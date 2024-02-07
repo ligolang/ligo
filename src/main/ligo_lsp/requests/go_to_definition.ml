@@ -358,8 +358,8 @@ let get_definitions : Scopes.def -> Scopes.Types.mdef list -> Scopes.def list =
   | _ :: _ as defs -> defs
 
 
-let filter_mdefs : Scopes.def list -> Scopes.Types.mdef list =
-  List.filter_map ~f:(function
+let filter_mdefs : Scopes.definitions -> Scopes.Types.mdef list =
+  Def.filter_map ~f:(function
       | Scopes.Types.Variable _ | Type _ | Label _ -> None
       | Module mdef -> Some mdef)
 

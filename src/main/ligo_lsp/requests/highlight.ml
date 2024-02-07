@@ -11,12 +11,14 @@ module Ranges = Set.Make (Range)
 let get_references_in_file : Def_location.t list -> Path.t -> Docs_cache.t -> Range.t list
   =
  fun locations file cache ->
-  let definitions : Def.t list =
+  let definitions : Def.definitions =
     match Docs_cache.find cache file with
     | Some { definitions; _ } -> definitions
-    | None -> []
+    | None -> { definitions = [] }
   in
-  get_references (Sequence.of_list locations) (Sequence.of_list definitions)
+  get_references
+    (Sequence.of_list locations)
+    (Sequence.of_list (Scopes.Types.flatten_defs definitions))
   |> Sequence.filter_map ~f:(fun Loc_in_file.{ range; path } ->
          Option.some_if (Path.equal path file) range)
   |> Ranges.of_sequence

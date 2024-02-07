@@ -27,7 +27,7 @@ let insert_module_path
   Option.value_map module_path_opt ~default:type' ~f:(fun module_path ->
       let open Ligo_prim in
       let mdefs =
-        List.filter_map input_d.definitions ~f:(function
+        Def.filter_map input_d.definitions ~f:(function
             | Variable _ | Type _ | Label _ -> None
             | Module mdef -> Some mdef)
       in

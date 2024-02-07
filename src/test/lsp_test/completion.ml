@@ -583,6 +583,42 @@ let test_cases_cameligo =
         ]
     ; negative_labels = [ "Baz" ]
     }
+  ; { test_name = "Field completions for stdlib module alias"
+    ; file_name = "contracts/lsp/completion_stdlib_alias.mligo"
+    ; position = Position.create ~line:2 ~character:15
+    ; completions =
+        [ CompletionItem.create
+            ~label:"Typed_address"
+            ~kind:CompletionItemKind.Module
+            ~sortText:"\x06"
+            ()
+        ; CompletionItem.create
+            ~label:"originate"
+            ~detail:"(* Unresolved *)"
+            ~kind:CompletionItemKind.Variable
+            ~sortText:"\x06"
+            ()
+        ]
+    ; negative_labels = [ "typed_address" ]
+    }
+  ; { test_name = "Things from inner modules don't appear in field completions"
+    ; file_name = "contracts/lsp/completion_module_defs.mligo"
+    ; position = Position.create ~line:8 ~character:12
+    ; completions =
+        [ CompletionItem.create
+            ~label:"B"
+            ~kind:CompletionItemKind.Module
+            ~sortText:"\x05"
+            ()
+        ; CompletionItem.create
+            ~label:"aaa"
+            ~detail:"int"
+            ~kind:CompletionItemKind.Variable
+            ~sortText:"\x05"
+            ()
+        ]
+    ; negative_labels = [ "bbb" ]
+    }
   ]
 
 
@@ -1000,6 +1036,42 @@ let test_cases_jsligo =
             ()
         ]
     ; negative_labels = [ "Baz" ]
+    }
+  ; { test_name = "Field completions for stdlib namespace alias"
+    ; file_name = "contracts/lsp/completion_stdlib_alias.jsligo"
+    ; position = Position.create ~line:2 ~character:17
+    ; completions =
+        [ CompletionItem.create
+            ~label:"Typed_address"
+            ~kind:CompletionItemKind.Module
+            ~sortText:"\x06"
+            ()
+        ; CompletionItem.create
+            ~label:"originate"
+            ~detail:"/* Unresolved */"
+            ~kind:CompletionItemKind.Variable
+            ~sortText:"\x06"
+            ()
+        ]
+    ; negative_labels = [ "typed_address" ]
+    }
+  ; { test_name = "Things from inner namespaces don't appear in field completions"
+    ; file_name = "contracts/lsp/completion_module_defs.jsligo"
+    ; position = Position.create ~line:8 ~character:14
+    ; completions =
+        [ CompletionItem.create
+            ~label:"B"
+            ~kind:CompletionItemKind.Module
+            ~sortText:"\x05"
+            ()
+        ; CompletionItem.create
+            ~label:"aaa"
+            ~detail:"int"
+            ~kind:CompletionItemKind.Variable
+            ~sortText:"\x05"
+            ()
+        ]
+    ; negative_labels = [ "bbb" ]
     }
   ]
 

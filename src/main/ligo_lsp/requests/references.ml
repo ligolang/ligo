@@ -39,7 +39,7 @@ let get_all_references_grouped_by_file
   =
  fun locations cache ->
   let go (_path, { definitions; _ }) =
-    get_references locations @@ Sequence.of_list definitions
+    get_references locations @@ Sequence.of_list (Scopes.Types.flatten_defs definitions)
   in
   cache
   |> Docs_cache.to_alist
@@ -58,7 +58,9 @@ let get_all_references : Def_location.t list -> Docs_cache.t -> Loc_in_file.t li
   |> Sequence.to_list
 
 
-let try_to_get_all_linked_locations : Def.t -> Def.t list -> Def_location.t list option =
+let try_to_get_all_linked_locations
+    : Def.t -> Def.definitions -> Def_location.t list option
+  =
  fun definition definitions ->
   let open Go_to_definition in
   let mdefs = filter_mdefs definitions in
@@ -82,7 +84,7 @@ let try_to_get_all_linked_locations : Def.t -> Def.t list -> Def_location.t list
       Def.get_location def)
 
 
-let get_all_linked_locations_or_def : Def.t -> Def.t list -> Def_location.t list =
+let get_all_linked_locations_or_def : Def.t -> Def.definitions -> Def_location.t list =
  fun definition definitions ->
   Option.value
     (try_to_get_all_linked_locations definition definitions)

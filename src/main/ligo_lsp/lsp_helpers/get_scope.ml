@@ -8,7 +8,7 @@ open Scopes.Types
 type defs_and_diagnostics =
   { errors : Main_errors.all list
   ; warnings : Main_warnings.all list
-  ; definitions : Def.t list
+  ; definitions : Def.definitions
   }
 
 let with_code_input
@@ -86,7 +86,7 @@ let get_scope_raw
     (source_file : BuildSystem.Source_input.code_input)
     ~defs_only
     ~raise
-    : def list
+    : Def.definitions
       * (Ast_typed.signature * Ast_typed.declaration list) option
       * inlined_scopes
   =
@@ -131,7 +131,7 @@ let get_scope_cli_result
   let defs, _, scopes =
     get_scope_raw raw_options (From_file source_file) ~defs_only ~raise
   in
-  defs, scopes
+  defs.definitions, scopes
 
 
 let get_scopes
@@ -154,7 +154,7 @@ let get_scopes
 let make_defs_and_diagnostics (errors, warnings, defs_opt) : defs_and_diagnostics =
   let errors = List.dedup_and_sort ~compare:Caml.compare errors in
   let warnings = List.dedup_and_sort ~compare:Caml.compare warnings in
-  let definitions = Option.value ~default:[] defs_opt in
+  let definitions = Option.value ~default:{ definitions = [] } defs_opt in
   { errors; warnings; definitions }
 
 

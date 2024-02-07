@@ -4,14 +4,14 @@ open Lsp_helpers
 let rec find_record_from_path
     (struct_type : Ast_core.type_expression)
     (field_path : string option list)
-    (definitions : Def.t list)
+    (definitions : Def.definitions)
     : Ast_core.row option
   =
   let rec find_record_in_core : Ast_core.type_content -> Ast_core.row option = function
     | T_record row -> Some row
     | T_variable var ->
       Option.bind
-        (List.find_map definitions ~f:(function
+        (Def.find_map definitions ~f:(function
             | Type tdef ->
               if Ligo_prim.Type_var.is_name var tdef.name then Some tdef else None
             | Variable _ | Module _ | Label _ -> None))
