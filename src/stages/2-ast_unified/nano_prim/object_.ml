@@ -8,7 +8,7 @@ and 'expr property =
   ; field_rhs : 'expr option
   }
 
-and 'expr t = 'expr property list
+and 'expr t = 'expr property Simple_utils.Location.wrap list
 
 and 'expr update =
   { object_ : 'expr

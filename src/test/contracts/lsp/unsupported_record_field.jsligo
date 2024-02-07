@@ -1,0 +1,8 @@
+type storage = { sponsee: address, ledger: big_map<address, tez> }
+
+type ret = [list<operation>, storage]
+
+@entry
+const sponsorise = (delta: int, store: storage): ret => {
+  return [list([]), { ...store, 1 }]
+}

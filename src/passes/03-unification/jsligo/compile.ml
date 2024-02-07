@@ -244,6 +244,7 @@ let rec expr : Eq.expr -> Folding.expr =
   | E_Object { value; _ } ->
     let f x =
       let I.{ attributes; property_id; property_rhs } = r_fst x in
+      let loc = r_snd x in
       TODO_do_in_parsing.weird_attr attributes;
       let open O.Object_ in
       let field_id =
@@ -252,13 +253,16 @@ let rec expr : Eq.expr -> Folding.expr =
         | F_Int i -> F_Int (snd i#payload)
         | F_Str s -> F_Str s#payload
       in
-      O.Object_.{ field_id; field_rhs = Option.map ~f:snd property_rhs }
+      Location.wrap
+        ~loc
+        O.Object_.{ field_id; field_rhs = Option.map ~f:snd property_rhs }
     in
     return @@ E_object (List.map ~f (sep_or_term_to_list value.inside))
   | E_Update { value = { inside; _ }; _ } ->
     let I.{ _object; updates; _ } = inside in
     let f x =
       let I.{ attributes; property_id; property_rhs } = r_fst x in
+      let loc = r_snd x in
       TODO_do_in_parsing.weird_attr attributes;
       let open O.Object_ in
       let field_id =
@@ -267,7 +271,9 @@ let rec expr : Eq.expr -> Folding.expr =
         | F_Int i -> F_Int (snd i#payload)
         | F_Str s -> F_Str s#payload
       in
-      O.Object_.{ field_id; field_rhs = Option.map ~f:snd property_rhs }
+      Location.wrap
+        ~loc
+        O.Object_.{ field_id; field_rhs = Option.map ~f:snd property_rhs }
     in
     let updates = List.map ~f (sep_or_term_to_list updates) in
     return @@ E_object_update { object_ = _object; updates }

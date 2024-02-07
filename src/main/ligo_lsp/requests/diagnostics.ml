@@ -49,33 +49,24 @@ let get_diagnostics (current_path : Path.t)
     : Ligo_interface.defs_and_diagnostics -> simple_diagnostic list
   =
  fun { errors; warnings; definitions = _ } ->
-  let open Option.Let_syntax in
   let mk_diag range file message severity =
     let location = Def.Loc_in_file.{ path = Path.from_absolute file; range } in
     Some { message; severity; location }
   in
   let extract_error_information : Main_errors.all -> simple_diagnostic list =
    fun errs ->
-    let insert_dummy =
-      match errs with
-      | `Self_ast_aggregated_tracer (`Self_ast_aggregated_expected_obj_ligo _)
-      | `Self_ast_aggregated_tracer (`Self_ast_aggregated_expected_obj_ligo_type _) ->
-        true
-      | _ -> false
-    in
     let errs = Main_errors.Formatter.error_json errs in
     List.filter_map
       ~f:(fun ({ content = { message; location; _ }; _ } : Simple_utils.Error.t) ->
-        match%bind location with
-        | File region ->
+        match location with
+        | Some (File region) ->
           mk_diag (Range.of_region region) region#file message DiagnosticSeverity.Error
-        | Virtual _ when insert_dummy ->
+        | Some (Virtual _) | None ->
           mk_diag
             Range.dummy
             (Path.to_string current_path)
             message
-            DiagnosticSeverity.Error
-        | Virtual _ -> None)
+            DiagnosticSeverity.Error)
       errs
   in
   let extract_warning_information : Main_warnings.all -> simple_diagnostic option =

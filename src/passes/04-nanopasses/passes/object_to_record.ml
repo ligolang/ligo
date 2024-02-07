@@ -10,25 +10,27 @@ let label_of_var x =
   Location.wrap ~loc @@ Label.of_string (Variable.to_name_exn x)
 
 
-let field_of_property ~raise : expr Object_.property -> (Label.t, expr) Field.t =
- fun { field_id; field_rhs } ->
+let field_of_property ~raise
+    : expr Object_.property Location.wrap -> (Label.t, expr) Field.t
+  =
+ fun { wrap_content = { field_id; field_rhs }; location = loc } ->
   match field_id, field_rhs with
   | F_Name l, Some expr -> Complete (l, expr)
-  | F_Name l, None -> Punned (Location.wrap ~loc:Location.generated l)
+  | F_Name l, None -> Punned (Location.wrap ~loc l)
   | _, Some expr -> raise.error @@ unsupported_object_field expr
-  | _, None ->
-    raise.error @@ unsupported_object_field (e_string ~loc:Location.generated "TODO")
+  | _, None -> raise.error @@ unsupported_object_field (e_string ~loc "TODO")
 
 
-let field_update_of_property ~raise : expr Object_.property -> expr Update.field =
- fun { field_id; field_rhs } ->
+let field_update_of_property ~raise
+    : expr Object_.property Location.wrap -> expr Update.field
+  =
+ fun { wrap_content = { field_id; field_rhs }; location = loc } ->
   match field_id, field_rhs with
   | F_Name l, Some expr ->
     Full_field { field_lhs = [ FieldName l ]; field_lens = Lens_Id; field_rhs = expr }
-  | F_Name l, None -> Pun (Location.wrap ~loc:Location.generated l)
+  | F_Name l, None -> Pun (Location.wrap ~loc l)
   | _, Some expr -> raise.error @@ unsupported_object_field expr
-  | _, None ->
-    raise.error @@ unsupported_object_field (e_string ~loc:Location.generated "TODO")
+  | _, None -> raise.error @@ unsupported_object_field (e_string ~loc "TODO")
 
 
 let compile ~raise =
