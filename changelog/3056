@@ -1,0 +1,7 @@
+
+author: DK318
+description: "Fix the next bugs in completions after the dot symbol for modules:\\nLack of items in aliases.Extra items\\nNow completion items are more accurate for modules.\\n\\n\\n"
+merge_request: '3056'
+title: "[#2132] Fix record field completions for modules"
+type: fixed
+            
