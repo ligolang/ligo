@@ -44,6 +44,7 @@ module Make (Options: Options.S) :
     val parse_file       : (file_path -> CST.t) parser
     val parse_string     : CST.t parser
     val parse_expression : CST.expr parser
+    val parse_type_expression : CST.type_expr parser
 
     (* Pretty-printing *)
 

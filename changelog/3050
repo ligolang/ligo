@@ -1,0 +1,7 @@
+
+author: lesenechal.remi
+description: "\\n\[CLI\] New command to compile LIGO type expressions to Michelson type expressions (see `ligo compile type`). Example: `ligo compile type 'int * string * nat' --syntax cameligo`\\n\\n"
+merge_request: '3050'
+title: "Compile LIGO type to Michelson"
+type: added
+            

@@ -5269,3 +5269,39 @@ interactive_expr: UIdent GT ZWSP ZWSP
 ##
 
 This syntax error should not happen. Please report to the developpers.
+
+interactive_type_expr: ZWSP
+##
+## Ends in an error in state: 1186.
+##
+## interactive_type_expr' -> . interactive_type_expr [ # ]
+##
+## The known suffix of the stack is as follows:
+##
+##
+
+Ill-formed type expression.
+At this point, a type expression is expected.
+
+interactive_type_expr: UIdent ARROW
+##
+## Ends in an error in state: 1187.
+##
+## interactive_type_expr -> type_expr . EOF [ # ]
+##
+## The known suffix of the stack is as follows:
+## type_expr
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 31, spurious reduction of production ctor -> UIdent
+## In state 26, spurious reduction of production short_variant(fun_type_level) -> ctor
+## In state 76, spurious reduction of production variant_type(fun_type_level) -> short_variant(fun_type_level)
+## In state 73, spurious reduction of production type_expr -> variant_type(fun_type_level)
+##
+
+Ill-formed type expression.
+At this point, if the type expression is complete, the end of the
+input is expected.

@@ -28,6 +28,14 @@ val type_expression
   -> I.expression
   -> O.expression
 
+val type_type_expression
+  :  raise:(typer_error, Main_warnings.all) raise
+  -> options:Compiler_options.middle_end
+  -> path:Ligo_prim.Module_var.t list
+  -> ?env:O.signature
+  -> I.type_expression
+  -> O.type_expression
+
 val eval_signature_sort
   :  raise:(typer_error, Main_warnings.all) raise
   -> options:Compiler_options.middle_end

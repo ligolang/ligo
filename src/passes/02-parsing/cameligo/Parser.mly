@@ -107,9 +107,10 @@ let hook_T_Attr = hook @@ fun a t -> T_Attr (a,t)
 
 (* Entry points *)
 
-%start contract interactive_expr
+%start contract interactive_expr interactive_type_expr
 %type <CST.t> contract
 %type <CST.expr> interactive_expr
+%type <CST.type_expr> interactive_type_expr
 
 %%
 
@@ -285,6 +286,8 @@ quoted_type_var:
     in {region; value} }
 
 (* Type expressions *)
+
+interactive_type_expr: type_expr EOF { $1 }
 
 type_expr:
   fun_type_level | variant_type(fun_type_level) { $1 }

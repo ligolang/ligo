@@ -431,6 +431,27 @@ let build_expression ~raise
   { expression = stacking_exp; ast_type = aggregated.type_expression }
 
 
+let build_type_expression ~raise
+    :  options:Compiler_options.t -> Syntax_types.t -> string
+    -> Source_input.file_name option
+    -> (Mini_c.meta, string) Tezos_micheline.Micheline.node
+  =
+ fun ~options syntax ty_expression file_name_opt ->
+  let init_prg =
+    let f : Source_input.file_name -> Ast_typed.program =
+     fun filename -> qualified_typed ~raise ~options (Source_input.From_file filename)
+    in
+    let default = Stdlib.select_lib_typed syntax (Stdlib.get ~options) in
+    Option.value_map file_name_opt ~f ~default
+  in
+  let init_sig =
+    (* can't use the contract signature directly because
+       it would force users to export declaration in Jsligo *)
+    Ast_typed.to_signature init_prg.pr_module
+  in
+  Ligo_compile.Utils.type_ty_expression ~raise ~options syntax ty_expression init_sig
+
+
 let parse_module_path ~loc s =
   if String.equal s ""
   then []

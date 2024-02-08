@@ -50,6 +50,17 @@ let compile_expression
   typed
 
 
+let compile_type_expression
+    ~raise
+    ~(options : Compiler_options.t)
+    ~(context : Ast_typed.signature)
+    (ty : Ast_core.type_expression)
+    : Ast_typed.type_expression
+  =
+  trace ~raise checking_tracer
+  @@ Checking.type_type_expression ~options:options.middle_end ~env:context ty ~path:[]
+
+
 let apply (entry_point : Value_var.t) (param : Ast_core.expression) : Ast_core.expression =
   let entry_point_var : Ast_core.expression =
     { expression_content = Ast_core.E_variable entry_point

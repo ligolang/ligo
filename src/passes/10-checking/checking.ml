@@ -1947,6 +1947,19 @@ let type_expression ~raise ~options ~path ?env ?tv_opt expr =
     ()
 
 
+let type_type_expression ~raise ~options ~path ?env (ty : I.type_expression) =
+  C.run_elab
+    (let%bind.C ty = With_default_layout.evaluate_type ty in
+     let ty = E.decode ty in
+     C.return ty)
+    ~raise
+    ~options
+    ~loc:ty.location
+    ~path
+    ?env
+    ()
+
+
 let eval_signature_sort ~raise ~options ~loc ~path ?env old_sig =
   C.run_elab
     (let%map.C sig_sort = infer_signature_sort (C.encode_signature old_sig) in

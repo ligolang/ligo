@@ -172,6 +172,27 @@ let expression (raw_options : Raw_options.t) expression init_file michelson_form
       Lwt.return (no_comment mich, []) )
 
 
+let type_ (raw_options : Raw_options.t) expression init_file michelson_format =
+  ( Formatter.Michelson_formatter.michelson_format michelson_format []
+  , fun ~raise ->
+      let syntax =
+        Syntax.of_string_opt ~raise (Syntax_name raw_options.syntax) init_file
+      in
+      let options =
+        let protocol_version =
+          Helpers.protocol_to_variant ~raise raw_options.protocol_version
+        in
+        Compiler_options.make
+          ~raw_options
+          ~syntax
+          ~protocol_version
+          ~has_env_comments:false
+          ()
+      in
+      let ty = Build.build_type_expression ~raise ~options syntax expression init_file in
+      Lwt.return (no_comment ty, []) )
+
+
 let constant (raw_options : Raw_options.t) constants init_file =
   ( Formatter.Michelson_formatter.michelson_constant_format
   , fun ~raise ->

@@ -115,9 +115,10 @@ let mk_mod_path :
 
 (* Entry points *)
 
-%start contract interactive_expr
+%start contract interactive_expr interactive_type_expr
 %type <CST.t> contract
 %type <CST.expr> interactive_expr
+%type <CST.type_expr> interactive_type_expr
 
 %%
 
@@ -417,6 +418,8 @@ type_decl:
     in D_Type {region; value} }
 
 (* TYPE EXPRESSIONS *)
+
+interactive_type_expr: type_expr EOF { $1 }
 
 type_expr:
   fun_type | variant_type | core_type { $1 }

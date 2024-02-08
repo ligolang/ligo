@@ -90,6 +90,12 @@ let parse_and_abstract_expression_cameligo ~raise buffer =
   Unification.Cameligo.compile_expression raw
 
 
+let parse_and_abstract_type_expression_cameligo ~raise buffer =
+  let module Parse = Parsing.Cameligo.Make (Cameligo.Options) in
+  let raw = trace ~raise parser_tracer @@ Parse.parse_type_expression buffer in
+  Unification.Cameligo.compile_type_expression raw
+
+
 let parse_and_abstract_jsligo ~raise buffer file_path =
   let module Parse = Parsing.Jsligo.Make (Jsligo.Options) in
   let raw = trace ~raise parser_tracer @@ Parse.parse_file buffer file_path in
@@ -100,6 +106,12 @@ let parse_and_abstract_expression_jsligo ~raise buffer =
   let module Parse = Parsing.Jsligo.Make (Jsligo.Options) in
   let raw = trace ~raise parser_tracer @@ Parse.parse_expression buffer in
   Unification.Jsligo.compile_expression raw
+
+
+let parse_and_abstract_type_expression_jsligo ~raise buffer =
+  let module Parse = Parsing.Jsligo.Make (Jsligo.Options) in
+  let raw = trace ~raise parser_tracer @@ Parse.parse_type_expression buffer in
+  Unification.Jsligo.compile_type_expression raw
 
 
 let parse_and_abstract ~raise ~(meta : meta) buffer file_path : Ast_unified.program =
@@ -121,6 +133,20 @@ let parse_and_abstract_expression
     match meta.syntax with
     | CameLIGO -> parse_and_abstract_expression_cameligo
     | JsLIGO -> parse_and_abstract_expression_jsligo
+  in
+  parse_and_abstract ~raise buffer
+
+
+let parse_and_abstract_type_expression
+    ~(raise : (Main_errors.all, Main_warnings.all) Simple_utils.Trace.raise)
+    ~(meta : meta)
+    buffer
+    : Ast_unified.ty_expr
+  =
+  let parse_and_abstract =
+    match meta.syntax with
+    | CameLIGO -> parse_and_abstract_type_expression_cameligo
+    | JsLIGO -> parse_and_abstract_type_expression_jsligo
   in
   parse_and_abstract ~raise buffer
 

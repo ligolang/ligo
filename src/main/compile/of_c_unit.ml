@@ -8,6 +8,7 @@ let compile ~raise ~meta c_unit (source_filename : string) : Ast_unified.program
 
 
 let compile_expression ~raise = parse_and_abstract_expression ~raise
+let compile_type_expression ~raise = parse_and_abstract_type_expression ~raise
 
 let compile_string ~raise : meta:meta -> c_unit -> Ast_unified.program =
  fun ~meta c_unit -> parse_and_abstract_string ~raise meta.syntax c_unit

@@ -33,6 +33,13 @@ val compile_expression
   -> Ast_unified.expr
   -> Ast_core.expression
 
+val compile_type_expression
+  :  raise:(Errors.t, Main_warnings.all) Simple_utils.Trace.raise
+  -> options:Compiler_options.t
+  -> ?disable_initial_check:bool
+  -> Ast_unified.ty_expr
+  -> Ast_core.type_expression
+
 val decompile_pattern
   :  raise:(Passes.Errors.t, Main_warnings.all) Simple_utils.Trace.raise
   -> syntax:Syntax_types.t

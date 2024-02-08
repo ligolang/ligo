@@ -240,6 +240,7 @@ module type LIGO_PARSER =
       sig
         type t
         type expr
+        type type_expr
       end
 
     (* The type of tokens. *)
@@ -252,6 +253,9 @@ module type LIGO_PARSER =
 
     val interactive_expr :
       (Lexing.lexbuf -> token) -> Lexing.lexbuf -> CST.expr
+
+    val interactive_type_expr :
+      (Lexing.lexbuf -> token) -> Lexing.lexbuf -> CST.type_expr
 
     val contract :
       (Lexing.lexbuf -> token) -> Lexing.lexbuf -> CST.t
@@ -267,6 +271,9 @@ module type LIGO_PARSER =
       sig
         val interactive_expr :
           Lexing.position -> CST.expr MenhirInterpreter.checkpoint
+
+        val interactive_type_expr :
+          Lexing.position -> CST.type_expr MenhirInterpreter.checkpoint
 
         val contract :
           Lexing.position -> CST.t MenhirInterpreter.checkpoint
@@ -291,7 +298,7 @@ module MakeTwoParsers
          (ParErr      : PAR_ERR)
          (UnitPasses  : Pipeline.PASSES with type item = Token.t Unit.t)
          (TokenPasses : Pipeline.PASSES with type item = Token.t)
-         (CST         : sig type t type expr end)
+         (CST         : sig type t type expr type type_expr end)
          (Parser      : LIGO_PARSER with type token = Token.t
                                      and module CST = CST) =
   struct
@@ -349,6 +356,11 @@ module MakeTwoParsers
         type tree = CST.expr
       end
 
+    module TyExprCST =
+      struct
+        type tree = CST.type_expr
+      end
+
     module ExprParser_Menhir =
       struct
         include Parser
@@ -364,8 +376,24 @@ module MakeTwoParsers
 
     module ExprParser = Partial (ExprCST) (ExprParser_Menhir)
 
+    module TyExprParser_Menhir =
+      struct
+        include Parser
+        type tree = TyExprCST.tree
+
+        let main = interactive_type_expr
+
+        module Incremental =
+          struct
+            let main = Incremental.interactive_type_expr
+          end
+      end
+
+    module TyExprParser = Partial (TyExprCST) (TyExprParser_Menhir)
     let expression       = ExprParser.parse_string
     let parse_expression = expression
+    let type_expression  = TyExprParser.parse_string
+    let parse_type_expression  = type_expression
  end
 
 (* PRETTY-PRINTING *)
