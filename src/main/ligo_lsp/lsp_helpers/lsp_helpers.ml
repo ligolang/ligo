@@ -188,6 +188,10 @@ module InitializeParams = Lsp.Types.InitializeParams
 module InitializeResult = Lsp.Types.InitializeResult
 module MessageActionItem = Lsp.Types.MessageActionItem
 module MessageType = Lsp.Types.MessageType
+
+module OptionalVersionedTextDocumentIdentifier =
+  Lsp.Types.OptionalVersionedTextDocumentIdentifier
+
 module Registration = Lsp.Types.Registration
 module RenameOptions = Lsp.Types.RenameOptions
 module SemanticTokens = Lsp.Types.SemanticTokens
@@ -202,6 +206,7 @@ module ShowMessageRequestParams = Lsp.Types.ShowMessageRequestParams
 module SymbolInformation = Lsp.Types.SymbolInformation
 module SymbolKind = Lsp.Types.SymbolKind
 module TextDocumentContentChangeEvent = Lsp.Types.TextDocumentContentChangeEvent
+module TextDocumentEdit = Lsp.Types.TextDocumentEdit
 module TextEdit = Lsp.Types.TextEdit
 module WorkspaceEdit = Lsp.Types.WorkspaceEdit
 module WorkspaceFolder = Lsp.Types.WorkspaceFolder

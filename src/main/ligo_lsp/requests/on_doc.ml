@@ -1,6 +1,63 @@
 open Handler
 open Lsp_helpers
 
+let default_project_file_contents : string = {|{
+  "dependencies": {
+  }
+}
+|}
+
+let create_default_project_file (project_root : Path.t) : unit Handler.t =
+  let@ () =
+    send_log_msg
+      ~type_:Info
+      (Format.asprintf "Creating project file at: %a." Path.pp project_root)
+  in
+  let uri = DocumentUri.of_path project_root in
+  let file_edit_params =
+    let edit =
+      WorkspaceEdit.create
+        ~documentChanges:
+          [ `CreateFile (CreateFile.create ~uri ())
+          ; `TextDocumentEdit
+              (TextDocumentEdit.create
+                 ~edits:
+                   [ `TextEdit
+                       (TextEdit.create
+                          ~newText:default_project_file_contents
+                          ~range:(Range.Construct.point 0 0))
+                   ]
+                 ~textDocument:
+                   (OptionalVersionedTextDocumentIdentifier.create ~uri ~version:1 ()))
+          ]
+        ()
+    in
+    ApplyWorkspaceEditParams.create ~edit ()
+  in
+  send_request (WorkspaceApplyEdit file_edit_params) (function
+      | Error error ->
+        let@ () = send_log_msg ~type_:Error error.message in
+        send_message ~type_:Error "Failed to create project file. Check logs."
+      | Ok { applied; failureReason; failedChange } ->
+        if applied
+        then
+          let@ () = update_project_root (Some project_root) in
+          send_message
+            ~type_:Info
+            (Format.asprintf "Created project file at: %a." Path.pp project_root)
+        else
+          let@ () =
+            Option.value_map ~default:pass ~f:(send_log_msg ~type_:Error) failureReason
+          in
+          let@ () =
+            Option.value_map
+              ~default:pass
+              ~f:(send_log_msg ~type_:Error <@ Format.sprintf "Failed change: %d")
+              failedChange
+          in
+          send_message ~type_:Error "Failed to create project file. Check logs.")
+
+
 let detect_or_ask_to_create_project_file (file : Path.t) : unit Handler.t =
   let@ get_scope_buffers = ask_docs_cache in
   let project_root = Project_root.get_project_root file in
@@ -81,38 +138,7 @@ let detect_or_ask_to_create_project_file (file : Path.t) : unit Handler.t =
                     (Path.from_absolute (common_prefix ^ title))
                     Project_root.ligoproject
                 in
-                let@ () =
-                  send_log_msg
-                    ~type_:Info
-                    (Format.sprintf
-                       "Creating project file at: %s."
-                       (Path.to_string project_root))
-                in
-                let uri = DocumentUri.of_path project_root in
-                let document_change = `CreateFile (CreateFile.create ~uri ()) in
-                let edit = WorkspaceEdit.create ~documentChanges:[ document_change ] () in
-                let w_e_params = ApplyWorkspaceEditParams.create ~edit () in
-                send_request (WorkspaceApplyEdit w_e_params) (function
-                    | Error error -> send_log_msg ~type_:Error error.message
-                    | Ok { applied; failureReason; failedChange = _ } ->
-                      if applied
-                      then
-                        let@ () = update_project_root (Some project_root) in
-                        send_message
-                          ~type_:Info
-                          (Format.sprintf
-                             "Created project file at: %s."
-                             (Path.to_string project_root))
-                      else (
-                        let msg =
-                          Option.value_map
-                            ~default:""
-                            ~f:(Format.sprintf " %s.")
-                            failureReason
-                        in
-                        send_message
-                          ~type_:Error
-                          (Format.sprintf "Failed to create project file.%s" msg))))
+                create_default_project_file project_root)
           in
           send_message_with_buttons ~message ~options ~type_:Info ~handler)
   | None, Some project_root ->
