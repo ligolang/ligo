@@ -178,13 +178,17 @@ let t_pair ~loc a b : type_expression =
   ez_t_record ~loc [ Label.of_int 0, a; Label.of_int 1, b ]
 
 
-let t_sum_ez ~loc ?(layout = default_layout) (lst : (string * type_expression) list)
+let t_sum_ez
+    ~loc
+    ?(layout = default_layout)
+    ?orig_name
+    (lst : (string * type_expression) list)
     : type_expression
   =
   let fields = List.map ~f:(fun (x, y) -> Label.of_string x, y) lst in
   let layout = layout @@ fields_with_no_annot fields in
   let row = Row.of_alist_exn ~layout fields in
-  make_t ~loc (T_sum row)
+  make_t ~loc (T_sum (row, orig_name))
 
 
 let t_bool ~loc () : type_expression =
@@ -203,7 +207,7 @@ let get_lambda_with_type e =
 
 let get_t_bool (t : type_expression) : unit option =
   match t.type_content with
-  | T_sum { fields; _ } ->
+  | T_sum ({ fields; _ }, _) ->
     let keys = Map.key_set fields in
     if Set.length keys = 2
        && Set.mem keys (Label.of_string "True")
@@ -215,7 +219,7 @@ let get_t_bool (t : type_expression) : unit option =
 
 let get_t_option (t : type_expression) : type_expression option =
   match t.type_content with
-  | T_sum { fields; _ } ->
+  | T_sum ({ fields; _ }, _) ->
     let keys = Map.key_set fields in
     if Set.length keys = 2
        && Set.mem keys (Label.of_string "Some")

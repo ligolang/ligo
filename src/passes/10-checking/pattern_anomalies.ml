@@ -88,7 +88,9 @@ let rec to_simple_pattern (ty_pattern : _ AST.Pattern.t * AST.type_expression) =
         [ SP_Constructor (cons_label, hd_tl, hd_ty) ])
   | P_variant (c, p) ->
     let p_ty =
-      get_variant_nested_type c (Option.value_exn ~here:[%here] (C.get_t_sum ty))
+      get_variant_nested_type
+        c
+        (Option.value_exn ~here:[%here] (Option.map ~f:fst @@ C.get_t_sum ty))
     in
     [ SP_Constructor (c, to_simple_pattern (p, p_ty), ty) ]
   | P_tuple ps ->
@@ -145,7 +147,11 @@ and to_original_pattern ~raise ~loc simple_patterns (ty : AST.type_expression) =
   | [ (SP_Constructor (Label ("#NIL", _), _, _) as simple_pattern) ] ->
     to_list_pattern ~raise ~loc simple_pattern
   | [ SP_Constructor (c, sps, t) ] ->
-    let t = get_variant_nested_type c (Option.value_exn ~here:[%here] (C.get_t_sum t)) in
+    let t =
+      get_variant_nested_type
+        c
+        (Option.value_exn ~here:[%here] (Option.map ~f:fst @@ C.get_t_sum t))
+    in
     let ps = to_original_pattern ~raise ~loc sps t in
     Location.wrap ~loc @@ P_variant (c, ps)
   | _ ->
@@ -258,7 +264,11 @@ let find_constuctor_arity c (t : AST.type_expression) =
     destructure_type t' @ [ t ]
   | Label ("#NIL", _) -> [ t ]
   | _ ->
-    let te = get_variant_nested_type c (Option.value_exn ~here:[%here] (C.get_t_sum t)) in
+    let te =
+      get_variant_nested_type
+        c
+        (Option.value_exn ~here:[%here] (Option.map ~f:fst @@ C.get_t_sum t))
+    in
     destructure_type te
 
 
@@ -267,7 +277,7 @@ let get_all_constructors (t : AST.type_expression) =
   then list_constructors
   else (
     match C.get_t_sum t with
-    | Some tsum ->
+    | Some (tsum, _) ->
       let label_map = tsum.fields in
       let labels = LMap.keys label_map in
       LSet.of_list labels

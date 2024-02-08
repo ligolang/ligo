@@ -579,9 +579,9 @@ module Apply = struct
     | T_construct construct ->
       let parameters = List.map ~f:apply construct.parameters in
       return @@ T_construct { construct with parameters }
-    | T_sum row' ->
+    | T_sum (row', orig_label) ->
       let row = row ctx row' in
-      return @@ T_sum row
+      return @@ T_sum (row, orig_label)
     | T_record row' ->
       let row = row ctx row' in
       return @@ T_record row
@@ -999,7 +999,7 @@ let get_sum : t -> Label.t -> (Type_var.t * Type_var.t list * Type.t * Type.t) l
       (let filter_tsum (var, type_) =
          let t_params, type_ = Type.destruct_type_abstraction type_ in
          match type_.content with
-         | T_sum m ->
+         | T_sum (m, _) ->
            (match Map.find m.fields constr with
            | Some associated_type -> Some (var, t_params, associated_type, type_)
            | None -> None)
@@ -1178,7 +1178,7 @@ end = struct
         (match%bind loop ~ctx:(ctx |:: C_type_var (tvar, kind)) type_ with
         | Type -> return Type
         | _ -> None)
-      | T_sum rows | T_record rows ->
+      | T_sum (rows, _) | T_record rows ->
         if Map.for_all
              ~f:(fun associated_type ->
                match loop associated_type with

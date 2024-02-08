@@ -430,7 +430,7 @@ and compile_type : I.type_expression -> O.type_expression =
   | T_variable x -> return (T_variable x)
   | T_constant { language; injection; parameters } ->
     return (T_constant { language; injection; parameters = List.map parameters ~f:self })
-  | T_sum r -> return (T_sum (I.Row.map self r))
+  | T_sum (r, _) -> return (T_sum (I.Row.map self r))
   | T_record r -> return (T_record (I.Row.map self r))
   | T_arrow x -> return (T_arrow (Arrow.map self x))
   | T_singleton x -> return (T_singleton x)

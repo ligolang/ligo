@@ -111,7 +111,7 @@ and decompile_type : I.type_expression -> O.type_expression =
     return (O.T_constant { language; injection; parameters })
   | T_sum { fields; layout } ->
     let fields = Record.map ~f:decompile_type fields in
-    return (O.T_sum { fields; layout })
+    return (O.T_sum ({ fields; layout }, None))
   | T_record { fields; layout } ->
     let fields = Record.map ~f:decompile_type fields in
     return (O.T_record { fields; layout })

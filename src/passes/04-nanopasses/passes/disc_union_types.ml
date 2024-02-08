@@ -55,8 +55,8 @@ let morph_t_disc ~raise ~err ~loc (rows : ty_expr Non_linear_disc_rows.t) : reg 
     then (
       let ty =
         let rows =
-          List.mapi singleton_rows ~f:(fun decl_pos (_, id, ty) ->
-              ( Label.of_string id
+          List.mapi singleton_rows ~f:(fun decl_pos (Label (_, loc), id, ty) ->
+              ( Label.T.create ~loc id
               , Non_linear_rows.{ associated_type = ty; attributes = []; decl_pos } ))
         in
         t_sum_raw ~loc rows (Some label)

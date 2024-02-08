@@ -91,9 +91,9 @@ let rec evaluate_type ~default_layout (type_ : I.type_expression)
     let%bind type1 = evaluate_type ~default_layout type1 in
     let%bind type2 = evaluate_type ~default_layout type2 in
     const @@ T_arrow { type1; type2; param_names }
-  | T_sum (row, _) ->
+  | T_sum (row, orig_label) ->
     let%bind row = evaluate_row ~default_layout row in
-    const @@ T_sum row
+    const @@ T_sum (row, orig_label)
   | T_record row ->
     let%bind row = evaluate_row ~default_layout row in
     const @@ T_record row
@@ -501,7 +501,7 @@ let rec check_expression (expr : I.expression) (type_ : Type.t)
         let%bind struct_ = struct_
         and update = update in
         return @@ O.E_update { struct_; path; update })
-  | E_constructor { constructor; element }, T_sum row ->
+  | E_constructor { constructor; element }, T_sum (row, _) ->
     let%bind constr_row_elem =
       raise_opt ~error:(bad_constructor constructor type_)
       @@ Map.find row.fields constructor
@@ -1281,7 +1281,7 @@ and check_pattern ~mut (pat : I.type_expression option I.Pattern.t) (type_ : Typ
       E.(
         let%bind list_pat = all list_pat in
         return @@ P.P_list (List list_pat))
-  | P_variant (label, arg_pat), T_sum row ->
+  | P_variant (label, arg_pat), T_sum (row, _) ->
     let%bind label_row_elem = raise_opt ~error:err @@ Map.find row.fields label in
     let%bind arg_pat = check arg_pat label_row_elem in
     const
