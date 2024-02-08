@@ -208,7 +208,7 @@ export default class LigoDebugConfigurationProvider implements vscode.DebugConfi
     _token?: vscode.CancellationToken,
   ): Promise<vscode.DebugConfiguration> {
     // Binary path would be passed later
-    await this.client.sendMsg('initializeLanguageServerState', { binaryPath: null });
+    await this.client.sendMsg('initializeLanguageServerState', { binaryPath: undefined });
 
     if (this.configDoesntExist(config)) {
       const editor = vscode.window.activeTextEditor

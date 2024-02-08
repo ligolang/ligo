@@ -136,13 +136,16 @@ async function getStorage(
 export async function executeCompileContract(
   context: LigoContext,
   client: LigoProtocolClient,
-  entrypoint: Maybe<string> = undefined,
+  maybeEntrypoint: Maybe<string> = undefined,
   format: Maybe<string> = 'text',
   showOutput = true,
 ): Promise<CompileContractResult> {
   const entrypoints = await prepareState(client);
 
-  if (!isDefined(entrypoint)) {
+  var entrypoint: string;
+  if (isDefined(maybeEntrypoint)) {
+    entrypoint = maybeEntrypoint
+  } else {
     entrypoint = await getEntrypoint(context, client, entrypoints);
   }
 
@@ -159,7 +162,7 @@ export async function executeCompileContract(
     ligoBinaryInfo,
     (path: string) => withProjectRootFlag([
       ['compile', 'contract', path],
-      Boolean(entrypoint) ? ['-m', entrypoint] : [],
+      ['-m', entrypoint],
       ['--michelson-format', format],
     ].flat()),
     CommandRequiredArguments.Path | CommandRequiredArguments.ProjectRoot,
@@ -177,25 +180,28 @@ export async function executeCompileContract(
 export async function executeCompileStorage(
   context: LigoContext,
   client: LigoProtocolClient,
-  entrypoint: Maybe<string> = undefined,
+  maybeEntrypoint: Maybe<string> = undefined,
   format: Maybe<string> = 'text',
-  storage: Maybe<string> = undefined,
+  maybeStorage: Maybe<string> = undefined,
   showOutput = true,
 ): Promise<CompileStorageResult> {
   const entrypoints = await prepareState(client);
 
-  if (!isDefined(entrypoint)) {
+  var entrypoint: string;
+  if (isDefined(maybeEntrypoint)) {
+    entrypoint = maybeEntrypoint
+  } else {
     entrypoint = await getEntrypoint(context, client, entrypoints);
-    if (!isDefined(entrypoint)) {
-      throw new ex.UserInterruptionException()
-    }
   }
 
-  if (!isDefined(storage)) {
+  var storage: string;
+  if (!isDefined(maybeStorage)) {
     const [validateInput, contractMetadata] =
       await prepareParameterStorageValidatorAndContractMetadata(client, entrypoint);
 
     storage = await getStorage(context, validateInput, entrypoint, contractMetadata);
+  } else {
+    storage = maybeStorage
   }
 
   if (!format) {
@@ -209,7 +215,7 @@ export async function executeCompileStorage(
     ligoBinaryInfo,
     (path: string) => withProjectRootFlag([
       ['compile', 'storage', path, storage],
-      Boolean(entrypoint) ? ['-m', entrypoint] : [],
+      ['-m', entrypoint],
       ['--michelson-format', format],
       ['--allow-json-download']
     ].flat()),
@@ -269,7 +275,7 @@ export async function executeDryRun(context: LigoContext, client: LigoProtocolCl
     ligoBinaryInfo,
     (path: string) => withProjectRootFlag([
       ['run', 'dry-run', path, parameter, storage],
-      Boolean(entrypoint) ? ['-m', entrypoint] : [],
+      ['-m', entrypoint],
     ].flat()),
   )
 }

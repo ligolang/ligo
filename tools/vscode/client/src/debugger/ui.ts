@@ -35,6 +35,7 @@ export type SteppingGranularity
  */
 export class DebugSteppingGranularityStatus implements vscode.Disposable {
   private bar: vscode.StatusBarItem;
+  // @ts-ignore uninitialized (set in smart setter)
   private _status: SteppingGranularity;
   private lastStatus: Maybe<SteppingGranularity>
   private readonly statusChangeEvent = new vscode.EventEmitter<SteppingGranularity>();
@@ -315,7 +316,7 @@ export async function getModuleName(
   context: LigoContext,
   validateModuleName: (entrypoint: string) => Promise<Maybe<string>>,
   moduleNamesList: [string, string][]
-): Promise<Maybe<string>> {
+): Promise<string> {
 
   interface State {
     pickedModuleName?: string;
@@ -371,7 +372,11 @@ export async function getModuleName(
       (input: MultiStepInput<State>, state: Ref<State>) => askForModuleName(input, state), {}
     );
 
-  return result.pickedModuleName;
+  if (isDefined(result.pickedModuleName)) {
+    return result.pickedModuleName;
+  } else {
+    throw new ex.UserInterruptionException()
+  }
 }
 
 export async function getParameterOrStorage(

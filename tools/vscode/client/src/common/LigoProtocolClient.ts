@@ -211,16 +211,14 @@ class ProtocolClient extends ee.EventEmitter {
   private rawData = Buffer.alloc(0);
   private contentLength: number;
 
-  constructor() {
+  constructor(writeable: stream.Writable) {
     super();
     this.sequence = 1;
     this.contentLength = -1;
+    this.outputStream = writeable;
   }
 
   protected connect(readable: stream.Readable, writable: stream.Writable): void {
-
-    this.outputStream = writable;
-
     readable.on('data', (data: Buffer) => {
       this.handleData(data);
     });
@@ -349,10 +347,11 @@ class ProtocolClient extends ee.EventEmitter {
 export class LigoProtocolClient extends ProtocolClient {
   socket: Net.Socket
   constructor(pipeName: string) {
-    super();
-    this.socket = Net.createConnection({ path: pipeName }, () => {
+    const socket = Net.createConnection({ path: pipeName }, () => {
       this.connect(this.socket, this.socket);
     });
+    super(socket);
+    this.socket = socket
   }
 
   sendMsg(command: 'resolveConfigFromLigo', args: ResolveConfigFromLigoArguments): Promise<ResolveConfigFromLigoResponse>
