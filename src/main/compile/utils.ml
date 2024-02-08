@@ -76,6 +76,32 @@ let type_expression ~raise ~options ?annotation ?wrap_variant syntax expression 
   typed_exp
 
 
+let type_ty_expression
+    ~raise
+    ~options
+    ?annotation
+    ?wrap_variant
+    syntax
+    expression
+    init_sig
+  =
+  let meta = Of_source.make_meta syntax in
+  let c_unit_exp, _ =
+    Of_source.preprocess_string
+      ~raise
+      ~options:options.Compiler_options.frontend
+      ~meta
+      expression
+  in
+  c_unit_exp
+  |> Of_c_unit.compile_type_expression ~raise ~meta
+  |> Of_unified.compile_type_expression ~raise ~options
+  |> Of_core.compile_type_expression ~raise ~options ~context:init_sig
+  |> Of_typed.compile_type_expression ~raise ~options
+  |> Of_expanded.compile_type ~raise
+  |> Of_mini_c.compile_type
+
+
 let compile_contract_input
     ~raise
     ~options

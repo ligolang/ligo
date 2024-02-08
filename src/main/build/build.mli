@@ -142,3 +142,11 @@ val qualified_typed_str
   -> options:Compiler_options.t
   -> string
   -> Ast_typed.program
+
+val build_type_expression
+  :  raise:(Main_errors.all, Main_warnings.all) Simple_utils.Trace.raise
+  -> options:Compiler_options.t
+  -> Syntax_types.t
+  -> string
+  -> Source_input.file_name option
+  -> (Mini_c.meta, string) Tezos_micheline.Micheline.node

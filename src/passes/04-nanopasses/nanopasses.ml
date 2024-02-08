@@ -251,3 +251,16 @@ let compile_expression
        ~raise
        ~sort:Selector.expr
        (get_passes ~options ~disable_initial_check)
+
+
+let compile_type_expression
+    ~raise
+    ~(options : Compiler_options.t)
+    ?(disable_initial_check = false)
+    : I.ty_expr -> O.type_expression
+  =
+  Trivial.To_core.type_expression ~raise
+  <@ compile_passes
+       ~raise
+       ~sort:Selector.ty_expr
+       (get_passes ~options ~disable_initial_check)

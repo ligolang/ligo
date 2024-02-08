@@ -57,6 +57,12 @@ let compile_expression ~raise ~options : Ast_typed.expression -> Ast_aggregated.
   trace ~raise self_ast_aggregated_tracer @@ Self_ast_aggregated.all_expression ~options x
 
 
+let compile_type_expression ~raise ~options
+    : Ast_typed.type_expression -> Ast_aggregated.type_expression
+  =
+ fun e -> trace ~raise aggregation_tracer @@ compile_type_expression e
+
+
 let apply_to_entrypoint_with_contract_type ~raise ~options
     :  Ast_typed.program -> Module_var.t list -> Ast_typed.contract_sig
     -> Ast_aggregated.expression

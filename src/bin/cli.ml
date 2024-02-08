@@ -1019,6 +1019,76 @@ let compile_expression =
     <*> function_body)
 
 
+let compile_type =
+  let f
+      syntax
+      expression
+      protocol_version
+      init_file
+      display_format
+      no_colour
+      skip_analytics
+      no_stdlib
+      michelson_format
+      show_warnings
+      warning_as_error
+      project_root
+      warn_unused_rec
+      warn_infinite_loop
+      libraries
+      ()
+    =
+    let raw_options =
+      Raw_options.make
+        ~syntax
+        ~protocol_version
+        ~no_stdlib
+        ~warning_as_error
+        ~project_root
+        ~warn_unused_rec
+        ~warn_infinite_loop
+        ~libraries
+        ()
+    in
+    let cli_analytics =
+      Analytics.generate_cli_metrics_with_syntax_and_protocol
+        ~command:"compile_type"
+        ~raw_options
+        ()
+    in
+    return_result_lwt
+      ~skip_analytics
+      ~cli_analytics
+      ~return
+      ~show_warnings
+      ~display_format
+      ~no_colour
+      ~warning_as_error:raw_options.warning_as_error
+    @@ Api.Compile.type_ raw_options expression init_file michelson_format
+  in
+  let summary = "compile to a Michelson value." in
+  let readme () = "This sub-command compiles a LIGO type to a Michelson type value." in
+  Command.basic
+    ~summary
+    ~readme
+    (f
+    <$> syntax
+    <*> expression "TYPE"
+    <*> protocol_version
+    <*> init_file
+    <*> display_format
+    <*> no_colour
+    <*> skip_analytics
+    <*> no_stdlib
+    <*> michelson_code_format
+    <*> warn
+    <*> werror
+    <*> project_root
+    <*> warn_unused_rec
+    <*> warn_infinite_loop
+    <*> libraries)
+
+
 let compile_storage =
   let f
       source_file
@@ -1216,6 +1286,7 @@ let compile_group =
   Command.group ~summary:"compile a ligo program to michelson"
   @@ [ "contract", compile_file
      ; "expression", compile_expression
+     ; "type", compile_type
      ; "parameter", compile_parameter
      ; "storage", compile_storage
      ; "constant", compile_constant

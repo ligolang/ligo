@@ -6,6 +6,14 @@ let compile_expression ~raise : Ast_typed.expression -> Ast_aggregated.expressio
   Compiler.compile_expression Compiler.Data.empty_env x
 
 
+let compile_type_expression ~raise
+    : Ast_typed.type_expression -> Ast_aggregated.type_expression
+  =
+ fun x ->
+  ignore raise;
+  Compiler.compile_type x
+
+
 let compile_program ~raise
     : Ast_typed.expression -> Ast_typed.program -> Ast_aggregated.program
   =

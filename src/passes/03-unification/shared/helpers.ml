@@ -103,6 +103,7 @@ module Make_unification (C : UNIF) = struct
 
   let compile_expression e = Ast_unified.Anamorphism.ana_expr ~f:unfolder e
   let compile_program prg = Ast_unified.Anamorphism.ana_program ~f:unfolder prg
+  let compile_type_expression t = Ast_unified.Anamorphism.ana_ty_expr ~f:unfolder t
 end
 
 let failwith_not_initial_node_decompiler node =

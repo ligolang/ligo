@@ -106,6 +106,7 @@ module type LIGO_PARSER =
       sig
         type t
         type expr
+        type type_expr
       end
 
     (* The type of tokens. *)
@@ -118,6 +119,9 @@ module type LIGO_PARSER =
 
     val interactive_expr :
       (Lexing.lexbuf -> token) -> Lexing.lexbuf -> CST.expr
+
+    val interactive_type_expr :
+      (Lexing.lexbuf -> token) -> Lexing.lexbuf -> CST.type_expr
 
     val contract :
       (Lexing.lexbuf -> token) -> Lexing.lexbuf -> CST.t
@@ -133,6 +137,9 @@ module type LIGO_PARSER =
       sig
         val interactive_expr :
           Lexing.position -> CST.expr MenhirInterpreter.checkpoint
+
+        val interactive_type_expr :
+          Lexing.position -> CST.type_expr MenhirInterpreter.checkpoint
 
         val contract :
           Lexing.position -> CST.t MenhirInterpreter.checkpoint
@@ -157,7 +164,7 @@ module MakeTwoParsers
          (ParErr      : PAR_ERR)
          (UnitPasses  : Pipeline.PASSES with type item = Token.t Unit.t)
          (TokenPasses : Pipeline.PASSES with type item = Token.t)
-         (CST         : sig type t type expr end)
+         (CST         : sig type t type expr type type_expr end)
          (Parser      : LIGO_PARSER with type token = Token.t
                                      and module CST = CST) :
   sig
@@ -183,6 +190,7 @@ module MakeTwoParsers
     (* Parsing expressions *)
 
     val parse_expression : CST.expr parser
+    val parse_type_expression : CST.type_expr parser
 
     (* Aliases *)
 

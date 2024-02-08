@@ -102,9 +102,10 @@ let get_attributes (node : CST.pattern) =
 
 (* Entry points *)
 
-%start contract interactive_expr
+%start contract interactive_expr interactive_type_expr
 %type <CST.t> contract
 %type <CST.expr> interactive_expr
+%type <CST.type_expr> interactive_type_expr
 
 (* Reductions on error states is sometimes needed in order to end on a
    state where there is hopefully more right context to provide better
@@ -374,6 +375,8 @@ type_var:
   wildcard | type_name { $1 }
 
 (* Type expressions *)
+
+interactive_type_expr: type_expr EOF { $1 }
 
 type_expr:
   sum_type | fun_type_level { $1 }
