@@ -37,11 +37,12 @@ interface InputBoxParameters {
 }
 
 export class MultiStepInput<S> {
-  static async run<S>(start: InputStep<S>, state: S) {
-    const input = new MultiStepInput<S>();
-    input.state = { ref: state };
+  private constructor(state: S) {
+    this.state = { ref: state };
+  }
 
-    return input.stepThrough(start);
+  static async run<S>(start: InputStep<S>, state: S) {
+    return new MultiStepInput<S>(state).stepThrough(start);
   }
 
   private state: Ref<S>;
@@ -165,7 +166,7 @@ export class MultiStepInput<S> {
         const validationTrigger = new class extends ValidationTrigger<string>{
           validate = validate
 
-          isObviouslyInvalid(text: string): boolean {
+          override isObviouslyInvalid(text: string): boolean {
             return text === '';
           }
 
@@ -360,7 +361,7 @@ abstract class ValidationTrigger<V> implements vscode.Disposable {
     return {
       // This is not entirely correct definition, it should be generic in
       // the type of returned `Thenable`; but for our cases this is enough.
-      then(onFulfilled: (passingValue: Maybe<V>) => void, onRejected: (reason: any) => void): Thenable<void> {
+      then(onFulfilled: (passingValue: Maybe<V>) => void, onRejected: (reason: any) => void): Thenable<Maybe<V>> {
         switch (this0.status.type) {
           case "neverCalled":
             onRejected("Validation has never been called");

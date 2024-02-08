@@ -11,6 +11,7 @@ import {
 import { getLastContractPath, ligoOutput } from './common';
 import { LigoContext } from '../../common/LigoContext';
 import { LigoProtocolClient } from '../../common/LigoProtocolClient';
+import { Maybe } from '../../common/base';
 
 const AUTHORIZATION_HEADER = 'Bearer ligo-ide';
 
@@ -41,8 +42,8 @@ async function askForContractAndStorage(
   context: LigoContext,
   client: LigoProtocolClient,
   format: string,
-  prevEntrypoint = undefined,
-  prevStorage = undefined,
+  prevEntrypoint: Maybe<string> = undefined,
+  prevStorage: Maybe<string> = undefined,
 ): Promise<ContractAndStorage> {
   const code = await executeCompileContract(
     context,
