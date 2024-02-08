@@ -1,0 +1,7 @@
+
+author: Martoon
+description: "\\nFix bad handling of `LIGO Options` -> `Compile contract` being cancelled at the module selection step.\\n\\n"
+merge_request: '3055'
+title: "[#2134] Fix remaining warnings after enabling stricter typechecker"
+type: fixed
+            
