@@ -393,34 +393,40 @@ class lsp_server (capability_mode : capability_mode) =
                        ~registerOptions:`Null
                        ()))
             in
-            let watcher_registration_opt =
+            let create_watcher_registration_opt patterns id =
               match didChangeWatchedFiles with
               | None -> None
               | Some { dynamicRegistration; _ } ->
                 (match dynamicRegistration with
                 | None | Some false -> None
                 | Some true ->
-                  let pattern = Format.sprintf "**/%s" Project_root.ligoproject in
-                  let ligo_project_watcher =
-                    Lsp.Types.FileSystemWatcher.create ~globPattern:(`Pattern pattern) ()
+                  let watchers =
+                    List.map patterns ~f:(fun pattern ->
+                        FileSystemWatcher.create ~globPattern:(`Pattern pattern) ())
                   in
                   let filewatcher =
-                    Lsp.Types.DidChangeWatchedFilesRegistrationOptions.create
-                      ~watchers:[ ligo_project_watcher ]
+                    DidChangeWatchedFilesRegistrationOptions.create ~watchers
                   in
                   Some
                     (Registration.create
-                       ~id:"ligoFileWatcher"
+                       ~id
                        ~method_:"workspace/didChangeWatchedFiles"
                        ~registerOptions:
-                         (Lsp.Types.DidChangeWatchedFilesRegistrationOptions.yojson_of_t
+                         (DidChangeWatchedFilesRegistrationOptions.yojson_of_t
                             filewatcher)
                        ()))
             in
             let registrations =
               List.filter_map
                 ~f:Fn.id
-                [ configuration_registration_opt; watcher_registration_opt ]
+                [ configuration_registration_opt
+                ; create_watcher_registration_opt
+                    [ Format.sprintf "**/%s" Project_root.ligoproject ]
+                    "ligoJsonFileWatcher"
+                ; create_watcher_registration_opt
+                    Syntax.[ cameligo_glob; jsligo_glob ]
+                    "ligoFileWatcher"
+                ]
             in
             if List.is_empty registrations
             then IO.return ()
@@ -493,16 +499,42 @@ class lsp_server (capability_mode : capability_mode) =
               in
               IO.return ()))
         | Client_notification.DidChangeWatchedFiles { changes } ->
-          let* () =
-            new_notify_back#send_log_msg ~type_:MessageType.Log "DidChangeWatchedFiles"
+          let pp_file_change_type : FileChangeType.t Fmt.t =
+           fun ppf ->
+            Format.fprintf ppf
+            <@ function
+            | FileChangeType.Created -> "Created"
+            | FileChangeType.Changed -> "Changed"
+            | FileChangeType.Deleted -> "Deleted"
           in
-          if List.exists changes ~f:(fun { type_ = _; uri } ->
-                 let path = Path.to_string (DocumentUri.to_path uri) in
-                 Filename.(basename path = Project_root.ligoproject))
+          Fn.flip Lwt_list.iter_s changes
+          @@ fun change ->
+          let* () =
+            new_notify_back#send_log_msg
+              ~type_:MessageType.Log
+              (Format.asprintf
+                 "%a watched file: %a"
+                 pp_file_change_type
+                 change.type_
+                 DocumentUri.pp
+                 change.uri)
+          in
+          let file = DocumentUri.to_path change.uri in
+          let file_name = Filename.basename @@ Path.to_string file in
+          if Filename.equal file_name Project_root.ligoproject
           then (
             last_project_dir := None;
-            mod_res := None);
-          IO.return ()
+            mod_res := None;
+            IO.return ())
+          else if Syntax.is_ligo file_name
+          then
+            (* If the file was changed from outside the editor, we clear the normalization
+               table. *)
+            Lwt.return (Hashtbl.clear file_normalization_tbl)
+          else
+            new_notify_back#send_log_msg
+              ~type_:MessageType.Warning
+              "Unknown watched file type"
         | Client_notification.DidSaveTextDocument { textDocument = { uri; _ }; _ } ->
           let { diagnostics_pull_mode; _ } = config in
           (match diagnostics_pull_mode, capability_mode with
