@@ -1,0 +1,7 @@
+
+author: heitor.toledo
+description: "\\n\"Find All References\"/\"Go to References\" and \"Rename\" will now look for all references from the project root (closest directory with `ligo.json` looking from the current path and parents). Previously, those references would only be found in files that had been previously opened.\\n\\n"
+merge_request: '3060'
+title: "Draft: [#2101] Find all references project-wise"
+type: added
+            
