@@ -13,8 +13,8 @@ let get_references_in_file : Def_location.t list -> Path.t -> Docs_cache.t -> Ra
  fun locations file cache ->
   let definitions : Def.definitions =
     match Docs_cache.find cache file with
-    | Some { definitions; _ } -> definitions
-    | None -> { definitions = [] }
+    | Some { definitions = Some definitions; _ } -> definitions
+    | _ -> { definitions = [] }
   in
   get_references
     (Sequence.of_list locations)
@@ -31,6 +31,8 @@ let on_req_highlight
  fun pos file ->
   with_cached_doc file ~default:None
   @@ fun { definitions; _ } ->
+  when_some' definitions
+  @@ fun definitions ->
   when_some (Def.get_definition pos file definitions)
   @@ fun definition ->
   let@ cache = ask_docs_cache in

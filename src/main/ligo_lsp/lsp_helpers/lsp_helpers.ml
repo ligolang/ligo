@@ -1,4 +1,5 @@
 (* Helpers provided by this lib *)
+module Directive = Directive
 module Files = Files
 module Graph = Graph
 module Helpers_file = Helpers_file

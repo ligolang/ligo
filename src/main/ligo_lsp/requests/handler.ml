@@ -46,7 +46,7 @@ type handler_env =
   { notify_back : notify_back_mockable
   ; config : config
   ; docs_cache : Docs_cache.t
-  ; last_project_file : Path.t option ref
+  ; last_project_dir : Path.t option ref
   ; mod_res : Preprocessor.ModRes.t option ref
   }
 
@@ -91,8 +91,8 @@ let ask_notify_back : notify_back_mockable Handler.t = fmap (fun x -> x.notify_b
 let ask_config : config Handler.t = fmap (fun x -> x.config) ask
 let ask_docs_cache : Docs_cache.t Handler.t = fmap (fun x -> x.docs_cache) ask
 
-let ask_last_project_file : Path.t option ref Handler.t =
-  fmap (fun x -> x.last_project_file) ask
+let ask_last_project_dir : Path.t option ref Handler.t =
+  fmap (fun x -> x.last_project_dir) ask
 
 
 let ask_mod_res : Preprocessor.ModRes.t option ref Handler.t =
@@ -107,6 +107,20 @@ let iter (xs : 'a list) ~f:(h : 'a -> unit Handler.t) : unit Handler.t =
     | x :: xs -> bind (h x) (fun () -> go xs)
   in
   go xs
+
+
+let rec fold_left ~(init : 'acc) ~(f : 'acc -> 'elt -> 'acc t) : 'elt list -> 'acc t
+  = function
+  | [] -> return init
+  | x :: xs -> bind (f init x) (fun init -> fold_left ~init ~f xs)
+
+
+let concat_map ~(f : 'a -> 'b list t) : 'a list -> 'b list t =
+  let rec go acc = function
+    | [] -> return (List.rev acc)
+    | x :: xs -> bind (f x) (fun ys -> go (List.rev_append ys acc) xs)
+  in
+  go []
 
 
 (** Conditional computations *)
@@ -305,14 +319,14 @@ let with_cst
 
 let update_project_root : Path.t option -> unit Handler.t =
  fun path ->
-  let@ last_project_file = ask_last_project_file in
+  let@ last_project_dir = ask_last_project_dir in
   let@ mod_res = ask_mod_res in
   return
   @@
   match path with
   | None ->
-    last_project_file := None;
+    last_project_dir := None;
     mod_res := None
   | Some path ->
-    last_project_file := Some path;
+    last_project_dir := Some path;
     mod_res := Preprocessor.ModRes.make (Path.to_string path)

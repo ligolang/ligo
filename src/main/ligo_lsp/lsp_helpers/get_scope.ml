@@ -158,7 +158,6 @@ let make_defs_and_diagnostics (errors, warnings, defs_opt) : defs_and_diagnostic
   { errors; warnings; definitions }
 
 
-let storage_name = "storage"
 let virtual_main_name = "lsp_virtual_main"
 
 (** When compiling past the typed AST, we need to provide an entry-point, otherwise the
@@ -306,6 +305,32 @@ let following_passes_diagnostics
     let stack = Printexc.get_backtrace () in
     logger ~type_:Error
     @@ Format.asprintf "Unexpected exception in following passes: %s%s" msg stack
+
+
+let get_defs
+    (raw_options : Raw_options.t)
+    (code_input : BuildSystem.Source_input.code_input)
+    : definitions Lwt.t
+  =
+  Trace.try_with_lwt
+    ~fast_fail:false
+    (fun ~raise ~catch:_ ->
+      with_code_input
+        ~raw_options
+        ~raise
+        ~code_input
+        ~f:(fun ~options ~syntax:_ ~stdlib ~prg ~module_deps ->
+          let defs, _prg =
+            Scopes.defs_and_typed_program
+              ~raise
+              ~with_types:raw_options.with_types
+              ~options
+              ~stdlib
+              ~prg
+              ~module_deps
+          in
+          Lwt.return defs))
+    (fun ~catch:_ _ -> Lwt.return { definitions = [] })
 
 
 (** Used by LSP, we're trying to get as many errors/warnings as possible *)

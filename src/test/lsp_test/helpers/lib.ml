@@ -13,7 +13,7 @@
 
     [Some "<some_path>/src/test/contracts/lsp/.ligo/source/i/ligo__s__bigarray__1.0.0__cf1c9d6c/lib/bigarray.mligo"]
 
-    Where <some_path> is machine dependent. *)
+    Where [<some_path>] is machine dependent. *)
 let resolve_lib_path
     ~(project_root : string)
     ~(file : string)

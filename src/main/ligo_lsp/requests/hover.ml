@@ -298,10 +298,8 @@ let hover_string
         ~f:print_signature
         core_sig
     in
-    let@ project_root = ask_last_project_file in
-    let printed_module =
-      Helpers_pretty.print_module ~project_root:!project_root syntax sig_str mdef
-    in
+    let@ project_root = fmap ( ! ) ask_last_project_dir in
+    let printed_module = Helpers_pretty.print_module ~project_root syntax sig_str mdef in
     return @@ `List (printed_module :: doc_comment_hovers)
 
 
@@ -311,6 +309,8 @@ let on_req_hover : Position.t -> Path.t -> Hover.t option Handler.t =
   @@ fun cst ->
   with_cached_doc file ~default:None
   @@ fun { definitions; syntax; _ } ->
+  when_some' definitions
+  @@ fun definitions ->
   when_some' (Def.get_definition pos file definitions)
   @@ fun definition ->
   let input =
