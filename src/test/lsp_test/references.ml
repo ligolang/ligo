@@ -231,6 +231,15 @@ let test_cases =
             ~lib_name:"bigarray"
             ~file_path:(Filename.concat "lib" "bigarray.mligo")
      in
+     let test_path =
+       Path.from_absolute
+       @@ Option.value_exn
+       @@ Lsp_test_helpers.Lib.resolve_lib_path
+            ~project_root:"contracts/lsp"
+            ~file:"contracts/lsp/registry.jsligo"
+            ~lib_name:"bigarray"
+            ~file_path:(Filename.concat "test" "bigarray.test.mligo")
+     in
      { test_name = "Reference of registry package in reverse dependency"
      ; test_file = package_path
      ; reference = Position.create ~line:27 ~character:4
@@ -238,6 +247,12 @@ let test_cases =
          [ Path.from_relative "contracts/lsp/registry.jsligo", interval 8 20 27
          ; Path.from_relative "contracts/lsp/registry.jsligo", interval 14 26 33
          ; package_path, interval 27 4 11
+         ; test_path, interval 49 21 28
+         ; test_path, interval 50 21 28
+         ; test_path, interval 51 21 28
+         ; test_path, interval 53 16 23
+         ; test_path, interval 62 16 23
+         ; test_path, interval 71 16 23
          ]
      })
   ; { test_name = "references of disc union type common field (left type)"
