@@ -865,14 +865,7 @@ let run ~project_root package_name cache_path ligo_registry =
       | None ->
         let* solution, cache = solve ~all_dependencies ~ligo_registry in
         remove_dir cache_path;
-        let* lock_file_json =
-          generate_lock_file ~project_name ~ligo_json ~solution ~cache
-        in
-        let* () =
-          let content = Lock_file.to_yojson lock_file_json |> Json.to_string in
-          write ~content ~to_:(lock_file project_root)
-        in
-        let* () =
+        let* ligo_json =
           match package_name with
           | Some _ ->
             let f (k, v) = k, `String v in
@@ -880,9 +873,17 @@ let run ~project_root package_name cache_path ligo_registry =
             (match update_json ~key:"dependencies" ~value:dependencies_json ligo_json with
             | Ok json ->
               let content = Json.pretty_to_string json in
-              write ~content ~to_:manifest_path
+              let* () = write ~content ~to_:manifest_path in
+              Lwt_result.return json
             | Error (`Msg m) -> Lwt_result.lift @@ Error (InternalError m))
-          | None -> Lwt_result.return ()
+          | None -> Lwt_result.return ligo_json
+        in
+        let* lock_file_json =
+          generate_lock_file ~project_name ~ligo_json ~solution ~cache
+        in
+        let* () =
+          let content = Lock_file.to_yojson lock_file_json |> Json.to_string in
+          write ~content ~to_:(lock_file project_root)
         in
         Lwt_result.return (solution, cache)
     in
