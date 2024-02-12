@@ -246,7 +246,7 @@ module Of_Ast_typed = struct
                Type_binding (Binder.get_var binder, Binder.get_ascr binder))
              (Pattern.binders let_binder)
         @ labels
-      | E_matching { matchee; cases } ->
+      | E_matching { matchee; disc_label = _; cases } ->
         let ty_expr = matchee.type_expression in
         let pats = List.map ~f:(fun elt -> elt.pattern) cases in
         let labels = List.concat_map ~f:(fun elt -> label_bindings elt ty_expr) pats in
@@ -538,7 +538,7 @@ module Of_Ast_core = struct
       let bindings = add_vvar_type bindings (fun_name, fun_type) in
       let bindings = add_param_type bindings binder in
       expression bindings result
-    | E_matching { matchee; cases } ->
+    | E_matching { matchee; disc_label = _; cases } ->
       let bindings =
         Option.value_map
           ~default:bindings

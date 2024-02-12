@@ -455,7 +455,9 @@ let e_a_applications ~loc lamb args : expression =
   e_a_applications ~loc lamb (List.rev args)
 
 
-let e_a_matching ~loc matchee cases t = e_matching ~loc { matchee; cases } t
+let e_a_matching ~loc ?disc_label matchee cases t =
+  e_matching ~loc { matchee; disc_label; cases } t
+
 
 let e_a_test_nil_views ~loc s =
   make_e ~loc (e_test_nil_views (e_a_unit ~loc ())) (t_views ~loc s)

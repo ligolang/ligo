@@ -6,7 +6,7 @@ open Errors
 module Location = Simple_utils.Location
 include Flag.No_arg ()
 
-(* Note 1: interesting, this pass is too verbose because we can't just morph blocks to expressions .. 
+(* Note 1: interesting, this pass is too verbose because we can't just morph blocks to expressions ..
    which would only be possible if we had "real" nanopass (as in, one type for each intermediary AST)
 
   Note 2: the following is a translation of the old code in abstractors (modified to take AST unified as input)
@@ -28,7 +28,7 @@ module Statement_result = struct
     (* continuation to elaborate conditional expression such as `if T then X else Y` ; `case x with P1 -> X | P2 -> Y`
       from control flow statements.
       It operates on a statement result so that each statement in the original branches can be merged
-      within the client logic : sometimes one branch is terminal 
+      within the client logic : sometimes one branch is terminal
 
       those 2 statements:
       ```
@@ -44,7 +44,7 @@ module Statement_result = struct
       ```
       since the merge happens within the control flow continuation, it allowed the positive branch to ignore any
       in incoming results (`<merge Return <hole>>` is always `Return`)
-      
+
       if the control_flow was operating on an expression, it would be hard to decide if an expression is terminal
     *)
     | Control_flow of (t -> expr)
@@ -204,10 +204,10 @@ and instr ~raise : instruction -> Statement_result.t =
     | Control_flow _ ->
       raise.error (unsupported_control_flow block')
       (* AS in :
-      ```jsligo  
+      ```jsligo
       const g = (n:int) => {
         let output = n;
-        
+
         {
           let x = 1 ;
           output += x ;
@@ -217,14 +217,14 @@ and instr ~raise : instruction -> Statement_result.t =
             output += x;
           }
         }
-        
+
         return output + x // x should not be visible here
       }
       ```
       *))
   | I_skip -> Binding Fun.id
   | I_call (f, args) -> Binding (fun x -> let_ignore_in (e_call ~loc f args) x)
-  | I_case { expr; cases } ->
+  | I_case { expr; disc_label; cases } ->
     if List.for_all (List.Ne.to_list cases) ~f:(fun x ->
            Statement_result.is_not_returning (clause ~raise x.rhs))
     then (
@@ -236,7 +236,7 @@ and instr ~raise : instruction -> Statement_result.t =
               Case.{ pattern; rhs })
             cases
         in
-        e_match ~loc { expr; cases }
+        e_match ~loc { expr; disc_label; cases }
       in
       Binding (fun hole -> let_unit_in match_ hole))
     else
@@ -249,7 +249,7 @@ and instr ~raise : instruction -> Statement_result.t =
                 Case.{ pattern; rhs })
               cases
           in
-          e_match ~loc { expr; cases })
+          e_match ~loc { expr; disc_label; cases })
   | I_cond { test; ifso; ifnot } ->
     let ifso_res = clause ~raise ifso in
     let ifnot_res_opt = Option.map ~f:(clause ~raise) ifnot in

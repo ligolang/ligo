@@ -240,6 +240,24 @@ let test_cases =
          ; package_path, interval 27 4 11
          ]
      })
+  ; { test_name = "references of disc union type common field (left type)"
+    ; test_file =
+        Path.from_relative "contracts/lsp/go_to_implementations/disc_union_fields.jsligo"
+    ; reference = Position.create ~line:0 ~character:11
+    ; references =
+        intervals
+          "contracts/lsp/go_to_implementations/disc_union_fields.jsligo"
+          [ interval 0 11 15; interval 3 12 16 ]
+    }
+  ; { test_name = "references of disc union type common field (right type)"
+    ; test_file =
+        Path.from_relative "contracts/lsp/go_to_implementations/disc_union_fields.jsligo"
+    ; reference = Position.create ~line:0 ~character:38
+    ; references =
+        intervals
+          "contracts/lsp/go_to_implementations/disc_union_fields.jsligo"
+          [ interval 0 38 42; interval 3 12 16 ]
+    }
   ]
 
 

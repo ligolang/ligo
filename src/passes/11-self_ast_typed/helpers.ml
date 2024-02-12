@@ -32,7 +32,7 @@ let rec fold_expression : 'a folder -> 'a -> expression -> 'a =
   | E_constructor { element = e; constructor = _ } ->
     let res = self init e in
     res
-  | E_matching { matchee = e; cases } ->
+  | E_matching { matchee = e; disc_label = _; cases } ->
     let res = self init e in
     let res = fold_cases f res cases in
     res
@@ -99,10 +99,10 @@ let rec map_expression : 'err mapper -> expression -> expression =
   let e' = f e in
   let return expression_content = { e' with expression_content } in
   match e'.expression_content with
-  | E_matching { matchee = e; cases } ->
+  | E_matching { matchee = e; disc_label; cases } ->
     let e' = self e in
     let cases' = map_cases f cases in
-    return @@ E_matching { matchee = e'; cases = cases' }
+    return @@ E_matching { matchee = e'; disc_label; cases = cases' }
   | E_accessor { struct_; path } ->
     let struct_ = self struct_ in
     return @@ E_accessor { struct_; path }
@@ -377,7 +377,8 @@ end = struct
       ; mutSet
       }
     | E_constructor { constructor = _; element } -> self element
-    | E_matching { matchee; cases } -> merge (self matchee) (get_fv_cases cases)
+    | E_matching { matchee; disc_label = _; cases } ->
+      merge (self matchee) (get_fv_cases cases)
     | E_record m ->
       let res = Record.map ~f:self m in
       let res = Record.values res in
@@ -492,10 +493,10 @@ module Declaration_mapper = struct
     let self = map_expression f in
     let return expression_content = { e with expression_content } in
     match e.expression_content with
-    | E_matching { matchee = e; cases } ->
+    | E_matching { matchee = e; disc_label; cases } ->
       let e' = self e in
       let cases' = map_cases f cases in
-      return @@ E_matching { matchee = e'; cases = cases' }
+      return @@ E_matching { matchee = e'; disc_label; cases = cases' }
     | E_accessor { struct_; path } ->
       let struct_ = self struct_ in
       return @@ E_accessor { struct_; path }

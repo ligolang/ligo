@@ -43,6 +43,7 @@ let gen_getters : ty_expr option Non_linear_rows.t * Location.t -> declaration l
            e_match
              ~loc
              { expr = ev_x
+             ; disc_label = None
              ; cases =
                  ( { pattern = Some (p_variant ~loc label (Some p_x))
                    ; rhs = e_some ~loc ev_x
@@ -166,7 +167,7 @@ let%expect_test "compile" =
        ((pattern ((P_var get_foo) (P_var x)))
         (let_rhs
          (E_match
-          ((expr (E_variable x))
+          ((expr (E_variable x)) (disc_label ())
            (cases
             (((pattern ((P_variant (Label Foo (Virtual generated)) ((P_var x)))))
               (rhs
@@ -183,7 +184,7 @@ let%expect_test "compile" =
        ((pattern ((P_var get_bar) (P_var x)))
         (let_rhs
          (E_match
-          ((expr (E_variable x))
+          ((expr (E_variable x)) (disc_label ())
            (cases
             (((pattern ((P_variant (Label Bar (Virtual generated)) ((P_var x)))))
               (rhs

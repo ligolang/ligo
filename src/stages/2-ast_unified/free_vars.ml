@@ -87,7 +87,7 @@ let fv_folder =
         remove bound result
       in
       remove fun_name fv_lamb
-    | E_match { expr; cases } ->
+    | E_match { expr; disc_label = _; cases } ->
       let f Case.{ pattern; rhs } = diff rhs (Option.value ~default:empty pattern) in
       union expr (unions @@ List.map (List.Ne.to_list cases) ~f)
     | _ -> fold_expr_ union fv_ty union union union empty expr

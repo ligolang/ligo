@@ -457,7 +457,7 @@ and compile_expression : Data.env -> ?debug_path:Data.path -> I.expression -> O.
     let v = Data.resolve_variable_in_path env module_path element in
     return (O.E_variable v)
   (* bounding expressions *)
-  | I.E_matching { matchee; cases } ->
+  | I.E_matching { matchee; disc_label; cases } ->
     let cases =
       List.map
         ~f:(fun { pattern; body } ->
@@ -470,7 +470,7 @@ and compile_expression : Data.env -> ?debug_path:Data.path -> I.expression -> O.
           O.Match_expr.{ pattern = I.Pattern.map self_ty pattern; body = self ~env body })
         cases
     in
-    return (O.E_matching { matchee = self matchee; cases })
+    return (O.E_matching { matchee = self matchee; disc_label; cases })
   | I.E_lambda { binder; output_type; result } ->
     let env = Data.rm_exp env (Param.get_var binder) in
     return

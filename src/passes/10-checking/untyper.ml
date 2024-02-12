@@ -98,7 +98,7 @@ and untype_expression_content ~loc (ec : O.expression_content) : I.expression =
     let e = self e in
     return (e_record_update ~loc r' path e)
   | E_matching m ->
-    let I.Match_expr.{ matchee; cases } = untype_match_expr m in
+    let I.Match_expr.{ matchee; disc_label = _; cases } = untype_match_expr m in
     return (e_matching ~loc matchee cases)
   | E_let_in { let_binder; rhs; let_result; attributes } ->
     let rhs = self rhs in
@@ -157,7 +157,7 @@ and untype_match_expr
     :  (O.expression, O.type_expression) O.Match_expr.t
     -> (I.expression, I.type_expression option) I.Match_expr.t
   =
- fun { matchee; cases } ->
+ fun { matchee; disc_label; cases } ->
   let matchee = untype_expression matchee in
   let cases =
     List.map cases ~f:(fun { pattern; body } ->
@@ -165,7 +165,7 @@ and untype_match_expr
         let body = untype_expression body in
         I.Match_expr.{ pattern; body })
   in
-  I.Match_expr.{ matchee; cases }
+  I.Match_expr.{ matchee; disc_label; cases }
 
 
 (* TODO: check usage *)

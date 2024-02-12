@@ -127,7 +127,7 @@ let compile ~raise =
                  Case.{ pattern = Some pattern; rhs })
         in
         let expr = e_annot ~loc:(get_e_loc struct_) (struct_, matching_ty) in
-        i_case ~loc { expr; cases }
+        i_case ~loc { expr; disc_label = Some proj_name; cases }
       in
       return res
     in
