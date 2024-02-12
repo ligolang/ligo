@@ -53,9 +53,9 @@ let rec decode (type_ : Type.t) ~path ~raise subst =
   | I.T_construct { language; constructor; parameters } ->
     let parameters = List.map parameters ~f:decode in
     return @@ O.T_constant { language; injection = constructor; parameters }
-  | I.T_sum row ->
+  | I.T_sum (row, orig_label) ->
     let row = decode_row row in
-    return @@ O.T_sum row
+    return @@ O.T_sum (row, orig_label)
   | I.T_record row ->
     let row = decode_row row in
     return @@ O.T_record row

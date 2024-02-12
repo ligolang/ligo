@@ -115,7 +115,7 @@ let rec expression : AST.expression -> t -> env -> t =
     expression let_result m_alias env
   | E_raw_code { language = _; code } -> expression code m_alias env
   | E_constructor { constructor = _; element } -> expression element m_alias env
-  | E_matching { matchee; cases } ->
+  | E_matching { matchee; disc_label = _; cases } ->
     let m_alias = expression matchee m_alias env in
     List.fold cases ~init:m_alias ~f:(fun m_alias { pattern = _; body } ->
         expression body m_alias env)

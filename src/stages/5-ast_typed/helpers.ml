@@ -50,9 +50,9 @@ let rec subst_type ?(fv = VarSet.empty) v t (u : type_expression) =
   | T_constant { language; injection; parameters } ->
     let parameters = List.map ~f:(self v t) parameters in
     { u with type_content = T_constant { language; injection; parameters } }
-  | T_sum row ->
+  | T_sum (row, orig_label) ->
     let row = Row.map (self v t) row in
-    { u with type_content = T_sum row }
+    { u with type_content = T_sum (row, orig_label) }
   | T_record row ->
     let row = Row.map (self v t) row in
     { u with type_content = T_record row }
@@ -71,10 +71,10 @@ let rec fold_map_expression : 'a fold_mapper -> 'a -> expression -> 'a * express
   else (
     let return expression_content = { e' with expression_content } in
     match e'.expression_content with
-    | E_matching { matchee = e; cases } ->
+    | E_matching { matchee = e; disc_label; cases } ->
       let res, e' = self init e in
       let res, cases' = fold_map_cases f res cases in
-      res, return @@ E_matching { matchee = e'; cases = cases' }
+      res, return @@ E_matching { matchee = e'; disc_label; cases = cases' }
     | E_accessor { struct_; path } ->
       let res, struct_ = self init struct_ in
       res, return @@ E_accessor { struct_; path }
@@ -217,7 +217,7 @@ let rec fold_type_expression
   match te.type_content with
   | T_variable _ -> init
   | T_constant { parameters; _ } -> List.fold parameters ~init ~f
-  | T_sum row | T_record row -> Row.fold f init row
+  | T_sum (row, _) | T_record row -> Row.fold f init row
   | T_arrow { type1; type2; param_names = _ } -> self type2 ~init:(self type1 ~init)
   | T_singleton _ -> init
   | T_abstraction { type_; _ } | T_for_all { type_; _ } -> self type_ ~init

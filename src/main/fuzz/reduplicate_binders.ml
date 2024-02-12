@@ -70,13 +70,13 @@ let rec reduplicate ~raise : expression -> expression =
   | E_constructor { constructor; element } ->
     let element = self element in
     return (E_constructor { constructor; element })
-  | E_matching { matchee; cases } ->
+  | E_matching { matchee; disc_label; cases } ->
     let matchee = self matchee in
     let cases =
       List.map cases ~f:(fun { pattern; body } ->
           Match_expr.{ pattern = pattern_remove_counter pattern; body = self body })
     in
-    return (E_matching { matchee; cases })
+    return (E_matching { matchee; disc_label; cases })
   (* Record *)
   | E_record map ->
     let map = Record.map ~f:self map in

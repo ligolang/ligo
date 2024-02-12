@@ -1,0 +1,8 @@
+type t = { kind : "42", a : int } | { kind : "aaa", b : bool }
+
+function f(x) {
+  switch (x.kind) {
+    case "42": return x.a
+    case "aaa": if (x.b) { return 42 } else { return 24 }
+  }
+}

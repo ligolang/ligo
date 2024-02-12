@@ -217,10 +217,10 @@ let rec swap_expression : Scope.swapper -> expression -> expression =
   | E_constructor { constructor; element } ->
     let element = self element in
     return @@ E_constructor { constructor; element }
-  | E_matching { matchee; cases } ->
+  | E_matching { matchee; disc_label; cases } ->
     let matchee = self matchee in
     let cases = matching_cases swaper cases in
-    return @@ E_matching { matchee; cases }
+    return @@ E_matching { matchee; disc_label; cases }
   | E_record record ->
     let record = Record.map ~f:self record in
     return @@ E_record record
@@ -430,10 +430,10 @@ let rec expression : Scope.t -> expression -> Scope.t * expression =
   | E_constructor { constructor; element } ->
     let _, element = self element in
     return @@ E_constructor { constructor; element }
-  | E_matching { matchee; cases } ->
+  | E_matching { matchee; disc_label; cases } ->
     let _, matchee = self matchee in
     let cases = matching_cases scope cases in
-    return @@ E_matching { matchee; cases }
+    return @@ E_matching { matchee; disc_label; cases }
   | E_record record ->
     let record = Record.map ~f:(fun elem -> snd @@ self elem) record in
     return @@ E_record record

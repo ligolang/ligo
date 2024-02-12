@@ -51,7 +51,33 @@ let rec defs_of_ty_expr ?(orig_type_loc : Location.t option)
     let orig_type_loc = Option.value ~default:ty_expr.location orig_type_loc in
     (match ty_expr.type_content with
     (* Actual traversals *)
-    | T_sum (row, _) ->
+    | T_sum (row, Some (Label (orig_label, _))) ->
+      (* Disc union type case *)
+      let labels = Record.labels row.fields in
+      let sum_string_type =
+        let record =
+          Record.of_list
+          @@ List.map
+               ~f:(fun (Label (label, _)) ->
+                 (* Let's remove a location since we don't want to create generated ctors
+                    in disc union types. *)
+                 Label.of_string label, AST.t_unit ~loc:Location.generated ())
+               labels
+        in
+        let row = AST.Row.create ~layout:None record in
+        AST.t_sum row None ~loc:Location.generated ()
+      in
+      let common_field_row =
+        (* Locations in generated labels correspond to each common field. *)
+        List.map labels ~f:(fun (Label (_, loc)) ->
+            Label.T.create ~loc orig_label, sum_string_type)
+      in
+      let acc =
+        defs_of_row ~label_case:Field orig_type_loc common_field_row def_type mod_path acc
+      in
+      let inner_types = Record.values row.fields in
+      List.fold_right ~init:acc ~f:self inner_types
+    | T_sum (row, None) ->
       defs_of_row
         ~label_case:Ctor
         orig_type_loc
@@ -425,7 +451,16 @@ module Of_Ast = struct
     | E_raw_code { language = _; code = _ } -> acc
     (* Variant *)
     | E_constructor { constructor; element } -> self element acc
-    | E_matching { matchee; cases } ->
+    | E_matching { matchee; disc_label; cases } ->
+      let unwrap_ascription (expr : AST.expression) =
+        match expr.expression_content with
+        | E_ascription { anno_expr; _ } -> anno_expr
+        | _ -> expr
+      in
+      let matchee =
+        (* We don't want to create the same type definition in ascription twice *)
+        if Option.is_some disc_label then unwrap_ascription matchee else matchee
+      in
       let defs_of_match_cases cases acc =
         let defs_of_match_case acc ({ pattern; body } : _ AST.Match_expr.match_case) =
           let decl_range = pattern.location in

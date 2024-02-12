@@ -51,7 +51,7 @@ let rec decompile_expression : I.expression -> O.expression =
       O.Match_expr.{ pattern; body }
     in
     let cases = List.map ~f cases in
-    return (O.E_matching { matchee; cases })
+    return (O.E_matching { matchee; disc_label = None; cases })
   | E_let_in { let_binder; rhs; let_result; attributes } ->
     let rhs = self rhs in
     let let_result = self let_result in

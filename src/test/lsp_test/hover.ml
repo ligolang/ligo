@@ -621,6 +621,22 @@ let test_cases =
         ; pos ~line:5 ~character:8, one "[\"Bbb\", bool]"
         ]
     }
+  ; { test_name = "Disc union fields"
+    ; file = "contracts/lsp/go_to_implementations/disc_union_fields.jsligo"
+    ; hovers =
+        List.map
+          ~f:(fun p -> p, one "kind : [\"aaa\"] | [\"42\"]")
+          [ pos ~line:0 ~character:11
+          ; pos ~line:0 ~character:38
+          ; pos ~line:3 ~character:12
+          ]
+        @ List.map
+            ~f:(fun p -> p, one "a : int")
+            [ pos ~line:0 ~character:24; pos ~line:4 ~character:24 ]
+        @ List.map
+            ~f:(fun p -> p, one "b : bool")
+            [ pos ~line:0 ~character:52; pos ~line:5 ~character:22 ]
+    }
   ]
 
 

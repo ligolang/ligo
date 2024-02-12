@@ -40,7 +40,8 @@ and content =
   | T_variable of Type_var.t
   | T_exists of Type_var.t
   | T_construct of construct
-  | T_sum of row
+  | T_sum of row * (Label.t option[@equal.ignore] [@hash.ignore] [@compare.ignore])
+  (* This [Label.t] represent an original name of field in disc union type *)
   | T_record of row
   | T_arrow of t Arrow.t
   | T_singleton of Literal_value.t
@@ -78,7 +79,7 @@ let rec free_vars t =
   | T_variable tvar -> Set.singleton tvar
   | T_exists _ -> Set.empty
   | T_construct { parameters; _ } -> parameters |> List.map ~f:free_vars |> Set.union_list
-  | T_sum row | T_record row -> free_vars_row row
+  | T_sum (row, _) | T_record row -> free_vars_row row
   | T_arrow arr -> arr |> Arrow.map free_vars |> Arrow.fold Set.union Set.empty
   | T_for_all abs | T_abstraction abs ->
     abs |> Abstraction.map free_vars |> Abstraction.fold Set.union Set.empty
@@ -101,9 +102,9 @@ let rec subst ?(free_vars = Type_var.Set.empty) t ~tvar ~type_ =
   | T_construct { language; constructor; parameters } ->
     let parameters = List.map ~f:subst parameters in
     return @@ T_construct { language; constructor; parameters }
-  | T_sum row ->
+  | T_sum (row, orig_label) ->
     let row = subst_row row in
-    return @@ T_sum row
+    return @@ T_sum (row, orig_label)
   | T_record row ->
     let row = subst_row row in
     return @@ T_record row
@@ -169,7 +170,7 @@ let rec fold : type a. t -> init:a -> f:(a -> t -> a) -> a =
   match t.content with
   | T_variable _ | T_exists _ | T_singleton _ -> init
   | T_construct { parameters; _ } -> List.fold parameters ~init ~f
-  | T_sum row | T_record row -> fold_row row ~init ~f
+  | T_sum (row, _) | T_record row -> fold_row row ~init ~f
   | T_arrow arr -> Arrow.fold fold init arr
   | T_abstraction abs | T_for_all abs -> Abstraction.fold fold init abs
 
@@ -273,7 +274,11 @@ let t_tuple ts ~loc () =
 
 let t_pair t1 t2 ~loc () = t_tuple [ t1; t2 ] ~loc ()
 let t_triplet t1 t2 t3 ~loc () = t_tuple [ t1; t2; t3 ] ~loc ()
-let t_sum_ez fields ~loc ?layout () = t_sum ~loc (row_ez fields ?layout ()) ()
+
+let t_sum_ez fields ~loc ?layout ?orig_label () =
+  t_sum ~loc (row_ez fields ?layout ()) orig_label ()
+
+
 let t_bool ~loc () = t_sum_ez ~loc [ "False", t_unit ~loc (); "True", t_unit ~loc () ] ()
 let t_option t ~loc () = t_sum_ez ~loc [ "None", t_unit ~loc (); "Some", t ] ()
 
@@ -344,7 +349,7 @@ let get_t__type_ t = get_t_binary_construct t Literal_types._type_
 
 let get_t_bool (t : t) : unit option =
   match t.content with
-  | T_sum { fields; _ } ->
+  | T_sum ({ fields; _ }, _) ->
     let keys = Map.key_set fields in
     if Set.length keys = 2
        && Set.mem keys (Label.of_string "True")
@@ -365,7 +370,7 @@ let get_t_option (t : t) : t option =
   let some = Label.of_string "Some" in
   let none = Label.of_string "None" in
   match t.content with
-  | T_sum { fields; _ } ->
+  | T_sum ({ fields; _ }, _) ->
     let keys = Map.key_set fields in
     if Set.length keys = 2 && Set.mem keys some && Set.mem keys none
     then Map.find fields some
@@ -501,7 +506,7 @@ let rec pp ~name_of_tvar ~name_of_exists ppf t =
     | T_singleton lit -> Literal_value.pp ppf lit
     | T_abstraction abs -> pp_type_abs ~name_of_tvar ~name_of_exists ppf abs
     | T_for_all for_all -> pp_forall ~name_of_tvar ~name_of_exists ppf for_all
-    | T_sum row -> Row.PP.sum_type pp (fun _ _ -> ()) ppf row
+    | T_sum (row, _) -> Row.PP.sum_type pp (fun _ _ -> ()) ppf row
     | T_record row -> Row.PP.record_type pp (fun _ _ -> ()) ppf row)
 
 

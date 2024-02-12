@@ -113,7 +113,7 @@ let map_typed_type_expression_module_path
     | T_constant { language; injection; parameters } ->
       T_constant
         { language; injection; parameters = List.map parameters ~f:type_expression }
-    | T_sum t -> T_sum (row t)
+    | T_sum (t, orig_label) -> T_sum (row t, orig_label)
     | T_record t -> T_record (row t)
     | T_arrow { type1; type2; param_names } ->
       T_arrow

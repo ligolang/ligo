@@ -321,10 +321,11 @@ end = struct
     | E_module_access { module_path; field; _ } ->
       ret
       @@ E_module_accessor { module_path = List.Ne.to_list module_path; element = field }
-    | E_match { expr; cases } ->
+    | E_match { expr; disc_label; cases } ->
       ret
       @@ E_matching
            { matchee = expr
+           ; disc_label
            ; cases =
                List.map (List.Ne.to_list cases) ~f:(function I.Case.{ pattern; rhs } ->
                    let default : O.type_expression option O.Pattern.t =
@@ -768,9 +769,9 @@ end = struct
             (Passes.Errors.invariant_trivial e.location "module accessor decompilation")
       in
       ret @@ E_module_access { module_path; field = element; field_as_open = false }
-    | E_matching { matchee; cases } ->
+    | E_matching { matchee; disc_label; cases } ->
       let cases = List.map cases ~f:(fun _ -> assert false) in
-      ret @@ E_match { expr = matchee; cases = List.Ne.of_list cases }
+      ret @@ E_match { expr = matchee; disc_label; cases = List.Ne.of_list cases }
     | E_ascription { anno_expr; type_annotation } ->
       ret @@ E_annot (anno_expr, type_annotation)
     | E_type_in { type_binder; rhs; let_result } ->

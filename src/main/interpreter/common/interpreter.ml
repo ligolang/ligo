@@ -1756,7 +1756,7 @@ and eval_ligo ~raise ~steps ~options : AST.expression -> calltrace -> env -> val
   | E_constructor { constructor = Label (c, _); element } ->
     let* v' = eval_ligo element calltrace env in
     return @@ V_Construct (c, v')
-  | E_matching { matchee; cases } ->
+  | E_matching { matchee; disc_label = _; cases } ->
     let* matchee' = eval_ligo matchee calltrace env in
     let* body, env =
       (* find pattern matching the matchee value *)

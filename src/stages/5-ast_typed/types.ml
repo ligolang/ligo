@@ -9,7 +9,10 @@ type module_variable = Module_var.t [@@deriving compare, hash]
 type type_content =
   | T_variable of Type_var.t
   | T_constant of type_injection
-  | T_sum of type_expression Row.t
+  | T_sum of
+      type_expression Row.t
+      * (Label.t option[@eq.ignore] [@hash.ignore] [@compare.ignore])
+  (* This [Label.t] represent an original name of field in disc union type *)
   | T_record of type_expression Row.t
   | T_arrow of ty_expr Arrow.t
   | T_singleton of Literal_value.t

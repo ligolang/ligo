@@ -481,6 +481,30 @@ let test_cases =
     ; definitions = Some [ interval 40 23 24 ]
     ; def_type = Def
     }
+  ; { test_name = "Go to definition of disc union type common field in switch"
+    ; file_with_reference = "contracts/lsp/go_to_implementations/disc_union_fields.jsligo"
+    ; reference = Position.create ~line:3 ~character:12
+    ; file_with_definition =
+        Path.from_relative "contracts/lsp/go_to_implementations/disc_union_fields.jsligo"
+    ; definitions = Some [ interval 0 38 42 ]
+    ; def_type = Def
+    }
+  ; { test_name = "Go to definition of disc union type left field"
+    ; file_with_reference = "contracts/lsp/go_to_implementations/disc_union_fields.jsligo"
+    ; reference = Position.create ~line:4 ~character:24
+    ; file_with_definition =
+        Path.from_relative "contracts/lsp/go_to_implementations/disc_union_fields.jsligo"
+    ; definitions = Some [ interval 0 24 25 ]
+    ; def_type = Def
+    }
+  ; { test_name = "Go to definition of disc union type right field"
+    ; file_with_reference = "contracts/lsp/go_to_implementations/disc_union_fields.jsligo"
+    ; reference = Position.create ~line:5 ~character:22
+    ; file_with_definition =
+        Path.from_relative "contracts/lsp/go_to_implementations/disc_union_fields.jsligo"
+    ; definitions = Some [ interval 0 52 53 ]
+    ; def_type = Def
+    }
   ]
 
 

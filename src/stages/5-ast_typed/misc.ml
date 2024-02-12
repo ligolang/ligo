@@ -38,7 +38,7 @@ let rec assert_type_expression_eq ((a, b) : type_expression * type_expression)
         (List.zip_exn lsta lstb)
     else None
   | T_constant _, _ -> None
-  | T_sum row1, T_sum row2 | T_record row1, T_record row2 ->
+  | T_sum (row1, _), T_sum (row2, _) | T_record row1, T_record row2 ->
     Option.some_if
       (Row.equal
          (fun t1 t2 -> Option.is_some @@ assert_type_expression_eq (t1, t2))
@@ -429,7 +429,7 @@ let get_entrypoint_parameter_type
   =
  fun label parameter_ty ->
   let open Simple_utils.Option in
-  let* rows = Combinators.get_t_sum parameter_ty in
+  let* rows, _ = Combinators.get_t_sum parameter_ty in
   let lst = Row.to_alist rows in
   match lst with
   | [ (_single_entry, ty) ] when Option.is_none label -> Some ty

@@ -60,9 +60,9 @@ let rec type_mapper ~f (t : Type.t) =
   | T_record row ->
     let row = row_mapper ~f row in
     return @@ T_record row
-  | T_sum row ->
+  | T_sum (row, orig_label) ->
     let row = row_mapper ~f row in
-    return @@ T_sum row
+    return @@ T_sum (row, orig_label)
   | T_for_all abs ->
     let abs = Abstraction.map (type_mapper ~f) abs in
     return @@ T_for_all abs

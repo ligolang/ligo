@@ -115,10 +115,10 @@ module Comparable = struct
     let open Let_syntax in
     fun type1 type2 ->
       let%bind () = try_compare type1 type2 ~in_:(unify type1 type2) in
-      let%bind row1 =
+      let%bind row1, _ =
         raise_opt ~error:(comparator_composed type1) @@ Type.get_t_sum type1
       in
-      let%bind row2 =
+      let%bind row2, _ =
         raise_opt ~error:(comparator_composed type2) @@ Type.get_t_sum type2
       in
       let%bind _ =
