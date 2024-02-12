@@ -430,7 +430,7 @@ and compile_type : I.type_expression -> O.type_expression =
   | T_variable x -> return (T_variable x)
   | T_constant { language; injection; parameters } ->
     return (T_constant { language; injection; parameters = List.map parameters ~f:self })
-  | T_sum r -> return (T_sum (I.Row.map self r))
+  | T_sum (r, _) -> return (T_sum (I.Row.map self r))
   | T_record r -> return (T_record (I.Row.map self r))
   | T_arrow x -> return (T_arrow (Arrow.map self x))
   | T_singleton x -> return (T_singleton x)
@@ -457,7 +457,7 @@ and compile_expression : Data.env -> ?debug_path:Data.path -> I.expression -> O.
     let v = Data.resolve_variable_in_path env module_path element in
     return (O.E_variable v)
   (* bounding expressions *)
-  | I.E_matching { matchee; cases } ->
+  | I.E_matching { matchee; disc_label; cases } ->
     let cases =
       List.map
         ~f:(fun { pattern; body } ->
@@ -470,7 +470,7 @@ and compile_expression : Data.env -> ?debug_path:Data.path -> I.expression -> O.
           O.Match_expr.{ pattern = I.Pattern.map self_ty pattern; body = self ~env body })
         cases
     in
-    return (O.E_matching { matchee = self matchee; cases })
+    return (O.E_matching { matchee = self matchee; disc_label; cases })
   | I.E_lambda { binder; output_type; result } ->
     let env = Data.rm_exp env (Param.get_var binder) in
     return

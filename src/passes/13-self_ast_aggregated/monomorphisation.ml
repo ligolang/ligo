@@ -80,12 +80,12 @@ let apply_table_expr table (expr : AST.expression) =
           let fun_type = apply_table_type fun_type in
           let lambda = Lambda.map Fn.id apply_table_type lambda in
           return @@ E_recursive { fun_name; fun_type; lambda; force_lambdarec }
-        | E_matching { matchee; cases } ->
+        | E_matching { matchee; disc_label; cases } ->
           let f : _ AST.Match_expr.match_case -> _ AST.Match_expr.match_case =
            fun { pattern; body } ->
             { pattern = AST.Pattern.map apply_table_type pattern; body }
           in
-          return @@ E_matching { matchee; cases = List.map cases ~f }
+          return @@ E_matching { matchee; disc_label; cases = List.map cases ~f }
         | E_assign { binder; expression } ->
           let binder = Binder.map apply_table_type binder in
           return @@ E_assign { binder; expression }
@@ -218,12 +218,12 @@ let subst_external_term et t (e : AST.expression) =
         | E_recursive { fun_name; fun_type; lambda; force_lambdarec } ->
           let fun_type = subst_external_type et t fun_type in
           return @@ E_recursive { fun_name; fun_type; lambda; force_lambdarec }
-        | E_matching { matchee; cases } ->
+        | E_matching { matchee; disc_label; cases } ->
           let f : _ AST.Match_expr.match_case -> _ AST.Match_expr.match_case =
            fun { pattern; body } ->
             { pattern = AST.Pattern.map (subst_external_type et t) pattern; body }
           in
-          return @@ E_matching { matchee; cases = List.map cases ~f }
+          return @@ E_matching { matchee; disc_label; cases = List.map cases ~f }
         | E_assign { binder; expression } ->
           let binder = Binder.map (subst_external_type et t) binder in
           return @@ E_assign { binder; expression }
@@ -410,10 +410,10 @@ let rec mono_polymorphic_expression ~raise
   | E_constructor { constructor; element } ->
     let data, element = self data element in
     data, return (E_constructor { constructor; element })
-  | E_matching { matchee; cases } ->
+  | E_matching { matchee; disc_label; cases } ->
     let data, cases = mono_polymorphic_cases ~raise data cases in
     let data, matchee = self data matchee in
-    data, return (E_matching { matchee; cases })
+    data, return (E_matching { matchee; disc_label; cases })
   | E_record lmap ->
     let data, lmap = Record.fold_map ~f:self ~init:data lmap in
     data, return (E_record lmap)

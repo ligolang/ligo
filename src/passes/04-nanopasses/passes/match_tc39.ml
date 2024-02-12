@@ -19,7 +19,9 @@ let compile ~raise =
     let same = make_e ~loc e.wrap_content in
     match Location.unwrap e with
     | E_match_tc39 { subject; match_clauses = DefaultClause expr } ->
-      e_match ~loc { expr = subject; cases = List.Ne.singleton (wild_case expr) }
+      e_match
+        ~loc
+        { expr = subject; disc_label = None; cases = List.Ne.singleton (wild_case expr) }
     | E_match_tc39 { subject; match_clauses = AllClauses (clauses, default_opt) } ->
       let clauses =
         List.Ne.map
@@ -31,7 +33,7 @@ let compile ~raise =
         Option.value_map default_opt ~default:clauses ~f:(fun expr ->
             List.Ne.append clauses (List.Ne.singleton @@ wild_case expr))
       in
-      e_match ~loc { expr = subject; cases }
+      e_match ~loc { expr = subject; disc_label = None; cases }
     | _ -> same
   in
   Fold { idle_fold with expr }

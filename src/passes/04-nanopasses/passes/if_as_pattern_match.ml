@@ -28,7 +28,7 @@ let compile ~raise:_ =
       let test =
         e_annot (test, tv_bool ~loc:Location.generated ()) ~loc:(get_e_loc test)
       in
-      e_match ~loc { expr = test; cases }
+      e_match ~loc { expr = test; disc_label = None; cases }
     | e -> make_e ~loc e
   in
   Fold { idle_fold with expr }

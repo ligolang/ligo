@@ -310,6 +310,7 @@ let%expect_test "compile" =
         ((expr
           (E_constant
            ((cons_name C_MAP_FIND_OPT) (arguments ((EXPR1) (E_variable m))))))
+         (disc_label ())
          (cases
           (((pattern ((P_variant (Label Some (Virtual generated)) ((P_var gen)))))
             (rhs

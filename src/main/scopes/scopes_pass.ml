@@ -125,7 +125,7 @@ module Of_Ast = struct
       scopes
     | E_raw_code { language = _; code = _ } -> add_current_expr scopes
     | E_constructor { constructor = _; element } -> self element scopes env
-    | E_matching { matchee; cases } ->
+    | E_matching { matchee; disc_label = _; cases } ->
       let scopes = self matchee scopes env (* c.f. match.mligo:6 *) in
       (* Env update logic from References *)
       List.fold cases ~init:scopes ~f:(fun scopes { pattern; body } ->

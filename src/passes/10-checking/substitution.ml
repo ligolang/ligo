@@ -41,9 +41,9 @@ module Apply = struct
     | T_construct construct ->
       let parameters = List.map ~f:apply construct.parameters in
       return @@ T_construct { construct with parameters }
-    | T_sum row' ->
+    | T_sum (row', orig_label) ->
       let row = row subst row' in
-      return @@ T_sum row
+      return @@ T_sum (row, orig_label)
     | T_record row' ->
       let row = row subst row' in
       return @@ T_record row

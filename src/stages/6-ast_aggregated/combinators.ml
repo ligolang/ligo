@@ -402,7 +402,10 @@ let e_a_variable ~loc v ty = e_variable ~loc v ty
 let e_a_application ~loc lamb args t = e_application ~loc { lamb; args } t
 let e_a_lambda ~loc l in_ty out_ty = e_lambda ~loc l (t_arrow ~loc in_ty out_ty ())
 let e_a_recursive ~loc l = e_recursive ~loc l l.fun_type
-let e_a_matching ~loc matchee cases t = e_matching ~loc { matchee; cases } t
+
+let e_a_matching ~loc ?disc_label matchee cases t =
+  e_matching ~loc { matchee; disc_label; cases } t
+
 
 let e_a_let_in ~loc let_binder rhs let_result attributes =
   e_let_in ~loc { let_binder; rhs; let_result; attributes } (get_type let_result)

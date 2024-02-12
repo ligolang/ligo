@@ -260,11 +260,11 @@ module Mutator = struct
     let return expression_content = { e' with expression_content } in
     let self = mutate_expression in
     match e'.expression_content with
-    | E_matching { matchee; cases } ->
+    | E_matching { matchee; disc_label; cases } ->
       let+ matchee, cases, mutation =
         combine matchee (self matchee) cases (mutate_cases cases)
       in
-      return @@ E_matching { matchee; cases }, mutation
+      return @@ E_matching { matchee; disc_label; cases }, mutation
     | E_accessor { struct_; path } ->
       let+ struct_, mutation = self struct_ in
       return @@ E_accessor { struct_; path }, mutation

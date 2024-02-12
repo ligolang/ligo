@@ -91,9 +91,9 @@ let rec evaluate_type ~default_layout (type_ : I.type_expression)
     let%bind type1 = evaluate_type ~default_layout type1 in
     let%bind type2 = evaluate_type ~default_layout type2 in
     const @@ T_arrow { type1; type2; param_names }
-  | T_sum (row, _) ->
+  | T_sum (row, orig_label) ->
     let%bind row = evaluate_row ~default_layout row in
-    const @@ T_sum row
+    const @@ T_sum (row, orig_label)
   | T_record row ->
     let%bind row = evaluate_row ~default_layout row in
     const @@ T_record row
@@ -501,7 +501,7 @@ let rec check_expression (expr : I.expression) (type_ : Type.t)
         let%bind struct_ = struct_
         and update = update in
         return @@ O.E_update { struct_; path; update })
-  | E_constructor { constructor; element }, T_sum row ->
+  | E_constructor { constructor; element }, T_sum (row, _) ->
     let%bind constr_row_elem =
       raise_opt ~error:(bad_constructor constructor type_)
       @@ Map.find row.fields constructor
@@ -511,11 +511,11 @@ let rec check_expression (expr : I.expression) (type_ : Type.t)
       E.(
         let%bind element = element in
         return @@ O.E_constructor { constructor; element })
-  | E_matching { matchee; cases }, _ ->
+  | E_matching { matchee; disc_label; cases }, _ ->
     let%bind matchee_type, matchee = infer matchee in
     let%bind matchee_type = Context.tapply matchee_type in
     let%bind cases = check_cases cases matchee_type type_ in
-    let%bind match_expr = compile_match matchee cases matchee_type in
+    let%bind match_expr = compile_match matchee disc_label cases matchee_type in
     const match_expr
   | E_let_in { let_binder; rhs; let_result; attributes }, _ ->
     let%bind rhs_type, rhs = infer rhs in
@@ -829,12 +829,12 @@ and infer_expression (expr : I.expression)
         let%bind arg = arg in
         return @@ O.E_constructor { constructor; element = arg })
       sum_type
-  | E_matching { matchee; cases } ->
+  | E_matching { matchee; disc_label; cases } ->
     let%bind matchee_type, matchee = infer matchee in
     let%bind ret_type = exists Type in
     let%bind matchee_type = Context.tapply matchee_type in
     let%bind cases = check_cases cases matchee_type ret_type in
-    let%bind match_expr = compile_match matchee cases matchee_type in
+    let%bind match_expr = compile_match matchee disc_label cases matchee_type in
     const match_expr ret_type
   | E_mod_in { module_binder = mvar; rhs; let_result } ->
     let%bind sig_, rhs = infer_module_expr rhs in
@@ -1281,7 +1281,7 @@ and check_pattern ~mut (pat : I.type_expression option I.Pattern.t) (type_ : Typ
       E.(
         let%bind list_pat = all list_pat in
         return @@ P.P_list (List list_pat))
-  | P_variant (label, arg_pat), T_sum row ->
+  | P_variant (label, arg_pat), T_sum (row, _) ->
     let%bind label_row_elem = raise_opt ~error:err @@ Map.find row.fields label in
     let%bind arg_pat = check arg_pat label_row_elem in
     const
@@ -1503,7 +1503,7 @@ and def_frag
     ~in_
 
 
-and compile_match (matchee : O.expression E.t) cases matchee_type
+and compile_match (matchee : O.expression E.t) disc_label cases matchee_type
     : (O.expression_content E.t, _, _) C.t
   =
   let open C in
@@ -1522,7 +1522,7 @@ and compile_match (matchee : O.expression E.t) cases matchee_type
       let cases =
         List.map cases ~f:(fun (pattern, body) -> O.Match_expr.{ pattern; body })
       in
-      O.E_matching { matchee; cases })
+      O.E_matching { matchee; disc_label; cases })
 
 
 and cast_items

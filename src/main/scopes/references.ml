@@ -385,7 +385,28 @@ let rec expression : AST.expression -> references -> env -> references =
   | E_constructor { constructor; element } ->
     let refs = References.add_ctor constructor env refs in
     expression element refs env
-  | E_matching { matchee; cases } ->
+  | E_matching { matchee; disc_label; cases } ->
+    let refs =
+      Option.value_map
+        (let open Option.Let_syntax in
+        let%bind disc_label = disc_label in
+        let%map row =
+          match matchee.expression_content with
+          | E_ascription { type_annotation; _ } ->
+            let%map row, _ = AST.get_t_sum type_annotation in
+            row
+          | _ -> None
+        in
+        disc_label, row)
+        ~default:refs
+        ~f:(fun (Label (disc_label, usage_loc), row) ->
+          let labels = Record.labels row.fields in
+          List.fold_left labels ~init:refs ~f:(fun refs (Label (_, loc)) ->
+              References.add_def_usage
+                ~def:(Label (Label.T.create ~loc disc_label))
+                ~usage_loc
+                refs))
+    in
     let refs = expression matchee refs env in
     List.fold cases ~init:refs ~f:(fun refs { pattern; body } ->
         let labels = Linear_pattern.labels pattern in

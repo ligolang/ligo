@@ -68,7 +68,7 @@ let expression ~raise : expression -> expression =
     in
     let cases : _ Match_expr.match_case list = [ tcase; fcase ] in
     let matching : (expression, type_expression) Match_expr.t =
-      { matchee = value; cases }
+      { matchee = value; disc_label = None; cases }
     in
     e_matching ~loc:expr.location matching expr.type_expression
   | E_coerce { anno_expr = value; _ }

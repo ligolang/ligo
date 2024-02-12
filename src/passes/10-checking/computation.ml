@@ -37,9 +37,9 @@ let rec encode (type_ : Ast_typed.type_expression) : Type.t =
   | T_constant { language; injection; parameters } ->
     let parameters = List.map parameters ~f:encode in
     return @@ T_construct { language; constructor = injection; parameters }
-  | T_sum row ->
+  | T_sum (row, orig_label) ->
     let row = encode_row row in
-    return @@ T_sum row
+    return @@ T_sum (row, orig_label)
   | T_record row ->
     let row = encode_row row in
     return @@ T_record row
@@ -466,7 +466,7 @@ let occurs_check ~tvar (type_ : Type.t) =
       loop type2
     | T_for_all { type_; _ } | T_abstraction { type_; _ } -> loop type_
     | T_construct { parameters; _ } -> List.iter parameters ~f:loop
-    | T_record row | T_sum row -> Map.iter row.fields ~f:loop
+    | T_record row | T_sum (row, _) -> Map.iter row.fields ~f:loop
     | T_singleton _ -> ()
   in
   loop type_
@@ -534,9 +534,9 @@ let rec lift ~(mode : Mode.t) ~kind ~tvar (type_ : Type.t) : (Type.t, _, _) t =
     let%bind type1 = lift ~mode:(Mode.invert mode) type1 in
     let%bind type2 = Context.tapply type2 >>= lift ~mode in
     const @@ T_arrow { type1; type2; param_names }
-  | T_sum row ->
+  | T_sum (row, orig_label) ->
     let%bind row = lift_row row in
-    const @@ T_sum row
+    const @@ T_sum (row, orig_label)
   | T_record row ->
     let%bind row = lift_row row in
     const @@ T_record row
@@ -631,8 +631,8 @@ let rec unify_aux (type1 : Type.t) (type2 : Type.t)
     let type1 = Type.subst_var type1 ~tvar:tvar1 ~tvar':tvar in
     let type2 = Type.subst_var type2 ~tvar:tvar2 ~tvar':tvar in
     Context.add [ C_type_var (tvar, kind1) ] ~on_exit:Drop ~in_:(unify_aux type1 type2)
-  | ( T_sum { fields = fields1; layout = layout1 }
-    , T_sum { fields = fields2; layout = layout2 } )
+  | ( T_sum ({ fields = fields1; layout = layout1 }, _)
+    , T_sum ({ fields = fields2; layout = layout2 }, _) )
   | ( T_record { fields = fields1; layout = layout1 }
     , T_record { fields = fields2; layout = layout2 } )
     when equal_domains fields1 fields2 ->
@@ -689,8 +689,8 @@ let rec eq (type1 : Type.t) (type2 : Type.t) =
     let type1 = Type.subst_var type1 ~tvar:tvar1 ~tvar':tvar in
     let type2 = Type.subst_var type2 ~tvar:tvar2 ~tvar':tvar in
     Context.add [ C_type_var (tvar, kind1) ] ~on_exit:Drop ~in_:(eq type1 type2)
-  | ( T_sum { fields = fields1; layout = layout1 }
-    , T_sum { fields = fields2; layout = layout2 } )
+  | ( T_sum ({ fields = fields1; layout = layout1 }, _)
+    , T_sum ({ fields = fields2; layout = layout2 }, _) )
   | ( T_record { fields = fields1; layout = layout1 }
     , T_record { fields = fields2; layout = layout2 } )
     when equal_domains fields1 fields2 ->

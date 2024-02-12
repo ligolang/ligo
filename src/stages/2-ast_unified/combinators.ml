@@ -262,7 +262,7 @@ let e_unopt ~loc matchee none_body (var_some, some_body) =
     let pattern = p_variant ~loc (Label.of_string "None") None in
     Case.{ pattern = Some pattern; rhs = none_body }
   in
-  e_match ~loc { expr = matchee; cases = some_case, [ none_case ] }
+  e_match ~loc { expr = matchee; disc_label = None; cases = some_case, [ none_case ] }
 
 
 let let_unit_in rhs body =

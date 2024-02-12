@@ -321,7 +321,7 @@ let rec expr : Eq.expr -> Folding.expr =
       in
       nseq_map (compile_case_clause <@ r_fst) @@ nsepseq_to_nseq cases
     in
-    Location.wrap ~loc @@ O.E_match { expr = subject; cases }
+    Location.wrap ~loc @@ O.E_match { expr = subject; disc_label = None; cases }
   | E_Typed a ->
     let e, (_, te) = a.value.inside in
     ret @@ E_annot (e, te)

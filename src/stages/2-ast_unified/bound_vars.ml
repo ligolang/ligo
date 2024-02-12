@@ -1,7 +1,7 @@
 open Types
 open Recursion_schemes.Catamorphism
 
-(* accounts for branches, e.g. 
+(* accounts for branches, e.g.
    `let x = 1 in let y = 2 in x + y` |-> [[ x ; y ]]
    and
    `match x with One x -> let x = x+1 in x | Two z -> z` |-> [[x ; x] ; [ z ]]
@@ -60,7 +60,7 @@ let fv_folder =
         add bound result
       in
       add fun_name b_lamb
-    | E_match { expr = _; cases } ->
+    | E_match { expr = _; disc_label = _; cases } ->
       let f Case.{ pattern; rhs } =
         match pattern with
         | None -> []

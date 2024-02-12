@@ -69,7 +69,7 @@ let rec replace : expression -> Value_var.t -> Value_var.t -> expression =
   | E_constructor { constructor; element } ->
     let element = replace element in
     return @@ E_constructor { constructor; element }
-  | E_matching { matchee; cases } ->
+  | E_matching { matchee; disc_label; cases } ->
     let matchee = replace matchee in
     let cases =
       List.map cases ~f:(fun { pattern; body } ->
@@ -80,7 +80,7 @@ let rec replace : expression -> Value_var.t -> Value_var.t -> expression =
           in
           ({ pattern; body } : _ Types.Match_expr.match_case))
     in
-    return @@ E_matching { matchee; cases }
+    return @@ E_matching { matchee; disc_label; cases }
   | E_literal _ -> e
   | E_raw_code { language; code } ->
     let code = replace code in
@@ -247,14 +247,14 @@ let rec subst_expression
   | E_constructor { constructor; element } ->
     let element = self element in
     return @@ E_constructor { constructor; element }
-  | E_matching { matchee; cases } ->
+  | E_matching { matchee; disc_label; cases } ->
     let matchee = self matchee in
     let cases =
       List.map cases ~f:(fun { pattern; body } ->
           let pattern, body = subst_pattern (pattern, body) ~x ~expr in
           ({ pattern; body } : _ Match_expr.match_case))
     in
-    return @@ E_matching { matchee; cases }
+    return @@ E_matching { matchee; disc_label; cases }
   | E_literal _ -> return_id
   | E_raw_code { language; code } ->
     let code = self code in

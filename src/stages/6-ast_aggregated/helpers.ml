@@ -158,10 +158,10 @@ let rec fold_map_expression : 'a fold_mapper -> 'a -> expression -> 'a * express
   else (
     let return expression_content = { e' with expression_content } in
     match e'.expression_content with
-    | E_matching { matchee; cases } ->
+    | E_matching { matchee; disc_label; cases } ->
       let res, matchee = self init matchee in
       let res, cases = fold_map_cases f res cases in
-      res, return @@ E_matching { matchee; cases }
+      res, return @@ E_matching { matchee; disc_label; cases }
     | E_record m ->
       let res, m' = Record.fold_map ~f:self ~init m in
       res, return @@ E_record m'
@@ -283,7 +283,8 @@ end = struct
       let fv = self result in
       remove fun_name @@ remove (Param.get_var binder) fv
     | E_constructor { element; _ } -> self element
-    | E_matching { matchee; cases } -> union (self matchee) (get_fv_cases cases)
+    | E_matching { matchee; disc_label = _; cases } ->
+      union (self matchee) (get_fv_cases cases)
     | E_record m ->
       let res = Record.map ~f:self m in
       let res = Record.values res in
@@ -348,10 +349,10 @@ let rec map_expression : 'err mapper -> expression -> expression =
   let e' = f e in
   let return expression_content = { e' with expression_content } in
   match e'.expression_content with
-  | E_matching { matchee = e; cases } ->
+  | E_matching { matchee = e; disc_label; cases } ->
     let e' = self e in
     let cases' = map_cases f cases in
-    return @@ E_matching { matchee = e'; cases = cases' }
+    return @@ E_matching { matchee = e'; disc_label; cases = cases' }
   | E_record m ->
     let m' = Record.map ~f:self m in
     return @@ E_record m'

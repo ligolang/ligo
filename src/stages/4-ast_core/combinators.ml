@@ -174,7 +174,9 @@ let e_constructor ~loc constructor element : expression =
   e_constructor ~loc { constructor; element } ()
 
 
-let e_matching ~loc matchee cases : expression = e_matching ~loc { matchee; cases } ()
+let e_matching ~loc ?disc_label matchee cases : expression =
+  e_matching ~loc { matchee; disc_label; cases } ()
+
 
 let e_record_accessor ~loc struct_ path =
   e_accessor ~loc ({ struct_; path } : _ Types.Accessor.t) ()
