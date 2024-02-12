@@ -1,0 +1,7 @@
+
+author: DK318
+description: "Support disc union fields in LSP. Now you can see hovers on these fields and use \"go to definition\" capability.\\n\\n\\n"
+merge_request: '3066'
+title: "[#2130] Add disc union fields to scopes"
+type: added
+            
