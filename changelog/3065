@@ -1,0 +1,7 @@
+
+author: melwyn95
+description: "\\nWhen a package was installed for the first time. Compiler was not able to resolve it without a second ligo install.\\nNow packages are resolved after the first installation.\\n\\n"
+merge_request: '3065'
+title: "Fix `ligo install` the first time a package is installed"
+type: fixed
+            
