@@ -1,0 +1,7 @@
+
+author: Martoon
+description: "\\n\\nPrompt with the suggestion to install LIGO is now more convenient to work with.\\n\\n"
+merge_request: '3061'
+title: "[#2133] Extract some options from LIGO upgrade prompt"
+type: fixed
+            
