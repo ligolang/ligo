@@ -11,7 +11,7 @@ import {
 } from 'vscode-languageclient/node'
 import { extensionName } from './common'
 import { ligoBinaryInfo, getBinaryPath } from '../common/config'
-import { Maybe } from '../common/base'
+import { Maybe, isDefined } from '../common/base'
 
 import detectInstaller from 'detect-installer'
 import { Readable } from 'stream'
@@ -350,30 +350,71 @@ type WindowsInstallMethod = "GUI Installer" | "npm" | "yarn" | null
 type InstallMethod = LinuxInstallMethod | MacOSInstallMethod | WindowsInstallMethod
 
 type ChosenUpgradeMethod = 'Static Binary' | 'Upgrade' | 'Open Downloads' | 'Cancel'
-type ChosenInstallMethod = 'Static Binary' | 'GUI installer' | 'NPM' | 'Yarn' | 'Homebrew' | 'AUR' | 'Open Downloads' | 'Choose path' | 'Cancel'
+type ChosenInstallMethodDetails = 'Static Binary' | 'GUI installer' | 'NPM' | 'Yarn' | 'Homebrew' | 'AUR' | 'Open Downloads' | 'Cancel'
+type ChosenInstallMethod = ChosenInstallMethodDetails | 'Choose path'
 
-async function askUserToInstall(platform: NodeJS.Platform, message: string): Promise<Maybe<ChosenInstallMethod>> {
-  type DefaultOptions = 'Choose path' | 'Open Downloads' | 'Cancel'
-  const defaultOptions: DefaultOptions[] = ['Choose path', 'Open Downloads', 'Cancel']
+async function askUserToInstall(platform: NodeJS.Platform, message: string): Promise<ChosenInstallMethod> {
+  let chosen = await vscode.window.showErrorMessage(message, 'Choose path', 'Install...', 'Cancel')
+  switch (chosen) {
+    case 'Choose path':
+      return 'Choose path'
+    case 'Cancel':
+    case undefined:
+      return 'Cancel'
+    case 'Install...':
+      return await askUserInstallDetails(platform)
+  }
+}
+
+async function askUserInstallDetails(platform: NodeJS.Platform): Promise<ChosenInstallMethodDetails> {
+  let options: ({ type: ChosenInstallMethod, detail?: string })[] =
+    [{
+      type: 'Open Downloads',
+      detail: 'Open releases page on LIGO GitLab.'
+    }]
+
   switch (platform) {
-    case 'win32': {
-      const windowsOptions: ('GUI installer' | DefaultOptions)[] =
-        ['GUI installer', ...defaultOptions]
-      return vscode.window.showErrorMessage(message, ...windowsOptions)
-    }
-    case 'linux': {
+    case 'win32':
+      options.push(
+        {
+          type: 'GUI installer',
+          detail: 'Download and run official installation wizard.'
+        }
+      )
+      break
+    case 'linux':
       // TODO: we may as well suggest the debian package
-      const linuxOptions: ('Static Binary' | 'AUR' | DefaultOptions)[] =
-        ['Static Binary', 'AUR', ...defaultOptions]
-      return vscode.window.showErrorMessage(message, ...linuxOptions)
-    }
-    case 'darwin': {
-      const macosOptions: ('NPM' | 'Yarn' | 'Homebrew' | DefaultOptions)[] =
-        ['NPM', 'Yarn', 'Homebrew', ...defaultOptions]
-      return vscode.window.showErrorMessage(message, ...macosOptions)
-    }
-    default:
-      return vscode.window.showErrorMessage(message, ...defaultOptions)
+      options.push(
+        {
+          type: 'Static Binary',
+          detail: 'Download and install the official static binary distribution.'
+        },
+        {
+          type: 'AUR',
+          detail: 'Install using pacman.'
+        }
+      )
+      break
+    case 'darwin':
+      options.push(
+        { type: 'NPM' },
+        { type: 'Yarn' },
+        { type: 'Homebrew' }
+      )
+      break
+  }
+
+  // In options, copy `type` field to `label` field.
+  // Note that 'label' is a mere string (not enum), so we have to keep both.
+  let items: (vscode.QuickPickItem & { type: ChosenInstallMethod })[] =
+    options.map(o => ({ type: o.type, label: o.type, detail: o.detail }))
+  let quickPickOptions = { title: "Choose LIGO installation method", ignoreFocusOut: true }
+  let result = await vscode.window.showQuickPick(items, quickPickOptions)
+
+  if (isDefined(result)) {
+    return result.type
+  } else {
+    return 'Cancel'
   }
 }
 
@@ -533,7 +574,7 @@ async function showUpdateError(
     const answer: Maybe<ChosenUpgradeMethod> = await askUserToUpgrade(platform, installer, errorMessage)
     return !!await runUpgrade(client, ligoPath, await latestRelease, platform, installer, answer)
   } else {
-    const answer: Maybe<ChosenInstallMethod> = await askUserToInstall(platform, errorMessage)
+    const answer: ChosenInstallMethod = await askUserToInstall(platform, errorMessage)
     return await runInstaller(client, platform, answer)
   }
 }
@@ -556,7 +597,7 @@ export default async function updateLigo(client: LanguageClient): Promise<void> 
 
     const shouldContinue = await showUpdateError(
       client,
-      `Could not find a LIGO installation on your computer or the installation is invalid. Pick one of the available installation methods. Details: ${err.message}. ${hint}`,
+      `Could not find a LIGO installation on your computer or the installation is invalid. Choose path to the LIGO executable or consider using one of the available installation options. Details: ${err.message}. ${hint}`,
       false,
       ligoPath,
     )
