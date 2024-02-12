@@ -1,0 +1,7 @@
+
+author: heitor.toledo
+description: "\\nFixed the LSP sometimes skipping some directories while looking for completions and references.\\n\\n"
+merge_request: '3067'
+title: "[#2101] Fix `list_directory` skipping directories"
+type: fixed
+            

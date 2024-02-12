@@ -48,31 +48,35 @@ let toplevel
     | Error _ -> Error (as_str, warns_str))
 
 
+let ligo_package_dir : string = ".ligo"
+
 (** This heuristic checks whether the given file refers to a file defined within
     a LIGO registry package. *)
 let is_packaged (file : string) : bool =
   (* Here we use a heuristic: if the file is defined within any directory called
       ".ligo", we suppose that it was imported. *)
-  List.mem (String.split_on_chars ~on:[ '\\'; '/' ] file) ".ligo" ~equal:String.( = )
+  List.mem (Filename.parts file) ligo_package_dir ~equal:Filename.equal
 
 
 let list_directory ?(include_library = false) ?syntax (dir : string) : string list =
-  let rec aux ?(include_library = include_library) (res : string list)
-      : string list -> string list
-    = function
+  let rec aux (res : string list) : string list -> string list = function
     | f :: fs when Caml.Sys.is_directory f ->
-      let rel_f = FilePath.make_relative dir f in
-      let is_packaged = is_packaged rel_f in
-      let is_hidden = String.is_prefix ~prefix:"." rel_f in
-      if ((not include_library) && is_packaged) || ((not is_packaged) && is_hidden)
+      let parts = Filename.parts f in
+      let number_of_deps = List.count parts ~f:(Filename.equal ligo_package_dir) in
+      let is_hidden = List.exists parts ~f:(String.is_prefix ~prefix:".") in
+      (* We don't want to display completions and references for nested dependencies. *)
+      let is_packaged = number_of_deps = 1 in
+      let is_nested_package = number_of_deps > 1 in
+      if is_nested_package
+         || ((not include_library) && is_packaged)
+         || ((not is_packaged) && is_hidden)
       then aux res fs
       else
         Caml.Sys.readdir f
         |> Array.to_list
         |> List.map ~f:(Filename.concat f)
         |> List.append fs
-        (* We don't want to display the completions for nested dependencies *)
-        |> aux ~include_library:(include_library && not is_packaged) res
+        |> aux res
     | f :: fs ->
       let _, ext = Filename.split_extension f in
       (match Syntax.of_ext_opt ext with
