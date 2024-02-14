@@ -1,44 +1,48 @@
 module Requests = Ligo_lsp.Server.Requests
-open Alcotest_extras
-open Lsp_helpers
+open Lsp_test_helpers.Common
 open Cst_shared.Fold
-open Cst_cameligo.Fold
 open Simple_utils.Utils
 
-type ('a, 'b) cst_fold_test =
+type 'node node_witness =
+  | CameLIGONode : Cst_cameligo.Fold.some_node node_witness
+  | JsLIGONode : Cst_jsligo.Fold.some_node node_witness
+
+type ('a, 'b, 'node) cst_fold_test =
   { file_path : string
-  ; expected : 'b
   ; accumulator : 'b
   ; fold_function : 'b -> 'a -> 'b
-  ; map_function : some_node -> 'a fold_control
-  ; testable : 'b Alcotest.testable
+  ; witness : 'node node_witness
+  ; map_function : 'node -> 'a fold_control
+  ; pp_result : 'b Fmt.t
   }
 
 let get_cst_fold
-    (type a b)
-    ({ file_path; expected; accumulator; fold_function; map_function; testable } :
-      (a, b) cst_fold_test)
-    : unit Alcotest.test_case
+    (type a b node)
+    ({ file_path; accumulator; fold_function; witness; map_function; pp_result } :
+      (a, b, node) cst_fold_test)
+    : unit
   =
-  Alcotest.test_case file_path `Quick
-  @@ fun () ->
+  let file_path = resolve file_path in
   let contents = In_channel.read_all file_path in
   let cst =
     Ligo_api.Dialect_cst.get_cst
       ~strict:false
-      ~file:(Path.to_string @@ Path.from_relative file_path)
+      ~file:file_path
       Syntax_types.CameLIGO
       (Caml.Buffer.of_seq (Caml.String.to_seq contents))
   in
-  match cst with
-  | Ok (CameLIGO cst) ->
+  match cst, witness with
+  | Ok (CameLIGO cst), CameLIGONode ->
     let result = Cst_cameligo.Fold.fold_cst accumulator fold_function map_function cst in
-    check testable "List of list sizes is incorrect" expected result
-  | Error e -> fail e
-  | _ -> fail "FATAL ERROR: can't get CST"
+    Format.printf "%a" pp_result result
+  | Ok (JsLIGO cst), JsLIGONode ->
+    let result = Cst_jsligo.Fold.fold_cst accumulator fold_function map_function cst in
+    Format.printf "%a" pp_result result
+  | Error e, _ -> failwith e
+  | _ -> failwith "FATAL ERROR: can't get CST"
 
 
-let length_of_lists_but_not_in_modules : some_node -> int fold_control =
+let length_of_lists_but_not_in_modules : Cst_cameligo.Fold.some_node -> int fold_control =
  fun (Some_node (x, b)) ->
   match b with
   | S_list_ S_expr -> Continue (List.length @@ sepseq_to_list x.value.inside)
@@ -46,7 +50,7 @@ let length_of_lists_but_not_in_modules : some_node -> int fold_control =
   | _ -> Skip
 
 
-let tokens_with_zero_size : some_node -> string option fold_control =
+let tokens_with_zero_size : Cst_cameligo.Fold.some_node -> string option fold_control =
  fun (Some_node (x, b)) ->
   match b with
   | S_eof -> Stop
@@ -62,33 +66,29 @@ let tokens_with_zero_size : some_node -> string option fold_control =
   | _ -> Skip
 
 
-let test1 =
-  { file_path = "contracts/lsp/fold_lists.mligo"
-  ; expected = [ 0; 5; 3; 0; 3; 3; 5 ] (* Reversed because of fold *)
-  ; accumulator = []
-  ; fold_function = Fun.flip List.cons
-  ; map_function = length_of_lists_but_not_in_modules
-  ; testable = Alcotest.list Alcotest.int
-  }
+let%expect_test _ =
+  get_cst_fold
+    { file_path = "contracts/lsp/fold_lists.mligo"
+    ; accumulator = []
+    ; fold_function = Fun.flip List.cons
+    ; witness = CameLIGONode
+    ; map_function = length_of_lists_but_not_in_modules
+    ; pp_result = Fmt.Dump.list Format.pp_print_int
+    };
+  [%expect {| [0; 5; 3; 0; 3; 3; 5] |}]
 
-
-let test2 =
-  { file_path = "contracts/lsp/missing_a_lot.mligo"
-  ; expected =
-      Some
-        [ "\226\154\160ghost_ident\226\152\160"
-        ; "in"
-        ; "\226\154\160ghost_ident\226\152\160"
-        ; "="
-        ; "="
-        ]
-      (* Reversed because of fold *)
-  ; accumulator = Some []
-  ; fold_function =
-      (fun l x -> Option.bind l ~f:(fun l -> Option.bind x ~f:(fun x -> Some (x :: l))))
-  ; map_function = tokens_with_zero_size
-  ; testable = Alcotest.option @@ Alcotest.list Alcotest.string
-  }
-
-
-let tests = "cst fold", [ get_cst_fold test1; get_cst_fold test2 ]
+let%expect_test _ =
+  get_cst_fold
+    { file_path = "contracts/lsp/missing_a_lot.mligo"
+    ; accumulator = Some []
+    ; fold_function =
+        (fun l x -> Option.bind l ~f:(fun l -> Option.bind x ~f:(fun x -> Some (x :: l))))
+    ; witness = CameLIGONode
+    ; map_function = tokens_with_zero_size
+    ; pp_result = Fmt.Dump.option @@ Fmt.Dump.list String.pp
+    };
+  [%expect
+    {|
+    Some
+      ["\226\154\160ghost_ident\226\152\160"; "in";
+       "\226\154\160ghost_ident\226\152\160"; "="; "="] |}]

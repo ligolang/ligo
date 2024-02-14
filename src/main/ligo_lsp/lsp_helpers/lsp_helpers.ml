@@ -158,14 +158,7 @@ end
 module DocumentHighlight = struct
   include Lsp.Types.DocumentHighlight
 
-  let pp fmt (hi : t) =
-    let kind_opt_pp fmt = function
-      | None -> Format.fprintf fmt "%s" "<no kind>"
-      | Some k -> DocumentHighlightKind.pp fmt k
-    in
-    Format.fprintf fmt "%a [%a]" Range.pp hi.range kind_opt_pp hi.kind
-
-
+  let pp = Helpers_pretty.pp_with_yojson yojson_of_t
   let eq = Caml.( = )
   let testable = Alcotest.testable pp eq
 end
