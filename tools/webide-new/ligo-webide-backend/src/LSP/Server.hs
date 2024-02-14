@@ -54,7 +54,7 @@ handleConnection conn = pingConnection conn $ do
     ligoPath <- asks (scLigoPath . ccServerConfig)
 
     let cmd :: CreateProcess
-        cmd = (proc ligoPath ["lsp"])
+        cmd = (proc ligoPath ["lsp", "no-semantic-tokens"])
           { std_in = UseHandle stdinConsumer
           , std_out = UseHandle stdoutProducer
           , std_err = UseHandle stderrProducer
