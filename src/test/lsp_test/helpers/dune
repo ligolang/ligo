@@ -1,4 +1,12 @@
 (library
  (name lsp_test_helpers)
  (public_name ligo.lsp_test.helpers)
- (libraries ligo_api))
+ (libraries
+  lsp
+  linol
+  ligo_lsp
+  ligo_api
+  cli_helpers
+  lsp_helpers
+  compiler_options
+  syntax_types))

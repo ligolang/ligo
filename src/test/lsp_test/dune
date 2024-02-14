@@ -2,7 +2,7 @@
  (name lsp_test_requests)
  (public_name ligo.lsp_test.requests)
  (preprocess
-  (pps ppx_yojson_conv))
+  (pps ppx_yojson_conv ppx_expect))
  (libraries
   lsp
   linol
@@ -13,4 +13,10 @@
   lsp_test_helpers
   alcotest_extras
   compiler_options
-  syntax_types))
+  syntax_types
+  fileutils)
+ (inline_tests
+  (libraries simple-utils-unix simple-utils-unix.http_uri ligo.api)
+  (flags (-stop-on-error))
+  (deps
+   (source_tree ../contracts))))

@@ -1,6 +1,6 @@
 open Alcotest_extras
 open Lsp_helpers
-open Handlers
+open Lsp_test_helpers.Handlers
 module Requests = Ligo_lsp.Server.Requests
 open Requests.Handler
 

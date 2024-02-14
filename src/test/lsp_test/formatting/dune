@@ -1,0 +1,144 @@
+(executable
+ (name formatting_test)
+ (libraries
+  lsp
+  linol
+  ligo_lsp
+  ligo_api
+  cli_helpers
+  lsp_helpers
+  lsp_test_helpers
+  compiler_options
+  syntax_types))
+
+;;
+
+(rule
+ (targets formatted.mligo_output)
+ (action
+  (run
+   ./formatting_test.exe
+   ../../contracts/lsp/format_me.mligo
+   formatted.mligo_output))
+ (deps ../../contracts/lsp/format_me.mligo))
+
+(rule
+ (alias runtest)
+ (action
+  (diff ../../contracts/lsp/formatted.mligo formatted.mligo_output)))
+
+;;
+
+; No ghost_idents, please
+
+(rule
+ (alias runtest)
+ (action
+  (run ./formatting_test.exe ../../contracts/lsp/syntax_error.mligo))
+ (deps ../../contracts/lsp/syntax_error.mligo))
+
+;;
+
+(rule
+ (targets formatted.jsligo_output)
+ (action
+  (run
+   ./formatting_test.exe
+   ../../contracts/lsp/format_me.jsligo
+   formatted.jsligo_output))
+ (deps ../../contracts/lsp/format_me.jsligo))
+
+(rule
+ (alias runtest)
+ (action
+  (diff ../../contracts/lsp/formatted.jsligo formatted.jsligo_output)))
+
+;;
+
+(rule
+ (targets with_ligopretty_formatted.mligo_output)
+ (action
+  (run
+   ./formatting_test.exe
+   ../../contracts/lsp/with_ligopretty/format_me.mligo
+   with_ligopretty_formatted.mligo_output))
+ (deps ../../contracts/lsp/with_ligopretty/format_me.mligo))
+
+(rule
+ (alias runtest)
+ (action
+  (diff
+   ../../contracts/lsp/with_ligopretty/formatted.mligo
+   with_ligopretty_formatted.mligo_output)))
+
+;;
+
+(rule
+ (targets with_ligopretty_formatted.jsligo_output)
+ (action
+  (run
+   ./formatting_test.exe
+   ../../contracts/lsp/with_ligopretty/format_me.jsligo
+   with_ligopretty_formatted.jsligo_output))
+ (deps ../../contracts/lsp/with_ligopretty/format_me.jsligo))
+
+(rule
+ (alias runtest)
+ (action
+  (diff
+   ../../contracts/lsp/with_ligopretty/formatted.jsligo
+   with_ligopretty_formatted.jsligo_output)))
+
+;;
+
+(rule
+ (targets folding_range_for_loop_formatted.jsligo_output)
+ (action
+  (run
+   ./formatting_test.exe
+   ../../contracts/lsp/folding_range_for_loop.jsligo
+   folding_range_for_loop_formatted.jsligo_output))
+ (deps ../../contracts/lsp/folding_range_for_loop.jsligo))
+
+(rule
+ (alias runtest)
+ (action
+  (diff
+   ../../contracts/lsp/folding_range_for_loop_formatted.jsligo
+   folding_range_for_loop_formatted.jsligo_output)))
+
+;;
+
+(rule
+ (targets format_me_comments_formatted.mligo_output)
+ (action
+  (run
+   ./formatting_test.exe
+   ../../contracts/lsp/format_me_comments.mligo
+   format_me_comments_formatted.mligo_output))
+ (deps ../../contracts/lsp/format_me_comments.mligo))
+
+(rule
+ (alias runtest)
+ (action
+  (diff
+   ../../contracts/lsp/formatted_comments.mligo
+   format_me_comments_formatted.mligo_output)))
+
+;;
+
+(rule
+ (targets format_me_comments_formatted.jsligo_output)
+ (action
+  (run
+   ./formatting_test.exe
+   ../../contracts/lsp/format_me_comments.jsligo
+   format_me_comments_formatted.jsligo_output))
+ (deps ../../contracts/lsp/format_me_comments.jsligo))
+
+(rule
+ (alias runtest)
+ (action
+  (diff
+   ../../contracts/lsp/formatted_comments.jsligo
+   format_me_comments_formatted.jsligo_output)))

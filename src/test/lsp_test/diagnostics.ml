@@ -1,23 +1,16 @@
 module Requests = Ligo_lsp.Server.Requests
-open Alcotest_extras
-open Handlers
+open Lsp_test_helpers.Handlers
+open Lsp_test_helpers.Common
 open Lsp_helpers
-open Range.Construct
 
 type diagnostics_test =
-  { test_name : string
-  ; file_path : string
-  ; diagnostics : Requests.simple_diagnostic list
+  { file_path : string
   ; max_number_of_problems : int option
   }
 
-let get_diagnostics_test
-    ({ test_name; file_path; diagnostics; max_number_of_problems } : diagnostics_test)
-    : unit Alcotest.test_case
+let get_diagnostics_test ({ file_path; max_number_of_problems } : diagnostics_test) : unit
   =
-  Alcotest.test_case test_name `Quick
-  @@ fun () ->
-  let file_path_normalized = Path.from_relative file_path in
+  let file_path_normalized = normalize_path file_path in
   let config =
     Option.map max_number_of_problems ~f:(fun max_number_of_problems ->
         { default_test_config with max_number_of_problems })
@@ -25,465 +18,455 @@ let get_diagnostics_test
   let _uri, actual_diagnostics =
     test_run_session ?config @@ open_file file_path_normalized
   in
-  (* [on_doc] sends an empty list in case there are no diags, so we also need to
-     address this corner case in our test expectations. *)
-  let expected_diagnostics =
-    let diags_by_file =
-      Requests.partition_simple_diagnostics
-        file_path_normalized
-        max_number_of_problems
-        diagnostics
-    in
-    let uri = DocumentUri.of_path file_path_normalized in
-    if List.Assoc.mem diags_by_file ~equal:DocumentUri.equal uri
-    then diags_by_file
-    else (uri, []) :: diags_by_file
-  in
-  let module AML = Alcotest_map_of_lists (Path) in
   let module Map = Map.Make (Path) in
   let to_map l =
     match Map.of_alist l with
     | `Ok map -> map
-    | `Duplicate_key path -> failf "Key duplication: %s." (Path.to_string path)
+    | `Duplicate_key path -> failwithf "Key duplication: %s." (Path.to_string path) ()
   in
-  let actual = to_map @@ Requests.Handler.Path_hashtbl.to_alist actual_diagnostics in
-  let expected =
-    to_map @@ List.map ~f:(Tuple2.map_fst ~f:DocumentUri.to_path) expected_diagnostics
+  let actual =
+    actual_diagnostics
+    |> Requests.Handler.Path_hashtbl.to_alist
+    |> to_map
+    |> Map.to_alist
+    |> List.map ~f:(fun (path, diags) -> path_to_relative path, diags)
   in
-  AML.should_match
-    ~msg:(Format.asprintf "Diagnostics mismatch for %s:" file_path)
-    Path.testable
-    Diagnostic.testable
-    ~actual
-    ~expected
+  Format.printf "%a" Fmt.Dump.(list @@ pair String.pp (list Diagnostic.pp)) actual
 
 
-let test_cases =
-  [ { test_name = "Type errors"
-    ; file_path = "contracts/negative/error_typer_1.mligo"
-    ; diagnostics =
-        [ { severity = DiagnosticSeverity.Error
-          ; message =
-              "This expression has type \"int\", but an expression was expected of type \n\
-               \"string\".\n\
-               Type \"int\" is not compatible with type \"string\"."
-          ; location =
-              { range = interval 2 19 27
-              ; path = Path.from_relative "contracts/negative/error_typer_1.mligo"
-              }
-          }
-        ; { severity = DiagnosticSeverity.Error
-          ; message = "Variable \"foo\" not found. "
-          ; location =
-              { range = interval 5 31 34
-              ; path = Path.from_relative "contracts/negative/error_typer_1.mligo"
-              }
-          }
-        ]
+let%expect_test "Type errors" =
+  get_diagnostics_test
+    { file_path = "contracts/negative/error_typer_1.mligo"
     ; max_number_of_problems = None
-    }
-  ; { test_name = "Syntax error"
-    ; file_path = "contracts/lsp/syntax_error.mligo"
-    ; diagnostics =
-        [ { severity = DiagnosticSeverity.Error
-          ; message =
-              "Ill-formed contract.\n\
-               At this point, if the current declaration is complete, one of the\n\
-               following is expected:\n\
-              \  * another declaration;\n\
-              \  * the end of the file.\n"
-          ; location =
-              { range = interval 0 10 11
-              ; path = Path.from_relative "contracts/lsp/syntax_error.mligo"
-              }
-          }
-        ]
-    ; max_number_of_problems = None
-    }
-  ; { test_name = "Warnings"
-    ; file_path = "contracts/lsp/warnings.jsligo"
-    ; diagnostics =
-        [ { severity = DiagnosticSeverity.Warning
-          ; message =
-              "\n\
-               Warning: unused variable \"x\".\n\
-               Hint: replace it by \"_x\" to prevent this warning.\n"
-          ; location =
-              { range = interval 2 10 11
-              ; path = Path.from_relative "contracts/lsp/warnings.jsligo"
-              }
-          }
-        ; { severity = DiagnosticSeverity.Warning
-          ; message = "Toplevel let declaration is silently changed to const declaration."
-          ; location =
-              { range = interval 0 7 17
-              ; path = Path.from_relative "contracts/lsp/warnings.jsligo"
-              }
-          }
-        ]
-    ; max_number_of_problems = None
-    }
-  ; { test_name = "Syntax and type errors"
-    ; file_path = "contracts/lsp/syntax_plus_type_errors.jsligo"
-    ; diagnostics =
-        [ { severity = DiagnosticSeverity.Error
-          ; message = "Invalid type(s).\nExpected \"string\", but got: \"int\"."
-          ; location =
-              { range = interval 2 19 21
-              ; path = Path.from_relative "contracts/lsp/syntax_plus_type_errors.jsligo"
-              }
-          }
-        ; { severity = DiagnosticSeverity.Error
-          ; message =
-              "Ill-formed expression.\nAt this point, an expression is expected.\n"
-          ; location =
-              { range = interval 4 15 18
-              ; path = Path.from_relative "contracts/lsp/syntax_plus_type_errors.jsligo"
-              }
-          }
-        ; { severity = DiagnosticSeverity.Error
-          ; message =
-              "Ill-formed value declaration.\n\
-               At this point, a pattern is expected, e.g. a variable.\n"
-          ; location =
-              { range = point 4 18
-              ; path = Path.from_relative "contracts/lsp/syntax_plus_type_errors.jsligo"
-              }
-          }
-        ; { severity = DiagnosticSeverity.Warning
-          ; message = "Toplevel let declaration is silently changed to const declaration."
-          ; location =
-              { range = interval 4 15 18
-              ; path = Path.from_relative "contracts/lsp/syntax_plus_type_errors.jsligo"
-              }
-          }
-        ]
-    ; max_number_of_problems = None
-    }
-  ; { test_name = "All OK"
-    ; file_path = "contracts/lsp/simple.mligo"
-    ; diagnostics = []
-    ; max_number_of_problems = None
-    }
-  ; { test_name = "Limit from 11 to 2 diagnostics in session"
-    ; file_path = "contracts/warning_sum_types.mligo"
-    ; diagnostics =
-        [ { severity = DiagnosticSeverity.Warning
-          ; message =
-              "Warning: The type of \"TopTop(42)\" is ambiguous: Inferred type is \
-               \"ttop2\" but could be of type \"ttop\".\n\
-               Hint: You might want to add a type annotation. \n"
-          ; location =
-              { range = interval 85 14 23
-              ; path = Path.from_relative "contracts/warning_sum_types.mligo"
-              }
-          }
-        ; { severity = DiagnosticSeverity.Warning
-          ; message =
-              "Warning: The type of \"TopA(42)\" is ambiguous: Inferred type is \"ta\" \
-               but could be of type \"ttop\".\n\
-               Hint: You might want to add a type annotation. \n"
-              (* TODO: #2127 this message is wrong. *)
-          ; location =
-              { range = interval 87 14 21
-              ; path = Path.from_relative "contracts/warning_sum_types.mligo"
-              }
-          }
-        ]
-    ; max_number_of_problems = Some 2
-    }
-  ; { test_name = "Polymorphic Type error"
-    ; file_path = "contracts/lsp/poly_type_error.mligo"
-    ; diagnostics =
-        [ { severity = DiagnosticSeverity.Error
-          ; message =
-              "This expression has type \"int\", but an expression was expected of type \n\
-               \"( ^a * ^b ) -> ^a\".\n\
-               Type \"int\" is not compatible with type \"( ^a * ^b ) -> ^a\".\n\
-               Hint: \"^b\", \"^a\" represent placeholder type(s).\n"
-          ; location =
-              { range = interval 0 21 22
-              ; path = Path.from_relative "contracts/lsp/poly_type_error.mligo"
-              }
-          }
-        ]
-    ; max_number_of_problems = None
-    }
-  ; { test_name = "No diagnostics for imported package."
-    ; file_path = "contracts/lsp/registry.jsligo"
-    ; diagnostics = []
-    ; max_number_of_problems = None
-    }
-  ; { test_name = "Shows diagnostics from another file."
-    ; file_path = "contracts/lsp/import_warnings.jsligo"
-    ; diagnostics =
-        [ { severity = DiagnosticSeverity.Warning
-          ; message =
-              "\n\
-               Warning: unused variable \"x\".\n\
-               Hint: replace it by \"_x\" to prevent this warning.\n"
-          ; location =
-              { range = interval 2 10 11
-              ; path = Path.from_relative "contracts/lsp/warnings.jsligo"
-              }
-          }
-        ; { severity = DiagnosticSeverity.Warning
-          ; message = "Toplevel let declaration is silently changed to const declaration."
-          ; location =
-              { range = interval 0 7 17
-              ; path = Path.from_relative "contracts/lsp/warnings.jsligo"
-              }
-          }
-        ]
-    ; max_number_of_problems = None
-    }
-  ; { test_name = "Shows TZIP-16 checks with a top-level storage."
-    ; file_path = "contracts/lsp/test_metadata.mligo"
-    ; diagnostics =
-        [ { severity = DiagnosticSeverity.Warning
-          ; message =
-              "Warning: If the following metadata is meant to be TZIP-16 compliant,\n\
-               then it should be a 'big_map' from 'string' to 'bytes'.\n\
-               Hint: The corresponding type should be :\n\
-              \  (string, bytes) big_map\n\
-               You can disable this warning with the '--no-metadata-check' flag.\n"
-          ; location =
-              { range = interval 2 15 19
-              ; path = Path.from_relative "contracts/lsp/test_metadata.mligo"
-              }
-          }
-        ]
-    ; max_number_of_problems = None
-    }
-  ; { test_name = "Shows a duplicate entrypoint error."
-    ; file_path = "contracts/lsp/entrypoints_repeated.mligo"
-    ; diagnostics =
-        [ { message = "Duplicate entry-point ep_int"
-          ; location =
-              { range = interval 1 4 10
-              ; path = Path.from_relative "contracts/lsp/entrypoints_repeated.mligo"
-              }
-          ; severity = DiagnosticSeverity.Error
-          }
-        ]
-    ; max_number_of_problems = None
-    }
-  ; { test_name = "Shows an error when two toplevel entrypoints have different storage."
-    ; file_path = "contracts/lsp/entrypoints_different_storage.mligo"
-    ; diagnostics =
-        [ { message =
-              "Storage types do not match for different entrypoints:\n\
-               - ep_int : int\n\
-               - ep_string : string"
-          ; location =
-              { range = interval 1 4 10
-              ; path =
-                  Path.from_relative "contracts/lsp/entrypoints_different_storage.mligo"
-              }
-          ; severity = DiagnosticSeverity.Error
-          }
-        ]
-    ; max_number_of_problems = None
-    }
-  ; { test_name =
-        "Shows views-related errors and storage warnings."
-        (* TODO #2086 add tests for more complicated errors *)
-    ; file_path = "contracts/lsp/entrypoints_views.mligo"
-    ; diagnostics =
-        [ { message =
-              "Warning: If the following metadata is meant to be TZIP-16 compliant,\n\
-               then it should be a 'big_map' from 'string' to 'bytes'.\n\
-               Hint: The corresponding type should be :\n\
-              \  (string, bytes) big_map\n\
-               You can disable this warning with the '--no-metadata-check' flag.\n"
-          ; location =
-              { range = interval 4 16 20
-              ; path = Path.from_relative "contracts/lsp/entrypoints_views.mligo"
-              }
-          ; severity = DiagnosticSeverity.Warning
-          }
-        ; { message = "The view \"bad_view_not_func\" is not a function."
-          ; location =
-              { range = interval 21 4 21
-              ; path = Path.from_relative "contracts/lsp/entrypoints_views.mligo"
-              }
-          ; severity = DiagnosticSeverity.Error
-          }
-        ]
-    ; max_number_of_problems = None
-    }
-  ; { test_name = "Shows entrypoint-related errors in many modules simultaneously."
-    ; file_path = "contracts/lsp/entrypoints_modules.mligo"
-    ; diagnostics =
-        [ { message = "Invalid type for view \"Bad_4\".\nA view must be a function."
-          ; location =
-              { range = interval 51 6 7
-              ; path = Path.from_relative "contracts/lsp/entrypoints_modules.mligo"
-              }
-          ; severity = DiagnosticSeverity.Error
-          }
-        ; { message = "Not an entrypoint: unit -> ( list (operation) * string )"
-          ; location =
-              { range = interval 41 6 12
-              ; path = Path.from_relative "contracts/lsp/entrypoints_modules.mligo"
-              }
-          ; severity = DiagnosticSeverity.Error
-          }
-        ; { message = "Duplicate entry-point ep_string"
-          ; location =
-              { range = interval 32 6 15
-              ; path = Path.from_relative "contracts/lsp/entrypoints_modules.mligo"
-              }
-          ; severity = DiagnosticSeverity.Error
-          }
-        ; { message =
-              "Storage types do not match for different entrypoints:\n\
-               - ep_string : string\n\
-               - ep_int : int"
-          ; location =
-              { range = interval 23 6 15
-              ; path = Path.from_relative "contracts/lsp/entrypoints_modules.mligo"
-              }
-          ; severity = DiagnosticSeverity.Error
-          }
-        ]
-    ; max_number_of_problems = None
-    }
-  ; { test_name = "ghost_ident filter"
-    ; file_path = "contracts/lsp/missing_value.mligo"
-    ; diagnostics =
-        [ { severity = DiagnosticSeverity.Error
-          ; message =
-              "Ill-formed value declaration.\nAt this point, an expression is expected.\n"
-          ; location =
-              { range = point 0 7
-              ; path = Path.from_relative "contracts/lsp/missing_value.mligo"
-              }
-          }
-        ]
-    ; max_number_of_problems = None
-    }
-  ; { test_name = "ghost string filter"
-    ; file_path = "contracts/lsp/missing_string.jsligo"
-    ; diagnostics =
-        [ { severity = DiagnosticSeverity.Error
-          ; message = "Expected constructor \"Tail\" in expected sum type \"coin\"."
-          ; location =
-              { range = interval 4 17 23
-              ; path = Path.from_relative "contracts/lsp/missing_string.jsligo"
-              }
-          }
-        ; { severity = DiagnosticSeverity.Error
-          ; message =
-              "Ill-formed variant type.\n\
-               At this point, a string denoting a constructor is expected.\n"
-          ; location =
-              { range = interval 0 24 25
-              ; path = Path.from_relative "contracts/lsp/missing_string.jsligo"
-              }
-          }
-        ]
-    ; max_number_of_problems = None
-    }
-  ; { test_name = "Ghost_ident filter"
-    ; file_path = "contracts/lsp/missing_module_name.mligo"
-    ; diagnostics =
-        [ { severity = DiagnosticSeverity.Error
-          ; message =
-              "Ill-formed module declaration.\n\
-               At this point, the name of the module being declared is expected.\n"
-          ; location =
-              { range = interval 0 7 8
-              ; path = Path.from_relative "contracts/lsp/missing_module_name.mligo"
-              }
-          }
-        ]
-    ; max_number_of_problems = None
-    }
-  ; { test_name = "Shows comparing error and suggests to use functions from Test module"
-    ; file_path = "contracts/lsp/diagnostics_equal.mligo"
-    ; diagnostics =
-        [ { message =
-              "Invalid arguments.\n\
-               These types cannot be compared: \"list (int)\" and \"list (int)\".\n\
-               Use \"Test.equal\", \"Test.not_equal\", \"Test.greater\", \"Test.less\", \
-               \"Test.greater_or_equal\", or \"Test.less_or_equal\" to compare lists, \
-               maps, sets, etc."
-          ; location =
-              { range = interval 2 12 27
-              ; path = Path.from_relative "contracts/lsp/diagnostics_equal.mligo"
-              }
-          ; severity = DiagnosticSeverity.Error
-          }
-        ]
-    ; max_number_of_problems = None
-    }
-  ; { test_name = "Shows wrong test primitive usage error"
-    ; file_path = "contracts/lsp/diagnostics_wrong_usage_of_test_primitives.mligo"
-    ; diagnostics =
-        [ { message = "Invalid usage of a Test primitive."
-          ; location =
-              { range = Range.dummy (* TODO: show a proper location here *)
-              ; path =
-                  Path.from_relative
-                    "contracts/lsp/diagnostics_wrong_usage_of_test_primitives.mligo"
-              }
-          ; severity = DiagnosticSeverity.Error
-          }
-        ]
-    ; max_number_of_problems = None
-    }
-  ; { test_name = "Shows a warning for deprecated functions"
-    ; file_path = "contracts/deprecated.mligo"
-    ; diagnostics =
-        [ { message =
-              "\nWarning: deprecated value.\nReplace me by...\ng!\nmail: foo@bar.com\n"
-          ; location =
-              { range = interval 4 74 75
-              ; path = Path.from_relative "contracts/deprecated.mligo"
-              }
-          ; severity = DiagnosticSeverity.Warning
-          }
-        ]
-    ; max_number_of_problems = None
-    }
-  ; { test_name = "No diagnostics for dynamic entrypoints (mligo)."
-    ; file_path = "contracts/dynamic_entrypoints.mligo"
-    ; diagnostics = []
-    ; max_number_of_problems = None
-    }
-  ; { test_name = "No diagnostics for dynamic entrypoints (jsligo)."
-    ; file_path = "contracts/dynamic_entrypoints.jsligo"
-    ; diagnostics = []
-    ; max_number_of_problems = None
-    }
-  ; { test_name = "Shows errors for unsupported record fields (jsligo)."
-    ; file_path = "contracts/lsp/unsupported_record_field.jsligo"
-    ; diagnostics =
-        [ { message = "Unsupported object field"
-          ; location =
-              { range = interval 6 32 33
-              ; path = Path.from_relative "contracts/lsp/unsupported_record_field.jsligo"
-              }
-          ; severity = DiagnosticSeverity.Error
-          }
-        ]
-    ; max_number_of_problems = None
-    }
-  ; { test_name = "Shows errors for unbound variables in records (jsligo)."
-    ; file_path = "contracts/lsp/unbound_var_in_record.jsligo"
-    ; diagnostics =
-        [ { message = "Variable \"a\" not found. "
-          ; location =
-              { range = interval 1 37 38
-              ; path = Path.from_relative "contracts/lsp/unbound_var_in_record.jsligo"
-              }
-          ; severity = DiagnosticSeverity.Error
-          }
-        ]
-    ; max_number_of_problems = None
-    }
-  ]
+    };
+  [%expect
+    {|
+    [("../../../../../default/src/test/contracts/negative/error_typer_1.mligo",
+      [{
+         "message": "This expression has type \"int\", but an expression was expected of type \n\"string\".\nType \"int\" is not compatible with type \"string\".",
+         "range": {
+           "end": { "character": 27, "line": 2 },
+           "start": { "character": 19, "line": 2 }
+         },
+         "severity": 1
+       };
+       {
+         "message": "Variable \"foo\" not found. ",
+         "range": {
+           "end": { "character": 34, "line": 5 },
+           "start": { "character": 31, "line": 5 }
+         },
+         "severity": 1
+       }])] |}]
 
+let%expect_test "Syntax error" =
+  get_diagnostics_test
+    { file_path = "contracts/lsp/syntax_error.mligo"; max_number_of_problems = None };
+  [%expect
+    {|
+    [("../../../../../default/src/test/contracts/lsp/syntax_error.mligo",
+      [{
+         "message": "Ill-formed contract.\nAt this point, if the current declaration is complete, one of the\nfollowing is expected:\n  * another declaration;\n  * the end of the file.\n",
+         "range": {
+           "end": { "character": 11, "line": 0 },
+           "start": { "character": 10, "line": 0 }
+         },
+         "severity": 1
+       }])] |}]
 
-let tests = "diagnostics", List.map ~f:get_diagnostics_test test_cases
+let%expect_test "Warnings" =
+  get_diagnostics_test
+    { file_path = "contracts/lsp/warnings.jsligo"; max_number_of_problems = None };
+  [%expect
+    {|
+    [("../../../../../default/src/test/contracts/lsp/warnings.jsligo",
+      [{
+         "message": "Toplevel let declaration is silently changed to const declaration.",
+         "range": {
+           "end": { "character": 17, "line": 0 },
+           "start": { "character": 7, "line": 0 }
+         },
+         "severity": 2
+       };
+       {
+         "message": "\nWarning: unused variable \"x\".\nHint: replace it by \"_x\" to prevent this warning.\n",
+         "range": {
+           "end": { "character": 11, "line": 2 },
+           "start": { "character": 10, "line": 2 }
+         },
+         "severity": 2
+       }])] |}]
+
+let%expect_test "Syntax and type errors" =
+  get_diagnostics_test
+    { file_path = "contracts/lsp/syntax_plus_type_errors.jsligo"
+    ; max_number_of_problems = None
+    };
+  [%expect
+    {|
+    [("../../../../../default/src/test/contracts/lsp/syntax_plus_type_errors.jsligo",
+      [{
+         "message": "Invalid type(s).\nExpected \"string\", but got: \"int\".",
+         "range": {
+           "end": { "character": 21, "line": 2 },
+           "start": { "character": 19, "line": 2 }
+         },
+         "severity": 1
+       };
+       {
+         "message": "Ill-formed expression.\nAt this point, an expression is expected.\n",
+         "range": {
+           "end": { "character": 18, "line": 4 },
+           "start": { "character": 15, "line": 4 }
+         },
+         "severity": 1
+       };
+       {
+         "message": "Toplevel let declaration is silently changed to const declaration.",
+         "range": {
+           "end": { "character": 18, "line": 4 },
+           "start": { "character": 15, "line": 4 }
+         },
+         "severity": 2
+       };
+       {
+         "message": "Ill-formed value declaration.\nAt this point, a pattern is expected, e.g. a variable.\n",
+         "range": {
+           "end": { "character": 18, "line": 4 },
+           "start": { "character": 18, "line": 4 }
+         },
+         "severity": 1
+       }])] |}]
+
+let%expect_test "All OK" =
+  get_diagnostics_test
+    { file_path = "contracts/lsp/simple.mligo"; max_number_of_problems = None };
+  [%expect {| [("../../../../../default/src/test/contracts/lsp/simple.mligo", [])] |}]
+
+let%expect_test "Limit from 11 to 2 diagnostics in session" =
+  get_diagnostics_test
+    { file_path = "contracts/warning_sum_types.mligo"; max_number_of_problems = Some 2 };
+  [%expect
+    {|
+    [("../../../../../default/src/test/contracts/warning_sum_types.mligo",
+      [{
+         "message": "Warning: The type of \"TopTop(42)\" is ambiguous: Inferred type is \"ttop2\" but could be of type \"ttop\".\nHint: You might want to add a type annotation. \n",
+         "range": {
+           "end": { "character": 23, "line": 85 },
+           "start": { "character": 14, "line": 85 }
+         },
+         "severity": 2
+       };
+       {
+         "message": "Warning: The type of \"TopA(42)\" is ambiguous: Inferred type is \"ta\" but could be of type \"ttop\".\nHint: You might want to add a type annotation. \n",
+         "range": {
+           "end": { "character": 21, "line": 87 },
+           "start": { "character": 14, "line": 87 }
+         },
+         "severity": 2
+       }])] |}]
+
+let%expect_test "Polymorphic Type error" =
+  get_diagnostics_test
+    { file_path = "contracts/lsp/poly_type_error.mligo"; max_number_of_problems = None };
+  [%expect
+    {|
+    [("../../../../../default/src/test/contracts/lsp/poly_type_error.mligo",
+      [{
+         "message": "This expression has type \"int\", but an expression was expected of type \n\"( ^a * ^b ) -> ^a\".\nType \"int\" is not compatible with type \"( ^a * ^b ) -> ^a\".\nHint: \"^b\", \"^a\" represent placeholder type(s).\n",
+         "range": {
+           "end": { "character": 22, "line": 0 },
+           "start": { "character": 21, "line": 0 }
+         },
+         "severity": 1
+       }])] |}]
+
+let%expect_test "No diagnostics for imported package." =
+  get_diagnostics_test
+    { file_path = "contracts/lsp/registry.jsligo"; max_number_of_problems = None };
+  [%expect {| [("../../../../../default/src/test/contracts/lsp/registry.jsligo", [])] |}]
+
+let%expect_test "Shows diagnostics from another file." =
+  get_diagnostics_test
+    { file_path = "contracts/lsp/import_warnings.jsligo"; max_number_of_problems = None };
+  [%expect
+    {|
+    [("../../../../../default/src/test/contracts/lsp/import_warnings.jsligo", []);
+     ("../../../../../default/src/test/contracts/lsp/warnings.jsligo",
+      [{
+         "message": "\nWarning: unused variable \"x\".\nHint: replace it by \"_x\" to prevent this warning.\n",
+         "range": {
+           "end": { "character": 11, "line": 2 },
+           "start": { "character": 10, "line": 2 }
+         },
+         "severity": 2
+       };
+       {
+         "message": "Toplevel let declaration is silently changed to const declaration.",
+         "range": {
+           "end": { "character": 17, "line": 0 },
+           "start": { "character": 7, "line": 0 }
+         },
+         "severity": 2
+       }])] |}]
+
+let%expect_test "Shows TZIP-16 checks with a top-level storage." =
+  get_diagnostics_test
+    { file_path = "contracts/lsp/test_metadata.mligo"; max_number_of_problems = None };
+  [%expect
+    {|
+    [("../../../../../default/src/test/contracts/lsp/test_metadata.mligo",
+      [{
+         "message": "Warning: If the following metadata is meant to be TZIP-16 compliant,\nthen it should be a 'big_map' from 'string' to 'bytes'.\nHint: The corresponding type should be :\n  (string, bytes) big_map\nYou can disable this warning with the '--no-metadata-check' flag.\n",
+         "range": {
+           "end": { "character": 19, "line": 2 },
+           "start": { "character": 15, "line": 2 }
+         },
+         "severity": 2
+       }])] |}]
+
+let%expect_test "Shows a duplicate entrypoint error." =
+  get_diagnostics_test
+    { file_path = "contracts/lsp/entrypoints_repeated.mligo"
+    ; max_number_of_problems = None
+    };
+  [%expect
+    {|
+    [("../../../../../default/src/test/contracts/lsp/entrypoints_repeated.mligo",
+      [{
+         "message": "Duplicate entry-point ep_int",
+         "range": {
+           "end": { "character": 10, "line": 1 },
+           "start": { "character": 4, "line": 1 }
+         },
+         "severity": 1
+       }])] |}]
+
+let%expect_test "Shows an error when two toplevel entrypoints have different storage." =
+  get_diagnostics_test
+    { file_path = "contracts/lsp/entrypoints_different_storage.mligo"
+    ; max_number_of_problems = None
+    };
+  [%expect
+    {|
+    [("../../../../../default/src/test/contracts/lsp/entrypoints_different_storage.mligo",
+      [{
+         "message": "Storage types do not match for different entrypoints:\n- ep_int : int\n- ep_string : string",
+         "range": {
+           "end": { "character": 10, "line": 1 },
+           "start": { "character": 4, "line": 1 }
+         },
+         "severity": 1
+       }])] |}]
+
+let%expect_test "Shows views-related errors and storage warnings." =
+  get_diagnostics_test
+    { file_path = "contracts/lsp/entrypoints_views.mligo"; max_number_of_problems = None };
+  [%expect
+    {|
+    [("../../../../../default/src/test/contracts/lsp/entrypoints_views.mligo",
+      [{
+         "message": "Warning: If the following metadata is meant to be TZIP-16 compliant,\nthen it should be a 'big_map' from 'string' to 'bytes'.\nHint: The corresponding type should be :\n  (string, bytes) big_map\nYou can disable this warning with the '--no-metadata-check' flag.\n",
+         "range": {
+           "end": { "character": 20, "line": 4 },
+           "start": { "character": 16, "line": 4 }
+         },
+         "severity": 2
+       };
+       {
+         "message": "The view \"bad_view_not_func\" is not a function.",
+         "range": {
+           "end": { "character": 21, "line": 21 },
+           "start": { "character": 4, "line": 21 }
+         },
+         "severity": 1
+       }])] |}]
+
+let%expect_test "Shows entrypoint-related errors in many modules simultaneously." =
+  get_diagnostics_test
+    { file_path = "contracts/lsp/entrypoints_modules.mligo"
+    ; max_number_of_problems = None
+    };
+  [%expect
+    {|
+    [("../../../../../default/src/test/contracts/lsp/entrypoints_modules.mligo",
+      [{
+         "message": "Storage types do not match for different entrypoints:\n- ep_string : string\n- ep_int : int",
+         "range": {
+           "end": { "character": 15, "line": 23 },
+           "start": { "character": 6, "line": 23 }
+         },
+         "severity": 1
+       };
+       {
+         "message": "Duplicate entry-point ep_string",
+         "range": {
+           "end": { "character": 15, "line": 32 },
+           "start": { "character": 6, "line": 32 }
+         },
+         "severity": 1
+       };
+       {
+         "message": "Not an entrypoint: unit -> ( list (operation) * string )",
+         "range": {
+           "end": { "character": 12, "line": 41 },
+           "start": { "character": 6, "line": 41 }
+         },
+         "severity": 1
+       };
+       {
+         "message": "Invalid type for view \"Bad_4\".\nA view must be a function.",
+         "range": {
+           "end": { "character": 7, "line": 51 },
+           "start": { "character": 6, "line": 51 }
+         },
+         "severity": 1
+       }])] |}]
+
+let%expect_test "ghost_ident filter" =
+  get_diagnostics_test
+    { file_path = "contracts/lsp/missing_value.mligo"; max_number_of_problems = None };
+  [%expect
+    {|
+    [("../../../../../default/src/test/contracts/lsp/missing_value.mligo",
+      [{
+         "message": "Ill-formed value declaration.\nAt this point, an expression is expected.\n",
+         "range": {
+           "end": { "character": 7, "line": 0 },
+           "start": { "character": 7, "line": 0 }
+         },
+         "severity": 1
+       }])] |}]
+
+let%expect_test "ghost string filter" =
+  get_diagnostics_test
+    { file_path = "contracts/lsp/missing_string.jsligo"; max_number_of_problems = None };
+  [%expect
+    {|
+    [("../../../../../default/src/test/contracts/lsp/missing_string.jsligo",
+      [{
+         "message": "Ill-formed variant type.\nAt this point, a string denoting a constructor is expected.\n",
+         "range": {
+           "end": { "character": 25, "line": 0 },
+           "start": { "character": 24, "line": 0 }
+         },
+         "severity": 1
+       };
+       {
+         "message": "Expected constructor \"Tail\" in expected sum type \"coin\".",
+         "range": {
+           "end": { "character": 23, "line": 4 },
+           "start": { "character": 17, "line": 4 }
+         },
+         "severity": 1
+       }])] |}]
+
+let%expect_test "Ghost_ident filter" =
+  get_diagnostics_test
+    { file_path = "contracts/lsp/missing_module_name.mligo"
+    ; max_number_of_problems = None
+    };
+  [%expect
+    {|
+    [("../../../../../default/src/test/contracts/lsp/missing_module_name.mligo",
+      [{
+         "message": "Ill-formed module declaration.\nAt this point, the name of the module being declared is expected.\n",
+         "range": {
+           "end": { "character": 8, "line": 0 },
+           "start": { "character": 7, "line": 0 }
+         },
+         "severity": 1
+       }])] |}]
+
+let%expect_test "Shows comparing error and suggests to use functions from Test module" =
+  get_diagnostics_test
+    { file_path = "contracts/lsp/diagnostics_equal.mligo"; max_number_of_problems = None };
+  [%expect
+    {|
+    [("../../../../../default/src/test/contracts/lsp/diagnostics_equal.mligo",
+      [{
+         "message": "Invalid arguments.\nThese types cannot be compared: \"list (int)\" and \"list (int)\".\nUse \"Test.equal\", \"Test.not_equal\", \"Test.greater\", \"Test.less\", \"Test.greater_or_equal\", or \"Test.less_or_equal\" to compare lists, maps, sets, etc.",
+         "range": {
+           "end": { "character": 27, "line": 2 },
+           "start": { "character": 12, "line": 2 }
+         },
+         "severity": 1
+       }])] |}]
+
+let%expect_test "Shows wrong test primitive usage error" =
+  get_diagnostics_test
+    { file_path = "contracts/lsp/diagnostics_wrong_usage_of_test_primitives.mligo"
+    ; max_number_of_problems = None
+    };
+  [%expect
+    {|
+    [("../../../../../default/src/test/contracts/lsp/diagnostics_wrong_usage_of_test_primitives.mligo",
+      [{
+         "message": "Invalid usage of a Test primitive.",
+         "range": {
+           "end": { "character": 1, "line": 0 },
+           "start": { "character": 0, "line": 0 }
+         },
+         "severity": 1
+       }])] |}]
+
+let%expect_test "Shows a warning for deprecated functions" =
+  get_diagnostics_test
+    { file_path = "contracts/deprecated.mligo"; max_number_of_problems = None };
+  [%expect
+    {|
+    [("../../../../../default/src/test/contracts/deprecated.mligo",
+      [{
+         "message": "\nWarning: deprecated value.\nReplace me by...\ng!\nmail: foo@bar.com\n",
+         "range": {
+           "end": { "character": 75, "line": 4 },
+           "start": { "character": 74, "line": 4 }
+         },
+         "severity": 2
+       }])] |}]
+
+let%expect_test "No diagnostics for dynamic entrypoints (mligo)." =
+  get_diagnostics_test
+    { file_path = "contracts/dynamic_entrypoints.mligo"; max_number_of_problems = None };
+  [%expect
+    {| [("../../../../../default/src/test/contracts/dynamic_entrypoints.mligo", [])] |}]
+
+let%expect_test "No diagnostics for dynamic entrypoints (jsligo)." =
+  get_diagnostics_test
+    { file_path = "contracts/dynamic_entrypoints.jsligo"; max_number_of_problems = None };
+  [%expect
+    {| [("../../../../../default/src/test/contracts/dynamic_entrypoints.jsligo", [])] |}]
+
+let%expect_test "Shows errors for unsupported record fields (jsligo)." =
+  get_diagnostics_test
+    { file_path = "contracts/lsp/unsupported_record_field.jsligo"
+    ; max_number_of_problems = None
+    };
+  [%expect
+    {|
+    [("../../../../../default/src/test/contracts/lsp/unsupported_record_field.jsligo",
+      [{
+         "message": "Unsupported object field",
+         "range": {
+           "end": { "character": 33, "line": 6 },
+           "start": { "character": 32, "line": 6 }
+         },
+         "severity": 1
+       }])] |}]
+
+let%expect_test "Shows errors for unbound variables in records (jsligo)." =
+  get_diagnostics_test
+    { file_path = "contracts/lsp/unbound_var_in_record.jsligo"
+    ; max_number_of_problems = None
+    };
+  [%expect
+    {|
+    [("../../../../../default/src/test/contracts/lsp/unbound_var_in_record.jsligo",
+      [{
+         "message": "Variable \"a\" not found. ",
+         "range": {
+           "end": { "character": 38, "line": 1 },
+           "start": { "character": 37, "line": 1 }
+         },
+         "severity": 1
+       }])] |}]
