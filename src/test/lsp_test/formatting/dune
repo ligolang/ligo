@@ -11,6 +11,11 @@
   compiler_options
   syntax_types))
 
+(alias
+ (name lsp-test)
+ (deps
+  (alias runtest)))
+
 ;;
 
 (rule
