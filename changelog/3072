@@ -1,0 +1,7 @@
+
+author: xavierm02
+description: "\\nIf an entrypoint signature was wrong, the diagnostic was on the first entrypoint. Now it's fixed and target the wrong one.\\n\\n"
+merge_request: '3072'
+title: "Fix \"Not en entrypoint\" errors pointing to the wrong entrypoint"
+type: fixed
+            
