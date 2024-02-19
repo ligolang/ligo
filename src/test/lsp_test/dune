@@ -17,6 +17,10 @@
   fileutils)
  (inline_tests
   (libraries simple-utils-unix simple-utils-unix.http_uri ligo.api)
-  (flags (-stop-on-error))
   (deps
    (source_tree ../contracts))))
+
+(alias
+ (name lsp-test)
+ (deps
+  (alias runtest)))
