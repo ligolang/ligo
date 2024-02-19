@@ -669,7 +669,7 @@ let parameter_from_entrypoints
         let%bind parameter_, storage_ =
           Result.of_option
             (get_entrypoint ep_type)
-            ~error:(`Not_entry_point_form (entrypoint, entrypoint_type))
+            ~error:(`Not_entry_point_form (ep, ep_type))
         in
         let%bind () =
           Result.of_option
