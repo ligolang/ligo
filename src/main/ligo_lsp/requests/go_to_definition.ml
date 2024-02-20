@@ -82,7 +82,7 @@ let find_last_def_by_name_and_level (def : Scopes.def)
   =
   let open Scopes.Types in
   List.max_elt ~compare:(fun def1 def2 ->
-      Simple_utils.Location_ordered.compare (get_range def1) (get_range def2))
+      Simple_utils.Location.compare (get_range def1) (get_range def2))
   <@ List.filter ~f:(fun def' ->
          match def, def' with
          | Variable _, Variable _ | Type _, Type _ | Module _, Module _ | Label _, Label _

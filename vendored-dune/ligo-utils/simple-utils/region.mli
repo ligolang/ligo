@@ -5,7 +5,7 @@
 
 (* DEFINITION *)
 
-(* The start (included) of the region is given by the field [start],
+(** The start (included) of the region is given by the field [start],
    which is a {e position}, and the end (excluded) is the position
    given by the field [stop]. The convention of including the start
    and excluding the end enables to have empty regions if, and only
@@ -54,7 +54,6 @@
        convention as [to_string], except that the resulting string is
        shorter (usually for debugging or tracing).
  *)
-
 type t = <
   start : Pos.t;
   stop  : Pos.t;
@@ -81,17 +80,14 @@ type t = <
   compact   : ?file:bool -> ?offsets:bool -> [`Byte | `Point] -> string;
 >
 
-(* The type [region] is a synonym of [t] to use after [open Region]. *)
-
+(** The type [region] is a synonym of [t] to use after [open Region]. *)
 and region = t
 
-(* The type ['a reg] enables the concept of some value of type ['a] to
+(** The type ['a reg] enables the concept of some value of type ['a] to
    be related to a region in a source file. *)
-
 and 'a reg = {region: t; value: 'a}
 
-(* Making a region from the matched prefix of a lexing buffer *)
-
+(** Making a region from the matched prefix of a lexing buffer *)
 val from_lexbuf : Lexing.lexbuf -> t
 
 (* {1 Injections} *)
@@ -99,66 +95,60 @@ val from_lexbuf : Lexing.lexbuf -> t
 exception Different_files of string * string
 exception Out_of_order_pos of string * string
 
-(* The function [make] creates a region from two positions. If the
+(** The function [make] creates a region from two positions. If the
     positions are not properly ordered or refer to different files,
     the exceptions [Out_of_order_pos] and [Different_files],
     respectively, are raised. *)
-
 val make : start:Pos.t -> stop:Pos.t -> t
 
 val empty : Pos.t -> t (* Special case of [make] when [stop] is [stop]. *)
 
 (* SPECIAL REGIONS *)
 
-(* To deal with ghost expressions, that is, pieces of abstract syntax
+(** To deal with ghost expressions, that is, pieces of abstract syntax
    that have not been built from excerpts of concrete syntax, we need
    _ghost regions_. The module [Pos] provides a [ghost] position, and
    we also provide a [ghost] region and, in type [t], the method
    [is_ghost] to check it. It is implemented as two [Pos.ghost]
    positions. *)
-
 val ghost : t
 
-(* The call to [wrap_ghost] wraps a value within a ghost region. *)
-
+(** The call to [wrap_ghost] wraps a value within a ghost region. *)
 val wrap_ghost : 'a -> 'a reg
 
-(* Occasionnally, we may need a minimum region. It is here made of
+(** Occasionnally, we may need a minimum region. It is here made of
    two minimal positions. *)
-
 val min : file:string -> t
 
 (* COMPARISONS *)
 
-(* Two regions are equal if, and only if, they refer to the same file
+(** Two regions are equal if, and only if, they refer to the same file
    and their start positions are equal and their stop positions are
    equal. See [Pos.equal]. Note that either region being compared can
    be ghosts. *)
-
 val equal : t -> t -> bool
 
 val reg_equal : ('a -> 'a -> bool) -> 'a reg -> 'a reg -> bool
 
-(* The call [lt r1 r2] ("lower than") has the value [true] if, and
-   only if, regions [r1] and [r2] refer to the same file, none is a
-   ghost and the start position of [r1] is lower than that of
-   [r2]. (See [Pos.lt].) *)
-
+(** The call [lt r1 r2] ("lower than") has the value [true] if, and
+    only if, the file name of [r1] is lexigraphically less than that
+    of [r2], or in case they are equal, then if the start position of
+    [r1] is lower than that of [r2], or if the end position of [r1] is
+    less than that of [r2], if the start positions are equal. (See
+    [Pos.lt].) *)
 val lt : t -> t -> bool
 
-(* The call [compare r1 r2] has the value 0 if [equal r1 r2] returns
+(** The call [compare r1 r2] has the value 0 if [equal r1 r2] returns
    [true]. Otherwise it returns -1 if [lt r1 r2] returns [true], and 1
    if [lt r1 r2] returns [false]. *)
-
 val compare : t -> t -> int
 
-(* Given two regions [r1] and [r2], we may want the region [cover r1
+(** Given two regions [r1] and [r2], we may want the region [cover r1
    r2] that covers [r1] and [r2]. We have the property [equal (cover
    r1 r2) (cover r2 r1)]. (In a sense, it is the maximum region, but
    we avoid that name because of the [min] function above.) If [r1] is
    a ghost, the cover is [r2], and if [r2] is a ghost, the cover is
    [r1].  *)
-
 val cover : t -> t -> t
 
 (* CONVERSIONS *)
