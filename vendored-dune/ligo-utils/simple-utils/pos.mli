@@ -123,8 +123,9 @@ val min : file:string -> t
 
 (* COMPARISONS *)
 
-val equal : t -> t -> bool
-val lt    : t -> t -> bool
+val equal   : t -> t -> bool
+val lt      : t -> t -> bool
+val compare : t -> t -> int
 
 (* CONVERSIONS *)
 

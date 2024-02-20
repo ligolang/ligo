@@ -35,7 +35,7 @@ let scopes : Format.formatter -> inlined_scopes -> unit =
     let loc, defs = scope in
     let defs =
       List.sort defs ~compare:(fun d1 d2 ->
-          Simple_utils.Location_ordered.compare (get_range d1) (get_range d2))
+          Simple_utils.Location.compare (get_range d1) (get_range d2))
     in
     let pp_bindings f defs =
       List.iter defs ~f:(fun def ->
@@ -45,8 +45,7 @@ let scopes : Format.formatter -> inlined_scopes -> unit =
   in
   let pp_scopes f = List.iter ~f:(Format.fprintf f "@[<v>%a@ @]" pp_scope) in
   let s =
-    List.sort s ~compare:(fun (l1, _) (l2, _) ->
-        Simple_utils.Location_ordered.compare l1 l2)
+    List.sort s ~compare:(fun (l1, _) (l2, _) -> Simple_utils.Location.compare l1 l2)
   in
   Format.fprintf f "@[<v>Scopes:@ %a@]" pp_scopes s
 
@@ -190,7 +189,7 @@ and definitions : Format.formatter -> def list -> unit =
  fun ppf defs ->
   let defs =
     List.sort defs ~compare:(fun d1 d2 ->
-        Simple_utils.Location_ordered.compare (get_range d1) (get_range d2))
+        Simple_utils.Location.compare (get_range d1) (get_range d2))
   in
   let variables, labels_types_modules =
     List.partition_tf

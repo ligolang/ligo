@@ -200,3 +200,8 @@ let lt pos1 pos2 =
   String.equal pos1#file pos2#file
  && (pos1#line < pos2#line
     || pos1#line = pos2#line && pos1#byte_offset < pos2#byte_offset)
+
+let compare pos1 pos2 =
+  if equal pos1 pos2
+  then 0
+  else if lt pos1 pos2 then -1 else 1

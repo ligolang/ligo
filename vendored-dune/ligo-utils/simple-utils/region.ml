@@ -145,25 +145,19 @@ let min ~file = make ~start:(Pos.min ~file) ~stop:(Pos.min ~file)
 
 (* Comparisons *)
 
-let equal (r1 : t) (r2 : t) =
-  String.equal r1#file r2#file
-&& Pos.equal r1#start r2#start
-&& Pos.equal r1#stop  r2#stop
+let compare r1 r2 =
+  let file_cmp = String.compare r1#file r2#file in
+  let start_cmp = Pos.compare r1#start r2#start in
+  let stop_cmp = Pos.compare r1#stop r2#stop in
+  (match file_cmp, start_cmp, stop_cmp with
+  | 0, 0, c | 0, c, _ | c, _, _ -> c)
+
+let lt r1 r2 = compare r1 r2 < 0
+
+let equal r1 r2 = compare r1 r2 = 0
 
 let reg_equal eq {region=r1;value=v1} {region=r2;value=v2} =
   equal r1 r2 && eq v1 v2
-
-let lt r1 r2 =
-  String.equal r1#file r2#file
-&& not r1#is_ghost
-&& not r2#is_ghost
-&& Pos.lt r1#start r2#start
-&& Pos.lt r1#stop  r2#stop
-
-let compare r1 r2 =
-  if equal r1 r2 then 0
-  else if lt r1 r2 then -1
-  else 1
 
 let cover r1 r2 =
   if r1#is_ghost then r2
