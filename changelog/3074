@@ -1,0 +1,7 @@
+
+author: heitor.toledo
+description: "\\nFixed comparison for regions not being well formed, which could cause crashes in the LSP.\\n\\n"
+merge_request: '3074'
+title: "[#2148] Fix comparison for regions"
+type: fixed
+            

@@ -337,7 +337,7 @@ let rec patch : t -> Types.def list -> Types.def list =
     let same_name_lte =
       LMap.filter
         (fun _loc (_resolved_module_path, resolved_module) ->
-          Location_ordered.compare (Uid.to_location resolved_module) loc <= 0
+          Location.compare (Uid.to_location resolved_module) loc <= 0
           && String.equal (Uid.to_name resolved_module) name)
         m_alias
     in

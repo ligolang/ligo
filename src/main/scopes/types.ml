@@ -16,8 +16,8 @@ let get_mod_binder_name : Module_var.t -> string =
 
 module Location = Simple_utils.Location
 module List = Simple_utils.List
-module LSet = Caml.Set.Make (Simple_utils.Location_ordered)
-module LMap = Simple_utils.Map.Make (Simple_utils.Location_ordered)
+module LSet = Caml.Set.Make (Simple_utils.Location)
+module LMap = Simple_utils.Map.Make (Simple_utils.Location)
 
 module Uid : sig
   type t [@@deriving compare, sexp]
