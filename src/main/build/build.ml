@@ -481,6 +481,18 @@ let rec build_contract_aggregated ~raise
   let typed_prg =
     trace ~raise self_ast_typed_tracer @@ Self_ast_typed.all_program typed_prg
   in
+  let module_path =
+    let open Ast_typed.Misc in
+    (* if `module_path` is empty, `typed_prg` isn't a contract and `typed_prg`
+      contains only one contract module: let `module_path` become the path
+      to that single contract module *)
+    if List.is_empty module_path && Option.is_none (get_contract_opt typed_prg.pr_sig)
+    then (
+      match get_all_contracts typed_prg with
+      | [ (single_contract_module, _) ] -> [ single_contract_module ]
+      | _ -> module_path)
+    else module_path
+  in
   let _sig, contract_sig =
     let sig_ = Ast_typed.to_extended_signature typed_prg in
     trace_option

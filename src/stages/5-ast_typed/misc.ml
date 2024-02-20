@@ -401,15 +401,26 @@ let get_path_signature : signature -> Module_var.t list -> signature option =
     ~init:(Some prg_sig)
 
 
+let get_contract_opt sig_ =
+  match sig_.sig_sort with
+  | Ss_contract csig -> Some (sig_, csig)
+  | _ -> None
+
+
+let get_all_contracts prg =
+  List.filter_map prg.pr_sig.sig_items ~f:(fun sig_item ->
+      match Location.unwrap sig_item with
+      | S_module (v, { sig_sort = Ss_contract s; _ }) -> Some (v, s)
+      | _ -> None)
+
+
 let get_contract_signature
     : signature -> Module_var.t list -> (signature * contract_sig) option
   =
  fun prg_sig mods ->
   let open Simple_utils.Option in
   let* sig_ = get_path_signature prg_sig mods in
-  match sig_.sig_sort with
-  | Ss_contract csig -> return @@ (sig_, csig)
-  | _ -> None
+  get_contract_opt sig_
 
 
 let get_sig_value

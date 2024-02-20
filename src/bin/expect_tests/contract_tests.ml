@@ -3426,3 +3426,10 @@ let%expect_test "dry-run module contract" =
     ];
   [%expect {|
     ( LIST_EMPTY() , unit ) |}]
+
+let%expect_test "infer compilation target" =
+  run_ligo_good [ "compile"; "contract"; contract "single_contract_module_compile.mligo" ];
+  [%expect {|
+      { parameter unit ;
+        storage unit ;
+        code { DROP ; UNIT ; NIL operation ; PAIR } } |}]
