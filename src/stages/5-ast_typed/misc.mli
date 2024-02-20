@@ -62,3 +62,5 @@ val get_sig_value
   -> (ty_expr * Sig_item_attr.t) option
 
 val get_path_signature : signature -> Module_var.t list -> signature option
+val get_all_contracts : program -> (module_variable * contract_sig) list
+val get_contract_opt : signature -> (signature * contract_sig) option

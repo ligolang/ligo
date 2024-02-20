@@ -85,7 +85,10 @@ let function_name =
 let module_ =
   let open Command.Param in
   let name = "m" in
-  let doc = "MODULE the entry-point will be compiled from that module." in
+  let doc =
+    "MODULE the entry-point will be compiled from that module. Files containing a single \
+     contract module are automatically infered"
+  in
   let spec = optional_with_default Default_options.module_ string in
   flag ~doc ~aliases:[ "--module" ] name spec
 
@@ -793,7 +796,8 @@ let compile_file =
   let readme () =
     "This sub-command compiles a contract to Michelson code. It expects a source file \
      and an entrypoint function that has the type of a contract: \"parameter * storage \
-     -> operations list * storage\"."
+     -> operations list * storage\". If top-level is not a contract and defines only one \
+     contract module, this module become the compilation target (to avoid usage of -m)"
   in
   Command.basic
     ~summary

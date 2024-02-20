@@ -45,7 +45,7 @@ compile a contract.
 
   ligo compile contract SOURCE_FILE
 
-This sub-command compiles a contract to Michelson code. It expects a source file and an entrypoint function that has the type of a contract: "parameter * storage -> operations list * storage".
+This sub-command compiles a contract to Michelson code. It expects a source file and an entrypoint function that has the type of a contract: "parameter * storage -> operations list * storage". If top-level is not a contract and defines only one contract module, this module become the compilation target (to avoid usage of -m)
 
 === flags ===
 
@@ -115,7 +115,8 @@ This sub-command compiles a contract to Michelson code. It expects a source file
                              . (this command is deprecated) the entry-point that
                                will be compiled.
   [-m MODULE], --module      . the entry-point will be compiled from that
-                               module.
+                               module. Files containing a single contract module
+                               are automatically infered
   [-p PROTOCOL], --protocol  . choose protocol's types/values pre-loaded into
                                the LIGO environment (oxford2). By default, the
                                current protocol (oxford2) will be used
@@ -185,7 +186,8 @@ let%expect_test _ =
                                  . the entry-point to be matched against the
                                    parameter expression
       [-m MODULE], --module      . the entry-point will be compiled from that
-                                   module.
+                                   module. Files containing a single contract module
+                                   are automatically infered
       [-p PROTOCOL], --protocol  . choose protocol's types/values pre-loaded into
                                    the LIGO environment (oxford2). By default, the
                                    current protocol (oxford2) will be used
@@ -260,7 +262,8 @@ let%expect_test _ =
                                  . (this command is deprecated) the entry-point that
                                    will be compiled.
       [-m MODULE], --module      . the entry-point will be compiled from that
-                                   module.
+                                   module. Files containing a single contract module
+                                   are automatically infered
       [-p PROTOCOL], --protocol  . choose protocol's types/values pre-loaded into
                                    the LIGO environment (oxford2). By default, the
                                    current protocol (oxford2) will be used
@@ -356,7 +359,8 @@ let%expect_test _ =
                                  . (this command is deprecated) the entry-point that
                                    will be compiled.
       [-m MODULE], --module      . the entry-point will be compiled from that
-                                   module.
+                                   module. Files containing a single contract module
+                                   are automatically infered
       [-p PROTOCOL], --protocol  . choose protocol's types/values pre-loaded into
                                    the LIGO environment (oxford2). By default, the
                                    current protocol (oxford2) will be used
