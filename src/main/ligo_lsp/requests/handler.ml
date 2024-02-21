@@ -306,6 +306,7 @@ let with_cst
   match
     Ligo_api.Dialect_cst.get_cst
       ?project_root:(Option.map ~f:Path.to_string @@ Project_root.get_project_root path)
+      ~preprocess_define:(* TODO: extract from project root ? *) []
       ~strict
       ~file:(Path.to_string path)
       syntax

@@ -10,14 +10,20 @@ let to_unified
 
 
 let to_core ~raise ~options ~meta (c_unit : Buffer.t) file_path =
-  let unified = to_unified ~raise ~meta c_unit file_path in
+  let unified =
+    let preprocess_define = options.Compiler_options.frontend.preprocess_define in
+    to_unified ~raise ~meta ~preprocess_define c_unit file_path
+  in
   Of_unified.compile ~raise ~options unified
 
 
 let core_expression_string ~raise ~options syntax expression =
   let meta = Of_source.make_meta_from_syntax syntax in
   let c_unit_exp, _ = Of_source.compile_string_without_preproc expression in
-  let unified = Of_c_unit.compile_expression ~raise ~meta c_unit_exp in
+  let unified =
+    let preprocess_define = options.Compiler_options.frontend.preprocess_define in
+    Of_c_unit.compile_expression ~raise ~preprocess_define ~meta c_unit_exp
+  in
   Of_unified.compile_expression ~raise ~options unified
 
 
@@ -36,7 +42,8 @@ let core_program_string ~raise ~options syntax expression =
       ~meta
       expression
   in
-  let unified = Of_c_unit.compile_string ~raise ~meta c_unit in
+  let preprocess_define = options.frontend.preprocess_define in
+  let unified = Of_c_unit.compile_string ~raise ~meta ~preprocess_define c_unit in
   Of_unified.compile ~raise ~options unified
 
 
@@ -56,7 +63,8 @@ let type_expression ~raise ~options ?annotation ?wrap_variant syntax expression 
       ~meta
       expression
   in
-  let unified = Of_c_unit.compile_expression ~raise ~meta c_unit_exp in
+  let preprocess_define = options.frontend.preprocess_define in
+  let unified = Of_c_unit.compile_expression ~raise ~meta ~preprocess_define c_unit_exp in
   let core_exp = Of_unified.compile_expression ~raise ~options unified in
   let core_exp =
     match wrap_variant with
@@ -94,7 +102,10 @@ let type_ty_expression
       expression
   in
   c_unit_exp
-  |> Of_c_unit.compile_type_expression ~raise ~meta
+  |> Of_c_unit.compile_type_expression
+       ~raise
+       ~meta
+       ~preprocess_define:options.frontend.preprocess_define
   |> Of_unified.compile_type_expression ~raise ~options
   |> Of_core.compile_type_expression ~raise ~options ~context:init_sig
   |> Of_typed.compile_type_expression ~raise ~options
@@ -114,7 +125,10 @@ let compile_contract_input
   let (parameter, _), (storage, _) =
     Of_source.compile_contract_input ~raise ~options ~meta parameter storage
   in
-  let unified = Of_c_unit.compile_contract_input ~raise ~meta parameter storage in
+  let unified =
+    let preprocess_define = options.frontend.preprocess_define in
+    Of_c_unit.compile_contract_input ~raise ~meta ~preprocess_define parameter storage
+  in
   let core = Of_unified.compile_expression ~raise ~options unified in
   let typed =
     let context = Ast_typed.to_signature init_prog.pr_module in

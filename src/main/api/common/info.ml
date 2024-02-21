@@ -65,6 +65,7 @@ let dump_cst (raw_options : Raw_options.t) (source_files : string list) =
               Dialect_cst.get_cst_exn
                 ?project_root:options.frontend.project_root
                 ~preprocess:true
+                ~preprocess_define:raw_options.preprocess_define
                 ~strict:false
                 ~file:source_file
                 syntax

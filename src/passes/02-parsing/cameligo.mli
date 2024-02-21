@@ -24,6 +24,7 @@ module Make (Options: Options.S) :
     type 'a parser =
       ?jsligo:string option option ->
       ?preprocess:bool ->
+      preprocess_define: string list ->
       ?project_root:file_path ->
       raise:raise ->
       Buffer.t ->

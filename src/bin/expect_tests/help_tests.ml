@@ -111,6 +111,7 @@ This sub-command compiles a contract to Michelson code. It expects a source file
   [--warn-unused-rec]        . warn about unused recursion in a recursive
                                function
   [--werror]                 . treat warnings as errors
+  [-D pass]                  . a list of defines to the preprocessor
   [-e ENTRY-POINT], --entry-point
                              . (this command is deprecated) the entry-point that
                                will be compiled.
@@ -182,6 +183,7 @@ let%expect_test _ =
       [--warn-unused-rec]        . warn about unused recursion in a recursive
                                    function
       [--werror]                 . treat warnings as errors
+      [-D pass]                  . a list of defines to the preprocessor
       [-e ENTRY-POINT], --entry-point
                                  . the entry-point to be matched against the
                                    parameter expression
@@ -258,6 +260,7 @@ let%expect_test _ =
       [--warn-unused-rec]        . warn about unused recursion in a recursive
                                    function
       [--werror]                 . treat warnings as errors
+      [-D pass]                  . a list of defines to the preprocessor
       [-e ENTRY-POINT], --entry-point
                                  . (this command is deprecated) the entry-point that
                                    will be compiled.
@@ -304,6 +307,7 @@ let%expect_test _ =
                                    function
       [--werror]                 . treat warnings as errors
       [--without-run]            . disable running of compiled expression.
+      [-D pass]                  . a list of defines to the preprocessor
       [-p PROTOCOL], --protocol  . choose protocol's types/values pre-loaded into
                                    the LIGO environment (oxford2). By default, the
                                    current protocol (oxford2) will be used
@@ -516,6 +520,7 @@ let%expect_test _ =
                                    function
       [--werror]                 . treat warnings as errors
       [--without-run]            . disable running of compiled expression.
+      [-D pass]                  . a list of defines to the preprocessor
       [-p PROTOCOL], --protocol  . choose protocol's types/values pre-loaded into
                                    the LIGO environment (oxford2). By default, the
                                    current protocol (oxford2) will be used

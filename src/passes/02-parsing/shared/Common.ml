@@ -77,6 +77,7 @@ module MakeParser
     type 'a parser =
       ?jsligo:string option option ->
       ?preprocess:bool ->
+      preprocess_define: string list ->
       ?project_root:file_path ->
       raise:raise ->
       Buffer.t ->
@@ -191,11 +192,12 @@ module MakeParser
 
         end
 
-    let gen_parser ?(jsligo=None) ?(preprocess=true) ?project_root ~raise
+    let gen_parser ?(jsligo=None) ?(preprocess=true) ~preprocess_define ?project_root ~raise
                 ?file_path buffer : CST.tree =
       let module Options : ParserLexerOptions = struct
         let jsligo = jsligo
         let preprocess = preprocess
+        let preprocess_define = preprocess_define
         let project_root = project_root
         let raise = raise
         let file_path = file_path
@@ -216,16 +218,16 @@ module MakeParser
 
     (* Parsing a file *)
 
-    let from_file ?jsligo ?preprocess ?project_root ~raise buffer file_path
+    let from_file ?jsligo ?preprocess ~preprocess_define ?project_root ~raise buffer file_path
       : CST.tree =
-      gen_parser ?jsligo ?preprocess ?project_root ~raise ~file_path buffer
+      gen_parser ?jsligo ?preprocess ~preprocess_define ?project_root ~raise ~file_path buffer
 
     let parse_file = from_file
 
     (* Parsing a string *)
 
-    let from_string ?jsligo ?preprocess ?project_root ~raise buffer : CST.tree =
-      gen_parser ?jsligo ?preprocess ?project_root ~raise buffer
+    let from_string ?jsligo ?preprocess ~preprocess_define ?project_root ~raise buffer : CST.tree =
+      gen_parser ?jsligo ?preprocess ~preprocess_define ?project_root ~raise buffer
 
     let parse_string = from_string
   end
@@ -309,6 +311,7 @@ module MakeTwoParsers
     type 'a parser =
       ?jsligo:string option option ->
       ?preprocess:bool ->
+      preprocess_define: string list ->
       ?project_root:file_path ->
       raise:raise ->
       Buffer.t ->

@@ -43,7 +43,13 @@ let expression expression new_syntax syntax libraries =
           ~meta
           expression
       in
-      let unified = Compile.Of_c_unit.compile_expression ~raise ~meta c_unit_expr in
+      let unified =
+        let preprocess_define =
+          ignore options;
+          assert false
+        in
+        Compile.Of_c_unit.compile_expression ~raise ~meta ~preprocess_define c_unit_expr
+      in
       let core = Compile.Of_unified.compile_expression ~options ~raise unified in
       (* Decompiling chain *)
       let n_syntax = Syntax.of_string_opt ~raise (Syntax_name new_syntax) None in

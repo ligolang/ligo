@@ -39,17 +39,30 @@ let test { test_name; actual; expected } =
     }
   in
   let preprocess = false in
+  let preprocess_define = [] in
   let formatted_contents =
     Parsing.(
       match syntax with
       | CameLIGO ->
         let module Parse = Cameligo.Make (Options) in
         let module Pretty = Cameligo.Pretty in
-        Parse.pretty_print_file ~preprocess ~raise Pretty.default_state buffer actual
+        Parse.pretty_print_file
+          ~preprocess
+          ~preprocess_define
+          ~raise
+          Pretty.default_state
+          buffer
+          actual
       | JsLIGO ->
         let module Parse = Jsligo.Make (Options) in
         let module Pretty = Jsligo.Pretty in
-        Parse.pretty_print_file ~preprocess ~raise Pretty.default_state buffer actual)
+        Parse.pretty_print_file
+          ~preprocess
+          ~preprocess_define
+          ~raise
+          Pretty.default_state
+          buffer
+          actual)
   in
   Alcotest.(check string)
     (Format.asprintf "Formatted contents of the files (%s) should be equal" actual)

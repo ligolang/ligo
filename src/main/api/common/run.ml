@@ -240,7 +240,11 @@ let evaluate_call
           parameter
       in
       let imperative_param =
-        Compile.Of_c_unit.compile_expression ~raise ~meta c_unit_param
+        Compile.Of_c_unit.compile_expression
+          ~raise
+          ~meta
+          ~preprocess_define:options.frontend.preprocess_define
+          c_unit_param
       in
       let core_param =
         Compile.Of_unified.compile_expression ~raise ~options imperative_param
