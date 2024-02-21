@@ -147,3 +147,39 @@
   (diff
    ../../contracts/lsp/formatted_comments.jsligo
    format_me_comments_formatted.jsligo_output)))
+
+;;
+
+(rule
+ (targets format_two_backslashes_formatted.mligo_output)
+ (action
+  (run
+   ./formatting_test.exe
+   ../../contracts/lsp/format_two_backslashes.mligo
+   format_two_backslashes_formatted.mligo_output))
+ (deps ../../contracts/lsp/format_two_backslashes.mligo))
+
+(rule
+ (alias runtest)
+ (action
+  (diff
+   ../../contracts/lsp/formatted_backslashes.mligo
+   format_two_backslashes_formatted.mligo_output)))
+
+;;
+
+(rule
+ (targets format_two_backslashes_formatted.jsligo_output)
+ (action
+  (run
+   ./formatting_test.exe
+   ../../contracts/lsp/format_two_backslashes.jsligo
+   format_two_backslashes_formatted.jsligo_output))
+ (deps ../../contracts/lsp/format_two_backslashes.jsligo))
+
+(rule
+ (alias runtest)
+ (action
+  (diff
+   ../../contracts/lsp/formatted_backslashes.jsligo
+   format_two_backslashes_formatted.jsligo_output)))

@@ -11,8 +11,7 @@ let%expect_test _ =
     ; "-D"
     ; "FOO"
     ];
-  [%expect
-    {|
+  [%expect {|
     1 |}]
 
 let%expect_test _ =
@@ -24,6 +23,5 @@ let%expect_test _ =
     ; "--init-file"
     ; test "preprocessor_define.mligo"
     ];
-  [%expect
-    {|
+  [%expect {|
     Variable "x" not found. |}]
