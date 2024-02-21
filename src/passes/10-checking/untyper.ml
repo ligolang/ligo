@@ -261,11 +261,13 @@ and untype_declaration_type : _ O.Type_decl.t -> _ I.Type_decl.t =
 and untype_declaration_module : _ O.Module_decl.t -> _ I.Module_decl.t =
  fun { module_binder
      ; module_
-     ; module_attr = { public; hidden; leading_comments }
+     ; module_attr = { public; hidden; leading_comments; deprecated }
      ; annotation
      } ->
   let module_ = untype_module_expr module_ in
-  let module_attr = ({ public; hidden; leading_comments } : I.TypeOrModuleAttr.t) in
+  let module_attr =
+    ({ public; hidden; leading_comments; deprecated } : I.TypeOrModuleAttr.t)
+  in
   { module_binder; module_; module_attr; annotation }
 
 

@@ -147,6 +147,7 @@ end = struct
     | { key = "hidden"; value = None } -> { o_attr with hidden = true }
     | { key = "comment"; value = Some comment } ->
       { o_attr with leading_comments = comment :: o_attr.leading_comments }
+    | { key = "deprecated"; value } -> { o_attr with deprecated = value }
     | _ ->
       raise.warning (`Nanopasses_attribute_ignored loc);
       Type_or_module_attr.default_attributes

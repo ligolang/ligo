@@ -6,3 +6,8 @@ module C = struct
 end
 
 let test = Test.log (f ())
+
+[@deprecated "@!FOO!this is h, but only h or i will trigger"] let h () = 3
+[@deprecated "@!FOO!this is h, but only h or i will trigger"] let i () = 3
+
+let test2 = Test.log (h () + i ())

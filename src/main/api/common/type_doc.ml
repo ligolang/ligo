@@ -124,13 +124,17 @@ let rec decl_to_typescript (decl : Ast_typed.decl) : document =
     let binders = Linear_pattern.binders pattern in
     let doc = comments_to_doc leading_comments in
     unlines @@ List.map binders ~f:(binder_doc public doc)
-  | D_type { type_binder; type_expr; type_attr = { public; hidden; leading_comments } }
+  | D_type
+      { type_binder
+      ; type_expr
+      ; type_attr = { public; hidden; leading_comments; deprecated }
+      }
     when not hidden ->
     type_expr_doc public (comments_to_doc leading_comments) type_binder type_expr
   | D_module
       { module_binder
       ; module_ = { module_content; _ }
-      ; module_attr = { public; hidden; leading_comments }
+      ; module_attr = { public; hidden; leading_comments; deprecated }
       ; _
       }
     when (not hidden) && not (Module_var.is_generated module_binder) ->
