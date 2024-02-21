@@ -231,7 +231,15 @@ let print_mutez (node : (lexeme * Int64.t) wrap) =
 
 let print_ctor (node : ctor) = token node
 
-let print_string (node : lexeme wrap) = dquotes (token node)
+let print_string (node : lexeme wrap) =
+  let escape node =
+    if Parsing_shared.Errors.ErrorWrapper.is_wrapped node#payload
+    then node#payload
+    else String.escaped node#payload
+  in
+  let prefix =
+    print_comments node#comments ^^ string (escape node)
+  in dquotes (print_line_comment_opt prefix node#line_comment)
 
 and print_verbatim (node : lexeme wrap) = bquotes (token node)
 

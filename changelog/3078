@@ -1,0 +1,7 @@
+
+author: rinderkn
+description: "\\nStrings are now properly escaped upon formatting.\\n\\n"
+merge_request: '3078'
+title: "Added escaping with pretty-printing tokens (including strings)."
+type: fixed
+            
