@@ -421,7 +421,7 @@ and compile_type : I.type_expression -> O.type_expression =
   let self = compile_type in
   let return type_content : O.type_expression =
     { type_content
-    ; orig_var = Option.map ty.orig_var ~f:snd
+    ; orig_var = Option.map ty.abbrev ~f:(fun { orig_var = _, v; _ } -> v)
     ; location = ty.location
     ; source_type = Some ty
     }

@@ -103,7 +103,7 @@ let map_core_type_expression_module_path
         | T_singleton _ ) as t -> t)
 
 
-let map_typed_type_expression_module_path
+let rec map_typed_type_expression_module_path
     :  (Ligo_prim.Module_var.t list -> Ligo_prim.Module_var.t list)
     -> Ast_typed.type_expression -> Ast_typed.type_expression
   =
@@ -126,9 +126,15 @@ let map_typed_type_expression_module_path
   and row : Ast_typed.row -> Ast_typed.row =
    fun { fields; layout } -> { fields = Label.Map.map fields ~f:type_expression; layout }
   and type_expression : Ast_typed.type_expression -> Ast_typed.type_expression =
-   fun { type_content = t; orig_var; location } ->
+   fun { type_content = t; abbrev; location } ->
     { type_content = type_content t
-    ; orig_var = Option.map orig_var ~f:(Tuple2.map_fst ~f)
+    ; abbrev =
+        Option.map abbrev ~f:(fun { orig_var; applied_types } ->
+            Ast_typed.
+              { orig_var = Tuple2.map_fst ~f orig_var
+              ; applied_types =
+                  List.map ~f:(map_typed_type_expression_module_path f) applied_types
+              })
     ; location
     }
   in

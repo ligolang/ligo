@@ -76,8 +76,8 @@ let type_expr_doc
         angles (separate comma @@ List.map params ~f:(string <@ Type_var.to_name_exn))
     in
     let name = Type_var.to_name_exn name in
-    (* We want to avoid cases like "type t = t", so, lets remove its original name *)
-    let typ = decompile_type { ty_expr with orig_var = None } in
+    (* We want to avoid cases like "type t = t", so, lets remove its original abbreviation *)
+    let typ = decompile_type { ty_expr with abbrev = None } in
     attach_doc doc_opt @@ unwords [ export public; !^"type"; !^name; params; equals; typ ])
 
 

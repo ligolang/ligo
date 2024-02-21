@@ -30,10 +30,16 @@ and te_list = type_expression list
 and annot_option = string option
 and row_element = ty_expr Row.t
 
+and abbrev =
+  { orig_var : Module_var.t list * Type_var.t
+  ; applied_types : type_expression list
+        (** [orig_var] doesn't remember type parameters,
+            so to be able using the [orig_var] for parametric types we store the params here. *)
+  }
+
 and type_expression =
   { type_content : type_content
-  ; orig_var : (Module_var.t list * Type_var.t) option
-        [@eq.ignore] [@hash.ignore] [@compare.ignore]
+  ; abbrev : abbrev option [@eq.ignore] [@hash.ignore] [@compare.ignore]
   ; location : Location.t [@eq.ignore] [@hash.ignore] [@compare.ignore]
   }
 

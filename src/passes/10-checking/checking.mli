@@ -1,6 +1,7 @@
 module I = Ast_core
 module O = Ast_typed
 module Errors = Errors
+module Type_var_name_tbl = Type.Type_var_name_tbl
 open Errors
 open Simple_utils.Trace
 

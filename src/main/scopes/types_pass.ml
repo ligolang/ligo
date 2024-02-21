@@ -167,9 +167,10 @@ module Of_Ast_typed = struct
    fun env -> function
     | Type_binding (v, t) ->
       let t =
-        match t.orig_var with
-        | Some (path, t') -> { t with type_content = T_variable t' }
-        | None -> t
+        match t.abbrev with
+        | Some { orig_var = _path, t'; applied_types = [] } ->
+          { t with type_content = T_variable t' }
+        | Some { orig_var = _; applied_types = _ :: _ } | None -> t
       in
       let loc = Value_var.get_location v in
       let type_case = Resolved t in
@@ -706,6 +707,153 @@ module Typing_env = struct
     raise.log_error (tracer e)
 
 
+  let make_concise_name ~name_tbl name =
+    if Type_var.is_generated name
+    then (
+      let name_content = Checking.Type_var_name_tbl.name_of name_tbl name in
+      Type_var.of_input_var ~loc:(Type_var.get_location name) name_content)
+    else name
+
+
+  (** Convenient function that creates a hashmap,
+      passes it into continuation, and clears it after all. *)
+  let with_name_tbl : f:(name_tbl:Checking.Type_var_name_tbl.t -> 'a) -> 'a =
+   fun ~f ->
+    let name_tbl = Checking.Type_var_name_tbl.create () in
+    let result = f ~name_tbl in
+    Checking.Type_var_name_tbl.clear name_tbl;
+    result
+
+
+  let rec replace_gen_type_vars_type_expression ~name_tbl
+      : Ast_typed.type_expression -> Ast_typed.type_expression
+    =
+    Ast_typed.Helpers.map_type_expression ~f:(fun ty_expr ->
+        let self = replace_gen_type_vars_type_expression ~name_tbl in
+        let ty_expr = Ast_typed.Helpers.map_applied_types ~f:self ty_expr in
+        let return type_content = { ty_expr with type_content } in
+        let make_concise_name = make_concise_name ~name_tbl in
+        return
+        @@
+        match ty_expr.type_content with
+        | T_variable tvar -> T_variable (make_concise_name tvar)
+        | T_abstraction abstr ->
+          T_abstraction { abstr with ty_binder = make_concise_name abstr.ty_binder }
+        | T_for_all for_all ->
+          T_for_all { for_all with ty_binder = make_concise_name for_all.ty_binder }
+        | (T_constant _ | T_sum _ | T_record _ | T_arrow _ | T_singleton _) as tc -> tc)
+
+
+  and replace_gen_type_vars_expression ~name_tbl
+      : Ast_typed.expression -> Ast_typed.expression
+    =
+    Ast_typed.Helpers.map_expression ~f:(fun expr ->
+        let self_type_expr = replace_gen_type_vars_type_expression ~name_tbl in
+        let type_expression = self_type_expr expr.type_expression in
+        let return ?(continue = true) expression_content =
+          continue, { expr with expression_content; type_expression }
+        in
+        match expr.expression_content with
+        | E_lambda lam -> return @@ E_lambda (Lambda.map Fn.id self_type_expr lam)
+        | E_recursive recursive ->
+          return @@ E_recursive (Recursive.map Fn.id self_type_expr recursive)
+        | E_let_in let_in ->
+          return @@ E_let_in (Ast_typed.Let_in.map Fn.id self_type_expr let_in)
+        | E_type_inst { forall; type_ } ->
+          let type_ = self_type_expr type_ in
+          return @@ E_type_inst { forall; type_ }
+        | E_coerce ascr -> return @@ E_coerce (Ascription.map Fn.id self_type_expr ascr)
+        | E_matching matching ->
+          return @@ E_matching (Ast_typed.Match_expr.map Fn.id self_type_expr matching)
+        | E_let_mut_in let_mut_in ->
+          return @@ E_let_mut_in (Ast_typed.Let_in.map Fn.id self_type_expr let_mut_in)
+        | E_assign assign -> return @@ E_assign (Assign.map Fn.id self_type_expr assign)
+        | E_mod_in mod_in ->
+          return ~continue:false
+          @@ E_mod_in (Mod_in.map Fn.id replace_gen_type_vars_module_expr mod_in)
+        | E_type_abstraction { type_binder; result } ->
+          let type_binder = make_concise_name ~name_tbl type_binder in
+          return @@ E_type_abstraction { type_binder; result }
+        | ( E_variable _
+          | E_contract _
+          | E_literal _
+          | E_module_accessor _
+          | E_deref _
+          | E_constant _
+          | E_application _
+          | E_raw_code _
+          | E_constructor _
+          | E_record _
+          | E_accessor _
+          | E_update _
+          | E_for _
+          | E_for_each _
+          | E_while _ ) as ec -> return @@ ec)
+
+
+  (* We want to have one name table per declaration.
+     We'll pass it into expression/type replacement functions.
+
+     For each module/signature we'll create a separate one. *)
+
+  and replace_gen_type_vars_module_expr : Ast_typed.module_expr -> Ast_typed.module_expr =
+   fun { module_content; module_location; signature } ->
+    let module_content = Module_expr.map replace_gen_type_vars_decl module_content in
+    let signature = replace_gen_type_vars_signature signature in
+    { module_content; module_location; signature }
+
+
+  and replace_gen_type_vars_signature : Ast_typed.signature -> Ast_typed.signature =
+   fun { sig_items; sig_sort } ->
+    let sig_items = List.map sig_items ~f:replace_gen_type_vars_sig_item in
+    { sig_items; sig_sort }
+
+
+  and replace_gen_type_vars_sig_item : Ast_typed.sig_item -> Ast_typed.sig_item =
+   fun sig_item ->
+    with_name_tbl ~f:(fun ~name_tbl ->
+        let return = Location.wrap ~loc:sig_item.location in
+        let make_concise_name = make_concise_name ~name_tbl in
+        let self_type_expr = replace_gen_type_vars_type_expression ~name_tbl in
+        return
+        @@
+        match sig_item.wrap_content with
+        | S_value (vvar, ty_expr, attr) ->
+          Ast_typed.S_value (vvar, self_type_expr ty_expr, attr)
+        | S_type (tvar, ty_expr, attr) ->
+          S_type (make_concise_name tvar, self_type_expr ty_expr, attr)
+        | S_type_var (tvar, attr) -> S_type_var (make_concise_name tvar, attr)
+        | S_module (mvar, sig_) -> S_module (mvar, replace_gen_type_vars_signature sig_)
+        | S_module_type (mvar, sig_) ->
+          S_module_type (mvar, replace_gen_type_vars_signature sig_))
+
+
+  (** Replace all generated type variables in declaration with concise ones. *)
+  and replace_gen_type_vars_decl : Ast_typed.declaration -> Ast_typed.declaration =
+   fun decl ->
+    with_name_tbl ~f:(fun ~name_tbl ->
+        let self_expr = replace_gen_type_vars_expression ~name_tbl in
+        let self_type_expr = replace_gen_type_vars_type_expression ~name_tbl in
+        let return : Ast_typed.declaration_content -> Ast_typed.declaration =
+          Location.wrap ~loc:decl.location
+        in
+        return
+        @@
+        match decl.wrap_content with
+        | D_value d_value ->
+          D_value (Ast_typed.Value_decl.map self_expr self_type_expr d_value)
+        | D_irrefutable_match d_irr ->
+          D_irrefutable_match (Ast_typed.Pattern_decl.map self_expr self_type_expr d_irr)
+        | D_type d_type -> D_type (Ast_typed.Type_decl.map self_type_expr d_type)
+        | D_module d_module ->
+          D_module
+            (Ast_typed.Module_decl.map replace_gen_type_vars_module_expr Fn.id d_module)
+        | D_module_include d_module_include ->
+          D_module_include (replace_gen_type_vars_module_expr d_module_include)
+        | D_signature d_sig ->
+          D_signature (Ast_typed.Signature_decl.map replace_gen_type_vars_signature d_sig))
+
+
   let update_typing_env
       ~(raise : (Main_errors.all, Main_warnings.all) Trace.raise)
       ~options
@@ -718,7 +866,12 @@ module Typing_env = struct
     in
     match typed_prg with
     | Ok (decls, ws) ->
+      (* [Checking.Type_var_name_tbl.name_of] also looks into this shared map
+         before creating a fresh pretty name. So, first variables from
+         the type may have names starting from the middle of the latin alphabet. *)
+      Checking.Type_var_name_tbl.Exists.clear ();
       List.fold_left decls ~init:tenv ~f:(fun tenv decl ->
+          let decl = replace_gen_type_vars_decl decl in
           let bindings =
             Of_Ast_typed.extract_binding_types tenv.bindings decl.wrap_content
           in

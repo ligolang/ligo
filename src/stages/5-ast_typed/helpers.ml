@@ -208,22 +208,65 @@ let fold_map_program : 'a fold_mapper -> 'a -> program -> 'a * program =
   res, { p with pr_module = module_ }
 
 
-let rec fold_type_expression
+let rec fold_map_type_expression
+    : type a.
+      type_expression
+      -> init:a
+      -> f:(a -> type_expression -> a * type_expression)
+      -> a * type_expression
+  =
+ fun te ~init ~f ->
+  let self te = fold_map_type_expression te ~f in
+  let init, te = f init te in
+  let return type_content = { te with type_content } in
+  match te.type_content with
+  | (T_variable _ | T_singleton _) as tc -> init, return tc
+  | T_constant { parameters; language; injection } ->
+    let init, parameters = List.fold_map parameters ~init ~f in
+    init, return @@ T_constant { parameters; language; injection }
+  | T_sum (row, orig_label) ->
+    let init, fields = Record.fold_map row.fields ~init ~f in
+    init, return @@ T_sum ({ row with fields }, orig_label)
+  | T_record row ->
+    let init, fields = Record.fold_map row.fields ~init ~f in
+    init, return @@ T_record { row with fields }
+  | T_arrow { type1; type2; param_names } ->
+    let init, type1 = self type1 ~init in
+    let init, type2 = self type2 ~init in
+    init, return @@ T_arrow { type1; type2; param_names }
+  | T_abstraction { type_; kind; ty_binder } ->
+    let init, type_ = self type_ ~init in
+    init, return @@ T_abstraction { type_; kind; ty_binder }
+  | T_for_all { type_; kind; ty_binder } ->
+    let init, type_ = self type_ ~init in
+    init, return @@ T_for_all { type_; kind; ty_binder }
+
+
+let fold_type_expression
     : type a. type_expression -> init:a -> f:(a -> type_expression -> a) -> a
   =
  fun te ~init ~f ->
-  let self te = fold_type_expression te ~f in
-  let init = f init te in
-  match te.type_content with
-  | T_variable _ -> init
-  | T_constant { parameters; _ } -> List.fold parameters ~init ~f
-  | T_sum (row, _) | T_record row -> Row.fold f init row
-  | T_arrow { type1; type2; param_names = _ } -> self type2 ~init:(self type1 ~init)
-  | T_singleton _ -> init
-  | T_abstraction { type_; _ } | T_for_all { type_; _ } -> self type_ ~init
+  fst @@ fold_map_type_expression te ~init ~f:(fun acc te -> f acc te, te)
 
 
-let map_expression f prg = snd @@ fold_map_program (fun () exp -> true, (), f exp) () prg
+let map_type_expression
+    : type_expression -> f:(type_expression -> type_expression) -> type_expression
+  =
+ fun te ~f -> snd @@ fold_map_type_expression te ~init:() ~f:(fun () te -> (), f te)
+
+
+let map_expression : f:(expression -> bool * expression) -> expression -> expression =
+ fun ~f expr ->
+  snd
+  @@ fold_map_expression
+       (fun () expr ->
+         let continue, expr = f expr in
+         continue, (), expr)
+       ()
+       expr
+
+
+let map_program f prg = snd @@ fold_map_program (fun () exp -> true, (), f exp) () prg
 
 (* An [IdMap] is a [Map] augmented with an [id] field (which is wrapped around the map [value] field).
   Using a map instead of a list makes shadowed modules inaccessible,
@@ -316,3 +359,18 @@ let fetch_view_type : declaration -> (type_expression * type_expression Binder.t
   | D_module _
   | D_module_include _
   | D_signature _ -> None
+
+
+let map_orig_var ~f t =
+  { t with
+    abbrev =
+      Option.map t.abbrev ~f:(fun abbrev -> { abbrev with orig_var = f abbrev.orig_var })
+  }
+
+
+let map_applied_types ~f t =
+  { t with
+    abbrev =
+      Option.map t.abbrev ~f:(fun abbrev ->
+          { abbrev with applied_types = List.map ~f abbrev.applied_types })
+  }

@@ -13,12 +13,14 @@ type mangled_mdefs = mdef SMap.t
 (** Mapping from mangled UIDs to resolved UIDs. *)
 type mangled_to_resolved = Uid.t UidMap.t
 
-let extracted_mangled_uids : def list -> mangled_to_resolved =
+let rec extracted_mangled_uids : def list -> mangled_to_resolved =
   List.fold ~init:UidMap.empty ~f:(fun acc -> function
     | Variable _ | Type _ | Label _ -> acc
     | Module mdef ->
       (match mdef.mod_case with
-      | Alias { resolve_mod_name = Unresolved_path _ } | Def _ -> acc
+      | Def defs ->
+        UidMap.union (fun _uid _fst snd -> Some snd) acc (extracted_mangled_uids defs)
+      | Alias { resolve_mod_name = Unresolved_path _ } -> acc
       | Alias { resolve_mod_name = Resolved_path resolved } ->
         if Location.equal (Uid.to_location resolved.resolved_module) Location.env
            && String.is_prefix
