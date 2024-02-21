@@ -110,6 +110,7 @@ let mk_mod_path :
 %on_error_reduce
   last_or_more(block_stmt)
   nseq(__anonymous_2)
+  object_expr
 
 (* See [ParToken.mly] for the definition of tokens. *)
 
@@ -984,7 +985,7 @@ non_object_expr:
 (* Object expressions *)
 
 object_level_expr:
-  object_expr   { E_Object $1 }
+  object_expr   { $1 }
 | object_update { E_Update $1 }
 
 (* Functional expressions *)
@@ -1297,7 +1298,16 @@ literal_expr:
 (* Object expressions *)
 
 object_expr:
-  braces (sep_or_term (property (expr), property_sep)) { $1 }
+  untyped_object_expr | typed_object_expr { $1 }
+
+untyped_object_expr:
+  braces (sep_or_term (property (expr), property_sep)) { E_Object $1 }
+
+typed_object_expr:
+  untyped_object_expr "as" type_expr {
+    let stop   = type_expr_to_region $3 in
+    let region = cover (expr_to_region $1) stop
+    in E_Typed {region; value=($1,$2,$3)} }
 
 property (right_expr):
   property_id ioption(":" right_expr { $1,$2 }) {
