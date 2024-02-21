@@ -36,6 +36,7 @@ module Options = Parameters.Options
 let get_cst_exn
     ?(preprocess = false)
     ?(project_root : string option)
+    ~preprocess_define
     ~(strict : bool)
     ~(file : string)
     (syntax : Syntax_types.t)
@@ -62,14 +63,17 @@ let get_cst_exn
   match syntax with
   | CameLIGO ->
     let module Parse = Cameligo.Make (Options) in
-    CameLIGO (Parse.parse_file ~preprocess ?project_root ~raise c_unit file)
+    CameLIGO
+      (Parse.parse_file ~preprocess ~preprocess_define ?project_root ~raise c_unit file)
   | JsLIGO ->
     let module Parse = Jsligo.Make (Options) in
-    JsLIGO (Parse.parse_file ~preprocess ?project_root ~raise c_unit file)
+    JsLIGO
+      (Parse.parse_file ~preprocess ~preprocess_define ?project_root ~raise c_unit file)
 
 
 let get_cst
     ?(preprocess = false)
+    ~(preprocess_define : string list)
     ?(project_root : string option)
     ~(strict : bool)
     ~(file : string)
@@ -77,5 +81,15 @@ let get_cst
     (c_unit : Buffer.t)
     : (t, string) result
   =
-  try Ok (get_cst_exn ~preprocess ?project_root ~strict ~file syntax c_unit) with
+  try
+    Ok
+      (get_cst_exn
+         ~preprocess
+         ~preprocess_define
+         ?project_root
+         ~strict
+         ~file
+         syntax
+         c_unit)
+  with
   | Fatal_cst_error err -> Error err

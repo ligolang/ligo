@@ -49,12 +49,12 @@ module Make (Options : Options.S) =
     type raise = (Errors.t, Main_warnings.all) Trace.raise
 
     let pretty_print_file
-        env ?jsligo ?preprocess ?project_root ~raise buffer file_path =
+        env ?jsligo ?preprocess ~preprocess_define ?project_root ~raise buffer file_path =
       parse_file
-        ?jsligo ?preprocess ?project_root ~raise buffer file_path
+        ?jsligo ?preprocess ~preprocess_define ?project_root ~raise buffer file_path
       |> pretty_print env
 
-    let pretty_print_cst ?jsligo ?preprocess ?project_root
+    let pretty_print_cst ?jsligo ?preprocess ~preprocess_define ?project_root
                          ~raise buffer file_path =
       let module PreprocParams =
         Preprocessor.CLI.MakeDefault (Config) in
@@ -68,7 +68,7 @@ module Make (Options : Options.S) =
           let layout  = true
           let regions = true
         end in
-      let tree   = parse_file ?jsligo ?preprocess ?project_root
+      let tree   = parse_file ?jsligo ?preprocess ~preprocess_define ?project_root
                               ~raise buffer file_path in
       let buffer = Buffer.create 59 in
       let open Options in

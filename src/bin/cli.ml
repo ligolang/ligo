@@ -516,6 +516,20 @@ let hide_sort : _ Command.Param.t =
   flag ~doc ~aliases:[ "hide" ] "--hide-sort" spec
 
 
+let preprocess_define : string list Command.Param.t =
+  let open Command.Param in
+  let doc = "pass a list of defines to the preprocessor" in
+  let sort_type = Core.Command.Arg_type.create Fun.id in
+  let spec =
+    optional_with_default []
+    @@ Command.Arg_type.comma_separated
+         ~strip_whitespace:true
+         ~unique_values:true
+         sort_type
+  in
+  flag ~doc ~aliases:[] "-D" spec
+
+
 let function_body =
   let open Command.Param in
   let name = "--function-body" in
@@ -732,6 +746,7 @@ let compile_file =
       no_stdlib
       michelson_format
       output_file
+      preprocess_define
       show_warnings
       warning_as_error
       no_colour
@@ -766,6 +781,7 @@ let compile_file =
         ~warn_unused_rec
         ~warn_infinite_loop
         ~libraries
+        ~preprocess_define
         ()
     in
     let cli_analytics =
@@ -816,6 +832,7 @@ let compile_file =
     <*> no_stdlib
     <*> michelson_code_format
     <*> output_file
+    <*> preprocess_define
     <*> warn
     <*> werror
     <*> no_colour
@@ -848,6 +865,7 @@ let compile_parameter =
       no_colour
       skip_analytics
       michelson_format
+      preprocess_define
       output_file
       show_warnings
       warning_as_error
@@ -871,6 +889,7 @@ let compile_parameter =
         ~warn_unused_rec
         ~warn_infinite_loop
         ~libraries
+        ~preprocess_define
         ()
     in
     let cli_analytics =
@@ -926,6 +945,7 @@ let compile_parameter =
     <*> no_colour
     <*> skip_analytics
     <*> michelson_code_format
+    <*> preprocess_define
     <*> output_file
     <*> warn
     <*> werror
@@ -949,6 +969,7 @@ let compile_expression =
       without_run
       no_stdlib
       michelson_format
+      preprocess_define
       show_warnings
       warning_as_error
       constants
@@ -974,6 +995,7 @@ let compile_expression =
         ~warn_infinite_loop
         ~libraries
         ~function_body
+        ~preprocess_define
         ()
     in
     let cli_analytics =
@@ -1012,6 +1034,7 @@ let compile_expression =
     <*> without_run
     <*> no_stdlib
     <*> michelson_code_format
+    <*> preprocess_define
     <*> warn
     <*> werror
     <*> constants
@@ -1034,6 +1057,7 @@ let compile_type =
       skip_analytics
       no_stdlib
       michelson_format
+      preprocess_define
       show_warnings
       warning_as_error
       project_root
@@ -1052,6 +1076,7 @@ let compile_type =
         ~warn_unused_rec
         ~warn_infinite_loop
         ~libraries
+        ~preprocess_define
         ()
     in
     let cli_analytics =
@@ -1085,6 +1110,7 @@ let compile_type =
     <*> skip_analytics
     <*> no_stdlib
     <*> michelson_code_format
+    <*> preprocess_define
     <*> warn
     <*> werror
     <*> project_root
@@ -1113,6 +1139,7 @@ let compile_storage =
       disallow_json_download
       skip_analytics
       michelson_format
+      preprocess_define
       output_file
       show_warnings
       warning_as_error
@@ -1203,6 +1230,7 @@ let compile_storage =
     <*> disallow_json_download
     <*> skip_analytics
     <*> michelson_code_format
+    <*> preprocess_define
     <*> output_file
     <*> warn
     <*> werror
@@ -1224,6 +1252,7 @@ let compile_constant =
       no_colour
       skip_analytics
       without_run
+      preprocess_define
       show_warnings
       warning_as_error
       project_root
@@ -1242,6 +1271,7 @@ let compile_constant =
         ~warn_unused_rec
         ~warn_infinite_loop
         ~libraries
+        ~preprocess_define
         ()
     in
     let cli_analytics =
@@ -1278,6 +1308,7 @@ let compile_constant =
     <*> no_colour
     <*> skip_analytics
     <*> without_run
+    <*> preprocess_define
     <*> warn
     <*> werror
     <*> project_root

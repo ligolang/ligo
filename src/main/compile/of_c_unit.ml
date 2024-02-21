@@ -3,21 +3,33 @@ open Helpers
 
 type c_unit = Buffer.t
 
-let compile ~raise ~meta c_unit (source_filename : string) : Ast_unified.program =
-  parse_and_abstract ~raise ~meta c_unit source_filename
+let compile ~raise ~meta ~preprocess_define c_unit (source_filename : string)
+    : Ast_unified.program
+  =
+  parse_and_abstract ~raise ~meta ~preprocess_define c_unit source_filename
 
 
-let compile_expression ~raise = parse_and_abstract_expression ~raise
+let compile_expression ~raise ~preprocess_define =
+  parse_and_abstract_expression ~raise ~preprocess_define
+
+
 let compile_type_expression ~raise = parse_and_abstract_type_expression ~raise
 
-let compile_string ~raise : meta:meta -> c_unit -> Ast_unified.program =
- fun ~meta c_unit -> parse_and_abstract_string ~raise meta.syntax c_unit
+let compile_string ~raise
+    : meta:meta -> preprocess_define:string list -> c_unit -> Ast_unified.program
+  =
+ fun ~meta ~preprocess_define c_unit ->
+  parse_and_abstract_string ~raise ~preprocess_define meta.syntax c_unit
 
 
-let compile_contract_input ~raise : meta:meta -> c_unit -> c_unit -> Ast_unified.expr =
- fun ~meta storage parameter ->
+let compile_contract_input ~raise
+    : meta:meta -> preprocess_define:string list -> c_unit -> c_unit -> Ast_unified.expr
+  =
+ fun ~meta ~preprocess_define storage parameter ->
   let storage, parameter =
-    Simple_utils.Pair.map ~f:(compile_expression ~raise ~meta) (storage, parameter)
+    Simple_utils.Pair.map
+      ~f:(compile_expression ~raise ~meta ~preprocess_define)
+      (storage, parameter)
   in
   Ast_unified.e_tuple
     ~loc:Location.dummy

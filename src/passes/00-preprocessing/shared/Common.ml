@@ -22,7 +22,7 @@ module type S =
     type nonrec result = (LowAPI.success, Errors.t) result
 
     type 'src preprocessor =
-      ?project_root:file_path -> dirs -> 'src -> result
+      ?project_root:file_path -> preprocess_define:string list -> dirs -> 'src -> result
 
     (* Preprocessing various sources *)
 
@@ -56,7 +56,7 @@ module Make (Config : Config.S) =
     type nonrec result = (LowAPI.success, Errors.t) result
 
     type 'src preprocessor =
-      ?project_root:file_path -> dirs -> 'src -> result
+      ?project_root:file_path -> preprocess_define:string list -> dirs -> 'src -> result
 
     (* Postlude (THIS FUNCTION IS THE ONLY ONE IMPURE) *)
 
@@ -74,7 +74,7 @@ module Make (Config : Config.S) =
 
     (* Preprocessing a file *)
 
-    let from_file ?project_root:project_root' dirs' file_path =
+    let from_file ?project_root:project_root' ~preprocess_define dirs' file_path =
       let module Options =
         struct
           include Default.Options
@@ -82,6 +82,7 @@ module Make (Config : Config.S) =
           let input        = Some file_path
           let project_root = project_root'
           let dirs         = dirs'
+          let define       = preprocess_define
         end in
       let open LowAPI.Make (Default.Config) (Options)
       in finalise Default.Options.show_pp @@ from_file file_path
@@ -89,13 +90,14 @@ module Make (Config : Config.S) =
 
     (* Preprocessing a string *)
 
-    let from_string ?project_root:project_root' dirs' string =
+    let from_string ?project_root:project_root' ~preprocess_define dirs' string =
       let module Options =
         struct
           include Default.Options
           (* We shadow some default settings *)
           let project_root = project_root'
           let dirs         = dirs'
+          let define       = preprocess_define
         end in
       let open LowAPI.Make (Config) (Options)
       in finalise Options.show_pp @@ from_string string
@@ -103,13 +105,14 @@ module Make (Config : Config.S) =
 
     (* Preprocessing a raw input (from lsp mostly) *)
 
-    let from_raw_input ?project_root:project_root' dirs' (file, string) =
+    let from_raw_input ?project_root:project_root' ~preprocess_define dirs' (file, string) =
       let module Options =
         struct
           include Default.Options
           (* We shadow some default settings *)
           let project_root = project_root'
           let dirs         = dirs'
+          let define       = preprocess_define
         end in
       let open LowAPI.Make (Config) (Options)
       in finalise Options.show_pp @@ from_raw_input (file, string)
@@ -117,19 +120,20 @@ module Make (Config : Config.S) =
 
     (* Preprocessing a string buffer *)
 
-    let from_buffer ?project_root dirs buffer =
-      from_string ?project_root dirs @@ Buffer.contents buffer
+    let from_buffer ?project_root ~preprocess_define dirs buffer =
+      from_string ?project_root ~preprocess_define dirs @@ Buffer.contents buffer
     let preprocess_buffer = from_buffer
 
     (* Preprocessing a channel *)
 
-    let from_channel ?project_root:project_root' dirs' channel =
+    let from_channel ?project_root:project_root' ~preprocess_define dirs' channel =
       let module Options =
         struct
           include Default.Options
           (* We shadow some default settings *)
           let project_root = project_root'
           let dirs         = dirs'
+          let define       = preprocess_define
         end in
       let open LowAPI.Make (Config) (Options)
       in finalise Options.show_pp @@ from_channel channel

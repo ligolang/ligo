@@ -28,6 +28,7 @@ let get_cst_fold
     Ligo_api.Dialect_cst.get_cst
       ~strict:false
       ~file:file_path
+      ~preprocess_define:[]
       Syntax_types.CameLIGO
       (Caml.Buffer.of_seq (Caml.String.to_seq contents))
   in

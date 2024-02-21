@@ -17,6 +17,7 @@ let pretty_print (raw_options : Raw_options.t) source_file =
       let meta = Compile.Of_source.extract_meta syntax in
       ( Compile.Utils.pretty_print
           ~preprocess:false
+          ~preprocess_define:raw_options.preprocess_define
           ~raise
           ~options:options.frontend
           ~meta
@@ -70,6 +71,7 @@ let cst (raw_options : Raw_options.t) source_file =
       let meta = Compile.Of_source.extract_meta syntax in
       ( Compile.Utils.pretty_print_cst
           ~preprocess:false
+          ~preprocess_define:raw_options.preprocess_define
           ~raise
           ~options:options.frontend
           ~meta
@@ -92,7 +94,10 @@ let ast_unified (raw_options : Raw_options.t) show_loc hide_sort stop_before sou
           ~meta
           source_file
       in
-      let unified = Compile.Utils.to_unified ~raise ~meta c_unit source_file in
+      let unified =
+        let preprocess_define = raw_options.preprocess_define in
+        Compile.Utils.to_unified ~raise ~meta ~preprocess_define c_unit source_file
+      in
       match stop_before with
       | None -> unified, []
       | Some _ ->

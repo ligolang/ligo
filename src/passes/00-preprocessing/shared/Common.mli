@@ -22,7 +22,7 @@ module type S =
     type nonrec result = (LowAPI.success, Errors.t) result
 
     type 'src preprocessor =
-      ?project_root:file_path -> dirs -> 'src -> result
+      ?project_root:file_path -> preprocess_define:string list -> dirs -> 'src -> result
 
     (* Preprocessing various sources *)
 

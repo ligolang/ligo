@@ -35,6 +35,7 @@ type t =
   ; constants : string list
   ; file_constants : string option
   ; function_body : bool
+  ; preprocess_define : string list
   }
 
 module Default_options = struct
@@ -80,6 +81,7 @@ module Default_options = struct
   let constants = []
   let file_constants = None
   let function_body = false
+  let preprocess_define = []
 end
 
 let make
@@ -113,6 +115,7 @@ let make
     ?(constants = Default_options.constants)
     ?(file_constants = Default_options.file_constants)
     ?(function_body = Default_options.function_body)
+    ?(preprocess_define = Default_options.preprocess_define)
     ()
   =
   { (* Formatter *)
@@ -151,4 +154,5 @@ let make
   ; constants
   ; file_constants
   ; function_body
+  ; preprocess_define
   }
