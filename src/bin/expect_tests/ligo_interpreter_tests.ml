@@ -882,7 +882,8 @@ let%expect_test _ =
 
 let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "test_print_values.mligo" ];
-  [%expect {| aloh |}]
+  [%expect {|
+    aloh |}]
 
 let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "test_to_json.mligo" ];

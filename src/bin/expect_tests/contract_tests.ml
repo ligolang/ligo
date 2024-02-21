@@ -68,15 +68,26 @@ let%expect_test _ =
       7 |
       8 | let test = Test.log (f ())
                                ^
+      9 |
     :
     Warning: deprecated value.
     Replace me by...
     g!
     mail: foo@bar.com
 
+    File "../../test/contracts/deprecated.mligo", line 13, characters 22-23:
+     12 |
+     13 | let test2 = Test.log (h () + i ())
+                                ^
+    :
+    Warning: deprecated value.
+    this is h, but only h or i will trigger
+
     1
+    6
     Everything at the top-level was executed.
-    - test exited with value (). |}]
+    - test exited with value ().
+    - test2 exited with value (). |}]
 
 let%expect_test _ =
   run_ligo_good [ "compile"; "contract"; contract "deprecated.mligo"; "-m"; "C" ];
