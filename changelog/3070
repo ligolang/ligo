@@ -1,6 +1,6 @@
 
 author: lesenechal.remi
-description: "\\nYou can now pass a list of defines to LIGO preprocessor using flag -D.\\n\\n\\n```\\n(* myfile.mligo *)\\n#if FOO\\n[@entry] let toto () () : operation list * unit = failwith \"lol\"\\n#endif\\n\\n```\\n\\n\`ligo compile contract myfile.mligo -D FOO\`\\n\\n"
+description: "\\nYou can now pass a list of defines to LIGO preprocessor using flag -D.\\n\\n\\n```\\n(* myfile.mligo *)\\n#if FOO\\n[@entry] let toto () () : operation list * unit = failwith \"lol\"\\n#endif\\n\\n```\\n\\n`ligo compile contract myfile.mligo -D FOO`\\n\\n"
 merge_request: '3070'
 title: "preprocessor define option"
 type: added
