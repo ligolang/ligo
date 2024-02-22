@@ -195,7 +195,7 @@ module Data = struct
 
   let memo_rec
       ?(size = 30)
-      ?(hash = (Caml.Hashtbl.hash : 'a -> int))
+      ?(hash = (Caml.Hashtbl.hash_param 1_000 10_000 : 'a -> int))
       (f : ('a -> 'b) -> 'a -> 'b)
     =
     let h = Caml.Hashtbl.create size in
