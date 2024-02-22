@@ -1,6 +1,6 @@
 
 author: lesenechal.remi
-description: "\\n\`ligo compile contract\` now infers the compilation target when the top-level is not a contract and defines only one contract module. In this case, the module becomes the compilation target (to avoid usage of `-m`).\\n\\nThis following contract\\n\\n\\n```ocaml\\n(* myfile.mligo *)\\nmodule Single = struct\\n  [@entry] let main () () : operation list * unit = [],()\\nend\\n\\n```\\n\\ncan now be compiler using \`ligo compile contract myfile.mligo\`\\n\\n"
+description: "\\n`ligo compile contract` now infers the compilation target when the top-level is not a contract and defines only one contract module. In this case, the module becomes the compilation target (to avoid usage of `-m`).\\n\\nThis following contract\\n\\n\\n```ocaml\\n(* myfile.mligo *)\\nmodule Single = struct\\n  [@entry] let main () () : operation list * unit = [],()\\nend\\n\\n```\\n\\ncan now be compiler using `ligo compile contract myfile.mligo`\\n\\n"
 merge_request: '3075'
 title: "`ligo compile` command now infer compilation target in some cases"
 type: added
