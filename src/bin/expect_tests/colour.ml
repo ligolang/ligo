@@ -63,6 +63,21 @@ let%expect_test _ =
   run_ligo_bad [ "run"; "test"; contract_test ];
   [%expect
     {|
+    File "../../test/contracts/negative/colour_test.mligo", line 2, characters 12-23:
+      1 |
+      2 | let test1 = [1m[31mTest.assert[0m (1 = 1)
+      3 | let test2 = Test.assert (1 = 2)
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `Assert.assert` from `Test.Next` is encouraged for a smoother migration.
+
+    File "../../test/contracts/negative/colour_test.mligo", line 3, characters 12-23:
+      2 | let test1 = Test.assert (1 = 1)
+      3 | let test2 = [1m[31mTest.assert[0m (1 = 2)
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `Assert.assert` from `Test.Next` is encouraged for a smoother migration.
+
     File "../../test/contracts/negative/colour_test.mligo", line 3, characters 12-31:
       2 | let test1 = Test.assert (1 = 1)
       3 | let test2 = [1m[31mTest.assert (1 = 2)[0m
@@ -83,6 +98,23 @@ let%expect_test _ =
   run_ligo_bad [ "run"; "test"; "--no-color"; contract_test ];
   [%expect
     {|
+    File "../../test/contracts/negative/colour_test.mligo", line 2, characters 12-23:
+      1 |
+      2 | let test1 = Test.assert (1 = 1)
+                      ^^^^^^^^^^^
+      3 | let test2 = Test.assert (1 = 2)
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `Assert.assert` from `Test.Next` is encouraged for a smoother migration.
+
+    File "../../test/contracts/negative/colour_test.mligo", line 3, characters 12-23:
+      2 | let test1 = Test.assert (1 = 1)
+      3 | let test2 = Test.assert (1 = 2)
+                      ^^^^^^^^^^^
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `Assert.assert` from `Test.Next` is encouraged for a smoother migration.
+
     File "../../test/contracts/negative/colour_test.mligo", line 3, characters 12-31:
       2 | let test1 = Test.assert (1 = 1)
       3 | let test2 = Test.assert (1 = 2)

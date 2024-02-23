@@ -12,6 +12,23 @@ let%expect_test _ =
   run_ligo_good [ "run"; "test"; test_ "jsligo/nested_tuple.jsligo" ];
   [%expect
     {|
+    File "../../test/contracts/top_level_patterns/interpreter/jsligo/nested_tuple.jsligo", line 1, characters 10-31:
+      1 | const _ = Test.set_print_values ()
+                    ^^^^^^^^^^^^^^^^^^^^^
+      2 |
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `IO.set_test_print` from `Test.Next` is encouraged for a smoother migration.
+
+    File "../../test/contracts/top_level_patterns/interpreter/jsligo/nested_tuple.jsligo", line 4, characters 4-12:
+      3 | const f = () => {
+      4 |     Test.log("Once");
+              ^^^^^^^^
+      5 |     return [[1 as nat, 1, "H"], [2 as nat, 2, "E"], [3 as nat, 3, "L"]]
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `IO.log` from `Test.Next` is encouraged for a smoother migration.
+
     "Once"
     Everything at the top-level was executed.
     - test exited with value (). |}]
@@ -33,6 +50,23 @@ let%expect_test _ =
   run_ligo_good [ "run"; "test"; test_ "jsligo/tuple.jsligo" ];
   [%expect
     {|
+    File "../../test/contracts/top_level_patterns/interpreter/jsligo/tuple.jsligo", line 1, characters 10-31:
+      1 | const _ = Test.set_print_values ()
+                    ^^^^^^^^^^^^^^^^^^^^^
+      2 |
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `IO.set_test_print` from `Test.Next` is encouraged for a smoother migration.
+
+    File "../../test/contracts/top_level_patterns/interpreter/jsligo/tuple.jsligo", line 4, characters 2-10:
+      3 | const f = () => {
+      4 |   Test.log("Once");
+            ^^^^^^^^
+      5 |   return [1 as nat, 1, "Hello"]
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `IO.log` from `Test.Next` is encouraged for a smoother migration.
+
     "Once"
     Everything at the top-level was executed.
     - test exited with value (). |}]

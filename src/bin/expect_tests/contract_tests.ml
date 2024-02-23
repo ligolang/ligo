@@ -64,6 +64,15 @@ let%expect_test _ =
     g!
     mail: foo@bar.com
 
+    File "../../test/contracts/deprecated.mligo", line 8, characters 11-19:
+      7 |
+      8 | let test = Test.log (f ())
+                     ^^^^^^^^
+      9 |
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `IO.log` from `Test.Next` is encouraged for a smoother migration.
+
     File "../../test/contracts/deprecated.mligo", line 8, characters 21-22:
       7 |
       8 | let test = Test.log (f ())
@@ -74,6 +83,14 @@ let%expect_test _ =
     Replace me by...
     g!
     mail: foo@bar.com
+
+    File "../../test/contracts/deprecated.mligo", line 13, characters 12-20:
+     12 |
+     13 | let test2 = Test.log (h () + i ())
+                      ^^^^^^^^
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `IO.log` from `Test.Next` is encouraged for a smoother migration.
 
     File "../../test/contracts/deprecated.mligo", line 13, characters 22-23:
      12 |
@@ -217,6 +234,24 @@ let%expect_test _ =
   run_ligo_good [ "run"; "test"; contract "interfaces.include.jsligo" ];
   [%expect
     {|
+    File "../../test/contracts/interfaces.include.jsligo", line 68, characters 13-27:
+     67 | const test = do {
+     68 |   let orig = Test.originate(contract_of(ImplAll), ImplAll.foo(42), 0tez);
+                       ^^^^^^^^^^^^^^
+     69 |   let p : parameter_of ImplAll = Other4();
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `Originate.contract` from `Test.Next` is encouraged for a smoother migration.
+
+    File "../../test/contracts/interfaces.include.jsligo", line 70, characters 2-19:
+     69 |   let p : parameter_of ImplAll = Other4();
+     70 |   Test.transfer_exn(orig.addr, p, 1mutez);
+            ^^^^^^^^^^^^^^^^^
+     71 | }
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.transfer_exn` from `Test.Next` is encouraged for a smoother migration.
+
     Everything at the top-level was executed.
     - test exited with value 1297n. |}]
 
@@ -3312,6 +3347,33 @@ let%expect_test _ =
   run_ligo_good [ "run"; "test"; contract "increment_prefix.jsligo" ];
   [%expect
     {|
+    File "../../test/contracts/increment_prefix.jsligo", line 24, characters 13-27:
+     23 |   let initial_storage = 42;
+     24 |   let orig = Test.originate(contract_of(IncDec), initial_storage, 0tez);
+                       ^^^^^^^^^^^^^^
+     25 |   Test.transfer_exn(orig.addr, Increment(), 1mutez);
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `Originate.contract` from `Test.Next` is encouraged for a smoother migration.
+
+    File "../../test/contracts/increment_prefix.jsligo", line 25, characters 2-19:
+     24 |   let orig = Test.originate(contract_of(IncDec), initial_storage, 0tez);
+     25 |   Test.transfer_exn(orig.addr, Increment(), 1mutez);
+            ^^^^^^^^^^^^^^^^^
+     26 |   return assert(Test.get_storage(orig.addr) == initial_storage + 1);
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.transfer_exn` from `Test.Next` is encouraged for a smoother migration.
+
+    File "../../test/contracts/increment_prefix.jsligo", line 26, characters 16-32:
+     25 |   Test.transfer_exn(orig.addr, Increment(), 1mutez);
+     26 |   return assert(Test.get_storage(orig.addr) == initial_storage + 1);
+                          ^^^^^^^^^^^^^^^^
+     27 | }) ();
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.get_storage` from `Test.Next` is encouraged for a smoother migration.
+
     Everything at the top-level was executed.
     - test_increment exited with value (). |}]
 
@@ -3408,6 +3470,51 @@ let%expect_test _ =
   run_ligo_good [ "run"; "test"; contract "reverse_string_for_loop.jsligo" ];
   [%expect
     {|
+    File "../../test/contracts/reverse_string_for_loop.jsligo", line 19, characters 17-31:
+     18 |       let initial_storage = "esrever";
+     19 |       let orig = Test.originate(contract_of(C), initial_storage, 0 as tez);
+                           ^^^^^^^^^^^^^^
+     20 |       Test.transfer_exn(orig.addr, Main(unit), 1 as mutez);
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `Originate.contract` from `Test.Next` is encouraged for a smoother migration.
+
+    File "../../test/contracts/reverse_string_for_loop.jsligo", line 20, characters 6-23:
+     19 |       let orig = Test.originate(contract_of(C), initial_storage, 0 as tez);
+     20 |       Test.transfer_exn(orig.addr, Main(unit), 1 as mutez);
+                ^^^^^^^^^^^^^^^^^
+     21 |       Test.log(Test.get_storage(orig.addr));
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.transfer_exn` from `Test.Next` is encouraged for a smoother migration.
+
+    File "../../test/contracts/reverse_string_for_loop.jsligo", line 21, characters 6-14:
+     20 |       Test.transfer_exn(orig.addr, Main(unit), 1 as mutez);
+     21 |       Test.log(Test.get_storage(orig.addr));
+                ^^^^^^^^
+     22 |       return assert(Test.get_storage(orig.addr) == "reverse")
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `IO.log` from `Test.Next` is encouraged for a smoother migration.
+
+    File "../../test/contracts/reverse_string_for_loop.jsligo", line 21, characters 15-31:
+     20 |       Test.transfer_exn(orig.addr, Main(unit), 1 as mutez);
+     21 |       Test.log(Test.get_storage(orig.addr));
+                         ^^^^^^^^^^^^^^^^
+     22 |       return assert(Test.get_storage(orig.addr) == "reverse")
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.get_storage` from `Test.Next` is encouraged for a smoother migration.
+
+    File "../../test/contracts/reverse_string_for_loop.jsligo", line 22, characters 20-36:
+     21 |       Test.log(Test.get_storage(orig.addr));
+     22 |       return assert(Test.get_storage(orig.addr) == "reverse")
+                              ^^^^^^^^^^^^^^^^
+     23 |     }
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.get_storage` from `Test.Next` is encouraged for a smoother migration.
+
     "reverse"
     Everything at the top-level was executed.
     - test exited with value (). |}]
