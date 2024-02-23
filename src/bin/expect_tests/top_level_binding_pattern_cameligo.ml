@@ -52,6 +52,23 @@ let%expect_test _ =
   run_ligo_good [ "run"; "test"; test_ "cameligo/nested_record.mligo" ];
   [%expect
     {|
+    File "../../test/contracts/top_level_patterns/interpreter/cameligo/nested_record.mligo", line 1, characters 9-30:
+      1 | let () = Test.set_print_values ()
+                   ^^^^^^^^^^^^^^^^^^^^^
+      2 |
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `IO.set_test_print` from `Test.Next` is encouraged for a smoother migration.
+
+    File "../../test/contracts/top_level_patterns/interpreter/cameligo/nested_record.mligo", line 7, characters 13-21:
+      6 | let f () =
+      7 |     let () = Test.log "Once" in
+                       ^^^^^^^^
+      8 |     { a = { c = 1n ; d = 1 ; e = "H" }
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `IO.log` from `Test.Next` is encouraged for a smoother migration.
+
     "Once"
     Everything at the top-level was executed.
     - test exited with value (). |}]
@@ -60,6 +77,23 @@ let%expect_test _ =
   run_ligo_good [ "run"; "test"; test_ "cameligo/nested_tuple.mligo" ];
   [%expect
     {|
+    File "../../test/contracts/top_level_patterns/interpreter/cameligo/nested_tuple.mligo", line 1, characters 9-30:
+      1 | let () = Test.set_print_values ()
+                   ^^^^^^^^^^^^^^^^^^^^^
+      2 |
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `IO.set_test_print` from `Test.Next` is encouraged for a smoother migration.
+
+    File "../../test/contracts/top_level_patterns/interpreter/cameligo/nested_tuple.mligo", line 4, characters 13-21:
+      3 | let f () =
+      4 |     let () = Test.log "Once" in
+                       ^^^^^^^^
+      5 |     ((1n, 1, "H"), (2n, 2, "E"), (3n, 3, "L"))
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `IO.log` from `Test.Next` is encouraged for a smoother migration.
+
     "Once"
     Everything at the top-level was executed.
     - test exited with value (). |}]
@@ -68,6 +102,23 @@ let%expect_test _ =
   run_ligo_good [ "run"; "test"; test_ "cameligo/record_tuple.mligo" ];
   [%expect
     {|
+    File "../../test/contracts/top_level_patterns/interpreter/cameligo/record_tuple.mligo", line 1, characters 9-30:
+      1 | let () = Test.set_print_values ()
+                   ^^^^^^^^^^^^^^^^^^^^^
+      2 |
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `IO.set_test_print` from `Test.Next` is encouraged for a smoother migration.
+
+    File "../../test/contracts/top_level_patterns/interpreter/cameligo/record_tuple.mligo", line 10, characters 11-19:
+      9 | let f () =
+     10 |   let () = Test.log "Once" in
+                     ^^^^^^^^
+     11 |   { a = (1n     , 1 , "H")
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `IO.log` from `Test.Next` is encouraged for a smoother migration.
+
     "Once"
     Everything at the top-level was executed.
     - test exited with value (). |}]
@@ -76,6 +127,23 @@ let%expect_test _ =
   run_ligo_good [ "run"; "test"; test_ "cameligo/tuple_record.mligo" ];
   [%expect
     {|
+    File "../../test/contracts/top_level_patterns/interpreter/cameligo/tuple_record.mligo", line 1, characters 9-30:
+      1 | let () = Test.set_print_values ()
+                   ^^^^^^^^^^^^^^^^^^^^^
+      2 |
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `IO.set_test_print` from `Test.Next` is encouraged for a smoother migration.
+
+    File "../../test/contracts/top_level_patterns/interpreter/cameligo/tuple_record.mligo", line 6, characters 11-19:
+      5 | let f () =
+      6 |   let () = Test.log "Once" in
+                     ^^^^^^^^
+      7 |   ( { a = 1n ; b = 1 ; c = "H" }
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `IO.log` from `Test.Next` is encouraged for a smoother migration.
+
     "Once"
     Everything at the top-level was executed.
     - test exited with value (). |}]
@@ -84,6 +152,23 @@ let%expect_test _ =
   run_ligo_good [ "run"; "test"; test_ "cameligo/record.mligo" ];
   [%expect
     {|
+    File "../../test/contracts/top_level_patterns/interpreter/cameligo/record.mligo", line 1, characters 9-30:
+      1 | let () = Test.set_print_values ()
+                   ^^^^^^^^^^^^^^^^^^^^^
+      2 |
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `IO.set_test_print` from `Test.Next` is encouraged for a smoother migration.
+
+    File "../../test/contracts/top_level_patterns/interpreter/cameligo/record.mligo", line 6, characters 11-19:
+      5 | let f () =
+      6 |   let () = Test.log "Once" in
+                     ^^^^^^^^
+      7 |   { a = 1n ; b = 1 ; c = "Hello" }
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `IO.log` from `Test.Next` is encouraged for a smoother migration.
+
     "Once"
     Everything at the top-level was executed.
     - test exited with value (). |}]
@@ -92,6 +177,23 @@ let%expect_test _ =
   run_ligo_good [ "run"; "test"; test_ "cameligo/tuple.mligo" ];
   [%expect
     {|
+    File "../../test/contracts/top_level_patterns/interpreter/cameligo/tuple.mligo", line 1, characters 9-30:
+      1 | let () = Test.set_print_values ()
+                   ^^^^^^^^^^^^^^^^^^^^^
+      2 |
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `IO.set_test_print` from `Test.Next` is encouraged for a smoother migration.
+
+    File "../../test/contracts/top_level_patterns/interpreter/cameligo/tuple.mligo", line 4, characters 11-19:
+      3 | let f () =
+      4 |   let () = Test.log "Once" in
+                     ^^^^^^^^
+      5 |   (1n, 1, "Hello")
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `IO.log` from `Test.Next` is encouraged for a smoother migration.
+
     "Once"
     Everything at the top-level was executed.
     - test exited with value (). |}]
@@ -100,6 +202,15 @@ let%expect_test _ =
   run_ligo_good [ "run"; "test"; test_ "cameligo/constr_tuple_destructuring.mligo" ];
   [%expect
     {|
+      File "../../test/contracts/top_level_patterns/interpreter/cameligo/constr_tuple_destructuring.mligo", line 4, characters 11-19:
+        3 | let f () =
+        4 |   let () = Test.log "Once" in
+                       ^^^^^^^^
+        5 |   1, (Foo 2, "hey")
+      :
+      Warning: deprecated value.
+      In a future version, `Test` will be replaced by `Test.Next`, and using `IO.log` from `Test.Next` is encouraged for a smoother migration.
+
       "Once"
       Everything at the top-level was executed.
       - test exited with value (). |}]
@@ -108,6 +219,15 @@ let%expect_test _ =
   run_ligo_good [ "run"; "test"; test_ "cameligo/constr_record_destructuring.mligo" ];
   [%expect
     {|
+    File "../../test/contracts/top_level_patterns/interpreter/cameligo/constr_record_destructuring.mligo", line 5, characters 11-19:
+      4 | let f () =
+      5 |   let () = Test.log "Once" in
+                     ^^^^^^^^
+      6 |   { a = 1 ; b = Foo 2 ; c = "hey" }
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `IO.log` from `Test.Next` is encouraged for a smoother migration.
+
     "Once"
     Everything at the top-level was executed.
     - test exited with value (). |}]

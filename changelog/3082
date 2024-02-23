@@ -1,0 +1,7 @@
+
+author: er433
+description: "\\n\\n"
+merge_request: '3082'
+title: "Stdlib: add `deprecated` messages on `Test` (for `Test.Next`)"
+type: added
+            

@@ -317,6 +317,7 @@ decompileLigoValues typesAndValues = withMapLigoExc do
 
     callLigoBS Nothing
       [ "run", "test"
+      , "--no-warn"
       , strArg path
       ]
     >>= decodeOutput
