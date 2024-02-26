@@ -1,0 +1,7 @@
+
+author: lesenechal.remi
+description: "\\nfix a bug where Big_set literals where not typing\\n\\n"
+merge_request: '3083'
+title: "big set literal fix"
+type: fixed
+            
