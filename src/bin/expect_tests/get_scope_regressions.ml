@@ -217,14 +217,14 @@ let%expect_test _ =
     (f#2:4-5 -> f)
     Range: File "../../test/contracts/get_scope_tests/regressions/wrong_reference1.mligo", line 2, characters 4-5
     Decl Range: File "../../test/contracts/get_scope_tests/regressions/wrong_reference1.mligo", line 2, characters 0-11
-    Content: |resolved: ∀ gen#3 : * . [x]gen#3 -> int|
+    Content: |resolved: ∀ a : * . [x]a -> int|
     references: []
     Mod Path =
     Def Type = Global
     (x#2:6-7 -> x)
     Range: File "../../test/contracts/get_scope_tests/regressions/wrong_reference1.mligo", line 2, characters 6-7
     Decl Range: File "../../test/contracts/get_scope_tests/regressions/wrong_reference1.mligo", line 2, characters 6-7
-    Content: |resolved: gen#3|
+    Content: |resolved: a|
     references: []
     Mod Path =
     Def Type = Parameter

@@ -840,10 +840,11 @@ end = struct
     | T_variable v -> ret @@ T_var v
     | T_contract_parameter x -> ret @@ T_contract_parameter x
     | T_constant (t, _) -> ret @@ T_constant (Ligo_prim.Literal_types.to_string t)
+    | T_app { type_operator = { module_path = []; element }; arguments } ->
+      let constr = I.make_t ~loc (T_variable element) in
+      ret @@ T_app { constr; type_args = List.Ne.of_list arguments }
     | T_app { type_operator; arguments } ->
-      ignore type_operator.module_path;
-      (* TODO *)
-      let constr = I.make_t ~loc (T_variable type_operator.element) in
+      let constr = I.make_t ~loc (T_module_accessor type_operator) in
       ret @@ T_app { constr; type_args = List.Ne.of_list arguments }
     | T_arrow { type1; type2; param_names } -> ret @@ T_fun (param_names, type1, type2)
     | T_singleton (Literal_string x) -> ret @@ T_string (Ligo_string.extract x)

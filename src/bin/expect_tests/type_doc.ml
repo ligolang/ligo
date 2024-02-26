@@ -39,8 +39,7 @@ let%expect_test _ =
     /**
      * Extracts `int` value from `t<int, int>`
      */
-    export const extract_int : (v: ["A", int] | ["B", int] | ["C", int]) => int =
-    "..."
+    export const extract_int : (v: t<int, int>) => int = "..."
 
     /** Some storage */
     export type storage = { a: int; b: bool; c: string }

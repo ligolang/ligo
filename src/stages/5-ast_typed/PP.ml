@@ -76,14 +76,15 @@ let rec type_content_orig : formatter -> type_content -> unit =
 
 
 and type_expression_orig ppf (te : type_expression) : unit =
-  match te.orig_var with
+  let rec module_path v ppf = function
+    | [] -> type_expression ppf (Combinators.t_variable ~loc:te.location v ())
+    | m :: ms -> fprintf ppf "%a.%a" Module_var.pp m (module_path v) ms
+  in
+  match te.abbrev with
   | None -> type_expression_impl type_content_orig ppf te
-  | Some (path, v) ->
-    let rec module_path ppf = function
-      | [] -> type_expression ppf (Combinators.t_variable ~loc:te.location v ())
-      | m :: ms -> fprintf ppf "%a.%a" Module_var.pp m module_path ms
-    in
-    module_path ppf path
+  | Some { orig_var = path, v; applied_types = [] } -> module_path v ppf path
+  | Some { orig_var = path, v; applied_types = _ :: _ as applied_types } ->
+    fprintf ppf "%a%a" (module_path v) path (list_sep_d_par type_expression) applied_types
 
 
 let rec expression ppf (e : expression) =

@@ -101,7 +101,8 @@ and decompile_type : I.type_expression -> O.type_expression =
   let return type_content : O.type_expression =
     { type_content
     ; location = ty.location
-    ; orig_var = Option.map ty.orig_var ~f:(fun v -> [], v)
+    ; abbrev =
+        Option.map ty.orig_var ~f:(fun v -> O.{ orig_var = [], v; applied_types = [] })
     }
   in
   match ty.type_content with

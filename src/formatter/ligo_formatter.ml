@@ -373,11 +373,15 @@ module Michelson_formatter = struct
         (fun prim -> prim)
         node
     in
-    let rec shrink_type ({ type_content; orig_var; _ } : Ast_typed.type_expression)
+    let rec shrink_type ({ type_content; abbrev; _ } : Ast_typed.type_expression)
         : shrunk_type_expression
       =
       let open Ligo_prim in
-      let orig_var = Option.map ~f:Function.(Type_var.to_name_exn <@ snd) orig_var in
+      let orig_var =
+        Option.map
+          ~f:(fun abbrev -> Function.(Type_var.to_name_exn <@ snd) abbrev.orig_var)
+          abbrev
+      in
       let shrink_type_content : Ast_typed.type_content -> shrunk_type_content = function
         | T_variable var_name ->
           let var_name =

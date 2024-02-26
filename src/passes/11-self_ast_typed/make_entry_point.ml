@@ -278,7 +278,7 @@ let generate_entry_logic : raise:_ -> Ast_typed.program -> Ast_typed.program =
 
 let expand_e_contract =
   let open Ast_typed in
-  Helpers.map_expression (fun exp ->
+  Helpers.map_program (fun exp ->
       Simple_utils.Option.(
         value
           ~default:exp

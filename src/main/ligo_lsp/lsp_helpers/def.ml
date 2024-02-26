@@ -134,18 +134,26 @@ let use_var_name_if_available : type_info -> Ast_core.type_expression =
 let get_type ~(use_module_accessor : bool) (vdef : Scopes.Types.vdef) : type_info option =
   match vdef.t with
   | Core contents -> Some { var_name = None; contents }
-  | Resolved { type_content; orig_var; location } ->
+  | Resolved { type_content; abbrev; location } ->
     Some
       { var_name =
           (* This is non-empty in case there is a name for our type. *)
-          Option.map orig_var ~f:(fun (module_path, element) ->
-              { Ast_core.type_content =
-                  (match module_path with
-                  | _ :: _ when use_module_accessor ->
-                    T_module_accessor { module_path; element }
-                  | _ -> T_variable element)
-              ; location
-              })
+          Option.map abbrev ~f:(fun { orig_var = module_path, element; applied_types } ->
+              let type_content : Ast_core.type_content =
+                let module_path = if use_module_accessor then module_path else [] in
+                match applied_types, module_path with
+                | _ :: _, _ ->
+                  let type_operator = Ligo_prim.Module_access.{ module_path; element } in
+                  let arguments =
+                    List.map
+                      ~f:(Checking.untype_type_expression ~use_orig_var:true)
+                      applied_types
+                  in
+                  T_app { type_operator; arguments }
+                | [], _ :: _ -> T_module_accessor { module_path; element }
+                | [], [] -> T_variable element
+              in
+              Ast_core.{ type_content; location })
       ; contents =
           (* We want to preserve both the type var and type expression here, so we set
              [use_orig_var = True] so this expression will be pretty, and we also set
@@ -153,7 +161,7 @@ let get_type ~(use_module_accessor : bool) (vdef : Scopes.Types.vdef) : type_inf
              just [T_variable]. *)
           Checking.untype_type_expression
             ~use_orig_var:true
-            { type_content; orig_var = None; location }
+            { type_content; abbrev = None; location }
       }
   | Unresolved -> None
 

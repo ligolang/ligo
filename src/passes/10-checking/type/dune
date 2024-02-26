@@ -1,0 +1,16 @@
+(library
+ (name type)
+ (public_name ligo.checking.type)
+ (instrumentation
+  (backend bisect_ppx))
+ (libraries simple-utils ligo_prim backend fmt)
+ (preprocess
+  (staged_pps
+   ppx_woo
+   ppx_map
+   ppx_import
+   ppx_let
+   ppx_deriving_yojson
+   ppx_sexp_conv
+   ppx_compare
+   ppx_hash)))
