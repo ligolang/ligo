@@ -1,0 +1,55 @@
+type func<a, b> = ["Func", (x : a) => b]
+
+const incr = Func(x => x + 1);
+
+function apply_func (f, x) {
+  match (f) {
+    when (Func(f)): f(x)
+  }
+}
+
+function apply_func2<dom, codom> (f : func<dom, codom>, x) {
+  match (f) {
+    when (Func(f)): f(x)
+  }
+}
+
+type t<a> = { x : a, y : string }
+
+function f<a> (r : t<a>) {
+  return {...r, y : "42"}
+}
+
+const ticket = Tezos.create_ticket(42n, 42n)
+
+const lst = List.map (c => c + 42, list([1, 2]))
+
+const opt = Some(42)
+
+const big_map = Big_map.literal(list([[42, 42n], [100, 100n]]))
+
+namespace M {
+  export type t<a> = ["Aaa", a]
+}
+
+const x = #["Aaa", "aaa"]
+
+#import "poly_types_common.mligo" "Common"
+
+const foo = Foo(42)
+
+const ok_result : Common.result<int, string> = Ok(42)
+
+const error_result : Common.result<int, string> = Error("42")
+
+namespace B {
+  namespace X {
+    export type x<a> = a
+  }
+
+  type b<a> = ["B", X.x<a>]
+}
+
+type t = list<int>
+
+const f3 = (x : t) => List.cons(42, x)

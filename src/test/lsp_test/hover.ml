@@ -190,7 +190,7 @@ let%expect_test "hovers.mligo" =
      {
        "contents": [
          {
-           "value": "x1 : int list list -> int list list list",
+           "value": "x1 : int list list -> int list list2",
            "language": "cameligo"
          }
        ]
@@ -229,7 +229,10 @@ let%expect_test "hovers.mligo" =
      };
      {
        "contents": [
-         { "value": "type 'v p = 'v proxy_address", "language": "cameligo" }
+         {
+           "value": "type 'v p = 'v Test.Proxy_ticket.proxy_address",
+           "language": "cameligo"
+         }
        ]
      };
      {
@@ -896,7 +899,7 @@ let%expect_test "doc_comments.mligo" =
      };
      {
        "contents": [
-         { "value": "t : int list", "language": "cameligo" },
+         { "value": "t : int t", "language": "cameligo" },
          "Has type with comment inside"
        ]
      }] |}]
@@ -1041,7 +1044,7 @@ let%expect_test "doc_comments.jsligo" =
      };
      {
        "contents": [
-         { "value": "t : (_: unit) => list<int>", "language": "jsligo" },
+         { "value": "t : (_: unit) => t<int>", "language": "jsligo" },
          "Has type with comment inside"
        ]
      }] |}]
@@ -1401,3 +1404,240 @@ let%expect_test "Disc union fields" =
      { "contents": [ { "value": "a : int", "language": "jsligo" } ] };
      { "contents": [ { "value": "b : bool", "language": "jsligo" } ] };
      { "contents": [ { "value": "b : bool", "language": "jsligo" } ] }] |}]
+
+let%expect_test "Polymorphic types (CameLIGO)" =
+  get_hover_test
+    { file = "contracts/lsp/hover/poly_types.mligo"
+    ; hover_positions =
+        [ pos ~line:0 ~character:15
+        ; pos ~line:2 ~character:5
+        ; pos ~line:4 ~character:4
+        ; pos ~line:4 ~character:21
+        ; pos ~line:4 ~character:24
+        ; pos ~line:4 ~character:28
+        ; pos ~line:4 ~character:30
+        ; pos ~line:6 ~character:4
+        ; pos ~line:6 ~character:15
+        ; pos ~line:6 ~character:17
+        ; pos ~line:7 ~character:8
+        ; pos ~line:8 ~character:9
+        ; pos ~line:8 ~character:14
+        ; pos ~line:8 ~character:16
+        ; pos ~line:10 ~character:4
+        ; pos ~line:10 ~character:33
+        ; pos ~line:10 ~character:56
+        ; pos ~line:16 ~character:4
+        ; pos ~line:16 ~character:16
+        ; pos ~line:18 ~character:4
+        ; pos ~line:20 ~character:4
+        ; pos ~line:22 ~character:4
+        ; pos ~line:24 ~character:4
+        ; pos ~line:30 ~character:4
+        ; pos ~line:34 ~character:4
+        ; pos ~line:38 ~character:4
+        ; pos ~line:40 ~character:4
+        ; pos ~line:47 ~character:10
+        ; pos ~line:50 ~character:5
+        ; pos ~line:52 ~character:4
+        ]
+    };
+  [%expect
+    {|
+    [{
+       "contents": [
+         {
+           "value": "type ('a, 'b) func = Func of ('a -> 'b)",
+           "language": "cameligo"
+         }
+       ]
+     };
+     {
+       "contents": [
+         { "value": "incr : (int, int) func", "language": "cameligo" }
+       ]
+     };
+     {
+       "contents": [
+         {
+           "value": "apply_func : 'a 'b.('a, 'b) func -> 'a -> 'b",
+           "language": "cameligo"
+         }
+       ]
+     }; { "contents": [ { "value": "f : a -> b", "language": "cameligo" } ] };
+     { "contents": [ { "value": "x : a", "language": "cameligo" } ] };
+     { "contents": [ { "value": "f : a -> b", "language": "cameligo" } ] };
+     { "contents": [ { "value": "x : a", "language": "cameligo" } ] };
+     {
+       "contents": [
+         {
+           "value": "apply_func : 'a 'b.('a, 'b) func -> 'a -> 'b",
+           "language": "cameligo"
+         }
+       ]
+     };
+     { "contents": [ { "value": "f : (a, b) func", "language": "cameligo" } ] };
+     { "contents": [ { "value": "x : a", "language": "cameligo" } ] };
+     { "contents": [ { "value": "f : (a, b) func", "language": "cameligo" } ] };
+     { "contents": [ { "value": "f : a -> b", "language": "cameligo" } ] };
+     { "contents": [ { "value": "f : a -> b", "language": "cameligo" } ] };
+     { "contents": [ { "value": "x : a", "language": "cameligo" } ] };
+     {
+       "contents": [
+         {
+           "value": "apply_func :\n  'dom\n  'codom.('dom, 'codom) func -> 'dom -> 'codom",
+           "language": "cameligo"
+         }
+       ]
+     };
+     {
+       "contents": [
+         { "value": "f : (dom, codom) func", "language": "cameligo" }
+       ]
+     }; { "contents": [ { "value": "x : dom", "language": "cameligo" } ] };
+     {
+       "contents": [ { "value": "f : 'a.'a t -> 'a t", "language": "cameligo" } ]
+     }; { "contents": [ { "value": "r : a t", "language": "cameligo" } ] };
+     {
+       "contents": [
+         { "value": "ticket : nat ticket option", "language": "cameligo" }
+       ]
+     };
+     { "contents": [ { "value": "lst : int list", "language": "cameligo" } ] };
+     { "contents": [ { "value": "opt : int option", "language": "cameligo" } ] };
+     {
+       "contents": [
+         { "value": "big_map : (int, nat) big_map", "language": "cameligo" }
+       ]
+     };
+     { "contents": [ { "value": "x : string M.t", "language": "cameligo" } ] };
+     {
+       "contents": [
+         { "value": "foo : int Common.foo", "language": "cameligo" }
+       ]
+     };
+     {
+       "contents": [
+         { "value": "ok_result : (int, string) result", "language": "cameligo" }
+       ]
+     };
+     {
+       "contents": [
+         {
+           "value": "error_result : (int, string) result",
+           "language": "cameligo"
+         }
+       ]
+     };
+     {
+       "contents": [
+         { "value": "type 'a b = B of 'a X.x", "language": "cameligo" }
+       ]
+     };
+     { "contents": [ { "value": "type t = int list", "language": "cameligo" } ] };
+     { "contents": [ { "value": "f : t -> int list", "language": "cameligo" } ] }] |}]
+
+let%expect_test "Polymorphic types (JsLIGO)" =
+  get_hover_test
+    { file = "contracts/lsp/hover/poly_types.jsligo"
+    ; hover_positions =
+        [ pos ~line:0 ~character:5
+        ; pos ~line:2 ~character:6
+        ; pos ~line:4 ~character:9
+        ; pos ~line:4 ~character:21
+        ; pos ~line:4 ~character:24
+        ; pos ~line:5 ~character:9
+        ; pos ~line:6 ~character:15
+        ; pos ~line:6 ~character:20
+        ; pos ~line:6 ~character:22
+        ; pos ~line:10 ~character:9
+        ; pos ~line:10 ~character:34
+        ; pos ~line:10 ~character:56
+        ; pos ~line:18 ~character:9
+        ; pos ~line:18 ~character:15
+        ; pos ~line:22 ~character:6
+        ; pos ~line:24 ~character:6
+        ; pos ~line:26 ~character:6
+        ; pos ~line:28 ~character:6
+        ; pos ~line:34 ~character:6
+        ; pos ~line:38 ~character:6
+        ; pos ~line:40 ~character:6
+        ; pos ~line:49 ~character:7
+        ; pos ~line:52 ~character:5
+        ; pos ~line:54 ~character:6
+        ]
+    };
+  [%expect
+    {|
+    [{
+       "contents": [
+         {
+           "value": "type func<a, b> = | [\"Func\", (x: a) => b]",
+           "language": "jsligo"
+         }
+       ]
+     };
+     {
+       "contents": [ { "value": "incr : func<int, int>", "language": "jsligo" } ]
+     };
+     {
+       "contents": [
+         {
+           "value": "apply_func : <a, b>(f: func<a, b>, x: a) => b",
+           "language": "jsligo"
+         }
+       ]
+     }; { "contents": [ { "value": "f : func<a, b>", "language": "jsligo" } ] };
+     { "contents": [ { "value": "x : a", "language": "jsligo" } ] };
+     { "contents": [ { "value": "f : func<a, b>", "language": "jsligo" } ] };
+     { "contents": [ { "value": "f : (x: a) => b", "language": "jsligo" } ] };
+     { "contents": [ { "value": "f : (x: a) => b", "language": "jsligo" } ] };
+     { "contents": [ { "value": "x : a", "language": "jsligo" } ] };
+     {
+       "contents": [
+         {
+           "value": "apply_func2 :\n  <dom, codom>(f: func<dom, codom>, x: dom) => codom",
+           "language": "jsligo"
+         }
+       ]
+     };
+     {
+       "contents": [ { "value": "f : func<dom, codom>", "language": "jsligo" } ]
+     }; { "contents": [ { "value": "x : dom", "language": "jsligo" } ] };
+     {
+       "contents": [
+         { "value": "f : <a>(r: t<a>) => t<a>", "language": "jsligo" }
+       ]
+     }; { "contents": [ { "value": "r : t<a>", "language": "jsligo" } ] };
+     {
+       "contents": [
+         { "value": "ticket : option<ticket<nat>>", "language": "jsligo" }
+       ]
+     }; { "contents": [ { "value": "lst : list<int>", "language": "jsligo" } ] };
+     { "contents": [ { "value": "opt : option<int>", "language": "jsligo" } ] };
+     {
+       "contents": [
+         { "value": "big_map : big_map<int, nat>", "language": "jsligo" }
+       ]
+     }; { "contents": [ { "value": "x : M.t<string>", "language": "jsligo" } ] };
+     {
+       "contents": [ { "value": "foo : Common.foo<int>", "language": "jsligo" } ]
+     };
+     {
+       "contents": [
+         {
+           "value": "ok_result : Common.result<int, string>",
+           "language": "jsligo"
+         }
+       ]
+     };
+     {
+       "contents": [
+         { "value": "type b<a> = | [\"B\", X.x<a>]", "language": "jsligo" }
+       ]
+     };
+     { "contents": [ { "value": "type t = list<int>", "language": "jsligo" } ] };
+     {
+       "contents": [
+         { "value": "f3 : (x: t) => list<int>", "language": "jsligo" }
+       ]
+     }] |}]

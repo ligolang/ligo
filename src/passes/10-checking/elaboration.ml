@@ -29,11 +29,16 @@ let all_lmap_unit (lmap : unit t Label.Map.t) : unit t =
 include Let_syntax
 
 let rec decode (type_ : Type.t) ~path ~raise subst =
-  let return type_content : O.type_expression =
-    { type_content; orig_var = type_.orig_var; location = type_.location }
-  in
   let decode type_ = decode type_ ~raise ~path subst in
   let decode_row row = decode_row row ~path ~raise subst in
+  let return type_content : O.type_expression =
+    { type_content
+    ; abbrev =
+        Option.map type_.abbrev ~f:(fun { orig_var; applied_types } ->
+            O.{ orig_var; applied_types = List.map ~f:decode applied_types })
+    ; location = type_.location
+    }
+  in
   match type_.content with
   | I.T_variable tvar -> return @@ O.T_variable tvar
   | I.T_exists tvar ->

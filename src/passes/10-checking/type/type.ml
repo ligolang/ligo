@@ -1,77 +1,47 @@
-module Location = Simple_utils.Location
 module PP = Simple_utils.PP_helpers
 open Ligo_prim
+include Type_def
 
-module Layout = struct
-  type t =
-    | L_concrete of Layout.t
-    | L_exists of Layout_var.t
-  [@@deriving yojson, equal, sexp, compare, hash]
-
-  type field = Layout.field =
-    { name : Label.t
-    ; annot : string option
-    }
-
-  let fields = function
-    | L_concrete layout -> Some (Layout.fields layout)
-    | L_exists _lvar -> None
-
-
-  let default fields = L_concrete (Layout.default fields)
-
-  let pp ppf t =
-    match t with
-    | L_concrete layout -> Layout.pp ppf layout
-    | L_exists lvar -> Format.fprintf ppf "^%a" Layout_var.pp lvar
-end
-
-module Row = Row.Make (Layout)
-
-type t =
-  { content : content
-  ; orig_var :
-      ((Module_var.t list * Type_var.t) option
-      [@equal.ignore] [@compare.ignore] [@hash.ignore])
-  ; location : (Location.t[@equal.ignore] [@compare.ignore] [@hash.ignore] [@sexp.opaque])
-  }
-
-and content =
-  | T_variable of Type_var.t
-  | T_exists of Type_var.t
-  | T_construct of construct
-  | T_sum of row * (Label.t option[@equal.ignore] [@hash.ignore] [@compare.ignore])
-  (* This [Label.t] represent an original name of field in disc union type *)
-  | T_record of row
-  | T_arrow of t Arrow.t
-  | T_singleton of Literal_value.t
-  | T_abstraction of t Abstraction.t
-  | T_for_all of t Abstraction.t
+type content = [%import: Type_def.content]
 [@@deriving
-  yojson
-  , ez
-      { prefixes =
-          [ ( "make_t"
-            , fun ~loc content : t -> { content; location = loc; orig_var = None } )
-          ; ("get", fun x -> x.content)
-          ]
-      ; wrap_constructor =
-          ("content", fun type_content ~loc () -> make_t ~loc type_content)
-      ; wrap_get = "content", get
-      ; default_get = `Option
-      }]
-
-and row = t Row.t
-and layout = Layout.t
-
-and construct =
-  { language : string
-  ; constructor : Literal_types.t
-  ; parameters : t list
-  }
-[@@deriving yojson, equal, sexp, compare, hash]
+  ez
+    { prefixes =
+        [ ( "make_t"
+          , fun ~loc ?orig_var ?(applied_types = []) content : t ->
+              { content
+              ; location = loc
+              ; abbrev =
+                  Option.map orig_var ~f:(fun orig_var -> { orig_var; applied_types })
+              } )
+        ; ("get", fun x -> x.content)
+        ]
+    ; wrap_constructor = ("content", fun type_content ~loc () -> make_t ~loc type_content)
+    ; wrap_get = "content", get
+    ; default_get = `Option
+    }]
 
 type constr = loc:Location.t -> unit -> t
+
+let set_orig_var ~orig_var t =
+  { t with
+    abbrev =
+      (match t.abbrev with
+      | None -> Some { orig_var; applied_types = [] }
+      | Some abbrev -> Some { abbrev with orig_var })
+  }
+
+
+let set_applied_types ~applied_types t =
+  { t with abbrev = Option.map t.abbrev ~f:(fun abbrev -> { abbrev with applied_types }) }
+
+
+let map_applied_types ~f t =
+  { t with
+    abbrev =
+      Option.map t.abbrev ~f:(fun abbrev ->
+          { abbrev with applied_types = List.map ~f abbrev.applied_types })
+  }
+
 
 let rec free_vars t =
   let module Set = Type_var.Set in
@@ -94,7 +64,7 @@ let rec subst ?(free_vars = Type_var.Set.empty) t ~tvar ~type_ =
   let subst t = subst t ~free_vars ~tvar ~type_ in
   let subst_abstraction abs = subst_abstraction abs ~free_vars ~tvar ~type_ in
   let subst_row row = subst_row row ~free_vars ~tvar ~type_ in
-  let return content = { t with content } in
+  let return content = map_applied_types ~f:subst { t with content } in
   match t.content with
   | T_variable tvar' ->
     if Type_var.(tvar = tvar') then type_ else return @@ T_variable tvar'
@@ -399,6 +369,8 @@ module Type_var_name_tbl : sig
   (** [create ()] creates a new type variable table. *)
   val create : unit -> t
 
+  val pp : t Fmt.t
+
   (** [clear t] clears the table [t]. *)
   val clear : t -> unit
 
@@ -421,6 +393,17 @@ end = struct
     ; mutable name_counter : int
           (* [name_counter] is a counter used to generate unique variable names *)
     }
+
+  let pp ppf { name_tbl; names; name_counter } =
+    Format.fprintf
+      ppf
+      "name_tbl: %a\n\nnames: %a\n\nname_counter: %d\n\n"
+      Fmt.Dump.(list @@ pair Type_var.pp String.pp)
+      (Hashtbl.to_alist name_tbl)
+      (Fmt.Dump.list String.pp)
+      (Hash_set.to_list names)
+      name_counter
+
 
   let create () =
     { name_tbl = Hashtbl.create (module Type_var)

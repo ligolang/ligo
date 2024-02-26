@@ -1,6 +1,7 @@
 module List = Simple_utils.List
 open Simple_utils.Trace
 module Errors = Errors
+module Type_var_name_tbl = Type.Type_var_name_tbl
 open Errors
 open Ligo_prim
 module Signature = Context.Signature
@@ -69,9 +70,9 @@ let rec evaluate_type ~default_layout (type_ : I.type_expression)
   let open Let_syntax in
   set_loc type_.location
   @@
-  let const content =
+  let const ?orig_var ?applied_types content =
     let%bind loc = loc () in
-    return @@ Type.make_t ~loc content
+    return @@ Type.make_t ~loc ?orig_var ?applied_types content
   in
   let lift type_ =
     let%bind loc = loc () in
@@ -173,7 +174,7 @@ let rec evaluate_type ~default_layout (type_ : I.type_expression)
       List.fold_right vargs ~init:ty_body ~f:(fun (tvar, type_) result ->
           Type.subst result ~tvar ~type_)
     in
-    const result.content
+    const ~orig_var:(module_path, type_operator) ~applied_types:arguments result.content
   | T_module_accessor { module_path; element } ->
     let%bind sig_ =
       Context.get_module_of_path_exn
@@ -405,7 +406,7 @@ let t_record_with_orig_var (fields : Type.t Record.t) : (Type.t, _, _) C.t =
       let%bind path = path () in
       return
         { (Type.t_record row ~loc:(Type_var.get_location orig_var) ()) with
-          orig_var = Some (path, orig_var)
+          abbrev = Some { orig_var = path, orig_var; applied_types = [] }
         })
 
 
@@ -823,6 +824,9 @@ and infer_expression (expr : I.expression)
     in
     let arg_type = apply_subst arg_type in
     let sum_type = apply_subst sum_type in
+    let sum_type =
+      Type.set_applied_types ~applied_types:(List.map subst ~f:snd) sum_type
+    in
     let%bind arg = check arg arg_type in
     const
       E.(
@@ -1438,6 +1442,9 @@ and infer_pattern ~mut (pat : I.type_expression option I.Pattern.t)
     in
     let arg_type = apply_subst arg_type in
     let sum_type = apply_subst sum_type in
+    let sum_type =
+      Type.set_applied_types ~applied_types:(List.map subst ~f:snd) sum_type
+    in
     let%bind arg_pat = check arg_pat arg_type in
     const
       E.(
@@ -1715,7 +1722,10 @@ and infer_declaration (decl : I.declaration)
   | D_type { type_binder; type_expr; type_attr } ->
     let%bind type_expr = With_default_layout.evaluate_type type_expr in
     let%bind path = path () in
-    let type_expr = { type_expr with orig_var = Some (path, type_binder) } in
+    let type_expr =
+      Type.set_applied_types ~applied_types:[]
+      @@ Type.set_orig_var ~orig_var:(path, type_binder) type_expr
+    in
     let%bind loc = loc () in
     const
       E.(

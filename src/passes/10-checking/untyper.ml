@@ -19,11 +19,16 @@ let rec untype_type_expression ?(use_orig_var = false) (t : O.type_expression)
   let return t = I.make_t ~loc t in
   return
   @@
-  match t.orig_var with
-  | Some (module_path, element) when use_orig_var ->
+  match t.abbrev with
+  | Some { orig_var = module_path, element; applied_types = [] } when use_orig_var ->
     (match module_path with
     | [] -> T_variable element
     | _ :: _ as module_path -> T_module_accessor { module_path; element })
+  | Some { orig_var = module_path, element; applied_types = _ :: _ as applied_types }
+    when use_orig_var ->
+    let type_operator = Module_access.{ module_path; element } in
+    let arguments = List.map ~f:self applied_types in
+    I.T_app { type_operator; arguments }
   | _ ->
     (match t.type_content with
     | O.T_sum ({ fields; layout }, orig_label) ->
@@ -213,7 +218,7 @@ and untype_sig_item ?(use_orig_var = false) : O.sig_item -> I.sig_item =
   match sig_item with
   | S_value (var, type_, attr) ->
     I.S_value (var, untype_type_expression ~use_orig_var type_, attr)
-  | S_type (var, type_, { leading_comments }) when Option.is_some @@ type_.orig_var ->
+  | S_type (var, type_, { leading_comments }) when Option.is_some @@ type_.abbrev ->
     (* we do not want to print the original variable if that is the first definition or an alias *)
     S_type (var, untype_type_expression type_, { leading_comments })
   | S_type (var, type_, { leading_comments }) ->

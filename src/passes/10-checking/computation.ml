@@ -20,7 +20,12 @@ type ('a, 'err, 'wrn) t =
 
 let rec encode (type_ : Ast_typed.type_expression) : Type.t =
   let return content : Type.t =
-    { content; orig_var = type_.orig_var; location = type_.location }
+    { content
+    ; abbrev =
+        Option.map type_.abbrev ~f:(fun { orig_var; applied_types } ->
+            Type.{ orig_var; applied_types = List.map ~f:encode applied_types })
+    ; location = type_.location
+    }
   in
   match type_.type_content with
   | T_variable tvar -> return @@ T_variable tvar

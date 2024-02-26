@@ -954,8 +954,8 @@ let add_shadowed_nested_t_sum tsum_list (tvar, type_) =
     =
    fun shadower_tvar (acc, is_top_level) type_ ->
     let return x = x, false in
-    match type_.content, type_.orig_var with
-    | T_sum _, Some (_, tvar) ->
+    match type_.content, type_.abbrev with
+    | T_sum _, Some { orig_var = _, tvar; _ } ->
       if Type_var.equal tvar shadower_tvar && not is_top_level
       then return ((tvar, type_) :: acc)
       else return acc
@@ -997,7 +997,8 @@ let get_sum : t -> Label.t -> (Type_var.t * Type_var.t list * Type.t * Type.t) l
     (module Label)
     (fun ctx constr ->
       (let filter_tsum (var, type_) =
-         let t_params, type_ = Type.destruct_type_abstraction type_ in
+         let t_params, inner_type = Type.destruct_type_abstraction type_ in
+         let type_ = { inner_type with abbrev = type_.abbrev } in
          match type_.content with
          | T_sum (m, _) ->
            (match Map.find m.fields constr with
@@ -1049,7 +1050,7 @@ let get_record : t -> Type.t Label.Map.t -> (Type_var.t option * Type.row) optio
                 ~f:(fun (Label (ka, _), va) (Label (kb, _), vb) ->
                   String.equal ka kb && Type.equal va vb)
             with
-           | Ok result -> Option.some_if result (type_.orig_var, record_type')
+           | Ok result -> Option.some_if result (type_.abbrev, record_type')
            | Unequal_lengths -> None)
          | _ -> None
        in
@@ -1061,7 +1062,8 @@ let get_record : t -> Type.t Label.Map.t -> (Type_var.t option * Type.row) optio
            |> Map.to_alist
            |> List.find_map ~f:(fun (_, type_) -> is_record_type type_)
          with
-         | Some (orig_var_opt, row) -> Some (Option.map orig_var_opt ~f:snd, row)
+         | Some (orig_var_opt, row) ->
+           Some (Option.map orig_var_opt ~f:(fun { orig_var = _, v; _ } -> v), row)
          | None ->
            let modules = to_module_map t in
            List.fold_left
