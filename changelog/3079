@@ -1,0 +1,7 @@
+
+author: DK318
+description: "Show polymorphic values in hovers instead of raw ones. For example, in this code\\n\\n```ocaml\\ntype 'a t = { x : 'a; y : string }\\n\\nlet x : int t = { x = 42; y = \"42\" }\\n\\n```\\non `x` hover you'll see `int t` instead of `{ x : int; y : string }`.\\n\\n\\n"
+merge_request: '3079'
+title: "[#1965] Show polymorphic types in LSP + replace generated type variables"
+type: added
+            
