@@ -96,6 +96,8 @@ type constant' =
   | C_BIG_MAP_EMPTY [@pure]
   | C_BIG_MAP_LITERAL
   | C_BIG_MAP_GET_AND_UPDATE [@pure]
+  (* Big Sets *)
+  | C_BIG_SET_LITERAL
   (* Blockchain *)
   | C_CREATE_CONTRACT
   (* Casting dynamic entrypoints to nat *)
