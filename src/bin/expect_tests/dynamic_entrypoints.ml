@@ -98,6 +98,15 @@ let%expect_test "dynamic entrypoints test (mligo)" =
   run_ligo_good [ "run"; "test"; test "dynamic_entrypoints_tests.mligo" ];
   [%expect
     {|
+  File "../../test/contracts/dynamic_entrypoints_tests.mligo", line 29, characters 21-58:
+   28 | let test_dyn =
+   29 |   let init_storage = Test.storage_with_dynamic_entrypoints (contract_of  C) 42 in
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   30 |   let orig = Test.originate (contract_of C) init_storage 0mutez in
+  :
+  Warning: deprecated value.
+  In a future version, `Test` will be replaced by `Test.Next`, and using `Dynamic_entrypoints.storage` from `Test.Next` is encouraged for a smoother migration.
+
   File "../../test/contracts/dynamic_entrypoints_tests.mligo", line 30, characters 13-27:
    29 |   let init_storage = Test.storage_with_dynamic_entrypoints (contract_of  C) 42 in
    30 |   let orig = Test.originate (contract_of C) init_storage 0mutez in
@@ -158,6 +167,15 @@ let%expect_test "dynamic entrypoints test (jsligo)" =
   run_ligo_good [ "run"; "test"; test "dynamic_entrypoints_tests.jsligo" ];
   [%expect
     {|
+    File "../../test/contracts/dynamic_entrypoints_tests.jsligo", line 32, characters 23-60:
+     31 | const test_dyn = do {
+     32 |   const init_storage = Test.storage_with_dynamic_entrypoints(contract_of(C), 42);
+                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     33 |   const orig = Test.originate (contract_of(C), init_storage, 0mutez);
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `Dynamic_entrypoints.storage` from `Test.Next` is encouraged for a smoother migration.
+
     File "../../test/contracts/dynamic_entrypoints_tests.jsligo", line 33, characters 15-29:
      32 |   const init_storage = Test.storage_with_dynamic_entrypoints(contract_of(C), 42);
      33 |   const orig = Test.originate (contract_of(C), init_storage, 0mutez);
