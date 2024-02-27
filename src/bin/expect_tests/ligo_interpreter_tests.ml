@@ -18,6 +18,15 @@ let%expect_test _ =
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Originate.contract` from `Test.Next` is encouraged for a smoother migration.
 
+    File "./test_timelock.mligo", line 23, characters 38-54:
+     22 |   let test_open (cc : chest_key * chest) (expected : bytes) : unit =
+     23 |     let x : C parameter_of contract = Test.to_contract orig.addr in
+                                                ^^^^^^^^^^^^^^^^
+     24 |     let _ = Test.transfer_to_contract_exn x (Check cc) 0tez in
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.to_contract` from `Test.Next` is encouraged for a smoother migration.
+
     File "./test_timelock.mligo", line 24, characters 12-41:
      23 |     let x : C parameter_of contract = Test.to_contract orig.addr in
      24 |     let _ = Test.transfer_to_contract_exn x (Check cc) 0tez in
@@ -44,6 +53,51 @@ let%expect_test _ =
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `IO.log` from `Test.Next` is encouraged for a smoother migration.
+
+    File "./test_timelock.mligo", line 30, characters 27-44:
+     29 |   let test1 = (* chest key/payload and time matches -> OK *)
+     30 |     let chest, chest_key = Test.create_chest payload 10n in
+                                     ^^^^^^^^^^^^^^^^^
+     31 |     test_open (chest_key, chest) payload
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `Timelock.create` from `Test.Next` is encouraged for a smoother migration.
+
+    File "./test_timelock.mligo", line 34, characters 19-36:
+     33 |   let test2 = (* chest key/payload do not match *)
+     34 |     let chest, _ = Test.create_chest payload 10n in
+                             ^^^^^^^^^^^^^^^^^
+     35 |     let _, chest_key = Test.create_chest 0x2020 10n in
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `Timelock.create` from `Test.Next` is encouraged for a smoother migration.
+
+    File "./test_timelock.mligo", line 35, characters 23-40:
+     34 |     let chest, _ = Test.create_chest payload 10n in
+     35 |     let _, chest_key = Test.create_chest 0x2020 10n in
+                                 ^^^^^^^^^^^^^^^^^
+     36 |     test_open (chest_key,chest) 0xff
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `Timelock.create` from `Test.Next` is encouraged for a smoother migration.
+
+    File "./test_timelock.mligo", line 39, characters 19-36:
+     38 |   let test3 = (* chest time does not match *)
+     39 |     let chest, _ = Test.create_chest payload 2n in
+                             ^^^^^^^^^^^^^^^^^
+     40 |     let chest_key = Test.create_chest_key chest 10n in
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `Timelock.create` from `Test.Next` is encouraged for a smoother migration.
+
+    File "./test_timelock.mligo", line 40, characters 20-41:
+     39 |     let chest, _ = Test.create_chest payload 2n in
+     40 |     let chest_key = Test.create_chest_key chest 10n in
+                              ^^^^^^^^^^^^^^^^^^^^^
+     41 |     test_open (chest_key, chest) 0x
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `Timelock.create_key` from `Test.Next` is encouraged for a smoother migration.
 
     (0x4141 , 0x4141)
     (0xff , 0xff)
@@ -82,6 +136,24 @@ let%expect_test _ =
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Originate.from_file` from `Test.Next` is encouraged for a smoother migration.
+
+    File "./test_hashlock.mligo", line 12, characters 14-30:
+     11 |   let {addr = typed_addr; code = _; size = _} = Test.originate_from_file "../hashlock.mligo" init_storage 0tez in
+     12 |   let contr = Test.to_contract typed_addr in
+                        ^^^^^^^^^^^^^^^^
+     13 |   let parameter = Commit salted_hash in
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.to_contract` from `Test.Next` is encouraged for a smoother migration.
+
+    File "./test_hashlock.mligo", line 14, characters 11-26:
+     13 |   let parameter = Commit salted_hash in
+     14 |   let () = Test.set_source first_committer in
+                     ^^^^^^^^^^^^^^^
+     15 |   let lock_time = Tezos.get_now () + 15 + 86_400 in
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `State.set_source` from `Test.Next` is encouraged for a smoother migration.
 
     File "./test_hashlock.mligo", line 16, characters 10-39:
      15 |   let lock_time = Tezos.get_now () + 15 + 86_400 in
@@ -137,6 +209,24 @@ let%expect_test _ =
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Originate.from_file` from `Test.Next` is encouraged for a smoother migration.
 
+    File "./test_hashlock.mligo", line 32, characters 14-30:
+     31 |   let {addr = typed_addr; code = _; size = _} = Test.originate_from_file "../hashlock.mligo" init_storage 0tez in
+     32 |   let contr = Test.to_contract typed_addr in
+                        ^^^^^^^^^^^^^^^^
+     33 |   let parameter = Reveal reveal in
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.to_contract` from `Test.Next` is encouraged for a smoother migration.
+
+    File "./test_hashlock.mligo", line 34, characters 11-26:
+     33 |   let parameter = Reveal reveal in
+     34 |   let () = Test.set_source first_committer in
+                     ^^^^^^^^^^^^^^^
+     35 |   match Test.transfer_to_contract contr parameter 0tez with
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `State.set_source` from `Test.Next` is encouraged for a smoother migration.
+
     File "./test_hashlock.mligo", line 35, characters 8-33:
      34 |   let () = Test.set_source first_committer in
      35 |   match Test.transfer_to_contract contr parameter 0tez with
@@ -154,6 +244,15 @@ let%expect_test _ =
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Assert.assert` from `Test.Next` is encouraged for a smoother migration.
+
+    File "./test_hashlock.mligo", line 37, characters 43-63:
+     36 |   | Success _ -> failwith "Transaction should fail"
+     37 |   | Fail (Rejected (a, _)) -> Test.assert (Test.michelson_equal a (Test.eval "You have not made a commitment to hash against yet."))
+                                                     ^^^^^^^^^^^^^^^^^^^^
+     38 |   | Fail _ -> failwith "Transaction should fail with rejection"
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `Compare.eq` from `Test.Next` is encouraged for a smoother migration.
 
     File "./test_hashlock.mligo", line 37, characters 67-76:
      36 |   | Success _ -> failwith "Transaction should fail"
@@ -191,6 +290,24 @@ let%expect_test _ =
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Originate.from_file` from `Test.Next` is encouraged for a smoother migration.
 
+    File "./test_hashlock.mligo", line 51, characters 14-30:
+     50 |   let {addr = typed_addr; code = _; size = _} = Test.originate_from_file "../hashlock.mligo" init_storage 0tez in
+     51 |   let contr = Test.to_contract typed_addr in
+                        ^^^^^^^^^^^^^^^^
+     52 |   let empty_message = fun (_ : unit) -> ([] : operation list) in
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.to_contract` from `Test.Next` is encouraged for a smoother migration.
+
+    File "./test_hashlock.mligo", line 55, characters 11-26:
+     54 |   let parameter = Reveal reveal in
+     55 |   let () = Test.set_source first_committer in
+                     ^^^^^^^^^^^^^^^
+     56 |   match Test.transfer_to_contract contr parameter 0tez with
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `State.set_source` from `Test.Next` is encouraged for a smoother migration.
+
     File "./test_hashlock.mligo", line 56, characters 8-33:
      55 |   let () = Test.set_source first_committer in
      56 |   match Test.transfer_to_contract contr parameter 0tez with
@@ -208,6 +325,15 @@ let%expect_test _ =
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Assert.assert` from `Test.Next` is encouraged for a smoother migration.
+
+    File "./test_hashlock.mligo", line 58, characters 43-63:
+     57 |   | Success _ -> failwith "Transaction should fail"
+     58 |   | Fail (Rejected (a, _)) -> Test.assert (Test.michelson_equal a (Test.eval "It has not been 24 hours since your commit yet."))
+                                                     ^^^^^^^^^^^^^^^^^^^^
+     59 |   | Fail _ -> failwith "Transaction should fail with rejection"
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `Compare.eq` from `Test.Next` is encouraged for a smoother migration.
 
     File "./test_hashlock.mligo", line 58, characters 67-76:
      57 |   | Success _ -> failwith "Transaction should fail"
@@ -245,6 +371,24 @@ let%expect_test _ =
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Originate.from_file` from `Test.Next` is encouraged for a smoother migration.
 
+    File "./test_hashlock.mligo", line 73, characters 14-30:
+     72 |   let {addr = typed_addr; code = _; size = _} = Test.originate_from_file "../hashlock.mligo" init_storage 0tez in
+     73 |   let contr = Test.to_contract typed_addr in
+                        ^^^^^^^^^^^^^^^^
+     74 |   let empty_message = fun (_ : unit) -> ([] : operation list) in
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.to_contract` from `Test.Next` is encouraged for a smoother migration.
+
+    File "./test_hashlock.mligo", line 77, characters 11-26:
+     76 |   let parameter = Reveal reveal in
+     77 |   let () = Test.set_source first_committer in
+                     ^^^^^^^^^^^^^^^
+     78 |   match Test.transfer_to_contract contr parameter 0tez with
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `State.set_source` from `Test.Next` is encouraged for a smoother migration.
+
     File "./test_hashlock.mligo", line 78, characters 8-33:
      77 |   let () = Test.set_source first_committer in
      78 |   match Test.transfer_to_contract contr parameter 0tez with
@@ -262,6 +406,15 @@ let%expect_test _ =
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Assert.assert` from `Test.Next` is encouraged for a smoother migration.
+
+    File "./test_hashlock.mligo", line 80, characters 43-63:
+     79 |   | Success _ -> failwith "Transaction should fail"
+     80 |   | Fail (Rejected (a, _)) -> Test.assert (Test.michelson_equal a (Test.eval "This reveal does not match your commitment."))
+                                                     ^^^^^^^^^^^^^^^^^^^^
+     81 |   | Fail _ -> failwith "Transaction should fail with rejection"
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `Compare.eq` from `Test.Next` is encouraged for a smoother migration.
 
     File "./test_hashlock.mligo", line 80, characters 67-76:
      79 |   | Success _ -> failwith "Transaction should fail"
@@ -299,6 +452,24 @@ let%expect_test _ =
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Originate.from_file` from `Test.Next` is encouraged for a smoother migration.
 
+    File "./test_hashlock.mligo", line 95, characters 14-30:
+     94 |   let {addr = typed_addr; code = _; size = _} = Test.originate_from_file "../hashlock.mligo" init_storage 0tez in
+     95 |   let contr = Test.to_contract typed_addr in
+                        ^^^^^^^^^^^^^^^^
+     96 |   let empty_message = fun (_ : unit) -> ([] : operation list) in
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.to_contract` from `Test.Next` is encouraged for a smoother migration.
+
+    File "./test_hashlock.mligo", line 99, characters 11-26:
+     98 |   let parameter = Reveal reveal in
+     99 |   let () = Test.set_source first_committer in
+                     ^^^^^^^^^^^^^^^
+    100 |   match Test.transfer_to_contract contr parameter 0tez with
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `State.set_source` from `Test.Next` is encouraged for a smoother migration.
+
     File "./test_hashlock.mligo", line 100, characters 8-33:
      99 |   let () = Test.set_source first_committer in
     100 |   match Test.transfer_to_contract contr parameter 0tez with
@@ -316,6 +487,15 @@ let%expect_test _ =
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Assert.assert` from `Test.Next` is encouraged for a smoother migration.
+
+    File "./test_hashlock.mligo", line 102, characters 43-63:
+    101 |   | Success _ -> failwith "Transaction should fail"
+    102 |   | Fail (Rejected (a, _)) -> Test.assert (Test.michelson_equal a (Test.eval "Your commitment did not match the storage hash."))
+                                                     ^^^^^^^^^^^^^^^^^^^^
+    103 |   | Fail _ -> failwith "Transaction should fail with rejection"
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `Compare.eq` from `Test.Next` is encouraged for a smoother migration.
 
     File "./test_hashlock.mligo", line 102, characters 67-76:
     101 |   | Success _ -> failwith "Transaction should fail"
@@ -353,6 +533,24 @@ let%expect_test _ =
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Originate.from_file` from `Test.Next` is encouraged for a smoother migration.
 
+    File "./test_hashlock.mligo", line 117, characters 14-30:
+    116 |   let {addr = typed_addr; code = _; size = _} = Test.originate_from_file "../hashlock.mligo" init_storage 0tez in
+    117 |   let contr = Test.to_contract typed_addr in
+                        ^^^^^^^^^^^^^^^^
+    118 |   let empty_message = fun (_ : unit) -> ([] : operation list) in
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.to_contract` from `Test.Next` is encouraged for a smoother migration.
+
+    File "./test_hashlock.mligo", line 121, characters 11-26:
+    120 |   let parameter = Reveal reveal in
+    121 |   let () = Test.set_source first_committer in
+                     ^^^^^^^^^^^^^^^
+    122 |   match Test.transfer_to_contract contr parameter 0tez with
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `State.set_source` from `Test.Next` is encouraged for a smoother migration.
+
     File "./test_hashlock.mligo", line 122, characters 8-33:
     121 |   let () = Test.set_source first_committer in
     122 |   match Test.transfer_to_contract contr parameter 0tez with
@@ -370,6 +568,15 @@ let%expect_test _ =
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Assert.assert` from `Test.Next` is encouraged for a smoother migration.
+
+    File "./test_hashlock.mligo", line 124, characters 43-63:
+    123 |   | Success _ -> failwith "Transaction should fail"
+    124 |   | Fail (Rejected (a, _)) -> Test.assert (Test.michelson_equal a (Test.eval "This contract has already been used."))
+                                                     ^^^^^^^^^^^^^^^^^^^^
+    125 |   | Fail _ -> failwith "Transaction should fail with rejection"
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `Compare.eq` from `Test.Next` is encouraged for a smoother migration.
 
     File "./test_hashlock.mligo", line 124, characters 67-76:
     123 |   | Success _ -> failwith "Transaction should fail"
@@ -406,6 +613,24 @@ let%expect_test _ =
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Originate.from_file` from `Test.Next` is encouraged for a smoother migration.
+
+    File "./test_hashlock.mligo", line 138, characters 14-30:
+    137 |   let {addr = typed_addr; code = _; size = _} = Test.originate_from_file "../hashlock.mligo" init_storage 0tez in
+    138 |   let contr = Test.to_contract typed_addr in
+                        ^^^^^^^^^^^^^^^^
+    139 |   let empty_message = fun (_ : unit) -> ([] : operation list) in
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.to_contract` from `Test.Next` is encouraged for a smoother migration.
+
+    File "./test_hashlock.mligo", line 142, characters 11-26:
+    141 |   let parameter = Reveal reveal in
+    142 |   let () = Test.set_source first_committer in
+                     ^^^^^^^^^^^^^^^
+    143 |   let _ = Test.transfer_to_contract_exn contr parameter 0tez in
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `State.set_source` from `Test.Next` is encouraged for a smoother migration.
 
     File "./test_hashlock.mligo", line 143, characters 10-39:
     142 |   let () = Test.set_source first_committer in
@@ -512,6 +737,23 @@ let%expect_test _ =
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.transfer_exn` from `Test.Next` is encouraged for a smoother migration.
 
+    File "./test_events_pair_vs_record.mligo", line 16, characters 16-41:
+     15 |   let _ = Test.transfer_exn orig.addr (Main {num1 = 1n ; num2 = 2n}) 0tez in
+     16 |   let events = (Test.get_last_events_from orig.addr "foo" : C.mystruct list) in
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^
+     17 |   match events with [{num1;num2}] -> num1 + num2 | _ -> Test.failwith "not good"
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `State.last_events` from `Test.Next` is encouraged for a smoother migration.
+
+    File "./test_events_pair_vs_record.mligo", line 17, characters 56-69:
+     16 |   let events = (Test.get_last_events_from orig.addr "foo" : C.mystruct list) in
+     17 |   match events with [{num1;num2}] -> num1 + num2 | _ -> Test.failwith "not good"
+                                                                  ^^^^^^^^^^^^^
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `Assert.failwith` from `Test.Next` is encouraged for a smoother migration.
+
     Everything at the top-level was executed.
     - test_foo exited with value 3n. |}]
 
@@ -538,6 +780,15 @@ let%expect_test _ =
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Account.address` from `Test.Next` is encouraged for a smoother migration.
 
+    File "./test_timestamp_contract.mligo", line 10, characters 11-26:
+      9 |   let sender_ = Test.nth_bootstrap_account 1 in
+     10 |   let () = Test.set_source sender_ in
+                     ^^^^^^^^^^^^^^^
+     11 |
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `State.set_source` from `Test.Next` is encouraged for a smoother migration.
+
     File "./test_timestamp_contract.mligo", line 14, characters 13-27:
      13 |
      14 |   let orig = Test.originate (contract_of C) init_storage 0mutez in
@@ -546,6 +797,15 @@ let%expect_test _ =
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Originate.contract` from `Test.Next` is encouraged for a smoother migration.
+
+    File "./test_timestamp_contract.mligo", line 15, characters 14-30:
+     14 |   let orig = Test.originate (contract_of C) init_storage 0mutez in
+     15 |   let contr = Test.to_contract orig.addr in
+                        ^^^^^^^^^^^^^^^^
+     16 |   let addr = Tezos.address contr in
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.to_contract` from `Test.Next` is encouraged for a smoother migration.
 
     File "./test_timestamp_contract.mligo", line 21, characters 10-35:
      20 |   let c = boot() in
@@ -917,6 +1177,15 @@ let%expect_test _ =
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.transfer` from `Test.Next` is encouraged for a smoother migration.
 
+    File "./views_test.mligo", line 11, characters 13-28:
+     10 |       addr_c
+     11 |       (Main (Test.to_address addr_v))
+                       ^^^^^^^^^^^^^^^
+     12 |       1tez in
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.to_address` from `Test.Next` is encouraged for a smoother migration.
+
     File "./views_test.mligo", line 15, characters 14-30:
      14 |     Success _ ->
      15 |       let x = Test.get_storage addr_c in
@@ -968,6 +1237,15 @@ let%expect_test _ =
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Originate.contract` from `Test.Next` is encouraged for a smoother migration.
 
+    File "./test_fail.mligo", line 5, characters 14-30:
+      4 |   let orig = Test.originate (contract_of C) () 0tez in
+      5 |   let contr = Test.to_contract orig.addr in
+                        ^^^^^^^^^^^^^^^^
+      6 |   let addr = Tezos.address contr in
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.to_contract` from `Test.Next` is encouraged for a smoother migration.
+
     File "./test_fail.mligo", line 7, characters 8-33:
       6 |   let addr = Tezos.address contr in
       7 |   match Test.transfer_to_contract contr (Main ()) 10tez with
@@ -1011,6 +1289,15 @@ let%expect_test _ =
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.transfer` from `Test.Next` is encouraged for a smoother migration.
 
+    File "./test_fail_from_file.mligo", line 12, characters 35-50:
+     11 |     | Rejected (x, addr_fail) ->
+     12 |       let () = assert (addr_fail = Test.to_address orig.addr) in
+                                             ^^^^^^^^^^^^^^^
+     13 |       x
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.to_address` from `Test.Next` is encouraged for a smoother migration.
+
     Everything at the top-level was executed.
     - test exited with value "my contract always fail". |}]
 
@@ -1036,6 +1323,15 @@ let%expect_test _ =
   Warning: deprecated value.
   In a future version, `Test` will be replaced by `Test.Next`, and using `Michelson.run` from `Test.Next` is encouraged for a smoother migration.
 
+  File "./compile_expr.mligo", line 14, characters 10-30:
+   13 |                    (1 + 3 + 2, 1n + 2n, "a" ^ "b", 0xFF00, ()) in
+   14 |   assert (Test.michelson_equal d_one ret)
+                  ^^^^^^^^^^^^^^^^^^^^
+   15 |
+  :
+  Warning: deprecated value.
+  In a future version, `Test` will be replaced by `Test.Next`, and using `Compare.eq` from `Test.Next` is encouraged for a smoother migration.
+
   File "./compile_expr.mligo", line 17, characters 11-20:
    16 | let test2 =
    17 |   let x1 = Test.eval (1,2) in
@@ -1053,6 +1349,15 @@ let%expect_test _ =
   :
   Warning: deprecated value.
   In a future version, `Test` will be replaced by `Test.Next`, and using `Michelson.run` from `Test.Next` is encouraged for a smoother migration.
+
+  File "./compile_expr.mligo", line 19, characters 11-31:
+   18 |   let x2 = Test.run (fun (x : int * int) -> x) (1, 2) in
+   19 |   let eq = Test.michelson_equal x1 x2 in
+                   ^^^^^^^^^^^^^^^^^^^^
+   20 |   assert eq
+  :
+  Warning: deprecated value.
+  In a future version, `Test` will be replaced by `Test.Next`, and using `Compare.eq` from `Test.Next` is encouraged for a smoother migration.
 
   File "./compile_expr.mligo", line 23, characters 11-20:
    22 | let test3 =
@@ -1072,6 +1377,15 @@ let%expect_test _ =
   Warning: deprecated value.
   In a future version, `Test` will be replaced by `Test.Next`, and using `Michelson.eval` from `Test.Next` is encouraged for a smoother migration.
 
+  File "./compile_expr.mligo", line 25, characters 15-35:
+   24 |   let x2 = Test.eval (Baz2 1n : some_v_2) in
+   25 |   assert (not (Test.michelson_equal x1 x2))
+                       ^^^^^^^^^^^^^^^^^^^^
+   26 |
+  :
+  Warning: deprecated value.
+  In a future version, `Test` will be replaced by `Test.Next`, and using `Compare.eq` from `Test.Next` is encouraged for a smoother migration.
+
   File "./compile_expr.mligo", line 28, characters 11-20:
    27 | let test4 =
    28 |   let x1 = Test.eval ({ one = 1 ; two = 2n ; three = "a" ; four = 0xFF00 ; five = () } : some_r) in
@@ -1089,6 +1403,14 @@ let%expect_test _ =
   :
   Warning: deprecated value.
   In a future version, `Test` will be replaced by `Test.Next`, and using `Michelson.eval` from `Test.Next` is encouraged for a smoother migration.
+
+  File "./compile_expr.mligo", line 30, characters 15-35:
+   29 |   let x2 = Test.eval ({ one2 = 1 ; two2 = 2n ; three2 = "a" ; four2 = 0xFF00 ; five2 = () } : some_r_2) in
+   30 |   assert (not (Test.michelson_equal x1 x2))
+                       ^^^^^^^^^^^^^^^^^^^^
+  :
+  Warning: deprecated value.
+  In a future version, `Test` will be replaced by `Test.Next`, and using `Compare.eq` from `Test.Next` is encouraged for a smoother migration.
 
   Everything at the top-level was executed.
   - test1 exited with value ().
@@ -1118,6 +1440,15 @@ let%expect_test _ =
   Warning: deprecated value.
   In a future version, `Test` will be replaced by `Test.Next`, and using `Michelson.run` from `Test.Next` is encouraged for a smoother migration.
 
+  File "./compile_expr_from_file.mligo", line 6, characters 10-30:
+    5 |   let ret = Test.run (fun (x:r_comb) -> x.one ) v in
+    6 |   assert (Test.michelson_equal d_one ret)
+                  ^^^^^^^^^^^^^^^^^^^^
+    7 |
+  :
+  Warning: deprecated value.
+  In a future version, `Test` will be replaced by `Test.Next`, and using `Compare.eq` from `Test.Next` is encouraged for a smoother migration.
+
   File "./compile_expr_from_file.mligo", line 9, characters 11-29:
     8 | let test2 =
     9 |   let x1 = Test.compile_value (1,2) in
@@ -1135,6 +1466,15 @@ let%expect_test _ =
   :
   Warning: deprecated value.
   In a future version, `Test` will be replaced by `Test.Next`, and using `Michelson.run` from `Test.Next` is encouraged for a smoother migration.
+
+  File "./compile_expr_from_file.mligo", line 11, characters 11-31:
+   10 |   let x2 = Test.run (fun () -> (1,2)) () in
+   11 |   let eq = Test.michelson_equal x1 x2 in
+                   ^^^^^^^^^^^^^^^^^^^^
+   12 |   assert eq
+  :
+  Warning: deprecated value.
+  In a future version, `Test` will be replaced by `Test.Next`, and using `Compare.eq` from `Test.Next` is encouraged for a smoother migration.
 
   File "./compile_expr_from_file.mligo", line 17, characters 4-12:
    16 |     type r_comb = [@layout comb] { one : int ; two : nat ; three : string ; four : bytes ; five : unit } in
@@ -1154,6 +1494,15 @@ let%expect_test _ =
   Warning: deprecated value.
   In a future version, `Test` will be replaced by `Test.Next`, and using `Michelson.run` from `Test.Next` is encouraged for a smoother migration.
 
+  File "./compile_expr_from_file.mligo", line 23, characters 15-35:
+   22 |   in
+   23 |   assert (not (Test.michelson_equal x1 x2))
+                       ^^^^^^^^^^^^^^^^^^^^
+   24 |
+  :
+  Warning: deprecated value.
+  In a future version, `Test` will be replaced by `Test.Next`, and using `Compare.eq` from `Test.Next` is encouraged for a smoother migration.
+
   File "./compile_expr_from_file.mligo", line 28, characters 4-12:
    27 |     type v_comb = [@layout comb] | Foo of int | Bar of string | Bare of string | Baz of nat in
    28 |     Test.run (fun () -> (Baz 1n: v_comb)) ()
@@ -1172,6 +1521,14 @@ let%expect_test _ =
   Warning: deprecated value.
   In a future version, `Test` will be replaced by `Test.Next`, and using `Michelson.run` from `Test.Next` is encouraged for a smoother migration.
 
+  File "./compile_expr_from_file.mligo", line 34, characters 15-35:
+   33 |   in
+   34 |   assert (not (Test.michelson_equal x1 x2))
+                       ^^^^^^^^^^^^^^^^^^^^
+  :
+  Warning: deprecated value.
+  In a future version, `Test` will be replaced by `Test.Next`, and using `Compare.eq` from `Test.Next` is encouraged for a smoother migration.
+
   Everything at the top-level was executed.
   - test1 exited with value ().
   - test2 exited with value ().
@@ -1182,6 +1539,15 @@ let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "test_example.mligo" ];
   [%expect
     {|
+    File "./test_example.mligo", line 4, characters 19-41:
+      3 | let check_new_origination (src :address) : address =
+      4 |   let last_origs = Test.last_originations () in
+                             ^^^^^^^^^^^^^^^^^^^^^^
+      5 |   match Map.find_opt src last_origs with
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `State.last_originations` from `Test.Next` is encouraged for a smoother migration.
+
     File "./test_example.mligo", line 7, characters 15-26:
       6 |     | Some new_lst -> (
       7 |       let () = Test.assert (List.length new_lst = 1n) in
@@ -1308,6 +1674,15 @@ let%expect_test _ =
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Assert.assert` from `Test.Next` is encouraged for a smoother migration.
 
+    File "./test_example.mligo", line 38, characters 28-48:
+     37 |       let () = Test.assert (addr = new_account2) in
+     38 |       let () = Test.assert (Test.michelson_equal v (Test.eval 111)) in
+                                      ^^^^^^^^^^^^^^^^^^^^
+     39 |       v
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `Compare.eq` from `Test.Next` is encouraged for a smoother migration.
+
     File "./test_example.mligo", line 38, characters 52-61:
      37 |       let () = Test.assert (addr = new_account2) in
      38 |       let () = Test.assert (Test.michelson_equal v (Test.eval 111)) in
@@ -1362,6 +1737,24 @@ let%expect_test _ =
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Account.address` from `Test.Next` is encouraged for a smoother migration.
 
+    File "./test_example.mligo", line 57, characters 11-26:
+     56 |   let bsa3 = (Test.nth_bootstrap_account 3) in
+     57 |   let () = Test.set_source bsa3 in
+                     ^^^^^^^^^^^^^^^
+     58 |   let () = Test.set_baker bsa2 in
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `State.set_source` from `Test.Next` is encouraged for a smoother migration.
+
+    File "./test_example.mligo", line 58, characters 11-25:
+     57 |   let () = Test.set_source bsa3 in
+     58 |   let () = Test.set_baker bsa2 in
+                     ^^^^^^^^^^^^^^
+     59 |   // some balance tests:
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `State.set_baker` from `Test.Next` is encouraged for a smoother migration.
+
     File "./test_example.mligo", line 61, characters 4-12:
      60 |   let tz = fun (n:nat) ->
      61 |     Test.run (fun (x : unit -> nat) -> x () * 1mutez) (fun (_ : unit) -> n)
@@ -1415,6 +1808,15 @@ let%expect_test _ =
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Assert.assert` from `Test.Next` is encouraged for a smoother migration.
+
+    File "./test_example.mligo", line 65, characters 24-44:
+     64 |   let () = Test.assert ((Test.get_balance_of_address bsa1) = 0mutez) in
+     65 |   let () = Test.assert (Test.michelson_equal (Test.eval (Test.get_balance_of_address bsa1)) (tz 0n)) in
+                                  ^^^^^^^^^^^^^^^^^^^^
+     66 |   let () = Test.assert ((Test.get_balance_of_address bsa2) = 3800000tez) in
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `Compare.eq` from `Test.Next` is encouraged for a smoother migration.
 
     File "./test_example.mligo", line 65, characters 46-55:
      64 |   let () = Test.assert ((Test.get_balance_of_address bsa1) = 0mutez) in
@@ -1478,6 +1880,15 @@ let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "test_example.mligo" ];
   [%expect
     {|
+    File "./test_example.mligo", line 4, characters 19-41:
+      3 | let check_new_origination (src :address) : address =
+      4 |   let last_origs = Test.last_originations () in
+                             ^^^^^^^^^^^^^^^^^^^^^^
+      5 |   match Map.find_opt src last_origs with
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `State.last_originations` from `Test.Next` is encouraged for a smoother migration.
+
     File "./test_example.mligo", line 7, characters 15-26:
       6 |     | Some new_lst -> (
       7 |       let () = Test.assert (List.length new_lst = 1n) in
@@ -1604,6 +2015,15 @@ let%expect_test _ =
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Assert.assert` from `Test.Next` is encouraged for a smoother migration.
 
+    File "./test_example.mligo", line 38, characters 28-48:
+     37 |       let () = Test.assert (addr = new_account2) in
+     38 |       let () = Test.assert (Test.michelson_equal v (Test.eval 111)) in
+                                      ^^^^^^^^^^^^^^^^^^^^
+     39 |       v
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `Compare.eq` from `Test.Next` is encouraged for a smoother migration.
+
     File "./test_example.mligo", line 38, characters 52-61:
      37 |       let () = Test.assert (addr = new_account2) in
      38 |       let () = Test.assert (Test.michelson_equal v (Test.eval 111)) in
@@ -1658,6 +2078,24 @@ let%expect_test _ =
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Account.address` from `Test.Next` is encouraged for a smoother migration.
 
+    File "./test_example.mligo", line 57, characters 11-26:
+     56 |   let bsa3 = (Test.nth_bootstrap_account 3) in
+     57 |   let () = Test.set_source bsa3 in
+                     ^^^^^^^^^^^^^^^
+     58 |   let () = Test.set_baker bsa2 in
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `State.set_source` from `Test.Next` is encouraged for a smoother migration.
+
+    File "./test_example.mligo", line 58, characters 11-25:
+     57 |   let () = Test.set_source bsa3 in
+     58 |   let () = Test.set_baker bsa2 in
+                     ^^^^^^^^^^^^^^
+     59 |   // some balance tests:
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `State.set_baker` from `Test.Next` is encouraged for a smoother migration.
+
     File "./test_example.mligo", line 61, characters 4-12:
      60 |   let tz = fun (n:nat) ->
      61 |     Test.run (fun (x : unit -> nat) -> x () * 1mutez) (fun (_ : unit) -> n)
@@ -1711,6 +2149,15 @@ let%expect_test _ =
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Assert.assert` from `Test.Next` is encouraged for a smoother migration.
+
+    File "./test_example.mligo", line 65, characters 24-44:
+     64 |   let () = Test.assert ((Test.get_balance_of_address bsa1) = 0mutez) in
+     65 |   let () = Test.assert (Test.michelson_equal (Test.eval (Test.get_balance_of_address bsa1)) (tz 0n)) in
+                                  ^^^^^^^^^^^^^^^^^^^^
+     66 |   let () = Test.assert ((Test.get_balance_of_address bsa2) = 3800000tez) in
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `Compare.eq` from `Test.Next` is encouraged for a smoother migration.
 
     File "./test_example.mligo", line 65, characters 46-55:
      64 |   let () = Test.assert ((Test.get_balance_of_address bsa1) = 0mutez) in
@@ -1782,6 +2229,15 @@ let%expect_test _ =
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Originate.contract` from `Test.Next` is encouraged for a smoother migration.
+
+    File "./catch_balance_too_low.mligo", line 5, characters 14-30:
+      4 |   let orig = Test.originate (contract_of C) None 0tez in
+      5 |   let contr = Test.to_contract orig.addr in
+                        ^^^^^^^^^^^^^^^^
+      6 |   match Test.transfer_to_contract contr (Main Two) 1mutez with
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.to_contract` from `Test.Next` is encouraged for a smoother migration.
 
     File "./catch_balance_too_low.mligo", line 6, characters 8-33:
       5 |   let contr = Test.to_contract orig.addr in
@@ -1959,6 +2415,15 @@ let%expect_test _ =
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Originate.contract` from `Test.Next` is encouraged for a smoother migration.
 
+    File "./test_rec_contract.mligo", line 9, characters 15-31:
+      8 |   let {addr = taddr; code = _; size = _} = Test.originate (contract_of C) () 0tez in
+      9 |   let _contr = Test.to_contract taddr in
+                         ^^^^^^^^^^^^^^^^
+     10 |   ()
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.to_contract` from `Test.Next` is encouraged for a smoother migration.
+
     Everything at the top-level was executed.
     - test exited with value (). |}]
 
@@ -1974,6 +2439,15 @@ let%expect_test _ =
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Originate.contract` from `Test.Next` is encouraged for a smoother migration.
+
+    File "./test_importer.mligo", line 5, characters 14-30:
+      4 |   let orig = Test.originate (contract_of External) External.D.default.initial 0tez in
+      5 |   let contr = Test.to_contract orig.addr in
+                        ^^^^^^^^^^^^^^^^
+      6 |   let () = assert (Test.get_storage orig.addr = External.D.default.initial) in
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.to_contract` from `Test.Next` is encouraged for a smoother migration.
 
     File "./test_importer.mligo", line 6, characters 19-35:
       5 |   let contr = Test.to_contract orig.addr in
@@ -2025,6 +2499,15 @@ let%expect_test _ =
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Originate.contract` from `Test.Next` is encouraged for a smoother migration.
+
+    File "./test_bigmap.mligo", line 14, characters 12-28:
+     13 |   let orig = Test.originate (contract_of C) init 0tez in
+     14 |   let ctr = Test.to_contract orig.addr in
+                      ^^^^^^^^^^^^^^^^
+     15 |   let m_old = Test.get_storage orig.addr in
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.to_contract` from `Test.Next` is encouraged for a smoother migration.
 
     File "./test_bigmap.mligo", line 15, characters 14-30:
      14 |   let ctr = Test.to_contract orig.addr in
@@ -2156,6 +2639,15 @@ let%expect_test _ =
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Originate.contract` from `Test.Next` is encouraged for a smoother migration.
 
+    File "./test_bigmap_compare.mligo", line 12, characters 13-28:
+     11 |     let orig = Test.originate (contract_of C) initial_storage 0tez in
+     12 |     let () = Test.set_source a1 in
+                       ^^^^^^^^^^^^^^^
+     13 |     let _ = Test.transfer_exn orig.addr (Main (a1, 1234n)) 1mutez in
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `State.set_source` from `Test.Next` is encouraged for a smoother migration.
+
     File "./test_bigmap_compare.mligo", line 13, characters 12-29:
      12 |     let () = Test.set_source a1 in
      13 |     let _ = Test.transfer_exn orig.addr (Main (a1, 1234n)) 1mutez in
@@ -2217,6 +2709,15 @@ let%expect_test _ =
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.transfer_exn` from `Test.Next` is encouraged for a smoother migration.
 
+    File "./test_bigmap_set.mligo", line 14, characters 11-27:
+     13 |   let init = Big_map.add 21 (fun (_ : nat) -> 0n) (Big_map.empty : (int, nat -> nat) big_map) in
+     14 |   let () = Test.set_big_map 5 init in
+                     ^^^^^^^^^^^^^^^^
+     15 |   let m_new = Test.get_storage taddr in
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `State.set_big_map` from `Test.Next` is encouraged for a smoother migration.
+
     File "./test_bigmap_set.mligo", line 15, characters 14-30:
      14 |   let () = Test.set_big_map 5 init in
      15 |   let m_new = Test.get_storage taddr in
@@ -2234,6 +2735,15 @@ let%expect_test _ =
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `IO.log` from `Test.Next` is encouraged for a smoother migration.
+
+    File "./test_bigmap_set.mligo", line 20, characters 15-31:
+     19 |       let () = Test.log (f 4n) in
+     20 |       let () = Test.set_big_map 4 init in
+                         ^^^^^^^^^^^^^^^^
+     21 |       let m_new = Test.get_storage taddr in
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `State.set_big_map` from `Test.Next` is encouraged for a smoother migration.
 
     File "./test_bigmap_set.mligo", line 21, characters 18-34:
      20 |       let () = Test.set_big_map 4 init in
@@ -2459,6 +2969,15 @@ let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "test_mutate_module.mligo" ];
   [%expect
     {|
+    File "./test_mutate_module.mligo", line 4, characters 42-58:
+      3 | let _tester (a : (Adder parameter_of, int) typed_address) (_ : (Adder parameter_of, int) michelson_contract) (_ : int) : unit =
+      4 |   let c : (Adder parameter_of) contract = Test.to_contract a in
+                                                    ^^^^^^^^^^^^^^^^
+      5 |   (* Test 1 *)
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.to_contract` from `Test.Next` is encouraged for a smoother migration.
+
     File "./test_mutate_module.mligo", line 6, characters 10-39:
       5 |   (* Test 1 *)
       6 |   let _ = Test.transfer_to_contract_exn c (Add 0) 0tez in
@@ -2515,6 +3034,15 @@ let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "test_mutate_module.jsligo" ];
   [%expect
     {|
+    File "./test_mutate_module.jsligo", line 4, characters 41-57:
+      3 | const _tester = (a : typed_address<parameter_of Adder, int>, _c : michelson_contract<parameter_of Adder, int>, _i : int) : unit => {
+      4 |   let c : contract<parameter_of Adder> = Test.to_contract(a);
+                                                   ^^^^^^^^^^^^^^^^
+      5 |   /* Test 1 */
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.to_contract` from `Test.Next` is encouraged for a smoother migration.
+
     File "./test_mutate_module.jsligo", line 6, characters 2-31:
       5 |   /* Test 1 */
       6 |   Test.transfer_to_contract_exn(c, Add(0), 0tez);
@@ -2887,6 +3415,24 @@ let%expect_test _ =
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Originate.contract` from `Test.Next` is encouraged for a smoother migration.
 
+    File "./test_FA12.mligo", line 12, characters 14-30:
+     11 |   let {addr = typed_addr; code = _; size = _} = Test.originate (contract_of C) storage 0tez in
+     12 |   let contr = Test.to_contract typed_addr in
+                        ^^^^^^^^^^^^^^^^
+     13 |   let parameter = Transfer { address_from = from_; address_to = to_; value = 10n } in
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.to_contract` from `Test.Next` is encouraged for a smoother migration.
+
+    File "./test_FA12.mligo", line 14, characters 11-26:
+     13 |   let parameter = Transfer { address_from = from_; address_to = to_; value = 10n } in
+     14 |   let () = Test.set_source sender_ in
+                     ^^^^^^^^^^^^^^^
+     15 |   let _ = Test.transfer_to_contract_exn contr (Main parameter) 0tez in
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `State.set_source` from `Test.Next` is encouraged for a smoother migration.
+
     File "./test_FA12.mligo", line 15, characters 10-39:
      14 |   let () = Test.set_source sender_ in
      15 |   let _ = Test.transfer_to_contract_exn contr (Main parameter) 0tez in
@@ -2950,6 +3496,24 @@ let%expect_test _ =
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Originate.contract` from `Test.Next` is encouraged for a smoother migration.
 
+    File "./test_FA12.mligo", line 32, characters 14-30:
+     31 |   let {addr = typed_addr; code = _; size = _} = Test.originate (contract_of C) storage 0tez in
+     32 |   let contr = Test.to_contract typed_addr in
+                        ^^^^^^^^^^^^^^^^
+     33 |   let parameter = Transfer { address_from = from_; address_to = to_; value = 10n } in
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.to_contract` from `Test.Next` is encouraged for a smoother migration.
+
+    File "./test_FA12.mligo", line 34, characters 11-26:
+     33 |   let parameter = Transfer { address_from = from_; address_to = to_; value = 10n } in
+     34 |   let () = Test.set_source sender_ in
+                     ^^^^^^^^^^^^^^^
+     35 |   match Test.transfer_to_contract contr (Main parameter) 0tez with
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `State.set_source` from `Test.Next` is encouraged for a smoother migration.
+
     File "./test_FA12.mligo", line 35, characters 8-33:
      34 |   let () = Test.set_source sender_ in
      35 |   match Test.transfer_to_contract contr (Main parameter) 0tez with
@@ -2958,6 +3522,15 @@ let%expect_test _ =
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Contract.transfer` from `Test.Next` is encouraged for a smoother migration.
+
+    File "./test_FA12.mligo", line 37, characters 38-58:
+     36 |   | Success _ -> failwith "Transaction should fail"
+     37 |   | Fail (Rejected (a, _)) -> assert (Test.michelson_equal a (Test.eval "NotEnoughAllowance"))
+                                                ^^^^^^^^^^^^^^^^^^^^
+     38 |   | Fail _ -> failwith "Transaction should fail with rejection"
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `Compare.eq` from `Test.Next` is encouraged for a smoother migration.
 
     File "./test_FA12.mligo", line 37, characters 62-71:
      36 |   | Success _ -> failwith "Transaction should fail"
@@ -3013,6 +3586,24 @@ let%expect_test _ =
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Originate.contract` from `Test.Next` is encouraged for a smoother migration.
 
+    File "./test_FA12.mligo", line 49, characters 14-30:
+     48 |   let {addr = typed_addr; code = _; size = _} = Test.originate (contract_of C) storage 0tez in
+     49 |   let contr = Test.to_contract typed_addr in
+                        ^^^^^^^^^^^^^^^^
+     50 |   let parameter = Transfer { address_from = from_; address_to = to_; value = 10n } in
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.to_contract` from `Test.Next` is encouraged for a smoother migration.
+
+    File "./test_FA12.mligo", line 51, characters 11-26:
+     50 |   let parameter = Transfer { address_from = from_; address_to = to_; value = 10n } in
+     51 |   let () = Test.set_source sender_ in
+                     ^^^^^^^^^^^^^^^
+     52 |   match Test.transfer_to_contract contr (Main parameter) 0tez with
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `State.set_source` from `Test.Next` is encouraged for a smoother migration.
+
     File "./test_FA12.mligo", line 52, characters 8-33:
      51 |   let () = Test.set_source sender_ in
      52 |   match Test.transfer_to_contract contr (Main parameter) 0tez with
@@ -3021,6 +3612,15 @@ let%expect_test _ =
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Contract.transfer` from `Test.Next` is encouraged for a smoother migration.
+
+    File "./test_FA12.mligo", line 54, characters 38-58:
+     53 |   | Success _ -> failwith "Transaction should fail"
+     54 |   | Fail (Rejected (a, _)) -> assert (Test.michelson_equal a (Test.eval "NotEnoughBalance"))
+                                                ^^^^^^^^^^^^^^^^^^^^
+     55 |   | Fail _ -> failwith "Transaction should fail with rejection"
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `Compare.eq` from `Test.Next` is encouraged for a smoother migration.
 
     File "./test_FA12.mligo", line 54, characters 62-71:
      53 |   | Success _ -> failwith "Transaction should fail"
@@ -3075,6 +3675,24 @@ let%expect_test _ =
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Originate.contract` from `Test.Next` is encouraged for a smoother migration.
+
+    File "./test_FA12.mligo", line 66, characters 14-30:
+     65 |   let {addr = typed_addr; code = _; size = _} = Test.originate (contract_of C) storage 0tez in
+     66 |   let contr = Test.to_contract typed_addr in
+                        ^^^^^^^^^^^^^^^^
+     67 |   let parameter = Approve { spender = from_; value = 100n } in
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.to_contract` from `Test.Next` is encouraged for a smoother migration.
+
+    File "./test_FA12.mligo", line 68, characters 11-26:
+     67 |   let parameter = Approve { spender = from_; value = 100n } in
+     68 |   let () = Test.set_source sender_ in
+                     ^^^^^^^^^^^^^^^
+     69 |   let _ = Test.transfer_to_contract_exn contr (Main parameter) 0tez in
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `State.set_source` from `Test.Next` is encouraged for a smoother migration.
 
     File "./test_FA12.mligo", line 69, characters 10-39:
      68 |   let () = Test.set_source sender_ in
@@ -3139,6 +3757,24 @@ let%expect_test _ =
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Originate.contract` from `Test.Next` is encouraged for a smoother migration.
 
+    File "./test_FA12.mligo", line 86, characters 14-30:
+     85 |   let {addr = typed_addr; code = _; size = _} = Test.originate (contract_of C) storage 0tez in
+     86 |   let contr = Test.to_contract typed_addr in
+                        ^^^^^^^^^^^^^^^^
+     87 |   let parameter = Approve { spender = from_; value = 100n } in
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.to_contract` from `Test.Next` is encouraged for a smoother migration.
+
+    File "./test_FA12.mligo", line 88, characters 11-26:
+     87 |   let parameter = Approve { spender = from_; value = 100n } in
+     88 |   let () = Test.set_source sender_ in
+                     ^^^^^^^^^^^^^^^
+     89 |   match Test.transfer_to_contract contr (Main parameter) 0tez with
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `State.set_source` from `Test.Next` is encouraged for a smoother migration.
+
     File "./test_FA12.mligo", line 89, characters 8-33:
      88 |   let () = Test.set_source sender_ in
      89 |   match Test.transfer_to_contract contr (Main parameter) 0tez with
@@ -3147,6 +3783,15 @@ let%expect_test _ =
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Contract.transfer` from `Test.Next` is encouraged for a smoother migration.
+
+    File "./test_FA12.mligo", line 91, characters 38-58:
+     90 |   | Success _ -> failwith "Transaction should fail"
+     91 |   | Fail (Rejected (a, _)) -> assert (Test.michelson_equal a (Test.eval "UnsafeAllowanceChange"))
+                                                ^^^^^^^^^^^^^^^^^^^^
+     92 |   | Fail _ -> failwith "Transaction should fail with rejection"
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `Compare.eq` from `Test.Next` is encouraged for a smoother migration.
 
     File "./test_FA12.mligo", line 91, characters 62-71:
      90 |   | Success _ -> failwith "Transaction should fail"
@@ -3202,6 +3847,15 @@ let%expect_test _ =
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Originate.contract` from `Test.Next` is encouraged for a smoother migration.
 
+    File "./test_FA12.mligo", line 106, characters 26-42:
+    105 |   let {addr = dummy_typed_addr; code = _; size = _} = Test.originate dummy_contract 0n 0tez in
+    106 |   let dummy_typed_contr = Test.to_contract dummy_typed_addr in
+                                    ^^^^^^^^^^^^^^^^
+    107 |   let storage = { tokens = Big_map.literal [(sender_, 100n); (from_, 100n); (to_, 100n)];
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.to_contract` from `Test.Next` is encouraged for a smoother migration.
+
     File "./test_FA12.mligo", line 110, characters 48-62:
     109 |                   total_supply = 300n } in
     110 |   let {addr = typed_addr; code = _; size = _} = Test.originate (contract_of C) storage 0tez in
@@ -3210,6 +3864,24 @@ let%expect_test _ =
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Originate.contract` from `Test.Next` is encouraged for a smoother migration.
+
+    File "./test_FA12.mligo", line 111, characters 14-30:
+    110 |   let {addr = typed_addr; code = _; size = _} = Test.originate (contract_of C) storage 0tez in
+    111 |   let contr = Test.to_contract typed_addr in
+                        ^^^^^^^^^^^^^^^^
+    112 |   let parameter = GetAllowance { request = { owner = from_; spender = sender_} ; callback = dummy_typed_contr } in
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.to_contract` from `Test.Next` is encouraged for a smoother migration.
+
+    File "./test_FA12.mligo", line 113, characters 11-26:
+    112 |   let parameter = GetAllowance { request = { owner = from_; spender = sender_} ; callback = dummy_typed_contr } in
+    113 |   let () = Test.set_source sender_ in
+                     ^^^^^^^^^^^^^^^
+    114 |   let _ = Test.transfer_to_contract_exn contr (Main parameter) 0tez in
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `State.set_source` from `Test.Next` is encouraged for a smoother migration.
 
     File "./test_FA12.mligo", line 114, characters 10-39:
     113 |   let () = Test.set_source sender_ in
@@ -3283,6 +3955,15 @@ let%expect_test _ =
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Originate.contract` from `Test.Next` is encouraged for a smoother migration.
 
+    File "./test_FA12.mligo", line 130, characters 26-42:
+    129 |   let {addr = dummy_typed_addr; code = _; size = _} = Test.originate dummy_contract 0n 0tez in
+    130 |   let dummy_typed_contr = Test.to_contract dummy_typed_addr in
+                                    ^^^^^^^^^^^^^^^^
+    131 |   let storage = { tokens = Big_map.literal [(sender_, 100n); (from_, 100n); (to_, 100n)];
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.to_contract` from `Test.Next` is encouraged for a smoother migration.
+
     File "./test_FA12.mligo", line 134, characters 48-62:
     133 |                   total_supply = 300n } in
     134 |   let {addr = typed_addr; code = _; size = _} = Test.originate (contract_of C) storage 0tez in
@@ -3291,6 +3972,24 @@ let%expect_test _ =
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Originate.contract` from `Test.Next` is encouraged for a smoother migration.
+
+    File "./test_FA12.mligo", line 135, characters 14-30:
+    134 |   let {addr = typed_addr; code = _; size = _} = Test.originate (contract_of C) storage 0tez in
+    135 |   let contr = Test.to_contract typed_addr in
+                        ^^^^^^^^^^^^^^^^
+    136 |   let parameter = GetBalance { owner = from_ ; callback = dummy_typed_contr } in
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.to_contract` from `Test.Next` is encouraged for a smoother migration.
+
+    File "./test_FA12.mligo", line 137, characters 11-26:
+    136 |   let parameter = GetBalance { owner = from_ ; callback = dummy_typed_contr } in
+    137 |   let () = Test.set_source sender_ in
+                     ^^^^^^^^^^^^^^^
+    138 |   let _ = Test.transfer_to_contract_exn contr (Main parameter) 0tez in
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `State.set_source` from `Test.Next` is encouraged for a smoother migration.
 
     File "./test_FA12.mligo", line 138, characters 10-39:
     137 |   let () = Test.set_source sender_ in
@@ -3364,6 +4063,15 @@ let%expect_test _ =
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Originate.contract` from `Test.Next` is encouraged for a smoother migration.
 
+    File "./test_FA12.mligo", line 154, characters 26-42:
+    153 |   let {addr = dummy_typed_addr; code = _; size = _} = Test.originate dummy_contract 0n 0tez in
+    154 |   let dummy_typed_contr = Test.to_contract dummy_typed_addr in
+                                    ^^^^^^^^^^^^^^^^
+    155 |   let storage = { tokens = Big_map.literal [(sender_, 100n); (from_, 100n); (to_, 100n)];
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.to_contract` from `Test.Next` is encouraged for a smoother migration.
+
     File "./test_FA12.mligo", line 158, characters 48-62:
     157 |                   total_supply = 300n } in
     158 |   let {addr = typed_addr; code = _; size = _} = Test.originate (contract_of C) storage 0tez in
@@ -3372,6 +4080,24 @@ let%expect_test _ =
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Originate.contract` from `Test.Next` is encouraged for a smoother migration.
+
+    File "./test_FA12.mligo", line 159, characters 14-30:
+    158 |   let {addr = typed_addr; code = _; size = _} = Test.originate (contract_of C) storage 0tez in
+    159 |   let contr = Test.to_contract typed_addr in
+                        ^^^^^^^^^^^^^^^^
+    160 |   let parameter = GetTotalSupply { callback = dummy_typed_contr; request = () } in
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.to_contract` from `Test.Next` is encouraged for a smoother migration.
+
+    File "./test_FA12.mligo", line 161, characters 11-26:
+    160 |   let parameter = GetTotalSupply { callback = dummy_typed_contr; request = () } in
+    161 |   let () = Test.set_source sender_ in
+                     ^^^^^^^^^^^^^^^
+    162 |   let _ = Test.transfer_to_contract_exn contr (Main parameter) 0tez in
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `State.set_source` from `Test.Next` is encouraged for a smoother migration.
 
     File "./test_FA12.mligo", line 162, characters 10-39:
     161 |   let () = Test.set_source sender_ in
@@ -3587,6 +4313,15 @@ let%expect_test _ =
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Address.to_typed_address` from `Test.Next` is encouraged for a smoother migration.
 
+    File "./test_accounts.mligo", line 4, characters 18-34:
+      3 | let test_new =
+      4 |   let (_sk, pk) = Test.new_account () in
+                            ^^^^^^^^^^^^^^^^
+      5 |   let pkh = Crypto.hash_key pk in
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `Account.new` from `Test.Next` is encouraged for a smoother migration.
+
     File "./test_accounts.mligo", line 8, characters 12-38:
       7 |   let a = Tezos.address c in
       8 |   let to_ = Test.nth_bootstrap_account 0 in
@@ -3604,6 +4339,15 @@ let%expect_test _ =
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Contract.transfer_exn` from `Test.Next` is encouraged for a smoother migration.
+
+    File "./test_accounts.mligo", line 10, characters 10-25:
+      9 |   let _ = Test.transfer_to_contract_exn c () 123tez in
+     10 |   let _ = Test.set_source a in
+                    ^^^^^^^^^^^^^^^
+     11 |   let _ = Test.transfer_exn (cast_implicit_account to_) () 12tez in
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `State.set_source` from `Test.Next` is encouraged for a smoother migration.
 
     File "./test_accounts.mligo", line 11, characters 10-27:
      10 |   let _ = Test.set_source a in
@@ -3659,6 +4403,15 @@ let%expect_test _ =
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Contract.transfer_exn` from `Test.Next` is encouraged for a smoother migration.
 
+    File "./test_accounts.mligo", line 24, characters 10-25:
+     23 |   let _ = Test.transfer_to_contract_exn c () 123tez in
+     24 |   let _ = Test.set_source a in
+                    ^^^^^^^^^^^^^^^
+     25 |   let _ = Test.transfer_exn (cast_implicit_account to_) () 12tez in
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `State.set_source` from `Test.Next` is encouraged for a smoother migration.
+
     File "./test_accounts.mligo", line 25, characters 10-27:
      24 |   let _ = Test.set_source a in
      25 |   let _ = Test.transfer_exn (cast_implicit_account to_) () 12tez in
@@ -3684,6 +4437,24 @@ let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "test_baker_account.mligo" ];
   [%expect
     {|
+    File "./test_baker_account.mligo", line 7, characters 12-28:
+      6 | let test =
+      7 |   let acc = Test.new_account () in
+                      ^^^^^^^^^^^^^^^^
+      8 |   let () = Test.baker_account acc (None : tez option) in
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `Account.new` from `Test.Next` is encouraged for a smoother migration.
+
+    File "./test_baker_account.mligo", line 8, characters 11-29:
+      7 |   let acc = Test.new_account () in
+      8 |   let () = Test.baker_account acc (None : tez option) in
+                     ^^^^^^^^^^^^^^^^^^
+      9 |   let () = Test.reset_state 2n ([] : tez list) in
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `State.Reset.add_baker` from `Test.Next` is encouraged for a smoother migration.
+
     File "./test_baker_account.mligo", line 9, characters 11-27:
       8 |   let () = Test.baker_account acc (None : tez option) in
       9 |   let () = Test.reset_state 2n ([] : tez list) in
@@ -3728,6 +4499,24 @@ let%expect_test _ =
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `IO.log` from `Test.Next` is encouraged for a smoother migration.
+
+    File "./test_baker_account.mligo", line 15, characters 20-41:
+     14 |   let () = Test.log(Test.get_balance_of_address a) in
+     15 |   let () = Test.log(Test.get_voting_power pkh) in
+                              ^^^^^^^^^^^^^^^^^^^^^
+     16 |   let () = Test.set_baker a in
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `State.get_voting_power` from `Test.Next` is encouraged for a smoother migration.
+
+    File "./test_baker_account.mligo", line 16, characters 11-25:
+     15 |   let () = Test.log(Test.get_voting_power pkh) in
+     16 |   let () = Test.set_baker a in
+                     ^^^^^^^^^^^^^^
+     17 |   let orig = Test.originate (contract_of C) 41 5tez in
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `State.set_baker` from `Test.Next` is encouraged for a smoother migration.
 
     File "./test_baker_account.mligo", line 17, characters 13-27:
      16 |   let () = Test.set_baker a in
@@ -3774,6 +4563,24 @@ let%expect_test _ =
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `IO.log` from `Test.Next` is encouraged for a smoother migration.
 
+    File "./test_baker_account.mligo", line 20, characters 20-41:
+     19 |   let () = Test.log(Test.get_balance_of_address a) in
+     20 |   let () = Test.log(Test.get_voting_power pkh) in
+                              ^^^^^^^^^^^^^^^^^^^^^
+     21 |   let cc = Test.to_contract orig.addr in
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `State.get_voting_power` from `Test.Next` is encouraged for a smoother migration.
+
+    File "./test_baker_account.mligo", line 21, characters 11-27:
+     20 |   let () = Test.log(Test.get_voting_power pkh) in
+     21 |   let cc = Test.to_contract orig.addr in
+                     ^^^^^^^^^^^^^^^^
+     22 |   let _ = Test.transfer_to_contract cc (Main 1) 3tez in
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.to_contract` from `Test.Next` is encouraged for a smoother migration.
+
     File "./test_baker_account.mligo", line 22, characters 10-35:
      21 |   let cc = Test.to_contract orig.addr in
      22 |   let _ = Test.transfer_to_contract cc (Main 1) 3tez in
@@ -3819,6 +4626,15 @@ let%expect_test _ =
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `IO.log` from `Test.Next` is encouraged for a smoother migration.
 
+    File "./test_baker_account.mligo", line 25, characters 20-41:
+     24 |   let () = Test.log(Test.get_balance_of_address a) in
+     25 |   let () = Test.log(Test.get_voting_power pkh) in
+                              ^^^^^^^^^^^^^^^^^^^^^
+     26 |   ()
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `State.get_voting_power` from `Test.Next` is encouraged for a smoother migration.
+
     "STARTING BALANCE AND VOTING POWER"
     3800000000000mutez
     4000000000000n
@@ -3835,6 +4651,15 @@ let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "test_register_delegate.mligo" ];
   [%expect
     {|
+    File "./test_register_delegate.mligo", line 7, characters 12-28:
+      6 |
+      7 |   let acc = Test.new_account () in
+                      ^^^^^^^^^^^^^^^^
+      8 |   let pkh = Crypto.hash_key acc.1 in
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `Account.new` from `Test.Next` is encouraged for a smoother migration.
+
     File "./test_register_delegate.mligo", line 12, characters 10-39:
      11 |
      12 |   let _ = Test.transfer_to_contract_exn c () 1000000tez in
@@ -3852,6 +4677,15 @@ let%expect_test _ =
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `State.register_delegate` from `Test.Next` is encouraged for a smoother migration.
+
+    File "./test_register_delegate.mligo", line 19, characters 11-38:
+     18 |   *)
+     19 |   let () = Test.bake_until_n_cycle_end 8n in
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     20 |
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `State.bake_until` from `Test.Next` is encouraged for a smoother migration.
 
     File "./test_register_delegate.mligo", line 21, characters 11-19:
      20 |
@@ -3888,6 +4722,24 @@ let%expect_test _ =
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `IO.log` from `Test.Next` is encouraged for a smoother migration.
+
+    File "./test_register_delegate.mligo", line 23, characters 20-41:
+     22 |   let () = Test.log(Test.get_balance_of_address a) in
+     23 |   let () = Test.log(Test.get_voting_power pkh) in
+                              ^^^^^^^^^^^^^^^^^^^^^
+     24 |   let () = Test.set_baker a in
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `State.get_voting_power` from `Test.Next` is encouraged for a smoother migration.
+
+    File "./test_register_delegate.mligo", line 24, characters 11-25:
+     23 |   let () = Test.log(Test.get_voting_power pkh) in
+     24 |   let () = Test.set_baker a in
+                     ^^^^^^^^^^^^^^
+     25 |   let orig = Test.originate (contract_of C) 41 5tez in
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `State.set_baker` from `Test.Next` is encouraged for a smoother migration.
 
     File "./test_register_delegate.mligo", line 25, characters 13-27:
      24 |   let () = Test.set_baker a in
@@ -3934,6 +4786,15 @@ let%expect_test _ =
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `IO.log` from `Test.Next` is encouraged for a smoother migration.
 
+    File "./test_register_delegate.mligo", line 29, characters 20-41:
+     28 |   let () = Test.log(Test.get_balance_of_address a) in
+     29 |   let () = Test.log(Test.get_voting_power pkh) in
+                              ^^^^^^^^^^^^^^^^^^^^^
+     30 |   let _ = Test.transfer orig.addr (Main 1) 3tez in
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `State.get_voting_power` from `Test.Next` is encouraged for a smoother migration.
+
     File "./test_register_delegate.mligo", line 30, characters 10-23:
      29 |   let () = Test.log(Test.get_voting_power pkh) in
      30 |   let _ = Test.transfer orig.addr (Main 1) 3tez in
@@ -3978,6 +4839,15 @@ let%expect_test _ =
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `IO.log` from `Test.Next` is encouraged for a smoother migration.
+
+    File "./test_register_delegate.mligo", line 34, characters 20-41:
+     33 |   let () = Test.log(Test.get_balance_of_address a) in
+     34 |   let () = Test.log(Test.get_voting_power pkh) in
+                              ^^^^^^^^^^^^^^^^^^^^^
+     35 |   ()
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `State.get_voting_power` from `Test.Next` is encouraged for a smoother migration.
 
     "STARTING BALANCE AND VOTING POWER"
     950000000000mutez
@@ -4046,6 +4916,15 @@ let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "test_global_constant_2.mligo" ];
   [%expect
     {|
+    File "./test_global_constant_2.mligo", line 6, characters 31-65:
+      5 |
+      6 |   let ct : michelson_program = Test.constant_to_michelson_program "{ PUSH int 2 ; PUSH int 3 ; DIG 2 ; MUL ; ADD }"
+                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+      7 |   let ct : string = Test.register_constant ct
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `Michelson.parse` from `Test.Next` is encouraged for a smoother migration.
+
     File "./test_global_constant_2.mligo", line 7, characters 20-42:
       6 |   let ct : michelson_program = Test.constant_to_michelson_program "{ PUSH int 2 ; PUSH int 3 ; DIG 2 ; MUL ; ADD }"
       7 |   let ct : string = Test.register_constant ct
@@ -4669,6 +5548,15 @@ let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "test_read_contract.mligo" ];
   [%expect
     {|
+    File "./test_read_contract.mligo", line 3, characters 4-32:
+      2 |   let c : (unit, unit) michelson_contract =
+      3 |     Test.read_contract_from_file "contract_under_test/compiled.tz" in
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+      4 |   let s = Test.decompile (Test.parse_michelson "Unit") in
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `Michelson.Contract.from_file` from `Test.Next` is encouraged for a smoother migration.
+
     File "./test_read_contract.mligo", line 4, characters 10-24:
       3 |     Test.read_contract_from_file "contract_under_test/compiled.tz" in
       4 |   let s = Test.decompile (Test.parse_michelson "Unit") in
@@ -4687,6 +5575,15 @@ let%expect_test _ =
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Michelson.parse` from `Test.Next` is encouraged for a smoother migration.
 
+    File "./test_read_contract.mligo", line 5, characters 10-33:
+      4 |   let s = Test.decompile (Test.parse_michelson "Unit") in
+      5 |   let a = Test.originate_contract c s 0tez in
+                    ^^^^^^^^^^^^^^^^^^^^^^^
+      6 |   Test.log a
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `Originate.michelson` from `Test.Next` is encouraged for a smoother migration.
+
     File "./test_read_contract.mligo", line 6, characters 2-10:
       5 |   let a = Test.originate_contract c s 0tez in
       6 |   Test.log a
@@ -4696,6 +5593,15 @@ let%expect_test _ =
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `IO.log` from `Test.Next` is encouraged for a smoother migration.
 
+    File "./test_read_contract.mligo", line 9, characters 56-84:
+      8 | let test_bar =
+      9 |   let c : (unit, (int,string) map) michelson_contract = Test.read_contract_from_file "contract_under_test/other_compiled.tz" in
+                                                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     10 |   let s = Test.decompile (Test.constant_to_michelson_program "{ Elt 1 \\"hi\\" }") in
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `Michelson.Contract.from_file` from `Test.Next` is encouraged for a smoother migration.
+
     File "./test_read_contract.mligo", line 10, characters 10-24:
       9 |   let c : (unit, (int,string) map) michelson_contract = Test.read_contract_from_file "contract_under_test/other_compiled.tz" in
      10 |   let s = Test.decompile (Test.constant_to_michelson_program "{ Elt 1 \\"hi\\" }") in
@@ -4704,6 +5610,24 @@ let%expect_test _ =
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Michelson.decompile` from `Test.Next` is encouraged for a smoother migration.
+
+    File "./test_read_contract.mligo", line 10, characters 26-60:
+      9 |   let c : (unit, (int,string) map) michelson_contract = Test.read_contract_from_file "contract_under_test/other_compiled.tz" in
+     10 |   let s = Test.decompile (Test.constant_to_michelson_program "{ Elt 1 \\"hi\\" }") in
+                                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     11 |   let a = Test.originate_contract c s 0tez in
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `Michelson.parse` from `Test.Next` is encouraged for a smoother migration.
+
+    File "./test_read_contract.mligo", line 11, characters 10-33:
+     10 |   let s = Test.decompile (Test.constant_to_michelson_program "{ Elt 1 \\"hi\\" }") in
+     11 |   let a = Test.originate_contract c s 0tez in
+                    ^^^^^^^^^^^^^^^^^^^^^^^
+     12 |   let s = Test.get_storage a in
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `Originate.michelson` from `Test.Next` is encouraged for a smoother migration.
 
     File "./test_read_contract.mligo", line 12, characters 10-26:
      11 |   let a = Test.originate_contract c s 0tez in
@@ -4801,6 +5725,24 @@ let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "test_sign.mligo" ];
   [%expect
     {|
+    File "./test_sign.mligo", line 2, characters 17-33:
+      1 | let test =
+      2 |   let (sk, pk) = Test.new_account () in
+                           ^^^^^^^^^^^^^^^^
+      3 |   let data = Bytes.pack "Bonjour le monde !" in
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `Account.new` from `Test.Next` is encouraged for a smoother migration.
+
+    File "./test_sign.mligo", line 4, characters 10-19:
+      3 |   let data = Bytes.pack "Bonjour le monde !" in
+      4 |   let s = Test.sign sk data in
+                    ^^^^^^^^^
+      5 |   assert (Crypto.check pk s data)
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `Crypto.sign` from `Test.Next` is encouraged for a smoother migration.
+
     Everything at the top-level was executed.
     - test exited with value (). |}]
 
@@ -5181,6 +6123,15 @@ let%expect_test _ =
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Originate.contract` from `Test.Next` is encouraged for a smoother migration.
 
+    File "./get_contract.mligo", line 13, characters 10-26:
+     12 |   let ta = orig.addr in
+     13 |   let c = Test.to_contract ta in
+                    ^^^^^^^^^^^^^^^^
+     14 |   let a = Tezos.address c in
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.to_contract` from `Test.Next` is encouraged for a smoother migration.
+
     Everything at the top-level was executed.
     - test exited with value (). |}]
 
@@ -5248,6 +6199,15 @@ let%expect_test _ =
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Account.address` from `Test.Next` is encouraged for a smoother migration.
+
+    File "./test_tickets_and_bigmaps.mligo", line 42, characters 11-26:
+     41 |   let sender_ = Test.nth_bootstrap_account 1 in
+     42 |   let () = Test.set_source sender_ in
+                     ^^^^^^^^^^^^^^^
+     43 |
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `State.set_source` from `Test.Next` is encouraged for a smoother migration.
 
     File "./test_tickets_and_bigmaps.mligo", line 51, characters 13-27:
      50 |
@@ -5652,6 +6612,15 @@ let%expect_test _ =
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.get_storage` from `Test.Next` is encouraged for a smoother migration.
 
+    File "./test_originate_module.mligo", line 17, characters 44-60:
+     16 |   let () = Test.println ("With storage: " ^ Test.to_string (Test.get_storage ta)) in
+     17 |   let c : (Bar.Foo parameter_of) contract = Test.to_contract ta in
+                                                      ^^^^^^^^^^^^^^^^
+     18 |   let _ = Test.transfer_to_contract_exn c (Add 42) 0tez in
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.to_contract` from `Test.Next` is encouraged for a smoother migration.
+
     File "./test_originate_module.mligo", line 18, characters 10-39:
      17 |   let c : (Bar.Foo parameter_of) contract = Test.to_contract ta in
      18 |   let _ = Test.transfer_to_contract_exn c (Add 42) 0tez in
@@ -5709,6 +6678,15 @@ let%expect_test _ =
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Originate.contract` from `Test.Next` is encouraged for a smoother migration.
+
+    File "./test_originate_module.jsligo", line 14, characters 41-57:
+     13 |   let orig = Test.originate(contract_of(C), initial_storage, 0 as tez);
+     14 |   let contr : contract<parameter_of C> = Test.to_contract(orig.addr);
+                                                   ^^^^^^^^^^^^^^^^
+     15 |   let p : parameter_of C = Increment(1);
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.to_contract` from `Test.Next` is encouraged for a smoother migration.
 
     File "./test_originate_module.jsligo", line 16, characters 2-31:
      15 |   let p : parameter_of C = Increment(1);
@@ -5797,6 +6775,33 @@ let%expect_test _ =
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Account.address` from `Test.Next` is encouraged for a smoother migration.
+
+    File "./contract_with_ticket_param.mligo", line 13, characters 33-49:
+     12 |   let orig = Test.originate (contract_of C) ("bye",Test.nth_bootstrap_account 1) 1mutez in
+     13 |   let main_addr = Tezos.address (Test.to_contract orig.addr) in
+                                           ^^^^^^^^^^^^^^^^
+     14 |
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.to_contract` from `Test.Next` is encouraged for a smoother migration.
+
+    File "./contract_with_ticket_param.mligo", line 32, characters 16-43:
+     31 |   in
+     32 |   let s, addr = Test.get_storage_of_address main_addr in
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     33 |   let p_addr = proxy_taddr |> Test.to_contract |> Tezos.address in
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `Address.get_storage` from `Test.Next` is encouraged for a smoother migration.
+
+    File "./contract_with_ticket_param.mligo", line 33, characters 30-46:
+     32 |   let s, addr = Test.get_storage_of_address main_addr in
+     33 |   let p_addr = proxy_taddr |> Test.to_contract |> Tezos.address in
+                                        ^^^^^^^^^^^^^^^^
+     34 |   assert (s = "world" && addr = p_addr)
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.to_contract` from `Test.Next` is encouraged for a smoother migration.
 
     Everything at the top-level was executed.
     - test_transfer_to_contract exited with value (). |}]
@@ -6172,6 +7177,15 @@ let%expect_test _ =
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Originate.from_file` from `Test.Next` is encouraged for a smoother migration.
 
+    File "./test.mligo", line 10, characters 13-29:
+      9 |   let addr = Foo.originate () in
+     10 |   let bef  = Test.get_balance addr in
+                       ^^^^^^^^^^^^^^^^
+     11 |   let ()   = ignore (Test.transfer addr () 10tez) in
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.get_balance` from `Test.Next` is encouraged for a smoother migration.
+
     File "./test.mligo", line 11, characters 21-34:
      10 |   let bef  = Test.get_balance addr in
      11 |   let ()   = ignore (Test.transfer addr () 10tez) in
@@ -6180,6 +7194,15 @@ let%expect_test _ =
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.transfer` from `Test.Next` is encouraged for a smoother migration.
+
+    File "./test.mligo", line 12, characters 13-29:
+     11 |   let ()   = ignore (Test.transfer addr () 10tez) in
+     12 |   let aft  = Test.get_balance addr in
+                       ^^^^^^^^^^^^^^^^
+     13 |   aft = (bef + 10tez)
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.get_balance` from `Test.Next` is encouraged for a smoother migration.
 
     Everything at the top-level was executed.
     - test_originate_from_file_relative_path exited with value KT1MoPRoithHNa7i6LYHqeQfZB4oyWThinnS.
@@ -6205,6 +7228,15 @@ let%expect_test _ =
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Originate.from_file` from `Test.Next` is encouraged for a smoother migration.
 
+    File "./test.jsligo", line 13, characters 13-29:
+     12 |   let addr = Foo.originate();
+     13 |   let bef  = Test.get_balance(addr);
+                       ^^^^^^^^^^^^^^^^
+     14 |   ignore(Test.transfer (addr, unit, 10 as mutez));
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.get_balance` from `Test.Next` is encouraged for a smoother migration.
+
     File "./test.jsligo", line 14, characters 9-22:
      13 |   let bef  = Test.get_balance(addr);
      14 |   ignore(Test.transfer (addr, unit, 10 as mutez));
@@ -6213,6 +7245,15 @@ let%expect_test _ =
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.transfer` from `Test.Next` is encouraged for a smoother migration.
+
+    File "./test.jsligo", line 15, characters 13-29:
+     14 |   ignore(Test.transfer (addr, unit, 10 as mutez));
+     15 |   let aft  = Test.get_balance(addr);
+                       ^^^^^^^^^^^^^^^^
+     16 |   return aft == (bef + (10 as mutez))
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.get_balance` from `Test.Next` is encouraged for a smoother migration.
 
     Everything at the top-level was executed.
     - test_originate_from_file_relative_path exited with value KT1MoPRoithHNa7i6LYHqeQfZB4oyWThinnS.
@@ -6246,6 +7287,15 @@ let%expect_test _ =
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Originate.from_file` from `Test.Next` is encouraged for a smoother migration.
 
+    File "./test/a/b/test.mligo", line 10, characters 13-29:
+      9 |   let addr = Foo.originate () in
+     10 |   let bef  = Test.get_balance addr in
+                       ^^^^^^^^^^^^^^^^
+     11 |   let ()   = ignore (Test.transfer addr () 10tez) in
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.get_balance` from `Test.Next` is encouraged for a smoother migration.
+
     File "./test/a/b/test.mligo", line 11, characters 21-34:
      10 |   let bef  = Test.get_balance addr in
      11 |   let ()   = ignore (Test.transfer addr () 10tez) in
@@ -6254,6 +7304,15 @@ let%expect_test _ =
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.transfer` from `Test.Next` is encouraged for a smoother migration.
+
+    File "./test/a/b/test.mligo", line 12, characters 13-29:
+     11 |   let ()   = ignore (Test.transfer addr () 10tez) in
+     12 |   let aft  = Test.get_balance addr in
+                       ^^^^^^^^^^^^^^^^
+     13 |   aft = (bef + 10tez)
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.get_balance` from `Test.Next` is encouraged for a smoother migration.
 
     Everything at the top-level was executed.
     - test_originate_from_file_relative_path exited with value KT1MoPRoithHNa7i6LYHqeQfZB4oyWThinnS.
@@ -6279,6 +7338,15 @@ let%expect_test _ =
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Originate.from_file` from `Test.Next` is encouraged for a smoother migration.
 
+    File "./test/a/b/test.jsligo", line 13, characters 13-29:
+     12 |   let addr = Foo.originate();
+     13 |   let bef  = Test.get_balance(addr);
+                       ^^^^^^^^^^^^^^^^
+     14 |   ignore(Test.transfer (addr, unit, 10 as mutez));
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.get_balance` from `Test.Next` is encouraged for a smoother migration.
+
     File "./test/a/b/test.jsligo", line 14, characters 9-22:
      13 |   let bef  = Test.get_balance(addr);
      14 |   ignore(Test.transfer (addr, unit, 10 as mutez));
@@ -6287,6 +7355,15 @@ let%expect_test _ =
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.transfer` from `Test.Next` is encouraged for a smoother migration.
+
+    File "./test/a/b/test.jsligo", line 15, characters 13-29:
+     14 |   ignore(Test.transfer (addr, unit, 10 as mutez));
+     15 |   let aft  = Test.get_balance(addr);
+                       ^^^^^^^^^^^^^^^^
+     16 |   return aft == (bef + (10 as mutez))
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.get_balance` from `Test.Next` is encouraged for a smoother migration.
 
     Everything at the top-level was executed.
     - test_originate_from_file_relative_path exited with value KT1MoPRoithHNa7i6LYHqeQfZB4oyWThinnS.
@@ -6421,6 +7498,15 @@ let%expect_test _ =
   run_ligo_bad [ "run"; "test"; bad_test "test_trace2.mligo" ];
   [%expect
     {|
+    File "../../test/contracts/negative//interpreter_tests/test_trace2.mligo", line 7, characters 11-38:
+      6 | let make_call (contr : C parameter_of contract) =
+      7 |   let () = Test.get_storage_of_address ("KT1RYW6Zm24t3rSquhw1djfcgQeH9gBdsmiL" : address) in
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+      8 |   Test.transfer_to_contract_exn contr (Main ()) 10tez
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `Address.get_storage` from `Test.Next` is encouraged for a smoother migration.
+
     File "../../test/contracts/negative//interpreter_tests/test_trace2.mligo", line 8, characters 2-31:
       7 |   let () = Test.get_storage_of_address ("KT1RYW6Zm24t3rSquhw1djfcgQeH9gBdsmiL" : address) in
       8 |   Test.transfer_to_contract_exn contr (Main ()) 10tez
@@ -6438,6 +7524,14 @@ let%expect_test _ =
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Originate.contract` from `Test.Next` is encouraged for a smoother migration.
+
+    File "../../test/contracts/negative//interpreter_tests/test_trace2.mligo", line 13, characters 13-29:
+     12 |   let orig = Test.originate (contract_of C) () 1tez in
+     13 |   make_call (Test.to_contract orig.addr)
+                       ^^^^^^^^^^^^^^^^
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.to_contract` from `Test.Next` is encouraged for a smoother migration.
 
     File "../../test/contracts/negative//interpreter_tests/test_trace2.mligo", line 7, characters 11-89:
       6 | let make_call (contr : C parameter_of contract) =
@@ -6504,6 +7598,15 @@ let%expect_test _ =
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Originate.contract` from `Test.Next` is encouraged for a smoother migration.
 
+    File "../../test/contracts/negative//interpreter_tests/test_source1.mligo", line 5, characters 14-30:
+      4 |   let {addr = taddr ; code = _ ; size = _} = Test.originate (contract_of C) () 0tez in
+      5 |   let contr = Test.to_contract taddr in
+                        ^^^^^^^^^^^^^^^^
+      6 |   let addr = Tezos.address contr in
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.to_contract` from `Test.Next` is encouraged for a smoother migration.
+
     File "../../test/contracts/negative//interpreter_tests/test_source1.mligo", line 7, characters 11-19:
       6 |   let addr = Tezos.address contr in
       7 |   let () = Test.log addr in
@@ -6512,6 +7615,15 @@ let%expect_test _ =
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `IO.log` from `Test.Next` is encouraged for a smoother migration.
+
+    File "../../test/contracts/negative//interpreter_tests/test_source1.mligo", line 8, characters 11-26:
+      7 |   let () = Test.log addr in
+      8 |   let () = Test.set_source addr in
+                     ^^^^^^^^^^^^^^^
+      9 |   let _ = Test.originate (contract_of C) () 0tez in
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `State.set_source` from `Test.Next` is encouraged for a smoother migration.
 
     File "../../test/contracts/negative//interpreter_tests/test_source1.mligo", line 9, characters 10-24:
       8 |   let () = Test.set_source addr in
@@ -6552,6 +7664,24 @@ let%expect_test _ =
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `IO.log` from `Test.Next` is encouraged for a smoother migration.
+
+    File "../../test/contracts/negative//interpreter_tests/test_source2.mligo", line 6, characters 11-26:
+      5 |   let () = Test.log orig.addr in
+      6 |   let () = Test.set_source (Test.to_address orig.addr) in
+                     ^^^^^^^^^^^^^^^
+      7 |   let _ = Test.transfer_exn orig.addr (Main ()) 0tez in
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `State.set_source` from `Test.Next` is encouraged for a smoother migration.
+
+    File "../../test/contracts/negative//interpreter_tests/test_source2.mligo", line 6, characters 28-43:
+      5 |   let () = Test.log orig.addr in
+      6 |   let () = Test.set_source (Test.to_address orig.addr) in
+                                      ^^^^^^^^^^^^^^^
+      7 |   let _ = Test.transfer_exn orig.addr (Main ()) 0tez in
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.to_address` from `Test.Next` is encouraged for a smoother migration.
 
     File "../../test/contracts/negative//interpreter_tests/test_source2.mligo", line 7, characters 10-27:
       6 |   let () = Test.set_source (Test.to_address orig.addr) in
@@ -6641,6 +7771,15 @@ let%expect_test _ =
   run_ligo_bad [ "run"; "test"; bad_test "test_register_delegate.mligo" ];
   [%expect
     {|
+    File "../../test/contracts/negative//interpreter_tests/test_register_delegate.mligo", line 7, characters 12-28:
+      6 |
+      7 |   let acc = Test.new_account () in
+                      ^^^^^^^^^^^^^^^^
+      8 |   let pkh = Crypto.hash_key acc.1 in
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `Account.new` from `Test.Next` is encouraged for a smoother migration.
+
     File "../../test/contracts/negative//interpreter_tests/test_register_delegate.mligo", line 12, characters 10-39:
      11 |
      12 |   let _ = Test.transfer_to_contract_exn c () 100000tez in
@@ -6658,6 +7797,15 @@ let%expect_test _ =
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `State.register_delegate` from `Test.Next` is encouraged for a smoother migration.
+
+    File "../../test/contracts/negative//interpreter_tests/test_register_delegate.mligo", line 14, characters 11-38:
+     13 |   let () = Test.register_delegate pkh in
+     14 |   let () = Test.bake_until_n_cycle_end 2n in
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     15 |
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `State.bake_until` from `Test.Next` is encouraged for a smoother migration.
 
     File "../../test/contracts/negative//interpreter_tests/test_register_delegate.mligo", line 16, characters 11-19:
      15 |
@@ -6694,6 +7842,24 @@ let%expect_test _ =
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `IO.log` from `Test.Next` is encouraged for a smoother migration.
+
+    File "../../test/contracts/negative//interpreter_tests/test_register_delegate.mligo", line 18, characters 20-41:
+     17 |   let () = Test.log(Test.get_balance_of_address a) in
+     18 |   let () = Test.log(Test.get_voting_power pkh) in
+                              ^^^^^^^^^^^^^^^^^^^^^
+     19 |   let () = Test.set_baker a in
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `State.get_voting_power` from `Test.Next` is encouraged for a smoother migration.
+
+    File "../../test/contracts/negative//interpreter_tests/test_register_delegate.mligo", line 19, characters 11-25:
+     18 |   let () = Test.log(Test.get_voting_power pkh) in
+     19 |   let () = Test.set_baker a in
+                     ^^^^^^^^^^^^^^
+     20 |   let {addr = ta ; code = _ ; size = _} = Test.originate (contract_of C) 41 5tez in
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `State.set_baker` from `Test.Next` is encouraged for a smoother migration.
 
     File "../../test/contracts/negative//interpreter_tests/test_register_delegate.mligo", line 20, characters 42-56:
      19 |   let () = Test.set_baker a in
@@ -6740,6 +7906,24 @@ let%expect_test _ =
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `IO.log` from `Test.Next` is encouraged for a smoother migration.
 
+    File "../../test/contracts/negative//interpreter_tests/test_register_delegate.mligo", line 24, characters 20-41:
+     23 |   let () = Test.log(Test.get_balance_of_address a) in
+     24 |   let () = Test.log(Test.get_voting_power pkh) in
+                              ^^^^^^^^^^^^^^^^^^^^^
+     25 |   let cc = Test.to_contract ta in
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `State.get_voting_power` from `Test.Next` is encouraged for a smoother migration.
+
+    File "../../test/contracts/negative//interpreter_tests/test_register_delegate.mligo", line 25, characters 11-27:
+     24 |   let () = Test.log(Test.get_voting_power pkh) in
+     25 |   let cc = Test.to_contract ta in
+                     ^^^^^^^^^^^^^^^^
+     26 |   let _ = Test.transfer_to_contract cc (Main 1) 3tez in
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.to_contract` from `Test.Next` is encouraged for a smoother migration.
+
     File "../../test/contracts/negative//interpreter_tests/test_register_delegate.mligo", line 26, characters 10-35:
      25 |   let cc = Test.to_contract ta in
      26 |   let _ = Test.transfer_to_contract cc (Main 1) 3tez in
@@ -6785,6 +7969,15 @@ let%expect_test _ =
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `IO.log` from `Test.Next` is encouraged for a smoother migration.
 
+    File "../../test/contracts/negative//interpreter_tests/test_register_delegate.mligo", line 30, characters 20-41:
+     29 |   let () = Test.log(Test.get_balance_of_address a) in
+     30 |   let () = Test.log(Test.get_voting_power pkh) in
+                              ^^^^^^^^^^^^^^^^^^^^^
+     31 |   ()
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `State.get_voting_power` from `Test.Next` is encouraged for a smoother migration.
+
     File "../../test/contracts/negative//interpreter_tests/test_register_delegate.mligo", line 20, characters 42-80:
      19 |   let () = Test.set_baker a in
      20 |   let {addr = ta ; code = _ ; size = _} = Test.originate (contract_of C) 41 5tez in
@@ -6798,6 +7991,15 @@ let%expect_test _ =
   run_ligo_bad [ "run"; "test"; bad_test "test_register_delegate_stake.mligo" ];
   [%expect
     {|
+    File "../../test/contracts/negative//interpreter_tests/test_register_delegate_stake.mligo", line 6, characters 12-28:
+      5 | let test =
+      6 |   let acc = Test.new_account () in
+                      ^^^^^^^^^^^^^^^^
+      7 |   let pkh = Crypto.hash_key acc.1 in
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `Account.new` from `Test.Next` is encouraged for a smoother migration.
+
     File "../../test/contracts/negative//interpreter_tests/test_register_delegate_stake.mligo", line 10, characters 10-39:
       9 |
      10 |   let _ = Test.transfer_to_contract_exn c () 1000000tez in
@@ -6815,6 +8017,15 @@ let%expect_test _ =
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `State.register_delegate` from `Test.Next` is encouraged for a smoother migration.
+
+    File "../../test/contracts/negative//interpreter_tests/test_register_delegate_stake.mligo", line 12, characters 11-21:
+     11 |   let () = Test.register_delegate pkh in
+     12 |   let () = Test.stake pkh 1000000tez in
+                     ^^^^^^^^^^
+     13 |   ()
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `State.stake` from `Test.Next` is encouraged for a smoother migration.
 
     File "../../test/contracts/negative//interpreter_tests/test_register_delegate_stake.mligo", line 12, characters 11-36:
      11 |   let () = Test.register_delegate pkh in
@@ -6846,6 +8057,24 @@ let%expect_test _ =
   :
   Warning: deprecated value.
   In a future version, `Test` will be replaced by `Test.Next`, and using `Originate.from_file` from `Test.Next` is encouraged for a smoother migration.
+
+  File "typed_addr_in_bytes_pack.mligo", line 3, characters 15-30:
+    2 |     let orig = Test.originate_from_file "./unit_contract.mligo" () 0tez in
+    3 |     let addr = Test.to_address orig.addr in
+                       ^^^^^^^^^^^^^^^
+    4 |     let contr = Test.to_contract orig.addr in
+  :
+  Warning: deprecated value.
+  In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.to_address` from `Test.Next` is encouraged for a smoother migration.
+
+  File "typed_addr_in_bytes_pack.mligo", line 4, characters 16-32:
+    3 |     let addr = Test.to_address orig.addr in
+    4 |     let contr = Test.to_contract orig.addr in
+                        ^^^^^^^^^^^^^^^^
+    5 |     {
+  :
+  Warning: deprecated value.
+  In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.to_contract` from `Test.Next` is encouraged for a smoother migration.
 
   File "typed_addr_in_bytes_pack.mligo", line 18, characters 13-21:
    17 |     ) in
@@ -6908,6 +8137,15 @@ let%expect_test _ =
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Originate.contract` from `Test.Next` is encouraged for a smoother migration.
+
+    File "../../test/contracts/negative//interpreter_tests/get_contract.mligo", line 12, characters 10-26:
+     11 |   let {addr = ta ; code = _ ; size = _} = Test.originate (contract_of C) 0 0tez in
+     12 |   let c = Test.to_contract ta in
+                    ^^^^^^^^^^^^^^^^
+     13 |   let a = Tezos.address c in
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.to_contract` from `Test.Next` is encouraged for a smoother migration.
 
     File "../../test/contracts/negative//interpreter_tests/get_contract.mligo", line 18, characters 10-66:
      17 |   let _ = (Tezos.get_contract a : (C parameter_of contract)) in

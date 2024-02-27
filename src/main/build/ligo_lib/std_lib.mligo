@@ -341,6 +341,10 @@ type ('p, 's) origination_result =
 
 type implicit_address = (unit,unit) typed_address
 
+module Toplevel = struct
+  module String = String
+end
+
 module Test = struct
   [@deprecated "In a future version, `Test` will be replaced by `Test.Next`, and using `Michelson.run` from `Test.Next` is encouraged for a smoother migration."]
   let run (type a b) (f : a -> b) (v : a) : michelson_program = [%external ("TEST_RUN", f, v)]
@@ -350,31 +354,39 @@ module Test = struct
   let decompile (type a) (m : michelson_program) : a = [%external ("TEST_DECOMPILE", m)]
   [@deprecated "In a future version, `Test` will be replaced by `Test.Next`, and using `Michelson.eval` from `Test.Next` is encouraged for a smoother migration."]
   let compile_value (type a) (x : a) : michelson_program = eval x
-
+  [@deprecated "In a future version, `Test` will be replaced by `Test.Next`, and using `State.get_total_voting_power` from `Test.Next` is encouraged for a smoother migration."]
   let get_total_voting_power (_u : unit) : nat = [%external ("TEST_GET_TOTAL_VOTING_POWER", ())]
+  [@deprecated "In a future version, `Test` will be replaced by `Test.Next`, and using `Assert.failwith` from `Test.Next` is encouraged for a smoother migration."]
   let failwith (type a b) (v : a) : b = [%external ("TEST_FAILWITH", v)]
+  [@deprecated "In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.to_contract` from `Test.Next` is encouraged for a smoother migration."]
   let to_contract (type p s) (t : (p, s) typed_address) : p contract = [%external ("TEST_TO_CONTRACT", t)]
+  [@deprecated "In a future version, `Test` will be replaced by `Test.Next`, and using `State.set_source` from `Test.Next` is encouraged for a smoother migration."]
   let set_source (a : address) : unit = [%external ("TEST_SET_SOURCE", a)]
   [@deprecated "In a future version, `Test` will be replaced by `Test.Next`, and using `Address.to_typed_address` from `Test.Next` is encouraged for a smoother migration."]
   let cast_address (type a b) (a : address) : (a, b) typed_address = [%external ("TEST_CAST_ADDRESS", a)]
-  let to_address (type a b) (c : (a, b) typed_address ) : address = [%external ("TEST_TO_ADDRESS", c)]
+  [@deprecated "In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.to_address` from `Test.Next` is encouraged for a smoother migration."]
+  let to_address (type a b) (c : (a, b) typed_address) : address = [%external ("TEST_TO_ADDRESS", c)]
   [@deprecated "In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.get_storage` from `Test.Next` is encouraged for a smoother migration."]
   let get_storage (type p s) (t : (p, s) typed_address) : s =
     let s : michelson_program = [%external ("TEST_GET_STORAGE", t)] in
     (decompile s : s)
+  [@deprecated "In a future version, `Test` will be replaced by `Test.Next`, and using `Address.get_storage` from `Test.Next` is encouraged for a smoother migration."]
   let get_storage_of_address (type b) (a : address) : b =
     (* we use unit bellow because we don't want inference to force useless annotations *)
     let a : (unit, b) typed_address = cast_address a in
     get_storage a
   [@deprecated "In a future version, `Test` will be replaced by `Test.Next`, and using `Address.get_balance` from `Test.Next` is encouraged for a smoother migration."]
   let get_balance_of_address (a : address) : tez = [%external ("TEST_GET_BALANCE", a)]
+  [@deprecated "In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.get_balance` from `Test.Next` is encouraged for a smoother migration."]
   let get_balance (type p s) (a : (p, s) typed_address) : tez =
     [%external ("TEST_GET_BALANCE", to_address a)]
   [@deprecated "In a future version, `Test` will be replaced by `Test.Next`, and using `IO.print` from `Test.Next` is encouraged for a smoother migration."]
   let print (v : string) : unit = [%external ("TEST_PRINT", 1, v)]
   [@deprecated "In a future version, `Test` will be replaced by `Test.Next`, and using `IO.eprint` from `Test.Next` is encouraged for a smoother migration."]
   let eprint (v : string) : unit = [%external ("TEST_PRINT", 2, v)]
+  [@deprecated "In a future version, `Test` will be replaced by `Test.Next`, and using `State.get_voting_power` from `Test.Next` is encouraged for a smoother migration."]
   let get_voting_power (kh : key_hash) : nat = [%external ("TEST_GET_VOTING_POWER", kh)]
+  [@deprecated "In a future version, `Test` will be replaced by `Test.Next`, and using `Account.Contract.bootstrap` from `Test.Next` is encouraged for a smoother migration."]
   let nth_bootstrap_contract (i : nat) : address = [%external ("TEST_NTH_BOOTSTRAP_CONTRACT", i)]
   [@deprecated "In a future version, `Test` will be replaced by `Test.Next`, and using `Account.address` from `Test.Next` is encouraged for a smoother migration."]
   let nth_bootstrap_account (i : int) : address =
@@ -382,20 +394,27 @@ module Test = struct
     a
   [@deprecated "In a future version, `Test` will be replaced by `Test.Next`, and using `Account.info` from `Test.Next` is encouraged for a smoother migration."]
   let get_bootstrap_account (n : nat) : address * key * string = [%external ("TEST_GET_NTH_BS", (int n))]
+  [@deprecated "In a future version, `Test` will be replaced by `Test.Next`, and using `Account.Contract.bootstrap_typed_address` from `Test.Next` is encouraged for a smoother migration."]
   let nth_bootstrap_typed_address (type a b) (n : nat) : (a, b) typed_address = [%external ("TEST_NTH_BOOTSTRAP_TYPED_ADDRESS", n)]
+  [@deprecated "In a future version, `Test` will be replaced by `Test.Next`, and using `State.last_originations` from `Test.Next` is encouraged for a smoother migration."]
   let last_originations (u : unit) : (address, address list) map = [%external ("TEST_LAST_ORIGINATIONS", u)]
   let random (type a) (_u : unit) : a =
     let g : a pbt_gen = [%external ("TEST_RANDOM", false)] in
     [%external ("TEST_GENERATOR_EVAL", g)]
+  [@deprecated "In a future version, `Test` will be replaced by `Test.Next`, and using `Account.new` from `Test.Next` is encouraged for a smoother migration."]
   let new_account (u : unit) : string * key = [%external ("TEST_NEW_ACCOUNT", u)]
+  [@deprecated "In a future version, `Test` will be replaced by `Test.Next`, and using `State.bake_until` from `Test.Next` is encouraged for a smoother migration."]
   let bake_until_n_cycle_end (n : nat) : unit = [%external ("TEST_BAKE_UNTIL_N_CYCLE_END", n)]
   let get_time (_u : unit) : timestamp = Tezos.get_now ()
   [@deprecated "In a future version, `Test` will be replaced by `Test.Next`, and using `State.register_delegate` from `Test.Next` is encouraged for a smoother migration."]
   let register_delegate (kh : key_hash) : unit = [%external ("TEST_REGISTER_DELEGATE", kh)]
+  [@deprecated "In a future version, `Test` will be replaced by `Test.Next`, and using `State.stake` from `Test.Next` is encouraged for a smoother migration."]
   let stake (kh : key_hash) (t : tez) : unit = [%external ("TEST_STAKE", kh, t)]
   [@deprecated "In a future version, `Test` will be replaced by `Test.Next`, and using `State.register_constant` from `Test.Next` is encouraged for a smoother migration."]
   let register_constant (m : michelson_program) : string = [%external ("TEST_REGISTER_CONSTANT", m)]
+  [@deprecated "In a future version, `Test` will be replaced by `Test.Next`, and using `Contract.to_typed_address` from `Test.Next` is encouraged for a smoother migration."]
   let to_typed_address (type a b) (c : a contract) : (a, b) typed_address = [%external ("TEST_TO_TYPED_ADDRESS", c)]
+  [@deprecated "In a future version, `Test` will be replaced by `Test.Next`, and using `Michelson.parse` from `Test.Next` is encouraged for a smoother migration."]
   let constant_to_michelson_program (s : string) : michelson_program = [%external ("TEST_CONSTANT_TO_MICHELSON", s)]
   [@deprecated "In a future version, `Test` will be replaced by `Test.Next`, and using `Michelson.parse` from `Test.Next` is encouraged for a smoother migration."]
   let parse_michelson (s : string) : michelson_program = [%external ("TEST_CONSTANT_TO_MICHELSON", s)]
@@ -411,7 +430,9 @@ module Test = struct
   let to_json (type a) (v : a) : string = [%external ("TEST_TO_STRING", v, 1)]
   [@deprecated "In a future version, `Test` will be replaced by `Test.Next`, and using `String.debugger_json` from `Test.Next` is encouraged for a smoother migration."]
   let to_debugger_json (type a) (v : a) : string = [%external ("TEST_TO_STRING", v, 2)]
+  [@deprecated "In a future version, `Test` will be replaced by `Test.Next`, and using `State.set_baker_policy` from `Test.Next` is encouraged for a smoother migration."]
   let set_baker_policy (bp : test_baker_policy) : unit = [%external ("TEST_SET_BAKER", bp)]
+  [@deprecated "In a future version, `Test` will be replaced by `Test.Next`, and using `State.set_baker` from `Test.Next` is encouraged for a smoother migration."]
   let set_baker (a : address) : unit = set_baker_policy (By_account a)
   [@deprecated "In a future version, `Test` will be replaced by `Test.Next`, and using `Michelson.Contract.size` from `Test.Next` is encouraged for a smoother migration."]
   let size (type p s) (c : (p,s) michelson_contract) : int = [%external ("TEST_SIZE", c)]
@@ -420,6 +441,7 @@ module Test = struct
     let no_vs : s views = [%external ("TEST_NIL_VIEWS", ())] in
     let ast_c : (p,s) michelson_contract = [%external ("TEST_COMPILE_CONTRACT", f, no_vs)] in
     [%external ("TEST_COMPILE_AST_CONTRACT", ast_c)]
+  [@deprecated "In a future version, `Test` will be replaced by `Test.Next`, and using `Michelson.Contract.from_file` from `Test.Next` is encouraged for a smoother migration."]
   let read_contract_from_file (type p s) (fn : string) : (p,s) michelson_contract = [%external ("TEST_READ_CONTRACT_FROM_FILE", fn)]
   [@deprecated "In a future version, `Test` will be replaced by `Test.Next`, and using `String.chr` from `Test.Next` is encouraged for a smoother migration."]
   let chr (n : nat) : string option =
@@ -460,7 +482,7 @@ module Test = struct
       let (_, v) = [%external ("LOOP_LEFT", iter, (0n, (Success : a pbt_result)))] in
       v
   end
-
+  [@deprecated "In a future version, `Test` will be replaced by `Test.Next`, and using `State.last_events` from `Test.Next` is encouraged for a smoother migration."]
   let get_last_events_from (type a p s) (addr : (p,s) typed_address) (rtag: string) : a list =
     let addr = Tezos.address (to_contract addr) in
     let event_map : (address * a) list = [%external ("TEST_LAST_EVENTS", rtag)] in
@@ -488,13 +510,19 @@ module Test = struct
   let reset_state (n : nat) (l : tez list) : unit = [%external ("TEST_STATE_RESET", (None : timestamp option), n, l)]
   [@deprecated "In a future version, `Test` will be replaced by `Test.Next`, and using `State.reset_at` from `Test.Next` is encouraged for a smoother migration."]
   let reset_state_at (t:timestamp) (n : nat) (l : tez list) : unit = [%external ("TEST_STATE_RESET", (Some t), n, l)]
+  [@deprecated "In a future version, `Test` will be replaced by `Test.Next`, and using `State.Reset.add_func_contract` from `Test.Next` is encouraged for a smoother migration."]
   let bootstrap_contract (type p s) (f : p * s -> operation list * s) (s : s) (t : tez) : unit = [%external ("TEST_BOOTSTRAP_CONTRACT", f, s, t)]
+  [@deprecated "In a future version, `Test` will be replaced by `Test.Next`, and using `Mutation.value` from `Test.Next` is encouraged for a smoother migration."]
   let mutate_value (type a) (n : nat) (v : a) : (a * mutation) option = [%external ("TEST_MUTATE_VALUE", n, v)]
+  [@deprecated "In a future version, `Test` will be replaced by `Test.Next`, and using `Mutation.save` from `Test.Next` is encouraged for a smoother migration."]
   let save_mutation (s : string) (m : mutation) : string option = [%external ("TEST_SAVE_MUTATION", s, m)]
+  [@deprecated "In a future version, `Test` will be replaced by `Test.Next`, and using `Crypto.sign` from `Test.Next` is encouraged for a smoother migration."]
   let sign (sk : string) (d : bytes) : signature = [%external ("TEST_SIGN", sk, d)]
   [@deprecated "In a future version, `Test` will be replaced by `Test.Next`, and using `Account.add` from `Test.Next` is encouraged for a smoother migration."]
   let add_account (s : string) (k : key) : unit = [%external ("TEST_ADD_ACCOUNT", s, k)]
+  [@deprecated "In a future version, `Test` will be replaced by `Test.Next`, and using `State.Reset.add_baker` from `Test.Next` is encouraged for a smoother migration."]
   let baker_account (p : string * key) (o : tez option) : unit = [%external ("TEST_BAKER_ACCOUNT", p, o)]
+  [@deprecated "In a future version, `Test` will be replaced by `Test.Next`, and using `State.set_big_map` from `Test.Next` is encouraged for a smoother migration."]
   let set_big_map (type a b) (i : int) (m : (a, b) big_map) : unit = [%external ("TEST_SET_BIG_MAP", i, m)]
   [@deprecated "In a future version, `Test` will be replaced by `Test.Next`, and using `Contract.transfer` from `Test.Next` is encouraged for a smoother migration."]
   let transfer_to_contract (type p) (c : p contract) (s : p) (t : tez) : test_exec_result =
@@ -506,7 +534,9 @@ module Test = struct
       let e : string option = [%external ("TEST_GET_ENTRYPOINT", c)] in
       let s : michelson_program = eval s in
       [%external ("TEST_EXTERNAL_CALL_TO_ADDRESS_EXN", c, e, s, t)]
+  [@deprecated "In a future version, `Test` will be replaced by `Test.Next`, and using `Compare.eq` from `Test.Next` is encouraged for a smoother migration."]
   let michelson_equal (m1 : michelson_program) (m2 : michelson_program) : bool = m1 = m2
+  [@deprecated "In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.get_entrypoint` from `Test.Next` is encouraged for a smoother migration."]
   let to_entrypoint (type a b c) (s : string) (t : (a, b) typed_address) : c contract =
     let s = if String.length s > 0n then
               if String.sub 0n 1n s = "%" then
@@ -515,12 +545,14 @@ module Test = struct
 	      else s
 	    else s in
     [%external ("TEST_TO_ENTRYPOINT", s, t)]
+  [@deprecated "In a future version, `Test` will be replaced by `Test.Next`, and using `Dynamic_entrypoints.storage` from `Test.Next` is encouraged for a smoother migration."]
   let storage_with_dynamic_entrypoints (type p s s2) ((_, _, init_opt) : (p, s) module_contract) (s:s2) =
     type t = [@layout comb] { storage : s2 ; dynamic_entrypoints : dynamic_entrypoints} in
     match init_opt with
     | Some dynamic_entrypoints ->
       ({storage = s ; dynamic_entrypoints } : t)
     | None -> failwith "Your contract do not have dynamic entrypoints"
+  [@deprecated "In a future version, `Test` will be replaced by `Test.Next`, and using `Originate.michelson` from `Test.Next` is encouraged for a smoother migration."]
   let originate_contract (type p s) (c : (p,s) michelson_contract) (s : s) (t : tez) : (p,s) typed_address =
     let s = eval s in
     [%external ("TEST_ORIGINATE", c, s, t)]
@@ -683,8 +715,9 @@ module Test = struct
   let greater_or_equal (type a) (lhs : a) (rhs : a) : bool = compare lhs rhs >= 0
   [@deprecated "In a future version, `Test` will be replaced by `Test.Next`, and using `Compare.le` from `Test.Next` is encouraged for a smoother migration."]
   let less_or_equal (type a) (lhs : a) (rhs : a) : bool = compare lhs rhs <= 0
-
+  [@deprecated "In a future version, `Test` will be replaced by `Test.Next`, and using `Timelock.create` from `Test.Next` is encouraged for a smoother migration."]
   let create_chest (b : bytes) (n : nat) : chest * chest_key = [%external ("TEST_CREATE_CHEST", b, n)]
+  [@deprecated "In a future version, `Test` will be replaced by `Test.Next`, and using `Timelock.create_key` from `Test.Next` is encouraged for a smoother migration."]
   let create_chest_key (c : chest) (n : nat) : chest_key = [%external ("TEST_CREATE_CHEST_KEY", c, n)]
 
   module Proxy_ticket = struct
@@ -761,8 +794,10 @@ module Test = struct
           let from_file = originate_from_file_and_mutate_all
           let contract = originate_and_mutate_all
       end
-      let value = mutate_value
-      let save = save_mutation
+      let value (type a) (n : nat) (v : a) : (a * mutation) option =
+        [%external ("TEST_MUTATE_VALUE", n, v)]
+      let save (s : string) (m : mutation) : string option =
+        [%external ("TEST_SAVE_MUTATION", s, m)]
     end
     module PBT = PBT
     module State = struct
@@ -773,26 +808,86 @@ module Test = struct
       let reset_at = reset_state_at
       let register_delegate = register_delegate
       let register_constant = register_constant
+      let set_source (a : address) : unit =
+        [%external ("TEST_SET_SOURCE", a)]
+      let set_baker_policy (bp : test_baker_policy) : unit =
+        [%external ("TEST_SET_BAKER", bp)]
+      let set_baker (a : address) : unit =
+        set_baker_policy (By_account a)
+      let bake_until (n : nat) : unit =
+        [%external ("TEST_BAKE_UNTIL_N_CYCLE_END", n)]
+      let set_big_map (type k v) (i : int) (m : (k, v) big_map) : unit =
+        [%external ("TEST_SET_BIG_MAP", i, m)]
+      let get_voting_power (kh : key_hash) : nat =
+        [%external ("TEST_GET_VOTING_POWER", kh)]
+      let get_total_voting_power (() : unit) : nat =
+        [%external ("TEST_GET_TOTAL_VOTING_POWER", ())]
+      let last_originations (() : unit) : (address, address list) map =
+        [%external ("TEST_LAST_ORIGINATIONS", ())]
+      let last_events (type a p s)
+        (addr : (p,s) typed_address)
+        (rtag: string)
+      : a list =
+        let addr = Tezos.address (to_contract addr) in
+        let event_map : (address * a) list = [%external ("TEST_LAST_EVENTS", rtag)] in
+        let f ((acc, (c_addr,event)) : a list * (address * a)) : a list =
+          if addr = c_addr then event::acc
+          else acc
+        in
+        List.fold f event_map ([]: a list)
+      let stake (kh : key_hash) (t : tez) : unit =
+        [%external ("TEST_STAKE", kh, t)]
+      module Reset = struct
+        let add_baker (p : string * key) (o : tez option) : unit =
+          [%external ("TEST_BAKER_ACCOUNT", p, o)]
+        let add_func_contract (type p s)
+          (f : p * s -> operation list * s)
+          (s : s)
+          (t : tez)
+        : unit =
+          [%external ("TEST_BOOTSTRAP_CONTRACT", f, s, t)]
+      end
     end
     module Account = struct
-      let alice () = nth_bootstrap_account 0
-      let bob () = nth_bootstrap_account 1
-      let carol () = nth_bootstrap_account 2
-      let dan () = nth_bootstrap_account 3
+      let address (n : nat) =
+        let (a, _, _) = [%external ("TEST_GET_NTH_BS", (int n))] in
+        a
+      let alice () = address 0n
+      let bob () = address 1n
+      let carol () = address 2n
+      let dan () = address 3n
       let add = add_account
-      let address (n : nat) = nth_bootstrap_account (int n)
       type info = { addr: address; pk: key; sk: string }
       let info (n : nat) : info =
         let (addr, pk, sk) = get_bootstrap_account n in
         { addr ; pk ; sk }
+      let new (() : unit) : info =
+        let (sk, pk) = [%external ("TEST_NEW_ACCOUNT", ())] in
+        let addr = [%michelson ({| { HASH_KEY ; ADDRESS } |} pk : address)] in
+        { addr ; pk ; sk }
+      module Contract = struct
+        let bootstrap (i : nat) : address =
+          [%external ("TEST_NTH_BOOTSTRAP_CONTRACT", i)]
+        let bootstrap_typed_address (type a b) (n : nat) : (a, b) typed_address =
+          [%external ("TEST_NTH_BOOTSTRAP_TYPED_ADDRESS", n)]
+      end
     end
     module Compare = struct
-      let eq = equal
-      let neq = not_equal
-      let gt = greater
-      let lt = less
-      let ge = greater_or_equal
-      let le = less_or_equal
+      [@private]
+      let compare (type a) (lhs : a) (rhs : a) : int =
+        [%external ("TEST_COMPARE", lhs, rhs)]
+      let eq (type a) (lhs : a) (rhs : a) : bool =
+        compare lhs rhs = 0
+      let neq (type a) (lhs : a) (rhs : a) : bool =
+        compare lhs rhs <> 0
+      let gt (type a) (lhs : a) (rhs : a) : bool =
+        compare lhs rhs > 0
+      let lt (type a) (lhs : a) (rhs : a) : bool =
+        compare lhs rhs < 0
+      let ge (type a) (lhs : a) (rhs : a) : bool =
+        compare lhs rhs >= 0
+      let le (type a) (lhs : a) (rhs : a) : bool =
+        compare lhs rhs <= 0
     end
     module Michelson = struct
       let run = run
@@ -810,11 +905,15 @@ module Test = struct
       let print = print
       let println = println
       let eprint = eprint
+      let eprintln (v : string) : unit =
+        eprint (v ^ nl)
       let log = log
       let set_test_print = set_print_values
       let unset_test_print = unset_print_values
     end
     module Assert = struct
+      let failwith (type a b) (v : a) : b =
+        [%external ("TEST_FAILWITH", v)]
       let assert = assert
       let some = assert_some
       let none = assert_none
@@ -848,21 +947,69 @@ module Test = struct
         let { addr ; code ; size } = originate_from_file fn s t in
         let taddr = addr in
         { taddr ; code ; size }
+      let michelson (type p s)
+        (c : (p,s) michelson_contract)
+        (s : s)
+        (t : tez)
+      : (p,s) typed_address =
+        let s = eval s in
+        [%external ("TEST_ORIGINATE", c, s, t)]
     end
     module Contract = struct
       let transfer = transfer_to_contract
       let transfer_exn = transfer_to_contract_exn
+      let to_typed_address (type p s) (c : p contract) : (p, s) typed_address =
+        [%external ("TEST_TO_TYPED_ADDRESS", c)]
     end
     module Typed_address = struct
       let transfer = transfer
       let transfer_exn = transfer_exn
       let get_storage = get_storage
+      let get_balance (type p s) (a : (p, s) typed_address) : tez =
+        [%external ("TEST_GET_BALANCE", to_address a)]
+      let to_address (type p s) (c : (p, s) typed_address) : address =
+        [%external ("TEST_TO_ADDRESS", c)]
+      let to_contract (type p s) (t : (p, s) typed_address) : p contract =
+        [%external ("TEST_TO_CONTRACT", t)]
+      let get_entrypoint (type p s q) (s : string) (t : (p, s) typed_address) : q contract =
+        let s = if Toplevel.String.length s > 0n then
+                  if Toplevel.String.sub 0n 1n s = "%" then
+                    let () = IO.eprintln "WARNING: get_entrypoint: automatically removing starting %" in
+                    Toplevel.String.sub 1n (abs (Toplevel.String.length s - 1)) s
+	                else s
+	              else s in
+        [%external ("TEST_TO_ENTRYPOINT", s, t)]
     end
     module Address = struct
       let get_balance = get_balance_of_address
       let to_typed_address = cast_address
+      let get_storage (type b) (a : address) : b =
+        (* we use unit bellow because we don't want inference to force useless annotations *)
+        let a : (unit, b) typed_address = to_typed_address a in
+        Typed_address.get_storage a
+    end
+    module Timelock = struct
+      let create (b : bytes) (n : nat) : chest * chest_key =
+        [%external ("TEST_CREATE_CHEST", b, n)]
+      let create_key (c : chest) (n : nat) : chest_key =
+        [%external ("TEST_CREATE_CHEST_KEY", c, n)]
+    end
+    module Crypto = struct
+      let sign (sk : string) (d : bytes) : signature =
+        [%external ("TEST_SIGN", sk, d)]
+    end
+    module Dynamic_entrypoints = struct
+      let storage (type p s s2)
+        ((_, _, init_opt) : (p, s) module_contract)
+        (s:s2)
+      =
+        type t = [@layout comb] { storage : s2 ; dynamic_entrypoints : dynamic_entrypoints} in
+        match init_opt with
+        | Some dynamic_entrypoints -> ({storage = s ; dynamic_entrypoints } : t)
+        | None -> failwith "Your contract do not have dynamic entrypoints"
     end
     let originate = Originate.contract
+    let failwith = Assert.failwith
     include Typed_address
   end
 end

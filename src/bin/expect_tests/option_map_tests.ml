@@ -61,6 +61,15 @@ let%expect_test _ =
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Originate.contract` from `Test.Next` is encouraged for a smoother migration.
 
+    File "../../test/contracts/option_record.mligo", line 13, characters 12-28:
+     12 |   let orig = Test.originate (contract_of C) (None : t) 0tez in
+     13 |   let ctr = Test.to_contract orig.addr in
+                      ^^^^^^^^^^^^^^^^
+     14 |   let _ = Test.transfer_to_contract_exn ctr (Main ()) 0tez in
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.to_contract` from `Test.Next` is encouraged for a smoother migration.
+
     File "../../test/contracts/option_record.mligo", line 14, characters 10-39:
      13 |   let ctr = Test.to_contract orig.addr in
      14 |   let _ = Test.transfer_to_contract_exn ctr (Main ()) 0tez in

@@ -70,7 +70,7 @@ and internals =
   ; next_bootstrapped_contracts : bootstrap_contract list
         (* next contracts to be injected as boostrap accounts in the next state reset *)
   ; next_baker_accounts : baker_account list
-        (* next contracts to be injected as boostrap accounts in the next state reset *)
+        (* next contracts to be injected as baker accounts in the next state reset *)
   ; bootstrapped : Memory_proto_alpha.Protocol.Alpha_context.Contract.t list
         (* addresses of boostrapped contracts *)
   ; storage_tys : storage_tys

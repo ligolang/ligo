@@ -1142,7 +1142,7 @@ File "../../test/contracts/negative/create_contract_toplevel.mligo", line 5, cha
       ^^^^^^^^
  10 |   in
 
-Not all free variables could be inlined in Tezos.create_contract usage: gen#324. |}];
+Not all free variables could be inlined in Tezos.create_contract usage: gen#358. |}];
   run_ligo_good [ "compile"; "contract"; contract "create_contract_var.mligo" ];
   [%expect
     {|
@@ -1234,7 +1234,7 @@ Not all free variables could be inlined in Tezos.create_contract usage: gen#324.
           ^^^^^^^^^^
      15 |   ([toto.0], store)
 
-    Not all free variables could be inlined in Tezos.create_contract usage: gen#325. |}];
+    Not all free variables could be inlined in Tezos.create_contract usage: gen#359. |}];
   run_ligo_bad [ "compile"; "contract"; bad_contract "create_contract_no_inline.mligo" ];
   [%expect
     {|
@@ -1297,7 +1297,7 @@ Not all free variables could be inlined in Tezos.create_contract usage: gen#324.
           ^^^^^^^
      15 |   let toto : operation list = [op] in
 
-    Not all free variables could be inlined in Tezos.create_contract usage: foo#339. |}];
+    Not all free variables could be inlined in Tezos.create_contract usage: foo#373. |}];
   run_ligo_good [ "compile"; "contract"; contract "create_contract.mligo" ];
   [%expect
     {|

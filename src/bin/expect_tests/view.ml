@@ -130,6 +130,15 @@ let%expect_test _ =
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Originate.from_file` from `Test.Next` is encouraged for a smoother migration.
 
+    File "../../test/contracts/views_using_view.test.mligo", line 25, characters 13-28:
+     24 |   let orig1 : orig1 = Test.originate_from_file "./views_using_view.jsligo" 999 1tez in
+     25 |   let addr = Test.to_address orig1.addr in
+                       ^^^^^^^^^^^^^^^
+     26 |   let orig2 = Test.originate (contract_of Proxy) (Integer 1) 1tez in
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.to_address` from `Test.Next` is encouraged for a smoother migration.
+
     File "../../test/contracts/views_using_view.test.mligo", line 26, characters 14-28:
      25 |   let addr = Test.to_address orig1.addr in
      26 |   let orig2 = Test.originate (contract_of Proxy) (Integer 1) 1tez in
@@ -165,6 +174,15 @@ let%expect_test _ =
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Originate.from_file` from `Test.Next` is encouraged for a smoother migration.
+
+    File "../../test/contracts/views_using_view.test.mligo", line 33, characters 13-28:
+     32 |   let orig1 : orig1 = Test.originate_from_file "./views_using_view.jsligo" 999 1tez in
+     33 |   let addr = Test.to_address orig1.addr in
+                       ^^^^^^^^^^^^^^^
+     34 |   let orig2 = Test.originate (contract_of Proxy) (Integer 1) 1tez in
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.to_address` from `Test.Next` is encouraged for a smoother migration.
 
     File "../../test/contracts/views_using_view.test.mligo", line 34, characters 14-28:
      33 |   let addr = Test.to_address orig1.addr in
@@ -202,6 +220,15 @@ let%expect_test _ =
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Originate.from_file` from `Test.Next` is encouraged for a smoother migration.
 
+    File "../../test/contracts/views_using_view.test.mligo", line 41, characters 13-28:
+     40 |   let orig1 : orig1 = Test.originate_from_file "./views_using_view.jsligo" 999 1tez in
+     41 |   let addr = Test.to_address orig1.addr in
+                       ^^^^^^^^^^^^^^^
+     42 |   let orig2 = Test.originate (contract_of Proxy) (Integer 1) 1tez in
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.to_address` from `Test.Next` is encouraged for a smoother migration.
+
     File "../../test/contracts/views_using_view.test.mligo", line 42, characters 14-28:
      41 |   let addr = Test.to_address orig1.addr in
      42 |   let orig2 = Test.originate (contract_of Proxy) (Integer 1) 1tez in
@@ -238,6 +265,15 @@ let%expect_test _ =
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Originate.from_file` from `Test.Next` is encouraged for a smoother migration.
 
+    File "../../test/contracts/views_using_view.test.mligo", line 49, characters 13-28:
+     48 |   let orig1 : orig1 = Test.originate_from_file "./views_using_view.jsligo" 999 1tez in
+     49 |   let addr = Test.to_address orig1.addr in
+                       ^^^^^^^^^^^^^^^
+     50 |   let orig2 = Test.originate (contract_of Proxy) (Integer 1) 1tez in
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.to_address` from `Test.Next` is encouraged for a smoother migration.
+
     File "../../test/contracts/views_using_view.test.mligo", line 50, characters 14-28:
      49 |   let addr = Test.to_address orig1.addr in
      50 |   let orig2 = Test.originate (contract_of Proxy) (Integer 1) 1tez in
@@ -265,6 +301,15 @@ let%expect_test _ =
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.get_storage` from `Test.Next` is encouraged for a smoother migration.
 
+    File "../../test/contracts/views_using_view.test.mligo", line 53, characters 15-30:
+     52 |   let s = Test.get_storage orig2.addr in
+     53 |   s = Address (Test.to_address orig2.addr)
+                         ^^^^^^^^^^^^^^^
+     54 |
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.to_address` from `Test.Next` is encouraged for a smoother migration.
+
     File "../../test/contracts/views_using_view.test.mligo", line 56, characters 22-46:
      55 | let test_super_not_funny =
      56 |   let orig1 : orig1 = Test.originate_from_file "./views_using_view.jsligo" 999 1tez in
@@ -273,6 +318,15 @@ let%expect_test _ =
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Originate.from_file` from `Test.Next` is encouraged for a smoother migration.
+
+    File "../../test/contracts/views_using_view.test.mligo", line 57, characters 13-28:
+     56 |   let orig1 : orig1 = Test.originate_from_file "./views_using_view.jsligo" 999 1tez in
+     57 |   let addr = Test.to_address orig1.addr in
+                       ^^^^^^^^^^^^^^^
+     58 |   let orig2 = Test.originate (contract_of Proxy) (Integer 1) 1tez in
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.to_address` from `Test.Next` is encouraged for a smoother migration.
 
     File "../../test/contracts/views_using_view.test.mligo", line 58, characters 14-28:
      57 |   let addr = Test.to_address orig1.addr in
@@ -329,6 +383,15 @@ let%expect_test _ =
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `IO.log` from `Test.Next` is encouraged for a smoother migration.
+
+    File "../../test/contracts/view_exported.jsligo", line 12, characters 10-26:
+     11 |   Test.log(orig.code);
+     12 |   let c = Test.to_contract(orig.addr);
+                    ^^^^^^^^^^^^^^^^
+     13 |
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.to_contract` from `Test.Next` is encouraged for a smoother migration.
 
     File "../../test/contracts/view_exported.jsligo", line 14, characters 2-10:
      13 |
