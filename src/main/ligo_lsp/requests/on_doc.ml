@@ -151,105 +151,45 @@ let detect_or_ask_to_create_project_file (file : Path.t) : unit Handler.t =
   | Some _, (None | Some _) -> pass
 
 
-let try_to_get_syntax : Path.t -> Syntax_types.t Handler.t =
- fun file ->
-  match Path.get_syntax file with
-  | None ->
-    lift_IO @@ failwith @@ "Expected file with LIGO code, got: " ^ Path.to_string file
-  | Some s -> return s
-
-
-let set_cache
-    :  Syntax_types.t -> Def.definitions option -> Path.t -> string
-    -> Ligo_interface.scopes option -> unit Handler.t
-  =
- fun syntax definitions file contents scopes ->
+(** E.g. if project root was changed *)
+let drop_cached_definitions : Path.t -> unit Handler.t =
+ fun path ->
   let@ docs_cache = ask_docs_cache in
-  return
-  @@ Docs_cache.set
-       docs_cache
-       ~key:file
-       ~data:{ definitions; syntax; code = contents; scopes }
+  when_some_ (Docs_cache.find docs_cache path)
+  @@ fun { syntax; code; definitions = _; scopes = _ } ->
+  set_docs_cache path { syntax; code; definitions = None; scopes = None }
 
 
-(** We define here a helper that will:
-    - process a document
-    - store the state resulting from the processing
-    - return the diagnostics from the new state
-    - find or ask the user to create a project file *)
+(** We define here a helper that:
+   - saves a new version of document to memory
+   - finds or asks the user to create a project file
+   Also, if [process_immediately = true], it
+   - processes a document
+   - stores the state resulting from the processing
+   - sends the diagnostics from the new state
+   *)
 let on_doc
-    : ?changes:TextDocumentContentChangeEvent.t list -> Path.t -> string -> unit Handler.t
+    :  process_immediately:bool -> ?changes:TextDocumentContentChangeEvent.t list
+    -> Path.t -> string -> unit Handler.t
   =
- fun ?changes:_ file contents ->
-  let@ () = send_debug_msg @@ Format.asprintf "Updating doc: %a" Path.pp file in
-  let@ { config = { max_number_of_problems; _ }; last_project_dir; _ } = ask in
-  let@ syntax = try_to_get_syntax file in
+ fun ~process_immediately ?changes:_ file code ->
+  let@ syntax = get_syntax_exn file in
+  let@ () =
+    send_debug_msg
+    @@ Format.asprintf
+         (if process_immediately
+         then "caching and processing doc: %a"
+         else "caching doc: %a")
+         Path.pp
+         file
+  in
   let@ () = detect_or_ask_to_create_project_file file in
-  let project_root = !last_project_dir in
-  let@ ({ definitions; _ } as defs_and_diagnostics) =
-    with_run_in_IO
-    @@ fun { unlift_IO } ->
-    Ligo_interface.get_defs_and_diagnostics
-      ~project_root
-      ~code:contents
-      ~logger:(fun ~type_ msg -> unlift_IO @@ send_log_msg ~type_ msg)
-      file
-  in
-  let scopes = Ligo_interface.get_scope ~project_root ~code:contents file in
-  let@ () = set_cache syntax (Some definitions) file contents (Some scopes) in
-  let diags_by_file =
-    let simple_diags = Diagnostics.get_diagnostics file defs_and_diagnostics in
-    Diagnostics.partition_simple_diagnostics
-      file
-      (Some max_number_of_problems)
-      simple_diags
-  in
-  (* Corner case: clear diagnostics for this file in case there are none. *)
-  let@ () =
-    let uri = DocumentUri.of_path file in
-    if List.Assoc.mem diags_by_file ~equal:DocumentUri.equal uri
-    then pass
-    else send_diagnostic uri []
-  in
-  iter diags_by_file ~f:(Simple_utils.Utils.uncurry send_diagnostic)
-
-
-(** The same as [on_doc] but only updates file caches. Sets [syntax] and [code] but leaves
-    all other fields with empty values. *)
-let on_doc_semantic_tokens
-    : ?changes:TextDocumentContentChangeEvent.t list -> Path.t -> string -> unit Handler.t
-  =
- fun ?changes:_ file contents ->
-  let@ () =
-    send_debug_msg @@ Format.asprintf "Updating doc (semantic tokens): %a" Path.pp file
-  in
-  let@ syntax = try_to_get_syntax file in
-  set_cache syntax None file contents None
-
-
-(** The same as [on_doc] but uses cached file content to get the list of [definitions]. We
-    use this during [on_req_references] request on files that import the current file,
-    since it's possible that we never opened this file in order to cache the correct
-    [code], but empty an list of [definitions]. *)
-let on_doc_references : Path.t -> unit Handler.t =
- fun file ->
-  let@ docs_cache = ask_docs_cache in
-  match Docs_cache.find docs_cache file with
-  | None -> return ()
-  | Some { code; _ } ->
-    let@ () =
-      send_debug_msg @@ Format.asprintf "Updating doc (references): %a" Path.pp file
-    in
-    let@ last_project_dir = ask_last_project_dir in
-    let project_root = !last_project_dir in
-    let@ syntax = try_to_get_syntax file in
-    let@ definitions = lift_IO @@ Ligo_interface.get_defs ~project_root ~code file in
-    let scopes = Ligo_interface.get_scope ~project_root ~code file in
-    set_cache syntax (Some definitions) file code (Some scopes)
+  let@ () = set_docs_cache file { syntax; code; definitions = None; scopes = None } in
+  when_ process_immediately @@ process_doc file
 
 
 (** This function checks if the given [Path.t] is cached, and if it's not, will read its
-    contents from the disk and set the cache, using [[]] for definitions and scopes. If
+    contents from the disk and set the cache, setting [None] for definitions and scopes. If
     the file is cached, it will do nothing. *)
 let cache_doc_minimal : Path.t -> unit Handler.t =
  fun file ->
@@ -258,14 +198,14 @@ let cache_doc_minimal : Path.t -> unit Handler.t =
   then return ()
   else
     let@ () =
-      send_debug_msg @@ Format.asprintf "Reading doc (minimal): %a" Path.pp file
+      send_debug_msg @@ Format.asprintf "Reading doc from disk (minimal): %a" Path.pp file
     in
-    let@ contents =
+    let@ code =
       lift_IO
       @@ Lwt_io.with_file ~mode:Input (Path.to_string file) (Lwt_io.read ?count:None)
     in
-    let@ syntax = try_to_get_syntax file in
-    set_cache syntax None file contents None
+    let@ syntax = get_syntax_exn file in
+    set_docs_cache file { syntax; code; definitions = None; scopes = None }
 
 
 module File_graph = Lsp_helpers.Graph.Make (Path)

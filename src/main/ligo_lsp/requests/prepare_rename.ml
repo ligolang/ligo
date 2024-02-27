@@ -30,6 +30,4 @@ let prepare_rename : Position.t -> Path.t -> Scopes.definitions -> Range.t optio
 let on_req_prepare_rename : Position.t -> Path.t -> Range.t option Handler.t =
  fun pos file ->
   with_cached_doc file ~default:None
-  @@ fun { definitions; _ } ->
-  when_some' definitions
-  @@ fun definitions -> return @@ prepare_rename pos file definitions
+  @@ fun { definitions; _ } -> return @@ prepare_rename pos file definitions

@@ -309,8 +309,6 @@ let on_req_hover : Position.t -> Path.t -> Hover.t option Handler.t =
   @@ fun cst ->
   with_cached_doc file ~default:None
   @@ fun { definitions; syntax; _ } ->
-  when_some' definitions
-  @@ fun definitions ->
   when_some' (Def.get_definition pos file definitions)
   @@ fun definition ->
   let input =

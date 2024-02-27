@@ -8,6 +8,7 @@ let default_test_config : config =
   ; disabled_features = []
   ; max_line_width = None
   ; completion_implementation = `With_scopes
+  ; diagnostics_pull_mode = `OnDocUpdate
   }
 
 
@@ -29,7 +30,12 @@ let test_run_session ?(config = default_test_config) (session : 'a Handler.t)
 
 
 let open_file (file : Path.t) : Path.t Handler.t =
-  let@ () = Requests.on_doc file (In_channel.read_all @@ Path.to_string file) in
+  let@ () =
+    Requests.on_doc
+      ~process_immediately:true
+      file
+      (In_channel.read_all @@ Path.to_string file)
+  in
   return file
 
 

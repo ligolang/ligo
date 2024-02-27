@@ -13,7 +13,17 @@ let extract_link_from_directive
 
 
 let on_req_document_link (file : Path.t) : DocumentLink.t list option handler =
+  let@ { diagnostics_pull_mode; _ } = ask_config in
   let@ () = send_debug_msg @@ "On document_link:" ^ Path.to_string file in
+  let@ () =
+    match diagnostics_pull_mode with
+    | `OnDocumentLinkRequest ->
+      let@ () =
+        send_debug_msg @@ "document_link: processing doc " ^ Path.to_string file
+      in
+      process_doc file
+    | `OnDocUpdate | `OnSave -> return ()
+  in
   let dir = Path.dirname file in
   let@ mod_res = ask_mod_res in
   let@ directives_opt =

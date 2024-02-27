@@ -12,6 +12,7 @@ let default_config : config =
   ; disabled_features = []
   ; max_line_width = None
   ; completion_implementation = `With_scopes
+  ; diagnostics_pull_mode = `OnDocUpdate
   }
 
 
@@ -47,23 +48,40 @@ class lsp_server (capability_mode : capability_mode) =
 
     val mod_res : Preprocessor.ModRes.t option ref = ref None
 
-    val on_doc =
+    method run_handler : type a. notify_back_mockable -> a Handler.t -> a IO.t =
+      fun notify_back ->
+        run_handler
+          { notify_back
+          ; config
+          ; docs_cache = get_scope_buffers
+          ; last_project_dir
+          ; mod_res
+          }
+
+    method on_doc
+        : ?changes:TextDocumentContentChangeEvent.t list -> Path.t -> string -> unit t =
       match capability_mode with
-      | All_capabilities | No_semantic_tokens -> Requests.on_doc
-      | Only_semantic_tokens -> Requests.on_doc_semantic_tokens
+      | Only_semantic_tokens ->
+        (* No need for calculating definitions/diagnostics here *)
+        Requests.on_doc ~process_immediately:false
+      | All_capabilities | No_semantic_tokens ->
+        let { diagnostics_pull_mode; _ } = config in
+        (match diagnostics_pull_mode with
+        | `OnDocUpdate -> Requests.on_doc ~process_immediately:true
+        | `OnDocumentLinkRequest | `OnSave -> Requests.on_doc ~process_immediately:false)
 
     (* We now override the [on_notify_doc_did_open] method that will be called
        by the server each time a new document is opened. *)
     method on_notif_doc_did_open ~notify_back document ~content : unit IO.t =
       let file = DocumentUri.to_path document.uri in
-      run_handler
-        { notify_back = Normal notify_back
-        ; config
-        ; docs_cache = get_scope_buffers
-        ; last_project_dir
-        ; mod_res
-        }
-      @@ on_doc file content
+      let { diagnostics_pull_mode; _ } = config in
+      match diagnostics_pull_mode, capability_mode with
+      | _, Only_semantic_tokens | `OnDocumentLinkRequest, _ | `OnDocUpdate, _ ->
+        self#run_handler (Normal notify_back) @@ self#on_doc file content
+      (* For [`OnSave] we should process doc that was opened *)
+      | `OnSave, _ ->
+        self#run_handler (Normal notify_back)
+        @@ Requests.on_doc ~process_immediately:true file content
 
     (* Similarly, we also override the [on_notify_doc_did_change] method that will be called
        by the server each time a document is changed. *)
@@ -75,25 +93,24 @@ class lsp_server (capability_mode : capability_mode) =
         ~new_content
         : unit IO.t =
       let file = DocumentUri.to_path document.uri in
-      run_handler
-        { notify_back = Normal notify_back
-        ; config
-        ; docs_cache = get_scope_buffers
-        ; last_project_dir
-        ; mod_res
-        }
-      @@ on_doc ~changes file new_content
+      self#run_handler (Normal notify_back) @@ self#on_doc ~changes file new_content
 
-    method decode_apply_settings (settings : Yojson.Safe.t) : unit =
+    method decode_apply_settings
+        (notify_back : Linol_lwt.Jsonrpc2.notify_back)
+        (settings : Yojson.Safe.t)
+        : unit IO.t =
       let open Yojson.Safe.Util in
       match to_option (member "ligoLanguageServer") settings with
-      | None -> ()
+      | None -> IO.return ()
       | Some ligo_language_server ->
-        self#decode_apply_ligo_language_server ligo_language_server
+        self#decode_apply_ligo_language_server notify_back ligo_language_server
 
-    method decode_apply_ligo_language_server (ligo_language_server : Yojson.Safe.t) : unit
-        =
+    method decode_apply_ligo_language_server
+        (notify_back : Linol_lwt.Jsonrpc2.notify_back)
+        (ligo_language_server : Yojson.Safe.t)
+        : unit IO.t =
       let open Yojson.Safe.Util in
+      let open IO in
       config
         <- { max_number_of_problems =
                ligo_language_server
@@ -126,12 +143,41 @@ class lsp_server (capability_mode : capability_mode) =
                | Some "all identifiers" -> `All_definitions
                | Some "only fields and keywords" -> `Only_keywords_and_fields
                | Some _ | None -> default_config.completion_implementation)
-           }
+           ; diagnostics_pull_mode =
+               (ligo_language_server
+               |> member "diagnosticsPullMode"
+               |> to_string_option
+               |> function
+               | Some "on doc update (can be slow)" -> `OnDocUpdate
+               | Some "on document link request" -> `OnDocumentLinkRequest
+               | Some "on save" -> `OnSave
+               | Some _ | None -> default_config.diagnostics_pull_mode)
+           };
+      let* () =
+        match config.diagnostics_pull_mode with
+        | `OnDocumentLinkRequest
+          when List.exists
+                 ~f:(String.equal "textDocument/documentLink")
+                 config.disabled_features ->
+          notify_back#send_notification
+          @@ ShowMessage
+               (ShowMessageParams.create
+                  ~message:
+                    "Ligo Language Server: Diagnostics pull mode is 'on document link' \
+                     while 'textDocument/documentLink' request is disabled. This can \
+                     lead to missing diagnostics.\n\
+                     Please enable 'textDocument/documentLink' request or change \
+                     diagnostics pull mode."
+                  ~type_:Warning)
+        | _ -> IO.return @@ ()
+      in
+      IO.return @@ ()
 
     method! on_req_initialize
         ~(notify_back : Linol_lwt.Jsonrpc2.notify_back)
         (init_params : InitializeParams.t)
         : InitializeResult.t IO.t =
+      let open IO in
       (* Currently, the behaviors of these editors will be as follow:
          * Emacs: Will send [Some `Null]. Default config will be used.
            TODO: Fix this in #1706.
@@ -139,10 +185,10 @@ class lsp_server (capability_mode : capability_mode) =
            TODO: Fix this in #1707.
          * Visual Studio Code: As we support reading the configuration from
            this editor, we proceed with our ordinary business and decode it. *)
-      let () =
+      let* () =
         match init_params.initializationOptions with
-        | None -> ()
-        | Some settings -> self#decode_apply_settings settings
+        | None -> return ()
+        | Some settings -> self#decode_apply_settings notify_back settings
       in
       client_capabilities <- init_params.capabilities;
       super#on_req_initialize ~notify_back init_params
@@ -284,14 +330,7 @@ class lsp_server (capability_mode : capability_mode) =
         in
         let notif_run_handler action =
           (* Cannot eta-reduce, mutable `config` must be taken upon `action` run *)
-          run_handler
-            { notify_back = Normal new_notify_back
-            ; config
-            ; docs_cache = get_scope_buffers
-            ; last_project_dir
-            ; mod_res
-            }
-            action
+          self#run_handler (Normal new_notify_back) @@ action
         in
         let ( let* ) = IO.( let* ) in
         function
@@ -391,13 +430,17 @@ class lsp_server (capability_mode : capability_mode) =
                                     Format.fprintf ppf "%s" (Yojson.Safe.to_string json)))
                                configs)
                       in
-                      let () =
-                        List.iter ~f:self#decode_apply_ligo_language_server configs
+                      let* () =
+                        Lwt_list.iter_p
+                          (self#decode_apply_ligo_language_server new_notify_back)
+                          configs
                       in
                       (* Update diagnostics *)
                       Lwt_list.iter_p
-                        (fun (path, Ligo_interface.{ code; _ }) ->
-                          notif_run_handler @@ on_doc path code)
+                        (fun ( path
+                             , (Ligo_interface.{ code; _ } :
+                                 Ligo_interface.unprepared_file_data) ) ->
+                          notif_run_handler @@ self#on_doc path code)
                         (List.take
                            (Docs_cache.to_alist get_scope_buffers)
                            max_files_for_diagnostics_update_at_once))
@@ -414,6 +457,27 @@ class lsp_server (capability_mode : capability_mode) =
             last_project_dir := None;
             mod_res := None);
           IO.return ()
+        | Client_notification.DidSaveTextDocument { textDocument = { uri; _ }; _ } ->
+          let { diagnostics_pull_mode; _ } = config in
+          (match diagnostics_pull_mode with
+          | `OnSave ->
+            let path = DocumentUri.to_path uri in
+            let* () =
+              new_notify_back#send_log_msg ~type_:MessageType.Log
+              @@ Format.asprintf "Processing saved doc: %a" Path.pp path
+            in
+            let new_notify_back =
+              Normal
+                (new Linol_lwt.Jsonrpc2.notify_back
+                   ~uri
+                   ~notify_back
+                   ~server_request
+                   ~workDoneToken:None
+                   ~partialResultToken:None
+                   ())
+            in
+            self#run_handler new_notify_back @@ process_doc path
+          | `OnDocUpdate | `OnDocumentLinkRequest -> IO.return ())
         | notification -> super#on_notification ~notify_back ~server_request notification
 
     method! on_request
@@ -431,42 +495,41 @@ class lsp_server (capability_mode : capability_mode) =
             : r IO.t
           =
           let method_ = (Client_request.to_jsonrpc_request r ~id).method_ in
-          (* If the project root changed, let's repopulate the cache by running
-             [Requests.on_doc] again. *)
+          (* If the project root changed, let's repopulate the cache by deleting existing info and
+             running [Requests.on_doc] again. *)
           let repopulate_cache : unit Handler.t =
             let file = DocumentUri.to_path uri in
             match Docs_cache.find get_scope_buffers file with
             (* Shouldn't happen because [Requests.on_doc] should trigger and populate the
                cache. *)
             | None -> pass
-            | Some { code; _ } ->
+            | Some { code; syntax; _ } ->
               let last_project_dir = !last_project_dir in
               if Option.equal
                    Path.equal
                    last_project_dir
                    (Project_root.get_project_root file)
               then pass
-              else on_doc ?changes:None file code
+              else
+                let@ _ =
+                  set_docs_cache file { syntax; code; definitions = None; scopes = None }
+                in
+                self#on_doc ?changes:None file code
           in
           if self#is_request_enabled method_
              && List.mem ~equal:Caml.( = ) allowed_modes capability_mode
-          then
-            run_handler
-              { notify_back =
-                  Normal
-                    (new Linol_lwt.Jsonrpc2.notify_back
-                       ~uri
-                       ~notify_back
-                       ~server_request
-                       ~workDoneToken:None
-                       ~partialResultToken:None
-                       ())
-              ; config
-              ; docs_cache = get_scope_buffers
-              ; last_project_dir
-              ; mod_res
-              }
-              (bind repopulate_cache (fun () -> handler))
+          then (
+            let new_notify_back =
+              Normal
+                (new Linol_lwt.Jsonrpc2.notify_back
+                   ~uri
+                   ~notify_back
+                   ~server_request
+                   ~workDoneToken:None
+                   ~partialResultToken:None
+                   ())
+            in
+            self#run_handler new_notify_back @@ bind repopulate_cache (fun () -> handler))
           else IO.return default
         in
         match r with
