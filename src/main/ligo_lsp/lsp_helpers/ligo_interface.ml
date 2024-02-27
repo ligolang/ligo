@@ -7,13 +7,18 @@ type nonrec defs_and_diagnostics = defs_and_diagnostics
 type scopes = Scopes.scopes
 type definitions = Scopes.definitions
 
-(** To support dirty files, we store some data about files in memory *)
-type file_data =
+type ('defs, 'scopes) file_data_case =
   { syntax : Syntax_types.t
   ; code : string
-  ; definitions : Def.definitions option
-  ; scopes : scopes option
+  ; definitions : 'defs
+  ; scopes : 'scopes
   }
+
+(** [None] in definitions / scopes means that file was not processed.
+    See [on_doc] and [process_doc] *)
+type unprepared_file_data = (Def.definitions option, scopes option) file_data_case
+
+type file_data = (Def.definitions, scopes) file_data_case
 
 let lsp_raw_options : project_root:Path.t option -> Compiler_options.Raw_options.t =
  fun ~project_root ->

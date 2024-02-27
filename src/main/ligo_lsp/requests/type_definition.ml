@@ -5,8 +5,6 @@ let on_req_type_definition : Position.t -> Path.t -> Locations.t option Handler.
  fun pos file ->
   with_cached_doc file ~default:None
   @@ fun { definitions; _ } ->
-  when_some' definitions
-  @@ fun definitions ->
   when_some' (Def.get_definition pos file definitions)
   @@ fun def ->
   when_some'

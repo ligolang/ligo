@@ -31,8 +31,6 @@ let on_req_highlight
  fun pos file ->
   with_cached_doc file ~default:None
   @@ fun { definitions; _ } ->
-  when_some' definitions
-  @@ fun definitions ->
   when_some (Def.get_definition pos file definitions)
   @@ fun definition ->
   let@ cache = ask_docs_cache in

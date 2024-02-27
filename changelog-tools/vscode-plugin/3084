@@ -1,0 +1,7 @@
+
+author: Sorokin-Anton
+description: "\\nAdded \"ligoLanguageServer.diagnosticsPullMode\" setting to vscode extension so now the language server processes files on document link request by default, which improves its performance and responsiveness.\\n\\n"
+merge_request: '3084'
+title: "[#1697] Reduce number of get-scope calls by LSP"
+type: performance
+            

@@ -38,7 +38,7 @@ let get_all_references_grouped_by_file
     -> (Path.t * Range.t Sequence.t) Sequence.t
   =
  fun locations cache ->
-  let go (_path, { definitions; _ }) =
+  let go (_path, ({ definitions; _ } : Ligo_interface.unprepared_file_data)) =
     Option.value_map
       definitions
       ~default:Sequence.empty
@@ -116,31 +116,21 @@ let get_reverse_dependencies : Path.t -> Path.t list Handler.t =
   return reverse_deps
 
 
-(** Open all unopened files that are our reverse dependencies that may have a reference.
-    We don't open direct dependencies since we already know the references from scopes. *)
-let prepare_caches_for_references : Path.t list -> unit Handler.t =
-  iter ~f:On_doc.on_doc_references
-
-
 let get_all_reverse_dependencies_definitions : Path.t list -> definitions Handler.t =
   fmap Scopes.Types.wrap_definitions
   <@ concat_map ~f:(fun file ->
          with_cached_doc_pure file ~default:[]
-         @@ fun { definitions; _ } ->
-         Option.value_map definitions ~default:[] ~f:(fun { definitions } -> definitions))
+         @@ fun { definitions = { definitions }; _ } -> definitions)
 
 
 let on_req_references : Position.t -> Path.t -> Location.t list option Handler.t =
  fun pos file ->
   with_cached_doc file ~default:None
   @@ fun { definitions; _ } ->
-  when_some' definitions
-  @@ fun definitions ->
   when_some (Def.get_definition pos file definitions)
   @@ fun definition ->
   let@ cache = ask_docs_cache in
   let@ files = get_reverse_dependencies file in
-  let@ () = prepare_caches_for_references files in
   let@ all_definitions = get_all_reverse_dependencies_definitions files in
   let locations = get_all_linked_locations_or_def definition all_definitions in
   let references = get_all_references locations cache in

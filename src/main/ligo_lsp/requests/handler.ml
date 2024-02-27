@@ -4,7 +4,7 @@ module Path_hashtbl = Hashtbl.Make (Path)
 module Docs_cache = struct
   include Path_hashtbl (* So we can call e.g. [Docs_cache.find] *)
 
-  type t = Ligo_interface.file_data Path_hashtbl.t
+  type t = Ligo_interface.unprepared_file_data Path_hashtbl.t
 
   let create : unit -> t = fun () -> Path_hashtbl.create ~size:32 ()
 end
@@ -29,6 +29,12 @@ type config =
             - [`OnlyKeywordsAndRecordFields]: provide record/module fields if the coursor
               is located after a dot (like M.x|), otherwise provide keywords only.
               This is fast and always correct, but don't contain even the stdlib stuff. *)
+  ; diagnostics_pull_mode : [ `OnDocUpdate | `OnDocumentLinkRequest | `OnSave ]
+        (** when should we process the document?
+            - [`OnDocUpdate]: immediatly after we've got a new version
+            - [`OnDocumentLinkRequest]: when editor asks us for document links
+              (vscode do this automatically after user stops typing)
+            - [`OnSave]: when the document was saved *)
   }
 
 (** We can send diagnostics to user or just save them to list in case of testing *)
@@ -81,6 +87,8 @@ let fmap (f : 'a -> 'b) (x : 'a Handler.t) : 'b Handler.t =
   return @@ f x'
 
 
+let void (x : 'a Handler.t) : unit Handler.t = fmap (fun _ -> ()) x
+
 (** We can run things from [Linol_lwt.IO] monad here *)
 let lift_IO (m : 'a IO.t) : 'a Handler.t = Handler (fun _ -> m)
 
@@ -99,11 +107,18 @@ let ask_mod_res : Preprocessor.ModRes.t option ref Handler.t =
   fmap (fun x -> x.mod_res) ask
 
 
+let set_docs_cache (path : Path.t) (data : Ligo_interface.unprepared_file_data)
+    : unit Handler.t
+  =
+  let@ docs_cache = ask_docs_cache in
+  return @@ Docs_cache.set docs_cache ~key:path ~data
+
+
 (** Sequencing handlers *)
 
 let iter (xs : 'a list) ~f:(h : 'a -> unit Handler.t) : unit Handler.t =
   let rec go = function
-    | [] -> return ()
+    | [] -> pass
     | x :: xs -> bind (h x) (fun () -> go xs)
   in
   go xs
@@ -125,7 +140,7 @@ let concat_map ~(f : 'a -> 'b list t) : 'a list -> 'b list t =
 
 (** Conditional computations *)
 
-let when_ (b : bool) (m : unit Handler.t) : unit Handler.t = if b then m else return ()
+let when_ (b : bool) (m : unit Handler.t) : unit Handler.t = if b then m else pass
 
 let when_some (m_opt : 'a option) (f : 'a -> 'b Handler.t) : 'b option Handler.t =
   match m_opt with
@@ -136,7 +151,7 @@ let when_some (m_opt : 'a option) (f : 'a -> 'b Handler.t) : 'b option Handler.t
 let when_some_ (m_opt : 'a option) (f : 'a -> unit Handler.t) : unit Handler.t =
   match m_opt with
   | Some m -> f m
-  | None -> return ()
+  | None -> pass
 
 
 let when_some' (m_opt : 'a option) (f : 'a -> 'b option Handler.t) : 'b option Handler.t =
@@ -176,8 +191,8 @@ let send_log_msg ~(type_ : MessageType.t) (s : string) : unit Handler.t =
     let@ { logging_verbosity; _ } = ask_config in
     if Caml.(type_ <= logging_verbosity)
     then lift_IO @@ nb#send_log_msg ~type_ s
-    else return ()
-  | Mock _ -> return ()
+    else pass
+  | Mock _ -> pass
 
 
 (** Send diagnostics (errors, warnings) to the LSP client. *)
@@ -211,7 +226,7 @@ let send_message ?(type_ : MessageType.t = Info) (message : string) : unit Handl
   | Normal nb ->
     lift_IO
       (nb#send_notification @@ ShowMessage (ShowMessageParams.create ~message ~type_))
-  | Mock _ -> return ()
+  | Mock _ -> pass
 
 
 type unlift_IO = { unlift_IO : 'a. 'a Handler.t -> 'a IO.t }
@@ -249,10 +264,19 @@ let send_message_with_buttons
   send_request smr handler
 
 
+let get_syntax_exn : Path.t -> Syntax_types.t t =
+ fun path ->
+  match Path.get_syntax path with
+  | None ->
+    lift_IO @@ IO.failwith @@ "Expected file with LIGO code, got: " ^ Path.to_string path
+  | Some s -> return s
+
+
 (**
 Use doc info from cache. In case it's not available, return default value.
 This can happen only if we obtained a request for document that was not opened, so
 it's ok to return things like [None] in this case.
+In case doc was not processed yet launches doc processing and sends diagnostics
 *)
 let with_cached_doc
     ~(default : 'a)
@@ -263,8 +287,53 @@ let with_cached_doc
   =
   let@ docs = ask_docs_cache in
   match Docs_cache.find docs path with
-  | Some file_data -> f file_data
   | None -> return default
+  | Some { code; syntax; definitions; scopes } ->
+    (match definitions, scopes with
+    | Some definitions, Some scopes -> f { code; syntax; definitions; scopes }
+    | _ ->
+      let@ last_project_dir = ask_last_project_dir in
+      let project_root = !last_project_dir in
+      let@ syntax = get_syntax_exn path in
+      let@ ({ definitions; _ } as defs_and_diagnostics) =
+        with_run_in_IO
+        @@ fun { unlift_IO } ->
+        Ligo_interface.get_defs_and_diagnostics
+          ~project_root
+          ~code
+          ~logger:(fun ~type_ msg -> unlift_IO @@ send_log_msg ~type_ msg)
+          path
+      in
+      let scopes = Ligo_interface.get_scope ~project_root ~code path in
+      let@ () =
+        set_docs_cache
+          path
+          { code; syntax; definitions = Some definitions; scopes = Some scopes }
+      in
+      let@ max_number_of_problems = fmap (fun x -> x.max_number_of_problems) ask_config in
+      let diags_by_file =
+        let simple_diags = Diagnostics.get_diagnostics path defs_and_diagnostics in
+        Diagnostics.partition_simple_diagnostics
+          path
+          (Some max_number_of_problems)
+          simple_diags
+      in
+      (* Corner case: clear diagnostics for this file in case there are none. *)
+      let@ () =
+        let uri = DocumentUri.of_path path in
+        if List.Assoc.mem diags_by_file ~equal:DocumentUri.equal uri
+        then pass
+        else send_diagnostic uri []
+      in
+      let@ () = iter diags_by_file ~f:(Simple_utils.Utils.uncurry send_diagnostic) in
+      f { code; syntax; definitions; scopes })
+
+
+(* Calculates definitions and scopes for given file,
+   saving them to cache and sending diagnostics to the client.
+   If the document was already processed - does nothing *)
+let process_doc (path : Path.t) : unit Handler.t =
+  with_cached_doc path ~default:() (fun _ -> pass)
 
 
 let with_cached_doc_pure
@@ -277,7 +346,7 @@ let with_cached_doc_pure
   with_cached_doc path ~default f'
 
 
-let with_code (path : Path.t) (default : 'a) (f : string -> 'a Handler.t) : 'a Handler.t =
+let with_code (path : Path.t) ~(default : 'a) (f : string -> 'a Handler.t) : 'a Handler.t =
   let@ docs = ask_docs_cache in
   match Docs_cache.find docs path with
   | Some file_data -> f file_data.code
@@ -301,8 +370,9 @@ let with_cst
     (f : Dialect_cst.t -> 'a Handler.t)
     : 'a Handler.t
   =
-  with_cached_doc path ~default
-  @@ fun { syntax; code; _ } ->
+  with_code ~default path
+  @@ fun code ->
+  let@ syntax = get_syntax_exn path in
   match
     Ligo_api.Dialect_cst.get_cst
       ?project_root:(Option.map ~f:Path.to_string @@ Project_root.get_project_root path)

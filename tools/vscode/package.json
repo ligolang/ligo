@@ -127,6 +127,17 @@
                     "default": "in-scope identifiers (can be slow)",
                     "markdownDescription": "There are different implementations for LSP-based completion suggestions:\n- 'in-scope identifiers' is most accurate, but can be slow (leading to LSP being stuck) on big files.\n- 'all identifiers' is faster, but contains identifiers that are not in scope.\n- 'only fields and keywords' shows only keywords unless we're completing a module item or a record field."
                 },
+                "ligoLanguageServer.diagnosticsPullMode": {
+                    "scope": "resource",
+                    "type": "string",
+                    "enum": [
+                        "on doc update (can be slow)",
+                        "on document link request",
+                        "on save"
+                    ],
+                    "default": "on document link request",
+                    "markdownDescription": "When should the language server publish diagnostics for files?\n - 'on doc update' means running checks on each keystroke which can lead to performance problems\n - 'on document link request' relies on the `textDocument/documentLink` request sent automatically by VSCode when the user stops typing\n - 'on save' checks a file and publishes diagnostics for it after the file was saved\nNote: the file is also always checked when the language server receives a request like hover/completion/etc"
+                },
                 "ligoDebugger.maxSteps": {
                     "scope": "resource",
                     "type": [

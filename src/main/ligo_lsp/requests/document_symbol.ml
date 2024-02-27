@@ -189,9 +189,11 @@ and get_all_symbols_hierarchies
 let on_req_document_symbol (path : Path.t)
     : [> `DocumentSymbol of DocumentSymbol.t list ] option Handler.t
   =
-  with_cached_doc_pure path ~default:None
+  with_cached_doc path ~default:None
   @@ fun { syntax; code = _; definitions; scopes = _ } ->
-  let%bind.Option definitions = definitions in
+  let@ () =
+    send_debug_msg @@ Format.asprintf "On document symbol request on %a" Path.pp path
+  in
   let definitions =
     Def.filter definitions ~f:(fun def ->
         match Scopes.Types.get_range def with
@@ -199,5 +201,6 @@ let on_req_document_symbol (path : Path.t)
         | Virtual _ -> false)
   in
   let hierarchy = create_hierarchy definitions in
-  Option.map (get_all_symbols_hierarchies syntax hierarchy) ~f:(fun symbols ->
-      `DocumentSymbol symbols)
+  return
+  @@ Option.map (get_all_symbols_hierarchies syntax hierarchy) ~f:(fun symbols ->
+         `DocumentSymbol symbols)
