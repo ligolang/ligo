@@ -73,34 +73,52 @@ let try_with_lwt ?(fast_fail = true) (type error warning) f g =
   try%lwt f ~raise ~catch with
   | Local_lwt x -> g ~catch x
 
+type (_, _, 'error) fast_fail =
+  | No_fast_fail : ('error list, 'error list, 'error) fast_fail
+  | Fast_fail : ('error, unit, 'error) fast_fail
+
 let to_stdlib_result
-    :  (raise:('error, 'warning) raise -> 'value)
-    -> ('value * 'warning list, 'error * 'warning list) Stdlib.result
+    (type error warning error_error error_ok value)
+    ~(fast_fail : (error_error, error_ok, error) fast_fail)
+    :  (raise:(error, warning) raise -> value)
+    -> (value * error_ok * warning list, error_error * warning list) Stdlib.result
   =
  fun f ->
-  try_with
-    (fun ~raise ~catch ->
-      let v = f ~raise in
-      let warn = catch.warnings () in
-      Ok (v, warn))
-    (fun ~catch e ->
-      let warn = catch.warnings () in
-      Error (e, warn))
+  match fast_fail with
+  | No_fast_fail ->
+    try_with
+      ~fast_fail:false
+      (fun ~raise ~catch -> Ok (f ~raise, catch.errors (), catch.warnings ()))
+      (fun ~catch e -> Error (e :: catch.errors (), catch.warnings ()))
+  | Fast_fail ->
+    try_with
+      ~fast_fail:true
+      (fun ~raise ~catch -> Ok (f ~raise, (), catch.warnings ()))
+      (fun ~catch e -> Error (e, catch.warnings ()))
 
 let to_stdlib_result_lwt
-    :  (raise:('error, 'warning) raise -> 'value Lwt.t)
-    -> ('value * 'warning list, 'error * 'warning list) Lwt_result.t
+    (type error warning error_error error_ok value)
+    ~(fast_fail : (error_error, error_ok, error) fast_fail)
+    :  (raise:(error, warning) raise -> value Lwt.t)
+    -> (value * error_ok * warning list, error_error * warning list) Lwt_result.t
   =
  fun f ->
   let open Lwt.Let_syntax in
-  try_with_lwt
-    (fun ~raise ~catch ->
-      let%map v = f ~raise in
-      let warn = catch.warnings () in
-      Ok (v, warn))
-    (fun ~catch e ->
-      let warn = catch.warnings () in
-      Lwt.return @@ Error (e, warn))
+  match fast_fail with
+  | No_fast_fail ->
+    try_with_lwt
+      ~fast_fail:false
+      (fun ~raise ~catch ->
+        let%map v = f ~raise in
+        Ok (v, catch.errors (), catch.warnings ()))
+      (fun ~catch e -> Lwt.return @@ Error (e :: catch.errors (), catch.warnings ()))
+  | Fast_fail ->
+    try_with_lwt
+      ~fast_fail:true
+      (fun ~raise ~catch ->
+        let%map v = f ~raise in
+        Ok (v, (), catch.warnings ()))
+      (fun ~catch e -> Lwt.return @@ Error (e, catch.warnings ()))
 
 let map_error ~f ~raise t = t ~raise:(raise_map_error ~f raise)
 

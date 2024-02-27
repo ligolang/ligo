@@ -12,23 +12,19 @@ let unlines : document list -> document = separate hardline <@ strip_empty
 let dots = !^"\"...\""
 
 let decompile_type (ty_expr : Ast_typed.ty_expr) : document =
-  let unresolved_type =
-    let open Ast_unified in
-    t_var
-      ~loc:Location.generated
-      (Ty_variable.of_input_var ~loc:Location.generated "unresolved")
-  in
   let unified_type =
     match
-      Trace.to_stdlib_result @@ Checking.untype_type_expression ~use_orig_var:true ty_expr
+      let%bind.Option core_type =
+        Trace.to_option @@ Checking.untype_type_expression ~use_orig_var:true ty_expr
+      in
+      Trace.to_option @@ Nanopasses.decompile_ty_expr ~syntax:JsLIGO core_type
     with
-    | Ok (core_type, _) ->
-      (match
-         Trace.to_stdlib_result @@ Nanopasses.decompile_ty_expr ~syntax:JsLIGO core_type
-       with
-      | Ok (unified_type, _) -> unified_type
-      | Error _ -> unresolved_type)
-    | Error _ -> unresolved_type
+    | None ->
+      let open Ast_unified in
+      t_var
+        ~loc:Location.generated
+        (Ty_variable.of_input_var ~loc:Location.generated "unresolved")
+    | Some unified_type -> unified_type
   in
   let open Unification.Jsligo in
   let open Parsing.Jsligo in

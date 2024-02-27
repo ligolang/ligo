@@ -2,14 +2,16 @@ open Simple_utils
 open Simple_utils.Function
 open PPrint
 
-let with_raise ?(cleanup = fun () -> ()) f =
-  let result = Trace.to_stdlib_result f in
+let with_raise ?(cleanup = fun () -> ()) f
+    : ('value * unit * 'warning list, 'error * 'warning list) result
+  =
+  let result = Trace.to_stdlib_result ~fast_fail:Fast_fail f in
   cleanup ();
   result
 
 
 let format_errors = function
-  | Ok ((), _) -> Ok ("", "")
+  | Ok ((), (), _) -> Ok ("", "")
   | Error (e, _) ->
     Error
       ( Format.asprintf
@@ -103,7 +105,7 @@ let decompile_core_type
 
 
 let decompile_type
-    ~raise
+    ~(raise : (Checking.Errors.typer_error, Main_warnings.all) Trace.raise)
     ?escape_html_characters
     ?prefix
     ~(syntax : Syntax_types.t)
@@ -115,19 +117,14 @@ let decompile_type
 
 
 let decompile_type_case
+    ~(raise : (Checking.Errors.typer_error, Main_warnings.all) Trace.raise)
     ?escape_html_characters
     ?prefix
     ~(syntax : Syntax_types.t)
     (t : Scopes.Types.type_case)
     : document
   =
-  let unresolved = Option.value ~default:empty prefix ^/^ !^"unresolved" in
   match t with
   | Core t -> decompile_core_type ?escape_html_characters ?prefix ~syntax t
-  | Resolved t ->
-    (match
-       Trace.to_option @@ decompile_type ?escape_html_characters ?prefix ~syntax t
-     with
-    | None -> unresolved
-    | Some t -> t)
-  | Unresolved -> unresolved
+  | Resolved t -> decompile_type ~raise ?escape_html_characters ?prefix ~syntax t
+  | Unresolved -> Option.value ~default:empty prefix ^/^ !^"unresolved"

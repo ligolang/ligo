@@ -183,10 +183,10 @@ let return_result_lwt ~cli_analytics ~skip_analytics
   Analytics.propose_term_acceptation ~skip_analytics;
   let () =
     try
-      let result = Lwt_main.run @@ Trace.to_stdlib_result_lwt f in
+      let result = Lwt_main.run @@ Trace.to_stdlib_result_lwt ~fast_fail:Fast_fail f in
       let value, analytics =
         match result with
-        | Ok ((v, analytics), _w) -> Ok v, analytics
+        | Ok ((v, analytics), (), _w) -> Ok v, analytics
         | Error (e, _w) -> Error e, []
       in
       let format = Display.bind_format value_format Main_errors.Formatter.error_format in

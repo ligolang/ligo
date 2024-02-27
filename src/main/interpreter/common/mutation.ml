@@ -16,10 +16,11 @@ let get_syntax ~raise syntax loc =
     let file = r#file in
     let syntax =
       Simple_utils.Trace.to_stdlib_result
+        ~fast_fail:Fast_fail
         (Syntax.of_string_opt (Syntax_types.Syntax_name "auto") (Some file))
     in
     (match syntax with
-    | Ok (r, _) -> r
+    | Ok (r, (), _) -> r
     | Error _ -> of_syntax ())
 
 

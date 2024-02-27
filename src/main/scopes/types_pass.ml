@@ -712,8 +712,10 @@ module Typing_env = struct
       we use {!collect_warns_and_errs} *)
   let collect_warns_and_errs
       ~(raise : (Main_errors.all, Main_warnings.all) Trace.raise)
-      tracer
-      (es, ws)
+      (tracer : 'err -> Main_errors.all)
+      (es : 'err list)
+      (ws : Main_warnings.all list)
+      : unit
     =
     List.iter ws ~f:raise.warning;
     List.iter es ~f:(fun e -> raise.log_error (tracer e))
@@ -887,11 +889,11 @@ module Typing_env = struct
       : Ast_typed.program * t
     =
     let typed_prg =
-      Simple_utils.Trace.to_stdlib_result
+      Simple_utils.Trace.to_stdlib_result ~fast_fail:No_fast_fail
       @@ Checking.type_program ~options ~env:stdlib_env prg
     in
     match typed_prg with
-    | Ok (({ pr_module; pr_sig } as prg), ws) ->
+    | Ok (({ pr_module; pr_sig } as prg), es, ws) ->
       (* [Checking.Type_var_name_tbl.name_of] also looks into this shared map
          before creating a fresh pretty name. So, first variables from
          the type may have names starting from the middle of the latin alphabet. *)
@@ -903,11 +905,12 @@ module Typing_env = struct
             @@ Of_Ast_typed.extract_binding_types bindings decl.wrap_content)
       in
       let () = List.iter ws ~f:raise.warning in
-      let es = collect_recovered_errors_from_module pr_module in
-      collect_warns_and_errs ~raise Main_errors.scopes_recovered_error (es, ws);
+      let es = List.map ~f:Checking.Errors.error_json es in
+      let es = es @ collect_recovered_errors_from_module pr_module in
+      collect_warns_and_errs ~raise Main_errors.scopes_recovered_error es ws;
       prg, bindings
-    | Error (e, ws) ->
-      collect_warns_and_errs ~raise Main_errors.checking_tracer ([ e ], ws);
+    | Error (es, ws) ->
+      collect_warns_and_errs ~raise Main_errors.checking_tracer es ws;
       (* For now, assume errors are recorded in the AST *)
       ( { pr_module = []; pr_sig = { sig_items = []; sig_sort = Ss_module } }
       , empty module_env )
@@ -945,10 +948,15 @@ module Typing_env = struct
       decls
     =
     ignore options;
-    match Simple_utils.Trace.to_stdlib_result @@ Self_ast_typed.all_program decls with
-    | Ok (_, ws) -> List.iter ws ~f:raise.warning
-    | Error (e, ws) ->
-      collect_warns_and_errs ~raise Main_errors.self_ast_typed_tracer ([ e ], ws)
+    let es, ws =
+      match
+        Simple_utils.Trace.to_stdlib_result ~fast_fail:No_fast_fail
+        @@ Self_ast_typed.all_program decls
+      with
+      | Ok (_prg, es, ws) -> es, ws
+      | Error (es, ws) -> es, ws
+    in
+    collect_warns_and_errs ~raise Main_errors.self_ast_typed_tracer es ws
 end
 
 (** [resolve] takes your [Ast_core.program] and gives you the typing information
