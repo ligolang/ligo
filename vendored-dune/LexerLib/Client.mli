@@ -11,9 +11,11 @@ module type S =
       Lexing.lexbuf ->
       (token * token State.t, message) Stdlib.result
 
-    val mk_string : Thread.t -> token
-    val mk_eof    : Region.t -> token
-    val callback  : lexer
+    val mk_verbatim : Thread.t -> token (* FOR FUTURE USE *)
+    val mk_string   : Thread.t -> token
+    val mk_eof      : Region.t -> token
+
+    val callback : lexer
 
     (* For JsLIGO only. The accumulator is the list of previous tokens
        in reverse order. The first argument is the comment-as-a-token. *)

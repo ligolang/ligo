@@ -209,8 +209,9 @@ module Make (Config : Config.S) (Client : Client.S) =
 
     module Client =
       struct
-        let mk_string = Client.mk_string
-        let mk_eof    = Client.mk_eof
+        let mk_verbatim = Client.mk_verbatim
+        let mk_string   = Client.mk_string
+        let mk_eof      = Client.mk_eof
 
         let callback state lexbuf =
           match Client.callback state lexbuf with
@@ -284,52 +285,78 @@ let natural  = digit | digit+ digit (* Linemarkers *)
 
 (* Comment delimiters *)
 
-let pascaligo_block_comment_opening  = "(*"
-let pascaligo_block_comment_closing  = "*)"
-let pascaligo_line_comment_opening   = "//"
+let pascaligo_block_comment_opening = "(*"
+let pascaligo_block_comment_closing = "*)"
+let pascaligo_line_comment_opening  = "//"
 
-let cameligo_block_comment_opening   = "(*"
-let cameligo_block_comment_closing   = "*)"
-let cameligo_line_comment_opening    = "//"
+let cameligo_block_comment_opening  = "(*"
+let cameligo_block_comment_closing  = "*)"
+let cameligo_line_comment_opening   = "//"
 
-let jsligo_block_comment_opening     = "/*"
-let jsligo_block_comment_closing     = "*/"
-let jsligo_line_comment_opening      = "//"
+let jsligo_block_comment_opening    = "/*"
+let jsligo_block_comment_closing    = "*/"
+let jsligo_line_comment_opening     = "//"
 
-let pyligo_block_comment_opening     = "/*"
-let pyligo_block_comment_closing     = "*/"
-let pyligo_line_comment_opening      = "##"
+let pyligo_block_comment_opening    = "/*"
+let pyligo_block_comment_closing    = "*/"
+let pyligo_line_comment_opening     = "##"
 
 let block_comment_opening =
-   pascaligo_block_comment_opening
-|   cameligo_block_comment_opening
-|     jsligo_block_comment_opening
-|     pyligo_block_comment_opening
+  pascaligo_block_comment_opening
+|  cameligo_block_comment_opening
+|    jsligo_block_comment_opening
+|    pyligo_block_comment_opening
 
 let block_comment_closing =
-   pascaligo_block_comment_closing
-|   cameligo_block_comment_closing
-|     jsligo_block_comment_closing
-|     pyligo_block_comment_closing
+  pascaligo_block_comment_closing
+|  cameligo_block_comment_closing
+|    jsligo_block_comment_closing
+|    pyligo_block_comment_closing
 
 let line_comment_opening =
-   pascaligo_line_comment_opening
-|   cameligo_line_comment_opening
-|     jsligo_line_comment_opening
-|     pyligo_line_comment_opening
+  pascaligo_line_comment_opening
+|  cameligo_line_comment_opening
+|    jsligo_line_comment_opening
+|    pyligo_line_comment_opening
 
 (* String delimiters *)
 
-let  pascaligo_string_delimiter = "\""
-let   cameligo_string_delimiter = "\""
-let     jsligo_string_delimiter = "\""
-let     pyligo_string_delimiter = "\""
+let pascaligo_string_delimiter = "\""
+let  cameligo_string_delimiter = "\""
+let    jsligo_string_delimiter = "\""
+let    pyligo_string_delimiter = "\""
 
 let string_delimiter =
-   pascaligo_string_delimiter
-|   cameligo_string_delimiter
-|     jsligo_string_delimiter
-|     pyligo_string_delimiter
+  pascaligo_string_delimiter
+|  cameligo_string_delimiter
+|    jsligo_string_delimiter
+|    pyligo_string_delimiter
+
+(* Verbatim string delimiters (FOR FUTURE USE) *)
+
+let pascaligo_verbatim_opening = "{|"
+let pascaligo_verbatim_closing = "|}"
+
+let cameligo_verbatim_opening  = "{|"
+let cameligo_verbatim_closing  = "|}"
+
+let jsligo_verbatim_opening    = "`"
+let jsligo_verbatim_closing    = "`"
+
+let pyligo_verbatim_opening    = "{|"
+let pyligo_verbatim_closing    = "|}"
+
+let verbatim_opening =
+  pascaligo_verbatim_opening
+| cameligo_verbatim_opening
+| jsligo_verbatim_opening
+| pyligo_verbatim_opening
+
+let verbatim_closing =
+  pascaligo_verbatim_closing
+| cameligo_verbatim_closing
+| jsligo_verbatim_closing
+| pyligo_verbatim_closing
 
 (* Preprocessing directives *)
 

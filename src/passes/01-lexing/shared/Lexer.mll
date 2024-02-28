@@ -86,7 +86,7 @@ module Make (Options : Options.S) (Token : Token.S) =
 
     (* TOKENS *)
 
-    (* Strings *)
+    (* Strings (not used, only exported for the lexer library) *)
 
     let mk_string thread =
       let start  = thread#opening#start in
@@ -96,21 +96,18 @@ module Make (Options : Options.S) (Token : Token.S) =
 
     (* Verbatim strings *)
 
-    let mk_verbatim (thread, state) =
+    let mk_verbatim thread =
       let start  = thread#opening#start in
-      let stop   = state#pos in
+      let stop   = thread#closing#stop in
       let region = Region.make ~start ~stop in
-      let lexeme = thread#to_string in
-      let token  = Token.mk_verbatim lexeme region
-      in token, state
+      Token.mk_verbatim (thread#to_string) region
 
     (* Bytes *)
 
     let mk_bytes bytes state buffer =
       let state, Region.{region; _} = state#sync buffer in
-      let norm  = Str.(global_replace (regexp "_") "" bytes) in
-      let token = Token.mk_bytes bytes norm region
-      in token, state
+      let norm  = Str.(global_replace (regexp "_") "" bytes)
+      in Token.mk_bytes bytes norm region, state
 
     (* Integers *)
 
@@ -120,8 +117,7 @@ module Make (Options : Options.S) (Token : Token.S) =
       let z = Z.of_string lexeme in
       if   Z.equal z Z.zero && String.(lexeme <> "0")
       then fail region Non_canonical_zero
-      else let token = Token.mk_int lexeme z region
-           in token, state
+      else Token.mk_int lexeme z region, state
 
     (* Natural numbers *)
 
@@ -287,7 +283,6 @@ let hex_digit = digit | ['A'-'F' 'a'-'f']
 let byte      = hex_digit hex_digit
 let byte_seq  = byte | byte (byte | '_')* byte
 let bytes     = "0x" (byte_seq? as bytes)
-let directive = '#' (blank* as space) (small+ as id) (* For #include *)
 let code_inj  = ("[%" as start) (key as lang)
 
 (* Symbols *)
@@ -306,11 +301,11 @@ let     pyligo_sym = "->" | "^"   | "**"  | "//" | "%"  | "@"  | "|" | "&"
                    | "*=" | "/="  | "//=" | "%=" | "@=" | "&=" | "|="
                    | "^=" | "<<=" | "**=" (* | ">>=" : See parser. *)
 let symbol =
-      common_sym
-|  pascaligo_sym
-|   cameligo_sym
-|     jsligo_sym
-|     pyligo_sym
+     common_sym
+| pascaligo_sym
+|  cameligo_sym
+|    jsligo_sym
+|    pyligo_sym
 
 (* RULES *)
 
@@ -323,8 +318,9 @@ rule scan state = parse
     let verb_open, verb_close = Token.verbatim_delimiters in
     if String.(lexeme = verb_open) then
       let state, Region.{region; _} = state#sync lexbuf in
-      let thread = Thread.make ~opening:region
-      in scan_verbatim verb_close thread state lexbuf |> mk_verbatim
+      let thread = Thread.make ~opening:region in
+      let thread, state = scan_verbatim verb_close thread state lexbuf
+      in mk_verbatim thread, state
     else mk_sym state lexbuf }
 
 | "[@" str_attr "]" { mk_str_attr key ?value state lexbuf }
@@ -407,8 +403,9 @@ and scan_verbatim verb_close thread state = parse
             scan_verbatim verb_close thread state lexbuf) }
 
 | "`" | "|}" as lexeme {
+    let state, Region.{region; _} = state#sync lexbuf in
     if String.(verb_close = lexeme) then
-      thread, fst (state#sync lexbuf)
+      thread#set_closing region, state
     else
       let state, _ = state#sync lexbuf
       and thread   = thread#push_string lexeme in

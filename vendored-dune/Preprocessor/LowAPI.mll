@@ -571,8 +571,7 @@ rule scan state = parse
     let state, quote = state#sync lexbuf in
     match Config.string with
       Some delimiter when String.(delimiter = quote.Region.value) ->
-        let state = in_string quote state lexbuf
-        in scan state lexbuf
+        scan (in_string quote state lexbuf) lexbuf
     | Some _ | None -> scan state lexbuf }
 
   (* Comments *)
@@ -584,8 +583,7 @@ rule scan state = parse
     match Config.block with
       Some block when String.(block#opening = lexeme) ->
         let region = Region.from_lexbuf lexbuf in
-        let state  = in_block block region state lexbuf
-        in scan state lexbuf
+        scan (in_block block region state lexbuf) lexbuf
     | Some _ | None -> scan state lexbuf }
 
 | line_comment_opening {
