@@ -14,11 +14,7 @@ let get_document_link_test file_path : unit =
   | Some links ->
     let links =
       List.map links ~f:(fun link ->
-          let target =
-            Option.map link.target ~f:(fun target ->
-                let target = String.chop_prefix_if_exists ~prefix:"file://" target in
-                string_path_to_relative target)
-          in
+          let target = Option.map link.target ~f:to_relative_uri in
           { link with target })
     in
     Format.printf "%a" (Fmt.Dump.list DocumentLink.pp) links
@@ -34,7 +30,7 @@ let%expect_test _ =
          "end": { "character": 25, "line": 2 },
          "start": { "character": 9, "line": 2 }
        },
-       "target": "../../../../../default/src/test/contracts/included.mligo"
+       "target": "file:///../../../../../default/src/test/contracts/included.mligo"
      }] |}]
 
 let%expect_test _ =
@@ -46,7 +42,7 @@ let%expect_test _ =
          "end": { "character": 26, "line": 2 },
          "start": { "character": 9, "line": 2 }
        },
-       "target": "../../../../../default/src/test/contracts/included.jsligo"
+       "target": "file:///../../../../../default/src/test/contracts/included.jsligo"
      }] |}]
 
 (* with #import *)
@@ -59,14 +55,14 @@ let%expect_test _ =
          "end": { "character": 17, "line": 0 },
          "start": { "character": 8, "line": 0 }
        },
-       "target": "../../../../../default/src/test/contracts/build/F.mligo"
+       "target": "file:///../../../../../default/src/test/contracts/build/F.mligo"
      };
      {
        "range": {
          "end": { "character": 17, "line": 1 },
          "start": { "character": 8, "line": 1 }
        },
-       "target": "../../../../../default/src/test/contracts/build/G.mligo"
+       "target": "file:///../../../../../default/src/test/contracts/build/G.mligo"
      }] |}]
 
 (* with #import *)
@@ -79,7 +75,7 @@ let%expect_test _ =
          "end": { "character": 18, "line": 0 },
          "start": { "character": 8, "line": 0 }
        },
-       "target": "../../../../../default/src/test/contracts/build/A.jsligo"
+       "target": "file:///../../../../../default/src/test/contracts/build/A.jsligo"
      }] |}]
 
 (* with #import *)
@@ -92,7 +88,7 @@ let%expect_test _ =
          "end": { "character": 43, "line": 0 },
          "start": { "character": 8, "line": 0 }
        },
-       "target": "../../../../../default/src/test/contracts/lsp/.ligo/source/i/ligo__s__bigarray__1.0.0__cf1c9d6c/lib/bigarray.mligo"
+       "target": "file:///../../../../../default/src/test/contracts/lsp/.ligo/source/i/ligo__s__bigarray__1.0.0__cf1c9d6c/lib/bigarray.mligo"
      }] |}]
 
 (* with #include *)
@@ -105,5 +101,5 @@ let%expect_test _ =
          "end": { "character": 44, "line": 0 },
          "start": { "character": 9, "line": 0 }
        },
-       "target": "../../../../../default/src/test/contracts/lsp/.ligo/source/i/ligo__s__bigarray__1.0.0__cf1c9d6c/lib/bigarray.mligo"
+       "target": "file:///../../../../../default/src/test/contracts/lsp/.ligo/source/i/ligo__s__bigarray__1.0.0__cf1c9d6c/lib/bigarray.mligo"
      }] |}]
