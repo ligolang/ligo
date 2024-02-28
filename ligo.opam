@@ -88,9 +88,9 @@ depends: [
   "ocamlformat-rpc" { = "0.21.0" }
   "ocaml-lsp-server" { >= "1.14.0" }
   # dependencies for ligo lsp (OCaml implementation)
-  "lsp" { = "1.14.2" }
-  "linol" { = "0.4" }
-  "linol-lwt" { = "0.4" }
+  "lsp" { >= "1.17" & < "1.18" }
+  "linol" { = "0.5" }
+  "linol-lwt" { = "0.5" }
   "aches-lwt"
   "fileutils"
   # Networking
@@ -101,6 +101,6 @@ build: [
 ]
 pin-depends: [
   [ "ocaml-recovery-parser.0.2.4" "git+https://github.com/serokell/ocaml-recovery-parser.git#0.2.4" ]
-  [ "linol.0.4" "git+https://github.com/c-cube/linol.git#bb92d7d73b721f8faf55b3518df5b4bc93250a4d" ]
-  [ "linol-lwt.0.4" "git+https://github.com/c-cube/linol.git#bb92d7d73b721f8faf55b3518df5b4bc93250a4d" ]
+  [ "linol.0.5" "git+https://github.com/c-cube/linol.git#7730eabf98f657059920369b41d43e657a231ed5" ]
+  [ "linol-lwt.0.5" "git+https://github.com/c-cube/linol.git#7730eabf98f657059920369b41d43e657a231ed5" ]
 ]

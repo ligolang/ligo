@@ -83,22 +83,8 @@ module DocumentLink = struct
   let eq = Caml.( = )
   let testable = Alcotest.testable pp eq
 
-  let path_to_target path =
-    let prefix =
-      (* Target of document link should be an URI, but the lsp library wrongly uses string type here,
-     so we're creating a string starting with "file:///"*)
-      if Sys.unix
-      then
-        "file://"
-        (* after adding the prefix to abs path "/home/..." we'll get "file:///home/..." *)
-      else "file:///"
-      (* after adding the prefix to "C:/users/..." we'll get "file:///C:/users/..." *)
-    in
-    prefix ^ Path.to_string_with_canonical_drive_letter path
-
-
   let create ~(target : Path.t) =
-    Lsp.Types.DocumentLink.create ~target:(path_to_target target)
+    Lsp.Types.DocumentLink.create ~target:(DocumentUri.of_path target)
 end
 
 module DocumentSymbol = struct

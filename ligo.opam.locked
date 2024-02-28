@@ -105,14 +105,14 @@ depends: [
   "json-data-encoding" {= "0.12.1"}
   "json-data-encoding-bson" {= "0.12.1"}
   "jsonm" {= "1.0.2"}
-  "jsonrpc" {= "1.14.2"}
+  "jsonrpc" {= "1.17.0"}
   "jst-config" {= "v0.15.1"}
   "lambda-term" {= "3.3.2"}
-  "linol" {= "0.4"}
-  "linol-lwt" {= "0.4"}
+  "linol" {= "0.5"}
+  "linol-lwt" {= "0.5"}
   "logs" {= "0.7.0"}
   "lru" {= "0.3.1"}
-  "lsp" {= "1.14.2"}
+  "lsp" {= "1.17.0"}
   "lwt" {= "5.7.0"}
   "lwt-canceler" {= "0.3"}
   "lwt_ppx" {= "2.1.0"}
@@ -254,6 +254,7 @@ depends: [
   "timezone" {= "v0.15.0"}
   "tls" {= "0.15.4"}
   "topkg" {= "1.0.7"}
+  "trace" {= "0.6"}
   "trie" {= "1.0.0"}
   "typerep" {= "v0.15.0"}
   "tyxml" {= "4.5.0"}
@@ -276,13 +277,13 @@ build: ["dune" "build" "-p" name "-j" jobs]
 dev-repo: "git+https://gitlab.com/ligolang/tezos.git"
 pin-depends: [
   [
-    "linol.0.4"
-    "git+https://github.com/c-cube/linol.git#bb92d7d73b721f8faf55b3518df5b4bc93250a4d"
-  ]
+  "linol.0.5"
+  "git+https://github.com/c-cube/linol.git#7730eabf98f657059920369b41d43e657a231ed5"
+]
   [
-    "linol-lwt.0.4"
-    "git+https://github.com/c-cube/linol.git#bb92d7d73b721f8faf55b3518df5b4bc93250a4d"
-  ]
+  "linol-lwt.0.5"
+  "git+https://github.com/c-cube/linol.git#7730eabf98f657059920369b41d43e657a231ed5"
+]
   [
     "ocaml-recovery-parser.0.2.4"
     "git+https://github.com/serokell/ocaml-recovery-parser.git#0.2.4"
