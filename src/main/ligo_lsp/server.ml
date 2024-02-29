@@ -459,8 +459,10 @@ class lsp_server (capability_mode : capability_mode) =
           IO.return ()
         | Client_notification.DidSaveTextDocument { textDocument = { uri; _ }; _ } ->
           let { diagnostics_pull_mode; _ } = config in
-          (match diagnostics_pull_mode with
-          | `OnSave ->
+          (match diagnostics_pull_mode, capability_mode with
+          | _, Only_semantic_tokens | `OnDocUpdate, _ | `OnDocumentLinkRequest, _ ->
+            IO.return ()
+          | `OnSave, _ ->
             let path = DocumentUri.to_path uri in
             let* () =
               new_notify_back#send_log_msg ~type_:MessageType.Log
@@ -476,8 +478,7 @@ class lsp_server (capability_mode : capability_mode) =
                    ~partialResultToken:None
                    ())
             in
-            self#run_handler new_notify_back @@ process_doc path
-          | `OnDocUpdate | `OnDocumentLinkRequest -> IO.return ())
+            self#run_handler new_notify_back @@ process_doc path)
         | notification -> super#on_notification ~notify_back ~server_request notification
 
     method! on_request
