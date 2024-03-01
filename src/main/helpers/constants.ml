@@ -6,6 +6,7 @@ let ligo_registry = "https://packages.ligolang.org"
 let esy = "esy"
 let windows = "Win32"
 let typedoc = "typedoc"
+let markdown_folder_to_html = "markdown-folder-to-html"
 
 let esy_add ~package_name ~cache_path ~ligo_registry =
   ( ""

@@ -3,6 +3,7 @@ type command = string * string array
 val esy : string
 val windows : string
 val typedoc : string
+val markdown_folder_to_html : string
 val ligo_install_path : string
 val ligo_rc_path : unit -> string
 val ligo_registry : string

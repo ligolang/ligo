@@ -131,41 +131,27 @@ let hover_string
   in
   let language = Some (Syntax.to_string syntax) in
   let doc_comment_hovers =
-    let comments =
-      Def.get_comments def
-      (* Contents of all comments that are attached to declaration.
-         For example, content of (* x *) is " x " *)
-    in
+    let comments = Def.get_comments def in
     let doc_comments =
       List.filter
-        ~f:(String.is_prefix ~prefix:"*")
+        ~f:(Ligo_docs.Comments.is_doc_comment ~output_syntax:syntax)
         (* Comments like [(** *)] in CameLIGO are considered as documentation comments *)
         comments
     in
-    let format_comment =
-      let source_syntax =
-        match Def.get_location def with
-        | File { path; _ } -> Path.get_syntax path
-        | StdLib _ -> Some CameLIGO (* Since Stdlib is written in CameLIGO *)
-        | Virtual _ -> None
-      in
-      (* we don't want to show "*" at hover, and for JsLIGO we strip "*" from every
-         string of a comment, to match the TypeDoc's behaviour *)
-      let strip_spaces_and_star =
-        String.strip ~drop:Char.is_whitespace
-        <@ String.chop_prefix_if_exists ~prefix:"*"
-        <@ String.strip ~drop:Char.is_whitespace
-      in
-      match source_syntax with
-      | Some CameLIGO | None -> strip_spaces_and_star
-      | Some JsLIGO ->
-        String.strip ~drop:Char.is_whitespace
-        <@ String.concat ~sep:"\n"
-        <@ List.map ~f:strip_spaces_and_star
-        <@ String.split_lines
+    let source_syntax =
+      Option.value ~default:syntax
+      @@
+      match Def.get_location def with
+      | File { path; _ } -> Path.get_syntax path
+      | StdLib _ -> Some CameLIGO (* Since Stdlib is written in CameLIGO *)
+      | Virtual _ -> None
     in
     List.map
-      ~f:(fun str -> MarkedString.{ language = None; value = format_comment str })
+      ~f:(fun str ->
+        MarkedString.
+          { language = None
+          ; value = Ligo_docs.Comments.format_doc_comment ~source_syntax str
+          })
       doc_comments
   in
   match def with

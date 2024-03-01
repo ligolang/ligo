@@ -17,7 +17,17 @@ let compile ~raise:_ =
 
 
 let reduction ~raise:_ = Iter.defaults
-let decompile ~raise:_ = Nothing
+
+let decompile ~raise:_ =
+  let pass_ty : _ ty_expr_ -> ty_expr = function
+    | { location = loc; wrap_content = T_var v } when not (Ty_variable.is_generated v) ->
+      (match String.chop_prefix ~prefix:"'" @@ Ty_variable.to_name_exn v with
+      | Some unquoted -> t_arg ~loc unquoted
+      | None -> make_t ~loc (T_var v))
+    | { location = loc; wrap_content } -> make_t ~loc wrap_content
+  in
+  Fold { idle_fold with ty_expr = pass_ty }
+
 
 open Unit_test_helpers.Ty_expr
 

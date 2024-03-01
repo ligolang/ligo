@@ -123,10 +123,12 @@ let ast_core (raw_options : Raw_options.t) source_file =
       core, [] )
 
 
-let ast_typed (raw_options : Raw_options.t) (type_doc : bool) source_file =
-  ( (if type_doc
-    then { Ast_typed.Formatter.program_format with pp = Type_doc.to_typescript }
-    else Ast_typed.Formatter.program_format)
+let ast_typed
+    (raw_options : Raw_options.t)
+    ?(custom_formatter : Ast_typed.program Simple_utils.Display.format option)
+    source_file
+  =
+  ( Option.value ~default:Ast_typed.Formatter.program_format custom_formatter
   , fun ~raise ->
       let options =
         (* TODO: options should be computed outside of the API *)

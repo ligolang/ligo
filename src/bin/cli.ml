@@ -108,6 +108,13 @@ let directory =
   Command.Param.(anon (name %: file_type))
 
 
+let output_directory =
+  let open Command.Param in
+  let doc = "FILENAME if used, writes the output files into specified dir" in
+  let spec = optional file_type in
+  flag ~doc ~aliases:[ "o" ] "--output-dir" spec
+
+
 let package_name =
   let name = "PACKAGE_NAME" in
   Command.Param.(anon (maybe (name %: string)))
@@ -710,12 +717,19 @@ let type_doc =
   flag ~doc name no_arg
 
 
+let mdx =
+  let open Command.Param in
+  let name = "--mdx" in
+  let doc = "[BETA] Generate documentation in mdx format." in
+  flag ~doc name no_arg
+
+
 let doc_args =
   let open Command.Param in
   let name = "--doc-args" in
   let doc =
     "ARGUMENTS Arguments that would be passed into documentation generating tool \
-     (typedoc for JsLIGO)"
+     (typedoc if --type-doc is enabled)"
   in
   let spec = optional_with_default "" string in
   flag ~doc name spec
@@ -2579,6 +2593,15 @@ let print_ast_typed =
       libraries
       ()
     =
+    let formatter =
+      if type_doc
+      then
+        Some
+          { Ast_typed.Formatter.program_format with
+            pp = Ligo_docs.Type_doc.to_typescript
+          }
+      else None
+    in
     let raw_options =
       Raw_options.make
         ~syntax
@@ -2606,7 +2629,7 @@ let print_ast_typed =
       ~display_format
       ~no_colour
       ~warning_as_error:raw_options.warning_as_error
-    @@ Api.Print.ast_typed raw_options type_doc source_file
+    @@ Api.Print.ast_typed raw_options ?custom_formatter:formatter source_file
   in
   let summary =
     "print the typed AST.\n\
@@ -3438,7 +3461,17 @@ let analytics =
 
 
 let doc =
-  let f syntax directory doc_args skip_analytics protocol_version () =
+  let f
+      directory
+      output_directory
+      doc_args
+      syntax
+      skip_analytics
+      protocol_version
+      type_doc
+      mdx
+      ()
+    =
     let raw_options = Raw_options.make ~syntax ~protocol_version () in
     let cli_analytics =
       Analytics.generate_cli_metrics_with_syntax_and_protocol
@@ -3447,15 +3480,28 @@ let doc =
         ()
     in
     return_with_custom_formatter ~skip_analytics ~cli_analytics ~return
-    @@ Api.Doc.doc raw_options directory doc_args
+    @@ Ligo_docs.Doc.doc ~mdx ~type_doc ?output_directory raw_options directory doc_args
   in
   let summary = "[BETA] Generate a documentation for your project" in
   let readme () =
-    "[BETA] Generate a documentation for your project. At this moment only JsLIGO is \
-     supported and it requires typedoc to be installed"
+    "[BETA] Generate a documentation for your project.\n\
+     By default, generates HTML using markdown-folder-to-html.\n\
+     Also you can generate mdx files using --mdx flag and use tools/ligo-mdx-to-html on \
+     the folder with generated files to get html files.\n\
+     Alternatively, you can simply generate the markdown files using the --markdown flag\n\
+     Also you can generate documentation for JsLIGO files using the TypeDoc tool by \
+     passing the --type-doc flag"
   in
   Command.basic ~summary ~readme
-  @@ (f <$> req_syntax <*> directory <*> doc_args <*> skip_analytics <*> protocol_version)
+  @@ (f
+     <$> directory
+     <*> output_directory
+     <*> doc_args
+     <*> syntax
+     <*> skip_analytics
+     <*> protocol_version
+     <*> type_doc
+     <*> mdx)
 
 
 let main =
