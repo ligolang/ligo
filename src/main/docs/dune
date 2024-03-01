@@ -1,0 +1,10 @@
+(library
+ (name ligo_docs)
+ (public_name ligo.ligo_docs)
+ (flags
+  (:standard -w +A-4-23-40-42-44-70))
+ (instrumentation
+  (backend bisect_ppx))
+ (libraries lsp_helpers simple-utils simple-utils-unix syntax crunch)
+ (preprocess
+  (pps ppx_let)))

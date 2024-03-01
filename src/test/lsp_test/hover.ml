@@ -96,8 +96,7 @@ let%expect_test "registry.jsligo" =
            "value": "map :\n  <src, dst>(_: (_: src) => dst) => (_: list<src>) => list<\n    dst\n  >",
            "language": "jsligo"
          },
-         "display-only-for-cameligo\n     The call `map f [a1; ...; an]` applies the function `f` to `a1`,\n    ..., `an` (from left to right), and builds the list\n    `[f a1; ...; f an]` with the results returned by `f`.",
-         "display-only-for-jsligo\n    The call `map(f, list([a1; ...; an]))` applies the function `f` to\n    `a1`, ..., `an` (from left to right), and builds the list\n    `list([f(a1); ...; f(an)])` with the results returned by `f`."
+         "The call `map(f, list([a1; ...; an]))` applies the function `f` to\n    `a1`, ..., `an` (from left to right), and builds the list\n    `list([f(a1); ...; f(an)])` with the results returned by `f`."
        ]
      };
      { "contents": [ { "value": "primes : list<int>", "language": "jsligo" } ] };
@@ -182,8 +181,7 @@ let%expect_test "hovers.mligo" =
            "value": "map : 'src 'dst.('src -> 'dst) -> 'src list -> 'dst list",
            "language": "cameligo"
          },
-         "display-only-for-cameligo\n     The call `map f [a1; ...; an]` applies the function `f` to `a1`,\n    ..., `an` (from left to right), and builds the list\n    `[f a1; ...; f an]` with the results returned by `f`.",
-         "display-only-for-jsligo\n    The call `map(f, list([a1; ...; an]))` applies the function `f` to\n    `a1`, ..., `an` (from left to right), and builds the list\n    `list([f(a1); ...; f(an)])` with the results returned by `f`."
+         "The call `map f [a1; ...; an]` applies the function `f` to `a1`,\n    ..., `an` (from left to right), and builds the list\n    `[f a1; ...; f an]` with the results returned by `f`."
        ]
      };
      {
@@ -221,8 +219,7 @@ let%expect_test "hovers.mligo" =
            "value": "create_contract :\n  'param\n  'storage.('param, 'storage) entrypoint ->\n  key_hash option ->\n  tez -> 'storage -> (operation * address)",
            "language": "cameligo"
          },
-         "display-only-for-cameligo\n    The call `create_contract c e a s` returns a contract creation\n    operation (origination) for the entrypoint `e` (as a function)\n    with optional delegate `d`, initial amount `a` and initial\n    storage `s`, together with the address of the created\n    contract. Note that the created contract cannot be called\n    immediately afterwards (that is, `get_contract_opt` on that\n    address would return `None`), as the origination must be\n    performed successfully first, for example by calling a proxy\n    contract or itself.",
-         "display-only-for-jsligo\n    The call `create_contract(c,e,a,s)` returns a contract creation\n    operation (origination) for the entrypoint `e` (as a function)\n    with optional delegate `d`, initial amount `a` and initial\n    storage `s`, together with the address of the created\n    contract. Note that the created contract cannot be called\n    immediately afterwards (that is, `get_contract_opt` on that\n    address would return `None()`), as the origination must be\n    performed successfully first, for example by calling a proxy\n    contract or itself."
+         "The call `create_contract c e a s` returns a contract creation\n    operation (origination) for the entrypoint `e` (as a function)\n    with optional delegate `d`, initial amount `a` and initial\n    storage `s`, together with the address of the created\n    contract. Note that the created contract cannot be called\n    immediately afterwards (that is, `get_contract_opt` on that\n    address would return `None`), as the origination must be\n    performed successfully first, for example by calling a proxy\n    contract or itself."
        ]
      };
      {

@@ -1,0 +1,27 @@
+{
+  "name": "ligo-mdx-to-html",
+  "type": "module",
+  "version": "1.0.0",
+  "description": "MDX to HTML converter for LIGO",
+  "main": "dist/convert.js",
+  "scripts": {
+    "install": "tsc",
+    "start": "tsc && node dist/convert.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "bin": {
+    "ligo-mdx-to-html": "dist/convert.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@types/node": "^20.10.5",
+    "@types/react-dom": "^18.2.18",
+    "jsx-runtime": "^1.2.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "safe-mdx": "^0.0.3",
+    "typescript": "^5.3.3"
+  }
+}

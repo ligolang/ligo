@@ -76,8 +76,9 @@ type all =
   | `Main_invalid_sender of string
   | `Main_invalid_source of string
   | `Main_invalid_timestamp of string
-  | `Main_typedoc_doesnt_exist
-  | `Main_typedoc_failed of string
+  | `Main_ligo_doc_cli_error of string
+  | `Main_external_doc_tool_doesnt_exist of string * [ `Npm ]
+  | `Main_external_doc_tool_failed of string * string
   | `Test_err_tracer of string * all
   | `Test_run_tracer of string * all
   | `Test_expect_tracer of Ast_core.expression * Ast_core.expression

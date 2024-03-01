@@ -295,12 +295,19 @@ let rec error_ppformat
          Error: %s@]"
         fn
         s
-    | `Main_typedoc_doesnt_exist ->
-      Format.fprintf
-        f
-        "Typedoc does not exist. You can install it by running \"npm install -g typedoc\""
-    | `Main_typedoc_failed err ->
-      Format.fprintf f "@[<hv>Typedoc failed with the next error:@.%s @]" err
+    | `Main_ligo_doc_cli_error s ->
+      Format.fprintf f "@[<hv>ligo doc: bad CLI call\nError: %s@]" s
+    | `Main_external_doc_tool_doesnt_exist (tool, installation_method) ->
+      (match installation_method with
+      | `Npm ->
+        Format.fprintf
+          f
+          "@[<hv>%s is not in PATH or in working directory. @.Hint: You can install it \
+           by running \"npm install -g %s\"@]"
+          tool
+          tool)
+    | `Main_external_doc_tool_failed (tool, err) ->
+      Format.fprintf f "@[<hv>%s failed with the next error:@.%s @]" tool err
     | `Unparsing_michelson_tracer errs ->
       let errs =
         List.map
@@ -744,11 +751,16 @@ let rec error_json : Types.all -> Simple_utils.Error.t list =
   | `Main_entrypoint_not_found ->
     let content = make_content ~message:"Missing entrypoint" () in
     [ make ~stage:"top-level glue" ~content ]
-  | `Main_typedoc_doesnt_exist ->
-    let content = make_content ~message:"Typedoc does not exist" () in
+  | `Main_ligo_doc_cli_error s ->
+    let content =
+      make_content ~message:(Format.asprintf "ligo doc: CLI error: %s" s) ()
+    in
     [ make ~stage:"doc" ~content ]
-  | `Main_typedoc_failed _ ->
-    let content = make_content ~message:"Typedoc failure" () in
+  | `Main_external_doc_tool_doesnt_exist (tool, _installation_method) ->
+    let content = make_content ~message:(Format.asprintf "%s does not exist" tool) () in
+    [ make ~stage:"doc" ~content ]
+  | `Main_external_doc_tool_failed (tool, _err) ->
+    let content = make_content ~message:(Format.asprintf "%s failed" tool) () in
     [ make ~stage:"doc" ~content ]
   | `Preproc_tracer e -> [ Preprocessing.Errors.error_json e ]
   | `Parser_tracer e -> [ Parsing.Errors.error_json e ]

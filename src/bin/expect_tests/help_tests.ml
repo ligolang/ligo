@@ -569,16 +569,31 @@ let%expect_test _ =
     {|
     [BETA] Generate a documentation for your project
 
-      ligo doc SYNTAX DIRECTORY
+      ligo doc DIRECTORY
 
-    [BETA] Generate a documentation for your project. At this moment only JsLIGO is supported and it requires typedoc to be installed
+    [BETA] Generate a documentation for your project.
+    By default, generates HTML using markdown-folder-to-html.
+    Also you can generate mdx files using --mdx flag and use tools/ligo-mdx-to-html on the folder with generated files to get html files.
+    Alternatively, you can simply generate the markdown files using the --markdown flag
+    Also you can generate documentation for JsLIGO files using the TypeDoc tool by passing the --type-doc flag
 
     === flags ===
 
       [--doc-args ARGUMENTS]     . Arguments that would be passed into documentation
-                                   generating tool (typedoc for JsLIGO)
+                                   generating tool (typedoc if --type-doc is
+                                   enabled)
+      [--mdx]                    . [BETA] Generate documentation in mdx format.
+      [--output-dir FILENAME], -o
+                                 . if used, writes the output files into specified
+                                   dir
       [--skip-analytics]         . Avoid ligo analytics publication. Configurable
                                    with environment variable LIGO_SKIP_ANALYTICS too
+      [--syntax SYNTAX], -s      . the syntax that will be used. Currently supported
+                                   syntaxes are "cameligo" and "jsligo". By default,
+                                   the syntax is guessed from the extension (.mligo
+                                   and .jsligo respectively).
+      [--type-doc]               . Translate JsLIGO program into TypeScript for
+                                   generating documentation.
       [-p PROTOCOL], --protocol  . choose protocol's types/values pre-loaded into
                                    the LIGO environment (oxford2). By default, the
                                    current protocol (oxford2) will be used

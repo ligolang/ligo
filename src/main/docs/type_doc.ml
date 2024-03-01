@@ -81,23 +81,6 @@ let type_expr_doc
     attach_doc doc_opt @@ unwords [ export public; !^"type"; !^name; params; equals; typ ])
 
 
-let unmangle (str : string) : string option =
-  let open Option.Let_syntax in
-  let%bind str = String.chop_prefix str ~prefix:"Mangled_module_" in
-  let open Str in
-  str
-  |> global_replace (regexp_string "_p_") "."
-  |> global_replace (regexp_string "_c_") ":"
-  |> global_replace (regexp_string "_b_") "\\"
-  |> global_replace (regexp_string "_s_") "/"
-  |> global_replace (regexp_string "_a_") "@"
-  |> global_replace (regexp_string "_d_") "-"
-  |> global_replace (regexp_string "_l_") "("
-  |> global_replace (regexp_string "_r_") ")"
-  |> global_replace (regexp_string "_u_") "_"
-  |> return
-
-
 let to_typescript_path (path : string) : string option =
   let open Option.Let_syntax in
   let absolute_path = FilePath.make_absolute (Caml.Sys.getcwd ()) path in
@@ -127,14 +110,14 @@ let rec decl_to_typescript (decl : Ast_typed.decl) : document =
   | D_type
       { type_binder
       ; type_expr
-      ; type_attr = { public; hidden; leading_comments; deprecated }
+      ; type_attr = { public; hidden; leading_comments; deprecated = _ }
       }
     when not hidden ->
     type_expr_doc public (comments_to_doc leading_comments) type_binder type_expr
   | D_module
       { module_binder
       ; module_ = { module_content; _ }
-      ; module_attr = { public; hidden; leading_comments; deprecated }
+      ; module_attr = { public; hidden; leading_comments; deprecated = _ }
       ; _
       }
     when (not hidden) && not (Module_var.is_generated module_binder) ->
@@ -144,7 +127,7 @@ let rec decl_to_typescript (decl : Ast_typed.decl) : document =
       let import_line mod_path =
         unwords [ export public; !^"import"; !^name; equals; mod_path ]
       in
-      match unmangle @@ Module_var.to_name_exn var, vars with
+      match Docs_utils.unmangle @@ Module_var.to_name_exn var, vars with
       | Some rel_path, [] ->
         Option.value
           ~default:empty

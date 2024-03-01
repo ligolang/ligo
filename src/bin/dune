@@ -25,7 +25,8 @@
   lwt.unix
   base64
   prompt
-  ligo_api)
+  ligo_api
+  ligo_docs)
  (modules forgot_password user cli version))
 
 (library
