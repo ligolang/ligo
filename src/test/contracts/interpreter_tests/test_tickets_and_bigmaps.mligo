@@ -18,7 +18,8 @@ module C = struct
     let owner = (Tezos.get_sender()) in
     let (owned_tickets_opt, tickets) =
       Big_map.get_and_update owner (None : unit ticket option) tickets in
-    let new_ticket = Option.unopt (Tezos.create_ticket unit 1n) in
+    let new_ticket =
+      Option.value_with_error "option is None" (Tezos.create_ticket unit 1n) in
     let join_tickets =
       match owned_tickets_opt with
         None -> new_ticket
@@ -36,7 +37,7 @@ module C = struct
     buy_ticket(store)
 end
 
-let test_one = 
+let test_one =
   let () = Test.reset_state 2n ([] : tez list) in
   let sender_ = Test.nth_bootstrap_account 1 in
   let () = Test.set_source sender_ in

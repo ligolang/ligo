@@ -100,6 +100,23 @@ let%expect_test _ =
   :
   Warning: variable cannot be used more than once.
 
+  File "../../test/contracts/duplicate_ticket_local_module.mligo", line 8, characters 17-29:
+    7 |   module B = struct
+    8 |     let ticket = Option.unopt (Tezos.create_ticket 10n 10n)
+                         ^^^^^^^^^^^^
+    9 |
+  :
+  Warning: deprecated value.
+  Use `Option.value_with_error` instead.
+
+  File "../../test/contracts/duplicate_ticket_local_module.mligo", line 13, characters 6-18:
+   12 |   end in
+   13 |   [], Option.unopt (Tezos.join_tickets (fst B.y, snd B.y))
+              ^^^^^^^^^^^^
+  :
+  Warning: deprecated value.
+  Use `Option.value_with_error` instead.
+
   Error(s) occurred while type checking the contract:
   Ill typed contract:
     01: { parameter unit ;

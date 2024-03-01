@@ -93,9 +93,11 @@ let%expect_test "registry.jsligo" =
      {
        "contents": [
          {
-           "value": "map : <a, b>(_: (_: a) => b) => (_: list<a>) => list<b>",
+           "value": "map :\n  <src, dst>(_: (_: src) => dst) => (_: list<src>) => list<\n    dst\n  >",
            "language": "jsligo"
-         }
+         },
+         "display-only-for-cameligo\n     The call `map f [a1; ...; an]` applies the function `f` to `a1`,\n    ..., `an` (from left to right), and builds the list\n    `[f a1; ...; f an]` with the results returned by `f`.",
+         "display-only-for-jsligo\n    The call `map(f, list([a1; ...; an]))` applies the function `f` to\n    `a1`, ..., `an` (from left to right), and builds the list\n    `list([f(a1); ...; f(an)])` with the results returned by `f`."
        ]
      };
      { "contents": [ { "value": "primes : list<int>", "language": "jsligo" } ] };
@@ -177,9 +179,11 @@ let%expect_test "hovers.mligo" =
      {
        "contents": [
          {
-           "value": "map : 'a 'b.('a -> 'b) -> 'a list -> 'b list",
+           "value": "map : 'src 'dst.('src -> 'dst) -> 'src list -> 'dst list",
            "language": "cameligo"
-         }
+         },
+         "display-only-for-cameligo\n     The call `map f [a1; ...; an]` applies the function `f` to `a1`,\n    ..., `an` (from left to right), and builds the list\n    `[f a1; ...; f an]` with the results returned by `f`.",
+         "display-only-for-jsligo\n    The call `map(f, list([a1; ...; an]))` applies the function `f` to\n    `a1`, ..., `an` (from left to right), and builds the list\n    `list([f(a1); ...; f(an)])` with the results returned by `f`."
        ]
      };
      {
@@ -214,9 +218,11 @@ let%expect_test "hovers.mligo" =
      {
        "contents": [
          {
-           "value": "create_contract :\n  'p\n  's.('p -> 's -> (operation list * 's)) ->\n  key_hash option -> tez -> 's -> (operation * address)",
+           "value": "create_contract :\n  'param\n  'storage.('param, 'storage) entrypoint ->\n  key_hash option ->\n  tez -> 'storage -> (operation * address)",
            "language": "cameligo"
-         }
+         },
+         "display-only-for-cameligo\n    The call `create_contract c e a s` returns a contract creation\n    operation (origination) for the entrypoint `e` (as a function)\n    with optional delegate `d`, initial amount `a` and initial\n    storage `s`, together with the address of the created\n    contract. Note that the created contract cannot be called\n    immediately afterwards (that is, `get_contract_opt` on that\n    address would return `None`), as the origination must be\n    performed successfully first, for example by calling a proxy\n    contract or itself.",
+         "display-only-for-jsligo\n    The call `create_contract(c,e,a,s)` returns a contract creation\n    operation (origination) for the entrypoint `e` (as a function)\n    with optional delegate `d`, initial amount `a` and initial\n    storage `s`, together with the address of the created\n    contract. Note that the created contract cannot be called\n    immediately afterwards (that is, `get_contract_opt` on that\n    address would return `None()`), as the origination must be\n    performed successfully first, for example by calling a proxy\n    contract or itself."
        ]
      };
      {
@@ -401,9 +407,10 @@ let%expect_test "hover_module.mligo" =
      {
        "contents": [
          {
-           "value": "module Bytes : sig\n  val concats : bytes list -> bytes\n\n  val pack : 'a.'a -> bytes\n\n  val unpack : 'a.bytes -> 'a option\n\n  val length : bytes -> nat\n\n  val concat : bytes -> bytes -> bytes\n\n  val sub : nat -> nat -> bytes -> bytes\n  end",
+           "value": "module Bytes : sig\n  val length : bytes -> nat\n\n  val size : bytes -> nat\n\n  val concat : bytes -> bytes -> bytes\n\n  val concats : bytes list -> bytes\n\n  val sub : nat -> nat -> bytes -> bytes\n\n  val slice : nat -> nat -> bytes -> bytes\n\n  val pack : 'a.'a -> bytes\n\n  val unpack : 'a.bytes -> 'a option\n  end",
            "language": "cameligo"
-         }
+         },
+         "Sequences of bytes\n\n    Bytes are used for serializing data, in order to check signatures\n    and compute hashes on them. They can also be used to read untyped\n    data from outside of the contract."
        ]
      };
      {
@@ -614,9 +621,10 @@ let%expect_test "hover_module.jsligo" =
      {
        "contents": [
          {
-           "value": "namespace Bytes implements {\n  const concats: (_: list<bytes>) => bytes;\n  const pack: <a>(_: a) => bytes;\n  const unpack: <a>(_: bytes) => option<a>;\n  const length: (_: bytes) => nat;\n  const concat: (_: bytes) => (_: bytes) => bytes;\n  const sub: (_: nat) => (_: nat) => (_: bytes) => bytes\n}",
+           "value": "namespace Bytes implements {\n  const length: (_: bytes) => nat;\n  const size: (_: bytes) => nat;\n  const concat: (_: bytes) => (_: bytes) => bytes;\n  const concats: (_: list<bytes>) => bytes;\n  const sub: (_: nat) => (_: nat) => (_: bytes) => bytes;\n  const slice: (_: nat) => (_: nat) => (_: bytes) => bytes;\n  const pack: <a>(_: a) => bytes;\n  const unpack: <a>(_: bytes) => option<a>\n}",
            "language": "jsligo"
-         }
+         },
+         "Sequences of bytes\n\n    Bytes are used for serializing data, in order to check signatures\n    and compute hashes on them. They can also be used to read untyped\n    data from outside of the contract."
        ]
      };
      {
@@ -1506,7 +1514,7 @@ let%expect_test "Polymorphic types (CameLIGO)" =
      { "contents": [ { "value": "opt : int option", "language": "cameligo" } ] };
      {
        "contents": [
-         { "value": "big_map : (int, nat) big_map", "language": "cameligo" }
+         { "value": "big_map : (int, nat) t", "language": "cameligo" }
        ]
      };
      { "contents": [ { "value": "x : string M.t", "language": "cameligo" } ] };
@@ -1615,9 +1623,7 @@ let%expect_test "Polymorphic types (JsLIGO)" =
      }; { "contents": [ { "value": "lst : list<int>", "language": "jsligo" } ] };
      { "contents": [ { "value": "opt : option<int>", "language": "jsligo" } ] };
      {
-       "contents": [
-         { "value": "big_map : big_map<int, nat>", "language": "jsligo" }
-       ]
+       "contents": [ { "value": "big_map : t<int, nat>", "language": "jsligo" } ]
      }; { "contents": [ { "value": "x : M.t<string>", "language": "jsligo" } ] };
      {
        "contents": [ { "value": "foo : Common.foo<int>", "language": "jsligo" } ]
@@ -1637,7 +1643,5 @@ let%expect_test "Polymorphic types (JsLIGO)" =
      };
      { "contents": [ { "value": "type t = list<int>", "language": "jsligo" } ] };
      {
-       "contents": [
-         { "value": "f3 : (x: t) => list<int>", "language": "jsligo" }
-       ]
+       "contents": [ { "value": "f3 : (x: t) => t<int>", "language": "jsligo" } ]
      }] |}]

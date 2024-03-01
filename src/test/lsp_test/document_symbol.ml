@@ -21,7 +21,7 @@ let%expect_test "Simple document symbols" =
   [%expect
     {|
     [{
-       "detail": "<p, s>(_: (_: p) => (_: s) => [list<operation>, s]) => (\n  _: option<key_hash>\n) => (_: tez) => (_: s) => [operation, address]",
+       "detail": "<param, storage>(_: entrypoint<param, storage>) => (\n  _: option<key_hash>\n) => (_: tez) => (_: storage) => [operation, address]",
        "kind": 13,
        "name": "z",
        "range": {

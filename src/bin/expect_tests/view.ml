@@ -121,6 +121,51 @@ let%expect_test _ =
   run_ligo_good [ "run"; "test"; contract "views_using_view.test.mligo" ];
   [%expect
     {|
+    File "../../test/contracts/views_using_view.test.mligo", line 14, characters 42-54:
+     13 |     = [], (match p with
+     14 |             Basic (v,a)       -> Integer (Option.unopt (Tezos.call_view "basic" a v))
+                                                    ^^^^^^^^^^^^
+     15 |           | Get_storage v     -> Integer (Option.unopt (Tezos.call_view "get_storage" () v))
+    :
+    Warning: deprecated value.
+    Use `Option.value_with_error` instead.
+
+    File "../../test/contracts/views_using_view.test.mligo", line 15, characters 42-54:
+     14 |             Basic (v,a)       -> Integer (Option.unopt (Tezos.call_view "basic" a v))
+     15 |           | Get_storage v     -> Integer (Option.unopt (Tezos.call_view "get_storage" () v))
+                                                    ^^^^^^^^^^^^
+     16 |           | Not_funny v       -> Integer (Option.unopt (Tezos.call_view "not_funny" () v) )
+    :
+    Warning: deprecated value.
+    Use `Option.value_with_error` instead.
+
+    File "../../test/contracts/views_using_view.test.mligo", line 16, characters 42-54:
+     15 |           | Get_storage v     -> Integer (Option.unopt (Tezos.call_view "get_storage" () v))
+     16 |           | Not_funny v       -> Integer (Option.unopt (Tezos.call_view "not_funny" () v) )
+                                                    ^^^^^^^^^^^^
+     17 |           | Get_address v     -> Address (Option.unopt (Tezos.call_view "get_address" () v))
+    :
+    Warning: deprecated value.
+    Use `Option.value_with_error` instead.
+
+    File "../../test/contracts/views_using_view.test.mligo", line 17, characters 42-54:
+     16 |           | Not_funny v       -> Integer (Option.unopt (Tezos.call_view "not_funny" () v) )
+     17 |           | Get_address v     -> Address (Option.unopt (Tezos.call_view "get_address" () v))
+                                                    ^^^^^^^^^^^^
+     18 |           | Super_not_funny v -> Integer (Option.unopt (Tezos.call_view "super_not_funny" () v)))
+    :
+    Warning: deprecated value.
+    Use `Option.value_with_error` instead.
+
+    File "../../test/contracts/views_using_view.test.mligo", line 18, characters 42-54:
+     17 |           | Get_address v     -> Address (Option.unopt (Tezos.call_view "get_address" () v))
+     18 |           | Super_not_funny v -> Integer (Option.unopt (Tezos.call_view "super_not_funny" () v)))
+                                                    ^^^^^^^^^^^^
+     19 | end
+    :
+    Warning: deprecated value.
+    Use `Option.value_with_error` instead.
+
     File "../../test/contracts/views_using_view.test.mligo", line 24, characters 22-46:
      23 | let test_basic =
      24 |   let orig1 : orig1 = Test.originate_from_file "./views_using_view.jsligo" 999 1tez in

@@ -1,0 +1,7 @@
+
+author: rinderkn
+description: "\\nAdded a module Big_set (lazily accessed sets, based on Big_map)Documentation for CameLIGO and JsLIGO.Introduced local `type t` aliases in modules `Set`, `List`, `Map` etc.Renamed the type parameters for maximum readability.Added, when meaningful, functions `of_list` that can take a list expression that may not be a literal.Deprecated some functions and added equivalent ones with a better name (e.g, `List.head` and `List.head_opt`).  Added either a function `size` or `length` so all modules have both.Same for `sub` and `slice` whenever meaningful.Added functions `empty` in all modules.Simplified implementations, made them uniform (order of constructors in pattern maching, for example), tried to avoid relying on built-ins.The module Option was messy.\\n"
+merge_request: '3064'
+title: "Rewrite of the standard library"
+type: added
+            

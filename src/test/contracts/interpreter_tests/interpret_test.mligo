@@ -298,17 +298,17 @@ let test_list_concat =
   let zs = concat xs ys in
   assert (zs = [1n;2n;3n;4n;5n;6n])
 
-let test_list_head_opt =
-  assert (List.head_opt ([1n;2n;3n] : nat list) = (Some 1n : nat option) &&
-          List.head_opt ([2n;3n]    : nat list) = (Some 2n : nat option) &&
-          List.head_opt ([3n]       : nat list) = (Some 3n : nat option) &&
-          List.head_opt ([]         : nat list) = (None    : nat option))
+let test_list_head =
+  assert (List.head ([1n;2n;3n] : nat list) = (Some 1n : nat option) &&
+          List.head ([2n;3n]    : nat list) = (Some 2n : nat option) &&
+          List.head ([3n]       : nat list) = (Some 3n : nat option) &&
+          List.head ([]         : nat list) = (None    : nat option))
 
-let test_list_tail_opt =
-  assert (List.tail_opt ([1n;2n;3n] : nat list) = (Some [2n;3n]         : nat list option) &&
-          List.tail_opt ([2n;3n]    : nat list) = (Some [3n]            : nat list option) &&
-          List.tail_opt ([3n]       : nat list) = (Some ([] : nat list) : nat list option) &&
-          List.tail_opt ([]         : nat list) = (None                 : nat list option))
+let test_list_tail =
+  assert (List.tail ([1n;2n;3n] : nat list) = (Some [2n;3n]         : nat list option) &&
+          List.tail ([2n;3n]    : nat list) = (Some [3n]            : nat list option) &&
+          List.tail ([3n]       : nat list) = (Some ([] : nat list) : nat list option) &&
+          List.tail ([]         : nat list) = (None                 : nat list option))
 
 let reverse (xs : nat list) =
   List.fold_left (fun (ys,x : (nat list * nat)) -> x :: ys) ([] : nat list) xs
@@ -389,10 +389,10 @@ let test_none_with_error =
   assert_none_with_error (None : int option) "bar"
 
 let test_unopt =
-  assert (Option.unopt (Some 1 : int option) = 1)
+  assert (Option.value_with_error "option is None" (Some 1 : int option) = 1)
 
 let test_unopt_with_error =
-  assert (Option.unopt_with_error (Some 2 : int option) "bar" = 2)
+  assert (Option.value_with_error "bar" (Some 2 : int option) = 2)
 
 let test_sha256 =
   let hash5n = (0xf6c5c0ad2216920e105be5e940c4a71ead0741f9dbdb32bfab9570df57cc983a : bytes) in
@@ -455,7 +455,7 @@ let test_not =
   let f ((x, y) : nat * int) : int = x * not y in
   assert (Test.eval (f (313n , 2938818607801353443)) = Test.run f (313n , 2938818607801353443))
 
-let test_chain_id = 
+let test_chain_id =
   let chain_id = Test.eval ("NetXH12Aer3be93" : chain_id) in
   assert (chain_id = Test.eval (Tezos.get_chain_id ()))
 
@@ -471,7 +471,7 @@ let test_concats =
   ()
 
 let test_bytes_nat_int_conversion =
-  let b = 0x123456 in 
+  let b = 0x123456 in
   (* bytes => nat => bytes *)
   let () = assert (b = bytes(nat(b))) in
   (* bytes => int => bytes *)

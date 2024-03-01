@@ -66,6 +66,20 @@ let expression ~raise : expression -> expression =
         pairs
         ~f:(fun (k, v) m -> e_a_big_map_add ~loc k v m)
         ~init:(e_a_big_map_empty ~loc k_ty v_ty)
+    | C_BIG_SET_LITERAL ->
+      let elt =
+        trace_option ~raise (Errors.bad_single_arity cst expr) @@ List.to_singleton lst
+      in
+      let k_ty, unit_ty =
+        trace_option ~raise (Errors.bad_map_param_type cst expr)
+        @@ get_t_big_map expr.type_expression
+      in
+      let lst = list_expression ~raise elt in
+      let pairs = List.map ~f:(fun el -> el, e_a_unit ~loc ()) lst in
+      List.fold_right
+        pairs
+        ~f:(fun (k, v) m -> e_a_big_map_add ~loc k v m)
+        ~init:(e_a_big_map_empty ~loc k_ty unit_ty)
     | C_SET_LITERAL ->
       let elt =
         trace_option ~raise (Errors.bad_single_arity cst expr) @@ List.to_singleton lst

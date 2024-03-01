@@ -79,7 +79,6 @@ type kwd_with      = lexeme wrap
 
 type arrow    = lexeme wrap                         (* -> *)
 type ass      = lexeme wrap [@@deriving yojson_of]  (* := *)
-type append   = lexeme wrap                         (* @  *)
 type bool_or  = lexeme wrap                         (* || *)
 type bool_and = lexeme wrap [@@deriving yojson_of]  (* && *)
 type caret    = lexeme wrap [@@deriving yojson_of]  (* ^  *)

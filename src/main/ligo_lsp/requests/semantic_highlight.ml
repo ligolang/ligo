@@ -396,7 +396,6 @@ let semantic_tokens (cst : Dialect_cst.t) (range : Range.t) : int array =
         | S_kwd_while -> keyword node
         | S_kwd_with -> keyword node
         (* Symbols *)
-        | S_append -> operator node
         | S_arrow -> operator node
         | S_ass -> operator node
         | S_bool_and -> operator node
