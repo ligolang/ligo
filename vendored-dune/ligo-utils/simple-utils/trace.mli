@@ -71,6 +71,11 @@ type (_, _, 'error) fast_fail =
           raised on [Result.Error], the type of error raised on [Result.Ok] ([unit] since
           we fail on the first error), and the type of the error. *)
 
+(** Cast the result of {!Fast_fail} into one compatible with {!No_fast_fail}. *)
+val cast_fast_fail_result
+  :  ('value * unit * 'warning list, 'error * 'warning list) result
+  -> ('value * 'error list * 'warning list, 'error list * 'warning list) result
+
 (** Wrap the [try_with] in a stdlib [result = Ok 'value | Error 'error]. *)
 val to_stdlib_result
   :  fast_fail:('error_error, 'error_ok, 'error) fast_fail

@@ -93,10 +93,12 @@ let mk_decompiler_test { code; expected; syntax; name } =
   in *)
   let ast_unified =
     let result =
-      Trace.to_stdlib_result @@ Nanopasses.decompile_ty_expr @@ Lwt_main.run ast_core
+      Trace.to_stdlib_result ~fast_fail:Fast_fail
+      @@ Nanopasses.decompile_ty_expr
+      @@ Lwt_main.run ast_core
     in
     match result with
-    | Ok (s, _warnings) -> s ~syntax
+    | Ok (s, (), _warnings) -> s ~syntax
     | Error (errors, _warnings) ->
       let errors_formatter =
         Nanopasses.Errors.error_ppformat ~no_colour:false ~display_format:Human_readable

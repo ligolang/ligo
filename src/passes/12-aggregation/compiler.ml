@@ -150,14 +150,15 @@ module Data = struct
         List.find acc.env.mod_ ~f:(fun x -> Module_var.equal x.name module_variable)
       with
       | Some x -> x.in_
-      | _ ->
-        failwith
-          (Format.asprintf
-             "couldnt find %a in: \n %a "
-             Module_var.pp
-             module_variable
-             pp_env
-             env)
+      | None ->
+        (* XXX: Suppose the following contract:
+
+           [let x : int = Byte.length]
+
+           If [--typer-error-recovery] is enabled (on for the LSP), printing the env will
+           take a very long time and hang the LSP. Because of this, it's not recommended
+           to print the environment in production. *)
+        failwith (Format.asprintf "Couldn't find %a in env" Module_var.pp module_variable)
     in
     List.fold requested_path ~init:{ content = []; env } ~f
 

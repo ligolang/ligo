@@ -30,7 +30,9 @@ let rec encode ~raise (type_ : Ast_typed.type_expression) : Type.t =
   in
   match type_.type_content with
   | T_variable tvar -> return @@ T_variable tvar
-  | T_exists _ -> raise.error @@ cannot_encode_texists type_ type_.location
+  | T_exists tvar ->
+    let () = raise.log_error @@ cannot_encode_texists type_ type_.location in
+    return @@ T_exists tvar
   | T_arrow arr ->
     let arr = Arrow.map encode arr in
     return @@ T_arrow arr
@@ -136,7 +138,7 @@ let run_elab t ~raise ~options ~loc ~path ?env () =
   let (ctx, subst), elab = t ~raise ~options ~loc ~path (ctx, Substitution.empty) in
   (* Drop to get any remaining equations that relate to elaborated thing *)
   let _ctx, subst' = Context.drop_until ctx ~pos ~on_exit:Drop in
-  Elaboration.run elab ~path ~raise (Substitution.merge subst subst')
+  Elaboration.run elab ~path ~raise ~options (Substitution.merge subst subst')
 
 
 include Monad.Make3 (struct
@@ -214,8 +216,16 @@ let raise_opt opt ~error : _ t =
 
 let raise err : _ t = fun ~raise ~options:_ ~loc ~path:_ _state -> raise.error (err loc)
 
+let log_error err : _ t =
+ fun ~raise ~options:_ ~loc ~path:_ state -> state, raise.log_error (err loc)
+
+
 let raise_l ~loc err : _ t =
  fun ~raise ~options:_ ~loc:_ ~path:_ _state -> raise.error (err loc)
+
+
+let log_error_l ~loc err : _ t =
+ fun ~raise ~options:_ ~loc:_ ~path:_ state -> state, raise.log_error (err loc)
 
 
 let warn wrn : _ t =
@@ -467,7 +477,7 @@ let occurs_check ~tvar (type_ : Type.t) =
   let%bind loc = loc () in
   lift_raise
   @@ fun raise ->
-  let fail () = raise.error (occurs_check_failed tvar type_ loc) in
+  let fail () = raise.log_error (occurs_check_failed tvar type_ loc) in
   let rec loop (type_ : Type.t) =
     match type_.content with
     | T_variable _tvar' -> ()
@@ -595,7 +605,7 @@ let unify_layout type1 type2 ~fields (layout1 : Type.layout) (layout2 : Type.lay
   match layout1, layout2 with
   | L_concrete layout1, L_concrete layout2 when Layout.equal layout1 layout2 -> return ()
   | L_concrete _, L_concrete _ ->
-    raise (cannot_unify_local_diff_layout type1 type2 layout1 layout2)
+    log_error (cannot_unify_local_diff_layout type1 type2 layout1 layout2)
   | L_exists lvar1, L_exists lvar2 when Layout_var.equal lvar1 lvar2 -> return ()
   | L_exists lvar, layout | layout, L_exists lvar ->
     let%bind layout = lift_layout ~at:(C_lexists_var (lvar, fields)) ~fields layout in
@@ -615,7 +625,7 @@ let rec unify_aux (type1 : Type.t) (type2 : Type.t)
   in
   let fail () =
     let%bind no_color = Options.no_color () in
-    raise (cannot_unify_local no_color type1 type2)
+    log_error (cannot_unify_local no_color type1 type2)
   in
   match type1.content, type2.content with
   | T_singleton lit1, T_singleton lit2 when Literal_value.equal lit1 lit2 -> return ()
@@ -628,7 +638,7 @@ let rec unify_aux (type1 : Type.t) (type2 : Type.t)
     when String.(lang1 = lang2) && Literal_types.equal constr1 constr2 ->
     (match List.map2 params1 params2 ~f:unify_ with
     | Ok ts -> all_unit ts
-    | Unequal_lengths -> raise (assert false))
+    | Unequal_lengths -> log_error (assert false))
   | ( T_arrow { type1 = type11; type2 = type12; param_names = _ }
     , T_arrow { type1 = type21; type2 = type22; param_names = _ } ) ->
     let%bind () = unify_aux type11 type21 in
@@ -849,6 +859,37 @@ let lexists fields =
   return layout
 
 
+module Error_recovery = struct
+  open Let_syntax
+
+  let is_enabled ~raise:_ ~(options : Compiler_options.middle_end) ~loc:_ ~path:_ state =
+    state, options.typer_error_recovery
+
+
+  let try' ~error ~default =
+    if%bind is_enabled
+    then (
+      let%bind () = log_error error in
+      default)
+    else raise error
+
+
+  let try_opt ~error ~default = Option.value_map ~default:(try' ~error ~default) ~f:return
+
+  let type' ~raise ~options ~loc ~path state =
+    exists Type ~raise ~options ~loc ~path state
+
+
+  let try_type ~error = try' ~error ~default:type'
+
+  let row ~raise:_ ~options:_ ~loc:_ ~path:_ state =
+    state, { Type.Row.fields = Record.empty; layout = Type.Layout.default [] }
+
+
+  let sig' ~raise:_ ~options:_ ~loc:_ ~path:_ state =
+    state, { Context.Signature.items = []; sort = Ss_module }
+end
+
 let def bindings ~on_exit ~in_ =
   Context.add
     (List.map bindings ~f:(fun (var, mut_flag, type_, attr) ->
@@ -891,7 +932,7 @@ let def_sig_item sig_items ~on_exit ~in_ =
 
 let assert_ cond ~error =
   let open Let_syntax in
-  if cond then return () else raise error
+  if cond then return () else log_error error
 
 
 let hash_context () =
@@ -917,13 +958,41 @@ let create_type (constr : Type.constr) =
   return (constr ~loc ())
 
 
-let try_ (body : ('a, 'err, 'wrn) t) ~(with_ : 'err -> ('a, 'err, 'wrn) t)
+let try_ (body : ('a, 'err, 'wrn) t) ~(with_ : 'err list -> ('a, 'err, 'wrn) t)
     : ('a, 'err, 'wrn) t
   =
  fun ~raise ~options ~loc ~path state ->
-  Trace.try_with
-    (fun ~raise ~catch:_ -> body ~raise ~options ~loc ~path state)
-    (fun ~catch:_ err -> with_ err ~raise ~options ~loc ~path state)
+  let body = body ~options ~loc ~path state in
+  match
+    if options.typer_error_recovery
+    then Trace.to_stdlib_result ~fast_fail:No_fast_fail body
+    else Trace.cast_fast_fail_result @@ Trace.to_stdlib_result ~fast_fail:Fast_fail body
+  with
+  | Ok (result, _es, _ws) -> result
+  | Error (es, _ws) -> with_ es ~raise ~options ~loc ~path state
+
+
+let try_with_diagnostics
+    (body : ('a, 'err, 'wrn) t)
+    ~(with_ : ('a, 'err, 'wrn) t)
+    ~(diagnostics : 'err list -> 'wrn list -> (unit, 'err, 'wrn) t)
+    : ('a, 'err, 'wrn) t
+  =
+ fun ~raise ~options ~loc ~path state ->
+  let body = body ~options ~loc ~path state in
+  let (state, result), es, ws =
+    match
+      if options.typer_error_recovery
+      then Trace.to_stdlib_result ~fast_fail:No_fast_fail body
+      else Trace.cast_fast_fail_result @@ Trace.to_stdlib_result ~fast_fail:Fast_fail body
+    with
+    | Ok (result, es, ws) -> result, es, ws
+    | Error (es, ws) ->
+      let result = with_ ~raise ~options ~loc ~path state in
+      result, es, ws
+  in
+  let state, () = diagnostics es ws ~raise ~options ~loc ~path state in
+  state, result
 
 
 let try_all (ts : ('a, 'err, 'wrn) t list) : ('a, 'err, 'wrn) t =

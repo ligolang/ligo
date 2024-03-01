@@ -1,5 +1,4 @@
 module List = Simple_utils.List
-open Simple_utils.Trace
 module Errors = Errors
 module Type_var_name_tbl = Type.Type_var_name_tbl
 open Errors
@@ -10,13 +9,14 @@ module I = Ast_core
 module O = Ast_typed
 module C = Computation
 module E = Elaboration
+module Error_recovery = C.Error_recovery
 
 let untype_expression = Untyper.untype_expression
 let untype_type_expression = Untyper.untype_type_expression
 let untype_signature = Untyper.untype_signature
 
 let assert_type_expression_eq ~raise (loc : Location.t) (type1, type2) : unit =
-  trace_option ~raise (assert_equal type1 type2 loc)
+  Simple_utils.Trace.trace_option ~raise (assert_equal type1 type2 loc)
   @@ O.assert_type_expression_eq (type1, type2)
 
 
@@ -55,7 +55,7 @@ let warn_ambiguous_constructor_pat ~pat ~tvar ~arg_type ignored =
       `Checking_ambiguous_constructor_pat (pat, var_chosen, var_ignored, loc))
 
 
-let check_let_annomalies ~syntax binder type_expr =
+let check_let_anomalies ~options:_ ~syntax binder type_expr =
   Elaboration.check_anomalies
     ~loc:(Location.get_location binder)
     ~syntax
@@ -81,11 +81,21 @@ let rec evaluate_type ~default_layout (type_ : I.type_expression)
   match type_.type_content with
   | T_contract_parameter x ->
     let%bind { items = _; sort } =
-      Context.get_module_of_path_exn x ~error:(fun loc ->
-          unbound_module (List.Ne.to_list x) loc)
+      match%bind Context.get_module_of_path x with
+      | None ->
+        Error_recovery.try'
+          ~error:(fun loc -> unbound_module (List.Ne.to_list x) loc)
+          ~default:Error_recovery.sig'
+      | Some sig_ -> return sig_
     in
     let%bind parameter, _ =
-      raise_opt ~error:not_a_contract @@ Signature.get_contract_sort sort
+      Error_recovery.try_opt
+        ~error:not_a_contract
+        ~default:
+          (let%bind p = Error_recovery.type' in
+           let%bind s = Error_recovery.type' in
+           return (p, s))
+        (Signature.get_contract_sort sort)
     in
     lift parameter
   | T_arrow { type1; type2; param_names } ->
@@ -101,7 +111,11 @@ let rec evaluate_type ~default_layout (type_ : I.type_expression)
   | T_variable tvar ->
     (* Get the closest type or type variable with type var [tvar] *)
     (match%bind
-       Context.get_type_or_type_var_exn tvar ~error:(unbound_type_variable tvar)
+       let%bind t_opt = Context.get_type_or_type_var tvar in
+       Error_recovery.try_opt
+         t_opt
+         ~error:(unbound_type_variable tvar)
+         ~default:(C.map ~f:(fun t -> `Type t) Error_recovery.type')
      with
     | `Type type_ -> lift type_
     | `Type_var _kind -> const @@ T_variable tvar)
@@ -137,15 +151,24 @@ let rec evaluate_type ~default_layout (type_ : I.type_expression)
       (* Depending on whether there is a path or not, look up in current context or module sig. *)
       match module_path with
       | [] ->
-        Context.get_type_exn type_operator ~error:(unbound_type_variable type_operator)
+        let%bind t_opt = Context.get_type type_operator in
+        Error_recovery.try_opt
+          t_opt
+          ~default:Error_recovery.type'
+          ~error:(unbound_type_variable type_operator)
       | _ ->
         let%bind sig_ =
-          Context.get_module_of_path_exn
-            (List.Ne.of_list module_path)
-            ~error:(unbound_module module_path)
+          match%bind Context.get_module_of_path (List.Ne.of_list module_path) with
+          | None ->
+            Error_recovery.try'
+              ~error:(unbound_module module_path)
+              ~default:Error_recovery.sig'
+          | Some sig_ -> return sig_
         in
-        raise_opt ~error:(unbound_type_variable type_operator)
-        @@ Signature.get_type sig_ type_operator
+        Error_recovery.try_opt
+          (Signature.get_type sig_ type_operator)
+          ~default:Error_recovery.type'
+          ~error:(unbound_type_variable type_operator)
     in
     (* 2. Evaluate arguments *)
     let%bind arguments =
@@ -157,7 +180,7 @@ let rec evaluate_type ~default_layout (type_ : I.type_expression)
       |> List.map ~f:(fun arg ->
              match%bind Context.Well_formed.type_ arg with
              | Some (Type | Singleton) -> return ()
-             | _ -> raise (ill_formed_type arg))
+             | _ -> Error_recovery.try' ~default:(return ()) ~error:(ill_formed_type arg))
       |> all_unit
     in
     (* 4. Beta-reduce *)
@@ -167,7 +190,9 @@ let rec evaluate_type ~default_layout (type_ : I.type_expression)
       | Unequal_lengths ->
         let actual = List.length arguments in
         let expected = List.length vars in
-        raise (type_app_wrong_arity (Some type_operator) expected actual)
+        Error_recovery.try'
+          ~default:(return [])
+          ~error:(type_app_wrong_arity (Some type_operator) expected actual)
       | Ok vargs -> return vargs
     in
     let result =
@@ -177,11 +202,17 @@ let rec evaluate_type ~default_layout (type_ : I.type_expression)
     const ~orig_var:(module_path, type_operator) ~applied_types:arguments result.content
   | T_module_accessor { module_path; element } ->
     let%bind sig_ =
-      Context.get_module_of_path_exn
-        (List.Ne.of_list module_path)
-        ~error:(unbound_module module_path)
+      match%bind Context.get_module_of_path (List.Ne.of_list module_path) with
+      | None ->
+        Error_recovery.try'
+          ~error:(unbound_module module_path)
+          ~default:Error_recovery.sig'
+      | Some sig_ -> return sig_
     in
-    raise_opt ~error:(unbound_type_variable element) @@ Signature.get_type sig_ element
+    Error_recovery.try_opt
+      ~error:(unbound_type_variable element)
+      ~default:Error_recovery.type'
+      (Signature.get_type sig_ element)
   | T_singleton lit -> const @@ T_singleton lit
   | T_abstraction { ty_binder; kind; type_ } ->
     let%bind type_, () =
@@ -350,9 +381,12 @@ module With_default_layout = struct
       return sig_
     | S_path module_path ->
       let%bind sig_ =
-        Context.get_module_type_of_path_exn
-          module_path
-          ~error:(unbound_module_type module_path)
+        match%bind Context.get_module_type_of_path module_path with
+        | None ->
+          Error_recovery.try'
+            ~error:(unbound_module_type module_path)
+            ~default:Error_recovery.sig'
+        | Some sig_ -> return sig_
       in
       return sig_
 end
@@ -403,7 +437,7 @@ let rec check_expression (expr : I.expression) (type_ : Type.t)
   let open C in
   let open Let_syntax in
   let check expr type_ = check_expression expr type_ in
-  let infer expr = infer_expression expr in
+  let infer expr = try_infer_expression expr in
   let%bind () = hash_context () in
   set_loc expr.location
   @@
@@ -487,7 +521,10 @@ let rec check_expression (expr : I.expression) (type_ : Type.t)
   | E_update { struct_; path; update }, T_record row ->
     let%bind struct_ = check struct_ type_ in
     let%bind field_row_elem =
-      raise_opt ~error:(bad_record_access path) @@ Map.find row.fields path
+      Error_recovery.try_opt
+        ~error:(bad_record_access path)
+        ~default:Error_recovery.type'
+        (Map.find row.fields path)
     in
     let%bind update = check update field_row_elem in
     const
@@ -497,8 +534,10 @@ let rec check_expression (expr : I.expression) (type_ : Type.t)
         return @@ O.E_update { struct_; path; update })
   | E_constructor { constructor; element }, T_sum (row, _) ->
     let%bind constr_row_elem =
-      raise_opt ~error:(bad_constructor constructor type_)
-      @@ Map.find row.fields constructor
+      Error_recovery.try_opt
+        ~error:(bad_constructor constructor type_)
+        ~default:Error_recovery.type'
+        (Map.find row.fields constructor)
     in
     let%bind element = check element constr_row_elem in
     const
@@ -570,7 +609,7 @@ and infer_expression (expr : I.expression)
   let open C in
   let open Let_syntax in
   let check expr type_ = check_expression expr type_ in
-  let infer expr = infer_expression expr in
+  let infer expr = try_infer_expression expr in
   let%bind () = hash_context () in
   set_loc expr.location
   @@
@@ -591,14 +630,36 @@ and infer_expression (expr : I.expression)
           return @@ O.make_e ~loc content type_) )
   in
   let%bind syntax = Options.syntax () in
+  let const_error_recovery ?type_ errors =
+    let%bind () = all_unit @@ List.map ~f:log_error errors in
+    let%bind type_ =
+      match type_ with
+      | None -> Error_recovery.type'
+      | Some type_ -> return type_
+    in
+    const (E.return @@ O.E_error expr) type_
+  in
   match expr.expression_content with
   | E_literal lit -> infer_literal lit
   | E_constant { cons_name = const; arguments = args } -> infer_constant const args
   | E_variable var ->
     let%bind mut_flag, type_, _ =
-      Context.get_value_exn var ~error:(function
-          | `Not_found -> unbound_variable var
-          | `Mut_var_captured -> mut_var_captured var)
+      match%bind Context.get_value var with
+      | Ok ret -> return ret
+      | Error e ->
+        Error_recovery.try'
+          ~error:
+            (match e with
+            | `Not_found -> unbound_variable var
+            | `Mut_var_captured -> mut_var_captured var)
+          ~default:
+            (let mut_flag =
+               match syntax with
+               | None | Some CameLIGO -> Param.Immutable
+               | Some JsLIGO -> Param.Mutable
+             in
+             let%bind type_ = Error_recovery.type' in
+             return (mut_flag, type_, Attrs.Value.default))
     in
     const
       E.(
@@ -608,11 +669,21 @@ and infer_expression (expr : I.expression)
       type_
   | E_contract x ->
     let%bind { items = _; sort } =
-      Context.get_module_of_path_exn x ~error:(fun loc ->
-          unbound_module (List.Ne.to_list x) loc)
+      match%bind Context.get_module_of_path x with
+      | None ->
+        Error_recovery.try'
+          ~error:(fun loc -> unbound_module (List.Ne.to_list x) loc)
+          ~default:Error_recovery.sig'
+      | Some sig_ -> return sig_
     in
     let%bind parameter, storage =
-      raise_opt ~error:not_a_contract @@ Signature.get_contract_sort sort
+      Error_recovery.try_opt
+        ~error:not_a_contract
+        ~default:
+          (let%bind t1 = Error_recovery.type' in
+           let%bind t2 = Error_recovery.type' in
+           return (t1, t2))
+        (Signature.get_contract_sort sort)
     in
     let contract_ty = Type.t_contract_of parameter storage in
     const E.(return (O.E_contract x)) contract_ty
@@ -621,7 +692,7 @@ and infer_expression (expr : I.expression)
     let%bind lamb_type, lamb = infer lamb in
     let%bind ret_type, f, args =
       let%bind lamb_type = Context.tapply lamb_type in
-      infer_application lamb_type args
+      infer_application expr lamb_type args
     in
     const
       E.(
@@ -658,7 +729,7 @@ and infer_expression (expr : I.expression)
         let%bind let_binder = let_binder in
         let%bind rhs = rhs
         and let_result = let_result in
-        let%bind () = check_let_annomalies ~syntax let_binder rhs_type in
+        let%bind () = check_let_anomalies ~options ~syntax let_binder rhs_type in
         return (O.E_let_in { let_binder; rhs; let_result; attributes }))
       res_type
   | E_type_in { type_binder = tvar; rhs; let_result } ->
@@ -669,58 +740,52 @@ and infer_expression (expr : I.expression)
     let%bind let_result = lift let_result res_type in
     return (res_type, let_result)
   | E_raw_code { language = "michelson"; code } ->
-    let%bind code, result_type =
-      raise_opt ~error:not_annotated @@ I.get_e_ascription code.expression_content
-    in
-    let vals = I.get_e_applications code.expression_content in
-    let vals =
-      match vals with
-      | [] -> [ code ]
-      | vals -> vals
-    in
-    let code = List.hd_exn vals in
-    let args = List.tl_exn vals in
-    let%bind args =
-      List.fold_right
-        ~f:(fun expr result ->
-          let%bind list = result in
-          let%bind expr_type, expr = infer expr in
-          let list = (expr_type, expr) :: list in
-          return list)
-        ~init:(return [])
-        args
-    in
-    let%bind _, code = infer code in
-    let%bind loc = loc () in
-    let%bind result_type = With_default_layout.evaluate_type result_type in
-    let rec build_func_type args =
-      match args with
-      | [] -> result_type
-      | (arg_type, _) :: args -> Type.t_arrow ~loc arg_type (build_func_type args) ()
-    in
-    let func_type = build_func_type args in
-    const
-      E.(
-        let%bind code = code
-        and code_type = decode func_type
-        and args = all @@ List.map ~f:snd args in
-        let code = { code with type_expression = code_type } in
-        let code = O.e_a_applications ~loc code args in
-        return @@ O.E_raw_code { language = "michelson"; code })
-      result_type
+    (match I.get_e_ascription code.expression_content with
+    | None -> const_error_recovery [ not_annotated ]
+    | Some (code, result_type) ->
+      let vals = I.get_e_applications code.expression_content in
+      let code, args =
+        match vals with
+        | [] -> code, []
+        | code :: args -> code, args
+      in
+      let%bind args =
+        List.fold_right args ~init:(return []) ~f:(fun expr result ->
+            let%bind list = result in
+            let%bind expr_type, expr = infer expr in
+            let list = (expr_type, expr) :: list in
+            return list)
+      in
+      let%bind _, code = infer code in
+      let%bind loc = loc () in
+      let%bind result_type = With_default_layout.evaluate_type result_type in
+      let rec build_func_type = function
+        | [] -> result_type
+        | (arg_type, _) :: args -> Type.t_arrow ~loc arg_type (build_func_type args) ()
+      in
+      let func_type = build_func_type args in
+      const
+        E.(
+          let%bind code = code
+          and code_type = decode func_type
+          and args = all @@ List.map ~f:snd args in
+          let code = { code with type_expression = code_type } in
+          let code = O.e_a_applications ~loc code args in
+          return @@ O.E_raw_code { language = "michelson"; code })
+        result_type)
   | E_raw_code { language; code } ->
-    let%bind code, code_type =
-      raise_opt ~error:not_annotated @@ I.get_e_ascription code.expression_content
-    in
-    let%bind code_type = With_default_layout.evaluate_type code_type in
-    let%bind _, code = infer code in
-    const
-      E.(
-        let%bind code = code
-        and code_type = decode code_type in
-        return
-        @@ O.E_raw_code { language; code = { code with type_expression = code_type } })
-      code_type
+    (match I.get_e_ascription code.expression_content with
+    | None -> const_error_recovery [ not_annotated ]
+    | Some (code, code_type) ->
+      let%bind code_type = With_default_layout.evaluate_type code_type in
+      let%bind _, code = infer code in
+      const
+        E.(
+          let%bind code = code
+          and code_type = decode code_type in
+          return
+          @@ O.E_raw_code { language; code = { code with type_expression = code_type } })
+        code_type)
   | E_ascription { anno_expr; type_annotation } ->
     let%bind ascr = With_default_layout.evaluate_type type_annotation in
     let%bind expr = check anno_expr ascr in
@@ -729,9 +794,13 @@ and infer_expression (expr : I.expression)
   | E_recursive { fun_name; fun_type; lambda; force_lambdarec } ->
     let%bind fun_type = With_default_layout.evaluate_type fun_type in
     let%bind Arrow.{ type1 = arg_type; type2 = ret_type; param_names = _ } =
-      raise_opt
+      Error_recovery.try_opt
         ~error:(corner_case "Expected function type annotation for recursive function")
-      @@ Type.get_t_arrow fun_type
+        ~default:
+          (let%bind type1 = Error_recovery.type' in
+           let%bind type2 = Error_recovery.type' in
+           return Arrow.{ type1; type2; param_names = [] })
+        (Type.get_t_arrow fun_type)
     in
     let%bind lambda =
       def
@@ -767,10 +836,16 @@ and infer_expression (expr : I.expression)
     let%bind record_type, struct_ = infer struct_ in
     let%bind row =
       let%bind record_type = Context.tapply record_type in
-      raise_opt ~error:(expected_record record_type) @@ Type.get_t_record record_type
+      Error_recovery.try_opt
+        ~error:(expected_record record_type)
+        ~default:Error_recovery.row
+        (Type.get_t_record record_type)
     in
     let%bind field_row_elem =
-      raise_opt ~error:(bad_record_access field) @@ Map.find row.fields field
+      Error_recovery.try_opt
+        ~error:(bad_record_access field)
+        ~default:Error_recovery.type'
+        (Map.find row.fields field)
     in
     const
       E.(
@@ -781,10 +856,16 @@ and infer_expression (expr : I.expression)
     let%bind record_type, struct_ = infer struct_ in
     let%bind row =
       let%bind record_type = Context.tapply record_type in
-      raise_opt ~error:(expected_record record_type) @@ Type.get_t_record record_type
+      Error_recovery.try_opt
+        ~error:(expected_record record_type)
+        ~default:Error_recovery.row
+        (Type.get_t_record record_type)
     in
     let%bind field_row_elem =
-      raise_opt ~error:(bad_record_access path) @@ Map.find row.fields path
+      Error_recovery.try_opt
+        ~error:(bad_record_access path)
+        ~default:Error_recovery.type'
+        (Map.find row.fields path)
     in
     let%bind update = check update field_row_elem in
     const
@@ -793,13 +874,21 @@ and infer_expression (expr : I.expression)
         and update = update in
         return @@ O.E_update { struct_; path; update })
       record_type
-  | E_constructor { constructor = Label (label, _) as constructor; _ }
+  | E_constructor { constructor = Label (label, _) as constructor; element = _ }
     when String.(label = "M_right" || label = "M_left") ->
-    raise (michelson_or_no_annotation constructor)
+    let error = michelson_or_no_annotation constructor in
+    Error_recovery.try' ~error ~default:(const_error_recovery [])
   | E_constructor { constructor; element = arg } ->
     let%bind tvars, arg_type, sum_type =
       match%bind Context.get_sum constructor with
-      | [] -> raise (unbound_constructor constructor)
+      | [] ->
+        Error_recovery.try'
+          ~error:(unbound_constructor constructor)
+          ~default:
+            (let tvars = [] in
+             let%bind arg_type = Error_recovery.type' in
+             let%bind sum_type = Error_recovery.type' in
+             return (tvars, arg_type, sum_type))
       | (tvar, tvars, arg_type, sum_type) :: other ->
         let%bind () = warn_ambiguous_constructor_expr ~expr ~tvar ~arg_type other in
         return (tvars, arg_type, sum_type)
@@ -847,10 +936,20 @@ and infer_expression (expr : I.expression)
   | E_module_accessor { module_path; element } ->
     let module_path' = List.Ne.of_list module_path in
     let%bind sig_ =
-      Context.get_module_of_path_exn module_path' ~error:(unbound_module module_path)
+      match%bind Context.get_module_of_path module_path' with
+      | None ->
+        Error_recovery.try'
+          ~error:(unbound_module module_path)
+          ~default:Error_recovery.sig'
+      | Some sig_ -> return sig_
     in
     let%bind elt_type, _ =
-      raise_opt ~error:(unbound_variable element) @@ Signature.get_value sig_ element
+      Error_recovery.try_opt
+        ~error:(unbound_variable element)
+        ~default:
+          (let%bind elt_type = Error_recovery.type' in
+           return (elt_type, Attrs.Value.default))
+        (Signature.get_value sig_ element)
     in
     const E.(return @@ O.E_module_accessor { module_path; element }) elt_type
   | E_let_mut_in { let_binder; rhs; let_result; attributes } ->
@@ -869,16 +968,21 @@ and infer_expression (expr : I.expression)
         let%bind let_binder = let_binder in
         let%bind rhs = rhs
         and let_result = let_result in
-        let%bind () = check_let_annomalies ~syntax let_binder rhs_type in
+        let%bind () = check_let_anomalies ~options ~syntax let_binder rhs_type in
         return (O.E_let_mut_in { let_binder; rhs; let_result; attributes }))
       res_type
   | E_assign { binder; expression } ->
     let%bind type_ =
       let var = Binder.get_var binder in
       set_loc (Value_var.get_location var)
-      @@ Context.get_mut_exn var ~error:(function
-             | `Not_found -> unbound_mut_variable var
-             | `Mut_var_captured -> mut_var_captured var)
+      @@ match%bind Context.get_mut var with
+         | Ok ty -> return ty
+         | Error err ->
+           Error_recovery.try_type
+             ~error:
+               (match err with
+               | `Not_found -> unbound_mut_variable var
+               | `Mut_var_captured -> mut_var_captured var)
     in
     let%bind type_ = Context.tapply type_ in
     let%bind expression = check expression type_ in
@@ -919,8 +1023,13 @@ and infer_expression (expr : I.expression)
     let%bind type_, collection = infer collection in
     let%bind type_ = Context.tapply type_ in
     let%bind key_type, val_type =
-      raise_opt ~error:(mismatching_for_each_collection_type collection_type type_)
-      @@ Type.get_t_map type_
+      Error_recovery.try_opt
+        ~error:(mismatching_for_each_collection_type collection_type type_)
+        ~default:
+          (let%bind key_type = Error_recovery.type' in
+           let%bind val_type = Error_recovery.type' in
+           return (key_type, val_type))
+        (Type.get_t_map type_)
     in
     let%bind fe_body =
       def
@@ -937,27 +1046,36 @@ and infer_expression (expr : I.expression)
         return @@ O.E_for_each { fe_binder; collection; collection_type = Map; fe_body })
       t_unit
   | E_for_each { fe_binder = _, Some _; collection_type = List | Set; _ } ->
-    raise (mismatching_for_each_binder_arity 1 2)
+    let error = mismatching_for_each_binder_arity 1 2 in
+    Error_recovery.try' ~error ~default:(const_error_recovery [ error ])
   | E_for_each
       { fe_binder = (binder, None) as fe_binder; collection; collection_type; fe_body } ->
     let%bind t_unit = create_type Type.t_unit in
     let%bind type_, collection = infer collection in
     let%bind (binder_type : Type.t) =
-      let opt_value_exn opt =
-        raise_opt ~error:(mismatching_for_each_collection_type collection_type type_) opt
+      let opt_value default =
+        Error_recovery.try_opt
+          ~default
+          ~error:(mismatching_for_each_collection_type collection_type type_)
       in
       (* This is bad -- TODO: get rid of collection type (no-longer required) + use patterns *)
       let get_t_map type_ =
-        let%bind type1, type2 = opt_value_exn @@ Type.get_t_map type_ in
+        let%bind type1, type2 =
+          opt_value
+            (let%bind type1 = Error_recovery.type' in
+             let%bind type2 = Error_recovery.type' in
+             return (type1, type2))
+          @@ Type.get_t_map type_
+        in
         create_type (Type.t_tuple [ type1; type2 ])
       in
       match (collection_type : For_each_loop.collect_type) with
-      | Set -> opt_value_exn @@ Type.get_t_set type_
-      | List -> opt_value_exn @@ Type.get_t_list type_
+      | Set -> opt_value Error_recovery.type' @@ Type.get_t_set type_
+      | List -> opt_value Error_recovery.type' @@ Type.get_t_list type_
       | Map -> get_t_map type_
       | Any ->
         try_
-          (opt_value_exn
+          (opt_value Error_recovery.type'
           @@ Option.first_some (Type.get_t_set type_) (Type.get_t_list type_))
           ~with_:(fun _ -> get_t_map type_)
     in
@@ -984,6 +1102,46 @@ and infer_expression (expr : I.expression)
         and body = body in
         return @@ O.E_while { cond; body })
       t_unit
+
+
+and try_infer_expression (expr : I.expression) : (Type.t * O.expression E.t, _, _) C.t =
+  let open C in
+  let open Let_syntax in
+  if%bind Error_recovery.is_enabled
+  then
+    (* Most error-recovery cases should be handled by using the functions provided by
+       [Error_recovery]. However, in case we still reach [raise.error], we still have this
+       catch-all case to allow the recovery to continue. *)
+    try_with_diagnostics
+      (infer_expression expr)
+      ~with_:
+        (let%bind loc = loc () in
+         (* Use an arbitrary type for the erroneous expression *)
+         let%map ret_type =
+           match Ast_core.Combinators.get_e_ascription_opt expr with
+           | None -> Error_recovery.type'
+           | Some ascr -> With_default_layout.evaluate_type ascr.type_annotation
+         in
+         ( ret_type
+         , E.(
+             let%bind ret_type = decode ret_type in
+             return @@ O.make_e ~loc (E_error expr) ret_type) ))
+      ~diagnostics:(fun errors warnings ->
+        (* [try_] will swallow errors and warnings in case of success, since we
+           extensively use [log_error] for error-recovery. Hence, we still want to log all
+           of those that reached here, no matter if we had a success or failure. *)
+        let%bind () =
+          all_unit
+          @@ List.map errors ~f:(fun error ->
+                 lift_raise (fun raise -> raise.log_error error))
+        in
+        let%bind () =
+          all_unit
+          @@ List.map warnings ~f:(fun warning ->
+                 lift_raise (fun raise -> raise.warning warning))
+        in
+        return ())
+  else infer_expression expr
 
 
 and check_lambda
@@ -1073,7 +1231,7 @@ and infer_lambda ({ binder; output_type = ret_ascr; result } : _ Lambda.t)
             def
               [ var_name, Param.get_mut_flag binder, arg_type, Context.Attr.default ]
               ~on_exit:Lift_type
-              ~in_:(infer_expression result)
+              ~in_:(try_infer_expression result)
           in
           let var_name =
             if Value_var.is_generated var_name
@@ -1126,17 +1284,28 @@ and generalize_expr (in_ : (Type.t * O.expression E.t, 'err, 'wrn) C.t)
   return (type_, expr)
 
 
-and infer_application (lamb_type : Type.t) (args : I.expression)
+and infer_application (expr : I.expression) (lamb_type : Type.t) (args : I.expression)
     : (Type.t * (O.expression -> O.expression E.t) * O.expression E.t, _, _) C.t
   =
   let open C in
   let open Let_syntax in
-  let fail () = raise (should_be_a_function_type lamb_type args) in
+  let fail () =
+    Error_recovery.try'
+      ~error:(should_be_a_function_type lamb_type args)
+      ~default:
+        (let%bind loc = loc () in
+         return
+           ( lamb_type
+           , E.return
+           , E.(
+               let%bind lamb_type = decode lamb_type in
+               return (O.make_e ~loc (O.E_error expr) lamb_type)) ))
+  in
   match lamb_type.content with
   | T_for_all { ty_binder = tvar; kind; type_ } ->
     let%bind texists = exists kind in
     let lamb_type = Type.subst type_ ~tvar ~type_:texists in
-    let%bind ret_type, f, args = infer_application lamb_type args in
+    let%bind ret_type, f, args = infer_application expr lamb_type args in
     return
       ( ret_type
       , E.(
@@ -1202,7 +1371,7 @@ and infer_constant const args : (Type.t * O.expression E.t, _, _) C.t =
   let open Let_syntax in
   let%bind ret_type, args =
     Constant_typers.infer_constant
-      ~infer:infer_expression
+      ~infer:try_infer_expression
       ~check:check_expression
       const
       args
@@ -1240,6 +1409,7 @@ and check_pattern ~mut (pat : I.type_expression option I.Pattern.t) (type_ : Typ
         return @@ (Location.wrap ~loc content : O.type_expression O.Pattern.t))
   in
   let err = pattern_do_not_conform_type pat type_ in
+  (* TODO: add error recovery for patterns *)
   let fail () = raise err in
   set_loc pat.location
   @@
@@ -1539,7 +1709,10 @@ and cast_items
   | [] -> return ([], [])
   | `S_type (v, ty, _) :: sig_ ->
     let%bind ty' =
-      raise_opt (Signature.get_type inferred_sig v) ~error:(signature_not_found_type v)
+      Error_recovery.try_opt
+        ~error:(signature_not_found_type v)
+        ~default:Error_recovery.type'
+        (Signature.get_type inferred_sig v)
     in
     if Type.equal ty ty'
     then (
@@ -1548,7 +1721,11 @@ and cast_items
       return
         ( Location.wrap ~loc (Signature.S_type (v, ty', Attrs.Module.default)) :: sig_
         , entries ))
-    else raise (signature_not_match_type v ty ty')
+    else
+      (* TODO: review this *)
+      Error_recovery.try'
+        ~error:(signature_not_match_type v ty ty')
+        ~default:(return ([], []))
   | `S_value (v, ty, attr) :: sig_ ->
     let%bind () =
       match Signature.get_value inferred_sig v with
@@ -1556,9 +1733,13 @@ and cast_items
         let%bind eq = eq ty ty' in
         if Bool.equal attr.entry attr'.entry && Bool.equal attr.view attr'.view && eq
         then return ()
-        else raise (signature_not_match_value v ty ty')
+        else
+          Error_recovery.try'
+            ~error:(signature_not_match_value v ty ty')
+            ~default:(return ())
       | None when attr.optional -> return ()
-      | None -> raise (signature_not_found_value v)
+      | None ->
+        Error_recovery.try' ~error:(signature_not_found_value v) ~default:(return ())
     in
     let%bind sig_, entries = cast_items inferred_sig sig_ in
     let entries = entries @ if attr.entry then [ v ] else [] in
@@ -1584,15 +1765,18 @@ and cast_signature (inferred_sig : Signature.t) (annoted_sig : Signature.t)
   let open C in
   let open Let_syntax in
   let%bind tvars, items =
-    raise_opt ~error:(corner_case "Signature is not casteable")
-    @@ Signature.as_casteable annoted_sig
+    (* TODO: review this *)
+    Error_recovery.try_opt
+      ~error:(corner_case "Signature is not casteable")
+      ~default:(return ([], []))
+      (Signature.as_casteable annoted_sig)
   in
   let instantiate_tvar tvar r =
     let%bind insts, items = r in
     let%bind type_ =
-      raise_opt
-        (Signature.get_type inferred_sig tvar)
-        ~error:(signature_not_found_type tvar)
+      match Signature.get_type inferred_sig tvar with
+      | None -> Error_recovery.try_type ~error:(signature_not_found_type tvar)
+      | Some t -> return t
     in
     let%bind loc = loc () in
     return
@@ -1635,28 +1819,25 @@ and infer_module_expr ?is_annoted_entry (mod_expr : I.module_expr)
   | M_module_path path ->
     (* Check we can access every element in [path] *)
     let%bind sig_ =
-      Context.get_module_of_path_exn path ~error:(unbound_module (List.Ne.to_list path))
+      match%bind Context.get_module_of_path path with
+      | None ->
+        Error_recovery.try'
+          ~error:(unbound_module (List.Ne.to_list path))
+          ~default:Error_recovery.sig'
+      | Some sig_ -> return sig_
     in
     const E.(return @@ M.M_module_path path) sig_
   | M_variable mvar ->
     (* Check we can access [mvar] *)
-    let%bind sig_ = Context.get_module_exn mvar ~error:(unbound_module_variable mvar) in
+    let%bind sig_ =
+      match%bind Context.get_module mvar with
+      | None ->
+        Error_recovery.try'
+          ~error:(unbound_module_variable mvar)
+          ~default:Error_recovery.sig'
+      | Some sig_ -> return sig_
+    in
     const E.(return @@ M.M_variable mvar) sig_
-
-
-and try_infer_expression (expr : I.expression) : (Type.t * O.expression E.t, _, _) C.t =
-  let open C in
-  let open Let_syntax in
-  try_ (infer_expression expr) ~with_:(fun error ->
-      let%bind loc = loc () in
-      (* Use an arbitrary type for the erroneous expression *)
-      let%bind ret_type = exists Type in
-      return
-        ( ret_type
-        , E.(
-            let error = Errors.error_json error in
-            let%bind ret_type = decode ret_type in
-            return @@ O.make_e ~loc (E_error { expression = expr; error }) ret_type) ))
 
 
 and infer_declaration (decl : I.declaration)
@@ -1694,11 +1875,12 @@ and infer_declaration (decl : I.declaration)
       Option.value_map ascr ~default:expr ~f:(fun ascr ->
           I.e_ascription ~loc:expr.location expr ascr)
     in
-    let%bind expr_type, expr = infer_expression expr in
+    let%bind expr_type, expr = try_infer_expression expr in
     let%bind lhs_type =
       match Type.dynamic_entrypoint expr_type with
       | Error (`Not_entry_point_form x) ->
-        C.raise_l ~loc:(Value_var.get_location var) (not_an_entrypoint expr_type)
+        Error_recovery.try_type ~error:(fun _loc ->
+            not_an_entrypoint expr_type (Value_var.get_location var))
       | Ok t -> return t
     in
     let attr = infer_value_attr attr in
@@ -1722,7 +1904,7 @@ and infer_declaration (decl : I.declaration)
       E.(
         let%bind expr = expr
         and pattern = pattern in
-        let%bind () = check_let_annomalies ~syntax pattern expr.type_expression in
+        let%bind () = check_let_anomalies ~options ~syntax pattern expr.type_expression in
         return @@ O.D_irrefutable_match { pattern; expr; attr })
       (List.map
          ~f:(fun (v, _, ty) ->
@@ -1884,17 +2066,25 @@ and infer_signature_sort ?is_annoted_entry (old_sig : Signature.t)
     (* FIXME: This could be improved by using unification to unify the storage
        types together, permitting more programs to type check. *)
     let%bind parameter, storage =
+      let default =
+        let%bind parameter = Error_recovery.type' in
+        let%bind storage = Error_recovery.type' in
+        return (parameter, storage)
+      in
       match Type.parameter_from_entrypoints entrypoints with
       | Error (`Duplicate_entrypoint v) ->
-        C.raise_l ~loc:(Value_var.get_location v) (duplicate_entrypoint v)
+        Error_recovery.try' ~default ~error:(fun _loc ->
+            duplicate_entrypoint v (Value_var.get_location v))
       | Error (`Not_entry_point_form (ep, ep_type)) ->
-        C.raise_l ~loc:(Value_var.get_location ep) (not_an_entrypoint ep_type)
+        Error_recovery.try' ~default ~error:(fun _loc ->
+            not_an_entrypoint ep_type (Value_var.get_location ep))
       | Error (`Storage_does_not_match (ep_1, storage_1, ep_2, storage_2)) ->
-        C.raise_l
-          ~loc:(Value_var.get_location ep_1)
-          (storage_do_not_match ep_1 storage_1 ep_2 storage_2)
+        Error_recovery.try' ~default ~error:(fun _loc ->
+            (storage_do_not_match ep_1 storage_1 ep_2 storage_2)
+              (Value_var.get_location ep_1))
       | Error (`Wrong_dynamic_storage_definition t) ->
-        C.raise_l ~loc:t.location (wrong_dynamic_storage_definition t)
+        Error_recovery.try' ~default ~error:(fun _loc ->
+            wrong_dynamic_storage_definition t t.location)
       | Ok (p, s) -> return (p, s)
     in
     return (Signature.Ss_contract { storage; parameter })
@@ -1957,7 +2147,7 @@ let type_expression ~raise ~options ~path ?env ?tv_opt expr =
       let type_ = C.encode ~raise type_ in
       check_expression expr type_
     | None ->
-      let%map.C _, expr = infer_expression expr in
+      let%map.C _, expr = try_infer_expression expr in
       expr)
     ~raise
     ~options

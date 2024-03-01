@@ -36,6 +36,7 @@ type middle_end =
   ; syntax_for_errors : Syntax_types.t option
   ; no_colour : bool
   ; no_metadata_check : bool
+  ; typer_error_recovery : bool
   }
 
 type backend =
@@ -108,6 +109,7 @@ let make
     ; syntax_for_errors = syntax
     ; no_colour = raw_options.no_colour
     ; no_metadata_check = raw_options.no_metadata_check
+    ; typer_error_recovery = raw_options.typer_error_recovery
     }
   in
   let backend =

@@ -162,7 +162,7 @@ type typer_error =
     Ast_core.type_expression option Ast_core.Pattern.t * Type.t * Location.t
   | `Typer_uncomparable_types of Type.t * Type.t * Location.t
   | `Typer_comparator_composed of Type.t * Location.t
-  | `Typer_cannot_decode_texists of Type.t * Location.t
+  | `Typer_cannot_decode_texists of Type_var.t * Type.t * Location.t
   | `Typer_cannot_encode_texists of Ast_typed.type_expression * Location.t
   | `Typer_cannot_decompile_texists of Ast_typed.type_expression * Location.t
   | `Typer_signature_not_found_value of Value_var.t * Location.t
@@ -500,7 +500,7 @@ let rec extract_loc_and_message
       | mvar :: path -> Format.fprintf ppf "%a.%a" Module_var.pp mvar pp_path path
     in
     loc, Format.asprintf "@[<hv> Signature \"%a\" not found.@]" pp_path path
-  | `Typer_cannot_decode_texists (type_, loc) ->
+  | `Typer_cannot_decode_texists (_tvar, type_, loc) ->
     let type_ = type_improve type_ in
     ( loc
     , Format.asprintf

@@ -31,8 +31,7 @@ let error_ppformat
     | `Aggregation_cannot_compile_erroneous_expression (_expr, loc) ->
       Format.fprintf
         f
-        "@[<hv>%a@.Cannot compile erroneous expression. This is an internal error, \
-         please contact the developers.@]"
+        "@[<hv>%a@.Cannot compile erroneous expression.@]"
         (Snippet.pp ~no_colour)
         loc
     | `Aggregation_redundant_pattern loc ->
@@ -63,10 +62,7 @@ let error_json : aggregation_error -> Simple_utils.Error.t =
     let content = make_content ~message ~location:loc () in
     make ~stage ~content
   | `Aggregation_cannot_compile_erroneous_expression (_expr, loc) ->
-    let message =
-      "Cannot compile erroneous expression. This is an internal error, please contact \
-       the developers"
-    in
+    let message = "Cannot compile erroneous expression." in
     let content = make_content ~message ~location:loc () in
     make ~stage ~content
   | `Aggregation_redundant_pattern location ->

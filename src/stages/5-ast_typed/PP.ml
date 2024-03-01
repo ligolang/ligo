@@ -165,14 +165,9 @@ and expression_content ppf (ec : expression_content) =
   | E_for for_loop -> For_loop.pp expression ppf for_loop
   | E_for_each for_each -> For_each_loop.pp expression ppf for_each
   | E_while while_loop -> While_loop.pp expression ppf while_loop
-  | E_error { expression; error } ->
+  | E_error expression ->
     (* Should only be printed in debugging situations *)
-    Format.fprintf
-      ppf
-      "@[Error { expression = %a;@;<1 8>message = %s }@]"
-      Ast_core.PP.expression
-      expression
-      error.content.message
+    Format.fprintf ppf "@[Error (%a)@]" Ast_core.PP.expression expression
 
 
 and type_inst ppf { forall; type_ } =
@@ -236,17 +231,20 @@ and signature ppf (sig_ : signature) : unit =
     sig_.sig_items
 
 
+and contract_sig ppf ({ storage; parameter } : contract_sig) : unit =
+  Format.fprintf
+    ppf
+    "@[<v> < @, storage : %a @, parameter : %a >@]"
+    type_expression
+    storage
+    type_expression
+    parameter
+
+
 and signature_sort ppf (sig_ : signature_sort) : unit =
   match sig_ with
   | Ss_module -> ()
-  | Ss_contract { storage; parameter } ->
-    Format.fprintf
-      ppf
-      "@[<v> < @, storage : %a @, parameter : %a >@]"
-      type_expression
-      storage
-      type_expression
-      parameter
+  | Ss_contract contract_sig_ -> contract_sig ppf contract_sig_
 
 
 let program_with_sig ?(use_hidden = false) ppf (p : program) =

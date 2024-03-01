@@ -4,11 +4,16 @@ type simple_diagnostic =
   { severity : DiagnosticSeverity.t
   ; message : string
   ; location : Def.Loc_in_file.t
+  ; stage : string
   }
 
 let from_simple_diagnostic : simple_diagnostic -> Diagnostic.t =
- fun { severity; message; location } ->
-  Diagnostic.create ?severity:(Some severity) ~message ~range:location.range ()
+ fun { stage; severity; message; location } ->
+  Diagnostic.create
+    ~severity
+    ~message:(Format.asprintf "[%s] %s" stage message)
+    ~range:location.range
+    ()
 
 
 let partition_simple_diagnostics
@@ -54,34 +59,49 @@ let get_diagnostics (current_path : Path.t)
      ; potential_tzip16_storages = _
      ; lambda_types = _
      } ->
-  let mk_diag range file message severity =
+  let mk_diag ~stage ~range ~file ~message ~severity =
     let location = Def.Loc_in_file.{ path = Path.from_absolute file; range } in
-    Some { message; severity; location }
+    Some { message; severity; location; stage }
   in
   let extract_error_information : Main_errors.all -> simple_diagnostic list =
    fun errs ->
     let errs = Main_errors.Formatter.error_json errs in
     List.filter_map
-      ~f:(fun ({ content = { message; location; _ }; _ } : Simple_utils.Error.t) ->
+      ~f:
+        (fun ({ content = { message; location; children = _ }; status = _; stage } :
+               Simple_utils.Error.t) ->
         match location with
         | Some (File region) ->
-          mk_diag (Range.of_region region) region#file message DiagnosticSeverity.Error
+          mk_diag
+            ~stage
+            ~range:(Range.of_region region)
+            ~file:region#file
+            ~message
+            ~severity:DiagnosticSeverity.Error
         | Some (Virtual _) | None ->
           mk_diag
-            Range.dummy
-            (Path.to_string current_path)
-            message
-            DiagnosticSeverity.Error)
+            ~stage
+            ~range:Range.dummy
+            ~file:(Path.to_string current_path)
+            ~message
+            ~severity:DiagnosticSeverity.Error)
       errs
   in
   let extract_warning_information : Main_warnings.all -> simple_diagnostic option =
    fun warn ->
-    let ({ content = { message; location; _ }; _ } : Simple_utils.Warning.t) =
+    let ({ content = { message; location; variable = _ }; status = _; stage }
+          : Simple_utils.Warning.t)
+      =
       Main_warnings.to_warning warn
     in
     match location with
     | File region ->
-      mk_diag (Range.of_region region) region#file message DiagnosticSeverity.Warning
+      mk_diag
+        ~stage
+        ~range:(Range.of_region region)
+        ~file:region#file
+        ~message
+        ~severity:DiagnosticSeverity.Warning
     | Virtual _ -> None
   in
   List.concat_map ~f:extract_error_information errors

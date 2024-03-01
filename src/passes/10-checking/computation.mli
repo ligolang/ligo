@@ -36,8 +36,14 @@ val lift_raise : (('err, 'wrn) raise -> 'a) -> ('a, 'err, 'wrn) t
 (** [raise err] raises the error [err] at location [loc ()] (the current location). *)
 val raise : 'err Errors.with_loc -> ('a, 'err, 'wrn) t
 
+(** [log_error err] logs the error [err] at location [loc ()] (the current location). *)
+val log_error : 'err Errors.with_loc -> (unit, 'err, 'wrn) t
+
 (** [raise_l ~loc err] raises the error [err] at location [loc]. *)
 val raise_l : loc:Location.t -> 'err Errors.with_loc -> ('a, 'err, 'wrn) t
+
+(** [log_error_l ~loc err] logs the error [err] at location [loc]. *)
+val log_error_l : loc:Location.t -> 'err Errors.with_loc -> (unit, 'err, 'wrn) t
 
 (** [warn wrn] reports the warning [wrn] at location [loc ()] (the current location). *)
 val warn : 'wrn Errors.with_loc -> (unit, 'err, 'wrn) t
@@ -58,8 +64,21 @@ val raise_opt : 'a option -> error:'err Errors.with_loc -> ('a, 'err, 'wrn) t
 val assert_ : bool -> error:'err Errors.with_loc -> (unit, 'err, 'wrn) t
 
 (** [try_ comp ~with_] executes the computation [comp]. If [comp] raises
-    an error [err], then the handler [with_] is called with [err]. *)
-val try_ : ('a, 'err, 'wrn) t -> with_:('err -> ('a, 'err, 'wrn) t) -> ('a, 'err, 'wrn) t
+    errors [errs], then the handler [with_] is called with [errs]. *)
+val try_
+  :  ('a, 'err, 'wrn) t
+  -> with_:('err list -> ('a, 'err, 'wrn) t)
+  -> ('a, 'err, 'wrn) t
+
+(** [try_with_diagnostics comp ~with_ ~diagnostics] is like [try_], but it also allows
+    to inspect generated diagnostics (errors and warnings) generated while trying [comp],
+    regardless of success of failure. Useful for error recovery, used by the language
+    server. *)
+val try_with_diagnostics
+  :  ('a, 'err, 'wrn) t
+  -> with_:('a, 'err, 'wrn) t
+  -> diagnostics:('err list -> 'wrn list -> (unit, 'err, 'wrn) t)
+  -> ('a, 'err, 'wrn) t
 
 val try_all
   :  ('a, ([> `Typer_corner_case of string * Location.t ] as 'err), 'wrn) t list
@@ -453,3 +472,43 @@ val run_elab
   -> ?env:Ast_typed.signature
   -> unit
   -> 'a
+
+(** {9 Error Recovery} *)
+
+(** This section defines the [Error_recovery] module, whose functions define helpers to
+    allow the typer to recover from failures, used by the language server. *)
+
+(** Helpers to handle typer error recovery. *)
+module Error_recovery : sig
+  (** Checks whether the typer error recovery is enabled. *)
+  val is_enabled : (bool, 'err, 'wrn) t
+
+  (** Checks whether the typer error recovery is enabled, and if it is, logs the error
+      from [error] and returns [default], otherwise raises the error from [error]. *)
+  val try'
+    :  error:'err Errors.with_loc
+    -> default:('a, 'err, 'wrn) t
+    -> ('a, 'err, 'wrn) t
+
+  (** Checks whether the typer error recovery is enabled, and if its, returns [default],
+      otherwise raises the error from [error]. *)
+  val try_opt
+    :  error:'err Errors.with_loc
+    -> default:('a, 'err, 'wrn) t
+    -> 'a option
+    -> ('a, 'err, 'wrn) t
+
+  (** If we could not infer some type, emit a placeholder type so typing can continue. *)
+  val type' : (Type.t, 'err, 'wrn) t
+
+  (** Checks whether the typer error recovery is enabled, and if its, returns [type],
+      otherwise runs [on_disabled] (useful to throw some error). *)
+  val try_type : error:'err Errors.with_loc -> (Type.t, 'err, 'wrn) t
+
+  (** If we could not infer some row, emit a placeholder type so typing can continue. *)
+  val row : ('a Type.Row.t, 'err, 'wrn) t
+
+  (** If we could not infer some signature, emit a placeholder type so typing can
+      continue. *)
+  val sig' : (Context.Signature.t, 'err, 'wrn) t
+end

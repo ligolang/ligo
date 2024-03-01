@@ -607,9 +607,17 @@ let rec error_ppformat
       Format.fprintf
         f
         "@[<hv>%a@.%s@]"
-        Simple_utils.(PP_helpers.option (Snippet.pp ~no_colour))
+        Simple_utils.(PP_helpers.if_present (Snippet.pp ~no_colour))
         e.content.location
         e.content.message)
+
+
+let errors_ppformat
+    :  display_format:string display_format -> no_colour:bool -> Format.formatter
+    -> Types.all list -> unit
+  =
+ fun ~display_format ~no_colour f errs ->
+  List.iter errs ~f:(fun err -> error_ppformat ~display_format ~no_colour f err)
 
 
 let rec error_json : Types.all -> Simple_utils.Error.t list =
@@ -830,12 +838,18 @@ let rec error_json : Types.all -> Simple_utils.Error.t list =
   | `Scopes_recovered_error e -> [ e ]
 
 
-let error_jsonformat : Types.all -> Yojson.Safe.t =
+let errors_jsonformat : Types.all list -> Yojson.Safe.t =
  fun e ->
-  let errors = error_json e in
+  let errors = List.bind ~f:error_json e in
   let errors = List.map errors ~f:Simple_utils.Error.to_yojson in
   `List errors
 
 
-let error_format : _ Simple_utils.Display.format =
+let error_jsonformat : Types.all -> Yojson.Safe.t = fun e -> errors_jsonformat [ e ]
+
+let error_format : Types.all Simple_utils.Display.format =
   { pp = error_ppformat; to_json = error_jsonformat }
+
+
+let errors_format : Types.all list Simple_utils.Display.format =
+  { pp = errors_ppformat; to_json = errors_jsonformat }

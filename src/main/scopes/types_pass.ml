@@ -717,8 +717,11 @@ module Typing_env = struct
       (ws : Main_warnings.all list)
       : unit
     =
-    List.iter ws ~f:raise.warning;
-    List.iter es ~f:(fun e -> raise.log_error (tracer e))
+    (* During error-recovery, duplicated diagnostics may appear (e.g., multiple errors
+       about underspecified types. We ignore extra ones. *)
+    List.iter (List.dedup_and_sort ws ~compare:Caml.compare) ~f:raise.warning;
+    List.iter (List.dedup_and_sort es ~compare:Caml.compare) ~f:(fun e ->
+        raise.log_error (tracer e))
 
 
   let make_concise_name ~name_tbl name =
@@ -870,97 +873,101 @@ module Typing_env = struct
           D_signature (Ast_typed.Signature_decl.map replace_gen_type_vars_signature d_sig))
 
 
-  let collect_recovered_errors_from_module prg =
-    Self_ast_typed.Helpers.fold_expression_in_module
-      (fun errs (expr : Ast_typed.expression) ->
-        match expr.expression_content with
-        | E_error { error; _ } -> error :: errs
-        | _ -> errs)
-      []
-      prg
-
-
   let resolve
       ~(raise : (Main_errors.all, Main_warnings.all) Trace.raise)
       ~(options : Compiler_options.middle_end)
       ~(stdlib_env : Ast_typed.signature)
-      ~(module_env : Env.t)
+      ~(bindings : t)
       (prg : Ast_core.program)
       : Ast_typed.program * t
     =
-    let typed_prg =
+    match
       Simple_utils.Trace.to_stdlib_result ~fast_fail:No_fast_fail
       @@ Checking.type_program ~options ~env:stdlib_env prg
-    in
-    match typed_prg with
+    with
     | Ok (({ pr_module; pr_sig } as prg), es, ws) ->
       (* [Checking.Type_var_name_tbl.name_of] also looks into this shared map
          before creating a fresh pretty name. So, first variables from
          the type may have names starting from the middle of the latin alphabet. *)
       Checking.Type_var_name_tbl.Exists.clear ();
-      let bindings =
-        List.fold_left pr_module ~init:(empty module_env) ~f:(fun bindings decl ->
+      let bindings, es', ws' =
+        List.fold_left
+          pr_module
+          ~init:(bindings, [], [])
+          ~f:(fun (bindings, es, ws) decl ->
             let decl = replace_gen_type_vars_decl decl in
-            Simple_utils.Trace.trace ~raise Main_errors.checking_tracer
-            @@ Of_Ast_typed.extract_binding_types bindings decl.wrap_content)
+            Simple_utils.Trace.try_with
+              ~fast_fail:raise.fast_fail
+              (fun ~raise ~catch ->
+                ( Of_Ast_typed.extract_binding_types ~raise bindings decl.wrap_content
+                , catch.errors ()
+                , catch.warnings () ))
+              (fun ~catch e -> bindings, e :: catch.errors (), catch.warnings ()))
       in
-      let () = List.iter ws ~f:raise.warning in
-      let es = List.map ~f:Checking.Errors.error_json es in
-      let es = es @ collect_recovered_errors_from_module pr_module in
+      let es = List.map ~f:Checking.Errors.error_json (es @ es') in
+      let ws = ws @ ws' in
       collect_warns_and_errs ~raise Main_errors.scopes_recovered_error es ws;
       prg, bindings
     | Error (es, ws) ->
       collect_warns_and_errs ~raise Main_errors.checking_tracer es ws;
-      (* For now, assume errors are recorded in the AST *)
-      ( { pr_module = []; pr_sig = { sig_items = []; sig_sort = Ss_module } }
-      , empty module_env )
+      { pr_module = []; pr_sig = { sig_items = []; sig_sort = Ss_module } }, bindings
 
 
-  (*(* If our file contains entrypoints, we should type-check them (e.g. check that
-     they have the same storage), and attach corresponding storage and parameter
-     to our program, so they will be available during self_ast_typed_pass *)
+  (* If our file contains entrypoints, we should type-check them (e.g. check that they
+     have the same storage). *)
   let signature_sort_pass
       ~(raise : (Main_errors.all, Main_warnings.all) Trace.raise)
       ~(options : Compiler_options.middle_end)
-      ~(loc : Location.t)
-      (tenv : t)
-      : t
+      (prg : Ast_typed.program)
+      : unit
     =
-    let sig_sort : Ast_typed.sig_sort =
+    let loc = Checking.loc_of_program prg.pr_module in
+    let es, ws =
       match
-        Simple_utils.Trace.to_stdlib_result
-        @@ fun ~raise ->
-        Simple_utils.Trace.trace ~raise Main_errors.checking_tracer
-        @@ Checking.eval_signature_sort ~options ~loc ~path:[] tenv.type_env
+        Simple_utils.Trace.to_stdlib_result ~fast_fail:No_fast_fail
+        @@ Checking.eval_signature_sort ~options ~loc ~path:[] prg.pr_sig
       with
-      | Ok (sig_sort, ws) ->
-        List.iter ws ~f:raise.warning;
-        sig_sort
-      | Error (e, ws) ->
-        collect_warns_and_errs ~raise Main_errors.checking_tracer ([ e ], ws);
-        Ss_module
+      | Ok (_sig_sort, es, ws) -> es, ws
+      | Error (es, ws) -> es, ws
     in
-    { tenv with type_env = { tenv.type_env with sig_sort } }*)
+    collect_warns_and_errs ~raise Main_errors.checking_tracer es ws
+
 
   let self_ast_typed_pass
       ~(raise : (Main_errors.all, Main_warnings.all) Trace.raise)
       ~(options : Compiler_options.middle_end)
-      decls
+      (prg : Ast_typed.program)
+      : unit
     =
     ignore options;
     let es, ws =
       match
         Simple_utils.Trace.to_stdlib_result ~fast_fail:No_fast_fail
-        @@ Self_ast_typed.all_program decls
+        @@ Self_ast_typed.all_program prg
       with
       | Ok (_prg, es, ws) -> es, ws
       | Error (es, ws) -> es, ws
     in
     collect_warns_and_errs ~raise Main_errors.self_ast_typed_tracer es ws
+
+
+  let init stdlib_decls env =
+    let rec add_stdlib_modules : t -> Ast_typed.signature -> t =
+     fun env stdlib_sig ->
+      List.fold_left stdlib_sig.sig_items ~init:env ~f:(fun env -> function
+        | { wrap_content = S_module (name, sig_) | S_module_type (name, sig_)
+          ; location = _
+          } ->
+          let env = add_stdlib_modules env sig_ in
+          Of_Ast_typed.add_binding env (Module_binding (name, sig_))
+        | _ -> env)
+    in
+    let type_env = Ast_typed.Misc.to_signature stdlib_decls in
+    add_stdlib_modules (empty env) type_env
 end
 
 (** [resolve] takes your [Ast_core.program] and gives you the typing information
-    in the form of [t]
+    in the form of [t], as well the typed [Ast_typed.program].
 
     Here we run the typer related thing first because in the following example
     {[
@@ -990,7 +997,9 @@ let resolve
   =
  fun ~raise ~options ~stdlib_decls ~module_env prg ->
   let stdlib_env = Ast_typed.to_extended_signature stdlib_decls in
-  let tprg, bindings = Typing_env.resolve ~raise ~options ~stdlib_env ~module_env prg in
+  let bindings = Typing_env.init stdlib_decls.pr_module module_env in
+  let tprg, bindings = Typing_env.resolve ~raise ~options ~stdlib_env ~bindings prg in
+  let () = Typing_env.signature_sort_pass ~raise ~options tprg in
   let () = Typing_env.self_ast_typed_pass ~raise ~options tprg in
   Of_Ast_core.program ~raise bindings tprg.pr_sig prg, tprg
 

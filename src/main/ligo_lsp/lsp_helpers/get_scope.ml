@@ -181,7 +181,8 @@ let make_lsp_virtual_main
   let main =
     Format.sprintf
       (match syntax with
-      | CameLIGO -> "[@entry]\nlet %s (_ : never) (s : %s) : operation list * %s = [], s"
+      | CameLIGO ->
+        "[@entry]\nlet %s (_ : never) (s : %s) : operation list * (%s) = [], s"
       | JsLIGO ->
         "@entry\nconst %s = (_: never, s: %s): [list<operation>, %s] => [list([]), s]")
       virtual_main_name
@@ -209,7 +210,7 @@ let make_lsp_virtual_main
   This require our file to have an entrypoint, so we can add a virtual one. *)
 let following_passes_diagnostics
     ~(raise : (Main_errors.all, Main_warnings.all) Trace.raise)
-    ~(stdlib_context : Ast_typed.signature)
+    ~(stdlib_program : Ast_typed.program)
     ~(syntax : Syntax_types.t)
     ~(logger : type_:Lsp.Types.MessageType.t -> string -> unit Lwt.t)
     (raw_options : Raw_options.t)
@@ -227,15 +228,20 @@ let following_passes_diagnostics
       ~has_env_comments:false
       ()
   in
-  try
+  try%lwt
     let contract_sig, pr_sig_items, prg =
+      let { Ast_typed.pr_module = stdlib_prg; pr_sig = stdlib_context } =
+        stdlib_program
+      in
+      let sig_items = stdlib_context.sig_items @ sig_items in
+      let pr_module = stdlib_prg @ pr_module in
       match sig_sort with
       | Ss_contract contract_sig ->
         (* There is an entrypoint in a contract, so we know the storage *)
         Some contract_sig, sig_items, pr_module
       | Ss_module ->
         let storage_type = "never" in
-        let context = { stdlib_context with sig_items } in
+        let context = { Ast_typed.sig_items; sig_sort } in
         let virtual_main_typed, _virtual_main_core =
           make_lsp_virtual_main ~raise ~options ~context ~syntax storage_type
         in
@@ -258,9 +264,16 @@ let following_passes_diagnostics
           }
       }
     in
-    let errors, warnings =
-      match contract_sig with
-      | Some contract_sig ->
+    let log_diagnostics errors warnings =
+      List.iter warnings ~f:raise.warning;
+      List.iter errors ~f:raise.log_error
+    in
+    let prg =
+      (* TODO: Partially redundant? Already performed by [Types_pass.Typing_env.
+         self_ast_typed_pass], but we do it again since now we have a virtual entry...
+         nonetheless, removing either this or that pass will prevent some diagnostics from
+         being shown. *)
+      let prg, errors, warnings =
         Trace.try_with
           ~fast_fail:false
           (fun ~raise ~catch ->
@@ -268,22 +281,27 @@ let following_passes_diagnostics
               Trace.trace ~raise Main_errors.self_ast_typed_tracer
               @@ Self_ast_typed.all_program prg
             in
-            List.iter
-              ~f:(fun module_path ->
+            prg, catch.errors (), catch.warnings ())
+          (fun ~catch e -> prg, e :: catch.errors (), catch.warnings ())
+      in
+      log_diagnostics errors warnings;
+      prg
+    in
+    Option.iter contract_sig ~f:(fun contract_sig ->
+        List.iter (Ligo_compile.Of_typed.get_modules_with_entries prg) ~f:(fun mod_path ->
+            Trace.try_with
+              ~fast_fail:false
+              (fun ~raise ~catch ->
                 let _ast_aggregated =
                   Ligo_compile.Of_typed.apply_to_entrypoint_with_contract_type
                     ~raise
                     ~options:options.middle_end
                     prg
-                    module_path
+                    mod_path
                     contract_sig
                 in
-                ())
-              (Ligo_compile.Of_typed.get_modules_with_entries prg);
-            catch.errors (), catch.warnings ())
-          (fun ~catch e -> e :: catch.errors (), catch.warnings ())
-      | None -> [], []
-    in
+                log_diagnostics (catch.errors ()) (catch.warnings ()))
+              (fun ~catch e -> log_diagnostics (e :: catch.errors ()) (catch.warnings ()))));
     let ast_aggregated =
       Ligo_compile.Of_typed.compile_expression_in_context
         ~self_pass:true
@@ -300,14 +318,13 @@ let following_passes_diagnostics
     let mini_c = Ligo_compile.Of_expanded.compile_expression ~raise ast_expanded in
     let open Lwt.Let_syntax in
     let%map _mich = Ligo_compile.Of_mini_c.compile_expression ~raise ~options mini_c in
-    List.iter warnings ~f:raise.warning;
-    List.iter errors ~f:raise.error
+    ()
   with
   | exn ->
-    let msg = Exn.to_string exn in
     let stack = Printexc.get_backtrace () in
+    let msg = Exn.to_string exn in
     logger ~type_:Error
-    @@ Format.asprintf "Unexpected exception in following passes: %s%s" msg stack
+    @@ Format.asprintf "Unexpected exception in following passes: %s\n%s" msg stack
 
 
 let get_defs
@@ -369,7 +386,7 @@ let get_defs_and_diagnostics
                  match prg with
                  | None -> Lwt.return ([], [], [])
                  | Some prg ->
-                   let stdlib_context = (fst stdlib).pr_sig in
+                   let stdlib_program = fst stdlib in
                    let potential_tzip16_storages =
                      Tzip16_storage.vars_to_mark_as_tzip16_compatible path prg
                    in
@@ -379,7 +396,7 @@ let get_defs_and_diagnostics
                        let%map () =
                          following_passes_diagnostics
                            ~raise
-                           ~stdlib_context
+                           ~stdlib_program
                            ~syntax
                            ~logger
                            raw_options

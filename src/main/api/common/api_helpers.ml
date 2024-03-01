@@ -4,7 +4,8 @@ module Trace = Simple_utils.Trace
 
 let toplevel
     :  ?warning_as_error:bool -> minify_json:bool -> display_format:ex_display_format
-    -> no_colour:bool -> displayable -> ('value * _ * 'w, _) result -> _
+    -> no_colour:bool -> displayable -> ('value * _ * 'w, _) result
+    -> (string * string, string * string) result
   =
  fun ?(warning_as_error = false) ~minify_json ~display_format ~no_colour disp value ->
   let (Ex_display_format t) = display_format in

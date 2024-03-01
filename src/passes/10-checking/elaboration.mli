@@ -26,6 +26,7 @@ val check_anomalies
 
 val run
   :  'a t
+  -> options:Compiler_options.middle_end
   -> path:Module_var.t list
   -> raise:(error, warning) raise
   -> Substitution.t

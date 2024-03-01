@@ -13,17 +13,11 @@ type completion_test =
   }
 
 let completion_test
-    (dialect : Syntax_types.t)
     ?(config : config option)
     { test_name; file_name; position; completions; negative_labels }
     : unit Alcotest.test_case
   =
-  let pretty_syntax_type =
-    match dialect with
-    | CameLIGO -> "CameLIGO"
-    | JsLIGO -> "JsLIGO"
-  in
-  Alcotest.test_case (Format.sprintf "%s: %s" pretty_syntax_type test_name) `Quick
+  Alcotest.test_case (Format.sprintf "%s: %s" file_name test_name) `Quick
   @@ fun () ->
   let actual_completions, _diagnostics =
     test_run_session ?config
@@ -35,7 +29,7 @@ let completion_test
     | `List _ -> fail "Unexpected `List"
   in
   match actual_completions with
-  | None -> fail "Expected some completion list, got None"
+  | None -> fail "Expected Some completion list, got None"
   | Some actual_completions ->
     let actual_completions = (get_completion_list actual_completions).items in
     should_be_contained_in
@@ -48,7 +42,7 @@ let completion_test
     should_not_be_contained_in Alcotest.string ~small:negative_labels ~big:actual_labels
 
 
-let test_cases_cameligo =
+let test_cases =
   [ { test_name = "Complete record fields"
     ; file_name = "contracts/lsp/completion_record.mligo"
     ; position = Position.create ~line:7 ~character:30
@@ -243,13 +237,13 @@ let test_cases_cameligo =
         [ CompletionItem.create
             ~label:"outer"
             ~kind:CompletionItemKind.Variable
-            ~detail:"(* Unresolved *)"
+            ~detail:"string"
             ~sortText:"\x08"
             ()
         ; CompletionItem.create
             ~label:"inner"
             ~kind:CompletionItemKind.Variable
-            ~detail:"(* Unresolved *)"
+            ~detail:"int"
             ~sortText:"\x08"
             ()
         ]
@@ -262,7 +256,7 @@ let test_cases_cameligo =
         [ CompletionItem.create
             ~label:"outer"
             ~kind:CompletionItemKind.Variable
-            ~detail:"(* Unresolved *)"
+            ~detail:"string"
             ~sortText:"\x08"
             ()
         ; CompletionItem.create
@@ -619,11 +613,7 @@ let test_cases_cameligo =
         ]
     ; negative_labels = [ "bbb" ]
     }
-  ]
-
-
-let test_cases_jsligo =
-  [ { test_name = "Complete record fields"
+  ; { test_name = "Complete record fields"
     ; file_name = "contracts/lsp/completion_record.jsligo"
     ; position = Position.create ~line:7 ~character:31
     ; completions =
@@ -817,13 +807,13 @@ let test_cases_jsligo =
         [ CompletionItem.create
             ~label:"outer"
             ~kind:CompletionItemKind.Variable
-            ~detail:"/* Unresolved */"
+            ~detail:"string"
             ~sortText:"\x08"
             ()
         ; CompletionItem.create
             ~label:"inner"
             ~kind:CompletionItemKind.Variable
-            ~detail:"/* Unresolved */"
+            ~detail:"int"
             ~sortText:"\x08"
             ()
         ]
@@ -836,7 +826,7 @@ let test_cases_jsligo =
         [ CompletionItem.create
             ~label:"outer"
             ~kind:CompletionItemKind.Variable
-            ~detail:"/* Unresolved */"
+            ~detail:"string"
             ~sortText:"\x08"
             ()
         ; CompletionItem.create
@@ -1093,7 +1083,7 @@ let completion_implementations_test : unit Alcotest.test_case list =
             ; CompletionItem.create
                 ~label:"outer"
                 ~kind:CompletionItemKind.Variable
-                ~detail:"/* Unresolved */"
+                ~detail:"string"
                 ~sortText:"\x08"
                 ()
             ]
@@ -1117,13 +1107,13 @@ let completion_implementations_test : unit Alcotest.test_case list =
             ; CompletionItem.create
                 ~label:"inner"
                 ~kind:CompletionItemKind.Variable
-                ~detail:"/* Unresolved */"
+                ~detail:"int"
                 ~sortText:"\x08"
                 ()
             ; CompletionItem.create
                 ~label:"outer"
                 ~kind:CompletionItemKind.Variable
-                ~detail:"/* Unresolved */"
+                ~detail:"string"
                 ~sortText:"\x08"
                 ()
             ]
@@ -1147,12 +1137,9 @@ let completion_implementations_test : unit Alcotest.test_case list =
   List.map
     ~f:(fun (completion_implementation, test) ->
       let config = { default_test_config with completion_implementation } in
-      completion_test ~config CameLIGO test)
+      completion_test ~config test)
     cases
 
 
 let tests =
-  ( "completion"
-  , List.map ~f:(completion_test CameLIGO) test_cases_cameligo
-    @ List.map ~f:(completion_test JsLIGO) test_cases_jsligo
-    @ completion_implementations_test )
+  "completion", List.map ~f:completion_test test_cases @ completion_implementations_test

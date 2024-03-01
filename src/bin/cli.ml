@@ -450,6 +450,13 @@ let defs_only =
   flag ~doc name no_arg
 
 
+let typer_error_recovery : bool Command.Param.t =
+  let open Command.Param in
+  let name = "--typer-error-recovery" in
+  let doc = "Enable error-recovery in the typer." in
+  flag ~doc name no_arg
+
+
 let disable_lsp_request_logging =
   let open Command.Param in
   let name = "--disable-lsp-requests-logging" in
@@ -2148,6 +2155,7 @@ let get_scope =
       defs_only
       project_root
       no_stdlib
+      typer_error_recovery
       ()
     =
     let raw_options =
@@ -2158,6 +2166,7 @@ let get_scope =
         ~defs_only
         ~project_root
         ~no_stdlib
+        ~typer_error_recovery
         ()
     in
     let cli_analytics =
@@ -2193,7 +2202,8 @@ let get_scope =
     <*> with_types
     <*> defs_only
     <*> project_root
-    <*> no_stdlib)
+    <*> no_stdlib
+    <*> typer_error_recovery)
 
 
 let resolve_config =
@@ -2591,6 +2601,7 @@ let print_ast_typed =
       no_colour
       skip_analytics
       libraries
+      typer_error_recovery
       ()
     =
     let formatter =
@@ -2613,6 +2624,7 @@ let print_ast_typed =
         ~test
         ~no_colour
         ~libraries
+        ~typer_error_recovery
         ()
     in
     let cli_analytics =
@@ -2623,6 +2635,7 @@ let print_ast_typed =
         ()
     in
     return_result
+      ~fast_fail:(not raw_options.typer_error_recovery)
       ~skip_analytics
       ~cli_analytics
       ~return
@@ -2654,7 +2667,8 @@ let print_ast_typed =
      <*> test_mode
      <*> no_colour
      <*> skip_analytics
-     <*> libraries)
+     <*> libraries
+     <*> typer_error_recovery)
 
 
 let print_ast_aggregated =
@@ -2671,6 +2685,7 @@ let print_ast_aggregated =
       no_colour
       skip_analytics
       libraries
+      typer_error_recovery
       ()
     =
     let raw_options =
@@ -2684,6 +2699,7 @@ let print_ast_aggregated =
         ~test
         ~no_colour
         ~libraries
+        ~typer_error_recovery
         ()
     in
     let cli_analytics =
@@ -2694,6 +2710,7 @@ let print_ast_aggregated =
         ()
     in
     return_result
+      ~fast_fail:(not raw_options.typer_error_recovery)
       ~skip_analytics
       ~cli_analytics
       ~return
@@ -2724,7 +2741,8 @@ let print_ast_aggregated =
     <*> test_mode
     <*> no_colour
     <*> skip_analytics
-    <*> libraries)
+    <*> libraries
+    <*> typer_error_recovery)
 
 
 let print_module_signature =

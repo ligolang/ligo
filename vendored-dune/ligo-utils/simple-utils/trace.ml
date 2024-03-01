@@ -77,6 +77,10 @@ type (_, _, 'error) fast_fail =
   | No_fast_fail : ('error list, 'error list, 'error) fast_fail
   | Fast_fail : ('error, unit, 'error) fast_fail
 
+let cast_fast_fail_result = function
+  | Ok (res, (), ws) -> Ok (res, [], ws)
+  | Error (err, ws) -> Error ([ err ], ws)
+
 let to_stdlib_result
     (type error warning error_error error_ok value)
     ~(fast_fail : (error_error, error_ok, error) fast_fail)
@@ -88,12 +92,16 @@ let to_stdlib_result
   | No_fast_fail ->
     try_with
       ~fast_fail:false
-      (fun ~raise ~catch -> Ok (f ~raise, catch.errors (), catch.warnings ()))
+      (fun ~raise ~catch ->
+        let ret = f ~raise in
+        Ok (ret, catch.errors (), catch.warnings ()))
       (fun ~catch e -> Error (e :: catch.errors (), catch.warnings ()))
   | Fast_fail ->
     try_with
       ~fast_fail:true
-      (fun ~raise ~catch -> Ok (f ~raise, (), catch.warnings ()))
+      (fun ~raise ~catch ->
+        let ret = f ~raise in
+        Ok (ret, (), catch.warnings ()))
       (fun ~catch e -> Error (e, catch.warnings ()))
 
 let to_stdlib_result_lwt

@@ -42,7 +42,10 @@ let rec untype_type_expression
       let fields = Map.map fields ~f:self in
       I.T_record { fields; layout = Some layout }
     | O.T_variable name -> I.T_variable name
-    | O.T_exists _ -> raise.error (`Typer_cannot_decompile_texists (t, t.location))
+    | O.T_exists name ->
+      if true (* TODO *)
+      then I.T_variable name
+      else raise.error (`Typer_cannot_decompile_texists (t, t.location))
     | O.T_arrow arr ->
       let arr = Arrow.map self arr in
       I.T_arrow arr
@@ -163,7 +166,7 @@ and untype_expression_content ~loc ~raise (ec : O.expression_content) : I.expres
       self forall
     | _ ->
       failwith "Impossible case: cannot untype a type instance of a non polymorphic type")
-  | E_error { expression; _ } -> expression
+  | E_error expression -> expression
 
 
 and untype_match_expr ~raise

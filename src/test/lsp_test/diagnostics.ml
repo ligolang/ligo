@@ -43,7 +43,7 @@ let%expect_test "Type errors" =
     {|
     [("../../../../../default/src/test/contracts/negative/error_typer_1.mligo",
       [{
-         "message": "This expression has type \"int\", but an expression was expected of type \n\"string\".\nType \"int\" is not compatible with type \"string\".",
+         "message": "[typer] This expression has type \"int\", but an expression was expected of type \n\"string\".\nType \"int\" is not compatible with type \"string\".",
          "range": {
            "end": { "character": 27, "line": 2 },
            "start": { "character": 19, "line": 2 }
@@ -51,10 +51,18 @@ let%expect_test "Type errors" =
          "severity": 1
        };
        {
-         "message": "Variable \"foo\" not found. ",
+         "message": "[aggregation] Cannot compile erroneous expression.",
          "range": {
            "end": { "character": 34, "line": 5 },
-           "start": { "character": 31, "line": 5 }
+           "start": { "character": 3, "line": 5 }
+         },
+         "severity": 1
+       };
+       {
+         "message": "[typer] This expression has type \"string\", but an expression was expected of type \n\"int\".\nType \"string\" is not compatible with type \"int\".",
+         "range": {
+           "end": { "character": 34, "line": 5 },
+           "start": { "character": 27, "line": 5 }
          },
          "severity": 1
        }])] |}]
@@ -66,7 +74,7 @@ let%expect_test "Syntax error" =
     {|
     [("../../../../../default/src/test/contracts/lsp/syntax_error.mligo",
       [{
-         "message": "Ill-formed contract.\nAt this point, if the current declaration is complete, one of the\nfollowing is expected:\n  * another declaration;\n  * the end of the file.\n",
+         "message": "[parsing] Ill-formed contract.\nAt this point, if the current declaration is complete, one of the\nfollowing is expected:\n  * another declaration;\n  * the end of the file.\n",
          "range": {
            "end": { "character": 11, "line": 0 },
            "start": { "character": 10, "line": 0 }
@@ -81,7 +89,7 @@ let%expect_test "Warnings" =
     {|
     [("../../../../../default/src/test/contracts/lsp/warnings.jsligo",
       [{
-         "message": "Toplevel let declaration is silently changed to const declaration.",
+         "message": "[abstractor] Toplevel let declaration is silently changed to const declaration.",
          "range": {
            "end": { "character": 17, "line": 0 },
            "start": { "character": 7, "line": 0 }
@@ -89,7 +97,7 @@ let%expect_test "Warnings" =
          "severity": 2
        };
        {
-         "message": "\nWarning: unused variable \"x\".\nHint: replace it by \"_x\" to prevent this warning.\n",
+         "message": "[parsing command line parameters] \nWarning: unused variable \"x\".\nHint: replace it by \"_x\" to prevent this warning.\n",
          "range": {
            "end": { "character": 11, "line": 2 },
            "start": { "character": 10, "line": 2 }
@@ -106,7 +114,7 @@ let%expect_test "Syntax and type errors" =
     {|
     [("../../../../../default/src/test/contracts/lsp/syntax_plus_type_errors.jsligo",
       [{
-         "message": "Invalid type(s).\nExpected \"string\", but got: \"int\".",
+         "message": "[typer] Invalid type(s).\nExpected \"string\", but got: \"int\".",
          "range": {
            "end": { "character": 21, "line": 2 },
            "start": { "character": 19, "line": 2 }
@@ -114,7 +122,7 @@ let%expect_test "Syntax and type errors" =
          "severity": 1
        };
        {
-         "message": "Ill-formed expression.\nAt this point, an expression is expected.\n",
+         "message": "[parsing] Ill-formed expression.\nAt this point, an expression is expected.\n",
          "range": {
            "end": { "character": 18, "line": 4 },
            "start": { "character": 15, "line": 4 }
@@ -122,7 +130,7 @@ let%expect_test "Syntax and type errors" =
          "severity": 1
        };
        {
-         "message": "Toplevel let declaration is silently changed to const declaration.",
+         "message": "[abstractor] Toplevel let declaration is silently changed to const declaration.",
          "range": {
            "end": { "character": 18, "line": 4 },
            "start": { "character": 15, "line": 4 }
@@ -130,7 +138,15 @@ let%expect_test "Syntax and type errors" =
          "severity": 2
        };
        {
-         "message": "Ill-formed value declaration.\nAt this point, a pattern is expected, e.g. a variable.\n",
+         "message": "[parsing] Ill-formed value declaration.\nAt this point, a pattern is expected, e.g. a variable.\n",
+         "range": {
+           "end": { "character": 18, "line": 4 },
+           "start": { "character": 18, "line": 4 }
+         },
+         "severity": 1
+       };
+       {
+         "message": "[aggregation] Underspecified type \"^gen#6466\".\nPlease add additional annotations.",
          "range": {
            "end": { "character": 18, "line": 4 },
            "start": { "character": 18, "line": 4 }
@@ -150,7 +166,7 @@ let%expect_test "Limit from 11 to 2 diagnostics in session" =
     {|
     [("../../../../../default/src/test/contracts/warning_sum_types.mligo",
       [{
-         "message": "Warning: The type of \"TopTop(42)\" is ambiguous: Inferred type is \"ttop2\" but could be of type \"ttop\".\nHint: You might want to add a type annotation. \n",
+         "message": "[typer] Warning: The type of \"TopTop(42)\" is ambiguous: Inferred type is \"ttop2\" but could be of type \"ttop\".\nHint: You might want to add a type annotation. \n",
          "range": {
            "end": { "character": 23, "line": 85 },
            "start": { "character": 14, "line": 85 }
@@ -158,7 +174,7 @@ let%expect_test "Limit from 11 to 2 diagnostics in session" =
          "severity": 2
        };
        {
-         "message": "Warning: The type of \"TopA(42)\" is ambiguous: Inferred type is \"ta\" but could be of type \"ttop\".\nHint: You might want to add a type annotation. \n",
+         "message": "[typer] Warning: The type of \"TopA(42)\" is ambiguous: Inferred type is \"ttop\" but could be of type \"ta\".\nHint: You might want to add a type annotation. \n",
          "range": {
            "end": { "character": 21, "line": 87 },
            "start": { "character": 14, "line": 87 }
@@ -173,7 +189,23 @@ let%expect_test "Polymorphic Type error" =
     {|
     [("../../../../../default/src/test/contracts/lsp/poly_type_error.mligo",
       [{
-         "message": "This expression has type \"int\", but an expression was expected of type \n\"( ^a * ^b ) -> ^a\".\nType \"int\" is not compatible with type \"( ^a * ^b ) -> ^a\".\nHint: \"^b\", \"^a\" represent placeholder type(s).\n",
+         "message": "[typer] Underspecified type \"^gen#6470\".\nCannot encode this type.",
+         "range": {
+           "end": { "character": 22, "line": 0 },
+           "start": { "character": 11, "line": 0 }
+         },
+         "severity": 1
+       };
+       {
+         "message": "[typer] Underspecified type \"^gen#6472\".\nCannot encode this type.",
+         "range": {
+           "end": { "character": 22, "line": 0 },
+           "start": { "character": 11, "line": 0 }
+         },
+         "severity": 1
+       };
+       {
+         "message": "[typer] This expression has type \"int\", but an expression was expected of type \n\"( ^a * ^b ) -> ^a\".\nType \"int\" is not compatible with type \"( ^a * ^b ) -> ^a\".\nHint: \"^b\", \"^a\" represent placeholder type(s).\n",
          "range": {
            "end": { "character": 22, "line": 0 },
            "start": { "character": 21, "line": 0 }
@@ -194,7 +226,7 @@ let%expect_test "Shows diagnostics from another file." =
     [("../../../../../default/src/test/contracts/lsp/import_warnings.jsligo", []);
      ("../../../../../default/src/test/contracts/lsp/warnings.jsligo",
       [{
-         "message": "\nWarning: unused variable \"x\".\nHint: replace it by \"_x\" to prevent this warning.\n",
+         "message": "[parsing command line parameters] \nWarning: unused variable \"x\".\nHint: replace it by \"_x\" to prevent this warning.\n",
          "range": {
            "end": { "character": 11, "line": 2 },
            "start": { "character": 10, "line": 2 }
@@ -202,7 +234,7 @@ let%expect_test "Shows diagnostics from another file." =
          "severity": 2
        };
        {
-         "message": "Toplevel let declaration is silently changed to const declaration.",
+         "message": "[abstractor] Toplevel let declaration is silently changed to const declaration.",
          "range": {
            "end": { "character": 17, "line": 0 },
            "start": { "character": 7, "line": 0 }
@@ -217,7 +249,7 @@ let%expect_test "Shows TZIP-16 checks with a top-level storage." =
     {|
     [("../../../../../default/src/test/contracts/lsp/test_metadata.mligo",
       [{
-         "message": "Warning: If the following metadata is meant to be TZIP-16 compliant,\nthen it should be a 'big_map' from 'string' to 'bytes'.\nHint: The corresponding type should be :\n  (string, bytes) big_map\nYou can disable this warning with the '--no-metadata-check' flag.\n",
+         "message": "[parsing command line parameters] Warning: If the following metadata is meant to be TZIP-16 compliant,\nthen it should be a 'big_map' from 'string' to 'bytes'.\nHint: The corresponding type should be :\n  (string, bytes) big_map\nYou can disable this warning with the '--no-metadata-check' flag.\n",
          "range": {
            "end": { "character": 19, "line": 2 },
            "start": { "character": 15, "line": 2 }
@@ -234,10 +266,42 @@ let%expect_test "Shows a duplicate entrypoint error." =
     {|
     [("../../../../../default/src/test/contracts/lsp/entrypoints_repeated.mligo",
       [{
-         "message": "Duplicate entry-point ep_int",
+         "message": "[typer] Duplicate entry-point ep_int",
          "range": {
            "end": { "character": 10, "line": 1 },
            "start": { "character": 4, "line": 1 }
+         },
+         "severity": 1
+       };
+       {
+         "message": "[typer] Duplicate entry-point ep_int",
+         "range": {
+           "end": { "character": 10, "line": 1 },
+           "start": { "character": 4, "line": 1 }
+         },
+         "severity": 1
+       };
+       {
+         "message": "[typer] Underspecified type \"^gen#6546\".\nCannot encode this type.",
+         "range": {
+           "end": { "character": 68, "line": 4 },
+           "start": { "character": 0, "line": 0 }
+         },
+         "severity": 1
+       };
+       {
+         "message": "[typer] Underspecified type \"^gen#6547\".\nCannot encode this type.",
+         "range": {
+           "end": { "character": 68, "line": 4 },
+           "start": { "character": 0, "line": 0 }
+         },
+         "severity": 1
+       };
+       {
+         "message": "[aggregation] Underspecified type \"^gen#6547\".\nPlease add additional annotations.",
+         "range": {
+           "end": { "character": 68, "line": 4 },
+           "start": { "character": 0, "line": 0 }
          },
          "severity": 1
        }])] |}]
@@ -251,10 +315,42 @@ let%expect_test "Shows an error when two toplevel entrypoints have different sto
     {|
     [("../../../../../default/src/test/contracts/lsp/entrypoints_different_storage.mligo",
       [{
-         "message": "Storage types do not match for different entrypoints:\n- ep_int : int\n- ep_string : string",
+         "message": "[typer] Storage types do not match for different entrypoints:\n- ep_int : int\n- ep_string : string",
          "range": {
            "end": { "character": 10, "line": 1 },
            "start": { "character": 4, "line": 1 }
+         },
+         "severity": 1
+       };
+       {
+         "message": "[typer] Storage types do not match for different entrypoints:\n- ep_int : int\n- ep_string : string",
+         "range": {
+           "end": { "character": 10, "line": 1 },
+           "start": { "character": 4, "line": 1 }
+         },
+         "severity": 1
+       };
+       {
+         "message": "[typer] Underspecified type \"^gen#6552\".\nCannot encode this type.",
+         "range": {
+           "end": { "character": 77, "line": 4 },
+           "start": { "character": 0, "line": 0 }
+         },
+         "severity": 1
+       };
+       {
+         "message": "[typer] Underspecified type \"^gen#6553\".\nCannot encode this type.",
+         "range": {
+           "end": { "character": 77, "line": 4 },
+           "start": { "character": 0, "line": 0 }
+         },
+         "severity": 1
+       };
+       {
+         "message": "[aggregation] Underspecified type \"^gen#6553\".\nPlease add additional annotations.",
+         "range": {
+           "end": { "character": 77, "line": 4 },
+           "start": { "character": 0, "line": 0 }
          },
          "severity": 1
        }])] |}]
@@ -266,7 +362,7 @@ let%expect_test "Shows views-related errors and storage warnings." =
     {|
     [("../../../../../default/src/test/contracts/lsp/entrypoints_views.mligo",
       [{
-         "message": "Warning: If the following metadata is meant to be TZIP-16 compliant,\nthen it should be a 'big_map' from 'string' to 'bytes'.\nHint: The corresponding type should be :\n  (string, bytes) big_map\nYou can disable this warning with the '--no-metadata-check' flag.\n",
+         "message": "[parsing command line parameters] Warning: If the following metadata is meant to be TZIP-16 compliant,\nthen it should be a 'big_map' from 'string' to 'bytes'.\nHint: The corresponding type should be :\n  (string, bytes) big_map\nYou can disable this warning with the '--no-metadata-check' flag.\n",
          "range": {
            "end": { "character": 20, "line": 4 },
            "start": { "character": 16, "line": 4 }
@@ -274,7 +370,7 @@ let%expect_test "Shows views-related errors and storage warnings." =
          "severity": 2
        };
        {
-         "message": "The view \"bad_view_not_func\" is not a function.",
+         "message": "[self_ast_typed] The view \"bad_view_not_func\" is not a function.",
          "range": {
            "end": { "character": 21, "line": 21 },
            "start": { "character": 4, "line": 21 }
@@ -291,7 +387,7 @@ let%expect_test "Shows entrypoint-related errors in many modules simultaneously.
     {|
     [("../../../../../default/src/test/contracts/lsp/entrypoints_modules.mligo",
       [{
-         "message": "Storage types do not match for different entrypoints:\n- ep_string : string\n- ep_int : int",
+         "message": "[typer] Storage types do not match for different entrypoints:\n- ep_string : string\n- ep_int : int",
          "range": {
            "end": { "character": 15, "line": 23 },
            "start": { "character": 6, "line": 23 }
@@ -299,7 +395,23 @@ let%expect_test "Shows entrypoint-related errors in many modules simultaneously.
          "severity": 1
        };
        {
-         "message": "Duplicate entry-point ep_string",
+         "message": "[typer] Underspecified type \"^gen#6564\".\nCannot encode this type.",
+         "range": {
+           "end": { "character": 3, "line": 28 },
+           "start": { "character": 15, "line": 21 }
+         },
+         "severity": 1
+       };
+       {
+         "message": "[typer] Underspecified type \"^gen#6565\".\nCannot encode this type.",
+         "range": {
+           "end": { "character": 3, "line": 28 },
+           "start": { "character": 15, "line": 21 }
+         },
+         "severity": 1
+       };
+       {
+         "message": "[typer] Duplicate entry-point ep_string",
          "range": {
            "end": { "character": 15, "line": 32 },
            "start": { "character": 6, "line": 32 }
@@ -307,7 +419,23 @@ let%expect_test "Shows entrypoint-related errors in many modules simultaneously.
          "severity": 1
        };
        {
-         "message": "Not an entrypoint: unit -> ( list (operation) * string )",
+         "message": "[typer] Underspecified type \"^gen#6568\".\nCannot encode this type.",
+         "range": {
+           "end": { "character": 3, "line": 37 },
+           "start": { "character": 15, "line": 30 }
+         },
+         "severity": 1
+       };
+       {
+         "message": "[typer] Underspecified type \"^gen#6569\".\nCannot encode this type.",
+         "range": {
+           "end": { "character": 3, "line": 37 },
+           "start": { "character": 15, "line": 30 }
+         },
+         "severity": 1
+       };
+       {
+         "message": "[typer] Not an entrypoint: unit -> ( list (operation) * string )",
          "range": {
            "end": { "character": 12, "line": 41 },
            "start": { "character": 6, "line": 41 }
@@ -315,7 +443,23 @@ let%expect_test "Shows entrypoint-related errors in many modules simultaneously.
          "severity": 1
        };
        {
-         "message": "Invalid type for view \"Bad_4\".\nA view must be a function.",
+         "message": "[typer] Underspecified type \"^gen#6571\".\nCannot encode this type.",
+         "range": {
+           "end": { "character": 3, "line": 43 },
+           "start": { "character": 15, "line": 39 }
+         },
+         "severity": 1
+       };
+       {
+         "message": "[typer] Underspecified type \"^gen#6572\".\nCannot encode this type.",
+         "range": {
+           "end": { "character": 3, "line": 43 },
+           "start": { "character": 15, "line": 39 }
+         },
+         "severity": 1
+       };
+       {
+         "message": "[self_ast_typed] Invalid type for view \"Bad_4\".\nA view must be a function.",
          "range": {
            "end": { "character": 7, "line": 51 },
            "start": { "character": 6, "line": 51 }
@@ -330,7 +474,15 @@ let%expect_test "ghost_ident filter" =
     {|
     [("../../../../../default/src/test/contracts/lsp/missing_value.mligo",
       [{
-         "message": "Ill-formed value declaration.\nAt this point, an expression is expected.\n",
+         "message": "[parsing] Ill-formed value declaration.\nAt this point, an expression is expected.\n",
+         "range": {
+           "end": { "character": 7, "line": 0 },
+           "start": { "character": 7, "line": 0 }
+         },
+         "severity": 1
+       };
+       {
+         "message": "[typer] Underspecified type \"^gen#6575\".\nCannot encode this type.",
          "range": {
            "end": { "character": 7, "line": 0 },
            "start": { "character": 7, "line": 0 }
@@ -345,7 +497,7 @@ let%expect_test "ghost string filter" =
     {|
     [("../../../../../default/src/test/contracts/lsp/missing_string.jsligo",
       [{
-         "message": "Ill-formed variant type.\nAt this point, a string denoting a constructor is expected.\n",
+         "message": "[parsing] Ill-formed variant type.\nAt this point, a string denoting a constructor is expected.\n",
          "range": {
            "end": { "character": 25, "line": 0 },
            "start": { "character": 24, "line": 0 }
@@ -353,10 +505,26 @@ let%expect_test "ghost string filter" =
          "severity": 1
        };
        {
-         "message": "Expected constructor \"Tail\" in expected sum type \"coin\".",
+         "message": "[typer] Expected constructor \"Tail\" in expected sum type \"coin\".",
          "range": {
            "end": { "character": 23, "line": 4 },
            "start": { "character": 17, "line": 4 }
+         },
+         "severity": 1
+       };
+       {
+         "message": "[typer] Pattern not of the expected type \"coin\".",
+         "range": {
+           "end": { "character": 14, "line": 5 },
+           "start": { "character": 10, "line": 5 }
+         },
+         "severity": 1
+       };
+       {
+         "message": "[aggregation] Cannot compile erroneous expression.",
+         "range": {
+           "end": { "character": 3, "line": 6 },
+           "start": { "character": 13, "line": 2 }
          },
          "severity": 1
        }])] |}]
@@ -370,7 +538,7 @@ let%expect_test "Ghost_ident filter" =
     {|
     [("../../../../../default/src/test/contracts/lsp/missing_module_name.mligo",
       [{
-         "message": "Ill-formed module declaration.\nAt this point, the name of the module being declared is expected.\n",
+         "message": "[parsing] Ill-formed module declaration.\nAt this point, the name of the module being declared is expected.\n",
          "range": {
            "end": { "character": 8, "line": 0 },
            "start": { "character": 7, "line": 0 }
@@ -385,7 +553,15 @@ let%expect_test "Shows comparing error and suggests to use functions from Test m
     {|
     [("../../../../../default/src/test/contracts/lsp/diagnostics_equal.mligo",
       [{
-         "message": "Invalid arguments.\nThese types cannot be compared: \"list (int)\" and \"list (int)\".\nUse \"Test.equal\", \"Test.not_equal\", \"Test.greater\", \"Test.less\", \"Test.greater_or_equal\", or \"Test.less_or_equal\" to compare lists, maps, sets, etc.",
+         "message": "[typer] Underspecified type \"^gen#6593\".\nCannot encode this type.",
+         "range": {
+           "end": { "character": 27, "line": 2 },
+           "start": { "character": 0, "line": 2 }
+         },
+         "severity": 1
+       };
+       {
+         "message": "[typer] Invalid arguments.\nThese types cannot be compared: \"list (int)\" and \"list (int)\".\nUse \"Test.equal\", \"Test.not_equal\", \"Test.greater\", \"Test.less\", \"Test.greater_or_equal\", or \"Test.less_or_equal\" to compare lists, maps, sets, etc.",
          "range": {
            "end": { "character": 27, "line": 2 },
            "start": { "character": 12, "line": 2 }
@@ -402,7 +578,7 @@ let%expect_test "Shows wrong test primitive usage error" =
     {|
     [("../../../../../default/src/test/contracts/lsp/diagnostics_wrong_usage_of_test_primitives.mligo",
       [{
-         "message": "Invalid usage of a Test primitive.",
+         "message": "[self_ast_aggregated] Invalid usage of a Test primitive.",
          "range": {
            "end": { "character": 1, "line": 0 },
            "start": { "character": 0, "line": 0 }
@@ -417,7 +593,7 @@ let%expect_test "Shows a warning for deprecated functions" =
     {|
     [("../../../../../default/src/test/contracts/deprecated.mligo",
       [{
-         "message": "\nWarning: deprecated value.\nReplace me by...\ng!\nmail: foo@bar.com\n",
+         "message": "[parsing command line parameters] \nWarning: deprecated value.\nReplace me by...\ng!\nmail: foo@bar.com\n",
          "range": {
            "end": { "character": 75, "line": 4 },
            "start": { "character": 74, "line": 4 }
@@ -446,7 +622,7 @@ let%expect_test "Shows errors for unsupported record fields (jsligo)." =
     {|
     [("../../../../../default/src/test/contracts/lsp/unsupported_record_field.jsligo",
       [{
-         "message": "Unsupported object field",
+         "message": "[small_passes] Unsupported object field",
          "range": {
            "end": { "character": 33, "line": 6 },
            "start": { "character": 32, "line": 6 }
@@ -463,7 +639,47 @@ let%expect_test "Shows errors for unbound variables in records (jsligo)." =
     {|
     [("../../../../../default/src/test/contracts/lsp/unbound_var_in_record.jsligo",
       [{
-         "message": "Variable \"a\" not found. ",
+         "message": "[typer] Variable \"aa\" not found. ",
+         "range": {
+           "end": { "character": 26, "line": 1 },
+           "start": { "character": 24, "line": 1 }
+         },
+         "severity": 1
+       };
+       {
+         "message": "[typer] Variable \"sd\" not found. ",
+         "range": {
+           "end": { "character": 29, "line": 1 },
+           "start": { "character": 27, "line": 1 }
+         },
+         "severity": 1
+       };
+       {
+         "message": "[typer] Variable \"asd\" not found. ",
+         "range": {
+           "end": { "character": 33, "line": 1 },
+           "start": { "character": 30, "line": 1 }
+         },
+         "severity": 1
+       };
+       {
+         "message": "[typer] Variable \"cd\" not found. ",
+         "range": {
+           "end": { "character": 36, "line": 1 },
+           "start": { "character": 34, "line": 1 }
+         },
+         "severity": 1
+       };
+       {
+         "message": "[typer] Variable \"a\" not found. ",
+         "range": {
+           "end": { "character": 38, "line": 1 },
+           "start": { "character": 37, "line": 1 }
+         },
+         "severity": 1
+       };
+       {
+         "message": "[aggregation] Underspecified type \"^gen#6637\".\nPlease add additional annotations.",
          "range": {
            "end": { "character": 38, "line": 1 },
            "start": { "character": 37, "line": 1 }

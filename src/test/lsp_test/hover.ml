@@ -412,13 +412,16 @@ let%expect_test "hover_module.mligo" =
      };
      {
        "contents": [
-         { "value": "module Mangled : (* Unresolved *)", "language": "cameligo" }
+         {
+           "value": "module Mangled : sig\n  val where : a\n  end",
+           "language": "cameligo"
+         }
        ]
      };
      {
        "contents": [
          {
-           "value": "module Mangled_with_sig : sig\n  type t\n\n  type int =  string\n  end",
+           "value": "module Mangled_with_sig : sig\n  type t =  a\n  end",
            "language": "cameligo"
          }
        ]
@@ -627,7 +630,7 @@ let%expect_test "hover_module.jsligo" =
      {
        "contents": [
          {
-           "value": "namespace Mangled implements /* Unresolved */",
+           "value": "namespace Mangled implements {\n  const where: a;\n  const v: int\n}",
            "language": "jsligo"
          }
        ]
@@ -635,7 +638,7 @@ let%expect_test "hover_module.jsligo" =
      {
        "contents": [
          {
-           "value": "namespace Mangled_with_sig implements {\n  type t;\n  type int = string\n}",
+           "value": "namespace Mangled_with_sig implements {\n  const where: a;\n  type t = string;\n  type int = string\n}",
            "language": "jsligo"
          }
        ]
@@ -643,7 +646,7 @@ let%expect_test "hover_module.jsligo" =
      {
        "contents": [
          {
-           "value": "namespace Mangled_with_inlined_sig implements {\n  const foo: int\n}",
+           "value": "namespace Mangled_with_inlined_sig implements {\n  const where: a;\n  const foo: int\n}",
            "language": "jsligo"
          }
        ]
