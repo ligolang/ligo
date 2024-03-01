@@ -830,6 +830,18 @@ let opt_get () : _ peep =
   | _ -> No_change
 
 
+(* GET_AND_UPDATE ; DROP  ↦  UPDATE *)
+let opt_get_and_update_drop () : _ peep =
+  let* x = peep in
+  match x with
+  | Prim (l, "GET_AND_UPDATE", [], _) ->
+    let* x = peep in
+    (match x with
+    | Prim (_, "DROP", [], _) -> Changed [ Prim (l, "UPDATE", [], []) ]
+    | _ -> No_change)
+  | _ -> No_change
+
+
 (* PUSH unit Unit  ↦  UNIT *)
 let opt_push () : _ peep =
   let* x = peep in
@@ -992,6 +1004,7 @@ let optimize
     ; peephole @@ opt_unpair2 ()
     ; peephole @@ opt_digdug_drop ()
     ; peephole @@ opt_get ()
+    ; peephole @@ opt_get_and_update_drop ()
     ; peephole @@ opt_push ()
     ; peephole @@ peep2 opt_neg_int
     ; peephole @@ peep3 opt_nat_int_neg

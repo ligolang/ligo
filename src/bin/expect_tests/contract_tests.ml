@@ -458,8 +458,7 @@ let%expect_test _ =
                              EQ ;
                              IF { DIG 2 ; DROP ; NONE nat } { DIG 2 ; SOME } ;
                              DIG 3 ;
-                             GET_AND_UPDATE ;
-                             DROP ;
+                             UPDATE ;
                              UPDATE 3 }
                            { DUP 2 ;
                              GET 3 ;
@@ -491,8 +490,7 @@ let%expect_test _ =
                                   EQ ;
                                   IF { SWAP ; DROP ; NONE nat } { SWAP ; SOME } ;
                                   DIG 2 ;
-                                  GET_AND_UPDATE ;
-                                  DROP } ;
+                                  UPDATE } ;
                              DUP 3 ;
                              GET 4 ;
                              DUP 3 ;
@@ -511,8 +509,7 @@ let%expect_test _ =
                              IF { SWAP ; DROP ; NONE nat } { SWAP ; SOME } ;
                              DUP 4 ;
                              CAR ;
-                             GET_AND_UPDATE ;
-                             DROP ;
+                             UPDATE ;
                              DUP 3 ;
                              GET 4 ;
                              DUP 2 ;
@@ -530,8 +527,7 @@ let%expect_test _ =
                              IF { DIG 2 ; DROP ; NONE nat } { DIG 2 ; SOME } ;
                              DIG 4 ;
                              GET 3 ;
-                             GET_AND_UPDATE ;
-                             DROP ;
+                             UPDATE ;
                              UPDATE 1 ;
                              SWAP ;
                              UPDATE 3 } ;
@@ -783,8 +779,7 @@ let%expect_test _ =
                      IF_NONE { PUSH string "impossible?" ; FAILWITH } {} } ;
                  SOME ;
                  DIG 2 ;
-                 GET_AND_UPDATE ;
-                 DROP ;
+                 UPDATE ;
                  SWAP ;
                  PAIR ;
                  NIL operation ;
@@ -822,8 +817,7 @@ let%expect_test _ =
                          SOME ;
                          DUP 4 ;
                          GET 4 ;
-                         GET_AND_UPDATE ;
-                         DROP ;
+                         UPDATE ;
                          DIG 2 ;
                          CAR ;
                          PUSH mutez 0 ;
@@ -1790,8 +1784,7 @@ let%expect_test _ =
                      IF_NONE { PUSH string "impossible?" ; FAILWITH } {} } ;
                  SOME ;
                  DIG 2 ;
-                 GET_AND_UPDATE ;
-                 DROP ;
+                 UPDATE ;
                  SWAP ;
                  PAIR ;
                  NIL operation ;
@@ -1829,8 +1822,7 @@ let%expect_test _ =
                          SOME ;
                          DUP 4 ;
                          GET 4 ;
-                         GET_AND_UPDATE ;
-                         DROP ;
+                         UPDATE ;
                          DIG 2 ;
                          CAR ;
                          PUSH mutez 0 ;
@@ -3054,8 +3046,7 @@ let%expect_test _ =
                              EQ ;
                              IF { DIG 2 ; DROP ; NONE nat } { DIG 2 ; SOME } ;
                              DIG 3 ;
-                             GET_AND_UPDATE ;
-                             DROP ;
+                             UPDATE ;
                              UPDATE 3 }
                            { DUP 2 ;
                              GET 3 ;
@@ -3087,8 +3078,7 @@ let%expect_test _ =
                                   EQ ;
                                   IF { SWAP ; DROP ; NONE nat } { SWAP ; SOME } ;
                                   DIG 2 ;
-                                  GET_AND_UPDATE ;
-                                  DROP } ;
+                                  UPDATE } ;
                              DUP 3 ;
                              GET 4 ;
                              DUP 3 ;
@@ -3107,8 +3097,7 @@ let%expect_test _ =
                              IF { SWAP ; DROP ; NONE nat } { SWAP ; SOME } ;
                              DUP 4 ;
                              CAR ;
-                             GET_AND_UPDATE ;
-                             DROP ;
+                             UPDATE ;
                              DUP 3 ;
                              GET 4 ;
                              DUP 2 ;
@@ -3126,8 +3115,7 @@ let%expect_test _ =
                              IF { DIG 2 ; DROP ; NONE nat } { DIG 2 ; SOME } ;
                              DIG 4 ;
                              GET 3 ;
-                             GET_AND_UPDATE ;
-                             DROP ;
+                             UPDATE ;
                              UPDATE 1 ;
                              SWAP ;
                              UPDATE 3 } ;
@@ -3184,8 +3172,7 @@ let%expect_test _ =
                       SOME ;
                       DIG 4 ;
                       CAR ;
-                      GET_AND_UPDATE ;
-                      DROP } ;
+                      UPDATE } ;
                  DUG 2 ;
                  PAIR 3 ;
                  NIL operation ;
@@ -3222,8 +3209,7 @@ let%expect_test _ =
                              DUG 2 ;
                              SOME ;
                              DIG 2 ;
-                             GET_AND_UPDATE ;
-                             DROP ;
+                             UPDATE ;
                              PAIR 3 ;
                              NIL operation ;
                              PAIR } } }
@@ -3246,8 +3232,7 @@ let%expect_test _ =
                          DUG 2 ;
                          SOME ;
                          DIG 2 ;
-                         GET_AND_UPDATE ;
-                         DROP ;
+                         UPDATE ;
                          PAIR 3 ;
                          NIL operation ;
                          PAIR } } } } ;

@@ -1,0 +1,7 @@
+
+author: er433
+description: "\\n\\n"
+merge_request: '3092'
+title: "Backend: add a new opt. for simplyfing `GET_AND_UPDATE ; DROP` to `UPDATE`"
+type: performance
+            
