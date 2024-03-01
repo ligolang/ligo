@@ -652,24 +652,76 @@ module Checks = struct
     | _ -> None
 
 
-  let download ~loc uri
-      : (string, [> `Metadata_error_download of Location.t * string ]) Lwt_result.t
-    =
-    let open Lwt.Let_syntax in
-    let open Cohttp_lwt_unix in
-    try%lwt
-      let uri = Uri.of_string uri in
-      let headers = Cohttp.Header.of_list [ "Content-type", "application/json" ] in
-      let%bind _, body = Client.get ~headers uri in
-      let%bind body = Cohttp_lwt.Body.to_string body in
-      Lwt.return @@ Ok body
-    with
-    | _ -> Lwt.return (Error (`Metadata_error_download (loc, uri)))
+  module Json_download = struct
+    module Lru_uri_cache =
+      Lru.M.Make
+        (String)
+        (struct
+          type t = (string, unit) result
 
+          let weight = function
+            | Ok s -> String.length s
+            | Error () -> 1
+        end)
+    (* Simple cache for keeping downloaded data; caps the overall size of data *)
+
+    type cache_option =
+      | No_cache
+      | Lru_cache of Lru_uri_cache.t
+
+    let use_lru_cache ~(size_in_bytes : int) : cache_option =
+      Lru_cache (Lru_uri_cache.create size_in_bytes)
+
+
+    type options =
+      [ `Unspecified
+      | `Disabled
+      | `Enabled of cache_option
+      ]
+
+    let with_cache
+        :  cache_option -> (string -> ('r, unit) Lwt_result.t) -> string
+        -> ('r, unit) Lwt_result.t
+      = function
+      | No_cache -> Fn.id
+      | Lru_cache cache ->
+        fun run uri ->
+          (match Lru_uri_cache.find uri cache with
+          | Some x -> Lwt.return x
+          | None ->
+            let%lwt value = run uri in
+            let () = Lru_uri_cache.add uri value cache in
+            Lwt.return value)
+
+
+    let run ~loc uri : (string, unit) Lwt_result.t =
+      let open Lwt.Let_syntax in
+      let open Cohttp_lwt_unix in
+      try%lwt
+        let uri = Uri.of_string uri in
+        let headers = Cohttp.Header.of_list [ "Content-type", "application/json" ] in
+        let%bind _, body = Client.get ~headers uri in
+        let%bind body = Cohttp_lwt.Body.to_string body in
+        Lwt.return @@ Ok body
+      with
+      | _ -> Lwt.return (Error ())
+
+
+    (* This is thread-safe, however does not make an effort at deduplicating
+       downloads of the same URLs *)
+    let run_with_cache ~cache ~loc uri
+        : (string, [> `Metadata_error_download of Location.t * string ]) Lwt_result.t
+      =
+      Lwt.map (fun outcome ->
+          match outcome with
+          | Error () -> Error (`Metadata_error_download (loc, uri))
+          | Ok res -> Ok res)
+      @@ with_cache cache (run ~loc) uri
+  end
 
   let tzip16_check
       ~loc
-      ?json_download
+      ~(json_download : Json_download.options)
       ~storage_type
       (metadata : (int, string) Tezos_micheline.Micheline.node)
     =
@@ -705,10 +757,10 @@ module Checks = struct
     | "https" | "http" ->
       let uri = Uri.to_string uri in
       (match json_download with
-      | None -> Lwt_result.fail (`Metadata_json_download (loc, "an HTTP"))
-      | Some false -> Lwt_result.return ()
-      | Some true ->
-        let%bind json = download ~loc uri in
+      | `Unspecified -> Lwt_result.fail (`Metadata_json_download (loc, "an HTTP"))
+      | `Disabled -> Lwt_result.return ()
+      | `Enabled cache ->
+        let%bind json = Json_download.run_with_cache ~cache ~loc uri in
         json_check ~loc ~storage_type ?sha256hash json)
     | "ipfs" ->
       (match Uri.host uri with
@@ -716,10 +768,10 @@ module Checks = struct
       | Some domain ->
         let uri = "https://ipfs.io/ipfs/" ^ domain in
         (match json_download with
-        | None -> Lwt_result.fail (`Metadata_json_download (loc, "an IPFS"))
-        | Some false -> Lwt_result.return ()
-        | Some true ->
-          let%bind json = download ~loc uri in
+        | `Unspecified -> Lwt_result.fail (`Metadata_json_download (loc, "an IPFS"))
+        | `Disabled -> Lwt_result.return ()
+        | `Enabled cache ->
+          let%bind json = Json_download.run_with_cache ~cache ~loc uri in
           json_check ~loc ~storage_type ?sha256hash json))
     | _ -> Lwt_result.return ()
 
@@ -779,7 +831,11 @@ module Checks = struct
         (match%map
            tzip16_check
              ~loc
-             ?json_download:options.tools.json_download
+             ~json_download:
+               (match options.tools.json_download with
+               | None -> `Unspecified
+               | Some false -> `Disabled
+               | Some true -> `Enabled Json_download.No_cache)
              ~storage_type:type_
              metadata
          with
