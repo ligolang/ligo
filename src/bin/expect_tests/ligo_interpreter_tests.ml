@@ -6176,7 +6176,7 @@ let%expect_test _ =
 
     edpktom5rsehpEY6Kp2NShwsnpaaEjWxKFMJ3Rjp99VMJuHS93wxD6
     Everything at the top-level was executed.
-    - test exited with value Success (1949n). |}]
+    - test exited with value Success (1719n). |}]
 
 let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "test_tickets_and_bigmaps.mligo" ];
@@ -6235,7 +6235,7 @@ let%expect_test _ =
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `IO.log` from `Test.Next` is encouraged for a smoother migration.
 
-    Success (2673n)
+    Success (2672n)
     Everything at the top-level was executed.
     - test_one exited with value (). |}]
 
