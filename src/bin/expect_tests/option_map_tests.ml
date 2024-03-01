@@ -88,5 +88,23 @@ let%expect_test _ =
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.get_storage` from `Test.Next` is encouraged for a smoother migration.
 
+    File "../../test/contracts/option_record.mligo", line 16, characters 10-22:
+     15 |   let v = Test.get_storage orig.addr in
+     16 |   let v = Option.unopt v in
+                    ^^^^^^^^^^^^
+     17 |   let s = Option.unopt v.s in
+    :
+    Warning: deprecated value.
+    Use `Option.value_with_error` instead.
+
+    File "../../test/contracts/option_record.mligo", line 17, characters 10-22:
+     16 |   let v = Option.unopt v in
+     17 |   let s = Option.unopt v.s in
+                    ^^^^^^^^^^^^
+     18 |   assert (s = 1)
+    :
+    Warning: deprecated value.
+    Use `Option.value_with_error` instead.
+
     Everything at the top-level was executed.
     - test exited with value (). |}]

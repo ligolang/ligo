@@ -1078,8 +1078,8 @@ let%expect_test _ =
     - test_bytes_bitwise_ops exited with value ().
     - test_bytes_bitwise_module exited with value ().
     - test_list_concat exited with value ().
-    - test_list_head_opt exited with value ().
-    - test_list_tail_opt exited with value ().
+    - test_list_head exited with value ().
+    - test_list_tail exited with value ().
     - test_list_reverse exited with value ().
     - test_set_fold_desc exited with value ().
     - test_set_update exited with value ().
@@ -5763,40 +5763,40 @@ let%expect_test _ =
      10 |   let orig = Test.originate (contract_of Factory) ([] : address list) 10tez in
      11 |   let _ = Test.transfer_exn orig.addr (Main 42) 0tez in
                     ^^^^^^^^^^^^^^^^^
-     12 |   let addr : address = Option.unopt (List.head_opt (Test.get_storage orig.addr)) in
+     12 |   let addr : address =
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.transfer_exn` from `Test.Next` is encouraged for a smoother migration.
 
-    File "./test_create.mligo", line 12, characters 52-68:
-     11 |   let _ = Test.transfer_exn orig.addr (Main 42) 0tez in
-     12 |   let addr : address = Option.unopt (List.head_opt (Test.get_storage orig.addr)) in
-                                                              ^^^^^^^^^^^^^^^^
-     13 |   let taddr : (int, int) typed_address = Test.cast_address addr in
+    File "./test_create.mligo", line 15, characters 18-34:
+     14 |       "option is None"
+     15 |       (List.head (Test.get_storage orig.addr)) in
+                            ^^^^^^^^^^^^^^^^
+     16 |   let taddr : (int, int) typed_address = Test.cast_address addr in
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.get_storage` from `Test.Next` is encouraged for a smoother migration.
 
-    File "./test_create.mligo", line 13, characters 41-58:
-     12 |   let addr : address = Option.unopt (List.head_opt (Test.get_storage orig.addr)) in
-     13 |   let taddr : (int, int) typed_address = Test.cast_address addr in
+    File "./test_create.mligo", line 16, characters 41-58:
+     15 |       (List.head (Test.get_storage orig.addr)) in
+     16 |   let taddr : (int, int) typed_address = Test.cast_address addr in
                                                    ^^^^^^^^^^^^^^^^^
-     14 |   Test.log (Test.get_storage taddr)
+     17 |   Test.log (Test.get_storage taddr)
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Address.to_typed_address` from `Test.Next` is encouraged for a smoother migration.
 
-    File "./test_create.mligo", line 14, characters 2-10:
-     13 |   let taddr : (int, int) typed_address = Test.cast_address addr in
-     14 |   Test.log (Test.get_storage taddr)
+    File "./test_create.mligo", line 17, characters 2-10:
+     16 |   let taddr : (int, int) typed_address = Test.cast_address addr in
+     17 |   Test.log (Test.get_storage taddr)
             ^^^^^^^^
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `IO.log` from `Test.Next` is encouraged for a smoother migration.
 
-    File "./test_create.mligo", line 14, characters 12-28:
-     13 |   let taddr : (int, int) typed_address = Test.cast_address addr in
-     14 |   Test.log (Test.get_storage taddr)
+    File "./test_create.mligo", line 17, characters 12-28:
+     16 |   let taddr : (int, int) typed_address = Test.cast_address addr in
+     17 |   Test.log (Test.get_storage taddr)
                       ^^^^^^^^^^^^^^^^
     :
     Warning: deprecated value.
@@ -5823,40 +5823,40 @@ let%expect_test _ =
      10 |   let orig = Test.originate (contract_of Factory) ([] : address list) 10tez in
      11 |   let _ = Test.transfer_exn orig.addr (Main 42) 0tez in
                     ^^^^^^^^^^^^^^^^^
-     12 |   let addr : address = Option.unopt (List.head_opt (Test.get_storage orig.addr)) in
+     12 |   let addr : address =
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.transfer_exn` from `Test.Next` is encouraged for a smoother migration.
 
-    File "./test_create2.mligo", line 12, characters 52-68:
-     11 |   let _ = Test.transfer_exn orig.addr (Main 42) 0tez in
-     12 |   let addr : address = Option.unopt (List.head_opt (Test.get_storage orig.addr)) in
-                                                              ^^^^^^^^^^^^^^^^
-     13 |   let taddr : (int, int) typed_address = Test.cast_address addr in
+    File "./test_create2.mligo", line 14, characters 18-34:
+     13 |     Option.value_with_error "option is None"
+     14 |       (List.head (Test.get_storage orig.addr)) in
+                            ^^^^^^^^^^^^^^^^
+     15 |   let taddr : (int, int) typed_address = Test.cast_address addr in
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.get_storage` from `Test.Next` is encouraged for a smoother migration.
 
-    File "./test_create2.mligo", line 13, characters 41-58:
-     12 |   let addr : address = Option.unopt (List.head_opt (Test.get_storage orig.addr)) in
-     13 |   let taddr : (int, int) typed_address = Test.cast_address addr in
+    File "./test_create2.mligo", line 15, characters 41-58:
+     14 |       (List.head (Test.get_storage orig.addr)) in
+     15 |   let taddr : (int, int) typed_address = Test.cast_address addr in
                                                    ^^^^^^^^^^^^^^^^^
-     14 |   Test.log (Test.get_storage taddr)
+     16 |   Test.log (Test.get_storage taddr)
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Address.to_typed_address` from `Test.Next` is encouraged for a smoother migration.
 
-    File "./test_create2.mligo", line 14, characters 2-10:
-     13 |   let taddr : (int, int) typed_address = Test.cast_address addr in
-     14 |   Test.log (Test.get_storage taddr)
+    File "./test_create2.mligo", line 16, characters 2-10:
+     15 |   let taddr : (int, int) typed_address = Test.cast_address addr in
+     16 |   Test.log (Test.get_storage taddr)
             ^^^^^^^^
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `IO.log` from `Test.Next` is encouraged for a smoother migration.
 
-    File "./test_create2.mligo", line 14, characters 12-28:
-     13 |   let taddr : (int, int) typed_address = Test.cast_address addr in
-     14 |   Test.log (Test.get_storage taddr)
+    File "./test_create2.mligo", line 16, characters 12-28:
+     15 |   let taddr : (int, int) typed_address = Test.cast_address addr in
+     16 |   Test.log (Test.get_storage taddr)
                       ^^^^^^^^^^^^^^^^
     :
     Warning: deprecated value.
@@ -5892,68 +5892,68 @@ let%expect_test _ =
       3 |   let () = Test.print "Hello " in
       4 |   let () = Test.println "world" in
                      ^^^^^^^^^^^^
-      5 |   let () = Test.print (Option.unopt (Test.chr 64n)) in
+      5 |   let () =
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `IO.println` from `Test.Next` is encouraged for a smoother migration.
 
-    File "./test_print.mligo", line 5, characters 11-21:
-      4 |   let () = Test.println "world" in
-      5 |   let () = Test.print (Option.unopt (Test.chr 64n)) in
-                     ^^^^^^^^^^
-      6 |   let () = Test.print (Test.to_string 42) in
+    File "./test_print.mligo", line 6, characters 4-14:
+      5 |   let () =
+      6 |     Test.print (Option.value_with_error "option is None" (Test.chr 64n)) in
+              ^^^^^^^^^^
+      7 |   let () = Test.print (Test.to_string 42) in
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `IO.print` from `Test.Next` is encouraged for a smoother migration.
 
-    File "./test_print.mligo", line 5, characters 37-45:
-      4 |   let () = Test.println "world" in
-      5 |   let () = Test.print (Option.unopt (Test.chr 64n)) in
-                                               ^^^^^^^^
-      6 |   let () = Test.print (Test.to_string 42) in
+    File "./test_print.mligo", line 6, characters 58-66:
+      5 |   let () =
+      6 |     Test.print (Option.value_with_error "option is None" (Test.chr 64n)) in
+                                                                    ^^^^^^^^
+      7 |   let () = Test.print (Test.to_string 42) in
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `String.chr` from `Test.Next` is encouraged for a smoother migration.
 
-    File "./test_print.mligo", line 6, characters 11-21:
-      5 |   let () = Test.print (Option.unopt (Test.chr 64n)) in
-      6 |   let () = Test.print (Test.to_string 42) in
+    File "./test_print.mligo", line 7, characters 11-21:
+      6 |     Test.print (Option.value_with_error "option is None" (Test.chr 64n)) in
+      7 |   let () = Test.print (Test.to_string 42) in
                      ^^^^^^^^^^
-      7 |   let () = Test.print Test.nl in
+      8 |   let () = Test.print Test.nl in
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `IO.print` from `Test.Next` is encouraged for a smoother migration.
 
-    File "./test_print.mligo", line 6, characters 23-37:
-      5 |   let () = Test.print (Option.unopt (Test.chr 64n)) in
-      6 |   let () = Test.print (Test.to_string 42) in
+    File "./test_print.mligo", line 7, characters 23-37:
+      6 |     Test.print (Option.value_with_error "option is None" (Test.chr 64n)) in
+      7 |   let () = Test.print (Test.to_string 42) in
                                  ^^^^^^^^^^^^^^
-      7 |   let () = Test.print Test.nl in
+      8 |   let () = Test.print Test.nl in
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `String.show` from `Test.Next` is encouraged for a smoother migration.
 
-    File "./test_print.mligo", line 7, characters 11-21:
-      6 |   let () = Test.print (Test.to_string 42) in
-      7 |   let () = Test.print Test.nl in
+    File "./test_print.mligo", line 8, characters 11-21:
+      7 |   let () = Test.print (Test.to_string 42) in
+      8 |   let () = Test.print Test.nl in
                      ^^^^^^^^^^
-      8 |   Test.to_string (true, 42n)
+      9 |   Test.to_string (true, 42n)
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `IO.print` from `Test.Next` is encouraged for a smoother migration.
 
-    File "./test_print.mligo", line 7, characters 22-29:
-      6 |   let () = Test.print (Test.to_string 42) in
-      7 |   let () = Test.print Test.nl in
+    File "./test_print.mligo", line 8, characters 22-29:
+      7 |   let () = Test.print (Test.to_string 42) in
+      8 |   let () = Test.print Test.nl in
                                 ^^^^^^^
-      8 |   Test.to_string (true, 42n)
+      9 |   Test.to_string (true, 42n)
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `String.nl` from `Test.Next` is encouraged for a smoother migration.
 
-    File "./test_print.mligo", line 8, characters 2-16:
-      7 |   let () = Test.print Test.nl in
-      8 |   Test.to_string (true, 42n)
+    File "./test_print.mligo", line 9, characters 2-16:
+      8 |   let () = Test.print Test.nl in
+      9 |   Test.to_string (true, 42n)
             ^^^^^^^^^^^^^^
     :
     Warning: deprecated value.
@@ -6176,60 +6176,60 @@ let%expect_test _ =
 
     edpktom5rsehpEY6Kp2NShwsnpaaEjWxKFMJ3Rjp99VMJuHS93wxD6
     Everything at the top-level was executed.
-    - test exited with value Success (1720n). |}]
+    - test exited with value Success (1949n). |}]
 
 let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "test_tickets_and_bigmaps.mligo" ];
   [%expect
     {|
-    File "./test_tickets_and_bigmaps.mligo", line 40, characters 11-27:
-     39 | let test_one =
-     40 |   let () = Test.reset_state 2n ([] : tez list) in
+    File "./test_tickets_and_bigmaps.mligo", line 41, characters 11-27:
+     40 | let test_one =
+     41 |   let () = Test.reset_state 2n ([] : tez list) in
                      ^^^^^^^^^^^^^^^^
-     41 |   let sender_ = Test.nth_bootstrap_account 1 in
+     42 |   let sender_ = Test.nth_bootstrap_account 1 in
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `State.reset` from `Test.Next` is encouraged for a smoother migration.
 
-    File "./test_tickets_and_bigmaps.mligo", line 41, characters 16-42:
-     40 |   let () = Test.reset_state 2n ([] : tez list) in
-     41 |   let sender_ = Test.nth_bootstrap_account 1 in
+    File "./test_tickets_and_bigmaps.mligo", line 42, characters 16-42:
+     41 |   let () = Test.reset_state 2n ([] : tez list) in
+     42 |   let sender_ = Test.nth_bootstrap_account 1 in
                           ^^^^^^^^^^^^^^^^^^^^^^^^^^
-     42 |   let () = Test.set_source sender_ in
+     43 |   let () = Test.set_source sender_ in
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Account.address` from `Test.Next` is encouraged for a smoother migration.
 
-    File "./test_tickets_and_bigmaps.mligo", line 42, characters 11-26:
-     41 |   let sender_ = Test.nth_bootstrap_account 1 in
-     42 |   let () = Test.set_source sender_ in
+    File "./test_tickets_and_bigmaps.mligo", line 43, characters 11-26:
+     42 |   let sender_ = Test.nth_bootstrap_account 1 in
+     43 |   let () = Test.set_source sender_ in
                      ^^^^^^^^^^^^^^^
-     43 |
+     44 |
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `State.set_source` from `Test.Next` is encouraged for a smoother migration.
 
-    File "./test_tickets_and_bigmaps.mligo", line 51, characters 13-27:
-     50 |
-     51 |   let orig = Test.originate (contract_of C) init_storage 0mutez in
+    File "./test_tickets_and_bigmaps.mligo", line 52, characters 13-27:
+     51 |
+     52 |   let orig = Test.originate (contract_of C) init_storage 0mutez in
                        ^^^^^^^^^^^^^^
-     52 |   let r = Test.transfer orig.addr (Main ()) 1tez in
+     53 |   let r = Test.transfer orig.addr (Main ()) 1tez in
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Originate.contract` from `Test.Next` is encouraged for a smoother migration.
 
-    File "./test_tickets_and_bigmaps.mligo", line 52, characters 10-23:
-     51 |   let orig = Test.originate (contract_of C) init_storage 0mutez in
-     52 |   let r = Test.transfer orig.addr (Main ()) 1tez in
+    File "./test_tickets_and_bigmaps.mligo", line 53, characters 10-23:
+     52 |   let orig = Test.originate (contract_of C) init_storage 0mutez in
+     53 |   let r = Test.transfer orig.addr (Main ()) 1tez in
                     ^^^^^^^^^^^^^
-     53 |   Test.log (r)
+     54 |   Test.log (r)
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.transfer` from `Test.Next` is encouraged for a smoother migration.
 
-    File "./test_tickets_and_bigmaps.mligo", line 53, characters 2-10:
-     52 |   let r = Test.transfer orig.addr (Main ()) 1tez in
-     53 |   Test.log (r)
+    File "./test_tickets_and_bigmaps.mligo", line 54, characters 2-10:
+     53 |   let r = Test.transfer orig.addr (Main ()) 1tez in
+     54 |   Test.log (r)
             ^^^^^^^^
     :
     Warning: deprecated value.
@@ -7441,6 +7441,7 @@ let%expect_test _ =
     An uncaught error occured:
     Failwith: "failed assertion"
     Trace:
+    File "../../test/contracts/negative//interpreter_tests/test_failure2.mligo", line 2, characters 4-16 ,
     File "../../test/contracts/negative//interpreter_tests/test_failure2.mligo", line 2, characters 4-16 ,
     File "../../test/contracts/negative//interpreter_tests/test_failure2.mligo", line 2, characters 4-16 |}]
 

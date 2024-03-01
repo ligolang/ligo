@@ -34,7 +34,9 @@ let main (p : parameter) (s : storage) : operation list * storage =
     | Mint mint ->
         begin
           assert (Tezos.get_sender () = s.admin);
-          let ticket = Option.unopt (Tezos.create_ticket () mint.amount) in
+          let ticket =
+            Option.value_with_error
+              "option is None" (Tezos.create_ticket () mint.amount) in
           let op = Tezos.transaction ticket 0mutez mint.destination in
           ([op], s)
         end

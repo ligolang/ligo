@@ -20,11 +20,177 @@ let%expect_test _ =
 
 let%expect_test _ =
   run_ligo_good [ "info"; "measure-contract"; contract "cameligo/ticket_record.mligo" ];
-  [%expect {| 517 bytes |}]
+  [%expect
+    {|
+    File "../../test/contracts/top_level_patterns/contracts/cameligo/ticket_record.mligo", line 4, characters 12-24:
+      3 | let { a = a1 ; b = b1 ; c = c1 }
+      4 |     = { a = Option.unopt (Tezos.create_ticket 1 10n)
+                      ^^^^^^^^^^^^
+      5 |       ; b = Option.unopt (Tezos.create_ticket "one" 10n)
+    :
+    Warning: deprecated value.
+    Use `Option.value_with_error` instead.
+
+    File "../../test/contracts/top_level_patterns/contracts/cameligo/ticket_record.mligo", line 5, characters 12-24:
+      4 |     = { a = Option.unopt (Tezos.create_ticket 1 10n)
+      5 |       ; b = Option.unopt (Tezos.create_ticket "one" 10n)
+                      ^^^^^^^^^^^^
+      6 |       ; c = Option.unopt (Tezos.create_ticket 1n 10n)
+    :
+    Warning: deprecated value.
+    Use `Option.value_with_error` instead.
+
+    File "../../test/contracts/top_level_patterns/contracts/cameligo/ticket_record.mligo", line 6, characters 12-24:
+      5 |       ; b = Option.unopt (Tezos.create_ticket "one" 10n)
+      6 |       ; c = Option.unopt (Tezos.create_ticket 1n 10n)
+                      ^^^^^^^^^^^^
+      7 |       }
+    :
+    Warning: deprecated value.
+    Use `Option.value_with_error` instead.
+
+    File "../../test/contracts/top_level_patterns/contracts/cameligo/ticket_record.mligo", line 10, characters 12-24:
+      9 | let { a = a2 ; c = c2 ; b = b2 }
+     10 |     = { a = Option.unopt (Tezos.create_ticket 2 10n)
+                      ^^^^^^^^^^^^
+     11 |       ; b = Option.unopt (Tezos.create_ticket "TWO" 10n)
+    :
+    Warning: deprecated value.
+    Use `Option.value_with_error` instead.
+
+    File "../../test/contracts/top_level_patterns/contracts/cameligo/ticket_record.mligo", line 11, characters 12-24:
+     10 |     = { a = Option.unopt (Tezos.create_ticket 2 10n)
+     11 |       ; b = Option.unopt (Tezos.create_ticket "TWO" 10n)
+                      ^^^^^^^^^^^^
+     12 |       ; c = Option.unopt (Tezos.create_ticket 3n 10n)
+    :
+    Warning: deprecated value.
+    Use `Option.value_with_error` instead.
+
+    File "../../test/contracts/top_level_patterns/contracts/cameligo/ticket_record.mligo", line 12, characters 12-24:
+     11 |       ; b = Option.unopt (Tezos.create_ticket "TWO" 10n)
+     12 |       ; c = Option.unopt (Tezos.create_ticket 3n 10n)
+                      ^^^^^^^^^^^^
+     13 |       }
+    :
+    Warning: deprecated value.
+    Use `Option.value_with_error` instead.
+
+    File "../../test/contracts/top_level_patterns/contracts/cameligo/ticket_record.mligo", line 20, characters 13-25:
+     19 |   = [],
+     20 |     (let a = Option.unopt (Tezos.join_tickets (a1, a2)) in
+                       ^^^^^^^^^^^^
+     21 |     let b  = Option.unopt (Tezos.join_tickets (b1, b2)) in
+    :
+    Warning: deprecated value.
+    Use `Option.value_with_error` instead.
+
+    File "../../test/contracts/top_level_patterns/contracts/cameligo/ticket_record.mligo", line 21, characters 13-25:
+     20 |     (let a = Option.unopt (Tezos.join_tickets (a1, a2)) in
+     21 |     let b  = Option.unopt (Tezos.join_tickets (b1, b2)) in
+                       ^^^^^^^^^^^^
+     22 |     let c  = Option.unopt (Tezos.join_tickets (c1, c2)) in
+    :
+    Warning: deprecated value.
+    Use `Option.value_with_error` instead.
+
+    File "../../test/contracts/top_level_patterns/contracts/cameligo/ticket_record.mligo", line 22, characters 13-25:
+     21 |     let b  = Option.unopt (Tezos.join_tickets (b1, b2)) in
+     22 |     let c  = Option.unopt (Tezos.join_tickets (c1, c2)) in
+                       ^^^^^^^^^^^^
+     23 |     (a, b, c))
+    :
+    Warning: deprecated value.
+    Use `Option.value_with_error` instead.
+
+    517 bytes |}]
 
 let%expect_test _ =
   run_ligo_good [ "info"; "measure-contract"; contract "cameligo/ticket_tuple.mligo" ];
-  [%expect {| 517 bytes |}]
+  [%expect
+    {|
+    File "../../test/contracts/top_level_patterns/contracts/cameligo/ticket_tuple.mligo", line 2, characters 6-18:
+      1 | let (a1, a2, a3)
+      2 |   = ( Option.unopt (Tezos.create_ticket 1 10n)
+                ^^^^^^^^^^^^
+      3 |     , Option.unopt (Tezos.create_ticket "one" 10n)
+    :
+    Warning: deprecated value.
+    Use `Option.value_with_error` instead.
+
+    File "../../test/contracts/top_level_patterns/contracts/cameligo/ticket_tuple.mligo", line 3, characters 6-18:
+      2 |   = ( Option.unopt (Tezos.create_ticket 1 10n)
+      3 |     , Option.unopt (Tezos.create_ticket "one" 10n)
+                ^^^^^^^^^^^^
+      4 |     , Option.unopt (Tezos.create_ticket 1n 10n)
+    :
+    Warning: deprecated value.
+    Use `Option.value_with_error` instead.
+
+    File "../../test/contracts/top_level_patterns/contracts/cameligo/ticket_tuple.mligo", line 4, characters 6-18:
+      3 |     , Option.unopt (Tezos.create_ticket "one" 10n)
+      4 |     , Option.unopt (Tezos.create_ticket 1n 10n)
+                ^^^^^^^^^^^^
+      5 |     )
+    :
+    Warning: deprecated value.
+    Use `Option.value_with_error` instead.
+
+    File "../../test/contracts/top_level_patterns/contracts/cameligo/ticket_tuple.mligo", line 8, characters 6-18:
+      7 | let (b1, b2, b3)
+      8 |   = ( Option.unopt (Tezos.create_ticket 2 10n)
+                ^^^^^^^^^^^^
+      9 |     , Option.unopt (Tezos.create_ticket "TWO" 10n)
+    :
+    Warning: deprecated value.
+    Use `Option.value_with_error` instead.
+
+    File "../../test/contracts/top_level_patterns/contracts/cameligo/ticket_tuple.mligo", line 9, characters 6-18:
+      8 |   = ( Option.unopt (Tezos.create_ticket 2 10n)
+      9 |     , Option.unopt (Tezos.create_ticket "TWO" 10n)
+                ^^^^^^^^^^^^
+     10 |     , Option.unopt (Tezos.create_ticket 3n 10n)
+    :
+    Warning: deprecated value.
+    Use `Option.value_with_error` instead.
+
+    File "../../test/contracts/top_level_patterns/contracts/cameligo/ticket_tuple.mligo", line 10, characters 6-18:
+      9 |     , Option.unopt (Tezos.create_ticket "TWO" 10n)
+     10 |     , Option.unopt (Tezos.create_ticket 3n 10n)
+                ^^^^^^^^^^^^
+     11 |     )
+    :
+    Warning: deprecated value.
+    Use `Option.value_with_error` instead.
+
+    File "../../test/contracts/top_level_patterns/contracts/cameligo/ticket_tuple.mligo", line 18, characters 13-25:
+     17 |   = [],
+     18 |     (let a = Option.unopt (Tezos.join_tickets (a1, b1)) in
+                       ^^^^^^^^^^^^
+     19 |     let b  = Option.unopt (Tezos.join_tickets (a2, b2)) in
+    :
+    Warning: deprecated value.
+    Use `Option.value_with_error` instead.
+
+    File "../../test/contracts/top_level_patterns/contracts/cameligo/ticket_tuple.mligo", line 19, characters 13-25:
+     18 |     (let a = Option.unopt (Tezos.join_tickets (a1, b1)) in
+     19 |     let b  = Option.unopt (Tezos.join_tickets (a2, b2)) in
+                       ^^^^^^^^^^^^
+     20 |     let c  = Option.unopt (Tezos.join_tickets (a3, b3)) in
+    :
+    Warning: deprecated value.
+    Use `Option.value_with_error` instead.
+
+    File "../../test/contracts/top_level_patterns/contracts/cameligo/ticket_tuple.mligo", line 20, characters 13-25:
+     19 |     let b  = Option.unopt (Tezos.join_tickets (a2, b2)) in
+     20 |     let c  = Option.unopt (Tezos.join_tickets (a3, b3)) in
+                       ^^^^^^^^^^^^
+     21 |     (a, b, c))
+    :
+    Warning: deprecated value.
+    Use `Option.value_with_error` instead.
+
+    517 bytes |}]
 
 let%expect_test _ =
   run_ligo_good [ "info"; "measure-contract"; contract "cameligo/tuple_record.mligo" ];
@@ -371,6 +537,23 @@ let%expect_test _ =
     :
     Warning: variable cannot be used more than once.
 
+    File "../../test/contracts/top_level_patterns/negative/cameligo/ticket_record.mligo", line 3, characters 15-27:
+      2 |
+      3 | let {b} = {b = Option.unopt (Tezos.create_ticket "one" 10n)}
+                         ^^^^^^^^^^^^
+      4 |
+    :
+    Warning: deprecated value.
+    Use `Option.value_with_error` instead.
+
+    File "../../test/contracts/top_level_patterns/negative/cameligo/ticket_record.mligo", line 9, characters 6-18:
+      8 | let main (_ : unit) (_ : storage) : operation list * storage =
+      9 |   [], Option.unopt (Tezos.join_tickets (b, b))
+                ^^^^^^^^^^^^
+    :
+    Warning: deprecated value.
+    Use `Option.value_with_error` instead.
+
     File "../../test/contracts/top_level_patterns/negative/cameligo/ticket_record.mligo", line 3, characters 5-6:
       2 |
       3 | let {b} = {b = Option.unopt (Tezos.create_ticket "one" 10n)}
@@ -378,6 +561,23 @@ let%expect_test _ =
       4 |
     :
     Warning: variable cannot be used more than once.
+
+    File "../../test/contracts/top_level_patterns/negative/cameligo/ticket_record.mligo", line 3, characters 15-27:
+      2 |
+      3 | let {b} = {b = Option.unopt (Tezos.create_ticket "one" 10n)}
+                         ^^^^^^^^^^^^
+      4 |
+    :
+    Warning: deprecated value.
+    Use `Option.value_with_error` instead.
+
+    File "../../test/contracts/top_level_patterns/negative/cameligo/ticket_record.mligo", line 9, characters 6-18:
+      8 | let main (_ : unit) (_ : storage) : operation list * storage =
+      9 |   [], Option.unopt (Tezos.join_tickets (b, b))
+                ^^^^^^^^^^^^
+    :
+    Warning: deprecated value.
+    Use `Option.value_with_error` instead.
     { parameter unit ;
       storage (ticket string) ;
       code { DROP ;
@@ -409,12 +609,44 @@ let%expect_test _ =
     :
     Warning: variable cannot be used more than once.
 
+    File "../../test/contracts/top_level_patterns/negative/cameligo/ticket_tuple.mligo", line 1, characters 14-26:
+      1 | let (b, _) = (Option.unopt (Tezos.create_ticket "one" 10n), 1)
+                        ^^^^^^^^^^^^
+      2 |
+    :
+    Warning: deprecated value.
+    Use `Option.value_with_error` instead.
+
+    File "../../test/contracts/top_level_patterns/negative/cameligo/ticket_tuple.mligo", line 7, characters 6-18:
+      6 | let main (_ : unit) (_ : storage) : operation list * storage =
+      7 |   [], Option.unopt (Tezos.join_tickets (b, b))
+                ^^^^^^^^^^^^
+    :
+    Warning: deprecated value.
+    Use `Option.value_with_error` instead.
+
     File "../../test/contracts/top_level_patterns/negative/cameligo/ticket_tuple.mligo", line 1, characters 5-6:
       1 | let (b, _) = (Option.unopt (Tezos.create_ticket "one" 10n), 1)
                ^
       2 |
     :
     Warning: variable cannot be used more than once.
+
+    File "../../test/contracts/top_level_patterns/negative/cameligo/ticket_tuple.mligo", line 1, characters 14-26:
+      1 | let (b, _) = (Option.unopt (Tezos.create_ticket "one" 10n), 1)
+                        ^^^^^^^^^^^^
+      2 |
+    :
+    Warning: deprecated value.
+    Use `Option.value_with_error` instead.
+
+    File "../../test/contracts/top_level_patterns/negative/cameligo/ticket_tuple.mligo", line 7, characters 6-18:
+      6 | let main (_ : unit) (_ : storage) : operation list * storage =
+      7 |   [], Option.unopt (Tezos.join_tickets (b, b))
+                ^^^^^^^^^^^^
+    :
+    Warning: deprecated value.
+    Use `Option.value_with_error` instead.
     { parameter unit ;
       storage (ticket string) ;
       code { DROP ;

@@ -448,17 +448,18 @@ let%expect_test _ =
                              GT ;
                              AND ;
                              IF { PUSH string "UnsafeAllowanceChange" ; FAILWITH } {} ;
-                             DIG 3 ;
-                             DIG 3 ;
+                             DIG 2 ;
                              CDR ;
                              DIG 3 ;
+                             DIG 3 ;
                              PUSH nat 0 ;
-                             DUP 3 ;
+                             DUP 4 ;
                              COMPARE ;
                              EQ ;
-                             IF { SWAP ; DROP ; NONE nat } { SWAP ; SOME } ;
+                             IF { DIG 2 ; DROP ; NONE nat } { DIG 2 ; SOME } ;
                              DIG 3 ;
-                             UPDATE ;
+                             GET_AND_UPDATE ;
+                             DROP ;
                              UPDATE 3 }
                            { DUP 2 ;
                              GET 3 ;
@@ -490,7 +491,8 @@ let%expect_test _ =
                                   EQ ;
                                   IF { SWAP ; DROP ; NONE nat } { SWAP ; SOME } ;
                                   DIG 2 ;
-                                  UPDATE } ;
+                                  GET_AND_UPDATE ;
+                                  DROP } ;
                              DUP 3 ;
                              GET 4 ;
                              DUP 3 ;
@@ -509,7 +511,8 @@ let%expect_test _ =
                              IF { SWAP ; DROP ; NONE nat } { SWAP ; SOME } ;
                              DUP 4 ;
                              CAR ;
-                             UPDATE ;
+                             GET_AND_UPDATE ;
+                             DROP ;
                              DUP 3 ;
                              GET 4 ;
                              DUP 2 ;
@@ -527,7 +530,8 @@ let%expect_test _ =
                              IF { DIG 2 ; DROP ; NONE nat } { DIG 2 ; SOME } ;
                              DIG 4 ;
                              GET 3 ;
-                             UPDATE ;
+                             GET_AND_UPDATE ;
+                             DROP ;
                              UPDATE 1 ;
                              SWAP ;
                              UPDATE 3 } ;
@@ -728,9 +732,8 @@ let%expect_test _ =
                    { DROP ; DUP 2 ; PUSH nat 1 ; DIG 3 ; GET 5 ; ADD ; UPDATE 5 } ;
                  DUP ;
                  GET 7 ;
-                 DIG 2 ;
                  PUSH bool True ;
-                 SWAP ;
+                 DIG 3 ;
                  UPDATE ;
                  UPDATE 7 }
                { SWAP ;
@@ -877,7 +880,9 @@ let%expect_test _ =
                  CDR ;
                  UNIT ;
                  TICKET ;
-                 IF_NONE { PUSH string "option is None" ; FAILWITH } {} ;
+                 PUSH string "option is None" ;
+                 SWAP ;
+                 IF_NONE { FAILWITH } { SWAP ; DROP } ;
                  SWAP ;
                  CAR ;
                  PUSH mutez 0 ;
@@ -1056,6 +1061,15 @@ let%expect_test _ =
   run_ligo_bad [ "compile"; "contract"; bad_contract "self_in_lambdarec.mligo" ];
   [%expect
     {|
+      File "../../test/contracts/negative/self_in_lambdarec.mligo", line 7, characters 7-19:
+        6 |     Tezos.address
+        7 |       (Option.unopt (Tezos.get_contract_opt addr : int contract option))
+                   ^^^^^^^^^^^^
+        8 |
+      :
+      Warning: deprecated value.
+      Use `Option.value_with_error` instead.
+
       "Tezos.self" must be used directly and cannot be used via another function. |}]
 
 let%expect_test _ =
@@ -1142,7 +1156,7 @@ File "../../test/contracts/negative/create_contract_toplevel.mligo", line 5, cha
       ^^^^^^^^
  10 |   in
 
-Not all free variables could be inlined in Tezos.create_contract usage: gen#358. |}];
+Not all free variables could be inlined in Tezos.create_contract usage: gen#384. |}];
   run_ligo_good [ "compile"; "contract"; contract "create_contract_var.mligo" ];
   [%expect
     {|
@@ -1234,7 +1248,7 @@ Not all free variables could be inlined in Tezos.create_contract usage: gen#358.
           ^^^^^^^^^^
      15 |   ([toto.0], store)
 
-    Not all free variables could be inlined in Tezos.create_contract usage: gen#359. |}];
+    Not all free variables could be inlined in Tezos.create_contract usage: gen#385. |}];
   run_ligo_bad [ "compile"; "contract"; bad_contract "create_contract_no_inline.mligo" ];
   [%expect
     {|
@@ -1297,7 +1311,7 @@ Not all free variables could be inlined in Tezos.create_contract usage: gen#358.
           ^^^^^^^
      15 |   let toto : operation list = [op] in
 
-    Not all free variables could be inlined in Tezos.create_contract usage: foo#373. |}];
+    Not all free variables could be inlined in Tezos.create_contract usage: foo#399. |}];
   run_ligo_good [ "compile"; "contract"; contract "create_contract.mligo" ];
   [%expect
     {|
@@ -2631,6 +2645,15 @@ let%expect_test _ =
   run_ligo_good [ "compile"; "contract"; contract "get_entrypoint.jsligo" ];
   [%expect
     {|
+    File "../../test/contracts/get_entrypoint.jsligo", line 3, characters 26-38:
+      2 | const main = (_u : unit, _b : address) : [list <operation>, address] => {
+      3 |   let c : contract<int> = Option.unopt(Tezos.get_entrypoint_opt ("%foo", Tezos.get_sender()));
+                                    ^^^^^^^^^^^^
+      4 |   return [list([]) as list <operation>, Tezos.address(c)];
+    :
+    Warning: deprecated value.
+    Use `Option.value_with_error` instead.
+
     { parameter unit ;
       storage address ;
       code { DROP ;
@@ -3021,17 +3044,18 @@ let%expect_test _ =
                              GT ;
                              AND ;
                              IF { PUSH string "UnsafeAllowanceChange" ; FAILWITH } {} ;
-                             DIG 3 ;
-                             DIG 3 ;
+                             DIG 2 ;
                              CDR ;
                              DIG 3 ;
+                             DIG 3 ;
                              PUSH nat 0 ;
-                             DUP 3 ;
+                             DUP 4 ;
                              COMPARE ;
                              EQ ;
-                             IF { SWAP ; DROP ; NONE nat } { SWAP ; SOME } ;
+                             IF { DIG 2 ; DROP ; NONE nat } { DIG 2 ; SOME } ;
                              DIG 3 ;
-                             UPDATE ;
+                             GET_AND_UPDATE ;
+                             DROP ;
                              UPDATE 3 }
                            { DUP 2 ;
                              GET 3 ;
@@ -3063,7 +3087,8 @@ let%expect_test _ =
                                   EQ ;
                                   IF { SWAP ; DROP ; NONE nat } { SWAP ; SOME } ;
                                   DIG 2 ;
-                                  UPDATE } ;
+                                  GET_AND_UPDATE ;
+                                  DROP } ;
                              DUP 3 ;
                              GET 4 ;
                              DUP 3 ;
@@ -3082,7 +3107,8 @@ let%expect_test _ =
                              IF { SWAP ; DROP ; NONE nat } { SWAP ; SOME } ;
                              DUP 4 ;
                              CAR ;
-                             UPDATE ;
+                             GET_AND_UPDATE ;
+                             DROP ;
                              DUP 3 ;
                              GET 4 ;
                              DUP 2 ;
@@ -3100,7 +3126,8 @@ let%expect_test _ =
                              IF { DIG 2 ; DROP ; NONE nat } { DIG 2 ; SOME } ;
                              DIG 4 ;
                              GET 3 ;
-                             UPDATE ;
+                             GET_AND_UPDATE ;
+                             DROP ;
                              UPDATE 1 ;
                              SWAP ;
                              UPDATE 3 } ;
@@ -3122,6 +3149,15 @@ let%expect_test _ =
   run_ligo_good [ "compile"; "contract"; contract "pokeGame.jsligo" ];
   [%expect
     {|
+    File "../../test/contracts/pokeGame.jsligo", line 102, characters 31-43:
+    101 |   } else {
+    102 |     const t : ticket<string> = Option.unopt(Tezos.create_ticket("can_poke", ticketCount));
+                                         ^^^^^^^^^^^^
+    103 |     return [
+    :
+    Warning: deprecated value.
+    Use `Option.value_with_error` instead.
+
     { parameter
         (or (pair %init address nat) (or (address %pokeAndGetFeedback) (unit %poke))) ;
       storage
@@ -3145,12 +3181,11 @@ let%expect_test _ =
                       IF_NONE { PUSH string "option is None" ; FAILWITH } {} ;
                       DIG 3 ;
                       SWAP ;
+                      SOME ;
                       DIG 4 ;
                       CAR ;
-                      SWAP ;
-                      SOME ;
-                      SWAP ;
-                      UPDATE } ;
+                      GET_AND_UPDATE ;
+                      DROP } ;
                  DUG 2 ;
                  PAIR 3 ;
                  NIL operation ;
@@ -3184,10 +3219,11 @@ let%expect_test _ =
                              DIG 4 ;
                              PAIR ;
                              SOURCE ;
-                             SWAP ;
+                             DUG 2 ;
                              SOME ;
-                             SWAP ;
-                             UPDATE ;
+                             DIG 2 ;
+                             GET_AND_UPDATE ;
+                             DROP ;
                              PAIR 3 ;
                              NIL operation ;
                              PAIR } } }
@@ -3207,10 +3243,11 @@ let%expect_test _ =
                          SELF_ADDRESS ;
                          PAIR ;
                          SOURCE ;
-                         SWAP ;
+                         DUG 2 ;
                          SOME ;
-                         SWAP ;
-                         UPDATE ;
+                         DIG 2 ;
+                         GET_AND_UPDATE ;
+                         DROP ;
                          PAIR 3 ;
                          NIL operation ;
                          PAIR } } } } ;
@@ -3218,7 +3255,18 @@ let%expect_test _ =
 
 let%expect_test _ =
   run_ligo_good [ "compile"; "parameter"; contract "pokeGame.jsligo"; "Poke()" ];
-  [%expect {| (Right (Right Unit)) |}]
+  [%expect
+    {|
+    File "../../test/contracts/pokeGame.jsligo", line 102, characters 31-43:
+    101 |   } else {
+    102 |     const t : ticket<string> = Option.unopt(Tezos.create_ticket("can_poke", ticketCount));
+                                         ^^^^^^^^^^^^
+    103 |     return [
+    :
+    Warning: deprecated value.
+    Use `Option.value_with_error` instead.
+
+    (Right (Right Unit)) |}]
 
 let%expect_test _ =
   run_ligo_good [ "compile"; "contract"; contract "contract_of.jsligo" ];

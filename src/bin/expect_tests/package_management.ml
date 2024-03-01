@@ -15,7 +15,7 @@ let%expect_test _ =
   [%expect
     {|
     Everything at the top-level was executed.
-    - test exited with value KT1Cc2Cru5HktLnEjK9Gn39fYrjHw1YLdnUB(None). |}]
+    - test exited with value KT1V86EzBTi8Z9zjbBiPVcuMh2U4tFg7vS6G(None). |}]
 
 let%expect_test _ =
   run_ligo_good [ "install"; "--project-root"; "complex_project_with_one_dependency" ];

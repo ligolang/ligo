@@ -137,6 +137,23 @@ let%expect_test _ =
     :
     Warning: variable cannot be used more than once.
 
+    File "../../test/contracts/top_level_patterns/negative/jsligo/ticket_record.jsligo", line 3, characters 19-31:
+      2 |
+      3 | const { b } = { b: Option.unopt(Tezos.create_ticket("one", 10 as nat)) };
+                             ^^^^^^^^^^^^
+      4 |
+    :
+    Warning: deprecated value.
+    Use `Option.value_with_error` instead.
+
+    File "../../test/contracts/top_level_patterns/negative/jsligo/ticket_record.jsligo", line 9, characters 13-25:
+      8 | const main = (_p: unit, _s: storage): [list<operation>, storage] =>
+      9 |   [list([]), Option.unopt(Tezos.join_tickets([b, b]))];
+                       ^^^^^^^^^^^^
+    :
+    Warning: deprecated value.
+    Use `Option.value_with_error` instead.
+
     File "../../test/contracts/top_level_patterns/negative/jsligo/ticket_record.jsligo", line 3, characters 8-9:
       2 |
       3 | const { b } = { b: Option.unopt(Tezos.create_ticket("one", 10 as nat)) };
@@ -144,6 +161,23 @@ let%expect_test _ =
       4 |
     :
     Warning: variable cannot be used more than once.
+
+    File "../../test/contracts/top_level_patterns/negative/jsligo/ticket_record.jsligo", line 3, characters 19-31:
+      2 |
+      3 | const { b } = { b: Option.unopt(Tezos.create_ticket("one", 10 as nat)) };
+                             ^^^^^^^^^^^^
+      4 |
+    :
+    Warning: deprecated value.
+    Use `Option.value_with_error` instead.
+
+    File "../../test/contracts/top_level_patterns/negative/jsligo/ticket_record.jsligo", line 9, characters 13-25:
+      8 | const main = (_p: unit, _s: storage): [list<operation>, storage] =>
+      9 |   [list([]), Option.unopt(Tezos.join_tickets([b, b]))];
+                       ^^^^^^^^^^^^
+    :
+    Warning: deprecated value.
+    Use `Option.value_with_error` instead.
     { parameter unit ;
       storage (ticket string) ;
       code { DROP ;
@@ -175,12 +209,44 @@ let%expect_test _ =
     :
     Warning: variable cannot be used more than once.
 
+    File "../../test/contracts/top_level_patterns/negative/jsligo/ticket_tuple.jsligo", line 1, characters 16-28:
+      1 | const [b, _] = [Option.unopt(Tezos.create_ticket("one", 10 as nat)), 1];
+                          ^^^^^^^^^^^^
+      2 |
+    :
+    Warning: deprecated value.
+    Use `Option.value_with_error` instead.
+
+    File "../../test/contracts/top_level_patterns/negative/jsligo/ticket_tuple.jsligo", line 7, characters 13-25:
+      6 | const main = (_p: unit, _s: storage): [list<operation>, storage] =>
+      7 |   [list([]), Option.unopt(Tezos.join_tickets([b, b]))];
+                       ^^^^^^^^^^^^
+    :
+    Warning: deprecated value.
+    Use `Option.value_with_error` instead.
+
     File "../../test/contracts/top_level_patterns/negative/jsligo/ticket_tuple.jsligo", line 1, characters 7-8:
       1 | const [b, _] = [Option.unopt(Tezos.create_ticket("one", 10 as nat)), 1];
                  ^
       2 |
     :
     Warning: variable cannot be used more than once.
+
+    File "../../test/contracts/top_level_patterns/negative/jsligo/ticket_tuple.jsligo", line 1, characters 16-28:
+      1 | const [b, _] = [Option.unopt(Tezos.create_ticket("one", 10 as nat)), 1];
+                          ^^^^^^^^^^^^
+      2 |
+    :
+    Warning: deprecated value.
+    Use `Option.value_with_error` instead.
+
+    File "../../test/contracts/top_level_patterns/negative/jsligo/ticket_tuple.jsligo", line 7, characters 13-25:
+      6 | const main = (_p: unit, _s: storage): [list<operation>, storage] =>
+      7 |   [list([]), Option.unopt(Tezos.join_tickets([b, b]))];
+                       ^^^^^^^^^^^^
+    :
+    Warning: deprecated value.
+    Use `Option.value_with_error` instead.
     { parameter unit ;
       storage (ticket string) ;
       code { DROP ;

@@ -6,8 +6,7 @@ open Region
 type 'a fold_control = 'a Cst_shared.Fold.fold_control
 
 type _ sing =
-    S_append : append sing
-  | S_arrow : arrow sing
+    S_arrow : arrow sing
   | S_ass : ass sing
   | S_assign : assign sing
   | S_attr : Attr.t sing
@@ -199,7 +198,6 @@ let fold'
 
   and fold : some_node -> unit =
   function (Some_node (node, sing)) -> match sing with
-    S_append -> process @@ node -| S_wrap S_lexeme
   | S_arrow -> process @@ node -| S_wrap S_lexeme
   | S_ass -> process @@ node -| S_wrap S_lexeme
   | S_assign ->

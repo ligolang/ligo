@@ -1557,6 +1557,13 @@ let constant_typer_tbl : (Errors.typer_error, Main_warnings.all) t Const_map.t =
           create
             ~mode_annot:[ Inferred ]
             ~types:[ t_list (t_pair a b ~loc ()) ~loc () ^~> t_big_map a b ~loc () ]) )
+    ; ( C_BIG_SET_LITERAL
+      , of_type
+          (for_all "a"
+          @@ fun a ->
+          create
+            ~mode_annot:[ Inferred ]
+            ~types:[ t_list a ~loc () ^~> t_big_map a (t_unit ~loc ()) ~loc () ]) )
     ; ( C_SET_LITERAL
       , of_type
           (for_all "a"
