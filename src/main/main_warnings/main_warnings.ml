@@ -29,6 +29,7 @@ type all =
   | `Use_meta_ligo of Location.t
   | `Self_ast_aggregated_warning_bad_self_type of
     Ast_aggregated.type_expression * Ast_aggregated.type_expression * Location.t
+  | `Metadata_absent of Location.t
   | `Metadata_cannot_parse of Location.t
   | `Metadata_no_empty_key of Location.t
   | `Metadata_tezos_storage_not_found of Location.t * string
@@ -208,6 +209,12 @@ let pp
         got
         Ast_aggregated.PP.type_expression
         expected
+    | `Metadata_absent loc ->
+      Format.fprintf
+        f
+        "@[<hv>%a@.Warning: Metadata field is not present. @]"
+        snippet_pp
+        loc
     | `Metadata_cannot_parse loc ->
       Format.fprintf
         f
@@ -455,6 +462,10 @@ let to_warning : all -> Simple_utils.Warning.t =
     in
     let content = make_content ~message ~location () in
     make ~stage:"aggregation" ~content
+  | `Metadata_absent location ->
+    let message = Format.sprintf "Metadata field is not present." in
+    let content = make_content ~message ~location () in
+    make ~stage:"metadata_check" ~content
   | `Metadata_cannot_parse location ->
     let message = Format.sprintf "Cannot parse big-map metadata." in
     let content = make_content ~message ~location () in

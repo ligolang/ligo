@@ -9,6 +9,7 @@ let default_test_config : config =
   ; max_line_width = None
   ; completion_implementation = `With_scopes
   ; diagnostics_pull_mode = `OnDocUpdate
+  ; metadata_checks_downloading = false
   }
 
 
@@ -29,6 +30,7 @@ let test_run_session ?(config = default_test_config) (session : 'a Handler.t)
       ; last_project_dir = ref None
       ; mod_res = ref None
       ; normalize
+      ; metadata_download_options = `Unspecified
       }
       session
   in

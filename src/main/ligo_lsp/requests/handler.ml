@@ -35,6 +35,9 @@ type config =
             - [`OnDocumentLinkRequest]: when editor asks us for document links
               (vscode do this automatically after user stops typing)
             - [`OnSave]: when the document was saved *)
+  ; metadata_checks_downloading : bool
+        (** When running metadata checks, whether to download and check
+            mentioned external resources *)
   }
 
 (** We can send diagnostics to user or just save them to list in case of testing *)
@@ -55,6 +58,7 @@ type handler_env =
   ; last_project_dir : Path.t option ref
   ; mod_res : Preprocessor.ModRes.t option ref
   ; normalize : string -> Path.t
+  ; metadata_download_options : Tzip16_storage.download_options
   }
 
 (** Handler monad : allows sending messages to user and reading docs cache *)
@@ -109,6 +113,10 @@ let ask_mod_res : Preprocessor.ModRes.t option ref Handler.t =
 
 
 let ask_normalize : (string -> Path.t) Handler.t = fmap (fun x -> x.normalize) ask
+
+let ask_metadata_download_options : Tzip16_storage.download_options Handler.t =
+  fmap (fun x -> x.metadata_download_options) ask
+
 
 let set_docs_cache (path : Path.t) (data : Ligo_interface.unprepared_file_data)
     : unit Handler.t
@@ -320,6 +328,7 @@ let with_cached_doc
       let@ last_project_dir = ask_last_project_dir in
       let project_root = !last_project_dir in
       let@ syntax = get_syntax_exn path in
+      let@ tzip16_download_options = ask_metadata_download_options in
       let@ ({ definitions; potential_tzip16_storages; _ } as defs_and_diagnostics) =
         with_run_in_IO
         @@ fun { unlift_IO } ->
@@ -327,6 +336,7 @@ let with_cached_doc
           ~project_root
           ~code
           ~logger:(fun ~type_ msg -> unlift_IO @@ send_log_msg ~type_ msg)
+          ~tzip16_download_options
           path
       in
       let@ normalize = ask_normalize in

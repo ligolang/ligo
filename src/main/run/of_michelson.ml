@@ -659,28 +659,33 @@ module Checks = struct
         (struct
           type t = (string, unit) result
 
-          let weight = function
-            | Ok s -> String.length s
-            | Error () -> 1
+          let weight _ = 1
         end)
     (* Simple cache for keeping downloaded data; caps the overall size of data *)
 
-    type cache_option =
+    type cache_state =
       | No_cache
       | Lru_cache of Lru_uri_cache.t
 
-    let use_lru_cache ~(size_in_bytes : int) : cache_option =
-      Lru_cache (Lru_uri_cache.create size_in_bytes)
+    let use_lru_cache () : cache_state =
+      (* Using 1000 as size. Should be sufficient to fit all links in the
+         project, but prevents unlimitted growth in case of repetitive links
+         changes.
+
+         We expect downloaded metadata to be small, a few kilobytes maximum, so
+         overall cache size remains reasonable.
+      *)
+      Lru_cache (Lru_uri_cache.create 1000)
 
 
     type options =
       [ `Unspecified
       | `Disabled
-      | `Enabled of cache_option
+      | `Enabled of cache_state
       ]
 
     let with_cache
-        :  cache_option -> (string -> ('r, unit) Lwt_result.t) -> string
+        :  cache_state -> (string -> ('r, unit) Lwt_result.t) -> string
         -> ('r, unit) Lwt_result.t
       = function
       | No_cache -> Fn.id
@@ -719,7 +724,7 @@ module Checks = struct
       @@ with_cache cache (run ~loc) uri
   end
 
-  let tzip16_check
+  let tzip16_check_metadata
       ~loc
       ~(json_download : Json_download.options)
       ~storage_type
@@ -814,6 +819,27 @@ module Checks = struct
     | _ -> None
 
 
+  let tzip16_check_storage
+      ~raise
+      ~(json_download : Json_download.options)
+      ?(require_metadata_field = true)
+      ~storage_type
+      ~loc
+      (exp : (int, string) Tezos_micheline.Micheline.node)
+      : unit Lwt.t
+    =
+    let open Lwt.Let_syntax in
+    match find_annoted_element "%metadata" storage_type exp with
+    | Some metadata ->
+      let open Simple_utils.Trace in
+      (match%map tzip16_check_metadata ~loc ~json_download ~storage_type metadata with
+      | Ok () -> ()
+      | Error w -> raise.warning w)
+    | None ->
+      Lwt.return
+      @@ if require_metadata_field then raise.warning (`Metadata_absent loc) else ()
+
+
   let storage
       ~raise
       ~(options : Compiler_options.t)
@@ -822,25 +848,18 @@ module Checks = struct
       (exp : (int, string) Tezos_micheline.Micheline.node)
       : unit Lwt.t
     =
-    let open Lwt.Let_syntax in
     if not options.middle_end.no_metadata_check
-    then (
-      match find_annoted_element "%metadata" type_ exp with
-      | Some metadata ->
-        let open Simple_utils.Trace in
-        (match%map
-           tzip16_check
-             ~loc
-             ~json_download:
-               (match options.tools.json_download with
-               | None -> `Unspecified
-               | Some false -> `Disabled
-               | Some true -> `Enabled Json_download.No_cache)
-             ~storage_type:type_
-             metadata
-         with
-        | Ok () -> ()
-        | Error w -> raise.warning w)
-      | None -> Lwt.return ())
+    then
+      tzip16_check_storage
+        ~raise
+        ~require_metadata_field:false
+        ~json_download:
+          (match options.tools.json_download with
+          | None -> `Unspecified
+          | Some false -> `Disabled
+          | Some true -> `Enabled Json_download.No_cache)
+        ~storage_type:type_
+        ~loc
+        exp
     else Lwt.return ()
 end

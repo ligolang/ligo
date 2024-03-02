@@ -13,6 +13,7 @@ let default_config : config =
   ; max_line_width = None
   ; completion_implementation = `With_scopes
   ; diagnostics_pull_mode = `OnDocumentLinkRequest
+  ; metadata_checks_downloading = true
   }
 
 
@@ -103,6 +104,8 @@ class lsp_server (capability_mode : capability_mode) =
           Path.from_absolute file)
     [@@alert "-from_absolute_performance"]
 
+    val mutable metadata_download_options : Tzip16_storage.download_options = `Unspecified
+
     (** Stores the path to the last ligo.json file, if found. *)
     val last_project_dir : Path.t option ref = ref None
 
@@ -117,6 +120,7 @@ class lsp_server (capability_mode : capability_mode) =
           ; last_project_dir
           ; mod_res
           ; normalize = self#normalize
+          ; metadata_download_options
           }
 
     method on_doc_with_handler ~process_immediately ?changes ~version file content =
@@ -230,7 +234,18 @@ class lsp_server (capability_mode : capability_mode) =
                | Some "on document link request" -> `OnDocumentLinkRequest
                | Some "on save" -> `OnSave
                | Some _ | None -> default_config.diagnostics_pull_mode)
+           ; metadata_checks_downloading =
+               (ligo_language_server
+               |> member "metadataChecksDownloading"
+               |> function
+               | `Bool v -> v
+               | _ -> default_config.metadata_checks_downloading)
            };
+      let () =
+        metadata_download_options
+          <- Tzip16_storage.create_download_options
+               ~enabled:config.metadata_checks_downloading
+      in
       let* () =
         match config.diagnostics_pull_mode with
         | `OnDocumentLinkRequest

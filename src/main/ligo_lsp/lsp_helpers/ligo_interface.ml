@@ -95,9 +95,10 @@ let get_defs : project_root:Path.t option -> code:string -> Path.t -> definition
 
 let get_defs_and_diagnostics
     :  project_root:Path.t option -> code:string
-    -> logger:(type_:Lsp.Types.MessageType.t -> string -> unit Lwt.t) -> Path.t
+    -> logger:(type_:Lsp.Types.MessageType.t -> string -> unit Lwt.t)
+    -> tzip16_download_options:Tzip16_storage.download_options -> Path.t
     -> defs_and_diagnostics Lwt.t
   =
- fun ~project_root ~code ~logger path ->
+ fun ~project_root ~code ~logger ~tzip16_download_options path ->
   let options = lsp_raw_options ~project_root in
-  get_defs_and_diagnostics ~logger options path code
+  get_defs_and_diagnostics ~logger ~tzip16_download_options options path code

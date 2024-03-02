@@ -8,6 +8,7 @@
  (libraries
   core_unix.filename_unix
   ligo_api
+  ligo_run
   linol
   linol-lwt
   lsp
