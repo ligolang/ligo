@@ -1,0 +1,3 @@
+const a: tez  = 5mutez;
+const b: tez  = 10mutez;
+const c = (a == b); // false

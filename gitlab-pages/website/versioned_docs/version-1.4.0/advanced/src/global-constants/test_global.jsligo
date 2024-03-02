@@ -1,0 +1,20 @@
+namespace C {
+  type storage = int
+  type parameter = unit
+
+  const f = (x : int) => x * 3 + 2;
+
+  const ct = Test.register_constant(Test.eval(f));
+
+  @entry
+  const main = (p: parameter, s: storage) : [list<operation>, storage] =>
+    [list([]), Tezos.constant(ct)(s)];
+}
+
+const _test = () => {
+  let orig = Test.originate(contract_of(C), 1, 0tez);
+  Test.transfer_exn(orig.addr, Main(unit), 0tez);
+  assert (Test.get_storage(orig.addr) == 5);
+};
+
+const test = _test();

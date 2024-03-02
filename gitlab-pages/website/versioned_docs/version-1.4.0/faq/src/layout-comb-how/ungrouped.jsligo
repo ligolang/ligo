@@ -1,0 +1,54 @@
+type foo = {
+  foo : nat,
+  bar : int,
+  baz : string
+}
+
+namespace Foo {
+  @entry
+  const foo = (_: foo, s: unit) : [list<operation>, unit] => [list([]), s];
+
+  // dummy entrypoint to avoid bug with single entrypoint :(
+  @entry
+  const dummy = (_: unit, s: unit) : [list<operation>, unit] => [list([]), s];
+};
+
+namespace Bar {
+  @entry
+  const bar = (addr: address, s: unit) : [list<operation>, unit] => {
+    const arg : foo = {foo: 1n, bar: 2, baz: "three"};
+    const amt : tez = 0tz;
+    const dst : contract<foo> = Tezos.get_entrypoint("%foo", addr);
+    const tx = Tezos.transaction(arg, amt, dst);
+    return [list([tx]), s];
+  }
+
+  // dummy entrypoint to avoid bug with single entrypoint :(
+  @entry
+  const dummy = (_: unit, s: unit) : [list<operation>, unit] => [list([]), s];
+};
+
+const test_interaction = do{
+  const orig_foo = Test.originate(contract_of(Foo), unit, 0tz);
+  const foo_addr = Test.to_address (orig_foo.addr);
+  const orig_bar = Test.originate(contract_of(Bar), unit, 0tz);
+  Test.transfer_exn(orig_bar.addr, Bar(foo_addr), 0tz);
+};
+type tree_variant =
+  @layout("tree")
+  | ["Foo", nat]
+  | ["Bar", int]
+  | ["Baz", string];
+
+type tree_record =
+  @layout("tree")
+  {
+    foo : int,
+    bar : int
+  };
+
+// in JsLIGO, you must assign names to tuple types in order to put
+// them back into tree layout, and then use these names at use sites instead
+// of repeating the tuple type
+
+type tree_tuple = @layout("tree") [nat, int, string];

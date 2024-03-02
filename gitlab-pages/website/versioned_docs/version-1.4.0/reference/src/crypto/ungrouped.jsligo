@@ -1,0 +1,12 @@
+let hasherman_blake = (s: bytes):bytes => Crypto.blake2b(s);
+let hasherman = (s: bytes): bytes => Crypto.sha256(s);
+let hasherman512 = (s: bytes): bytes => Crypto.sha512(s);
+let hasherman3 = (s: bytes): bytes => Crypto.sha3(s);
+let hasherman_keccak = (s: bytes): bytes => Crypto.keccak(s);
+let check_hash_key = (kh1: key_hash, k2: key) : [bool, key_hash] => {
+  let kh2 : key_hash = Crypto.hash_key(k2);
+  if (kh1 == kh2) { return [true, kh2]; } else { return [false, kh2]; };
+};
+function check_signature (pk: key, signed: signature, msg: bytes) : bool {
+  return Crypto.check(pk, signed, msg)
+};

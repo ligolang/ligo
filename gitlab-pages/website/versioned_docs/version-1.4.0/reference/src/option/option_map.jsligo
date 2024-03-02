@@ -1,0 +1,8 @@
+
+let v : option<int> = Some(1);
+
+let foo = (_ : int) : string => "foo";
+
+let foo_option : option<string> = Option.map (foo, v); /* Some "foo" */
+
+let none : option<string> = Option.map (foo, None() as option<int>); /* None */

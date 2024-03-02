@@ -203,49 +203,41 @@ const sidebars = {
   "API": {
     "Language": [
       "reference/map-reference",
-      "reference/crypto-reference",
+      "reference/toplevel-reference",
       "reference/tezos-reference",
-      "reference/string-reference",
-      "reference/set-reference",
-      "reference/bytes-reference",
-      "reference/list-reference",
-      "reference/big-map-reference",
       "reference/bitwise-reference",
       "reference/option-reference",
-      "reference/toplevel-reference",
-      "reference/dynamic-entrypoints-reference",
+      "reference/string-reference",
+      "reference/list-reference",
+      "reference/bytes-reference",
       "reference/big-set-reference",
+      "reference/set-reference",
+      "reference/dynamic-entrypoints-reference",
+      "reference/big-map-reference",
+      "reference/crypto-reference",
       {
         "type": "category",
         "label": "Test",
         "items": [
-          "reference/test.pbt-reference",
-          "reference/test.proxy-ticket-reference",
           "reference/test-reference",
+          "reference/test.proxy-ticket-reference",
+          "reference/test.pbt-reference",
           {
             "type": "category",
             "label": "Next",
             "items": [
+              "reference/test.next.ticket-reference",
+              "reference/test.next.timelock-reference",
+              "reference/test.next.compare-reference",
+              "reference/test.next.string-reference",
+              "reference/test.next.typed-address-reference",
+              "reference/test.next.io-reference",
+              "reference/test.next-reference",
               "reference/test.next.address-reference",
               "reference/test.next.contract-reference",
               "reference/test.next.originate-reference",
-              "reference/test.next.timelock-reference",
-              "reference/test.next.ticket-reference",
-              "reference/test.next.string-reference",
-              "reference/test.next.typed-address-reference",
-              "reference/test.next-reference",
-              "reference/test.next.io-reference",
               "reference/test.next.dynamic-entrypoints-reference",
-              "reference/test.next.compare-reference",
               "reference/test.next.crypto-reference",
-              {
-                "type": "category",
-                "label": "Mutation",
-                "items": [
-                  "reference/test.next.mutation-reference",
-                  "reference/test.next.mutation.all-reference"
-                ]
-              },
               {
                 "type": "category",
                 "label": "State",
@@ -256,26 +248,34 @@ const sidebars = {
               },
               {
                 "type": "category",
-                "label": "Assert",
+                "label": "Account",
                 "items": [
-                  "reference/test.next.assert-reference",
-                  "reference/test.next.assert.error-reference"
+                  "reference/test.next.account.contract-reference",
+                  "reference/test.next.account-reference"
                 ]
               },
               {
                 "type": "category",
                 "label": "Michelson",
                 "items": [
-                  "reference/test.next.michelson.contract-reference",
-                  "reference/test.next.michelson-reference"
+                  "reference/test.next.michelson-reference",
+                  "reference/test.next.michelson.contract-reference"
                 ]
               },
               {
                 "type": "category",
-                "label": "Account",
+                "label": "Mutation",
                 "items": [
-                  "reference/test.next.account.contract-reference",
-                  "reference/test.next.account-reference"
+                  "reference/test.next.mutation.all-reference",
+                  "reference/test.next.mutation-reference"
+                ]
+              },
+              {
+                "type": "category",
+                "label": "Assert",
+                "items": [
+                  "reference/test.next.assert.error-reference",
+                  "reference/test.next.assert-reference"
                 ]
               }
             ]

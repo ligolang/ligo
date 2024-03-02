@@ -1,0 +1,8 @@
+let zero: nat = 2n & 1n;
+let two_bytes : bytes = 0x11 & 0x10
+let five: nat = 4n | 1n;
+let three_bytes : bytes = 0x11 | 0x10
+let four : nat = 2n << 1n
+let five_one_two : bytes = 0x0100 << 1n
+let one : nat = 2n >> 1n;
+let zero_bytes : bytes = 0x01 >> 1n

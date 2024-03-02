@@ -1,0 +1,10 @@
+const destinationAddress: address =
+  "tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" as address;
+
+const contract : contract<unit> =
+  match(Tezos.get_contract_opt(Tezos.get_sender()) as option<contract<unit>>) {
+    when(Some(contract)): contract;
+    when(None()): failwith("no contract or wrong contract type")
+  }
+const payment: operation =
+  Tezos.transaction(unit, 100mutez, contract);
