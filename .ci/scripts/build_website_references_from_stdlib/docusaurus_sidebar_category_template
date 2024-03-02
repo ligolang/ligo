@@ -1,0 +1,7 @@
+{
+  "type": "category",
+  "label": <<label>>,
+  "items": [
+    <<items>>
+  ]
+}

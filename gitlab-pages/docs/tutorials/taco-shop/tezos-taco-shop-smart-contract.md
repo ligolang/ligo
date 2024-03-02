@@ -583,7 +583,7 @@ Let's break it down a little bit:
   trying to purchase an unregistered Taco. An auxiliary function to
   check equality of values on maps is defined.
 
-> checkout the [reference page](../../reference/test.md) for a more detailed description of the Test API
+> checkout the [reference page](../../reference/Test.md) for a more detailed description of the Test API
 
 Now it is time to use the LIGO command `test`. It will evaluate our
 smart contract and print the result value of those entries that start

@@ -261,7 +261,7 @@ and returns a value of type `test_exec_result`
 
 > Note: Functions `mk_param` and `mk_storage` will be executed in the proxy contract itself
 
-Find more detailed information on the API of [`Proxy_ticket` here](../reference/proxy_ticket.md)
+Find more detailed information on the API of [`Proxy_ticket` here](../reference/Test.Proxy_ticket.md)
 
 #### Usages
 

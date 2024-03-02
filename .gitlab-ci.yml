@@ -237,6 +237,7 @@ xrefcheck:
     - echo $LATEST_VERSION
     - cp -f ./changelog.md $WEBSITE_PATH/versioned_docs/$LATEST_VERSION/intro/changelog.md
     - npm --prefix $WEBSITE_PATH ci
+    - npm --prefix $WEBSITE_PATH run clear
     - npm --prefix $WEBSITE_PATH run build
     - cp -Lr --no-preserve=mode,ownership,timestamps $WEBSITE_PATH/build public
     - touch to-dos.html; cp to-dos.html public/to-dos.html

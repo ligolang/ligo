@@ -39,7 +39,7 @@ type result<success,failure> =
 
 An exception (pun not intended) to this is that when using the test framework, some functions are able to detect a `failwith` raised by one of their callbacks, and return a different result based on the success or failure.
 
-For example, the [Test.transfer](../reference/test.md) function catches errors raised with `failwith` and converts them to a result of type `type test_exec_result = Success of nat | Fail of test_exec_error`.
+For example, the [Test.transfer](../reference/Test.md) function catches errors raised with `failwith` and converts them to a result of type `type test_exec_result = Success of nat | Fail of test_exec_error`.
 This allows the programmer to write positive and negative test, checking that the contract runs as intended and fails as intended.
 
 <!-- updated use of entry -->

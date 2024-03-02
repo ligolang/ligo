@@ -1,5 +1,5 @@
 ---
-id: toplevel
+id: toplevel-reference
 title: Top-Level
 description: Available functions at the top level
 hide_table_of_contents: true

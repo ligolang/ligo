@@ -36,7 +36,7 @@ const config = {
         docs: {
           path: "../docs",
           sidebarPath: require.resolve("./sidebars.js"),
-          sidebarCollapsed: false,
+          sidebarCollapsed: true,
         },
         blog: {
           showReadingTime: true,
@@ -84,7 +84,7 @@ const config = {
         items: [
           { type: "docsVersionDropdown", position: "left" },
           { to: "docs/intro/introduction", label: "Docs", position: "left", target: "_self" },
-          { to: "docs/reference/toplevel", label: "API", position: "left" },
+          { to: "docs/reference/toplevel-reference", label: "API", position: "left" },
           { to: "docs/faq/intro", label: "FAQ", position: "left" },
           { to: "https://packages.ligolang.org/packages", label: "Registry", position: "right" },
           { to: "https://ide.ligolang.org/", label: "Web IDE", position: "right" },

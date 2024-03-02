@@ -37,6 +37,6 @@ const test = do {
 
 </Syntax>
 
-Check out the reference of the `Test` framework for exact signature of the functions [here](../reference/test.md).
+Check out the reference of the `Test` framework for exact signature of the functions [here](../reference/Test.md).
 
 <!-- updated use of entry -->

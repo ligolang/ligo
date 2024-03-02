@@ -1,14 +1,4 @@
 /**
- * Creating a sidebar enables you to:
- - create an ordered group of docs
- - render a sidebar for each doc of that group
- - provide next/previous navigation
-
- The sidebars can be generated from the filesystem, or explicitly defined here.
-
- Create as many sidebars as you want.
- */
-
 // @ts-check
 
 /** @type {import('@docusaurus/plugin-content-docs').SidebarsConfig} */
@@ -33,9 +23,9 @@ const sidebars = {
         "items": [
           "tutorials/taco-shop/tezos-taco-shop-smart-contract",
           "tutorials/taco-shop/tezos-taco-shop-payout"
-        ],
+        ]
       },
-      "tutorials/start-a-project-from-a-template",
+      "tutorials/start-a-project-from-a-template"
     ],
     "Comments": [
       "comments/comments"
@@ -151,8 +141,7 @@ const sidebars = {
       "signatures/extending"
     ],
     "Switches": [
-      "switches/switches" //,
-//      "switches/discriminated"
+      "switches/switches"
     ],
     "Preprocessor": [
       "preprocessor/preprocessor",
@@ -171,34 +160,18 @@ const sidebars = {
       "contract/events",
       "language-basics/tezos-specific"
     ],
-    // "Basics": [
-    //   "language-basics/types",
-    //   "language-basics/composite-types",
-    //   "language-basics/type-annotations",
-    //   "language-basics/functions",
-    //   "language-basics/boolean-if-else",
-    //   "language-basics/constants-and-variables",
-    //   "language-basics/maps-records",
-    //   "language-basics/sets-lists-tuples",
-    //   /* TODO: + mutation */
-    //   "language-basics/exceptions",
-    //   "language-basics/math-numbers-tez",
-    //   "language-basics/loops",
-    //   "language-basics/unit-option-pattern-matching"
-    // ],
     "Testing and Debugging": [
       "advanced/testing",
       "advanced/mutation-testing",
-      "advanced/michelson_testing",
-      //TODO: write doc "testing/debugging"
+      "advanced/michelson_testing"
     ],
     "Combining Code": [
       {
-        type: "doc",
-        id: "language-basics/modules",
-        label: "Modules",
-        customProps: {
-          jsLigoName: "Namespaces"
+        "type": "doc",
+        "id": "language-basics/modules",
+        "label": "Modules",
+        "customProps": {
+          "jsLigoName": "Namespaces"
         }
       },
       "advanced/global-constants",
@@ -211,7 +184,6 @@ const sidebars = {
       "tutorials/inter-contract-calls/inter-contract-calls",
       "tutorials/optimisation/optimisation",
       "tutorials/security/security",
-      //TODO: write doc "advanced/best-practices",
       "advanced/timestamps-addresses",
       "advanced/include",
       "advanced/first-contract",
@@ -223,39 +195,93 @@ const sidebars = {
       "intro/editor-support",
       "api/cli-commands",
       "api/cheat-sheet",
-      // "contributors/origin",
-      // "contributors/philosophy",
-      // "contributors/getting-started",
-      // "contributors/documentation-and-releases",
-      // "contributors/big-picture/overview",
-      // "contributors/big-picture/front-end",
-      // "contributors/big-picture/middle-end",
-      // "contributors/big-picture/vendors",
-      // "contributors/road-map/short-term",
-      // "contributors/road-map/long-term",
       "tutorials/registry/what-is-the-registry",
       "tutorials/registry/how-to-make-an-audit",
-      "tutorials/tz-vs-eth/tz-vs-eth",
-    ],
+      "tutorials/tz-vs-eth/tz-vs-eth"
+    ]
   },
   "API": {
     "Language": [
-      "reference/toplevel",
+      "reference/map-reference",
+      "reference/crypto-reference",
+      "reference/tezos-reference",
+      "reference/string-reference",
+      "reference/set-reference",
+      "reference/bytes-reference",
+      "reference/list-reference",
       "reference/big-map-reference",
       "reference/bitwise-reference",
-      "reference/bytes-reference",
-      "reference/crypto-reference",
-      "reference/dynamic-entrypoints-reference",
-      "reference/list-reference",
-      "reference/map-reference",
-      "reference/set-reference",
-      "reference/string-reference",
       "reference/option-reference",
-      "reference/current-reference",
-      "reference/test",
-      "reference/test-next",
-      "reference/proxy-ticket-reference",
-      "contract/tickets"
+      "reference/toplevel-reference",
+      "reference/dynamic-entrypoints-reference",
+      "reference/big-set-reference",
+      {
+        "type": "category",
+        "label": "Test",
+        "items": [
+          "reference/test.pbt-reference",
+          "reference/test.proxy-ticket-reference",
+          "reference/test-reference",
+          {
+            "type": "category",
+            "label": "Next",
+            "items": [
+              "reference/test.next.address-reference",
+              "reference/test.next.contract-reference",
+              "reference/test.next.originate-reference",
+              "reference/test.next.timelock-reference",
+              "reference/test.next.ticket-reference",
+              "reference/test.next.string-reference",
+              "reference/test.next.typed-address-reference",
+              "reference/test.next-reference",
+              "reference/test.next.io-reference",
+              "reference/test.next.dynamic-entrypoints-reference",
+              "reference/test.next.compare-reference",
+              "reference/test.next.crypto-reference",
+              {
+                "type": "category",
+                "label": "Mutation",
+                "items": [
+                  "reference/test.next.mutation-reference",
+                  "reference/test.next.mutation.all-reference"
+                ]
+              },
+              {
+                "type": "category",
+                "label": "State",
+                "items": [
+                  "reference/test.next.state-reference",
+                  "reference/test.next.state.reset-reference"
+                ]
+              },
+              {
+                "type": "category",
+                "label": "Assert",
+                "items": [
+                  "reference/test.next.assert-reference",
+                  "reference/test.next.assert.error-reference"
+                ]
+              },
+              {
+                "type": "category",
+                "label": "Michelson",
+                "items": [
+                  "reference/test.next.michelson.contract-reference",
+                  "reference/test.next.michelson-reference"
+                ]
+              },
+              {
+                "type": "category",
+                "label": "Account",
+                "items": [
+                  "reference/test.next.account.contract-reference",
+                  "reference/test.next.account-reference"
+                ]
+              }
+            ]
+          }
+        ]
+      }
     ],
     "CLI": [
       {
@@ -371,7 +397,7 @@ const sidebars = {
       "protocol/mumbai",
       "protocol/nairobi",
       "protocol/oxford"
-    ],
+    ]
   },
   "faq": {
     "FAQ": [

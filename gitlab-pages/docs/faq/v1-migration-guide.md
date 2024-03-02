@@ -23,7 +23,7 @@ As the use of `@entry` or `[@entry]` (and `@view` or `[@view]`) in the source is
 
 Another consequence of this change is that, when originating a contract for tests, `Test.originate` now take as an argument a module containing multiple entry points instead of a single function, i.e. a single entry point
 
-We are also rolling out a new feature allowing the addition, removal and update of dynamic entry points for a contract after deployment. This could be a useful feature for example when building a DAO which allows on-chain vote to upgrade its code (or a DAO which controls the code of another separate contract). For more information, see [the documentation](../advanced/dynamic-entrypoints.md) and [the reference](../reference/dynamic_entrypoints.md) for this feature.
+We are also rolling out a new feature allowing the addition, removal and update of dynamic entry points for a contract after deployment. This could be a useful feature for example when building a DAO which allows on-chain vote to upgrade its code (or a DAO which controls the code of another separate contract). For more information, see [the documentation](../advanced/dynamic-entrypoints.md) and [the reference](../reference/Dynamic_entrypoints.md) for this feature.
 
 MRs:
 * https://gitlab.com/ligolang/ligo/-/merge_requests/2818
