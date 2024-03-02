@@ -198,7 +198,7 @@
   },
   "API": {
     "Language": [
-      "reference/toplevel",
+      "reference/toplevel-reference",
       "reference/big-map-reference",
       "reference/bitwise-reference",
       "reference/bytes-reference",
