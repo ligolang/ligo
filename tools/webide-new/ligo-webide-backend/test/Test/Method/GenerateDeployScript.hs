@@ -31,7 +31,7 @@ test_singleFile = mkTest "generates deploy script for single-file contract corre
               }
           , gdsrName = "increment-cameligo"
           , gdsrEntrypoint = Just "main"
-          , gdsrProtocol = Just "nairobi"
+          , gdsrProtocol = Just "oxford2"
           }
   actual :: DeployScript <- post "generate-deploy-script" body
   let expectationPath = contractsDir </> "basic/deploy_script.json"
