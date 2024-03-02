@@ -65,12 +65,12 @@ suite('LIGO: Commands work', () => {
     testFile: 'simple.mligo',
     deploy: {
       storage: 'unit',
-      network: 'nairobinet',
-      output: /The contract was successfully deployed on the nairobinet test network\nView your contract here: https:\/\/better-call\.dev\/nairobinet\/[a-zA-Z0-9]{36}\nThe address of your new contract is: [a-zA-Z0-9]{36}\nThe initial storage of your contract is: { *"prim": *"Unit" *}/,
+      network: 'ghostnet',
+      output: /The contract was successfully deployed on the ghostnet test network\nView your contract here: https:\/\/better-call\.dev\/ghostnet\/[a-zA-Z0-9]{36}\nThe address of your new contract is: [a-zA-Z0-9]{36}\nThe initial storage of your contract is: { *"prim": *"Unit" *}/,
     },
     generateDeployScript: {
       storage: 'unit',
-      network: 'nairobinet',
+      network: 'ghostnet',
       output: /Generated deploy script for 'simple' contract:\noctez-client originate contract simple transferring 0 from baker running { parameter unit ; storage unit ; code { CAR ; NIL operation ; PAIR } }\n\n --init Unit\n\n --burn-cap 0.07375/,
     },
   }))
@@ -79,13 +79,13 @@ suite('LIGO: Commands work', () => {
     deploy: {
       entrypoint: 'First',
       storage: '42',
-      network: 'nairobinet',
-      output: /The contract was successfully deployed on the nairobinet test network\nView your contract here: https:\/\/better-call\.dev\/nairobinet\/[a-zA-Z0-9]{36}\nThe address of your new contract is: [a-zA-Z0-9]{36}\nThe initial storage of your contract is: { *"int": *"42" *}/,
+      network: 'ghostnet',
+      output: /The contract was successfully deployed on the ghostnet test network\nView your contract here: https:\/\/better-call\.dev\/ghostnet\/[a-zA-Z0-9]{36}\nThe address of your new contract is: [a-zA-Z0-9]{36}\nThe initial storage of your contract is: { *"int": *"42" *}/,
     },
     generateDeployScript: {
       entrypoint: 'First',
       storage: '42',
-      network: 'nairobinet',
+      network: 'ghostnet',
       output: /Generated deploy script for 'two-entrypoints' contract:\noctez-client originate contract two-entrypoints transferring 0 from baker running { parameter unit ; storage int ; code { CDR ; NIL operation ; PAIR } }\n\n --init 42\n\n --burn-cap 0.07375/,
     },
   }))

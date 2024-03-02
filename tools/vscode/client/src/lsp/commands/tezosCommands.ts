@@ -15,7 +15,7 @@ import { Maybe } from '../../common/base';
 
 const AUTHORIZATION_HEADER = 'Bearer ligo-ide';
 
-const currentlyActiveNetworks = ['nairobinet', 'ghostnet']
+const currentlyActiveNetworks = ['ghostnet']
 
 const Tezos = (network: string): TezosToolkit | undefined => {
   if (currentlyActiveNetworks.includes(network)) {
