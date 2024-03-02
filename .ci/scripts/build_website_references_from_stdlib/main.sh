@@ -1,10 +1,12 @@
 #!/usr/bin/env bash 
 cd "$(dirname "${BASH_SOURCE[0]}")"
 
+ligo_path=$1
+
 path_to_root=../../..
 sidebar_folderpath=$path_to_root/gitlab-pages/website/
 # Build the ligo docs mdx
-$path_to_root/_build/install/default/bin/ligo doc $path_to_root/src/main/build/ligo_lib/ --mdx
+$($path_to_root/$ligo_path doc $path_to_root/src/main/build/ligo_lib/ --mdx)
 mkdir -p md
 mv $path_to_root/src/main/build/ligo_lib/markdown_docs/std_lib.mligo/* md
 folder="./md"

@@ -448,7 +448,7 @@ update-repository-status:
     - git submodule update --init --recursive --remote --force
     - git remote rm origin && git remote add origin "git@gitlab.com:ligolang/ligo.git"
     - node scripts/manpages/manpages.js ./ligo
-    - ./.ci/scripts/build_website_references_from_stdlib/main.sh
+    - ./.ci/scripts/build_website_references_from_stdlib/main.sh ligo
     - ./.ci/scripts/versioning_website.sh $RELEASE_VERSION
     - LAST_TAG_JOB_ID=`./.ci/scripts/release_metadata/read_release_metadata.sh LAST_TAG_JOB_ID`
     - ./.ci/scripts/update_distribution_references_with_release.sh $LAST_TAG_JOB_ID $RELEASE_VERSION $SRI_LIGO_BINARY_HASH
