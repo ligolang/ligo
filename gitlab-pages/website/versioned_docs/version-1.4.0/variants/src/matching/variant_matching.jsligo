@@ -1,0 +1,11 @@
+type colour =
+| ["RGB", [int, int, int]]
+| ["Gray", int]
+| ["Default"];
+
+const int_of_colour = (c : colour) : int =>
+  match(c) {
+    when(RGB([r,g,b])): 16 + b + g * 6 + r * 36;
+    when(Gray(i)): 232 + i;
+    when(Default): 0;
+  };

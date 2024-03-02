@@ -1,0 +1,11 @@
+const my_ticket1 = Option.unopt(Tezos.create_ticket(1, 10n));
+const my_ticket2 = Option.unopt(Tezos.create_ticket("one", 10n));
+const v2 = do {
+  let [[_addr, [payload, _amt]], _ticket] = Tezos.read_ticket (my_ticket2);
+  return payload;
+}
+const [ta, tb] =
+  match(Tezos.split_ticket(my_ticket1, [6n, 4n])) {
+    when(None()): failwith("amt_a + amt_v != amt");
+    when(Some(split_tickets)): split_tickets
+  };

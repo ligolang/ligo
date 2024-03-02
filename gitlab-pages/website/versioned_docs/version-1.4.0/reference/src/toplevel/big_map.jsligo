@@ -1,0 +1,2 @@
+type move = [int, int];
+type register = big_map<address, move>;

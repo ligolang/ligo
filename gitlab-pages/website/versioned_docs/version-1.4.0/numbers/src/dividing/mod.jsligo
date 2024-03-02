@@ -1,0 +1,4 @@
+const a : nat = 120  % 9;  // int % int yields nat
+const b : nat = 120n % 9;  // nat % int yields nat
+const c : nat = 120n % 9n; // nat % nat yields nat
+const d : nat = 120  % 9n; // int % nat yields nat

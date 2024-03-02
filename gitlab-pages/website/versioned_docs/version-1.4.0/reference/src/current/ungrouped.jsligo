@@ -1,0 +1,5 @@
+let check = (p: unit, s: tez):[list<operation>, tez] =>
+  [list([]), Tezos.get_balance()];
+function threshold (p : unit) {
+  if (Tezos.get_amount() == 100tez) return 42 else return 0;
+};

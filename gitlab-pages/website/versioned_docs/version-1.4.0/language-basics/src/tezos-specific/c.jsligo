@@ -1,0 +1,3 @@
+const check_signature =
+  (pk: key, signed: signature, msg: bytes) =>
+  Crypto.check(pk, signed, msg);
