@@ -9,6 +9,15 @@ let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "test_timelock.mligo" ];
   [%expect
     {|
+    File "./test_timelock.mligo", line 45, characters 8-14:
+     44 |     let chest1, chest_key1 = Test.create_chest payload 2n in
+     45 |     let chest2, chest_key2 = Test.create_chest payload 2n in
+                  ^^^^^^
+     46 |     let () = assert (not (Test.Next.Timelock.verify chest1 chest_key2 2n)) in
+    :
+    Warning: unused variable "chest2".
+    Hint: replace it by "_chest2" to prevent this warning.
+
     File "./test_timelock.mligo", line 19, characters 13-27:
      18 |   let init_storage : bytes = 0x41414141 in
      19 |   let orig = Test.originate (contract_of C) init_storage 0tez in
@@ -99,11 +108,29 @@ let%expect_test _ =
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Timelock.create_key` from `Test.Next` is encouraged for a smoother migration.
 
+    File "./test_timelock.mligo", line 44, characters 29-46:
+     43 |   let test4 = (* verify *)
+     44 |     let chest1, chest_key1 = Test.create_chest payload 2n in
+                                       ^^^^^^^^^^^^^^^^^
+     45 |     let chest2, chest_key2 = Test.create_chest payload 2n in
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `Timelock.create` from `Test.Next` is encouraged for a smoother migration.
+
+    File "./test_timelock.mligo", line 45, characters 29-46:
+     44 |     let chest1, chest_key1 = Test.create_chest payload 2n in
+     45 |     let chest2, chest_key2 = Test.create_chest payload 2n in
+                                       ^^^^^^^^^^^^^^^^^
+     46 |     let () = assert (not (Test.Next.Timelock.verify chest1 chest_key2 2n)) in
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `Timelock.create` from `Test.Next` is encouraged for a smoother migration.
+
     (0x4141 , 0x4141)
     (0xff , 0xff)
     (0x , 0x)
     Everything at the top-level was executed.
-    - test exited with value [() ; () ; ()]. |}]
+    - test exited with value [() ; () ; () ; ()]. |}]
 
 (* tests replacing Hashlock tests *)
 let%expect_test _ =

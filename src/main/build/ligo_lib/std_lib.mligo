@@ -3592,6 +3592,15 @@ module Test = struct
         [%external ("TEST_CREATE_CHEST", b, n)]
       let create_key (c : chest) (n : nat) : chest_key =
         [%external ("TEST_CREATE_CHEST_KEY", c, n)]
+
+      (** display-only-for-cameligo
+        The call `verify chest chest_key n` verifies a matching
+        between `chest` and `chest_key` (taking into account `n`). *)
+      (** display-only-for-jsligo
+        The call `verify(chest, chest_key, n)` verifies a matching
+        between `chest` and `chest_key` (taking into account `n`). *)
+      let verify (c : chest) (ck : chest_key) (n : nat) : bool =
+        [%external ("TEST_VERIFY_CHEST", c, ck, n)]
     end
     module Crypto = struct
       let sign (sk : string) (d : bytes) : signature =
