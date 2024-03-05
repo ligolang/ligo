@@ -81,6 +81,7 @@ let lsp_raw_options : project_root:Path.t option -> Compiler_options.Raw_options
  fun ~project_root ->
   Compiler_options.Raw_options.make
     ~with_types:true
+    ~no_metadata_check:true (* We handle TZIP-16 metadata checks separately *)
     ~project_root:(Option.map ~f:Path.to_string project_root)
     ~typer_error_recovery:true
     ()

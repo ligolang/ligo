@@ -217,15 +217,7 @@ let%expect_test "Shows TZIP-16 checks with a top-level storage." =
     { file_path = "contracts/lsp/test_metadata.mligo"; max_number_of_problems = None };
   [%expect
     {|
-    [("../../../../../default/src/test/contracts/lsp/test_metadata.mligo",
-      [{
-         "message": "[Compiler stage: aggregation] Warning: If the following metadata is meant to be TZIP-16 compliant,\nthen it should be a 'big_map' from 'string' to 'bytes'.\nHint: The corresponding type should be :\n  (string, bytes) big_map\nYou can disable this warning with the '--no-metadata-check' flag.\n",
-         "range": {
-           "end": { "character": 19, "line": 2 },
-           "start": { "character": 15, "line": 2 }
-         },
-         "severity": 2
-       }])] |}]
+    [("../../../../../default/src/test/contracts/lsp/test_metadata.mligo", [])] |}]
 
 let%expect_test "Shows a duplicate entrypoint error." =
   get_diagnostics_test
@@ -268,14 +260,6 @@ let%expect_test "Shows views-related errors and storage warnings." =
     {|
     [("../../../../../default/src/test/contracts/lsp/entrypoints_views.mligo",
       [{
-         "message": "[Compiler stage: aggregation] Warning: If the following metadata is meant to be TZIP-16 compliant,\nthen it should be a 'big_map' from 'string' to 'bytes'.\nHint: The corresponding type should be :\n  (string, bytes) big_map\nYou can disable this warning with the '--no-metadata-check' flag.\n",
-         "range": {
-           "end": { "character": 20, "line": 4 },
-           "start": { "character": 16, "line": 4 }
-         },
-         "severity": 2
-       };
-       {
          "message": "[Compiler stage: self_ast_typed] The view \"bad_view_not_func\" is not a function.",
          "range": {
            "end": { "character": 21, "line": 21 },
