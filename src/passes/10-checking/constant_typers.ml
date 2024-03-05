@@ -1533,6 +1533,16 @@ let constant_typer_tbl : (Errors.typer_error, Main_warnings.all) t Const_map.t =
           (create
              ~mode_annot:[ Checked; Checked ]
              ~types:[ t_chest ~loc () ^-> t_nat ~loc () ^~> t_chest_key ~loc () ]) )
+    ; ( C_TEST_VERIFY_CHEST
+      , of_type
+          (create
+             ~mode_annot:[ Checked; Checked; Checked ]
+             ~types:
+               [ t_chest ~loc ()
+                 ^-> t_chest_key ~loc ()
+                 ^-> t_nat ~loc ()
+                 ^~> t_bool ~loc ()
+               ]) )
     ; C_EQ, of_comparator Comparable.comparator
     ; C_NEQ, of_comparator Comparable.comparator
     ; C_LT, of_comparator Comparable.comparator

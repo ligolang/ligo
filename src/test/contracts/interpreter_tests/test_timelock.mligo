@@ -39,4 +39,10 @@ let test =
     let chest, _ = Test.create_chest payload 2n in
     let chest_key = Test.create_chest_key chest 10n in
     test_open (chest_key, chest) 0x
-  in [test1; test2; test3]
+  in
+  let test4 = (* verify *)
+    let chest1, chest_key1 = Test.create_chest payload 2n in
+    let chest2, chest_key2 = Test.create_chest payload 2n in
+    let () = assert (not (Test.Next.Timelock.verify chest1 chest_key2 2n)) in
+    assert (Test.Next.Timelock.verify chest1 chest_key1 2n)
+  in [test1; test2; test3; test4]

@@ -133,6 +133,15 @@ let create_chest (payload : Bytes.t) (time : int) : _ =
   chest_bytes, chest_key_bytes
 
 
+let verify_chest (chest : bytes) (chest_key : bytes) (time : int) : _ =
+  let open Tezos_crypto in
+  let chest = Data_encoding.Binary.of_bytes_exn Timelock.chest_encoding chest in
+  let chest_key =
+    Data_encoding.Binary.of_bytes_exn Timelock.chest_key_encoding chest_key
+  in
+  Timelock.verify ~time chest.locked_value chest_key
+
+
 let clean_location_with v x =
   let open Tezos_micheline.Micheline in
   inject_locations (fun _ -> v) (strip_locations x)
