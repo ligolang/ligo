@@ -1,0 +1,7 @@
+
+author: rinderkn
+description: "\\nIt is now possible to use `'a big_set` instead of `'a Big_set.t`.\\n\\n"
+merge_request: '3096'
+title: "Adding top-level definition of type 'a big_set."
+type: added
+            
