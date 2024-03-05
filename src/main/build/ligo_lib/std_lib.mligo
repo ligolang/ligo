@@ -1796,6 +1796,12 @@ module Big_set = struct
     Big_map.mem elt set
 end
 
+(** display-only-for-cameligo
+  The type of the big sets is based on `big_map`. *)
+(** display-only-for-jsligo
+  The type of the big sets is based on `big_map`. *)
+type 'elt big_set = 'elt Big_set.t
+
 (** Strings of characters *)
 module String = struct
 
