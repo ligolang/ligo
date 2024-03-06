@@ -137,6 +137,7 @@ and expression_content ppf (ec : expression_content) =
           ; dyn_entry = _
           ; hidden = true
           ; thunk = _
+          ; tzip16_compatible = _
           ; deprecated = _
           ; leading_comments = _
           }

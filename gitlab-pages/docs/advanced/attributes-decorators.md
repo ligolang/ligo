@@ -82,6 +82,14 @@ Michelson does not natively support records or variants. These have to be encode
 
 For more information, see [Interop: Michelson layout of LIGO data structures](../advanced/interop.md##michelson-layout-of-ligo-data-structures).
 
+## @tzip16_compatible to enable TZIP-16 storage checks
+
+The `@tzip16_compatible` attribute is used to indicate a storage variable that is expected to contain metadata compliant with [TZIP-16 specification](https://gitlab.com/tezos/tzip/-/blob/master/proposals/tzip-16/tzip-16.md). Values marked with this attribute are subject to automatic checks verifying that the storage indeed satisfies TZIP-16 rules.
+
+Note that at the moment there is no support for thus feature from the LIGO compiler; IDEs however can recognize the attribute and provide additional verification.
+
+The attribute works only on variables that are not functions. In case a function returning storage needs to be verified, one can create one or several sample storages out of it and apply the attribute to them.
+
 ## Internal attributes
 
 Furthermore, the following attributes are used internally by the compiler, you may encounter them when exporting the AST after a certain compilation pass, but they should not appear in normal source code.
@@ -147,6 +155,14 @@ For more information, see [Interop: Different Michelson annotations](../advanced
 Michelson does not natively support records or variants. These have to be encoded using nested `pair`s or nested `or`s. Many tree representations could translate to the same linear sequence of fields or constructors. LIGO makes it possible to choose between a right comb which preserves the order or the fields or constructors as declared in the source code, and a left-balanced, alphabetically ordered binary tree. The decorators `@layout("comb")` and `@layout("tree")` can be placed before the `{ ... }` for records and before the first constructor or leading `|` for variants, in order to explicitly choose the desired layout.
 
 For more information, see [Interop: Michelson layout of LIGO data structures](../advanced/interop.md##michelson-layout-of-ligo-data-structures).
+
+## @tzip16_compatible to enable TZIP-16 storage checks
+
+The `@tzip16_compatible` decorator is used to indicate a storage variable that is expected to contain metadata compliant with [TZIP-16 specification](https://gitlab.com/tezos/tzip/-/blob/master/proposals/tzip-16/tzip-16.md). Values marked with this decorator are subject to automatic checks verifying that the storage indeed satisfies TZIP-16 rules.
+
+Note that at the moment there is no support for thus feature from the LIGO compiler; IDEs however can recognize the decorator and provide additional verification.
+
+The decorator works only on variables that are not functions. In case a function returning storage needs to be verified, one can create one or several sample constant storages out of it and apply the decorator to them.
 
 ## export to mark an identifier as accessible outside its defining module
 

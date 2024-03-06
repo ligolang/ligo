@@ -1,0 +1,23 @@
+type storage = { data: int; metadata: big_map<string, bytes> }
+
+@tzip16_compatible
+const storage_sample: storage = {
+  data: 5,
+  metadata: Big_map.literal(
+    list(
+      [
+        [
+          "",
+          (
+            bytes
+            `https://ipfs.io/ipfs/QmSBc8QuynU7bArUGtjwCRhZUbJyZQArrczKnqM7hZPtfV`
+          )
+        ]
+      ]
+    )
+  )
+}
+
+@entry
+const main = (_: string, store: storage): [list<operation>, storage] =>
+  [list([]), store]

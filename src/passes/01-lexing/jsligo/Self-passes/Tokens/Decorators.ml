@@ -46,6 +46,9 @@ let collect_attributes tokens =
       | "thunk" ->
           let attr = Token.mk_attr ~key:"thunk" id#region
           in inner (attr :: acc) tokens
+      | "tzip16_compatible" ->
+          let attr = Token.mk_attr ~key:"tzip16_compatible" id#region
+          in inner (attr :: acc) tokens
       | "comment" | "annot" | "layout" | "deprecated" -> (
           match tokens with
             LPAR _ :: String value :: RPAR _ :: rest ->

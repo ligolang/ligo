@@ -293,6 +293,7 @@ let rec compile_expression ~raise (ae : AST.expression) : expression =
           ; public = _
           ; hidden = _
           ; thunk = _
+          ; tzip16_compatible = _
           ; entry = _
           ; dyn_entry = _
           ; deprecated = _

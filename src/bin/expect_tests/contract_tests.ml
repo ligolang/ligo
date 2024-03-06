@@ -2515,6 +2515,14 @@ let%expect_test _ =
              CONS ;
              PAIR } } |}]
 
+let%expect_test _ =
+  run_ligo_good [ "compile"; "contract"; "--werror"; contract "tzip16-compatible.mligo" ];
+  [%expect
+    {|
+    { parameter string ;
+      storage (pair (int %data) (big_map %metadata string bytes)) ;
+      code { CDR ; NIL operation ; PAIR } } |}]
+
 (* check compiling many (more than 10) views *)
 let%expect_test _ =
   run_ligo_good [ "compile"; "contract"; contract "call_view_impure.mligo" ];

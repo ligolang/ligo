@@ -138,6 +138,7 @@ let rec get_entry (lst : module_) (name : Value_var.t) : expression option =
             ; public = _
             ; hidden = _
             ; thunk = _
+            ; tzip16_compatible = _
             ; entry = _
             ; deprecated = _
             ; leading_comments = _
