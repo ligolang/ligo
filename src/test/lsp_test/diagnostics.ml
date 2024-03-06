@@ -146,7 +146,7 @@ let%expect_test "Syntax and type errors" =
          "severity": 1
        };
        {
-         "message": "[aggregation] Underspecified type \"^gen#6466\".\nPlease add additional annotations.",
+         "message": "[aggregation] Underspecified type \"^gen#6523\".\nPlease add additional annotations.",
          "range": {
            "end": { "character": 18, "line": 4 },
            "start": { "character": 18, "line": 4 }
@@ -189,7 +189,7 @@ let%expect_test "Polymorphic Type error" =
     {|
     [("../../../../../default/src/test/contracts/lsp/poly_type_error.mligo",
       [{
-         "message": "[typer] Underspecified type \"^gen#6470\".\nCannot encode this type.",
+         "message": "[typer] Underspecified type \"^gen#6527\".\nCannot encode this type.",
          "range": {
            "end": { "character": 22, "line": 0 },
            "start": { "character": 11, "line": 0 }
@@ -197,7 +197,7 @@ let%expect_test "Polymorphic Type error" =
          "severity": 1
        };
        {
-         "message": "[typer] Underspecified type \"^gen#6472\".\nCannot encode this type.",
+         "message": "[typer] Underspecified type \"^gen#6529\".\nCannot encode this type.",
          "range": {
            "end": { "character": 22, "line": 0 },
            "start": { "character": 11, "line": 0 }
@@ -282,7 +282,7 @@ let%expect_test "Shows a duplicate entrypoint error." =
          "severity": 1
        };
        {
-         "message": "[typer] Underspecified type \"^gen#6546\".\nCannot encode this type.",
+         "message": "[typer] Underspecified type \"^gen#6603\".\nCannot encode this type.",
          "range": {
            "end": { "character": 68, "line": 4 },
            "start": { "character": 0, "line": 0 }
@@ -290,7 +290,7 @@ let%expect_test "Shows a duplicate entrypoint error." =
          "severity": 1
        };
        {
-         "message": "[typer] Underspecified type \"^gen#6547\".\nCannot encode this type.",
+         "message": "[typer] Underspecified type \"^gen#6604\".\nCannot encode this type.",
          "range": {
            "end": { "character": 68, "line": 4 },
            "start": { "character": 0, "line": 0 }
@@ -298,7 +298,7 @@ let%expect_test "Shows a duplicate entrypoint error." =
          "severity": 1
        };
        {
-         "message": "[aggregation] Underspecified type \"^gen#6547\".\nPlease add additional annotations.",
+         "message": "[aggregation] Underspecified type \"^gen#6604\".\nPlease add additional annotations.",
          "range": {
            "end": { "character": 68, "line": 4 },
            "start": { "character": 0, "line": 0 }
@@ -331,7 +331,7 @@ let%expect_test "Shows an error when two toplevel entrypoints have different sto
          "severity": 1
        };
        {
-         "message": "[typer] Underspecified type \"^gen#6552\".\nCannot encode this type.",
+         "message": "[typer] Underspecified type \"^gen#6609\".\nCannot encode this type.",
          "range": {
            "end": { "character": 77, "line": 4 },
            "start": { "character": 0, "line": 0 }
@@ -339,7 +339,7 @@ let%expect_test "Shows an error when two toplevel entrypoints have different sto
          "severity": 1
        };
        {
-         "message": "[typer] Underspecified type \"^gen#6553\".\nCannot encode this type.",
+         "message": "[typer] Underspecified type \"^gen#6610\".\nCannot encode this type.",
          "range": {
            "end": { "character": 77, "line": 4 },
            "start": { "character": 0, "line": 0 }
@@ -347,7 +347,7 @@ let%expect_test "Shows an error when two toplevel entrypoints have different sto
          "severity": 1
        };
        {
-         "message": "[aggregation] Underspecified type \"^gen#6553\".\nPlease add additional annotations.",
+         "message": "[aggregation] Underspecified type \"^gen#6610\".\nPlease add additional annotations.",
          "range": {
            "end": { "character": 77, "line": 4 },
            "start": { "character": 0, "line": 0 }
@@ -395,7 +395,7 @@ let%expect_test "Shows entrypoint-related errors in many modules simultaneously.
          "severity": 1
        };
        {
-         "message": "[typer] Underspecified type \"^gen#6564\".\nCannot encode this type.",
+         "message": "[typer] Underspecified type \"^gen#6621\".\nCannot encode this type.",
          "range": {
            "end": { "character": 3, "line": 28 },
            "start": { "character": 15, "line": 21 }
@@ -403,7 +403,7 @@ let%expect_test "Shows entrypoint-related errors in many modules simultaneously.
          "severity": 1
        };
        {
-         "message": "[typer] Underspecified type \"^gen#6565\".\nCannot encode this type.",
+         "message": "[typer] Underspecified type \"^gen#6622\".\nCannot encode this type.",
          "range": {
            "end": { "character": 3, "line": 28 },
            "start": { "character": 15, "line": 21 }
@@ -419,7 +419,7 @@ let%expect_test "Shows entrypoint-related errors in many modules simultaneously.
          "severity": 1
        };
        {
-         "message": "[typer] Underspecified type \"^gen#6568\".\nCannot encode this type.",
+         "message": "[typer] Underspecified type \"^gen#6625\".\nCannot encode this type.",
          "range": {
            "end": { "character": 3, "line": 37 },
            "start": { "character": 15, "line": 30 }
@@ -427,7 +427,7 @@ let%expect_test "Shows entrypoint-related errors in many modules simultaneously.
          "severity": 1
        };
        {
-         "message": "[typer] Underspecified type \"^gen#6569\".\nCannot encode this type.",
+         "message": "[typer] Underspecified type \"^gen#6626\".\nCannot encode this type.",
          "range": {
            "end": { "character": 3, "line": 37 },
            "start": { "character": 15, "line": 30 }
@@ -443,7 +443,7 @@ let%expect_test "Shows entrypoint-related errors in many modules simultaneously.
          "severity": 1
        };
        {
-         "message": "[typer] Underspecified type \"^gen#6571\".\nCannot encode this type.",
+         "message": "[typer] Underspecified type \"^gen#6628\".\nCannot encode this type.",
          "range": {
            "end": { "character": 3, "line": 43 },
            "start": { "character": 15, "line": 39 }
@@ -451,7 +451,7 @@ let%expect_test "Shows entrypoint-related errors in many modules simultaneously.
          "severity": 1
        };
        {
-         "message": "[typer] Underspecified type \"^gen#6572\".\nCannot encode this type.",
+         "message": "[typer] Underspecified type \"^gen#6629\".\nCannot encode this type.",
          "range": {
            "end": { "character": 3, "line": 43 },
            "start": { "character": 15, "line": 39 }
@@ -482,7 +482,7 @@ let%expect_test "ghost_ident filter" =
          "severity": 1
        };
        {
-         "message": "[typer] Underspecified type \"^gen#6575\".\nCannot encode this type.",
+         "message": "[typer] Underspecified type \"^gen#6632\".\nCannot encode this type.",
          "range": {
            "end": { "character": 7, "line": 0 },
            "start": { "character": 7, "line": 0 }
@@ -553,7 +553,7 @@ let%expect_test "Shows comparing error and suggests to use functions from Test m
     {|
     [("../../../../../default/src/test/contracts/lsp/diagnostics_equal.mligo",
       [{
-         "message": "[typer] Underspecified type \"^gen#6593\".\nCannot encode this type.",
+         "message": "[typer] Underspecified type \"^gen#6650\".\nCannot encode this type.",
          "range": {
            "end": { "character": 27, "line": 2 },
            "start": { "character": 0, "line": 2 }
@@ -679,7 +679,7 @@ let%expect_test "Shows errors for unbound variables in records (jsligo)." =
          "severity": 1
        };
        {
-         "message": "[aggregation] Underspecified type \"^gen#6637\".\nPlease add additional annotations.",
+         "message": "[aggregation] Underspecified type \"^gen#6694\".\nPlease add additional annotations.",
          "range": {
            "end": { "character": 38, "line": 1 },
            "start": { "character": 37, "line": 1 }
