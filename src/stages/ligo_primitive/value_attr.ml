@@ -14,7 +14,9 @@ type t =
     hidden : bool
   ; (* Controls whether it should be inlined at AST level *)
     thunk : bool
-  ; deprecated : string option
+  ; tzip16_compatible : bool
+  ; (* No support from compiler at the moment, but acknowledged by LSP *)
+    deprecated : string option
   ; leading_comments : string list
   }
 [@@deriving eq, compare, yojson, hash]
@@ -46,13 +48,14 @@ let pp
     ; public
     ; hidden
     ; thunk
+    ; tzip16_compatible
     ; deprecated
     ; leading_comments
     }
   =
   fprintf
     ppf
-    "%a%a%a%a%a%a%a%a%a%a"
+    "%a%a%a%a%a%a%a%a%a%a%a"
     (pp_if_set "inline")
     inline
     (pp_if_set "no_mutation")
@@ -69,6 +72,8 @@ let pp
     hidden
     (pp_if_set "thunk")
     thunk
+    (pp_if_set "tzip16_compatible")
+    tzip16_compatible
     (pp_if_some "deprecated")
     deprecated
     pp_comments
@@ -83,6 +88,7 @@ let default_attributes =
   ; public = true
   ; hidden = false
   ; thunk = false
+  ; tzip16_compatible = false
   ; dyn_entry = false
   ; deprecated = None
   ; leading_comments = []

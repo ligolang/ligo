@@ -1,0 +1,7 @@
+
+author: Martoon
+description: "\\nAdded `tzip16_compatible` attribute for indicating that the given storage value is expected to satisfy TZIP-16 metadata rules.\\n\\nThis attribute does nothing on itself at the moment, but some IDEs may provide additional verification.\\n\\nExample (CameLIGO):\\n\\n\\n```caml\\ntype storage =\\n  {\\n   data : int;\\n   metadata : (string, bytes) big_map\\n  }\\n\\n[@tzip16_compatible]\\nlet storage_sample : storage =\\n  {\\n   data = 5;\\n   metadata =\\n     Big_map.literal\\n       [\\n         (\"\",\\n          [%bytes\\n          \"https://ipfs.io/ipfs/QmSBc8QuynU7bArUGtjwCRhZUbJyZQArrczKnqM7hZPtfV\"])\\n       ]\\n  }\\n\\n```\\n\\nExample (JsLIGO):\\n\\n\\n```js\\ntype storage = { data: int; metadata: big_map<string, bytes> }\\n\\n@tzip16_compatible\\nconst storage_sample: storage = {\\n  data: 5,\\n  metadata: Big_map.literal(\\n    list(\\n      [\\n        [\\n          \"\",\\n          (\\n            bytes\\n            `https://ipfs.io/ipfs/QmSBc8QuynU7bArUGtjwCRhZUbJyZQArrczKnqM7hZPtfV`\\n          )\\n        ]\\n      ]\\n    )\\n  )\\n}\\n\\n\\n```\\n\\n"
+merge_request: '3086'
+title: "[#2084] Add attribute for TZIP-16 compatibility"
+type: added
+            

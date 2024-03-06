@@ -84,6 +84,8 @@ end = struct
     | { key = "public"; value = None } -> { o_attr with public = true }
     | { key = "hidden"; value = None } -> { o_attr with hidden = true }
     | { key = "thunk"; value = None } -> { o_attr with thunk = true }
+    | { key = "tzip16_compatible"; value = None } ->
+      { o_attr with tzip16_compatible = true }
     | { key = "entry"; value = None } -> { o_attr with entry = true }
     | { key = "comment"; value = Some comment } ->
       { o_attr with leading_comments = comment :: o_attr.leading_comments }
@@ -127,6 +129,8 @@ end = struct
     | { key = "inline"; value = None } -> { o_attr with inline = true }
     | { key = "no_mutation"; value = None } -> { o_attr with no_mutation = true }
     | { key = "thunk"; value = None } -> { o_attr with thunk = true }
+    | { key = "tzip16_compatible"; value = None } ->
+      { o_attr with tzip16_compatible = true }
     | { key = "private"; value = None } -> { o_attr with public = false }
     | { key = "public"; value = None } -> { o_attr with public = true }
     | { key = "comment"; value = Some comment } ->
