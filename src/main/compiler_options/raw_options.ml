@@ -12,6 +12,7 @@ type t =
   ; libraries : string list
   ; project_root : string option
   ; transpiled : bool
+  ; parser_error_recovery : bool
   ; (* Tools *)
     with_types : bool
   ; self_pass : bool
@@ -55,6 +56,7 @@ module Default_options = struct
   let libraries = []
   let project_root = None
   let transpiled = false
+  let parser_error_recovery = false
 
   (* Tools *)
   let only_ep = false
@@ -98,6 +100,7 @@ let make
     ?(libraries = Default_options.libraries)
     ?(project_root = Default_options.project_root)
     ?(transpiled = Default_options.transpiled)
+    ?(parser_error_recovery = Default_options.parser_error_recovery)
     ?(only_ep = Default_options.only_ep)
     ?(with_types = Default_options.with_types)
     ?(self_pass = Default_options.self_pass)
@@ -134,6 +137,7 @@ let make
   ; libraries
   ; project_root
   ; transpiled
+  ; parser_error_recovery
   ; (* Tools *)
     only_ep
   ; with_types

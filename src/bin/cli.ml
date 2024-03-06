@@ -450,6 +450,13 @@ let defs_only =
   flag ~doc name no_arg
 
 
+let parser_error_recovery : bool Command.Param.t =
+  let open Command.Param in
+  let name = "--parser-error-recovery" in
+  let doc = "Enable error-recovery in the parser." in
+  flag ~doc name no_arg
+
+
 let typer_error_recovery : bool Command.Param.t =
   let open Command.Param in
   let name = "--typer-error-recovery" in
@@ -2156,6 +2163,7 @@ let get_scope =
       project_root
       no_stdlib
       typer_error_recovery
+      parser_error_recovery
       ()
     =
     let raw_options =
@@ -2167,6 +2175,7 @@ let get_scope =
         ~project_root
         ~no_stdlib
         ~typer_error_recovery
+        ~parser_error_recovery
         ()
     in
     let cli_analytics =
@@ -2203,7 +2212,8 @@ let get_scope =
     <*> defs_only
     <*> project_root
     <*> no_stdlib
-    <*> typer_error_recovery)
+    <*> typer_error_recovery
+    <*> parser_error_recovery)
 
 
 let resolve_config =
@@ -2354,10 +2364,18 @@ let pretty_print =
       skip_analytics
       project_root
       libraries
+      parser_error_recovery
       ()
     =
     let raw_options =
-      Raw_options.make ~syntax ~warning_as_error ~no_colour ~project_root ~libraries ()
+      Raw_options.make
+        ~syntax
+        ~warning_as_error
+        ~no_colour
+        ~project_root
+        ~libraries
+        ~parser_error_recovery
+        ()
     in
     let cli_analytics =
       Analytics.generate_cli_metrics_with_syntax_and_protocol
@@ -2367,6 +2385,7 @@ let pretty_print =
         ()
     in
     return_result
+      ~fast_fail:(not parser_error_recovery)
       ~skip_analytics
       ~cli_analytics
       ~return
@@ -2390,7 +2409,8 @@ let pretty_print =
      <*> no_colour
      <*> skip_analytics
      <*> project_root
-     <*> libraries)
+     <*> libraries
+     <*> parser_error_recovery)
 
 
 let print_graph =
@@ -2449,9 +2469,18 @@ let print_cst =
       skip_analytics
       project_root
       libraries
+      parser_error_recovery
       ()
     =
-    let raw_options = Raw_options.make ~syntax ~no_colour ~project_root ~libraries () in
+    let raw_options =
+      Raw_options.make
+        ~syntax
+        ~no_colour
+        ~project_root
+        ~libraries
+        ~parser_error_recovery
+        ()
+    in
     let cli_analytics =
       Analytics.generate_cli_metrics_with_syntax_and_protocol
         ~command:"print_cst"
@@ -2460,6 +2489,7 @@ let print_cst =
         ()
     in
     return_result
+      ~fast_fail:(not parser_error_recovery)
       ~skip_analytics
       ~cli_analytics
       ~return
@@ -2483,7 +2513,8 @@ let print_cst =
      <*> no_colour
      <*> skip_analytics
      <*> project_root
-     <*> libraries)
+     <*> libraries
+     <*> parser_error_recovery)
 
 
 let print_ast_unified =
@@ -2602,6 +2633,7 @@ let print_ast_typed =
       skip_analytics
       libraries
       typer_error_recovery
+      parser_error_recovery
       ()
     =
     let formatter =
@@ -2625,6 +2657,7 @@ let print_ast_typed =
         ~no_colour
         ~libraries
         ~typer_error_recovery
+        ~parser_error_recovery
         ()
     in
     let cli_analytics =
@@ -2635,7 +2668,7 @@ let print_ast_typed =
         ()
     in
     return_result
-      ~fast_fail:(not raw_options.typer_error_recovery)
+      ~fast_fail:(not (typer_error_recovery || parser_error_recovery))
       ~skip_analytics
       ~cli_analytics
       ~return
@@ -2668,7 +2701,8 @@ let print_ast_typed =
      <*> no_colour
      <*> skip_analytics
      <*> libraries
-     <*> typer_error_recovery)
+     <*> typer_error_recovery
+     <*> parser_error_recovery)
 
 
 let print_ast_aggregated =
@@ -2686,6 +2720,7 @@ let print_ast_aggregated =
       skip_analytics
       libraries
       typer_error_recovery
+      parser_error_recovery
       ()
     =
     let raw_options =
@@ -2700,6 +2735,7 @@ let print_ast_aggregated =
         ~no_colour
         ~libraries
         ~typer_error_recovery
+        ~parser_error_recovery
         ()
     in
     let cli_analytics =
@@ -2710,7 +2746,7 @@ let print_ast_aggregated =
         ()
     in
     return_result
-      ~fast_fail:(not raw_options.typer_error_recovery)
+      ~fast_fail:(not (typer_error_recovery || parser_error_recovery))
       ~skip_analytics
       ~cli_analytics
       ~return
@@ -2742,7 +2778,8 @@ let print_ast_aggregated =
     <*> no_colour
     <*> skip_analytics
     <*> libraries
-    <*> typer_error_recovery)
+    <*> typer_error_recovery
+    <*> parser_error_recovery)
 
 
 let print_module_signature =
