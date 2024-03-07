@@ -1056,12 +1056,12 @@ core_expr:
 no_attr_expr:
   unit            { E_Unit     $1 }
 | list_of(expr)   { E_List     $1 }
-| record_expr     { E_Record   $1 }
 | code_inj        { E_CodeInj  $1 }
 | par(typed_expr) { E_Typed    $1 }
 | sequence_expr   { E_Seq      $1 }
 | record_update   { E_Update   $1 }
 | ctor            { E_Ctor     $1 }
+| record_expr
 | literal_expr
 | path_expr       { $1 }
 
@@ -1133,12 +1133,18 @@ local_path:
     and value  = {record_or_tuple=(E_Par $1); selector=$2; field_path=$3}
     in E_Proj {region; value}
   }
+| record_expr "." nsepseq(selection,".") {
+    let stop   = nsepseq_to_region selection_to_region $3 in
+    let region = cover (expr_to_region $1) stop
+    and value  = {record_or_tuple=$1; selector=$2; field_path=$3}
+    in E_Proj {region; value}
+  }
 | field_path { $1 }
 
 (* Record expression *)
 
 record_expr:
-  record(field_assignment) { $1 }
+  record(field_assignment) { E_Record $1 }
 
 field_assignment:
   attributes field_name "=" expr {
