@@ -1,0 +1,7 @@
+
+author: rinderkn
+description: "\\nThe parser now accepts immediate projection of record expressions, e.g. \"{x=1}.x\".\\n\\n"
+merge_request: '3102'
+title: "Allowing expressions {...}.x"
+type: added
+            
