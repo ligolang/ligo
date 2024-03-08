@@ -30,9 +30,10 @@ module Data = struct
       For each declaration it holds the binding and the payload (expression or another module)
       together with its own environment.
   *)
+
   type t =
     { env : env
-    ; content : decl list
+    ; content : int list
     }
 
   and env =
@@ -40,16 +41,38 @@ module Data = struct
     ; mod_ : mod_ list
     }
 
-  and decl =
-    | Mod of mod_
-    | Incl of decl list
-    | Exp of exp_
-    | Pat of pat_
-
   and mod_ =
     { name : Module_var.t
     ; in_ : t
     }
+
+  (* [binding_] link [old] identifiers to freshly generated ones [fresh] *)
+  and 'a binding_ =
+    { old : 'a
+    ; fresh : 'a
+    }
+
+  and var_binding = Value_var.t binding_
+  and pat_binding = (O.ty_expr[@sexp.opaque]) O.Pattern.t binding_ [@@deriving sexp_of]
+
+  (*
+    Important note: path is _ONLY_ used for naming of fresh variables, so that debuging a printed AST is easier.
+    e.g. module access `A.B.x` will become variable `#A#B#x`
+    IT SHOULD NEVER BE USED FOR INTERNAL COMPUTATION OR RESOLVING
+  *)
+  type path = string list
+
+  module IMap = Map.Make (struct
+    type t = int [@@deriving sexp_of]
+
+    let compare = Int.compare
+  end)
+
+  type decl =
+    | Mod of mod_
+    | Incl of int list
+    | Exp of exp_
+    | Pat of pat_
 
   and pat_ =
     { binding : pat_binding
@@ -67,21 +90,21 @@ module Data = struct
     ; loc : Location.t
     }
 
-  (* [binding_] link [old] identifiers to freshly generated ones [fresh] *)
-  and 'a binding_ =
-    { old : 'a
-    ; fresh : 'a
-    }
+  let decl_map : (int * decl IMap.t) ref = ref (0, IMap.empty)
 
-  and var_binding = Value_var.t binding_
-  and pat_binding = (O.ty_expr[@sexp.opaque]) O.Pattern.t binding_ [@@deriving sexp_of]
+  let new_global_decl : decl -> int =
+   fun d ->
+    let cur_max_idx, dm = !decl_map in
+    decl_map := cur_max_idx + 1, IMap.add cur_max_idx d dm;
+    cur_max_idx
 
-  (*
-    Important note: path is _ONLY_ used for naming of fresh variables, so that debuging a printed AST is easier.
-    e.g. module access `A.B.x` will become variable `#A#B#x`
-    IT SHOULD NEVER BE USED FOR INTERNAL COMPUTATION OR RESOLVING
-  *)
-  and path = string list
+
+  let get_global_decl : int -> decl =
+   fun i ->
+    match IMap.find_opt i (snd @@ !decl_map) with
+    | Some x -> x
+    | None -> failwith "corner case: could not find decl in decl_map"
+
 
   let pp ppf data = Format.fprintf ppf "%a" Sexp.pp_hum (sexp_of_t data)
   let pp_env ppf data = Format.fprintf ppf "%a" Sexp.pp_hum (sexp_of_env data)
@@ -150,7 +173,9 @@ module Data = struct
     let exp =
       List.filter exp ~f:(fun x -> not (Value_var.equal x.old new_exp.binding.old))
     in
-    { env = { exp = new_exp.binding :: exp; mod_ }; content = content @ [ Exp new_exp ] }
+    { env = { exp = new_exp.binding :: exp; mod_ }
+    ; content = content @ [ new_global_decl (Exp new_exp) ]
+    }
 
 
   let pat_to_var_bindings : pat_binding -> var_binding list =
@@ -167,7 +192,9 @@ module Data = struct
       List.filter exp ~f:(fun x ->
           not @@ List.exists new_bound ~f:(fun new_ -> Value_var.equal x.old new_.old))
     in
-    { env = { exp = new_bound @ exp; mod_ }; content = content @ [ Pat new_pat ] }
+    { env = { exp = new_bound @ exp; mod_ }
+    ; content = content @ [ new_global_decl (Pat new_pat) ]
+    }
 
 
   let add_module : t -> Module_var.t -> t -> t =
@@ -176,7 +203,9 @@ module Data = struct
       { name = mod_var; in_ = new_scope }
       :: List.filter mod_ ~f:(fun x -> not (Module_var.equal x.name mod_var))
     in
-    let content = content @ [ Mod { name = mod_var; in_ = new_scope } ] in
+    let content =
+      content @ [ new_global_decl (Mod { name = mod_var; in_ = new_scope }) ]
+    in
     { env = { exp; mod_ }; content }
 
 
@@ -249,30 +278,44 @@ module Data = struct
       { exp; mod_ }
     in
     let refresh_env x y = memo_rec refresh_env (x, y) in
+    let dedup_new_bindings =
+      let compare_new_bindings (ma, va) (mb, vb) =
+        Tuple2.compare ~cmp1:(List.compare Module_var.compare) ~cmp2:Value_var.compare (ma, va.old) (mb, vb.old)
+      in
+      List.dedup_and_sort ~compare:compare_new_bindings
+    in
     let new_bindings, content =
-      List.fold_map data.content ~init:new_bindings ~f:(fun new_bindings -> function
-        | Pat ({ binding = { old; fresh = _ }; env; _ } as x) ->
-          let env = refresh_env new_bindings env in
-          let new_binding = { old; fresh = fresh_pattern old path } in
-          let nb_pat = List.map ~f:(fun x -> [], x) @@ pat_to_var_bindings new_binding in
-          nb_pat @ new_bindings, Pat { x with binding = new_binding; env }
-        | Exp ({ binding = { old; fresh = _ }; env; _ } as x) ->
-          let env = refresh_env new_bindings env in
-          let new_binding = { old; fresh = fresh_var old path } in
-          ([], new_binding) :: new_bindings, Exp { x with binding = new_binding; env }
-        | Mod { name; in_ } ->
-          let inner_bindings, in_ =
-            refresh ~new_bindings in_ (extend_debug_path path name)
-          in
-          let mod_bindings =
-            List.map ~f:(fun (mod_path, b) -> name :: mod_path, b) inner_bindings
-          in
-          mod_bindings @ new_bindings, Mod { name; in_ }
-        | Incl x ->
-          let incl_bindings, x =
-            refresh ~new_bindings { content = x; env = empty_env } path
-          in
-          incl_bindings @ new_bindings, Incl x.content)
+      List.fold_map data.content ~init:new_bindings ~f:(fun new_bindings idx ->
+          let decl = get_global_decl idx in
+          match decl with
+          | Pat ({ binding = { old; fresh = _ }; env; _ } as x) ->
+            let env = refresh_env new_bindings env in
+            let new_binding = { old; fresh = fresh_pattern old path } in
+            let nb_pat =
+              List.map ~f:(fun x -> [], x) @@ pat_to_var_bindings new_binding
+            in
+            let new_idx = new_global_decl (Pat { x with binding = new_binding; env }) in
+            dedup_new_bindings @@ nb_pat @ new_bindings, new_idx
+          | Exp ({ binding = { old; fresh = _ }; env; _ } as x) ->
+            let env = refresh_env new_bindings env in
+            let new_binding = { old; fresh = fresh_var old path } in
+            let new_idx = new_global_decl (Exp { x with binding = new_binding; env }) in
+            dedup_new_bindings @@ (([], new_binding) :: new_bindings), new_idx
+          | Mod { name; in_ } ->
+            let inner_bindings, in_ =
+              refresh ~new_bindings in_ (extend_debug_path path name)
+            in
+            let mod_bindings =
+              List.map ~f:(fun (mod_path, b) -> name :: mod_path, b) inner_bindings
+            in
+            let new_idx = new_global_decl (Mod { name; in_ }) in
+            dedup_new_bindings @@ mod_bindings, new_idx
+          | Incl x ->
+            let incl_bindings, x =
+              refresh ~new_bindings { content = x; env = empty_env } path
+            in
+            let new_idx = new_global_decl (Incl x.content) in
+            dedup_new_bindings @@ incl_bindings, new_idx)
     in
     let env = refresh_env new_bindings data.env in
     new_bindings, { content; env }
@@ -296,15 +339,15 @@ module Data = struct
                  Module_var.equal x.name new_.name))
     in
     { env = { exp = exp @ to_include.env.exp; mod_ = mod_ @ to_include.env.mod_ }
-    ; content = data.content @ [ Incl to_include.content ]
+    ; content = data.content @ [ new_global_decl (Incl to_include.content) ]
     }
 end
 
 let rec aggregate_scope : Data.t -> leaf:O.expression -> O.expression =
  fun { content; _ } ~leaf ->
-  let rec f : Data.decl -> O.expression -> O.expression =
+  let rec f : int -> O.expression -> O.expression =
    fun d acc_exp ->
-    match d with
+    match Data.get_global_decl d with
     | Pat { binding = { old = _; fresh }; item; env; attr; loc } ->
       let item = compile_expression env item in
       O.e_a_let_in ~loc fresh item acc_exp attr
@@ -323,9 +366,9 @@ let rec aggregate_scope : Data.t -> leaf:O.expression -> O.expression =
 
 and build_context : Data.t -> O.context =
  fun { content; _ } ->
-  let rec f : Data.decl -> O.declaration list =
+  let rec f : int -> O.declaration list =
    fun d ->
-    match d with
+    match Data.get_global_decl d with
     | Pat { binding = { old = _; fresh }; item; env; attr; loc } ->
       let item = compile_expression env item in
       [ Location.wrap ~loc (O.D_irrefutable_match { pattern = fresh; expr = item; attr })

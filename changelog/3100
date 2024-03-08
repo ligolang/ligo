@@ -1,0 +1,7 @@
+
+author: lesenechal.remi
+description: "\\nPerformance improvement on module inclusion\\n\\n"
+merge_request: '3100'
+title: "optimize aggregation"
+type: performance
+            
