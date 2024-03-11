@@ -1,4 +1,6 @@
 include Diagnostics
+include Code_lens
+include Commands
 include Completion
 include Document_link
 include Document_symbol
@@ -15,3 +17,4 @@ include Rename
 include Semantic_highlight
 include Type_definition
 module Handler = Handler
+module Commands = Commands

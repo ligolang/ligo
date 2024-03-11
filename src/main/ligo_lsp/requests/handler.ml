@@ -288,14 +288,17 @@ let with_cached_doc
   let@ docs = ask_docs_cache in
   match Docs_cache.find docs path with
   | None -> return default
-  | Some { code; syntax; definitions; scopes } ->
-    (match definitions, scopes with
-    | Some definitions, Some scopes -> f { code; syntax; definitions; scopes }
+  | Some
+      { code; syntax; document_version; definitions; scopes; potential_tzip16_storages }
+    ->
+    (match definitions, scopes, potential_tzip16_storages with
+    | Some definitions, Some scopes, Some potential_tzip16_storages ->
+      f { code; syntax; document_version; definitions; scopes; potential_tzip16_storages }
     | _ ->
       let@ last_project_dir = ask_last_project_dir in
       let project_root = !last_project_dir in
       let@ syntax = get_syntax_exn path in
-      let@ ({ definitions; _ } as defs_and_diagnostics) =
+      let@ ({ definitions; potential_tzip16_storages; _ } as defs_and_diagnostics) =
         with_run_in_IO
         @@ fun { unlift_IO } ->
         Ligo_interface.get_defs_and_diagnostics
@@ -308,7 +311,13 @@ let with_cached_doc
       let@ () =
         set_docs_cache
           path
-          { code; syntax; definitions = Some definitions; scopes = Some scopes }
+          { code
+          ; syntax
+          ; document_version
+          ; definitions = Some definitions
+          ; scopes = Some scopes
+          ; potential_tzip16_storages = Some potential_tzip16_storages
+          }
       in
       let@ max_number_of_problems = fmap (fun x -> x.max_number_of_problems) ask_config in
       let diags_by_file =
@@ -326,7 +335,7 @@ let with_cached_doc
         else send_diagnostic uri []
       in
       let@ () = iter diags_by_file ~f:(Simple_utils.Utils.uncurry send_diagnostic) in
-      f { code; syntax; definitions; scopes })
+      f { code; syntax; document_version; definitions; scopes; potential_tzip16_storages })
 
 
 (* Calculates definitions and scopes for given file,

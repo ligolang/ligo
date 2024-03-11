@@ -7,18 +7,28 @@ type nonrec defs_and_diagnostics = defs_and_diagnostics
 type scopes = Scopes.scopes
 type definitions = Scopes.definitions
 
-type ('defs, 'scopes) file_data_case =
+(* Version of the document with respect to all its edits, see
+   VersionedTextDocumentIdentifier in LSP specification
+*)
+type document_version = int [@@deriving yojson]
+type potential_tzip16_storages = Ast_typed.expression_variable list
+
+type ('defs, 'scopes, 'pot_tzip16) file_data_case =
   { syntax : Syntax_types.t
   ; code : string
+  ; document_version : document_version option
+        (* Invariant: always set for an opened document *)
   ; definitions : 'defs
   ; scopes : 'scopes
+  ; potential_tzip16_storages : 'pot_tzip16
   }
 
 (** [None] in definitions / scopes means that file was not processed.
     See [on_doc] and [process_doc] *)
-type unprepared_file_data = (Def.definitions option, scopes option) file_data_case
+type unprepared_file_data =
+  (Def.definitions option, scopes option, potential_tzip16_storages option) file_data_case
 
-type file_data = (Def.definitions, scopes) file_data_case
+type file_data = (Def.definitions, scopes, potential_tzip16_storages) file_data_case
 
 let lsp_raw_options : project_root:Path.t option -> Compiler_options.Raw_options.t =
  fun ~project_root ->

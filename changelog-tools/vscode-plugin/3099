@@ -1,0 +1,7 @@
+
+author: Martoon
+description: "\\nLSP now tries to detect storages that supposedly comply the TZIP-16 protocol, and for them will suggest adding `@tzip16_compatible` attribute/decorator using Code lens. \\n\\n"
+merge_request: '3099'
+title: "[#2084] Implement code lens that suggests inserting TZIP-16 attribute"
+type: added
+            

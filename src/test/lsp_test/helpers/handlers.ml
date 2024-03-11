@@ -33,6 +33,7 @@ let open_file (file : Path.t) : Path.t Handler.t =
   let@ () =
     Requests.on_doc
       ~process_immediately:true
+      ~version:(`New 1)
       file
       (In_channel.read_all @@ Path.to_string file)
   in

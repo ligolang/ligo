@@ -149,8 +149,17 @@ module DocumentHighlight = struct
   let testable = Alcotest.testable pp eq
 end
 
+module CodeLens = struct
+  include Lsp.Types.CodeLens
+
+  let pp = Helpers_pretty.pp_with_yojson yojson_of_t
+  let eq = Caml.( = )
+end
+
 module ApplyWorkspaceEditParams = Lsp.Types.ApplyWorkspaceEditParams
 module ClientCapabilities = Lsp.Types.ClientCapabilities
+module CodeLensOptions = Lsp.Types.CodeLensOptions
+module Command = Lsp.Types.Command
 module CompletionItemKind = Lsp.Types.CompletionItemKind
 module CompletionOptions = Lsp.Types.CompletionOptions
 module ConfigurationItem = Lsp.Types.ConfigurationItem
@@ -158,6 +167,7 @@ module CreateFile = Lsp.Types.CreateFile
 module DiagnosticSeverity = Lsp.Types.DiagnosticSeverity
 module DocumentLinkOptions = Lsp.Types.DocumentLinkOptions
 module DocumentSymbolOptions = Lsp.Types.DocumentSymbolOptions
+module ExecuteCommandOptions = Lsp.Types.ExecuteCommandOptions
 module FileOperationFilter = Lsp.Types.FileOperationFilter
 module FileOperationOptions = Lsp.Types.FileOperationOptions
 module FileOperationPattern = Lsp.Types.FileOperationPattern
