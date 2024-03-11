@@ -325,6 +325,9 @@ class lsp_server (capability_mode : capability_mode) =
            ~resolveProvider:(self#is_request_enabled "textDocument/codeLens")
            ())
 
+    method config_inlay_hint =
+      Some (`Bool (self#is_request_enabled "textDocument/inlayHint"))
+
     method! config_modify_capabilities (c : ServerCapabilities.t) : ServerCapabilities.t =
       { c with
         hoverProvider = self#config_hover
@@ -333,6 +336,7 @@ class lsp_server (capability_mode : capability_mode) =
       ; definitionProvider = self#config_definition
       ; declarationProvider = self#config_declaration
       ; implementationProvider = self#config_implementation
+      ; inlayHintProvider = self#config_inlay_hint
       ; renameProvider = self#config_rename
       ; referencesProvider = self#config_references
       ; typeDefinitionProvider = self#config_type_definition
@@ -553,6 +557,8 @@ class lsp_server (capability_mode : capability_mode) =
                     ; definitions = None
                     ; scopes = None
                     ; potential_tzip16_storages = None
+                    ; parse_error_ranges = []
+                    ; lambda_types = Ligo_interface.LMap.empty
                     }
                 in
                 self#on_doc ?changes:None ~version:`Unchanged file code
@@ -670,5 +676,9 @@ class lsp_server (capability_mode : capability_mode) =
           let uri = textDocument.uri in
           run ~allowed_modes:[ All_capabilities; No_semantic_tokens ] ~uri ~default:[]
           @@ Requests.on_code_lens (DocumentUri.to_path uri)
+        | Client_request.InlayHint { textDocument; range; _ } ->
+          let uri = textDocument.uri in
+          run ~uri ~default:None
+          @@ Requests.on_req_inlay_hint (DocumentUri.to_path uri) range
         | _ -> super#on_request ~notify_back ~server_request ~id r
   end

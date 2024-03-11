@@ -10,6 +10,7 @@ type defs_and_diagnostics =
   ; warnings : Main_warnings.all list
   ; definitions : Def.definitions
   ; potential_tzip16_storages : Ast_typed.expression_variable list
+  ; lambda_types : Ast_typed.ty_expr LMap.t
   }
 
 let with_code_input
@@ -99,7 +100,7 @@ let get_scope_raw
     ~f:(fun ~options ~syntax:_ ~stdlib ~prg ~module_deps ->
       if defs_only
       then (
-        let defs, typed =
+        let defs, typed, _lambda_types =
           Scopes.defs_and_typed_program
             ~with_types
             ~raise
@@ -152,14 +153,15 @@ let get_scopes
     (fun ~catch:_ _ -> [])
 
 
-let make_defs_and_diagnostics (errors, warnings, defs_opt, potential_storage_vars)
+let make_defs_and_diagnostics
+    (errors, warnings, defs_opt, potential_storage_vars, lambda_types)
     : defs_and_diagnostics
   =
   let errors = List.dedup_and_sort ~compare:Caml.compare errors in
   let warnings = List.dedup_and_sort ~compare:Caml.compare warnings in
   let definitions = Option.value ~default:{ definitions = [] } defs_opt in
   let potential_tzip16_storages = potential_storage_vars in
-  { errors; warnings; definitions; potential_tzip16_storages }
+  { errors; warnings; definitions; potential_tzip16_storages; lambda_types }
 
 
 let virtual_main_name = "lsp_virtual_main"
@@ -324,7 +326,7 @@ let get_defs
         ~raise
         ~code_input
         ~f:(fun ~options ~syntax:_ ~stdlib ~prg ~module_deps ->
-          let defs, _prg =
+          let defs, _prg, _lambda_types =
             Scopes.defs_and_typed_program
               ~raise
               ~with_types:raw_options.with_types
@@ -350,13 +352,13 @@ let get_defs_and_diagnostics
        ~fast_fail:false
        (fun ~raise ~catch ->
          let open Lwt.Let_syntax in
-         let%map errors, warnings, v, storage_vars =
+         let%map errors, warnings, v, storage_vars, lambda_types =
            with_code_input
              ~raw_options
              ~raise
              ~code_input
              ~f:(fun ~options ~syntax ~stdlib ~(prg : Ast_core.module_) ~module_deps ->
-               let defs, prg =
+               let defs, prg, lambda_types =
                  Scopes.defs_and_typed_program
                    ~raise
                    ~with_types
@@ -393,7 +395,12 @@ let get_defs_and_diagnostics
                          , catch.warnings ()
                          , potential_tzip16_storages ))
                in
-               errors, warnings, defs, storage_vars)
+               errors, warnings, defs, storage_vars, lambda_types)
          in
-         errors @ catch.errors (), warnings @ catch.warnings (), Some v, storage_vars)
-       (fun ~catch e -> Lwt.return (e :: catch.errors (), catch.warnings (), None, []))
+         ( errors @ catch.errors ()
+         , warnings @ catch.warnings ()
+         , Some v
+         , storage_vars
+         , lambda_types ))
+       (fun ~catch e ->
+         Lwt.return (e :: catch.errors (), catch.warnings (), None, [], LMap.empty))

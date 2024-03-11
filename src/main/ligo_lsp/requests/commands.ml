@@ -60,7 +60,6 @@ type storage_var_position =
   ; (* Version of the document at which `line` is actual *)
     document_version : Ligo_interface.document_version
   }
-[@@deriving yojson]
 
 let create_attr_text (name : string) (syntax : Syntax_types.t) : string =
   match syntax with

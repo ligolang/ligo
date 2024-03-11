@@ -289,11 +289,27 @@ let with_cached_doc
   match Docs_cache.find docs path with
   | None -> return default
   | Some
-      { code; syntax; document_version; definitions; scopes; potential_tzip16_storages }
-    ->
+      { code
+      ; syntax
+      ; document_version
+      ; definitions
+      ; scopes
+      ; potential_tzip16_storages
+      ; parse_error_ranges
+      ; lambda_types
+      } ->
     (match definitions, scopes, potential_tzip16_storages with
     | Some definitions, Some scopes, Some potential_tzip16_storages ->
-      f { code; syntax; document_version; definitions; scopes; potential_tzip16_storages }
+      f
+        { code
+        ; syntax
+        ; document_version
+        ; definitions
+        ; scopes
+        ; potential_tzip16_storages
+        ; parse_error_ranges
+        ; lambda_types
+        }
     | _ ->
       let@ last_project_dir = ask_last_project_dir in
       let project_root = !last_project_dir in
@@ -308,6 +324,12 @@ let with_cached_doc
           path
       in
       let scopes = Ligo_interface.get_scope ~project_root ~code path in
+      let parse_error_ranges =
+        List.fold defs_and_diagnostics.errors ~init:[] ~f:(fun acc -> function
+          | `Parser_tracer (`Parsing { value = _; region }) ->
+            Range.of_region region :: acc
+          | _ -> acc)
+      in
       let@ () =
         set_docs_cache
           path
@@ -317,6 +339,8 @@ let with_cached_doc
           ; definitions = Some definitions
           ; scopes = Some scopes
           ; potential_tzip16_storages = Some potential_tzip16_storages
+          ; parse_error_ranges
+          ; lambda_types = defs_and_diagnostics.lambda_types
           }
       in
       let@ max_number_of_problems = fmap (fun x -> x.max_number_of_problems) ask_config in
@@ -335,7 +359,16 @@ let with_cached_doc
         else send_diagnostic uri []
       in
       let@ () = iter diags_by_file ~f:(Simple_utils.Utils.uncurry send_diagnostic) in
-      f { code; syntax; document_version; definitions; scopes; potential_tzip16_storages })
+      f
+        { code
+        ; syntax
+        ; document_version
+        ; definitions
+        ; scopes
+        ; potential_tzip16_storages
+        ; parse_error_ranges
+        ; lambda_types = defs_and_diagnostics.lambda_types
+        })
 
 
 (* Calculates definitions and scopes for given file,

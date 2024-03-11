@@ -6,7 +6,7 @@
  (instrumentation
   (backend bisect_ppx))
  (preprocess
-  (pps ppx_let))
+  (pps ppx_let ppx_compare))
  (libraries
   lsp
   linol

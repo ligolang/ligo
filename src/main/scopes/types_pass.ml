@@ -7,20 +7,28 @@ module Pattern = Ast_typed.Pattern
 type t =
   { type_cases : type_case LMap.t
   ; label_cases : Ast_core.ty_expr LMap.t
+  ; lambda_cases : Ast_typed.ty_expr LMap.t
   ; module_signatures : signature_case LMap.t
   ; module_env : Env.t
   }
 
 (** For debugging. *)
 let pp : t Fmt.t =
- fun ppf { type_cases; module_signatures; module_env; label_cases } ->
+ fun ppf { type_cases; module_signatures; module_env; label_cases; lambda_cases } ->
   Format.fprintf
     ppf
-    "{ type_cases: %a\n; label_cases: %a\n; module_signatures: %a\n; module_env: %a\n}"
+    "{ type_cases: %a\n\
+     ; label_cases: %a\n\
+     ; lambda_cases: %a\n\
+     ; module_signatures: %a\n\
+     ; module_env: %a\n\
+     }"
     Fmt.Dump.(seq (pair Location.pp PP.type_case))
     (LMap.to_seq type_cases)
     Fmt.Dump.(seq (pair Location.pp Ast_core.PP.type_expression))
     (LMap.to_seq label_cases)
+    Fmt.Dump.(seq (pair Location.pp Ast_typed.PP.type_expression))
+    (LMap.to_seq lambda_cases)
     Fmt.Dump.(seq (pair Location.pp PP.signature_case))
     (LMap.to_seq module_signatures)
     Env.pp
@@ -30,6 +38,7 @@ let pp : t Fmt.t =
 let empty (module_env : Env.t) =
   { type_cases = LMap.empty
   ; label_cases = LMap.empty
+  ; lambda_cases = LMap.empty
   ; module_signatures = LMap.empty
   ; module_env
   }
@@ -49,6 +58,10 @@ let add_label_case loc label_case env =
           | None -> Some label_case)
         env.label_cases
   }
+
+
+let add_lambda_case loc typ env =
+  { env with lambda_cases = LMap.add loc typ env.lambda_cases }
 
 
 let add_module_signature loc signature env =
@@ -151,6 +164,7 @@ module Of_Ast_typed = struct
     | Type_binding of (Ast_typed.expression_variable * Ast_typed.type_expression)
     | Label_binding of (Label.t * Ast_core.type_expression)
     | Module_binding of (Ast_typed.module_variable * Ast_typed.signature)
+    | Lambda_binding of (Location.t * Ast_typed.ty_expr)
 
   let label_bindings : _ Pattern.t -> Ast_typed.ty_expr -> binding list =
    fun p ty_expr ->
@@ -179,6 +193,7 @@ module Of_Ast_typed = struct
     | Module_binding (v, s) ->
       let loc = Module_var.get_location v in
       add_module_signature loc (Resolved s) env
+    | Lambda_binding (loc, typ) -> add_lambda_case loc typ env
 
 
   let add_bindings env bindings = List.fold bindings ~init:env ~f:add_binding
@@ -232,12 +247,18 @@ module Of_Ast_typed = struct
         return [ mk_label_binding path struct_.type_expression ]
       | E_constructor { constructor; element = _ } ->
         return [ mk_label_binding constructor exp.type_expression ]
-      | E_lambda { binder; _ } ->
-        return [ Type_binding (Param.get_var binder, Param.get_ascr binder) ]
-      | E_recursive { fun_name; fun_type; lambda = { binder; _ }; force_lambdarec = _ } ->
+      | E_lambda { binder; output_type; _ } ->
+        return
+          [ Type_binding (Param.get_var binder, Param.get_ascr binder)
+          ; Lambda_binding (exp.location, output_type)
+          ]
+      | E_recursive
+          { fun_name; fun_type; lambda = { binder; output_type; _ }; force_lambdarec = _ }
+        ->
         return
           [ Type_binding (fun_name, fun_type)
           ; Type_binding (Param.get_var binder, Param.get_ascr binder)
+          ; Lambda_binding (exp.location, output_type)
           ]
       | E_let_mut_in { let_binder; rhs; _ } | E_let_in { let_binder; rhs; _ } ->
         let labels = label_bindings let_binder rhs.type_expression in
