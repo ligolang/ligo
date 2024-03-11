@@ -1,0 +1,79 @@
+type param = int;
+
+////////////////////////////////////////////////////////////////////////////////
+// no metadata here
+namespace Entry_no_metadata {
+  export type storage = { data: int }
+  @entry
+  const main = (_p: param, s: storage): [list<operation>, storage] =>
+    [list([]), s]
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// metadata with incorrect format (it's a big_map but params are reversed)
+namespace Entry_invalid_metadata {
+  export type storage = { data: int, metadata: big_map<bytes, string> }
+  @entry
+  const main = (_p: param, s: storage): [list<operation>, storage] =>
+    [list([]), s]
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// metadata with correct format
+namespace Entry_valid_metadata {
+  export type storage = { data: int, metadata: big_map<string, bytes> }
+  @entry
+  const main = (_p: param, s: storage): [list<operation>, storage] =>
+    [list([]), s]
+  const off_view = (p: int, s: storage): int => p + s.data
+}
+
+type storage = Entry_valid_metadata.storage
+
+// Note: in this file we do not care about metadata validity, only about whether
+// tzip16 attribute is handled
+const storage_simple_case: storage = {
+  data: 0;
+  metadata: Big_map.literal(list([]))
+}
+
+const storage_without_explicit_type = {
+  data: 0;
+  metadata: (Big_map.literal(list([])) as big_map<string, bytes>)
+}
+
+@tzip16_compatible
+const storage_with_attribute: storage = {
+  data: 0;
+  metadata: Big_map.literal(list([]))
+}
+
+const storage_without_metadata_field: Entry_no_metadata.storage = { data: 0 }
+
+const storage_with_invalid_metadata: Entry_invalid_metadata.storage = {
+  data: 0;
+  metadata: Big_map.literal(list([]))
+}
+
+const storage_of_no_existing_storage_type = {
+  data: { meq: "" };
+  metadata: (Big_map.literal(list([])) as big_map<string, bytes>)
+}
+
+namespace Wrapper {
+  namespace Inner_wrapper {
+    const storage_inside_module: storage = {
+      data: 0;
+      metadata: Big_map.literal(list([]))
+    }
+  }
+}
+
+const make = (a: int): storage => {
+  return { data: a; metadata: Big_map.literal(list([])) }
+}
+
+const [storage_from_multi_binding, and_another_storage]: [storage, storage] = [
+  make(1),
+  make(2)
+]

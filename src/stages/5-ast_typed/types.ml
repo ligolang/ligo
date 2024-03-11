@@ -11,7 +11,7 @@ type type_content =
   | T_constant of type_injection
   | T_sum of
       type_expression Row.t
-      * (Label.t option[@eq.ignore] [@hash.ignore] [@compare.ignore])
+      * (Label.t option[@equal.ignore] [@hash.ignore] [@compare.ignore])
   (* This [Label.t] represent an original name of field in disc union type *)
   | T_record of type_expression Row.t
   | T_arrow of ty_expr Arrow.t
@@ -39,11 +39,11 @@ and abbrev =
 
 and type_expression =
   { type_content : type_content
-  ; abbrev : abbrev option [@eq.ignore] [@hash.ignore] [@compare.ignore]
-  ; location : Location.t [@eq.ignore] [@hash.ignore] [@compare.ignore]
+  ; abbrev : abbrev option [@equal.ignore] [@hash.ignore] [@compare.ignore]
+  ; location : Location.t [@equal.ignore] [@hash.ignore] [@compare.ignore]
   }
 
-and ty_expr = type_expression [@@deriving eq, compare, yojson, hash]
+and ty_expr = type_expression [@@deriving equal, compare, yojson, hash]
 
 module ValueAttr = Value_attr
 module TypeOrModuleAttr = Type_or_module_attr
@@ -99,11 +99,11 @@ and type_inst =
 
 and expression =
   { expression_content : expression_content
-  ; location : Location.t [@hash.ignore]
+  ; location : Location.t [@equal.ignore] [@hash.ignore] [@compare.ignore]
   ; type_expression : type_expression
   }
 
-and expr = expression [@@deriving eq, compare, yojson, hash]
+and expr = expression [@@deriving equal, compare, yojson, hash]
 
 and declaration_content =
   | D_value of (expr, ty_expr) Value_decl.t
@@ -114,15 +114,15 @@ and declaration_content =
   | D_signature of signature Signature_decl.t
 
 and declaration = declaration_content Location.wrap
-and decl = declaration [@@deriving eq, compare, yojson, hash]
-and module_content = decl Module_expr.t [@@deriving eq, compare, yojson, hash]
+and decl = declaration [@@deriving equal, compare, yojson, hash]
+and module_content = decl Module_expr.t [@@deriving equal, compare, yojson, hash]
 
 and module_expr =
   { module_content : module_content
-  ; module_location : Location.t [@eq.ignore] [@hash.ignore]
+  ; module_location : Location.t [@equal.ignore] [@compare.ignore] [@hash.ignore]
   ; signature : signature
   }
-[@@deriving eq, compare, yojson, hash]
+[@@deriving equal, compare, yojson, hash]
 
 and sig_item_content =
   | S_value of Value_var.t * ty_expr * Sig_item_attr.t
@@ -147,10 +147,10 @@ and signature_sort =
   | Ss_module
   | Ss_contract of contract_sig
 
-type module_ = decl list [@@deriving eq, compare, yojson, hash]
+type module_ = decl list [@@deriving equal, compare, yojson, hash]
 
 type program =
   { pr_module : module_
   ; pr_sig : signature
   }
-[@@deriving eq, compare, yojson, hash]
+[@@deriving equal, compare, yojson, hash]

@@ -59,7 +59,11 @@ class lsp_server (capability_mode : capability_mode) =
           }
 
     method on_doc
-        : ?changes:TextDocumentContentChangeEvent.t list -> Path.t -> string -> unit t =
+        : ?changes:TextDocumentContentChangeEvent.t list
+          -> version:[ `New of Ligo_interface.document_version | `Unchanged ]
+          -> Path.t
+          -> string
+          -> unit t =
       match capability_mode with
       | Only_semantic_tokens ->
         (* No need for calculating definitions/diagnostics here *)
@@ -77,11 +81,16 @@ class lsp_server (capability_mode : capability_mode) =
       let { diagnostics_pull_mode; _ } = config in
       match diagnostics_pull_mode, capability_mode with
       | _, Only_semantic_tokens | `OnDocumentLinkRequest, _ | `OnDocUpdate, _ ->
-        self#run_handler (Normal notify_back) @@ self#on_doc file content
+        self#run_handler (Normal notify_back)
+        @@ self#on_doc file content ~version:(`New document.version)
       (* For [`OnSave] we should process doc that was opened *)
       | `OnSave, _ ->
         self#run_handler (Normal notify_back)
-        @@ Requests.on_doc ~process_immediately:true file content
+        @@ Requests.on_doc
+             ~process_immediately:true
+             ~version:(`New document.version)
+             file
+             content
 
     (* Similarly, we also override the [on_notify_doc_did_change] method that will be called
        by the server each time a document is changed. *)
@@ -93,7 +102,8 @@ class lsp_server (capability_mode : capability_mode) =
         ~new_content
         : unit IO.t =
       let file = DocumentUri.to_path document.uri in
-      self#run_handler (Normal notify_back) @@ self#on_doc ~changes file new_content
+      self#run_handler (Normal notify_back)
+      @@ self#on_doc ~changes ~version:(`New document.version) file new_content
 
     method decode_apply_settings
         (notify_back : Linol_lwt.Jsonrpc2.notify_back)
@@ -295,6 +305,26 @@ class lsp_server (capability_mode : capability_mode) =
         | No_semantic_tokens -> None)
       else None
 
+    method config_execute_command =
+      (* Commands is an internally used thing, so handling all commands without
+         looking at disabled features. However, we don't want "semantic tokens"
+         LSP and "no semantic tokens" LSP to declare the same commands, it
+         wouldn't work.
+         *)
+      let commands =
+        match capability_mode with
+        | All_capabilities | No_semantic_tokens ->
+          Requests.Commands.Ligo_lsp_commands.[ add_tzip16_attr.id ]
+        | Only_semantic_tokens -> []
+      in
+      Some (ExecuteCommandOptions.create ~commands ())
+
+    method config_code_lens =
+      Some
+        (CodeLensOptions.create
+           ~resolveProvider:(self#is_request_enabled "textDocument/codeLens")
+           ())
+
     method! config_modify_capabilities (c : ServerCapabilities.t) : ServerCapabilities.t =
       { c with
         hoverProvider = self#config_hover
@@ -312,6 +342,8 @@ class lsp_server (capability_mode : capability_mode) =
       ; documentRangeFormattingProvider = self#config_range_formatting
       ; completionProvider = self#config_completion
       ; semanticTokensProvider = self#config_semantic_tokens
+      ; executeCommandProvider = self#config_execute_command
+      ; codeLensProvider = self#config_code_lens
       }
 
     method! on_notification
@@ -440,7 +472,7 @@ class lsp_server (capability_mode : capability_mode) =
                         (fun ( path
                              , (Ligo_interface.{ code; _ } :
                                  Ligo_interface.unprepared_file_data) ) ->
-                          notif_run_handler @@ self#on_doc path code)
+                          notif_run_handler @@ self#on_doc path code ~version:`Unchanged)
                         (List.take
                            (Docs_cache.to_alist get_scope_buffers)
                            max_files_for_diagnostics_update_at_once))
@@ -504,7 +536,7 @@ class lsp_server (capability_mode : capability_mode) =
             (* Shouldn't happen because [Requests.on_doc] should trigger and populate the
                cache. *)
             | None -> pass
-            | Some { code; syntax; _ } ->
+            | Some { code; syntax; document_version; _ } ->
               let last_project_dir = !last_project_dir in
               if Option.equal
                    Path.equal
@@ -513,9 +545,17 @@ class lsp_server (capability_mode : capability_mode) =
               then pass
               else
                 let@ _ =
-                  set_docs_cache file { syntax; code; definitions = None; scopes = None }
+                  set_docs_cache
+                    file
+                    { syntax
+                    ; code
+                    ; document_version
+                    ; definitions = None
+                    ; scopes = None
+                    ; potential_tzip16_storages = None
+                    }
                 in
-                self#on_doc ?changes:None file code
+                self#on_doc ?changes:None ~version:`Unchanged file code
           in
           if self#is_request_enabled method_
              && List.mem ~equal:Caml.( = ) allowed_modes capability_mode
@@ -532,6 +572,23 @@ class lsp_server (capability_mode : capability_mode) =
             in
             self#run_handler new_notify_back @@ bind repopulate_cache (fun () -> handler))
           else IO.return default
+        in
+        let run_command (handler : r Handler.t) : r IO.t =
+          run_handler
+            { notify_back =
+                Normal
+                  (new Linol_lwt.Jsonrpc2.notify_back
+                     ~notify_back
+                     ~server_request
+                     ~workDoneToken:None
+                     ~partialResultToken:None
+                     ())
+            ; config
+            ; docs_cache = get_scope_buffers
+            ; last_project_dir
+            ; mod_res
+            }
+            handler
         in
         match r with
         | Client_request.DocumentSymbol { textDocument; _ } ->
@@ -607,5 +664,11 @@ class lsp_server (capability_mode : capability_mode) =
           let uri = textDocument.uri in
           run ~allowed_modes:[ All_capabilities; Only_semantic_tokens ] ~uri ~default:None
           @@ Requests.on_req_semantic_tokens_range (DocumentUri.to_path uri) range
+        | Client_request.ExecuteCommand { command; arguments; _ } ->
+          run_command @@ Requests.on_execute_command ~command ?arguments ()
+        | Client_request.TextDocumentCodeLens { textDocument; _ } ->
+          let uri = textDocument.uri in
+          run ~allowed_modes:[ All_capabilities; No_semantic_tokens ] ~uri ~default:[]
+          @@ Requests.on_code_lens (DocumentUri.to_path uri)
         | _ -> super#on_request ~notify_back ~server_request ~id r
   end

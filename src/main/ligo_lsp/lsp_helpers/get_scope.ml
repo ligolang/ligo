@@ -9,6 +9,7 @@ type defs_and_diagnostics =
   { errors : Main_errors.all list
   ; warnings : Main_warnings.all list
   ; definitions : Def.definitions
+  ; potential_tzip16_storages : Ast_typed.expression_variable list
   }
 
 let with_code_input
@@ -151,11 +152,14 @@ let get_scopes
     (fun ~catch:_ _ -> [])
 
 
-let make_defs_and_diagnostics (errors, warnings, defs_opt) : defs_and_diagnostics =
+let make_defs_and_diagnostics (errors, warnings, defs_opt, potential_storage_vars)
+    : defs_and_diagnostics
+  =
   let errors = List.dedup_and_sort ~compare:Caml.compare errors in
   let warnings = List.dedup_and_sort ~compare:Caml.compare warnings in
   let definitions = Option.value ~default:{ definitions = [] } defs_opt in
-  { errors; warnings; definitions }
+  let potential_tzip16_storages = potential_storage_vars in
+  { errors; warnings; definitions; potential_tzip16_storages }
 
 
 let virtual_main_name = "lsp_virtual_main"
@@ -346,12 +350,12 @@ let get_defs_and_diagnostics
        ~fast_fail:false
        (fun ~raise ~catch ->
          let open Lwt.Let_syntax in
-         let%map errors, warnings, v =
+         let%map errors, warnings, v, storage_vars =
            with_code_input
              ~raw_options
              ~raise
              ~code_input
-             ~f:(fun ~options ~syntax ~stdlib ~prg ~module_deps ->
+             ~f:(fun ~options ~syntax ~stdlib ~(prg : Ast_core.module_) ~module_deps ->
                let defs, prg =
                  Scopes.defs_and_typed_program
                    ~raise
@@ -361,11 +365,14 @@ let get_defs_and_diagnostics
                    ~prg
                    ~module_deps
                in
-               let%map errors, warnings =
+               let%map errors, warnings, storage_vars =
                  match prg with
-                 | None -> Lwt.return ([], [])
+                 | None -> Lwt.return ([], [], [])
                  | Some (env, prg) ->
                    let stdlib_context = (fst stdlib).pr_sig in
+                   let potential_tzip16_storages =
+                     Tzip16_storage.vars_to_mark_as_tzip16_compatible env prg
+                   in
                    Trace.try_with_lwt
                      ~fast_fail:false
                      (fun ~raise ~catch ->
@@ -379,11 +386,14 @@ let get_defs_and_diagnostics
                            env
                            prg
                        in
-                       catch.errors (), catch.warnings ())
+                       catch.errors (), catch.warnings (), potential_tzip16_storages)
                      (fun ~catch e ->
-                       Lwt.return (e :: catch.errors (), catch.warnings ()))
+                       Lwt.return
+                         ( e :: catch.errors ()
+                         , catch.warnings ()
+                         , potential_tzip16_storages ))
                in
-               errors, warnings, defs)
+               errors, warnings, defs, storage_vars)
          in
-         errors @ catch.errors (), warnings @ catch.warnings (), Some v)
-       (fun ~catch e -> Lwt.return (e :: catch.errors (), catch.warnings (), None))
+         errors @ catch.errors (), warnings @ catch.warnings (), Some v, storage_vars)
+       (fun ~catch e -> Lwt.return (e :: catch.errors (), catch.warnings (), None, []))

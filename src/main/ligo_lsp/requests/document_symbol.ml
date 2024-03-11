@@ -190,7 +190,7 @@ let on_req_document_symbol (path : Path.t)
     : [> `DocumentSymbol of DocumentSymbol.t list ] option Handler.t
   =
   with_cached_doc path ~default:None
-  @@ fun { syntax; code = _; definitions; scopes = _ } ->
+  @@ fun { syntax; definitions; _ } ->
   let@ () =
     send_debug_msg @@ Format.asprintf "On document symbol request on %a" Path.pp path
   in

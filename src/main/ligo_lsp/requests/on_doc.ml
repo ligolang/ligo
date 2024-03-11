@@ -156,8 +156,22 @@ let drop_cached_definitions : Path.t -> unit Handler.t =
  fun path ->
   let@ docs_cache = ask_docs_cache in
   when_some_ (Docs_cache.find docs_cache path)
-  @@ fun { syntax; code; definitions = _; scopes = _ } ->
-  set_docs_cache path { syntax; code; definitions = None; scopes = None }
+  @@ fun { syntax
+         ; code
+         ; document_version
+         ; definitions = _
+         ; scopes = _
+         ; potential_tzip16_storages = _
+         } ->
+  set_docs_cache
+    path
+    { syntax
+    ; code
+    ; document_version
+    ; definitions = None
+    ; scopes = None
+    ; potential_tzip16_storages = None
+    }
 
 
 (** We define here a helper that:
@@ -170,9 +184,10 @@ let drop_cached_definitions : Path.t -> unit Handler.t =
    *)
 let on_doc
     :  process_immediately:bool -> ?changes:TextDocumentContentChangeEvent.t list
-    -> Path.t -> string -> unit Handler.t
+    -> version:[ `New of Ligo_interface.document_version | `Unchanged ] -> Path.t
+    -> string -> unit Handler.t
   =
- fun ~process_immediately ?changes:_ file code ->
+ fun ~process_immediately ?changes:_ ~version file code ->
   let@ syntax = get_syntax_exn file in
   let@ () =
     send_debug_msg
@@ -184,13 +199,33 @@ let on_doc
          file
   in
   let@ () = detect_or_ask_to_create_project_file file in
-  let@ () = set_docs_cache file { syntax; code; definitions = None; scopes = None } in
+  let@ old_docs = ask_docs_cache in
+  let@ () =
+    set_docs_cache
+      file
+      { syntax
+      ; code
+      ; document_version =
+          (match version with
+          | `New v -> Some v
+          | `Unchanged ->
+            (match Docs_cache.find old_docs file with
+            | None -> None
+            | Some cache -> cache.document_version))
+      ; definitions = None
+      ; scopes = None
+      ; potential_tzip16_storages = None
+      }
+  in
   when_ process_immediately @@ process_doc file
 
 
 (** This function checks if the given [Path.t] is cached, and if it's not, will read its
     contents from the disk and set the cache, setting [None] for definitions and scopes. If
-    the file is cached, it will do nothing. *)
+    the file is cached, it will do nothing.
+
+    This function is only for the case when the file is not opened in the editor.
+    *)
 let cache_doc_minimal : Path.t -> unit Handler.t =
  fun file ->
   let@ docs_cache = ask_docs_cache in
@@ -205,7 +240,16 @@ let cache_doc_minimal : Path.t -> unit Handler.t =
       @@ Lwt_io.with_file ~mode:Input (Path.to_string file) (Lwt_io.read ?count:None)
     in
     let@ syntax = get_syntax_exn file in
-    set_docs_cache file { syntax; code; definitions = None; scopes = None }
+    set_docs_cache
+      file
+      { syntax
+      ; code
+      ; document_version =
+          None (* This is valid because file is not opened in the editor *)
+      ; definitions = None
+      ; scopes = None
+      ; potential_tzip16_storages = None
+      }
 
 
 module File_graph = Lsp_helpers.Graph.Make (Path)
