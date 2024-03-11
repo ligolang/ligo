@@ -1235,7 +1235,7 @@ test_Snapshots = testGroup "Snapshots collection"
           checkSnapshot \case
             InterpretSnapshot
               { isStackFrames = StackFrame
-                  { sfStack = _ :
+                  { sfStack =
                       StackItem
                         { siLigoDesc = LigoStackEntry LigoExposedStackEntry
                             { leseType = typ

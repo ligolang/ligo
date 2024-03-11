@@ -74,27 +74,11 @@ InterpretSnapshot:
             elem delta of int in test/contracts/module-entrypoints.mligo
           siValue: 42 ] ]
 InterpretSnapshot:
-  isStatus:
-    running / expression evaluated (Pair { } 58 : (operation list * int))
-  isStackFrames:
-    [ StackFrame:
-      sfName: IncDec.decrement
-      sfLoc: test/contracts/module-entrypoints.mligo@9:5-9:22
-      sfStack:
-        [ StackItem:
-          siLigoDesc:
-            elem store of int in test/contracts/module-entrypoints.mligo
-          siValue: 100
-        , StackItem:
-          siLigoDesc:
-            elem delta of int in test/contracts/module-entrypoints.mligo
-          siValue: 42 ] ]
-InterpretSnapshot:
   isStatus: terminated ok
   isStackFrames:
     [ StackFrame:
       sfName: IncDec.decrement
-      sfLoc: test/contracts/module-entrypoints.mligo@9:5-9:22
+      sfLoc: test/contracts/module-entrypoints.mligo@9:5-9:7
       sfStack:
         [ StackItem:
           siLigoDesc: elem ? of  in #generated
