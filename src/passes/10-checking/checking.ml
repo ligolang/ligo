@@ -1676,7 +1676,8 @@ and infer_declaration (decl : I.declaration)
     let ascr = Binder.get_ascr binder in
     let%bind loc = loc () in
     let expr =
-      Option.value_map ascr ~default:expr ~f:(fun ascr -> I.e_ascription ~loc expr ascr)
+      Option.value_map ascr ~default:expr ~f:(fun ascr ->
+          I.e_ascription ~loc:expr.location expr ascr)
     in
     let%bind expr_type, expr = infer_expression expr in
     let%bind lhs_type =
@@ -1732,7 +1733,8 @@ and infer_declaration (decl : I.declaration)
     let ascr = Binder.get_ascr binder in
     let%bind loc = loc () in
     let expr =
-      Option.value_map ascr ~default:expr ~f:(fun ascr -> I.e_ascription ~loc expr ascr)
+      Option.value_map ascr ~default:expr ~f:(fun ascr ->
+          I.e_ascription ~loc:expr.location expr ascr)
     in
     let%bind expr_type, expr = infer_expression expr in
     let attr = infer_value_attr attr in

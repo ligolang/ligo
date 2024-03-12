@@ -1,0 +1,92 @@
+const f1 = 42
+
+const f2 : int = 42
+
+const f3 = <a>() => 42;
+
+function f4(x) {
+  return (y => x + y)
+}
+
+function f5(x) {
+  return ((y) => x + y)
+}
+
+function f6 ([x, y]) {
+  return x
+}
+
+const f7 = ([x, y], z) => {
+    if (z) {
+      return x
+    } else {
+      return y
+    }
+};
+
+function f8(x : int) : int {
+  if (x == 1) {
+    return 1
+  } else {
+    return f8(x - 1) * x
+  }
+}
+
+const f9 = (x : int) : int => {
+  if (x == 1) {
+    return 1
+  } else {
+    return f9(x - 1) * x
+  }
+};
+
+
+function f10 () {
+  let res = 0;
+  for (let i = false; i; i = true) {
+    res++;
+  }
+  return res
+}
+
+function f11() {
+  const f = (x, y) => x + y;
+  const f1 = function (x, y) { return x + y };
+  const f2 = function () { return 42 };
+  const g = (x : int) : int => { g(x) };
+  const h: (x: int) => int = (x : int) : int => { h(x) };
+  const a = ([x, y]) => x + y;
+  const b = function ([x, y]) { return x + y };
+}
+
+type t<a> = ["Box", a]
+
+function f12 (box) {
+  match (box) {
+    when(Box(a)) : a
+  }
+}
+
+function f13(lst : list<int>) {
+  for (let x of lst) {
+    return unit
+  }
+}
+
+function f14() {
+  let res = false
+  while (!res) {
+    res = true
+  }
+}
+
+type r<a> = { x : a; y : int; z : string }
+
+function f15(r : r<int>) {
+  let { x; y; z } = r;
+  let { x : x1; y : y1; z : z1 } = r;
+}
+
+function f16 ({x; y; z}) {
+  return x
+}

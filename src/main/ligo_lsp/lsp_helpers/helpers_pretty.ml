@@ -18,6 +18,13 @@ let doc_to_string ~(width : int) (doc : PPrint.document) : string =
   Buffer.contents buffer
 
 
+let doc_to_compact_string ~(width : int) (doc : PPrint.document) : string =
+  ignore width;
+  let buffer = Buffer.create 131 in
+  PPrint.ToBuffer.compact buffer doc;
+  Buffer.contents buffer
+
+
 let default_line_width_for_formatted_file = 80
 let default_line_width_for_hovers = 60
 

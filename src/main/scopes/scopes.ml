@@ -31,7 +31,9 @@ let defs_and_typed_program
     :  raise:(Main_errors.all, Main_warnings.all) Trace.raise
     -> options:Compiler_options.middle_end -> stdlib:Ast_typed.program * Ast_core.program
     -> prg:Ast_core.module_ -> module_deps:string SMap.t -> with_types:bool
-    -> definitions * (Ast_typed.signature * Ast_typed.declaration list) option
+    -> definitions
+       * (Ast_typed.signature * Ast_typed.declaration list) option
+       * Ast_typed.ty_expr LMap.t
   =
  fun ~raise ~options ~stdlib ~prg ~module_deps ~with_types ->
   let stdlib_decls, stdlib_core, stdlib_defs =
@@ -65,7 +67,8 @@ let defs_and_typed_program
     |> References.patch (References.declarations (stdlib_core @ prg) bindings.label_cases)
     |> Inline_mangled_modules_pass.patch mangled_uids
     |> wrap_definitions
-  , typed )
+  , typed
+  , bindings.lambda_cases )
 
 
 let scopes_declarations
@@ -109,7 +112,7 @@ let defs_and_typed_program_and_scopes
        * inlined_scopes
   =
  fun ~raise ~options ~stdlib ~prg ~module_deps ~with_types ->
-  let definitions, typed =
+  let definitions, typed, _ =
     defs_and_typed_program ~raise ~options ~stdlib ~prg ~module_deps ~with_types
   in
   let scopes = inlined_scopes ~options ~stdlib ~prg ~definitions in

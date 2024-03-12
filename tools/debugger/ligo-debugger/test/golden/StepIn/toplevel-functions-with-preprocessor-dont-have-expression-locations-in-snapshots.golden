@@ -2,14 +2,10 @@ InterpretSnapshot:
   isStatus: running / faced statement
   isStackFrames:
     [ StackFrame:
-      sfName: main
+      sfName: <start>
       sfLoc: test/contracts/contract-with-preprocessor.mligo@10:3-10:42
       sfStack:
         [ StackItem:
-          siLigoDesc:
-            elem s of int in test/contracts/contract-with-preprocessor.mligo
-          siValue: 0
-        , StackItem:
           siLigoDesc:
             elem foo of (int * int) -> int in test/contracts/contract-with-preprocessor.mligo
           siValue:
@@ -24,13 +20,16 @@ InterpretSnapshot:
               {  };
               SWAP;
               {  };
-              { {  }; { SWAP }; ADD } } ] ]
+              { {  }; { SWAP }; ADD } }
+        , StackItem:
+          siLigoDesc: <hidden elem>
+          siValue: Pair Unit 0 ] ]
 InterpretSnapshot:
-  isStatus: running / upon expression
+  isStatus: running / faced statement
   isStackFrames:
     [ StackFrame:
       sfName: main
-      sfLoc: test/contracts/contract-with-preprocessor.mligo@10:4-10:41
+      sfLoc: test/contracts/contract-with-preprocessor.mligo@10:3-10:42
       sfStack:
         [ StackItem:
           siLigoDesc:
@@ -347,39 +346,11 @@ InterpretSnapshot:
               {  };
               { {  }; { SWAP }; ADD } } ] ]
 InterpretSnapshot:
-  isStatus:
-    running / expression evaluated (Pair { } 42 : (operation list * int))
-  isStackFrames:
-    [ StackFrame:
-      sfName: main
-      sfLoc: test/contracts/contract-with-preprocessor.mligo@10:4-10:41
-      sfStack:
-        [ StackItem:
-          siLigoDesc:
-            elem s of int in test/contracts/contract-with-preprocessor.mligo
-          siValue: 0
-        , StackItem:
-          siLigoDesc:
-            elem foo of (int * int) -> int in test/contracts/contract-with-preprocessor.mligo
-          siValue:
-            { {  };
-              {  };
-              UNPAIR;
-              {  };
-              {  };
-              SWAP;
-              {  };
-              SWAP;
-              {  };
-              SWAP;
-              {  };
-              { {  }; { SWAP }; ADD } } ] ]
-InterpretSnapshot:
   isStatus: terminated ok
   isStackFrames:
     [ StackFrame:
       sfName: main
-      sfLoc: test/contracts/contract-with-preprocessor.mligo@10:4-10:41
+      sfLoc: test/contracts/contract-with-preprocessor.mligo@10:4-10:25
       sfStack:
         [ StackItem:
           siLigoDesc: elem ? of  in #generated

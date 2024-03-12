@@ -57,7 +57,7 @@ test_Compilation = testGroup "Getting debug info"
         , [ LigoMereEnvInfo [LigoHiddenStackEntry] ]
 
         , [ LigoMereLocInfo ((2, 1) <-> (5, 30)) uncurriedMainType ]
-        , [ LigoMereLocInfo ((2, 1) <-> (5, 30)) curriedMainType ]
+        , [ LigoMereLocInfo ((3, 3) <-> (5, 30)) curriedMainType ]
 
         , replicate 5 LigoEmptyLocationInfo
         ]

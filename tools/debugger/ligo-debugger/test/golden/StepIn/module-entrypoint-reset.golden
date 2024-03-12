@@ -71,35 +71,11 @@ InterpretSnapshot:
                 (pair (list operation) int)
                 { DROP; { { PUSH int 0 }; { NIL operation }; PAIR } } } ] ]
 InterpretSnapshot:
-  isStatus: running / expression evaluated (Pair { } 0 : (operation list * int))
-  isStackFrames:
-    [ StackFrame:
-      sfName: IncDec.reset
-      sfLoc: test/contracts/module-entrypoints.mligo@11:5-11:10
-      sfStack:
-        [ StackItem:
-          siLigoDesc:
-            elem ? of (([@layout comb] |
-                Reset of (unit) | Decrement of (int) | Increment of (int)) * int) in #generated
-          siValue: Unit
-        , StackItem:
-          siLigoDesc: elem s of int in #generated
-          siValue: 100
-        , StackItem:
-          siLigoDesc:
-            elem IncDec.reset of unit -> int -> (operation list * int) in test/contracts/module-entrypoints.mligo
-          siValue:
-            { DROP;
-              LAMBDA
-                int
-                (pair (list operation) int)
-                { DROP; { { PUSH int 0 }; { NIL operation }; PAIR } } } ] ]
-InterpretSnapshot:
   isStatus: terminated ok
   isStackFrames:
     [ StackFrame:
       sfName: IncDec.reset
-      sfLoc: test/contracts/module-entrypoints.mligo@11:5-11:10
+      sfLoc: test/contracts/module-entrypoints.mligo@11:5-11:7
       sfStack:
         [ StackItem:
           siLigoDesc: elem ? of  in #generated

@@ -156,6 +156,14 @@ module CodeLens = struct
   let eq = Caml.( = )
 end
 
+module InlayHint = struct
+  include Lsp.Types.InlayHint
+
+  let pp = Helpers_pretty.pp_with_yojson yojson_of_t
+  let eq = Caml.( = )
+  let testable = Alcotest.testable pp eq
+end
+
 module ApplyWorkspaceEditParams = Lsp.Types.ApplyWorkspaceEditParams
 module ClientCapabilities = Lsp.Types.ClientCapabilities
 module CodeLensOptions = Lsp.Types.CodeLensOptions

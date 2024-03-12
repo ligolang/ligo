@@ -27,7 +27,15 @@ let on_req_completion (pos : Position.t) (path : Path.t)
          | `Only_keywords_and_fields -> "Only_keywords_and_fields")
   in
   with_cached_doc ~default:None path
-  @@ fun { definitions; code; syntax; scopes; _ } ->
+  @@ fun { definitions
+         ; code
+         ; syntax
+         ; scopes
+         ; document_version = _
+         ; parse_error_ranges = _
+         ; potential_tzip16_storages = _
+         ; lambda_types = _
+         } ->
   let keyword_completions = Completion_lib.Keywords.get_keyword_completions syntax in
   let project_root = Project_root.get_project_root path in
   let@ mod_res = ask_mod_res in
