@@ -318,6 +318,7 @@ and ty_expr : CST.type_expr AST.ty_expr_ -> CST.type_expr =
   | T_var t -> decompile_tvar t
   | T_var_esc t -> decompile_tvar_esc t
   | T_int (_, z) -> T_Int (ghost_int z)
+  | T_nat (_, z) -> T_Nat (ghost_nat z)
   | T_string s -> T_String (ghost_string s)
   | T_module_open_in { module_path; field; field_as_open } ->
     let module_path = module_path, [] in

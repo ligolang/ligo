@@ -359,7 +359,7 @@ end
 
 let infer_value_attr : I.ValueAttr.t -> O.ValueAttr.t = fun x -> x
 
-let infer_literal lit : (Type.t * O.expression E.t, _, _) C.t =
+let infer_literal ?(singleton = false) lit : (Type.t * O.expression E.t, _, _) C.t =
   let open C in
   let open Let_syntax in
   let const constr =
@@ -371,25 +371,12 @@ let infer_literal lit : (Type.t * O.expression E.t, _, _) C.t =
           let%bind type_ = decode type_ in
           return @@ O.make_e ~loc (E_literal lit) type_) )
   in
-  match lit with
-  | Literal_unit -> const Type.t_unit
-  | Literal_string _ -> const Type.t_string
-  | Literal_key _ -> const Type.t_key
-  | Literal_key_hash _ -> const Type.t_key_hash
-  | Literal_chain_id _ -> const Type.t_chain_id
-  | Literal_signature _ -> const Type.t_signature
-  | Literal_bytes _ -> const Type.t_bytes
-  | Literal_int _ -> const Type.t_int
-  | Literal_nat _ -> const Type.t_nat
-  | Literal_timestamp _ -> const Type.t_timestamp
-  | Literal_mutez _ -> const Type.t_tez
-  | Literal_address _ -> const Type.t_address
-  | Literal_operation _ -> const Type.t_operation
-  | Literal_bls12_381_g1 _ -> const Type.t_bls12_381_g1
-  | Literal_bls12_381_g2 _ -> const Type.t_bls12_381_g2
-  | Literal_bls12_381_fr _ -> const Type.t_bls12_381_fr
-  | Literal_chest _ -> const Type.t_chest
-  | Literal_chest_key _ -> const Type.t_chest_key
+  if singleton
+  then const (Type.t_singleton lit)
+  else (
+    let typ = Literal_value.typeof lit in
+    let constr = Type.t_construct typ [] in
+    const constr)
 
 
 let t_record_with_orig_var (fields : Type.t Record.t) : (Type.t, _, _) C.t =
@@ -437,6 +424,12 @@ let rec check_expression (expr : I.expression) (type_ : Type.t)
         return @@ O.make_e ~loc content type_)
   in
   match expr.expression_content, type_.content with
+  | E_literal lit, T_singleton lit_in_typ ->
+    let%bind lit_type, expr = infer_literal ~singleton:true lit in
+    let%bind () =
+      assert_ (Type.equal lit_type type_) ~error:(literal_type_mismatch lit_type type_)
+    in
+    return expr
   | E_literal lit, T_construct _ ->
     let%bind lit_type, expr = infer_literal lit in
     let%bind () =

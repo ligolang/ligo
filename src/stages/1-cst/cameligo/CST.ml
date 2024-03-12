@@ -329,6 +329,7 @@ and type_expr =
 | T_Fun         of fun_type reg                    (* x -> y          *)
 | T_Int         of int_literal                     (* 42              *)
 | T_ModPath     of type_expr module_path reg       (* A.B.(x * y)     *)
+| T_Nat         of nat_literal                     (* 42n              *)
 | T_Par         of type_expr par                   (* (t)             *)
 | T_ParameterOf of parameter_of reg                (* parameter_of M  *)
 | T_Record      of field_decl reg record           (* {a; [@x] b: t}  *)
@@ -741,7 +742,8 @@ let rec type_expr_to_region = function
 | T_ForAll  {region; _}
 | T_Fun     {region; _} -> region
 | T_Int     w -> w#region
-| T_ModPath {region; _}
+| T_ModPath {region; _} -> region
+| T_Nat     w -> w#region
 | T_Par     {region; _}
 | T_ParameterOf {region; _}
 | T_Record  {region; _} -> region

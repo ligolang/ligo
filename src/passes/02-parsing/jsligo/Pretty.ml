@@ -1288,6 +1288,7 @@ and print_type_expr state = function
 | T_Fun         t -> print_T_Fun         state t
 | T_Int         t -> print_T_Int               t
 | T_NamePath    t -> print_T_NamePath    state t
+| T_Nat         t -> print_T_Nat               t
 | T_Object      t -> print_T_Object      state t
 | T_Par         t -> print_T_Par         state t
 | T_ParameterOf t -> print_T_ParameterOf state t
@@ -1344,7 +1345,7 @@ and print_fun_type state (node : fun_type) =
 
 and print_T_Fun state (node : fun_type) = print_fun_type state node
 
-(* Integer type *)
+(* Integer singleton type *)
 
 and print_T_Int (node : (lexeme * Z.t) wrap) = print_int node
 
@@ -1352,6 +1353,10 @@ and print_T_Int (node : (lexeme * Z.t) wrap) = print_int node
 
 and print_T_NamePath state (node : type_expr namespace_path reg) =
   print_namespace_path state (print_type_expr state) node.value
+
+(* Natural singleton type *)
+
+and print_T_Nat (node : (lexeme * Z.t) wrap) = print_nat node
 
 (* Object type *)
 

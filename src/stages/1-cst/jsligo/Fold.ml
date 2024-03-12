@@ -840,6 +840,7 @@ let fold'
     | T_Fun node -> node -| S_fun_type
     | T_Int node -> node -| S_int_literal
     | T_NamePath node -> node -| S_reg (S_namespace_path S_type_expr)
+    | T_Nat node -> node -| S_nat_literal
     | T_Object node -> node -| S_object S_type_expr
     | T_Par node -> node -| S_par S_type_expr
     | T_ParameterOf node -> node -| S_reg S_parameter_of_type

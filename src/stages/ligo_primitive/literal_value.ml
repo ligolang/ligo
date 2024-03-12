@@ -52,3 +52,24 @@ let pp ppf (l : t) =
 
 
 let assert_eq (a, b) = if equal a b then Some () else None
+
+let typeof lit =
+  match lit with
+  | Literal_unit -> Literal_types.unit
+  | Literal_string _ -> Literal_types.string
+  | Literal_key _ -> Literal_types.key
+  | Literal_key_hash _ -> Literal_types.key_hash
+  | Literal_chain_id _ -> Literal_types.chain_id
+  | Literal_signature _ -> Literal_types.signature
+  | Literal_bytes _ -> Literal_types.bytes
+  | Literal_int _ -> Literal_types.int
+  | Literal_nat _ -> Literal_types.nat
+  | Literal_timestamp _ -> Literal_types.timestamp
+  | Literal_mutez _ -> Literal_types.tez
+  | Literal_address _ -> Literal_types.address
+  | Literal_operation _ -> Literal_types.operation
+  | Literal_bls12_381_g1 _ -> Literal_types.bls12_381_g1
+  | Literal_bls12_381_g2 _ -> Literal_types.bls12_381_g2
+  | Literal_bls12_381_fr _ -> Literal_types.bls12_381_fr
+  | Literal_chest _ -> Literal_types.chest
+  | Literal_chest_key _ -> Literal_types.chest_key

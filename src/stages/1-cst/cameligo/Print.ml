@@ -282,6 +282,7 @@ and print_type_expr state = function
 | T_Fun         t -> print_T_Fun         state t
 | T_Int         t -> print_T_Int         state t
 | T_ModPath     t -> print_T_ModPath     state t
+| T_Nat         t -> print_T_Nat         state t
 | T_Par         t -> print_T_Par         state t
 | T_ParameterOf t -> print_T_ParameterOf state t
 | T_Record      t -> print_T_Record      state t
@@ -360,6 +361,11 @@ and print_T_Int state (node : (lexeme * Z.t) wrap) =
 
 and print_T_ModPath state (node : type_expr module_path reg) =
   print_module_path print_type_expr "T_ModPath" state node
+
+(* The natural number type *)
+
+and print_T_Nat state (node : (lexeme * Z.t) wrap) =
+  Tree.make_int "T_Nat" state node
 
 (* Parenthesised type expressions *)
 

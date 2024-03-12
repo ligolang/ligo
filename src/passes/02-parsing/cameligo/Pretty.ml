@@ -473,6 +473,7 @@ and print_type_expr state = function
 | T_Fun         t -> print_T_Fun       state t
 | T_Int         t -> print_T_Int             t
 | T_ModPath     t -> print_T_ModPath   state t
+| T_Nat         t -> print_T_Nat             t
 | T_Par         t -> print_T_Par       state t
 | T_Record      t -> print_T_Record    state t
 | T_String      t -> print_T_String          t
@@ -571,6 +572,10 @@ and print_module_path
     and sep     = token selector ^^ break 0 in
     let modules = separate_map sep token modules
     in group (modules ^^ sep ^^ print field)
+
+(* Natural number type *)
+
+and print_T_Nat (node : (lexeme * Z.t) wrap) = print_nat node
 
 (* Parenthesised type expressions *)
 
