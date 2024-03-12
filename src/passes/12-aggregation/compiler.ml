@@ -280,7 +280,11 @@ module Data = struct
     let refresh_env x y = memo_rec refresh_env (x, y) in
     let dedup_new_bindings =
       let compare_new_bindings (ma, va) (mb, vb) =
-        Tuple2.compare ~cmp1:(List.compare Module_var.compare) ~cmp2:Value_var.compare (ma, va.old) (mb, vb.old)
+        Tuple2.compare
+          ~cmp1:(List.compare Module_var.compare)
+          ~cmp2:Value_var.compare
+          (ma, va.old)
+          (mb, vb.old)
       in
       List.dedup_and_sort ~compare:compare_new_bindings
     in
