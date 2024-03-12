@@ -1,0 +1,7 @@
+
+author: DK318
+description: "Add a support for inlay hints in LSP. Now you can see type annotation hints in your code.\\n\\n\\n"
+merge_request: '3104'
+title: "[#2098] Implement inlay hints for inferred types"
+type: added
+            
