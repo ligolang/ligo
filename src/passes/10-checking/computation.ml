@@ -803,6 +803,9 @@ let rec subtype_aux ~(received : Type.t) ~(expected : Type.t)
           let%bind expected = decode expected in
           return
           @@ O.e_coerce ~loc { anno_expr = hole; type_annotation = expected } expected)
+  | T_singleton lit, T_construct _
+    when Option.is_some (Type.get_t_base_inj expected (Literal_value.typeof lit)) ->
+    return E.return
   | _, _ ->
     let%bind () = unify_aux received expected in
     return E.return

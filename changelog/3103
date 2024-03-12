@@ -1,0 +1,7 @@
+
+author: xavierm02
+description: "\\n"
+merge_request: '3103'
+title: "Made singleton types inhabitable, and subtypes of the type of the value"
+type: added
+            

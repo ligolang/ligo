@@ -583,6 +583,9 @@ let rec ty_expr : Eq.ty_expr -> Folding.ty_expr =
   | T_Int t ->
     let s, z = t#payload in
     return @@ T_int (s, z)
+  | T_Nat t ->
+    let s, z = t#payload in
+    return @@ T_nat (s, z)
   | T_NamePath { value = { namespace_path; property; _ }; _ } ->
     let namespace_path = List.Ne.of_list @@ nsepseq_to_list namespace_path in
     let module_path = List.Ne.map TODO_do_in_parsing.mvar namespace_path in

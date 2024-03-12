@@ -267,6 +267,8 @@ let rec compile_type ~raise (t : AST.type_expression) : type_expression =
     let result' = compile_type type2 in
     return @@ T_function (param', result')
   | T_singleton (Literal_int z) -> return @@ T_base (TB_type_int z)
+  | T_singleton (Literal_nat _) -> return @@ T_base TB_nat
+  | T_singleton (Literal_string _) -> return @@ T_base TB_string
   | T_singleton _ -> raise.error @@ corner_case ~loc:__LOC__ "Singleton uncaught"
   | T_for_all _ -> raise.error @@ corner_case ~loc:__LOC__ "For all type uncaught"
 

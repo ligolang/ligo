@@ -454,6 +454,7 @@ end = struct
     | T_fun (param_names, type1, type2) -> ret @@ T_arrow { type1; type2; param_names }
     | T_string str -> ret @@ T_singleton (Literal_string (Ligo_string.standard str))
     | T_int (_, x) -> ret @@ T_singleton (Literal_int x)
+    | T_nat (_, x) -> ret @@ T_singleton (Literal_nat x)
     | T_module_access { module_path; field; _ } ->
       ret
       @@ T_module_accessor { module_path = List.Ne.to_list module_path; element = field }

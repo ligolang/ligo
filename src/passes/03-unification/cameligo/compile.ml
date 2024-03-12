@@ -466,6 +466,9 @@ let rec ty_expr : Eq.ty_expr -> Folding.ty_expr =
   | T_Int v ->
     let a, b = w_fst v in
     ret @@ T_int (a, b)
+  | T_Nat v ->
+    let a, b = w_fst v in
+    ret @@ T_nat (a, b)
   | T_ModPath { value = { module_path = hd, tl; field; selector }; region } ->
     let field_as_open = TODO_do_in_parsing.field_as_open_t field in
     (* TODO: change AST_unified *)

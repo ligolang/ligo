@@ -306,6 +306,7 @@ and p : ?arrow_rhs:bool -> CST.type_expr -> CST.type_expr =
     | T_Record _
     | T_ModPath _
     | T_Int _
+    | T_Nat _
     | T_String _ -> false
   in
   if needs_parens t
@@ -337,6 +338,7 @@ and ty_expr : CST.type_expr AST.ty_expr_ -> CST.type_expr =
   match Location.unwrap te with
   | T_attr (attr, t) -> T_Attr (decompile_attr attr, t)
   | T_int (_s, z) -> T_Int (ghost_int z)
+  | T_nat (_s, z) -> T_Nat (ghost_nat z)
   | T_string s -> T_String (ghost_string s)
   | T_arg s -> T_Arg (w (Some ghost_quote, CST.Var (ghost_ident s)))
   | T_var t -> decompile_tvar t

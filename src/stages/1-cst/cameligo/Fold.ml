@@ -701,6 +701,7 @@ let fold'
     | T_Fun node -> node -| S_reg S_fun_type
     | T_Int node -> node -| S_wrap (S_tuple_2 (S_lexeme, S_z))
     | T_ModPath node -> node -| S_reg (S_module_path S_type_expr)
+    | T_Nat node -> node -| S_wrap (S_tuple_2 (S_lexeme, S_z))
     | T_Par node -> node -| S_par S_type_expr
     | T_Record node -> node -| S_record (S_reg S_field_decl)
     | T_String node -> node -| S_string_literal

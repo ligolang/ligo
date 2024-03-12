@@ -505,7 +505,7 @@ ctor_arg(kind): kind { $1 } (* For clearer error messages *)
 
 (* The production [core_type_no_string] is here to avoid a conflict
    with a variant for a constant contructor, e.g. [["C"]], which could
-   be interpreted otherwise as an type tuple (array) of the type
+   be interpreted otherwise as a type tuple (array) of the type
    ["C"]. *)
 
 core_type:
@@ -519,6 +519,7 @@ core_type_no_string:
 
 no_par_type_expr:
   "<int>"           { T_Int         $1 }
+| "<nat>"           { T_Nat         $1 }
 | type_name         { T_Var         $1 }
 | type_ctor_app     { T_App         $1 }
 | array_type        { T_Array       $1 }

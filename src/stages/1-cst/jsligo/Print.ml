@@ -297,6 +297,7 @@ and print_type_expr state = function
 | T_Fun         t -> print_T_Fun          state t
 | T_Int         t -> print_T_Int          state t
 | T_NamePath    t -> print_T_NamePath     state t
+| T_Nat         t -> print_T_Nat          state t
 | T_Object      t -> print_T_Object       state t
 | T_Par         t -> print_T_Par          state t
 | T_ParameterOf t -> print_T_ParameterOf  state t
@@ -362,7 +363,7 @@ and print_fun_type_param state (node: fun_type_param reg) =
 and print_codomain state (node: type_expr) =
   Tree.make_unary state "<codomain>" print_type_expr node
 
-(* The integer type *)
+(* The integer singleton type *)
 
 and print_T_Int state (node : int_literal) =
   Tree.make_int "T_Int" state node
@@ -371,6 +372,11 @@ and print_T_Int state (node : int_literal) =
 
 and print_T_NamePath state (node : type_expr namespace_path reg) =
   print_namespace_path print_type_expr "T_NamePath" state node
+
+(* The natural singleton type *)
+
+and print_T_Nat state (node : nat_literal) =
+  Tree.make_int "T_Nat" state node
 
 (* Parenthesised type expressions *)
 

@@ -104,6 +104,7 @@ and 'self type_expression_content_ =
   | T_named_fun of 'self Named_fun.t (* JsLIGO only: (x : x) => y *)
   | T_string of string (* Some types are parametrized by strings / ints *)
   | T_int of string * Z.t
+  | T_nat of string * Z.t
   | T_module_open_in of (Mod_variable.t, 'self) Mod_access.t (* A.(<...>) *)
   | T_arg of string (* 'a *)
   | T_sum_raw of
