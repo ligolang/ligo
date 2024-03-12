@@ -8,6 +8,7 @@ include Folding_range
 include Formatting
 include Go_to_definition
 include Hover
+include Inlay_hint
 include On_doc
 include Prepare_rename
 include Range_formatting

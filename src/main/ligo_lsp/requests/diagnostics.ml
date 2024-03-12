@@ -48,7 +48,12 @@ let partition_simple_diagnostics
 let get_diagnostics (current_path : Path.t)
     : Ligo_interface.defs_and_diagnostics -> simple_diagnostic list
   =
- fun { errors; warnings; definitions = _; potential_tzip16_storages = _ } ->
+ fun { errors
+     ; warnings
+     ; definitions = _
+     ; potential_tzip16_storages = _
+     ; lambda_types = _
+     } ->
   let mk_diag range file message severity =
     let location = Def.Loc_in_file.{ path = Path.from_absolute file; range } in
     Some { message; severity; location }

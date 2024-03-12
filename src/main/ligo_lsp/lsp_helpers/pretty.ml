@@ -8,6 +8,7 @@ type pp_mode =
 [@@deriving show]
 
 let with_pp_mode
+    ?(doc_to_string = Helpers_pretty.doc_to_string)
     { indent; width }
     (pprint :
       (* Intentionally use explicit state so type error could occur
@@ -25,7 +26,7 @@ let with_pp_mode
       method leading_vbar = pprint_state#leading_vbar
     end
   in
-  Helpers_pretty.doc_to_string ~width
+  doc_to_string ~width
   @@
   match x with
   | CameLIGO code ->
@@ -170,9 +171,10 @@ let pretty_print_type_expression
          PPrint.document
          (* In hovers we need to append things like `type t =` to type exprs,
             and since it should be done before [doc_to_string], such option is exposed here *)
-    -> pp_mode -> syntax:Syntax_types.t -> Ast_core.type_expression -> pretty_print_result
+    -> ?doc_to_string:(width:int -> PPrint.document -> string) -> pp_mode
+    -> syntax:Syntax_types.t -> Ast_core.type_expression -> pretty_print_result
   =
- fun ?prefix pp_mode ~syntax te ->
+ fun ?prefix ?(doc_to_string = Helpers_pretty.doc_to_string) pp_mode ~syntax te ->
   match decompile_type ~syntax te with
   | Ok cst ->
     let add_prefix = Option.value_map prefix ~default:Fun.id ~f:PPrint.( ^//^ ) in
@@ -182,11 +184,11 @@ let pretty_print_type_expression
         ; jsligo = add_prefix <@ uncurry Parsing.Jsligo.Pretty.print_type_expr
         }
     in
-    `Ok (with_pp_mode pp_mode print cst)
+    `Ok (with_pp_mode ~doc_to_string pp_mode print cst)
   | Error err ->
     `Nonpretty
       ( err
-      , Helpers_pretty.doc_to_string ~width:10000
+      , doc_to_string ~width:10000
         @@
         let prefix_doc =
           Option.value_map prefix ~default:PPrint.empty ~f:PPrint.(fun x -> x ^^ space)
@@ -195,11 +197,14 @@ let pretty_print_type_expression
           prefix_doc ^^ string (Format.asprintf "%a" Ast_core.PP.type_expression te)) )
 
 
-let show_type : syntax:Syntax_types.t -> Ast_core.type_expression -> string =
+let show_type
+    :  syntax:Syntax_types.t -> ?doc_to_string:(width:int -> PPrint.document -> string)
+    -> Ast_core.type_expression -> string
+  =
   (* VSCode is ignoring any newlines in completion detail *)
   let pp_mode = { width = 60; indent = 2 } in
-  fun ~syntax te ->
-    match pretty_print_type_expression pp_mode ~syntax te with
+  fun ~syntax ?(doc_to_string = Helpers_pretty.doc_to_string) te ->
+    match pretty_print_type_expression ~doc_to_string pp_mode ~syntax te with
     | `Ok str -> str
     (* Sending log messages from here or adding exn to return type will make the code less
        straightforward, so we're just silently ignoring it since one can use hover on this

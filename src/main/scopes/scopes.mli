@@ -18,7 +18,9 @@ val defs_and_typed_program
   -> prg:Ast_core.module_
   -> module_deps:string Map.Make(String).t
   -> with_types:bool
-  -> definitions * (Ast_typed.signature * Ast_typed.declaration list) option
+  -> definitions
+     * (Ast_typed.signature * Ast_typed.declaration list) option
+     * Ast_typed.ty_expr Types.LMap.t
 
 val inlined_scopes
   :  options:Compiler_options.middle_end

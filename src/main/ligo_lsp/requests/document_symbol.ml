@@ -27,7 +27,11 @@ let make_def_info (syntax : Syntax_types.t) (def : Def.t)
     | Variable ({ name; range; decl_range; def_type; _ } as vdef) ->
       let type_info = Def.get_type ~use_module_accessor:true vdef in
       let detail =
-        Option.map type_info ~f:(Pretty.show_type ~syntax <@ Def.use_var_name_if_available)
+        Option.map
+          type_info
+          ~f:
+            (Pretty.show_type ~syntax ~doc_to_string:Helpers_pretty.doc_to_string
+            <@ Def.use_var_name_if_available)
       in
       let is_field =
         match def_type with
@@ -46,7 +50,11 @@ let make_def_info (syntax : Syntax_types.t) (def : Def.t)
       in
       detail, kind, name, decl_range, range
     | Type { name; range; decl_range; content; _ } ->
-      let detail = Option.map content ~f:(Pretty.show_type ~syntax) in
+      let detail =
+        Option.map
+          content
+          ~f:(Pretty.show_type ~doc_to_string:Helpers_pretty.doc_to_string ~syntax)
+      in
       let kind =
         match content with
         | None -> SymbolKind.TypeParameter
@@ -190,7 +198,15 @@ let on_req_document_symbol (path : Path.t)
     : [> `DocumentSymbol of DocumentSymbol.t list ] option Handler.t
   =
   with_cached_doc path ~default:None
-  @@ fun { syntax; definitions; _ } ->
+  @@ fun { syntax
+         ; code = _
+         ; definitions
+         ; document_version = _
+         ; scopes = _
+         ; parse_error_ranges = _
+         ; lambda_types = _
+         ; potential_tzip16_storages = _
+         } ->
   let@ () =
     send_debug_msg @@ Format.asprintf "On document symbol request on %a" Path.pp path
   in

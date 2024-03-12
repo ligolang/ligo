@@ -162,16 +162,10 @@ let drop_cached_definitions : Path.t -> unit Handler.t =
          ; definitions = _
          ; scopes = _
          ; potential_tzip16_storages = _
+         ; parse_error_ranges = _
+         ; lambda_types = _
          } ->
-  set_docs_cache
-    path
-    { syntax
-    ; code
-    ; document_version
-    ; definitions = None
-    ; scopes = None
-    ; potential_tzip16_storages = None
-    }
+  set_docs_cache path (Ligo_interface.empty ~syntax ~code ~document_version)
 
 
 (** We define here a helper that:
@@ -200,23 +194,15 @@ let on_doc
   in
   let@ () = detect_or_ask_to_create_project_file file in
   let@ old_docs = ask_docs_cache in
-  let@ () =
-    set_docs_cache
-      file
-      { syntax
-      ; code
-      ; document_version =
-          (match version with
-          | `New v -> Some v
-          | `Unchanged ->
-            (match Docs_cache.find old_docs file with
-            | None -> None
-            | Some cache -> cache.document_version))
-      ; definitions = None
-      ; scopes = None
-      ; potential_tzip16_storages = None
-      }
+  let document_version =
+    match version with
+    | `New v -> Some v
+    | `Unchanged ->
+      (match Docs_cache.find old_docs file with
+      | None -> None
+      | Some cache -> cache.document_version)
   in
+  let@ () = set_docs_cache file (Ligo_interface.empty ~syntax ~code ~document_version) in
   when_ process_immediately @@ process_doc file
 
 
@@ -242,14 +228,11 @@ let cache_doc_minimal : Path.t -> unit Handler.t =
     let@ syntax = get_syntax_exn file in
     set_docs_cache
       file
-      { syntax
-      ; code
-      ; document_version =
-          None (* This is valid because file is not opened in the editor *)
-      ; definitions = None
-      ; scopes = None
-      ; potential_tzip16_storages = None
-      }
+      (Ligo_interface.empty
+         ~syntax
+         ~code
+         ~document_version:None
+           (* This is valid because file is not opened in the editor *))
 
 
 module File_graph = Lsp_helpers.Graph.Make (Path)

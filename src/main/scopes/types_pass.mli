@@ -4,6 +4,7 @@ module LMap = Types.LMap
 type t =
   { type_cases : Types.type_case LMap.t
   ; label_cases : Ast_core.ty_expr LMap.t
+  ; lambda_cases : Ast_typed.ty_expr LMap.t
   ; module_signatures : Types.signature_case LMap.t
   ; module_env : Env.t
   }
