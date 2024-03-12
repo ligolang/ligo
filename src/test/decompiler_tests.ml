@@ -28,6 +28,7 @@ let get_defs ~(code : string) ~(syntax : Syntax_types.t) : Scopes.def list Lwt.t
            ; definitions
            ; potential_tzip16_storages = _
            ; lambda_types = _
+           ; subst
            }
             : Lsp_helpers.Ligo_interface.Get_scope.defs_and_diagnostics)
     =
@@ -46,7 +47,9 @@ let get_defs ~(code : string) ~(syntax : Syntax_types.t) : Scopes.def list Lwt.t
            ~no_colour:false
            ~display_format:Human_readable
     in
-    failf "%a" formatter errors);
+    fail
+    @@ Option.value_map ~default:Fn.id ~f:Scopes.Subst.replace_string subst
+    @@ Format.asprintf "%a" formatter errors);
   Scopes.Types.flatten_defs definitions
 
 

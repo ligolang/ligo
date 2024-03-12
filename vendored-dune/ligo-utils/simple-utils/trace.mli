@@ -136,7 +136,7 @@ val from_result : raise:('b, 'w) raise -> ('a, 'b) result -> 'a
 val to_bool : (raise:('b, 'w) raise -> 'a) -> bool
 
 (** Return the evaluation of the function as [Some(res) | None]. *)
-val to_option : (raise:('b, 'w) raise -> 'a) -> 'a option
+val to_option : ?fast_fail:bool -> (raise:('b, 'w) raise -> 'a) -> 'a option
 
 (** Run the second function if the first fails. *)
 val bind_or

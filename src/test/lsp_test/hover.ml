@@ -413,7 +413,7 @@ let%expect_test "hover_module.mligo" =
      {
        "contents": [
          {
-           "value": "module Mangled : sig\n  val where : a\n  end",
+           "value": "module Mangled : sig\n  val where : ^a\n  end",
            "language": "cameligo"
          }
        ]
@@ -421,7 +421,7 @@ let%expect_test "hover_module.mligo" =
      {
        "contents": [
          {
-           "value": "module Mangled_with_sig : sig\n  type t =  a\n  end",
+           "value": "module Mangled_with_sig : sig\n  type t =  ^a\n  end",
            "language": "cameligo"
          }
        ]
@@ -630,7 +630,7 @@ let%expect_test "hover_module.jsligo" =
      {
        "contents": [
          {
-           "value": "namespace Mangled implements {\n  const where: a;\n  const v: int\n}",
+           "value": "namespace Mangled implements {\n  const where: ^a;\n  const v: int\n}",
            "language": "jsligo"
          }
        ]
@@ -638,7 +638,7 @@ let%expect_test "hover_module.jsligo" =
      {
        "contents": [
          {
-           "value": "namespace Mangled_with_sig implements {\n  const where: a;\n  type t = string;\n  type int = string\n}",
+           "value": "namespace Mangled_with_sig implements {\n  const where: ^a;\n  type t = string;\n  type int = string\n}",
            "language": "jsligo"
          }
        ]
@@ -646,7 +646,7 @@ let%expect_test "hover_module.jsligo" =
      {
        "contents": [
          {
-           "value": "namespace Mangled_with_inlined_sig implements {\n  const where: a;\n  const foo: int\n}",
+           "value": "namespace Mangled_with_inlined_sig implements {\n  const where: ^a;\n  const foo: int\n}",
            "language": "jsligo"
          }
        ]
@@ -1274,7 +1274,8 @@ let%expect_test "Preserves module path inside option type" =
     ; hover_positions = [ pos ~line:4 ~character:4 ]
     };
   [%expect
-    {| [{ "contents": [ { "value": "x : A.t option", "language": "cameligo" } ] }] |}]
+    {|
+      [{ "contents": [ { "value": "x : A.t option", "language": "cameligo" } ] }] |}]
 
 let%expect_test "Preserves module path of an imported module" =
   get_hover_test
@@ -1664,14 +1665,16 @@ let%expect_test "Recover from missing module" =
     { file = "contracts/lsp/hover/recover_missing_module.mligo"
     ; hover_positions = [ pos ~line:0 ~character:4 ]
     };
-  [%expect {| [{ "contents": [ { "value": "a : int", "language": "cameligo" } ] }] |}]
+  [%expect {|
+    [{ "contents": [ { "value": "a : int", "language": "cameligo" } ] }] |}]
 
 let%expect_test "Recover from missing record field" =
   get_hover_test
     { file = "contracts/lsp/hover/recover_missing_record_field.mligo"
     ; hover_positions = [ pos ~line:0 ~character:4 ]
     };
-  [%expect {| [{ "contents": [ { "value": "a : a", "language": "cameligo" } ] }] |}]
+  [%expect {|
+    [{ "contents": [ { "value": "a : ^a", "language": "cameligo" } ] }] |}]
 
 let%expect_test "Recover from type error" =
   get_hover_test

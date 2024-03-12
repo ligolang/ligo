@@ -14,7 +14,13 @@ let rec type_content_impl type_expression_impl : formatter -> type_content -> un
  fun ppf tc ->
   match tc with
   | T_variable tv -> Type_var.pp ppf tv
-  | T_exists tv -> Format.fprintf ppf "^%a" Type_var.pp tv
+  | T_exists tv ->
+    (* Sometimes, the name may already contain ^ in it, so let's not print it again. I
+       don't know why it happens, but I suppose decompiling from the typed AST to the core
+       AST and back to the typed AST while the typer error recovery is on may produce
+       these, since we convert to [T_variable] appending a ^ to it. *)
+    let name = Format.asprintf "%a" Type_var.pp tv in
+    Format.fprintf ppf "^%s" @@ String.chop_prefix_if_exists ~prefix:"^" name
   | T_sum (row, _) -> Row.PP.sum_type type_expression_impl layout ppf row
   | T_record row -> Row.PP.tuple_or_record_type type_expression_impl layout ppf row
   | T_arrow a -> Arrow.pp type_expression_impl ppf a

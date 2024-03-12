@@ -2060,34 +2060,30 @@ and infer_signature_sort ?is_annoted_entry (old_sig : Signature.t)
           when attr.entry && is_annoted_entry var -> Some (var, type_)
         | _ -> None)
   in
+  (* In case there is no entrypoints, or it has some error, infer the signature sort as
+     the old sort. One might be tempted to use [Error_recovery.type'] for the parameter
+     and storage, but it may trigger a [failwith] later on. *)
+  let default = return old_sig.sort in
   match List.Ne.of_list_opt entrypoints with
-  | None -> return old_sig.sort
+  | None -> default
   | Some entrypoints ->
     (* FIXME: This could be improved by using unification to unify the storage
        types together, permitting more programs to type check. *)
-    let%bind parameter, storage =
-      let default =
-        let%bind parameter = Error_recovery.type' in
-        let%bind storage = Error_recovery.type' in
-        return (parameter, storage)
-      in
-      match Type.parameter_from_entrypoints entrypoints with
-      | Error (`Duplicate_entrypoint v) ->
-        Error_recovery.try' ~default ~error:(fun _loc ->
-            duplicate_entrypoint v (Value_var.get_location v))
-      | Error (`Not_entry_point_form (ep, ep_type)) ->
-        Error_recovery.try' ~default ~error:(fun _loc ->
-            not_an_entrypoint ep_type (Value_var.get_location ep))
-      | Error (`Storage_does_not_match (ep_1, storage_1, ep_2, storage_2)) ->
-        Error_recovery.try' ~default ~error:(fun _loc ->
-            (storage_do_not_match ep_1 storage_1 ep_2 storage_2)
-              (Value_var.get_location ep_1))
-      | Error (`Wrong_dynamic_storage_definition t) ->
-        Error_recovery.try' ~default ~error:(fun _loc ->
-            wrong_dynamic_storage_definition t t.location)
-      | Ok (p, s) -> return (p, s)
-    in
-    return (Signature.Ss_contract { storage; parameter })
+    (match Type.parameter_from_entrypoints entrypoints with
+    | Error (`Duplicate_entrypoint v) ->
+      Error_recovery.try' ~default ~error:(fun _loc ->
+          duplicate_entrypoint v (Value_var.get_location v))
+    | Error (`Not_entry_point_form (ep, ep_type)) ->
+      Error_recovery.try' ~default ~error:(fun _loc ->
+          not_an_entrypoint ep_type (Value_var.get_location ep))
+    | Error (`Storage_does_not_match (ep_1, storage_1, ep_2, storage_2)) ->
+      Error_recovery.try' ~default ~error:(fun _loc ->
+          (storage_do_not_match ep_1 storage_1 ep_2 storage_2)
+            (Value_var.get_location ep_1))
+    | Error (`Wrong_dynamic_storage_definition t) ->
+      Error_recovery.try' ~default ~error:(fun _loc ->
+          wrong_dynamic_storage_definition t t.location)
+    | Ok (parameter, storage) -> return (Signature.Ss_contract { storage; parameter }))
 
 
 and remove_non_public (sig_ : Signature.t) =

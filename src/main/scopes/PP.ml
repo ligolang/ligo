@@ -90,8 +90,8 @@ let tdef : Format.formatter -> tdef -> unit =
  fun ppf { content; references; _ } ->
   let pp_content ppf content =
     match content with
-    | None -> Format.fprintf ppf ""
-    | Some content -> Format.fprintf ppf "%a" Ast_core.PP.type_expression content
+    | None -> ()
+    | Some content -> Ast_core.PP.type_expression ppf content
   in
   Format.fprintf ppf "|%a|@ %a" pp_content content refs references
 

@@ -7,6 +7,7 @@ type t =
   ; lambda_cases : Ast_typed.ty_expr LMap.t
   ; module_signatures : Types.signature_case LMap.t
   ; module_env : Env.t
+  ; subst : Types.Subst.t
   }
 
 val empty : Env.t -> t

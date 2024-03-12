@@ -7,6 +7,7 @@ let get_type (vdef : Scopes.Types.vdef) : Ast_core.type_expression option =
   | Core ty -> Some ty
   | Resolved ty ->
     Trace.try_with
+      ~fast_fail:false
       (fun ~raise ~catch:_ -> Some (Checking.untype_type_expression ~raise ty))
       (fun ~catch:_ _ -> None)
   | Unresolved -> None

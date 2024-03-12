@@ -1,6 +1,6 @@
 type content =
   { message : string
-  ; location : Location.t option [@equal.ignore] [@hash.ignore] [@compare.ignore]
+  ; location : Location.t option
   ; children : t option
   }
 
@@ -9,7 +9,7 @@ and t =
   ; stage : string
   ; content : content
   }
-[@@deriving equal, compare, hash, yojson]
+[@@deriving equal, compare, yojson]
 
 let make_content ~message ?location ?children () = { message; location; children }
 let status = "error"

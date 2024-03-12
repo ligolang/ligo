@@ -862,8 +862,8 @@ let lexists fields =
 module Error_recovery = struct
   open Let_syntax
 
-  let is_enabled ~raise:_ ~(options : Compiler_options.middle_end) ~loc:_ ~path:_ state =
-    state, options.typer_error_recovery
+  let is_enabled ~raise:_ ~options ~loc:_ ~path:_ state =
+    state, options.Compiler_options.typer_error_recovery
 
 
   let try' ~error ~default =

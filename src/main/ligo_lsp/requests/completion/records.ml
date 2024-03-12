@@ -62,7 +62,7 @@ let projection_impl
     | Core t -> mk_completions t
     | Resolved t ->
       let%bind.Option t =
-        Simple_utils.Trace.to_option @@ Checking.untype_type_expression t
+        Simple_utils.Trace.to_option ~fast_fail:false @@ Checking.untype_type_expression t
       in
       mk_completions t
     | Unresolved -> None)

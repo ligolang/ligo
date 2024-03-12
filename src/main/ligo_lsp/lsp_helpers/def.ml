@@ -140,7 +140,7 @@ let get_type ~(use_module_accessor : bool) (vdef : Scopes.Types.vdef) : type_inf
          [use_orig_var = True] so this expression will be pretty, and we also set
          [orig_var = None] before untyping so we're getting full expression and not just
          [T_variable]. *)
-      Simple_utils.Trace.to_option
+      Simple_utils.Trace.to_option ~fast_fail:false
       @@ Checking.untype_type_expression
            ~use_orig_var:true
            { type_content; abbrev = None; location }
@@ -156,7 +156,7 @@ let get_type ~(use_module_accessor : bool) (vdef : Scopes.Types.vdef) : type_inf
                   let type_operator = Ligo_prim.Module_access.{ module_path; element } in
                   let arguments =
                     List.filter_map applied_types ~f:(fun t ->
-                        Simple_utils.Trace.to_option
+                        Simple_utils.Trace.to_option ~fast_fail:false
                         @@ Checking.untype_type_expression ~use_orig_var:true t)
                   in
                   T_app { type_operator; arguments }

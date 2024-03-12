@@ -40,13 +40,7 @@ let all_lmap_unit (lmap : unit t Label.Map.t) : unit t =
 
 include Let_syntax
 
-let rec decode
-    (type_ : Type.t)
-    ~(options : Compiler_options.middle_end)
-    ~path
-    ~raise
-    subst
-  =
+let rec decode (type_ : Type.t) ~options ~path ~raise subst =
   let decode type_ = decode type_ ~options ~raise ~path subst in
   let decode_row row = decode_row row ~options ~path ~raise subst in
   let return type_content : O.type_expression =
@@ -64,7 +58,7 @@ let rec decode
     | Some (_, type_) -> decode type_
     | None ->
       let error = cannot_decode_texists tvar type_ type_.location in
-      if options.typer_error_recovery
+      if options.Compiler_options.typer_error_recovery
       then (
         raise.log_error error;
         return @@ O.T_exists tvar)
@@ -121,7 +115,7 @@ and decode_row ({ fields; layout } : Type.row) ~options ~path ~raise subst =
   { fields; layout }
 
 
-let decode type_ ~(options : Compiler_options.middle_end) ~path ~raise subst =
+let decode type_ ~options ~path ~raise subst =
   (* Attempt to lift the error to the originally decoded type (improves error reporting) *)
   Trace.try_with
     ~fast_fail:raise.fast_fail

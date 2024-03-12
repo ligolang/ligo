@@ -304,6 +304,43 @@ type scopes = scope list
 type inlined_scope = def scope_case
 type inlined_scopes = inlined_scope list
 
+(** The typer may produce generated variables such as [gen#123], and in error messages
+    created by the typer error-recovery, it would be desirable to replace those with
+    prettified names that match the ones that were replaced by the types pass. This module
+    is used by that pass to keep a map whose keys are generated variables and whose values
+    are the prettified names. Users of {!Subst.t} may then call {!Subst.replace_string} to
+    perform a substitution of known generated variables for their prettified counterparts.
+  *)
+module Subst = struct
+  type t = (string, string) Hashtbl.t
+
+  let create () = Hashtbl.create (module String)
+  let add = Hashtbl.add
+  let find = Hashtbl.find
+  let pp ppf subst = Fmt.Dump.(list (pair string string)) ppf (Hashtbl.to_alist subst)
+
+  (** Sustitute generated variables (e.g. [^gen#123]) with a prettified name if it exists
+      (e.g.: [^a]) in the given input string. *)
+  let replace_string subst input =
+    input
+    |> Str.full_split (Str.regexp {|\^?gen#[0-9]+|})
+    |> List.map ~f:(function
+           | Text msg -> msg
+           | Delim gen ->
+             Option.value
+               ~default:gen
+               (find subst (String.chop_prefix_if_exists ~prefix:"^" gen)))
+    |> String.concat ?sep:None
+end
+
+type t =
+  { definitions : definitions
+  ; program : Ast_typed.program option
+  ; subst : Subst.t
+  ; inlined_scopes : inlined_scopes lazy_t
+  ; lambda_types : Ast_typed.ty_expr LMap.t
+  }
+
 let rec flatten_defs : definitions -> def list =
  fun { definitions } ->
   match definitions with

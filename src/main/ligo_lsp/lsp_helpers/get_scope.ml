@@ -11,6 +11,7 @@ type defs_and_diagnostics =
   ; definitions : Def.definitions
   ; potential_tzip16_storages : Ast_typed.expression_variable list
   ; lambda_types : Ast_typed.ty_expr LMap.t
+  ; subst : Scopes.Subst.t option
   }
 
 let with_code_input
@@ -18,7 +19,7 @@ let with_code_input
          (options:Compiler_options.middle_end
           -> syntax:Syntax_types.t
           -> stdlib:Ast_typed.program * Ast_core.program
-          -> prg:Ast_core.module_
+          -> prg:Ast_core.program
           -> module_deps:string SMap.t
           -> 'a)
     -> raw_options:Raw_options.t -> raise:(Main_errors.all, Main_warnings.all) Trace.raise
@@ -39,8 +40,6 @@ let with_code_input
     Ligo_compile.Helpers.protocol_to_variant ~raise raw_options.protocol_version
   in
   let options = Compiler_options.make ~raw_options ~syntax ~protocol_version () in
-  (* let Compiler_options.{ with_types; _ } = options.tools in *)
-
   (* Here we need to extract module dependencies in order to show
     to the user file paths of mangled modules *)
   let prg, module_deps =
@@ -78,7 +77,6 @@ let with_code_input
   let stdlib =
     Build.Stdlib.select_lib_typed syntax lib, Build.Stdlib.select_lib_core syntax lib
   in
-  (* let () = assert (List.length (fst stdlib) = List.length (snd stdlib)) in *)
   f ~options:options.middle_end ~stdlib ~prg ~syntax ~module_deps
 
 
@@ -86,9 +84,8 @@ let with_code_input
 let get_scope_raw
     (raw_options : Raw_options.t)
     (source_file : BuildSystem.Source_input.code_input)
-    ~defs_only
     ~raise
-    : Def.definitions * Ast_typed.program option * inlined_scopes
+    : Scopes.t
   =
   let with_types = raw_options.with_types in
   with_code_input
@@ -96,26 +93,7 @@ let get_scope_raw
     ~raise
     ~code_input:source_file
     ~f:(fun ~options ~syntax:_ ~stdlib ~prg ~module_deps ->
-      if defs_only
-      then (
-        let defs, typed, _lambda_types =
-          Scopes.defs_and_typed_program
-            ~with_types
-            ~raise
-            ~options
-            ~stdlib
-            ~prg
-            ~module_deps
-        in
-        defs, typed, [])
-      else
-        Scopes.defs_and_typed_program_and_scopes
-          ~with_types
-          ~raise
-          ~options
-          ~stdlib
-          ~prg
-          ~module_deps)
+      Scopes.run ~with_types ~raise ~options ~stdlib ~prg ~module_deps)
 
 
 (** Used by CLI, formats all definitions, errors and warnings and returns strings *)
@@ -128,10 +106,8 @@ let get_scope_cli_result
   =
   Scopes.Api_helper.format_result ~display_format ~no_colour
   @@ fun ~raise ->
-  let defs, _, scopes =
-    get_scope_raw raw_options (From_file source_file) ~defs_only ~raise
-  in
-  defs.definitions, scopes
+  let v = get_scope_raw raw_options (From_file source_file) ~raise in
+  { v with inlined_scopes = (if defs_only then Lazy.from_val [] else v.inlined_scopes) }
 
 
 let get_scopes
@@ -152,14 +128,14 @@ let get_scopes
 
 
 let make_defs_and_diagnostics
-    (errors, warnings, defs_opt, potential_storage_vars, lambda_types)
+    (errors, warnings, defs_opt, potential_storage_vars, lambda_types, subst)
     : defs_and_diagnostics
   =
   let errors = List.dedup_and_sort ~compare:Caml.compare errors in
   let warnings = List.dedup_and_sort ~compare:Caml.compare warnings in
   let definitions = Option.value ~default:{ definitions = [] } defs_opt in
   let potential_tzip16_storages = potential_storage_vars in
-  { errors; warnings; definitions; potential_tzip16_storages; lambda_types }
+  { errors; warnings; definitions; potential_tzip16_storages; lambda_types; subst }
 
 
 let virtual_main_name = "lsp_virtual_main"
@@ -340,16 +316,17 @@ let get_defs
         ~raise
         ~code_input
         ~f:(fun ~options ~syntax:_ ~stdlib ~prg ~module_deps ->
-          let defs, _prg, _lambda_types =
-            Scopes.defs_and_typed_program
-              ~raise
-              ~with_types:raw_options.with_types
-              ~options
-              ~stdlib
-              ~prg
-              ~module_deps
+          let with_types = raw_options.with_types in
+          let { Scopes.definitions
+              ; program = _
+              ; subst = _
+              ; inlined_scopes = _
+              ; lambda_types = _
+              }
+            =
+            Scopes.run ~raise ~with_types ~options ~stdlib ~prg ~module_deps
           in
-          Lwt.return defs))
+          Lwt.return definitions))
     (fun ~catch:_ _ -> Lwt.return { definitions = [] })
 
 
@@ -367,28 +344,28 @@ let get_defs_and_diagnostics
        ~fast_fail:false
        (fun ~raise ~catch ->
          let open Lwt.Let_syntax in
-         let%map errors, warnings, v, storage_vars, lambda_types =
+         let%map errors, warnings, v, storage_vars, lambda_types, subst =
            with_code_input
              ~raw_options
              ~raise
              ~code_input:(Raw_input_lsp { file = Path.to_string path; code })
-             ~f:(fun ~options ~syntax ~stdlib ~(prg : Ast_core.module_) ~module_deps ->
-               let defs, prg, lambda_types =
-                 Scopes.defs_and_typed_program
-                   ~raise
-                   ~with_types
-                   ~options
-                   ~stdlib
-                   ~prg
-                   ~module_deps
+             ~f:(fun ~options ~syntax ~stdlib ~prg ~module_deps ->
+               let { Scopes.definitions
+                   ; program
+                   ; subst
+                   ; inlined_scopes = _
+                   ; lambda_types
+                   }
+                 =
+                 Scopes.run ~raise ~with_types ~options ~stdlib ~prg ~module_deps
                in
                let%map errors, warnings, storage_vars =
-                 match prg with
+                 match program with
                  | None -> Lwt.return ([], [], [])
-                 | Some prg ->
+                 | Some program ->
                    let stdlib_program = fst stdlib in
                    let potential_tzip16_storages =
-                     Tzip16_storage.vars_to_mark_as_tzip16_compatible path prg
+                     Tzip16_storage.vars_to_mark_as_tzip16_compatible path program
                    in
                    Trace.try_with_lwt
                      ~fast_fail:false
@@ -400,7 +377,7 @@ let get_defs_and_diagnostics
                            ~syntax
                            ~logger
                            raw_options
-                           prg
+                           program
                        in
                        catch.errors (), catch.warnings (), potential_tzip16_storages)
                      (fun ~catch e ->
@@ -409,12 +386,13 @@ let get_defs_and_diagnostics
                          , catch.warnings ()
                          , potential_tzip16_storages ))
                in
-               errors, warnings, defs, storage_vars, lambda_types)
+               errors, warnings, definitions, storage_vars, lambda_types, Some subst)
          in
          ( errors @ catch.errors ()
          , warnings @ catch.warnings ()
          , Some v
          , storage_vars
-         , lambda_types ))
+         , lambda_types
+         , subst ))
        (fun ~catch e ->
-         Lwt.return (e :: catch.errors (), catch.warnings (), None, [], LMap.empty))
+         Lwt.return (e :: catch.errors (), catch.warnings (), None, [], LMap.empty, None))

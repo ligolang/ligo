@@ -146,7 +146,7 @@ let%expect_test "Syntax and type errors" =
          "severity": 1
        };
        {
-         "message": "[aggregation] Underspecified type \"^gen#6523\".\nPlease add additional annotations.",
+         "message": "[aggregation] Underspecified type \"^a\".\nPlease add additional annotations.",
          "range": {
            "end": { "character": 18, "line": 4 },
            "start": { "character": 18, "line": 4 }
@@ -189,7 +189,7 @@ let%expect_test "Polymorphic Type error" =
     {|
     [("../../../../../default/src/test/contracts/lsp/poly_type_error.mligo",
       [{
-         "message": "[typer] Underspecified type \"^gen#6527\".\nCannot encode this type.",
+         "message": "[typer] Underspecified type \"^a\".\nCannot decompile this type.",
          "range": {
            "end": { "character": 22, "line": 0 },
            "start": { "character": 11, "line": 0 }
@@ -197,7 +197,23 @@ let%expect_test "Polymorphic Type error" =
          "severity": 1
        };
        {
-         "message": "[typer] Underspecified type \"^gen#6529\".\nCannot encode this type.",
+         "message": "[typer] Underspecified type \"^a\".\nCannot encode this type.",
+         "range": {
+           "end": { "character": 22, "line": 0 },
+           "start": { "character": 11, "line": 0 }
+         },
+         "severity": 1
+       };
+       {
+         "message": "[typer] Underspecified type \"^b\".\nCannot decompile this type.",
+         "range": {
+           "end": { "character": 22, "line": 0 },
+           "start": { "character": 11, "line": 0 }
+         },
+         "severity": 1
+       };
+       {
+         "message": "[typer] Underspecified type \"^b\".\nCannot encode this type.",
          "range": {
            "end": { "character": 22, "line": 0 },
            "start": { "character": 11, "line": 0 }
@@ -272,38 +288,6 @@ let%expect_test "Shows a duplicate entrypoint error." =
            "start": { "character": 4, "line": 1 }
          },
          "severity": 1
-       };
-       {
-         "message": "[typer] Duplicate entry-point ep_int",
-         "range": {
-           "end": { "character": 10, "line": 1 },
-           "start": { "character": 4, "line": 1 }
-         },
-         "severity": 1
-       };
-       {
-         "message": "[typer] Underspecified type \"^gen#6603\".\nCannot encode this type.",
-         "range": {
-           "end": { "character": 68, "line": 4 },
-           "start": { "character": 0, "line": 0 }
-         },
-         "severity": 1
-       };
-       {
-         "message": "[typer] Underspecified type \"^gen#6604\".\nCannot encode this type.",
-         "range": {
-           "end": { "character": 68, "line": 4 },
-           "start": { "character": 0, "line": 0 }
-         },
-         "severity": 1
-       };
-       {
-         "message": "[aggregation] Underspecified type \"^gen#6604\".\nPlease add additional annotations.",
-         "range": {
-           "end": { "character": 68, "line": 4 },
-           "start": { "character": 0, "line": 0 }
-         },
-         "severity": 1
        }])] |}]
 
 let%expect_test "Shows an error when two toplevel entrypoints have different storage." =
@@ -319,38 +303,6 @@ let%expect_test "Shows an error when two toplevel entrypoints have different sto
          "range": {
            "end": { "character": 10, "line": 1 },
            "start": { "character": 4, "line": 1 }
-         },
-         "severity": 1
-       };
-       {
-         "message": "[typer] Storage types do not match for different entrypoints:\n- ep_int : int\n- ep_string : string",
-         "range": {
-           "end": { "character": 10, "line": 1 },
-           "start": { "character": 4, "line": 1 }
-         },
-         "severity": 1
-       };
-       {
-         "message": "[typer] Underspecified type \"^gen#6609\".\nCannot encode this type.",
-         "range": {
-           "end": { "character": 77, "line": 4 },
-           "start": { "character": 0, "line": 0 }
-         },
-         "severity": 1
-       };
-       {
-         "message": "[typer] Underspecified type \"^gen#6610\".\nCannot encode this type.",
-         "range": {
-           "end": { "character": 77, "line": 4 },
-           "start": { "character": 0, "line": 0 }
-         },
-         "severity": 1
-       };
-       {
-         "message": "[aggregation] Underspecified type \"^gen#6610\".\nPlease add additional annotations.",
-         "range": {
-           "end": { "character": 77, "line": 4 },
-           "start": { "character": 0, "line": 0 }
          },
          "severity": 1
        }])] |}]
@@ -395,22 +347,6 @@ let%expect_test "Shows entrypoint-related errors in many modules simultaneously.
          "severity": 1
        };
        {
-         "message": "[typer] Underspecified type \"^gen#6621\".\nCannot encode this type.",
-         "range": {
-           "end": { "character": 3, "line": 28 },
-           "start": { "character": 15, "line": 21 }
-         },
-         "severity": 1
-       };
-       {
-         "message": "[typer] Underspecified type \"^gen#6622\".\nCannot encode this type.",
-         "range": {
-           "end": { "character": 3, "line": 28 },
-           "start": { "character": 15, "line": 21 }
-         },
-         "severity": 1
-       };
-       {
          "message": "[typer] Duplicate entry-point ep_string",
          "range": {
            "end": { "character": 15, "line": 32 },
@@ -419,42 +355,10 @@ let%expect_test "Shows entrypoint-related errors in many modules simultaneously.
          "severity": 1
        };
        {
-         "message": "[typer] Underspecified type \"^gen#6625\".\nCannot encode this type.",
-         "range": {
-           "end": { "character": 3, "line": 37 },
-           "start": { "character": 15, "line": 30 }
-         },
-         "severity": 1
-       };
-       {
-         "message": "[typer] Underspecified type \"^gen#6626\".\nCannot encode this type.",
-         "range": {
-           "end": { "character": 3, "line": 37 },
-           "start": { "character": 15, "line": 30 }
-         },
-         "severity": 1
-       };
-       {
          "message": "[typer] Not an entrypoint: unit -> ( list (operation) * string )",
          "range": {
            "end": { "character": 12, "line": 41 },
            "start": { "character": 6, "line": 41 }
-         },
-         "severity": 1
-       };
-       {
-         "message": "[typer] Underspecified type \"^gen#6628\".\nCannot encode this type.",
-         "range": {
-           "end": { "character": 3, "line": 43 },
-           "start": { "character": 15, "line": 39 }
-         },
-         "severity": 1
-       };
-       {
-         "message": "[typer] Underspecified type \"^gen#6629\".\nCannot encode this type.",
-         "range": {
-           "end": { "character": 3, "line": 43 },
-           "start": { "character": 15, "line": 39 }
          },
          "severity": 1
        };
@@ -482,7 +386,15 @@ let%expect_test "ghost_ident filter" =
          "severity": 1
        };
        {
-         "message": "[typer] Underspecified type \"^gen#6632\".\nCannot encode this type.",
+         "message": "[typer] Underspecified type \"^a\".\nCannot decompile this type.",
+         "range": {
+           "end": { "character": 7, "line": 0 },
+           "start": { "character": 7, "line": 0 }
+         },
+         "severity": 1
+       };
+       {
+         "message": "[typer] Underspecified type \"^a\".\nCannot encode this type.",
          "range": {
            "end": { "character": 7, "line": 0 },
            "start": { "character": 7, "line": 0 }
@@ -553,7 +465,15 @@ let%expect_test "Shows comparing error and suggests to use functions from Test m
     {|
     [("../../../../../default/src/test/contracts/lsp/diagnostics_equal.mligo",
       [{
-         "message": "[typer] Underspecified type \"^gen#6650\".\nCannot encode this type.",
+         "message": "[typer] Underspecified type \"^a\".\nCannot decompile this type.",
+         "range": {
+           "end": { "character": 27, "line": 2 },
+           "start": { "character": 0, "line": 2 }
+         },
+         "severity": 1
+       };
+       {
+         "message": "[typer] Underspecified type \"^a\".\nCannot encode this type.",
          "range": {
            "end": { "character": 27, "line": 2 },
            "start": { "character": 0, "line": 2 }
@@ -639,10 +559,26 @@ let%expect_test "Shows errors for unbound variables in records (jsligo)." =
     {|
     [("../../../../../default/src/test/contracts/lsp/unbound_var_in_record.jsligo",
       [{
+         "message": "[typer] Underspecified type \"^b\".\nCannot decompile this type.",
+         "range": {
+           "end": { "character": 26, "line": 1 },
+           "start": { "character": 24, "line": 1 }
+         },
+         "severity": 1
+       };
+       {
          "message": "[typer] Variable \"aa\" not found. ",
          "range": {
            "end": { "character": 26, "line": 1 },
            "start": { "character": 24, "line": 1 }
+         },
+         "severity": 1
+       };
+       {
+         "message": "[typer] Underspecified type \"^e\".\nCannot decompile this type.",
+         "range": {
+           "end": { "character": 29, "line": 1 },
+           "start": { "character": 27, "line": 1 }
          },
          "severity": 1
        };
@@ -655,10 +591,26 @@ let%expect_test "Shows errors for unbound variables in records (jsligo)." =
          "severity": 1
        };
        {
+         "message": "[typer] Underspecified type \"^c\".\nCannot decompile this type.",
+         "range": {
+           "end": { "character": 33, "line": 1 },
+           "start": { "character": 30, "line": 1 }
+         },
+         "severity": 1
+       };
+       {
          "message": "[typer] Variable \"asd\" not found. ",
          "range": {
            "end": { "character": 33, "line": 1 },
            "start": { "character": 30, "line": 1 }
+         },
+         "severity": 1
+       };
+       {
+         "message": "[typer] Underspecified type \"^d\".\nCannot decompile this type.",
+         "range": {
+           "end": { "character": 36, "line": 1 },
+           "start": { "character": 34, "line": 1 }
          },
          "severity": 1
        };
@@ -671,7 +623,7 @@ let%expect_test "Shows errors for unbound variables in records (jsligo)." =
          "severity": 1
        };
        {
-         "message": "[typer] Variable \"a\" not found. ",
+         "message": "[typer] Underspecified type \"^a\".\nCannot decompile this type.",
          "range": {
            "end": { "character": 38, "line": 1 },
            "start": { "character": 37, "line": 1 }
@@ -679,10 +631,160 @@ let%expect_test "Shows errors for unbound variables in records (jsligo)." =
          "severity": 1
        };
        {
-         "message": "[aggregation] Underspecified type \"^gen#6694\".\nPlease add additional annotations.",
+         "message": "[aggregation] Underspecified type \"^a\".\nPlease add additional annotations.",
          "range": {
            "end": { "character": 38, "line": 1 },
            "start": { "character": 37, "line": 1 }
+         },
+         "severity": 1
+       };
+       {
+         "message": "[typer] Variable \"a\" not found. ",
+         "range": {
+           "end": { "character": 38, "line": 1 },
+           "start": { "character": 37, "line": 1 }
+         },
+         "severity": 1
+       }])] |}]
+
+let%expect_test "Shows errors for type error recovery missing variable" =
+  get_diagnostics_test
+    { file_path = "contracts/lsp/hover/recover_missing_variable.mligo"
+    ; max_number_of_problems = None
+    };
+  [%expect
+    {|
+    [("../../../../../default/src/test/contracts/lsp/hover/recover_missing_variable.mligo",
+      [{
+         "message": "[typer] Variable \"f\" not found. ",
+         "range": {
+           "end": { "character": 10, "line": 0 },
+           "start": { "character": 9, "line": 0 }
+         },
+         "severity": 1
+       }])] |}]
+
+let%expect_test "Shows errors for type error recovery missing module" =
+  get_diagnostics_test
+    { file_path = "contracts/lsp/hover/recover_missing_module.mligo"
+    ; max_number_of_problems = None
+    };
+  [%expect
+    {|
+    [("../../../../../default/src/test/contracts/lsp/hover/recover_missing_module.mligo",
+      [{
+         "message": "[typer]  Module \"Byte\" not found.",
+         "range": {
+           "end": { "character": 25, "line": 0 },
+           "start": { "character": 14, "line": 0 }
+         },
+         "severity": 1
+       };
+       {
+         "message": "[typer] Variable \"length\" not found. ",
+         "range": {
+           "end": { "character": 25, "line": 0 },
+           "start": { "character": 14, "line": 0 }
+         },
+         "severity": 1
+       }])] |}]
+
+let%expect_test "Shows errors for type error recovery missing record field" =
+  get_diagnostics_test
+    { file_path = "contracts/lsp/hover/recover_missing_record_field.mligo"
+    ; max_number_of_problems = None
+    };
+  [%expect
+    {|
+    [("../../../../../default/src/test/contracts/lsp/hover/recover_missing_record_field.mligo",
+      [{
+         "message": "[typer] Invalid record field \"g\" in record.",
+         "range": {
+           "end": { "character": 20, "line": 0 },
+           "start": { "character": 8, "line": 0 }
+         },
+         "severity": 1
+       };
+       {
+         "message": "[typer] Underspecified type \"^a\".\nCannot decompile this type.",
+         "range": {
+           "end": { "character": 20, "line": 0 },
+           "start": { "character": 8, "line": 0 }
+         },
+         "severity": 1
+       };
+       {
+         "message": "[typer] Underspecified type \"^a\".\nCannot encode this type.",
+         "range": {
+           "end": { "character": 20, "line": 0 },
+           "start": { "character": 8, "line": 0 }
+         },
+         "severity": 1
+       }])] |}]
+
+let%expect_test "Shows errors for type error recovery" =
+  get_diagnostics_test
+    { file_path = "contracts/lsp/hover/recover_type_error_1.mligo"
+    ; max_number_of_problems = None
+    };
+  [%expect
+    {|
+    [("../../../../../default/src/test/contracts/lsp/hover/recover_type_error_1.mligo",
+      [{
+         "message": "[aggregation] Cannot compile erroneous expression.",
+         "range": {
+           "end": { "character": 16, "line": 1 },
+           "start": { "character": 2, "line": 1 }
+         },
+         "severity": 1
+       };
+       {
+         "message": "[typer] This expression has type \"string\", but an expression was expected of type \n\"int\".\nType \"string\" is not compatible with type \"int\".",
+         "range": {
+           "end": { "character": 16, "line": 1 },
+           "start": { "character": 10, "line": 1 }
+         },
+         "severity": 1
+       }])] |}]
+
+let%expect_test "Shows errors for type error recovery 2" =
+  get_diagnostics_test
+    { file_path = "contracts/lsp/hover/recover_type_error_2.mligo"
+    ; max_number_of_problems = None
+    };
+  [%expect
+    {|
+    [("../../../../../default/src/test/contracts/lsp/hover/recover_type_error_2.mligo",
+      [{
+         "message": "[aggregation] Cannot compile erroneous expression.",
+         "range": {
+           "end": { "character": 15, "line": 0 },
+           "start": { "character": 0, "line": 0 }
+         },
+         "severity": 1
+       };
+       {
+         "message": "[typer] This expression has type \"string\", but an expression was expected of type \n\"int\".\nType \"string\" is not compatible with type \"int\".",
+         "range": {
+           "end": { "character": 15, "line": 0 },
+           "start": { "character": 8, "line": 0 }
+         },
+         "severity": 1
+       }])] |}]
+
+let%expect_test "Shows errors for type error recovery 3" =
+  get_diagnostics_test
+    { file_path = "contracts/lsp/hover/recover_type_error_3.mligo"
+    ; max_number_of_problems = None
+    };
+  [%expect
+    {|
+    [("../../../../../default/src/test/contracts/lsp/hover/recover_type_error_3.mligo",
+      [{
+         "message": "[typer] Variable \"f\" not found. ",
+         "range": {
+           "end": { "character": 11, "line": 0 },
+           "start": { "character": 10, "line": 0 }
          },
          "severity": 1
        }])] |}]

@@ -258,7 +258,7 @@ let hover_string
       | Core core_sig -> Some (drop_common_module_path @@ strip_generated core_sig)
       | Resolved signature ->
         let%map.Option sig' =
-          Simple_utils.Trace.to_option
+          Simple_utils.Trace.to_option ~fast_fail:false
           @@ Checking.untype_signature ~use_orig_var:true signature
         in
         drop_common_module_path @@ strip_generated sig'

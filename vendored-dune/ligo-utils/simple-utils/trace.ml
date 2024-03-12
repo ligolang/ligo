@@ -213,7 +213,8 @@ let to_bool f =
       true)
     (fun ~catch _ -> false)
 
-let to_option f = try_with (fun ~raise ~catch:_ -> Some (f ~raise)) (fun ~catch _ -> None)
+let to_option ?fast_fail f =
+  try_with ?fast_fail (fun ~raise ~catch:_ -> Some (f ~raise)) (fun ~catch _ -> None)
 
 (* Convert an option to a result, with a given error if the parameter
    is None. *)

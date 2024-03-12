@@ -91,15 +91,23 @@ let%expect_test _ =
                     ^^^^^
      14 |   j
 
-    Underspecified type "^gen#2".
-    Cannot encode this type.
+    Invalid record field "boo" in record.
     File "../../test/contracts/get_scope_tests/bad_field_record.mligo", line 13, characters 10-15:
      12 | let b =
      13 |   let j = c.boo in
                     ^^^^^
      14 |   j
 
-    Invalid record field "boo" in record.
+    Underspecified type "^a".
+    Cannot decompile this type.
+    File "../../test/contracts/get_scope_tests/bad_field_record.mligo", line 13, characters 10-15:
+     12 | let b =
+     13 |   let j = c.boo in
+                    ^^^^^
+     14 |   j
+
+    Underspecified type "^a".
+    Cannot encode this type.
 
 |}];
   run_ligo_good

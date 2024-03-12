@@ -6,6 +6,7 @@ type simple_diagnostic =
   ; location : Def.Loc_in_file.t
   ; stage : string
   }
+[@@deriving compare]
 
 let from_simple_diagnostic : simple_diagnostic -> Diagnostic.t =
  fun { stage; severity; message; location } ->
@@ -58,9 +59,13 @@ let get_diagnostics (current_path : Path.t)
      ; definitions = _
      ; potential_tzip16_storages = _
      ; lambda_types = _
+     ; subst
      } ->
   let mk_diag ~stage ~range ~file ~message ~severity =
     let location = Def.Loc_in_file.{ path = Path.from_absolute file; range } in
+    let message =
+      Option.value_map ~default:Fn.id ~f:Scopes.Subst.replace_string subst message
+    in
     Some { message; severity; location; stage }
   in
   let extract_error_information : Main_errors.all -> simple_diagnostic list =
@@ -108,3 +113,4 @@ let get_diagnostics (current_path : Path.t)
   @ List.filter_map ~f:extract_warning_information warnings
   |> List.filter ~f:(fun { message; _ } ->
          not @@ Parsing_shared.Errors.ErrorWrapper.is_wrapped message)
+  |> List.dedup_and_sort ~compare:compare_simple_diagnostic

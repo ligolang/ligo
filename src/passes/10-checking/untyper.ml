@@ -43,9 +43,8 @@ let rec untype_type_expression
       I.T_record { fields; layout = Some layout }
     | O.T_variable name -> I.T_variable name
     | O.T_exists name ->
-      if true (* TODO *)
-      then I.T_variable name
-      else raise.error (`Typer_cannot_decompile_texists (t, t.location))
+      raise.log_error (`Typer_cannot_decompile_texists (t, t.location));
+      I.T_variable name
     | O.T_arrow arr ->
       let arr = Arrow.map self arr in
       I.T_arrow arr
