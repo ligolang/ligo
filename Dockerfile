@@ -47,6 +47,17 @@ COPY scripts/version.sh /ligo/scripts/version.sh
 
 COPY tools/ligo-syntax-highlighting ligo-syntax-highlighting
 
+# Version info
+##################
+# Code between TAG_REMOVE_IN_CASE_OF_MR is used for the ligo changelog command. It's useful 
+# to trace the used version in case of debugging or usage of next tag. But it'll create divergence on cache for each commit.
+# So we remove it to optimize CI in case of MR.
+# To debug your MR you can build it locally, or remove the line which remove lines in CI
+##################
+### TAG_REMOVE_IN_CASE_OF_MR ###
+ARG ligo_version
+### TAG_REMOVE_IN_CASE_OF_MR ###
+
 # Tests
 ##################
 # Code between TAG_REMOVE_IN_CASE_OF_SKIPTEST will be removed in case of skip test.
@@ -67,16 +78,6 @@ RUN mkdir highlighting highlighting/vim highlighting/emacs highlighting/vscode h
 COPY changelog.txt /ligo/changelog.txt
 ENV CHANGELOG_PATH=/ligo/changelog.txt
 
-# Version info
-##################
-# Code between TAG_REMOVE_IN_CASE_OF_MR is used for the ligo changelog command. It's useful 
-# to trace the used version in case of debugging or usage of next tag. But it'll create divergence on cache for each commit.
-# So we remove it to optimize CI in case of MR.
-# To debug your MR you can build it locally, or remove the line which remove lines in CI
-##################
-### TAG_REMOVE_IN_CASE_OF_MR ###
-ARG ligo_version
-### TAG_REMOVE_IN_CASE_OF_MR ###
 
 RUN LIGO_VERSION=$ligo_version opam exec -- dune build -p ligo --profile static \
   # Copy binary now to avoid problems with BISECT_ENABLE below
