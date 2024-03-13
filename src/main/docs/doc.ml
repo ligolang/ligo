@@ -132,7 +132,7 @@ let markdown_doc
               Mdx.to_mdx ~source_syntax ~source_file ?file_name:(Some rel_path) typed
             in
             List.map files ~f:(fun { file_name; contents } ->
-                let abs_path = FilePath.concat folder file_name in
+                let abs_path = FilePath.concat folder (String.lowercase file_name) in
                 Out_channel.write_all abs_path ~data:contents;
                 abs_path)))
   in
