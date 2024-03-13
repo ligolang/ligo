@@ -304,17 +304,17 @@ and module_doc
     | Some mod_path ->
       link
         ~text:(string @@ mod_path_to_string mod_path)
-        ~target:(string @@ md_file_for_module mod_path)
+        ~target:(string @@ (String.lowercase (md_file_for_module mod_path)))
   in
   match m with
   | M_struct m ->
-    let name = Module_var.to_name_exn name in
+    let name = String.lowercase (Module_var.to_name_exn name) in
     let full_path = mod_path_to_string @@ config.current_mod_path @ [ name ] in
     let file_name = add_extension_md full_path in
     let link =
       (* That's what we print to current file. FIXME: should be syntax dependant,
        but <SyntaxTitle> can't hold links for now *)
-      link ~text:(string @@ "module " ^ name) ~target:(string file_name) ^^ hardline
+      link ~text:(string @@ "module " ^ name) ~target:(string (String.lowercase file_name)) ^^ hardline
     and contents =
       (* Contents of file we create *)
       let heading = string @@ "# " ^ full_path in
@@ -368,7 +368,7 @@ and module_type_doc
   let link =
     (* That's what we print to current file. FIXME: should be syntax dependant,
        but <SyntaxTitle> can't hold links for now *)
-    link ~text:(string @@ "module type " ^ name) ~target:(string file_name) ^^ hardline
+    link ~text:(string @@ "module type " ^ name) ~target:(string (String.lowercase file_name)) ^^ hardline
   and contents =
     (* Contents of file we create *)
     let heading = string @@ "# " ^ full_path in
