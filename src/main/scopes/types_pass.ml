@@ -757,12 +757,7 @@ module Typing_env = struct
   (** Convenient function that creates a hashmap,
       passes it into continuation, and clears it after all. *)
   let with_env : subst:Subst.t -> f:(env:env -> 'a) -> 'a =
-   fun ~subst ~f ->
-    let module Name_tbl = Checking.Type_var_name_tbl in
-    let env = { name_tbl = Name_tbl.create (); subst } in
-    Name_tbl.Exists.clear ();
-    let result = f ~env in
-    result
+   fun ~subst ~f -> f ~env:{ name_tbl = Checking.Type_var_name_tbl.create (); subst }
 
 
   let rec replace_gen_type_vars_type_expression ~env

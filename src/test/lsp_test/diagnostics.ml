@@ -820,3 +820,125 @@ let%expect_test "Shows errors for type error recovery 3" =
          },
          "severity": 1
        }])] |}]
+
+let%expect_test "Type recovered type variables" =
+  get_diagnostics_test
+    { file_path = "contracts/lsp/inlay_hints/typer_error_recovery.jsligo"
+    ; max_number_of_problems = None
+    };
+  [%expect
+    {|
+    [("../../../../../default/src/test/contracts/lsp/inlay_hints/typer_error_recovery.jsligo",
+      [{
+         "message": "[typer] This expression has type \"unit\", but an expression was expected of type \n\"int\".\nType \"unit\" is not compatible with type \"int\".",
+         "range": {
+           "end": { "character": 19, "line": 0 },
+           "start": { "character": 11, "line": 0 }
+         },
+         "severity": 1
+       };
+       {
+         "message": "[typer] Variable \"g\" not found. ",
+         "range": {
+           "end": { "character": 22, "line": 0 },
+           "start": { "character": 21, "line": 0 }
+         },
+         "severity": 1
+       };
+       {
+         "message": "[typer] Underspecified type \"^b\".\nCannot decompile this type.",
+         "range": {
+           "end": { "character": 24, "line": 0 },
+           "start": { "character": 21, "line": 0 }
+         },
+         "severity": 1
+       };
+       {
+         "message": "[typer] Underspecified type \"^b\".\nCannot encode this type.",
+         "range": {
+           "end": { "character": 24, "line": 0 },
+           "start": { "character": 21, "line": 0 }
+         },
+         "severity": 1
+       };
+       {
+         "message": "[typer] Underspecified type \"^a\".\nCannot decompile this type.",
+         "range": {
+           "end": { "character": 25, "line": 0 },
+           "start": { "character": 10, "line": 0 }
+         },
+         "severity": 1
+       };
+       {
+         "message": "[typer] Underspecified type \"^a\".\nCannot encode this type.",
+         "range": {
+           "end": { "character": 25, "line": 0 },
+           "start": { "character": 10, "line": 0 }
+         },
+         "severity": 1
+       };
+       {
+         "message": "[typer] Underspecified type \"^c\".\nCannot decompile this type.",
+         "range": {
+           "end": { "character": 16, "line": 1 },
+           "start": { "character": 6, "line": 1 }
+         },
+         "severity": 1
+       };
+       {
+         "message": "[typer] Underspecified type \"^c\".\nCannot encode this type.",
+         "range": {
+           "end": { "character": 16, "line": 1 },
+           "start": { "character": 6, "line": 1 }
+         },
+         "severity": 1
+       };
+       {
+         "message": "[typer] This expression has type \"string\", but an expression was expected of type \n\"int\".\nType \"string\" is not compatible with type \"int\".",
+         "range": {
+           "end": { "character": 16, "line": 1 },
+           "start": { "character": 10, "line": 1 }
+         },
+         "severity": 1
+       };
+       {
+         "message": "[typer] Variable \"f\" not found. ",
+         "range": {
+           "end": { "character": 11, "line": 2 },
+           "start": { "character": 10, "line": 2 }
+         },
+         "severity": 1
+       };
+       {
+         "message": "[typer] Underspecified type \"^d\".\nCannot decompile this type.",
+         "range": {
+           "end": { "character": 14, "line": 2 },
+           "start": { "character": 10, "line": 2 }
+         },
+         "severity": 1
+       };
+       {
+         "message": "[typer] Underspecified type \"^d\".\nCannot encode this type.",
+         "range": {
+           "end": { "character": 14, "line": 2 },
+           "start": { "character": 10, "line": 2 }
+         },
+         "severity": 1
+       }])] |}]
+
+let%expect_test "Invalid entry point" =
+  get_diagnostics_test
+    { file_path = "contracts/lsp/entrypoint_invalid.mligo"
+    ; max_number_of_problems = None
+    };
+  [%expect
+    {|
+    [("../../../../../default/src/test/contracts/lsp/entrypoint_invalid.mligo",
+      [{
+         "message": "[typer] Not an entrypoint: unit -> int -> ( list (operation) * unit )",
+         "range": {
+           "end": { "character": 10, "line": 1 },
+           "start": { "character": 4, "line": 1 }
+         },
+         "severity": 1
+       }])] |}]
