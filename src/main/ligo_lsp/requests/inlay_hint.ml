@@ -397,8 +397,11 @@ let provide_hints_for_lambda_types
       Option.value ~default:acc
       @@ Option.bind (LMap.find_opt loc fun_defs) ~f:(fun { position; _ } ->
              let%map.Option typ =
-               Trace.to_option ~fast_fail:false
-               @@ Checking.untype_type_expression ~use_orig_var:true typ
+               try
+                 Trace.to_option ~fast_fail:false
+                 @@ Checking.untype_type_expression ~use_orig_var:true typ
+               with
+               | _exn -> None
              in
              { position = Shifted position; typ } :: acc))
     lambda_types
@@ -443,8 +446,11 @@ let process_variable_def
   function
   | { range; t = Resolved typ; _ } ->
     let%bind.Option typ =
-      Trace.to_option ~fast_fail:false
-      @@ Checking.untype_type_expression ~use_orig_var:true typ
+      try
+        Trace.to_option ~fast_fail:false
+        @@ Checking.untype_type_expression ~use_orig_var:true typ
+      with
+      | _exn -> None
     in
     process_variable range typ
   | { range; t = Core typ; _ } ->

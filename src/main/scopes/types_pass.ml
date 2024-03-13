@@ -173,16 +173,26 @@ module Of_Ast_typed = struct
 
   let label_bindings ~raise : _ Pattern.t -> Ast_typed.ty_expr -> binding list =
    fun p ty_expr ->
-    List.map ~f:(fun elt -> Label_binding elt)
-    @@ label_bindings
-         p
-         (Checking.untype_type_expression ~raise ~use_orig_var:false ty_expr)
+    try
+      List.map ~f:(fun elt -> Label_binding elt)
+      @@ label_bindings
+           p
+           (Trace.trace ~raise Main_errors.checking_tracer
+           @@ Checking.untype_type_expression ~use_orig_var:false ty_expr)
+    with
+    | exn -> Misc.log_exception_with_raise ~raise ~default:[] exn
 
 
-  let mk_label_binding ~raise : Label.t -> Ast_typed.ty_expr -> binding =
+  let mk_label_binding ~raise : Label.t -> Ast_typed.ty_expr -> binding option =
    fun label ty_expr ->
-    Label_binding
-      (label, Checking.untype_type_expression ~raise ~use_orig_var:false ty_expr)
+    try
+      Some
+        (Trace.trace ~raise Main_errors.checking_tracer
+        @@ fun ~raise ->
+        Label_binding
+          (label, Checking.untype_type_expression ~raise ~use_orig_var:false ty_expr))
+    with
+    | exn -> Misc.log_exception_with_raise ~raise ~default:None exn
 
 
   let add_binding : t -> binding -> t =
@@ -254,13 +264,19 @@ module Of_Ast_typed = struct
       | E_record record ->
         let labels = Record.labels record in
         return
-        @@ List.map
+        @@ List.filter_map
              ~f:(fun label -> mk_label_binding ~raise label exp.type_expression)
              labels
       | E_accessor { struct_; path } | E_update { struct_; path; update = _ } ->
-        return [ mk_label_binding ~raise path struct_.type_expression ]
+        return
+        @@ List.filter_map
+             ~f:Fn.id
+             [ mk_label_binding ~raise path struct_.type_expression ]
       | E_constructor { constructor; element = _ } ->
-        return [ mk_label_binding ~raise constructor exp.type_expression ]
+        return
+        @@ List.filter_map
+             ~f:Fn.id
+             [ mk_label_binding ~raise constructor exp.type_expression ]
       | E_lambda { binder; output_type; _ } ->
         return
           [ Type_binding (Param.get_var binder, Param.get_ascr binder)
@@ -719,7 +735,7 @@ module Typing_env = struct
       (type err)
       ~(raise : (Main_errors.all, Main_warnings.all) Trace.raise)
       ~(subst : Subst.t)
-      (tracer : err -> Simple_utils.Error.t)
+      (tracer : err -> Simple_utils.Error.t list)
       (es : err list)
       (ws : Main_warnings.all list)
       : unit
@@ -728,7 +744,9 @@ module Typing_env = struct
        about underspecified types. We ignore extra ones by using {!List.dedup_and_sort}. *)
     List.iter (List.dedup_and_sort ws ~compare:Caml.compare) ~f:raise.warning;
     List.iter
-      (List.dedup_and_sort (List.map es ~f:tracer) ~compare:Simple_utils.Error.compare)
+      (List.dedup_and_sort
+         (List.concat_map es ~f:tracer)
+         ~compare:Simple_utils.Error.compare)
       ~f:(fun e -> raise.log_error (Main_errors.scopes_recovered_error e))
 
 
@@ -908,6 +926,7 @@ module Typing_env = struct
     =
     match
       Simple_utils.Trace.to_stdlib_result ~fast_fail:No_fast_fail
+      @@ Simple_utils.Trace.trace Main_errors.checking_tracer
       @@ Checking.type_program ~options ~env:stdlib_env prg
     with
     | Ok (({ pr_module; pr_sig = _ } as prg), es, ws) ->
@@ -930,10 +949,20 @@ module Typing_env = struct
                 bindings, catch.errors () @ es, catch.warnings () @ ws)
               (fun ~catch e -> bs, e :: (catch.errors () @ es), catch.warnings () @ ws))
       in
-      collect_warns_and_errs ~raise ~subst:bindings.subst Checking.Errors.error_json es ws;
+      collect_warns_and_errs
+        ~raise
+        ~subst:bindings.subst
+        Main_errors.Formatter.error_json
+        es
+        ws;
       prg, bindings
     | Error (es, ws) ->
-      collect_warns_and_errs ~raise ~subst:bindings.subst Checking.Errors.error_json es ws;
+      collect_warns_and_errs
+        ~raise
+        ~subst:bindings.subst
+        Main_errors.Formatter.error_json
+        es
+        ws;
       { pr_module = []; pr_sig = { sig_items = []; sig_sort = Ss_module } }, bindings
 
 
@@ -950,13 +979,19 @@ module Typing_env = struct
     let prg, es, ws =
       match
         Simple_utils.Trace.to_stdlib_result ~fast_fail:No_fast_fail
+        @@ Simple_utils.Trace.trace Main_errors.checking_tracer
         @@ Checking.eval_signature_sort ~options ~loc ~path:[] prg.pr_sig
       with
       | Ok (sig_sort, es, ws) ->
         { prg with pr_sig = { prg.pr_sig with sig_sort } }, es, ws
       | Error (es, ws) -> prg, es, ws
     in
-    collect_warns_and_errs ~raise ~subst:bindings.subst Checking.Errors.error_json es ws;
+    collect_warns_and_errs
+      ~raise
+      ~subst:bindings.subst
+      Main_errors.Formatter.error_json
+      es
+      ws;
     prg
 
 
@@ -968,17 +1003,25 @@ module Typing_env = struct
       : Ast_typed.program
     =
     ignore options;
-    let prg, es, ws =
-      match
-        Simple_utils.Trace.to_stdlib_result ~fast_fail:No_fast_fail
-        @@ Self_ast_typed.all_program prg
-      with
-      | Ok (prg, es, ws) -> prg, es, ws
-      | Error (es, ws) -> prg, es, ws
-    in
-    let subst = bindings.subst in
-    collect_warns_and_errs ~raise ~subst Self_ast_typed.Errors.error_json es ws;
-    prg
+    try
+      let prg, es, ws =
+        match
+          Simple_utils.Trace.to_stdlib_result ~fast_fail:No_fast_fail
+          @@ Self_ast_typed.all_program prg
+        with
+        | Ok (prg, es, ws) -> prg, es, ws
+        | Error (es, ws) -> prg, es, ws
+      in
+      let subst = bindings.subst in
+      collect_warns_and_errs
+        ~raise
+        ~subst
+        (fun e -> [ Self_ast_typed.Errors.error_json e ])
+        es
+        ws;
+      prg
+    with
+    | exn -> Misc.rethrow_exception_with_raise ~raise exn
 
 
   let init stdlib_decls env =

@@ -170,3 +170,44 @@ let map_core_signature_module_path
     | S_path path -> S_path (f_ne_list path)
   in
   signature
+
+
+let stage : string = "scopes"
+
+let recover_exception_error ?(stage : string = stage) (exn : exn)
+    : [> `Scopes_recovered_error of Simple_utils.Error.t ]
+  =
+  Main_errors.scopes_recovered_error
+  @@ Simple_utils.Error.(
+       make
+         ~stage
+         ~content:
+           (make_content
+              ~message:(Format.asprintf "Unexpected exception: %a" Exn.pp exn)
+              ()))
+
+
+let log_exception_with_raise
+    ~(raise :
+       ( [> `Scopes_recovered_error of Simple_utils.Error.t ]
+       , [> ] )
+       Simple_utils.Trace.raise)
+    ?(stage : string option)
+    ~(default : 'a)
+    (exn : exn)
+    : 'a
+  =
+  raise.log_error @@ recover_exception_error ?stage exn;
+  default
+
+
+let rethrow_exception_with_raise
+    ~(raise :
+       ( [> `Scopes_recovered_error of Simple_utils.Error.t ]
+       , [> ] )
+       Simple_utils.Trace.raise)
+    ?(stage : string option)
+    (exn : exn)
+    : 'a
+  =
+  raise.error @@ recover_exception_error ?stage exn
