@@ -146,7 +146,7 @@ let%expect_test "Syntax and type errors" =
          "severity": 1
        };
        {
-         "message": "[aggregation] Underspecified type \"^a\".\nPlease add additional annotations.",
+         "message": "[typer] Underspecified type \"^a\".\nCannot encode this type.",
          "range": {
            "end": { "character": 18, "line": 4 },
            "start": { "character": 18, "line": 4 }
@@ -567,6 +567,14 @@ let%expect_test "Shows errors for unbound variables in records (jsligo)." =
          "severity": 1
        };
        {
+         "message": "[typer] Underspecified type \"^b\".\nCannot encode this type.",
+         "range": {
+           "end": { "character": 26, "line": 1 },
+           "start": { "character": 24, "line": 1 }
+         },
+         "severity": 1
+       };
+       {
          "message": "[typer] Variable \"aa\" not found. ",
          "range": {
            "end": { "character": 26, "line": 1 },
@@ -576,6 +584,14 @@ let%expect_test "Shows errors for unbound variables in records (jsligo)." =
        };
        {
          "message": "[typer] Underspecified type \"^e\".\nCannot decompile this type.",
+         "range": {
+           "end": { "character": 29, "line": 1 },
+           "start": { "character": 27, "line": 1 }
+         },
+         "severity": 1
+       };
+       {
+         "message": "[typer] Underspecified type \"^e\".\nCannot encode this type.",
          "range": {
            "end": { "character": 29, "line": 1 },
            "start": { "character": 27, "line": 1 }
@@ -599,6 +615,14 @@ let%expect_test "Shows errors for unbound variables in records (jsligo)." =
          "severity": 1
        };
        {
+         "message": "[typer] Underspecified type \"^c\".\nCannot encode this type.",
+         "range": {
+           "end": { "character": 33, "line": 1 },
+           "start": { "character": 30, "line": 1 }
+         },
+         "severity": 1
+       };
+       {
          "message": "[typer] Variable \"asd\" not found. ",
          "range": {
            "end": { "character": 33, "line": 1 },
@@ -608,6 +632,14 @@ let%expect_test "Shows errors for unbound variables in records (jsligo)." =
        };
        {
          "message": "[typer] Underspecified type \"^d\".\nCannot decompile this type.",
+         "range": {
+           "end": { "character": 36, "line": 1 },
+           "start": { "character": 34, "line": 1 }
+         },
+         "severity": 1
+       };
+       {
+         "message": "[typer] Underspecified type \"^d\".\nCannot encode this type.",
          "range": {
            "end": { "character": 36, "line": 1 },
            "start": { "character": 34, "line": 1 }
@@ -631,7 +663,7 @@ let%expect_test "Shows errors for unbound variables in records (jsligo)." =
          "severity": 1
        };
        {
-         "message": "[aggregation] Underspecified type \"^a\".\nPlease add additional annotations.",
+         "message": "[typer] Underspecified type \"^a\".\nCannot encode this type.",
          "range": {
            "end": { "character": 38, "line": 1 },
            "start": { "character": 37, "line": 1 }

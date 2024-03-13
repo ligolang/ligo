@@ -949,18 +949,20 @@ module Typing_env = struct
       ~(options : Compiler_options.middle_end)
       ~(bindings : t)
       (prg : Ast_typed.program)
-      : unit
+      : Ast_typed.program
     =
     let loc = Checking.loc_of_program prg.pr_module in
-    let es, ws =
+    let prg, es, ws =
       match
         Simple_utils.Trace.to_stdlib_result ~fast_fail:No_fast_fail
         @@ Checking.eval_signature_sort ~options ~loc ~path:[] prg.pr_sig
       with
-      | Ok (_sig_sort, es, ws) -> es, ws
-      | Error (es, ws) -> es, ws
+      | Ok (sig_sort, es, ws) ->
+        { prg with pr_sig = { prg.pr_sig with sig_sort } }, es, ws
+      | Error (es, ws) -> prg, es, ws
     in
-    collect_warns_and_errs ~raise ~subst:bindings.subst Checking.Errors.error_json es ws
+    collect_warns_and_errs ~raise ~subst:bindings.subst Checking.Errors.error_json es ws;
+    prg
 
 
   let self_ast_typed_pass
@@ -968,19 +970,20 @@ module Typing_env = struct
       ~(options : Compiler_options.middle_end)
       ~(bindings : t)
       (prg : Ast_typed.program)
-      : unit
+      : Ast_typed.program
     =
     ignore options;
-    let es, ws =
+    let prg, es, ws =
       match
         Simple_utils.Trace.to_stdlib_result ~fast_fail:No_fast_fail
         @@ Self_ast_typed.all_program prg
       with
-      | Ok (_prg, es, ws) -> es, ws
-      | Error (es, ws) -> es, ws
+      | Ok (prg, es, ws) -> prg, es, ws
+      | Error (es, ws) -> prg, es, ws
     in
     let subst = bindings.subst in
-    collect_warns_and_errs ~raise ~subst Self_ast_typed.Errors.error_json es ws
+    collect_warns_and_errs ~raise ~subst Self_ast_typed.Errors.error_json es ws;
+    prg
 
 
   let init stdlib_decls env =
@@ -1031,8 +1034,9 @@ let resolve
   let stdlib_env = Ast_typed.to_extended_signature stdlib_decls in
   let bindings = Typing_env.init stdlib_decls.pr_module module_env in
   let tprg, bindings = Typing_env.resolve ~raise ~options ~stdlib_env ~bindings prg in
-  let () = Typing_env.signature_sort_pass ~raise ~options ~bindings tprg in
-  let () = Typing_env.self_ast_typed_pass ~raise ~options ~bindings tprg in
+  (* TODO: which pass should we run first? *)
+  let tprg = Typing_env.self_ast_typed_pass ~raise ~options ~bindings tprg in
+  let tprg = Typing_env.signature_sort_pass ~raise ~options ~bindings tprg in
   Of_Ast_core.program ~raise bindings tprg.pr_sig prg, tprg
 
 
