@@ -10,12 +10,11 @@ type t =
   ; lambda_cases : Ast_typed.ty_expr LMap.t
   ; module_signatures : signature_case LMap.t
   ; module_env : Env.t
-  ; subst : Subst.t
   }
 
 (** For debugging. *)
 let[@warning "-32"] pp : t Fmt.t =
- fun ppf { type_cases; module_signatures; module_env; label_cases; lambda_cases; subst } ->
+ fun ppf { type_cases; module_signatures; module_env; label_cases; lambda_cases } ->
   Format.fprintf
     ppf
     "{ type_cases: %a\n\
@@ -23,7 +22,6 @@ let[@warning "-32"] pp : t Fmt.t =
      ; lambda_cases: %a\n\
      ; module_signatures: %a\n\
      ; module_env: %a\n\
-     ; subst = %a\n\
      }"
     Fmt.Dump.(seq (pair Location.pp PP.type_case))
     (LMap.to_seq type_cases)
@@ -35,8 +33,6 @@ let[@warning "-32"] pp : t Fmt.t =
     (LMap.to_seq module_signatures)
     Env.pp
     module_env
-    Subst.pp
-    subst
 
 
 let empty (module_env : Env.t) =
@@ -45,7 +41,6 @@ let empty (module_env : Env.t) =
   ; lambda_cases = LMap.empty
   ; module_signatures = LMap.empty
   ; module_env
-  ; subst = Subst.create ()
   }
 
 
@@ -728,54 +723,43 @@ module Of_Ast_core = struct
 end
 
 module Typing_env = struct
-  (** The typer may call {!Trace.error} which internally always calls {!Stdlib.raise}
-      which stops the program, but here we want to recover from the error. That is the
-      reason we use {!collect_warns_and_errs}. *)
+  (** The typer normall call {!Trace.error} which internally always calls {!Stdlib.raise}
+      which stops the program, But here we want to recover from the error. That is the reason
+      we use {!collect_warns_and_errs} *)
   let collect_warns_and_errs
-      (type err)
       ~(raise : (Main_errors.all, Main_warnings.all) Trace.raise)
-      ~(subst : Subst.t)
-      (tracer : err -> Simple_utils.Error.t list)
-      (es : err list)
+      (tracer : 'err -> Main_errors.all)
+      (es : 'err list)
       (ws : Main_warnings.all list)
       : unit
     =
     (* During error-recovery, duplicated diagnostics may appear (e.g., multiple errors
-       about underspecified types. We ignore extra ones by using {!List.dedup_and_sort}. *)
+       about underspecified types. We ignore extra ones. *)
     List.iter (List.dedup_and_sort ws ~compare:Caml.compare) ~f:raise.warning;
-    List.iter
-      (List.dedup_and_sort
-         (List.concat_map es ~f:tracer)
-         ~compare:Simple_utils.Error.compare)
-      ~f:(fun e -> raise.log_error (Main_errors.scopes_recovered_error e))
+    List.iter (List.dedup_and_sort es ~compare:Caml.compare) ~f:(fun e ->
+        raise.log_error (tracer e))
 
 
-  type env =
-    { name_tbl : Checking.Type_var_name_tbl.t
-    ; subst : Subst.t
-    }
+  type env = { name_tbl : Checking.Type_var_name_tbl.t }
 
   let make_concise_name ?(is_existential = false) ~env name =
-    let module Name_tbl = Checking.Type_var_name_tbl in
     if Type_var.is_generated name
     then (
       let name_content =
         if is_existential
         then (
-          let name_content = Name_tbl.Exists.name_of name in
+          let name_content = Checking.Type_var_name_tbl.Exists.name_of name in
           Format.sprintf "^%s" name_content)
-        else Name_tbl.name_of env.name_tbl name
+        else Checking.Type_var_name_tbl.name_of env.name_tbl name
       in
-      let orig_name = Format.asprintf "%a" Type_var.pp name in
-      let (`Duplicate | `Ok) = Subst.add env.subst ~key:orig_name ~data:name_content in
       Type_var.of_input_var ~loc:(Type_var.get_location name) name_content)
     else name
 
 
   (** Convenient function that creates a hashmap,
       passes it into continuation, and clears it after all. *)
-  let with_env : subst:Subst.t -> f:(env:env -> 'a) -> 'a =
-   fun ~subst ~f -> f ~env:{ name_tbl = Checking.Type_var_name_tbl.create (); subst }
+  let with_env : f:(env:env -> 'a) -> 'a =
+   fun ~f -> f ~env:{ name_tbl = Checking.Type_var_name_tbl.create () }
 
 
   let rec replace_gen_type_vars_type_expression ~env
@@ -823,7 +807,7 @@ module Typing_env = struct
         | E_assign assign -> return @@ E_assign (Assign.map Fn.id self_type_expr assign)
         | E_mod_in mod_in ->
           return ~continue:false
-          @@ E_mod_in (Mod_in.map Fn.id (replace_gen_type_vars_module_expr ~env) mod_in)
+          @@ E_mod_in (Mod_in.map Fn.id replace_gen_type_vars_module_expr mod_in)
         | E_type_abstraction { type_binder; result } ->
           let type_binder = make_concise_name ~env type_binder in
           return @@ E_type_abstraction { type_binder; result }
@@ -849,26 +833,23 @@ module Typing_env = struct
      We'll pass it into expression/type replacement functions.
 
      For each module/signature we'll create a separate one. *)
-  and replace_gen_type_vars_module_expr ~env
-      : Ast_typed.module_expr -> Ast_typed.module_expr
-    =
+
+  and replace_gen_type_vars_module_expr : Ast_typed.module_expr -> Ast_typed.module_expr =
    fun { module_content; module_location; signature } ->
-    let module_content =
-      Module_expr.map (replace_gen_type_vars_decl ~env) module_content
-    in
-    let signature = replace_gen_type_vars_signature ~env signature in
+    let module_content = Module_expr.map replace_gen_type_vars_decl module_content in
+    let signature = replace_gen_type_vars_signature signature in
     { module_content; module_location; signature }
 
 
-  and replace_gen_type_vars_signature ~env : Ast_typed.signature -> Ast_typed.signature =
+  and replace_gen_type_vars_signature : Ast_typed.signature -> Ast_typed.signature =
    fun { sig_items; sig_sort } ->
-    let sig_items = List.map sig_items ~f:(replace_gen_type_vars_sig_item ~env) in
+    let sig_items = List.map sig_items ~f:replace_gen_type_vars_sig_item in
     { sig_items; sig_sort }
 
 
-  and replace_gen_type_vars_sig_item ~env : Ast_typed.sig_item -> Ast_typed.sig_item =
+  and replace_gen_type_vars_sig_item : Ast_typed.sig_item -> Ast_typed.sig_item =
    fun sig_item ->
-    with_env ~subst:env.subst ~f:(fun ~env ->
+    with_env ~f:(fun ~env ->
         let return = Location.wrap ~loc:sig_item.location in
         let make_concise_name = make_concise_name ~env in
         let self_type_expr = replace_gen_type_vars_type_expression ~env in
@@ -880,16 +861,15 @@ module Typing_env = struct
         | S_type (tvar, ty_expr, attr) ->
           S_type (make_concise_name tvar, self_type_expr ty_expr, attr)
         | S_type_var (tvar, attr) -> S_type_var (make_concise_name tvar, attr)
-        | S_module (mvar, sig_) ->
-          S_module (mvar, replace_gen_type_vars_signature ~env sig_)
+        | S_module (mvar, sig_) -> S_module (mvar, replace_gen_type_vars_signature sig_)
         | S_module_type (mvar, sig_) ->
-          S_module_type (mvar, replace_gen_type_vars_signature ~env sig_))
+          S_module_type (mvar, replace_gen_type_vars_signature sig_))
 
 
   (** Replace all generated type variables in declaration with concise ones. *)
-  and replace_gen_type_vars_decl ~env : Ast_typed.declaration -> Ast_typed.declaration =
+  and replace_gen_type_vars_decl : Ast_typed.declaration -> Ast_typed.declaration =
    fun decl ->
-    with_env ~subst:env.subst ~f:(fun ~env ->
+    with_env ~f:(fun ~env ->
         let self_expr = replace_gen_type_vars_expression ~env in
         let self_type_expr = replace_gen_type_vars_type_expression ~env in
         let return : Ast_typed.declaration_content -> Ast_typed.declaration =
@@ -905,15 +885,11 @@ module Typing_env = struct
         | D_type d_type -> D_type (Ast_typed.Type_decl.map self_type_expr d_type)
         | D_module d_module ->
           D_module
-            (Ast_typed.Module_decl.map
-               (replace_gen_type_vars_module_expr ~env)
-               Fn.id
-               d_module)
+            (Ast_typed.Module_decl.map replace_gen_type_vars_module_expr Fn.id d_module)
         | D_module_include d_module_include ->
-          D_module_include (replace_gen_type_vars_module_expr ~env d_module_include)
+          D_module_include (replace_gen_type_vars_module_expr d_module_include)
         | D_signature d_sig ->
-          D_signature
-            (Ast_typed.Signature_decl.map (replace_gen_type_vars_signature ~env) d_sig))
+          D_signature (Ast_typed.Signature_decl.map replace_gen_type_vars_signature d_sig))
 
 
   let resolve
@@ -931,38 +907,25 @@ module Typing_env = struct
     with
     | Ok (({ pr_module; pr_sig = _ } as prg), es, ws) ->
       let bindings, es, ws =
-        List.fold_left pr_module ~init:(bindings, es, ws) ~f:(fun (bs, es, ws) decl ->
-            let decl =
-              replace_gen_type_vars_decl
-                ~env:
-                  { name_tbl = Checking.Type_var_name_tbl.create ()
-                  ; subst = bindings.subst
-                  }
-                decl
-            in
+        List.fold_left
+          pr_module
+          ~init:(bindings, es, ws)
+          ~f:(fun (bindings, es, ws) decl ->
+            let decl = replace_gen_type_vars_decl decl in
             Simple_utils.Trace.try_with
               ~fast_fail:raise.fast_fail
               (fun ~raise ~catch ->
                 let bindings =
-                  Of_Ast_typed.extract_binding_types ~raise bs decl.wrap_content
+                  Of_Ast_typed.extract_binding_types ~raise bindings decl.wrap_content
                 in
                 bindings, catch.errors () @ es, catch.warnings () @ ws)
-              (fun ~catch e -> bs, e :: (catch.errors () @ es), catch.warnings () @ ws))
+              (fun ~catch e ->
+                bindings, e :: (catch.errors () @ es), catch.warnings () @ ws))
       in
-      collect_warns_and_errs
-        ~raise
-        ~subst:bindings.subst
-        Main_errors.Formatter.error_json
-        es
-        ws;
+      collect_warns_and_errs ~raise Fn.id es ws;
       prg, bindings
     | Error (es, ws) ->
-      collect_warns_and_errs
-        ~raise
-        ~subst:bindings.subst
-        Main_errors.Formatter.error_json
-        es
-        ws;
+      collect_warns_and_errs ~raise Fn.id es ws;
       { pr_module = []; pr_sig = { sig_items = []; sig_sort = Ss_module } }, bindings
 
 
@@ -971,7 +934,6 @@ module Typing_env = struct
   let signature_sort_pass
       ~(raise : (Main_errors.all, Main_warnings.all) Trace.raise)
       ~(options : Compiler_options.middle_end)
-      ~(bindings : t)
       (prg : Ast_typed.program)
       : Ast_typed.program
     =
@@ -979,26 +941,19 @@ module Typing_env = struct
     let prg, es, ws =
       match
         Simple_utils.Trace.to_stdlib_result ~fast_fail:No_fast_fail
-        @@ Simple_utils.Trace.trace Main_errors.checking_tracer
         @@ Checking.eval_signature_sort ~options ~loc ~path:[] prg.pr_sig
       with
       | Ok (sig_sort, es, ws) ->
         { prg with pr_sig = { prg.pr_sig with sig_sort } }, es, ws
       | Error (es, ws) -> prg, es, ws
     in
-    collect_warns_and_errs
-      ~raise
-      ~subst:bindings.subst
-      Main_errors.Formatter.error_json
-      es
-      ws;
+    collect_warns_and_errs ~raise Main_errors.checking_tracer es ws;
     prg
 
 
   let self_ast_typed_pass
       ~(raise : (Main_errors.all, Main_warnings.all) Trace.raise)
       ~(options : Compiler_options.middle_end)
-      ~(bindings : t)
       (prg : Ast_typed.program)
       : Ast_typed.program
     =
@@ -1012,13 +967,7 @@ module Typing_env = struct
         | Ok (prg, es, ws) -> prg, es, ws
         | Error (es, ws) -> prg, es, ws
       in
-      let subst = bindings.subst in
-      collect_warns_and_errs
-        ~raise
-        ~subst
-        (fun e -> [ Self_ast_typed.Errors.error_json e ])
-        es
-        ws;
+      collect_warns_and_errs ~raise Main_errors.self_ast_typed_tracer es ws;
       prg
     with
     | exn -> Misc.rethrow_exception_with_raise ~raise exn
@@ -1049,8 +998,8 @@ end
       let y = x + ""
     ]}
 
-    In the first pass we run the typer for the entire program. Then, we run another typer
-    pass (self_ast_typed) and get diagnostics for the signature.
+    In the first pass for each [Ast_core.declaration] we [Typing_env.update_typing_env]
+    this gives use
 
     pass1 (just typer) -> [ x -> resolved (int) ; t -> unresolved ; y -> unresolved ]
 
@@ -1073,8 +1022,8 @@ let resolve
   let bindings = Typing_env.init stdlib_decls.pr_module module_env in
   let tprg, bindings = Typing_env.resolve ~raise ~options ~stdlib_env ~bindings prg in
   (* TODO: which pass should we run first? *)
-  let tprg = Typing_env.self_ast_typed_pass ~raise ~options ~bindings tprg in
-  let tprg = Typing_env.signature_sort_pass ~raise ~options ~bindings tprg in
+  let tprg = Typing_env.self_ast_typed_pass ~raise ~options tprg in
+  let tprg = Typing_env.signature_sort_pass ~raise ~options tprg in
   Of_Ast_core.program ~raise bindings tprg.pr_sig prg, tprg
 
 

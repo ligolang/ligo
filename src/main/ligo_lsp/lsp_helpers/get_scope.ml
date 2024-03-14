@@ -11,7 +11,6 @@ type defs_and_diagnostics =
   ; definitions : Def.definitions
   ; potential_tzip16_storages : Ast_typed.expression_variable list
   ; lambda_types : Ast_typed.ty_expr LMap.t
-  ; subst : Scopes.Subst.t option
   }
 
 let with_code_input
@@ -128,14 +127,14 @@ let get_scopes
 
 
 let make_defs_and_diagnostics
-    (errors, warnings, defs_opt, potential_storage_vars, lambda_types, subst)
+    (errors, warnings, defs_opt, potential_storage_vars, lambda_types)
     : defs_and_diagnostics
   =
   let errors = List.dedup_and_sort ~compare:Caml.compare errors in
   let warnings = List.dedup_and_sort ~compare:Caml.compare warnings in
   let definitions = Option.value ~default:{ definitions = [] } defs_opt in
   let potential_tzip16_storages = potential_storage_vars in
-  { errors; warnings; definitions; potential_tzip16_storages; lambda_types; subst }
+  { errors; warnings; definitions; potential_tzip16_storages; lambda_types }
 
 
 let virtual_main_name = "lsp_virtual_main"
@@ -317,13 +316,7 @@ let get_defs
         ~code_input
         ~f:(fun ~options ~syntax:_ ~stdlib ~prg ~module_deps ->
           let with_types = raw_options.with_types in
-          let { Scopes.definitions
-              ; program = _
-              ; subst = _
-              ; inlined_scopes = _
-              ; lambda_types = _
-              }
-            =
+          let { Scopes.definitions; program = _; inlined_scopes = _; lambda_types = _ } =
             Scopes.run ~raise ~with_types ~options ~stdlib ~prg ~module_deps
           in
           Lwt.return definitions))
@@ -344,19 +337,13 @@ let get_defs_and_diagnostics
        ~fast_fail:false
        (fun ~raise ~catch ->
          let open Lwt.Let_syntax in
-         let%map errors, warnings, v, storage_vars, lambda_types, subst =
+         let%map errors, warnings, v, storage_vars, lambda_types =
            with_code_input
              ~raw_options
              ~raise
              ~code_input:(Raw_input_lsp { file = Path.to_string path; code })
              ~f:(fun ~options ~syntax ~stdlib ~prg ~module_deps ->
-               let { Scopes.definitions
-                   ; program
-                   ; subst
-                   ; inlined_scopes = _
-                   ; lambda_types
-                   }
-                 =
+               let { Scopes.definitions; program; inlined_scopes = _; lambda_types } =
                  Scopes.run ~raise ~with_types ~options ~stdlib ~prg ~module_deps
                in
                let%map errors, warnings, storage_vars =
@@ -386,13 +373,12 @@ let get_defs_and_diagnostics
                          , catch.warnings ()
                          , potential_tzip16_storages ))
                in
-               errors, warnings, definitions, storage_vars, lambda_types, Some subst)
+               errors, warnings, definitions, storage_vars, lambda_types)
          in
          ( errors @ catch.errors ()
          , warnings @ catch.warnings ()
          , Some v
          , storage_vars
-         , lambda_types
-         , subst ))
+         , lambda_types ))
        (fun ~catch e ->
-         Lwt.return (e :: catch.errors (), catch.warnings (), None, [], LMap.empty, None))
+         Lwt.return (e :: catch.errors (), catch.warnings (), None, [], LMap.empty))

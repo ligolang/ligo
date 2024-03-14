@@ -11,7 +11,6 @@ module LMap = Types.LMap
 module Location = Simple_utils.Location
 module Trace = Simple_utils.Trace
 module Types = Types
-module Subst = Types.Subst
 module Uid = Types.Uid
 module SMap = Map.Make (String)
 
@@ -32,7 +31,6 @@ type inlined_scopes = Types.inlined_scopes
 type t = Types.t =
   { definitions : definitions
   ; program : Ast_typed.program option
-  ; subst : Subst.t
   ; inlined_scopes : inlined_scopes lazy_t
   ; lambda_types : Ast_typed.ty_expr LMap.t
   }
@@ -109,7 +107,6 @@ let run
   in
   { definitions
   ; program = typed
-  ; subst = tenv.subst
   ; inlined_scopes = lazy (inlined_scopes ~options ~stdlib ~prg ~definitions)
   ; lambda_types = tenv.lambda_cases
   }

@@ -50,6 +50,23 @@ let partition_simple_diagnostics
          , List.map ~f:from_simple_diagnostic diags ))
 
 
+(** We might not want to show some diagnostics, like ones about encoding/decoding/untyping
+    existential types. We filter them in this function. *)
+let filter_diagnostics : Main_errors.all list -> Main_errors.all list =
+  List.filter ~f:(function
+      | `Checking_tracer e ->
+        (match e with
+        | `Typer_cannot_decode_texists _
+        | `Typer_cannot_encode_texists _
+        | `Typer_cannot_decompile_texists _ -> false
+        | _ -> true)
+      | `Aggregation_tracer e ->
+        (match e with
+        | `Aggregation_cannot_compile_texists _ -> false
+        | _ -> true)
+      | _ -> true)
+
+
 (** Extract all errors and warnings for the given scopes and collect them in a list. *)
 let get_diagnostics (current_path : Path.t)
     : Ligo_interface.defs_and_diagnostics -> simple_diagnostic list
@@ -59,13 +76,9 @@ let get_diagnostics (current_path : Path.t)
      ; definitions = _
      ; potential_tzip16_storages = _
      ; lambda_types = _
-     ; subst
      } ->
   let mk_diag ~stage ~range ~file ~message ~severity =
     let location = Def.Loc_in_file.{ path = Path.from_absolute file; range } in
-    let message =
-      Option.value_map ~default:Fn.id ~f:Scopes.Subst.replace_string subst message
-    in
     Some { message; severity; location; stage }
   in
   let extract_error_information : Main_errors.all -> simple_diagnostic list =
@@ -109,8 +122,7 @@ let get_diagnostics (current_path : Path.t)
         ~severity:DiagnosticSeverity.Warning
     | Virtual _ -> None
   in
-  List.concat_map ~f:extract_error_information errors
+  List.concat_map ~f:extract_error_information (filter_diagnostics errors)
   @ List.filter_map ~f:extract_warning_information warnings
   |> List.filter ~f:(fun { message; _ } ->
          not @@ Parsing_shared.Errors.ErrorWrapper.is_wrapped message)
-  |> List.dedup_and_sort ~compare:compare_simple_diagnostic

@@ -144,14 +144,6 @@ let%expect_test "Syntax and type errors" =
            "start": { "character": 18, "line": 4 }
          },
          "severity": 1
-       };
-       {
-         "message": "[Compiler stage: typer] Underspecified type \"^a\".\nCannot encode this type.",
-         "range": {
-           "end": { "character": 18, "line": 4 },
-           "start": { "character": 18, "line": 4 }
-         },
-         "severity": 1
        }])] |}]
 
 let%expect_test "All OK" =
@@ -189,38 +181,6 @@ let%expect_test "Polymorphic Type error" =
     {|
     [("../../../../../default/src/test/contracts/lsp/poly_type_error.mligo",
       [{
-         "message": "[Compiler stage: typer] Underspecified type \"^a\".\nCannot decompile this type.",
-         "range": {
-           "end": { "character": 22, "line": 0 },
-           "start": { "character": 11, "line": 0 }
-         },
-         "severity": 1
-       };
-       {
-         "message": "[Compiler stage: typer] Underspecified type \"^a\".\nCannot encode this type.",
-         "range": {
-           "end": { "character": 22, "line": 0 },
-           "start": { "character": 11, "line": 0 }
-         },
-         "severity": 1
-       };
-       {
-         "message": "[Compiler stage: typer] Underspecified type \"^b\".\nCannot decompile this type.",
-         "range": {
-           "end": { "character": 22, "line": 0 },
-           "start": { "character": 11, "line": 0 }
-         },
-         "severity": 1
-       };
-       {
-         "message": "[Compiler stage: typer] Underspecified type \"^b\".\nCannot encode this type.",
-         "range": {
-           "end": { "character": 22, "line": 0 },
-           "start": { "character": 11, "line": 0 }
-         },
-         "severity": 1
-       };
-       {
          "message": "[Compiler stage: typer] This expression has type \"int\", but an expression was expected of type \n\"( ^a * ^b ) -> ^a\".\nType \"int\" is not compatible with type \"( ^a * ^b ) -> ^a\".\nHint: \"^b\", \"^a\" represent placeholder type(s).\n",
          "range": {
            "end": { "character": 22, "line": 0 },
@@ -384,22 +344,6 @@ let%expect_test "ghost_ident filter" =
            "start": { "character": 7, "line": 0 }
          },
          "severity": 1
-       };
-       {
-         "message": "[Compiler stage: typer] Underspecified type \"^a\".\nCannot decompile this type.",
-         "range": {
-           "end": { "character": 7, "line": 0 },
-           "start": { "character": 7, "line": 0 }
-         },
-         "severity": 1
-       };
-       {
-         "message": "[Compiler stage: typer] Underspecified type \"^a\".\nCannot encode this type.",
-         "range": {
-           "end": { "character": 7, "line": 0 },
-           "start": { "character": 7, "line": 0 }
-         },
-         "severity": 1
        }])] |}]
 
 let%expect_test "ghost string filter" =
@@ -465,22 +409,6 @@ let%expect_test "Shows comparing error and suggests to use functions from Test m
     {|
     [("../../../../../default/src/test/contracts/lsp/diagnostics_equal.mligo",
       [{
-         "message": "[Compiler stage: typer] Underspecified type \"^a\".\nCannot decompile this type.",
-         "range": {
-           "end": { "character": 27, "line": 2 },
-           "start": { "character": 0, "line": 2 }
-         },
-         "severity": 1
-       };
-       {
-         "message": "[Compiler stage: typer] Underspecified type \"^a\".\nCannot encode this type.",
-         "range": {
-           "end": { "character": 27, "line": 2 },
-           "start": { "character": 0, "line": 2 }
-         },
-         "severity": 1
-       };
-       {
          "message": "[Compiler stage: typer] Invalid arguments.\nThese types cannot be compared: \"list (int)\" and \"list (int)\".\nUse \"Test.equal\", \"Test.not_equal\", \"Test.greater\", \"Test.less\", \"Test.greater_or_equal\", or \"Test.less_or_equal\" to compare lists, maps, sets, etc.",
          "range": {
            "end": { "character": 27, "line": 2 },
@@ -559,42 +487,10 @@ let%expect_test "Shows errors for unbound variables in records (jsligo)." =
     {|
     [("../../../../../default/src/test/contracts/lsp/unbound_var_in_record.jsligo",
       [{
-         "message": "[Compiler stage: typer] Underspecified type \"^b\".\nCannot decompile this type.",
-         "range": {
-           "end": { "character": 26, "line": 1 },
-           "start": { "character": 24, "line": 1 }
-         },
-         "severity": 1
-       };
-       {
-         "message": "[Compiler stage: typer] Underspecified type \"^b\".\nCannot encode this type.",
-         "range": {
-           "end": { "character": 26, "line": 1 },
-           "start": { "character": 24, "line": 1 }
-         },
-         "severity": 1
-       };
-       {
          "message": "[Compiler stage: typer] Variable \"aa\" not found. ",
          "range": {
            "end": { "character": 26, "line": 1 },
            "start": { "character": 24, "line": 1 }
-         },
-         "severity": 1
-       };
-       {
-         "message": "[Compiler stage: typer] Underspecified type \"^e\".\nCannot decompile this type.",
-         "range": {
-           "end": { "character": 29, "line": 1 },
-           "start": { "character": 27, "line": 1 }
-         },
-         "severity": 1
-       };
-       {
-         "message": "[Compiler stage: typer] Underspecified type \"^e\".\nCannot encode this type.",
-         "range": {
-           "end": { "character": 29, "line": 1 },
-           "start": { "character": 27, "line": 1 }
          },
          "severity": 1
        };
@@ -607,22 +503,6 @@ let%expect_test "Shows errors for unbound variables in records (jsligo)." =
          "severity": 1
        };
        {
-         "message": "[Compiler stage: typer] Underspecified type \"^c\".\nCannot decompile this type.",
-         "range": {
-           "end": { "character": 33, "line": 1 },
-           "start": { "character": 30, "line": 1 }
-         },
-         "severity": 1
-       };
-       {
-         "message": "[Compiler stage: typer] Underspecified type \"^c\".\nCannot encode this type.",
-         "range": {
-           "end": { "character": 33, "line": 1 },
-           "start": { "character": 30, "line": 1 }
-         },
-         "severity": 1
-       };
-       {
          "message": "[Compiler stage: typer] Variable \"asd\" not found. ",
          "range": {
            "end": { "character": 33, "line": 1 },
@@ -631,42 +511,10 @@ let%expect_test "Shows errors for unbound variables in records (jsligo)." =
          "severity": 1
        };
        {
-         "message": "[Compiler stage: typer] Underspecified type \"^d\".\nCannot decompile this type.",
-         "range": {
-           "end": { "character": 36, "line": 1 },
-           "start": { "character": 34, "line": 1 }
-         },
-         "severity": 1
-       };
-       {
-         "message": "[Compiler stage: typer] Underspecified type \"^d\".\nCannot encode this type.",
-         "range": {
-           "end": { "character": 36, "line": 1 },
-           "start": { "character": 34, "line": 1 }
-         },
-         "severity": 1
-       };
-       {
          "message": "[Compiler stage: typer] Variable \"cd\" not found. ",
          "range": {
            "end": { "character": 36, "line": 1 },
            "start": { "character": 34, "line": 1 }
-         },
-         "severity": 1
-       };
-       {
-         "message": "[Compiler stage: typer] Underspecified type \"^a\".\nCannot decompile this type.",
-         "range": {
-           "end": { "character": 38, "line": 1 },
-           "start": { "character": 37, "line": 1 }
-         },
-         "severity": 1
-       };
-       {
-         "message": "[Compiler stage: typer] Underspecified type \"^a\".\nCannot encode this type.",
-         "range": {
-           "end": { "character": 38, "line": 1 },
-           "start": { "character": 37, "line": 1 }
          },
          "severity": 1
        };
@@ -705,7 +553,7 @@ let%expect_test "Shows errors for type error recovery missing module" =
     {|
     [("../../../../../default/src/test/contracts/lsp/hover/recover_missing_module.mligo",
       [{
-         "message": "[Compiler stage: typer]  Module \"Byte\" not found.",
+         "message": "[Compiler stage: typer] Variable \"length\" not found. ",
          "range": {
            "end": { "character": 25, "line": 0 },
            "start": { "character": 14, "line": 0 }
@@ -713,7 +561,7 @@ let%expect_test "Shows errors for type error recovery missing module" =
          "severity": 1
        };
        {
-         "message": "[Compiler stage: typer] Variable \"length\" not found. ",
+         "message": "[Compiler stage: typer]  Module \"Byte\" not found.",
          "range": {
            "end": { "character": 25, "line": 0 },
            "start": { "character": 14, "line": 0 }
@@ -731,22 +579,6 @@ let%expect_test "Shows errors for type error recovery missing record field" =
     [("../../../../../default/src/test/contracts/lsp/hover/recover_missing_record_field.mligo",
       [{
          "message": "[Compiler stage: typer] Invalid record field \"g\" in record.",
-         "range": {
-           "end": { "character": 20, "line": 0 },
-           "start": { "character": 8, "line": 0 }
-         },
-         "severity": 1
-       };
-       {
-         "message": "[Compiler stage: typer] Underspecified type \"^a\".\nCannot decompile this type.",
-         "range": {
-           "end": { "character": 20, "line": 0 },
-           "start": { "character": 8, "line": 0 }
-         },
-         "severity": 1
-       };
-       {
-         "message": "[Compiler stage: typer] Underspecified type \"^a\".\nCannot encode this type.",
          "range": {
            "end": { "character": 20, "line": 0 },
            "start": { "character": 8, "line": 0 }
@@ -846,54 +678,6 @@ let%expect_test "Type recovered type variables" =
          "severity": 1
        };
        {
-         "message": "[Compiler stage: typer] Underspecified type \"^b\".\nCannot decompile this type.",
-         "range": {
-           "end": { "character": 24, "line": 0 },
-           "start": { "character": 21, "line": 0 }
-         },
-         "severity": 1
-       };
-       {
-         "message": "[Compiler stage: typer] Underspecified type \"^b\".\nCannot encode this type.",
-         "range": {
-           "end": { "character": 24, "line": 0 },
-           "start": { "character": 21, "line": 0 }
-         },
-         "severity": 1
-       };
-       {
-         "message": "[Compiler stage: typer] Underspecified type \"^a\".\nCannot decompile this type.",
-         "range": {
-           "end": { "character": 25, "line": 0 },
-           "start": { "character": 10, "line": 0 }
-         },
-         "severity": 1
-       };
-       {
-         "message": "[Compiler stage: typer] Underspecified type \"^a\".\nCannot encode this type.",
-         "range": {
-           "end": { "character": 25, "line": 0 },
-           "start": { "character": 10, "line": 0 }
-         },
-         "severity": 1
-       };
-       {
-         "message": "[Compiler stage: typer] Underspecified type \"^c\".\nCannot decompile this type.",
-         "range": {
-           "end": { "character": 16, "line": 1 },
-           "start": { "character": 6, "line": 1 }
-         },
-         "severity": 1
-       };
-       {
-         "message": "[Compiler stage: typer] Underspecified type \"^c\".\nCannot encode this type.",
-         "range": {
-           "end": { "character": 16, "line": 1 },
-           "start": { "character": 6, "line": 1 }
-         },
-         "severity": 1
-       };
-       {
          "message": "[Compiler stage: typer] This expression has type \"string\", but an expression was expected of type \n\"int\".\nType \"string\" is not compatible with type \"int\".",
          "range": {
            "end": { "character": 16, "line": 1 },
@@ -905,22 +689,6 @@ let%expect_test "Type recovered type variables" =
          "message": "[Compiler stage: typer] Variable \"f\" not found. ",
          "range": {
            "end": { "character": 11, "line": 2 },
-           "start": { "character": 10, "line": 2 }
-         },
-         "severity": 1
-       };
-       {
-         "message": "[Compiler stage: typer] Underspecified type \"^d\".\nCannot decompile this type.",
-         "range": {
-           "end": { "character": 14, "line": 2 },
-           "start": { "character": 10, "line": 2 }
-         },
-         "severity": 1
-       };
-       {
-         "message": "[Compiler stage: typer] Underspecified type \"^d\".\nCannot encode this type.",
-         "range": {
-           "end": { "character": 14, "line": 2 },
            "start": { "character": 10, "line": 2 }
          },
          "severity": 1

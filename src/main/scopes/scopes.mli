@@ -5,7 +5,6 @@ module Types = Types
 module PP = PP
 module Uid = Types.Uid
 module Misc = Misc
-module Subst = Types.Subst
 
 type def = Types.def
 type definitions = Types.definitions
@@ -15,7 +14,6 @@ type inlined_scopes = Types.inlined_scopes
 type t = Types.t =
   { definitions : definitions
   ; program : Ast_typed.program option
-  ; subst : Subst.t
   ; inlined_scopes : inlined_scopes lazy_t
   ; lambda_types : Ast_typed.ty_expr Types.LMap.t
   }
