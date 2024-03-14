@@ -12,7 +12,7 @@ let from_simple_diagnostic : simple_diagnostic -> Diagnostic.t =
  fun { stage; severity; message; location } ->
   Diagnostic.create
     ~severity
-    ~message:(Format.asprintf "[%s] %s" stage message)
+    ~message:(Format.asprintf "[Compiler stage: %s] %s" stage message)
     ~range:location.range
     ()
 
