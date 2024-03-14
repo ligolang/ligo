@@ -84,7 +84,7 @@ and expr = expression [@@deriving eq, compare, yojson, hash]
 
 and module_annotation =
   { signature : signature_expr
-  ; filter : bool
+  ; filter : bool (** [false] for JsLIGO, [true] for CameLIGO *)
   }
 [@@deriving yojson, eq, compare, hash]
 

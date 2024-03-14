@@ -421,7 +421,7 @@ let%expect_test "hover_module.mligo" =
      {
        "contents": [
          {
-           "value": "module Mangled_with_sig : sig\n  type t =  ^c\n  end",
+           "value": "module Mangled_with_sig : sig\n  type t\n\n  type int\n  end",
            "language": "cameligo"
          }
        ]

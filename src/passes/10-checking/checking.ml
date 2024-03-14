@@ -1666,18 +1666,17 @@ and cast_items
         ~default:Error_recovery.type'
         (Signature.get_type inferred_sig v)
     in
-    if Type.equal ty ty'
-    then (
-      let%bind sig_, entries = cast_items inferred_sig sig_ in
-      let%bind loc = loc () in
+    let%bind sig_, entries = cast_items inferred_sig sig_ in
+    let%bind loc = loc () in
+    let cast_items' =
       return
         ( Location.wrap ~loc (Signature.S_type (v, ty', Attrs.Module.default)) :: sig_
-        , entries ))
+        , entries )
+    in
+    if Type.equal ty ty'
+    then cast_items'
     else
-      (* TODO: review this *)
-      Error_recovery.try'
-        ~error:(signature_not_match_type v ty ty')
-        ~default:(return ([], []))
+      Error_recovery.try' ~error:(signature_not_match_type v ty ty') ~default:cast_items'
   | `S_value (v, ty, attr) :: sig_ ->
     let%bind () =
       match Signature.get_value inferred_sig v with

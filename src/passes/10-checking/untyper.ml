@@ -232,7 +232,15 @@ and untype_sig_item ~raise ?(use_orig_var = false) : O.sig_item -> I.sig_item =
     (* we do not want to print the original variable if that is the first definition or an alias *)
     S_type (var, untype_type_expression ~raise type_, { leading_comments })
   | S_type (var, type_, { leading_comments }) ->
-    S_type (var, untype_type_expression ~raise ~use_orig_var type_, { leading_comments })
+    (* When decompiling a signature type, it's possible that we'll get something like
+       [type t = ^a], which is undesirable. To work around this, we log the error and
+       return this as a type var. *)
+    (match type_.type_content with
+    | T_exists _ ->
+      raise.log_error (`Typer_cannot_decompile_texists (type_, type_.location));
+      S_type_var (var, { leading_comments })
+    | _ ->
+      S_type (var, untype_type_expression ~raise ~use_orig_var type_, { leading_comments }))
   | S_type_var (var, attr) -> S_type_var (var, attr)
   | S_module (var, sig_) -> S_module (var, untype_signature ~raise ~use_orig_var sig_)
   | S_module_type (var, sig_) ->
