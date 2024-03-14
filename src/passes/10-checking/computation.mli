@@ -105,6 +105,8 @@ end
 
 (** {5 Context} *)
 
+module Context_ = Context
+
 (** [context ()] returns the context. *)
 val context : unit -> (Context.t, 'err, 'wrn) t
 
@@ -144,30 +146,15 @@ module Context : sig
        , 'wrn )
        t
 
-  val get_value_exn
-    :  Value_var.t
-    -> error:([ `Mut_var_captured | `Not_found ] -> 'err Errors.with_loc)
-    -> (Context.mutable_flag * Type.t * Context.Attrs.Value.t, 'err, 'wrn) t
-
   (** [get_imm var] returns the type of the immutable variable [var].
       Returning [None] if not found in the current context. *)
   val get_imm : Value_var.t -> ((Type.t * Context.Attrs.Value.t) option, 'err, 'wrn) t
-
-  val get_imm_exn
-    :  Value_var.t
-    -> error:'err Errors.with_loc
-    -> (Type.t * Context.Attrs.Value.t, 'err, 'wrn) t
 
   (** [get_mut var] returns the type of the mutable variable [var].
       Returning [None] if not found in the current context. *)
   val get_mut
     :  Value_var.t
     -> ((Type.t, [ `Mut_var_captured | `Not_found ]) result, 'err, 'wrn) t
-
-  val get_mut_exn
-    :  Value_var.t
-    -> error:([ `Mut_var_captured | `Not_found ] -> 'err Errors.with_loc)
-    -> (Type.t, 'err, 'wrn) t
 
   (** [get_type_var tvar] returns the kind of the type variable [tvar].
       Returning [None] if not found in the current context.
@@ -177,11 +164,6 @@ module Context : sig
 
   val get_type_var : Type_var.t -> (Kind.t option, 'err, 'wrn) t
 
-  val get_type_var_exn
-    :  Type_var.t
-    -> error:'err Errors.with_loc
-    -> (Kind.t, 'err, 'wrn) t
-
   (** [get_type tvar] returns the type bound to the type variable [tvar].
       Returning [None] if not found in the current context.
 
@@ -189,7 +171,6 @@ module Context : sig
       bound type variables. e.g. [fun (type a) ... -> ...] *)
 
   val get_type : Type_var.t -> (Type.t option, 'err, 'wrn) t
-  val get_type_exn : Type_var.t -> error:'err Errors.with_loc -> (Type.t, 'err, 'wrn) t
 
   (** [get_type_or_type_var tvar] returns the type or kind of the type variable [tvar].
       Returning [None] if not found in the current context. *)
@@ -197,30 +178,15 @@ module Context : sig
     :  Type_var.t
     -> ([ `Type of Type.t | `Type_var of Kind.t ] option, 'err, 'wrn) t
 
-  val get_type_or_type_var_exn
-    :  Type_var.t
-    -> error:'err Errors.with_loc
-    -> ([ `Type of Type.t | `Type_var of Kind.t ], 'err, 'wrn) t
-
   (** [get_module mvar] returns signature of the module [mvar].
       Returning [None] if not found in the current context. *)
 
   val get_module : Module_var.t -> (Signature.t option, 'err, 'wrn) t
 
-  val get_module_exn
-    :  Module_var.t
-    -> error:'err Errors.with_loc
-    -> (Signature.t, 'err, 'wrn) t
-
   (** [get_module_of_path path] returns the signature of the module path [path].
       Returning [None] if not found in the current context. *)
 
   val get_module_of_path : Module_var.t List.Ne.t -> (Signature.t option, 'err, 'wrn) t
-
-  val get_module_of_path_exn
-    :  Module_var.t List.Ne.t
-    -> error:'err Errors.with_loc
-    -> (Signature.t, 'err, 'wrn) t
 
   (** [get_module_type_of_path path] returns the signature of the module path [path].
       Returning [None] if not found in the current context. *)
@@ -228,11 +194,6 @@ module Context : sig
   val get_module_type_of_path
     :  Module_var.t List.Ne.t
     -> (Signature.t option, 'err, 'wrn) t
-
-  val get_module_type_of_path_exn
-    :  Module_var.t List.Ne.t
-    -> error:'err Errors.with_loc
-    -> (Signature.t, 'err, 'wrn) t
 
   (** [get_sum constr] returns a list of [(type_name, type_params, constr_type, sum_type)] for any sum type in the context
       containing [constr].
@@ -511,4 +472,46 @@ module Error_recovery : sig
   (** If we could not infer some signature, emit a placeholder type so typing can
       continue. *)
   val sig' : (Context.Signature.t, 'err, 'wrn) t
+
+  (** Utilities for getting values from the context, or dealing with error recovery in
+      case they weren't found. *)
+  module Get : sig
+    val value
+      :  Value_var.t
+      -> error:([ `Mut_var_captured | `Not_found ] -> 'err Errors.with_loc)
+      -> (Context_.mutable_flag * Type.t * Context_.Attrs.Value.t, 'err, 'wrn) t
+
+    val imm
+      :  Value_var.t
+      -> error:'err Errors.with_loc
+      -> (Type.t * Context_.Attrs.Value.t, 'err, 'wrn) t
+
+    val mut
+      :  Value_var.t
+      -> error:([ `Mut_var_captured | `Not_found ] -> 'err Errors.with_loc)
+      -> (Type.t, 'err, 'wrn) t
+
+    val type_or_type_var
+      :  Type_var.t
+      -> error:'err Errors.with_loc
+      -> ([ `Type of Type.t | `Type_var of Kind.t ], 'err, 'wrn) t
+
+    val type_var : Type_var.t -> error:'err Errors.with_loc -> (Kind.t, 'err, 'wrn) t
+    val type' : Type_var.t -> error:'err Errors.with_loc -> (Type.t, 'err, 'wrn) t
+
+    val module'
+      :  Module_var.t
+      -> error:'err Errors.with_loc
+      -> (Context.Signature.t, 'err, 'wrn) t
+
+    val module_of_path
+      :  Module_var.t List.Ne.t
+      -> error:'err Errors.with_loc
+      -> (Context.Signature.t, 'err, 'wrn) t
+
+    val module_type_of_path
+      :  Module_var.t List.Ne.t
+      -> error:'err Errors.with_loc
+      -> (Context.Signature.t, 'err, 'wrn) t
+  end
 end

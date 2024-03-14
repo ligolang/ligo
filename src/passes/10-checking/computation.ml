@@ -388,22 +388,13 @@ module Context = struct
 
 
   let get_value var : _ t = lift_ctx (fun ctx -> Context.get_value ctx var)
-  let get_value_exn var ~error : _ t = get_value var >>= raise_result ~error
   let get_imm var : _ t = lift_ctx (fun ctx -> Context.get_imm ctx var)
-  let get_imm_exn var ~error : _ t = get_imm var >>= raise_opt ~error
   let get_mut var : _ t = lift_ctx (fun ctx -> Context.get_mut ctx var)
-  let get_mut_exn var ~error : _ t = get_mut var >>= raise_result ~error
   let get_type_var tvar : _ t = lift_ctx (fun ctx -> Context.get_type_var ctx tvar)
-  let get_type_var_exn tvar ~error = get_type_var tvar >>= raise_opt ~error
   let get_type tvar : _ t = lift_ctx (fun ctx -> Context.get_type ctx tvar)
-  let get_type_exn tvar ~error = get_type tvar >>= raise_opt ~error
 
   let get_type_or_type_var tvar : _ t =
     lift_ctx (fun ctx -> Context.get_type_or_type_var ctx tvar)
-
-
-  let get_type_or_type_var_exn tvar ~error =
-    get_type_or_type_var tvar >>= raise_opt ~error
 
 
   let get_texists_var tvar ~error : _ t =
@@ -414,20 +405,11 @@ module Context = struct
     lift_ctx (fun ctx -> Context.get_module_of_path ctx path)
 
 
-  let get_module_of_path_exn path ~error : _ t =
-    get_module_of_path path >>= raise_opt ~error
-
-
   let get_module_type_of_path path : _ t =
     lift_ctx (fun ctx -> Context.get_module_type_of_path ctx path)
 
 
-  let get_module_type_of_path_exn path ~error : _ t =
-    get_module_type_of_path path >>= raise_opt ~error
-
-
   let get_module mvar : _ t = lift_ctx (fun ctx -> Context.get_module ctx mvar)
-  let get_module_exn mvar ~error : _ t = get_module mvar >>= raise_opt ~error
   let get_sum constr : _ t = lift_ctx (fun ctx -> Context.get_sum ctx constr)
   let get_record fields : _ t = lift_ctx (fun ctx -> Context.get_record ctx fields)
 
@@ -888,6 +870,66 @@ module Error_recovery = struct
 
   let sig' ~raise:_ ~options:_ ~loc:_ ~path:_ state =
     state, { Context.Signature.items = []; sort = Ss_module }
+
+
+  module Get = struct
+    let get_opt_or_exn getter key ~error ~default : _ t =
+      let open Let_syntax in
+      match%bind getter key with
+      | None -> try' ~error ~default
+      | Some value -> return value
+
+
+    let get_result_or_exn getter key ~error ~default : _ t =
+      let open Let_syntax in
+      match%bind getter key with
+      | Ok value -> return value
+      | Error err -> try' ~error:(error err) ~default
+
+
+    let value var ~error : _ t =
+      get_result_or_exn
+        Context.get_value
+        var
+        ~error
+        ~default:(type' >>| fun t -> Param.Mutable, t, Context.Attr.default)
+
+
+    let imm var ~error : _ t =
+      get_opt_or_exn
+        Context.get_imm
+        var
+        ~error
+        ~default:(type' >>| fun t -> t, Context.Attr.default)
+
+
+    let mut var ~error : _ t = get_result_or_exn Context.get_mut var ~error ~default:type'
+
+    let type_var tvar ~error =
+      get_opt_or_exn Context.get_type_var tvar ~error ~default:(return Kind.Type)
+
+
+    let type_or_type_var tvar ~error =
+      get_opt_or_exn
+        Context.get_type_or_type_var
+        tvar
+        ~error
+        ~default:(type' >>| fun t -> `Type t)
+
+
+    let type' tvar ~error = get_opt_or_exn Context.get_type tvar ~error ~default:type'
+
+    let module_of_path path ~error : _ t =
+      get_opt_or_exn Context.get_module_of_path path ~error ~default:sig'
+
+
+    let module_type_of_path path ~error : _ t =
+      get_opt_or_exn Context.get_module_type_of_path path ~error ~default:sig'
+
+
+    let module' mvar ~error : _ t =
+      get_opt_or_exn Context.get_module mvar ~error ~default:sig'
+  end
 end
 
 let def bindings ~on_exit ~in_ =

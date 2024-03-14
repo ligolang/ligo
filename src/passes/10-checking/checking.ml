@@ -81,12 +81,7 @@ let rec evaluate_type ~default_layout (type_ : I.type_expression)
   match type_.type_content with
   | T_contract_parameter x ->
     let%bind { items = _; sort } =
-      match%bind Context.get_module_of_path x with
-      | None ->
-        Error_recovery.try'
-          ~error:(fun loc -> unbound_module (List.Ne.to_list x) loc)
-          ~default:Error_recovery.sig'
-      | Some sig_ -> return sig_
+      Error_recovery.Get.module_of_path x ~error:(unbound_module (List.Ne.to_list x))
     in
     let%bind parameter, _ =
       Error_recovery.try_opt
@@ -111,11 +106,7 @@ let rec evaluate_type ~default_layout (type_ : I.type_expression)
   | T_variable tvar ->
     (* Get the closest type or type variable with type var [tvar] *)
     (match%bind
-       let%bind t_opt = Context.get_type_or_type_var tvar in
-       Error_recovery.try_opt
-         t_opt
-         ~error:(unbound_type_variable tvar)
-         ~default:(C.map ~f:(fun t -> `Type t) Error_recovery.type')
+       Error_recovery.Get.type_or_type_var tvar ~error:(unbound_type_variable tvar)
      with
     | `Type type_ -> lift type_
     | `Type_var _kind -> const @@ T_variable tvar)
@@ -151,19 +142,14 @@ let rec evaluate_type ~default_layout (type_ : I.type_expression)
       (* Depending on whether there is a path or not, look up in current context or module sig. *)
       match module_path with
       | [] ->
-        let%bind t_opt = Context.get_type type_operator in
-        Error_recovery.try_opt
-          t_opt
-          ~default:Error_recovery.type'
+        Error_recovery.Get.type'
+          type_operator
           ~error:(unbound_type_variable type_operator)
       | _ ->
         let%bind sig_ =
-          match%bind Context.get_module_of_path (List.Ne.of_list module_path) with
-          | None ->
-            Error_recovery.try'
-              ~error:(unbound_module module_path)
-              ~default:Error_recovery.sig'
-          | Some sig_ -> return sig_
+          Error_recovery.Get.module_of_path
+            (List.Ne.of_list module_path)
+            ~error:(unbound_module module_path)
         in
         Error_recovery.try_opt
           (Signature.get_type sig_ type_operator)
@@ -202,12 +188,9 @@ let rec evaluate_type ~default_layout (type_ : I.type_expression)
     const ~orig_var:(module_path, type_operator) ~applied_types:arguments result.content
   | T_module_accessor { module_path; element } ->
     let%bind sig_ =
-      match%bind Context.get_module_of_path (List.Ne.of_list module_path) with
-      | None ->
-        Error_recovery.try'
-          ~error:(unbound_module module_path)
-          ~default:Error_recovery.sig'
-      | Some sig_ -> return sig_
+      Error_recovery.Get.module_of_path
+        (List.Ne.of_list module_path)
+        ~error:(unbound_module module_path)
     in
     Error_recovery.try_opt
       ~error:(unbound_type_variable element)
@@ -381,12 +364,9 @@ module With_default_layout = struct
       return sig_
     | S_path module_path ->
       let%bind sig_ =
-        match%bind Context.get_module_type_of_path module_path with
-        | None ->
-          Error_recovery.try'
-            ~error:(unbound_module_type module_path)
-            ~default:Error_recovery.sig'
-        | Some sig_ -> return sig_
+        Error_recovery.Get.module_type_of_path
+          module_path
+          ~error:(unbound_module_type module_path)
       in
       return sig_
 end
@@ -644,22 +624,9 @@ and infer_expression (expr : I.expression)
   | E_constant { cons_name = const; arguments = args } -> infer_constant const args
   | E_variable var ->
     let%bind mut_flag, type_, _ =
-      match%bind Context.get_value var with
-      | Ok ret -> return ret
-      | Error e ->
-        Error_recovery.try'
-          ~error:
-            (match e with
-            | `Not_found -> unbound_variable var
-            | `Mut_var_captured -> mut_var_captured var)
-          ~default:
-            (let mut_flag =
-               match syntax with
-               | None | Some CameLIGO -> Param.Immutable
-               | Some JsLIGO -> Param.Mutable
-             in
-             let%bind type_ = Error_recovery.type' in
-             return (mut_flag, type_, Attrs.Value.default))
+      Error_recovery.Get.value var ~error:(function
+          | `Not_found -> unbound_variable var
+          | `Mut_var_captured -> mut_var_captured var)
     in
     const
       E.(
@@ -669,12 +636,7 @@ and infer_expression (expr : I.expression)
       type_
   | E_contract x ->
     let%bind { items = _; sort } =
-      match%bind Context.get_module_of_path x with
-      | None ->
-        Error_recovery.try'
-          ~error:(fun loc -> unbound_module (List.Ne.to_list x) loc)
-          ~default:Error_recovery.sig'
-      | Some sig_ -> return sig_
+      Error_recovery.Get.module_of_path x ~error:(unbound_module (List.Ne.to_list x))
     in
     let%bind parameter, storage =
       Error_recovery.try_opt
@@ -936,12 +898,7 @@ and infer_expression (expr : I.expression)
   | E_module_accessor { module_path; element } ->
     let module_path' = List.Ne.of_list module_path in
     let%bind sig_ =
-      match%bind Context.get_module_of_path module_path' with
-      | None ->
-        Error_recovery.try'
-          ~error:(unbound_module module_path)
-          ~default:Error_recovery.sig'
-      | Some sig_ -> return sig_
+      Error_recovery.Get.module_of_path module_path' ~error:(unbound_module module_path)
     in
     let%bind elt_type, _ =
       Error_recovery.try_opt
@@ -975,14 +932,9 @@ and infer_expression (expr : I.expression)
     let%bind type_ =
       let var = Binder.get_var binder in
       set_loc (Value_var.get_location var)
-      @@ match%bind Context.get_mut var with
-         | Ok ty -> return ty
-         | Error err ->
-           Error_recovery.try_type
-             ~error:
-               (match err with
-               | `Not_found -> unbound_mut_variable var
-               | `Mut_var_captured -> mut_var_captured var)
+      @@ Error_recovery.Get.mut var ~error:(function
+             | `Not_found -> unbound_mut_variable var
+             | `Mut_var_captured -> mut_var_captured var)
     in
     let%bind type_ = Context.tapply type_ in
     let%bind expression = check expression type_ in
@@ -1819,23 +1771,15 @@ and infer_module_expr ?is_annoted_entry (mod_expr : I.module_expr)
   | M_module_path path ->
     (* Check we can access every element in [path] *)
     let%bind sig_ =
-      match%bind Context.get_module_of_path path with
-      | None ->
-        Error_recovery.try'
-          ~error:(unbound_module (List.Ne.to_list path))
-          ~default:Error_recovery.sig'
-      | Some sig_ -> return sig_
+      Error_recovery.Get.module_of_path
+        path
+        ~error:(unbound_module (List.Ne.to_list path))
     in
     const E.(return @@ M.M_module_path path) sig_
   | M_variable mvar ->
     (* Check we can access [mvar] *)
     let%bind sig_ =
-      match%bind Context.get_module mvar with
-      | None ->
-        Error_recovery.try'
-          ~error:(unbound_module_variable mvar)
-          ~default:Error_recovery.sig'
-      | Some sig_ -> return sig_
+      Error_recovery.Get.module' mvar ~error:(unbound_module_variable mvar)
     in
     const E.(return @@ M.M_variable mvar) sig_
 
