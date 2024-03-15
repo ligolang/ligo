@@ -1,3 +1,5 @@
+#include "metadata_tzip16_detection_included.mligo"
+
 type param = int
 
 (* --------------------------------------------------------------------------- *)

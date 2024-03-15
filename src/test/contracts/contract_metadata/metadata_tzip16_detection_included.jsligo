@@ -1,0 +1,7 @@
+namespace Module_x {
+  export type storage = { content: int, metadata: big_map<string, bytes> }
+  @entry
+  const main = (_p: unit, s: storage): [list<operation>, storage] =>
+    [list([]), s]
+  const storage: storage = { content: 5, metadata: Big_map.literal(list([])) }
+}

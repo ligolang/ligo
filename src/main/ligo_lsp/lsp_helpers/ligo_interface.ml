@@ -94,10 +94,7 @@ let get_defs_and_diagnostics
   =
  fun ~project_root ~code ~logger path ->
   let options = lsp_raw_options ~project_root in
-  get_defs_and_diagnostics
-    ~logger
-    options
-    (Raw_input_lsp { file = Path.to_string path; code })
+  get_defs_and_diagnostics ~logger options path code
 
 
 let get_scope : project_root:Path.t option -> code:string -> Path.t -> scopes =

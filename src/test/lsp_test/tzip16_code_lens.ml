@@ -41,56 +41,56 @@ let%expect_test "Suggestions for adding tzip16_compatible attributes in CameLIGO
        "command": {
          "arguments": [
            "../../../../../default/src/test/contracts/contract_metadata/metadata_tzip16_detection.mligo",
-           63, 1
+           65, 1
          ],
          "command": "add-tzip16-addr",
          "title": "Mark as TZIP-16 compatible storage"
        },
        "range": {
-         "end": { "character": 23, "line": 63 },
-         "start": { "character": 4, "line": 63 }
+         "end": { "character": 23, "line": 65 },
+         "start": { "character": 4, "line": 65 }
        }
      };
      {
        "command": {
          "arguments": [
            "../../../../../default/src/test/contracts/contract_metadata/metadata_tzip16_detection.mligo",
-           69, 1
+           71, 1
          ],
          "command": "add-tzip16-addr",
          "title": "Mark as TZIP-16 compatible storage"
        },
        "range": {
-         "end": { "character": 33, "line": 69 },
-         "start": { "character": 4, "line": 69 }
+         "end": { "character": 33, "line": 71 },
+         "start": { "character": 4, "line": 71 }
        }
      };
      {
        "command": {
          "arguments": [
            "../../../../../default/src/test/contracts/contract_metadata/metadata_tzip16_detection.mligo",
-           84, 1
+           86, 1
          ],
          "command": "add-tzip16-addr",
          "title": "Mark as TZIP-16 compatible storage"
        },
        "range": {
-         "end": { "character": 33, "line": 84 },
-         "start": { "character": 4, "line": 84 }
+         "end": { "character": 33, "line": 86 },
+         "start": { "character": 4, "line": 86 }
        }
      };
      {
        "command": {
          "arguments": [
            "../../../../../default/src/test/contracts/contract_metadata/metadata_tzip16_detection.mligo",
-           98, 1
+           100, 1
          ],
          "command": "add-tzip16-addr",
          "title": "Mark as TZIP-16 compatible storage"
        },
        "range": {
-         "end": { "character": 29, "line": 98 },
-         "start": { "character": 8, "line": 98 }
+         "end": { "character": 29, "line": 100 },
+         "start": { "character": 8, "line": 100 }
        }
      }]
       |}]
@@ -103,56 +103,56 @@ let%expect_test "Suggestions for adding tzip16_compatible attributes in JsLIGO" 
        "command": {
          "arguments": [
            "../../../../../default/src/test/contracts/contract_metadata/metadata_tzip16_detection.jsligo",
-           34, 1
+           36, 1
          ],
          "command": "add-tzip16-addr",
          "title": "Mark as TZIP-16 compatible storage"
        },
        "range": {
-         "end": { "character": 25, "line": 34 },
-         "start": { "character": 6, "line": 34 }
+         "end": { "character": 25, "line": 36 },
+         "start": { "character": 6, "line": 36 }
        }
      };
      {
        "command": {
          "arguments": [
            "../../../../../default/src/test/contracts/contract_metadata/metadata_tzip16_detection.jsligo",
-           39, 1
+           41, 1
          ],
          "command": "add-tzip16-addr",
          "title": "Mark as TZIP-16 compatible storage"
        },
        "range": {
-         "end": { "character": 35, "line": 39 },
-         "start": { "character": 6, "line": 39 }
+         "end": { "character": 35, "line": 41 },
+         "start": { "character": 6, "line": 41 }
        }
      };
      {
        "command": {
          "arguments": [
            "../../../../../default/src/test/contracts/contract_metadata/metadata_tzip16_detection.jsligo",
-           52, 1
+           54, 1
          ],
          "command": "add-tzip16-addr",
          "title": "Mark as TZIP-16 compatible storage"
        },
        "range": {
-         "end": { "character": 35, "line": 52 },
-         "start": { "character": 6, "line": 52 }
+         "end": { "character": 35, "line": 54 },
+         "start": { "character": 6, "line": 54 }
        }
      };
      {
        "command": {
          "arguments": [
            "../../../../../default/src/test/contracts/contract_metadata/metadata_tzip16_detection.jsligo",
-           64, 1
+           66, 1
          ],
          "command": "add-tzip16-addr",
          "title": "Mark as TZIP-16 compatible storage"
        },
        "range": {
-         "end": { "character": 31, "line": 64 },
-         "start": { "character": 10, "line": 64 }
+         "end": { "character": 31, "line": 66 },
+         "start": { "character": 10, "line": 66 }
        }
      }]
       |}]

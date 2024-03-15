@@ -47,13 +47,7 @@ let is_potential_storage_type
     (known_storage_types : Ast_typed.type_expression list)
     : bool
   =
-  (* Helps to get rid of the most irrelevant options *)
-  let is_from_stdlib =
-    match type_expr.location with
-    | File region -> Helpers_file.is_stdlib region#file
-    | Virtual _ -> false
-  in
-  let has_metadata () =
+  let has_metadata =
     match type_expr.type_content with
     | T_record r -> Map.mem r.fields (Ligo_prim.Label.create "metadata")
     | _ -> false
@@ -61,11 +55,17 @@ let is_potential_storage_type
   let has_known_type () =
     List.mem known_storage_types type_expr ~equal:Ast_typed.equal_ty_expr
   in
-  (not is_from_stdlib) && has_metadata () && has_known_type ()
+  has_metadata && has_known_type ()
+
+
+let location_is_from_file (path : Path.t) : Location.t -> bool = function
+  | Virtual _ -> false
+  | File reg -> String.equal (Path.to_string path) reg#file
 
 
 (** Extract all potential storages from a file *)
 let vars_to_mark_as_tzip16_compatible
+    (cur_file : Path.t)
     (env : Ast_typed.signature)
     (prg : Ast_typed.declaration list)
     : Ast_typed.expression_variable list
@@ -85,6 +85,9 @@ let vars_to_mark_as_tzip16_compatible
            None
          | [ binder ] ->
            if (not decl_info.has_tzip16_compatible_attr)
+              && location_is_from_file
+                   cur_file
+                   (Ligo_prim.Value_var.get_location binder.var)
               && is_potential_storage_type binder.ascr all_storage_types
            then Some binder.var
            else None)

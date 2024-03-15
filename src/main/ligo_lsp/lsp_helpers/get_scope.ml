@@ -343,7 +343,8 @@ let get_defs
 let get_defs_and_diagnostics
     ~(logger : type_:Lsp.Types.MessageType.t -> string -> unit Lwt.t)
     (raw_options : Raw_options.t)
-    (code_input : BuildSystem.Source_input.code_input)
+    (path : Path.t)
+    (code : string)
     : defs_and_diagnostics Lwt.t
   =
   let with_types = raw_options.with_types in
@@ -356,7 +357,7 @@ let get_defs_and_diagnostics
            with_code_input
              ~raw_options
              ~raise
-             ~code_input
+             ~code_input:(Raw_input_lsp { file = Path.to_string path; code })
              ~f:(fun ~options ~syntax ~stdlib ~(prg : Ast_core.module_) ~module_deps ->
                let defs, prg, lambda_types =
                  Scopes.defs_and_typed_program
@@ -373,7 +374,7 @@ let get_defs_and_diagnostics
                  | Some (env, prg) ->
                    let stdlib_context = (fst stdlib).pr_sig in
                    let potential_tzip16_storages =
-                     Tzip16_storage.vars_to_mark_as_tzip16_compatible env prg
+                     Tzip16_storage.vars_to_mark_as_tzip16_compatible path env prg
                    in
                    Trace.try_with_lwt
                      ~fast_fail:false
