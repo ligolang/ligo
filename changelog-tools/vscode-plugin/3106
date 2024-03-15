@@ -1,0 +1,7 @@
+
+author: Martoon
+description: "\\nTZIP-16 related code lenses are not grabbed from the imported files anymore.\\n\\n"
+merge_request: '3106'
+title: "[#2084] Trim code lenses to the file they are related to"
+type: fixed
+            

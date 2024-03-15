@@ -31,10 +31,12 @@ let get_defs ~(code : string) ~(syntax : Syntax_types.t) : Scopes.def list Lwt.t
            }
             : Lsp_helpers.Ligo_interface.Get_scope.defs_and_diagnostics)
     =
+    (* Path does not matter for the fields we want to get *)
     Lsp_helpers.Ligo_interface.Get_scope.get_defs_and_diagnostics
       ~logger:(fun ~type_:_ _ -> Lwt.return_unit)
       options
-      (Raw_input_lsp { file = "test" ^ Syntax.to_ext syntax; code })
+      (Lsp_helpers.Path.from_relative @@ "test" ^ Syntax.to_ext syntax)
+      code
   in
   if not (List.is_empty errors)
   then (
