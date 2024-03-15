@@ -255,8 +255,8 @@ let compare_constant_val (c : constant_val) (c' : constant_val) : int =
     Tezos_protocol.Protocol.Alpha_context.Contract.compare a a'
   | ( C_contract { address = a; entrypoint = e }
     , C_contract { address = a'; entrypoint = e' } ) ->
-    (match Tezos_protocol.Protocol.Alpha_context.Contract.compare a a' with
-    | 0 -> Option.compare String.compare e e'
+    (match Contract.compare a a' with
+    | 0 -> Option.compare Entrypoint_repr.compare e e'
     | c -> c)
   | C_key_hash kh, C_key_hash kh' -> Tezos_crypto.Signature.Public_key_hash.compare kh kh'
   | C_key k, C_key k' -> Tezos_crypto.Signature.Public_key.compare k k'

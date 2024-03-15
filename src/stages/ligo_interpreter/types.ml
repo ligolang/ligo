@@ -69,12 +69,33 @@ module Generator = struct
   let of_yojson _ = failwith "generator_of_yojson: not implemented"
 end
 
+module Entrypoint_repr = struct
+  include Tezos_raw_protocol.Entrypoint_repr
+
+  let to_yojson (c : t) = [%to_yojson: string] (to_string c)
+  let of_yojson _ = failwith "entrypoint_of_yojson: not implemented"
+
+  let of_string_exn s =
+    match
+      Memory_proto_alpha.Raw_protocol.Entrypoint_repr.of_annot_lax_opt
+        (Memory_proto_alpha.Raw_protocol.Non_empty_string.of_string_exn s)
+    with
+    | Some x -> x
+    | None -> failwith (Format.asprintf "Testing framework: Invalid entrypoint %s" s)
+
+
+  let of_string_opt s =
+    let open Simple_utils.Option in
+    let* s = Memory_proto_alpha.Raw_protocol.Non_empty_string.of_string s in
+    Memory_proto_alpha.Raw_protocol.Entrypoint_repr.of_annot_lax_opt s
+end
+
 type mcode = unit Tezos_utils.Michelson.michelson [@@deriving yojson]
 type mutation = Location.t * Ast_aggregated.expression * string [@@deriving yojson]
 
 type contract =
   { address : Contract.t
-  ; entrypoint : string option
+  ; entrypoint : Entrypoint_repr.t option
   }
 [@@deriving yojson]
 

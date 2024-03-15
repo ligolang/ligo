@@ -226,7 +226,7 @@ let compare_constants ~no_colour ~raise o1 o2 loc calltrace =
     , V_Ct (C_contract { address = addr2; entrypoint = entr2 }) ) ->
     Tuple2.compare
       ~cmp1:Tezos_state.compare_account
-      ~cmp2:(Option.compare String.compare)
+      ~cmp2:(Option.compare Entrypoint_repr.compare)
       (addr1, entr1)
       (addr2, entr2)
   | operand, operand' ->
@@ -1159,23 +1159,37 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t)
     return @@ code
   | C_TEST_COMPILE_CONTRACT_FROM_FILE, _ -> fail @@ error_type ()
   | ( C_TEST_EXTERNAL_CALL_TO_ADDRESS_EXN
-    , [ V_Ct (C_contract { address; _ })
-      ; entrypoint
+    , [ V_Ct (C_contract { address; entrypoint })
+      ; replaced_entrypoint
       ; V_Michelson (Ty_code { micheline_repr = { code = param; _ }; _ })
       ; V_Ct (C_mutez amt)
       ] ) ->
-    let entrypoint = Option.join @@ LC.get_string_option entrypoint in
+    let entrypoint =
+      match entrypoint with
+      | Some entrypoint -> Some entrypoint
+      | None ->
+        Option.bind ~f:Entrypoint_repr.of_string_opt
+        @@ Option.join
+        @@ LC.get_string_option replaced_entrypoint
+    in
     let contract = { address; entrypoint } in
     let>> res = External_call (loc, calltrace, contract, param, amt) in
     return_contract_exec_exn res
   | C_TEST_EXTERNAL_CALL_TO_ADDRESS_EXN, _ -> fail @@ error_type ()
   | ( C_TEST_EXTERNAL_CALL_TO_ADDRESS
-    , [ V_Ct (C_contract { address; _ })
-      ; entrypoint
+    , [ V_Ct (C_contract { address; entrypoint })
+      ; replaced_entrypoint
       ; V_Michelson (Ty_code { micheline_repr = { code = param; _ }; _ })
       ; V_Ct (C_mutez amt)
       ] ) ->
-    let entrypoint = Option.join @@ LC.get_string_option entrypoint in
+    let entrypoint =
+      match entrypoint with
+      | Some entrypoint -> Some entrypoint
+      | None ->
+        Option.bind ~f:Entrypoint_repr.of_string_opt
+        @@ Option.join
+        @@ LC.get_string_option replaced_entrypoint
+    in
     let contract = { address; entrypoint } in
     let>> res = External_call (loc, calltrace, contract, param, amt) in
     return_contract_exec res
@@ -1498,7 +1512,9 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t)
   | C_TEST_GET_ENTRYPOINT, [ V_Ct (C_contract { address = _; entrypoint }) ] ->
     (match entrypoint with
     | None -> return @@ v_none ()
-    | Some s -> return @@ v_some (v_string s))
+    | Some entrypoint ->
+      let s = Format.asprintf "%a" Entrypoint_repr.pp entrypoint in
+      return @@ v_some (v_string s))
   | C_TEST_GET_ENTRYPOINT, _ -> fail @@ error_type ()
   | C_TEST_INT64_OF_INT, [ V_Ct (C_int n) ] -> return @@ V_Ct (C_int64 (Z.to_int64 n))
   | C_TEST_INT64_OF_INT, _ -> fail @@ error_type ()

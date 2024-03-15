@@ -314,9 +314,6 @@ module Command = struct
       (), ctxt
     | Get_state () -> Lwt.return (ctxt, ctxt)
     | External_call (loc, calltrace, { address; entrypoint }, param, amt) ->
-      let entrypoint =
-        Option.map ~f:(fun x -> Michelson_backend.entrypoint_of_string x) entrypoint
-      in
       let%map x =
         Tezos_state.transfer ~raise ~loc ~calltrace ctxt address ?entrypoint param amt
       in
@@ -621,6 +618,7 @@ module Command = struct
     | To_contract (loc, v, entrypoint, _ty_expr) ->
       (match v with
       | LT.V_Typed_address address ->
+        let entrypoint = Option.map ~f:LT.Entrypoint_repr.of_string_exn entrypoint in
         let contract : LT.constant_val = LT.C_contract { address; entrypoint } in
         Lwt.return (LT.V_Ct contract, ctxt)
       | _ -> raise.error @@ Errors.generic_error loc "Should be caught by the typer")

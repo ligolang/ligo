@@ -209,7 +209,7 @@ let rec decompile_to_untyped_value ~raise ~bigmaps
   | Prim (_, "contract", [ _ ], _), String (_, s) ->
     let address, entrypoint =
       match String.split s ~on:'%' with
-      | [ a; b ] -> contract_of_string ~raise a, Some b
+      | [ a; b ] -> contract_of_string ~raise a, Some (Entrypoint_repr.of_string_exn b)
       | [ a ] -> contract_of_string ~raise a, None
       | _ -> raise.error (untranspilable ty value)
     in
