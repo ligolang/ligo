@@ -25,9 +25,9 @@ let pp_ct : Format.formatter -> constant_val -> unit =
     Format.fprintf
       ppf
       "%a(%a)"
-      Tezos_protocol.Protocol.Alpha_context.Contract.pp
+      Contract.pp
       c.address
-      (PP_helpers.option PP_helpers.string)
+      (PP_helpers.option Entrypoint_repr.pp)
       c.entrypoint
   | C_mutez n -> Format.fprintf ppf "%smutez" (Z.to_string n)
   | C_key_hash c -> Format.fprintf ppf "%a" Tezos_crypto.Signature.Public_key_hash.pp c

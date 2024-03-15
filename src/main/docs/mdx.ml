@@ -304,7 +304,7 @@ and module_doc
     | Some mod_path ->
       link
         ~text:(string @@ mod_path_to_string mod_path)
-        ~target:(string @@ (String.lowercase (md_file_for_module mod_path)))
+        ~target:(string @@ String.lowercase (md_file_for_module mod_path))
   in
   match m with
   | M_struct m ->
@@ -314,7 +314,10 @@ and module_doc
     let link =
       (* That's what we print to current file. FIXME: should be syntax dependant,
        but <SyntaxTitle> can't hold links for now *)
-      link ~text:(string @@ "module " ^ name) ~target:(string (String.lowercase file_name)) ^^ hardline
+      link
+        ~text:(string @@ "module " ^ name)
+        ~target:(string (String.lowercase file_name))
+      ^^ hardline
     and contents =
       (* Contents of file we create *)
       let heading = string @@ "# " ^ full_path in
@@ -368,7 +371,10 @@ and module_type_doc
   let link =
     (* That's what we print to current file. FIXME: should be syntax dependant,
        but <SyntaxTitle> can't hold links for now *)
-    link ~text:(string @@ "module type " ^ name) ~target:(string (String.lowercase file_name)) ^^ hardline
+    link
+      ~text:(string @@ "module type " ^ name)
+      ~target:(string (String.lowercase file_name))
+    ^^ hardline
   and contents =
     (* Contents of file we create *)
     let heading = string @@ "# " ^ full_path in
