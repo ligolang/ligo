@@ -12,7 +12,7 @@ let default_config : config =
   ; disabled_features = []
   ; max_line_width = None
   ; completion_implementation = `With_scopes
-  ; diagnostics_pull_mode = `OnDocUpdate
+  ; diagnostics_pull_mode = `OnDocumentLinkRequest
   }
 
 

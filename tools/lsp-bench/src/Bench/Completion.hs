@@ -43,7 +43,7 @@ requestCompletion cr@CompletionRequest {..} = do
 
 simpleCompletionBench :: CompletionRequest -> Benchmark
 simpleCompletionBench cr@CompletionRequest {..} =
-  benchLspSession
+  benchLspSession OnDocumentLink
     (show crFile <> "/" <> show crPos)
     crProject
     $ requestCompletion cr
@@ -80,11 +80,34 @@ completionsOneBigFile =
       }
   ]
 
+completionsChecker :: [CompletionRequest]
+completionsChecker =
+  [
+    CompletionRequest
+      { crProject = projectChecker
+      , crFile = FileDoc "avl.mligo"
+      , crPos = (637,23)
+      , crExpectedSubset = ["branch", "balance_bottom_up", "bytes"]
+      }
+  , CompletionRequest
+      { crProject = projectChecker
+      , crFile = FileDoc "fa2Ledger.mligo"
+      , crPos = (65,40)
+      , crExpectedSubset = ["ledger", "ledger_issue", "ledger_withdraw"]
+      }
+  , CompletionRequest
+      { crProject = projectChecker
+      , crFile = FileDoc "sliceList.mligo"
+      , crPos = (66,30)
+      , crExpectedSubset = ["auctions", "avl_del"]
+      }
+  ]
+
 bench_simple_completions :: [Benchmark]
 bench_simple_completions =
   [ bgroup
       "Completions/simple"
       [ simpleCompletionBench cr
-      | cr <- completionsOneSmallFile <> completionsOneBigFile
+      | cr <- completionsOneSmallFile <> completionsOneBigFile <> completionsChecker
       ]
   ]

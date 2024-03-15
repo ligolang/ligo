@@ -2,7 +2,6 @@
 	path = vendors/tezos-ligo
 	url = https://gitlab.com/ligolang/tezos-ligo.git
 	branch = v19.0-ligo
-[submodule "tools/lsp/squirrel/bench/submodules/baseDAO"]
-	path = tools/lsp/squirrel/bench/submodules/baseDAO
-	url = https://github.com/Sorokin-Anton/baseDAO
-	branch = Sorokin-Anton/branch-for-ligo-lsp-benchmarks
+[submodule "tools/lsp-bench/projects/submodules/checker"]
+	path = tools/lsp-bench/projects/submodules/checker
+	url = git@github.com:marigold-dev/checker-ligo.git

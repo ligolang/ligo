@@ -48,13 +48,13 @@ bench_simple_hovers =
   [ bgroup
       "Hovers/simple"
       [ simpleHoverBench hr
-        | hr <- hoversOneBigFile
+        | hr <- hoversOneBigFile <> hoversChecker
       ]
   ]
 
 simpleHoverBench :: HoverRequest -> Benchmark
 simpleHoverBench hr@HoverRequest {..} =
-  benchLspSession
+  benchLspSession OnDocumentLink
     (show hrFile <> "/" <> toString hrExpectedName)
     hrProject
     $ requestHover hr
@@ -87,6 +87,35 @@ hoversOneBigFile =
       }
   ]
 
+hoversChecker :: [HoverRequest]
+hoversChecker =
+  [
+    HoverRequest
+      { hrProject = projectChecker,
+        hrFile = FileDoc "sliceList.mligo",
+        hrPos = (29, 7),
+        hrExpectedName = "slice_list_bounds"
+      },
+    HoverRequest
+      { hrProject = projectChecker,
+        hrFile = FileDoc "sliceList.mligo",
+        hrPos = (192, 17),
+        hrExpectedName = "storage"
+      },
+    HoverRequest
+      { hrProject = projectChecker,
+        hrFile = FileDoc "sliceList.mligo",
+        hrPos = (163, 55),
+        hrExpectedName = "slice_list_youngest_ptr"
+      },
+    HoverRequest
+      { hrProject = projectChecker,
+        hrFile = FileDoc "sliceList.mligo",
+        hrPos = (144, 21),
+        hrExpectedName = "slice_list_remove"
+      }
+  ]
+
 -- request many hovers from a file in one session
 -- to check that our caching works correctly. It's expected that
 -- the result will be close to case when we ask for one hover.
@@ -99,5 +128,13 @@ bench_sequence_hovers =
       , bsSetRequestDoc = \doc hr -> hr {hrFile = doc}
       , bsRunRequest = requestHover
       , bsProject = projectWithOneBigFile
+      }
+  , benchSequence BenchmarkSequence
+      { bsName = "Hovers/sequence"
+      , bsRequests = hoversChecker
+      , bsGetRequestDoc = hrFile
+      , bsSetRequestDoc = \doc hr -> hr {hrFile = doc}
+      , bsRunRequest = requestHover
+      , bsProject = projectChecker
       }
   ]

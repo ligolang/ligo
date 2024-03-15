@@ -8,10 +8,6 @@ import Language.LSP.Protocol.Types qualified as LSP
 import Language.LSP.Test qualified as LSP
 
 import Bench.Util
-import Data.Aeson qualified as Aeson
-import Language.LSP.Protocol.Lens qualified as LspLens
-import Language.LSP.Protocol.Message qualified as LSP
-import Lens.Micro ((^.))
 
 data ExpectedDiagnosticsNumber = ExpectedDiagnosticsNumber
   { expectedErrors :: Int
@@ -33,20 +29,10 @@ data DiagnosticsRequest = DiagnosticsRequest
     -- ^ How many errors/warninbgs/etc we expect? @Nothing@ if we don't want to make assertions
   } deriving Show
 
-waitDiagnostics :: DiagnosticsRequest -> LSP.Session [LSP.Diagnostic]
-waitDiagnostics dr@DiagnosticsRequest {..} = do
-  _ <- getDoc drFile -- We just want to trigger TextDocumentDidOpen in case the doc was not opened before
-  _ <- let params = Aeson.Null in LSP.sendRequest (LSP.SMethod_CustomMethod $ Proxy @"DebugEcho") params
-    -- After we edited a document multiple times, the LSP server might produce multiple publish diagnostics
-    -- notifications
-  firstMessage <- LSP.waitForDiagnostics
-  otherDiagnosticMessages <- many LSP.publishDiagnosticsNotification
-  echoResponse <- LSP.response (LSP.SMethod_CustomMethod $ Proxy @"DebugEcho")
-  unless (echoResponse ^. LspLens.result == Right (Aeson.String "DebugEchoResponse"))
-    $ fail "Expected DebugEchoResponse"
-  let diagnostics = case nonEmpty otherDiagnosticMessages of
-        Nothing -> firstMessage
-        Just messages -> last messages ^. (LspLens.params . LspLens.diagnostics)
+waitDiagnostics :: DiagnosticsPullingMethod -> DiagnosticsRequest -> LSP.Session [LSP.Diagnostic]
+waitDiagnostics pullingMethod dr@DiagnosticsRequest {..} = do
+  tdi <- getDoc drFile -- We just want to trigger TextDocumentDidOpen in case the doc was not opened before
+  diagnostics <- pullDiagnostics tdi pullingMethod
   whenJust drExpected $ \expectedNumbers ->
     let diagnosticTypes :: [(String, ExpectedDiagnosticsNumber -> Int, LSP.DiagnosticSeverity)]
         diagnosticTypes =
@@ -70,7 +56,13 @@ waitDiagnostics dr@DiagnosticsRequest {..} = do
 
 simpleDiagnosticsBench :: DiagnosticsRequest -> Benchmark
 simpleDiagnosticsBench dr@DiagnosticsRequest {..} =
-  benchLspSession (show drFile) drProject $ waitDiagnostics dr
+  -- Pulling method in these benchmarks has non effect
+  -- since we don't do any modifications in the target file
+  benchLspSession
+    OnDocumentLink
+    (show drFile)
+    drProject
+    do waitDiagnostics OnDocumentLink dr
 
 bench_simple_diagnostics :: [Benchmark]
 bench_simple_diagnostics =
@@ -87,49 +79,80 @@ bench_simple_diagnostics =
         , drFile = FileDoc "one_big_file.mligo"
         , drExpected = Just def
         }
+      , DiagnosticsRequest
+        { drProject = projectChecker
+        , drFile = FileDoc "sliceList.mligo"
+        , drExpected = Just def
+        }
       ]
     ]
   ]
 
-benchDiagnosticsOneSmallFileEdits, benchDiagnosticsOneSmallFileKeystrokes :: Benchmark
-(benchDiagnosticsOneSmallFileEdits, benchDiagnosticsOneSmallFileKeystrokes) =
+-- Sorry for so long lines
+benchDiagnosticsOneSmallFileEditsOnDoc, benchDiagnosticsOneSmallFileKeystrokesOnDoc, benchDiagnosticsOneSmallFileEditsOnDocumentLink, benchDiagnosticsOneSmallFileKeystrokesOnDocumentLink :: Benchmark
+(benchDiagnosticsOneSmallFileEditsOnDoc, benchDiagnosticsOneSmallFileKeystrokesOnDoc, benchDiagnosticsOneSmallFileEditsOnDocumentLink, benchDiagnosticsOneSmallFileKeystrokesOnDocumentLink) =
   withBothEditsAndKeystrokes benchDiagnosticsOneSmallFile
   where
-  benchDiagnosticsOneSmallFile insertFuncName insert =
-    benchLspSession ("one_small_file.mligo/" <> insertFuncName) projectWithOneSmallFile $ do
+  benchDiagnosticsOneSmallFile pullingMethod insertFuncName insert =
+    benchLspSession pullingMethod ("one_small_file.mligo/" <> insertFuncName <> "/" <> show pullingMethod) projectWithOneSmallFile $ do
     doc <- OpenedDoc <$> openLigoDoc "one_small_file.mligo"
     let drFile = doc
         drProject = projectWithOneSmallFile
-    diags1 <- waitDiagnostics DiagnosticsRequest {drFile, drProject, drExpected = Just $ def {expectedErrors = 1}} -- i_am_type_error
+    diags1 <- waitDiagnostics pullingMethod DiagnosticsRequest {drFile, drProject, drExpected = Just $ def {expectedErrors = 1}} -- i_am_type_error
     insert doc (8,1) "let the_type_error = (2 : string)"
-    diags2 <- waitDiagnostics DiagnosticsRequest {drFile, drProject, drExpected = Just $ def {expectedErrors = 2}}
+    diags2 <- waitDiagnostics pullingMethod DiagnosticsRequest {drFile, drProject, drExpected = Just $ def {expectedErrors = 2}}
     insert doc (4,1) "let another_type_error = (3 : string)"
-    diags3 <- waitDiagnostics DiagnosticsRequest {drFile, drProject, drExpected = Just $ def {expectedErrors = 3}}
+    diags3 <- waitDiagnostics pullingMethod DiagnosticsRequest {drFile, drProject, drExpected = Just $ def {expectedErrors = 3}}
     pure (diags1, diags2, diags3)
 
-benchDiagnosticsOneBigFileEdits, benchDiagnosticsOneBigFileKeystrokes :: Benchmark
-(benchDiagnosticsOneBigFileEdits, benchDiagnosticsOneBigFileKeystrokes) =
+benchDiagnosticsOneBigFileEditsOnDoc, benchDiagnosticsOneBigFileKeystrokesOnDoc, benchDiagnosticsOneBigFileEditsOnDocumentLink, benchDiagnosticsOneBigFileKeystrokesOnDocumentLink :: Benchmark
+(benchDiagnosticsOneBigFileEditsOnDoc, benchDiagnosticsOneBigFileKeystrokesOnDoc, benchDiagnosticsOneBigFileEditsOnDocumentLink, benchDiagnosticsOneBigFileKeystrokesOnDocumentLink) =
   withBothEditsAndKeystrokes benchDiagnosticsOneSmallFile
   where
-  benchDiagnosticsOneSmallFile insertFuncName insert =
-    benchLspSession ("one_big_file.mligo/" <> insertFuncName) projectWithOneBigFile $ do
+  benchDiagnosticsOneSmallFile pullingMethod insertFuncName insert =
+    benchLspSession pullingMethod ("one_big_file.mligo/" <> insertFuncName <> "/" <> show pullingMethod) projectWithOneBigFile $ do
     doc <- OpenedDoc <$> openLigoDoc "one_big_file.mligo"
     let drFile = doc
         drProject = projectWithOneBigFile
-    diags1 <- waitDiagnostics DiagnosticsRequest {drFile, drProject, drExpected = Just $ def {expectedErrors = 0}}
+    diags1 <- waitDiagnostics pullingMethod DiagnosticsRequest {drFile, drProject, drExpected = Just $ def {expectedErrors = 0}}
     insert doc (8,1) "let the_type_error = (2 : string)"
-    diags2 <- waitDiagnostics DiagnosticsRequest {drFile, drProject, drExpected = Just $ def {expectedErrors = 1}}
+    diags2 <- waitDiagnostics pullingMethod DiagnosticsRequest {drFile, drProject, drExpected = Just $ def {expectedErrors = 1}}
     insert doc (4,1) "let another_type_error = (3 : string)"
-    diags3 <- waitDiagnostics DiagnosticsRequest {drFile, drProject, drExpected = Just $ def {expectedErrors = 2}}
+    diags3 <- waitDiagnostics pullingMethod DiagnosticsRequest {drFile, drProject, drExpected = Just $ def {expectedErrors = 2}}
     pure (diags1, diags2, diags3)
+
+benchDiagnosticsCheckerEditsOnDocumentLink, benchDiagnosticsCheckerKeystrokesOnDocumentLink :: Benchmark
+(benchDiagnosticsCheckerEditsOnDocumentLink, benchDiagnosticsCheckerKeystrokesOnDocumentLink) =
+  let (_, _, edits, keystrokes) = withBothEditsAndKeystrokes benchDiagnosticsChecker
+  in (edits, keystrokes)
+  where
+    benchDiagnosticsChecker _ insertFuncName insert =
+      benchLspSession OnDocumentLink ("avl.mligo/" <> insertFuncName) projectChecker do
+        let pullingMethod = OnDocumentLink
+        doc <- OpenedDoc <$> openLigoDoc "avl.mligo"
+        let drFile = doc
+            drProject = projectChecker
+        diags1 <- waitDiagnostics pullingMethod DiagnosticsRequest {drFile, drProject, drExpected = Just $ def {expectedErrors = 0}}
+        insert doc (703,1) "let the_type_error = (2 : string)"
+        diags2 <- waitDiagnostics pullingMethod DiagnosticsRequest {drFile, drProject, drExpected = Just $ def {expectedErrors = 1}}
+        insert doc (342,1) "let another_type_error = (3 : string)"
+        diags3 <- waitDiagnostics pullingMethod DiagnosticsRequest {drFile, drProject, drExpected = Just $ def {expectedErrors = 2}}
+        pure (diags1, diags2, diags3)
+
 
 bench_diagnostics_edits :: [Benchmark]
 bench_diagnostics_edits =
   [ bgroup
       "Diagnostics/edits"
-      [ benchDiagnosticsOneSmallFileEdits
-      , benchDiagnosticsOneSmallFileKeystrokes
-      , benchDiagnosticsOneBigFileEdits
-      , benchDiagnosticsOneBigFileKeystrokes
+      [ benchDiagnosticsOneSmallFileEditsOnDoc
+      , benchDiagnosticsOneSmallFileKeystrokesOnDoc
+      , benchDiagnosticsOneBigFileEditsOnDoc
+      , benchDiagnosticsOneBigFileKeystrokesOnDoc
+      , benchDiagnosticsOneSmallFileEditsOnDocumentLink
+      , benchDiagnosticsOneSmallFileKeystrokesOnDocumentLink
+      , benchDiagnosticsOneBigFileEditsOnDocumentLink
+      , benchDiagnosticsOneBigFileKeystrokesOnDocumentLink
+      , benchDiagnosticsCheckerEditsOnDocumentLink
+      , benchDiagnosticsCheckerKeystrokesOnDocumentLink
       ]
   ]
