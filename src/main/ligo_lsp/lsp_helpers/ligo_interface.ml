@@ -52,7 +52,10 @@ type ('defs, 'scopes, 'pot_tzip16) file_data_case =
 (** [None] in definitions / scopes means that file was not processed.
     See [on_doc] and [process_doc] *)
 type unprepared_file_data =
-  (Def.definitions option, scopes option, potential_tzip16_storages option) file_data_case
+  ( Def.definitions option
+  , scopes lazy_t option
+  , potential_tzip16_storages option )
+  file_data_case
 
 let empty
     ~(syntax : Syntax_types.t)
@@ -71,7 +74,8 @@ let empty
   }
 
 
-type file_data = (Def.definitions, scopes, potential_tzip16_storages) file_data_case
+type file_data =
+  (Def.definitions, scopes lazy_t, potential_tzip16_storages) file_data_case
 
 let lsp_raw_options : project_root:Path.t option -> Compiler_options.Raw_options.t =
  fun ~project_root ->

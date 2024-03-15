@@ -323,7 +323,7 @@ let with_cached_doc
           ~logger:(fun ~type_ msg -> unlift_IO @@ send_log_msg ~type_ msg)
           path
       in
-      let scopes = Ligo_interface.get_scope ~project_root ~code path in
+      let scopes = lazy (Ligo_interface.get_scope ~project_root ~code path) in
       let parse_error_ranges =
         List.fold defs_and_diagnostics.errors ~init:[] ~f:(fun acc -> function
           | `Parser_tracer (`Parsing { value = _; region }) ->
