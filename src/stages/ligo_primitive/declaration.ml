@@ -1,3 +1,4 @@
+open Var
 module Location = Simple_utils.Location
 
 module type Attr = sig
@@ -102,4 +103,24 @@ module Signature_decl (Attr : Attr) = struct
       signature
       Attr.pp
       signature_attr
+end
+
+module Import_decl (Attr : Attr) = struct
+  type t =
+    { import_name : Module_var.t
+    ; imported_module : Module_var.t
+    ; import_attr : Attr.t
+    }
+  [@@deriving eq, compare, yojson, hash, fold, map]
+
+  let pp ppf { import_name; imported_module; import_attr } =
+    Format.fprintf
+      ppf
+      "@[<2>import %a =@ %a%a@]"
+      Module_var.pp
+      import_name
+      Module_var.pp
+      imported_module
+      Attr.pp
+      import_attr
 end

@@ -79,7 +79,8 @@ and fold_expression_in_module self acc (decls : declaration list) =
       | D_module x -> fold_expression_in_module_expr self acc x.module_
       | D_module_include x -> fold_expression_in_module_expr self acc x
       | D_type _ -> acc
-      | D_signature _ -> acc)
+      | D_signature _ -> acc
+      | D_import _ -> acc)
 
 
 and fold_expression_in_module_expr : ('a -> expression -> 'a) -> 'a -> module_expr -> 'a =
@@ -210,6 +211,7 @@ and map_declaration m (x : declaration) =
   | D_module_include module_ ->
     return @@ D_module_include (map_expression_in_module_expr m module_)
   | D_signature ds -> return @@ D_signature ds
+  | D_import import -> return @@ D_import import
 
 
 and map_decl m d = map_declaration m d
@@ -479,6 +481,7 @@ end = struct
         get_fv_module_expr module_
       | D_type _t -> empty
       | D_signature _s -> empty
+      | D_import _import -> empty
     in
     unions @@ List.map ~f:aux m
 
@@ -612,6 +615,7 @@ module Declaration_mapper = struct
       let module_ = map_expression_in_module_expr f module_ in
       return @@ D_module_include module_
     | D_signature signature -> return @@ D_signature signature
+    | D_import import -> return @@ D_import import
 
 
   and map_decl m d = map_declaration m d

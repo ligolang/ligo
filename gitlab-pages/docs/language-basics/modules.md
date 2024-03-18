@@ -527,7 +527,7 @@ listed in the given interface, like so:
 
 ```jsligo group=contract2
 namespace FA0 implements FA0_INTF {
-  type storage = int;
+  export type storage = int;
   @entry const add = (s : int, k : int) : [list<operation>, int] => [list([]), s + k];
   @entry const extra = (s : int, k : int) : [list<operation>, int] => [list([]), s - k];
 }
@@ -574,7 +574,7 @@ implementing `FAAll_INTF` can choose not to implement
 
 ```jsligo group=contract2
 namespace FAAll_wo_opt_val implements FAAll_INTF {
-  type t = int;
+  export type t = int;
 
   @entry const transfer = (_u : unit, s : t) : [list<operation>, t] => [list([]), s];
   @entry const transfer1 = (_u : unit, s : t) : [list<operation>, t] => [list([]), s];

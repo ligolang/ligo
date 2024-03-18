@@ -73,16 +73,16 @@ interface can be done as follows:
 
 ```jsligo group=intf_extending
 namespace NewEuro implements NewEuro_INTF {
-  type t = int;
+  export type t = int;
 
-  const add = (a: t, b: t) => a + b;
+  export const add = (a: t, b: t) => a + b;
 
-  const one: t = 1;
-  const two: t = 2;
-  const ten: t = 10;
-  const fifty: t = 50;
-  const hundred: t = 100;
-  const five_hundred: t = 500; // Could be omitted
+  export const one: t = 1;
+  export const two: t = 2;
+  export const ten: t = 10;
+  export const fifty: t = 50;
+  export const hundred: t = 100;
+  export const five_hundred: t = 500; // Could be omitted
   const twenty: t = 20; // Extra new constant
 }
 ```

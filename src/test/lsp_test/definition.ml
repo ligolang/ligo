@@ -67,7 +67,7 @@ let%expect_test "Identifier" =
 let%expect_test "Imported identifier" =
   get_definition_test
     { file_with_reference = "contracts/build/B.mligo"
-    ; reference = Position.create ~line:7 ~character:19
+    ; reference = Position.create ~line:9 ~character:19
     ; def_type = Def
     };
   [%expect

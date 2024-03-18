@@ -637,6 +637,15 @@ and declaration : AST.declaration -> references -> env -> references * env =
     let refs, defs_or_alias_opt, module_map = signature_expression signature refs env in
     let env = Env.add_mvar signature_binder defs_or_alias_opt module_map env in
     refs, env
+  | D_import { import_name; imported_module; import_attr = _ } ->
+    let module_expr =
+      Location.wrap ~loc:Location.generated (Module_expr.M_variable imported_module)
+    in
+    let refs, defs_or_alias_opt, module_map =
+      module_expression env.parent_mod module_expr refs env
+    in
+    let env = Env.add_mvar import_name defs_or_alias_opt module_map env in
+    refs, env
 
 
 and sig_item : AST.sig_item -> references -> env -> references * env =

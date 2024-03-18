@@ -52,15 +52,15 @@ let%expect_test _ =
     {|
     [{
        "range": {
-         "end": { "character": 17, "line": 0 },
-         "start": { "character": 8, "line": 0 }
+         "end": { "character": 17, "line": 1 },
+         "start": { "character": 8, "line": 1 }
        },
        "target": "file:///../../../../../default/src/test/contracts/build/F.mligo"
      };
      {
        "range": {
-         "end": { "character": 17, "line": 1 },
-         "start": { "character": 8, "line": 1 }
+         "end": { "character": 17, "line": 4 },
+         "start": { "character": 8, "line": 4 }
        },
        "target": "file:///../../../../../default/src/test/contracts/build/G.mligo"
      }] |}]

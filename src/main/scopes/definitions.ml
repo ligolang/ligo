@@ -533,7 +533,12 @@ module Of_Ast = struct
    fun decl acc ->
     match Location.unwrap decl with
     | D_module_include mod_expr -> extends_of_mod_expr mod_expr acc
-    | D_value _ | D_irrefutable_match _ | D_type _ | D_module _ | D_signature _ -> acc
+    | D_value _
+    | D_irrefutable_match _
+    | D_type _
+    | D_module _
+    | D_signature _
+    | D_import _ -> acc
 
 
   and extends_of_declarations : AST.declaration list -> extension list -> extension list =
@@ -862,6 +867,25 @@ module Of_Ast = struct
         def_type
         mod_path
         (defs @ acc)
+    | D_import { import_name; imported_module; import_attr } ->
+      let inner_mod_path = add_inner_mod_path import_name mod_path in
+      let module_expr =
+        Location.wrap ~loc:Location.generated (Module_expr.M_variable imported_module)
+      in
+      let mod_case =
+        mod_case_of_mod_expr ~defs_of_decls module_deps module_expr inner_mod_path
+      in
+      defs_of_mvar_mod_expr
+        ~mod_case
+        ~attributes:(Some (Module_attr import_attr))
+        ~decl_range
+        ~implements:[]
+        ~extends:[]
+        module_deps
+        imported_module
+        def_type
+        mod_path
+        acc
 
 
   and defs_of_decls ~(waivers : Waivers.t)

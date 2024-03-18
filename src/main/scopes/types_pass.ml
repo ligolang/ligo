@@ -358,6 +358,7 @@ module Of_Ast_typed = struct
     | D_signature { signature_binder; signature; signature_attr = _ } ->
       let prev = add_bindings prev [ Module_binding (signature_binder, signature) ] in
       extract_binding_types_from_signature prev signature
+    | D_import _ -> prev (* TODO: find a way to extract a signature there *)
 end
 
 module Of_Ast_core = struct
@@ -707,6 +708,7 @@ module Of_Ast_core = struct
         add_module_signature ~raise bindings prg_sig signature_binder (Some signature)
       in
       signature_content bindings wrap_content
+    | D_import _ -> bindings
 
 
   and declarations ~raise : t -> Ast_typed.signature -> Ast_core.declaration list -> t =
@@ -889,7 +891,8 @@ module Typing_env = struct
         | D_module_include d_module_include ->
           D_module_include (replace_gen_type_vars_module_expr d_module_include)
         | D_signature d_sig ->
-          D_signature (Ast_typed.Signature_decl.map replace_gen_type_vars_signature d_sig))
+          D_signature (Ast_typed.Signature_decl.map replace_gen_type_vars_signature d_sig)
+        | D_import import -> D_import import)
 
 
   let resolve

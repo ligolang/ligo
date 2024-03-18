@@ -9,8 +9,8 @@ namespace Interfaces {
 };
 
 namespace IncDec implements Interfaces.IncDec {
-  type storage = int;
-  type ret = [list<operation>, storage];
+  export type storage = int;
+  export type ret = [list<operation>, storage];
 
   @entry
   const increment = (delta : int, store : storage) : ret =>
@@ -26,7 +26,7 @@ namespace IncDec implements Interfaces.IncDec {
 };
 
 namespace X implements { type t; const x : t } {
-  type t = int;
+  export type t = int;
   export const x = 42;
   const y = 5;
 };

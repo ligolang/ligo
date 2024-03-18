@@ -2,7 +2,7 @@ module PP = PP
 module Errors = Errors
 module To_yojson = To_yojson
 module Formatter = Formatter
-open Types
+include Types
 module List = Simple_utils.List
 
 module Source_input = struct
@@ -46,16 +46,14 @@ module type M = sig
   module AST : sig
     type t
 
-    val link : t -> t -> t
-
     (* An interface describes the signature of a module *)
     type interface
-
-    val link_interface : interface -> interface -> interface
 
     (* Environment should be a local notion of the BuildSystem *)
     type environment
 
+    val link : t -> t -> t
+    val link_interface : interface -> interface -> interface
     val init_env : environment
     val add_module_to_environment : module_name -> interface -> environment -> environment
     val add_interface_to_environment : interface -> environment -> environment
@@ -64,6 +62,8 @@ module type M = sig
     val make_module_in_ast : module_name -> t -> interface -> t -> t
     val make_module_in_interface : module_name -> interface -> interface -> interface
   end
+
+  val link_imports : AST.t -> objs:(AST.t * AST.interface) SMap.t -> AST.t
 
   val compile
     :  AST.environment
@@ -139,26 +139,26 @@ module Make (M : M) = struct
       let order = TopSort.fold aux dep_g [] in
       Ok order)
 
-  let aggregate_dependencies_as_headers order_deps asts_typed =
+  let link ~objs linking_order =
     (* Add the module at the beginning of the file *)
-    let aux map (file_name, (_, _, _, deps_lst)) =
+    let aux map (file_name, (mangled_name, _, _, deps_lst)) =
       let ast, intf =
-        match SMap.find_opt file_name asts_typed with
+        match SMap.find_opt file_name objs with
         | Some ast -> ast
         | None -> failwith "failed to find module"
       in
-      let map = SMap.add file_name (ast, intf) map in
+      let map = SMap.add mangled_name (ast, intf) map in
       map
     in
-    let asts_typed = List.fold ~f:aux ~init:SMap.empty order_deps in
+    let mangled_objs = List.fold ~f:aux ~init:SMap.empty linking_order in
     (* Separate the program and the dependency (those are process differently) *)
-    let (file_name, (_, _, _, _deps_lst)), order_deps =
-      match List.rev order_deps with
+    let (file_name, (_, _, _, _deps_lst)), linking_order =
+      match List.rev linking_order with
       | [] -> failwith "compiling nothing"
       | hd :: tl -> hd, tl
     in
-    let contract, contract_interface =
-      match SMap.find_opt file_name asts_typed with
+    let contract, contract_intf =
+      match SMap.find_opt file_name objs with
       | Some ast -> ast
       | None -> failwith "failed to find module"
     in
@@ -167,22 +167,27 @@ module Make (M : M) = struct
       let module_binder = mangled_name in
       (* Get the ast_type of the module *)
       let ast_typed, interface =
-        match SMap.find_opt file_name asts_typed with
+        match SMap.find_opt file_name objs with
         | Some ast -> ast
         | None -> failwith "failed to find module"
       in
       module_binder, ast_typed, interface
     in
-    let header_list = List.map ~f:add_modules @@ order_deps in
-    let aggregated =
+    let header_list = List.map ~f:add_modules @@ linking_order in
+    let contract, contract_intf =
       List.fold_left
         ~f:(fun (c, ci) (module_binder, ast, interface) ->
           ( M.AST.make_module_in_ast module_binder ast interface c
           , M.AST.make_module_in_interface module_binder interface ci ))
-        ~init:(contract, contract_interface)
+        ~init:(contract, contract_intf)
         header_list
     in
-    aggregated
+    (* Link the stdlib *)
+    let contract = M.AST.link (M.lib_ast ()) contract in
+    let contract_intf = M.AST.link_interface (M.lib_interface ()) contract_intf in
+    (* Finally link all the imports *)
+    let contract = M.link_imports contract ~objs:mangled_objs in
+    contract, contract_intf
 
   let add_modules_in_env (env : M.AST.environment) deps =
     let aux env (module_name, (_, intf)) =
@@ -242,17 +247,9 @@ module Make (M : M) = struct
     let deps = dependency_graph code_input in
     let file_name = Source_input.id_of_code_input code_input in
     match solve_graph deps file_name with
-    | Ok ordered_deps ->
-      let asts_typed =
-        List.fold ~f:compile_file_with_deps ~init:SMap.empty ordered_deps
-      in
-      let contract, contract_interface =
-        aggregate_dependencies_as_headers ordered_deps asts_typed
-      in
-      let contract = M.AST.link (M.lib_ast ()) contract in
-      let contract_interface =
-        M.AST.link_interface (M.lib_interface ()) contract_interface
-      in
+    | Ok linking_order ->
+      let objs = List.fold ~f:compile_file_with_deps ~init:SMap.empty linking_order in
+      let contract, contract_interface = link ~objs linking_order in
       Ok (contract, contract_interface)
     | Error e -> Error e
 end
