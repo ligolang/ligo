@@ -365,7 +365,7 @@ let to_warning : all -> Simple_utils.Warning.t =
   | `Self_ast_aggregated_deprecated (location, msg) ->
     let message = Format.sprintf "@.Warning: deprecated value.@.%s\n" msg in
     let content = make_content ~message ~location () in
-    make ~stage:"parsing command line parameters" ~content
+    make ~stage:"aggregation" ~content
   | `Self_ast_aggregated_warning_unused (location, variable) ->
     let message =
       Format.sprintf
@@ -375,7 +375,7 @@ let to_warning : all -> Simple_utils.Warning.t =
         variable
     in
     let content = make_content ~message ~location ~variable () in
-    make ~stage:"parsing command line parameters" ~content
+    make ~stage:"aggregation" ~content
   | `Self_ast_aggregated_warning_muchused (location, _s) ->
     let message =
       Format.sprintf "@.Warning: variable cannot be used more than once.\n@]"
@@ -390,7 +390,7 @@ let to_warning : all -> Simple_utils.Warning.t =
         s
     in
     let content = make_content ~message ~location () in
-    make ~stage:"parsing command line parameters" ~content
+    make ~stage:"aggregation" ~content
   | `Self_ast_aggregated_metadata_invalid_type (loc, s) ->
     let message =
       Format.sprintf
@@ -401,7 +401,7 @@ let to_warning : all -> Simple_utils.Warning.t =
         s
     in
     let content = make_content ~message ~location:loc () in
-    make ~stage:"parsing command line parameters" ~content
+    make ~stage:"aggregation" ~content
   | `Nanopasses_attribute_ignored loc ->
     let message = "Warning: ignored attributes" in
     let content = make_content ~message ~location:loc () in

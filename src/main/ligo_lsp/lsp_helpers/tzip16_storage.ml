@@ -64,16 +64,14 @@ let location_is_from_file (path : Path.t) : Location.t -> bool = function
 
 
 (** Extract all potential storages from a file *)
-let vars_to_mark_as_tzip16_compatible
-    (cur_file : Path.t)
-    (env : Ast_typed.signature)
-    (prg : Ast_typed.declaration list)
+let vars_to_mark_as_tzip16_compatible (cur_file : Path.t) (prg : Ast_typed.program)
     : Ast_typed.expression_variable list
   =
   let all_storage_types =
-    List.map (get_all_contract_sigs env) ~f:(fun contract_sig -> contract_sig.storage)
+    List.map (get_all_contract_sigs prg.pr_sig) ~f:(fun contract_sig ->
+        contract_sig.storage)
   in
-  get_all_variables_info prg
+  get_all_variables_info prg.pr_module
   |> Sequence.filter_map ~f:(fun decl_info ->
          match decl_info.binders with
          | [] -> None

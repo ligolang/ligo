@@ -1,5 +1,19 @@
 open Lsp_helpers
 open Handler
+module Trace = Simple_utils.Trace
+
+let get_type (vdef : Scopes.Types.vdef) : Ast_core.type_expression option =
+  match vdef.t with
+  | Core ty -> Some ty
+  | Resolved ty ->
+    Trace.try_with
+      ~fast_fail:false
+      (fun ~raise ~catch:_ ->
+        try Some (Checking.untype_type_expression ~raise ty) with
+        | _exn -> None)
+      (fun ~catch:_ _ -> None)
+  | Unresolved -> None
+
 
 let on_req_type_definition : Position.t -> Path.t -> Locations.t option Handler.t =
  fun pos file ->

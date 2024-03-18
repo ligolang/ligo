@@ -18,7 +18,8 @@ type ('a, 'err, 'wrn) t =
   -> State.t
   -> State.t * 'a
 
-let rec encode (type_ : Ast_typed.type_expression) : Type.t =
+let rec encode ~raise (type_ : Ast_typed.type_expression) : Type.t =
+  let encode = encode ~raise in
   let return content : Type.t =
     { content
     ; abbrev =
@@ -29,6 +30,9 @@ let rec encode (type_ : Ast_typed.type_expression) : Type.t =
   in
   match type_.type_content with
   | T_variable tvar -> return @@ T_variable tvar
+  | T_exists tvar ->
+    let () = raise.log_error @@ cannot_encode_texists type_ type_.location in
+    return @@ T_exists tvar
   | T_arrow arr ->
     let arr = Arrow.map encode arr in
     return @@ T_arrow arr
@@ -43,52 +47,55 @@ let rec encode (type_ : Ast_typed.type_expression) : Type.t =
     let parameters = List.map parameters ~f:encode in
     return @@ T_construct { language; constructor = injection; parameters }
   | T_sum (row, orig_label) ->
-    let row = encode_row row in
+    let row = encode_row ~raise row in
     return @@ T_sum (row, orig_label)
   | T_record row ->
-    let row = encode_row row in
+    let row = encode_row ~raise row in
     return @@ T_record row
 
 
-and encode_row ({ fields; layout } : Ast_typed.row) : Type.row =
-  let fields = Map.map ~f:encode fields in
+and encode_row ~raise ({ fields; layout } : Ast_typed.row) : Type.row =
+  let fields = Map.map ~f:(encode ~raise) fields in
   let layout = encode_layout layout in
   Row.{ fields; layout }
 
 
 and encode_layout (layout : Layout.t) : Type.layout = L_concrete layout
 
-and encode_sig_item (item : Ast_typed.sig_item) : Context.Signature.item Location.wrap =
+and encode_sig_item ~raise (item : Ast_typed.sig_item)
+    : Context.Signature.item Location.wrap
+  =
   Location.wrap ~loc:(Location.get_location item)
   @@
   match Location.unwrap item with
   | Ast_typed.S_value (v, ty, attr) ->
-    Context.Signature.S_value (v, encode ty, encode_sig_item_attribute attr)
+    Context.Signature.S_value (v, encode ~raise ty, encode_sig_item_attribute attr)
   | S_type (v, ty, attr) ->
     Context.Signature.S_type
       ( v
-      , encode ty
+      , encode ~raise ty
       , { Context.Attrs.Type.default with leading_comments = attr.leading_comments } )
   | S_type_var (v, attr) ->
     Context.Signature.S_type_var
       (v, { Context.Attrs.Type.default with leading_comments = attr.leading_comments })
   | S_module (v, sig_) ->
-    Context.Signature.S_module (v, encode_signature sig_, Context.Attrs.Module.default)
+    Context.Signature.S_module
+      (v, encode_signature ~raise sig_, Context.Attrs.Module.default)
   | S_module_type (v, sig_) ->
     Context.Signature.S_module_type
-      (v, encode_signature sig_, Context.Attrs.Signature.default)
+      (v, encode_signature ~raise sig_, Context.Attrs.Signature.default)
 
 
-and encode_sig_sort (sort : Ast_typed.signature_sort) : Context.Signature.sort =
+and encode_sig_sort ~raise (sort : Ast_typed.signature_sort) : Context.Signature.sort =
   match sort with
   | Ss_module -> Ss_module
   | Ss_contract { storage; parameter } ->
-    Ss_contract { storage = encode storage; parameter = encode parameter }
+    Ss_contract { storage = encode ~raise storage; parameter = encode ~raise parameter }
 
 
-and encode_signature (sig_ : Ast_typed.signature) : Context.Signature.t =
-  { items = List.map ~f:encode_sig_item sig_.sig_items
-  ; sort = encode_sig_sort sig_.sig_sort
+and encode_signature ~raise (sig_ : Ast_typed.signature) : Context.Signature.t =
+  { items = List.map ~f:(encode_sig_item ~raise) sig_.sig_items
+  ; sort = encode_sig_sort ~raise sig_.sig_sort
   }
 
 
@@ -103,7 +110,7 @@ and encode_sig_item_attribute (attr : Sig_item_attr.t) : Context.Attrs.Value.t =
 
 
 (* Load context from the outside declarations *)
-let ctx_init_of_sig ?env () =
+let ctx_init_of_sig ~raise ?env () =
   match env with
   | None -> Context.empty
   | Some (env : Ast_typed.signature) ->
@@ -114,23 +121,24 @@ let ctx_init_of_sig ?env () =
       | Ss_module -> true);
     let f ctx decl =
       match Location.unwrap decl with
-      | Ast_typed.S_value (v, ty, _attr) -> Context.add_imm ctx v (encode ty)
-      | S_type (v, ty, _) -> Context.add_type ctx v (encode ty)
+      | Ast_typed.S_value (v, ty, _attr) -> Context.add_imm ctx v (encode ~raise ty)
+      | S_type (v, ty, _) -> Context.add_type ctx v (encode ~raise ty)
       | S_type_var (v, _) -> Context.add_type_var ctx v Kind.Type
-      | S_module (v, sig_) -> Context.add_module ctx v (encode_signature sig_)
-      | S_module_type (v, sig_) -> Context.add_module_type ctx v (encode_signature sig_)
+      | S_module (v, sig_) -> Context.add_module ctx v (encode_signature ~raise sig_)
+      | S_module_type (v, sig_) ->
+        Context.add_module_type ctx v (encode_signature ~raise sig_)
     in
     List.fold env.sig_items ~init:Context.empty ~f
 
 
 let run_elab t ~raise ~options ~loc ~path ?env () =
-  let ctx = ctx_init_of_sig ?env () in
+  let ctx = ctx_init_of_sig ~raise ?env () in
   (* Format.printf "@[Context:@.%a@]" Context.pp ctx; *)
   let ctx, pos = Context.mark ctx in
   let (ctx, subst), elab = t ~raise ~options ~loc ~path (ctx, Substitution.empty) in
   (* Drop to get any remaining equations that relate to elaborated thing *)
   let _ctx, subst' = Context.drop_until ctx ~pos ~on_exit:Drop in
-  Elaboration.run elab ~path ~raise (Substitution.merge subst subst')
+  Elaboration.run elab ~path ~raise ~options (Substitution.merge subst subst')
 
 
 include Monad.Make3 (struct
@@ -208,8 +216,16 @@ let raise_opt opt ~error : _ t =
 
 let raise err : _ t = fun ~raise ~options:_ ~loc ~path:_ _state -> raise.error (err loc)
 
+let log_error err : _ t =
+ fun ~raise ~options:_ ~loc ~path:_ state -> state, raise.log_error (err loc)
+
+
 let raise_l ~loc err : _ t =
  fun ~raise ~options:_ ~loc:_ ~path:_ _state -> raise.error (err loc)
+
+
+let log_error_l ~loc err : _ t =
+ fun ~raise ~options:_ ~loc:_ ~path:_ state -> state, raise.log_error (err loc)
 
 
 let warn wrn : _ t =
@@ -372,22 +388,13 @@ module Context = struct
 
 
   let get_value var : _ t = lift_ctx (fun ctx -> Context.get_value ctx var)
-  let get_value_exn var ~error : _ t = get_value var >>= raise_result ~error
   let get_imm var : _ t = lift_ctx (fun ctx -> Context.get_imm ctx var)
-  let get_imm_exn var ~error : _ t = get_imm var >>= raise_opt ~error
   let get_mut var : _ t = lift_ctx (fun ctx -> Context.get_mut ctx var)
-  let get_mut_exn var ~error : _ t = get_mut var >>= raise_result ~error
   let get_type_var tvar : _ t = lift_ctx (fun ctx -> Context.get_type_var ctx tvar)
-  let get_type_var_exn tvar ~error = get_type_var tvar >>= raise_opt ~error
   let get_type tvar : _ t = lift_ctx (fun ctx -> Context.get_type ctx tvar)
-  let get_type_exn tvar ~error = get_type tvar >>= raise_opt ~error
 
   let get_type_or_type_var tvar : _ t =
     lift_ctx (fun ctx -> Context.get_type_or_type_var ctx tvar)
-
-
-  let get_type_or_type_var_exn tvar ~error =
-    get_type_or_type_var tvar >>= raise_opt ~error
 
 
   let get_texists_var tvar ~error : _ t =
@@ -398,20 +405,11 @@ module Context = struct
     lift_ctx (fun ctx -> Context.get_module_of_path ctx path)
 
 
-  let get_module_of_path_exn path ~error : _ t =
-    get_module_of_path path >>= raise_opt ~error
-
-
   let get_module_type_of_path path : _ t =
     lift_ctx (fun ctx -> Context.get_module_type_of_path ctx path)
 
 
-  let get_module_type_of_path_exn path ~error : _ t =
-    get_module_type_of_path path >>= raise_opt ~error
-
-
   let get_module mvar : _ t = lift_ctx (fun ctx -> Context.get_module ctx mvar)
-  let get_module_exn mvar ~error : _ t = get_module mvar >>= raise_opt ~error
   let get_sum constr : _ t = lift_ctx (fun ctx -> Context.get_sum ctx constr)
   let get_record fields : _ t = lift_ctx (fun ctx -> Context.get_record ctx fields)
 
@@ -461,7 +459,7 @@ let occurs_check ~tvar (type_ : Type.t) =
   let%bind loc = loc () in
   lift_raise
   @@ fun raise ->
-  let fail () = raise.error (occurs_check_failed tvar type_ loc) in
+  let fail () = raise.log_error (occurs_check_failed tvar type_ loc) in
   let rec loop (type_ : Type.t) =
     match type_.content with
     | T_variable _tvar' -> ()
@@ -589,7 +587,7 @@ let unify_layout type1 type2 ~fields (layout1 : Type.layout) (layout2 : Type.lay
   match layout1, layout2 with
   | L_concrete layout1, L_concrete layout2 when Layout.equal layout1 layout2 -> return ()
   | L_concrete _, L_concrete _ ->
-    raise (cannot_unify_local_diff_layout type1 type2 layout1 layout2)
+    log_error (cannot_unify_local_diff_layout type1 type2 layout1 layout2)
   | L_exists lvar1, L_exists lvar2 when Layout_var.equal lvar1 lvar2 -> return ()
   | L_exists lvar, layout | layout, L_exists lvar ->
     let%bind layout = lift_layout ~at:(C_lexists_var (lvar, fields)) ~fields layout in
@@ -609,7 +607,7 @@ let rec unify_aux (type1 : Type.t) (type2 : Type.t)
   in
   let fail () =
     let%bind no_color = Options.no_color () in
-    raise (cannot_unify_local no_color type1 type2)
+    log_error (cannot_unify_local no_color type1 type2)
   in
   match type1.content, type2.content with
   | T_singleton lit1, T_singleton lit2 when Literal_value.equal lit1 lit2 -> return ()
@@ -622,7 +620,7 @@ let rec unify_aux (type1 : Type.t) (type2 : Type.t)
     when String.(lang1 = lang2) && Literal_types.equal constr1 constr2 ->
     (match List.map2 params1 params2 ~f:unify_ with
     | Ok ts -> all_unit ts
-    | Unequal_lengths -> raise (assert false))
+    | Unequal_lengths -> log_error (assert false))
   | ( T_arrow { type1 = type11; type2 = type12; param_names = _ }
     , T_arrow { type1 = type21; type2 = type22; param_names = _ } ) ->
     let%bind () = unify_aux type11 type21 in
@@ -843,6 +841,110 @@ let lexists fields =
   return layout
 
 
+module Error_recovery = struct
+  open Let_syntax
+
+  let is_enabled ~raise:_ ~options ~loc:_ ~path:_ state =
+    state, options.Compiler_options.typer_error_recovery
+
+
+  let raise_or_use_default ~error ~default =
+    if%bind is_enabled
+    then (
+      let%bind () = log_error error in
+      default)
+    else raise error
+
+
+  let raise_or_use_default_opt ~error ~default =
+    Option.value_map ~default:(raise_or_use_default ~error ~default) ~f:return
+
+
+  let raise_or_use_default_result ~ok ~error ~default = function
+    | Ok value -> ok value
+    | Error err -> raise_or_use_default ~error:(Fn.flip error err) ~default
+
+
+  let wildcard_type ~raise ~options ~loc ~path state =
+    exists Type ~raise ~options ~loc ~path state
+
+
+  let raise_or_use_default_type ~error =
+    raise_or_use_default ~error ~default:wildcard_type
+
+
+  let row ~raise:_ ~options:_ ~loc:_ ~path:_ state =
+    state, { Type.Row.fields = Record.empty; layout = Type.Layout.default [] }
+
+
+  let sig_ ~raise:_ ~options:_ ~loc:_ ~path:_ state =
+    state, { Context.Signature.items = []; sort = Ss_module }
+
+
+  module Get = struct
+    let get_opt_or_exn getter key ~error ~default : _ t =
+      let open Let_syntax in
+      match%bind getter key with
+      | None -> raise_or_use_default ~error ~default
+      | Some value -> return value
+
+
+    let get_result_or_exn getter key ~error ~default : _ t =
+      let open Let_syntax in
+      match%bind getter key with
+      | Ok value -> return value
+      | Error err -> raise_or_use_default ~error:(error err) ~default
+
+
+    let value var ~error : _ t =
+      get_result_or_exn
+        Context.get_value
+        var
+        ~error
+        ~default:(wildcard_type >>| fun t -> Param.Mutable, t, Context.Attr.default)
+
+
+    let imm var ~error : _ t =
+      get_opt_or_exn
+        Context.get_imm
+        var
+        ~error
+        ~default:(wildcard_type >>| fun t -> t, Context.Attr.default)
+
+
+    let mut var ~error : _ t =
+      get_result_or_exn Context.get_mut var ~error ~default:wildcard_type
+
+
+    let type_var tvar ~error =
+      get_opt_or_exn Context.get_type_var tvar ~error ~default:(return Kind.Type)
+
+
+    let type_or_type_var tvar ~error =
+      get_opt_or_exn
+        Context.get_type_or_type_var
+        tvar
+        ~error
+        ~default:(wildcard_type >>| fun t -> `Type t)
+
+
+    let type_ tvar ~error =
+      get_opt_or_exn Context.get_type tvar ~error ~default:wildcard_type
+
+
+    let module_of_path path ~error : _ t =
+      get_opt_or_exn Context.get_module_of_path path ~error ~default:sig_
+
+
+    let module_type_of_path path ~error : _ t =
+      get_opt_or_exn Context.get_module_type_of_path path ~error ~default:sig_
+
+
+    let module_ mvar ~error : _ t =
+      get_opt_or_exn Context.get_module mvar ~error ~default:sig_
+  end
+end
+
 let def bindings ~on_exit ~in_ =
   Context.add
     (List.map bindings ~f:(fun (var, mut_flag, type_, attr) ->
@@ -885,7 +987,7 @@ let def_sig_item sig_items ~on_exit ~in_ =
 
 let assert_ cond ~error =
   let open Let_syntax in
-  if cond then return () else raise error
+  if cond then return () else log_error error
 
 
 let hash_context () =
@@ -911,13 +1013,41 @@ let create_type (constr : Type.constr) =
   return (constr ~loc ())
 
 
-let try_ (body : ('a, 'err, 'wrn) t) ~(with_ : 'err -> ('a, 'err, 'wrn) t)
+let try_ (body : ('a, 'err, 'wrn) t) ~(with_ : 'err list -> ('a, 'err, 'wrn) t)
     : ('a, 'err, 'wrn) t
   =
  fun ~raise ~options ~loc ~path state ->
-  Trace.try_with
-    (fun ~raise ~catch:_ -> body ~raise ~options ~loc ~path state)
-    (fun ~catch:_ err -> with_ err ~raise ~options ~loc ~path state)
+  let body = body ~options ~loc ~path state in
+  match
+    if options.typer_error_recovery
+    then Trace.to_stdlib_result ~fast_fail:No_fast_fail body
+    else Trace.cast_fast_fail_result @@ Trace.to_stdlib_result ~fast_fail:Fast_fail body
+  with
+  | Ok (result, _es, _ws) -> result
+  | Error (es, _ws) -> with_ es ~raise ~options ~loc ~path state
+
+
+let try_with_diagnostics
+    (body : ('a, 'err, 'wrn) t)
+    ~(with_ : ('a, 'err, 'wrn) t)
+    ~(diagnostics : 'err list -> 'wrn list -> (unit, 'err, 'wrn) t)
+    : ('a, 'err, 'wrn) t
+  =
+ fun ~raise ~options ~loc ~path state ->
+  let body = body ~options ~loc ~path state in
+  let (state, result), es, ws =
+    match
+      if options.typer_error_recovery
+      then Trace.to_stdlib_result ~fast_fail:No_fast_fail body
+      else Trace.cast_fast_fail_result @@ Trace.to_stdlib_result ~fast_fail:Fast_fail body
+    with
+    | Ok (result, es, ws) -> result, es, ws
+    | Error (es, ws) ->
+      let result = with_ ~raise ~options ~loc ~path state in
+      result, es, ws
+  in
+  let state, () = diagnostics es ws ~raise ~options ~loc ~path state in
+  state, result
 
 
 let try_all (ts : ('a, 'err, 'wrn) t list) : ('a, 'err, 'wrn) t =

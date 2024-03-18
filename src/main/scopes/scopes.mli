@@ -11,16 +11,21 @@ type definitions = Types.definitions
 type scopes = Types.scopes
 type inlined_scopes = Types.inlined_scopes
 
-val defs_and_typed_program
+type t = Types.t =
+  { definitions : definitions
+  ; program : Ast_typed.program option
+  ; inlined_scopes : inlined_scopes lazy_t
+  ; lambda_types : Ast_typed.ty_expr Types.LMap.t
+  }
+
+val run
   :  raise:(Main_errors.all, Main_warnings.all) Trace.raise
   -> options:Compiler_options.middle_end
   -> stdlib:Ast_typed.program * Ast_core.program
   -> prg:Ast_core.module_
   -> module_deps:string Map.Make(String).t
   -> with_types:bool
-  -> definitions
-     * (Ast_typed.signature * Ast_typed.declaration list) option
-     * Ast_typed.ty_expr Types.LMap.t
+  -> t
 
 val inlined_scopes
   :  options:Compiler_options.middle_end
@@ -34,14 +39,3 @@ val scopes
   -> stdlib:Ast_typed.program * Ast_core.program
   -> prg:Ast_core.module_
   -> scopes
-
-val defs_and_typed_program_and_scopes
-  :  raise:(Main_errors.all, Main_warnings.all) Trace.raise
-  -> options:Compiler_options.middle_end
-  -> stdlib:Ast_typed.program * Ast_core.program
-  -> prg:Ast_core.module_
-  -> module_deps:string Map.Make(String).t
-  -> with_types:bool
-  -> definitions
-     * (Ast_typed.signature * Ast_typed.declaration list) option
-     * inlined_scopes

@@ -39,12 +39,14 @@ let compile_expression_in_context
   in
   let exp =
     Option.value_map contract_info ~default:exp ~f:(fun { storage; parameter } ->
+        let parameter, storage =
+          trace ~raise aggregation_tracer
+          @@ fun ~raise ->
+          ( Aggregation.compile_type ~raise parameter
+          , Aggregation.compile_type ~raise storage )
+        in
         trace ~raise self_ast_aggregated_tracer
-        @@ Self_ast_aggregated.all_contract
-             ~options
-             (Aggregation.compile_type parameter)
-             (Aggregation.compile_type storage)
-             exp)
+        @@ Self_ast_aggregated.all_contract ~options parameter storage exp)
   in
   let exp = if force_uncurry then Ast_aggregated.Combinators.uncurry_wrap exp else exp in
   if self_pass then Self_ast_aggregated.remove_check_self exp else exp

@@ -36,8 +36,14 @@ val lift_raise : (('err, 'wrn) raise -> 'a) -> ('a, 'err, 'wrn) t
 (** [raise err] raises the error [err] at location [loc ()] (the current location). *)
 val raise : 'err Errors.with_loc -> ('a, 'err, 'wrn) t
 
+(** [log_error err] logs the error [err] at location [loc ()] (the current location). *)
+val log_error : 'err Errors.with_loc -> (unit, 'err, 'wrn) t
+
 (** [raise_l ~loc err] raises the error [err] at location [loc]. *)
 val raise_l : loc:Location.t -> 'err Errors.with_loc -> ('a, 'err, 'wrn) t
+
+(** [log_error_l ~loc err] logs the error [err] at location [loc]. *)
+val log_error_l : loc:Location.t -> 'err Errors.with_loc -> (unit, 'err, 'wrn) t
 
 (** [warn wrn] reports the warning [wrn] at location [loc ()] (the current location). *)
 val warn : 'wrn Errors.with_loc -> (unit, 'err, 'wrn) t
@@ -58,8 +64,21 @@ val raise_opt : 'a option -> error:'err Errors.with_loc -> ('a, 'err, 'wrn) t
 val assert_ : bool -> error:'err Errors.with_loc -> (unit, 'err, 'wrn) t
 
 (** [try_ comp ~with_] executes the computation [comp]. If [comp] raises
-    an error [err], then the handler [with_] is called with [err]. *)
-val try_ : ('a, 'err, 'wrn) t -> with_:('err -> ('a, 'err, 'wrn) t) -> ('a, 'err, 'wrn) t
+    errors [errs], then the handler [with_] is called with [errs]. *)
+val try_
+  :  ('a, 'err, 'wrn) t
+  -> with_:('err list -> ('a, 'err, 'wrn) t)
+  -> ('a, 'err, 'wrn) t
+
+(** [try_with_diagnostics comp ~with_ ~diagnostics] is like [try_], but it also allows
+    to inspect generated diagnostics (errors and warnings) generated while trying [comp],
+    regardless of success of failure. Useful for error recovery, used by the language
+    server. *)
+val try_with_diagnostics
+  :  ('a, 'err, 'wrn) t
+  -> with_:('a, 'err, 'wrn) t
+  -> diagnostics:('err list -> 'wrn list -> (unit, 'err, 'wrn) t)
+  -> ('a, 'err, 'wrn) t
 
 val try_all
   :  ('a, ([> `Typer_corner_case of string * Location.t ] as 'err), 'wrn) t list
@@ -85,6 +104,8 @@ module Options : sig
 end
 
 (** {5 Context} *)
+
+module Context_ = Context
 
 (** [context ()] returns the context. *)
 val context : unit -> (Context.t, 'err, 'wrn) t
@@ -125,30 +146,15 @@ module Context : sig
        , 'wrn )
        t
 
-  val get_value_exn
-    :  Value_var.t
-    -> error:([ `Mut_var_captured | `Not_found ] -> 'err Errors.with_loc)
-    -> (Context.mutable_flag * Type.t * Context.Attrs.Value.t, 'err, 'wrn) t
-
   (** [get_imm var] returns the type of the immutable variable [var].
       Returning [None] if not found in the current context. *)
   val get_imm : Value_var.t -> ((Type.t * Context.Attrs.Value.t) option, 'err, 'wrn) t
-
-  val get_imm_exn
-    :  Value_var.t
-    -> error:'err Errors.with_loc
-    -> (Type.t * Context.Attrs.Value.t, 'err, 'wrn) t
 
   (** [get_mut var] returns the type of the mutable variable [var].
       Returning [None] if not found in the current context. *)
   val get_mut
     :  Value_var.t
     -> ((Type.t, [ `Mut_var_captured | `Not_found ]) result, 'err, 'wrn) t
-
-  val get_mut_exn
-    :  Value_var.t
-    -> error:([ `Mut_var_captured | `Not_found ] -> 'err Errors.with_loc)
-    -> (Type.t, 'err, 'wrn) t
 
   (** [get_type_var tvar] returns the kind of the type variable [tvar].
       Returning [None] if not found in the current context.
@@ -158,11 +164,6 @@ module Context : sig
 
   val get_type_var : Type_var.t -> (Kind.t option, 'err, 'wrn) t
 
-  val get_type_var_exn
-    :  Type_var.t
-    -> error:'err Errors.with_loc
-    -> (Kind.t, 'err, 'wrn) t
-
   (** [get_type tvar] returns the type bound to the type variable [tvar].
       Returning [None] if not found in the current context.
 
@@ -170,7 +171,6 @@ module Context : sig
       bound type variables. e.g. [fun (type a) ... -> ...] *)
 
   val get_type : Type_var.t -> (Type.t option, 'err, 'wrn) t
-  val get_type_exn : Type_var.t -> error:'err Errors.with_loc -> (Type.t, 'err, 'wrn) t
 
   (** [get_type_or_type_var tvar] returns the type or kind of the type variable [tvar].
       Returning [None] if not found in the current context. *)
@@ -178,30 +178,15 @@ module Context : sig
     :  Type_var.t
     -> ([ `Type of Type.t | `Type_var of Kind.t ] option, 'err, 'wrn) t
 
-  val get_type_or_type_var_exn
-    :  Type_var.t
-    -> error:'err Errors.with_loc
-    -> ([ `Type of Type.t | `Type_var of Kind.t ], 'err, 'wrn) t
-
   (** [get_module mvar] returns signature of the module [mvar].
       Returning [None] if not found in the current context. *)
 
   val get_module : Module_var.t -> (Signature.t option, 'err, 'wrn) t
 
-  val get_module_exn
-    :  Module_var.t
-    -> error:'err Errors.with_loc
-    -> (Signature.t, 'err, 'wrn) t
-
   (** [get_module_of_path path] returns the signature of the module path [path].
       Returning [None] if not found in the current context. *)
 
   val get_module_of_path : Module_var.t List.Ne.t -> (Signature.t option, 'err, 'wrn) t
-
-  val get_module_of_path_exn
-    :  Module_var.t List.Ne.t
-    -> error:'err Errors.with_loc
-    -> (Signature.t, 'err, 'wrn) t
 
   (** [get_module_type_of_path path] returns the signature of the module path [path].
       Returning [None] if not found in the current context. *)
@@ -209,11 +194,6 @@ module Context : sig
   val get_module_type_of_path
     :  Module_var.t List.Ne.t
     -> (Signature.t option, 'err, 'wrn) t
-
-  val get_module_type_of_path_exn
-    :  Module_var.t List.Ne.t
-    -> error:'err Errors.with_loc
-    -> (Signature.t, 'err, 'wrn) t
 
   (** [get_sum constr] returns a list of [(type_name, type_params, constr_type, sum_type)] for any sum type in the context
       containing [constr].
@@ -426,15 +406,21 @@ module With_frag : sig
   val run : ('a, 'err, 'wrn) t -> (fragment * 'a, 'err, 'wrn) e
 end
 
-(** {8 Execution}*)
+(** {8 Execution} *)
 
 (** This section defines functions related to running computations. *)
 
-(** [encode type_] encodes an [Ast_typed.type_expression] representation of a type into the typer's
-    internal representation [Type.t]. *)
-val encode : Ast_typed.type_expression -> Type.t
+(** [encode ~raise type_] encodes an [Ast_typed.type_expression] representation of a type
+    into the typer's internal representation [Type.t]. *)
+val encode
+  :  raise:(Errors.typer_error, Main_warnings.all) raise
+  -> Ast_typed.type_expression
+  -> Type.t
 
-val encode_signature : Ast_typed.signature -> Context.Signature.t
+val encode_signature
+  :  raise:(Errors.typer_error, Main_warnings.all) raise
+  -> Ast_typed.signature
+  -> Context.Signature.t
 
 (** [run_elab comp ~raise ~options ~loc ~env] runs and elaborates the computation [comp] with the handler
     provided by [~raise], compiler options [~options] and initial environment [~env]. *)
@@ -447,3 +433,96 @@ val run_elab
   -> ?env:Ast_typed.signature
   -> unit
   -> 'a
+
+(** {9 Error Recovery} *)
+
+(** This section defines the [Error_recovery] module, whose functions define helpers to
+    allow the typer to recover from failures, used by the language server. *)
+
+(** Helpers to handle typer error recovery. *)
+module Error_recovery : sig
+  (** Checks whether the typer error recovery is enabled. *)
+  val is_enabled : (bool, 'err, 'wrn) t
+
+  (** Checks whether the typer error recovery is enabled, and if it is, logs the error
+      from [error] and returns [default], otherwise raises the error from [error]. *)
+  val raise_or_use_default
+    :  error:'err Errors.with_loc
+    -> default:('a, 'err, 'wrn) t
+    -> ('a, 'err, 'wrn) t
+
+  (** If the provided value is [None], logs the [error] and returns [default] (if error
+      recovery is enabled), or raises [error] (otherwise). If the value is [Some], then it
+      just returns the value without further actions. *)
+  val raise_or_use_default_opt
+    :  error:'err Errors.with_loc
+    -> default:('a, 'err, 'wrn) t
+    -> 'a option
+    -> ('a, 'err, 'wrn) t
+
+  (** If the provided value is [Error], logs the error and returns [default] (if error
+      recovery is enabled), or raises the error (otherwise). If the value is [Ok], then it
+      just calls [ok] on the value without further actions. *)
+  val raise_or_use_default_result
+    :  ok:('ok_result -> ('a, 'err, 'wrn) t)
+    -> error:('err_result -> 'err) Errors.with_loc
+    -> default:('a, 'err, 'wrn) t
+    -> ('ok_result, 'err_result) result
+    -> ('a, 'err, 'wrn) t
+
+  (** If we could not infer some type, emit a placeholder type so typing can continue. *)
+  val wildcard_type : (Type.t, 'err, 'wrn) t
+
+  (** Checks whether the typer error recovery is enabled, and if its, returns [type],
+      otherwise runs [on_disabled] (useful to throw some error). *)
+  val raise_or_use_default_type : error:'err Errors.with_loc -> (Type.t, 'err, 'wrn) t
+
+  (** If we could not infer some row, emit a placeholder type so typing can continue. *)
+  val row : ('a Type.Row.t, 'err, 'wrn) t
+
+  (** If we could not infer some signature, emit a placeholder type so typing can
+      continue. *)
+  val sig_ : (Context.Signature.t, 'err, 'wrn) t
+
+  (** Utilities for getting values from the context, or dealing with error recovery in
+      case they weren't found. *)
+  module Get : sig
+    val value
+      :  Value_var.t
+      -> error:([ `Mut_var_captured | `Not_found ] -> 'err Errors.with_loc)
+      -> (Context_.mutable_flag * Type.t * Context_.Attrs.Value.t, 'err, 'wrn) t
+
+    val imm
+      :  Value_var.t
+      -> error:'err Errors.with_loc
+      -> (Type.t * Context_.Attrs.Value.t, 'err, 'wrn) t
+
+    val mut
+      :  Value_var.t
+      -> error:([ `Mut_var_captured | `Not_found ] -> 'err Errors.with_loc)
+      -> (Type.t, 'err, 'wrn) t
+
+    val type_or_type_var
+      :  Type_var.t
+      -> error:'err Errors.with_loc
+      -> ([ `Type of Type.t | `Type_var of Kind.t ], 'err, 'wrn) t
+
+    val type_var : Type_var.t -> error:'err Errors.with_loc -> (Kind.t, 'err, 'wrn) t
+    val type_ : Type_var.t -> error:'err Errors.with_loc -> (Type.t, 'err, 'wrn) t
+
+    val module_
+      :  Module_var.t
+      -> error:'err Errors.with_loc
+      -> (Context.Signature.t, 'err, 'wrn) t
+
+    val module_of_path
+      :  Module_var.t List.Ne.t
+      -> error:'err Errors.with_loc
+      -> (Context.Signature.t, 'err, 'wrn) t
+
+    val module_type_of_path
+      :  Module_var.t List.Ne.t
+      -> error:'err Errors.with_loc
+      -> (Context.Signature.t, 'err, 'wrn) t
+  end
+end

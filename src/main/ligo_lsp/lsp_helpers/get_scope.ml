@@ -18,7 +18,7 @@ let with_code_input
          (options:Compiler_options.middle_end
           -> syntax:Syntax_types.t
           -> stdlib:Ast_typed.program * Ast_core.program
-          -> prg:Ast_core.module_
+          -> prg:Ast_core.program
           -> module_deps:string SMap.t
           -> 'a)
     -> raw_options:Raw_options.t -> raise:(Main_errors.all, Main_warnings.all) Trace.raise
@@ -39,8 +39,6 @@ let with_code_input
     Ligo_compile.Helpers.protocol_to_variant ~raise raw_options.protocol_version
   in
   let options = Compiler_options.make ~raw_options ~syntax ~protocol_version () in
-  (* let Compiler_options.{ with_types; _ } = options.tools in *)
-
   (* Here we need to extract module dependencies in order to show
     to the user file paths of mangled modules *)
   let prg, module_deps =
@@ -78,7 +76,6 @@ let with_code_input
   let stdlib =
     Build.Stdlib.select_lib_typed syntax lib, Build.Stdlib.select_lib_core syntax lib
   in
-  (* let () = assert (List.length (fst stdlib) = List.length (snd stdlib)) in *)
   f ~options:options.middle_end ~stdlib ~prg ~syntax ~module_deps
 
 
@@ -86,11 +83,8 @@ let with_code_input
 let get_scope_raw
     (raw_options : Raw_options.t)
     (source_file : BuildSystem.Source_input.code_input)
-    ~defs_only
     ~raise
-    : Def.definitions
-      * (Ast_typed.signature * Ast_typed.declaration list) option
-      * inlined_scopes
+    : Scopes.t
   =
   let with_types = raw_options.with_types in
   with_code_input
@@ -98,26 +92,7 @@ let get_scope_raw
     ~raise
     ~code_input:source_file
     ~f:(fun ~options ~syntax:_ ~stdlib ~prg ~module_deps ->
-      if defs_only
-      then (
-        let defs, typed, _lambda_types =
-          Scopes.defs_and_typed_program
-            ~with_types
-            ~raise
-            ~options
-            ~stdlib
-            ~prg
-            ~module_deps
-        in
-        defs, typed, [])
-      else
-        Scopes.defs_and_typed_program_and_scopes
-          ~with_types
-          ~raise
-          ~options
-          ~stdlib
-          ~prg
-          ~module_deps)
+      Scopes.run ~with_types ~raise ~options ~stdlib ~prg ~module_deps)
 
 
 (** Used by CLI, formats all definitions, errors and warnings and returns strings *)
@@ -130,10 +105,8 @@ let get_scope_cli_result
   =
   Scopes.Api_helper.format_result ~display_format ~no_colour
   @@ fun ~raise ->
-  let defs, _, scopes =
-    get_scope_raw raw_options (From_file source_file) ~defs_only ~raise
-  in
-  defs.definitions, scopes
+  let v = get_scope_raw raw_options (From_file source_file) ~raise in
+  { v with inlined_scopes = (if defs_only then Lazy.from_val [] else v.inlined_scopes) }
 
 
 let get_scopes
@@ -183,7 +156,8 @@ let make_lsp_virtual_main
   let main =
     Format.sprintf
       (match syntax with
-      | CameLIGO -> "[@entry]\nlet %s (_ : never) (s : %s) : operation list * %s = [], s"
+      | CameLIGO ->
+        "[@entry]\nlet %s (_ : never) (s : %s) : operation list * (%s) = [], s"
       | JsLIGO ->
         "@entry\nconst %s = (_: never, s: %s): [list<operation>, %s] => [list([]), s]")
       virtual_main_name
@@ -211,12 +185,11 @@ let make_lsp_virtual_main
   This require our file to have an entrypoint, so we can add a virtual one. *)
 let following_passes_diagnostics
     ~(raise : (Main_errors.all, Main_warnings.all) Trace.raise)
-    ~(stdlib_context : Ast_typed.signature)
+    ~(stdlib_program : Ast_typed.program)
     ~(syntax : Syntax_types.t)
     ~(logger : type_:Lsp.Types.MessageType.t -> string -> unit Lwt.t)
     (raw_options : Raw_options.t)
-    (env : Ast_typed.signature)
-    (prg : Ast_typed.declaration list)
+    ({ pr_module; pr_sig = { sig_items; sig_sort } } : Ast_typed.program)
     : unit Lwt.t
   =
   let options =
@@ -230,15 +203,20 @@ let following_passes_diagnostics
       ~has_env_comments:false
       ()
   in
-  try
+  try%lwt
     let contract_sig, pr_sig_items, prg =
-      match env.sig_sort with
+      let { Ast_typed.pr_module = stdlib_prg; pr_sig = stdlib_context } =
+        stdlib_program
+      in
+      let sig_items = stdlib_context.sig_items @ sig_items in
+      let pr_module = stdlib_prg @ pr_module in
+      match sig_sort with
       | Ss_contract contract_sig ->
         (* There is an entrypoint in a contract, so we know the storage *)
-        Some contract_sig, env.sig_items, prg
+        Some contract_sig, sig_items, pr_module
       | Ss_module ->
         let storage_type = "never" in
-        let context = { stdlib_context with sig_items = env.sig_items } in
+        let context = { Ast_typed.sig_items; sig_sort } in
         let virtual_main_typed, _virtual_main_core =
           make_lsp_virtual_main ~raise ~options ~context ~syntax storage_type
         in
@@ -246,8 +224,8 @@ let following_passes_diagnostics
           | Ss_module ->
             None (* Should be impossible since virtual main is an entrypoint *)
           | Ss_contract contract_sig -> Some contract_sig)
-        , env.sig_items @ virtual_main_typed.pr_sig.sig_items
-        , prg @ virtual_main_typed.pr_module )
+        , sig_items @ virtual_main_typed.pr_sig.sig_items
+        , pr_module @ virtual_main_typed.pr_module )
     in
     let prg : Ast_typed.program =
       { pr_module = prg
@@ -261,9 +239,16 @@ let following_passes_diagnostics
           }
       }
     in
-    let errors, warnings =
-      match contract_sig with
-      | Some contract_sig ->
+    let log_diagnostics errors warnings =
+      List.iter warnings ~f:raise.warning;
+      List.iter errors ~f:raise.log_error
+    in
+    let prg =
+      (* TODO: Partially redundant? Already performed by [Types_pass.Typing_env.
+         self_ast_typed_pass], but we do it again since now we have a virtual entry...
+         nonetheless, removing either this or that pass will prevent some diagnostics from
+         being shown. *)
+      let prg, errors, warnings =
         Trace.try_with
           ~fast_fail:false
           (fun ~raise ~catch ->
@@ -271,22 +256,27 @@ let following_passes_diagnostics
               Trace.trace ~raise Main_errors.self_ast_typed_tracer
               @@ Self_ast_typed.all_program prg
             in
-            List.iter
-              ~f:(fun module_path ->
+            prg, catch.errors (), catch.warnings ())
+          (fun ~catch e -> prg, e :: catch.errors (), catch.warnings ())
+      in
+      log_diagnostics errors warnings;
+      prg
+    in
+    Option.iter contract_sig ~f:(fun contract_sig ->
+        List.iter (Ligo_compile.Of_typed.get_modules_with_entries prg) ~f:(fun mod_path ->
+            Trace.try_with
+              ~fast_fail:false
+              (fun ~raise ~catch ->
                 let _ast_aggregated =
                   Ligo_compile.Of_typed.apply_to_entrypoint_with_contract_type
                     ~raise
                     ~options:options.middle_end
                     prg
-                    module_path
+                    mod_path
                     contract_sig
                 in
-                ())
-              (Ligo_compile.Of_typed.get_modules_with_entries prg);
-            catch.errors (), catch.warnings ())
-          (fun ~catch e -> e :: catch.errors (), catch.warnings ())
-      | None -> [], []
-    in
+                log_diagnostics (catch.errors ()) (catch.warnings ()))
+              (fun ~catch e -> log_diagnostics (e :: catch.errors ()) (catch.warnings ()))));
     let ast_aggregated =
       Ligo_compile.Of_typed.compile_expression_in_context
         ~self_pass:true
@@ -303,14 +293,13 @@ let following_passes_diagnostics
     let mini_c = Ligo_compile.Of_expanded.compile_expression ~raise ast_expanded in
     let open Lwt.Let_syntax in
     let%map _mich = Ligo_compile.Of_mini_c.compile_expression ~raise ~options mini_c in
-    List.iter warnings ~f:raise.warning;
-    List.iter errors ~f:raise.error
+    ()
   with
   | exn ->
-    let msg = Exn.to_string exn in
     let stack = Printexc.get_backtrace () in
+    let msg = Exn.to_string exn in
     logger ~type_:Error
-    @@ Format.asprintf "Unexpected exception in following passes: %s%s" msg stack
+    @@ Format.asprintf "Unexpected exception in following passes: %s\n%s" msg stack
 
 
 let get_defs
@@ -326,16 +315,11 @@ let get_defs
         ~raise
         ~code_input
         ~f:(fun ~options ~syntax:_ ~stdlib ~prg ~module_deps ->
-          let defs, _prg, _lambda_types =
-            Scopes.defs_and_typed_program
-              ~raise
-              ~with_types:raw_options.with_types
-              ~options
-              ~stdlib
-              ~prg
-              ~module_deps
+          let with_types = raw_options.with_types in
+          let { Scopes.definitions; program = _; inlined_scopes = _; lambda_types = _ } =
+            Scopes.run ~raise ~with_types ~options ~stdlib ~prg ~module_deps
           in
-          Lwt.return defs))
+          Lwt.return definitions))
     (fun ~catch:_ _ -> Lwt.return { definitions = [] })
 
 
@@ -358,23 +342,17 @@ let get_defs_and_diagnostics
              ~raw_options
              ~raise
              ~code_input:(Raw_input_lsp { file = Path.to_string path; code })
-             ~f:(fun ~options ~syntax ~stdlib ~(prg : Ast_core.module_) ~module_deps ->
-               let defs, prg, lambda_types =
-                 Scopes.defs_and_typed_program
-                   ~raise
-                   ~with_types
-                   ~options
-                   ~stdlib
-                   ~prg
-                   ~module_deps
+             ~f:(fun ~options ~syntax ~stdlib ~prg ~module_deps ->
+               let { Scopes.definitions; program; inlined_scopes = _; lambda_types } =
+                 Scopes.run ~raise ~with_types ~options ~stdlib ~prg ~module_deps
                in
                let%map errors, warnings, storage_vars =
-                 match prg with
+                 match program with
                  | None -> Lwt.return ([], [], [])
-                 | Some (env, prg) ->
-                   let stdlib_context = (fst stdlib).pr_sig in
+                 | Some program ->
+                   let stdlib_program = fst stdlib in
                    let potential_tzip16_storages =
-                     Tzip16_storage.vars_to_mark_as_tzip16_compatible path env prg
+                     Tzip16_storage.vars_to_mark_as_tzip16_compatible path program
                    in
                    Trace.try_with_lwt
                      ~fast_fail:false
@@ -382,12 +360,11 @@ let get_defs_and_diagnostics
                        let%map () =
                          following_passes_diagnostics
                            ~raise
-                           ~stdlib_context
+                           ~stdlib_program
                            ~syntax
                            ~logger
                            raw_options
-                           env
-                           prg
+                           program
                        in
                        catch.errors (), catch.warnings (), potential_tzip16_storages)
                      (fun ~catch e ->
@@ -396,7 +373,7 @@ let get_defs_and_diagnostics
                          , catch.warnings ()
                          , potential_tzip16_storages ))
                in
-               errors, warnings, defs, storage_vars, lambda_types)
+               errors, warnings, definitions, storage_vars, lambda_types)
          in
          ( errors @ catch.errors ()
          , warnings @ catch.warnings ()

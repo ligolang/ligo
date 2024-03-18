@@ -1,0 +1,7 @@
+
+author: heitor.toledo
+description: "\\nThe type-checker now supports error recovery, which the LSP turns on. This allows for more diagnostics to be reported, for more variables to have resolved types, and due to some technicalities, also improves the performance.\\n\\n"
+merge_request: '3098'
+title: "Draft: [#1751] Implement typer error recovery"
+type: added
+            

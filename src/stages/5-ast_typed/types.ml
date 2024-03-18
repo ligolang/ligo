@@ -8,6 +8,7 @@ type module_variable = Module_var.t [@@deriving compare, hash]
 
 type type_content =
   | T_variable of Type_var.t
+  | T_exists of Type_var.t
   | T_constant of type_injection
   | T_sum of
       type_expression Row.t
@@ -91,6 +92,8 @@ type expression_content =
   | E_for of expr For_loop.t
   | E_for_each of expr For_each_loop.t
   | E_while of expr While_loop.t
+  (* Error recovery *)
+  | E_error of Ast_core.expression
 
 and type_inst =
   { forall : expression

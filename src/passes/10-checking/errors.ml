@@ -162,7 +162,9 @@ type typer_error =
     Ast_core.type_expression option Ast_core.Pattern.t * Type.t * Location.t
   | `Typer_uncomparable_types of Type.t * Type.t * Location.t
   | `Typer_comparator_composed of Type.t * Location.t
-  | `Typer_cannot_decode_texists of Type.t * Location.t
+  | `Typer_cannot_decode_texists of Type_var.t * Type.t * Location.t
+  | `Typer_cannot_encode_texists of Ast_typed.type_expression * Location.t
+  | `Typer_cannot_decompile_texists of Ast_typed.type_expression * Location.t
   | `Typer_signature_not_found_value of Value_var.t * Location.t
   | `Typer_signature_not_found_type of Type_var.t * Location.t
   | `Typer_signature_not_found_entry of Value_var.t * Location.t
@@ -498,7 +500,7 @@ let rec extract_loc_and_message
       | mvar :: path -> Format.fprintf ppf "%a.%a" Module_var.pp mvar pp_path path
     in
     loc, Format.asprintf "@[<hv> Signature \"%a\" not found.@]" pp_path path
-  | `Typer_cannot_decode_texists (type_, loc) ->
+  | `Typer_cannot_decode_texists (_tvar, type_, loc) ->
     let type_ = type_improve type_ in
     ( loc
     , Format.asprintf
@@ -507,6 +509,18 @@ let rec extract_loc_and_message
         type_
         (pp_texists_hint ())
         [ type_ ] )
+  | `Typer_cannot_decompile_texists (type_, loc) ->
+    ( loc
+    , Format.asprintf
+        "@[<hv>Underspecified type \"%a\".@.Cannot decompile this type.@]"
+        Ast_typed.PP.type_expression
+        type_ )
+  | `Typer_cannot_encode_texists (type_, loc) ->
+    ( loc
+    , Format.asprintf
+        "@[<hv>Underspecified type \"%a\".@.Cannot encode this type.@]"
+        Ast_typed.PP.type_expression
+        type_ )
   | `Typer_literal_type_mismatch (lit_type, expected_type, loc) ->
     let lit_type = type_improve lit_type in
     let expected_type = type_improve expected_type in

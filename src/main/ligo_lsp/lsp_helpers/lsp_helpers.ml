@@ -172,7 +172,22 @@ module CompletionItemKind = Lsp.Types.CompletionItemKind
 module CompletionOptions = Lsp.Types.CompletionOptions
 module ConfigurationItem = Lsp.Types.ConfigurationItem
 module CreateFile = Lsp.Types.CreateFile
-module DiagnosticSeverity = Lsp.Types.DiagnosticSeverity
+
+module DiagnosticSeverity = struct
+  include Lsp.Types.DiagnosticSeverity
+
+  let compare (a : t) (b : t) =
+    match a, b with
+    | Error, Error | Warning, Warning | Information, Information | Hint, Hint -> 0
+    | Error, _ | Warning, (Information | Hint) | Information, Hint -> -1
+    | Hint, _ | Information, (Error | Warning) | Warning, Error -> 1
+
+
+  let pp = Helpers_pretty.pp_with_yojson yojson_of_t
+  let eq = Caml.( = )
+  let testable = Alcotest.testable pp eq
+end
+
 module DocumentLinkOptions = Lsp.Types.DocumentLinkOptions
 module DocumentSymbolOptions = Lsp.Types.DocumentSymbolOptions
 module ExecuteCommandOptions = Lsp.Types.ExecuteCommandOptions

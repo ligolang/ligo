@@ -164,7 +164,7 @@ let return_with_custom_formatter ~cli_analytics ~skip_analytics
     ()
 
 
-let return_result_lwt ~cli_analytics ~skip_analytics
+let return_result_lwt ?(fast_fail = true) ~cli_analytics ~skip_analytics
     :  return:return ref -> ?show_warnings:bool -> ?output_file:string
     -> ?minify_json:bool -> display_format:_ -> no_colour:bool -> warning_as_error:bool
     -> 'value Display.format
@@ -181,26 +181,35 @@ let return_result_lwt ~cli_analytics ~skip_analytics
      ~warning_as_error
      (value_format, f) ->
   Analytics.propose_term_acceptation ~skip_analytics;
-  let () =
-    try
-      let result = Lwt_main.run @@ Trace.to_stdlib_result_lwt f in
+  let get_formatted_result () =
+    let edit_metrics_and_format_toplevel result format =
       let value, analytics =
         match result with
-        | Ok ((v, analytics), _w) -> Ok v, analytics
+        | Ok ((v, analytics), _e, _w) -> Ok v, analytics
         | Error (e, _w) -> Error e, []
       in
-      let format = Display.bind_format value_format Main_errors.Formatter.error_format in
-      let formatted_result () =
-        Ligo_api.Api_helpers.toplevel
-          ~warning_as_error
-          ~minify_json
-          ~display_format
-          ~no_colour
-          (Displayable { value; format })
-          result
-      in
       Analytics.edit_metrics_values (List.append cli_analytics analytics);
-      match formatted_result () with
+      Ligo_api.Api_helpers.toplevel
+        ~warning_as_error
+        ~minify_json
+        ~display_format
+        ~no_colour
+        (Displayable { value; format })
+        result
+    in
+    if fast_fail
+    then (
+      let result = Lwt_main.run @@ Trace.to_stdlib_result_lwt ~fast_fail:Fast_fail f in
+      let format = Display.bind_format value_format Main_errors.Formatter.error_format in
+      edit_metrics_and_format_toplevel result format)
+    else (
+      let result = Lwt_main.run @@ Trace.to_stdlib_result_lwt ~fast_fail:No_fast_fail f in
+      let format = Display.bind_format value_format Main_errors.Formatter.errors_format in
+      edit_metrics_and_format_toplevel result format)
+  in
+  let () =
+    try
+      match get_formatted_result () with
       | Ok (v, w) ->
         return := Done;
         return_with_warn ~show_warnings w (fun () -> return_good ?output_file v)
@@ -217,7 +226,7 @@ let return_result_lwt ~cli_analytics ~skip_analytics
   | Exception _ -> ()
 
 
-let return_result ~cli_analytics ~skip_analytics
+let return_result ?fast_fail ~cli_analytics ~skip_analytics
     :  return:return ref -> ?show_warnings:bool -> ?output_file:string
     -> ?minify_json:bool -> display_format:_ -> no_colour:bool -> warning_as_error:bool
     -> 'value Display.format
@@ -234,6 +243,7 @@ let return_result ~cli_analytics ~skip_analytics
      ~warning_as_error
      (value_format, f) ->
   return_result_lwt
+    ?fast_fail
     ~cli_analytics
     ~skip_analytics
     ~return

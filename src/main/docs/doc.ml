@@ -4,7 +4,8 @@ open Ligo_compile
 module Constants = Commands.Constants
 
 let html_using_type_doc (raw_options : Raw_options.t) directory doc_args ()
-    : (unit * Main_warnings.all list, Main_errors.all * Main_warnings.all list) result
+    : ( unit * unit * Main_warnings.all list, Main_errors.all * Main_warnings.all list )
+    result
   =
   let doc_args = String.split ~on:' ' doc_args in
   let directory =
@@ -76,7 +77,8 @@ let markdown_doc
     ?output_directory
     doc_args
     ()
-    : (unit * Main_warnings.all list, Main_errors.all * Main_warnings.all list) result
+    : ( unit * unit * Main_warnings.all list, Main_errors.all * Main_warnings.all list )
+    result
   =
   ignore doc_args;
   let to_normalised_abs_path path =
@@ -129,7 +131,8 @@ let markdown_doc
             let folder = FilePath.make_absolute output_directory rel_path in
             FileUtil.mkdir ~parent:true folder;
             let files =
-              Mdx.to_mdx ~source_syntax ~source_file ?file_name:(Some rel_path) typed
+              Trace.trace ~raise Main_errors.checking_tracer
+              @@ Mdx.to_mdx ~source_syntax ~source_file ?file_name:(Some rel_path) typed
             in
             List.map files ~f:(fun { file_name; contents } ->
                 let abs_path = FilePath.concat folder (String.lowercase file_name) in

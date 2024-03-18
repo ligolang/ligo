@@ -78,6 +78,7 @@ let lsp_raw_options : project_root:Path.t option -> Compiler_options.Raw_options
   Compiler_options.Raw_options.make
     ~with_types:true
     ~project_root:(Option.map ~f:Path.to_string project_root)
+    ~typer_error_recovery:true
     ()
 
 

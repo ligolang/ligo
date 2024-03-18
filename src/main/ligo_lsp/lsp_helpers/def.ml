@@ -135,6 +135,19 @@ let get_type ~(use_module_accessor : bool) (vdef : Scopes.Types.vdef) : type_inf
   match vdef.t with
   | Core contents -> Some { var_name = None; contents }
   | Resolved { type_content; abbrev; location } ->
+    let%bind.Option contents =
+      (* We want to preserve both the type var and type expression here, so we set
+         [use_orig_var = True] so this expression will be pretty, and we also set
+         [orig_var = None] before untyping so we're getting full expression and not just
+         [T_variable]. *)
+      try
+        Simple_utils.Trace.to_option ~fast_fail:false
+        @@ Checking.untype_type_expression
+             ~use_orig_var:true
+             { type_content; abbrev = None; location }
+      with
+      | _exn -> None
+    in
     Some
       { var_name =
           (* This is non-empty in case there is a name for our type. *)
@@ -145,23 +158,19 @@ let get_type ~(use_module_accessor : bool) (vdef : Scopes.Types.vdef) : type_inf
                 | _ :: _, _ ->
                   let type_operator = Ligo_prim.Module_access.{ module_path; element } in
                   let arguments =
-                    List.map
-                      ~f:(Checking.untype_type_expression ~use_orig_var:true)
-                      applied_types
+                    List.filter_map applied_types ~f:(fun t ->
+                        try
+                          Simple_utils.Trace.to_option ~fast_fail:false
+                          @@ Checking.untype_type_expression ~use_orig_var:true t
+                        with
+                        | _exn -> None)
                   in
                   T_app { type_operator; arguments }
                 | [], _ :: _ -> T_module_accessor { module_path; element }
                 | [], [] -> T_variable element
               in
               Ast_core.{ type_content; location })
-      ; contents =
-          (* We want to preserve both the type var and type expression here, so we set
-             [use_orig_var = True] so this expression will be pretty, and we also set
-             [orig_var = None] before untyping so we're getting full expression and not
-             just [T_variable]. *)
-          Checking.untype_type_expression
-            ~use_orig_var:true
-            { type_content; abbrev = None; location }
+      ; contents
       }
   | Unresolved -> None
 

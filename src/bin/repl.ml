@@ -322,8 +322,8 @@ let parse s =
 
 let eval display_format no_colour state c =
   let (Ex_display_format t) = display_format in
-  match to_stdlib_result c with
-  | Ok ((state, out), _w) ->
+  match to_stdlib_result ~fast_fail:Fast_fail c with
+  | Ok ((state, out), (), _w) ->
     let disp = Displayable { value = out; format = repl_result_format } in
     let out : string =
       match t with

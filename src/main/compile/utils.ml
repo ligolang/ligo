@@ -174,7 +174,6 @@ let pretty_print ?(preprocess = false) ~raise ~options ~meta file_path =
 
 
 let pretty_print_cst ?(preprocess = true) ~raise ~options ~meta file_path =
-  ignore preprocess;
   let buffer =
     if preprocess
     then fst @@ Of_source.preprocess_file ~raise ~options ~meta file_path
