@@ -50,7 +50,10 @@ type config =
 [@@deriving yojson_of]
 
 let pp_type_expression ~raise ~syntax f type_expr =
-  let core_type_expr = Checking.untype_type_expression type_expr in
+  let core_type_expr =
+    Trace.trace ~raise Main_errors.checking_tracer
+    @@ Checking.untype_type_expression type_expr
+  in
   try
     let unified_type_expr =
       Trace.trace ~raise Main_errors.nanopasses_tracer

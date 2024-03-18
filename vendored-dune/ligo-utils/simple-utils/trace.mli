@@ -57,16 +57,37 @@ val try_with_lwt
   -> (catch:('error, 'warning) catch -> 'error -> 'a Lwt.t)
   -> 'a Lwt.t
 
+(** Whether to recover from [raise.log_error] ([No_fast_fast]) or immediately fail
+    [Fast_fail]. The three fields represent, respectively, the type of the error(s) on
+    [Result.Error], the type of the optional error on [Result.Ok], and the type of the
+    error that is used by the other two fields. *)
+type (_, _, 'error) fast_fail =
+  | No_fast_fail : ('error list, 'error list, 'error) fast_fail
+      (** Do not fail on [log_error]. The three fields represent, respectively, the type
+          of error raised on [Result.Error], the type of error raised on [Result.Ok], and
+          the type of the error. *)
+  | Fast_fail : ('error, unit, 'error) fast_fail
+      (** Fail on [log_error]. The three fields represent, respectively, the type of error
+          raised on [Result.Error], the type of error raised on [Result.Ok] ([unit] since
+          we fail on the first error), and the type of the error. *)
+
+(** Cast the result of {!Fast_fail} into one compatible with {!No_fast_fail}. *)
+val cast_fast_fail_result
+  :  ('value * unit * 'warning list, 'error * 'warning list) result
+  -> ('value * 'error list * 'warning list, 'error list * 'warning list) result
+
 (** Wrap the [try_with] in a stdlib [result = Ok 'value | Error 'error]. *)
 val to_stdlib_result
-  :  (raise:('error, 'warn) raise -> 'value)
-  -> ('value * 'warn list, 'error * 'warn list) result
+  :  fast_fail:('error_error, 'error_ok, 'error) fast_fail
+  -> (raise:('error, 'warning) raise -> 'value)
+  -> ('value * 'error_ok * 'warning list, 'error_error * 'warning list) Stdlib.result
 
 (** Wrap the [try_with_lwt] in a [Lwt_result.t]. Very important: whenever your handler
     return a Lwt promise, you must use this function instead of [to_stdlib_result]. *)
 val to_stdlib_result_lwt
-  :  (raise:('error, 'warn) raise -> 'value Lwt.t)
-  -> ('value * 'warn list, 'error * 'warn list) Lwt_result.t
+  :  fast_fail:('error_error, 'error_ok, 'error) fast_fail
+  -> (raise:('error, 'warning) raise -> 'value Lwt.t)
+  -> ('value * 'error_ok * 'warning list, 'error_error * 'warning list) Lwt_result.t
 
 val map_error
   :  f:('error1 -> 'error2)
@@ -115,7 +136,7 @@ val from_result : raise:('b, 'w) raise -> ('a, 'b) result -> 'a
 val to_bool : (raise:('b, 'w) raise -> 'a) -> bool
 
 (** Return the evaluation of the function as [Some(res) | None]. *)
-val to_option : (raise:('b, 'w) raise -> 'a) -> 'a option
+val to_option : ?fast_fail:bool -> (raise:('b, 'w) raise -> 'a) -> 'a option
 
 (** Run the second function if the first fails. *)
 val bind_or

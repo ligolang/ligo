@@ -304,6 +304,13 @@ type scopes = scope list
 type inlined_scope = def scope_case
 type inlined_scopes = inlined_scope list
 
+type t =
+  { definitions : definitions
+  ; program : Ast_typed.program option
+  ; inlined_scopes : inlined_scopes lazy_t
+  ; lambda_types : Ast_typed.ty_expr LMap.t
+  }
+
 let rec flatten_defs : definitions -> def list =
  fun { definitions } ->
   match definitions with

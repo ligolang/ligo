@@ -60,6 +60,14 @@ let projection_impl
     in
     (match t with
     | Core t -> mk_completions t
-    | Resolved t -> mk_completions (Checking.untype_type_expression t)
+    | Resolved t ->
+      let%bind.Option t =
+        try
+          Simple_utils.Trace.to_option ~fast_fail:false
+          @@ Checking.untype_type_expression t
+        with
+        | _exn -> None
+      in
+      mk_completions t
     | Unresolved -> None)
   | None | Some (Type _ | Module _ | Label _) -> None

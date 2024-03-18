@@ -3,7 +3,7 @@
  (public_name ligo.ast_typed)
  (instrumentation
   (backend bisect_ppx))
- (libraries simple-utils ligo_prim backend UnionFind)
+ (libraries simple-utils ligo_prim backend ligo.ast_core)
  (preprocess
   (staged_pps
    ppx_compare

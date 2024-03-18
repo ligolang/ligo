@@ -42,6 +42,7 @@ let check_view_type ~raise
     let self = type_check err in
     match t.type_content with
     | T_variable _ -> ()
+    | T_exists _ -> ()
     | T_constant { injection = Big_map; _ }
     | T_constant { injection = Sapling_state; _ }
     | T_constant { injection = Operation; _ }

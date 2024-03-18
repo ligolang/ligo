@@ -394,12 +394,16 @@ let provide_hints_for_lambda_types
   =
   LMap.fold
     (fun loc typ acc ->
-      Option.value_map
-        (LMap.find_opt loc fun_defs)
-        ~default:acc
-        ~f:(fun { position; _ } ->
-          let typ = Checking.untype_type_expression ~use_orig_var:true typ in
-          { position = Shifted position; typ } :: acc))
+      Option.value ~default:acc
+      @@ Option.bind (LMap.find_opt loc fun_defs) ~f:(fun { position; _ } ->
+             let%map.Option typ =
+               try
+                 Trace.to_option ~fast_fail:false
+                 @@ Checking.untype_type_expression ~use_orig_var:true typ
+               with
+               | _exn -> None
+             in
+             { position = Shifted position; typ } :: acc))
     lambda_types
     []
 
@@ -441,7 +445,13 @@ let process_variable_def
   in
   function
   | { range; t = Resolved typ; _ } ->
-    let typ = Checking.untype_type_expression ~use_orig_var:true typ in
+    let%bind.Option typ =
+      try
+        Trace.to_option ~fast_fail:false
+        @@ Checking.untype_type_expression ~use_orig_var:true typ
+      with
+      | _exn -> None
+    in
     process_variable range typ
   | { range; t = Core typ; _ } ->
     let%bind.Option region = Loc.get_file range in

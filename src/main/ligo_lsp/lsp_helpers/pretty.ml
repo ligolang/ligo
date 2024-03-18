@@ -58,13 +58,13 @@ let pretty_print_signature
     =
     try
       match
-        Simple_utils.Trace.to_stdlib_result
+        Simple_utils.Trace.to_stdlib_result ~fast_fail:Fast_fail
         @@ Nanopasses.decompile_sig_expr
              ~syntax
              (Simple_utils.Location.wrap ~loc:Simple_utils.Location.generated
              @@ Ast_core.S_sig core_sig)
       with
-      | Ok (unified_sig_expr, _) -> Ok unified_sig_expr
+      | Ok (unified_sig_expr, (), _) -> Ok unified_sig_expr
       | Error (err, _) -> Error (`PassesError err)
     with
     | exn -> Error (`Exn exn)
@@ -102,10 +102,11 @@ let decompile_type
   try
     (* Both Ast_core -> Ast_unified and Ast_unified -> CST decompilers can throw exceptions :( *)
     match
-      Simple_utils.Trace.to_stdlib_result @@ Nanopasses.decompile_ty_expr ~syntax te
+      Simple_utils.Trace.to_stdlib_result ~fast_fail:Fast_fail
+      @@ Nanopasses.decompile_ty_expr ~syntax te
     with
     | Error (err, _warnings) -> Error (`PassesError err)
-    | Ok (s, _warnings) ->
+    | Ok (s, (), _warnings) ->
       Ok
         (match syntax with
         | JsLIGO -> JsLIGO (Unification_jsligo.Decompile.decompile_type_expression s)

@@ -137,8 +137,12 @@ let rec fold_map_expression : 'a fold_mapper -> 'a -> expression -> 'a * express
     | E_while w ->
       let res, w = While_loop.fold_map self init w in
       res, return @@ E_while w
-    | (E_deref _ | E_literal _ | E_variable _ | E_contract _ | E_module_accessor _) as e'
-      -> init, return e')
+    | ( E_deref _
+      | E_literal _
+      | E_variable _
+      | E_contract _
+      | E_module_accessor _
+      | E_error _ ) as e' -> init, return e')
 
 
 and fold_map_case
@@ -218,17 +222,21 @@ let rec fold_map_type_expression
  fun te ~init ~f ->
   let self te = fold_map_type_expression te ~f in
   let init, te = f init te in
+  let fold_map_record ~init row =
+    Record.fold_map row.Row.fields ~init ~f:(fun init field -> self field ~init)
+  in
+  let fold_map_list ~init = List.fold_map ~init ~f:(fun init elt -> self elt ~init) in
   let return type_content = { te with type_content } in
   match te.type_content with
-  | (T_variable _ | T_singleton _) as tc -> init, return tc
+  | (T_variable _ | T_exists _ | T_singleton _) as tc -> init, return tc
   | T_constant { parameters; language; injection } ->
-    let init, parameters = List.fold_map parameters ~init ~f in
+    let init, parameters = fold_map_list parameters ~init in
     init, return @@ T_constant { parameters; language; injection }
   | T_sum (row, orig_label) ->
-    let init, fields = Record.fold_map row.fields ~init ~f in
+    let init, fields = fold_map_record ~init row in
     init, return @@ T_sum ({ row with fields }, orig_label)
   | T_record row ->
-    let init, fields = Record.fold_map row.fields ~init ~f in
+    let init, fields = fold_map_record ~init row in
     init, return @@ T_record { row with fields }
   | T_arrow { type1; type2; param_names } ->
     let init, type1 = self type1 ~init in

@@ -38,9 +38,10 @@ let compile ~options x =
   let no_colour : bool = options.tools.no_colour in
   match
     Simple_utils.Trace.to_stdlib_result
+      ~fast_fail:Fast_fail
       (Ligo_compile.Utils.core_program_string ~options CameLIGO x)
   with
-  | Ok (x, _w) -> Helpers.internalize_core x
+  | Ok (x, (), _w) -> Helpers.internalize_core x
   | Error (e, _w) ->
     let error_msg =
       Format.asprintf
@@ -55,9 +56,11 @@ let type_ ~options x =
   let open Compiler_options in
   let no_colour = options.tools.no_colour in
   match
-    Simple_utils.Trace.to_stdlib_result (Ligo_compile.Of_core.typecheck ~options x)
+    Simple_utils.Trace.to_stdlib_result
+      ~fast_fail:Fast_fail
+      (Ligo_compile.Of_core.typecheck ~options x)
   with
-  | Ok (x, _w) -> x
+  | Ok (x, (), _w) -> x
   | Error (e, _w) ->
     let error_msg =
       Format.asprintf

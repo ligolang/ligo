@@ -71,9 +71,14 @@ let make_def_info (syntax : Syntax_types.t) (def : Def.t)
           | Unresolved -> None
           | Core signature -> Some (Pretty.pretty_print_signature ~syntax signature)
           | Resolved signature ->
-            Some
-              (Pretty.pretty_print_signature ~syntax
-              @@ Checking.untype_signature signature)
+            let%map.Option sig' =
+              try
+                Simple_utils.Trace.to_option ~fast_fail:false
+                @@ Checking.untype_signature signature
+              with
+              | _exn -> None
+            in
+            Pretty.pretty_print_signature ~syntax sig'
         with
         | `Ok pretty -> Some pretty
         | `Nonpretty _ -> None

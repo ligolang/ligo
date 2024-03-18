@@ -602,7 +602,22 @@ let rec error_ppformat
         (PP_helpers.list_sep_d pp_elt)
         locs_and_types
     | `Resolve_config_config_type_mismatch (got, pp_typ) ->
-      Format.fprintf f "Expected config type to be a record.\nGot: %a" pp_typ got)
+      Format.fprintf f "Expected config type to be a record.\nGot: %a" pp_typ got
+    | `Scopes_recovered_error e ->
+      Format.fprintf
+        f
+        "@[<hv>%a@.%s@]"
+        Simple_utils.(PP_helpers.if_present (Snippet.pp ~no_colour))
+        e.content.location
+        e.content.message)
+
+
+let errors_ppformat
+    :  display_format:string display_format -> no_colour:bool -> Format.formatter
+    -> Types.all list -> unit
+  =
+ fun ~display_format ~no_colour f errs ->
+  List.iter errs ~f:(fun err -> error_ppformat ~display_format ~no_colour f err)
 
 
 let rec error_json : Types.all -> Simple_utils.Error.t list =
@@ -820,14 +835,21 @@ let rec error_json : Types.all -> Simple_utils.Error.t list =
   | `Resolve_config_corner_case err ->
     let content = make_content ~message:(Format.asprintf "Corner case: %s" err) () in
     [ make ~stage:"resolve_config" ~content ]
+  | `Scopes_recovered_error e -> [ e ]
 
 
-let error_jsonformat : Types.all -> Yojson.Safe.t =
+let errors_jsonformat : Types.all list -> Yojson.Safe.t =
  fun e ->
-  let errors = error_json e in
+  let errors = List.bind ~f:error_json e in
   let errors = List.map errors ~f:Simple_utils.Error.to_yojson in
   `List errors
 
 
-let error_format : _ Simple_utils.Display.format =
+let error_jsonformat : Types.all -> Yojson.Safe.t = fun e -> errors_jsonformat [ e ]
+
+let error_format : Types.all Simple_utils.Display.format =
   { pp = error_ppformat; to_json = error_jsonformat }
+
+
+let errors_format : Types.all list Simple_utils.Display.format =
+  { pp = errors_ppformat; to_json = errors_jsonformat }

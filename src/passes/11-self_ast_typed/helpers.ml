@@ -12,7 +12,12 @@ let rec fold_expression : 'a folder -> 'a -> expression -> 'a =
   let self_type = Fun.const in
   let init = f init e in
   match e.expression_content with
-  | E_literal _ | E_variable _ | E_contract _ | E_raw_code _ | E_module_accessor _ -> init
+  | E_literal _
+  | E_variable _
+  | E_contract _
+  | E_raw_code _
+  | E_module_accessor _
+  | E_error _ -> init
   | E_constant { arguments = lst; cons_name = _ } ->
     let res = List.fold ~f:self ~init lst in
     res
@@ -66,21 +71,21 @@ let rec fold_expression : 'a folder -> 'a -> expression -> 'a =
   | E_while w -> While_loop.fold self init w
 
 
+and fold_expression_in_module self acc (decls : declaration list) =
+  List.fold decls ~init:acc ~f:(fun acc x ->
+      match x.wrap_content with
+      | D_value x -> self acc x.expr
+      | D_irrefutable_match x -> self acc x.expr
+      | D_module x -> fold_expression_in_module_expr self acc x.module_
+      | D_module_include x -> fold_expression_in_module_expr self acc x
+      | D_type _ -> acc
+      | D_signature _ -> acc)
+
+
 and fold_expression_in_module_expr : ('a -> expression -> 'a) -> 'a -> module_expr -> 'a =
  fun self acc x ->
   match x.module_content with
-  | M_struct decls ->
-    List.fold
-      ~f:(fun acc x ->
-        match x.wrap_content with
-        | D_value x -> self acc x.expr
-        | D_irrefutable_match x -> self acc x.expr
-        | D_module x -> fold_expression_in_module_expr self acc x.module_
-        | D_module_include x -> fold_expression_in_module_expr self acc x
-        | D_type _ -> acc
-        | D_signature _ -> acc)
-      ~init:acc
-      decls
+  | M_struct decls -> fold_expression_in_module self acc decls
   | M_module_path _ -> acc
   | M_variable _ -> acc
 
@@ -166,8 +171,8 @@ let rec map_expression : 'err mapper -> expression -> expression =
     let rhs = self rhs in
     let let_result = self let_result in
     return @@ E_let_mut_in { let_binder; rhs; let_result; attributes }
-  | (E_deref _ | E_literal _ | E_variable _ | E_contract _ | E_raw_code _) as e' ->
-    return e'
+  | (E_deref _ | E_literal _ | E_variable _ | E_contract _ | E_raw_code _ | E_error _) as
+    e' -> return e'
 
 
 and map_expression_in_module_expr
@@ -432,6 +437,7 @@ end = struct
         List.fold binders ~init:fv2 ~f:(fun fv2 b -> VarSet.remove (Binder.get_var b) fv2)
       in
       merge (self rhs) { modVarSet; moduleEnv; varSet; mutSet = fv2 }
+    | E_error _ -> empty
 
 
   and get_fv_cases : _ Match_expr.match_case list -> moduleEnv' =
@@ -565,8 +571,8 @@ module Declaration_mapper = struct
       let rhs = self rhs in
       let let_result = self let_result in
       return @@ E_let_mut_in { let_binder; rhs; let_result; attributes }
-    | (E_deref _ | E_literal _ | E_variable _ | E_contract _ | E_raw_code _) as e' ->
-      return e'
+    | (E_deref _ | E_literal _ | E_variable _ | E_contract _ | E_raw_code _ | E_error _)
+      as e' -> return e'
 
 
   and map_expression_in_module_expr

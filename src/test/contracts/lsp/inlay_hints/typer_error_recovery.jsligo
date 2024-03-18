@@ -1,0 +1,4 @@
+const w = [1 * unit, g()]
+const x = 1 + ""
+const y = f(0)
+const z = [x, y, w]

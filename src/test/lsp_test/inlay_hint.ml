@@ -280,3 +280,20 @@ let%expect_test "Inlay hints in JsLIGO" =
        "position": { "character": 24, "line": 84 }
      };
      { "kind": 1, "label": ": a", "position": { "character": 24, "line": 89 } }] |}]
+
+let%expect_test "Inlay hints for type recovered type variables" =
+  get_inlay_hint_test "contracts/lsp/inlay_hints/typer_error_recovery.jsligo";
+  [%expect
+    {|
+    [{
+       "kind": 1,
+       "label": ": [^a, ^b]",
+       "position": { "character": 7, "line": 0 }
+     };
+     { "kind": 1, "label": ": ^c", "position": { "character": 7, "line": 1 } };
+     { "kind": 1, "label": ": ^d", "position": { "character": 7, "line": 2 } };
+     {
+       "kind": 1,
+       "label": ": [^c, ^d, [^a, ^b]]",
+       "position": { "character": 7, "line": 3 }
+     }] |}]

@@ -60,10 +60,10 @@ let add_all_lines_to_buffer : In_channel.t -> Buffer.t -> unit =
   loop_lines ()
 
 
-let expression_to_string ~syntax aggregated =
+let expression_to_string ~raise ~syntax aggregated =
   let aggregated = Reduplicate_binders.reduplicate ~raise aggregated in
   let typed = Aggregation.decompile aggregated in
-  let core = Decompile.Of_typed.decompile_expression typed in
+  let core = Decompile.Of_typed.decompile_expression ~raise typed in
   let unified =
     let raise =
       Simple_utils.Trace.raise_failwith "Could not decompile in mutation fuzz"

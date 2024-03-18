@@ -16,10 +16,11 @@ let get_syntax ~raise syntax loc =
     let file = r#file in
     let syntax =
       Simple_utils.Trace.to_stdlib_result
+        ~fast_fail:Fast_fail
         (Syntax.of_string_opt (Syntax_types.Syntax_name "auto") (Some file))
     in
     (match syntax with
-    | Ok (r, _) -> r
+    | Ok (r, (), _) -> r
     | Error _ -> of_syntax ())
 
 
@@ -32,7 +33,10 @@ let mutate_some_contract
   let module Fuzzer = Fuzz.Ast_aggregated.Mutator in
   let f (e, (l, m)) =
     let syntax = get_syntax ~raise syntax l in
-    let s = Fuzz.Ast_aggregated.expression_to_string ~syntax m in
+    let s =
+      trace ~raise Main_errors.checking_tracer
+      @@ Fuzz.Ast_aggregated.expression_to_string ~syntax m
+    in
     e, (l, m, s)
   in
   Option.map ~f @@ Fuzzer.some_mutate_expression ~n main
@@ -48,7 +52,10 @@ let mutate_some_value
   let module Fuzzer = Fuzz.Ast_aggregated.Mutator in
   let f (e, (loc, m)) =
     let syntax = get_syntax ~raise syntax loc in
-    let s = Fuzz.Ast_aggregated.expression_to_string ~syntax m in
+    let s =
+      trace ~raise Main_errors.checking_tracer
+      @@ Fuzz.Ast_aggregated.expression_to_string ~syntax m
+    in
     e, (loc, m, s)
   in
   Option.map ~f @@ Fuzzer.some_mutate_expression ~n expr

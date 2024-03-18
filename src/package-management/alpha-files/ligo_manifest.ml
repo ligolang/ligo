@@ -34,8 +34,8 @@ let validate_storage ~main ~storage_fn ~storage_arg () =
     let _, run_me =
       Ligo_api.Compile.storage raw_options [] main expression "0" "0" None None None `Json
     in
-    (match Simple_utils.Trace.to_stdlib_result run_me with
-    | Ok _ -> Ok ()
+    (match Simple_utils.Trace.to_stdlib_result ~fast_fail:Fast_fail run_me with
+    | Ok (_, (), _) -> Ok ()
     | Error _ ->
       Error
         "Error: Check `storage_fn` & `storage_arg` in packge.json or check your LIGO \

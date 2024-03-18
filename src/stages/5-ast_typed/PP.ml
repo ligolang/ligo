@@ -14,6 +14,13 @@ let rec type_content_impl type_expression_impl : formatter -> type_content -> un
  fun ppf tc ->
   match tc with
   | T_variable tv -> Type_var.pp ppf tv
+  | T_exists tv ->
+    (* Sometimes, the name may already contain ^ in it, so let's not print it again. I
+       don't know why it happens, but I suppose decompiling from the typed AST to the core
+       AST and back to the typed AST while the typer error recovery is on may produce
+       these, since we convert to [T_variable] appending a ^ to it. *)
+    let name = Format.asprintf "%a" Type_var.pp tv in
+    Format.fprintf ppf "^%s" @@ String.chop_prefix_if_exists ~prefix:"^" name
   | T_sum (row, _) -> Row.PP.sum_type type_expression_impl layout ppf row
   | T_record row -> Row.PP.tuple_or_record_type type_expression_impl layout ppf row
   | T_arrow a -> Arrow.pp type_expression_impl ppf a
@@ -164,6 +171,9 @@ and expression_content ppf (ec : expression_content) =
   | E_for for_loop -> For_loop.pp expression ppf for_loop
   | E_for_each for_each -> For_each_loop.pp expression ppf for_each
   | E_while while_loop -> While_loop.pp expression ppf while_loop
+  | E_error expression ->
+    (* Should only be printed in debugging situations *)
+    Format.fprintf ppf "@[Error (%a)@]" Ast_core.PP.expression expression
 
 
 and type_inst ppf { forall; type_ } =
@@ -227,17 +237,20 @@ and signature ppf (sig_ : signature) : unit =
     sig_.sig_items
 
 
+and contract_sig ppf ({ storage; parameter } : contract_sig) : unit =
+  Format.fprintf
+    ppf
+    "@[<v> < @, storage : %a @, parameter : %a >@]"
+    type_expression
+    storage
+    type_expression
+    parameter
+
+
 and signature_sort ppf (sig_ : signature_sort) : unit =
   match sig_ with
   | Ss_module -> ()
-  | Ss_contract { storage; parameter } ->
-    Format.fprintf
-      ppf
-      "@[<v> < @, storage : %a @, parameter : %a >@]"
-      type_expression
-      storage
-      type_expression
-      parameter
+  | Ss_contract contract_sig_ -> contract_sig ppf contract_sig_
 
 
 let program_with_sig ?(use_hidden = false) ppf (p : program) =

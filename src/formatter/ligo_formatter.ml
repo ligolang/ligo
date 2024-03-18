@@ -131,6 +131,7 @@ module Michelson_formatter = struct
 
   type shrunk_type_content =
     | T_variable of string
+    | T_exists of string
     | T_constant of shrunk_type_injection
     | T_sum of shrunk_type_expression Row.t
     | T_record of shrunk_type_expression Row.t
@@ -390,6 +391,13 @@ module Michelson_formatter = struct
             else Type_var.to_name_exn var_name
           in
           T_variable var_name
+        | T_exists var_name ->
+          let var_name =
+            if Type_var.is_generated var_name
+            then "<generated>"
+            else Type_var.to_name_exn var_name
+          in
+          T_exists var_name
         | T_constant { injection; parameters; _ } ->
           let injection = Literal_types.to_string injection in
           let parameters = List.map ~f:shrink_type parameters in

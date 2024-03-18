@@ -46,7 +46,7 @@ let get_defs ~(code : string) ~(syntax : Syntax_types.t) : Scopes.def list Lwt.t
            ~no_colour:false
            ~display_format:Human_readable
     in
-    failf "%a" formatter errors);
+    fail @@ Format.asprintf "%a" formatter errors);
   Scopes.Types.flatten_defs definitions
 
 
@@ -72,7 +72,12 @@ let mk_decompiler_test { code; expected; syntax; name } =
       (* ^ E.g. "let x a = a + 1" creates two vdefs but the one for x is always first*)
       (match vdef.t with
       | Core t -> t
-      | Resolved ast_typed -> Checking.untype_type_expression ast_typed
+      | Resolved ast_typed ->
+        Trace.try_with
+          (fun ~raise ~catch:_ -> Checking.untype_type_expression ~raise ast_typed)
+          (fun ~catch:_ _ ->
+            failwith
+              "Got a vdef with a resolved type, but cannot decompile type expression")
       | Unresolved -> failwith "Got a vdef with unresolved type")
     | Type tdef :: _ ->
       Option.value_or_thunk
@@ -88,10 +93,12 @@ let mk_decompiler_test { code; expected; syntax; name } =
   in *)
   let ast_unified =
     let result =
-      Trace.to_stdlib_result @@ Nanopasses.decompile_ty_expr @@ Lwt_main.run ast_core
+      Trace.to_stdlib_result ~fast_fail:Fast_fail
+      @@ Nanopasses.decompile_ty_expr
+      @@ Lwt_main.run ast_core
     in
     match result with
-    | Ok (s, _warnings) -> s ~syntax
+    | Ok (s, (), _warnings) -> s ~syntax
     | Error (errors, _warnings) ->
       let errors_formatter =
         Nanopasses.Errors.error_ppformat ~no_colour:false ~display_format:Human_readable

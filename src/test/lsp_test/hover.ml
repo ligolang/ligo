@@ -412,13 +412,16 @@ let%expect_test "hover_module.mligo" =
      };
      {
        "contents": [
-         { "value": "module Mangled : (* Unresolved *)", "language": "cameligo" }
+         {
+           "value": "module Mangled : sig\n  val where : ^a\n  end",
+           "language": "cameligo"
+         }
        ]
      };
      {
        "contents": [
          {
-           "value": "module Mangled_with_sig : sig\n  type t\n\n  type int =  string\n  end",
+           "value": "module Mangled_with_sig : sig\n  type t\n\n  type int\n  end",
            "language": "cameligo"
          }
        ]
@@ -627,7 +630,7 @@ let%expect_test "hover_module.jsligo" =
      {
        "contents": [
          {
-           "value": "namespace Mangled implements /* Unresolved */",
+           "value": "namespace Mangled implements {\n  const where: ^a;\n  const v: int\n}",
            "language": "jsligo"
          }
        ]
@@ -635,7 +638,7 @@ let%expect_test "hover_module.jsligo" =
      {
        "contents": [
          {
-           "value": "namespace Mangled_with_sig implements {\n  type t;\n  type int = string\n}",
+           "value": "namespace Mangled_with_sig implements {\n  const where: ^b;\n  type t = string;\n  type int = string\n}",
            "language": "jsligo"
          }
        ]
@@ -643,7 +646,7 @@ let%expect_test "hover_module.jsligo" =
      {
        "contents": [
          {
-           "value": "namespace Mangled_with_inlined_sig implements {\n  const foo: int\n}",
+           "value": "namespace Mangled_with_inlined_sig implements {\n  const where: ^c;\n  const foo: int\n}",
            "language": "jsligo"
          }
        ]
@@ -1153,6 +1156,7 @@ let%expect_test "dynamic_entrypoints.jsligo" =
        ]
      }] |}]
 
+(* TODO: If we get a ghost identifier, then the module type is unresolved. *)
 let%expect_test "missing_module.mligo" =
   get_hover_test
     { file = "contracts/lsp/hover/missing_module.mligo"
@@ -1166,6 +1170,7 @@ let%expect_test "missing_module.mligo" =
        ]
      }] |}]
 
+(* TODO: If we get a ghost identifier, then the type annotation is unresolved. *)
 let%expect_test "missing_type_annot.mligo" =
   get_hover_test
     { file = "contracts/lsp/hover/missing_type_annot.mligo"
@@ -1179,6 +1184,7 @@ let%expect_test "missing_type_annot.mligo" =
        ]
      }] |}]
 
+(* TODO: If we get a ghost identifier, then the type is unresolved. *)
 let%expect_test "missing_type.mligo" =
   get_hover_test
     { file = "contracts/lsp/hover/missing_type.mligo"
@@ -1268,7 +1274,8 @@ let%expect_test "Preserves module path inside option type" =
     ; hover_positions = [ pos ~line:4 ~character:4 ]
     };
   [%expect
-    {| [{ "contents": [ { "value": "x : A.t option", "language": "cameligo" } ] }] |}]
+    {|
+      [{ "contents": [ { "value": "x : A.t option", "language": "cameligo" } ] }] |}]
 
 let%expect_test "Preserves module path of an imported module" =
   get_hover_test
@@ -1641,4 +1648,71 @@ let%expect_test "Polymorphic types (JsLIGO)" =
      { "contents": [ { "value": "type t = list<int>", "language": "jsligo" } ] };
      {
        "contents": [ { "value": "f3 : (x: t) => t<int>", "language": "jsligo" } ]
+     }] |}]
+
+let%expect_test "Recover from missing variable" =
+  get_hover_test
+    { file = "contracts/lsp/hover/recover_missing_variable.mligo"
+    ; hover_positions = [ pos ~line:0 ~character:4; pos ~line:1 ~character:4 ]
+    };
+  [%expect
+    {|
+    [{ "contents": [ { "value": "g : int", "language": "cameligo" } ] };
+     { "contents": [ { "value": "h : int", "language": "cameligo" } ] }] |}]
+
+let%expect_test "Recover from missing module" =
+  get_hover_test
+    { file = "contracts/lsp/hover/recover_missing_module.mligo"
+    ; hover_positions = [ pos ~line:0 ~character:4 ]
+    };
+  [%expect {|
+    [{ "contents": [ { "value": "a : int", "language": "cameligo" } ] }] |}]
+
+let%expect_test "Recover from missing record field" =
+  get_hover_test
+    { file = "contracts/lsp/hover/recover_missing_record_field.mligo"
+    ; hover_positions = [ pos ~line:0 ~character:4 ]
+    };
+  [%expect {|
+    [{ "contents": [ { "value": "a : ^a", "language": "cameligo" } ] }] |}]
+
+let%expect_test "Recover from type error" =
+  get_hover_test
+    { file = "contracts/lsp/hover/recover_type_error_1.mligo"
+    ; hover_positions =
+        [ pos ~line:1 ~character:6; pos ~line:2 ~character:6; pos ~line:5 ~character:4 ]
+    };
+  [%expect
+    {|
+    [{ "contents": [ { "value": "x : int", "language": "cameligo" } ] };
+     { "contents": [ { "value": "y : int", "language": "cameligo" } ] };
+     { "contents": [ { "value": "y : int", "language": "cameligo" } ] }] |}]
+
+let%expect_test "Recover from type error 2" =
+  get_hover_test
+    { file = "contracts/lsp/hover/recover_type_error_2.mligo"
+    ; hover_positions =
+        [ pos ~line:0 ~character:4; pos ~line:1 ~character:4; pos ~line:2 ~character:4 ]
+    };
+  [%expect
+    {|
+    [{ "contents": [ { "value": "a : string", "language": "cameligo" } ] };
+     {
+       "contents": [
+         { "value": "f : string -> string", "language": "cameligo" }
+       ]
+     }; { "contents": [ { "value": "g : string", "language": "cameligo" } ] }] |}]
+
+let%expect_test "Recover from type error 3" =
+  get_hover_test
+    { file = "contracts/lsp/hover/recover_type_error_3.mligo"
+    ; hover_positions = [ pos ~line:0 ~character:4; pos ~line:1 ~character:4 ]
+    };
+  [%expect
+    {|
+    [{
+       "contents": [ { "value": "g : 'a 'b.'a -> 'b", "language": "cameligo" } ]
+     };
+     {
+       "contents": [ { "value": "h : 'a 'b.'a -> 'b", "language": "cameligo" } ]
      }] |}]
