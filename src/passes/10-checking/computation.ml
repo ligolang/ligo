@@ -848,7 +848,7 @@ module Error_recovery = struct
     state, options.Compiler_options.typer_error_recovery
 
 
-  let try' ~error ~default =
+  let raise_or_use_default ~error ~default =
     if%bind is_enabled
     then (
       let%bind () = log_error error in
@@ -856,19 +856,28 @@ module Error_recovery = struct
     else raise error
 
 
-  let try_opt ~error ~default = Option.value_map ~default:(try' ~error ~default) ~f:return
+  let raise_or_use_default_opt ~error ~default =
+    Option.value_map ~default:(raise_or_use_default ~error ~default) ~f:return
 
-  let type' ~raise ~options ~loc ~path state =
+
+  let raise_or_use_default_result ~ok ~error ~default = function
+    | Ok value -> ok value
+    | Error err -> raise_or_use_default ~error:(Fn.flip error err) ~default
+
+
+  let wildcard_type ~raise ~options ~loc ~path state =
     exists Type ~raise ~options ~loc ~path state
 
 
-  let try_type ~error = try' ~error ~default:type'
+  let raise_or_use_default_type ~error =
+    raise_or_use_default ~error ~default:wildcard_type
+
 
   let row ~raise:_ ~options:_ ~loc:_ ~path:_ state =
     state, { Type.Row.fields = Record.empty; layout = Type.Layout.default [] }
 
 
-  let sig' ~raise:_ ~options:_ ~loc:_ ~path:_ state =
+  let sig_ ~raise:_ ~options:_ ~loc:_ ~path:_ state =
     state, { Context.Signature.items = []; sort = Ss_module }
 
 
@@ -876,7 +885,7 @@ module Error_recovery = struct
     let get_opt_or_exn getter key ~error ~default : _ t =
       let open Let_syntax in
       match%bind getter key with
-      | None -> try' ~error ~default
+      | None -> raise_or_use_default ~error ~default
       | Some value -> return value
 
 
@@ -884,7 +893,7 @@ module Error_recovery = struct
       let open Let_syntax in
       match%bind getter key with
       | Ok value -> return value
-      | Error err -> try' ~error:(error err) ~default
+      | Error err -> raise_or_use_default ~error:(error err) ~default
 
 
     let value var ~error : _ t =
@@ -892,7 +901,7 @@ module Error_recovery = struct
         Context.get_value
         var
         ~error
-        ~default:(type' >>| fun t -> Param.Mutable, t, Context.Attr.default)
+        ~default:(wildcard_type >>| fun t -> Param.Mutable, t, Context.Attr.default)
 
 
     let imm var ~error : _ t =
@@ -900,10 +909,12 @@ module Error_recovery = struct
         Context.get_imm
         var
         ~error
-        ~default:(type' >>| fun t -> t, Context.Attr.default)
+        ~default:(wildcard_type >>| fun t -> t, Context.Attr.default)
 
 
-    let mut var ~error : _ t = get_result_or_exn Context.get_mut var ~error ~default:type'
+    let mut var ~error : _ t =
+      get_result_or_exn Context.get_mut var ~error ~default:wildcard_type
+
 
     let type_var tvar ~error =
       get_opt_or_exn Context.get_type_var tvar ~error ~default:(return Kind.Type)
@@ -914,21 +925,23 @@ module Error_recovery = struct
         Context.get_type_or_type_var
         tvar
         ~error
-        ~default:(type' >>| fun t -> `Type t)
+        ~default:(wildcard_type >>| fun t -> `Type t)
 
 
-    let type' tvar ~error = get_opt_or_exn Context.get_type tvar ~error ~default:type'
+    let type_ tvar ~error =
+      get_opt_or_exn Context.get_type tvar ~error ~default:wildcard_type
+
 
     let module_of_path path ~error : _ t =
-      get_opt_or_exn Context.get_module_of_path path ~error ~default:sig'
+      get_opt_or_exn Context.get_module_of_path path ~error ~default:sig_
 
 
     let module_type_of_path path ~error : _ t =
-      get_opt_or_exn Context.get_module_type_of_path path ~error ~default:sig'
+      get_opt_or_exn Context.get_module_type_of_path path ~error ~default:sig_
 
 
-    let module' mvar ~error : _ t =
-      get_opt_or_exn Context.get_module mvar ~error ~default:sig'
+    let module_ mvar ~error : _ t =
+      get_opt_or_exn Context.get_module mvar ~error ~default:sig_
   end
 end
 

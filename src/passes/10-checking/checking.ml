@@ -84,11 +84,11 @@ let rec evaluate_type ~default_layout (type_ : I.type_expression)
       Error_recovery.Get.module_of_path x ~error:(unbound_module (List.Ne.to_list x))
     in
     let%bind parameter, _ =
-      Error_recovery.try_opt
+      Error_recovery.raise_or_use_default_opt
         ~error:not_a_contract
         ~default:
-          (let%bind p = Error_recovery.type' in
-           let%bind s = Error_recovery.type' in
+          (let%bind p = Error_recovery.wildcard_type in
+           let%bind s = Error_recovery.wildcard_type in
            return (p, s))
         (Signature.get_contract_sort sort)
     in
@@ -142,7 +142,7 @@ let rec evaluate_type ~default_layout (type_ : I.type_expression)
       (* Depending on whether there is a path or not, look up in current context or module sig. *)
       match module_path with
       | [] ->
-        Error_recovery.Get.type'
+        Error_recovery.Get.type_
           type_operator
           ~error:(unbound_type_variable type_operator)
       | _ ->
@@ -151,9 +151,9 @@ let rec evaluate_type ~default_layout (type_ : I.type_expression)
             (List.Ne.of_list module_path)
             ~error:(unbound_module module_path)
         in
-        Error_recovery.try_opt
+        Error_recovery.raise_or_use_default_opt
           (Signature.get_type sig_ type_operator)
-          ~default:Error_recovery.type'
+          ~default:Error_recovery.wildcard_type
           ~error:(unbound_type_variable type_operator)
     in
     (* 2. Evaluate arguments *)
@@ -166,20 +166,23 @@ let rec evaluate_type ~default_layout (type_ : I.type_expression)
       |> List.map ~f:(fun arg ->
              match%bind Context.Well_formed.type_ arg with
              | Some (Type | Singleton) -> return ()
-             | _ -> Error_recovery.try' ~default:(return ()) ~error:(ill_formed_type arg))
+             | _ ->
+               Error_recovery.raise_or_use_default
+                 ~default:(return ())
+                 ~error:(ill_formed_type arg))
       |> all_unit
     in
     (* 4. Beta-reduce *)
     let vars, ty_body = Type.destruct_type_abstraction operator in
     let%bind vargs =
-      match List.zip vars arguments with
-      | Unequal_lengths ->
+      match List.zip_with_remainder vars arguments with
+      | vargs, Some _excess ->
         let actual = List.length arguments in
         let expected = List.length vars in
-        Error_recovery.try'
-          ~default:(return [])
+        Error_recovery.raise_or_use_default
+          ~default:(return vargs)
           ~error:(type_app_wrong_arity (Some type_operator) expected actual)
-      | Ok vargs -> return vargs
+      | vargs, None -> return vargs
     in
     let result =
       List.fold_right vargs ~init:ty_body ~f:(fun (tvar, type_) result ->
@@ -192,9 +195,9 @@ let rec evaluate_type ~default_layout (type_ : I.type_expression)
         (List.Ne.of_list module_path)
         ~error:(unbound_module module_path)
     in
-    Error_recovery.try_opt
+    Error_recovery.raise_or_use_default_opt
       ~error:(unbound_type_variable element)
-      ~default:Error_recovery.type'
+      ~default:Error_recovery.wildcard_type
       (Signature.get_type sig_ element)
   | T_singleton lit -> const @@ T_singleton lit
   | T_abstraction { ty_binder; kind; type_ } ->
@@ -501,9 +504,9 @@ let rec check_expression (expr : I.expression) (type_ : Type.t)
   | E_update { struct_; path; update }, T_record row ->
     let%bind struct_ = check struct_ type_ in
     let%bind field_row_elem =
-      Error_recovery.try_opt
+      Error_recovery.raise_or_use_default_opt
         ~error:(bad_record_access path)
-        ~default:Error_recovery.type'
+        ~default:Error_recovery.wildcard_type
         (Map.find row.fields path)
     in
     let%bind update = check update field_row_elem in
@@ -514,9 +517,9 @@ let rec check_expression (expr : I.expression) (type_ : Type.t)
         return @@ O.E_update { struct_; path; update })
   | E_constructor { constructor; element }, T_sum (row, _) ->
     let%bind constr_row_elem =
-      Error_recovery.try_opt
+      Error_recovery.raise_or_use_default_opt
         ~error:(bad_constructor constructor type_)
-        ~default:Error_recovery.type'
+        ~default:Error_recovery.wildcard_type
         (Map.find row.fields constructor)
     in
     let%bind element = check element constr_row_elem in
@@ -614,7 +617,7 @@ and infer_expression (expr : I.expression)
     let%bind () = all_unit @@ List.map ~f:log_error errors in
     let%bind type_ =
       match type_ with
-      | None -> Error_recovery.type'
+      | None -> Error_recovery.wildcard_type
       | Some type_ -> return type_
     in
     const (E.return @@ O.E_error expr) type_
@@ -639,11 +642,11 @@ and infer_expression (expr : I.expression)
       Error_recovery.Get.module_of_path x ~error:(unbound_module (List.Ne.to_list x))
     in
     let%bind parameter, storage =
-      Error_recovery.try_opt
+      Error_recovery.raise_or_use_default_opt
         ~error:not_a_contract
         ~default:
-          (let%bind t1 = Error_recovery.type' in
-           let%bind t2 = Error_recovery.type' in
+          (let%bind t1 = Error_recovery.wildcard_type in
+           let%bind t2 = Error_recovery.wildcard_type in
            return (t1, t2))
         (Signature.get_contract_sort sort)
     in
@@ -756,11 +759,11 @@ and infer_expression (expr : I.expression)
   | E_recursive { fun_name; fun_type; lambda; force_lambdarec } ->
     let%bind fun_type = With_default_layout.evaluate_type fun_type in
     let%bind Arrow.{ type1 = arg_type; type2 = ret_type; param_names = _ } =
-      Error_recovery.try_opt
+      Error_recovery.raise_or_use_default_opt
         ~error:(corner_case "Expected function type annotation for recursive function")
         ~default:
-          (let%bind type1 = Error_recovery.type' in
-           let%bind type2 = Error_recovery.type' in
+          (let%bind type1 = Error_recovery.wildcard_type in
+           let%bind type2 = Error_recovery.wildcard_type in
            return Arrow.{ type1; type2; param_names = [] })
         (Type.get_t_arrow fun_type)
     in
@@ -798,15 +801,15 @@ and infer_expression (expr : I.expression)
     let%bind record_type, struct_ = infer struct_ in
     let%bind row =
       let%bind record_type = Context.tapply record_type in
-      Error_recovery.try_opt
+      Error_recovery.raise_or_use_default_opt
         ~error:(expected_record record_type)
         ~default:Error_recovery.row
         (Type.get_t_record record_type)
     in
     let%bind field_row_elem =
-      Error_recovery.try_opt
+      Error_recovery.raise_or_use_default_opt
         ~error:(bad_record_access field)
-        ~default:Error_recovery.type'
+        ~default:Error_recovery.wildcard_type
         (Map.find row.fields field)
     in
     const
@@ -818,15 +821,15 @@ and infer_expression (expr : I.expression)
     let%bind record_type, struct_ = infer struct_ in
     let%bind row =
       let%bind record_type = Context.tapply record_type in
-      Error_recovery.try_opt
+      Error_recovery.raise_or_use_default_opt
         ~error:(expected_record record_type)
         ~default:Error_recovery.row
         (Type.get_t_record record_type)
     in
     let%bind field_row_elem =
-      Error_recovery.try_opt
+      Error_recovery.raise_or_use_default_opt
         ~error:(bad_record_access path)
-        ~default:Error_recovery.type'
+        ~default:Error_recovery.wildcard_type
         (Map.find row.fields path)
     in
     let%bind update = check update field_row_elem in
@@ -839,17 +842,17 @@ and infer_expression (expr : I.expression)
   | E_constructor { constructor = Label (label, _) as constructor; element = _ }
     when String.(label = "M_right" || label = "M_left") ->
     let error = michelson_or_no_annotation constructor in
-    Error_recovery.try' ~error ~default:(const_error_recovery [])
+    Error_recovery.raise_or_use_default ~error ~default:(const_error_recovery [])
   | E_constructor { constructor; element = arg } ->
     let%bind tvars, arg_type, sum_type =
       match%bind Context.get_sum constructor with
       | [] ->
-        Error_recovery.try'
+        Error_recovery.raise_or_use_default
           ~error:(unbound_constructor constructor)
           ~default:
             (let tvars = [] in
-             let%bind arg_type = Error_recovery.type' in
-             let%bind sum_type = Error_recovery.type' in
+             let%bind arg_type = Error_recovery.wildcard_type in
+             let%bind sum_type = Error_recovery.wildcard_type in
              return (tvars, arg_type, sum_type))
       | (tvar, tvars, arg_type, sum_type) :: other ->
         let%bind () = warn_ambiguous_constructor_expr ~expr ~tvar ~arg_type other in
@@ -901,10 +904,10 @@ and infer_expression (expr : I.expression)
       Error_recovery.Get.module_of_path module_path' ~error:(unbound_module module_path)
     in
     let%bind elt_type, _ =
-      Error_recovery.try_opt
+      Error_recovery.raise_or_use_default_opt
         ~error:(unbound_variable element)
         ~default:
-          (let%bind elt_type = Error_recovery.type' in
+          (let%bind elt_type = Error_recovery.wildcard_type in
            return (elt_type, Attrs.Value.default))
         (Signature.get_value sig_ element)
     in
@@ -975,11 +978,11 @@ and infer_expression (expr : I.expression)
     let%bind type_, collection = infer collection in
     let%bind type_ = Context.tapply type_ in
     let%bind key_type, val_type =
-      Error_recovery.try_opt
+      Error_recovery.raise_or_use_default_opt
         ~error:(mismatching_for_each_collection_type collection_type type_)
         ~default:
-          (let%bind key_type = Error_recovery.type' in
-           let%bind val_type = Error_recovery.type' in
+          (let%bind key_type = Error_recovery.wildcard_type in
+           let%bind val_type = Error_recovery.wildcard_type in
            return (key_type, val_type))
         (Type.get_t_map type_)
     in
@@ -999,14 +1002,14 @@ and infer_expression (expr : I.expression)
       t_unit
   | E_for_each { fe_binder = _, Some _; collection_type = List | Set; _ } ->
     let error = mismatching_for_each_binder_arity 1 2 in
-    Error_recovery.try' ~error ~default:(const_error_recovery [ error ])
+    Error_recovery.raise_or_use_default ~error ~default:(const_error_recovery [ error ])
   | E_for_each
       { fe_binder = (binder, None) as fe_binder; collection; collection_type; fe_body } ->
     let%bind t_unit = create_type Type.t_unit in
     let%bind type_, collection = infer collection in
     let%bind (binder_type : Type.t) =
       let opt_value default =
-        Error_recovery.try_opt
+        Error_recovery.raise_or_use_default_opt
           ~default
           ~error:(mismatching_for_each_collection_type collection_type type_)
       in
@@ -1014,20 +1017,20 @@ and infer_expression (expr : I.expression)
       let get_t_map type_ =
         let%bind type1, type2 =
           opt_value
-            (let%bind type1 = Error_recovery.type' in
-             let%bind type2 = Error_recovery.type' in
+            (let%bind type1 = Error_recovery.wildcard_type in
+             let%bind type2 = Error_recovery.wildcard_type in
              return (type1, type2))
           @@ Type.get_t_map type_
         in
         create_type (Type.t_tuple [ type1; type2 ])
       in
       match (collection_type : For_each_loop.collect_type) with
-      | Set -> opt_value Error_recovery.type' @@ Type.get_t_set type_
-      | List -> opt_value Error_recovery.type' @@ Type.get_t_list type_
+      | Set -> opt_value Error_recovery.wildcard_type @@ Type.get_t_set type_
+      | List -> opt_value Error_recovery.wildcard_type @@ Type.get_t_list type_
       | Map -> get_t_map type_
       | Any ->
         try_
-          (opt_value Error_recovery.type'
+          (opt_value Error_recovery.wildcard_type
           @@ Option.first_some (Type.get_t_set type_) (Type.get_t_list type_))
           ~with_:(fun _ -> get_t_map type_)
     in
@@ -1071,7 +1074,7 @@ and try_infer_expression (expr : I.expression) : (Type.t * O.expression E.t, _, 
          (* Use an arbitrary type for the erroneous expression *)
          let%map ret_type =
            match Ast_core.Combinators.get_e_ascription_opt expr with
-           | None -> Error_recovery.type'
+           | None -> Error_recovery.wildcard_type
            | Some ascr -> With_default_layout.evaluate_type ascr.type_annotation
          in
          ( ret_type
@@ -1242,7 +1245,7 @@ and infer_application (expr : I.expression) (lamb_type : Type.t) (args : I.expre
   let open C in
   let open Let_syntax in
   let fail () =
-    Error_recovery.try'
+    Error_recovery.raise_or_use_default
       ~error:(should_be_a_function_type lamb_type args)
       ~default:
         (let%bind loc = loc () in
@@ -1661,9 +1664,9 @@ and cast_items
   | [] -> return ([], [])
   | `S_type (v, ty, _) :: sig_ ->
     let%bind ty' =
-      Error_recovery.try_opt
+      Error_recovery.raise_or_use_default_opt
         ~error:(signature_not_found_type v)
-        ~default:Error_recovery.type'
+        ~default:Error_recovery.wildcard_type
         (Signature.get_type inferred_sig v)
     in
     let%bind sig_, entries = cast_items inferred_sig sig_ in
@@ -1676,7 +1679,9 @@ and cast_items
     if Type.equal ty ty'
     then cast_items'
     else
-      Error_recovery.try' ~error:(signature_not_match_type v ty ty') ~default:cast_items'
+      Error_recovery.raise_or_use_default
+        ~error:(signature_not_match_type v ty ty')
+        ~default:cast_items'
   | `S_value (v, ty, attr) :: sig_ ->
     let%bind () =
       match Signature.get_value inferred_sig v with
@@ -1685,12 +1690,14 @@ and cast_items
         if Bool.equal attr.entry attr'.entry && Bool.equal attr.view attr'.view && eq
         then return ()
         else
-          Error_recovery.try'
+          Error_recovery.raise_or_use_default
             ~error:(signature_not_match_value v ty ty')
             ~default:(return ())
       | None when attr.optional -> return ()
       | None ->
-        Error_recovery.try' ~error:(signature_not_found_value v) ~default:(return ())
+        Error_recovery.raise_or_use_default
+          ~error:(signature_not_found_value v)
+          ~default:(return ())
     in
     let%bind sig_, entries = cast_items inferred_sig sig_ in
     let entries = entries @ if attr.entry then [ v ] else [] in
@@ -1717,7 +1724,7 @@ and cast_signature (inferred_sig : Signature.t) (annoted_sig : Signature.t)
   let open Let_syntax in
   let%bind tvars, items =
     (* TODO: review this *)
-    Error_recovery.try_opt
+    Error_recovery.raise_or_use_default_opt
       ~error:(corner_case "Signature is not casteable")
       ~default:(return ([], []))
       (Signature.as_casteable annoted_sig)
@@ -1726,7 +1733,8 @@ and cast_signature (inferred_sig : Signature.t) (annoted_sig : Signature.t)
     let%bind insts, items = r in
     let%bind type_ =
       match Signature.get_type inferred_sig tvar with
-      | None -> Error_recovery.try_type ~error:(signature_not_found_type tvar)
+      | None ->
+        Error_recovery.raise_or_use_default_type ~error:(signature_not_found_type tvar)
       | Some t -> return t
     in
     let%bind loc = loc () in
@@ -1778,7 +1786,7 @@ and infer_module_expr ?is_annoted_entry (mod_expr : I.module_expr)
   | M_variable mvar ->
     (* Check we can access [mvar] *)
     let%bind sig_ =
-      Error_recovery.Get.module' mvar ~error:(unbound_module_variable mvar)
+      Error_recovery.Get.module_ mvar ~error:(unbound_module_variable mvar)
     in
     const E.(return @@ M.M_variable mvar) sig_
 
@@ -1820,11 +1828,12 @@ and infer_declaration (decl : I.declaration)
     in
     let%bind expr_type, expr = try_infer_expression expr in
     let%bind lhs_type =
-      match Type.dynamic_entrypoint expr_type with
-      | Error (`Not_entry_point_form x) ->
-        Error_recovery.try_type ~error:(fun _loc ->
-            not_an_entrypoint expr_type (Value_var.get_location var))
-      | Ok t -> return t
+      Error_recovery.raise_or_use_default_result
+        (Type.dynamic_entrypoint expr_type)
+        ~default:Error_recovery.wildcard_type
+        ~error:(fun _loc (`Not_entry_point_form x) ->
+          not_an_entrypoint expr_type (Value_var.get_location var))
+        ~ok:return
     in
     let attr = infer_value_attr attr in
     const
@@ -2004,7 +2013,7 @@ and infer_signature_sort ?is_annoted_entry (old_sig : Signature.t)
         | _ -> None)
   in
   (* In case there is no entrypoints, or it has some error, infer the signature sort as
-     the old sort. One might be tempted to use [Error_recovery.type'] for the parameter
+     the old sort. One might be tempted to use [Error_recovery.wildcard_type] for the parameter
      and storage, but it may trigger a [failwith] later on. *)
   let default = return old_sig.sort in
   match List.Ne.of_list_opt entrypoints with
@@ -2012,21 +2021,21 @@ and infer_signature_sort ?is_annoted_entry (old_sig : Signature.t)
   | Some entrypoints ->
     (* FIXME: This could be improved by using unification to unify the storage
        types together, permitting more programs to type check. *)
-    (match Type.parameter_from_entrypoints entrypoints with
-    | Error (`Duplicate_entrypoint v) ->
-      Error_recovery.try' ~default ~error:(fun _loc ->
-          duplicate_entrypoint v (Value_var.get_location v))
-    | Error (`Not_entry_point_form (ep, ep_type)) ->
-      Error_recovery.try' ~default ~error:(fun _loc ->
-          not_an_entrypoint ep_type (Value_var.get_location ep))
-    | Error (`Storage_does_not_match (ep_1, storage_1, ep_2, storage_2)) ->
-      Error_recovery.try' ~default ~error:(fun _loc ->
-          (storage_do_not_match ep_1 storage_1 ep_2 storage_2)
-            (Value_var.get_location ep_1))
-    | Error (`Wrong_dynamic_storage_definition t) ->
-      Error_recovery.try' ~default ~error:(fun _loc ->
-          wrong_dynamic_storage_definition t t.location)
-    | Ok (parameter, storage) -> return (Signature.Ss_contract { storage; parameter }))
+    Error_recovery.raise_or_use_default_result
+      (Type.parameter_from_entrypoints entrypoints)
+      ~default
+      ~ok:(fun (parameter, storage) ->
+        return (Signature.Ss_contract { storage; parameter }))
+      ~error:
+        (fun _loc -> function
+          | `Duplicate_entrypoint v -> duplicate_entrypoint v (Value_var.get_location v)
+          | `Not_entry_point_form (ep, ep_type) ->
+            not_an_entrypoint ep_type (Value_var.get_location ep)
+          | `Storage_does_not_match (ep_1, storage_1, ep_2, storage_2) ->
+            (storage_do_not_match ep_1 storage_1 ep_2 storage_2)
+              (Value_var.get_location ep_1)
+          | `Wrong_dynamic_storage_definition t ->
+            wrong_dynamic_storage_definition t t.Type.location)
 
 
 and remove_non_public (sig_ : Signature.t) =

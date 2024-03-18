@@ -446,32 +446,43 @@ module Error_recovery : sig
 
   (** Checks whether the typer error recovery is enabled, and if it is, logs the error
       from [error] and returns [default], otherwise raises the error from [error]. *)
-  val try'
+  val raise_or_use_default
     :  error:'err Errors.with_loc
     -> default:('a, 'err, 'wrn) t
     -> ('a, 'err, 'wrn) t
 
-  (** Checks whether the typer error recovery is enabled, and if its, returns [default],
-      otherwise raises the error from [error]. *)
-  val try_opt
+  (** If the provided value is [None], logs the [error] and returns [default] (if error
+      recovery is enabled), or raises [error] (otherwise). If the value is [Some], then it
+      just returns the value without further actions. *)
+  val raise_or_use_default_opt
     :  error:'err Errors.with_loc
     -> default:('a, 'err, 'wrn) t
     -> 'a option
     -> ('a, 'err, 'wrn) t
 
+  (** If the provided value is [Error], logs the error and returns [default] (if error
+      recovery is enabled), or raises the error (otherwise). If the value is [Ok], then it
+      just calls [ok] on the value without further actions. *)
+  val raise_or_use_default_result
+    :  ok:('ok_result -> ('a, 'err, 'wrn) t)
+    -> error:('err_result -> 'err) Errors.with_loc
+    -> default:('a, 'err, 'wrn) t
+    -> ('ok_result, 'err_result) result
+    -> ('a, 'err, 'wrn) t
+
   (** If we could not infer some type, emit a placeholder type so typing can continue. *)
-  val type' : (Type.t, 'err, 'wrn) t
+  val wildcard_type : (Type.t, 'err, 'wrn) t
 
   (** Checks whether the typer error recovery is enabled, and if its, returns [type],
       otherwise runs [on_disabled] (useful to throw some error). *)
-  val try_type : error:'err Errors.with_loc -> (Type.t, 'err, 'wrn) t
+  val raise_or_use_default_type : error:'err Errors.with_loc -> (Type.t, 'err, 'wrn) t
 
   (** If we could not infer some row, emit a placeholder type so typing can continue. *)
   val row : ('a Type.Row.t, 'err, 'wrn) t
 
   (** If we could not infer some signature, emit a placeholder type so typing can
       continue. *)
-  val sig' : (Context.Signature.t, 'err, 'wrn) t
+  val sig_ : (Context.Signature.t, 'err, 'wrn) t
 
   (** Utilities for getting values from the context, or dealing with error recovery in
       case they weren't found. *)
@@ -497,9 +508,9 @@ module Error_recovery : sig
       -> ([ `Type of Type.t | `Type_var of Kind.t ], 'err, 'wrn) t
 
     val type_var : Type_var.t -> error:'err Errors.with_loc -> (Kind.t, 'err, 'wrn) t
-    val type' : Type_var.t -> error:'err Errors.with_loc -> (Type.t, 'err, 'wrn) t
+    val type_ : Type_var.t -> error:'err Errors.with_loc -> (Type.t, 'err, 'wrn) t
 
-    val module'
+    val module_
       :  Module_var.t
       -> error:'err Errors.with_loc
       -> (Context.Signature.t, 'err, 'wrn) t
