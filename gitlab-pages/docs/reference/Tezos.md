@@ -335,7 +335,7 @@ let create&#95;contract:
 </SyntaxTitle>
 <Syntax syntax="cameligo">
 
-The call `create_contract c e a s` returns a contract creation
+The call `create_contract e d a s` returns a contract creation
     operation (origination) for the entrypoint `e` (as a function)
     with optional delegate `d`, initial amount `a` and initial
     storage `s`, together with the address of the created
@@ -349,7 +349,7 @@ The call `create_contract c e a s` returns a contract creation
 
 <Syntax syntax="jsligo">
 
-The call `create_contract(c,e,a,s)` returns a contract creation
+The call `create_contract(e,d,a,s)` returns a contract creation
     operation (origination) for the entrypoint `e` (as a function)
     with optional delegate `d`, initial amount `a` and initial
     storage `s`, together with the address of the created
