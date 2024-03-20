@@ -38,6 +38,11 @@ type config =
   ; metadata_checks_downloading : bool
         (** When running metadata checks, whether to download and check
             mentioned external resources *)
+  ; metadata_checks_download_timeout_sec : float
+        (** When running metadata checks, which timeout (in seconds) will be
+            used for downloading from external sources. Timeout is mandatory,
+            in LSP metadata downloading is secondary functionality and we
+            don't want downloads to block diagnostics indefinitely. *)
   }
 
 (** We can send diagnostics to user or just save them to list in case of testing *)

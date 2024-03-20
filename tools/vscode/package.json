@@ -144,6 +144,12 @@
                     "default": true,
                     "description": "Allow metadata checks to visit specified external resources (relevant for e.g. TZIP-16 metadata)."
                 },
+                "ligoLanguageServer.metadataChecksDownloadTimeout": {
+                    "scope": "resource",
+                    "type": "number",
+                    "default": 10,
+                    "description": "Time limit (in seconds) for metadata checks that involve downloading from external resource.\nTakes effect only when metadata checks downloading is enabled."
+                },
                 "ligoDebugger.maxSteps": {
                     "scope": "resource",
                     "type": [

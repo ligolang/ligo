@@ -653,21 +653,26 @@ module Checks = struct
 
 
   module Json_download = struct
+    type error =
+      [ `Download_error
+      | `Timeout
+      ]
+
     module Lru_uri_cache =
       Lru.M.Make
         (String)
         (struct
-          type t = (string, unit) result
+          type t = (string, error) result
 
           let weight _ = 1
         end)
     (* Simple cache for keeping downloaded data; caps the overall size of data *)
 
-    type cache_state =
+    type cache =
       | No_cache
       | Lru_cache of Lru_uri_cache.t
 
-    let use_lru_cache () : cache_state =
+    let use_lru_cache () : cache =
       (* Using 1000 as size. Should be sufficient to fit all links in the
          project, but prevents unlimitted growth in case of repetitive links
          changes.
@@ -678,15 +683,20 @@ module Checks = struct
       Lru_cache (Lru_uri_cache.create 1000)
 
 
+    type enabled_options =
+      { cache : cache
+      ; timeout_sec : float option
+      }
+
     type options =
       [ `Unspecified
       | `Disabled
-      | `Enabled of cache_state
+      | `Enabled of enabled_options
       ]
 
     let with_cache
-        :  cache_state -> (string -> ('r, unit) Lwt_result.t) -> string
-        -> ('r, unit) Lwt_result.t
+        :  cache -> (string -> ('r, error) Lwt_result.t) -> string
+        -> ('r, error) Lwt_result.t
       = function
       | No_cache -> Fn.id
       | Lru_cache cache ->
@@ -699,7 +709,20 @@ module Checks = struct
             Lwt.return value)
 
 
-    let run ~loc uri : (string, unit) Lwt_result.t =
+    let with_timeout
+        (time_opt : float option)
+        (action : 'a -> ('r, error) Lwt_result.t)
+        (arg : 'a)
+        : ('r, error) result Lwt.t
+      =
+      let open Lwt in
+      match time_opt with
+      | None -> action arg
+      | Some time ->
+        Lwt.pick [ action arg; (Lwt_unix.sleep time >|= fun () -> Error `Timeout) ]
+
+
+    let run ~loc uri : (string, error) Lwt_result.t =
       let open Lwt.Let_syntax in
       let open Cohttp_lwt_unix in
       try%lwt
@@ -709,19 +732,18 @@ module Checks = struct
         let%bind body = Cohttp_lwt.Body.to_string body in
         Lwt.return @@ Ok body
       with
-      | _ -> Lwt.return (Error ())
+      | _ -> Lwt.return (Error `Download_error)
 
 
     (* This is thread-safe, however does not make an effort at deduplicating
        downloads of the same URLs *)
-    let run_with_cache ~cache ~loc uri
-        : (string, [> `Metadata_error_download of Location.t * string ]) Lwt_result.t
-      =
+    let run_with ~(options : enabled_options) ~loc uri =
       Lwt.map (fun outcome ->
           match outcome with
-          | Error () -> Error (`Metadata_error_download (loc, uri))
+          | Error `Download_error -> Error (`Metadata_error_download (loc, uri))
+          | Error `Timeout -> Error (`Metadata_download_timeout (loc, uri))
           | Ok res -> Ok res)
-      @@ with_cache cache (run ~loc) uri
+      @@ with_cache options.cache (with_timeout options.timeout_sec (run ~loc)) uri
   end
 
   let tzip16_check_metadata
@@ -764,8 +786,8 @@ module Checks = struct
       (match json_download with
       | `Unspecified -> Lwt_result.fail (`Metadata_json_download (loc, "an HTTP"))
       | `Disabled -> Lwt_result.return ()
-      | `Enabled cache ->
-        let%bind json = Json_download.run_with_cache ~cache ~loc uri in
+      | `Enabled options ->
+        let%bind json = Json_download.run_with ~options ~loc uri in
         json_check ~loc ~storage_type ?sha256hash json)
     | "ipfs" ->
       (match Uri.host uri with
@@ -775,8 +797,8 @@ module Checks = struct
         (match json_download with
         | `Unspecified -> Lwt_result.fail (`Metadata_json_download (loc, "an IPFS"))
         | `Disabled -> Lwt_result.return ()
-        | `Enabled cache ->
-          let%bind json = Json_download.run_with_cache ~cache ~loc uri in
+        | `Enabled options ->
+          let%bind json = Json_download.run_with ~options ~loc uri in
           json_check ~loc ~storage_type ?sha256hash json))
     | _ -> Lwt_result.return ()
 
@@ -857,7 +879,7 @@ module Checks = struct
           (match options.tools.json_download with
           | None -> `Unspecified
           | Some false -> `Disabled
-          | Some true -> `Enabled Json_download.No_cache)
+          | Some true -> `Enabled { cache = Json_download.No_cache; timeout_sec = None })
         ~storage_type:type_
         ~loc
         exp

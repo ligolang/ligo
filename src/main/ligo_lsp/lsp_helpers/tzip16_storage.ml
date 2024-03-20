@@ -111,9 +111,13 @@ let values_for_tzip16_check (cur_file : Path.t) (prg : Ast_typed.declaration lis
 
 type download_options = Ligo_run.Of_michelson.Checks.Json_download.options
 
-let create_download_options ~(enabled : bool) : download_options =
+let create_download_options ~(enabled : bool) ~(timeout_sec : float) : download_options =
   if enabled
-  then `Enabled (Ligo_run.Of_michelson.Checks.Json_download.use_lru_cache ())
+  then
+    `Enabled
+      { cache = Ligo_run.Of_michelson.Checks.Json_download.use_lru_cache ()
+      ; timeout_sec = Some timeout_sec
+      }
   else `Disabled
 
 

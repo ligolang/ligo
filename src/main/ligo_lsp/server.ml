@@ -14,6 +14,7 @@ let default_config : config =
   ; completion_implementation = `With_scopes
   ; diagnostics_pull_mode = `OnDocumentLinkRequest
   ; metadata_checks_downloading = true
+  ; metadata_checks_download_timeout_sec = 10.
   }
 
 
@@ -240,11 +241,19 @@ class lsp_server (capability_mode : capability_mode) =
                |> function
                | `Bool v -> v
                | _ -> default_config.metadata_checks_downloading)
+           ; metadata_checks_download_timeout_sec =
+               (ligo_language_server
+               |> member "metadataChecksDownloadTimeout"
+               |> function
+               | `Int v when v >= 0 -> float_of_int v
+               | `Float v when Float.is_non_negative v -> v
+               | _ -> default_config.metadata_checks_download_timeout_sec)
            };
       let () =
         metadata_download_options
           <- Tzip16_storage.create_download_options
                ~enabled:config.metadata_checks_downloading
+               ~timeout_sec:config.metadata_checks_download_timeout_sec
       in
       let* () =
         match config.diagnostics_pull_mode with
