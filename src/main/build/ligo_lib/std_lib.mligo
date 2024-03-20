@@ -465,7 +465,7 @@ module Tezos = struct
     | Some contract_addr -> contract_addr
 
   (** display-only-for-cameligo
-    The call `create_contract c e a s` returns a contract creation
+    The call `create_contract e d a s` returns a contract creation
     operation (origination) for the entrypoint `e` (as a function)
     with optional delegate `d`, initial amount `a` and initial
     storage `s`, together with the address of the created
@@ -475,7 +475,7 @@ module Tezos = struct
     performed successfully first, for example by calling a proxy
     contract or itself. *)
   (** display-only-for-jsligo
-    The call `create_contract(c,e,a,s)` returns a contract creation
+    The call `create_contract(e,d,a,s)` returns a contract creation
     operation (origination) for the entrypoint `e` (as a function)
     with optional delegate `d`, initial amount `a` and initial
     storage `s`, together with the address of the created
