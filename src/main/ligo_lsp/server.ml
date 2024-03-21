@@ -544,7 +544,7 @@ class lsp_server (capability_mode : capability_mode) =
             (* Shouldn't happen because [Requests.on_doc] should trigger and populate the
                cache. *)
             | None -> pass
-            | Some { code; syntax; document_version; _ } ->
+            | Some { code; _ } ->
               let last_project_dir = !last_project_dir in
               if Option.equal
                    Path.equal
@@ -552,19 +552,7 @@ class lsp_server (capability_mode : capability_mode) =
                    (Project_root.get_project_root file)
               then pass
               else
-                let@ _ =
-                  set_docs_cache
-                    file
-                    { syntax
-                    ; code
-                    ; document_version
-                    ; definitions = None
-                    ; scopes = None
-                    ; potential_tzip16_storages = None
-                    ; parse_error_ranges = []
-                    ; lambda_types = Ligo_interface.LMap.empty
-                    }
-                in
+                let@ () = Requests.drop_cached_definitions file in
                 let@ () =
                   send_log_msg
                     ~type_:MessageType.Log

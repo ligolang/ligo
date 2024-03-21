@@ -14,7 +14,7 @@ type definitions = Scopes.definitions
 type document_version = int [@@deriving yojson]
 type potential_tzip16_storages = Ast_typed.expression_variable list
 
-type ('defs, 'scopes, 'pot_tzip16) file_data_case =
+type ('defs, 'hierarchy, 'pot_tzip16) file_data_case =
   { syntax : Syntax_types.t
   ; code : string
   ; document_version : document_version option
@@ -45,7 +45,7 @@ type ('defs, 'scopes, 'pot_tzip16) file_data_case =
             and stops at the end of the expression (after [x + y] in this case).
             The type is [int]. *)
   ; definitions : 'defs
-  ; scopes : 'scopes
+  ; hierarchy : 'hierarchy
   ; potential_tzip16_storages : 'pot_tzip16
   }
 
@@ -53,7 +53,7 @@ type ('defs, 'scopes, 'pot_tzip16) file_data_case =
     See [on_doc] and [process_doc] *)
 type unprepared_file_data =
   ( Def.definitions option
-  , scopes lazy_t option
+  , Def.Hierarchy.t lazy_t option
   , potential_tzip16_storages option )
   file_data_case
 
@@ -69,13 +69,13 @@ let empty
   ; parse_error_ranges = []
   ; lambda_types = LMap.empty
   ; definitions = None
-  ; scopes = None
+  ; hierarchy = None
   ; potential_tzip16_storages = None
   }
 
 
 type file_data =
-  (Def.definitions, scopes lazy_t, potential_tzip16_storages) file_data_case
+  (Def.definitions, Def.Hierarchy.t lazy_t, potential_tzip16_storages) file_data_case
 
 let lsp_raw_options : project_root:Path.t option -> Compiler_options.Raw_options.t =
  fun ~project_root ->
@@ -100,9 +100,3 @@ let get_defs_and_diagnostics
  fun ~project_root ~code ~logger path ->
   let options = lsp_raw_options ~project_root in
   get_defs_and_diagnostics ~logger options path code
-
-
-let get_scope : project_root:Path.t option -> code:string -> Path.t -> scopes =
- fun ~project_root ~code path ->
-  let options = lsp_raw_options ~project_root in
-  get_scopes options (Raw_input_lsp { file = Path.to_string path; code })

@@ -2,6 +2,7 @@ open Imports
 
 type t = Scopes.def
 type definitions = Scopes.definitions
+type 'a fold_control = 'a Cst_shared.Fold.fold_control
 
 (* TODO use this in Scopes instead of `Loc` and `LSet` *)
 
@@ -73,25 +74,31 @@ let is_reference : Position.t -> Path.t -> Scopes.def -> bool =
   Def_locations.exists ~f:check_pos @@ references_getter definition
 
 
-let rec fold_definitions : init:'a -> f:('a -> t -> 'a) -> definitions -> 'a =
+(** Fold over definitions, flattening them along the fold. The [fold_control] allows you
+    to choose whether to continue or stop (with or without accumulating the new value) the
+    fold into that definition's children, in case it is a module. *)
+let rec fold_definitions : init:'a -> f:('a -> t -> 'a fold_control) -> definitions -> 'a =
  fun ~init ~f { definitions } ->
-  List.fold_left
-    ~init
-    ~f:(fun acc def ->
-      let acc = f acc def in
-      match def with
-      | Module { mod_case = Def definitions; _ } ->
-        fold_definitions ~init:acc ~f { definitions }
-      | Module { mod_case = Alias _; _ } | Variable _ | Type _ | Label _ -> acc)
-    definitions
+  List.fold_left definitions ~init ~f:(fun acc def ->
+      let fold_inner acc =
+        match def with
+        | Module { mod_case = Def definitions; _ } ->
+          fold_definitions ~init:acc ~f { definitions }
+        | Module { mod_case = Alias _; _ } | Variable _ | Type _ | Label _ -> acc
+      in
+      match f acc def with
+      | Stop -> acc
+      | Skip -> fold_inner acc
+      | Continue acc -> fold_inner acc
+      | Last acc -> acc)
 
 
 let find_map : f:(t -> 'a option) -> definitions -> 'a option =
  fun ~f ->
   fold_definitions ~init:None ~f:(fun acc def ->
       match acc with
-      | Some _ -> acc
-      | None -> f def)
+      | Some _ -> Last acc
+      | None -> Continue (f def))
 
 
 let find : f:(t -> bool) -> definitions -> t option =
@@ -102,11 +109,22 @@ let filter_map : f:(t -> 'a option) -> definitions -> 'a list =
  fun ~f ->
   List.rev
   <@ fold_definitions ~init:[] ~f:(fun acc def ->
-         Option.value_map ~default:acc ~f:(fun x -> x :: acc) (f def))
+         Continue (Option.value_map ~default:acc ~f:(fun x -> x :: acc) (f def)))
 
 
 let filter : f:(t -> bool) -> definitions -> t list =
  fun ~f -> filter_map ~f:(fun def -> Option.some_if (f def) def)
+
+
+let filter_file : file:Path.t -> definitions -> t list =
+ fun ~file ->
+  fold_definitions ~init:[] ~f:(fun acc def ->
+      match Scopes.Types.get_decl_range def with
+      | File region ->
+        if Path.(equal (from_absolute region#file) file)
+        then Continue (def :: acc)
+        else Stop
+      | Virtual _ -> Stop)
 
 
 let get_definition : Position.t -> Path.t -> definitions -> t option =
@@ -192,3 +210,111 @@ let get_comments : t -> string list = function
     | Signature_attr attr -> attr.leading_comments
     | No_attributes -> [])
   | Label _ -> []
+
+
+module Hierarchy = struct
+  type t = Scopes.def Rose.forest
+
+  let create : definitions -> t =
+    Rose.map_forest ~f:Tuple3.get3
+    <@ Rose.forest_of_list
+       (* See the expect test in [Rose] on why we compare and check for intersection like
+          this. *)
+         ~compare:(fun ((range1 : Range.t), file1, _def1) (range2, file2, _def2) ->
+           let path_ord = Path.compare file1 file2 in
+           if path_ord = 0
+           then (
+             let pos_ord = Position.compare range1.start range2.start in
+             if pos_ord = 0 then Position.compare range2.end_ range1.end_ else pos_ord)
+           else path_ord)
+         ~intersects:(fun (range1, file1, _def1) (range2, file2, _def2) ->
+           Path.equal file1 file2 && Position.compare range1.end_ range2.start > 0)
+    <@ filter_map ~f:(fun def ->
+           match Scopes.Types.get_decl_range def with
+           | File region ->
+             let range = Range.of_region region in
+             let file = Path.from_absolute region#file in
+             Some (range, file, def)
+           | Virtual _ -> None)
+
+
+  let scope_at_point (file : Path.t) (point : Position.t) (mod_path : Scopes.Uid.t list)
+      : t -> Scopes.def list
+    =
+    let shadow_defs : Scopes.def list -> Scopes.def list =
+      List.filter_map ~f:List.hd
+      <@ List.sort_and_group ~compare:Scopes.Types.compare_def_by_name
+    in
+    (* A def is interesting to us if either it's from another file, or it's from the same
+       file but it's declaration happened before the current point. Also, it must be
+       visible from our current module.
+         There is a caveat: constructors are declared in the global scope, so we need to
+       consider that they are of interest even if they aren't in the scope "spine".
+         To handle this, we consider that types and constructors are always definitions of
+       interest (so we can visit them), and that constructors are always parents of
+       interest (so we always add them to the scope). Moreover, constructors declared in
+       local type definitions are not added globally, so we want to add them only if we're
+       completing a scope within a child's body, and hence we have to also ask whether we
+       have children of interest. *)
+    let is_def_of_interest (def : Scopes.def) : bool =
+      match Scopes.Types.get_decl_range def with
+      | File region ->
+        (Position.(of_pos region#start <= point)
+        || not Path.(equal file (from_absolute region#file)))
+        &&
+        (match def with
+        | Label { label_case = Ctor; _ } | Type _ -> true
+        | Label { label_case = Field; _ } | Variable _ | Module _ ->
+          List.is_prefix
+            mod_path
+            ~equal:Scopes.Uid.equal
+            ~prefix:(Scopes.Types.get_mod_path def))
+      | Virtual _ -> false
+    in
+    (* We consider that a parent is of interest if it doesn't contain the point. Such
+       parents are the ones in the "spine" of the scope, such as our current variable or
+       module, which we don't want to show.
+         The same caveat about constructors above apply here.
+         TODO: Strictly speaking, we should check whether the definition is recursive or
+       not, and show it in case it's recursive. *)
+    let is_parent_of_interest (def : Scopes.def) : bool =
+      match Scopes.Types.get_decl_range def with
+      | File region ->
+        let excludes_position = not Range.(contains_position point (of_region region)) in
+        (match def with
+        | Label { label_case = Ctor; _ } -> true
+        | Label { label_case = Field; _ } | Variable _ | Type _ | Module _ ->
+          excludes_position)
+      | Virtual _ -> false
+    in
+    (* We only have this function because of global constructors. Only add constructors
+       declared within a variable's body if our scope point is inside the variable in the
+       first place. Otherwise, children are always valid. *)
+    let are_children_of_interest (def : Scopes.def) : bool =
+      match def with
+      | Variable _ ->
+        (match Scopes.Types.get_decl_range def with
+        | File region -> Range.(contains_position point (of_region region))
+        | Virtual _ -> false)
+      | Type _ | Module _ | Label _ -> true
+    in
+    let rec go : t -> Scopes.def list = function
+      | [] -> []
+      | Rose.Tree ((parent, parents), children) :: ts ->
+        if is_def_of_interest parent
+        then
+          if is_parent_of_interest parent
+          then
+            parent
+            :: List.concat
+                 [ parents
+                 ; (if are_children_of_interest parent then go children else [])
+                 ; go ts
+                 ]
+          else if are_children_of_interest parent
+          then go children @ go ts
+          else go ts
+        else go ts
+    in
+    shadow_defs <@ go
+end
