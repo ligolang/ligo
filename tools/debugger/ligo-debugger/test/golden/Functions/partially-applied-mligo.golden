@@ -131,6 +131,10 @@ ApplicationMeta:
       amAppliedArguments: [Value 1 of type int]
       amPreviousApplication: 
 ApplicationMeta:
+  amFunctionName: triple
+  amAppliedArguments: [Value 1 of type int]
+  amPreviousApplication: 
+ApplicationMeta:
   amFunctionName: f1
   amAppliedArguments: [Value 2 of type int]
   amPreviousApplication:
@@ -138,10 +142,6 @@ ApplicationMeta:
       amFunctionName: triple
       amAppliedArguments: [Value 1 of type int]
       amPreviousApplication: 
-ApplicationMeta:
-  amFunctionName: triple
-  amAppliedArguments: [Value 1 of type int]
-  amPreviousApplication: 
 ApplicationMeta:
   amFunctionName: f2
   amAppliedArguments: [Value 3 of type int]
@@ -155,6 +155,10 @@ ApplicationMeta:
           amAppliedArguments: [Value 1 of type int]
           amPreviousApplication: 
 ApplicationMeta:
+  amFunctionName: triple
+  amAppliedArguments: [Value 1 of type int]
+  amPreviousApplication: 
+ApplicationMeta:
   amFunctionName: f1
   amAppliedArguments: [Value 2 of type int]
   amPreviousApplication:
@@ -162,10 +166,6 @@ ApplicationMeta:
       amFunctionName: triple
       amAppliedArguments: [Value 1 of type int]
       amPreviousApplication: 
-ApplicationMeta:
-  amFunctionName: triple
-  amAppliedArguments: [Value 1 of type int]
-  amPreviousApplication: 
 ApplicationMeta:
   amFunctionName: f2
   amAppliedArguments: [Value 3 of type int]
@@ -179,6 +179,10 @@ ApplicationMeta:
           amAppliedArguments: [Value 1 of type int]
           amPreviousApplication: 
 ApplicationMeta:
+  amFunctionName: triple
+  amAppliedArguments: [Value 1 of type int]
+  amPreviousApplication: 
+ApplicationMeta:
   amFunctionName: f1
   amAppliedArguments: [Value 2 of type int]
   amPreviousApplication:
@@ -186,10 +190,6 @@ ApplicationMeta:
       amFunctionName: triple
       amAppliedArguments: [Value 1 of type int]
       amPreviousApplication: 
-ApplicationMeta:
-  amFunctionName: triple
-  amAppliedArguments: [Value 1 of type int]
-  amPreviousApplication: 
 ApplicationMeta:
   amFunctionName: f2
   amAppliedArguments: [Value 3 of type int]
@@ -203,6 +203,18 @@ ApplicationMeta:
           amAppliedArguments: [Value 1 of type int]
           amPreviousApplication: 
 ApplicationMeta:
+  amFunctionName: triple
+  amAppliedArguments: [Value 1 of type int]
+  amPreviousApplication: 
+ApplicationMeta:
+  amFunctionName: f1
+  amAppliedArguments: [Value 2 of type int]
+  amPreviousApplication:
+    ApplicationMeta:
+      amFunctionName: triple
+      amAppliedArguments: [Value 1 of type int]
+      amPreviousApplication: 
+ApplicationMeta:
   amFunctionName: f2
   amAppliedArguments: [Value 3 of type int]
   amPreviousApplication:
@@ -215,6 +227,10 @@ ApplicationMeta:
           amAppliedArguments: [Value 1 of type int]
           amPreviousApplication: 
 ApplicationMeta:
+  amFunctionName: triple
+  amAppliedArguments: [Value 1 of type int]
+  amPreviousApplication: 
+ApplicationMeta:
   amFunctionName: f1
   amAppliedArguments: [Value 2 of type int]
   amPreviousApplication:
@@ -222,10 +238,6 @@ ApplicationMeta:
       amFunctionName: triple
       amAppliedArguments: [Value 1 of type int]
       amPreviousApplication: 
-ApplicationMeta:
-  amFunctionName: triple
-  amAppliedArguments: [Value 1 of type int]
-  amPreviousApplication: 
 ApplicationMeta:
   amFunctionName: f2
   amAppliedArguments: [Value 3 of type int]
@@ -238,18 +250,6 @@ ApplicationMeta:
           amFunctionName: triple
           amAppliedArguments: [Value 1 of type int]
           amPreviousApplication: 
-ApplicationMeta:
-  amFunctionName: f1
-  amAppliedArguments: [Value 2 of type int]
-  amPreviousApplication:
-    ApplicationMeta:
-      amFunctionName: triple
-      amAppliedArguments: [Value 1 of type int]
-      amPreviousApplication: 
-ApplicationMeta:
-  amFunctionName: triple
-  amAppliedArguments: [Value 1 of type int]
-  amPreviousApplication: 
 ApplicationMeta:
   amFunctionName: triple
   amAppliedArguments: [Value 1 of type int, Value 2 of type int]
