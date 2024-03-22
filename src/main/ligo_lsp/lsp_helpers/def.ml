@@ -77,20 +77,22 @@ let is_reference : Position.t -> Path.t -> Scopes.def -> bool =
 (** Fold over definitions, flattening them along the fold. The [fold_control] allows you
     to choose whether to continue or stop (with or without accumulating the new value) the
     fold into that definition's children, in case it is a module. *)
-let rec fold_definitions : init:'a -> f:('a -> t -> 'a fold_control) -> definitions -> 'a =
+let fold_definitions : init:'a -> f:('a -> t -> 'a fold_control) -> definitions -> 'a =
  fun ~init ~f { definitions } ->
-  List.fold_left definitions ~init ~f:(fun acc def ->
-      let fold_inner acc =
-        match def with
-        | Module { mod_case = Def definitions; _ } ->
-          fold_definitions ~init:acc ~f { definitions }
-        | Module { mod_case = Alias _; _ } | Variable _ | Type _ | Label _ -> acc
-      in
-      match f acc def with
-      | Stop -> acc
-      | Skip -> fold_inner acc
-      | Continue acc -> fold_inner acc
-      | Last acc -> acc)
+  let rec go init =
+    List.fold ~init ~f:(fun acc (def : t) ->
+        let[@inline] fold_inner acc =
+          match def with
+          | Module { mod_case = Def definitions; _ } -> go acc definitions
+          | Module { mod_case = Alias _; _ } | Variable _ | Type _ | Label _ -> acc
+        in
+        match f acc def with
+        | Stop -> acc
+        | Skip -> fold_inner acc
+        | Continue acc -> fold_inner acc
+        | Last acc -> acc)
+  in
+  go init definitions
 
 
 let find_map : f:(t -> 'a option) -> definitions -> 'a option =
@@ -216,26 +218,30 @@ module Hierarchy = struct
   type t = Scopes.def Rose.forest
 
   let create : definitions -> t =
-    Rose.map_forest ~f:Tuple3.get3
-    <@ Rose.forest_of_list
-       (* See the expect test in [Rose] on why we compare and check for intersection like
-          this. *)
-         ~compare:(fun ((range1 : Range.t), file1, _def1) (range2, file2, _def2) ->
-           let path_ord = Path.compare file1 file2 in
-           if path_ord = 0
-           then (
-             let pos_ord = Position.compare range1.start range2.start in
-             if pos_ord = 0 then Position.compare range2.end_ range1.end_ else pos_ord)
-           else path_ord)
-         ~intersects:(fun (range1, file1, _def1) (range2, file2, _def2) ->
-           Path.equal file1 file2 && Position.compare range1.end_ range2.start > 0)
-    <@ filter_map ~f:(fun def ->
-           match Scopes.Types.get_decl_range def with
-           | File region ->
-             let range = Range.of_region region in
-             let file = Path.from_absolute region#file in
-             Some (range, file, def)
-           | Virtual _ -> None)
+   fun defs ->
+    (* [Path.from_absolute] is a very expensive function, so we make a table to hold the
+       known normalized paths as an optimization. *)
+    Files.with_normalized_files ~f:(fun ~normalize ->
+        Rose.map_forest ~f:Tuple3.get3
+        @@ Rose.forest_of_list
+           (* See the expect test in [Rose] on why we compare and check for intersection
+              like this. *)
+             ~compare:(fun ((range1 : Range.t), file1, _def1) (range2, file2, _def2) ->
+               let path_ord = Path.compare file1 file2 in
+               if path_ord = 0
+               then (
+                 let pos_ord = Position.compare range1.start range2.start in
+                 if pos_ord = 0 then Position.compare range2.end_ range1.end_ else pos_ord)
+               else path_ord)
+             ~intersects:(fun (range1, file1, _def1) (range2, file2, _def2) ->
+               Path.equal file1 file2 && Position.compare range1.end_ range2.start > 0)
+        @@ filter_map defs ~f:(fun def ->
+               match Scopes.Types.get_decl_range def with
+               | File region ->
+                 let range = Range.of_region region in
+                 let path = normalize region#file in
+                 Some (range, path, def)
+               | Virtual _ -> None))
 
 
   let scope_at_point (file : Path.t) (point : Position.t) (mod_path : Scopes.Uid.t list)
