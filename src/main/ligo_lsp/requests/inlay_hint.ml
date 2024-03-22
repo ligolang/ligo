@@ -413,10 +413,9 @@ let process_variable_def
     ~(banned_in_core : Range.t list)
     ~(fun_defs : fun_def_value LMap.t)
     ~(ban_defs : Range.t list)
-    ~(normalize : string -> Path.t)
-    (file : Path.t)
     : Scopes.Types.vdef -> inlay_hint option
   =
+  let open Option.Let_syntax in
   let process_variable (range : Loc.t) (typ : Ast_core.ty_expr) =
     match LMap.find_opt range fun_defs with
     | Some { position; num_of_binders } ->
@@ -428,14 +427,12 @@ let process_variable_def
           | T_abstraction { type_; _ } | T_for_all { type_; _ } -> strip_args type_ n
           | _ -> None)
       in
-      Option.bind (strip_args typ num_of_binders) ~f:(fun typ ->
-          Option.some_if
-            (not @@ List.exists ban_defs ~f:(Range.contains_position position))
-            { position = Shifted position; typ })
+      let%bind typ = strip_args typ num_of_binders in
+      Option.some_if
+        (not @@ List.exists ban_defs ~f:(Range.contains_position position))
+        { position = Shifted position; typ }
     | None ->
-      let open Option.Let_syntax in
       let%bind file_range = Loc.get_file range in
-      let%bind () = Option.some_if (Path.equal (normalize file_range#file) file) () in
       let file_range = Range.of_region file_range in
       let%map () =
         Option.some_if (not @@ List.exists ban_defs ~f:(Range.intersects file_range)) ()
@@ -444,7 +441,7 @@ let process_variable_def
   in
   function
   | { range; t = Resolved typ; _ } ->
-    let%bind.Option typ =
+    let%bind typ =
       try
         Trace.to_option ~fast_fail:false
         @@ Checking.untype_type_expression ~use_orig_var:true typ
@@ -453,7 +450,7 @@ let process_variable_def
     in
     process_variable range typ
   | { range; t = Core typ; _ } ->
-    let%bind.Option region = Loc.get_file range in
+    let%bind region = Loc.get_file range in
     let range' = Range.of_region region in
     if List.exists banned_in_core ~f:(fun banned_range ->
            Range.inside ~big:banned_range ~small:range')
@@ -469,21 +466,23 @@ let provide_hints_for_variables
     (definitions : Def.definitions)
     (file : Path.t)
   =
-  let vdefs =
-    let open Scopes.Types in
-    definitions
-    |> Def.filter_map ~f:(function
-           | Variable vdef -> Some vdef
-           | Type _ | Module _ | Label _ -> None)
-       (* Sometimes we can see duplicate definitions (e.g. in JsLIGO's cycles).
-          Since we're creating one inlay hint per definition this may result into duplicate hints ([x : int : int]). *)
-    |> List.dedup_and_sort ~compare:(fun (lhs : (* WTF OCaml? *) vdef) rhs ->
-           Uid.compare lhs.uid rhs.uid)
-  in
   Files.with_normalized_files ~f:(fun ~normalize ->
-      List.filter_map
-        vdefs
-        ~f:(process_variable_def ~banned_in_core ~fun_defs ~ban_defs ~normalize file))
+      let vdefs =
+        let open Scopes.Types in
+        definitions
+        |> Def.filter_map ~f:(function
+               | Variable vdef ->
+                 (match vdef.decl_range with
+                 | File region ->
+                   Option.some_if (Path.equal (normalize region#file) file) vdef
+                 | Virtual _ -> None)
+               | Type _ | Module _ | Label _ -> None)
+           (* Sometimes we can see duplicate definitions (e.g. in JsLIGO's cycles).
+          Since we're creating one inlay hint per definition this may result into duplicate hints ([x : int : int]). *)
+        |> List.dedup_and_sort ~compare:(fun (lhs : (* WTF OCaml? *) vdef) rhs ->
+               Uid.compare lhs.uid rhs.uid)
+      in
+      List.filter_map vdefs ~f:(process_variable_def ~banned_in_core ~fun_defs ~ban_defs))
 
 
 (** Compile our intermediate representation of inlay hint into [InlayHint.t]. *)
