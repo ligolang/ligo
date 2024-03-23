@@ -48,6 +48,7 @@ let completion_context_priority
 
 
 let defs_to_completion_items
+    ~(normalize : string -> Path.t)
     (context : completion_context)
     (path : Path.t)
     (syntax : Syntax_types.t)
@@ -56,7 +57,7 @@ let defs_to_completion_items
   =
   List.map defs ~f:(fun def ->
       let name = Scopes.Types.get_def_name def in
-      let same_file = Option.map (Def.get_path def) ~f:(Path.equal path) in
+      let same_file = Option.map (Def.get_path ~normalize def) ~f:(Path.equal path) in
       let sortText = completion_context_priority ?same_file context in
       let kind, detail =
         match def with

@@ -16,6 +16,11 @@ let test_run_session ?(config = default_test_config) (session : 'a Handler.t)
     : 'a * Diagnostic.t list Path_hashtbl.t
   =
   let mocked_notify_back = Path_hashtbl.create () in
+  let file_normalization_tbl = Hashtbl.create (module String) in
+  let normalize file =
+    Hashtbl.find_or_add file_normalization_tbl file ~default:(fun () ->
+        Path.from_absolute file)
+  in
   let result =
     run_handler
       { notify_back = Mock mocked_notify_back
@@ -23,6 +28,7 @@ let test_run_session ?(config = default_test_config) (session : 'a Handler.t)
       ; docs_cache = Docs_cache.create ()
       ; last_project_dir = ref None
       ; mod_res = ref None
+      ; normalize
       }
       session
   in

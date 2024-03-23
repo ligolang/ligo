@@ -6,6 +6,7 @@ let hovers_pp_mode : Pretty.pp_mode =
 
 
 let insert_module_path
+    ~(normalize : string -> Path.t)
     (input_d : Completion_lib.Common.input_d)
     (type' : Ast_core.type_expression)
     : Ast_core.type_expression
@@ -52,9 +53,9 @@ let insert_module_path
           | Virtual _ -> None
           | File reg -> Some reg
         in
-        let path = Path.from_absolute region#file in
+        let path = normalize region#file in
         let pos = Position.of_pos region#start in
-        Def.get_definition pos path input_d.definitions
+        Def.get_definition ~normalize pos path input_d.definitions
       in
       let get_module_uid (module_path : Scopes.Uid.t list) : Scopes.Uid.t option =
         let%bind.Option module_name = List.last module_path in
@@ -95,10 +96,10 @@ let insert_module_path
 
 
 let hover_string
-    :  Completion_lib.Common.input_d -> Scopes.def
+    :  normalize:(string -> Path.t) -> Completion_lib.Common.input_d -> Scopes.def
     -> [> `List of MarkedString.t list ] Handler.t
   =
- fun input_d def ->
+ fun ~normalize input_d def ->
   let syntax = Dialect_cst.to_syntax_type input_d.cst in
   let handle_pretty_print_result (name : string) = function
     | `Ok str -> return str
@@ -141,7 +142,7 @@ let hover_string
     let source_syntax =
       Option.value ~default:syntax
       @@
-      match Def.get_location def with
+      match Def.get_location ~normalize def with
       | File { path; _ } -> Path.get_syntax path
       | StdLib _ -> Some CameLIGO (* Since Stdlib is written in CameLIGO *)
       | Virtual _ -> None
@@ -163,7 +164,7 @@ let hover_string
         ~default:(return @@ Helpers_pretty.unresolved_type_as_comment syntax)
         ~f:
           (print_type_with_prefix ~prefix
-          <@ insert_module_path input_d
+          <@ insert_module_path ~normalize input_d
           <@ Def.use_var_name_if_available)
         type_info
     in
@@ -205,7 +206,9 @@ let hover_string
       return @@ `List (MarkedString.{ language; value } :: doc_comment_hovers)
     | Some content ->
       let prefix = PPrint.(string "type" ^//^ string name_with_params ^//^ equals) in
-      let@ value = print_type_with_prefix ~prefix @@ insert_module_path input_d content in
+      let@ value =
+        print_type_with_prefix ~prefix @@ insert_module_path ~normalize input_d content
+      in
       return @@ `List (MarkedString.{ language; value } :: doc_comment_hovers))
   | Label ldef ->
     (match ldef.label_case with
@@ -299,12 +302,13 @@ let on_req_hover : Position.t -> Path.t -> Hover.t option Handler.t =
   @@ fun cst ->
   with_cached_doc file ~default:None
   @@ fun { definitions; syntax; _ } ->
-  when_some' (Def.get_definition pos file definitions)
+  let@ normalize = ask_normalize in
+  when_some' (Def.get_definition ~normalize pos file definitions)
   @@ fun definition ->
   let input =
     Completion_lib.Common.mk_input_d ~cst ~syntax ~path:file ~definitions ~pos
   in
-  let@ (`List strings) = hover_string input definition in
+  let@ (`List strings) = hover_string ~normalize input definition in
   let replace =
     Parsing_shared.Errors.ErrorWrapper.replace_with
       (Helpers_pretty.unresolved_type_as_comment syntax)

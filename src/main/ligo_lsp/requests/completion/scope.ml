@@ -94,11 +94,13 @@ let pick_scope
 let get_defs_completions : _ Common.input -> Def.Hierarchy.t -> Def.t list = pick_scope
 
 let get_scope_completions
+    ~(normalize : string -> Path.t)
     ({ path; syntax; definitions = _; cst = _; pos = _ } as input : _ Common.input)
     (hierarchy : Def.Hierarchy.t)
     : CompletionItem.t list
   =
   let with_possible_duplicates =
-    defs_to_completion_items Scope path syntax @@ get_defs_completions input hierarchy
+    defs_to_completion_items ~normalize Scope path syntax
+    @@ get_defs_completions input hierarchy
   in
   Common.nub_sort_items with_possible_duplicates

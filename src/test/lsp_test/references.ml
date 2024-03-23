@@ -14,7 +14,14 @@ let get_references_test ({ test_file; reference } : references_test) : unit =
   let actual_references, _diagnostics =
     test_run_session
     @@ let@ uri = open_file test_file in
-       Requests.on_req_references reference uri
+       let@ normalize = ask_normalize in
+       let@ references = Requests.on_req_references reference uri in
+       return
+       @@ Option.map
+            references
+            ~f:
+              (List.map ~f:(fun loc ->
+                   { loc with Location.uri = to_relative_uri ~normalize loc.Location.uri }))
   in
   match actual_references with
   | None ->
@@ -24,10 +31,6 @@ let get_references_test ({ test_file; reference } : references_test) : unit =
          Path.pp
          test_file
   | Some actual_references ->
-    let actual_references =
-      List.map actual_references ~f:(fun loc ->
-          { loc with uri = to_relative_uri loc.uri })
-    in
     Format.printf "%a" (Fmt.Dump.list Location.pp) actual_references
 
 

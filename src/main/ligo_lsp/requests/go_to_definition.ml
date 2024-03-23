@@ -367,9 +367,10 @@ let filter_mdefs : Scopes.definitions -> Scopes.Types.mdef list =
 let on_req_impl : decl_def_or_impl -> Position.t -> Path.t -> Locations.t option Handler.t
   =
  fun decl_def_or_impl pos file ->
+  let@ normalize = ask_normalize in
   with_cached_doc_pure file ~default:None
   @@ fun { definitions; _ } ->
-  let%bind.Option definition = Def.get_definition pos file definitions in
+  let%bind.Option definition = Def.get_definition ~normalize pos file definitions in
   let definitions =
     (match decl_def_or_impl with
     | Decl -> get_declaration
@@ -380,7 +381,7 @@ let on_req_impl : decl_def_or_impl -> Position.t -> Path.t -> Locations.t option
   in
   match
     List.filter_map definitions ~f:(fun definition ->
-        match Def.get_location definition with
+        match Def.get_location ~normalize definition with
         | File { range; path } ->
           Some (Location.create ~range ~uri:(DocumentUri.of_path path))
         | StdLib _ | Virtual _ -> None)

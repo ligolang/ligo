@@ -41,6 +41,11 @@ class lsp_server (capability_mode : capability_mode) =
     method spawn_query_handler = Linol_lwt.spawn
     val mutable config : config = default_config
     val mutable client_capabilities : ClientCapabilities.t = ClientCapabilities.create ()
+    val file_normalization_tbl = Hashtbl.create (module String)
+
+    method private normalize (file : string) : Path.t =
+      Hashtbl.find_or_add file_normalization_tbl file ~default:(fun () ->
+          Path.from_absolute file)
 
     (** Stores the path to the last ligo.json file, if found. *)
     val last_project_dir : Path.t option ref = ref None
@@ -55,6 +60,7 @@ class lsp_server (capability_mode : capability_mode) =
           ; docs_cache = get_scope_buffers
           ; last_project_dir
           ; mod_res
+          ; normalize = self#normalize
           }
 
     method on_doc
@@ -577,20 +583,14 @@ class lsp_server (capability_mode : capability_mode) =
           else IO.return default
         in
         let run_command (handler : r Handler.t) : r IO.t =
-          run_handler
-            { notify_back =
-                Normal
-                  (new Linol_lwt.Jsonrpc2.notify_back
-                     ~notify_back
-                     ~server_request
-                     ~workDoneToken:None
-                     ~partialResultToken:None
-                     ())
-            ; config
-            ; docs_cache = get_scope_buffers
-            ; last_project_dir
-            ; mod_res
-            }
+          self#run_handler
+            (Normal
+               (new Linol_lwt.Jsonrpc2.notify_back
+                  ~notify_back
+                  ~server_request
+                  ~workDoneToken:None
+                  ~partialResultToken:None
+                  ()))
             handler
         in
         match r with

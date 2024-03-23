@@ -32,7 +32,11 @@ let to_string_with_canonical_drive_letter : t -> string =
 (** Create [Path.t] from a string containing an absolute file path. It removes as many
     indirections ([.], [..], symlinks, etc) as possible from the path, returning its
     canonicalized absolute path. This function assumes that we are in a POSIX-compliant
-    OS. *)
+    OS.
+      WARNING: This function is expensive. If you will call it in a loop, and such a loop
+    may have repeated files, prefer binding [Handler.ask_normalize] and calling the
+    provided function instead. The performance of the LSP can be greatly impacted by this.
+  *)
 let from_absolute : string -> t = fun p -> UnsafePath (normalise p)
 
 (** Create [Path.t] from a string containing file path relative to current dir.

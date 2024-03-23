@@ -8,14 +8,15 @@ module PathMap = Map.Make (Path)
 module Ranges = Set.Make (Range)
 
 let get_references
-    : Def_location.t Sequence.t -> Scopes.def Sequence.t -> Loc_in_file.t Sequence.t
+    :  normalize:(string -> Path.t) -> Def_location.t Sequence.t -> Scopes.def Sequence.t
+    -> Loc_in_file.t Sequence.t
   =
- fun locations defs ->
+ fun ~normalize locations defs ->
   defs
   |> Sequence.concat_map ~f:(fun def ->
          Sequence.concat_map locations ~f:(fun location ->
-             if Def_location.equal (Def.get_location def) location
-             then Def_locations.to_sequence @@ Def.references_getter def
+             if Def_location.equal (Def.get_location ~normalize def) location
+             then Def_locations.to_sequence @@ Def.references_getter ~normalize def
              else Sequence.empty))
   |> Sequence.filter_map ~f:(function
          | Def_location.File loc -> Some loc
@@ -34,15 +35,18 @@ let partition_references : Loc_in_file.t Sequence.t -> Ranges.t PathMap.t =
 
 (* This version is useful for rename request *)
 let get_all_references_grouped_by_file
-    :  Def_location.t Sequence.t -> Docs_cache.t
+    :  normalize:(string -> Path.t) -> Def_location.t Sequence.t -> Docs_cache.t
     -> (Path.t * Range.t Sequence.t) Sequence.t
   =
- fun locations cache ->
+ fun ~normalize locations cache ->
   let go (_path, ({ definitions; _ } : Ligo_interface.unprepared_file_data)) =
     Option.value_map
       definitions
       ~default:Sequence.empty
-      ~f:(get_references locations <@ Sequence.of_list <@ Scopes.Types.flatten_defs)
+      ~f:
+        (get_references ~normalize locations
+        <@ Sequence.of_list
+        <@ Scopes.Types.flatten_defs)
   in
   cache
   |> Docs_cache.to_alist
@@ -53,18 +57,22 @@ let get_all_references_grouped_by_file
   |> Sequence.map ~f:(fun (file, refs) -> file, Ranges.to_sequence refs)
 
 
-let get_all_references : Def_location.t list -> Docs_cache.t -> Loc_in_file.t list =
- fun locations cache ->
-  get_all_references_grouped_by_file (Sequence.of_list locations) cache
+let get_all_references
+    :  normalize:(string -> Path.t) -> Def_location.t list -> Docs_cache.t
+    -> Loc_in_file.t list
+  =
+ fun ~normalize locations cache ->
+  get_all_references_grouped_by_file ~normalize (Sequence.of_list locations) cache
   |> Sequence.concat_map ~f:(fun (path, ranges) ->
          Sequence.map ~f:(fun range -> Loc_in_file.{ path; range }) ranges)
   |> Sequence.to_list
 
 
 let try_to_get_all_linked_locations
-    : Def.t -> Def.definitions -> Def_location.t list option
+    :  normalize:(string -> Path.t) -> Def.t -> Def.definitions
+    -> Def_location.t list option
   =
- fun definition definitions ->
+ fun ~normalize definition definitions ->
   let open Go_to_definition in
   let mdefs = filter_mdefs definitions in
   let mod_ids = mdefs_to_identifiers mdefs in
@@ -84,7 +92,7 @@ let try_to_get_all_linked_locations
           try_to_resolve_mod_case mdefs mdef.mod_case
       in
       let%map.Option def = find_last_def_by_name_and_level definition defs in
-      Def.get_location def)
+      Def.get_location ~normalize def)
 
 
 (** Tries to get all locations from definitions that relate to the given definition by
@@ -94,11 +102,13 @@ let try_to_get_all_linked_locations
     reference (or reference of implementation/definition) of the other.
       In other words, linked locations are those that, if you rename one of them, all of
     the others should be rename as well. *)
-let get_all_linked_locations_or_def : Def.t -> Def.definitions -> Def_location.t list =
- fun definition definitions ->
+let get_all_linked_locations_or_def
+    : normalize:(string -> Path.t) -> Def.t -> Def.definitions -> Def_location.t list
+  =
+ fun ~normalize definition definitions ->
   Option.value
-    (try_to_get_all_linked_locations definition definitions)
-    ~default:[ Def.get_location definition ]
+    (try_to_get_all_linked_locations ~normalize definition definitions)
+    ~default:[ Def.get_location ~normalize definition ]
 
 
 let get_reverse_dependencies : Path.t -> Path.t list Handler.t =
@@ -127,13 +137,14 @@ let on_req_references : Position.t -> Path.t -> Location.t list option Handler.t
  fun pos file ->
   with_cached_doc file ~default:None
   @@ fun { definitions; _ } ->
-  when_some (Def.get_definition pos file definitions)
+  let@ normalize = ask_normalize in
+  when_some (Def.get_definition ~normalize pos file definitions)
   @@ fun definition ->
   let@ cache = ask_docs_cache in
   let@ files = get_reverse_dependencies file in
   let@ all_definitions = get_all_reverse_dependencies_definitions files in
-  let locations = get_all_linked_locations_or_def definition all_definitions in
-  let references = get_all_references locations cache in
+  let locations = get_all_linked_locations_or_def ~normalize definition all_definitions in
+  let references = get_all_references ~normalize locations cache in
   let show_reference fmt Loc_in_file.{ path; range } =
     Format.fprintf fmt "%a\n%a" Path.pp path Range.pp range
   in

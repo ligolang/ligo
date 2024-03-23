@@ -460,29 +460,29 @@ let process_variable_def
 
 
 let provide_hints_for_variables
+    ~(normalize : string -> Path.t)
     ~(banned_in_core : Range.t list)
     ~(fun_defs : fun_def_value LMap.t)
     ~(ban_defs : Range.t list)
     (definitions : Def.definitions)
     (file : Path.t)
   =
-  Files.with_normalized_files ~f:(fun ~normalize ->
-      let vdefs =
-        let open Scopes.Types in
-        definitions
-        |> Def.filter_map ~f:(function
-               | Variable vdef ->
-                 (match vdef.decl_range with
-                 | File region ->
-                   Option.some_if (Path.equal (normalize region#file) file) vdef
-                 | Virtual _ -> None)
-               | Type _ | Module _ | Label _ -> None)
-           (* Sometimes we can see duplicate definitions (e.g. in JsLIGO's cycles).
+  let vdefs =
+    let open Scopes.Types in
+    definitions
+    |> Def.filter_map ~f:(function
+           | Variable vdef ->
+             (match vdef.decl_range with
+             | File region ->
+               Option.some_if (Path.equal (normalize region#file) file) vdef
+             | Virtual _ -> None)
+           | Type _ | Module _ | Label _ -> None)
+       (* Sometimes we can see duplicate definitions (e.g. in JsLIGO's cycles).
           Since we're creating one inlay hint per definition this may result into duplicate hints ([x : int : int]). *)
-        |> List.dedup_and_sort ~compare:(fun (lhs : (* WTF OCaml? *) vdef) rhs ->
-               Uid.compare lhs.uid rhs.uid)
-      in
-      List.filter_map vdefs ~f:(process_variable_def ~banned_in_core ~fun_defs ~ban_defs))
+    |> List.dedup_and_sort ~compare:(fun (lhs : (* WTF OCaml? *) vdef) rhs ->
+           Uid.compare lhs.uid rhs.uid)
+  in
+  List.filter_map vdefs ~f:(process_variable_def ~banned_in_core ~fun_defs ~ban_defs)
 
 
 (** Compile our intermediate representation of inlay hint into [InlayHint.t]. *)
@@ -528,8 +528,15 @@ let on_req_inlay_hint (file : Path.t) (range : Range.t)
     provide_inlay_hint_info ~parse_error_ranges range cst
   in
   let inlay_hints = provide_hints_for_lambda_types ~lambda_types ~fun_defs in
+  let@ normalize = ask_normalize in
   let inlay_hints =
     inlay_hints
-    @ provide_hints_for_variables ~banned_in_core ~fun_defs ~ban_defs definitions file
+    @ provide_hints_for_variables
+        ~normalize
+        ~banned_in_core
+        ~fun_defs
+        ~ban_defs
+        definitions
+        file
   in
   return @@ Some (compile_inlay_hints ~syntax ~need_par_defs inlay_hints)

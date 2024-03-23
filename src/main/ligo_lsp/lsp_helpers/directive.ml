@@ -22,6 +22,7 @@ let extract_directives_jsligo (cst : Parsing.Jsligo.CST.t) : Preprocessor.Direct
 
 
 let extract_range_and_target
+    ~(normalize : string -> Path.t)
     ~(relative_to_dir : Path.t)
     ~(mod_res : Preprocessor.ModRes.t option)
     : Preprocessor.Directive.t -> (Range.t * Path.t) option
@@ -37,7 +38,7 @@ let extract_range_and_target
         let inclusion_paths =
           get_dependencies ~file:(Path.to_string relative_to_dir) mod_res
         in
-        Option.map ~f:Path.from_absolute
+        Option.map ~f:normalize
         @@ find_external_file ~file:file_path.value ~inclusion_paths
     in
     Option.map target ~f:(fun target -> range, target)
