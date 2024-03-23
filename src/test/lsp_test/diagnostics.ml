@@ -15,8 +15,11 @@ let get_diagnostics_test ({ file_path; max_number_of_problems } : diagnostics_te
     Option.map max_number_of_problems ~f:(fun max_number_of_problems ->
         { default_test_config with max_number_of_problems })
   in
+  let metadata_download_options =
+    Tzip16_storage.create_download_options ~enabled:true ~timeout_sec:10.
+  in
   let _uri, actual_diagnostics =
-    test_run_session ?config @@ open_file file_path_normalized
+    test_run_session ?config ~metadata_download_options @@ open_file file_path_normalized
   in
   let module Map = Map.Make (Path) in
   let to_map l =
@@ -664,3 +667,72 @@ let%expect_test "Invalid entry point" =
          },
          "severity": 1
        }])] |}]
+
+let%expect_test "TZIP-16 metadata checks: common" =
+  get_diagnostics_test
+    { file_path = "contracts/contract_metadata/metadata_tzip16_check.mligo"
+    ; max_number_of_problems = None
+    };
+  [%expect
+    {|
+    [("../../../../../default/src/test/contracts/contract_metadata/metadata_tzip16_check.mligo",
+      [{
+         "message": "[Compiler stage: metadata_check] Warning: Could not download JSON in URL: https://ipfs.iasfao/iadsfdsfaspfs/QmSBc8QuynU7bArUGtjwCRhZUbJyZQArrczKnqM7hZPtfV",
+         "range": {
+           "end": { "character": 15, "line": 16 },
+           "start": { "character": 4, "line": 16 }
+         },
+         "severity": 2
+       };
+       {
+         "message": "[Compiler stage: metadata_check] Metadata field is not present.",
+         "range": {
+           "end": { "character": 15, "line": 29 },
+           "start": { "character": 4, "line": 29 }
+         },
+         "severity": 2
+       };
+       {
+         "message": "[Compiler stage: metadata_check] Cannot parse big-map metadata.",
+         "range": {
+           "end": { "character": 21, "line": 32 },
+           "start": { "character": 4, "line": 32 }
+         },
+         "severity": 2
+       }])] |}]
+
+let%expect_test "TZIP-16 metadata checks: both plain warning and metadata warning are \
+                 displayed"
+  =
+  get_diagnostics_test
+    { file_path = "contracts/contract_metadata/metadata_tzip16_two_warnings.jsligo"
+    ; max_number_of_problems = None
+    };
+  [%expect
+    {|
+    [("../../../../../default/src/test/contracts/contract_metadata/metadata_tzip16_two_warnings.jsligo",
+      [{
+         "message": "[Compiler stage: abstractor] Toplevel let declaration is silently changed to const declaration.",
+         "range": {
+           "end": { "character": 9, "line": 0 },
+           "start": { "character": 0, "line": 0 }
+         },
+         "severity": 2
+       };
+       {
+         "message": "[Compiler stage: metadata_check] Metadata field is not present.",
+         "range": {
+           "end": { "character": 32, "line": 2 },
+           "start": { "character": 25, "line": 2 }
+         },
+         "severity": 2
+       }])] |}]
+
+(* TODO #2162: enable *)
+(* let%expect_test "TZIP-16 metadata checks: non-computable storages" =
+  get_diagnostics_test
+    { file_path = "contracts/contract_metadata/metadata_tzip16_non_computable.mligo"
+    ; max_number_of_problems = None
+    };
+  [%expect {|
+    To fill! |}] *)

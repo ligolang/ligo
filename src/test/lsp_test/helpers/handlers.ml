@@ -14,7 +14,10 @@ let default_test_config : config =
   }
 
 
-let test_run_session ?(config = default_test_config) (session : 'a Handler.t)
+let test_run_session
+    ?(config = default_test_config)
+    ?(metadata_download_options = `Unspecified)
+    (session : 'a Handler.t)
     : 'a * Diagnostic.t list Path_hashtbl.t
   =
   let mocked_notify_back = Path_hashtbl.create () in
@@ -31,7 +34,7 @@ let test_run_session ?(config = default_test_config) (session : 'a Handler.t)
       ; last_project_dir = ref None
       ; mod_res = ref None
       ; normalize
-      ; metadata_download_options = `Unspecified
+      ; metadata_download_options
       }
       session
   in
