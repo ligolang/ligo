@@ -64,6 +64,23 @@ module Catamorphism = struct
     }
 
 
+  let compose_folds : idle_fold -> idle_fold -> idle_fold =
+   fun lhs rhs ->
+    { expr = (fun x -> rhs.expr (lhs.expr x).fp)
+    ; ty_expr = (fun x -> rhs.ty_expr (lhs.ty_expr x).fp)
+    ; pattern = (fun x -> rhs.pattern (lhs.pattern x).fp)
+    ; statement = (fun x -> rhs.statement (lhs.statement x).fp)
+    ; block = (fun x -> rhs.block (lhs.block x).fp)
+    ; mod_expr = (fun x -> rhs.mod_expr (lhs.mod_expr x).fp)
+    ; instruction = (fun x -> rhs.instruction (lhs.instruction x).fp)
+    ; declaration = (fun x -> rhs.declaration (lhs.declaration x).fp)
+    ; program_entry = (fun x -> rhs.program_entry (lhs.program_entry x).fp)
+    ; program = (fun x -> rhs.program (lhs.program x).fp)
+    ; sig_expr = (fun x -> rhs.sig_expr (lhs.sig_expr x).fp)
+    ; sig_entry = (fun x -> rhs.sig_entry (lhs.sig_entry x).fp)
+    }
+
+
   let rec cata_expr
       : type e t p s b m i d pe prg sgt si.
         f:(e, t, p, s, b, m, i, d, pe, prg, sgt, si) fold -> expr -> e
