@@ -4,7 +4,7 @@
  (instrumentation
   (backend bisect_ppx))
  (preprocess
-  (pps ppx_here ppx_let ppx_jane))
+  (pps ppx_here ppx_let ppx_jane ppx_compare))
  ; For profiling
  ; (preprocess
  ;  (pps ppx_here ppx_let ppx_jane landmarks-ppx --auto))

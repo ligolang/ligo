@@ -1,6 +1,8 @@
 open Ligo_prim
 open Simple_utils
 open Env
+open Env_list
+module Env = Env_list
 module AST = Ast_core
 
 type t = def list LMap.t
@@ -425,6 +427,6 @@ module Of_Ast = struct
     scopes
 end
 
-let inline_scopes : Env.Def.def_map -> t -> Types.inlined_scopes =
+let inline_scopes : Def.def_map -> t -> Types.inlined_scopes =
  fun prg_defs scopes ->
-  scopes |> LMap.map (Env.Def.defs_to_types_defs prg_defs) |> LMap.to_kv_list
+  scopes |> LMap.map (Def.defs_to_types_defs prg_defs) |> LMap.to_kv_list
