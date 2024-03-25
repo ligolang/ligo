@@ -1,0 +1,7 @@
+
+author: heitor.toledo
+description: "\\nThe LSP should now have faster times between keystrokes.\\n\\nThis happens because the LSP would previously calculate all scopes for all points between keystrokes for use in completions. Now, it will do so lazily, only when document symbols or completions for scopes are requested. Moreover, a new algorithm was implemented, that should be much faster.\\n\\nAlso, the LSP would try to normalize paths in a loop for all definitions in case a document symbol or inlay hints request was received. It will now cache those to avoid normalizing paths that were previously normalized, giving a performance boost.\\n\\n"
+merge_request: '3117'
+title: "[#2143] New, faster algorithm for scopes completion, and caching for path normalization"
+type: performance
+            
