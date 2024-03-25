@@ -91,8 +91,8 @@ let compile ~raise:_ =
   let program : _ program_ -> program =
    fun p ->
     let extended =
-      List.fold p ~init:[] ~f:(fun acc pe : program_entry list ->
-          let default = acc @ [ pe ] in
+      List.fold_right p ~init:[] ~f:(fun pe acc : program_entry list ->
+          let default = pe :: acc in
           let type_sum_decl_opt =
             let open Simple_utils.Option in
             let* d = get_pe_declaration pe in
