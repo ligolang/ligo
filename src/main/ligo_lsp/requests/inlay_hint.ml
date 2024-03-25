@@ -413,6 +413,7 @@ let process_variable_def
     ~(banned_in_core : Range.t list)
     ~(fun_defs : fun_def_value LMap.t)
     ~(ban_defs : Range.t list)
+    ~(normalize : string -> Path.t)
     (file : Path.t)
     : Scopes.Types.vdef -> inlay_hint option
   =
@@ -434,9 +435,7 @@ let process_variable_def
     | None ->
       let open Option.Let_syntax in
       let%bind file_range = Loc.get_file range in
-      let%bind () =
-        Option.some_if (Path.equal (Path.from_absolute file_range#file) file) ()
-      in
+      let%bind () = Option.some_if (Path.equal (normalize file_range#file) file) () in
       let file_range = Range.of_region file_range in
       let%map () =
         Option.some_if (not @@ List.exists ban_defs ~f:(Range.intersects file_range)) ()
@@ -481,7 +480,10 @@ let provide_hints_for_variables
     |> List.dedup_and_sort ~compare:(fun (lhs : (* WTF OCaml? *) vdef) rhs ->
            Uid.compare lhs.uid rhs.uid)
   in
-  List.filter_map vdefs ~f:(process_variable_def ~banned_in_core ~fun_defs ~ban_defs file)
+  Files.with_normalized_files ~f:(fun ~normalize ->
+      List.filter_map
+        vdefs
+        ~f:(process_variable_def ~banned_in_core ~fun_defs ~ban_defs ~normalize file))
 
 
 (** Compile our intermediate representation of inlay hint into [InlayHint.t]. *)

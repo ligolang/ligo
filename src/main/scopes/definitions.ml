@@ -518,15 +518,15 @@ module Of_Ast = struct
    fun mvars -> Standalone_signature_or_module (unresolved_path mvars)
 
 
-  and alias_of_mvars : string SMap.t -> Module_var.t list -> alias =
-   fun module_deps mvars ->
+  and alias_of_mvars : Module_var.t list -> alias =
+   fun mvars ->
     let module_path = List.map ~f:mvar_to_id mvars in
     (* The resolved name will be filled later. *)
     { resolve_mod_name = Unresolved_path { module_path } }
 
 
-  and mod_case_of_mvars : string SMap.t -> Module_var.t list -> mod_case =
-   fun module_deps mvars -> Alias (alias_of_mvars module_deps mvars)
+  and mod_case_of_mvars : Module_var.t list -> mod_case =
+   fun mvars -> Alias (alias_of_mvars mvars)
 
 
   and extends_of_declaration : AST.declaration -> extension list -> extension list =
@@ -563,8 +563,8 @@ module Of_Ast = struct
    fun ~defs_of_decls module_deps mod_expr mod_path ->
     match Location.unwrap mod_expr with
     | M_struct decls -> Def (defs_of_decls (decls, Module_field, mod_path) [])
-    | M_variable mod_var -> mod_case_of_mvars module_deps [ mod_var ]
-    | M_module_path mod_path -> mod_case_of_mvars module_deps @@ List.Ne.to_list mod_path
+    | M_variable mod_var -> mod_case_of_mvars [ mod_var ]
+    | M_module_path mod_path -> mod_case_of_mvars @@ List.Ne.to_list mod_path
 
 
   and mod_case_of_signature : string SMap.t -> AST.signature -> Uid.t list -> mod_case =
@@ -630,7 +630,7 @@ module Of_Ast = struct
               ; location = _
               }
             ]
-        } -> `Alias (alias_of_mvars module_deps @@ List.Ne.to_list mod_path)
+        } -> `Alias (alias_of_mvars @@ List.Ne.to_list mod_path)
     | S_sig sig' ->
       let Ast_core.{ items } = Misc.flatten_includes sig' in
       `Implementations
@@ -648,7 +648,7 @@ module Of_Ast = struct
                      %a"
                     AST.PP.signature_expr
                     sig_expr))
-    | S_path mod_path -> `Alias (alias_of_mvars module_deps @@ List.Ne.to_list mod_path)
+    | S_path mod_path -> `Alias (alias_of_mvars @@ List.Ne.to_list mod_path)
 
 
   and implementations_of_sig_expr_from_annotation

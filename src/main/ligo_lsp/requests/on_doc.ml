@@ -160,7 +160,7 @@ let drop_cached_definitions : Path.t -> unit Handler.t =
          ; code
          ; document_version
          ; definitions = _
-         ; scopes = _
+         ; hierarchy = _
          ; potential_tzip16_storages = _
          ; parse_error_ranges = _
          ; lambda_types = _
@@ -207,8 +207,8 @@ let on_doc
 
 
 (** This function checks if the given [Path.t] is cached, and if it's not, will read its
-    contents from the disk and set the cache, setting [None] for definitions and scopes. If
-    the file is cached, it will do nothing.
+    contents from the disk and set the cache, setting [None] for definitions and hierarchy.
+    If the file is cached, it will do nothing.
 
     This function is only for the case when the file is not opened in the editor.
     *)

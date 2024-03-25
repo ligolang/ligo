@@ -1,20 +1,20 @@
-(* open Types *)
-
 open Ligo_prim
 open Simple_utils
 open Env
-module LSet = Types.LSet
-module LMap = Types.LMap
-module Trace = Simple_utils.Trace
 module AST = Ast_core
 
 type t = def list LMap.t
 
+let shadow_defs : def list -> def list =
+  let ( <@ ) = Function.( <@ ) in
+  List.filter_map ~f:List.hd <@ List.sort_and_group ~compare:Def.compare_def_by_name
+
+
 let add : t -> Location.t -> def list -> t =
  fun scopes rhs_range defs ->
   let f : def list option -> def list option = function
-    | None -> Some defs
-    | Some value -> Some (List.rev_append defs value)
+    | None -> Some (shadow_defs defs)
+    | Some value -> Some (shadow_defs @@ List.rev_append defs value)
   in
   LMap.update rhs_range f scopes
 
@@ -413,15 +413,6 @@ module Of_Ast = struct
     scopes, env
 
 
-  let rec shadow_defs : def list -> def list = function
-    | [] -> []
-    | def :: defs ->
-      let shadow_def def' = not @@ Def.equal_def_by_name def def' in
-      def :: shadow_defs (List.filter defs ~f:shadow_def)
-
-
-  let fix_shadowing_in_scopes : t -> t = LMap.map shadow_defs
-
   let declarations ~(env_preload_decls : AST.declaration list) : AST.declaration list -> t
     =
    fun decls ->
@@ -431,7 +422,7 @@ module Of_Ast = struct
       declarations env_preload_decls scopes env (* Preload env with stdlib if provided *)
     in
     let scopes, _ = declarations decls scopes env in
-    fix_shadowing_in_scopes scopes
+    scopes
 end
 
 let inline_scopes : Env.Def.def_map -> t -> Types.inlined_scopes =

@@ -293,24 +293,26 @@ let with_cached_doc
       ; syntax
       ; document_version
       ; definitions
-      ; scopes
+      ; hierarchy
       ; potential_tzip16_storages
       ; parse_error_ranges
       ; lambda_types
       } ->
-    (match definitions, scopes, potential_tzip16_storages with
-    | Some definitions, Some scopes, Some potential_tzip16_storages ->
+    (match definitions, hierarchy, potential_tzip16_storages with
+    | Some definitions, Some hierarchy, Some potential_tzip16_storages ->
+      let@ () = send_debug_msg "Found definitions, hierarchy and TZIP-16 storages" in
       f
         { code
         ; syntax
         ; document_version
         ; definitions
-        ; scopes
+        ; hierarchy
         ; potential_tzip16_storages
         ; parse_error_ranges
         ; lambda_types
         }
     | _ ->
+      let@ () = send_debug_msg "Recalculating caches" in
       let@ last_project_dir = ask_last_project_dir in
       let project_root = !last_project_dir in
       let@ syntax = get_syntax_exn path in
@@ -323,7 +325,7 @@ let with_cached_doc
           ~logger:(fun ~type_ msg -> unlift_IO @@ send_log_msg ~type_ msg)
           path
       in
-      let scopes = Ligo_interface.get_scope ~project_root ~code path in
+      let hierarchy = lazy (Def.Hierarchy.create definitions) in
       let parse_error_ranges =
         List.fold defs_and_diagnostics.errors ~init:[] ~f:(fun acc -> function
           | `Parser_tracer (`Parsing { value = _; region }) ->
@@ -337,7 +339,7 @@ let with_cached_doc
           ; syntax
           ; document_version
           ; definitions = Some definitions
-          ; scopes = Some scopes
+          ; hierarchy = Some hierarchy
           ; potential_tzip16_storages = Some potential_tzip16_storages
           ; parse_error_ranges
           ; lambda_types = defs_and_diagnostics.lambda_types
@@ -364,7 +366,7 @@ let with_cached_doc
         ; syntax
         ; document_version
         ; definitions
-        ; scopes
+        ; hierarchy
         ; potential_tzip16_storages
         ; parse_error_ranges
         ; lambda_types = defs_and_diagnostics.lambda_types

@@ -1,20 +1,6 @@
 open Handler
 open Lsp_helpers
 
-let create_hierarchy : Def.t list -> Def.t Rose.forest =
-  Rose.map_forest ~f:snd
-  <@ Rose.forest_of_list
-     (* See the expect test in [Rose] on why we compare and check for intersection like this. *)
-       ~compare:(fun ((range1 : Range.t), _def1) (range2, _def2) ->
-         let ord = Position.compare range1.start range2.start in
-         if ord = 0 then Position.compare range2.end_ range1.end_ else ord)
-       ~intersects:(fun (range1, _def1) (range2, _def2) ->
-         Position.compare range1.end_ range2.start > 0)
-  <@ List.filter_map ~f:(fun def ->
-         let%map.Option range = Range.of_loc @@ Scopes.Types.get_decl_range def in
-         range, def)
-
-
 let guard_ghost (input : string) : string option =
   Option.some_if (not @@ Parsing.Errors.ErrorWrapper.is_wrapped input) input
 
@@ -205,9 +191,9 @@ let on_req_document_symbol (path : Path.t)
   with_cached_doc path ~default:None
   @@ fun { syntax
          ; code = _
-         ; definitions
+         ; definitions = _
          ; document_version = _
-         ; scopes = _
+         ; hierarchy
          ; parse_error_ranges = _
          ; lambda_types = _
          ; potential_tzip16_storages = _
@@ -215,13 +201,13 @@ let on_req_document_symbol (path : Path.t)
   let@ () =
     send_debug_msg @@ Format.asprintf "On document symbol request on %a" Path.pp path
   in
-  let definitions =
-    Def.filter definitions ~f:(fun def ->
-        match Scopes.Types.get_range def with
-        | File reg -> Path.equal path (Path.from_absolute reg#file)
-        | Virtual _ -> false)
+  let hierarchy =
+    Files.with_normalized_files ~f:(fun ~normalize ->
+        Rose.filter_top_down (force hierarchy) ~f:(fun def ->
+            match Scopes.Types.get_decl_range def with
+            | File region -> Path.equal (normalize region#file) path
+            | Virtual _ -> false))
   in
-  let hierarchy = create_hierarchy definitions in
   return
   @@ Option.map (get_all_symbols_hierarchies syntax hierarchy) ~f:(fun symbols ->
          `DocumentSymbol symbols)

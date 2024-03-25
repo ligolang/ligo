@@ -65,6 +65,18 @@ let forest_of_list ~(compare : 'a -> 'a -> int) ~(intersects : 'a -> 'a -> bool)
   go <@ List.sort ~compare
 
 
+(** Filters the definition hierarchy, but doesn't visit inner children in case the
+    predicate failed for all of the parents. *)
+let rec filter_top_down : f:('a -> bool) -> 'a forest -> 'a forest =
+ fun ~f -> function
+  | [] -> []
+  | Tree ((parent, parents), children) :: ts ->
+    let ts = filter_top_down ~f ts in
+    (match List.filter ~f (parent :: parents) with
+    | [] -> ts
+    | parent :: parents -> Tree ((parent, parents), filter_top_down ~f children) :: ts)
+
+
 let%expect_test "Creates a rose forest out of ranges" =
   (*      0-10
          / |  \
