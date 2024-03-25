@@ -30,7 +30,7 @@ let on_req_completion (pos : Position.t) (path : Path.t)
   @@ fun { definitions
          ; code
          ; syntax
-         ; scopes
+         ; hierarchy
          ; document_version = _
          ; parse_error_ranges = _
          ; potential_tzip16_storages = _
@@ -77,7 +77,7 @@ let on_req_completion (pos : Position.t) (path : Path.t)
         @ completions_without_cst
       | `With_scopes ->
         return
-        @@ Completion_lib.Scope.get_scope_completions input scopes
+        @@ Completion_lib.Scope.get_scope_completions input (force hierarchy)
         @ completions_without_cst)
   in
   return @@ mk_completion_list all_completions

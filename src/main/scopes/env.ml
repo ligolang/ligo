@@ -105,24 +105,23 @@ module Def = struct
     Uid_map.find_opt def_uid prg_defs
 
 
-  (* match find_def_opt new_def prg_defs with
-    | Some _ as ok -> ok
-    | None -> pp Format.err_formatter new_def; None *)
-
   let defs_to_types_defs (prg_defs : def_map) : def list -> Types.def list =
    fun new_defs -> List.filter_map ~f:(to_types_def_opt prg_defs) new_defs
 
 
-  let equal_def_by_name (a : def) (b : def) : bool =
+  let compare_def_by_name (a : def) (b : def) : int =
     let open Types in
     match a, b with
-    | Variable x, Variable y -> String.equal (get_binder_name x) (get_binder_name y)
-    | Type x, Type y -> String.equal (get_type_binder_name x) (get_type_binder_name y)
+    | Variable x, Variable y -> String.compare (get_binder_name x) (get_binder_name y)
+    | Type x, Type y -> String.compare (get_type_binder_name x) (get_type_binder_name y)
     | Module x, Module y ->
-      compare_mod_name (get_mod_binder_name x) (get_mod_binder_name y) = 0
-    | Label (Label (x, _)), Label (Label (y, _)) -> String.equal x y
-    | ( (Variable _ | Type _ | Module _ | Label _)
-      , (Variable _ | Type _ | Module _ | Label _) ) -> false
+      compare_mod_name (get_mod_binder_name x) (get_mod_binder_name y)
+    | Label x, Label y -> Label.T.compare x y
+    | Variable _, _ | Type _, (Module _ | Label _) | Module _, Label _ -> -1
+    | Label _, _ | Module _, (Type _ | Variable _) | Type _, Variable _ -> 1
+
+
+  let equal_def_by_name (a : def) (b : def) : bool = compare_def_by_name a b = 0
 end
 
 type def = Def.t

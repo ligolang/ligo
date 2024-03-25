@@ -223,15 +223,17 @@ and def =
 let compare_mdef (m1 : mdef) (m2 : mdef) : int = Uid.compare m1.uid m2.uid
 let equal_def a b = 0 = compare_def a b
 
-let equal_def_by_name (a : def) (b : def) : bool =
+let compare_def_by_name (a : def) (b : def) : int =
   match a, b with
-  | Variable x, Variable y -> String.equal x.name y.name
-  | Type x, Type y -> String.equal x.name y.name
-  | Module x, Module y -> compare_mod_name x.name y.name = 0
-  | Label x, Label y -> String.equal x.name y.name
-  | (Variable _ | Type _ | Module _ | Label _), (Variable _ | Type _ | Module _ | Label _)
-    -> false
+  | Variable x, Variable y -> String.compare x.name y.name
+  | Type x, Type y -> String.compare x.name y.name
+  | Module x, Module y -> compare_mod_name x.name y.name
+  | Label x, Label y -> String.compare x.name y.name
+  | Variable _, _ | Type _, (Module _ | Label _) | Module _, Label _ -> -1
+  | Label _, _ | Module _, (Type _ | Variable _) | Type _, Variable _ -> 1
 
+
+let equal_def_by_name (a : def) (b : def) : bool = compare_def_by_name a b = 0
 
 let get_def_name = function
   | Variable d -> d.name

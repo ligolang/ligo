@@ -40,7 +40,6 @@ class lsp_server (capability_mode : capability_mode) =
     inherit Linol_lwt.Jsonrpc2.server as super
     method spawn_query_handler = Linol_lwt.spawn
     val mutable config : config = default_config
-    val storage_invalidated : bool ref = ref true
     val mutable client_capabilities : ClientCapabilities.t = ClientCapabilities.create ()
 
     (** Stores the path to the last ligo.json file, if found. *)
@@ -438,6 +437,11 @@ class lsp_server (capability_mode : capability_mode) =
             (match configuration with
             | None | Some false -> IO.return ()
             | Some true ->
+              let* () =
+                new_notify_back#send_log_msg
+                  ~type_:MessageType.Log
+                  "Applying configuration change"
+              in
               (* A soft restriction on number of files for which we can
                  simultaneously update diagnostics - prevents bursts of workload *)
               let max_files_for_diagnostics_update_at_once = 20 in
@@ -540,7 +544,7 @@ class lsp_server (capability_mode : capability_mode) =
             (* Shouldn't happen because [Requests.on_doc] should trigger and populate the
                cache. *)
             | None -> pass
-            | Some { code; syntax; document_version; _ } ->
+            | Some { code; _ } ->
               let last_project_dir = !last_project_dir in
               if Option.equal
                    Path.equal
@@ -548,18 +552,11 @@ class lsp_server (capability_mode : capability_mode) =
                    (Project_root.get_project_root file)
               then pass
               else
-                let@ _ =
-                  set_docs_cache
-                    file
-                    { syntax
-                    ; code
-                    ; document_version
-                    ; definitions = None
-                    ; scopes = None
-                    ; potential_tzip16_storages = None
-                    ; parse_error_ranges = []
-                    ; lambda_types = Ligo_interface.LMap.empty
-                    }
+                let@ () = Requests.drop_cached_definitions file in
+                let@ () =
+                  send_log_msg
+                    ~type_:MessageType.Log
+                    "Project root changed: repopulating cache"
                 in
                 self#on_doc ?changes:None ~version:`Unchanged file code
           in

@@ -47,3 +47,23 @@ let list_library_files (dir : Path.t) (mod_res : Preprocessor.ModRes.t option)
            list_directory ~include_library:true path
            |> List.map ~f:(Filename.concat package_name <@ Path.make_relative path)
            |> return))
+
+
+(** {!Path.from_absolute} is a very expensive function, so we may make a table to hold the
+    known normalized paths as an optimization. Use this instead of calling that function
+    in a loop. Warning: the contents of the normalization are cached, meaning that they
+    won't account for changes in the disk. It is recommended to not persist this table for
+    long operations. *)
+let with_normalized_files (type cont) : f:(normalize:(string -> Path.t) -> cont) -> cont =
+ fun ~f ->
+  let file_normalization_tbl = Hashtbl.create (module String) in
+  f ~normalize:(fun file ->
+      Hashtbl.find_or_add file_normalization_tbl file ~default:(fun () ->
+          Path.from_absolute file))
+
+
+(** Get the normalization table created by !{with_normalized_files}. Warning: the contents
+    of the normalization are cached, meaning that they won't account for changes in the
+    disk. It is recommended to not persist this table for long operations. *)
+let create_normalization : string -> Path.t =
+  with_normalized_files ~f:(fun ~normalize -> normalize)

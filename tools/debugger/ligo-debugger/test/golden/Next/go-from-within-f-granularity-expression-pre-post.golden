@@ -216,11 +216,11 @@ InterpretSnapshot:
       sfLoc: test/contracts/functions-visiting.mligo@4:8-4:10
       sfStack:
         [ StackItem:
-          siLigoDesc: elem x of int in test/contracts/functions-visiting.mligo
-          siValue: 101
-        , StackItem:
           siLigoDesc: elem a of int in test/contracts/functions-visiting.mligo
           siValue: 1
+        , StackItem:
+          siLigoDesc: elem x of int in test/contracts/functions-visiting.mligo
+          siValue: 101
         , StackItem:
           siLigoDesc: elem x2 of int in test/contracts/functions-visiting.mligo
           siValue: 201 ]
@@ -359,17 +359,6 @@ InterpretSnapshot:
       sfLoc: test/contracts/functions-visiting.mligo@14:3-14:30
       sfStack:
         [ StackItem:
-          siLigoDesc: elem s2 of int in test/contracts/functions-visiting.mligo
-          siValue: 1
-        , StackItem:
-          siLigoDesc: elem s of int in test/contracts/functions-visiting.mligo
-          siValue: 0
-        , StackItem:
-          siLigoDesc:
-            elem g of unit -> int in test/contracts/functions-visiting.mligo
-          siValue:
-            { DROP; { { PUSH int 10 }; { PUSH int 10 }; ADD }; {  }; {  } }
-        , StackItem:
           siLigoDesc:
             elem f of int -> int in test/contracts/functions-visiting.mligo
           siValue:
@@ -377,6 +366,17 @@ InterpretSnapshot:
               { { { PUSH int 100 }; { SWAP }; ADD };
                 {  };
                 { { { PUSH int 100 }; { SWAP }; ADD }; {  }; {  } } } }
+        , StackItem:
+          siLigoDesc:
+            elem g of unit -> int in test/contracts/functions-visiting.mligo
+          siValue:
+            { DROP; { { PUSH int 10 }; { PUSH int 10 }; ADD }; {  }; {  } }
+        , StackItem:
+          siLigoDesc: elem s of int in test/contracts/functions-visiting.mligo
+          siValue: 0
+        , StackItem:
+          siLigoDesc: elem s2 of int in test/contracts/functions-visiting.mligo
+          siValue: 1
         , StackItem:
           siLigoDesc: elem s3 of int in test/contracts/functions-visiting.mligo
           siValue: 221 ] ]
@@ -388,17 +388,6 @@ InterpretSnapshot:
       sfLoc: test/contracts/functions-visiting.mligo@14:4-14:29
       sfStack:
         [ StackItem:
-          siLigoDesc: elem s2 of int in test/contracts/functions-visiting.mligo
-          siValue: 1
-        , StackItem:
-          siLigoDesc: elem s of int in test/contracts/functions-visiting.mligo
-          siValue: 0
-        , StackItem:
-          siLigoDesc:
-            elem g of unit -> int in test/contracts/functions-visiting.mligo
-          siValue:
-            { DROP; { { PUSH int 10 }; { PUSH int 10 }; ADD }; {  }; {  } }
-        , StackItem:
           siLigoDesc:
             elem f of int -> int in test/contracts/functions-visiting.mligo
           siValue:
@@ -406,6 +395,17 @@ InterpretSnapshot:
               { { { PUSH int 100 }; { SWAP }; ADD };
                 {  };
                 { { { PUSH int 100 }; { SWAP }; ADD }; {  }; {  } } } }
+        , StackItem:
+          siLigoDesc:
+            elem g of unit -> int in test/contracts/functions-visiting.mligo
+          siValue:
+            { DROP; { { PUSH int 10 }; { PUSH int 10 }; ADD }; {  }; {  } }
+        , StackItem:
+          siLigoDesc: elem s of int in test/contracts/functions-visiting.mligo
+          siValue: 0
+        , StackItem:
+          siLigoDesc: elem s2 of int in test/contracts/functions-visiting.mligo
+          siValue: 1
         , StackItem:
           siLigoDesc: elem s3 of int in test/contracts/functions-visiting.mligo
           siValue: 221 ] ]
@@ -417,17 +417,6 @@ InterpretSnapshot:
       sfLoc: test/contracts/functions-visiting.mligo@14:4-14:25
       sfStack:
         [ StackItem:
-          siLigoDesc: elem s2 of int in test/contracts/functions-visiting.mligo
-          siValue: 1
-        , StackItem:
-          siLigoDesc: elem s of int in test/contracts/functions-visiting.mligo
-          siValue: 0
-        , StackItem:
-          siLigoDesc:
-            elem g of unit -> int in test/contracts/functions-visiting.mligo
-          siValue:
-            { DROP; { { PUSH int 10 }; { PUSH int 10 }; ADD }; {  }; {  } }
-        , StackItem:
           siLigoDesc:
             elem f of int -> int in test/contracts/functions-visiting.mligo
           siValue:
@@ -435,6 +424,17 @@ InterpretSnapshot:
               { { { PUSH int 100 }; { SWAP }; ADD };
                 {  };
                 { { { PUSH int 100 }; { SWAP }; ADD }; {  }; {  } } } }
+        , StackItem:
+          siLigoDesc:
+            elem g of unit -> int in test/contracts/functions-visiting.mligo
+          siValue:
+            { DROP; { { PUSH int 10 }; { PUSH int 10 }; ADD }; {  }; {  } }
+        , StackItem:
+          siLigoDesc: elem s of int in test/contracts/functions-visiting.mligo
+          siValue: 0
+        , StackItem:
+          siLigoDesc: elem s2 of int in test/contracts/functions-visiting.mligo
+          siValue: 1
         , StackItem:
           siLigoDesc: elem s3 of int in test/contracts/functions-visiting.mligo
           siValue: 221 ] ]
@@ -446,17 +446,6 @@ InterpretSnapshot:
       sfLoc: test/contracts/functions-visiting.mligo@14:4-14:25
       sfStack:
         [ StackItem:
-          siLigoDesc: elem s2 of int in test/contracts/functions-visiting.mligo
-          siValue: 1
-        , StackItem:
-          siLigoDesc: elem s of int in test/contracts/functions-visiting.mligo
-          siValue: 0
-        , StackItem:
-          siLigoDesc:
-            elem g of unit -> int in test/contracts/functions-visiting.mligo
-          siValue:
-            { DROP; { { PUSH int 10 }; { PUSH int 10 }; ADD }; {  }; {  } }
-        , StackItem:
           siLigoDesc:
             elem f of int -> int in test/contracts/functions-visiting.mligo
           siValue:
@@ -464,6 +453,17 @@ InterpretSnapshot:
               { { { PUSH int 100 }; { SWAP }; ADD };
                 {  };
                 { { { PUSH int 100 }; { SWAP }; ADD }; {  }; {  } } } }
+        , StackItem:
+          siLigoDesc:
+            elem g of unit -> int in test/contracts/functions-visiting.mligo
+          siValue:
+            { DROP; { { PUSH int 10 }; { PUSH int 10 }; ADD }; {  }; {  } }
+        , StackItem:
+          siLigoDesc: elem s of int in test/contracts/functions-visiting.mligo
+          siValue: 0
+        , StackItem:
+          siLigoDesc: elem s2 of int in test/contracts/functions-visiting.mligo
+          siValue: 1
         , StackItem:
           siLigoDesc: elem s3 of int in test/contracts/functions-visiting.mligo
           siValue: 221 ] ]
@@ -476,17 +476,6 @@ InterpretSnapshot:
       sfLoc: test/contracts/functions-visiting.mligo@14:4-14:29
       sfStack:
         [ StackItem:
-          siLigoDesc: elem s2 of int in test/contracts/functions-visiting.mligo
-          siValue: 1
-        , StackItem:
-          siLigoDesc: elem s of int in test/contracts/functions-visiting.mligo
-          siValue: 0
-        , StackItem:
-          siLigoDesc:
-            elem g of unit -> int in test/contracts/functions-visiting.mligo
-          siValue:
-            { DROP; { { PUSH int 10 }; { PUSH int 10 }; ADD }; {  }; {  } }
-        , StackItem:
           siLigoDesc:
             elem f of int -> int in test/contracts/functions-visiting.mligo
           siValue:
@@ -494,6 +483,17 @@ InterpretSnapshot:
               { { { PUSH int 100 }; { SWAP }; ADD };
                 {  };
                 { { { PUSH int 100 }; { SWAP }; ADD }; {  }; {  } } } }
+        , StackItem:
+          siLigoDesc:
+            elem g of unit -> int in test/contracts/functions-visiting.mligo
+          siValue:
+            { DROP; { { PUSH int 10 }; { PUSH int 10 }; ADD }; {  }; {  } }
+        , StackItem:
+          siLigoDesc: elem s of int in test/contracts/functions-visiting.mligo
+          siValue: 0
+        , StackItem:
+          siLigoDesc: elem s2 of int in test/contracts/functions-visiting.mligo
+          siValue: 1
         , StackItem:
           siLigoDesc: elem s3 of int in test/contracts/functions-visiting.mligo
           siValue: 221 ] ]

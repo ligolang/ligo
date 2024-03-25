@@ -1,6 +1,4 @@
-module LMap = Types.LMap
-
-type t = Env.def list LMap.t
+type t = Env.def list Types.LMap.t
 
 module Of_Ast : sig
   val declarations

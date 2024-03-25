@@ -501,6 +501,11 @@ InterpretSnapshot:
       sfStack:
         [ StackItem:
           siLigoDesc:
+            elem bar of int -> int -> int in test/contracts/local-function-assignments.mligo
+          siValue:
+            { {  }; UNPAIR; {  }; {  }; SWAP; {  }; { {  }; { SWAP }; SUB } }
+        , StackItem:
+          siLigoDesc:
             elem baz of int -> (int * int) -> int in test/contracts/local-function-assignments.mligo
           siValue:
             { {  };
@@ -520,11 +525,6 @@ InterpretSnapshot:
               SWAP;
               {  };
               { { {  }; { SWAP }; MUL }; { SWAP }; ADD } }
-        , StackItem:
-          siLigoDesc:
-            elem bar of int -> int -> int in test/contracts/local-function-assignments.mligo
-          siValue:
-            { {  }; UNPAIR; {  }; {  }; SWAP; {  }; { {  }; { SWAP }; SUB } }
         , StackItem:
           siLigoDesc:
             elem foo of (int * int) -> int in test/contracts/local-function-assignments.mligo
