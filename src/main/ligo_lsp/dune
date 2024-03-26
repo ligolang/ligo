@@ -2,7 +2,7 @@
  (name ligo_lsp)
  (public_name ligo.ligo_lsp)
  (flags
-  (:standard -w +A-4-23-40-42-44-70))
+  (:standard -alert @all -w +A-4-23-40-42-44-70))
  (instrumentation
   (backend bisect_ppx))
  (libraries

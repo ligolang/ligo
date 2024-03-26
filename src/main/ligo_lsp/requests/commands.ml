@@ -134,7 +134,7 @@ module Ligo_lsp_commands = struct
      public, let's pass each command argument as a separate simple list element.
      *)
 
-  let add_tzip16_attr : storage_var_position Command.t =
+  let add_tzip16_attr ~(normalize : string -> Path.t) : storage_var_position Command.t =
     { id = "add-tzip16-addr"
     ; args_encoder =
         (fun args ->
@@ -145,24 +145,25 @@ module Ligo_lsp_commands = struct
     ; args_decoder =
         (function
         | [ `String p; `Int l; `Int v ] ->
-          Ok { file = Path.from_absolute p; line = l; document_version = v }
+          Ok { file = normalize p; line = l; document_version = v }
         | _ -> Error "Invalid argument types")
     }
 
 
-  let match_command
+  let match_command ~(normalize : string -> Path.t)
       :  command:string -> arguments:Yojson.Safe.t list
       -> Yojson.Safe.t handler Command.Match.or_error
     =
     let open Command.Match in
-    create_matcher [ arm ~command:add_tzip16_attr ~handler:execute_add_tzip16_attr ]
+    create_matcher
+      [ arm ~command:(add_tzip16_attr ~normalize) ~handler:execute_add_tzip16_attr ]
 end
 
-let on_execute_command ~(command : string) ?(arguments : Yojson.Safe.t list option) ()
+let on_execute_command ~(command : string) ?(arguments : Yojson.Safe.t list = []) ()
     : Yojson.Safe.t handler
   =
-  let arguments = Option.value arguments ~default:[] in
-  match Ligo_lsp_commands.match_command ~command ~arguments with
+  let@ normalize = ask_normalize in
+  match Ligo_lsp_commands.match_command ~normalize ~command ~arguments with
   | Ok action -> action
   | Unknown_command ->
     let@ () =

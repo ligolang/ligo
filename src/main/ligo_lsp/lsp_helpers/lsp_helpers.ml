@@ -188,13 +188,19 @@ module DiagnosticSeverity = struct
   let testable = Alcotest.testable pp eq
 end
 
+module DidChangeWatchedFilesRegistrationOptions =
+  Lsp.Types.DidChangeWatchedFilesRegistrationOptions
+
 module DocumentLinkOptions = Lsp.Types.DocumentLinkOptions
 module DocumentSymbolOptions = Lsp.Types.DocumentSymbolOptions
 module ExecuteCommandOptions = Lsp.Types.ExecuteCommandOptions
+module FileChangeType = Lsp.Types.FileChangeType
+module FileEvent = Lsp.Types.FileEvent
 module FileOperationFilter = Lsp.Types.FileOperationFilter
 module FileOperationOptions = Lsp.Types.FileOperationOptions
 module FileOperationPattern = Lsp.Types.FileOperationPattern
 module FileOperationRegistrationOptions = Lsp.Types.FileOperationRegistrationOptions
+module FileSystemWatcher = Lsp.Types.FileSystemWatcher
 module FoldingRangeKind = Lsp.Types.FoldingRangeKind
 module Hover = Lsp.Types.Hover
 module InitializeParams = Lsp.Types.InitializeParams

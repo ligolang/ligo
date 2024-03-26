@@ -39,8 +39,10 @@ let on_req_completion (pos : Position.t) (path : Path.t)
   let keyword_completions = Completion_lib.Keywords.get_keyword_completions syntax in
   let project_root = Project_root.get_project_root path in
   let@ mod_res = ask_mod_res in
+  let@ normalize = ask_normalize in
   let files =
     Completion_lib.Files.get_files_for_completions
+      ~normalize
       ~pos
       ~code
       ~current_file:path
@@ -57,7 +59,7 @@ let on_req_completion (pos : Position.t) (path : Path.t)
   let input : Completion_lib.Common.input_d =
     Completion_lib.Common.mk_input_d ~cst ~path ~syntax ~definitions ~pos
   in
-  let field_completions = Completion_lib.Fields.get_fields_completions input in
+  let field_completions = Completion_lib.Fields.get_fields_completions ~normalize input in
   let@ all_completions =
     (* If we are completing a record or module field, there is no need to also
        suggest scopes or keywords. *)
@@ -70,6 +72,7 @@ let on_req_completion (pos : Position.t) (path : Path.t)
         return
         @@ Completion_lib.Common.nub_sort_items
              (Completion_lib.Common.defs_to_completion_items
+                ~normalize
                 Scope
                 path
                 syntax
@@ -77,7 +80,7 @@ let on_req_completion (pos : Position.t) (path : Path.t)
         @ completions_without_cst
       | `With_scopes ->
         return
-        @@ Completion_lib.Scope.get_scope_completions input (force hierarchy)
+        @@ Completion_lib.Scope.get_scope_completions ~normalize input (force hierarchy)
         @ completions_without_cst)
   in
   return @@ mk_completion_list all_completions

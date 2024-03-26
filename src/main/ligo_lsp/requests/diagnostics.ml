@@ -68,7 +68,7 @@ let filter_diagnostics : Main_errors.all list -> Main_errors.all list =
 
 
 (** Extract all errors and warnings for the given scopes and collect them in a list. *)
-let get_diagnostics (current_path : Path.t)
+let get_diagnostics ~(normalize : string -> Path.t) (current_path : Path.t)
     : Ligo_interface.defs_and_diagnostics -> simple_diagnostic list
   =
  fun { errors
@@ -78,7 +78,7 @@ let get_diagnostics (current_path : Path.t)
      ; lambda_types = _
      } ->
   let mk_diag ~stage ~range ~file ~message ~severity =
-    let location = Def.Loc_in_file.{ path = Path.from_absolute file; range } in
+    let location = Def.Loc_in_file.{ path = normalize file; range } in
     Some { message; severity; location; stage }
   in
   let extract_error_information : Main_errors.all -> simple_diagnostic list =

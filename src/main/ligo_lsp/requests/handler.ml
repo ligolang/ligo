@@ -54,6 +54,7 @@ type handler_env =
   ; docs_cache : Docs_cache.t
   ; last_project_dir : Path.t option ref
   ; mod_res : Preprocessor.ModRes.t option ref
+  ; normalize : string -> Path.t
   }
 
 (** Handler monad : allows sending messages to user and reading docs cache *)
@@ -106,6 +107,8 @@ let ask_last_project_dir : Path.t option ref Handler.t =
 let ask_mod_res : Preprocessor.ModRes.t option ref Handler.t =
   fmap (fun x -> x.mod_res) ask
 
+
+let ask_normalize : (string -> Path.t) Handler.t = fmap (fun x -> x.normalize) ask
 
 let set_docs_cache (path : Path.t) (data : Ligo_interface.unprepared_file_data)
     : unit Handler.t
@@ -209,10 +212,11 @@ let send_diagnostic (uri : DocumentUri.t) (s : Diagnostic.t list) : unit Handler
     | Some old_uri -> nb#set_uri old_uri);
     pass
   | Mock diagnostics ->
+    let@ normalize = ask_normalize in
     return
       (Path_hashtbl.update
          diagnostics
-         (DocumentUri.to_path uri)
+         (DocumentUri.to_path ~normalize uri)
          ~f:(Option.value_map ~default:s ~f:(( @ ) s)))
 
 
@@ -325,7 +329,8 @@ let with_cached_doc
           ~logger:(fun ~type_ msg -> unlift_IO @@ send_log_msg ~type_ msg)
           path
       in
-      let hierarchy = lazy (Def.Hierarchy.create definitions) in
+      let@ normalize = ask_normalize in
+      let hierarchy = lazy (Def.Hierarchy.create ~normalize definitions) in
       let parse_error_ranges =
         List.fold defs_and_diagnostics.errors ~init:[] ~f:(fun acc -> function
           | `Parser_tracer (`Parsing { value = _; region }) ->
@@ -347,7 +352,9 @@ let with_cached_doc
       in
       let@ max_number_of_problems = fmap (fun x -> x.max_number_of_problems) ask_config in
       let diags_by_file =
-        let simple_diags = Diagnostics.get_diagnostics path defs_and_diagnostics in
+        let simple_diags =
+          Diagnostics.get_diagnostics ~normalize path defs_and_diagnostics
+        in
         Diagnostics.partition_simple_diagnostics
           path
           (Some max_number_of_problems)

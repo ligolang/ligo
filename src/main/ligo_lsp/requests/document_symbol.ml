@@ -201,12 +201,12 @@ let on_req_document_symbol (path : Path.t)
   let@ () =
     send_debug_msg @@ Format.asprintf "On document symbol request on %a" Path.pp path
   in
+  let@ normalize = ask_normalize in
   let hierarchy =
-    Files.with_normalized_files ~f:(fun ~normalize ->
-        Rose.filter_top_down (force hierarchy) ~f:(fun def ->
-            match Scopes.Types.get_decl_range def with
-            | File region -> Path.equal (normalize region#file) path
-            | Virtual _ -> false))
+    Rose.filter_top_down (force hierarchy) ~f:(fun def ->
+        match Scopes.Types.get_decl_range def with
+        | File region -> Path.equal (normalize region#file) path
+        | Virtual _ -> false)
   in
   return
   @@ Option.map (get_all_symbols_hierarchies syntax hierarchy) ~f:(fun symbols ->
