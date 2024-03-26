@@ -1839,7 +1839,7 @@ module String = struct
     the list `list`, from left to right. *)
   let concats (list: string list) : string =
     (* TODO: Remove constant CONCATS. *)
-    List.fold_right (uncurry concat) list ""
+    [%michelson ({| {CONCAT} |} list : string)]
 
   (** display-only-for-cameligo
     The call `sub index len str` is the substring of string `str`
@@ -1915,7 +1915,7 @@ module Bytes = struct
     sequences in the list `list`, from left to right. *)
   let concats (list: bytes list) : bytes =
     (* TODO: Remove constant CONCATS. *)
-    List.fold_right (uncurry concat) list 0x
+    [%michelson ({| {CONCAT} |} list : bytes)]
 
   (** display-only-for-cameligo
     The call `sub index len bytes` is the subsequence of bytes
