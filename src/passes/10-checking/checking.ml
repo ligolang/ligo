@@ -493,7 +493,12 @@ let rec check_expression (expr : I.expression) (type_ : Type.t)
       record
       |> Map.mapi ~f:(fun ~key:label ~data:expr ->
              (* Invariant: [Map.key_set record = Map.key_set row.fields]  *)
-             let type_ = Map.find_exn row.fields label in
+             let%bind type_ =
+               Error_recovery.raise_or_use_default_opt
+                 ~error:(unbound_label_edge_case record label row)
+                 ~default:Error_recovery.wildcard_type
+                 (Map.find row.fields label)
+             in
              check expr type_)
       |> all_lmap
     in
