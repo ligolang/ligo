@@ -676,8 +676,18 @@ let project_root =
   let spec = optional file_type in
   let spec =
     map_flag spec ~f:(function
-        | None -> Cli_helpers.find_project_root ()
-        | Some x -> Some x)
+        | None ->
+          let v =
+            Lsp_helpers.Path.(
+              Option.map
+                ~f:to_string
+                (Lsp_helpers.Project_root.get_project_root_from_dir @@ from_relative "."))
+          in
+          Analytics.set_project_root v;
+          v
+        | Some x ->
+          Analytics.set_project_root (Some x);
+          Some x)
   in
   flag ~doc name spec
 

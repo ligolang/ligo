@@ -4,6 +4,25 @@ open Prometheus
 open Core
 open Compiler_options.Raw_options
 
+(* dirty, but simple *)
+let project_root : string option ref = ref None
+let set_project_root : string option -> unit = fun s -> project_root := s
+
+let dot_ligo rest =
+  let home =
+    match Sys.getenv "HOME" with
+    | Some v -> v
+    | None ->
+      (match Sys.getenv "USERPROFILE" with
+      | Some v -> v
+      | None -> "")
+  in
+  (match !project_root with
+  | None -> home ^ "/.ligo"
+  | Some x -> x)
+  ^/ rest
+
+
 (* Types *)
 type environment =
   | Ci
@@ -47,15 +66,6 @@ let is_skip_analytics_through_env_var =
   | None -> false
 
 
-let get_home =
-  match Sys.getenv "HOME" with
-  | Some v -> v
-  | None ->
-    (match Sys.getenv "USERPROFILE" with
-    | Some v -> v
-    | None -> "")
-
-
 let current_process_is_in_docker =
   match Sys.getenv "DOCKER_EXECUTION" with
   | Some _value -> true
@@ -91,7 +101,7 @@ let registry =
 let term_acceptance_filepath =
   if current_process_is_in_docker
   then ".ligo/term_acceptance"
-  else get_home ^ "/.ligo/term_acceptance"
+  else dot_ligo "term_acceptance"
 
 
 let line_separator = if String.equal Sys.os_type "Win32" then "\r\n" else "\n"
@@ -287,13 +297,13 @@ let get_user_id () =
   let user_id =
     if current_process_is_in_docker
     then "docker"
-    else get_or_create_id (get_home ^ "/.ligo/user_id")
+    else get_or_create_id (dot_ligo "user_id")
   in
   user_id
 
 
 (* Repository id *)
-let get_repository_id () = get_or_create_id ".ligo/repository_id"
+let get_repository_id () = get_or_create_id (dot_ligo "repository_id")
 
 (* Analytics *)
 let set ~gauge_group ~labels ~value =

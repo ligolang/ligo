@@ -15,8 +15,6 @@ module Checksum : sig
   val check_integrity : string -> expected:string -> (unit, error) result
 end
 
-val find_project_root : unit -> string option
-
 type return =
   | Done
   | Compileur_Error
