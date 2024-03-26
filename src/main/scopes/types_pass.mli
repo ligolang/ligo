@@ -6,16 +6,16 @@ type t =
   ; label_cases : Ast_core.ty_expr LMap.t
   ; lambda_cases : Ast_typed.ty_expr LMap.t
   ; module_signatures : Types.signature_case LMap.t
-  ; module_env : Env.t
+  ; module_env : Env.Env_map.t
   }
 
-val empty : Env.t -> t
+val empty : Env.Env_map.t -> t
 
 val resolve
   :  raise:(Main_errors.all, Main_warnings.all) Trace.raise
   -> options:Compiler_options.middle_end
   -> stdlib_decls:Ast_typed.program
-  -> module_env:Env.t
+  -> module_env:Env.Env_map.t
   -> Ast_core.program
   -> t * Ast_typed.program
 

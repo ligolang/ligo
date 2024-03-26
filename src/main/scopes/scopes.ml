@@ -80,7 +80,11 @@ let run
       let stdlib_decls, stdlib_core = stdlib in
       let stdlib_core_types =
         Types_pass.(
-          Of_Ast_core.program ~raise (empty Env.empty) stdlib_decls.pr_sig stdlib_core)
+          Of_Ast_core.program
+            ~raise
+            (empty Env.Env_map.empty)
+            stdlib_decls.pr_sig
+            stdlib_core)
       in
       ( stdlib_decls
       , stdlib_core
@@ -94,7 +98,7 @@ let run
     then
       Tuple2.map_snd ~f:Option.some
       @@ Types_pass.resolve ~raise ~options ~stdlib_decls ~module_env:env prg
-    else Types_pass.empty Env.empty, None
+    else Types_pass.empty Env.Env_map.empty, None
   in
   let mangled_uids, defs = Definitions.Of_Ast.definitions prg module_deps stdlib_defs in
   let definitions =

@@ -3,6 +3,7 @@ open Ligo_prim
 open Types
 module LMap = Types.LMap
 module Pattern = Ast_typed.Pattern
+module Env = Env.Env_map
 
 type t =
   { type_cases : type_case LMap.t
@@ -154,7 +155,7 @@ let lookup_signature : Location.t -> t -> signature_case option =
 
 let resolve_module_path : Module_var.t Types.List.Ne.t -> t -> Module_var.t option =
  fun path { module_env; _ } ->
-  let defs = module_env.avail_defs @ module_env.parent in
+  let defs = Env.union_defs module_env.avail_defs module_env.parent in
   let mmap = module_env.module_map in
   Option.map ~f:(fun (_, resolved, _) -> resolved) (Env.resolve_mpath path defs mmap)
 

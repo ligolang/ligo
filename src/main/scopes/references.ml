@@ -5,6 +5,8 @@ module AST = Ast_core
 module LSet = Types.LSet
 module LMap = Types.LMap
 open Env
+open Env_map
+module Env = Env_map
 
 (* --------------------------- Module usage --------------------------------- *)
 
@@ -84,7 +86,7 @@ module References = struct
       ~default:refs
       (let open Option.Let_syntax in
       let%map orig_type = Env.lookup_tvar_opt env tvar in
-      let t_loc = Env.Def.get_location orig_type in
+      let t_loc = Def.get_location orig_type in
       map_tv
         (LMap.update t_loc (fun lmap ->
              let lmap = Option.value ~default:Label.Map.empty lmap in
@@ -210,7 +212,12 @@ module References = struct
     | Some (_orig, defs) ->
       update_element_reference
         element
-        { parent = []; avail_defs = defs; module_map; parent_mod = Some mv; label_types }
+        { parent = Env.empty_defs
+        ; avail_defs = defs
+        ; module_map
+        ; parent_mod = Some mv
+        ; label_types
+        }
 
 
   (** [add_maccess_vvar] updates references of a module accessed value/var *)
@@ -275,7 +282,7 @@ let resolve_mpath
     let input_loc = Module_var.get_location input in
     (real, `Usage input_loc) :: acc
   in
-  let defs = env.avail_defs @ env.parent in
+  let defs = Env.union_defs env.avail_defs env.parent in
   let mmap = env.module_map in
   let acc, m_opt = Env.fold_resolve_mpath mvs defs mmap ~init ~f in
   match m_opt with
@@ -529,7 +536,11 @@ and module_expression
  fun parent_mod me refs env ->
   (* Move [avail_defs] to [parent] before finding [references] in module_expr *)
   let env =
-    { env with avail_defs = []; parent = env.avail_defs @ env.parent; parent_mod }
+    { env with
+      avail_defs = Env.empty_defs
+    ; parent = Env.union_defs env.avail_defs env.parent
+    ; parent_mod
+    }
   in
   let refs, defs_or_alias_opt, env =
     match me.wrap_content with
@@ -560,7 +571,12 @@ and signature_expression
      Note: I guess we still need to add the module names as references, and for
      signatures, we need to add sig items as references. And for both, we need to link the
      definitions with the references. *)
-  let env = { env with avail_defs = []; parent = env.avail_defs @ env.parent } in
+  let env =
+    { env with
+      avail_defs = Env.empty_defs
+    ; parent = Env.union_defs env.avail_defs env.parent
+    }
+  in
   let refs, alias_opt, env =
     match me.wrap_content with
     | S_sig sig' ->

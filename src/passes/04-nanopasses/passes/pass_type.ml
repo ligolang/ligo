@@ -1,12 +1,9 @@
 open Ast_unified
 open Simple_utils.Trace
+open Simple_utils.Function
 include Morphing
 
-type pass =
-  { name : string
-  ; morphing : morphing
-  }
-
+type pass = { morphing : morphing }
 type raise_t = (Errors.t, Main_warnings.all) raise
 
 module type T = sig
@@ -48,21 +45,54 @@ end = struct
   let instruction x = x.instruction
 end
 
+type pass_direction =
+  | Compile
+  | Decompile
+
 let process_name =
   (* we use __MODULE__ .. can be a bit incovenient as a name to use with CLI so we process it a bit *)
   let open Simple_utils.Function in
   String.lowercase <@ String.substr_replace_all ~pattern:"Passes__" ~with_:""
 
 
-let pass_of_module ~raise (module P : T) : pass * bool =
-  let name = process_name P.name in
-  let morphing =
-    Morphing.morph
-      ~compile:(P.compile ~raise)
-      ~decompile:(P.decompile ~raise)
-      ~reduction:(P.reduction ~raise)
+type pre_morphing =
+  { pass : pass_kind
+  ; reduction : Iter.iter
+  }
+
+let rec combine_pre_morphings : pre_morphing list -> pre_morphing list = function
+  | [] -> []
+  | [ last ] -> [ last ]
+  | lhs :: rhs :: others ->
+    (match Morphing.combine_pass_kinds lhs.pass rhs.pass with
+    | None -> lhs :: combine_pre_morphings (rhs :: others)
+    | Some combined_pass ->
+      let combined_reduction = Iter.combine_iteration [ lhs.reduction; rhs.reduction ] in
+      combine_pre_morphings
+        ({ pass = combined_pass; reduction = combined_reduction } :: others))
+
+
+let pass_of_module ({ pass; reduction } : pre_morphing) : pass =
+  let morphing = Morphing.morph ~pass ~reduction in
+  { morphing }
+
+
+let passes_of_modules ~raise ~pass_direction (modules : (module T) list) : pass list =
+  let pick_pass (module P : T) =
+    match pass_direction with
+    | Compile -> P.compile ~raise
+    | Decompile -> P.decompile ~raise
   in
-  { name; morphing }, P.is_enabled ()
+  let pre_morphings =
+    List.filter_map
+      ~f:(fun (module P) ->
+        Option.some_if
+          (P.is_enabled ())
+          { pass = pick_pass (module P); reduction = P.reduction ~raise })
+      modules
+  in
+  let combined_pre_morphings = combine_pre_morphings pre_morphings in
+  List.map ~f:pass_of_module combined_pre_morphings
 
 
 (* returns the pass name at which nanopass execution should stop and
@@ -77,13 +107,22 @@ let partial_pass_execution_from_name stop =
   | _ -> false, String.lowercase stop
 
 
-let rec select_passes included name passes =
-  match passes with
+let rec select_sub_passes included name : (module T) list -> (module T) list * bool
+  = function
+  | [] -> [], false
+  | (module P) :: tl ->
+    if String.equal name (process_name P.name)
+    then if included then [ (module P) ], true else [], true
+    else
+      Tuple2.map_fst ~f:(List.cons (module P : T)) @@ select_sub_passes included name tl
+
+
+let rec select_passes included name : (module T) list list -> (module T) list list
+  = function
   | [] -> []
-  | pass :: tl ->
-    if String.equal name (fst pass).name
-    then if included then [ pass ] else []
-    else pass :: select_passes included name tl
+  | sub_passes :: tl ->
+    let selected, found = select_sub_passes included name sub_passes in
+    if found then [ selected ] else selected :: select_passes included name tl
 
 
 (* executes a pass and check combined reductions *)
@@ -91,52 +130,63 @@ let compile_with_passes : type a. a -> a sub_pass list -> a =
  fun prg passes ->
   let f : a * a dyn_reduction_check list -> a sub_pass -> a * a dyn_reduction_check list =
    fun (prg, checks) pass ->
-    let prg = pass.forward prg in
+    let prg = pass.transformation prg in
     (* checking all the reductions so far *)
-    let checks = pass.forward_check :: checks in
-    (combine_checks checks) prg;
+    let checks = pass.transformation_check :: checks in
     prg, checks
   in
-  let prg, _ = List.fold passes ~init:(prg, []) ~f in
+  let prg, checks = List.fold passes ~init:(prg, []) ~f in
+  (combine_checks checks) prg;
   prg
 
 
-let filter_before (passes : (pass * bool) list) stop_before =
+let filter_before (passes : (module T) list list) stop_before : (module T) list list =
   let included, stop = partial_pass_execution_from_name stop_before in
-  if not (List.exists passes ~f:(fun (pass, _) -> String.equal stop pass.name))
+  let all_passes = List.concat passes in
+  if not
+       (List.exists all_passes ~f:(fun (module P) ->
+            String.equal stop (process_name P.name)))
   then failwith "No pass with the specified name";
-  if List.exists passes ~f:(fun (pass, enabled) ->
-         String.equal stop pass.name && not enabled)
+  if List.exists all_passes ~f:(fun (module P) ->
+         String.equal stop (process_name P.name) && not (P.is_enabled ()))
   then failwith "A pass exist with the specified name but isn't enabled";
   select_passes included stop passes
 
 
 let decompile_passes
     : type a.
-      raise:raise_t -> ?stop_before:_ -> sort:a Selector.t -> (module T) list -> a -> a
+      raise:raise_t
+      -> ?stop_before:_
+      -> sort:a Selector.t
+      -> (module T) list list
+      -> a
+      -> a
   =
  fun ~raise ?stop_before ~sort passes value ->
   passes
   |> List.rev
-  |> List.map ~f:(pass_of_module ~raise)
   |> fun default ->
   Option.value_map stop_before ~default ~f:(filter_before default)
-  |> List.filter_map ~f:(fun (pass, enabled) -> if enabled then Some pass else None)
+  |> List.concat_map ~f:(passes_of_modules ~pass_direction:Decompile ~raise <@ List.rev)
   |> List.map ~f:(fun (p : pass) -> p.morphing)
   |> List.map ~f:(Selector.select sort)
-  |> List.fold ~init:value ~f:(fun prg pass -> pass.backward prg)
+  |> List.fold ~init:value ~f:(fun prg pass -> pass.transformation prg)
 
 
 let compile_passes
     : type a.
-      raise:raise_t -> ?stop_before:_ -> sort:a Selector.t -> (module T) list -> a -> a
+      raise:raise_t
+      -> ?stop_before:_
+      -> sort:a Selector.t
+      -> (module T) list list
+      -> a
+      -> a
   =
  fun ~raise ?stop_before ~sort passes prg ->
   passes
-  |> List.map ~f:(pass_of_module ~raise)
   |> fun default ->
   Option.value_map stop_before ~default ~f:(filter_before default)
-  |> List.filter_map ~f:(fun (pass, enabled) -> if enabled then Some pass else None)
+  |> List.concat_map ~f:(passes_of_modules ~pass_direction:Compile ~raise)
   |> List.map ~f:(fun (p : pass) -> p.morphing)
   |> List.map ~f:(Selector.select sort)
   |> compile_with_passes prg

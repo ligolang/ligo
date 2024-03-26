@@ -9,9 +9,8 @@ type 'a code_transformation = 'a -> 'a
 type 'a dyn_reduction_check = Iter.iter * (Iter.iter -> 'a -> unit)
 
 type 'a sub_pass =
-  { forward : 'a code_transformation
-  ; forward_check : 'a dyn_reduction_check
-  ; backward : 'a code_transformation
+  { transformation : 'a code_transformation
+  ; transformation_check : 'a dyn_reduction_check
   }
 
 type morphing =
@@ -139,6 +138,73 @@ type pass_kind =
   | Check : Iter.iter -> pass_kind
   | Nothing : pass_kind
 
+let _type__combine_fold_check (fold : Catamorphism.idle_fold) (check : Iter.iter) x =
+  let res = fold._type_ x in
+  check._type_ res.fp;
+  res
+  [@@map
+    _type_
+    , ( "expr"
+      , "program"
+      , "program_entry"
+      , "pattern"
+      , "statement"
+      , "ty_expr"
+      , "instruction"
+      , "block"
+      , "mod_expr"
+      , "declaration"
+      , "sig_expr"
+      , "sig_entry" )]
+
+
+let combine_pass_kinds : pass_kind -> pass_kind -> pass_kind option =
+ fun lhs rhs ->
+  match lhs, rhs with
+  | Fold lhs, Fold rhs -> Option.some @@ Fold (Catamorphism.compose_folds lhs rhs)
+  | Check lhs, Fold rhs ->
+    let fld : Catamorphism.idle_fold =
+      let combine check fold x =
+        check x;
+        fold x
+      in
+      { expr = combine lhs.expr rhs.expr
+      ; ty_expr = combine lhs.ty_expr rhs.ty_expr
+      ; pattern = combine lhs.pattern rhs.pattern
+      ; statement = combine lhs.statement rhs.statement
+      ; block = combine lhs.block rhs.block
+      ; mod_expr = combine lhs.mod_expr rhs.mod_expr
+      ; instruction = combine lhs.instruction rhs.instruction
+      ; declaration = combine lhs.declaration rhs.declaration
+      ; program_entry = combine lhs.program_entry rhs.program_entry
+      ; program = combine lhs.program rhs.program
+      ; sig_expr = combine lhs.sig_expr rhs.sig_expr
+      ; sig_entry = combine lhs.sig_entry rhs.sig_entry
+      }
+    in
+    Option.some @@ Fold fld
+  | Fold lhs, Check rhs ->
+    let fld : Catamorphism.idle_fold =
+      { expr = expr_combine_fold_check lhs rhs
+      ; ty_expr = ty_expr_combine_fold_check lhs rhs
+      ; pattern = pattern_combine_fold_check lhs rhs
+      ; statement = statement_combine_fold_check lhs rhs
+      ; block = block_combine_fold_check lhs rhs
+      ; mod_expr = mod_expr_combine_fold_check lhs rhs
+      ; instruction = instruction_combine_fold_check lhs rhs
+      ; declaration = declaration_combine_fold_check lhs rhs
+      ; program_entry = program_entry_combine_fold_check lhs rhs
+      ; program = program_combine_fold_check lhs rhs
+      ; sig_expr = sig_expr_combine_fold_check lhs rhs
+      ; sig_entry = sig_entry_combine_fold_check lhs rhs
+      }
+    in
+    Option.some @@ Fold fld
+  | Check lhs, Check rhs -> Option.some @@ Check (Iter.combine_iteration [ lhs; rhs ])
+  | ( (Seq _ | Ignore _ | Fold _ | Refold_acc _ | Check _ | Nothing)
+    , (Seq _ | Ignore _ | Fold _ | Refold_acc _ | Check _ | Nothing) ) -> None
+
+
 type 'ast morphers =
   { cata : f:Catamorphism.idle_fold -> 'ast -> 'ast
   ; hylo :
@@ -184,16 +250,10 @@ let mk_code_transformation : type v. pass_kind -> v morphers -> v code_transform
  fun pass_kind morphers -> mk_morph pass_kind morphers
 
 
-let morph
-    ~(compile : pass_kind)
-    ~(decompile : pass_kind)
-    ~(reduction : Ast_unified.Iter.iter)
-    : morphing
-  =
+let morph ~(pass : pass_kind) ~(reduction : Ast_unified.Iter.iter) : morphing =
   let mk_sub_pass ({ iter; _ } as morphers) =
-    { forward = mk_code_transformation compile morphers
-    ; forward_check = (reduction, fun f v -> iter ~f v)
-    ; backward = mk_code_transformation decompile morphers
+    { transformation = mk_code_transformation pass morphers
+    ; transformation_check = (reduction, fun f v -> iter ~f v)
     }
   in
   { expression = mk_sub_pass expr_morphers

@@ -1,0 +1,7 @@
+
+author: DK318
+description: "Improved performance for LSP and compilation pipeline.\\n\\nThe LSP should now take less time between keystrokes.\\n\\nThis is done by reducing the number of tree traversals in nanopasses compilation stage.\\n\\n\\n\\n"
+merge_request: '3120'
+title: "Draft: [#2143] Optimizations in references and nanopasses"
+type: performance
+            

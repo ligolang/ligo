@@ -4,6 +4,8 @@ module AST = Ast_core
 module LSet = Types.LSet
 module LMap = Types.LMap
 open Env
+open Env_map
+module Env = Env_map
 
 type t = (Types.Uid.t list * Types.Uid.t) LMap.t
 
@@ -27,7 +29,7 @@ let resolve_mpath
   let f : Types.Uid.t list -> _ -> Types.Uid.t list =
    fun acc (_input, real, _resolved, _defs_of_that_module) -> Types.mvar_to_id real :: acc
   in
-  let defs = env.avail_defs @ env.parent in
+  let defs = Env.union_defs env.avail_defs env.parent in
   let mmap = env.module_map in
   let acc, m_opt = Env.fold_resolve_mpath mvs defs mmap ~init ~f in
   match m_opt with
@@ -155,7 +157,11 @@ and module_expression
   =
  fun parent_mod me m_alias env ->
   let env =
-    { env with avail_defs = []; parent = env.avail_defs @ env.parent; parent_mod }
+    { env with
+      avail_defs = Env.empty_defs
+    ; parent = Env.union_defs env.avail_defs env.parent
+    ; parent_mod
+    }
   in
   let m_alias, defs_or_alias_opt, env =
     match me.wrap_content with
@@ -196,7 +202,11 @@ and signature_expression_from_D_signature
   =
  fun parent_mod se m_alias env ->
   let env =
-    { env with avail_defs = []; parent = env.avail_defs @ env.parent; parent_mod }
+    { env with
+      avail_defs = Env.empty_defs
+    ; parent = Env.union_defs env.avail_defs env.parent
+    ; parent_mod
+    }
   in
   let m_alias, defs_or_alias_opt, env =
     match se.wrap_content with
@@ -226,7 +236,10 @@ and signature_expression_from_D_signature
 and signature_expression_from_annotation : AST.signature_expr -> t -> env -> t * env =
  fun se m_alias old_env ->
   let env =
-    { old_env with avail_defs = []; parent = old_env.avail_defs @ old_env.parent }
+    { old_env with
+      avail_defs = Env.empty_defs
+    ; parent = Env.union_defs old_env.avail_defs old_env.parent
+    }
   in
   let m_alias, env =
     match se.wrap_content with
