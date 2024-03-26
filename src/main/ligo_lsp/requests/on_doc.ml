@@ -65,6 +65,7 @@ let detect_or_ask_to_create_project_file (file : Path.t) : unit Handler.t =
   match Docs_cache.find get_scope_buffers file, project_root with
   | None, None ->
     send_request WorkspaceFolders (fun folders ->
+        let@ normalize = ask_normalize in
         let@ folders =
           match folders with
           | Ok folders -> return folders
@@ -73,7 +74,8 @@ let detect_or_ask_to_create_project_file (file : Path.t) : unit Handler.t =
             return []
         in
         let folders =
-          List.map folders ~f:(fun { WorkspaceFolder.uri; _ } -> DocumentUri.to_path uri)
+          List.map folders ~f:(fun { WorkspaceFolder.uri; _ } ->
+              DocumentUri.to_path ~normalize uri)
         in
         let variants =
           [ ".ligoproject"; "esy.json" ] (* Top priority *)
@@ -132,12 +134,11 @@ let detect_or_ask_to_create_project_file (file : Path.t) : unit Handler.t =
             | Ok (Some { title }) ->
               if String.equal no title
               then pass
-              else
-                let@ normalize = ask_normalize in
+              else (
                 let project_root =
                   Path.concat (normalize (common_prefix ^ title)) Project_root.ligoproject
                 in
-                create_default_project_file project_root
+                create_default_project_file project_root)
           in
           send_message_with_buttons ~message ~options ~type_:Info ~handler)
   | None, Some project_root ->

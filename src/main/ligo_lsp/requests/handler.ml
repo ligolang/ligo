@@ -212,10 +212,11 @@ let send_diagnostic (uri : DocumentUri.t) (s : Diagnostic.t list) : unit Handler
     | Some old_uri -> nb#set_uri old_uri);
     pass
   | Mock diagnostics ->
+    let@ normalize = ask_normalize in
     return
       (Path_hashtbl.update
          diagnostics
-         (DocumentUri.to_path uri)
+         (DocumentUri.to_path ~normalize uri)
          ~f:(Option.value_map ~default:s ~f:(( @ ) s)))
 
 

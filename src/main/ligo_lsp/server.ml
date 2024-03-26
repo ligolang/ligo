@@ -47,6 +47,7 @@ class lsp_server (capability_mode : capability_mode) =
     method private normalize (file : string) : Path.t =
       Hashtbl.find_or_add file_normalization_tbl file ~default:(fun () ->
           Path.from_absolute file)
+    [@@alert "-from_absolute_performance"]
 
     [@@@alert "@from_absolute_performance"]
 
@@ -85,20 +86,21 @@ class lsp_server (capability_mode : capability_mode) =
     (* We now override the [on_notify_doc_did_open] method that will be called
        by the server each time a new document is opened. *)
     method on_notif_doc_did_open ~notify_back document ~content : unit IO.t =
-      let file = DocumentUri.to_path document.uri in
+      self#run_handler (Normal notify_back)
+      @@
       let { diagnostics_pull_mode; _ } = config in
+      let@ normalize = ask_normalize in
+      let file = DocumentUri.to_path ~normalize document.uri in
       match diagnostics_pull_mode, capability_mode with
       | _, Only_semantic_tokens | `OnDocumentLinkRequest, _ | `OnDocUpdate, _ ->
-        self#run_handler (Normal notify_back)
-        @@ self#on_doc file content ~version:(`New document.version)
+        self#on_doc file content ~version:(`New document.version)
       (* For [`OnSave] we should process doc that was opened *)
       | `OnSave, _ ->
-        self#run_handler (Normal notify_back)
-        @@ Requests.on_doc
-             ~process_immediately:true
-             ~version:(`New document.version)
-             file
-             content
+        Requests.on_doc
+          ~process_immediately:true
+          ~version:(`New document.version)
+          file
+          content
 
     (* Similarly, we also override the [on_notify_doc_did_change] method that will be called
        by the server each time a document is changed. *)
@@ -109,9 +111,10 @@ class lsp_server (capability_mode : capability_mode) =
         ~old_content:_old
         ~new_content
         : unit IO.t =
-      let file = DocumentUri.to_path document.uri in
       self#run_handler (Normal notify_back)
-      @@ self#on_doc ~changes ~version:(`New document.version) file new_content
+      @@ let@ normalize = ask_normalize in
+         let file = DocumentUri.to_path ~normalize document.uri in
+         self#on_doc ~changes ~version:(`New document.version) file new_content
 
     method decode_apply_settings
         (notify_back : Linol_lwt.Jsonrpc2.notify_back)
@@ -322,10 +325,13 @@ class lsp_server (capability_mode : capability_mode) =
       let commands =
         match capability_mode with
         | All_capabilities | No_semantic_tokens ->
-          Requests.Commands.Ligo_lsp_commands.[ add_tzip16_attr.id ]
+          (* [id] doesn't use [~normalize], so using [Path.from_absolute] here is fine. *)
+          Requests.Commands.Ligo_lsp_commands.
+            [ (add_tzip16_attr ~normalize:Path.from_absolute).id ]
         | Only_semantic_tokens -> []
       in
       Some (ExecuteCommandOptions.create ~commands ())
+    [@@alert "-from_absolute_performance"]
 
     method config_code_lens =
       Some
@@ -522,7 +528,7 @@ class lsp_server (capability_mode : capability_mode) =
                  DocumentUri.pp
                  change.uri)
           in
-          let file = DocumentUri.to_path change.uri in
+          let file = DocumentUri.to_path ~normalize:self#normalize change.uri in
           let file_name = Filename.basename @@ Path.to_string file in
           if Filename.equal file_name Project_root.ligoproject
           then (
@@ -544,7 +550,7 @@ class lsp_server (capability_mode : capability_mode) =
           | _, Only_semantic_tokens | `OnDocUpdate, _ | `OnDocumentLinkRequest, _ ->
             IO.return ()
           | `OnSave, _ ->
-            let path = DocumentUri.to_path uri in
+            let path = DocumentUri.to_path ~normalize:self#normalize uri in
             let* () =
               new_notify_back#send_log_msg ~type_:MessageType.Log
               @@ Format.asprintf "Processing saved doc: %a" Path.pp path
@@ -569,6 +575,7 @@ class lsp_server (capability_mode : capability_mode) =
                   -> r Client_request.t
                   -> r IO.t =
       fun ~notify_back ~server_request ~id (r : r Client_request.t) ->
+        let normalize = self#normalize in
         let run
             ?(allowed_modes : capability_mode list = default_modes)
             ~(uri : DocumentUri.t)
@@ -580,7 +587,7 @@ class lsp_server (capability_mode : capability_mode) =
           (* If the project root changed, let's repopulate the cache by deleting existing info and
              running [Requests.on_doc] again. *)
           let repopulate_cache : unit Handler.t =
-            let file = DocumentUri.to_path uri in
+            let file = DocumentUri.to_path ~normalize uri in
             match Docs_cache.find get_scope_buffers file with
             (* Shouldn't happen because [Requests.on_doc] should trigger and populate the
                cache. *)
@@ -632,85 +639,90 @@ class lsp_server (capability_mode : capability_mode) =
         | Client_request.DocumentSymbol { textDocument; _ } ->
           let uri = textDocument.uri in
           run ~uri ~default:None
-          @@ Requests.on_req_document_symbol (DocumentUri.to_path uri)
+          @@ Requests.on_req_document_symbol (DocumentUri.to_path ~normalize uri)
         | Client_request.TextDocumentFormatting { textDocument; options; _ } ->
           let uri = textDocument.uri in
           run ~uri ~default:None
-          @@ Requests.on_req_formatting (DocumentUri.to_path uri) options
+          @@ Requests.on_req_formatting (DocumentUri.to_path ~normalize uri) options
         | Client_request.TextDocumentDeclaration { textDocument; position; _ } ->
           let uri = textDocument.uri in
           run ~uri ~default:None
-          @@ Requests.on_req_declaration position (DocumentUri.to_path uri)
+          @@ Requests.on_req_declaration position (DocumentUri.to_path ~normalize uri)
         | Client_request.TextDocumentDefinition { textDocument; position; _ } ->
           let uri = textDocument.uri in
           run ~uri ~default:None
-          @@ Requests.on_req_definition position (DocumentUri.to_path uri)
+          @@ Requests.on_req_definition position (DocumentUri.to_path ~normalize uri)
         | Client_request.TextDocumentImplementation { textDocument; position; _ } ->
           let uri = textDocument.uri in
           run ~uri ~default:None
-          @@ Requests.on_req_implementation position (DocumentUri.to_path uri)
+          @@ Requests.on_req_implementation position (DocumentUri.to_path ~normalize uri)
         | Client_request.TextDocumentHover { textDocument; position; _ } ->
           let uri = textDocument.uri in
           run ~uri ~default:None
-          @@ Requests.on_req_hover position (DocumentUri.to_path uri)
+          @@ Requests.on_req_hover position (DocumentUri.to_path ~normalize uri)
         | Client_request.TextDocumentPrepareRename { position; textDocument; _ } ->
           let uri = textDocument.uri in
           run ~uri ~default:None
-          @@ Requests.on_req_prepare_rename position (DocumentUri.to_path uri)
+          @@ Requests.on_req_prepare_rename position (DocumentUri.to_path ~normalize uri)
         | Client_request.TextDocumentRename { newName; position; textDocument; _ } ->
           let default = WorkspaceEdit.create () in
           let uri = textDocument.uri in
           run ~uri ~default
-          @@ Requests.on_req_rename newName position (DocumentUri.to_path uri)
+          @@ Requests.on_req_rename newName position (DocumentUri.to_path ~normalize uri)
         | Client_request.TextDocumentReferences { position; textDocument; _ } ->
           let uri = textDocument.uri in
           run ~uri ~default:None
-          @@ Requests.on_req_references position (DocumentUri.to_path uri)
+          @@ Requests.on_req_references position (DocumentUri.to_path ~normalize uri)
         | Client_request.TextDocumentTypeDefinition { textDocument; position; _ } ->
           let uri = textDocument.uri in
           run ~uri ~default:None
-          @@ Requests.on_req_type_definition position (DocumentUri.to_path uri)
+          @@ Requests.on_req_type_definition position (DocumentUri.to_path ~normalize uri)
         | Client_request.TextDocumentLink { textDocument; _ } ->
           let uri = textDocument.uri in
           run ~uri ~default:None
-          @@ Requests.on_req_document_link (DocumentUri.to_path uri)
+          @@ Requests.on_req_document_link (DocumentUri.to_path ~normalize uri)
         | Client_request.TextDocumentHighlight { textDocument; position; _ } ->
           let uri = textDocument.uri in
           run ~uri ~default:None
-          @@ Requests.on_req_highlight position (DocumentUri.to_path uri)
+          @@ Requests.on_req_highlight position (DocumentUri.to_path ~normalize uri)
         | Client_request.TextDocumentFoldingRange { textDocument; _ } ->
           let uri = textDocument.uri in
           run ~uri ~default:None
-          @@ Requests.on_req_folding_range (DocumentUri.to_path uri)
+          @@ Requests.on_req_folding_range (DocumentUri.to_path ~normalize uri)
         | Client_request.TextDocumentRangeFormatting { range; textDocument; options; _ }
           ->
           let uri = textDocument.uri in
           run ~uri ~default:None
-          @@ Requests.on_req_range_formatting (DocumentUri.to_path uri) range options
+          @@ Requests.on_req_range_formatting
+               (DocumentUri.to_path ~normalize uri)
+               range
+               options
         | Client_request.TextDocumentCompletion { textDocument; position; _ } ->
           let uri = textDocument.uri in
           run ~uri ~default:None
-          @@ Requests.on_req_completion position (DocumentUri.to_path uri)
+          @@ Requests.on_req_completion position (DocumentUri.to_path ~normalize uri)
         | Client_request.UnknownRequest { meth = "DebugEcho"; _ } ->
           (* Used in tools/lsp-bench *)
           IO.return @@ `String "DebugEchoResponse"
         | Client_request.SemanticTokensFull { textDocument; _ } ->
           let uri = textDocument.uri in
           run ~allowed_modes:[ All_capabilities; Only_semantic_tokens ] ~uri ~default:None
-          @@ Requests.on_req_semantic_tokens_full (DocumentUri.to_path uri)
+          @@ Requests.on_req_semantic_tokens_full (DocumentUri.to_path ~normalize uri)
         | Client_request.SemanticTokensRange { textDocument; range; _ } ->
           let uri = textDocument.uri in
           run ~allowed_modes:[ All_capabilities; Only_semantic_tokens ] ~uri ~default:None
-          @@ Requests.on_req_semantic_tokens_range (DocumentUri.to_path uri) range
+          @@ Requests.on_req_semantic_tokens_range
+               (DocumentUri.to_path ~normalize uri)
+               range
         | Client_request.ExecuteCommand { command; arguments; _ } ->
           run_command @@ Requests.on_execute_command ~command ?arguments ()
         | Client_request.TextDocumentCodeLens { textDocument; _ } ->
           let uri = textDocument.uri in
           run ~allowed_modes:[ All_capabilities; No_semantic_tokens ] ~uri ~default:[]
-          @@ Requests.on_code_lens (DocumentUri.to_path uri)
+          @@ Requests.on_code_lens (DocumentUri.to_path ~normalize uri)
         | Client_request.InlayHint { textDocument; range; _ } ->
           let uri = textDocument.uri in
           run ~uri ~default:None
-          @@ Requests.on_req_inlay_hint (DocumentUri.to_path uri) range
+          @@ Requests.on_req_inlay_hint (DocumentUri.to_path ~normalize uri) range
         | _ -> super#on_request ~notify_back ~server_request ~id r
   end

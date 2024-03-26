@@ -75,13 +75,14 @@ let get_current_module (cst : Dialect_cst.t) (pos : Position.t) : Scopes.Uid.t l
 
 
 let pick_scope
+    ~(normalize : string -> Path.t)
     ({ path; syntax = _; definitions = _; cst; pos } : _ Common.input)
     (hierarchy : Def.Hierarchy.t)
     : Def.t list
   =
   let mod_path = get_current_module cst pos in
   let pos = pick_closest_pos cst pos in
-  Def.Hierarchy.scope_at_point path pos mod_path hierarchy
+  Def.Hierarchy.scope_at_point ~normalize path pos mod_path hierarchy
 
 
 (* Definitions that are available at given position.
@@ -91,7 +92,11 @@ let pick_scope
    We want to show only completions with non-qualified names, e.g.
    instead of showing [List.map], [List.append], etc we'll just show the [List] module,
    and if user choose [List], the [Fields.get_fields_completions] will show [map], etc *)
-let get_defs_completions : _ Common.input -> Def.Hierarchy.t -> Def.t list = pick_scope
+let get_defs_completions
+    : normalize:(string -> Path.t) -> _ Common.input -> Def.Hierarchy.t -> Def.t list
+  =
+  pick_scope
+
 
 let get_scope_completions
     ~(normalize : string -> Path.t)
@@ -101,6 +106,6 @@ let get_scope_completions
   =
   let with_possible_duplicates =
     defs_to_completion_items ~normalize Scope path syntax
-    @@ get_defs_completions input hierarchy
+    @@ get_defs_completions ~normalize input hierarchy
   in
   Common.nub_sort_items with_possible_duplicates

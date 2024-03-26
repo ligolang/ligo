@@ -33,6 +33,7 @@ let tzip16_compliance_lens (file : Path.t) : CodeLens.t list handler =
        display anything *)
     return []
   | { document_version = Some document_version; potential_tzip16_storages; _ } ->
+    let@ normalize = ask_normalize in
     return
     @@ List.filter_map potential_tzip16_storages ~f:(fun potential_storage_var ->
            let%bind.Option var_range =
@@ -55,7 +56,7 @@ let tzip16_compliance_lens (file : Path.t) : CodeLens.t list handler =
                 ~range
                 ~command:
                   (Command.compile
-                     ~command:Ligo_lsp_commands.add_tzip16_attr
+                     ~command:(Ligo_lsp_commands.add_tzip16_attr ~normalize)
                      ~title:"Mark as TZIP-16 compatible storage"
                      ~arguments:storage_var_position)
                 ())

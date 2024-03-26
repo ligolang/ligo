@@ -121,14 +121,12 @@ let filter : f:(t -> bool) -> definitions -> t list =
  fun ~f -> filter_map ~f:(fun def -> Option.some_if (f def) def)
 
 
-let filter_file : file:Path.t -> definitions -> t list =
- fun ~file ->
+let filter_file : normalize:(string -> Path.t) -> file:Path.t -> definitions -> t list =
+ fun ~normalize ~file ->
   fold_definitions ~init:[] ~f:(fun acc def ->
       match Scopes.Types.get_decl_range def with
       | File region ->
-        if Path.(equal (from_absolute region#file) file)
-        then Continue (def :: acc)
-        else Stop
+        if Path.equal (normalize region#file) file then Continue (def :: acc) else Stop
       | Virtual _ -> Stop)
 
 
@@ -247,7 +245,11 @@ module Hierarchy = struct
            | Virtual _ -> None)
 
 
-  let scope_at_point (file : Path.t) (point : Position.t) (mod_path : Scopes.Uid.t list)
+  let scope_at_point
+      ~(normalize : string -> Path.t)
+      (file : Path.t)
+      (point : Position.t)
+      (mod_path : Scopes.Uid.t list)
       : t -> Scopes.def list
     =
     let shadow_defs : Scopes.def list -> Scopes.def list =
@@ -269,7 +271,7 @@ module Hierarchy = struct
       match Scopes.Types.get_decl_range def with
       | File region ->
         (Position.(of_pos region#start <= point)
-        || not Path.(equal file (from_absolute region#file)))
+        || not (Path.equal file (normalize region#file)))
         &&
         (match def with
         | Label { label_case = Ctor; _ } | Type _ -> true
