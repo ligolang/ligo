@@ -1,0 +1,7 @@
+
+author: lesenechal.remi
+description: "\\nAnalytics: the project root is now derived from `ligo.json` location if not provided in the CLI (\`--project-root\` option)\\n\\n"
+merge_request: '3115'
+title: "Resolve \"Generate .ligo in root folder of workspace\""
+type: fixed
+            

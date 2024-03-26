@@ -51,3 +51,4 @@ val generate_cli_metrics_with_syntax_and_protocol
 val push_collected_metrics : skip_analytics:bool -> unit
 val propose_term_acceptation : skip_analytics:bool -> unit
 val edit_metrics_values : analytics_inputs -> unit
+val set_project_root : string option -> unit

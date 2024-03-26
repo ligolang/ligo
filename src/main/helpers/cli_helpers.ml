@@ -89,24 +89,6 @@ end = struct
     if String.equal got expected then Ok () else Error IntegrityMismatch
 end
 
-let find_project_root () =
-  let pwd = Caml.Sys.getcwd in
-  let rec aux p =
-    let dirs = Ligo_unix.ls_dir p in
-    if List.exists ~f:(String.equal "ligo.json") dirs
-    then Some p
-    else (
-      let p' = Filename.dirname p in
-      (* Check if we reached the root directory, since the parent of
-         the root directory is the root directory itself *)
-      if Filename.equal p p' then None else aux p')
-  in
-  try
-    aux (pwd ()) (* In case of permission issues when reading file, catch the exception *)
-  with
-  | _ -> None
-
-
 let return_good ?output_file v =
   let fmt : Format.formatter =
     match output_file with
