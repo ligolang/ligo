@@ -15,7 +15,7 @@ interface FA1 extends FABase {
 };
 
 namespace Impl implements FA0Ext, FA1 {
-  type t = int;
+  export type t = int;
 
   @entry const transfer = (_u : unit, s : t) : [list<operation>, t] => [list([]), s];
   @entry const other1 = (_u : unit, s : t) : [list<operation>, t] => [list([]), s];
@@ -31,7 +31,7 @@ interface FAAll extends FA0Ext, FA1 {
 };
 
 namespace ImplAll implements FAAll {
-  type t = int;
+  export type t = int;
 
   @entry const transfer = (_u : unit, s : t) : [list<operation>, t] => [list([]), s];
   @entry const other1 = (_u : unit, s : t) : [list<operation>, t] => [list([]), s];
@@ -49,7 +49,7 @@ namespace ImplAll implements FAAll {
 
 
 namespace ImplAllNoJuju implements FAAll {
-  type t = int;
+  export type t = int;
 
   @entry const transfer = (_u : unit, s : t) : [list<operation>, t] => [list([]), s];
   @entry const other1 = (_u : unit, s : t) : [list<operation>, t] => [list([]), s];

@@ -174,6 +174,35 @@ module Separate (Params : Params) = struct
       Ligo_compile.Of_core.typecheck_with_signature ~raise ~options ~context module_
     in
     prg, prg.pr_sig
+
+
+  let link_imports : AST.t -> objs:(AST.t * AST.interface) BuildSystem.SMap.t -> AST.t =
+   fun prg ~objs ->
+    let module_ =
+      prg.pr_module
+      |> Self_ast_typed.Helpers.Declaration_mapper.map_module
+         @@ fun decl ->
+         let loc = decl.location in
+         match Location.unwrap decl with
+         | D_import { import_name; imported_module = mangled_module_name; import_attr } ->
+           (* Create module alias for mangled module *)
+           let _, intf =
+             BuildSystem.SMap.find (Module_var.to_name_exn mangled_module_name) objs
+           in
+           Location.wrap ~loc
+           @@ Ast_typed.D_module
+                { module_binder = import_name
+                ; module_ =
+                    { module_content = M_variable mangled_module_name
+                    ; signature = intf
+                    ; module_location = Location.generated
+                    }
+                ; module_attr = import_attr
+                ; annotation = ()
+                }
+         | _ -> decl
+    in
+    { prg with pr_module = module_ }
 end
 
 module Infer (Params : Params) = struct
@@ -233,6 +262,25 @@ module Infer (Params : Params) = struct
     let options = Compiler_options.set_syntax options (Some syntax) in
     let module_ = Ligo_compile.Utils.to_core ~raise ~options ~meta c_unit file_name in
     Helpers.inject_declaration ~options ~raise syntax module_, []
+
+
+  let link_imports : AST.t -> objs:(AST.t * AST.interface) BuildSystem.SMap.t -> AST.t =
+   fun prg ~objs:_ ->
+    let open Ast_core in
+    prg
+    |> Ast_core.Helpers.Declaration_mapper.map_module
+       @@ fun decl ->
+       let loc = decl.location in
+       match Location.unwrap decl with
+       | D_import { import_name; imported_module = mangled_module_name; import_attr } ->
+         Location.wrap ~loc
+         @@ D_module
+              { module_binder = import_name
+              ; module_ = Location.wrap ~loc (Module_expr.M_variable mangled_module_name)
+              ; module_attr = import_attr
+              ; annotation = None
+              }
+       | _ -> decl
 end
 
 module Build_typed (Params : Params) = BuildSystem.Make (Separate (Params))

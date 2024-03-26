@@ -63,7 +63,8 @@ let get_declarations_typed (typed_prg : Ast_typed.program) =
              | D_type _
              | D_module _
              | D_signature _
-             | D_module_include _ -> None)
+             | D_module_include _
+             | D_import _ -> None)
   @@ typed_prg.pr_module
 
 

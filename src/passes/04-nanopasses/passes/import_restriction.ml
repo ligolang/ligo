@@ -5,6 +5,10 @@ open Errors
 module Location = Simple_utils.Location
 include Flag.No_arg ()
 
+let is_mangled mvar =
+  String.is_prefix ~prefix:"Mangled_module_" (Mod_variable.to_name_exn mvar)
+
+
 let compile ~raise =
   (* given a declaration, we extract all visibility attributes (in reverse order) *)
   let rec extract_visibility : _ -> _ =
@@ -30,6 +34,12 @@ let compile ~raise =
       let open Import in
       (match i with
       | Import_all_as _ | Import_selected _ -> raise.error (unsupported_import ret)
+      | Import_rename { module_path = imported_module, []; alias }
+        when is_mangled imported_module ->
+        (* Only keep the import around if it is a module alias introduced by #import *)
+        d_import
+          ~loc
+          (Import_rename { alias; module_path = List.Ne.singleton imported_module })
       | Import_rename { alias; module_path } ->
         let mod_expr =
           let loc =
@@ -45,6 +55,14 @@ let compile ~raise =
         @@ d_module
              ~loc
              { name = alias; mod_expr; annotation = { signatures = []; filter = false } })
+    | D_module { name; mod_expr; annotation = _ } as d ->
+      (match get_m mod_expr with
+      | M_var alias when is_mangled alias ->
+        (* Translate [module <Name> = <Mangled module>] to [import <Name> = <Mangled module>] *)
+        d_import
+          ~loc
+          (Import_rename { alias = name; module_path = List.Ne.singleton alias })
+      | _ -> make_d ~loc d)
     | d -> make_d ~loc d
   in
   let program_entry
@@ -66,7 +84,8 @@ let reduction ~raise =
   { Iter.defaults with
     declaration =
       (function
-      | { wrap_content = D_import _; _ } -> raise.error (wrong_reduction __MODULE__)
+      | { wrap_content = D_import (Import_rename { module_path = mvar, _; _ }); _ }
+        when not (is_mangled mvar) -> raise.error (wrong_reduction __MODULE__)
       | _ -> ())
   }
 

@@ -60,6 +60,7 @@ module Value_decl (Attr : Declaration.Attr) = Declaration.Value_decl (Attr)
 module Type_decl (Attr : Declaration.Attr) = Declaration.Type_decl (Attr)
 module Module_decl (Attr : Declaration.Attr) = Declaration.Module_decl (Attr)
 module Signature_decl (Attr : Declaration.Attr) = Declaration.Signature_decl (Attr)
+module Import_decl = Declaration.Import_decl
 module Value_attr = Value_attr
 module Sig_item_attr = Sig_item_attr
 module Sig_type_attr = Sig_type_attr

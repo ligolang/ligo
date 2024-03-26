@@ -453,6 +453,7 @@ and compile_declarations ~(raise : _ Trace.raise)
       in
       Data.include_ acc_scope data
     | I.D_signature _ -> acc_scope
+    | I.D_import _ -> failwith "import declarations cannot be aggregated"
   in
   List.fold lst ~init:init_scope ~f
 

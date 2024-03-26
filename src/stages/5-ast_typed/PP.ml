@@ -180,6 +180,10 @@ and type_inst ppf { forall; type_ } =
   fprintf ppf "%a@@{%a}" expression forall type_expression type_
 
 
+and module_path ppf (mp : Module_var.t List.Ne.t) : unit =
+  Simple_utils.PP_helpers.(ne_list_sep Module_var.pp (tag ".")) ppf mp
+
+
 and declaration ?(use_hidden = true) ppf (d : declaration) =
   match Location.unwrap d with
   | D_value vd ->
@@ -200,6 +204,7 @@ and declaration ?(use_hidden = true) ppf (d : declaration) =
     else Types.Module_decl.pp module_expr (fun _ () -> ()) ppf md
   | D_module_include x -> fprintf ppf "include %a" module_expr x
   | D_signature sd -> Types.Signature_decl.pp signature ppf sd
+  | D_import import -> Import_decl.pp ppf import
 
 
 and decl ppf d = declaration ppf d

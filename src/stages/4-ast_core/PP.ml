@@ -113,6 +113,10 @@ and expression_content ppf (ec : expression_content) =
   | E_while while_loop -> While_loop.pp expression ppf while_loop
 
 
+and module_path ppf (mp : Module_var.t List.Ne.t) : unit =
+  Simple_utils.PP_helpers.(ne_list_sep Module_var.pp (tag ".")) ppf mp
+
+
 and declaration ppf (d : declaration) =
   match Location.unwrap d with
   | D_value vd ->
@@ -130,6 +134,7 @@ and declaration ppf (d : declaration) =
       md
   | D_module_include me -> fprintf ppf "include (%a)" module_expr me
   | D_signature sd -> Types.Signature_decl.pp signature_expr ppf sd
+  | D_import import -> Import_decl.pp ppf import
 
 
 and decl ppf d = declaration ppf d
