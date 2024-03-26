@@ -42,10 +42,13 @@ class lsp_server (capability_mode : capability_mode) =
     val mutable config : config = default_config
     val mutable client_capabilities : ClientCapabilities.t = ClientCapabilities.create ()
     val file_normalization_tbl = Hashtbl.create (module String)
+    [@@@alert "-from_absolute_performance"]
 
     method private normalize (file : string) : Path.t =
       Hashtbl.find_or_add file_normalization_tbl file ~default:(fun () ->
           Path.from_absolute file)
+
+    [@@@alert "@from_absolute_performance"]
 
     (** Stores the path to the last ligo.json file, if found. *)
     val last_project_dir : Path.t option ref = ref None
