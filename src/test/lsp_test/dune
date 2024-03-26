@@ -1,6 +1,8 @@
 (library
  (name lsp_test_requests)
  (public_name ligo.lsp_test.requests)
+ (flags
+  (:standard -alert @all -alert -from_absolute_performance))
  (preprocess
   (pps ppx_yojson_conv ppx_expect))
  (libraries

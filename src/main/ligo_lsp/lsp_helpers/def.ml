@@ -23,11 +23,11 @@ module Def_location = struct
     | Virtual of string
   [@@deriving eq, ord, sexp]
 
-  let of_loc : Loc.t -> t = function
+  let of_loc : normalize:(string -> Path.t) -> Loc.t -> t =
+   fun ~normalize -> function
     | File region when Helpers_file.is_stdlib region#file ->
       StdLib { range = Range.of_region region }
-    | File region ->
-      File { range = Range.of_region region; path = Path.from_absolute region#file }
+    | File region -> File { range = Range.of_region region; path = normalize region#file }
     | Virtual s -> Virtual s
 
 
@@ -38,20 +38,21 @@ module Def_locations = Set.Make (Def_location)
 
 let to_string (def : t) = Format.asprintf "%a" Scopes.PP.definitions [ def ]
 
-let get_location : Scopes.def -> Def_location.t =
-  Def_location.of_loc <@ Scopes.Types.get_range
+let get_location : normalize:(string -> Path.t) -> Scopes.def -> Def_location.t =
+ fun ~normalize -> Def_location.of_loc ~normalize <@ Scopes.Types.get_range
 
 
-let get_path : Scopes.def -> Path.t option =
+let get_path : normalize:(string -> Path.t) -> Scopes.def -> Path.t option =
+ fun ~normalize ->
   Def_location.(
     function
     | File { path; _ } -> Some path
     | StdLib _ | Virtual _ -> None)
-  <@ get_location
+  <@ get_location ~normalize
 
 
-let references_getter : Scopes.def -> Def_locations.t =
- fun def ->
+let references_getter : normalize:(string -> Path.t) -> Scopes.def -> Def_locations.t =
+ fun ~normalize def ->
   let module LSet = Scopes.Types.LSet in
   let lset =
     match def with
@@ -61,17 +62,19 @@ let references_getter : Scopes.def -> Def_locations.t =
     | Label ldef -> LSet.add ldef.range ldef.references
   in
   Def_locations.of_sequence
-  @@ Sequence.map ~f:Def_location.of_loc
+  @@ Sequence.map ~f:(Def_location.of_loc ~normalize)
   @@ Sequence.of_seq (LSet.to_seq lset)
 
 
-let is_reference : Position.t -> Path.t -> Scopes.def -> bool =
- fun pos file definition ->
+let is_reference
+    : normalize:(string -> Path.t) -> Position.t -> Path.t -> Scopes.def -> bool
+  =
+ fun ~normalize pos file definition ->
   let check_pos : Def_location.t -> bool = function
     | File { path; range } -> Range.contains_position pos range && Path.equal path file
     | StdLib _ | Virtual _ -> false
   in
-  Def_locations.exists ~f:check_pos @@ references_getter definition
+  Def_locations.exists ~f:check_pos @@ references_getter ~normalize definition
 
 
 (** Fold over definitions, flattening them along the fold. The [fold_control] allows you
@@ -129,8 +132,11 @@ let filter_file : file:Path.t -> definitions -> t list =
       | Virtual _ -> Stop)
 
 
-let get_definition : Position.t -> Path.t -> definitions -> t option =
- fun pos uri definitions -> find ~f:(is_reference pos uri) definitions
+let get_definition
+    : normalize:(string -> Path.t) -> Position.t -> Path.t -> definitions -> t option
+  =
+ fun ~normalize pos path definitions ->
+  find ~f:(is_reference ~normalize pos path) definitions
 
 
 (* E.g. when [type t = A | B], the type info for A would have
@@ -217,31 +223,28 @@ let get_comments : t -> string list = function
 module Hierarchy = struct
   type t = Scopes.def Rose.forest
 
-  let create : definitions -> t =
-   fun defs ->
-    (* [Path.from_absolute] is a very expensive function, so we make a table to hold the
-       known normalized paths as an optimization. *)
-    Files.with_normalized_files ~f:(fun ~normalize ->
-        Rose.map_forest ~f:Tuple3.get3
-        @@ Rose.forest_of_list
-           (* See the expect test in [Rose] on why we compare and check for intersection
+  let create : normalize:(string -> Path.t) -> definitions -> t =
+   fun ~normalize defs ->
+    Rose.map_forest ~f:Tuple3.get3
+    @@ Rose.forest_of_list
+       (* See the expect test in [Rose] on why we compare and check for intersection
               like this. *)
-             ~compare:(fun ((range1 : Range.t), file1, _def1) (range2, file2, _def2) ->
-               let path_ord = Path.compare file1 file2 in
-               if path_ord = 0
-               then (
-                 let pos_ord = Position.compare range1.start range2.start in
-                 if pos_ord = 0 then Position.compare range2.end_ range1.end_ else pos_ord)
-               else path_ord)
-             ~intersects:(fun (range1, file1, _def1) (range2, file2, _def2) ->
-               Path.equal file1 file2 && Position.compare range1.end_ range2.start > 0)
-        @@ filter_map defs ~f:(fun def ->
-               match Scopes.Types.get_decl_range def with
-               | File region ->
-                 let range = Range.of_region region in
-                 let path = normalize region#file in
-                 Some (range, path, def)
-               | Virtual _ -> None))
+         ~compare:(fun ((range1 : Range.t), file1, _def1) (range2, file2, _def2) ->
+           let path_ord = Path.compare file1 file2 in
+           if path_ord = 0
+           then (
+             let pos_ord = Position.compare range1.start range2.start in
+             if pos_ord = 0 then Position.compare range2.end_ range1.end_ else pos_ord)
+           else path_ord)
+         ~intersects:(fun (range1, file1, _def1) (range2, file2, _def2) ->
+           Path.equal file1 file2 && Position.compare range1.end_ range2.start > 0)
+    @@ filter_map defs ~f:(fun def ->
+           match Scopes.Types.get_decl_range def with
+           | File region ->
+             let range = Range.of_region region in
+             let path = normalize region#file in
+             Some (range, path, def)
+           | Virtual _ -> None)
 
 
   let scope_at_point (file : Path.t) (point : Position.t) (mod_path : Scopes.Uid.t list)

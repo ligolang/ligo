@@ -2,6 +2,7 @@ open Common
 open Lsp_helpers
 
 let get_files_for_completions
+    ~(normalize : string -> Path.t)
     ~(pos : Position.t)
     ~(code : string)
     ~(current_file : Path.t)
@@ -18,16 +19,13 @@ let get_files_for_completions
   in
   if Str.string_match regex current_line 0
   then
-    Option.value_map
-      ~default:[]
-      ~f:(fun project_root ->
-        Files.list_directory project_root
+    Option.value_map project_root ~default:[] ~f:(fun project_root ->
+        Files.list_directory ~normalize project_root
         |> List.filter_map ~f:(fun file ->
                if Path.equal current_file file
                then None
                else Option.some @@ Path.make_relative (Path.dirname current_file) file)
-        |> List.append (Files.list_library_files project_root mod_res))
-      project_root
+        |> List.append (Files.list_library_files ~normalize project_root mod_res))
   else []
 
 

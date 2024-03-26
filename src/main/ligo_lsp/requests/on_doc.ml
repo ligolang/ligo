@@ -132,13 +132,12 @@ let detect_or_ask_to_create_project_file (file : Path.t) : unit Handler.t =
             | Ok (Some { title }) ->
               if String.equal no title
               then pass
-              else (
+              else
+                let@ normalize = ask_normalize in
                 let project_root =
-                  Path.concat
-                    (Path.from_absolute (common_prefix ^ title))
-                    Project_root.ligoproject
+                  Path.concat (normalize (common_prefix ^ title)) Project_root.ligoproject
                 in
-                create_default_project_file project_root)
+                create_default_project_file project_root
           in
           send_message_with_buttons ~message ~options ~type_:Info ~handler)
   | None, Some project_root ->
@@ -243,7 +242,8 @@ let build_file_graph : File_graph.t option Handler.t =
   | None -> return None
   | Some project_root ->
     let@ mod_res = fmap ( ! ) ask_mod_res in
-    let files = Files.list_directory ~include_library:true project_root in
+    let@ normalize = ask_normalize in
+    let files = Files.list_directory ~normalize ~include_library:true project_root in
     let@ graph =
       fold_left files ~init:File_graph.empty ~f:(fun g file ->
           let@ () = cache_doc_minimal file in
@@ -253,15 +253,16 @@ let build_file_graph : File_graph.t option Handler.t =
             | CameLIGO cst -> return @@ Directive.extract_directives_cameligo cst
             | JsLIGO cst -> return @@ Directive.extract_directives_jsligo cst
           in
-          (* Collect all links from [#include] and [#import] directives and remove as many
-             indirections as possible, so duplicates won't exist in the file graph and
-             cause problems. *)
+          (* Collect all links from [#include] and [#import] directives and remove as
+                 many indirections as possible, so duplicates won't exist in the file
+                 graph and cause problems. *)
           let deps =
             List.filter_map
               directives
               ~f:
                 (Option.map ~f:snd
                 <@ Directive.extract_range_and_target
+                     ~normalize
                      ~relative_to_dir:(Path.dirname file)
                      ~mod_res)
           in

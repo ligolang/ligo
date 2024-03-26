@@ -30,17 +30,18 @@ let get_definition_test ({ file_with_reference; reference; def_type } : definiti
   let actual_definitions, _diagnostics =
     test_run_session
     @@ let@ uri = open_file @@ normalize_path file_with_reference in
-       get_definition reference uri
-  in
-  let actual_definitions =
-    Option.map actual_definitions ~f:(function
-        | `Location locations ->
-          `Location
-            (List.map locations ~f:(fun loc -> { loc with uri = to_relative_uri loc.uri }))
-        | `LocationLink links ->
-          `LocationLink
-            (List.map links ~f:(fun link ->
-                 { link with targetUri = to_relative_uri link.targetUri })))
+       let@ definitions = get_definition reference uri in
+       let@ normalize = ask_normalize in
+       return
+       @@ Option.map definitions ~f:(function
+              | `Location locations ->
+                `Location
+                  (List.map locations ~f:(fun loc ->
+                       { loc with uri = to_relative_uri ~normalize loc.uri }))
+              | `LocationLink links ->
+                `LocationLink
+                  (List.map links ~f:(fun link ->
+                       { link with targetUri = to_relative_uri ~normalize link.targetUri })))
   in
   Format.printf "%a" (Fmt.Dump.option Locations.pp) actual_definitions
 

@@ -2,13 +2,14 @@ open Handler
 open Lsp_helpers
 
 let extract_link_from_directive
+    ~(normalize : string -> Path.t)
     ~(relative_to_dir : Path.t)
     ~(mod_res : Preprocessor.ModRes.t option)
     : Preprocessor.Directive.t -> DocumentLink.t option
   =
  fun directive ->
   Option.map
-    (Directive.extract_range_and_target ~relative_to_dir ~mod_res directive)
+    (Directive.extract_range_and_target ~normalize ~relative_to_dir ~mod_res directive)
     ~f:(fun (range, target) -> DocumentLink.create ~range ~target ())
 
 
@@ -37,9 +38,14 @@ let on_req_document_link (file : Path.t) : DocumentLink.t list option handler =
          }
          cst
   in
+  let@ normalize = ask_normalize in
   return
   @@ Option.map
        ~f:
          (List.filter_map
-            ~f:(extract_link_from_directive ~relative_to_dir:dir ~mod_res:!mod_res))
+            ~f:
+              (extract_link_from_directive
+                 ~normalize
+                 ~relative_to_dir:dir
+                 ~mod_res:!mod_res))
   @@ directives_opt

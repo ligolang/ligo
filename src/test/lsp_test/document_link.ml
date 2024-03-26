@@ -8,16 +8,20 @@ let get_document_link_test file_path : unit =
   let links_opt, _diagnostics =
     test_run_session
     @@ let@ uri = open_file @@ normalize_path file_path in
-       Requests.on_req_document_link uri
+       let@ links = Requests.on_req_document_link uri in
+       let@ normalize = ask_normalize in
+       return
+       @@ Option.map
+            links
+            ~f:
+              (List.map ~f:(fun link ->
+                   let target =
+                     Option.map link.DocumentLink.target ~f:(to_relative_uri ~normalize)
+                   in
+                   { link with target }))
   in
   match links_opt with
-  | Some links ->
-    let links =
-      List.map links ~f:(fun link ->
-          let target = Option.map link.target ~f:to_relative_uri in
-          { link with target })
-    in
-    Format.printf "%a" (Fmt.Dump.list DocumentLink.pp) links
+  | Some links -> Format.printf "%a" (Fmt.Dump.list DocumentLink.pp) links
   | None -> failwith "Expected some list of document links, got None"
 
 

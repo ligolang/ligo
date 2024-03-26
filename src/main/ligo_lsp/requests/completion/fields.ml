@@ -351,6 +351,7 @@ let get_linearized_path
 
 let complete_fields
     (type a)
+    ~(normalize : string -> Path.t)
     (module C : Compatible_CST with type cst = a)
     (input : a Common.input)
     : CompletionItem.t list
@@ -358,13 +359,15 @@ let complete_fields
   Option.value ~default:[]
   @@ Option.bind ~f:(function
          | Projection (struct_pos, proj_fields_before_cursor) ->
-           Records.projection_impl input struct_pos proj_fields_before_cursor
+           Records.projection_impl ~normalize input struct_pos proj_fields_before_cursor
          | Module (def_scope, module_names_before_cursor) ->
-           Modules.module_path_impl module_names_before_cursor input def_scope)
+           Modules.module_path_impl ~normalize module_names_before_cursor input def_scope)
   @@ get_linearized_path (module C) input
 
 
-let get_fields_completions (input : Common.input_d) : CompletionItem.t list =
+let get_fields_completions ~(normalize : string -> Path.t) (input : Common.input_d)
+    : CompletionItem.t list
+  =
   match input.cst with
-  | CameLIGO cst -> complete_fields (module C_CameLIGO) { input with cst }
-  | JsLIGO cst -> complete_fields (module C_JsLIGO) { input with cst }
+  | CameLIGO cst -> complete_fields ~normalize (module C_CameLIGO) { input with cst }
+  | JsLIGO cst -> complete_fields ~normalize (module C_JsLIGO) { input with cst }

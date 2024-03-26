@@ -8,15 +8,18 @@ module Loc_in_file = Def.Loc_in_file
 module PathMap = Map.Make (Path)
 module Ranges = Set.Make (Range)
 
-let get_references_in_file : Def_location.t list -> Path.t -> Docs_cache.t -> Range.t list
+let get_references_in_file
+    :  normalize:(string -> Path.t) -> Def_location.t list -> Path.t -> Docs_cache.t
+    -> Range.t list
   =
- fun locations file cache ->
+ fun ~normalize locations file cache ->
   let definitions : Def.definitions =
     match Docs_cache.find cache file with
     | Some { definitions = Some definitions; _ } -> definitions
     | _ -> { definitions = [] }
   in
   get_references
+    ~normalize
     (Sequence.of_list locations)
     (Sequence.of_list (Scopes.Types.flatten_defs definitions))
   |> Sequence.filter_map ~f:(fun Loc_in_file.{ range; path } ->
@@ -31,11 +34,12 @@ let on_req_highlight
  fun pos file ->
   with_cached_doc file ~default:None
   @@ fun { definitions; _ } ->
-  when_some (Def.get_definition pos file definitions)
+  let@ normalize = ask_normalize in
+  when_some (Def.get_definition ~normalize pos file definitions)
   @@ fun definition ->
   let@ cache = ask_docs_cache in
-  let locations = get_all_linked_locations_or_def definition definitions in
-  let references = get_references_in_file locations file cache in
+  let locations = get_all_linked_locations_or_def ~normalize definition definitions in
+  let references = get_references_in_file ~normalize locations file cache in
   let@ () =
     send_debug_msg
     @@ Format.asprintf

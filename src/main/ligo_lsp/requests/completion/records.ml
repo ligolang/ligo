@@ -47,12 +47,13 @@ let core_record_to_completion_items ~syntax (row : Ast_core.row) : CompletionIte
 
 
 let projection_impl
+    ~(normalize : string -> Path.t)
     ({ syntax; path; definitions; _ } : _ Common.input)
     (struct_pos : Position.t)
     (proj_fields_before_cursor : string option list)
     : CompletionItem.t list option
   =
-  match Def.get_definition struct_pos path definitions with
+  match Def.get_definition ~normalize struct_pos path definitions with
   | Some (Variable { t; _ }) ->
     let mk_completions t =
       Option.map ~f:(core_record_to_completion_items ~syntax)

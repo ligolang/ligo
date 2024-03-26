@@ -43,3 +43,10 @@ let to_string = function
 let to_ext = function
   | CameLIGO -> ".mligo"
   | JsLIGO -> ".jsligo"
+
+
+let is_cameligo = Fn.flip Filename.check_suffix ".mligo"
+let is_jsligo = Fn.flip Filename.check_suffix ".jsligo"
+let is_ligo file_path = is_cameligo file_path || is_jsligo file_path
+let cameligo_glob = "**/*.mligo"
+let jsligo_glob = "**/*.jsligo"
