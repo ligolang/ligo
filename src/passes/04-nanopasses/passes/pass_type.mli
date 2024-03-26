@@ -91,7 +91,7 @@ val decompile_passes
   :  raise:raise_t
   -> ?stop_before:string
   -> sort:'a Selector.t
-  -> (module T) list
+  -> (module T) list list
   -> 'a
   -> 'a
 
@@ -101,6 +101,6 @@ val compile_passes
   :  raise:raise_t
   -> ?stop_before:string
   -> sort:'a Selector.t
-  -> (module T) list
+  -> (module T) list list
   -> 'a
   -> 'a
