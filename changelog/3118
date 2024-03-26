@@ -1,0 +1,7 @@
+
+author: heitor.toledo
+description: "\\nThe LSP should now take less time between keystrokes.\\n\\nThis is done by creating a table for file canonicalization, which accounted for a huge time spent by the LSP.\\n\\n"
+merge_request: '3118'
+title: "[#2143] Reuse the normalization table LSP-wide"
+type: performance
+            
