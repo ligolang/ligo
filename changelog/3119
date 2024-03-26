@@ -1,0 +1,7 @@
+
+author: er433
+description: "\\n\\n"
+merge_request: '3119'
+title: "Fix: use `CONCAT` instead of fold + uncurry concat"
+type: fixed
+            
