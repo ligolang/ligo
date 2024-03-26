@@ -192,7 +192,9 @@ let%expect_test "Polymorphic Type error" =
 let%expect_test "No diagnostics for imported package." =
   get_diagnostics_test
     { file_path = "contracts/lsp/registry.jsligo"; max_number_of_problems = None };
-  [%expect {| [("../../../../../default/src/test/contracts/lsp/registry.jsligo", [])] |}]
+  [%expect
+    {|
+    [("../../../../../default/src/test/contracts/lsp/registry.jsligo", [])] |}]
 
 let%expect_test "Shows diagnostics from another file." =
   get_diagnostics_test

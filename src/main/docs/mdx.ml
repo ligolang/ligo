@@ -461,8 +461,8 @@ and decl_doc
       signature_binder
       signature
   | D_module_include _ -> (* TODO *) empty
-  | D_module _ | D_value _ | D_type _ | D_irrefutable_match _ | D_signature _ ->
-    empty (* decl is hidden *)
+  | D_module _ | D_value _ | D_type _ | D_irrefutable_match _ | D_signature _ | D_import _
+    -> empty (* decl is hidden *)
 
 
 let to_mdx

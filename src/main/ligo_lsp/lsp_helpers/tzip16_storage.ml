@@ -38,7 +38,7 @@ let rec get_all_variables_info (prg : Ast_typed.declaration list)
         (match module_.module_content with
         | M_struct decls -> get_all_variables_info decls
         | M_variable _ | M_module_path _ -> Sequence.empty)
-      | D_module_include _ | D_type _ | D_signature _ -> Sequence.empty)
+      | D_module_include _ | D_type _ | D_signature _ | D_import _ -> Sequence.empty)
 
 
 (** Makes best effort to tell whether this type is some storage type or not. *)

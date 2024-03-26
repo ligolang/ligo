@@ -53,7 +53,7 @@ module Attrs = struct
       ; optional : bool
       ; leading_comments : string list
       }
-    [@@deriving compare, hash, equal]
+    [@@deriving compare, sexp, hash, equal]
 
     let default =
       { entry = false
@@ -76,7 +76,7 @@ module Attrs = struct
       { public : bool
       ; leading_comments : string list
       }
-    [@@deriving compare, hash, equal]
+    [@@deriving compare, sexp, hash, equal]
 
     let default = { public = true; leading_comments = [] }
 
@@ -91,7 +91,7 @@ module Attrs = struct
       { public : bool
       ; leading_comments : string list
       }
-    [@@deriving compare, hash, equal]
+    [@@deriving compare, sexp, hash, equal]
 
     let default = { public = true; leading_comments = [] }
 
@@ -120,7 +120,7 @@ module Signature = struct
           { storage : Type.t
           ; parameter : Type.t
           }
-    [@@deriving equal, compare, hash]
+    [@@deriving equal, sexp, compare, hash]
   end
 
   include T

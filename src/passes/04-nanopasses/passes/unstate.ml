@@ -104,11 +104,8 @@ let rec decl : declaration -> Statement_result.t =
     let d = decl d in
     Statement_result.merge (Binding (fun x -> e_attr ~loc:(get_e_loc x) (attr, x))) d
   | D_import (Import_rename { alias; module_path }) ->
-    Binding
-      (fun x ->
-        e_mod_in
-          ~loc:(get_e_loc x)
-          { module_name = alias; rhs = m_path ~loc module_path; body = x })
+    (* We shouldn't support this anyway since imports are typically 'hoisted' *)
+    failwith "imports are not supported in nested scopes"
   | D_export d ->
     (* weird .. *)
     decl (d_attr ~loc (Attribute.{ key = "public"; value = None }, d))

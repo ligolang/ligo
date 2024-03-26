@@ -103,4 +103,6 @@ pin-depends: [
   [ "ocaml-recovery-parser.0.2.4" "git+https://github.com/serokell/ocaml-recovery-parser.git#0.2.4" ]
   [ "linol.0.5" "git+https://github.com/c-cube/linol.git#7730eabf98f657059920369b41d43e657a231ed5" ]
   [ "linol-lwt.0.5" "git+https://github.com/c-cube/linol.git#7730eabf98f657059920369b41d43e657a231ed5" ]
+  [ "landmarks.1.4" "git+https://github.com/LexiFi/landmarks.git#b0c753cd2a4c4aa00dffdd3be187d8ed592fabf7" ]
+  [ "landmarks-ppx.1.4" "git+https://github.com/LexiFi/landmarks.git#b0c753cd2a4c4aa00dffdd3be187d8ed592fabf7" ]
 ]

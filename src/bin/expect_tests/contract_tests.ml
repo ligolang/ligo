@@ -189,48 +189,25 @@ let%expect_test _ =
     [ "compile"; "contract"; bad_contract "interfaces.optional.jsligo"; "-m"; "FAAll" ];
   [%expect
     {|
-    File "../../test/contracts/negative/interfaces.optional.jsligo", line 33, character 0 to line 49, character 1:
-     32 |
-     33 | namespace ImplAll implements FAAll {
-          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-     34 |   type t = int;
+    File "../../test/contracts/negative/interfaces.optional.jsligo", line 17, character 0 to line 23, character 1:
+     16 |
+     17 | namespace Impl implements FA0Ext, FA1 {
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     18 |   type t = int;
           ^^^^^^^^^^^^^^^
-     35 |
+     19 |
 
-     36 |   @entry const transfer = (_u : unit, s : t) : [list<operation>, t] => [list([]), s];
+     20 |   @entry const transfer = (_u : unit, s : t) : [list<operation>, t] => [list([]), s];
           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-     37 |   @entry const other1 = (_u : unit, s : t) : [list<operation>, t] => [list([]), s];
+     21 |   @entry const other1 = (_u : unit, s : t) : [list<operation>, t] => [list([]), s];
           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-     38 |   @entry const other2 = (_u : unit, s : t) : [list<operation>, t] => [list([]), s];
+     22 |   @entry const other2 = (_u : unit, s : t) : [list<operation>, t] => [list([]), s];
           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-     39 |   @entry const other3 = (_u : unit, s : t) : [list<operation>, t] => [list([]), s];
-          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-     40 |   @view const v1 = (_u : unit, s : t) : t => s;
-          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-     41 |   /* this is wrong because juju has a different type */
-          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-     42 |   @entry const juju = (_i : string, s : t) : [list<operation>, t] => [list([]), s];
-          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-     43 |
-
-     44 |   /* foo, other4 and v2 are not in FAAll, but still added, because filtering
-          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-     45 |      is not enabled */
-          ^^^^^^^^^^^^^^^^^^^^^^
-     46 |   export const foo = (s : t) : t => s;
-          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-     47 |   @entry const other4 = (_u : unit, s : t) : [list<operation>, t] => [list([]), s];
-          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-     48 |   @view const v2 = (_u : unit, s : t) : t => s;
-          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-     49 | }
+     23 | };
           ^
-     50 |
+     24 |
 
-    Value "juju" does not match.
-    Expected "[_i, s]string -> int -> ( list (operation) * int )", but got: "[i, s]int -> int ->
-    ( list (operation) *
-      int )". |}];
+    Type "t" declared in signature but not found. |}];
   run_ligo_good [ "run"; "test"; contract "interfaces.include.jsligo" ];
   [%expect
     {|
@@ -2706,7 +2683,8 @@ let%expect_test _ =
     ; "-m"
     ; "Contract"
     ];
-  [%expect {| Unit |}];
+  [%expect {|
+    Unit |}];
   run_ligo_good
     [ "compile"
     ; "parameter"
@@ -2715,7 +2693,8 @@ let%expect_test _ =
     ; "-m"
     ; "Contract"
     ];
-  [%expect {| Unit |}];
+  [%expect {|
+    Unit |}];
   run_ligo_good
     [ "compile"
     ; "parameter"
@@ -2724,7 +2703,8 @@ let%expect_test _ =
     ; "-m"
     ; "Contract"
     ];
-  [%expect {| Unit |}]
+  [%expect {|
+    Unit |}]
 
 (* make sure that in compile storage we annotate the type *)
 let%expect_test _ =

@@ -185,6 +185,7 @@ and fold_map_declaration m acc (x : declaration) =
     let acc', module_ = (fold_map_expression_in_module_expr m) acc module_ in
     acc', { x with wrap_content = D_module_include module_ }
   | D_signature sig_ -> acc, { x with wrap_content = D_signature sig_ }
+  | D_import import -> acc, { x with wrap_content = D_import import }
 
 
 and fold_map_decl m = fold_map_declaration m
@@ -346,7 +347,8 @@ let get_views : program -> (Value_var.t * Location.t) list =
       | D_value _
       | D_irrefutable_match _
       | D_module_include _
-      | D_signature _ -> acc
+      | D_signature _
+      | D_import _ -> acc
     in
     (* TODO: This would be easier to use the signature instead of the module *)
     List.fold_right ~init:[] ~f module_
@@ -366,7 +368,8 @@ let fetch_view_type : declaration -> (type_expression * type_expression Binder.t
   | D_type _
   | D_module _
   | D_module_include _
-  | D_signature _ -> None
+  | D_signature _
+  | D_import _ -> None
 
 
 let map_orig_var ~f t =

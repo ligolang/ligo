@@ -210,7 +210,12 @@ let rec list_declarations
                  (Format.asprintf "%a." Module_var.pp module_binder
                  ^ Format.asprintf "%a" Value_var.pp v)))
         @ prev
-      | D_value _ | D_irrefutable_match _ | D_type _ | D_module _ | D_signature _ -> prev)
+      | D_value _
+      | D_irrefutable_match _
+      | D_type _
+      | D_module _
+      | D_signature _
+      | D_import _ -> prev)
     ~init:[]
     m.pr_module
 
@@ -247,6 +252,6 @@ let get_modules_with_entries (prg : Ast_typed.program) : Module_var.t list list 
           Ast_typed.{ pr_module; pr_sig }
           |> aux ~current_module:(module_binder :: current_module)
           |> ModSet.union acc
-        | D_module _ | D_type _ | D_module_include _ | D_signature _ -> acc)
+        | D_module _ | D_type _ | D_module_include _ | D_signature _ | D_import _ -> acc)
   in
   aux prg |> ModSet.to_seq |> Seq.fold_left (fun acc elt -> List.rev elt :: acc) []

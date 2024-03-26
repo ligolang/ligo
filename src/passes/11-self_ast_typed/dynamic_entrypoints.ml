@@ -98,7 +98,8 @@ let map_contract ~storage_type ~parameter_type decls sig_ =
         | D_type _
         | D_module _
         | D_module_include _
-        | D_signature _ -> (ctr, acc), [ el ])
+        | D_signature _
+        | D_import _ -> (ctr, acc), [ el ])
   in
   match dyns with
   | [] -> decls, sig_

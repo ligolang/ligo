@@ -147,8 +147,12 @@ let rec get_entry (lst : module_) (name : Value_var.t) : expression option =
             }
         } -> if Binder.apply (Value_var.equal name) binder then Some expr else None
     | D_module_include { module_content = M_struct x; _ } -> get_entry x name
-    | D_module_include _ | D_irrefutable_match _ | D_type _ | D_module _ | D_signature _
-      -> None
+    | D_module_include _
+    | D_irrefutable_match _
+    | D_type _
+    | D_module _
+    | D_signature _
+    | D_import _ -> None
   in
   List.find_map ~f:aux (List.rev lst)
 
@@ -385,7 +389,8 @@ let rec fetch_views_in_module ~storage_ty
     | D_type _
     | D_module _
     | D_value _
-    | D_signature _ -> return ()
+    | D_signature _
+    | D_import _ -> return ()
   in
   List.fold_right ~f:aux ~init:([], []) prog
 
@@ -489,7 +494,10 @@ let to_sig_items (module_ : module_) : sig_item list =
       | D_module { module_binder; module_; module_attr = _; annotation = () } ->
         ctx @ [ Location.wrap ~loc @@ S_module (module_binder, module_.signature) ]
       | D_signature { signature_binder; signature; signature_attr } ->
-        ctx @ [ Location.wrap ~loc @@ S_module_type (signature_binder, signature) ])
+        ctx @ [ Location.wrap ~loc @@ S_module_type (signature_binder, signature) ]
+      | D_import import ->
+        (* Imports are hidden in signatures *)
+        ctx)
 
 
 let to_signature (module_ : module_) : signature =

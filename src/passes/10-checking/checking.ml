@@ -1966,6 +1966,28 @@ and infer_declaration (decl : I.declaration)
         let%bind module_ = module_ in
         return @@ O.D_module_include module_)
       sig_.items
+  | D_import { import_name; imported_module; import_attr } ->
+    let%bind path = path () in
+    let inner_name = path @ [ import_name ] in
+    let%bind loc = loc () in
+    (* Lookup signature of [module_path] *)
+    let%bind sig_ =
+      Error_recovery.Get.module_
+        imported_module
+        ~error:(unbound_module_variable imported_module)
+    in
+    set_path inner_name
+    @@ const
+         E.(return @@ O.D_import { import_name; imported_module; import_attr })
+         [ Location.wrap ~loc
+           @@ Signature.S_module
+                ( import_name
+                , sig_
+                , (* Note that if [public] is [false] (which it is by default), then 
+                     the module binding is added to the context but not the signature of the 
+                     enclosing module. *)
+                  Attrs.Module.of_core_attr import_attr )
+         ]
 
 
 and infer_module ?is_annoted_entry (module_ : I.module_)
@@ -1983,6 +2005,7 @@ and infer_module ?is_annoted_entry (module_ : I.module_)
       let%bind sig_', decls =
         def_sig_item sig_items ~on_exit:Lift_sig ~in_:(loop module_)
       in
+      let sig_items = filter_non_public_sig_items sig_items in
       return
         ( { sig_' with items = sig_items @ sig_'.items }
         , E.(
@@ -2038,17 +2061,18 @@ and infer_signature_sort ?is_annoted_entry (old_sig : Signature.t)
             wrong_dynamic_storage_definition t t.Type.location)
 
 
+and filter_non_public_sig_items (sig_items : Signature.item Location.wrap list) =
+  List.filter sig_items ~f:(fun { wrap_content; location = _ } ->
+      match wrap_content with
+      | Signature.S_value (_, _, attr) -> attr.public || attr.entry || attr.view
+      | Signature.S_type (_, _, attr) -> attr.public
+      | Signature.S_type_var (_, attr) -> attr.public
+      | Signature.S_module (_, _, attr) -> attr.public
+      | Signature.S_module_type (_m, _, attr) -> attr.public)
+
+
 and remove_non_public (sig_ : Signature.t) =
-  let items =
-    List.filter sig_.items ~f:(fun { wrap_content; location = _ } ->
-        match wrap_content with
-        | Signature.S_value (_, _, attr) -> attr.public || attr.entry || attr.view
-        | Signature.S_type (_, _, attr) -> attr.public
-        | Signature.S_type_var (_, attr) -> attr.public
-        | Signature.S_module (_, _, attr) -> attr.public
-        | Signature.S_module_type (_m, _, attr) -> attr.public)
-  in
-  { sig_ with items }
+  { sig_ with items = filter_non_public_sig_items sig_.items }
 
 
 (* Turns out we merge multiple programs together before this point, which raises error

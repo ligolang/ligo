@@ -12,7 +12,7 @@ module Attrs : sig
       ; optional : bool
       ; leading_comments : string list
       }
-    [@@deriving compare, hash, equal]
+    [@@deriving compare, sexp, hash, equal]
 
     val default : t
     val of_core_attr : Ast_typed.ValueAttr.t -> t
@@ -23,7 +23,7 @@ module Attrs : sig
       { public : bool
       ; leading_comments : string list
       }
-    [@@deriving compare, hash, equal]
+    [@@deriving compare, sexp, hash, equal]
 
     val default : t
     val of_core_attr : Ast_typed.TypeOrModuleAttr.t -> t
@@ -36,7 +36,7 @@ module Attrs : sig
       { public : bool
       ; leading_comments : string list
       }
-    [@@deriving compare, hash, equal]
+    [@@deriving compare, sexp, hash, equal]
 
     val default : t
     val of_core_attr : Ast_typed.SignatureAttr.t -> t
@@ -48,6 +48,7 @@ module Signature : sig
     { items : item Location.wrap list
     ; sort : sort
     }
+  [@@deriving compare, sexp, hash, equal]
 
   and sort =
     | Ss_module

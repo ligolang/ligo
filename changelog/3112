@@ -1,0 +1,7 @@
+
+author: alistair.obrien
+description: "\\n\\nperf!: fix polynomial decoding induced by `#import`s\\n\\n"
+merge_request: '3112'
+title: "perf: fix polynomial decoding induced by `#import`s"
+type: breaking
+            

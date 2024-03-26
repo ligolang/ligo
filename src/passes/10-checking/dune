@@ -21,6 +21,7 @@
    ppx_woo
    ppx_map
    ppx_sexp_conv
+   ppx_sexp_message
    ppx_compare
    ppx_let
    ppx_here

@@ -71,7 +71,10 @@ let internalize_core (ds : Ast_core.program) : Ast_core.program =
         | D_module_include x -> D_module_include x
         | D_signature signature' ->
           (* TODO *)
-          D_signature signature')
+          D_signature signature'
+        | D_import import ->
+          (* Imports are hidden by default *)
+          D_import import)
       decl
   and module' module_ = List.map ~f:declaration module_ in
   List.map ~f:declaration ds

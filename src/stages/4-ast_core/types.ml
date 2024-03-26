@@ -42,6 +42,7 @@ module Pattern = Linear_pattern
 module Match_expr = Match_expr.Make (Pattern)
 module Pattern_decl = Pattern_decl (Pattern) (Value_attr)
 module Let_in = Let_in.Make (Pattern) (Value_attr)
+module Import_decl = Import_decl (Type_or_module_attr)
 
 type expression_content =
   (* Base *)
@@ -95,6 +96,7 @@ and declaration_content =
   | D_module of (module_expr, module_annotation option) Module_decl.t
   | D_module_include of module_expr
   | D_signature of signature_expr Signature_decl.t
+  | D_import of Import_decl.t
 
 and declaration = declaration_content Location.wrap
 and decl = declaration [@@deriving eq, compare, yojson, hash]

@@ -993,7 +993,7 @@ Namespace impmlementing
 
 ```jsligo
 namespace FA0 implements FA0_INTF {
-  type storage = int;
+  export type storage = int;
   @entry const add = (s : int, k : int) : [list<operation>, int] => [list([]), s + k];
   @entry const extra = (s : int, k : int) : [list<operation>, int] => [list([]), s - k];
 }
