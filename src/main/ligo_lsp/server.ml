@@ -23,6 +23,57 @@ type capability_mode =
 
 let default_modes : capability_mode list = [ All_capabilities; No_semantic_tokens ]
 
+(* OCaml object methods are recursive by default, but OCaml doesn't play nicely with
+   polymorphic recursion. The callers of this function have types that interact with GADTs
+   and the solution I found was to extract this into a function outside the object. *)
+let try_with_crash_handler
+    (type a)
+    (has_caught_crash : bool ref)
+    (action : a t)
+    ~(default : a)
+    : a t
+  =
+  let log_crash_and_display_message (exn : exn) : unit t =
+    let stack = Printexc.get_backtrace () in
+    let@ () =
+      send_log_msg ~type_:Error
+      @@ Format.asprintf "Unexpected exception: %a\n%s" Exn.pp exn stack
+    in
+    if !has_caught_crash
+    then pass
+    else (
+      let don't_show_again = "Don't show again" in
+      send_message_with_buttons
+        ~type_:Error
+        ~options:[ don't_show_again ]
+        ~message:
+          (Format.asprintf
+             "An unexpected exception has occurred.\n\
+              The language server will now operate at a limited capacity until the crash \
+              has been worked around. Please report this as a bug together with an \
+              example on how to reproduce this. A stack trace may be found in the logs \
+              for LIGO Language Server. Details:\n\
+              %a"
+             Exn.pp
+             exn)
+        ~handler:(function
+          | Error error -> send_log_msg ~type_:Error error.message
+          | Ok None -> pass
+          | Ok (Some { title }) ->
+            if String.equal title don't_show_again then has_caught_crash := true;
+            pass))
+  in
+  with_run_in_IO
+  @@ fun { unlift_IO } ->
+  try%lwt
+    let%lwt result = unlift_IO action in
+    IO.return result
+  with
+  | exn ->
+    let%lwt () = unlift_IO @@ log_crash_and_display_message exn in
+    IO.return default
+
+
 (** Lsp server class
 
    This is the main point of interaction beetween the code checking documents
@@ -34,7 +85,6 @@ let default_modes : capability_mode list = [ All_capabilities; No_semantic_token
    so that users only need to override methods that they want the server to
    actually meaningfully interpret and respond to.
 *)
-
 class lsp_server (capability_mode : capability_mode) =
   object (self)
     inherit Linol_lwt.Jsonrpc2.server as super
@@ -42,14 +92,16 @@ class lsp_server (capability_mode : capability_mode) =
     val mutable config : config = default_config
     val mutable client_capabilities : ClientCapabilities.t = ClientCapabilities.create ()
     val file_normalization_tbl = Hashtbl.create (module String)
-    [@@@alert "-from_absolute_performance"]
+
+    (** If [true], indicates that we reached a fatal [failwith] and the user has
+        acknowledged it. [false] indicates that we haven't reached a crash yet, or the
+        user has not yet acknowledged yet. *)
+    val has_caught_crash : bool ref = ref false
 
     method private normalize (file : string) : Path.t =
       Hashtbl.find_or_add file_normalization_tbl file ~default:(fun () ->
           Path.from_absolute file)
     [@@alert "-from_absolute_performance"]
-
-    [@@@alert "@from_absolute_performance"]
 
     (** Stores the path to the last ligo.json file, if found. *)
     val last_project_dir : Path.t option ref = ref None
@@ -67,6 +119,10 @@ class lsp_server (capability_mode : capability_mode) =
           ; normalize = self#normalize
           }
 
+    method on_doc_with_handler ~process_immediately ?changes ~version file content =
+      try_with_crash_handler has_caught_crash ~default:()
+      @@ Requests.on_doc ~process_immediately ?changes ~version file content
+
     method on_doc
         : ?changes:TextDocumentContentChangeEvent.t list
           -> version:[ `New of Ligo_interface.document_version | `Unchanged ]
@@ -76,12 +132,13 @@ class lsp_server (capability_mode : capability_mode) =
       match capability_mode with
       | Only_semantic_tokens ->
         (* No need for calculating definitions/diagnostics here *)
-        Requests.on_doc ~process_immediately:false
+        self#on_doc_with_handler ~process_immediately:false
       | All_capabilities | No_semantic_tokens ->
         let { diagnostics_pull_mode; _ } = config in
         (match diagnostics_pull_mode with
-        | `OnDocUpdate -> Requests.on_doc ~process_immediately:true
-        | `OnDocumentLinkRequest | `OnSave -> Requests.on_doc ~process_immediately:false)
+        | `OnDocUpdate -> self#on_doc_with_handler ~process_immediately:true
+        | `OnDocumentLinkRequest | `OnSave ->
+          self#on_doc_with_handler ~process_immediately:false)
 
     (* We now override the [on_notify_doc_did_open] method that will be called
        by the server each time a new document is opened. *)
@@ -96,7 +153,7 @@ class lsp_server (capability_mode : capability_mode) =
         self#on_doc file content ~version:(`New document.version)
       (* For [`OnSave] we should process doc that was opened *)
       | `OnSave, _ ->
-        Requests.on_doc
+        self#on_doc_with_handler
           ~process_immediately:true
           ~version:(`New document.version)
           file
@@ -565,7 +622,9 @@ class lsp_server (capability_mode : capability_mode) =
                    ~partialResultToken:None
                    ())
             in
-            self#run_handler new_notify_back @@ process_doc path)
+            self#run_handler new_notify_back
+            @@ try_with_crash_handler has_caught_crash ~default:()
+            @@ process_doc path)
         | notification -> super#on_notification ~notify_back ~server_request notification
 
     method! on_request
@@ -621,7 +680,9 @@ class lsp_server (capability_mode : capability_mode) =
                    ~partialResultToken:None
                    ())
             in
-            self#run_handler new_notify_back @@ bind repopulate_cache (fun () -> handler))
+            self#run_handler new_notify_back
+            @@ try_with_crash_handler has_caught_crash ~default
+            @@ bind repopulate_cache (fun () -> handler))
           else IO.return default
         in
         let run_command (handler : r Handler.t) : r IO.t =
