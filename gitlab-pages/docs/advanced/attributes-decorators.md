@@ -74,13 +74,13 @@ This attribute can be used to choose the name of the Michelson equivalent of rec
 
 Using `@annot`, the Michelson annotation for a given field or constructor can be customized. This is useful for interoperability, where a third-party program or contract expects specific Michelson annotations, even if the LIGO code might not use these names internally.
 
-For more information, see [Interop: Different Michelson annotations](../advanced/interop.md#different-michelson-annotations)?
+For more information, see [Interop: Different Michelson annotations](../tezos/contracts/interop.md#different-michelson-annotations)?
 
 ## @layout to specify the Michelson layout of composite data types (structures and variants)
 
 Michelson does not natively support records or variants. These have to be encoded using nested `pair`s or nested `or`s. Many tree representations could translate to the same linear sequence of fields or constructors. LIGO makes it possible to choose between a right comb which preserves the order or the fields or constructors as declared in the source code, and a left-balanced, alphabetically ordered binary tree. The attributes `[@layout comb]` and `[@layout tree]` can be placed before the `{ ... }` for records and before the first constructor or leading `|` for variants, in order to explicitly choose the desired layout.
 
-For more information, see [Interop: Michelson layout of LIGO data structures](../advanced/interop.md##michelson-layout-of-ligo-data-structures).
+For more information, see [Interop: Michelson layout of LIGO data structures](../tezos/contracts/interop.md##michelson-layout-of-ligo-data-structures).
 
 ## @tzip16_compatible to enable TZIP-16 storage checks
 
@@ -148,13 +148,13 @@ This decorator can be used to choose the name of the Michelson equivalent of rec
 
 Using `@annot`, the Michelson annotation for a given field or constructor can be customized. This is useful for interoperability, where a third-party program or contract expects specific Michelson annotations, even if the LIGO code might not use these names internally.
 
-For more information, see [Interop: Different Michelson annotations](../advanced/interop.md#different-michelson-annotations)?
+For more information, see [Interop: Different Michelson annotations](../tezos/contracts/interop.md#different-michelson-annotations)?
 
 ## @layout to specify the Michelson layout of composite data types (structures and variants)
 
 Michelson does not natively support records or variants. These have to be encoded using nested `pair`s or nested `or`s. Many tree representations could translate to the same linear sequence of fields or constructors. LIGO makes it possible to choose between a right comb which preserves the order or the fields or constructors as declared in the source code, and a left-balanced, alphabetically ordered binary tree. The decorators `@layout("comb")` and `@layout("tree")` can be placed before the `{ ... }` for records and before the first constructor or leading `|` for variants, in order to explicitly choose the desired layout.
 
-For more information, see [Interop: Michelson layout of LIGO data structures](../advanced/interop.md##michelson-layout-of-ligo-data-structures).
+For more information, see [Interop: Michelson layout of LIGO data structures](../tezos/contracts/interop.md##michelson-layout-of-ligo-data-structures).
 
 ## @tzip16_compatible to enable TZIP-16 storage checks
 

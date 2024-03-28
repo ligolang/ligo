@@ -1,6 +1,6 @@
 ---
 id: tezos-reference
-title: Tezos
+title: tezos
 hide_table_of_contents: true
 ---
 import Syntax from '@theme/Syntax';

@@ -18,7 +18,7 @@ let contains_3 = Map.mem 3 new_map // = true
 ```
 
 Note: See the predefined
-[module Map](../reference/map-reference/?lang=cameligo)
+[module Map](../reference/map-reference)
 
 </Syntax>
 
@@ -31,6 +31,6 @@ const contains_3 = Map.mem(3, new_map); // == true
 ```
 
 Note: See the predefined
-[namespace Map](../reference/map-reference/?lang=jsligo)
+[namespace Map](../reference/map-reference)
 
 </Syntax>

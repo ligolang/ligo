@@ -6039,9 +6039,9 @@ contract: EIdent ZWSP
 ## In state 846, spurious reduction of production left_hs -> var_path
 ##
 
-Ill-formed ternary conditional.
-At this point, an assignment symbol is expected, e.g. '=', '+=', '&='
-etc.
+Ill-formed arithmetic expression.
+At this point, if the expression is complete, an assignment symbol is
+expected, e.g. '=', '+=', '&=' etc.
 
 contract: EIdent QMARK Bytes As EIdent COLON ZWSP
 ##

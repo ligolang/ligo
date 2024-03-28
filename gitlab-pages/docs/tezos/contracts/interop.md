@@ -1,6 +1,6 @@
 ---
 id: interop
-title: Interop
+title: Interoperability
 ---
 
 import Syntax from '@theme/Syntax';
@@ -50,7 +50,7 @@ works not with
 :::info
 In the case of annotated entrypoints --- the annotated `or` tree
 directly under `parameter` in a contract --- you should use
-annotations, as otherwise it's unclear which entrypoint you are
+annotations, as otherwise it is unclear which entrypoint you are
 referring to.
 :::
 
@@ -70,7 +70,8 @@ location retaining right combed tree, like this:
 
 <Syntax syntax="cameligo">
 
-You can use the `@layout comb` (or `@layout:comb`) attribute to make this choice explicitly:
+You can use the attribute `[@layout comb]` to make this choice
+explicitly:
 
 ```cameligo
 type animal =
@@ -84,7 +85,7 @@ type animal =
 
 <Syntax syntax="jsligo">
 
-You can use the decorator `@layout comb` to make this choice explicitly:
+You can use the decorator `@layout("comb")` to make this choice explicitly:
 
 ```jsligo
 type animal =
@@ -98,8 +99,7 @@ type animal =
 
 <Syntax syntax="cameligo">
 
-The `@layout comb` (or `@layout:comb`) attribute can also be used on
-record types:
+The attribute `[@layout comb]` can also be used on record types:
 
 ```cameligo
 type artist =
@@ -128,7 +128,8 @@ type artist =
 
 </Syntax>
 
-The next section discusses an alternative layout, which used to be the default one until LIGO version 1.0.
+The next section discusses an alternative layout, which used to be the
+default one until LIGO version 1.0.
 
 ### Alternative alphabetically ordered left-balanced tree layout
 
@@ -203,7 +204,7 @@ will result into:
 
 <Syntax syntax="cameligo">
 
-The `@annot <name>` attribute can also be used on record field
+The attribute `[@annot <name>]` can also be used on record field
 annotations:
 
 ```cameligo group=annot
@@ -213,8 +214,9 @@ type artist = {
   [@annot performer] name: string;
 }
 ```
-If the `@layout comb` and `@annot <name>` attributes are not adequate
-enough for your use-case, LIGO has more advanced advanced
+
+If the `[@layout comb]` and `[@annot <name>]` attributes are not
+adequate enough for your use-case, LIGO has more advanced advanced
 interoperability features, which we will we discuss next.
 
 </Syntax>
@@ -289,8 +291,8 @@ If you do not want to inject a Michelson annotation, the you simply
 provide an empty string.
 
 :::info
-Alternatively, if annotations are not important you can also use plain tuples
-for pair's instead. Plain tuples don't have any annotations.
+Alternatively, if annotations are not important you can also use plain
+tuples for pairs instead. Plain tuples do not have any annotations.
 :::
 
 To use variables of type `michelson_or` you have to use `M_left` and
@@ -381,9 +383,7 @@ let make_abstract_sum (z_or: z_or) =
             | M_left n -> W
             | M_right n -> V)))
 
-let make_abstract_record z y x w v =
-  { z = z; y = y; x = x; w = w; v = v }
-
+let make_abstract_record z y x w v = {z; y; x; w; v}
 ```
 
 </Syntax>
@@ -411,7 +411,7 @@ type test = {
   v: int
 };
 
-let make_concrete_sum = (r: z_to_v): z_or =>
+const make_concrete_sum = (r: z_to_v): z_or =>
   match(r) {
     when(Z()): M_left(unit);
     when(Y()): M_right(M_left(unit));
@@ -421,10 +421,10 @@ let make_concrete_sum = (r: z_to_v): z_or =>
   };
 
 
-let make_concrete_record = (r: test) =>
+const make_concrete_record = (r: test) =>
   [r.z, r.y, r.x, r.w, r.v];
 
-let make_abstract_sum = (z_or: z_or): z_to_v =>
+const make_abstract_sum = (z_or: z_or): z_to_v =>
   match(z_or) {
     when(M_left(n)): Z();
     when(M_right(y_or)): match(y_or) {
@@ -439,23 +439,29 @@ let make_abstract_sum = (z_or: z_or): z_to_v =>
     }
   };
 
-let make_abstract_record = (z: string, y: int, x: string, w: bool, v: int) =>  ({z,y,x,w,v});
+const make_abstract_record =
+  (z: string, y: int, x: string, w: bool, v: int) => ({z,y,x,w,v});
 ```
 
 </Syntax>
 
 
 ## Entrypoints and annotations
-It's possible for a contract to have multiple entrypoints, which is implicitly translated in
-LIGO to a `parameter` with a variant type as shown below. The following contract:
+
+It is possible for a contract to have multiple entrypoints, which is
+implicitly translated in LIGO to a `parameter` with a variant type as
+shown below. The following contract:
 
 <Syntax syntax="cameligo">
 
 ```cameligo group=entrypoints_and_annotations
 type storage = int
 
-[@entry] let left (i : int) (x : storage) : operation list * storage = [], x - i
-[@entry] let right (i : int) (x : storage) : operation list * storage = [], x + i
+[@entry]
+let left (i : int) (x : storage) : operation list * storage = [], x - i
+
+[@entry]
+let right (i : int) (x : storage) : operation list * storage = [], x + i
 ```
 
 </Syntax>
@@ -465,8 +471,13 @@ type storage = int
 ```jsligo group=entrypoints_and_annotations
 type storage = int
 
-@entry const left  = (i : int, x : storage) : [list<operation>, storage] => [list([]), x - i]
-@entry const right = (i : int, x : storage) : [list<operation>, storage] => [list([]), x + i]
+@entry
+const left = (i: int, x: storage) : [list<operation>, storage] =>
+  [list([]), x - i]
+
+@entry
+const right = (i: int, x: storage) : [list<operation>, storage] =>
+  [list([]), x + i]
 ```
 
 </Syntax>
@@ -483,7 +494,7 @@ type parameter =
  | Right of int
 
 [@entry]
-let main (p : parameter) (x : storage): (operation list * storage) =
+let main (p : parameter) (x : storage) : operation list * storage =
   [],
   (match p with
   | Left i -> x - i
@@ -560,15 +571,14 @@ const main = (p: parameter, s: storage): [list<operation>, storage] => {
 
 </Syntax>
 
-
-Notice how we directly use the `%left` entrypoint without mentioning the
-`%right` entrypoint. This is done with the help of annotations. Without
-annotations it wouldn't be clear what our `int` would be referring to.
+Notice how we directly use the `%left` entrypoint without mentioning
+the `%right` entrypoint. This is done with the help of
+annotations. Without annotations it wouldn't be clear what our `int`
+would be referring to.
 
 This currently only works for `or`'s or variant types in LIGO.
 
 ## Amendment
-With the upcoming 007 amendment to Tezos this will change though, and also
-`pair`s can be ordered differently.
 
-<!-- updated use of entry -->
+With amendment 007 to Tezos this is changed though, and also `pair`s
+can be ordered differently.

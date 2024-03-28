@@ -26,7 +26,7 @@ let assert_all_greater_than_3 (m : (int, int) map) : unit =
 ```
 
 Note: See the predefined
-[module Map](../reference/map-reference/?lang=cameligo)
+[module Map](../reference/map-reference)
 
 </Syntax>
 
@@ -38,6 +38,6 @@ const assert_all_greater_than_3 =
 ```
 
 Note: See the predefined
-[namespace Map](../reference/map-reference/?lang=jsligo)
+[namespace Map](../reference/map-reference)
 
 </Syntax>

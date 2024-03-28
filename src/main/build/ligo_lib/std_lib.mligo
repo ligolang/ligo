@@ -247,17 +247,25 @@ let nat (bytes: bytes) : nat =
   [%michelson ({| {NAT} |} bytes : nat)]
 
 (** display-only-for-cameligo
-  The call `ediv z1 z2`, where `z1` and `z2` are either of type
-  `int` or `nat`, returns `None` if `z2` is zero; otherwise, it
-  returns the pair `(q,r)`, where `q` is the quotient and `r` the
-  positive remainder, as is the convention of the mathematical
-  Euclidian division. *)
+    The call `ediv z1 z2`, where `z1` and `z2` are either of type
+    `int` or `nat`, returns `None` if `z2` is zero; otherwise, it
+    returns the pair `(q,r)`, where `q` is the quotient and `r` the
+    positive remainder, as is the convention of the mathematical
+    Euclidian division. The function `ediv` is also overloaded to work
+    on values of type `tez`. When `z1` and `z2` are of type `tez` and
+    `z2` is nonzero, we get a `nat` quotient and a `tez`
+    remainder. When `z1` is a `tez` and `z2` is a nonzero `nat`, the
+    calls yields a quotient and a remainder both of type `tez`. *)
 (** display-only-for-jsligo
-  The call `ediv(z1, z2)`, where `z1` and `z2` are either of type
-  `int` or `nat`, returns `None()` if `z2` is zero; otherwise, it
-  returns the pair `[q,r]`, where `q` is the quotient and `r` the
-  positive remainder, as is the convention of the mathematical
-  Euclidian division. *)
+    The call `ediv(z1, z2)`, where `z1` and `z2` are either of type
+    `int` or `nat`, returns `None()` if `z2` is zero; otherwise, it
+    returns the pair `[q,r]`, where `q` is the quotient and `r` the
+    positive remainder, as is the convention of the mathematical
+    Euclidian division. The function `ediv` is also overloaded to work
+    on values of type `tez`. When `z1` and `z2` are of type `tez` and
+    `z2` is nonzero, we get a `nat` quotient and a `tez`
+    remainder. When `z1` is a `tez` and `z2` is a nonzero `nat`, the
+    calls yields a quotient and a remainder both of type `tez`. *)
 let ediv (type a b) (left: a) (right: b) : (a, b) external_ediv =
   [%michelson ({| {EDIV} |} left right : (a, b) external_ediv)]
 
@@ -267,51 +275,51 @@ module Tezos = struct
   (* Addresses *)
 
   (** display-only-for-cameligo
-    The call `get_sender ()` is the address of the contract (that
+    The call `Tezos.get_sender ()` is the address of the contract (that
     is, a smart contract or an implicit account) that initiated the
     current internal transaction. Note that, if transactions have been
-    chained, that address could be different from `get_source ()`. *)
+    chained, that address could be different from `Tezos.get_source ()`. *)
   (** display-only-for-jsligo
-    The call `get_sender()` is the address of the contract (that
+    The call `Tezos.get_sender()` is the address of the contract (that
     is, a smart contract or an implicit account) that initiated the
     current internal transaction. Note that, if transactions have been
-    chained, that address could be different from `get_source()`. *)
+    chained, that address could be different from `Tezos.get_source()`. *)
   let get_sender () : address =
     [%michelson ({| {SENDER} |} : address)]
 
   (** display-only-for-cameligo
-    The call `get_source ()` is the address of the implicit account
+    The call `Tezos.get_source ()` is the address of the implicit account
     that initiated the current transaction. If transactions have been
-    chained, that address is different from `get_sender ()`. *)
+    chained, that address is different from `Tezos.get_sender ()`. *)
   (** display-only-for-jsligo
-    The call `get_source()` is the address of the implicit account
+    The call `Tezos.get_source()` is the address of the implicit account
     that initiated the current transaction. If transactions have been
-    chained, that address is different from `get_sender()`. *)
+    chained, that address is different from `Tezos.get_sender()`. *)
   let get_source () : address =
     [%michelson ({| {SOURCE} |} : address)]
 
   (** display-only-for-cameligo
-    The call `self entrypoint` is the address of the current smart
+    The call `Tezos.self entrypoint` is the address of the current smart
     contract, that is, the smart contract containing the call. For the
     address of the smart contract actually *executing* the call,
     because it is embedded in a lambda sent to another smart contract,
-    use `get_self_address` instead. The string `entrypoint` is the
+    use `Tezos.get_self_address` instead. The string `entrypoint` is the
     name of a valid entrypoint such that `entrypoint` is not
-    `"default"`, or the empty string denoting the `"default"`
+    `"%default"`, or the empty string denoting the `"%default"`
     entrypoint (which is the root of the smart contract parameter if
-    no `"default"` entrypoint is explicitly defined). If the contract
+    no `"%default"` entrypoint is explicitly defined). If the contract
     does not have the specified entrypoint, the call results in an
     type checking error. *)
   (** display-only-for-jsligo
-    The call `self(entrypoint)` is the address of the current smart
+    The call `Tezos.self(entrypoint)` is the address of the current smart
     contract, that is, the smart contract containing the call. For the
     address of the smart contract actually *executing* the call,
     because it is embedded in a lambda sent to another smart contract,
-    use `get_self_address` instead. The string `entrypoint` is the
+    use `Tezos.get_self_address` instead. The string `entrypoint` is the
     name of a valid entrypoint such that `entrypoint` is not
-    `"default"`, or the empty string denoting the `"default"`
+    `"%default"`, or the empty string denoting the `"%default"`
     entrypoint (which is the root of the smart contract parameter if
-    no `"default"` entrypoint is explicitly defined). If the contract
+    no `"%default"` entrypoint is explicitly defined). If the contract
     does not have the specified entrypoint, the call results in an
     type checking error. *)
   [@inline] [@thunk]
@@ -320,43 +328,43 @@ module Tezos = struct
     [%michelson ({| {SELF (annot $0)} |} entrypoint : a contract)]
 
   (** display-only-for-cameligo
-    The call `get_self_address ()` is the address of the smart
+    The call `Tezos.get_self_address ()` is the address of the smart
     contract actually executing the call, as a value of type
     `address`. That contract can be different from the one containing
     the call if the call is in a lambda transmitted to another smart
     contract. Therefore, it is assumed that, in general, the type of
     the executing contract is statically unknown, so the return type
-    of `get_self_address` is not `'a contract`, but `address`. (See
-    `self`.) *)
+    of `Tezos.get_self_address` is not `'a contract`, but `address`. (See
+    `Tezos.self`.) *)
   (** display-only-for-jsligo
-    The call `get_self_address()` is the address of the smart
+    The call `Tezos.get_self_address()` is the address of the smart
     contract actually executing the call, as a value of type
     `address`. That contract can be different from the one containing
     the call if the call is in a lambda transmitted to another smart
     contract. Therefore, it is assumed that, in general, the type of
     the executing contract is statically unknown, so the return type
-    of `get_self_address` is not `'a contract`, but `address`. (See
-    `self`.) *)
+    of `Tezos.get_self_address` is not `'a contract`, but `address`. (See
+    `Tezos.self`.) *)
   let get_self_address () : address =
     [%michelson ({| {SELF_ADDRESS} |} : address)]
 
   (** display-only-for-cameligo
-    The call `address contract` casts the address of the smart
+    The call `Tezos.address contract` casts the address of the smart
     contract `contract` into the more general value of type
     `address`. *)
   (** display-only-for-jsligo
-    The call `address(contract)` casts the address of the smart
+    The call `Tezos.address(contract)` casts the address of the smart
     contract `contract` into the more general value of type
     `address`. *)
   let address (type a) (contract_addr: a contract) : address =
     [%michelson ({| {ADDRESS} |} contract_addr : address)]
 
   (** display-only-for-cameligo
-    The call `implicit_account kh` casts the public key hash `kh`
+    The call `Tezos.implicit_account kh` casts the public key hash `kh`
     into the address of its implicit account. Note that addresses of
     implicit accounts always have the type `unit contract`. *)
   (** display-only-for-jsligo
-    The call `implicit_account(kh)` casts the public key hash `kh`
+    The call `Tezos.implicit_account(kh)` casts the public key hash `kh`
     into the address of its implicit account. Note that addresses of
     implicit accounts always have the type `contract<unit>`. *)
   let implicit_account (kh: key_hash) : unit contract =
@@ -365,13 +373,13 @@ module Tezos = struct
   (* Contracts and operations *)
 
   (** display-only-for-cameligo
-    The call `get_contract_opt addr` casts the address `addr` into
+    The call `Tezos.get_contract_opt addr` casts the address `addr` into
     that of a contract address, if such contract exists. The value of
     the call is `None` if no such contract exists, otherwise `Some
     contract`, where `contract` is the contract's address. Note: The
     address of an implicit account has type `unit contract`. *)
   (** display-only-for-jsligo
-    The call `get_contract_opt(addr)` casts the address `addr` into
+    The call `Tezos.get_contract_opt(addr)` casts the address `addr` into
     that of a contract address, if such contract exists. The value of
     the call is `None()` if no such contract exists, otherwise `Some
     contract`, where `contract` is the contract's address. Note: The
@@ -382,12 +390,12 @@ module Tezos = struct
                  : param contract option)]
 
   (** display-only-for-cameligo
-    The call `get_contract_with_error addr error` casts the address
+    The call `Tezos.get_contract_with_error addr error` casts the address
     `addr` into that of a contract address, if such contract
     exists. If not, the execution fails with the error message
     `error`. *)
   (** display-only-for-jsligo
-    The call `get_contract_with_error(addr, error)` casts the address
+    The call `Tezos.get_contract_with_error(addr, error)` casts the address
     `addr` into that of a contract address, if such contract
     exists. If not, the execution fails with the error message
     `error`. *)
@@ -398,13 +406,13 @@ module Tezos = struct
     | Some contract_addr -> contract_addr
 
   (** display-only-for-cameligo
-    The call `get_contract addr` casts the address `addr` into that
+    The call `Tezos.get_contract addr` casts the address `addr` into that
     of a smart contract address, if such contract exists. The call
     fails with the message `"bad address for get_contract"` if no
     such smart contract exists. Note: The address of an implicit
     account has type `unit contract`. *)
   (** display-only-for-jsligo
-    The call `get_contract(addr)` casts the address `addr` into that
+    The call `Tezos.get_contract(addr)` casts the address `addr` into that
     of a smart contract address, if such contract exists. The call
     fails with the message `"bad address for get_contract"` if no
     such smart contract exists. Note: The address of an implicit
@@ -414,10 +422,10 @@ module Tezos = struct
     get_contract_with_error addr "bad address for get_contract"
 
   (** display-only-for-cameligo
-    The call `get_entrypoint_opt entrypoint addr` has the same
-    behaviour as `get_contract_opt addr`, with the additional
+    The call `Tezos.get_entrypoint_opt entrypoint addr` has the same
+    behaviour as `Tezos.get_contract_opt addr`, with the additional
     constraint that the contract must have an entrypoint named
-    `entrypoint`. In other words, `get_entrypoint_opt entrypoint addr`
+    `entrypoint`. In other words, `Tezos.get_entrypoint_opt entrypoint addr`
     casts the address `addr` into that of a smart contract
     address, if such contract exists and has an entrypoint named
     `entrypoint`. The value of the call is `None` if no such smart
@@ -425,10 +433,10 @@ module Tezos = struct
     the smart contract's address. Note: The address of an implicit
     account has type `unit contract`. *)
   (** display-only-for-jsligo
-    The call `get_entrypoint_opt(entrypoint, addr)` has the same
-    behaviour as `get_contract_opt(addr)`, with the additional
+    The call `Tezos.get_entrypoint_opt(entrypoint, addr)` has the same
+    behaviour as `Tezos.get_contract_opt(addr)`, with the additional
     constraint that the contract must have an entrypoint named
-    `entrypoint`. In other words, `get_entrypoint_opt(entrypoint, addr)`
+    `entrypoint`. In other words, `Tezos.get_entrypoint_opt(entrypoint, addr)`
     casts the address `addr` into that of a smart contract
     address, if such contract exists and has an entrypoint named
     `entrypoint`. The value of the call is `None()` if no such smart
@@ -444,14 +452,14 @@ module Tezos = struct
                  : param contract option)]
 
   (** display-only-for-cameligo
-    The call `get_entrypoint entrypoint addr` casts the address
+    The call `Tezos.get_entrypoint entrypoint addr` casts the address
     `addr` into that of a smart contract address, if such contract
     exists and has an entrypoint named `entrypoint`. If no such smart
     contract exists, the execution fails with the error message
     `"bad address for get_entrypoint"`. Note: The address of an implicit
     account has type `unit contract`. *)
   (** display-only-for-jsligo
-    The call `get_entrypoint(entrypoint, addr)` casts the address
+    The call `Tezos.get_entrypoint(entrypoint, addr)` casts the address
     `addr` into that of a smart contract address, if such contract
     exists and has an entrypoint named `entrypoint`. If no such smart
     contract exists, the execution fails with the error message
@@ -465,22 +473,22 @@ module Tezos = struct
     | Some contract_addr -> contract_addr
 
   (** display-only-for-cameligo
-    The call `create_contract e d a s` returns a contract creation
+    The call `Tezos.create_contract e d a s` returns a contract creation
     operation (origination) for the entrypoint `e` (as a function)
     with optional delegate `d`, initial amount `a` and initial
     storage `s`, together with the address of the created
     contract. Note that the created contract cannot be called
-    immediately afterwards (that is, `get_contract_opt` on that
+    immediately afterwards (that is, `Tezos.get_contract_opt` on that
     address would return `None`), as the origination must be
     performed successfully first, for example by calling a proxy
     contract or itself. *)
   (** display-only-for-jsligo
-    The call `create_contract(e,d,a,s)` returns a contract creation
+    The call `Tezos.create_contract(e,d,a,s)` returns a contract creation
     operation (origination) for the entrypoint `e` (as a function)
     with optional delegate `d`, initial amount `a` and initial
     storage `s`, together with the address of the created
     contract. Note that the created contract cannot be called
-    immediately afterwards (that is, `get_contract_opt` on that
+    immediately afterwards (that is, `Tezos.get_contract_opt` on that
     address would return `None()`), as the origination must be
     performed successfully first, for example by calling a proxy
     contract or itself. *)
@@ -496,7 +504,7 @@ module Tezos = struct
                 uncurry entrypoint, delegate, amount, storage)]
 
   (** display-only-for-cameligo
-    The call `set_delegate d` evaluates in an operation that sets
+    The call `Tezos.set_delegate d` evaluates in an operation that sets
     the delegate of the current smart contract to be `d`, where `d` is
     an optional key hash. If `None`, the delegation is withdrawn. If
     the contract has no delegation, then no change occurs. If `d` is
@@ -508,7 +516,7 @@ module Tezos = struct
     instruction in itself does not fail; it produces an operation that
     will fail when applied. *)
   (** display-only-for-jsligo
-    The call `set_delegate(d)` evaluates in an operation that sets
+    The call `Tezos.set_delegate(d)` evaluates in an operation that sets
     the delegate of the current smart contract to be `d`, where `d` is
     an optional key hash. If `None()`, the delegation is withdrawn. If
     the contract has no delegation, then no change occurs. If `d` is
@@ -523,13 +531,13 @@ module Tezos = struct
     [%michelson ({| {SET_DELEGATE} |} delegate : operation)]
 
   (** display-only-for-cameligo
-    The call `transaction param amount contract_addr` evaluates in
+    The call `Tezos.transaction param amount contract_addr` evaluates in
     an operation that will send the amount `amount` in mutez to the
     contract at the valid address `contract_addr`, with parameter
     `param`. If the contract is an implicit account, the parameter
     must be `unit`. *)
   (** display-only-for-jsligo
-    The call `transaction(param, amount, contract_addr)` evaluates in
+    The call `Tezos.transaction(param, amount, contract_addr)` evaluates in
     an operation that will send the amount `amount` in mutez to the
     contract at the valid address `contract_addr`, with parameter
     `param`. If the contract is an implicit account, the parameter
@@ -541,7 +549,7 @@ module Tezos = struct
       ({| {TRANSFER_TOKENS} |} param amount contract_addr : operation)]
 
   (** display-only-for-cameligo
-    The call `call_view v p a` calls the view `v` with parameter
+    The call `Tezos.call_view v p a` calls the view `v` with parameter
     `param` at the contract whose address is `a`. The value returned
     is `None` if the view does not exist, or has a different type of
     parameter, or if the contract does not exist at that
@@ -549,7 +557,7 @@ module Tezos = struct
     of the view. Note: the storage of the view is the same as when the
     execution of the contract calling the view started.*)
   (** display-only-for-jsligo
-    The call `call_view(v, p, a)` calls the view `v` with parameter
+    The call `Tezos.call_view(v, p, a)` calls the view `v` with parameter
     `param` at the contract whose address is `a`. The value returned
     is `None()` if the view does not exist, or has a different type of
     parameter, or if the contract does not exist at that
@@ -568,12 +576,12 @@ module Tezos = struct
   (* Tickets *)
 
   (** display-only-for-cameligo
-    The call `create_ticket v a` creates a ticket with value `v` and
+    The call `Tezos.create_ticket v a` creates a ticket with value `v` and
     amount `a`. If the creation is a success, the value `Some t` is
     returned, where `t` is the ticket; otherwise, `None` is the
     result. Note: Tickets cannot be duplicated. *)
   (** display-only-for-jsligo
-    The call `create_ticket(v, a)` creates a ticket with value `v` and
+    The call `Tezos.create_ticket(v, a)` creates a ticket with value `v` and
     amount `a`. If the creation is a success, the value `Some(t)` is
     returned, where `t` is the ticket; otherwise, `None()` is the
     result. Note: Tickets cannot be duplicated. *)
@@ -581,13 +589,13 @@ module Tezos = struct
     [%michelson ({| {TICKET} |} value amount : a ticket option)]
 
   (** display-only-for-cameligo
-    The call `split_ticket t (a1, a2)` results in a pair of tickets
+    The call `Tezos.split_ticket t (a1, a2)` results in a pair of tickets
     `t1` and `t2` such that the former owns the amount `a1` and the
     later `a2`. More precisely, the value of the call is
     `Some (t1, t2)` because signifying to the callee the failure of
     the splitting is achieved by returning the value `None`. *)
   (** display-only-for-jsligo
-    The call `split_ticket(t, [a1, a2])` results in a pair of tickets
+    The call `Tezos.split_ticket(t, [a1, a2])` results in a pair of tickets
     `t1` and `t2` such that the former owns the amount `a1` and the
     later `a2`. More precisely, the value of the call is
     `Some([t1, t2])` because signifying to the callee the failure of
@@ -598,20 +606,20 @@ module Tezos = struct
                  : (a ticket * a ticket) option)]
 
   (** display-only-for-cameligo
-    The call `join_tickets (t1, t2)` joins the tickets `t1` and
+    The call `Tezos.join_tickets (t1, t2)` joins the tickets `t1` and
     `t2`, which must have the same type of value. *)
   (** display-only-for-jsligo
-    The call `join_tickets(t1, t2)` joins the tickets `t1` and
+    The call `Tezos.join_tickets(t1, t2)` joins the tickets `t1` and
     `t2`, which must have the same type of value. *)
   let join_tickets (type a) (tickets: a ticket * a ticket) : a ticket option =
     [%michelson ({| {JOIN_TICKETS} |} tickets : a ticket option)]
 
   (** display-only-for-cameligo
-    The call `read_ticket t` returns `t` itself and the contents of
+    The call `Tezos.read_ticket t` returns `t` itself and the contents of
     `t` which is a pair `(address, (value, amount))`, where `address` is
     the address of the smart contract that created it. *)
   (** display-only-for-jsligo
-    The call `read_ticket(t)` returns `t` itself and the contents of
+    The call `Tezos.read_ticket(t)` returns `t` itself and the contents of
     `t` which is a pair `[address, [value, amount]]`, where `address` is
     the address of the smart contract that created it. *)
   let read_ticket (type a) (ticket: a ticket)
@@ -621,7 +629,7 @@ module Tezos = struct
 
   (* Sapling *)
 
-  (** The evaluation of the constant `sapling_empty_state` is an empty
+  (** The evaluation of the constant `Tezos.sapling_empty_state` is an empty
     sapling state, that is, no one can spend tokens from it. *)
   [@inline] [@thunk]
   let sapling_empty_state (type sap_t) : sap_t sapling_state =
@@ -630,14 +638,14 @@ module Tezos = struct
                  : sap_t sapling_state)]
 
   (** display-only-for-cameligo
-    The call `sapling_verify_update trans state`, where the
+    The call `Tezos.sapling_verify_update trans state`, where the
     transaction `trans` can be applied to the state `state`, returns
     `Some (data, (delta, new_state))`, where `data` is the bound data
     (as bytes), `delta` is the difference between the outputs and the
     inputs of the transaction, and `new_state` is the updated
     state. *)
   (** display-only-for-jsligo
-    The call `sapling_verify_update(trans, state)`, where the
+    The call `Tezos.sapling_verify_update(trans, state)`, where the
     transaction `trans` can be applied to the state `state`, returns
     `Some ([data, [delta, new_state]])`, where `data` is the bound data
     (as bytes), `delta` is the difference between the outputs and the
@@ -655,13 +663,13 @@ module Tezos = struct
   (* Events *)
 
   (** display-only-for-cameligo
-    The call `emit event_tag event_type` evaluates in an operation
+    The call `Tezos.emit event_tag event_type` evaluates in an operation
     that will write an event into the transaction receipt after the
     successful execution of this contract. The event is annotated by
     the string `event_tag` if it is not empty. The argument
     `event_type` is used only to specify the type of data attachment. *)
   (** display-only-for-jsligo
-    The call `emit event_tag(event_type)` evaluates in an operation
+    The call `Tezos.emit(event_tag, event_type)` evaluates in an operation
     that will write an event into the transaction receipt after the
     successful execution of this contract. The event is annotated by
     the string `event_tag` if it is not empty. The argument
@@ -685,33 +693,33 @@ module Tezos = struct
   (* Miscellanea *)
 
   (** display-only-for-cameligo
-    The call `get_balance ()` returns the balance in mutez of the
+    The call `Tezos.get_balance ()` returns the balance in mutez of the
     account associated to the currently executed smart contract,
     including any mutez added by the calling transaction. *)
   (** display-only-for-jsligo
-    The call `get_balance()` returns the balance in mutez of the
+    The call `Tezos.get_balance()` returns the balance in mutez of the
     account associated to the currently executed smart contract,
     including any mutez added by the calling transaction. *)
   let get_balance () : tez =
     [%michelson ({| {BALANCE} |} : tez)]
 
   (** display-only-for-cameligo
-    The call `get_amount ()` returns the amount in mutez of the
+    The call `Tezos.get_amount ()` returns the amount in mutez of the
     current transaction. *)
   (** display-only-for-jsligo
-    The call `get_amount()` returns the amount in mutez of the
+    The call `Tezos.get_amount()` returns the amount in mutez of the
     current transaction. *)
   let get_amount () : tez =
     [%michelson ({| {AMOUNT} |} : tez)]
 
   (** display-only-for-cameligo
-    The call `get_now ()` returns the minimal injection time for the
+    The call `Tezos.get_now ()` returns the minimal injection time for the
     current block, namely the block whose application triggered this
     execution. The minimal injection time constitutes an estimate of
     the moment when the current block is injected, hence the name
     "now". *)
   (** display-only-for-jsligo
-    The call `get_now()` returns the minimal injection time for the
+    The call `Tezos.get_now()` returns the minimal injection time for the
     current block, namely the block whose application triggered this
     execution. The minimal injection time constitutes an estimate of
     the moment when the current block is injected, hence the name
@@ -720,38 +728,38 @@ module Tezos = struct
     [%michelson ({| {NOW} |} : timestamp)]
 
   (** display-only-for-cameligo
-    The call `get_min_block_time ()` returns the minimal delay
+    The call `Tezos.get_min_block_time ()` returns the minimal delay
     between two consecutive blocks in the chain. *)
   (** display-only-for-jsligo
-    The call `get_min_block_time()` returns the minimal delay
+    The call `Tezos.get_min_block_time()` returns the minimal delay
     between two consecutive blocks in the chain. *)
   let get_min_block_time () : nat =
     [%michelson ({| {MIN_BLOCK_TIME} |} : nat)]
 
   (** display-only-for-cameligo
-    The call `get_level ()` returns the current block level. *)
+    The call `Tezos.get_level ()` returns the current block level. *)
   (** display-only-for-jsligo
-    The call `get_level()` returns the current block level. *)
+    The call `Tezos.get_level()` returns the current block level. *)
   let get_level () : nat =
     [%michelson ({| {LEVEL} |} : nat)]
 
   (** display-only-for-cameligo
-    The call `get_chain_id ()` returns the identifier of the chain
+    The call `Tezos.get_chain_id ()` returns the identifier of the chain
     on which the smart contract is executed. *)
   (** display-only-for-jsligo
-    The call `get_chain_id ()` returns the identifier of the chain
+    The call `Tezos.get_chain_id ()` returns the identifier of the chain
     on which the smart contract is executed. *)
   let get_chain_id () : chain_id =
     [%michelson ({| {CHAIN_ID} |} : chain_id)]
 
   (** display-only-for-cameligo
-    The call `get_total_voting_power ()` returns the total voting
+    The call `Tezos.get_total_voting_power ()` returns the total voting
     power of all contracts. The total voting power coincides with the
     sum of the stake of every contract in the voting listings. The
     voting listings is calculated at the beginning of every voting
     period. *)
   (** display-only-for-jsligo
-    The call `get_total_voting_power()` returns the total voting
+    The call `Tezos.get_total_voting_power()` returns the total voting
     power of all contracts. The total voting power coincides with the
     sum of the stake of every contract in the voting listings. The
     voting listings is calculated at the beginning of every voting
@@ -760,13 +768,13 @@ module Tezos = struct
     [%michelson ({| {TOTAL_VOTING_POWER} |} : nat)]
 
   (** display-only-for-cameligo
-    The call `voting_power contract_kh` returns the voting power of
+    The call `Tezos.voting_power contract_kh` returns the voting power of
     a given contract specified by the key hash `contract_kh`. This
     voting power coincides with the weight of the contract in the
     voting listings (that is, the stake) which is calculated at the
     beginning of every voting period. *)
   (** display-only-for-jsligo
-    The call `voting_power(contract_kh)` returns the voting power of
+    The call `Tezos.voting_power(contract_kh)` returns the voting power of
     a given contract specified by the key hash `contract_kh`. This
     voting power coincides with the weight of the contract in the
     voting listings (that is, the stake) which is calculated at the
@@ -775,12 +783,12 @@ module Tezos = struct
     [%michelson ({| {VOTING_POWER} |} kh : nat)]
 
   (** display-only-for-cameligo
-    The call `never n` is never meant to be executed, as the type
+    The call `Tezos.never n` is never meant to be executed, as the type
     `never` is inhabited, but to instruct the typechecker that a
     branch in the control flow, for example, in a pattern matching, is
     dead. *)
   (** display-only-for-jsligo
-    The call `never(n)` is never meant to be executed, as the type
+    The call `Tezos.never(n)` is never meant to be executed, as the type
     `never` is inhabited, but to instruct the typechecker that a
     branch in the control flow, for example, in a pattern matching, is
     dead. *)
@@ -788,13 +796,13 @@ module Tezos = struct
     [%michelson ({| {NEVER} |} never : a)]
 
   (** display-only-for-cameligo
-    The call `pairing_check pairings` verifies that the product of
+    The call `Tezos.pairing_check pairings` verifies that the product of
     pairings of the given list of points `pairings` is equal to 1 in
     the field Fq12. It evaluates in `true` if the list is empty. This
     function can be used to verify if two pairings P1 and P2 are equal
     by verifying P1 * P2^(-1) = 1. *)
   (** display-only-for-jsligo
-    The call `pairing_check(pairings)` verifies that the product of
+    The call `Tezos.pairing_check(pairings)` verifies that the product of
     pairings of the given list of points `pairings` is equal to 1 in
     the field Fq12. It evaluates in `true` if the list is empty. This
     function can be used to verify if two pairings P1 and P2 are equal
@@ -803,13 +811,13 @@ module Tezos = struct
     [%michelson ({| {PAIRING_CHECK} |} list : bool)]
 
   (** display-only-for-cameligo
-    The call to `constant hash` returns the value stored on-chain
+    The call to `Tezos.constant hash` returns the value stored on-chain
     whose hash value is `hash` (global constants). This call can fail
     when the contract is originated if the hash is invalid or the
     expansion of the global constant is ill-typed, or too large (gas
     consumption). *)
   (** display-only-for-cameligo
-    The call to `constant(hash)` returns the value stored on-chain
+    The call to `Tezos.constant(hash)` returns the value stored on-chain
     whose hash value is `hash` (global constants). This call can fail
     when the contract is originated if the hash is invalid or the
     expansion of the global constant is ill-typed, or too large (gas
@@ -822,79 +830,79 @@ end
 (** Bitwise operations *)
 module Bitwise = struct
 
-  (** The call `@and a b` is the conjunction defined on boolean,
+  (** The call `Bitiwise.@and a b` is the conjunction defined on boolean,
     natural number and bytes operands. In the boolean case, the result
     is the logical "and" of the operands. In the natural number and
     bytes cases, the result is the bitwise "and" of the operands.
 
-    The function `@and` is also defined when the left operand is of
+    The function `Bitwise.@and` is also defined when the left operand is of
     type `int`. Negative numbers are considered in two's complement
     representation, starting with a virtual infinite number of 1s.
 
-    When `@and` is used for bytes operands, the bytes result has the
-    same length as the shorter operand. The prefix of the longer
-    operand is cut to match with the length of the shorter one before
-    taking the bitwise "and". *)
+    When `Bitwise.@and` is used for bytes operands, the bytes result
+    has the same length as the shorter operand. The prefix of the
+    longer operand is cut to match with the length of the shorter one
+    before taking the bitwise "and". *)
   let @and (type a b) (left: a) (right: b) : (a, b) external_and =
     [%michelson ({| {AND} |} left right : (a, b) external_and)]
 
-  (** The call `@or a b` is the disjunction defined on boolean,
+  (** The call `Bitwise.@or a b` is the disjunction defined on boolean,
     natural number and bytes operands. In the boolean case, the result
     is the logical "or" of the operands. In the natural number and
     bytes cases, the result is the bitwise "or" of the operands.
 
-    When the function `@or` is used for bytes operands, the result
+    When the function `Bitwise.@or` is used for bytes operands, the result
     bytes has the same length as the longer operand. The shorter
     operand is zero-padded on the left to match with the length of the
     longer one before taking the bitwise "or". *)
   let @or (type a b) (left: a) (right: b) : (a, b) external_xor =
     [%michelson ({| {OR} |} left right : (a, b) external_xor)]
 
-  (** The call `xor a b` is the exclusive disjunction defined on
+  (** The call `Bitwise.xor a b` is the exclusive disjunction defined on
     boolean, natural number and bytes operands. In the boolean case,
     the result is the logical "exclusive or" of the operands. In the
     natural number and bytes cases, the result is the bitwise "xor" of
     the operands.
 
-    When `xor` is used for bytes operands, the result bytes has the
-    same length as the longer operand. The shorter operand is
+    When `Bitwise.xor` is used for bytes operands, the result bytes
+    has the same length as the longer operand. The shorter operand is
     zero-padded on the left to match with the length of the longer one
     before taking the bitwise "xor". *)
   let xor (type a b) (left: a) (right: b) : (a, b) external_or =
     [%michelson ({| {XOR} |} left right : (a, b) external_or )]
 
-  (** The function `shift_left` on natural numbers consumes two
+  (** The function `Bitwise.shift_left` on natural numbers consumes two
     natural numbers and produces the first number logically
     left-shifted by the second number. This instruction is only
     defined if the second number is less than or equal to 256.
 
-    For bytes, the function `shift_left` consumes one byte sequence
+    For bytes, the function `Biwise.shift_left` consumes one byte sequence
     and one natural number, and produces the bytes logically
     left-shifted by the natural number. The vacated bits on the right
     are filled with zeros. The shifted bits are minimally zero-padded
     on the left in order to keep all the original bits, regardless if
-    they are 0 or 1: for example, `shift_left 0x1234 1` is `0x002468`,
+    they are 0 or 1: for example, `Bitwise.shift_left 0x1234 1` is `0x002468`,
     instead of `0x2468` (even though in this case no significant bit
     would be lost) or `0x00002468` (where padding is not minimal). The
-    length of the bytes returned by `shift_left` is `l + (s + 7) / 8`
+    length of the bytes returned by `Bitwise.shift_left` is `l + (s + 7) / 8`
     bytes where `l` is the length of the original bytes and `s` is the
     natural number. This instruction is only defined if the second
     number is less than or equal to 64000. *)
   let shift_left (type a b) (left: a) (right: b) : (a, b) external_lsl =
     [%michelson ({| {LSL} |} left right : (a, b) external_lsl)]
 
-  (** The function `shift_right` on natural numbers consumes two
+  (** The function `Bitwise.shift_right` on natural numbers consumes two
     natural numbers and produces the first number logically
     right-shifted by second number. This function is only defined if
     the second number is less than or equal to 256.
 
-    For bytes, the function `shift_right` consumes one chunk of bytes
+    For bytes, the function `Bitwise.shift_right` consumes one chunk of bytes
     and one natural number and produces the bytes logically
     right-shifted by the natural number. The shifted bits are
-    minimally zero-padded on the left. For example, `shift_right
+    minimally zero-padded on the left. For example, `Bitwise.shift_right
     0x012349 9` is `0x0091`, instead of `0x91` (where the 7 left-most
     bits are lost) or `0x000091` (not minimal padding). The length of
-    the returned bytes by `shift_right` is `max 0 (l - s / 8)` bytes,
+    the returned bytes by `Bitwise.shift_right` is `max 0 (l - s / 8)` bytes,
     where `l` is the length of the original bytes, and `s` is the
     natural number. *)
   let shift_right (type a b) (left: a) (right: b) : (a, b) external_lsr =
@@ -905,10 +913,10 @@ end
 module Option = struct
 
   (** display-only-for-cameligo
-    The call `value d opt` is `v` if `opt` is `Some v`, and `d`
+    The call `Option.value d opt` is `v` if `opt` is `Some v`, and `d`
     otherwise. *)
   (** display-only-for-jsligo
-    The call `value(d, opt)` is `v` if `opt` is `Some(v)`, and `d`
+    The call `Option.value(d, opt)` is `v` if `opt` is `Some(v)`, and `d`
     otherwise. *)
   let value (type a) (default: a) (opt: a option) : a =
     match opt with
@@ -916,11 +924,11 @@ module Option = struct
     | Some v -> v
 
   (** display-only-for-cameligo
-    The call `value_with_error err opt` terminates with the error
+    The call `Option.value_with_error err opt` terminates with the error
     `err` if, and only if, `opt` is `None`; otherwise it is `Some v`
     and `v` is returned. *)
   (** display-only-for-jsligo
-    The call `value_with_error(err, opt)` terminates with the error
+    The call `Option.value_with_error(err, opt)` terminates with the error
     `err` if, and only if, `opt` is `None()`; otherwise it is `Some(v)`
     and `v` is returned. *)
   let value_with_error (type err a) (error: err) (opt: a option) : a =
@@ -929,11 +937,11 @@ module Option = struct
     | Some v -> v
 
   (** display-only-for-cameligo
-    The call `value_exn err opt` terminates with the error `err` if,
+    The call `Option.value_exn err opt` terminates with the error `err` if,
     and only if, `opt` is `None`; otherwise it is `Some v` and `v` is
     returned. *)
   (** display-only-for-jsligo
-    The call `value_exn(err, opt)` terminates with the error `err` if,
+    The call `Option.value_exn(err, opt)` terminates with the error `err` if,
     and only if, `opt` is `None()`; otherwise it is `Some(v)` and `v` is
     returned. *)
   [@inline] [@deprecated "Use `Option.value_with_error` instead."]
@@ -941,11 +949,11 @@ module Option = struct
     value_with_error error opt
 
   (** display-only-for-cameligo
-    The call `unopt_with_error opt err` terminates with the error
+    The call `Option.unopt_with_error opt err` terminates with the error
     `err` if, and only if, `opt` is `None`; otherwise it is `Some v`
     and `v` is returned. *)
   (** display-only-for-jsligo
-    The call `unopt_with_error(opt, err)` terminates with the error
+    The call `Option.unopt_with_error(opt, err)` terminates with the error
     `err` if, and only if, `opt` is `None()`; otherwise it is
     `Some(v)` and `v` is returned. *)
   [@inline] [@deprecated "Use `Option.value_with_error` instead."]
@@ -953,11 +961,11 @@ module Option = struct
     value_with_error error opt
 
   (** display-only-for-cameligo
-    The call `unopt opt ` terminates with the string
+    The call `Option.unopt opt ` terminates with the string
     `"option is None"` if, and only if, `opt` is `None`; otherwise it is
     `Some v` and `v` is returned.*)
   (** display-only-for-jsligo
-    The call `unopt(opt)` terminates with the string
+    The call `Option.unopt(opt)` terminates with the string
     `"option is None"` if, and only if, `opt` is `None()`; otherwise it is
     `Some(v)` and `v` is returned.*)
   [@inline] [@deprecated "Use `Option.value_with_error` instead."]
@@ -965,20 +973,20 @@ module Option = struct
     value_with_error "option is None" opt
 
   (** display-only-for-cameligo
-    The call `map f opt` is `None` if `opt` is `None`, and
+    The call `Option.map f opt` is `None` if `opt` is `None`, and
     `Some (f v)` if `opt` is `Some v`. *)
   (** display-only-for-jsligo
-    The call `map(f, opt)` is `None()` if `opt` is `None()`, and
+    The call `Option.map(f, opt)` is `None()` if `opt` is `None()`, and
     `Some(f(v))` if `opt` is `Some(v)`. *)
   [@thunk]
   let map (type a b) (f: a -> b) (opt: a option) : b option =
     [%external ("OPTION_MAP", f, opt)]
 
   (** display-only-for-cameligo
-    The call `is_none opt` is `true` if, and only if, `opt` is
+    The call `Option.is_none opt` is `true` if, and only if, `opt` is
     `None`. *)
   (** display-only-for-jsligo
-    The call `is_none(opt)` is `true` if, and only if, `opt` is
+    The call `Option.is_none(opt)` is `true` if, and only if, `opt` is
     `None()`. *)
   let is_none (type a) (opt: a option) : bool =
     match opt with
@@ -986,10 +994,10 @@ module Option = struct
     | Some _ -> false
 
   (** display-only-for-cameligo
-    The call `is_some opt` is `false` if, and only if, `opt` is
+    The call `Option.is_some opt` is `false` if, and only if, `opt` is
     `None`. *)
   (** display-only-for-jsligo
-    The call `is_some(opt)` is `false` if, and only if, `opt` is
+    The call `Option.is_some(opt)` is `false` if, and only if, `opt` is
     `None()`. *)
   let is_some (type a) (opt: a option) : bool =
     match opt with
@@ -1004,36 +1012,36 @@ module List = struct
   type 'elt t = 'elt list
 
   (** display-only-for-cameligo
-    The value `empty` is the empty list. It is a synonym for
+    The value `List.empty` is the empty list. It is a synonym for
     `[]`. In some contexts, it is useful to annotate it with its type,
     for example: `(empty : int list)`. *)
   (** display-only-for-jsligo
-    The value `empty` is the empty list. It is a synonym for
+    The value `List.empty` is the empty list. It is a synonym for
     `list([])`. In some contexts, it is useful to annotate it with its
     type, for example: `(empty as list<int>)`. *)
   let empty (type elt) : elt t = []
 
   (** display-only-for-cameligo
-      The call `length l` is the number of elements in the list
+      The call `List.length l` is the number of elements in the list
       `l`. Note: `List.length` is another name for `List.size`. *)
   (** display-only-for-jsligo
-      The call `length(l)` is the number of elements in the list
+      The call `List.length(l)` is the number of elements in the list
       `l`. Note: `List.length` is another name for `List.size`. *)
   let length (type elt) (list: elt t) : nat =
     [%external ("LIST_SIZE", list)]
 
   (** display-only-for-cameligo
-    The call `size l` is the number of elements in the list `l`. *)
+    The call `List.size l` is the number of elements in the list `l`. *)
   (** display-only-for-jsligo
-    The call `size(l)` is the number of elements in the list `l`. *)
+    The call `List.size(l)` is the number of elements in the list `l`. *)
   [@inline]
   let size (type elt) (list: elt t) : nat = length list
 
   (** display-only-for-cameligo
-    The call `head l`, where `l` is a list, is `None` if `l` is
+    The call `List.head l`, where `l` is a list, is `None` if `l` is
     empty; otherwise, `Some hd`, where `hd` is the head of the list. *)
   (** display-only-for-jsligo
-    The call `head(l)`, where `l` is a list, is `None()` if `l` is
+    The call `List.head(l)`, where `l` is a list, is `None()` if `l` is
     empty; otherwise, `Some(hd)`, where `hd` is the head of the list. *)
   let head (type elt) (list: elt t) : elt option =
     match list with
@@ -1041,19 +1049,19 @@ module List = struct
     | head :: _ -> Some head
 
   (** display-only-for-cameligo
-    The call `head_opt l`, where `l` is a list, is `None` if `l` is
+    The call `List.head_opt l`, where `l` is a list, is `None` if `l` is
     empty; otherwise, `Some hd`, where `hd` is the head of the list. *)
   (** display-only-for-jsligo
-    The call `head_opt(l)`, where `l` is a list, is `None()` if `l` is
+    The call `List.head_opt(l)`, where `l` is a list, is `None()` if `l` is
     empty; otherwise, `Some(hd)`, where `hd` is the head of the list. *)
   [@inline] [@deprecated "Use `List.head` instead."]
   let head_opt (type elt) (list: elt t) : elt option = head list
 
   (** display-only-for-cameligo
-    The call `tail l`, where `l` is a list, is `None` if `l` is
+    The call `List.tail l`, where `l` is a list, is `None` if `l` is
     empty; otherwise, `Some tl`, where `tl` is the tail of the list. *)
   (** display-only-for-jsligo
-    The call `tail(l)`, where `l` is a list, is `None()` if `l` is
+    The call `List.tail(l)`, where `l` is a list, is `None()` if `l` is
     empty; otherwise, `Some(tl)`, where `tl` is the tail of the list. *)
   let tail (type elt) (list: elt t) : elt t option =
     match list with
@@ -1061,65 +1069,65 @@ module List = struct
     | _ :: tail -> Some tail
 
   (** display-only-for-cameligo
-    The call `tail_opt l`, where `l` is a list, is `None` if `l` is
+    The call `List.tail_opt l`, where `l` is a list, is `None` if `l` is
     empty; otherwise, `Some tl`, where `tl` is the tail of the list. *)
   (** display-only-for-jsligo
-    The call `tail_opt(l)`, where `l` is a list, is `None()` if `l` is
+    The call `List.tail_opt(l)`, where `l` is a list, is `None()` if `l` is
     empty; otherwise, `Some(tl)`, where `tl` is the tail of the list. *)
   [@inline] [@deprecated "Use `List.tail` instead."]
   let tail_opt (type elt) (list: elt t) : elt t option =
     tail list
 
   (** display-only-for-cameligo
-     The call `map f [a1; ...; an]` applies the function `f` to `a1`,
+     The call `List.map f [a1; ...; an]` applies the function `f` to `a1`,
     ..., `an` (from left to right), and builds the list
     `[f a1; ...; f an]` with the results returned by `f`. *)
   (** display-only-for-jsligo
-    The call `map(f, list([a1; ...; an]))` applies the function `f` to
+    The call `List.map(f, list([a1; ...; an]))` applies the function `f` to
     `a1`, ..., `an` (from left to right), and builds the list
     `list([f(a1); ...; f(an)])` with the results returned by `f`. *)
   let map (type src dst) (f: src -> dst) (list: src list) : dst list =
     [%external ("LIST_MAP", f, list)]
 
   (** display-only-for-cameligo
-    The call `iter f [a1; ...; an]` applies the function `f` in turn
+    The call `List.iter f [a1; ...; an]` applies the function `f` in turn
     to `[a1; ...; an]`. It is equivalent to
     `let () = f a1 in let () = f a2 in ... in f an`. *)
   (** display-only-for-jsligo
-    The call `iter(f, list([a1; ...; an]))` applies the function `f`
+    The call `List.iter(f, list([a1; ...; an]))` applies the function `f`
     in turn to `list([a1; ...; an])`. It is equivalent to `{f(a1);
     f(a2); ...; f(an)}`. *)
   let iter (type elt) (f: elt -> unit) (list: elt t) : unit =
     [%external ("LIST_ITER", f, list)]
 
   (** display-only-for-cameligo
-    The call `fold_left f init [a1; ...; an]` is
+    The call `List.fold_left f init [a1; ...; an]` is
     `f (... (f (f init a1) a2) ...) an`. *)
   (** display-only-for-jsligo
-    The call `fold_left(f, init, list([a1; ...; an]))` is
+    The call `List.fold_left(f, init, list([a1; ...; an]))` is
     `f (... (f (f(init, a1)), a2), ...), an)`. *)
   let fold_left
     (type elt acc) (f: acc * elt -> acc) (init: acc) (list: elt t) : acc =
     [%external ("LIST_FOLD_LEFT", f, init, list)]
 
   (** display-only-for-cameligo
-    The call `fold_right f [a1; ...; an] init` is
+    The call `List.fold_right f [a1; ...; an] init` is
     `f a1 (f a2 (... (f an init) ...))`. *)
   (** display-only-for-jsligo
-    The call `fold_right(f, list([a1; ...; an]), init)` is
+    The call `List.fold_right(f, list([a1; ...; an]), init)` is
     `f (a1, f (a2, (..., f (an, init))...))`. *)
   let fold_right
     (type elt acc) (f: elt * acc -> acc) (list: elt t) (init: acc) : acc =
     [%external ("LIST_FOLD_RIGHT", f, list, init)]
 
   (** display-only-for-cameligo
-    The call `fold f [a1; ...; an] init` is
+    The call `List.fold f [a1; ...; an] init` is
     `f (... (f (f init a1) a2) ...) an`. Note:
-    `fold_left f init list` is the same as `fold f list init`. *)
+    `List.fold_left f init list` is the same as `List.fold f list init`. *)
   (** display-only-for-jsligo
-    The call `fold(f, list([a1; ...; an]), init)` is
+    The call `List.fold(f, list([a1; ...; an]), init)` is
     `f (... (f (f (init, a1), a2) ...), an)`. Note:
-    `fold_left(f, init, list)` is the same as `fold(f, list, init)`. *)
+    `List.fold_left(f, init, list)` is the same as `List.fold(f, list, init)`. *)
   [@inline]
   let fold
     (type elt acc) (f: acc * elt -> acc) (list: elt t) (init: acc) : acc =
@@ -1127,20 +1135,20 @@ module List = struct
     fold_left f init list
 
   (** display-only-for-cameligo
-    The call `cons e l` is `e :: l`. *)
+    The call `List.cons e l` is `e :: l`. *)
   (** display-only-for-jsligo
-    The call `cons(e, l)` is `list([e, ...l])`. *)
+    The call `List.cons(e, l)` is `list([e, ...l])`. *)
   let cons (type elt) (elt: elt) (list: elt t) : elt t =
     (* TODO: Remove constant CONS. *)
     elt :: list
 
   (** display-only-for-cameligo
-    The call `find_opt pred list` is `None` if no element of the
+    The call `List.find_opt pred list` is `None` if no element of the
     list `list` satisfies the predicate `pred`; otherwise, it is
     `Some e`, where `e` is the leftmost element in `list` that satisfies
     `pred`. The order of the calls of `pred` is not specified. *)
   (** display-only-for-jsligo
-    The call `find_opt(pred, list)` is `None()` if no element of the
+    The call `List.find_opt(pred, list)` is `None()` if no element of the
     list `list` satisfies the predicate `pred`; otherwise, it is
     `Some(e)`, where `e` is the leftmost element in `list` that satisfies
     `pred`. The order of the calls of `pred` is not specified. *)
@@ -1151,12 +1159,12 @@ module List = struct
     in fold_right aux list None
 
   (** display-only-for-cameligo
-    The call `filter_map f l` is the maximal sub-list of `l` such
+    The call `List.filter_map f l` is the maximal sub-list of `l` such
     that the call of function `f` on its elements is not `None`. Note:
     `f` is called on all elements of `l`. The order of the calls of
     `f` is not specified. *)
   (** display-only-for-jsligo
-    The call `filter_map(f, l)` is the maximal sub-list of `l` such
+    The call `List.filter_map(f, l)` is the maximal sub-list of `l` such
     that the call of function `f` on its elements is not `None()`. Note:
     `f` is called on all elements of `l`. The order of the calls of
     `f` is not specified. *)
@@ -1169,10 +1177,10 @@ module List = struct
     in fold_right f list []
 
   (** display-only-for-cameligo
-    The call `update f l` is the list `l` where the elements `e`
+    The call `List.update f l` is the list `l` where the elements `e`
     such that `f e` is `Some v` have been replaced by `v`. *)
   (** display-only-for-jsligo
-    The call `update(f, l)` is the list `l` where the elements `e`
+    The call `List.update(f, l)` is the list `l` where the elements `e`
     such that `f(e)` is `Some(v)` have been replaced by `v`. *)
   let update
     (type elt) (filter: elt -> elt option) (list: elt t) : elt t =
@@ -1183,10 +1191,10 @@ module List = struct
     in map f list
 
   (** display-only-for-cameligo
-    The call `update_with p d l` is the list `l` where the elements
+    The call `List.update_with p d l` is the list `l` where the elements
     `e` such that satisfy the predicate `p` are replaced by `d`. *)
   (** display-only-for-jsligo
-    The call `update_with(p,d,l)` is the list `l` where the elements
+    The call `List.update_with(p,d,l)` is the list `l` where the elements
     `e` such that satisfy the predicate `p` are replaced by `d`. *)
   let update_with
     (type elt) (pred: elt -> bool) (default: elt) (list: elt t) : elt t =
@@ -1198,34 +1206,34 @@ end
 module Map = struct
 
   (** display-only-for-cameligo
-    The type `('key,'value) t` is an alias for `('key,'value) map`. *)
+    The type `('key,'value) Map.t` is an alias for `('key,'value) map`. *)
   (** display-only-for-jsligo
-    The type `t<key, value>` is an alias for `map<key,value>`. *)
+    The type `Map.t<key, value>` is an alias for `map<key,value>`. *)
   type ('key,'value) t = ('key,'value) map
 
   (** display-only-for-cameligo
-    The value `empty` is the empty map. In some contexts, it is
+    The value `Map.empty` is the empty map. In some contexts, it is
     useful to annotate it with its type, for example:
-    `(empty : (int, string) map)`. *)
+    `(Map.empty : (int, string) map)`. *)
   (** display-only-for-jsligo
-    The value `empty` is the empty map. In some contexts, it is
+    The value `Map.empty` is the empty map. In some contexts, it is
     useful to annotate it with its type, for example:
-    `(empty as map<int, string>)`. *)
+    `(Map.empty as map<int, string>)`. *)
   let empty (type key value) : (key, value) t =
     [%external "MAP_EMPTY"]
 
   (** display-only-for-cameligo
-    The call `get_and_update key None map` returns a copy of the map
+    The call `Map.get_and_update key None map` returns a copy of the map
     `map` without the entry for the key `key` in `map` (no change if
-    the key is absent). The call `get_and_update key (Some value) map`
+    the key is absent). The call `Map.get_and_update key (Some value) map`
     returns a copy of the map `map` where there is an entry for the
     key `key` associated with the value `value`. In both cases, if
     there was already a value `v` bound to `key`, it is returned as
     `Some v`, otherwise `None`. *)
   (** display-only-for-jsligo
-    The call `get_and_update(key, None(), map)` returns a copy of the
+    The call `Map.get_and_update(key, None(), map)` returns a copy of the
     map `map` without the entry for the key `key` in `map` (no change
-    if the key is absent). The call `get_and_update(key, Some(value),
+    if the key is absent). The call `Map.get_and_update(key, Some(value),
     map)` returns a copy of the map `map` where there is an entry for
     the key `key` associated with the value `value`. In both cases, if
     there was already a value `v` bound to `key`, it is returned as
@@ -1236,19 +1244,19 @@ module Map = struct
     [%external ("MAP_GET_AND_UPDATE", key, upd, map)]
 
   (** display-only-for-cameligo
-    The call `update key None map` returns a copy of the map `map`
+    The call `Map.update key None map` returns a copy of the map `map`
     without the entry for the key `key` in `map` (no change if the key
-    is absent). The call `update key (Some value) map` returns the map
+    is absent). The call `Map.update key (Some value) map` returns the map
     `map` where there is an entry for the key `key` associated with
     the value `value`. In both cases, the value originally bound to
-    `key` is lost. See `get_and_update`. *)
+    `key` is lost. See `Map.get_and_update`. *)
   (** display-only-for-jsligo
-    The call `update(key, None(), map)` returns a copy of the map `map`
+    The call `Map.update(key, None(), map)` returns a copy of the map `map`
     without the entry for the key `key` in `map` (no change if the key
-    is absent). The call `update(key, Some(value), map)` returns the map
+    is absent). The call `Map.update(key, Some(value), map)` returns the map
     `map` where there is an entry for the key `key` associated with
     the value `value`. In both cases, the value originally bound to
-    `key` is lost. See `get_and_update`. *)
+    `key` is lost. See `Map.get_and_update`. *)
   let update
     (type key value) (key: key) (upd: value option) (map: (key, value) t)
     : (key, value) t =
@@ -1256,11 +1264,11 @@ module Map = struct
     get_and_update key upd map |> snd
 
   (** display-only-for-cameligo
-    The call `add key value map` returns a copy of the `map` where
+    The call `Map.add key value map` returns a copy of the `map` where
     there is a binding of key `key` to value `value`. If there is a
     binding for `key` in `map`, then it is lost. *)
   (** display-only-for-jsligo
-    The call `add(key, value, map)` returns a copy of the `map` where
+    The call `Map.add(key, value, map)` returns a copy of the `map` where
     there is a binding of key `key` to value `value`. If there is a
     binding for `key` in `map`, then it is lost. *)
   let add (type key value) (key: key) (value: value) (map: (key, value) t)
@@ -1269,10 +1277,10 @@ module Map = struct
     update key (Some value) map
 
   (** display-only-for-cameligo
-    The call `remove key map` returns a copy of the map `map` where
+    The call `Map.remove key map` returns a copy of the map `map` where
     the binding for key `key` is absent. *)
   (** display-only-for-jsligo
-    The call `remove(key, map)` returns a copy of the map `map` where
+    The call `Map.remove(key, map)` returns a copy of the map `map` where
     the binding for key `key` is absent. *)
   let remove (type key value) (key: key) (map: (key, value) t)
     : (key, value) t =
@@ -1280,11 +1288,11 @@ module Map = struct
     update key None map
 
   (** display-only-for-cameligo
-    The call `literal [(k1,v1); ...; (kn,vn)]` returns a map from
+    The call `Map.literal [(k1,v1); ...; (kn,vn)]` returns a map from
     the pairs of key/value in the list. Note: The list must be a
     literal, not an expression (compile-time list of values). *)
   (** display-only-for-jsligo
-    The call `literal(list[[k1,v1], ..., [kn,vn]])` returns a map from
+    The call `Map.literal(list[[k1,v1], ..., [kn,vn]])` returns a map from
     the pairs of key/value in the list. Note: The list must be a
     literal, not an expression (compile-time list of values). *)
   [@thunk] [@inline]
@@ -1293,12 +1301,12 @@ module Map = struct
     [%external ("MAP_LITERAL", bindings)]
 
   (** display-only-for-cameligo
-    The call `of_list bindings` returns a map from the pairs of
-    key/value in the list `bindings`. Note: Use `literal` instead if
+    The call `Map.of_list bindings` returns a map from the pairs of
+    key/value in the list `bindings`. Note: Use `Map.literal` instead if
     using a literal list. *)
   (** display-only-for-jsligo
-    The call `of_list(bindings)` returns a map from the pairs of
-    key/value in the list `bindings`. Note: Use `literal` instead if
+    The call `Map.of_list(bindings)` returns a map from the pairs of
+    key/value in the list `bindings`. Note: Use `Map.literal` instead if
     using a literal list. *)
   let of_list (type key value) (bindings: (key * value) list)
     : (key, value) t =
@@ -1306,29 +1314,29 @@ module Map = struct
     in List.fold_left update empty bindings
 
   (** display-only-for-cameligo
-    The call `size map` evaluates in the number of entries in the
+    The call `Map.size map` evaluates in the number of entries in the
     map `map`. *)
   (** display-only-for-jsligo
-    The call `size(map)` evaluates in the number of entries in the
+    The call `Map.size(map)` evaluates in the number of entries in the
     map `map`. *)
   let size (type key value) (map: (key, value) t) : nat =
     [%external ("MAP_SIZE", map)]
 
   (** display-only-for-cameligo
-    The call `mem key map` is `true` if, and only if, the key `key`
+    The call `Map.mem key map` is `true` if, and only if, the key `key`
     is in the map `map`. *)
   (** display-only-for-jsligo
-    The call `mem(key, map)` is `true` if, and only if, the key `key`
+    The call `Map.mem(key, map)` is `true` if, and only if, the key `key`
     is in the map `map`. *)
   let mem (type key value) (key: key) (map: (key, value) t) : bool =
     [%external ("MAP_MEM", key, map)]
 
   (** display-only-for-cameligo
-    The call `find_opt key map` returns `None` if the key `key` is
+    The call `Map.find_opt key map` returns `None` if the key `key` is
     present in the map `map`; otherwise, it is `Some v`, where `v` is
     the value associated to `key` in `map`. *)
   (** display-only-for-jsligo
-    The call `find_opt(key, map)` returns `None()` if the key `key` is
+    The call `Map.find_opt(key, map)` returns `None()` if the key `key` is
     present in the map `map`; otherwise, it is `Some(v)`, where `v` is
     the value associated to `key` in `map`. *)
   let find_opt (type key value) (key: key) (map: (key, value) t)
@@ -1336,11 +1344,11 @@ module Map = struct
     [%external ("MAP_FIND_OPT", key, map)]
 
   (** display-only-for-cameligo
-    The call `find key map` returns the value associated to `key` in
+    The call `Map.find key map` returns the value associated to `key` in
     `map`. If the key is absent, the execution fails with the string
     `"MAP FIND"`. *)
   (** display-only-for-jsligo
-    The call `find(key, map)` returns the value associated to `key` in
+    The call `Map.find(key, map)` returns the value associated to `key` in
     `map`. If the key is absent, the execution fails with the string
     `"MAP FIND"`. *)
   let find (type key value) (key: key) (map: (key, value) t) : value =
@@ -1350,12 +1358,12 @@ module Map = struct
     | Some value -> value
 
   (** display-only-for-cameligo
-    The call `fold f map init` is
+    The call `Map.fold f map init` is
     `f ( ... f (f (init, (k1,v1)), (k2,v2)), ..., (kn,vn))`
     where `(k1,v1)`, `(k2,v2)`, ..., `(kn,vn)` are the bindings in the
     map `map`, in increasing order of the keys `k1`, `k2`, ..., and `kn`. *)
   (** display-only-for-jsligo
-    The call `fold(f, map, init)` is
+    The call `Map.fold(f, map, init)` is
     `f (... f (f (init, [k1,v1]), [k2,v2]), ..., [kn,vn])`
     where `[k1,v1]`, `[k2,v2]`, ..., `[kn,vn]` are the bindings in the
     map `map`, in increasing order of the keys `k1`, `k2`, ..., and `kn`. *)
@@ -1368,10 +1376,10 @@ module Map = struct
     [%external ("MAP_FOLD", f, map, init)]
 
   (** display-only-for-cameligo
-    The call `iter f map` is
+    The call `Map.iter f map` is
     `let () = f (k1,v1) in let () = f (k2,v2) in ... in f (kn,vn)`. *)
   (** display-only-for-jsligo
-    The call `iter(f, map)` is `{f (k1,v1); (k2,v2); ...; f (kn,vn);}`. *)
+    The call `Map.iter(f, map)` is `{f (k1,v1); (k2,v2); ...; f (kn,vn);}`. *)
   let iter
     (type key value) (f: key * value -> unit) (map: (key, value) t) : unit =
     [%external ("MAP_ITER", f, map)]
@@ -1382,12 +1390,12 @@ module Map = struct
     *)
 
   (** display-only-for-cameligo
-    The call `map f m`, where the map `m` contains the bindings
+    The call `Map.map f m`, where the map `m` contains the bindings
     `(k1,v1)`, `(k2,v2)`, ..., and `(kn,vn)` in increasing order of
     the keys, is the map containing the bindings `(k1, f (k1,v1))`,
     `(k2, f (k2,v2))`, ..., `(kn, f (kn,vn))`. *)
   (** display-only-for-jsligo
-    The call `map(f, m)`, where the map `m` contains the bindings
+    The call `Map.map(f, m)`, where the map `m` contains the bindings
     `[k1,v1]`, `[k2,v2]`, ..., and `[kn,vn]` in increasing order of
     the keys, is the map containing the bindings `[k1, f (k1,v1)]`,
     `[k2, f (k2,v2)]`, ..., `[kn, f (kn,vn)]`. *)
@@ -1409,73 +1417,79 @@ end
 module Big_map = struct
 
   (** display-only-for-cameligo
-    The type `('key,'value) t` is an alias for
-    `('key,'value) big_map`. *)
+      The type `('key,'value) Big_map.t` is an alias for
+      `('key,'value) big_map`. *)
   (** display-only-for-jsligo
-    The type `t<key, value>` is an alias for `big_map<key, value>`. *)
+      The type `Big_map.t<key, value>` is an alias for `big_map<key,
+      value>`. *)
   type ('key,'value) t = ('key,'value) big_map
 
   (** display-only-for-cameligo
-    The value `empty` is the empty big map. In some contexts, it is
-    useful to annotate it with its type, for example:
-    `(empty : (int, string) big_map)`.*)
+      The value `Big_map.empty` is the empty big map. In some
+      contexts, it is useful to annotate it with its type, for example:
+      `(Big_map.empty : (int, string) big_map)`.*)
   (** display-only-for-jsligo
-    The value `empty` is the empty big map. In some contexts, it is
-    useful to annotate it with its type, for example:
-    `(empty as big_map<int, string>`.*)
+      The value `Big_map.empty` is the empty big map. In some
+      contexts, it is useful to annotate it with its type, for example:
+      `(Big_map.empty as big_map<int, string>`.*)
   [@inline]
   let empty (type key value) : (key, value) t =
     [%external "BIG_MAP_EMPTY"]
 
   (** display-only-for-cameligo
-    The call `get_and_update key None map` returns a copy of the map
-    `map` without the entry for the key `key` in `map` (no change if
-    the key is absent). The call `get_and_update key (Some value) map`
-    returns a copy of the map `map` where there is an entry for the
-    key `key` associated with the value `value`. In both cases, if
-    there was already a value `v` bound to `key`, it is returned as
-    `Some v`, otherwise `None`. *)
+      The call `Big_map.get_and_update key None map` returns a copy of
+      the big map `map` without the entry for the key `key` in `map`
+      (no change if the key is absent). The call
+      `Big_map.get_and_update key (Some value) map` returns a copy of
+      the big map `map` where there is an entry for the key `key`
+      associated with the value `value`. In both cases, if there was
+      already a value `v` bound to `key`, it is returned as `Some v`,
+      otherwise `None`. *)
   (** display-only-for-jsligo
-    The call `get_and_update(key, None(), map)` returns a copy of the map
-    `map` without the entry for the key `key` in `map` (no change if
-    the key is absent). The call `get_and_update(key, Some(value), map)`
-    returns a copy of the map `map` where there is an entry for the
-    key `key` associated with the value `value`. In both cases, if
-    there was already a value `v` bound to `key`, it is returned as
-    `Some(v)`, otherwise `None()`. *)
+      The call `Big_map.get_and_update(key, None(), map)` returns a
+      copy of the big map `map` without the entry for the key `key` in
+      `map` (no change if the key is absent). The call
+      `Big_map.get_and_update(key, Some(value), map)` returns a copy
+      of the big map `map` where there is an entry for the key `key`
+      associated with the value `value`. In both cases, if there was
+      already a value `v` bound to `key`, it is returned as `Some(v)`,
+      otherwise `None()`. *)
   let get_and_update
     (type key value) (key: key) (upd: value option) (map: (key, value) t)
     : value option * (key, value) t =
     [%external ("BIG_MAP_GET_AND_UPDATE", key, upd, map)]
 
   (** display-only-for-cameligo
-    The call `update key None map` returns a copy of the map `map`
-    without the entry for the key `key` in `map` (no change if the key
-    is absent). The call `update key (Some value) map` returns the map
-    `map` where there is an entry for the key `key` associated with
-    the value `value`. In both cases, the value originally bound to
-    `key` is lost. See `get_and_update`. *)
+      The call `Big_map.update key None map` returns a copy of the big
+      map `map` without the entry for the key `key` in `map` (no
+      change if the key is absent). The call `Big_map.update key (Some
+      value) map` returns the big map `map` where there is an entry
+      for the key `key` associated with the value `value`. In both
+      cases, the value originally bound to `key` is lost. See
+      `Big_map.get_and_update`. *)
   (** display-only-for-jsligo
-    The call `update(key, None(), map)` returns a copy of the map `map`
-    without the entry for the key `key` in `map` (no change if the key
-    is absent). The call `update(key, Some(value), map)` returns the map
-    `map` where there is an entry for the key `key` associated with
-    the value `value`. In both cases, the value originally bound to
-    `key` is lost. See `get_and_update`. *)
+      The call `Big_map.update(key, None(), map)` returns a copy of
+      the big map `map` without the entry for the key `key` in `map`
+      (no change if the key is absent). The call `Big_map.update(key,
+      Some(value), map)` returns the big map `map` where there is an
+      entry for the key `key` associated with the value `value`. In
+      both cases, the value originally bound to `key` is lost. See
+      `Big_map.get_and_update`. *)
   let update
     (type key value) (key: key) (upd: value option) (map: (key, value) t)
     : (key, value) t =
-    (* TODO: Remove constant MAP_UPDATE. *)
     get_and_update key upd map |> snd
 
   (** display-only-for-cameligo
-    The call `add key value map` returns a copy of the `map` where
-    there is a binding of key `key` to value `value`. If there is a
-    binding for `key` in `map`, then it is lost. *)
+      The call `Big_map.add key value map` returns a copy of the big
+      map `map` where there is a binding of key `key` to value
+      `value`. If there is a binding for `key` in `map`, then it is
+      lost. *)
   (** display-only-for-jsligo
-    The call `add(key, value, map)` returns a copy of the `map` where
-    there is a binding of key `key` to value `value`. If there is a
-    binding for `key` in `map`, then it is lost. *)
+      The call `Big_map.add(key, value, map)` returns a copy of the
+      big map `map` where there is a binding of key `key` to value
+      `value`. If there is a binding for `key` in `map`, then it is
+      lost. *)
   let add
     (type key value) (key: key) (value: value) (map: (key, value) t)
     : (key, value) t =
@@ -1483,71 +1497,72 @@ module Big_map = struct
     update key (Some value) map
 
   (** display-only-for-cameligo
-    The call `remove key map` returns a copy of the map `map` where
-    the binding for key `key` is absent. *)
+      The call `Big_map.remove key map` returns a copy of the big map
+      `map` where the binding for key `key` is absent. *)
   (** display-only-for-jsligo
-    The call `remove(key, map)` returns a copy of the map `map` where
-    the binding for key `key` is absent. *)
+      The call `Big_map.remove(key, map)` returns a copy of the big
+      map `map` where the binding for key `key` is absent. *)
   let remove (type key value) (key: key) (map: (key, value) t)
     : (key, value) t =
     (* TODO: Remove constant MAP_REMOVE. *)
     update key None map
 
   (** display-only-for-cameligo
-    The call `literal [(k1,v1); ...; (kn,vn)]` returns a big map from
-    the pairs of key/value in the list. Note: The list must be a
-    literal, not an expression (compile-time list of values). *)
+      The call `Big_map.literal [(k1,v1); ...; (kn,vn)]` returns a big
+      map from the pairs of key/value in the list. Note: The list must
+      be a literal, not an expression (compile-time list of values). *)
   (** display-only-for-jsligo
-    The call `literal(list[[k1,v1], ..., [kn,vn]])` returns a big map
-    from the pairs of key/value in the list. Note: The list must be a
-    literal, not an expression (compile-time list of values). *)
+      The call `Big_map.literal(list[[k1,v1], ..., [kn,vn]])` returns
+      a big map from the pairs of key/value in the list. Note: The list
+      must be a literal, not an expression (compile-time list of
+      values). *)
   [@thunk] [@inline]
   let literal (type key value) (bindings: (key * value) list)
     : (key, value) t =
     [%external ("BIG_MAP_LITERAL", bindings)]
 
   (** display-only-for-cameligo
-    The call `of_list bindings` returns a big map from the pairs of
-    key/value in the list `bindings`. Note: Use `literal` instead if
-    using a literal list. *)
+      The call `Big_map.of_list bindings` returns a big map from the
+      pairs of key/value in the list `bindings`. Note: Use
+      `Big_map.literal` instead if using a literal list. *)
   (** display-only-for-jsligo
-    The call `of_list(bindings)` returns a big map from the pairs of
-    key/value in the list `bindings`. Note: Use `literal` instead if
-    using a literal list. *)
+      The call `Big_map.of_list(bindings)` returns a big map from the
+      pairs of key/value in the list `bindings`. Note: Use
+      `Big_map.literal` instead if using a literal list. *)
   let of_list (type key value) (bindings: (key * value) list)
     : (key, value) t =
     let update (map, (key, value)) = add key value map
     in List.fold_left update empty bindings
 
   (** display-only-for-cameligo
-    The call `mem key map` is `true` if, and only if, the key `key`
-    is in the big map `map`. *)
+      The call `Big_map.mem key map` is `true` if, and only if, the
+      key `key` is in the big map `map`. *)
   (** display-only-for-jsligo
-    The call `mem(key, map)` is `true` if, and only if, the key `key`
-    is in the big map `map`. *)
+      The call `Big_map.mem(key, map)` is `true` if, and only if, the
+      key `key` is in the big map `map`. *)
   let mem (type key value) (key: key) (map: (key, value) t) : bool =
     [%external ("MAP_MEM", key, map)]
 
   (** display-only-for-cameligo
-    The call `find_opt key map` returns `None` if the key `key` is
-    present in the big map `map`; otherwise, it is `Some v`, where `v`
-    is the value associated to `key` in `map`. *)
+      The call `Big_map.find_opt key map` returns `None` if the key
+      `key` is present in the big map `map`; otherwise, it is `Some v`,
+      where `v` is the value associated to `key` in `map`. *)
   (** display-only-for-jsligo
-    The call `find_opt(key, map)` returns `None()` if the key `key` is
-    present in the big map `map`; otherwise, it is `Some(v)`, where `v`
-    is the value associated to `key` in `map`. *)
+      The call `Big_map.find_opt(key, map)` returns `None()` if the
+      key `key` is present in the big map `map`; otherwise, it is
+      `Some(v)`, where `v` is the value associated to `key` in `map`. *)
   let find_opt (type key value) (key: key) (map: (key, value) t)
     : value option =
     [%external ("MAP_FIND_OPT", key, map)]
 
   (** display-only-for-cameligo
-    The call `find key map` returns the value associated to `key` in
-    `map`. If the key is absent, the execution fails with the string
-    `"MAP FIND"`. *)
+      The call `Big_map.find key map` returns the value associated to
+      `key` in the big map `map`. If the key is absent, the execution
+      fails with the string `"MAP FIND"`. *)
   (** display-only-for-jsligo
-    The call `find(key, map)` returns the value associated to `key` in
-    `map`. If the key is absent, the execution fails with the string
-    `"MAP FIND"`. *)
+      The call `Big_map.find(key, map)` returns the value associated
+      to `key` in the big map `map`. If the key is absent, the
+      execution fails with the string `"MAP FIND"`. *)
   let find (type key value) (key: key) (map: (key, value) t) : value =
     (* TODO: Remove constant MAP_FIND. *)
     match find_opt key map with
@@ -1559,56 +1574,60 @@ end
 module Set = struct
 
   (** display-only-for-cameligo
-    The type `'elt t` is an alias for `'elt set`. *)
+    The type `'elt Set.t` is an alias for `'elt set`. *)
   (** display-only-for-jsligo
-    The type `t<elt>` is an alias for `set<elt>`. *)
+    The type `Set.t<elt>` is an alias for `set<elt>`. *)
   type 'elt t = 'elt set
 
-  (** display-only-for-jsligo
-    The value `empty` denotes the empty set. In some contexts, it is
+  (** display-only-for-cameligo
+    The value `Set.empty` denotes the empty set. In some contexts, it is
     useful to annotate it with its type, for example:
-    `(empty as set<int>)`. *)
+    `(Set.empty : int set)`. *)
+  (** display-only-for-jsligo
+    The value `Set.empty` denotes the empty set. In some contexts, it is
+    useful to annotate it with its type, for example:
+    `(Set.empty as set<int>)`. *)
   [@inline]
   let empty (type elt) : elt t =
     [%external "SET_EMPTY"]
 
   (** display-only-for-cameligo
-    The call `update elt true set` is a copy of the set `set`
-    containing the element `elt`. The call `update elt false set` is a
+    The call `Set.update elt true set` is a copy of the set `set`
+    containing the element `elt`. The call `Set.update elt false set` is a
     copy of the set `set` where the element `elt` is absent. *)
   (** display-only-for-jsligo
-    The call `update(elt, true, set)` is a copy of the set `set`
-    containing the element `elt`. The call `update(elt, false, set)` is a
+    The call `Set.update(elt, true, set)` is a copy of the set `set`
+    containing the element `elt`. The call `Set.update(elt, false, set)` is a
     copy of the set `set` where the element `elt` is absent. *)
   let update (type elt) (elt: elt) (add: bool) (set: elt t) : elt t =
     [%external ("SET_UPDATE", elt, add, set)]
 
   (** display-only-for-cameligo
-    The call `add elt set` is a set containing all the elements of
+    The call `Set.add elt set` is a set containing all the elements of
     the set `set`, plus the element `elt`. *)
   (** display-only-for-jsligo
-    The call `add(elt, set)` is a set containing all the elements of
+    The call `Set.add(elt, set)` is a set containing all the elements of
     the set `set`, plus the element `elt`. *)
   let add (type elt) (elt: elt) (set: elt t) : elt t =
     (* TODO: Remove constant SET_ADD. *)
     update elt true set
 
   (** display-only-for-cameligo
-    The call `remove elt set` is a copy of the set `set` without the
+    The call `Set.remove elt set` is a copy of the set `set` without the
     element `elt`. *)
   (** display-only-for-jsligo
-    The call `remove(elt, set)` is a copy of the set `set` without the
+    The call `Set.remove(elt, set)` is a copy of the set `set` without the
     element `elt`. *)
   let remove (type elt) (elt: elt) (set: elt t) : elt t =
     (* TODO: Remove constant SET_REMOVE. *)
     update elt false set
 
   (** display-only-for-cameligo
-    The call `literal [e1; ...; en]` is a set containing exactly the
+    The call `Set.literal [e1; ...; en]` is a set containing exactly the
     elements in the list. Note: The list must be literal, not an
     expression (compile-time list of values). *)
   (** display-only-for-jsligo
-    The call `literal(list([e1, ..., en]))` is a set containing
+    The call `Set.literal(list([e1, ..., en]))` is a set containing
     exactly the elements in the list. Note: The list must be literal,
     not an expression (compile-time list of values). *)
   [@thunk] [@inline]
@@ -1616,48 +1635,48 @@ module Set = struct
     [%external ("SET_LITERAL", list)]
 
   (** display-only-for-cameligo
-    The call `of_list elements` is a set containing exactly the
-    elements in the list `elements`. Note: Use `literal` instead if
+    The call `Set.of_list elements` is a set containing exactly the
+    elements in the list `elements`. Note: Use `Set.literal` instead if
     using a literal list. Note: Use `literal` instead if using a
     literal list. *)
   (** display-only-for-jsligo
-    The call `of_list(elements)` is a set containing exactly the
-    elements in the list `elements`. Note: Use `literal` instead if
+    The call `Set.of_list(elements)` is a set containing exactly the
+    elements in the list `elements`. Note: Use `Set.literal` instead if
     using a literal list. Note: Use `literal` instead if using a
     literal list. *)
   let of_list (type elt) (elements: elt list) : elt t =
     List.fold_left (fun (set, elt) -> add elt set) empty elements
 
   (** display-only-for-cameligo
-    The call `size set` is the number of elements of the set `set`. *)
+    The call `Set.size set` is the number of elements of the set `set`. *)
   (** display-only-for-jsligo
-    The call `size(set)` is the number of elements of the set `set`. *)
+    The call `Set.size(set)` is the number of elements of the set `set`. *)
   let size (type elt) (set: elt t) : nat =
     [%external ("SET_SIZE", set)]
 
   (** display-only-for-cameligo
-    The call `cardinal set` is the number of elements of the set `set`. *)
+    The call `Set.cardinal set` is the number of elements of the set `set`. *)
   (** display-only-for-jsligo
-    The call `cardinal(set)` is the number of elements of the set `set`. *)
+    The call `Set.cardinal(set)` is the number of elements of the set `set`. *)
   [@inline]
   let cardinal (type elt) (set: elt t) : nat = size set
 
   (** display-only-for-cameligo
-    The call `mem elt set` is `true` if, and only if, the element
+    The call `Set.mem elt set` is `true` if, and only if, the element
     `elt` belongs to the set `set`. *)
   (** display-only-for-jsligo
-    The call `mem(elt, set)` is `true` if, and only if, the element
+    The call `Set.mem(elt, set)` is `true` if, and only if, the element
     `elt` belongs to the set `set`. *)
   let mem (type elt) (elt: elt) (set: elt t) : bool =
     [%external ("SET_MEM", elt, set)]
 
   (** display-only-for-cameligo
-    The call `fold f set init` is
+    The call `Set.fold f set init` is
     `f(... (f (f (init, e1), e2), ...), en)`,
     where `e1`, `e2`, ..., `en` are the elements of the set `set` in
     increasing order. *)
   (** display-only-for-jsligo
-    The call `fold(f, set, init)` is
+    The call `Set.fold(f, set, init)` is
     `f(... (f (f (init, e1), e2), ...), en)`,
     where `e1`, `e2`, ..., `en` are the elements of the set `set` in
     increasing order. *)
@@ -1666,11 +1685,11 @@ module Set = struct
     [%external ("SET_FOLD", f, set, init)]
 
   (** display-only-for-cameligo
-    The call `fold f set init` is `f(... (f (init, en), ...), e1)`,
+    The call `Set.fold f set init` is `f(... (f (init, en), ...), e1)`,
     where `e1`, `e2`, ..., `en` are the elements of the set `set` in
     increasing order. *)
   (** display-only-for-jsligo
-    The call `fold(f, set, init)` is `f(... (f (init, en), ...), e1)`,
+    The call `Set.fold(f, set, init)` is `f(... (f (init, en), ...), e1)`,
     where `e1`, `e2`, ..., `en` are the elements of the set `set` in
     increasing order. *)
   let fold_desc
@@ -1678,12 +1697,12 @@ module Set = struct
     [%external ("SET_FOLD_DESC", f, set, init)]
 
   (** display-only-for-cameligo
-    The call `filter_map f set` is a set made by calling `f` (the
+    The call `Set.filter_map f set` is a set made by calling `f` (the
     filter) on each element of the set `set`: if `f` returns `None`,
     the element is skipped in the result, otherwise, if it is
     `Some e`, then `e` is kept. *)
   (** display-only-for-jsligo
-    The call `filter_map(f, set)` is a set made by calling `f` (the
+    The call `Set.filter_map(f, set)` is a set made by calling `f` (the
     filter) on each element of the set `set`: if `f` returns `None()`,
     the element is skipped in the result, otherwise, if it is
     `Some(e)`, then `e` is kept. *)
@@ -1696,20 +1715,20 @@ module Set = struct
     in fold_desc f set empty
 
   (** display-only-for-cameligo
-    The call `iter f set` applies `f` to all the elements of the set
+    The call `Set.iter f set` applies `f` to all the elements of the set
     `set` in increasing order. *)
   (** display-only-for-jsligo
-    The call `iter(f, set)` applies `f` to all the elements of the set
+    The call `Set.iter(f, set)` applies `f` to all the elements of the set
     `set` in increasing order. *)
   let iter (type elt) (f: elt -> unit) (set: elt t) : unit =
     (* TODO: Remove constant SET_ITER. *)
     fold (fun ((), elt : unit * elt) -> f elt) set ()
 
   (** display-only-for-cameligo
-    The call `map f set` evaluates in a set whose elements have been
+    The call `Set.map f set` evaluates in a set whose elements have been
     obtained by applying `f` to the elements of the set `set`. *)
   (** display-only-for-jsligo
-    The call `map(f, set)` evaluates in a set whose elements have been
+    The call `Set.map(f, set)` evaluates in a set whose elements have been
     obtained by applying `f` to the elements of the set `set`. *)
   let map
     (type old new) (f: old -> new) (set: old t) : new t =
@@ -1726,47 +1745,51 @@ module Big_set = struct
   type 'elt t = ('elt, unit) big_map
 
   (** display-only-for-cameligo
-    The value `empty` denotes the empty big set. In some contexts,
+    The value `Big_set.empty` denotes the empty big set. In some contexts,
     it is useful to annotate it with its type, for example:
-    `(empty as Big_set.t<int>)`. *)
+    `(Big_set.empty : int Big_set.t)`. *)
+  (** display-only-for-jsligo
+    The value `Big_set.empty` denotes the empty big set. In some contexts,
+    it is useful to annotate it with its type, for example:
+    `(Big_set.empty as Big_set.t<int>)`. *)
   let empty (type elt) : elt t = Big_map.empty
 
   (** display-only-for-cameligo
-    The call `update elt true set` is a copy of the big set `set`
-    containing the element `elt`. The call `update elt false set` is a
+    The call `Big_set.update elt true set` is a copy of the big set `set`
+    containing the element `elt`. The call `Big_set.update elt false set` is a
     copy of the big set `set` where the element `elt` is absent. *)
   (** display-only-for-jsligo
-    The call `update(elt, true, set)` is a copy of the big set `set`
-    containing the element `elt`. The call `update(elt, false, set)`
+    The call `Big_set.update(elt, true, set)` is a copy of the big set `set`
+    containing the element `elt`. The call `Big_set.update(elt, false, set)`
     is a copy of the big set `set` where the element `elt` is
     absent. *)
   let update (type elt) (elt: elt) (add: bool) (set: elt t) : elt t =
     Big_map.update elt (if add then Some () else None) set
 
   (** display-only-for-cameligo
-    The call `add elt set` is a big set containing all the elements
+    The call `Big_set.add elt set` is a big set containing all the elements
     of the big set `set`, plus the element `elt`. *)
   (** display-only-for-jsligo
-    The call `add(elt, set)` is a big set containing all the elements
+    The call `Big_set.add(elt, set)` is a big set containing all the elements
     of the big set `set`, plus the element `elt`. *)
   let add (type elt) (elt: elt) (set: elt t) : elt t =
     Big_map.add elt () set
 
   (** display-only-for-cameligo
-    The call `remove elt set` is a copy of the set `set` without the
+    The call `Big_set.remove elt set` is a copy of the set `set` without the
     element `elt`. *)
   (** display-only-for-jsligo
-    The call `remove(elt, set)` is a copy of the set `set` without the
+    The call `Big_set.remove(elt, set)` is a copy of the set `set` without the
     element `elt`. *)
   let remove (type elt) (elt: elt) (set: elt t) : elt t =
     Big_map.remove elt set
 
   (** display-only-for-cameligo
-    The call `literal [e1; ...; en]` is a big set containing exactly
+    The call `Big_Set.literal [e1; ...; en]` is a big set containing exactly
     the elements in the list. Note: The list must be literal, not an
     expression (compile-time list of values). *)
   (** display-only-for-jsligo
-    The call `literal(list([e1, ..., en]))` is a big set containing
+    The call `Big_set.literal(list([e1, ..., en]))` is a big set containing
     exactly the elements in the list. Note: The list must be literal,
     not an expression (compile-time list of values). *)
   [@thunk] [@inline]
@@ -1774,23 +1797,21 @@ module Big_set = struct
     [%external ("BIG_SET_LITERAL", list)]
 
   (** display-only-for-cameligo
-    The call `of_list elements` is a big set containing exactly the
-    elements in the list `elements`. Note: Use `literal` instead if
-    using a literal list. Note: Use `literal` instead if using a
-    literal list. *)
+    The call `Big_set.of_list elements` is a big set containing exactly the
+    elements in the list `elements`. Note: Use `Big_set.literal` instead if
+    using a literal list. *)
   (** display-only-for-jsligo
-    The call `of_list(elements)` is a big set containing exactly the
-    elements in the list `elements`. Note: Use `literal` instead if
-    using a literal list. Note: Use `literal` instead if using a
-    literal list. *)
+    The call `Big_set.of_list(elements)` is a big set containing exactly the
+    elements in the list `elements`. Note: Use `Big_set.literal` instead if
+    using a literal list. *)
   let of_list (type elt) (elements : elt list) : elt t =
     List.fold_left (fun (set, elt) -> add elt set) empty elements
 
   (** display-only-for-cameligo
-    The call `mem elt set` is `true` if, and only if, the element
+    The call `Big_set.mem elt set` is `true` if, and only if, the element
     `elt` belongs to the big set `set`. *)
   (** display-only-for-jsligo
-    The call `mem(elt, set)` is `true` if, and only if, the element
+    The call `Big_set.mem(elt, set)` is `true` if, and only if, the element
     `elt` belongs to the big set `set`. *)
   let mem (type elt) (elt: elt) (set: elt t) : bool =
     Big_map.mem elt set
@@ -1806,48 +1827,48 @@ type 'elt big_set = 'elt Big_set.t
 module String = struct
 
   (** display-only-for-cameligo
-      The call `length s` is the number of characters in the string
+      The call `String.length s` is the number of characters in the string
       `s`. Note: `String.length` is another name for `String.size`. *)
   (** display-only-for-jsligo
-      The call `length(s)` is the number of characters in the string
+      The call `String.length(s)` is the number of characters in the string
       `s`. Note: `String.length` is another name for `String.size`. *)
   let length (string: string) : nat =
     [%external ("SIZE", string)]
 
   (** display-only-for-cameligo
-    The call `size s` is the number of characters in the string `s`. *)
+    The call `String.size s` is the number of characters in the string `s`. *)
   (** display-only-for-jsligo
-    The call `size(s)` is the number of characters in the string `s`. *)
+    The call `String.size(s)` is the number of characters in the string `s`. *)
   [@inline]
   let size (string: string) : nat = length string
 
   (** display-only-for-cameligo
-    The call `concat left right` is the concatenation of the string
+    The call `String.concat left right` is the concatenation of the string
     `left` and the string `right`, in that order.  *)
   (** display-only-for-jsligo
-    The call `concat(left, right)` is the concatenation of the string
+    The call `String.concat(left, right)` is the concatenation of the string
     `left` and the string `right`, in that order.  *)
   let concat (left: string) (right: string) : string =
     (* TODO: Remove constant CONCAT. *)
     left ^ right
 
   (** display-only-for-cameligo
-    The call `concats list` is the concatenation of the strings in
+    The call `String.concats list` is the concatenation of the strings in
     the list `list`, from left to right. *)
   (** display-only-for-jsligo
-    The call `concats(list)` is the concatenation of the strings in
+    The call `String.concats(list)` is the concatenation of the strings in
     the list `list`, from left to right. *)
   let concats (list: string list) : string =
     (* TODO: Remove constant CONCATS. *)
     [%michelson ({| {CONCAT} |} list : string)]
 
   (** display-only-for-cameligo
-    The call `sub index len str` is the substring of string `str`
+    The call `String.sub index len str` is the substring of string `str`
     starting at index `index` (0 denoting the first character) and of
     length `len`. If the index or length are invalid, an exception
     interrupts the execution. *)
   (** display-only-for-jsligo
-    The call `sub(index, len, str)` is the substring of string `str`
+    The call `String.sub(index, len, str)` is the substring of string `str`
     starting at index `index` (0 denoting the first character) and of
     length `len`. If the index or length are invalid, an exception
     interrupts the execution. *)
@@ -1855,12 +1876,12 @@ module String = struct
     [%external ("SLICE", index, length, string)]
 
   (** display-only-for-cameligo
-    The call `slice index len str` is the substring of string `str`
+    The call `String.slice index len str` is the substring of string `str`
     starting at index `index` (0 denoting the first character) and of
     length `len`. If the index or length are invalid, an exception
     interrupts the execution. *)
   (** display-only-for-jsligo
-    The call `slice(index, len, str)` is the substring of string `str`
+    The call `String.slice(index, len, str)` is the substring of string `str`
     starting at index `index` (0 denoting the first character) and of
     length `len`. If the index or length are invalid, an exception
     interrupts the execution. *)
@@ -1877,53 +1898,53 @@ end
 module Bytes = struct
 
   (** display-only-for-cameligo
-      The call `length b` is the number of bytes in the sequence of
+      The call `Bytes.length b` is the number of bytes in the sequence of
       bytes `b`. Note: `Bytes.length` is another name for
       `Bytes.size`. *)
   (** display-only-for-jsligo
-      The call `length(b)` is the number of bytes in the sequence of
+      The call `Bytes.length(b)` is the number of bytes in the sequence of
       bytes `b`. Note: `Bytes.length` is another name for
       `Bytes.size`. *)
   let length (bytes: bytes) : nat =
     [%external ("SIZE", bytes)]
 
   (** display-only-for-cameligo
-    The call `size b` is the number of bytes in the sequence of
+    The call `Bytes.size b` is the number of bytes in the sequence of
     bytes `b`.  *)
   (** display-only-for-jsligo
-    The call `size(b)` is the number of bytes in the sequence of
+    The call `Bytes.size(b)` is the number of bytes in the sequence of
     bytes `b`.  *)
   [@thunk] [@inline]
   let size (bytes: bytes) : nat = length bytes
 
   (** display-only-for-cameligo
-    The call `concat left right` is the sequence of bytes obtained
+    The call `Bytes.concat left right` is the sequence of bytes obtained
     by concatenating the sequence `left` before the sequence
     `right`. *)
   (** display-only-for-jsligo
-    The call `concat(left, right)` is the sequence of bytes obtained
+    The call `Bytes.concat(left, right)` is the sequence of bytes obtained
     by concatenating the sequence `left` before the sequence
     `right`. *)
   let concat (left: bytes) (right: bytes) : bytes =
     [%external ("CONCAT", left, right)]
 
   (** display-only-for-cameligo
-    The call `concats list` is the concatenation of the byte
+    The call `Bytes.concats list` is the concatenation of the byte
     sequences in the list `list`, from left to right. *)
   (** display-only-for-jsligo
-    The call `concats(list)` is the concatenation of the byte
+    The call `Bytes.concats(list)` is the concatenation of the byte
     sequences in the list `list`, from left to right. *)
   let concats (list: bytes list) : bytes =
     (* TODO: Remove constant CONCATS. *)
     [%michelson ({| {CONCAT} |} list : bytes)]
 
   (** display-only-for-cameligo
-    The call `sub index len bytes` is the subsequence of bytes
+    The call `Bytes.sub index len bytes` is the subsequence of bytes
     `bytes` starting at index `index` (0 denoting the first byte) and
     of length `len`. If the index or length are invalid, an exception
     interrupts the execution. *)
   (** display-only-for-jsligo
-    The call `sub(index, len, bytes)` is the subsequence of bytes
+    The call `Bytes.sub(index, len, bytes)` is the subsequence of bytes
     `bytes` starting at index `index` (0 denoting the first byte) and
     of length `len`. If the index or length are invalid, an exception
     interrupts the execution. *)
@@ -1931,12 +1952,12 @@ module Bytes = struct
     [%external ("SLICE", index, length, bytes)]
 
   (** display-only-for-cameligo
-    The call `slice index len bytes` is the subsequence of bytes
+    The call `Bytes.slice index len bytes` is the subsequence of bytes
     `bytes` starting at index `index` (0 denoting the first byte) and
     of length `len`. If the index or length are invalid, an exception
     interrupts the execution. *)
   (** display-only-for-jsligo
-    The call `slice(index, len, bytes)` is the subsequence of bytes
+    The call `Bytes.slice(index, len, bytes)` is the subsequence of bytes
     `bytes` starting at index `index` (0 denoting the first byte) and
     of length `len`. If the index or length are invalid, an exception
     interrupts the execution. *)
@@ -1945,19 +1966,19 @@ module Bytes = struct
     sub index length bytes
 
   (** display-only-for-cameligo
-    The call `pack v` transforms the value `v` into a sequence of
+    The call `Bytes.pack v` transforms the value `v` into a sequence of
     bytes. *)
   (** display-only-for-jsligo
-    The call `pack(v)` transforms the value `v` into a sequence of
+    The call `Bytes.pack(v)` transforms the value `v` into a sequence of
     bytes. *)
   let pack (type a) (value: a) : bytes =
     [%michelson ({| {PACK} |} value : bytes)]
 
   (** display-only-for-cameligo
-    The call `unpack bytes` is `Some v` if the sequence of bytes
+    The call `Bytes.unpack bytes` is `Some v` if the sequence of bytes
     `bytes` decodes into a valid LIGO value `v`; otherwise `None`. *)
   (** display-only-for-jsligo
-    The call `unpack(bytes)` is `Some(v)` if the sequence of bytes
+    The call `Bytes.unpack(bytes)` is `Some(v)` if the sequence of bytes
     `bytes` decodes into a valid LIGO value `v`; otherwise
     `None()`. *)
   let unpack (type a) (bytes: bytes) : a option =
@@ -2003,12 +2024,12 @@ module Crypto = struct
     [%michelson ({| {HASH_KEY} |} key : key_hash)]
 
   (** display-only-for-cameligo
-    The call `check k s b` verifies that the byte sequence `b` has
+    The call `Crypto.check k s b` verifies that the byte sequence `b` has
     been signed with the key `k`: it is `true` if, and only if, the
     signature `s` is a valid signature of the byte sequence created
     with `k`. *)
   (** display-only-for-jsligo
-    The call `check(k, s, b)` verifies that the byte sequence `b` has
+    The call `Crypto.check(k, s, b)` verifies that the byte sequence `b` has
     been signed with the key `k`: it is `true` if, and only if, the
     signature `s` is a valid signature of the byte sequence created
     with `k`. *)
@@ -2047,19 +2068,19 @@ module Dynamic_entrypoints = struct
     [%external ("CAST_DYNAMIC_ENTRYPOINT", dyn)]
 
   (** display-only-for-cameligo
-      The call `set dyn None dyn_map` returns a copy of the map of
-      dynamic entrypoints `dyn_map` where the dynamic entrypoint `dyn`
-      is not associated to a static entrypoint. The call `set dyn
-      (Some entrypoint) dyn_map` is a copy of `dyn_map` where the
-      dynamic entrypoint `dyn` is associated to the static entrypoint
-      `entrypoint`. *)
+      The call `Dynamic_entrypoints.set dyn None dyn_map` returns a copy
+      of the map of dynamic entrypoints `dyn_map` where the dynamic entrypoint
+      `dyn` is not associated to a static entrypoint. The call
+      `Dynamic_entrypoints set dyn (Some entrypoint) dyn_map` is a copy of
+      `dyn_map` where the dynamic entrypoint `dyn` is associated to the static
+      entrypoint `entrypoint`. *)
   (** display-only-for-jsligo
-      The call `set(dyn, None(), dyn_map)` returns a copy of the map of
-      dynamic entrypoints `dyn_map` where the dynamic entrypoint `dyn`
-      is not associated to a static entrypoint. The call `set(dyn,
-      Some(entrypoint), dyn_map)` is a copy of `dyn_map` where the
-      dynamic entrypoint `dyn` is associated to the static entrypoint
-      `entrypoint`. *)
+      The call `Dynamic_entrypoints.set(dyn, None(), dyn_map)` returns a copy
+      of the map of dynamic entrypoints `dyn_map` where the dynamic entrypoint
+      `dyn` is not associated to a static entrypoint. The call
+      `Dynamic_entrypoints.set(dyn, Some(entrypoint), dyn_map)` is a copy of
+      `dyn_map` where the  dynamic entrypoint `dyn` is associated to the static
+      entrypoint `entrypoint`. *)
   let set
     (type param storage)
     (dyn: (param, storage) dynamic_entrypoint)
@@ -2070,23 +2091,21 @@ module Dynamic_entrypoints = struct
     Big_map.update (cast_dynamic_entrypoint dyn) packed_entry_opt dyn_map
 
   (** display-only-for-cameligo
-      The call `set_bytes dyn None dyn_map` returns a copy of the map
-      of dynamic entrypoints `dyn_map` where the dynamic entrypoint
+      The call `Dynamic_entrypoints.set_bytes dyn None dyn_map` returns a copy of
+      the map of dynamic entrypoints `dyn_map` where the dynamic entrypoint
       `dyn` is not associated to a static entrypoint. The call
-      `set_bytes dyn (Some bytes) dyn_map` is a copy of `dyn_map`
-      where the dynamic entrypoint `dyn` is associated to the static
-      entrypoint encoded by the sequence of bytes `bytes`. If that
-      sequence is invalid, any call to the dynamic entrypoint will
-      fail. *)
+      `Dynamic_entrypoints.set_bytes dyn (Some bytes) dyn_map` is a copy of
+      `dyn_map` where the dynamic entrypoint `dyn` is associated to the static
+      entrypoint encoded by the sequence of bytes `bytes`. If that sequence is
+      invalid, any call to the dynamic entrypoint will fail. *)
   (** display-only-for-jsligo
-      The call `set_bytes(dyn, None(), dyn_map)` returns a copy of the
-      map of dynamic entrypoints `dyn_map` where the dynamic
+      The call `Dynamic_entrypoints.set_bytes(dyn, None(), dyn_map)` returns a
+      copy of the map of dynamic entrypoints `dyn_map` where the dynamic
       entrypoint `dyn` is not associated to a static entrypoint. The
-      call `set_bytes(dyn, Some(bytes), dyn_map)` is a copy of `dyn_map`
-      where the dynamic entrypoint `dyn` is associated to the static
-      entrypoint encoded by the sequence of bytes `bytes`. If that
-      sequence is invalid, any call to the dynamic entrypoint will
-      fail. *)
+      call `Dynamic_entrypoints.set_bytes(dyn, Some(bytes), dyn_map)` is a copy
+      of `dyn_map` where the dynamic entrypoint `dyn` is associated to the static
+      entrypoint encoded by the sequence of bytes `bytes`. If that sequence is
+      invalid, any call to the dynamic entrypoint will fail. *)
   let set_bytes
     (type param storage)
     (dyn: (param, storage) dynamic_entrypoint)
@@ -2096,13 +2115,13 @@ module Dynamic_entrypoints = struct
     Big_map.update (cast_dynamic_entrypoint dyn) bytes_opt dyn_map
 
   (** display-only-for-cameligo
-      The call `get dyn dyn_map` is `None` if the dynamic entrypoint
-      `dyn` is absent from the dynamic entrypoints map
+      The call `Dynamic_entrypoints.get dyn dyn_map` is `None` if the dynamic
+      entrypoint `dyn` is absent from the dynamic entrypoints map
       `dyn_map`. Otherwise, it is `Some entry`, where `entry` is a
       static entrypoint that is callable (like a function). See type
       `entrypoint`. *)
   (** display-only-for-jsligo
-      The call `get(dyn, dyn_map)` is `None()` if the dynamic
+      The call `Dynamic_entrypoints.get(dyn, dyn_map)` is `None()` if the dynamic
       entrypoint `dyn` is absent from the dynamic entrypoints map
       `dyn_map`. Otherwise, it is `Some(entry)`, where `entry` is a
       static entrypoint that is callable (like a function). See type
@@ -2581,10 +2600,10 @@ module Test = struct
   let to_entrypoint (type a b c) (s : string) (t : (a, b) typed_address) : c contract =
     let s = if String.length s > 0n then
               if String.sub 0n 1n s = "%" then
-                let () = log "WARNING: Test.to_entrypoint: automatically removing starting %" in
+                let () = log "WARNING: Test.to_entrypoint: automatically removing leading %" in
                 String.sub 1n (abs (String.length s - 1)) s
-	      else s
-	    else s in
+              else s
+            else s in
     [%external ("TEST_TO_ENTRYPOINT", s, t)]
   [@deprecated "In a future version, `Test` will be replaced by `Test.Next`, and using `Dynamic_entrypoints.storage` from `Test.Next` is encouraged for a smoother migration."]
 

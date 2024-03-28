@@ -9,7 +9,7 @@ import Syntax from '@theme/Syntax';
 There is no loop over maps in CameLIGO.
 
 Note: See the predefined
-[module Map](../reference/map-reference/?lang=cameligo)
+[module Map](../reference/map-reference)
 
 </Syntax>
 
@@ -33,6 +33,6 @@ function sum_val (m: map<int,int>) {
 ```
 
 Note: See the predefined
-[namespace Map](../reference/map-reference/?lang=jsligo)
+[namespace Map](../reference/map-reference)
 
 </Syntax>

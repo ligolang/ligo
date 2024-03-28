@@ -41,7 +41,7 @@ individual map bindings. Note that `("<string value>": address)` means
 that we type-cast a string into an address.
 
 Note: See the predefined
-[module Map](../reference/map-reference/?lang=cameligo)
+[module Map](../reference/map-reference)
 
 </Syntax>
 
@@ -66,7 +66,7 @@ individual map bindings. Note that `"<string value>" as address` means
 that we type-cast a string into an address.
 
 Note: See the predefined
-[namespace Map](../reference/map-reference/?lang=jsligo)
+[namespace Map](../reference/map-reference)
 
 </Syntax>
 

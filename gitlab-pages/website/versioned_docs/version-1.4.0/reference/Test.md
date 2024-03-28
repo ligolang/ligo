@@ -16,7 +16,7 @@ The testing framework
 [module Proxy_ticket](Test.Proxy_ticket.md)
 
 
-[module Next](Test.Next.md)
+[module Next](test.next.md)
 
 
 <SyntaxTitle syntax="cameligo">

@@ -80,13 +80,13 @@ that the exception raised by `failwith` carries the default string
 <Syntax syntax="cameligo">
 
 Note: See the predefined
-[module Map](../reference/map-reference/?lang=cameligo)
+[module Map](../reference/map-reference)
 
 </Syntax>
 
 <Syntax syntax="jsligo">
 
 Note: See the predefined
-[namespace Map](../reference/map-reference/?lang=jsligo)
+[namespace Map](../reference/map-reference)
 
 </Syntax>

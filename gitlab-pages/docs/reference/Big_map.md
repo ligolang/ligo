@@ -1,6 +1,6 @@
 ---
 id: big-map-reference
-title: Big_map
+title: big_map
 hide_table_of_contents: true
 ---
 import Syntax from '@theme/Syntax';

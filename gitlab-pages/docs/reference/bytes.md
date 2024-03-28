@@ -1,6 +1,6 @@
 ---
 id: bytes-reference
-title: Bytes
+title: bytes
 hide_table_of_contents: true
 ---
 import Syntax from '@theme/Syntax';

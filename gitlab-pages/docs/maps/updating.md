@@ -47,7 +47,7 @@ let three, map_without_3 = Map.get_and_update 3 None map_with_3
 ```
 
 Note: See the predefined
-[module Map](../reference/map-reference/?lang=cameligo)
+[module Map](../reference/map-reference)
 
 </Syntax>
 
@@ -59,6 +59,6 @@ const [three, map_without_3] = Map.get_and_update(3, None(), map_with_3);
 ```
 
 Note: See the predefined
-[namespace Map](../reference/map-reference/?lang=jsligo)
+[namespace Map](../reference/map-reference)
 
 </Syntax>
