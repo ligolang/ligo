@@ -63,6 +63,15 @@ let%expect_test _ =
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `IO.log` from `Test.Next` is encouraged for a smoother migration.
 
+    File "./test_timelock.mligo", line 27, characters 4-10:
+     26 |     let _ = Test.log (s, expected) in
+     27 |     assert (s = expected)
+              ^^^^^^
+     28 |   in
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
     File "./test_timelock.mligo", line 30, characters 27-44:
      29 |   let test1 = (* chest key/payload and time matches -> OK *)
      30 |     let chest, chest_key = Test.create_chest payload 10n in
@@ -125,6 +134,24 @@ let%expect_test _ =
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Timelock.create` from `Test.Next` is encouraged for a smoother migration.
+
+    File "./test_timelock.mligo", line 46, characters 13-19:
+     45 |     let chest2, chest_key2 = Test.create_chest payload 2n in
+     46 |     let () = assert (not (Test.Next.Timelock.verify chest1 chest_key2 2n)) in
+                       ^^^^^^
+     47 |     assert (Test.Next.Timelock.verify chest1 chest_key1 2n)
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./test_timelock.mligo", line 47, characters 4-10:
+     46 |     let () = assert (not (Test.Next.Timelock.verify chest1 chest_key2 2n)) in
+     47 |     assert (Test.Next.Timelock.verify chest1 chest_key1 2n)
+              ^^^^^^
+     48 |   in [test1; test2; test3; test4]
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
 
     (0x4141 , 0x4141)
     (0xff , 0xff)
@@ -726,6 +753,24 @@ let%expect_test _ =
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Assert.assert` from `Test.Next` is encouraged for a smoother migration.
 
+    File "./test_compare.mligo", line 19, characters 11-17:
+     18 | let test_cmp_record =
+     19 |   let () = assert ({ a = "x" ; b = 0 } < { a = "y" ; b = 1 }) in
+                     ^^^^^^
+     20 |   let () = assert ({ c = "y" ; d = 0 } < { c = "x" ; d = 1 }) in
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./test_compare.mligo", line 20, characters 11-17:
+     19 |   let () = assert ({ a = "x" ; b = 0 } < { a = "y" ; b = 1 }) in
+     20 |   let () = assert ({ c = "y" ; d = 0 } < { c = "x" ; d = 1 }) in
+                     ^^^^^^
+     21 |   ()
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
     Everything at the top-level was executed.
     - test_cmp exited with value ().
     - test_cmp_list exited with value ().
@@ -860,6 +905,672 @@ let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "interpret_test.mligo" ];
   [%expect
     {|
+    File "./interpret_test.mligo", line 4, characters 2-8:
+      3 |   let foo = fun (i : int) -> i * i in
+      4 |   assert ((foo (a + 1)) = 16)
+            ^^^^^^
+      5 |
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpret_test.mligo", line 10, characters 2-8:
+      9 |   let bar = (foo 1 2) in
+     10 |   assert (bar 3 = 5)
+            ^^^^^^
+     11 |
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpret_test.mligo", line 19, characters 2-8:
+     18 |   in
+     19 |   assert (foo 1 = 5)
+            ^^^^^^
+     20 |
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpret_test.mligo", line 26, characters 2-8:
+     25 |   in
+     26 |   assert (baz 3 = 5)
+            ^^^^^^
+     27 |
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpret_test.mligo", line 33, characters 2-8:
+     32 |   in
+     33 |   assert (bar 2 = 5)
+            ^^^^^^
+     34 |
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpret_test.mligo", line 35, characters 19-25:
+     34 |
+     35 | let test_concats = assert (0x70 ^ 0x70  = 0x7070)
+                             ^^^^^^
+     36 |
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpret_test.mligo", line 44, characters 5-11:
+     43 |   let ab : foo_record = {a="a"; b="b"}
+     44 |   in assert (ab.a ^ ab.b = "ab")
+               ^^^^^^
+     45 |
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpret_test.mligo", line 49, characters 2-8:
+     48 |   let res = {ab with b = "c"} in
+     49 |   assert (res.b = "c")
+            ^^^^^^
+     50 |
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpret_test.mligo", line 60, characters 5-11:
+     59 |   let farg : bar_record = {f = foo; arg = 2}
+     60 |   in assert (farg.f farg.arg = 5)
+               ^^^^^^
+     61 |
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpret_test.mligo", line 69, characters 2-8:
+     68 |   let a = Bar 1 in
+     69 |   assert (match a with
+            ^^^^^^
+     70 |   | Foo   -> false
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpret_test.mligo", line 76, characters 2-8:
+     75 |   let b = true in
+     76 |   assert (match b with
+            ^^^^^^
+     77 |   | True -> true
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpret_test.mligo", line 82, characters 2-8:
+     81 |   let a = [1; 2; 3; 4] in
+     82 |   assert (match a with
+            ^^^^^^
+     83 |   | _::_ -> true
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpret_test.mligo", line 88, characters 5-11:
+     87 |   let a, b = true, false
+     88 |   in assert (a or b)
+               ^^^^^^
+     89 |
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpret_test.mligo", line 92, characters 2-8:
+     91 |   let a = [1; 2; 3; 4] in
+     92 |   assert ((List.length (0::a)) = 5n)
+            ^^^^^^
+     93 |
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpret_test.mligo", line 98, characters 2-8:
+     97 |   let a = Some 0 in
+     98 |   assert (match a with
+            ^^^^^^
+     99 |   | Some _ -> true
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpret_test.mligo", line 104, characters 2-8:
+    103 |   let a : foobar = None in
+    104 |   assert (match a with
+            ^^^^^^
+    105 |   | Some _ -> false
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpret_test.mligo", line 110, characters 2-8:
+    109 |   let i : int = 1 in
+    110 |   assert (match (is_nat i) with
+            ^^^^^^
+    111 |   | Some _ -> true
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpret_test.mligo", line 116, characters 2-8:
+    115 |   let j : int = -1 in
+    116 |   assert (match (is_nat j) with
+            ^^^^^^
+    117 |   | Some _ -> false
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpret_test.mligo", line 122, characters 2-8:
+    121 |   let a : nat = abs (-5) in
+    122 |   assert (a = 5n)
+            ^^^^^^
+    123 |
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpret_test.mligo", line 124, characters 19-25:
+    123 |
+    124 | let test_nat_int = assert ((int 5n) = 5)
+                             ^^^^^^
+    125 |
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpret_test.mligo", line 129, characters 2-8:
+    128 |   let add_one : (int -> int) = fun (i : int) -> i + 1 in
+    129 |   assert (match (List.map add_one a) with
+            ^^^^^^
+    130 |   | hd::_tl -> (hd = 2)
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpret_test.mligo", line 138, characters 2-8:
+    137 |   in
+    138 |   assert ((List.fold acc a 0) = 10)
+            ^^^^^^
+    139 |
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpret_test.mligo", line 145, characters 2-8:
+    144 |   let d = 2 >= 1 in
+    145 |   assert ( not(a) && b && (not c) && d )
+            ^^^^^^
+    146 |
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpret_test.mligo", line 147, characters 29-35:
+    146 |
+    147 | let test_comparison_string = assert (not("foo"="bar") && ("baz"="baz"))
+                                       ^^^^^^
+    148 |
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpret_test.mligo", line 151, characters 2-8:
+    150 |   let a = 1/2 in
+    151 |   assert (a = 0)
+            ^^^^^^
+    152 |
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpret_test.mligo", line 155, characters 2-8:
+    154 |   let a = 1n/2n in
+    155 |   assert (a = 0n)
+            ^^^^^^
+    156 |
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpret_test.mligo", line 159, characters 2-8:
+    158 |   let a = 2 in
+    159 |   assert (-a = -2)
+            ^^^^^^
+    160 |
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpret_test.mligo", line 167, characters 2-8:
+    166 |   let e = 0xFFFF in
+    167 |   assert ((List.length a = 5n) &&
+            ^^^^^^
+    168 |           (String.length b = 5n) &&
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpret_test.mligo", line 173, characters 16-22:
+    172 |
+    173 | let test_modi = assert (3 mod 2 = 1n)
+                          ^^^^^^
+    174 |
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpret_test.mligo", line 176, characters 11-17:
+    175 | let test_assertion_pass =
+    176 |   let () = assert (1=1) in
+                     ^^^^^^
+    177 |   assert true
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpret_test.mligo", line 177, characters 2-8:
+    176 |   let () = assert (1=1) in
+    177 |   assert true
+            ^^^^^^
+    178 |
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpret_test.mligo", line 182, characters 2-8:
+    181 |   in
+    182 |   assert (match (Map.find_opt "two" m) with
+            ^^^^^^
+    183 |   | Some _ -> true
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpret_test.mligo", line 190, characters 5-11:
+    189 |   let aux = fun (i : int * (string * int)) -> i.0 + i.1.1
+    190 |   in assert (Map.fold aux m 0 = 6)
+               ^^^^^^
+    191 |
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpret_test.mligo", line 194, characters 2-8:
+    193 |   let aux = fun (i : string * int) -> i.1 + String.length i.0 in
+    194 |   assert (Map.find "one" (Map.map aux m) = 4)
+            ^^^^^^
+    195 |
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpret_test.mligo", line 196, characters 19-25:
+    195 |
+    196 | let test_map_mem = assert ((Map.mem "one" m) && (Map.mem "two" m) && (Map.mem "three" m))
+                             ^^^^^^
+    197 |
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpret_test.mligo", line 202, characters 2-8:
+    201 |   let m = Map.remove "three" m in
+    202 |   assert (not (Map.mem "one" m) &&  not (Map.mem "two" m) && not (Map.mem "three" m))
+            ^^^^^^
+    203 |
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpret_test.mligo", line 207, characters 2-8:
+    206 |   let m2 = Map.update "one" (None : int option) m in
+    207 |   assert ((Map.mem "four" m1) && not (Map.mem "one" m2))
+            ^^^^^^
+    208 |
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpret_test.mligo", line 213, characters 2-8:
+    212 |   let s = Set.add 1 (Set.empty : int set) in
+    213 |   assert (Set.mem 1 s)
+            ^^^^^^
+    214 |
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpret_test.mligo", line 216, characters 2-8:
+    215 | let test_set_mem =
+    216 |   assert ((Set.mem 1 s) && (Set.mem 2 s) && (Set.mem 3 s))
+            ^^^^^^
+    217 |
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpret_test.mligo", line 220, characters 11-17:
+    219 |   let s = Set.literal [0n; 1n; 2n] in
+    220 |   let () = assert ((Set.mem 1n s) && (Set.mem 2n s) && (Set.mem 0n s)) in
+                     ^^^^^^
+    221 |   let s = Set.remove 0n s in
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpret_test.mligo", line 222, characters 2-8:
+    221 |   let s = Set.remove 0n s in
+    222 |   assert ((Set.mem 1n s) && (Set.mem 2n s) && not (Set.mem 0n s))
+            ^^^^^^
+    223 |
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpret_test.mligo", line 229, characters 2-8:
+    228 |   in
+    229 |   assert (sum (10,0) = 55)
+            ^^^^^^
+    230 |
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpret_test.mligo", line 234, characters 31-37:
+    233 |
+    234 | let test_top_level_recursion = assert (sum_rec (10,0) = 55)
+                                         ^^^^^^
+    235 |
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpret_test.mligo", line 244, characters 4-10:
+    243 |
+    244 |     assert (b_and_int     = 4n  &&
+              ^^^^^^
+    245 |             b_and_nat     = 4n  &&
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpret_test.mligo", line 259, characters 4-10:
+    258 |
+    259 |     assert (b_and_int     = 4n  &&
+              ^^^^^^
+    260 |             b_and_nat     = 4n  &&
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpret_test.mligo", line 273, characters 2-8:
+    272 |
+    273 |   assert (b_and         = 0x0004 &&
+            ^^^^^^
+    274 |           b_or          = 0x0107 &&
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpret_test.mligo", line 286, characters 2-8:
+    285 |
+    286 |   assert (b_and         = 0x0004 &&
+            ^^^^^^
+    287 |           b_or          = 0x0107 &&
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpret_test.mligo", line 299, characters 2-8:
+    298 |   let zs = concat xs ys in
+    299 |   assert (zs = [1n;2n;3n;4n;5n;6n])
+            ^^^^^^
+    300 |
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpret_test.mligo", line 302, characters 2-8:
+    301 | let test_list_head =
+    302 |   assert (List.head ([1n;2n;3n] : nat list) = (Some 1n : nat option) &&
+            ^^^^^^
+    303 |           List.head ([2n;3n]    : nat list) = (Some 2n : nat option) &&
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpret_test.mligo", line 308, characters 2-8:
+    307 | let test_list_tail =
+    308 |   assert (List.tail ([1n;2n;3n] : nat list) = (Some [2n;3n]         : nat list option) &&
+            ^^^^^^
+    309 |           List.tail ([2n;3n]    : nat list) = (Some [3n]            : nat list option) &&
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpret_test.mligo", line 318, characters 2-8:
+    317 |   let xs = [1n;2n;3n] in
+    318 |   assert (reverse xs = [3n;2n;1n])
+            ^^^^^^
+    319 |
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpret_test.mligo", line 323, characters 2-8:
+    322 |   let sum = Set.fold_desc (fun (x,acc : nat * nat) -> acc + x) xs 0n in
+    323 |   assert (sum = 6n)
+            ^^^^^^
+    324 |
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpret_test.mligo", line 330, characters 2-8:
+    329 |   let xs = Set.update 5n false xs in
+    330 |   assert (xs = Set.literal [1n;2n;4n])
+            ^^^^^^
+    331 |
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpret_test.mligo", line 336, characters 2-8:
+    335 |   let ys = Map.literal [(1n,"Hello");(2n,"Foo")] in
+    336 |   assert (xs = ys && old = Some "World")
+            ^^^^^^
+    337 |
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpret_test.mligo", line 342, characters 2-8:
+    341 |   let ys = Big_map.literal [(1n,"Hello");(2n,"Foo")] in
+    342 |   assert (xs = ys && old = Some "World")
+            ^^^^^^
+    343 |
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpret_test.mligo", line 347, characters 2-8:
+    346 |   let n = 1tez in
+    347 |   assert (m + n = 11tez)
+            ^^^^^^
+    348 |
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpret_test.mligo", line 352, characters 2-8:
+    351 |   let n = 1tez in
+    352 |   assert (m - n = Some 9tez)
+            ^^^^^^
+    353 |
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpret_test.mligo", line 356, characters 2-8:
+    355 |   let a = 1tez/2tez in
+    356 |   assert (a = 0n)
+            ^^^^^^
+    357 |
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpret_test.mligo", line 362, characters 2-8:
+    361 |   let diff : int = today - some_date in
+    362 |   assert (diff = 31622400)
+            ^^^^^^
+    363 |
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpret_test.mligo", line 367, characters 2-8:
+    366 |   let sum = List.fold_left (fun (x,acc : (int * int)) -> x + acc) 0 xs in
+    367 |   assert (sum = 6)
+            ^^^^^^
+    368 |
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpret_test.mligo", line 370, characters 11-17:
+    369 | let test_bytes_sub =
+    370 |   let () = assert (Bytes.sub 0n 3n (Bytes.pack 5n) = (Bytes.pack 5)) in
+                     ^^^^^^
+    371 |   let () = assert (Bytes.sub 1n 2n (Bytes.pack 5n) = 0x0005) in
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpret_test.mligo", line 371, characters 11-17:
+    370 |   let () = assert (Bytes.sub 0n 3n (Bytes.pack 5n) = (Bytes.pack 5)) in
+    371 |   let () = assert (Bytes.sub 1n 2n (Bytes.pack 5n) = 0x0005) in
+                     ^^^^^^
+    372 |   let () = assert (Bytes.sub 0n 0n (Bytes.pack 5n) = Bytes.sub 2n 0n (Bytes.pack 5)) in
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpret_test.mligo", line 372, characters 11-17:
+    371 |   let () = assert (Bytes.sub 1n 2n (Bytes.pack 5n) = 0x0005) in
+    372 |   let () = assert (Bytes.sub 0n 0n (Bytes.pack 5n) = Bytes.sub 2n 0n (Bytes.pack 5)) in
+                     ^^^^^^
+    373 |   let () = assert (Bytes.sub 2n 1n (Bytes.pack 5n) = 0x05) in
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpret_test.mligo", line 373, characters 11-17:
+    372 |   let () = assert (Bytes.sub 0n 0n (Bytes.pack 5n) = Bytes.sub 2n 0n (Bytes.pack 5)) in
+    373 |   let () = assert (Bytes.sub 2n 1n (Bytes.pack 5n) = 0x05) in
+                     ^^^^^^
+    374 |   assert (Bytes.sub 0n 1n (Bytes.pack 5n) = 0x05)
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpret_test.mligo", line 374, characters 2-8:
+    373 |   let () = assert (Bytes.sub 2n 1n (Bytes.pack 5n) = 0x05) in
+    374 |   assert (Bytes.sub 0n 1n (Bytes.pack 5n) = 0x05)
+            ^^^^^^
+    375 |
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpret_test.mligo", line 377, characters 2-19:
+    376 | let test_with_error =
+    377 |   assert_with_error true "foo"
+            ^^^^^^^^^^^^^^^^^
+    378 |
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.Error.assert` is encouraged for a smoother migration.
+
+    File "./interpret_test.mligo", line 380, characters 2-13:
+    379 | let test_some =
+    380 |   assert_some (Some 1 : int option)
+            ^^^^^^^^^^^
+    381 |
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.some` is encouraged for a smoother migration.
+
+    File "./interpret_test.mligo", line 383, characters 2-24:
+    382 | let test_some_with_error =
+    383 |   assert_some_with_error (Some 2 : int option) "bar"
+            ^^^^^^^^^^^^^^^^^^^^^^
+    384 |
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.Error.some` is encouraged for a smoother migration.
+
+    File "./interpret_test.mligo", line 386, characters 2-13:
+    385 | let test_none =
+    386 |   assert_none (None : int option)
+            ^^^^^^^^^^^
+    387 |
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.none` is encouraged for a smoother migration.
+
+    File "./interpret_test.mligo", line 389, characters 2-24:
+    388 | let test_none_with_error =
+    389 |   assert_none_with_error (None : int option) "bar"
+            ^^^^^^^^^^^^^^^^^^^^^^
+    390 |
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.Error.none` is encouraged for a smoother migration.
+
+    File "./interpret_test.mligo", line 392, characters 2-8:
+    391 | let test_unopt =
+    392 |   assert (Option.value_with_error "option is None" (Some 1 : int option) = 1)
+            ^^^^^^
+    393 |
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpret_test.mligo", line 395, characters 2-8:
+    394 | let test_unopt_with_error =
+    395 |   assert (Option.value_with_error "bar" (Some 2 : int option) = 2)
+            ^^^^^^
+    396 |
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpret_test.mligo", line 400, characters 11-17:
+    399 |   let hashempty = (0xe3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 : bytes) in
+    400 |   let () = assert (Crypto.sha256 (Bytes.pack 5n) = hash5n) in
+                     ^^^^^^
+    401 |   let () = assert (Test.eval (Crypto.sha256 (Bytes.pack 5n)) = Test.run (fun (n : nat) -> Crypto.sha256 (Bytes.pack n)) 5n) in
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpret_test.mligo", line 401, characters 11-17:
+    400 |   let () = assert (Crypto.sha256 (Bytes.pack 5n) = hash5n) in
+    401 |   let () = assert (Test.eval (Crypto.sha256 (Bytes.pack 5n)) = Test.run (fun (n : nat) -> Crypto.sha256 (Bytes.pack n)) 5n) in
+                     ^^^^^^
+    402 |   assert (Crypto.sha256 (Bytes.sub 0n 0n (Bytes.pack 5n)) = hashempty)
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
     File "./interpret_test.mligo", line 401, characters 19-28:
     400 |   let () = assert (Crypto.sha256 (Bytes.pack 5n) = hash5n) in
     401 |   let () = assert (Test.eval (Crypto.sha256 (Bytes.pack 5n)) = Test.run (fun (n : nat) -> Crypto.sha256 (Bytes.pack n)) 5n) in
@@ -877,6 +1588,33 @@ let%expect_test _ =
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Michelson.run` from `Test.Next` is encouraged for a smoother migration.
+
+    File "./interpret_test.mligo", line 402, characters 2-8:
+    401 |   let () = assert (Test.eval (Crypto.sha256 (Bytes.pack 5n)) = Test.run (fun (n : nat) -> Crypto.sha256 (Bytes.pack n)) 5n) in
+    402 |   assert (Crypto.sha256 (Bytes.sub 0n 0n (Bytes.pack 5n)) = hashempty)
+            ^^^^^^
+    403 |
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpret_test.mligo", line 409, characters 11-17:
+    408 |     (0xcf83e1357eefb8bdf1542850d66d8007d620e4050b5715dc83f4a921d36ce9ce47d0d13c5d85f2b0ff8318d2877eec2f63b931bd47417a81a538327af927da3e : bytes) in
+    409 |   let () = assert (Crypto.sha512 (Bytes.pack 5n) = hash5n) in
+                     ^^^^^^
+    410 |   let () = assert (Test.eval (Crypto.sha512 (Bytes.pack 5n)) = Test.run (fun (n : nat) -> Crypto.sha512 (Bytes.pack n)) 5n) in
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpret_test.mligo", line 410, characters 11-17:
+    409 |   let () = assert (Crypto.sha512 (Bytes.pack 5n) = hash5n) in
+    410 |   let () = assert (Test.eval (Crypto.sha512 (Bytes.pack 5n)) = Test.run (fun (n : nat) -> Crypto.sha512 (Bytes.pack n)) 5n) in
+                     ^^^^^^
+    411 |   assert (Crypto.sha512 (Bytes.sub 0n 0n (Bytes.pack 5n)) = hashempty)
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
 
     File "./interpret_test.mligo", line 410, characters 19-28:
     409 |   let () = assert (Crypto.sha512 (Bytes.pack 5n) = hash5n) in
@@ -896,6 +1634,33 @@ let%expect_test _ =
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Michelson.run` from `Test.Next` is encouraged for a smoother migration.
 
+    File "./interpret_test.mligo", line 411, characters 2-8:
+    410 |   let () = assert (Test.eval (Crypto.sha512 (Bytes.pack 5n)) = Test.run (fun (n : nat) -> Crypto.sha512 (Bytes.pack n)) 5n) in
+    411 |   assert (Crypto.sha512 (Bytes.sub 0n 0n (Bytes.pack 5n)) = hashempty)
+            ^^^^^^
+    412 |
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpret_test.mligo", line 416, characters 11-17:
+    415 |   let hashempty = (0x0e5751c026e543b2e8ab2eb06099daa1d1e5df47778f7787faab45cdf12fe3a8 : bytes) in
+    416 |   let () = assert (Crypto.blake2b (Bytes.pack 5n) = hash5n) in
+                     ^^^^^^
+    417 |   let () = assert (Test.eval (Crypto.blake2b (Bytes.pack 5n)) = Test.run (fun (n : nat) -> Crypto.blake2b (Bytes.pack n)) 5n) in
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpret_test.mligo", line 417, characters 11-17:
+    416 |   let () = assert (Crypto.blake2b (Bytes.pack 5n) = hash5n) in
+    417 |   let () = assert (Test.eval (Crypto.blake2b (Bytes.pack 5n)) = Test.run (fun (n : nat) -> Crypto.blake2b (Bytes.pack n)) 5n) in
+                     ^^^^^^
+    418 |   assert (Crypto.blake2b (Bytes.sub 0n 0n (Bytes.pack 5n)) = hashempty)
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
     File "./interpret_test.mligo", line 417, characters 19-28:
     416 |   let () = assert (Crypto.blake2b (Bytes.pack 5n) = hash5n) in
     417 |   let () = assert (Test.eval (Crypto.blake2b (Bytes.pack 5n)) = Test.run (fun (n : nat) -> Crypto.blake2b (Bytes.pack n)) 5n) in
@@ -913,6 +1678,33 @@ let%expect_test _ =
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Michelson.run` from `Test.Next` is encouraged for a smoother migration.
+
+    File "./interpret_test.mligo", line 418, characters 2-8:
+    417 |   let () = assert (Test.eval (Crypto.blake2b (Bytes.pack 5n)) = Test.run (fun (n : nat) -> Crypto.blake2b (Bytes.pack n)) 5n) in
+    418 |   assert (Crypto.blake2b (Bytes.sub 0n 0n (Bytes.pack 5n)) = hashempty)
+            ^^^^^^
+    419 |
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpret_test.mligo", line 423, characters 11-17:
+    422 |   let hashempty = (0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470 : bytes) in
+    423 |   let () = assert (Crypto.keccak (Bytes.pack 5n) = hash5n) in
+                     ^^^^^^
+    424 |   let () = assert (Test.eval (Crypto.keccak (Bytes.pack 5n)) = Test.run (fun (n : nat) -> Crypto.keccak (Bytes.pack n)) 5n) in
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpret_test.mligo", line 424, characters 11-17:
+    423 |   let () = assert (Crypto.keccak (Bytes.pack 5n) = hash5n) in
+    424 |   let () = assert (Test.eval (Crypto.keccak (Bytes.pack 5n)) = Test.run (fun (n : nat) -> Crypto.keccak (Bytes.pack n)) 5n) in
+                     ^^^^^^
+    425 |   assert (Crypto.keccak (Bytes.sub 0n 0n (Bytes.pack 5n)) = hashempty)
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
 
     File "./interpret_test.mligo", line 424, characters 19-28:
     423 |   let () = assert (Crypto.keccak (Bytes.pack 5n) = hash5n) in
@@ -932,6 +1724,33 @@ let%expect_test _ =
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Michelson.run` from `Test.Next` is encouraged for a smoother migration.
 
+    File "./interpret_test.mligo", line 425, characters 2-8:
+    424 |   let () = assert (Test.eval (Crypto.keccak (Bytes.pack 5n)) = Test.run (fun (n : nat) -> Crypto.keccak (Bytes.pack n)) 5n) in
+    425 |   assert (Crypto.keccak (Bytes.sub 0n 0n (Bytes.pack 5n)) = hashempty)
+            ^^^^^^
+    426 |
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpret_test.mligo", line 430, characters 11-17:
+    429 |   let hashempty = (0xa7ffc6f8bf1ed76651c14756a061d662f580ff4de43b49fa82d80a4b80f8434a : bytes) in
+    430 |   let () = assert (Crypto.sha3 (Bytes.pack 5n) = hash5n) in
+                     ^^^^^^
+    431 |   let () = assert (Test.eval (Crypto.sha3 (Bytes.pack 5n)) = Test.run (fun (n : nat) -> Crypto.sha3 (Bytes.pack n)) 5n) in
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpret_test.mligo", line 431, characters 11-17:
+    430 |   let () = assert (Crypto.sha3 (Bytes.pack 5n) = hash5n) in
+    431 |   let () = assert (Test.eval (Crypto.sha3 (Bytes.pack 5n)) = Test.run (fun (n : nat) -> Crypto.sha3 (Bytes.pack n)) 5n) in
+                     ^^^^^^
+    432 |   assert (Crypto.sha3 (Bytes.sub 0n 0n (Bytes.pack 5n)) = hashempty)
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
     File "./interpret_test.mligo", line 431, characters 19-28:
     430 |   let () = assert (Crypto.sha3 (Bytes.pack 5n) = hash5n) in
     431 |   let () = assert (Test.eval (Crypto.sha3 (Bytes.pack 5n)) = Test.run (fun (n : nat) -> Crypto.sha3 (Bytes.pack n)) 5n) in
@@ -949,6 +1768,24 @@ let%expect_test _ =
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Michelson.run` from `Test.Next` is encouraged for a smoother migration.
+
+    File "./interpret_test.mligo", line 432, characters 2-8:
+    431 |   let () = assert (Test.eval (Crypto.sha3 (Bytes.pack 5n)) = Test.run (fun (n : nat) -> Crypto.sha3 (Bytes.pack n)) 5n) in
+    432 |   assert (Crypto.sha3 (Bytes.sub 0n 0n (Bytes.pack 5n)) = hashempty)
+            ^^^^^^
+    433 |
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpret_test.mligo", line 437, characters 11-17:
+    436 |   let key_hash = ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" : key_hash) in
+    437 |   let () = assert (Test.eval (Crypto.hash_key key) = Test.run (fun (k : key) -> Crypto.hash_key k) key) in
+                     ^^^^^^
+    438 |   assert (Crypto.hash_key key = key_hash)
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
 
     File "./interpret_test.mligo", line 437, characters 19-28:
     436 |   let key_hash = ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" : key_hash) in
@@ -968,6 +1805,33 @@ let%expect_test _ =
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Michelson.run` from `Test.Next` is encouraged for a smoother migration.
 
+    File "./interpret_test.mligo", line 438, characters 2-8:
+    437 |   let () = assert (Test.eval (Crypto.hash_key key) = Test.run (fun (k : key) -> Crypto.hash_key k) key) in
+    438 |   assert (Crypto.hash_key key = key_hash)
+            ^^^^^^
+    439 |
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpret_test.mligo", line 444, characters 11-17:
+    443 |   let message = Crypto.blake2b (Bytes.pack "hello") in
+    444 |   let () = assert (Crypto.check key signature message) in
+                     ^^^^^^
+    445 |   let message = Crypto.blake2b (Bytes.pack "hola") in
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpret_test.mligo", line 446, characters 2-8:
+    445 |   let message = Crypto.blake2b (Bytes.pack "hola") in
+    446 |   assert (not (Crypto.check key signature message))
+            ^^^^^^
+    447 |
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
     File "./interpret_test.mligo", line 451, characters 17-25:
     450 |   let alpha_int = int alpha in
     451 |   let mich_int = Test.run (fun (_ : unit) -> int (0xe406000000000000000000000000000000000000000000000000000000000000 : bls12_381_fr)) () in
@@ -977,6 +1841,15 @@ let%expect_test _ =
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Michelson.run` from `Test.Next` is encouraged for a smoother migration.
 
+    File "./interpret_test.mligo", line 452, characters 2-8:
+    451 |   let mich_int = Test.run (fun (_ : unit) -> int (0xe406000000000000000000000000000000000000000000000000000000000000 : bls12_381_fr)) () in
+    452 |   assert (Test.eval alpha_int = mich_int)
+            ^^^^^^
+    453 |
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
     File "./interpret_test.mligo", line 452, characters 10-19:
     451 |   let mich_int = Test.run (fun (_ : unit) -> int (0xe406000000000000000000000000000000000000000000000000000000000000 : bls12_381_fr)) () in
     452 |   assert (Test.eval alpha_int = mich_int)
@@ -985,6 +1858,15 @@ let%expect_test _ =
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Michelson.eval` from `Test.Next` is encouraged for a smoother migration.
+
+    File "./interpret_test.mligo", line 456, characters 2-8:
+    455 |   let f ((x, y) : nat * int) : int = x * not y in
+    456 |   assert (Test.eval (f (313n , 2938818607801353443)) = Test.run f (313n , 2938818607801353443))
+            ^^^^^^
+    457 |
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
 
     File "./interpret_test.mligo", line 456, characters 10-19:
     455 |   let f ((x, y) : nat * int) : int = x * not y in
@@ -1013,6 +1895,15 @@ let%expect_test _ =
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Michelson.eval` from `Test.Next` is encouraged for a smoother migration.
 
+    File "./interpret_test.mligo", line 460, characters 2-8:
+    459 |   let chain_id = Test.eval ("NetXH12Aer3be93" : chain_id) in
+    460 |   assert (chain_id = Test.eval (Tezos.get_chain_id ()))
+            ^^^^^^
+    461 |
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
     File "./interpret_test.mligo", line 460, characters 21-30:
     459 |   let chain_id = Test.eval ("NetXH12Aer3be93" : chain_id) in
     460 |   assert (chain_id = Test.eval (Tezos.get_chain_id ()))
@@ -1021,6 +1912,51 @@ let%expect_test _ =
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Michelson.eval` from `Test.Next` is encouraged for a smoother migration.
+
+    File "./interpret_test.mligo", line 464, characters 11-17:
+    463 |   let ss = ["aa"; "bb"; ""; "cc"] in
+    464 |   let () = assert (String.concats ss = "aabbcc") in
+                     ^^^^^^
+    465 |   let bs = [(0x00 : bytes); (0x0102 : bytes); (0x03 : bytes)] in
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpret_test.mligo", line 466, characters 11-17:
+    465 |   let bs = [(0x00 : bytes); (0x0102 : bytes); (0x03 : bytes)] in
+    466 |   let () = assert (Bytes.concats bs = (0x00010203 : bytes)) in
+                     ^^^^^^
+    467 |   let () = assert (String.concats [] = "") in
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpret_test.mligo", line 467, characters 11-17:
+    466 |   let () = assert (Bytes.concats bs = (0x00010203 : bytes)) in
+    467 |   let () = assert (String.concats [] = "") in
+                     ^^^^^^
+    468 |   let () = assert (Bytes.concats [] = Bytes.sub 0n 0n (0x00 : bytes)) in
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpret_test.mligo", line 468, characters 11-17:
+    467 |   let () = assert (String.concats [] = "") in
+    468 |   let () = assert (Bytes.concats [] = Bytes.sub 0n 0n (0x00 : bytes)) in
+                     ^^^^^^
+    469 |   let () = assert (Test.run (fun () -> String.concats ss) () = Test.eval (String.concats ss)) in
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpret_test.mligo", line 469, characters 11-17:
+    468 |   let () = assert (Bytes.concats [] = Bytes.sub 0n 0n (0x00 : bytes)) in
+    469 |   let () = assert (Test.run (fun () -> String.concats ss) () = Test.eval (String.concats ss)) in
+                     ^^^^^^
+    470 |   let () = assert (Test.run (fun () -> Bytes.concats bs) () = Test.eval (Bytes.concats bs)) in
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
 
     File "./interpret_test.mligo", line 469, characters 19-27:
     468 |   let () = assert (Bytes.concats [] = Bytes.sub 0n 0n (0x00 : bytes)) in
@@ -1040,6 +1976,15 @@ let%expect_test _ =
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Michelson.eval` from `Test.Next` is encouraged for a smoother migration.
 
+    File "./interpret_test.mligo", line 470, characters 11-17:
+    469 |   let () = assert (Test.run (fun () -> String.concats ss) () = Test.eval (String.concats ss)) in
+    470 |   let () = assert (Test.run (fun () -> Bytes.concats bs) () = Test.eval (Bytes.concats bs)) in
+                     ^^^^^^
+    471 |   ()
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
     File "./interpret_test.mligo", line 470, characters 19-27:
     469 |   let () = assert (Test.run (fun () -> String.concats ss) () = Test.eval (String.concats ss)) in
     470 |   let () = assert (Test.run (fun () -> Bytes.concats bs) () = Test.eval (Bytes.concats bs)) in
@@ -1057,6 +2002,42 @@ let%expect_test _ =
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Michelson.eval` from `Test.Next` is encouraged for a smoother migration.
+
+    File "./interpret_test.mligo", line 476, characters 11-17:
+    475 |   (* bytes => nat => bytes *)
+    476 |   let () = assert (b = bytes(nat(b))) in
+                     ^^^^^^
+    477 |   (* bytes => int => bytes *)
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpret_test.mligo", line 478, characters 11-17:
+    477 |   (* bytes => int => bytes *)
+    478 |   let () = assert (b = bytes(int(b))) in
+                     ^^^^^^
+    479 |   (* int => bytes => int *)
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpret_test.mligo", line 480, characters 11-17:
+    479 |   (* int => bytes => int *)
+    480 |   let () = assert (1234 = int(bytes(1234))) in
+                     ^^^^^^
+    481 |   (* nat => bytes => nat *)
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpret_test.mligo", line 482, characters 11-17:
+    481 |   (* nat => bytes => nat *)
+    482 |   let () = assert (4567n = nat(bytes(4567n))) in
+                     ^^^^^^
+    483 |   ()
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
 
     Everything at the top-level was executed.
     - test_lambda_call exited with value ().
@@ -1222,6 +2203,15 @@ let%expect_test _ =
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.get_storage` from `Test.Next` is encouraged for a smoother migration.
 
+    File "./views_test.mligo", line 16, characters 6-12:
+     15 |       let x = Test.get_storage addr_c in
+     16 |       assert (x = 2)
+                ^^^^^^
+     17 |   | _ -> failwith "transfer to view caller failed"
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
     Everything at the top-level was executed.
     - test exited with value (). |}]
 
@@ -1282,6 +2272,15 @@ let%expect_test _ =
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Contract.transfer` from `Test.Next` is encouraged for a smoother migration.
 
+    File "./test_fail.mligo", line 13, characters 15-21:
+     12 |       let (x, addr_fail) = x in
+     13 |       let () = assert (addr_fail = addr) in
+                         ^^^^^^
+     14 |       x
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
     Everything at the top-level was executed.
     - test exited with value "my contract always fail". |}]
 
@@ -1316,6 +2315,15 @@ let%expect_test _ =
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.transfer` from `Test.Next` is encouraged for a smoother migration.
 
+    File "./test_fail_from_file.mligo", line 12, characters 15-21:
+     11 |     | Rejected (x, addr_fail) ->
+     12 |       let () = assert (addr_fail = Test.to_address orig.addr) in
+                         ^^^^^^
+     13 |       x
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
     File "./test_fail_from_file.mligo", line 12, characters 35-50:
      11 |     | Rejected (x, addr_fail) ->
      12 |       let () = assert (addr_fail = Test.to_address orig.addr) in
@@ -1349,6 +2357,15 @@ let%expect_test _ =
   :
   Warning: deprecated value.
   In a future version, `Test` will be replaced by `Test.Next`, and using `Michelson.run` from `Test.Next` is encouraged for a smoother migration.
+
+  File "./compile_expr.mligo", line 14, characters 2-8:
+   13 |                    (1 + 3 + 2, 1n + 2n, "a" ^ "b", 0xFF00, ()) in
+   14 |   assert (Test.michelson_equal d_one ret)
+          ^^^^^^
+   15 |
+  :
+  Warning: deprecated value.
+  In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
 
   File "./compile_expr.mligo", line 14, characters 10-30:
    13 |                    (1 + 3 + 2, 1n + 2n, "a" ^ "b", 0xFF00, ()) in
@@ -1386,6 +2403,15 @@ let%expect_test _ =
   Warning: deprecated value.
   In a future version, `Test` will be replaced by `Test.Next`, and using `Compare.eq` from `Test.Next` is encouraged for a smoother migration.
 
+  File "./compile_expr.mligo", line 20, characters 2-8:
+   19 |   let eq = Test.michelson_equal x1 x2 in
+   20 |   assert eq
+          ^^^^^^
+   21 |
+  :
+  Warning: deprecated value.
+  In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
   File "./compile_expr.mligo", line 23, characters 11-20:
    22 | let test3 =
    23 |   let x1 = Test.eval (Baz 1n : some_v) in
@@ -1403,6 +2429,15 @@ let%expect_test _ =
   :
   Warning: deprecated value.
   In a future version, `Test` will be replaced by `Test.Next`, and using `Michelson.eval` from `Test.Next` is encouraged for a smoother migration.
+
+  File "./compile_expr.mligo", line 25, characters 2-8:
+   24 |   let x2 = Test.eval (Baz2 1n : some_v_2) in
+   25 |   assert (not (Test.michelson_equal x1 x2))
+          ^^^^^^
+   26 |
+  :
+  Warning: deprecated value.
+  In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
 
   File "./compile_expr.mligo", line 25, characters 15-35:
    24 |   let x2 = Test.eval (Baz2 1n : some_v_2) in
@@ -1430,6 +2465,14 @@ let%expect_test _ =
   :
   Warning: deprecated value.
   In a future version, `Test` will be replaced by `Test.Next`, and using `Michelson.eval` from `Test.Next` is encouraged for a smoother migration.
+
+  File "./compile_expr.mligo", line 30, characters 2-8:
+   29 |   let x2 = Test.eval ({ one2 = 1 ; two2 = 2n ; three2 = "a" ; four2 = 0xFF00 ; five2 = () } : some_r_2) in
+   30 |   assert (not (Test.michelson_equal x1 x2))
+          ^^^^^^
+  :
+  Warning: deprecated value.
+  In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
 
   File "./compile_expr.mligo", line 30, characters 15-35:
    29 |   let x2 = Test.eval ({ one2 = 1 ; two2 = 2n ; three2 = "a" ; four2 = 0xFF00 ; five2 = () } : some_r_2) in
@@ -1467,6 +2510,15 @@ let%expect_test _ =
   Warning: deprecated value.
   In a future version, `Test` will be replaced by `Test.Next`, and using `Michelson.run` from `Test.Next` is encouraged for a smoother migration.
 
+  File "./compile_expr_from_file.mligo", line 6, characters 2-8:
+    5 |   let ret = Test.run (fun (x:r_comb) -> x.one ) v in
+    6 |   assert (Test.michelson_equal d_one ret)
+          ^^^^^^
+    7 |
+  :
+  Warning: deprecated value.
+  In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
   File "./compile_expr_from_file.mligo", line 6, characters 10-30:
     5 |   let ret = Test.run (fun (x:r_comb) -> x.one ) v in
     6 |   assert (Test.michelson_equal d_one ret)
@@ -1503,6 +2555,15 @@ let%expect_test _ =
   Warning: deprecated value.
   In a future version, `Test` will be replaced by `Test.Next`, and using `Compare.eq` from `Test.Next` is encouraged for a smoother migration.
 
+  File "./compile_expr_from_file.mligo", line 12, characters 2-8:
+   11 |   let eq = Test.michelson_equal x1 x2 in
+   12 |   assert eq
+          ^^^^^^
+   13 |
+  :
+  Warning: deprecated value.
+  In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
   File "./compile_expr_from_file.mligo", line 17, characters 4-12:
    16 |     type r_comb = [@layout comb] { one : int ; two : nat ; three : string ; four : bytes ; five : unit } in
    17 |     Test.run (fun () -> ({one = 1 ; two = 2n ; three = "a" ; four = 0xFF00 ; five = ()}:r_comb)) ()
@@ -1520,6 +2581,15 @@ let%expect_test _ =
   :
   Warning: deprecated value.
   In a future version, `Test` will be replaced by `Test.Next`, and using `Michelson.run` from `Test.Next` is encouraged for a smoother migration.
+
+  File "./compile_expr_from_file.mligo", line 23, characters 2-8:
+   22 |   in
+   23 |   assert (not (Test.michelson_equal x1 x2))
+          ^^^^^^
+   24 |
+  :
+  Warning: deprecated value.
+  In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
 
   File "./compile_expr_from_file.mligo", line 23, characters 15-35:
    22 |   in
@@ -1548,6 +2618,14 @@ let%expect_test _ =
   Warning: deprecated value.
   In a future version, `Test` will be replaced by `Test.Next`, and using `Michelson.run` from `Test.Next` is encouraged for a smoother migration.
 
+  File "./compile_expr_from_file.mligo", line 34, characters 2-8:
+   33 |   in
+   34 |   assert (not (Test.michelson_equal x1 x2))
+          ^^^^^^
+  :
+  Warning: deprecated value.
+  In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
   File "./compile_expr_from_file.mligo", line 34, characters 15-35:
    33 |   in
    34 |   assert (not (Test.michelson_equal x1 x2))
@@ -1566,6 +2644,15 @@ let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "test_example.mligo" ];
   [%expect
     {|
+    File "contract_under_test/contract_create.mligo", line 15, characters 24-41:
+     14 |       let ops = match c with
+     15 |           Some (c) -> [ Tezos.transaction 1n 10tez c ]
+                                  ^^^^^^^^^^^^^^^^^
+     16 |         | None     -> (failwith 2 : operation list)
+    :
+    Warning: deprecated value.
+    In a future version, `Tezos` will be replaced by `Tezos.Next`, and using `Operation.transaction` from `Tezos.Next` is encouraged for a smoother migration.
+
     File "./test_example.mligo", line 4, characters 19-41:
       3 | let check_new_origination (src :address) : address =
       4 |   let last_origs = Test.last_originations () in
@@ -1907,6 +2994,15 @@ let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "test_example.mligo" ];
   [%expect
     {|
+    File "contract_under_test/contract_create.mligo", line 15, characters 24-41:
+     14 |       let ops = match c with
+     15 |           Some (c) -> [ Tezos.transaction 1n 10tez c ]
+                                  ^^^^^^^^^^^^^^^^^
+     16 |         | None     -> (failwith 2 : operation list)
+    :
+    Warning: deprecated value.
+    In a future version, `Tezos` will be replaced by `Tezos.Next`, and using `Operation.transaction` from `Tezos.Next` is encouraged for a smoother migration.
+
     File "./test_example.mligo", line 4, characters 19-41:
       3 | let check_new_origination (src :address) : address =
       4 |   let last_origs = Test.last_originations () in
@@ -2248,6 +3344,15 @@ let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "catch_balance_too_low.mligo" ];
   [%expect
     {|
+    File "contract_under_test/contract_create.mligo", line 15, characters 24-41:
+     14 |       let ops = match c with
+     15 |           Some (c) -> [ Tezos.transaction 1n 10tez c ]
+                                  ^^^^^^^^^^^^^^^^^
+     16 |         | None     -> (failwith 2 : operation list)
+    :
+    Warning: deprecated value.
+    In a future version, `Tezos` will be replaced by `Tezos.Next`, and using `Operation.transaction` from `Tezos.Next` is encouraged for a smoother migration.
+
     File "./catch_balance_too_low.mligo", line 4, characters 13-27:
       3 | let test =
       4 |   let orig = Test.originate (contract_of C) None 0tez in
@@ -2274,6 +3379,24 @@ let%expect_test _ =
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Contract.transfer` from `Test.Next` is encouraged for a smoother migration.
+
+    File "./catch_balance_too_low.mligo", line 9, characters 13-19:
+      8 |   | Fail (Balance_too_low {contract_too_low = _ ; contract_balance ; spend_request}) ->
+      9 |     let () = assert (contract_balance =  1mutez) in
+                       ^^^^^^
+     10 |     let () = assert (spend_request = 1tez) in
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./catch_balance_too_low.mligo", line 10, characters 13-19:
+      9 |     let () = assert (contract_balance =  1mutez) in
+     10 |     let () = assert (spend_request = 1tez) in
+                       ^^^^^^
+     11 |     ()
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
 
     Everything at the top-level was executed.
     - test exited with value (). |}]
@@ -2332,6 +3455,14 @@ let%expect_test _ =
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.get_storage` from `Test.Next` is encouraged for a smoother migration.
+
+    File "./test_subst_with_storage_from_file.mligo", line 8, characters 2-8:
+      7 |   let ovens_map = store.foo in
+      8 |   assert (ovens_map = 0)
+            ^^^^^^
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
 
     Everything at the top-level was executed.
     - test exited with value (). |}]
@@ -2476,6 +3607,15 @@ let%expect_test _ =
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.to_contract` from `Test.Next` is encouraged for a smoother migration.
 
+    File "./test_importer.mligo", line 6, characters 11-17:
+      5 |   let contr = Test.to_contract orig.addr in
+      6 |   let () = assert (Test.get_storage orig.addr = External.D.default.initial) in
+                     ^^^^^^
+      7 |   let _ = Test.transfer_to_contract_exn contr (Main (External.D.default.final)) 0tez in
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
     File "./test_importer.mligo", line 6, characters 19-35:
       5 |   let contr = Test.to_contract orig.addr in
       6 |   let () = assert (Test.get_storage orig.addr = External.D.default.initial) in
@@ -2493,6 +3633,14 @@ let%expect_test _ =
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Contract.transfer_exn` from `Test.Next` is encouraged for a smoother migration.
+
+    File "./test_importer.mligo", line 8, characters 2-8:
+      7 |   let _ = Test.transfer_to_contract_exn contr (Main (External.D.default.final)) 0tez in
+      8 |   assert (Test.get_storage orig.addr = External.D.default.final)
+            ^^^^^^
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
 
     File "./test_importer.mligo", line 8, characters 10-26:
       7 |   let _ = Test.transfer_to_contract_exn contr (Main (External.D.default.final)) 0tez in
@@ -2693,6 +3841,24 @@ let%expect_test _ =
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.get_storage` from `Test.Next` is encouraged for a smoother migration.
 
+    File "./test_bigmap_compare.mligo", line 15, characters 13-19:
+     14 |     let ns = Test.get_storage orig.addr in
+     15 |     let () = assert (ns = Big_map.literal [((a1, 0n), 42n); ((a1, 1n), 1234n)]) in
+                       ^^^^^^
+     16 |     let () = assert (Big_map.find_opt (a1, 1n) ns = Some 1234n) in
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./test_bigmap_compare.mligo", line 16, characters 13-19:
+     15 |     let () = assert (ns = Big_map.literal [((a1, 0n), 42n); ((a1, 1n), 1234n)]) in
+     16 |     let () = assert (Big_map.find_opt (a1, 1n) ns = Some 1234n) in
+                       ^^^^^^
+     17 |     let _ = Test.transfer_exn orig.addr (Main (a1, 4321n)) 1mutez in
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
     File "./test_bigmap_compare.mligo", line 17, characters 12-29:
      16 |     let () = assert (Big_map.find_opt (a1, 1n) ns = Some 1234n) in
      17 |     let _ = Test.transfer_exn orig.addr (Main (a1, 4321n)) 1mutez in
@@ -2702,6 +3868,15 @@ let%expect_test _ =
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.transfer_exn` from `Test.Next` is encouraged for a smoother migration.
 
+    File "./test_bigmap_compare.mligo", line 18, characters 13-19:
+     17 |     let _ = Test.transfer_exn orig.addr (Main (a1, 4321n)) 1mutez in
+     18 |     let () = assert (ns = Big_map.literal [((a1, 0n), 42n); ((a1, 1n), 1234n)]) in
+                       ^^^^^^
+     19 |     let ns = Test.get_storage orig.addr in
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
     File "./test_bigmap_compare.mligo", line 19, characters 13-29:
      18 |     let () = assert (ns = Big_map.literal [((a1, 0n), 42n); ((a1, 1n), 1234n)]) in
      19 |     let ns = Test.get_storage orig.addr in
@@ -2710,6 +3885,24 @@ let%expect_test _ =
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.get_storage` from `Test.Next` is encouraged for a smoother migration.
+
+    File "./test_bigmap_compare.mligo", line 20, characters 13-19:
+     19 |     let ns = Test.get_storage orig.addr in
+     20 |     let () = assert (ns = Big_map.literal [((a1, 0n), 42n); ((a1, 1n), 4321n)]) in
+                       ^^^^^^
+     21 |     let () = assert (ns = Big_map.literal [((a1, 0n), 42n); ((a1, 0n), 42n); ((a1, 1n), 4321n)]) in
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./test_bigmap_compare.mligo", line 21, characters 13-19:
+     20 |     let () = assert (ns = Big_map.literal [((a1, 0n), 42n); ((a1, 1n), 4321n)]) in
+     21 |     let () = assert (ns = Big_map.literal [((a1, 0n), 42n); ((a1, 0n), 42n); ((a1, 1n), 4321n)]) in
+                       ^^^^^^
+     22 |     ()
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
 
     Everything at the top-level was executed.
     - test exited with value (). |}]
@@ -2849,6 +4042,645 @@ let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "interpreter_nested_comparison_test.mligo" ];
   [%expect
     {|
+    File "./interpreter_nested_comparison_test.mligo", line 24, characters 2-8:
+     23 | let test =
+     24 |   assert (initial_storage = initial_storage)
+            ^^^^^^
+     25 |
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpreter_nested_comparison_test.mligo", line 183, characters 10-16:
+    182 | let test_equal =
+    183 |   let _ = assert (hello = hello) in
+                    ^^^^^^
+    184 |   let _ = assert (addr1 = addr1) in
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpreter_nested_comparison_test.mligo", line 184, characters 10-16:
+    183 |   let _ = assert (hello = hello) in
+    184 |   let _ = assert (addr1 = addr1) in
+                    ^^^^^^
+    185 |   let _ = assert (ts1 = ts1) in
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpreter_nested_comparison_test.mligo", line 185, characters 10-16:
+    184 |   let _ = assert (addr1 = addr1) in
+    185 |   let _ = assert (ts1 = ts1) in
+                    ^^^^^^
+    186 |   let _ = assert (lst = lst) in
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpreter_nested_comparison_test.mligo", line 186, characters 10-16:
+    185 |   let _ = assert (ts1 = ts1) in
+    186 |   let _ = assert (lst = lst) in
+                    ^^^^^^
+    187 |   let _ = assert (r = r) in
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpreter_nested_comparison_test.mligo", line 187, characters 10-16:
+    186 |   let _ = assert (lst = lst) in
+    187 |   let _ = assert (r = r) in
+                    ^^^^^^
+    188 |   let _ = assert (s = s) in
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpreter_nested_comparison_test.mligo", line 188, characters 10-16:
+    187 |   let _ = assert (r = r) in
+    188 |   let _ = assert (s = s) in
+                    ^^^^^^
+    189 |   let _ = assert (m = m) in
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpreter_nested_comparison_test.mligo", line 189, characters 10-16:
+    188 |   let _ = assert (s = s) in
+    189 |   let _ = assert (m = m) in
+                    ^^^^^^
+    190 |   let _ = assert (bm = bm) in
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpreter_nested_comparison_test.mligo", line 190, characters 10-16:
+    189 |   let _ = assert (m = m) in
+    190 |   let _ = assert (bm = bm) in
+                    ^^^^^^
+    191 |   let _ = assert (c1 = c1) in
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpreter_nested_comparison_test.mligo", line 191, characters 10-16:
+    190 |   let _ = assert (bm = bm) in
+    191 |   let _ = assert (c1 = c1) in
+                    ^^^^^^
+    192 |   let _ = assert (c2 = c2) in
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpreter_nested_comparison_test.mligo", line 192, characters 10-16:
+    191 |   let _ = assert (c1 = c1) in
+    192 |   let _ = assert (c2 = c2) in
+                    ^^^^^^
+    193 |   let _ = assert (c3 = c3) in
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpreter_nested_comparison_test.mligo", line 193, characters 10-16:
+    192 |   let _ = assert (c2 = c2) in
+    193 |   let _ = assert (c3 = c3) in
+                    ^^^^^^
+    194 |   let _ = assert (c4 = c4) in
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpreter_nested_comparison_test.mligo", line 194, characters 10-16:
+    193 |   let _ = assert (c3 = c3) in
+    194 |   let _ = assert (c4 = c4) in
+                    ^^^^^^
+    195 |   let _ = assert (c5 = c5) in
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpreter_nested_comparison_test.mligo", line 195, characters 10-16:
+    194 |   let _ = assert (c4 = c4) in
+    195 |   let _ = assert (c5 = c5) in
+                    ^^^^^^
+    196 |   let _ = assert (c6 = c6) in
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpreter_nested_comparison_test.mligo", line 196, characters 10-16:
+    195 |   let _ = assert (c5 = c5) in
+    196 |   let _ = assert (c6 = c6) in
+                    ^^^^^^
+    197 |   let _ = assert (c7 = c7) in
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpreter_nested_comparison_test.mligo", line 197, characters 10-16:
+    196 |   let _ = assert (c6 = c6) in
+    197 |   let _ = assert (c7 = c7) in
+                    ^^^^^^
+    198 |   let _ = assert (c8 = c8) in
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpreter_nested_comparison_test.mligo", line 198, characters 10-16:
+    197 |   let _ = assert (c7 = c7) in
+    198 |   let _ = assert (c8 = c8) in
+                    ^^^^^^
+    199 |   let _ = assert (lr = lr) in
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpreter_nested_comparison_test.mligo", line 199, characters 10-16:
+    198 |   let _ = assert (c8 = c8) in
+    199 |   let _ = assert (lr = lr) in
+                    ^^^^^^
+    200 |   let _ = assert (ls = ls) in
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpreter_nested_comparison_test.mligo", line 200, characters 10-16:
+    199 |   let _ = assert (lr = lr) in
+    200 |   let _ = assert (ls = ls) in
+                    ^^^^^^
+    201 |   let _ = assert (lcs = lcs) in
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpreter_nested_comparison_test.mligo", line 201, characters 10-16:
+    200 |   let _ = assert (ls = ls) in
+    201 |   let _ = assert (lcs = lcs) in
+                    ^^^^^^
+    202 |   let _ = assert (lm = lm) in
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpreter_nested_comparison_test.mligo", line 202, characters 10-16:
+    201 |   let _ = assert (lcs = lcs) in
+    202 |   let _ = assert (lm = lm) in
+                    ^^^^^^
+    203 |   let _ = assert (lbm = lbm) in
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpreter_nested_comparison_test.mligo", line 203, characters 10-16:
+    202 |   let _ = assert (lm = lm) in
+    203 |   let _ = assert (lbm = lbm) in
+                    ^^^^^^
+    204 |   let _ = assert (ll = ll) in
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpreter_nested_comparison_test.mligo", line 204, characters 10-16:
+    203 |   let _ = assert (lbm = lbm) in
+    204 |   let _ = assert (ll = ll) in
+                    ^^^^^^
+    205 |   let _ = assert (nest_r = nest_r) in
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpreter_nested_comparison_test.mligo", line 205, characters 10-16:
+    204 |   let _ = assert (ll = ll) in
+    205 |   let _ = assert (nest_r = nest_r) in
+                    ^^^^^^
+    206 |   let _ = assert (sl = sl) in
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpreter_nested_comparison_test.mligo", line 206, characters 10-16:
+    205 |   let _ = assert (nest_r = nest_r) in
+    206 |   let _ = assert (sl = sl) in
+                    ^^^^^^
+    207 |   let _ = assert (sr = sr) in
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpreter_nested_comparison_test.mligo", line 207, characters 10-16:
+    206 |   let _ = assert (sl = sl) in
+    207 |   let _ = assert (sr = sr) in
+                    ^^^^^^
+    208 |   let _ = assert (sc = sc) in
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpreter_nested_comparison_test.mligo", line 208, characters 10-16:
+    207 |   let _ = assert (sr = sr) in
+    208 |   let _ = assert (sc = sc) in
+                    ^^^^^^
+    209 |   let _ = assert (sm = sm) in
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpreter_nested_comparison_test.mligo", line 209, characters 10-16:
+    208 |   let _ = assert (sc = sc) in
+    209 |   let _ = assert (sm = sm) in
+                    ^^^^^^
+    210 |   let _ = assert (ss = ss) in
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpreter_nested_comparison_test.mligo", line 210, characters 10-16:
+    209 |   let _ = assert (sm = sm) in
+    210 |   let _ = assert (ss = ss) in
+                    ^^^^^^
+    211 |   let _ = assert (ml = ml) in
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpreter_nested_comparison_test.mligo", line 211, characters 10-16:
+    210 |   let _ = assert (ss = ss) in
+    211 |   let _ = assert (ml = ml) in
+                    ^^^^^^
+    212 |   let _ = assert (mm = mm) in
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpreter_nested_comparison_test.mligo", line 212, characters 10-16:
+    211 |   let _ = assert (ml = ml) in
+    212 |   let _ = assert (mm = mm) in
+                    ^^^^^^
+    213 |   let _ = assert (bmm = bmm) in
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpreter_nested_comparison_test.mligo", line 213, characters 10-16:
+    212 |   let _ = assert (mm = mm) in
+    213 |   let _ = assert (bmm = bmm) in
+                    ^^^^^^
+    214 |   let _ = assert (mbm = mbm) in
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpreter_nested_comparison_test.mligo", line 214, characters 10-16:
+    213 |   let _ = assert (bmm = bmm) in
+    214 |   let _ = assert (mbm = mbm) in
+                    ^^^^^^
+    215 |   let _ = assert (ms = ms) in
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpreter_nested_comparison_test.mligo", line 215, characters 10-16:
+    214 |   let _ = assert (mbm = mbm) in
+    215 |   let _ = assert (ms = ms) in
+                    ^^^^^^
+    216 |   let _ = assert (mc = mc) in
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpreter_nested_comparison_test.mligo", line 216, characters 10-16:
+    215 |   let _ = assert (ms = ms) in
+    216 |   let _ = assert (mc = mc) in
+                    ^^^^^^
+    217 |   let _ = assert (mr = mr) in
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpreter_nested_comparison_test.mligo", line 217, characters 10-16:
+    216 |   let _ = assert (mc = mc) in
+    217 |   let _ = assert (mr = mr) in
+                    ^^^^^^
+    218 |   ()
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpreter_nested_comparison_test.mligo", line 221, characters 10-16:
+    220 | let test_not_equal =
+    221 |   let _ = assert (hello <> "Bye") in
+                    ^^^^^^
+    222 |   let _ = assert (addr1 <> addr2) in
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpreter_nested_comparison_test.mligo", line 222, characters 10-16:
+    221 |   let _ = assert (hello <> "Bye") in
+    222 |   let _ = assert (addr1 <> addr2) in
+                    ^^^^^^
+    223 |   let _ = assert (ts1 <> ts2) in
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpreter_nested_comparison_test.mligo", line 223, characters 10-16:
+    222 |   let _ = assert (addr1 <> addr2) in
+    223 |   let _ = assert (ts1 <> ts2) in
+                    ^^^^^^
+    224 |   let _ = assert (lst <> [3;2;1]) in
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpreter_nested_comparison_test.mligo", line 224, characters 10-16:
+    223 |   let _ = assert (ts1 <> ts2) in
+    224 |   let _ = assert (lst <> [3;2;1]) in
+                    ^^^^^^
+    225 |   let _ = assert (r <> r2) in
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpreter_nested_comparison_test.mligo", line 225, characters 10-16:
+    224 |   let _ = assert (lst <> [3;2;1]) in
+    225 |   let _ = assert (r <> r2) in
+                    ^^^^^^
+    226 |   let _ = assert (s <> s2) in
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpreter_nested_comparison_test.mligo", line 226, characters 10-16:
+    225 |   let _ = assert (r <> r2) in
+    226 |   let _ = assert (s <> s2) in
+                    ^^^^^^
+    227 |   let _ = assert (m <> m2) in
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpreter_nested_comparison_test.mligo", line 227, characters 10-16:
+    226 |   let _ = assert (s <> s2) in
+    227 |   let _ = assert (m <> m2) in
+                    ^^^^^^
+    228 |   let _ = assert (bm <> bm2) in
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpreter_nested_comparison_test.mligo", line 228, characters 10-16:
+    227 |   let _ = assert (m <> m2) in
+    228 |   let _ = assert (bm <> bm2) in
+                    ^^^^^^
+    229 |   let _ = assert (c1 <> c2) in
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpreter_nested_comparison_test.mligo", line 229, characters 10-16:
+    228 |   let _ = assert (bm <> bm2) in
+    229 |   let _ = assert (c1 <> c2) in
+                    ^^^^^^
+    230 |   let _ = assert (c2 <> c1) in
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpreter_nested_comparison_test.mligo", line 230, characters 10-16:
+    229 |   let _ = assert (c1 <> c2) in
+    230 |   let _ = assert (c2 <> c1) in
+                    ^^^^^^
+    231 |   let _ = assert (c3 <> c4) in
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpreter_nested_comparison_test.mligo", line 231, characters 10-16:
+    230 |   let _ = assert (c2 <> c1) in
+    231 |   let _ = assert (c3 <> c4) in
+                    ^^^^^^
+    232 |   let _ = assert (c4 <> c5) in
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpreter_nested_comparison_test.mligo", line 232, characters 10-16:
+    231 |   let _ = assert (c3 <> c4) in
+    232 |   let _ = assert (c4 <> c5) in
+                    ^^^^^^
+    233 |   let _ = assert (c5 <> c6) in
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpreter_nested_comparison_test.mligo", line 233, characters 10-16:
+    232 |   let _ = assert (c4 <> c5) in
+    233 |   let _ = assert (c5 <> c6) in
+                    ^^^^^^
+    234 |   let _ = assert (c6 <> c7) in
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpreter_nested_comparison_test.mligo", line 234, characters 10-16:
+    233 |   let _ = assert (c5 <> c6) in
+    234 |   let _ = assert (c6 <> c7) in
+                    ^^^^^^
+    235 |   let _ = assert (c7 <> c8) in
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpreter_nested_comparison_test.mligo", line 235, characters 10-16:
+    234 |   let _ = assert (c6 <> c7) in
+    235 |   let _ = assert (c7 <> c8) in
+                    ^^^^^^
+    236 |   let _ = assert (c8 <> c3) in
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpreter_nested_comparison_test.mligo", line 236, characters 10-16:
+    235 |   let _ = assert (c7 <> c8) in
+    236 |   let _ = assert (c8 <> c3) in
+                    ^^^^^^
+    237 |   let _ = assert (lr <> lr2) in
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpreter_nested_comparison_test.mligo", line 237, characters 10-16:
+    236 |   let _ = assert (c8 <> c3) in
+    237 |   let _ = assert (lr <> lr2) in
+                    ^^^^^^
+    238 |   let _ = assert (ls <> ls2) in
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpreter_nested_comparison_test.mligo", line 238, characters 10-16:
+    237 |   let _ = assert (lr <> lr2) in
+    238 |   let _ = assert (ls <> ls2) in
+                    ^^^^^^
+    239 |   let _ = assert (lcs <> lcs2) in
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpreter_nested_comparison_test.mligo", line 239, characters 10-16:
+    238 |   let _ = assert (ls <> ls2) in
+    239 |   let _ = assert (lcs <> lcs2) in
+                    ^^^^^^
+    240 |   let _ = assert (lm <> lm2) in
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpreter_nested_comparison_test.mligo", line 240, characters 10-16:
+    239 |   let _ = assert (lcs <> lcs2) in
+    240 |   let _ = assert (lm <> lm2) in
+                    ^^^^^^
+    241 |   let _ = assert (lbm <> lbm2) in
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpreter_nested_comparison_test.mligo", line 241, characters 10-16:
+    240 |   let _ = assert (lm <> lm2) in
+    241 |   let _ = assert (lbm <> lbm2) in
+                    ^^^^^^
+    242 |   let _ = assert (ll <> ll2) in
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpreter_nested_comparison_test.mligo", line 242, characters 10-16:
+    241 |   let _ = assert (lbm <> lbm2) in
+    242 |   let _ = assert (ll <> ll2) in
+                    ^^^^^^
+    243 |   let _ = assert (nest_r <> nest_r2) in
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpreter_nested_comparison_test.mligo", line 243, characters 10-16:
+    242 |   let _ = assert (ll <> ll2) in
+    243 |   let _ = assert (nest_r <> nest_r2) in
+                    ^^^^^^
+    244 |   let _ = assert (sl <> sl2) in
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpreter_nested_comparison_test.mligo", line 244, characters 10-16:
+    243 |   let _ = assert (nest_r <> nest_r2) in
+    244 |   let _ = assert (sl <> sl2) in
+                    ^^^^^^
+    245 |   let _ = assert (sr <> sr2) in
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpreter_nested_comparison_test.mligo", line 245, characters 10-16:
+    244 |   let _ = assert (sl <> sl2) in
+    245 |   let _ = assert (sr <> sr2) in
+                    ^^^^^^
+    246 |   let _ = assert (sc <> sc2) in
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpreter_nested_comparison_test.mligo", line 246, characters 10-16:
+    245 |   let _ = assert (sr <> sr2) in
+    246 |   let _ = assert (sc <> sc2) in
+                    ^^^^^^
+    247 |   let _ = assert (sm <> sm2) in
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpreter_nested_comparison_test.mligo", line 247, characters 10-16:
+    246 |   let _ = assert (sc <> sc2) in
+    247 |   let _ = assert (sm <> sm2) in
+                    ^^^^^^
+    248 |   let _ = assert (ss <> ss2) in
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpreter_nested_comparison_test.mligo", line 248, characters 10-16:
+    247 |   let _ = assert (sm <> sm2) in
+    248 |   let _ = assert (ss <> ss2) in
+                    ^^^^^^
+    249 |   let _ = assert (ml <> ml2) in
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpreter_nested_comparison_test.mligo", line 249, characters 10-16:
+    248 |   let _ = assert (ss <> ss2) in
+    249 |   let _ = assert (ml <> ml2) in
+                    ^^^^^^
+    250 |   let _ = assert (mm <> mm2) in
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpreter_nested_comparison_test.mligo", line 250, characters 10-16:
+    249 |   let _ = assert (ml <> ml2) in
+    250 |   let _ = assert (mm <> mm2) in
+                    ^^^^^^
+    251 |   let _ = assert (mbm <> mbm2) in
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpreter_nested_comparison_test.mligo", line 251, characters 10-16:
+    250 |   let _ = assert (mm <> mm2) in
+    251 |   let _ = assert (mbm <> mbm2) in
+                    ^^^^^^
+    252 |   let _ = assert (bmm <> bmm2) in
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpreter_nested_comparison_test.mligo", line 252, characters 10-16:
+    251 |   let _ = assert (mbm <> mbm2) in
+    252 |   let _ = assert (bmm <> bmm2) in
+                    ^^^^^^
+    253 |   let _ = assert (ms <> ms2) in
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpreter_nested_comparison_test.mligo", line 253, characters 10-16:
+    252 |   let _ = assert (bmm <> bmm2) in
+    253 |   let _ = assert (ms <> ms2) in
+                    ^^^^^^
+    254 |   let _ = assert (mc <> mc2) in
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpreter_nested_comparison_test.mligo", line 254, characters 10-16:
+    253 |   let _ = assert (ms <> ms2) in
+    254 |   let _ = assert (mc <> mc2) in
+                    ^^^^^^
+    255 |   let _ = assert (mr <> mr2) in
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./interpreter_nested_comparison_test.mligo", line 255, characters 10-16:
+    254 |   let _ = assert (mc <> mc2) in
+    255 |   let _ = assert (mr <> mr2) in
+                    ^^^^^^
+    256 |   ()
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
     Everything at the top-level was executed.
     - test exited with value ().
     - test_equal exited with value ().
@@ -2858,6 +4690,15 @@ let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "test_no_mutation.mligo" ];
   [%expect
     {|
+    File "./test_no_mutation.mligo", line 19, characters 27-33:
+     18 |   let main (action : parameter) (store : storage) : return =
+     19 |     [@no_mutation] let _ = assert (0 = 0) in
+                                     ^^^^^^
+     20 |     ([] : operation list),    // No operations
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
     File "./test_no_mutation.mligo", line 28, characters 13-27:
      27 |   let initial_storage = 7 in
      28 |   let orig = Test.originate contract initial_storage 0tez in
@@ -2948,6 +4789,15 @@ let%expect_test _ =
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.transfer_exn` from `Test.Next` is encouraged for a smoother migration.
 
+    File "./test_mutate_from_file.mligo", line 5, characters 13-19:
+      4 |     let _ = Test.transfer_exn a 0 0tez in
+      5 |     let () = assert (Test.get_storage a = 0) in
+                       ^^^^^^
+      6 |     (* Test 2 *)
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
     File "./test_mutate_from_file.mligo", line 5, characters 21-37:
       4 |     let _ = Test.transfer_exn a 0 0tez in
       5 |     let () = assert (Test.get_storage a = 0) in
@@ -2965,6 +4815,15 @@ let%expect_test _ =
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.transfer_exn` from `Test.Next` is encouraged for a smoother migration.
+
+    File "./test_mutate_from_file.mligo", line 8, characters 13-19:
+      7 |     let _ = Test.transfer_exn a 1 0tez in
+      8 |     let () = assert (Test.get_storage a = 1) in
+                       ^^^^^^
+      9 |     ()
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
 
     File "./test_mutate_from_file.mligo", line 8, characters 21-37:
       7 |     let _ = Test.transfer_exn a 1 0tez in
@@ -3014,6 +4873,15 @@ let%expect_test _ =
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Contract.transfer_exn` from `Test.Next` is encouraged for a smoother migration.
 
+    File "./test_mutate_module.mligo", line 7, characters 11-17:
+      6 |   let _ = Test.transfer_to_contract_exn c (Add 0) 0tez in
+      7 |   let () = assert (Test.get_storage a = 0) in
+                     ^^^^^^
+      8 |   (* Test 2 *)
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
     File "./test_mutate_module.mligo", line 7, characters 19-35:
       6 |   let _ = Test.transfer_to_contract_exn c (Add 0) 0tez in
       7 |   let () = assert (Test.get_storage a = 0) in
@@ -3031,6 +4899,15 @@ let%expect_test _ =
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Contract.transfer_exn` from `Test.Next` is encouraged for a smoother migration.
+
+    File "./test_mutate_module.mligo", line 10, characters 11-17:
+      9 |   let _ = Test.transfer_to_contract_exn c (Add 1) 0tez in
+     10 |   let () = assert (Test.get_storage a = 1) in
+                     ^^^^^^
+     11 |   ()
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
 
     File "./test_mutate_module.mligo", line 10, characters 19-35:
       9 |   let _ = Test.transfer_to_contract_exn c (Add 1) 0tez in
@@ -3230,6 +5107,14 @@ let%expect_test _ =
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.transfer_exn` from `Test.Next` is encouraged for a smoother migration.
 
+    File "./test_many_imports.mligo", line 6, characters 2-8:
+      5 |   let _ = Test.transfer_exn orig.addr (Main ()) 0tez in
+      6 |   assert (Test.get_storage orig.addr = ())
+            ^^^^^^
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
     File "./test_many_imports.mligo", line 6, characters 10-26:
       5 |   let _ = Test.transfer_exn orig.addr (Main ()) 0tez in
       6 |   assert (Test.get_storage orig.addr = ())
@@ -3397,6 +5282,33 @@ let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "test_FA12.mligo" ];
   [%expect
     {|
+    File "../FA1.2.mligo", line 114, characters 3-20:
+    113 |     | None -> 0n in
+    114 |   [Tezos.transaction (Main value) 0mutez param.callback]
+             ^^^^^^^^^^^^^^^^^
+    115 |
+    :
+    Warning: deprecated value.
+    In a future version, `Tezos` will be replaced by `Tezos.Next`, and using `Operation.transaction` from `Tezos.Next` is encouraged for a smoother migration.
+
+    File "../FA1.2.mligo", line 121, characters 3-20:
+    120 |     | None -> 0n in
+    121 |   [Tezos.transaction (Main value) 0mutez param.callback]
+             ^^^^^^^^^^^^^^^^^
+    122 |
+    :
+    Warning: deprecated value.
+    In a future version, `Tezos` will be replaced by `Tezos.Next`, and using `Operation.transaction` from `Tezos.Next` is encouraged for a smoother migration.
+
+    File "../FA1.2.mligo", line 125, characters 3-20:
+    124 |   let total = storage.total_supply in
+    125 |   [Tezos.transaction (Main total) 0mutez param.callback]
+             ^^^^^^^^^^^^^^^^^
+    126 |
+    :
+    Warning: deprecated value.
+    In a future version, `Tezos` will be replaced by `Tezos.Next`, and using `Operation.transaction` from `Tezos.Next` is encouraged for a smoother migration.
+
     File "./test_FA12.mligo", line 4, characters 11-27:
       3 | let test_transfer =
       4 |   let () = Test.reset_state 10n ([] : tez list) in
@@ -3478,6 +5390,15 @@ let%expect_test _ =
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.get_storage` from `Test.Next` is encouraged for a smoother migration.
 
+    File "./test_FA12.mligo", line 17, characters 2-8:
+     16 |   let new_storage = Test.get_storage typed_addr in
+     17 |   assert ((Big_map.find_opt to_ new_storage.tokens = Some 110n) &&
+            ^^^^^^
+     18 |           (Big_map.find_opt from_ new_storage.tokens = Some 90n) &&
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
     File "./test_FA12.mligo", line 24, characters 11-27:
      23 | let test_transfer_not_e_allowance =
      24 |   let () = Test.reset_state 10n ([] : tez list) in
@@ -3549,6 +5470,15 @@ let%expect_test _ =
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Contract.transfer` from `Test.Next` is encouraged for a smoother migration.
+
+    File "./test_FA12.mligo", line 37, characters 30-36:
+     36 |   | Success _ -> failwith "Transaction should fail"
+     37 |   | Fail (Rejected (a, _)) -> assert (Test.michelson_equal a (Test.eval "NotEnoughAllowance"))
+                                        ^^^^^^
+     38 |   | Fail _ -> failwith "Transaction should fail with rejection"
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
 
     File "./test_FA12.mligo", line 37, characters 38-58:
      36 |   | Success _ -> failwith "Transaction should fail"
@@ -3639,6 +5569,15 @@ let%expect_test _ =
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Contract.transfer` from `Test.Next` is encouraged for a smoother migration.
+
+    File "./test_FA12.mligo", line 54, characters 30-36:
+     53 |   | Success _ -> failwith "Transaction should fail"
+     54 |   | Fail (Rejected (a, _)) -> assert (Test.michelson_equal a (Test.eval "NotEnoughBalance"))
+                                        ^^^^^^
+     55 |   | Fail _ -> failwith "Transaction should fail with rejection"
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
 
     File "./test_FA12.mligo", line 54, characters 38-58:
      53 |   | Success _ -> failwith "Transaction should fail"
@@ -3739,6 +5678,15 @@ let%expect_test _ =
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.get_storage` from `Test.Next` is encouraged for a smoother migration.
 
+    File "./test_FA12.mligo", line 71, characters 2-8:
+     70 |   let new_storage = Test.get_storage typed_addr in
+     71 |   assert ((Big_map.find_opt to_ new_storage.tokens = Some 100n) &&
+            ^^^^^^
+     72 |           (Big_map.find_opt from_ new_storage.tokens = Some 100n) &&
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
     File "./test_FA12.mligo", line 78, characters 11-27:
      77 | let test_approve_unsafe =
      78 |   let () = Test.reset_state 10n ([] : tez list) in
@@ -3810,6 +5758,15 @@ let%expect_test _ =
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Contract.transfer` from `Test.Next` is encouraged for a smoother migration.
+
+    File "./test_FA12.mligo", line 91, characters 30-36:
+     90 |   | Success _ -> failwith "Transaction should fail"
+     91 |   | Fail (Rejected (a, _)) -> assert (Test.michelson_equal a (Test.eval "UnsafeAllowanceChange"))
+                                        ^^^^^^
+     92 |   | Fail _ -> failwith "Transaction should fail with rejection"
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
 
     File "./test_FA12.mligo", line 91, characters 38-58:
      90 |   | Success _ -> failwith "Transaction should fail"
@@ -3928,6 +5885,15 @@ let%expect_test _ =
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.get_storage` from `Test.Next` is encouraged for a smoother migration.
 
+    File "./test_FA12.mligo", line 116, characters 10-16:
+    115 |   let new_storage = Test.get_storage typed_addr in
+    116 |   let _ = assert ((Big_map.find_opt to_ new_storage.tokens = Some 100n) &&
+                    ^^^^^^
+    117 |                   (Big_map.find_opt from_ new_storage.tokens = Some 100n) &&
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
     File "./test_FA12.mligo", line 121, characters 26-42:
     120 |                   (new_storage.total_supply = 300n)) in
     121 |   let dummy_new_storage = Test.get_storage dummy_typed_addr in
@@ -3936,6 +5902,15 @@ let%expect_test _ =
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.get_storage` from `Test.Next` is encouraged for a smoother migration.
+
+    File "./test_FA12.mligo", line 122, characters 2-8:
+    121 |   let dummy_new_storage = Test.get_storage dummy_typed_addr in
+    122 |   assert (dummy_new_storage = 100n)
+            ^^^^^^
+    123 |
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
 
     File "./test_FA12.mligo", line 125, characters 11-27:
     124 | let test_get_balance =
@@ -4036,6 +6011,15 @@ let%expect_test _ =
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.get_storage` from `Test.Next` is encouraged for a smoother migration.
 
+    File "./test_FA12.mligo", line 140, characters 10-16:
+    139 |   let new_storage = Test.get_storage typed_addr in
+    140 |   let _ = assert ((Big_map.find_opt to_ new_storage.tokens = Some 100n) &&
+                    ^^^^^^
+    141 |                   (Big_map.find_opt from_ new_storage.tokens = Some 100n) &&
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
     File "./test_FA12.mligo", line 145, characters 26-42:
     144 |                   (new_storage.total_supply = 300n)) in
     145 |   let dummy_new_storage = Test.get_storage dummy_typed_addr in
@@ -4044,6 +6028,15 @@ let%expect_test _ =
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.get_storage` from `Test.Next` is encouraged for a smoother migration.
+
+    File "./test_FA12.mligo", line 146, characters 2-8:
+    145 |   let dummy_new_storage = Test.get_storage dummy_typed_addr in
+    146 |   assert (dummy_new_storage = 100n)
+            ^^^^^^
+    147 |
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
 
     File "./test_FA12.mligo", line 149, characters 11-27:
     148 | let test_get_total_supply =
@@ -4144,6 +6137,15 @@ let%expect_test _ =
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.get_storage` from `Test.Next` is encouraged for a smoother migration.
 
+    File "./test_FA12.mligo", line 164, characters 10-16:
+    163 |   let new_storage = Test.get_storage typed_addr in
+    164 |   let _ = assert ((Big_map.find_opt to_ new_storage.tokens = Some 100n) &&
+                    ^^^^^^
+    165 |                   (Big_map.find_opt from_ new_storage.tokens = Some 100n) &&
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
     File "./test_FA12.mligo", line 169, characters 26-42:
     168 |                   (new_storage.total_supply = 300n)) in
     169 |   let dummy_new_storage = Test.get_storage dummy_typed_addr in
@@ -4152,6 +6154,14 @@ let%expect_test _ =
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.get_storage` from `Test.Next` is encouraged for a smoother migration.
+
+    File "./test_FA12.mligo", line 170, characters 2-8:
+    169 |   let dummy_new_storage = Test.get_storage dummy_typed_addr in
+    170 |   assert (dummy_new_storage = 300n)
+            ^^^^^^
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
 
     Everything at the top-level was executed.
     - test_transfer exited with value ().
@@ -4167,6 +6177,41 @@ let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "pack_unpack.mligo" ];
   [%expect
     {|
+    File "./pack_unpack.mligo", line 6, characters 2-8:
+      5 |   let unpacked : string option = Bytes.unpack packed in
+      6 |   assert (Some data = unpacked)
+            ^^^^^^
+      7 |
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./pack_unpack.mligo", line 12, characters 2-8:
+     11 |   let unpacked : int option = Bytes.unpack packed in
+     12 |   assert (Some data = unpacked)
+            ^^^^^^
+     13 |
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./pack_unpack.mligo", line 18, characters 2-8:
+     17 |   let unpacked : int option = Bytes.unpack packed in
+     18 |   assert ((None : int option) = unpacked)
+            ^^^^^^
+     19 |
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./pack_unpack.mligo", line 25, characters 2-8:
+     24 |   let unpacked : string option = Bytes.unpack packed in
+     25 |   assert ((None : string option) = unpacked)
+            ^^^^^^
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
     Everything at the top-level was executed.
     - test_string exited with value ().
     - test_int exited with value ().
@@ -4186,6 +6231,15 @@ let%expect_test _ =
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Originate.contract` from `Test.Next` is encouraged for a smoother migration.
 
+    File "./test_pack_unpack.mligo", line 10, characters 11-17:
+      9 |   let orig = Test.originate (contract_of C) b 0tez in
+     10 |   let () = assert ((Bytes.unpack (Test.get_storage orig.addr) : nat option) = Some 42n) in
+                     ^^^^^^
+     11 |   let b = Bytes.pack "bonjour" in
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
     File "./test_pack_unpack.mligo", line 10, characters 34-50:
       9 |   let orig = Test.originate (contract_of C) b 0tez in
      10 |   let () = assert ((Bytes.unpack (Test.get_storage orig.addr) : nat option) = Some 42n) in
@@ -4204,6 +6258,14 @@ let%expect_test _ =
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.transfer_exn` from `Test.Next` is encouraged for a smoother migration.
 
+    File "./test_pack_unpack.mligo", line 13, characters 2-8:
+     12 |   let _ = Test.transfer_exn orig.addr (Main b) 0tez in
+     13 |   assert ((Bytes.unpack (Test.get_storage orig.addr) : string option) = Some "bonjour")
+            ^^^^^^
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
     File "./test_pack_unpack.mligo", line 13, characters 25-41:
      12 |   let _ = Test.transfer_exn orig.addr (Main b) 0tez in
      13 |   assert ((Bytes.unpack (Test.get_storage orig.addr) : string option) = Some "bonjour")
@@ -4219,6 +6281,23 @@ let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "pairing_check.mligo" ];
   [%expect
     {|
+    File "./pairing_check.mligo", line 15, characters 11-17:
+     14 |   let t = gamma_abc.1 * input_x + gamma_abc.2 * input_y + gamma_abc.0 in
+     15 |   let () = assert (Tezos.pairing_check [(proof_a, proof_b); (-t, gamma); (-proof_c, delta); (-alpha, beta)]) in
+                     ^^^^^^
+     16 |   assert (not (Tezos.pairing_check [(proof_a, proof_b); (-t, gamma); (-proof_a, delta); (-alpha, beta)]))
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./pairing_check.mligo", line 16, characters 2-8:
+     15 |   let () = assert (Tezos.pairing_check [(proof_a, proof_b); (-t, gamma); (-proof_c, delta); (-alpha, beta)]) in
+     16 |   assert (not (Tezos.pairing_check [(proof_a, proof_b); (-t, gamma); (-proof_a, delta); (-alpha, beta)]))
+            ^^^^^^
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
     Everything at the top-level was executed.
     - test exited with value (). |}]
 
@@ -4270,6 +6349,15 @@ let%expect_test _ =
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.transfer` from `Test.Next` is encouraged for a smoother migration.
+
+    File "./gas_consum.mligo", line 27, characters 13-19:
+     26 |   | Success cons1 , Success cons2, Success cons3 ->
+     27 |     let () = assert ((cons1 < cons2) && (cons2 = cons3)) in
+                       ^^^^^^
+     28 |     (cons1,cons2,cons3)
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
 
     Everything at the top-level was executed.
     - test exited with value (1305n , 1510n , 1510n). |}]
@@ -4928,6 +7016,14 @@ let%expect_test _ =
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.transfer_exn` from `Test.Next` is encouraged for a smoother migration.
 
+    File "./test_global_constant.mligo", line 18, characters 2-8:
+     17 |   let _ = Test.transfer_exn orig.addr (Main ()) 0tez in
+     18 |   assert (Test.get_storage orig.addr = 5)
+            ^^^^^^
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
     File "./test_global_constant.mligo", line 18, characters 10-26:
      17 |   let _ = Test.transfer_exn orig.addr (Main ()) 0tez in
      18 |   assert (Test.get_storage orig.addr = 5)
@@ -4979,6 +7075,14 @@ let%expect_test _ =
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.transfer_exn` from `Test.Next` is encouraged for a smoother migration.
 
+    File "./test_global_constant_2.mligo", line 16, characters 2-8:
+     15 |   let _ = Test.transfer_exn orig.addr (Main ()) 0tez in
+     16 |   assert (Test.get_storage orig.addr = 5)
+            ^^^^^^
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
     File "./test_global_constant_2.mligo", line 16, characters 10-26:
      15 |   let _ = Test.transfer_exn orig.addr (Main ()) 0tez in
      16 |   assert (Test.get_storage orig.addr = 5)
@@ -5027,6 +7131,23 @@ let%expect_test _ =
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Michelson.run` from `Test.Next` is encouraged for a smoother migration.
+
+    File "./test_timestamp.mligo", line 6, characters 1-7:
+      5 |  let new_time : timestamp = the_time - subtractthis in
+      6 |  assert (new_time = new_time_mich)
+           ^^^^^^
+      7 |
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./test_timestamp.mligo", line 9, characters 2-8:
+      8 | let test_get_time =
+      9 |   assert (Test.get_time () = ("1970-01-01t00:00:00Z" : timestamp))
+            ^^^^^^
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
 
     Everything at the top-level was executed.
     - test_sub exited with value ().
@@ -5770,6 +7891,14 @@ let%expect_test _ =
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Crypto.sign` from `Test.Next` is encouraged for a smoother migration.
 
+    File "./test_sign.mligo", line 5, characters 2-8:
+      4 |   let s = Test.sign sk data in
+      5 |   assert (Crypto.check pk s data)
+            ^^^^^^
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
     Everything at the top-level was executed.
     - test exited with value (). |}]
 
@@ -6044,6 +8173,15 @@ let%expect_test _ =
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Michelson.decompile` from `Test.Next` is encouraged for a smoother migration.
 
+    File "./test_untranspile_bls.mligo", line 5, characters 2-8:
+      4 |   let dec = (Test.decompile value : bls12_381_fr) in
+      5 |   assert (Test.to_string dec = Test.to_string bls)
+            ^^^^^^
+      6 |
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
     File "./test_untranspile_bls.mligo", line 5, characters 10-24:
       4 |   let dec = (Test.decompile value : bls12_381_fr) in
       5 |   assert (Test.to_string dec = Test.to_string bls)
@@ -6080,6 +8218,15 @@ let%expect_test _ =
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Michelson.decompile` from `Test.Next` is encouraged for a smoother migration.
 
+    File "./test_untranspile_bls.mligo", line 11, characters 2-8:
+     10 |   let dec = (Test.decompile value : bls12_381_g1) in
+     11 |   assert (Test.to_string dec = Test.to_string bls)
+            ^^^^^^
+     12 |
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
     File "./test_untranspile_bls.mligo", line 11, characters 10-24:
      10 |   let dec = (Test.decompile value : bls12_381_g1) in
      11 |   assert (Test.to_string dec = Test.to_string bls)
@@ -6115,6 +8262,14 @@ let%expect_test _ =
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Michelson.decompile` from `Test.Next` is encouraged for a smoother migration.
+
+    File "./test_untranspile_bls.mligo", line 17, characters 2-8:
+     16 |   let dec = (Test.decompile value : bls12_381_g2) in
+     17 |   assert (Test.to_string dec = Test.to_string bls)
+            ^^^^^^
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
 
     File "./test_untranspile_bls.mligo", line 17, characters 10-24:
      16 |   let dec = (Test.decompile value : bls12_381_g2) in
@@ -6158,6 +8313,24 @@ let%expect_test _ =
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.to_contract` from `Test.Next` is encouraged for a smoother migration.
+
+    File "./get_contract.mligo", line 15, characters 11-22:
+     14 |   let a = Tezos.address c in
+     15 |   let () = assert_some (Tezos.get_entrypoint_opt "%foo" a : (int contract) option) in
+                     ^^^^^^^^^^^
+     16 |   let _ = (Tezos.get_entrypoint "%foo" a : (int contract)) in
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.some` is encouraged for a smoother migration.
+
+    File "./get_contract.mligo", line 17, characters 11-22:
+     16 |   let _ = (Tezos.get_entrypoint "%foo" a : (int contract)) in
+     17 |   let () = assert_some (Tezos.get_contract_opt a : ((C parameter_of) contract) option) in
+                     ^^^^^^^^^^^
+     18 |   let _ = (Tezos.get_contract a : ((C parameter_of) contract)) in
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.some` is encouraged for a smoother migration.
 
     Everything at the top-level was executed.
     - test exited with value (). |}]
@@ -6209,6 +8382,33 @@ let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "test_tickets_and_bigmaps.mligo" ];
   [%expect
     {|
+    File "./test_tickets_and_bigmaps.mligo", line 15, characters 6-23:
+     14 |     let _check_given_amount =
+     15 |       assert_with_error
+                ^^^^^^^^^^^^^^^^^
+     16 |         (Tezos.get_amount () = data.price)
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.Error.assert` is encouraged for a smoother migration.
+
+    File "./test_tickets_and_bigmaps.mligo", line 22, characters 48-67:
+     21 |     let new_ticket =
+     22 |       Option.value_with_error "option is None" (Tezos.create_ticket unit 1n) in
+                                                          ^^^^^^^^^^^^^^^^^^^
+     23 |     let join_tickets =
+    :
+    Warning: deprecated value.
+    In a future version, `Tezos` will be replaced by `Tezos.Next`, and using `Ticket.create` from `Tezos.Next` is encouraged for a smoother migration.
+
+    File "./test_tickets_and_bigmaps.mligo", line 27, characters 17-35:
+     26 |       | Some owned_tickets ->
+     27 |           (match Tezos.join_tickets (owned_tickets, new_ticket) with
+                           ^^^^^^^^^^^^^^^^^^
+     28 |               None -> failwith "2"
+    :
+    Warning: deprecated value.
+    In a future version, `Tezos` will be replaced by `Tezos.Next`, and using `Ticket.join` from `Tezos.Next` is encouraged for a smoother migration.
+
     File "./test_tickets_and_bigmaps.mligo", line 41, characters 11-27:
      40 | let test_one =
      41 |   let () = Test.reset_state 2n ([] : tez list) in
@@ -6545,6 +8745,240 @@ let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "record_field_assign.jsligo" ];
   [%expect
     {|
+      File "./record_field_assign.jsligo", line 67, characters 4-10:
+       66 |     r.x1 = 6;
+       67 |     assert(r.x1 == 6);
+                ^^^^^^
+       68 |
+      :
+      Warning: deprecated value.
+      In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+      File "./record_field_assign.jsligo", line 75, characters 4-10:
+       74 |     r.x.y1 = 11;
+       75 |     assert(r.x.y1 == 11);
+                ^^^^^^
+       76 |
+      :
+      Warning: deprecated value.
+      In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+      File "./record_field_assign.jsligo", line 83, characters 4-10:
+       82 |     r.x.y.z = 11;
+       83 |     assert(r.x.y.z == 11);
+                ^^^^^^
+       84 |
+      :
+      Warning: deprecated value.
+      In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+      File "./record_field_assign.jsligo", line 86, characters 4-10:
+       85 |     r.x.y.z1 = 11;
+       86 |     assert(r.x.y.z1 == 11);
+                ^^^^^^
+       87 |
+      :
+      Warning: deprecated value.
+      In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+      File "./record_field_assign.jsligo", line 96, characters 4-10:
+       95 |     r.x1 = a;
+       96 |     assert(r.x1 == a);
+                ^^^^^^
+       97 |
+      :
+      Warning: deprecated value.
+      In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+      File "./record_field_assign.jsligo", line 106, characters 4-10:
+      105 |     r.x.y1 = a;
+      106 |     assert(r.x.y1 == a);
+                ^^^^^^
+      107 |
+      :
+      Warning: deprecated value.
+      In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+      File "./record_field_assign.jsligo", line 116, characters 4-10:
+      115 |     r.x.y.z = a;
+      116 |     assert(r.x.y.z == a);
+                ^^^^^^
+      117 |
+      :
+      Warning: deprecated value.
+      In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+      File "./record_field_assign.jsligo", line 119, characters 4-10:
+      118 |     r.x.y.z1 = a;
+      119 |     assert(r.x.y.z1 == a);
+                ^^^^^^
+      120 |
+      :
+      Warning: deprecated value.
+      In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+      File "./record_field_assign.jsligo", line 129, characters 4-10:
+      128 |     r.x.y.z = a + 1;
+      129 |     assert(r.x.y.z == 12);
+                ^^^^^^
+      130 |
+      :
+      Warning: deprecated value.
+      In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+      File "./record_field_assign.jsligo", line 132, characters 4-10:
+      131 |     r.x.y.z1 = a + 1;
+      132 |     assert(r.x.y.z1 == (13 - 1));
+                ^^^^^^
+      133 |
+      :
+      Warning: deprecated value.
+      In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+      File "./record_field_assign.jsligo", line 142, characters 4-10:
+      141 |     r.x.y.z = s.a.b.c;
+      142 |     assert(r.x.y.z == 9);
+                ^^^^^^
+      143 |
+      :
+      Warning: deprecated value.
+      In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+      File "./record_field_assign.jsligo", line 145, characters 4-10:
+      144 |     r.x.y.z1 = s.a.b.c + r.x.y.z;
+      145 |     assert(r.x.y.z1 == 18);
+                ^^^^^^
+      146 |
+      :
+      Warning: deprecated value.
+      In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+      File "./record_field_assign.jsligo", line 153, characters 4-10:
+      152 |     r.x.y.z = M.pi;
+      153 |     assert(r.x.y.z == M.pi);
+                ^^^^^^
+      154 |
+      :
+      Warning: deprecated value.
+      In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+      File "./record_field_assign.jsligo", line 156, characters 4-10:
+      155 |     r.x.y.z1 = M.pi + r.x.y.z;
+      156 |     assert(r.x.y.z1 == M.pi2);
+                ^^^^^^
+      157 |
+      :
+      Warning: deprecated value.
+      In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+      File "./record_field_assign.jsligo", line 164, characters 4-10:
+      163 |     r.x.y.z = M.val_d.p.q.r;
+      164 |     assert(r.x.y.z == 4);
+                ^^^^^^
+      165 |
+      :
+      Warning: deprecated value.
+      In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+      File "./record_field_assign.jsligo", line 167, characters 4-10:
+      166 |     r.x.y.z1 = M.val_d.p.q.r + r.x.y.z;
+      167 |     assert(r.x.y.z1 == 8);
+                ^^^^^^
+      168 |
+      :
+      Warning: deprecated value.
+      In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+      File "./record_field_assign.jsligo", line 176, characters 4-10:
+      175 |     kk.x.y.z = lambda;
+      176 |     assert(kk.x.y.z(9) == 20);
+                ^^^^^^
+      177 |
+      :
+      Warning: deprecated value.
+      In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+      File "./record_field_assign.jsligo", line 186, characters 4-10:
+      185 |     r.x.y.z = sq(2);
+      186 |     assert(r.x.y.z == 4);
+                ^^^^^^
+      187 |
+      :
+      Warning: deprecated value.
+      In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+      File "./record_field_assign.jsligo", line 189, characters 4-10:
+      188 |     r.x.y.z1 = sq(r.x.y.z);
+      189 |     assert(r.x.y.z1 == 16);
+                ^^^^^^
+      190 |
+      :
+      Warning: deprecated value.
+      In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+      File "./record_field_assign.jsligo", line 201, characters 2-8:
+      200 |   p.x[3] = 5;
+      201 |   assert(p.x[3] == 5)
+              ^^^^^^
+      202 | })())
+      :
+      Warning: deprecated value.
+      In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+      File "./record_field_assign.jsligo", line 211, characters 2-8:
+      210 |   p.x["z"] = 10;
+      211 |   assert(p.x["z"] == 10);
+              ^^^^^^
+      212 | })())
+      :
+      Warning: deprecated value.
+      In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+      File "./record_field_assign.jsligo", line 218, characters 4-10:
+      217 |     r["x"]["y1"] = 11;
+      218 |     assert(r["x"]["y1"] == 11);
+                ^^^^^^
+      219 |
+      :
+      Warning: deprecated value.
+      In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+      File "./record_field_assign.jsligo", line 226, characters 4-10:
+      225 |     r["x"]["y"]["z"] = 11;
+      226 |     assert(r["x"]["y"]["z"] == 11);
+                ^^^^^^
+      227 |
+      :
+      Warning: deprecated value.
+      In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+      File "./record_field_assign.jsligo", line 229, characters 4-10:
+      228 |     r["x"]["y"]["z1"] = 11;
+      229 |     assert(r.x.y.z1 == 11);
+                ^^^^^^
+      230 |
+      :
+      Warning: deprecated value.
+      In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+      File "./record_field_assign.jsligo", line 243, characters 4-10:
+      242 |     r["x"].y[2]["z"] = "Hello";
+      243 |     assert(r["x"]["y"][2].z == "Hello");
+                ^^^^^^
+      244 |
+      :
+      Warning: deprecated value.
+      In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+      File "./record_field_assign.jsligo", line 246, characters 4-10:
+      245 |     r["x"]["y"][2].z1 = 11;
+      246 |     assert(r.x.y[2].z1 == 11);
+                ^^^^^^
+      247 |
+      :
+      Warning: deprecated value.
+      In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
       Everything at the top-level was executed.
       - test_simple_record_assign exited with value ().
       - test_nested_record_assign_level1 exited with value ().
@@ -6724,6 +9158,15 @@ let%expect_test _ =
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Contract.transfer_exn` from `Test.Next` is encouraged for a smoother migration.
 
+    File "./test_originate_module.jsligo", line 17, characters 9-15:
+     16 |   Test.transfer_to_contract_exn(contr, p, 1 as mutez);
+     17 |   return assert(Test.get_storage(orig.addr) == initial_storage + 1);
+                   ^^^^^^
+     18 | }) ();
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
     File "./test_originate_module.jsligo", line 17, characters 16-32:
      16 |   Test.transfer_to_contract_exn(contr, p, 1 as mutez);
      17 |   return assert(Test.get_storage(orig.addr) == initial_storage + 1);
@@ -6770,6 +9213,15 @@ let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "contract_with_ticket_storage.mligo" ];
   [%expect
     {|
+    File "./contract_with_ticket_storage.mligo", line 8, characters 20-37:
+      7 |     | Some ticket ->
+      8 |       let (_ , t) = Tezos.read_ticket ticket in
+                              ^^^^^^^^^^^^^^^^^
+      9 |       Some t
+    :
+    Warning: deprecated value.
+    In a future version, `Tezos` will be replaced by `Tezos.Next`, and using `Ticket.read` from `Tezos.Next` is encouraged for a smoother migration.
+
     File "./contract_with_ticket_storage.mligo", line 22, characters 13-21:
      21 |   | Some { ticketer=_ ; value ; amount } ->
      22 |     let () = Test.log ("unforged_ticket", unforged_storage) in
@@ -6779,12 +9231,39 @@ let%expect_test _ =
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `IO.log` from `Test.Next` is encouraged for a smoother migration.
 
+    File "./contract_with_ticket_storage.mligo", line 23, characters 13-19:
+     22 |     let () = Test.log ("unforged_ticket", unforged_storage) in
+     23 |     let () = assert (value = ticket_info.0) in
+                       ^^^^^^
+     24 |     let () = assert (amount = ticket_info.1) in
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./contract_with_ticket_storage.mligo", line 24, characters 13-19:
+     23 |     let () = assert (value = ticket_info.0) in
+     24 |     let () = assert (amount = ticket_info.1) in
+                       ^^^^^^
+     25 |     ()
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
     ("unforged_ticket" , Some ({amount = 15n ; ticketer = KT1CDHnKFHBMFtyzC92oTfi4Z5wthR4Yk3LW ; value = 0x0202}))
     Everything at the top-level was executed.
     - test_originate_contract exited with value (). |}];
   run_ligo_good [ "run"; "test"; test "contract_with_ticket_param.mligo" ];
   [%expect
     {|
+    File "./contract_with_ticket_param.mligo", line 7, characters 24-41:
+      6 |     let (_,ticket) = p in
+      7 |     let (_,(v,_)) , _ = Tezos.read_ticket ticket in
+                                  ^^^^^^^^^^^^^^^^^
+      8 |     [] , (v, Tezos.get_sender ())
+    :
+    Warning: deprecated value.
+    In a future version, `Tezos` will be replaced by `Tezos.Next`, and using `Ticket.read` from `Tezos.Next` is encouraged for a smoother migration.
+
     File "./contract_with_ticket_param.mligo", line 12, characters 13-27:
      11 | let test_transfer_to_contract =
      12 |   let orig = Test.originate (contract_of C) ("bye",Test.nth_bootstrap_account 1) 1mutez in
@@ -6830,6 +9309,14 @@ let%expect_test _ =
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.to_contract` from `Test.Next` is encouraged for a smoother migration.
 
+    File "./contract_with_ticket_param.mligo", line 34, characters 2-8:
+     33 |   let p_addr = proxy_taddr |> Test.to_contract |> Tezos.address in
+     34 |   assert (s = "world" && addr = p_addr)
+            ^^^^^^
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
     Everything at the top-level was executed.
     - test_transfer_to_contract exited with value (). |}]
 
@@ -6837,6 +9324,446 @@ let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "test_prefix_posfix_ops.jsligo" ];
   [%expect
     {|
+    File "./test_prefix_posfix_ops.jsligo", line 3, characters 2-8:
+      2 |   let x = 0;
+      3 |   assert(x++ == 0);
+            ^^^^^^
+      4 |   assert(x++ == 1);
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./test_prefix_posfix_ops.jsligo", line 4, characters 2-8:
+      3 |   assert(x++ == 0);
+      4 |   assert(x++ == 1);
+            ^^^^^^
+      5 |   assert(x++ == 2);
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./test_prefix_posfix_ops.jsligo", line 5, characters 2-8:
+      4 |   assert(x++ == 1);
+      5 |   assert(x++ == 2);
+            ^^^^^^
+      6 |   assert(x++ == 3);
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./test_prefix_posfix_ops.jsligo", line 6, characters 2-8:
+      5 |   assert(x++ == 2);
+      6 |   assert(x++ == 3);
+            ^^^^^^
+      7 |   assert(x++ == 4);
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./test_prefix_posfix_ops.jsligo", line 7, characters 2-8:
+      6 |   assert(x++ == 3);
+      7 |   assert(x++ == 4);
+            ^^^^^^
+      8 |   assert(x-- == 5);
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./test_prefix_posfix_ops.jsligo", line 8, characters 2-8:
+      7 |   assert(x++ == 4);
+      8 |   assert(x-- == 5);
+            ^^^^^^
+      9 |   assert(x-- == 4);
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./test_prefix_posfix_ops.jsligo", line 9, characters 2-8:
+      8 |   assert(x-- == 5);
+      9 |   assert(x-- == 4);
+            ^^^^^^
+     10 |   assert(x-- == 3);
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./test_prefix_posfix_ops.jsligo", line 10, characters 2-8:
+      9 |   assert(x-- == 4);
+     10 |   assert(x-- == 3);
+            ^^^^^^
+     11 |   assert(x-- == 2);
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./test_prefix_posfix_ops.jsligo", line 11, characters 2-8:
+     10 |   assert(x-- == 3);
+     11 |   assert(x-- == 2);
+            ^^^^^^
+     12 |   assert(x-- == 1);
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./test_prefix_posfix_ops.jsligo", line 12, characters 2-8:
+     11 |   assert(x-- == 2);
+     12 |   assert(x-- == 1);
+            ^^^^^^
+     13 |   assert(x   == 0);
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./test_prefix_posfix_ops.jsligo", line 13, characters 2-8:
+     12 |   assert(x-- == 1);
+     13 |   assert(x   == 0);
+            ^^^^^^
+     14 |   assert((x++ + x++ + x-- + x--) == 4);
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./test_prefix_posfix_ops.jsligo", line 14, characters 2-8:
+     13 |   assert(x   == 0);
+     14 |   assert((x++ + x++ + x-- + x--) == 4);
+            ^^^^^^
+     15 |   assert(((x++ == 0) && (x++ == 1) && (x-- == 2) && (x-- == 1)));
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./test_prefix_posfix_ops.jsligo", line 15, characters 2-8:
+     14 |   assert((x++ + x++ + x-- + x--) == 4);
+     15 |   assert(((x++ == 0) && (x++ == 1) && (x-- == 2) && (x-- == 1)));
+            ^^^^^^
+     16 | })()
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./test_prefix_posfix_ops.jsligo", line 20, characters 2-8:
+     19 |   let x = 0;
+     20 |   assert(++x == 1);
+            ^^^^^^
+     21 |   assert(++x == 2);
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./test_prefix_posfix_ops.jsligo", line 21, characters 2-8:
+     20 |   assert(++x == 1);
+     21 |   assert(++x == 2);
+            ^^^^^^
+     22 |   assert(++x == 3);
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./test_prefix_posfix_ops.jsligo", line 22, characters 2-8:
+     21 |   assert(++x == 2);
+     22 |   assert(++x == 3);
+            ^^^^^^
+     23 |   assert(++x == 4);
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./test_prefix_posfix_ops.jsligo", line 23, characters 2-8:
+     22 |   assert(++x == 3);
+     23 |   assert(++x == 4);
+            ^^^^^^
+     24 |   assert(++x == 5);
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./test_prefix_posfix_ops.jsligo", line 24, characters 2-8:
+     23 |   assert(++x == 4);
+     24 |   assert(++x == 5);
+            ^^^^^^
+     25 |   assert(--x == 4);
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./test_prefix_posfix_ops.jsligo", line 25, characters 2-8:
+     24 |   assert(++x == 5);
+     25 |   assert(--x == 4);
+            ^^^^^^
+     26 |   assert(--x == 3);
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./test_prefix_posfix_ops.jsligo", line 26, characters 2-8:
+     25 |   assert(--x == 4);
+     26 |   assert(--x == 3);
+            ^^^^^^
+     27 |   assert(--x == 2);
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./test_prefix_posfix_ops.jsligo", line 27, characters 2-8:
+     26 |   assert(--x == 3);
+     27 |   assert(--x == 2);
+            ^^^^^^
+     28 |   assert(--x == 1);
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./test_prefix_posfix_ops.jsligo", line 28, characters 2-8:
+     27 |   assert(--x == 2);
+     28 |   assert(--x == 1);
+            ^^^^^^
+     29 |   assert(--x == 0);
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./test_prefix_posfix_ops.jsligo", line 29, characters 2-8:
+     28 |   assert(--x == 1);
+     29 |   assert(--x == 0);
+            ^^^^^^
+     30 |   assert((++x + ++x + --x + --x) == 4);
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./test_prefix_posfix_ops.jsligo", line 30, characters 2-8:
+     29 |   assert(--x == 0);
+     30 |   assert((++x + ++x + --x + --x) == 4);
+            ^^^^^^
+     31 |   assert(((++x == 1) && (++x == 2) && (--x == 1) && (--x == 0)));
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./test_prefix_posfix_ops.jsligo", line 31, characters 2-8:
+     30 |   assert((++x + ++x + --x + --x) == 4);
+     31 |   assert(((++x == 1) && (++x == 2) && (--x == 1) && (--x == 0)));
+            ^^^^^^
+     32 | })()
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./test_prefix_posfix_ops.jsligo", line 53, characters 15-21:
+     52 |
+     53 | const test1  = assert(0  == nth_fibonacci(1))
+                         ^^^^^^
+     54 | const test2  = assert(1  == nth_fibonacci(2))
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./test_prefix_posfix_ops.jsligo", line 54, characters 15-21:
+     53 | const test1  = assert(0  == nth_fibonacci(1))
+     54 | const test2  = assert(1  == nth_fibonacci(2))
+                         ^^^^^^
+     55 | const test3  = assert(1  == nth_fibonacci(3))
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./test_prefix_posfix_ops.jsligo", line 55, characters 15-21:
+     54 | const test2  = assert(1  == nth_fibonacci(2))
+     55 | const test3  = assert(1  == nth_fibonacci(3))
+                         ^^^^^^
+     56 | const test4  = assert(2  == nth_fibonacci(4))
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./test_prefix_posfix_ops.jsligo", line 56, characters 15-21:
+     55 | const test3  = assert(1  == nth_fibonacci(3))
+     56 | const test4  = assert(2  == nth_fibonacci(4))
+                         ^^^^^^
+     57 | const test5  = assert(3  == nth_fibonacci(5))
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./test_prefix_posfix_ops.jsligo", line 57, characters 15-21:
+     56 | const test4  = assert(2  == nth_fibonacci(4))
+     57 | const test5  = assert(3  == nth_fibonacci(5))
+                         ^^^^^^
+     58 | const test6  = assert(5  == nth_fibonacci(6))
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./test_prefix_posfix_ops.jsligo", line 58, characters 15-21:
+     57 | const test5  = assert(3  == nth_fibonacci(5))
+     58 | const test6  = assert(5  == nth_fibonacci(6))
+                         ^^^^^^
+     59 | const test7  = assert(8  == nth_fibonacci(7))
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./test_prefix_posfix_ops.jsligo", line 59, characters 15-21:
+     58 | const test6  = assert(5  == nth_fibonacci(6))
+     59 | const test7  = assert(8  == nth_fibonacci(7))
+                         ^^^^^^
+     60 | const test8  = assert(13 == nth_fibonacci(8))
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./test_prefix_posfix_ops.jsligo", line 60, characters 15-21:
+     59 | const test7  = assert(8  == nth_fibonacci(7))
+     60 | const test8  = assert(13 == nth_fibonacci(8))
+                         ^^^^^^
+     61 | const test9  = assert(21 == nth_fibonacci(9))
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./test_prefix_posfix_ops.jsligo", line 61, characters 15-21:
+     60 | const test8  = assert(13 == nth_fibonacci(8))
+     61 | const test9  = assert(21 == nth_fibonacci(9))
+                         ^^^^^^
+     62 | const test10 = assert(34 == nth_fibonacci(10))
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./test_prefix_posfix_ops.jsligo", line 62, characters 15-21:
+     61 | const test9  = assert(21 == nth_fibonacci(9))
+     62 | const test10 = assert(34 == nth_fibonacci(10))
+                         ^^^^^^
+     63 | const test11 = assert(55 == nth_fibonacci(11))
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./test_prefix_posfix_ops.jsligo", line 63, characters 15-21:
+     62 | const test10 = assert(34 == nth_fibonacci(10))
+     63 | const test11 = assert(55 == nth_fibonacci(11))
+                         ^^^^^^
+     64 | const test12 = assert(89 == nth_fibonacci(12))
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./test_prefix_posfix_ops.jsligo", line 64, characters 15-21:
+     63 | const test11 = assert(55 == nth_fibonacci(11))
+     64 | const test12 = assert(89 == nth_fibonacci(12))
+                         ^^^^^^
+     65 |
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./test_prefix_posfix_ops.jsligo", line 84, characters 16-22:
+     83 |
+     84 | const test1_  = assert(0  == nth_fibonacci2(1))
+                          ^^^^^^
+     85 | const test2_  = assert(1  == nth_fibonacci2(2))
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./test_prefix_posfix_ops.jsligo", line 85, characters 16-22:
+     84 | const test1_  = assert(0  == nth_fibonacci2(1))
+     85 | const test2_  = assert(1  == nth_fibonacci2(2))
+                          ^^^^^^
+     86 | const test3_  = assert(1  == nth_fibonacci2(3))
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./test_prefix_posfix_ops.jsligo", line 86, characters 16-22:
+     85 | const test2_  = assert(1  == nth_fibonacci2(2))
+     86 | const test3_  = assert(1  == nth_fibonacci2(3))
+                          ^^^^^^
+     87 | const test4_  = assert(2  == nth_fibonacci2(4))
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./test_prefix_posfix_ops.jsligo", line 87, characters 16-22:
+     86 | const test3_  = assert(1  == nth_fibonacci2(3))
+     87 | const test4_  = assert(2  == nth_fibonacci2(4))
+                          ^^^^^^
+     88 | const test5_  = assert(3  == nth_fibonacci2(5))
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./test_prefix_posfix_ops.jsligo", line 88, characters 16-22:
+     87 | const test4_  = assert(2  == nth_fibonacci2(4))
+     88 | const test5_  = assert(3  == nth_fibonacci2(5))
+                          ^^^^^^
+     89 | const test6_  = assert(5  == nth_fibonacci2(6))
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./test_prefix_posfix_ops.jsligo", line 89, characters 16-22:
+     88 | const test5_  = assert(3  == nth_fibonacci2(5))
+     89 | const test6_  = assert(5  == nth_fibonacci2(6))
+                          ^^^^^^
+     90 | const test7_  = assert(8  == nth_fibonacci2(7))
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./test_prefix_posfix_ops.jsligo", line 90, characters 16-22:
+     89 | const test6_  = assert(5  == nth_fibonacci2(6))
+     90 | const test7_  = assert(8  == nth_fibonacci2(7))
+                          ^^^^^^
+     91 | const test8_  = assert(13 == nth_fibonacci2(8))
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./test_prefix_posfix_ops.jsligo", line 91, characters 16-22:
+     90 | const test7_  = assert(8  == nth_fibonacci2(7))
+     91 | const test8_  = assert(13 == nth_fibonacci2(8))
+                          ^^^^^^
+     92 | const test9_  = assert(21 == nth_fibonacci2(9))
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./test_prefix_posfix_ops.jsligo", line 92, characters 16-22:
+     91 | const test8_  = assert(13 == nth_fibonacci2(8))
+     92 | const test9_  = assert(21 == nth_fibonacci2(9))
+                          ^^^^^^
+     93 | const test10_ = assert(34 == nth_fibonacci2(10))
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./test_prefix_posfix_ops.jsligo", line 93, characters 16-22:
+     92 | const test9_  = assert(21 == nth_fibonacci2(9))
+     93 | const test10_ = assert(34 == nth_fibonacci2(10))
+                          ^^^^^^
+     94 | const test11_ = assert(55 == nth_fibonacci2(11))
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./test_prefix_posfix_ops.jsligo", line 94, characters 16-22:
+     93 | const test10_ = assert(34 == nth_fibonacci2(10))
+     94 | const test11_ = assert(55 == nth_fibonacci2(11))
+                          ^^^^^^
+     95 | const test12_ = assert(89 == nth_fibonacci2(12))
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "./test_prefix_posfix_ops.jsligo", line 95, characters 16-22:
+     94 | const test11_ = assert(55 == nth_fibonacci2(11))
+     95 | const test12_ = assert(89 == nth_fibonacci2(12))
+                          ^^^^^^
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
     Everything at the top-level was executed.
     - test_prefix_ops exited with value ().
     - test_postfix_ops exited with value ().
@@ -7460,6 +10387,14 @@ let%expect_test _ =
   run_ligo_bad [ "run"; "test"; bad_test "test_failure2.mligo" ];
   [%expect
     {|
+    File "../../test/contracts/negative//interpreter_tests/test_failure2.mligo", line 2, characters 4-10:
+      1 | let test =
+      2 |     assert false
+              ^^^^^^
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
     File "../../test/contracts/negative//interpreter_tests/test_failure2.mligo", line 2, characters 4-16:
       1 | let test =
       2 |     assert false
@@ -8104,6 +11039,15 @@ let%expect_test _ =
   Warning: deprecated value.
   In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.to_contract` from `Test.Next` is encouraged for a smoother migration.
 
+  File "typed_addr_in_bytes_pack.mligo", line 15, characters 30-47:
+   14 |         match (Tezos.get_entrypoint_opt "%transfer" r.addr : unit contract option) with
+   15 |           Some(c) -> let op = Tezos.transaction () 0mutez c in [op]
+                                      ^^^^^^^^^^^^^^^^^
+   16 |         | None ->  ([] : operation list)
+  :
+  Warning: deprecated value.
+  In a future version, `Tezos` will be replaced by `Tezos.Next`, and using `Operation.transaction` from `Tezos.Next` is encouraged for a smoother migration.
+
   File "typed_addr_in_bytes_pack.mligo", line 18, characters 13-21:
    17 |     ) in
    18 |     let () = Test.log(packed) in
@@ -8145,6 +11089,24 @@ let%expect_test _ =
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `IO.log` from `Test.Next` is encouraged for a smoother migration.
 
+    File "../../test/contracts/negative//interpreter_tests/test_michelson_non_func.mligo", line 5, characters 4-10:
+      4 |     Test.log x;
+      5 |     assert (x = x);
+              ^^^^^^
+      6 |     assert (x = 1)
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "../../test/contracts/negative//interpreter_tests/test_michelson_non_func.mligo", line 6, characters 4-10:
+      5 |     assert (x = x);
+      6 |     assert (x = 1)
+              ^^^^^^
+      7 |   end
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
     File "../../test/contracts/negative//interpreter_tests/test_michelson_non_func.mligo", line 2, characters 16-55:
       1 | let test =
       2 |   let x : int = [%Michelson ({|{ PUSH int 1 }|} : int)] in
@@ -8174,6 +11136,24 @@ let%expect_test _ =
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.to_contract` from `Test.Next` is encouraged for a smoother migration.
+
+    File "../../test/contracts/negative//interpreter_tests/get_contract.mligo", line 14, characters 11-22:
+     13 |   let a = Tezos.address c in
+     14 |   let () = assert_some (Tezos.get_entrypoint_opt "%foo" a : (int contract) option) in
+                     ^^^^^^^^^^^
+     15 |   let _ = (Tezos.get_entrypoint "%foo" a : (int contract)) in
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.some` is encouraged for a smoother migration.
+
+    File "../../test/contracts/negative//interpreter_tests/get_contract.mligo", line 16, characters 11-22:
+     15 |   let _ = (Tezos.get_entrypoint "%foo" a : (int contract)) in
+     16 |   let () = assert_some (Tezos.get_contract_opt a : (C parameter_of contract) option) in
+                     ^^^^^^^^^^^
+     17 |   let _ = (Tezos.get_contract a : (C parameter_of contract)) in
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.some` is encouraged for a smoother migration.
 
     File "../../test/contracts/negative//interpreter_tests/get_contract.mligo", line 18, characters 10-66:
      17 |   let _ = (Tezos.get_contract a : (C parameter_of contract)) in

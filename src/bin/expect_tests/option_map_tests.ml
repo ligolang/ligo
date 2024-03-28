@@ -16,6 +16,42 @@ let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "option_map.mligo" ];
   [%expect
     {|
+    File "../../test/contracts/option_map.mligo", line 12, characters 10-16:
+     11 |   let b = Option.map to_tup a in
+     12 |   let _ = assert (b = (Some ("foo", 1))) in
+                    ^^^^^^
+     13 |   let _ = assert (a = (Option.map to_int b)) in
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "../../test/contracts/option_map.mligo", line 13, characters 10-16:
+     12 |   let _ = assert (b = (Some ("foo", 1))) in
+     13 |   let _ = assert (a = (Option.map to_int b)) in
+                    ^^^^^^
+     14 |   let a : int option = None in
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "../../test/contracts/option_map.mligo", line 16, characters 10-16:
+     15 |   let b = Option.map to_tup a in
+     16 |   let _ = assert (b = (None : (string * int) option)) in
+                    ^^^^^^
+     17 |   let _ = assert (a = (Option.map to_int b)) in
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "../../test/contracts/option_map.mligo", line 17, characters 10-16:
+     16 |   let _ = assert (b = (None : (string * int) option)) in
+     17 |   let _ = assert (a = (Option.map to_int b)) in
+                    ^^^^^^
+     18 |   ()
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
     Everything at the top-level was executed.
     - test exited with value (). |}]
 
@@ -35,6 +71,42 @@ let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "option_map.mligo" ];
   [%expect
     {|
+    File "../../test/contracts/option_map.mligo", line 12, characters 10-16:
+     11 |   let b = Option.map to_tup a in
+     12 |   let _ = assert (b = (Some ("foo", 1))) in
+                    ^^^^^^
+     13 |   let _ = assert (a = (Option.map to_int b)) in
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "../../test/contracts/option_map.mligo", line 13, characters 10-16:
+     12 |   let _ = assert (b = (Some ("foo", 1))) in
+     13 |   let _ = assert (a = (Option.map to_int b)) in
+                    ^^^^^^
+     14 |   let a : int option = None in
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "../../test/contracts/option_map.mligo", line 16, characters 10-16:
+     15 |   let b = Option.map to_tup a in
+     16 |   let _ = assert (b = (None : (string * int) option)) in
+                    ^^^^^^
+     17 |   let _ = assert (a = (Option.map to_int b)) in
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "../../test/contracts/option_map.mligo", line 17, characters 10-16:
+     16 |   let _ = assert (b = (None : (string * int) option)) in
+     17 |   let _ = assert (a = (Option.map to_int b)) in
+                    ^^^^^^
+     18 |   ()
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
     Everything at the top-level was executed.
     - test exited with value (). |}]
 
@@ -105,6 +177,14 @@ let%expect_test _ =
     :
     Warning: deprecated value.
     Use `Option.value_with_error` instead.
+
+    File "../../test/contracts/option_record.mligo", line 18, characters 2-8:
+     17 |   let s = Option.unopt v.s in
+     18 |   assert (s = 1)
+            ^^^^^^
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
 
     Everything at the top-level was executed.
     - test exited with value (). |}]

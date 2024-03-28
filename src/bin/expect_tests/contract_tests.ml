@@ -353,6 +353,33 @@ let%expect_test _ =
     [ "compile"; "contract"; contract "FA1.2.interface.mligo"; "-m"; "FA12_ENTRIES" ];
   [%expect
     {|
+    File "../../test/contracts/FA1.2.entries.mligo", line 108, characters 3-20:
+    107 |     | None -> 0n in
+    108 |   [Tezos.transaction value 0mutez param.callback], storage
+             ^^^^^^^^^^^^^^^^^
+    109 |
+    :
+    Warning: deprecated value.
+    In a future version, `Tezos` will be replaced by `Tezos.Next`, and using `Operation.transaction` from `Tezos.Next` is encouraged for a smoother migration.
+
+    File "../../test/contracts/FA1.2.entries.mligo", line 116, characters 3-20:
+    115 |     | None -> 0n in
+    116 |   [Tezos.transaction value 0mutez param.callback], storage
+             ^^^^^^^^^^^^^^^^^
+    117 |
+    :
+    Warning: deprecated value.
+    In a future version, `Tezos` will be replaced by `Tezos.Next`, and using `Operation.transaction` from `Tezos.Next` is encouraged for a smoother migration.
+
+    File "../../test/contracts/FA1.2.entries.mligo", line 121, characters 3-20:
+    120 |   let total = storage.total_supply in
+    121 |   [Tezos.transaction total 0mutez param.callback],storage
+             ^^^^^^^^^^^^^^^^^
+    122 |
+    :
+    Warning: deprecated value.
+    In a future version, `Tezos` will be replaced by `Tezos.Next`, and using `Operation.transaction` from `Tezos.Next` is encouraged for a smoother migration.
+
     { parameter
         (or (pair %getTotalSupply (unit %request) (contract %callback nat))
             (or (pair %getBalance (address %owner) (contract %callback nat))
@@ -812,11 +839,11 @@ let%expect_test _ =
   run_ligo_good [ "compile"; "contract"; contract "ticket_builder.mligo" ];
   [%expect
     {|
-    File "../../test/contracts/ticket_builder.mligo", line 29, characters 30-36:
-     28 |         begin
-     29 |           let ((ticketer, _), ticket) =
+    File "../../test/contracts/ticket_builder.mligo", line 31, characters 30-36:
+     30 |         begin
+     31 |           let ((ticketer, _), ticket) =
                                         ^^^^^^
-     30 |             (Tezos.read_ticket ticket : (address * (unit * nat)) * unit ticket) in
+     32 |             (Tezos.Ticket.read ticket : (address * (unit * nat)) * unit ticket) in
     :
     Warning: unused variable "ticket".
     Hint: replace it by "_ticket" to prevent this warning.
@@ -1127,7 +1154,7 @@ File "../../test/contracts/negative/create_contract_toplevel.mligo", line 5, cha
       ^^^^^^^^
  10 |   in
 
-Not all free variables could be inlined in Tezos.create_contract usage: gen#385. |}];
+Not all free variables could be inlined in Tezos.create_contract usage: gen#430. |}];
   run_ligo_good [ "compile"; "contract"; contract "create_contract_var.mligo" ];
   [%expect
     {|
@@ -1219,7 +1246,7 @@ Not all free variables could be inlined in Tezos.create_contract usage: gen#385.
           ^^^^^^^^^^
      15 |   ([toto.0], store)
 
-    Not all free variables could be inlined in Tezos.create_contract usage: gen#386. |}];
+    Not all free variables could be inlined in Tezos.create_contract usage: gen#431. |}];
   run_ligo_bad [ "compile"; "contract"; bad_contract "create_contract_no_inline.mligo" ];
   [%expect
     {|
@@ -1282,7 +1309,7 @@ Not all free variables could be inlined in Tezos.create_contract usage: gen#385.
           ^^^^^^^
      15 |   let toto : operation list = [op] in
 
-    Not all free variables could be inlined in Tezos.create_contract usage: foo#400. |}];
+    Not all free variables could be inlined in Tezos.create_contract usage: foo#445. |}];
   run_ligo_good [ "compile"; "contract"; contract "create_contract.mligo" ];
   [%expect
     {|
@@ -1494,6 +1521,15 @@ let%expect_test _ =
   run_ligo_good [ "compile"; "contract"; contract "self_annotations.mligo" ];
   [%expect
     {|
+    File "../../test/contracts/self_annotations.mligo", line 8, characters 11-28:
+      7 |   let c = (Tezos.self ("%foo") : unit contract) in
+      8 |   let op = Tezos.transaction () 0mutez c in
+                     ^^^^^^^^^^^^^^^^^
+      9 |   ([op] : operation list), ()
+    :
+    Warning: deprecated value.
+    In a future version, `Tezos` will be replaced by `Tezos.Next`, and using `Operation.transaction` from `Tezos.Next` is encouraged for a smoother migration.
+
     { parameter (or (unit %foo) (unit %b)) ;
       storage unit ;
       code { DROP ;
@@ -2146,6 +2182,15 @@ let%expect_test _ =
   run_ligo_good [ "compile"; "contract"; contract "get_capitalized_entrypoint.mligo" ];
   [%expect
     {|
+    File "../../test/contracts/get_capitalized_entrypoint.mligo", line 7, characters 25-42:
+      6 |   | Some dst ->
+      7 |     let op : operation = Tezos.transaction () 0mutez dst in
+                                   ^^^^^^^^^^^^^^^^^
+      8 |     ([op], ())
+    :
+    Warning: deprecated value.
+    In a future version, `Tezos` will be replaced by `Tezos.Next`, and using `Operation.transaction` from `Tezos.Next` is encouraged for a smoother migration.
+
     { parameter unit ;
       storage unit ;
       code { DROP ;
@@ -2649,7 +2694,18 @@ let%expect_test _ =
 (* make sure that in compile storage/expression we can check SELF *)
 let%expect_test _ =
   run_ligo_good [ "compile"; "storage"; contract "self_annotations.mligo"; "()" ];
-  [%expect {| Unit |}]
+  [%expect
+    {|
+    File "../../test/contracts/self_annotations.mligo", line 8, characters 11-28:
+      7 |   let c = (Tezos.self ("%foo") : unit contract) in
+      8 |   let op = Tezos.transaction () 0mutez c in
+                     ^^^^^^^^^^^^^^^^^
+      9 |   ([op] : operation list), ()
+    :
+    Warning: deprecated value.
+    In a future version, `Tezos` will be replaced by `Tezos.Next`, and using `Operation.transaction` from `Tezos.Next` is encouraged for a smoother migration.
+
+    Unit |}]
 
 (* check tag in Tezos.emit *)
 let%expect_test _ =
@@ -2952,6 +3008,33 @@ let%expect_test _ =
   run_ligo_good [ "compile"; "contract"; contract "FA1.2.entries.mligo" ];
   [%expect
     {|
+    File "../../test/contracts/FA1.2.entries.mligo", line 108, characters 3-20:
+    107 |     | None -> 0n in
+    108 |   [Tezos.transaction value 0mutez param.callback], storage
+             ^^^^^^^^^^^^^^^^^
+    109 |
+    :
+    Warning: deprecated value.
+    In a future version, `Tezos` will be replaced by `Tezos.Next`, and using `Operation.transaction` from `Tezos.Next` is encouraged for a smoother migration.
+
+    File "../../test/contracts/FA1.2.entries.mligo", line 116, characters 3-20:
+    115 |     | None -> 0n in
+    116 |   [Tezos.transaction value 0mutez param.callback], storage
+             ^^^^^^^^^^^^^^^^^
+    117 |
+    :
+    Warning: deprecated value.
+    In a future version, `Tezos` will be replaced by `Tezos.Next`, and using `Operation.transaction` from `Tezos.Next` is encouraged for a smoother migration.
+
+    File "../../test/contracts/FA1.2.entries.mligo", line 121, characters 3-20:
+    120 |   let total = storage.total_supply in
+    121 |   [Tezos.transaction total 0mutez param.callback],storage
+             ^^^^^^^^^^^^^^^^^
+    122 |
+    :
+    Warning: deprecated value.
+    In a future version, `Tezos` will be replaced by `Tezos.Next`, and using `Operation.transaction` from `Tezos.Next` is encouraged for a smoother migration.
+
     { parameter
         (or (pair %getTotalSupply (unit %request) (contract %callback nat))
             (or (pair %getBalance (address %owner) (contract %callback nat))
@@ -3119,7 +3202,35 @@ let%expect_test _ =
        = 3n }"
     ];
   [%expect
-    {| (Right (Right (Right (Left (Pair "tz1fakefakefakefakefakefakefakcphLA5" 3))))) |}]
+    {|
+      File "../../test/contracts/FA1.2.entries.mligo", line 108, characters 3-20:
+      107 |     | None -> 0n in
+      108 |   [Tezos.transaction value 0mutez param.callback], storage
+               ^^^^^^^^^^^^^^^^^
+      109 |
+      :
+      Warning: deprecated value.
+      In a future version, `Tezos` will be replaced by `Tezos.Next`, and using `Operation.transaction` from `Tezos.Next` is encouraged for a smoother migration.
+
+      File "../../test/contracts/FA1.2.entries.mligo", line 116, characters 3-20:
+      115 |     | None -> 0n in
+      116 |   [Tezos.transaction value 0mutez param.callback], storage
+               ^^^^^^^^^^^^^^^^^
+      117 |
+      :
+      Warning: deprecated value.
+      In a future version, `Tezos` will be replaced by `Tezos.Next`, and using `Operation.transaction` from `Tezos.Next` is encouraged for a smoother migration.
+
+      File "../../test/contracts/FA1.2.entries.mligo", line 121, characters 3-20:
+      120 |   let total = storage.total_supply in
+      121 |   [Tezos.transaction total 0mutez param.callback],storage
+               ^^^^^^^^^^^^^^^^^
+      122 |
+      :
+      Warning: deprecated value.
+      In a future version, `Tezos` will be replaced by `Tezos.Next`, and using `Operation.transaction` from `Tezos.Next` is encouraged for a smoother migration.
+
+      (Right (Right (Right (Left (Pair "tz1fakefakefakefakefakefakefakcphLA5" 3))))) |}]
 
 let%expect_test _ =
   run_ligo_good [ "compile"; "contract"; contract "pokeGame.jsligo" ];
@@ -3133,6 +3244,15 @@ let%expect_test _ =
     :
     Warning: deprecated value.
     Use `Option.value_with_error` instead.
+
+    File "../../test/contracts/pokeGame.jsligo", line 102, characters 44-63:
+    101 |   } else {
+    102 |     const t : ticket<string> = Option.unopt(Tezos.create_ticket("can_poke", ticketCount));
+                                                      ^^^^^^^^^^^^^^^^^^^
+    103 |     return [
+    :
+    Warning: deprecated value.
+    In a future version, `Tezos` will be replaced by `Tezos.Next`, and using `Ticket.create` from `Tezos.Next` is encouraged for a smoother migration.
 
     { parameter
         (or (pair %init address nat) (or (address %pokeAndGetFeedback) (unit %poke))) ;
@@ -3239,6 +3359,15 @@ let%expect_test _ =
     Warning: deprecated value.
     Use `Option.value_with_error` instead.
 
+    File "../../test/contracts/pokeGame.jsligo", line 102, characters 44-63:
+    101 |   } else {
+    102 |     const t : ticket<string> = Option.unopt(Tezos.create_ticket("can_poke", ticketCount));
+                                                      ^^^^^^^^^^^^^^^^^^^
+    103 |     return [
+    :
+    Warning: deprecated value.
+    In a future version, `Tezos` will be replaced by `Tezos.Next`, and using `Ticket.create` from `Tezos.Next` is encouraged for a smoother migration.
+
     (Right (Right Unit)) |}]
 
 let%expect_test _ =
@@ -3264,6 +3393,15 @@ let%expect_test _ =
   run_ligo_good [ "compile"; "contract"; contract "bytes_bitwise.mligo" ];
   [%expect
     {|
+    File "../../test/contracts/bytes_bitwise.mligo", line 7, characters 11-17:
+      6 |   let b_shift_right = 0x0006 lsr  1n     in
+      7 |   let () = assert (b_and         = 0x0004 &&
+                     ^^^^^^
+      8 |                    b_or          = 0x0107 &&
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
     { parameter unit ;
       storage unit ;
       code { DROP ;
@@ -3308,12 +3446,59 @@ let%expect_test _ =
              NIL operation ;
              PAIR } } |}];
   run_ligo_good [ "run"; "dry-run"; contract "bytes_bitwise.mligo"; "()"; "()" ];
-  [%expect {| ( LIST_EMPTY() , unit ) |}]
+  [%expect
+    {|
+    File "../../test/contracts/bytes_bitwise.mligo", line 7, characters 11-17:
+      6 |   let b_shift_right = 0x0006 lsr  1n     in
+      7 |   let () = assert (b_and         = 0x0004 &&
+                     ^^^^^^
+      8 |                    b_or          = 0x0107 &&
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    ( LIST_EMPTY() , unit ) |}]
 
 let%expect_test _ =
   run_ligo_good [ "compile"; "contract"; contract "bytes_int_nat_conv.mligo" ];
   [%expect
     {|
+    File "../../test/contracts/bytes_int_nat_conv.mligo", line 4, characters 11-17:
+      3 |   (* bytes => nat => bytes *)
+      4 |   let () = assert (b = bytes(nat(b))) in
+                     ^^^^^^
+      5 |   (* bytes => int => bytes *)
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "../../test/contracts/bytes_int_nat_conv.mligo", line 6, characters 11-17:
+      5 |   (* bytes => int => bytes *)
+      6 |   let () = assert (b = bytes(int(b))) in
+                     ^^^^^^
+      7 |   (* int => bytes => int *)
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "../../test/contracts/bytes_int_nat_conv.mligo", line 8, characters 11-17:
+      7 |   (* int => bytes => int *)
+      8 |   let () = assert (1234 = int(bytes(1234))) in
+                     ^^^^^^
+      9 |   (* nat => bytes => nat *)
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "../../test/contracts/bytes_int_nat_conv.mligo", line 10, characters 11-17:
+      9 |   (* nat => bytes => nat *)
+     10 |   let () = assert (4567n = nat(bytes(4567n))) in
+                     ^^^^^^
+     11 |   [], ()
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
     { parameter unit ;
       storage unit ;
       code { DROP ;
@@ -3350,7 +3535,45 @@ let%expect_test _ =
              NIL operation ;
              PAIR } } |}];
   run_ligo_good [ "run"; "dry-run"; contract "bytes_int_nat_conv.mligo"; "()"; "()" ];
-  [%expect {| ( LIST_EMPTY() , unit ) |}]
+  [%expect
+    {|
+    File "../../test/contracts/bytes_int_nat_conv.mligo", line 4, characters 11-17:
+      3 |   (* bytes => nat => bytes *)
+      4 |   let () = assert (b = bytes(nat(b))) in
+                     ^^^^^^
+      5 |   (* bytes => int => bytes *)
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "../../test/contracts/bytes_int_nat_conv.mligo", line 6, characters 11-17:
+      5 |   (* bytes => int => bytes *)
+      6 |   let () = assert (b = bytes(int(b))) in
+                     ^^^^^^
+      7 |   (* int => bytes => int *)
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "../../test/contracts/bytes_int_nat_conv.mligo", line 8, characters 11-17:
+      7 |   (* int => bytes => int *)
+      8 |   let () = assert (1234 = int(bytes(1234))) in
+                     ^^^^^^
+      9 |   (* nat => bytes => nat *)
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "../../test/contracts/bytes_int_nat_conv.mligo", line 10, characters 11-17:
+      9 |   (* nat => bytes => nat *)
+     10 |   let () = assert (4567n = nat(bytes(4567n))) in
+                     ^^^^^^
+     11 |   [], ()
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    ( LIST_EMPTY() , unit ) |}]
 
 let%expect_test _ =
   run_ligo_good
@@ -3385,6 +3608,15 @@ let%expect_test _ =
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.transfer_exn` from `Test.Next` is encouraged for a smoother migration.
+
+    File "../../test/contracts/increment_prefix.jsligo", line 26, characters 9-15:
+     25 |   Test.transfer_exn(orig.addr, Increment(), 1mutez);
+     26 |   return assert(Test.get_storage(orig.addr) == initial_storage + 1);
+                   ^^^^^^
+     27 | }) ();
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
 
     File "../../test/contracts/increment_prefix.jsligo", line 26, characters 16-32:
      25 |   Test.transfer_exn(orig.addr, Increment(), 1mutez);
@@ -3526,6 +3758,15 @@ let%expect_test _ =
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.get_storage` from `Test.Next` is encouraged for a smoother migration.
+
+    File "../../test/contracts/reverse_string_for_loop.jsligo", line 22, characters 13-19:
+     21 |       Test.log(Test.get_storage(orig.addr));
+     22 |       return assert(Test.get_storage(orig.addr) == "reverse")
+                       ^^^^^^
+     23 |     }
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
 
     File "../../test/contracts/reverse_string_for_loop.jsligo", line 22, characters 20-36:
      21 |       Test.log(Test.get_storage(orig.addr));

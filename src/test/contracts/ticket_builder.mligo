@@ -6,6 +6,8 @@ Modelled after:
 Goes with ticket_wallet.mligo.
 *)
 
+module Tezos = Tezos.Next
+
 type mint_parameter =
   [@layout comb]
   {
@@ -22,22 +24,22 @@ type storage = [@layout comb] {admin : address}
 [@entry]
 let main (p : parameter) (s : storage) : operation list * storage =
   begin
-    assert (Tezos.get_amount () = 0mutez);
+    Assert.assert (Tezos.get_amount () = 0mutez);
     match p with
       Burn ticket ->
         begin
           let ((ticketer, _), ticket) =
-            (Tezos.read_ticket ticket : (address * (unit * nat)) * unit ticket) in
-          assert (ticketer = Tezos.get_self_address ());
+            (Tezos.Ticket.read ticket : (address * (unit * nat)) * unit ticket) in
+          Assert.assert (ticketer = Tezos.get_self_address ());
           (([] : operation list), s)
         end
     | Mint mint ->
         begin
-          assert (Tezos.get_sender () = s.admin);
+          Assert.assert (Tezos.get_sender () = s.admin);
           let ticket =
             Option.value_with_error
-              "option is None" (Tezos.create_ticket () mint.amount) in
-          let op = Tezos.transaction ticket 0mutez mint.destination in
+              "option is None" (Tezos.Ticket.create () mint.amount) in
+          let op = Tezos.Operation.transaction ticket 0mutez mint.destination in
           ([op], s)
         end
   end
