@@ -1,0 +1,7 @@
+
+author: heitor.toledo
+description: "\\nThe LSP should now be a bit more resilient against crashes, and better log exceptions.\\n\\n"
+merge_request: '3124'
+title: "[Chore] Prevent crash in typer error recovery"
+type: fixed
+            
