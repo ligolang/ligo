@@ -162,9 +162,9 @@ type typer_error =
     Ast_core.type_expression option Ast_core.Pattern.t * Type.t * Location.t
   | `Typer_uncomparable_types of Type.t * Type.t * Location.t
   | `Typer_comparator_composed of Type.t * Location.t
-  | `Typer_cannot_decode_texists of Type_var.t * Type.t * Location.t
-  | `Typer_cannot_encode_texists of Ast_typed.type_expression * Location.t
-  | `Typer_cannot_decompile_texists of Ast_typed.type_expression * Location.t
+  | `Typer_cannot_decode_texists of Type_var.t * Location.t
+  | `Typer_cannot_encode_texists of Type_var.t * Location.t
+  | `Typer_cannot_decompile_texists of Type_var.t * Location.t
   | `Typer_signature_not_found_value of Value_var.t * Location.t
   | `Typer_signature_not_found_type of Type_var.t * Location.t
   | `Typer_signature_not_found_entry of Value_var.t * Location.t
@@ -503,27 +503,27 @@ let rec extract_loc_and_message
       | mvar :: path -> Format.fprintf ppf "%a.%a" Module_var.pp mvar pp_path path
     in
     loc, Format.asprintf "@[<hv> Signature \"%a\" not found.@]" pp_path path
-  | `Typer_cannot_decode_texists (_tvar, type_, loc) ->
-    let type_ = type_improve type_ in
+  | `Typer_cannot_decode_texists (tvar, loc) ->
     ( loc
     , Format.asprintf
-        "@[<hv>Underspecified type \"%a\".@.Please add additional annotations.%a@]"
-        pp_type
-        type_
+        "@[<hv>Underspecified type \"^%s\".@.Please add additional annotations.%a@]"
+        (Type.Type_var_name_tbl.Exists.name_of tvar)
         (pp_texists_hint ())
-        [ type_ ] )
-  | `Typer_cannot_decompile_texists (type_, loc) ->
+        [ Type.t_exists ~loc tvar () ] )
+  | `Typer_cannot_decompile_texists (tvar, loc) ->
     ( loc
     , Format.asprintf
-        "@[<hv>Underspecified type \"%a\".@.Cannot decompile this type.@]"
-        Ast_typed.PP.type_expression
-        type_ )
-  | `Typer_cannot_encode_texists (type_, loc) ->
+        "@[<hv>Underspecified type \"^%s\".@.Cannot decompile this type.%a@]"
+        (Type.Type_var_name_tbl.Exists.name_of tvar)
+        (pp_texists_hint ())
+        [ Type.t_exists ~loc tvar () ] )
+  | `Typer_cannot_encode_texists (tvar, loc) ->
     ( loc
     , Format.asprintf
-        "@[<hv>Underspecified type \"%a\".@.Cannot encode this type.@]"
-        Ast_typed.PP.type_expression
-        type_ )
+        "@[<hv>Underspecified type \"^%s\".@.Cannot encode this type.%a@]"
+        (Type.Type_var_name_tbl.Exists.name_of tvar)
+        (pp_texists_hint ())
+        [ Type.t_exists ~loc tvar () ] )
   | `Typer_literal_type_mismatch (lit_type, expected_type, loc) ->
     let lit_type = type_improve lit_type in
     let expected_type = type_improve expected_type in

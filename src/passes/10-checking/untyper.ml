@@ -43,8 +43,13 @@ let rec untype_type_expression
       I.T_record { fields; layout = Some layout }
     | O.T_variable name -> I.T_variable name
     | O.T_exists name ->
-      raise.log_error (`Typer_cannot_decompile_texists (t, t.location));
-      I.T_variable name
+      raise.log_error (`Typer_cannot_decompile_texists (name, t.location));
+      (* TODO: #2170 *)
+      let name_content = Type.Type_var_name_tbl.Exists.name_of name in
+      I.T_variable
+        (Type_var.of_input_var
+           ~loc:(Type_var.get_location name)
+           (Format.asprintf "^%s" name_content))
     | O.T_arrow arr ->
       let arr = Arrow.map self arr in
       I.T_arrow arr
@@ -236,8 +241,8 @@ and untype_sig_item ~raise ?(use_orig_var = false) : O.sig_item -> I.sig_item =
        [type t = ^a], which is undesirable. To work around this, we log the error and
        return this as a type var. *)
     (match type_.type_content with
-    | T_exists _ ->
-      raise.log_error (`Typer_cannot_decompile_texists (type_, type_.location));
+    | T_exists name ->
+      raise.log_error (`Typer_cannot_decompile_texists (name, type_.location));
       S_type_var (var, { leading_comments })
     | _ ->
       S_type (var, untype_type_expression ~raise ~use_orig_var type_, { leading_comments }))

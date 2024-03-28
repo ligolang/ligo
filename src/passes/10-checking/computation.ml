@@ -15,6 +15,7 @@ type ('a, 'err, 'wrn) t =
   -> options:Compiler_options.middle_end
   -> loc:Location.t
   -> path:Module_var.t list
+  -> poly_name_tbl:Type.Type_var_name_tbl.t
   -> State.t
   -> State.t * 'a
 
@@ -31,7 +32,7 @@ let rec encode ~raise (type_ : Ast_typed.type_expression) : Type.t =
   match type_.type_content with
   | T_variable tvar -> return @@ T_variable tvar
   | T_exists tvar ->
-    let () = raise.log_error @@ cannot_encode_texists type_ type_.location in
+    let () = raise.log_error @@ cannot_encode_texists tvar type_.location in
     return @@ T_exists tvar
   | T_arrow arr ->
     let arr = Arrow.map encode arr in
@@ -135,7 +136,10 @@ let run_elab t ~raise ~options ~loc ~path ?env () =
   let ctx = ctx_init_of_sig ~raise ?env () in
   (* Format.printf "@[Context:@.%a@]" Context.pp ctx; *)
   let ctx, pos = Context.mark ctx in
-  let (ctx, subst), elab = t ~raise ~options ~loc ~path (ctx, Substitution.empty) in
+  let poly_name_tbl = Type.Type_var_name_tbl.create () in
+  let (ctx, subst), elab =
+    t ~raise ~options ~loc ~path ~poly_name_tbl (ctx, Substitution.empty)
+  in
   (* Drop to get any remaining equations that relate to elaborated thing *)
   let _ctx, subst' = Context.drop_until ctx ~pos ~on_exit:Drop in
   Elaboration.run elab ~path ~raise ~options (Substitution.merge subst subst')
@@ -144,28 +148,30 @@ let run_elab t ~raise ~options ~loc ~path ?env () =
 include Monad.Make3 (struct
   type nonrec ('a, 'err, 'wrn) t = ('a, 'err, 'wrn) t
 
-  let return result ~raise:_ ~options:_ ~loc:_ ~path:_ state = state, result
+  let return result ~raise:_ ~options:_ ~loc:_ ~path:_ ~poly_name_tbl:_ state =
+    state, result
 
-  let bind t ~f ~raise ~options ~loc ~path state =
-    let state, result = t ~raise ~options ~loc ~path state in
-    f result ~raise ~options ~loc ~path state
+
+  let bind t ~f ~raise ~options ~loc ~path ~poly_name_tbl state =
+    let state, result = t ~raise ~options ~loc ~path ~poly_name_tbl state in
+    f result ~raise ~options ~loc ~path ~poly_name_tbl state
 
 
   let map = `Define_using_bind
 end)
 
 let all_lmap (lmap : ('a, 'err, 'wrn) t Label.Map.t) : ('a Label.Map.t, 'err, 'wrn) t =
- fun ~raise ~options ~loc ~path state ->
+ fun ~raise ~options ~loc ~path ~poly_name_tbl state ->
   Label.Map.fold_map lmap ~init:state ~f:(fun ~key:_label ~data:t state ->
-      t ~raise ~options ~loc ~path state)
+      t ~raise ~options ~loc ~path ~poly_name_tbl state)
 
 
 let all_lmap_unit (lmap : (unit, 'err, 'wrn) t Label.Map.t) : (unit, 'err, 'wrn) t =
- fun ~raise ~options ~loc ~path state ->
+ fun ~raise ~options ~loc ~path ~poly_name_tbl state ->
   let state =
     Label.Map.fold
       ~f:(fun ~key:_label ~data:t state ->
-        let state, () = t ~raise ~options ~loc ~path state in
+        let state, () = t ~raise ~options ~loc ~path ~poly_name_tbl state in
         state)
       lmap
       ~init:state
@@ -174,62 +180,80 @@ let all_lmap_unit (lmap : (unit, 'err, 'wrn) t Label.Map.t) : (unit, 'err, 'wrn)
 
 
 let context () : (Context.t, _, _) t =
- fun ~raise:_ ~options:_ ~loc:_ ~path:_ (ctx, subst) -> (ctx, subst), ctx
+ fun ~raise:_ ~options:_ ~loc:_ ~path:_ ~poly_name_tbl:_ (ctx, subst) -> (ctx, subst), ctx
 
 
 let options () : (Compiler_options.middle_end, _, _) t =
- fun ~raise:_ ~options ~loc:_ ~path:_ state -> state, options
+ fun ~raise:_ ~options ~loc:_ ~path:_ ~poly_name_tbl:_ state -> state, options
 
 
 let loc () : (Location.t, _, _) t =
- fun ~raise:_ ~options:_ ~loc ~path:_ state -> state, loc
+ fun ~raise:_ ~options:_ ~loc ~path:_ ~poly_name_tbl:_ state -> state, loc
 
 
 let path () : (Module_var.t list, _, _) t =
- fun ~raise:_ ~options:_ ~loc:_ ~path state -> state, path
+ fun ~raise:_ ~options:_ ~loc:_ ~path ~poly_name_tbl:_ state -> state, path
+
+
+let poly_name_tbl () : (Type.Type_var_name_tbl.t, _, _) t =
+ fun ~raise:_ ~options:_ ~loc:_ ~path:_ ~poly_name_tbl state -> state, poly_name_tbl
 
 
 let set_loc loc (in_ : ('a, 'err, 'wrn) t) : ('a, 'err, 'wrn) t =
- fun ~raise ~options ~loc:_ ~path state -> in_ ~raise ~options ~loc ~path state
+ fun ~raise ~options ~loc:_ ~path ~poly_name_tbl state ->
+  in_ ~raise ~options ~loc ~path ~poly_name_tbl state
 
 
 let set_path path (in_ : ('a, 'err, 'wrn) t) : ('a, 'err, 'wrn) t =
- fun ~raise ~options ~loc ~path:_ state -> in_ ~raise ~options ~loc ~path state
+ fun ~raise ~options ~loc ~path:_ ~poly_name_tbl state ->
+  in_ ~raise ~options ~loc ~path ~poly_name_tbl state
+
+
+let set_poly_name_tbl poly_name_tbl (in_ : ('a, 'err, 'wrn) t) : ('a, 'err, 'wrn) t =
+ fun ~raise ~options ~loc ~path ~poly_name_tbl:_ state ->
+  in_ ~raise ~options ~loc ~path ~poly_name_tbl state
 
 
 let set_context ctx : (unit, _, _) t =
- fun ~raise:_ ~options:_ ~loc:_ ~path:_ (_ctx, subst) -> (ctx, subst), ()
+ fun ~raise:_ ~options:_ ~loc:_ ~path:_ ~poly_name_tbl:_ (_ctx, subst) -> (ctx, subst), ()
 
 
-let lift_raise f : _ t = fun ~raise ~options:_ ~loc:_ ~path:_ state -> state, f raise
+let lift_raise f : _ t =
+ fun ~raise ~options:_ ~loc:_ ~path:_ ~poly_name_tbl:_ state -> state, f raise
+
 
 let raise_result result ~error : _ t =
- fun ~raise ~options:_ ~loc ~path:_ state ->
+ fun ~raise ~options:_ ~loc ~path:_ ~poly_name_tbl:_ state ->
   match result with
   | Ok result -> state, result
   | Error err -> raise.error (error err loc)
 
 
 let raise_opt opt ~error : _ t =
- fun ~raise ~options:_ ~loc ~path:_ state -> state, trace_option ~raise (error loc) opt
+ fun ~raise ~options:_ ~loc ~path:_ ~poly_name_tbl:_ state ->
+  state, trace_option ~raise (error loc) opt
 
 
-let raise err : _ t = fun ~raise ~options:_ ~loc ~path:_ _state -> raise.error (err loc)
+let raise err : _ t =
+ fun ~raise ~options:_ ~loc ~path:_ ~poly_name_tbl:_ _state -> raise.error (err loc)
+
 
 let log_error err : _ t =
- fun ~raise ~options:_ ~loc ~path:_ state -> state, raise.log_error (err loc)
+ fun ~raise ~options:_ ~loc ~path:_ ~poly_name_tbl:_ state ->
+  state, raise.log_error (err loc)
 
 
 let raise_l ~loc err : _ t =
- fun ~raise ~options:_ ~loc:_ ~path:_ _state -> raise.error (err loc)
+ fun ~raise ~options:_ ~loc:_ ~path:_ ~poly_name_tbl:_ _state -> raise.error (err loc)
 
 
 let log_error_l ~loc err : _ t =
- fun ~raise ~options:_ ~loc:_ ~path:_ state -> state, raise.log_error (err loc)
+ fun ~raise ~options:_ ~loc:_ ~path:_ ~poly_name_tbl:_ state ->
+  state, raise.log_error (err loc)
 
 
 let warn wrn : _ t =
- fun ~raise ~options:_ ~loc ~path:_ state ->
+ fun ~raise ~options:_ ~loc ~path:_ ~poly_name_tbl:_ state ->
   raise.warning (wrn loc);
   state, ()
 
@@ -328,9 +352,11 @@ module Context = struct
 
 
   let lock (type a) ~(on_exit : a exit) ~(in_ : (a, _, _) t) : (a, _, _) t =
-   fun ~raise ~options ~loc ~path (ctx, subst) ->
+   fun ~raise ~options ~loc ~path ~poly_name_tbl (ctx, subst) ->
     let ctx, lock = Context.lock ctx in
-    let (ctx, subst), result = in_ ~raise ~options ~loc ~path (ctx, subst) in
+    let (ctx, subst), result =
+      in_ ~raise ~options ~loc ~path ~poly_name_tbl (ctx, subst)
+    in
     let ctx, subst', (result : a) =
       match on_exit, result with
       | Drop, result ->
@@ -352,10 +378,12 @@ module Context = struct
 
 
   let add (type a) items ~(on_exit : a exit) ~(in_ : (a, _, _) t) : (a, _, _) t =
-   fun ~raise ~options ~loc ~path (ctx, subst) ->
+   fun ~raise ~options ~loc ~path ~poly_name_tbl (ctx, subst) ->
     let ctx, pos = Context.mark ctx in
     let ctx = List.fold_right items ~init:ctx ~f:(fun item ctx -> Context.add ctx item) in
-    let (ctx, subst), result = in_ ~raise ~options ~loc ~path (ctx, subst) in
+    let (ctx, subst), result =
+      in_ ~raise ~options ~loc ~path ~poly_name_tbl (ctx, subst)
+    in
     let ctx, subst', (result : a) =
       match on_exit, result with
       | Drop, result ->
@@ -377,7 +405,7 @@ module Context = struct
 
 
   let push items : _ t =
-   fun ~raise:_ ~options:_ ~loc:_ ~path:_ (ctx, subst) ->
+   fun ~raise:_ ~options:_ ~loc:_ ~path:_ ~poly_name_tbl:_ (ctx, subst) ->
     (Context.(ctx |@ of_list items), subst), ()
 
 
@@ -414,18 +442,18 @@ module Context = struct
   let get_record fields : _ t = lift_ctx (fun ctx -> Context.get_record ctx fields)
 
   let add_texists_eq tvar kind type_ : _ t =
-   fun ~raise:_ ~options:_ ~loc:_ ~path:_ (ctx, subst) ->
+   fun ~raise:_ ~options:_ ~loc:_ ~path:_ ~poly_name_tbl:_ (ctx, subst) ->
     (Context.add_texists_eq ctx tvar kind type_, subst), ()
 
 
   let add_lexists_eq lvar fields layout : _ t =
-   fun ~raise:_ ~options:_ ~loc:_ ~path:_ (ctx, subst) ->
+   fun ~raise:_ ~options:_ ~loc:_ ~path:_ ~poly_name_tbl:_ (ctx, subst) ->
     (Context.add_lexists_eq ctx lvar fields layout, subst), ()
 
 
   module Apply = struct
     let type_ type' : _ t =
-     fun ~raise:_ ~options:_ ~loc:_ ~path:_ (ctx, subst) ->
+     fun ~raise:_ ~options:_ ~loc:_ ~path:_ ~poly_name_tbl:_ (ctx, subst) ->
       (ctx, subst), Context.Apply.type_ ctx type'
   end
 
@@ -844,7 +872,7 @@ let lexists fields =
 module Error_recovery = struct
   open Let_syntax
 
-  let is_enabled ~raise:_ ~options ~loc:_ ~path:_ state =
+  let is_enabled ~raise:_ ~options ~loc:_ ~path:_ ~poly_name_tbl:_ state =
     state, options.Compiler_options.typer_error_recovery
 
 
@@ -865,19 +893,19 @@ module Error_recovery = struct
     | Error err -> raise_or_use_default ~error:(Fn.flip error err) ~default
 
 
-  let wildcard_type ~raise ~options ~loc ~path state =
-    exists Type ~raise ~options ~loc ~path state
+  let wildcard_type ~raise ~options ~loc ~path ~poly_name_tbl state =
+    exists Type ~raise ~options ~loc ~path ~poly_name_tbl state
 
 
   let raise_or_use_default_type ~error =
     raise_or_use_default ~error ~default:wildcard_type
 
 
-  let row ~raise:_ ~options:_ ~loc:_ ~path:_ state =
+  let row ~raise:_ ~options:_ ~loc:_ ~path:_ ~poly_name_tbl:_ state =
     state, { Type.Row.fields = Record.empty; layout = Type.Layout.default [] }
 
 
-  let sig_ ~raise:_ ~options:_ ~loc:_ ~path:_ state =
+  let sig_ ~raise:_ ~options:_ ~loc:_ ~path:_ ~poly_name_tbl:_ state =
     state, { Context.Signature.items = []; sort = Ss_module }
 
 
@@ -1000,10 +1028,14 @@ let hash_context () =
 let generalize (t : (Type.t * 'a, _, _) t)
     : (Type.t * (Type_var.t * Kind.t) list * 'a, _, _) t
   =
- fun ~raise ~options ~loc ~path (ctx, subst) ->
+ fun ~raise ~options ~loc ~path ~poly_name_tbl (ctx, subst) ->
   let ctx, pos = Context_.mark ctx in
-  let (ctx, subst), (type_, result) = t ~raise ~options ~loc ~path (ctx, subst) in
-  let ctx, type_, tvars, subst' = Context_.generalize ctx type_ ~pos ~loc in
+  let (ctx, subst), (type_, result) =
+    t ~raise ~options ~loc ~path ~poly_name_tbl (ctx, subst)
+  in
+  let ctx, type_, tvars, subst' =
+    Context_.generalize ctx type_ ~pos ~loc ~poly_name_tbl
+  in
   (ctx, Substitution.merge subst subst'), (type_, tvars, result)
 
 
@@ -1016,15 +1048,15 @@ let create_type (constr : Type.constr) =
 let try_ (body : ('a, 'err, 'wrn) t) ~(with_ : 'err list -> ('a, 'err, 'wrn) t)
     : ('a, 'err, 'wrn) t
   =
- fun ~raise ~options ~loc ~path state ->
-  let body = body ~options ~loc ~path state in
+ fun ~raise ~options ~loc ~path ~poly_name_tbl state ->
+  let body = body ~options ~loc ~path ~poly_name_tbl state in
   match
     if options.typer_error_recovery
     then Trace.to_stdlib_result ~fast_fail:No_fast_fail body
     else Trace.cast_fast_fail_result @@ Trace.to_stdlib_result ~fast_fail:Fast_fail body
   with
   | Ok (result, _es, _ws) -> result
-  | Error (es, _ws) -> with_ es ~raise ~options ~loc ~path state
+  | Error (es, _ws) -> with_ es ~raise ~options ~loc ~path ~poly_name_tbl state
 
 
 let try_with_diagnostics
@@ -1033,8 +1065,8 @@ let try_with_diagnostics
     ~(diagnostics : 'err list -> 'wrn list -> (unit, 'err, 'wrn) t)
     : ('a, 'err, 'wrn) t
   =
- fun ~raise ~options ~loc ~path state ->
-  let body = body ~options ~loc ~path state in
+ fun ~raise ~options ~loc ~path ~poly_name_tbl state ->
+  let body = body ~options ~loc ~path ~poly_name_tbl state in
   let (state, result), es, ws =
     match
       if options.typer_error_recovery
@@ -1043,19 +1075,20 @@ let try_with_diagnostics
     with
     | Ok (result, es, ws) -> result, es, ws
     | Error (es, ws) ->
-      let result = with_ ~raise ~options ~loc ~path state in
+      let result = with_ ~raise ~options ~loc ~path ~poly_name_tbl state in
       result, es, ws
   in
-  let state, () = diagnostics es ws ~raise ~options ~loc ~path state in
+  let state, () = diagnostics es ws ~raise ~options ~loc ~path ~poly_name_tbl state in
   state, result
 
 
 let try_all (ts : ('a, 'err, 'wrn) t list) : ('a, 'err, 'wrn) t =
- fun ~raise ~options ~loc ~path state ->
+ fun ~raise ~options ~loc ~path ~poly_name_tbl state ->
   Trace.bind_exists
     ~raise
     (List.Ne.of_list
-    @@ List.map ts ~f:(fun t ~raise -> t ~raise ~options ~loc ~path state))
+    @@ List.map ts ~f:(fun t ~raise -> t ~raise ~options ~loc ~path ~poly_name_tbl state)
+    )
 
 
 module With_frag = struct
@@ -1091,24 +1124,26 @@ module With_frag = struct
   end)
 
   let all_lmap (lmap : ('a, 'err, 'wrn) t Label.Map.t) : ('a Label.Map.t, 'err, 'wrn) t =
-   fun ~raise ~options ~loc ~path state ->
+   fun ~raise ~options ~loc ~path ~poly_name_tbl state ->
     let (state, frag), lmap =
       Label.Map.fold_map
         lmap
         ~init:(state, [])
         ~f:(fun ~key:_label ~data:t (state, frag) ->
-          let state, (frag', result) = t ~raise ~options ~loc ~path state in
+          let state, (frag', result) =
+            t ~raise ~options ~loc ~path ~poly_name_tbl state
+          in
           (state, frag @ frag'), result)
     in
     state, (frag, lmap)
 
 
   let all_lmap_unit (lmap : (unit, 'err, 'wrn) t Label.Map.t) : (unit, 'err, 'wrn) t =
-   fun ~raise ~options ~loc ~path state ->
+   fun ~raise ~options ~loc ~path ~poly_name_tbl state ->
     let state, frag =
       Label.Map.fold
         ~f:(fun ~key:_label ~data:t (state, frag) ->
-          let state, (frag', ()) = t ~raise ~options ~loc ~path state in
+          let state, (frag', ()) = t ~raise ~options ~loc ~path ~poly_name_tbl state in
           state, frag @ frag')
         lmap
         ~init:(state, [])

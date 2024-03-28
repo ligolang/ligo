@@ -1284,7 +1284,7 @@ let generalize_type ~loc ~tvars ~subst type_ =
       Type.t_for_all ~loc { ty_binder = tvar'; kind; type_ } ())
 
 
-let generalize t type_ ~pos ~loc =
+let generalize t type_ ~pos ~loc ~poly_name_tbl =
   let ctxl, ctxr = split_at t ~at:(C_pos pos) in
   (* Determine subst and generalizable vars of [ctxr] *)
   let subst, tvars, lvars = unsolved ctxr in
@@ -1292,7 +1292,9 @@ let generalize t type_ ~pos ~loc =
      to universal [tvars'] (and [default_layout]) *)
   let tvars =
     (* [exn] is safe since [tvar] in tvars shouldn't be duplicated *)
-    List.map tvars ~f:(fun (tvar, kind) -> tvar, (Type_var.fresh_like ~loc tvar, kind))
+    List.map tvars ~f:(fun (tvar, kind) ->
+        let name_content = Type_var_name_tbl.name_of poly_name_tbl tvar in
+        tvar, (Type_var.of_input_var ~loc name_content, kind))
   in
   (* Add layout substs *)
   let subst =

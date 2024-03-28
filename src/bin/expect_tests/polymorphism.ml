@@ -483,7 +483,7 @@ let%expect_test _ =
                   ^^
       2 |
 
-    Underspecified type "list (^a)".
+    Underspecified type "^a".
     Please add additional annotations.
     Hint: "^a" represent placeholder type(s). |xxx}]
 
@@ -491,7 +491,7 @@ let%expect_test _ =
   run_ligo_bad [ "compile"; "expression"; "cameligo"; "[]" ];
   [%expect
     {|
-    Underspecified type "list (^a)".
+    Underspecified type "^a".
     Please add additional annotations.
     Hint: "^a" represent placeholder type(s). |}]
 
@@ -505,7 +505,7 @@ let%expect_test _ =
       2 |
 
     Cannot monomorphise the expression.
-    The inferred type was "[_]unit -> ∀ a . ∀ b . [s]a -> ( list (b) * a )".
+    The inferred type was "[_]unit -> ∀ b . ∀ c . [s]b -> ( list (c) * b )".
     Hint: Try adding additional annotations. |}]
 
 let%expect_test _ =
