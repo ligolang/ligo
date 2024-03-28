@@ -125,6 +125,15 @@ let%expect_test "dynamic entrypoints test (mligo)" =
   Warning: deprecated value.
   In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.transfer_exn` from `Test.Next` is encouraged for a smoother migration.
 
+  File "../../test/contracts/dynamic_entrypoints_tests.mligo", line 33, characters 11-17:
+   32 |   let _ = Test.transfer_exn orig.addr (Call_one ()) 1mutez in
+   33 |   let () = assert ((Test.get_storage orig.addr).storage = 1) in
+                   ^^^^^^
+   34 |   (* Change initial one and call it *)
+  :
+  Warning: deprecated value.
+  In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
   File "../../test/contracts/dynamic_entrypoints_tests.mligo", line 33, characters 20-36:
    32 |   let _ = Test.transfer_exn orig.addr (Call_one ()) 1mutez in
    33 |   let () = assert ((Test.get_storage orig.addr).storage = 1) in
@@ -151,6 +160,14 @@ let%expect_test "dynamic entrypoints test (mligo)" =
   :
   Warning: deprecated value.
   In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.transfer_exn` from `Test.Next` is encouraged for a smoother migration.
+
+  File "../../test/contracts/dynamic_entrypoints_tests.mligo", line 38, characters 2-8:
+   37 |   let _ = Test.transfer_exn orig.addr (Call_one ()) 1mutez in
+   38 |   assert ((Test.get_storage orig.addr).storage = 2)
+          ^^^^^^
+  :
+  Warning: deprecated value.
+  In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
 
   File "../../test/contracts/dynamic_entrypoints_tests.mligo", line 38, characters 11-27:
    37 |   let _ = Test.transfer_exn orig.addr (Call_one ()) 1mutez in
@@ -194,6 +211,15 @@ let%expect_test "dynamic entrypoints test (jsligo)" =
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.transfer_exn` from `Test.Next` is encouraged for a smoother migration.
 
+    File "../../test/contracts/dynamic_entrypoints_tests.jsligo", line 36, characters 2-8:
+     35 |   Test.transfer_exn (orig.addr, Call_one(), 1mutez);
+     36 |   assert ((Test.get_storage(orig.addr)).storage == 1);
+            ^^^^^^
+     37 |   /* Change initial one and call it */
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
     File "../../test/contracts/dynamic_entrypoints_tests.jsligo", line 36, characters 11-27:
      35 |   Test.transfer_exn (orig.addr, Call_one(), 1mutez);
      36 |   assert ((Test.get_storage(orig.addr)).storage == 1);
@@ -220,6 +246,15 @@ let%expect_test "dynamic entrypoints test (jsligo)" =
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.transfer_exn` from `Test.Next` is encouraged for a smoother migration.
+
+    File "../../test/contracts/dynamic_entrypoints_tests.jsligo", line 41, characters 2-8:
+     40 |   Test.transfer_exn (orig.addr, (Call_one()), 1mutez);
+     41 |   assert ((Test.get_storage(orig.addr)).storage == 2);
+            ^^^^^^
+     42 |   return []
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
 
     File "../../test/contracts/dynamic_entrypoints_tests.jsligo", line 41, characters 11-27:
      40 |   Test.transfer_exn (orig.addr, (Call_one()), 1mutez);

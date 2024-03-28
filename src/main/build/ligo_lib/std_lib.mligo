@@ -98,19 +98,47 @@ let ignore (type a) (_: a) : unit = ()
   The call `curry f x y` has the same value as `f (x,y)`. *)
 (** display-only-for-jsligo
   The call `curry(f,x,y)` has the same value as `f(x,y)`. *)
+[@deprecated "In a future version, this function will be deprecated, and using `Tuple2.curry` is encouraged for a smoother migration."]
 let curry (type a b c) (f: a * b -> c) (x: a) (y: b) : c = f (x, y)
 
 (** display-only-for-cameligo
   The call `uncurry f (x,y)` has the same value as `f x y`. *)
 (** display-only-for-jsligo
   The call `uncurry(f,[x,y])` has the same value as `f(x)(y)`. *)
+[@deprecated "In a future version, this function will be deprecated, and using `Tuple2.uncurry` is encouraged for a smoother migration."]
 let uncurry (type a b c) (f: a -> b -> c) (x,y : a * b) : c = f x y
 
 (** Projecting the first component of a pair *)
+[@deprecated "In a future version, this function will be deprecated, and using `Tuple2.get1` is encouraged for a smoother migration."]
 let fst (type a b) (x,_ : a * b) : a = x
 
 (** Projecting the second component of a pair. *)
+[@deprecated "In a future version, this function will be deprecated, and using `Tuple2.get2` is encouraged for a smoother migration."]
 let snd (type a b) (_,y : a * b) : b = y
+
+(** Binary tuples *)
+module Tuple2 = struct
+  (** display-only-for-cameligo
+    The call `curry f x y` has the same value as `f (x,y)`. *)
+  (** display-only-for-jsligo
+    The call `curry(f,x,y)` has the same value as `f(x,y)`. *)
+  let curry (type a b c) (f: a * b -> c) (x: a) (y: b) : c = f (x, y)
+
+  (** display-only-for-cameligo
+    The call `uncurry f (x,y)` has the same value as `f x y`. *)
+  (** display-only-for-jsligo
+    The call `uncurry(f,[x,y])` has the same value as `f(x)(y)`. *)
+  let uncurry (type a b c) (f: a -> b -> c) (x,y : a * b) : c = f x y
+
+  (** Projecting the first component of a pair *)
+  let get1 (type a b) (x,_ : a * b) : a = x
+
+  (** Projecting the second component of a pair. *)
+  let get2 (type a b) (_,y : a * b) : b = y
+
+  (** Swap the components of a pair. *)
+  let swap (type a b) (x,y : a * b) : b * a = (y, x)
+end
 
 (** display-only-for-cameligo
   The call `failwith e` terminates the execution with the value `e`,
@@ -139,6 +167,7 @@ let bytes (type a) (value: a) : a external_bytes =
   The call `assert_with_error(cond, error)` terminates the execution
   with the string `error` (that is, an error message) if, and only if,
   the boolean condition `cond` is false. *)
+[@deprecated "In a future version, this function will be deprecated, and using `Assert.Error.assert` is encouraged for a smoother migration."]
 let assert_with_error (condition: bool) (error: string) : unit =
   if condition then () else failwith error
 
@@ -150,6 +179,7 @@ let assert_with_error (condition: bool) (error: string) : unit =
   The call `assert(cond)` terminates the execution with the string
   `"failed assertion"` if, and only if, the boolean condition `cond`
   is false. *)
+[@deprecated "In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration."]
 [@inline]
 let assert (condition: bool) : unit =
   assert_with_error condition "failed assertion"
@@ -162,6 +192,7 @@ let assert (condition: bool) : unit =
   The call `assert_some_with_error(opt, err)` terminates the execution
   with the string `err` (that is, an error message) if, and only if,
   `opt` is `None()`. *)
+[@deprecated "In a future version, this function will be deprecated, and using `Assert.Error.some` is encouraged for a smoother migration."]
 let assert_some_with_error (type a) (opt: a option) (err: string) : unit =
   match opt with
   | None -> failwith err
@@ -173,6 +204,7 @@ let assert_some_with_error (type a) (opt: a option) (err: string) : unit =
 (** display-only-for-jsligo
   The call `assert_some(opt)` terminates the execution with the
   string `"failed assert some"` if, and only if, `opt` is `None()`. *)
+[@deprecated "In a future version, this function will be deprecated, and using `Assert.some` is encouraged for a smoother migration."]
 [@inline]
 let assert_some (type a) (opt: a option) : unit =
   assert_some_with_error opt "failed assert some"
@@ -185,6 +217,7 @@ let assert_some (type a) (opt: a option) : unit =
   The call `assert_none_with_error(opt, err)` terminates the execution
   with the string `err` (that is, an error message) if, and only if,
   `opt` is an optional value different from `None()`. *)
+[@deprecated "In a future version, this function will be deprecated, and using `Assert.Error.none` is encouraged for a smoother migration."]
 let assert_none_with_error (type a) (opt: a option) (err: string) : unit =
   match opt with
   | None -> ()
@@ -196,10 +229,83 @@ let assert_none_with_error (type a) (opt: a option) (err: string) : unit =
 (** display-only-for-jsligo
   The call `assert_none(opt)` terminates the execution with the string
   `"failed assert none"` if, and only if, `opt` is not `None()`. *)
+[@deprecated "In a future version, this function will be deprecated, and using `Assert.none` is encouraged for a smoother migration."]
 [@inline]
 let assert_none (type a) (opt: a option) : unit =
   assert_none_with_error opt "failed assert none"
 
+module Assert = struct
+  module Error = struct
+    (** display-only-for-cameligo
+      The call `assert cond error` terminates the execution
+      with the string `error` (that is, an error message) if, and only if,
+      the boolean condition `cond` is false. *)
+    (** display-only-for-jsligo
+      The call `assert(cond, error)` terminates the execution
+      with the string `error` (that is, an error message) if, and only if,
+      the boolean condition `cond` is false. *)
+    let assert (condition: bool) (error: string) : unit =
+      if condition then () else failwith error
+
+    (** display-only-for-cameligo
+      The call `some opt err` terminates the execution
+      with the string `err` (that is, an error message) if, and only if,
+      `opt` is `None`. *)
+    (** display-only-for-jsligo
+      The call `some(opt, err)` terminates the execution
+      with the string `err` (that is, an error message) if, and only if,
+      `opt` is `None()`. *)
+    let some (type a) (opt: a option) (err: string) : unit =
+      match opt with
+      | None -> failwith err
+      | Some _ -> ()
+
+    (** display-only-for-cameligo
+      The call `none opt err` terminates the execution
+      with the string `err` (that is, an error message) if, and only if,
+      `opt` is an optional value different from `None`. *)
+    (** display-only-for-jsligo
+      The call `none(opt, err)` terminates the execution
+      with the string `err` (that is, an error message) if, and only if,
+      `opt` is an optional value different from `None()`. *)
+    let none (type a) (opt: a option) (err: string) : unit =
+      match opt with
+      | None -> ()
+      | Some _ -> failwith err
+  end
+
+  (** display-only-for-cameligo
+    The call `assert cond` terminates the execution with the string
+    `"failed assertion"` if, and only if, the boolean condition `cond`
+    is false. *)
+  (** display-only-for-jsligo
+    The call `assert(cond)` terminates the execution with the string
+    `"failed assertion"` if, and only if, the boolean condition `cond`
+    is false. *)
+  [@inline]
+  let assert (condition: bool) : unit =
+    Error.assert condition "failed assertion"
+
+  (** display-only-for-cameligo
+    The call `some opt` terminates the execution with the
+    string `"failed assert some"` if, and only if, `opt` is `None`. *)
+  (** display-only-for-jsligo
+    The call `some(opt)` terminates the execution with the
+    string `"failed assert some"` if, and only if, `opt` is `None()`. *)
+  [@inline]
+  let some (type a) (opt: a option) : unit =
+    Error.some opt "failed assert some"
+
+  (** display-only-for-cameligo
+    The call `none opt` terminates the execution with the string
+    `"failed assert none"` if, and only if, `opt` is not `None`. *)
+  (** display-only-for-jsligo
+    The call `none(opt)` terminates the execution with the string
+    `"failed assert none"` if, and only if, `opt` is not `None()`. *)
+  [@inline]
+  let none (type a) (opt: a option) : unit =
+    Error.none opt "failed assert none"
+end
 (* Arithmetics *)
 
 (** display-only-for-cameligo
@@ -484,6 +590,7 @@ module Tezos = struct
     address would return `None()`), as the origination must be
     performed successfully first, for example by calling a proxy
     contract or itself. *)
+  [@deprecated "In a future version, `Tezos` will be replaced by `Tezos.Next`, and using `Operation.create_contract` from `Tezos.Next` is encouraged for a smoother migration."]
   [@inline] [@thunk]
   let create_contract
     (type param storage)
@@ -493,7 +600,7 @@ module Tezos = struct
     (storage: storage)
     : operation * address =
     [%external ("CREATE_CONTRACT",
-                uncurry entrypoint, delegate, amount, storage)]
+                Tuple2.uncurry entrypoint, delegate, amount, storage)]
 
   (** display-only-for-cameligo
     The call `set_delegate d` evaluates in an operation that sets
@@ -519,6 +626,7 @@ module Tezos = struct
     contract or if `kh` is not a registered delegate. However, the
     instruction in itself does not fail; it produces an operation that
     will fail when applied. *)
+  [@deprecated "In a future version, `Tezos` will be replaced by `Tezos.Next`, and using `Operation.set_delegate` from `Tezos.Next` is encouraged for a smoother migration."]
   let set_delegate (delegate: key_hash option) : operation =
     [%michelson ({| {SET_DELEGATE} |} delegate : operation)]
 
@@ -534,6 +642,7 @@ module Tezos = struct
     contract at the valid address `contract_addr`, with parameter
     `param`. If the contract is an implicit account, the parameter
     must be `unit`. *)
+  [@deprecated "In a future version, `Tezos` will be replaced by `Tezos.Next`, and using `Operation.transaction` from `Tezos.Next` is encouraged for a smoother migration."]
   let transaction
     (type param) (param: param) (amount: tez) (contract_addr: param contract)
     : operation =
@@ -577,6 +686,7 @@ module Tezos = struct
     amount `a`. If the creation is a success, the value `Some(t)` is
     returned, where `t` is the ticket; otherwise, `None()` is the
     result. Note: Tickets cannot be duplicated. *)
+  [@deprecated "In a future version, `Tezos` will be replaced by `Tezos.Next`, and using `Ticket.create` from `Tezos.Next` is encouraged for a smoother migration."]
   let create_ticket (type a) (value: a) (amount: nat) : a ticket option =
     [%michelson ({| {TICKET} |} value amount : a ticket option)]
 
@@ -592,6 +702,7 @@ module Tezos = struct
     later `a2`. More precisely, the value of the call is
     `Some([t1, t2])` because signifying to the callee the failure of
     the splitting is achieved by returning the value `None()`. *)
+  [@deprecated "In a future version, `Tezos` will be replaced by `Tezos.Next`, and using `Ticket.split` from `Tezos.Next` is encouraged for a smoother migration."]
   let split_ticket (type a) (ticket: a ticket) (amounts: nat * nat)
     : (a ticket * a ticket) option =
     [%michelson ({| {SPLIT_TICKET} |} ticket amounts
@@ -603,6 +714,7 @@ module Tezos = struct
   (** display-only-for-jsligo
     The call `join_tickets(t1, t2)` joins the tickets `t1` and
     `t2`, which must have the same type of value. *)
+  [@deprecated "In a future version, `Tezos` will be replaced by `Tezos.Next`, and using `Ticket.join` from `Tezos.Next` is encouraged for a smoother migration."]
   let join_tickets (type a) (tickets: a ticket * a ticket) : a ticket option =
     [%michelson ({| {JOIN_TICKETS} |} tickets : a ticket option)]
 
@@ -614,6 +726,7 @@ module Tezos = struct
     The call `read_ticket(t)` returns `t` itself and the contents of
     `t` which is a pair `[address, [value, amount]]`, where `address` is
     the address of the smart contract that created it. *)
+  [@deprecated "In a future version, `Tezos` will be replaced by `Tezos.Next`, and using `Ticket.read` from `Tezos.Next` is encouraged for a smoother migration."]
   let read_ticket (type a) (ticket: a ticket)
     : (address * (a * nat)) * a ticket =
     [%michelson ({| {READ_TICKET; PAIR} |} ticket
@@ -623,6 +736,7 @@ module Tezos = struct
 
   (** The evaluation of the constant `sapling_empty_state` is an empty
     sapling state, that is, no one can spend tokens from it. *)
+  [@deprecated "In a future version, `Tezos` will be replaced by `Tezos.Next`, and using `Sapling.empty_state` from `Tezos.Next` is encouraged for a smoother migration."]
   [@inline] [@thunk]
   let sapling_empty_state (type sap_t) : sap_t sapling_state =
     [%michelson ({| {SAPLING_EMPTY_STATE (typeopt $0)} |}
@@ -643,6 +757,7 @@ module Tezos = struct
     (as bytes), `delta` is the difference between the outputs and the
     inputs of the transaction, and `new_state` is the updated
     state. *)
+  [@deprecated "In a future version, `Tezos` will be replaced by `Tezos.Next`, and using `Sapling.verify_update` from `Tezos.Next` is encouraged for a smoother migration."]
   [@inline] [@thunk]
   let sapling_verify_update
     (type sap_a)
@@ -666,6 +781,7 @@ module Tezos = struct
     successful execution of this contract. The event is annotated by
     the string `event_tag` if it is not empty. The argument
     `event_type` is used only to specify the type of data attachment. *)
+  [@deprecated "In a future version, `Tezos` will be replaced by `Tezos.Next`, and using `Operation.emit` from `Tezos.Next` is encouraged for a smoother migration."]
   [@inline] [@thunk]
   let emit (type event_type) (event_tag: string) (event_type: event_type)
     : operation =
@@ -817,6 +933,564 @@ module Tezos = struct
   [@inline] [@thunk]
   let constant (type a) (hash: string) : a =
     [%external ("GLOBAL_CONSTANT", hash)]
+
+  module Next = struct
+    (* Addresses *)
+
+    (** display-only-for-cameligo
+      The call `get_sender ()` is the address of the contract (that
+      is, a smart contract or an implicit account) that initiated the
+      current internal transaction. Note that, if transactions have been
+      chained, that address could be different from `get_source ()`. *)
+    (** display-only-for-jsligo
+      The call `get_sender()` is the address of the contract (that
+      is, a smart contract or an implicit account) that initiated the
+      current internal transaction. Note that, if transactions have been
+      chained, that address could be different from `get_source()`. *)
+    let get_sender () : address =
+      [%michelson ({| {SENDER} |} : address)]
+
+    (** display-only-for-cameligo
+      The call `get_source ()` is the address of the implicit account
+      that initiated the current transaction. If transactions have been
+      chained, that address is different from `get_sender ()`. *)
+    (** display-only-for-jsligo
+      The call `get_source()` is the address of the implicit account
+      that initiated the current transaction. If transactions have been
+      chained, that address is different from `get_sender()`. *)
+    let get_source () : address =
+      [%michelson ({| {SOURCE} |} : address)]
+
+    (** display-only-for-cameligo
+      The call `self entrypoint` is the address of the current smart
+      contract, that is, the smart contract containing the call. For the
+      address of the smart contract actually *executing* the call,
+      because it is embedded in a lambda sent to another smart contract,
+      use `get_self_address` instead. The string `entrypoint` is the
+      name of a valid entrypoint such that `entrypoint` is not
+      `"default"`, or the empty string denoting the `"default"`
+      entrypoint (which is the root of the smart contract parameter if
+      no `"default"` entrypoint is explicitly defined). If the contract
+      does not have the specified entrypoint, the call results in an
+      type checking error. *)
+    (** display-only-for-jsligo
+      The call `self(entrypoint)` is the address of the current smart
+      contract, that is, the smart contract containing the call. For the
+      address of the smart contract actually *executing* the call,
+      because it is embedded in a lambda sent to another smart contract,
+      use `get_self_address` instead. The string `entrypoint` is the
+      name of a valid entrypoint such that `entrypoint` is not
+      `"default"`, or the empty string denoting the `"default"`
+      entrypoint (which is the root of the smart contract parameter if
+      no `"default"` entrypoint is explicitly defined). If the contract
+      does not have the specified entrypoint, the call results in an
+      type checking error. *)
+    [@inline] [@thunk]
+    let self (type a) (entrypoint: string) : a contract =
+      let _ : a option = [%external ("CHECK_SELF", entrypoint)] in
+      [%michelson ({| {SELF (annot $0)} |} entrypoint : a contract)]
+
+    (** display-only-for-cameligo
+      The call `get_self_address ()` is the address of the smart
+      contract actually executing the call, as a value of type
+      `address`. That contract can be different from the one containing
+      the call if the call is in a lambda transmitted to another smart
+      contract. Therefore, it is assumed that, in general, the type of
+      the executing contract is statically unknown, so the return type
+      of `get_self_address` is not `'a contract`, but `address`. (See
+      `self`.) *)
+    (** display-only-for-jsligo
+      The call `get_self_address()` is the address of the smart
+      contract actually executing the call, as a value of type
+      `address`. That contract can be different from the one containing
+      the call if the call is in a lambda transmitted to another smart
+      contract. Therefore, it is assumed that, in general, the type of
+      the executing contract is statically unknown, so the return type
+      of `get_self_address` is not `'a contract`, but `address`. (See
+      `self`.) *)
+    let get_self_address () : address =
+      [%michelson ({| {SELF_ADDRESS} |} : address)]
+
+    (** display-only-for-cameligo
+      The call `address contract` casts the address of the smart
+      contract `contract` into the more general value of type
+      `address`. *)
+    (** display-only-for-jsligo
+      The call `address(contract)` casts the address of the smart
+      contract `contract` into the more general value of type
+      `address`. *)
+    let address (type a) (contract_addr: a contract) : address =
+      [%michelson ({| {ADDRESS} |} contract_addr : address)]
+
+    (** display-only-for-cameligo
+      The call `implicit_account kh` casts the public key hash `kh`
+      into the address of its implicit account. Note that addresses of
+      implicit accounts always have the type `unit contract`. *)
+    (** display-only-for-jsligo
+      The call `implicit_account(kh)` casts the public key hash `kh`
+      into the address of its implicit account. Note that addresses of
+      implicit accounts always have the type `contract<unit>`. *)
+    let implicit_account (kh: key_hash) : unit contract =
+      [%michelson ({| {IMPLICIT_ACCOUNT} |} kh : unit contract)]
+
+    (* Contracts and operations *)
+
+    (** display-only-for-cameligo
+      The call `get_contract_opt addr` casts the address `addr` into
+      that of a contract address, if such contract exists. The value of
+      the call is `None` if no such contract exists, otherwise `Some
+      contract`, where `contract` is the contract's address. Note: The
+      address of an implicit account has type `unit contract`. *)
+    (** display-only-for-jsligo
+      The call `get_contract_opt(addr)` casts the address `addr` into
+      that of a contract address, if such contract exists. The value of
+      the call is `None()` if no such contract exists, otherwise `Some
+      contract`, where `contract` is the contract's address. Note: The
+      address of an implicit account has type `unit contract`. *)
+    [@inline] [@thunk]
+    let get_contract_opt (type param) (addr: address) : param contract option =
+      [%michelson ({| {CONTRACT (typeopt $0)} |} (None : param option) addr
+                  : param contract option)]
+
+    (** display-only-for-cameligo
+      The call `get_contract_with_error addr error` casts the address
+      `addr` into that of a contract address, if such contract
+      exists. If not, the execution fails with the error message
+      `error`. *)
+    (** display-only-for-jsligo
+      The call `get_contract_with_error(addr, error)` casts the address
+      `addr` into that of a contract address, if such contract
+      exists. If not, the execution fails with the error message
+      `error`. *)
+    let get_contract_with_error (type param) (addr: address) (error: string)
+      : param contract =
+      match get_contract_opt addr with
+      | None -> failwith error
+      | Some contract_addr -> contract_addr
+
+    (** display-only-for-cameligo
+      The call `get_contract addr` casts the address `addr` into that
+      of a smart contract address, if such contract exists. The call
+      fails with the message `"bad address for get_contract"` if no
+      such smart contract exists. Note: The address of an implicit
+      account has type `unit contract`. *)
+    (** display-only-for-jsligo
+      The call `get_contract(addr)` casts the address `addr` into that
+      of a smart contract address, if such contract exists. The call
+      fails with the message `"bad address for get_contract"` if no
+      such smart contract exists. Note: The address of an implicit
+      account has type `contract<unit>`. *)
+    [@inline] [@thunk]
+    let get_contract (type param) (addr: address) : param contract =
+      get_contract_with_error addr "bad address for get_contract"
+
+    (** display-only-for-cameligo
+      The call `get_entrypoint_opt entrypoint addr` has the same
+      behaviour as `get_contract_opt addr`, with the additional
+      constraint that the contract must have an entrypoint named
+      `entrypoint`. In other words, `get_entrypoint_opt entrypoint addr`
+      casts the address `addr` into that of a smart contract
+      address, if such contract exists and has an entrypoint named
+      `entrypoint`. The value of the call is `None` if no such smart
+      contract exists, otherwise `Some contract`, where `contract` is
+      the smart contract's address. Note: The address of an implicit
+      account has type `unit contract`. *)
+    (** display-only-for-jsligo
+      The call `get_entrypoint_opt(entrypoint, addr)` has the same
+      behaviour as `get_contract_opt(addr)`, with the additional
+      constraint that the contract must have an entrypoint named
+      `entrypoint`. In other words, `get_entrypoint_opt(entrypoint, addr)`
+      casts the address `addr` into that of a smart contract
+      address, if such contract exists and has an entrypoint named
+      `entrypoint`. The value of the call is `None()` if no such smart
+      contract exists, otherwise `Some(contract)`, where `contract` is
+      the smart contract's address. Note: The address of an implicit
+      account has type `contract<unit>`. *)
+    [@inline] [@thunk]
+    let get_entrypoint_opt (type param) (entrypoint: string) (addr: address)
+      : param contract option =
+      let () = [%external ("CHECK_ENTRYPOINT", entrypoint)] in
+      [%michelson ({| {CONTRACT (annot $0) (typeopt $1)} |}
+                  entrypoint (None : param option) addr
+                  : param contract option)]
+
+    (** display-only-for-cameligo
+      The call `get_entrypoint entrypoint addr` casts the address
+      `addr` into that of a smart contract address, if such contract
+      exists and has an entrypoint named `entrypoint`. If no such smart
+      contract exists, the execution fails with the error message
+      `"bad address for get_entrypoint"`. Note: The address of an implicit
+      account has type `unit contract`. *)
+    (** display-only-for-jsligo
+      The call `get_entrypoint(entrypoint, addr)` casts the address
+      `addr` into that of a smart contract address, if such contract
+      exists and has an entrypoint named `entrypoint`. If no such smart
+      contract exists, the execution fails with the error message
+      `"bad address for get_entrypoint"`. Note: The address of an implicit
+      account has type `contract<unit>`. *)
+    [@inline] [@thunk]
+    let get_entrypoint (type param) (entrypoint: string) (addr: address)
+      : param contract =
+      match get_entrypoint_opt entrypoint addr with
+      | None -> failwith "bad address for get_entrypoint"
+      | Some contract_addr -> contract_addr
+
+    module Operation = struct
+      (** display-only-for-cameligo
+        The call `create_contract e d a s` returns a contract creation
+        operation (origination) for the entrypoint `e` (as a function)
+        with optional delegate `d`, initial amount `a` and initial
+        storage `s`, together with the address of the created
+        contract. Note that the created contract cannot be called
+        immediately afterwards (that is, `get_contract_opt` on that
+        address would return `None`), as the origination must be
+        performed successfully first, for example by calling a proxy
+        contract or itself. *)
+      (** display-only-for-jsligo
+        The call `create_contract(e,d,a,s)` returns a contract creation
+        operation (origination) for the entrypoint `e` (as a function)
+        with optional delegate `d`, initial amount `a` and initial
+        storage `s`, together with the address of the created
+        contract. Note that the created contract cannot be called
+        immediately afterwards (that is, `get_contract_opt` on that
+        address would return `None()`), as the origination must be
+        performed successfully first, for example by calling a proxy
+        contract or itself. *)
+      [@inline] [@thunk]
+      let create_contract
+        (type param storage)
+        (entrypoint: (param, storage) entrypoint)
+        (delegate: key_hash option)
+        (amount: tez)
+        (storage: storage)
+        : operation * address =
+        [%external ("CREATE_CONTRACT",
+                    Tuple2.uncurry entrypoint, delegate, amount, storage)]
+
+      (** display-only-for-cameligo
+        The call `set_delegate d` evaluates in an operation that sets
+        the delegate of the current smart contract to be `d`, where `d` is
+        an optional key hash. If `None`, the delegation is withdrawn. If
+        the contract has no delegation, then no change occurs. If `d` is
+        `Some kh`, where `kh` is the key hash of a registered delegate
+        that is not the current delegate of the contract, then this
+        operation sets the delegate of the contract to this registered
+        delegate. A failure occurs if `kh` is the current delegate of the
+        contract or if `kh` is not a registered delegate. However, the
+        instruction in itself does not fail; it produces an operation that
+        will fail when applied. *)
+      (** display-only-for-jsligo
+        The call `set_delegate(d)` evaluates in an operation that sets
+        the delegate of the current smart contract to be `d`, where `d` is
+        an optional key hash. If `None()`, the delegation is withdrawn. If
+        the contract has no delegation, then no change occurs. If `d` is
+        `Some(kh)`, where `kh` is the key hash of a registered delegate
+        that is not the current delegate of the contract, then this
+        operation sets the delegate of the contract to this registered
+        delegate. A failure occurs if `kh` is the current delegate of the
+        contract or if `kh` is not a registered delegate. However, the
+        instruction in itself does not fail; it produces an operation that
+        will fail when applied. *)
+      let set_delegate (delegate: key_hash option) : operation =
+        [%michelson ({| {SET_DELEGATE} |} delegate : operation)]
+
+      (** display-only-for-cameligo
+        The call `transaction param amount contract_addr` evaluates in
+        an operation that will send the amount `amount` in mutez to the
+        contract at the valid address `contract_addr`, with parameter
+        `param`. If the contract is an implicit account, the parameter
+        must be `unit`. *)
+      (** display-only-for-jsligo
+        The call `transaction(param, amount, contract_addr)` evaluates in
+        an operation that will send the amount `amount` in mutez to the
+        contract at the valid address `contract_addr`, with parameter
+        `param`. If the contract is an implicit account, the parameter
+        must be `unit`. *)
+      let transaction
+        (type param) (param: param) (amount: tez) (contract_addr: param contract)
+        : operation =
+        [%michelson
+          ({| {TRANSFER_TOKENS} |} param amount contract_addr : operation)]
+
+      (** display-only-for-cameligo
+        The call `emit event_tag event_type` evaluates in an operation
+        that will write an event into the transaction receipt after the
+        successful execution of this contract. The event is annotated by
+        the string `event_tag` if it is not empty. The argument
+        `event_type` is used only to specify the type of data attachment. *)
+      (** display-only-for-jsligo
+        The call `emit event_tag(event_type)` evaluates in an operation
+        that will write an event into the transaction receipt after the
+        successful execution of this contract. The event is annotated by
+        the string `event_tag` if it is not empty. The argument
+        `event_type` is used only to specify the type of data attachment. *)
+      [@inline] [@thunk]
+      let emit (type event_type) (event_tag: string) (event_type: event_type)
+        : operation =
+        let () = [%external ("CHECK_EMIT_EVENT", event_tag, event_type)] in
+        [%michelson ({| {EMIT (annot $0) (typeopt $1)} |}
+                    event_tag (None : event_type option) event_type
+                    : operation)]
+    end
+
+    module View = struct
+      (** display-only-for-cameligo
+        The call `call v p a` calls the view `v` with parameter
+        `param` at the contract whose address is `a`. The value returned
+        is `None` if the view does not exist, or has a different type of
+        parameter, or if the contract does not exist at that
+        address. Otherwise, it is `Some v`, where `v` is the return value
+        of the view. Note: the storage of the view is the same as when the
+        execution of the contract calling the view started.*)
+      (** display-only-for-jsligo
+        The call `call(v, p, a)` calls the view `v` with parameter
+        `param` at the contract whose address is `a`. The value returned
+        is `None()` if the view does not exist, or has a different type of
+        parameter, or if the contract does not exist at that
+        address. Otherwise, it is `Some(v)`, where `v` is the return value
+        of the view. Note: the storage of the view is the same as when the
+        execution of the contract calling the view started. *)
+      [@inline] [@thunk]
+      let call
+        (type param return) (view: string) (param: param) (addr: address)
+        : return option =
+        let () = [%external ("CHECK_CALL_VIEW_LITSTR", view)]
+        in [%michelson ({| {VIEW (litstr $0) (typeopt $1)} |}
+                        view (None : return option) param addr
+                        : return option)]
+    end
+
+    module Ticket = struct
+      (** display-only-for-cameligo
+        The call `create v a` creates a ticket with value `v` and
+        amount `a`. If the creation is a success, the value `Some t` is
+        returned, where `t` is the ticket; otherwise, `None` is the
+        result. Note: Tickets cannot be duplicated. *)
+      (** display-only-for-jsligo
+        The call `create(v, a)` creates a ticket with value `v` and
+        amount `a`. If the creation is a success, the value `Some(t)` is
+        returned, where `t` is the ticket; otherwise, `None()` is the
+        result. Note: Tickets cannot be duplicated. *)
+      let create (type a) (value: a) (amount: nat) : a ticket option =
+        [%michelson ({| {TICKET} |} value amount : a ticket option)]
+
+      (** display-only-for-cameligo
+        The call `split t (a1, a2)` results in a pair of tickets
+        `t1` and `t2` such that the former owns the amount `a1` and the
+        later `a2`. More precisely, the value of the call is
+        `Some (t1, t2)` because signifying to the callee the failure of
+        the splitting is achieved by returning the value `None`. *)
+      (** display-only-for-jsligo
+        The call `split(t, [a1, a2])` results in a pair of tickets
+        `t1` and `t2` such that the former owns the amount `a1` and the
+        later `a2`. More precisely, the value of the call is
+        `Some([t1, t2])` because signifying to the callee the failure of
+        the splitting is achieved by returning the value `None()`. *)
+      let split (type a) (ticket: a ticket) (amounts: nat * nat)
+        : (a ticket * a ticket) option =
+        [%michelson ({| {SPLIT_TICKET} |} ticket amounts
+                    : (a ticket * a ticket) option)]
+
+      (** display-only-for-cameligo
+        The call `join (t1, t2)` joins the tickets `t1` and
+        `t2`, which must have the same type of value. *)
+      (** display-only-for-jsligo
+        The call `join(t1, t2)` joins the tickets `t1` and
+        `t2`, which must have the same type of value. *)
+      let join (type a) (tickets: a ticket * a ticket) : a ticket option =
+        [%michelson ({| {JOIN_TICKETS} |} tickets : a ticket option)]
+
+      (** display-only-for-cameligo
+        The call `read t` returns `t` itself and the contents of
+        `t` which is a pair `(address, (value, amount))`, where `address` is
+        the address of the smart contract that created it. *)
+      (** display-only-for-jsligo
+        The call `read(t)` returns `t` itself and the contents of
+        `t` which is a pair `[address, [value, amount]]`, where `address` is
+        the address of the smart contract that created it. *)
+      let read (type a) (ticket: a ticket)
+        : (address * (a * nat)) * a ticket =
+        [%michelson ({| {READ_TICKET; PAIR} |} ticket
+                    : (address * (a * nat)) * a ticket)]
+    end
+
+    module Sapling = struct
+      (** The evaluation of the constant `empty_state` is an empty
+        sapling state, that is, no one can spend tokens from it. *)
+      [@inline] [@thunk]
+      let empty_state (type sap_t) : sap_t sapling_state =
+        [%michelson ({| {SAPLING_EMPTY_STATE (typeopt $0)} |}
+                    (None : sap_t option)
+                    : sap_t sapling_state)]
+
+      (** display-only-for-cameligo
+        The call `verify_update trans state`, where the
+        transaction `trans` can be applied to the state `state`, returns
+        `Some (data, (delta, new_state))`, where `data` is the bound data
+        (as bytes), `delta` is the difference between the outputs and the
+        inputs of the transaction, and `new_state` is the updated
+        state. *)
+      (** display-only-for-jsligo
+        The call `verify_update(trans, state)`, where the
+        transaction `trans` can be applied to the state `state`, returns
+        `Some ([data, [delta, new_state]])`, where `data` is the bound data
+        (as bytes), `delta` is the difference between the outputs and the
+        inputs of the transaction, and `new_state` is the updated
+        state. *)
+      [@inline] [@thunk]
+      let verify_update
+        (type sap_a)
+        (trans: sap_a sapling_transaction)
+        (state: sap_a sapling_state)
+        : (bytes * (int * sap_a sapling_state)) option =
+        [%michelson ({| {SAPLING_VERIFY_UPDATE} |} trans state
+                    : (bytes * (int * sap_a sapling_state)) option)]
+    end
+
+    (* Time-lock *)
+
+    (** The function [open_chest] opens a timelocked chest given its key
+      and the time. The result is a byte option depending if the opening
+      is correct or not. *)
+    let open_chest (key: chest_key) (chest: chest) (time: nat) : bytes option =
+      [%michelson ({| {OPEN_CHEST} |} key chest time : bytes option)]
+
+    (* Miscellanea *)
+
+    (** display-only-for-cameligo
+      The call `get_balance ()` returns the balance in mutez of the
+      account associated to the currently executed smart contract,
+      including any mutez added by the calling transaction. *)
+    (** display-only-for-jsligo
+      The call `get_balance()` returns the balance in mutez of the
+      account associated to the currently executed smart contract,
+      including any mutez added by the calling transaction. *)
+    let get_balance () : tez =
+      [%michelson ({| {BALANCE} |} : tez)]
+
+    (** display-only-for-cameligo
+      The call `get_amount ()` returns the amount in mutez of the
+      current transaction. *)
+    (** display-only-for-jsligo
+      The call `get_amount()` returns the amount in mutez of the
+      current transaction. *)
+    let get_amount () : tez =
+      [%michelson ({| {AMOUNT} |} : tez)]
+
+    (** display-only-for-cameligo
+      The call `get_now ()` returns the minimal injection time for the
+      current block, namely the block whose application triggered this
+      execution. The minimal injection time constitutes an estimate of
+      the moment when the current block is injected, hence the name
+      "now". *)
+    (** display-only-for-jsligo
+      The call `get_now()` returns the minimal injection time for the
+      current block, namely the block whose application triggered this
+      execution. The minimal injection time constitutes an estimate of
+      the moment when the current block is injected, hence the name
+      "now". *)
+    let get_now () : timestamp =
+      [%michelson ({| {NOW} |} : timestamp)]
+
+    (** display-only-for-cameligo
+      The call `get_min_block_time ()` returns the minimal delay
+      between two consecutive blocks in the chain. *)
+    (** display-only-for-jsligo
+      The call `get_min_block_time()` returns the minimal delay
+      between two consecutive blocks in the chain. *)
+    let get_min_block_time () : nat =
+      [%michelson ({| {MIN_BLOCK_TIME} |} : nat)]
+
+    (** display-only-for-cameligo
+      The call `get_level ()` returns the current block level. *)
+    (** display-only-for-jsligo
+      The call `get_level()` returns the current block level. *)
+    let get_level () : nat =
+      [%michelson ({| {LEVEL} |} : nat)]
+
+    (** display-only-for-cameligo
+      The call `get_chain_id ()` returns the identifier of the chain
+      on which the smart contract is executed. *)
+    (** display-only-for-jsligo
+      The call `get_chain_id ()` returns the identifier of the chain
+      on which the smart contract is executed. *)
+    let get_chain_id () : chain_id =
+      [%michelson ({| {CHAIN_ID} |} : chain_id)]
+
+    (** display-only-for-cameligo
+      The call `get_total_voting_power ()` returns the total voting
+      power of all contracts. The total voting power coincides with the
+      sum of the stake of every contract in the voting listings. The
+      voting listings is calculated at the beginning of every voting
+      period. *)
+    (** display-only-for-jsligo
+      The call `get_total_voting_power()` returns the total voting
+      power of all contracts. The total voting power coincides with the
+      sum of the stake of every contract in the voting listings. The
+      voting listings is calculated at the beginning of every voting
+      period. *)
+    let get_total_voting_power () : nat =
+      [%michelson ({| {TOTAL_VOTING_POWER} |} : nat)]
+
+    (** display-only-for-cameligo
+      The call `voting_power contract_kh` returns the voting power of
+      a given contract specified by the key hash `contract_kh`. This
+      voting power coincides with the weight of the contract in the
+      voting listings (that is, the stake) which is calculated at the
+      beginning of every voting period. *)
+    (** display-only-for-jsligo
+      The call `voting_power(contract_kh)` returns the voting power of
+      a given contract specified by the key hash `contract_kh`. This
+      voting power coincides with the weight of the contract in the
+      voting listings (that is, the stake) which is calculated at the
+      beginning of every voting period. *)
+    let voting_power (kh : key_hash) : nat =
+      [%michelson ({| {VOTING_POWER} |} kh : nat)]
+
+    (** display-only-for-cameligo
+      The call `never n` is never meant to be executed, as the type
+      `never` is inhabited, but to instruct the typechecker that a
+      branch in the control flow, for example, in a pattern matching, is
+      dead. *)
+    (** display-only-for-jsligo
+      The call `never(n)` is never meant to be executed, as the type
+      `never` is inhabited, but to instruct the typechecker that a
+      branch in the control flow, for example, in a pattern matching, is
+      dead. *)
+    let never (type a) (never: never) : a =
+      [%michelson ({| {NEVER} |} never : a)]
+
+    (** display-only-for-cameligo
+      The call `pairing_check pairings` verifies that the product of
+      pairings of the given list of points `pairings` is equal to 1 in
+      the field Fq12. It evaluates in `true` if the list is empty. This
+      function can be used to verify if two pairings P1 and P2 are equal
+      by verifying P1 * P2^(-1) = 1. *)
+    (** display-only-for-jsligo
+      The call `pairing_check(pairings)` verifies that the product of
+      pairings of the given list of points `pairings` is equal to 1 in
+      the field Fq12. It evaluates in `true` if the list is empty. This
+      function can be used to verify if two pairings P1 and P2 are equal
+      by verifying P1 * P2^(-1) = 1. *)
+    let pairing_check (list: (bls12_381_g1 * bls12_381_g2) list) : bool =
+      [%michelson ({| {PAIRING_CHECK} |} list : bool)]
+
+    (** display-only-for-cameligo
+      The call to `constant hash` returns the value stored on-chain
+      whose hash value is `hash` (global constants). This call can fail
+      when the contract is originated if the hash is invalid or the
+      expansion of the global constant is ill-typed, or too large (gas
+      consumption). *)
+    (** display-only-for-cameligo
+      The call to `constant(hash)` returns the value stored on-chain
+      whose hash value is `hash` (global constants). This call can fail
+      when the contract is originated if the hash is invalid or the
+      expansion of the global constant is ill-typed, or too large (gas
+      consumption). *)
+    [@inline] [@thunk]
+    let constant (type a) (hash: string) : a =
+      [%external ("GLOBAL_CONSTANT", hash)]
+  end
 end
 
 (** Bitwise operations *)
@@ -847,8 +1521,8 @@ module Bitwise = struct
     bytes has the same length as the longer operand. The shorter
     operand is zero-padded on the left to match with the length of the
     longer one before taking the bitwise "or". *)
-  let @or (type a b) (left: a) (right: b) : (a, b) external_xor =
-    [%michelson ({| {OR} |} left right : (a, b) external_xor)]
+  let @or (type a b) (left: a) (right: b) : (a, b) external_or =
+    [%michelson ({| {OR} |} left right : (a, b) external_or)]
 
   (** The call `xor a b` is the exclusive disjunction defined on
     boolean, natural number and bytes operands. In the boolean case,
@@ -860,8 +1534,8 @@ module Bitwise = struct
     same length as the longer operand. The shorter operand is
     zero-padded on the left to match with the length of the longer one
     before taking the bitwise "xor". *)
-  let xor (type a b) (left: a) (right: b) : (a, b) external_or =
-    [%michelson ({| {XOR} |} left right : (a, b) external_or )]
+  let xor (type a b) (left: a) (right: b) : (a, b) external_xor =
+    [%michelson ({| {XOR} |} left right : (a, b) external_xor )]
 
   (** The function `shift_left` on natural numbers consumes two
     natural numbers and produces the first number logically
@@ -2979,7 +3653,7 @@ module Test = struct
       (s : s)
       (t : tez)
       : (p, s) typed_address =
-      let code = compile_contract (uncurry f)
+      let code = compile_contract (Tuple2.uncurry f)
       in originate_contract code s t
 
     type 'v proxy_address = (('v * nat) * address , unit) typed_address

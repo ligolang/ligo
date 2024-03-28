@@ -1,0 +1,7 @@
+
+author: er433
+description: "\\nNew factorization on certain components of the stdlib have been introduced:\\nA new version of `Tezos` module/namespace, which is accessible as `Tezos.Next`.Grouped commands dealing with assertions in `Assert` module/namespace.Grouped commands dealing with binary tuples in `Tuple2` (including `curry`/`uncurry`).\\n(see the documentation on each module/namespace of the API for further information)\\n\\nWarning messages signaling to use these new variants have been added to the old functions.\\n\\n"
+merge_request: '3121'
+title: "Stdlib: introducing `Tezos.Next` module and `Assert`"
+type: added
+            

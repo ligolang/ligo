@@ -6,6 +6,8 @@ Modelled after:
 Goes with ticket_builder.mligo.
 *)
 
+module Tezos = Tezos.Next
+
 type send_parameter =
   [@layout comb]
   {
@@ -28,21 +30,21 @@ type storage =
 [@entry]
 let main (p : parameter) (storage : storage) : operation list * storage =
   begin
-    assert (Tezos.get_amount () = 0mutez);
+    Assert.assert (Tezos.get_amount () = 0mutez);
     let {
      manager = manager;
      tickets = tickets
     } = storage in
     (match p with
        Receive ticket ->
-         let ((ticketer, _), ticket) = Tezos.read_ticket ticket in
+         let ((ticketer, _), ticket) = Tezos.Ticket.read ticket in
          let (old_ticket, tickets) =
            Big_map.get_and_update ticketer (None : unit ticket option) tickets in
          let ticket =
            match old_ticket with
              None -> ticket
            | Some old_ticket ->
-               (match Tezos.join_tickets (ticket, old_ticket) with
+               (match Tezos.Ticket.join (ticket, old_ticket) with
                   None -> (failwith "impossible?" : unit ticket)
                 | Some joined -> joined) in
          let (_, tickets) =
@@ -54,7 +56,7 @@ let main (p : parameter) (storage : storage) : operation list * storage =
           })
      | Send send ->
          begin
-           assert (Tezos.get_sender () = manager);
+           Assert.assert (Tezos.get_sender () = manager);
            let (ticket, tickets) =
              Big_map.get_and_update
                send.ticketer
@@ -63,13 +65,13 @@ let main (p : parameter) (storage : storage) : operation list * storage =
            (match ticket with
               None -> (failwith "no tickets" : operation list * storage)
             | Some ticket ->
-                let ((_, (_, total_amt)), ticket) = Tezos.read_ticket ticket in
+                let ((_, (_, total_amt)), ticket) = Tezos.Ticket.read ticket in
                 let send_amt = send.amount in
                 let keep_amt : nat =
                   match is_nat (total_amt - send_amt) with
                     None -> (failwith "not enough tickets" : nat)
                   | Some keep_amt -> keep_amt in
-                (match Tezos.split_ticket ticket (send_amt, keep_amt) with
+                (match Tezos.Ticket.split ticket (send_amt, keep_amt) with
                    None -> (failwith "impossible?" : operation list * storage)
                  | Some split_tickets ->
                      let (send_ticket, keep_ticket) = split_tickets in
@@ -79,7 +81,7 @@ let main (p : parameter) (storage : storage) : operation list * storage =
                          (Some keep_ticket)
                          tickets in
                      let op =
-                       Tezos.transaction send_ticket 0mutez send.destination in
+                       Tezos.Operation.transaction send_ticket 0mutez send.destination in
                      ([op],
                       {
                        manager = manager;

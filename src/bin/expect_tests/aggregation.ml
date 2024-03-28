@@ -6,6 +6,15 @@ let%expect_test _ =
   run_ligo_good [ "compile"; "contract"; contract "bug_alias13.mligo" ];
   [%expect
     {|
+    File "../../test/contracts/aggregation/bug_alias13.mligo", line 6, characters 6-12:
+      5 |     fun (n : nat) -> let current_turn = current_turn 1n in
+      6 |       assert (n = current_turn)
+                ^^^^^^
+      7 |
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
     { parameter unit ;
       storage unit ;
       code { DROP ;

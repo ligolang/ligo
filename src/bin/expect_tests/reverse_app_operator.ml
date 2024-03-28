@@ -4,6 +4,42 @@ let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "reverse_app.mligo" ];
   [%expect
     {|
+    File "../../test/contracts/reverse_app.mligo", line 29, characters 2-8:
+     28 |   in
+     29 |   assert (a = b)
+            ^^^^^^
+     30 |
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "../../test/contracts/reverse_app.mligo", line 37, characters 2-8:
+     36 |   in
+     37 |   assert (a = b)
+            ^^^^^^
+     38 |
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "../../test/contracts/reverse_app.mligo", line 45, characters 2-8:
+     44 |   in
+     45 |   assert (a = b)
+            ^^^^^^
+     46 |
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
+    File "../../test/contracts/reverse_app.mligo", line 53, characters 2-8:
+     52 |   in
+     53 |   assert (a = b)
+            ^^^^^^
+     54 |
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
     Everything at the top-level was executed.
     - test exited with value ().
     - test exited with value ().

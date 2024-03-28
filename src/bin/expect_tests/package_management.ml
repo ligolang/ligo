@@ -102,6 +102,14 @@ let%expect_test _ =
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.get_storage` from `Test.Next` is encouraged for a smoother migration.
 
+    File "src/a/b/c/contract.test.mligo", line 8, characters 2-8:
+      7 |   let storage = Test.get_storage orig.addr in
+      8 |   assert (storage = [3 ; 2 ; 1])
+            ^^^^^^
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
     Everything at the top-level was executed.
     - test_originate exited with value (). |}]
 
@@ -135,6 +143,14 @@ let%expect_test _ =
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.get_storage` from `Test.Next` is encouraged for a smoother migration.
+
+    File "src/a/b/c/contract.test.mligo", line 8, characters 2-8:
+      7 |   let storage = Test.get_storage orig.addr in
+      8 |   assert (storage = [3 ; 2 ; 1])
+            ^^^^^^
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
 
     Everything at the top-level was executed.
     - test_originate exited with value (). |}]
@@ -173,6 +189,14 @@ let%expect_test _ =
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.get_storage` from `Test.Next` is encouraged for a smoother migration.
 
+    File "contract.test.mligo", line 8, characters 2-8:
+      7 |   let storage = Test.get_storage orig.addr in
+      8 |   assert (storage = [3 ; 2 ; 1])
+            ^^^^^^
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
     Everything at the top-level was executed.
     - test_originate exited with value (). |}]
 
@@ -209,6 +233,14 @@ let%expect_test _ =
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.get_storage` from `Test.Next` is encouraged for a smoother migration.
+
+    File "c/contract.test.mligo", line 8, characters 2-8:
+      7 |   let storage = Test.get_storage orig.addr in
+      8 |   assert (storage = [3 ; 2 ; 1])
+            ^^^^^^
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
 
     Everything at the top-level was executed.
     - test_originate exited with value (). |}]
@@ -247,6 +279,14 @@ let%expect_test _ =
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.get_storage` from `Test.Next` is encouraged for a smoother migration.
 
+    File "b/c/contract.test.mligo", line 8, characters 2-8:
+      7 |   let storage = Test.get_storage orig.addr in
+      8 |   assert (storage = [3 ; 2 ; 1])
+            ^^^^^^
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
+
     Everything at the top-level was executed.
     - test_originate exited with value (). |}]
 
@@ -283,6 +323,14 @@ let%expect_test _ =
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.get_storage` from `Test.Next` is encouraged for a smoother migration.
+
+    File "a/b/c/contract.test.mligo", line 8, characters 2-8:
+      7 |   let storage = Test.get_storage orig.addr in
+      8 |   assert (storage = [3 ; 2 ; 1])
+            ^^^^^^
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
 
     Everything at the top-level was executed.
     - test_originate exited with value (). |}]
@@ -325,6 +373,14 @@ let%expect_test _ =
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.get_storage` from `Test.Next` is encouraged for a smoother migration.
+
+    File "using_scope_pkg_project/src/a/b/c/contract.test.mligo", line 8, characters 2-8:
+      7 |   let storage = Test.get_storage orig.addr in
+      8 |   assert (storage = [3 ; 2 ; 1])
+            ^^^^^^
+    :
+    Warning: deprecated value.
+    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
 
     Everything at the top-level was executed.
     - test_originate exited with value (). |}]
