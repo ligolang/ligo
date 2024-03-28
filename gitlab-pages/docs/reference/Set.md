@@ -1,6 +1,6 @@
 ---
 id: set-reference
-title: Set
+title: set
 hide_table_of_contents: true
 ---
 import Syntax from '@theme/Syntax';

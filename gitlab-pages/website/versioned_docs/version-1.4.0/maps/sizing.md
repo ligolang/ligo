@@ -15,7 +15,7 @@ let my_map : (int, string) map = Map.literal [(1,"one"); (2,"two")]
 let size : nat = Map.size my_map // = 2
 ```
 Note: See the predefined
-[module Map](../reference/map-reference/?lang=cameligo)
+[module Map](../reference/map-reference)
 
 </Syntax>
 
@@ -27,6 +27,6 @@ const size: nat = Map.size(my_map); // == 2
 ```
 
 Note: See the predefined
-[namespace Map](../reference/map-reference/?lang=jsligo)
+[namespace Map](../reference/map-reference)
 
 </Syntax>

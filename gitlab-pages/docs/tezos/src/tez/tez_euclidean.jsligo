@@ -1,0 +1,5 @@
+// Some (7, 2mutez)
+const ediv1: option<[nat, tez]> = ediv(37mutez, 5mutez);
+
+// Some (7mutez, 2mutez)
+const ediv2: option<[tez, tez]> = ediv(37mutez, 5n);

@@ -11,7 +11,8 @@ purported key.
 <Syntax syntax="cameligo">
 
 ```cameligo group=map_searching
-let my_map : (int, string) map = Map.literal [(1,"one"); (2,"two")]
+let my_map : (int, string) map =
+  Map.literal [(1,"one"); (2,"two")]
 let contains_2 : bool = Map.mem 2 my_map // = true
 ```
 
@@ -20,7 +21,8 @@ let contains_2 : bool = Map.mem 2 my_map // = true
 <Syntax syntax="jsligo">
 
 ```jsligo group=map_searching
-const my_map: map<int,string> = Map.literal(list([[1,"one"],[2,"two"]]));
+const my_map: map<int,string> =
+  Map.literal(list([[1,"one"],[2,"two"]]));
 const contains_2: bool = Map.mem(2, my_map); // == true
 ```
 
@@ -62,7 +64,7 @@ let force_access key map =
 
 <Syntax syntax="jsligo">
 
-```jsligo group=maps
+```jsligo group=map_searching
 let force_access = (key, map) => {
   return match(Map.find_opt (key, map)) {
     when(Some(value)): value;
@@ -80,13 +82,13 @@ that the exception raised by `failwith` carries the default string
 <Syntax syntax="cameligo">
 
 Note: See the predefined
-[module Map](../reference/map-reference/?lang=cameligo)
+[module Map](../reference/map-reference)
 
 </Syntax>
 
 <Syntax syntax="jsligo">
 
 Note: See the predefined
-[namespace Map](../reference/map-reference/?lang=jsligo)
+[namespace Map](../reference/map-reference)
 
 </Syntax>

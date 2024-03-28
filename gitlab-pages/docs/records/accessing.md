@@ -31,8 +31,8 @@ let is_alice_admin : bool = alice.is_admin // = true
 
 <Syntax syntax="jsligo">
 
-If we want to access a field, we use the selection operator "`.`",
-like so:
+If we want to access a field, we use the selection operator "`.`"
+followed by the field name, like so:
 
 ```jsligo group=record_access
 type user = {
@@ -50,6 +50,10 @@ const user : user = {login: "al", name: "Alice"};
 const alice : account = {user, id: 5, is_admin: true};
 const is_alice_admin = alice.is_admin; // == true
 ```
+
+Instead of the field name, we can provide between square brackets a
+string that contains the field name, or an integer that is the index
+of the field in the record declaration:
 
 </Syntax>
 

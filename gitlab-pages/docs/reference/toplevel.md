@@ -714,6 +714,25 @@ The call `ediv(z1, z2)`, where `z1` and `z2` are either of type
 
 
 <SyntaxTitle syntax="cameligo">
+type &#39;elt big&#95;set = &#39;elt Big&#95;set.t
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+type big&#95;set&lt;elt&gt; = Big&#95;set.t&lt;elt&gt;
+</SyntaxTitle>
+<Syntax syntax="cameligo">
+
+The type of the big sets is based on `big_map`.
+
+</Syntax>
+
+<Syntax syntax="jsligo">
+
+The type of the big sets is based on `big_map`.
+
+</Syntax>
+
+
+<SyntaxTitle syntax="cameligo">
 type dynamic&#95;entrypoints = (nat, bytes) big&#95;map
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">

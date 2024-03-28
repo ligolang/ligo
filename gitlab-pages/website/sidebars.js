@@ -47,13 +47,6 @@ const sidebars = {
       "numbers/multiplying",
       "numbers/dividing"
     ],
-    "Strings": [
-      "strings/strings",
-      "strings/concatenating",
-      "strings/sizing",
-      "strings/slicing",
-      "strings/verbatim"
-    ],
     "Booleans": [
       "booleans/booleans",
       "booleans/or",
@@ -61,6 +54,13 @@ const sidebars = {
       "booleans/not",
       "booleans/comparing",
       "booleans/conditionals"
+    ],
+    "Strings": [
+      "strings/strings",
+      "strings/concatenating",
+      "strings/sizing",
+      "strings/slicing",
+      "strings/verbatim"
     ],
     "Tuples": [
       "tuples/declaring",
@@ -153,94 +153,162 @@ const sidebars = {
       "preprocessor/import",
       "preprocessor/error"
     ],
-    "Tezos features": [
-      "advanced/decorators",
-      "advanced/entrypoints-contracts",
-      "contract/views",
-      "contract/events",
-      "language-basics/tezos-specific"
+    "TEZOS FEATURES": [
+      "tezos/tezos"
+    ],
+    "bytes": [
+      "tezos/bytes/bytes",
+      "tezos/bytes/concatenating",
+      "tezos/bytes/sizing",
+      "tezos/bytes/slicing",
+      "tezos/bytes/bitwise",
+      "tezos/bytes/packing",
+      "tezos/bytes/crypto"
+//      "tezos/bytes/assigning"
+    ],
+    "key": [
+      "tezos/key"
+    ],
+    "key_hash": [
+      "tezos/hash_key"
+    ],
+    "signature": [
+      "tezos/signature"
+    ],
+    "timestamp": [
+      "tezos/timestamp/timestamp",
+      "tezos/timestamp/now",
+      "tezos/timestamp/arithmetics",
+      "tezos/timestamp/comparing"
+    ],
+    "tez": [
+      "tezos/tez"
+    ],
+    "chain_id": [
+      "tezos/chain_id"
+    ],
+    "Big maps": [
+      "tezos/big_maps/declaring",
+      "tezos/big_maps/searching",
+      "tezos/big_maps/adding",
+      "tezos/big_maps/removing",
+      "tezos/big_maps/updating"
+    ],
+    "Big sets": [
+      "tezos/big_sets/declaring",
+      "tezos/big_sets/searching",
+      "tezos/big_sets/adding",
+      "tezos/big_sets/removing",
+      "tezos/big_sets/updating"
+    ],
+    "Attributes/Decorators": [
+      "tezos/decorators/decorators",
+      "tezos/decorators/annot",
+      "tezos/decorators/deprecated",
+      "tezos/decorators/dyn_entry",
+      "tezos/decorators/entry",
+      "tezos/decorators/inline",
+      "tezos/decorators/layout",
+      "tezos/decorators/private",
+      "tezos/decorators/view"
+    ],
+    "Contracts": [
+      "tezos/contracts/address",
+      "tezos/contracts/contracts",
+      "tezos/contracts/contract_of",
+      "tezos/contracts/michelson",
+      "tezos/contracts/michelson-injection",
+      "tezos/contracts/operation",
+      "contract/events"
     ],
     "Testing and Debugging": [
       "advanced/testing",
       "advanced/mutation-testing",
       "advanced/michelson_testing"
     ],
-    "Combining Code": [
-      {
-        "type": "doc",
-        "id": "language-basics/modules",
-        "label": "Modules",
-        "customProps": {
-          "jsLigoName": "Namespaces"
-        }
-      },
-      "advanced/global-constants",
-      "advanced/package-management"
-    ],
+//    "Combining Code": [
+      // {
+      //   "type": "doc",
+      //   "id": "language-basics/modules",
+      //   "label": "Modules",
+      //   "customProps": {
+      //     "jsLigoName": "Namespaces"
+      //   }
+      // },
+//      "advanced/global-constants",
+//    ],
     "Advanced Topics": [
-      "advanced/polymorphism",
-      "advanced/inline",
-      "advanced/dynamic-entrypoints",
-      "tutorials/inter-contract-calls/inter-contract-calls",
+      "advanced/package-management",
       "tutorials/optimisation/optimisation",
       "tutorials/security/security",
-      "advanced/timestamps-addresses",
-      "advanced/include",
-      "advanced/first-contract",
-      "advanced/michelson-and-ligo",
-      "advanced/interop",
-      "advanced/embedded-michelson"
-    ],
-    "Misc": [
-      "intro/editor-support",
-      "api/cli-commands",
-      "api/cheat-sheet",
-      "tutorials/registry/what-is-the-registry",
-      "tutorials/registry/how-to-make-an-audit",
-      "tutorials/tz-vs-eth/tz-vs-eth"
+//      "advanced/polymorphism",
+//      "advanced/inline",
+//      "advanced/dynamic-entrypoints",
+//      "tutorials/inter-contract-calls/inter-contract-calls",
+//      "advanced/timestamps-addresses",
+//      "advanced/include",
+//      "advanced/first-contract",
+//      "advanced/michelson-and-ligo",
+//      "advanced/embedded-michelson"
     ]
-  },
+  //   "Misc": [
+  //     "intro/editor-support",
+  //     "api/cli-commands",
+  //     "api/cheat-sheet",
+  //     "tutorials/registry/what-is-the-registry",
+  //     "tutorials/registry/how-to-make-an-audit",
+  //     "tutorials/tz-vs-eth/tz-vs-eth"
+  //   ]
+   },
   "API": {
     "Language": [
       "reference/map-reference",
-      "reference/toplevel-reference",
+      "reference/crypto-reference",
       "reference/tezos-reference",
+      "reference/string-reference",
+      "reference/set-reference",
+      "reference/bytes-reference",
+      "reference/list-reference",
+      "reference/big-map-reference",
       "reference/bitwise-reference",
       "reference/option-reference",
-      "reference/string-reference",
-      "reference/list-reference",
-      "reference/bytes-reference",
-      "reference/big-set-reference",
-      "reference/set-reference",
+      "reference/toplevel-reference",
       "reference/dynamic-entrypoints-reference",
-      "reference/big-map-reference",
-      "reference/crypto-reference",
+      "reference/big-set-reference",
       {
         "type": "category",
-        "label": "Test",
+        "label": "test",
         "items": [
-          "reference/test-reference",
-          "reference/test.proxy-ticket-reference",
           "reference/test.pbt-reference",
+          "reference/test.proxy-ticket-reference",
+          "reference/test-reference",
           {
             "type": "category",
-            "label": "Next",
+            "label": "next",
             "items": [
-              "reference/test.next.ticket-reference",
-              "reference/test.next.timelock-reference",
-              "reference/test.next.compare-reference",
-              "reference/test.next.string-reference",
-              "reference/test.next.typed-address-reference",
-              "reference/test.next.io-reference",
-              "reference/test.next-reference",
               "reference/test.next.address-reference",
               "reference/test.next.contract-reference",
               "reference/test.next.originate-reference",
+              "reference/test.next.timelock-reference",
+              "reference/test.next.ticket-reference",
+              "reference/test.next.string-reference",
+              "reference/test.next.typed-address-reference",
+              "reference/test.next-reference",
+              "reference/test.next.io-reference",
               "reference/test.next.dynamic-entrypoints-reference",
+              "reference/test.next.compare-reference",
               "reference/test.next.crypto-reference",
               {
                 "type": "category",
-                "label": "State",
+                "label": "mutation",
+                "items": [
+                  "reference/test.next.mutation-reference",
+                  "reference/test.next.mutation.all-reference"
+                ]
+              },
+              {
+                "type": "category",
+                "label": "state",
                 "items": [
                   "reference/test.next.state-reference",
                   "reference/test.next.state.reset-reference"
@@ -248,34 +316,26 @@ const sidebars = {
               },
               {
                 "type": "category",
-                "label": "Account",
+                "label": "assert",
+                "items": [
+                  "reference/test.next.assert-reference",
+                  "reference/test.next.assert.error-reference"
+                ]
+              },
+              {
+                "type": "category",
+                "label": "michelson",
+                "items": [
+                  "reference/test.next.michelson.contract-reference",
+                  "reference/test.next.michelson-reference"
+                ]
+              },
+              {
+                "type": "category",
+                "label": "account",
                 "items": [
                   "reference/test.next.account.contract-reference",
                   "reference/test.next.account-reference"
-                ]
-              },
-              {
-                "type": "category",
-                "label": "Michelson",
-                "items": [
-                  "reference/test.next.michelson-reference",
-                  "reference/test.next.michelson.contract-reference"
-                ]
-              },
-              {
-                "type": "category",
-                "label": "Mutation",
-                "items": [
-                  "reference/test.next.mutation.all-reference",
-                  "reference/test.next.mutation-reference"
-                ]
-              },
-              {
-                "type": "category",
-                "label": "Assert",
-                "items": [
-                  "reference/test.next.assert.error-reference",
-                  "reference/test.next.assert-reference"
                 ]
               }
             ]

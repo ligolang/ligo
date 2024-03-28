@@ -1,6 +1,6 @@
 ---
 id: list-reference
-title: List
+title: list
 hide_table_of_contents: true
 ---
 import Syntax from '@theme/Syntax';

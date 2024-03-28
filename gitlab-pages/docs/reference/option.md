@@ -1,6 +1,6 @@
 ---
 id: option-reference
-title: Option
+title: option
 hide_table_of_contents: true
 ---
 import Syntax from '@theme/Syntax';

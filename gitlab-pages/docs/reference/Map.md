@@ -1,6 +1,6 @@
 ---
 id: map-reference
-title: Map
+title: map
 hide_table_of_contents: true
 ---
 import Syntax from '@theme/Syntax';

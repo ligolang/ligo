@@ -24,7 +24,7 @@ let plus_one = Map.map (fun (k,v) -> k + v) my_map
 ```
 
 Note: See the predefined
-[module Map](../reference/map-reference/?lang=cameligo)
+[module Map](../reference/map-reference)
 
 </Syntax>
 
@@ -37,6 +37,6 @@ const plus_one = Map.map(([k,v]) => k + v, my_map);
 ```
 
 Note: See the predefined
-[namespace Map](../reference/map-reference/?lang=jsligo)
+[namespace Map](../reference/map-reference)
 
 </Syntax>

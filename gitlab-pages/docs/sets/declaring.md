@@ -16,15 +16,18 @@ type.
 
 The empty set is denoted by the predefined value `Set.empty`. A
 non-empty set can be built by using the function `Set.literal` which
-takes a list of elements and returns a set containing them, and only
-them.
+takes a list of *literal elements* and returns a set containing them,
+and only them.
 
 <Syntax syntax="cameligo">
 
 ```cameligo group=sets
 let empty_set : int set = Set.empty
-let my_set : int set = Set.literal [3; 2; 2; 1]
+let set1 : int set = Set.literal [3; 2; 2; 1]
 ```
+
+> Note: The element `2` is repeated in the list, but not in the set
+> made from it.
 
 Note: See the predefined
 [module Set](../reference/set-reference/?lang=cameligo)
@@ -35,16 +38,24 @@ Note: See the predefined
 
 ```jsligo group=sets
 const empty_set: set<int> = Set.empty;
-const my_set: set<int> = Set.literal(list([3, 2, 2, 1]));
+const set1: set<int> = Set.literal(list([3, 2, 2, 1]));
 ```
+
+> Note: The element `2` is repeated in the list, but not in the set
+> made from it.
 
 Note: See the predefined
 [namespace Set](../reference/set-reference/?lang=jsligo)
 
-</Syntax>
+If you want to build a big set from an arbitrary list of arbitrary
+values (not just literal values), then you must use `Set.of_list`
+instead of `Set.literal`:
 
-> Note: The element `2` is repeated in the list, but not in the set
-> made from it.
+```jsligo group=sets
+const two = 2;
+const set2: set<int> = Set.of_list(list([3, two, two, 1]));
+```
+</Syntax>
 
 Set elements are internally sorted by increasing values, so the type
 of the elements must be *comparable*, that is, they obey a total order

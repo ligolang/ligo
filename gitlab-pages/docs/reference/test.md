@@ -1,6 +1,6 @@
 ---
 id: test-reference
-title: Test
+title: test
 hide_table_of_contents: true
 ---
 import Syntax from '@theme/Syntax';
@@ -10,13 +10,13 @@ import SyntaxTitle from '@theme/SyntaxTitle';
 The testing framework
 
 
-[module PBT](Test.PBT.md)
+[module pbt](test.pbt.md)
 
 
-[module Proxy_ticket](Test.Proxy_ticket.md)
+[module proxy_ticket](test.proxy_ticket.md)
 
 
-[module Next](Test.Next.md)
+[module next](test.next.md)
 
 
 <SyntaxTitle syntax="cameligo">

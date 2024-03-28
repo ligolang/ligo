@@ -38,7 +38,7 @@ let horizontal_offset (g : game) : int =
 ```
 
 Note: See the predefined
-[module Map](../reference/map-reference/?lang=cameligo)
+[module Map](../reference/map-reference)
 
 </Syntax>
 
@@ -58,6 +58,6 @@ const horizontal_offset = (g: game): int => {
 ```
 
 Note: See the predefined
-[namespace Map](../reference/map-reference/?lang=jsligo)
+[namespace Map](../reference/map-reference)
 
 </Syntax>
