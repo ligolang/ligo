@@ -1,9 +1,13 @@
 ---
-id: layout-comb-why
 title: Why did the default datatype layout change to @layout comb?
+description: Discover the evolution of Michelson data type layouts in LIGO and the shift to @layout comb as the default choice in version 1.0. Explore the benefits, including improved performance and code size reduction.
+slug: layout-comb-why
+authors:
+  - tomjack
+tags: [explainer]
+image: https://i.imgur.com/mErPwqL.png
+hide_table_of_contents: true
 ---
-
-## Background
 
 When compiling to Michelson, LIGO must choose a "layout" for record
 and variant data types. Unfortunately, Michelson only has binary
@@ -15,6 +19,10 @@ Michelson. This choice needs to be consistent (else we will get type
 errors) and ideally it should be flexible (so that users can
 interoperate with Michelson types defined in standards or emitted by
 other compilers.)
+
+<!--truncate-->
+
+## Background
 
 In early versions of LIGO, two layouts were supported: `tree` and
 `comb`.
@@ -64,8 +72,7 @@ desired.
 
 ## What do I do?
 
-See the [How to deal with the change of the default datatype layout to
-`@layout comb` ?](layout-comb-how.md) doc for advice on how to deal
+See the [How to deal with the change of the default datatype layout to `@layout comb` ?](/blog/layout-comb-how) doc for advice on how to deal
 with this breaking change.
 
 <!-- updated use of entry -->

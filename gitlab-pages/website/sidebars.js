@@ -462,14 +462,11 @@ const sidebars = {
   "faq": {
     "FAQ": [
       "faq/intro",
-      "faq/v1-migration-guide",
       "faq/convert-address-to-contract",
       "faq/polymorphic-comparison",
       "faq/catch-error-view",
       "faq/cameligo-ocaml-syntax-diff",
       "faq/tezos-now-advance-time",
-      "faq/layout-comb-how",
-      "faq/layout-comb-why"
     ]
   }
 };

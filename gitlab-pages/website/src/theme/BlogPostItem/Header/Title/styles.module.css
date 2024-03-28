@@ -1,0 +1,14 @@
+.title,
+.title * {
+  color: var(--ligo-color_content-primary);
+  font-size: var(--ligo-text_size-3xl);
+}
+
+/**
+  Blog post title should be smaller on smaller devices
+**/
+@media (max-width: 576px) {
+  .title {
+    font-size: 2rem;
+  }
+}
