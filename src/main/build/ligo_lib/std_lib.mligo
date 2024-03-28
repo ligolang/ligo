@@ -3618,6 +3618,48 @@ module Test = struct
     end
     let originate = Originate.contract
     let failwith = Assert.failwith
-    include Typed_address
+    (* FIXME: [#2163](https://gitlab.com/ligolang/ligo/-/issues/2163)
+       Here we should `include Typed_address`, but it is buggy, so directly
+       copy and paste the module *)
+      (** Bakes a transaction by sending an amount of tez with a parameter
+         from the current source to another account. Returns the amount of
+         gas consumed by the execution of the contract. *)
+      let transfer = transfer
+
+      (** Bakes a transaction by sending an amount of tez with a parameter
+        from the current source to another account. Returns the amount of
+        gas consumed by the execution of the contract. Similar as
+        `Test.transfer`, but fails when anything goes wrong. *)
+      let transfer_exn = transfer_exn
+
+      (** Gets the storage of a typed account. *)
+      let get_storage = get_storage
+
+      (** Gets the balance of an account in tez. *)
+      let get_balance (type p s) (a : (p, s) typed_address) : tez =
+        [%external ("TEST_GET_BALANCE", to_address a)]
+      let to_address (type p s) (c : (p, s) typed_address) : address =
+        [%external ("TEST_TO_ADDRESS", c)]
+
+      (** Gets the contract corresponding to the default entrypoint of a
+        typed address: the contract parameter in the result will be the
+        type of the default entrypoint (generally `'param`, but this might
+        differ if `'param` includes a "default" entrypoint). *)
+      let to_contract (type p s) (t : (p, s) typed_address) : p contract =
+        [%external ("TEST_TO_CONTRACT", t)]
+
+      (** Gets the contract corresponding to an entrypoint of a typed
+        address: the contract parameter in the result will be the type of
+        the entrypoint, it needs to be annotated, entrypoint string should
+        omit the prefix "%", but if passed a string starting with "%", it
+        will be removed (and a warning emitted). *)
+      let get_entrypoint (type p s q) (s : string) (t : (p, s) typed_address) : q contract =
+        let s = if Toplevel.String.length s > 0n then
+                  if Toplevel.String.sub 0n 1n s = "%" then
+                    let () = IO.eprintln "WARNING: get_entrypoint: automatically removing starting %" in
+                    Toplevel.String.sub 1n (abs (Toplevel.String.length s - 1)) s
+	                else s
+	              else s in
+        [%external ("TEST_TO_ENTRYPOINT", s, t)]
   end
 end
