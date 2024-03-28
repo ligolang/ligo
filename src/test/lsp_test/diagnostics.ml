@@ -51,14 +51,6 @@ let%expect_test "Type errors" =
          "severity": 1
        };
        {
-         "message": "[Compiler stage: aggregation] Cannot compile erroneous expression.",
-         "range": {
-           "end": { "character": 34, "line": 5 },
-           "start": { "character": 3, "line": 5 }
-         },
-         "severity": 1
-       };
-       {
          "message": "[Compiler stage: typer] This expression has type \"string\", but an expression was expected of type \n\"int\".\nType \"string\" is not compatible with type \"int\".",
          "range": {
            "end": { "character": 34, "line": 5 },
@@ -377,14 +369,6 @@ let%expect_test "ghost string filter" =
            "start": { "character": 10, "line": 5 }
          },
          "severity": 1
-       };
-       {
-         "message": "[Compiler stage: aggregation] Cannot compile erroneous expression.",
-         "range": {
-           "end": { "character": 3, "line": 6 },
-           "start": { "character": 13, "line": 2 }
-         },
-         "severity": 1
        }])] |}]
 
 let%expect_test "Ghost_ident filter" =
@@ -597,14 +581,6 @@ let%expect_test "Shows errors for type error recovery" =
     {|
     [("../../../../../default/src/test/contracts/lsp/hover/recover_type_error_1.mligo",
       [{
-         "message": "[Compiler stage: aggregation] Cannot compile erroneous expression.",
-         "range": {
-           "end": { "character": 16, "line": 1 },
-           "start": { "character": 2, "line": 1 }
-         },
-         "severity": 1
-       };
-       {
          "message": "[Compiler stage: typer] This expression has type \"string\", but an expression was expected of type \n\"int\".\nType \"string\" is not compatible with type \"int\".",
          "range": {
            "end": { "character": 16, "line": 1 },
@@ -622,14 +598,6 @@ let%expect_test "Shows errors for type error recovery 2" =
     {|
     [("../../../../../default/src/test/contracts/lsp/hover/recover_type_error_2.mligo",
       [{
-         "message": "[Compiler stage: aggregation] Cannot compile erroneous expression.",
-         "range": {
-           "end": { "character": 15, "line": 0 },
-           "start": { "character": 0, "line": 0 }
-         },
-         "severity": 1
-       };
-       {
          "message": "[Compiler stage: typer] This expression has type \"string\", but an expression was expected of type \n\"int\".\nType \"string\" is not compatible with type \"int\".",
          "range": {
            "end": { "character": 15, "line": 0 },

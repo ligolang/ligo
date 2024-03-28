@@ -58,11 +58,13 @@ let filter_diagnostics : Main_errors.all list -> Main_errors.all list =
         (match e with
         | `Typer_cannot_decode_texists _
         | `Typer_cannot_encode_texists _
-        | `Typer_cannot_decompile_texists _ -> false
+        | `Typer_cannot_decompile_texists _
+        | `Typer_unbound_label_edge_case _ -> false
         | _ -> true)
       | `Aggregation_tracer e ->
         (match e with
-        | `Aggregation_cannot_compile_texists _ -> false
+        | `Aggregation_cannot_compile_texists _
+        | `Aggregation_cannot_compile_erroneous_expression _ -> false
         | _ -> true)
       | _ -> true)
 
@@ -77,52 +79,42 @@ let get_diagnostics ~(normalize : string -> Path.t) (current_path : Path.t)
      ; potential_tzip16_storages = _
      ; lambda_types = _
      } ->
-  let mk_diag ~stage ~range ~file ~message ~severity =
-    let location = Def.Loc_in_file.{ path = normalize file; range } in
-    Some { message; severity; location; stage }
+  let mk_diag ~stage ~range ~path ~message ~severity =
+    let location = Def.Loc_in_file.{ path; range } in
+    { message; severity; location; stage }
+  in
+  let diag_of_loc_opt ~stage ~message ~severity = function
+    | Some (Loc.File region) ->
+      let range = Range.of_region region in
+      let path = normalize region#file in
+      mk_diag ~stage ~range ~path ~message ~severity
+    | Some (Loc.Virtual _) | None ->
+      let range = Range.dummy in
+      let path = current_path in
+      mk_diag ~stage ~range ~path ~message ~severity
   in
   let extract_error_information : Main_errors.all -> simple_diagnostic list =
    fun errs ->
     let errs = Main_errors.Formatter.error_json errs in
-    List.filter_map
+    let severity = DiagnosticSeverity.Error in
+    List.map
       ~f:
         (fun ({ content = { message; location; children = _ }; status = _; stage } :
                Simple_utils.Error.t) ->
-        match location with
-        | Some (File region) ->
-          mk_diag
-            ~stage
-            ~range:(Range.of_region region)
-            ~file:region#file
-            ~message
-            ~severity:DiagnosticSeverity.Error
-        | Some (Virtual _) | None ->
-          mk_diag
-            ~stage
-            ~range:Range.dummy
-            ~file:(Path.to_string current_path)
-            ~message
-            ~severity:DiagnosticSeverity.Error)
+        diag_of_loc_opt ~stage ~message ~severity location)
       errs
   in
-  let extract_warning_information : Main_warnings.all -> simple_diagnostic option =
+  let extract_warning_information : Main_warnings.all -> simple_diagnostic =
    fun warn ->
     let ({ content = { message; location; variable = _ }; status = _; stage }
           : Simple_utils.Warning.t)
       =
       Main_warnings.to_warning warn
     in
-    match location with
-    | File region ->
-      mk_diag
-        ~stage
-        ~range:(Range.of_region region)
-        ~file:region#file
-        ~message
-        ~severity:DiagnosticSeverity.Warning
-    | Virtual _ -> None
+    let severity = DiagnosticSeverity.Warning in
+    diag_of_loc_opt ~stage ~message ~severity (Some location)
   in
   List.concat_map ~f:extract_error_information (filter_diagnostics errors)
-  @ List.filter_map ~f:extract_warning_information warnings
+  @ List.map ~f:extract_warning_information warnings
   |> List.filter ~f:(fun { message; _ } ->
          not @@ Parsing_shared.Errors.ErrorWrapper.is_wrapped message)
