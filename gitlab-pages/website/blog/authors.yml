@@ -1,0 +1,20 @@
+lcanis:
+  name: Laurent Canis
+  title: Tech Lead at Ligo
+  url: https://gitlab.com/Laucans
+  image_url: https://gitlab.com/uploads/-/system/user/avatar/10652212/avatar.png?width=400
+  email: laurent@marigold.dev
+
+tomjack:
+  name: Tom Jack
+  title: Developer at Ligo
+  url: https://gitlab.com/tomjack
+  image_url: https://secure.gravatar.com/avatar/d62c4ef79b9ef198c43a82d555fbd5fa9510464195223b160771910eb991e6fc?s=800&d=identicon
+  email: tom@marigold.dev
+
+suzannesoy:
+  name: Suzanne Soy
+  title: Developer at Ligo
+  url: https://gitlab.com/ligo.suzanne.soy
+  image_url: https://gitlab.com/uploads/-/system/user/avatar/2923020/avatar.png?width=192
+  email: suzanne@marigold.dev

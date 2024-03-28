@@ -1,0 +1,22 @@
+.avatar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.avatar:not(:last-child) {
+  margin-right: 0.5rem;
+}
+
+.avatar__name-link {
+  color: inherit;
+}
+
+.avatar__photo {
+  border-radius: 50%;
+  display: block;
+  height: 20px;
+  overflow: hidden;
+  width: 20px;
+  margin-right: 0.5rem;
+}

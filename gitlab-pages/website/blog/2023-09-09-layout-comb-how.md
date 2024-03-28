@@ -1,10 +1,18 @@
 ---
-id: layout-comb-how
 title: How to deal with the change of the default datatype layout to @layout comb ?
+description: Explore the challenges and solutions associated with the default datatype layout change to @layout comb in LIGO 1.0. For a comprehensive background on the change, refer to our "Why" article.
+slug: layout-comb-how
+authors:
+  - tomjack
+tags: [explainer]
+image: https://i.imgur.com/mErPwqL.png
+hide_table_of_contents: true
 ---
 
-See [Why did the default datatype layout change to `@layout comb` ?](layout-comb-why.md)
+See [Why did the default datatype layout change to `@layout comb` ?](/blog/layout-comb-why)
 for background about this change.
+
+<!--truncate-->
 
 ## Easy way out
 

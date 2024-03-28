@@ -1,0 +1,24 @@
+.container {
+  font-size: 0.9rem;
+}
+
+.blog-post-header__info {
+  display: flex;
+  flex-flow: wrap;
+  color: var(--ligo-color_content-secondary);
+}
+
+.spacer {
+  margin: 0 0.4rem;
+}
+
+.tags {
+  display: inline;
+  list-style: none;
+  padding: 0;
+}
+
+.tag {
+  display: inline-block;
+  margin: 0 0.4rem 0.5rem 0;
+}

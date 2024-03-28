@@ -40,11 +40,13 @@ const config = {
         },
         blog: {
           showReadingTime: true,
-          // Please change this to your repo.
-          // Remove this to remove the "edit this page" links.
-          // editUrl:
-          //   'https://github.com/facebook/docusaurus/tree/main/packages/create-docusaurus/templates/shared/',
+          readingTime: ({ content, frontMatter, defaultReadingTime }) =>
+            defaultReadingTime({ content, options: { wordsPerMinute: 300 } }),
+          blogTitle: "Ligo Blog",
+          blogDescription: "On the Ligo Blog, you will find news, release guides and explainers.",
+          blogSidebarCount: 0,
         },
+
         theme: {
           customCss: [
             require.resolve("./src/css/colors.css"),
@@ -68,7 +70,7 @@ const config = {
       announcementBar: {
         id: "support_us",
         content:
-          "<b>Ligo v1 is now available ! Check the migration guide : https://ligolang.org/docs/next/faq/v1-migration-guide ! </b>",
+          "<b>Ligo v1 is now available ! <a href='/blog/v1-migration-guide'>Check the migration guide</a> ! </b>",
         backgroundColor: "#003ee0",
         textColor: "#efefef",
         isCloseable: false,
@@ -86,6 +88,7 @@ const config = {
           { to: "docs/intro/introduction", label: "Docs", position: "left", target: "_self" },
           { to: "docs/reference/toplevel-reference", label: "API", position: "left" },
           { to: "docs/faq/intro", label: "FAQ", position: "left" },
+          { to: "blog", label: "Blog", position: "left" },
           { to: "https://packages.ligolang.org/packages", label: "Registry", position: "right" },
           { to: "https://ide.ligolang.org/", label: "Web IDE", position: "right" },
         ],
