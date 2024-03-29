@@ -1,4 +1,0 @@
-type storage = int
-
-@entry const left  = (i : int, x : storage) : [list<operation>, storage] => [list([]), x - i]
-@entry const right = (i : int, x : storage) : [list<operation>, storage] => [list([]), x + i]

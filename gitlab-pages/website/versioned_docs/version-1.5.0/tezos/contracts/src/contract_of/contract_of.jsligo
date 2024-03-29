@@ -1,0 +1,24 @@
+type storage = int;
+type @return = [list<operation>, storage];
+
+namespace C {
+  @entry
+  const decrement = (param: int, storage: storage) : @return =>
+    [list([]), storage - param];
+
+  @entry
+  const increment = (param: int, storage: storage) : @return =>
+    [list([]), storage + param];
+
+  @entry
+  const reset = (_unit: unit, _storage: storage) : @return =>
+    [list([]), 0];
+}
+
+const test_initial_storage = () : unit => {
+  const init_storage = 42;
+  const fee = 0mutez;
+  const orig = Test.Next.originate (contract_of(C), init_storage, fee);
+  const new_storage = Test.Next.Typed_address.get_storage(orig.taddr);
+  assert(new_storage == init_storage);
+}

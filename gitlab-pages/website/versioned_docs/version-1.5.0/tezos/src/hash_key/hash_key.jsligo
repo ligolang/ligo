@@ -1,0 +1,4 @@
+const check_hash_key = (kh1: key_hash, k2: key) => {
+  let kh2 = Crypto.hash_key(k2);
+  return [kh1 == kh2, kh2];
+};

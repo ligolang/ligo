@@ -1,0 +1,1 @@
+let len : nat = Bytes.length 0x0AFF // len = 2n

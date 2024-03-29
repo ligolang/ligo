@@ -1,0 +1,5 @@
+const is_it_a_nat = (i : int) =>
+  match (is_nat(i)) {
+    when(None): false;
+    when(Some(n)): do {ignore(n); return true; }
+  }

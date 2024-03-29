@@ -4,4 +4,5 @@
 	branch = v19.0-ligo
 [submodule "tools/lsp-bench/projects/submodules/checker"]
 	path = tools/lsp-bench/projects/submodules/checker
-	url = git@github.com:marigold-dev/checker-ligo.git
+	url = https://github.com/marigold-dev/checker-ligo.git
+	branch = main

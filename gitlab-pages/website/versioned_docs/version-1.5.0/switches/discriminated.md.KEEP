@@ -1,0 +1,92 @@
+---
+id: discriminated
+title: Discriminated unions
+---
+
+import Syntax from '@theme/Syntax';
+
+<Syntax syntax="cameligo">
+This feature is not available in CameLIGO."
+</Syntax>
+
+<Syntax syntax="jsligo">
+
+Switches operate on simple types, but sometimes we would like to
+associate values to the one use for the switch -- therefore going
+beyong enumerated types. This is where *discriminated union types*
+come handy.
+
+Discriminated union types are a special kind of variant types which
+enable a more expressive form of switching. Indeed, instead of having
+data constructors for each variant, we have records with a field
+`kind` of type `string`, which is used for pattern matching with the
+`switch` statement, as opposed to the `match` expression, where the
+whole of the value is use. For example:
+
+```jsligo group=discriminated
+type delta =
+  {kind: "increment", amount: int}
+| {kind: "decrement", amount: int}
+| {kind: "reset"};
+```
+
+If the field `kind` would be missing in one record-variant, an error
+would be generated.
+
+[//]: <> Also, if multiple fields are present which can be used as unique field, only the first unique field will be used.
+
+Creating a value from a discriminated union type requires all the
+fields to be fully written. So for increment that would be:
+
+```jsligo group=discriminated
+const incr : delta = {kind: "increment", amount: 3};
+```
+
+or
+
+```jsligo
+const zero : delta = {kind: "reset"};
+```
+
+Pattern matching over a discriminated union type relies on the
+`switch` statement. For example:
+
+```jsligo group=discriminated
+function apply (action: delta) {
+  let state = 0;
+  switch(action.kind) {
+    case "increment":
+      state += action.amount;
+      break
+    case "decrement":
+      state -= action.amount;
+      break
+    case "reset":
+      state = 0;
+      break
+  };
+};
+```
+
+Note that all cases of the discriminated union must be handled, if not
+an error will be generated (here: `"increment"`, `"decrement"` and
+`"reset"`). Note that a default case can also be used:
+
+```jsligo group=discriminated
+function apply_with_default (action: delta) {
+  let state = 0;
+  switch(action.kind) {
+    case "increment":
+      state += action.amount;
+      break
+    case "decrement":
+      state -= action.amount;
+      break
+    default:
+      state = 0;
+      break
+  };
+};
+```
+
+</Syntax>

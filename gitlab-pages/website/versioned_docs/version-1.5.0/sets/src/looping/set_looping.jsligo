@@ -1,0 +1,5 @@
+function sum_elt (s: set<int>) {
+  let sum = 0;
+  for (const e of s) sum = sum + e;
+  return sum;
+};
