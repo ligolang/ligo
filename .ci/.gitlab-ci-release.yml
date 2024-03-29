@@ -204,7 +204,7 @@ update_release_metadata:
   stage: push
   tags:
     - docker
-  image: node:20.2.0-buster
+  image: node:20.12.0-buster
   rules:
     - if: '$CI_COMMIT_TAG =~ /[0-9]+\.[0-9]+\.0/'
       when: always
@@ -428,7 +428,7 @@ update-repository-status:
   stage: tooling
   tags:
     - docker
-  image: node:20.2.0-buster
+  image: node:20.12.0-buster
   before_script:
     # Have to be done here because we are using an image for this job.
     - mkdir ~/.ssh
@@ -444,8 +444,6 @@ update-repository-status:
     - apt-get install -y --no-install-recommends jq
     - wget https://github.com/mikefarah/yq/releases/download/v4.18.1/yq_linux_amd64 -O /usr/bin/yq && chmod +x /usr/bin/yq
   script:
-    - git submodule sync --recursive                       
-    - git submodule update --init --recursive --remote --force
     - git remote rm origin && git remote add origin "git@gitlab.com:ligolang/ligo.git"
     - node scripts/manpages/manpages.js ./ligo
     - ./.ci/scripts/build_website_references_from_stdlib/main.sh ligo
