@@ -1,0 +1,2 @@
+const assert_all_greater_than_3 =
+  (m: map<int,int>) : unit => Map.iter(([_k,v]) => assert(v > 3), m);

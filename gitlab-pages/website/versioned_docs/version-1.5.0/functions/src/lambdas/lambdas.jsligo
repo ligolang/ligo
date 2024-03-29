@@ -1,0 +1,4 @@
+const sum = (x,y) => x + y;
+const increment = x => x + 1; // Or (x) => x + 1
+const decrement = (x) : int => x - 1;
+const comp_sum = ([x,y]) => x + y;

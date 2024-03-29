@@ -1,0 +1,5 @@
+function sum_list (l: list<int>) {
+  let sum = 0;
+  for (const i of l) sum = sum + i;
+  return sum;
+};

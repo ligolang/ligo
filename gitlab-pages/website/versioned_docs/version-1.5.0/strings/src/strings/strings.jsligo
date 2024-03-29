@@ -1,0 +1,3 @@
+const a :string = "Hello Alice";
+const one  = "" ? 0 : 1;
+const zero = "foo" ? 0 : 1;

@@ -1,0 +1,2 @@
+@inline
+const size = <elt>(list: List.t<elt>) : nat => List.length(list);

@@ -1,0 +1,9 @@
+const a = 1;
+const b : int = a; // Type ascription (a.k.a. annotation)
+const d = do {
+  const x = 1;
+  {
+    const x = 2; // No error: a sub-block
+    return x;
+  }
+};

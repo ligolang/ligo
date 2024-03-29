@@ -1,0 +1,7 @@
+const f = () => {
+  let b : bytes = 0x0005; // mutable
+  b &= 0x0106; // Bitwise "and"
+  b |= 0x0011; // Bitwise "or"
+  b ^= 0x13FF; // Bitwise "xor"
+  b <<= 8n;    // Bitwise "left shift"
+}
