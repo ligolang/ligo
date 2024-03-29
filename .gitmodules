@@ -5,3 +5,4 @@
 [submodule "tools/lsp-bench/projects/submodules/checker"]
 	path = tools/lsp-bench/projects/submodules/checker
 	url = https://github.com/marigold-dev/checker-ligo.git
+	branch = main
