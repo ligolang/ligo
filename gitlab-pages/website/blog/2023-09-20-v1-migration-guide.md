@@ -122,7 +122,7 @@ MRs:
 
 ### The comb layout is now used by default
 
-Some types can have several isomorphic representations in Michelson, and LIGO allows choosing between two of these, `comb` and `tree`, via an `@layout` decorator (e.g. `@layout("comb")` in JsLIGO, or `[@layout comb]` in CameLIGO). See [the documentation on layouts](/docs/advanced/interop#michelson-types-and-annotations).
+Some types can have several isomorphic representations in Michelson, and LIGO allows choosing between two of these, `comb` and `tree`, via an `@layout` decorator (e.g. `@layout("comb")` in JsLIGO, or `[@layout comb]` in CameLIGO).
 
 Previously, the default layout was `tree`, and in LIGO v1, the default becomes `comb`.
 
