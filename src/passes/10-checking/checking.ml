@@ -1811,6 +1811,7 @@ and infer_declaration (decl : I.declaration)
           return [ (Location.wrap ~loc content : O.declaration) ]) )
   in
   set_loc decl.location
+  @@ set_poly_name_tbl (Type_var_name_tbl.create ())
   @@
   match decl.wrap_content with
   | D_value { binder; attr; expr }
@@ -1988,8 +1989,8 @@ and infer_declaration (decl : I.declaration)
            @@ Signature.S_module
                 ( import_name
                 , sig_
-                , (* Note that if [public] is [false] (which it is by default), then 
-                     the module binding is added to the context but not the signature of the 
+                , (* Note that if [public] is [false] (which it is by default), then
+                     the module binding is added to the context but not the signature of the
                      enclosing module. *)
                   Attrs.Module.of_core_attr import_attr )
          ]

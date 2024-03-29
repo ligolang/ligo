@@ -57,7 +57,7 @@ let rec decode (type_ : Type.t) ~options ~path ~raise subst =
     (match Substitution.find_texists_eq subst tvar with
     | Some (_, type_) -> decode type_
     | None ->
-      let error = cannot_decode_texists tvar type_ type_.location in
+      let error = cannot_decode_texists tvar type_.location in
       if options.Compiler_options.typer_error_recovery
       then (
         raise.log_error error;
@@ -120,13 +120,13 @@ let decode type_ ~options ~path ~raise subst =
   Trace.try_with
     ~fast_fail:raise.fast_fail
     (fun ~raise ~catch:_ -> decode type_ ~options ~path ~raise subst)
-    (fun ~catch:_ (`Typer_cannot_decode_texists (tvar, _type, loc)) ->
+    (fun ~catch:_ (`Typer_cannot_decode_texists (tvar, loc)) ->
       let loc =
         if (* pick the best location! *) Location.is_dummy_or_generated loc
         then type_.location
         else loc
       in
-      let error = cannot_decode_texists tvar type_ loc in
+      let error = cannot_decode_texists tvar loc in
       if options.typer_error_recovery
       then (
         raise.log_error error;
