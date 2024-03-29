@@ -1,0 +1,7 @@
+
+author: DK318
+description: "The LSP should now take less time between keystrokes.\\n\\nThis is done by moving generated type variables replacements into checking pass.\\n\\n\\n"
+merge_request: '3129'
+title: "[#2143] Move generated variables replacement into checking"
+type: performance
+            
