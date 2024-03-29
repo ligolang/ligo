@@ -28,7 +28,18 @@ val loc : unit -> (Location.t, 'err, 'wrn) t
 (** [set_loc loc t] sets the current location to [loc] in computation [t]. *)
 val set_loc : Location.t -> ('a, 'err, 'wrn) t -> ('a, 'err, 'wrn) t
 
-(** {3 Error Handling} *)
+(** {3 Name table for polymorphic types} *)
+
+(** [poly_name_tbl ()] returns a name table for the current declaration. *)
+val poly_name_tbl : unit -> (Type.Type_var_name_tbl.t, 'err, 'wrn) t
+
+(** [set_poly_name_tbl poly_name_tbl t] sets the current name table to [poly_name_tbl] in computation [t]. *)
+val set_poly_name_tbl
+  :  Type.Type_var_name_tbl.t
+  -> ('a, 'err, 'wrn) t
+  -> ('a, 'err, 'wrn) t
+
+(** {4 Error Handling} *)
 
 (** [lift_raise f] lifts f (which may raise an error/warning) to a computation. *)
 val lift_raise : (('err, 'wrn) raise -> 'a) -> ('a, 'err, 'wrn) t
@@ -84,7 +95,7 @@ val try_all
   :  ('a, ([> `Typer_corner_case of string * Location.t ] as 'err), 'wrn) t list
   -> ('a, 'err, 'wrn) t
 
-(** {4 Compiler Options} *)
+(** {5 Compiler Options} *)
 
 (** [options ()] returns the compiler computations. *)
 val options : unit -> (Compiler_options.middle_end, 'err, 'wrn) t
@@ -103,7 +114,7 @@ module Options : sig
   val no_color : unit -> (bool, 'err, 'wrn) t
 end
 
-(** {5 Context} *)
+(** {6 Context} *)
 
 module Context_ = Context
 
@@ -309,7 +320,7 @@ val generalize
   :  (Type.t * 'a, 'err, 'wrn) t
   -> (Type.t * (Type_var.t * Kind.t) list * 'a, 'err, 'wrn) t
 
-(** {6 Unification and Subtyping} *)
+(** {7 Unification and Subtyping} *)
 
 (** [unify_texists tvar type_] unifies the existential (unification) variable [tvar] with the type [type_]. *)
 val unify_texists : Type_var.t -> Type.t -> (unit, [> Errors.local_unify_error ], 'wrn) t
@@ -336,7 +347,7 @@ val subtype
      , 'wrn )
      t
 
-(** {7 Fragments} *)
+(** {8 Fragments} *)
 
 (** A fragment is defined as a collection of variable bindings. They're used in the typing
     of patterns.
@@ -406,7 +417,7 @@ module With_frag : sig
   val run : ('a, 'err, 'wrn) t -> (fragment * 'a, 'err, 'wrn) e
 end
 
-(** {8 Execution} *)
+(** {9 Execution} *)
 
 (** This section defines functions related to running computations. *)
 
@@ -434,7 +445,7 @@ val run_elab
   -> unit
   -> 'a
 
-(** {9 Error Recovery} *)
+(** {10 Error Recovery} *)
 
 (** This section defines the [Error_recovery] module, whose functions define helpers to
     allow the typer to recover from failures, used by the language server. *)

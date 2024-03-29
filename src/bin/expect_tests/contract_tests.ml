@@ -2991,7 +2991,7 @@ let%expect_test _ =
                 ^^^^^^
       9 |     return failwith("You need to be part of Tezos organization to activate an organization");
 
-    Not an entrypoint: [_p]record[admins -> int , name -> string] -> ∀ gen#5 : * . [_s]int -> gen#5 |}]
+    Not an entrypoint: [_p]record[admins -> int , name -> string] -> ∀ a : * . [_s]int -> a |}]
 
 let%expect_test _ =
   run_ligo_good [ "compile"; "contract"; contract "increment_module.jsligo"; "-m"; "C" ];

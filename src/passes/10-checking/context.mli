@@ -167,6 +167,7 @@ val generalize
   -> Type.t
   -> pos:pos
   -> loc:Location.t
+  -> poly_name_tbl:Type.Type_var_name_tbl.t
   -> t * Type.t * (Type_var.t * Kind.t) list * Substitution.t
 
 type 'a apply = t -> 'a -> 'a
