@@ -183,17 +183,16 @@ class lsp_server (capability_mode : capability_mode) =
         (settings : Yojson.Safe.t)
         : unit IO.t =
       let open Yojson.Safe.Util in
-      match to_option (member "ligoLanguageServer") settings with
-      | None -> IO.return ()
+      (match to_option (member "ligoLanguageServer") settings with
+      | None -> ()
       | Some ligo_language_server ->
-        self#decode_apply_ligo_language_server notify_back ligo_language_server
+        self#decode_and_store_ligo_language_server_config ligo_language_server);
+      self#apply_metadata_options notify_back
 
-    method decode_apply_ligo_language_server
-        (notify_back : Linol_lwt.Jsonrpc2.notify_back)
+    method decode_and_store_ligo_language_server_config
         (ligo_language_server : Yojson.Safe.t)
-        : unit IO.t =
+        : unit =
       let open Yojson.Safe.Util in
-      let open IO in
       config
         <- { max_number_of_problems =
                ligo_language_server
@@ -248,7 +247,12 @@ class lsp_server (capability_mode : capability_mode) =
                | `Int v when v >= 0 -> float_of_int v
                | `Float v when Float.is_non_negative v -> v
                | _ -> default_config.metadata_checks_download_timeout_sec)
-           };
+           }
+
+    method apply_metadata_options
+        (notify_back : Linol_lwt.Jsonrpc2.notify_back)
+        : unit IO.t =
+      let open IO in
       let () =
         metadata_download_options
           <- Tzip16_storage.create_download_options
@@ -271,9 +275,9 @@ class lsp_server (capability_mode : capability_mode) =
                      Please enable 'textDocument/documentLink' request or change \
                      diagnostics pull mode."
                   ~type_:Warning)
-        | _ -> IO.return @@ ()
+        | _ -> IO.return ()
       in
-      IO.return @@ ()
+      IO.return ()
 
     method! on_req_initialize
         ~(notify_back : Linol_lwt.Jsonrpc2.notify_back)
@@ -289,7 +293,7 @@ class lsp_server (capability_mode : capability_mode) =
            this editor, we proceed with our ordinary business and decode it. *)
       let* () =
         match init_params.initializationOptions with
-        | None -> return ()
+        | None -> self#apply_metadata_options notify_back
         | Some settings -> self#decode_apply_settings notify_back settings
       in
       client_capabilities <- init_params.capabilities;
@@ -574,7 +578,9 @@ class lsp_server (capability_mode : capability_mode) =
                       in
                       let* () =
                         Lwt_list.iter_p
-                          (self#decode_apply_ligo_language_server new_notify_back)
+                          (fun new_config ->
+                            self#decode_and_store_ligo_language_server_config new_config;
+                            self#apply_metadata_options new_notify_back)
                           configs
                       in
                       (* Update diagnostics *)
