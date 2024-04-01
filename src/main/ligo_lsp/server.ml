@@ -12,7 +12,7 @@ let default_config : config =
   ; disabled_features = []
   ; max_line_width = None
   ; completion_implementation = `With_scopes
-  ; diagnostics_pull_mode = `OnDocumentLinkRequest
+  ; diagnostics_pull_mode = `OnDocUpdate
   ; metadata_checks_downloading = true
   ; metadata_checks_download_timeout_sec = 10.
   }
