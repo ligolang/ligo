@@ -19,15 +19,14 @@ type t&lt;key, value&gt; = big&#95;map&lt;key, value&gt;
 </SyntaxTitle>
 <Syntax syntax="cameligo">
 
-The type `('key,'value) Big_map.t` is an alias for
-      `('key,'value) big_map`.
+The type `('key,'value) t` is an alias for
+    `('key,'value) big_map`.
 
 </Syntax>
 
 <Syntax syntax="jsligo">
 
-The type `Big_map.t<key, value>` is an alias for `big_map<key,
-      value>`.
+The type `t<key, value>` is an alias for `big_map<key, value>`.
 
 </Syntax>
 
@@ -40,17 +39,17 @@ let empty: &lt;key, value&gt;t&lt;key, value&gt;
 </SyntaxTitle>
 <Syntax syntax="cameligo">
 
-The value `Big_map.empty` is the empty big map. In some
-      contexts, it is useful to annotate it with its type, for example:
-      `(Big_map.empty : (int, string) big_map)`.
+The value `empty` is the empty big map. In some contexts, it is
+    useful to annotate it with its type, for example:
+    `(empty : (int, string) big_map)`.
 
 </Syntax>
 
 <Syntax syntax="jsligo">
 
-The value `Big_map.empty` is the empty big map. In some
-      contexts, it is useful to annotate it with its type, for example:
-      `(Big_map.empty as big_map<int, string>`.
+The value `empty` is the empty big map. In some contexts, it is
+    useful to annotate it with its type, for example:
+    `(empty as big_map<int, string>`.
 
 </Syntax>
 
@@ -63,27 +62,25 @@ let get&#95;and&#95;update: &lt;key, value&gt;(&#95;: key) =&gt; (&#95;: option&
 </SyntaxTitle>
 <Syntax syntax="cameligo">
 
-The call `Big_map.get_and_update key None map` returns a copy of
-      the big map `map` without the entry for the key `key` in `map`
-      (no change if the key is absent). The call
-      `Big_map.get_and_update key (Some value) map` returns a copy of
-      the big map `map` where there is an entry for the key `key`
-      associated with the value `value`. In both cases, if there was
-      already a value `v` bound to `key`, it is returned as `Some v`,
-      otherwise `None`.
+The call `get_and_update key None map` returns a copy of the map
+    `map` without the entry for the key `key` in `map` (no change if
+    the key is absent). The call `get_and_update key (Some value) map`
+    returns a copy of the map `map` where there is an entry for the
+    key `key` associated with the value `value`. In both cases, if
+    there was already a value `v` bound to `key`, it is returned as
+    `Some v`, otherwise `None`.
 
 </Syntax>
 
 <Syntax syntax="jsligo">
 
-The call `Big_map.get_and_update(key, None(), map)` returns a
-      copy of the big map `map` without the entry for the key `key` in
-      `map` (no change if the key is absent). The call
-      `Big_map.get_and_update(key, Some(value), map)` returns a copy
-      of the big map `map` where there is an entry for the key `key`
-      associated with the value `value`. In both cases, if there was
-      already a value `v` bound to `key`, it is returned as `Some(v)`,
-      otherwise `None()`.
+The call `get_and_update(key, None(), map)` returns a copy of the map
+    `map` without the entry for the key `key` in `map` (no change if
+    the key is absent). The call `get_and_update(key, Some(value), map)`
+    returns a copy of the map `map` where there is an entry for the
+    key `key` associated with the value `value`. In both cases, if
+    there was already a value `v` bound to `key`, it is returned as
+    `Some(v)`, otherwise `None()`.
 
 </Syntax>
 
@@ -96,25 +93,23 @@ let update: &lt;key, value&gt;(&#95;: key) =&gt; (&#95;: option&lt;value&gt;) =&
 </SyntaxTitle>
 <Syntax syntax="cameligo">
 
-The call `Big_map.update key None map` returns a copy of the big
-      map `map` without the entry for the key `key` in `map` (no
-      change if the key is absent). The call `Big_map.update key (Some
-      value) map` returns the big map `map` where there is an entry
-      for the key `key` associated with the value `value`. In both
-      cases, the value originally bound to `key` is lost. See
-      `Big_map.get_and_update`.
+The call `update key None map` returns a copy of the map `map`
+    without the entry for the key `key` in `map` (no change if the key
+    is absent). The call `update key (Some value) map` returns the map
+    `map` where there is an entry for the key `key` associated with
+    the value `value`. In both cases, the value originally bound to
+    `key` is lost. See `get_and_update`.
 
 </Syntax>
 
 <Syntax syntax="jsligo">
 
-The call `Big_map.update(key, None(), map)` returns a copy of
-      the big map `map` without the entry for the key `key` in `map`
-      (no change if the key is absent). The call `Big_map.update(key,
-      Some(value), map)` returns the big map `map` where there is an
-      entry for the key `key` associated with the value `value`. In
-      both cases, the value originally bound to `key` is lost. See
-      `Big_map.get_and_update`.
+The call `update(key, None(), map)` returns a copy of the map `map`
+    without the entry for the key `key` in `map` (no change if the key
+    is absent). The call `update(key, Some(value), map)` returns the map
+    `map` where there is an entry for the key `key` associated with
+    the value `value`. In both cases, the value originally bound to
+    `key` is lost. See `get_and_update`.
 
 </Syntax>
 
@@ -127,19 +122,17 @@ let add: &lt;key, value&gt;(&#95;: key) =&gt; (&#95;: value) =&gt; (&#95;: t&lt;
 </SyntaxTitle>
 <Syntax syntax="cameligo">
 
-The call `Big_map.add key value map` returns a copy of the big
-      map `map` where there is a binding of key `key` to value
-      `value`. If there is a binding for `key` in `map`, then it is
-      lost.
+The call `add key value map` returns a copy of the `map` where
+    there is a binding of key `key` to value `value`. If there is a
+    binding for `key` in `map`, then it is lost.
 
 </Syntax>
 
 <Syntax syntax="jsligo">
 
-The call `Big_map.add(key, value, map)` returns a copy of the
-      big map `map` where there is a binding of key `key` to value
-      `value`. If there is a binding for `key` in `map`, then it is
-      lost.
+The call `add(key, value, map)` returns a copy of the `map` where
+    there is a binding of key `key` to value `value`. If there is a
+    binding for `key` in `map`, then it is lost.
 
 </Syntax>
 
@@ -152,15 +145,15 @@ let remove: &lt;key, value&gt;(&#95;: key) =&gt; (&#95;: t&lt;key, value&gt;) =&
 </SyntaxTitle>
 <Syntax syntax="cameligo">
 
-The call `Big_map.remove key map` returns a copy of the big map
-      `map` where the binding for key `key` is absent.
+The call `remove key map` returns a copy of the map `map` where
+    the binding for key `key` is absent.
 
 </Syntax>
 
 <Syntax syntax="jsligo">
 
-The call `Big_map.remove(key, map)` returns a copy of the big
-      map `map` where the binding for key `key` is absent.
+The call `remove(key, map)` returns a copy of the map `map` where
+    the binding for key `key` is absent.
 
 </Syntax>
 
@@ -173,18 +166,17 @@ let literal: &lt;key, value&gt;(&#95;: list&lt;[key, value]&gt;) =&gt; t&lt;key,
 </SyntaxTitle>
 <Syntax syntax="cameligo">
 
-The call `Big_map.literal [(k1,v1); ...; (kn,vn)]` returns a big
-      map from the pairs of key/value in the list. Note: The list must
-      be a literal, not an expression (compile-time list of values).
+The call `literal [(k1,v1); ...; (kn,vn)]` returns a big map from
+    the pairs of key/value in the list. Note: The list must be a
+    literal, not an expression (compile-time list of values).
 
 </Syntax>
 
 <Syntax syntax="jsligo">
 
-The call `Big_map.literal(list[[k1,v1], ..., [kn,vn]])` returns
-      a big map from the pairs of key/value in the list. Note: The list
-      must be a literal, not an expression (compile-time list of
-      values).
+The call `literal(list[[k1,v1], ..., [kn,vn]])` returns a big map
+    from the pairs of key/value in the list. Note: The list must be a
+    literal, not an expression (compile-time list of values).
 
 </Syntax>
 
@@ -197,17 +189,17 @@ let of&#95;list: &lt;key, value&gt;(&#95;: list&lt;[key, value]&gt;) =&gt; t&lt;
 </SyntaxTitle>
 <Syntax syntax="cameligo">
 
-The call `Big_map.of_list bindings` returns a big map from the
-      pairs of key/value in the list `bindings`. Note: Use
-      `Big_map.literal` instead if using a literal list.
+The call `of_list bindings` returns a big map from the pairs of
+    key/value in the list `bindings`. Note: Use `literal` instead if
+    using a literal list.
 
 </Syntax>
 
 <Syntax syntax="jsligo">
 
-The call `Big_map.of_list(bindings)` returns a big map from the
-      pairs of key/value in the list `bindings`. Note: Use
-      `Big_map.literal` instead if using a literal list.
+The call `of_list(bindings)` returns a big map from the pairs of
+    key/value in the list `bindings`. Note: Use `literal` instead if
+    using a literal list.
 
 </Syntax>
 
@@ -220,15 +212,15 @@ let mem: &lt;key, value&gt;(&#95;: key) =&gt; (&#95;: t&lt;key, value&gt;) =&gt;
 </SyntaxTitle>
 <Syntax syntax="cameligo">
 
-The call `Big_map.mem key map` is `true` if, and only if, the
-      key `key` is in the big map `map`.
+The call `mem key map` is `true` if, and only if, the key `key`
+    is in the big map `map`.
 
 </Syntax>
 
 <Syntax syntax="jsligo">
 
-The call `Big_map.mem(key, map)` is `true` if, and only if, the
-      key `key` is in the big map `map`.
+The call `mem(key, map)` is `true` if, and only if, the key `key`
+    is in the big map `map`.
 
 </Syntax>
 
@@ -241,17 +233,17 @@ let find&#95;opt: &lt;key, value&gt;(&#95;: key) =&gt; (&#95;: t&lt;key, value&g
 </SyntaxTitle>
 <Syntax syntax="cameligo">
 
-The call `Big_map.find_opt key map` returns `None` if the key
-      `key` is present in the big map `map`; otherwise, it is `Some v`,
-      where `v` is the value associated to `key` in `map`.
+The call `find_opt key map` returns `None` if the key `key` is
+    present in the big map `map`; otherwise, it is `Some v`, where `v`
+    is the value associated to `key` in `map`.
 
 </Syntax>
 
 <Syntax syntax="jsligo">
 
-The call `Big_map.find_opt(key, map)` returns `None()` if the
-      key `key` is present in the big map `map`; otherwise, it is
-      `Some(v)`, where `v` is the value associated to `key` in `map`.
+The call `find_opt(key, map)` returns `None()` if the key `key` is
+    present in the big map `map`; otherwise, it is `Some(v)`, where `v`
+    is the value associated to `key` in `map`.
 
 </Syntax>
 
@@ -264,16 +256,16 @@ let find: &lt;key, value&gt;(&#95;: key) =&gt; (&#95;: t&lt;key, value&gt;) =&gt
 </SyntaxTitle>
 <Syntax syntax="cameligo">
 
-The call `Big_map.find key map` returns the value associated to
-      `key` in the big map `map`. If the key is absent, the execution
-      fails with the string `"MAP FIND"`.
+The call `find key map` returns the value associated to `key` in
+    `map`. If the key is absent, the execution fails with the string
+    `"MAP FIND"`.
 
 </Syntax>
 
 <Syntax syntax="jsligo">
 
-The call `Big_map.find(key, map)` returns the value associated
-      to `key` in the big map `map`. If the key is absent, the
-      execution fails with the string `"MAP FIND"`.
+The call `find(key, map)` returns the value associated to `key` in
+    `map`. If the key is absent, the execution fails with the string
+    `"MAP FIND"`.
 
 </Syntax>

@@ -18,14 +18,14 @@ let length: (&#95;: string) =&gt; nat
 </SyntaxTitle>
 <Syntax syntax="cameligo">
 
-The call `String.length s` is the number of characters in the string
+The call `length s` is the number of characters in the string
       `s`. Note: `String.length` is another name for `String.size`.
 
 </Syntax>
 
 <Syntax syntax="jsligo">
 
-The call `String.length(s)` is the number of characters in the string
+The call `length(s)` is the number of characters in the string
       `s`. Note: `String.length` is another name for `String.size`.
 
 </Syntax>
@@ -39,13 +39,13 @@ let size: (&#95;: string) =&gt; nat
 </SyntaxTitle>
 <Syntax syntax="cameligo">
 
-The call `String.size s` is the number of characters in the string `s`.
+The call `size s` is the number of characters in the string `s`.
 
 </Syntax>
 
 <Syntax syntax="jsligo">
 
-The call `String.size(s)` is the number of characters in the string `s`.
+The call `size(s)` is the number of characters in the string `s`.
 
 </Syntax>
 
@@ -58,14 +58,14 @@ let concat: (&#95;: string) =&gt; (&#95;: string) =&gt; string
 </SyntaxTitle>
 <Syntax syntax="cameligo">
 
-The call `String.concat left right` is the concatenation of the string
+The call `concat left right` is the concatenation of the string
     `left` and the string `right`, in that order.
 
 </Syntax>
 
 <Syntax syntax="jsligo">
 
-The call `String.concat(left, right)` is the concatenation of the string
+The call `concat(left, right)` is the concatenation of the string
     `left` and the string `right`, in that order.
 
 </Syntax>
@@ -79,14 +79,14 @@ let concats: (&#95;: list&lt;string&gt;) =&gt; string
 </SyntaxTitle>
 <Syntax syntax="cameligo">
 
-The call `String.concats list` is the concatenation of the strings in
+The call `concats list` is the concatenation of the strings in
     the list `list`, from left to right.
 
 </Syntax>
 
 <Syntax syntax="jsligo">
 
-The call `String.concats(list)` is the concatenation of the strings in
+The call `concats(list)` is the concatenation of the strings in
     the list `list`, from left to right.
 
 </Syntax>
@@ -100,7 +100,7 @@ let sub: (&#95;: nat) =&gt; (&#95;: nat) =&gt; (&#95;: string) =&gt; string
 </SyntaxTitle>
 <Syntax syntax="cameligo">
 
-The call `String.sub index len str` is the substring of string `str`
+The call `sub index len str` is the substring of string `str`
     starting at index `index` (0 denoting the first character) and of
     length `len`. If the index or length are invalid, an exception
     interrupts the execution.
@@ -109,7 +109,7 @@ The call `String.sub index len str` is the substring of string `str`
 
 <Syntax syntax="jsligo">
 
-The call `String.sub(index, len, str)` is the substring of string `str`
+The call `sub(index, len, str)` is the substring of string `str`
     starting at index `index` (0 denoting the first character) and of
     length `len`. If the index or length are invalid, an exception
     interrupts the execution.
@@ -125,7 +125,7 @@ let slice: (&#95;: nat) =&gt; (&#95;: nat) =&gt; (&#95;: string) =&gt; string
 </SyntaxTitle>
 <Syntax syntax="cameligo">
 
-The call `String.slice index len str` is the substring of string `str`
+The call `slice index len str` is the substring of string `str`
     starting at index `index` (0 denoting the first character) and of
     length `len`. If the index or length are invalid, an exception
     interrupts the execution.
@@ -134,7 +134,7 @@ The call `String.slice index len str` is the substring of string `str`
 
 <Syntax syntax="jsligo">
 
-The call `String.slice(index, len, str)` is the substring of string `str`
+The call `slice(index, len, str)` is the substring of string `str`
     starting at index `index` (0 denoting the first character) and of
     length `len`. If the index or length are invalid, an exception
     interrupts the execution.

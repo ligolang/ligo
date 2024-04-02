@@ -37,17 +37,9 @@ let empty: &lt;elt&gt;t&lt;elt&gt;
 </SyntaxTitle>
 <Syntax syntax="cameligo">
 
-The value `Big_set.empty` denotes the empty big set. In some contexts,
+The value `empty` denotes the empty big set. In some contexts,
     it is useful to annotate it with its type, for example:
-    `(Big_set.empty : int Big_set.t)`.
-
-</Syntax>
-
-<Syntax syntax="jsligo">
-
-The value `Big_set.empty` denotes the empty big set. In some contexts,
-    it is useful to annotate it with its type, for example:
-    `(Big_set.empty as Big_set.t<int>)`.
+    `(empty as Big_set.t<int>)`.
 
 </Syntax>
 
@@ -60,16 +52,16 @@ let update: &lt;elt&gt;(&#95;: elt) =&gt; (&#95;: bool) =&gt; (&#95;: t&lt;elt&g
 </SyntaxTitle>
 <Syntax syntax="cameligo">
 
-The call `Big_set.update elt true set` is a copy of the big set `set`
-    containing the element `elt`. The call `Big_set.update elt false set` is a
+The call `update elt true set` is a copy of the big set `set`
+    containing the element `elt`. The call `update elt false set` is a
     copy of the big set `set` where the element `elt` is absent.
 
 </Syntax>
 
 <Syntax syntax="jsligo">
 
-The call `Big_set.update(elt, true, set)` is a copy of the big set `set`
-    containing the element `elt`. The call `Big_set.update(elt, false, set)`
+The call `update(elt, true, set)` is a copy of the big set `set`
+    containing the element `elt`. The call `update(elt, false, set)`
     is a copy of the big set `set` where the element `elt` is
     absent.
 
@@ -84,14 +76,14 @@ let add: &lt;elt&gt;(&#95;: elt) =&gt; (&#95;: t&lt;elt&gt;) =&gt; t&lt;elt&gt;
 </SyntaxTitle>
 <Syntax syntax="cameligo">
 
-The call `Big_set.add elt set` is a big set containing all the elements
+The call `add elt set` is a big set containing all the elements
     of the big set `set`, plus the element `elt`.
 
 </Syntax>
 
 <Syntax syntax="jsligo">
 
-The call `Big_set.add(elt, set)` is a big set containing all the elements
+The call `add(elt, set)` is a big set containing all the elements
     of the big set `set`, plus the element `elt`.
 
 </Syntax>
@@ -105,14 +97,14 @@ let remove: &lt;elt&gt;(&#95;: elt) =&gt; (&#95;: t&lt;elt&gt;) =&gt; t&lt;elt&g
 </SyntaxTitle>
 <Syntax syntax="cameligo">
 
-The call `Big_set.remove elt set` is a copy of the set `set` without the
+The call `remove elt set` is a copy of the set `set` without the
     element `elt`.
 
 </Syntax>
 
 <Syntax syntax="jsligo">
 
-The call `Big_set.remove(elt, set)` is a copy of the set `set` without the
+The call `remove(elt, set)` is a copy of the set `set` without the
     element `elt`.
 
 </Syntax>
@@ -126,7 +118,7 @@ let literal: &lt;elt&gt;(&#95;: list&lt;elt&gt;) =&gt; t&lt;elt&gt;
 </SyntaxTitle>
 <Syntax syntax="cameligo">
 
-The call `Big_Set.literal [e1; ...; en]` is a big set containing exactly
+The call `literal [e1; ...; en]` is a big set containing exactly
     the elements in the list. Note: The list must be literal, not an
     expression (compile-time list of values).
 
@@ -134,7 +126,7 @@ The call `Big_Set.literal [e1; ...; en]` is a big set containing exactly
 
 <Syntax syntax="jsligo">
 
-The call `Big_set.literal(list([e1, ..., en]))` is a big set containing
+The call `literal(list([e1, ..., en]))` is a big set containing
     exactly the elements in the list. Note: The list must be literal,
     not an expression (compile-time list of values).
 
@@ -149,17 +141,19 @@ let of&#95;list: &lt;elt&gt;(&#95;: list&lt;elt&gt;) =&gt; t&lt;elt&gt;
 </SyntaxTitle>
 <Syntax syntax="cameligo">
 
-The call `Big_set.of_list elements` is a big set containing exactly the
-    elements in the list `elements`. Note: Use `Big_set.literal` instead if
-    using a literal list.
+The call `of_list elements` is a big set containing exactly the
+    elements in the list `elements`. Note: Use `literal` instead if
+    using a literal list. Note: Use `literal` instead if using a
+    literal list.
 
 </Syntax>
 
 <Syntax syntax="jsligo">
 
-The call `Big_set.of_list(elements)` is a big set containing exactly the
-    elements in the list `elements`. Note: Use `Big_set.literal` instead if
-    using a literal list.
+The call `of_list(elements)` is a big set containing exactly the
+    elements in the list `elements`. Note: Use `literal` instead if
+    using a literal list. Note: Use `literal` instead if using a
+    literal list.
 
 </Syntax>
 
@@ -172,14 +166,14 @@ let mem: &lt;elt&gt;(&#95;: elt) =&gt; (&#95;: t&lt;elt&gt;) =&gt; bool
 </SyntaxTitle>
 <Syntax syntax="cameligo">
 
-The call `Big_set.mem elt set` is `true` if, and only if, the element
+The call `mem elt set` is `true` if, and only if, the element
     `elt` belongs to the big set `set`.
 
 </Syntax>
 
 <Syntax syntax="jsligo">
 
-The call `Big_set.mem(elt, set)` is `true` if, and only if, the element
+The call `mem(elt, set)` is `true` if, and only if, the element
     `elt` belongs to the big set `set`.
 
 </Syntax>

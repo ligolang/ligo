@@ -18,14 +18,14 @@ let value: &lt;a&gt;(&#95;: a) =&gt; (&#95;: option&lt;a&gt;) =&gt; a
 </SyntaxTitle>
 <Syntax syntax="cameligo">
 
-The call `Option.value d opt` is `v` if `opt` is `Some v`, and `d`
+The call `value d opt` is `v` if `opt` is `Some v`, and `d`
     otherwise.
 
 </Syntax>
 
 <Syntax syntax="jsligo">
 
-The call `Option.value(d, opt)` is `v` if `opt` is `Some(v)`, and `d`
+The call `value(d, opt)` is `v` if `opt` is `Some(v)`, and `d`
     otherwise.
 
 </Syntax>
@@ -39,7 +39,7 @@ let value&#95;with&#95;error: &lt;err, a&gt;(&#95;: err) =&gt; (&#95;: option&lt
 </SyntaxTitle>
 <Syntax syntax="cameligo">
 
-The call `Option.value_with_error err opt` terminates with the error
+The call `value_with_error err opt` terminates with the error
     `err` if, and only if, `opt` is `None`; otherwise it is `Some v`
     and `v` is returned.
 
@@ -47,7 +47,7 @@ The call `Option.value_with_error err opt` terminates with the error
 
 <Syntax syntax="jsligo">
 
-The call `Option.value_with_error(err, opt)` terminates with the error
+The call `value_with_error(err, opt)` terminates with the error
     `err` if, and only if, `opt` is `None()`; otherwise it is `Some(v)`
     and `v` is returned.
 
@@ -64,7 +64,7 @@ let value&#95;exn: &lt;err, a&gt;(&#95;: err) =&gt; (&#95;: option&lt;a&gt;) =&g
 
 <Syntax syntax="cameligo">
 
-The call `Option.value_exn err opt` terminates with the error `err` if,
+The call `value_exn err opt` terminates with the error `err` if,
     and only if, `opt` is `None`; otherwise it is `Some v` and `v` is
     returned.
 
@@ -72,7 +72,7 @@ The call `Option.value_exn err opt` terminates with the error `err` if,
 
 <Syntax syntax="jsligo">
 
-The call `Option.value_exn(err, opt)` terminates with the error `err` if,
+The call `value_exn(err, opt)` terminates with the error `err` if,
     and only if, `opt` is `None()`; otherwise it is `Some(v)` and `v` is
     returned.
 
@@ -89,7 +89,7 @@ let unopt&#95;with&#95;error: &lt;a&gt;(&#95;: option&lt;a&gt;) =&gt; (&#95;: st
 
 <Syntax syntax="cameligo">
 
-The call `Option.unopt_with_error opt err` terminates with the error
+The call `unopt_with_error opt err` terminates with the error
     `err` if, and only if, `opt` is `None`; otherwise it is `Some v`
     and `v` is returned.
 
@@ -97,7 +97,7 @@ The call `Option.unopt_with_error opt err` terminates with the error
 
 <Syntax syntax="jsligo">
 
-The call `Option.unopt_with_error(opt, err)` terminates with the error
+The call `unopt_with_error(opt, err)` terminates with the error
     `err` if, and only if, `opt` is `None()`; otherwise it is
     `Some(v)` and `v` is returned.
 
@@ -114,7 +114,7 @@ let unopt: &lt;a&gt;(&#95;: option&lt;a&gt;) =&gt; a
 
 <Syntax syntax="cameligo">
 
-The call `Option.unopt opt ` terminates with the string
+The call `unopt opt ` terminates with the string
     `"option is None"` if, and only if, `opt` is `None`; otherwise it is
     `Some v` and `v` is returned.
 
@@ -122,7 +122,7 @@ The call `Option.unopt opt ` terminates with the string
 
 <Syntax syntax="jsligo">
 
-The call `Option.unopt(opt)` terminates with the string
+The call `unopt(opt)` terminates with the string
     `"option is None"` if, and only if, `opt` is `None()`; otherwise it is
     `Some(v)` and `v` is returned.
 
@@ -137,14 +137,14 @@ let map: &lt;a, b&gt;(&#95;: (&#95;: a) =&gt; b) =&gt; (&#95;: option&lt;a&gt;) 
 </SyntaxTitle>
 <Syntax syntax="cameligo">
 
-The call `Option.map f opt` is `None` if `opt` is `None`, and
+The call `map f opt` is `None` if `opt` is `None`, and
     `Some (f v)` if `opt` is `Some v`.
 
 </Syntax>
 
 <Syntax syntax="jsligo">
 
-The call `Option.map(f, opt)` is `None()` if `opt` is `None()`, and
+The call `map(f, opt)` is `None()` if `opt` is `None()`, and
     `Some(f(v))` if `opt` is `Some(v)`.
 
 </Syntax>
@@ -158,14 +158,14 @@ let is&#95;none: &lt;a&gt;(&#95;: option&lt;a&gt;) =&gt; bool
 </SyntaxTitle>
 <Syntax syntax="cameligo">
 
-The call `Option.is_none opt` is `true` if, and only if, `opt` is
+The call `is_none opt` is `true` if, and only if, `opt` is
     `None`.
 
 </Syntax>
 
 <Syntax syntax="jsligo">
 
-The call `Option.is_none(opt)` is `true` if, and only if, `opt` is
+The call `is_none(opt)` is `true` if, and only if, `opt` is
     `None()`.
 
 </Syntax>
@@ -179,14 +179,14 @@ let is&#95;some: &lt;a&gt;(&#95;: option&lt;a&gt;) =&gt; bool
 </SyntaxTitle>
 <Syntax syntax="cameligo">
 
-The call `Option.is_some opt` is `false` if, and only if, `opt` is
+The call `is_some opt` is `false` if, and only if, `opt` is
     `None`.
 
 </Syntax>
 
 <Syntax syntax="jsligo">
 
-The call `Option.is_some(opt)` is `false` if, and only if, `opt` is
+The call `is_some(opt)` is `false` if, and only if, `opt` is
     `None()`.
 
 </Syntax>

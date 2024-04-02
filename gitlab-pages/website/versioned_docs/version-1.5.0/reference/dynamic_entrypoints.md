@@ -32,23 +32,23 @@ let set:
 </SyntaxTitle>
 <Syntax syntax="cameligo">
 
-The call `Dynamic_entrypoints.set dyn None dyn_map` returns a copy
-      of the map of dynamic entrypoints `dyn_map` where the dynamic entrypoint
-      `dyn` is not associated to a static entrypoint. The call
-      `Dynamic_entrypoints set dyn (Some entrypoint) dyn_map` is a copy of
-      `dyn_map` where the dynamic entrypoint `dyn` is associated to the static
-      entrypoint `entrypoint`.
+The call `set dyn None dyn_map` returns a copy of the map of
+      dynamic entrypoints `dyn_map` where the dynamic entrypoint `dyn`
+      is not associated to a static entrypoint. The call `set dyn
+      (Some entrypoint) dyn_map` is a copy of `dyn_map` where the
+      dynamic entrypoint `dyn` is associated to the static entrypoint
+      `entrypoint`.
 
 </Syntax>
 
 <Syntax syntax="jsligo">
 
-The call `Dynamic_entrypoints.set(dyn, None(), dyn_map)` returns a copy
-      of the map of dynamic entrypoints `dyn_map` where the dynamic entrypoint
-      `dyn` is not associated to a static entrypoint. The call
-      `Dynamic_entrypoints.set(dyn, Some(entrypoint), dyn_map)` is a copy of
-      `dyn_map` where the  dynamic entrypoint `dyn` is associated to the static
-      entrypoint `entrypoint`.
+The call `set(dyn, None(), dyn_map)` returns a copy of the map of
+      dynamic entrypoints `dyn_map` where the dynamic entrypoint `dyn`
+      is not associated to a static entrypoint. The call `set(dyn,
+      Some(entrypoint), dyn_map)` is a copy of `dyn_map` where the
+      dynamic entrypoint `dyn` is associated to the static entrypoint
+      `entrypoint`.
 
 </Syntax>
 
@@ -64,25 +64,27 @@ let set&#95;bytes:
 </SyntaxTitle>
 <Syntax syntax="cameligo">
 
-The call `Dynamic_entrypoints.set_bytes dyn None dyn_map` returns a copy of
-      the map of dynamic entrypoints `dyn_map` where the dynamic entrypoint
+The call `set_bytes dyn None dyn_map` returns a copy of the map
+      of dynamic entrypoints `dyn_map` where the dynamic entrypoint
       `dyn` is not associated to a static entrypoint. The call
-      `Dynamic_entrypoints.set_bytes dyn (Some bytes) dyn_map` is a copy of
-      `dyn_map` where the dynamic entrypoint `dyn` is associated to the static
-      entrypoint encoded by the sequence of bytes `bytes`. If that sequence is
-      invalid, any call to the dynamic entrypoint will fail.
+      `set_bytes dyn (Some bytes) dyn_map` is a copy of `dyn_map`
+      where the dynamic entrypoint `dyn` is associated to the static
+      entrypoint encoded by the sequence of bytes `bytes`. If that
+      sequence is invalid, any call to the dynamic entrypoint will
+      fail.
 
 </Syntax>
 
 <Syntax syntax="jsligo">
 
-The call `Dynamic_entrypoints.set_bytes(dyn, None(), dyn_map)` returns a
-      copy of the map of dynamic entrypoints `dyn_map` where the dynamic
+The call `set_bytes(dyn, None(), dyn_map)` returns a copy of the
+      map of dynamic entrypoints `dyn_map` where the dynamic
       entrypoint `dyn` is not associated to a static entrypoint. The
-      call `Dynamic_entrypoints.set_bytes(dyn, Some(bytes), dyn_map)` is a copy
-      of `dyn_map` where the dynamic entrypoint `dyn` is associated to the static
-      entrypoint encoded by the sequence of bytes `bytes`. If that sequence is
-      invalid, any call to the dynamic entrypoint will fail.
+      call `set_bytes(dyn, Some(bytes), dyn_map)` is a copy of `dyn_map`
+      where the dynamic entrypoint `dyn` is associated to the static
+      entrypoint encoded by the sequence of bytes `bytes`. If that
+      sequence is invalid, any call to the dynamic entrypoint will
+      fail.
 
 </Syntax>
 
@@ -100,8 +102,8 @@ let get:
 </SyntaxTitle>
 <Syntax syntax="cameligo">
 
-The call `Dynamic_entrypoints.get dyn dyn_map` is `None` if the dynamic
-      entrypoint `dyn` is absent from the dynamic entrypoints map
+The call `get dyn dyn_map` is `None` if the dynamic entrypoint
+      `dyn` is absent from the dynamic entrypoints map
       `dyn_map`. Otherwise, it is `Some entry`, where `entry` is a
       static entrypoint that is callable (like a function). See type
       `entrypoint`.
@@ -110,7 +112,7 @@ The call `Dynamic_entrypoints.get dyn dyn_map` is `None` if the dynamic
 
 <Syntax syntax="jsligo">
 
-The call `Dynamic_entrypoints.get(dyn, dyn_map)` is `None()` if the dynamic
+The call `get(dyn, dyn_map)` is `None()` if the dynamic
       entrypoint `dyn` is absent from the dynamic entrypoints map
       `dyn_map`. Otherwise, it is `Some(entry)`, where `entry` is a
       static entrypoint that is callable (like a function). See type

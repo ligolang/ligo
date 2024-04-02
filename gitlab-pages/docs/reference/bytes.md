@@ -22,7 +22,7 @@ let length: (&#95;: bytes) =&gt; nat
 </SyntaxTitle>
 <Syntax syntax="cameligo">
 
-The call `Bytes.length b` is the number of bytes in the sequence of
+The call `length b` is the number of bytes in the sequence of
       bytes `b`. Note: `Bytes.length` is another name for
       `Bytes.size`.
 
@@ -30,7 +30,7 @@ The call `Bytes.length b` is the number of bytes in the sequence of
 
 <Syntax syntax="jsligo">
 
-The call `Bytes.length(b)` is the number of bytes in the sequence of
+The call `length(b)` is the number of bytes in the sequence of
       bytes `b`. Note: `Bytes.length` is another name for
       `Bytes.size`.
 
@@ -45,14 +45,14 @@ let size: (&#95;: bytes) =&gt; nat
 </SyntaxTitle>
 <Syntax syntax="cameligo">
 
-The call `Bytes.size b` is the number of bytes in the sequence of
+The call `size b` is the number of bytes in the sequence of
     bytes `b`.
 
 </Syntax>
 
 <Syntax syntax="jsligo">
 
-The call `Bytes.size(b)` is the number of bytes in the sequence of
+The call `size(b)` is the number of bytes in the sequence of
     bytes `b`.
 
 </Syntax>
@@ -66,7 +66,7 @@ let concat: (&#95;: bytes) =&gt; (&#95;: bytes) =&gt; bytes
 </SyntaxTitle>
 <Syntax syntax="cameligo">
 
-The call `Bytes.concat left right` is the sequence of bytes obtained
+The call `concat left right` is the sequence of bytes obtained
     by concatenating the sequence `left` before the sequence
     `right`.
 
@@ -74,7 +74,7 @@ The call `Bytes.concat left right` is the sequence of bytes obtained
 
 <Syntax syntax="jsligo">
 
-The call `Bytes.concat(left, right)` is the sequence of bytes obtained
+The call `concat(left, right)` is the sequence of bytes obtained
     by concatenating the sequence `left` before the sequence
     `right`.
 
@@ -89,14 +89,14 @@ let concats: (&#95;: list&lt;bytes&gt;) =&gt; bytes
 </SyntaxTitle>
 <Syntax syntax="cameligo">
 
-The call `Bytes.concats list` is the concatenation of the byte
+The call `concats list` is the concatenation of the byte
     sequences in the list `list`, from left to right.
 
 </Syntax>
 
 <Syntax syntax="jsligo">
 
-The call `Bytes.concats(list)` is the concatenation of the byte
+The call `concats(list)` is the concatenation of the byte
     sequences in the list `list`, from left to right.
 
 </Syntax>
@@ -110,7 +110,7 @@ let sub: (&#95;: nat) =&gt; (&#95;: nat) =&gt; (&#95;: bytes) =&gt; bytes
 </SyntaxTitle>
 <Syntax syntax="cameligo">
 
-The call `Bytes.sub index len bytes` is the subsequence of bytes
+The call `sub index len bytes` is the subsequence of bytes
     `bytes` starting at index `index` (0 denoting the first byte) and
     of length `len`. If the index or length are invalid, an exception
     interrupts the execution.
@@ -119,7 +119,7 @@ The call `Bytes.sub index len bytes` is the subsequence of bytes
 
 <Syntax syntax="jsligo">
 
-The call `Bytes.sub(index, len, bytes)` is the subsequence of bytes
+The call `sub(index, len, bytes)` is the subsequence of bytes
     `bytes` starting at index `index` (0 denoting the first byte) and
     of length `len`. If the index or length are invalid, an exception
     interrupts the execution.
@@ -135,7 +135,7 @@ let slice: (&#95;: nat) =&gt; (&#95;: nat) =&gt; (&#95;: bytes) =&gt; bytes
 </SyntaxTitle>
 <Syntax syntax="cameligo">
 
-The call `Bytes.slice index len bytes` is the subsequence of bytes
+The call `slice index len bytes` is the subsequence of bytes
     `bytes` starting at index `index` (0 denoting the first byte) and
     of length `len`. If the index or length are invalid, an exception
     interrupts the execution.
@@ -144,7 +144,7 @@ The call `Bytes.slice index len bytes` is the subsequence of bytes
 
 <Syntax syntax="jsligo">
 
-The call `Bytes.slice(index, len, bytes)` is the subsequence of bytes
+The call `slice(index, len, bytes)` is the subsequence of bytes
     `bytes` starting at index `index` (0 denoting the first byte) and
     of length `len`. If the index or length are invalid, an exception
     interrupts the execution.
@@ -160,14 +160,14 @@ let pack: &lt;a&gt;(&#95;: a) =&gt; bytes
 </SyntaxTitle>
 <Syntax syntax="cameligo">
 
-The call `Bytes.pack v` transforms the value `v` into a sequence of
+The call `pack v` transforms the value `v` into a sequence of
     bytes.
 
 </Syntax>
 
 <Syntax syntax="jsligo">
 
-The call `Bytes.pack(v)` transforms the value `v` into a sequence of
+The call `pack(v)` transforms the value `v` into a sequence of
     bytes.
 
 </Syntax>
@@ -181,14 +181,14 @@ let unpack: &lt;a&gt;(&#95;: bytes) =&gt; option&lt;a&gt;
 </SyntaxTitle>
 <Syntax syntax="cameligo">
 
-The call `Bytes.unpack bytes` is `Some v` if the sequence of bytes
+The call `unpack bytes` is `Some v` if the sequence of bytes
     `bytes` decodes into a valid LIGO value `v`; otherwise `None`.
 
 </Syntax>
 
 <Syntax syntax="jsligo">
 
-The call `Bytes.unpack(bytes)` is `Some(v)` if the sequence of bytes
+The call `unpack(bytes)` is `Some(v)` if the sequence of bytes
     `bytes` decodes into a valid LIGO value `v`; otherwise
     `None()`.
 

@@ -1,6 +1,6 @@
 ---
 id: big-set-reference
-title: big_set
+title: Big_set
 hide_table_of_contents: true
 ---
 import Syntax from '@theme/Syntax';

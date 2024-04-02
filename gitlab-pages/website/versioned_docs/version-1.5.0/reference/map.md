@@ -19,13 +19,13 @@ type t&lt;key, value&gt; = map&lt;key, value&gt;
 </SyntaxTitle>
 <Syntax syntax="cameligo">
 
-The type `('key,'value) Map.t` is an alias for `('key,'value) map`.
+The type `('key,'value) t` is an alias for `('key,'value) map`.
 
 </Syntax>
 
 <Syntax syntax="jsligo">
 
-The type `Map.t<key, value>` is an alias for `map<key,value>`.
+The type `t<key, value>` is an alias for `map<key,value>`.
 
 </Syntax>
 
@@ -38,17 +38,17 @@ let empty: &lt;key, value&gt;t&lt;key, value&gt;
 </SyntaxTitle>
 <Syntax syntax="cameligo">
 
-The value `Map.empty` is the empty map. In some contexts, it is
+The value `empty` is the empty map. In some contexts, it is
     useful to annotate it with its type, for example:
-    `(Map.empty : (int, string) map)`.
+    `(empty : (int, string) map)`.
 
 </Syntax>
 
 <Syntax syntax="jsligo">
 
-The value `Map.empty` is the empty map. In some contexts, it is
+The value `empty` is the empty map. In some contexts, it is
     useful to annotate it with its type, for example:
-    `(Map.empty as map<int, string>)`.
+    `(empty as map<int, string>)`.
 
 </Syntax>
 
@@ -61,9 +61,9 @@ let get&#95;and&#95;update: &lt;key, value&gt;(&#95;: key) =&gt; (&#95;: option&
 </SyntaxTitle>
 <Syntax syntax="cameligo">
 
-The call `Map.get_and_update key None map` returns a copy of the map
+The call `get_and_update key None map` returns a copy of the map
     `map` without the entry for the key `key` in `map` (no change if
-    the key is absent). The call `Map.get_and_update key (Some value) map`
+    the key is absent). The call `get_and_update key (Some value) map`
     returns a copy of the map `map` where there is an entry for the
     key `key` associated with the value `value`. In both cases, if
     there was already a value `v` bound to `key`, it is returned as
@@ -73,9 +73,9 @@ The call `Map.get_and_update key None map` returns a copy of the map
 
 <Syntax syntax="jsligo">
 
-The call `Map.get_and_update(key, None(), map)` returns a copy of the
+The call `get_and_update(key, None(), map)` returns a copy of the
     map `map` without the entry for the key `key` in `map` (no change
-    if the key is absent). The call `Map.get_and_update(key, Some(value),
+    if the key is absent). The call `get_and_update(key, Some(value),
     map)` returns a copy of the map `map` where there is an entry for
     the key `key` associated with the value `value`. In both cases, if
     there was already a value `v` bound to `key`, it is returned as
@@ -92,23 +92,23 @@ let update: &lt;key, value&gt;(&#95;: key) =&gt; (&#95;: option&lt;value&gt;) =&
 </SyntaxTitle>
 <Syntax syntax="cameligo">
 
-The call `Map.update key None map` returns a copy of the map `map`
+The call `update key None map` returns a copy of the map `map`
     without the entry for the key `key` in `map` (no change if the key
-    is absent). The call `Map.update key (Some value) map` returns the map
+    is absent). The call `update key (Some value) map` returns the map
     `map` where there is an entry for the key `key` associated with
     the value `value`. In both cases, the value originally bound to
-    `key` is lost. See `Map.get_and_update`.
+    `key` is lost. See `get_and_update`.
 
 </Syntax>
 
 <Syntax syntax="jsligo">
 
-The call `Map.update(key, None(), map)` returns a copy of the map `map`
+The call `update(key, None(), map)` returns a copy of the map `map`
     without the entry for the key `key` in `map` (no change if the key
-    is absent). The call `Map.update(key, Some(value), map)` returns the map
+    is absent). The call `update(key, Some(value), map)` returns the map
     `map` where there is an entry for the key `key` associated with
     the value `value`. In both cases, the value originally bound to
-    `key` is lost. See `Map.get_and_update`.
+    `key` is lost. See `get_and_update`.
 
 </Syntax>
 
@@ -121,7 +121,7 @@ let add: &lt;key, value&gt;(&#95;: key) =&gt; (&#95;: value) =&gt; (&#95;: t&lt;
 </SyntaxTitle>
 <Syntax syntax="cameligo">
 
-The call `Map.add key value map` returns a copy of the `map` where
+The call `add key value map` returns a copy of the `map` where
     there is a binding of key `key` to value `value`. If there is a
     binding for `key` in `map`, then it is lost.
 
@@ -129,7 +129,7 @@ The call `Map.add key value map` returns a copy of the `map` where
 
 <Syntax syntax="jsligo">
 
-The call `Map.add(key, value, map)` returns a copy of the `map` where
+The call `add(key, value, map)` returns a copy of the `map` where
     there is a binding of key `key` to value `value`. If there is a
     binding for `key` in `map`, then it is lost.
 
@@ -144,14 +144,14 @@ let remove: &lt;key, value&gt;(&#95;: key) =&gt; (&#95;: t&lt;key, value&gt;) =&
 </SyntaxTitle>
 <Syntax syntax="cameligo">
 
-The call `Map.remove key map` returns a copy of the map `map` where
+The call `remove key map` returns a copy of the map `map` where
     the binding for key `key` is absent.
 
 </Syntax>
 
 <Syntax syntax="jsligo">
 
-The call `Map.remove(key, map)` returns a copy of the map `map` where
+The call `remove(key, map)` returns a copy of the map `map` where
     the binding for key `key` is absent.
 
 </Syntax>
@@ -165,7 +165,7 @@ let literal: &lt;key, value&gt;(&#95;: list&lt;[key, value]&gt;) =&gt; t&lt;key,
 </SyntaxTitle>
 <Syntax syntax="cameligo">
 
-The call `Map.literal [(k1,v1); ...; (kn,vn)]` returns a map from
+The call `literal [(k1,v1); ...; (kn,vn)]` returns a map from
     the pairs of key/value in the list. Note: The list must be a
     literal, not an expression (compile-time list of values).
 
@@ -173,7 +173,7 @@ The call `Map.literal [(k1,v1); ...; (kn,vn)]` returns a map from
 
 <Syntax syntax="jsligo">
 
-The call `Map.literal(list[[k1,v1], ..., [kn,vn]])` returns a map from
+The call `literal(list[[k1,v1], ..., [kn,vn]])` returns a map from
     the pairs of key/value in the list. Note: The list must be a
     literal, not an expression (compile-time list of values).
 
@@ -188,16 +188,16 @@ let of&#95;list: &lt;key, value&gt;(&#95;: list&lt;[key, value]&gt;) =&gt; t&lt;
 </SyntaxTitle>
 <Syntax syntax="cameligo">
 
-The call `Map.of_list bindings` returns a map from the pairs of
-    key/value in the list `bindings`. Note: Use `Map.literal` instead if
+The call `of_list bindings` returns a map from the pairs of
+    key/value in the list `bindings`. Note: Use `literal` instead if
     using a literal list.
 
 </Syntax>
 
 <Syntax syntax="jsligo">
 
-The call `Map.of_list(bindings)` returns a map from the pairs of
-    key/value in the list `bindings`. Note: Use `Map.literal` instead if
+The call `of_list(bindings)` returns a map from the pairs of
+    key/value in the list `bindings`. Note: Use `literal` instead if
     using a literal list.
 
 </Syntax>
@@ -211,14 +211,14 @@ let size: &lt;key, value&gt;(&#95;: t&lt;key, value&gt;) =&gt; nat
 </SyntaxTitle>
 <Syntax syntax="cameligo">
 
-The call `Map.size map` evaluates in the number of entries in the
+The call `size map` evaluates in the number of entries in the
     map `map`.
 
 </Syntax>
 
 <Syntax syntax="jsligo">
 
-The call `Map.size(map)` evaluates in the number of entries in the
+The call `size(map)` evaluates in the number of entries in the
     map `map`.
 
 </Syntax>
@@ -232,14 +232,14 @@ let mem: &lt;key, value&gt;(&#95;: key) =&gt; (&#95;: t&lt;key, value&gt;) =&gt;
 </SyntaxTitle>
 <Syntax syntax="cameligo">
 
-The call `Map.mem key map` is `true` if, and only if, the key `key`
+The call `mem key map` is `true` if, and only if, the key `key`
     is in the map `map`.
 
 </Syntax>
 
 <Syntax syntax="jsligo">
 
-The call `Map.mem(key, map)` is `true` if, and only if, the key `key`
+The call `mem(key, map)` is `true` if, and only if, the key `key`
     is in the map `map`.
 
 </Syntax>
@@ -253,7 +253,7 @@ let find&#95;opt: &lt;key, value&gt;(&#95;: key) =&gt; (&#95;: t&lt;key, value&g
 </SyntaxTitle>
 <Syntax syntax="cameligo">
 
-The call `Map.find_opt key map` returns `None` if the key `key` is
+The call `find_opt key map` returns `None` if the key `key` is
     present in the map `map`; otherwise, it is `Some v`, where `v` is
     the value associated to `key` in `map`.
 
@@ -261,7 +261,7 @@ The call `Map.find_opt key map` returns `None` if the key `key` is
 
 <Syntax syntax="jsligo">
 
-The call `Map.find_opt(key, map)` returns `None()` if the key `key` is
+The call `find_opt(key, map)` returns `None()` if the key `key` is
     present in the map `map`; otherwise, it is `Some(v)`, where `v` is
     the value associated to `key` in `map`.
 
@@ -276,7 +276,7 @@ let find: &lt;key, value&gt;(&#95;: key) =&gt; (&#95;: t&lt;key, value&gt;) =&gt
 </SyntaxTitle>
 <Syntax syntax="cameligo">
 
-The call `Map.find key map` returns the value associated to `key` in
+The call `find key map` returns the value associated to `key` in
     `map`. If the key is absent, the execution fails with the string
     `"MAP FIND"`.
 
@@ -284,7 +284,7 @@ The call `Map.find key map` returns the value associated to `key` in
 
 <Syntax syntax="jsligo">
 
-The call `Map.find(key, map)` returns the value associated to `key` in
+The call `find(key, map)` returns the value associated to `key` in
     `map`. If the key is absent, the execution fails with the string
     `"MAP FIND"`.
 
@@ -299,7 +299,7 @@ let fold: &lt;key, value, acc&gt;(&#95;: (&#95;: [acc, [key, value]]) =&gt; acc)
 </SyntaxTitle>
 <Syntax syntax="cameligo">
 
-The call `Map.fold f map init` is
+The call `fold f map init` is
     `f ( ... f (f (init, (k1,v1)), (k2,v2)), ..., (kn,vn))`
     where `(k1,v1)`, `(k2,v2)`, ..., `(kn,vn)` are the bindings in the
     map `map`, in increasing order of the keys `k1`, `k2`, ..., and `kn`.
@@ -308,7 +308,7 @@ The call `Map.fold f map init` is
 
 <Syntax syntax="jsligo">
 
-The call `Map.fold(f, map, init)` is
+The call `fold(f, map, init)` is
     `f (... f (f (init, [k1,v1]), [k2,v2]), ..., [kn,vn])`
     where `[k1,v1]`, `[k2,v2]`, ..., `[kn,vn]` are the bindings in the
     map `map`, in increasing order of the keys `k1`, `k2`, ..., and `kn`.
@@ -324,14 +324,14 @@ let iter: &lt;key, value&gt;(&#95;: (&#95;: [key, value]) =&gt; unit) =&gt; (&#9
 </SyntaxTitle>
 <Syntax syntax="cameligo">
 
-The call `Map.iter f map` is
+The call `iter f map` is
     `let () = f (k1,v1) in let () = f (k2,v2) in ... in f (kn,vn)`.
 
 </Syntax>
 
 <Syntax syntax="jsligo">
 
-The call `Map.iter(f, map)` is `{f (k1,v1); (k2,v2); ...; f (kn,vn);}`.
+The call `iter(f, map)` is `{f (k1,v1); (k2,v2); ...; f (kn,vn);}`.
 
 </Syntax>
 
@@ -344,7 +344,7 @@ let map: &lt;key, value, new&#95;value&gt;(&#95;: (&#95;: [key, value]) =&gt; ne
 </SyntaxTitle>
 <Syntax syntax="cameligo">
 
-The call `Map.map f m`, where the map `m` contains the bindings
+The call `map f m`, where the map `m` contains the bindings
     `(k1,v1)`, `(k2,v2)`, ..., and `(kn,vn)` in increasing order of
     the keys, is the map containing the bindings `(k1, f (k1,v1))`,
     `(k2, f (k2,v2))`, ..., `(kn, f (kn,vn))`.
@@ -353,7 +353,7 @@ The call `Map.map f m`, where the map `m` contains the bindings
 
 <Syntax syntax="jsligo">
 
-The call `Map.map(f, m)`, where the map `m` contains the bindings
+The call `map(f, m)`, where the map `m` contains the bindings
     `[k1,v1]`, `[k2,v2]`, ..., and `[kn,vn]` in increasing order of
     the keys, is the map containing the bindings `[k1, f (k1,v1)]`,
     `[k2, f (k2,v2)]`, ..., `[kn, f (kn,vn)]`.
