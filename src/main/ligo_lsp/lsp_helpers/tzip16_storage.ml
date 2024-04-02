@@ -18,6 +18,7 @@ let rec get_all_contract_sigs (env : Ast_typed.signature) : Ast_typed.contract_s
 
 type var_declaration_info =
   { binders : Ast_typed.type_expression Ligo_prim.Binder.t list
+  ; value : Ast_typed.expression
   ; has_tzip16_compatible_attr : bool
   }
 
@@ -26,12 +27,16 @@ let rec get_all_variables_info (prg : Ast_typed.declaration list)
   =
   Sequence.concat_map (Sequence.of_list prg) ~f:(fun decl ->
       match decl.wrap_content with
-      | D_value { binder; expr = _; attr } ->
+      | D_value { binder; expr; attr } ->
         Sequence.singleton
-          { binders = [ binder ]; has_tzip16_compatible_attr = attr.tzip16_compatible }
-      | D_irrefutable_match { pattern; expr = _; attr } ->
+          { binders = [ binder ]
+          ; value = expr
+          ; has_tzip16_compatible_attr = attr.tzip16_compatible
+          }
+      | D_irrefutable_match { pattern; expr; attr } ->
         Sequence.singleton
           { binders = Ast_core.Pattern.binders pattern
+          ; value = expr
           ; has_tzip16_compatible_attr = attr.tzip16_compatible
           }
       | D_module { module_; _ } ->
@@ -90,3 +95,98 @@ let vars_to_mark_as_tzip16_compatible (cur_file : Path.t) (prg : Ast_typed.progr
            then Some binder.var
            else None)
   |> Sequence.to_list
+
+
+let values_for_tzip16_check (cur_file : Path.t) (prg : Ast_typed.declaration list)
+    : (Ast_typed.expression * Location.t) Sequence.t
+  =
+  get_all_variables_info prg
+  |> Sequence.filter_map ~f:(fun decl_info ->
+         match decl_info.binders with
+         | binder :: _ when decl_info.has_tzip16_compatible_attr ->
+           Some (decl_info.value, Ligo_prim.Value_var.get_location binder.var)
+         | _ -> None)
+  |> Sequence.filter ~f:(fun (_expr, loc) -> location_is_from_file cur_file loc)
+
+
+type download_options = Ligo_run.Of_michelson.Checks.Json_download.options
+
+let create_download_options ~(enabled : bool) ~(timeout_sec : float) : download_options =
+  if enabled
+  then
+    `Enabled
+      { cache = Ligo_run.Of_michelson.Checks.Json_download.use_lru_cache ()
+      ; timeout_sec = Some timeout_sec
+      }
+  else `Disabled
+
+
+let check_typed_storage
+    ~(options : Compiler_options.t)
+    ~(json_download : download_options)
+    ~raise
+    ~(constants : string list)
+    ~(loc : Location.t)
+    (prg : Ast_typed.program)
+    (storage : Ast_typed.expression)
+    : unit Lwt.t
+  =
+  let open Lwt.Let_syntax in
+  let aggregated_storage =
+    Ligo_compile.Of_typed.compile_expression_in_context
+      ~self_pass:true
+      ~self_program:true
+      ~raise
+      ~options:options.middle_end
+      None
+      prg
+      storage
+  in
+  let expanded_storage =
+    Ligo_compile.Of_aggregated.compile_expression ~raise aggregated_storage
+  in
+  let mini_c_storage =
+    Ligo_compile.Of_expanded.compile_expression ~raise expanded_storage
+  in
+  let%bind compiled_storage =
+    Ligo_compile.Of_mini_c.compile_expression ~raise ~options mini_c_storage
+  in
+  let module Run = Ligo_run.Of_michelson in
+  let dry_run_options : Run.dry_run_options =
+    Run.(
+      (* There is no way how environment can affect metadata since metadata
+         carries bytes values, so passing arbitrary values below *)
+      { now = None
+      ; amount = "0"
+      ; balance = "0"
+      ; sender = None
+      ; source = None
+      ; parameter_ty = None
+      })
+  in
+  let%bind michelson_value =
+    let%bind options = Run.make_dry_run_options ~raise ~constants dry_run_options in
+    Run.evaluate_expression ~raise ~options compiled_storage.expr compiled_storage.expr_ty
+  in
+  Run.Checks.tzip16_check_storage
+    ~raise
+    ~loc
+    ~json_download
+    ~storage_type:compiled_storage.expr_ty
+    michelson_value
+
+
+let check_typed_program
+    ~(options : Compiler_options.t)
+    ~(json_download : download_options)
+    ~raise
+    ~(constants : string list)
+    ~(cur_file : Path.t)
+    (prg : Ast_typed.program)
+    : unit Lwt.t
+  =
+  let storages = values_for_tzip16_check cur_file prg.pr_module in
+  Lwt_list.iter_p
+    (fun (expr, loc) ->
+      check_typed_storage ~options ~json_download ~raise ~loc ~constants prg expr)
+    (Sequence.to_list storages)

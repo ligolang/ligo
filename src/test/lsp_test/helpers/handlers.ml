@@ -9,10 +9,15 @@ let default_test_config : config =
   ; max_line_width = None
   ; completion_implementation = `With_scopes
   ; diagnostics_pull_mode = `OnDocUpdate
+  ; metadata_checks_downloading = false
+  ; metadata_checks_download_timeout_sec = 3.
   }
 
 
-let test_run_session ?(config = default_test_config) (session : 'a Handler.t)
+let test_run_session
+    ?(config = default_test_config)
+    ?(metadata_download_options = `Unspecified)
+    (session : 'a Handler.t)
     : 'a * Diagnostic.t list Path_hashtbl.t
   =
   let mocked_notify_back = Path_hashtbl.create () in
@@ -29,6 +34,7 @@ let test_run_session ?(config = default_test_config) (session : 'a Handler.t)
       ; last_project_dir = ref None
       ; mod_res = ref None
       ; normalize
+      ; metadata_download_options
       }
       session
   in

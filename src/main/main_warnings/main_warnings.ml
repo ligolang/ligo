@@ -29,6 +29,7 @@ type all =
   | `Use_meta_ligo of Location.t
   | `Self_ast_aggregated_warning_bad_self_type of
     Ast_aggregated.type_expression * Ast_aggregated.type_expression * Location.t
+  | `Metadata_absent of Location.t
   | `Metadata_cannot_parse of Location.t
   | `Metadata_no_empty_key of Location.t
   | `Metadata_tezos_storage_not_found of Location.t * string
@@ -39,6 +40,7 @@ type all =
   | `Metadata_hash_fails of Location.t * string * string
   | `Metadata_json_download of Location.t * string
   | `Metadata_error_download of Location.t * string
+  | `Metadata_download_timeout of Location.t * string
   ]
 
 let warn_bad_self_type t1 t2 loc = `Self_ast_aggregated_warning_bad_self_type (t1, t2, loc)
@@ -208,6 +210,12 @@ let pp
         got
         Ast_aggregated.PP.type_expression
         expected
+    | `Metadata_absent loc ->
+      Format.fprintf
+        f
+        "@[<hv>%a@.Warning: Metadata field is not present. @]"
+        snippet_pp
+        loc
     | `Metadata_cannot_parse loc ->
       Format.fprintf
         f
@@ -279,6 +287,13 @@ let pp
       Format.fprintf
         f
         "@[<hv>%a@.Warning: Could not download JSON in URL: %s.@.@]"
+        snippet_pp
+        loc
+        s
+    | `Metadata_download_timeout (loc, s) ->
+      Format.fprintf
+        f
+        "@[<hv>%a@.Warning: Downloading JSON timed out in URL: %s.@.@]"
         snippet_pp
         loc
         s)
@@ -455,6 +470,10 @@ let to_warning : all -> Simple_utils.Warning.t =
     in
     let content = make_content ~message ~location () in
     make ~stage:"aggregation" ~content
+  | `Metadata_absent location ->
+    let message = Format.sprintf "Metadata field is not present." in
+    let content = make_content ~message ~location () in
+    make ~stage:"metadata_check" ~content
   | `Metadata_cannot_parse location ->
     let message = Format.sprintf "Cannot parse big-map metadata." in
     let content = make_content ~message ~location () in
@@ -506,6 +525,10 @@ let to_warning : all -> Simple_utils.Warning.t =
     make ~stage:"metadata_check" ~content
   | `Metadata_error_download (location, s) ->
     let message = Format.sprintf "Warning: Could not download JSON in URL: %s" s in
+    let content = make_content ~message ~location () in
+    make ~stage:"metadata_check" ~content
+  | `Metadata_download_timeout (location, s) ->
+    let message = Format.sprintf "Warning: Downloading JSON timed out in URL: %s" s in
     let content = make_content ~message ~location () in
     make ~stage:"metadata_check" ~content
 

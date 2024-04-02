@@ -1,0 +1,7 @@
+
+author: Martoon
+description: "\\nProvided IDEs extensions will run metadata checks on storage values annotated with `@tzip16_compatible`. \\n\\n"
+merge_request: '3111'
+title: "[#2084] Add TZIP-16 checks to LSP diagnostics"
+type: added
+            

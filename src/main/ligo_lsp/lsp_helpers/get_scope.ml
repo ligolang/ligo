@@ -187,6 +187,8 @@ let following_passes_diagnostics
     ~(raise : (Main_errors.all, Main_warnings.all) Trace.raise)
     ~(stdlib_program : Ast_typed.program)
     ~(syntax : Syntax_types.t)
+    ~(path : Path.t)
+    ~(tzip16_download_options : Tzip16_storage.download_options)
     (raw_options : Raw_options.t)
     ({ pr_module; pr_sig = { sig_items; sig_sort } } : Ast_typed.program)
     : unit Lwt.t
@@ -287,8 +289,14 @@ let following_passes_diagnostics
   in
   let mini_c = Ligo_compile.Of_expanded.compile_expression ~raise ast_expanded in
   let open Lwt.Let_syntax in
-  let%map _mich = Ligo_compile.Of_mini_c.compile_expression ~raise ~options mini_c in
-  ()
+  let%bind _mich = Ligo_compile.Of_mini_c.compile_expression ~raise ~options mini_c in
+  Tzip16_storage.check_typed_program
+    ~options
+    ~json_download:tzip16_download_options
+    ~raise
+    ~constants:[] (* TODO #2159: fill them *)
+    ~cur_file:path
+    prg
 
 
 let get_defs
@@ -315,6 +323,7 @@ let get_defs
 (** Used by LSP, we're trying to get as many errors/warnings as possible *)
 let get_defs_and_diagnostics
     ~(logger : type_:Lsp.Types.MessageType.t -> string -> unit Lwt.t)
+    ~(tzip16_download_options : Tzip16_storage.download_options)
     (raw_options : Raw_options.t)
     (path : Path.t)
     (code : string)
@@ -355,6 +364,8 @@ let get_defs_and_diagnostics
                               ~raise
                               ~stdlib_program
                               ~syntax
+                              ~path
+                              ~tzip16_download_options
                               raw_options
                               program
                           in

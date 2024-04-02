@@ -12,7 +12,9 @@ let default_config : config =
   ; disabled_features = []
   ; max_line_width = None
   ; completion_implementation = `With_scopes
-  ; diagnostics_pull_mode = `OnDocumentLinkRequest
+  ; diagnostics_pull_mode = `OnDocUpdate
+  ; metadata_checks_downloading = true
+  ; metadata_checks_download_timeout_sec = 10.
   }
 
 
@@ -103,6 +105,8 @@ class lsp_server (capability_mode : capability_mode) =
           Path.from_absolute file)
     [@@alert "-from_absolute_performance"]
 
+    val mutable metadata_download_options : Tzip16_storage.download_options = `Unspecified
+
     (** Stores the path to the last ligo.json file, if found. *)
     val last_project_dir : Path.t option ref = ref None
 
@@ -117,6 +121,7 @@ class lsp_server (capability_mode : capability_mode) =
           ; last_project_dir
           ; mod_res
           ; normalize = self#normalize
+          ; metadata_download_options
           }
 
     method on_doc_with_handler ~process_immediately ?changes ~version file content =
@@ -178,17 +183,16 @@ class lsp_server (capability_mode : capability_mode) =
         (settings : Yojson.Safe.t)
         : unit IO.t =
       let open Yojson.Safe.Util in
-      match to_option (member "ligoLanguageServer") settings with
-      | None -> IO.return ()
+      (match to_option (member "ligoLanguageServer") settings with
+      | None -> ()
       | Some ligo_language_server ->
-        self#decode_apply_ligo_language_server notify_back ligo_language_server
+        self#decode_and_store_ligo_language_server_config ligo_language_server);
+      self#apply_metadata_options notify_back
 
-    method decode_apply_ligo_language_server
-        (notify_back : Linol_lwt.Jsonrpc2.notify_back)
+    method decode_and_store_ligo_language_server_config
         (ligo_language_server : Yojson.Safe.t)
-        : unit IO.t =
+        : unit =
       let open Yojson.Safe.Util in
-      let open IO in
       config
         <- { max_number_of_problems =
                ligo_language_server
@@ -230,7 +234,31 @@ class lsp_server (capability_mode : capability_mode) =
                | Some "on document link request" -> `OnDocumentLinkRequest
                | Some "on save" -> `OnSave
                | Some _ | None -> default_config.diagnostics_pull_mode)
-           };
+           ; metadata_checks_downloading =
+               (ligo_language_server
+               |> member "metadataChecksDownloading"
+               |> function
+               | `Bool v -> v
+               | _ -> default_config.metadata_checks_downloading)
+           ; metadata_checks_download_timeout_sec =
+               (ligo_language_server
+               |> member "metadataChecksDownloadTimeout"
+               |> function
+               | `Int v when v >= 0 -> float_of_int v
+               | `Float v when Float.is_non_negative v -> v
+               | _ -> default_config.metadata_checks_download_timeout_sec)
+           }
+
+    method apply_metadata_options
+        (notify_back : Linol_lwt.Jsonrpc2.notify_back)
+        : unit IO.t =
+      let open IO in
+      let () =
+        metadata_download_options
+          <- Tzip16_storage.create_download_options
+               ~enabled:config.metadata_checks_downloading
+               ~timeout_sec:config.metadata_checks_download_timeout_sec
+      in
       let* () =
         match config.diagnostics_pull_mode with
         | `OnDocumentLinkRequest
@@ -247,9 +275,9 @@ class lsp_server (capability_mode : capability_mode) =
                      Please enable 'textDocument/documentLink' request or change \
                      diagnostics pull mode."
                   ~type_:Warning)
-        | _ -> IO.return @@ ()
+        | _ -> IO.return ()
       in
-      IO.return @@ ()
+      IO.return ()
 
     method! on_req_initialize
         ~(notify_back : Linol_lwt.Jsonrpc2.notify_back)
@@ -265,7 +293,7 @@ class lsp_server (capability_mode : capability_mode) =
            this editor, we proceed with our ordinary business and decode it. *)
       let* () =
         match init_params.initializationOptions with
-        | None -> return ()
+        | None -> self#apply_metadata_options notify_back
         | Some settings -> self#decode_apply_settings notify_back settings
       in
       client_capabilities <- init_params.capabilities;
@@ -550,7 +578,9 @@ class lsp_server (capability_mode : capability_mode) =
                       in
                       let* () =
                         Lwt_list.iter_p
-                          (self#decode_apply_ligo_language_server new_notify_back)
+                          (fun new_config ->
+                            self#decode_and_store_ligo_language_server_config new_config;
+                            self#apply_metadata_options new_notify_back)
                           configs
                       in
                       (* Update diagnostics *)

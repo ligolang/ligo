@@ -3455,11 +3455,11 @@ module Lsp_server = struct
       Out_channel.with_file ~append:true log_file ~f:(fun outc ->
           Logs.set_reporter (reporter @@ Format.formatter_of_out_channel outc);
           (* Disable logs for anything that is not linol, as it causes crashes. *)
+          Logs.set_level ~all:true None;
           List.iter (Logs.Src.list ()) ~f:(fun src ->
               match Logs.Src.name src with
               | "linol" -> Logs.Src.set_level src (Some Logs.Debug)
-              | _ -> Logs.Src.set_level src None);
-          Logs.set_level (Some Logs.Debug);
+              | _ -> ());
           let s = new Server.lsp_server capability_mode in
           let server = Linol_lwt.Jsonrpc2.create_stdio (s :> Linol_lwt.Jsonrpc2.server) in
           let shutdown () = Caml.(s#get_status = `ReceivedExit) in
