@@ -34,27 +34,19 @@ let rec extracted_mangled_uids : def list -> mangled_to_resolved =
         else acc))
 
 
-let (unmangle_module_names_in_core_type, unmangle_module_names_in_typed_type) :
-      (mangled_to_resolved -> Ast_core.type_expression -> Ast_core.type_expression)
-      * (mangled_to_resolved -> Ast_typed.type_expression -> Ast_typed.type_expression)
+let unmangle_module_names_in_typed_type
+    : mangled_to_resolved -> Ast_typed.type_expression -> Ast_typed.type_expression
   =
-  let find_if_not_generated mangled_to_resolved mvar =
+ fun mangled_to_resolved ->
+  let find_if_not_generated mvar =
     if Ligo_prim.Module_var.is_generated mvar
     then mvar
     else
       Option.value_map ~default:mvar ~f:id_to_mvar
       @@ UidMap.find_opt (mvar_to_id mvar) mangled_to_resolved
   in
-  let unmangle_module_list mangled_to_resolved =
-    List.map ~f:(find_if_not_generated mangled_to_resolved)
-  in
-  ( (fun mangled_to_resolved ->
-      Misc.map_core_type_expression_module_path
-        (unmangle_module_list mangled_to_resolved)
-        (List.Ne.map (find_if_not_generated mangled_to_resolved)))
-  , fun mangled_to_resolved ->
-      Misc.map_typed_type_expression_module_path
-        (unmangle_module_list mangled_to_resolved) )
+  let unmangle_module_list = List.map ~f:find_if_not_generated in
+  Misc.map_typed_type_expression_module_path unmangle_module_list
 
 
 let extract_mangled_mdefs : t -> def list -> mangled_mdefs =
@@ -102,25 +94,13 @@ let inline_mangled : mangled_mdefs -> t -> mangled_to_resolved -> def list -> de
         { vdef with
           t =
             (match vdef.t with
-            | Core core ->
-              Core (unmangle_module_names_in_core_type mangled_to_resolved core)
+            | Core core -> Core core
             | Resolved typed ->
               Resolved (unmangle_module_names_in_typed_type mangled_to_resolved typed)
             | Unresolved -> Unresolved)
         }
-    | Type tdef ->
-      Type
-        { tdef with
-          content =
-            Option.map
-              ~f:(unmangle_module_names_in_core_type mangled_to_resolved)
-              tdef.content
-        }
-    | Label ldef ->
-      Label
-        { ldef with
-          content = unmangle_module_names_in_core_type mangled_to_resolved ldef.content
-        }
+    | Type tdef -> Type tdef
+    | Label ldef -> Label ldef
     | Module mdef ->
       let inlined_mdef =
         match mdef.mod_case with
