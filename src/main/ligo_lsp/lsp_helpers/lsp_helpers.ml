@@ -9,6 +9,7 @@ module Path = Path
 module Pretty = Pretty
 module Project_root = Project_root
 module Rose = Rose
+module Tzip16_storage = Tzip16_storage
 
 (* Wrappers / extended versions for modules from LIGO and Lsp.Types *)
 module Def = Def

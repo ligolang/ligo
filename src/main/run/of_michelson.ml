@@ -652,24 +652,103 @@ module Checks = struct
     | _ -> None
 
 
-  let download ~loc uri
-      : (string, [> `Metadata_error_download of Location.t * string ]) Lwt_result.t
-    =
-    let open Lwt.Let_syntax in
-    let open Cohttp_lwt_unix in
-    try%lwt
-      let uri = Uri.of_string uri in
-      let headers = Cohttp.Header.of_list [ "Content-type", "application/json" ] in
-      let%bind _, body = Client.get ~headers uri in
-      let%bind body = Cohttp_lwt.Body.to_string body in
-      Lwt.return @@ Ok body
-    with
-    | _ -> Lwt.return (Error (`Metadata_error_download (loc, uri)))
+  module Json_download = struct
+    type error =
+      [ `Download_error
+      | `Timeout
+      ]
+
+    module Lru_uri_cache =
+      Lru.M.Make
+        (String)
+        (struct
+          type t = (string, error) result
+
+          let weight _ = 1
+        end)
+    (* Simple cache for keeping downloaded data; caps the overall size of data *)
+
+    type cache =
+      | No_cache
+      | Lru_cache of Lru_uri_cache.t
+
+    let use_lru_cache () : cache =
+      (* Using 1000 as size. Should be sufficient to fit all links in the
+         project, but prevents unlimitted growth in case of repetitive links
+         changes.
+
+         We expect downloaded metadata to be small, a few kilobytes maximum, so
+         overall cache size remains reasonable.
+      *)
+      Lru_cache (Lru_uri_cache.create 1000)
 
 
-  let tzip16_check
+    type enabled_options =
+      { cache : cache
+      ; timeout_sec : float option
+      }
+
+    type options =
+      [ `Unspecified
+      | `Disabled
+      | `Enabled of enabled_options
+      ]
+
+    let with_cache
+        :  cache -> (string -> ('r, error) Lwt_result.t) -> string
+        -> ('r, error) Lwt_result.t
+      = function
+      | No_cache -> Fn.id
+      | Lru_cache cache ->
+        fun run uri ->
+          (match Lru_uri_cache.find uri cache with
+          | Some x -> Lwt.return x
+          | None ->
+            let%lwt value = run uri in
+            let () = Lru_uri_cache.add uri value cache in
+            Lwt.return value)
+
+
+    let with_timeout
+        (time_opt : float option)
+        (action : 'a -> ('r, error) Lwt_result.t)
+        (arg : 'a)
+        : ('r, error) result Lwt.t
+      =
+      let open Lwt in
+      match time_opt with
+      | None -> action arg
+      | Some time ->
+        Lwt.pick [ action arg; (Lwt_unix.sleep time >|= fun () -> Error `Timeout) ]
+
+
+    let run ~loc uri : (string, error) Lwt_result.t =
+      let open Lwt.Let_syntax in
+      let open Cohttp_lwt_unix in
+      try%lwt
+        let uri = Uri.of_string uri in
+        let headers = Cohttp.Header.of_list [ "Content-type", "application/json" ] in
+        let%bind _, body = Client.get ~headers uri in
+        let%bind body = Cohttp_lwt.Body.to_string body in
+        Lwt.return @@ Ok body
+      with
+      | _ -> Lwt.return (Error `Download_error)
+
+
+    (* This is thread-safe, however does not make an effort at deduplicating
+       downloads of the same URLs *)
+    let run_with ~(options : enabled_options) ~loc uri =
+      Lwt.map (fun outcome ->
+          match outcome with
+          | Error `Download_error -> Error (`Metadata_error_download (loc, uri))
+          | Error `Timeout -> Error (`Metadata_download_timeout (loc, uri))
+          | Ok res -> Ok res)
+      @@ with_cache options.cache (with_timeout options.timeout_sec (run ~loc)) uri
+  end
+
+  let tzip16_check_metadata
       ~loc
-      ?json_download
+      ~(json_download : Json_download.options)
       ~storage_type
       (metadata : (int, string) Tezos_micheline.Micheline.node)
     =
@@ -705,10 +784,10 @@ module Checks = struct
     | "https" | "http" ->
       let uri = Uri.to_string uri in
       (match json_download with
-      | None -> Lwt_result.fail (`Metadata_json_download (loc, "an HTTP"))
-      | Some false -> Lwt_result.return ()
-      | Some true ->
-        let%bind json = download ~loc uri in
+      | `Unspecified -> Lwt_result.fail (`Metadata_json_download (loc, "an HTTP"))
+      | `Disabled -> Lwt_result.return ()
+      | `Enabled options ->
+        let%bind json = Json_download.run_with ~options ~loc uri in
         json_check ~loc ~storage_type ?sha256hash json)
     | "ipfs" ->
       (match Uri.host uri with
@@ -716,10 +795,10 @@ module Checks = struct
       | Some domain ->
         let uri = "https://ipfs.io/ipfs/" ^ domain in
         (match json_download with
-        | None -> Lwt_result.fail (`Metadata_json_download (loc, "an IPFS"))
-        | Some false -> Lwt_result.return ()
-        | Some true ->
-          let%bind json = download ~loc uri in
+        | `Unspecified -> Lwt_result.fail (`Metadata_json_download (loc, "an IPFS"))
+        | `Disabled -> Lwt_result.return ()
+        | `Enabled options ->
+          let%bind json = Json_download.run_with ~options ~loc uri in
           json_check ~loc ~storage_type ?sha256hash json))
     | _ -> Lwt_result.return ()
 
@@ -762,6 +841,27 @@ module Checks = struct
     | _ -> None
 
 
+  let tzip16_check_storage
+      ~raise
+      ~(json_download : Json_download.options)
+      ?(require_metadata_field = true)
+      ~storage_type
+      ~loc
+      (exp : (int, string) Tezos_micheline.Micheline.node)
+      : unit Lwt.t
+    =
+    let open Lwt.Let_syntax in
+    match find_annoted_element "%metadata" storage_type exp with
+    | Some metadata ->
+      let open Simple_utils.Trace in
+      (match%map tzip16_check_metadata ~loc ~json_download ~storage_type metadata with
+      | Ok () -> ()
+      | Error w -> raise.warning w)
+    | None ->
+      Lwt.return
+      @@ if require_metadata_field then raise.warning (`Metadata_absent loc) else ()
+
+
   let storage
       ~raise
       ~(options : Compiler_options.t)
@@ -770,21 +870,18 @@ module Checks = struct
       (exp : (int, string) Tezos_micheline.Micheline.node)
       : unit Lwt.t
     =
-    let open Lwt.Let_syntax in
     if not options.middle_end.no_metadata_check
-    then (
-      match find_annoted_element "%metadata" type_ exp with
-      | Some metadata ->
-        let open Simple_utils.Trace in
-        (match%map
-           tzip16_check
-             ~loc
-             ?json_download:options.tools.json_download
-             ~storage_type:type_
-             metadata
-         with
-        | Ok () -> ()
-        | Error w -> raise.warning w)
-      | None -> Lwt.return ())
+    then
+      tzip16_check_storage
+        ~raise
+        ~require_metadata_field:false
+        ~json_download:
+          (match options.tools.json_download with
+          | None -> `Unspecified
+          | Some false -> `Disabled
+          | Some true -> `Enabled { cache = Json_download.No_cache; timeout_sec = None })
+        ~storage_type:type_
+        ~loc
+        exp
     else Lwt.return ()
 end
