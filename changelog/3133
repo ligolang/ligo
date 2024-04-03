@@ -1,0 +1,7 @@
+
+author: heitor.toledo
+description: "\\nSmall performance boost for the LSP. The time between keystrokes will decrease.\\n\\n"
+merge_request: '3133'
+title: "[#2143] Improve the performance for inline mangled modules pass"
+type: performance
+            
