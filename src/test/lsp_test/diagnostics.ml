@@ -16,7 +16,7 @@ let get_diagnostics_test ({ file_path; max_number_of_problems } : diagnostics_te
         { default_test_config with max_number_of_problems })
   in
   let metadata_download_options =
-    Tzip16_storage.create_download_options ~enabled:true ~timeout_sec:10.
+    Tzip16_storage.create_download_options ~enabled:true ~timeout_sec:300.
   in
   let _uri, actual_diagnostics =
     test_run_session ?config ~metadata_download_options @@ open_file file_path_normalized

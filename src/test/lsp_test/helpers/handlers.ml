@@ -10,7 +10,7 @@ let default_test_config : config =
   ; completion_implementation = `With_scopes
   ; diagnostics_pull_mode = `OnDocUpdate
   ; metadata_checks_downloading = false
-  ; metadata_checks_download_timeout_sec = 3.
+  ; metadata_checks_download_timeout_sec = 300.
   }
 
 
