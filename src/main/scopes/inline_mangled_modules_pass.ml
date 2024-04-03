@@ -34,27 +34,21 @@ let rec extracted_mangled_uids : def list -> mangled_to_resolved =
         else acc))
 
 
-let (unmangle_module_names_in_core_type, unmangle_module_names_in_typed_type) :
-      (mangled_to_resolved -> Ast_core.type_expression -> Ast_core.type_expression)
-      * (mangled_to_resolved -> Ast_typed.type_expression -> Ast_typed.type_expression)
+let unmangle_module_names_in_typed_type
+    :  (Ast_typed.module_variable, Ast_typed.module_variable) Hashtbl.t
+    -> mangled_to_resolved -> Ast_typed.type_expression -> Ast_typed.type_expression
   =
-  let find_if_not_generated mangled_to_resolved mvar =
+ fun mvar_cache mangled_to_resolved ->
+  let find_if_not_generated mvar =
     if Ligo_prim.Module_var.is_generated mvar
     then mvar
     else
-      Option.value_map ~default:mvar ~f:id_to_mvar
-      @@ UidMap.find_opt (mvar_to_id mvar) mangled_to_resolved
+      Hashtbl.find_or_add mvar_cache mvar ~default:(fun () ->
+          Option.value_map ~default:mvar ~f:id_to_mvar
+          @@ UidMap.find_opt (mvar_to_id mvar) mangled_to_resolved)
   in
-  let unmangle_module_list mangled_to_resolved =
-    List.map ~f:(find_if_not_generated mangled_to_resolved)
-  in
-  ( (fun mangled_to_resolved ->
-      Misc.map_core_type_expression_module_path
-        (unmangle_module_list mangled_to_resolved)
-        (List.Ne.map (find_if_not_generated mangled_to_resolved)))
-  , fun mangled_to_resolved ->
-      Misc.map_typed_type_expression_module_path
-        (unmangle_module_list mangled_to_resolved) )
+  let unmangle_module_list = List.map ~f:find_if_not_generated in
+  Misc.map_typed_type_expression_module_path unmangle_module_list
 
 
 let extract_mangled_mdefs : t -> def list -> mangled_mdefs =
@@ -94,33 +88,25 @@ let strip_mangled_defs : mangled_mdefs -> t -> def list -> def list =
   List.filter_map ~f:mangled_alias_filter
 
 
-let inline_mangled : mangled_mdefs -> t -> mangled_to_resolved -> def list -> def list =
- fun mangled_file_name_to_mdef mangled_uids mangled_to_resolved ->
+let inline_mangled
+    :  (Ast_typed.module_variable, Ast_typed.module_variable) Hashtbl.t -> mangled_mdefs
+    -> t -> mangled_to_resolved -> def list -> def list
+  =
+ fun mvar_cache mangled_file_name_to_mdef mangled_uids mangled_to_resolved ->
   let rec inline : def -> def = function
     | Variable vdef ->
       Variable
         { vdef with
           t =
             (match vdef.t with
-            | Core core ->
-              Core (unmangle_module_names_in_core_type mangled_to_resolved core)
+            | Core core -> Core core
             | Resolved typed ->
-              Resolved (unmangle_module_names_in_typed_type mangled_to_resolved typed)
+              Resolved
+                (unmangle_module_names_in_typed_type mvar_cache mangled_to_resolved typed)
             | Unresolved -> Unresolved)
         }
-    | Type tdef ->
-      Type
-        { tdef with
-          content =
-            Option.map
-              ~f:(unmangle_module_names_in_core_type mangled_to_resolved)
-              tdef.content
-        }
-    | Label ldef ->
-      Label
-        { ldef with
-          content = unmangle_module_names_in_core_type mangled_to_resolved ldef.content
-        }
+    | Type tdef -> Type tdef
+    | Label ldef -> Label ldef
     | Module mdef ->
       let inlined_mdef =
         match mdef.mod_case with
@@ -161,6 +147,7 @@ let patch : t -> def list -> def list =
  fun mangled_uids defs ->
   let mangled_file_name_to_mdef = extract_mangled_mdefs mangled_uids defs in
   let mangled_to_resolved = extracted_mangled_uids defs in
+  let mvar_cache = Hashtbl.create (module Ligo_prim.Module_var) in
   defs
   |> strip_mangled_defs mangled_file_name_to_mdef mangled_uids
-  |> inline_mangled mangled_file_name_to_mdef mangled_uids mangled_to_resolved
+  |> inline_mangled mvar_cache mangled_file_name_to_mdef mangled_uids mangled_to_resolved
