@@ -5,7 +5,6 @@
   test
   doc_test
   repl_test
-  vendors_test
   contract_test
   get_scope_tests
   pretty_printer_tests
@@ -74,12 +73,6 @@
   (glob_files preprocessor/*)
   (glob_files install_tests/workflow/*)))
 
-(rule
- (alias vendors_test)
- (action
-  (run ./vendors_test.exe))
- (deps
-  (source_tree projects)))
 
 (rule
  (alias contract_test)
@@ -128,7 +121,6 @@
 (alias
  (name runtest)
  (deps
-  (alias vendors_test)
   (alias ligo-test)
   (alias doc-test)
   ;;  (alias parser-negative-tests)
