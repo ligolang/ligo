@@ -1,0 +1,7 @@
+
+author: DK318
+description: "The LSP should now take less time between keystrokes.\\n\\nThis is done by running aggregation pass only once per doc processing.\\n\\n\\n"
+merge_request: '3137'
+title: "[#2143] Run aggregation pass only once in following passes"
+type: performance
+            

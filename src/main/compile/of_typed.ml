@@ -231,27 +231,50 @@ let list_type_declarations (m : Ast_typed.program) : Type_var.t list =
     m.pr_module
 
 
-let get_modules_with_entries (prg : Ast_typed.program) : Module_var.t list list =
+let get_modules_with_entries (prg : Ast_typed.program)
+    : (Module_var.t list * Ast_typed.contract_sig) list
+  =
   let module ModPathOrd = struct
-    type t = Module_var.t list
+    type t = Module_var.t list * Ast_typed.contract_sig
 
-    let compare = List.compare Module_var.compare
+    let compare : t -> t -> int =
+      Tuple2.compare ~cmp1:(List.compare Module_var.compare) ~cmp2:(fun _lhs _rhs -> 0)
   end
   in
   let module ModSet = Caml.Set.Make (ModPathOrd) in
-  let rec aux ?(current_module = []) (prg : Ast_typed.program) : ModSet.t =
+  let contract_sig =
+    match prg.pr_sig.sig_sort with
+    | Ss_module ->
+      let unit_type = Ast_typed.t_unit ~loc:Location.generated () in
+      { parameter = unit_type; storage = unit_type }
+    | Ss_contract contract_sig -> contract_sig
+  in
+  let rec aux ?(current_module_and_sig = [], contract_sig) (prg : Ast_typed.program)
+      : ModSet.t
+    =
     List.fold_left prg.pr_module ~init:ModSet.empty ~f:(fun acc decl ->
         match decl.wrap_content with
         | D_value { attr; _ } | D_irrefutable_match { attr; _ } ->
-          if attr.entry then ModSet.add current_module acc else acc
+          if attr.entry then ModSet.add current_module_and_sig acc else acc
         | D_module
             { module_binder
             ; module_ = { module_content = M_struct pr_module; signature = pr_sig; _ }
             ; _
             } ->
+          let current_module_and_sig =
+            let current_module = module_binder :: fst current_module_and_sig in
+            let contract_sig =
+              match pr_sig.sig_sort with
+              | Ss_module -> snd current_module_and_sig
+              | Ss_contract contract_sig -> contract_sig
+            in
+            current_module, contract_sig
+          in
           Ast_typed.{ pr_module; pr_sig }
-          |> aux ~current_module:(module_binder :: current_module)
+          |> aux ~current_module_and_sig
           |> ModSet.union acc
         | D_module _ | D_type _ | D_module_include _ | D_signature _ | D_import _ -> acc)
   in
-  aux prg |> ModSet.to_seq |> Seq.fold_left (fun acc elt -> List.rev elt :: acc) []
+  aux prg
+  |> ModSet.to_seq
+  |> Seq.fold_left (fun acc elt -> Tuple2.map_fst ~f:List.rev elt :: acc) []

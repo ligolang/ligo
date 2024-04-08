@@ -8,6 +8,7 @@ module Magic_strings = struct
   let views = "$views"
   let contract = "$contract"
   let initial_dynamic_entrypoints = "$initial_dynamic_entrypoints"
+  let common_lsp_main = "$common_lsp_main"
 end
 
 open struct
@@ -23,3 +24,4 @@ let views = mk_v Magic_strings.views
 let contract = mk_v Magic_strings.contract
 let generated_main = mk_v Magic_strings.generated_main
 let initial_dynamic_entrypoints = mk_v Magic_strings.initial_dynamic_entrypoints
+let common_lsp_main = mk_v Magic_strings.common_lsp_main
