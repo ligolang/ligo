@@ -137,46 +137,123 @@ let make_defs_and_diagnostics
   { errors; warnings; definitions; potential_tzip16_storages; lambda_types }
 
 
-let virtual_main_name = "lsp_virtual_main"
+(** We want to produce all possible warnings/errors in following passes (everything after checking pass).
+    However, aggregation gets rid of unused declarations. Take this contract:
 
-(** When compiling past the typed AST, we need to provide an entry-point, otherwise the
-    compilation may fail. This function will generate a virtual entry-point with the name
-    provided by [virtual_main_name], using the never type as the parameter, and
-    [storage_type_expr] as the storage. This will be type-checked using [context].
+    {[
+      [@deprecated "This value is deprecated"]
+      let some_deprecated_value = 42
 
-    Can be used with custom storage type to proceed with compiling the storage expr. *)
-let make_lsp_virtual_main
-    ~raise
-    ~(options : Compiler_options.t)
-    ~(context : Ast_typed.signature)
-    ~(syntax : Syntax_types.t)
-    (storage_type_expr : string)
-    : Ast_typed.program * Ast_core.program
+      module A = struct
+        [@entry]
+        let entrypoint (p : int) (s : int) : operation list * int =
+          let _ = some_deprecated_value in
+          [], p + s
+      end
+
+      [@entry]
+      let another_entrypoint (p : int) (s : int) : operation list * int =
+        let _ = some_deprecated_value in
+        [], p + s
+    }]
+    This contract has 2 entrypoints. If we compile only one of them then we lose a deprecation warning from the other one.
+
+    After [self_ast_typed] pass all declarations with [@entry] attribute are bundled into one large entrypoint with [$main] name.
+    Let's create an entrypoint that will mention all the entrypoints of the contract. For the contract above it'll look like:
+
+    {[
+      let $common_lsp_main () () : operation list * unit =
+        let _ = ignore A.$main in
+        let _ = ignore $main in
+        [], ()
+    ]} *)
+let make_common_entrypoint
+    (modules_with_sigs : (Ligo_prim.Module_var.t list * Ast_typed.contract_sig) list)
+    : Ast_typed.module_ (* Common entrypoint *)
+      * Ast_typed.expression (* Expression to compile in context *)
+      * Ast_typed.sig_items (* Common entrypoint signature *)
+      * Ast_typed.contract_sig (* Contract signature of common entrypoint *)
   =
-  let main =
-    Format.sprintf
-      (match syntax with
-      | CameLIGO ->
-        "[@entry]\nlet %s (_ : never) (s : %s) : operation list * (%s) = [], s"
-      | JsLIGO ->
-        "@entry\nconst %s = (_: never, s: %s): [list<operation>, %s] => [list([]), s]")
-      virtual_main_name
-      storage_type_expr
-      storage_type_expr
+  let open Ligo_prim in
+  let open Ast_typed in
+  let loc = Location.generated in
+  let wildcard = Value_var.fresh ~loc ~name:"_" in
+  let unit_type = t_unit ~loc () in
+  let param_stor_type = t_pair ~loc unit_type unit_type in
+  let ep_type = Misc.build_entry_type unit_type unit_type in
+  let oplist = t_list ~loc (t_operation ~loc ()) in
+  let oplist_storage = t_pair ~loc oplist unit_type in
+  let init =
+    e_record
+      ~loc
+      (Record.record_of_tuple
+         [ e_constant ~loc { cons_name = C_LIST_EMPTY; arguments = [] } oplist
+         ; e_literal ~loc Literal_unit unit_type
+         ])
+      oplist_storage
   in
-  let typed, core =
-    Ligo_compile.Utils.type_program_string ~raise ~options ~context syntax main
+  let result =
+    List.fold
+      modules_with_sigs
+      ~init
+      ~f:(fun let_result (module_path, { parameter; storage }) ->
+        let let_binder = Pattern.var ~loc (Binder.make (wildcard ()) unit_type) in
+        let rhs =
+          let cur_ep_type = Misc.build_entry_type parameter storage in
+          let cur_ep =
+            e_module_accessor
+              ~loc
+              { module_path; element = Magic_vars.generated_main }
+              cur_ep_type
+          in
+          let ignore_expr =
+            let forall_var = Type_var.of_input_var ~loc "a" in
+            e_variable
+              ~loc
+              (Value_var.of_input_var ~loc "ignore")
+              (t_for_all
+                 ~loc
+                 forall_var
+                 Type
+                 (t_arrow ~loc (t_variable ~loc forall_var ()) unit_type ()))
+          in
+          e_a_application
+            ~loc
+            (e_type_inst
+               ~loc
+               { forall = ignore_expr; type_ = cur_ep_type }
+               (t_arrow ~loc cur_ep_type unit_type ()))
+            cur_ep
+            unit_type
+        in
+        let attributes = ValueAttr.default_attributes in
+        e_let_in ~loc { let_binder; let_result; rhs; attributes } oplist_storage)
   in
-  let sig_sort =
-    Option.value ~default:Ast_typed.Ss_module
-    @@ Trace.to_option
-    @@ Checking.eval_signature_sort
-         ~options:options.middle_end
-         ~loc:Location.dummy
-         ~path:[]
-         { typed.pr_sig with sig_items = typed.pr_sig.sig_items @ context.sig_items }
+  let lamb =
+    e_lambda
+      ~loc
+      { binder = Param.make (wildcard ()) param_stor_type
+      ; output_type = oplist_storage
+      ; result
+      }
+      ep_type
   in
-  { typed with pr_sig = { typed.pr_sig with sig_sort } }, core
+  let decl_var = Magic_vars.common_lsp_main in
+  let decl =
+    Location.wrap ~loc
+    @@ D_value
+         { binder = Binder.make decl_var ep_type
+         ; expr = lamb
+         ; attr = Value_attr.default_attributes
+         }
+  in
+  let ep_expr = e_variable ~loc decl_var ep_type in
+  let sig_items =
+    [ Location.wrap ~loc @@ S_value (decl_var, ep_type, Sig_item_attr.default_attributes)
+    ]
+  in
+  let contract_sig = { parameter = unit_type; storage = unit_type } in
+  [ decl ], ep_expr, sig_items, contract_sig
 
 
 (* Compiles (Ast_typed -> Ast_aggrefgated -> Ast_expanded -> mini_c -> michelson)
@@ -204,36 +281,9 @@ let following_passes_diagnostics
       ~has_env_comments:false
       ()
   in
-  let contract_sig, pr_sig_items, prg =
-    let { Ast_typed.pr_module = stdlib_prg; pr_sig = stdlib_context } = stdlib_program in
-    let sig_items = stdlib_context.sig_items @ sig_items in
-    let pr_module = stdlib_prg @ pr_module in
-    match sig_sort with
-    | Ss_contract contract_sig ->
-      (* There is an entrypoint in a contract, so we know the storage *)
-      Some contract_sig, sig_items, pr_module
-    | Ss_module ->
-      let storage_type = "never" in
-      let context = { Ast_typed.sig_items; sig_sort } in
-      let virtual_main_typed, _virtual_main_core =
-        make_lsp_virtual_main ~raise ~options ~context ~syntax storage_type
-      in
-      ( (match virtual_main_typed.pr_sig.sig_sort with
-        | Ss_module -> None (* Should be impossible since virtual main is an entrypoint *)
-        | Ss_contract contract_sig -> Some contract_sig)
-      , sig_items @ virtual_main_typed.pr_sig.sig_items
-      , pr_module @ virtual_main_typed.pr_module )
-  in
   let prg : Ast_typed.program =
-    { pr_module = prg
-    ; pr_sig =
-        { sig_sort =
-            Option.value_map
-              ~default:Ast_typed.Ss_module
-              ~f:(fun x -> Ss_contract x)
-              contract_sig
-        ; sig_items = pr_sig_items
-        }
+    { pr_module = stdlib_program.pr_module @ pr_module
+    ; pr_sig = { sig_sort; sig_items = stdlib_program.pr_sig.sig_items @ sig_items }
     }
   in
   let log_diagnostics errors warnings =
@@ -259,30 +309,29 @@ let following_passes_diagnostics
     log_diagnostics errors warnings;
     prg
   in
-  Option.iter contract_sig ~f:(fun contract_sig ->
-      List.iter (Ligo_compile.Of_typed.get_modules_with_entries prg) ~f:(fun mod_path ->
-          Trace.try_with
-            ~fast_fail:false
-            (fun ~raise ~catch ->
-              let _ast_aggregated =
-                Ligo_compile.Of_typed.apply_to_entrypoint_with_contract_type
-                  ~raise
-                  ~options:options.middle_end
-                  prg
-                  mod_path
-                  contract_sig
-              in
-              log_diagnostics (catch.errors ()) (catch.warnings ()))
-            (fun ~catch e -> log_diagnostics (e :: catch.errors ()) (catch.warnings ()))));
+  let modules_with_sigs = Ligo_compile.Of_typed.get_modules_with_entries prg in
+  let decls, ep_expr, sig_items_ep, contract_sig =
+    make_common_entrypoint modules_with_sigs
+  in
+  let prg =
+    let pr_module = prg.pr_module @ decls in
+    let pr_sig =
+      Ast_typed.
+        { sig_items = prg.pr_sig.sig_items @ sig_items_ep
+        ; sig_sort = Ss_contract contract_sig
+        }
+    in
+    Ast_typed.{ pr_module; pr_sig }
+  in
   let ast_aggregated =
     Ligo_compile.Of_typed.compile_expression_in_context
       ~self_pass:true
       ~self_program:true
       ~raise
       ~options:options.middle_end
-      contract_sig
+      (Some contract_sig)
       prg
-      (Ast_typed.e_a_unit ~loc:Simple_utils.Location.dummy ())
+      ep_expr
   in
   let ast_expanded =
     Ligo_compile.Of_aggregated.compile_expression ~raise ast_aggregated
