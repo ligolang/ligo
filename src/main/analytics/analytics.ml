@@ -107,7 +107,7 @@ let term_acceptance_filepath =
   else dot_ligo "term_acceptance" true
 
 
-let line_separator = if String.equal Sys.os_type "Win32" then "\r\n" else "\n"
+let line_separator = "\n"
 
 let acceptance_condition_common =
   "Ligo uses analytics to have a better understanding compiler community usage."

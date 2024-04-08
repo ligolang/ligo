@@ -4,7 +4,6 @@ let ligo_install_path = "./.ligo"
 let ligo_rc_path () = Filename.concat (Ligo_unix.home_directory ()) ".ligorc"
 let ligo_registry = "https://packages.ligolang.org"
 let esy = "esy"
-let windows = "Win32"
 let typedoc = "typedoc"
 let markdown_folder_to_html = "markdown-folder-to-html"
 
@@ -32,7 +31,6 @@ let esy_install ~cache_path ~ligo_registry =
     |] )
 
 
-let where ~cmd = "", [| "where"; "/q"; cmd |]
 let which ~cmd = "", [| "which"; cmd |]
 
 let git_clone ~project_url ~project_name =

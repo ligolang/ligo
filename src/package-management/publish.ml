@@ -27,13 +27,7 @@ let handle_server_response ~name response body =
   | _ -> Error (body, "")
 
 
-let os_type =
-  match Caml.Sys.os_type with
-  | "Unix" -> Gz.Unix
-  | "Win32" -> Gz.NTFS
-  | "Cygwin" -> Gz.NTFS
-  | _ -> Gz.Unix
-
+let os_type = Gz.Unix
 
 (* [gzip] compresses the file [fname] *)
 let gzip fname =

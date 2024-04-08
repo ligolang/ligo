@@ -5,24 +5,8 @@ type normalization = string -> t
 
 let to_string (UnsafePath a) = a
 
-let normalise_backslashes : string -> string =
-  Str.global_replace (Str.regexp "[\\|/]+") "/"
-
-
-let normalise_case : string -> string = Caml.String.lowercase_ascii
-
 let normalise : string -> string =
- fun path ->
-  if Sys.unix
-  then if Caml.Sys.file_exists path then Filename_unix.realpath path else path
-  else normalise_case @@ normalise_backslashes path
-
-
-(** Like [to_string] but capitalizes the drive letter on Windows,
-  so drive is e.g. "C:" instead of "c:")
-    *)
-let to_string_with_canonical_drive_letter : t -> string =
-  if Sys.unix then to_string else String.capitalize <@ to_string
+ fun path -> if Caml.Sys.file_exists path then Filename_unix.realpath path else path
 
 
 let from_absolute : normalization = fun p -> UnsafePath (normalise p)
@@ -56,8 +40,5 @@ let rec find_file_in_dir_and_parents dir file =
     if equal parent dir then None else find_file_in_dir_and_parents parent file)
 
 
-let pp (ppf : Format.formatter) : t -> unit =
-  Format.fprintf ppf "%s" <@ to_string_with_canonical_drive_letter
-
-
+let pp (ppf : Format.formatter) : t -> unit = Format.fprintf ppf "%s" <@ to_string
 let testable : t Alcotest.testable = Alcotest.testable pp equal
