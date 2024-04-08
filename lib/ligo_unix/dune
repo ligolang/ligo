@@ -1,0 +1,6 @@
+(library
+ (name ligo_unix)
+ (modules ligo_unix)
+ (flags (:standard))
+ (libraries unix)
+ (public_name ligo.unix))
