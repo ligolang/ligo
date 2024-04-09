@@ -1,6 +1,8 @@
 open Imports
 module Dialect_cst = Ligo_api.Dialect_cst
 
+(** Contains the number of space characters for indentation as well as the maximum line
+    width to pretty print something. *)
 type pp_mode =
   { indent : int
   ; width : int
@@ -35,6 +37,7 @@ let with_pp_mode
   | JsLIGO code -> pprint.jsligo (set_ident Parsing.Jsligo.Pretty.default_state, code)
 
 
+(** Pretty prints the provided CST using the provided configuration. *)
 let pretty_print_cst pp_mode ~(dialect_cst : Dialect_cst.t) : string =
   with_pp_mode
     pp_mode
@@ -44,6 +47,10 @@ let pretty_print_cst pp_mode ~(dialect_cst : Dialect_cst.t) : string =
     dialect_cst
 
 
+(** While pretty printing a core AST node, it's possible we'll reach an error since one
+    of the steps is to decompile it into the CST. The [`Nonpretty] constructor symbolizes
+    that some exception or nanopasses error occurred during the compilation, and moreover,
+    the pretty printer for the core AST was used (which doesn't look pretty). *)
 type pretty_print_result =
   [ `Ok of string
   | `Nonpretty of [ `Exn of exn | `PassesError of Passes.Errors.t ] * string
@@ -116,6 +123,10 @@ let decompile_type
   | exn -> Error (`Exn exn)
 
 
+(** Pretty-prints a variant type (pair with constructors name and its type expression) in
+    the given [syntax].
+    It's possible that decompiling and pretty printing went wrong, in which case it will
+    show a "non-pretty" version with the core AST pretty printer. *)
 let pretty_print_variant
     :  pp_mode -> syntax:Syntax_types.t -> Ligo_prim.Label.t * Ast_core.ty_expr
     -> pretty_print_result
@@ -165,6 +176,14 @@ let pretty_print_variant
       )
 
 
+(** Attempts to pretty print a core AST type expression in the given [syntax], prefixing
+    it with some [prefix] (e.g., ["type "]). This function gives the programmer more
+    control than [show_type].
+    It's possible that decompiling and pretty printing went wrong, in which case it will
+    show a "non-pretty" version with the core AST pretty printer.
+    [doc_to_string] (defaults to [Helpers_pretty.doc_to_string]) is the function that's
+    used to convert a [PPrint.document] into a string with the provided maximum line
+    width. *)
 let pretty_print_type_expression
     (* We try to decompile Ast_core to Ast_unified and then to CST.
      If this fails, we use the pretty printer for AST which gives nonpretty result *)
@@ -198,6 +217,13 @@ let pretty_print_type_expression
           prefix_doc ^^ string (Format.asprintf "%a" Ast_core.PP.type_expression te)) )
 
 
+(** Helper to pretty print a core AST type expression in the given [syntax]. Uses a
+    default [pp_mode] with 2 spaces for indentation and a maximum width of 60 characters.
+    It's possible that decompiling and pretty printing went wrong, in which case it will
+    show a "non-pretty" version with the core AST pretty printer.
+    [doc_to_string] (defaults to [Helpers_pretty.doc_to_string]) is the function that's
+    used to convert a [PPrint.document] into a string with the provided maximum line
+    width. *)
 let show_type
     :  syntax:Syntax_types.t -> ?doc_to_string:(width:int -> PPrint.document -> string)
     -> Ast_core.type_expression -> string

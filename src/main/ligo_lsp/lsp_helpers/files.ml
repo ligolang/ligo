@@ -1,3 +1,5 @@
+(** Lists all files in a directory. [normalize] is a function to turn a relative file path
+    into a resolved one (see the {!Path} module). *)
 let list_directory
     ~(normalize : string -> Path.t)
     ?(include_library = false)
@@ -8,6 +10,9 @@ let list_directory
   |> List.map ~f:normalize
 
 
+(** Lists all library files (i.e., [#import]ed files from the LIGO registry) in a
+    directory. [normalize] is a function to turn a relative file path into a resolved one
+    (see the {!Path} module). *)
 let list_library_files
     ~(normalize : string -> Path.t)
     (dir : Path.t)

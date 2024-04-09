@@ -1,6 +1,8 @@
 open Lsp_helpers
 module Path_hashtbl = Hashtbl.Make (Path)
 
+(** This is a hash table that stores file data for each file path that was opened. See
+    {!Ligo_interface.unprepared_file_data}. *)
 module Docs_cache = struct
   include Path_hashtbl (* So we can call e.g. [Docs_cache.find] *)
 
@@ -22,10 +24,10 @@ type config =
   ; completion_implementation :
       [ `With_scopes | `All_definitions | `Only_keywords_and_fields ]
         (** There are different ways to show a LSP completion: we can
-            - [`With_scopes]: provide all definitions available in current scope, but this is slow
-              since it uses [Ligo_interface.get_scopes]
+            - [`With_scopes]: provide all definitions available in current scope, but this
+              is a bit slower since it uses [Def.Hierarchy].
             - [`All_definitions]: provide all definitions in current file, including
-              things that are not available in the current scope
+              things that are not available in the current scope.
             - [`OnlyKeywordsAndRecordFields]: provide record/module fields if the coursor
               is located after a dot (like M.x|), otherwise provide keywords only.
               This is fast and always correct, but don't contain even the stdlib stuff. *)
@@ -55,32 +57,48 @@ type notify_back_mockable =
   | Mock of Diagnostic.t list Path_hashtbl.t
       (** A mock environment that may used to collect diagnostics for tests. *)
 
-(** Environment available in Handler monad *)
+(** Environment available in [handler] monad. *)
 type handler_env =
   { notify_back : notify_back_mockable
-  ; config : config
-  ; docs_cache : Docs_cache.t
-  ; last_project_dir : Path.t option ref
+        (** Allows sending a notification or request back to the client. *)
+  ; config : config (** The configuration provided by the client. *)
+  ; docs_cache : Docs_cache.t (** The cache for each open file. *)
+  ; last_project_dir : Path.t option ref (** The path to the last seen project root. *)
   ; mod_res : Preprocessor.ModRes.t option ref
+        (** The mod res can be used to resolve imports of LIGO registry packages into a
+            file path. *)
   ; normalize : string -> Path.t
+        (** A function that's used to canonicalize a file path. See {!Path.from_absolute}
+            and [ask_normalize]. We recommend using the function provided by
+            [ask_normalize] for performance. *)
   ; metadata_download_options : Tzip16_storage.download_options
+        (** Download options for diagnostics that check for TZIP-16-compatible storages. *)
   }
 
-(** Handler monad : allows sending messages to user and reading docs cache *)
+(** Handler monad: allows sending messages to user and reading docs cache by making use of
+    the [handler_env]. *)
 type 'a handler = Handler of (handler_env -> 'a IO.t) [@@unboxed]
 
 module Handler = struct
   type 'a t = 'a handler
 end
 
+(** Wrap a value in the [handler] monad. *)
 let return (a : 'a) : 'a Handler.t = Handler (fun _ -> IO.return a)
+
+(** The unit type wrapped in a [handler]. The same as [return ()]. *)
 let pass : unit Handler.t = return ()
 
+(** A type alias to [handler]. *)
 type 'a t = 'a Handler.t
 
+(** Get the underlying [IO.t] monad. *)
 let un_handler (Handler a : 'a Handler.t) : handler_env -> 'a IO.t = a
+
+(** Get the underlying [IO.t] monad. *)
 let run_handler (env : handler_env) (r : 'a Handler.t) : 'a IO.t = un_handler r env
 
+(** Monadic bind. *)
 let bind (Handler d : 'a Handler.t) (f : 'a -> 'b Handler.t) : 'b Handler.t =
   Handler
     IO.(
@@ -89,40 +107,52 @@ let bind (Handler d : 'a Handler.t) (f : 'a -> 'b Handler.t) : 'b Handler.t =
         un_handler (f p) env)
 
 
+(** Monadic bind. *)
 let ( let@ ) = bind
 
-(** Handler monad is a functor *)
+(** Map the underlying value in the monad. *)
 let fmap (f : 'a -> 'b) (x : 'a Handler.t) : 'b Handler.t =
   let@ x' = x in
   return @@ f x'
 
 
+(** Ignore the underlying value of the handler by replacing it with [()]. *)
 let void (x : 'a Handler.t) : unit Handler.t = fmap (fun _ -> ()) x
 
-(** We can run things from [Linol_lwt.IO] monad here *)
+(** Run an [IO.t] action in the context of a [handler]. *)
 let lift_IO (m : 'a IO.t) : 'a Handler.t = Handler (fun _ -> m)
 
-(** Get env inside monad computation *)
+(** Get the environment inside the monad computation. *)
 let ask : handler_env Handler.t = Handler IO.return
 
+(** Get the [notify_back] inside the monad computation. *)
 let ask_notify_back : notify_back_mockable Handler.t = fmap (fun x -> x.notify_back) ask
+
+(** Get the [config] inside the monad computation. *)
 let ask_config : config Handler.t = fmap (fun x -> x.config) ask
+
+(** Get the [docs_cache] inside the monad computation. *)
 let ask_docs_cache : Docs_cache.t Handler.t = fmap (fun x -> x.docs_cache) ask
 
+(** Get the [last_project_dir] inside the monad computation. *)
 let ask_last_project_dir : Path.t option ref Handler.t =
   fmap (fun x -> x.last_project_dir) ask
 
 
+(** Get the [mod_res] inside the monad computation. *)
 let ask_mod_res : Preprocessor.ModRes.t option ref Handler.t =
   fmap (fun x -> x.mod_res) ask
 
 
+(** Get the [normalize] inside the monad computation. *)
 let ask_normalize : (string -> Path.t) Handler.t = fmap (fun x -> x.normalize) ask
 
+(** Get the [metadata_download_options] inside the monad computation. *)
 let ask_metadata_download_options : Tzip16_storage.download_options Handler.t =
   fmap (fun x -> x.metadata_download_options) ask
 
 
+(** Add or overwrite the given path to contain the provided file data. *)
 let set_docs_cache (path : Path.t) (data : Ligo_interface.unprepared_file_data)
     : unit Handler.t
   =
@@ -132,6 +162,7 @@ let set_docs_cache (path : Path.t) (data : Ligo_interface.unprepared_file_data)
 
 (** Sequencing handlers *)
 
+(** Iterate over a list, consuming its elements. *)
 let iter (xs : 'a list) ~f:(h : 'a -> unit Handler.t) : unit Handler.t =
   let rec go = function
     | [] -> pass
@@ -140,12 +171,15 @@ let iter (xs : 'a list) ~f:(h : 'a -> unit Handler.t) : unit Handler.t =
   go xs
 
 
+(** Fold over a list while performing an action on them. *)
 let rec fold_left ~(init : 'acc) ~(f : 'acc -> 'elt -> 'acc t) : 'elt list -> 'acc t
   = function
   | [] -> return init
   | x :: xs -> bind (f init x) (fun init -> fold_left ~init ~f xs)
 
 
+(** Map over a list while performing an action that may create more elements. Concat the
+    results. *)
 let concat_map ~(f : 'a -> 'b list t) : 'a list -> 'b list t =
   let rec go acc = function
     | [] -> return (List.rev acc)
@@ -156,50 +190,42 @@ let concat_map ~(f : 'a -> 'b list t) : 'a list -> 'b list t =
 
 (** Conditional computations *)
 
+(** Consume an action if the given boolean is [true] or [pass] otherwise.
+    Note: OCaml is strict, so [when_ b m] may still perform "leading" non-monadic actions
+    in [m] eagerly, even if [b = false]. *)
 let when_ (b : bool) (m : unit Handler.t) : unit Handler.t = if b then m else pass
 
+(** Map over [Some] while performing an action. *)
 let when_some (m_opt : 'a option) (f : 'a -> 'b Handler.t) : 'b option Handler.t =
   match m_opt with
   | Some m -> fmap Option.some (f m)
   | None -> return None
 
 
+(** Iterate over [Some] performing an [unit]-producing action or [pass] otherwise. *)
 let when_some_ (m_opt : 'a option) (f : 'a -> unit Handler.t) : unit Handler.t =
   match m_opt with
   | Some m -> f m
   | None -> pass
 
 
+(** Bind over an action if it produced [Some]. *)
 let when_some' (m_opt : 'a option) (f : 'a -> 'b option Handler.t) : 'b option Handler.t =
   match m_opt with
   | Some m -> f m
   | None -> return None
 
 
-let when_some_m (m_opt_monadic : 'a option Handler.t) (f : 'a -> 'b Handler.t)
-    : 'b option Handler.t
-  =
-  let@ m_opt = m_opt_monadic in
-  when_some m_opt f
-
-
-let when_some_m' (m_opt_monadic : 'a option Handler.t) (f : 'a -> 'b option Handler.t)
-    : 'b option Handler.t
-  =
-  let@ m_opt = m_opt_monadic in
-  when_some' m_opt f
-
-
+(** Perform all actions in the provided list and collect the results. *)
 let sequence_m (lst : 'a Handler.t list) : 'a list Handler.t =
   fmap List.rev
-  @@ List.fold_left
-       ~init:(return [])
-       ~f:(fun acc_m elt_m ->
+  @@ List.fold_left lst ~init:(return []) ~f:(fun acc_m elt_m ->
          let@ elt = elt_m in
          fmap (fun acc -> elt :: acc) acc_m)
-       lst
 
 
+(** Sends a message to the client with the provided logging level. In VSCode, for
+    instance, it will appear in the Output > LIGO Language Server window. *)
 let send_log_msg ~(type_ : MessageType.t) (s : string) : unit Handler.t =
   let@ nb = ask_notify_back in
   match nb with
@@ -233,10 +259,10 @@ let send_diagnostic (uri : DocumentUri.t) (s : Diagnostic.t list) : unit Handler
          ~f:(Option.value_map ~default:s ~f:(( @ ) s)))
 
 
-(** Message will appear in log in case [logging_verbosity = MessageType.Log] *)
+(** Message will appear in log in case [logging_verbosity = MessageType.Log]. *)
 let send_debug_msg : string -> unit Handler.t = send_log_msg ~type_:MessageType.Log
 
-(** Displays a pop-up message *)
+(** Displays a pop-up message. *)
 let send_message ?(type_ : MessageType.t = Info) (message : string) : unit Handler.t =
   let@ nb = ask_notify_back in
   match nb with
@@ -246,12 +272,16 @@ let send_message ?(type_ : MessageType.t = Info) (message : string) : unit Handl
   | Mock _ -> pass
 
 
+(** Helper data type to unlift a [Handler.t] action into an [IO.t] *)
 type unlift_IO = { unlift_IO : 'a. 'a Handler.t -> 'a IO.t }
 
+(** Allows unlifting some [Handler.t] action to be run in [IO.t] in the context of a
+    [Handler.t]. *)
 let with_run_in_IO : (unlift_IO -> 'b IO.t) -> 'b Handler.t =
  fun inner -> Handler (fun env -> inner { unlift_IO = (fun x -> run_handler env x) })
 
 
+(** Sends a LSP request from the server to the client. *)
 let send_request
     (request : 'a Server_request.t)
     (handler : ('a, Jsonrpc.Response.Error.t) result -> unit Handler.t)
@@ -266,6 +296,8 @@ let send_request
   | Mock _ -> pass
 
 
+(** List [send_message], but also sends a list of options that the user can click on.
+    [handler] is a callback that will be called once the user has pressed some button. *)
 let send_message_with_buttons
     ~(message : string)
     ~(options : string list)
@@ -281,6 +313,7 @@ let send_message_with_buttons
   send_request smr handler
 
 
+(** Attempts to get the LIGO syntax of the provided path, or fails otherwise. *)
 let get_syntax_exn : Path.t -> Syntax_types.t t =
  fun path ->
   match Path.get_syntax path with
@@ -289,16 +322,14 @@ let get_syntax_exn : Path.t -> Syntax_types.t t =
   | Some s -> return s
 
 
-(**
-Use doc info from cache. In case it's not available, return default value.
-This can happen only if we obtained a request for document that was not opened, so
-it's ok to return things like [None] in this case.
-In case doc was not processed yet launches doc processing and sends diagnostics
-*)
+(** Use document info from cache. In case it was not found, returns the [default] value.
+    This can happen only if we obtained a request for document that was not opened, so
+    it's fine to return things like [None] in this case. In case the document was not
+    processed yet then it will process the document to fill the caches and send
+    diagnostics. *)
 let with_cached_doc
     ~(default : 'a)
-    (* Default value in case cached doc not found *)
-      (path : Path.t)
+    (path : Path.t)
     (f : Ligo_interface.file_data -> 'a Handler.t)
     : 'a Handler.t
   =
@@ -395,13 +426,15 @@ let with_cached_doc
         })
 
 
-(* Calculates definitions and scopes for given file,
-   saving them to cache and sending diagnostics to the client.
-   If the document was already processed - does nothing *)
+(** Calculates definitions and scopes for the given file path, saving them to the cache
+    and sending diagnostics to the client. If the document was already processed then this
+    function will do nothing. *)
 let process_doc (path : Path.t) : unit Handler.t =
   with_cached_doc path ~default:() (fun _ -> pass)
 
 
+(** The same as [with_cached_doc], but the provided function doesn't need to produce a
+    [Handler.t]. This is just a convenience to avoid calling [return]. *)
 let with_cached_doc_pure
     ~(default : 'a)
     (path : Path.t)
@@ -412,6 +445,7 @@ let with_cached_doc_pure
   with_cached_doc path ~default f'
 
 
+(** Like [with_cached_doc], but only provide the source code. *)
 let with_code (path : Path.t) ~(default : 'a) (f : string -> 'a Handler.t) : 'a Handler.t =
   let@ docs = ask_docs_cache in
   match Docs_cache.find docs path with
@@ -419,14 +453,13 @@ let with_code (path : Path.t) ~(default : 'a) (f : string -> 'a Handler.t) : 'a 
   | None -> return default
 
 
-(** Like with_cached_doc, but parses a CST from code. If `strict` is passed, error
-    recovery for parsing is disabled, so default arg will be returned in case of
-    any parse error.
-    `on_error` allows to display a pop-up instead of just adding a debug message
-    in case of an error. This is helpful for displaying to user why his request failed.
-    We should not display pop-up when automated (e.g. document link) request failed,
-    but should when e.g. formatting failed because of syntax error.
-*)
+(** Like [with_cached_doc], but parses a CST from code. If [strict] is passed, then the
+    error recovery for parsing will be disabled, and the [default] value will be returned
+  in case of any parse error.
+    [on_error] allows to display a pop-up instead of just adding a debug message in case
+  of an error. This is helpful for displaying to the user why their request failed. We
+  should not display a pop-up when an automated request (e.g. document link) failed, but
+  should when e.g. formatting failed because of a syntax error. *)
 let with_cst
     ~(default : 'a)
     ?(strict = false)
@@ -454,6 +487,8 @@ let with_cst
   | Ok cst -> f cst
 
 
+(** Sets the project root to the provided path, by updating [last_project_dir] and
+    [mod_res] accordingly.*)
 let update_project_root : Path.t option -> unit Handler.t =
  fun path ->
   let@ last_project_dir = ask_last_project_dir in
