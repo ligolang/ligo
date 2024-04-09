@@ -1,5 +1,3 @@
-// Test while loops in PascaLIGO
-
 let counter = (n: nat): nat => {
   let i : nat = (0 as nat);
   while (i < n) {

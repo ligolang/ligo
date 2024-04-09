@@ -1276,8 +1276,7 @@ for a line comment:
 
 ```
 let line_comments =
-  pascaligo_line_comment
-| cameligo_line_comment
+  cameligo_line_comment
 | michelson_line_comment
 | jsligo_line_comment
 ```

@@ -290,8 +290,7 @@ let code_inj  = ("[%" as start) (key as lang)
 let     common_sym =   ";" | "," | "(" | ")"  | "[" | "]"  | "{" | "}"
                      | "=" | ":" | "|" | "." | "_"
                      | "+" | "-" | "*" | "/"  | "<" | "<=" | ">"
-let  pascaligo_sym = "->" | "=/=" | "#" | ":=" | "^"
-let   cameligo_sym = "->" | "<>" | "::" | "||" | "&&" | "'" | "|>" | "^"
+let   cameligo_sym = "->" | "<>" | "::" | "||" | "&&" | "'" | "|>" | "^" | ":="
 let     jsligo_sym =   "..." | "?" | "!" | "%" | "==" | "!=" | "+=" | "-="
                    | "*=" | "/="| "%=" | "=>" | "++" | "--" | "#" | "<<"
                    | "<<=" (* | ">=" | ">>=" | ">>" : See parser. *)
@@ -302,7 +301,6 @@ let     pyligo_sym = "->" | "^"   | "**"  | "//" | "%"  | "@"  | "|" | "&"
                    | "^=" | "<<=" | "**=" (* | ">>=" : See parser. *)
 let symbol =
      common_sym
-| pascaligo_sym
 |  cameligo_sym
 |    jsligo_sym
 |    pyligo_sym

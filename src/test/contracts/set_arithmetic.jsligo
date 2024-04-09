@@ -15,7 +15,6 @@ let remove_op = (s: set <string>) : set <string> =>
 let remove_deep = (s: [set <string>, nat]): [set <string>, nat] =>
   [Set.remove ("foobar", s[0]), s[1]];
 
-/* homogeneity with pascaligo */
 let patch_op = (s: set <string>) : set <string> =>
   Set.add ("foobar", s);
 

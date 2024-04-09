@@ -557,7 +557,7 @@ const delete = (key: address, moves: register) =>
 
 A *functional iterator* is a function that traverses a data structure
 and calls in turn a given function over the elements of that structure
-to compute some value. Another approach is possible in PascaLIGO:
+to compute some value. Another approach is possible in JsLIGO:
 *loops* (see the relevant section).
 
 There are three kinds of functional iterations over LIGO maps: the
