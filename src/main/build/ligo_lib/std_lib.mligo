@@ -3942,7 +3942,7 @@ module Test = struct
       (** Creates and returns information of a new account. *)
       let new (() : unit) : info =
         let (sk, pk) = [%external ("TEST_NEW_ACCOUNT", ())] in
-        let addr = [%michelson ({| { HASH_KEY ; ADDRESS } |} pk : address)] in
+        let addr = [%michelson ({| { HASH_KEY ; IMPLICIT_ACCOUNT ; ADDRESS } |} pk : address)] in
         { addr ; pk ; sk }
 
       module Contract = struct
