@@ -1,6 +1,5 @@
 module Nseq = Simple_utils.Utils
 module CameLIGO_pretty = Parsing.Cameligo.Pretty
-module PascaLIGO_pretty = Parsing.Pascaligo.Pretty
 module JsLIGO_pretty = Parsing.Jsligo.Pretty
 open Handler
 open Lsp_helpers

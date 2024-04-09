@@ -312,24 +312,3 @@ let test_jsligo =
       (Recovery)
   in
   RecoveryTester.test
-
-
-let test_pascaligo =
-  let module LexerOptions = LexerLib.Options.MakeDefault (Preprocessor.Options.Default) in
-  let module CST = Cst_pascaligo.CST in
-  let module Pretty = Parsing_pascaligo.Pretty in
-  let module Print = Cst_pascaligo.Print in
-  let module Config = Preprocessing_pascaligo.Config in
-  let module Token = Lexing_pascaligo.Token in
-  let module ParErr = Parsing_pascaligo.ParErr in
-  let module UnitPasses = Lx_psc_self_units.Self.Make (LexerOptions) in
-  let module TokenPasses = Lx_psc_self_tokens.Self.Make (LexerOptions) in
-  let module RawParser = Parsing_pascaligo.Parser in
-  let module Recovery = Parsing_pascaligo.RecoverParser in
-  let module RecoveryTester =
-    RecoveryTester (CST) (Pretty) (Print) (Config) (Token) (ParErr) (UnitPasses)
-      (TokenPasses)
-      (RawParser)
-      (Recovery)
-  in
-  RecoveryTester.test

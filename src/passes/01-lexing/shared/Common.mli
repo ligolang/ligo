@@ -1,7 +1,6 @@
-(* This module is used by the files [pascaligo.ml], [cameligo.ml],
-   [jsligo.ml] etc. in the directory above. This means that this
-   module is specifically used to interface the lexers with the
-   compiler. *)
+(* This module is used by the files [cameligo.ml] and [jsligo.ml] etc. 
+   In the directory above. This means that this module is specifically 
+   used to interface the lexers with the compiler. *)
 
 (* Vendors dependencies *)
 

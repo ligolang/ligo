@@ -1272,8 +1272,6 @@ let add (n,m : int * foobar) : foobar = Map.add 23 n m
 
 let rm (m : foobar) : foobar = Map.remove 42 m
 
-(* Dummy test so that we can add the same test for PascaLIGO *)
-
 let patch_ (m : foobar) : foobar = Map.literal [(0,5); (1,6); (2,7)]
 
 (* Second dummy test, see above *)
@@ -1545,7 +1543,6 @@ type double_record = {inner : abc}
 
 let modify_inner (r : double_record) : double_record =
   {r with inner.b = 2048}
-// Test while loops in PascaLIGO
 
 let rec sum ((n,acc):int * int) : int =
     if (n < 1) then acc else sum (n-1, acc+n)

@@ -5,7 +5,9 @@ ligo transpile contract SOURCE_FILE
 ```
 
 ### DESCRIPTION
-This sub-command transpiles a source file to another syntax.It parses the source file and performs the transpiling at the syntactic level.It can be used for transpiling PascaLIGO contracts to JsLIGO.
+<!-- FIXME: @christian 
+     Do we still want to document this command since we no-longer support it? -->
+This sub-command transpiles a source file to another syntax.It parses the source file and performs the transpiling at the syntactic level. It can be used for transpiling PascaLIGO contracts to JsLIGO.
 
 ### FLAGS
 **--display-format FORMAT**

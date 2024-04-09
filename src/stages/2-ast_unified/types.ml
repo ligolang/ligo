@@ -378,6 +378,11 @@ and ('self, 'ty_expr, 'pattern, 'block, 'mod_expr) expression_content_ =
       ('block, 'ty_expr, 'pattern) Poly_fun.t (* <A>(x: A) => { ... } ) *)
   | E_constr of Label.t
   | E_ctor_app of ('self * 'self Simple_utils.List.Ne.t option)
+  (* FIXME: @christian
+     https://gitlab.com/ligolang/ligo/-/issues/2177
+     Following the removal of PascaLIGO, it appears that this constructor might 
+     not be necessary.
+   *)
   | E_applied_constructor of 'self Constructor.t (* MyCtor (42, 43, 44), PascaLigo only *)
   | E_call of 'self * 'self list Location.wrap (* f (x, y) ; f x y *)
   | E_match of ('self, 'pattern, 'self) Case.t (* match e with | A -> ... | B -> ... *)

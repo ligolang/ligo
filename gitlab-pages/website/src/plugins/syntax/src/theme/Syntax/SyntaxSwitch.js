@@ -1,20 +1,10 @@
-import { useHistory, useLocation } from "@docusaurus/router";
-import React, { useCallback, useEffect, useState } from "react";
+import { useHistory } from "@docusaurus/router";
+import React, { useCallback } from "react";
 
 import styles from "./styles.module.css";
 
 function SyntaxSwitch(props) {
-  const [isNext, setIsNext] = useState(false);
-  const location = useLocation();
   const history = useHistory();
-
-  useEffect(() => {
-    let hidePascaligo =
-      !location.pathname?.startsWith("/docs/0.72.0") &&
-      !location.pathname?.startsWith("/docs/0.73.0");
-
-    setIsNext(hidePascaligo);
-  }, [location]);
 
   const onSyntaxChange = useCallback(
     (value) => {
@@ -28,7 +18,7 @@ function SyntaxSwitch(props) {
     [props.syntax]
   );
 
-  return isNext ? (
+  return (
     <form>
       <div className={styles["switch__container"]}>
         <label
@@ -55,16 +45,6 @@ function SyntaxSwitch(props) {
         </label>
       </div>
     </form>
-  ) : (
-    <select
-      className={styles.syntaxSwitch}
-      value={props.syntax}
-      onChange={(e) => onSyntaxChange(e.target.value)}
-    >
-      <option value="cameligo">CameLIGO</option>
-      <option value="jsligo">JsLIGO</option>
-      <option value="pascaligo">PascaLIGO</option>
-    </select>
   );
 }
 

@@ -15,8 +15,6 @@ let add (n,m : int * foobar) : foobar = Map.add 23 n m
 
 let rm (m : foobar) : foobar = Map.remove 42 m
 
-(* Dummy test so that we can add the same test for PascaLIGO *)
-
 let patch_ (_m : foobar) : foobar = Map.literal [(0,5); (1,6); (2,7)]
 
 (* Second dummy test, see above *)
