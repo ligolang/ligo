@@ -6540,11 +6540,14 @@ let%expect_test _ =
      25 |   let _ = Test.transfer_exn (cast_implicit_account to_) () 12tez in
      26 |   Test.get_balance_of_address a
             ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     27 |
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Address.get_balance` from `Test.Next` is encouraged for a smoother migration.
 
     Everything at the top-level was executed.
+    - test_new exited with value 110000000mutez.
+    - test_add exited with value 110000000mutez.
     - test_new exited with value 110000000mutez.
     - test_add exited with value 110000000mutez. |}]
 
