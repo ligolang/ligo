@@ -1,6 +1,12 @@
 open Common
 open Lsp_helpers
 
+(** Recursively resolves a projection path, taking the current field's path and its type.
+
+    We look into the record's known fields and check for the presence of the current
+    field. If resolved, the algorithm recursively looks up this field's type and proceeds
+    to try to resolve it as a record with the remainder of the field path. Once there are
+    no more fields, we return the current record. *)
 let rec find_record_from_path
     (struct_type : Ast_core.type_expression)
     (field_path : string option list)
@@ -33,12 +39,7 @@ let rec find_record_from_path
     >>= fun struct_type -> find_record_from_path struct_type field_path definitions
 
 
-(* Recursively resolve a projection path. This is done with
-   [find_record_from_path], which takes the current field's path and its type.
-   We look into the record's known fields and check for the presence of the
-   current field. If resolved, the algorithm recursively looks up this field's
-   type and proceeds to try to resolve it as a record with the remainder of
-   the field path. Once there is no more fields, we return the current record. *)
+(** Helper function to create completion item from record fields. *)
 let core_record_to_completion_items ~syntax (row : Ast_core.row) : CompletionItem.t list =
   List.map (Map.to_alist row.fields) ~f:(fun (Label (label, _), texp) ->
       let detail = Pretty.show_type ~syntax texp in
@@ -46,6 +47,9 @@ let core_record_to_completion_items ~syntax (row : Ast_core.row) : CompletionIte
       CompletionItem.create ~label ~kind:CompletionItemKind.Field ~detail ~sortText ())
 
 
+(** Provides completions for the fields from the provided reference position of a record
+    variable name. [normalize] is a function to turn a relative file path into a resolved
+    one (see the {!Path} module). *)
 let projection_impl
     ~(normalize : string -> Path.t)
     ({ syntax; path; definitions; _ } : _ Common.input)

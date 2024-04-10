@@ -1,10 +1,13 @@
 open Handler
 open Lsp_helpers
 
+(** Returns [Some] if the input doesn't contain a parser error recovery wrapper. *)
 let guard_ghost (input : string) : string option =
   Option.some_if (not @@ Parsing.Errors.ErrorWrapper.is_wrapped input) input
 
 
+(** Creates information relevant to the current definition that can be shown in the UI for
+    document symbols. The [syntax] is used to pretty print details. *)
 let make_def_info (syntax : Syntax_types.t) (def : Def.t)
     : (string option * SymbolKind.t * string * Range.t * Range.t) option
   =
@@ -101,6 +104,7 @@ let make_def_info (syntax : Syntax_types.t) (def : Def.t)
   detail, kind, name, selectionRange, range
 
 
+(** Turns a hierarchy of some symbol into a hierarchically-organized document symbol. *)
 let rec get_all_symbols_hierarchy
     : Syntax_types.t -> Def.t Rose.tree -> DocumentSymbol.t option
   =
@@ -176,8 +180,9 @@ let rec get_all_symbols_hierarchy
     Some (DocumentSymbol.create ?children ?detail ~kind ~name ~range ~selectionRange ())
 
 
+(** Turns a hierarchy into a hierarchically-organized list of document symbols. *)
 and get_all_symbols_hierarchies
-    : Syntax_types.t -> Def.t Rose.forest -> DocumentSymbol.t list option
+    : Syntax_types.t -> Def.Hierarchy.t -> DocumentSymbol.t list option
   =
  fun syntax defs ->
   match List.filter_map defs ~f:(get_all_symbols_hierarchy syntax) with
@@ -185,6 +190,8 @@ and get_all_symbols_hierarchies
   | _ :: _ as defs -> Some defs
 
 
+(** Runs the handler for document symbol. This is usually called when the document is
+    opened or after the user types something. *)
 let on_req_document_symbol (path : Path.t)
     : [> `DocumentSymbol of DocumentSymbol.t list ] option Handler.t
   =

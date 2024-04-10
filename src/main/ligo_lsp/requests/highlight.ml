@@ -8,6 +8,9 @@ module Loc_in_file = Def.Loc_in_file
 module PathMap = Map.Make (Path)
 module Ranges = Set.Make (Range)
 
+(* Gets all references of the symbol in the provided location in a given file. [normalize]
+   is a function to turn a relative file path into a resolved one (see the {!Path}
+   module). *)
 let get_references_in_file
     :  normalize:(string -> Path.t) -> Def_location.t list -> Path.t -> Docs_cache.t
     -> Range.t list
@@ -28,6 +31,8 @@ let get_references_in_file
   |> Ranges.to_list
 
 
+(** Runs the handler for document highlight. This is normally called when the user clicks
+    some symbol. *)
 let on_req_highlight
     : Position.t -> Path.t -> Lsp.Types.DocumentHighlight.t list option Handler.t
   =

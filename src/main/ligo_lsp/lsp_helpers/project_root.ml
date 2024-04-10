@@ -2,6 +2,14 @@
     contains this file is the project root. *)
 let ligoproject = "ligo.json"
 
+(** The default content of the [ligoproject] file. Currently, this consists of just an
+    empty object with an empty dependencies object. *)
+let default_project_file_contents : string = {|{
+  "dependencies": {
+  }
+}
+|}
+
 (** Given a directory, searches for the innermost project root, if any. E.g., assuming
     that the given path was ["/home/johndoe/example.mligo"], we'll look for the project
     root in ["/home/johndoe"], ["/home"], and ["/"], in this order, stopping at the first

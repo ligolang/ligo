@@ -51,12 +51,15 @@ type fun_def_value =
             already represented in its arguments. *)
   }
 
+(** A helper signature to deal with differences between JsLIGO and CameLIGO CSTs. *)
 module type Inlay_hint_syntax = sig
   type some_node
   type cst
   type 'a instruction = some_node -> 'a fold_control
 
   val wrap_node : some_node -> syntax_node
+
+  (** See {!Cst_cameligo.Fold} and {!Cst_jsligo.Fold}. *)
   val fold_cst : 'b -> ('b -> 'a -> 'b) -> 'a instruction -> cst -> 'b
 
   (** Extracts [fun_def_value] for all function variables definitions. *)
@@ -87,6 +90,7 @@ module type Inlay_hint_syntax = sig
   val banned_for_core : Range.t instruction
 end
 
+(** Info obtained from [Inlay_hint_syntax]. *)
 type inlay_hint_info =
   { fun_defs : fun_def_value LMap.t
   ; ban_defs : Range.t list
@@ -341,6 +345,7 @@ module Jsligo_inlay_hint_provider = Inlay_hint_provider_Make (struct
     | _ -> Skip
 end)
 
+(** Provides all the necessary info for generating inlay hints. *)
 let provide_inlay_hint_info
     ~(parse_error_ranges : Range.t list)
     (selection_range : Range.t)
@@ -459,6 +464,9 @@ let process_variable_def
   | { t = Unresolved; _ } -> None
 
 
+(** Computes inlay hints for variables with core types (i.e., unnanotated variables whose
+    types that were inferred). [normalize] is a function to turn a relative file path into
+    a resolved one (see the {!Path} module). *)
 let provide_hints_for_variables
     ~(normalize : string -> Path.t)
     ~(banned_in_core : Range.t list)
@@ -466,6 +474,7 @@ let provide_hints_for_variables
     ~(ban_defs : Range.t list)
     (definitions : Def.definitions)
     (file : Path.t)
+    : inlay_hint list
   =
   let vdefs =
     let open Scopes.Types in

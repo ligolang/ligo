@@ -1,6 +1,10 @@
 open Handler
 open Lsp_helpers
 
+(** Returns the declaration range of the symbol over the provided position and path (if
+    any). Returns [None] if the declaration was not found or the symbol can't be renamed.
+    [normalize] is a function to turn a relative file path into a resolved one (see the
+    {!Path} module). *)
 let prepare_rename
     :  normalize:(string -> Path.t) -> Position.t -> Path.t -> Scopes.definitions
     -> Range.t option
@@ -31,6 +35,8 @@ let prepare_rename
        locations)
 
 
+(** Runs the handler for prepare rename. This is normally called when the user presses
+    the rename button. *)
 let on_req_prepare_rename : Position.t -> Path.t -> Range.t option Handler.t =
  fun pos file ->
   let@ normalize = ask_normalize in

@@ -2,19 +2,25 @@ open Lsp_helpers
 
 type lexeme = Cst_shared.Types.lexeme
 type 'a wrap = 'a Cst_shared.Types.wrap
+
+(** A dot [.] character wrap. *)
 type dot = lexeme wrap
 
 (** The context of some completion. The constructors of this data type should be
     ordered so that the first one has the highest priority and the last one has
     the lowest. *)
 type completion_context =
-  | File
-  | Record_field
-  | Module_field
-  | Scope
-  | Keyword
+  | File (** Completion of a file path. *)
+  | Record_field (** Completion of a record field. *)
+  | Module_field (** Completion of a module field. *)
+  | Scope (** Completion of items in the current scope. *)
+  | Keyword (** Completion of keywords and operators. *)
 
-(** Obtain the [CompletionItem.t.sortText] for some completion item given its context. *)
+(** Obtain the [CompletionItem.t.sortText] for some completion item given its context.
+    [type_aware] means that this completion has an expected type. [same_file] means that
+    this completion is declared in the same file that the user is currently on.
+    Completions with these booleans indicate that they should common before other
+    "ordinary" completions. *)
 let completion_context_priority
     ?(type_aware : bool = false)
     ?(same_file : bool = false)
@@ -38,7 +44,7 @@ let completion_context_priority
      The idea is to allocate strings [\x00], [\x01], [\x02], ... to sort these
      items according to their context. However, we may also want to have other
      factors, such as type-aware completion (even if it's currently not
-     implemented). or priority to items defined in the same file, meaning that
+     implemented), or priority to items defined in the same file, meaning that
      some items may come first.
      First we allocate the numbers 0, [max_score]*1, [max_score]*2, ... to
      represent some priority. Now, we subtract the score for this completion in
@@ -84,10 +90,10 @@ let defs_to_completion_items
       CompletionItem.create ~label:name ~kind ~sortText ?detail ())
 
 
-(* Details of a (successfully parsed) file that user plus the cursor position.
-   This type is introduced to avoid functions that have e.g. two [Position.t] or
-   [Def.t list] in arguments and to pass all arguments to functions
-   like [Fields.get_fields_completions] at once *)
+(** Details of a (successfully parsed) file plus the cursor position.
+    This type is introduced to avoid functions that have e.g. two [Position.t]s or
+    [Def.t list] in arguments and to pass all arguments to functions
+    like [Fields.get_fields_completions] at once. *)
 type 'cst input =
   { cst : 'cst
   ; syntax : Syntax_types.t
@@ -96,15 +102,17 @@ type 'cst input =
   ; pos : Position.t
   }
 
+(** [input] specialized to [Dialect_cst.t]. *)
 type input_d = Dialect_cst.t input
 
+(** Helper to create an [input_d]. *)
 let mk_input_d ~(cst : Dialect_cst.t) ~syntax ~path ~definitions ~pos : input_d =
   { cst; syntax; path; definitions; pos }
 
 
-(* Scopes are not perfect so sometimes they can show 2 things with same identifiers
-   "belonging to our scope". To make the output more compact,
-   we're keeping only one for them *)
+(** Scopes are not perfect so sometimes they can show 2 things with same identifiers
+    "belonging to our scope". To make the output more compact,
+    we're keeping only one for them *)
 let nub_sort_items : CompletionItem.t list -> CompletionItem.t list =
  fun with_possible_duplicates ->
   List.remove_consecutive_duplicates

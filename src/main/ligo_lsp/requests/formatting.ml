@@ -1,7 +1,7 @@
 open Handler
 open Lsp_helpers
 
-(* Gets a pp config, notifying user if the syntax used in this file is incorrect *)
+(** Gets a [pp_config], notifying the user if the syntax used in this file is incorrect. *)
 let try_get_pp_config : Path.t -> PP_config.t option Handler.t =
  fun path ->
   match PP_config.get_config path with
@@ -21,6 +21,8 @@ let try_get_pp_config : Path.t -> PP_config.t option Handler.t =
     return None
 
 
+(** Gets the [pp_mode] from the provided [pp_config], notifying the user if the syntax
+    used in this file is incorrect. If there is no config, then uses default values. *)
 let get_pp_mode : Path.t -> FormattingOptions.t -> Pretty.pp_mode Handler.t =
  fun file { tabSize = optsTabSize; _ } ->
   let@ pp_config_opt = try_get_pp_config file in
@@ -44,6 +46,10 @@ let get_pp_mode : Path.t -> FormattingOptions.t -> Pretty.pp_mode Handler.t =
 
 
 (* FIXME #1765: add support for configuration file, remove code duplication with range formatting *)
+
+(** Runs the handler for document formatting. This request is normally triggered manually
+    by the user, but it may also be triggered from some configuration (e.g., format on
+    save). *)
 let on_req_formatting : Path.t -> FormattingOptions.t -> TextEdit.t list option Handler.t =
  fun file opts ->
   let@ pp_mode = get_pp_mode file opts in

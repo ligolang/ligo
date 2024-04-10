@@ -1,5 +1,6 @@
 open Lsp_helpers
 
+(** An array with all semantic token types at the time the request was implemented. *)
 let all_types : SemanticTokenTypes.t array =
   [| Namespace
    ; Type
@@ -27,6 +28,7 @@ let all_types : SemanticTokenTypes.t array =
   |]
 
 
+(** An array with all semantic token modifiers at the time the request was implemented. *)
 let all_modifiers : SemanticTokenModifiers.t array =
   [| Declaration
    ; Definition
@@ -41,6 +43,7 @@ let all_modifiers : SemanticTokenModifiers.t array =
   |]
 
 
+(** A function mapping a semantic token type to a numeric code. *)
 let mk_type_code : SemanticTokenTypes.t -> int = function
   | Namespace -> 0
   | Type -> 1
@@ -67,6 +70,7 @@ let mk_type_code : SemanticTokenTypes.t -> int = function
   | Decorator -> 22
 
 
+(** A function mapping a semantic token modifier to a numeric code (flag). *)
 let mk_modifier_code : SemanticTokenModifiers.t -> int = function
   | Declaration -> 1 lsl 0
   | Definition -> 1 lsl 1
@@ -80,6 +84,7 @@ let mk_modifier_code : SemanticTokenModifiers.t -> int = function
   | DefaultLibrary -> 1 lsl 9
 
 
+(** A function mapping a semantic token type to its LSP name. *)
 let mk_type_legend : SemanticTokenTypes.t -> string = function
   | Namespace -> "namespace"
   | Type -> "type"
@@ -106,6 +111,7 @@ let mk_type_legend : SemanticTokenTypes.t -> string = function
   | Decorator -> "decorator"
 
 
+(** A function mapping a semantic token modifier to its LSP name. *)
 let mk_modifier_legend : SemanticTokenModifiers.t -> string = function
   | Declaration -> "declaration"
   | Definition -> "definition"
@@ -119,8 +125,9 @@ let mk_modifier_legend : SemanticTokenModifiers.t -> string = function
   | DefaultLibrary -> "defaultLibrary"
 
 
-type token = int * int * int * int * int
-
+(** Helper to deal with tokens that may have attributes, comments, and/or directives. We
+    need the tokens to be provided in order, so we may wrap them into these to help sort
+    them. See [compare_wrap_fields_regs]. *)
 type 'a wrap_field =
   | Attribute of Lexing_shared.Attr.attribute Simple_utils.Region.reg
   | Comment of Lexing_shared.Wrap.comment
@@ -128,6 +135,7 @@ type 'a wrap_field =
   | Line_comment of string Simple_utils.Region.reg
   | Payload of 'a Simple_utils.Region.reg
 
+(** Compare two [wrap_field]s lexicographically based on their regions. *)
 let compare_wrap_fields_regs (type a b) (x : a wrap_field) (y : b wrap_field) : int =
   let get_reg = function
     | Attribute a -> a.region
@@ -138,6 +146,10 @@ let compare_wrap_fields_regs (type a b) (x : a wrap_field) (y : b wrap_field) : 
   Simple_utils.Region.compare (get_reg x) (get_reg y)
 
 
+(** Given a list of tokens with absolute positions, turn into into a array of tokens with
+    relative positions, as per the LSP specification. This function mutates the array
+    in-place. If something went wrong during the construction of the relative ranges
+    (e.g., tokens are out-of-order), this function will log a warning. *)
 let mk_diff (tokens : int array) : unit Handler.t =
   let open Handler in
   let len = Array.length tokens in
@@ -178,12 +190,20 @@ let mk_diff (tokens : int array) : unit Handler.t =
   go 0 0 1
 
 
+(** Helper to provide better control over the context during the CST fold. *)
 type env =
-  | Normal
-  | FunApp
-  | FunArg
-  | FunDef
+  | Normal (** Highlight a token without any extra considerations. *)
+  | FunApp (** Highlight a token assuming it's the LHS of a function application. *)
+  | FunArg (** Highlight a token assuming it's a function argument. *)
+  | FunDef (** Highlight a token assuming it's a function definition. *)
 
+(** Creates an array with semantic tokens from the given CST for tokens in the provided
+    range, as per the LSP specification, except that these tokens positions are absolute,
+    rather than relative. Use [mk_diff] to make them relative. It's important that all
+    tokens are visited (otherwise there will be gaps in the syntax highlighting,
+    considering that the "traditional" syntax highlighting didn't highlight it), and they
+    are visited in order (because the LSP specification requires them to be in order). The
+    tokens may not overlap. *)
 let semantic_tokens (cst : Dialect_cst.t) (range : Range.t) : int array =
   let data = Vector.create ~dummy:0 in
   let outside (reg : Simple_utils.Region.t) : bool =
@@ -760,6 +780,8 @@ let semantic_tokens (cst : Dialect_cst.t) (range : Range.t) : int array =
   Vector.to_array data
 
 
+(** Runs the handler for the semantic tokens (range) request. This is normally invoked
+    between keystrokes. *)
 let on_req_semantic_tokens_range (path : Path.t) (range : Range.t)
     : SemanticTokens.t option Handler.t
   =
@@ -775,6 +797,8 @@ let on_req_semantic_tokens_range (path : Path.t) (range : Range.t)
   return (Some (SemanticTokens.create ~data ()))
 
 
+(** Runs the handler for the semantic tokens (full) request. This is normally invoked when
+    a document is open or between keystrokes. *)
 let on_req_semantic_tokens_full (path : Path.t) : SemanticTokens.t option Handler.t =
   let open Handler in
   let@ () = send_debug_msg "On request: semantic tokens full" in

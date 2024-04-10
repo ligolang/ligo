@@ -62,7 +62,8 @@ let tzip16_compliance_lens (file : Path.t) : CodeLens.t list handler =
                 ())
 
 
-(* This is usually called when file is opened and on every edit. *)
+(** Runs the handler for code lens. This is usually called when file is opened and on
+    every edit. *)
 let on_code_lens (file : Path.t) : CodeLens.t list handler =
   let@ () = send_debug_msg "Code lenses called" in
   let@ tzip16_compliance_lens = tzip16_compliance_lens file in

@@ -1,19 +1,21 @@
-(* Completions for things that come after dot, like [List.le] or [person.na]
-   This module finds if the cursor is located like this, finds corresponding record
-   or module, and calls [Records] or [Modules]  *)
+(** Completions for things that come after dot, like [List.le] or [person.na]
+    This module finds if the cursor is located like this, finds corresponding record
+    or module, and calls [Records] or [Modules]. *)
+
 (* TODO: we should handle field completion using ast_typed rather than scopes *)
 open Common
 open Lsp_helpers
 module Utils = Simple_utils.Utils
 module Fold = Cst_shared.Fold
 
+(** A module selection might be a module type at term level, type level, or module level. *)
 type ('module_expr, 'module_type_expr, 'module_name) expr_kind =
   | Module_path_expr of 'module_expr
   | Module_path_type_expr of 'module_type_expr
   | Module_path_selection of 'module_name
 
-(** We want to prove to the compiler that a module of type [Compatible_CST]
-    is containing either CameLIGO or JsLIGO cst *)
+(** We want to prove to the compiler that a module of type [Compatible_CST] is containing
+    either a CameLIGO or JsLIGO CST. *)
 type (_, _, _, _, _) cst_witness =
   | Witness_CameLIGO
       : ( Cst_cameligo.CST.cst
@@ -30,31 +32,68 @@ type (_, _, _, _, _) cst_witness =
         , Cst_jsligo.CST.namespace_name Cst_jsligo.CST.namespace_path )
         cst_witness
 
+(** Module type to abstract similar nodes from the CameLIGO and JsLIGO CSTs. *)
 module type Compatible_CST = sig
+  (** Top-level CST node. *)
   type cst
+
+  (** Expression node. *)
   type expr
+
+  (** Type expression node. *)
   type type_expr
+
+  (** Record projection node. *)
   type projection
-  type selection (* Note: this selection must include the dot (as in JsLIGO) *)
+
+  (** Record projection selection node. Note: this selection must include the dot (as in
+      JsLIGO). *)
+  type selection
 
   (* OCaml compiler wants concrete types to make the witness thing working *)
+
+  (** Module/namespace path projection specialized to expressions. *)
   type expr_module_path
+
+  (** Module/namespace path projection specialized to type expressions. *)
   type type_expr_module_path
+
+  (** Module/namespace path projection specialized to modules. *)
   type module_name_path
 
+  (** Extracts the region encompassing an expression. *)
   val expr_to_region : expr -> Region.t
+
+  (** Extracts the projected expression (the LHS of the dot). *)
   val expr_of_projection : projection -> expr
+
+  (** Attempts to extract the projection node out an expression. *)
   val try_get_projection : expr -> projection option
+
+  (** Attempts to extract the dot lexeme out a selection. *)
   val dot_of_selection : selection -> dot option
+
+  (* TODO: In the future, we should try to work with the expression before the dot rather
+     than just the lexeme. This currently allows us to just complete from a simple record
+     name, not arbitrary expressions. *)
+
+  (** Attempts to extract the lexeme out a selection. This is the record name just before
+      the dot lexeme. *)
   val lexeme_of_selection : selection -> lexeme option
+
+  (** Returns a non-empty list containing the dot lexemes and selections of the given
+      projection. *)
   val selections_of_projection : projection -> selection Utils.nseq
 
+  (** Returns the field name lexemes from the provided [expr_kind]. *)
   val lexemes_of_module_path
     :  (expr_module_path, type_expr_module_path, module_name_path) expr_kind
     -> lexeme wrap list
 
+  (** Extracts the field/property node that is accessed by the module path. *)
   val field_of_module_path : expr_module_path -> expr
 
+  (** A runtime witness of the [cst_witness] type. *)
   val cst_witness
     : ( cst
       , projection
@@ -162,6 +201,9 @@ type completion_distance =
   ; lexeme : distance option
   }
 
+(** This monoid is used to choose between two [distance]s, picking the one that has the
+    smallest distance (or the one with the smallest range in case the distances are the
+    same). By negative distance, we mean a distance that is to the left of the reference. *)
 let smallest_negative_distance_monoid : distance option Cst_shared.Fold.monoid =
   { empty = None
   ; append =
@@ -182,6 +224,8 @@ let smallest_negative_distance_monoid : distance option Cst_shared.Fold.monoid =
   }
 
 
+(** Just like [smallest_negative_distance_monoid], but works on a [completion_distance],
+    calculating it for both the [dot] and [lexeme]. *)
 let completion_distance_monoid : completion_distance Cst_shared.Fold.monoid =
   let dist_monoid = smallest_negative_distance_monoid in
   { empty = { dot = dist_monoid.empty; lexeme = dist_monoid.empty }
@@ -193,10 +237,23 @@ let completion_distance_monoid : completion_distance Cst_shared.Fold.monoid =
   }
 
 
+(** The CST for a record projection or module path might be in a tree structure, which is
+    difficult to work with. This data type represents that the structure was flattened
+    into lists for ease of development. *)
 type linearized_path =
   | Projection of (Position.t * lexeme option list)
+      (** A flattened record projection. The [Position.t] indicates the position of the
+          record being projected. The [lexeme option list] represents each lexeme after
+          the dots, which may as well be module names. The [option] is due to non-record
+          fields (e.g., list/tuple access). For example, if we have ["A.B.C.d.e.f"], then
+          the list will contain [[ "A"; "B"; "C"; "e"; "f"]], and the position will have
+          that of the missing ["d"]. *)
   | Module of (Modules.def_scope * lexeme wrap list)
+      (** A flattened module path. The [Modules.def_scope] indicates the level of the
+          module path, and the [lexeme wrap list] represent each module name being
+          accessed. *)
 
+(** Tries to get the record projection or module path of the given input. *)
 let get_linearized_path
     (type a)
     (module C : Compatible_CST with type cst = a)
@@ -349,6 +406,10 @@ let get_linearized_path
       fold_cst None (Fn.const Option.some) instruction cst)
 
 
+(** Attempts to find the linearized record projection or module path for the provided
+    input and return completion items from the resolved module or record. Currently just
+    works for completing from module names or struct names. [normalize] is a function to
+    turn a relative file path into a resolved one (see the {!Path} module). *)
 let complete_fields
     (type a)
     ~(normalize : string -> Path.t)
@@ -365,6 +426,9 @@ let complete_fields
   @@ get_linearized_path (module C) input
 
 
+(** Gets completions for record fields and module names for the provided CST and position.
+    See [complete_fields] for more information. [normalize] is a function to turn a
+    relative file path into a resolved one (see the {!Path} module). *)
 let get_fields_completions ~(normalize : string -> Path.t) (input : Common.input_d)
     : CompletionItem.t list
   =

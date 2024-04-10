@@ -1,12 +1,9 @@
 open Handler
 open Lsp_helpers
 
-let default_project_file_contents : string = {|{
-  "dependencies": {
-  }
-}
-|}
-
+(** Creates a file containing [Project_root.default_project_file_contents] at the provided
+    path and notifies the user about its creation. Updates the [Handler]'s
+    [last_project_dir] and [mod_res] accordingly. *)
 let create_default_project_file (project_root : Path.t) : unit Handler.t =
   let@ () =
     send_log_msg
@@ -24,7 +21,7 @@ let create_default_project_file (project_root : Path.t) : unit Handler.t =
                  ~edits:
                    [ `TextEdit
                        (TextEdit.create
-                          ~newText:default_project_file_contents
+                          ~newText:Project_root.default_project_file_contents
                           ~range:(Range.Construct.point 0 0))
                    ]
                  ~textDocument:
@@ -58,6 +55,13 @@ let create_default_project_file (project_root : Path.t) : unit Handler.t =
           send_message ~type_:Error "Failed to create project file. Check logs.")
 
 
+(** Given the path to some contract, checks whether a project root for it exists, or asks
+    the user to create one. Updates the [Handler]'s [last_project_dir] and [mod_res]
+    accordingly.
+
+    This function will try to detect legacy, deprecated project root files (.ligoproject
+    or esy.json), workspace folders, and the provided file's parent directory in order to
+    suggest directories to create the project file. *)
 let detect_or_ask_to_create_project_file (file : Path.t) : unit Handler.t =
   let@ get_scope_buffers = ask_docs_cache in
   let project_root = Project_root.get_project_root file in
@@ -151,7 +155,8 @@ let detect_or_ask_to_create_project_file (file : Path.t) : unit Handler.t =
   | Some _, (None | Some _) -> pass
 
 
-(** E.g. if project root was changed *)
+(** Clears the cache for the provided file path. This is useful, for example, if the
+    project root was changed. *)
 let drop_cached_definitions : Path.t -> unit Handler.t =
  fun path ->
   let@ docs_cache = ask_docs_cache in
@@ -169,13 +174,12 @@ let drop_cached_definitions : Path.t -> unit Handler.t =
 
 
 (** We define here a helper that:
-   - saves a new version of document to memory
-   - finds or asks the user to create a project file
-   Also, if [process_immediately = true], it
-   - processes a document
-   - stores the state resulting from the processing
-   - sends the diagnostics from the new state
-   *)
+   - saves a new version of document to memory.
+   - finds or asks the user to create a project file.
+   Also, if [process_immediately = true], then it
+   - processes a document.
+   - stores the state resulting from the processing.
+   - sends the diagnostics from the new state. *)
 let on_doc
     :  process_immediately:bool -> ?changes:TextDocumentContentChangeEvent.t list
     -> version:[ `New of Ligo_interface.document_version | `Unchanged ] -> Path.t
@@ -210,8 +214,7 @@ let on_doc
     contents from the disk and set the cache, setting [None] for definitions and hierarchy.
     If the file is cached, it will do nothing.
 
-    This function is only for the case when the file is not opened in the editor.
-    *)
+    This function is only for the case when the file is not opened in the editor. *)
 let cache_doc_minimal : Path.t -> unit Handler.t =
  fun file ->
   let@ docs_cache = ask_docs_cache in
@@ -235,8 +238,13 @@ let cache_doc_minimal : Path.t -> unit Handler.t =
            (* This is valid because file is not opened in the editor *))
 
 
+(** A directed, possibly cyclic graph whose vertices are LIGO files and whose edges mean
+    that a vertex [v1] [#import]s or [#include]s a vertex [v2]. *)
 module File_graph = Lsp_helpers.Graph.Make (Path)
 
+(** This function will scan the project root directory (if it exists) recursively and
+    build a directed, possibly cyclic graph whose vertices are LIGO files and whose edges
+    mean that a vertex [v1] [#import]s or [#include]s a vertex [v2]. *)
 let build_file_graph : File_graph.t option Handler.t =
   let@ last_project_dir = ask_last_project_dir in
   match !last_project_dir with
@@ -254,9 +262,9 @@ let build_file_graph : File_graph.t option Handler.t =
             | CameLIGO cst -> return @@ Directive.extract_directives_cameligo cst
             | JsLIGO cst -> return @@ Directive.extract_directives_jsligo cst
           in
-          (* Collect all links from [#include] and [#import] directives and remove as
-                 many indirections as possible, so duplicates won't exist in the file
-                 graph and cause problems. *)
+          (* Collect all links from [#include] and [#import] directives and remove as many
+             indirections as possible, so duplicates won't exist in the file graph and
+             cause problems. *)
           let deps =
             List.filter_map
               directives
