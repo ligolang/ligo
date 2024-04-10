@@ -174,7 +174,7 @@ The call `literal [(k1,v1); ...; (kn,vn)]` returns a big map from
 
 <Syntax syntax="jsligo">
 
-The call `literal(list[[k1,v1], ..., [kn,vn]])` returns a big map
+The call `literal(list([[k1,v1], ..., [kn,vn]]))` returns a big map
     from the pairs of key/value in the list. Note: The list must be a
     literal, not an expression (compile-time list of values).
 

@@ -173,7 +173,7 @@ The call `literal [(k1,v1); ...; (kn,vn)]` returns a map from
 
 <Syntax syntax="jsligo">
 
-The call `literal(list[[k1,v1], ..., [kn,vn]])` returns a map from
+The call `literal(list([[k1,v1], ..., [kn,vn]]))` returns a map from
     the pairs of key/value in the list. Note: The list must be a
     literal, not an expression (compile-time list of values).
 

@@ -1966,7 +1966,7 @@ module Map = struct
     the pairs of key/value in the list. Note: The list must be a
     literal, not an expression (compile-time list of values). *)
   (** display-only-for-jsligo
-    The call `Map.literal(list[[k1,v1], ..., [kn,vn]])` returns a map from
+    The call `Map.literal(list([[k1,v1], ..., [kn,vn]]))` returns a map from
     the pairs of key/value in the list. Note: The list must be a
     literal, not an expression (compile-time list of values). *)
   [@thunk] [@inline]
@@ -2186,7 +2186,7 @@ module Big_map = struct
       map from the pairs of key/value in the list. Note: The list must
       be a literal, not an expression (compile-time list of values). *)
   (** display-only-for-jsligo
-      The call `Big_map.literal(list[[k1,v1], ..., [kn,vn]])` returns
+      The call `Big_map.literal(list([[k1,v1], ..., [kn,vn]]))` returns
       a big map from the pairs of key/value in the list. Note: The list
       must be a literal, not an expression (compile-time list of
       values). *)
