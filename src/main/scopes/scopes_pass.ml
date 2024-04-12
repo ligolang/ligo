@@ -438,6 +438,6 @@ module Of_Ast = struct
     scopes
 end
 
-let inline_scopes : Def.def_map -> t -> Types.inlined_scopes =
+let inline_scopes : def_map -> t -> Types.inlined_scopes =
  fun prg_defs scopes ->
   scopes |> LMap.map (Def.defs_to_types_defs prg_defs) |> LMap.to_kv_list

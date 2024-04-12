@@ -1,25 +1,21 @@
 open Types
 module SMap = Caml.Map.Make (String)
-module UidMap = Caml.Map.Make (Uid)
 
-(** Mapping from mangled uid to its resolved file name. *)
-type t = string UidMap.t
-
-let empty : t = UidMap.empty
+type t = string Uid_map.t
 
 (** Mapping from file name to mangled module's definitions *)
 type mangled_mdefs = mdef SMap.t
 
 (** Mapping from mangled UIDs to resolved UIDs. *)
-type mangled_to_resolved = Uid.t UidMap.t
+type mangled_to_resolved = Uid.t Uid_map.t
 
 let rec extracted_mangled_uids : def list -> mangled_to_resolved =
-  List.fold ~init:UidMap.empty ~f:(fun acc -> function
+  List.fold ~init:Uid_map.empty ~f:(fun acc -> function
     | Variable _ | Type _ | Label _ -> acc
     | Module mdef ->
       (match mdef.mod_case with
       | Def defs ->
-        UidMap.union (fun _uid _fst snd -> Some snd) acc (extracted_mangled_uids defs)
+        Uid_map.union (fun _uid _fst snd -> Some snd) acc (extracted_mangled_uids defs)
       | Alias { resolve_mod_name = Unresolved_path _ } -> acc
       | Alias { resolve_mod_name = Resolved_path resolved } ->
         if Location.equal (Uid.to_location resolved.resolved_module) Location.env
@@ -30,7 +26,7 @@ let rec extracted_mangled_uids : def list -> mangled_to_resolved =
           (* n.b.: If the same module is imported twice (or some constructor is exported
              twice from different imports), then by my observations, we'll pick the one
              that was imported first. *)
-          UidMap.add resolved.resolved_module mdef.uid acc
+          Uid_map.add resolved.resolved_module mdef.uid acc
         else acc))
 
 
@@ -45,7 +41,7 @@ let unmangle_module_names_in_typed_type
     else
       Hashtbl.find_or_add mvar_cache mvar ~default:(fun () ->
           Option.value_map ~default:mvar ~f:id_to_mvar
-          @@ UidMap.find_opt (mvar_to_id mvar) mangled_to_resolved)
+          @@ Uid_map.find_opt (mvar_to_id mvar) mangled_to_resolved)
   in
   let unmangle_module_list = List.map ~f:find_if_not_generated in
   Misc.map_typed_type_expression_module_path unmangle_module_list
@@ -57,7 +53,7 @@ let extract_mangled_mdefs : t -> def list -> mangled_mdefs =
     | Variable _ | Type _ | Label _ -> []
     | Module mdef ->
       let first_mapping =
-        match UidMap.find_opt mdef.uid mangled_uids with
+        match Uid_map.find_opt mdef.uid mangled_uids with
         | None -> []
         | Some file_name -> [ file_name, mdef ]
       in
@@ -75,7 +71,7 @@ let strip_mangled_defs : mangled_mdefs -> t -> def list -> def list =
   let rec mangled_alias_filter : def -> def option = function
     | (Variable _ | Type _ | Label _) as def -> Some def
     | Module mdef as def ->
-      if UidMap.mem mdef.uid mangled_uids
+      if Uid_map.mem mdef.uid mangled_uids
       then None
       else (
         match mdef.mod_case with
@@ -115,7 +111,7 @@ let inline_mangled
             ~default:mdef
             (let open Option.Let_syntax in
             let mangled_uid = resolved.resolved_module in
-            let%bind file_name = UidMap.find_opt mangled_uid mangled_uids in
+            let%bind file_name = Uid_map.find_opt mangled_uid mangled_uids in
             let%bind mdef_orig = SMap.find_opt file_name mangled_file_name_to_mdef in
             return
             @@ { mdef with mod_case = mdef_orig.mod_case; inlined_name = Some file_name })
@@ -128,21 +124,6 @@ let inline_mangled
   List.map ~f:inline
 
 
-(** Preprocessing produces mangled modules.
-    The next thing
-    {[
-     #import "file.mligo" "A"
-    ]}
-    translates into
-    {[
-     module A = Mangled_bla_bla
-    ]}
-    Thus we get a [Mangled_bla_bla] definition and [A] module alias.
-
-    The idea here is to strip mangled definitions and inline them into each mangled alias.
-    Motivation is simple: we don't care about mangled modules. We should think about
-    them each time we're working with definitions (e.g. they may appear in completions).
-    It would be better to inline and forget about them. *)
 let patch : t -> def list -> def list =
  fun mangled_uids defs ->
   let mangled_file_name_to_mdef = extract_mangled_mdefs mangled_uids defs in

@@ -22,9 +22,12 @@ module Env = Env_map
     ; (D.2, `Usage (the location of D in module_expression))] *)
 type module_usage = Module_var.t * [ `Usage of Location.t ]
 
+(** A list of [module_usage]s. *)
 type module_usages = module_usage list
 
 module References = struct
+  (** Associates a location indicating some definition's range to a set of locations which
+      are all of its references (usages). *)
   type references = LSet.t LMap.t
 
   (** A map from original type variable location to labels with their locations.
@@ -40,6 +43,7 @@ module References = struct
       [Bar] label will have two locations in its set and [Foo] only one. *)
   type type_var_loc_to_label_refs = LSet.t Label.Map.t LMap.t
 
+  (** The result of running this pass. *)
   type t =
     { references : references
     ; type_var_loc_to_label_refs : type_var_loc_to_label_refs
@@ -233,7 +237,8 @@ module References = struct
     add_maccess ~update_element_reference:add_tvar
 end
 
-type references = References.t
+type t = References.t
+type references = t
 type label_types = References.label_types
 
 (** [resolve_module_alias_in_env] takes a module path ([Module_var.t List.Ne.t])

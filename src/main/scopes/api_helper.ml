@@ -2,6 +2,8 @@ open Simple_utils.Display
 open Simple_utils
 module Trace = Simple_utils.Trace
 
+(** Helper function to format the result of [ligo info get-scope]. Formats scopes,
+    definitions, errors, and warnings. *)
 let format_result
     :  display_format:ex_display_format -> no_colour:bool
     -> (raise:(Main_errors.all, _) Trace.raise -> 'value) -> _

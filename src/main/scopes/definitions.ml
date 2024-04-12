@@ -1,3 +1,4 @@
+open Simple_utils.Function
 open Ligo_prim
 open Types
 module AST = Ast_core
@@ -7,8 +8,6 @@ module MVar = Module_var
 module LSet = Types.LSet
 module SMap = Map.Make (String)
 module Mangled_pass = Inline_mangled_modules_pass
-
-let ( <@ ) = Simple_utils.Function.( <@ )
 
 type t = def list
 
@@ -249,39 +248,17 @@ let defs_of_mvar
     Module mdef :: acc)
 
 
-(**
-    This module contains the functions traversing the {!Ast_core}
-    to fetch its definitions.
-
-    During the traversal, some fields will be
-    left blank or filled with a dummy value,
-    they are meant to be filled in later passes.
-
-*)
 module Of_Ast = struct
-  (**
-    Options specifying which parts of the AST should not be traversed.
-
-    By default, the whole AST should be traversed.
-
-    The user, however, can provide a custom value with some fields set to [true]
-    in order to perform a custom AST-traversal without traversing certain specific nodes.
-    *)
   module Waivers = struct
     type t =
       { (* Useful for Stdlib AST traversal, when declaration rhs are unwanted *)
         d_value_expr : bool
-      ; d_type_expr : bool
+      ; d_type_expr : bool (* TODO: unused *)
       ; d_irrefutable_match_expr : bool
       }
 
     let default : t =
       { d_value_expr = false; d_type_expr = false; d_irrefutable_match_expr = false }
-
-
-    let of_opt : t option -> t = function
-      | Some t -> t
-      | None -> default
 
 
     (** Takes a function [f] and returns a wrapper function which :
@@ -903,10 +880,7 @@ module Of_Ast = struct
     Hashtbl.clear mangled_uids_hashtbl;
     let defs = defs_of_decls ~waivers module_deps [] Global prg acc in
     let mangled_uids_map =
-      mangled_uids_hashtbl
-      |> Hashtbl.to_alist
-      |> Caml.List.to_seq
-      |> Mangled_pass.UidMap.of_seq
+      mangled_uids_hashtbl |> Hashtbl.to_alist |> Caml.List.to_seq |> Uid_map.of_seq
     in
     mangled_uids_map, defs
 end

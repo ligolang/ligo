@@ -1,5 +1,10 @@
 open Simple_utils.Display
 
+(** Formats definitions and scopes, for use by [ligo info get-scope] in the CLI.
+
+    @param display_format How to format this. [Human_readable] is unsupported.
+    @param no_colour Ignored. The [no_colour] option is provided to all [_ppformat]
+    functions by default, but not needed by all of them, including this function. *)
 let scope_ppformat
     ~display_format
     ~no_colour
@@ -7,8 +12,6 @@ let scope_ppformat
     ({ definitions = { definitions }; program = _; inlined_scopes; lambda_types = _ } :
       Types.t)
   =
-  (* The [no_colour] option is provided to all [_ppformat] functions by default,
-     but not needed by all of them. Remove the [ignore] if you need it. *)
   let () = ignore no_colour in
   match display_format with
   | Human_readable ->
@@ -25,15 +28,19 @@ let scope_ppformat
       definitions
 
 
+(** Result of scopes for formatting by the CLI. *)
 type get_scope_output =
-  { errors : Main_errors.all list
-  ; warns : Main_warnings.all list
+  { errors : Main_errors.all list (** Collected errors by scopes. *)
+  ; warns : Main_warnings.all list (** Collected warnings by scopes. *)
   ; info : Types.t option
+        (** Result of running [Scopes.run]. If a fatal error occurred, returns [None]. *)
   }
 
 let error_format = Main_errors.Formatter.error_format
 let warn_format = Main_warnings.format
 
+(** Formats [get_scope_output], displaying errors, warnings, and [get_scope_output], in
+    this order. Errors and warnings are sorted and deduped before getting formatted. *)
 let pp_get_scope_output : get_scope_output pp =
  fun ~display_format ~no_colour f { errors; warns; info } ->
   let () =
@@ -57,26 +64,20 @@ let pp_get_scope_output : get_scope_output pp =
          Format.fprintf f "@,")
 
 
-let rec map_error_message ~f error =
-  { error with
-    Simple_utils.Error.content =
-      { error.Simple_utils.Error.content with
-        message = f error.content.message
-      ; children = Option.map ~f:(map_error_message ~f) error.content.children
-      }
-  }
-
-
+(** Format a list of errors to JSON. *)
 let to_errors list =
   let value = list |> List.concat_map ~f:Main_errors.Formatter.error_json in
   `List (List.map ~f:Simple_utils.Error.to_yojson value)
 
 
+(** Format a list of warnings to JSON. *)
 let to_warnings list =
   let warnings = list |> List.map ~f:Main_warnings.to_json in
   `List warnings
 
 
+(** Formats [get_scope_output] to JSON, including errors, warnings, definitions, and
+    scopes. *)
 let get_scope_output_to_json : get_scope_output -> json =
  fun { errors; warns; info } ->
   let info_json =
@@ -93,5 +94,6 @@ let get_scope_output_to_json : get_scope_output -> json =
   `Assoc (content @ info_json)
 
 
+(** [Dev] and [Json] formatters for [get_scope_output]. *)
 let get_scope_format : get_scope_output format =
   { pp = pp_get_scope_output; to_json = get_scope_output_to_json }

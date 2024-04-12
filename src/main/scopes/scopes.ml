@@ -56,7 +56,7 @@ let inlined_scopes
   |> Scopes_pass.inline_scopes (Uid_map.of_defs_list definitions)
 
 
-(* Fast scopes calculation that is used in LSP *)
+(* Fast scopes calculation that is used by [ligo info get-scope]. *)
 let scopes
     :  options:Compiler_options.middle_end -> stdlib:Ast_typed.program * Ast_core.program
     -> prg:Ast_core.module_ -> scopes

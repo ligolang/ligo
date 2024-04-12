@@ -44,6 +44,7 @@ let flatten_includes : Ast_core.signature -> Ast_core.signature =
   { items = go [] items }
 
 
+(** Maps all [Ast_core.type_content] in an [Ast_core.type_expression] bottom-up. *)
 let map_core_type_content_in_type_expression
     :  (Ast_core.type_content -> Ast_core.type_content) -> Ast_core.type_expression
     -> Ast_core.type_expression
@@ -75,6 +76,9 @@ let map_core_type_content_in_type_expression
   type_expression
 
 
+(** Maps all module paths in an [Ast_core.type_expression]. The data types sometimes use a
+    non-empty list, and sometimes an ordinary list, hence two functions need to be
+    provided. *)
 let map_core_type_expression_module_path
     :  (Ligo_prim.Module_var.t list -> Ligo_prim.Module_var.t list)
     -> (Ligo_prim.Module_var.t List.Ne.t -> Ligo_prim.Module_var.t List.Ne.t)
@@ -103,6 +107,7 @@ let map_core_type_expression_module_path
         | T_singleton _ ) as t -> t)
 
 
+(** Maps all module paths in an [Ast_typed.type_expression]. *)
 let rec map_typed_type_expression_module_path
     :  (Ligo_prim.Module_var.t list -> Ligo_prim.Module_var.t list)
     -> Ast_typed.type_expression -> Ast_typed.type_expression
@@ -141,6 +146,9 @@ let rec map_typed_type_expression_module_path
   type_expression
 
 
+(** Maps all module paths in an [Ast_core.signature]. The data types sometimes use a
+    non-empty list, and sometimes an ordinary list, hence two functions need to be
+    provided. *)
 let map_core_signature_module_path
     :  (Ligo_prim.Module_var.t list -> Ligo_prim.Module_var.t list)
     -> (Ligo_prim.Module_var.t List.Ne.t -> Ligo_prim.Module_var.t List.Ne.t)
@@ -172,8 +180,12 @@ let map_core_signature_module_path
   signature
 
 
+(** The current stage (scopes). *)
 let stage : string = "scopes"
 
+(** Creates a [Simple_utils.Error.t] from the provided exception and wraps in
+    [`Scopes_recovered_error] (defined in [Main_errors]). The [stage] allows to set the
+    compiler stage that caused this exception. Defaults to ["scopes"] if unset. *)
 let recover_exception_error ?(stage : string = stage) (exn : exn)
     : [> `Scopes_recovered_error of Simple_utils.Error.t ]
   =
@@ -187,6 +199,9 @@ let recover_exception_error ?(stage : string = stage) (exn : exn)
               ()))
 
 
+(** Logs the provided exception (after wrapping it with [recover_exception_error]) and
+    returns the [default] value. The [stage] allows to set the compiler stage that caused
+    this exception. Defaults to ["scopes"] if unset. *)
 let log_exception_with_raise
     ~(raise :
        ( [> `Scopes_recovered_error of Simple_utils.Error.t ]
@@ -201,6 +216,9 @@ let log_exception_with_raise
   default
 
 
+(** Raises the provided exception (after wrapping it with [recover_exception_error]). The
+    [stage] allows to set the compiler stage that caused this exception. Defaults to
+    ["scopes"] if unset. *)
 let rethrow_exception_with_raise
     ~(raise :
        ( [> `Scopes_recovered_error of Simple_utils.Error.t ]
