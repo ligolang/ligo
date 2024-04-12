@@ -8,7 +8,7 @@ open Compiler_options.Raw_options
 let project_root : string option ref = ref None
 let set_project_root : string option -> unit = fun s -> project_root := s
 
-let dot_ligo rest =
+let dot_ligo rest use_home_folder=
   let home =
     match Sys.getenv "HOME" with
     | Some v -> v
@@ -17,9 +17,12 @@ let dot_ligo rest =
       | Some v -> v
       | None -> "")
   in
-  (match !project_root with
-  | None -> home ^ "/.ligo"
-  | Some x -> x)
+  (match use_home_folder with
+  | true -> home ^ "/.ligo"
+  | false ->  
+    (match !project_root with
+      | None -> "./.ligo"
+      | Some x -> x ^ "/.ligo"))
   ^/ rest
 
 
@@ -101,7 +104,7 @@ let registry =
 let term_acceptance_filepath =
   if current_process_is_in_docker
   then ".ligo/term_acceptance"
-  else dot_ligo "term_acceptance"
+  else dot_ligo "term_acceptance" true
 
 
 let line_separator = if String.equal Sys.os_type "Win32" then "\r\n" else "\n"
@@ -297,13 +300,13 @@ let get_user_id () =
   let user_id =
     if current_process_is_in_docker
     then "docker"
-    else get_or_create_id (dot_ligo "user_id")
+    else get_or_create_id (dot_ligo "user_id" true)
   in
   user_id
 
 
 (* Repository id *)
-let get_repository_id () = get_or_create_id (dot_ligo "repository_id")
+let get_repository_id () = get_or_create_id (dot_ligo "repository_id" false)
 
 (* Analytics *)
 let set ~gauge_group ~labels ~value =
