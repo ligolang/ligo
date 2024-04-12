@@ -144,9 +144,8 @@ module Ligo_lsp_commands = struct
      *)
 
   (** A command to mark a storage as TZIP-16-compatible. See code lenses for more
-      information. [normalize] is a function to turn a relative file path into a resolved
-      one (see the {!Path} module). *)
-  let add_tzip16_attr ~(normalize : string -> Path.t) : storage_var_position Command.t =
+      information. *)
+  let add_tzip16_attr ~(normalize : Path.normalization) : storage_var_position Command.t =
     { id = "add-tzip16-addr"
     ; args_encoder =
         (fun args ->
@@ -162,7 +161,7 @@ module Ligo_lsp_commands = struct
     }
 
 
-  let match_command ~(normalize : string -> Path.t)
+  let match_command ~(normalize : Path.normalization)
       :  command:string -> arguments:Yojson.Safe.t list
       -> Yojson.Safe.t handler Command.Match.or_error
     =

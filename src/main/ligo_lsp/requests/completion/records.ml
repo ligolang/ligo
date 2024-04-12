@@ -48,10 +48,9 @@ let core_record_to_completion_items ~syntax (row : Ast_core.row) : CompletionIte
 
 
 (** Provides completions for the fields from the provided reference position of a record
-    variable name. [normalize] is a function to turn a relative file path into a resolved
-    one (see the {!Path} module). *)
+    variable name. *)
 let projection_impl
-    ~(normalize : string -> Path.t)
+    ~(normalize : Path.normalization)
     ({ syntax; path; definitions; _ } : _ Common.input)
     (struct_pos : Position.t)
     (proj_fields_before_cursor : string option list)

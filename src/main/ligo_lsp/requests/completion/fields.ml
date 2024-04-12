@@ -408,11 +408,10 @@ let get_linearized_path
 
 (** Attempts to find the linearized record projection or module path for the provided
     input and return completion items from the resolved module or record. Currently just
-    works for completing from module names or struct names. [normalize] is a function to
-    turn a relative file path into a resolved one (see the {!Path} module). *)
+    works for completing from module names or struct names. *)
 let complete_fields
     (type a)
-    ~(normalize : string -> Path.t)
+    ~(normalize : Path.normalization)
     (module C : Compatible_CST with type cst = a)
     (input : a Common.input)
     : CompletionItem.t list
@@ -427,9 +426,8 @@ let complete_fields
 
 
 (** Gets completions for record fields and module names for the provided CST and position.
-    See [complete_fields] for more information. [normalize] is a function to turn a
-    relative file path into a resolved one (see the {!Path} module). *)
-let get_fields_completions ~(normalize : string -> Path.t) (input : Common.input_d)
+    See [complete_fields] for more information. *)
+let get_fields_completions ~(normalize : Path.normalization) (input : Common.input_d)
     : CompletionItem.t list
   =
   match input.cst with

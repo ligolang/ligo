@@ -4,7 +4,7 @@ open Lsp_helpers
 (** See {!Directive.extract_range_and_target}. Extracts a range and target to create a
     document link. *)
 let extract_link_from_directive
-    ~(normalize : string -> Path.t)
+    ~(normalize : Path.normalization)
     ~(relative_to_dir : Path.t)
     ~(mod_res : Preprocessor.ModRes.t option)
     : Preprocessor.Directive.t -> DocumentLink.t option

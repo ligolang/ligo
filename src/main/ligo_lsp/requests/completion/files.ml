@@ -5,10 +5,9 @@ open Lsp_helpers
     for the provided [pos]ition in the [current_file], if it's over such a directive.
     [code] is the source file of the document (this function uses regexes and not the
     CST). The [project_root] is used to scan for LIGO files from the project root, and the
-    mod res is used to provide paths to LIGO registry packages. [normalize] is a function
-    to turn a relative file path into a resolved one (see the {!Path} module). *)
+    mod res is used to provide paths to LIGO registry packages. *)
 let get_files_for_completions
-    ~(normalize : string -> Path.t)
+    ~(normalize : Path.normalization)
     ~(pos : Position.t)
     ~(code : string)
     ~(current_file : Path.t)

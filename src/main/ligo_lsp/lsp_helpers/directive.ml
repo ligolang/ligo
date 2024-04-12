@@ -28,11 +28,11 @@ let extract_directives_jsligo (cst : Parsing.Jsligo.CST.t) : Preprocessor.Direct
 (** Given a directive (see {!extract_directives_cameligo} and {!extract_directives_jsligo}
     to extract directives) with an [#include] or [#import], this function will try to
     return the range of that directive as well as the resolved path to that directive.
-    [normalize] is a function to turn a relative file path into a resolved one (see the
-    {!Path} module), [relative_to_dir] is the directory with the file containing the
-    directive, and [mod_res] is used to resolve imports to LIGO registry packages. *)
+
+    @param relative_to_dir The directory with the file containing the directive.
+    @param mod_res Used to resolve imports to LIGO registry packages. *)
 let extract_range_and_target
-    ~(normalize : string -> Path.t)
+    ~(normalize : Path.normalization)
     ~(relative_to_dir : Path.t)
     ~(mod_res : Preprocessor.ModRes.t option)
     : Preprocessor.Directive.t -> (Range.t * Path.t) option

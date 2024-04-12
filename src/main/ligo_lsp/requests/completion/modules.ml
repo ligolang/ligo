@@ -19,10 +19,9 @@ let in_scope (def : Def.t) (scope : def_scope) : bool =
 
 
 (** Provides completions for the fields from the provided reference position of a module
-    variable. [normalize] is a function to turn a relative file path into a resolved one
-    (see the {!Path} module). *)
+    variable. *)
 let get_module_from_pos
-    ~(normalize : string -> Path.t)
+    ~(normalize : Path.normalization)
     ({ path; syntax; definitions; _ } : _ Common.input)
     (scope : def_scope)
     (module_pos : Position.t)
@@ -59,10 +58,9 @@ let get_module_from_pos
   | Variable _ | Type _ | Label _ -> None
 
 
-(** Provides completions for the fields from the provided module path. [normalize] is a
-    function to turn a relative file path into a resolved one (see the {!Path} module). *)
+(** Provides completions for the fields from the provided module path. *)
 let module_path_impl
-    ~(normalize : string -> Path.t)
+    ~(normalize : Path.normalization)
     (module_names_before_cursor : lexeme wrap list)
     (input : _ Common.input)
     (scope : def_scope)

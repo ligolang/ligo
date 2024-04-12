@@ -78,7 +78,7 @@ let filter_diagnostics : Main_errors.all list -> Main_errors.all list =
 
 
 (** Extract all errors and warnings for the given scopes and collect them in a list. *)
-let get_diagnostics ~(normalize : string -> Path.t) (current_path : Path.t)
+let get_diagnostics ~(normalize : Path.normalization) (current_path : Path.t)
     : Ligo_interface.defs_and_diagnostics -> simple_diagnostic list
   =
  fun { errors

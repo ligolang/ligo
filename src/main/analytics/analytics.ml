@@ -8,7 +8,7 @@ open Compiler_options.Raw_options
 let project_root : string option ref = ref None
 let set_project_root : string option -> unit = fun s -> project_root := s
 
-let dot_ligo rest use_home_folder=
+let dot_ligo rest use_home_folder =
   let home =
     match Sys.getenv "HOME" with
     | Some v -> v
@@ -19,10 +19,10 @@ let dot_ligo rest use_home_folder=
   in
   (match use_home_folder with
   | true -> home ^ "/.ligo"
-  | false ->  
+  | false ->
     (match !project_root with
-      | None -> "./.ligo"
-      | Some x -> x ^ "/.ligo"))
+    | None -> "./.ligo"
+    | Some x -> x ^ "/.ligo"))
   ^/ rest
 
 

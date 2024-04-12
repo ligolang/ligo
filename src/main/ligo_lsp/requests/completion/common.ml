@@ -54,7 +54,7 @@ let completion_context_priority
 
 
 let defs_to_completion_items
-    ~(normalize : string -> Path.t)
+    ~(normalize : Path.normalization)
     (context : completion_context)
     (path : Path.t)
     (syntax : Syntax_types.t)

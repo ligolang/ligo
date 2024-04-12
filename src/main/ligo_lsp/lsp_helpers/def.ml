@@ -28,9 +28,8 @@ module Def_location = struct
     | Virtual of string
   [@@deriving eq, ord, sexp]
 
-  (** Convert a {!Loc.t} into a {t}. [normalize] is a function to turn a relative file
-      path into a resolved one (see the {!Path} module). *)
-  let of_loc : normalize:(string -> Path.t) -> Loc.t -> t =
+  (** Convert a {!Loc.t} into a {t}. *)
+  let of_loc : normalize:Path.normalization -> Loc.t -> t =
    fun ~normalize -> function
     | File region when Helpers_file.is_stdlib region#file ->
       StdLib { range = Range.of_region region }
@@ -46,15 +45,13 @@ module Def_locations = Set.Make (Def_location)
 (** For debugging. Convert a [t] into a [string]. *)
 let to_string (def : t) = Format.asprintf "%a" Scopes.PP.definitions [ def ]
 
-(** Gets the range (not declaration range) of a [t]. [normalize] is a function to turn a
-    relative file path into a resolved one (see the {!Path} module). *)
-let get_location : normalize:(string -> Path.t) -> Scopes.def -> Def_location.t =
+(** Gets the range (not declaration range) of a [t]. *)
+let get_location : normalize:Path.normalization -> Scopes.def -> Def_location.t =
  fun ~normalize -> Def_location.of_loc ~normalize <@ Scopes.Types.get_range
 
 
-(** Gets the path where a [t] was declared. [normalize] is a function to turn a relative
-    file path into a resolved one (see the {!Path} module). *)
-let get_path : normalize:(string -> Path.t) -> Scopes.def -> Path.t option =
+(** Gets the path where a [t] was declared. *)
+let get_path : normalize:Path.normalization -> Scopes.def -> Path.t option =
  fun ~normalize ->
   Def_location.(
     function
@@ -63,9 +60,8 @@ let get_path : normalize:(string -> Path.t) -> Scopes.def -> Path.t option =
   <@ get_location ~normalize
 
 
-(** Gets a set with all the references of the given definition. [normalize] is a function
-    to turn a relative file path into a resolved one (see the {!Path} module). *)
-let references_getter : normalize:(string -> Path.t) -> t -> Def_locations.t =
+(** Gets a set with all the references of the given definition. *)
+let references_getter : normalize:Path.normalization -> t -> Def_locations.t =
  fun ~normalize def ->
   let module LSet = Scopes.Types.LSet in
   let lset =
@@ -81,9 +77,8 @@ let references_getter : normalize:(string -> Path.t) -> t -> Def_locations.t =
 
 
 (** Checks whether the given definition is a reference to the symbol located at the given
-    path and position (if there is no symbol there it will return [false]). [normalize] is
-    a function to turn a relative file path into a resolved one (see the {!Path} module). *)
-let is_reference : normalize:(string -> Path.t) -> Position.t -> Path.t -> t -> bool =
+    path and position (if there is no symbol there it will return [false]). *)
+let is_reference : normalize:Path.normalization -> Position.t -> Path.t -> t -> bool =
  fun ~normalize pos file definition ->
   let check_pos : Def_location.t -> bool = function
     | File { path; range } -> Range.contains_position pos range && Path.equal path file
@@ -148,9 +143,8 @@ let filter : f:(t -> bool) -> definitions -> t list =
 
 (** Filters the definitions while removing all definitions that were not declared in
     [file]. The returned list of definitions is flattened. This function does not visit a
-    module's inner definitions if that module was not declared in [file]. [normalize] is a
-    function to turn a relative file path into a resolved one (see the {!Path} module). *)
-let filter_file : normalize:(string -> Path.t) -> file:Path.t -> definitions -> t list =
+    module's inner definitions if that module was not declared in [file]. *)
+let filter_file : normalize:Path.normalization -> file:Path.t -> definitions -> t list =
  fun ~normalize ~file ->
   fold_definitions ~init:[] ~f:(fun acc def ->
       match Scopes.Types.get_decl_range def with
@@ -160,10 +154,9 @@ let filter_file : normalize:(string -> Path.t) -> file:Path.t -> definitions -> 
 
 
 (** Gets the definition that is a reference to the symbol located at the given path and
-    position (if there is no symbol there it will return [None]). [normalize] is a
-    function to turn a relative file path into a resolved one (see the {!Path} module). *)
+    position (if there is no symbol there it will return [None]). *)
 let get_definition
-    : normalize:(string -> Path.t) -> Position.t -> Path.t -> definitions -> t option
+    : normalize:Path.normalization -> Position.t -> Path.t -> definitions -> t option
   =
  fun ~normalize pos path definitions ->
   find ~f:(is_reference ~normalize pos path) definitions
@@ -261,9 +254,8 @@ module Hierarchy = struct
   (** A structure holding a definition hierarchy. *)
   type t = Scopes.def Rose.forest
 
-  (** Turn definitions into a hierarchy. [normalize] is a function to turn a relative file
-      path into a resolved one (see the {!Path} module). *)
-  let create : normalize:(string -> Path.t) -> definitions -> t =
+  (** Turn definitions into a hierarchy. *)
+  let create : normalize:Path.normalization -> definitions -> t =
    fun ~normalize defs ->
     Rose.map_forest ~f:Tuple3.get3
     @@ Rose.forest_of_list
@@ -288,10 +280,9 @@ module Hierarchy = struct
 
 
   (** Finds all definitions that are in-scope at the given file and position. The provided
-      module path should be the one at the given position. [normalize] is a function to
-      turn a relative file path into a resolved one (see the {!Path} module). *)
+      module path should be the one at the given position. *)
   let scope_at_point
-      ~(normalize : string -> Path.t)
+      ~(normalize : Path.normalization)
       (file : Path.t)
       (point : Position.t)
       (mod_path : Scopes.Uid.t list)

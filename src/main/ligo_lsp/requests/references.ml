@@ -8,10 +8,9 @@ module PathMap = Map.Make (Path)
 module Ranges = Set.Make (Range)
 
 (** For every location [l], returns the locations of every reference of the declaration of
-    [l]. [normalize] is a function to turn a relative file path into a resolved one (see
-    the {!Path} module). *)
+    [l]. *)
 let get_references
-    :  normalize:(string -> Path.t) -> Def_location.t Sequence.t -> Scopes.def Sequence.t
+    :  normalize:Path.normalization -> Def_location.t Sequence.t -> Scopes.def Sequence.t
     -> Loc_in_file.t Sequence.t
   =
  fun ~normalize locations defs ->
@@ -39,10 +38,9 @@ let partition_references : Loc_in_file.t Sequence.t -> Ranges.t PathMap.t =
 
 
 (** Like [get_all_references], but keeps the locations grouped by files. This version is
-    also useful for the rename request. [normalize] is a function to turn a relative file
-    path into a resolved one (see the {!Path} module). *)
+    also useful for the rename request. *)
 let get_all_references_grouped_by_file
-    :  normalize:(string -> Path.t) -> Def_location.t Sequence.t -> Docs_cache.t
+    :  normalize:Path.normalization -> Def_location.t Sequence.t -> Docs_cache.t
     -> (Path.t * Range.t Sequence.t) Sequence.t
   =
  fun ~normalize locations cache ->
@@ -65,10 +63,9 @@ let get_all_references_grouped_by_file
 
 
 (** For each location with a declaration, finds all references for that declaration and
-    concats them together. [normalize] is a function to turn a relative file path into a
-    resolved one (see the {!Path} module). *)
+    concats them together. *)
 let get_all_references
-    :  normalize:(string -> Path.t) -> Def_location.t list -> Docs_cache.t
+    :  normalize:Path.normalization -> Def_location.t list -> Docs_cache.t
     -> Loc_in_file.t list
   =
  fun ~normalize locations cache ->
@@ -86,7 +83,7 @@ let get_all_references
     In other words, linked locations are those that, if you rename one of them, all of the
     others should be renamed as well. *)
 let try_to_get_all_linked_locations
-    :  normalize:(string -> Path.t) -> Def.t -> Def.definitions
+    :  normalize:Path.normalization -> Def.t -> Def.definitions
     -> Def_location.t list option
   =
  fun ~normalize definition definitions ->
@@ -121,7 +118,7 @@ let try_to_get_all_linked_locations
     In other words, linked locations are those that, if you rename one of them, all of the
     others should be renamed as well. *)
 let get_all_linked_locations_or_def
-    : normalize:(string -> Path.t) -> Def.t -> Def.definitions -> Def_location.t list
+    : normalize:Path.normalization -> Def.t -> Def.definitions -> Def_location.t list
   =
  fun ~normalize definition definitions ->
   Option.value

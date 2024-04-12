@@ -7,11 +7,9 @@ let hovers_pp_mode : Pretty.pp_mode =
 
 
 (** Replaces [T_variable]s in the provided core type for [T_module_accessor]s using the
-    module path at the given position. The module path is resolved if it's an alias.
-    [normalize] is a function to turn a relative file path into a resolved one (see the
-    {!Path} module). *)
+    module path at the given position. The module path is resolved if it's an alias. *)
 let insert_module_path
-    ~(normalize : string -> Path.t)
+    ~(normalize : Path.normalization)
     (input_d : Completion_lib.Common.input_d)
     (type' : Ast_core.type_expression)
     : Ast_core.type_expression

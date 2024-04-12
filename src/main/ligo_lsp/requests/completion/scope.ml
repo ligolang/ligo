@@ -79,11 +79,9 @@ let get_current_module (cst : Dialect_cst.t) (pos : Position.t) : Scopes.Uid.t l
 
     We want to show only completions with non-qualified names, e.g. instead of showing
     [List.map], [List.append], etc, we'll just show the [List] module, and if the user
-    wrote [List.], the [Fields.get_fields_completions] will show [map], etc.
-      [normalize] is a function to turn a relative file path into a resolved one (see the
-    {!Path} module). *)
+    wrote [List.], the [Fields.get_fields_completions] will show [map], etc. *)
 let get_defs_completions
-    ~(normalize : string -> Path.t)
+    ~(normalize : Path.normalization)
     ({ path; syntax = _; definitions = _; cst; pos } : _ Common.input)
     (hierarchy : Def.Hierarchy.t)
     : Def.t list
@@ -94,7 +92,7 @@ let get_defs_completions
 
 
 let get_scope_completions
-    ~(normalize : string -> Path.t)
+    ~(normalize : Path.normalization)
     ({ path; syntax; definitions = _; cst = _; pos = _ } as input : _ Common.input)
     (hierarchy : Def.Hierarchy.t)
     : CompletionItem.t list

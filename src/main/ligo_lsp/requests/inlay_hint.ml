@@ -465,10 +465,9 @@ let process_variable_def
 
 
 (** Computes inlay hints for variables with core types (i.e., unnanotated variables whose
-    types that were inferred). [normalize] is a function to turn a relative file path into
-    a resolved one (see the {!Path} module). *)
+    types that were inferred). *)
 let provide_hints_for_variables
-    ~(normalize : string -> Path.t)
+    ~(normalize : Path.normalization)
     ~(banned_in_core : Range.t list)
     ~(fun_defs : fun_def_value LMap.t)
     ~(ban_defs : Range.t list)
