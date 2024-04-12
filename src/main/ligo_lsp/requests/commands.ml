@@ -5,12 +5,15 @@ open Lsp_helpers
 module Command = struct
   module Lsp_command = Lsp_helpers.Command
 
+  (** Contains a command identifier, a way to encode it into a JSON list, and a way to try
+      to decode it from a JSON list. *)
   type 'a t =
     { id : string
     ; args_encoder : 'a -> Yojson.Safe.t list
     ; args_decoder : Yojson.Safe.t list -> ('a, string) result
     }
 
+  (** Helper to create a LSP command from the provided command. *)
   let compile ~(command : 'a t) ~(title : string) ~(arguments : 'a) : Lsp_command.t =
     Command.create
       ~title
@@ -54,19 +57,25 @@ module Command = struct
   end
 end
 
+(** A position for a storage variable with file, line, and document version. *)
 type storage_var_position =
   { file : Path.t
   ; line : int
-  ; (* Version of the document at which `line` is actual *)
-    document_version : Ligo_interface.document_version
+  ; document_version : Ligo_interface.document_version
+        (** Version of the document at which `line` is actual. *)
   }
 
+(** Creates a string matching the syntax for a JsLIGO decorator/CameLIGO attribute using
+    the provided name and syntax. E.g. [[@tzip16_compatible]] for CameLIGO or
+    [@tzip16_compatible] for JsLIGO. *)
 let create_attr_text (name : string) (syntax : Syntax_types.t) : string =
   match syntax with
   | CameLIGO -> Format.sprintf "[%@%s]" name
   | JsLIGO -> Format.sprintf "%@%s" name
 
 
+(** Executes a command to add an attribute marking a storage as TZIP-16-compatible. See
+    the code lens for more information. *)
 let execute_add_tzip16_attr (storage_var_position : storage_var_position)
     : Yojson.Safe.t handler
   =
@@ -134,7 +143,9 @@ module Ligo_lsp_commands = struct
      public, let's pass each command argument as a separate simple list element.
      *)
 
-  let add_tzip16_attr ~(normalize : string -> Path.t) : storage_var_position Command.t =
+  (** A command to mark a storage as TZIP-16-compatible. See code lenses for more
+      information. *)
+  let add_tzip16_attr ~(normalize : Path.normalization) : storage_var_position Command.t =
     { id = "add-tzip16-addr"
     ; args_encoder =
         (fun args ->
@@ -150,7 +161,7 @@ module Ligo_lsp_commands = struct
     }
 
 
-  let match_command ~(normalize : string -> Path.t)
+  let match_command ~(normalize : Path.normalization)
       :  command:string -> arguments:Yojson.Safe.t list
       -> Yojson.Safe.t handler Command.Match.or_error
     =
@@ -159,6 +170,9 @@ module Ligo_lsp_commands = struct
       [ arm ~command:(add_tzip16_attr ~normalize) ~handler:execute_add_tzip16_attr ]
 end
 
+(** Runs the handler for execute command. Currently, the only implemented command is to
+    add an attribute to mark a storage as TZIP-16-compatible. This command is normally
+    invoked when the user presses the code lens button to make it as compatible. *)
 let on_execute_command ~(command : string) ?(arguments : Yojson.Safe.t list = []) ()
     : Yojson.Safe.t handler
   =

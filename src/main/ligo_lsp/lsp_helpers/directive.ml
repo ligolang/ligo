@@ -4,6 +4,8 @@ module Region = Simple_utils.Region
          extract those [Directive]'s later
    Also check if [Directive]'s can occur at top-level of module *)
 
+(** Extracts all top-level directives from a CameLIGO CST. Does not visit
+    top-level modules. *)
 let extract_directives_cameligo (cst : Parsing.Cameligo.CST.t)
     : Preprocessor.Directive.t list
   =
@@ -13,6 +15,8 @@ let extract_directives_cameligo (cst : Parsing.Cameligo.CST.t)
   @@ Simple_utils.Utils.nseq_to_list cst.decl
 
 
+(** Extracts all top-level directives from a JsLIGO CST. Does not visit
+    top-level namespaces. *)
 let extract_directives_jsligo (cst : Parsing.Jsligo.CST.t) : Preprocessor.Directive.t list
   =
   List.filter_map ~f:(function
@@ -21,8 +25,14 @@ let extract_directives_jsligo (cst : Parsing.Jsligo.CST.t) : Preprocessor.Direct
   @@ (Simple_utils.Utils.nseq_to_list cst.statements |> List.map ~f:fst)
 
 
+(** Given a directive (see {!extract_directives_cameligo} and {!extract_directives_jsligo}
+    to extract directives) with an [#include] or [#import], this function will try to
+    return the range of that directive as well as the resolved path to that directive.
+
+    @param relative_to_dir The directory with the file containing the directive.
+    @param mod_res Used to resolve imports to LIGO registry packages. *)
 let extract_range_and_target
-    ~(normalize : string -> Path.t)
+    ~(normalize : Path.normalization)
     ~(relative_to_dir : Path.t)
     ~(mod_res : Preprocessor.ModRes.t option)
     : Preprocessor.Directive.t -> (Range.t * Path.t) option

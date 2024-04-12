@@ -17,7 +17,9 @@ let string_path_to_relative : string -> string =
 let path_to_relative : Path.t -> string = string_path_to_relative <@ Path.to_string
 
 (** Makes path in [DocumentUri.t] relative to your cwd. *)
-let to_relative_uri ~(normalize : string -> Path.t) (uri : DocumentUri.t) : DocumentUri.t =
+let to_relative_uri ~(normalize : Path.normalization) (uri : DocumentUri.t)
+    : DocumentUri.t
+  =
   let abs_path = DocumentUri.to_path ~normalize uri in
   let rel_path = path_to_relative abs_path in
   DocumentUri.of_path (normalize rel_path)

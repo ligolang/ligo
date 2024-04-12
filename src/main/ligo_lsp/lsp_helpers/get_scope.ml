@@ -3,8 +3,10 @@ module Trace = Simple_utils.Trace
 module SMap = Map.Make (String)
 open Scopes.Types
 
-(** [errors] and [warnings] can come from [Scopes] module (which runs compiler up to
-    self_ast_typed pass), or from [following_passes_diagnostics] (collected in this module) *)
+(** Holds data collected from [Scopes] or from [following_passes_diagnostics]. [errors]
+    and [warnings] can come from [Scopes] module (which runs compiler up to
+    [Self_ast_typed] pass), or from [following_passes_diagnostics] (collected in this
+    module). See also: [Ligo_interface.file_data_case]. *)
 type defs_and_diagnostics =
   { errors : Main_errors.all list
   ; warnings : Main_warnings.all list
@@ -13,6 +15,8 @@ type defs_and_diagnostics =
   ; lambda_types : Ast_typed.ty_expr LMap.t
   }
 
+(** Compiles [code_input] from the source file up to the typed AST, providing all of its
+    module dependencies and stdlib to the callback [f]. *)
 let with_code_input
     :  f:
          (options:Compiler_options.middle_end
@@ -79,23 +83,7 @@ let with_code_input
   f ~options:options.middle_end ~stdlib ~prg ~syntax ~module_deps
 
 
-(** Internal function, uses `raise` for throwing errors *)
-let get_scope_raw
-    (raw_options : Raw_options.t)
-    (source_file : BuildSystem.Source_input.code_input)
-    ~raise
-    : Scopes.t
-  =
-  let with_types = raw_options.with_types in
-  with_code_input
-    ~raw_options
-    ~raise
-    ~code_input:source_file
-    ~f:(fun ~options ~syntax:_ ~stdlib ~prg ~module_deps ->
-      Scopes.run ~with_types ~raise ~options ~stdlib ~prg ~module_deps)
-
-
-(** Used by CLI, formats all definitions, errors and warnings and returns strings *)
+(** Used by CLI, formats all definitions, errors and warnings and returns strings. *)
 let get_scope_cli_result
     (raw_options : Raw_options.t)
     ~source_file
@@ -105,27 +93,21 @@ let get_scope_cli_result
   =
   Scopes.Api_helper.format_result ~display_format ~no_colour
   @@ fun ~raise ->
-  let v = get_scope_raw raw_options (From_file source_file) ~raise in
+  let v =
+    let with_types = raw_options.with_types in
+    with_code_input
+      ~raw_options
+      ~raise
+      ~code_input:(From_file source_file)
+      ~f:(fun ~options ~syntax:_ ~stdlib ~prg ~module_deps ->
+        Scopes.run ~with_types ~raise ~options ~stdlib ~prg ~module_deps)
+  in
   { v with inlined_scopes = (if defs_only then Lazy.from_val [] else v.inlined_scopes) }
 
 
-let get_scopes
-    (raw_options : Raw_options.t)
-    (code_input : BuildSystem.Source_input.code_input)
-    : scopes
-  =
-  Trace.try_with
-    ~fast_fail:false
-    (fun ~raise ~catch:_ ->
-      with_code_input
-        ~raw_options
-        ~raise
-        ~code_input
-        ~f:(fun ~options ~syntax:_ ~stdlib ~prg ~module_deps:_ ->
-          Scopes.scopes ~options ~stdlib ~prg))
-    (fun ~catch:_ _ -> [])
-
-
+(** Internal function used by [get_defs_and_diagnostics] to create [defs_and_diagnostics]
+    from that output. Doesn't do much besides deduping diagnostics and wrapping the data
+    in the structure. *)
 let make_defs_and_diagnostics
     (errors, warnings, defs_opt, potential_storage_vars, lambda_types)
     : defs_and_diagnostics
@@ -256,10 +238,10 @@ let make_common_entrypoint
   [ decl ], ep_expr, sig_items, contract_sig
 
 
-(* Compiles (Ast_typed -> Ast_aggrefgated -> Ast_expanded -> mini_c -> michelson)
-  the unit expression with the program as a context. This is enough to raise the
-  unused variable warnings, warnings about wrong storage metadata type and some others.
-  This require our file to have an entrypoint, so we can add a virtual one. *)
+(** Compiles (Ast_typed -> Ast_aggregated -> Ast_expanded -> Mini_c -> Michelson) a
+    virtual entry-point that references all other entrypoints in the file with the program
+    as a context. This is enough to raise the unused variable warnings, warnings about
+    wrong storage metadata type and some others. *)
 let following_passes_diagnostics
     ~(raise : (Main_errors.all, Main_warnings.all) Trace.raise)
     ~(stdlib_program : Ast_typed.program)
@@ -348,28 +330,11 @@ let following_passes_diagnostics
     prg
 
 
-let get_defs
-    (raw_options : Raw_options.t)
-    (code_input : BuildSystem.Source_input.code_input)
-    : definitions Lwt.t
-  =
-  Trace.try_with_lwt
-    ~fast_fail:false
-    (fun ~raise ~catch:_ ->
-      with_code_input
-        ~raw_options
-        ~raise
-        ~code_input
-        ~f:(fun ~options ~syntax:_ ~stdlib ~prg ~module_deps ->
-          let with_types = raw_options.with_types in
-          let { Scopes.definitions; program = _; inlined_scopes = _; lambda_types = _ } =
-            Scopes.run ~raise ~with_types ~options ~stdlib ~prg ~module_deps
-          in
-          Lwt.return definitions))
-    (fun ~catch:_ _ -> Lwt.return { definitions = [] })
-
-
-(** Used by LSP, we're trying to get as many errors/warnings as possible *)
+(** Calculates the [Def.t]s and diagnostics for a given file. [code] is the source code of
+    this file. [logger] is a function that will log messages (see
+    [Requests.Handler.send_log_msg] for a good choice of logger).
+    [tzip16_download_options] is used to control whether to display diagnostics that
+    require downloads from TZIP-16-compatible storages. *)
 let get_defs_and_diagnostics
     ~(logger : type_:Lsp.Types.MessageType.t -> string -> unit Lwt.t)
     ~(tzip16_download_options : Tzip16_storage.download_options)

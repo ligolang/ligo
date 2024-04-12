@@ -9,22 +9,26 @@ let pp = Helpers_pretty.pp_with_yojson yojson_of_t
 let testable = Alcotest.testable pp equal
 let to_string = Helpers_pretty.show_with_yojson yojson_of_t
 
+(** Convert a LIGO region into a LSP range. *)
 let of_region (region : Region.t) : t =
   create ~start:(Position.of_pos region#start) ~end_:(Position.of_pos region#stop)
 
 
+(** Attempt to convert a LIGO location into a LSP range. *)
 let of_loc (l : Loc.t) : t option =
   match l with
   | Virtual _ -> None
   | File region -> Some (of_region region)
 
 
+(** A region containing just the first line and character (0:0 to 0:1). *)
 let dummy : t =
   let dummy_start = Position.create ~character:0 ~line:0 in
   let dummy_end = Position.create ~character:1 ~line:0 in
   create ~end_:dummy_end ~start:dummy_start
 
 
+(** A region containing an entire file (0:0 to (2³¹-1):(2³¹-1)). *)
 let whole_file = create ~start:Position.file_start ~end_:Position.file_end
 
 (** Is the [small] range contained in the [big] one? *)
@@ -69,8 +73,9 @@ let intersects (r1 : t) (r2 : t) : bool =
   || contains_position r2.end_ r1
 
 
-(** Functions to quickly construct ranges. Designed to be [open]ed *)
+(** Functions to quickly construct ranges. This module is designed to be [open]ed. *)
 module Construct = struct
+  (** Construct a range from start line:start character to end line:end character. *)
   let range
       ((line_start, character_start) : int * int)
       ((line_end, character_end) : int * int)
@@ -81,11 +86,13 @@ module Construct = struct
       ~end_:(Position.create ~line:line_end ~character:character_end)
 
 
+  (** Construct a zero-length range from line:character to line:character. *)
   let point (line : int) (character : int) : t =
     let position = Position.create ~line ~character in
     create ~start:position ~end_:position
 
 
+  (** Construct a range from line:start character to line:end character. *)
   let interval (line : int) (character_start : int) (character_end : int) : t =
     create
       ~start:(Position.create ~line ~character:character_start)

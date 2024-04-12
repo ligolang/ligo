@@ -1,8 +1,13 @@
 open Common
 open Lsp_helpers
 
+(** Scans the file for [#include] and [#import] directives and provides file completions
+    for the provided [pos]ition in the [current_file], if it's over such a directive.
+    [code] is the source file of the document (this function uses regexes and not the
+    CST). The [project_root] is used to scan for LIGO files from the project root, and the
+    mod res is used to provide paths to LIGO registry packages. *)
 let get_files_for_completions
-    ~(normalize : string -> Path.t)
+    ~(normalize : Path.normalization)
     ~(pos : Position.t)
     ~(code : string)
     ~(current_file : Path.t)
@@ -29,6 +34,7 @@ let get_files_for_completions
   else []
 
 
+(** Helper to create completion items from file names. *)
 let complete_files (files : string list) : CompletionItem.t list =
   List.map files ~f:(fun file ->
       CompletionItem.create

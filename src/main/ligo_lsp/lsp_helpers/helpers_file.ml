@@ -4,4 +4,6 @@ let is_stdlib (file : string) : bool =
   String.(file = "")
 
 
+(** This heuristic checks whether the given file refers to a file defined within a LIGO
+    registry package. *)
 let is_packaged = Ligo_api.Api_helpers.is_packaged

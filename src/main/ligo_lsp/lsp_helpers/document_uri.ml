@@ -13,8 +13,13 @@ type internal_replication =
 
 let t_of_sexp : Sexp.t -> t = Obj.magic internal_replication_of_sexp
 let sexp_of_t : t -> Sexp.t = Obj.magic sexp_of_internal_replication
-let to_path ~(normalize : string -> Path.t) : t -> Path.t = normalize <@ to_path
+
+(** Convert a URI into a path. *)
+let to_path ~(normalize : Path.normalization) : t -> Path.t = normalize <@ to_path
+
+(** Convert a path into a URI. *)
 let of_path : Path.t -> t = of_path <@ Path.to_string
+
 let pp (ppf : Format.formatter) : t -> unit = Format.fprintf ppf "%s" <@ to_string
 
 let%expect_test "uri to sexp" =

@@ -1,12 +1,15 @@
 open Common
 open Lsp_helpers
 
+(** Represents a distinct namespace for terms, types, and modules. *)
 type def_scope =
   | Term_scope
   | Type_scope
   | Module_scope
 
-let in_scope (def : Def.t) (scope : def_scope) =
+(** Checks whether the provided definition is in scope. Note that modules are always in
+    scope. *)
+let in_scope (def : Def.t) (scope : def_scope) : bool =
   match def, scope with
   | Module _, (Term_scope | Type_scope | Module_scope) ->
     true (* We'll show modules for all definition scopes *)
@@ -15,8 +18,10 @@ let in_scope (def : Def.t) (scope : def_scope) =
   | _ -> false
 
 
+(** Provides completions for the fields from the provided reference position of a module
+    variable. *)
 let get_module_from_pos
-    ~(normalize : string -> Path.t)
+    ~(normalize : Path.normalization)
     ({ path; syntax; definitions; _ } : _ Common.input)
     (scope : def_scope)
     (module_pos : Position.t)
@@ -53,8 +58,9 @@ let get_module_from_pos
   | Variable _ | Type _ | Label _ -> None
 
 
+(** Provides completions for the fields from the provided module path. *)
 let module_path_impl
-    ~(normalize : string -> Path.t)
+    ~(normalize : Path.normalization)
     (module_names_before_cursor : lexeme wrap list)
     (input : _ Common.input)
     (scope : def_scope)

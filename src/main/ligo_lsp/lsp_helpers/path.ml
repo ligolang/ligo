@@ -1,6 +1,7 @@
 open Imports
 
 type t = UnsafePath of string [@@unboxed] [@@deriving eq, ord, sexp, hash]
+type normalization = string -> t
 
 let to_string (UnsafePath a) = a
 
@@ -24,16 +25,14 @@ let to_string_with_canonical_drive_letter : t -> string =
   if Sys.unix then to_string else String.capitalize <@ to_string
 
 
-let from_absolute : string -> t = fun p -> UnsafePath (normalise p)
+let from_absolute : normalization = fun p -> UnsafePath (normalise p)
 
-let from_relative : string -> t =
+let from_relative : normalization =
  fun p ->
   let abs_path = Filename.concat (Caml.Sys.getcwd ()) p in
   from_absolute abs_path
 
 
-(** Create a filename which is relative to the base filename.
-  The resulting type is [string] since it's expected for [Path.t] to be always absolute. *)
 let make_relative : t -> t -> string =
  fun base p -> FilePath.make_relative (to_string base) (to_string p)
 

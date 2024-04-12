@@ -7,6 +7,8 @@ type 'a fold_control = 'a Cst_shared.Fold.fold_control
 (* TODO use this in Scopes instead of `Loc` and `LSet` *)
 
 module Loc_in_file = struct
+  (** It's useful to bundle the path to a file and a given range together for a variety of
+      requests where results from multiple files may be present. *)
   type t =
     { path : Path.t
     ; range : Range.t
@@ -17,13 +19,17 @@ module Loc_in_file = struct
 end
 
 module Def_location = struct
+  (** Depending on the symbol we're dealing with, we might find a [File] to some
+      user-written file or registry package, a symbol declared in LIGO's [StdLib], or a
+      [Virtual] location. *)
   type t =
     | File of Loc_in_file.t
     | StdLib of { range : Range.t }
     | Virtual of string
   [@@deriving eq, ord, sexp]
 
-  let of_loc : normalize:(string -> Path.t) -> Loc.t -> t =
+  (** Convert a {!Loc.t} into a {t}. *)
+  let of_loc : normalize:Path.normalization -> Loc.t -> t =
    fun ~normalize -> function
     | File region when Helpers_file.is_stdlib region#file ->
       StdLib { range = Range.of_region region }
@@ -36,13 +42,16 @@ end
 
 module Def_locations = Set.Make (Def_location)
 
+(** For debugging. Convert a [t] into a [string]. *)
 let to_string (def : t) = Format.asprintf "%a" Scopes.PP.definitions [ def ]
 
-let get_location : normalize:(string -> Path.t) -> Scopes.def -> Def_location.t =
+(** Gets the range (not declaration range) of a [t]. *)
+let get_location : normalize:Path.normalization -> Scopes.def -> Def_location.t =
  fun ~normalize -> Def_location.of_loc ~normalize <@ Scopes.Types.get_range
 
 
-let get_path : normalize:(string -> Path.t) -> Scopes.def -> Path.t option =
+(** Gets the path where a [t] was declared. *)
+let get_path : normalize:Path.normalization -> Scopes.def -> Path.t option =
  fun ~normalize ->
   Def_location.(
     function
@@ -51,7 +60,8 @@ let get_path : normalize:(string -> Path.t) -> Scopes.def -> Path.t option =
   <@ get_location ~normalize
 
 
-let references_getter : normalize:(string -> Path.t) -> Scopes.def -> Def_locations.t =
+(** Gets a set with all the references of the given definition. *)
+let references_getter : normalize:Path.normalization -> t -> Def_locations.t =
  fun ~normalize def ->
   let module LSet = Scopes.Types.LSet in
   let lset =
@@ -66,9 +76,9 @@ let references_getter : normalize:(string -> Path.t) -> Scopes.def -> Def_locati
   @@ Sequence.of_seq (LSet.to_seq lset)
 
 
-let is_reference
-    : normalize:(string -> Path.t) -> Position.t -> Path.t -> Scopes.def -> bool
-  =
+(** Checks whether the given definition is a reference to the symbol located at the given
+    path and position (if there is no symbol there it will return [false]). *)
+let is_reference : normalize:Path.normalization -> Position.t -> Path.t -> t -> bool =
  fun ~normalize pos file definition ->
   let check_pos : Def_location.t -> bool = function
     | File { path; range } -> Range.contains_position pos range && Path.equal path file
@@ -98,6 +108,8 @@ let fold_definitions : init:'a -> f:('a -> t -> 'a fold_control) -> definitions 
   go init definitions
 
 
+(** Searches for a definition matching the predicate [f], returning the first one for
+    which it has returned [Some]. *)
 let find_map : f:(t -> 'a option) -> definitions -> 'a option =
  fun ~f ->
   fold_definitions ~init:None ~f:(fun acc def ->
@@ -106,10 +118,15 @@ let find_map : f:(t -> 'a option) -> definitions -> 'a option =
       | None -> Continue (f def))
 
 
+(** Searches for a definition matching the predicate [f], returning the first one for
+    which it has returned [true]. *)
 let find : f:(t -> bool) -> definitions -> t option =
  fun ~f -> find_map ~f:(fun def -> Option.some_if (f def) def)
 
 
+(** Filters the definitions while mapping each element, removing all definitions that
+    caused [f] to return [None]. The returned list of elements is flattened. This
+    function visits every module's definitions even if the predicate returned [None]. *)
 let filter_map : f:(t -> 'a option) -> definitions -> 'a list =
  fun ~f ->
   List.rev
@@ -117,11 +134,17 @@ let filter_map : f:(t -> 'a option) -> definitions -> 'a list =
          Continue (Option.value_map ~default:acc ~f:(fun x -> x :: acc) (f def)))
 
 
+(** Filters the definitions while removing all definitions that caused [f] to return
+    [false]. The returned list of definitions is flattened. This function visits every
+    module's definitions even if the predicate returned [false]. *)
 let filter : f:(t -> bool) -> definitions -> t list =
  fun ~f -> filter_map ~f:(fun def -> Option.some_if (f def) def)
 
 
-let filter_file : normalize:(string -> Path.t) -> file:Path.t -> definitions -> t list =
+(** Filters the definitions while removing all definitions that were not declared in
+    [file]. The returned list of definitions is flattened. This function does not visit a
+    module's inner definitions if that module was not declared in [file]. *)
+let filter_file : normalize:Path.normalization -> file:Path.t -> definitions -> t list =
  fun ~normalize ~file ->
   fold_definitions ~init:[] ~f:(fun acc def ->
       match Scopes.Types.get_decl_range def with
@@ -130,22 +153,25 @@ let filter_file : normalize:(string -> Path.t) -> file:Path.t -> definitions -> 
       | Virtual _ -> Stop)
 
 
+(** Gets the definition that is a reference to the symbol located at the given path and
+    position (if there is no symbol there it will return [None]). *)
 let get_definition
-    : normalize:(string -> Path.t) -> Position.t -> Path.t -> definitions -> t option
+    : normalize:Path.normalization -> Position.t -> Path.t -> definitions -> t option
   =
  fun ~normalize pos path definitions ->
   find ~f:(is_reference ~normalize pos path) definitions
 
 
-(* E.g. when [type t = A | B], the type info for A would have
-   var_name [Some <tvar for t>]
-   and contents A | B (which is a TSum)  *)
+(** Returns the declaration name of a type (if there is one) as well as that type's body.
+    E.g. when [type t = A | B], the type info for [A] would have [var_name] as
+    [Some t] (where [t] is a [Ligo_prim.Type_var.t] and [contents] as [A | B] (which is a
+    [T_sum]). *)
 type type_info =
   { var_name : Ast_core.type_expression option
   ; contents : Ast_core.type_expression
   }
 
-(* Use most compact type expression available *)
+(** Use the most compact type expression available. *)
 let use_var_name_if_available : type_info -> Ast_core.type_expression =
  fun { var_name; contents } -> Option.value ~default:contents var_name
 
@@ -199,6 +225,8 @@ let get_type ~(use_module_accessor : bool) (vdef : Scopes.Types.vdef) : type_inf
   | Unresolved -> None
 
 
+(** A definition may have line or block comments attached to it, which may be easily
+    retrieved using this function. *)
 let get_comments : t -> string list = function
   | Variable vdef ->
     (match vdef.attributes with
@@ -218,10 +246,16 @@ let get_comments : t -> string list = function
   | Label _ -> []
 
 
+(** Hierarchies of declarations. The hierarchy is based on the ranges of each symbol. A
+    symbol [a] is nested inside another symbol [b] if [a] was declared inside [b]. More
+    precisely, [a] is nested in [b] if the declaration range of [a] is contained in the
+    declaration range of [b]. *)
 module Hierarchy = struct
+  (** A structure holding a definition hierarchy. *)
   type t = Scopes.def Rose.forest
 
-  let create : normalize:(string -> Path.t) -> definitions -> t =
+  (** Turn definitions into a hierarchy. *)
+  let create : normalize:Path.normalization -> definitions -> t =
    fun ~normalize defs ->
     Rose.map_forest ~f:Tuple3.get3
     @@ Rose.forest_of_list
@@ -245,8 +279,10 @@ module Hierarchy = struct
            | Virtual _ -> None)
 
 
+  (** Finds all definitions that are in-scope at the given file and position. The provided
+      module path should be the one at the given position. *)
   let scope_at_point
-      ~(normalize : string -> Path.t)
+      ~(normalize : Path.normalization)
       (file : Path.t)
       (point : Position.t)
       (mod_path : Scopes.Uid.t list)

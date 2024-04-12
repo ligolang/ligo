@@ -1,5 +1,8 @@
 open Lsp_helpers
 
+(** Creates a folding range out of the given kind and region. The region will be
+    appropriately converted from the LIGO format (1-indexed lines, 0-indexed characters)
+    to the LSP format (0-indexed lines, 0-indexed columns). *)
 let mk_folding_range : FoldingRangeKind.t -> Region.t -> FoldingRange.t option =
  fun kind reg ->
   if reg#start#line = reg#stop#line
@@ -17,14 +20,22 @@ let mk_folding_range : FoldingRangeKind.t -> Region.t -> FoldingRange.t option =
        FoldingRange.create ~startLine ~startCharacter ~endLine ~endCharacter ~kind ())
 
 
+(** Creates a folding range with [FoldingRangeKind.Region] out of the given region. The
+    region will be appropriately converted from the LIGO format (1-indexed lines,
+    0-indexed characters) to the LSP format (0-indexed lines, 0-indexed columns). *)
 let mk_region : Region.t -> FoldingRange.t option =
   mk_folding_range FoldingRangeKind.Region
 
 
+(** Creates a folding range with [FoldingRangeKind.Imports] out of the given region. The
+    region will be appropriately converted from the LIGO format (1-indexed lines,
+    0-indexed characters) to the LSP format (0-indexed lines, 0-indexed columns). *)
 let mk_imports : Region.t -> FoldingRange.t option =
   mk_folding_range FoldingRangeKind.Imports
 
 
+(** Folds the CameLIGO CST, collecting folding ranges that we believe that might be
+    interesting to the user. *)
 let folding_range_cameligo : Cst.Cameligo.t -> FoldingRange.t list option =
  fun cst ->
   let open Cst_cameligo.Fold in
@@ -41,6 +52,8 @@ let folding_range_cameligo : Cst.Cameligo.t -> FoldingRange.t list option =
   Some (fold_cst [] (Fun.flip List.cons) get_range cst)
 
 
+(** Folds the JsLIGO CST, collecting folding ranges that we believe that might be
+    interesting to the user. *)
 let folding_range_jsligo : Cst.Jsligo.t -> FoldingRange.t list option =
  fun cst ->
   let open Cst_jsligo.Fold in
@@ -61,6 +74,8 @@ let folding_range_jsligo : Cst.Jsligo.t -> FoldingRange.t list option =
   Some (fold_cst [] (Fun.flip List.cons) get_range cst)
 
 
+(** Runs the handler for folding range. This is usually called when the document is opened
+    or after the user types something. *)
 let on_req_folding_range : Path.t -> FoldingRange.t list option Handler.t =
  fun file ->
   Handler.with_cst file ~default:None

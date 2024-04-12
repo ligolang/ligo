@@ -1,5 +1,8 @@
 open Lsp_helpers
 
+(** A [Diagnostic.t] has many fields that we don't use, which makes working with it and
+    writing tests a bit annoying. This data type holds just the data we currently care
+    about. *)
 type simple_diagnostic =
   { severity : DiagnosticSeverity.t
   ; message : string
@@ -8,6 +11,7 @@ type simple_diagnostic =
   }
 [@@deriving compare]
 
+(** Turn a simple diagnostic into a LSP one. *)
 let from_simple_diagnostic : simple_diagnostic -> Diagnostic.t =
  fun { stage; severity; message; location } ->
   Diagnostic.create
@@ -17,6 +21,10 @@ let from_simple_diagnostic : simple_diagnostic -> Diagnostic.t =
     ()
 
 
+(** Partition the diagnostics into each document that produced them, and sort the
+    diagnostics such that the diagnostics from the current file come before every other.
+    This function also accepts the maximum number of diagnostics, such that only the first
+    provided number of diagnostics will be taken. *)
 let partition_simple_diagnostics
     (current_path : Path.t)
     (max_number_of_problems : int option)
@@ -70,7 +78,7 @@ let filter_diagnostics : Main_errors.all list -> Main_errors.all list =
 
 
 (** Extract all errors and warnings for the given scopes and collect them in a list. *)
-let get_diagnostics ~(normalize : string -> Path.t) (current_path : Path.t)
+let get_diagnostics ~(normalize : Path.normalization) (current_path : Path.t)
     : Ligo_interface.defs_and_diagnostics -> simple_diagnostic list
   =
  fun { errors

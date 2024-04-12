@@ -1,8 +1,10 @@
 open Handler
 open Lsp_helpers
 
+(** See {!Directive.extract_range_and_target}. Extracts a range and target to create a
+    document link. *)
 let extract_link_from_directive
-    ~(normalize : string -> Path.t)
+    ~(normalize : Path.normalization)
     ~(relative_to_dir : Path.t)
     ~(mod_res : Preprocessor.ModRes.t option)
     : Preprocessor.Directive.t -> DocumentLink.t option
@@ -13,6 +15,10 @@ let extract_link_from_directive
     ~f:(fun (range, target) -> DocumentLink.create ~range ~target ())
 
 
+(** Runs the handler for document link. This is usually called when file is opened and on
+    every edit. For VSCode, the document link might run just after some delay when the
+    last edit is made, so we provide the choice to the user to process the document on
+    this request for better responsiveness. *)
 let on_req_document_link (file : Path.t) : DocumentLink.t list option handler =
   let@ { diagnostics_pull_mode; _ } = ask_config in
   let@ () = send_debug_msg @@ "On document_link:" ^ Path.to_string file in

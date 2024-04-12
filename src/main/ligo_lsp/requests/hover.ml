@@ -1,12 +1,15 @@
 open Handler
 open Lsp_helpers
 
+(** A default [pp_mode] that looks good with hovers. *)
 let hovers_pp_mode : Pretty.pp_mode =
   { width = Helpers_pretty.default_line_width_for_hovers; indent = 2 }
 
 
+(** Replaces [T_variable]s in the provided core type for [T_module_accessor]s using the
+    module path at the given position. The module path is resolved if it's an alias. *)
 let insert_module_path
-    ~(normalize : string -> Path.t)
+    ~(normalize : Path.normalization)
     (input_d : Completion_lib.Common.input_d)
     (type' : Ast_core.type_expression)
     : Ast_core.type_expression
@@ -95,11 +98,14 @@ let insert_module_path
           type')
 
 
+(** Retuns the hovers for some definition. That is, its prettified type/signature and all
+    documentation comments attached to it. It's possible that it won't be possible to
+    pretty-print it, in which case a non-pretty version will be shown instead. *)
 let hover_string
-    :  normalize:(string -> Path.t) -> Completion_lib.Common.input_d -> Scopes.def
+    :  Completion_lib.Common.input_d -> Scopes.def
     -> [> `List of MarkedString.t list ] Handler.t
   =
- fun ~normalize input_d def ->
+ fun input_d def ->
   let syntax = Dialect_cst.to_syntax_type input_d.cst in
   let handle_pretty_print_result (name : string) = function
     | `Ok str -> return str
@@ -131,6 +137,7 @@ let hover_string
       (Pretty.pretty_print_variant hovers_pp_mode ~syntax (label, te))
   in
   let language = Some (Syntax.to_string syntax) in
+  let@ normalize = ask_normalize in
   let doc_comment_hovers =
     let comments = Def.get_comments def in
     let doc_comments =
@@ -296,19 +303,21 @@ let hover_string
     return @@ `List (printed_module :: doc_comment_hovers)
 
 
+(** Runs the handler for the hover request. This is normally called when the user's mouse
+    hovers over a symbol. *)
 let on_req_hover : Position.t -> Path.t -> Hover.t option Handler.t =
  fun pos file ->
-  with_cst file ~default:None
-  @@ fun cst ->
   with_cached_doc file ~default:None
   @@ fun { definitions; syntax; _ } ->
   let@ normalize = ask_normalize in
   when_some' (Def.get_definition ~normalize pos file definitions)
   @@ fun definition ->
+  with_cst file ~default:None
+  @@ fun cst ->
   let input =
     Completion_lib.Common.mk_input_d ~cst ~syntax ~path:file ~definitions ~pos
   in
-  let@ (`List strings) = hover_string ~normalize input definition in
+  let@ (`List strings) = hover_string input definition in
   let replace =
     Parsing_shared.Errors.ErrorWrapper.replace_with
       (Helpers_pretty.unresolved_type_as_comment syntax)

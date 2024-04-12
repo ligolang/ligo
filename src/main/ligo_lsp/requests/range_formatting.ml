@@ -11,6 +11,7 @@ open Lsp_helpers
 type declaration =
   (Cst_cameligo.CST.declaration, Cst_jsligo.CST.statement) Dialect_cst.dialect
 
+(** Returns the declaration range of the given declaration. *)
 let decl_range : declaration -> Range.t =
   Range.of_region
   <@ Dialect_cst.from_dialect
@@ -19,6 +20,8 @@ let decl_range : declaration -> Range.t =
        }
 
 
+(** Collects all top-level declarations from the provided CST (does not visit inner
+    modules). *)
 let decls_of_cst : Dialect_cst.t -> declaration Nseq.nseq =
   Dialect_cst.from_dialect
     { cameligo =
@@ -33,6 +36,7 @@ let decls_of_cst : Dialect_cst.t -> declaration Nseq.nseq =
     }
 
 
+(** Prints the provided declaration in the given syntax. *)
 let print_decl : Pretty.pp_mode -> declaration -> string =
  fun pp_mode ->
   Pretty.with_pp_mode
@@ -46,6 +50,7 @@ let print_decl : Pretty.pp_mode -> declaration -> string =
   inserted by range formatting in case we're not stripping it manually *)
 let strip_trailing_newline (s : string) : string = String.rstrip s
 
+(** Formats declarations whose ranges are completely inside the provided formatting range. *)
 let range_formatting
     (pp_mode : Pretty.pp_mode)
     (decls : declaration Nseq.nseq)
@@ -70,6 +75,9 @@ let range_formatting
 
 
 (* FIXME #1765: use tab size from FormattingOptions *)
+
+(** Runs the handler for the document formatting request. This is normally invoked when
+    the user clicks the "Format Selection" button. *)
 let on_req_range_formatting
     : Path.t -> Range.t -> FormattingOptions.t -> TextEdit.t list option Handler.t
   =
