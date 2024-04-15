@@ -15,7 +15,7 @@ const matrixMultiply = (m1: map<[int, int], int>,
     Test.assert_with_error(m1c == m2r, 
     "Error: The number of columns in 1st matrix must be equal to number of rows in 2nd matrix");
 
-    let m3 = Map.literal(list([]));
+    let m3 : map<[int, int], int> = Map.literal([]);
     for (let i = 0 ; i < m1r ; i++) {
         for (let j = 0 ; j < m2c ; j++) {
             let value = 0;
@@ -35,7 +35,7 @@ const test_3x1_1x3 = (() => {
         Map.literal(list([[[0, 0], 1], 
                           [[1, 0], 2], 
                           [[2, 0], 3]])), 3, 1, 
-        Map.literal(list([[[0, 0], 4], [[0, 1], 5], [[0, 2], 6]])), 1, 3);
+        Map.literal([[[0, 0], 4], [[0, 1], 5], [[0, 2], 6]]), 1, 3);
     Test.assert(m == Map.literal(list([
         [[0, 0], 4] , [[0, 1], 5] , [[0, 2], 6],
         [[1, 0], 8] , [[1, 1], 10], [[1, 2], 12],
@@ -62,7 +62,7 @@ const test_3x3_3x3 = (() => {
 // 1 x 3 * 3 * 1 => 1 x 1
 const test_1x3_3x1 = (() => {
     let m = matrixMultiply(
-        Map.literal(list([[[0, 0], 1], [[0, 1], 2], [[0, 2], 3]])), 1, 3, 
+        Map.literal([[[0, 0], 1], [[0, 1], 2], [[0, 2], 3]]), 1, 3, 
         Map.literal(list([[[0, 0], 4],
                           [[1, 0], 5],
                           [[2, 0], 6]])), 3, 1);

@@ -428,15 +428,31 @@ let rec expression : AST.expression -> references -> env -> references =
         let env = List.fold_right vars ~init:env ~f:Env.add_vvar in
         expression body refs env)
   | E_record e_label_map ->
-    let labels = Record.labels e_label_map in
     let refs =
+      let labels = Record.labels e_label_map in
       List.fold_left
         ~init:refs
         ~f:(fun acc label -> References.add_ctor label env acc)
         labels
     in
-    let es = Record.values e_label_map in
-    List.fold es ~init:refs ~f:(fun refs e -> expression e refs env)
+    Record.fold e_label_map ~init:refs ~f:(fun refs e -> expression e refs env)
+  | E_tuple es ->
+    let refs =
+      let labels = Record.labels_of_tuple es in
+      List.fold_left
+        ~init:refs
+        ~f:(fun acc label -> References.add_ctor label env acc)
+        labels
+    in
+    List.Ne.fold_left es ~init:refs ~f:(fun refs e -> expression e refs env)
+  | E_array items | E_array_as_list items ->
+    List.fold_left items ~init:refs ~f:(fun entry item ->
+        let entry =
+          match item with
+          | Expr_entry entry -> entry
+          | Rest_entry entry -> entry
+        in
+        expression entry refs env)
   | E_accessor { struct_; path } ->
     let refs = References.add_ctor path env refs in
     expression struct_ refs env

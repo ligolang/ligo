@@ -7,6 +7,6 @@ interface FA0 {
 namespace Impl implements FA0 {
   export type storage = int;
 
-  @entry const add = (s : int, k : int) : [list<operation>, int] => [list([]), s + k];
-  @entry const extra = (s : int, k : int) : [list<operation>, int] => [list([]), s - k];
+  @entry const add = (s : int, k : int) : [list<operation>, int] => [[], s + k];
+  @entry const extra = (s : int, k : int) : [list<operation>, int] => [[], s - k];
 }

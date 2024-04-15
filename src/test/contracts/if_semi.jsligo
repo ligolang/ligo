@@ -11,7 +11,7 @@ const sub = (store: storage, delta: int): storage => store - delta;
 function main (action: parameter, store: storage) : [list<operation>, storage] {
   if (true) {
     return [
-      list([]),    // No operations
+      [],    // No operations
       match (action) {
         when(Increment(n)): add (store, n)
         when(Decrement(n)): sub (store, n)
@@ -24,7 +24,7 @@ function main (action: parameter, store: storage) : [list<operation>, storage] {
 function main2 (action: parameter, store: storage) : [list<operation>, storage] {
   if (true) {
     return [
-      list([]),    // No operations
+      [],    // No operations
       match (action) {
         when(Increment(n)): add (store, n)
         when(Decrement(n)): sub (store, n)
@@ -37,7 +37,7 @@ function main2 (action: parameter, store: storage) : [list<operation>, storage] 
 function main3 (action: parameter, store: storage) : [list<operation>, storage] {
   if (true) {
     return [
-      list([]),    // No operations
+      [],    // No operations
       match (action) {
         when(Increment(n)): add (store, n)
         when(Decrement(n)): sub (store, n)
@@ -52,7 +52,7 @@ function main3 (action: parameter, store: storage) : [list<operation>, storage] 
 function main4 (action: parameter, store: storage) : [list<operation>, storage] {
   if (true) {
     return [
-      list([]),    // No operations
+      [],    // No operations
       match (action) {
         when(Increment(n)): add (store, n)
         when(Decrement(n)): sub (store, n)

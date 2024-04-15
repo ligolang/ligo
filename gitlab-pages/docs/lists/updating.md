@@ -23,8 +23,8 @@ let evens_zeroed = List.update_with (fun x -> x mod 2 = 0n) 0 nats
 <Syntax syntax="jsligo">
 
 ```jsligo group=list_updating
-const nats = list([0, 1, 2, 3, 4]);
-// evens_zeroed == list([0, 1, 0, 3, 0])
+const nats : list<int> = [0, 1, 2, 3, 4];
+// evens_zeroed == [0, 1, 0, 3, 0]
 const evens_zeroed = List.update_with(x => x % 2 == 0n, 0, nats);
 ```
 
@@ -61,7 +61,7 @@ list by `v`.
 
 ```jsligo group=list_updating
 const f = x => x % 2 == 0n ? None() : Some(x*x);
-// odds == list([0, 1, 2, 9, 4])
+// odds == [0, 1, 2, 9, 4]
 const odds_squared = List.update(f, nats);
 ```
 

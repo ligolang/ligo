@@ -190,12 +190,6 @@ let e_ascription ~loc anno_expr type_annotation : expression =
   e_ascription ~loc { anno_expr; type_annotation } ()
 
 
-let get_e_tuple t =
-  match t with
-  | E_record r -> Some (List.map ~f:snd @@ Record.tuple_of_record r)
-  | _ -> None
-
-
 let get_e_application t =
   match t with
   | E_application { lamb; args } -> Some (lamb, args)
@@ -220,25 +214,6 @@ let get_e_ascription a =
 let get_e_lambda t =
   match t with
   | E_lambda lam -> Some lam
-  | _ -> None
-
-
-(* Same as get_e_pair *)
-let extract_pair : expression -> (expression * expression) option =
- fun e ->
-  match e.expression_content with
-  | E_record record ->
-    (match Record.to_list record with
-    | [ (Label ("0", _), a); (Label ("1", _), b) ]
-    | [ (Label ("1", _), b); (Label ("0", _), a) ] -> Some (a, b)
-    | _ -> None)
-  | _ -> None
-
-
-let extract_record : expression -> (Label.t * expression) list option =
- fun e ->
-  match e.expression_content with
-  | E_record lst -> Some (Record.to_list lst)
   | _ -> None
 
 

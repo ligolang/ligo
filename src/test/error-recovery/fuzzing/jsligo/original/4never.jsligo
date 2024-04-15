@@ -7,7 +7,7 @@ type storage = int;
 
 const main = ([action, store] : [parameter, storage]) : [list<operation>, storage] => {
   return [
-   (list([]) as list <operation>),
+   ([] as list <operation>),
    (match (action) {
     when (Increment(n)) : store + n;
     when (Extend(k)) : (Tezos.never(k) as storage)})

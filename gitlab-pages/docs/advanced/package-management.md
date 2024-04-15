@@ -132,13 +132,13 @@ let test =
 #include "main.jsligo"
 
 const test = (() => {
-    let storage = Test.compile_value(list([1, 2, 3]));
+    let storage = Test.compile_value([1, 2, 3]);
     let [addr, _, _] = Test.originate_from_file("./main.jsligo",
-    "main", (list([]) as list<string>), storage, 0tez);
+    "main", ([] as list<string>), storage, 0tez);
     let taddr : typed_address<parameter, storage> = Test.cast_address(addr);
     let contr : contract<parameter> = Test.to_contract(taddr);
     Test.transfer_to_contract_exn(contr, Reverse(), 1mutez);
-    assert (Test.get_storage(taddr) == list([3, 2, 1]))
+    assert (Test.get_storage(taddr) == [3, 2, 1])
 })();
 
 ```
@@ -253,7 +253,7 @@ Included directives:
   #import "file_path" "module_name";;
 In  [1]: #import "@ligo/bigarray/lib/bigarray.mligo" "BA";;
 Out [1]: Done.
-In  [2]: BA.concat (list([1, 2, 3]))(list([4, 5, 6]));;
+In  [2]: BA.concat ([1, 2, 3])([4, 5, 6]);;
 Out [2]: CONS(1 , CONS(2 , CONS(3 , CONS(4 , CONS(5 , CONS(6 , LIST_EMPTY()))))))
 In  [3]:
 ```
@@ -358,13 +358,13 @@ let reverse (type a) (xs : a list) : a list =
 /* LIGO library for working with lists */
 
 export const concat = <T>(xs : list<T>, ys : list<T>) : list<T> => {
-    let f = ([x, ys] : [T, list<T>]) : list<T> => list([x, ...ys]);
+    let f = ([x, ys] : [T, list<T>]) : list<T> => [x, ...ys];
     return List.fold_right(f, xs, ys)
 }
 
 export const reverse = <T>(xs : list<T>) : list<T> => {
-    let f = ([ys, x] : [list<T>, T]) : list<T> => list([x, ...ys]);
-    return List.fold_left(f, (list([]) as list<T>), xs)
+    let f = ([ys, x] : [list<T>, T]) : list<T> => [x, ...ys];
+    return List.fold_left(f, ([] as list<T>), xs)
 }
 
 ```
@@ -399,15 +399,15 @@ let test_reverse =
 #include "list.jsligo"
 
 const test_concat = (() => {
-    let xs = list([1, 2, 3]);
-    let ys = list([4, 5, 6]);
+    let xs : list<int> = [1, 2, 3];
+    let ys : list<int> = [4, 5, 6];
     let zs = concat(xs, ys);
-    assert (zs == list([1, 2, 3, 4, 5, 6]))
+    assert (zs == [1, 2, 3, 4, 5, 6])
 })();
 
 const test_reverse = (() => {
-    let xs = list([1, 2, 3]);
-    assert (reverse(xs) == list([3, 2, 1]))
+    let xs : list<int> = [1, 2, 3];
+    assert (reverse(xs) == [3, 2, 1])
 })();
 
 ```

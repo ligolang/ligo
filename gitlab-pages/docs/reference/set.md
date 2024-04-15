@@ -125,7 +125,7 @@ The call `literal [e1; ...; en]` is a set containing exactly the
 
 <Syntax syntax="jsligo">
 
-The call `literal(list([e1, ..., en]))` is a set containing
+The call `literal([e1, ..., en])` is a set containing
     exactly the elements in the list. Note: The list must be literal,
     not an expression (compile-time list of values).
 

@@ -172,7 +172,7 @@ like so:
 ```shell
 ligo run evaluate-expr \
   gitlab-pages/docs/language-basics/src/loops/collection.jsligo \
-  'sum_list(list([1,2,3]))'
+  'sum_list([1,2,3])'
 # Outputs: 6
 ```
 
@@ -191,7 +191,7 @@ like so:
 ```shell
 ligo run evaluate-expr \
   gitlab-pages/docs/language-basics/src/loops/collection.jsligo \
-  'sum_set(Set.literal(list([1,2,2,3])))'
+  'sum_set(Set.literal([1,2,2,3]))'
 # Outputs: 6
 ```
 
@@ -218,7 +218,7 @@ like so:
 ```shell
 ligo run evaluate-expr \
   gitlab-pages/docs/language-basics/src/loops/collection.jsligo \
- 'sum_map(Map.literal(list([ ["1", 1], ["2", 2], ["3", 3] ])))'
+ 'sum_map(Map.literal([ ["1", 1], ["2", 2], ["3", 3] ]))'
 # Outputs: ( "123", 6 )
 ```
 

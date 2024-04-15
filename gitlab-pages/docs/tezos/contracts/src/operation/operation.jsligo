@@ -9,5 +9,5 @@ const main = (_: string, storage: string) : @return => {
                           (None() as option<key_hash>),
                           300000000mutez,
                           "one");
-  return [list([op]), storage];
+  return [[op], storage];
 }

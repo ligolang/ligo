@@ -6,10 +6,10 @@ namespace C {
   /* Two entrypoints */
 
   @entry
-  function increment (store: storage, delta: int) : [list<operation>, storage] { return [list([]),store + delta] }
+  function increment (store: storage, delta: int) : [list<operation>, storage] { return [[],store + delta] }
 
   @entry
-  function decrement (store: storage, delta: int) : [list<operation>, storage] { return [list([]),store - delta] }
+  function decrement (store: storage, delta: int) : [list<operation>, storage] { return [[],store - delta] }
 
 }
 

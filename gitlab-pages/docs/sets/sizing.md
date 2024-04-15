@@ -23,7 +23,7 @@ Note: See the predefined
 <Syntax syntax="jsligo">
 
 ```jsligo group=cardinal
-const my_set: set<int> = Set.literal(list([3, 2, 2, 1]));
+const my_set: set<int> = Set.literal([3, 2, 2, 1]);
 const cardinal : nat = Set.size(my_set); // == 3
 ```
 

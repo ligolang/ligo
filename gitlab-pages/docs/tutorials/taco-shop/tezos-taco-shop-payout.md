@@ -116,7 +116,7 @@ namespace TacoShop {
       taco_kind_index,
       (Some ({...taco_kind, current_stock : abs (taco_kind.current_stock - 1n) })),
       taco_shop_storage );
-    return [list([]), taco_shop_storage]
+    return [[], taco_shop_storage]
   }
   };
 };
@@ -231,7 +231,7 @@ let operations : operation list = [payoutOperation]
 
 ```jsligo group=ex1
 const payoutOperation : operation = Tezos.transaction (unit, Tezos.get_amount (), receiver) ;
-const operations : list <operation> = list([payoutOperation]);
+const operations : list <operation> = [payoutOperation];
 ```
 
 </Syntax>
@@ -381,7 +381,7 @@ namespace TacoShop {
         when(None()): failwith ("Insufficient balance")
       };
       const op2 = Tezos.transaction (unit, donationAmount, donationReceiver);
-      const operations : list<operation> = list([ op1 , op2 ]);
+      const operations : list<operation> = [ op1 , op2 ];
 
       return [operations, taco_shop_storage]
     }
@@ -500,7 +500,7 @@ const op1 = match ((Tezos.get_amount ()) - donationAmount) {
   when(None()): failwith ("Insufficient balance")
 };
 const op2 = Tezos.transaction (unit, donationAmount, donationReceiver);
-const operations : list<operation> = list([ op1 , op2 ]);
+const operations : list<operation> = [ op1 , op2 ];
 ```
 
 </Syntax>

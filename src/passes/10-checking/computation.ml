@@ -296,6 +296,12 @@ module Options = struct
     let open Let_syntax in
     let%map options = options () in
     options.no_colour
+
+
+  let array_as_list () =
+    let open Let_syntax in
+    let%map options = options () in
+    options.array_as_list
 end
 
 type 'a exit =

@@ -53,9 +53,13 @@ let tuple_of_record (m : _ t) =
   Base.Sequence.to_list @@ Base.Sequence.unfold ~init:0 ~f:aux
 
 
-let record_of_tuple (l : _ list) =
-  of_list @@ List.mapi ~f:(fun i v -> Label.of_int i, v) l
+let labels_of_tuple l =
+  let l = Simple_utils.List.Ne.to_list l in
+  List.mapi ~f:(fun i _ -> Label.of_int i) l
 
+
+let record_of_tuple l = of_list @@ List.mapi ~f:(fun i v -> Label.of_int i, v) l
+let record_of_proper_tuple l = record_of_tuple (Simple_utils.List.Ne.to_list l)
 
 module PP = struct
   open Format
@@ -68,24 +72,18 @@ module PP = struct
     fprintf ppf "%a" Simple_utils.PP_helpers.(list_sep new_pp sep) lst
 
 
-  let tuple_sep_expr value sep ppf m =
-    assert (is_tuple m);
-    let lst = tuple_of_record m in
-    let new_pp ppf (_, v) = fprintf ppf "%a" value v in
-    fprintf ppf "%a" Simple_utils.PP_helpers.(list_sep new_pp sep) lst
-
-
   (* Prints records which only contain the consecutive fields
     0..(cardinal-1) as tuples *)
-  let tuple_or_record_sep_expr value format_record sep_record format_tuple sep_tuple ppf m
-    =
+  let tuple_or_record_sep_expr value format_record sep_record ppf m =
     if is_tuple m
-    then fprintf ppf format_tuple (tuple_sep_expr value (tag sep_tuple)) m
+    then (
+      let l = List.map ~f:snd (tuple_of_record m) in
+      Tuple.pp_list value ppf l)
     else fprintf ppf format_record (record_sep_expr value (tag sep_record)) m
 
 
   let tuple_or_record_sep_expr value =
-    tuple_or_record_sep_expr value "@[<hv 7>record[%a]@]" " ,@ " "@[<hv 2>( %a )@]" " ,@ "
+    tuple_or_record_sep_expr value "@[<hv 7>record[%a]@]" " ,@ "
 end
 
 let pp f ppf r = Format.fprintf ppf "%a" (PP.tuple_or_record_sep_expr f) r

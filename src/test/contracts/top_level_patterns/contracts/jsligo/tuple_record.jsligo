@@ -20,7 +20,7 @@ const [ { a : a4 , b : b4 , c : c4 }
 type storage = [nat, int, string]
 
 const main = (_ : unit, _ : storage) : [list<operation>, storage]
-  => [list([]), [ a1 + a2 + a3 + a4 + a5 + a6
+  => [[], [ a1 + a2 + a3 + a4 + a5 + a6
         , b1 + b2 + b3 + b4 + b5 + b6
         , c1 + c2 + c3 + c4 + c5 + c6
       ]]

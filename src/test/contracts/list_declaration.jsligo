@@ -1,4 +1,4 @@
 @entry
 const main = (_ : int, s : int) : [list<operation>, int] => {
-  return [(list([]) as list<operation>), s]
+  return [([] as list<operation>), s]
 };

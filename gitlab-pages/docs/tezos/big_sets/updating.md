@@ -23,7 +23,7 @@ let big_set_without_3 = Big_set.update 3 false nats
 <Syntax syntax="jsligo">
 
 ```jsligo group=big_set_updating
-const nats: big_set<int> = Big_set.literal(list([3, 2, 2, 1]));
+const nats: big_set<int> = Big_set.literal([3, 2, 2, 1]);
 const big_set_with_5 = Big_set.update(5, true, nats);
 const big_set_without_3 = Big_set.update(3, false, nats);
 ```

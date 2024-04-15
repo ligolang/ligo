@@ -9,5 +9,5 @@ const main = (_ : unit, s : int) : [list<operation>, int] => {
     i = i + 1;
   }
 
-  return [(list([]) as list<operation>), acc]
+  return [([] as list<operation>), acc]
 }

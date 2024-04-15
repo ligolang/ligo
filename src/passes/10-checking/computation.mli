@@ -112,6 +112,11 @@ module Options : sig
   (** [no_color ()] returns whether the [--no-color] flag was passed via compiler options.
       This is equivalent to [options () >>| fun opt -> opt.no_colour] *)
   val no_color : unit -> (bool, 'err, 'wrn) t
+
+  (** [array_as_list ()] returns whether the [--feature-infer-array-as-list]
+        flag was passed via compiler options.
+      This is equivalent to [options () >>| fun opt -> opt.array_as_list] *)
+  val array_as_list : unit -> (bool, 'err, 'wrn) t
 end
 
 (** {6 Context} *)

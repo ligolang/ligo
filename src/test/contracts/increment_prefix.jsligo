@@ -5,18 +5,18 @@ namespace IncDec {
   @entry
   function increment (_: unit, store : storage) : ret {
     let s = store
-    return [list([]), ++s];
+    return [[], ++s];
   }
 
   @entry
   function decrement (_: unit, store : storage) : ret {
     let s = store
-    return [list([]), --s];
+    return [[], --s];
   }
 
   @entry
     const reset = (_p : unit, _s : storage) : ret =>
-    [list([]), 0];
+    [[], 0];
 };
 
 const test_increment = (() => {

@@ -2,7 +2,7 @@ namespace C {
   export type storage = unit
   type result = [list<operation>, storage];
 
-  @entry const foo = (_u : unit, s : storage) : result => [list([]), s];
+  @entry const foo = (_u : unit, s : storage) : result => [[], s];
   @view const bar = (_u : unit, s : storage) => s;
 }
 

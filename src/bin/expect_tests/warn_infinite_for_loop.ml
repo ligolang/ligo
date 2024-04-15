@@ -17,7 +17,7 @@ let%expect_test "for loop negative tests" =
           ^^^^^^^^^^^^^^^^
       6 |   };
           ^^^
-      7 |   return [list([]), x]
+      7 |   return [[], x]
 
     Warning: A boolean conditional expression is expected.
     Otherwise this leads to an infinte loop.
@@ -46,7 +46,7 @@ let%expect_test "for loop negative tests" =
           ^^^^^^^^^^^^^^^^^
       6 |   }
           ^^^
-      7 |   return [list([]), y]
+      7 |   return [[], y]
 
     Warning: A boolean conditional expression is expected.
     Otherwise this leads to an infinte loop.
@@ -75,7 +75,7 @@ let%expect_test "for loop negative tests" =
           ^^^^^^^^^^^^^^
       6 |   }
           ^^^
-      7 |   return [list([]), y]
+      7 |   return [[], y]
 
     Warning: A boolean conditional expression is expected.
     Otherwise this leads to an infinte loop.
@@ -104,7 +104,7 @@ let%expect_test "for loop negative tests" =
           ^^^^^^^^^^^^^^
       6 |   }
           ^^^
-      7 |   return [list([]), y]
+      7 |   return [[], y]
 
     Warning: A boolean conditional expression is expected.
     Otherwise this leads to an infinte loop.
@@ -133,7 +133,7 @@ let%expect_test "for loop negative tests" =
           ^^^^^^^^^^^^^^
       6 |   }
           ^^^
-      7 |   return [list([]), x]
+      7 |   return [[], x]
 
     Warning: A boolean conditional expression is expected.
     Otherwise this leads to an infinte loop.
@@ -164,7 +164,7 @@ let%expect_test "for loop negative tests" =
           ^^^^^^^^^^^^^^
       6 |   }
           ^^^
-      7 |   return [list([]), y]
+      7 |   return [[], y]
 
     Warning: A boolean conditional expression is expected.
     Otherwise this leads to an infinte loop.
@@ -189,7 +189,7 @@ let%expect_test "for loop negative tests" =
       3 |   let y = 0;
       4 |   for ( ; ; ) ;
             ^^^^^^^^^^^
-      5 |   return [list([]), y]
+      5 |   return [[], y]
 
     Warning: A boolean conditional expression is expected.
     Otherwise this leads to an infinte loop.
@@ -214,7 +214,7 @@ let%expect_test "for loop negative tests" =
       3 |   let y = 0;
       4 |   for ( ; ; y++) ;
             ^^^^^^^^^^^^^^
-      5 |   return [list([]), y]
+      5 |   return [[], y]
 
     Warning: A boolean conditional expression is expected.
     Otherwise this leads to an infinte loop.
@@ -239,7 +239,7 @@ let%expect_test "for loop negative tests" =
       3 |   let y = 0;
       4 |   for (let _b = 0; ; ) ;
             ^^^^^^^^^^^^^^^^^^^^
-      5 |   return [list([]), y]
+      5 |   return [[], y]
 
     Warning: A boolean conditional expression is expected.
     Otherwise this leads to an infinte loop.
@@ -264,7 +264,7 @@ let%expect_test "for loop negative tests" =
       3 |   let y = 0;
       4 |   for (y = 0; ; ) ;
             ^^^^^^^^^^^^^^^
-      5 |   return [list([]), y]
+      5 |   return [[], y]
 
     Warning: A boolean conditional expression is expected.
     Otherwise this leads to an infinte loop.
@@ -289,7 +289,7 @@ let%expect_test "for loop negative tests" =
       3 |   let x = 0;
       4 |   for (let y = 0 ; ; y++) ;
             ^^^^^^^^^^^^^^^^^^^^^^^
-      5 |   return [list([]), x]
+      5 |   return [[], x]
 
     Warning: A boolean conditional expression is expected.
     Otherwise this leads to an infinte loop.
@@ -316,7 +316,7 @@ let%expect_test "for loop negative tests" =
       3 |   let y = 0;
       4 |   for (y = 0; ; y++) ;
             ^^^^^^^^^^^^^^^^^^
-      5 |   return [list([]), y]
+      5 |   return [[], y]
 
     Warning: A boolean conditional expression is expected.
     Otherwise this leads to an infinte loop.
@@ -333,10 +333,10 @@ let%expect_test "for loop negative tests" =
     [ "compile"; "contract"; test "for_loop/for_loop_initialiser_scope.jsligo" ];
   [%expect
     {|
-    File "../../test/contracts/for_loop/for_loop_initialiser_scope.jsligo", line 6, characters 20-21:
+    File "../../test/contracts/for_loop/for_loop_initialiser_scope.jsligo", line 6, characters 14-15:
       5 |   };
-      6 |   return [list([]), c]
-                              ^
+      6 |   return [[], c]
+                        ^
       7 | };
 
     Variable "c" not found. |}]

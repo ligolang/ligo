@@ -4,4 +4,4 @@ type storage = ticket<string>;
 
 @entry
 const main = (_p: unit, _s: storage): [list<operation>, storage] =>
-  [list([]), Option.unopt(Tezos.join_tickets([b, b]))];
+  [[], Option.unopt(Tezos.join_tickets([b, b]))];

@@ -472,6 +472,18 @@ module Of_Ast = struct
       defs_of_match_cases cases @@ self matchee acc
     (* Record *)
     | E_record r -> Record.fold ~init:acc ~f:(fun acc entry -> self entry acc) r
+    | E_tuple es -> List.Ne.fold_left ~init:acc ~f:(fun acc entry -> self entry acc) es
+    | E_array es | E_array_as_list es ->
+      List.fold_left
+        ~init:acc
+        ~f:(fun acc entry ->
+          let entry =
+            match entry with
+            | Expr_entry entry -> entry
+            | Rest_entry entry -> entry
+          in
+          self entry acc)
+        es
     | E_accessor { struct_; path } ->
       self struct_ acc (* Is it possible to have decl in there ? *)
     | E_update { struct_; path; update } -> self struct_ @@ self update acc

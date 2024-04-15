@@ -48,15 +48,15 @@ type @return = [list<operation>, storage];
 namespace Foo {
   @entry
   const decrement = (param: int, storage: storage) : @return =>
-    [list([]), storage - param];
+    [[], storage - param];
 
   @entry
   const increment = (param: int, storage: storage) : @return =>
-    [list([]), storage + param];
+    [[], storage + param];
 
   @entry
   const reset = (_u: unit, _s: storage) : @return =>
-    [list([]), 0];
+    [[], 0];
 
   @view
   const get_storage = (_: unit, storage: storage) : storage => storage;

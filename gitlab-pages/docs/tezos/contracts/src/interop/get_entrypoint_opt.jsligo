@@ -12,6 +12,6 @@ const main = (p: parameter, s: storage): [list<operation>, storage] => {
       when(None()): failwith ("contract does not match")
     };
   return [
-    list([Tezos.transaction(Left(2), 2mutez, contract)]),
+    [Tezos.transaction(Left(2), 2mutez, contract)],
     s];
 };

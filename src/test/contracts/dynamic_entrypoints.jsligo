@@ -6,10 +6,10 @@ type storage =
 
 @dyn_entry
   const one = (_u: unit, _i: int): [list<operation>, int] =>
-    [list([]), 1];
+    [[], 1];
 
 @dyn_entry
-const tick = (_t : ticket<int>, x : [int, int]) : [list<operation>, [int, int]] => [list([]), x];
+const tick = (_t : ticket<int>, x : [int, int]) : [list<operation>, [int, int]] => [[], x];
 
 @entry
 const call_one = (_u:unit, s : storage) : [list<operation>, storage] =>
@@ -35,6 +35,6 @@ const call_tick = (p : ticket<int>, s : storage) : [list<operation>, storage] =>
 const set_one = (one_v2 : entrypoint<unit, int>, s : storage) : [list<operation>, storage] => {
   const dynamic_entrypoints =
     Dynamic_entrypoints.set(one, (Some(one_v2)), s.dynamic_entrypoints);
-    return [list([]), {...s, dynamic_entrypoints}]
+    return [[], {...s, dynamic_entrypoints}]
 }
 

@@ -10,10 +10,10 @@ export type storage = {
 type result = [list<operation>, storage];
 
 const entry_A = (n: nat, store: storage): result =>
-  [list([]), {...store, counter: n}];
+  [[], {...store, counter: n}];
 
 const entry_B = (s: string, store: storage): result =>
-  [list([]), {...store, name: s}];
+  [[], {...store, name: s}];
 
 @entry
 const main = (action: parameter, store: storage): result =>

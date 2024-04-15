@@ -6,7 +6,7 @@
 namespace Impl0 implements INT0.FA0 {
   type storage = nat;
 
-  @entry const add = (s : int, k : storage) : [list<operation>, storage] => [list([]), abs (s + k)];
+  @entry const add = (s : int, k : storage) : [list<operation>, storage] => [[], abs (s + k)];
 }
 
 // check that implementation of a namespace defined outside, but in CameLIGO with @extensible works
@@ -14,21 +14,21 @@ namespace Impl0 implements INT0.FA0 {
 namespace Impl1 implements INT1.FA0 {
   export type storage = int;
 
-  @entry const add = (s : int, k : int) : [list<operation>, int] => [list([]), s + k];
-  @entry const extra = (s : int, k : int) : [list<operation>, int] => [list([]), s - k];
+  @entry const add = (s : int, k : int) : [list<operation>, int] => [[], s + k];
+  @entry const extra = (s : int, k : int) : [list<operation>, int] => [[], s - k];
 }
 
 namespace Impl2 implements INT1.FA0 {
   export type storage = nat;
 
-  @entry const add = (s : int, k : storage) : [list<operation>, storage] => [list([]), abs (s + k)];
-  @entry const extra = (s : int, k : storage) : [list<operation>, storage] => [list([]), abs (s - k)];
+  @entry const add = (s : int, k : storage) : [list<operation>, storage] => [[], abs (s + k)];
+  @entry const extra = (s : int, k : storage) : [list<operation>, storage] => [[], abs (s - k)];
 }
 
 namespace Impl3 implements INT1.FA0 {
   export type storage = nat;
 
-  @entry const add = (s : int, k : storage) : [list<operation>, storage] => [list([]), abs (s + k)];
+  @entry const add = (s : int, k : storage) : [list<operation>, storage] => [[], abs (s + k)];
 }
 
 
@@ -44,5 +44,5 @@ interface FA0 {
 namespace Impl4 implements INT0.FA0 {
   export type storage = nat;
 
-  @entry const add = (s : int, k : storage) : [list<operation>, storage] => [list([]), abs (s + k)];
+  @entry const add = (s : int, k : storage) : [list<operation>, storage] => [[], abs (s + k)];
 }

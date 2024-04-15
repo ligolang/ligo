@@ -269,8 +269,8 @@ like so:
 ```shell
 ligo run evaluate-call \
   gitlab-pages/docs/language-basics/src/functions/incr_map.jsligo \
-  incr_map "list([1,2,3])"
-# Outputs: CONS(2 , CONS(3 , CONS(4 , LIST_EMPTY()))), equivalent to list([ 2 , 3 , 4 ])
+  incr_map "[1,2,3]"
+# Outputs: CONS(2 , CONS(3 , CONS(4 , LIST_EMPTY()))), equivalent to [2, 3, 4]
 ```
 
 </Syntax>

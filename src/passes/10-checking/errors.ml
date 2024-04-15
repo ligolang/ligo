@@ -178,7 +178,8 @@ type typer_error =
   | `Typer_wrong_dynamic_storage_definition of Type.t * Location.t
   | (* Used only when error recovery is enabled. *)
     `Typer_unbound_label_edge_case of
-    Ast_core.expression Record.t * Label.t * Type.row * Location.t
+    Label.t * Type.row * Location.t
+  | `Typer_unsupported_rest_property of Ast_core.expression * Location.t
   ]
 [@@deriving poly_constructor { prefix = "typer_" }]
 
@@ -578,17 +579,17 @@ let rec extract_loc_and_message
         expected_type
         pp_type
         found_type )
-  | `Typer_unbound_label_edge_case (record_expr, label, type_row, loc) ->
+  | `Typer_unbound_label_edge_case (label, type_row, loc) ->
     ( loc
     , Format.asprintf
-        "@[<hv>Record type \"%a\" does not have a label \"%a\" in record expression \
-         \"%a\". This is an internal error, is typer error recovery enabled?@]"
+        "@[<hv>Record type \"%a\" does not have a label \"%a\". This is an internal \
+         error, is typer error recovery enabled?@]"
         (Row.PP.record_type Type.pp Layout.pp)
         type_row
         Label.pp
-        label
-        (Record.pp Ast_core.PP.expression)
-        record_expr )
+        label )
+  | `Typer_unsupported_rest_property (_expr, loc) ->
+    loc, Format.asprintf "@[<hv>Unsupported rest property@]"
 
 
 let error_ppformat

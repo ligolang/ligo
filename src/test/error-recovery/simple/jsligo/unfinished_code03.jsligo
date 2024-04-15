@@ -26,7 +26,7 @@ const  commit = ([p, s] : [bytes, storage]) : return_ => {
   const updated_map : commit_set =
     Big_map.update(Tezos.get_sender(), (Some (commit)), s.commits);
   const s_ = {...s, commits: updated_map};
-  return [(list([]) as list<operation>), s_]
+  return [([] as list<operation>), s_]
 }
   
 const reveal = ([p, s] : [reveal, storage]) : return_ => {

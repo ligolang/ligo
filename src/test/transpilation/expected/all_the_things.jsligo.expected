@@ -103,7 +103,7 @@ let transfer = ([p, s]: [transfer, storage]): [
         new_tokens
       );
     return [
-      (list([]) as list<operation>),
+      ([] as list<operation>),
       {
         ...s,
         tokens: new_tokens2,

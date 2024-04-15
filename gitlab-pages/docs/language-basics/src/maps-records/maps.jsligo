@@ -2,9 +2,9 @@ type move = [int, int];
 type register = map<address, move>;
 const empty: register = Map.empty;
 const moves : register =
-  Map.literal (list([
+  Map.literal ([
     ["tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" as address, [1,2]],
-    ["tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" as address, [0,3]]]));
+    ["tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" as address, [0,3]]]);
 const my_balance: option<move> =
   Map.find_opt("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" as address, moves);
 let force_access = (key: address, moves: register) => {

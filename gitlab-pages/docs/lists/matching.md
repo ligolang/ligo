@@ -43,15 +43,15 @@ function rev <T>(xs : list<T>) : list<T> {
       when([y,...ys]): rev([ys, list([y,...acc])])
     };
 
-  return rev([xs, list([])]);
+  return rev([xs, []]);
 };
 ```
 
 Note how the type checker was able to infer the types of `[]` and
 `[y,...ys]` in the `when` clauses (without the need of using
-`list([])` and `list([y,...ys])`), but in `list([y,...acc])` the cast
+`[]` and `[y,...ys]`), but in `[y,...acc]` the cast
 to `list` is necessary, because of the rest property that needs to be
-interpreted as a cons. Similarly, the `list` in `[xs, list([])]` is
+interpreted as a cons. Similarly, the `list` in `[xs, []]` is
 needed to force the interpretation of `[]` as the empty list, instead
 of the empty array ("unit").
 
@@ -78,8 +78,8 @@ let nats : nat list = rev [1n; 2n; 3n]
 <Syntax syntax="jsligo">
 
 ```jsligo group=reverse
-const ints : list<int> = rev(list([1, 2, 3]));
-const nats : list<nat> = rev(list([1n, 2n, 3n]));
+const ints : list<int> = rev([1, 2, 3]);
+const nats : list<nat> = rev([1n, 2n, 3n]);
 ```
 
 See predefined

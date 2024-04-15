@@ -11,5 +11,5 @@ const main = ([action, store]: [parameter, storage]) : return_ => {
     when (Add(n)) : n;
     when (Sub(n)) : -n
   };
-  return [(list([]) as list <operation>), store2];
+  return [([] as list <operation>), store2];
 };

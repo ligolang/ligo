@@ -64,6 +64,9 @@ type expression_content =
   | E_matching of (expr, ty_expr option) Match_expr.t
   (* Record *)
   | E_record of expr Record.t
+  | E_tuple of expr Tuple.t
+  | E_array of expr Array_repr.t
+  | E_array_as_list of expr Array_repr.t
   | E_accessor of expr Accessor.t
   | E_update of expr Update.t
   (* Advanced *)

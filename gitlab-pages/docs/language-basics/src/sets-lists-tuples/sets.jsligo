@@ -1,5 +1,5 @@
 const my_empty_set: set<int> = Set.empty;
-let my_set: set<int> = Set.literal(list([3, 2, 2, 1]));
+let my_set: set<int> = Set.literal([3, 2, 2, 1]);
 const with_999: set<int> = Set.add(999, my_set);
 const contains_3: bool = Set.mem(3, my_set);
 const cardinal: nat = Set.size(my_set);

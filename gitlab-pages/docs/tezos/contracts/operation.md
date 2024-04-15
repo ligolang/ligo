@@ -70,7 +70,7 @@ const main = (_: string, storage: string) : @return => {
                           (None() as option<key_hash>),
                           300000000mutez,
                           "one");
-  return [list([op]), storage];
+  return [[op], storage];
 }
 ```
 
@@ -161,7 +161,7 @@ namespace A {
 
   @entry
   const add = (delta: int, storage: storage): @return<storage> =>
-    [list([]), storage + delta];
+    [[], storage + delta];
 }
 
 namespace B {
@@ -174,7 +174,7 @@ namespace B {
                         0tez,
                         Tezos.get_contract(
                           "KT1TxqZ8QtKvLu3V3JH7Gx58n7Co8pgtpQU5" as address))
-    return [list([operation]), storage];
+    return [[operation], storage];
   }
 }
 ```
@@ -206,11 +206,11 @@ type storage = int
 
 @entry
 const sub = (i: int, x: storage) : [list<operation>, storage] =>
-  [list([]), x - i]
+  [[], x - i]
 
 @entry
 const add = (i: int, x: storage) : [list<operation>, storage] =>
-  [list([]), x + i]
+  [[], x + i]
 ```
 
 </Syntax>
@@ -286,7 +286,7 @@ const main = (_p: parameter, s: storage): [list<operation>, storage] => {
     Tezos.get_entrypoint(
       "%sub", // Corresponds to the `Sub` variant of `remote_param`.
       "tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" as address);
-  return [list([Tezos.transaction(Sub(2), 2mutez, contract_addr)]), s];
+  return [[Tezos.transaction(Sub(2), 2mutez, contract_addr)], s];
 };
 ```
 
@@ -339,7 +339,7 @@ fail; it produces an operation that will fail when applied.
 
 ```jsligo group=set_delegate
 const check = (kh: key_hash) : list<operation> =>
-  list([Tezos.set_delegate (Some(kh))]);
+  [Tezos.set_delegate (Some(kh))];
 ```
 
 </Syntax>
@@ -378,7 +378,7 @@ type storage = unit;
 
 @entry
 const main = (param: [int, int], storage: unit) : [list<operation>, storage] =>
-  [list([Tezos.emit("%foo", param), Tezos.emit("%bar", param[0])]), storage];
+  [[Tezos.emit("%foo", param), Tezos.emit("%bar", param[0])], storage];
 ```
 
 

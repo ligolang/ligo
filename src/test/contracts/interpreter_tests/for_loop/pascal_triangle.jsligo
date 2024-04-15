@@ -25,10 +25,10 @@ const printNums = (xs: list<int>): unit => {
 const printPascalTriangle = (n: int): string => {
     let lineLength = n * 4;
     for (let i = 0 ; i < n ; i++) {
-        let nums = list([]);
+        let nums : list<int> = [];
         for (let j = 0 ; j <= i ; j++) {
             const ncr = nCr(i,j);
-            nums = list([ncr, ...nums]);
+            nums = [ncr, ...nums];
         };
         let spaces = lineLength - spaceRequirement(nums);
         printSpaces(spaces/2);

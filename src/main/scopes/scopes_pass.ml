@@ -142,6 +142,16 @@ module Of_Ast = struct
     | E_record e_label_map ->
       let es = Record.values e_label_map in
       List.fold es ~init:scopes ~f:(fun scopes e -> self e scopes env)
+    | E_tuple es ->
+      List.Ne.fold_left es ~init:scopes ~f:(fun scopes e -> self e scopes env)
+    | E_array entries | E_array_as_list entries ->
+      List.fold_left entries ~init:scopes ~f:(fun scopes entry ->
+          let entry =
+            match entry with
+            | Expr_entry entry -> entry
+            | Rest_entry entry -> entry
+          in
+          self entry scopes env)
     | E_accessor { struct_; path = _ } -> self struct_ scopes env
     | E_update { struct_; path = _; update } ->
       let scopes = self struct_ scopes env in

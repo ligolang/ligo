@@ -540,6 +540,14 @@ module Of_Ast_core = struct
     | E_type_in { let_result; _ } -> expression bindings let_result
     | E_constructor { element; _ } -> expression bindings element
     | E_record lmap -> Record.fold lmap ~init:bindings ~f:expression
+    | E_tuple lmap -> List.Ne.fold_left lmap ~init:bindings ~f:expression
+    | E_array items | E_array_as_list items ->
+      List.fold_left items ~init:bindings ~f:(fun bindings item ->
+          let item =
+            match item with
+            | Expr_entry item | Rest_entry item -> item
+          in
+          expression bindings item)
     | E_accessor { struct_; path } ->
       let bindings =
         Option.value_map
@@ -566,6 +574,23 @@ module Of_Ast_core = struct
             ~init:bindings
             ~f:(fun acc label -> add_label_type acc (label, type_annotation))
             labels
+        | E_tuple tuple ->
+          let labels = Record.labels_of_tuple tuple in
+          List.fold_left
+            ~init:bindings
+            ~f:(fun acc label -> add_label_type acc (label, type_annotation))
+            labels
+        | E_array entries ->
+          List.fold_left
+            ~init:bindings
+            ~f:(fun bindings entry ->
+              let entry =
+                match entry with
+                | Expr_entry entry -> entry
+                | Rest_entry entry -> entry
+              in
+              expression bindings entry)
+            entries
         | E_constructor { constructor; element = _ } ->
           add_label_type bindings (constructor, type_annotation)
         | _ -> bindings

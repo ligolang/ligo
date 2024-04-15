@@ -1,4 +1,4 @@
-let my_list : list<int> = list([1, 2, 3]);
+let my_list : list<int> = [1, 2, 3];
 
 let sum = ([result, i]: [int, int]): int => result + i;
 

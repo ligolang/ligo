@@ -72,13 +72,13 @@ let some (o : unit option) (s : unit) : operation list * unit =
 @entry
 const main = (p: bool, s: unit) : [list<operation>, unit] => {
   let u: unit = assert(p);
-  return [list([]), s];
+  return [[], s];
 };
 
 @entry
 const some = (o: option<unit>, s : unit) : [list<operation>, unit] => {
   assert_some(o);
-  return [list([]), s]
+  return [[], s]
 };
 ```
 
@@ -103,7 +103,7 @@ let main (p : bool) (s : unit) : operation list * unit =
 @entry
 let main = (p: bool, s: unit) : [list<operation>, unit] => {
   assert_with_error (p, "My custom error message.");
-  return [list([]), s];
+  return [[], s];
 };
 ```
 

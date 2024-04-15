@@ -35,6 +35,7 @@ module Raw_code = Raw_code
 module Ascription = Ascription
 module Constructor = Constructor
 module Match_expr = Match_expr
+module Array_repr = Array_repr
 module Record = Record
 module Accessor (Path : Access_path.S) = Accessor.Make (Path)
 module Update (Path : Access_path.S) = Update.Make (Path)

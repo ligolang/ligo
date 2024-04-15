@@ -2,7 +2,7 @@ type storage = string
 type ret = [list<operation>, storage];
 
 const main = (word : string, store : storage) : ret
-  => [list([]) , store + " " + word]
+  => [[] , store + " " + word]
 
 /* view 'view1', simply returns the storage */
 @view

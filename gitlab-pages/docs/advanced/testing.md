@@ -77,9 +77,9 @@ namespace C {
   export type storage = int;
   export type result = [list<operation>, storage];
 
-  @entry const increment = (delta : int, store : storage) : result => [list([]), store + delta];
-  @entry const decrement = (delta : int, store : storage) : result => [list([]), store - delta];
-  @entry const reset = (_u : unit, _store : storage) : result => [list([]), 0];
+  @entry const increment = (delta : int, store : storage) : result => [[], store + delta];
+  @entry const decrement = (delta : int, store : storage) : result => [[], store - delta];
+  @entry const reset = (_u : unit, _store : storage) : result => [[], 0];
 }
 ```
 
@@ -333,7 +333,7 @@ namespace C {
   function main (p: param, _s: [string , address]) : [list<operation> , [string , address]] {
     let [_v,ticket] = p ;
     let [[_addr,[v,_t]] , _ticket] = Tezos.read_ticket (ticket) ;
-    return ([list([]) , [v, Tezos.get_sender ()]])
+    return ([[] , [v, Tezos.get_sender ()]])
   };
 }
 
@@ -532,7 +532,7 @@ let _u = Test.reset_state 5n ([] : tez list)
 
 ```jsligo test-ligo group=unit-remove-balance-mixed
 #include "./gitlab-pages/docs/advanced/src/testing/remove-balance.jsligo"
-let _u = Test.reset_state (5n, list([]) as list <tez>);
+let _u = Test.reset_state (5n, [] as list <tez>);
 ```
 
 </Syntax>
@@ -552,9 +552,9 @@ let balances : balances =
 
 ```jsligo test-ligo group=unit-remove-balance-mixed
 let balances : balances =
-  Map.literal(list([[Test.nth_bootstrap_account(1), 10tez],
-                    [Test.nth_bootstrap_account(2), 100tez],
-                    [Test.nth_bootstrap_account(3), 1000tez]]));
+  Map.literal([[Test.nth_bootstrap_account(1), 10tez],
+              [Test.nth_bootstrap_account(2), 100tez],
+              [Test.nth_bootstrap_account(3), 1000tez]]);
 ```
 
 </Syntax>
@@ -683,9 +683,9 @@ let reset (_ : unit) (_ : storage) : result = [], 0
 type storage = int;
 type result = [list<operation>, storage];
 
-@entry const increment = (delta: int, store: storage): result => [list([]), store + delta];
-@entry const decrement = (delta: int, store: storage): result => [list([]), store - delta];
-@entry const reset = (_u: unit, _store: storage): result => [list([]), 0];
+@entry const increment = (delta: int, store: storage): result => [[], store + delta];
+@entry const decrement = (delta: int, store: storage): result => [[], store - delta];
+@entry const reset = (_u: unit, _store: storage): result => [[], 0];
 ```
 
 </Syntax>
@@ -772,8 +772,8 @@ namespace C {
   let main = (p: [int, int], _: unit) => {
     let op1 = Tezos.emit("%foo", p);
     let op2 = Tezos.emit("%foo", p[0]);
-    return [list([op1, op2]), unit];
-    };
+    return [([op1, op2] as list<operation>), unit];
+  };
 }
 let test = do {
   let orig = Test.originate(contract_of(C), unit, 0tez);
@@ -798,10 +798,10 @@ namespace C {
   type storage = int;
 
   @entry
-  const increment = (action: int, store: storage) : [list <operation>, storage] => [list([]), store + action];
+  const increment = (action: int, store: storage) : [list <operation>, storage] => [[], store + action];
 
   @entry
-  const decrement = (action: int, store: storage) : [list <operation>, storage] => [list([]), store - action];
+  const decrement = (action: int, store: storage) : [list <operation>, storage] => [[], store - action];
 };
 
 const testC = do {

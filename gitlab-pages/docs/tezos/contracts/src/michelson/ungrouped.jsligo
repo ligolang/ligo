@@ -2,10 +2,10 @@ type t_storage = int
 type result = [list<operation>, t_storage]
 
 @entry
-function add (a, storage) : result { return [list([]), storage + a]; }
+function add (a, storage) : result { return [[], storage + a]; }
 
 @entry
-function sub (a, storage) : result { return [list([]), storage - a]; }
+function sub (a, storage) : result { return [[], storage - a]; }
 
 @entry
-function reset (_: unit, _storage: t_storage) : result { return [list([]), 0]; }
+function reset (_: unit, _storage: t_storage) : result { return [[], 0]; }

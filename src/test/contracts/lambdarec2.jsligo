@@ -1,6 +1,6 @@
 
 const wrong = (x : int) : int => {
-  const l = list([x, x]);
+  const l : list<int> = [x, x];
   let total = 0;
   for (const i of l) {
     total = total + wrong(i)

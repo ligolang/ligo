@@ -22,11 +22,11 @@ function f<a> (r : t<a>) {
 
 const ticket = Tezos.create_ticket(42n, 42n)
 
-const lst = List.map (c => c + 42, list([1, 2]))
+const lst = List.map (c => c + 42, [1, 2])
 
 const opt = Some(42)
 
-const big_map = Big_map.literal(list([[42, 42n], [100, 100n]]))
+const big_map = Big_map.literal([[42, 42n], [100, 100n]])
 
 namespace M {
   export type t<a> = ["Aaa", a]

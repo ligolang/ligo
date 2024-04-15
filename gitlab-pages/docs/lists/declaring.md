@@ -35,8 +35,8 @@ See predefined
 <Syntax syntax="jsligo">
 
 ```jsligo group=lists
-const empty_list: list<int> = list([]);
-const my_list = list([1, 2, 2]); // The head is 1, the tail is list([2, 2])
+const empty_list : list<int> = [];
+const my_list : list<int> = [1, 2, 2]; // The head is 1, the tail is [2, 2]
 ```
 
 Note how we need to use the cast `list(...)` on a tuple to make it a

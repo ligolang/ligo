@@ -1,6 +1,6 @@
 function main (p : bool, s : unit):[list<operation>, unit] {
   let _ : unit = assert (p);
-  return [(list([]) as list<operation>), s];
+  return [([] as list<operation>), s];
 };
 
 function some (o : option<unit>):unit {

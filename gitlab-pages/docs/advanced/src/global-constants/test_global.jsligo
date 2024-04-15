@@ -8,7 +8,7 @@ namespace C {
 
   @entry
   const main = (p: parameter, s: storage) : [list<operation>, storage] =>
-    [list([]), Tezos.constant(ct)(s)];
+    [[], Tezos.constant(ct)(s)];
 }
 
 const _test = () => {

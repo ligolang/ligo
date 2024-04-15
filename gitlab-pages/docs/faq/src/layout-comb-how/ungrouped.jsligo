@@ -6,11 +6,11 @@ type foo = {
 
 namespace Foo {
   @entry
-  const foo = (_: foo, s: unit) : [list<operation>, unit] => [list([]), s];
+  const foo = (_: foo, s: unit) : [list<operation>, unit] => [[], s];
 
   // dummy entrypoint to avoid bug with single entrypoint :(
   @entry
-  const dummy = (_: unit, s: unit) : [list<operation>, unit] => [list([]), s];
+  const dummy = (_: unit, s: unit) : [list<operation>, unit] => [[], s];
 };
 
 namespace Bar {
@@ -20,12 +20,12 @@ namespace Bar {
     const amt : tez = 0tz;
     const dst : contract<foo> = Tezos.get_entrypoint("%foo", addr);
     const tx = Tezos.transaction(arg, amt, dst);
-    return [list([tx]), s];
+    return [[tx], s];
   }
 
   // dummy entrypoint to avoid bug with single entrypoint :(
   @entry
-  const dummy = (_: unit, s: unit) : [list<operation>, unit] => [list([]), s];
+  const dummy = (_: unit, s: unit) : [list<operation>, unit] => [[], s];
 };
 
 const test_interaction = do{

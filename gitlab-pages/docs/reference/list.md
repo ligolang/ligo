@@ -36,7 +36,7 @@ The value `empty` is the empty list. It is a synonym for
 <Syntax syntax="jsligo">
 
 The value `empty` is the empty list. It is a synonym for
-    `list([])`. In some contexts, it is useful to annotate it with its
+    `[]`. In some contexts, it is useful to annotate it with its
     type, for example: `(empty as list<int>)`.
 
 </Syntax>
@@ -186,9 +186,9 @@ The call `map f [a1; ...; an]` applies the function `f` to `a1`,
 
 <Syntax syntax="jsligo">
 
-The call `map(f, list([a1; ...; an]))` applies the function `f` to
+The call `map(f, [a1; ...; an])` applies the function `f` to
     `a1`, ..., `an` (from left to right), and builds the list
-    `list([f(a1); ...; f(an)])` with the results returned by `f`.
+    `[f(a1); ...; f(an)]` with the results returned by `f`.
 
 </Syntax>
 
@@ -209,8 +209,8 @@ The call `iter f [a1; ...; an]` applies the function `f` in turn
 
 <Syntax syntax="jsligo">
 
-The call `iter(f, list([a1; ...; an]))` applies the function `f`
-    in turn to `list([a1; ...; an])`. It is equivalent to `{f(a1);
+The call `iter(f, [a1; ...; an])` applies the function `f`
+    in turn to `[a1; ...; an]`. It is equivalent to `{f(a1);
     f(a2); ...; f(an)}`.
 
 </Syntax>
@@ -231,7 +231,7 @@ The call `fold_left f init [a1; ...; an]` is
 
 <Syntax syntax="jsligo">
 
-The call `fold_left(f, init, list([a1; ...; an]))` is
+The call `fold_left(f, init, [a1; ...; an])` is
     `f (... (f (f(init, a1)), a2), ...), an)`.
 
 </Syntax>
@@ -252,7 +252,7 @@ The call `fold_right f [a1; ...; an] init` is
 
 <Syntax syntax="jsligo">
 
-The call `fold_right(f, list([a1; ...; an]), init)` is
+The call `fold_right(f, [a1; ...; an], init)` is
     `f (a1, f (a2, (..., f (an, init))...))`.
 
 </Syntax>
@@ -274,7 +274,7 @@ The call `fold f [a1; ...; an] init` is
 
 <Syntax syntax="jsligo">
 
-The call `fold(f, list([a1; ...; an]), init)` is
+The call `fold(f, [a1; ...; an], init)` is
     `f (... (f (f (init, a1), a2) ...), an)`. Note:
     `fold_left(f, init, list)` is the same as `fold(f, list, init)`.
 
@@ -295,7 +295,7 @@ The call `cons e l` is `e :: l`.
 
 <Syntax syntax="jsligo">
 
-The call `cons(e, l)` is `list([e, ...l])`.
+The call `cons(e, l)` is `[e, ...l]`.
 
 </Syntax>
 

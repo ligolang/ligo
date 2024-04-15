@@ -26,7 +26,7 @@ Even if LIGO currently offers **two syntaxes**, you'll need to **choose only one
 
   @entry
   const store_hello = (delta: int, store: storage): [list<operation>, storage] =>
-    [list([]), "Hello"];
+    [[], "Hello"];
 ```
 
   - **CameLIGO** is designed for developers with a background in

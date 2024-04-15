@@ -23,4 +23,4 @@ const hd = (x : list<int>) : int => {
 };
 
 const main = (a : parameter b : storage) : return_ =>
-  [list([]) as list<operation>, (hd(a) + (b + 8) * 11)]
+  [[] as list<operation>, (hd(a) + (b + 8) * 11)]

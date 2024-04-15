@@ -29,7 +29,6 @@ module Operators = Operators
 module Let_binding = Let_binding
 module Rev_app = Rev_app
 module Field = Field
-module Array_repr = Array_repr
 module Object_ = Object_
 module Update = Update
 module Selection = Selection

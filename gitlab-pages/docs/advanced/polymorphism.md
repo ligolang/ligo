@@ -141,10 +141,10 @@ function rev <T>(xs : list<T>) : list<T> {
   const rev = <T>([xs, acc] : [list<T>, list<T>]) : list<T> =>
     match(xs) {
       when([]): acc;
-      when([y,...ys]): rev([ys, list([y,...acc])])
+      when([y,...ys]): rev([ys, [y,...acc]])
     };
 
-  return rev([xs, (list([]) as list<T>)]);
+  return rev([xs, ([] as list<T>)]);
 };
 ```
 
@@ -166,8 +166,8 @@ let lnat : nat list = rev [1n; 2n; 3n]
 <Syntax syntax="jsligo">
 
 ```jsligo group=poly
-const lint : list<int> = rev(list([1, 2, 3]));
-const lnat : list<nat> = rev(list([1n, 2n, 3n]));
+const lint : list<int> = rev([1, 2, 3]);
+const lnat : list<nat> = rev([1n, 2n, 3n]);
 ```
 
 </Syntax>

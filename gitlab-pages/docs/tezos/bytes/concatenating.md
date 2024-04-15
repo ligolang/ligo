@@ -20,7 +20,7 @@ let three : bytes = Bytes.concats [0x70; 0xAA; 0xFF]
 
 ```jsligo group=concatenating
 const two: bytes = Bytes.concat(0x70, 0xAA);
-const three: bytes = Bytes.concats(list([0x70, 0xAA, 0xFF]));
+const three: bytes = Bytes.concats([0x70, 0xAA, 0xFF]);
 ```
 
 </Syntax>

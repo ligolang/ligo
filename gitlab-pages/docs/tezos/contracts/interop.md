@@ -473,11 +473,11 @@ type storage = int
 
 @entry
 const left = (i: int, x: storage) : [list<operation>, storage] =>
-  [list([]), x - i]
+  [[], x - i]
 
 @entry
 const right = (i: int, x: storage) : [list<operation>, storage] =>
-  [list([]), x + i]
+  [[], x + i]
 ```
 
 </Syntax>
@@ -564,7 +564,7 @@ const main = (p: parameter, s: storage): [list<operation>, storage] => {
       when(None()): failwith ("contract does not match")
     };
   return [
-    list([Tezos.transaction(Left(2), 2mutez, contract)]),
+    [Tezos.transaction(Left(2), 2mutez, contract)],
     s];
 };
 ```

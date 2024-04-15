@@ -68,5 +68,5 @@ function main (_p : unit, _s : unit) : [list<operation>, unit] {
   apply_applied_function();
   apply_sequence();
   type_aliases_have_children();
-  return [list([]), unit]
+  return [[], unit]
 }

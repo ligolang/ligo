@@ -37,6 +37,7 @@ type middle_end =
   ; no_colour : bool
   ; no_metadata_check : bool
   ; typer_error_recovery : bool
+  ; array_as_list : bool
   }
 
 type backend =
@@ -106,6 +107,7 @@ let make
     ; protocol_version
     ; warn_unused_rec = warn_unused_rec ~syntax raw_options.warn_unused_rec
     ; no_stdlib = raw_options.no_stdlib
+    ; array_as_list = raw_options.array_as_list
     ; syntax_for_errors = syntax
     ; no_colour = raw_options.no_colour
     ; no_metadata_check = raw_options.no_metadata_check

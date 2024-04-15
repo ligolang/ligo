@@ -1,4 +1,4 @@
 @entry
 let main = (p : int, _:  bool) : [list<operation>, bool] => {
-  return [(list([]) as list<operation>), p > 0]
+  return [([] as list<operation>), p > 0]
 };

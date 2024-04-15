@@ -20,4 +20,4 @@ const storage_sample: storage = {
 
 @entry
 const main = (_: string, store: storage): [list<operation>, storage] =>
-  [list([]), store]
+  [[], store]

@@ -5,7 +5,7 @@ function rev <T>(xs : list<T>) : list<T> {
       when([y,...ys]): rev([ys, list([y,...acc])])
     };
 
-  return rev([xs, list([])]);
+  return rev([xs, []]);
 };
-const ints : list<int> = rev(list([1, 2, 3]));
-const nats : list<nat> = rev(list([1n, 2n, 3n]));
+const ints : list<int> = rev([1, 2, 3]);
+const nats : list<nat> = rev([1n, 2n, 3n]);

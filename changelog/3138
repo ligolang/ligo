@@ -1,0 +1,7 @@
+
+author: theeduardorfs
+description: "\\nSupport typed-based disambiguation for lists and tuples, in JSLigo.\\n\\n\\n```jsligo\\nconst a : unit = [];\\nconst b : list<int> = [1, 2];\\nconst c : [int, int, int] = [1, 2, 3];\\n\\n```\\n\\n"
+merge_request: '3138'
+title: "Disambiguate array tuples from lists using typing information"
+type: added
+            

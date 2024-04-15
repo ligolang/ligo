@@ -109,7 +109,7 @@ type storage = EURO.t;
 
 @entry
 let main = (_action: unit, store: storage): [list<operation>, storage] =>
-  [list([]), EURO.add (store, EURO.one)];
+  [[], EURO.add (store, EURO.one)];
 ```
 
 </Syntax>
@@ -220,7 +220,7 @@ type storage = EURO.t;
 
 @entry
 let main = (_action: unit, store: storage) : [list<operation>, storage] =>
- [list([]), EURO.add (store, EURO.CONST.one)]
+ [[], EURO.add (store, EURO.CONST.one)]
 ```
 
 </Syntax>
@@ -300,7 +300,7 @@ type storage = EURO.t;
 
 @entry
 const main = (_action: unit, store: storage): [list<operation>, storage] =>
-  [list([]), EURO.add(store, EURO.one)];
+  [[], EURO.add(store, EURO.one)];
 ```
 
 </Syntax>
@@ -377,9 +377,9 @@ dispatcher contract is generated.
 ```jsligo group=contract
 namespace C {
   @entry
-  const increment = (p : int, s : int) : [list<operation>, int] => [list([]), s + p];
+  const increment = (p : int, s : int) : [list<operation>, int] => [[], s + p];
   @entry
-  const decrement = (p : int, s : int) : [list<operation>, int] => [list([]), s - p];
+  const decrement = (p : int, s : int) : [list<operation>, int] => [[], s - p];
 };
 ```
 
@@ -528,8 +528,8 @@ listed in the given interface, like so:
 ```jsligo group=contract2
 namespace FA0 implements FA0_INTF {
   export type storage = int;
-  @entry const add = (s : int, k : int) : [list<operation>, int] => [list([]), s + k];
-  @entry const extra = (s : int, k : int) : [list<operation>, int] => [list([]), s - k];
+  @entry const add = (s : int, k : int) : [list<operation>, int] => [[], s + k];
+  @entry const extra = (s : int, k : int) : [list<operation>, int] => [[], s - k];
 }
 ```
 
@@ -576,10 +576,10 @@ implementing `FAAll_INTF` can choose not to implement
 namespace FAAll_wo_opt_val implements FAAll_INTF {
   export type t = int;
 
-  @entry const transfer = (_u : unit, s : t) : [list<operation>, t] => [list([]), s];
-  @entry const transfer1 = (_u : unit, s : t) : [list<operation>, t] => [list([]), s];
-  @entry const transfer2 = (_u : unit, s : t) : [list<operation>, t] => [list([]), s];
-  @entry const transfer3 = (_u : unit, s : t) : [list<operation>, t] => [list([]), s];
+  @entry const transfer = (_u : unit, s : t) : [list<operation>, t] => [[], s];
+  @entry const transfer1 = (_u : unit, s : t) : [list<operation>, t] => [[], s];
+  @entry const transfer2 = (_u : unit, s : t) : [list<operation>, t] => [[], s];
+  @entry const transfer3 = (_u : unit, s : t) : [list<operation>, t] => [[], s];
   @view const v1 = (_u : unit, s : t) : t => s;
 
   /* "foo", "transfer4" and "v2" are not in "FAAll_INTF", but can
@@ -588,7 +588,7 @@ namespace FAAll_wo_opt_val implements FAAll_INTF {
      are implemented. */
 
   export const foo = (s : t) : t => s;
-  @entry const transfer4 = (_u : unit, s : t) : [list<operation>, t] => [list([]), s];
+  @entry const transfer4 = (_u : unit, s : t) : [list<operation>, t] => [[], s];
   @view const v2 = (_u : unit, s : t) : t => s;
 }
 

@@ -44,7 +44,7 @@ type storage = string
 type ret = [list<operation>, storage];
 
 const main = (word : string, store : storage) : ret
-  => [list([]) , store + " " + word]
+  => [[] , store + " " + word]
 
 /* view 'view1', simply returns the storage */
 @view
@@ -108,10 +108,10 @@ namespace C {
   type storage = string
 
   @entry
-  const append = (a: string, s: storage) : [list<operation> , storage] => [list([]), s + a];
+  const append = (a: string, s: storage) : [list<operation> , storage] => [[], s + a];
 
   @entry
-  const clear = (_p: unit, _s: storage) : [list<operation>, storage] => [list([]), ""];
+  const clear = (_p: unit, _s: storage) : [list<operation>, storage] => [[], ""];
 
   export const v = (expected_length: nat, s: storage) : bool => (String.length (s) == expected_length);
 }

@@ -6,6 +6,6 @@ let main = (_ignore: unit, storage: storage) : [list<operation>, storage] => {
   if (storage != packed) {
     return failwith("wrong chain") as [list<operation>, storage];
   } else {
-    return [list([]), packed];
+    return [[], packed];
   };
 };

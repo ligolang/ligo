@@ -3,7 +3,7 @@ type result = [list<operation>, storage];
 
 @entry @no_mutation
 const sub = (delta : int, store : storage) : result =>
-  [list([]), store - delta]
+  [[], store - delta]
 namespace MathPi {
   export const pi_millionth_numerator : int = 3141593
   export const pi_millionth_denominator : nat = 1000000n

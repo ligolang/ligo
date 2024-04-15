@@ -3,9 +3,9 @@ type foobar = map <int, int>;
 let empty_map: foobar = Map.empty;
 
 let map1 : foobar =
-  Map.literal (list([[144, 23], [51, 23], [42, 23], [120, 23], [421, 23]]));
+  Map.literal ([[144, 23], [51, 23], [42, 23], [120, 23], [421, 23]]);
 
-let map2 : foobar = Map.literal (list([[23, 0], [42, 0]]));
+let map2 : foobar = Map.literal ([[23, 0], [42, 0]]);
 
 let set_ = ([n, m]: [int, foobar]) : foobar => Map.update (23, Some (n), m);
 
@@ -14,17 +14,17 @@ let add = ([n, m]: [int, foobar]) : foobar => Map.add (23, n, m);
 let rm = (m: foobar) : foobar => Map.remove (42, m);
 
 let patch_ = (_m : foobar) : foobar =>
-  Map.literal (list([[0, 5], [1, 6], [2, 7]]));
+  Map.literal ([[0, 5], [1, 6], [2, 7]]);
 
 /* Second dummy test, see above */
 
 let patch_empty = (_m : foobar) : foobar =>
-  Map.literal (list([[0, 0], [1, 1], [2, 2]]));
+  Map.literal ([[0, 0], [1, 1], [2, 2]]);
 
 /* Third dummy test, see above */
 
 let patch_deep = (_m : [foobar, nat]) : [foobar, nat] =>
-  [Map.literal(list([[0, 0], [1, 9], [2, 2]])), (10 as nat)];
+  [Map.literal([[0, 0], [1, 9], [2, 2]]), (10 as nat)];
 
 let size_ = (m : foobar) : nat => Map.size (m);
 

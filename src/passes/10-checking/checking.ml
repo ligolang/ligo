@@ -414,6 +414,33 @@ let t_record_with_orig_var (fields : Type.t Record.t) : (Type.t, _, _) C.t =
         })
 
 
+let check_record const ~expr ~type_ record (row : Type.row) try_check =
+  let open C in
+  let open Let_syntax in
+  let%bind () =
+    assert_
+      (Set.equal (Map.key_set record) (Map.key_set row.fields))
+      ~error:(record_mismatch expr type_)
+  in
+  let%bind record =
+    record
+    |> Map.mapi ~f:(fun ~key:label ~data:expr ->
+           (* Invariant: [Map.key_set record = Map.key_set row.fields]  *)
+           let%bind type_ =
+             Error_recovery.raise_or_use_default_opt
+               ~error:(unbound_label_edge_case label row)
+               ~default:Error_recovery.wildcard_type
+               (Map.find row.fields label)
+           in
+           try_check expr type_)
+    |> all_lmap
+  in
+  const
+    E.(
+      let%bind record = all_lmap record in
+      return @@ O.E_record record)
+
+
 let rec check_expression (expr : I.expression) (type_ : Type.t)
     : (O.expression E.t, _, _) C.t
   =
@@ -431,6 +458,10 @@ let rec check_expression (expr : I.expression) (type_ : Type.t)
         let%bind content = content in
         let%bind type_ = decode type_ in
         return @@ O.make_e ~loc content type_)
+  in
+  let const_error_recovery () =
+    let%bind type_ = Error_recovery.wildcard_type in
+    const (E.return @@ O.E_error expr)
   in
   let const_with_type content type_ =
     let%bind loc = loc () in
@@ -484,28 +515,26 @@ let rec check_expression (expr : I.expression) (type_ : Type.t)
         let%bind lambda = lambda in
         return @@ O.E_lambda lambda)
   | E_record record, T_record row ->
-    let%bind () =
-      assert_
-        (Set.equal (Map.key_set record) (Map.key_set row.fields))
-        ~error:(record_mismatch expr type_)
-    in
-    let%bind record =
-      record
-      |> Map.mapi ~f:(fun ~key:label ~data:expr ->
-             (* Invariant: [Map.key_set record = Map.key_set row.fields]  *)
-             let%bind type_ =
-               Error_recovery.raise_or_use_default_opt
-                 ~error:(unbound_label_edge_case record label row)
-                 ~default:Error_recovery.wildcard_type
-                 (Map.find row.fields label)
-             in
-             check expr type_)
-      |> all_lmap
-    in
-    const
-      E.(
-        let%bind record = all_lmap record in
-        return @@ O.E_record record)
+    check_record const ~expr ~type_ record row check_expression
+  | E_tuple tuple, T_record row ->
+    (* TODO: split T_record to T_tuple *)
+    let record = Record.record_of_proper_tuple tuple in
+    check_record const ~expr ~type_ record row check_expression
+  | E_array (entry :: entries), T_record row ->
+    let record = Record.record_of_proper_tuple (entry, entries) in
+    check_record const ~expr ~type_ record row
+    @@ fun entry type_ ->
+    (match entry with
+    | Array_repr.Expr_entry entry -> check_expression entry type_
+    | Rest_entry entry ->
+      Error_recovery.raise_or_use_default
+        ~error:(unsupported_rest_property entry)
+        ~default:(const_error_recovery ()))
+  | E_array [], T_construct { language = _; constructor = Unit; parameters = [] } ->
+    const @@ E.(return @@ O.E_literal Literal_unit)
+  | ( (E_array entries | E_array_as_list entries)
+    , T_construct { language = _; constructor = List; parameters = [ _elt_type ] } ) ->
+    check_array_as_list ~type_ entries
   | E_update { struct_; path; update }, T_record row ->
     let%bind struct_ = check struct_ type_ in
     let%bind field_row_elem =
@@ -589,6 +618,33 @@ let rec check_expression (expr : I.expression) (type_ : Type.t)
       E.(
         let%bind expr = expr in
         f expr)
+
+
+and check_array_as_list ~type_ entries =
+  let open C in
+  let open Let_syntax in
+  let list_concat ~loc ~left ~right =
+    (* List.fold_right (fun x -> x.0 :: x.1) left right *)
+    let open I in
+    let p = Value_var.fresh ~loc () in
+    let result =
+      let l = e_record_accessor ~loc (e_variable ~loc p) (Label.of_int 0) in
+      let r = e_record_accessor ~loc (e_variable ~loc p) (Label.of_int 1) in
+      e_constant ~loc C_CONS [ l; r ]
+    in
+    let f = e_lambda ~loc (Ligo_prim.Param.make p None) None result in
+    e_constant ~loc C_LIST_FOLD_RIGHT [ f; left; right ]
+  in
+  let%bind loc = loc () in
+  let list =
+    let open I in
+    let empty = e_constant ~loc C_LIST_EMPTY [] in
+    List.fold_right entries ~init:empty ~f:(fun entry right ->
+        match entry with
+        | Array_repr.Expr_entry left -> e_constant ~loc C_CONS [ left; right ]
+        | Array_repr.Rest_entry left -> list_concat ~loc ~left ~right)
+  in
+  check_expression list type_
 
 
 and infer_expression (expr : I.expression)
@@ -784,24 +840,36 @@ and infer_expression (expr : I.expression)
         and fun_type = decode fun_type in
         return @@ O.E_recursive { fun_name; fun_type; lambda; force_lambdarec })
       fun_type
-  | E_record record ->
-    let%bind fields, record =
-      Label.Map.fold
-        ~f:(fun ~key:label ~data:expr result ->
-          let%bind fields, record = result in
-          let%bind expr_type, expr = infer expr in
-          let fields = Map.set fields ~key:label ~data:expr_type in
-          let record = Map.set record ~key:label ~data:expr in
-          return (fields, record))
-        record
-        ~init:(return Label.Map.(empty, empty))
-    in
-    let%bind record_type = t_record_with_orig_var fields in
-    const
-      E.(
-        let%bind record = all_lmap record in
-        return @@ O.E_record record)
-      record_type
+  | E_record record -> infer_record const record try_infer_expression
+  | E_tuple tuple ->
+    infer_record const (Record.record_of_proper_tuple tuple) try_infer_expression
+  | E_array entries ->
+    let%bind array_as_list = Options.array_as_list () in
+    if array_as_list
+    then infer_array_as_list entries
+    else (
+      let infer_array_item entry =
+        match entry with
+        | Array_repr.Expr_entry entry -> try_infer_expression entry
+        | Rest_entry entry ->
+          Error_recovery.raise_or_use_default
+            ~error:(unsupported_rest_property entry)
+            ~default:(const_error_recovery [])
+      in
+      match entries with
+      | [] -> infer_literal Literal_unit
+      | [ hd ] ->
+        let%bind hd_type, hd = infer_array_item hd in
+        let%bind array_type = create_type @@ Type.t_list hd_type in
+        let%bind loc = loc () in
+        return
+          ( array_type
+          , E.(
+              let%map hd = hd in
+              O.e_list ~loc [ hd ] hd.type_expression) )
+      | hd :: tl ->
+        infer_record const (Record.record_of_proper_tuple (hd, tl)) infer_array_item)
+  | E_array_as_list entries -> infer_array_as_list entries
   | E_accessor { struct_; path = field } ->
     let%bind record_type, struct_ = infer struct_ in
     let%bind row =
@@ -1062,6 +1130,41 @@ and infer_expression (expr : I.expression)
         and body = body in
         return @@ O.E_while { cond; body })
       t_unit
+
+
+and infer_record : type e. _ -> e Record.t -> (e -> _) -> _ =
+ fun const record try_infer ->
+  let open C in
+  let open Let_syntax in
+  let%bind fields, record =
+    Label.Map.fold
+      ~f:(fun ~key:label ~data:expr result ->
+        let%bind fields, record = result in
+        let%bind expr_type, expr = try_infer expr in
+        let fields = Map.set fields ~key:label ~data:expr_type in
+        let record = Map.set record ~key:label ~data:expr in
+        return (fields, record))
+      record
+      ~init:(return Label.Map.(empty, empty))
+  in
+  let%bind record_type = t_record_with_orig_var fields in
+  const
+    E.(
+      let%bind record = all_lmap record in
+      return @@ O.E_record record)
+    record_type
+
+
+and infer_array_as_list entries =
+  let open C in
+  let open Let_syntax in
+  let%bind elt_type = exists Type in
+  let%bind type_ =
+    let%bind loc = loc () in
+    return @@ Type.t_construct ~loc List [ elt_type ] ()
+  in
+  let%bind expr = check_array_as_list ~type_ entries in
+  return @@ (type_, expr)
 
 
 and try_infer_expression (expr : I.expression) : (Type.t * O.expression E.t, _, _) C.t =

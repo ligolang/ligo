@@ -346,10 +346,6 @@ let ez_e_record (lst : (Label.t * expression) list) : expression_content =
   E_record (Record.of_list lst)
 
 
-let e__ct_ arguments : expression_content = E_constant { cons_name = C__CT_; arguments }
-  [@@map _ct_, "list_literal"]
-
-
 let e__ct_ () : expression_content = E_constant { cons_name = C__CT_; arguments = [] }
   [@@map _ct_, "none"]
 
@@ -483,3 +479,17 @@ let get_view_form ty =
     | Some [ arg; storage ] -> Some (arg, storage, return)
     | _ -> None)
   | None -> None
+
+
+let e_nil ~loc type_ = e_constant ~loc { cons_name = C_LIST_EMPTY; arguments = [] } type_
+
+let e_cons ~loc hd tl type_ =
+  e_constant ~loc { cons_name = C_CONS; arguments = [ hd; tl ] } type_
+
+
+let e_list ~loc elts elt_type =
+  let list_type = t_list ~loc elt_type in
+  List.fold_right
+    elts
+    ~f:(fun hd tl -> e_cons ~loc hd tl list_type)
+    ~init:(e_nil ~loc list_type)

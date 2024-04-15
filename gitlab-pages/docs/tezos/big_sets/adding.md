@@ -21,7 +21,7 @@ let with_4 : int big_set = Big_set.add 4 my_big_set
 <Syntax syntax="jsligo">
 
 ```jsligo group=big_set_adding
-const my_big_set: big_set<int> = Big_set.literal(list([3, 2, 2, 1]));
+const my_big_set: big_set<int> = Big_set.literal([3, 2, 2, 1]);
 const with_4: big_set<int> = Big_set.add(4, my_big_set);
 ```
 

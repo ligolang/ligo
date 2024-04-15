@@ -759,6 +759,13 @@ let doc_args =
   flag ~doc name spec
 
 
+let array_as_list =
+  let open Command.Param in
+  let name = "--feature-infer-array-as-list" in
+  let doc = "Infer array as lists." in
+  flag ~doc name no_arg
+
+
 module Api = Ligo_api
 
 let ( <*> ) = Command.Param.( <*> )
@@ -798,6 +805,7 @@ let compile_file =
       warn_unused_rec
       warn_infinite_loop
       libraries
+      array_as_list
       ()
     =
     let raw_options =
@@ -820,6 +828,7 @@ let compile_file =
         ~warn_infinite_loop
         ~libraries
         ~preprocess_define
+        ~array_as_list
         ()
     in
     let cli_analytics =
@@ -883,7 +892,8 @@ let compile_file =
     <*> transpiled
     <*> warn_unused_rec
     <*> warn_infinite_loop
-    <*> libraries)
+    <*> libraries
+    <*> array_as_list)
 
 
 let compile_parameter =
@@ -1017,6 +1027,7 @@ let compile_expression =
       warn_infinite_loop
       libraries
       function_body
+      array_as_list
       ()
     =
     let raw_options =
@@ -1034,6 +1045,7 @@ let compile_expression =
         ~libraries
         ~function_body
         ~preprocess_define
+        ~array_as_list
         ()
     in
     let cli_analytics =
@@ -1081,7 +1093,8 @@ let compile_expression =
     <*> warn_unused_rec
     <*> warn_infinite_loop
     <*> libraries
-    <*> function_body)
+    <*> function_body
+    <*> array_as_list)
 
 
 let compile_type =
@@ -1297,6 +1310,7 @@ let compile_constant =
       warn_unused_rec
       warn_infinite_loop
       libraries
+      array_as_list
       ()
     =
     let raw_options =
@@ -1310,6 +1324,7 @@ let compile_constant =
         ~warn_infinite_loop
         ~libraries
         ~preprocess_define
+        ~array_as_list
         ()
     in
     let cli_analytics =
@@ -1352,7 +1367,8 @@ let compile_constant =
     <*> project_root
     <*> warn_unused_rec
     <*> warn_infinite_loop
-    <*> libraries)
+    <*> libraries
+    <*> array_as_list)
 
 
 let compile_group =
@@ -1549,6 +1565,7 @@ let test =
       warn_unused_rec
       warn_infinite_loop
       libraries
+      array_as_list
       ()
     =
     let raw_options =
@@ -1561,6 +1578,7 @@ let test =
         ~cli_expr_inj
         ~test:true
         ~libraries
+        ~array_as_list
         ()
     in
     let cli_analytics =
@@ -1601,7 +1619,8 @@ let test =
     <*> project_root
     <*> warn_unused_rec
     <*> warn_infinite_loop
-    <*> libraries)
+    <*> libraries
+    <*> array_as_list)
 
 
 let test_expr =
@@ -1619,6 +1638,7 @@ let test_expr =
       warn_unused_rec
       warn_infinite_loop
       libraries
+      array_as_list
       ()
     =
     let raw_options =
@@ -1631,6 +1651,7 @@ let test_expr =
         ~cli_expr_inj
         ~test:true
         ~libraries
+        ~array_as_list
         ()
     in
     let cli_analytics =
@@ -1671,7 +1692,8 @@ let test_expr =
     <*> project_root
     <*> warn_unused_rec
     <*> warn_infinite_loop
-    <*> libraries)
+    <*> libraries
+    <*> array_as_list)
 
 
 let dry_run =
@@ -1697,6 +1719,7 @@ let dry_run =
       warn_unused_rec
       warn_infinite_loop
       libraries
+      array_as_list
       ()
     =
     let raw_options =
@@ -1709,6 +1732,7 @@ let dry_run =
         ~warn_unused_rec
         ~warn_infinite_loop
         ~libraries
+        ~array_as_list
         ()
     in
     let cli_analytics =
@@ -1768,7 +1792,8 @@ let dry_run =
     <*> project_root
     <*> warn_unused_rec
     <*> warn_infinite_loop
-    <*> libraries)
+    <*> libraries
+    <*> array_as_list)
 
 
 let evaluate_call =
@@ -1792,6 +1817,7 @@ let evaluate_call =
       warn_unused_rec
       warn_infinite_loop
       libraries
+      array_as_list
       ()
     =
     let raw_options =
@@ -1803,6 +1829,7 @@ let evaluate_call =
         ~warn_unused_rec
         ~warn_infinite_loop
         ~libraries
+        ~array_as_list
         ()
     in
     let cli_analytics =
@@ -1859,7 +1886,8 @@ let evaluate_call =
     <*> project_root
     <*> warn_unused_rec
     <*> warn_infinite_loop
-    <*> libraries)
+    <*> libraries
+    <*> array_as_list)
 
 
 let evaluate_expr =
@@ -1882,6 +1910,7 @@ let evaluate_expr =
       warn_unused_rec
       warn_infinite_loop
       libraries
+      array_as_list
       ()
     =
     let raw_options =
@@ -1893,6 +1922,7 @@ let evaluate_expr =
         ~warn_unused_rec
         ~warn_infinite_loop
         ~libraries
+        ~array_as_list
         ()
     in
     let cli_analytics =
@@ -1939,7 +1969,8 @@ let evaluate_expr =
     <*> project_root
     <*> warn_unused_rec
     <*> warn_infinite_loop
-    <*> libraries)
+    <*> libraries
+    <*> array_as_list)
 
 
 let interpret =
@@ -1960,6 +1991,7 @@ let interpret =
       warn_unused_rec
       warn_infinite_loop
       libraries
+      array_as_list
       ()
     =
     let raw_options =
@@ -1970,6 +2002,7 @@ let interpret =
         ~warn_unused_rec
         ~warn_infinite_loop
         ~libraries
+        ~array_as_list
         ()
     in
     let cli_analytics =
@@ -2021,7 +2054,8 @@ let interpret =
     <*> project_root
     <*> warn_unused_rec
     <*> warn_infinite_loop
-    <*> libraries)
+    <*> libraries
+    <*> array_as_list)
 
 
 let run_group =
@@ -2644,6 +2678,7 @@ let print_ast_typed =
       libraries
       typer_error_recovery
       parser_error_recovery
+      array_as_list
       ()
     =
     let formatter =
@@ -2668,6 +2703,7 @@ let print_ast_typed =
         ~libraries
         ~typer_error_recovery
         ~parser_error_recovery
+        ~array_as_list
         ()
     in
     let cli_analytics =
@@ -2712,7 +2748,8 @@ let print_ast_typed =
      <*> skip_analytics
      <*> libraries
      <*> typer_error_recovery
-     <*> parser_error_recovery)
+     <*> parser_error_recovery
+     <*> array_as_list)
 
 
 let print_ast_aggregated =
@@ -2807,6 +2844,7 @@ let print_module_signature =
       no_colour
       skip_analytics
       libraries
+      array_as_list
       ()
     =
     let raw_options =
@@ -2821,6 +2859,7 @@ let print_module_signature =
         ~test
         ~no_colour
         ~libraries
+        ~array_as_list
         ()
     in
     let cli_analytics =
@@ -2857,7 +2896,8 @@ let print_module_signature =
     <*> test_mode
     <*> no_colour
     <*> skip_analytics
-    <*> libraries)
+    <*> libraries
+    <*> array_as_list)
 
 
 let print_ast_expanded =
@@ -2874,6 +2914,7 @@ let print_ast_expanded =
       warn_infinite_loop
       test
       libraries
+      array_as_list
       ()
     =
     let raw_options =
@@ -2886,6 +2927,7 @@ let print_ast_expanded =
         ~warn_infinite_loop
         ~test
         ~libraries
+        ~array_as_list
         ()
     in
     let cli_analytics =
@@ -2926,7 +2968,8 @@ let print_ast_expanded =
     <*> warn_unused_rec
     <*> warn_infinite_loop
     <*> test_mode
-    <*> libraries)
+    <*> libraries
+    <*> array_as_list)
 
 
 let print_mini_c =
@@ -2942,6 +2985,7 @@ let print_mini_c =
       no_colour
       skip_analytics
       libraries
+      array_as_list
       ()
     =
     let raw_options =
@@ -2953,6 +2997,7 @@ let print_mini_c =
         ~warn_infinite_loop
         ~no_colour
         ~libraries
+        ~array_as_list
         ()
     in
     let cli_analytics =
@@ -2993,7 +3038,8 @@ let print_mini_c =
     <*> warn_infinite_loop
     <*> no_colour
     <*> skip_analytics
-    <*> libraries)
+    <*> libraries
+    <*> array_as_list)
 
 
 let print_group =
@@ -3168,6 +3214,7 @@ let repl =
       init_file
       project_root
       libraries
+      array_as_list
       ()
     =
     let raw_options =
@@ -3209,7 +3256,8 @@ let repl =
     <*> skip_analytics
     <*> init_file
     <*> project_root
-    <*> libraries)
+    <*> libraries
+    <*> array_as_list)
 
 
 let install =

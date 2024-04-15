@@ -23,7 +23,7 @@ namespace TacoShop {
       taco_kind_index,
       (Some ({...taco_kind, current_stock : abs (taco_kind.current_stock - 1n) })),
       taco_shop_storage );
-    return [list([]), taco_shop_storage]
+    return [[], taco_shop_storage]
   }
   };
 };

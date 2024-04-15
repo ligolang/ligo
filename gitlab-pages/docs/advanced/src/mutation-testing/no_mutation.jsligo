@@ -7,10 +7,10 @@ type result = [list<operation>, storage];
 @entry
 const add = (delta : int, store : storage) : result => {
   @no_mutation let _a = assert (0 == 0);
-  return [list([]), store + delta];
+  return [[], store + delta];
 };
 
 @entry @no_mutation
 const sub = (delta : int, store : storage) : result => {
-  return [list([]), store - delta];
+  return [[], store - delta];
 };

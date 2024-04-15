@@ -4,5 +4,5 @@ const main = (_p: unit, _s: int): [list<operation>, int] => {
   for (let b = 0; ; ) {
     let _ = b;
   }
-  return [list([]), y]
+  return [[], y]
 };

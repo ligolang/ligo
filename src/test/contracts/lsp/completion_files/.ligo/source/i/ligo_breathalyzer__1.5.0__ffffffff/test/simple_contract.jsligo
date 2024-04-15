@@ -3,15 +3,15 @@ type ret = [list<operation>, s];
 
 @entry
 const increment = (delta : int, store : s) : ret =>
-  [list([]), store + delta];
+  [[], store + delta];
 
 @entry
 const decrement = (delta : int, store : s) : ret =>
-  [list([]), store - delta];
+  [[], store - delta];
 
 @entry
 const reset = (_unit : unit, _storage : s) : ret =>
-  [list([]), 0];
+  [[], 0];
 
 @view
 const get_value = (_unit : unit, s : s) : s =>

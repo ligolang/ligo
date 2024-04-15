@@ -6396,7 +6396,7 @@ let%expect_test _ =
       6 |     Test.transfer_to_contract_exn(c, unit, (123 as mutez));
       7 |     Test.log(Test.get_balance_of_address(a));
               ^^^^^^^^
-      8 |     return list([Tezos.address(c) , ...accList]);
+      8 |     return [Tezos.address(c) , ...accList];
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `IO.log` from `Test.Next` is encouraged for a smoother migration.
@@ -6405,7 +6405,7 @@ let%expect_test _ =
       6 |     Test.transfer_to_contract_exn(c, unit, (123 as mutez));
       7 |     Test.log(Test.get_balance_of_address(a));
                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^
-      8 |     return list([Tezos.address(c) , ...accList]);
+      8 |     return [Tezos.address(c) , ...accList];
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Address.get_balance` from `Test.Next` is encouraged for a smoother migration.
@@ -9963,7 +9963,7 @@ let%expect_test "for loops" =
     In a future version, `Test` will be replaced by `Test.Next`, and using `Assert.Error.assert` from `Test.Next` is encouraged for a smoother migration.
 
     File ".//for_loop/matrix_multiplication.jsligo", line 39, characters 4-15:
-     38 |         Map.literal(list([[[0, 0], 4], [[0, 1], 5], [[0, 2], 6]])), 1, 3);
+     38 |         Map.literal([[[0, 0], 4], [[0, 1], 5], [[0, 2], 6]]), 1, 3);
      39 |     Test.assert(m == Map.literal(list([
               ^^^^^^^^^^^
      40 |         [[0, 0], 4] , [[0, 1], 5] , [[0, 2], 6],

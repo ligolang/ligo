@@ -197,12 +197,12 @@ let%expect_test _ =
           ^^^^^^^^^^^^^^^
      19 |
 
-     20 |   @entry const transfer = (_u : unit, s : t) : [list<operation>, t] => [list([]), s];
-          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-     21 |   @entry const other1 = (_u : unit, s : t) : [list<operation>, t] => [list([]), s];
-          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-     22 |   @entry const other2 = (_u : unit, s : t) : [list<operation>, t] => [list([]), s];
-          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     20 |   @entry const transfer = (_u : unit, s : t) : [list<operation>, t] => [[], s];
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     21 |   @entry const other1 = (_u : unit, s : t) : [list<operation>, t] => [[], s];
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     22 |   @entry const other2 = (_u : unit, s : t) : [list<operation>, t] => [[], s];
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
      23 | };
           ^
      24 |
@@ -305,12 +305,11 @@ let%expect_test _ =
     [ "compile"
     ; "expression"
     ; "jsligo"
-    ; "f(list([1,2,3,4,5]))"
+    ; "f([1,2,3,4,5])"
     ; "--init-file"
     ; contract "implicit_cast.jsligo"
     ];
-  [%expect {|
-    3 |}]
+  [%expect {| 3 |}]
 
 let%expect_test _ =
   run_ligo_good
@@ -558,6 +557,13 @@ let%expect_test _ =
       storage (list int) ;
       code { UNPAIR ;
              NIL int ;
+             DIG 2 ;
+             NIL int ;
+             SWAP ;
+             ITER { CONS } ;
+             ITER { CONS } ;
+             SWAP ;
+             NIL int ;
              SWAP ;
              ITER { CONS } ;
              ITER { CONS } ;
@@ -654,7 +660,7 @@ let%expect_test _ =
       2 | const main = (u : unit, _ : unit) : [list<operation>, unit] => {
       3 |   let [op, _addr] = (create_contract_of_file `./removed.tz`)(None(), 1tez, u);
                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-      4 |   return [list([op]), []]
+      4 |   return [[op], []]
 
     Found a system error: ./removed.tz: No such file or directory. |}]
 
@@ -2671,7 +2677,7 @@ let%expect_test _ =
       2 | const main = (_u : unit, _b : address) : [list <operation>, address] => {
       3 |   let c : contract<int> = Option.unopt(Tezos.get_entrypoint_opt ("%foo", Tezos.get_sender()));
                                     ^^^^^^^^^^^^
-      4 |   return [list([]) as list <operation>, Tezos.address(c)];
+      4 |   return [[] as list <operation>, Tezos.address(c)];
     :
     Warning: deprecated value.
     Use `Option.value_with_error` instead.
@@ -3642,13 +3648,13 @@ let%expect_test _ =
   [%expect
     {|
     File "../../test/contracts/negative/loop.jsligo", line 4, character 4 to line 7, character 5:
-      3 |     let values = list ([]) ;
+      3 |     let values : list<int> = [];
       4 |     for (const [k, v, z] of x) {
               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-      5 |       keys = list([k, ...keys]);
-          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-      6 |       values = list([v, ...values]);
-          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+      5 |       keys = [k, ...keys];
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^
+      6 |       values = [v, ...values];
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
       7 |     };
           ^^^^^
       8 |     return [keys, values];
@@ -3667,7 +3673,7 @@ let%expect_test _ =
   [%expect
     {|
     File "../../test/contracts/negative/loop2.jsligo", line 4, character 4 to line 7, character 5:
-      3 |     let values : list<int> = list([]);
+      3 |     let values : list<int> = [];
       4 |     for (const [k, v] of x) {
               ^^^^^^^^^^^^^^^^^^^^^^^^^
       5 |       keys = list([k, ...keys]);
@@ -3814,3 +3820,95 @@ let%expect_test "infer compilation target" =
       { parameter unit ;
         storage unit ;
         code { DROP ; UNIT ; NIL operation ; PAIR } } |}]
+
+(* invalid list annotations for tuples *)
+let%expect_test _ =
+  run_ligo_bad
+    [ "print"; "ast-typed"; bad_contract "bad_annotation_list_and_tuple.mligo" ];
+  [%expect
+    {|
+    File "../../test/contracts/negative/bad_annotation_list_and_tuple.mligo", line 1, characters 10-14:
+      1 | let x = ((1, 2) : int list)
+                    ^^^^
+
+    This expression has type "( int * int )", but an expression was expected of type
+    "list (int)".
+    Type "( int * int )" is not compatible with type "list (int)". |}]
+
+(* array disambiguate *)
+let%expect_test _ =
+  run_ligo_good
+    [ "compile"
+    ; "expression"
+    ; "jsligo"
+    ; "t"
+    ; "--init-file"
+    ; contract "array_disambiguate.jsligo"
+    ];
+  [%expect
+    {|
+    { DROP ;
+      PUSH int 3 ;
+      PUSH int 2 ;
+      PUSH int 1 ;
+      PAIR 3 ;
+      UNIT ;
+      NIL int ;
+      PUSH int 2 ;
+      CONS ;
+      PUSH int 1 ;
+      CONS ;
+      UNIT ;
+      PAIR 4 } |}]
+
+(* array as list *)
+let%expect_test _ =
+  run_ligo_good
+    [ "compile"
+    ; "expression"
+    ; "jsligo"
+    ; "t"
+    ; "--feature-infer-array-as-list"
+    ; "--init-file"
+    ; contract "array_as_list.jsligo"
+    ];
+  [%expect
+    {|
+    { DROP ;
+      NIL int ;
+      PUSH int 2 ;
+      CONS ;
+      PUSH int 1 ;
+      CONS ;
+      NIL int ;
+      PUSH int 3 ;
+      CONS ;
+      DUP 2 ;
+      NIL int ;
+      SWAP ;
+      ITER { CONS } ;
+      ITER { CONS } ;
+      PUSH int 1 ;
+      CONS ;
+      NIL int ;
+      PUSH int 3 ;
+      CONS ;
+      DUP 3 ;
+      NIL int ;
+      SWAP ;
+      ITER { CONS } ;
+      ITER { CONS } ;
+      PUSH int 1 ;
+      CONS ;
+      SWAP ;
+      NIL int ;
+      PUSH int 3 ;
+      CONS ;
+      PUSH int 2 ;
+      CONS ;
+      PUSH int 1 ;
+      CONS ;
+      NIL string ;
+      DIG 4 ;
+      UNIT ;
+      PAIR 6 } |}]

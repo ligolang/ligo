@@ -24,7 +24,7 @@ Note: See the predefined
 
 ```jsligo group=map_size
 const my_map: map<int,string> =
-  Map.literal(list([[1,"one"],[2,"two"]]));
+  Map.literal([[1,"one"],[2,"two"]]);
 const size: nat = Map.size(my_map); // == 2
 ```
 

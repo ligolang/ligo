@@ -7,4 +7,4 @@ let { a : a1 , b : b1 , c : c1 } = { a = 2 as nat , b = 2 , c = "World" }
 type storage = [nat, int, string]
 
 let main (_ : unit, _ : storage) : [list<operation>, storage]
-  = [list([]), [a + a1, b + b1, c + c1]]
+  = [[], [a + a1, b + b1, c + c1]]

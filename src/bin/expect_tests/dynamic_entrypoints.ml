@@ -230,7 +230,7 @@ let%expect_test "dynamic entrypoints test (jsligo)" =
     In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.get_storage` from `Test.Next` is encouraged for a smoother migration.
 
     File "../../test/contracts/dynamic_entrypoints_tests.jsligo", line 39, characters 2-19:
-     38 |   const f = (_ : unit, i : int) : [list<operation>, int] => [list([]), i + 1];
+     38 |   const f = (_ : unit, i : int) : [list<operation>, int] => [[], i + 1];
      39 |   Test.transfer_exn (orig.addr, (Set_one(f)), 1mutez);
             ^^^^^^^^^^^^^^^^^
      40 |   Test.transfer_exn (orig.addr, (Call_one()), 1mutez);

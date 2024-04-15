@@ -7,7 +7,7 @@ namespace C {
 
   @dyn_entry
   export const one = (_u: unit, _i: int): [list<operation>, int] =>
-    [list([]), 1];
+    [[], 1];
 
   @entry
   export const call_one = (_u:unit, s : storage) : [list<operation>, storage] =>
@@ -23,7 +23,7 @@ namespace C {
   export const set_one = (one_v2 : entrypoint<unit, int>, s : storage) : [list<operation>, storage] => {
     const dynamic_entrypoints =
       Dynamic_entrypoints.set(one, (Some(one_v2)), s.dynamic_entrypoints);
-      return [list([]), {...s, dynamic_entrypoints}]
+      return [[], {...s, dynamic_entrypoints}]
   }
 
 }
@@ -35,7 +35,7 @@ const test_dyn = do {
   Test.transfer_exn (orig.addr, Call_one(), 1mutez);
   assert ((Test.get_storage(orig.addr)).storage == 1);
   /* Change initial one and call it */
-  const f = (_ : unit, i : int) : [list<operation>, int] => [list([]), i + 1];
+  const f = (_ : unit, i : int) : [list<operation>, int] => [[], i + 1];
   Test.transfer_exn (orig.addr, (Set_one(f)), 1mutez);
   Test.transfer_exn (orig.addr, (Call_one()), 1mutez);
   assert ((Test.get_storage(orig.addr)).storage == 2);

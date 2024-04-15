@@ -25,7 +25,7 @@ Note: See the predefined
 <Syntax syntax="jsligo">
 
 ```jsligo group=map_removing
-const my_map: map<int,string> = Map.literal(list([[1,"one"],[2,"two"]]));
+const my_map : map<int,string> = Map.literal([[1,"one"],[2,"two"]]);
 const new_map = Map.remove(2, my_map);
 const contains_3 = Map.mem(2, new_map); // == false
 ```

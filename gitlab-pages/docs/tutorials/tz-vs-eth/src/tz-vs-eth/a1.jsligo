@@ -10,8 +10,8 @@ const call = (fn: option<((x : int) => int)>, value: int) : int => {
 
 @entry
 const setFunction = (fn : ((v : int) => int), s : storage) : result =>
-  [list([]), {...s, fn: Some(fn)}];
+  [[], {...s, fn: Some(fn)}];
 
 @entry
 const callFunction = (_u : unit, s : storage) : result =>
-  [list([]), {...s, value: call(s.fn, s.value)}];
+  [[], {...s, value: call(s.fn, s.value)}];

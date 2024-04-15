@@ -9,7 +9,6 @@ let stage = "small_passes"
 type t =
   [ `Small_passes_wrong_reduction of string
   | `Small_passes_expected_variable of ty_expr
-  | `Small_passes_array_rest_not_supported of expr
   | `Small_passes_invalid_case of expr
   | `Small_passes_unsupported_match_object_property of expr
   | `Small_passes_invalid_list_pattern_match of Location.t
@@ -24,7 +23,6 @@ type t =
   | `Small_passes_unsupported_import of declaration
   | `Small_passes_unsupported_object_field of expr
   | `Small_passes_unsupported_update of expr
-  | `Small_passes_unsupported_rest_property of expr
   | `Small_passes_unsupported_projection of expr
   | `Small_passes_unsupported_disc_union_type of ty_expr
   | `Small_passes_unsupported_pattern_loop of Location.t
@@ -78,12 +76,6 @@ let error_ppformat
       Format.fprintf f "@[<hv>Pass %s did not reduce.@]" pass
     | `Small_passes_expected_variable t ->
       Format.fprintf f "@[<hv>%a@.Expected a declaration name@]" snippet_pp (get_t_loc t)
-    | `Small_passes_array_rest_not_supported e ->
-      Format.fprintf
-        f
-        "@[<hv>%a@.Rest property not supported here.@]"
-        snippet_pp
-        (get_e_loc e)
     | `Small_passes_invalid_case e ->
       Format.fprintf
         f
@@ -157,8 +149,6 @@ let error_ppformat
       Format.fprintf f "@[<hv>%a@.Unsupported object field@]" snippet_pp (get_e_loc e)
     | `Small_passes_unsupported_update e ->
       Format.fprintf f "@[<hv>%a@.Unsupported update@]" snippet_pp (get_e_loc e)
-    | `Small_passes_unsupported_rest_property e ->
-      Format.fprintf f "@[<hv>%a@.Unsupported rest property@]" snippet_pp (get_e_loc e)
     | `Small_passes_unsupported_pattern_loop loc ->
       Format.fprintf
         f
@@ -295,10 +285,6 @@ let error_json : t -> Simple_utils.Error.t =
     let message = Format.asprintf "Expected a declaration name." in
     let content = make_content ~message ~location:(get_t_loc t) () in
     make ~stage ~content
-  | `Small_passes_array_rest_not_supported e ->
-    let message = Format.asprintf "Rest property not supported here." in
-    let content = make_content ~message ~location:(get_e_loc e) () in
-    make ~stage ~content
   | `Small_passes_invalid_case e ->
     let message =
       "Invalid field value. An anonymous arrow function was expected, eg. Nothing: () => \
@@ -389,10 +375,6 @@ let error_json : t -> Simple_utils.Error.t =
   | `Small_passes_unsupported_update e ->
     let location = get_e_loc e in
     let content = make_content ~message:"Unsupported update" ~location () in
-    make ~stage ~content
-  | `Small_passes_unsupported_rest_property e ->
-    let location = get_e_loc e in
-    let content = make_content ~message:"Unsupported rest property" ~location () in
     make ~stage ~content
   | `Small_passes_unsupported_pattern_loop location ->
     let content = make_content ~message:"Unsupported pattern in loop" ~location () in

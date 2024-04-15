@@ -445,8 +445,8 @@ let%expect_test "Shows errors for unsupported record fields (jsligo)." =
       [{
          "message": "[Compiler stage: small_passes] Unsupported object field",
          "range": {
-           "end": { "character": 33, "line": 6 },
-           "start": { "character": 32, "line": 6 }
+           "end": { "character": 27, "line": 6 },
+           "start": { "character": 26, "line": 6 }
          },
          "severity": 1
        }])] |}]

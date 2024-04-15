@@ -27,7 +27,7 @@ let contains_2 = Map.mem 2 map_without_2 // = false
 <Syntax syntax="jsligo">
 
 ```jsligo group=map_updating
-const my_map: map<int,string> = Map.literal(list([[1,"one"],[2,"two"]]));
+const my_map: map<int,string> = Map.literal([[1,"one"],[2,"two"]]);
 const map_with_3 = Map.update (3, Some("three"), my_map);
 const contains_3 = Map.mem(3, map_with_3); // == true
 const map_without_2 = Map.update(2, None(), my_map);

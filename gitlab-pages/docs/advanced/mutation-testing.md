@@ -332,8 +332,8 @@ export namespace C {
   export type storage = int;
 
   // Two entrypoints
-  @entry const add = (delta: int, store: storage): [list<operation>, storage] => [list([]),store + delta];
-  @entry const sub = (delta: int, store: storage): [list<operation>, storage] => [list([]),store - delta];
+  @entry const add = (delta: int, store: storage): [list<operation>, storage] => [[],store + delta];
+  @entry const sub = (delta: int, store: storage): [list<operation>, storage] => [[],store - delta];
 }
 ```
 
@@ -468,8 +468,8 @@ ligo run test --library . gitlab-pages/docs/advanced/src/mutation-testing/mutati
 # Trace:
 # File "gitlab-pages/docs/advanced/src/mutation-testing/mutation-contract-test.jsligo", line 27, characters 6-68
 # Mutation at: File "gitlab-pages/docs/advanced/src/mutation-testing/mutation-contract.jsligo", line 8, characters 73-86:
-#   7 | @entry const add = (delta : int, store : storage) : result => [list([]), store + delta];
-#   8 | @entry const sub = (delta : int, store : storage) : result => [list([]), store - delta];
+#   7 | @entry const add = (delta : int, store : storage) : result => [[], store + delta];
+#   8 | @entry const sub = (delta : int, store : storage) : result => [[], store - delta];
 # 
 # Replacing by: store + delta.
 ```
@@ -643,12 +643,12 @@ type result = [list<operation>, storage];
 @entry
 const add = (delta : int, store : storage) : result => {
   @no_mutation let _a = assert (0 == 0);
-  return [list([]), store + delta];
+  return [[], store + delta];
 };
 
 @entry @no_mutation
 const sub = (delta : int, store : storage) : result => {
-  return [list([]), store - delta];
+  return [[], store - delta];
 };
 ```
 
