@@ -410,9 +410,9 @@ that we type-cast a string into an address.
 
 ```jsligo group=maps
 const moves : register =
-  Map.literal (list([
+  Map.literal ([
     ["tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" as address, [1,2]],
-    ["tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" as address, [0,3]]]));
+    ["tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" as address, [0,3]]]);
 ```
 
 The `Map.literal` predefined function builds a map from a list of
@@ -740,9 +740,9 @@ value>" : address)` means that we cast a string into an address.
 
 ```jsligo group=big_maps
 const moves : register =
-  Big_map.literal (list([
+  Big_map.literal([
     ["tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" as address, [1, 2]],
-    ["tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" as address, [0, 3]]]));
+    ["tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" as address, [0, 3]]]);
 ```
 
 The predefined function `Big_map.literal` constructs a big map from a

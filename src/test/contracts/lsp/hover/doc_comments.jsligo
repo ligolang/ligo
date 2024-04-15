@@ -33,7 +33,7 @@ type t<a> = list<a>
  *
  *  one ~~more~~ `line`
  */
-const x: t<int> = list([3])
+const x: t<int> = [3]
 
 const y = x
 
@@ -45,7 +45,7 @@ namespace M1 {
   /** AFTER DECORATOR */
   /** ENTRY POINT TERM */
   export const y = (x: int, _: int) =>
-    [(list([]) as list<operation>), 2 * x - 1]
+    [([] as list<operation>), 2 * x - 1]
   /** NESTED NAMESPACE */
   export namespace C {
     /** NESTED NAMESPACE TERM */

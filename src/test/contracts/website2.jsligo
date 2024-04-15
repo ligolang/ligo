@@ -17,7 +17,7 @@ function main (p: parameter, storage: storage): [list<operation>, int] {
     when(Increment(n)): add (storage, n);
     when(Decrement(n)): sub (storage, n)
   };
-  return [(list([]) as list <operation>), storage2];
+  return [([] as list <operation>), storage2];
 }
 
 /* IF YOU CHANGE THIS, CHANGE THE EXAMPLE ON THE FRONT PAGE OF THE WEBSITE */

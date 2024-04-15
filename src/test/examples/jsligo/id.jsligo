@@ -144,7 +144,7 @@ let buy = ([parameter, storage]: [buy, storage]) : [list<operation>, storage] =>
   };
   let updated_identities: big_map<id, id_details> =
     Big_map.update(new_id, Some(new_id_details), identities);
-  return [(list([]) as list<operation>), {
+  return [([] as list<operation>), {
                            identities : updated_identities,
                            next_id : new_id + 1,
                            name_price : storage.name_price,
@@ -174,7 +174,7 @@ let update_owner = ([parameter, storage]: [update_owner, storage]) : [list<opera
     profile : current_id_details.profile,
   };
   let updated_identities = Big_map.update(id, Some(updated_id_details), identities);
-  return [(list([]) as list<operation>), {
+  return [([] as list<operation>), {
                            identities : updated_identities,
                            next_id : storage.next_id,
                            name_price : storage.name_price,
@@ -220,7 +220,7 @@ let update_details = ([parameter, storage]: [update_details, storage]) :
   };
   let updated_identities: big_map<id, id_details> =
     Big_map.update(id, Some(updated_id_details), identities);
-  return [(list([]) as list<operation>), {
+  return [([] as list<operation>), {
                             identities : updated_identities,
                             next_id : storage.next_id,
                             name_price : storage.name_price,
@@ -234,7 +234,7 @@ let skip = ([p,storage]: [unit, storage]) : [list<operation>, storage] => {
     failwith("Incorrect amount paid.");
   }
 
-  return [(list([]) as list<operation>), {
+  return [([] as list<operation>), {
                             identities : storage.identities,
                             next_id : storage.next_id + 1,
                             name_price : storage.name_price,

@@ -75,7 +75,8 @@ struct
 
     let tuple_or_record_type value layout ppf (t : 'a t) =
       if is_tuple t
-      then Tuple.pp value ppf (to_tuple t)
+      then
+        Format.fprintf ppf "@[<hv 2>( %a )@]" (list_sep value (tag " *@ ")) (to_tuple t)
       else
         Format.fprintf ppf "@[<hv 7>record[%a]@]" (record_sep value layout (tag " ,@ ")) t
 

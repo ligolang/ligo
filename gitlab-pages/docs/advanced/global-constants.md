@@ -61,7 +61,7 @@ const c : ((_p : int) => int) = Tezos.constant("expruCKsgmUZjC7k8NRcwbcGbFSuLHv5
 
 @entry
 let main = (_p : unit, s : int) : [list<operation>, int] =>
-  [list([]), c(s)]
+  [[], c(s)]
 ```
 
 </Syntax>
@@ -149,7 +149,7 @@ const helper = ([s, x]: [string, int]) =>
 
 @entry
 const main = (p: string, s: int) : [list<operation>, int] =>
-  [list([]), helper ([p, s])];
+  [[], helper ([p, s])];
 ```
 
 </Syntax>
@@ -263,7 +263,7 @@ let main (p : string) (s : int) : operation list * int =
 ```jsligo group=global_call_2
 @entry
 const main = (p: string, s: int) : [list<operation>, int] =>
-  [ list([]), Tezos.constant("exprv547Y7U5wKLbQGmkDU9Coh5tKPzvEJjyUed7px9yGt9nrkELXf")([p, s]) ];
+  [ [], Tezos.constant("exprv547Y7U5wKLbQGmkDU9Coh5tKPzvEJjyUed7px9yGt9nrkELXf")([p, s]) ];
 ```
 
 </Syntax>
@@ -380,7 +380,7 @@ namespace C {
 
   @entry
   const main = (p: parameter, s: storage) : [list<operation>, storage] =>
-    [list([]), Tezos.constant(ct)(s)];
+    [[], Tezos.constant(ct)(s)];
 }
 
 const _test = () => {

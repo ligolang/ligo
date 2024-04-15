@@ -3,9 +3,9 @@ type register = big_map<address, move>;
 
 let empty: register = Big_map.empty;
 let moves: register =
-  Big_map.literal (list([
+  Big_map.literal([
     [("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" as address), [1, 2]],
-    [("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" as address), [0, 3]]]));
+    [("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" as address), [0, 3]]]);
 let my_balance: option <move> =
   Big_map.find_opt(("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" as address), moves);
 let has_balance: bool =

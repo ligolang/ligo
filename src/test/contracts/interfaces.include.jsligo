@@ -17,9 +17,9 @@ interface FA1 extends FABase {
 namespace Impl implements FA0Ext, FA1 {
   export type t = int;
 
-  @entry const transfer = (_u : unit, s : t) : [list<operation>, t] => [list([]), s];
-  @entry const other1 = (_u : unit, s : t) : [list<operation>, t] => [list([]), s];
-  @entry const other2 = (_u : unit, s : t) : [list<operation>, t] => [list([]), s];
+  @entry const transfer = (_u : unit, s : t) : [list<operation>, t] => [[], s];
+  @entry const other1 = (_u : unit, s : t) : [list<operation>, t] => [[], s];
+  @entry const other2 = (_u : unit, s : t) : [list<operation>, t] => [[], s];
 };
 
 interface FAAll extends FA0Ext, FA1 {
@@ -33,17 +33,17 @@ interface FAAll extends FA0Ext, FA1 {
 namespace ImplAll implements FAAll {
   export type t = int;
 
-  @entry const transfer = (_u : unit, s : t) : [list<operation>, t] => [list([]), s];
-  @entry const other1 = (_u : unit, s : t) : [list<operation>, t] => [list([]), s];
-  @entry const other2 = (_u : unit, s : t) : [list<operation>, t] => [list([]), s];
-  @entry const other3 = (_u : unit, s : t) : [list<operation>, t] => [list([]), s];
+  @entry const transfer = (_u : unit, s : t) : [list<operation>, t] => [[], s];
+  @entry const other1 = (_u : unit, s : t) : [list<operation>, t] => [[], s];
+  @entry const other2 = (_u : unit, s : t) : [list<operation>, t] => [[], s];
+  @entry const other3 = (_u : unit, s : t) : [list<operation>, t] => [[], s];
   @view const v1 = (_u : unit, s : t) : t => s;
-  @entry const juju = (_i : int, s : t) : [list<operation>, t] => [list([]), s];
+  @entry const juju = (_i : int, s : t) : [list<operation>, t] => [[], s];
 
   /* foo, other4 and v2 are not in FAAll, but still added, because filtering
      is not enabled */
   export const foo = (s : t) : t => s;
-  @entry const other4 = (_u : unit, s : t) : [list<operation>, t] => [list([]), s];
+  @entry const other4 = (_u : unit, s : t) : [list<operation>, t] => [[], s];
   @view const v2 = (_u : unit, s : t) : t => s;
 }
 
@@ -51,16 +51,16 @@ namespace ImplAll implements FAAll {
 namespace ImplAllNoJuju implements FAAll {
   export type t = int;
 
-  @entry const transfer = (_u : unit, s : t) : [list<operation>, t] => [list([]), s];
-  @entry const other1 = (_u : unit, s : t) : [list<operation>, t] => [list([]), s];
-  @entry const other2 = (_u : unit, s : t) : [list<operation>, t] => [list([]), s];
-  @entry const other3 = (_u : unit, s : t) : [list<operation>, t] => [list([]), s];
+  @entry const transfer = (_u : unit, s : t) : [list<operation>, t] => [[], s];
+  @entry const other1 = (_u : unit, s : t) : [list<operation>, t] => [[], s];
+  @entry const other2 = (_u : unit, s : t) : [list<operation>, t] => [[], s];
+  @entry const other3 = (_u : unit, s : t) : [list<operation>, t] => [[], s];
   @view const v1 = (_u : unit, s : t) : t => s;
 
   /* foo, other4 and v2 are not in FAAll, but still added, because filtering
      is not enabled */
   export const foo = (s : t) : t => s;
-  @entry const other4 = (_u : unit, s : t) : [list<operation>, t] => [list([]), s];
+  @entry const other4 = (_u : unit, s : t) : [list<operation>, t] => [[], s];
   @view const v2 = (_u : unit, s : t) : t => s;
 }
 

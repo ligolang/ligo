@@ -40,15 +40,15 @@ on the left lies the element to cons, and, on the right, a list on
 which to cons.
 
 ```jsligo group=consing
-const short_list = list([1,2,2]);
+const short_list : list<int> = [1, 2, 2];
 // long_list == [5,1,2,2]
-const long_list = list([5, ...short_list]);
+const long_list : list<int> = [5, ...short_list];
 ```
 
 There is also a predefined function `List.cons`:
 
 ```jsligo group=consing
-// longer_list == list([6, 5, 1, 2, 2])
+// longer_list == [6, 5, 1, 2, 2]
 const longer_list = List.cons(6, long_list);
 ```
 

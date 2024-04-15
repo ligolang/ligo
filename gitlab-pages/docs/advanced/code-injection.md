@@ -133,7 +133,7 @@ function main (action: parameter, store: storage) : [list<operation>, storage] {
       Increment: n => store + n,
       Extend: k => (Michelson`{ NEVER }` as ((n: never) => int))(k)
     });
-  return [list([]), storage];
+  return [[], storage];
 };
 ```
 

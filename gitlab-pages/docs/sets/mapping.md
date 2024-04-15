@@ -27,8 +27,8 @@ Note: See the predefined
 <Syntax syntax="jsligo">
 
 ```jsligo group=set_mapping
-const s: set<int> = Set.literal(list([5,1,2,2]));
-// plus_one == Set.literal(list([6,2,3]))
+const s: set<int> = Set.literal([5,1,2,2]);
+// plus_one == Set.literal([6,2,3])
 const plus_one: set<int> = Set.map(i => i + 1, s);
 ```
 

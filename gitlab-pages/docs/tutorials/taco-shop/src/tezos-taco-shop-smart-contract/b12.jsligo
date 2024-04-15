@@ -8,6 +8,6 @@ namespace TacoShop {
     list<operation>,
     taco_shop_storage
   ] {
-    return [list([]), taco_shop_storage]
+    return [[], taco_shop_storage]
   };
 };

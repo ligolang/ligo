@@ -6,7 +6,7 @@ export namespace IncDec {
 
   @entry
   const increment = (delta : int, store : storage) : result =>
-    [list([]), store + delta];
+    [[], store + delta];
 
   @entry
   const @default = (_u : unit, store : storage) : result =>
@@ -14,9 +14,9 @@ export namespace IncDec {
 
   @entry
   const decrement = (delta : int, store : storage) : result =>
-    [list([]), store - delta];
+    [[], store - delta];
 
   @entry
   const reset = (_p : unit, _s : storage) : result =>
-    [list([]), 0];
+    [[], 0];
 };

@@ -64,7 +64,7 @@ type result = [list<operation>, storage];
 
 @entry @no_mutation
 const sub = (delta: int, store: storage) : result =>
-  [list([]), store - delta];
+  [[], store - delta];
 ```
 
 </Syntax>

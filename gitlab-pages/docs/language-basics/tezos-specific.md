@@ -158,7 +158,7 @@ let origination : operation * address = Tezos.create_contract
 
 ```jsligo group=e
 const origination = Tezos.create_contract(
-  (p: nat, s: string) => [list([]), s],
+  (p: nat, s: string) => [[], s],
   None(),
   3tez,
   "initial_storage"

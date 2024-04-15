@@ -5,7 +5,7 @@ namespace C {
   function main (p: param, _s: [string , address]) : [list<operation> , [string , address]] {
     let [_v,ticket] = p ;
     let [[_addr,[v,_t]] , _ticket] = Tezos.read_ticket (ticket) ;
-    return ([list([]) , [v, Tezos.get_sender ()]])
+    return ([[] , [v, Tezos.get_sender ()]])
   };
 }
 

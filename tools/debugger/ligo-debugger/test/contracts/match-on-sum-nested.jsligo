@@ -14,5 +14,5 @@ let main = (p : variants, s: int) : [list<operation>, int] => {
     };
   };
 
-  return [(list([]) as list<operation>), s2]
+  return [([] as list<operation>), s2]
 };

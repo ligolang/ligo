@@ -31,7 +31,7 @@ export namespace IncDec {
 
   @entry
   const increment = (delta : int, store : storage) : result =>
-    [list([]), store + delta];
+    [[], store + delta];
 
   @entry
   const @default = (_u : unit, store : storage) : result =>
@@ -39,11 +39,11 @@ export namespace IncDec {
 
   @entry
   const decrement = (delta : int, store : storage) : result =>
-    [list([]), store - delta];
+    [[], store - delta];
 
   @entry
   const reset = (_p : unit, _s : storage) : result =>
-    [list([]), 0];
+    [[], 0];
 };
 ```
 
@@ -295,10 +295,10 @@ export type storage = {
 type result = [list<operation>, storage];
 
 const entry_A = (n: nat, store: storage): result =>
-  [list([]), {...store, counter: n}];
+  [[], {...store, counter: n}];
 
 const entry_B = (s: string, store: storage): result =>
-  [list([]), {...store, name: s}];
+  [[], {...store, name: s}];
 
 @entry
 const main = (action: parameter, store: storage): result =>
@@ -446,7 +446,7 @@ const no_tokens = (action: parameter, store: storage): result => {
   if (Tezos.get_amount() > 0tez) {
     return failwith("This contract does not accept tokens.");
   } else {
-    return [list([]), store];
+    return [[], store];
   };
 };
 ```
@@ -478,7 +478,7 @@ const owner = "tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" as address;
 
 const owner_only = (action: parameter, store: storage): result => {
   if (Tezos.get_sender() != owner) { return failwith("Access denied."); }
-  else { return [list([]), store]; };
+  else { return [[], store]; };
 };
 ```
 
@@ -568,7 +568,7 @@ export namespace IncDec {
 
   @entry
   const increment = (delta : int, store : storage) : ret =>
-    [list([]), store + delta];
+    [[], store + delta];
 
   // And so on, as above
 };
@@ -591,7 +591,7 @@ const dest = "KT19wgxcuXG9VH4Af5Tpm1vqEKdaMFpznXT3" as address;
 const proxy = (action: parameter, store: storage): result => {
   let counter : contract<parameter> = Tezos.get_contract_with_error(dest, "not found");
   let op = Tezos.transaction(Increment(5), 0tez, counter);
-  return [list([op]), store];
+  return [[], store];
 };
 ```
 

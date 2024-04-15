@@ -60,7 +60,7 @@ const unreach_6 = (x: string, y: string, z: string): string => {
 @entry
 const main = (_: int, s: int): [list<operation>, int] => {
   return [
-    (list([]) as list<operation>), // No operations
+    ([] as list<operation>), // No operations
     s
   ]
 };

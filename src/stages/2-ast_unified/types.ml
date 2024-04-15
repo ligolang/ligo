@@ -17,7 +17,7 @@ module Application = Ligo_prim.Application
 module Record = Ligo_prim.Record
 module Non_linear_rows = Nano_prim.Non_linear_rows (Label)
 module Field = Nano_prim.Field
-module Array_repr = Nano_prim.Array_repr
+module Array_repr = Ligo_prim.Array_repr
 module Object_ = Nano_prim.Object_
 module Selection = Nano_prim.Selection
 module Match_tc39 = Nano_prim.Match_tc39
@@ -365,6 +365,7 @@ and ('self, 'ty_expr, 'pattern, 'block, 'mod_expr) expression_content_ =
   | E_record_pun of (Label.t, 'self) Field.t list (* { x = 10; y; z } *)
   | E_array of
       'self Array_repr.t (* [1, 2, 3] , [42] , [] , [2 ...3] (specific to jsligo) *)
+  | E_array_as_list of 'self Array_repr.t (* list([1, 2, 3]) (specific to jsligo) *)
   | E_object of 'self Object_.t (* {a : 1, b : 2}  ; { a ... n } *)
   | E_object_update of 'self Object_.update
   | E_list of 'self list (* [ 1; 2; 3; 4; 5] *)

@@ -222,7 +222,7 @@ let main (((),s): unit * storage) : operation list * storage = [] , s
 
 ```jsligo group=views
 type storage = string
-let main = ([_ , s]: [unit , storage]) : [ list<operation> , storage] => [list([]), s];
+let main = ([_ , s]: [unit , storage]) : [ list<operation> , storage] => [[], s];
 
 /* view 'view1', simply returns the storage */
 @view

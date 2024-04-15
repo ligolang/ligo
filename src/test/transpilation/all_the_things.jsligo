@@ -74,7 +74,7 @@ let transfer = ([p,s] : [transfer, storage]) : [list <operation>, storage] => {
       when(None()): (0 as nat)
     };
     let new_tokens2 = Big_map.update (p.address_to, (Some (receiver_balance + p.value)), new_tokens);
-    return [(list([]) as list <operation>), { ...s,tokens:new_tokens2, allowances:new_allowances}];
+    return [([] as list <operation>), { ...s,tokens:new_tokens2, allowances:new_allowances}];
   };
 };
 

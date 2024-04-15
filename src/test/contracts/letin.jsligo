@@ -3,7 +3,7 @@ type storage = [int, int];
 let main = (n0 : int, n1 : storage) : [list <operation>, storage] => {
   let x : int = 7;
   let x2 : [int, int] = [x + n0, n1[0] + n1[1]];
-  return [list([]) as list <operation>, x2];
+  return [[] as list <operation>, x2];
 };
 
 let f0 = (_a: string): bool => true

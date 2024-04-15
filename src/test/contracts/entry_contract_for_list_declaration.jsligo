@@ -6,14 +6,14 @@ namespace Foo {
 
   @entry
   const increment = (delta: int, store: storage): ret =>
-    [list([]), store + delta];
+    [[], store + delta];
 
   @entry
   const decrement = (delta: int, store: storage): ret =>
-    [list([]), store - delta];
+    [[], store - delta];
 
   @entry
-  const reset = (_u: unit, _s: storage): ret => [list([]), 0]
+  const reset = (_u: unit, _s: storage): ret => [[], 0]
 };
 
 

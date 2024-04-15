@@ -7,5 +7,5 @@ const zs = list([...xs, ...ys]);
 @entry
 const main = (p: list<int>, s: list<int>): [list<operation>, list<int>] => {
   let rs = list([...p, ...s]);
-  return [list([]), rs]
+  return [[], rs]
 };

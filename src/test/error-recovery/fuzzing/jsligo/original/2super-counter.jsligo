@@ -11,5 +11,5 @@ const main = ([action, store]: [parameter, storage]) : return_ => {
     when (Increment(n)) : store + n;
     when (Decrement(n)) : store - n
   };
-  return [(list([]) as list <operation>), storage];
+  return [([] as list <operation>), storage];
 };

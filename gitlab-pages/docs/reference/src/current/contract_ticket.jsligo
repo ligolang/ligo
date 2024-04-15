@@ -8,5 +8,5 @@ type result = [list<operation>, storage];
 function main (i: parameter, store : storage): result {
   let my_ticket1 = Option.unopt (Tezos.create_ticket (i, 10n));
   let [_x, ret] = Big_map.get_and_update ("hello", Some(my_ticket1), store);
-  return [list([]), ret]
+  return [[], ret]
 };

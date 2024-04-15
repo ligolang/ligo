@@ -11,5 +11,5 @@ const g = (): int => {
 const main = (_ : unit, s : int) : [list<operation>, int] => {
     const s2 = s + 1;
     const s3 = g() + f(s2);
-    return [(list([]) as list<operation>), s3]
+    return [([] as list<operation>), s3]
 }

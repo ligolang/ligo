@@ -12,6 +12,6 @@ const main = ([action, store] : [parameter, storage]): [list <operation>, storag
     when (Increment(value)) : add (store, value);
     when (Decrement(value)) : sub (store, value)
   };
-  return [(list([]) as list <operation>), store2];
+  return [([] as list <operation>), store2];
 };
 

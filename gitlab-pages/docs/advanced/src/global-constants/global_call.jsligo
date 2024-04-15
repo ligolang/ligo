@@ -2,4 +2,4 @@ const c : ((_p : int) => int) = Tezos.constant("expruCKsgmUZjC7k8NRcwbcGbFSuLHv5
 
 @entry
 let main = (_p : unit, s : int) : [list<operation>, int] =>
-  [list([]), c(s)]
+  [[], c(s)]

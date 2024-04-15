@@ -17,5 +17,5 @@ const main = (_ : unit, _ : storage) : [list<operation>, storage]
     let a = Option.unopt (Tezos.join_tickets (a1, b1));
     let b = Option.unopt (Tezos.join_tickets (a2, b2));
     let c = Option.unopt (Tezos.join_tickets (a3, b3));
-    return [list([]), [a, b, c]]
+    return [[], [a, b, c]]
   }

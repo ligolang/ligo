@@ -4,5 +4,5 @@ type ret = [list<operation>, storage]
 
 @entry
 const sponsorise = (delta: int, store: storage): ret => {
-  return [list([]), { ...store, 1 }]
+  return [[], { ...store, 1 }]
 }

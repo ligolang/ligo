@@ -30,7 +30,7 @@ let check (p,s : unit * tez) = [], Tezos.get_balance()
 
 ```jsligo
 let check = (p: unit, s: tez):[list<operation>, tez] =>
-  [list([]), Tezos.get_balance()];
+  [[], Tezos.get_balance()];
 ```
 
 </Syntax>
@@ -392,7 +392,7 @@ let main = (_ignore: unit, storage: storage) : [list<operation>, storage] => {
   if (storage != packed) {
     return failwith("wrong chain") as [list<operation>, storage];
   } else {
-    return [list([]), packed];
+    return [[], packed];
   };
 };
 ```
@@ -660,7 +660,7 @@ type result = [list<operation>, storage];
 function main (i: parameter, store : storage): result {
   let my_ticket1 = Option.unopt (Tezos.create_ticket (i, 10n));
   let [_x, ret] = Big_map.get_and_update ("hello", Some(my_ticket1), store);
-  return [list([]), ret]
+  return [[], ret]
 };
 ```
 

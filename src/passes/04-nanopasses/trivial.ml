@@ -337,6 +337,9 @@ end = struct
           fields
       in
       ret @@ E_record (Ligo_prim.Record.of_list x)
+    | E_tuple fields -> ret @@ E_tuple fields
+    | E_array elements -> ret @@ E_array elements
+    | E_array_as_list entries -> ret @@ E_array_as_list entries
     | E_module_access { module_path; field; _ } ->
       ret
       @@ E_module_accessor { module_path = List.Ne.to_list module_path; element = field }
@@ -786,6 +789,9 @@ end = struct
     | E_record fields ->
       let lst = Ligo_prim.Record.to_list fields in
       ret @@ E_record_pun (List.map lst ~f:(fun (l, e) -> O.Field.Complete (l, e)))
+    | E_tuple elements -> ret @@ E_tuple elements
+    | E_array entries -> ret @@ E_array entries
+    | E_array_as_list entries -> ret @@ E_array_as_list entries
     | E_module_accessor { module_path; element } ->
       let module_path =
         match List.Ne.of_list_opt module_path with

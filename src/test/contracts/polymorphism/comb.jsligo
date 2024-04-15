@@ -8,7 +8,7 @@ const _rev = <T>([xs, acc] : [list<T>, list<T>]) : list<T> =>
     when([z,...zs]): _rev([zs, list([z,...acc])])
   };
 
-const rev = <T>(xs : list<T>) : list<T> => _rev([xs, (list([]) as list<T>)]);
+const rev = <T>(xs : list<T>) : list<T> => _rev([xs, ([] as list<T>)]);
 
 
 const _zip = <T,U>([xs, ys, acc] : [list<T>, list<U>, list<[T, U]>]) : list<[T, U]> =>
@@ -25,12 +25,12 @@ const _zip = <T,U>([xs, ys, acc] : [list<T>, list<U>, list<[T, U]>]) : list<[T, 
         };
   };
 
-const zip = <T,U>(xs : list<T>) => ((ys : list<U>) : list<[T, U]> => rev (_zip ([xs, ys, (list([]) as list<[T, U]>)])));
+const zip = <T,U>(xs : list<T>) => ((ys : list<U>) : list<[T, U]> => rev (_zip ([xs, ys, ([] as list<[T, U]>)])));
 
 const self_zip = <T>(lst : list<T>) : list<[T, T]> => {
   let [xs, ys] = diag(lst);
   return (zip(xs))(ys)
 };
 
-const v : list<[string, string]> = self_zip (list(["a","b"]));
-const w : list<[int, nat]> = (zip (list([1,2,3])))(list([(4 as nat),(5 as nat),(6 as nat)]));
+const v : list<[string, string]> = self_zip (["a","b"]);
+const w : list<[int, nat]> = (zip ([1,2,3]))([(4 as nat),(5 as nat),(6 as nat)]);

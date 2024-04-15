@@ -7,7 +7,7 @@ namespace Entry_no_metadata {
   type storage_1 = { data: int };
   type ret_1 = [list<operation>, storage_1];
   @entry
-  const main = (_p: param, s: storage_1): ret_1 => [list([]), s]
+  const main = (_p: param, s: storage_1): ret_1 => [[], s]
 };
 
 // ---------------------------------------------------------------------------
@@ -20,7 +20,7 @@ namespace Entry_invalid_metadata_1 {
   };
   type ret_2 = [list<operation>, storage_2];
   @entry
-  const main = (_p: param, s: storage_2): ret_2 => [list([]), s]
+  const main = (_p: param, s: storage_2): ret_2 => [[], s]
 };
 
 // ---------------------------------------------------------------------------
@@ -33,7 +33,7 @@ namespace Entry_invalid_metadata_2 {
   };
   type ret_3 = [list<operation>, storage_3];
   @entry
-  const main = (_p: param, s: storage_3): ret_3 => [list([]), s]
+  const main = (_p: param, s: storage_3): ret_3 => [[], s]
 };
 
 // ---------------------------------------------------------------------------
@@ -46,5 +46,5 @@ namespace Entry_valid_metadata {
   };
   type ret_4 = [list<operation>, storage_4];
   @entry
-  const main = (_p: param, s: storage_4): ret_4 => [list([]), s]
+  const main = (_p: param, s: storage_4): ret_4 => [[], s]
 };

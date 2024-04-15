@@ -16,4 +16,4 @@ const f_list = (xs : list<int>) : int => {
   return r;
 };
 
-const test_list = f_list(list([1,2,3]));
+const test_list = f_list([1,2,3]);

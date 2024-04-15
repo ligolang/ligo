@@ -9,4 +9,4 @@ const select = (source: map<int, string>, idx: int): option<[int, string]> => {
   return result;
 }
 
-const test = select(Map.literal(list([[1, "hello"], [2, "goodbye"], [3, "chau"]])), 1);
+const test = select(Map.literal([[1, "hello"], [2, "goodbye"], [3, "chau"]]), 1);

@@ -22,5 +22,5 @@ const main = (p: planet, _: int): [list<operation>, int] => {
       state = 0;
       break;
   };
-  return [list([]), state]
+  return [[], state]
 };

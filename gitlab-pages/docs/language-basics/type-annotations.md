@@ -55,7 +55,6 @@ type storage = {
 
 @entry
 const back = (param : unit, store : storage) : [list<operation>, storage] => { // Annotation
-  let no_op = list([]);
   if (Tezos.get_now() > store.deadline) {
     return failwith ("Deadline passed.");
   }
@@ -63,9 +62,9 @@ const back = (param : unit, store : storage) : [list<operation>, storage] => { /
     return match(Map.find_opt (Tezos.get_sender(), store.backers)) {
       when(None()): do {
         let backers = Map.update(Tezos.get_sender(), Some(Tezos.get_amount()), store.backers);
-        return [no_op, {...store, backers:backers}];
+        return [[], {...store, backers:backers}];
       };
-      when(Some(x)): [no_op, store]
+      when(Some(x)): [[], store]
     }
   };
 };

@@ -51,7 +51,7 @@ type storage = int
 
 @entry
 const main = (_action : unit, store : storage) : [list<operation>, storage] =>
-  [list([]), store + 1]
+  [[], store + 1]
 ```
 
 ```shell skip
@@ -99,11 +99,11 @@ type result = [list<operation>, storage];
 
 @entry
 const increment = (n: int, store: storage): result =>
-  [list([]), store + n];
+  [[], store + n];
 
 @entry
 const decrement = (n: int, store: storage): result =>
-  [list([]), store - n];
+  [[], store - n];
 
 [@view]
 const v1 = (n : int, store : storage) : int => store + n

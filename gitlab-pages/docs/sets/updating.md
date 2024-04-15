@@ -23,7 +23,7 @@ let set_without_3 = Set.update 3 false nats
 <Syntax syntax="jsligo">
 
 ```jsligo group=set_updating
-const nats: set<int> = Set.literal(list([3, 2, 2, 1]));
+const nats: set<int> = Set.literal([3, 2, 2, 1]);
 const set_with_5 = Set.update(5, true, nats);
 const set_without_3 = Set.update(3, false, nats);
 ```
@@ -56,7 +56,7 @@ Note: See the predefined
 
 ```jsligo group=set_updating
 const f = x => x % 2 == 0n ? None() : Some(x);
-// odds == Set.literal (list([3, 1]))
+// odds == Set.literal([3, 1])
 const odds = Set.filter_map(f, nats);
 ```
 

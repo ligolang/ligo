@@ -11,10 +11,10 @@ const foo = (xs : storage) : storage => {
     let r = R.div(R.new(a))(R.new(b));
     res = R.add(res)(r);
   };
-  return list([[res.p, res.q]]);
+  return [[res.p, res.q]];
 }
 
 @entry
 const main = (_action : unit, store : storage) : return_ => {
-  return [list([]) as list<operation>, foo (store)]
+  return [[] as list<operation>, foo (store)]
 };

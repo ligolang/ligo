@@ -4,8 +4,8 @@ interface FA0_INTF {
 }
 namespace FA0 implements FA0_INTF {
   export type storage = int;
-  @entry const add = (s : int, k : int) : [list<operation>, int] => [list([]), s + k];
-  @entry const extra = (s : int, k : int) : [list<operation>, int] => [list([]), s - k];
+  @entry const add = (s : int, k : int) : [list<operation>, int] => [[], s + k];
+  @entry const extra = (s : int, k : int) : [list<operation>, int] => [[], s - k];
 }
 interface FABase_INTF {
   type t;
@@ -30,10 +30,10 @@ interface FAAll_INTF extends FA0Ext_INTF, FA1_INTF {
 namespace FAAll_wo_opt_val implements FAAll_INTF {
   export type t = int;
 
-  @entry const transfer = (_u : unit, s : t) : [list<operation>, t] => [list([]), s];
-  @entry const transfer1 = (_u : unit, s : t) : [list<operation>, t] => [list([]), s];
-  @entry const transfer2 = (_u : unit, s : t) : [list<operation>, t] => [list([]), s];
-  @entry const transfer3 = (_u : unit, s : t) : [list<operation>, t] => [list([]), s];
+  @entry const transfer = (_u : unit, s : t) : [list<operation>, t] => [[], s];
+  @entry const transfer1 = (_u : unit, s : t) : [list<operation>, t] => [[], s];
+  @entry const transfer2 = (_u : unit, s : t) : [list<operation>, t] => [[], s];
+  @entry const transfer3 = (_u : unit, s : t) : [list<operation>, t] => [[], s];
   @view const v1 = (_u : unit, s : t) : t => s;
 
   /* "foo", "transfer4" and "v2" are not in "FAAll_INTF", but can
@@ -42,6 +42,6 @@ namespace FAAll_wo_opt_val implements FAAll_INTF {
      are implemented. */
 
   export const foo = (s : t) : t => s;
-  @entry const transfer4 = (_u : unit, s : t) : [list<operation>, t] => [list([]), s];
+  @entry const transfer4 = (_u : unit, s : t) : [list<operation>, t] => [[], s];
   @view const v2 = (_u : unit, s : t) : t => s;
 }

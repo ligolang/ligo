@@ -1,5 +1,5 @@
 const my_map: big_map<int,string> =
-  Big_map.literal(list([[1,"one"],[2,"two"]]));
+  Big_map.literal([[1,"one"],[2,"two"]]);
 const contains_2: bool = Big_map.mem(2, my_map); // == true
 const v : option<string> = Big_map.find_opt(2, my_map);
 let force_access = (key, map) => {

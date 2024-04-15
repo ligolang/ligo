@@ -5,7 +5,7 @@ const main = (_parameter : unit, _storage : int) : [list<operation>, int] => {
     z = z + 1;
     x = 1;
   };
-  return [list([]), x]
+  return [[], x]
 }
 // $ ligo run dry-run /tmp/what.jsligo unit 0
 // ( LIST_EMPTY() , 42 )

@@ -122,7 +122,7 @@ function buy_taco(taco_kind_index: nat, taco_shop_storage: taco_shop_storage): [
   list<operation>,
   taco_shop_storage
 ]  {
-    return [list([]), taco_shop_storage]
+    return [[], taco_shop_storage]
   };
 ```
 
@@ -185,7 +185,7 @@ namespace TacoShop {
     list<operation>,
     taco_shop_storage
   ] {
-    return [list([]), taco_shop_storage]
+    return [[], taco_shop_storage]
   };
 };
 
@@ -224,10 +224,10 @@ let default_storage: taco_shop_storage  = Map.literal [
 <Syntax syntax="jsligo">
 
 ```jsligo group=TacoShop
-const default_storage: taco_shop_storage = Map.literal (list([
+const default_storage: taco_shop_storage = Map.literal ([
   [1n, { current_stock : 50n, max_price : 50tez }],
   [2n, { current_stock : 20n, max_price : 75tez }]
-]));
+]);
 ```
 
 </Syntax>
@@ -320,7 +320,7 @@ function buy_taco(taco_kind_index: nat, taco_shop_storage: taco_shop_storage): [
     taco_kind_index,
     (Some (({...taco_kind, current_stock : abs (taco_kind.current_stock - (1n)) }))),
     taco_shop_storage );
-  return [list([]), taco_shop_storage_updated]
+  return [[], taco_shop_storage_updated]
 };
 ```
 
@@ -400,7 +400,7 @@ const buy_taco = (taco_kind_index: nat, taco_shop_storage: taco_shop_storage) : 
       taco_kind_index,
       (Some (({...taco_kind, current_stock : abs (taco_kind.current_stock - 1n) }))),
       taco_shop_storage );
-    return [list([]), taco_shop_storage]
+    return [[], taco_shop_storage]
   }
 };
 ```

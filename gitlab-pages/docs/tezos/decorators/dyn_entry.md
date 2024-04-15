@@ -57,12 +57,12 @@ type storage = {
 
 @dyn_entry
 const one = (_u: unit, _i: int): [list<operation>, int] =>
-  [list([]), 1];
+  [[], 1];
 
 @dyn_entry
 const tick = (_: ticket<int>, x: [int, int])
   : [list<operation>, [int, int]] =>
-  [list([]), x];
+  [[], x];
 ```
 
 </Syntax>

@@ -13,7 +13,7 @@ generated. unrecognized constant: {"constant":"BALANCE","location":"generated"}
 type storage = tez;
 
 function main3 (_unit : unit, _storage : storage) : [list<operation>, tez] {
-  return [(list([]) as list<operation>), Tezos.get_balance()] }
+  return [([] as list<operation>), Tezos.get_balance()] }
 
 function main (x0 : unit, x1 : storage): [list<operation>, tez] {
   return main3 (x0, x1) }

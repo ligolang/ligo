@@ -4,15 +4,15 @@ type @return = [list<operation>, storage];
 namespace C {
   @entry
   const decrement = (param: int, storage: storage) : @return =>
-    [list([]), storage - param];
+    [[], storage - param];
 
   @entry
   const increment = (param: int, storage: storage) : @return =>
-    [list([]), storage + param];
+    [[], storage + param];
 
   @entry
   const reset = (_unit: unit, _storage: storage) : @return =>
-    [list([]), 0];
+    [[], 0];
 }
 
 const test_initial_storage = () : unit => {

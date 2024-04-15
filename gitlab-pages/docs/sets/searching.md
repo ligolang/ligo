@@ -22,7 +22,7 @@ Note: See the predefined
 <Syntax syntax="jsligo">
 
 ```jsligo group=set_membership
-const my_set: set<int> = Set.literal(list([3, 2, 2, 1]));
+const my_set: set<int> = Set.literal([3, 2, 2, 1]);
 const contains_3: bool = Set.mem(3, my_set); // == true
 ```
 

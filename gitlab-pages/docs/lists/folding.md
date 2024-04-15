@@ -92,17 +92,17 @@ List.fold_right (folded, list, init)
 which mean that the folding can be done leftwards or rightwards on the
 list. One way to tell them apart is to look where the folded function,
 and the fold itself, keep the accumulator in their signatures. Take
-for example a function `f`, a list `list([1, 2, 3])`, and an initial
+for example a function `f`, a list `[1, 2, 3]`, and an initial
 accumulator `init`. Then
 
 ```
-List.fold_left (f, init, list([1;2;3])) = f (f (f (init, 1), 2), 3)
+List.fold_left (f, init, [1;2;3]) = f (f (f (init, 1), 2), 3)
 ```
 
 and
 
 ```
-List.fold_right (f, list([1;2;3]), init) = f (1, (f (2, (f (3, init)))))
+List.fold_right (f, [1;2;3], init) = f (1, (f (2, (f (3, init)))))
 ```
 
 The type of `List.fold_left` is `(p : [a * b => a, a, b list]) => a`.
@@ -114,9 +114,9 @@ that the empty list yields `0`:
 
 ```jsligo group=folding_lists
 const add1 = ([a, i]) => a + i;
-const sum1 = List.fold_left (add1, 0, list([1, 2, 3]));
+const sum1 = List.fold_left(add1, 0, [1, 2, 3]);
 const add2 = ([i, a]) => i + a;
-const sum2 = List.fold_right (add2, list([1, 2, 3]), 0);
+const sum2 = List.fold_right(add2, [1, 2, 3], 0);
 ```
 
 See predefined

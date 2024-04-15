@@ -1,8 +1,8 @@
 namespace C {
   @entry
-  const increment = (p : int, s : int) : [list<operation>, int] => [list([]), s + p];
+  const increment = (p : int, s : int) : [list<operation>, int] => [[], s + p];
   @entry
-  const decrement = (p : int, s : int) : [list<operation>, int] => [list([]), s - p];
+  const decrement = (p : int, s : int) : [list<operation>, int] => [[], s - p];
 };
 const test = do {
   let orig = Test.originate(contract_of(C), 0, 0tez);

@@ -14,15 +14,15 @@ namespace IncDec implements Interfaces.IncDec {
 
   @entry
   const increment = (delta : int, store : storage) : ret =>
-    [list([]), store + delta];
+    [[], store + delta];
 
   @entry
   const decrement = (delta : int, store : storage) : ret =>
-    [list([]), store - delta];
+    [[], store - delta];
 
   @entry
   const reset = (_p : unit, _s : storage) : ret =>
-    [list([]), 0];
+    [[], 0];
 };
 
 namespace X implements { type t; const x : t } {

@@ -9,7 +9,7 @@ const fib = (n : int) : int => {
 const cat = <T>(xs: list<T>, ys: list<T>) : list<T> =>
   match(xs) {
     when([]): ys;
-    when([hd, ...tl]): list([hd, ...cat(tl, ys)]);
+    when([hd, ...tl]): [hd, ...cat(tl, ys)];
   };
 
 const fib2 : (_u : unit) => (n : int) => int = () => {

@@ -4,7 +4,7 @@ type storage = int;
 
 let main = ([p, s]: [parameter, storage]) : [list<operation>, int] => {
   return match(p, {
-    Add: (n : int) => [list([]) as list<operation>, s + n],
-    Subtract: (n : int) => [list([]) as list<operation>, s - n]
+    Add: (n : int) => [[] as list<operation>, s + n],
+    Subtract: (n : int) => [[] as list<operation>, s - n]
   });
 };

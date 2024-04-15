@@ -38,7 +38,7 @@ Note: See the predefined
 
 ```jsligo group=sets
 const empty_set: set<int> = Set.empty;
-const set1: set<int> = Set.literal(list([3, 2, 2, 1]));
+const set1: set<int> = Set.literal([3, 2, 2, 1]);
 ```
 
 > Note: The element `2` is repeated in the list, but not in the set
@@ -53,7 +53,7 @@ instead of `Set.literal`:
 
 ```jsligo group=sets
 const two = 2;
-const set2: set<int> = Set.of_list(list([3, two, two, 1]));
+const set2 : set<int> = Set.of_list([3, two, two, 1]);
 ```
 </Syntax>
 

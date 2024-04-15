@@ -8,11 +8,11 @@ type return_ = [list<operation>, storage];
 @dyn_entry
 const poke = (_: unit, store: storage): return_ => {
   let _a = Tezos.get_balance();
-  return [list([]), store];
+  return [[], store];
 };
 
 @entry
 const bar = (_: unit, store: storage): return_ => {
   let _a = Tezos.get_balance();
-  return [list([]), store];
+  return [[], store];
 };

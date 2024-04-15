@@ -1,4 +1,4 @@
-let my_list_fold: list<int> = list([1, 2, 3]);
+let my_list_fold: list<int> = [1, 2, 3];
 
 let sum_fold = ([result, i]: [int, int]): int => result + i;
 

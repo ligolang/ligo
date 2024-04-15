@@ -70,7 +70,7 @@ let get_storage () (storage : int): int = storage
 
 ```jsligo skip
 // @entry
-const set_storage = ([new_storage, _old_storage] : [int, int]): [list<operation>, int] => [list([]), new_storage]
+const set_storage = ([new_storage, _old_storage] : [int, int]): [list<operation>, int] => [[], new_storage]
 
 @view
 const get_storage = ([_, storage] : [unit, int]): int => storage
@@ -80,7 +80,7 @@ is now written
 
 ```jsligo
 @entry
-const set_storage = (new_storage: int, _old_storage: int): [list<operation>, int] => [list([]), new_storage]
+const set_storage = (new_storage: int, _old_storage: int): [list<operation>, int] => [[], new_storage]
 
 @view
 const get_storage = (_: unit, storage: int): int => storage
@@ -152,14 +152,14 @@ These annotations / decorators should now be written without prefixing them with
 
 ```jsligo
 @entry
-const my_entry_point = (_: unit, n: int) : [list<operation>, int] => [list([]), n];
+const my_entry_point = (_: unit, n: int) : [list<operation>, int] => [[], n];
 ```
 
 instead of
 
 ```jsligo skip
 // @entry
-const my_entry_point = (_: unit, n: int) : [list<operation>, int] => [list([]), n];
+const my_entry_point = (_: unit, n: int) : [list<operation>, int] => [[], n];
 ```
 
 There are also two internal annotations / decorators, which should not appear in normal source code:
@@ -297,7 +297,7 @@ let main = (p : parameter, s : storage) : returnx => {
     when([]): s;
     when([hd, ...tl]): [s[0] + hd, tl]
   };
-  return [(list([]) as list<operation>), storage];
+  return [([] as list<operation>), storage];
 };
 ```
 

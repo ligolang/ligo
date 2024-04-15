@@ -22,7 +22,7 @@ let contains_2 : bool = Big_map.mem 2 my_map // = true
 
 ```jsligo group=big_map_searching
 const my_map: big_map<int,string> =
-  Big_map.literal(list([[1,"one"],[2,"two"]]));
+  Big_map.literal([[1,"one"],[2,"two"]]);
 const contains_2: bool = Big_map.mem(2, my_map); // == true
 ```
 

@@ -83,7 +83,7 @@ containing them, and only them.
 
 ```jsligo group=big_sets
 const empty_big_set: big_set<int> = Big_set.empty;
-const big_set1: big_set<int> = Big_set.literal(list([3, 2, 2, 1]));
+const big_set1: big_set<int> = Big_set.literal([3, 2, 2, 1]);
 ```
 
 > Note: The element `2` is repeated in the list, but not in the set
@@ -95,7 +95,7 @@ instead of `Big_set.literal`:
 
 ```jsligo group=big_sets
 const two = 2;
-const big_set2: big_set<int> = Big_set.of_list(list([3, two, two, 1]));
+const big_set2 : big_set<int> = Big_set.of_list([3, two, two, 1]);
 ```
 
 </Syntax>

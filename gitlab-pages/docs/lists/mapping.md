@@ -25,7 +25,7 @@ See predefined
 <Syntax syntax="jsligo">
 
 ```jsligo group=map_lists
-const plus_one = List.map (i => i + 1, list([6,2,3,3]));
+const plus_one = List.map(i => i + 1, [6, 2, 3, 3]);
 ```
 
 See predefined

@@ -54,7 +54,7 @@ type result = [list<operation>, storage];
 
 @entry
 const append = (s : string, store: storage): result =>
-  [list([]), store + s]
+  [[], store + s]
 ```
 
 </Syntax>

@@ -68,11 +68,11 @@ let one () (_ : int) : operation list * int = [], 1
 ```jsligo skip
 // define at least one entry
 @entry
-const nop = ([], s: int) : [list<operation>, int] => [list([]), s]
+const nop = ([], s: int) : [list<operation>, int] => [[], s]
 
 // define a dynamic entrypoint
 @dyn_entry
-const one = ([], _i : int) : [list<operation>, int] => [list([]), 1]
+const one = ([], _i : int) : [list<operation>, int] => [[], 1]
 ```
 
 </Syntax>
@@ -94,7 +94,7 @@ let one_with_different_storage () (_: nat) : operation list * nat = [], 1n
 
 ```jsligo skip
 @dyn_entry
-const one_with_different_storage = ([], _n : nat) : [list<operation>, nat] => [list([]), 1n]
+const one_with_different_storage = ([], _n : nat) : [list<operation>, nat] => [[], 1n]
 ```
 
 </Syntax>
@@ -249,7 +249,7 @@ let set_one (one_v2 : (unit, int) entrypoint) (s : storage) : operation list * s
 const set_one = (one_v2 : entrypoint<unit, int>, s : storage) : [list<operation>, storage] => {
   let dynamic_entrypoints =
     Dynamic_entrypoints.set(one, Some(one_v2), s.dynamic_entrypoints);
-  return [list([]), {...s, dynamic_entrypoints}]
+  return [[], {...s, dynamic_entrypoints}]
 }
 ```
 
@@ -362,7 +362,7 @@ const test_dyn = do {
   Test.transfer_to_contract (Test.to_contract(addr), Call_one(), 1mutez);
   assert ((Test.get_storage(addr)).storage == 1);
   /* Change initial one and call it */
-  const f = (_unit : unit, i : int) : [list<operation>, int] => [list([]), i + 1];
+  const f = (_unit : unit, i : int) : [list<operation>, int] => [[], i + 1];
   Test.transfer_to_contract (Test.to_contract(addr), (Set_one(f)), 1mutez);
   Test.transfer_to_contract (Test.to_contract(addr), (Call_one()), 1mutez);
   assert ((Test.get_storage(addr)).storage == 2);

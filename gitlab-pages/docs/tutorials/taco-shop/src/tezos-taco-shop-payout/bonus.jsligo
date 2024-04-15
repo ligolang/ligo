@@ -21,4 +21,4 @@ const op1 = match ((Tezos.get_amount ()) - donationAmount) {
   when(None()): failwith ("Insufficient balance")
 };
 const op2 = Tezos.transaction (unit, donationAmount, donationReceiver);
-const operations : list<operation> = list([ op1 , op2 ]);
+const operations : list<operation> = [ op1 , op2 ];

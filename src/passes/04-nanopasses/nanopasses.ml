@@ -14,7 +14,7 @@ type flags =
   ; export : bool
   ; freeze_operators : Syntax_types.t
   ; list_as_function : bool
-  ; array_to_tuple : bool
+  ; no_parameter_function : bool
   ; match_as_function : bool
   ; object_to_record : bool
   ; detect_recursion : bool
@@ -36,7 +36,7 @@ let passes ~(flags : flags) : (module T) list list =
       ; restrict_projection
       ; export
       ; list_as_function
-      ; array_to_tuple
+      ; no_parameter_function
       ; match_as_function
       ; object_to_record
       ; detect_recursion
@@ -107,7 +107,7 @@ let passes ~(flags : flags) : (module T) list list =
     ; entry (module Of_file) ~flag:always ~arg:mod_res
     ; entry (module List_as_function) ~flag:list_as_function ~arg:()
     ]
-  ; [ entry (module Array_to_tuple) ~flag:array_to_tuple ~arg:()
+  ; [ entry (module No_parameter_function) ~flag:no_parameter_function ~arg:()
     ; entry (module Match_tc39) ~flag:match_as_function ~arg:()
     ; entry (module Object_to_record) ~flag:object_to_record ~arg:()
     ; entry (module Hack_literalize_jsligo) ~flag:hack_literalize_jsligo ~arg:()
@@ -160,7 +160,7 @@ let extract_flags_from_options : disable_initial_check:bool -> Compiler_options.
   ; restrict_projection = is_jsligo
   ; export = is_jsligo
   ; list_as_function = is_jsligo
-  ; array_to_tuple = is_jsligo
+  ; no_parameter_function = is_jsligo
   ; match_as_function = is_jsligo
   ; object_to_record = is_jsligo
   ; detect_recursion = is_jsligo

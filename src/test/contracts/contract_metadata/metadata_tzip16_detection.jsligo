@@ -8,7 +8,7 @@ namespace Entry_no_metadata {
   export type storage = { data: int }
   @entry
   const main = (_p: param, s: storage): [list<operation>, storage] =>
-    [list([]), s]
+    [[], s]
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -17,7 +17,7 @@ namespace Entry_invalid_metadata {
   export type storage = { data: int, metadata: big_map<bytes, string> }
   @entry
   const main = (_p: param, s: storage): [list<operation>, storage] =>
-    [list([]), s]
+    [[], s]
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -26,7 +26,7 @@ namespace Entry_valid_metadata {
   export type storage = { data: int, metadata: big_map<string, bytes> }
   @entry
   const main = (_p: param, s: storage): [list<operation>, storage] =>
-    [list([]), s]
+    [[], s]
   const off_view = (p: int, s: storage): int => p + s.data
 }
 
@@ -36,43 +36,43 @@ type storage = Entry_valid_metadata.storage
 // tzip16 attribute is handled
 const storage_simple_case: storage = {
   data: 0;
-  metadata: Big_map.literal(list([]))
+  metadata: Big_map.literal([])
 }
 
 const storage_without_explicit_type = {
   data: 0;
-  metadata: (Big_map.literal(list([])) as big_map<string, bytes>)
+  metadata: (Big_map.literal([]) as big_map<string, bytes>)
 }
 
 @tzip16_compatible
 const storage_with_attribute: storage = {
   data: 0;
-  metadata: Big_map.literal(list([]))
+  metadata: Big_map.literal([])
 }
 
 const storage_without_metadata_field: Entry_no_metadata.storage = { data: 0 }
 
 const storage_with_invalid_metadata: Entry_invalid_metadata.storage = {
   data: 0;
-  metadata: Big_map.literal(list([]))
+  metadata: Big_map.literal([])
 }
 
 const storage_of_no_existing_storage_type = {
   data: { meq: "" };
-  metadata: (Big_map.literal(list([])) as big_map<string, bytes>)
+  metadata: (Big_map.literal([]) as big_map<string, bytes>)
 }
 
 namespace Wrapper {
   namespace Inner_wrapper {
     const storage_inside_module: storage = {
       data: 0;
-      metadata: Big_map.literal(list([]))
+      metadata: Big_map.literal([])
     }
   }
 }
 
 const make = (a: int): storage => {
-  return { data: a; metadata: Big_map.literal(list([])) }
+  return { data: a; metadata: Big_map.literal([]) }
 }
 
 const [storage_from_multi_binding, and_another_storage]: [storage, storage] = [

@@ -517,10 +517,10 @@ namespace C {
   export type storage = int;
 
   @entry
-  const increment = (action: int, store: storage) : [list <operation>, storage] => [list([]), store + action];
+  const increment = (action: int, store: storage) : [list <operation>, storage] => [[], store + action];
 
   @entry
-  const decrement = (action: int, store: storage) : [list <operation>, storage] => [list([]), store - action];
+  const decrement = (action: int, store: storage) : [list <operation>, storage] => [[], store - action];
 
   @view
   const get_storage = (must_be_positive: bool, storage: int): int => {
@@ -867,11 +867,11 @@ Maps
 ```jsligo
 type prices = map<nat, tez>;
 
-const prices: prices = Map.literal(list([
+const prices: prices = Map.literal([
   [10n, 60mutez],
   [50n, 30mutez],
   [100n, 10mutez]
-]));
+]);
 
 const price: option<tez> = Map.find_opt(50n, prices)
 
@@ -954,8 +954,8 @@ Namespace (auto-inferred type)
 ```jsligo
 namespace FA0_inferred {
   type storage = int;
-  @entry const add = (s : int, k : int) : [list<operation>, int] => [list([]), s + k];
-  @entry const extra = (s : int, k : int) : [list<operation>, int] => [list([]), s - k];
+  @entry const add = (s : int, k : int) : [list<operation>, int] => [[], s + k];
+  @entry const extra = (s : int, k : int) : [list<operation>, int] => [[], s - k];
 }
 ```
 
@@ -994,8 +994,8 @@ Namespace impmlementing
 ```jsligo
 namespace FA0 implements FA0_INTF {
   export type storage = int;
-  @entry const add = (s : int, k : int) : [list<operation>, int] => [list([]), s + k];
-  @entry const extra = (s : int, k : int) : [list<operation>, int] => [list([]), s - k];
+  @entry const add = (s : int, k : int) : [list<operation>, int] => [[], s + k];
+  @entry const extra = (s : int, k : int) : [list<operation>, int] => [[], s - k];
 }
 ```
 

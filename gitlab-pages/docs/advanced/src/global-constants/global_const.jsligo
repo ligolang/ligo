@@ -3,4 +3,4 @@ const helper = ([s, x]: [string, int]) =>
 
 @entry
 const main = (p: string, s: int) : [list<operation>, int] =>
-  [list([]), helper ([p, s])];
+  [[], helper ([p, s])];

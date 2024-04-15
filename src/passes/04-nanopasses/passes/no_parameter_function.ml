@@ -10,15 +10,6 @@ let compile ~raise =
    fun e ->
     let loc = Location.get_location e in
     match Location.unwrap e with
-    | E_array elements ->
-      (match elements with
-      | [] -> e_unit ~loc
-      | hd :: tl ->
-        let f = function
-          | Array_repr.Expr_entry e -> e
-          | Rest_entry e -> raise.error @@ unsupported_rest_property e
-        in
-        e_tuple ~loc (List.Ne.map f (hd, tl)))
     | E_block_poly_fun { type_params; parameters = []; ret_type; body } ->
       let parameters : pattern Param.t list =
         [ { param_kind = `Const; pattern = make_p ~loc:Location.generated P_unit } ]
@@ -38,7 +29,10 @@ let reduction ~raise =
   { Iter.defaults with
     expr =
       (function
-      | { wrap_content = E_array _; _ } -> raise.error (wrong_reduction __MODULE__)
+      | { wrap_content =
+            E_poly_fun { parameters = []; _ } | E_block_poly_fun { parameters = []; _ }
+        ; _
+        } -> raise.error (wrong_reduction __MODULE__)
       | _ -> ())
   }
 

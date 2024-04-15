@@ -2,10 +2,10 @@ namespace C {
   export type storage = int;
 
   @entry
-  const increment = (action: int, store: storage) : [list <operation>, storage] => [list([]), store + action];
+  const increment = (action: int, store: storage) : [list <operation>, storage] => [[], store + action];
 
   @entry
-  const decrement = (action: int, store: storage) : [list <operation>, storage] => [list([]), store - action];
+  const decrement = (action: int, store: storage) : [list <operation>, storage] => [[], store - action];
 
   @view
   const get_storage = (must_be_positive: bool, storage: int): int => {

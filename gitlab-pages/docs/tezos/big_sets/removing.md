@@ -23,7 +23,7 @@ let contains_3 = Big_set.mem 3 new_big_set // = false
 <Syntax syntax="jsligo">
 
 ```jsligo group=set_removing
-const my_big_set: big_set<int> = Big_set.literal(list([3, 2, 2, 1]));
+const my_big_set: big_set<int> = Big_set.literal([3, 2, 2, 1]);
 const new_big_set = Big_set.remove(3, my_big_set);
 const contains_3 = Big_set.mem(3, new_big_set); // == false
 ```

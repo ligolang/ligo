@@ -2,6 +2,6 @@
 type storage = int;
 type result = [list<operation>, storage];
 
-@entry const increment = (delta: int, store: storage): result => [list([]), store + delta];
-@entry const decrement = (delta: int, store: storage): result => [list([]), store - delta];
-@entry const reset = (_u: unit, _store: storage): result => [list([]), 0];
+@entry const increment = (delta: int, store: storage): result => [[], store + delta];
+@entry const decrement = (delta: int, store: storage): result => [[], store - delta];
+@entry const reset = (_u: unit, _store: storage): result => [[], 0];

@@ -186,8 +186,8 @@ let my_list : int list = [1; 2; 2] (* The head is 1, the tail is [2; 2] *)
 <Syntax syntax="jsligo">
 
 ```jsligo group=lists
-const empty_list: list<int> = list([]);
-const my_list = list([1, 2, 2]); // The head is 1, the tail is list([2, 2])
+const empty_list : list<int> = [];
+const my_list : list<int> = [1, 2, 2]; // The head is 1, the tail is [2, 2]
 ```
 
 </Syntax>
@@ -218,7 +218,7 @@ not symmetric: on the left lies the element to cons, and, on the
 right, a list on which to cons.
 
 ```jsligo group=lists
-const larger_list = list([5, ...my_list]); // [5,1,2,2]
+const larger_list : list<int> = [5, ...my_list]; // [5,1,2,2]
 ```
 
 </Syntax>
@@ -426,7 +426,7 @@ In JsLIGO, you can define a non-empty set using the `Set.literal` function
 which takes a list of elements & returns a set.
 
 ```jsligo group=sets
-let my_set: set<int> = Set.literal(list([3, 2, 2, 1]));
+let my_set: set<int> = Set.literal([3, 2, 2, 1]);
 ```
 
 You can check that `2` is not repeated in `my_set` by using the LIGO

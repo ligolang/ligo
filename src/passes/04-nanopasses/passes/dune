@@ -44,7 +44,7 @@
   pattern_constructor_application
   pattern_heuristic
   object_to_record
-  array_to_tuple
+  no_parameter_function
   let_syntax
   generalize_functions
   curry

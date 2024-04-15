@@ -5,4 +5,4 @@ const receiver : contract<unit> =
     when(None()): (failwith ("Not a contract") as contract<unit>)
   }
 const payoutOperation : operation = Tezos.transaction (unit, Tezos.get_amount (), receiver) ;
-const operations : list <operation> = list([payoutOperation]);
+const operations : list <operation> = [payoutOperation];

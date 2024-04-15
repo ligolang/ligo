@@ -72,6 +72,9 @@ and expression_content ppf (ec : expression_content) =
   | E_constructor c -> Constructor.pp expression ppf c
   | E_constant c -> Constant.pp expression ppf c
   | E_record m -> Record.pp expression ppf m
+  | E_tuple t -> Tuple.pp expression ppf t
+  | E_array a -> Array_repr.pp expression ppf a
+  | E_array_as_list a -> fprintf ppf "@[list(%a)]" (Array_repr.pp expression) a
   | E_accessor a -> Types.Accessor.pp expression ppf a
   | E_update u -> Types.Update.pp expression ppf u
   | E_lambda l -> Lambda.pp expression type_expression_option ppf l
