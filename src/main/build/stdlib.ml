@@ -76,7 +76,7 @@ let get : options:Compiler_options.t -> unit -> t =
   let def str = "#define " ^ str ^ "\n" in
   let std =
     match options.middle_end.protocol_version with
-    | Environment.Protocols.Oxford2 -> def "OXFORD2"
+    | Environment.Protocols.Paris_b -> def "PARIS_B"
   in
   let legacy_layout_tree =
     if Ligo_prim.Layout.legacy_layout_flag then def "LEGACY_LAYOUT_TREE" else ""

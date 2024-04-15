@@ -416,7 +416,7 @@ let evaluate_expression ~raise ?options exp exp_type : int Michelson.michelson L
 
 
 let evaluate_constant ~raise ?options exp exp_type
-    : (Tezos_raw_protocol_018_Proxford.Script_expr_hash.t * int Michelson.michelson) Lwt.t
+    : (Memory_proto_alpha.Protocol.Script_expr_hash.t * int Michelson.michelson) Lwt.t
   =
   let open Lwt.Let_syntax in
   let%bind etv = run_expression ~raise ?options exp exp_type in
@@ -509,7 +509,7 @@ module Checks = struct
         | None ->
           Lwt_result.return
             (Micheline.Prim
-               (0, Tezos_raw_protocol_018_Proxford.Michelson_v1_primitives.T_unit, [], []))
+               (0, Memory_proto_alpha.Protocol.Michelson_v1_primitives.T_unit, [], []))
       in
       let%bind storage_type =
         Lwt_result.map_error

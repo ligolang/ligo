@@ -1,9 +1,9 @@
 (library
  (name memory_proto_alpha)
- (public_name tezos-memory-proto-alpha)
+ (public_name ligo.tezos-memory-proto-alpha)
  (libraries
-  tezos-protocol-018-Proxford.protocol
-  octez-protocol-018-Proxford-libs.client
-  tezos-protocol-018-Proxford.parameters
-  tezos-protocol-018-Proxford.protocol.environment
-  octez-protocol-018-Proxford-libs.test-helpers))
+  tezos-protocol-019-PtParisB.protocol
+  octez-protocol-019-PtParisB-libs.client
+  tezos-protocol-019-PtParisB.parameters
+  tezos-protocol-019-PtParisB.protocol.environment
+  octez-protocol-019-PtParisB-libs.test-helpers))

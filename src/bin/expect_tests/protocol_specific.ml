@@ -124,7 +124,7 @@ let%expect_test _ =
 (* Test if pre alpha protocol works in this case it's mumbai, but in future this 
    will change *)
 let%expect_test _ =
-  run_ligo_good [ "compile"; "contract"; contract "unit.mligo"; "--protocol"; "oxford2" ];
+  run_ligo_good [ "compile"; "contract"; contract "unit.mligo"; "--protocol"; "parisb" ];
   [%expect
     {|
     { parameter unit ;

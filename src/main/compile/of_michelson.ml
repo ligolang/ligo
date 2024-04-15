@@ -58,27 +58,6 @@ let parse_constant ~raise code =
   @@ Memory_proto_alpha.node_to_canonical code
 
 
-let parse_constant_pre ~raise code =
-  let open Tezos_micheline in
-  let open Tezos_micheline.Micheline in
-  let code, errs = Micheline_parser.tokenize code in
-  let code =
-    match errs with
-    | _ :: _ ->
-      raise.error
-        (unparsing_michelson_tracer @@ List.map ~f:(fun x -> `Tezos_alpha_error x) errs)
-    | [] ->
-      let code, errs = Micheline_parser.parse_expression ~check:false code in
-      (match errs with
-      | _ :: _ ->
-        raise.error
-          (unparsing_michelson_tracer @@ List.map ~f:(fun x -> `Tezos_alpha_error x) errs)
-      | [] -> map_node (fun _ -> ()) (fun x -> x) code)
-  in
-  Proto_pre_alpha_utils.(
-    Trace.trace_alpha_tzresult ~raise unparsing_michelson_tracer
-    @@ Memory_proto_alpha.node_to_canonical code)
-
 
 let dummy : Stacking.meta =
   { location = Location.dummy
@@ -126,8 +105,7 @@ let build_contract ~raise
   in
   if disable_typecheck
   then Lwt.return contract
-  else if Environment.Protocols.equal Environment.Protocols.in_use protocol_version
-  then (
+  else (
     let%bind contract' =
       Lwt.map
         (Trace.trace_tzresult
@@ -193,46 +171,6 @@ let build_contract ~raise
         ~has_comment
         contract)
     else Lwt.return contract)
-  else (
-    let%bind contract' =
-      Lwt.map
-        (Trace.trace_tzresult
-           ~raise
-           (typecheck_contract_tracer protocol_version contract))
-        (Proto_pre_alpha_utils.Memory_proto_alpha.prims_of_strings contract)
-    in
-    (* Parse constants *)
-    let constants = List.map ~f:(parse_constant_pre ~raise) constants in
-    let%bind environment =
-      Proto_pre_alpha_utils.Memory_proto_alpha.dummy_environment ()
-    in
-    (* Update the Tezos context by registering the global constants *)
-    let%bind tezos_context =
-      Lwt_list.fold_left_s
-        (fun ctxt cnt ->
-          let%map ctxt, _, _ =
-            Lwt.map
-              (Proto_pre_alpha_utils.Trace.trace_alpha_tzresult
-                 ~raise
-                 (typecheck_contract_tracer protocol_version contract))
-            @@ Proto_pre_alpha_utils.Memory_proto_alpha.register_constant ctxt cnt
-          in
-          ctxt)
-        environment.tezos_context
-        constants
-    in
-    let environment = { environment with tezos_context } in
-    (* Type-check *)
-    let%map (_ : (_, _) Micheline.Micheline.node) =
-      Lwt.map
-        (Proto_pre_alpha_utils.Trace.trace_tzresult
-           ~raise
-           (typecheck_contract_tracer protocol_version contract))
-      @@ Proto_pre_alpha_utils.Memory_proto_alpha.typecheck_contract
-           ~environment
-           contract'
-    in
-    contract)
 
 
 let measure ~raise m =

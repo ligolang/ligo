@@ -1,4 +1,4 @@
-module List = Core.List
+open! Core
 module Michelson = Tezos_utils.Michelson
 include Memory_proto_alpha
 
@@ -28,9 +28,11 @@ module X = struct
     let error_details = Informative 0 in
     match ta, tb with
     | Item_t (tva, ra), Item_t (tvb, rb) ->
-      let (>>?) v f =
+      let ( >>? ) v f =
         let open Result_syntax in
-        let* x = v in f x in
+        let* x = v in
+        f x
+      in
       let x = ty_eq ~error_details tva tvb in
       Gas_monad.run ctxt x
       >>? fun (x, ctxt) ->
@@ -54,14 +56,14 @@ open X_error_monad
 
 let dummy_environment_result ?environment () =
   Option.value
-    ~default:(Lwt.map Result.ok @@ dummy_environment ())
-    (Option.map (fun env -> Lwt.return (Ok env)) environment)
+    ~default:(Lwt.map Result.return @@ dummy_environment ())
+    (Option.map ~f:(fun env -> Lwt.return (Ok env)) environment)
 
 let dummy_tezos_context ?tezos_context () =
   Option.value
     ~default:
       (Lwt.map (fun env -> Ok env.Init_proto_alpha.tezos_context) @@ dummy_environment ())
-    (Option.map (fun ctxt -> Lwt.return (Ok ctxt)) tezos_context)
+    (Option.map ~f:(fun ctxt -> Lwt.return (Ok ctxt)) tezos_context)
 
 let stack_ty_eq
     (type a ra b rb)
@@ -91,7 +93,7 @@ let ty_eq (type a b) ?tezos_context (a : (a, _) ty) (b : (b, _) ty)
 (* should not need lwt *)
 let canonical_of_strings michelson =
   let michelson, errs =
-    Tezos_client_018_Proxford.Michelson_v1_macros.expand_rec michelson
+    Tezos_client_019_PtParisB.Michelson_v1_macros.expand_rec michelson
   in
   match errs with
   | _ :: _ -> Lwt.return (Error errs)
@@ -143,7 +145,8 @@ let parse_michelson_fail
       >>? fun (Eq, _) ->
       let descr : (_, _, aft, aftr) descr = { descr with aft } in
       Ok descr)
-  | Failed { descr } -> Lwt.return (Ok (descr aft))
+  | Failed { descr } ->
+    Lwt.return (Ok (descr aft))
 
 let parse_michelson_data ?tezos_context michelson ty =
   dummy_tezos_context ?tezos_context ()
@@ -155,7 +158,13 @@ let parse_michelson_data ?tezos_context michelson ty =
       ; keep_extra_types_for_interpreter_logging = false
       }
   in
-  parse_data tezos_context ty michelson ~elab_conf ~allow_forged:true
+  parse_data
+    tezos_context
+    ty
+    michelson
+    ~elab_conf
+    ~allow_forged_tickets:true
+    ~allow_forged_lazy_storage_id:true
   >>=?? fun (data, _) -> Lwt_result_syntax.return data
 
 let parse_michelson_ty
@@ -257,7 +266,7 @@ let fake_bake tezos_context chain_id now : Alpha_context.t Lwt.t =
         let timestamp =
           match
             Alpha_context.Timestamp.of_seconds_string
-              (Z.to_string (Z.add (Z.of_int 30) (Script_timestamp.to_zint now)))
+              (Z.to_string (Z.add (Z.of_int 20) (Script_timestamp.to_zint now)))
           with
           | Some t -> t
           | _ -> Stdlib.failwith "bad timestamp"
@@ -302,7 +311,7 @@ let make_options
   let open Lwt.Let_syntax in
   let open Simple_utils.Function in
   let%bind env =
-    Option.value ~default:(dummy_environment ()) (Option.map Lwt.return env)
+    Option.value ~default:(dummy_environment ()) (Option.map ~f:Lwt.return env)
   in
   let tezos_context = Option.value ~default:env.tezos_context tezos_context in
   let now = Option.value ~default:(Script_timestamp.now env.tezos_context) now in
@@ -393,7 +402,7 @@ let no_trace_logger = None
 let interpret ?options (instr : ('a, 'b, 'c, 'd) kdescr) bef : (_ * _) tzresult Lwt.t =
   let open Lwt.Let_syntax in
   let%bind { tezos_context; source; self; payer; amount; chain_id; balance; now; level } =
-    Option.value ~default:(make_options ()) (Option.map Lwt.return options)
+    Option.value ~default:(make_options ()) (Option.map ~f:Lwt.return options)
   in
   let self =
     match self with
@@ -487,7 +496,7 @@ let failure_interpret ?options (instr : ('a, 's, 'b, 'u) descr) (bef : 'a) stack
     : _ interpret_res tzresult Lwt.t
   =
   let ( >>= ) = Lwt_syntax.( let* ) in
-  Option.value ~default:(make_options ()) (Option.map Lwt.return options)
+  Option.value ~default:(make_options ()) (Option.map ~f:Lwt.return options)
   >>= fun options ->
   let { tezos_context; source; self; payer; amount; chain_id; balance; now; level } =
     options

@@ -162,8 +162,7 @@ let%expect_test _ =
 (* tests replacing Hashlock tests *)
 let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "test_hashlock.mligo" ];
-  [%expect
-    {|
+  [%expect{|
     File "./test_hashlock.mligo", line 4, characters 11-30:
       3 | let test_commit =
       4 |   let () = Test.reset_state_at (0 : timestamp) 10n ([] : tez list) in
@@ -182,531 +181,531 @@ let%expect_test _ =
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Account.address` from `Test.Next` is encouraged for a smoother migration.
 
-    File "./test_hashlock.mligo", line 11, characters 48-72:
-     10 |   let init_storage = { hashed = Crypto.sha256 hashable ; unused = true ; commits = pre_commits } in
-     11 |   let {addr = typed_addr; code = _; size = _} = Test.originate_from_file "../hashlock.mligo" init_storage 0tez in
+    File "./test_hashlock.mligo", line 12, characters 48-72:
+     11 |   // Bake in order to get the address, so time has passed by 10 seconds (1 block)
+     12 |   let {addr = typed_addr; code = _; size = _} = Test.originate_from_file "../hashlock.mligo" init_storage 0tez in
                                                           ^^^^^^^^^^^^^^^^^^^^^^^^
-     12 |   let contr = Test.to_contract typed_addr in
+     13 |   let contr = Test.to_contract typed_addr in
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Originate.from_file` from `Test.Next` is encouraged for a smoother migration.
 
-    File "./test_hashlock.mligo", line 12, characters 14-30:
-     11 |   let {addr = typed_addr; code = _; size = _} = Test.originate_from_file "../hashlock.mligo" init_storage 0tez in
-     12 |   let contr = Test.to_contract typed_addr in
+    File "./test_hashlock.mligo", line 13, characters 14-30:
+     12 |   let {addr = typed_addr; code = _; size = _} = Test.originate_from_file "../hashlock.mligo" init_storage 0tez in
+     13 |   let contr = Test.to_contract typed_addr in
                         ^^^^^^^^^^^^^^^^
-     13 |   let parameter = Commit salted_hash in
+     14 |   let parameter = Commit salted_hash in
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.to_contract` from `Test.Next` is encouraged for a smoother migration.
 
-    File "./test_hashlock.mligo", line 14, characters 11-26:
-     13 |   let parameter = Commit salted_hash in
-     14 |   let () = Test.set_source first_committer in
+    File "./test_hashlock.mligo", line 15, characters 11-26:
+     14 |   let parameter = Commit salted_hash in
+     15 |   let () = Test.set_source first_committer in
                      ^^^^^^^^^^^^^^^
-     15 |   let lock_time = Tezos.get_now () + 15 + 86_400 in
+     16 |   // 86_400 is added to the date for commits in hashlock.mligo (1 day in seconds)
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `State.set_source` from `Test.Next` is encouraged for a smoother migration.
 
-    File "./test_hashlock.mligo", line 16, characters 10-39:
-     15 |   let lock_time = Tezos.get_now () + 15 + 86_400 in
-     16 |   let _ = Test.transfer_to_contract_exn contr parameter 0tez in
+    File "./test_hashlock.mligo", line 18, characters 10-39:
+     17 |   let lock_time = Tezos.get_now () + 10 + 86_400 in
+     18 |   let _ = Test.transfer_to_contract_exn contr parameter 0tez in
                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-     17 |   let new_storage = Test.get_storage typed_addr in
+     19 |   let new_storage = Test.get_storage typed_addr in
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Contract.transfer_exn` from `Test.Next` is encouraged for a smoother migration.
 
-    File "./test_hashlock.mligo", line 17, characters 20-36:
-     16 |   let _ = Test.transfer_to_contract_exn contr parameter 0tez in
-     17 |   let new_storage = Test.get_storage typed_addr in
+    File "./test_hashlock.mligo", line 19, characters 20-36:
+     18 |   let _ = Test.transfer_to_contract_exn contr parameter 0tez in
+     19 |   let new_storage = Test.get_storage typed_addr in
                               ^^^^^^^^^^^^^^^^
-     18 |   let commit = { date = lock_time ; salted_hash = salted_hash } in
+     20 |   let commit = { date = lock_time ; salted_hash = salted_hash } in
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.get_storage` from `Test.Next` is encouraged for a smoother migration.
 
-    File "./test_hashlock.mligo", line 21, characters 2-13:
-     20 |   let post_storage = { hashed = Crypto.sha256 hashable ; unused = true ; commits = post_commits } in
-     21 |   Test.assert (new_storage = post_storage)
+    File "./test_hashlock.mligo", line 23, characters 2-13:
+     22 |   let post_storage = { hashed = Crypto.sha256 hashable ; unused = true ; commits = post_commits } in
+     23 |   Test.assert (new_storage = post_storage)
             ^^^^^^^^^^^
-     22 |
+     24 |
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Assert.assert` from `Test.Next` is encouraged for a smoother migration.
 
-    File "./test_hashlock.mligo", line 24, characters 11-30:
-     23 | let test_reveal_no_commit =
-     24 |   let () = Test.reset_state_at (0 : timestamp) 10n ([] : tez list) in
+    File "./test_hashlock.mligo", line 26, characters 11-30:
+     25 | let test_reveal_no_commit =
+     26 |   let () = Test.reset_state_at (0 : timestamp) 10n ([] : tez list) in
                      ^^^^^^^^^^^^^^^^^^^
-     25 |   let first_committer = Test.nth_bootstrap_account 0 in
+     27 |   let first_committer = Test.nth_bootstrap_account 0 in
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `State.reset_at` from `Test.Next` is encouraged for a smoother migration.
 
-    File "./test_hashlock.mligo", line 25, characters 24-50:
-     24 |   let () = Test.reset_state_at (0 : timestamp) 10n ([] : tez list) in
-     25 |   let first_committer = Test.nth_bootstrap_account 0 in
+    File "./test_hashlock.mligo", line 27, characters 24-50:
+     26 |   let () = Test.reset_state_at (0 : timestamp) 10n ([] : tez list) in
+     27 |   let first_committer = Test.nth_bootstrap_account 0 in
                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^
-     26 |   let empty_message = fun (_ : unit) -> ([] : operation list) in
+     28 |   let empty_message = fun (_ : unit) -> ([] : operation list) in
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Account.address` from `Test.Next` is encouraged for a smoother migration.
 
-    File "./test_hashlock.mligo", line 31, characters 48-72:
-     30 |   let init_storage = { hashed = Crypto.sha256 hashable ; unused = true ; commits = pre_commits } in
-     31 |   let {addr = typed_addr; code = _; size = _} = Test.originate_from_file "../hashlock.mligo" init_storage 0tez in
+    File "./test_hashlock.mligo", line 33, characters 48-72:
+     32 |   let init_storage = { hashed = Crypto.sha256 hashable ; unused = true ; commits = pre_commits } in
+     33 |   let {addr = typed_addr; code = _; size = _} = Test.originate_from_file "../hashlock.mligo" init_storage 0tez in
                                                           ^^^^^^^^^^^^^^^^^^^^^^^^
-     32 |   let contr = Test.to_contract typed_addr in
+     34 |   let contr = Test.to_contract typed_addr in
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Originate.from_file` from `Test.Next` is encouraged for a smoother migration.
 
-    File "./test_hashlock.mligo", line 32, characters 14-30:
-     31 |   let {addr = typed_addr; code = _; size = _} = Test.originate_from_file "../hashlock.mligo" init_storage 0tez in
-     32 |   let contr = Test.to_contract typed_addr in
+    File "./test_hashlock.mligo", line 34, characters 14-30:
+     33 |   let {addr = typed_addr; code = _; size = _} = Test.originate_from_file "../hashlock.mligo" init_storage 0tez in
+     34 |   let contr = Test.to_contract typed_addr in
                         ^^^^^^^^^^^^^^^^
-     33 |   let parameter = Reveal reveal in
+     35 |   let parameter = Reveal reveal in
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.to_contract` from `Test.Next` is encouraged for a smoother migration.
 
-    File "./test_hashlock.mligo", line 34, characters 11-26:
-     33 |   let parameter = Reveal reveal in
-     34 |   let () = Test.set_source first_committer in
+    File "./test_hashlock.mligo", line 36, characters 11-26:
+     35 |   let parameter = Reveal reveal in
+     36 |   let () = Test.set_source first_committer in
                      ^^^^^^^^^^^^^^^
-     35 |   match Test.transfer_to_contract contr parameter 0tez with
+     37 |   match Test.transfer_to_contract contr parameter 0tez with
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `State.set_source` from `Test.Next` is encouraged for a smoother migration.
 
-    File "./test_hashlock.mligo", line 35, characters 8-33:
-     34 |   let () = Test.set_source first_committer in
-     35 |   match Test.transfer_to_contract contr parameter 0tez with
+    File "./test_hashlock.mligo", line 37, characters 8-33:
+     36 |   let () = Test.set_source first_committer in
+     37 |   match Test.transfer_to_contract contr parameter 0tez with
                   ^^^^^^^^^^^^^^^^^^^^^^^^^
-     36 |   | Success _ -> failwith "Transaction should fail"
+     38 |   | Success _ -> failwith "Transaction should fail"
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Contract.transfer` from `Test.Next` is encouraged for a smoother migration.
 
-    File "./test_hashlock.mligo", line 37, characters 30-41:
-     36 |   | Success _ -> failwith "Transaction should fail"
-     37 |   | Fail (Rejected (a, _)) -> Test.assert (Test.michelson_equal a (Test.eval "You have not made a commitment to hash against yet."))
+    File "./test_hashlock.mligo", line 39, characters 30-41:
+     38 |   | Success _ -> failwith "Transaction should fail"
+     39 |   | Fail (Rejected (a, _)) -> Test.assert (Test.michelson_equal a (Test.eval "You have not made a commitment to hash against yet."))
                                         ^^^^^^^^^^^
-     38 |   | Fail _ -> failwith "Transaction should fail with rejection"
+     40 |   | Fail _ -> failwith "Transaction should fail with rejection"
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Assert.assert` from `Test.Next` is encouraged for a smoother migration.
 
-    File "./test_hashlock.mligo", line 37, characters 43-63:
-     36 |   | Success _ -> failwith "Transaction should fail"
-     37 |   | Fail (Rejected (a, _)) -> Test.assert (Test.michelson_equal a (Test.eval "You have not made a commitment to hash against yet."))
+    File "./test_hashlock.mligo", line 39, characters 43-63:
+     38 |   | Success _ -> failwith "Transaction should fail"
+     39 |   | Fail (Rejected (a, _)) -> Test.assert (Test.michelson_equal a (Test.eval "You have not made a commitment to hash against yet."))
                                                      ^^^^^^^^^^^^^^^^^^^^
-     38 |   | Fail _ -> failwith "Transaction should fail with rejection"
+     40 |   | Fail _ -> failwith "Transaction should fail with rejection"
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Compare.eq` from `Test.Next` is encouraged for a smoother migration.
 
-    File "./test_hashlock.mligo", line 37, characters 67-76:
-     36 |   | Success _ -> failwith "Transaction should fail"
-     37 |   | Fail (Rejected (a, _)) -> Test.assert (Test.michelson_equal a (Test.eval "You have not made a commitment to hash against yet."))
+    File "./test_hashlock.mligo", line 39, characters 67-76:
+     38 |   | Success _ -> failwith "Transaction should fail"
+     39 |   | Fail (Rejected (a, _)) -> Test.assert (Test.michelson_equal a (Test.eval "You have not made a commitment to hash against yet."))
                                                                              ^^^^^^^^^
-     38 |   | Fail _ -> failwith "Transaction should fail with rejection"
+     40 |   | Fail _ -> failwith "Transaction should fail with rejection"
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Michelson.eval` from `Test.Next` is encouraged for a smoother migration.
 
-    File "./test_hashlock.mligo", line 41, characters 11-30:
-     40 | let test_reveal_young_commit =
-     41 |   let () = Test.reset_state_at (3_600 : timestamp) 10n ([] : tez list) in
+    File "./test_hashlock.mligo", line 43, characters 11-30:
+     42 | let test_reveal_young_commit =
+     43 |   let () = Test.reset_state_at (3_600 : timestamp) 10n ([] : tez list) in
                      ^^^^^^^^^^^^^^^^^^^
-     42 |   let first_committer = Test.nth_bootstrap_account 0 in
+     44 |   let first_committer = Test.nth_bootstrap_account 0 in
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `State.reset_at` from `Test.Next` is encouraged for a smoother migration.
 
-    File "./test_hashlock.mligo", line 42, characters 24-50:
-     41 |   let () = Test.reset_state_at (3_600 : timestamp) 10n ([] : tez list) in
-     42 |   let first_committer = Test.nth_bootstrap_account 0 in
+    File "./test_hashlock.mligo", line 44, characters 24-50:
+     43 |   let () = Test.reset_state_at (3_600 : timestamp) 10n ([] : tez list) in
+     44 |   let first_committer = Test.nth_bootstrap_account 0 in
                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^
-     43 |   let packed_sender = Bytes.pack first_committer in
+     45 |   let packed_sender = Bytes.pack first_committer in
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Account.address` from `Test.Next` is encouraged for a smoother migration.
 
-    File "./test_hashlock.mligo", line 50, characters 48-72:
-     49 |   let init_storage = { hashed = Crypto.sha256 hashable ; unused = true ; commits = commits } in
-     50 |   let {addr = typed_addr; code = _; size = _} = Test.originate_from_file "../hashlock.mligo" init_storage 0tez in
+    File "./test_hashlock.mligo", line 52, characters 48-72:
+     51 |   let init_storage = { hashed = Crypto.sha256 hashable ; unused = true ; commits = commits } in
+     52 |   let {addr = typed_addr; code = _; size = _} = Test.originate_from_file "../hashlock.mligo" init_storage 0tez in
                                                           ^^^^^^^^^^^^^^^^^^^^^^^^
-     51 |   let contr = Test.to_contract typed_addr in
+     53 |   let contr = Test.to_contract typed_addr in
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Originate.from_file` from `Test.Next` is encouraged for a smoother migration.
 
-    File "./test_hashlock.mligo", line 51, characters 14-30:
-     50 |   let {addr = typed_addr; code = _; size = _} = Test.originate_from_file "../hashlock.mligo" init_storage 0tez in
-     51 |   let contr = Test.to_contract typed_addr in
+    File "./test_hashlock.mligo", line 53, characters 14-30:
+     52 |   let {addr = typed_addr; code = _; size = _} = Test.originate_from_file "../hashlock.mligo" init_storage 0tez in
+     53 |   let contr = Test.to_contract typed_addr in
                         ^^^^^^^^^^^^^^^^
-     52 |   let empty_message = fun (_ : unit) -> ([] : operation list) in
+     54 |   let empty_message = fun (_ : unit) -> ([] : operation list) in
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.to_contract` from `Test.Next` is encouraged for a smoother migration.
 
-    File "./test_hashlock.mligo", line 55, characters 11-26:
-     54 |   let parameter = Reveal reveal in
-     55 |   let () = Test.set_source first_committer in
+    File "./test_hashlock.mligo", line 57, characters 11-26:
+     56 |   let parameter = Reveal reveal in
+     57 |   let () = Test.set_source first_committer in
                      ^^^^^^^^^^^^^^^
-     56 |   match Test.transfer_to_contract contr parameter 0tez with
+     58 |   match Test.transfer_to_contract contr parameter 0tez with
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `State.set_source` from `Test.Next` is encouraged for a smoother migration.
 
-    File "./test_hashlock.mligo", line 56, characters 8-33:
-     55 |   let () = Test.set_source first_committer in
-     56 |   match Test.transfer_to_contract contr parameter 0tez with
+    File "./test_hashlock.mligo", line 58, characters 8-33:
+     57 |   let () = Test.set_source first_committer in
+     58 |   match Test.transfer_to_contract contr parameter 0tez with
                   ^^^^^^^^^^^^^^^^^^^^^^^^^
-     57 |   | Success _ -> failwith "Transaction should fail"
+     59 |   | Success _ -> failwith "Transaction should fail"
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Contract.transfer` from `Test.Next` is encouraged for a smoother migration.
 
-    File "./test_hashlock.mligo", line 58, characters 30-41:
-     57 |   | Success _ -> failwith "Transaction should fail"
-     58 |   | Fail (Rejected (a, _)) -> Test.assert (Test.michelson_equal a (Test.eval "It has not been 24 hours since your commit yet."))
+    File "./test_hashlock.mligo", line 60, characters 30-41:
+     59 |   | Success _ -> failwith "Transaction should fail"
+     60 |   | Fail (Rejected (a, _)) -> Test.assert (Test.michelson_equal a (Test.eval "It has not been 24 hours since your commit yet."))
                                         ^^^^^^^^^^^
-     59 |   | Fail _ -> failwith "Transaction should fail with rejection"
+     61 |   | Fail _ -> failwith "Transaction should fail with rejection"
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Assert.assert` from `Test.Next` is encouraged for a smoother migration.
 
-    File "./test_hashlock.mligo", line 58, characters 43-63:
-     57 |   | Success _ -> failwith "Transaction should fail"
-     58 |   | Fail (Rejected (a, _)) -> Test.assert (Test.michelson_equal a (Test.eval "It has not been 24 hours since your commit yet."))
+    File "./test_hashlock.mligo", line 60, characters 43-63:
+     59 |   | Success _ -> failwith "Transaction should fail"
+     60 |   | Fail (Rejected (a, _)) -> Test.assert (Test.michelson_equal a (Test.eval "It has not been 24 hours since your commit yet."))
                                                      ^^^^^^^^^^^^^^^^^^^^
-     59 |   | Fail _ -> failwith "Transaction should fail with rejection"
+     61 |   | Fail _ -> failwith "Transaction should fail with rejection"
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Compare.eq` from `Test.Next` is encouraged for a smoother migration.
 
-    File "./test_hashlock.mligo", line 58, characters 67-76:
-     57 |   | Success _ -> failwith "Transaction should fail"
-     58 |   | Fail (Rejected (a, _)) -> Test.assert (Test.michelson_equal a (Test.eval "It has not been 24 hours since your commit yet."))
+    File "./test_hashlock.mligo", line 60, characters 67-76:
+     59 |   | Success _ -> failwith "Transaction should fail"
+     60 |   | Fail (Rejected (a, _)) -> Test.assert (Test.michelson_equal a (Test.eval "It has not been 24 hours since your commit yet."))
                                                                              ^^^^^^^^^
-     59 |   | Fail _ -> failwith "Transaction should fail with rejection"
+     61 |   | Fail _ -> failwith "Transaction should fail with rejection"
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Michelson.eval` from `Test.Next` is encouraged for a smoother migration.
 
-    File "./test_hashlock.mligo", line 62, characters 11-30:
-     61 | let test_reveal_breaks_commit =
-     62 |   let () = Test.reset_state_at (86_400 : timestamp) 10n ([] : tez list) in
+    File "./test_hashlock.mligo", line 64, characters 11-30:
+     63 | let test_reveal_breaks_commit =
+     64 |   let () = Test.reset_state_at (86_400 : timestamp) 10n ([] : tez list) in
                      ^^^^^^^^^^^^^^^^^^^
-     63 |   let first_committer = Test.nth_bootstrap_account 0 in
+     65 |   let first_committer = Test.nth_bootstrap_account 0 in
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `State.reset_at` from `Test.Next` is encouraged for a smoother migration.
 
-    File "./test_hashlock.mligo", line 63, characters 24-50:
-     62 |   let () = Test.reset_state_at (86_400 : timestamp) 10n ([] : tez list) in
-     63 |   let first_committer = Test.nth_bootstrap_account 0 in
+    File "./test_hashlock.mligo", line 65, characters 24-50:
+     64 |   let () = Test.reset_state_at (86_400 : timestamp) 10n ([] : tez list) in
+     65 |   let first_committer = Test.nth_bootstrap_account 0 in
                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^
-     64 |   let packed_sender = Bytes.pack first_committer in
+     66 |   let packed_sender = Bytes.pack first_committer in
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Account.address` from `Test.Next` is encouraged for a smoother migration.
 
-    File "./test_hashlock.mligo", line 72, characters 48-72:
-     71 |   let init_storage = { hashed = Crypto.sha256 hashable ; unused = true ; commits = commits } in
-     72 |   let {addr = typed_addr; code = _; size = _} = Test.originate_from_file "../hashlock.mligo" init_storage 0tez in
+    File "./test_hashlock.mligo", line 74, characters 48-72:
+     73 |   let init_storage = { hashed = Crypto.sha256 hashable ; unused = true ; commits = commits } in
+     74 |   let {addr = typed_addr; code = _; size = _} = Test.originate_from_file "../hashlock.mligo" init_storage 0tez in
                                                           ^^^^^^^^^^^^^^^^^^^^^^^^
-     73 |   let contr = Test.to_contract typed_addr in
+     75 |   let contr = Test.to_contract typed_addr in
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Originate.from_file` from `Test.Next` is encouraged for a smoother migration.
 
-    File "./test_hashlock.mligo", line 73, characters 14-30:
-     72 |   let {addr = typed_addr; code = _; size = _} = Test.originate_from_file "../hashlock.mligo" init_storage 0tez in
-     73 |   let contr = Test.to_contract typed_addr in
+    File "./test_hashlock.mligo", line 75, characters 14-30:
+     74 |   let {addr = typed_addr; code = _; size = _} = Test.originate_from_file "../hashlock.mligo" init_storage 0tez in
+     75 |   let contr = Test.to_contract typed_addr in
                         ^^^^^^^^^^^^^^^^
-     74 |   let empty_message = fun (_ : unit) -> ([] : operation list) in
+     76 |   let empty_message = fun (_ : unit) -> ([] : operation list) in
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.to_contract` from `Test.Next` is encouraged for a smoother migration.
 
-    File "./test_hashlock.mligo", line 77, characters 11-26:
-     76 |   let parameter = Reveal reveal in
-     77 |   let () = Test.set_source first_committer in
+    File "./test_hashlock.mligo", line 79, characters 11-26:
+     78 |   let parameter = Reveal reveal in
+     79 |   let () = Test.set_source first_committer in
                      ^^^^^^^^^^^^^^^
-     78 |   match Test.transfer_to_contract contr parameter 0tez with
+     80 |   match Test.transfer_to_contract contr parameter 0tez with
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `State.set_source` from `Test.Next` is encouraged for a smoother migration.
 
-    File "./test_hashlock.mligo", line 78, characters 8-33:
-     77 |   let () = Test.set_source first_committer in
-     78 |   match Test.transfer_to_contract contr parameter 0tez with
+    File "./test_hashlock.mligo", line 80, characters 8-33:
+     79 |   let () = Test.set_source first_committer in
+     80 |   match Test.transfer_to_contract contr parameter 0tez with
                   ^^^^^^^^^^^^^^^^^^^^^^^^^
-     79 |   | Success _ -> failwith "Transaction should fail"
+     81 |   | Success _ -> failwith "Transaction should fail"
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Contract.transfer` from `Test.Next` is encouraged for a smoother migration.
 
-    File "./test_hashlock.mligo", line 80, characters 30-41:
-     79 |   | Success _ -> failwith "Transaction should fail"
-     80 |   | Fail (Rejected (a, _)) -> Test.assert (Test.michelson_equal a (Test.eval "This reveal does not match your commitment."))
+    File "./test_hashlock.mligo", line 82, characters 30-41:
+     81 |   | Success _ -> failwith "Transaction should fail"
+     82 |   | Fail (Rejected (a, _)) -> Test.assert (Test.michelson_equal a (Test.eval "This reveal does not match your commitment."))
                                         ^^^^^^^^^^^
-     81 |   | Fail _ -> failwith "Transaction should fail with rejection"
+     83 |   | Fail _ -> failwith "Transaction should fail with rejection"
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Assert.assert` from `Test.Next` is encouraged for a smoother migration.
 
-    File "./test_hashlock.mligo", line 80, characters 43-63:
-     79 |   | Success _ -> failwith "Transaction should fail"
-     80 |   | Fail (Rejected (a, _)) -> Test.assert (Test.michelson_equal a (Test.eval "This reveal does not match your commitment."))
+    File "./test_hashlock.mligo", line 82, characters 43-63:
+     81 |   | Success _ -> failwith "Transaction should fail"
+     82 |   | Fail (Rejected (a, _)) -> Test.assert (Test.michelson_equal a (Test.eval "This reveal does not match your commitment."))
                                                      ^^^^^^^^^^^^^^^^^^^^
-     81 |   | Fail _ -> failwith "Transaction should fail with rejection"
+     83 |   | Fail _ -> failwith "Transaction should fail with rejection"
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Compare.eq` from `Test.Next` is encouraged for a smoother migration.
 
-    File "./test_hashlock.mligo", line 80, characters 67-76:
-     79 |   | Success _ -> failwith "Transaction should fail"
-     80 |   | Fail (Rejected (a, _)) -> Test.assert (Test.michelson_equal a (Test.eval "This reveal does not match your commitment."))
+    File "./test_hashlock.mligo", line 82, characters 67-76:
+     81 |   | Success _ -> failwith "Transaction should fail"
+     82 |   | Fail (Rejected (a, _)) -> Test.assert (Test.michelson_equal a (Test.eval "This reveal does not match your commitment."))
                                                                              ^^^^^^^^^
-     81 |   | Fail _ -> failwith "Transaction should fail with rejection"
+     83 |   | Fail _ -> failwith "Transaction should fail with rejection"
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Michelson.eval` from `Test.Next` is encouraged for a smoother migration.
 
-    File "./test_hashlock.mligo", line 84, characters 11-30:
-     83 | let test_reveal_wrong_commit =
-     84 |   let () = Test.reset_state_at (86_400 : timestamp) 10n ([] : tez list) in
+    File "./test_hashlock.mligo", line 86, characters 11-30:
+     85 | let test_reveal_wrong_commit =
+     86 |   let () = Test.reset_state_at (86_400 : timestamp) 10n ([] : tez list) in
                      ^^^^^^^^^^^^^^^^^^^
-     85 |   let first_committer = Test.nth_bootstrap_account 0 in
+     87 |   let first_committer = Test.nth_bootstrap_account 0 in
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `State.reset_at` from `Test.Next` is encouraged for a smoother migration.
 
-    File "./test_hashlock.mligo", line 85, characters 24-50:
-     84 |   let () = Test.reset_state_at (86_400 : timestamp) 10n ([] : tez list) in
-     85 |   let first_committer = Test.nth_bootstrap_account 0 in
+    File "./test_hashlock.mligo", line 87, characters 24-50:
+     86 |   let () = Test.reset_state_at (86_400 : timestamp) 10n ([] : tez list) in
+     87 |   let first_committer = Test.nth_bootstrap_account 0 in
                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^
-     86 |   let packed_sender = Bytes.pack first_committer in
+     88 |   let packed_sender = Bytes.pack first_committer in
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Account.address` from `Test.Next` is encouraged for a smoother migration.
 
-    File "./test_hashlock.mligo", line 94, characters 48-72:
-     93 |   let init_storage = { hashed = Crypto.sha256 hashable ; unused = true ; commits = commits } in
-     94 |   let {addr = typed_addr; code = _; size = _} = Test.originate_from_file "../hashlock.mligo" init_storage 0tez in
+    File "./test_hashlock.mligo", line 96, characters 48-72:
+     95 |   let init_storage = { hashed = Crypto.sha256 hashable ; unused = true ; commits = commits } in
+     96 |   let {addr = typed_addr; code = _; size = _} = Test.originate_from_file "../hashlock.mligo" init_storage 0tez in
                                                           ^^^^^^^^^^^^^^^^^^^^^^^^
-     95 |   let contr = Test.to_contract typed_addr in
+     97 |   let contr = Test.to_contract typed_addr in
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Originate.from_file` from `Test.Next` is encouraged for a smoother migration.
 
-    File "./test_hashlock.mligo", line 95, characters 14-30:
-     94 |   let {addr = typed_addr; code = _; size = _} = Test.originate_from_file "../hashlock.mligo" init_storage 0tez in
-     95 |   let contr = Test.to_contract typed_addr in
+    File "./test_hashlock.mligo", line 97, characters 14-30:
+     96 |   let {addr = typed_addr; code = _; size = _} = Test.originate_from_file "../hashlock.mligo" init_storage 0tez in
+     97 |   let contr = Test.to_contract typed_addr in
                         ^^^^^^^^^^^^^^^^
-     96 |   let empty_message = fun (_ : unit) -> ([] : operation list) in
+     98 |   let empty_message = fun (_ : unit) -> ([] : operation list) in
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.to_contract` from `Test.Next` is encouraged for a smoother migration.
 
-    File "./test_hashlock.mligo", line 99, characters 11-26:
-     98 |   let parameter = Reveal reveal in
-     99 |   let () = Test.set_source first_committer in
+    File "./test_hashlock.mligo", line 101, characters 11-26:
+    100 |   let parameter = Reveal reveal in
+    101 |   let () = Test.set_source first_committer in
                      ^^^^^^^^^^^^^^^
-    100 |   match Test.transfer_to_contract contr parameter 0tez with
+    102 |   match Test.transfer_to_contract contr parameter 0tez with
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `State.set_source` from `Test.Next` is encouraged for a smoother migration.
 
-    File "./test_hashlock.mligo", line 100, characters 8-33:
-     99 |   let () = Test.set_source first_committer in
-    100 |   match Test.transfer_to_contract contr parameter 0tez with
+    File "./test_hashlock.mligo", line 102, characters 8-33:
+    101 |   let () = Test.set_source first_committer in
+    102 |   match Test.transfer_to_contract contr parameter 0tez with
                   ^^^^^^^^^^^^^^^^^^^^^^^^^
-    101 |   | Success _ -> failwith "Transaction should fail"
+    103 |   | Success _ -> failwith "Transaction should fail"
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Contract.transfer` from `Test.Next` is encouraged for a smoother migration.
 
-    File "./test_hashlock.mligo", line 102, characters 30-41:
-    101 |   | Success _ -> failwith "Transaction should fail"
-    102 |   | Fail (Rejected (a, _)) -> Test.assert (Test.michelson_equal a (Test.eval "Your commitment did not match the storage hash."))
+    File "./test_hashlock.mligo", line 104, characters 30-41:
+    103 |   | Success _ -> failwith "Transaction should fail"
+    104 |   | Fail (Rejected (a, _)) -> Test.assert (Test.michelson_equal a (Test.eval "Your commitment did not match the storage hash."))
                                         ^^^^^^^^^^^
-    103 |   | Fail _ -> failwith "Transaction should fail with rejection"
+    105 |   | Fail _ -> failwith "Transaction should fail with rejection"
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Assert.assert` from `Test.Next` is encouraged for a smoother migration.
 
-    File "./test_hashlock.mligo", line 102, characters 43-63:
-    101 |   | Success _ -> failwith "Transaction should fail"
-    102 |   | Fail (Rejected (a, _)) -> Test.assert (Test.michelson_equal a (Test.eval "Your commitment did not match the storage hash."))
+    File "./test_hashlock.mligo", line 104, characters 43-63:
+    103 |   | Success _ -> failwith "Transaction should fail"
+    104 |   | Fail (Rejected (a, _)) -> Test.assert (Test.michelson_equal a (Test.eval "Your commitment did not match the storage hash."))
                                                      ^^^^^^^^^^^^^^^^^^^^
-    103 |   | Fail _ -> failwith "Transaction should fail with rejection"
+    105 |   | Fail _ -> failwith "Transaction should fail with rejection"
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Compare.eq` from `Test.Next` is encouraged for a smoother migration.
 
-    File "./test_hashlock.mligo", line 102, characters 67-76:
-    101 |   | Success _ -> failwith "Transaction should fail"
-    102 |   | Fail (Rejected (a, _)) -> Test.assert (Test.michelson_equal a (Test.eval "Your commitment did not match the storage hash."))
+    File "./test_hashlock.mligo", line 104, characters 67-76:
+    103 |   | Success _ -> failwith "Transaction should fail"
+    104 |   | Fail (Rejected (a, _)) -> Test.assert (Test.michelson_equal a (Test.eval "Your commitment did not match the storage hash."))
                                                                              ^^^^^^^^^
-    103 |   | Fail _ -> failwith "Transaction should fail with rejection"
+    105 |   | Fail _ -> failwith "Transaction should fail with rejection"
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Michelson.eval` from `Test.Next` is encouraged for a smoother migration.
 
-    File "./test_hashlock.mligo", line 106, characters 11-30:
-    105 | let test_reveal_no_reuse =
-    106 |   let () = Test.reset_state_at (86_400 : timestamp) 10n ([] : tez list) in
+    File "./test_hashlock.mligo", line 108, characters 11-30:
+    107 | let test_reveal_no_reuse =
+    108 |   let () = Test.reset_state_at (86_400 : timestamp) 10n ([] : tez list) in
                      ^^^^^^^^^^^^^^^^^^^
-    107 |   let first_committer = Test.nth_bootstrap_account 0 in
+    109 |   let first_committer = Test.nth_bootstrap_account 0 in
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `State.reset_at` from `Test.Next` is encouraged for a smoother migration.
 
-    File "./test_hashlock.mligo", line 107, characters 24-50:
-    106 |   let () = Test.reset_state_at (86_400 : timestamp) 10n ([] : tez list) in
-    107 |   let first_committer = Test.nth_bootstrap_account 0 in
+    File "./test_hashlock.mligo", line 109, characters 24-50:
+    108 |   let () = Test.reset_state_at (86_400 : timestamp) 10n ([] : tez list) in
+    109 |   let first_committer = Test.nth_bootstrap_account 0 in
                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^
-    108 |   let packed_sender = Bytes.pack first_committer in
+    110 |   let packed_sender = Bytes.pack first_committer in
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Account.address` from `Test.Next` is encouraged for a smoother migration.
 
-    File "./test_hashlock.mligo", line 116, characters 48-72:
-    115 |   let init_storage = { hashed = Crypto.sha256 hashable ; unused = false ; commits = commits } in
-    116 |   let {addr = typed_addr; code = _; size = _} = Test.originate_from_file "../hashlock.mligo" init_storage 0tez in
+    File "./test_hashlock.mligo", line 118, characters 48-72:
+    117 |   let init_storage = { hashed = Crypto.sha256 hashable ; unused = false ; commits = commits } in
+    118 |   let {addr = typed_addr; code = _; size = _} = Test.originate_from_file "../hashlock.mligo" init_storage 0tez in
                                                           ^^^^^^^^^^^^^^^^^^^^^^^^
-    117 |   let contr = Test.to_contract typed_addr in
+    119 |   let contr = Test.to_contract typed_addr in
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Originate.from_file` from `Test.Next` is encouraged for a smoother migration.
 
-    File "./test_hashlock.mligo", line 117, characters 14-30:
-    116 |   let {addr = typed_addr; code = _; size = _} = Test.originate_from_file "../hashlock.mligo" init_storage 0tez in
-    117 |   let contr = Test.to_contract typed_addr in
+    File "./test_hashlock.mligo", line 119, characters 14-30:
+    118 |   let {addr = typed_addr; code = _; size = _} = Test.originate_from_file "../hashlock.mligo" init_storage 0tez in
+    119 |   let contr = Test.to_contract typed_addr in
                         ^^^^^^^^^^^^^^^^
-    118 |   let empty_message = fun (_ : unit) -> ([] : operation list) in
+    120 |   let empty_message = fun (_ : unit) -> ([] : operation list) in
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.to_contract` from `Test.Next` is encouraged for a smoother migration.
 
-    File "./test_hashlock.mligo", line 121, characters 11-26:
-    120 |   let parameter = Reveal reveal in
-    121 |   let () = Test.set_source first_committer in
+    File "./test_hashlock.mligo", line 123, characters 11-26:
+    122 |   let parameter = Reveal reveal in
+    123 |   let () = Test.set_source first_committer in
                      ^^^^^^^^^^^^^^^
-    122 |   match Test.transfer_to_contract contr parameter 0tez with
+    124 |   match Test.transfer_to_contract contr parameter 0tez with
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `State.set_source` from `Test.Next` is encouraged for a smoother migration.
 
-    File "./test_hashlock.mligo", line 122, characters 8-33:
-    121 |   let () = Test.set_source first_committer in
-    122 |   match Test.transfer_to_contract contr parameter 0tez with
+    File "./test_hashlock.mligo", line 124, characters 8-33:
+    123 |   let () = Test.set_source first_committer in
+    124 |   match Test.transfer_to_contract contr parameter 0tez with
                   ^^^^^^^^^^^^^^^^^^^^^^^^^
-    123 |   | Success _ -> failwith "Transaction should fail"
+    125 |   | Success _ -> failwith "Transaction should fail"
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Contract.transfer` from `Test.Next` is encouraged for a smoother migration.
 
-    File "./test_hashlock.mligo", line 124, characters 30-41:
-    123 |   | Success _ -> failwith "Transaction should fail"
-    124 |   | Fail (Rejected (a, _)) -> Test.assert (Test.michelson_equal a (Test.eval "This contract has already been used."))
+    File "./test_hashlock.mligo", line 126, characters 30-41:
+    125 |   | Success _ -> failwith "Transaction should fail"
+    126 |   | Fail (Rejected (a, _)) -> Test.assert (Test.michelson_equal a (Test.eval "This contract has already been used."))
                                         ^^^^^^^^^^^
-    125 |   | Fail _ -> failwith "Transaction should fail with rejection"
+    127 |   | Fail _ -> failwith "Transaction should fail with rejection"
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Assert.assert` from `Test.Next` is encouraged for a smoother migration.
 
-    File "./test_hashlock.mligo", line 124, characters 43-63:
-    123 |   | Success _ -> failwith "Transaction should fail"
-    124 |   | Fail (Rejected (a, _)) -> Test.assert (Test.michelson_equal a (Test.eval "This contract has already been used."))
+    File "./test_hashlock.mligo", line 126, characters 43-63:
+    125 |   | Success _ -> failwith "Transaction should fail"
+    126 |   | Fail (Rejected (a, _)) -> Test.assert (Test.michelson_equal a (Test.eval "This contract has already been used."))
                                                      ^^^^^^^^^^^^^^^^^^^^
-    125 |   | Fail _ -> failwith "Transaction should fail with rejection"
+    127 |   | Fail _ -> failwith "Transaction should fail with rejection"
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Compare.eq` from `Test.Next` is encouraged for a smoother migration.
 
-    File "./test_hashlock.mligo", line 124, characters 67-76:
-    123 |   | Success _ -> failwith "Transaction should fail"
-    124 |   | Fail (Rejected (a, _)) -> Test.assert (Test.michelson_equal a (Test.eval "This contract has already been used."))
+    File "./test_hashlock.mligo", line 126, characters 67-76:
+    125 |   | Success _ -> failwith "Transaction should fail"
+    126 |   | Fail (Rejected (a, _)) -> Test.assert (Test.michelson_equal a (Test.eval "This contract has already been used."))
                                                                              ^^^^^^^^^
-    125 |   | Fail _ -> failwith "Transaction should fail with rejection"
+    127 |   | Fail _ -> failwith "Transaction should fail with rejection"
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Michelson.eval` from `Test.Next` is encouraged for a smoother migration.
 
-    File "./test_hashlock.mligo", line 128, characters 11-30:
-    127 | let test_reveal =
-    128 |   let () = Test.reset_state_at (86_400 : timestamp) 10n ([] : tez list) in
+    File "./test_hashlock.mligo", line 130, characters 11-30:
+    129 | let test_reveal =
+    130 |   let () = Test.reset_state_at (86_400 : timestamp) 10n ([] : tez list) in
                      ^^^^^^^^^^^^^^^^^^^
-    129 |   let first_committer = Test.nth_bootstrap_account 0 in
+    131 |   let first_committer = Test.nth_bootstrap_account 0 in
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `State.reset_at` from `Test.Next` is encouraged for a smoother migration.
 
-    File "./test_hashlock.mligo", line 129, characters 24-50:
-    128 |   let () = Test.reset_state_at (86_400 : timestamp) 10n ([] : tez list) in
-    129 |   let first_committer = Test.nth_bootstrap_account 0 in
+    File "./test_hashlock.mligo", line 131, characters 24-50:
+    130 |   let () = Test.reset_state_at (86_400 : timestamp) 10n ([] : tez list) in
+    131 |   let first_committer = Test.nth_bootstrap_account 0 in
                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^
-    130 |   let packed_sender = Bytes.pack first_committer in
+    132 |   let packed_sender = Bytes.pack first_committer in
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Account.address` from `Test.Next` is encouraged for a smoother migration.
 
-    File "./test_hashlock.mligo", line 137, characters 48-72:
-    136 |   let init_storage = { hashed = Crypto.sha256 hashable ; unused = true ; commits = commits } in
-    137 |   let {addr = typed_addr; code = _; size = _} = Test.originate_from_file "../hashlock.mligo" init_storage 0tez in
+    File "./test_hashlock.mligo", line 139, characters 48-72:
+    138 |   let init_storage = { hashed = Crypto.sha256 hashable ; unused = true ; commits = commits } in
+    139 |   let {addr = typed_addr; code = _; size = _} = Test.originate_from_file "../hashlock.mligo" init_storage 0tez in
                                                           ^^^^^^^^^^^^^^^^^^^^^^^^
-    138 |   let contr = Test.to_contract typed_addr in
+    140 |   let contr = Test.to_contract typed_addr in
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Originate.from_file` from `Test.Next` is encouraged for a smoother migration.
 
-    File "./test_hashlock.mligo", line 138, characters 14-30:
-    137 |   let {addr = typed_addr; code = _; size = _} = Test.originate_from_file "../hashlock.mligo" init_storage 0tez in
-    138 |   let contr = Test.to_contract typed_addr in
+    File "./test_hashlock.mligo", line 140, characters 14-30:
+    139 |   let {addr = typed_addr; code = _; size = _} = Test.originate_from_file "../hashlock.mligo" init_storage 0tez in
+    140 |   let contr = Test.to_contract typed_addr in
                         ^^^^^^^^^^^^^^^^
-    139 |   let empty_message = fun (_ : unit) -> ([] : operation list) in
+    141 |   let empty_message = fun (_ : unit) -> ([] : operation list) in
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.to_contract` from `Test.Next` is encouraged for a smoother migration.
 
-    File "./test_hashlock.mligo", line 142, characters 11-26:
-    141 |   let parameter = Reveal reveal in
-    142 |   let () = Test.set_source first_committer in
+    File "./test_hashlock.mligo", line 144, characters 11-26:
+    143 |   let parameter = Reveal reveal in
+    144 |   let () = Test.set_source first_committer in
                      ^^^^^^^^^^^^^^^
-    143 |   let _ = Test.transfer_to_contract_exn contr parameter 0tez in
+    145 |   let _ = Test.transfer_to_contract_exn contr parameter 0tez in
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `State.set_source` from `Test.Next` is encouraged for a smoother migration.
 
-    File "./test_hashlock.mligo", line 143, characters 10-39:
-    142 |   let () = Test.set_source first_committer in
-    143 |   let _ = Test.transfer_to_contract_exn contr parameter 0tez in
+    File "./test_hashlock.mligo", line 145, characters 10-39:
+    144 |   let () = Test.set_source first_committer in
+    145 |   let _ = Test.transfer_to_contract_exn contr parameter 0tez in
                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    144 |   let new_storage = Test.get_storage typed_addr in
+    146 |   let new_storage = Test.get_storage typed_addr in
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Contract.transfer_exn` from `Test.Next` is encouraged for a smoother migration.
 
-    File "./test_hashlock.mligo", line 144, characters 20-36:
-    143 |   let _ = Test.transfer_to_contract_exn contr parameter 0tez in
-    144 |   let new_storage = Test.get_storage typed_addr in
+    File "./test_hashlock.mligo", line 146, characters 20-36:
+    145 |   let _ = Test.transfer_to_contract_exn contr parameter 0tez in
+    146 |   let new_storage = Test.get_storage typed_addr in
                               ^^^^^^^^^^^^^^^^
-    145 |   let commit = { date = lock_time ; salted_hash = salted_hash } in
+    147 |   let commit = { date = lock_time ; salted_hash = salted_hash } in
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.get_storage` from `Test.Next` is encouraged for a smoother migration.
 
-    File "./test_hashlock.mligo", line 148, characters 2-13:
-    147 |   let post_storage = { hashed = Crypto.sha256 hashable ; unused = false ; commits = post_commits } in
-    148 |   Test.assert (new_storage = post_storage)
+    File "./test_hashlock.mligo", line 150, characters 2-13:
+    149 |   let post_storage = { hashed = Crypto.sha256 hashable ; unused = false ; commits = post_commits } in
+    150 |   Test.assert (new_storage = post_storage)
             ^^^^^^^^^^^
     :
     Warning: deprecated value.
@@ -6757,18 +6756,17 @@ let%expect_test _ =
     3800000000000mutez
     4000000000000n
     "BALANCE AND VOTING POWER AFTER ORIGINATE"
-    3800005749999mutez
+    3800004166666mutez
     4000000000000n
     "BALANCE AND VOTING POWER AFTER TRANSFER"
-    3800011499998mutez
+    3800008333332mutez
     4000000000000n
     Everything at the top-level was executed.
     - test exited with value (). |}]
 
 let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "test_register_delegate.mligo" ];
-  [%expect
-    {|
+  [%expect{|
     File "./test_register_delegate.mligo", line 7, characters 12-28:
       6 |
       7 |   let acc = Test.new_account () in
@@ -6791,191 +6789,191 @@ let%expect_test _ =
      12 |   let _ = Test.transfer_to_contract_exn c () 1000000tez in
      13 |   let () = Test.register_delegate pkh in
                      ^^^^^^^^^^^^^^^^^^^^^^
-     14 |   (*
+     14 |
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `State.register_delegate` from `Test.Next` is encouraged for a smoother migration.
 
-    File "./test_register_delegate.mligo", line 19, characters 11-38:
-     18 |   *)
-     19 |   let () = Test.bake_until_n_cycle_end 8n in
+    File "./test_register_delegate.mligo", line 16, characters 11-38:
+     15 |   // TODO: Why does 8n fail, but 4n work?
+     16 |   let () = Test.bake_until_n_cycle_end 4n in
                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^
-     20 |
+     17 |
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `State.bake_until` from `Test.Next` is encouraged for a smoother migration.
 
-    File "./test_register_delegate.mligo", line 21, characters 11-19:
-     20 |
-     21 |   let () = Test.log "STARTING BALANCE AND VOTING POWER" in
+    File "./test_register_delegate.mligo", line 18, characters 11-19:
+     17 |
+     18 |   let () = Test.log "STARTING BALANCE AND VOTING POWER" in
                      ^^^^^^^^
-     22 |   let () = Test.log(Test.get_balance_of_address a) in
+     19 |   let () = Test.log(Test.get_balance_of_address a) in
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `IO.log` from `Test.Next` is encouraged for a smoother migration.
 
-    File "./test_register_delegate.mligo", line 22, characters 11-19:
-     21 |   let () = Test.log "STARTING BALANCE AND VOTING POWER" in
-     22 |   let () = Test.log(Test.get_balance_of_address a) in
+    File "./test_register_delegate.mligo", line 19, characters 11-19:
+     18 |   let () = Test.log "STARTING BALANCE AND VOTING POWER" in
+     19 |   let () = Test.log(Test.get_balance_of_address a) in
                      ^^^^^^^^
-     23 |   let () = Test.log(Test.get_voting_power pkh) in
+     20 |   let () = Test.log(Test.get_voting_power pkh) in
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `IO.log` from `Test.Next` is encouraged for a smoother migration.
 
-    File "./test_register_delegate.mligo", line 22, characters 20-47:
-     21 |   let () = Test.log "STARTING BALANCE AND VOTING POWER" in
-     22 |   let () = Test.log(Test.get_balance_of_address a) in
+    File "./test_register_delegate.mligo", line 19, characters 20-47:
+     18 |   let () = Test.log "STARTING BALANCE AND VOTING POWER" in
+     19 |   let () = Test.log(Test.get_balance_of_address a) in
                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
-     23 |   let () = Test.log(Test.get_voting_power pkh) in
+     20 |   let () = Test.log(Test.get_voting_power pkh) in
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Address.get_balance` from `Test.Next` is encouraged for a smoother migration.
 
-    File "./test_register_delegate.mligo", line 23, characters 11-19:
-     22 |   let () = Test.log(Test.get_balance_of_address a) in
-     23 |   let () = Test.log(Test.get_voting_power pkh) in
+    File "./test_register_delegate.mligo", line 20, characters 11-19:
+     19 |   let () = Test.log(Test.get_balance_of_address a) in
+     20 |   let () = Test.log(Test.get_voting_power pkh) in
                      ^^^^^^^^
-     24 |   let () = Test.set_baker a in
+     21 |   let () = Test.set_baker a in
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `IO.log` from `Test.Next` is encouraged for a smoother migration.
 
-    File "./test_register_delegate.mligo", line 23, characters 20-41:
-     22 |   let () = Test.log(Test.get_balance_of_address a) in
-     23 |   let () = Test.log(Test.get_voting_power pkh) in
+    File "./test_register_delegate.mligo", line 20, characters 20-41:
+     19 |   let () = Test.log(Test.get_balance_of_address a) in
+     20 |   let () = Test.log(Test.get_voting_power pkh) in
                               ^^^^^^^^^^^^^^^^^^^^^
-     24 |   let () = Test.set_baker a in
+     21 |   let () = Test.set_baker a in
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `State.get_voting_power` from `Test.Next` is encouraged for a smoother migration.
 
-    File "./test_register_delegate.mligo", line 24, characters 11-25:
-     23 |   let () = Test.log(Test.get_voting_power pkh) in
-     24 |   let () = Test.set_baker a in
+    File "./test_register_delegate.mligo", line 21, characters 11-25:
+     20 |   let () = Test.log(Test.get_voting_power pkh) in
+     21 |   let () = Test.set_baker a in
                      ^^^^^^^^^^^^^^
-     25 |   let orig = Test.originate (contract_of C) 41 5tez in
+     22 |   let orig = Test.originate (contract_of C) 41 5tez in
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `State.set_baker` from `Test.Next` is encouraged for a smoother migration.
 
-    File "./test_register_delegate.mligo", line 25, characters 13-27:
-     24 |   let () = Test.set_baker a in
-     25 |   let orig = Test.originate (contract_of C) 41 5tez in
+    File "./test_register_delegate.mligo", line 22, characters 13-27:
+     21 |   let () = Test.set_baker a in
+     22 |   let orig = Test.originate (contract_of C) 41 5tez in
                        ^^^^^^^^^^^^^^
-     26 |
+     23 |
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Originate.contract` from `Test.Next` is encouraged for a smoother migration.
 
-    File "./test_register_delegate.mligo", line 27, characters 11-19:
-     26 |
-     27 |   let () = Test.log "BALANCE AND VOTING POWER AFTER ORIGINATE" in
+    File "./test_register_delegate.mligo", line 24, characters 11-19:
+     23 |
+     24 |   let () = Test.log "BALANCE AND VOTING POWER AFTER ORIGINATE" in
                      ^^^^^^^^
-     28 |   let () = Test.log(Test.get_balance_of_address a) in
+     25 |   let () = Test.log(Test.get_balance_of_address a) in
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `IO.log` from `Test.Next` is encouraged for a smoother migration.
 
-    File "./test_register_delegate.mligo", line 28, characters 11-19:
-     27 |   let () = Test.log "BALANCE AND VOTING POWER AFTER ORIGINATE" in
-     28 |   let () = Test.log(Test.get_balance_of_address a) in
+    File "./test_register_delegate.mligo", line 25, characters 11-19:
+     24 |   let () = Test.log "BALANCE AND VOTING POWER AFTER ORIGINATE" in
+     25 |   let () = Test.log(Test.get_balance_of_address a) in
                      ^^^^^^^^
-     29 |   let () = Test.log(Test.get_voting_power pkh) in
+     26 |   let () = Test.log(Test.get_voting_power pkh) in
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `IO.log` from `Test.Next` is encouraged for a smoother migration.
 
-    File "./test_register_delegate.mligo", line 28, characters 20-47:
-     27 |   let () = Test.log "BALANCE AND VOTING POWER AFTER ORIGINATE" in
-     28 |   let () = Test.log(Test.get_balance_of_address a) in
+    File "./test_register_delegate.mligo", line 25, characters 20-47:
+     24 |   let () = Test.log "BALANCE AND VOTING POWER AFTER ORIGINATE" in
+     25 |   let () = Test.log(Test.get_balance_of_address a) in
                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
-     29 |   let () = Test.log(Test.get_voting_power pkh) in
+     26 |   let () = Test.log(Test.get_voting_power pkh) in
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Address.get_balance` from `Test.Next` is encouraged for a smoother migration.
 
-    File "./test_register_delegate.mligo", line 29, characters 11-19:
-     28 |   let () = Test.log(Test.get_balance_of_address a) in
-     29 |   let () = Test.log(Test.get_voting_power pkh) in
+    File "./test_register_delegate.mligo", line 26, characters 11-19:
+     25 |   let () = Test.log(Test.get_balance_of_address a) in
+     26 |   let () = Test.log(Test.get_voting_power pkh) in
                      ^^^^^^^^
-     30 |   let _ = Test.transfer orig.addr (Main 1) 3tez in
+     27 |   let _ = Test.transfer orig.addr (Main 1) 3tez in
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `IO.log` from `Test.Next` is encouraged for a smoother migration.
 
-    File "./test_register_delegate.mligo", line 29, characters 20-41:
-     28 |   let () = Test.log(Test.get_balance_of_address a) in
-     29 |   let () = Test.log(Test.get_voting_power pkh) in
+    File "./test_register_delegate.mligo", line 26, characters 20-41:
+     25 |   let () = Test.log(Test.get_balance_of_address a) in
+     26 |   let () = Test.log(Test.get_voting_power pkh) in
                               ^^^^^^^^^^^^^^^^^^^^^
-     30 |   let _ = Test.transfer orig.addr (Main 1) 3tez in
+     27 |   let _ = Test.transfer orig.addr (Main 1) 3tez in
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `State.get_voting_power` from `Test.Next` is encouraged for a smoother migration.
 
-    File "./test_register_delegate.mligo", line 30, characters 10-23:
-     29 |   let () = Test.log(Test.get_voting_power pkh) in
-     30 |   let _ = Test.transfer orig.addr (Main 1) 3tez in
+    File "./test_register_delegate.mligo", line 27, characters 10-23:
+     26 |   let () = Test.log(Test.get_voting_power pkh) in
+     27 |   let _ = Test.transfer orig.addr (Main 1) 3tez in
                     ^^^^^^^^^^^^^
-     31 |
+     28 |
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.transfer` from `Test.Next` is encouraged for a smoother migration.
 
-    File "./test_register_delegate.mligo", line 32, characters 11-19:
-     31 |
-     32 |   let () = Test.log "BALANCE AND VOTING POWER AFTER TRANSFER" in
+    File "./test_register_delegate.mligo", line 29, characters 11-19:
+     28 |
+     29 |   let () = Test.log "BALANCE AND VOTING POWER AFTER TRANSFER" in
                      ^^^^^^^^
-     33 |   let () = Test.log(Test.get_balance_of_address a) in
+     30 |   let () = Test.log(Test.get_balance_of_address a) in
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `IO.log` from `Test.Next` is encouraged for a smoother migration.
 
-    File "./test_register_delegate.mligo", line 33, characters 11-19:
-     32 |   let () = Test.log "BALANCE AND VOTING POWER AFTER TRANSFER" in
-     33 |   let () = Test.log(Test.get_balance_of_address a) in
+    File "./test_register_delegate.mligo", line 30, characters 11-19:
+     29 |   let () = Test.log "BALANCE AND VOTING POWER AFTER TRANSFER" in
+     30 |   let () = Test.log(Test.get_balance_of_address a) in
                      ^^^^^^^^
-     34 |   let () = Test.log(Test.get_voting_power pkh) in
+     31 |   let () = Test.log(Test.get_voting_power pkh) in
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `IO.log` from `Test.Next` is encouraged for a smoother migration.
 
-    File "./test_register_delegate.mligo", line 33, characters 20-47:
-     32 |   let () = Test.log "BALANCE AND VOTING POWER AFTER TRANSFER" in
-     33 |   let () = Test.log(Test.get_balance_of_address a) in
+    File "./test_register_delegate.mligo", line 30, characters 20-47:
+     29 |   let () = Test.log "BALANCE AND VOTING POWER AFTER TRANSFER" in
+     30 |   let () = Test.log(Test.get_balance_of_address a) in
                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
-     34 |   let () = Test.log(Test.get_voting_power pkh) in
+     31 |   let () = Test.log(Test.get_voting_power pkh) in
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Address.get_balance` from `Test.Next` is encouraged for a smoother migration.
 
-    File "./test_register_delegate.mligo", line 34, characters 11-19:
-     33 |   let () = Test.log(Test.get_balance_of_address a) in
-     34 |   let () = Test.log(Test.get_voting_power pkh) in
+    File "./test_register_delegate.mligo", line 31, characters 11-19:
+     30 |   let () = Test.log(Test.get_balance_of_address a) in
+     31 |   let () = Test.log(Test.get_voting_power pkh) in
                      ^^^^^^^^
-     35 |   ()
+     32 |   ()
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `IO.log` from `Test.Next` is encouraged for a smoother migration.
 
-    File "./test_register_delegate.mligo", line 34, characters 20-41:
-     33 |   let () = Test.log(Test.get_balance_of_address a) in
-     34 |   let () = Test.log(Test.get_voting_power pkh) in
+    File "./test_register_delegate.mligo", line 31, characters 20-41:
+     30 |   let () = Test.log(Test.get_balance_of_address a) in
+     31 |   let () = Test.log(Test.get_voting_power pkh) in
                               ^^^^^^^^^^^^^^^^^^^^^
-     35 |   ()
+     32 |   ()
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `State.get_voting_power` from `Test.Next` is encouraged for a smoother migration.
 
     "STARTING BALANCE AND VOTING POWER"
     950000000000mutez
-    0n
+    1000000000000n
     "BALANCE AND VOTING POWER AFTER ORIGINATE"
-    950005749999mutez
-    0n
+    950004166666mutez
+    1000000000000n
     "BALANCE AND VOTING POWER AFTER TRANSFER"
-    950011499998mutez
-    0n
+    950008333332mutez
+    1000000000000n
     Everything at the top-level was executed.
     - test exited with value (). |}]
 
@@ -11000,7 +10998,7 @@ let%expect_test _ =
      13 |   ()
 
     An uncaught error occured:
-    { "id": "proto.018-Proxford.operation.manual_staking_forbidden",
+    { "id": "proto.019-PtParisB.operation.manual_staking_forbidden",
       "description":
         "Manual staking operations are forbidden because staking is currently automated.",
       "data": {} }

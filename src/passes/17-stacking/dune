@@ -5,7 +5,7 @@
   (backend bisect_ppx))
  (libraries
   simple-utils
-  proto-alpha-utils
+  ligo.proto-alpha-utils
   ligo_coq_ocaml
   self_michelson
   mini_c

@@ -4,7 +4,7 @@
  (libraries
   unification_shared
   simple-utils
-  tezos-utils
+  ligo.tezos-utils
   cst
   parsing
   ast_unified

@@ -8,11 +8,13 @@ let test_commit =
   let salted_hash = Crypto.sha256 (Bytes.concat hashable packed_sender) in
   let pre_commits = (Big_map.empty : Hashlock.commit_set) in
   let init_storage = { hashed = Crypto.sha256 hashable ; unused = true ; commits = pre_commits } in
+  // Bake in order to get the address, so time has passed by 10 seconds (1 block)
   let {addr = typed_addr; code = _; size = _} = Test.originate_from_file "../hashlock.mligo" init_storage 0tez in
   let contr = Test.to_contract typed_addr in
   let parameter = Commit salted_hash in
   let () = Test.set_source first_committer in
-  let lock_time = Tezos.get_now () + 15 + 86_400 in
+  // 86_400 is added to the date for commits in hashlock.mligo (1 day in seconds)
+  let lock_time = Tezos.get_now () + 10 + 86_400 in
   let _ = Test.transfer_to_contract_exn contr parameter 0tez in
   let new_storage = Test.get_storage typed_addr in
   let commit = { date = lock_time ; salted_hash = salted_hash } in

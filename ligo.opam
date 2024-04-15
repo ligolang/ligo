@@ -70,7 +70,6 @@ depends: [
   "tezos-rust-libs"
   "crunch"
   "class_group_vdf"
-  "data-encoding" { >= "0.7.1" & < "1.0.0" }
   "hex"
   "lwt-canceler"
   "seqes"
@@ -78,8 +77,9 @@ depends: [
   "hacl-star-raw"
   "hacl-star"
   "secp256k1-internal"
-  "mtime" { >= "1.4.0" & < "2.0.0" }
-  "zarith" { >= "1.12" & < "1.13" }
+  "mtime" { >= "2.0.0" }
+  "zarith" { >= "1.4" }
+  "tezt" { >= "4.0.0" & < "5.0.0" }
   # dev dependencies (not labels as { dev } since this feature doesn't work
   # currently https://github.com/ocaml/opam/issues/5177).
   # Also sticking to 0.21.0 for ocamlformat since ocamlformat-rpc doesn't have a

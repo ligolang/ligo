@@ -62,7 +62,7 @@ type all =
   | `Main_interpret_literal of Location.t * Literal_value.t
   | `Main_interpret_modules_not_supported of Location.t
   | `Main_interpret_not_enough_initial_accounts of
-    Location.t * Memory_proto_alpha.Protocol.Alpha_context.Tez.tez
+    Location.t * Memory_proto_alpha.Protocol.Alpha_context.Tez.t
   | `Main_decompile_michelson of Stacking.Errors.stacking_error
   | `Main_decompile_mini_c of Spilling.Errors.spilling_error
   | `Main_decompile_typed of Checking.Errors.typer_error
