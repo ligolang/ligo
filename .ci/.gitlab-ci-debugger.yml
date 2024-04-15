@@ -5,17 +5,6 @@ include:
 
 variables:
   LIGO_DEBUGGER_IMAGE_TAG: "ligo-debugger:${CI_COMMIT_SHORT_SHA}-${CI_PIPELINE_ID}"
-# Reads ligo version from 'LIGO_VERSION_FILE' env variable,
-# gets ligo binary from the corresponding release, and does
-# 'git add ligo' to make binary available for flake.
-.get_release_ligo_binary: &get_release_ligo_binary
-  # strip all comments form the version file and grep for version
-  - ligo_version="$(cat "$LIGO_VERSION_FILE" | sed '/^#/d' | grep -E '([0-9]{1,}\.)+[0-9]{1,}')"
-  - ligo_link="$(curl --silent https://gitlab.com/api/v4/projects/ligolang%2Fligo/releases/"$ligo_version"/assets/links |
-      jq -r '.[] | select(.name == "Static Linux binary") | .direct_asset_url')"
-  - wget --quiet -O ligo "$ligo_link"
-  - chmod +x ligo
-  - ./ligo --version
 
 .run_ligo_debugger_tests: &run_ligo_debugger_tests
   - docker build tools/debugger -t "${LIGO_DEBUGGER_IMAGE_TAG}-test"
@@ -115,18 +104,6 @@ debugger-build-macos:
     paths:
       - Darwin
 
-debugger-test-ligo-recommended:
-  stage: tools-check
-  rules:
-    - !reference [.vscode_production]
-  needs: [debugger-build]
-  variables:
-    LIGO_VERSION_FILE: "./tools/debugger/ligo-debugger/src/resources/versions/recommended"
-    LIGO_TEST_FLAGS: "-r"
-  before_script: *get_release_ligo_binary
-  script: *run_ligo_debugger_tests
-  after_script: *cleanup_ligo_debugger_test
-
 debugger-test-ligo-latest:
   stage: tools-check
   rules:
@@ -145,20 +122,6 @@ debugger-test-static-debugger-binary:
   allow_failure: true
   script:
     - (ldd Linux/bin/ligo-debugger || true) 2>&1 | grep -q "not a dynamic executable"
-
-debugger-test-ligo-minimal-supported:
-  stage: push
-  rules:
-    - !reference [.vscode_production]
-  needs: [debugger-build]
-  when: manual
-  variables:
-    LIGO_VERSION_FILE: "./tools/debugger/ligo-debugger/src/resources/versions/minimal-supported"
-    LIGO_TEST_FLAGS: "-r -m"
-  before_script: *get_release_ligo_binary
-  script: *run_ligo_debugger_tests
-  after_script: *cleanup_ligo_debugger_test
-  allow_failure: true
 
 debugger-build-and-publish-build-base-image:
   stage: push

@@ -545,16 +545,10 @@ excHandlersWrapper = \action ->
 
     excHandlers =
       [ Handler \(SomeDebuggerException (err :: excType)) -> do
-          versionIssuesDetails <- case debuggerExceptionType err of
-            -- TODO: make this pure, carry version in the LS state
-            MidLigoLayerException -> lift getVersionIssuesDetails
-            _ -> pure Nothing
-
           toErrResponse @excType $
             [int||#{displayException err}|]
             { DAP.variables = mconcat
                 [ one ("origin", pretty (debuggerExceptionType err))
-                , maybe mempty (one . ("versionIssues", )) versionIssuesDetails
                 , one ("shouldInterruptDebuggingSession", Text.toLower $ pretty $ shouldInterruptDebuggingSession @excType)
                 , debuggerExceptionData err
                 ]
@@ -666,15 +660,6 @@ setLigoConfigHandler = mkLigoHandler \req@LigoSetLigoConfigRequest{} -> do
     }
   do let binaryPath = req.binaryPath
      logMessage [int||Set LIGO binary path: #s{binaryPath}|]
-
-  rawVersion <- getLigoVersion
-  logMessage [int||Ligo version: #{getVersion rawVersion}|]
-
-  -- Pro-actively check that ligo version is supported
-  runMaybeT do
-    Just ligoVer <- pure $ parseLigoVersion rawVersion
-    VersionUnsupported <- pure $ isSupportedVersion ligoVer
-    throwIO $ UnsupportedLigoVersionException ligoVer
 
   DAP.respond ()
 

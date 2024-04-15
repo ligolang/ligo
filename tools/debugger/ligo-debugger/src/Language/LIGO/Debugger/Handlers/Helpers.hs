@@ -323,7 +323,6 @@ instance Exception SomeDebuggerException where
       , SomeDebuggerException <$> fromException @LigoDecodeException e
       , SomeDebuggerException <$> fromException @MichelsonDecodeException e
       , SomeDebuggerException <$> fromException @ConfigurationException e
-      , SomeDebuggerException <$> fromException @UnsupportedLigoVersionException e
       , SomeDebuggerException <$> fromException @UnsupportedExtension e
       , SomeDebuggerException <$> fromException @ReplacementException e
       , SomeDebuggerException <$> fromException @PluginCommunicationException e

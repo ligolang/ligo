@@ -6,9 +6,6 @@ module Util
   , ForInternalUse
   , itIsForInternalUse
   , allowedForInternalUseOnly
-  , readSemVerQ
-  , resourcesFolder
-  , rmode'semv
   , rmode'ansi
   , rmode'
   , everywhereM'
@@ -34,24 +31,17 @@ import Data.Aeson.Key qualified as Key
 import Data.Aeson.KeyMap qualified as KM
 import Data.Aeson.Types qualified as Aeson
 import Data.Bitraversable (bitraverse)
-import Data.Char qualified as Char
 import Data.List (groupBy, singleton)
 import Data.Map.Internal qualified as MI
 import Data.MessagePack (Config, DecodeError, MessagePack, Object (..), decodeError)
 import Data.MessagePack.Types (MessagePack (fromObjectWith, toObject))
 import Data.Reflection (Given, give, given)
 import Data.Scientific qualified as Sci
-import Data.SemVer qualified as SemVer
-import Data.Text qualified as Text
 import Data.Text.Lazy.Encoding qualified as TL
-import Debug qualified
 import Fmt.Buildable (Buildable, FromDoc, pretty)
 import Fmt.Internal.Core (FromBuilder, fromBuilder)
 import Generics.SYB (Data (gmapM), GenericM)
-import Language.Haskell.TH.Syntax (Code (..), Q, liftTyped)
 import System.Console.ANSI (SGR, setSGRCode)
-import System.FilePath ((</>))
-import TH.RelativePaths (qReadFileText)
 import Text.Interpolation.Nyan.Core (RMode (..))
 
 import Duplo (Cofree ((:<)), Lattice (leq))
@@ -87,30 +77,6 @@ itIsForInternalUse = give IsForInternalUse
 allowedForInternalUseOnly :: ForInternalUse => a -> a
 allowedForInternalUseOnly =
   case given @IsForInternalUse of IsForInternalUse -> id
-
--- | Read a 'SemVer.Version' from a file at compile time.
---
--- This allows comments in form of lines starting from @#@ sign.
-readSemVerQ :: FilePath -> Code Q SemVer.Version
-readSemVerQ path = Code do
-  content <- qReadFileText path
-  let clearContent = content
-        & lines
-        & filter ((/= "#") . take 1 . toString . Text.dropWhile Char.isSpace)
-        & unlines
-        & Text.strip
-
-  version <-
-    SemVer.fromText clearContent
-    & either (\_ -> fail $ "Invalid version constant in the file: " <> Debug.show clearContent) pure
-
-  examineCode . liftTyped $ version
-
-resourcesFolder :: FilePath
-resourcesFolder = "src" </> "resources"
-
-rmode'semv :: RMode SemVer.Version
-rmode'semv = RMode (pretty . SemVer.toText)
 
 rmode'ansi :: RMode [SGR]
 rmode'ansi = RMode (pretty . concatMap (setSGRCode . singleton))

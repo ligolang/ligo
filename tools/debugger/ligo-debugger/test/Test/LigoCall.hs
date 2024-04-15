@@ -114,17 +114,6 @@ test_ModuleNamesCollection = testGroup "Getting module names"
       res @?= []
   ]
 
-test_Versions :: TestTree
-test_Versions = testGroup "Ligo version management"
-  [ testGroup "Our versions base sanity"
-      [ testCase "Recommended version is treated as supported" $
-          isSupportedVersion recommendedVersion @?= VersionSupported
-
-      , testCase "Minimal supported version is actually treated as supported" $
-          isSupportedVersion minimalSupportedVersion @?= VersionSupported
-      ]
-  ]
-
 -- | Corner cases that once broke in LIGO and we have to extra check them.
 test_Regressions :: TestTree
 test_Regressions = testGroup "Regressions"

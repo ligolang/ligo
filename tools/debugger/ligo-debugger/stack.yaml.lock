@@ -12,17 +12,6 @@ packages:
   original:
     hackage: dir-traverse-0.2.3.0
 - completed:
-    commit: 540990acfd2d4aaffa17a8337cbfa9a38cb3f2aa
-    git: https://github.com/brendanhay/semver.git
-    name: semver
-    pantry-tree:
-      sha256: 71baf198c46075095d163b36393f51d4bb5cb51dae31f532d59c869c5d305bb8
-      size: 1177
-    version: 0.4.0.1
-  original:
-    commit: 540990acfd2d4aaffa17a8337cbfa9a38cb3f2aa
-    git: https://github.com/brendanhay/semver.git
-- completed:
     commit: 98c0a812f5529a0e3791f56f4051249210a0a905
     git: https://gitlab.com/morley-framework/morley-debugger.git
     name: morley-debugger
