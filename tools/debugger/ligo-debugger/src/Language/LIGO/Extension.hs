@@ -2,7 +2,6 @@ module Language.LIGO.Extension
   ( ElimExt (..)
   , Lang (..)
   , UnsupportedExtension (..)
-  , extGlobs
   , getExt
   , isLigoFile
   , onExt
@@ -26,12 +25,6 @@ newtype UnsupportedExtension = UnsupportedExtension String
 instance Exception UnsupportedExtension where
   displayException (UnsupportedExtension ext) =
     [int||Unsupported extension has been met: "#{ext}"|]
-
--- TODO: 'lsp' uses the 'Glob' package to deal with globs, but it doesn't
--- support braced globs such as "{,m,re}ligo" even though the LSP spec allows
--- it. Because of this, we return multiple globs instead of one single glob.
-extGlobs :: [Text]
-extGlobs = toText . (("**" </>) . ("*" <>)) <$> supportedExtensions
 
 getExt :: MonadError UnsupportedExtension m => FilePath -> m Lang
 getExt path =

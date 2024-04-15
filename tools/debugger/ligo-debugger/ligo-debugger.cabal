@@ -40,7 +40,6 @@ library
       Language.LIGO.Debugger.Michelson
       Language.LIGO.Debugger.Navigate
       Language.LIGO.Debugger.Snapshots
-      Language.LIGO.Diagnostic
       Language.LIGO.Extension
       Language.LIGO.Range
       Language.LIGO.Scope

@@ -73,7 +73,6 @@ deriving via PP (ModuleName it) instance Pretty it => Show (ModuleName it)
 deriving via PP (TypeName it) instance Pretty it => Show (TypeName it)
 deriving via PP (Ctor it) instance Pretty it => Show (Ctor it)
 deriving via PP (FieldName it) instance Pretty it => Show (FieldName it)
-deriving via PP (Error it) instance Pretty it => Show (Error it)
 
 instance
     ( Apply (LPP1 d) layers
@@ -93,9 +92,6 @@ instance
     LPP d (Tree layers info)
   where
   lpp (d :< f) = ascribe d $ lpp1 @d $ lpp @d <$> f
-
-instance LPP1 'Caml   Error where lpp1 (Error msg _) = blockComment Caml   $ pp msg
-instance LPP1 'Js     Error where lpp1 (Error msg _) = blockComment Js     $ pp msg
 
 ----------------------------------------------------------------------------
 -- Helpers
@@ -335,10 +331,6 @@ instance Pretty1 Attr where
 instance Pretty1 TField where
   pp1 = \case
     TField      n t -> n <.> maybe "" (":" `indent`) t
-
-instance Pretty1 Error where
-  pp1 = \case
-    Error src children -> sexpr "ERROR" ["\"" <> pp src <> "\"", pp children]
 
 instance Pretty1 CaseOrDefaultStm where
   pp1 = \case

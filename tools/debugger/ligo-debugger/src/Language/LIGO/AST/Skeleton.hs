@@ -17,14 +17,13 @@ module Language.LIGO.AST.Skeleton
   , Name (..), QualifiedName (..), Pattern (..), RecordFieldPattern (..)
   , Constant (..), FieldAssignment (..), Alt (..), Expr (..), TField (..)
   , Variant (..), Layout (..), Type (..), Binding (..), RawContract (..), TypeName (..)
-  , TypeVariableName (..), FieldName (..), Verbatim (..), Error (..), Ctor (..)
+  , TypeVariableName (..), FieldName (..), Verbatim (..), Ctor (..)
   , NameDecl (..), Preprocessor (..), PreprocessorCommand (..), ModuleName (..)
   , ModuleAccess (..), Attr (..), QuotedTypeParams (..), CaseOrDefaultStm (..)
   , Direction (..)
   , ModuleExpr (..)
   , Signature (..)
   , SigItem (..)
-  , pattern ErrorTypeUnresolved
   , getLIGO
   , setLIGO
   , nestedLIGO
@@ -48,7 +47,6 @@ import Util
 import Duplo.Pretty (PP (..), Pretty (..))
 import Duplo.Tree (Tree)
 
-import Language.LIGO.Diagnostic (MessageDetail (..))
 import Language.LIGO.Range (Range)
 
 data SomeLIGO xs = SomeLIGO Lang (LIGO xs)
@@ -80,7 +78,7 @@ type LIGO x = Tree RawLigoList x
 type RawLigoList =
   [ Name, QualifiedName, Pattern, RecordFieldPattern, Constant, FieldAssignment
   , Alt, Expr, TField, Variant, Type, Binding, RawContract, TypeName
-  , TypeVariableName, FieldName, Verbatim, Error, Ctor, NameDecl, Preprocessor
+  , TypeVariableName, FieldName, Verbatim, Ctor, NameDecl, Preprocessor
   , PreprocessorCommand, ModuleName, ModuleAccess, Attr, QuotedTypeParams
   , CaseOrDefaultStm, Direction, Signature, SigItem, ModuleExpr
   ]
@@ -357,12 +355,6 @@ newtype Attr it = Attr Text
   deriving stock (Generic, Eq, Functor, Foldable, Traversable)
   deriving Eq1 via DefaultEq1DeriveForText
 
-data Error it = Error MessageDetail [it]
-  deriving stock (Generic, Eq, Functor, Foldable, Traversable)
-
-pattern ErrorTypeUnresolved :: Error it
-pattern ErrorTypeUnresolved = Error (FromLIGO "unresolved type given") []
-
 --------------------------------------------------------------------------------
 
 -- TODO: is used also for comparing nodes in which the order
@@ -456,10 +448,6 @@ instance Eq1 Expr where
   liftEq f (List as) (List bs) = liftEqList f as bs
   liftEq f (Tuple as) (Tuple bs) = liftEqList f as bs
   liftEq f (Annot ea ta) (Annot eb tb) = f ea eb && f ta tb
-  liftEq _ _ _ = False
-
-instance Eq1 Error where
-  -- liftEq _ _ _ = error "Cannot compare `Error` nodes"
   liftEq _ _ _ = False
 
 instance Eq1 Binding where

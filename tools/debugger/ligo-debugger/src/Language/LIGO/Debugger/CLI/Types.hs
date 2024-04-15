@@ -56,7 +56,6 @@ import Language.LIGO.AST.Pretty hiding (Doc)
 import Language.LIGO.AST.Skeleton hiding (ModuleName, Name)
 import Language.LIGO.AST.Skeleton qualified as AST
 import Language.LIGO.Debugger.CLI.Helpers
-import Language.LIGO.Diagnostic
 import Language.LIGO.Range
 import Language.LIGO.Scope
 
@@ -576,7 +575,6 @@ data LigoTypeDefinitionScope = LigoTypeDefinitionScope
 data LigoTypeFull
   = LTFCore LigoTypeExpression
   | LTFResolved LigoTypeExpression
-  | LTFUnresolved
   deriving stock (Generic, Show)
 
 ----------------------------------------------------------------------------
@@ -916,21 +914,6 @@ guardOneElemList expected = withArray (toString expected) \arr -> do
       guard (ctor == expected)
     len -> fail $ "Expected array of size 1, got " <> show len
 
--- | Convert ligo error to its corresponding internal representation.
-fromLigoErrorToMsg :: LigoError -> Message
-fromLigoErrorToMsg LigoError
-  { _leContent = LigoErrorContent
-      { _lecMessage = err
-      , _lecLocation = fmap fromLigoRangeOrDef -> at
-      }
-  , _leStatus
-  } = Message (FromLIGO err) status (fromMaybe (point 0 0) at)
-  where
-    status = case _leStatus of
-      "error"   -> SeverityError
-      "warning" -> SeverityWarning
-      _         -> SeverityError
-
 -- | Converts ligo ranges to our internal ones.
 -- Note: ligo team allows for start file of a range be different from end file.
 -- Either if this intentional or not we throw an error if they are so.
@@ -969,7 +952,6 @@ fromLigoTypeFull :: LigoTypeFull -> LIGO Info
 fromLigoTypeFull = \case
   LTFCore lte     -> fromLigoTypeExpression lte
   LTFResolved lte -> fromLigoTypeExpression lte
-  LTFUnresolved   -> mkLigoError defaultState "unresolved"
 
 fromLigoTypeExpression :: LigoTypeExpression -> LIGO Info
 fromLigoTypeExpression
@@ -998,7 +980,7 @@ fromLigoType st = \case
 
   LTCSum sum ->
     case fromLigoTable FieldSum sum of
-      [] -> mkErr "malformed sum type, please report this as a bug"
+      [] -> error "malformed sum type, please report this as a bug"
       v : vs ->
         let ligoLayout = _lttLayout sum in
         make' (st, TSum (ligoLayoutToLayout ligoLayout) (v :| vs))
@@ -1097,8 +1079,6 @@ fromLigoType st = \case
         FieldSum     -> make' (st, Variant n $ maybeToList type')
         FieldProduct -> make' (st, TField  n type')
 
-    mkErr = mkLigoError st
-
 fromLigoDefinitions :: LigoDefinitions -> [Scope]
 fromLigoDefinitions LigoDefinitions{..} = mapMaybe fromLigoScope _ldScopes
   where
@@ -1110,9 +1090,6 @@ fromLigoDefinitions LigoDefinitions{..} = mapMaybe fromLigoScope _ldScopes
 
 defaultState :: Info
 defaultState = point 1 1
-
-mkLigoError :: Info -> Text -> LIGO Info
-mkLigoError p msg = make' . (p,) $ Error (FromLIGO msg) []
 
 -- | Variant of `make` that constructs a tree out of annotation and node
 -- that recovers range from previous subnodes by merging them, this helps to
