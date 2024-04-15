@@ -1,1 +1,0 @@
-const plus_one = List.map (i => i + 1, list([6,2,3,3]));

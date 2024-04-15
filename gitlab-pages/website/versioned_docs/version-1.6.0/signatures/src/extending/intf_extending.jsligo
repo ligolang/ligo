@@ -1,0 +1,32 @@
+interface Euro_INTF {
+  type t;
+  const add: (a: t, b: t) => t;
+  const one: t;
+  const two: t;
+};
+
+interface WithTenEuro_INTF extends Euro_INTF {
+  const ten: t;
+};
+
+interface WithFiftyEuro_INTF extends Euro_INTF {
+  const fifty: t;
+};
+interface NewEuro_INTF
+  extends WithTenEuro_INTF, WithFiftyEuro_INTF {
+  const hundred: t;
+  const five_hundred?: t;
+};
+namespace NewEuro implements NewEuro_INTF {
+  export type t = int;
+
+  export const add = (a: t, b: t) => a + b;
+
+  export const one: t = 1;
+  export const two: t = 2;
+  export const ten: t = 10;
+  export const fifty: t = 50;
+  export const hundred: t = 100;
+  export const five_hundred: t = 500; // Could be omitted
+  const twenty: t = 20; // Extra new constant
+}

@@ -1,0 +1,13 @@
+type storage = {
+  storage: int;
+  dynamic_entrypoints;
+};
+
+@dyn_entry
+const one = (_u: unit, _i: int): [list<operation>, int] =>
+  [[], 1];
+
+@dyn_entry
+const tick = (_: ticket<int>, x: [int, int])
+  : [list<operation>, [int, int]] =>
+  [[], x];

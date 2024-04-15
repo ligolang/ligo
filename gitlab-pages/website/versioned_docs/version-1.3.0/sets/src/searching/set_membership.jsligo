@@ -1,2 +1,0 @@
-const my_set: set<int> = Set.literal(list([3, 2, 2, 1]));
-const contains_3: bool = Set.mem(3, my_set); // == true
