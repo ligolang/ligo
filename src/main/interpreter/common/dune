@@ -8,7 +8,7 @@
  (libraries
   ast_aggregated
   ligo_interpreter
-  tezos-memory-proto-alpha
+  ligo.tezos-memory-proto-alpha
   main_errors
   ligo_compile
   build

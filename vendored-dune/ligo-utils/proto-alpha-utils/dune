@@ -1,11 +1,12 @@
 (library
  (name proto_alpha_utils)
- (public_name proto-alpha-utils)
+ (public_name ligo.proto-alpha-utils)
  (libraries
-  tezos-protocol-018-Proxford.protocol
-  tezos-memory-proto-alpha
+  ligo.tezos-memory-proto-alpha
+  tezos-protocol-019-PtParisB.protocol
   data-encoding
   simple-utils
-  tezos-utils)
+  core
+  ligo.tezos-utils)
  (preprocess
-  (pps ppx_let)))
+  (pps ppx_jane ppx_let)))

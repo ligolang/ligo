@@ -7,8 +7,7 @@
  (libraries
   main_errors
   simple-utils
-  proto-alpha-utils
-  proto-pre-alpha-utils
+  ligo.proto-alpha-utils
   preprocessing
   parsing
   cst

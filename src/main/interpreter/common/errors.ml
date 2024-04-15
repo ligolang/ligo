@@ -49,7 +49,7 @@ let generic_error ?(calltrace = []) : Location.t -> string -> interpreter_error 
 
 
 let not_enough_initial_accounts
-    : Location.t -> Memory_proto_alpha.Protocol.Alpha_context.Tez.tez -> interpreter_error
+    : Location.t -> Memory_proto_alpha.Protocol.Alpha_context.Tez.t -> interpreter_error
   =
  fun loc max -> `Main_interpret_not_enough_initial_accounts (loc, max)
 

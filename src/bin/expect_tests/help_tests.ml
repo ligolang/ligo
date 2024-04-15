@@ -119,8 +119,8 @@ This sub-command compiles a contract to Michelson code. It expects a source file
                                module. Files containing a single contract module
                                are automatically infered
   [-p PROTOCOL], --protocol  . choose protocol's types/values pre-loaded into
-                               the LIGO environment (oxford2). By default, the
-                               current protocol (oxford2) will be used
+                               the LIGO environment (parisb). By default, the
+                               current protocol (parisb) will be used
   [-help], -?                . print this help text and exit |}]
 
 let%expect_test _ =
@@ -191,8 +191,8 @@ let%expect_test _ =
                                    module. Files containing a single contract module
                                    are automatically infered
       [-p PROTOCOL], --protocol  . choose protocol's types/values pre-loaded into
-                                   the LIGO environment (oxford2). By default, the
-                                   current protocol (oxford2) will be used
+                                   the LIGO environment (parisb). By default, the
+                                   current protocol (parisb) will be used
       [-help], -?                . print this help text and exit |}]
 
 let%expect_test _ =
@@ -268,8 +268,8 @@ let%expect_test _ =
                                    module. Files containing a single contract module
                                    are automatically infered
       [-p PROTOCOL], --protocol  . choose protocol's types/values pre-loaded into
-                                   the LIGO environment (oxford2). By default, the
-                                   current protocol (oxford2) will be used
+                                   the LIGO environment (parisb). By default, the
+                                   current protocol (parisb) will be used
       [-help], -?                . print this help text and exit |}]
 
 let%expect_test _ =
@@ -309,8 +309,8 @@ let%expect_test _ =
       [--without-run]            . disable running of compiled expression.
       [-D pass]                  . a list of defines to the preprocessor
       [-p PROTOCOL], --protocol  . choose protocol's types/values pre-loaded into
-                                   the LIGO environment (oxford2). By default, the
-                                   current protocol (oxford2) will be used
+                                   the LIGO environment (parisb). By default, the
+                                   current protocol (parisb) will be used
       [-help], -?                . print this help text and exit |}]
 
 let%expect_test _ =
@@ -366,8 +366,8 @@ let%expect_test _ =
                                    module. Files containing a single contract module
                                    are automatically infered
       [-p PROTOCOL], --protocol  . choose protocol's types/values pre-loaded into
-                                   the LIGO environment (oxford2). By default, the
-                                   current protocol (oxford2) will be used
+                                   the LIGO environment (parisb). By default, the
+                                   current protocol (parisb) will be used
       [-help], -?                . print this help text and exit |}]
 
 let%expect_test _ =
@@ -417,8 +417,8 @@ let%expect_test _ =
                                    function
       [--werror]                 . treat warnings as errors
       [-p PROTOCOL], --protocol  . choose protocol's types/values pre-loaded into
-                                   the LIGO environment (oxford2). By default, the
-                                   current protocol (oxford2) will be used
+                                   the LIGO environment (parisb). By default, the
+                                   current protocol (parisb) will be used
       [-help], -?                . print this help text and exit |}]
 
 let%expect_test _ =
@@ -468,8 +468,8 @@ let%expect_test _ =
                                    function
       [--werror]                 . treat warnings as errors
       [-p PROTOCOL], --protocol  . choose protocol's types/values pre-loaded into
-                                   the LIGO environment (oxford2). By default, the
-                                   current protocol (oxford2) will be used
+                                   the LIGO environment (parisb). By default, the
+                                   current protocol (parisb) will be used
       [-help], -?                . print this help text and exit |}]
 
 let%expect_test _ =
@@ -522,8 +522,8 @@ let%expect_test _ =
       [--without-run]            . disable running of compiled expression.
       [-D pass]                  . a list of defines to the preprocessor
       [-p PROTOCOL], --protocol  . choose protocol's types/values pre-loaded into
-                                   the LIGO environment (oxford2). By default, the
-                                   current protocol (oxford2) will be used
+                                   the LIGO environment (parisb). By default, the
+                                   current protocol (parisb) will be used
       [-help], -?                . print this help text and exit |}]
 
 let%expect_test _ =
@@ -595,6 +595,6 @@ let%expect_test _ =
       [--type-doc]               . Translate JsLIGO program into TypeScript for
                                    generating documentation.
       [-p PROTOCOL], --protocol  . choose protocol's types/values pre-loaded into
-                                   the LIGO environment (oxford2). By default, the
-                                   current protocol (oxford2) will be used
+                                   the LIGO environment (parisb). By default, the
+                                   current protocol (parisb) will be used
       [-help], -?                . print this help text and exit |}]

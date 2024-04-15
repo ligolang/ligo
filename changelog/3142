@@ -1,0 +1,7 @@
+
+author: alistair.obrien
+description: "\\n\\nfeat: upgrade protocol to 019-PtParisB\\n\\n"
+merge_request: '3142'
+title: "feat: upgrade to ParisB"
+type: breaking
+            

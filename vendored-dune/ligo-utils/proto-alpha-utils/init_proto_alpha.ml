@@ -4,7 +4,7 @@ module Signature = Tezos_base.TzPervasives.Signature
 module Data_encoding = Alpha_environment.Data_encoding
 module MBytes = Bytes
 module Error_monad = X_error_monad
-module Proto_env = Tezos_protocol_environment_018_Proxford
+module Proto_env = Tezos_protocol_environment_019_PtParisB
 open Error_monad
 open Protocol
 
@@ -49,7 +49,7 @@ module Context_init = struct
     let open Error_monad in
     let open Lwt_result_syntax in
     let Parametric.
-          { blocks_per_cycle; blocks_per_commitment; blocks_per_stake_snapshot; _ }
+          { blocks_per_cycle; blocks_per_commitment; _ }
       =
       constants
     in
@@ -59,12 +59,12 @@ module Context_init = struct
             "Inconsistent constants : blocks per commitment must be less than blocks per \
              cycle")
     in
-    let* () =
+    (* let* () =
       Error_monad.unless (blocks_per_cycle >= blocks_per_stake_snapshot) (fun () ->
           failwith
             "Inconsistent constants : blocks per cycle must be superior than blocks per \
              roll snapshot")
-    in
+    in *)
     return ()
 
   let initial_context
@@ -218,7 +218,7 @@ module Context_init = struct
     let ( >>=? ) = Lwt_result_syntax.( let* ) in
     init n
     >>=? fun ((ctxt, header, hash), accounts, contracts) ->
-    let timestamp = Environment.Time.of_seconds @@ 1645498950L in
+    let timestamp = Environment.Time.of_notation_exn "2022-02-20T18:57:10Z" in
     begin_construction ~timestamp ~header ~hash ctxt.context
     >>=? fun ctxt -> Lwt_result_syntax.return (ctxt, accounts, contracts)
 end

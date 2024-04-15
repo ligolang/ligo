@@ -1,6 +1,6 @@
 (library
  (name tezos_utils)
- (public_name tezos-utils)
+ (public_name ligo.tezos-utils)
  (libraries
   octez-libs.micheline
   octez-libs.base
