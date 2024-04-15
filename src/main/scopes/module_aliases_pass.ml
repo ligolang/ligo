@@ -1,8 +1,6 @@
 open Ligo_prim
 open Simple_utils
 module AST = Ast_core
-module LSet = Types.LSet
-module LMap = Types.LMap
 open Env
 open Env_map
 module Env = Env_map
@@ -10,7 +8,7 @@ module Env = Env_map
 type t = (Types.Uid.t list * Types.Uid.t) LMap.t
 
 (** [resolve_mpath] takes a module path [mvs] and tries to resolve in the [env]
-    the final output is of type [(Module_var.t * string list) option]
+    the final output is of type [(Types.Uid.t list * Types.Uid.t) option]
     it is optional because we are not sure if the module alias can be resolved
     in the [env], in case we are able to resolve the alias the first part
     [Module_var.t] is the finally resolved module & the [string list] is the list
@@ -355,8 +353,6 @@ let declarations : AST.declaration list -> t * env =
   declarations decls m_alias env
 
 
-(** [patch] fixes the module aliases in the [defs]. It looks for module aliases
-    definitions & then looks up the range of the module definition in [t] *)
 let rec patch : t -> Types.def list -> Types.def list =
  fun m_alias ->
   let open Types in

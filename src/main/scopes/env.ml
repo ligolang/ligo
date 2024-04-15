@@ -10,7 +10,7 @@
 
   This module contains the {i environment} type along with the functions to manipulate it.
   An environment is :
-  j A list of all accessible defintions :
+  - A list of all accessible defintions :
     - [parent] are the ones defined outside of the current module (in ancestor modules)
     - [avail_defs] are the ones defined in the current module
   - A map from all encountered module to :
@@ -64,16 +64,19 @@ module Uid_map = Types.Uid_map
 
 (******************************************************************************)
 
+(** Associates [Uid.t]s to their [Types.def]s.  *)
+type def_map = Types.def Uid_map.t
+
 module Def = struct
-  type def =
+  (** A simpler form of [Types.def] that only stores a primitive variable. *)
+  type t =
     | Variable of Value_var.t
     | Type of Type_var.t
     | Module of Module_var.t
     | Label of Label.t
   [@@deriving equal, compare, sexp]
 
-  type t = def
-
+  (** Make a UID from a [t]. *)
   let make_uid = function
     | Variable v -> Types.Uid.make_var (module Value_var) v
     | Type v -> Types.Uid.make_var (module Type_var) v
@@ -81,8 +84,7 @@ module Def = struct
     | Label (Label (label, loc)) -> Some (Types.Uid.make label loc)
 
 
-  type def_map = Types.def Uid_map.t
-
+  (** Gets the location of a [t]. *)
   let get_location = function
     | Variable v -> Value_var.get_location v
     | Type t -> Type_var.get_location t
@@ -90,6 +92,7 @@ module Def = struct
     | Label (Label (_, loc)) -> loc
 
 
+  (** Pretty-print a [t], for debugging. *)
   let pp : Format.formatter -> t -> unit =
    fun ppf def ->
     match def with
@@ -99,44 +102,59 @@ module Def = struct
     | Label (Label (label, _)) -> Format.fprintf ppf "Label <%s>" label
 
 
-  let to_types_def_opt (prg_defs : def_map) : def -> Types.def option =
+  (** Find the given [t] in the provided [def_map] by its UID and return its [Types.def]
+      equivalent. *)
+  let to_types_def_opt (prg_defs : def_map) : t -> Types.def option =
    fun new_def ->
     let open Option.Let_syntax in
     let%bind def_uid = make_uid new_def in
     Uid_map.find_opt def_uid prg_defs
 
 
-  let defs_to_types_defs (prg_defs : def_map) : def list -> Types.def list =
+  (** Find the given [t]s in the provided [def_map] by their UIDs and return their
+      [Types.def] equivalents. If its equivalent is not available, it won't be present in
+      the output. *)
+  let defs_to_types_defs (prg_defs : def_map) : t list -> Types.def list =
    fun new_defs -> List.filter_map ~f:(to_types_def_opt prg_defs) new_defs
 
 
-  let compare_def_by_name (a : def) (b : def) : int =
+  (** Compares two [t]s by name and level. *)
+  let compare_def_by_name (a : t) (b : t) : int =
     let open Types in
     match a, b with
     | Variable x, Variable y -> String.compare (get_binder_name x) (get_binder_name y)
     | Type x, Type y -> String.compare (get_type_binder_name x) (get_type_binder_name y)
-    | Module x, Module y ->
-      compare_mod_name (get_mod_binder_name x) (get_mod_binder_name y)
+    | Module x, Module y -> String.compare (get_mod_binder_name x) (get_mod_binder_name y)
     | Label x, Label y -> Label.T.compare x y
     | Variable _, _ | Type _, (Module _ | Label _) | Module _, Label _ -> -1
     | Label _, _ | Module _, (Type _ | Variable _) | Type _, Variable _ -> 1
-
-
-  let equal_def_by_name (a : def) (b : def) : bool = compare_def_by_name a b = 0
 end
 
-type def = Def.def
+(** A simpler form of [Types.def] that only stores a primitive variable. *)
+type def = Def.t
 
 module Env_make (S : sig
+  (** Implementation for definitions (e.g., using a list or a map). OCaml has no HKTs, so
+      this type emulates it. *)
   type defs
 
+  (** Creates an empty collection of definitions. *)
   val empty_defs : defs
+
+  (** Tries to find a definition in the collection. *)
   val lookup_def_opt : defs -> def -> def option
+
+  (** Adds a definition to the collection. *)
   val add_def : def -> defs -> defs
+
+  (** Combines two collections of definitions. *)
   val union_defs : defs -> defs -> defs
+
+  (** Pretty-prints the data structure. *)
   val pp_defs : defs Fmt.t
 end) =
 struct
+  (** Simplified version of [Types.mod_case]. *)
   type defs_or_alias =
     | Defs of S.defs
     | Alias of Module_var.t
@@ -150,17 +168,18 @@ struct
   (******************************************************************************)
 
   (** Maps the encountered modules to:
-  - their aliases (in case of module alias)
-  - their list of defs (in case of mod expr)
+      - their aliases (in case of module alias)
+      - their list of defs (in case of mod expr)
 
-  Two different modules will always correspond to two different entries.
+      Two different modules will always correspond to two different entries.
 
-  Moreover, we use [option] so that [None] will represent the global module.
+      Moreover, we use [Module_var.t option] so that [None] will represent the global
+      module.
 
-  However, {!Module_var.compare} doesn't account for location, so same-name
-  modules will wrongly correspond to the same key, so same entry.
+      However, {!Module_var.compare} doesn't account for location, so same-name
+      modules will wrongly correspond to the same key, so same entry.
 
-  This is why we augment {!Module_var} with a location-aware comparison function. *)
+      This is why we augment {!Module_var} with a location-aware comparison function. *)
   module Module_map = struct
     module Mvar_map = Map.Make (struct
       type t = Module_var.t option
@@ -175,11 +194,11 @@ struct
 
     include Mvar_map
 
-    type module_map = defs_or_alias Mvar_map.t
-    type t = module_map
+    (** Associates module variables to their contents (module definition or module alias). *)
+    type t = defs_or_alias Mvar_map.t
 
     (** [resolve_mvar] takes [Module_var.t] and tries to resolve it in the [module_map],
-    in case of module alias it recusively resolves the alias in the [module_map]. *)
+        in case of module alias it recusively resolves the alias in the [module_map]. *)
     let rec resolve_mvar : Module_var.t -> t -> (Module_var.t * S.defs) option =
      fun mv module_map ->
       match%bind.Option Mvar_map.find_opt (Some mv) module_map with
@@ -187,7 +206,7 @@ struct
       | Alias mv' -> resolve_mvar mv' module_map
 
 
-    (** For debugging. *)
+    (** Pretty-print a module map for debugging. *)
     let pp : t Fmt.t =
      fun ppf module_map ->
       Format.fprintf
@@ -228,8 +247,10 @@ struct
     ; label_types : Ast_core.ty_expr LMap.t
     }
 
+  (** Shorthand alias for [env]. *)
   type t = env
 
+  (** Creates an empty environment, using [None] (global module) as the [parent_mod]. *)
   let empty =
     { parent = S.empty_defs
     ; avail_defs = S.empty_defs
@@ -239,8 +260,8 @@ struct
     }
 
 
-  (** For debugging. *)
-  let pp : env Fmt.t =
+  (** Pretty-print the environment for debugging. *)
+  let pp : t Fmt.t =
    fun ppf { parent; avail_defs; module_map; parent_mod; label_types } ->
     Format.fprintf
       ppf
@@ -269,7 +290,7 @@ struct
       [def] matching the given [def] predicate.
       It first tries to look up the [avail_defs] in the [env], and if it does not find the
       [def] there it looks up the [parent] defs. *)
-  let lookup_def_opt : env -> def -> def option =
+  let lookup_def_opt : t -> def -> def option =
    fun env def ->
     let find (defs : S.defs) = S.lookup_def_opt defs def in
     match find env.avail_defs with
@@ -279,13 +300,13 @@ struct
 
   (** [lookup_vvar_opt] looks up the [Value_var.t] in the [env] with the
       help of [lookup_def_opt] *)
-  let lookup_vvar_opt : env -> Value_var.t -> def option =
+  let lookup_vvar_opt : t -> Value_var.t -> def option =
    fun env v -> lookup_def_opt env (Variable v)
 
 
   (** [lookup_tvar_opt] looks up the [Type_var.t] in the [env] with the
       help of [lookup_def_opt] *)
-  let lookup_tvar_opt : env -> Type_var.t -> def option =
+  let lookup_tvar_opt : t -> Type_var.t -> def option =
    fun env t -> lookup_def_opt env (Type t)
 
 
@@ -413,23 +434,23 @@ struct
   (** Update functions *)
 
   (** [add_vvar] adds [Value_var.t] to [avail_defs] in the [env]. *)
-  let add_vvar : Value_var.t -> env -> env =
+  let add_vvar : Value_var.t -> t -> t =
    fun v env -> { env with avail_defs = S.add_def (Variable v) env.avail_defs }
 
 
   (** [add_tvar] adds [Type_var.t] to [avail_defs] in the [env]. *)
-  let add_tvar : Type_var.t -> env -> env =
+  let add_tvar : Type_var.t -> t -> t =
    fun t env -> { env with avail_defs = S.add_def (Type t) env.avail_defs }
 
 
   (** [add_label] adds [Label.t] to [avail_defs] in the [env]. *)
-  let add_label : Label.t -> env -> env =
+  let add_label : Label.t -> t -> t =
    fun c env -> { env with avail_defs = S.add_def (Label c) env.avail_defs }
 
 
   (** [add_mvar] adds the [Module_var.t] to the [avail_defs]. It also adds a [defs_or_alias]
       to the [module_map] in the [env]. *)
-  let add_mvar : Module_var.t -> defs_or_alias option -> module_map -> env -> env =
+  let add_mvar : Module_var.t -> defs_or_alias option -> module_map -> t -> t =
    fun m defs_or_alias_opt module_map env ->
     Option.value_map
       defs_or_alias_opt
@@ -451,7 +472,7 @@ struct
         concatenated with the child definitions.
       All of this only holds if the given [defs_or_alias_opt] is [Some _] and it could be
       resolved, otherwise the old [env] is just returned updated with the given [module_map]. *)
-  let include_mvar : defs_or_alias option -> module_map -> env -> env =
+  let include_mvar : defs_or_alias option -> module_map -> t -> t =
    fun defs_or_alias_opt module_map env ->
     match
       match%bind.Option defs_or_alias_opt with
@@ -482,18 +503,17 @@ struct
   include S
 end
 
-(* Let's keep this implementation for scopes since
-   it relies on the definition order.
+(* Let's keep this implementation for scopes since it relies on the definition order.
 
-   Plus this pass uses mostly modifying
-   operations (like [add_vvar]), so, using lists there would be faster. *)
+   Plus this pass uses mostly modifying operations (like [add_vvar]), so, using lists
+   there would be faster. *)
 module Env_list_impl = struct
   type defs = def list
 
   let empty_defs : defs = []
 
   let lookup_def_opt : defs -> def -> def option =
-   fun defs def -> List.find ~f:(Def.equal_def def) defs
+   fun defs def -> List.find ~f:(Def.equal def) defs
 
 
   let add_def : def -> defs -> defs = List.cons
@@ -501,20 +521,16 @@ module Env_list_impl = struct
   let pp_defs : defs Fmt.t = Fmt.Dump.(list Def.pp)
 end
 
+(** List-backed environment, for use by the debugger. *)
 module Env_list = Env_make (Env_list_impl)
 
 module Env_map_impl = struct
-  module K = struct
-    (* For some reasons sets are not working here, so, let's
-       use maps instead.
+  (* For some reasons sets are not working here, so, let's use maps instead.
 
-       The basic idea is to store in this map original definitions.
-       [equal] and [compare] for [Def.def] don't take into account
-       the location, so, this could be used to resolve references. *)
-    type t = Def.def [@@deriving compare, sexp]
-  end
-
-  include Core.Map.Make (K)
+     The basic idea is to store in this map original definitions. [equal] and [compare]
+     for [Def.t] don't take into account the location, so, this could be used to resolve
+     references. *)
+  include Core.Map.Make (Def)
 
   type defs = def t
 
@@ -531,4 +547,5 @@ module Env_map_impl = struct
    fun ppf defs -> Format.fprintf ppf "%a" Fmt.Dump.(list Def.pp) (to_defs_list defs)
 end
 
+(** Map-backed environment, for use by the language server. *)
 module Env_map = Env_make (Env_map_impl)

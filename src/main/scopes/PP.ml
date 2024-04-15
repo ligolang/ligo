@@ -1,8 +1,8 @@
+open Simple_utils.Function
 module PP_helpers = Simple_utils.PP_helpers
 open Types
 
-let ( <@ ) = Simple_utils.Utils.( <@ )
-
+(** Helper for printing a [type_case] or [signature_case]. *)
 let resolve_case
     :  'core_expr Fmt.t -> 'typed_expr Fmt.t
     -> ('core_expr, 'typed_expr) resolve_case Fmt.t
@@ -13,6 +13,7 @@ let resolve_case
   | Unresolved -> Format.fprintf ppf "unresolved"
 
 
+(** Prints the [label_case] field from a [ldef]. *)
 let label_case : label_case Fmt.t =
  fun ppf ->
   Format.fprintf ppf
@@ -21,14 +22,18 @@ let label_case : label_case Fmt.t =
   | Field -> "Field"
 
 
+(** Prints the [type_case] field from a [vdef]. *)
 let type_case : type_case Fmt.t =
   resolve_case Ast_core.PP.type_expression Ast_typed.PP.type_expression_orig
 
 
+(** Prints the [signature_case] field from an [mdef]. *)
 let signature_case : signature_case Fmt.t =
   resolve_case Ast_core.PP.signature Ast_typed.PP.signature
 
 
+(** Prints a list of scopes. The format for each scope will be [[ bindings ] loc] where
+    [bindings] is a collection of UIDs in-scope in [loc]. *)
 let scopes : Format.formatter -> inlined_scopes -> unit =
  fun f s ->
   let pp_scope f (scope : inlined_scope) =
@@ -37,10 +42,7 @@ let scopes : Format.formatter -> inlined_scopes -> unit =
       List.sort defs ~compare:(fun d1 d2 ->
           Simple_utils.Location.compare (get_range d1) (get_range d2))
     in
-    let pp_bindings f defs =
-      List.iter defs ~f:(fun def ->
-          Format.fprintf f "%s " (Uid.to_string @@ get_def_uid def))
-    in
+    let pp_bindings f = List.iter ~f:(Format.fprintf f "%a " Uid.pp <@ get_def_uid) in
     Format.fprintf f "[ %a ] %a" pp_bindings defs Location.pp loc
   in
   let pp_scopes f = List.iter ~f:(Format.fprintf f "@[<v>%a@ @]" pp_scope) in
@@ -50,6 +52,7 @@ let scopes : Format.formatter -> inlined_scopes -> unit =
   Format.fprintf f "@[<v>Scopes:@ %a@]" pp_scopes s
 
 
+(** Prints the [references] field from a definition. *)
 let refs : Format.formatter -> LSet.t -> unit =
  fun ppf locs ->
   match LSet.elements locs with
@@ -63,6 +66,12 @@ let refs : Format.formatter -> LSet.t -> unit =
       locs
 
 
+(** Prints a [vdef] in the following format:
+
+    |[type_case]|
+    [references]
+    Mod Path = [mod_path]
+    Def Type = [def_type] *)
 let vdef : Format.formatter -> vdef -> unit =
  fun ppf { t; references; mod_path; def_type; _ } ->
   let pp_def_type ppf =
@@ -86,6 +95,10 @@ let vdef : Format.formatter -> vdef -> unit =
     def_type
 
 
+(** Prints a [tdef] in the following format:
+
+    |[content]|
+    [references] *)
 let tdef : Format.formatter -> tdef -> unit =
  fun ppf { content; references; _ } ->
   let pp_content ppf content =
@@ -96,6 +109,7 @@ let tdef : Format.formatter -> tdef -> unit =
   Format.fprintf ppf "|%a|@ %a" pp_content content refs references
 
 
+(** Prints a dot-separated module path using [Uid.pp] for the module names. *)
 let rec path : Uid.t list Fmt.t =
  fun ppf -> function
   | [] -> ()
@@ -103,6 +117,19 @@ let rec path : Uid.t list Fmt.t =
   | m :: ms -> Format.fprintf ppf "%a.%a" Uid.pp m path ms
 
 
+(** Prints a [resolve_mod_name]. This function might have three different notations:
+    * "M (unresolved)": the module path M points to an unresolved module.
+    * "M (-> N"): the module path M points to a module path N where each module name has
+      been resolved.
+    * "M (N -> O)": the module path M points to a module path N where each module name has
+      been resolved, which in turn resolves to a module name O such that the last module
+      name of N is not the same as O.
+    Most modules will fall in the second case. The third case is interesting because most
+    modules paths won't have so many layers of indirection, in which the alias has parts
+    pointing to other aliases, and so the last module name might already be resolved to a
+    definition. See [module2.mligo] and [module3.mligo] (in
+    [test/contracts/get_scope_tests]) and [src/bin/expect_tests/get_scope.ml] for examples
+    of tests that fall into the third case. *)
 let resolve_mod_name : resolve_mod_name Fmt.t =
  fun ppf -> function
   | Unresolved_path { module_path } ->
@@ -122,11 +149,21 @@ let resolve_mod_name : resolve_mod_name Fmt.t =
         resolved_module
 
 
+(** Prints a [tdef] in the following format:
+
+    [content]
+    [label_case] *)
 let ldef : Format.formatter -> ldef -> unit =
  fun ppf { content; label_case = case; _ } ->
   Format.fprintf ppf "%a @ %a @ " Ast_core.PP.type_expression content label_case case
 
 
+(** Prints a [mdef] in the following format:
+
+    [mod_case]
+    [references]
+    Implements: [implements]
+    Extends: [extends] *)
 let rec mdef : Format.formatter -> mdef -> unit =
  fun ppf { mod_case = mod_case'; references; implements; extends; _ } ->
   let pp_implements ppf =
@@ -148,6 +185,7 @@ let rec mdef : Format.formatter -> mdef -> unit =
     extends
 
 
+(** Prints an [implementation]. *)
 and implementation : Format.formatter -> implementation -> unit =
  fun ppf -> function
   | Ad_hoc_signature d -> Format.fprintf ppf "Ad hoc: %a" definitions d
@@ -155,12 +193,18 @@ and implementation : Format.formatter -> implementation -> unit =
     Format.fprintf ppf "Standalone: %a" resolve_mod_name path
 
 
+(** Prints a [mod_case]. *)
 and mod_case : Format.formatter -> mod_case -> unit =
  fun ppf -> function
   | Alias { resolve_mod_name = path } -> resolve_mod_name ppf path
   | Def d -> Format.fprintf ppf "Members: %a" definitions d
 
 
+(** Prints a definition in the following format:
+    ([uid] -> [name])
+    Range: [range]
+    Decl Range: [decl_range]
+    Content: [content] *)
 and definition : Format.formatter -> def -> unit =
  fun ppf def ->
   let pp_content ppf = function
@@ -185,6 +229,8 @@ and definition : Format.formatter -> def -> unit =
   Format.fprintf ppf "%a" pp_def def
 
 
+(** Prints a list of definitions. The definitions will be sorted by their [range]s, and
+    partitioned into variables, types, labels, and modules. *)
 and definitions : Format.formatter -> def list -> unit =
  fun ppf defs ->
   let defs =
@@ -227,6 +273,8 @@ and definitions : Format.formatter -> def list -> unit =
     modules
 
 
+(** Convert a definition to JSON. The first element of the tuple is that definition's UID
+    converted to string. *)
 let rec def_to_yojson : def -> string * Yojson.Safe.t =
  fun def ->
   let type_case_to_yojson = function
@@ -323,6 +371,7 @@ let rec def_to_yojson : def -> string * Yojson.Safe.t =
   Tuple2.map_fst ~f:Uid.to_string @@ aux def
 
 
+(** Convert a list of definitions to JSON. *)
 and defs_json (defs : def list) : Yojson.Safe.t =
   let get_defs defs =
     let variables, labels_types_modules =
@@ -355,6 +404,7 @@ and defs_json (defs : def list) : Yojson.Safe.t =
   `Assoc (get_defs defs)
 
 
+(** Convert scopes to JSON. *)
 let scopes_json (scopes : inlined_scopes) : Yojson.Safe.t =
   `List
     (List.map
