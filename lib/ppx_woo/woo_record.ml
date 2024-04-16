@@ -1,3 +1,4 @@
+open Core
 module P = Ppxlib
 module A = P.Ast_builder.Default
 module W = Woo_types
@@ -31,7 +32,6 @@ module Make (Params : Woo_helpers.PARAMS) = struct
     let name = prefix ^ "make" in
     [ declaration ~name ~body ]
 
-
   let make_tpl prefix : W.record -> P.structure_item list =
    fun property_declarations ->
     let lts = SMap.to_kv_list property_declarations in
@@ -53,7 +53,6 @@ module Make (Params : Woo_helpers.PARAMS) = struct
     let body = Base.List.fold_right lts ~init ~f in
     let name = prefix ^ "make_tpl" in
     [ declaration ~name ~body ]
-
 
   let destruct_tpl prefix : W.record -> P.structure_item list =
    fun property_declarations ->

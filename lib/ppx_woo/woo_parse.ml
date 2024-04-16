@@ -1,3 +1,4 @@
+open Core
 module P = Ppxlib
 module A = P.Ast_builder.Default
 module W = Woo_types
@@ -20,7 +21,6 @@ let get_default_value_opt : P.attribute -> P.expression option =
   | Pstr_eval (expr, _) -> Some expr
   | _ -> None
 
-
 let labelled_record_field index : P.label_declaration -> W.labelled_record_field =
  fun ld ->
   let label = ld.pld_name.txt in
@@ -29,12 +29,10 @@ let labelled_record_field index : P.label_declaration -> W.labelled_record_field
   let default_value = Base.List.find_map ~f:get_default_value_opt attributes in
   label, W.record_field ?default_value index (W.T_core ty)
 
-
 let record : P.label_declaration list -> W.type_expression =
  fun lds ->
   let record_fields = List.mapi ~f:labelled_record_field lds in
   T_record (W.r_decls record_fields)
-
 
 let type_declaration ?non_recursive : P.type_declaration -> W.type_declaration =
  fun td ->
@@ -65,10 +63,8 @@ let type_declaration ?non_recursive : P.type_declaration -> W.type_declaration =
   in
   W.type_declaration ?non_recursive (label, body)
 
-
 let type_declarations ?non_recursive : P.type_declaration list -> W.type_declarations =
  fun tds -> List.map ~f:(type_declaration ?non_recursive) tds
-
 
 let non_recursive : P.rec_flag -> W.non_recursive =
  fun rf ->

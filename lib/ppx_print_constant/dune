@@ -1,0 +1,12 @@
+(library
+ (name ppx_print_constant)
+ (kind ppx_deriver)
+ (modules ppx_print_constant)
+ (preprocess
+  (pps ppxlib.metaquot))
+ (libraries
+  core
+  simple-utils
+  simple-utils-unix.http_uri
+  simple-utils-unix
+  ppxlib))

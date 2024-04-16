@@ -1,3 +1,4 @@
+open Core
 module P = Ppxlib
 module A = P.Ast_builder.Default
 module W = Woo_types
@@ -20,7 +21,6 @@ module Make (Params : Woo_helpers.PARAMS) = struct
     let name = label_to_variable label in
     [ abstract_type_declaration name body ]
 
-
   let constructor_types : W.variant -> P.structure_item list =
    fun v ->
     let W.{ polymorphic; constructor_declarations } = v in
@@ -28,7 +28,6 @@ module Make (Params : Woo_helpers.PARAMS) = struct
     let itemss = List.map ~f:(constructor_type polymorphic) ltss in
     let items = List.concat itemss in
     items
-
 
   let constructor ?wrap_constructor polymorphic
       : W.labelled_types -> P.structure_item list
@@ -58,7 +57,6 @@ module Make (Params : Woo_helpers.PARAMS) = struct
     in
     let name = label_to_variable label in
     [ declaration ~name ~body ]
-
 
   let constructors ?wrap_constructor : W.variant -> P.structure_item list =
    fun v ->

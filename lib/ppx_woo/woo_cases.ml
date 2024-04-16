@@ -1,3 +1,4 @@
+open Core
 module P = Ppxlib
 module A = P.Ast_builder.Default
 module W = Woo_types
@@ -36,7 +37,6 @@ module Make (Params : Woo_helpers.PARAMS) = struct
     in
     let all = List.map ~f:single lst in
     all
-
 
   let setters ?wrap_map:_ : W.variant -> P.structure_item list =
    fun variant ->

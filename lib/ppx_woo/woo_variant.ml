@@ -1,3 +1,4 @@
+open Core
 module P = Ppxlib
 module A = P.Ast_builder.Default
 module W = Woo_types
@@ -29,7 +30,6 @@ module Make (Params : Woo_helpers.PARAMS) = struct
     in
     let name = prefix ^ "destruct" in
     [ declaration ~name ~body ]
-
 
   let destruct_tpl prefix : W.variant -> P.structure_item list =
    fun variant ->

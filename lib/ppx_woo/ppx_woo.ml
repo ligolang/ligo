@@ -1,3 +1,4 @@
+open Core
 module P = Ppxlib
 module A = P.Ast_builder.Default
 module W = Woo_types
@@ -78,7 +79,6 @@ let make_PARAMS loc : (module Woo_helpers.PARAMS) =
     let location = loc
   end : Woo_helpers.PARAMS)
 
-
 let args =
   P.Deriving.Args.(
     empty
@@ -88,7 +88,6 @@ let args =
     +> arg "wrap_get" (pack2 (pexp_tuple (estring __ ^:: __ ^:: nil)))
     +> arg "wrap_map" (pack2 (pexp_tuple (estring __ ^:: __ ^:: nil)))
     +> arg "default_get" (pexp_variant __ none))
-
 
 let deriver =
   let str_type_decl =
