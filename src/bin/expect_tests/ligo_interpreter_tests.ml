@@ -162,7 +162,8 @@ let%expect_test _ =
 (* tests replacing Hashlock tests *)
 let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "test_hashlock.mligo" ];
-  [%expect{|
+  [%expect
+    {|
     File "./test_hashlock.mligo", line 4, characters 11-30:
       3 | let test_commit =
       4 |   let () = Test.reset_state_at (0 : timestamp) 10n ([] : tez list) in
@@ -6766,7 +6767,8 @@ let%expect_test _ =
 
 let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "test_register_delegate.mligo" ];
-  [%expect{|
+  [%expect
+    {|
     File "./test_register_delegate.mligo", line 7, characters 12-28:
       6 |
       7 |   let acc = Test.new_account () in

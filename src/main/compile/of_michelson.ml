@@ -58,7 +58,6 @@ let parse_constant ~raise code =
   @@ Memory_proto_alpha.node_to_canonical code
 
 
-
 let dummy : Stacking.meta =
   { location = Location.dummy
   ; env = []

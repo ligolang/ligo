@@ -8,9 +8,7 @@
  (libraries Preprocessor simple-utils octez-libs.micheline ligo_main))
 
 (rule
- (targets
-  platform-specific-compiler-flags.sexp
-  platform-specific-linker-flags.sexp)
+ (targets platform-specific-linker-flags.sexp)
  (action
   (run ../configurator/configurator.exe)))
 
@@ -30,8 +28,7 @@
     -keep-locs
     -open
     Core
-    (:include platform-specific-linker-flags.sexp)
-    (:include platform-specific-compiler-flags.sexp))))
+    (:include platform-specific-linker-flags.sexp))))
  (release
   (link_flags
    (:include platform-specific-linker-flags.sexp))
@@ -43,8 +40,7 @@
     -keep-locs
     -open
     Core
-    (:include platform-specific-linker-flags.sexp)
-    (:include platform-specific-compiler-flags.sexp))))
+    (:include platform-specific-linker-flags.sexp))))
  (static
   (link_flags
    (:include platform-specific-linker-flags.sexp))
@@ -56,5 +52,4 @@
     -keep-locs
     -open
     Core
-    (:include platform-specific-linker-flags.sexp)
-    (:include platform-specific-compiler-flags.sexp)))))
+    (:include platform-specific-linker-flags.sexp)))))

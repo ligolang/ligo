@@ -24,6 +24,3 @@ _esy
 node_modules
 changelog.txt
 /src/main/build/ligo_lib/loaded.ml
-
-jsoo/dist
-jsoo/lib
