@@ -14,26 +14,36 @@ import { getBinaryPath, ligoBinaryInfo } from '../../common/config';
 
 /* eslint-disable no-bitwise */
 
+/** The result of running the command for compiling a contract. */
 export type CompileContractResult = {
+  /** The entry-point chosen by the user. */
   entrypoint: string,
+
+  /** The format (text, hex, json) for the output chosen by the user. */
   format: string,
+
+  /** The actual result printed by the compiler. */
   result: string
 }
 
+/** The result of running the command for compiling a storage. */
 export type CompileStorageResult = {
+  /** The entry-point chosen by the user. */
   entrypoint: string,
+
+  /** The format (text, hex, json) for the output chosen by the user. */
   format: string,
+
+  /** The value of the storage inputted by the user. */
   storage: string,
+
+  /** The actual result printed by the compiler. */
   result: string
 }
 
-export type SilentCompilationOptions = {
-  entrypoint: string,
-  printToConsole: boolean,
-  onPath: Maybe<string>,
-  flags: string[]
-}
-
+/**
+ * A helper for appending a project root switch to the compiler command input.
+ */
 const withProjectRootFlag = (args: string[]) => (projectRootDirectory: Maybe<string>) => {
   if (projectRootDirectory) {
     return args.concat(['--project-root', projectRootDirectory])
@@ -41,12 +51,22 @@ const withProjectRootFlag = (args: string[]) => (projectRootDirectory: Maybe<str
   return args
 }
 
+/**
+ * Initializes the debugger language server state. This is needed since the
+ * debugger provides validation mechanisms for user input in the UI.
+ *
+ * @returns The list of entry-points.
+ */
 async function prepareState(client: LigoProtocolClient): Promise<[string, string][]> {
   const binaryPath = getBinaryPath(ligoBinaryInfo)
   await client.sendMsg('initializeLanguageServerState', { binaryPath });
   return (await client.sendMsg('setProgramPath', { program: getLastContractPath().path })).body.moduleNames.reverse();
 }
 
+/**
+ * Opens a quick pick asking the user to input the module name to be used. Uses
+ * the debugger for validation.
+ */
 async function getEntrypoint(
   context: LigoContext,
   client: LigoProtocolClient,
@@ -61,11 +81,24 @@ async function getEntrypoint(
   );
 }
 
+/**
+ * The type of a function used to validate the input type.
+ *
+ * @param inputType Whether the input is for a parameter or storage value.
+ * @param valueLang Whether the input value is written in LIGO or Michelson
+ * syntax.
+ * @param value The inputted value.
+ * @returns A promise resolving to an error message, if validation failed.
+ */
 type ValidateInputType =
   (inputType: InputBoxType, valueLang: InputValueLang)
     => (value: string)
       => Promise<Maybe<string>>;
 
+/**
+ * Fetches the contract metadata for the given entry-points and prepares a
+ * function that queries the debugger for validation.
+ */
 async function prepareParameterStorageValidatorAndContractMetadata(
   client: LigoProtocolClient,
   entrypoint: string
@@ -90,6 +123,15 @@ async function prepareParameterStorageValidatorAndContractMetadata(
   return [validateInput, contractMetadata];
 }
 
+/**
+ * Opens an input box asking the user to provide an input for a parameter.
+ *
+ * @param validateInput Validation function obtained from
+ * {@link prepareParameterStorageValidatorAndContractMetadata}.
+ * @param entrypoint The chosen entry-point to which we are getting the
+ * parameter.
+ * @returns A promise resolving to the inputed parameter value.
+ */
 async function getParameter(
   context: LigoContext,
   validateInput: ValidateInputType,
@@ -111,6 +153,14 @@ async function getParameter(
   ))[0];
 }
 
+/**
+ * Opens an input box asking the user to provide an input for a storage.
+ *
+ * @param validateInput Validation function obtained from
+ * {@link prepareParameterStorageValidatorAndContractMetadata}.
+ * @param entrypoint The chosen entry-point to which we are getting the storage.
+ * @returns A promise resolving to the inputed storage value.
+ */
 async function getStorage(
   context: LigoContext,
   validateInput: ValidateInputType,
@@ -132,6 +182,16 @@ async function getStorage(
   ))[0];
 }
 
+/**
+ * Calls the LIGO compiler with `compile contract` on the provided parameters.
+ *
+ * @param maybeEntrypoint The entry-point to which we are getting the storage.
+ * Asks the user for input if not provided.
+ * @param format The format (text, hex, json) for the output chosen by the user.
+ * @param showOutput Whether to show the command's result in the LIGO Compiler
+ * output channel or not.
+ * @returns The result of compiling the contract from LIGO.
+ */
 /* eslint-disable no-param-reassign */
 export async function executeCompileContract(
   context: LigoContext,
@@ -176,6 +236,18 @@ export async function executeCompileContract(
   };
 }
 
+/**
+ * Calls the LIGO compiler with `compile storage` on the provided parameters.
+ *
+ * @param maybeEntrypoint The entry-point to which we are getting the storage.
+ * Asks the user for input if not provided.
+ * @param format The format (text, hex, json) for the output chosen by the user.
+ * @param maybeStorage The storage to be compiled. Asks the user for input if
+ * not provided.
+ * @param showOutput Whether to show the command's result in the LIGO Compiler
+ * output channel or not.
+ * @returns The result of compiling the storage from LIGO.
+ */
 /* eslint-disable no-param-reassign */
 export async function executeCompileStorage(
   context: LigoContext,
@@ -231,7 +303,12 @@ export async function executeCompileStorage(
   };
 }
 
-export async function executeCompileExpression() {
+/**
+ * Calls the LIGO compiler with `compile expression` on user-provided input.
+ *
+ * @returns The result of compiling the expression from LIGO.
+ */
+export async function executeCompileExpression(): Promise<string> {
   const declarations = await executeCommand(
     ligoBinaryInfo,
     (path: string) => withProjectRootFlag([
@@ -261,7 +338,12 @@ export async function executeCompileExpression() {
   )
 }
 
-export async function executeDryRun(context: LigoContext, client: LigoProtocolClient) {
+/**
+ * Calls the LIGO compiler with `run dry-run` on user-provided input.
+ *
+ * @returns The result of dry-running an entry-point from LIGO.
+ */
+export async function executeDryRun(context: LigoContext, client: LigoProtocolClient): Promise<string> {
   const entrypoints = await prepareState(client);
   const entrypoint = await getEntrypoint(context, client, entrypoints);
 
@@ -280,6 +362,11 @@ export async function executeDryRun(context: LigoContext, client: LigoProtocolCl
   )
 }
 
+/**
+ * Calls the LIGO compiler with `run evaluate-call` on user-provided input.
+ *
+ * @returns The result of evaluating a a function call from LIGO.
+ */
 export async function executeEvaluateFunction(context: LigoContext) {
   const maybeEntrypoint = await createRememberingInputBox(context, {
     title: 'Function',

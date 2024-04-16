@@ -13,10 +13,16 @@ import { LigoContext } from '../../common/LigoContext';
 import { LigoProtocolClient } from '../../common/LigoProtocolClient';
 import { Maybe } from '../../common/base';
 
+/** Used by {@link fetchRandomPrivateKey}. */
 const AUTHORIZATION_HEADER = 'Bearer ligo-ide';
 
+/** List of active supported networks for deploying Michelson contracts. */
 const currentlyActiveNetworks = ['ghostnet']
 
+/**
+ * Tezos toolkit to be used for deploying contracts. Currently deploys them to
+ * ecadinfra.
+ */
 const Tezos = (network: string): TezosToolkit | undefined => {
   if (currentlyActiveNetworks.includes(network)) {
     return new TezosToolkit(`https://${network}.ecadinfra.com`)
@@ -25,6 +31,12 @@ const Tezos = (network: string): TezosToolkit | undefined => {
   }
 }
 
+/**
+ * Opens a quick pick asking the user to choose a network to deploy contracts,
+ * using the networks from {@link currentlyActiveNetworks}.
+ *
+ * @returns The user-inputted network for deploying a contract.
+ */
 async function askForNetwork(): Promise<string> {
   return createQuickPickBox(
     currentlyActiveNetworks,
@@ -33,11 +45,26 @@ async function askForNetwork(): Promise<string> {
   );
 }
 
+/** Utility data type holding a compiled contract and compiled storage. */
 type ContractAndStorage = {
+  /** Result of compiling the contract. */
   code: CompileContractResult,
+
+  /** Result of compiling the storage. */
   storage: CompileStorageResult
 }
 
+/**
+ * Opens input boxes asking the user to provide contract and storage data for
+ * compilation.
+ *
+ * @param format The format (text, hex, json) for the output chosen by the user.
+ * @param prevEntrypoint The entry-point to which we are getting the storage.
+ * Asks the user for input if not provided.
+ * @param prevStorage The storage to be compiled. Asks the user for input if not
+ * provided.
+ * @returns The result of compiling the contract and storage.
+ */
 async function askForContractAndStorage(
   context: LigoContext,
   client: LigoProtocolClient,
@@ -65,6 +92,14 @@ async function askForContractAndStorage(
   return { code, storage }
 }
 
+/**
+ * Fetches a random private key from ecadinfra used for deploying a smart
+ * contract to the blockchain.
+ *
+ * @param network The network to which the contract will be deployed.
+ * @returns A promise resolving to the key, or an error message, depending on
+ * whether we got "OK" or "Error".
+ */
 export async function fetchRandomPrivateKey(network: string): Promise<["OK" | "Error", string]> {
   const URL = `https://keygen.ecadinfra.com/${network}`;
   const response = await fetch(URL, {
@@ -77,6 +112,13 @@ export async function fetchRandomPrivateKey(network: string): Promise<["OK" | "E
   return [status === 200 ? "OK" : "Error", text]
 }
 
+/**
+ * Displays a warning window to the user explaining that we do not support
+ * deploying to the given network.
+ *
+ * @param network The unsupported network.
+ * @param msg An optional message providing more details.
+ */
 const showUnsupportedMessage = (network: string, msg?: string) => {
   const details = msg ? ` Details: ${msg}` : ''
   return vscode.window.showWarningMessage(
@@ -84,6 +126,11 @@ const showUnsupportedMessage = (network: string, msg?: string) => {
   )
 }
 
+/**
+ * Asks the user for input and deploys the smart contract to the network that
+ * will be chosen by the user. The output will be printed to the LIGO Compiler
+ * output channel.
+ */
 export async function executeDeploy(context: LigoContext, client: LigoProtocolClient): Promise<void> {
   const { code, storage } = await askForContractAndStorage(context, client, 'json')
   const network = await askForNetwork()
@@ -137,6 +184,12 @@ export async function executeDeploy(context: LigoContext, client: LigoProtocolCl
   )
 }
 
+/**
+ * Asks the user for input and generates a script that can be used to call
+ * `octez-client` to deploy the smart contract to the network that will be
+ * chosen by the user. The output will be printed to the LIGO Compiler output
+ * channel.
+ */
 export async function executeGenerateDeployScript(context: LigoContext, client: LigoProtocolClient): Promise<void> {
   const { code: codeJson, storage: storageJson } = await askForContractAndStorage(context, client, 'json')
   const { code, storage } = await askForContractAndStorage(

@@ -11,36 +11,95 @@ import { QuickPickItem } from "vscode";
 import * as vscode from 'vscode'
 import { InputValidationResult, isDefined, Maybe, Ref } from "./base";
 
+/**
+ * While implementing the UI, besides going forward through a succession of
+ * choices, we'd like the user to also be able to go back to a previous window,
+ * or completely cancel the series of input windows. This class is used to allow
+ * the implementation of such flow of input actions.
+ */
 class InputFlowAction {
+  /** Action to go back to the previous input window. */
   static back = new InputFlowAction();
+
+  /** Action to cancel the inputting actions. */
   static cancel = new InputFlowAction();
 }
 
+/**
+ * A function representing a single step in a multi-step input chain.
+ *
+ * @param input An object allowing to display and record an input.
+ * @param state A remembered state for the multi-input input chain.
+ */
 type InputStep<S> = (input: MultiStepInput<S>, state: Ref<S>) => Thenable<InputStep<S> | void>;
 
+/**
+ * Helper interface storing parameters to be displayed by a
+ * {@link vscode.QuickInput | QuickPick}.
+ */
 interface QuickPickParameters<T extends QuickPickItem> {
+  /**
+   * The quantity of steps, in case we are dealing with UI that requires
+   * multiple inputs by the user.
+   */
   totalSteps: number;
+
+  /** The items that the user will be able to choose. */
   items: T[];
+
+  /** The default item that will be active by default. */
   activeItem?: T;
+
+  /** Additional buttons that the user will be able to click. */
   buttons?: vscode.QuickInputButton[];
+
+  /**
+   * A placeholder that will be shown in the message for the input box for when
+   * no input has been provided.
+   */
   placeholder: string;
 }
 
+/**
+ * Helper interface storing parameters to be displayed by a
+ * {@link vscode.InputBox | InputBox}.
+ */
 interface InputBoxParameters {
+  /**
+   * A placeholder that will be shown in the message for the input box for when
+   * no input has been provided.
+   */
   placeholder: string;
+
+  /**
+   * The quantity of steps, in case we are dealing with UI that requires
+   * multiple inputs by the user.
+   */
   totalSteps: number;
+
+  /** The current input value. */
   value: string;
+
+  /** A prompt text providing some question or explanation to the user. */
   prompt: string;
+
+  /** A validation function used to check the input. */
   validate: (value: string) => Promise<InputValidationResult>;
+
+  /** Additional buttons that the user will be able to click. */
   buttons?: vscode.QuickInputButton[];
+
+  /** Whether the input box should stay open even when losing focus. */
   ignoreFocusOut: boolean;
 }
 
+/** A UI abstraction to deal with a succession of inputs. */
 export class MultiStepInput<S> {
   private constructor(state: S) {
     this.state = { ref: state };
   }
 
+  /** Starts the multi-step input chain. */
   static async run<S>(start: InputStep<S>, state: S) {
     return new MultiStepInput<S>(state).stepThrough(start);
   }
@@ -50,10 +109,12 @@ export class MultiStepInput<S> {
   private steps: InputStep<S>[] = [];
   private shouldRecordStep: boolean = true;
 
+  /** Disables recording this step, preventing the user from going back. */
   public doNotRecordStep() {
     this.shouldRecordStep = false;
   }
 
+  /** Gets the current value of this input step. */
   public getCurrentValue(): Maybe<string> {
     // Since 'InputBox' is interface we can't check 'this.current' type
     // with 'instanceof'.
@@ -100,6 +161,7 @@ export class MultiStepInput<S> {
     return this.state.ref;
   }
 
+  /** Shows a {@link vscode.QuickPick | QuickPick} for this input step. */
   async showQuickPick<T extends QuickPickItem, P extends QuickPickParameters<T>>({ totalSteps, items, activeItem, buttons, placeholder }: P) {
     const disposables: vscode.Disposable[] = [];
     try {
@@ -145,6 +207,7 @@ export class MultiStepInput<S> {
     }
   }
 
+  /** Shows a {@link vscode.InputBox | InputBox} for this input step. */
   async showInputBox<P extends InputBoxParameters>({ placeholder, totalSteps, value, prompt, validate, buttons, ignoreFocusOut }: P) {
     const disposables: vscode.Disposable[] = [];
     try {
@@ -230,61 +293,70 @@ export class MultiStepInput<S> {
   }
 }
 
-
-// This class provides functionality close to EventEmitter but specialized to
-// events validation.
-//
-// Validation is a user-defined asynchronous and potentially long action,
-// and this class helps to work with such validation in a safe manner,
-// avoiding bugs due to race conditions.
-//
-// This is implemented via sequentially processing the values, keeping a queue
-// of values that are pending for validation, however this queue has capacity 1
-// and older values are dropped.
+/**
+ * This class provides functionality close to
+ * {@link vscode.EventEmitter | EventEmitter} but specialized to events
+ * validation.
+ *
+ * Validation is a user-defined asynchronous and potentially long action, and
+ * this class helps to work with such validation in a safe manner, avoiding bugs
+ * due to race conditions.
+ *
+ * This is implemented via sequentially processing the values, keeping a queue
+ * of values that are pending for validation, however this queue has capacity 1
+ * and older values are dropped.
+ */
 abstract class ValidationTrigger<V> implements vscode.Disposable {
-  // An inner events emitter that helps to keep `fire` of non-Promise type.
+  /** An inner events emitter that helps to keep `fire` of non-Promise type. */
   private emitter: vscode.EventEmitter<V> = new vscode.EventEmitter();
 
-  // What are we doing at the moment / what we just did.
+  /** What are we doing at the moment / what we just did. */
   private status:
     | { type: "neverCalled" }
     | { type: "busy" }
     | { type: "validated", value: V, successfull: boolean }
     = { type: "neverCalled" }
 
-  // The last value that has been submitted for validation, given that
-  // we are already busy validating something.
+  /**
+   * The last value that has been submitted for validation, given that we are
+   * already busy validating something.
+   */
   private pendingValue: Maybe<V>
 
-  // Callbacks added by `awaitResult` that are yet waiting.
+  /** Callbacks added by `awaitResult` that are yet waiting. */
   private resultWaiters: ((passingValue: Maybe<V>) => void)[] = new Array();
 
   public constructor() {
     this.emitter.event(v => this.executeValidation(v));
   }
 
-  // Submit a value for validation.
+  /** Submit a value for validation. */
   public fire(value: V): void {
     this.emitter.fire(value)
   }
 
-  // Validation function.
+  /** Validation function. */
   protected abstract validate(value: V): Promise<InputValidationResult>
 
-  // Values that are obviously invalid and we don't want to show a "bad value"
-  // error for them.
+  /**
+   * Values that are obviously invalid and we don't want to show a "bad value"
+   * error for them.
+   */
   protected isObviouslyInvalid(value: V): boolean { return false; }
 
-  // Invoked when some validation function is completed.
-  //
-  // This will be run in the same order in which values were passed for
-  // validation.
-  //
-  // This will be run as many times as values were submitted for valitation via
-  // 'fire' method, however subsequent submission of the same value will be ignored.
+  /**
+   * Invoked when some validation function is completed.
+   *
+   * This will be run in the same order in which values were passed for
+   * validation.
+   *
+   * This will be run as many times as values were submitted for valitation via
+   * 'fire' method, however subsequent submission of the same value will be
+   * ignored.
+   */
   protected abstract onValidationResult(validationResult: InputValidationResult): void
 
-  // Safely run validation for a new value.
+  /** Safely run validation for a new value. */
   private async executeValidation(value: V): Promise<void> {
     try {
       // Check if we are busy validating something.
@@ -327,13 +399,14 @@ abstract class ValidationTrigger<V> implements vscode.Disposable {
     } catch (err) {
       vscode.window.showWarningMessage("Internal error in validation: " + err)
     }
-
   }
 
-  // Keep processing the values that are pending for validation.
-  //
-  // This function may execute for an arbitrary amount of time, so it must
-  // appear only as the last action in the sequence or in a separate thread.
+  /**
+   * Keep processing the values that are pending for validation.
+   *
+   * This function may execute for an arbitrary amount of time, so it must
+   * appear only as the last action in the sequence or in a separate thread.
+   */
   private async keepValidatingPending(lastValidatedValue: V, lastValidationSuccessful: boolean): Promise<void> {
     if (isDefined(this.pendingValue)) {
       // Continue with validating a new value.
@@ -348,14 +421,15 @@ abstract class ValidationTrigger<V> implements vscode.Disposable {
       this.resultWaiters.forEach(waiter => waiter(passingValue));
       this.resultWaiters = new Array();
     }
-
   }
 
-  // Awaits for a moment when we have validated all the values and no new values
-  // yet come, and returns the last value if it passed validation, and
-  // `undefined` otherwise.
-  //
-  // This rejects if no value has ever been validated.
+  /**
+   * Awaits for a moment when we have validated all the values and no new values
+   * yet come, and returns the last value if it passed validation, and
+   * `undefined` otherwise.
+   *
+   * This rejects if no value has ever been validated.
+   */
   public stablePassingValue(): Thenable<Maybe<V>> {
     const this0 = this;
     return {

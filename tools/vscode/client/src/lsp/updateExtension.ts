@@ -28,6 +28,17 @@ type ExtensionQuery = {
   ]
 }
 
+/**
+ * Posts a REST request that fails after the provided timeout value, showing an
+ * error window to the user in case it failed.
+ *
+ * @param ep The URL in which we'll post.
+ * @param body The contents of the request.
+ * @param timeout The maximum time, in milliseconds, to which we'll await for a
+ * response.
+ * @returns A promise resolving to the request's response, or `undefined` if it
+ * failed.
+ */
 async function postWithTimeout<T>(
   ep: string,
   body: any,
@@ -51,6 +62,12 @@ async function postWithTimeout<T>(
     })
 }
 
+/**
+ * Queries the VSCode API to check for the latest `ligo-vscode` version.
+ *
+ * @returns A promise resolving to the latest version, or `undefined` if it
+ * couldn't be fetched.
+ */
 async function getCurrentExtensionVersion(): Promise<string | undefined> {
   const query = {
     filters: [
@@ -73,6 +90,11 @@ async function getCurrentExtensionVersion(): Promise<string | undefined> {
     ?.data.results[0]?.extensions[0]?.versions[0]?.version
 }
 
+/**
+ * Checks for the installed `ligo-vscode` version and queries the VSCode
+ * Marketplace API for the latest version, asking the user to whether to update
+ * if there is a mismatch. Automatically installs if they press "Update".
+ */
 export default async function updateExtension(cxt: ExtensionContext): Promise<void> {
   const extensionPath = path.join(cxt.extensionPath, 'package.json')
   const packageFile = JSON.parse(fs.readFileSync(extensionPath, 'utf8'))
