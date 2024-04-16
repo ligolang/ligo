@@ -68,8 +68,6 @@
   parsing_shared
   parsing_jsligo
   cst_jsligo
-  simple-utils-unix
-  simple-utils-unix.http_uri
   ;; Third party
   hex)
  (modules ParserMain)

@@ -1,0 +1,8 @@
+lib/ligo_lexer_lib/*.ml
+lib/ligo_lexer_lib/*.mli
+
+lib/ligo_parser_lib/*.ml
+lib/ligo_parser_lib/*.mli
+
+lib/ligo_preprocessor/*.ml
+lib/ligo_preprocessor/*.mli

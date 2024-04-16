@@ -2,4 +2,4 @@
  (name LigoSyntaxHighlighting)
  ; (link_flags (-ccopt -static))
  (modules regexp CameLIGO JsLIGO LigoSyntaxHighlighting)
- (libraries SyntaxHighlighting cmdliner ligo.unix))
+ (libraries cmdliner ligo.unix ligo.syntax_highlighting))

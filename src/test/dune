@@ -12,8 +12,6 @@
   decompiler_tests)
  (libraries
   simple-utils
-  simple-utils-unix
-  simple-utils-unix.http_uri
   ligo.tezos-memory-proto-alpha
   ligo.main_interpreter
   ligo.api

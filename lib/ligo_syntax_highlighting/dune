@@ -1,0 +1,5 @@
+(library
+ (name SyntaxHighlighting)
+ (public_name ligo.syntax_highlighting)
+ (modules regexp Core Helpers Textmate VIM Emacs)
+ (libraries yojson))

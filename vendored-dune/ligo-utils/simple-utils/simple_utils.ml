@@ -20,8 +20,8 @@ module Runned_result = Runned_result
 module Snippet = Snippet
 module Error = Error
 module Warning = Warning
-module File = Simple_utils_file
-module Http_uri = Simple_utils_http_uri
+module File = File
+module Http_uri = Http_uri
 
 (* Originally by Christian Rinderknecht *)
 

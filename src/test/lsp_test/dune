@@ -18,7 +18,6 @@
   syntax_types
   fileutils)
  (inline_tests
-  (libraries simple-utils-unix simple-utils-unix.http_uri ligo.api)
   (deps
    (source_tree ../contracts))))
 
