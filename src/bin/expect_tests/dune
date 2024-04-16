@@ -9,7 +9,6 @@
   pkg_two_versions)
  (libraries unpublish_mock_server simple-utils cli ligo.unix ligo.api)
  (inline_tests
-  (libraries simple-utils-unix simple-utils-unix.http_uri)
   (flags
    ; (-only-test %{env:EXPECT_ONLY_TEST=build_module_test.ml:6}) ;
    (-stop-on-error))

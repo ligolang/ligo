@@ -1,4 +1,0 @@
-(library
- (name simple_utils_http_uri_unix)
- (public_name simple-utils-unix.http_uri)
- (implements simple_utils_http_uri))

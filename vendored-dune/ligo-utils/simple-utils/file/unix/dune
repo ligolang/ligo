@@ -1,4 +1,0 @@
-(library
- (name simple_utils_file_unix)
- (public_name simple-utils-unix)
- (implements simple_utils_file))

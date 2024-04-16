@@ -1,4 +1,0 @@
-(library
- (name simple_utils_file)
- (public_name simple-utils.file)
- (virtual_modules simple_utils_file))

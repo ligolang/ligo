@@ -4,9 +4,4 @@
  (modules ppx_read_constant)
  (preprocess
   (pps ppxlib.metaquot))
- (libraries
-  core
-  simple-utils
-  simple-utils-unix
-  simple-utils-unix.http_uri
-  ppxlib))
+ (libraries core simple-utils ppxlib))

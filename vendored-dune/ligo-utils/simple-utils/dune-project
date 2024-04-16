@@ -2,9 +2,3 @@
 
 (package
  (name simple-utils))
-
-(package
- (name simple-utils-unix))
-
-(package
- (name simple-utils-js))

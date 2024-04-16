@@ -6,5 +6,4 @@
  (libraries simple-utils environment octez-libs.hacl ligo.proto-alpha-utils)
  (preprocess
   (pps ppx_expect ppx_let))
- (inline_tests
-  (libraries simple-utils-unix simple-utils-unix.http_uri)))
+ (inline_tests))
