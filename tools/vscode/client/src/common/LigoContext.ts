@@ -13,12 +13,10 @@ import { InputBoxType, InputValueLang, isDefined, Maybe } from './base';
 export class LigoContext {
   context: vscode.ExtensionContext
   workspaceState: LigoLocalStorage
-  globalState: LigoGlobalStorage
 
   constructor(context: vscode.ExtensionContext) {
     this.context = context
     this.workspaceState = new LigoLocalStorage(context.workspaceState)
-    this.globalState = new LigoGlobalStorage(context.globalState)
   }
 
   asAbsolutePath(relativePath: string): string {
@@ -145,20 +143,5 @@ export class LigoLocalStorage extends AbstractLigoStorage {
    */
   lspRememberedValue(...keys: string[]): ValueAccess<string> {
     return this.access("lsp", ...keys);
-  }
-}
-
-/** Represents a global storage for `ligo-vscode`. */
-export class LigoGlobalStorage extends AbstractLigoStorage {
-  constructor(state: vscode.Memento) {
-    super(state);
-  }
-
-  /**
-   * Returns the {@link ValueAccess} for accessing the state of the
-   * `"askOnStart"` command.
-   */
-  public askOnStartCommandChanged(): ValueAccess<boolean> {
-    return this.access("command", "askOnStart");
   }
 }

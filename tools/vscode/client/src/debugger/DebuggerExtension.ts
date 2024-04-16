@@ -45,19 +45,6 @@ export class DebuggerExtension implements vscode.Disposable {
     const trackerFactory = new GranularityFillingTrackerFactory(() => this.stepStatus.status)
     context.context.subscriptions.push(vscode.debug.registerDebugAdapterTrackerFactory('ligo', trackerFactory))
 
-    const askOnStartCommandChanged = context.globalState.askOnStartCommandChanged();
-    if (!isDefined(askOnStartCommandChanged.value) || !askOnStartCommandChanged.value) {
-      vscode.window.showWarningMessage(
-        `Note that syntax for commands in launch.json have changed.
-        Now commands are wrapped into (*@ and @*) instead of { and }.
-        For more information see README.md`, "OK"
-      ).then(result => {
-        if (isDefined(result)) {
-          askOnStartCommandChanged.value = true;
-        }
-      });
-    }
-
     const provider = new LigoDebugConfigurationProvider(this.client, context);
     context.context.subscriptions.push(vscode.debug.registerDebugConfigurationProvider('ligo', provider))
 
