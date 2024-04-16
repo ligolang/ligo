@@ -10,9 +10,6 @@ import SyntaxTitle from '@theme/SyntaxTitle';
 Tezos-specific functions
 
 
-[module next](tezos.next.md)
-
-
 <SyntaxTitle syntax="cameligo">
 val get&#95;sender : unit -&gt; address
 </SyntaxTitle>
@@ -21,19 +18,19 @@ let get&#95;sender: (&#95;: unit) =&gt; address
 </SyntaxTitle>
 <Syntax syntax="cameligo">
 
-The call `Tezos.get_sender ()` is the address of the contract (that
+The call `get_sender ()` is the address of the contract (that
     is, a smart contract or an implicit account) that initiated the
     current internal transaction. Note that, if transactions have been
-    chained, that address could be different from `Tezos.get_source ()`.
+    chained, that address could be different from `get_source ()`.
 
 </Syntax>
 
 <Syntax syntax="jsligo">
 
-The call `Tezos.get_sender()` is the address of the contract (that
+The call `get_sender()` is the address of the contract (that
     is, a smart contract or an implicit account) that initiated the
     current internal transaction. Note that, if transactions have been
-    chained, that address could be different from `Tezos.get_source()`.
+    chained, that address could be different from `get_source()`.
 
 </Syntax>
 
@@ -46,17 +43,17 @@ let get&#95;source: (&#95;: unit) =&gt; address
 </SyntaxTitle>
 <Syntax syntax="cameligo">
 
-The call `Tezos.get_source ()` is the address of the implicit account
+The call `get_source ()` is the address of the implicit account
     that initiated the current transaction. If transactions have been
-    chained, that address is different from `Tezos.get_sender ()`.
+    chained, that address is different from `get_sender ()`.
 
 </Syntax>
 
 <Syntax syntax="jsligo">
 
-The call `Tezos.get_source()` is the address of the implicit account
+The call `get_source()` is the address of the implicit account
     that initiated the current transaction. If transactions have been
-    chained, that address is different from `Tezos.get_sender()`.
+    chained, that address is different from `get_sender()`.
 
 </Syntax>
 
@@ -69,15 +66,15 @@ let self: &lt;a&gt;(&#95;: string) =&gt; contract&lt;a&gt;
 </SyntaxTitle>
 <Syntax syntax="cameligo">
 
-The call `Tezos.self entrypoint` is the address of the current smart
+The call `self entrypoint` is the address of the current smart
     contract, that is, the smart contract containing the call. For the
     address of the smart contract actually *executing* the call,
     because it is embedded in a lambda sent to another smart contract,
-    use `Tezos.get_self_address` instead. The string `entrypoint` is the
+    use `get_self_address` instead. The string `entrypoint` is the
     name of a valid entrypoint such that `entrypoint` is not
-    `"%default"`, or the empty string denoting the `"%default"`
+    `"default"`, or the empty string denoting the `"default"`
     entrypoint (which is the root of the smart contract parameter if
-    no `"%default"` entrypoint is explicitly defined). If the contract
+    no `"default"` entrypoint is explicitly defined). If the contract
     does not have the specified entrypoint, the call results in an
     type checking error.
 
@@ -85,15 +82,15 @@ The call `Tezos.self entrypoint` is the address of the current smart
 
 <Syntax syntax="jsligo">
 
-The call `Tezos.self(entrypoint)` is the address of the current smart
+The call `self(entrypoint)` is the address of the current smart
     contract, that is, the smart contract containing the call. For the
     address of the smart contract actually *executing* the call,
     because it is embedded in a lambda sent to another smart contract,
-    use `Tezos.get_self_address` instead. The string `entrypoint` is the
+    use `get_self_address` instead. The string `entrypoint` is the
     name of a valid entrypoint such that `entrypoint` is not
-    `"%default"`, or the empty string denoting the `"%default"`
+    `"default"`, or the empty string denoting the `"default"`
     entrypoint (which is the root of the smart contract parameter if
-    no `"%default"` entrypoint is explicitly defined). If the contract
+    no `"default"` entrypoint is explicitly defined). If the contract
     does not have the specified entrypoint, the call results in an
     type checking error.
 
@@ -108,27 +105,27 @@ let get&#95;self&#95;address: (&#95;: unit) =&gt; address
 </SyntaxTitle>
 <Syntax syntax="cameligo">
 
-The call `Tezos.get_self_address ()` is the address of the smart
+The call `get_self_address ()` is the address of the smart
     contract actually executing the call, as a value of type
     `address`. That contract can be different from the one containing
     the call if the call is in a lambda transmitted to another smart
     contract. Therefore, it is assumed that, in general, the type of
     the executing contract is statically unknown, so the return type
-    of `Tezos.get_self_address` is not `'a contract`, but `address`. (See
-    `Tezos.self`.)
+    of `get_self_address` is not `'a contract`, but `address`. (See
+    `self`.)
 
 </Syntax>
 
 <Syntax syntax="jsligo">
 
-The call `Tezos.get_self_address()` is the address of the smart
+The call `get_self_address()` is the address of the smart
     contract actually executing the call, as a value of type
     `address`. That contract can be different from the one containing
     the call if the call is in a lambda transmitted to another smart
     contract. Therefore, it is assumed that, in general, the type of
     the executing contract is statically unknown, so the return type
-    of `Tezos.get_self_address` is not `'a contract`, but `address`. (See
-    `Tezos.self`.)
+    of `get_self_address` is not `'a contract`, but `address`. (See
+    `self`.)
 
 </Syntax>
 
@@ -141,7 +138,7 @@ let address: &lt;a&gt;(&#95;: contract&lt;a&gt;) =&gt; address
 </SyntaxTitle>
 <Syntax syntax="cameligo">
 
-The call `Tezos.address contract` casts the address of the smart
+The call `address contract` casts the address of the smart
     contract `contract` into the more general value of type
     `address`.
 
@@ -149,7 +146,7 @@ The call `Tezos.address contract` casts the address of the smart
 
 <Syntax syntax="jsligo">
 
-The call `Tezos.address(contract)` casts the address of the smart
+The call `address(contract)` casts the address of the smart
     contract `contract` into the more general value of type
     `address`.
 
@@ -164,7 +161,7 @@ let implicit&#95;account: (&#95;: key&#95;hash) =&gt; contract&lt;unit&gt;
 </SyntaxTitle>
 <Syntax syntax="cameligo">
 
-The call `Tezos.implicit_account kh` casts the public key hash `kh`
+The call `implicit_account kh` casts the public key hash `kh`
     into the address of its implicit account. Note that addresses of
     implicit accounts always have the type `unit contract`.
 
@@ -172,7 +169,7 @@ The call `Tezos.implicit_account kh` casts the public key hash `kh`
 
 <Syntax syntax="jsligo">
 
-The call `Tezos.implicit_account(kh)` casts the public key hash `kh`
+The call `implicit_account(kh)` casts the public key hash `kh`
     into the address of its implicit account. Note that addresses of
     implicit accounts always have the type `contract<unit>`.
 
@@ -187,7 +184,7 @@ let get&#95;contract&#95;opt: &lt;param&gt;(&#95;: address) =&gt; option&lt;cont
 </SyntaxTitle>
 <Syntax syntax="cameligo">
 
-The call `Tezos.get_contract_opt addr` casts the address `addr` into
+The call `get_contract_opt addr` casts the address `addr` into
     that of a contract address, if such contract exists. The value of
     the call is `None` if no such contract exists, otherwise `Some
     contract`, where `contract` is the contract's address. Note: The
@@ -197,7 +194,7 @@ The call `Tezos.get_contract_opt addr` casts the address `addr` into
 
 <Syntax syntax="jsligo">
 
-The call `Tezos.get_contract_opt(addr)` casts the address `addr` into
+The call `get_contract_opt(addr)` casts the address `addr` into
     that of a contract address, if such contract exists. The value of
     the call is `None()` if no such contract exists, otherwise `Some
     contract`, where `contract` is the contract's address. Note: The
@@ -214,7 +211,7 @@ let get&#95;contract&#95;with&#95;error: &lt;param&gt;(&#95;: address) =&gt; (&#
 </SyntaxTitle>
 <Syntax syntax="cameligo">
 
-The call `Tezos.get_contract_with_error addr error` casts the address
+The call `get_contract_with_error addr error` casts the address
     `addr` into that of a contract address, if such contract
     exists. If not, the execution fails with the error message
     `error`.
@@ -223,7 +220,7 @@ The call `Tezos.get_contract_with_error addr error` casts the address
 
 <Syntax syntax="jsligo">
 
-The call `Tezos.get_contract_with_error(addr, error)` casts the address
+The call `get_contract_with_error(addr, error)` casts the address
     `addr` into that of a contract address, if such contract
     exists. If not, the execution fails with the error message
     `error`.
@@ -239,7 +236,7 @@ let get&#95;contract: &lt;param&gt;(&#95;: address) =&gt; contract&lt;param&gt;
 </SyntaxTitle>
 <Syntax syntax="cameligo">
 
-The call `Tezos.get_contract addr` casts the address `addr` into that
+The call `get_contract addr` casts the address `addr` into that
     of a smart contract address, if such contract exists. The call
     fails with the message `"bad address for get_contract"` if no
     such smart contract exists. Note: The address of an implicit
@@ -249,7 +246,7 @@ The call `Tezos.get_contract addr` casts the address `addr` into that
 
 <Syntax syntax="jsligo">
 
-The call `Tezos.get_contract(addr)` casts the address `addr` into that
+The call `get_contract(addr)` casts the address `addr` into that
     of a smart contract address, if such contract exists. The call
     fails with the message `"bad address for get_contract"` if no
     such smart contract exists. Note: The address of an implicit
@@ -266,10 +263,10 @@ let get&#95;entrypoint&#95;opt: &lt;param&gt;(&#95;: string) =&gt; (&#95;: addre
 </SyntaxTitle>
 <Syntax syntax="cameligo">
 
-The call `Tezos.get_entrypoint_opt entrypoint addr` has the same
-    behaviour as `Tezos.get_contract_opt addr`, with the additional
+The call `get_entrypoint_opt entrypoint addr` has the same
+    behaviour as `get_contract_opt addr`, with the additional
     constraint that the contract must have an entrypoint named
-    `entrypoint`. In other words, `Tezos.get_entrypoint_opt entrypoint addr`
+    `entrypoint`. In other words, `get_entrypoint_opt entrypoint addr`
     casts the address `addr` into that of a smart contract
     address, if such contract exists and has an entrypoint named
     `entrypoint`. The value of the call is `None` if no such smart
@@ -281,10 +278,10 @@ The call `Tezos.get_entrypoint_opt entrypoint addr` has the same
 
 <Syntax syntax="jsligo">
 
-The call `Tezos.get_entrypoint_opt(entrypoint, addr)` has the same
-    behaviour as `Tezos.get_contract_opt(addr)`, with the additional
+The call `get_entrypoint_opt(entrypoint, addr)` has the same
+    behaviour as `get_contract_opt(addr)`, with the additional
     constraint that the contract must have an entrypoint named
-    `entrypoint`. In other words, `Tezos.get_entrypoint_opt(entrypoint, addr)`
+    `entrypoint`. In other words, `get_entrypoint_opt(entrypoint, addr)`
     casts the address `addr` into that of a smart contract
     address, if such contract exists and has an entrypoint named
     `entrypoint`. The value of the call is `None()` if no such smart
@@ -303,7 +300,7 @@ let get&#95;entrypoint: &lt;param&gt;(&#95;: string) =&gt; (&#95;: address) =&gt
 </SyntaxTitle>
 <Syntax syntax="cameligo">
 
-The call `Tezos.get_entrypoint entrypoint addr` casts the address
+The call `get_entrypoint entrypoint addr` casts the address
     `addr` into that of a smart contract address, if such contract
     exists and has an entrypoint named `entrypoint`. If no such smart
     contract exists, the execution fails with the error message
@@ -314,7 +311,7 @@ The call `Tezos.get_entrypoint entrypoint addr` casts the address
 
 <Syntax syntax="jsligo">
 
-The call `Tezos.get_entrypoint(entrypoint, addr)` casts the address
+The call `get_entrypoint(entrypoint, addr)` casts the address
     `addr` into that of a smart contract address, if such contract
     exists and has an entrypoint named `entrypoint`. If no such smart
     contract exists, the execution fails with the error message
@@ -336,16 +333,14 @@ let create&#95;contract:
     address
   ]
 </SyntaxTitle>
-**Deprecated:** In a future version, `Tezos` will be replaced by `Tezos.Next`, and using `Operation.create_contract` from `Tezos.Next` is encouraged for a smoother migration.
-
 <Syntax syntax="cameligo">
 
-The call `Tezos.create_contract e d a s` returns a contract creation
+The call `create_contract e d a s` returns a contract creation
     operation (origination) for the entrypoint `e` (as a function)
     with optional delegate `d`, initial amount `a` and initial
     storage `s`, together with the address of the created
     contract. Note that the created contract cannot be called
-    immediately afterwards (that is, `Tezos.get_contract_opt` on that
+    immediately afterwards (that is, `get_contract_opt` on that
     address would return `None`), as the origination must be
     performed successfully first, for example by calling a proxy
     contract or itself.
@@ -354,12 +349,12 @@ The call `Tezos.create_contract e d a s` returns a contract creation
 
 <Syntax syntax="jsligo">
 
-The call `Tezos.create_contract(e,d,a,s)` returns a contract creation
+The call `create_contract(e,d,a,s)` returns a contract creation
     operation (origination) for the entrypoint `e` (as a function)
     with optional delegate `d`, initial amount `a` and initial
     storage `s`, together with the address of the created
     contract. Note that the created contract cannot be called
-    immediately afterwards (that is, `Tezos.get_contract_opt` on that
+    immediately afterwards (that is, `get_contract_opt` on that
     address would return `None()`), as the origination must be
     performed successfully first, for example by calling a proxy
     contract or itself.
@@ -373,11 +368,9 @@ val set&#95;delegate : key&#95;hash option -&gt; operation
 <SyntaxTitle syntax="jsligo">
 let set&#95;delegate: (&#95;: option&lt;key&#95;hash&gt;) =&gt; operation
 </SyntaxTitle>
-**Deprecated:** In a future version, `Tezos` will be replaced by `Tezos.Next`, and using `Operation.set_delegate` from `Tezos.Next` is encouraged for a smoother migration.
-
 <Syntax syntax="cameligo">
 
-The call `Tezos.set_delegate d` evaluates in an operation that sets
+The call `set_delegate d` evaluates in an operation that sets
     the delegate of the current smart contract to be `d`, where `d` is
     an optional key hash. If `None`, the delegation is withdrawn. If
     the contract has no delegation, then no change occurs. If `d` is
@@ -393,7 +386,7 @@ The call `Tezos.set_delegate d` evaluates in an operation that sets
 
 <Syntax syntax="jsligo">
 
-The call `Tezos.set_delegate(d)` evaluates in an operation that sets
+The call `set_delegate(d)` evaluates in an operation that sets
     the delegate of the current smart contract to be `d`, where `d` is
     an optional key hash. If `None()`, the delegation is withdrawn. If
     the contract has no delegation, then no change occurs. If `d` is
@@ -414,11 +407,9 @@ val transaction : &#39;param.&#39;param -&gt; tez -&gt; &#39;param contract -&gt
 <SyntaxTitle syntax="jsligo">
 let transaction: &lt;param&gt;(&#95;: param) =&gt; (&#95;: tez) =&gt; (&#95;: contract&lt;param&gt;) =&gt; operation
 </SyntaxTitle>
-**Deprecated:** In a future version, `Tezos` will be replaced by `Tezos.Next`, and using `Operation.transaction` from `Tezos.Next` is encouraged for a smoother migration.
-
 <Syntax syntax="cameligo">
 
-The call `Tezos.transaction param amount contract_addr` evaluates in
+The call `transaction param amount contract_addr` evaluates in
     an operation that will send the amount `amount` in mutez to the
     contract at the valid address `contract_addr`, with parameter
     `param`. If the contract is an implicit account, the parameter
@@ -428,7 +419,7 @@ The call `Tezos.transaction param amount contract_addr` evaluates in
 
 <Syntax syntax="jsligo">
 
-The call `Tezos.transaction(param, amount, contract_addr)` evaluates in
+The call `transaction(param, amount, contract_addr)` evaluates in
     an operation that will send the amount `amount` in mutez to the
     contract at the valid address `contract_addr`, with parameter
     `param`. If the contract is an implicit account, the parameter
@@ -445,7 +436,7 @@ let call&#95;view: &lt;param, return&gt;(&#95;: string) =&gt; (&#95;: param) =&g
 </SyntaxTitle>
 <Syntax syntax="cameligo">
 
-The call `Tezos.call_view v p a` calls the view `v` with parameter
+The call `call_view v p a` calls the view `v` with parameter
     `param` at the contract whose address is `a`. The value returned
     is `None` if the view does not exist, or has a different type of
     parameter, or if the contract does not exist at that
@@ -457,7 +448,7 @@ The call `Tezos.call_view v p a` calls the view `v` with parameter
 
 <Syntax syntax="jsligo">
 
-The call `Tezos.call_view(v, p, a)` calls the view `v` with parameter
+The call `call_view(v, p, a)` calls the view `v` with parameter
     `param` at the contract whose address is `a`. The value returned
     is `None()` if the view does not exist, or has a different type of
     parameter, or if the contract does not exist at that
@@ -474,11 +465,9 @@ val create&#95;ticket : &#39;a.&#39;a -&gt; nat -&gt; &#39;a ticket option
 <SyntaxTitle syntax="jsligo">
 let create&#95;ticket: &lt;a&gt;(&#95;: a) =&gt; (&#95;: nat) =&gt; option&lt;ticket&lt;a&gt;&gt;
 </SyntaxTitle>
-**Deprecated:** In a future version, `Tezos` will be replaced by `Tezos.Next`, and using `Ticket.create` from `Tezos.Next` is encouraged for a smoother migration.
-
 <Syntax syntax="cameligo">
 
-The call `Tezos.create_ticket v a` creates a ticket with value `v` and
+The call `create_ticket v a` creates a ticket with value `v` and
     amount `a`. If the creation is a success, the value `Some t` is
     returned, where `t` is the ticket; otherwise, `None` is the
     result. Note: Tickets cannot be duplicated.
@@ -487,7 +476,7 @@ The call `Tezos.create_ticket v a` creates a ticket with value `v` and
 
 <Syntax syntax="jsligo">
 
-The call `Tezos.create_ticket(v, a)` creates a ticket with value `v` and
+The call `create_ticket(v, a)` creates a ticket with value `v` and
     amount `a`. If the creation is a success, the value `Some(t)` is
     returned, where `t` is the ticket; otherwise, `None()` is the
     result. Note: Tickets cannot be duplicated.
@@ -501,11 +490,9 @@ val split&#95;ticket : &#39;a.&#39;a ticket -&gt; (nat * nat) -&gt; (&#39;a tick
 <SyntaxTitle syntax="jsligo">
 let split&#95;ticket: &lt;a&gt;(&#95;: ticket&lt;a&gt;) =&gt; (&#95;: [nat, nat]) =&gt; option&lt;[ticket&lt;a&gt;, ticket&lt;a&gt;]&gt;
 </SyntaxTitle>
-**Deprecated:** In a future version, `Tezos` will be replaced by `Tezos.Next`, and using `Ticket.split` from `Tezos.Next` is encouraged for a smoother migration.
-
 <Syntax syntax="cameligo">
 
-The call `Tezos.split_ticket t (a1, a2)` results in a pair of tickets
+The call `split_ticket t (a1, a2)` results in a pair of tickets
     `t1` and `t2` such that the former owns the amount `a1` and the
     later `a2`. More precisely, the value of the call is
     `Some (t1, t2)` because signifying to the callee the failure of
@@ -515,7 +502,7 @@ The call `Tezos.split_ticket t (a1, a2)` results in a pair of tickets
 
 <Syntax syntax="jsligo">
 
-The call `Tezos.split_ticket(t, [a1, a2])` results in a pair of tickets
+The call `split_ticket(t, [a1, a2])` results in a pair of tickets
     `t1` and `t2` such that the former owns the amount `a1` and the
     later `a2`. More precisely, the value of the call is
     `Some([t1, t2])` because signifying to the callee the failure of
@@ -530,18 +517,16 @@ val join&#95;tickets : &#39;a.(&#39;a ticket * &#39;a ticket) -&gt; &#39;a ticke
 <SyntaxTitle syntax="jsligo">
 let join&#95;tickets: &lt;a&gt;(&#95;: [ticket&lt;a&gt;, ticket&lt;a&gt;]) =&gt; option&lt;ticket&lt;a&gt;&gt;
 </SyntaxTitle>
-**Deprecated:** In a future version, `Tezos` will be replaced by `Tezos.Next`, and using `Ticket.join` from `Tezos.Next` is encouraged for a smoother migration.
-
 <Syntax syntax="cameligo">
 
-The call `Tezos.join_tickets (t1, t2)` joins the tickets `t1` and
+The call `join_tickets (t1, t2)` joins the tickets `t1` and
     `t2`, which must have the same type of value.
 
 </Syntax>
 
 <Syntax syntax="jsligo">
 
-The call `Tezos.join_tickets(t1, t2)` joins the tickets `t1` and
+The call `join_tickets(t1, t2)` joins the tickets `t1` and
     `t2`, which must have the same type of value.
 
 </Syntax>
@@ -553,11 +538,9 @@ val read&#95;ticket : &#39;a.&#39;a ticket -&gt; (address * &#39;a * nat * &#39;
 <SyntaxTitle syntax="jsligo">
 let read&#95;ticket: &lt;a&gt;(&#95;: ticket&lt;a&gt;) =&gt; [[address, [a, nat]], ticket&lt;a&gt;]
 </SyntaxTitle>
-**Deprecated:** In a future version, `Tezos` will be replaced by `Tezos.Next`, and using `Ticket.read` from `Tezos.Next` is encouraged for a smoother migration.
-
 <Syntax syntax="cameligo">
 
-The call `Tezos.read_ticket t` returns `t` itself and the contents of
+The call `read_ticket t` returns `t` itself and the contents of
     `t` which is a pair `(address, (value, amount))`, where `address` is
     the address of the smart contract that created it.
 
@@ -565,7 +548,7 @@ The call `Tezos.read_ticket t` returns `t` itself and the contents of
 
 <Syntax syntax="jsligo">
 
-The call `Tezos.read_ticket(t)` returns `t` itself and the contents of
+The call `read_ticket(t)` returns `t` itself and the contents of
     `t` which is a pair `[address, [value, amount]]`, where `address` is
     the address of the smart contract that created it.
 
@@ -578,9 +561,7 @@ val sapling&#95;empty&#95;state : &#39;sap&#95;t.&#39;sap&#95;t sapling&#95;stat
 <SyntaxTitle syntax="jsligo">
 let sapling&#95;empty&#95;state: &lt;sap&#95;t&gt;sapling&#95;state&lt;sap&#95;t&gt;
 </SyntaxTitle>
-**Deprecated:** In a future version, `Tezos` will be replaced by `Tezos.Next`, and using `Sapling.empty_state` from `Tezos.Next` is encouraged for a smoother migration.
-
-The evaluation of the constant `Tezos.sapling_empty_state` is an empty
+The evaluation of the constant `sapling_empty_state` is an empty
     sapling state, that is, no one can spend tokens from it.
 
 
@@ -592,11 +573,9 @@ val sapling&#95;verify&#95;update :
 let sapling&#95;verify&#95;update:
   &lt;sap&#95;a&gt;(&#95;: sapling&#95;transaction&lt;sap&#95;a&gt;) =&gt; (&#95;: sapling&#95;state&lt;sap&#95;a&gt;) =&gt; option&lt;[bytes, [int, sapling&#95;state&lt;sap&#95;a&gt;]]&gt;
 </SyntaxTitle>
-**Deprecated:** In a future version, `Tezos` will be replaced by `Tezos.Next`, and using `Sapling.verify_update` from `Tezos.Next` is encouraged for a smoother migration.
-
 <Syntax syntax="cameligo">
 
-The call `Tezos.sapling_verify_update trans state`, where the
+The call `sapling_verify_update trans state`, where the
     transaction `trans` can be applied to the state `state`, returns
     `Some (data, (delta, new_state))`, where `data` is the bound data
     (as bytes), `delta` is the difference between the outputs and the
@@ -607,7 +586,7 @@ The call `Tezos.sapling_verify_update trans state`, where the
 
 <Syntax syntax="jsligo">
 
-The call `Tezos.sapling_verify_update(trans, state)`, where the
+The call `sapling_verify_update(trans, state)`, where the
     transaction `trans` can be applied to the state `state`, returns
     `Some ([data, [delta, new_state]])`, where `data` is the bound data
     (as bytes), `delta` is the difference between the outputs and the
@@ -623,11 +602,9 @@ val emit : &#39;event&#95;type.string -&gt; &#39;event&#95;type -&gt; operation
 <SyntaxTitle syntax="jsligo">
 let emit: &lt;event&#95;type&gt;(&#95;: string) =&gt; (&#95;: event&#95;type) =&gt; operation
 </SyntaxTitle>
-**Deprecated:** In a future version, `Tezos` will be replaced by `Tezos.Next`, and using `Operation.emit` from `Tezos.Next` is encouraged for a smoother migration.
-
 <Syntax syntax="cameligo">
 
-The call `Tezos.emit event_tag event_type` evaluates in an operation
+The call `emit event_tag event_type` evaluates in an operation
     that will write an event into the transaction receipt after the
     successful execution of this contract. The event is annotated by
     the string `event_tag` if it is not empty. The argument
@@ -637,7 +614,7 @@ The call `Tezos.emit event_tag event_type` evaluates in an operation
 
 <Syntax syntax="jsligo">
 
-The call `Tezos.emit(event_tag, event_type)` evaluates in an operation
+The call `emit event_tag(event_type)` evaluates in an operation
     that will write an event into the transaction receipt after the
     successful execution of this contract. The event is annotated by
     the string `event_tag` if it is not empty. The argument
@@ -665,7 +642,7 @@ let get&#95;balance: (&#95;: unit) =&gt; tez
 </SyntaxTitle>
 <Syntax syntax="cameligo">
 
-The call `Tezos.get_balance ()` returns the balance in mutez of the
+The call `get_balance ()` returns the balance in mutez of the
     account associated to the currently executed smart contract,
     including any mutez added by the calling transaction.
 
@@ -673,7 +650,7 @@ The call `Tezos.get_balance ()` returns the balance in mutez of the
 
 <Syntax syntax="jsligo">
 
-The call `Tezos.get_balance()` returns the balance in mutez of the
+The call `get_balance()` returns the balance in mutez of the
     account associated to the currently executed smart contract,
     including any mutez added by the calling transaction.
 
@@ -688,14 +665,14 @@ let get&#95;amount: (&#95;: unit) =&gt; tez
 </SyntaxTitle>
 <Syntax syntax="cameligo">
 
-The call `Tezos.get_amount ()` returns the amount in mutez of the
+The call `get_amount ()` returns the amount in mutez of the
     current transaction.
 
 </Syntax>
 
 <Syntax syntax="jsligo">
 
-The call `Tezos.get_amount()` returns the amount in mutez of the
+The call `get_amount()` returns the amount in mutez of the
     current transaction.
 
 </Syntax>
@@ -709,7 +686,7 @@ let get&#95;now: (&#95;: unit) =&gt; timestamp
 </SyntaxTitle>
 <Syntax syntax="cameligo">
 
-The call `Tezos.get_now ()` returns the minimal injection time for the
+The call `get_now ()` returns the minimal injection time for the
     current block, namely the block whose application triggered this
     execution. The minimal injection time constitutes an estimate of
     the moment when the current block is injected, hence the name
@@ -719,7 +696,7 @@ The call `Tezos.get_now ()` returns the minimal injection time for the
 
 <Syntax syntax="jsligo">
 
-The call `Tezos.get_now()` returns the minimal injection time for the
+The call `get_now()` returns the minimal injection time for the
     current block, namely the block whose application triggered this
     execution. The minimal injection time constitutes an estimate of
     the moment when the current block is injected, hence the name
@@ -736,14 +713,14 @@ let get&#95;min&#95;block&#95;time: (&#95;: unit) =&gt; nat
 </SyntaxTitle>
 <Syntax syntax="cameligo">
 
-The call `Tezos.get_min_block_time ()` returns the minimal delay
+The call `get_min_block_time ()` returns the minimal delay
     between two consecutive blocks in the chain.
 
 </Syntax>
 
 <Syntax syntax="jsligo">
 
-The call `Tezos.get_min_block_time()` returns the minimal delay
+The call `get_min_block_time()` returns the minimal delay
     between two consecutive blocks in the chain.
 
 </Syntax>
@@ -757,13 +734,13 @@ let get&#95;level: (&#95;: unit) =&gt; nat
 </SyntaxTitle>
 <Syntax syntax="cameligo">
 
-The call `Tezos.get_level ()` returns the current block level.
+The call `get_level ()` returns the current block level.
 
 </Syntax>
 
 <Syntax syntax="jsligo">
 
-The call `Tezos.get_level()` returns the current block level.
+The call `get_level()` returns the current block level.
 
 </Syntax>
 
@@ -776,14 +753,14 @@ let get&#95;chain&#95;id: (&#95;: unit) =&gt; chain&#95;id
 </SyntaxTitle>
 <Syntax syntax="cameligo">
 
-The call `Tezos.get_chain_id ()` returns the identifier of the chain
+The call `get_chain_id ()` returns the identifier of the chain
     on which the smart contract is executed.
 
 </Syntax>
 
 <Syntax syntax="jsligo">
 
-The call `Tezos.get_chain_id ()` returns the identifier of the chain
+The call `get_chain_id ()` returns the identifier of the chain
     on which the smart contract is executed.
 
 </Syntax>
@@ -797,7 +774,7 @@ let get&#95;total&#95;voting&#95;power: (&#95;: unit) =&gt; nat
 </SyntaxTitle>
 <Syntax syntax="cameligo">
 
-The call `Tezos.get_total_voting_power ()` returns the total voting
+The call `get_total_voting_power ()` returns the total voting
     power of all contracts. The total voting power coincides with the
     sum of the stake of every contract in the voting listings. The
     voting listings is calculated at the beginning of every voting
@@ -807,7 +784,7 @@ The call `Tezos.get_total_voting_power ()` returns the total voting
 
 <Syntax syntax="jsligo">
 
-The call `Tezos.get_total_voting_power()` returns the total voting
+The call `get_total_voting_power()` returns the total voting
     power of all contracts. The total voting power coincides with the
     sum of the stake of every contract in the voting listings. The
     voting listings is calculated at the beginning of every voting
@@ -824,7 +801,7 @@ let voting&#95;power: (&#95;: key&#95;hash) =&gt; nat
 </SyntaxTitle>
 <Syntax syntax="cameligo">
 
-The call `Tezos.voting_power contract_kh` returns the voting power of
+The call `voting_power contract_kh` returns the voting power of
     a given contract specified by the key hash `contract_kh`. This
     voting power coincides with the weight of the contract in the
     voting listings (that is, the stake) which is calculated at the
@@ -834,7 +811,7 @@ The call `Tezos.voting_power contract_kh` returns the voting power of
 
 <Syntax syntax="jsligo">
 
-The call `Tezos.voting_power(contract_kh)` returns the voting power of
+The call `voting_power(contract_kh)` returns the voting power of
     a given contract specified by the key hash `contract_kh`. This
     voting power coincides with the weight of the contract in the
     voting listings (that is, the stake) which is calculated at the
@@ -851,7 +828,7 @@ let never: &lt;a&gt;(&#95;: never) =&gt; a
 </SyntaxTitle>
 <Syntax syntax="cameligo">
 
-The call `Tezos.never n` is never meant to be executed, as the type
+The call `never n` is never meant to be executed, as the type
     `never` is inhabited, but to instruct the typechecker that a
     branch in the control flow, for example, in a pattern matching, is
     dead.
@@ -860,7 +837,7 @@ The call `Tezos.never n` is never meant to be executed, as the type
 
 <Syntax syntax="jsligo">
 
-The call `Tezos.never(n)` is never meant to be executed, as the type
+The call `never(n)` is never meant to be executed, as the type
     `never` is inhabited, but to instruct the typechecker that a
     branch in the control flow, for example, in a pattern matching, is
     dead.
@@ -876,7 +853,7 @@ let pairing&#95;check: (&#95;: list&lt;[bls12&#95;381&#95;g1, bls12&#95;381&#95;
 </SyntaxTitle>
 <Syntax syntax="cameligo">
 
-The call `Tezos.pairing_check pairings` verifies that the product of
+The call `pairing_check pairings` verifies that the product of
     pairings of the given list of points `pairings` is equal to 1 in
     the field Fq12. It evaluates in `true` if the list is empty. This
     function can be used to verify if two pairings P1 and P2 are equal
@@ -886,7 +863,7 @@ The call `Tezos.pairing_check pairings` verifies that the product of
 
 <Syntax syntax="jsligo">
 
-The call `Tezos.pairing_check(pairings)` verifies that the product of
+The call `pairing_check(pairings)` verifies that the product of
     pairings of the given list of points `pairings` is equal to 1 in
     the field Fq12. It evaluates in `true` if the list is empty. This
     function can be used to verify if two pairings P1 and P2 are equal
@@ -903,7 +880,7 @@ let constant: &lt;a&gt;(&#95;: string) =&gt; a
 </SyntaxTitle>
 <Syntax syntax="cameligo">
 
-The call to `Tezos.constant hash` returns the value stored on-chain
+The call to `constant hash` returns the value stored on-chain
     whose hash value is `hash` (global constants). This call can fail
     when the contract is originated if the hash is invalid or the
     expansion of the global constant is ill-typed, or too large (gas
@@ -913,7 +890,7 @@ The call to `Tezos.constant hash` returns the value stored on-chain
 
 <Syntax syntax="cameligo">
 
-The call to `Tezos.constant(hash)` returns the value stored on-chain
+The call to `constant(hash)` returns the value stored on-chain
     whose hash value is `hash` (global constants). This call can fail
     when the contract is originated if the hash is invalid or the
     expansion of the global constant is ill-typed, or too large (gas

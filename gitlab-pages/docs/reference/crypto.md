@@ -89,7 +89,7 @@ let check: (&#95;: key) =&gt; (&#95;: signature) =&gt; (&#95;: bytes) =&gt; bool
 </SyntaxTitle>
 <Syntax syntax="cameligo">
 
-The call `Crypto.check k s b` verifies that the byte sequence `b` has
+The call `check k s b` verifies that the byte sequence `b` has
     been signed with the key `k`: it is `true` if, and only if, the
     signature `s` is a valid signature of the byte sequence created
     with `k`.
@@ -98,7 +98,7 @@ The call `Crypto.check k s b` verifies that the byte sequence `b` has
 
 <Syntax syntax="jsligo">
 
-The call `Crypto.check(k, s, b)` verifies that the byte sequence `b` has
+The call `check(k, s, b)` verifies that the byte sequence `b` has
     been signed with the key `k`: it is `true` if, and only if, the
     signature `s` is a valid signature of the byte sequence created
     with `k`.
