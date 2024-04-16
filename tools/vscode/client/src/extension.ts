@@ -16,6 +16,10 @@ import LigoServer from './debugger/LigoServer';
 import { getCurrentWorkspacePath } from './debugger/base';
 import { trackLigoPathChanges } from './common/config';
 
+/**
+ * Activates the `ligo-vscode` extension, initializing both LIGO Language Server
+ * and LIGO Debugger.
+ */
 export async function activate(context: vscode.ExtensionContext) {
   const ligoContext = new LigoContext(context);
 

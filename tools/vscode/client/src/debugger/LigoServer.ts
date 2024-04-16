@@ -8,8 +8,10 @@ import { join } from 'path'
 import { platform } from 'process'
 import { Maybe } from '../common/base'
 
-// Server to forward requests from the debugger adapter to the process stdin and
-// stdout of the process to the client.
+/**
+ * Server to forward requests from the debugger adapter to the process stdin and
+ * stdout of the process to the client.
+ */
 export default class LigoServer implements vscode.Disposable {
   server: net.Server
   adapterProcess: cp.ChildProcessWithoutNullStreams
@@ -23,6 +25,11 @@ export default class LigoServer implements vscode.Disposable {
     return adapterProcess
   }
 
+  /**
+   * Creates a named pipe in order to forward the debug adapter response to the
+   * client. Properly handle the cases when the pipe receives data, or exits,
+   * either with success or failure.
+   */
   public constructor(cwd: Maybe<string>, command: string, args: ReadonlyArray<string>) {
     if (!fs.existsSync(command)) {
       LigoServer.showError("Couldn't find debugger adapter executable")
@@ -67,19 +74,21 @@ export default class LigoServer implements vscode.Disposable {
     }).listen(pipePath)
 
     if (!this.server.listening) {
-      LigoServer.showError("Adapter server couldn't start listening on pipe " + pipePath + ". Try again")
+      LigoServer.showError(`Adapter server couldn't start listening on pipe ${pipePath}. Try again`)
     }
   }
 
-
+  /** Returns the address of this server. */
   address() {
     return this.server.address() as string
   }
 
+  /** Returns the port number of this server. */
   port() {
     return (this.server.address() as net.AddressInfo).port
   }
 
+  /** Releases resources acquired by this server. */
   dispose() {
     this.adapterProcess.kill()
     this.server.close()

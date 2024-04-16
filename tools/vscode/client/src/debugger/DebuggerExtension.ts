@@ -9,11 +9,19 @@ import { LigoContext } from '../common/LigoContext'
 import { LigoDebugAdapterTrackerFactory } from './LigoDebugAdapterTrackerFactory'
 import { isDefined } from '../common/base'
 
+/**
+ * The main class for the debugger. An instance of this object holds all the
+ * necessary state for launching and running the debugger.
+ */
 export class DebuggerExtension implements vscode.Disposable {
   private server: LigoServer;
   private client: LigoProtocolClient;
   private stepStatus = new DebugSteppingGranularityStatus(async _granularity => { });
 
+  /**
+   * Registers all features needed for the debugger's functioning, initializes
+   * all states, and registers commands.
+   */
   public constructor(context: LigoContext, server: LigoServer, client: LigoProtocolClient) {
     const documentProvider = new class implements vscode.TextDocumentContentProvider {
       onDidChangeEmitter = new vscode.EventEmitter<vscode.Uri>();
@@ -37,19 +45,6 @@ export class DebuggerExtension implements vscode.Disposable {
     const trackerFactory = new GranularityFillingTrackerFactory(() => this.stepStatus.status)
     context.context.subscriptions.push(vscode.debug.registerDebugAdapterTrackerFactory('ligo', trackerFactory))
 
-    const askOnStartCommandChanged = context.globalState.askOnStartCommandChanged();
-    if (!isDefined(askOnStartCommandChanged.value) || !askOnStartCommandChanged.value) {
-      vscode.window.showWarningMessage(
-        `Note that syntax for commands in launch.json have changed.
-        Now commands are wrapped into (*@ and @*) instead of { and }.
-        For more information see README.md`, "OK"
-      ).then(result => {
-        if (isDefined(result)) {
-          askOnStartCommandChanged.value = true;
-        }
-      });
-    }
-
     const provider = new LigoDebugConfigurationProvider(this.client, context);
     context.context.subscriptions.push(vscode.debug.registerDebugConfigurationProvider('ligo', provider))
 
@@ -72,6 +67,7 @@ export class DebuggerExtension implements vscode.Disposable {
     );
   }
 
+  /** Releases resources acquired by the debugger. */
   public dispose(): void {
     this.stepStatus.dispose();
   }

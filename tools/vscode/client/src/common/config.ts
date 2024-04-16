@@ -2,28 +2,39 @@ import * as vscode from 'vscode';
 import { Disposable } from "vscode-languageclient";
 import { isDefined } from './base';
 
+/**
+ * When starting a process, we'd like to identify it by its name and
+ * configuration path.
+ */
 export type BinaryInfo = {
   name: string,
   path: string,
 }
 
+/** An instance of {@link BinaryInfo} for the LIGO compiler. */
 export const ligoBinaryInfo = {
   name: 'ligo',
   path: 'ligoLanguageServer.ligoBinaryPath'
 }
 
-export function getBinaryPath(info: BinaryInfo) {
+/**
+ * Attempts to get the provided {@link BinaryInfo} from the workspace
+ * configuration.
+ */
+export function getBinaryPath(info: BinaryInfo): string {
   const config = vscode.workspace.getConfiguration()
   let binaryPath = config.get<string>(info.path)
   if (!isDefined(binaryPath)) {
     // We always expect some value because a default value is registered in package.json
-    throw new Error("Unexpectedly no LIGO path from config")
+    throw new Error(`Unexpectedly no ${info.name} path from config`)
   }
   return binaryPath
 }
 
-/** Start detecting when path to LIGO is changed in config, and initiate client
-  * restart sequence. */
+/**
+ * Start detecting when path to LIGO is changed in config, and initiate client
+ * restart sequence.
+ */
 export function trackLigoPathChanges(): Disposable {
   // We do the thing via subscribing on "configuration changed" event.
   //

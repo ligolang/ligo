@@ -2,6 +2,7 @@ import * as vscode from 'vscode'
 
 import LigoServer from './LigoServer'
 
+/** A description to create a debug adapter in a named pipe. */
 export default class DebugAdapterServerDescriptorFactory
   implements vscode.DebugAdapterDescriptorFactory {
   readonly server: LigoServer

@@ -32,6 +32,10 @@ import { SteppingGranularity } from "../debugger/ui";
 import * as ncp from 'copy-paste';
 import { isDefined, Maybe } from './base';
 
+/**
+ * LIGO Debugger supports many custom requests, whose names are enumerated in
+ * this type.
+ */
 type LigoSpecificRequest
   = 'resolveConfigFromLigo'
   | 'initializeLanguageServerState'
@@ -52,6 +56,14 @@ type LigoSpecificRequest
  * not allow for showing large texts conveniently.
  *
  * Also this text box provides an ability to copy-paste its error message.
+ *
+ * @param title The title of the error window.
+ * @param messageParts The messages to be displayed in the error window. Each of
+ * them will be separated by newlines.
+ * @param callback An optional callback used to operate on the clicked result,
+ * in case there are provided items.
+ * @param items A list of items which will be shown as clickable buttons in the
+ * error window.
  */
 function showLargeErrorMessage<S, T extends string>(
   title: string,
@@ -106,6 +118,12 @@ function showLargeErrorMessage<S, T extends string>(
   });
 }
 
+/**
+ * Like {@link showLargeErrorMessage}, but gives the user the choice to open
+ * their `launch.json` file.
+ *
+ * @param message The message to be displayed in the error window.
+ */
 export function showErrorWithOpenLaunchJson(message: string) {
   showLargeErrorMessage(
     "Launch configuration problem",
@@ -127,6 +145,10 @@ export function showErrorWithOpenLaunchJson(message: string) {
   );
 }
 
+/**
+ * Handles an error response, which depending on its message and origin, might
+ * suggest the user to upgrade LIGO, suggest fixing their `launch.json`, etc.
+ */
 export function processErrorResponse(response: DebugProtocol.ErrorResponse): void {
   if (!isDefined(response.body.error)) {
     return
@@ -198,11 +220,15 @@ export function processErrorResponse(response: DebugProtocol.ErrorResponse): voi
   }
 }
 
-// This class is copypasted from https://github.com/microsoft/vscode-debugadapter-node/blob/main/testSupport/src/protocolClient.ts
-// because when it encounters an `ErrorResponse` it just throws `response.message` field
-// and this is not convenient for us. We want to work with error responses too.
+/**
+ * This class is copypasted from
+ * {@link https://github.com/microsoft/vscode-debugadapter-node/blob/main/testSupport/src/protocolClient.ts}
+ * because when it encounters an
+ * {@link DebugProtocol.ErrorResponse | ErrorResponse} it just throws a
+ * `response.message` field and this is not convenient for us. We want to work
+ * with error responses too.
+ */
 class ProtocolClient extends ee.EventEmitter {
-
   private static TWO_CRLF = '\r\n\r\n';
 
   private outputStream: stream.Writable;
@@ -259,7 +285,6 @@ class ProtocolClient extends ee.EventEmitter {
   public send(command: string, args?: any): Promise<DebugProtocol.Response>;
 
   public send(command: string, args?: any): Promise<DebugProtocol.Response> {
-
     return new Promise((completeDispatch, errorDispatch) => {
       this.doSend(command, args, (result: DebugProtocol.Response) => {
         if (result.success) {
@@ -275,7 +300,6 @@ class ProtocolClient extends ee.EventEmitter {
   }
 
   private doSend(command: string, args: any, clb: (result: DebugProtocol.Response) => void): void {
-
     const request: DebugProtocol.Request = {
       type: 'request',
       seq: this.sequence++,
@@ -293,7 +317,6 @@ class ProtocolClient extends ee.EventEmitter {
   }
 
   private handleData(data: Buffer): void {
-
     this.rawData = Buffer.concat([this.rawData, data]);
 
     while (true) {
@@ -327,7 +350,6 @@ class ProtocolClient extends ee.EventEmitter {
   }
 
   private dispatch(body: string): void {
-
     const rawData = JSON.parse(body);
 
     if (typeof rawData.event !== 'undefined') {
@@ -344,6 +366,9 @@ class ProtocolClient extends ee.EventEmitter {
   }
 }
 
+/**
+ * Extends the {@link ProtocolClient} with LIGO-specific custom methods.
+ */
 export class LigoProtocolClient extends ProtocolClient {
   socket: Net.Socket
   constructor(pipeName: string) {
@@ -375,9 +400,9 @@ export class LigoProtocolClient extends ProtocolClient {
  *
  * We have to do this manually because VSCode lacks UI capabilities that
  * would allow the user specifying the desired granularity, see
- * https://github.com/microsoft/vscode/issues/102236
+ * {@link https://github.com/microsoft/vscode/issues/102236}.
  *
- * We have to do this here, not in `LigoProtocolClient`, since the latter
+ * We have to do this here, not in {@link LigoProtocolClient}, since the latter
  * is only used for our custom handlers. LIGO-859 may change this.
  */
 export class GranularityFillingTracker implements DebugAdapterTracker {
@@ -398,6 +423,7 @@ export class GranularityFillingTracker implements DebugAdapterTracker {
   }
 }
 
+/** A class wrapper for a function that sets the stepping granularity. */
 export class GranularityFillingTrackerFactory implements DebugAdapterTrackerFactory {
   private getGranularity: () => SteppingGranularity
 

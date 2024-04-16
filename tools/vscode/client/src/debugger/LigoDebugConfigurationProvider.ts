@@ -8,6 +8,9 @@ import { createConfigSnippet, createRememberingQuickPick, getConfigPath, getModu
 import { InputValueLang, isDefined, Maybe } from '../common/base'
 import { getBinaryPath, ligoBinaryInfo } from '../common/config'
 
+/**
+ * Attempts to create the provided directory path, if it doesn't exist already.
+ */
 function createLogDir(logDir: string): void | undefined {
   if (!fs.existsSync(logDir)) {
     fs.mkdir(logDir, { recursive: true } as fs.MakeDirectoryOptions, (err) => {
@@ -18,20 +21,33 @@ function createLogDir(logDir: string): void | undefined {
   }
 }
 
-export type ConfigField
-  = "moduleName"
+/**
+ * A configuration field name. This is currently just used to show the user
+ * where something went wrong in the case of an error.
+ *
+ * @see {@link tryExecuteCommand}
+ */
+export type ConfigField =
+  | "moduleName"
   | "entrypoint"
   | "parameter"
   | "storage"
   | "program"
   | "configPath"
-  ;
 
-export type ConfigCommand
-  = "AskOnStart"
+/**
+ * A configuration command name.
+ *
+ * @see {@link tryExecuteCommand}
+ */
+export type ConfigCommand =
+  | "AskOnStart"
   | "CurrentFile"
-  ;
 
+/**
+ * Allows to register and resolve LIGO debug configurations before they are sent
+ * to the debugger.
+ */
 export default class LigoDebugConfigurationProvider implements vscode.DebugConfigurationProvider {
   private client: LigoProtocolClient;
   private context: LigoContext;
@@ -41,6 +57,11 @@ export default class LigoDebugConfigurationProvider implements vscode.DebugConfi
     this.context = context;
   }
 
+  /**
+   * Attempts to resolve the LIGO-specific fields from the provided
+   * configuration, adding pseudo-commands (like `(*@AskOnStart@*)`) whenever a
+   * configuration was not provided.
+   */
   private async tryToResolveConfigFromLigo(config: vscode.DebugConfiguration): Promise<vscode.DebugConfiguration> {
     const binaryPath = getBinaryPath(ligoBinaryInfo);
     const pluginConfig = vscode.workspace.getConfiguration();
@@ -84,6 +105,10 @@ export default class LigoDebugConfigurationProvider implements vscode.DebugConfi
     return config;
   }
 
+  /**
+   * Attempts to resolve the provided configuration, communicating with the
+   * debug adapter in order to obtain known fields.
+   */
   private async resolveConfig(config: vscode.DebugConfiguration): Promise<vscode.DebugConfiguration> {
     const defaultPath: Maybe<string> = config.program;
 
@@ -202,6 +227,10 @@ export default class LigoDebugConfigurationProvider implements vscode.DebugConfi
     return !config.type && !config.request && !config.name;
   }
 
+  /**
+   * Attempts to resolve the provided configuration, adding pseudo-commands
+   * (like `(*@AskOnStart@*)`) whenever a configuration was not provided.
+   */
   async resolveDebugConfiguration(
     _folder: vscode.WorkspaceFolder | undefined,
     config: vscode.DebugConfiguration,

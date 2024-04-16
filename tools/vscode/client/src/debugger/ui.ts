@@ -19,6 +19,7 @@ import { MultiStepInput } from '../common/ui';
 import { InputBoxType, InputValueLang, isDefined, Maybe, Ref } from '../common/base';
 import * as ex from '../common/exceptions'
 
+/** The stepping granularity, indicating where the debugger should step. */
 export type SteppingGranularity
   = 'statement'
   | 'expression'
@@ -27,11 +28,11 @@ export type SteppingGranularity
 /**
  * Keeps information about stepping granularity status.
  *
- * In UI this creates a button & command for changing the used granularity,
- * plus it can also be manually changed via the `status` setter.
+ * In UI this creates a button & command for changing the used granularity, plus
+ * it can also be manually changed via the `status` setter.
  *
- * It is then possible to read the status from the same 'status' field,
- * or subscribe on changes in the constructor.
+ * It is then possible to read the status from the same 'status' field, or
+ * subscribe on changes in the constructor.
  */
 export class DebugSteppingGranularityStatus implements vscode.Disposable {
   private bar: vscode.StatusBarItem;
@@ -41,6 +42,7 @@ export class DebugSteppingGranularityStatus implements vscode.Disposable {
   private readonly statusChangeEvent = new vscode.EventEmitter<SteppingGranularity>();
   private disposables: vscode.Disposable[] = new Array();
 
+  /** Registers buttons and commands for changing the step granularity. */
   constructor
     (onStatusChanged?: (newGranularity: SteppingGranularity) => Promise<void>
     ) {
@@ -53,11 +55,11 @@ export class DebugSteppingGranularityStatus implements vscode.Disposable {
     // Note: VSCode has built-in status bar that is added on debug session start,
     // At the moment of writing it has id='status.debug' and priority=30, and
     // our status bar we want to put alongside.
-    this.bar = vscode.window.createStatusBarItem
-      ('status.debug.ligo.stepping'
-        , vscode.StatusBarAlignment.Left
-        , 28
-      );
+    this.bar = vscode.window.createStatusBarItem(
+      'status.debug.ligo.stepping',
+      vscode.StatusBarAlignment.Left,
+      28,
+    );
     this.bar.name = 'Debug Stepping Granularity Status';
     this.bar.tooltip = 'Select debug step granularity';
     this.bar.command = switchCommand;
@@ -133,13 +135,16 @@ export class DebugSteppingGranularityStatus implements vscode.Disposable {
    */
   public hide() { this.bar.hide(); }
 
+  /** Releases resources acquired by this object. */
   public dispose() {
     this.bar.dispose();
     this.disposables.forEach(d => d.dispose());
   }
 
-  // Creates a quick pick for stepping granularity selection and returns
-  // the selected option.
+  /**
+   * Creates a quick pick for stepping granularity selection and returns the
+   * selected option.
+   */
   private async createStatusChoosingQuickPick(): Promise<Maybe<SteppingGranularity>> {
     const allOptions: SteppingGranularity[] = ["statement", "expression", "expressionSurrounded"]
     const counter = { value: 0 };
@@ -174,6 +179,9 @@ export class DebugSteppingGranularityStatus implements vscode.Disposable {
     return chosen?.type;
   }
 
+  /**
+   * A short, user-readable string describing the provided stepping granularity.
+   */
   static granularityToUIString(granularity: SteppingGranularity): string {
     switch (granularity) {
       case 'statement':
@@ -186,6 +194,8 @@ export class DebugSteppingGranularityStatus implements vscode.Disposable {
   }
 }
 
+/** Given some type name, suggests a reasonable default value of that type. */
+// TODO: suggest unit type
 const suggestTypeValue = (mitype: string): { value: string, selection?: [number, number] } => {
   const startsWith = (prefix: string, str: string): boolean =>
     str.substring(0, prefix.length) === prefix
@@ -214,6 +224,11 @@ const suggestTypeValue = (mitype: string): { value: string, selection?: [number,
   }
 }
 
+/**
+ * Some values might be wrapped in quote marks or brackets. If this is the case,
+ * then this function will suggest a selection range that is reasonable
+ * according to the provided type and value.
+ */
 const oldValueSelection = (mitype: string, oldVal: string): Maybe<[number, number]> => {
   const startsWith = (prefix: string, str: string): boolean =>
     str.substring(0, prefix.length) === prefix
@@ -228,8 +243,10 @@ const oldValueSelection = (mitype: string, oldVal: string): Maybe<[number, numbe
   }
 }
 
-// Create QuickPick which remembers previously
-// inputted value in workspace storage.
+/**
+ * Creates a {@link QuickPick} which remembers the previously inputted value
+ * stored in the workspace storage.
+ */
 export async function createRememberingQuickPick(
   contractMetadata: ContractMetadata,
   placeHolder: string
@@ -266,6 +283,10 @@ export async function createRememberingQuickPick(
   })
 }
 
+/**
+ * Attempts to get a path to a LIGO file containing the configuration to use
+ * during the debugger runtime, inputting the user to provide this path.
+ */
 export async function getConfigPath(context: LigoContext): Promise<Maybe<string>> {
   interface State {
     pickedConfigPath?: string;
@@ -312,6 +333,14 @@ export async function getConfigPath(context: LigoContext): Promise<Maybe<string>
   return result.pickedConfigPath;
 }
 
+/**
+ * Opens a quick pick asking the user to input the module name to be debugged.
+ *
+ * @param validateModuleName A function used to check whether the inputted
+ * module name is valid or not, displayed the returned warning message, if any.
+ * @param moduleNamesList The available module names from which the user can
+ * choose.
+ */
 export async function getModuleName(
   context: LigoContext,
   validateModuleName: (entrypoint: string) => Promise<Maybe<string>>,
@@ -379,6 +408,25 @@ export async function getModuleName(
   }
 }
 
+/**
+ * Opens an input box asking the user to input a value for a parameter or
+ * storage.
+ *
+ * @param validateInput A function used to check whether the inputted value is
+ * valid or not, displayed the returned warning message, if any.
+ * @param inputBoxType Whether to get the value to the parameter or storage.
+ * @param placeHolder A string that will be shown while no input is provided.
+ * @param prompt A prompt message asking the user to provide the value.
+ * @param moduleName The module path containing the entry-point in which the
+ * parameter or storage is being validated.
+ * @param contractMetadata Contract metadata for this contract.
+ * @param entrypoint The entry-point in which the parameter or storage is being
+ * validated.
+ * @param showSwitchButton Whether to show a button allowing the user to switch
+ * between LIGO or Michelson value for the value.
+ * @returns A promise resolving to the inputted value and whether it's using
+ * LIGO or Michelson syntax.
+ */
 export async function getParameterOrStorage(
   context: LigoContext,
   validateInput: (inputType: InputBoxType, valueLang: InputValueLang) => (value: string) => Promise<Maybe<string>>,
@@ -522,6 +570,11 @@ export async function getParameterOrStorage(
   }
 }
 
+/**
+ * Creates a configuration snippet file based on the provided LIGO context.
+ * @returns A Promise resolving to a boolean indicating whether the snippet
+ * creation was successful.
+ */
 export async function createConfigSnippet(context: LigoContext): Promise<boolean> {
   return vscode.window.showSaveDialog({
     defaultUri: getCurrentWorkspacePath(),
