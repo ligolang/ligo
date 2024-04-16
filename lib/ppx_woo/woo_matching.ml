@@ -1,3 +1,4 @@
+open Core
 module P = Ppxlib
 module A = P.Ast_builder.Default
 module W = Woo_types
@@ -29,7 +30,6 @@ module Make (Params : Woo_helpers.PARAMS) = struct
     let declaration = A.value_binding ~loc ~expr:body ~pat:function_name in
     let declarations = A.pstr_value ~loc Nonrecursive [ declaration ] in
     declarations
-
 
   let generic_case ~polymorphic ~base_label rhs
       : string * W.type_expression list -> P.case
@@ -75,7 +75,6 @@ module Make (Params : Woo_helpers.PARAMS) = struct
     in
     A.case ~lhs ~guard:None ~rhs
 
-
   let matching_full ?wrap_get ~namer rhs : W.variant -> P.structure_item list =
    fun variant ->
     let matching_single =
@@ -87,14 +86,12 @@ module Make (Params : Woo_helpers.PARAMS) = struct
     let matching_lst = List.map ~f:(matching_single variant) constructor_declarations in
     matching_lst
 
-
   let matching_is_full ?wrap_get : W.variant -> P.structure_item list =
     let rhs ~base_label ~current_label ~variable:_ =
       e_bool @@ String.equal base_label current_label
     in
     let namer x = "is_" ^ x in
     matching_full ?wrap_get ~namer rhs
-
 
   let matching_exn_full ?wrap_get : W.variant -> P.structure_item list =
     let namer x = "get_" ^ x ^ "_exn" in
@@ -108,7 +105,6 @@ module Make (Params : Woo_helpers.PARAMS) = struct
     in
     matching_full ?wrap_get ~namer rhs
 
-
   let matching_opt_full ?wrap_get : W.variant -> P.structure_item list =
     let namer x = "get_" ^ x ^ "_opt" in
     let rhs ~base_label ~current_label ~variable =
@@ -117,7 +113,6 @@ module Make (Params : Woo_helpers.PARAMS) = struct
       else P.([%expr None])
     in
     matching_full ~namer ?wrap_get rhs
-
 
   let matching_default ?(default_get = "Option") variant : P.structure_item list =
     let namer x = "get_" ^ x in

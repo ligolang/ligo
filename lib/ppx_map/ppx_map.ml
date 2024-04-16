@@ -1,3 +1,4 @@
+open Core
 open Ppxlib
 open Simple_utils
 
@@ -5,7 +6,6 @@ let rec extract_ident = function
   | Lident id -> id
   | Ldot (_, id) -> id
   | Lapply (_, lid) -> extract_ident lid
-
 
 let extract_payload = function
   | PStr
@@ -44,7 +44,6 @@ let extract_payload = function
     Some (extract_ident id.txt, l)
   | _ -> None
 
-
 let replace_exprs id new_id =
   let replace l =
     let l = Str.global_replace (Str.regexp_string id) new_id l in
@@ -75,7 +74,6 @@ let replace_exprs id new_id =
       aux lid
   end
 
-
 let map_exprs =
   object
     inherit Ast_traverse.map as super
@@ -99,7 +97,6 @@ let map_exprs =
         Pstr_value (flg, exprs)
       | sid -> sid
   end
-
 
 let () =
   Ppxlib.Driver.register_transformation

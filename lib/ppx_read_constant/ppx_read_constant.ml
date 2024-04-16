@@ -1,7 +1,6 @@
-open Ppxlib
-module List = ListLabels
-open Ast_builder.Default
 open Core
+open Ppxlib
+open Ast_builder.Default
 
 let ppx_name = "read_constant"
 let func_name = "read_constant'"
@@ -21,7 +20,6 @@ let rec get_payload tag = function
       | _ -> None)
     else get_payload tag attributes
 
-
 let constructor_impl (cd : constructor_declaration) =
   let loc = cd.pcd_loc in
   let { txt; loc = cloc } = cd.pcd_name in
@@ -34,7 +32,6 @@ let constructor_impl (cd : constructor_declaration) =
   let rhs = econstruct cd None in
   let pat = ppat_constant ~loc:cloc (Pconst_string (s, cloc, None)) in
   case ~lhs:pat ~guard:None ~rhs:[%expr Some [%e rhs]]
-
 
 let func_of_cases ~loc (cs : cases) =
   pstr_value
@@ -53,7 +50,6 @@ let func_of_cases ~loc (cs : cases) =
       }
     ]
 
-
 let generate_impl ~ctxt (_rec_flag, type_declarations) =
   let loc = Expansion_context.Deriver.derived_item_loc ctxt in
   List.filter_map type_declarations ~f:(fun (td : type_declaration) ->
@@ -64,7 +60,6 @@ let generate_impl ~ctxt (_rec_flag, type_declarations) =
   |> List.map ~f:(fun xs ->
          List.append xs [ case ~lhs:(ppat_any ~loc) ~guard:None ~rhs:[%expr None] ])
   |> List.map ~f:(func_of_cases ~loc)
-
 
 let impl_generator = Deriving.Generator.V2.make_noarg generate_impl
 let my_deriver = Deriving.add ppx_name ~str_type_decl:impl_generator

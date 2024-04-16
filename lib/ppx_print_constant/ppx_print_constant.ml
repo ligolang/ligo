@@ -1,7 +1,6 @@
-open Ppxlib
-module List = ListLabels
-open Ast_builder.Default
 open Core
+open Ppxlib
+open Ast_builder.Default
 
 let ppx_name = "print_constant"
 let func_name = "pp_constant'"
@@ -21,7 +20,6 @@ let rec get_payload tag = function
       | _ -> None)
     else get_payload tag attributes
 
-
 let constructor_impl (cd : constructor_declaration) =
   let loc = cd.pcd_loc in
   let { txt; loc = cloc } = cd.pcd_name in
@@ -38,7 +36,6 @@ let constructor_impl (cd : constructor_declaration) =
     | _ -> Some (ppat_any ~loc)
   in
   case ~lhs:(ppat_construct ~loc { loc = cloc; txt = Lident txt } pat) ~guard:None ~rhs
-
 
 let func_of_cases ~loc (cs : cases) =
   pstr_value
@@ -62,7 +59,6 @@ let func_of_cases ~loc (cs : cases) =
       }
     ]
 
-
 let generate_impl ~ctxt (_rec_flag, type_declarations) =
   let loc = Expansion_context.Deriver.derived_item_loc ctxt in
   List.filter_map type_declarations ~f:(fun (td : type_declaration) ->
@@ -71,7 +67,6 @@ let generate_impl ~ctxt (_rec_flag, type_declarations) =
       | { ptype_kind = Ptype_variant constructors; _ } ->
         Some (List.map constructors ~f:constructor_impl))
   |> List.map ~f:(func_of_cases ~loc)
-
 
 let impl_generator = Deriving.Generator.V2.make_noarg generate_impl
 let my_deriver = Deriving.add ppx_name ~str_type_decl:impl_generator

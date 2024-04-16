@@ -5,7 +5,6 @@ open Ast_builder.Default
 let raise_unsupported ~loc =
   Location.raise_errorf ~loc "ppx_poly_constructor: unsupported."
 
-
 module Helper = struct
   let struct_string_opt s =
     match s with
@@ -16,7 +15,6 @@ module Helper = struct
       ] -> Some s
     | _ -> None
 
-
   let payload_of_attributes_opt tag attributes =
     let f { attr_name; attr_payload; _ } =
       match attr_payload with
@@ -24,7 +22,6 @@ module Helper = struct
       | _ -> None
     in
     List.find_map attributes ~f
-
 
   let protect_keyword s = if Keyword.is_keyword s then s ^ "_" else s
 end
@@ -68,7 +65,6 @@ module Inspector (PE : PAYLOAD_EXTRACT) = struct
       }
     | Rinherit _ -> raise_unsupported ~loc
 
-
   let type_declaration td =
     let loc = td.ptype_loc in
     match td.ptype_kind with
@@ -89,7 +85,6 @@ module Gen_str = struct
     in
     Helper.protect_keyword s
 
-
   let constructors ?prefix loc constructors =
     let open Constructor in
     List.map constructors ~f:(fun c ->
@@ -107,7 +102,6 @@ module Gen_str = struct
         in
         let value_binding = value_binding ~loc ~pat:(pvar ~loc name) ~expr in
         pstr_value ~loc Nonrecursive [ value_binding ])
-
 
   let generate ~loc ~path:_ (_, tds) prefix =
     let module TE = struct

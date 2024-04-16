@@ -1,0 +1,12 @@
+(library
+ (name ppx_map)
+ (kind ppx_rewriter)
+ (modules ppx_map)
+ (preprocess
+  (pps ppxlib.metaquot))
+ (libraries
+  base
+  simple-utils
+  simple-utils-unix
+  simple-utils-unix.http_uri
+  ppxlib))

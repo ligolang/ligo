@@ -1,5 +1,5 @@
+open Core
 open Ppxlib
-module List = ListLabels
 open Ast_builder.Default
 
 let ppx_name = "is"
@@ -9,7 +9,8 @@ let constructor_impl ~tag (cd : constructor_declaration) =
   let { txt; loc = cloc } = cd.pcd_name in
   let rhs =
     if List.mem
-         ~set:(List.map ~f:(fun { attr_name; _ } -> attr_name.txt) cd.pcd_attributes)
+         ~equal:String.equal
+         (List.map ~f:(fun { attr_name; _ } -> attr_name.txt) cd.pcd_attributes)
          tag
     then [%expr true]
     else [%expr false]
@@ -20,7 +21,6 @@ let constructor_impl ~tag (cd : constructor_declaration) =
     | _ -> Some (ppat_any ~loc)
   in
   case ~lhs:(ppat_construct ~loc { loc = cloc; txt = Lident txt } pat) ~guard:None ~rhs
-
 
 let func_of_cases ~loc ~prefix ~tag (cs : cases) =
   let func_name = prefix ^ "is_" ^ tag in
@@ -39,7 +39,6 @@ let func_of_cases ~loc ~prefix ~tag (cs : cases) =
       ; pvb_loc = loc
       }
     ]
-
 
 let generate_impl
     ~ctxt
@@ -71,10 +70,8 @@ let generate_impl
   in
   List.map ~f tags |> List.concat
 
-
 let impl_generator =
   let prefix = Deriving.Args.(empty +> arg "tags" (elist __) +> arg "name" __) in
   Deriving.Generator.V2.make prefix generate_impl
-
 
 let my_deriver = Deriving.add ppx_name ~str_type_decl:impl_generator

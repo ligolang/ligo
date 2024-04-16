@@ -73,7 +73,6 @@
   (glob_files preprocessor/*)
   (glob_files install_tests/workflow/*)))
 
-
 (rule
  (alias contract_test)
  (action
