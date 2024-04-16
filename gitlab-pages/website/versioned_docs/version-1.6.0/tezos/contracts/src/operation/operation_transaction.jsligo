@@ -1,0 +1,23 @@
+type @return<storage> = [list<operation>, storage];
+
+namespace A {
+  type storage = int;
+
+  @entry
+  const add = (delta: int, storage: storage): @return<storage> =>
+    [[], storage + delta];
+}
+
+namespace B {
+  type storage = int;
+
+  @entry
+  const increment = (_param: unit, storage: storage): @return<storage> => {
+    const operation =
+      Tezos.transaction(Add(1) as parameter_of A,
+                        0tez,
+                        Tezos.get_contract(
+                          "KT1TxqZ8QtKvLu3V3JH7Gx58n7Co8pgtpQU5" as address))
+    return [[operation], storage];
+  }
+}

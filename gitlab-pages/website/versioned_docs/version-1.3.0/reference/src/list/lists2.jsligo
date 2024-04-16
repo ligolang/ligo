@@ -1,5 +1,0 @@
-let my_list_fold: list<int> = list([1, 2, 3]);
-
-let sum_fold = ([result, i]: [int, int]): int => result + i;
-
-let sum_of_elements_fold: int = List.fold(sum_fold, my_list_fold, 0);

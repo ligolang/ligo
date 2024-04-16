@@ -1,3 +1,0 @@
-const my_map: map<int,string> = Map.literal(list([[1,"one"],[2,"two"]]));
-const new_map = Map.add(3, "three", my_map);
-const contains_3 = Map.mem(3, new_map); // == true

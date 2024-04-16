@@ -1,8 +1,0 @@
-type storage = int;
-type result = [list<operation>, int]
-
-@entry
-const add = (i : int, s : storage) : result => [list([]), s + i]
-
-@entry
-const subtract = (i : int, s : storage) : result => [list([]), s - i]

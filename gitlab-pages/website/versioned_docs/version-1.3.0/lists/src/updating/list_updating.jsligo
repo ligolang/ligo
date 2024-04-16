@@ -1,6 +1,0 @@
-const nats = list([0, 1, 2, 3, 4]);
-// evens_zeroed == list([0, 1, 0, 3, 0])
-const evens_zeroed = List.update_with(x => x % 2 == 0n, 0, nats);
-const f = x => x % 2 == 0n ? None() : Some(x*x);
-// odds == list([0, 1, 2, 9, 4])
-const odds_squared = List.update(f, nats);
