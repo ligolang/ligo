@@ -90,3 +90,10 @@ function f15(r : r<int>) {
 function f16 ({x; y; z}) {
   return x
 }
+
+// Inlay hints are omitted for interface items
+export interface Intf {
+  type storage;
+  type ret = [list<operation>, storage];
+  @entry const increment : (k: int, s: storage) => ret;
+}
