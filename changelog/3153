@@ -1,0 +1,7 @@
+
+author: krendelhoff
+description: "\\nFixed inlay hints being displayed in signatures and interfaces even in the presence of annotations.\\n\\n"
+merge_request: '3153'
+title: "[#2611] Avoid inlay hints for signature items"
+type: fixed
+            
