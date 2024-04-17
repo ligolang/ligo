@@ -57,3 +57,10 @@ let f17 (r : int r) =
   ()
 
 let f18 {x; y; z} = x
+
+// Inlay hints are omitted for signature items
+module type Sig = sig
+  type storage
+  type ret = operation list * storage
+  [@entry] val increment: int -> storage -> ret
+end
