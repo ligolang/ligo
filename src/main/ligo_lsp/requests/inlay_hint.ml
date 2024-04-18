@@ -260,6 +260,9 @@ module Cameligo_inlay_hint_provider = Inlay_hint_provider_Make (struct
     | S_typed_expr, (expr, _) ->
       let reg = expr_to_region expr in
       Continue (Range.of_region reg)
+    | S_sig_value, { kwd_val; var; _ } ->
+      let reg = Region.cover kwd_val#region @@ variable_to_region var in
+      Continue (Range.of_region reg)
     | _ -> Skip
 end)
 
@@ -341,6 +344,9 @@ module Jsligo_inlay_hint_provider = Inlay_hint_provider_Make (struct
         | NakedParam pat -> pattern_to_region pat
         | ParParams fun_params -> fun_params.region
       in
+      Continue (Range.of_region reg)
+    | S_intf_const, { kwd_const; const_name; _ } ->
+      let reg = Region.cover kwd_const#region @@ variable_to_region const_name in
       Continue (Range.of_region reg)
     | _ -> Skip
 end)
