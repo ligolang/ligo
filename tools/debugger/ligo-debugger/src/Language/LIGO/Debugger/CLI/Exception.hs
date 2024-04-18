@@ -5,12 +5,10 @@ module Language.LIGO.Debugger.CLI.Exception
   , SomeLigoException (..)
   , LigoErrorNodeParseErrorException  (..)
   , LigoClientFailureException (..)
-  , LigoDecodedExpectedClientFailureException (..)
   , LigoIOException (..)
   , LigoJSONException (..)
   , LigoJSONExceptionContent (..)
   , LigoMalformedJSONException (..)
-  , LigoPreprocessFailedException (..)
   , LigoDecodeException (..)
   , ConfigurationException (..)
   , LigoCallException (..)
@@ -29,6 +27,7 @@ import Util
 
 import Language.LIGO.Debugger.CLI.Types
 
+-- | A subclass for exceptions that come from LIGO binary.
 class Exception a => LigoException a where
 
 -- | Catch ligo failure to be able to restore from it
@@ -40,26 +39,12 @@ data LigoClientFailureException = LigoClientFailureException
   } deriving anyclass (LigoException)
     deriving stock (Show)
 
--- | Expected ligo failure decoded from its JSON output
-data LigoDecodedExpectedClientFailureException = LigoDecodedExpectedClientFailureException
-  { decfeErrorsDecoded :: NonEmpty LigoError -- ^ Successfully decoded ligo errors
-  , decfeWarningsDecoded :: [LigoError]
-  , decfeFile :: FilePath -- ^ File that caused the error
-  } deriving anyclass (LigoException)
-    deriving stock (Show)
-
-data LigoPreprocessFailedException = LigoPreprocessFailedException
-  { pfeMessage :: Text -- ^ Successfully decoded ligo error
-  , pfeFile :: FilePath -- ^ File that caused the error
-  } deriving anyclass (LigoException)
-    deriving stock (Show)
-
 -- | Starting @ligo@ executable failed - some system error.
 --
 -- Likely LIGO isn't installed or was not found.
 data LigoIOException = LigoIOException
-  { lieType :: IOException.IOErrorType
-  , lieDescription :: Text
+  { lieType :: IOException.IOErrorType -- ^ An error type.
+  , lieDescription :: Text -- ^ An error message.
   } deriving anyclass (LigoException)
     deriving stock (Show)
 
@@ -70,15 +55,16 @@ data LigoIOException = LigoIOException
 -- | Arbitrary exception from the @LIGO@ binary
 -- in JSON format.
 data LigoJSONException = LigoJSONException
-  { ljeStatus :: Text
-  , ljeStage :: Text
-  , ljeContent :: LigoJSONExceptionContent
+  { ljeStatus :: Text -- ^ A status of exception.
+  , ljeStage :: Text -- ^ Where LIGO exception occurred.
+  , ljeContent :: LigoJSONExceptionContent -- ^ Exception's contents.
   } deriving stock (Show, Generic)
 
+-- | Contents of @LigoJSONException@.
 data LigoJSONExceptionContent = LigoJSONExceptionContent
-  { ljecMessage :: Text
-  , ljecLocation :: Maybe LigoRange
-  , ljecChildren :: Maybe LigoJSONException
+  { ljecMessage :: Text -- ^ An exception message.
+  , ljecLocation :: Maybe LigoRange -- ^ A possible location of the exception.
+  , ljecChildren :: Maybe LigoJSONException -- ^ Possible children of the exception.
   } deriving stock (Show, Generic)
 
 instance FromJSON LigoJSONException where
@@ -124,6 +110,7 @@ data LigoMalformedJSONException = LigoMalformedJSONException
   } deriving anyclass (LigoException)
     deriving stock (Show)
 
+-- | An existential wrapper for @LigoException@s.
 data SomeLigoException where
   SomeLigoException :: LigoException a => a -> SomeLigoException
 
@@ -135,11 +122,9 @@ instance Exception SomeLigoException where
   fromException e =
     asum
       [ SomeLigoException <$> fromException @LigoClientFailureException                e
-      , SomeLigoException <$> fromException @LigoDecodedExpectedClientFailureException e
       , SomeLigoException <$> fromException @LigoErrorNodeParseErrorException          e
       , SomeLigoException <$> fromException @LigoMalformedJSONException                e
       , SomeLigoException <$> fromException @LigoDefinitionParseErrorException         e
-      , SomeLigoException <$> fromException @LigoPreprocessFailedException             e
       , SomeLigoException <$> fromException @LigoIOException                           e
       ]
 
@@ -159,14 +144,6 @@ instance Exception LigoClientFailureException where
       stdErr
         | Text.null cfeStderr = "" :: String
         | otherwise = [int||Stderr: #{cfeStderr}|]
-
-instance Exception LigoDecodedExpectedClientFailureException where
-  displayException LigoDecodedExpectedClientFailureException {..} =
-    [int||LIGO binary produced expected error which we successfully decoded as:
-    #{toList decfeErrorsDecoded}
-    With warnings
-    #{toList decfeWarningsDecoded}
-    Caused by: #{decfeFile}|]
 
 instance Exception LigoErrorNodeParseErrorException where
   displayException LigoErrorNodeParseErrorException {..} =
@@ -191,11 +168,6 @@ instance Exception LigoDefinitionParseErrorException where
     Caused by: #{ldpeFile}
     JSON output dumped:
     #{ldpeOutput}|]
-
-instance Exception LigoPreprocessFailedException where
-  displayException LigoPreprocessFailedException {..} =
-    [int||LIGO failed to preprocess contract with: #{pfeMessage}
-    Caused by: #{pfeFile}|]
 
 instance Exception LigoIOException where
   displayException LigoIOException {..} =

@@ -90,6 +90,7 @@ import Language.LIGO.Debugger.Snapshots
 import Language.LIGO.Extension (UnsupportedExtension (..), getExt)
 import Language.LIGO.Range
 
+-- | A LIGO language type marker.
 data LIGO
 
 instance HasLigoClient (RIO LIGO) where
@@ -104,6 +105,7 @@ instance HasLigoClient (RIO LIGO) where
           maybe getLigoClientEnv pure maybeEnv
         Nothing -> getLigoClientEnv
 
+-- | A list of custom debugger handlers.
 ligoCustomHandlers :: DAP.HandlersSet (RIO LIGO)
 ligoCustomHandlers =
   [ resolveConfigFromLigo
@@ -118,6 +120,7 @@ ligoCustomHandlers =
   , validateConfigHandler
   ]
 
+-- | A list of implemented debugger handlers.
 ligoHandlers :: StopAdapter -> DAP.HandlersSet (RIO LIGO)
 ligoHandlers stopAdapter = MorleyHandlers.safenHandler <$> concat
   [ [ MorleyHandlers.initializeHandler
@@ -475,6 +478,9 @@ instance HasSpecificMessages LIGO where
 
   processStep = processLigoStep
 
+-- | A handler for @TerminateRequest@.
+-- It releases all the resources (e.g. closes thread pools and
+-- clean-ups the server state).
 terminateHandler :: DAP.Handler (RIO LIGO)
 terminateHandler = mkLigoHandler \req@DAP.TerminateRequest{} -> do
   resetDAPState
@@ -493,6 +499,7 @@ terminateHandler = mkLigoHandler \req@DAP.TerminateRequest{} -> do
     submitEvent $ Just DAP.TerminatedEvent{ DAP.restart = Nothing }
     logMessage "Terminating the contract\n"
 
+-- | An intermediate action that would be done on one debugger step.
 onStep :: MonadRIO LIGO m => m ()
 onStep = do
   lServVar <- asks _rcLSState
@@ -525,6 +532,8 @@ mkLigoHandler
   => LigoHandlerBody r -> LigoHandler
 mkLigoHandler body = DAP.LowLevel.mkHandler (excHandlersWrapper . body)
 
+-- | A wrapper for exception handlers.
+-- Converts internal debugger exceptions to @DAP.Error@s.
 excHandlersWrapper
   :: (HasLigoClient m)
   => DAP.EventSubmitIO m
@@ -567,6 +576,9 @@ theThreadId = DAP.ThreadId 1
 topFrameId :: DAP.StackFrameId
 topFrameId = DAP.StackFrameId 1
 
+-- | Creates a task that decompiles a Michelson value to the LIGO one.
+-- Returns decompiled value if it's present in cache.
+-- Otherwise, returns @ToBeComputed@ stub.
 decompileValue
   :: (MonadIO m)
   => PreLigoConvertInfo
@@ -582,10 +594,13 @@ decompileValue convertInfo@(PreLigoConvertInfo val typ) manager = do
   mLigoVal <- DV.compute manager convertInfo
   pure $ fromMaybe ToBeComputed mLigoVal
 
+-- | A handler that resolves a configuration from LIGO.
 resolveConfigFromLigo :: DAP.Handler (RIO LIGO)
 resolveConfigFromLigo = mkLigoHandler \req@LigoResolveConfigFromLigoRequest{} ->
   respond =<< resolveConfig req.configPath
 
+-- | A handler that initializes logging handler
+-- if the logging directory is provided.
 initializeLoggerHandler :: DAP.Handler (RIO LIGO)
 initializeLoggerHandler = mkLigoHandler \req@LigoInitializeLoggerRequest{} -> do
   let file = req.file
@@ -600,7 +615,13 @@ initializeLoggerHandler = mkLigoHandler \req@LigoInitializeLoggerRequest{} -> do
   respondAndAlso () do
     logMessage [int||Initializing logger for #{file} finished|]
 
-convertMichelsonValuesToLigo :: (HasLigoClient m) => (Text -> m ()) -> [PreLigoConvertInfo] -> m [LigoOrMichValue]
+-- | Converts a batch of Michelson values into LIGO ones.
+-- It's passed to @DV.newManager@ constructor.
+convertMichelsonValuesToLigo
+  :: (HasLigoClient m)
+  => (Text -> m ()) -- ^ Logging function.
+  -> [PreLigoConvertInfo] -- ^ Variables to convert.
+  -> m [LigoOrMichValue]
 convertMichelsonValuesToLigo logger inps = do
   let typesAndValues = inps
         <&> \(PreLigoConvertInfo val typ) -> (typ, val)
@@ -620,6 +641,7 @@ convertMichelsonValuesToLigo logger inps = do
       typesAndValues
       decompiledValues
 
+-- | A handler that initializes an empty server state.
 initializeLanguageServerState :: DAP.Handler (RIO LIGO)
 initializeLanguageServerState = mkLigoHandler \req@LigoInitializeLanguageServerStateRequest{} -> do
   lServVar <- asks _rcLSState
@@ -643,6 +665,9 @@ initializeLanguageServerState = mkLigoHandler \req@LigoInitializeLanguageServerS
     }
   DAP.respond ()
 
+-- | A handler that processes a configuration from VSCode.
+-- It also initializes a thread pool and a manager
+-- for values decompilation.
 setLigoConfigHandler :: DAP.Handler (RIO LIGO)
 setLigoConfigHandler = mkLigoHandler \req@LigoSetLigoConfigRequest{} -> do
   let maxStepsMb = RemainingSteps <$> req.maxSteps
@@ -663,6 +688,8 @@ setLigoConfigHandler = mkLigoHandler \req@LigoSetLigoConfigRequest{} -> do
 
   DAP.respond ()
 
+-- | A handler that sets the program path to the server's state.
+-- Returns a list of modules and their prettified versions.
 setProgramPathHandler :: DAP.Handler (RIO LIGO)
 setProgramPathHandler = mkLigoHandler \req@LigoSetProgramPathRequest{} -> do
   getExt req.program
@@ -683,6 +710,7 @@ setProgramPathHandler = mkLigoHandler \req@LigoSetProgramPathRequest{} -> do
     let program = req.program
     logMessage [int||Setting program path #{program} is finished|]
 
+-- | A handler that validates a module name with entry points.
 validateModuleNameHandler :: DAP.Handler (RIO LIGO)
 validateModuleNameHandler = mkLigoHandler \req@LigoValidateModuleNameRequest{} -> do
   program <- getProgram
@@ -690,6 +718,9 @@ validateModuleNameHandler = mkLigoHandler \req@LigoValidateModuleNameRequest{} -
 
   respond $ ligoValidateFromEither (first pretty result)
 
+-- | A handler that compiles the contract, extracts all
+-- the interesting information from it, and updates server's state.
+-- Returns @ContractMetadata@.
 getContractMetadataHandler :: DAP.Handler (RIO LIGO)
 getContractMetadataHandler = mkLigoHandler \req@LigoGetContractMetadataRequest{} -> do
   lServVar <- asks (_rcLSState @LIGO)
@@ -776,6 +807,7 @@ getContractMetadataHandler = mkLigoHandler \req@LigoGetContractMetadataRequest{}
               JsonFromBuildable <$> michelsonEntrypoints
           }
 
+-- | A handler that validates LIGO's entry point name.
 validateEntrypointHandler :: DAP.Handler (RIO LIGO)
 validateEntrypointHandler = mkLigoHandler \req@LigoValidateEntrypointRequest{} -> do
   let pickedEntrypoint = U.UnsafeEpName req.pickedEntrypoint
@@ -792,6 +824,7 @@ validateEntrypointHandler = mkLigoHandler \req@LigoValidateEntrypointRequest{} -
   else
     respond $ LigoValidateFailed [int||Entrypoint #{pickedEntrypoint} doesn't exist|]
 
+-- | A handler that validates a value of specific category (parameter or storage).
 validateValueHandler :: DAP.Handler (RIO LIGO)
 validateValueHandler = mkLigoHandler \req@LigoValidateValueRequest{} -> do
   CollectedRunInfo
@@ -821,6 +854,10 @@ validateValueHandler = mkLigoHandler \req@LigoValidateValueRequest{} -> do
 
   respond $ ligoValidateFromEither parseRes
 
+-- | A handler that validates a debugging configuration using cached
+-- values from the server's state.
+--
+-- It validates parameter and storage in a specific language (LIGO or Michelson).
 validateConfigHandler :: DAP.Handler (RIO LIGO)
 validateConfigHandler = mkLigoHandler \req@LigoValidateConfigRequest{} -> do
   -- Getting a contract here because of GHC complains:
@@ -866,6 +903,10 @@ validateConfigHandler = mkLigoHandler \req@LigoValidateConfigRequest{} -> do
 
   respond ()
 
+-- | Initialize a debugging session.
+--
+-- This function should be called when the debugging configuration
+-- is resolved and server's state is filled.
 initDebuggerSession
   :: LigoLaunchRequest
   -> RIO LIGO (DAPSessionState (InterpretSnapshot 'Unique))
@@ -933,6 +974,7 @@ initDebuggerSession req = do
 
   pure $ DAPSessionState ds mempty mempty
 
+-- | Initializes a contract's environment.
 initContractEnv
   :: (MonadIO m)
   => ContractState -> LigoContractEnv -> RemainingSteps -> m (ContractEnv IO)
@@ -975,6 +1017,7 @@ initContractEnv selfState env ceMaxSteps = do
   let ceOperationHash = Nothing
   pure ContractEnv{ceMetaWrapper = id, ..}
 
+-- | Initializes a debugger state with lazy snapshots and source locations.
 initDebuggerState :: InterpretHistory is -> Set SourceLocation -> DebuggerState is
 initDebuggerState his allLocs = DebuggerState
   { _dsSnapshots = playInterpretHistory his

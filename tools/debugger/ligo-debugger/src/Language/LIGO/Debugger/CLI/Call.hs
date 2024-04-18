@@ -68,6 +68,7 @@ strArg = LigoCliArg . protect . toString
       ('-' : _) -> ' ' : arg
       _ -> arg
 
+-- | Wrap arbitrary @IOError@ into @LigoIOException@.
 rewrapIOError :: MonadUnliftIO m => m a -> m a
 rewrapIOError = UnliftIO.handle \exc@IOException.IOError{} ->
   UnliftIO.throwIO LigoIOException
@@ -75,6 +76,8 @@ rewrapIOError = UnliftIO.handle \exc@IOException.IOError{} ->
     , lieDescription = toText $ IOException.ioe_description exc
     }
 
+-- | Same as @callLigo@ but returns lazy bytes instead.
+-- It's useful when the output could be large (e.g. @compileLigoContractDebug@).
 callLigoBS :: HasLigoClient m => Maybe FilePath -> [LigoCliArg] -> m LByteString
 callLigoBS _rootDir args = do
   LigoClientEnv {..} <- getLigoClientEnv
@@ -117,6 +120,8 @@ callLigo rootDir args = do
 -- LIGO Debugger stuff
 ----------------------------------------------------------------------------
 
+-- | Handles exceptions that may be produced when calling a LIGO executable.
+-- Maps them to the debugger ones.
 withMapLigoExc :: (HasLigoClient m) => m a -> m a
 withMapLigoExc = flip catches
   [ Handler \(e :: LigoClientFailureException) ->
@@ -195,6 +200,7 @@ compileLigoExpression valueOrigin ctxFile expr = withMapLigoExc $
         & first (LigoDecodeException "parsing Michelson value" .  pretty)
         & fromEither
 
+-- | Get all modules with entry points.
 getAvailableModules :: forall m. (HasLigoClient m)
                         => FilePath -> m ModuleNamesList
 getAvailableModules file = withMapLigoExc $
@@ -232,6 +238,7 @@ decompileLigoValues typesAndValues = withMapLigoExc do
     decodeOutput = either (throwIO . LigoDecodeException "decoding ligo decompile" . toText) pure
       . Aeson.eitherDecode
 
+-- | Resolve a debugging configuration written in LIGO.
 resolveConfig :: forall m. (HasLigoClient m) => FilePath -> m LigoLaunchRequest
 resolveConfig configPath = withMapLigoExc do
   handleJSONException LigoResolveConfigException $
@@ -272,6 +279,7 @@ resolveConfig configPath = withMapLigoExc do
           votingPowers <- o .:? "voting_powers"
           pure LigoContractEnv{..}
 
+-- | @getScopes path@ gets all scopes for the contract that has a @path@ file path.
 getScopes :: forall m. (HasLigoClient m) => FilePath -> m LigoDefinitions
 getScopes contractPath = withMapLigoExc do
   callLigoBS Nothing
@@ -286,6 +294,8 @@ getScopes contractPath = withMapLigoExc do
     decodeOutput = either (throwIO . LigoDecodeException "decoding ligo scopes" . toText) pure
       . Aeson.eitherDecode
 
+-- | @decodeCST files@ takes a batch of @files@ and produces parsed ASTs.
+-- The order of produced ASTs corresponds to the order of @files@.
 decodeCST :: forall m. (HasLigoClient m) => NonEmpty FilePath -> m [SomeLIGO Info]
 decodeCST files = withMapLigoExc $
   callLigoBS

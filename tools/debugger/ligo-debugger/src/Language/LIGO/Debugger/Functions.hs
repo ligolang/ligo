@@ -52,6 +52,8 @@ instance SingI u => Buildable (LambdaName u) where
     LName n -> build n
     LNameUnknown -> build internalStackFrameName
 
+-- | Compares a passed unique name with @LambdaName@.
+-- Returns @False@ if lambda's name is unknown or they don't match.
 matchesUniqueLambdaName :: Name 'Unique -> LambdaName 'Unique -> Bool
 matchesUniqueLambdaName n1 = \case
   LName n2 -> n1 `compareUniqueNames` n2
@@ -59,8 +61,8 @@ matchesUniqueLambdaName n1 = \case
 
 -- | An argument applied to lambda.
 data LambdaArg u = LambdaArg
-  { laValue :: T.SomeValue
-  , laType :: LigoTypeF u
+  { laValue :: T.SomeValue -- ^ Argument's Michelson value.
+  , laType :: LigoTypeF u -- ^ Argument's LIGO type.
   } deriving stock (Generic)
 
 deriving stock instance (Show (LigoTypeF u)) => Show (LambdaArg u)
@@ -75,8 +77,8 @@ instance (ForInternalUse, SingI u) => Buildable (LambdaArg u) where
 
 -- | Information that comes along with a lambda being named.
 data LambdaNamedInfo u = LambdaNamedInfo
-  { lniName :: Name u
-  , lniType :: LigoType
+  { lniName :: Name u -- ^ Lambda's name.
+  , lniType :: LigoType -- ^ Lambda's type.
   } deriving stock (Show, Generic)
     deriving anyclass (NFData)
 
@@ -91,7 +93,7 @@ data ApplicationMeta u = ApplicationMeta
     -- ^ A name of applied function.
     -- It is @Nothing@ if applied expression isn't a function name.
     -- E.g. @(f a) b@.
-  , amAppliedArguments :: [LambdaArg u]
+  , amAppliedArguments :: [LambdaArg u] -- ^ Applied arguments.
   , amPreviousApplication :: Maybe (ApplicationMeta u)
     -- ^ We don't want to lose an information about previously applied
     -- functions.
@@ -224,6 +226,9 @@ lambdaMetaL = lens
 mLambdaMetaL :: Traversal' (T.Value t) (Maybe LambdaMeta)
 mLambdaMetaL f = \case{ v@T.VLam{} -> lambdaMetaL f v; v -> pure v }
 
+-- | Embeds a unique lambda's name with its type into arbitrary value.
+-- Does nothing if value is not a lambda or the topmost
+-- recorded unique name matches with the passed one.
 embedFunctionNameIntoLambda
   :: LigoVariable 'Unique
   -> LigoType
@@ -236,6 +241,8 @@ embedFunctionNameIntoLambda (LigoVariable newName) newType =
     events ->
       LambdaNamedInfo newName newType : events
 
+-- | @tryToEmbedEnvIntoLambda vec (entry, stkEl)@ tries to embed @entry@'s name into
+-- @stkEl@'s value if and only if the @entry@'s type is an arrow one.
 tryToEmbedEnvIntoLambda :: LigoTypesVec -> (LigoStackEntry 'Unique, StkEl meta t) -> StkEl meta t
 tryToEmbedEnvIntoLambda vec (LigoStackEntry LigoExposedStackEntry{..}, stkEl@(MkStkEl m val)) =
   case (leseDeclaration, vec `readLigoType` leseType) of
@@ -244,6 +251,8 @@ tryToEmbedEnvIntoLambda vec (LigoStackEntry LigoExposedStackEntry{..}, stkEl@(Mk
     _ -> stkEl
 tryToEmbedEnvIntoLambda _ (_, stkEl) = stkEl
 
+-- | @embedFunctionNames vec stack ligoStack@ embeds function names from @ligoStack@
+-- to the corresponding elements in the @stack@.
 embedFunctionNames :: LigoTypesVec -> Rec (StkEl meta) t -> LigoStack 'Unique -> Rec (StkEl meta) t
 embedFunctionNames vec (x :& xs) (y : ys) = tryToEmbedEnvIntoLambda vec (y, x) :& embedFunctionNames vec xs ys
 embedFunctionNames _ stack [] = stack
@@ -269,9 +278,11 @@ setAppliedArgs functionNameMb args (LambdaMeta evs oldArgs) =
         Nothing -> inner{ amAppliedArguments = amAppliedArguments <> args }
     mergeMetas Nothing = defaultMeta
 
+-- | Gets @LambdaMeta@ from lambda Michelson value.
 getLambdaMeta :: T.Value ('T.TLambda i o) -> LambdaMeta
 getLambdaMeta = fromMaybe def . view lambdaMetaL
 
+-- | Makes a concise lambda argument from the unique one.
 makeConciseLambdaArg :: LigoTypesVec -> LambdaArg 'Unique -> LambdaArg 'Concise
 makeConciseLambdaArg vec arg =
   let
@@ -279,6 +290,7 @@ makeConciseLambdaArg vec arg =
     laValue = arg ^. laValueL
   in LambdaArg{..}
 
+-- | Make a concise application meta from the unique one.
 makeConciseApplicationMeta :: LigoTypesVec -> ApplicationMeta 'Unique -> ApplicationMeta 'Concise
 makeConciseApplicationMeta vec appMeta =
   let
@@ -287,6 +299,7 @@ makeConciseApplicationMeta vec appMeta =
     amPreviousApplication = makeConciseApplicationMeta vec <$> appMeta ^. amPreviousApplicationL
   in ApplicationMeta{..}
 
+-- | Extracts an application meta from an arbitrary value.
 extractApplicationMeta :: T.SomeValue -> Maybe (ApplicationMeta 'Unique)
 extractApplicationMeta = \case
   T.SomeValue val@T.VLam{} -> lmApplicationMeta =<< val ^. lambdaMetaL

@@ -55,11 +55,16 @@ data CollectedRunInfo where
      . (T.ParameterScope cp, T.StorageScope st)
     =>
     { criContract :: T.Contract cp st
+      -- ^ Compiled contract.
     , criEpcMb :: Maybe (T.EntrypointCallT cp arg)
+      -- ^ Entry point lifting sequence.
     , criParameterMb :: Maybe (T.Value arg)
+      -- ^ Compiled parameter.
     , criStorageMb :: Maybe (T.Value st)
+      -- ^ Compiled storage.
     } -> CollectedRunInfo
 
+-- | Creates @CollectedRunInfo@ from compiled contract.
 onlyContractRunInfo
   :: forall cp st
    . (T.ParameterScope cp, T.StorageScope st)
@@ -92,17 +97,28 @@ instance Hashable PreLigoConvertInfo where
 -- creation.
 data LigoLanguageServerState = LigoLanguageServerState
   { lsProgram :: Maybe FilePath
+    -- ^ A path to the main contract's file.
   , lsCollectedRunInfo :: Maybe CollectedRunInfo
+    -- ^ A collected information that is required
+    -- to launch the contract.
   , lsAllLocs :: Maybe (Set SourceLocation)
+    -- ^ Statement + interesting expression locations.
   , lsBinaryPath :: Maybe FilePath
+    -- ^ A path to LIGO binary.
   , lsParsedContracts :: Maybe (HashMap FilePath (LIGO Info))
+    -- ^ All parsed LIGO files.
   , lsLambdaLocs :: Maybe (HashSet Range)
+    -- ^ Locations assigned to @LAMBDA@ instruction.
   , lsLigoTypesVec :: Maybe LigoTypesVec
+    -- ^ A contract's type environment.
   , lsEntrypoints :: Maybe (Map U.EpName U.Ty)
     -- ^ A list of available @Michelson@ entrypoints.
   , lsPickedEntrypoint :: Maybe Text
+    -- ^ An entry point name to run.
   , lsVarsComputeThreadPool :: Maybe AbortingThreadPool.Pool
+    -- ^ A thread pool for variables decompilation.
   , lsToLigoValueConverter :: Maybe (DelayedValues.Manager PreLigoConvertInfo LigoOrMichValue)
+    -- ^ A manager that converts @PreLigoConvertInfo@ into @LigoOrMichValue@.
   , lsMoveId :: Word
     -- ^ The identifier of position, assigned a unique id after each step
     -- (visiting the same snapshot twice will also result in different ids).
@@ -122,10 +138,14 @@ instance Buildable LigoLanguageServerState where
     Debugging program: #{lsProgram}
     |]
 
+-- | @withMichelsonEntrypoint contract entrypoint cont@ extracts
+-- annotations @Notes arg@ and entry point lifting sequence @EntrypointCallT param arg@
+-- and passes them into @cont@.
+-- Throws @ConfigurationException@ if @entrypoint@ doesn't exist or it's malformed.
 withMichelsonEntrypoint
   :: (MonadIO m)
   => T.Contract param st
-  -> Text
+  -> Text -- ^ Entry point name.
   -> (forall arg. SingI arg => T.Notes arg -> T.EntrypointCallT param arg -> m a)
   -> m a
 withMichelsonEntrypoint contract@T.Contract{} entrypoint cont = do
@@ -198,94 +218,139 @@ parseValue ctxContractPath category val valueLang ligoType = runExceptT do
       |]
     & liftEither
 
+-- | Gets server state.
+-- Throws @PluginCommunicationException@ if the state is not
+-- initialized.
 getServerState :: MonadRIO ext m => m (LanguageServerStateExt ext)
 getServerState =
   asks _rcLSState >>= readTVarIO >>=
     maybe (throwIO uninitLanguageServerExc) pure
 
+-- | An exception that is thrown when the server state is
+-- uninitialized.
 uninitLanguageServerExc :: PluginCommunicationException
 uninitLanguageServerExc =
   PluginCommunicationException "Language server state is not initialized"
 
+-- | @expectInitialized errMsg maybeM@ tries to unwrap @Maybe@
+-- inside @maybeM@ computation.
+-- Throws @PluginCommunicationException@ with @errMsg@ text
+-- if underlying value is @Nothing@.
 expectInitialized :: (MonadIO m) => Text -> m (Maybe a) -> m a
 expectInitialized errMsg maybeM = maybeM >>= \case
   Nothing -> throwIO $ PluginCommunicationException errMsg
   Just val -> pure val
 
+-- | Gets a program.
+-- Throws a @PluginCommunicationException@ if @lsProgram@ field is @Nothing@.
 getProgram
   :: (LanguageServerStateExt ext ~ LigoLanguageServerState)
   => MonadRIO ext m => m FilePath
 getProgram = "Program is not initialized" `expectInitialized` (lsProgram <$> getServerState)
 
+-- | Gets a collected run info.
+-- Throws a @PluginCommunicationException@ if @lsCollectedRunInfo@ field is @Nothing@.
 getCollectedRunInfo
   :: (LanguageServerStateExt ext ~ LigoLanguageServerState)
   => MonadRIO ext m => m CollectedRunInfo
 getCollectedRunInfo =
   "Collected run info is not initialized" `expectInitialized` (lsCollectedRunInfo <$> getServerState)
 
+-- | Gets all locations.
+-- Throws @PluginCommunicationException@ if @lsAllLocs@ field is @Nothing@.
 getAllLocs
   :: (LanguageServerStateExt ext ~ LigoLanguageServerState)
   => MonadRIO ext m => m (Set SourceLocation)
 getAllLocs = "All locs are not initialized" `expectInitialized` (lsAllLocs <$> getServerState)
 
+-- | Gets all parsed contract files.
+-- Throws @PluginCommunicationException@ if @lsParsedContracts@ field is @Nothing@.
 getParsedContracts
   :: (LanguageServerStateExt ext ~ LigoLanguageServerState)
   => MonadRIO ext m => m (HashMap FilePath (LIGO Info))
 getParsedContracts =
   "Parsed contracts are not initialized" `expectInitialized` (lsParsedContracts <$> getServerState)
 
+-- | Gets all lambda locations.
+-- Throws @PluginCommunicationException@ if @lsLambdaLocs@ field is @Nothing@.
 getLambdaLocs
   :: (LanguageServerStateExt ext ~ LigoLanguageServerState)
   => MonadRIO ext m => m (HashSet Range)
 getLambdaLocs = "Lambda locs are not initialized" `expectInitialized` (lsLambdaLocs <$> getServerState)
 
+-- | Gets max steps.
 getMaxStepsMb
   :: (LanguageServerStateExt ext ~ LigoLanguageServerState)
   => MonadRIO ext m => m (Maybe RemainingSteps)
 getMaxStepsMb = lsMaxSteps <$> getServerState
 
+-- | Gets entry point LIGO type.
+-- Throws @PluginCommunicationException@ if @lsEntrypointType@ field is @Nothing@.
 getEntrypointType
   :: (LanguageServerStateExt ext ~ LigoLanguageServerState)
   => MonadRIO ext m => m LigoType
 getEntrypointType = "Entrypoint type is not initialized" `expectInitialized` (lsEntrypointType <$> getServerState)
 
+-- | Gets contract's type environment.
+-- Throws @PluginCommunicationException@ if @lsLigoTypesVec@ field is @Nothing@.
 getLigoTypesVec
   :: (LanguageServerStateExt ext ~ LigoLanguageServerState)
   => MonadRIO ext m => m LigoTypesVec
 getLigoTypesVec = "Ligo types are not initialized" `expectInitialized` (lsLigoTypesVec <$> getServerState)
 
+-- | Gets a map from entry point name to its type.
+-- Throws @PluginCommunicationException@ if @lsEntrypoints@ field is @Nothing@.
 getEntrypoints
   :: (LanguageServerStateExt ext ~ LigoLanguageServerState)
   => MonadRIO ext m => m (Map U.EpName U.Ty)
 getEntrypoints = "Entrypoints are not initialized" `expectInitialized` (lsEntrypoints <$> getServerState)
 
+-- | Gets picked entry point name.
+-- Throws @PluginCommunicationException@ if @lsPickedEntrypoint@ field is @Nothing@.
 getPickedEntrypoint
   :: (LanguageServerStateExt ext ~ LigoLanguageServerState)
   => MonadRIO ext m => m Text
 getPickedEntrypoint = "Picked entrypoint is not initialized" `expectInitialized` (lsPickedEntrypoint <$> getServerState)
 
+-- | Gets scopes.
+-- Throws @PluginCommunicationException@ if @lsScopes@ field is @Nothing@.
 getLigoScopes
   :: (LanguageServerStateExt ext ~ LigoLanguageServerState)
   => MonadRIO ext m => m (HashMap FilePath [Scope])
 getLigoScopes = "Scopes are not initialized" `expectInitialized` (lsScopes <$> getServerState)
 
+-- | Gets argument ranges.
+-- Throws @PluginCommunicationException@ if @lsArgumentRanges@ field is @Nothing@.
 getArgumentRanges
   :: (LanguageServerStateExt ext ~ LigoLanguageServerState)
   => MonadRIO ext m => m (HashSet Range)
 getArgumentRanges = "Argument ranges are not initialized" `expectInitialized` (lsArgumentRanges <$> getServerState)
 
+-- | Gets a thread pool for variables decompilation.
+-- Throws @PluginCommunicationException@ if @lsVarsComputeThreadPool@ field is @Nothing@.
 getVarsComputeThreadPool
   :: (LanguageServerStateExt ext ~ LigoLanguageServerState)
   => MonadRIO ext m => m AbortingThreadPool.Pool
 getVarsComputeThreadPool =
   "Thread pool is not initialized" `expectInitialized` (lsVarsComputeThreadPool <$> getServerState)
 
+-- | Gets LIGO value's converting manager.
+-- Throws @PluginCommunicationException@ if @lsToLigoValueConverter@ field is @Nothing@.
 getToLigoValueConverter
   :: (LanguageServerStateExt ext ~ LigoLanguageServerState)
   => MonadRIO ext m => m (DelayedValues.Manager PreLigoConvertInfo LigoOrMichValue)
 getToLigoValueConverter =
   "To LIGO value converter is not initialized" `expectInitialized` (lsToLigoValueConverter <$> getServerState)
 
+-- | @getParameterStorageAndOpsTypes epType@ assumes that @epType@ has
+-- the following format: @(param * st) -> operation list * st@
+--
+-- Returns if format matches:
+-- 1. @param@ type.
+-- 2. @st@ type.
+-- 3. @operation list * st@ type.
+--
+-- Otherwise, return 3 @LigoTypeUnresolved@.
 getParameterStorageAndOpsTypes :: LigoType -> (LigoType, LigoType, LigoType)
 getParameterStorageAndOpsTypes (LigoTypeResolved typ) =
   fromMaybe (LigoType Nothing, LigoType Nothing, LigoType Nothing) do
@@ -295,8 +360,9 @@ getParameterStorageAndOpsTypes (LigoTypeResolved typ) =
     param <- _lttFields HM.!? "0"
     st <- _lttFields HM.!? "1"
     pure (LigoTypeResolved param, LigoTypeResolved st, LigoTypeResolved _ltaType2)
-getParameterStorageAndOpsTypes _ = (LigoType Nothing, LigoType Nothing, LigoType Nothing)
+getParameterStorageAndOpsTypes _ = (LigoTypeUnresolved, LigoTypeUnresolved, LigoTypeUnresolved)
 
+-- | Parses all passed contracts.
 parseContracts :: (HasLigoClient m) => [FilePath] -> m (HashMap FilePath (LIGO Info))
 parseContracts allFiles = do
   allFilesNE <-

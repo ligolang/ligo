@@ -24,585 +24,916 @@ import Language.LIGO.Range
 -- All these types are mostly mappings
 -- for the corresponding types from @CST.ml@.
 
+-- | A CST of @JsLIGO@ contract file.
 data CST = CST
   { cstStatements :: Statements
+    -- ^ Top-level statements.
   , cstEof :: WrappedLexeme
+    -- ^ Eof lexeme.
   }
   deriving stock (Show, Generic)
   deriving anyclass (NFData)
 
+-- | Top-level statements.
 type Statements = [Tuple1 Statement]
 
+-- | All the statements.
 data Statement
   = SAttr (Tuple1 Statement)
+    -- ^ Statement with the attribute.
   | SBlock (Par Statements)
+    -- ^ Statements in braces.
   | SBreak WrappedLexeme
+    -- ^ Break statement.
   | SContinue WrappedLexeme
+    -- ^ Continue statement.
   | SDecl Declaration
+    -- ^ Declaration statement.
   | SExport (Reg ExportStmt)
+    -- ^ Export statement.
   | SExpr Expr
+    -- ^ Expression statement.
   | SFor (Reg ForStmt)
+    -- ^ @for@ loop statement.
   | SForOf (Reg ForOfStmt)
+    -- ^ @for (.. of ..)@ loop statement.
   | SIf (Reg IfStmt)
+    -- ^ Conditional statement.
   | SReturn (Reg ReturnStmt)
+    -- ^ Return statement.
   | SSwitch (Reg SwitchStmt)
+    -- ^ Switch statement.
   | SWhile (Reg WhileStmt)
+    -- ^ @while@ loop statement.
   deriving stock (Show, Generic)
   deriving anyclass (NFData)
 
+-- | Like @Par'@ but with assigned region.
 type Par a = Reg (Par' a)
+
+-- | A value in parenthesis, brackets, braces, etc.
 newtype Par' a = Par'
   { pInside :: a
+    -- ^ A value inside.
   }
   deriving stock (Show, Generic)
   deriving anyclass (NFData)
 
+-- | All declarations.
 data Declaration
   = DFun (Reg FunDecl)
+    -- ^ Function declaration.
   | DImport ImportDecl
+    -- ^ Import namespace declaration.
   | DInterface (Reg InterfaceDecl)
+    -- ^ Interface declaration.
   | DNamespace (Reg NamespaceDecl)
+    -- ^ Namespace declaration.
   | DType (Reg TypeDecl)
+    -- ^ Type declaration.
   | DValue (Reg ValueDecl)
+    -- ^ Value declaration.
   deriving stock (Show, Generic)
   deriving anyclass (NFData)
 
+-- | Export statement.
 type ExportStmt = Tuple1 Declaration
 
+-- | A binary operation.
 data BinOp a = BinOp
   { boArg1 :: Expr
+    -- ^ Left-hand side.
   , boOp :: a
+    -- ^ Operator.
   , boArg2 :: Expr
+    -- ^ Right-hand side.
   }
   deriving stock (Show, Generic)
   deriving anyclass (NFData)
 
+-- | An unary operation.
 data UnOp a = UnOp
   { uoOp :: a
+    -- ^ Operator.
   , uoArg :: Expr
+    -- ^ Expression argument.
   }
   deriving stock (Show, Generic)
   deriving anyclass (NFData)
 
+-- | A type alias for some binary operation.
 type SomeBinOp = Reg (BinOp WrappedLexeme)
+
+-- | A type alias for some unary operation.
 type SomeUnOp = Reg (UnOp WrappedLexeme)
 
+-- | All expressions.
 data Expr
   = EAdd SomeBinOp
+    -- ^ Add expression.
   | EAddEq SomeBinOp
+    -- ^ Add and assign expression.
   | EAnd SomeBinOp
+    -- ^ Logical and expression.
   | EApp (Reg (Expr, Arguments))
+    -- ^ Expression application.
   | EArray (Array Expr)
+    -- ^ Array expression.
   | EArrowFun (Reg ArrowFunExpr)
+    -- ^ Arrow lambda expression.
   | EAssign SomeBinOp
+    -- ^ Assignment expression.
   | EAttr (Tuple1 Expr)
+    -- ^ Expression with the attribute.
   | EBitAnd SomeBinOp
+    -- ^ Bitwise and expression.
   | EBitAndEq SomeBinOp
+    -- ^ Bitwise and and assign expression.
   | EBitNeg SomeUnOp
+    -- ^ Bitwise negation expression.
   | EBitOr SomeBinOp
+    -- ^ Bitwise or expression.
   | EBitOrEq SomeBinOp
+    -- ^ Bitwise or and assign expression.
   | EBitSl SomeBinOp
+    -- ^ Bitwise shift-left expression.
   | EBitSlEq SomeBinOp
+    -- ^ Bitwise shift-left and assign expression.
   | EBitSr SomeBinOp
+    -- ^ Bitwise shift-right expression.
   | EBitSrEq SomeBinOp
+    -- ^ Bitwise shift-right and assign expression.
   | EBitXor SomeBinOp
+    -- ^ Bitwise xor expression.
   | EBitXorEq SomeBinOp
+    -- ^ Bitwise xor and assign expression.
   | EBytes WrappedTupleLexeme
+    -- ^ Bytes expression.
   | ECodeInj (Reg CodeInj)
+    -- ^ Code injection expression.
   | EContractOf (Reg ContractOfExpr)
+    -- ^ @contract_of@ expression.
   | ECtorApp (VariantKind Expr)
+    -- ^ Constructor application expression.
   | EDiv SomeBinOp
+    -- ^ Division expression.
   | EDivEq SomeBinOp
+    -- ^ Division and assign expression.
   | EDo (Reg DoExpr)
+    -- ^ Do-expression.
   | EEqual SomeBinOp
+    -- ^ Equality check expression.
   | EFalse WrappedLexeme
+    -- ^ @False@ value expression.
   | EFunction (Reg FunctionExpr)
+    -- ^ Function lambda expression.
   | EGeq SomeBinOp
+    -- ^ @>=@ expression.
   | EGt SomeBinOp
+    -- ^ @>@ expression.
   | EInt WrappedTupleLexeme
+    -- ^ Integer expression.
   | ELeq SomeBinOp
+    -- ^ @<=@ expression.
   | ELt SomeBinOp
+    -- ^ @<@ expression.
   | EMatch (Reg MatchExpr)
+    -- ^ Match expression.
   | EMult SomeBinOp
+    -- ^ Multiplication expression
   | EMultEq SomeBinOp
+    -- ^ Multiplication and assign expression
   | EMutez WrappedTupleLexeme
+    -- ^ Mutez expression.
   | ENamePath (Reg (NamespacePath Expr))
+    -- ^ Namespace path expression.
   | ENat WrappedTupleLexeme
+    -- ^ Natural expression.
   | ENeg SomeUnOp
+    -- ^ Negation expression.
   | ENeq SomeBinOp
+    -- ^ Not-equality check expression.
   | ENot SomeUnOp
+    -- ^ Logical negation expression.
   | EObject (Object Expr)
+    -- ^ Object expression.
   | EOr SomeBinOp
+    -- ^ Logical or expression.
   | EPar (Par Expr)
+    -- ^ Expression in the parenthesis.
   | EPostDecr SomeUnOp
+    -- ^ Post decrement expression.
   | EPostIncr SomeUnOp
+    -- ^ Post increment expression.
   | EPreDecr SomeUnOp
+    -- ^ Pre decrement expression.
   | EPreIncr SomeUnOp
+    -- ^ Pre increment expression.
   | EProj (Reg Projection)
+    -- ^ Projection expression.
   | ERem SomeBinOp
+    -- ^ Remainder expression.
   | ERemEq SomeBinOp
+    -- ^ Remainder and assign expression.
   | EString WrappedLexeme
+    -- ^ String expression.
   | ESub SomeBinOp
+    -- ^ Subtract expression.
   | ESubEq SomeBinOp
+    -- ^ Subtract and assign expression.
   | ETernary (Reg Ternary)
+    -- ^ Ternary expression.
   | ETrue WrappedLexeme
+    -- ^ @True@ value expression.
   | ETyped (Reg TypedExpr)
+    -- ^ Expression with type.
   | EUpdate (Par UpdateExpr)
+    -- ^ Object update expression.
   | EVar WrappedLexeme
+    -- ^ Variable expression.
   | EVerbatim WrappedLexeme
+    -- ^ Verbatim string expression.
   | EXor SomeBinOp
+    -- ^ Logical xor expression.
   deriving stock (Show, Generic)
   deriving anyclass (NFData)
 
+-- | An array.
 type Array a = Par [Element a]
+
+-- | Array's element.
 type Element a = Tuple1 a
 
+-- | @for@ loop statement.
 data ForStmt = ForStmt
   { fsRange :: Par RangeFor
+    -- ^ Loop's range.
   , fsForBody :: Maybe Statement
+    -- ^ Loop's body.
   }
   deriving stock (Show, Generic)
   deriving anyclass (NFData)
 
+-- | @for@ loop range.
 data RangeFor = RangeFor
   { rfInitialiser :: Maybe Statement
+    -- ^ Initialise loop.
   , rfCondition :: Maybe Expr
+    -- ^ Condition in loop.
   , rfAfterthought :: Maybe [Expr]
+    -- ^ An action after iteration.
   }
   deriving stock (Show, Generic)
   deriving anyclass (NFData)
 
+-- | @for (.. of ..)@ loop statement.
 data ForOfStmt = ForOfStmt
   { fosRange :: Par RangeOf
+    -- ^ Loop's range.
   , fosForOfBody :: Statement
+    -- ^ Loop's body.
   }
   deriving stock (Show, Generic)
   deriving anyclass (NFData)
 
+-- | @for (.. of ..)@ loop range.
 data RangeOf = RangeOf
   { roIndex :: Pattern
+    -- ^ Element of collection.
   , roExpr :: Expr
+    -- ^ Iterable collection.
   }
   deriving stock (Show, Generic)
   deriving anyclass (NFData)
 
+-- | Variable kind.
 data VarKind
   = Let
+    -- ^ Mutable variable.
   | Const
+    -- ^ Immutable variable.
   deriving stock (Show, Generic)
   deriving anyclass (NFData)
 
+-- | Conditional statement.
 data IfStmt = IfStmt
   { isTest :: Par Expr
+    -- ^ A condition to test.
   , isIfSo :: Tuple1 Statement
+    -- ^ @True@ branch of @if@ statement.
   , isIfNot :: Maybe (Tuple1 Statement)
+    -- ^ @False@ branch of @if@ statement.
   }
   deriving stock (Show, Generic)
   deriving anyclass (NFData)
 
+-- | Return statement.
 type ReturnStmt = Tuple1 (Maybe Expr)
 
+-- | Switch statement.
 data SwitchStmt = SwitchStmt
   { ssSubject :: Par Expr
+    -- ^ Expression to switch.
   , ssCases :: Par Cases
+    -- ^ Cases.
   }
   deriving stock (Show, Generic)
   deriving anyclass (NFData)
 
+-- | Switch cases.
 data Cases
   = AllCases AllCases
+    -- ^ Expression switch cases with possible default one.
   | Default (Reg SwitchDefault)
+    -- ^ A default case.
   deriving stock (Show, Generic)
   deriving anyclass (NFData)
 
+-- | Expression switch cases with possible default one.
 type AllCases = ([Reg SwitchCase], Maybe (Reg SwitchDefault))
 
+-- | One switch case.
 data SwitchCase = SwitchCase
   { scExpr :: Expr
+    -- ^ A left-hand side expression.
   , scCaseBody :: Maybe Statements
+    -- ^ A right-hand side statements.
   }
   deriving stock (Show, Generic)
   deriving anyclass (NFData)
 
+-- | Default switch case.
 newtype SwitchDefault = SwitchDefault
   { sdDefaultBody :: Maybe Statements
+    -- ^ Default's body.
   }
   deriving stock (Show, Generic)
   deriving anyclass (NFData)
 
+-- | @while@ loop statement.
 data WhileStmt = WhileStmt
   { wsInvariant :: Par Expr
+    -- ^ Loop's invariant.
   , wsWhileBody :: Statement
+    -- ^ Loop's body.
   }
   deriving stock (Show, Generic)
   deriving anyclass (NFData)
 
+-- | Function declaration.
 data FunDecl = FunDecl
   { fdFunName :: WrappedLexeme
+    -- ^ Function's name.
   , fdGenerics :: Maybe Generics
+    -- ^ Function's type parameters.
   , fdParameters :: FunParams
+    -- ^ Function's arguments.
   , fdRhsType :: Maybe TypeAnnotation
+    -- ^ Function's result type.
   , fdFunBody :: Par Statements
+    -- ^ Function's definition.
   }
   deriving stock (Show, Generic)
   deriving anyclass (NFData)
 
+-- | A type annotation.
 type TypeAnnotation = Tuple1 TypeExpr
 
+-- | All type expressions.
 data TypeExpr
   = TApp (Reg (TypeExpr, TypeCtorArgs))
+    -- ^ Type application.
   | TAttr (Tuple1 TypeExpr)
+    -- ^ Type with the attribute.
   | TArray ArrayType
+    -- ^ Array type.
   | TForAll (Reg (Generics, TypeExpr))
+    -- ^ For all type.
   | TFun FunType
+    -- ^ Named arrow type.
   | TInt WrappedTupleLexeme
+    -- ^ Integer singleton.
   | TNamePath (Reg (NamespacePath TypeExpr))
+    -- ^ Namespace path type.
   | TObject (Object TypeExpr)
+    -- ^ Object type.
   | TPar (Par TypeExpr)
+    -- ^ Type in the parenthesis.
   | TParameterOf (Reg ParameterOfType)
+    -- ^ @parameter_of@ type.
   | TString WrappedLexeme
+    -- ^ String singleton.
   | TUnion UnionType
+    -- ^ Union type.
   | TVar WrappedLexeme
+    -- ^ Type variable.
   | TVariant VariantType
+    -- ^ Variant type.
   deriving stock (Show, Generic)
   deriving anyclass (NFData)
 
+-- | Variant type.
 type VariantType = Reg (NonEmpty (VariantKind TypeExpr))
 
+-- | Variant type description cases.
 data VariantKind a
   = Variant (Reg (Variant a))
+    -- ^ Variant type construction.
   | Bracketed (Reg (BracketedVariant a))
+    -- ^ Variant type defined via @#[...]@ syntax.
   | Legacy (Reg (LegacyVariant a))
+    -- ^ Tupled definition.
   deriving stock (Show, Generic)
   deriving anyclass (NFData)
 
+-- | Variant type construction.
 newtype Variant a = VariantC
   { vTuple :: CtorApp a
+    -- ^ Constructor application.
   }
   deriving stock (Show, Generic)
   deriving anyclass (NFData)
 
+-- | @#[...]@ variant's syntax definition.
 newtype BracketedVariant a = BracketedVariant
   { bvTuple :: Par (BracketedVariantArgs a)
+    -- ^ Constructor with its arguments.
   }
   deriving stock (Show, Generic)
   deriving anyclass (NFData)
 
+-- | @#[...]@ variant's syntax arguments.
 data BracketedVariantArgs a = BracketedVariantArgs
   { bvaCtor :: a
+    -- ^ Constructor.
   , bvaArgs :: Maybe (Tuple1 [a])
+    -- ^ Arguments.
   }
   deriving stock (Show, Generic)
   deriving anyclass (NFData)
 
+-- | A tupled variant.
 newtype LegacyVariant a = LegacyVariant
   { lvTuple :: Par (LegacyVariantArgs a)
+    -- ^ Constructor with its arguments.
   }
   deriving stock (Show, Generic)
   deriving anyclass (NFData)
 
+-- | A tupled variant arguments.
 data LegacyVariantArgs a = LegacyVariantArgs
   { lvaCtor :: WrappedLexeme
+    -- ^ Contructor name.
   , lvaArgs :: [Tuple1 a]
+    -- ^ Arguments.
   }
   deriving stock (Show, Generic)
   deriving anyclass (NFData)
 
+-- | A union type.
 type UnionType = Reg (NonEmpty (Object TypeExpr))
 
+-- | @parameter_of@ type.
 newtype ParameterOfType = ParameterOfType
   { potNamespacePath :: NamespaceSelection
+    -- ^ Namespace path inside @parameter_of@.
   }
   deriving stock (Show, Generic)
   deriving anyclass (NFData)
 
+-- | A kind of namespace selection.
 data NamespaceSelection
   = MPath (Reg (NamespacePath WrappedLexeme))
+    -- ^ A dot-separated path.
   | MAlias WrappedLexeme
+    -- ^ A standalone namespace's name.
   deriving stock (Show, Generic)
   deriving anyclass (NFData)
 
+-- | Named arrow type.
 type FunType = Reg (FunTypeParams, TypeExpr)
 
+-- | Named parameters.
 type FunTypeParams = Par [Reg FunTypeParam]
 
+-- | Named parameter.
 type FunTypeParam = (Pattern, TypeAnnotation)
 
+-- | All patterns.
 data Pattern
   = PArray (Array Pattern)
+    -- ^ Array pattern.
   | PAttr (Tuple1 Pattern)
+    -- ^ Pattern with the attribute.
   | PBytes WrappedTupleLexeme
+    -- ^ Bytes pattern.
   | PCtorApp (VariantKind Pattern)
+    -- ^ Constructor application pattern.
   | PFalse WrappedLexeme
+    -- ^ @False@ value pattern.
   | PInt WrappedTupleLexeme
+    -- ^ Integer pattern.
   | PMutez WrappedTupleLexeme
+    -- ^ Mutez pattern.
   | PNamePath (Reg (NamespacePath Pattern))
+    -- ^ Namespace path pattern.
   | PNat WrappedTupleLexeme
+    -- ^ Natural pattern.
   | PObject (Object Pattern)
+    -- ^ Object pattern.
   | PString WrappedLexeme
+    -- ^ String pattern.
   | PTrue WrappedLexeme
+    -- ^ @True@ value pattern.
   | PTyped (Reg TypedPattern)
+    -- ^ Pattern with the type.
   | PVar WrappedLexeme
+    -- ^ Variable pattern.
   | PVerbatim WrappedLexeme
+    -- ^ Verbatim string pattern.
   deriving stock (Show, Generic)
   deriving anyclass (NFData)
 
+-- | Pattern with the type.
 type TypedPattern = (Pattern, TypeAnnotation)
 
+-- | Array type.
 type ArrayType = Par [TypeExpr]
 
+-- | Type application arguments.
 type TypeCtorArgs = Par [TypeExpr]
 
+-- | Function parameters.
 type FunParams = Par [Pattern]
 
+-- | Generic type parameters.
 type Generics = Par [WrappedLexeme]
 
+-- | Import declaration.
 data ImportDecl
   = ImportAlias (Reg ImportAlias)
+    -- ^ Alias declaration.
   | ImportAllAs (Reg ImportAllAs)
+    -- ^ Import all declaration.
   | ImportFrom (Reg ImportFrom)
+    -- ^ Import things from.
   deriving stock (Show, Generic)
   deriving anyclass (NFData)
 
+-- | Import alias declaration.
 data ImportAlias = ImportAliasC
   { iacAlias :: WrappedLexeme
+    -- ^ Alias name.
   , iacNamespacePath :: NamespaceSelection
+    -- ^ Path to the namespace.
   }
   deriving stock (Show, Generic)
   deriving anyclass (NFData)
 
+-- | Import all declaration.
 data ImportAllAs = ImportAllAsC
   { iaacAlias :: WrappedLexeme
+    -- ^ Alias name.
   , iaacFilePath :: WrappedLexeme
+    -- ^ A path to the file.
   }
   deriving stock (Show, Generic)
   deriving anyclass (NFData)
 
+-- | Import from declaration.
 data ImportFrom = ImportFromC
   { ifcImported :: Par [WrappedLexeme]
+    -- ^ Imported items.
   , ifcFilePath :: WrappedLexeme
+    -- ^ A path to the file.
   }
   deriving stock (Show, Generic)
   deriving anyclass (NFData)
 
+-- | Interface declaration.
 data InterfaceDecl = InterfaceDecl
   { idIntfName :: WrappedLexeme
+    -- ^ A name of interface.
   , idIntfExtends :: Maybe Extends
+    -- ^ Inherited interfaces.
   , idIntfBody :: IntfBody
+    -- ^ A body of interface.
   }
   deriving stock (Show, Generic)
   deriving anyclass (NFData)
 
+-- | Inherited interfaces.
 type Extends = Reg (Tuple1 [IntfExpr])
 
+-- | A body of interface.
 type IntfBody = Par IntrEntries
 
+-- | Entries in the interface.
 type IntrEntries = [IntfEntry]
 
+-- | Interface's entry kind.
 data IntfEntry
   = IAttr (Tuple1 IntfEntry)
+    -- ^ Entry with the attribute.
   | IType (Reg IntfType)
+    -- ^ Type definition entry.
   | IConst (Reg IntfConst)
+    -- ^ Constant definition entry.
   deriving stock (Show, Generic)
   deriving anyclass (NFData)
 
+-- | Type definition entry.
 data IntfType = IntfType
   { itTypeName :: WrappedLexeme
+    -- ^ Type's name.
   , itGenerics :: Maybe Generics
+    -- ^ Type's parameters.
   , itTypeRhs :: Maybe (Tuple1 TypeExpr)
+    -- ^ Possible type's definition.
   }
   deriving stock (Show, Generic)
   deriving anyclass (NFData)
 
+-- | Constant definition entry.
 data IntfConst = IntfConst
   { icConstName :: WrappedLexeme
+    -- ^ Constant's name.
   , icConstType :: TypeAnnotation
+    -- ^ Constant's type.
   }
   deriving stock (Show, Generic)
   deriving anyclass (NFData)
 
+-- | Namespace declaration.
 data NamespaceDecl = NamespaceDecl
   { ndNamespaceName :: WrappedLexeme
+    -- ^ Namespace's name.
   , ndNamespaceType :: Maybe Interface
+    -- ^ Namespace's interface.
   , ndNamespaceBody :: Par Statements
+    -- ^ Namespace's definition.
   }
   deriving stock (Show, Generic)
   deriving anyclass (NFData)
 
+-- | Interface type.
 type Interface = Reg (Tuple1 [IntfExpr])
 
+-- | Interface kind.
 data IntfExpr
   = IBody IntfBody
+    -- ^ Interface's body.
   | IPath NamespaceSelection
+    -- ^ Path to the interface.
   deriving stock (Show, Generic)
   deriving anyclass (NFData)
 
+-- | Type declaration.
 data TypeDecl = TypeDecl
   { tdName :: WrappedLexeme
+    -- ^ Type's name.
   , tdGenerics :: Maybe Generics
+    -- ^ Type's parameters.
   , tdTypeExpr :: TypeExpr
+    -- ^ Type's definition.
   }
   deriving stock (Show, Generic)
   deriving anyclass (NFData)
 
+-- | Value declaration.
 data ValueDecl = ValueDecl
   { vdKind :: VarKind
+    -- ^ Value's kind.
   , vdBindings :: NonEmpty (Reg ValBinding)
+    -- ^ Comma-separated bindings.
   }
   deriving stock (Show, Generic)
   deriving anyclass (NFData)
 
+-- | One value binding.
 data ValBinding = ValBinding
   { vbPattern :: Pattern
+    -- ^ Binding's pattern.
   , vbRhsType :: Maybe TypeAnnotation
+    -- ^ Binding's type.
   , vbRhsExpr :: Expr
+    -- ^ Binding's definition.
   }
   deriving stock (Show, Generic)
   deriving anyclass (NFData)
 
+-- | Expression application arguments.
 type Arguments = Par [Expr]
 
+-- | Arrow function expression.
 data ArrowFunExpr = ArrowFunExpr
   { afeGenerics :: Maybe Generics
+    -- ^ Type parameters.
   , afeParameters :: ArrowFunParams
+    -- ^ Function's arguments.
   , afeRhsType :: Maybe TypeAnnotation
+    -- ^ Function's return type.
   , afeFunBody :: FunBody
+    -- ^ Function's definition.
   }
   deriving stock (Show, Generic)
   deriving anyclass (NFData)
 
+-- | Function's body.
 data FunBody
   = StmtBody (Par Statements)
+    -- ^ Function definition via statements.
   | ExprBody Expr
+    -- ^ Function definition via expression.
   deriving stock (Show, Generic)
   deriving anyclass (NFData)
 
+-- | Function's arguments.
 data ArrowFunParams
   = ParParams FunParams
+    -- ^ Arguments in parenthesis.
   | NakedParam Pattern
+    -- ^ Standalone function argument.
   deriving stock (Show, Generic)
   deriving anyclass (NFData)
 
+-- | A code injection expression.
 data CodeInj = CodeInj
   { ciLanguage :: WrappedLexeme
+    -- ^ A language of injection.
   , ciCode :: Expr
+    -- ^ A code to inject.
   }
   deriving stock (Show, Generic)
   deriving anyclass (NFData)
 
+-- | @contract_of@ expression.
 newtype ContractOfExpr = ContractOfExpr
   { coeNamespacePath :: Par NamespaceSelection
+    -- ^ A right-hand side of @contract_of@.
   }
   deriving stock (Show, Generic)
   deriving anyclass (NFData)
 
+-- | Constructor application.
 type CtorApp a = Tuple1 (App a)
 
+-- | Application kind.
 data App a
   = ZeroArg CtorAppKind
+    -- ^ Constructor without arguments.
   | MultArg (CtorAppKind, Par (NonEmpty a))
+    -- ^ Constructor with arguments.
   deriving stock (Show, Generic)
   deriving anyclass (NFData)
 
+-- | Constructor kind.
 data CtorAppKind
   = CtorStr WrappedLexeme
+    -- ^ Name in quotes.
   | CtorName WrappedLexeme
+    -- ^ Standalone name.
   deriving stock (Show, Generic)
   deriving anyclass (NFData)
 
+-- | Do-expression.
 newtype DoExpr = DoExpr
   { deStatements :: Par Statements
+    -- ^ Do-expression's body.
   }
   deriving stock (Show, Generic)
   deriving anyclass (NFData)
 
+-- | Function expression.
 data FunctionExpr = FunctionExpr
   { feGenerics :: Maybe Generics
+    -- ^ Type parameters.
   , feParameters :: ArrowFunParams
+    -- ^ Function's arguments.
   , feRhsType :: Maybe TypeAnnotation
+    -- ^ Function's return type.
   , feFunBody :: FunBody
+    -- ^ Function's definition.
   }
   deriving stock (Show, Generic)
   deriving anyclass (NFData)
 
+-- | Match expression.
 data MatchExpr = MatchExpr
   { meSubject :: Par Expr
+    -- ^ Scrutinee.
   , meClauses :: Par MatchClauses
+    -- ^ Cases.
   }
   deriving stock (Show, Generic)
   deriving anyclass (NFData)
 
+-- | Match cases.
 data MatchClauses
   = AllClauses AllMatchClauses
+    -- ^ Pattern match cases with possible default one.
   | DefaultClause (Reg MatchDefault)
+    -- ^ A default case.
   deriving stock (Show, Generic)
   deriving anyclass (NFData)
 
+-- | Pattern match cases with possible default one.
 type AllMatchClauses = ([Reg MatchClause], Maybe (Reg MatchDefault))
 
+-- | One match case.
 data MatchClause = MatchClause
   { mcFilter :: Par Pattern
+    -- ^ Left-hand side pattern.
   , mcClauseExpr :: Expr
+    -- ^ Right-hand side expression.
   }
   deriving stock (Show, Generic)
   deriving anyclass (NFData)
 
+-- | Default match case.
 newtype MatchDefault = MatchDefault
   { mdDefaultExpr :: Expr
+    -- ^ Default expression.
   }
   deriving stock (Show, Generic)
   deriving anyclass (NFData)
 
+-- | A namespace path with accessor.
 data NamespacePath a = NamespacePath
   { npNamespacePath :: [WrappedLexeme]
+    -- ^ A path to property.
   , npProperty :: a
+    -- ^ An accessor.
   }
   deriving stock (Show, Generic, Functor)
   deriving anyclass (NFData)
 
+-- | An object.
 type Object a = Par [Reg (Property a)]
 
+-- | Object's property.
 data Property a = Property
   { pPropertyId :: PropertyId
+    -- ^ Property's name.
   , pPropertyRhs :: Maybe (Tuple1 a)
+    -- ^ Property's right-hand side.
   }
   deriving stock (Show, Generic, Functor)
   deriving anyclass (NFData)
 
+-- | A kind of property's left-hand side.
 data PropertyId
   = FInt WrappedTupleLexeme
+    -- ^ An integer.
   | FName WrappedLexeme
+    -- ^ A standalone name.
   | FStr WrappedLexeme
+    -- ^ A name in quotes.
   deriving stock (Show, Generic)
   deriving anyclass (NFData)
 
+-- | Array's or object's projection expression.
 data Projection = Projection
   { pObjectOrArray :: Expr
+    -- ^ Projected expression.
   , pPropertyPath :: [Selection]
+    -- ^ Projection selection.
   }
   deriving stock (Show, Generic)
   deriving anyclass (NFData)
 
+-- | A type of selection.
 data Selection
   = PropertyName (Tuple1 WrappedLexeme)
+    -- ^ Property standalone name.
   | PropertyStr (Par WrappedLexeme)
+    -- ^ Property name in quotes.
   | Component (Par WrappedTupleLexeme)
+    -- ^ A number of array's component.
   deriving stock (Show, Generic)
   deriving anyclass (NFData)
 
+-- | Ternary expression.
 data Ternary = Ternary
   { tCondition :: Expr
+    -- ^ Condition expression.
   , tTruthy :: Expr
+    -- ^ Expression on @true@.
   , tFalsy :: Expr
+    -- ^ Expression on @false@.
   }
   deriving stock (Show, Generic)
   deriving anyclass (NFData)
 
+-- | Expression with type.
 type TypedExpr = (Expr, TypeExpr)
 
+-- | Object update expression.
 data UpdateExpr = UpdateExpr
   { ueObject :: Expr -- field called _object
+    -- ^ Object to update.
   , ueUpdates :: [Reg (Property Expr)]
+    -- ^ Object's updates.
   }
   deriving stock (Show, Generic)
   deriving anyclass (NFData)
@@ -1100,6 +1431,7 @@ instance MessagePack MatchDefault where
 -- Conversion --
 ----------------
 
+-- | Transform @JsLIGO@ CST into unified AST.
 toAST :: CST -> LIGO Info
 toAST CST{..} =
   let

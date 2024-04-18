@@ -8,7 +8,6 @@ module Language.LIGO.Range
   , Range(..)
   , PreprocessedRange(..)
   , cutOut
-  , excluding
   , intersects
   , interval
   , merged
@@ -46,6 +45,7 @@ import Morley.Debugger.Core.Common (IsSourceLoc (..), SrcLoc (..))
 
 import Util
 
+-- | @point l c@ constructs a zero-length range from l:c to l:c.
 point :: Int -> Int -> Range
 point l c = Range (LigoPosition l c) (LigoPosition l c) ""
 
@@ -80,14 +80,15 @@ instance IsSourceLoc LigoPosition where
 -- | A continuous location in text. This includes information to the file as
 -- seen by the user (i.e.: before preprocessing).
 data Range = Range
-  { _rStart  :: LigoPosition  -- ^ [Start: line, col, byte-offset...
-  , _rFinish :: LigoPosition  -- ^ ... End: line, col, byte-offset).
-  , _rFile   :: FilePath
+  { _rStart  :: LigoPosition -- ^ [Start: line, col...
+  , _rFinish :: LigoPosition -- ^ ... End: line, col).
+  , _rFile   :: FilePath -- ^ A file path where this range is contained in.
   }
   deriving stock (Generic, Data)
   deriving (Show) via PP Range
   deriving anyclass (NFData, Hashable)
 
+-- | A traversal that focuses on line numbers in @Range@.
 rangeLines :: Traversal' Range Int
 rangeLines f (Range (LigoPosition sl sc) (LigoPosition fl fc) file) =
   Range
@@ -147,9 +148,7 @@ cutOut startOffset finishOffset bs =
     $ BS.drop startOffset
       bs
 
-excluding :: Range -> Range -> Range
-excluding (Range _ s _) (Range _ f t) = Range s f t
-
+-- | Merges two ranges.
 merged :: Range -> Range -> Range
 merged (Range s _ _) (Range _ f t) = Range s f t
 
@@ -195,10 +194,12 @@ instance Ord Range where
 makeLenses ''LigoPosition
 makeLenses ''Range
 
+-- | A lens that focuses on the start line number.
 startLine :: Lens' Range Int
 startLine = rStart . lpLine
 {-# INLINE startLine #-}
 
+-- | A lens that focuses on the finish line number.
 finishLine :: Lens' Range Int
 finishLine = rFinish . lpLine
 {-# INLINE finishLine #-}
