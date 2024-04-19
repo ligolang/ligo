@@ -72,7 +72,7 @@ type state =
 let make_state ~raise ~(options : Compiler_options.t) =
   let open Lwt.Let_syntax in
   let%map tezos_context =
-    Tezos_state.init_ctxt ~raise options.backend.protocol_version []
+    Tezos_state.init_ctxt ~raise []
   in
   let mod_res = Option.bind ~f:ModRes.make options.frontend.project_root in
   { tezos_context; mod_res; heap = Heap.empty; print_values = true }
@@ -307,7 +307,6 @@ module Command = struct
           ~initial_balances:amts
           ~n:(Z.to_int n)
           ?initial_timestamp
-          ctxt.internals.protocol_version
           bootstrap_contracts
           ~baker_accounts
       in

@@ -30,8 +30,7 @@ type t =
     no_stdlib : bool
   ; array_as_list : bool
   ; (* Backend *)
-    protocol_version : string
-  ; disable_michelson_typechecking : bool
+    disable_michelson_typechecking : bool
   ; experimental_disable_optimizations_for_debugging : bool
   ; enable_typed_opt : bool
   ; without_run : bool
@@ -79,7 +78,6 @@ module Default_options = struct
   let array_as_list = false
 
   (* Backend *)
-  let protocol_version = "current"
   let disable_michelson_typechecking = false
   let experimental_disable_optimizations_for_debugging = false
   let enable_typed_opt = false
@@ -111,7 +109,6 @@ let make
     ?(steps = Default_options.steps)
     ?(generator = Default_options.generator)
     ?(cli_expr_inj = Default_options.cli_expr_inj)
-    ?(protocol_version = Default_options.protocol_version)
     ?(no_stdlib = Default_options.no_stdlib)
     ?(array_as_list = Default_options.array_as_list)
     ?(defs_only = Default_options.defs_only)
@@ -158,8 +155,7 @@ let make
     no_stdlib
   ; array_as_list
   ; (* Backend *)
-    protocol_version
-  ; disable_michelson_typechecking
+    disable_michelson_typechecking
   ; experimental_disable_optimizations_for_debugging
   ; enable_typed_opt
   ; without_run

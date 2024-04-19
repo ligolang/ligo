@@ -18,7 +18,7 @@ type all =
   | `Main_transpilation_same_source_and_dest_syntax of string
   | `Main_unparse_tracer of tezos_alpha_error list
   | `Main_typecheck_contract_tracer of
-    Environment.Protocols.t * int Tezos_utils.Michelson.michelson * tezos_alpha_error list
+    int Tezos_utils.Michelson.michelson * tezos_alpha_error list
   | `Main_could_not_serialize of tezos_alpha_error list
   | `Check_typed_arguments_tracer of Simple_utils.Runned_result.check_type * all
   | `Main_unknown

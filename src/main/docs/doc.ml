@@ -1,6 +1,5 @@
 open Simple_utils
 open Compiler_options
-open Ligo_compile
 module Constants = Commands.Constants
 
 let html_using_type_doc (raw_options : Raw_options.t) directory doc_args ()
@@ -27,12 +26,7 @@ let html_using_type_doc (raw_options : Raw_options.t) directory doc_args ()
     | Ok false | Error _ ->
       raise.error @@ `Main_external_doc_tool_doesnt_exist (Constants.typedoc, `Npm));
     let syntax = Syntax_types.JsLIGO in
-    let options =
-      let protocol_version =
-        Helpers.protocol_to_variant ~raise raw_options.protocol_version
-      in
-      Compiler_options.make ~protocol_version ~raw_options ~syntax ()
-    in
+    let options = Compiler_options.make ~raw_options ~syntax () in
     let files = Ligo_api.Api_helpers.list_directory ~syntax directory in
     FileUtil.cp ~recurse:true [ directory ] tmp_dir;
     let ts_files =
@@ -100,12 +94,7 @@ let markdown_doc
   in
   Docs_utils.with_raise
   @@ fun ~raise ->
-  let options =
-    let protocol_version =
-      Helpers.protocol_to_variant ~raise raw_options.protocol_version
-    in
-    Compiler_options.make ~protocol_version ~raw_options ()
-  in
+  let options = Compiler_options.make ~raw_options () in
   let files = Ligo_api.Api_helpers.list_directory directory in
   if List.is_empty files then failwith "ligo doc: no ligo files found in input directory";
   let _md_files =

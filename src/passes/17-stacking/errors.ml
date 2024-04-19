@@ -9,8 +9,7 @@ type stacking_error =
   | `Stacking_could_not_tokenize_michelson of string
   | `Stacking_could_not_parse_michelson of string
   | `Stacking_untranspilable of int Michelson.t * int Michelson.t
-  | `Stacking_unsupported_primitive of
-    Ligo_prim.Constant.constant' * Environment.Protocols.t
+  | `Stacking_unsupported_primitive of Ligo_prim.Constant.constant'
   ]
 [@@deriving poly_constructor { prefix = "stacking_" }]
 
@@ -35,13 +34,12 @@ let error_ppformat
   match display_format with
   | Human_readable | Dev ->
     (match a with
-    | `Stacking_unsupported_primitive (c, p) ->
+    | `Stacking_unsupported_primitive c ->
       Format.fprintf
         f
-        "@[<hv>unsupported primitive %a in protocol %s@]"
+        "@[<hv>unsupported primitive %a@]"
         Ligo_prim.Constant.pp_constant'
         c
-        (Environment.Protocols.variant_to_string p)
     | `Stacking_corner_case (loc, msg) ->
       let s =
         Format.asprintf
@@ -83,13 +81,12 @@ let error_json : stacking_error -> Simple_utils.Error.t =
  fun e ->
   let open Simple_utils.Error in
   match e with
-  | `Stacking_unsupported_primitive (c, p) ->
+  | `Stacking_unsupported_primitive c ->
     let message =
       Format.asprintf
-        "@[<hv>unsupported primitive %a in protocol %s@]"
+        "@[<hv>unsupported primitive %a@]"
         Ligo_prim.Constant.pp_constant'
         c
-        (Environment.Protocols.variant_to_string p)
     in
     let content = make_content ~message () in
     make ~stage ~content

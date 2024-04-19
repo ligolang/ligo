@@ -69,14 +69,12 @@ let dummy : Stacking.meta =
 
 (* should preserve locations, currently wipes them *)
 let build_contract ~raise
-    :  protocol_version:Environment.Protocols.t
-    -> ?experimental_disable_optimizations_for_debugging:bool -> ?enable_typed_opt:bool
+    :  ?experimental_disable_optimizations_for_debugging:bool -> ?enable_typed_opt:bool
     -> ?has_env_comments:bool -> ?disable_typecheck:bool -> ?constants:string list
     -> ?tezos_context:_ -> Stacking.compiled_expression
     -> (Value_var.t * Stacking.compiled_expression) list -> _ Michelson.michelson Lwt.t
   =
- fun ~protocol_version
-     ?(experimental_disable_optimizations_for_debugging = false)
+ fun ?(experimental_disable_optimizations_for_debugging = false)
      ?(enable_typed_opt = false)
      ?(has_env_comments = false)
      ?(disable_typecheck = false)
@@ -107,9 +105,7 @@ let build_contract ~raise
   else (
     let%bind contract' =
       Lwt.map
-        (Trace.trace_tzresult
-           ~raise
-           (typecheck_contract_tracer protocol_version contract))
+        (Trace.trace_tzresult ~raise (typecheck_contract_tracer contract))
         (Memory_proto_alpha.prims_of_strings contract)
     in
     (* Parse constants *)
@@ -126,9 +122,7 @@ let build_contract ~raise
         (fun ctxt cnt ->
           let%map ctxt, _, _ =
             Lwt.map
-              (Trace.trace_alpha_tzresult
-                 ~raise
-                 (typecheck_contract_tracer protocol_version contract))
+              (Trace.trace_alpha_tzresult ~raise (typecheck_contract_tracer contract))
             @@ Proto_alpha_utils.Memory_proto_alpha.register_constant ctxt cnt
           in
           ctxt)
@@ -138,10 +132,7 @@ let build_contract ~raise
     let environment = { environment with tezos_context } in
     (* Type-check *)
     let%bind (_ : (_, _) Micheline.Micheline.node) =
-      Lwt.map
-        (Trace.trace_tzresult
-           ~raise
-           (typecheck_contract_tracer protocol_version contract))
+      Lwt.map (Trace.trace_tzresult ~raise (typecheck_contract_tracer contract))
       @@ Proto_alpha_utils.Memory_proto_alpha.typecheck_contract ~environment contract'
     in
     if enable_typed_opt && not experimental_disable_optimizations_for_debugging
@@ -149,10 +140,7 @@ let build_contract ~raise
       let typer_oracle : type a. (a, _) Micheline.Micheline.node -> _ Lwt.t =
        fun c ->
         let%map map, _ =
-          Lwt.map
-            (Trace.trace_tzresult
-               ~raise
-               (typecheck_contract_tracer protocol_version contract))
+          Lwt.map (Trace.trace_tzresult ~raise (typecheck_contract_tracer contract))
           @@ Proto_alpha_utils.Memory_proto_alpha.typecheck_map_contract ~environment c
         in
         map
@@ -165,7 +153,6 @@ let build_contract ~raise
       Self_michelson.optimize_with_types
         ~raise
         ~typer_oracle
-        protocol_version
         ~experimental_disable_optimizations_for_debugging
         ~has_comment
         contract)

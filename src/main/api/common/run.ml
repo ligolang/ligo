@@ -8,14 +8,6 @@ let test (raw_options : Raw_options.t) code_input =
   ( Ligo_interpreter.Formatter.tests_format
   , fun ~raise ->
       let open Lwt.Let_syntax in
-      let raw_options =
-        { raw_options with
-          protocol_version = Environment.Protocols.(variant_to_string in_use)
-        }
-      in
-      let protocol_version =
-        Helpers.protocol_to_variant ~raise raw_options.protocol_version
-      in
       let syntax =
         Syntax.of_string_opt
           ~raise
@@ -27,7 +19,7 @@ let test (raw_options : Raw_options.t) code_input =
             | Raw { id; _ } -> Some id
             | Raw_input_lsp { file; _ } -> Some file)
       in
-      let options = Compiler_options.make ~protocol_version ~syntax ~raw_options () in
+      let options = Compiler_options.make ~syntax ~raw_options () in
       let Compiler_options.{ steps; _ } = options.test_framework in
       let typed = Build.qualified_typed ~raise ~options code_input in
       let%map result = Interpreter.eval_test ~raise ~steps ~options typed in
@@ -38,18 +30,10 @@ let test_expression (raw_options : Raw_options.t) expr source_file =
   ( Ligo_interpreter.Formatter.tests_format
   , fun ~raise ->
       let open Lwt.Let_syntax in
-      let raw_options =
-        { raw_options with
-          protocol_version = Environment.Protocols.(variant_to_string in_use)
-        }
-      in
-      let protocol_version =
-        Helpers.protocol_to_variant ~raise raw_options.protocol_version
-      in
       let syntax =
         Syntax.of_string_opt ~raise (Syntax_name raw_options.syntax) source_file
       in
-      let options = Compiler_options.make ~protocol_version ~syntax ~raw_options () in
+      let options = Compiler_options.make ~syntax ~raw_options () in
       let Compiler_options.{ steps; _ } = options.test_framework in
       let module Stdlib = Build.Stdlib in
       let module Source_input = BuildSystem.Source_input in
@@ -83,14 +67,11 @@ let dry_run
   ( Decompile.Formatter.expression_format
   , fun ~raise ->
       let open Lwt.Let_syntax in
-      let protocol_version =
-        Helpers.protocol_to_variant ~raise raw_options.protocol_version
-      in
       let syntax =
         Syntax.of_string_opt ~raise (Syntax_name raw_options.syntax) (Some source_file)
       in
       Deprecation.entry_cli ~raise syntax entry_point;
-      let options = Compiler_options.make ~protocol_version ~syntax ~raw_options () in
+      let options = Compiler_options.make ~syntax ~raw_options () in
       let Compiler_options.{ module_; _ } = options.frontend in
       let module_path = Build.parse_module_path ~loc:Location.dummy module_ in
       let typed_prg =
@@ -128,7 +109,6 @@ let dry_run
           Compile.Of_michelson.build_contract
             ~raise
             ~enable_typed_opt:options.backend.enable_typed_opt
-            ~protocol_version
             compile_exp
             []
         in
@@ -182,12 +162,7 @@ let interpret
       let syntax =
         Syntax.of_string_opt ~raise (Syntax_name raw_options.syntax) init_file
       in
-      let options =
-        let protocol_version =
-          Helpers.protocol_to_variant ~raise raw_options.protocol_version
-        in
-        Compiler_options.make ~protocol_version ~raw_options ~syntax ()
-      in
+      let options = Compiler_options.make ~raw_options ~syntax () in
       let%bind Build.{ expression; ast_type } =
         Build.build_expression ~raise ~options syntax expression init_file
       in
@@ -219,12 +194,7 @@ let evaluate_call
       let syntax =
         Syntax.of_string_opt ~raise (Syntax_name raw_options.syntax) (Some source_file)
       in
-      let options =
-        let protocol_version =
-          Helpers.protocol_to_variant ~raise raw_options.protocol_version
-        in
-        Compiler_options.make ~protocol_version ~raw_options ~syntax ()
-      in
+      let options = Compiler_options.make ~raw_options ~syntax () in
       let init_prog =
         Build.qualified_typed ~raise ~options (Build.Source_input.From_file source_file)
       in
@@ -301,12 +271,7 @@ let evaluate_expr
       let syntax =
         Syntax.of_string_opt ~raise (Syntax_name raw_options.syntax) (Some source_file)
       in
-      let options =
-        let protocol_version =
-          Helpers.protocol_to_variant ~raise raw_options.protocol_version
-        in
-        Compiler_options.make ~protocol_version ~raw_options ~syntax ()
-      in
+      let options = Compiler_options.make ~raw_options ~syntax () in
       let%bind Build.{ expression; ast_type } =
         Build.build_expression ~raise ~options syntax exp (Some source_file)
       in

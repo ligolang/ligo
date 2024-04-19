@@ -1,0 +1,7 @@
+
+author: alistair.obrien
+description: "\\n\\nDeprecate the `--protocol` flag.\\n\\n\\n```sh\\nligo compile contract unit.mligo --protocol parisb\\nWarning: the flag `-p` (aliases: `--protocol`) is deprecated and will be ignored\\n  { parameter unit ;\\n    storage unit ;\\n    code { DROP ; UNIT ; NIL operation ; PAIR } }\\n\\n```\\n\\n"
+merge_request: '3146'
+title: "feat: remove `environment` library and deprecate `--protocol` flag"
+type: added
+            

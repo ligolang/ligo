@@ -320,7 +320,6 @@ let compile_contract_ast_none ~raise ~options ~tezos_context main =
     Ligo_compile.Of_michelson.build_contract
       ~raise
       ~has_env_comments:false
-      ~protocol_version:options.middle_end.protocol_version
       ~disable_typecheck:false
       ~tezos_context
       main_michelson
@@ -387,7 +386,6 @@ let compile_contract_ast_single ~raise ~options ~tezos_context main views =
     Ligo_compile.Of_michelson.build_contract
       ~raise
       ~has_env_comments:false
-      ~protocol_version:options.middle_end.protocol_version
       ~disable_typecheck
       ~tezos_context
       main_michelson
@@ -420,7 +418,6 @@ let compile_contract_ast_multi ~raise ~options ~tezos_context main views =
     Ligo_compile.Of_michelson.build_contract
       ~raise
       ~has_env_comments:false
-      ~protocol_version:options.middle_end.protocol_version
       ~disable_typecheck:false
       ~tezos_context
       main_michelson

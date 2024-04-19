@@ -24,7 +24,7 @@ let schema_test_positive
       Caml.Filename.temp_file ~temp_dir:"./" "get_scope_test" ".json"
     in
     let write data = Out_channel.write_all temp_file_name ~data in
-    let options = Raw_options.make ~with_types ~protocol_version:"current" () in
+    let options = Raw_options.make ~with_types () in
     match
       Lsp_helpers.Ligo_interface.Get_scope.get_scope_cli_result
         options
@@ -55,7 +55,7 @@ let schema_test_negative
       Caml.Filename.temp_file ~temp_dir:"./" "get_scope_test" ".json"
     in
     let write data = Out_channel.write_all temp_file_name ~data in
-    let options = Raw_options.make ~with_types ~protocol_version:"current" () in
+    let options = Raw_options.make ~with_types () in
     let res_str, actual_status =
       match
         Lsp_helpers.Ligo_interface.Get_scope.get_scope_cli_result

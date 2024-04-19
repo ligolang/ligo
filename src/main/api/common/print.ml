@@ -135,10 +135,7 @@ let ast_typed
         let syntax =
           Syntax.of_string_opt ~raise (Syntax_name raw_options.syntax) (Some source_file)
         in
-        let protocol_version =
-          Helpers.protocol_to_variant ~raise raw_options.protocol_version
-        in
-        Compiler_options.make ~protocol_version ~raw_options ~syntax ()
+        Compiler_options.make ~raw_options ~syntax ()
       in
       let Compiler_options.{ self_pass; _ } = options.tools in
       let typed =
@@ -167,10 +164,7 @@ let ast_aggregated (raw_options : Raw_options.t) source_file =
         let syntax =
           Syntax.of_string_opt ~raise (Syntax_name raw_options.syntax) (Some source_file)
         in
-        let protocol_version =
-          Helpers.protocol_to_variant ~raise raw_options.protocol_version
-        in
-        Compiler_options.make ~protocol_version ~raw_options ~syntax ()
+        Compiler_options.make ~raw_options ~syntax ()
       in
       let Compiler_options.{ self_pass; _ } = options.tools in
       let typed =
@@ -194,10 +188,7 @@ let signature (raw_options : Raw_options.t) source_file =
       in
       let options =
         (* TODO: options should be computed outside of the API *)
-        let protocol_version =
-          Helpers.protocol_to_variant ~raise raw_options.protocol_version
-        in
-        Compiler_options.make ~protocol_version ~raw_options ~syntax ()
+        Compiler_options.make ~raw_options ~syntax ()
       in
       let sig_ =
         let Compiler_options.{ module_; _ } = options.frontend in
@@ -237,10 +228,7 @@ let ast_expanded (raw_options : Raw_options.t) source_file =
         let syntax =
           Syntax.of_string_opt ~raise (Syntax_name raw_options.syntax) (Some source_file)
         in
-        let protocol_version =
-          Helpers.protocol_to_variant ~raise raw_options.protocol_version
-        in
-        Compiler_options.make ~protocol_version ~raw_options ~syntax ()
+        Compiler_options.make ~raw_options ~syntax ()
       in
       let Compiler_options.{ self_pass; _ } = options.tools in
       let typed =
@@ -266,10 +254,7 @@ let mini_c (raw_options : Raw_options.t) source_file optimize =
         let syntax =
           Syntax.of_string_opt ~raise (Syntax_name raw_options.syntax) (Some source_file)
         in
-        let protocol_version =
-          Helpers.protocol_to_variant ~raise raw_options.protocol_version
-        in
-        Compiler_options.make ~protocol_version ~raw_options ~syntax ()
+        Compiler_options.make ~raw_options ~syntax ()
       in
       let typed =
         Build.qualified_typed ~raise ~options (Build.Source_input.From_file source_file)

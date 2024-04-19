@@ -127,6 +127,7 @@ let%expect_test _ =
   run_ligo_good [ "compile"; "contract"; contract "unit.mligo"; "--protocol"; "parisb" ];
   [%expect
     {|
-    { parameter unit ;
-      storage unit ;
-      code { DROP ; UNIT ; NIL operation ; PAIR } } |}]
+  Warning: the flag `-p` (aliases: `--protocol`) is deprecated and will be ignored
+  { parameter unit ;
+    storage unit ;
+    code { DROP ; UNIT ; NIL operation ; PAIR } } |}]

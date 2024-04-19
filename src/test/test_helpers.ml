@@ -45,7 +45,6 @@ type test =
 let options =
   Compiler_options.make
     ~raw_options:(Raw_options.make ())
-    ~protocol_version:Environment.Protocols.in_use
     ()
 
 
@@ -673,7 +672,6 @@ let compile_main ~raise f () =
        (* fails if the given entry point is not a valid contract *)
        Ligo_compile.Of_michelson.build_contract
          ~raise
-         ~protocol_version:Environment.Protocols.in_use
          michelson_prg
          []
      in

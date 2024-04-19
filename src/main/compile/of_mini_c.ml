@@ -59,15 +59,12 @@ let compile_contract ~raise
  fun ~options e ->
   let open Lwt.Let_syntax in
   let input_ty, contract = optimize_for_contract ~raise options e in
-  let protocol_version = options.backend.protocol_version in
   let de_bruijn =
-    trace ~raise scoping_tracer
-    @@ Scoping.translate_closed_function ~proto:protocol_version contract input_ty
+    trace ~raise scoping_tracer @@ Scoping.translate_closed_function contract input_ty
   in
   let%map de_bruijn = Stacking.Program.compile_function_body de_bruijn in
   let expr =
     Self_michelson.optimize
-      protocol_version
       ~experimental_disable_optimizations_for_debugging:
         options.backend.experimental_disable_optimizations_for_debugging
       ~has_comment:(has_comment options)
@@ -95,15 +92,12 @@ let compile_view ~raise
         trace ~raise self_mini_c_tracer @@ Self_mini_c.all_expression options view.body
     }
   in
-  let protocol_version = options.backend.protocol_version in
   let de_bruijn =
-    trace ~raise scoping_tracer
-    @@ Scoping.translate_closed_function ~proto:protocol_version view input_ty
+    trace ~raise scoping_tracer @@ Scoping.translate_closed_function view input_ty
   in
   let%map de_bruijn = Stacking.Program.compile_function_body de_bruijn in
   let expr =
     Self_michelson.optimize
-      protocol_version
       ~experimental_disable_optimizations_for_debugging:
         options.backend.experimental_disable_optimizations_for_debugging
       ~has_comment:(has_comment options)
@@ -125,15 +119,10 @@ let compile_expression ~raise
  fun ~options e ->
   let open Lwt.Let_syntax in
   let e = trace ~raise self_mini_c_tracer @@ Self_mini_c.all_expression options e in
-  let protocol_version = options.backend.protocol_version in
-  let expr =
-    trace ~raise scoping_tracer
-    @@ Scoping.translate_expression ~proto:protocol_version e []
-  in
+  let expr = trace ~raise scoping_tracer @@ Scoping.translate_expression e [] in
   let%map expr = Stacking.Program.compile_expr [] expr in
   let expr =
     Self_michelson.optimize
-      protocol_version
       ~experimental_disable_optimizations_for_debugging:
         options.backend.experimental_disable_optimizations_for_debugging
       ~has_comment:(has_comment options)
@@ -148,7 +137,6 @@ let compile_expression_function ~raise
   =
  fun ~options e ->
   let open Lwt.Let_syntax in
-  let protocol_version = options.backend.protocol_version in
   let input_ty, _ =
     trace ~raise self_mini_c_tracer @@ Self_mini_c.get_t_function e.type_expression
   in
@@ -162,13 +150,11 @@ let compile_expression_function ~raise
     }
   in
   let de_bruijn =
-    trace ~raise scoping_tracer
-    @@ Scoping.translate_closed_function ~proto:protocol_version expr input_ty
+    trace ~raise scoping_tracer @@ Scoping.translate_closed_function expr input_ty
   in
   let%map de_bruijn = Stacking.Program.compile_function_body de_bruijn in
   let expr =
     Self_michelson.optimize
-      protocol_version
       ~experimental_disable_optimizations_for_debugging:
         options.backend.experimental_disable_optimizations_for_debugging
       ~has_comment:(has_comment options)

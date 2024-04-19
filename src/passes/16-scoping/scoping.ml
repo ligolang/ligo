@@ -178,7 +178,7 @@ let extract_applications (expr : I.expression) (env : I.environment)
 (* Let |-I and |-O be the input and output typing judgments. If
    env |-I expr : a, and translate_expression expr env = (expr', us), then
    select us env |-O expr' : a. *)
-let rec translate_expression ~raise ~proto (expr : I.expression) (env : I.environment)
+let rec translate_expression ~raise (expr : I.expression) (env : I.environment)
     : (meta, base_type, Ligo_prim.Literal_value.t, (meta, string) Micheline.node) O.expr
   =
   let meta : meta =
@@ -190,11 +190,11 @@ let rec translate_expression ~raise ~proto (expr : I.expression) (env : I.enviro
     }
   in
   let ty = expr.type_expression in
-  let translate_expression = translate_expression ~raise ~proto in
-  let translate_args = translate_args ~raise ~proto in
-  let translate_binder = translate_binder ~raise ~proto in
-  let translate_binder2 = translate_binder2 ~raise ~proto in
-  let translate_binderN = translate_binderN ~raise ~proto in
+  let translate_expression = translate_expression ~raise in
+  let translate_args = translate_args ~raise in
+  let translate_binder = translate_binder ~raise in
+  let translate_binder2 = translate_binder2 ~raise in
+  let translate_binderN = translate_binderN ~raise in
   match expr.content with
   | E_literal lit -> O.E_literal (meta, lit)
   | E_variable x -> E_var (meta, translate_var x env)
@@ -224,9 +224,7 @@ let rec translate_expression ~raise ~proto (expr : I.expression) (env : I.enviro
     let binder = translate_binder2 ((binder, rec_binder), body) env in
     O.E_rec (meta, binder, translate_type return_type)
   | E_constant constant ->
-    let mich, args =
-      translate_constant ~raise ~proto meta constant expr.type_expression env
-    in
+    let mich, args = translate_constant ~raise meta constant expr.type_expression env in
     O.E_inline_michelson (meta, mich, args)
   | E_application (f, x) ->
     let args = translate_args [ f; x ] env in
@@ -435,16 +433,16 @@ let rec translate_expression ~raise ~proto (expr : I.expression) (env : I.enviro
     E_while (meta, cond, body)
 
 
-and translate_binder ~raise ~proto (binder, body) env =
+and translate_binder ~raise (binder, body) env =
   let env' = I.Environment.add binder env in
-  let body = translate_expression ~raise ~proto body env' in
+  let body = translate_expression ~raise body env' in
   let binder, binder_type = binder in
   O.Binds (nil, [ translate_type ~var:binder binder_type ], body)
 
 
-and translate_binder2 ~raise ~proto ((binder1, binder2), body) env =
+and translate_binder2 ~raise ((binder1, binder2), body) env =
   let env' = I.Environment.add binder1 (I.Environment.add binder2 env) in
-  let body = translate_expression ~raise ~proto body env' in
+  let body = translate_expression ~raise body env' in
   let binder1, binder1_type = binder1 in
   let binder2, binder2_type = binder2 in
   O.Binds
@@ -455,18 +453,16 @@ and translate_binder2 ~raise ~proto ((binder1, binder2), body) env =
     , body )
 
 
-and translate_binderN ~raise ~proto (vars, body) env =
+and translate_binderN ~raise (vars, body) env =
   let env' = List.fold_right ~f:I.Environment.add vars ~init:env in
-  let body = translate_expression ~raise ~proto body env' in
+  let body = translate_expression ~raise body env' in
   O.Binds (nil, List.map ~f:(fun (var, ty) -> translate_type ~var ty) vars, body)
 
 
-and translate_args ~raise ~proto (arguments : I.expression list) env : _ O.args =
+and translate_args ~raise (arguments : I.expression list) env : _ O.args =
   let arguments = List.rev arguments in
   let arguments =
-    List.map
-      ~f:(fun argument -> translate_expression ~raise ~proto argument env)
-      arguments
+    List.map ~f:(fun argument -> translate_expression ~raise argument env) arguments
   in
   List.fold_right
     ~f:(fun arg args -> O.Args_cons (nil, arg, args))
@@ -476,7 +472,6 @@ and translate_args ~raise ~proto (arguments : I.expression list) env : _ O.args 
 
 and translate_constant
     ~raise
-    ~proto
     (meta : meta)
     (expr : I.constant)
     (ty : I.type_expression)
@@ -500,7 +495,7 @@ and translate_constant
      First we translate any static args and return the rest of the
      non-static arguments, if any: *)
   let translate_type t = Stacking.To_micheline.translate_type (translate_type t) in
-  let translate_args = translate_args ~raise ~proto in
+  let translate_args = translate_args ~raise in
   (* This is for compatibility with the existing stuff in
      Predefined.Michelson and below. I believe this stuff should be
      simplified away but don't want to do it right now. *)
@@ -583,7 +578,7 @@ and translate_constant
     | None -> expr.arguments
   in
   let arguments = translate_args arguments env in
-  match Predefined.Michelson.get_operators proto expr.cons_name with
+  match Predefined.Michelson.get_operators expr.cons_name with
   | Some x ->
     ( [ (* Handle predefined (and possibly special) operators, applying
          any type/annot/script args using apply_static_args. *)
@@ -595,22 +590,17 @@ and translate_constant
     , arguments )
   | None ->
     let open Simple_utils.Trace in
-    raise.error (Errors.unsupported_primitive expr.cons_name proto)
+    raise.error (Errors.unsupported_primitive expr.cons_name)
 
 
 and translate_closed_function
     ~raise
-    ~proto
     ?(env = [])
     ({ binder; body } : I.anon_function)
     input_ty
     : _ O.binds
   =
   let body =
-    translate_expression
-      ~raise
-      ~proto
-      body
-      (Mini_c.Environment.add (binder, input_ty) env)
+    translate_expression ~raise body (Mini_c.Environment.add (binder, input_ty) env)
   in
   Binds (nil, [ translate_type input_ty ], body)

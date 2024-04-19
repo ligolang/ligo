@@ -20,3 +20,6 @@ type 'a alpha_tzresult = 'a Alpha_environment.Error_monad.tzresult
 
 module Alpha_error_monad = Alpha_environment.Error_monad
 include Proto
+
+let protocol_str = "parisb"
+let protocol_def_str = "PARIS_B"

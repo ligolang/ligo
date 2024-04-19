@@ -39,10 +39,7 @@ let with_code_input
   let syntax =
     Syntax.of_string_opt ~raise (Syntax_name raw_options.syntax) (Some file_name)
   in
-  let protocol_version =
-    Ligo_compile.Helpers.protocol_to_variant ~raise raw_options.protocol_version
-  in
-  let options = Compiler_options.make ~raw_options ~syntax ~protocol_version () in
+  let options = Compiler_options.make ~raw_options ~syntax () in
   (* Here we need to extract module dependencies in order to show
     to the user file paths of mangled modules *)
   let prg, module_deps =
@@ -253,13 +250,9 @@ let following_passes_diagnostics
     : unit Lwt.t
   =
   let options =
-    let protocol_version =
-      Ligo_compile.Helpers.protocol_to_variant ~raise raw_options.protocol_version
-    in
     Compiler_options.make
       ~raw_options
       ~syntax
-      ~protocol_version
       ~has_env_comments:false
       ()
   in

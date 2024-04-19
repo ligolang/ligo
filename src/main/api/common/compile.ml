@@ -59,12 +59,9 @@ let contract
       in
       Deprecation.view_cli ~raise syntax views;
       Deprecation.entry_cli ~raise syntax entry_point;
-      let protocol_version =
-        Helpers.protocol_to_variant ~raise raw_options.protocol_version
-      in
       let options =
         let has_env_comments = has_env_comments michelson_comments in
-        Compiler_options.make ~raw_options ~syntax ~protocol_version ~has_env_comments ()
+        Compiler_options.make ~raw_options ~syntax ~has_env_comments ()
       in
       let Compiler_options.
             { disable_michelson_typechecking = disable_typecheck
@@ -101,7 +98,6 @@ let contract
           ~experimental_disable_optimizations_for_debugging:
             options.backend.experimental_disable_optimizations_for_debugging
           ~enable_typed_opt:options.backend.enable_typed_opt
-          ~protocol_version:options.middle_end.protocol_version
           ~has_env_comments:options.backend.has_env_comments
           ~disable_typecheck
           ~constants
@@ -118,7 +114,7 @@ let contract
               Gauge_compilation_size
                 { contract_discriminant
                 ; syntax = Syntax.to_string syntax
-                ; protocol = Environment.Protocols.variant_to_string protocol_version
+                ; protocol = Memory_proto_alpha.protocol_str
                 }
           ; metric_value = Int.to_float compiled_contract_size
           }
@@ -134,15 +130,7 @@ let expression (raw_options : Raw_options.t) expression init_file michelson_form
         Syntax.of_string_opt ~raise (Syntax_name raw_options.syntax) init_file
       in
       let options =
-        let protocol_version =
-          Helpers.protocol_to_variant ~raise raw_options.protocol_version
-        in
-        Compiler_options.make
-          ~raw_options
-          ~syntax
-          ~protocol_version
-          ~has_env_comments:false
-          ()
+        Compiler_options.make ~raw_options ~syntax ~has_env_comments:false ()
       in
       let Compiler_options.{ without_run; function_body; _ } = options.backend in
       let Compiler_options.{ constants; file_constants; _ } = options.backend in
@@ -179,15 +167,7 @@ let type_ (raw_options : Raw_options.t) expression init_file michelson_format =
         Syntax.of_string_opt ~raise (Syntax_name raw_options.syntax) init_file
       in
       let options =
-        let protocol_version =
-          Helpers.protocol_to_variant ~raise raw_options.protocol_version
-        in
-        Compiler_options.make
-          ~raw_options
-          ~syntax
-          ~protocol_version
-          ~has_env_comments:false
-          ()
+        Compiler_options.make ~raw_options ~syntax ~has_env_comments:false ()
       in
       let ty = Build.build_type_expression ~raise ~options syntax expression init_file in
       Lwt.return (no_comment ty, []) )
@@ -201,15 +181,7 @@ let constant (raw_options : Raw_options.t) constants init_file =
         Syntax.of_string_opt ~raise (Syntax_name raw_options.syntax) init_file
       in
       let options =
-        let protocol_version =
-          Helpers.protocol_to_variant ~raise raw_options.protocol_version
-        in
-        Compiler_options.make
-          ~raw_options
-          ~syntax
-          ~protocol_version
-          ~has_env_comments:false
-          ()
+        Compiler_options.make ~raw_options ~syntax ~has_env_comments:false ()
       in
       let Compiler_options.{ without_run; _ } = options.backend in
       let%bind Build.{ expression; _ } =
@@ -344,19 +316,11 @@ let parameter
   ( Formatter.Michelson_formatter.michelson_format michelson_format []
   , fun ~raise ->
       let open Lwt.Let_syntax in
-      let protocol_version =
-        Helpers.protocol_to_variant ~raise raw_options.protocol_version
-      in
       let syntax =
         Syntax.of_string_opt ~raise (Syntax_name raw_options.syntax) (Some source_file)
       in
       let options =
-        Compiler_options.make
-          ~raw_options
-          ~syntax
-          ~protocol_version
-          ~has_env_comments:false
-          ()
+        Compiler_options.make ~raw_options ~syntax ~has_env_comments:false ()
       in
       let typed_param, app_typed_prg, constants, contract_type, module_path =
         typed_contract_and_expression
@@ -388,7 +352,6 @@ let parameter
         Ligo_compile.Of_michelson.build_contract
           ~raise
           ~enable_typed_opt:options.backend.enable_typed_opt
-          ~protocol_version
           ~constants
           michelson
           []
@@ -454,7 +417,6 @@ let storage_impl
     Ligo_compile.Of_michelson.build_contract
       ~raise
       ~enable_typed_opt:options.backend.enable_typed_opt
-      ~protocol_version:options.backend.protocol_version
       ~constants
       michelson
       []
@@ -532,16 +494,8 @@ let storage_of_typed
   =
   ( Formatter.Michelson_formatter.michelson_format michelson_format []
   , fun ~raise ->
-      let protocol_version =
-        Helpers.protocol_to_variant ~raise raw_options.protocol_version
-      in
       let options =
-        Compiler_options.make
-          ~raw_options
-          ~syntax
-          ~protocol_version
-          ~has_env_comments:false
-          ()
+        Compiler_options.make ~raw_options ~syntax ~has_env_comments:false ()
       in
       storage_impl
         ~self_pass:true
@@ -577,9 +531,6 @@ let storage
   =
   ( Formatter.Michelson_formatter.michelson_format michelson_format []
   , fun ~raise ->
-      let protocol_version =
-        Helpers.protocol_to_variant ~raise raw_options.protocol_version
-      in
       let extract_file_name : BuildSystem.Source_input.code_input -> string = function
         | From_file file_name -> file_name
         | Raw { id; _ } -> id
@@ -593,7 +544,6 @@ let storage
         Compiler_options.make
           ~raw_options
           ~syntax
-          ~protocol_version
           ~has_env_comments:false
           ()
       in
