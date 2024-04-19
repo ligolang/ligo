@@ -1,0 +1,7 @@
+
+author: alan.marko
+description: "\\nSupport added for distinguishing tez and mutez in LIGO pretty printer.\\n\\n"
+merge_request: '3125'
+title: "[#2069] Distinguish between tez and mutez at CST level"
+type: fixed
+            

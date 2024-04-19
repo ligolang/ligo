@@ -229,6 +229,31 @@ let print_mutez (node : (lexeme * Int64.t) wrap) =
     ^/^ (Int64.to_string (snd node#payload) ^ "mutez" |> string)
   in print_line_comment_opt prefix node#line_comment
 
+let print_tez (node : (lexeme * Q.t) wrap) =
+  let payload = snd node#payload in
+  let numerator = Q.num payload in
+  let denominator = Q.den payload in
+  let power_of_ten = Z.((of_string "10") ** (String.length (to_string denominator))) in
+  let multiply_by = Z.(power_of_ten / denominator) in
+  let adjusted_numerator = Z.(numerator * multiply_by) in
+  let integral = Z.(to_string (div adjusted_numerator power_of_ten)) in
+  let fractional = Z.(to_string (rem adjusted_numerator power_of_ten)) in
+  let num_zeros = String.length (Z.to_string denominator) - String.length fractional in
+  let fractional_with_zeros = (String.make num_zeros '0') ^ fractional in
+
+  let rec remove_trailing_zeros str =
+    if String.length str > 0 && str.[String.length str - 1] = '0' then
+      remove_trailing_zeros (String.sub str 0 (String.length str - 1))
+    else
+      str
+  in
+  let fractional_no_trailing_zeros = remove_trailing_zeros fractional_with_zeros in
+
+  let prefix = print_comments node#comments
+        ^/^ (integral ^ (if fractional_no_trailing_zeros <> "" then "." ^ fractional_no_trailing_zeros else "") ^ "tez" |> string)
+  in print_line_comment_opt prefix node#line_comment
+  
+
 let print_ctor (node : ctor) = token node
 
 let print_string (node : lexeme wrap) =
@@ -714,6 +739,7 @@ and print_expr state = function
 | E_Mult       e -> print_E_Mult       state e
 | E_MultEq     e -> print_E_MultEq     state e
 | E_Mutez      e -> print_E_Mutez            e
+| E_Tez        e -> print_E_Tez              e
 | E_NamePath   e -> print_E_NamePath   state e
 | E_Nat        e -> print_E_Nat              e
 | E_Neg        e -> print_E_Neg        state e
@@ -1012,6 +1038,10 @@ and print_E_MultEq state (node : times_eq bin_op reg) =
 
 and print_E_Mutez (node : (lexeme * Int64.t) wrap) = print_mutez node
 
+(* Tez as an expression *)
+
+and print_E_Tez (node : (lexeme * Q.t) wrap) = print_tez node
+
 (* Selection through nested namespaces *)
 
 and print_E_NamePath state (node : expr namespace_path reg) =
@@ -1196,6 +1226,7 @@ and print_pattern state = function
 | P_False    p -> print_P_False          p
 | P_Int      p -> print_P_Int            p
 | P_Mutez    p -> print_P_Mutez          p
+| P_Tez      p -> print_P_Tez            p
 | P_NamePath p -> print_P_NamePath state p
 | P_Nat      p -> print_P_Nat            p
 | P_Object   p -> print_P_Object   state p
@@ -1240,6 +1271,10 @@ and print_P_Int (node : (lexeme * Z.t) wrap) = print_int node
 (* Mutez in patterns *)
 
 and print_P_Mutez (node : (lexeme * Int64.t) wrap) = print_mutez node
+
+(* Tez in patterns *)
+
+and print_P_Tez (node : (lexeme * Q.t) wrap) = print_tez node
 
 (* Selected pattern *)
 

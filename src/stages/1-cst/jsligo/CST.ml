@@ -152,6 +152,7 @@ type attribute      = Attr.t wrap
 type bytes_literal    = (lexeme * (Hex.t [@yojson.opaque])) wrap [@@deriving yojson_of]
 type int_literal      = (lexeme * (Z.t [@yojson.opaque])) wrap [@@deriving yojson_of]
 type mutez_literal    = (lexeme * (Int64.t [@yojson.opaque])) wrap [@@deriving yojson_of]
+type tez_literal      = (lexeme * (Q.t [@yojson.opaque])) wrap [@@deriving yojson_of]
 type nat_literal      = int_literal [@@deriving yojson_of]
 type string_literal   = lexeme wrap [@@deriving yojson_of]
 type verbatim_literal = lexeme wrap [@@deriving yojson_of]
@@ -461,6 +462,7 @@ and pattern =
 | P_False    of kwd_false                                (* false           *)
 | P_Int      of int_literal                              (* 42              *)
 | P_Mutez    of mutez_literal                            (* 5mutez          *)
+| P_Tez      of tez_literal                              (* 5tez            *)
 | P_NamePath of pattern namespace_path reg               (* M.N.{x, y : 0}  *)
 | P_Nat      of nat_literal                              (* 4n              *)
 | P_Object   of pattern _object                          (* {x, y : 0}      *)
@@ -630,6 +632,7 @@ and expr =
 | E_Mult       of times bin_op reg                     (* x * y              *)
 | E_MultEq     of times_eq bin_op reg                  (* x *= y             *)
 | E_Mutez      of mutez_literal                        (* 5mutez             *)
+| E_Tez        of tez_literal                          (* 5tez               *)
 | E_NamePath   of expr namespace_path reg              (* M.N.x.0            *)
 | E_Nat        of nat_literal                          (* 42n                *)
 | E_Neg        of minus un_op reg                      (* -x                 *)
@@ -819,6 +822,7 @@ let rec pattern_to_region = function
 | P_False    w -> w#region
 | P_Int      w -> w#region
 | P_Mutez    w -> w#region
+| P_Tez      w -> w#region
 | P_NamePath {region; _} -> region
 | P_Nat      w -> w#region
 | P_Object   {region; _} -> region
@@ -867,6 +871,7 @@ let rec expr_to_region = function
 | E_Mult       {region; _}
 | E_MultEq    {region; _} -> region
 | E_Mutez      w -> w#region
+| E_Tez        w -> w#region
 | E_NamePath   {region; _} -> region
 | E_Nat        w -> w#region
 | E_Neg        {region; _}

@@ -1,3 +1,4 @@
+open Core
 open Simple_utils.Trace
 open Simple_utils
 open Ligo_interpreter.Types
@@ -1582,7 +1583,9 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t)
 
 
 (*interpreter*)
-and eval_literal : Ligo_prim.Literal_value.t -> value Monad.t = function
+and eval_literal : Ligo_prim.Literal_value.t -> value Monad.t =
+ fun l ->
+  match l with
   | Literal_unit -> Monad.return @@ v_unit ()
   | Literal_int i -> Monad.return @@ v_int i
   | Literal_nat n -> Monad.return @@ v_nat n
@@ -1624,7 +1627,7 @@ and eval_literal : Ligo_prim.Literal_value.t -> value Monad.t = function
     | None -> Monad.fail @@ Errors.literal Location.generated (Literal_chain_id c))
   | Literal_chest b -> Monad.return @@ v_chest b
   | Literal_chest_key b -> Monad.return @@ v_chest_key b
-  | l -> Monad.fail @@ Errors.literal Location.generated l
+  | Literal_operation _ as l -> Monad.fail @@ Errors.literal Location.generated l
 
 
 and eval_ligo ~raise ~steps ~options : AST.expression -> calltrace -> env -> value Monad.t

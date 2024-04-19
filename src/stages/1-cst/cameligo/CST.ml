@@ -145,6 +145,9 @@ type int_literal =
 type mutez_literal =
   (lexeme * (Int64.t [@yojson.opaque])) wrap [@@deriving yojson_of]
 
+type tez_literal =
+  (lexeme * (Q.t [@yojson.opaque])) wrap [@@deriving yojson_of]
+
 type nat_literal      = int_literal [@@deriving yojson_of]
 type string_literal   = lexeme wrap [@@deriving yojson_of]
 type verbatim_literal = lexeme wrap [@@deriving yojson_of]
@@ -407,6 +410,7 @@ and pattern =
 | P_List     of pattern list_                   (* [x; 4]    *)
 | P_ModPath  of pattern module_path reg         (* M.N.x     *)
 | P_Mutez    of mutez_literal                   (* 5mutez    *)
+| P_Tez      of tez_literal                     (* 5tez      *)
 | P_Nat      of nat_literal                     (* 4n        *)
 | P_Par      of pattern par                     (* (C, 4)    *)
 | P_Record   of record_pattern                  (* {x=y; z}  *)
@@ -501,6 +505,7 @@ and expr =
 | E_ModPath    of expr module_path reg   (* M.N.x.0                       *)
 | E_Mult       of times bin_op reg       (* x * y                         *)
 | E_Mutez      of mutez_literal          (* 5mutez                        *)
+| E_Tez        of tez_literal            (* 5tez                          *)
 | E_Nat        of nat_literal            (* 4n                            *)
 | E_Neg        of minus un_op reg        (* -a                            *)
 | E_Neq        of neq bin_op reg         (* x <> y                        *)
@@ -762,6 +767,7 @@ let rec pattern_to_region = function
 | P_List     {region; _}
 | P_ModPath  {region; _} -> region
 | P_Mutez    p -> p#region
+| P_Tez      p -> p#region
 | P_Nat      p -> p#region
 | P_Par      {region; _}
 | P_Record   {region; _} -> region
@@ -809,6 +815,7 @@ let rec expr_to_region = function
 | E_ModPath    {region; _}
 | E_Mult       {region; _} -> region
 | E_Mutez      e -> e#region
+| E_Tez        e -> e#region
 | E_Nat        e -> e#region
 | E_Neg        {region; _}
 | E_Neq        {region; _}

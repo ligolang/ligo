@@ -236,6 +236,10 @@ let rec expr : Eq.expr -> Folding.expr =
   | E_Int i -> ret @@ E_literal (Literal_int (snd i#payload))
   | E_Nat n -> ret @@ E_literal (Literal_nat (snd n#payload))
   | E_Mutez m -> ret @@ E_literal (Literal_mutez (Z.of_int64 (snd m#payload)))
+  | E_Tez m ->
+    let mutez_bigint = Q.(to_bigint (mul (of_int 1_000_000) (snd m#payload))) in
+    let mutez_int64 = Z.to_int64 mutez_bigint in
+    ret @@ E_literal (Literal_mutez (Z.of_int64 mutez_int64))
   | E_Or or_ -> compile_bin_op DPIPE or_
   | E_And and_ -> compile_bin_op DAMPERSAND and_
   | E_Not not_ -> compile_unary_op WORD_NOT not_
@@ -502,6 +506,10 @@ let rec pattern : Eq.pattern -> Folding.pattern =
   | P_Int v -> ret @@ P_literal (Literal_int (snd (w_fst v)))
   | P_Nat v -> ret @@ P_literal (Literal_nat (snd (w_fst v)))
   | P_Mutez v -> ret @@ P_literal (Literal_mutez (Z.of_int64 (snd (w_fst v))))
+  | P_Tez v ->
+    let mutez_bigint = Q.(to_bigint (mul (of_int 1_000_000) (snd (w_fst v)))) in
+    let mutez_int64 = Z.to_int64 mutez_bigint in
+    ret @@ P_literal (Literal_mutez (Z.of_int64 mutez_int64))
   | P_Bytes v -> ret @@ P_literal (Literal_bytes (Hex.to_bytes (snd (w_fst v))))
   | P_String v ->
     ret @@ P_literal (Literal_string (Simple_utils.Ligo_string.standard (w_fst v)))

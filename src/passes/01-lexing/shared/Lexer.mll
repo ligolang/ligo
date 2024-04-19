@@ -35,7 +35,6 @@ module Make (Options : Options.S) (Token : Token.S) =
     | Non_canonical_zero
     | Invalid_symbol of string
     | Wrong_nat_syntax of string
-    | Wrong_mutez_syntax of string
     | Wrong_lang_syntax of string
     | Unterminated_verbatim of string
     | Overflow_mutez
@@ -56,8 +55,6 @@ module Make (Options : Options.S) (Token : Token.S) =
                  Hint: Check the LIGO syntax you use." s
     | Wrong_nat_syntax hint ->
         sprintf "Wrong nat syntax.\n%s" hint
-    | Wrong_mutez_syntax hint ->
-        sprintf "Wrong mutez syntax.\n%s" hint
     | Wrong_lang_syntax hint ->
         sprintf "Wrong code injection syntax.\n%s" hint
     | Unterminated_verbatim term ->
@@ -141,27 +138,21 @@ module Make (Options : Options.S) (Token : Token.S) =
           if   Int64.equal mutez_64 Int64.zero && String.(nat <> "0")
           then fail region Non_canonical_zero
           else let suffix = "mutez" in
-               match Token.mk_mutez nat ~suffix mutez_64 region with
-                 Ok token -> token, state
-               | Error Token.Wrong_mutez_syntax hint ->
-                   fail region (Wrong_mutez_syntax hint)
+              (Token.mk_mutez nat ~suffix mutez_64 region, state)
 
-    (* Integral Tez (internally converted to mutez) *)
+    (* Integral Tez *)
 
     let mk_tez nat suffix state buffer =
       let state, Region.{region; _} = state#sync buffer
-      and mutez = Z.mul (Z.of_int 1_000_000) (Z.of_string nat) in
-      try
-        let mutez_64 = Z.to_int64 mutez in
-        if   Int64.equal mutez_64 Int64.zero && String.(nat <> "0")
+      and tez = Q.of_string nat in
+      let mutez_bigint = Q.(to_bigint (mul (of_int 1_000_000) tez)) in
+      if Z.fits_int64 mutez_bigint then
+        if   Q.equal tez Q.zero && String.(nat <> "0")
         then fail region Non_canonical_zero
-        else match Token.mk_mutez nat ~suffix mutez_64 region with
-               Ok token -> token, state
-             | Error Token.Wrong_mutez_syntax hint ->
-                 fail region (Wrong_mutez_syntax hint)
-      with Z.Overflow -> fail region Overflow_mutez
+        else (Token.mk_tez nat ~suffix tez region, state)
+      else fail region Overflow_mutez
 
-    (* Tez as a decimal number (internally converted to mutez) *)
+    (* Tez as a decimal number *)
 
     let mk_tez_dec integral fractional suffix state buffer =
       let state, Region.{region; _} = state#sync buffer in
@@ -171,6 +162,7 @@ module Make (Options : Options.S) (Token : Token.S) =
       and frac_length = String.length fractional' in
       let denominator = Z.of_string ("1" ^ String.make frac_length '0')
       and million     = Q.of_string "1_000_000" in
+      let q_tez       = Q.make numerator denominator in
       let q_mutez     = Q.make numerator denominator |> Q.mul million in
       if Z.equal (Q.den q_mutez) Z.one then
         try
@@ -179,10 +171,7 @@ module Make (Options : Options.S) (Token : Token.S) =
                && String.(integral <> "0" || fractional <> "0")
           then fail region Non_canonical_zero
           else let lexeme = integral ^ "." ^ fractional in
-               match Token.mk_mutez lexeme ~suffix mutez_64 region with
-                 Ok token -> token, state
-               | Error Token.Wrong_mutez_syntax hint ->
-                   fail region (Wrong_mutez_syntax hint)
+               Token.mk_tez lexeme ~suffix q_tez region, state
         with Z.Overflow -> fail region Overflow_mutez
       else fail region Underflow_mutez
 

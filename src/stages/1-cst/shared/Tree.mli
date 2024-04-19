@@ -206,3 +206,4 @@ val make_int      : root -> (lexeme *     Z.t) Wrap.t printer
 val make_nat      : root -> (lexeme *     Z.t) Wrap.t printer
 val make_bytes    : root -> (lexeme *   Hex.t) Wrap.t printer
 val make_mutez    : root -> (lexeme * Int64.t) Wrap.t printer
+val make_tez      : root -> (lexeme *     Q.t) Wrap.t printer

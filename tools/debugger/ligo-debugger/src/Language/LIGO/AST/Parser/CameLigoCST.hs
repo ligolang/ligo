@@ -104,7 +104,7 @@ data Pattern
   | PModPath (Reg (ModulePath Pattern))
     -- ^ Module path pattern.
   | PMutez WrappedTupleLexeme
-    -- ^ Mutez pattern.
+  | PTez WrappedTupleLexeme
   | PNat WrappedTupleLexeme
     -- ^ Natural pattern.
   | PPar (Par Pattern)
@@ -275,7 +275,7 @@ data Expr
   | EMult SomeBinOp
     -- ^ Multiplication expression.
   | EMutez WrappedTupleLexeme
-    -- ^ Mutez expression.
+  | ETez WrappedTupleLexeme
   | ENat WrappedTupleLexeme
     -- ^ Natural expression.
   | ENeg SomeUnOp
@@ -845,6 +845,7 @@ instance MessagePack Pattern where
     , PList     <$> (guardMsg (name == "P_List"    ) >> fromObjectWith cfg arg)
     , PModPath  <$> (guardMsg (name == "P_ModPath" ) >> fromObjectWith cfg arg)
     , PMutez    <$> (guardMsg (name == "P_Mutez"   ) >> fromObjectWith cfg arg)
+    , PTez      <$> (guardMsg (name == "P_Tez"     ) >> fromObjectWith cfg arg)
     , PNat      <$> (guardMsg (name == "P_Nat"     ) >> fromObjectWith cfg arg)
     , PPar      <$> (guardMsg (name == "P_Par"     ) >> fromObjectWith cfg arg)
     , PRecord   <$> (guardMsg (name == "P_Record"  ) >> fromObjectWith cfg arg)
@@ -965,6 +966,7 @@ instance MessagePack Expr where
     , EModPath    <$> (guardMsg (name == "E_ModPath"   ) >> fromObjectWith cfg arg)
     , EMult       <$> (guardMsg (name == "E_Mult"      ) >> fromObjectWith cfg arg)
     , EMutez      <$> (guardMsg (name == "E_Mutez"     ) >> fromObjectWith cfg arg)
+    , ETez        <$> (guardMsg (name == "E_Tez"       ) >> fromObjectWith cfg arg)
     , ENat        <$> (guardMsg (name == "E_Nat"       ) >> fromObjectWith cfg arg)
     , ENeg        <$> (guardMsg (name == "E_Neg"       ) >> fromObjectWith cfg arg)
     , ENeq        <$> (guardMsg (name == "E_Neq"       ) >> fromObjectWith cfg arg)
@@ -1271,6 +1273,7 @@ toAST CST{..} =
       PList (unpackReg -> (r, Par' pats)) -> fastMake r (AST.IsList (patConv <$> pats))
       PModPath (unpackReg -> (r, modPath)) -> fastMake r (modPathConv $ patConv <$> modPath)
       PMutez (unpackWrap -> (r, Tuple1 tez)) -> makeConstantPat r (AST.CTez tez)
+      PTez (unpackWrap -> (r, Tuple1 tez)) -> makeConstantPat r (AST.CTez tez)
       PNat (unpackWrap -> (r, Tuple1 n)) -> makeConstantPat r (AST.CNat n)
       PPar (unpackReg -> (r, Par' pat)) -> fastMake r (AST.IsParen (patConv pat))
       PRecord (unpackReg -> (r, Par' recFields)) -> fastMake r (AST.IsRecord (fieldPatConv <$> recFields))
@@ -1402,6 +1405,7 @@ toAST CST{..} =
       EModPath (unpackReg -> (r, modPath)) -> fastMake r (modPathConv $ exprConv <$> modPath)
       EMult op -> makeBinOp op
       EMutez (unpackWrap -> (r, Tuple1 tez)) -> makeConstantExpr r (AST.CTez tez)
+      ETez (unpackWrap -> (r, Tuple1 tez)) -> makeConstantExpr r (AST.CTez tez)
       ENat (unpackWrap -> (r, Tuple1 nat)) -> makeConstantExpr r (AST.CNat nat)
       ENeg op -> makeUnOp op
       ENeq op -> makeBinOp op

@@ -332,8 +332,7 @@ let%expect_test _ =
     ; "--init-file"
     ; contract "implicit_cast.mligo"
     ];
-  [%expect {|
-    True |}]
+  [%expect {| True |}]
 
 let%expect_test _ =
   run_ligo_good
