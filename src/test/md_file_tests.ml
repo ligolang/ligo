@@ -13,7 +13,7 @@ type lang =
   | Shell (* Shell = compilation commands and other sh code *)
 
 module SnippetsGroup = Caml.Map.Make (struct
-  type t = syntax * group_name * Environment.Protocols.t
+  type t = syntax * group_name
 
   let compare a b = Caml.compare a b
 end)
@@ -25,19 +25,6 @@ let arg_to_string x =
   | Md.Field s -> s
   | Md.NameValue (k, v) -> Format.asprintf "%s=%s" k v
 
-
-let get_proto p =
-  let opt =
-    try Environment.Protocols.protocols_to_variant p with
-    | _ -> None
-  in
-  match opt with
-  | Some x -> x
-  | None -> failwith (Format.asprintf "unknown protocol %s" p)
-
-
-let current_proto = get_proto "current"
-let in_use_proto = Environment.Protocols.in_use
 
 let execute_command command : int * string =
   Printf.printf "\nExecute %s" command;
@@ -113,7 +100,7 @@ let get_groups md_file : snippetsmap =
       | [ Md.Field "" ] | [ Md.Field "run" ] ->
         ( nb_shell_blocks + 1
         , SnippetsGroup.update
-            ("shell", Format.sprintf "run_shell_%d" nb_shell_blocks, current_proto)
+            ("shell", Format.sprintf "run_shell_%d" nb_shell_blocks)
             (function
               (* TODO: should use String.concat only once at the top *)
               | Some (Shell, sh) ->
@@ -147,7 +134,7 @@ let get_groups md_file : snippetsmap =
         (match el.arguments with
         | [ Md.Field "" ] ->
           SnippetsGroup.update
-            (s, "ungrouped", current_proto)
+            (s, "ungrouped")
             (fun arg_content ->
               match arg_content with
               | Some (lang, ct) -> Some (lang, String.concat ~sep:"\n" (ct :: el.contents))
@@ -157,7 +144,7 @@ let get_groups md_file : snippetsmap =
         | [ Md.Field "test-ligo"; Md.NameValue ("group", name) ] ->
           let lang = Meta in
           SnippetsGroup.update
-            (s, name, in_use_proto)
+            (s, name)
             (fun arg_content ->
               match arg_content with
               | Some (lang', ct) when Caml.( = ) lang lang' ->
@@ -167,7 +154,7 @@ let get_groups md_file : snippetsmap =
         | [ Md.NameValue ("group", name); Md.NameValue ("protocol", x) ] ->
           let lang = Object in
           SnippetsGroup.update
-            (s, name, get_proto x)
+            (s, name)
             (fun arg_content ->
               match arg_content with
               | Some (lang', ct) when Caml.( = ) lang lang' ->
@@ -177,7 +164,7 @@ let get_groups md_file : snippetsmap =
         | [ Md.NameValue ("group", name) ] ->
           let lang = Object in
           SnippetsGroup.update
-            (s, name, current_proto)
+            (s, name)
             (fun arg_content ->
               match arg_content with
               | Some (lang', ct) when Caml.( = ) lang lang' ->
@@ -223,8 +210,8 @@ let write_if_different (filename : string) ~(contents : string) : bool =
 
 
 let write_to_files ~raise md_filename grp_list : bool =
-  let aux : (syntax * group_name * Environment.Protocols.t) * (lang * string) -> bool =
-   fun ((syntax, grp, protocol_version), (lang, contents)) ->
+  let aux : (syntax * group_name) * (lang * string) -> bool =
+   fun ((syntax, grp), (lang, contents)) ->
     if String.equal syntax "shell"
     then false
     else (
@@ -274,16 +261,15 @@ let compile_groups ~raise filename grp_list =
   @@
   let open Lwt.Let_syntax in
   let aux
-      : (syntax * group_name * Environment.Protocols.t) * (lang * string) -> unit Lwt.t
+      : (syntax * group_name) * (lang * string) -> unit Lwt.t
     =
-   fun ((syntax, grp, protocol_version), (lang, contents)) ->
+   fun ((syntax, grp), (lang, contents)) ->
     trace ~raise (test_md_file filename syntax grp contents)
     @@ fun ~raise ->
     let options syntax =
       Compiler_options.make
         ~syntax:(Syntax.of_string_opt ~raise (Syntax_name syntax) None)
         ~raw_options:(Raw_options.make ())
-        ~protocol_version
         ()
     in
     match lang with

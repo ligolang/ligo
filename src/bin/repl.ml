@@ -137,7 +137,6 @@ module Raw_options = Compiler_options.Raw_options
 
 type state =
   { syntax : Syntax_types.t
-  ; protocol : Environment.Protocols.t
   ; top_level : Ast_typed.program
   ; dry_run_opts : Run.options
   ; module_resolutions : Preprocessor.ModRes.t option
@@ -224,13 +223,7 @@ let try_declaration ~raise ~raw_options state s =
 
 let import_file ~raise ~raw_options state file_name module_name =
   let file_name = ModRes.Helpers.resolve ~file:file_name state.module_resolutions in
-  let options =
-    Compiler_options.make
-      ~raw_options
-      ~syntax:state.syntax
-      ~protocol_version:state.protocol
-      ()
-  in
+  let options = Compiler_options.make ~raw_options ~syntax:state.syntax () in
   let module_ =
     let Ast_typed.{ pr_module; pr_sig } =
       Build.qualified_typed_with_signature
@@ -266,13 +259,7 @@ let import_file ~raise ~raw_options state file_name module_name =
 
 let use_file ~raise ~raw_options state file_name =
   let file_name = ModRes.Helpers.resolve ~file:file_name state.module_resolutions in
-  let options =
-    Compiler_options.make
-      ~raw_options
-      ~syntax:state.syntax
-      ~protocol_version:state.protocol
-      ()
-  in
+  let options = Compiler_options.make ~raw_options ~syntax:state.syntax () in
   (* Missing typer environment? *)
   let module' =
     Build.qualified_typed ~raise ~options (Build.Source_input.From_file file_name)
@@ -362,12 +349,11 @@ let welcome_msg =
   \  #import \"file_path\" \"module_name\";;"
 
 
-let make_initial_state syntax protocol dry_run_opts project_root options =
+let make_initial_state syntax dry_run_opts project_root options =
   let lib = Build.Stdlib.get ~options in
   let top_level = Build.Stdlib.select_lib_typed syntax lib in
   { top_level
   ; syntax
-  ; protocol
   ; dry_run_opts
   ; module_resolutions = Option.bind project_root ~f:Preprocessor.ModRes.make
   }
@@ -433,23 +419,17 @@ let main
     init_file
     ()
   =
-  let protocol =
-    Environment.Protocols.protocols_to_variant raw_options.protocol_version
-  in
   let syntax = Syntax.of_string_opt (Syntax_name raw_options.syntax) None in
   let dry_run_opts =
     Ligo_run.Of_michelson.make_dry_run_options
       { now; amount; balance; sender; source; parameter_ty = None }
   in
   match
-    ( protocol
-    , Simple_utils.Trace.to_option syntax
-    , Simple_utils.Trace.to_option dry_run_opts )
+    Simple_utils.Trace.to_option syntax, Simple_utils.Trace.to_option dry_run_opts
   with
-  | _, None, _ -> Error ("Please check syntax name.", "")
-  | None, _, _ -> Error ("Please check protocol name.", "")
-  | _, _, None -> Error ("Please check run options.", "")
-  | Some protocol, Some syntax, Some dry_run_opts ->
+  | None, _ -> Error ("Please check syntax name.", "")
+  | _, None -> Error ("Please check run options.", "")
+  | Some syntax, Some dry_run_opts ->
     Lwt_main.run (LTerm_inputrc.load ());
     let term = Lwt_main.run (Lazy.force LTerm.stdout) in
     let history = LTerm_history.create [] in
@@ -457,7 +437,6 @@ let main
     let state =
       make_initial_state
         syntax
-        protocol
         (Lwt_main.run dry_run_opts)
         raw_options.project_root
         options

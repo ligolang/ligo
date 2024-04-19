@@ -8,7 +8,6 @@
   ast_core
   ast_typed
   mini_c
-  environment
   stacking
   ligo_coq_ocaml)
  (flags

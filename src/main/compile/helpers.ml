@@ -3,14 +3,6 @@ open Main_errors
 
 type meta = { syntax : Syntax_types.t }
 
-let protocol_to_variant ~raise : string -> Environment.Protocols.t =
- fun s ->
-  trace_option
-    ~raise
-    (main_invalid_protocol_version Environment.Protocols.protocols_str s)
-  @@ Environment.Protocols.protocols_to_variant s
-
-
 (* Preprocessing *)
 
 type options = Compiler_options.t

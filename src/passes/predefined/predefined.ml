@@ -57,91 +57,89 @@ module Michelson = struct
     `Tezos_utils.Michelson` will help too, so that no Michelson has to actually
     be written by hand.
    *)
-  type protocol_type = Environment.Protocols.t
-
   include Helpers.Michelson
   open Tezos_utils.Michelson
   open Ligo_prim.Constant
 
-  let get_operators (protocol_version : protocol_type) c : predicate option =
-    match c, protocol_version with
-    | C_ADD, _ -> Some (simple_binary @@ prim "ADD")
-    | C_SUB, _ -> Some (simple_binary @@ prim "SUB")
-    | C_SUB_MUTEZ, _ -> Some (simple_binary @@ prim "SUB_MUTEZ")
-    | C_MUL, _ -> Some (simple_binary @@ prim "MUL")
-    | C_DIV, _ ->
+  let get_operators c : predicate option =
+    match c with
+    | C_ADD -> Some (simple_binary @@ prim "ADD")
+    | C_SUB -> Some (simple_binary @@ prim "SUB")
+    | C_SUB_MUTEZ -> Some (simple_binary @@ prim "SUB_MUTEZ")
+    | C_MUL -> Some (simple_binary @@ prim "MUL")
+    | C_DIV ->
       Some
         (simple_binary
         @@ seq [ prim "EDIV"; i_assert_some_msg (i_push_string "DIV by 0"); i_car ])
-    | C_MOD, _ ->
+    | C_MOD ->
       Some
         (simple_binary
         @@ seq [ prim "EDIV"; i_assert_some_msg (i_push_string "MOD by 0"); i_cdr ])
-    | C_NEG, _ -> Some (simple_unary @@ prim "NEG")
-    | C_OR, _ -> Some (simple_binary @@ prim "OR")
-    | C_AND, _ -> Some (simple_binary @@ prim "AND")
-    | C_XOR, _ -> Some (simple_binary @@ prim "XOR")
-    | C_LOR, _ -> Some (simple_binary @@ prim "OR")
-    | C_LAND, _ -> Some (simple_binary @@ prim "AND")
-    | C_LXOR, _ -> Some (simple_binary @@ prim "XOR")
-    | C_LSL, _ -> Some (simple_binary @@ prim "LSL")
-    | C_LSR, _ -> Some (simple_binary @@ prim "LSR")
-    | C_NOT, _ -> Some (simple_unary @@ prim "NOT")
-    | C_PAIR, _ -> Some (simple_binary @@ prim "PAIR")
-    | C_CAR, _ -> Some (simple_unary @@ prim "CAR")
-    | C_CDR, _ -> Some (simple_unary @@ prim "CDR")
-    | C_TRUE, _ -> Some (simple_constant @@ i_push (prim "bool") (prim "True"))
-    | C_FALSE, _ -> Some (simple_constant @@ i_push (prim "bool") (prim "False"))
-    | C_EQ, _ -> Some (simple_binary @@ seq [ prim "COMPARE"; prim "EQ" ])
-    | C_NEQ, _ -> Some (simple_binary @@ seq [ prim "COMPARE"; prim "NEQ" ])
-    | C_LT, _ -> Some (simple_binary @@ seq [ prim "COMPARE"; prim "LT" ])
-    | C_LE, _ -> Some (simple_binary @@ seq [ prim "COMPARE"; prim "LE" ])
-    | C_GT, _ -> Some (simple_binary @@ seq [ prim "COMPARE"; prim "GT" ])
-    | C_GE, _ -> Some (simple_binary @@ seq [ prim "COMPARE"; prim "GE" ])
-    | C_UPDATE, _ -> Some (simple_ternary @@ prim "UPDATE")
-    | C_SOME, _ -> Some (simple_unary @@ prim "SOME")
-    | C_MAP_FIND, _ ->
+    | C_NEG -> Some (simple_unary @@ prim "NEG")
+    | C_OR -> Some (simple_binary @@ prim "OR")
+    | C_AND -> Some (simple_binary @@ prim "AND")
+    | C_XOR -> Some (simple_binary @@ prim "XOR")
+    | C_LOR -> Some (simple_binary @@ prim "OR")
+    | C_LAND -> Some (simple_binary @@ prim "AND")
+    | C_LXOR -> Some (simple_binary @@ prim "XOR")
+    | C_LSL -> Some (simple_binary @@ prim "LSL")
+    | C_LSR -> Some (simple_binary @@ prim "LSR")
+    | C_NOT -> Some (simple_unary @@ prim "NOT")
+    | C_PAIR -> Some (simple_binary @@ prim "PAIR")
+    | C_CAR -> Some (simple_unary @@ prim "CAR")
+    | C_CDR -> Some (simple_unary @@ prim "CDR")
+    | C_TRUE -> Some (simple_constant @@ i_push (prim "bool") (prim "True"))
+    | C_FALSE -> Some (simple_constant @@ i_push (prim "bool") (prim "False"))
+    | C_EQ -> Some (simple_binary @@ seq [ prim "COMPARE"; prim "EQ" ])
+    | C_NEQ -> Some (simple_binary @@ seq [ prim "COMPARE"; prim "NEQ" ])
+    | C_LT -> Some (simple_binary @@ seq [ prim "COMPARE"; prim "LT" ])
+    | C_LE -> Some (simple_binary @@ seq [ prim "COMPARE"; prim "LE" ])
+    | C_GT -> Some (simple_binary @@ seq [ prim "COMPARE"; prim "GT" ])
+    | C_GE -> Some (simple_binary @@ seq [ prim "COMPARE"; prim "GE" ])
+    | C_UPDATE -> Some (simple_ternary @@ prim "UPDATE")
+    | C_SOME -> Some (simple_unary @@ prim "SOME")
+    | C_MAP_FIND ->
       Some
         (simple_binary @@ seq [ prim "GET"; i_assert_some_msg (i_push_string "MAP FIND") ])
-    | C_MAP_FIND_OPT, _ -> Some (simple_binary @@ prim "GET")
-    | C_MAP_ADD, _ -> Some (simple_ternary @@ seq [ dip i_some; prim "UPDATE" ])
-    | C_MAP_UPDATE, _ -> Some (simple_ternary @@ prim "UPDATE")
-    | (C_MAP_GET_AND_UPDATE | C_BIG_MAP_GET_AND_UPDATE), _ ->
+    | C_MAP_FIND_OPT -> Some (simple_binary @@ prim "GET")
+    | C_MAP_ADD -> Some (simple_ternary @@ seq [ dip i_some; prim "UPDATE" ])
+    | C_MAP_UPDATE -> Some (simple_ternary @@ prim "UPDATE")
+    | C_MAP_GET_AND_UPDATE | C_BIG_MAP_GET_AND_UPDATE ->
       Some (simple_ternary @@ seq [ prim "GET_AND_UPDATE"; prim "PAIR" ])
-    | C_CONS, _ -> Some (simple_binary @@ prim "CONS")
-    | C_UNIT, _ -> Some (simple_constant @@ prim "UNIT")
-    | C_SET_MEM, _ -> Some (simple_binary @@ prim "MEM")
-    | C_SET_ADD, _ ->
+    | C_CONS -> Some (simple_binary @@ prim "CONS")
+    | C_UNIT -> Some (simple_constant @@ prim "UNIT")
+    | C_SET_MEM -> Some (simple_binary @@ prim "MEM")
+    | C_SET_ADD ->
       Some
         (simple_binary @@ seq [ dip (i_push (prim "bool") (prim "True")); prim "UPDATE" ])
-    | C_SET_REMOVE, _ ->
+    | C_SET_REMOVE ->
       Some
         (simple_binary @@ seq [ dip (i_push (prim "bool") (prim "False")); prim "UPDATE" ])
-    | C_SET_UPDATE, _ -> Some (simple_ternary @@ prim "UPDATE")
-    | C_CONCAT, _ -> Some (simple_binary @@ prim "CONCAT")
-    | C_CONCATS, _ -> Some (simple_unary @@ prim "CONCAT")
-    | C_SLICE, _ ->
+    | C_SET_UPDATE -> Some (simple_ternary @@ prim "UPDATE")
+    | C_CONCAT -> Some (simple_binary @@ prim "CONCAT")
+    | C_CONCATS -> Some (simple_unary @@ prim "CONCAT")
+    | C_SLICE ->
       Some
         (simple_ternary @@ seq [ prim "SLICE"; i_assert_some_msg (i_push_string "SLICE") ])
-    | C_NONE, _ -> Some (trivial_special "NONE")
-    | C_NIL, _ -> Some (trivial_special "NIL")
-    | C_LOOP_CONTINUE, _ -> Some (trivial_special "LEFT")
-    | C_LOOP_STOP, _ -> Some (trivial_special "RIGHT")
-    | C_LIST_EMPTY, _ -> Some (trivial_special "NIL")
-    | C_SET_EMPTY, _ -> Some (trivial_special "EMPTY_SET")
-    | C_MAP_EMPTY, _ -> Some (trivial_special "EMPTY_MAP")
-    | C_BIG_MAP_EMPTY, _ -> Some (trivial_special "EMPTY_BIG_MAP")
-    | C_LIST_SIZE, _ -> Some (trivial_special "SIZE")
-    | C_SET_SIZE, _ -> Some (trivial_special "SIZE")
-    | C_MAP_SIZE, _ -> Some (trivial_special "SIZE")
-    | C_SIZE, _ -> Some (trivial_special "SIZE")
-    | C_MAP_MEM, _ -> Some (simple_binary @@ prim "MEM")
-    | C_MAP_REMOVE, _ ->
+    | C_NONE -> Some (trivial_special "NONE")
+    | C_NIL -> Some (trivial_special "NIL")
+    | C_LOOP_CONTINUE -> Some (trivial_special "LEFT")
+    | C_LOOP_STOP -> Some (trivial_special "RIGHT")
+    | C_LIST_EMPTY -> Some (trivial_special "NIL")
+    | C_SET_EMPTY -> Some (trivial_special "EMPTY_SET")
+    | C_MAP_EMPTY -> Some (trivial_special "EMPTY_MAP")
+    | C_BIG_MAP_EMPTY -> Some (trivial_special "EMPTY_BIG_MAP")
+    | C_LIST_SIZE -> Some (trivial_special "SIZE")
+    | C_SET_SIZE -> Some (trivial_special "SIZE")
+    | C_MAP_SIZE -> Some (trivial_special "SIZE")
+    | C_SIZE -> Some (trivial_special "SIZE")
+    | C_MAP_MEM -> Some (simple_binary @@ prim "MEM")
+    | C_MAP_REMOVE ->
       Some (special (fun with_args -> seq [ dip (with_args "NONE"); prim "UPDATE" ]))
-    | C_LEFT, _ -> Some (trivial_special "LEFT")
-    | C_RIGHT, _ -> Some (trivial_special "RIGHT")
-    | C_CREATE_CONTRACT, _ ->
+    | C_LEFT -> Some (trivial_special "LEFT")
+    | C_RIGHT -> Some (trivial_special "RIGHT")
+    | C_CREATE_CONTRACT ->
       Some (special (fun with_args -> seq [ with_args "CREATE_CONTRACT"; i_pair ]))
-    | C_GLOBAL_CONSTANT, _ -> Some (special (fun with_args -> with_args "PUSH"))
+    | C_GLOBAL_CONSTANT -> Some (special (fun with_args -> with_args "PUSH"))
     | _ -> None
 end

@@ -6,7 +6,6 @@
  (libraries
   simple-utils
   ast_aggregated
-  environment
   compiler_options
   main_warnings)
  (preprocess

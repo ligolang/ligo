@@ -29,7 +29,6 @@ let smaller m1 m2 =
     optimize
       ~experimental_disable_optimizations_for_debugging:false
       ~has_comment:(fun _ -> false)
-      Environment.Protocols.current
   in
   let%bind loc1 = measure (optimize (Seq (null, m1))) in
   let%bind loc2 = measure (optimize (Seq (null, m2))) in

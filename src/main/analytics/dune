@@ -9,7 +9,6 @@
   prometheus
   prometheus_push
   compiler_options
-  environment
   syntax_types
   syntax)
  (modules analytics version))

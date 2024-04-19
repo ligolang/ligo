@@ -17,12 +17,7 @@ module Cache = struct
     - multiple imports (#imports)
     - multiple compilation of contract in "ligo test"
   *)
-  module LanguageMap = Simple_utils.Map.Make (struct
-    type t = Environment.Protocols.t * bool
-
-    let compare (pa, ta) (pb, tb) =
-      Int.(abs (Environment.Protocols.compare pa pb) + abs (compare_bool ta tb))
-  end)
+  module LanguageMap = Simple_utils.Map.Make (Bool)
 
   type cache = t LanguageMap.t
 
@@ -30,7 +25,7 @@ module Cache = struct
 
   let build_key ~options =
     let open Compiler_options in
-    options.middle_end.protocol_version, options.middle_end.test
+    options.middle_end.test
 end
 
 let compile ~options x =
@@ -74,10 +69,7 @@ let type_ ~options x =
 let get : options:Compiler_options.t -> unit -> t =
  fun ~options () ->
   let def str = "#define " ^ str ^ "\n" in
-  let std =
-    match options.middle_end.protocol_version with
-    | Environment.Protocols.Paris_b -> def "PARIS_B"
-  in
+  let std = def Memory_proto_alpha.protocol_def_str in
   let legacy_layout_tree =
     if Ligo_prim.Layout.legacy_layout_flag then def "LEGACY_LAYOUT_TREE" else ""
   in

@@ -9,7 +9,6 @@
   nanopasses
   unification
   predefined
-  environment
   compiler_options
   main_warnings
   syntax_types

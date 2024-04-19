@@ -62,8 +62,7 @@ and transduced =
   }
 
 and internals =
-  { protocol_version : Environment.Protocols.t
-  ; baker_policy : Tezos_alpha_test_helpers.Block.baker_policy
+  { baker_policy : Tezos_alpha_test_helpers.Block.baker_policy
         (* baker to be used for the next transfer/origination *)
   ; source : Memory_proto_alpha.Protocol.Alpha_context.Contract.t
         (* source to be used for the next transfer/origination *)
@@ -995,7 +994,6 @@ let init_ctxt
     ?(baker_accounts = [])
     ?(n = 2)
     ?initial_timestamp
-    protocol_version
     bootstrapped_contracts
   =
   let open Lwt.Let_syntax in
@@ -1058,8 +1056,7 @@ let init_ctxt
     let baker = unwrap_baker ~raise ~loc ~calltrace baker in
     let transduced = { last_originations = []; bigmaps = []; last_events = [] } in
     let internals =
-      { protocol_version
-      ; baker_policy = By_account baker
+      { baker_policy = By_account baker
       ; source
       ; next_bootstrapped_contracts = []
       ; next_baker_accounts = []

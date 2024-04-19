@@ -12,8 +12,6 @@ include Helpers
 open Peephole
 open Peephole.Let_syntax
 
-type proto = Environment.Protocols.t
-
 (* `arity p` should be `Some n` only if p is (always) an instruction
    which removes n items from the stack and uses them to push 1 item,
    without effects other than gas consumption. It must never fail. *)
@@ -963,14 +961,12 @@ let rec opt_strip_annots (x : _ michelson) : _ michelson =
 
 let optimize
     : type meta.
-      Environment.Protocols.t
-      -> experimental_disable_optimizations_for_debugging:bool
+      experimental_disable_optimizations_for_debugging:bool
       -> has_comment:(meta -> bool)
       -> meta michelson
       -> meta michelson
   =
- fun proto ~experimental_disable_optimizations_for_debugging ~has_comment x ->
-  ignore proto;
+ fun ~experimental_disable_optimizations_for_debugging ~has_comment x ->
   let x = flatten_seqs ~has_comment x in
   let x = opt_tail_fail x in
   let optimizers =
@@ -1033,7 +1029,6 @@ let rec optimize_with_types
             node
             -> Proto_alpha_utils.Memory_proto_alpha.Protocol.Script_tc_errors.type_map
                Lwt.t)
-      -> Environment.Protocols.t
       -> experimental_disable_optimizations_for_debugging:bool
       -> has_comment:(l -> bool)
       -> l michelson
@@ -1041,7 +1036,6 @@ let rec optimize_with_types
   =
  fun ~raise
      ~typer_oracle
-     proto
      ~experimental_disable_optimizations_for_debugging
      ~has_comment
      contract ->
@@ -1089,8 +1083,7 @@ let rec optimize_with_types
     in
     let code =
       if changed
-      then
-        optimize proto ~experimental_disable_optimizations_for_debugging ~has_comment code
+      then optimize ~experimental_disable_optimizations_for_debugging ~has_comment code
       else code
     in
     let recover_locs node =
@@ -1113,7 +1106,6 @@ let rec optimize_with_types
       optimize_with_types
         ~raise
         ~typer_oracle
-        proto
         ~experimental_disable_optimizations_for_debugging
         ~has_comment
         contract

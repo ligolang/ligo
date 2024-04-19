@@ -1,4 +1,3 @@
-module Ligo_proto = Environment.Protocols
 module Option = Simple_utils.Option
 module List = Simple_utils.List
 open Errors

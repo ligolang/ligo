@@ -3,6 +3,53 @@ module Constants = Commands.Constants
 module Default_options = Compiler_options.Default_options
 module Raw_options = Compiler_options.Raw_options
 
+let pp_quoted ppf s = Format.fprintf ppf "`%s`" s
+
+module Deprecated_param : sig
+  (** A deprecated parameter is a parameter that will always be ignored
+      and will raise a warning when passed a non-empty value. *)
+  type t = unit Command.Param.t
+
+  (** Creates a deprecated flag, printing a warning when [Some _] is parsed 
+      from the flag. *)
+  val flag
+    :  ?full_flag_required:unit
+    -> ?aliases:string list
+    -> ?replacement:string
+    -> string
+    -> 'a option Command.Flag.t
+    -> doc:string
+    -> t
+end = struct
+  type t = unit Command.Param.t
+
+  let flag ?full_flag_required ?aliases ?replacement name spec ~doc =
+    let open Command.Param in
+    let doc =
+      Format.asprintf
+        "%s (deprecated%a)"
+        doc
+        (Format.pp_print_option (fun ppf r ->
+             Format.fprintf ppf ", use %a instead" pp_quoted r))
+        replacement
+    in
+    flag ?full_flag_required ?aliases name spec ~doc
+    |> map ~f:(function
+           | None -> ()
+           | Some _ ->
+             Format.eprintf
+               "Warning: the flag %a%a is deprecated and will be ignored\n%!"
+               pp_quoted
+               ("-" ^ name)
+               (Format.pp_print_option (fun ppf aliases ->
+                    Format.fprintf
+                      ppf
+                      " (aliases: %a)"
+                      (Format.pp_print_list pp_quoted)
+                      aliases))
+               aliases)
+end
+
 let is_dev = ref true
 
 let file_type =
@@ -285,25 +332,11 @@ let steps =
 
 let protocol_version =
   let open Command.Param in
-  let open Environment.Protocols in
-  let plist =
-    Format.asprintf
-      "%a"
-      (Simple_utils.PP_helpers.list_sep_d_par Format.pp_print_string)
-      protocols_str
-  in
   let doc =
-    Format.asprintf
-      "PROTOCOL choose protocol's types/values pre-loaded into the LIGO environment %s. \
-       By default, the current protocol (%s) will be used"
-      plist
-      (variant_to_string current)
+    "PROTOCOL choose protocol's types/values pre-loaded into the LIGO environment"
   in
-  let protocol_type =
-    create_string_arg_type_with_static_completion ~items:protocols_str
-  in
-  let spec = optional_with_default Default_options.protocol_version protocol_type in
-  flag ~doc ~aliases:[ "--protocol" ] "p" spec
+  let spec = optional string in
+  Deprecated_param.flag ~doc ~aliases:[ "--protocol" ] "p" spec
 
 
 let cli_expr_inj =
@@ -783,7 +816,7 @@ let compile_file =
       module_
       views
       syntax
-      protocol_version
+      ((* DEPRECATED: protocol_version *) () as _protocol_version)
       display_format
       disable_michelson_typechecking
       experimental_disable_optimizations_for_debugging
@@ -812,7 +845,6 @@ let compile_file =
       Raw_options.make
         ~module_
         ~syntax
-        ~protocol_version
         ~disable_michelson_typechecking
         ~experimental_disable_optimizations_for_debugging
         ~enable_typed_opt
@@ -903,7 +935,7 @@ let compile_parameter =
       module_
       expression
       syntax
-      protocol_version
+      ((* DEPRECATED: protocol_version *) () as _protocol_version)
       amount
       balance
       sender
@@ -929,7 +961,6 @@ let compile_parameter =
       Raw_options.make
         ~syntax
         ~module_
-        ~protocol_version
         ~warning_as_error
         ~constants
         ~file_constants
@@ -1009,7 +1040,7 @@ let compile_expression =
   let f
       syntax
       expression
-      protocol_version
+      ((* DEPRECATED: protocol_version *) () as _protocol_version)
       init_file
       display_format
       no_colour
@@ -1033,7 +1064,6 @@ let compile_expression =
     let raw_options =
       Raw_options.make
         ~syntax
-        ~protocol_version
         ~without_run
         ~no_stdlib
         ~warning_as_error
@@ -1101,7 +1131,7 @@ let compile_type =
   let f
       syntax
       expression
-      protocol_version
+      ((* DEPRECATED: protocol_version *) () as _protocol_version)
       init_file
       display_format
       no_colour
@@ -1120,7 +1150,6 @@ let compile_type =
     let raw_options =
       Raw_options.make
         ~syntax
-        ~protocol_version
         ~no_stdlib
         ~warning_as_error
         ~project_root
@@ -1177,7 +1206,7 @@ let compile_storage =
       entry_point
       module_
       syntax
-      protocol_version
+      ((* DEPRECATED: protocol_version *) () as _protocol_version)
       amount
       balance
       sender
@@ -1213,7 +1242,6 @@ let compile_storage =
       Raw_options.make
         ~module_
         ~syntax
-        ~protocol_version
         ~warning_as_error
         ~constants
         ~file_constants
@@ -1297,7 +1325,7 @@ let compile_constant =
   let f
       syntax
       expression
-      protocol_version
+      ((* DEPRECATED: protocol_version *) () as _protocol_version)
       init_file
       display_format
       no_colour
@@ -1316,7 +1344,6 @@ let compile_constant =
     let raw_options =
       Raw_options.make
         ~syntax
-        ~protocol_version
         ~without_run
         ~warning_as_error
         ~project_root
@@ -1709,7 +1736,7 @@ let dry_run =
       source
       now
       syntax
-      protocol_version
+      ((* DEPRECATED: protocol_version *) () as _protocol_version)
       display_format
       no_colour
       skip_analytics
@@ -1726,7 +1753,6 @@ let dry_run =
       Raw_options.make
         ~module_
         ~syntax
-        ~protocol_version
         ~warning_as_error
         ~project_root
         ~warn_unused_rec
@@ -1807,7 +1833,7 @@ let evaluate_call =
       source
       now
       syntax
-      protocol_version
+      ((* DEPRECATED: protocol_version *) () as _protocol_version)
       display_format
       no_colour
       skip_analytics
@@ -1823,7 +1849,6 @@ let evaluate_call =
     let raw_options =
       Raw_options.make
         ~syntax
-        ~protocol_version
         ~warning_as_error
         ~project_root
         ~warn_unused_rec
@@ -1900,7 +1925,7 @@ let evaluate_expr =
       source
       now
       syntax
-      protocol_version
+      ((* DEPRECATED: protocol_version *) () as _protocol_version)
       display_format
       no_colour
       skip_analytics
@@ -1916,7 +1941,6 @@ let evaluate_expr =
     let raw_options =
       Raw_options.make
         ~syntax
-        ~protocol_version
         ~warning_as_error
         ~project_root
         ~warn_unused_rec
@@ -1978,7 +2002,7 @@ let interpret =
       expression
       init_file
       syntax
-      protocol_version
+      ((* DEPRECATED: protocol_version *) () as _protocol_version)
       amount
       balance
       sender
@@ -1997,7 +2021,6 @@ let interpret =
     let raw_options =
       Raw_options.make
         ~syntax
-        ~protocol_version
         ~project_root
         ~warn_unused_rec
         ~warn_infinite_loop
@@ -2128,7 +2151,7 @@ let measure_contract =
       source_file
       entry_point
       syntax
-      protocol_version
+      ((* DEPRECATED: protocol_version *) () as _protocol_version)
       display_format
       no_colour
       skip_analytics
@@ -2144,7 +2167,6 @@ let measure_contract =
     let raw_options =
       Raw_options.make
         ~syntax
-        ~protocol_version
         ~warning_as_error
         ~project_root
         ~warn_unused_rec
@@ -2198,7 +2220,7 @@ let measure_contract =
 let get_scope =
   let f
       source_file
-      protocol_version
+      ((* DEPRECATED: protocol_version *) () as _protocol_version)
       libraries
       display_format
       no_colour
@@ -2212,7 +2234,6 @@ let get_scope =
     =
     let raw_options =
       Raw_options.make
-        ~protocol_version
         ~libraries
         ~with_types
         ~defs_only
@@ -2291,7 +2312,7 @@ let resolve_config =
 let dump_cst =
   let f
       (source_file, source_files)
-      protocol_version
+      ((* DEPRECATED: protocol_version *) () as _protocol_version)
       libraries
       display_format
       with_types
@@ -2299,7 +2320,7 @@ let dump_cst =
       no_colour
       ()
     =
-    let raw_options = Raw_options.make ~protocol_version ~libraries ~with_types () in
+    let raw_options = Raw_options.make ~libraries ~with_types () in
     let cli_analytics =
       Analytics.generate_cli_metrics_with_syntax_and_protocol
         ~command:"info_dump-cst"
@@ -2666,7 +2687,7 @@ let print_ast_typed =
       source_file
       type_doc
       syntax
-      protocol_version
+      ((* DEPRECATED: protocol_version *) () as _protocol_version)
       display_format
       self_pass
       project_root
@@ -2693,7 +2714,6 @@ let print_ast_typed =
     let raw_options =
       Raw_options.make
         ~syntax
-        ~protocol_version
         ~self_pass
         ~project_root
         ~warn_unused_rec
@@ -2756,7 +2776,7 @@ let print_ast_aggregated =
   let f
       source_file
       syntax
-      protocol_version
+      ((* DEPRECATED: protocol_version *) () as _protocol_version)
       display_format
       self_pass
       project_root
@@ -2773,7 +2793,6 @@ let print_ast_aggregated =
     let raw_options =
       Raw_options.make
         ~syntax
-        ~protocol_version
         ~self_pass
         ~project_root
         ~warn_unused_rec
@@ -2834,7 +2853,7 @@ let print_module_signature =
       source_file
       syntax
       module_
-      protocol_version
+      ((* DEPRECATED: protocol_version *) () as _protocol_version)
       display_format
       self_pass
       project_root
@@ -2850,7 +2869,6 @@ let print_module_signature =
     let raw_options =
       Raw_options.make
         ~syntax
-        ~protocol_version
         ~self_pass
         ~module_
         ~project_root
@@ -2904,7 +2922,7 @@ let print_ast_expanded =
   let f
       source_file
       syntax
-      protocol_version
+      ((* DEPRECATED: protocol_version *) () as _protocol_version)
       display_format
       no_colour
       skip_analytics
@@ -2920,7 +2938,6 @@ let print_ast_expanded =
     let raw_options =
       Raw_options.make
         ~syntax
-        ~protocol_version
         ~self_pass
         ~project_root
         ~warn_unused_rec
@@ -2976,7 +2993,7 @@ let print_mini_c =
   let f
       source_file
       syntax
-      protocol_version
+      ((* DEPRECATED: protocol_version *) () as _protocol_version)
       display_format
       optimize
       project_root
@@ -2991,7 +3008,6 @@ let print_mini_c =
     let raw_options =
       Raw_options.make
         ~syntax
-        ~protocol_version
         ~project_root
         ~warn_unused_rec
         ~warn_infinite_loop
@@ -3202,7 +3218,7 @@ let changelog =
 let repl =
   let f
       syntax
-      protocol_version
+      ((* DEPRECATED: protocol_version *) () as _protocol_version)
       amount
       balance
       sender
@@ -3217,9 +3233,7 @@ let repl =
       array_as_list
       ()
     =
-    let raw_options =
-      Raw_options.make ~syntax ~protocol_version ~project_root ~libraries ()
-    in
+    let raw_options = Raw_options.make ~syntax ~project_root ~libraries () in
     let cli_analytics =
       Analytics.generate_cli_metrics_with_syntax_and_protocol
         ~command:"repl"
@@ -3580,12 +3594,12 @@ let doc =
       doc_args
       syntax
       skip_analytics
-      protocol_version
+      ((* DEPRECATED: protocol_version *) () as _protocol_version)
       type_doc
       mdx
       ()
     =
-    let raw_options = Raw_options.make ~syntax ~protocol_version () in
+    let raw_options = Raw_options.make ~syntax () in
     let cli_analytics =
       Analytics.generate_cli_metrics_with_syntax_and_protocol
         ~command:"doc"
@@ -3638,12 +3652,7 @@ let main =
 
 let run ?argv () =
   Printexc.record_backtrace true;
-  let build_info =
-    Format.sprintf
-      "Protocol built-in: %s"
-      Environment.Protocols.(variant_to_string in_use)
-  in
-  Command_unix.run ~build_info ~version:Version.version ?argv main;
+  Command_unix.run ~version:Version.version ?argv main;
   (* Effect to error code *)
   match !return with
   | Done -> 0

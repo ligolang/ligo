@@ -1,4 +1,3 @@
-open Environment
 module Default_options = Raw_options.Default_options
 module Raw_options = Raw_options
 
@@ -30,7 +29,6 @@ type test_framework =
 
 type middle_end =
   { test : bool
-  ; protocol_version : Protocols.t
   ; warn_unused_rec : bool
   ; no_stdlib : bool
   ; syntax_for_errors : Syntax_types.t option
@@ -41,8 +39,7 @@ type middle_end =
   }
 
 type backend =
-  { protocol_version : Protocols.t
-  ; disable_michelson_typechecking : bool
+  { disable_michelson_typechecking : bool
   ; experimental_disable_optimizations_for_debugging : bool
   ; enable_typed_opt : bool
   ; without_run : bool
@@ -71,14 +68,10 @@ let warn_unused_rec ~syntax should_warn =
 
 
 let make
-    :  raw_options:Raw_options.t -> ?syntax:Syntax_types.t
-    -> ?protocol_version:Protocols.t -> ?has_env_comments:bool -> unit -> t
+    :  raw_options:Raw_options.t -> ?syntax:Syntax_types.t -> ?has_env_comments:bool
+    -> unit -> t
   =
- fun ~raw_options
-     ?syntax
-     ?(protocol_version = Protocols.current)
-     ?(has_env_comments = false)
-     () ->
+ fun ~raw_options ?syntax ?(has_env_comments = false) () ->
   let frontend =
     { syntax
     ; libraries = raw_options.libraries
@@ -104,7 +97,6 @@ let make
   in
   let middle_end =
     { test = raw_options.test
-    ; protocol_version
     ; warn_unused_rec = warn_unused_rec ~syntax raw_options.warn_unused_rec
     ; no_stdlib = raw_options.no_stdlib
     ; array_as_list = raw_options.array_as_list
@@ -115,8 +107,7 @@ let make
     }
   in
   let backend =
-    { protocol_version
-    ; disable_michelson_typechecking = raw_options.disable_michelson_typechecking
+    { disable_michelson_typechecking = raw_options.disable_michelson_typechecking
     ; experimental_disable_optimizations_for_debugging =
         raw_options.experimental_disable_optimizations_for_debugging
     ; enable_typed_opt = raw_options.enable_typed_opt

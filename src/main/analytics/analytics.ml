@@ -364,12 +364,6 @@ let determine_syntax_label syntax source : string =
   | _ -> "invalid"
 
 
-let get_protocol_label ~raw_options =
-  match raw_options.protocol_version with
-  | "current" -> Environment.Protocols.variant_to_string Environment.Protocols.current
-  | _ -> raw_options.protocol_version
-
-
 let generate_cli_metric ~command =
   { group = Counter_cli_execution { command }; metric_value = 1.0 }
 
@@ -381,12 +375,11 @@ let generate_cli_metrics_with_syntax_and_protocol ~command ~raw_options ?source_
     | None -> ""
   in
   let syntax = determine_syntax_label raw_options.syntax source in
-  let protocol_version = get_protocol_label ~raw_options in
   let execution_metric = generate_cli_metric ~command in
   let run_metric =
     { group =
         Counter_cli_execution_by_syntax_and_protocol
-          { command; syntax; protocol = protocol_version }
+          { command; syntax; protocol = Memory_proto_alpha.protocol_str }
     ; metric_value = 1.0
     }
   in
