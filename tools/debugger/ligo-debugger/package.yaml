@@ -103,7 +103,6 @@ library:
     - record-dot-preprocessor
     - record-hasfield
     - scientific
-    - semver
     - singletons
     - singletons-th
     - stm
@@ -137,7 +136,6 @@ executables:
       - ligo-debugger
       - morley
       - morley-debugger
-      - semver
 
     source-dirs:
       - app/ligo-debugger

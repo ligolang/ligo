@@ -40,7 +40,6 @@ library
       Language.LIGO.Debugger.Michelson
       Language.LIGO.Debugger.Navigate
       Language.LIGO.Debugger.Snapshots
-      Language.LIGO.Diagnostic
       Language.LIGO.Extension
       Language.LIGO.Range
       Language.LIGO.Scope
@@ -136,7 +135,6 @@ library
     , record-hasfield
     , reflection
     , scientific
-    , semver
     , singletons
     , singletons-th
     , stm
@@ -215,7 +213,6 @@ executable ligo-debugger
     , morley
     , morley-debugger
     , morley-prelude
-    , semver
   default-language: Haskell2010
 
 test-suite ligo-debugger-test

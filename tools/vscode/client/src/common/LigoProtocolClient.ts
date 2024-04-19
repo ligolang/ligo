@@ -193,14 +193,10 @@ export function processErrorResponse(response: DebugProtocol.ErrorResponse): voi
       showLargeErrorMessage("LIGO reported error", [formattedMessage]);
       return;
     case "adapter-ligo":
-      const versionIssues = response.body.error?.variables?.versionIssues
-
       showLargeErrorMessage(
         "Unexpected output from LIGO",
-        [isDefined(versionIssues)
-          ? versionIssues
-          : "Some unexpected error when communicating with LIGO"
-          , "Details: " + formattedMessage
+        [ "Some unexpected error when communicating with LIGO"
+        , "Details: " + formattedMessage
         ]
       );
       return;
@@ -210,7 +206,7 @@ export function processErrorResponse(response: DebugProtocol.ErrorResponse): voi
       showLargeErrorMessage(
         "Internal error happened",
         ["Please contact us."
-          , "Details: " + formattedMessage
+        , "Details: " + formattedMessage
         ]
       );
       return;

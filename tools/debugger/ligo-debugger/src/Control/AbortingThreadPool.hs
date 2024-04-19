@@ -21,8 +21,12 @@ import UnliftIO.MVar (modifyMVar_)
 -- where @N@ is the limit specified in 'newPool'.
 newtype Pool = Pool (MVar PoolState)
 
-data PoolState = Working WorkingPool | Closed
+-- | A state of thread pool.
+data PoolState
+  = Working WorkingPool -- ^ A thread pool is in active state.
+  | Closed -- ^ A thread pool is closed.
 
+-- | An implementation of thread pool.
 data WorkingPool = WorkingPool
   { wpAsyncs :: Seq (Async.Async ())
     -- ^ Queue with asyncs that have been run.

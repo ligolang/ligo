@@ -62,6 +62,7 @@ ligoBinaryPath = getEnv "LIGO_BINARY_PATH" `UnliftIO.catch` \e ->
 instance Default LigoClientEnv where
   def = LigoClientEnv{_lceClientPath = "ligo"}
 
+-- | A type class that provides a @LigoClientEnv@ for a monad @m@.
 class MonadUnliftIO m => HasLigoClient m where
   getLigoClientEnv :: m LigoClientEnv
 
@@ -115,6 +116,7 @@ data NameType
 
 genSingletons [''NameType]
 
+-- | A text wrapper with phantom @NameType@ type.
 newtype Name (u :: NameType) = Name Text
   deriving stock (Data)
   deriving newtype (Show, NFData, FromJSON)
@@ -127,6 +129,9 @@ instance (TypeError ('Text "You can't compare unique names directly. Please use 
          ) => Eq (Name 'Unique) where
   (==) = error "impossible"
 
+-- | See explanations above.
+-- If we really want to compare unique names then we should
+-- explicitly call this function.
 compareUniqueNames :: Name 'Unique -> Name 'Unique -> Bool
 compareUniqueNames (Name lhs) (Name rhs) = lhs == rhs
 
@@ -172,6 +177,8 @@ instance MessagePack (Name u) where
   toObject _ = const ObjectNil
   fromObjectWith cfg = fmap Name . fromObjectWith cfg
 
+-- | A convenient type that allows deriving @FromJSON@ instances.
+-- @n@ stands for the number of capital letters in the type.
 newtype LigoJSON (n :: Nat) a = LigoJSON a
 
 -- | Converts string to snake_case

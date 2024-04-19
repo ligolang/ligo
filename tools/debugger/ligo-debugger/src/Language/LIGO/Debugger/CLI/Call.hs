@@ -6,47 +6,26 @@ module Language.LIGO.Debugger.CLI.Call
   , decompileLigoValues
   , resolveConfig
   , getScopes
-
-    -- * Versions
-  , Version (..)
-
-  , getLigoVersion
-  , parseLigoVersion
-  , VersionSupport (..)
-  , isSupportedVersion
-  , minimalSupportedVersion
-  , recommendedVersion
-  , getVersionIssuesDetails
   , decodeCST
-
-    -- * Exceptions
-  , UnsupportedLigoVersionException (..)
   ) where
 
 import Control.Arrow ((>>>))
-import Data.Aeson
-  (FromJSON (parseJSON), KeyValue ((.=)), ToJSON, Value, eitherDecodeStrict', object, withObject,
-  (.:?))
+import Data.Aeson (Value, withObject, (.:?))
 import Data.Aeson qualified as Aeson
 import Data.Aeson.Types (Parser, parseEither)
 import Data.Coerce (coerce)
-import Data.Map qualified as M
 import Data.MessagePack (errorMessages, unpackEither)
-import Data.SemVer qualified as SemVer
 import Data.Text qualified as T
-import Data.Text qualified as Text
-import Fmt.Buildable (Buildable, build, pretty)
+import Fmt.Buildable (pretty)
 import GHC.IO.Exception qualified as IOException
 import System.Exit (ExitCode (ExitSuccess))
-import System.FilePath (isPathSeparator, takeDirectory, (</>))
 import System.Process (cwd, proc)
 import System.Process.ByteString.Lazy qualified as PExtras
 import Text.Interpolation.Nyan hiding (rmode')
 import Util
 
 import UnliftIO
-  (Handler (Handler), MonadUnliftIO, catches, hFlush, handle, throwIO, try, withSystemTempFile)
-import UnliftIO.Directory (doesFileExist)
+  (Handler (Handler), MonadUnliftIO, catches, hFlush, handle, throwIO, withSystemTempFile)
 import UnliftIO.Exception (fromEither)
 import UnliftIO.Process (readCreateProcessWithExitCode)
 
@@ -89,6 +68,7 @@ strArg = LigoCliArg . protect . toString
       ('-' : _) -> ' ' : arg
       _ -> arg
 
+-- | Wrap arbitrary @IOError@ into @LigoIOException@.
 rewrapIOError :: MonadUnliftIO m => m a -> m a
 rewrapIOError = UnliftIO.handle \exc@IOException.IOError{} ->
   UnliftIO.throwIO LigoIOException
@@ -96,6 +76,8 @@ rewrapIOError = UnliftIO.handle \exc@IOException.IOError{} ->
     , lieDescription = toText $ IOException.ioe_description exc
     }
 
+-- | Same as @callLigo@ but returns lazy bytes instead.
+-- It's useful when the output could be large (e.g. @compileLigoContractDebug@).
 callLigoBS :: HasLigoClient m => Maybe FilePath -> [LigoCliArg] -> m LByteString
 callLigoBS _rootDir args = do
   LigoClientEnv {..} <- getLigoClientEnv
@@ -134,83 +116,12 @@ callLigo rootDir args = do
     UnliftIO.throwIO $ LigoClientFailureException (toText lo) (toText le) Nothing (Just ec)
   pure $ toText lo
 
-newtype Version = Version
-  { getVersion :: Text
-  }
-
-instance ToJSON Version where
-  toJSON (Version ver) = object ["version" .= ver]
-
-parseValue :: FromJSON a => Value -> Either String a
-parseValue = parseEither parseJSON
-
-----------------------------------------------------------------------------
--- Execute ligo binary itself
-
--- | Get the current LIGO version.
---
--- ```
--- ligo --version
--- ```
---
--- TODO: rename this back to @getLigoVersion@.
-getLigoVersionRaw :: (HasLigoClient m) => m Version
-getLigoVersionRaw =
-  Version . Text.strip <$> callLigo Nothing ["--version"]
-
--- | Get the current LIGO version, but in case of any failure return 'Nothing'.
---
--- ```
--- ligo --version
--- ```
-getLigoVersionSafe :: (HasLigoClient m) => m (Maybe Version)
-getLigoVersionSafe = do
-  rightToMaybe <$> UnliftIO.try @_ @SomeException getLigoVersionRaw
-
-findProjectRoot :: FilePath -> IO (Maybe FilePath)
-findProjectRoot currentDirectory = do
-  packageExists <- doesFileExist $ currentDirectory </> packageName
-  if
-    | packageExists -> pure $ Just currentDirectory
-    | currentDirectory == "." || isRoot currentDirectory -> pure Nothing
-    | otherwise -> findProjectRoot $ takeDirectory currentDirectory
-  where
-    packageName = "package.json"
-    isRoot [c] = isPathSeparator c
-    isRoot _   = False
-
-projectRootToCliArg :: Maybe FilePath -> [LigoCliArg]
-projectRootToCliArg = maybe [] (\projectRoot -> ["--project-root", strArg projectRoot])
-
--- | A middleware for processing `ExpectedClientFailure` error needed to pass it
--- multiple levels up allowing us from restoring from expected ligo errors.
-handleLigoErrors :: (HasLigoClient m) => FilePath -> Text -> m a
-handleLigoErrors path encodedErr = do
-  case eitherDecodeStrict' @(NonEmpty LigoError) $ encodeUtf8 encodedErr of
-    Left err -> do
-      UnliftIO.throwIO $ LigoErrorNodeParseErrorException (toText err) encodedErr path
-    Right decodedErrors -> do
-      UnliftIO.throwIO $
-        LigoDecodedExpectedClientFailureException decodedErrors [] path
-
--- | Like 'handleLigoError', but used for the case when multiple LIGO errors may
--- happen. On a decode failure, attempts to decode as a single LIGO error
--- instead.
-handleLigoMessages :: (HasLigoClient m) => FilePath -> Text -> m a
-handleLigoMessages path encodedErr = do
-  case eitherDecodeStrict' @LigoMessages $ encodeUtf8 encodedErr of
-    Left _ ->
-      -- It's possible LIGO has output a list of errors instead. Try to decode
-      -- it:
-      handleLigoErrors path encodedErr
-    Right (LigoMessages decodedErrors decodedWarnings) -> do
-      UnliftIO.throwIO $
-        LigoDecodedExpectedClientFailureException decodedErrors decodedWarnings path
-
 ----------------------------------------------------------------------------
 -- LIGO Debugger stuff
 ----------------------------------------------------------------------------
 
+-- | Handles exceptions that may be produced when calling a LIGO executable.
+-- Maps them to the debugger ones.
 withMapLigoExc :: (HasLigoClient m) => m a -> m a
 withMapLigoExc = flip catches
   [ Handler \(e :: LigoClientFailureException) ->
@@ -289,6 +200,7 @@ compileLigoExpression valueOrigin ctxFile expr = withMapLigoExc $
         & first (LigoDecodeException "parsing Michelson value" .  pretty)
         & fromEither
 
+-- | Get all modules with entry points.
 getAvailableModules :: forall m. (HasLigoClient m)
                         => FilePath -> m ModuleNamesList
 getAvailableModules file = withMapLigoExc $
@@ -326,6 +238,7 @@ decompileLigoValues typesAndValues = withMapLigoExc do
     decodeOutput = either (throwIO . LigoDecodeException "decoding ligo decompile" . toText) pure
       . Aeson.eitherDecode
 
+-- | Resolve a debugging configuration written in LIGO.
 resolveConfig :: forall m. (HasLigoClient m) => FilePath -> m LigoLaunchRequest
 resolveConfig configPath = withMapLigoExc do
   handleJSONException LigoResolveConfigException $
@@ -366,6 +279,7 @@ resolveConfig configPath = withMapLigoExc do
           votingPowers <- o .:? "voting_powers"
           pure LigoContractEnv{..}
 
+-- | @getScopes path@ gets all scopes for the contract that has a @path@ file path.
 getScopes :: forall m. (HasLigoClient m) => FilePath -> m LigoDefinitions
 getScopes contractPath = withMapLigoExc do
   callLigoBS Nothing
@@ -380,6 +294,8 @@ getScopes contractPath = withMapLigoExc do
     decodeOutput = either (throwIO . LigoDecodeException "decoding ligo scopes" . toText) pure
       . Aeson.eitherDecode
 
+-- | @decodeCST files@ takes a batch of @files@ and produces parsed ASTs.
+-- The order of produced ASTs corresponds to the order of @files@.
 decodeCST :: forall m. (HasLigoClient m) => NonEmpty FilePath -> m [SomeLIGO Info]
 decodeCST files = withMapLigoExc $
   callLigoBS
@@ -398,144 +314,3 @@ decodeCST files = withMapLigoExc $
           $ (unpackEither bts)
 
       pure asts
-
--- Versions
-----------------------------------------------------------------------------
-
--- | The current LIGO version is completely unsupported.
-data UnsupportedLigoVersionException = UnsupportedLigoVersionException SemVer.Version
-  deriving stock (Show)
-
-instance Buildable UnsupportedLigoVersionException where
-  build (UnsupportedLigoVersionException verActual) =
-    [int||Used `ligo` executable has #semv{verActual} version which is not supported|]
-
-instance Exception UnsupportedLigoVersionException where
-  displayException = pretty
-
-instance DebuggerException UnsupportedLigoVersionException where
-  type ExceptionTag UnsupportedLigoVersionException = "UnsupportedLigoVersion"
-  debuggerExceptionType _ = UserException
-  debuggerExceptionData (UnsupportedLigoVersionException verActual) = M.fromList
-    [ ("actualVersion", [int||#semv{verActual}|])
-    , ("recommendedVersion", [int||#semv{recommendedVersion}|])
-    ]
-  shouldInterruptDebuggingSession = False
-
--- | Run ligo to get the version of executable.
-getLigoVersion :: (HasLigoClient m) => m Version
-getLigoVersion = withMapLigoExc getLigoVersionRaw
-
-parseLigoVersion :: Version -> Maybe SemVer.Version
-parseLigoVersion =
-  rightToMaybe . SemVer.fromText . T.strip . getVersion
-
--- | Whether a particular version of @ligo@ version we treat as supported.
-data VersionSupport
-  = VersionSupported
-    -- ^ We fully support a version with high level of assurance.
-    --
-    -- If our tests pass for a particular version, we can treat it as supported.
-  | VersionPartiallySupported
-    -- ^ This version works for us with exception of some minor corner cases;
-    -- or we don't know for sure if this version is supported.
-  | VersionUnsupported
-    -- ^ We do not provide an adequate support for this version.
-  deriving stock (Eq, Show, Enum, Bounded)
-
--- | @x > y@ means that @x@ assumes better support than @y@.
-instance Ord VersionSupport where
-  -- writing down this instance manually to avoid invalid
-  -- addition of new constructors
-
-  compare = compare `on` \case
-    VersionUnsupported -> 0 :: Int
-    VersionPartiallySupported -> 1
-    VersionSupported -> 2
-
-instance Buildable VersionSupport where
-  build = \case
-    VersionSupported -> "supported"
-    VersionPartiallySupported -> "partially supported"
-    VersionUnsupported -> "unsupported"
-
--- | See how much do we support the provided version of @ligo@.
-isSupportedVersion :: SemVer.Version -> VersionSupport
-isSupportedVersion ver = fromMaybe fullSupport $ asum
-  -- List of rules to detect an unsupported version.
-  --
-  -- Rules in `docs/ligo-versions.md` make sure that this function
-  -- is kept up-to-date.
-  --
-  -- You can add custom rules, e.g. the following one excludes one version
-  -- because it is buggy:
-  --
-  -- @
-  -- ver == [Data.SemVer.QQ.version|0.1.2|]
-  --   ?- noSupport
-  -- @
-  [ -- Debug information in the necessary format is not available in old versions
-    ver < minimalSupportedVersion
-      ?- noSupport
-
-    -- Future versions that we didn't check yet
-  , ver > recommendedVersion  -- don't hesitate to replace this with a higher constant
-      ?- partialSupport
-  ]
-  where
-    infix 0 ?-
-    (?-) :: Bool -> a -> Maybe a
-    cond ?- res = guard cond $> res
-
-    noSupport = VersionUnsupported
-    partialSupport = VersionPartiallySupported
-    fullSupport = VersionSupported
-
-  -- Implementation note: in case in the future we'll want to provide the users
-  -- with the full list of supported versions, we can define rules in terms of
-  -- 'Data.SemVer.Constraint.Constraint'.
-
--- | Minimal version which we at least partially support.
---
--- We extract this to a separate variable only because it is needed
--- in tests.
-minimalSupportedVersion :: SemVer.Version
-minimalSupportedVersion =
-  $$(readSemVerQ $ resourcesFolder </> "versions" </> "minimal-supported")
-
--- | Version that we suggest the user to use with our debugger.
---
--- For now we assume that debugger may break more often and more badly than LSP,
--- so it has its own recommended version. By experience, it quite possible that
--- LIGO introduces breaking changes that we cannot workaround and that may take
--- a while to fix.
--- When the situation stabilizes, we can get rid of this and assume that we
--- are successful at supporting the latest version.
-recommendedVersion :: SemVer.Version
-recommendedVersion =
-  $$(readSemVerQ $ resourcesFolder </> "versions" </> "recommended")
-
--- | A clarifying message that mentions issues with ligo version being
--- unsupported, in case any such issues take place.
-getVersionIssuesDetails :: (HasLigoClient m) => m (Maybe Text)
-getVersionIssuesDetails = do
-  (parseLigoVersion <$> getLigoVersion) <&> \case
-        Nothing -> Just [int|n|
-          You seem to be using not a stable release of ligo,
-          consider trying #semv{recommendedVersion}.
-          |]
-        Just ver -> case isSupportedVersion ver of
-          -- We should never get this as @unsupported@ case is checked
-          -- at startup, but putting some message here nevertheless just in case
-          VersionUnsupported -> Just [int|n|
-            Note that the current version of ligo #semv{ver} is not supported!
-            |]
-          VersionPartiallySupported -> Just [int|n|
-            Note that the current ligo version #semv{ver} is not guaranteed to work
-            correctly with debugger.
-
-            If you need debugging capabilities, you might try ligo of
-            #semv{recommendedVersion} version until the new version of
-            the extension is released.
-            |]
-          VersionSupported -> Nothing

@@ -64,12 +64,17 @@ import Language.LIGO.Range (LigoPosition (..), Range (..), getRange, isLigoStdLi
 -- in debugging.
 type EmbeddedLigoMeta = LigoIndexedInfo 'Unique
 
+-- | Converts @LigoPosition@ into @SrcLoc@.
+-- May throw an exception if line or column overflow the @Word@ type.
 ligoPositionToSrcLoc :: HasCallStack => LigoPosition -> SrcLoc
 ligoPositionToSrcLoc (LigoPosition l c) =
   SrcLoc
     (Unsafe.fromIntegral (toInteger l - 1))
     (Unsafe.fromIntegral (toInteger c - 1))
 
+-- | Converts @Range@ into @SourceLocation@.
+-- May throw an exception if line or column in start or end of the range
+-- overflow the @Word@ type.
 rangeToSourceLocation :: HasCallStack => Range -> SourceLocation
 rangeToSourceLocation Range{..} =
   SourceLocation (MSFile _rFile) (ligoPositionToSrcLoc _rStart) (ligoPositionToSrcLoc _rFinish)
@@ -80,10 +85,14 @@ spineAtPoint
   :: Range -> LIGO Info -> [LIGO Info]
 spineAtPoint pos = spineTo (\i -> pos `leq` getRange i)
 
+-- | Returns the most local node that covers
+-- the given range.
 findNodeAtPoint
   :: Range -> LIGO Info -> Maybe (LIGO Info)
 findNodeAtPoint pos = listToMaybe . spineAtPoint pos
 
+-- | @getStatementLocs locs parsedContracts@ gets all statement locations
+-- from all contracts @parsedContracts@ using their expression locations @locs@.
 getStatementLocs :: HasCallStack => Set SourceLocation -> HashMap FilePath (LIGO Info) -> Set SourceLocation
 getStatementLocs locs parsedContracts =
   ranges
@@ -130,7 +139,7 @@ getStatementLocs locs parsedContracts =
                 (const . const $ False)
                 False
 
--- | Here we decide whether the node is at the top-level
+-- | Decides whether the node is at the top-level
 -- by its parent node.
 isTopLevel :: LIGO Info -> Bool
 isTopLevel parent
@@ -297,9 +306,13 @@ isRedundantIndexedInfo LigoIndexedInfo{..} = isNothing $ asum
   , void liiEnvironment
   ]
 
+-- | A type of value that would be thrown by @FAILWITH@ instruction
+-- if the replacement error occurs.
 errorValueType :: U.Ty
 errorValueType = [utypeQ|pair address string|]
 
+-- | An address of value's left-hand side that
+-- would be thrown by @FAILWITH@ instruction if the replacement error occurs.
 errorAddress :: KindedAddress 'AddressKindImplicit
 errorAddress = [ta|tz1fakefakefakefakefakefakefakcphLA5|]
 
@@ -328,6 +341,7 @@ replacementErrorValueToException = \case
     pure $ ReplacementException errMsg
   _ -> Nothing
 
+-- | Packs a value from @StkEl@ in @SomeValue@ existential type.
 stkElValue :: StkEl meta v -> SomeValue
 stkElValue stkEl = let v = seValue stkEl in withValueTypeSanity v (SomeValue v)
 
@@ -352,6 +366,7 @@ getMetaMbAndUnwrap = \case
   ConcreteMeta embeddedMeta inner -> (Just embeddedMeta, inner)
   instr -> (Nothing, instr)
 
+-- | Checks if the provided range covers a function application node.
 isLocationForFunctionCall :: Range -> HashMap FilePath (LIGO Info) -> Bool
 isLocationForFunctionCall range parsedContracts = isJust do
   contract <- parsedContracts !? _rFile range
@@ -519,8 +534,10 @@ shouldIgnoreMeta range instr parsedContracts = shouldIgnoreMetaByInstruction || 
 -- /Interesting/ means that we want to use this location
 -- in switching breakpoints.
 data ExpressionSourceLocation = ExpressionSourceLocation
-  { eslRange :: Range
+  { eslRange :: Range -- ^ An expression source location.
   , eslShouldKeep :: HashMap FilePath (LIGO Info) -> Bool
+      -- ^ A predicate that indicates whether we should pick
+      -- that location of not.
   } deriving stock (Generic)
     deriving anyclass (NFData)
 
@@ -530,8 +547,10 @@ instance Eq ExpressionSourceLocation where
 instance Ord ExpressionSourceLocation where
   lhs <= rhs = eslRange lhs <= eslRange rhs
 
+-- | Picks all source locations from the provided set.
 getAllSourceLocations :: Set ExpressionSourceLocation -> Set SourceLocation
 getAllSourceLocations = S.map (rangeToSourceLocation . eslRange)
 
+-- | Picks only interesting source locations.
 getInterestingSourceLocations :: HashMap FilePath (LIGO Info) -> Set ExpressionSourceLocation -> Set SourceLocation
 getInterestingSourceLocations parsedContracts = getAllSourceLocations . S.filter (`eslShouldKeep` parsedContracts)

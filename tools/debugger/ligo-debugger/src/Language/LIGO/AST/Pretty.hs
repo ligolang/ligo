@@ -1,7 +1,7 @@
 {-# LANGUAGE PolyKinds, UndecidableInstances #-}
 {-# OPTIONS_GHC -Wno-orphans #-}
 
--- | Pretty printers for all 4 dialects and core s-expressions
+-- | Pretty printers for all 2 dialects and core s-expressions
 -- and their corresponding `Show` instances for @AST.Skeleton@ types.
 
 module Language.LIGO.AST.Pretty
@@ -27,18 +27,25 @@ import Language.LIGO.AST.Skeleton hiding (Type)
 import Language.LIGO.AST.Skeleton qualified as AST
 import Language.LIGO.Range (Range)
 
+-- TODO: clean-up this module
+-- We have too much redundant stuff here.
+-- For example, we're interested only in the types pretty-printers in the debugger.
+
 ----------------------------------------------------------------------------
 -- Internal
 ----------------------------------------------------------------------------
 
+-- | A convenient type-class that provides a pretty-printer
+-- for the node @expr@ in specific LIGO @dialect@.
 class (Pretty expr) => LPP (dialect :: Lang) expr where
-    lpp :: expr -> Doc
-    lpp = pp
+  lpp :: expr -> Doc
+  lpp = pp
 
 instance LPP dialect () where
 instance LPP dialect Text where
 instance LPP dialect Doc where
 
+-- | The same as @LPP@ but for nodes with kind @* -> *@.
 class (Pretty1 expr) => LPP1 (dialect :: Lang) (expr :: Type -> Type) where
   lpp1 :: expr Doc -> Doc
   lpp1 = pp1
@@ -73,7 +80,6 @@ deriving via PP (ModuleName it) instance Pretty it => Show (ModuleName it)
 deriving via PP (TypeName it) instance Pretty it => Show (TypeName it)
 deriving via PP (Ctor it) instance Pretty it => Show (Ctor it)
 deriving via PP (FieldName it) instance Pretty it => Show (FieldName it)
-deriving via PP (Error it) instance Pretty it => Show (Error it)
 
 instance
     ( Apply (LPP1 d) layers
@@ -94,36 +100,43 @@ instance
   where
   lpp (d :< f) = ascribe d $ lpp1 @d $ lpp @d <$> f
 
-instance LPP1 'Caml   Error where lpp1 (Error msg _) = blockComment Caml   $ pp msg
-instance LPP1 'Js     Error where lpp1 (Error msg _) = blockComment Js     $ pp msg
-
 ----------------------------------------------------------------------------
 -- Helpers
 ----------------------------------------------------------------------------
 
+-- | @sexpr header docs@ constructs an s-expression of @(header docs)@ format.
 sexpr :: Text -> [Doc] -> Doc
 sexpr header [] = "(" <.> pp header <.> ")"
 sexpr header items = "(" <.> pp header `indent` foldr above DPretty.empty items <.> ")"
 
+-- | @sop a op b@ constructs an s-expression of @(a op b)@ format.
 sop :: Doc -> Text -> [Doc] -> Doc
 sop a op b = "(" <.> a `indent` pp op `indent` foldr above DPretty.empty b <.> ")"
 
+-- | @blockWith f lst@ prettifies elements of @lst@, applies @f@ to pretty elements, and
+-- concats these elements.
 blockWith :: forall dialect p . LPP dialect p => (Doc -> Doc) -> [p] -> Doc
 blockWith f = foldr (indent . f . lpp @dialect) DPretty.empty
 
+-- | Concatenates all @Doc@s with line separator.
 block' :: [Doc] -> Doc
--- block' = foldr (<.>) empty . map ((<.> "\n") . lpp)
 block' = foldr (($+$) . (<.> "\n") . lpp) DPretty.empty
 
+-- | Makes a @[val1; val2; val3]@ list from @LPP@ values.
 list :: forall dialect p . LPP dialect p => [p] -> Doc
 list = brackets . train @dialect @p ";"
 
+-- | Adds a separator between @LPP@ values.
+--
+-- For example, @train "." [A, B, C]@ will result into @A.B.C@.
 train :: forall dialect p . LPP dialect p => Doc -> [p] -> Doc
 train sep' = hsep . punctuate sep' . map (lpp @dialect)
 
+-- | Makes a @(val1, val2, val3)@ tuple from @LPP@ values.
 tuple :: forall dialect p . LPP dialect p => [p] -> Doc
 tuple = parens . train @dialect @p ","
 
+-- | Wraps a @Doc@ with braces.
 braces :: Doc -> Doc
 braces p = "{" <+> p <+> "}"
 
@@ -336,10 +349,6 @@ instance Pretty1 TField where
   pp1 = \case
     TField      n t -> n <.> maybe "" (":" `indent`) t
 
-instance Pretty1 Error where
-  pp1 = \case
-    Error src children -> sexpr "ERROR" ["\"" <> pp src <> "\"", pp children]
-
 instance Pretty1 CaseOrDefaultStm where
   pp1 = \case
     CaseStm  c s -> sexpr "case"    [c, pp s]
@@ -417,9 +426,11 @@ instance LPP1 d Attr where
 -- Js
 ----------------------------------------------------------------------------
 
+-- | Makes a @JsLIGO@ tuple from @LPP 'Js@ values.
 tupleJsLIGO :: forall p . LPP 'Js p => [p] -> Doc
 tupleJsLIGO = brackets . train @'Js @p ","
 
+-- | Makes @JsLIGO@ type parameters from @Doc@s.
 prettyTyVarsJs :: [Doc] -> Doc
 prettyTyVarsJs []  = DPretty.empty
 prettyTyVarsJs tys = "<" <.> train ", " tys <.> ">"
@@ -594,11 +605,13 @@ instance LPP1 'Js Direction where
 -- Caml
 ----------------------------------------------------------------------------
 
+-- | Makes a @CameLIGO@ tuple from @LPP 'Caml@ values.
 tupleCameLIGO :: LPP 'Caml p => [p] -> Doc
 tupleCameLIGO = \case
   [x] -> lpp @'Caml x
   xs  -> tuple @'Caml xs
 
+-- | Makes @CameLIGO@ type parameters from @Doc@s.
 prettyTyVarsCaml :: [Doc] -> Doc
 prettyTyVarsCaml []  = DPretty.empty
 prettyTyVarsCaml tys = parens ("type" <+> train ", " tys)
@@ -773,13 +786,17 @@ instance LPP1 'Caml Direction where
 -- General utilities
 ----------------------------------------------------------------------------
 
+-- | A convenient constraint that provides @CameLIGO@
+-- and @JsLIGO@ pretty-printers.
 type TotalLPP expr = (LPP 'Caml expr, LPP 'Js expr)
 
+-- | Prettifies a LIGO expression in the given dialect.
 lppDialect :: TotalLPP expr => Lang -> expr -> Doc
 lppDialect dialect = case dialect of
   Caml -> lpp @'Caml
   Js   -> lpp @'Js
 
+-- | Wraps contents into block comments in the given dialect.
 blockComment :: Lang -> Doc -> Doc
 blockComment dialect contents = case dialect of
   Caml -> "(*" <+> contents <+> "*)"

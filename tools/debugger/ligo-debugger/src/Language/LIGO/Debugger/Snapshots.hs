@@ -100,8 +100,8 @@ import Language.LIGO.Scope
 
 -- | Stack element, likely with an associated variable.
 data StackItem u = StackItem
-  { siLigoDesc :: LigoStackEntry u
-  , siValue :: SomeValue
+  { siLigoDesc :: LigoStackEntry u -- ^ Stack element description.
+  , siValue :: SomeValue -- ^ Stack value.
   } deriving stock (Generic)
     deriving anyclass (Buildable)
 
@@ -230,8 +230,11 @@ instance NavigableSnapshotWithMethods (InterpretSnapshot u) where
 -- | A key for cache map in @CollectorState@.
 data CacheKey = CacheKey
   { ckVariableName :: Text
+    -- ^ A cached variable's name.
   , ckStackFrameName :: Text
+    -- ^ A stack frame's name where this variable occurs.
   , ckFileName :: FilePath
+    -- ^ A file path where this variable occurs.
   } deriving stock (Show, Eq, Ord, Generic)
     deriving anyclass (NFData, Hashable)
 
@@ -295,6 +298,7 @@ makeLensesWith postfixLFields ''StackFrame
 makeLensesWith postfixLFields ''InterpretSnapshot
 makeLensesWith postfixLFields ''CollectorState
 
+-- | Makes a concise snapshot from the unique one.
 makeConciseSnapshots :: LigoTypesVec -> InterpretSnapshot 'Unique -> InterpretSnapshot 'Concise
 makeConciseSnapshots vec snap =
   snap & isStackFramesL . each . sfStackL . each . siLigoDescL %~ makeConciseLigoStackEntry vec
@@ -310,6 +314,7 @@ csActiveStackFrameL = csStackFramesL . __head
         setHead :: NonEmpty a -> a -> NonEmpty a
         setHead (_ :| xs) x' = x' :| xs
 
+-- | A type alias for contract's environment.
 type ContractEnv m = ContractEnv' (CollectingEvalOp m)
 
 -- | Our monadic stack, allows running interpretation and making snapshot
@@ -342,12 +347,15 @@ instance (Monad m) => InterpreterStateMonad (CollectingEvalOp m) where
 makePrisms ''InterpretStatus
 makePrisms ''InterpretEvent
 
+-- | A traversal that focuses on @SomeValue@ in @EventExpressionEvaluated@ interpret status.
 statusExpressionEvaluatedP :: Traversal' InterpretStatus SomeValue
 statusExpressionEvaluatedP = _InterpretRunning . _EventExpressionEvaluated . _2 . _Just
 
+-- | Logs an internal message during the interpretation.
 logMessage :: (Monad m) => (ForInternalUse => Text) -> CollectingEvalOp m ()
 logMessage msg = logMessageM (pure msg)
 
+-- | Same as @logMessage@ but logs a message wrapped into monadic context.
 logMessageM :: (Monad m) => (ForInternalUse => CollectingEvalOp m Text) -> CollectingEvalOp m ()
 logMessageM mkMsg = do
   logger <- use csLoggingFunctionL
@@ -810,6 +818,16 @@ runInstrCollect = \instr oldStack -> michFailureHandler `handleError` do
                         isFunctionAssignment = isScopeForStatements (not isLambdaLoc) x && isOnSuccess
                       in cont (isLambdaLoc && not isFunctionAssignment) ignore
 
+-- | @runCollectInterpretSnapshots act env initSt initStorage@
+-- lazily runs an interpretation @act@ with passed contract's environment @env@
+-- and state @initSt@.
+--
+-- If interpretation is successful then the last snapshot would be patched
+-- with produced operations and new/old storages values.
+--
+-- Otherwise, it will either throw a @ReplacementException@ if a @FAILWITH@ instruction
+-- emitted a value that was created by @createErrorValue@, or create a snapshot with
+-- @InterpretFailed@ status.
 runCollectInterpretSnapshots
   :: (MonadUnliftIO m, MonadActive m)
   => CollectingEvalOp m FinalStack
@@ -879,19 +897,19 @@ beforeMainStackFrameName = "<start>"
 collectInterpretSnapshots
   :: forall m cp st arg.
      (MonadUnliftIO m, MonadActive m)
-  => FilePath
-  -> Contract cp st
-  -> EntrypointCallT cp arg
-  -> Value arg
-  -> Value st
-  -> ContractEnv m
-  -> HashMap FilePath (LIGO Info)
-  -> (Text -> m ())
-  -> HashSet Range
-  -> Bool -- ^ should we track steps amount
-  -> LigoTypesVec
-  -> HashMap FilePath [Scope]
-  -> HashSet Range
+  => FilePath -- ^ A path to main contract's file.
+  -> Contract cp st -- ^ A compiled contract.
+  -> EntrypointCallT cp arg -- ^ An entry point lifting sequence.
+  -> Value arg -- ^ A parameter value.
+  -> Value st -- ^ A storage value.
+  -> ContractEnv m -- ^ A contract's environment.
+  -> HashMap FilePath (LIGO Info) -- ^ All parsed contracts.
+  -> (Text -> m ()) -- ^ A logger.
+  -> HashSet Range -- ^ Expression locations that relate to @LAMBDA@ instructions.
+  -> Bool -- ^ Whether we should the amount of steps.
+  -> LigoTypesVec -- ^ A vector with LIGO types.
+  -> HashMap FilePath [Scope] -- ^ Variables scopes.
+  -> HashSet Range -- ^ Applied arguments ranges.
   -> m (InterpretHistory (InterpretSnapshot 'Unique))
 collectInterpretSnapshots
   mainFile

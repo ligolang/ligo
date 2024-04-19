@@ -56,7 +56,6 @@ import Language.LIGO.AST.Pretty hiding (Doc)
 import Language.LIGO.AST.Skeleton hiding (ModuleName, Name)
 import Language.LIGO.AST.Skeleton qualified as AST
 import Language.LIGO.Debugger.CLI.Helpers
-import Language.LIGO.Diagnostic
 import Language.LIGO.Range
 import Language.LIGO.Scope
 
@@ -66,7 +65,7 @@ import Language.LIGO.Scope
 
 -- | Describes a variable.
 newtype LigoVariable (u :: NameType) = LigoVariable
-  { lvName :: Name u
+  { lvName :: Name u -- ^ Variable's name
   } deriving stock (Show, Generic, Data)
     deriving newtype (Buildable)
     deriving anyclass (NFData)
@@ -74,7 +73,9 @@ newtype LigoVariable (u :: NameType) = LigoVariable
 deriving stock instance Eq (LigoVariable 'Concise)
 
 -- | Reference to type description in the types map.
-newtype LigoTypeRef = LigoTypeRef { unLigoTypeRef :: Int }
+newtype LigoTypeRef = LigoTypeRef
+  { unLigoTypeRef :: Int -- ^ Position in @LigoTypesVec@.
+  }
   deriving stock (Show, Eq, Ord, Data, Generic)
   deriving anyclass (NFData)
 
@@ -101,68 +102,109 @@ data LigoTypeContent
   deriving stock (Generic, Show, Eq, Data)
   deriving anyclass (NFData, Hashable)
 
+-- | A singleton LIGO type.
 data LigoTypeLiteralValue
   = LTLVUnit
+    -- ^ Unit type.
   | LTLVInt Int
+    -- ^ Int type.
   | LTLVNat Int
+    -- ^ Nat type.
   | LTLVTimestamp Int
+    -- ^ Timestamp type.
   | LTLVMutez Int
+    -- ^ Mutez type.
   | LTLVString LigoString
+    -- ^ String type.
   | LTLVBytes Text
+    -- ^ Bytes type.
   | LTLVAddress Text
+    -- ^ Address type.
   | LTLVSignature Text
+    -- ^ Signature type.
   | LTLVKey Text
+    -- ^ Key type.
   | LTLVKeyHash Text
+    -- ^ Key hash type.
   | LTLVChainId Text
+    -- ^ Chain ID type.
   | LTLVOperation Text
+    -- ^ Operation type.
   | LTLVBls_381G1 Text
+    -- ^ Bls12_381_g1 type.
   | LTLVBls_381G2 Text
+    -- ^ Bls12_381_g2 type.
   | LTLVBls_381Fr Text
+    -- ^ Bls12_381_fr type.
   deriving stock (Generic, Show, Eq, Data)
   deriving anyclass (NFData, Hashable)
 
+-- | Represents a LIGO string.
 data LigoString
   = LSStandard Text
+    -- ^ Standard string (e.g. @"abacaba"@).
   | LSVerbatim Text
+    -- ^ Verbatim string (e.g @{|abacaba|}@).
   deriving stock (Generic, Show, Eq, Data)
   deriving anyclass (NFData, Hashable)
 
+-- | A type alias for LIGO sum types.
 type LigoTypeSum = LigoTypeTable
+
+-- | A type alias for LIGO record types.
 type LigoTypeRecord = LigoTypeTable
 
+-- | A common type that represents LIGO sum/record types.
 data LigoTypeTable = LigoTypeTable
   { _lttFields  :: HM.HashMap Text LigoTypeExpression
+    -- ^ Map from constructor/field name to its type.
   , _lttLayout  :: LigoLayout
+    -- ^ A sum/record type's layout.
   }
   deriving stock (Generic, Show, Eq, Data)
   deriving anyclass (NFData, Hashable)
 
+-- | A type's layout represented by tree.
 data LigoLayout
   = LLInner [LigoLayout]
+    -- ^ Branch node with arbitrary amount of children.
   | LLField Text
+    -- ^ Leaf node with constructor's/field's name.
   deriving stock (Generic, Show, Eq, Data)
   deriving anyclass (NFData, Hashable)
 
+-- | An inner field of @LTCConstant@.
 data LigoTypeConstant = LigoTypeConstant
   { _ltcParameters :: [LigoTypeExpression]
+    -- ^ Type parameters (e.g. in @(int, nat) map@
+    -- these parameters would be @[int, nat]@).
   , _ltcInjection  :: Text
+    -- ^ A type's injection. Usually it's Michelson.
   }
   deriving stock (Generic, Show, Eq, Data)
   deriving anyclass (NFData, Hashable)
 
+-- | An inner field of @LTCArrow@.
 data LigoTypeArrow = LigoTypeArrow
   -- "type2" -> "type1"
   { _ltaType2 :: LigoTypeExpression
+    -- ^ Right-hand side type.
   , _ltaType1 :: LigoTypeExpression
+    -- ^ Left-hand side type.
   }
   deriving stock (Generic, Show, Eq, Data)
   deriving anyclass (NFData, Hashable)
 
+-- | Type that represents LIGO's variable.
 data LigoVar = LigoVar
   { _lvName      :: Text
+    -- ^ Variable's name.
   , _lvCounter   :: Int
+    -- ^ Variable's counter.
   , _lvGenerated :: Bool
+    -- ^ Is this variable generated?
   , _lvLocation  :: LigoRange
+    -- ^ Variable's location in the source code.
   }
   deriving stock (Generic, Show, Eq, Data)
   deriving anyclass (NFData, Hashable)
@@ -174,13 +216,18 @@ data LigoVar = LigoVar
 -- ```
 data LigoRange
   = LRVirtual Text
+    -- ^ Virtual location.
   | LRFile LigoFileRange
+    -- ^ Concrete location.
   deriving stock (Eq, Generic, Show, Data)
   deriving anyclass (NFData, Hashable)
 
+-- | An inner field of @LRFile@.
 data LigoFileRange = LigoFileRange
   { _lfrStart :: LigoRangeInner
+    -- ^ A starting point.
   , _lfrStop  :: LigoRangeInner
+    -- ^ A finishing point.
   }
   deriving stock (Eq, Generic, Show, Data)
   deriving anyclass (NFData, Hashable)
@@ -192,8 +239,11 @@ data LigoFileRange = LigoFileRange
 -- ```
 data LigoRangeInner = LigoRangeInner
   { _lriByte     :: LigoByte
+    -- ^ A lexing byte-oriented position.
   , _lriPointNum :: Int
+    -- ^ A number of code points since the beginning of the file.
   , _lriPointBol :: Int
+    -- ^ A number of code points since the beginning of the current line.
   }
   deriving stock (Eq, Generic, Show, Data)
   deriving anyclass (NFData, Hashable)
@@ -205,9 +255,14 @@ data LigoRangeInner = LigoRangeInner
 -- ```
 data LigoByte = LigoByte
   { _lbPosFname :: FilePath
+    -- ^ An origin file path.
   , _lbPosLnum  :: Int
+    -- ^ A line number.
   , _lbPosBol   :: Int
+    -- ^ An offset of the beginning of the line.
   , _lbPosCnum  :: Int
+    -- ^ An offset of the position.
+    -- The difference between @_lbPosCnum@ and @_lbPosBol@ is the column number.
   }
   deriving stock (Eq, Generic, Show, Data)
   deriving anyclass (NFData, Hashable)
@@ -218,35 +273,54 @@ data LigoByte = LigoByte
 -- { "parameters": [LigoTypeParameter] }
 -- ```
 data LigoTypeExpression = LigoTypeExpression
-  { -- | We parse it by a chunks of 2, each odd element of array is a name for
+  { -- We parse it by a chunks of 2, each odd element of array is a name for
     -- even element which is `LigoTypeContentInner`.
   ---- Common for 4th and 5th stage
     -- ```
     -- { "type_content": [ <name>, LigoTypeContentInner ] }
     -- ```
     _lteTypeContent :: LigoTypeContent
+    -- ^ Type expression's content.
   ---- 4th stage specific
   , _lteOrigVar     :: Maybe Text
+    -- ^ Original name of the type, if exists.
   }
   deriving stock (Generic, Show, Eq, Data)
   deriving anyclass (NFData, Hashable)
 
-newtype LigoTypesVec = LigoTypesVec { unLigoTypesVec :: Vector LigoTypeExpression }
+-- | A convenient wrapper for the vector of LIGO types.
+newtype LigoTypesVec = LigoTypesVec
+  { unLigoTypesVec :: Vector LigoTypeExpression
+    -- ^ LIGO types.
+  }
   deriving stock (Data, Generic)
   deriving newtype (Show, NFData)
 
-newtype LigoType = LigoType { unLigoType :: Maybe LigoTypeExpression }
+-- | A convenient wrapper for the LIGO type.
+newtype LigoType = LigoType
+  { unLigoType :: Maybe LigoTypeExpression
+    -- ^ A LIGO type. Could be @Nothing@ if the meta
+    -- from the source mapper is omitted.
+  }
   deriving stock (Data)
   deriving newtype (Show, Generic, NFData, Hashable)
 
+-- | A pattern for resolved LIGO types.
 pattern LigoTypeResolved :: LigoTypeExpression -> LigoType
 pattern LigoTypeResolved typ = LigoType (Just typ)
 
+-- | A pattern for unresolved LIGO types.
 pattern LigoTypeUnresolved :: LigoType
 pattern LigoTypeUnresolved = LigoType Nothing
 
 {-# COMPLETE LigoTypeResolved, LigoTypeUnresolved #-}
 
+-- | A type family for LIGO types:
+-- 1. For @Unique@ values we want to store only a @LigoTypeRef@
+--    because we don't want to make them bloated.
+--    Using @LigoTypesVec@ we could resolve them.
+-- 2. For @Concise@ values we'll store a concrete type
+--    since these values will only appear during the contract's interpretation.
 type family LigoTypeF (u :: NameType) where
   LigoTypeF 'Unique  = Maybe LigoTypeRef
   LigoTypeF 'Concise = LigoType
@@ -262,8 +336,11 @@ instance ForInternalUse => Buildable LigoType where
 -- | An element of the stack with some information interesting for us.
 data LigoExposedStackEntry u = LigoExposedStackEntry
   { leseDeclaration :: Maybe (LigoVariable u)
+    -- ^ A variable's name.
   , leseType        :: LigoTypeF u
+    -- ^ A variable's type.
   , leseFileName    :: Maybe FilePath
+    -- ^ A variable's origin.
   } deriving stock (Generic)
 
 deriving stock instance (Typeable u, Data (LigoTypeF u)) => Data (LigoExposedStackEntry u)
@@ -286,6 +363,7 @@ deriving stock instance (Show (LigoTypeF u)) => Show (LigoStackEntry u)
 deriving anyclass instance (NFData (LigoTypeF u)) => NFData (LigoStackEntry u)
 deriving stock instance Eq (LigoStackEntry 'Concise)
 
+-- | A pattern for @LigoStackEntry@ where only the type is known.
 pattern LigoStackEntryNoVar :: LigoTypeF u -> LigoStackEntry u
 pattern LigoStackEntryNoVar ty = LigoStackEntry LigoExposedStackEntry
   { leseDeclaration = Nothing
@@ -293,6 +371,7 @@ pattern LigoStackEntryNoVar ty = LigoStackEntry LigoExposedStackEntry
   , leseFileName = Nothing
   }
 
+-- | A pattern for @LigoStackEntry 'Concise@ where everything is known.
 pattern LigoStackEntryVar :: Text -> LigoType -> Maybe FilePath -> LigoStackEntry 'Concise
 pattern LigoStackEntryVar name ty fileName = LigoStackEntry LigoExposedStackEntry
   { leseDeclaration = Just LigoVariable{ lvName = Name name }
@@ -305,6 +384,7 @@ pattern LigoStackEntryVar name ty fileName = LigoStackEntry LigoExposedStackEntr
 -- Entries are listed in top-to-bottom order.
 type LigoStack u = [LigoStackEntry u]
 
+-- | An application meta from the source mapper.
 data LigoApplication u = LigoApplication
   { laAppliedFunction :: Maybe (LigoVariable u)
     -- ^ A name of applied function.
@@ -317,6 +397,7 @@ deriving stock instance (Show (LigoTypeF u)) => Show (LigoApplication u)
 deriving anyclass instance (NFData (LigoTypeF u)) => NFData (LigoApplication u)
 deriving stock instance Eq (LigoApplication 'Concise)
 
+-- | An applied argument.
 data LigoApplicationArgument u = LigoApplicationArgument
   { laaArgumentType :: LigoTypeF u
     -- ^ A type of argument.
@@ -329,6 +410,7 @@ deriving stock instance (Show (LigoTypeF u)) => Show (LigoApplicationArgument u)
 deriving anyclass instance (NFData (LigoTypeF u)) => NFData (LigoApplicationArgument u)
 deriving stock instance Eq (LigoApplicationArgument 'Concise)
 
+-- | A kind of the applied argument.
 data LigoArgumentKind u
   = LAKVar (LigoVariable u, FilePath)
     -- ^ A name of _bound_ variable with its file path.
@@ -394,9 +476,11 @@ deriving stock instance (Show (LigoTypeF u)) => Show (LigoIndexedInfo u)
 deriving anyclass instance (NFData (LigoTypeF u)) => NFData (LigoIndexedInfo u)
 deriving stock instance Eq (LigoIndexedInfo 'Concise)
 
+-- | A pattern for empty meta.
 pattern LigoEmptyLocationInfo :: LigoIndexedInfo u
 pattern LigoEmptyLocationInfo = LigoIndexedInfo Nothing Nothing Nothing Nothing
 
+-- | A pattern for location meta.
 pattern LigoMereLocInfo :: Range -> LigoTypeF u -> LigoIndexedInfo u
 pattern LigoMereLocInfo loc typ = LigoIndexedInfo
   { liiLocation = Just loc
@@ -405,6 +489,7 @@ pattern LigoMereLocInfo loc typ = LigoIndexedInfo
   , liiApplication = Nothing
   }
 
+-- | A pattern for environment meta.
 pattern LigoMereEnvInfo :: LigoStack u -> LigoIndexedInfo u
 pattern LigoMereEnvInfo env = LigoIndexedInfo
   { liiLocation = Nothing
@@ -416,16 +501,25 @@ pattern LigoMereEnvInfo env = LigoIndexedInfo
 -- | The debug output produced by LIGO.
 data LigoMapper u = LigoMapper
   { lmLocations :: [LigoIndexedInfo u]
+    -- ^ Metas that source mapper produced.
   , lmTypes :: LigoTypesVec
+    -- ^ A type environment of the contract.
   , lmMichelsonCode :: Micheline.Expression
+    -- ^ A compiled LIGO contract.
   }
 
+-- | A convenient wrapper for LIGO module names.
 newtype ModuleName = ModuleName
   { enModule :: Text
+    -- ^ A full module name with dots.
   } deriving stock (Show, Eq, Ord, Generic, Data)
     deriving anyclass (NFData)
 
-newtype ModuleNamesList = ModuleNamesList { unModuleNamesList :: [ModuleName] }
+-- | A wrapper for list of modules with entry points.
+newtype ModuleNamesList = ModuleNamesList
+  { unModuleNamesList :: [ModuleName]
+    -- ^ A list of modules with entry points.
+  }
   deriving newtype (Buildable)
 
 -- | Node representing ligo error with additional meta
@@ -576,7 +670,6 @@ data LigoTypeDefinitionScope = LigoTypeDefinitionScope
 data LigoTypeFull
   = LTFCore LigoTypeExpression
   | LTFResolved LigoTypeExpression
-  | LTFUnresolved
   deriving stock (Generic, Show)
 
 ----------------------------------------------------------------------------
@@ -908,6 +1001,8 @@ instance Buildable LigoError where
 -- Helpers
 ----------------------------------------------------------------------------
 
+-- | Ensures that the JSON value is a list with only one element.
+-- Fails otherwise.
 guardOneElemList :: Text -> Value -> Parser ()
 guardOneElemList expected = withArray (toString expected) \arr -> do
   case V.length arr of
@@ -915,21 +1010,6 @@ guardOneElemList expected = withArray (toString expected) \arr -> do
       String ctor <- pure $ V.unsafeIndex arr 0
       guard (ctor == expected)
     len -> fail $ "Expected array of size 1, got " <> show len
-
--- | Convert ligo error to its corresponding internal representation.
-fromLigoErrorToMsg :: LigoError -> Message
-fromLigoErrorToMsg LigoError
-  { _leContent = LigoErrorContent
-      { _lecMessage = err
-      , _lecLocation = fmap fromLigoRangeOrDef -> at
-      }
-  , _leStatus
-  } = Message (FromLIGO err) status (fromMaybe (point 0 0) at)
-  where
-    status = case _leStatus of
-      "error"   -> SeverityError
-      "warning" -> SeverityWarning
-      _         -> SeverityError
 
 -- | Converts ligo ranges to our internal ones.
 -- Note: ligo team allows for start file of a range be different from end file.
@@ -958,24 +1038,42 @@ mbFromLigoRange
       , _rFile = startFilePath
       }
 
+-- | Converts @LigoRange@ to @Range@.
+-- Returns a dummy @point 0 0@ if the passed @LigoRange@ is virtual.
 fromLigoRangeOrDef :: LigoRange -> Range
 fromLigoRangeOrDef = fromMaybe (point 0 0) . mbFromLigoRange
 
-data NameKind = NameType | NameField FieldKind | NameModule
-data FieldKind = FieldSum | FieldProduct
+-- | A convenient type for @fromLigoType@ function.
+-- Represents an origin of the textual representation.
+data NameKind
+  = NameType
+    -- ^ A type name.
+  | NameField FieldKind
+    -- ^ A constructor/field name.
+  | NameModule
+    -- TODO: unused.
+    -- ^ A module name.
 
--- | Reconstruct `LIGO` tree out of `LigoTypeFull`.
+-- | An inner field of @NameField@.
+data FieldKind
+  = FieldSum
+    -- ^ A constructor name.
+  | FieldProduct
+    -- ^ A record field name.
+
+-- | Reconstruct LIGO tree out of @LigoTypeFull@.
 fromLigoTypeFull :: LigoTypeFull -> LIGO Info
 fromLigoTypeFull = \case
   LTFCore lte     -> fromLigoTypeExpression lte
   LTFResolved lte -> fromLigoTypeExpression lte
-  LTFUnresolved   -> mkLigoError defaultState "unresolved"
 
+-- | Reconstruct LIGO tree out of @LigoTypeExpression@.
 fromLigoTypeExpression :: LigoTypeExpression -> LIGO Info
 fromLigoTypeExpression
   LigoTypeExpression {..} =
     fromLigoType defaultState _lteTypeContent
 
+-- | Reconstruct LIGO tree out of @LigoTypeContent@.
 fromLigoType
   :: Info
   -> LigoTypeContent
@@ -998,7 +1096,7 @@ fromLigoType st = \case
 
   LTCSum sum ->
     case fromLigoTable FieldSum sum of
-      [] -> mkErr "malformed sum type, please report this as a bug"
+      [] -> error "malformed sum type, please report this as a bug"
       v : vs ->
         let ligoLayout = _lttLayout sum in
         make' (st, TSum (ligoLayoutToLayout ligoLayout) (v :| vs))
@@ -1097,8 +1195,7 @@ fromLigoType st = \case
         FieldSum     -> make' (st, Variant n $ maybeToList type')
         FieldProduct -> make' (st, TField  n type')
 
-    mkErr = mkLigoError st
-
+-- | Converts @LigoDefinitions@ to our internal representation of @Scope@s.
 fromLigoDefinitions :: LigoDefinitions -> [Scope]
 fromLigoDefinitions LigoDefinitions{..} = mapMaybe fromLigoScope _ldScopes
   where
@@ -1108,11 +1205,9 @@ fromLigoDefinitions LigoDefinitions{..} = mapMaybe fromLigoScope _ldScopes
       let sVariables = _lsExpressionEnvironment
       pure Scope{..}
 
+-- | A default @Info@.
 defaultState :: Info
 defaultState = point 1 1
-
-mkLigoError :: Info -> Text -> LIGO Info
-mkLigoError p msg = make' . (p,) $ Error (FromLIGO msg) []
 
 -- | Variant of `make` that constructs a tree out of annotation and node
 -- that recovers range from previous subnodes by merging them, this helps to
@@ -1146,15 +1241,19 @@ unknownVariable = "?"
 internalStackFrameName :: Text
 internalStackFrameName = "<internal>"
 
+-- | Make a concise @LigoVariable@ from the unique one.
 stripSuffixHashVariable :: LigoVariable 'Unique -> LigoVariable 'Concise
 stripSuffixHashVariable var = LigoVariable $ pretty var
 
+-- | Creates @LigoTypeExpression@ from its type content.
 mkTypeExpression :: LigoTypeContent -> LigoTypeExpression
 mkTypeExpression content = LigoTypeExpression
   { _lteTypeContent = content
   , _lteOrigVar = Nothing
   }
 
+-- | Creates a constant @LigoTypeExpression@ from its injection
+-- and type parameters.
 mkConstantType :: Text -> [LigoTypeExpression] -> LigoTypeExpression
 mkConstantType typeName parameters = mkTypeExpression $ LTCConstant $
   LigoTypeConstant
@@ -1162,6 +1261,7 @@ mkConstantType typeName parameters = mkTypeExpression $ LTCConstant $
     , _ltcInjection = typeName
     }
 
+-- | Creates an arrow @LigoTypeExpression@ from its domain and codomain.
 mkArrowType :: LigoTypeExpression -> LigoTypeExpression -> LigoTypeExpression
 mkArrowType domain codomain = mkTypeExpression $ LTCArrow $
   LigoTypeArrow
@@ -1169,27 +1269,37 @@ mkArrowType domain codomain = mkTypeExpression $ LTCArrow $
     , _ltaType1 = domain
     }
 
+-- | An infix version of @mkArrowType@.
 (~>) :: LigoTypeExpression -> LigoTypeExpression -> LigoTypeExpression
 (~>) = mkArrowType
 
 infixr 2 ~>
 
+-- | Creates a @LigoTypeTable@ from its layout and associative list
+-- of constructor/field names to their types.
 mkTypeTable :: LigoLayout -> [(Text, LigoTypeExpression)] -> LigoTypeTable
 mkTypeTable layout keyValues = LigoTypeTable (HM.fromList keyValues) layout
 
+-- | Creates a record @LigoTypeExpression@ from its layout and associative list
+-- of field names to their types.
 mkRecordType :: LigoLayout -> [(Text, LigoTypeExpression)] -> LigoTypeExpression
 mkRecordType layout keyValues = mkTypeTable layout keyValues
   & LTCRecord
   & mkTypeExpression
 
+-- | Creates a sum @LigoTypeExpression@ from its layout and associative list
+-- of constructor names to their types.
 mkSumType :: LigoLayout -> [(Text, LigoTypeExpression)] -> LigoTypeExpression
 mkSumType layout keyValues = mkTypeTable layout keyValues
   & LTCSum
   & mkTypeExpression
 
+-- | Creates a simple constant @LigoTypeExpression@
+-- without any type parameters.
 mkSimpleConstantType :: Text -> LigoTypeExpression
 mkSimpleConstantType typ = mkConstantType typ []
 
+-- | Creates a pair.
 mkPairType :: LigoTypeExpression -> LigoTypeExpression -> LigoTypeExpression
 mkPairType fstElem sndElem = mkRecordType pairLayout
   [ ("0", fstElem)
@@ -1225,11 +1335,14 @@ replaceANSI =
   . T.replace
       [int||#ansi{[SetConsoleIntensity BoldIntensity, SetColor Foreground Dull Red]}|] "-->"
 
+-- | We can't define type class instances for type families.
+-- This function is a workaround for @Buildable (LigoTypeF u)@.
 buildLigoTypeF :: forall u. (SingI u) => LigoTypeF u -> Doc
 buildLigoTypeF typ = case sing @u of
   SUnique -> build typ
   SConcise -> buildType Caml typ
 
+-- | Creates a @ModuleName@.
 mkModuleName :: Text -> ModuleName
 mkModuleName txt =
   let enModule = T.dropEnd 1 $ T.dropWhileEnd (/= '.') txt in
@@ -1242,6 +1355,7 @@ makeLensesWith postfixLFields ''LigoApplicationArgument
 makePrisms ''LigoStackEntry
 makePrisms ''LigoArgumentKind
 
+-- | Make a concise @LigoStackEntry@ from the unique one.
 makeConciseLigoStackEntry :: LigoTypesVec -> LigoStackEntry 'Unique -> LigoStackEntry 'Concise
 makeConciseLigoStackEntry vec = \case
   LigoStackEntry lese@LigoExposedStackEntry{..} -> LigoStackEntry lese
@@ -1250,6 +1364,7 @@ makeConciseLigoStackEntry vec = \case
     }
   LigoHiddenStackEntry -> LigoHiddenStackEntry
 
+-- | Make a concise @LigoApplication@ from the unique one.
 makeConciseLigoApplication :: LigoTypesVec -> LigoApplication 'Unique -> LigoApplication 'Concise
 makeConciseLigoApplication vec LigoApplication{..} = LigoApplication
   { laAppliedFunction = stripSuffixHashVariable <$> laAppliedFunction
@@ -1269,6 +1384,7 @@ makeConciseLigoApplication vec LigoApplication{..} = LigoApplication
           , laaArgument = conciseArgument
           }
 
+-- | Make a concise @LigoIndexedInfo@ from the unique one.
 makeConciseLigoIndexedInfo :: LigoTypesVec -> LigoIndexedInfo 'Unique -> LigoIndexedInfo 'Concise
 makeConciseLigoIndexedInfo vec indexedInfo =
   indexedInfo
@@ -1277,6 +1393,8 @@ makeConciseLigoIndexedInfo vec indexedInfo =
     , liiApplication = makeConciseLigoApplication vec <$> liiApplication indexedInfo
     }
 
+-- | Parses modules with entry points from LIGO compiler's
+-- textual output.
 parseModuleNamesList :: Text -> Maybe ModuleNamesList
 parseModuleNamesList (lines -> parts) = do
   moduleNames <- safeTail >=> safeInit $ parts
@@ -1288,6 +1406,7 @@ parseModuleNamesList (lines -> parts) = do
     safeInit :: [a] -> Maybe [a]
     safeInit = fmap init . nonEmpty
 
+-- | Resolves a @LigoTypeRef@ into @LigoType@ using @LigoTypesVec@.
 readLigoType :: LigoTypesVec -> Maybe LigoTypeRef -> LigoType
 readLigoType (LigoTypesVec v) = \case
   Nothing -> LigoType Nothing

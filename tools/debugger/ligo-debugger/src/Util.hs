@@ -6,13 +6,9 @@ module Util
   , ForInternalUse
   , itIsForInternalUse
   , allowedForInternalUseOnly
-  , readSemVerQ
-  , resourcesFolder
-  , rmode'semv
   , rmode'ansi
   , rmode'
   , everywhereM'
-  , foldMapM
   , safeIndex
   , unionOrd
   , findKey
@@ -34,38 +30,38 @@ import Data.Aeson.Key qualified as Key
 import Data.Aeson.KeyMap qualified as KM
 import Data.Aeson.Types qualified as Aeson
 import Data.Bitraversable (bitraverse)
-import Data.Char qualified as Char
 import Data.List (groupBy, singleton)
 import Data.Map.Internal qualified as MI
 import Data.MessagePack (Config, DecodeError, MessagePack, Object (..), decodeError)
 import Data.MessagePack.Types (MessagePack (fromObjectWith, toObject))
 import Data.Reflection (Given, give, given)
 import Data.Scientific qualified as Sci
-import Data.SemVer qualified as SemVer
-import Data.Text qualified as Text
 import Data.Text.Lazy.Encoding qualified as TL
-import Debug qualified
 import Fmt.Buildable (Buildable, FromDoc, pretty)
 import Fmt.Internal.Core (FromBuilder, fromBuilder)
 import Generics.SYB (Data (gmapM), GenericM)
-import Language.Haskell.TH.Syntax (Code (..), Q, liftTyped)
 import System.Console.ANSI (SGR, setSGRCode)
-import System.FilePath ((</>))
-import TH.RelativePaths (qReadFileText)
 import Text.Interpolation.Nyan.Core (RMode (..))
 
 import Duplo (Cofree ((:<)), Lattice (leq))
 
-groupByKey :: Ord k => (a -> k) -> (a -> v) -> [a] -> [(k, [v])]
+-- | Forms an associative list from list of values and to key/value mappers.
+groupByKey
+  :: forall a k v
+   . Ord k
+  => (a -> k) -- ^ to key mapper
+  -> (a -> v) -- ^ to value mapper
+  -> [a] -- ^ a list of values
+  -> [(k, [v])]
 groupByKey f g =
-  extractGroup f g
+  extractGroup
   . groupBy ((==) `on` f)
   . sortOn f
-
-extractGroup :: (a -> k) -> (a -> v) -> [[a]] -> [(k, [v])]
-extractGroup _ _ [] = []
-extractGroup f g ([] : xs) = extractGroup f g xs
-extractGroup f g (ys@(y : _) : xs) = (f y, g <$> ys) : extractGroup f g xs
+  where
+    extractGroup :: [[a]] -> [(k, [v])]
+    extractGroup [] = []
+    extractGroup ([] : xs) = extractGroup xs
+    extractGroup (ys@(y : _) : xs) = (f y, g <$> ys) : extractGroup xs
 
 -- | This constraint indicates that the given value/function must be used
 -- only where it will affect us, developers, and would be invisible for the users
@@ -84,34 +80,12 @@ data IsForInternalUse = IsForInternalUse
 itIsForInternalUse :: (ForInternalUse => a) -> a
 itIsForInternalUse = give IsForInternalUse
 
+-- | Mark a value as @ForInternalUse@.
 allowedForInternalUseOnly :: ForInternalUse => a -> a
 allowedForInternalUseOnly =
   case given @IsForInternalUse of IsForInternalUse -> id
 
--- | Read a 'SemVer.Version' from a file at compile time.
---
--- This allows comments in form of lines starting from @#@ sign.
-readSemVerQ :: FilePath -> Code Q SemVer.Version
-readSemVerQ path = Code do
-  content <- qReadFileText path
-  let clearContent = content
-        & lines
-        & filter ((/= "#") . take 1 . toString . Text.dropWhile Char.isSpace)
-        & unlines
-        & Text.strip
-
-  version <-
-    SemVer.fromText clearContent
-    & either (\_ -> fail $ "Invalid version constant in the file: " <> Debug.show clearContent) pure
-
-  examineCode . liftTyped $ version
-
-resourcesFolder :: FilePath
-resourcesFolder = "src" </> "resources"
-
-rmode'semv :: RMode SemVer.Version
-rmode'semv = RMode (pretty . SemVer.toText)
-
+-- | Rendering mode for a list of SGR (Select Graphic Rendition).
 rmode'ansi :: RMode [SGR]
 rmode'ansi = RMode (pretty . concatMap (setSGRCode . singleton))
 
@@ -125,11 +99,8 @@ everywhereM' f = go
       x' <- f x
       gmapM go x'
 
-foldMapM :: (Foldable t, Monad m, Monoid b) => (a -> m b) -> t a -> m b
-foldMapM f = foldlM folder mempty
-  where
-    folder !acc new = (acc <>) <$> f new
-
+-- | Picks n-th element in the list.
+-- Returns @Nothing@ if the index is out of bounds.
 safeIndex :: (Eq t, Num t) => [a] -> t -> Maybe a
 safeIndex [] _ = Nothing
 safeIndex (x : _) 0 = Just x
@@ -153,10 +124,11 @@ findKey f x (MI.Bin _ k v l r) = case compare x (f k) of
   EQ -> Just (k, v)
   GT -> findKey f x r
 
+-- | Apply a pure transformation to every string in some JSON value.
 mapJsonText :: (Text -> Text) -> Aeson.Value -> Aeson.Value
 mapJsonText f = runIdentity . traverseJsonText (Identity . f)
 
--- | Apply a transformation to every string in some JSON value.
+-- | Apply an applicative transformation to every string in some JSON value.
 traverseJsonText :: Applicative f => (Text -> f Text) -> Aeson.Value -> f Aeson.Value
 traverseJsonText f = \case
   Aeson.Object obj ->
@@ -168,6 +140,7 @@ traverseJsonText f = \case
   b@(Aeson.Bool _) -> pure b
   Aeson.Null -> pure Aeson.Null
 
+-- | A flipped version of @(<\<$\>>)@.
 (<<&>>) :: (Functor f, Functor g) => f (g a) -> (a -> b) -> f (g b)
 a <<&>> f = fmap (fmap f) a
 {-# INLINE (<<&>>) #-}
@@ -194,6 +167,7 @@ lazyBytesToText = toText . TL.decodeUtf8
 textToLazyBytes :: Text -> LByteString
 textToLazyBytes = TL.encodeUtf8 . fromStrict
 
+-- | A render mode for @Buildable@ values.
 rmode' :: (Buildable a) => RMode a
 rmode' = RMode pretty
 

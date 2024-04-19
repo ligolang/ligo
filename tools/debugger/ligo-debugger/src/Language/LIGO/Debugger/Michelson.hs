@@ -51,9 +51,9 @@ import Language.LIGO.Range
 
 -- | Untyped Michelson instruction with meta embedded.
 data OpWithMeta meta
-  = MPrimEx (InstrWithMeta meta)
-  | MSeqEx [OpWithMeta meta]
-  | MMetaEx meta (OpWithMeta meta)
+  = MPrimEx (InstrWithMeta meta) -- ^ A node with a standalone instruction.
+  | MSeqEx [OpWithMeta meta] -- ^ A node with a sequence of instructions.
+  | MMetaEx meta (OpWithMeta meta) -- ^ A node with meta.
   deriving stock (Eq, Show, Data, Generic)
   deriving anyclass (NFData)
 
@@ -71,7 +71,10 @@ instance (Buildable meta) => Buildable (OpWithMeta meta) where
   build (MPrimEx expandedInstr) =  [int||<MPrimEx: #{expandedInstr}>|]
   build (MSeqEx expandedOps)    =  [int||<MSeqEx: #{expandedOps}>|]
 
+-- | A type alias for instruction with metas.
 type InstrWithMeta meta = U.InstrAbstract [] (OpWithMeta meta)
+
+-- | A type alias for contract with metas.
 type ContractWithMeta meta = U.Contract' (OpWithMeta meta)
 
 instance (meta ~ meta') => FromExp (WithMeta meta) (OpWithMeta meta') where
@@ -79,6 +82,8 @@ instance (meta ~ meta') => FromExp (WithMeta meta) (OpWithMeta meta') where
     ExpSeq _ exps -> MSeqEx <$> traverse fromExp exps
     other -> MPrimEx <$> fromExp other
 
+-- | A special type checker for instructions with metas.
+-- It also strips redundant metas.
 typeCheckOpWithMeta
   :: (Show meta, NFData meta, Data meta)
   => (meta -> Bool) -> Tc.TcInstrBase (OpWithMeta meta)
@@ -108,6 +113,8 @@ instance Data meta => Tc.IsInstrOp (OpWithMeta meta) where
     U.ValueSeq xs -> MSeqEx . toList <$> traverse Tc.tryValToOp xs
     _ -> Nothing
 
+-- | An error which is emitted if a Micheline expression
+-- could not be converted into @ContractWithMeta@.
 newtype FromExpressionWithMetaError meta
   = FromExpressionWithMetaError (FromExpError (WithMeta meta))
   deriving newtype (Eq)
@@ -136,14 +143,20 @@ instance Buildable (FromExpressionWithMetaError EmbeddedLigoMeta) where
         where
           buildList' buildElem = mconcat . intersperse ", " . map buildElem
 
+-- | An error that type checker emits if it can't process a @ContractWithMeta@.
 newtype TcErrorWithMeta meta = TcErrorWithMeta (TcError' (OpWithMeta meta))
   deriving newtype (Eq, Buildable)
 
+-- | An error that could occur during the procession of the source mapper.
 data DecodeError meta
   = FromExpressionFailed (FromExpressionWithMetaError meta)
+  -- ^ A wrapper for @FromExpressionWithMetaError@.
   | MetaEmbeddingError MetaEmbeddingError
+    -- ^ A wrapper for @MetaEmbeddingError@.
   | TypeCheckFailed (TcErrorWithMeta meta)
+    -- ^ A wrapper for @TcErrorWithMeta@.
   | PreprocessError PreprocessError
+    -- ^ A wrapper for @PreprocessError@.
   deriving stock (Eq, Generic)
 
 instance (Buildable (FromExpressionWithMetaError meta), Buildable meta) => Buildable (DecodeError meta) where
@@ -157,9 +170,12 @@ instance (Buildable (FromExpressionWithMetaError meta), Buildable meta) => Build
     PreprocessError err ->
       pretty err
 
+-- | An error which may occur during metas embedding.
 data MetaEmbeddingError
   = InsufficientMetas Int
+    -- ^ We have less metas than instructions.
   | ExtraMetas Int
+    -- ^ We have more metas than instructions.
   deriving stock (Eq, Generic)
 
 instance Buildable MetaEmbeddingError where
@@ -178,10 +194,13 @@ embedMetas metas expr = forOf (unsafePartsOf (expAllExtraL devoid)) expr (ensure
     ensureLength [] ys = throwError (InsufficientMetas $ length ys)
     ensureLength xs [] = throwError (ExtraMetas $ length xs)
 
+-- | Converts a Micheline expression into @ContractWithMeta@.
+-- Throws a @FromExpressionWithMetaError@ error if it could not be converted.
 expressionToUntypedContract :: forall meta. ExpressionWithMeta meta -> Either (DecodeError meta) (ContractWithMeta meta)
 expressionToUntypedContract expWithMeta = first (FromExpressionFailed . FromExpressionWithMetaError) $
   fromExp @(WithMeta meta) @(ContractWithMeta _) expWithMeta
 
+-- | An exception that wraps @DecodeError@.
 newtype MichelsonDecodeException = MichelsonDecodeException (DecodeError EmbeddedLigoMeta)
   deriving stock (Generic)
   deriving newtype Buildable
@@ -202,6 +221,9 @@ instance DebuggerException MichelsonDecodeException where
       UnsupportedTicketDup -> UserException
   shouldInterruptDebuggingSession = False
 
+-- | Wraps a type checking error:
+--   1. If it's a tickets @DUP@ping error then wrap it with @PreprocessError@.
+--   2. Otherwise, wrap it with @TypeCheckFailed@.
 wrapTypeCheckFailed :: TcError' (OpWithMeta meta) -> DecodeError meta
 wrapTypeCheckFailed = \case
   TcFailedOnInstr _ _ _ _ (Just (UnsupportedTypeForScope _ BtHasTicket)) ->
@@ -219,9 +241,13 @@ fromUntypedToTyped uContract isRedundantMeta = do
     $ typeCheckingWith debuggerTcOptions
     $ Tc.typeCheckContract' (typeCheckOpWithMeta isRedundantMeta) processedUContract
 
+-- | An error that may occur during Michelson contract
+-- preprocessing,
 data PreprocessError
   = EntrypointTypeNotFound U.EpName
+    -- ^ The contract lacks of entry point's type.
   | UnsupportedTicketDup
+    -- ^ Type checking failed on tickets @DUP@ping.
   deriving stock (Eq, Generic)
 
 instance Buildable PreprocessError where
@@ -238,10 +264,16 @@ instance Buildable PreprocessError where
         contract actually compiles.
       |]
 
+-- | A monad that stores a map
+-- from entry point's name to its type and
+-- provides an ability to throw @PreprocessError@s.
 type PreprocessMonad meta =
   ReaderT (Map U.EpName U.Ty) $
   Except PreprocessError
 
+-- | @createErrorValue errMsg@ creates a value with
+-- @pair address string@ type where address is equal to @errorAddress@
+-- a @string@ value equals to @errMsg@.
 createErrorValue :: MText -> U.Value' [] (OpWithMeta meta)
 createErrorValue errMsg =
   U.ValuePair (U.ValueString addrText) (U.ValueString errMsg)

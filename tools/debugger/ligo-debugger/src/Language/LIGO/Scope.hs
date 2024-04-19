@@ -9,6 +9,8 @@ import Duplo (leq)
 
 import Language.LIGO.Range
 
+-- | A type that stores ranges and variable definitions
+-- that are available in these ranges.
 data Scope = Scope
   { sRange :: Range
     -- ^ A range that scope covers.

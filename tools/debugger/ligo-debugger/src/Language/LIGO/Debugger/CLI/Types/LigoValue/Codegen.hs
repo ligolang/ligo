@@ -67,6 +67,7 @@ type family ReplaceOps (t :: T.T) :: T.T where
   ReplaceOps ('T.TOr l r) = 'T.TOr (ReplaceOps l) (ReplaceOps r)
   ReplaceOps t = t
 
+-- | Replace @STOperation@ with @STString@.
 replaceOpSing :: forall (t :: T.T). Sing t -> Sing (ReplaceOps t)
 replaceOpSing = \case
   STOperation -> STString

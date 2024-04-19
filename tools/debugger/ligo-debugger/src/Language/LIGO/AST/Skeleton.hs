@@ -13,18 +13,16 @@ module Language.LIGO.AST.Skeleton
   , Lang (..)
   , allLangs
   , langExtension
-  , cameLIGOKeywords, jsLIGOKeywords
   , Name (..), QualifiedName (..), Pattern (..), RecordFieldPattern (..)
   , Constant (..), FieldAssignment (..), Alt (..), Expr (..), TField (..)
   , Variant (..), Layout (..), Type (..), Binding (..), RawContract (..), TypeName (..)
-  , TypeVariableName (..), FieldName (..), Verbatim (..), Error (..), Ctor (..)
+  , TypeVariableName (..), FieldName (..), Verbatim (..), Ctor (..)
   , NameDecl (..), Preprocessor (..), PreprocessorCommand (..), ModuleName (..)
   , ModuleAccess (..), Attr (..), QuotedTypeParams (..), CaseOrDefaultStm (..)
   , Direction (..)
   , ModuleExpr (..)
   , Signature (..)
   , SigItem (..)
-  , pattern ErrorTypeUnresolved
   , getLIGO
   , setLIGO
   , nestedLIGO
@@ -38,7 +36,6 @@ import Control.MessagePack (withMsgText)
 import Control.Monad.Validate (refute)
 import Data.Default (Default (def))
 import Data.Functor.Classes (Eq1 (..))
-import Data.HashSet qualified as HashSet
 import Data.MessagePack (MessagePack (..), decodeError)
 import Fmt.Buildable (Buildable, build)
 import Text.Interpolation.Nyan hiding (rmode')
@@ -48,20 +45,25 @@ import Util
 import Duplo.Pretty (PP (..), Pretty (..))
 import Duplo.Tree (Tree)
 
-import Language.LIGO.Diagnostic (MessageDetail (..))
 import Language.LIGO.Range (Range)
 
+-- | A type that stores an origin dialect
+-- and unified AST of the contract.
 data SomeLIGO xs = SomeLIGO Lang (LIGO xs)
 
+-- | A lens that focuses on the AST.
 nestedLIGO :: Lens (SomeLIGO xs) (SomeLIGO xs') (LIGO xs) (LIGO xs')
 nestedLIGO = lens getLIGO setLIGO
 
+-- | Get an AST.
 getLIGO :: SomeLIGO xs -> LIGO xs
 getLIGO (SomeLIGO _ ligo) = ligo
 
+-- | Set an AST.
 setLIGO :: SomeLIGO xs -> LIGO ys -> SomeLIGO ys
 setLIGO (SomeLIGO d _) = SomeLIGO d
 
+-- | Applies an action on AST in some functorial context.
 withNestedLIGO
   :: Functor f => SomeLIGO xs -> (LIGO xs -> f (LIGO xs')) -> f (SomeLIGO xs')
 withNestedLIGO = flip nestedLIGO
@@ -72,22 +74,25 @@ instance Pretty (LIGO xs) => Show (SomeLIGO xs) where
 instance Pretty (LIGO xs) => Pretty (SomeLIGO xs) where
   pp (SomeLIGO _ nested) = pp nested
 
+-- | An information that every AST node stores.
 type Info = Range
 
 -- | The universal AST for CameLIGO and JsLIGO.
 type LIGO x = Tree RawLigoList x
 
+-- | All types of nodes that are present in the AST.
 type RawLigoList =
   [ Name, QualifiedName, Pattern, RecordFieldPattern, Constant, FieldAssignment
   , Alt, Expr, TField, Variant, Type, Binding, RawContract, TypeName
-  , TypeVariableName, FieldName, Verbatim, Error, Ctor, NameDecl, Preprocessor
+  , TypeVariableName, FieldName, Verbatim, Ctor, NameDecl, Preprocessor
   , PreprocessorCommand, ModuleName, ModuleAccess, Attr, QuotedTypeParams
   , CaseOrDefaultStm, Direction, Signature, SigItem, ModuleExpr
   ]
 
+-- | A type which represents a LIGO dialect.
 data Lang
-  = Caml
-  | Js
+  = Caml -- ^ @CameLIGO@.
+  | Js  -- ^ @JsLIGO@.
   deriving stock (Show, Eq, Enum, Bounded, Generic)
   deriving anyclass (Hashable, NFData)
 
@@ -103,6 +108,7 @@ instance MessagePack Lang where
       "JsLIGO" -> pure Js
       other -> refute $ decodeError [int||Unexpected lang: #{other}|]
 
+-- | All LIGO dialects.
 allLangs :: [Lang]
 allLangs = [minBound .. maxBound]
 
@@ -115,27 +121,16 @@ langExtension = \case
   Caml -> ".mligo"
   Js   -> ".jsligo"
 
-cameLIGOKeywords :: HashSet Text
-cameLIGOKeywords = HashSet.fromList
-  [ "in", "struct", "begin", "end", "match", "with", "rec", "if", "then", "else"
-  , "let", "module", "type", "of", "fun", "or", "mod", "land", "lor", "lxor"
-  , "lsl", "lsr", "not"
-  ]
-
-jsLIGOKeywords :: HashSet Text
-jsLIGOKeywords = HashSet.fromList
-  [ "else", "if", "let", "const", "type", "return", "switch", "case", "default"
-  , "as", "break", "namespace", "import", "export", "while", "for", "of"
-  ]
-
 -- Let 'Accessor' be either 'FieldName' or a 'Text'ual representation of an
 -- index (a number).
 
+-- | A node that represents the whole contract.
 newtype RawContract it
   = RawContract [it] -- ^ [Declaration]
   deriving stock (Generic, Eq, Functor, Foldable, Traversable)
   deriving Eq1 via DefaultEq1DeriveFor1List
 
+-- | A node that represents a top-level binding.
 data Binding it
   = BFunction     IsRec it [it] [it] (Maybe it) it -- ^ (IsRec) (Name) (TypeVariableName) (Parameters) (Type) (Expr)
   | BParameter    it (Maybe it) -- ^ (Pattern) (Type)
@@ -151,23 +146,27 @@ data Binding it
   | BDeclarationSeq [it] -- ^ (BVar | BConst)
   deriving stock (Generic, Eq, Functor, Foldable, Traversable)
 
+-- | A node that represents module expression declarations.
 newtype ModuleExpr it
   = ModuleExpr [it] -- ^ [Declaration]
   deriving stock (Generic, Eq, Functor, Foldable, Traversable)
   deriving Eq1 via DefaultEq1DeriveFor1List
 
+-- | A node that represents signature with its items.
 newtype Signature it = Signature
   { sSignatureBody :: [it] -- ^ (SigItem)
   }
   deriving stock (Generic, Eq, Functor, Foldable, Traversable)
   deriving Eq1 via DefaultEq1DeriveFor1List
 
+-- | A node that represents signature item.
 data SigItem it
   = SValue it it -- ^ (Name) (TypeExpression)
   | SType it (Maybe it) -- ^ (TypeVariableName) (TypeExpression)
   | SInclude it -- ^ Signature
   deriving stock (Generic, Eq, Functor, Foldable, Traversable)
 
+-- | A node that represents quoted type parameters.
 data QuotedTypeParams it
   = QuotedTypeParam it  -- ^ (TypeVariableName)
   | QuotedTypeParams [it]  -- ^ [TypeVariableName]
@@ -178,11 +177,13 @@ data QuotedTypeParams it
 -- @rec@ keywords. In JsLIGO, functions are always recursive.
 type IsRec = Bool
 
+-- | A type for LIGO type layouts.
 data Layout
   = Tree
   | Comb
   deriving stock (Generic, Eq, Show)
 
+-- | A node which represents LIGO type expressions.
 data Type it
   = TArrow     it     it            -- ^ (Type) (Type)
   | TRecord    Layout [it]          -- ^ [TField]
@@ -198,15 +199,18 @@ data Type it
   | TForAll    [it]   it            -- ^ [TypeVariableName] (Type)
   deriving stock (Generic, Eq, Functor, Foldable, Traversable)
 
+-- | A node which represents a variant in @TSum@.
 data Variant it
   = Variant it [it]  -- (Name) [Type]
   deriving stock (Generic, Eq, Functor, Foldable, Traversable)
 
+-- | A node which represents a record field in @TRecord@.
 data TField it
   = TField it (Maybe it)  -- (Name) (Maybe (Type))
   deriving stock (Generic, Eq, Functor, Foldable, Traversable)
 
--- | TODO: break onto smaller types? Literals -> Constant; mapOps; mmove Annots to Decls.
+-- TODO: break onto smaller types? Literals -> Constant; mapOps; mmove Annots to Decls.
+-- | A node which represents a LIGO expression.
 data Expr it
   = Let       it it   -- Declaration Expr
   | Apply     it [it] -- (Expr) [Expr]
@@ -241,37 +245,45 @@ data Expr it
   | EDo       [it] -- [Declaration]
   deriving stock (Generic, Functor, Foldable, Traversable)
 
+-- | A node which represents a direction in @for@ loops.
 data Direction it
   = Upto
   | Downto
   deriving stock (Generic, Functor, Foldable, Traversable)
 
+-- | A node which represents verbatim text.
 newtype Verbatim it
   = Verbatim Text
   deriving stock (Generic, Functor, Foldable, Traversable)
   deriving Eq1 via DefaultEq1DeriveForText
 
+-- | A node which represents preprocessor directives.
 newtype Preprocessor it
   = Preprocessor it -- (PreprocessorCommand)
   deriving stock (Generic, Functor, Foldable, Traversable)
   deriving Eq1 via DefaultEq1DeriveFor1Field
 
+-- | A node which represents a case in @match .. with@ expression.
 data Alt it
   = Alt it it -- (Pattern) (Expr)
   | Default it -- Expr
   deriving stock (Generic, Eq, Functor, Foldable, Traversable)
 
+-- | A node which represents a case in @switch@ expression.
 data CaseOrDefaultStm it
   = CaseStm it [it] -- (Expr) [Expr]
   | DefaultStm [it] -- [Expr]
   deriving stock (Generic, Eq, Functor, Foldable, Traversable)
 
+-- | A node which represents a field assignment case in
+-- record updates.
 data FieldAssignment it
   = FieldAssignment [it] it -- [Accessor] (Expr)
   | Spread it -- (Name)
   | Capture it -- Accessor
   deriving stock (Generic, Eq, Functor, Foldable, Traversable)
 
+-- | A node which represents a LIGO constant.
 data Constant it
   = CInt     Text
   | CNat     Text
@@ -281,6 +293,7 @@ data Constant it
   | CTez     Text
   deriving stock (Generic, Eq, Functor, Foldable, Traversable)
 
+-- | A node which represents a LIGO pattern.
 data Pattern it
   = IsConstr     it [it] -- (Name) [Pattern]
   | IsConstant   it -- (Constant)
@@ -297,18 +310,20 @@ data Pattern it
   | IsTrue
   deriving stock (Generic, Eq, Functor, Foldable, Traversable)
 
--- Used specifically in record destructuring
+-- | A node which represents record fields in record pattern destructuring.
 data RecordFieldPattern it
   = IsRecordField it it
   | IsRecordCapture it
   deriving stock (Generic, Eq, Functor, Foldable, Traversable)
 
+-- | A node which represents module access.
 data ModuleAccess it = ModuleAccess
   { maPath  :: [it] -- [ModuleName]
   , maField :: it -- Accessor
   }
   deriving stock (Generic, Eq, Functor, Foldable, Traversable)
 
+-- | A node which represents projections.
 data QualifiedName it
   = QualifiedName
     { qnSource ::  it -- Name
@@ -316,66 +331,72 @@ data QualifiedName it
     }
   deriving stock (Generic, Eq, Functor, Foldable, Traversable)
 
+-- | A node which represents variable names.
 newtype Name it = Name
   { _raw     :: Text
   }
   deriving stock (Generic, Functor, Foldable, Traversable)
   deriving Eq1 via DefaultEq1DeriveForText
 
+-- | A node which represents variable name declarations.
 newtype NameDecl it = NameDecl
   { _raw     :: Text
   }
   deriving stock (Generic, Eq, Functor, Foldable, Traversable)
   deriving Eq1 via DefaultEq1DeriveForText
 
+-- | A node which represents a module name.
 newtype ModuleName it = ModuleName Text
   deriving stock (Generic, Eq, Functor, Foldable, Traversable)
   deriving Eq1 via DefaultEq1DeriveForText
 
+-- | A node which represents a type name.
 newtype TypeName it = TypeName Text
   deriving stock (Generic, Eq, Functor, Foldable, Traversable)
   deriving Eq1 via DefaultEq1DeriveForText
 
+-- | A node which represents a type variable name.
 newtype TypeVariableName it = TypeVariableName Text
   deriving stock (Generic, Eq, Functor, Foldable, Traversable)
   deriving Eq1 via DefaultEq1DeriveForText
 
--- | Constructor node in AST
+-- | A node which represents a constructor.
 newtype Ctor it = Ctor Text
   deriving stock (Generic, Eq, Functor, Foldable, Traversable)
   deriving Eq1 via DefaultEq1DeriveForText
 
+-- | A node which represents a preprocessor directive.
 newtype PreprocessorCommand it = PreprocessorCommand Text
   deriving stock (Generic, Eq, Functor, Foldable, Traversable)
   deriving Eq1 via DefaultEq1DeriveForText
 
+-- | A node which represents a record field name.
 newtype FieldName it = FieldName Text
   deriving stock (Generic, Eq, Functor, Foldable, Traversable)
   deriving Eq1 via DefaultEq1DeriveForText
 
+-- | A node which represents an attribute.
 newtype Attr it = Attr Text
   deriving stock (Generic, Eq, Functor, Foldable, Traversable)
   deriving Eq1 via DefaultEq1DeriveForText
-
-data Error it = Error MessageDetail [it]
-  deriving stock (Generic, Eq, Functor, Foldable, Traversable)
-
-pattern ErrorTypeUnresolved :: Error it
-pattern ErrorTypeUnresolved = Error (FromLIGO "unresolved type given") []
 
 --------------------------------------------------------------------------------
 
 -- TODO: is used also for comparing nodes in which the order
 -- of elements is unimportant (for instance sum types) so
 -- they may be mistreated as unequal.
+
+-- | Lifts an equality function to lists.
 liftEqList :: (a -> b -> Bool) -> [a] -> [b] -> Bool
 liftEqList _ []       []       = True
 liftEqList f (x : xs) (y : ys) = f x y && liftEqList f xs ys
 liftEqList _ _        _        = False
 
+-- | Lifts an equality function to non empty lists.
 liftEqNonEmpty :: (a -> b -> Bool) -> NonEmpty a -> NonEmpty b -> Bool
 liftEqNonEmpty f (x :| xs) (y :| ys) = f x y && liftEqList f xs ys
 
+-- | Lifts an equality function to @Maybe@.
 liftEqMaybe :: (a -> b -> Bool) -> Maybe a -> Maybe b -> Bool
 liftEqMaybe _ Nothing  Nothing  = True
 liftEqMaybe f (Just x) (Just y) = f x y
@@ -400,24 +421,28 @@ liftEqMaybe _ _        _        = False
 -- instance Eq1 T where
 --   liftEq = liftEq'
 
+-- | A convenient type for deriving @Eq1@ for nodes with @Text@.
 newtype DefaultEq1DeriveForText it =
   DefaultEq1DeriveForText Text
 
 instance Eq1 DefaultEq1DeriveForText where
   liftEq _ (DefaultEq1DeriveForText a) (DefaultEq1DeriveForText b) = a == b
 
+-- | A convenient type for deriving @Eq1@ for nodes with only one field.
 newtype DefaultEq1DeriveFor1Field it =
   DefaultEq1DeriveFor1Field it
 
 instance Eq1 DefaultEq1DeriveFor1Field where
   liftEq f (DefaultEq1DeriveFor1Field a) (DefaultEq1DeriveFor1Field b) = f a b
 
+-- | A convenient type for deriving @Eq1@ for nodes with only two fields.
 data DefaultEq1DeriveFor2Field it =
   DefaultEq1DeriveFor2Field it it
 
 instance Eq1 DefaultEq1DeriveFor2Field where
   liftEq f (DefaultEq1DeriveFor2Field a b) (DefaultEq1DeriveFor2Field c d) = f a c && f b d
 
+-- | A convenient type for deriving @Eq1@ for nodes with only one list field.
 newtype DefaultEq1DeriveFor1List it =
   DefaultEq1DeriveFor1List [it]
 
@@ -456,10 +481,6 @@ instance Eq1 Expr where
   liftEq f (List as) (List bs) = liftEqList f as bs
   liftEq f (Tuple as) (Tuple bs) = liftEqList f as bs
   liftEq f (Annot ea ta) (Annot eb tb) = f ea eb && f ta tb
-  liftEq _ _ _ = False
-
-instance Eq1 Error where
-  -- liftEq _ _ _ = error "Cannot compare `Error` nodes"
   liftEq _ _ _ = False
 
 instance Eq1 Binding where

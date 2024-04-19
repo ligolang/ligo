@@ -47,109 +47,128 @@ import Language.LIGO.Debugger.CLI.Types
 --- Types ---
 -------------
 
+-- | Represents a value either in LIGO or Michelson
+-- format.
 data LigoOrMichValue
   = LigoValue LigoType LigoValue
+    -- ^ Value in LIGO format.
   | MichValue LigoType SomeValue
+    -- ^ Value in Michelson format.
   | ToBeComputed
     -- ^ Since we compute @LIGO@ values in async manner
     -- we can use this stub if value isn't available yet.
   deriving stock (Generic, Show, Eq)
 
+-- | LIGO value.
 data LigoValue
   = LVCt LigoConstant
+    -- ^ A literal value.
   | LVList [LigoValue]
+    -- ^ A list of values.
   | LVRecord (HashMap LigoLabel LigoValue)
+    -- ^ A record value.
   | LVConstructor (Text, LigoValue)
+    -- ^ A sum value.
   | LVSet [LigoValue]
+    -- ^ A set of values.
   | LVMap [(LigoValue, LigoValue)]
+    -- ^ A map of values.
   | LVTypedAddress Text
+    -- ^ A typed address value.
   | LVMichelson LigoValueMichelson
+    -- ^ A raw Michelson value.
   | LVMichelsonContract Value
+    -- ^ A Michelson contract value.
+    -- It may occur only in the tests.
   | LVGen Value
+    -- ^ A generator value.
+    -- It may occur only in the tests.
   | LVLocation Value
+    -- ^ A heap location value.
+    -- It may occur only in the tests.
   | LVMutation Value
+    -- ^ A mutation value.
+    -- It may occur only in the tests.
   | LVAstContract Value
+    -- ^ A contract's AST value.
+    -- It may occur only in the tests.
   | LVFuncVal
+    -- ^ A function value.
   deriving stock (Generic, Show, Eq, Data)
   deriving anyclass (NFData)
 
+-- | A record's label.
 data LigoLabel = LLabel Text
   deriving stock (Generic, Show, Eq, Data)
   deriving anyclass (NFData, Hashable, FromJSONKey)
 
-data LigoMutFlag
-  = LMFImmutable
-  | LMFMutable
-  deriving stock (Generic, Show, Eq, Data)
-  deriving anyclass (NFData)
-
-data LigoValueExpr = LigoValueExpr
-  { lveAstType :: Value
-  , lveEvalTerm :: LigoValue
-  } deriving stock (Generic, Show, Eq, Data)
-    deriving anyclass (NFData)
-    deriving (FromJSON) via LigoValueJSON 3 LigoValueExpr
-
-data LigoEnvItem = LigoEnvItem
-  { leiItem :: LigoValueExpr
-  , leiNoMutation :: Bool
-  , leiInline :: Bool
-  } deriving stock (Generic, Show, Eq, Data)
-    deriving anyclass (NFData)
-    deriving (FromJSON) via LigoValueJSON 3 LigoEnvItem
-
--- This type is unused now but may be
--- useful at some moment of time.
-data LigoFuncVal = LigoFuncVal
-  { lfvRecName :: Maybe LigoVar
-  , lfvOrigLambda :: Value
-  , lfvBody :: Value
-  , lfvArgBinder :: LigoVar
-  , lfvArgMutFlag :: LigoMutFlag
-  , lfvEnv :: [(LigoVar, LigoEnvItem)]
-  } deriving stock (Generic, Show, Eq, Data)
-    deriving anyclass (NFData)
-    deriving (FromJSON) via LigoValueJSON 3 LigoFuncVal
-
+-- | A contract value.
 data LigoContract = LigoContract
   { lcAddress :: Text
+    -- ^ A contract's address.
   , lcEntrypoint :: Maybe Text
+    -- ^ A contract's entry point.
   } deriving stock (Generic, Show, Eq, Data)
     deriving anyclass (NFData)
     deriving (FromJSON) via LigoValueJSON 2 LigoContract
 
+-- | A literal value.
 data LigoConstant
   = LCString Text
+    -- ^ String value.
   | LCBytes Text
+    -- ^ Bytes value.
   | LCAddress Text
+    -- ^ Address value.
   | LCContract LigoContract
+    -- ^ Contract value.
   | LCNat Text
+    -- ^ Natural number value.
   | LCTimestamp Text
+    -- ^ Timestamp value.
   | LCKeyHash Text
+    -- ^ Key hash value.
   | LCKey Text
+    -- ^ Key value.
   | LCSignature Text
+    -- ^ Signature value.
   | LCBls12_381Fr Text
+    -- ^ Bls12_381_fr value.
   | LCBls12_381G1 Text
+    -- ^ Bls12_381_g1 value.
   | LCBls12_381G2 Text
+    -- ^ Bls12_381_g2 value.
   | LCChainId Text
+    -- ^ Chain ID value.
   | LCInt Text
+    -- ^ Integer number value.
   | LCInt64 Integer
+    -- ^ Int64 number value.
   | LCMutez Text
+    -- ^ Mutez value.
   | LCBool Bool
+    -- ^ Boolean value.
   | LCUnit
+    -- ^ Unit value.
   deriving stock (Generic, Show, Eq, Data)
   deriving anyclass (NFData)
 
+-- | A typed Michelson code.
 data LigoValueTyCode = LigoValueTyCode
   { lvtcAstTy :: Value
+    -- ^ Contract's type.
   , lvtcMichelineRepr :: Value
+    -- ^ Micheline representaion.
   } deriving stock (Generic, Show, Eq, Data)
     deriving anyclass (NFData)
     deriving (FromJSON) via LigoValueJSON 4 LigoValueTyCode
 
+-- | A raw Michelson code.
 data LigoValueMichelson
   = LVMUntypedCode Value
+    -- ^ Untyped code.
   | LVMTyCode LigoValueTyCode
+    -- ^ Typed code.
   deriving stock (Generic, Show, Eq, Data)
   deriving anyclass (NFData)
 
@@ -157,6 +176,10 @@ data LigoValueMichelson
 --- Helpers ---
 ---------------
 
+-- TODO: replace it with @LigoJSON@.
+
+-- | A convenient type that allows deriving @FromJSON@ instances.
+-- @n@ stands for the number of capital letters in the type.
 newtype LigoValueJSON (n :: Nat) a = LigoValueJSON a
 
 instance (Generic a, GFromJSON Zero (Rep a), KnownNat n) => FromJSON (LigoValueJSON n a) where
@@ -164,18 +187,27 @@ instance (Generic a, GFromJSON Zero (Rep a), KnownNat n) => FromJSON (LigoValueJ
     { fieldLabelModifier = genericDrop (natVal (Proxy @n) + 1) . toSnakeCase
     }
 
+-- | Capitalize the first letter of the string.
 toUpperCase :: String -> String
 toUpperCase = \case
   x : xs -> toUpper x : xs
   [] -> []
 
+-- | @surround left right sep lst@ will add separators @sep@ into
+-- the list @lst@ and surrond the result with @left@ and @right@.
+--
+-- E.g. @surround "[" "]" ";" [1, 2, 3] == "[1;2;3]"@.
 surround :: (Buildable a) => Doc -> Doc -> Doc -> [a] -> Doc
 surround left right sep lst = mconcat $ left : intersperse sep (build <$> lst) ++ [right]
 
+-- | Tries to convert a record value into the tuple.
 toTupleMaybe :: LigoValue -> Maybe [LigoValue]
 toTupleMaybe (LVRecord record) = forM [0..HM.size record - 1] \i -> HM.lookup (LLabel $ pretty i) record
 toTupleMaybe _ = Nothing
 
+-- | Tries to pick a record's field type by its name.
+-- Returns @LigoTypeUnresolved@ if passed type is not a record
+-- or the given field does not exist.
 getTypeByFieldName :: Text -> LigoType -> LigoType
 getTypeByFieldName field = \case
   LigoTypeResolved LigoTypeExpression
@@ -215,11 +247,12 @@ tryDecompilePrimitive (SomeValue val) = case val of
     mkConstant :: LigoConstant -> Maybe LigoValue
     mkConstant = Just . LVCt
 
+-- | Extract the type from @LigoOrMichValue@.
 getLigoType :: LigoOrMichValue -> LigoType
 getLigoType = \case
   LigoValue typ _ -> typ
   MichValue typ _ -> typ
-  ToBeComputed -> LigoType Nothing
+  ToBeComputed -> LigoTypeUnresolved
 
 -----------------
 --- Instances ---
@@ -265,12 +298,6 @@ instance FromJSON LigoLabel where
         | ctor == "Label" -> LLabel <$> parseJSON label
       _ -> fail "Expected 2 elements array"
 
-instance FromJSON LigoMutFlag where
-  parseJSON val = asum
-    [ LMFImmutable <$ guardOneElemList "Immutable" val
-    , LMFMutable <$ guardOneElemList "Mutable" val
-    ]
-
 -- An explanation about constants in @drop@s.
 -- First @drop@ (the rightmosts) removes type abbreviation in constructor.
 -- The second one @drop 1@ removes an underscore. This is because
@@ -308,6 +335,11 @@ instance Buildable (DebugPrint (Lang, LigoOrMichValue)) where
       LigoValue ligoType ligoValue -> buildLigoValue' lang mode ligoType ligoValue
       ToBeComputed -> build ToBeComputed
 
+-- | Prettifies @LigoValue@ using target dialect and a printing mode:
+-- 1. @DpmNormal@. A pretty-printer mode for values in variables pane.
+--    It doesn't depend on the dialect.
+-- 2. @DpmEvaluated@. A pretty-printer mode for values that would be obtained
+--    from @Copy Value@ button. The format matches with the target dialect.
 buildLigoValue' :: Lang -> DebugPrintMode -> LigoType -> LigoValue -> Doc
 buildLigoValue' lang mode ligoType = \case
   LVCt constant -> buildConstant' lang mode constant
@@ -397,9 +429,15 @@ buildLigoValue' lang mode ligoType = \case
         Just ([k, v], _) -> pure (Just k, Just v)
         _ -> Nothing
 
+-- | A shortcut for @buildLigoValue' Caml DpmNormal@.
 buildLigoValue :: LigoType -> LigoValue -> Doc
 buildLigoValue = buildLigoValue' Caml DpmNormal
 
+-- | Prettifies @LigoConstant@ using target dialect and a printing mode:
+-- 1. @DpmNormal@. A pretty-printer mode for values in variables pane.
+--    It doesn't depend on the dialect.
+-- 2. @DpmEvaluated@. A pretty-printer mode for values that would be obtained
+--    from @Copy Value@ button. The format matches with the target dialect.
 buildConstant' :: Lang -> DebugPrintMode -> LigoConstant -> Doc
 buildConstant' lang mode = \case
   LCString str -> build $ Debug.show @Text str
@@ -445,6 +483,7 @@ buildConstant' lang mode = \case
     buildTimestamp other =
       throw (PluginCommunicationException [int||Unexpected string in timestamp: #{other}|])
 
+-- | A shortcut for @buildConstant' Caml DpmNormal@.
 buildConstant :: LigoConstant -> Doc
 buildConstant = buildConstant' Caml DpmNormal
 
