@@ -154,7 +154,7 @@ let main (p : key_hash) =
   Tezos.address c
 
 let check_ (p : unit) : int =
-  if Tezos.get_amount () = 100000000mutez
+  if Tezos.get_amount () = 100tez
   then 42
   else 0
 
@@ -678,7 +678,7 @@ let main (action, store : string * string) : return =
       (fun (p, s : nat * string) -> (([] : operation list),
           "one"))
       (None : key_hash option)
-      300000000mutez
+      300tez
       "un" in
   ([toto.0], store)
 
@@ -795,7 +795,7 @@ let attempt (p, store : param * storage) : return =
       Some contract -> contract
     | None -> (failwith "No contract" : unit contract) in
   let transfer : operation =
-    Tezos.transaction (unit, contract, 10000000mutez) in
+    Tezos.transaction (unit, contract, 10tez) in
   let store : storage = {challenge = p.new_challenge} in
   ([] : operation list), store
 
@@ -1322,12 +1322,12 @@ let divs_int =
 
 let divs_nat =
   let a = 1n / 2n in
-  let b = 1000000mutez / 2000000mutez in
+  let b = 1tez / 2tez in
   (a = 0n) && (a = b)
 
 let divs_tez =
-  let a = 1000000mutez / 2n in
-  (a = 500000mutez)
+  let a = 1tez / 2n in
+  (a = 0.5tez)
 
 let var_neg =
   let a = 2 in
@@ -2111,17 +2111,14 @@ let main (action, store : parameter * storage) : return =
     | Decrement n -> store - n in
   ([] : operation list), store
 
-let add_tez : tez = 21mutez + 21mutez
+let add_tez : tez = 21mutez + 0.000021tez
 
-let sub_tez : tez = 21mutez - 20mutez
+let sub_tez : tez = 0.000021tez - 0.00002tez
 
 let not_enough_tez : tez = 4611686018427387903mutez
 
 let add_more_tez : tez =
-  100000000mutez + 10000000mutez + 1000000mutez
-  + 100000mutez
-  + 10000mutez
-  + 1000mutez
+  100tez + 10tez + 1tez + 0.1tez + 0.01tez + 0.001tez
 
 (*
 Modelled after:

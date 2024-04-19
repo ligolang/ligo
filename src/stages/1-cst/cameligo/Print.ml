@@ -435,6 +435,7 @@ and print_pattern state = function
 | P_List     p -> print_P_List     state p
 | P_ModPath  p -> print_P_ModPath  state p
 | P_Mutez    p -> print_P_Mutez    state p
+| P_Tez      p -> print_P_Tez      state p
 | P_Nat      p -> print_P_Nat      state p
 | P_Par      p -> print_P_Par      state p
 | P_Record   p -> print_P_Record   state p
@@ -513,6 +514,9 @@ and print_P_ModPath state (node : pattern module_path reg) =
 
 and print_P_Mutez state (node : (lexeme * Int64.t) wrap) =
   Tree.make_mutez "P_Mutez" state node
+
+and print_P_Tez state (node : (lexeme * Q.t) wrap) =
+    Tree.make_tez "P_Tez" state node
 
 (* Natural numbers in patterns *)
 
@@ -662,6 +666,7 @@ and print_expr state = function
 | E_ModPath    e -> print_E_ModPath    state e
 | E_Mult       e -> print_E_Mult       state e
 | E_Mutez      e -> print_E_Mutez      state e
+| E_Tez        e -> print_E_Tez        state e
 | E_Nat        e -> print_E_Nat        state e
 | E_Neg        e -> print_E_Neg        state e
 | E_Neq        e -> print_E_Neq        state e
@@ -975,6 +980,11 @@ and print_E_Mult state (node : times bin_op reg) =
 
 and print_E_Mutez state (node : (lexeme * Int64.t) wrap) =
   Tree.make_mutez "E_Mutez" state node
+
+(* Tez literals *)
+
+and print_E_Tez state (node : (lexeme * Q.t) wrap) =
+  Tree.make_tez "E_Tez" state node
 
 (* Natural numbers *)
 

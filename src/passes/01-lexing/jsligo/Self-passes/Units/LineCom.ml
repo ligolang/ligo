@@ -34,6 +34,7 @@ let add_comment (comment : string Region.reg) : Token.t -> Token.t = function
 | Int      w -> Int (w#add_line_comment comment)
 | Nat      w -> Nat (w#add_line_comment comment)
 | Mutez    w -> Mutez (w#add_line_comment comment)
+| Tez      w -> Tez (w#add_line_comment comment)
 | Ident    w -> Ident (w#add_line_comment comment)
 | UIdent   w -> UIdent (w#add_line_comment comment)
 | EIdent   w -> EIdent (w#add_line_comment comment)

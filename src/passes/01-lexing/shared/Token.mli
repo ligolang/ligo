@@ -77,12 +77,14 @@ module type S =
       lexeme -> Z.t -> Region.t -> (token, nat_err) result
 
     (* Mutez *)
-
-    type mutez_err = Wrong_mutez_syntax of string (* Hint *)
-
     val mk_mutez :
       lexeme -> suffix:string -> Int64.t ->
-      Region.t -> (token, mutez_err) result
+      Region.t -> token
+    
+    (* Tez *)
+    val mk_tez :
+      lexeme -> suffix:string -> Q.t ->
+      Region.t -> token
 
     (* Symbols *)
 

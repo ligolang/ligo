@@ -204,7 +204,7 @@ data Expr
   | EMultEq SomeBinOp
     -- ^ Multiplication and assign expression
   | EMutez WrappedTupleLexeme
-    -- ^ Mutez expression.
+  | ETez WrappedTupleLexeme
   | ENamePath (Reg (NamespacePath Expr))
     -- ^ Namespace path expression.
   | ENat WrappedTupleLexeme
@@ -534,7 +534,7 @@ data Pattern
   | PInt WrappedTupleLexeme
     -- ^ Integer pattern.
   | PMutez WrappedTupleLexeme
-    -- ^ Mutez pattern.
+  | PTez WrappedTupleLexeme
   | PNamePath (Reg (NamespacePath Pattern))
     -- ^ Namespace path pattern.
   | PNat WrappedTupleLexeme
@@ -1020,6 +1020,7 @@ instance MessagePack Expr where
     , EMult       <$> (guardMsg (name == "E_Mult"      ) >> fromObjectWith cfg arg)
     , EMultEq     <$> (guardMsg (name == "E_MultEq"    ) >> fromObjectWith cfg arg)
     , EMutez      <$> (guardMsg (name == "E_Mutez"     ) >> fromObjectWith cfg arg)
+    , ETez        <$> (guardMsg (name == "E_Tez"       ) >> fromObjectWith cfg arg)
     , ENamePath   <$> (guardMsg (name == "E_NamePath"  ) >> fromObjectWith cfg arg)
     , ENat        <$> (guardMsg (name == "E_Nat"       ) >> fromObjectWith cfg arg)
     , ENeg        <$> (guardMsg (name == "E_Neg"       ) >> fromObjectWith cfg arg)
@@ -1290,6 +1291,7 @@ instance MessagePack Pattern where
     , PFalse    <$> (guardMsg (name == "P_False"   ) >> fromObjectWith cfg arg)
     , PInt      <$> (guardMsg (name == "P_Int"     ) >> fromObjectWith cfg arg)
     , PMutez    <$> (guardMsg (name == "P_Mutez"   ) >> fromObjectWith cfg arg)
+    , PTez      <$> (guardMsg (name == "P_Tez"     ) >> fromObjectWith cfg arg)
     , PNamePath <$> (guardMsg (name == "P_NamePath") >> fromObjectWith cfg arg)
     , PNat      <$> (guardMsg (name == "P_Nat"     ) >> fromObjectWith cfg arg)
     , PObject   <$> (guardMsg (name == "P_Object"  ) >> fromObjectWith cfg arg)
@@ -1745,6 +1747,7 @@ toAST CST{..} =
       EMult mult -> makeBinOp mult
       EMultEq multEq -> makeBinOp multEq
       EMutez (unpackWrap -> (r, Tuple1 mutez)) -> makeConstantExpr r (AST.CTez mutez)
+      ETez (unpackWrap -> (r, Tuple1 tez)) -> makeConstantExpr r (AST.CTez tez)
       ENamePath (unpackReg -> (r, path)) ->
         let
           moduleAccess = namespacePathConv $ exprConv <$> path
@@ -1867,6 +1870,7 @@ toAST CST{..} =
       PFalse (unpackWrap -> (r, _)) -> fastMake r AST.IsFalse
       PInt (unpackWrap -> (r, Tuple1 n)) -> makeConstantPattern r (AST.CInt n)
       PMutez (unpackWrap -> (r, Tuple1 mutez)) -> makeConstantPattern r (AST.CTez mutez)
+      PTez (unpackWrap -> (r, Tuple1 tez)) -> makeConstantPattern r (AST.CTez tez)
       PNamePath (unpackReg -> (r, path)) ->
         fastMake r (namespacePathConv $ patternConv <$> path)
       PNat (unpackWrap -> (r, Tuple1 n)) -> makeConstantPattern r (AST.CNat n)

@@ -50,6 +50,7 @@ module T =
     | Int      of (lexeme * Z.t) Wrap.t
     | Nat      of (lexeme * Z.t) Wrap.t
     | Mutez    of (lexeme * Int64.t) Wrap.t
+    | Tez      of (lexeme * Q.t) Wrap.t
     | Ident    of lexeme Wrap.t              (* foo  *)
     | UIdent   of lexeme Wrap.t              (* Foo  *)
     | EIdent   of lexeme Wrap.t              (* @foo *)
@@ -166,6 +167,7 @@ module T =
     | Int      t
     | Nat      t -> [fst t#payload]
     | Mutez    t -> [fst t#payload]
+    | Tez      t -> [fst t#payload]
     | Ident    t
     | UIdent   t
     | EIdent   t -> [t#payload]
@@ -678,6 +680,7 @@ module T =
     let wrap_int      z = wrap (Z.to_string z, z)
     let wrap_nat      z = wrap (Z.to_string z ^ "n", z)
     let wrap_mutez    m = wrap (Int64.to_string m ^ "mutez", m)
+    let wrap_tez      m = wrap (Q.to_string m ^ "tez", m)
     let wrap_ident    i = wrap i
     let wrap_uident   i = wrap i
     let wrap_eident   i = wrap i
@@ -695,6 +698,7 @@ module T =
     let ghost_int      z = wrap_int      z   Region.ghost
     let ghost_nat      z = wrap_nat      z   Region.ghost
     let ghost_mutez    m = wrap_mutez    m   Region.ghost
+    let ghost_tez      t = wrap_tez      t   Region.ghost
     let ghost_ident    i = wrap_ident    i   Region.ghost
     let ghost_uident   i = wrap_uident   i   Region.ghost
     let ghost_eident   i = wrap_eident   i   Region.ghost
@@ -707,6 +711,7 @@ module T =
     let ghost_Int      z = Int      (ghost_int z)
     let ghost_Nat      z = Nat      (ghost_nat z)
     let ghost_Mutez    m = Mutez    (ghost_mutez m)
+    let ghost_Tez      t = Tez      (ghost_tez t)
     let ghost_Ident    i = Ident    (ghost_ident i)
     let ghost_UIdent   i = UIdent   (ghost_uident i)
     let ghost_EIdent   i = EIdent   (ghost_eident i)
@@ -749,6 +754,7 @@ module T =
     | "Int"      -> "1"
     | "Nat"      -> "1n"
     | "Mutez"    -> "1mutez"
+    | "Tez"      -> "1tez"
     | "String"   -> "\"a string\""
     | "Verbatim" -> "{|verbatim|}"
     | "Bytes"    -> "0xAA"
@@ -881,6 +887,9 @@ module T =
     | Mutez t ->
         let s, n = t#payload in
         t#region, sprintf "Mutez (%S, %s)" s (Int64.to_string n)
+    | Tez t ->
+        let s, n = t#payload in
+        t#region, sprintf "Tez (%S, %s)" s (Q.to_string n)
     | Ident t ->
         t#region, sprintf "Ident %S%s" t#payload (comments t)
     | UIdent t ->
@@ -1002,6 +1011,7 @@ module T =
     | Int      w
     | Nat      w -> w#comments
     | Mutez    w -> w#comments
+    | Tez      w -> w#comments
     | Ident    w
     | UIdent   w
     | EIdent   w -> w#comments
@@ -1145,11 +1155,14 @@ module T =
     let mk_nat nat z region = Ok (Nat (wrap (nat ^ "n", z) region))
 
     (* Mutez *)
-
-    type mutez_err = Wrong_mutez_syntax of string (* Not CameLIGO *)
-
     let mk_mutez nat ~suffix int64 region =
-      Ok (Mutez (wrap (nat ^ suffix, int64) region))
+      Mutez (wrap (nat ^ suffix, int64) region)
+    
+    (* Tez *)
+    let mk_tez nat ~suffix q region =
+      Tez (wrap (nat ^ suffix, q) region)
+
+    (* Identifiers *)
 
     (* End-Of-File *)
 

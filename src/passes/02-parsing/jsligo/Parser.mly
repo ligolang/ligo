@@ -1290,6 +1290,7 @@ literal_expr:
   "<int>"      { E_Int      $1 }
 | "<nat>"      { E_Nat      $1 }
 | "<mutez>"    { E_Mutez    $1 }
+| "<tez>"      { E_Tez      $1 }
 | "<string>"   { E_String   $1 }
 | "<verbatim>" { E_Verbatim $1 }
 | "<bytes>"    { E_Bytes    $1 }
@@ -1445,6 +1446,7 @@ literal_pattern:
   "<int>"      { P_Int      $1 }
 | "<nat>"      { P_Nat      $1 }
 | "<mutez>"    { P_Mutez    $1 }
+| "<tez>"      { P_Tez      $1 }
 | "<string>"   { P_String   $1 }
 | "<verbatim>" { P_Verbatim $1 }
 | "<bytes>"    { P_Bytes    $1 }

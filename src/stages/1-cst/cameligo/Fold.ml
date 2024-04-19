@@ -47,7 +47,8 @@ type _ sing =
   | S_geq : geq sing
   | S_gt : gt sing
   | S_hex : Hex.t sing
-  | S_int64 : Int64.t sing
+  | S_int64 : Int64.t  sing
+  | S_q : Q.t sing
   | S_kwd_begin : kwd_begin sing
   | S_kwd_do : kwd_do sing
   | S_kwd_done : kwd_done sing
@@ -320,6 +321,7 @@ let fold'
     | E_ModPath node -> node -| S_reg (S_module_path S_expr)
     | E_Mult node -> node -| S_reg (S_bin_op S_times)
     | E_Mutez node -> node -| S_wrap (S_tuple_2 (S_lexeme, S_int64))
+    | E_Tez node -> node -| S_wrap (S_tuple_2 (S_lexeme, S_q))
     | E_Nat node -> node -| S_wrap (S_tuple_2 (S_lexeme, S_z))
     | E_Neg node -> node -| S_reg (S_un_op S_minus)
     | E_Neq node -> node -| S_reg (S_bin_op S_neq)
@@ -393,6 +395,7 @@ let fold'
   | S_gt -> process @@ node -| S_wrap S_lexeme
   | S_hex -> () (* Leaf *)
   | S_int64 -> () (* Leaf *)
+  | S_q -> () (* Leaf *)
   | S_kwd_begin -> process @@ node -| S_wrap S_lexeme
   | S_kwd_do -> process @@ node -| S_wrap S_lexeme
   | S_kwd_done -> process @@ node -| S_wrap S_lexeme
@@ -561,6 +564,7 @@ let fold'
     | P_List node -> node -| S_list_ S_pattern
     | P_ModPath node -> node -| S_reg (S_module_path S_pattern)
     | P_Mutez node -> node -| S_wrap (S_tuple_2 (S_lexeme, S_int64))
+    | P_Tez node -> node -| S_wrap (S_tuple_2 (S_lexeme, S_q))
     | P_Nat node -> node -| S_wrap (S_tuple_2 (S_lexeme, S_z))
     | P_Par node -> node -| S_par S_pattern
     | P_Record node -> node -| S_record_pattern

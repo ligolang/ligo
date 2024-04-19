@@ -211,3 +211,4 @@ let make_int   = make_num Z.to_string
 let make_nat   = make_int
 let make_bytes = make_num Hex.show
 let make_mutez = make_num Int64.to_string
+let make_tez   = make_num Q.to_string
