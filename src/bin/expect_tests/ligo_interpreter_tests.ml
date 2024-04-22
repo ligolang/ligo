@@ -10218,6 +10218,63 @@ let%expect_test _ =
     - test_originate_from_file_relative_path_w_r_t_imported_file exited with value true. |}]
 
 let () = Caml.Sys.chdir pwd
+let () = Caml.Sys.chdir "../../test/contracts/interpreter_tests/"
+
+let%expect_test _ =
+  run_ligo_good [ "run"; "test"; test "test_record_update.jsligo" ];
+  [%expect
+    {|
+    File "./test_record_update.jsligo", line 9, character 0 to line 13, character 2:
+      8 | // Storage list
+      9 | let l1 = list([
+          ^^^^^^^^^^^^^^^
+     10 |   {a : 1, b : true, c : "foo"},
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     11 |   {a : 2, b : false, c : "bar"},
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     12 |   {a : 3, b : true, c : "baz"},
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     13 | ]);
+          ^^
+     14 |
+
+    Toplevel let declaration is silently changed to const declaration.
+
+    File "./test_record_update.jsligo", line 15, character 0 to line 19, character 2:
+     14 |
+     15 | let l2 = list([
+          ^^^^^^^^^^^^^^^
+     16 |   {a : 1, b : true, c : "foo"},
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     17 |   {a : 2, b : false, c : "bar"},
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     18 |   {a : 3, b : true, c : "baz"},
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     19 | ]);
+          ^^
+     20 |
+
+    Toplevel let declaration is silently changed to const declaration.
+
+    File "./test_record_update.jsligo", line 21, characters 0-47:
+     20 |
+     21 | let new_storage = {a : 4, b : false, c : "new"};
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     22 |
+
+    Toplevel let declaration is silently changed to const declaration.
+
+    File "./test_record_update.jsligo", line 23, characters 0-49:
+     22 |
+     23 | let l_copy = list([{...new_storage,} as storage]);
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     24 |
+
+    Toplevel let declaration is silently changed to const declaration.
+
+    Everything at the top-level was executed. |}]
+
+let () = Caml.Sys.chdir pwd
 
 let () =
   Caml.Sys.chdir "../../test/contracts/interpreter_tests/originate_from_relative_path/"
