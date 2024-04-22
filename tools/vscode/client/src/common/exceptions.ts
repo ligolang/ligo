@@ -71,3 +71,41 @@ export class NoReleasesAccess extends Error {
     super('Could not check for the recent LIGO release')
   }
 }
+
+/**
+ * This error is thrown when the platform is not supported. The constructor takes a 
+ * platform name.
+ */
+export class UnsupportedPlatform extends Error {
+  platform: NodeJS.Platform
+
+  constructor(platform: NodeJS.Platform) {
+    super(`Unsupported platform: ${platform}`)
+    this.platform = platform
+  }
+}
+
+/**
+ * This error is thrown when a `brew` command fails.
+ */
+export class HomebrewError extends Error {
+  stderr: string
+
+  constructor(message: string, { stderr = "" } = {}) {
+    super(`Homebrew error: ${message}`)
+    this.stderr = stderr
+  }
+}
+
+
+/**
+ * This error is thrown when a `pacman` command fails.
+ */
+export class PacmanError extends Error {
+  stderr: string
+
+  constructor(message: string, { stderr = "" } = {}) {
+    super(`Pacman error: ${message}`)
+    this.stderr = stderr
+  }
+}
