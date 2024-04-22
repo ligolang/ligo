@@ -13,15 +13,17 @@ type references_test =
 let get_references_test ({ test_file; reference } : references_test) : unit =
   let actual_references, _diagnostics =
     test_run_session
-    @@ let@ uri = open_file test_file in
-       let@ normalize = ask_normalize in
-       let@ references = Requests.on_req_references reference uri in
-       return
-       @@ Option.map
-            references
-            ~f:
-              (List.map ~f:(fun loc ->
-                   { loc with Location.uri = to_relative_uri ~normalize loc.Location.uri }))
+    @@
+    let open Handler.Let_syntax in
+    let%bind uri = open_file test_file in
+    let%bind normalize = ask_normalize in
+    let%bind references = Requests.on_req_references reference uri in
+    return
+    @@ Option.map
+         references
+         ~f:
+           (List.map ~f:(fun loc ->
+                { loc with Location.uri = to_relative_uri ~normalize loc.Location.uri }))
   in
   match actual_references with
   | None ->

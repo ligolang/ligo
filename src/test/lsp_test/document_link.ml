@@ -7,18 +7,20 @@ open Lsp_helpers
 let get_document_link_test file_path : unit =
   let links_opt, _diagnostics =
     test_run_session
-    @@ let@ uri = open_file @@ normalize_path file_path in
-       let@ links = Requests.on_req_document_link uri in
-       let@ normalize = ask_normalize in
-       return
-       @@ Option.map
-            links
-            ~f:
-              (List.map ~f:(fun link ->
-                   let target =
-                     Option.map link.DocumentLink.target ~f:(to_relative_uri ~normalize)
-                   in
-                   { link with target }))
+    @@
+    let open Handler.Let_syntax in
+    let%bind uri = open_file @@ normalize_path file_path in
+    let%bind links = Requests.on_req_document_link uri in
+    let%bind normalize = ask_normalize in
+    return
+    @@ Option.map
+         links
+         ~f:
+           (List.map ~f:(fun link ->
+                let target =
+                  Option.map link.DocumentLink.target ~f:(to_relative_uri ~normalize)
+                in
+                { link with target }))
   in
   match links_opt with
   | Some links -> Format.printf "%a" (Fmt.Dump.list DocumentLink.pp) links

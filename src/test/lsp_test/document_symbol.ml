@@ -7,8 +7,10 @@ open Requests.Handler
 let document_symbol_test ?(config : config option) file_name : unit =
   let actual_symbols, _diagnostics =
     test_run_session ?config
-    @@ let@ uri = open_file @@ normalize_path file_name in
-       Requests.on_req_document_symbol uri
+    @@
+    let open Handler.Let_syntax in
+    let%bind uri = open_file @@ normalize_path file_name in
+    Requests.on_req_document_symbol uri
   in
   match actual_symbols with
   | None -> failwith "Expected some symbol list, got None"

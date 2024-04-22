@@ -2,7 +2,6 @@ open Lsp_helpers
 open Lsp_test_helpers.Handlers
 open Lsp_test_helpers.Common
 module Requests = Ligo_lsp.Server.Requests
-open Requests.Handler
 open Range.Construct
 
 module ModifiersSet = struct
@@ -73,10 +72,12 @@ let decompile_tokens (encoded_tokens : int array) : Token.t list =
 let semantic_highlight_test ({ file_name; range } : semantic_highlight_test) : unit =
   let actual_semantic_tokens, _diagnostics =
     test_run_session
-    @@ let@ file_name = open_file @@ normalize_path file_name in
-       match range with
-       | Some range -> Requests.on_req_semantic_tokens_range file_name range
-       | None -> Requests.on_req_semantic_tokens_full file_name
+    @@
+    let open Handler.Let_syntax in
+    let%bind file_name = open_file @@ normalize_path file_name in
+    match range with
+    | Some range -> Requests.on_req_semantic_tokens_range file_name range
+    | None -> Requests.on_req_semantic_tokens_full file_name
   in
   match actual_semantic_tokens with
   | None -> failwith "Expected some semantic tokens list, got None"

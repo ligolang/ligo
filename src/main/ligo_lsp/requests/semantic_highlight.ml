@@ -152,6 +152,7 @@ let compare_wrap_fields_regs (type a b) (x : a wrap_field) (y : b wrap_field) : 
     (e.g., tokens are out-of-order), this function will log a warning. *)
 let mk_diff (tokens : int array) : unit Handler.t =
   let open Handler in
+  let open Handler.Let_syntax in
   let len = Array.length tokens in
   let rec go (i : int) (last_line : int) (last_start_char : int) : unit Handler.t =
     (* Don't change it with [when_]!!!
@@ -166,7 +167,7 @@ let mk_diff (tokens : int array) : unit Handler.t =
         if delta_line = 0 then start_char - last_start_char else start_char - 1
       in
       let length = tokens.(i + 2) in
-      let@ () =
+      let%bind () =
         when_ (delta_line < 0 || delta_start_char < 0 || length < 0)
         @@ send_log_msg ~type_:Warning
         @@ Format.asprintf
@@ -786,14 +787,15 @@ let on_req_semantic_tokens_range (path : Path.t) (range : Range.t)
     : SemanticTokens.t option Handler.t
   =
   let open Handler in
-  let@ () =
+  let open Handler.Let_syntax in
+  let%bind () =
     send_debug_msg
     @@ Format.asprintf "On request: semantic tokens range (at %a)" Range.pp range
   in
   with_cst path ~default:None
   @@ fun cst ->
   let data = semantic_tokens cst range in
-  let@ () = mk_diff data in
+  let%bind () = mk_diff data in
   return (Some (SemanticTokens.create ~data ()))
 
 
@@ -801,5 +803,6 @@ let on_req_semantic_tokens_range (path : Path.t) (range : Range.t)
     a document is open or between keystrokes. *)
 let on_req_semantic_tokens_full (path : Path.t) : SemanticTokens.t option Handler.t =
   let open Handler in
-  let@ () = send_debug_msg "On request: semantic tokens full" in
+  let open Handler.Let_syntax in
+  let%bind () = send_debug_msg "On request: semantic tokens full" in
   on_req_semantic_tokens_range path Range.whole_file

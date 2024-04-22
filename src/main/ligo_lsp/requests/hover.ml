@@ -106,11 +106,12 @@ let hover_string
     -> [> `List of MarkedString.t list ] Handler.t
   =
  fun input_d def ->
+  let open Handler.Let_syntax in
   let syntax = Dialect_cst.to_syntax_type input_d.cst in
   let handle_pretty_print_result (name : string) = function
     | `Ok str -> return str
     | `Nonpretty (err, nonpretty_result) ->
-      let@ () =
+      let%bind () =
         send_log_msg ~type_:Error
         @@
         match err with
@@ -137,7 +138,7 @@ let hover_string
       (Pretty.pretty_print_variant hovers_pp_mode ~syntax (label, te))
   in
   let language = Some (Syntax.to_string syntax) in
-  let@ normalize = ask_normalize in
+  let%bind normalize = ask_normalize in
   let doc_comment_hovers =
     let comments = Def.get_comments def in
     let doc_comments =
@@ -166,7 +167,7 @@ let hover_string
   | Variable vdef ->
     let prefix = PPrint.(string vdef.name ^//^ colon) in
     let type_info = Def.get_type ~use_module_accessor:true vdef in
-    let@ value =
+    let%bind value =
       Option.value_map
         ~default:(return @@ Helpers_pretty.unresolved_type_as_comment syntax)
         ~f:
@@ -183,7 +184,7 @@ let hover_string
       | _ -> []
     in
     (* Like ['a x] or [x<a>] if there are params, or just [x] otherwise *)
-    let@ name_with_params =
+    let%bind name_with_params =
       match
         Option.value_map tdef.content ~default:[] ~f:(fun content ->
             get_params content.type_content)
@@ -213,7 +214,7 @@ let hover_string
       return @@ `List (MarkedString.{ language; value } :: doc_comment_hovers)
     | Some content ->
       let prefix = PPrint.(string "type" ^//^ string name_with_params ^//^ equals) in
-      let@ value =
+      let%bind value =
         print_type_with_prefix ~prefix @@ insert_module_path ~normalize input_d content
       in
       return @@ `List (MarkedString.{ language; value } :: doc_comment_hovers))
@@ -225,11 +226,11 @@ let hover_string
         let open Scopes.Types in
         Label (Uid.to_name ldef.uid, Uid.to_location ldef.uid)
       in
-      let@ value = print_variant label ldef.content in
+      let%bind value = print_variant label ldef.content in
       return @@ `List (MarkedString.{ language; value } :: doc_comment_hovers)
     | Field ->
       let prefix = PPrint.(string ldef.name ^//^ colon) in
-      let@ value = print_type_with_prefix ~prefix ldef.content in
+      let%bind value = print_type_with_prefix ~prefix ldef.content in
       return @@ `List (MarkedString.{ language; value } :: doc_comment_hovers))
   | Module mdef ->
     let rec strip_generated : Ast_core.signature -> Ast_core.signature =
@@ -281,7 +282,7 @@ let hover_string
       match Pretty.pretty_print_signature ~syntax sig_ with
       | `Ok str -> return str
       | `Nonpretty (err, nonpretty_sig) ->
-        let@ () =
+        let%bind () =
           send_log_msg ~type_:Error
           @@
           match err with
@@ -292,13 +293,13 @@ let hover_string
         in
         return nonpretty_sig
     in
-    let@ sig_str =
+    let%bind sig_str =
       Option.value_map
         ~default:(return @@ Helpers_pretty.unresolved_type_as_comment syntax)
         ~f:print_signature
         core_sig
     in
-    let@ project_root = fmap ( ! ) ask_last_project_dir in
+    let%bind project_root = ask_last_project_dir >>| fun dir -> !dir in
     let printed_module = Helpers_pretty.print_module ~project_root syntax sig_str mdef in
     return @@ `List (printed_module :: doc_comment_hovers)
 
@@ -307,9 +308,10 @@ let hover_string
     hovers over a symbol. *)
 let on_req_hover : Position.t -> Path.t -> Hover.t option Handler.t =
  fun pos file ->
+  let open Handler.Let_syntax in
   with_cached_doc file ~default:None
   @@ fun { definitions; syntax; _ } ->
-  let@ normalize = ask_normalize in
+  let%bind normalize = ask_normalize in
   when_some' (Def.get_definition ~normalize pos file definitions)
   @@ fun definition ->
   with_cst file ~default:None
@@ -317,7 +319,7 @@ let on_req_hover : Position.t -> Path.t -> Hover.t option Handler.t =
   let input =
     Completion_lib.Common.mk_input_d ~cst ~syntax ~path:file ~definitions ~pos
   in
-  let@ (`List strings) = hover_string input definition in
+  let%bind (`List strings) = hover_string input definition in
   let replace =
     Parsing_shared.Errors.ErrorWrapper.replace_with
       (Helpers_pretty.unresolved_type_as_comment syntax)

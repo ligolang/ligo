@@ -9,7 +9,8 @@ module Project_root_test = struct
       Handlers.test_run_session
       @@
       let open Requests.Handler in
-      let@ _uri = Handlers.open_file normalized_file_name in
+      let open Let_syntax in
+      let%bind _uri = Handlers.open_file normalized_file_name in
       ask_last_project_dir
     in
     let all_diags = Requests.Handler.Path_hashtbl.to_alist diagnostics in

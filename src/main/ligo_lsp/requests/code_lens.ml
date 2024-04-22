@@ -26,6 +26,7 @@ open Commands
        accurate.
      *)
 let tzip16_compliance_lens (file : Path.t) : CodeLens.t list handler =
+  let open Handler.Let_syntax in
   with_cached_doc ~default:[] file
   @@ function
   | { document_version = None; _ } ->
@@ -33,7 +34,7 @@ let tzip16_compliance_lens (file : Path.t) : CodeLens.t list handler =
        display anything *)
     return []
   | { document_version = Some document_version; potential_tzip16_storages; _ } ->
-    let@ normalize = ask_normalize in
+    let%bind normalize = ask_normalize in
     return
     @@ List.filter_map potential_tzip16_storages ~f:(fun potential_storage_var ->
            let%bind.Option var_range =
@@ -65,6 +66,7 @@ let tzip16_compliance_lens (file : Path.t) : CodeLens.t list handler =
 (** Runs the handler for code lens. This is usually called when file is opened and on
     every edit. *)
 let on_code_lens (file : Path.t) : CodeLens.t list handler =
-  let@ () = send_debug_msg "Code lenses called" in
-  let@ tzip16_compliance_lens = tzip16_compliance_lens file in
+  let open Handler.Let_syntax in
+  let%bind () = send_debug_msg "Code lenses called" in
+  let%bind tzip16_compliance_lens = tzip16_compliance_lens file in
   return tzip16_compliance_lens

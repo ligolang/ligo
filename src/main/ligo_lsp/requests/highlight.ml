@@ -35,15 +35,16 @@ let on_req_highlight
     : Position.t -> Path.t -> Lsp.Types.DocumentHighlight.t list option Handler.t
   =
  fun pos file ->
+  let open Handler.Let_syntax in
   with_cached_doc file ~default:None
   @@ fun { definitions; _ } ->
-  let@ normalize = ask_normalize in
+  let%bind normalize = ask_normalize in
   when_some (Def.get_definition ~normalize pos file definitions)
   @@ fun definition ->
-  let@ cache = ask_docs_cache in
+  let%bind cache = ask_docs_cache in
   let locations = get_all_linked_locations_or_def ~normalize definition definitions in
   let references = get_references_in_file ~normalize locations file cache in
-  let@ () =
+  let%bind () =
     send_debug_msg
     @@ Format.asprintf
          "On highlight request on %a\n%a"

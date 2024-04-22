@@ -13,15 +13,18 @@ let rename_reference : string -> Range.t -> TextEdit.t =
     the rename button and if the prepare rename request didn't fail. *)
 let on_req_rename : string -> Position.t -> Path.t -> WorkspaceEdit.t Handler.t =
  fun new_name pos file ->
-  let@ get_scope_buffers = ask_docs_cache in
+  let open Handler.Let_syntax in
+  let%bind get_scope_buffers = ask_docs_cache in
   with_cached_doc file ~default:(WorkspaceEdit.create ())
   @@ fun { definitions; _ } ->
-  let@ value =
-    let@ normalize = ask_normalize in
+  let%bind value =
+    let%bind normalize = ask_normalize in
     when_some' (Def.get_definition ~normalize pos file definitions)
     @@ fun definition ->
-    let@ files = References.get_reverse_dependencies file in
-    let@ all_definitions = References.get_all_reverse_dependencies_definitions files in
+    let%bind files = References.get_reverse_dependencies file in
+    let%bind all_definitions =
+      References.get_all_reverse_dependencies_definitions files
+    in
     let references =
       let locations =
         References.get_all_linked_locations_or_def ~normalize definition all_definitions

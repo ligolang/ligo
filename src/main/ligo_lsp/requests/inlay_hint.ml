@@ -534,6 +534,7 @@ let compile_inlay_hints ~(syntax : Syntax_types.t) ~(need_par_defs : Range_set.t
 let on_req_inlay_hint (file : Path.t) (range : Range.t)
     : InlayHint.t list option Handler.t
   =
+  let open Handler.Let_syntax in
   with_cst file ~default:None
   @@ fun cst ->
   with_cached_doc file ~default:None
@@ -542,7 +543,7 @@ let on_req_inlay_hint (file : Path.t) (range : Range.t)
     provide_inlay_hint_info ~parse_error_ranges range cst
   in
   let inlay_hints = provide_hints_for_lambda_types ~lambda_types ~fun_defs in
-  let@ normalize = ask_normalize in
+  let%bind normalize = ask_normalize in
   let inlay_hints =
     inlay_hints
     @ provide_hints_for_variables

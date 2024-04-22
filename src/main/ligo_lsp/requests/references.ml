@@ -131,8 +131,9 @@ let get_all_linked_locations_or_def
     dependent of B and B is a dependency of A. *)
 let get_reverse_dependencies : Path.t -> Path.t list Handler.t =
  fun file ->
+  let open Handler.Let_syntax in
   let module File_graph = On_doc.File_graph in
-  let@ file_graph = On_doc.build_file_graph in
+  let%bind file_graph = On_doc.build_file_graph in
   let reverse_deps =
     Option.value_map
       ~default:[ file ]
@@ -147,10 +148,12 @@ let get_reverse_dependencies : Path.t -> Path.t list Handler.t =
 (** Gets all definitions of the provided list of files. See [get_reverse_dependencies].
     This function assumes that the files were previously cached. *)
 let get_all_reverse_dependencies_definitions : Path.t list -> definitions Handler.t =
-  fmap Scopes.Types.wrap_definitions
-  <@ concat_map ~f:(fun file ->
+ fun files ->
+  files
+  |> concat_map ~f:(fun file ->
          with_cached_doc_pure file ~default:[]
          @@ fun { definitions = { definitions }; _ } -> definitions)
+  >>| Scopes.Types.wrap_definitions
 
 
 (** Runs the handler for the references request. This is normally invoked when the user
@@ -161,21 +164,22 @@ let get_all_reverse_dependencies_definitions : Path.t list -> definitions Handle
     capability that corresponds to that button. *)
 let on_req_references : Position.t -> Path.t -> Location.t list option Handler.t =
  fun pos file ->
+  let open Handler.Let_syntax in
   with_cached_doc file ~default:None
   @@ fun { definitions; _ } ->
-  let@ normalize = ask_normalize in
+  let%bind normalize = ask_normalize in
   when_some (Def.get_definition ~normalize pos file definitions)
   @@ fun definition ->
-  let@ cache = ask_docs_cache in
-  let@ files = get_reverse_dependencies file in
-  let@ all_definitions = get_all_reverse_dependencies_definitions files in
+  let%bind cache = ask_docs_cache in
+  let%bind files = get_reverse_dependencies file in
+  let%bind all_definitions = get_all_reverse_dependencies_definitions files in
   let locations = get_all_linked_locations_or_def ~normalize definition all_definitions in
   let references = get_all_references ~normalize locations cache in
   let show_reference fmt Loc_in_file.{ path; range } =
     Format.fprintf fmt "%a\n%a" Path.pp path Range.pp range
   in
-  let@ () =
-    let@ project_root = ask_last_project_dir in
+  let%bind () =
+    let%bind project_root = ask_last_project_dir in
     send_debug_msg
     @@ Format.asprintf
          "On references request on %a (project root: %a)\n%a"

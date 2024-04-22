@@ -2,7 +2,6 @@ module Requests = Ligo_lsp.Server.Requests
 open Lsp_test_helpers.Handlers
 open Lsp_test_helpers.Common
 open Lsp_helpers
-open Requests.Handler
 
 type highlight_test =
   { test_file : string
@@ -12,8 +11,10 @@ type highlight_test =
 let get_highlight_test ({ test_file; position } : highlight_test) : unit =
   let actual_highlights, _diagnostics =
     test_run_session
-    @@ let@ uri = open_file @@ normalize_path test_file in
-       Requests.on_req_highlight position uri
+    @@
+    let open Handler.Let_syntax in
+    let%bind uri = open_file @@ normalize_path test_file in
+    Requests.on_req_highlight position uri
   in
   match actual_highlights with
   | None ->

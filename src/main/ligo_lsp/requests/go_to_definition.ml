@@ -422,7 +422,8 @@ let filter_mdefs : Scopes.definitions -> Scopes.Types.mdef list =
 let on_req_impl : decl_def_or_impl -> Position.t -> Path.t -> Locations.t option Handler.t
   =
  fun decl_def_or_impl pos file ->
-  let@ normalize = ask_normalize in
+  let open Handler.Let_syntax in
+  let%bind normalize = ask_normalize in
   with_cached_doc_pure file ~default:None
   @@ fun { definitions; _ } ->
   let%bind.Option definition = Def.get_definition ~normalize pos file definitions in

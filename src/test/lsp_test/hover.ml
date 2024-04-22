@@ -17,8 +17,10 @@ let get_hover_test ({ file; hover_positions } : hover_test) : unit =
     let path = normalize_path file in
     let actual_hover, diagnostics =
       test_run_session
-      @@ let@ uri = open_file path in
-         Requests.on_req_hover position uri
+      @@
+      let open Handler.Let_syntax in
+      let%bind uri = open_file path in
+      Requests.on_req_hover position uri
     in
     let test_info =
       Format.asprintf
