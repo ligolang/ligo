@@ -1,0 +1,7 @@
+
+author: alan.marko
+description: "\\nFixed a bug requiring extra parentheses when doing object update.\\n\\n"
+merge_request: '3154'
+title: "Remove need for parentheses in object updates"
+type: fixed
+            

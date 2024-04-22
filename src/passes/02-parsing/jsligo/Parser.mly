@@ -53,6 +53,7 @@ let mk_mod_path :
 (* Reductions on error *)
 
 %on_error_reduce
+  object_update
   literal_expr
   ctor
   ctor_app_pattern
@@ -987,7 +988,7 @@ non_object_expr:
 
 object_level_expr:
   object_expr   { $1 }
-| object_update { E_Update $1 }
+| object_update { $1 }
 
 (* Functional expressions *)
 
@@ -1300,7 +1301,8 @@ literal_expr:
 (* Object expressions *)
 
 object_expr:
-  untyped_object_expr | typed_object_expr { $1 }
+  untyped_object_expr
+| typed_object_expr { $1 }
 
 untyped_object_expr:
   braces (sep_or_term (property (expr), property_sep)) { E_Object $1 }
@@ -1337,7 +1339,17 @@ code_inj:
 (* Functional updates of objects *)
 
 object_update:
-  braces (update_expr) { $1 }
+   typed_update_expr { $1 }
+|  untyped_update_expr { $1 }
+
+untyped_update_expr:
+  braces ( update_expr ) { E_Update $1 }
+
+typed_update_expr:
+  untyped_update_expr "as" type_expr {
+    let stop   = type_expr_to_region $3 in
+    let region = cover (expr_to_region $1) stop
+    in E_Typed {region; value=($1,$2,$3)} }
 
 update_expr:
   "..." expr property_sep updates {
