@@ -17,9 +17,10 @@ let get_type (vdef : Scopes.Types.vdef) : Ast_core.type_expression option =
 
 let on_req_type_definition : Position.t -> Path.t -> Locations.t option Handler.t =
  fun pos file ->
+  let open Handler.Let_syntax in
   with_cached_doc file ~default:None
   @@ fun { definitions; _ } ->
-  let@ normalize = ask_normalize in
+  let%bind normalize = ask_normalize in
   when_some' (Def.get_definition ~normalize pos file definitions)
   @@ fun def ->
   when_some'

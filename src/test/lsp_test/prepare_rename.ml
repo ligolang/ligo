@@ -2,7 +2,6 @@ module Requests = Ligo_lsp.Server.Requests
 open Lsp_test_helpers.Handlers
 open Lsp_test_helpers.Common
 open Lsp_helpers
-open Requests.Handler
 
 type prepare_rename_test =
   { file_path : Path.t (* To support packaged files *)
@@ -15,8 +14,10 @@ let get_prepare_rename_test ({ file_path; reference; can_rename } : prepare_rena
   =
   let result, _diagnostics =
     test_run_session
-    @@ let@ uri = open_file file_path in
-       Requests.on_req_prepare_rename reference uri
+    @@
+    let open Handler.Let_syntax in
+    let%bind uri = open_file file_path in
+    Requests.on_req_prepare_rename reference uri
   in
   let error_prefix =
     Format.asprintf "In %s, %a: " (Path.to_string file_path) Position.pp reference

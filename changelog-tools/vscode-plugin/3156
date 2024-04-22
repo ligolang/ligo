@@ -1,0 +1,7 @@
+
+author: alistair.obrien
+description: "\\n\\nchore: switch `Ligo_lsp.Handler` to use Core's `Monad` interface with ppx_let\\n\\n"
+merge_request: '3156'
+title: "chore: switch `Ligo_lsp.Handler` to use Core's `Monad` interface with ppx_let"
+type: fixed
+            

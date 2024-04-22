@@ -8,9 +8,9 @@ let get_tzip16_code_lens_test (file_path : string) : unit =
   let code_lens_response, _ =
     test_run_session
     @@
-    let ( let@ ) = Requests.Handler.bind in
-    let@ _ = open_file file_path_normalized in
-    let@ docs_cache = Requests.Handler.ask_docs_cache in
+    let open Handler.Let_syntax in
+    let%bind _ = open_file file_path_normalized in
+    let%bind docs_cache = Requests.Handler.ask_docs_cache in
     Requests.on_code_lens file_path_normalized
   in
   let code_lens_response_ =

@@ -195,6 +195,7 @@ and get_all_symbols_hierarchies
 let on_req_document_symbol (path : Path.t)
     : [> `DocumentSymbol of DocumentSymbol.t list ] option Handler.t
   =
+  let open Handler.Let_syntax in
   with_cached_doc path ~default:None
   @@ fun { syntax
          ; code = _
@@ -205,10 +206,10 @@ let on_req_document_symbol (path : Path.t)
          ; lambda_types = _
          ; potential_tzip16_storages = _
          } ->
-  let@ () =
+  let%bind () =
     send_debug_msg @@ Format.asprintf "On document symbol request on %a" Path.pp path
   in
-  let@ normalize = ask_normalize in
+  let%bind normalize = ask_normalize in
   let hierarchy =
     Rose.filter_top_down (force hierarchy) ~f:(fun def ->
         match Scopes.Types.get_decl_range def with

@@ -21,8 +21,10 @@ let completion_test
   @@ fun () ->
   let actual_completions, _diagnostics =
     test_run_session ?config
-    @@ let@ uri = open_file (Path.from_relative file_name) in
-       Requests.on_req_completion position uri
+    @@
+    let open Handler.Let_syntax in
+    let%bind uri = open_file (Path.from_relative file_name) in
+    Requests.on_req_completion position uri
   in
   let get_completion_list = function
     | `CompletionList items -> items

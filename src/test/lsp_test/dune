@@ -4,7 +4,7 @@
  (flags
   (:standard -alert @all -alert -from_absolute_performance))
  (preprocess
-  (pps ppx_yojson_conv ppx_expect))
+  (pps ppx_jane ppx_yojson_conv ppx_expect))
  (libraries
   lsp
   linol

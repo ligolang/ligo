@@ -3,7 +3,6 @@ open Lsp_test_helpers.Handlers
 open Lsp_test_helpers.Common
 open Lsp_helpers
 open Range.Construct
-open Requests.Handler
 
 type range_formatting_test =
   { file_path : string
@@ -13,8 +12,10 @@ type range_formatting_test =
 let get_formatting_test ({ file_path; range } : range_formatting_test) : unit =
   let result, _diagnostics =
     test_run_session
-    @@ let@ uri = open_file @@ normalize_path file_path in
-       Requests.on_req_range_formatting uri range FormattingOptions.default
+    @@
+    let open Handler.Let_syntax in
+    let%bind uri = open_file @@ normalize_path file_path in
+    Requests.on_req_range_formatting uri range FormattingOptions.default
   in
   match result with
   | None -> ()

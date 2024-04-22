@@ -1,7 +1,6 @@
 module Requests = Ligo_lsp.Server.Requests
 open Lsp_test_helpers.Handlers
 open Lsp_helpers
-open Requests.Handler
 
 type formatting_test =
   { expected_path : string
@@ -11,8 +10,10 @@ type formatting_test =
 let get_formatting_test ({ expected_path; output_path_opt } : formatting_test) : unit =
   let result, _diagnostics =
     test_run_session
-    @@ let@ uri = open_file @@ Path.from_relative expected_path in
-       Requests.on_req_formatting uri FormattingOptions.default
+    @@
+    let open Handler.Let_syntax in
+    let%bind uri = open_file @@ Path.from_relative expected_path in
+    Requests.on_req_formatting uri FormattingOptions.default
   in
   match result, output_path_opt with
   | None, None -> ()

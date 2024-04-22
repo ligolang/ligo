@@ -17,10 +17,11 @@ let on_req_completion (pos : Position.t) (path : Path.t)
     : [ `CompletionList of CompletionList.t | `List of CompletionItem.t list ] option
     Handler.t
   =
-  let@ completion_implementation =
-    fmap (fun c -> c.completion_implementation) ask_config
+  let open Handler.Let_syntax in
+  let%bind completion_implementation =
+    ask_config >>| fun c -> c.completion_implementation
   in
-  let@ () =
+  let%bind () =
     send_debug_msg
     @@ sprintf
          "On completion request: %s, %s, mode: %s"
@@ -43,8 +44,8 @@ let on_req_completion (pos : Position.t) (path : Path.t)
          } ->
   let keyword_completions = Completion_lib.Keywords.get_keyword_completions syntax in
   let project_root = Project_root.get_project_root path in
-  let@ mod_res = ask_mod_res in
-  let@ normalize = ask_normalize in
+  let%bind mod_res = ask_mod_res in
+  let%bind normalize = ask_normalize in
   let files =
     Completion_lib.Files.get_files_for_completions
       ~normalize
@@ -65,7 +66,7 @@ let on_req_completion (pos : Position.t) (path : Path.t)
     Completion_lib.Common.mk_input_d ~cst ~path ~syntax ~definitions ~pos
   in
   let field_completions = Completion_lib.Fields.get_fields_completions ~normalize input in
-  let@ all_completions =
+  let%bind all_completions =
     (* If we are completing a record or module field, there is no need to also
        suggest scopes or keywords. *)
     if not (List.is_empty field_completions)

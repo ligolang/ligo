@@ -9,7 +9,9 @@
   lsp_helpers
   lsp_test_helpers
   compiler_options
-  syntax_types))
+  syntax_types)
+ (preprocess
+  (pps ppx_jane)))
 
 (alias
  (name lsp-test)

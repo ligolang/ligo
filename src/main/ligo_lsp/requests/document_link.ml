@@ -20,20 +20,21 @@ let extract_link_from_directive
     last edit is made, so we provide the choice to the user to process the document on
     this request for better responsiveness. *)
 let on_req_document_link (file : Path.t) : DocumentLink.t list option handler =
-  let@ { diagnostics_pull_mode; _ } = ask_config in
-  let@ () = send_debug_msg @@ "On document_link:" ^ Path.to_string file in
-  let@ () =
+  let open Handler.Let_syntax in
+  let%bind { diagnostics_pull_mode; _ } = ask_config in
+  let%bind () = send_debug_msg @@ "On document_link:" ^ Path.to_string file in
+  let%bind () =
     match diagnostics_pull_mode with
     | `OnDocumentLinkRequest ->
-      let@ () =
+      let%bind () =
         send_debug_msg @@ "document_link: processing doc " ^ Path.to_string file
       in
       process_doc file
     | `OnDocUpdate | `OnSave -> return ()
   in
   let dir = Path.dirname file in
-  let@ mod_res = ask_mod_res in
-  let@ directives_opt =
+  let%bind mod_res = ask_mod_res in
+  let%bind directives_opt =
     with_cst file ~default:None
     @@ fun cst ->
     return
@@ -44,7 +45,7 @@ let on_req_document_link (file : Path.t) : DocumentLink.t list option handler =
          }
          cst
   in
-  let@ normalize = ask_normalize in
+  let%bind normalize = ask_normalize in
   return
   @@ Option.map
        ~f:

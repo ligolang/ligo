@@ -5,7 +5,8 @@ open Lsp_helpers
     path and notifies the user about its creation. Updates the [Handler]'s
     [last_project_dir] and [mod_res] accordingly. *)
 let create_default_project_file (project_root : Path.t) : unit Handler.t =
-  let@ () =
+  let open Handler.Let_syntax in
+  let%bind () =
     send_log_msg
       ~type_:Info
       (Format.asprintf "Creating project file at: %a." Path.pp project_root)
@@ -33,26 +34,26 @@ let create_default_project_file (project_root : Path.t) : unit Handler.t =
   in
   send_request (WorkspaceApplyEdit file_edit_params) (function
       | Error error ->
-        let@ () = send_log_msg ~type_:Error error.message in
+        let%bind () = send_log_msg ~type_:Error error.message in
         send_message ~type_:Error "Failed to create project file. Check logs."
       | Ok { applied; failureReason; failedChange } ->
         if applied
-        then
-          let@ () = update_project_root (Some project_root) in
+        then (
+          let%bind () = update_project_root (Some project_root) in
           send_message
             ~type_:Info
-            (Format.asprintf "Created project file at: %a." Path.pp project_root)
-        else
-          let@ () =
+            (Format.asprintf "Created project file at: %a." Path.pp project_root))
+        else (
+          let%bind () =
             Option.value_map ~default:pass ~f:(send_log_msg ~type_:Error) failureReason
           in
-          let@ () =
+          let%bind () =
             Option.value_map
               ~default:pass
               ~f:(send_log_msg ~type_:Error <@ Format.sprintf "Failed change: %d")
               failedChange
           in
-          send_message ~type_:Error "Failed to create project file. Check logs.")
+          send_message ~type_:Error "Failed to create project file. Check logs."))
 
 
 (** Given the path to some contract, checks whether a project root for it exists, or asks
@@ -63,18 +64,19 @@ let create_default_project_file (project_root : Path.t) : unit Handler.t =
     or esy.json), workspace folders, and the provided file's parent directory in order to
     suggest directories to create the project file. *)
 let detect_or_ask_to_create_project_file (file : Path.t) : unit Handler.t =
-  let@ get_scope_buffers = ask_docs_cache in
+  let open Handler.Let_syntax in
+  let%bind get_scope_buffers = ask_docs_cache in
   let project_root = Project_root.get_project_root file in
-  let@ () = update_project_root project_root in
+  let%bind () = update_project_root project_root in
   match Docs_cache.find get_scope_buffers file, project_root with
   | None, None ->
     send_request WorkspaceFolders (fun folders ->
-        let@ normalize = ask_normalize in
-        let@ folders =
+        let%bind normalize = ask_normalize in
+        let%bind folders =
           match folders with
           | Ok folders -> return folders
           | Error error ->
-            let@ () = send_log_msg ~type_:Error error.message in
+            let%bind () = send_log_msg ~type_:Error error.message in
             return []
         in
         let folders =
@@ -159,7 +161,8 @@ let detect_or_ask_to_create_project_file (file : Path.t) : unit Handler.t =
     project root was changed. *)
 let drop_cached_definitions : Path.t -> unit Handler.t =
  fun path ->
-  let@ docs_cache = ask_docs_cache in
+  let open Handler.Let_syntax in
+  let%bind docs_cache = ask_docs_cache in
   when_some_ (Docs_cache.find docs_cache path)
   @@ fun { syntax
          ; code
@@ -186,8 +189,9 @@ let on_doc
     -> string -> unit Handler.t
   =
  fun ~process_immediately ?changes:_ ~version file code ->
-  let@ syntax = get_syntax_exn file in
-  let@ () =
+  let open Handler.Let_syntax in
+  let%bind syntax = get_syntax_exn file in
+  let%bind () =
     send_debug_msg
     @@ Format.asprintf
          (if process_immediately
@@ -196,8 +200,8 @@ let on_doc
          Path.pp
          file
   in
-  let@ () = detect_or_ask_to_create_project_file file in
-  let@ old_docs = ask_docs_cache in
+  let%bind () = detect_or_ask_to_create_project_file file in
+  let%bind old_docs = ask_docs_cache in
   let document_version =
     match version with
     | `New v -> Some v
@@ -206,7 +210,9 @@ let on_doc
       | None -> None
       | Some cache -> cache.document_version)
   in
-  let@ () = set_docs_cache file (Ligo_interface.empty ~syntax ~code ~document_version) in
+  let%bind () =
+    set_docs_cache file (Ligo_interface.empty ~syntax ~code ~document_version)
+  in
   when_ process_immediately @@ process_doc file
 
 
@@ -217,25 +223,26 @@ let on_doc
     This function is only for the case when the file is not opened in the editor. *)
 let cache_doc_minimal : Path.t -> unit Handler.t =
  fun file ->
-  let@ docs_cache = ask_docs_cache in
+  let open Handler.Let_syntax in
+  let%bind docs_cache = ask_docs_cache in
   if Docs_cache.mem docs_cache file
   then return ()
-  else
-    let@ () =
+  else (
+    let%bind () =
       send_debug_msg @@ Format.asprintf "Reading doc from disk (minimal): %a" Path.pp file
     in
-    let@ code =
-      lift_IO
+    let%bind code =
+      lift_io
       @@ Lwt_io.with_file ~mode:Input (Path.to_string file) (Lwt_io.read ?count:None)
     in
-    let@ syntax = get_syntax_exn file in
+    let%bind syntax = get_syntax_exn file in
     set_docs_cache
       file
       (Ligo_interface.empty
          ~syntax
          ~code
          ~document_version:None
-           (* This is valid because file is not opened in the editor *))
+           (* This is valid because file is not opened in the editor *)))
 
 
 (** A directed, possibly cyclic graph whose vertices are LIGO files and whose edges mean
@@ -246,17 +253,18 @@ module File_graph = Lsp_helpers.Graph.Make (Path)
     build a directed, possibly cyclic graph whose vertices are LIGO files and whose edges
     mean that a vertex [v1] [#import]s or [#include]s a vertex [v2]. *)
 let build_file_graph : File_graph.t option Handler.t =
-  let@ last_project_dir = ask_last_project_dir in
+  let open Handler.Let_syntax in
+  let%bind last_project_dir = ask_last_project_dir in
   match !last_project_dir with
   | None -> return None
   | Some project_root ->
-    let@ mod_res = fmap ( ! ) ask_mod_res in
-    let@ normalize = ask_normalize in
+    let%bind mod_res = ask_mod_res >>| fun res -> !res in
+    let%bind normalize = ask_normalize in
     let files = Files.list_directory ~normalize ~include_library:true project_root in
-    let@ graph =
+    let%bind graph =
       fold_left files ~init:File_graph.empty ~f:(fun g file ->
-          let@ () = cache_doc_minimal file in
-          let@ directives =
+          let%bind () = cache_doc_minimal file in
+          let%bind directives =
             with_cst ~default:[] ~strict:false ~on_error:(const pass) file
             @@ function
             | CameLIGO cst -> return @@ Directive.extract_directives_cameligo cst

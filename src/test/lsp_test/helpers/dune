@@ -11,4 +11,6 @@
   cli_helpers
   lsp_helpers
   compiler_options
-  syntax_types))
+  syntax_types)
+ (preprocess
+  (pps ppx_jane)))

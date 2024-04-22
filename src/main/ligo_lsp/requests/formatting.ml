@@ -4,9 +4,10 @@ open Lsp_helpers
 (** Gets a [pp_config], notifying the user if the syntax used in this file is incorrect. *)
 let try_get_pp_config : Path.t -> PP_config.t option Handler.t =
  fun path ->
+  let open Handler.Let_syntax in
   match PP_config.get_config path with
   | `PP_config t ->
-    let@ () = send_debug_msg @@ "Using config from " ^ Path.to_string path in
+    let%bind () = send_debug_msg @@ "Using config from " ^ Path.to_string path in
     return @@ Some t
   | `File_not_found -> return None
   | (`Decode_error _ | `Wrong_json _) as err ->
@@ -17,7 +18,7 @@ let try_get_pp_config : Path.t -> PP_config.t option Handler.t =
       | `Wrong_json err ->
         "The " ^ PP_config.config_file_name ^ " file contains malformed JSON data: " ^ err
     in
-    let@ () = send_message ?type_:(Some Error) msg in
+    let%bind () = send_message ?type_:(Some Error) msg in
     return None
 
 
@@ -25,18 +26,19 @@ let try_get_pp_config : Path.t -> PP_config.t option Handler.t =
     used in this file is incorrect. If there is no config, then uses default values. *)
 let get_pp_mode : Path.t -> FormattingOptions.t -> Pretty.pp_mode Handler.t =
  fun file { tabSize = optsTabSize; _ } ->
-  let@ pp_config_opt = try_get_pp_config file in
+  let open Handler.Let_syntax in
+  let%bind pp_config_opt = try_get_pp_config file in
   let indent =
     (* If pp_config exists and corresponding field is nonempty we always use it *)
     match Option.bind ~f:(fun pp_config -> pp_config.tab_width) pp_config_opt with
     | Some w -> w
     | None -> optsTabSize
   in
-  let@ width =
+  let%bind width =
     match Option.bind ~f:(fun pp_config -> pp_config.print_width) pp_config_opt with
     | Some w -> return w
     | None ->
-      let@ lsp_config_width = fmap (fun x -> x.max_line_width) ask_config in
+      let%bind lsp_config_width = ask_config >>| fun x -> x.max_line_width in
       return
       @@ Option.value
            ~default:Helpers_pretty.default_line_width_for_formatted_file
@@ -52,8 +54,9 @@ let get_pp_mode : Path.t -> FormattingOptions.t -> Pretty.pp_mode Handler.t =
     save). *)
 let on_req_formatting : Path.t -> FormattingOptions.t -> TextEdit.t list option Handler.t =
  fun file opts ->
-  let@ pp_mode = get_pp_mode file opts in
-  let@ () =
+  let open Let_syntax in
+  let%bind pp_mode = get_pp_mode file opts in
+  let%bind () =
     send_debug_msg
     @@ Format.asprintf
          "Formatting request on %s, mode: %a"
@@ -62,11 +65,11 @@ let on_req_formatting : Path.t -> FormattingOptions.t -> TextEdit.t list option 
          pp_mode
   in
   if Helpers_file.is_packaged @@ Path.to_string file
-  then
-    let@ () =
+  then (
+    let%bind () =
       send_message ~type_:Error @@ "Can not format a file from an imported package."
     in
-    return None
+    return None)
   else (
     let on_error _err =
       send_message ~type_:Error @@ "Can not format a file with syntax errors"

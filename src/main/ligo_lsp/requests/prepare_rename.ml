@@ -37,6 +37,7 @@ let prepare_rename
     the rename button. *)
 let on_req_prepare_rename : Position.t -> Path.t -> Range.t option Handler.t =
  fun pos file ->
-  let@ normalize = ask_normalize in
+  let open Handler.Let_syntax in
+  let%bind normalize = ask_normalize in
   with_cached_doc file ~default:None
   @@ fun { definitions; _ } -> return @@ prepare_rename ~normalize pos file definitions

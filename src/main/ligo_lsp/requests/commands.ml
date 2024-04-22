@@ -79,7 +79,8 @@ let create_attr_text (name : string) (syntax : Syntax_types.t) : string =
 let execute_add_tzip16_attr (storage_var_position : storage_var_position)
     : Yojson.Safe.t handler
   =
-  let@ () =
+  let open Handler.Let_syntax in
+  let%bind () =
     send_debug_msg
     @@ Format.asprintf
          "Adding tzip16 attribute in %a:%d"
@@ -87,7 +88,7 @@ let execute_add_tzip16_attr (storage_var_position : storage_var_position)
          storage_var_position.file
          storage_var_position.line
   in
-  let@ syntax = get_syntax_exn storage_var_position.file in
+  let%bind syntax = get_syntax_exn storage_var_position.file in
   let inserted_text =
     Format.sprintf "%s@." @@ create_attr_text "tzip16_compatible" syntax
   in
@@ -115,17 +116,17 @@ let execute_add_tzip16_attr (storage_var_position : storage_var_position)
              ]
            ())
   in
-  let@ () =
+  let%bind () =
     send_request (WorkspaceApplyEdit edit) (function
         | Error error ->
-          let@ () = send_log_msg ~type_:Error error.message in
+          let%bind () = send_log_msg ~type_:Error error.message in
           send_message ~type_:Error "Failed to apply code change. Check logs."
         | Ok { applied; failureReason; failedChange } ->
           when_ (not applied)
-          @@ let@ () =
+          @@ let%bind () =
                Option.value_map ~default:pass ~f:(send_log_msg ~type_:Error) failureReason
              in
-             let@ () =
+             let%bind () =
                Option.value_map
                  ~default:pass
                  ~f:(send_log_msg ~type_:Error <@ Format.sprintf "Failed change: %d")
@@ -176,16 +177,17 @@ end
 let on_execute_command ~(command : string) ?(arguments : Yojson.Safe.t list = []) ()
     : Yojson.Safe.t handler
   =
-  let@ normalize = ask_normalize in
+  let open Handler.Let_syntax in
+  let%bind normalize = ask_normalize in
   match Ligo_lsp_commands.match_command ~normalize ~command ~arguments with
   | Ok action -> action
   | Unknown_command ->
-    let@ () =
+    let%bind () =
       send_log_msg ~type_:Error @@ sprintf "Got an unknown command `%s`" command
     in
     return `Null
   | Decode_error msg ->
-    let@ () =
+    let%bind () =
       send_log_msg ~type_:Error
       @@ sprintf "Failed to decode arguments for command `%s`: %s" command msg
     in

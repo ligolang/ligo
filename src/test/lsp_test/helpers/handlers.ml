@@ -1,5 +1,6 @@
 module Requests = Ligo_lsp.Server.Requests
-open Requests.Handler
+module Handler = Requests.Handler
+open Handler
 open Lsp_helpers
 
 let default_test_config : config =
@@ -27,7 +28,8 @@ let test_run_session
         Path.from_absolute file)
   in
   let result =
-    run_handler
+    Handler.run
+      session
       { notify_back = Mock mocked_notify_back
       ; config
       ; docs_cache = Docs_cache.create ()
@@ -36,13 +38,13 @@ let test_run_session
       ; normalize
       ; metadata_download_options
       }
-      session
   in
   Lwt_main.run result, mocked_notify_back
 
 
 let open_file (file : Path.t) : Path.t Handler.t =
-  let@ () =
+  let open Handler.Let_syntax in
+  let%bind () =
     Requests.on_doc
       ~process_immediately:true
       ~version:(`New 1)

@@ -82,8 +82,9 @@ let on_req_range_formatting
     : Path.t -> Range.t -> FormattingOptions.t -> TextEdit.t list option Handler.t
   =
  fun file range opts ->
-  let@ pp_mode = Formatting.get_pp_mode file opts in
-  let@ () =
+  let open Handler.Let_syntax in
+  let%bind pp_mode = Formatting.get_pp_mode file opts in
+  let%bind () =
     send_debug_msg
     @@ Format.asprintf
          "Formatting request on %s, mode: %a"
@@ -92,11 +93,11 @@ let on_req_range_formatting
          pp_mode
   in
   if Helpers_file.is_packaged @@ Path.to_string file
-  then
-    let@ () =
+  then (
+    let%bind () =
       send_message ~type_:Error @@ "Can not format a file from an imported package."
     in
-    return None
+    return None)
   else (
     let on_error _err =
       send_message ~type_:Error
@@ -105,14 +106,14 @@ let on_req_range_formatting
     with_cst ~strict:true ~on_error file ~default:None
     @@ fun cst ->
     let edits = range_formatting pp_mode (decls_of_cst cst) range in
-    let@ () =
+    let%bind () =
       when_
         (Option.is_none edits)
         (send_message ~type_:Warning
         @@ "Range formatting: currently can format only toplevel declarations, none \
             selected by given range")
     in
-    let@ () =
+    let%bind () =
       when_some_ edits
       @@ fun edits_list ->
       send_debug_msg

@@ -2,13 +2,14 @@ module Requests = Ligo_lsp.Server.Requests
 open Lsp_test_helpers.Handlers
 open Lsp_test_helpers.Common
 open Lsp_helpers
-open Requests.Handler
 
 let get_folding_range_test file_path : unit =
   let folds_opt, _diagnostics =
     test_run_session
-    @@ let@ uri = open_file @@ normalize_path file_path in
-       Requests.on_req_folding_range uri
+    @@
+    let open Handler.Let_syntax in
+    let%bind uri = open_file @@ normalize_path file_path in
+    Requests.on_req_folding_range uri
   in
   match folds_opt with
   | Some actual_folds -> Format.printf "%a" (Fmt.Dump.list FoldingRange.pp) actual_folds

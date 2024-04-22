@@ -1,7 +1,8 @@
 (* We export the request implementations for testing them *)
 module Requests = Requests
+module Handler = Requests.Handler
 open Lsp_helpers
-open Requests.Handler
+open Handler
 
 (** A sensible default configuration to use in case we have obtained no configuration from
     the LSP client. *)
@@ -43,9 +44,10 @@ let try_with_crash_handler
     ~(default : a)
     : a t
   =
+  let open Handler.Let_syntax in
   let log_crash_and_display_message (exn : exn) : unit t =
     let stack = Printexc.get_backtrace () in
-    let@ () =
+    let%bind () =
       send_log_msg ~type_:Error
       @@ Format.asprintf "Unexpected exception: %a\n%s" Exn.pp exn stack
     in
@@ -73,11 +75,11 @@ let try_with_crash_handler
             if String.equal title don't_show_again then has_caught_crash := true;
             pass))
   in
-  with_run_in_IO
-  @@ fun { unlift_IO } ->
-  try%lwt unlift_IO action with
+  with_run_in_io
+  @@ fun { unlift_io } ->
+  try%lwt unlift_io action with
   | exn ->
-    let%lwt () = unlift_IO @@ log_crash_and_display_message exn in
+    let%lwt () = unlift_io @@ log_crash_and_display_message exn in
     IO.return default
 
 
@@ -147,8 +149,9 @@ class lsp_server (capability_mode : capability_mode) =
     (** The [Handler.t] monad is used to run requests, but the server class operates in
         the [IO.t] monad. This method is used to run handlers. *)
     method run_handler : type a. notify_back_mockable -> a Handler.t -> a IO.t =
-      fun notify_back ->
-        run_handler
+      fun notify_back handler ->
+        Handler.run
+          handler
           { notify_back
           ; config
           ; docs_cache = get_scope_buffers
@@ -186,10 +189,11 @@ class lsp_server (capability_mode : capability_mode) =
 
     (** Handles the notification for when a document is opened. *)
     method on_notif_doc_did_open ~notify_back document ~content : unit IO.t =
+      let open Handler.Let_syntax in
       self#run_handler (Normal notify_back)
       @@
       let { diagnostics_pull_mode; _ } = config in
-      let@ normalize = ask_normalize in
+      let%bind normalize = ask_normalize in
       let file = DocumentUri.to_path ~normalize document.uri in
       match diagnostics_pull_mode, capability_mode with
       | _, Only_semantic_tokens | `OnDocumentLinkRequest, _ | `OnDocUpdate, _ ->
@@ -210,8 +214,9 @@ class lsp_server (capability_mode : capability_mode) =
         ~old_content:_old
         ~new_content
         : unit IO.t =
+      let open Handler.Let_syntax in
       self#run_handler (Normal notify_back)
-      @@ let@ normalize = ask_normalize in
+      @@ let%bind normalize = ask_normalize in
          let file = DocumentUri.to_path ~normalize document.uri in
          self#on_doc ~changes ~version:(`New document.version) file new_content
 
@@ -747,6 +752,7 @@ class lsp_server (capability_mode : capability_mode) =
                   -> r Client_request.t
                   -> r IO.t =
       fun ~notify_back ~server_request ~id (r : r Client_request.t) ->
+        let open Handler.Let_syntax in
         let normalize = self#normalize in
         let run
             ?(allowed_modes : capability_mode list = default_modes)
@@ -771,14 +777,14 @@ class lsp_server (capability_mode : capability_mode) =
                    last_project_dir
                    (Project_root.get_project_root file)
               then pass
-              else
-                let@ () = Requests.drop_cached_definitions file in
-                let@ () =
+              else (
+                let%bind () = Requests.drop_cached_definitions file in
+                let%bind () =
                   send_log_msg
                     ~type_:MessageType.Log
                     "Project root changed: repopulating cache"
                 in
-                self#on_doc ?changes:None ~version:`Unchanged file code
+                self#on_doc ?changes:None ~version:`Unchanged file code)
           in
           if self#is_request_enabled method_
              && List.mem ~equal:Caml.( = ) allowed_modes capability_mode
@@ -795,7 +801,7 @@ class lsp_server (capability_mode : capability_mode) =
             in
             self#run_handler new_notify_back
             @@ try_with_crash_handler has_caught_crash ~default
-            @@ bind repopulate_cache (fun () -> handler))
+            @@ Handler.(repopulate_cache >>= fun () -> handler))
           else IO.return default
         in
         let run_command (handler : r Handler.t) : r IO.t =
