@@ -1,0 +1,7 @@
+
+author: alistair.obrien
+description: "\\n\\nfix(vscode): remove `detect-installer` dependency and remove deprecated\\nwin32, npm and yarn installer support.\\n\\n"
+merge_request: '3155'
+title: "fix: remove detect-installer dependency"
+type: fixed
+            
