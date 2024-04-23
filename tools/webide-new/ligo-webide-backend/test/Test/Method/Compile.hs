@@ -73,7 +73,7 @@ test_multiFile = mkTest "compiles multi-file input correctly" $ do
                   , pModule = Nothing
                 },
               rEntrypoint = Just "main",
-              rProtocol = Just "oxford2",
+              rProtocol = Just "parisb",
               rStorage = Nothing,
               rDisplayFormat = Nothing
             }
