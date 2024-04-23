@@ -1,12 +1,12 @@
 {
     "defaultProtocol":{
-       "showName":"Oxford2",
-       "name":"oxford2"
+       "showName":"ParisB",
+       "name":"parisb"
     },
     "protocols":[
        {
-          "showName":"Oxford2",
-          "name":"oxford2"
+          "showName":"ParisB",
+          "name":"parisb"
        }
     ],
     "networks":[

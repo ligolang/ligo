@@ -6,8 +6,6 @@ import { WebIdeApi } from "~/components/api/api";
 import ProjectManager from "~/base-components/workspace/ProjectManager/ProjectManager";
 import Terminal from "~/base-components/terminal";
 
-import redux from "~/base-components/redux";
-
 export class CompilerManager {
   static terminal: Terminal | null = null;
 
@@ -47,14 +45,9 @@ export class CompilerManager {
     }
     const module: string = projectManager.projectSettings?.get("module") ?? "";
     const moduleArg = module !== "" ? `-m ${module}` : "";
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-    const { protocol } = redux.getState();
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-    const name: string = protocol?.name ?? "";
-    const protocolArg = name !== "" ? `--protocol ${name}` : "";
     if (CompilerManager.terminal) {
       CompilerManager.terminal.writeCmdToTerminal(
-        `ligo compile contract ${projectManager.mainFilePath} ${protocolArg} ${moduleArg}`
+        `ligo compile contract ${projectManager.mainFilePath} ${moduleArg}`
       );
     }
 
