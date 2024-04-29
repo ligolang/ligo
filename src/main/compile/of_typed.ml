@@ -4,7 +4,6 @@ open Ast_typed
 open Aggregation
 open Main_errors
 module Var = Simple_utils.Var
-module SMap = Map.Make (String)
 
 (* contract_info here is the optional information on the contract we are compiling
    It would be better if Self_ast_aggregated.all_contract was executing on
@@ -235,13 +234,16 @@ let get_modules_with_entries (prg : Ast_typed.program)
     : (Module_var.t list * Ast_typed.contract_sig) list
   =
   let module ModPathOrd = struct
-    type t = Module_var.t list * Ast_typed.contract_sig
+    module T = struct
+      type t =
+        Module_var.t list * (Ast_typed.contract_sig[@compare.ignore] [@sexp.opaque])
+      [@@deriving sexp, compare]
+    end
 
-    let compare : t -> t -> int =
-      Tuple2.compare ~cmp1:(List.compare Module_var.compare) ~cmp2:(fun _lhs _rhs -> 0)
+    include T
+    include Comparable.Make (T)
   end
   in
-  let module ModSet = Caml.Set.Make (ModPathOrd) in
   let contract_sig =
     match prg.pr_sig.sig_sort with
     | Ss_module ->
@@ -250,12 +252,12 @@ let get_modules_with_entries (prg : Ast_typed.program)
     | Ss_contract contract_sig -> contract_sig
   in
   let rec aux ?(current_module_and_sig = [], contract_sig) (prg : Ast_typed.program)
-      : ModSet.t
+      : ModPathOrd.Set.t
     =
-    List.fold_left prg.pr_module ~init:ModSet.empty ~f:(fun acc decl ->
+    List.fold_left prg.pr_module ~init:ModPathOrd.Set.empty ~f:(fun acc decl ->
         match decl.wrap_content with
         | D_value { attr; _ } | D_irrefutable_match { attr; _ } ->
-          if attr.entry then ModSet.add current_module_and_sig acc else acc
+          if attr.entry then Set.add acc current_module_and_sig else acc
         | D_module
             { module_binder
             ; module_ = { module_content = M_struct pr_module; signature = pr_sig; _ }
@@ -270,11 +272,9 @@ let get_modules_with_entries (prg : Ast_typed.program)
             in
             current_module, contract_sig
           in
-          Ast_typed.{ pr_module; pr_sig }
-          |> aux ~current_module_and_sig
-          |> ModSet.union acc
+          Ast_typed.{ pr_module; pr_sig } |> aux ~current_module_and_sig |> Set.union acc
         | D_module _ | D_type _ | D_module_include _ | D_signature _ | D_import _ -> acc)
   in
   aux prg
-  |> ModSet.to_seq
-  |> Seq.fold_left (fun acc elt -> Tuple2.map_fst ~f:List.rev elt :: acc) []
+  |> Set.to_list
+  |> List.fold_left ~f:(fun acc elt -> Tuple2.map_fst ~f:List.rev elt :: acc) ~init:[]

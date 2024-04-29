@@ -6,14 +6,17 @@ type normalization = string -> t
 let to_string (UnsafePath a) = a
 
 let normalise : string -> string =
- fun path -> if Caml.Sys.file_exists path then Filename_unix.realpath path else path
+ fun path ->
+  match Sys_unix.file_exists path with
+  | `Yes -> Filename_unix.realpath path
+  | `No | `Unknown -> path
 
 
 let from_absolute : normalization = fun p -> UnsafePath (normalise p)
 
 let from_relative : normalization =
  fun p ->
-  let abs_path = Filename.concat (Caml.Sys.getcwd ()) p in
+  let abs_path = Filename.concat (Sys_unix.getcwd ()) p in
   from_absolute abs_path
 
 
@@ -32,12 +35,13 @@ let get_syntax = Syntax.of_ext_opt <@ get_extension
 
 let rec find_file_in_dir_and_parents dir file =
   let potential_file = concat dir file in
-  if Caml.Sys.file_exists (to_string potential_file)
-  then Some potential_file
-  else (
+  match Sys_unix.file_exists (to_string potential_file) with
+  | `Yes -> Some potential_file
+  | `No ->
     let parent = dirname dir in
     (* e.g.: [dirname "/" = "/"] *)
-    if equal parent dir then None else find_file_in_dir_and_parents parent file)
+    if equal parent dir then None else find_file_in_dir_and_parents parent file
+  | `Unknown -> None
 
 
 let pp (ppf : Format.formatter) : t -> unit = Format.fprintf ppf "%s" <@ to_string

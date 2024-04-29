@@ -42,12 +42,7 @@ type test =
   | Test_suite of (string * test list)
   | Test of test_case
 
-let options =
-  Compiler_options.make
-    ~raw_options:(Raw_options.make ())
-    ()
-
-
+let options = Compiler_options.make ~raw_options:(Raw_options.make ()) ()
 let loc = Location.test
 
 let test_format : 'a Simple_utils.Display.format =
@@ -670,9 +665,6 @@ let compile_main ~raise f () =
      in
      let%map _contract : _ Tezos_utils.Michelson.michelson Lwt.t =
        (* fails if the given entry point is not a valid contract *)
-       Ligo_compile.Of_michelson.build_contract
-         ~raise
-         michelson_prg
-         []
+       Ligo_compile.Of_michelson.build_contract ~raise michelson_prg []
      in
      ()

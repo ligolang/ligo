@@ -9,7 +9,7 @@ module type S =
     type lexer =
       token State.t ->
       Lexing.lexbuf ->
-      (token * token State.t, message) Stdlib.result
+      (token * token State.t, message) result
 
     val mk_verbatim : Thread.t -> token (* FOR FUTURE USE *)
     val mk_string   : Thread.t -> token
@@ -24,11 +24,11 @@ module type S =
       token -> (* The comment-token *)
       token list ->
       Lexing.lexbuf ->
-      (token list, message) Stdlib.result
+      (token list, message) result
 
     val block_comment_attr :
       token -> (* The comment-token *)
       token list ->
       Lexing.lexbuf ->
-      (token list, message) Stdlib.result
+      (token list, message) result
   end

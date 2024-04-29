@@ -28,7 +28,7 @@ module Set = struct
 
   type yojson__list = T.t list [@@deriving yojson]
 
-  let to_yojson t = yojson__list_to_yojson @@ to_list t
+  let to_yojson t = yojson__list_to_yojson @@ Core.Set.to_list t
 
   let of_yojson json =
     let open Result.Let_syntax in
@@ -49,7 +49,7 @@ module Map = struct
       type t = (T.t * a) list [@@deriving to_yojson]
     end
     in
-    M.to_yojson @@ to_alist t
+    M.to_yojson @@ Core.Map.to_alist t
 
 
   let of_yojson
@@ -69,9 +69,9 @@ module Map = struct
 
 
   let fold_map t ~init ~f =
-    fold t ~init:(init, empty) ~f:(fun ~key ~data (acc, map) ->
+    Core.Map.fold t ~init:(init, empty) ~f:(fun ~key ~data (acc, map) ->
         let acc, data = f ~key ~data acc in
-        let map = Map.set map ~key ~data in
+        let map = Core.Map.set map ~key ~data in
         acc, map)
 end
 

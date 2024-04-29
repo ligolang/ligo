@@ -30,13 +30,13 @@ module type S =
 
 module Make (Config : Config.S) (Client : Client.S) =
   struct
-    module Core = Core.Make (Config) (Client)
+    module LexCore = LexCore.Make (Config) (Client)
 
-    type lex_unit = Core.lex_unit
+    type lex_unit = LexCore.lex_unit
 
-    type units = Core.units
+    type units = LexCore.units
 
-    type error = Core.error = {
+    type error = LexCore.error = {
       used_units : units;
       message    : string Region.reg
     }
@@ -46,25 +46,25 @@ module Make (Config : Config.S) (Client : Client.S) =
     (* Lexing the input given a lexer instance *)
 
     let scan_all_units = function
-      Stdlib.Error message ->
+      Error message ->
         Error {used_units=[]; message}
-    | Ok Core.{read_units; lexbuf; close; _} ->
+    | Ok LexCore.{read_units; lexbuf; close; _} ->
         let result = read_units lexbuf
         in (close (); result)
 
     (* Lexing all lexical units from various sources *)
 
     let from_lexbuf ?(file="") lexbuf =
-      Core.(open_stream (Lexbuf (file, lexbuf))) |> scan_all_units
+      LexCore.(open_stream (Lexbuf (file, lexbuf))) |> scan_all_units
 
     let from_channel ?(file="") channel =
-      Core.(open_stream (Channel (file, channel))) |> scan_all_units
+      LexCore.(open_stream (Channel (file, channel))) |> scan_all_units
 
     let from_string ?(file="") string =
-      Core.(open_stream (String (file, string))) |> scan_all_units
+      LexCore.(open_stream (String (file, string))) |> scan_all_units
 
     let from_buffer ?(file="") buffer =
-      Core.(open_stream (Buffer (file, buffer))) |> scan_all_units
+      LexCore.(open_stream (Buffer (file, buffer))) |> scan_all_units
 
-    let from_file file = Core.(open_stream (File file)) |> scan_all_units
+    let from_file file = LexCore.(open_stream (File file)) |> scan_all_units
   end

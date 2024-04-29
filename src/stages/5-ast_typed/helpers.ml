@@ -16,13 +16,15 @@ let remove_empty_annotation (ann : string option) : string option =
 module TMap = Simple_utils.Map.Make (Type_var)
 
 (* Free type variables in a type *)
-module VarSet = Caml.Set.Make (Type_var)
+module VarSet = Set
+
+let empty_set = VarSet.empty (module Type_var)
 
 (* Substitutes a type variable `v` for a type `t` in the type `u`. In
    principle, variables could be captured. But in case a binder
    (forall, abstraction) is found in `fv`, a new (fresh) binder is
    generated and subtituted to prevent capture. *)
-let rec subst_type ?(fv = VarSet.empty) v t (u : type_expression) =
+let rec subst_type ?(fv = empty_set) v t (u : type_expression) =
   let self = subst_type ~fv in
   let loc = u.location in
   match u.type_content with
@@ -31,7 +33,7 @@ let rec subst_type ?(fv = VarSet.empty) v t (u : type_expression) =
     let type1 = self v t type1 in
     let type2 = self v t type2 in
     { u with type_content = T_arrow { type1; type2; param_names } }
-  | T_abstraction { ty_binder; kind; type_ } when VarSet.mem ty_binder fv ->
+  | T_abstraction { ty_binder; kind; type_ } when VarSet.mem fv ty_binder ->
     let ty_binder' = Type_var.fresh ~loc () in
     let type_ = self ty_binder (Combinators.t_variable ~loc ty_binder' ()) type_ in
     let ty_binder = ty_binder' in
@@ -39,7 +41,7 @@ let rec subst_type ?(fv = VarSet.empty) v t (u : type_expression) =
   | T_abstraction { ty_binder; kind; type_ } when not (Type_var.equal ty_binder v) ->
     let type_ = self v t type_ in
     { u with type_content = T_abstraction { ty_binder; kind; type_ } }
-  | T_for_all { ty_binder; kind; type_ } when VarSet.mem ty_binder fv ->
+  | T_for_all { ty_binder; kind; type_ } when VarSet.mem fv ty_binder ->
     let ty_binder' = Type_var.fresh ~loc () in
     let type_ = self ty_binder (Combinators.t_variable ~loc ty_binder' ()) type_ in
     let ty_binder = ty_binder' in
@@ -295,7 +297,7 @@ let map_program f prg = snd @@ fold_map_program (fun () exp -> true, (), f exp) 
 let global_id = ref 0
 
 module IdMap = struct
-  module type OrderedType = Caml.Map.OrderedType
+  module type OrderedType = Stdlib.Map.OrderedType
 
   module type IdMapSig = sig
     type key

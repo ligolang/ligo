@@ -113,6 +113,7 @@ module Mod_identifier = struct
   type t =
     | Ad_hoc_signature of Scopes.Uid.t
     | Standalone_signature_or_module of Scopes.Uid.t
+  [@@deriving sexp]
 
   let compare (id1 : t) (id2 : t) : int =
     match id1, id2 with
@@ -137,7 +138,7 @@ module Mod_graph = Graph.Make (Mod_identifier)
 
 (** A map that allows looking up modules, namespaces, interfaces, and signatures given a
     [Mod_identifier.t]. *)
-module Mod_map = Caml.Map.Make (Mod_identifier)
+module Mod_map = Map.Make (Mod_identifier)
 
 (** If the provided [resolve_mod_name] is resolved, then returns the resolved module.
     Otherwise, attempts to resolve it by approximating it with a module that has the same
@@ -223,8 +224,7 @@ let mdef_to_implementation : Scopes.Types.mdef -> Scopes.Types.implementation =
 let mdefs_to_identifiers : Scopes.Types.mdef list -> Scopes.Types.implementation Mod_map.t
   =
  fun mdefs ->
-  Mod_map.of_seq
-  @@ Caml.List.to_seq
+  List.fold ~init:Mod_map.empty ~f:(fun map (id, impl) -> Map.set map ~key:id ~data:impl)
   @@ List.concat_map mdefs ~f:(fun mdef ->
          (( Mod_identifier.Standalone_signature_or_module mdef.uid
           , mdef_to_implementation mdef )
@@ -285,11 +285,11 @@ let try_to_get_mdef_uid
  fun def mdefs mod_ids ->
   match find_module_by_uid_path (Scopes.Types.get_mod_path def) mdefs with
   | None ->
-    Seq.find_map (function
+    Sequence.find_map ~f:(function
         | id, Scopes.Types.Ad_hoc_signature defs ->
           Option.map (find_last_def_by_name_and_level def defs) ~f:(const id)
         | _, Standalone_signature_or_module _ -> None)
-    @@ Mod_map.to_seq mod_ids
+    @@ Map.to_sequence mod_ids
   | Some def_mod -> Some (Mod_identifier.Standalone_signature_or_module def_mod.uid)
 
 
@@ -352,7 +352,7 @@ let get_implementations : Scopes.def -> Scopes.Types.mdef list -> Scopes.def lis
     in
     (* Search for [def] within the modules. *)
     List.filter_map (Mod_graph.to_vertices defining_mods) ~f:(fun id ->
-        Option.bind ~f:find_defs_in_implementation @@ Mod_map.find_opt id mod_ids)
+        Option.bind ~f:find_defs_in_implementation @@ Map.find mod_ids id)
   with
   | None | Some [] -> [ def ]
   | Some (_ :: _ as implementers) -> implementers

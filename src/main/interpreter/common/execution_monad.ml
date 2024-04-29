@@ -1,4 +1,6 @@
 open Simple_utils.Trace
+open Core
+
 (*
   That monad do not seem very useful now,
   but it could become useful if we want to support multiple testing mode (against node, or memory)
@@ -28,11 +30,9 @@ module Heap : sig
   val deref : t -> loc -> value
   val set : t -> loc -> value -> t
 end = struct
-  module Map = Caml.Map.Make (Int)
+  type t = LT.value Int.Map.t
 
-  type t = LT.value Map.t
-
-  let empty = Map.empty
+  let empty = Int.Map.empty
 
   let incr_next =
     let next = ref 0 in
@@ -43,21 +43,21 @@ end = struct
 
   let alloc t value =
     let loc = incr_next () in
-    loc, Map.add loc value t
+    loc, Map.set t ~key:loc ~data:value
 
 
   let free t loc =
-    if not (Map.mem loc t) then failwith "Cannot free unallocated location";
-    Map.remove loc t
+    if not (Map.mem t loc) then failwith "Cannot free unallocated location";
+    Map.remove t loc
 
 
   let set t loc value =
-    if not (Map.mem loc t) then failwith "Cannot set unallocated location";
-    Map.add loc value t
+    if not (Map.mem t loc) then failwith "Cannot set unallocated location";
+    Map.set t ~key:loc ~data:value
 
 
   let deref t loc =
-    match Map.find_opt loc t with
+    match Map.find t loc with
     | Some value -> value
     | None -> failwith "Cannot deref unallocated location"
 end
@@ -71,9 +71,7 @@ type state =
 
 let make_state ~raise ~(options : Compiler_options.t) =
   let open Lwt.Let_syntax in
-  let%map tezos_context =
-    Tezos_state.init_ctxt ~raise []
-  in
+  let%map tezos_context = Tezos_state.init_ctxt ~raise [] in
   let mod_res = Option.bind ~f:ModRes.make options.frontend.project_root in
   { tezos_context; mod_res; heap = Heap.empty; print_values = true }
 
@@ -744,7 +742,8 @@ module Command = struct
       let x =
         let f (_, tag, _, p_ty) =
           (*this comparison looks fishy*)
-          Caml.compare rq_p_ty p_ty = 0 && String.equal rq_tag tag
+          (* FIXME: ... *)
+          Stdlib.compare rq_p_ty p_ty = 0 && String.equal rq_tag tag
         in
         List.filter ctxt.transduced.last_events ~f
       in

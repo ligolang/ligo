@@ -18,7 +18,7 @@ let get_references
   |> Sequence.concat_map ~f:(fun def ->
          Sequence.concat_map locations ~f:(fun location ->
              if Def_location.equal (Def.get_location ~normalize def) location
-             then Def_locations.to_sequence @@ Def.references_getter ~normalize def
+             then Set.to_sequence @@ Def.references_getter ~normalize def
              else Sequence.empty))
   |> Sequence.filter_map ~f:(function
          | Def_location.File loc -> Some loc
@@ -28,13 +28,11 @@ let get_references
 (** Partitions the collection of reference locations into a map whose keys are the files
     that these locations belong to, and whose keys are such ranges. *)
 let partition_references : Loc_in_file.t Sequence.t -> Ranges.t PathMap.t =
-  Sequence.fold
-    ~f:(fun acc loc ->
+  Sequence.fold ~init:PathMap.empty ~f:(fun acc loc ->
       let open Loc_in_file in
-      PathMap.update acc loc.path ~f:(function
+      Map.update acc loc.path ~f:(function
           | None -> Ranges.singleton loc.range
-          | Some others -> Ranges.add others loc.range))
-    ~init:PathMap.empty
+          | Some others -> Set.add others loc.range))
 
 
 (** Like [get_all_references], but keeps the locations grouped by files. This version is
@@ -54,12 +52,12 @@ let get_all_references_grouped_by_file
         <@ Scopes.Types.flatten_defs)
   in
   cache
-  |> Docs_cache.to_alist
+  |> Hashtbl.to_alist
   |> Sequence.of_list
   |> Sequence.concat_map ~f:go
   |> partition_references
-  |> PathMap.to_sequence
-  |> Sequence.map ~f:(fun (file, refs) -> file, Ranges.to_sequence refs)
+  |> Map.to_sequence
+  |> Sequence.map ~f:(fun (file, refs) -> file, Set.to_sequence refs)
 
 
 (** For each location with a declaration, finds all references for that declaration and
@@ -96,7 +94,7 @@ let try_to_get_all_linked_locations
   in
   List.filter_map (Mod_graph.to_vertices defining_mods) ~f:(fun id ->
       let%bind.Option defs =
-        match%bind.Option Mod_map.find_opt id mod_ids with
+        match%bind.Option Map.find mod_ids id with
         | Ad_hoc_signature defs -> Some defs
         | Standalone_signature_or_module path ->
           let%bind.Option uid = try_to_resolve_path mdefs path in

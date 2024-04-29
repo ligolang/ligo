@@ -2,4 +2,4 @@
  (name configurator)
  (modules configurator)
  (flags (:standard))
- (libraries core dune-configurator))
+ (libraries core dune-configurator core_unix core_unix.sys_unix))

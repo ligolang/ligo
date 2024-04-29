@@ -4,7 +4,6 @@ module Location = Simple_utils.Location
 module Var = Simple_utils.Var
 module List = Simple_utils.List
 module Ligo_string = Simple_utils.Ligo_string
-module Int64 = Caml.Int64
 open Ligo_prim
 open Types
 open Simple_utils.PP_helpers
@@ -190,7 +189,7 @@ module With_name_tbl = struct
             (* User-defined name. We'd like to try keep the name. However
                a collision could occur if we've previously used this name.
 
-               We resolve the collision by adding a number to the end until we reach 
+               We resolve the collision by adding a number to the end until we reach
                a unique name *)
             let name = Type_var.to_name_exn tvar in
             let curr_name = ref name in

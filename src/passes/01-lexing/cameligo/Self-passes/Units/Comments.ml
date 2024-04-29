@@ -5,7 +5,6 @@
 
 module Region    = Simple_utils.Region
 module Std       = Simple_utils.Std
-module Core      = LexerLib.Core
 module Markup    = LexerLib.Markup
 module Directive = Preprocessor.Directive
 module Unit      = LexerLib.Unit
@@ -36,7 +35,7 @@ type units = item list
 
 type message = string Region.reg
 
-type result = (units, units * message) Stdlib.result
+type nonrec result = (units, units * message) result
 
 let filter ?print_passes ~add_warning:_ units : result =
   let () =

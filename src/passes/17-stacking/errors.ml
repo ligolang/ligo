@@ -83,10 +83,7 @@ let error_json : stacking_error -> Simple_utils.Error.t =
   match e with
   | `Stacking_unsupported_primitive c ->
     let message =
-      Format.asprintf
-        "@[<hv>unsupported primitive %a@]"
-        Ligo_prim.Constant.pp_constant'
-        c
+      Format.asprintf "@[<hv>unsupported primitive %a@]" Ligo_prim.Constant.pp_constant' c
     in
     let content = make_content ~message () in
     make ~stage ~content

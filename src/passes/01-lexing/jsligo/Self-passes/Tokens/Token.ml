@@ -8,9 +8,10 @@ module Directive = Preprocessor.Directive
 
 (* Utility modules and types *)
 
-module SMap = Map.Make (String)
 module Wrap = Lexing_shared.Wrap
 module Attr = Lexing_shared.Attr
+
+let empty_map = Map.empty (module String)
 
 let sprintf = Printf.sprintf
 
@@ -423,14 +424,16 @@ module T =
 
     let keywords =
       let add map (key, data) =
-        match SMap.add ~key ~data map with
+        match Map.add ~key ~data map with
           `Ok map -> map
         | `Duplicate -> map in
       let apply map mk_kwd =
         let lexemes = to_lexeme (mk_kwd Region.ghost) in
         List.fold_left ~f:(fun map lex -> add map (lex, mk_kwd))
                        ~init:map lexemes
-      in List.fold_left ~f:apply ~init:SMap.empty keywords
+      in List.fold_left ~f:apply ~init:empty_map keywords
+
+    let keywords_list = Map.keys keywords
 
     (* Ghost keywords *)
 
@@ -670,14 +673,16 @@ module T =
 
     let symbols =
       let add map (key, data) =
-        match SMap.add ~key ~data map with
+        match Map.add ~key ~data map with
           `Ok map -> map
         | `Duplicate -> map in
       let apply map mk_sym =
         let lexemes = to_lexeme (mk_sym Region.ghost) in
         List.fold_left ~f:(fun map lex -> add map (lex, mk_sym))
                        ~init:map lexemes
-      in List.fold_left ~f:apply ~init:SMap.empty symbols
+      in List.fold_left ~f:apply ~init:empty_map symbols
+
+    let symbols_list = Map.keys symbols
 
     (* Ghost symbols *)
 
@@ -999,8 +1004,9 @@ module T =
     (* FROM TOKENS TO TOKEN STRINGS AND REGIONS *)
 
     let comments (w : _ Wrap.t) =
-      if Caml.(w#comments = [] && w#line_comment = None) then ""
-      else " + comment(s)"
+      match w#comments, w#line_comment with
+        [], None -> ""
+      | _ -> " + comment(s)"
 
     let proj_token = function
       (* Preprocessing directives *)
@@ -1151,8 +1157,9 @@ module T =
     | SEMI_ELSE (t1, t2) ->
         let region   = Region.cover t1#region t2#region
         and comments =
-          if Caml.(t1#comments = []) && Caml.(t2#comments = []) then ""
-          else " + comments"
+          match t1#comments, t2#comments with
+            [], [] -> ""
+          | _ -> " + comments"
         in region, sprintf "SEMI_ELSE%s" comments
 
     (* End-Of-File *)
@@ -1299,7 +1306,7 @@ module T =
     type kwd_err = Invalid_keyword
 
     let mk_kwd ident region =
-      match SMap.find keywords ident with
+      match Map.find keywords ident with
         Some mk_kwd -> Ok (mk_kwd region)
       |        None -> Error Invalid_keyword
 
@@ -1355,14 +1362,14 @@ module T =
     type sym_err = Invalid_symbol of string
 
     let mk_sym lexeme region =
-      match SMap.find symbols lexeme with
+      match Map.find symbols lexeme with
         Some mk_sym -> Ok (mk_sym region)
       |        None -> Error (Invalid_symbol lexeme)
 
     (* Identifiers *)
 
     let mk_ident value region =
-      match SMap.find keywords value with
+      match Map.find keywords value with
         Some mk_kwd -> mk_kwd region
       |        None -> Ident (wrap value region)
 

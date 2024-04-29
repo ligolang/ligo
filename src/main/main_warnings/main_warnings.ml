@@ -40,6 +40,7 @@ type all =
   | `Metadata_error_download of Location.t * string
   | `Metadata_download_timeout of Location.t * string
   ]
+[@@deriving compare]
 
 let warn_bad_self_type t1 t2 loc = `Self_ast_aggregated_warning_bad_self_type (t1, t2, loc)
 

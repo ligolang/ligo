@@ -1,18 +1,21 @@
 open Types
 open Recursion_schemes.Catamorphism
-module VarSet = Caml.Set.Make (Variable)
+module VarSet = Set
 
-let empty = VarSet.empty
-let singleton = VarSet.singleton
+let empty = VarSet.empty (module Variable)
+let singleton = VarSet.singleton (module Variable)
 let union = VarSet.union
 let diff = VarSet.diff
 let add = VarSet.add
 let remove = VarSet.remove
-let of_list = VarSet.of_list
-let unions : VarSet.t list -> VarSet.t = fun l -> List.fold l ~init:empty ~f:union
+let of_list = VarSet.of_list (module Variable)
 
-type fv = VarSet.t
-type bound = VarSet.t
+let unions : (Variable.t, _) VarSet.t list -> (Variable.t, _) VarSet.t =
+ fun l -> List.fold l ~init:empty ~f:union
+
+
+type fv = (Variable.t, Variable.comparator_witness) VarSet.t
+type bound = (Variable.t, Variable.comparator_witness) VarSet.t
 type sequence = fv * bound
 
 let fv_of_sequence (lst : sequence list) : fv =
@@ -56,13 +59,13 @@ let fv_folder =
       union rhs fv_body
     | E_for { index; init; bound; step; block } ->
       let used = unions [ init; bound; Option.value ~default:empty step; block ] in
-      remove index used
+      remove used index
     | E_for_in (ForMap { binding = v1, v2; collection; block }) ->
       let used = unions [ collection; block ] in
       diff used (of_list [ v1; v2 ])
     | E_for_in (ForSetOrList { var; for_kind = _; collection; block }) ->
       let used = unions [ collection; block ] in
-      remove var used
+      remove used var
     | E_for_in (ForAny { pattern; collection; block }) ->
       let used = unions [ collection; block ] in
       diff used pattern
@@ -77,16 +80,16 @@ let fv_folder =
         let bound = unions (List.map ~f:(fun x -> x.pattern) parameters) in
         diff body bound
       in
-      remove fun_name fv_lamb
+      remove fv_lamb fun_name
     | E_lambda { binder = { binder; _ }; result; _ } ->
       let bound = Ligo_prim.Binder.get_var binder in
-      remove bound result
+      remove result bound
     | E_recursive { fun_name; lambda = { binder = { binder; _ }; result; _ }; _ } ->
       let fv_lamb =
         let bound = Ligo_prim.Binder.get_var binder in
-        remove bound result
+        remove result bound
       in
-      remove fun_name fv_lamb
+      remove fv_lamb fun_name
     | E_match { expr; disc_label = _; cases } ->
       let f Case.{ pattern; rhs } = diff rhs (Option.value ~default:empty pattern) in
       union expr (unions @@ List.map (List.Ne.to_list cases) ~f)
@@ -111,7 +114,7 @@ let fv_folder =
     | D_fun { is_rec; fun_name; parameters; return; _ } ->
       let bound =
         let params = unions @@ List.map parameters ~f:(fun x -> x.pattern) in
-        if is_rec then add fun_name params else params
+        if is_rec then add params fun_name else params
       in
       bound, diff return bound
     | D_irrefutable_match { pattern; expr } -> pattern, diff expr pattern

@@ -1,7 +1,7 @@
 {
-module Array = Caml.Array
+module Array = Stdlib.Array
 (* initial version taken from https://github.com/realworldocaml/mdx *)
-type arg = 
+type arg =
   | Field of string
   | NameValue of string * string
 
@@ -28,15 +28,15 @@ let ws = ' ' | '\t'
 rule text = parse
   | eof { [] }
   | "```" ([^' ' '\n']* as h) ws* ([^'\n']* as l) eol
-      { 
+      {
         let header = if String.equal h "" then None else Some h in
         let contents = block lexbuf in
         let arguments = String.split ~on:' ' l in
-        let arguments = List.map ~f:(fun a -> 
+        let arguments = List.map ~f:(fun a ->
           if (String.contains a '=') then
             ( let a = String.split ~on:'=' a in
             NameValue (List.nth_exn a 0, List.nth_exn a 1))
-          else 
+          else
             Field a
         ) arguments in
         let file = lexbuf.Lexing.lex_start_p.Lexing.pos_fname in
@@ -58,6 +58,6 @@ and block = parse
 let token lexbuf =
   try
     text lexbuf
-  with Failure _ -> 
+  with Failure _ ->
     raise (Err "incomplete code block")
 }

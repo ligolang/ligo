@@ -44,8 +44,8 @@ let validate_storage ~main ~storage_fn ~storage_arg () =
 
 
 let validate_main_file ~main =
-  match Caml.Sys.file_exists main with
-  | true ->
+  match Sys_unix.file_exists main with
+  | `Yes ->
     let ext_opt = snd @@ Filename.split_extension main in
     let ligo_syntax_opt = Syntax.of_ext_opt ext_opt in
     (match ligo_syntax_opt with
@@ -54,7 +54,7 @@ let validate_main_file ~main =
       Error
         "Error: Invalid LIGO file specifed in main field of ligo.json\n\
          Valid extension for LIGO files are (.mligo, .jsligo) ")
-  | false ->
+  | `No | `Unknown ->
     Error
       "Error: main file does not exists.\nPlease specify a valid LIGO file in ligo.json."
 
@@ -258,9 +258,9 @@ let read ~project_root =
   | Some project_root ->
     let ligo_manifest_path = Filename.concat project_root "ligo.json" in
     let () =
-      match Caml.Sys.file_exists ligo_manifest_path with
-      | false -> failwith "Error: Unable to find ligo.json!"
-      | true -> ()
+      match Sys_unix.file_exists ligo_manifest_path with
+      | `No | `Unknown -> failwith "Error: Unable to find ligo.json!"
+      | `Yes -> ()
     in
     let json =
       try Yojson.Safe.from_file ligo_manifest_path with

@@ -4,5 +4,7 @@
  (instrumentation
   (backend bisect_ppx))
  (libraries simple-utils ast_aggregated ligo.tezos-memory-proto-alpha)
+ (preprocess
+  (pps ppx_compare))
  (flags
   (:standard -w +1..62-4-9-44-40-42-48-30@39@33)))

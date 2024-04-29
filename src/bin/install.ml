@@ -34,7 +34,7 @@ let manifest_migration_prompt ~manifest =
 
 
 let migrate_manifest ~project_root ~previous_manifest =
-  let ( let* ) = Caml.Result.bind in
+  let ( let* ) v f = Result.bind v ~f in
   let previous_manifest_path = Fpath.(v project_root / previous_manifest) in
   let new_manifest_path = Fpath.(v project_root / "ligo.json") in
   let old_lock_file_path = Fpath.(v project_root / "esy.lock") in
@@ -62,7 +62,7 @@ let manual_migration_hint =
 
 
 let rec install ~project_root ~package_name ~cache_path ~ligo_registry ~esy_legacy =
-  let ( let* ) = Caml.Result.bind in
+  let ( let* ) v f = Result.bind v ~f in
   let* project_root =
     match project_root with
     | Some p -> Ok p

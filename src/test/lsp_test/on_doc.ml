@@ -13,9 +13,15 @@ module Project_root_test = struct
       let%bind _uri = Handlers.open_file normalized_file_name in
       ask_last_project_dir
     in
-    let all_diags = Requests.Handler.Path_hashtbl.to_alist diagnostics in
+    let all_diags = Hashtbl.to_alist diagnostics in
     (* Expect no diagnostics as everything should be fine. *)
-    assert (Caml.(all_diags = [ normalized_file_name, [] ]));
+    assert (
+      List.equal
+        (Tuple2.equal
+           ~eq1:Lsp_helpers.Path.equal
+           ~eq2:(List.equal Lsp_helpers.Diagnostic.eq))
+        all_diags
+        [ normalized_file_name, [] ]);
     let project_root = Option.map !project_root ~f:path_to_relative in
     Format.printf "%a" (Fmt.Dump.option String.pp) project_root
 

@@ -89,7 +89,7 @@ let rec decompile ~raise (v : value) (t : AST.type_expression) : AST.expression 
         in
         List.map ~f:aux map
       in
-      let map' = List.dedup_and_sort ~compare:Caml.compare map' in
+      let map' = List.dedup_and_sort ~compare:Stdlib.compare map' in
       (* AST.Compare.map_kbv is broken because of expression and litteral being broken *)
       let aux (key, value) prev =
         return @@ E_constant { cons_name = C_MAP_ADD; arguments = [ key; value; prev ] }
@@ -106,7 +106,7 @@ let rec decompile ~raise (v : value) (t : AST.type_expression) : AST.expression 
         in
         List.map ~f:aux big_map
       in
-      let big_map' = List.dedup_and_sort ~compare:Caml.compare big_map' in
+      let big_map' = List.dedup_and_sort ~compare:Stdlib.compare big_map' in
       let aux (key, value) prev =
         return @@ E_constant { cons_name = C_MAP_ADD; arguments = [ key; value; prev ] }
       in
@@ -129,7 +129,7 @@ let rec decompile ~raise (v : value) (t : AST.type_expression) : AST.expression 
         let aux e = self e ty in
         List.map ~f:aux lst
       in
-      let lst' = List.dedup_and_sort ~compare:Caml.compare lst' in
+      let lst' = List.dedup_and_sort ~compare:Stdlib.compare lst' in
       let aux prev cur =
         return @@ E_constant { cons_name = C_SET_ADD; arguments = [ cur; prev ] }
       in

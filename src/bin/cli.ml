@@ -62,9 +62,9 @@ let file_type =
         let completions = In_channel.input_lines chan_in in
         ignore (Ligo_unix.close_process_in chan_in);
         List.map (List.sort ~compare:String.compare completions) ~f:(fun comp ->
-            match Caml.Sys.is_directory comp with
-            | true -> comp ^ "/"
-            | _ | (exception _) -> comp)
+            match Sys_unix.is_directory comp with
+            | `Yes -> comp ^ "/"
+            | `No | `Unknown | (exception _) -> comp)
       in
       match completions with
       | [ dir ] when String.is_suffix dir ~suffix:"/" ->
@@ -3404,7 +3404,7 @@ let add_user =
   let f username email ligo_registry ligorc_path skip_analytics () =
     return_with_custom_formatter ~skip_analytics ~cli_analytics:[ cli_analytic ] ~return
     @@ fun () ->
-    let ( let* ) = Caml.Result.bind in
+    let ( let* ) v f = Result.bind v ~f in
     let* username =
       prompt_and_env_fallback
         ~fallback_env_var:"LIGO_USERNAME"
@@ -3442,7 +3442,7 @@ let login =
   let f username ligo_registry ligorc_path skip_analytics () =
     return_with_custom_formatter ~skip_analytics ~cli_analytics:[ cli_analytic ] ~return
     @@ fun () ->
-    let ( let* ) = Caml.Result.bind in
+    let ( let* ) v f = Result.bind v ~f in
     let* username =
       prompt_and_env_fallback
         ~fallback_env_var:"LIGO_USERNAME"
@@ -3484,12 +3484,12 @@ module Lsp_server = struct
     let run_lsp () =
       let s = new Server.lsp_server capability_mode in
       let server = Linol_lwt.Jsonrpc2.create_stdio (s :> Linol_lwt.Jsonrpc2.server) in
-      let shutdown () = Caml.(s#get_status = `ReceivedExit) in
+      let shutdown () = Poly.(s#get_status = `ReceivedExit) in
       let task = Linol_lwt.Jsonrpc2.run ~shutdown server in
       match Linol_lwt.run task with
       | () -> Ok ("", "")
       | exception e ->
-        let e = Caml.Printexc.to_string e in
+        let e = Exn.to_string e in
         Error ("", e)
     in
     let with_request_logging f () =
@@ -3524,13 +3524,13 @@ module Lsp_server = struct
               | _ -> ());
           let s = new Server.lsp_server capability_mode in
           let server = Linol_lwt.Jsonrpc2.create_stdio (s :> Linol_lwt.Jsonrpc2.server) in
-          let shutdown () = Caml.(s#get_status = `ReceivedExit) in
+          let shutdown () = Poly.(s#get_status = `ReceivedExit) in
           let task = Linol_lwt.Jsonrpc2.run ~shutdown server in
           Format.eprintf "For LIGO language server logs, see %s\n%!" log_file;
           match Linol_lwt.run task with
           | () -> Ok ("", "")
           | exception e ->
-            let e = Caml.Printexc.to_string e in
+            let e = Exn.to_string e in
             Error ("", e))
     in
     if log_requests then with_request_logging run_lsp () else run_lsp ()

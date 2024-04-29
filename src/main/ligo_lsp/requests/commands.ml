@@ -48,7 +48,7 @@ module Command = struct
           raise @@ Invalid_argument (sprintf "Duplicate handler id `%s`" key)
       in
       fun ~command ~arguments ->
-        match HandlersMap.find handlers_map command with
+        match Map.find handlers_map command with
         | None -> Unknown_command
         | Some (LspHandler (cmd, handler)) ->
           (match cmd.args_decoder arguments with

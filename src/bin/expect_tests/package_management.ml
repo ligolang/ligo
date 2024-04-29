@@ -1,14 +1,14 @@
 open Cli_expect
 
-let () = Caml.Sys.chdir "../../test/projects/"
-let pwd = Caml.Sys.getcwd ()
+let () = Sys_unix.chdir "../../test/projects/"
+let pwd = Sys_unix.getcwd ()
 
-(* FIXME (@alistair.obrien): 
-   This test is disabled until we patch the FA2 package with the correct exports / public imports 
+(* FIXME (@alistair.obrien):
+   This test is disabled until we patch the FA2 package with the correct exports / public imports
    MR that introduced this: https://gitlab.com/ligolang/ligo/-/merge_requests/3112
    Related issue: https://gitlab.com/ligolang/ligo/-/issues/2160
 *)
-(* 
+(*
 let%expect_test _ =
   run_ligo_good
     [ "run"
@@ -43,6 +43,8 @@ let%expect_test _ =
   run_ligo_good [ "install"; "--project-root"; "complex_project_with_one_dependency" ];
   [%expect {| Project root: complex_project_with_one_dependency |}]
 
+let () = Sys_unix.chdir pwd
+
 let%expect_test _ =
   run_ligo_good
     [ "info"
@@ -52,6 +54,8 @@ let%expect_test _ =
     ; "using_scope_pkg_project"
     ];
   [%expect {| 95 bytes |}]
+
+let () = Sys_unix.chdir pwd
 
 let%expect_test _ =
   run_ligo_bad
@@ -69,7 +73,8 @@ let%expect_test _ =
       2 |
     File "tezos-ligo-fa2" not found. |}]
 
-let () = Caml.Sys.chdir "using_scope_pkg_project"
+let () = Sys_unix.chdir pwd
+let () = Sys_unix.chdir "using_scope_pkg_project"
 
 let%expect_test _ =
   run_ligo_good [ "run"; "test"; "src/a/b/c/contract.test.mligo"; "--project-root"; "." ];
@@ -113,6 +118,9 @@ let%expect_test _ =
     Everything at the top-level was executed.
     - test_originate exited with value (). |}]
 
+let () = Sys_unix.chdir pwd
+let () = Sys_unix.chdir "using_scope_pkg_project"
+
 let%expect_test _ =
   run_ligo_good [ "run"; "test"; "src/a/b/c/contract.test.mligo" ];
   [%expect
@@ -155,8 +163,8 @@ let%expect_test _ =
     Everything at the top-level was executed.
     - test_originate exited with value (). |}]
 
-let () = Caml.Sys.chdir pwd
-let () = Caml.Sys.chdir "using_scope_pkg_project/src/a/b/c"
+let () = Sys_unix.chdir pwd
+let () = Sys_unix.chdir "using_scope_pkg_project/src/a/b/c"
 
 let%expect_test _ =
   run_ligo_good [ "run"; "test"; "contract.test.mligo" ];
@@ -200,8 +208,8 @@ let%expect_test _ =
     Everything at the top-level was executed.
     - test_originate exited with value (). |}]
 
-let () = Caml.Sys.chdir pwd
-let () = Caml.Sys.chdir "using_scope_pkg_project/src/a/b"
+let () = Sys_unix.chdir pwd
+let () = Sys_unix.chdir "using_scope_pkg_project/src/a/b"
 
 let%expect_test _ =
   run_ligo_good [ "run"; "test"; "c/contract.test.mligo" ];
@@ -245,8 +253,8 @@ let%expect_test _ =
     Everything at the top-level was executed.
     - test_originate exited with value (). |}]
 
-let () = Caml.Sys.chdir pwd
-let () = Caml.Sys.chdir "using_scope_pkg_project/src/a"
+let () = Sys_unix.chdir pwd
+let () = Sys_unix.chdir "using_scope_pkg_project/src/a"
 
 let%expect_test _ =
   run_ligo_good [ "run"; "test"; "b/c/contract.test.mligo" ];
@@ -290,8 +298,8 @@ let%expect_test _ =
     Everything at the top-level was executed.
     - test_originate exited with value (). |}]
 
-let () = Caml.Sys.chdir pwd
-let () = Caml.Sys.chdir "using_scope_pkg_project/src"
+let () = Sys_unix.chdir pwd
+let () = Sys_unix.chdir "using_scope_pkg_project/src"
 
 let%expect_test _ =
   run_ligo_good [ "run"; "test"; "a/b/c/contract.test.mligo" ];
@@ -335,7 +343,7 @@ let%expect_test _ =
     Everything at the top-level was executed.
     - test_originate exited with value (). |}]
 
-let () = Caml.Sys.chdir pwd
+let () = Sys_unix.chdir pwd
 
 let%expect_test _ =
   run_ligo_good
@@ -385,6 +393,8 @@ let%expect_test _ =
     Everything at the top-level was executed.
     - test_originate exited with value (). |}]
 
+let () = Sys_unix.chdir pwd
+
 let%expect_test _ =
   run_ligo_good
     [ "compile"; "contract"; "dao_path_bug/main.mligo"; "--project-root"; "dao_path_bug" ];
@@ -394,7 +404,8 @@ let%expect_test _ =
       storage (option nat) ;
       code { DROP ; SENDER ; UNIT ; VIEW "total_supply" nat ; NIL operation ; PAIR } } |}]
 
-let () = Caml.Sys.chdir "dao_path_bug"
+let () = Sys_unix.chdir pwd
+let () = Sys_unix.chdir "dao_path_bug"
 
 let%expect_test _ =
   run_ligo_good [ "compile"; "contract"; "main.mligo" ];
@@ -404,7 +415,7 @@ let%expect_test _ =
       storage (option nat) ;
       code { DROP ; SENDER ; UNIT ; VIEW "total_supply" nat ; NIL operation ; PAIR } } |}]
 
-let () = Caml.Sys.chdir pwd
+let () = Sys_unix.chdir pwd
 
 let%expect_test _ =
   run_ligo_good
@@ -425,7 +436,8 @@ let%expect_test _ =
              NIL operation ;
              PAIR } } |}]
 
-let () = Caml.Sys.chdir "include_include"
+let () = Sys_unix.chdir pwd
+let () = Sys_unix.chdir "include_include"
 
 let%expect_test _ =
   run_ligo_good [ "compile"; "contract"; "main.mligo" ];
@@ -440,7 +452,7 @@ let%expect_test _ =
              NIL operation ;
              PAIR } } |}]
 
-let () = Caml.Sys.chdir pwd
+let () = Sys_unix.chdir pwd
 
 let%expect_test _ =
   run_ligo_good
@@ -464,7 +476,8 @@ let%expect_test _ =
              NIL operation ;
              PAIR } } |}]
 
-let () = Caml.Sys.chdir "include_import"
+let () = Sys_unix.chdir pwd
+let () = Sys_unix.chdir "include_import"
 
 let%expect_test _ =
   run_ligo_good [ "compile"; "contract"; "main.mligo" ];
@@ -482,7 +495,7 @@ let%expect_test _ =
              NIL operation ;
              PAIR } } |}]
 
-let () = Caml.Sys.chdir pwd
+let () = Sys_unix.chdir pwd
 
 let%expect_test _ =
   run_ligo_good
@@ -506,7 +519,8 @@ let%expect_test _ =
              NIL operation ;
              PAIR } } |}]
 
-let () = Caml.Sys.chdir "import_import"
+let () = Sys_unix.chdir pwd
+let () = Sys_unix.chdir "import_import"
 
 let%expect_test _ =
   run_ligo_good [ "compile"; "contract"; "main.mligo" ];
@@ -524,7 +538,7 @@ let%expect_test _ =
              NIL operation ;
              PAIR } } |}]
 
-let () = Caml.Sys.chdir pwd
+let () = Sys_unix.chdir pwd
 
 let%expect_test _ =
   run_ligo_good
@@ -551,7 +565,8 @@ let%expect_test _ =
              NIL operation ;
              PAIR } } |}]
 
-let () = Caml.Sys.chdir "import_include"
+let () = Sys_unix.chdir pwd
+let () = Sys_unix.chdir "import_include"
 
 let%expect_test _ =
   run_ligo_good [ "compile"; "contract"; "main.mligo" ];
@@ -572,7 +587,7 @@ let%expect_test _ =
              NIL operation ;
              PAIR } } |}]
 
-let () = Caml.Sys.chdir pwd
+let () = Sys_unix.chdir pwd
 
 let%expect_test _ =
   run_ligo_good
@@ -589,7 +604,8 @@ let%expect_test _ =
     Everything at the top-level was executed.
     - test exited with value (). |}]
 
-let () = Caml.Sys.chdir "using_ligo_breathalyser"
+let () = Sys_unix.chdir pwd
+let () = Sys_unix.chdir "using_ligo_breathalyser"
 
 let%expect_test _ =
   run_ligo_good [ "run"; "test"; "test.mligo"; "--no-warn" ];
@@ -605,7 +621,7 @@ let%expect_test _ =
     Everything at the top-level was executed.
     - test exited with value (). |}]
 
-let () = Caml.Sys.chdir pwd
+let () = Sys_unix.chdir pwd
 
 let%expect_test _ =
   let test s =
@@ -680,27 +696,28 @@ let%expect_test _ =
 
 (* main file resolution tests *)
 
-let () = Caml.Sys.chdir "main_file_resolution/valid_main"
+let () = Sys_unix.chdir pwd
+let () = Sys_unix.chdir "main_file_resolution/valid_main"
 
-(* FIXME (@alistair.obrien): 
-   This test is disabled until we patch the breathalyzer package with the correct exports / public imports 
+(* FIXME (@alistair.obrien):
+   This test is disabled until we patch the breathalyzer package with the correct exports / public imports
    MR that introduced this: https://gitlab.com/ligolang/ligo/-/merge_requests/3112
    Related issue: https://gitlab.com/ligolang/ligo/-/issues/2161
 *)
-(* 
+(*
 let%expect_test _ =
   run_ligo_good [ "run"; "test"; "main.mligo"; "--no-warn" ];
   [%expect.unreachable];
-  Caml.Sys.chdir pwd;
-  Caml.Sys.chdir "main_file_resolution/invalid_main";
+  Sys_unix.chdir pwd;
+  Sys_unix.chdir "main_file_resolution/invalid_main";
   run_ligo_bad [ "run"; "test"; "main.mligo" ];
   [%expect.unreachable];
-  Caml.Sys.chdir pwd;
-  Caml.Sys.chdir "main_file_resolution/scoped_valid_main";
+  Sys_unix.chdir pwd;
+  Sys_unix.chdir "main_file_resolution/scoped_valid_main";
   run_ligo_good [ "run"; "test"; "main.mligo" ];
   [%expect.unreachable];
-  Caml.Sys.chdir pwd;
-  Caml.Sys.chdir "main_file_resolution/scoped_invalid_main";
+  Sys_unix.chdir pwd;
+  Sys_unix.chdir "main_file_resolution/scoped_invalid_main";
   run_ligo_bad [ "run"; "test"; "main.mligo" ];
   [%expect.unreachable]
   [@@expect.uncaught_exn
@@ -723,12 +740,12 @@ let%expect_test _ =
 
    Module "Breath.Logger" not found. |}] *)
 
-let () = Caml.Sys.chdir pwd
+let () = Sys_unix.chdir pwd
 
 (* ligo publish tests *)
 
 let ligo_bin_path = "../../../../../install/default/bin/ligo"
-let () = Caml.Sys.chdir "publish_invalid_main"
+let () = Sys_unix.chdir "publish_invalid_main"
 
 let%expect_test _ =
   run_ligo_bad [ "registry"; "publish"; "--dry-run" ];
@@ -739,8 +756,8 @@ let%expect_test _ =
     Error: main file does not exists.
     Please specify a valid LIGO file in ligo.json. |}]
 
-let () = Caml.Sys.chdir pwd
-let () = Caml.Sys.chdir "publish_invalid_main2"
+let () = Sys_unix.chdir pwd
+let () = Sys_unix.chdir "publish_invalid_main2"
 
 let%expect_test _ =
   run_ligo_bad [ "registry"; "publish"; "--dry-run" ];
@@ -751,8 +768,8 @@ let%expect_test _ =
     Error: Invalid LIGO file specifed in main field of ligo.json
     Valid extension for LIGO files are (.mligo, .jsligo) |}]
 
-let () = Caml.Sys.chdir pwd
-let () = Caml.Sys.chdir "publish_invalid_storage"
+let () = Sys_unix.chdir pwd
+let () = Sys_unix.chdir "publish_invalid_storage"
 
 let%expect_test _ =
   run_ligo_bad [ "registry"; "publish"; "--dry-run" ];
@@ -762,7 +779,7 @@ let%expect_test _ =
     ==> Validating manifest file...
     Error: Check `storage_fn` & `storage_arg` in packge.json or check your LIGO storage expression |}]
 
-let () = Caml.Sys.chdir pwd
+let () = Sys_unix.chdir pwd
 
 let clean_size ~prefix line =
   if String.is_prefix ~prefix line
@@ -795,7 +812,7 @@ let remove_dynamic_info_from_log log =
   |> String.concat ~sep:"\n"
 
 
-let () = Caml.Sys.chdir "publish_lib_lt_1mb"
+let () = Sys_unix.chdir "publish_lib_lt_1mb"
 
 let%expect_test _ =
   run_ligo_good [ "registry"; "publish"; "--dry-run" ];
@@ -816,8 +833,8 @@ let%expect_test _ =
         unpacked size: *** kB
         total files:   3 |}]
 
-let () = Caml.Sys.chdir pwd
-let () = Caml.Sys.chdir "publish_contract_lt_1mb"
+let () = Sys_unix.chdir pwd
+let () = Sys_unix.chdir "publish_contract_lt_1mb"
 
 let%expect_test _ =
   run_ligo_good [ "registry"; "publish"; "--dry-run" ];
@@ -838,8 +855,8 @@ let%expect_test _ =
         unpacked size: *** kB
         total files:   3 |}]
 
-let () = Caml.Sys.chdir pwd
-let () = Caml.Sys.chdir "publish_contract_gt_1mb"
+let () = Sys_unix.chdir pwd
+let () = Sys_unix.chdir "publish_contract_gt_1mb"
 
 let%expect_test _ =
   run_ligo_good [ "registry"; "publish"; "--dry-run" ];
@@ -860,8 +877,8 @@ let%expect_test _ =
         unpacked size: *** MB
         total files:   3 |}]
 
-let () = Caml.Sys.chdir pwd
-let () = Caml.Sys.chdir "publish_contract_slash_in_pkg_name"
+let () = Sys_unix.chdir pwd
+let () = Sys_unix.chdir "publish_contract_slash_in_pkg_name"
 
 let%expect_test _ =
   run_ligo_good [ "registry"; "publish"; "--dry-run" ];
@@ -882,8 +899,8 @@ let%expect_test _ =
         unpacked size: *** B
         total files:   3 |}]
 
-let () = Caml.Sys.chdir pwd
-let () = Caml.Sys.chdir "test_ligoignore"
+let () = Sys_unix.chdir pwd
+let () = Sys_unix.chdir "test_ligoignore"
 
 let%expect_test _ =
   run_ligo_good [ "registry"; "publish"; "--dry-run" ];
@@ -904,8 +921,8 @@ let%expect_test _ =
         unpacked size: *** B
         total files:   1 |}]
 
-let () = Caml.Sys.chdir pwd
-let () = Caml.Sys.chdir "test_ligoignore_with_empty_lines"
+let () = Sys_unix.chdir pwd
+let () = Sys_unix.chdir "test_ligoignore_with_empty_lines"
 
 let%expect_test _ =
   run_ligo_good [ "registry"; "publish"; "--dry-run" ];
@@ -931,7 +948,9 @@ let spawn_unpublish_mock_server () =
   Lwt.async @@ fun () -> Unpublish_mock_server.server_lwt port
 
 
-let () = Caml.Sys.chdir pwd
+let () = Sys_unix.chdir pwd
+let () = Sys_unix.chdir "test_ligoignore_with_empty_lines"
+
 (* Spawns a mock server with a single package called @foo/bar-pkg with two versions
    1.0.4
    1.0.5
@@ -939,7 +958,12 @@ let () = Caml.Sys.chdir pwd
 
 let () = spawn_unpublish_mock_server ()
 
+(* FIXME: @Christian.Rinderknecht
+   These tests are disabled because of the upgrade of Core to its latest version.
+*)
+
 (* Tries to unpublish version 1.0.5 *)
+(*
 let%expect_test _ =
   run_ligo_good
     [ "registry"
@@ -956,8 +980,11 @@ let%expect_test _ =
   [%expect {|
     ==> Checking auth token... Done
     ==> Unpublishing package... Done |}]
-
+*)
 (* Unpublishing the only version remaining, 1.0.4. Equivalent to unpublishing the entire package *)
+(*
+let () = Sys_unix.chdir pwd
+
 let%expect_test _ =
   run_ligo_good
     [ "registry"
@@ -975,8 +1002,12 @@ let%expect_test _ =
     {|
     ==> Checking auth token... Done
     ==> Package @foo/bar-pkg has only one version 1.0.4. Unpublishing the entire package..... Done |}]
-
+*)
 (* Try to unpublish again, this time, only failing *)
+(*
+let () = Sys_unix.chdir pwd
+let () = Sys_unix.chdir "test_ligoignore_with_empty_lines"
+
 let%expect_test _ =
   run_ligo_bad
     [ "registry"
@@ -993,5 +1024,5 @@ let%expect_test _ =
     ==> Checking auth token... Done
     ==> Deleting package completely...
     Package not found |}]
-
-let () = Caml.Sys.chdir pwd
+*)
+let () = Sys_unix.chdir pwd

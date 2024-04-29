@@ -20,8 +20,8 @@ let get_mod_binder_name : Module_var.t -> string =
 
 module Location = Simple_utils.Location
 module List = Simple_utils.List
-module LSet = Caml.Set.Make (Simple_utils.Location)
-module LMap = Simple_utils.Map.Make (Simple_utils.Location)
+module LSet = Set.Make (Simple_utils.Location)
+module LMap = Map.Make (Simple_utils.Location)
 
 module Uid : sig
   (** A UID uniquely identifies some value, type, module, or label, by using its name and

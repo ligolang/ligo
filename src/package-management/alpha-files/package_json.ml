@@ -1,6 +1,6 @@
 open Package_management_external_libs
 module Semver = Ligo_semver
-module DependencyMap = Caml.Map.Make (String)
+module DependencyMap = Map.Make (String)
 
 type t =
   { dependencies : Semver.t DependencyMap.t
@@ -14,7 +14,7 @@ let dependencies_y_to_map ~field_name = function
       match dependencies_map_acc, version_y with
       | Ok dependencies_map, `String version_str ->
         (match Semver.of_string version_str with
-        | Some version -> Ok (DependencyMap.add name version dependencies_map)
+        | Some version -> Ok (Map.set ~key:name ~data:version dependencies_map)
         | None -> Error ("Could not parse version string: " ^ version_str ^ " for " ^ name))
       | Error e, _ -> Error e
       | _, y ->
@@ -48,7 +48,7 @@ let extract_dependencies =
 let to_yojson { dependencies; dev_dependencies } =
   let dependencies_to_y dependencies =
     let f (name, version) = name, `String (Semver.to_string version) in
-    `Assoc (dependencies |> DependencyMap.bindings |> List.map ~f)
+    `Assoc (dependencies |> Map.to_alist |> List.map ~f)
   in
   let dependencies_y = dependencies_to_y dependencies in
   let dev_dependencies_y = dependencies_to_y dev_dependencies in

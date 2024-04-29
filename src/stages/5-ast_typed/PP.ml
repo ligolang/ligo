@@ -4,7 +4,6 @@ module Location = Simple_utils.Location
 module Var = Simple_utils.Var
 module List = Simple_utils.List
 module Ligo_string = Simple_utils.Ligo_string
-module Int64 = Caml.Int64
 open Ligo_prim
 open Format
 open Types

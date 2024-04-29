@@ -18,17 +18,17 @@ type interpreter_error = Errors.interpreter_error
    if that fails it tries to resolve it as a relative path w.r.t. directory of [source_file]
    if that fails it tries to resolve it as a package path using [mod_res] *)
 let resolve_contract_file ~mod_res ~source_file ~contract_file =
-  match Caml.Sys.file_exists contract_file with
-  | true -> contract_file
-  | false ->
+  match Sys_unix.file_exists contract_file with
+  | `Yes -> contract_file
+  | `No | `Unknown ->
     (match source_file with
+    | None -> ModRes.Helpers.resolve ~file:contract_file mod_res
     | Some source_file ->
       let d = Filename.dirname source_file in
       let s = Filename.concat d contract_file in
-      (match Caml.Sys.file_exists s with
-      | true -> s
-      | false -> ModRes.Helpers.resolve ~file:contract_file mod_res)
-    | None -> ModRes.Helpers.resolve ~file:contract_file mod_res)
+      (match Sys_unix.file_exists s with
+      | `Yes -> s
+      | `No | `Unknown -> ModRes.Helpers.resolve ~file:contract_file mod_res))
 
 
 (*
@@ -1314,18 +1314,20 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t)
     let id = Mutation.get_mutation_id mutation in
     let file_path = reg#file in
     (try
-       let odir = Caml.Sys.getcwd () in
-       let () = Caml.Sys.chdir dir in
-       let file_path = Filename.basename file_path in
-       let file_path =
-         Caml.Filename.remove_extension file_path
-         ^ "."
-         ^ id
-         ^ Caml.Filename.extension file_path
+       let odir = Sys_unix.getcwd () in
+       let () = Sys_unix.chdir dir in
+       let file_path = Core.Filename.basename file_path in
+       let filename, extension = Core.Filename.split_extension file_path in
+       let extension =
+         match extension with
+         | Some ext -> ext
+         | None -> ""
        in
+       let file_path = filename ^ "." ^ id ^ extension in
        let out_chan = Out_channel.create file_path in
-       let () = Caml.Buffer.output_buffer out_chan file_contents in
-       let () = Caml.Sys.chdir odir in
+       let string_contents = Core.Buffer.contents file_contents in
+       let () = Out_channel.output_string out_chan string_contents in
+       let () = Sys_unix.chdir odir in
        return (v_some (v_string file_path))
      with
     | Sys_error _ -> return (v_none ()))
@@ -2057,7 +2059,7 @@ and eval_ligo ~raise ~steps ~options : AST.expression -> calltrace -> env -> val
     let code = Tezos_utils.Michelson.map replace code in
     let args =
       List.filter_mapi
-        ~f:(fun i v -> if not (List.mem !used i ~equal:Caml.( = )) then Some v else None)
+        ~f:(fun i v -> if not (List.mem !used i ~equal:Int.equal) then Some v else None)
         args
     in
     let>> v =

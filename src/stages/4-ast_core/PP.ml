@@ -1,6 +1,5 @@
 [@@@coverage exclude_file]
 
-module Int64 = Caml.Int64
 open Ligo_prim
 open Types
 open Format

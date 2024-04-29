@@ -79,7 +79,10 @@ let resolve_module_alias
     let resolved_name = Types.mvar_to_id ma in
     let m_alias =
       Option.value_map lhs_mv_opt ~default:m_alias ~f:(fun lhs_mv ->
-          LMap.add (Module_var.get_location lhs_mv) (resolved_ids, resolved_name) m_alias)
+          Core.Map.set
+            m_alias
+            ~key:(Module_var.get_location lhs_mv)
+            ~data:(resolved_ids, resolved_name))
     in
     m_alias, Some (Alias ma)
   | None -> m_alias, None
@@ -363,13 +366,13 @@ let rec patch : t -> Types.def list -> Types.def list =
     let name = Uid.to_name uid in
     let loc = Uid.to_location uid in
     let same_name_lte =
-      LMap.filter
-        (fun _loc (_resolved_module_path, resolved_module) ->
+      Core.Map.filteri
+        m_alias
+        ~f:(fun ~key:_loc ~data:(_resolved_module_path, resolved_module) ->
           Location.compare (Uid.to_location resolved_module) loc <= 0
           && String.equal (Uid.to_name resolved_module) name)
-        m_alias
     in
-    Option.map ~f:snd @@ LMap.max_binding_opt same_name_lte
+    Option.map ~f:snd @@ Core.Map.max_elt same_name_lte
   in
   let patch_resolve_mod_name path =
     let module_path = get_module_path path in
@@ -392,7 +395,7 @@ let rec patch : t -> Types.def list -> Types.def list =
         let patch_mod_case = function
           | Def defs -> Def (patch m_alias defs)
           | Alias { resolve_mod_name } as alias ->
-            (match LMap.find_opt m.range m_alias with
+            (match Core.Map.find m_alias m.range with
             | None -> alias
             | Some (resolved_module_path, resolved_module) ->
               Alias

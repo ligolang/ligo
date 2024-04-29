@@ -25,7 +25,7 @@ let main ~ligo_registry ~ligorc_path ~username =
   | Ok Password_reset_emailed ->
     Ok ("An email containing the link to reset your password has been sent", "")
   | Ok Profile_creation_pending ->
-    let ( let* ) = Caml.Result.bind in
+    let ( let* ) v f = Result.bind v ~f in
     let prompt () =
       let open Lwt_result.Syntax in
       let* email = Prompt.prompt ~msg:"Email: " in

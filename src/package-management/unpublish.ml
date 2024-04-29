@@ -71,7 +71,7 @@ let unpublish_package_version ~name ~body ~ligo_registry ~token ~tarball_name ~r
   handle_server_response ~name response body_str
 
 
-(* The function [get_auth_token] reads as .ligorc file and extracts the 
+(* The function [get_auth_token] reads as .ligorc file and extracts the
    auth-token for the requested [ligo_registry] *)
 let get_auth_token ~ligorc_path ligo_registry =
   let ligorc = LigoRC.read ~ligorc_path in
@@ -124,7 +124,8 @@ let unpublish ~name ~version ~ligo_registry ~ligorc_path =
       Error (e, w)
     | Ok { name; attachments; versions; readme; description; revision; _ } ->
       (match
-         SMap.cardinal versions, SMap.exists (fun k _ -> String.equal k version) versions
+         ( Map.length versions
+         , Map.existsi versions ~f:(fun ~key ~data:_ -> String.equal key version) )
        with
       | 1, true ->
         let before =
@@ -138,12 +139,12 @@ let unpublish ~name ~version ~ligo_registry ~ligorc_path =
         let msg = Printf.sprintf "Package %s does not have version %s. " name version in
         Error (msg, "")
       | _, _ ->
-        let f k _ = not (String.equal k version) in
-        let versions = SMap.filter f versions in
+        let f ~key ~data:_ = not (String.equal key version) in
+        let versions = Map.filteri ~f versions in
         let latest_version =
           match
             versions
-            |> SMap.bindings
+            |> Map.to_alist
             |> List.filter_map ~f:(fun (v, _) -> Semver.of_string v)
             |> List.sort ~compare:(fun x y ->
                    Semver.compare x y * -1 (* inverts the order *))

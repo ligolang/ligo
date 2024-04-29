@@ -5,19 +5,19 @@ open Package_management_alpha_files
 open Lock_file
 open Cli_helpers
 
-module Closure = Caml.Set.Make (struct
+module Closure = Set.Make (struct
   include NameVersion
 
   type t = NameVersion.t
 end)
 
-module Metadata_cache = Caml.Map.Make (struct
+module Metadata_cache = Map.Make (struct
   include NameVersion
 
   type t = NameVersion.t
 end)
 
-module InstallationJsonMap = Caml.Map.Make (NameVersion)
+module InstallationJsonMap = Map.Make (NameVersion)
 
 let ( let@ ) o f = Result.bind ~f o
 
@@ -104,38 +104,38 @@ let does_json_manifest_exist ~project_root =
   let ligo_json = Filename.concat project_root "ligo.json" in
   let esy_json = Filename.concat project_root "esy.json" in
   match
-    ( Caml.Sys.file_exists ligo_json
-    , Caml.Sys.file_exists package_json
-    , Caml.Sys.file_exists esy_json )
+    ( Sys_unix.file_exists ligo_json
+    , Sys_unix.file_exists package_json
+    , Sys_unix.file_exists esy_json )
   with
-  | true, _, _ ->
+  | `Yes, _, _ ->
     (try
        let _ = Yojson.Safe.from_file ligo_json in
        `OK
        (* TODO: in case of invalid json write {} to the file *)
      with
     | _ -> `Invalid_ligo_json)
-  | false, true, false ->
+  | (`No | `Unknown), `Yes, (`No | `Unknown) ->
     (try
        let _ = Yojson.Safe.from_file package_json in
        `Valid_package_json
      with
     | _ -> `Invalid_package_json)
-  | false, _, true ->
+  | (`No | `Unknown), _, `Yes ->
     (try
        let _ = Yojson.Safe.from_file esy_json in
        `Valid_esy_json
      with
     | _ -> `Invalid_package_json)
-  | false, false, false -> `No_manifest
+  | (`No | `Unknown), (`No | `Unknown), (`No | `Unknown) -> `No_manifest
 
 
-(* 
+(*
 [DEPRECATED USAGE IN FUTURE]
 
 With esy not being used this particular convention would be removed
 this is just a stub to make sure that currently this works with package import
-with the current preproccessor that accepts a package name with a 8 letter hex code 
+with the current preproccessor that accepts a package name with a 8 letter hex code
 
   This is temporary and ffffffff is random string and has no signficant meaning
 *)
@@ -158,12 +158,18 @@ let installation_json : string -> Fpath.t =
  fun path -> Fpath.(v path / "_ligo" / "ligo" / "installation.json")
 
 
+let file_exists fname =
+  match Sys_unix.file_exists fname with
+  | `Yes -> true
+  | `No | `Unknown -> false
+
+
 let index_json_exists : string -> bool =
- fun path -> Caml.Sys.file_exists @@ Fpath.to_string @@ lock_file path
+ fun path -> file_exists @@ Fpath.to_string @@ lock_file path
 
 
 let ligo_json_exists : string -> bool =
- fun project_root -> Caml.Sys.file_exists @@ Fpath.to_string @@ ligo_json project_root
+ fun project_root -> file_exists @@ Fpath.to_string @@ ligo_json project_root
 
 
 let read_lock_file ~project_root =
@@ -192,7 +198,7 @@ let find_latest_version : Json.t -> string =
   Json.Util.(member "dist-tags" json |> member "latest" |> Json.to_string |> trim_quotes)
 
 
-(* 
+(*
 if version contains the following
   1. '^' -> return the version that it is prefixed to - eg. "^1.0.0" => "1.0.0"
   2. '~' -> return the version that it is prefixed to - eg. "~1.0.0" => "1.0.0"
@@ -233,11 +239,11 @@ let get_apt_version : string -> json:Json.t -> string =
 
 (* The one place where package version must be supplied as a string.
    This helps us pass "*" as a version.
-   
+
    If we disallow "*", find_latest_version is pointless.
 
    Ideally, it should be decomposed - it shouldnt have to resolve "*" versions
-   
+
  *)
 
 let get_metadata_json
@@ -293,7 +299,7 @@ let create_pkg_dir ~dest_dir ~tarball_path =
 
 let cached_get_metadata_json ~cache ~name ~version ~ligo_registry =
   let open Lwt_result.Syntax in
-  match Metadata_cache.find_opt (NameVersion.make ~name ~version) cache with
+  match Map.find cache (NameVersion.make ~name ~version) with
   | Some metadata_json -> Lwt.return_ok (metadata_json, cache)
   | None ->
     let* (metadata_json : Json.t) =
@@ -303,8 +309,7 @@ let cached_get_metadata_json ~cache ~name ~version ~ligo_registry =
         ~ligo_registry
     in
     Lwt.return_ok
-      ( metadata_json
-      , Metadata_cache.(add NameVersion.{ name; version } metadata_json cache) )
+      (metadata_json, Map.set ~key:NameVersion.{ name; version } ~data:metadata_json cache)
 
 
 (* The following function fetches tarballs using the source entry in index.json,
@@ -382,7 +387,7 @@ let fetch_tarballs
         Lwt_result.lift @@ Result.of_option ~error:UnableToObtainRelativePath path
       in
       let* () = create_pkg_dir ~dest_dir ~tarball_path in
-      let installation_map = InstallationJsonMap.add pkg rel_dir installation_map in
+      let installation_map = Map.set ~key:pkg ~data:rel_dir installation_map in
       loop ~cache ~installation_map rest
   in
   (* gets details from cache and download tar file to the ligo_package_dir *)
@@ -396,7 +401,11 @@ let fetch_tarballs
   let tar_zip_files =
     let dir = Fpath.v source in
     let is_tar_zip path =
-      let path = Caml.Filename.extension @@ Fpath.to_string path in
+      let path =
+        match Filename.split_extension (Fpath.to_string path) with
+        | _, Some ext -> ext
+        | _ -> ""
+      in
       match path with
       | ".tgz" | ".tar" | ".gzip" -> true
       | _ -> false
@@ -408,7 +417,7 @@ let fetch_tarballs
     | Error (`Msg msg) -> raise @@ Failure msg
   in
   (* cleanup all the uneccessary .tgz and .tar files in the ligo package directory *)
-  List.iter ~f:Caml.Sys.remove tar_zip_files;
+  List.iter ~f:Sys_unix.remove tar_zip_files;
   Lwt_result.return installation_map
 
 
@@ -440,7 +449,7 @@ let generate_installation_json
     in
     `Assoc (default :: List.map ~f lst)
   in
-  let lst = InstallationJsonMap.bindings installation_json_map in
+  let lst = Map.to_alist installation_json_map in
   create_json lst
 
 
@@ -603,7 +612,7 @@ let get_transitive_closure ~ligo_registry dependencies =
   let open Lwt_result.Syntax in
   let rec traverse deps closure cache =
     match deps with
-    | [] -> Lwt.return_ok (Closure.elements closure, cache)
+    | [] -> Lwt.return_ok (Set.to_list closure, cache)
     | (name, version) :: rest ->
       let version_str = remove_version_prefix version in
       let* version =
@@ -613,13 +622,13 @@ let get_transitive_closure ~ligo_registry dependencies =
       in
       let version = NameVersion.SemverVersion version in
       let package = NameVersion.make ~name ~version in
-      (match Closure.mem package closure with
+      (match Set.mem closure package with
       | true -> traverse rest closure cache
       | false ->
         let* metadata_json, cache =
           cached_get_metadata_json ~cache ~name ~version ~ligo_registry
         in
-        let closure = Closure.add package closure in
+        let closure = Set.add closure package in
         let* _ = Lwt.return @@ RegistryResponse.get_version (Ok metadata_json) in
         let rest = rest @ RegistryResponse.get_dependencies (Ok metadata_json) in
         traverse rest closure cache)
@@ -673,8 +682,7 @@ let generate_lock_file
   let dev_dependencies = dev_dependencies ligo_json solution in
   let metadata_json_list =
     let f name_version =
-      Metadata_cache.find_opt name_version cache
-      |> Result.of_option ~error:MetadataJsonCacheFail
+      Map.find cache name_version |> Result.of_option ~error:MetadataJsonCacheFail
     in
     List.map ~f solution |> Result.all
   in
@@ -709,7 +717,7 @@ let generate_lock_file
         | Node.NodeVersion version ->
           let version = NameVersion.SemverVersion version in
           let name_version = NameVersion.make ~name ~version in
-          let acc = NodeMap.add name_version node acc in
+          let acc = Map.set ~key:name_version ~data:node acc in
           loop tl acc
         | Node.DefaultVersion _ -> loop tl acc)
     in
@@ -734,11 +742,11 @@ let generate_lock_file
             | Node.DefaultVersion version ->
               let version = NameVersion.StringVersion version in
               let name_version = NameVersion.make ~name ~version in
-              Ok (NodeMap.add name_version default_node nodes)
+              Ok (Map.set ~key:name_version ~data:default_node nodes)
             | Node.NodeVersion version ->
               let version = NameVersion.SemverVersion version in
               let name_version = NameVersion.make ~name ~version in
-              Ok (NodeMap.add name_version default_node nodes)
+              Ok (Map.set ~key:name_version ~data:default_node nodes)
           in
           nodes)
     in
@@ -773,7 +781,7 @@ let is_checksum_in_sync current_checksum all_dependencies =
 
 
 let get_lock_file_that_is_in_sync ~project_root ~all_dependencies =
-  let ( let+ ) = Caml.Option.bind in
+  let ( let+ ) v f = Option.bind v ~f in
   let+ lock_file_json =
     match read_lock_file ~project_root with
     | Ok json -> Some json
@@ -860,7 +868,7 @@ let run ~project_root package_name cache_path ligo_registry =
           | Error m -> Error (LockFileParserFailure m)
           | Ok lock_file -> Ok lock_file
         in
-        let solution = Lock_file.(NodeMap.bindings lock_file.node) |> List.map ~f:fst in
+        let solution = Lock_file.(Map.to_alist lock_file.node) |> List.map ~f:fst in
         Lwt_result.return (solution, Metadata_cache.empty)
       | None ->
         let* solution, cache = solve ~all_dependencies ~ligo_registry in

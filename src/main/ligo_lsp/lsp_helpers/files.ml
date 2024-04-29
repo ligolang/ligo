@@ -27,7 +27,7 @@ let list_library_files
       try Some (Yojson.Safe.from_file installation_json_path) with
       | _ -> None
     in
-    let module SMap = Caml.Map.Make (String) in
+    let module SMap = Core.Map.Make (String) in
     let%bind assoc_list =
       match installation_json with
       | `Assoc lst -> Some lst
@@ -45,7 +45,7 @@ let list_library_files
                  | Error _ -> None
                in
                let path_to_sources = FilePath.make_absolute (Path.to_string dir) v in
-               return @@ SMap.add path_to_sources package_name mp)
+               return @@ Core.Map.set mp ~key:path_to_sources ~data:package_name)
           | _ -> mp)
     in
     let root_deps = Preprocessor.ModRes.get_root_dependencies mod_res in
@@ -53,7 +53,7 @@ let list_library_files
     return
     @@ List.concat
     @@ List.filter_map root_deps ~f:(fun (Path path) ->
-           let%bind package_name = SMap.find_opt path path_to_package_map in
+           let%bind package_name = Core.Map.find path_to_package_map path in
            let path = normalize path in
            list_directory ~normalize ~include_library:true path
            |> List.map ~f:(Filename.concat package_name <@ Path.make_relative path)

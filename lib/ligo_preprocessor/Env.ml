@@ -1,1 +1,1 @@
-include Caml.Set.Make (String)
+include Set.Make (String)

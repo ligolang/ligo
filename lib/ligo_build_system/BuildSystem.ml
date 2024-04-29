@@ -105,11 +105,7 @@ module Make (M : M) = struct
         in
         let dep_g, vertices =
           let f (x, y) =
-            let dependency_code_input =
-              match Caml.Sys.backend_type with
-              | Other "js_of_ocaml" -> Source_input.HTTP (Uri.of_string x)
-              | _ -> Source_input.From_file x
-            in
+            let dependency_code_input = Source_input.From_file x in
             dependency_code_input, y
           in
           let deps = List.map ~f deps in
@@ -200,12 +196,6 @@ module Make (M : M) = struct
       (_file_name, (_meta, _c_unit, deps))
     =
     let aux (file_name, module_name) =
-      let file_name =
-        match Caml.Sys.backend_type with
-        | Other "js_of_ocaml" ->
-          Filename.basename file_name (* Because HTTP URIs could be deepers *)
-        | _ -> file_name
-      in
       let ast_typed =
         match SMap.find_opt file_name asts_typed with
         | Some ast -> ast

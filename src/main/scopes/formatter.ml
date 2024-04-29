@@ -51,14 +51,14 @@ let pp_get_scope_output : get_scope_output pp =
   let () = if not @@ List.is_empty errors then Format.fprintf f "@[<v>Errors: @,@]" in
   let () =
     errors
-    |> List.dedup_and_sort ~compare:Caml.compare
+    |> List.dedup_and_sort ~compare:Stdlib.compare
     |> List.iter ~f:(fun err ->
            error_format.pp ~display_format ~no_colour f err;
            Format.fprintf f "@,")
   in
   let () = if not @@ List.is_empty warns then Format.fprintf f "@[<v>Warnings: @,@]" in
   warns
-  |> List.dedup_and_sort ~compare:Caml.compare
+  |> List.dedup_and_sort ~compare:Stdlib.compare
   |> List.iter ~f:(fun warn ->
          warn_format.pp ~display_format ~no_colour f warn;
          Format.fprintf f "@,")

@@ -2,7 +2,6 @@ open Lsp_test_helpers.Handlers
 open Lsp_test_helpers.Common
 open Lsp_helpers
 module Requests = Ligo_lsp.Server.Requests
-open Requests.Handler
 
 type hover_test =
   { file : string
@@ -29,7 +28,7 @@ let get_hover_test ({ file; hover_positions } : hover_test) : unit =
         Position.pp
         position
         Fmt.Dump.(list (pair Path.pp (list Diagnostic.pp)))
-        (Path_hashtbl.to_alist diagnostics)
+        (Hashtbl.to_alist diagnostics)
     in
     match actual_hover with
     | None -> failwith @@ "Expected a hover message, got none.\n" ^ test_info

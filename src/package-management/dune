@@ -1,6 +1,8 @@
 (library
  (name package_management)
  (libraries
+  core_unix
+  core_unix.filename_unix
   cli_helpers
   registry
   package_management_external_libs

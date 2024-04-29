@@ -3,28 +3,29 @@
 open Package_management_alpha_shared
 module Semver = Package_management_external_libs.Ligo_semver
 module NameVersion = Name_version
-module NameVersionMap = Caml.Map.Make (NameVersion)
+module NameVersionMap = Map.Make (NameVersion)
+open Core
 
 module Source = struct
-  type dist = string [@@deriving yojson]
+  type dist = string [@@deriving yojson, sexp]
 
   type default =
     { type_ : string [@key "type"]
     ; path : string
     ; manifest : string
     }
-  [@@deriving yojson]
+  [@@deriving yojson, sexp]
 
   type node =
     { type_ : string [@key "type"]
     ; source : dist list
     }
-  [@@deriving yojson]
+  [@@deriving yojson, sexp]
 
   type t =
     | Node of node
     | Default of default
-  [@@deriving yojson]
+  [@@deriving yojson, sexp]
 
   let to_yojson = function
     | Node node -> node_to_yojson node
@@ -36,7 +37,7 @@ module Source = struct
 
 
   let of_yojson y =
-    let ( let+ ) = Caml.Result.bind in
+    let ( let+ ) v f = Result.bind v ~f in
     match Yojson.Safe.(Util.member "type" y |> to_string |> trim_quotes) with
     | exception Yojson.Safe.Util.Type_error _ ->
       Error "Couldn't parse lock file json while parsing 'source' field"
@@ -50,13 +51,13 @@ end
 
 module Node = struct
   type dependency = string * string [@@deriving yojson]
-  type source = Source.t [@@deriving yojson]
+  type source = Source.t [@@deriving yojson, sexp]
 
   (* In default node version is a string and not a semver equivalent string *)
   type version =
-    | NodeVersion of Semver.t
+    | NodeVersion of (int * int * int) (* Semver.t *)
     | DefaultVersion of string
-  [@@deriving yojson]
+  [@@deriving yojson, sexp]
 
   let version_to_yojson = function
     | NodeVersion semver -> `String (Semver.to_string semver)
@@ -84,7 +85,7 @@ module Node = struct
     ; dependencies : NameVersion.t list
     ; dev_dependencies : NameVersion.t list [@key "devDependencies"]
     }
-  [@@deriving yojson]
+  [@@deriving yojson, sexp]
 
   let compare a b =
     match String.compare a.name b.name with
@@ -100,14 +101,16 @@ end
 module NodeMap = struct
   include NameVersionMap
 
-  type t = Node.t NameVersionMap.t
+  type t = Node.t NameVersionMap.t [@@deriving sexp]
+
+  (*  let sexp_of_t (map: t) = *)
 
   let of_yojson = function
     | `Assoc kvs ->
       let init = Ok NameVersionMap.empty in
       let f acc (k, v) =
         match acc, Node.of_yojson v, NameVersion.of_string k with
-        | Ok acc_v, Ok v, Ok k -> Result.return @@ NameVersionMap.add k v acc_v
+        | Ok acc_v, Ok v, Ok k -> Result.return @@ Map.set acc_v ~key:k ~data:v
         | _, _, Error (`Msg e) -> Error e
         | _, Error e, _ -> Error e
         | Error e, _, _ -> Error e
@@ -117,7 +120,7 @@ module NodeMap = struct
 
 
   let to_yojson v =
-    let kvs = NameVersionMap.bindings v in
+    let kvs = Map.to_alist v in
     let assoc v = `Assoc v in
     let f (k, v) = k |> NameVersion.to_string, Node.to_yojson v in
     assoc @@ List.map ~f kvs

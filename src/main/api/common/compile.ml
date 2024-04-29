@@ -541,11 +541,7 @@ let storage
       let syntax = Syntax.of_string_opt ~raise (Syntax_name "auto") (Some filename) in
       Deprecation.entry_cli ~raise syntax entry_point;
       let options =
-        Compiler_options.make
-          ~raw_options
-          ~syntax
-          ~has_env_comments:false
-          ()
+        Compiler_options.make ~raw_options ~syntax ~has_env_comments:false ()
       in
       storage_impl
         options

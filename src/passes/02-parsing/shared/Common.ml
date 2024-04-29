@@ -83,7 +83,7 @@ module MakeParser
       Buffer.t ->
       'a
 
-    (* Lifting [Stdlib.result] to [Trace.raise] and logging errors. *)
+    (* Lifting [Result.t] to [Trace.raise] and logging errors. *)
 
     let log_errors ~(raise:raise) errors =
       List.iter (List.rev errors)

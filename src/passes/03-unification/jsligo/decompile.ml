@@ -408,7 +408,7 @@ and ty_expr : CST.type_expr AST.ty_expr_ -> CST.type_expr =
      fun (constr, t) -> Legacy (w @@ decompile_variant constr (Some t) [])
     in
     let pairs =
-      match Utils.list_to_sepseq (AST.Label.Map.to_alist fields) ghost_vbar with
+      match Utils.list_to_sepseq (Core.Map.to_alist fields) ghost_vbar with
       | None -> failwith "Decompiler: got a T_sum with no elements"
       | Some nsepseq -> Utils.nsepseq_map f nsepseq
     in
@@ -420,7 +420,7 @@ and ty_expr : CST.type_expr AST.ty_expr_ -> CST.type_expr =
     let f : AST.Label.t * CST.type_expr -> CST.type_expr CST.property CST.reg =
      fun (field_name, t) -> w @@ decompile_field field_name t []
     in
-    (match Utils.list_to_sepseq (AST.Label.Map.to_alist fields) ghost_semi with
+    (match Utils.list_to_sepseq (Core.Map.to_alist fields) ghost_semi with
     | None -> failwith "Decompiler: got a T_record with no elements"
     | Some nsepseq -> T_Object (mk_object @@ Utils.nsepseq_map f nsepseq))
   | T_fun _ ->

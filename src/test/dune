@@ -32,9 +32,12 @@
   lsp_test_requests
   package_management
   lwt
-  lwt.unix)
+  lwt.unix
+  core_unix
+  core_unix.sys_unix
+  core_unix.filename_unix)
  (preprocess
-  (pps ppx_let)))
+  (pps ppx_let ppx_compare ppx_sexp_conv)))
 
 (rule
  (alias doc-test)

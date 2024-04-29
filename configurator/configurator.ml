@@ -1,5 +1,6 @@
 open! Core
 module C = Configurator.V1
+open Core
 
 let () =
   let f _ =

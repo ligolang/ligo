@@ -17,19 +17,19 @@ let fold_map : 'a t -> init:'acc -> f:('acc -> 'a -> 'acc * 'b) -> 'acc * 'b t =
 
 
 let iter : 'a t -> f:('a -> unit) -> unit =
- fun record ~f -> Label.Map.iter ~f:(fun a -> f a) record
+ fun record ~f -> Map.iter ~f:(fun a -> f a) record
 
 
 let map : 'a t -> f:('a -> 'b) -> 'b t = fun record ~f -> Map.map ~f record
 let mapi t ~f = Map.mapi t ~f:(fun ~key ~data -> f ~label:key ~value:data)
-let exists = Label.Map.exists
+let exists = Map.exists
 let of_list = Label.Map.of_alist_exn
 let to_list t = Map.to_alist t
 let to_list_rev t = Map.to_alist ~key_order:`Decreasing t
 let labels t = Map.keys t
 let values t = Map.data t
-let find = Label.Map.find_exn
-let find_opt = Label.Map.find
+let find = Map.find_exn
+let find_opt = Map.find
 let cardinal m = Map.count m ~f:(fun _ -> true) (* ?? *)
 let mem = Map.mem
 let set = Map.set (* ?? *)
@@ -40,14 +40,12 @@ let update_opt t label ~f =
   | None -> t
 
 
-let is_tuple m =
-  List.for_all ~f:(fun i -> Label.Map.mem m i) @@ Label.range 0 (Label.Map.length m)
-
+let is_tuple m = List.for_all ~f:(fun i -> Map.mem m i) @@ Label.range 0 (Map.length m)
 
 let tuple_of_record (m : _ t) =
   let aux i =
     let label = Label.of_int i in
-    let opt = Label.Map.find m label in
+    let opt = Map.find m label in
     Option.bind ~f:(fun opt -> Some ((label, opt), i + 1)) opt
   in
   Base.Sequence.to_list @@ Base.Sequence.unfold ~init:0 ~f:aux

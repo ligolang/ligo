@@ -11,5 +11,5 @@
   cli_helpers)
  ;; cli_helpers because we need Syntax module from there. Syntax module is used in the validation of manifest files.
  (preprocess
-  (pps ppx_deriving_yojson ppx_inline_test))
+  (pps ppx_deriving_yojson ppx_inline_test ppx_jane))
  (synopsis "Modules processing manifest and lock files"))

@@ -118,7 +118,7 @@ module type S =
     | Lexing  of error
     | System  of error
 
-    type 'src parser = 'src -> (tree, pass_error) Stdlib.result
+    type 'src parser = 'src -> (tree, pass_error) result
 
     (* Monolithic API of Menhir *)
 
@@ -150,7 +150,7 @@ module type S =
            is not found or a lexer error occurred. *)
 
     type 'src recovery_parser =
-      'src -> (tree * message list, message Utils.nseq) Stdlib.result
+      'src -> (tree * message list, message Utils.nseq) result
 
     (* Parsing with recovery from various sources *)
 
@@ -185,7 +185,7 @@ module Make (Lexer  : LEXER)
     | Lexing  of error
     | System  of error
 
-    type 'src parser = 'src -> (Parser.tree, pass_error) Stdlib.result
+    type 'src parser = 'src -> (Parser.tree, pass_error) result
 
     (* Errors and error messages *)
 
@@ -228,7 +228,7 @@ module Make (Lexer  : LEXER)
 
     let menhir_lexer ~no_colour lexbuf =
       match Lexer.scan_token ~no_colour lexbuf with
-        Stdlib.Ok token -> token
+        Ok token -> token
       | Error message ->
           let used_tokens = Lexer.used_tokens () in
           raise (LexingError {used_tokens; message})
@@ -238,9 +238,9 @@ module Make (Lexer  : LEXER)
     let mono_menhir ~no_colour lexbuf_of source : (Parser.tree, pass_error) result =
       let lexbuf = lexbuf_of source in
       let menhir_lexer = menhir_lexer ~no_colour in
-      try Stdlib.Ok (Parser.main menhir_lexer lexbuf) with
+      try Ok (Parser.main menhir_lexer lexbuf) with
         LexingError error ->
-          Stdlib.Error (Lexing error)
+          Error (Lexing error)
       | Parser.Error -> (* Menhir exception *)
           Error (Parsing (wrap_parse_error ~no_colour lexbuf "Syntax error."))
 
@@ -256,15 +256,15 @@ module Make (Lexer  : LEXER)
         let in_chan = In_channel.create path in
         let lexbuf  = Lexing.from_channel in_chan in
         let ()      = Lexbuf.reset_file path lexbuf in
-        Stdlib.Ok (lexbuf, fun () -> In_channel.close in_chan)
+        Ok (lexbuf, fun () -> In_channel.close in_chan)
       with Sys_error msg ->
         let region  = Region.min ~file:path in
         let message = Region.{region; value=msg}
-        in Stdlib.Error {used_tokens=[]; message}
+        in Error {used_tokens=[]; message}
 
     let mono_from_file ~no_colour path =
       match lexbuf_from_file path with
-        Stdlib.Error error -> Error (System error)
+        Error error -> Error (System error)
       | Ok (lexbuf, close) ->
           let tree = mono_menhir ~no_colour (fun x -> x) lexbuf
           in close (); tree
@@ -306,7 +306,7 @@ module Make (Lexer  : LEXER)
               Printf.sprintf "Syntax error #%i." state
           | msg -> msg
             (* Likely a build error, but we work around it: *)
-          | exception Caml.Not_found -> "Syntax error."
+          | exception Stdlib.Not_found -> "Syntax error."
 
     exception ParsingError of string
 
@@ -348,7 +348,7 @@ module Make (Lexer  : LEXER)
     let to_pos (mode : [`Byte | `Point]) (pos : Lexing.position)
         : Simple_utils.Pos.t =
       (* Note: [Pos.from_byte (Lexing.dummy_pos) != Pos.ghost] *)
-      if Caml.(pos = Lexing.dummy_pos) then
+      if Stdlib.(pos = Lexing.dummy_pos) then
           Pos.ghost
       else
       (* Note: assumed that [Pos.from_byte] keeps
@@ -403,7 +403,7 @@ module Make (Lexer  : LEXER)
       let module Incr = Parser.Incremental in
       let parser      = Incr.main lexbuf.Lexing.lex_curr_p in
       let tree =
-        try Stdlib.Ok (interpreter parser) with
+        try Ok (interpreter parser) with
           LexingError error -> Error (Lexing error)
         | ParsingError msg  -> Error (Parsing (wrap_parse_error ~no_colour lexbuf msg))
       in tree
@@ -414,7 +414,7 @@ module Make (Lexer  : LEXER)
 
     let incr_from_file ~no_colour (module ParErr : PAR_ERR) path =
       match lexbuf_from_file path with
-        Stdlib.Error error -> Error (System error)
+        Error error -> Error (System error)
       | Ok (lexbuf, close) ->
           let tree = incr_from_lexbuf ~no_colour (module ParErr) lexbuf
           in (close (); tree)
@@ -433,7 +433,7 @@ module Make (Lexer  : LEXER)
            is not found or a lexer error occurred. *)
 
     type 'src recovery_parser =
-      'src -> (Parser.tree * message list, message Utils.nseq) Stdlib.result
+      'src -> (Parser.tree * message list, message Utils.nseq) result
 
     module EltPrinter =
       struct
@@ -611,26 +611,26 @@ module Make (Lexer  : LEXER)
           (failure  : 'a Inter.checkpoint -> message)
           (supplier : unit -> token * Lexing.position * Lexing.position)
           (initial  : 'a Inter.checkpoint)
-          : (Parser.tree * message list, message Utils.nseq) Stdlib.result =
+          : (Parser.tree * message list, message Utils.nseq) result =
           let initial = Correct initial in
           let errors : message list ref = ref []
           in
           let rec loop parser =
             match supplier () with
               exception LexingError error ->
-                Stdlib.Error (error.message, !errors)
+                Error (error.message, !errors)
             | token ->
                 let result =
                   match step parser failure token with
                     res, Some error -> errors := error::!errors; res
                   | res, None       -> res in
                 match result with
-                  Success x            -> Stdlib.Ok (success x, !errors)
+                  Success x            -> Ok (success x, !errors)
                 | Intermediate parser  -> loop parser
                 | InternalError msg    ->
                     let value     = "Internal error: " ^ msg in
                     let region, _ = get_current_token_region lexbuf
-                    in Stdlib.Error (Region.{value; region}, !errors)
+                    in Error (Region.{value; region}, !errors)
           in loop initial
       end
 
@@ -656,8 +656,8 @@ module Make (Lexer  : LEXER)
 
     let recov_from_file ~no_colour (module ParErr : PAR_ERR) path =
       match lexbuf_from_file path with
-        Stdlib.Error error ->
-          Stdlib.Error (error.message, [])
+        Error error ->
+          Error (error.message, [])
       | Ok (lexbuf, close) ->
           let result = recov_from_lexbuf ~no_colour (module ParErr) lexbuf
           in (close (); result)

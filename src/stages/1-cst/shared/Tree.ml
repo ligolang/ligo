@@ -21,11 +21,11 @@ let sprintf = Printf.sprintf
 (* The printing of the CST makes use of a threaded data structure: the
    _state_. The printing is done to the string buffer bound to the
    field [buffer], which is imperatively updated (see module
-   [Stdlib.Buffer].) The method [pad] updates the current padding,
-   which is comprised of two components: the padding to reach the new
-   node (space before reaching a subtree, then a vertical bar for it)
-   and the padding for the new node itself. (Is it the last child of
-   its parent?) *)
+   [Buffer].) The method [pad] updates the current padding, which is
+   comprised of two components: the padding to reach the new node
+   (space before reaching a subtree, then a vertical bar for it) and
+   the padding for the new node itself. (Is it the last child of its
+   parent?) *)
 
 type state = <
   regions  : bool;

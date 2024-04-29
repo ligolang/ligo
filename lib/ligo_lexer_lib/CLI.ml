@@ -67,9 +67,9 @@ module Make (PreprocParams: Preprocessor.CLI.PARAMETERS) : PARAMETERS =
     | Some Some file -> "Some (Some " ^ file ^ ")"
 
     let set_jsligo file =
-      if Caml.(!jsligo = None)
-      then jsligo := Some (Some file)
-      else raise (Getopt.Error "Only one --jsligo option allowed.")
+      match !jsligo with
+        None -> jsligo := Some (Some file)
+      | _ -> raise (Getopt.Error "Only one --jsligo option allowed.")
 
     (* --post *)
 
@@ -81,7 +81,7 @@ module Make (PreprocParams: Preprocessor.CLI.PARAMETERS) : PARAMETERS =
       match !post with
         Some _ -> raise (Getopt.Error "Only one --post option allowed.")
       | None ->
-          match Caml.int_of_string_opt arg with
+          match Stdlib.int_of_string_opt arg with
             None -> raise (Getopt.Error "Invalid pass number.")
           | Some num when num < 0 ->
               raise (Getopt.Error "Invalid pass number.")
@@ -94,9 +94,9 @@ module Make (PreprocParams: Preprocessor.CLI.PARAMETERS) : PARAMETERS =
     | Some s -> Printf.sprintf "Some %S" s
 
     let set_string str =
-      if Caml.(!string = None)
-      then string := Some str
-      else raise (Getopt.Error "Only one --string option allowed.")
+      match !string with
+        None ->  string := Some str
+      | _ -> raise (Getopt.Error "Only one --string option allowed.")
 
     (* Specifying the command-line options a la GNU
 

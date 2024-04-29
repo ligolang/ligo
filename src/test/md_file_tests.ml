@@ -4,18 +4,17 @@ open Main_errors
 
 let () = Ligo_unix.putenv ~key:"LIGO_FORCE_NEW_TYPER" ~data:"false"
 
-type syntax = string
-type group_name = string
+type syntax = string [@@deriving compare, sexp]
+type group_name = string [@@deriving compare, sexp]
 
 type lang =
   | Meta (* Meta = ligo test framework code *)
   | Object (* Object = normal LIGO code *)
   | Shell (* Shell = compilation commands and other sh code *)
+[@@deriving equal]
 
-module SnippetsGroup = Caml.Map.Make (struct
-  type t = syntax * group_name
-
-  let compare a b = Caml.compare a b
+module SnippetsGroup = Map.Make (struct
+  type t = syntax * group_name [@@deriving compare, sexp]
 end)
 
 type snippetsmap = (lang * string) SnippetsGroup.t
@@ -99,16 +98,16 @@ let get_groups md_file : snippetsmap =
       (* Run everything by default, some code below tests for GITLAB_CI to only actually run things on the CI *)
       | [ Md.Field "" ] | [ Md.Field "run" ] ->
         ( nb_shell_blocks + 1
-        , SnippetsGroup.update
+        , Map.change
+            grp_map
             ("shell", Format.sprintf "run_shell_%d" nb_shell_blocks)
-            (function
+            ~f:(function
               (* TODO: should use String.concat only once at the top *)
               | Some (Shell, sh) ->
                 Some (Shell, String.concat ~sep:"\n" (sh :: el.contents))
               | None -> Some (Shell, String.concat ~sep:"\n" el.contents)
               | Some (_, sh) ->
-                failwith "internal test error: group name shouldn't be 'run_shell_xxx'")
-            grp_map )
+                failwith "internal test error: group name shouldn't be 'run_shell_xxx'") )
       | [ Md.Field "skip" ] | _ -> nb_shell_blocks, grp_map)
     | Some ("cameligo" as s) | Some ("jsligo" as s) ->
       ( nb_shell_blocks
@@ -133,44 +132,32 @@ let get_groups md_file : snippetsmap =
         in
         (match el.arguments with
         | [ Md.Field "" ] ->
-          SnippetsGroup.update
-            (s, "ungrouped")
-            (fun arg_content ->
+          Map.change grp_map (s, "ungrouped") ~f:(fun arg_content ->
               match arg_content with
               | Some (lang, ct) -> Some (lang, String.concat ~sep:"\n" (ct :: el.contents))
               | None -> Some (Object, String.concat ~sep:"\n" el.contents))
-            grp_map
         | [ Md.Field "skip" ] -> grp_map
         | [ Md.Field "test-ligo"; Md.NameValue ("group", name) ] ->
           let lang = Meta in
-          SnippetsGroup.update
-            (s, name)
-            (fun arg_content ->
+          Map.change grp_map (s, name) ~f:(fun arg_content ->
               match arg_content with
-              | Some (lang', ct) when Caml.( = ) lang lang' ->
+              | Some (lang', ct) when equal_lang lang lang' ->
                 Some (lang, String.concat ~sep:"\n" (ct :: el.contents))
               | _ -> Some (lang, String.concat ~sep:"\n" el.contents))
-            grp_map
         | [ Md.NameValue ("group", name); Md.NameValue ("protocol", x) ] ->
           let lang = Object in
-          SnippetsGroup.update
-            (s, name)
-            (fun arg_content ->
+          Map.change grp_map (s, name) ~f:(fun arg_content ->
               match arg_content with
-              | Some (lang', ct) when Caml.( = ) lang lang' ->
+              | Some (lang', ct) when equal_lang lang lang' ->
                 Some (lang, String.concat ~sep:"\n" (ct :: el.contents))
               | _ -> Some (lang, String.concat ~sep:"\n" el.contents))
-            grp_map
         | [ Md.NameValue ("group", name) ] ->
           let lang = Object in
-          SnippetsGroup.update
-            (s, name)
-            (fun arg_content ->
+          Map.change grp_map (s, name) ~f:(fun arg_content ->
               match arg_content with
-              | Some (lang', ct) when Caml.( = ) lang lang' ->
+              | Some (lang', ct) when equal_lang lang lang' ->
                 Some (lang, String.concat ~sep:"\n" (ct :: el.contents))
               | _ -> Some (lang, String.concat ~sep:"\n" el.contents))
-            grp_map
         | args ->
           let () =
             List.iter
@@ -194,9 +181,7 @@ let get_groups md_file : snippetsmap =
 let write_if_different (filename : string) ~(contents : string) : bool =
   let old_contents, same =
     try
-      let old_contents =
-        Caml.In_channel.with_open_bin filename Caml.In_channel.input_all
-      in
+      let old_contents = In_channel.with_file filename ~f:In_channel.input_all in
       old_contents, String.equal old_contents contents
     with
     | _ ->
@@ -216,11 +201,13 @@ let write_to_files ~raise md_filename grp_list : bool =
     then false
     else (
       let root_dir =
-        if Caml.Sys.file_exists "../../dune-project"
-        then "../.."
-        else if Caml.Sys.file_exists "../../../dune-project"
-        then "../../.."
-        else failwith "Could not find root_dir, please fix src/test/md_file_tsts.ml"
+        match Sys_unix.file_exists "../../dune-project" with
+        | `Yes -> "../.."
+        | `No | `Unknown ->
+          (match Sys_unix.file_exists "../../../dune-project" with
+          | `Yes -> "../../.."
+          | `No | `Unknown ->
+            failwith "Could not find root_dir, please fix src/test/md_file_tsts.ml")
       in
       let syntax = Syntax.of_string_opt ~raise (Syntax_name syntax) None in
       let dirname =
@@ -260,9 +247,7 @@ let compile_groups ~raise filename grp_list =
   Lwt_main.run
   @@
   let open Lwt.Let_syntax in
-  let aux
-      : (syntax * group_name) * (lang * string) -> unit Lwt.t
-    =
+  let aux : (syntax * group_name) * (lang * string) -> unit Lwt.t =
    fun ((syntax, grp), (lang, contents)) ->
     trace ~raise (test_md_file filename syntax grp contents)
     @@ fun ~raise ->
@@ -339,7 +324,7 @@ let write_all_to_files ~raise md_filenames () =
     (* Tradeoff: This is duplicated with the "compile" function below, but
        having it duplicated allows having it inside a proper "test". *)
     let groups = get_groups filename in
-    let groups_map = SnippetsGroup.bindings groups in
+    let groups_map = Map.to_alist groups in
     write_to_files ~raise filename groups_map
   in
   let updates = List.filter ~f:aux md_filenames in
@@ -355,7 +340,7 @@ let write_all_to_files ~raise md_filenames () =
 let compile ~raise filename () =
   (* Format.printf "[compile] Filename: %s@." filename; *)
   let groups = get_groups filename in
-  let groups_map = SnippetsGroup.bindings groups in
+  let groups_map = Map.to_alist groups in
   let (_ : bool) = write_to_files ~raise filename groups_map in
   let () = compile_groups ~raise filename groups_map in
   ()
@@ -372,7 +357,7 @@ let get_all_md_files () =
         if not (List.exists ~f:(String.equal md_file) exclude_files)
         then (
           let grp = get_groups md_file in
-          if not (SnippetsGroup.is_empty grp) then all_input := md_file :: !all_input)
+          if not (Map.is_empty grp) then all_input := md_file :: !all_input)
       done
     with
     | End_of_file -> In_channel.close ic
@@ -381,7 +366,7 @@ let get_all_md_files () =
 
 
 let main =
-  Caml.Sys.chdir "../..";
+  Sys_unix.chdir "../..";
   test_suite "Markdown files"
   @@
   let all_md_files = get_all_md_files () in

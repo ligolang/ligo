@@ -2,13 +2,15 @@ open Package_management_external_libs
 module Semver = Ligo_semver
 
 type version =
-  | SemverVersion of Semver.t
+  | SemverVersion of (int * int * int) (* Semver.t *)
   | StringVersion of string
+[@@deriving sexp]
 
 type t =
   { name : string
   ; version : version
   }
+[@@deriving sexp]
 
 let compare a b =
   match String.compare a.name b.name with

@@ -26,6 +26,7 @@ type capability_mode =
   | Only_semantic_tokens (** Enable just semantic tokens. *)
   | All_capabilities (** Enable all capabilities. *)
   | No_semantic_tokens (** Enable all capabilities, except semantic tokens. *)
+[@@deriving equal]
 
 (* OCaml object methods are recursive by default, but OCaml doesn't play nicely with
    polymorphic recursion. The callers of this function have types that interact with GADTs
@@ -673,7 +674,7 @@ class lsp_server (capability_mode : capability_mode) =
                                  Ligo_interface.unprepared_file_data) ) ->
                           notif_run_handler @@ self#on_doc path code ~version:`Unchanged)
                         (List.take
-                           (Docs_cache.to_alist get_scope_buffers)
+                           (Hashtbl.to_alist get_scope_buffers)
                            max_files_for_diagnostics_update_at_once))
               in
               IO.return ()))
@@ -766,7 +767,7 @@ class lsp_server (capability_mode : capability_mode) =
              running [Requests.on_doc] again. *)
           let repopulate_cache : unit Handler.t =
             let file = DocumentUri.to_path ~normalize uri in
-            match Docs_cache.find get_scope_buffers file with
+            match Hashtbl.find get_scope_buffers file with
             (* Shouldn't happen because [Requests.on_doc] should trigger and populate the
                cache. *)
             | None -> pass
@@ -787,7 +788,7 @@ class lsp_server (capability_mode : capability_mode) =
                 self#on_doc ?changes:None ~version:`Unchanged file code)
           in
           if self#is_request_enabled method_
-             && List.mem ~equal:Caml.( = ) allowed_modes capability_mode
+             && List.mem ~equal:equal_capability_mode allowed_modes capability_mode
           then (
             let new_notify_back =
               Normal

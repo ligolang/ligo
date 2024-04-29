@@ -52,14 +52,14 @@ let%expect_test _ =
     (b#12:4-5 -> b)
     Range: File "../../test/contracts/get_scope_tests/bad_field_record.mligo", line 12, characters 4-5
     Decl Range: File "../../test/contracts/get_scope_tests/bad_field_record.mligo", line 12, character 0 to line 14, character 3
-    Content: |resolved: ^gen#2|
+    Content: |resolved: ^gen#734|
     references: []
     Mod Path =
     Def Type = Global
     (j#13:6-7 -> j)
     Range: File "../../test/contracts/get_scope_tests/bad_field_record.mligo", line 13, characters 6-7
     Decl Range: File "../../test/contracts/get_scope_tests/bad_field_record.mligo", line 13, character 2 to line 14, character 2
-    Content: |resolved: ^gen#2|
+    Content: |resolved: ^gen#734|
     references:
       File "../../test/contracts/get_scope_tests/bad_field_record.mligo", line 14, characters 2-3
     Mod Path =

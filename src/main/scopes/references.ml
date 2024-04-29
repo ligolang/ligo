@@ -1,5 +1,5 @@
 open Ligo_prim
-open Simple_utils
+module Location = Simple_utils.Location
 open Simple_utils.Function
 module AST = Ast_core
 module LSet = Types.LSet
@@ -54,8 +54,9 @@ module References = struct
   (** For debugging. *)
   let[@warning "-32"] pp : t Fmt.t =
    fun ppf t ->
-    Fmt.Dump.(seq (pair Location.pp (fun ppf -> seq Location.pp ppf <@ LSet.to_seq))) ppf
-    @@ LMap.to_seq t.references
+    Fmt.Dump.(list (pair Location.pp (fun ppf -> list Location.pp ppf <@ Set.to_list)))
+      ppf
+    @@ Map.to_alist t.references
 
 
   let map_ref f t = { t with references = f t.references }
@@ -65,13 +66,11 @@ module References = struct
    fun { references = lhs_references; type_var_loc_to_label_refs = lhs_tv }
        { references = rhs_references; type_var_loc_to_label_refs = rhs_tv } ->
     { references =
-        LMap.union (fun _loc x y -> Some (LSet.union x y)) lhs_references rhs_references
+        Map.merge_skewed lhs_references rhs_references ~combine:(fun ~key:_loc ->
+            Set.union)
     ; type_var_loc_to_label_refs =
-        LMap.union
-          (fun _loc x y ->
-            Some (Label.Map.merge_skewed x y ~combine:(fun ~key:_ x y -> LSet.union x y)))
-          lhs_tv
-          rhs_tv
+        Map.merge_skewed lhs_tv rhs_tv ~combine:(fun ~key:_loc ->
+            Map.merge_skewed ~combine:(fun ~key:_label -> Set.union))
     }
 
 
@@ -79,9 +78,10 @@ module References = struct
   let add_def_usage : def:def -> usage_loc:Location.t -> t -> t =
    fun ~def ~usage_loc ->
     map_ref
-    @@ LMap.update (Def.get_location def) (function
-           | None -> Some (LSet.singleton usage_loc)
-           | Some locs -> Some (LSet.add usage_loc locs))
+    @@ fun refs ->
+    Map.change refs (Def.get_location def) ~f:(function
+        | None -> Some (LSet.singleton usage_loc)
+        | Some locs -> Some (Set.add locs usage_loc))
 
 
   let add_label_type_var_usage : Type_var.t -> Label.t -> env -> t -> t =
@@ -92,13 +92,18 @@ module References = struct
       let%map orig_type = Env.lookup_tvar_opt env tvar in
       let t_loc = Def.get_location orig_type in
       map_tv
-        (LMap.update t_loc (fun lmap ->
-             let lmap = Option.value ~default:Label.Map.empty lmap in
-             return
-             @@ Label.Map.update
-                  lmap
-                  label
-                  ~f:(Option.value_map ~default:(LSet.singleton loc) ~f:(LSet.add loc))))
+        (fun tvs ->
+          Map.change tvs t_loc ~f:(fun lmap ->
+              let lmap = Option.value ~default:Label.Map.empty lmap in
+              return
+              @@ Map.change
+                   lmap
+                   label
+                   ~f:
+                     (Option.some
+                     <@ Option.value_map
+                          ~default:(LSet.singleton loc)
+                          ~f:(Fn.flip Set.add loc))))
         refs)
 
 
@@ -136,12 +141,12 @@ module References = struct
     Option.value
       ~default:refs
       (let open Option.Let_syntax in
-      let%bind label_type = LMap.find_opt loc env.label_types in
+      let%bind label_type = Map.find env.label_types loc in
       let label_type = Ast_core.strip_abstraction label_type in
       match label_type.type_content with
       | T_sum (row, _) | T_record row ->
         let%map orig_label =
-          List.find ~f:(Label.equal label) (Label.Map.keys row.fields)
+          Core.List.find ~f:(Label.equal label) (Map.keys row.fields)
         in
         add_def_usage ~def:(Label orig_label) ~usage_loc:loc refs
       | T_variable tvar when not (Type_var.is_generated tvar) ->
@@ -277,7 +282,7 @@ type label_types = References.label_types
   aux mvs (env.avail_defs @ env.parent) [] *)
 
 let resolve_mpath
-    :  Module_var.t List.Ne.t -> env
+    :  Module_var.t Simple_utils.List.Ne.t -> env
     -> (Module_var.t * module_usages, module_usages) result
   =
  fun mvs env ->
@@ -301,7 +306,7 @@ let resolve_mpath
 let resolve_module_alias_and_update_mvar_references
     :  ?update_references_for_element:
          ('a -> Module_var.t -> module_map -> label_types -> references -> references)
-    -> ?element:'a -> Module_var.t List.Ne.t -> env -> references
+    -> ?element:'a -> Module_var.t Simple_utils.List.Ne.t -> env -> references
     -> references * defs_or_alias option
   =
  fun ?(update_references_for_element = fun _ _ _ _ rs -> rs) ?element mvs env refs ->
@@ -330,14 +335,14 @@ let rec expression : AST.expression -> references -> env -> references =
   | E_contract mods ->
     let usages =
       mods
-      |> List.Ne.to_list
+      |> Simple_utils.List.Ne.to_list
       |> List.map ~f:(fun x -> x, `Usage (Module_var.get_location x))
     in
     References.add_module_usages usages refs
   | E_module_accessor { module_path; element } ->
     let refs, _ =
       resolve_module_alias_and_update_mvar_references
-        (List.Ne.of_list module_path)
+        (Simple_utils.List.Ne.of_list module_path)
         env
         refs
         ~element
@@ -449,7 +454,7 @@ let rec expression : AST.expression -> references -> env -> references =
         ~f:(fun acc label -> References.add_ctor label env acc)
         labels
     in
-    List.Ne.fold_left es ~init:refs ~f:(fun refs e -> expression e refs env)
+    Simple_utils.List.Ne.fold_left es ~init:refs ~f:(fun refs e -> expression e refs env)
   | E_array items | E_array_as_list items ->
     List.fold_left items ~init:refs ~f:(fun entry item ->
         let entry =
@@ -502,7 +507,7 @@ and type_expression : AST.type_expression -> references -> env -> references =
   | T_contract_parameter mods ->
     let usages =
       mods
-      |> List.Ne.to_list
+      |> Simple_utils.List.Ne.to_list
       |> List.map ~f:(fun x -> x, `Usage (Module_var.get_location x))
     in
     References.add_module_usages usages refs
@@ -510,7 +515,7 @@ and type_expression : AST.type_expression -> references -> env -> references =
   | T_module_accessor { module_path; element } ->
     let refs, _ =
       resolve_module_alias_and_update_mvar_references
-        (List.Ne.of_list module_path)
+        (Simple_utils.List.Ne.of_list module_path)
         env
         refs
         ~element
@@ -524,7 +529,7 @@ and type_expression : AST.type_expression -> references -> env -> references =
       | module_path ->
         let refs, _ =
           resolve_module_alias_and_update_mvar_references
-            (List.Ne.of_list module_path)
+            (Simple_utils.List.Ne.of_list module_path)
             env
             refs
             ~element
@@ -749,12 +754,10 @@ let rec patch_references : references -> Types.def list -> patched_references =
               ~default:acc
               (let open Option.Let_syntax in
               let%bind orig_type = tdef.content in
-              let%bind label_refs =
-                LMap.find_opt tdef.range refs.type_var_loc_to_label_refs
-              in
+              let%bind label_refs = Map.find refs.type_var_loc_to_label_refs tdef.range in
               let%map orig_labels =
                 match (Ast_core.strip_abstraction orig_type).type_content with
-                | T_sum (row, _) | T_record row -> Some (Label.Map.keys row.fields)
+                | T_sum (row, _) | T_record row -> Some (Map.keys row.fields)
                 | _ -> None
               in
               List.fold_left
@@ -762,11 +765,12 @@ let rec patch_references : references -> Types.def list -> patched_references =
                 ~f:(fun acc (Label (_, orig_label_loc) as orig_label) ->
                   Option.value
                     ~default:acc
-                    (let%map refs = Label.Map.find label_refs orig_label in
+                    (let%map refs = Map.find label_refs orig_label in
                      References.map_ref
-                       (LMap.update
+                       (Fn.flip
+                          Map.change
                           orig_label_loc
-                          (return <@ Option.value_map ~default:refs ~f:(LSet.union refs)))
+                          ~f:(return <@ Option.value_map ~default:refs ~f:(Set.union refs)))
                        acc))
                 orig_labels)
           | Module { mod_case = Def defs; _ } ->
@@ -783,15 +787,15 @@ let patch : references -> Types.def list -> Types.def list =
   let rec patch refs defs =
     List.map defs ~f:(function
         | Types.Variable v ->
-          (match LMap.find_opt v.range refs with
+          (match Map.find refs v.range with
           | None -> Types.Variable v
           | Some references -> Variable { v with references })
         | Type t ->
-          (match LMap.find_opt t.range refs with
+          (match Map.find refs t.range with
           | None -> Types.Type t
           | Some references -> Type { t with references })
         | Label l ->
-          (match LMap.find_opt l.range refs with
+          (match Map.find refs l.range with
           | None -> Types.Label l
           | Some references -> Label { l with references })
         | Module m ->
@@ -804,7 +808,7 @@ let patch : references -> Types.def list -> Types.def list =
             | Standalone_signature_or_module _ as path -> path
           in
           let m =
-            match LMap.find_opt m.range refs with
+            match Map.find refs m.range with
             | None -> m
             | Some references -> { m with references }
           in

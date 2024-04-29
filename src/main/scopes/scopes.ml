@@ -63,8 +63,8 @@ let scopes
   =
  fun ~options ~stdlib ~prg ->
   scopes_declarations ~options ~stdlib ~prg
-  |> LMap.map (List.filter_map ~f:Env.Def.make_uid)
-  |> LMap.to_kv_list
+  |> Core.Map.map ~f:(List.filter_map ~f:Env.Def.make_uid)
+  |> Core.Map.to_alist
 
 
 let run

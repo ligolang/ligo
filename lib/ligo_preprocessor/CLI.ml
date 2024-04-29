@@ -227,15 +227,19 @@ module Make (Config : Config.S) : PARAMETERS =
     (* Checking the input file (if any) *)
 
     let check_file file_path =
-      let actual = Caml.Filename.extension file_path in
+      let _, actual = Filename.split_extension file_path in
+      let actual =
+        match actual with
+          Some actual -> actual
+        | None -> "" in
       match Config.file_ext with
         Some expected when String.(expected <> actual) ->
           let msg = sprintf "Expected file extension %S." expected
           in `WrongFileExt msg
       | Some _ | None ->
-          if   Caml.Sys.file_exists file_path
-          then `Done
-          else `FileNotFound "Source file not found."
+          match Sys_unix.file_exists file_path with
+            `Yes -> `Done
+          | `No | `Unknown -> `FileNotFound "Source file not found."
 
     (* Input and status *)
 

@@ -737,7 +737,7 @@ come from the LIGO compiler, which uses the preprocessor as a library
 and has its own command-line interface. The type `result` is
 
 ```
-type result = (success, Buffer.t option * message) Stdlib.result
+type result = (success, Buffer.t option * message) result
 ```
 
 In case of error, the preprocessor (as a function) returns an error
@@ -1237,9 +1237,9 @@ lexer, in function `from_lexbuf`:
   match preproc state buffer with
     state ->
       List.iter close_in state.chans;
-      Stdlib.Ok (state.out, state.import)
+      Ok (state.out, state.import)
   | exception Error (buffer, msg) ->
-      Stdlib.Error (Some buffer, msg)
+      Error (Some buffer, msg)
 ```
 
 and in the utility function `apply`:
@@ -1247,8 +1247,8 @@ and in the utility function `apply`:
 ```
 let apply transform region state =
   match transform state with
-    Stdlib.Ok state  -> state
-  | Stdlib.Error err -> fail state region err
+    Ok state  -> state
+  | Error err -> fail state region err
 ```
 
 The internal exception `Error` is only raise by the function `fail`

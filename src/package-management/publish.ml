@@ -9,7 +9,7 @@ module Alpha = Alpha
 open Registry.Response
 open Utils
 
-(* [handle_server_response] handles the response to the request made by 
+(* [handle_server_response] handles the response to the request made by
    [publish] *)
 let handle_server_response ~name response body =
   let open Cohttp_lwt in
@@ -64,7 +64,7 @@ let gzip fname =
 
 
 (* [get_all_files] returs a list of files to be included in the package, it
-   starts starts finding files from the project-root & It ignores the files or 
+   starts starts finding files from the project-root & It ignores the files or
    directries specified in .ligoignore *)
 let rec get_all_files : ligoignore:(string -> bool) -> string -> (string * int) list Lwt.t
   =
@@ -95,7 +95,7 @@ let rec get_all_files : ligoignore:(string -> bool) -> string -> (string * int) 
       (* npm ignores symlinks in the tarball *)
       Lwt.return []
     | S_CHR | S_BLK | S_FIFO | S_SOCK ->
-      (* Ignore these types of files as they don't makes sense to include in 
+      (* Ignore these types of files as they don't makes sense to include in
        tarball *)
       Lwt.return []
   in
@@ -103,10 +103,10 @@ let rec get_all_files : ligoignore:(string -> bool) -> string -> (string * int) 
 
 
 let from_dir ~dir f =
-  let pwd = Caml.Sys.getcwd () in
-  let () = Caml.Sys.chdir dir in
+  let pwd = Sys_unix.getcwd () in
+  let () = Sys_unix.chdir dir in
   let result = f () in
-  let () = Caml.Sys.chdir pwd in
+  let () = Sys_unix.chdir pwd in
   result
 
 
@@ -116,7 +116,7 @@ let tar ~name ~version files =
   let unpacked_size = List.fold sizes ~init:0 ~f:( + ) in
   let fcount = List.length files in
   let fname =
-    Caml.Filename.temp_file
+    Filename_unix.temp_file
       (remove_unfriendly_filename_chars name)
       (Semver.to_string version)
   in
@@ -135,7 +135,7 @@ let tar_gzip ~name ~version ~ligoignore dir =
   Lwt.return (fcount, Buffer.contents_bytes buf, unpacked_size)
 
 
-(* The function [pack] creates a tar-ball (tar + gzip) from the [project_root] 
+(* The function [pack] creates a tar-ball (tar + gzip) from the [project_root]
    and it calculates hashes (sha1 & sha256) and returns a [PackageStats.t] *)
 let pack ~name ~version ~project_root ~ligoignore =
   let fcount, tarball, unpacked_size =
@@ -177,7 +177,7 @@ let validate_manifest manifest =
   | Error e -> Error (e, "")
 
 
-(* The function [get_auth_token] reads as .ligorc file and extracts the 
+(* The function [get_auth_token] reads as .ligorc file and extracts the
    auth-token for the requested [ligo_registry] *)
 let get_auth_token ~ligorc_path ligo_registry =
   let ligorc = LigoRC.read ~ligorc_path in
@@ -196,7 +196,7 @@ let get_project_root project_root =
       ("\nCan't find project-root.\nHint: Use --project-root to specify project root.", "")
 
 
-(* [publish] makes a HTTP put request to the [ligo_registry] with the [body] 
+(* [publish] makes a HTTP put request to the [ligo_registry] with the [body]
    and used [token] for authorization *)
 let publish' ~name ~ligo_registry ~body ~token =
   let open Cohttp_lwt_unix in
@@ -284,7 +284,7 @@ let publish ~ligo_registry ~ligorc_path ~project_root ~dry_run =
         ~bugs
     in
     let version_str = Semver.to_string version in
-    let versions = SMap.add version_str v SMap.empty in
+    let versions = Map.set SMap.empty ~key:version_str ~data:v in
     let dist_tags = { latest = version_str } in
     let body =
       PutBody.make

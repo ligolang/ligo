@@ -29,7 +29,7 @@ let rec assert_value_eq a b =
 and assert_value_eq_content a b =
   match a, b with
   | E_literal a, E_literal b -> Literal_value.assert_eq (a, b)
-  | E_constant ca, E_constant cb when Caml.( = ) ca.cons_name cb.cons_name ->
+  | E_constant ca, E_constant cb when Stdlib.( = ) ca.cons_name cb.cons_name ->
     let lst = List.zip_exn ca.arguments cb.arguments in
     let all = List.map ~f:(fun (a, b) -> assert_value_eq a b) lst in
     if List.exists ~f:Option.is_none all then None else Some ()

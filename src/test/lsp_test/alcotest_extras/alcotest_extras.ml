@@ -4,7 +4,7 @@ include Pretty_check
 (* Like Aloctest.string, but without escaping *)
 let raw_string : string Alcotest.testable =
   let pp_string ppf x = Fmt.pf ppf "%s" x in
-  Alcotest.testable pp_string Caml.( = )
+  Alcotest.testable pp_string Stdlib.( = )
 
 
 (** Like [should_match_list], but as a [Alcotest.testable]. Might not give

@@ -893,7 +893,7 @@ end = struct
       ret @@ T_var (O.Ty_variable.of_input_var ~loc "bool")
     | T_sum ({ fields; layout = _ }, _) when is_some (I.get_t_option ty) ->
       let constr = I.make_t ~loc (T_variable (O.Ty_variable.of_input_var ~loc "option"))
-      and arg = Ligo_prim.Label.Map.find_exn fields (Ligo_prim.Label.create "Some") in
+      and arg = Core.Map.find_exn fields (Ligo_prim.Label.create "Some") in
       ret
       @@ T_app
            { constr

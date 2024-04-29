@@ -13,6 +13,8 @@ module Utils     = Types.Utils
 module Region    = Types.Region
 module Token     = Lexing_jsligo.Token
 
+open Ppx_yojson_conv_lib.Yojson_conv.Primitives
+
 (* Local dependencies *)
 
 module Wrap  = Types.Wrap

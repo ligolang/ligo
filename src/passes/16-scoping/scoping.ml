@@ -395,7 +395,8 @@ let rec translate_expression ~raise (expr : I.expression) (env : I.environment)
     let code = List.map ~f:(Tezos_utils.Michelson.map replace) code in
     let args' =
       List.filter_mapi
-        ~f:(fun i v -> if not (List.mem !used i ~equal:Caml.( = )) then Some v else None)
+        ~f:(fun i v ->
+          if not (List.mem !used i ~equal:Stdlib.( = )) then Some v else None)
         args'
     in
     let args' = translate_args args' env in

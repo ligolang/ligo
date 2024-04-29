@@ -280,7 +280,7 @@ struct
       Fmt.Dump.(option Module_var.pp)
       parent_mod
       Fmt.Dump.(list (pair Location.pp Ast_core.PP.type_expression))
-      (LMap.to_kv_list label_types)
+      (Core.Map.to_alist label_types)
 
 
   (******************************************************************************)
@@ -535,12 +535,16 @@ module Env_map_impl = struct
   type defs = def t
 
   let empty_defs : defs = empty
-  let lookup_def_opt : defs -> def -> def option = find
-  let add_def : def -> defs -> defs = fun def defs -> update defs def ~f:(Fn.const def)
-  let to_defs_list : defs -> def list = data
+  let lookup_def_opt : defs -> def -> def option = Core.Map.find
+
+  let add_def : def -> defs -> defs =
+   fun def defs -> Core.Map.update defs def ~f:(Fn.const def)
+
+
+  let to_defs_list : defs -> def list = Core.Map.data
 
   let union_defs : defs -> defs -> defs =
-    merge_skewed ~combine:(fun ~key:_ lhs _rhs -> lhs)
+    Core.Map.merge_skewed ~combine:(fun ~key:_ lhs _rhs -> lhs)
 
 
   let pp_defs : defs Fmt.t =
