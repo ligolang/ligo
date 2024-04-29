@@ -24,9 +24,9 @@
     2. Matrix (P -> A): Match expressions are represented as matrices, each row
        corresponds to a clause in the match. A row looks like (pi1, ..., pin) -> ai
        Here p's are patterns and a's are the body of clause
-    3. Occrance: Occurance is a path to a sub-pattern.
+    3. Occurrence: Occurrence is a path to a sub-pattern.
        e.g. | A(D(E)), B, C -> ...
-       The occurance of E is x.A.D.E
+       The occurrence of E is x.A.D.E
     4. Head constructor: Head constructor of a pattern is the set of constructors
        that occur in the first column of the matrix.
        e.g. Head constructor of (A, B, _, C) is {A}
@@ -51,40 +51,47 @@ module Record = Ligo_prim.Record
 module I = Ast_aggregated
 module O = Ast_expanded
 module C = Ast_aggregated.Combinators
-module ConstructorSet = Set.Make (Label)
-module ConstructorMap = Label.Map
-module OccuranceMap = Label.Map
+module ConstructorSet = Core.Set (* Label *)
+module ConstructorMap = Core.Map (* Label *)
 
-let label_map_of_kv_list : (Label.t * 'value) list -> 'value OccuranceMap.t =
+type 'value ctor_map = (Label.t, 'value, Label.comparator_witness) ConstructorMap.t
+
+module OccurrenceMap = Core.Map (* Label *)
+
+let empty_occ_map = OccurrenceMap.empty (module Label)
+
+type 'value occ_map = (Label.t, 'value, Label.comparator_witness) OccurrenceMap.t
+
+let label_map_of_kv_list : (Label.t * 'value) list -> 'value occ_map =
  fun lvlist ->
-  List.fold lvlist ~init:OccuranceMap.empty ~f:(fun lm (k, v) ->
-      OccuranceMap.update lm k ~f:(function
+  List.fold lvlist ~init:empty_occ_map ~f:(fun lm (k, v) ->
+      OccurrenceMap.update lm k ~f:(function
           | Some v -> v
           | None -> v))
 
 
-module VSet = Set.Make (Value_var)
-
-(** The [Names] module keeps track of all the occurances and their corresponding
+(** The [Names] module keeps track of all the occurrences and their corresponding
     generated variables and also all the bound variables in patterns *)
 module Names = struct
-  type t = Value_var.t OccuranceMap.t
+  type t = Value_var.t occ_map
 
-  let init matchee_label matchee_var = OccuranceMap.singleton matchee_label matchee_var
+  let init matchee_label matchee_var =
+    OccurrenceMap.singleton (module Label) matchee_label matchee_var
+
 
   let get : Label.t -> t -> Value_var.t * t =
    fun label names ->
-    match OccuranceMap.find names label with
+    match OccurrenceMap.find names label with
     | Some v -> v, names
     | None ->
       let v = Value_var.fresh ~loc:Location.generated ~name:(Label.to_string label) () in
       ( v
-      , OccuranceMap.update names label ~f:(function
+      , OccurrenceMap.update names label ~f:(function
             | None -> v
             | Some v -> v) )
 end
 
-type signature = ConstructorSet.t
+type signature = (Label.t, Label.comparator_witness) ConstructorSet.t
 
 type simple_pattern =
   | SP_Var of Value_var.t * (O.type_expression[@sexp.opaque])
@@ -101,8 +108,8 @@ type simple_pattern =
 type action = (O.expression[@sexp.opaque]) [@@deriving sexp]
 type row = simple_pattern list * action [@@deriving sexp]
 type matrix = row list [@@deriving sexp]
-type occurance = Label.t * O.type_expression
-type occurances = occurance list
+type occurrence = Label.t * O.type_expression
+type occurrences = occurrence list
 
 let get_number_of_fields : O.type_expression -> int =
  fun t ->
@@ -121,7 +128,7 @@ let rec n_vars ~loc n =
 let empty_label = Label.of_string ""
 let nil_label = Label.of_string "Nil"
 let cons_label = Label.of_string "Cons"
-let list_signature = ConstructorSet.of_list [ nil_label; cons_label ]
+let list_signature = ConstructorSet.of_list (module Label) [ nil_label; cons_label ]
 
 let nil ty parent_type loc =
   SP_Constructor
@@ -214,7 +221,7 @@ type vars_and_projections =
   ; ascr : O.type_expression
   }
 
-(** This function scans a pattern an find occurances for each sub-pattern
+(** This function scans a pattern an find occurrences for each sub-pattern
     and generates fresh variables for them and also return a list of
     [vars_and_projections] i.e. a list of variables to be substituted by
     new fresh variables *)
@@ -248,7 +255,7 @@ let get_variant_nested_type c ty =
   | Some tsum ->
     let label_map = tsum.fields in
     Option.value_or_thunk ~default:(corner_case_constructor_not_found c ty __LOC__)
-    @@ Label.Map.find label_map c
+    @@ Core.Map.find label_map c
   | None ->
     if C.is_t_list ty
     then
@@ -268,7 +275,7 @@ let get_signature_of_sum_type : O.type_expression -> signature =
   let row = Option.value_exn ~here:[%here] (C.get_t_sum t) in
   let cts = I.Row.to_alist row in
   let cs = List.map cts ~f:fst in
-  ConstructorSet.of_list cs
+  ConstructorSet.of_list (module Label) cs
 
 
 (** This function converts [I.Pattern.t] to [simple_pattern list]
@@ -319,25 +326,25 @@ let rec to_simple_pattern
     let row = Option.value_exn ~here:[%here] (C.get_t_record ty) in
     List.concat_mapi ps ~f:(fun i p ->
         let p_ty =
-          Option.value_exn ~here:[%here] (OccuranceMap.find row.fields (Label.of_int i))
+          Option.value_exn ~here:[%here] (OccurrenceMap.find row.fields (Label.of_int i))
         in
         to_simple_pattern p_ty p)
   | P_record ps ->
     let row = Option.value_exn ~here:[%here] (C.get_t_record ty) in
     let ps = Record.to_list ps in
     List.concat_map ps ~f:(fun (label, p) ->
-        let p_ty = Option.value_exn ~here:[%here] (OccuranceMap.find row.fields label) in
+        let p_ty = Option.value_exn ~here:[%here] (OccurrenceMap.find row.fields label) in
         to_simple_pattern p_ty p)
 
 
-(** This function scans a pattern and returns a list of [occurance] *)
-let get_occurances : O.type_expression -> occurances =
+(** This function scans a pattern and returns a list of [occurrence] *)
+let get_occurrences : O.type_expression -> occurrences =
  fun t ->
   if C.is_t_unit t
   then []
   else if C.is_t_record t
   then (
-    let rec aux : O.type_expression -> occurances =
+    let rec aux : O.type_expression -> occurrences =
      fun t ->
       match C.get_t_record t with
       | Some row ->
@@ -353,16 +360,16 @@ let get_occurances : O.type_expression -> occurances =
   else [ empty_label, t ]
 
 
-(** This function takes a list of [occurance] (o1, o2, ... , on) and returns the
-    specialized occurances (o1.1, ..., o1.a, o2, ..., on)
+(** This function takes a list of [occurrence] (o1, o2, ... , on) and returns the
+    specialized occurrences (o1.1, ..., o1.a, o2, ..., on)
     where a is the arity of the constructor *)
-let specialize_occurances : Label.t -> occurances -> O.type_expression -> occurances =
+let specialize_occurrences : Label.t -> occurrences -> O.type_expression -> occurrences =
  fun c os ty ->
   match os with
-  | [] -> corner_case "can't specialize occurances" __LOC__ ()
+  | [] -> corner_case "can't specialize occurrences" __LOC__ ()
   | (o1, _) :: o2_n ->
     let o1_a =
-      List.map (get_occurances ty) ~f:(fun (oi, ti) -> join_labels [ o1; c; oi ], ti)
+      List.map (get_occurrences ty) ~f:(fun (oi, ti) -> join_labels [ o1; c; oi ], ti)
     in
     o1_a @ o2_n
 
@@ -391,12 +398,12 @@ let specialize : Label.t -> int -> matrix -> matrix =
         Some (n_vars ~loc a @ ps, body))
 
 
-(** This function takes a list of [occurance] (o1, o2, ... , on) and returns the
-    default occurances (o2, ..., on) *)
-let default_occurances : occurances -> occurances =
+(** This function takes a list of [occurrence] (o1, o2, ... , on) and returns the
+    default occurrences (o2, ..., on) *)
+let default_occurrences : occurrences -> occurrences =
  fun os ->
   match os with
-  | [] -> corner_case "can't get default occurances" __LOC__ ()
+  | [] -> corner_case "can't get default occurrences" __LOC__ ()
   | _ :: o2_n -> o2_n
 
 
@@ -445,7 +452,7 @@ and subtree =
 
 (** This is a predicate function which returns [true] is all the patterns are
     [SP_Var] *)
-let has_all_var_pattersn : simple_pattern list -> bool =
+let has_all_var_patterns : simple_pattern list -> bool =
  fun pattern ->
   List.for_all pattern ~f:(fun r ->
       match r with
@@ -462,7 +469,7 @@ type constructor_info =
 
 type head_constructors_info =
   { index : int
-  ; head_constructors : constructor_info ConstructorMap.t
+  ; head_constructors : constructor_info ctor_map
   ; signature : signature
   }
 
@@ -583,7 +590,7 @@ let rec generate_match_record
 
             For each constructor ck we find the [subtree] like
             Ak = to_decision_tree((o1·1 ... o1·a o2 ... on), S(ck, P → A))
-            i.e. we specialize the occurances & the marix
+            i.e. we specialize the occurrences & the marix
 
             Then we group togher the [subree]s in a list like
             L = c1:A1;c2:A2;...;ck:Ak
@@ -600,12 +607,12 @@ let rec generate_match_record
             L = c1:A1;c2:A2;...;ck:Ak;cm1:Am1;...cmn:Amn
 
             and we emit the [SwitchConstructor] node the the list of subrers L *)
-let rec to_decision_tree : Names.t -> occurances -> matrix -> decision_tree =
- fun names occurances matrix ->
+let rec to_decision_tree : Names.t -> occurrences -> matrix -> decision_tree =
+ fun names occurrences matrix ->
   match matrix with
   | [] -> Fail
   | (row, body) :: _ when List.is_empty row -> Leaf body
-  | (row, body) :: _ when has_all_var_pattersn row -> Leaf body
+  | (row, body) :: _ when has_all_var_patterns row -> Leaf body
   | matrix ->
     let { index = i; head_constructors = head_constructors_with_arity; signature } =
       head_constructors_of_column_with_atleast_one_constructor matrix
@@ -613,11 +620,12 @@ let rec to_decision_tree : Names.t -> occurances -> matrix -> decision_tree =
     if i = 0
     then (
       let o, ot =
-        Option.value_or_thunk ~default:(corner_case "empty occurances" __LOC__)
-        @@ List.hd occurances
+        Option.value_or_thunk ~default:(corner_case "empty occurrences" __LOC__)
+        @@ List.hd occurrences
       in
       let head_constructors =
-        ConstructorSet.of_list @@ ConstructorMap.keys head_constructors_with_arity
+        ConstructorSet.of_list (module Label)
+        @@ ConstructorMap.keys head_constructors_with_arity
       in
       let missing_constructors = ConstructorSet.diff signature head_constructors in
       let head, parent_tys, locations =
@@ -632,7 +640,7 @@ let rec to_decision_tree : Names.t -> occurances -> matrix -> decision_tree =
                let t =
                  to_decision_tree
                    names
-                   (specialize_occurances c occurances ty)
+                   (specialize_occurrences c occurrences ty)
                    (specialize c a matrix)
                in
                let constructor_label = join_labels [ o; c ] in
@@ -648,7 +656,7 @@ let rec to_decision_tree : Names.t -> occurances -> matrix -> decision_tree =
             let label = join_labels [ o; c ] in
             let binder, names = Names.get label names in
             let subtree =
-              to_decision_tree names (default_occurances occurances) (default matrix)
+              to_decision_tree names (default_occurrences occurrences) (default matrix)
             in
             { constructor = c; binder; subtree })
       in
@@ -667,8 +675,8 @@ let rec to_decision_tree : Names.t -> occurances -> matrix -> decision_tree =
       SwitchConstructor { matchee = Binder.make o ot; cases; variant_type; location })
     else (
       let swapped_matrix = swap_column_in_matrix i matrix in
-      let swapped_occurances = swap_elt i occurances in
-      to_decision_tree names swapped_occurances swapped_matrix)
+      let swapped_occurrences = swap_elt i occurrences in
+      to_decision_tree names swapped_occurrences swapped_matrix)
 
 
 (** This function is quite straightforward conversion from [decision_tree] to
@@ -757,11 +765,11 @@ let compile
         in
         names, (to_simple_pattern matchee_type pattern, body))
   in
-  let top_occurances =
+  let top_occurrences =
     List.map ~f:(fun (l, t) -> join_labels [ matchee_label; l ], t)
-    @@ get_occurances matchee_type
+    @@ get_occurrences matchee_type
   in
-  let dt = to_decision_tree names top_occurances matrix in
+  let dt = to_decision_tree names top_occurrences matrix in
   (* If the top-level pattern is a record pattern we wrap the decision tree in a
      [SwitchRecord] *)
   let dt = generate_match_record matchee_loc matchee_label matchee_type names dt in

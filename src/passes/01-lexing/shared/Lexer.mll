@@ -8,8 +8,7 @@
 
 (* OCaml Stdlib *)
 
-module Array = Caml.Array (* Used in the generated code only *)
-module Int64 = Caml.Int64
+module Array = Stdlib.Array (* Used in the generated code only *)
 
 (* VENDOR DEPENDENCIES *)
 
@@ -378,7 +377,7 @@ and scan_verbatim verb_close thread state = parse
     let linenum       = Region.wrap_ghost linenum in (* We don't care. *)
     (match Directive.scan_linemarker
              hash_state#pos linenum preproc_state lexbuf
-     with Stdlib.Error (region, error) ->
+     with Error (region, error) ->
             fail region (Invalid_directive error)
         | Ok _ ->
             let state = hash_state#newline lexbuf in
@@ -414,11 +413,11 @@ and scan_verbatim verb_close thread state = parse
     type lexer =
       token State.t ->
       Lexing.lexbuf ->
-      (token * token State.t, message) Stdlib.result
+      (token * token State.t, message) result
 
     let handle scan state lexbuf =
-      try Stdlib.Ok (scan state lexbuf) with
-        Error msg -> Stdlib.Error msg
+      try Ok (scan state lexbuf) with
+        Error msg -> Error msg
 
     let callback state = handle scan state
 

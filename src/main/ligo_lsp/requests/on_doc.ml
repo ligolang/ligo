@@ -68,7 +68,7 @@ let detect_or_ask_to_create_project_file (file : Path.t) : unit Handler.t =
   let%bind get_scope_buffers = ask_docs_cache in
   let project_root = Project_root.get_project_root file in
   let%bind () = update_project_root project_root in
-  match Docs_cache.find get_scope_buffers file, project_root with
+  match Hashtbl.find get_scope_buffers file, project_root with
   | None, None ->
     send_request WorkspaceFolders (fun folders ->
         let%bind normalize = ask_normalize in
@@ -163,7 +163,7 @@ let drop_cached_definitions : Path.t -> unit Handler.t =
  fun path ->
   let open Handler.Let_syntax in
   let%bind docs_cache = ask_docs_cache in
-  when_some_ (Docs_cache.find docs_cache path)
+  when_some_ (Hashtbl.find docs_cache path)
   @@ fun { syntax
          ; code
          ; document_version
@@ -206,7 +206,7 @@ let on_doc
     match version with
     | `New v -> Some v
     | `Unchanged ->
-      (match Docs_cache.find old_docs file with
+      (match Hashtbl.find old_docs file with
       | None -> None
       | Some cache -> cache.document_version)
   in
@@ -225,7 +225,7 @@ let cache_doc_minimal : Path.t -> unit Handler.t =
  fun file ->
   let open Handler.Let_syntax in
   let%bind docs_cache = ask_docs_cache in
-  if Docs_cache.mem docs_cache file
+  if Hashtbl.mem docs_cache file
   then return ()
   else (
     let%bind () =

@@ -203,9 +203,7 @@ let gauge_compilation_size_group =
     "compilation_size"
 
 
-let create_id () =
-  Format.asprintf "%a" Uuid.pp (Uuid.create_random Core.Random.State.default)
-
+let create_id () = Format.asprintf "%a" Uuid.pp (Uuid.create_random Random.State.default)
 
 let read_file path =
   match OS.File.read Fpath.(v path) with
@@ -349,10 +347,9 @@ let push_collected_metrics ~skip_analytics =
 
 
 let determine_syntax_label_from_source source : string =
-  let ext = Caml.Filename.extension source in
-  match ext with
-  | ".mligo" -> "CameLIGO"
-  | ".jsligo" -> "JsLIGO"
+  match Filename.split_extension source with
+  | _, Some "mligo" -> "CameLIGO"
+  | _, Some "jsligo" -> "JsLIGO"
   | _ -> "invalid"
 
 

@@ -32,7 +32,8 @@ let unzip fname =
   | Ok _ ->
     let bytes = Buffer.contents_bytes r in
     let nbytes = Bytes.length bytes in
-    let fname = Format.sprintf "%s.tar" (Caml.Filename.remove_extension fname) in
+    let prefix = Filename.chop_extension fname in
+    let fname = Format.sprintf "%s.tar" prefix in
     let out_fd = Ligo_unix.openfile fname [ Ligo_unix.O_CREAT; Ligo_unix.O_RDWR ] 0o666 in
     let mbytes = Ligo_unix.write out_fd bytes 0 nbytes in
     let () = Ligo_unix.close in_fd in

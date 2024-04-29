@@ -6,13 +6,15 @@ open Package_management_external_libs
 module Semver = Ligo_semver
 
 type version =
-  | SemverVersion of Semver.t
+  | SemverVersion of (int * int * int) (*Semver.t*)
   | StringVersion of string
+[@@deriving sexp]
 
 type t =
   { name : string
   ; version : version
   }
+[@@deriving sexp]
 
 val compare : t -> t -> int
 val make : name:string -> version:version -> t
@@ -23,3 +25,5 @@ val to_string : t -> string
 val of_string : string -> (t, [> Rresult.R.msg ]) result
 val to_yojson : t -> Yojson.Safe.t
 val of_yojson : Yojson.Safe.t -> (t, string) result
+val t_of_sexp : Sexp.t -> t
+val sexp_of_t : t -> Sexp.t

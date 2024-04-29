@@ -18,7 +18,7 @@ let add : t -> Location.t -> def list -> t =
     | None -> Some (shadow_defs defs)
     | Some value -> Some (shadow_defs @@ List.rev_append defs value)
   in
-  LMap.update rhs_range f scopes
+  Core.Map.change scopes rhs_range ~f
 
 
 (* --------------------------- AST traversal -------------------------------- *)
@@ -450,4 +450,5 @@ end
 
 let inline_scopes : def_map -> t -> Types.inlined_scopes =
  fun prg_defs scopes ->
-  scopes |> LMap.map (Def.defs_to_types_defs prg_defs) |> LMap.to_kv_list
+  (*  scopes |> LMap.map (Def.defs_to_types_defs prg_defs) |> LMap.to_kv_list*)
+  Core.Map.map scopes ~f:(Def.defs_to_types_defs prg_defs) |> Core.Map.to_alist

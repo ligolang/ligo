@@ -5,7 +5,7 @@ class virtual prompt_base term =
 
     method! send_action =
       function
-      | LTerm_read_line.Break -> raise Caml.Sys.Break
+      | LTerm_read_line.Break -> raise Sys_unix.Break
       | action -> super#send_action action
 
     method! show_box = false
@@ -51,7 +51,7 @@ let handle_interruption ?fallback_env_var f =
         let* v = f stdout_term in
         Lwt_result.return @@ Zed_string.to_utf8 @@ v)
       (function
-        | LTerm_read_line.Interrupt | Caml.Sys.Break -> Lwt_result.lift @@ Error Cancelled
+        | LTerm_read_line.Interrupt | Sys_unix.Break -> Lwt_result.lift @@ Error Cancelled
         | e -> Lwt_result.lift @@ Error (Unknown_error e))
   else
     Lwt_result.lift

@@ -2,7 +2,7 @@
 
 (* Utilities *)
 
-module SMap = Caml.Map.Make (String)
+module SMap = Map.Make (String)
 
 (* Monadic bind *)
 
@@ -25,16 +25,16 @@ type t = {
 
 (* Packages *)
 
-type package = Package of string
+type package = Package of string [@@deriving sexp]
 
 module PackageOrd =
   struct
-    type t = package
+    type t = package [@@deriving sexp]
 
     let compare (Package a) (Package b) = String.compare a b
   end
 
-module PackageMap = Caml.Map.Make (PackageOrd)
+module PackageMap = Map.Make (PackageOrd)
 
 (* TODO Explain the following types. *)
 
@@ -138,7 +138,7 @@ module Path =
     (* [get_absolute_path path] returns the absolute path
        w.r.t. the root *)
 
-    let get_absolute_path ?(root=Caml.Sys.getcwd ()) path =
+    let get_absolute_path ?(root=Sys_unix.getcwd ()) path =
       let path' = v path in
       if is_abs path' then path' else v (join root path)
 
@@ -183,12 +183,13 @@ module Esy =
 
     (* The function [find_manifest_path] finds manifest file for a package. *)
 
-    let find_manifest_path directory = 
+    let find_manifest_path directory =
       if match Simple_utils.File.exists (directory ^ "/" ^ "package.json") with Some _ -> true | _ -> false
       then Some (directory / "package.json")
-      else if Stdlib.Sys.file_exists (directory / "package.json")
-      then Some (directory / "package.json")
-      else None
+      else
+      match Sys_unix.file_exists (directory / "package.json") with
+        `Yes -> Some (directory / "package.json")
+      | `No | `Unknown -> None
 
     (* Path to installation.json *)
 
@@ -289,10 +290,10 @@ let clean_installation_json ~root abs_path_to_project_root installation_json =
   let* installation_json = installation_json in
   let kvs = Yojson.Basic.Util.to_assoc installation_json in
   (* set the path of root project to [abs_path_to_project_root] *)
-  let kvs = List.map kvs ~f:(fun (k, v) -> 
-    if String.equal k root 
-    then (k, `String abs_path_to_project_root) 
-    else (k, v)) 
+  let kvs = List.map kvs ~f:(fun (k, v) ->
+    if String.equal k root
+    then (k, `String abs_path_to_project_root)
+    else (k, v))
   in
   let folded map (key, value) =
     let* map   in
@@ -301,7 +302,7 @@ let clean_installation_json ~root abs_path_to_project_root installation_json =
     let  abs_p = Path.get_absolute_path ~root:abs_path_to_project_root value in
     let* abs_s = Path.to_string abs_p in
     let  incl  = Path abs_s in
-    Some (PackageMap.add key incl map)
+    Some (Map.set map ~key ~data:incl)
   in List.fold_left kvs ~f:folded ~init:(Some PackageMap.empty)
 
 (* The function [clean_lock_file_json] converts and esy lock file to a
@@ -360,7 +361,7 @@ let clean_lock_file_json lock_json =
     let  dependencies = Util.member "dependencies" value in
     let* dependencies = JsonHelpers.string_list_of dependencies in
     let  dependencies = List.map dependencies ~f:(fun d -> Package d)
-    in Some (PackageMap.add key dependencies map) in
+    in Some (Map.set ~key ~data:dependencies map) in
   let* node = List.fold_left kvs ~f:folded ~init:(Some PackageMap.empty)
   in Some {root; node}
 
@@ -369,7 +370,7 @@ let clean_lock_file_json lock_json =
    given). *)
 
 let resolve_path abs_path_to_project_root installation pkg_name =
-  let* Path path = PackageMap.find_opt pkg_name installation in
+  let* Path path = Map.find installation pkg_name in
   let  path = Path.get_absolute_path
                 ~root:abs_path_to_project_root path in
   let* path = Path.to_string path
@@ -382,7 +383,7 @@ let resolve_path abs_path_to_project_root installation pkg_name =
 
 let resolve_paths abs_path_to_project_root installation graph
     : resolution list option =
-  let folded key value entries =
+  let folded ~key ~data:value entries =
     let* entries in
     let  mapped = resolve_path abs_path_to_project_root installation in
     let* resolved = compact @@ List.map value ~f:mapped in
@@ -391,7 +392,7 @@ let resolve_paths abs_path_to_project_root installation graph
     let  paths = List.sort ~compare:String.compare resolved in
     let  paths = List.map ~f:(fun p -> Path p) paths
     in Some ((key, paths) :: entries)
-  in PackageMap.fold folded graph (Some [])
+  in Map.fold ~f:folded graph ~init:(Some [])
 
 (* The function [find_dependencies] takes the esy lock file and
    traverses the dependency graph, and constructs a map of package
@@ -401,13 +402,13 @@ let resolve_paths abs_path_to_project_root installation graph
 let find_dependencies (lock_file : lock_file) : package list PackageMap.t =
   let {root; node} = lock_file in
   let rec dfs graph dep =
-    if PackageMap.mem dep graph
+    if Map.mem graph dep
     then graph
     else
-      let deps = PackageMap.find_opt dep node in
+      let deps = Map.find node dep in
       match deps with
         Some deps ->
-          let graph = PackageMap.add dep deps graph
+          let graph = Map.set ~key:dep ~data:deps graph
           in List.fold_left deps ~init:graph ~f:dfs
       | _ -> graph
   in dfs PackageMap.empty root
@@ -485,8 +486,8 @@ let get_dependencies ~file = function
     in
     aux path
 
-(* The function [get_main_field_from_manifest] take a root [directory] 
-   and reads the LIGO manifest inside the directory and looks for the 
+(* The function [get_main_field_from_manifest] take a root [directory]
+   and reads the LIGO manifest inside the directory and looks for the
    main field in the manifest.
 
    Note: The main field in the LIGO manifest is the path the main file that
@@ -531,12 +532,12 @@ let find_external_file ~file ~inclusion_paths =
   let* segs =
     match segs with
       [scope ; pkg_name]
-      when Core.String.is_prefix ~prefix:"@" scope -> 
+      when Core.String.is_prefix ~prefix:"@" scope ->
       let scope = Core.String.chop_prefix_exn ~prefix:"@" scope in
       let* Path dir = find_package_root_dir ~scope pkg_name in
       let* main_file = get_main_field_from_manifest dir in
       Some main_file
-    | [pkg_name] -> 
+    | [pkg_name] ->
       let* Path dir = find_package_root_dir pkg_name in
       let* main_file = get_main_field_from_manifest dir in
       Some main_file
@@ -581,8 +582,9 @@ module Helpers =
        functions [get_root_dependencies] & [find_external_file] *)
 
     let resolve ~file module_resolutions =
-      if Stdlib.Sys.file_exists file then file
-      else
+      match Sys_unix.file_exists file with
+        `Yes -> file
+      | `No | `Unknown ->
         let inclusion_paths =
           get_root_dependencies module_resolutions in
         let external_file  =

@@ -116,7 +116,7 @@ module type S =
     | Lexing  of error
     | System  of error
 
-    type 'src parser = 'src -> (tree, pass_error) Stdlib.result
+    type 'src parser = 'src -> (tree, pass_error) result
 
     (* Monolithic API of Menhir *)
 
@@ -148,7 +148,7 @@ module type S =
            is not found or a lexer error occurred. *)
 
     type 'src recovery_parser =
-      'src -> (tree * message list, message Utils.nseq) Stdlib.result
+      'src -> (tree * message list, message Utils.nseq) result
 
     (* Parsing with recovery from various sources *)
 

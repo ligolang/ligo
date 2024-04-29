@@ -12,6 +12,8 @@ module Directive = Types.Directive
 module Utils     = Types.Utils
 module Region    = Types.Region
 
+open Ppx_yojson_conv_lib.Yojson_conv.Primitives
+
 (* Local dependencies *)
 
 module Wrap = Types.Wrap

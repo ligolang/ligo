@@ -25,12 +25,14 @@ let get_cst_fold
   let file_path = resolve file_path in
   let contents = In_channel.read_all file_path in
   let cst =
+    let buffer = Buffer.create (String.length contents) in
+    Buffer.add_string buffer contents;
     Ligo_api.Dialect_cst.get_cst
       ~strict:false
       ~file:file_path
       ~preprocess_define:[]
       Syntax_types.CameLIGO
-      (Caml.Buffer.of_seq (Caml.String.to_seq contents))
+      buffer
   in
   match cst, witness with
   | Ok (CameLIGO cst), CameLIGONode ->

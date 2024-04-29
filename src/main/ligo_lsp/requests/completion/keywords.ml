@@ -1,19 +1,13 @@
 open Common
 open Lsp_helpers
-module SMap = Map.Make (String)
 
 (** Helper module type to deal with CameLIGO or JsLIGO tokens. *)
 module type Built_in = sig
-  (** The type of the tokens for a given dialect. *)
-  type t
+  (** A list with keywords for a given dialect. *)
+  val keywords_list : string list
 
-  (** A map for getting keywords for a given dialect. We're normally only interested in
-      this map's keys. *)
-  val keywords : (Simple_utils.Region.t -> t) SMap.t
-
-  (** A map for getting operators for a given dialect. We're normally only interested in
-      this map's keys. *)
-  val symbols : (Simple_utils.Region.t -> t) SMap.t
+  (** A list with operators for a given dialect. *)
+  val symbols_list : string list
 end
 
 (** Gets completions for keywords and operators based on whether we're dealing with
@@ -21,7 +15,7 @@ end
     [jsligo_keyword_completions]. *)
 let dialect_keyword_completions (module Built_in : Built_in) : CompletionItem.t list =
   List.map
-    Built_in.(Map.keys keywords @ Map.keys symbols)
+    Built_in.(keywords_list @ symbols_list)
     ~f:(fun keyword ->
       CompletionItem.create
         ~label:keyword

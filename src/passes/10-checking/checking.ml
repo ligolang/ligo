@@ -1137,7 +1137,7 @@ and infer_record : type e. _ -> e Record.t -> (e -> _) -> _ =
   let open C in
   let open Let_syntax in
   let%bind fields, record =
-    Label.Map.fold
+    Core.Map.fold
       ~f:(fun ~key:label ~data:expr result ->
         let%bind fields, record = result in
         let%bind expr_type, expr = try_infer expr in

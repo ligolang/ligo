@@ -41,7 +41,7 @@ module Make (Token : TOKEN) =
     let fail acc region error =
       let units = List.rev acc
       and msg = error_to_string error in
-      Stdlib.Error (units, Region.{value=msg; region})
+      Error (units, Region.{value=msg; region})
 
     (* Checking the style *)
 
@@ -49,7 +49,7 @@ module Make (Token : TOKEN) =
 
     type message = string Region.reg
 
-    type result = (units, units * message) Stdlib.result
+    type nonrec result = (units, units * message) result
 
     let rec filter ~add_warning acc = function
       [] -> Ok (List.rev acc)

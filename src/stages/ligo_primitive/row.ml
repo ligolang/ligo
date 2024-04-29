@@ -11,7 +11,7 @@ struct
     }
   [@@deriving equal, compare, yojson, sexp]
 
-  let find_type (t : 'a t) (l : Label.t) : 'a option = Label.Map.find t.fields l
+  let find_type (t : 'a t) (l : Label.t) : 'a option = Map.find t.fields l
 
   let invariant t =
     Invariant.invariant [%here] t [%sexp_of: _] (fun () ->
@@ -43,7 +43,7 @@ struct
   let length t = Map.length t.fields
 
   let is_tuple t =
-    List.for_all ~f:(fun i -> Label.Map.mem t.fields i) @@ Label.range 0 (length t)
+    List.for_all ~f:(fun i -> Map.mem t.fields i) @@ Label.range 0 (length t)
 
 
   let to_tuple (t : 'a t) : 'a list =
@@ -111,7 +111,7 @@ module With_layout = struct
 
   let to_alist (t : 'a t) : (Label.t * 'a) list =
     List.map (Layout.to_list t.layout) ~f:(fun label ->
-        label, Label.Map.find_exn t.fields label)
+        label, Map.find_exn t.fields label)
 
 
   (* remaining operations are highly specific to layouts *)
@@ -130,7 +130,7 @@ module With_layout = struct
       match t with
       | Empty ->
         failwith (Format.asprintf "internal error: constructor not found @ %s" __LOC__)
-      | Leaf { name; _ } -> name, value, Label.Map.find_exn row.fields name
+      | Leaf { name; _ } -> name, value, Map.find_exn row.fields name
       | Node (l, r) ->
         (match get_left value with
         | Some value -> aux l value
@@ -161,7 +161,7 @@ module With_layout = struct
     in
     let rec aux (t : Layout.t) value =
       match t with
-      | Field { name; _ } -> [ name, value, Label.Map.find_exn row.fields name ]
+      | Field { name; _ } -> [ name, value, Map.find_exn row.fields name ]
       | Inner ts ->
         (match get_list (List.length ts) value with
         | None ->

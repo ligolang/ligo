@@ -3,7 +3,7 @@
  *)
 
 module Semver = Package_management_external_libs.Ligo_semver
-module SMap = Caml.Map.Make (String)
+module SMap = Map.Make (String)
 open Package_management_shared
 module RepositoryUrl = Repository_url
 module Uri = Package_management_external_libs.Ligo_uri
@@ -142,7 +142,9 @@ module Versions = struct
   type t = Version.t SMap.t
 
   let to_yojson t =
-    let kvs = SMap.fold (fun k v xs -> (k, Version.to_yojson v) :: xs) t [] in
+    let kvs =
+      Map.fold ~f:(fun ~key:k ~data:v xs -> (k, Version.to_yojson v) :: xs) t ~init:[]
+    in
     `Assoc kvs
 
 
@@ -150,7 +152,7 @@ module Versions = struct
     | `Assoc kvs ->
       let f smap (k, v) =
         match smap, Version.of_yojson v with
-        | Ok smap, Ok version -> Ok (SMap.add k version smap)
+        | Ok smap, Ok version -> Ok (Map.set smap ~key:k ~data:version)
         | Ok _, Error e -> Error e
         | Error e, _ -> Error e
       in
@@ -222,7 +224,7 @@ module MakeAttachments (Attachment : Attachment) :
     | `Assoc kvs ->
       let f acc (k, v) =
         match acc, Attachment.of_yojson v with
-        | Ok acc, Ok v -> Ok (SMap.add k v acc)
+        | Ok acc, Ok v -> Ok (Map.set ~key:k ~data:v acc)
         | Error e, _ -> Error e
         | _, Error e -> Error e
       in
@@ -232,11 +234,13 @@ module MakeAttachments (Attachment : Attachment) :
 
 
   let to_yojson t =
-    let kvs = SMap.fold (fun k v xs -> (k, Attachment.to_yojson v) :: xs) t [] in
+    let kvs =
+      Map.fold ~f:(fun ~key:k ~data:v xs -> (k, Attachment.to_yojson v) :: xs) t ~init:[]
+    in
     `Assoc kvs
 end
 
-(* This module represents the body of the HTTP request needed to publish a 
+(* This module represents the body of the HTTP request needed to publish a
    package to LIGO registry *)
 module MakeBody (Attachments : Attachments) = struct
   type t =
@@ -268,14 +272,15 @@ module PutAttachments = struct
 
   let make ~(package_stats : PackageStats.t) =
     let gzipped_tarball = package_stats.PackageStats.tarball_content in
-    SMap.add
-      package_stats.PackageStats.tarball_name
-      PutAttachment.
-        { content_type = "application/octet-stream"
-        ; data = Base64.encode_exn (Bytes.to_string gzipped_tarball)
-        ; length = Bytes.length gzipped_tarball
-        }
+    Map.set
       SMap.empty
+      ~key:package_stats.PackageStats.tarball_name
+      ~data:
+        PutAttachment.
+          { content_type = "application/octet-stream"
+          ; data = Base64.encode_exn (Bytes.to_string gzipped_tarball)
+          ; length = Bytes.length gzipped_tarball
+          }
 end
 
 module PutBody = MakeBody (PutAttachments)

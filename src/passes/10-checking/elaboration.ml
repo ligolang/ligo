@@ -35,7 +35,7 @@ let all_lmap (lmap : 'a t Label.Map.t) : 'a Label.Map.t t =
 
 let all_lmap_unit (lmap : unit t Label.Map.t) : unit t =
  fun ~options ~path ~raise subst ->
-  Label.Map.iter ~f:(fun t -> t ~options ~path ~raise subst) lmap
+  Map.iter ~f:(fun t -> t ~options ~path ~raise subst) lmap
 
 
 include Let_syntax

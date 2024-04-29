@@ -2,6 +2,7 @@
  (name ligo_init)
  (libraries
   core
+  core_unix.filename_unix
   bos
   simple-utils
   cli_helpers

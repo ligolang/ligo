@@ -23,10 +23,11 @@ let test { test_name; actual; expected } =
   Alcotest.test_case test_name `Quick
   @@ fun () ->
   let syntax =
-    match Caml.Filename.extension actual with
-    | ".mligo" -> Syntax_types.CameLIGO
-    | ".jsligo" -> Syntax_types.JsLIGO
-    | other -> failwith (Printf.sprintf "Unknown extension %s" other)
+    match snd (Filename.split_extension actual) with
+    | Some "mligo" -> Syntax_types.CameLIGO
+    | Some "jsligo" -> Syntax_types.JsLIGO
+    | Some other -> failwith (Printf.sprintf "Unknown extension %s" other)
+    | None -> failwith "Missing extension"
   in
   let contents = In_channel.read_all actual in
   let buffer = Buffer.create (String.length contents) in

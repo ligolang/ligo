@@ -356,7 +356,7 @@ and ty_expr : CST.type_expr AST.ty_expr_ -> CST.type_expr =
     in
     (* TODO #1758 support nullary constructors *)
     let pairs =
-      match Utils.list_to_sepseq (Label.Map.to_alist fields) ghost_vbar with
+      match Utils.list_to_sepseq (Core.Map.to_alist fields) ghost_vbar with
       | None -> failwith "Decompiler: got a T_sum with no elements"
       | Some nsepseq -> Utils.nsepseq_map f nsepseq
     in
@@ -371,7 +371,7 @@ and ty_expr : CST.type_expr AST.ty_expr_ -> CST.type_expr =
               ; field_type = Some (ghost_colon, t)
               ; attributes = []
               })
-      @@ Utils.list_to_sepseq (Label.Map.to_alist fields) ghost_semi
+      @@ Utils.list_to_sepseq (Core.Map.to_alist fields) ghost_semi
     in
     T_Record (w CST.{ lbrace = ghost_lbrace; inside = pairs; rbrace = ghost_rbrace })
   | T_app { constr; type_args } ->

@@ -50,9 +50,9 @@ let rec free_vars t =
   | T_exists _ -> Set.empty
   | T_construct { parameters; _ } -> parameters |> List.map ~f:free_vars |> Set.union_list
   | T_sum (row, _) | T_record row -> free_vars_row row
-  | T_arrow arr -> arr |> Arrow.map free_vars |> Arrow.fold Set.union Set.empty
+  | T_arrow arr -> arr |> Arrow.map free_vars |> Arrow.fold Core.Set.union Set.empty
   | T_for_all abs | T_abstraction abs ->
-    abs |> Abstraction.map free_vars |> Abstraction.fold Set.union Set.empty
+    abs |> Abstraction.map free_vars |> Abstraction.fold Core.Set.union Set.empty
   | T_singleton _ -> Set.empty
 
 

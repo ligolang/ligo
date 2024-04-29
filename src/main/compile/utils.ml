@@ -157,11 +157,14 @@ let buffer_from_path file_path =
   let int_length =
     match Int64.to_int chan_length with
     | Some int -> int
-    | None -> Caml.Sys.max_string_length
+    | None -> String.max_length
   in
   let buffer = Buffer.create int_length in
-  let () = Caml.Buffer.add_channel buffer in_channel int_length in
-  buffer
+  match In_channel.input_buffer in_channel buffer ~len:int_length with
+  | Some () ->
+    In_channel.close in_channel;
+    buffer
+  | None -> raise Stdlib.End_of_file
 
 
 let pretty_print ?(preprocess = false) ~raise ~options ~meta file_path =

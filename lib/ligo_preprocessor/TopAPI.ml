@@ -75,7 +75,7 @@ module Make (Parameters : CLI.PARAMETERS) =
       let open Std in
       let () =
         match preprocessed with
-          Stdlib.Ok (text, _) ->
+          Ok (text, _) ->
             if Options.show_pp then
               add_line std.out @@ Buffer.contents text;
               add_nl std.out

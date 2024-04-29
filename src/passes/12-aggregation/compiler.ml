@@ -226,16 +226,20 @@ module Data = struct
 
   let memo_rec
       ?(size = 30)
-      ?(hash = (Caml.Hashtbl.hash_param 1_000 10_000 : 'a -> int))
+      ?(hash = (Core.Hashtbl.hash_param 1_000 10_000 : 'a -> int))
       (f : ('a -> 'b) -> 'a -> 'b)
     =
-    let h = Caml.Hashtbl.create size in
+    let h = Core.Hashtbl.create (module Int) ~size in
     let rec g x =
       let k = hash x in
-      match Caml.Hashtbl.find_opt h k with
+      match Core.Hashtbl.find h k with
       | None ->
         let z = f g x in
-        Caml.Hashtbl.add h k z;
+        (* Warning: The original code called Caml.Hashtbl.add, which
+           behaves differently if the key was already present: here,
+           instead of hiding any previous binding, we leave the table
+           unchanged. *)
+        let (`Ok | `Duplicate) = Core.Hashtbl.add h ~key:k ~data:z in
         z
       | Some z -> z
     in

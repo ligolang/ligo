@@ -5,7 +5,7 @@ module Semver = Ligo_semver
 
 (* TODO Merge with [Ligo_manifest] *)
 
-module DependencyMap : module type of Caml.Map.Make (String)
+module DependencyMap : module type of Map.Make (String)
 
 type t =
   { dependencies : Semver.t DependencyMap.t

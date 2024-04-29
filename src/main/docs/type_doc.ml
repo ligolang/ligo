@@ -4,7 +4,7 @@ open PPrint
 open Ligo_prim
 open Simple_utils.Function
 
-let strip_empty = List.filter ~f:(Caml.( != ) empty)
+let strip_empty = List.filter ~f:(fun doc -> not @@ is_empty doc)
 let unwords : document list -> document = separate space <@ strip_empty
 let unlines : document list -> document = separate hardline <@ strip_empty
 
@@ -83,10 +83,16 @@ let type_expr_doc
     attach_doc doc_opt @@ unwords [ export public; !^"type"; !^name; params; equals; typ ])
 
 
+let file_exists path =
+  match Sys_unix.file_exists path with
+  | `Yes -> true
+  | `No | `Unknown -> false
+
+
 let to_typescript_path (path : string) : string option =
   let open Option.Let_syntax in
-  let absolute_path = FilePath.make_absolute (Caml.Sys.getcwd ()) path in
-  let%bind () = Option.some_if (Caml.Sys.file_exists absolute_path) () in
+  let absolute_path = FilePath.make_absolute (Sys_unix.getcwd ()) path in
+  let%bind () = Option.some_if (file_exists absolute_path) () in
   let base_name, ext_opt = Filename.split_extension absolute_path in
   match%bind Syntax.of_ext_opt ext_opt with
   | JsLIGO -> return base_name

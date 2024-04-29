@@ -76,7 +76,7 @@ type env =
   }
 
 module T = struct
-  (** The handler monad ['a t] allows sending messages to user 
+  (** The handler monad ['a t] allows sending messages to user
       and reading docs cache by making use of the [env]. *)
   type 'a t = Handler of (env -> 'a IO.t) [@@unboxed]
 
@@ -138,7 +138,7 @@ let ask_metadata_download_options : Tzip16_storage.download_options t =
 let set_docs_cache (path : Path.t) (data : Ligo_interface.unprepared_file_data) : unit t =
   let open Let_syntax in
   let%map docs_cache = ask_docs_cache in
-  Docs_cache.set docs_cache ~key:path ~data
+  Hashtbl.set docs_cache ~key:path ~data
 
 
 (** Sequencing handlers *)
@@ -204,7 +204,7 @@ let send_log_msg ~(type_ : MessageType.t) (s : string) : unit t =
   match%bind ask_notify_back with
   | Normal nb ->
     let%bind { logging_verbosity; _ } = ask_config in
-    if Caml.(type_ <= logging_verbosity)
+    if Stdlib.(type_ <= logging_verbosity)
     then lift_io @@ nb#send_log_msg ~type_ s
     else pass
   | Mock _ -> pass
@@ -225,7 +225,7 @@ let send_diagnostic (uri : DocumentUri.t) (s : Diagnostic.t list) : unit t =
     pass
   | Mock diagnostics ->
     let%map normalize = ask_normalize in
-    Path_hashtbl.update
+    Hashtbl.update
       diagnostics
       (DocumentUri.to_path ~normalize uri)
       ~f:(Option.value_map ~default:s ~f:(( @ ) s))
@@ -306,7 +306,7 @@ let with_cached_doc ~(default : 'a) (path : Path.t) (f : Ligo_interface.file_dat
   =
   let open Let_syntax in
   let%bind docs = ask_docs_cache in
-  match Docs_cache.find docs path with
+  match Hashtbl.find docs path with
   | None -> return default
   | Some
       { code
@@ -423,7 +423,7 @@ let with_cached_doc_pure
 let with_code (path : Path.t) ~(default : 'a) (f : string -> 'a t) : 'a t =
   let open Let_syntax in
   let%bind docs = ask_docs_cache in
-  match Docs_cache.find docs path with
+  match Hashtbl.find docs path with
   | Some file_data -> f file_data.code
   | None -> return default
 
@@ -449,13 +449,15 @@ let with_cst
   let open Let_syntax in
   let%bind syntax = get_syntax_exn path in
   match
+    let buffer = Buffer.create (String.length code) in
+    Buffer.add_string buffer code;
     Ligo_api.Dialect_cst.get_cst
       ?project_root:(Option.map ~f:Path.to_string @@ Project_root.get_project_root path)
       ~preprocess_define:(* TODO: extract from project root ? *) []
       ~strict
       ~file:(Path.to_string path)
       syntax
-      (Caml.Buffer.of_seq (Caml.String.to_seq code))
+      buffer
   with
   | Error err ->
     let%bind () = on_error err in

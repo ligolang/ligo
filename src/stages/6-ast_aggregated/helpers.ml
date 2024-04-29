@@ -56,7 +56,7 @@ let destruct_arrows (t : type_expression) =
   destruct_arrows [] t
 
 
-let assert_eq a b = if Caml.( = ) a b then Some () else None
+let assert_eq a b = if Stdlib.( = ) a b then Some () else None
 let assert_same_size a b = if List.length a = List.length b then Some () else None
 
 (* ~unforged_tickets allows type containing tickets to be decompiled to 'unforged' tickets (e.g. `int * int ticket` |-> `int * {ticketer : address ; value : int ; amount : nat }
@@ -244,19 +244,29 @@ module Free_variables : sig
   val expression_only_var : expression -> Value_var.t list
 end = struct
   open Ligo_prim
-  module VarSet = Caml.Set.Make (Value_var)
+  module VarSet = Set
+
+  let empty_set = VarSet.empty (module Value_var)
+
+  type var_set = (Value_var.t, Value_var.comparator_witness) VarSet.t
 
   type t =
-    { var : VarSet.t
-    ; mut_var : VarSet.t
+    { var : var_set
+    ; mut_var : var_set
     }
 
-  let empty = { var = VarSet.empty; mut_var = VarSet.empty }
-  let singleton_var v = { var = VarSet.singleton v; mut_var = VarSet.empty }
-  let singleton_mut_var v = { var = VarSet.empty; mut_var = VarSet.singleton v }
+  let empty = { var = empty_set; mut_var = empty_set }
+
+  let singleton_var v =
+    { var = VarSet.singleton (module Value_var) v; mut_var = empty_set }
+
+
+  let singleton_mut_var v =
+    { var = empty_set; mut_var = VarSet.singleton (module Value_var) v }
+
 
   let remove name t =
-    { var = VarSet.remove name t.var; mut_var = VarSet.remove name t.mut_var }
+    { var = VarSet.remove t.var name; mut_var = VarSet.remove t.mut_var name }
 
 
   let union { var = y1; mut_var = z1 } { var = y2; mut_var = z2 } =
@@ -328,7 +338,7 @@ end = struct
            varSet)
 
 
-  let to_list x = VarSet.fold (fun v r -> v :: r) x []
+  let to_list x = VarSet.fold x ~f:(fun r v -> v :: r) ~init:[]
 
   let expression e =
     let varSet = get_fv_expr e in

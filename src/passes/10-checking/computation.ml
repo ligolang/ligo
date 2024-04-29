@@ -169,7 +169,7 @@ let all_lmap (lmap : ('a, 'err, 'wrn) t Label.Map.t) : ('a Label.Map.t, 'err, 'w
 let all_lmap_unit (lmap : (unit, 'err, 'wrn) t Label.Map.t) : (unit, 'err, 'wrn) t =
  fun ~raise ~options ~loc ~path ~poly_name_tbl state ->
   let state =
-    Label.Map.fold
+    Map.fold
       ~f:(fun ~key:_label ~data:t state ->
         let state, () = t ~raise ~options ~loc ~path ~poly_name_tbl state in
         state)
@@ -743,7 +743,7 @@ let rec eq (type1 : Type.t) (type2 : Type.t) =
              eq_ row_elem1 row_elem2)
       |> all_lmap
     in
-    return (List.for_all ~f:Fn.id @@ Label.Map.data bs)
+    return (List.for_all ~f:Fn.id @@ Core.Map.data bs)
   | _ -> return false
 
 
@@ -1147,7 +1147,7 @@ module With_frag = struct
   let all_lmap_unit (lmap : (unit, 'err, 'wrn) t Label.Map.t) : (unit, 'err, 'wrn) t =
    fun ~raise ~options ~loc ~path ~poly_name_tbl state ->
     let state, frag =
-      Label.Map.fold
+      Core.Map.fold
         ~f:(fun ~key:_label ~data:t (state, frag) ->
           let state, (frag', ()) = t ~raise ~options ~loc ~path ~poly_name_tbl state in
           state, frag @ frag')

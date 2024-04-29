@@ -16,4 +16,6 @@
   fuzz
   ligo_run
   self_ast_typed
-  bls12-381))
+  bls12-381
+  core_unix
+  core_unix.sys_unix))

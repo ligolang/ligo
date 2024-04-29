@@ -13,15 +13,11 @@ module Config    = Preprocessor.Config
 
 (* Third-party libraries *)
 
-module Array  = Caml.Array  (* Used in the generated code only *)
+module Array  = Stdlib.Array  (* Used in the generated code only *)
 
 (* UTILITIES *)
 
-let (let*) : ('a, 'e) result -> ('a -> ('b, 'e) result) -> ('b, 'e) result =
-  fun r f ->
-    match r with
-      Ok x         -> f x
-    | Error _ as e -> e
+let ( let* ) v f = Result.bind v ~f
 
 (* The functor return signature *)
 
@@ -82,7 +78,7 @@ module Make (Config : Config.S) (Client : Client.S) =
       let value      = Error.to_string error in
       let message    = Region.{value; region} in
       let used_units = List.rev state#lexical_units
-      in Stdlib.Error {used_units; message}
+      in Error {used_units; message}
 
     (* Auxiliary functions for preprocessing directives *)
 
@@ -96,7 +92,7 @@ module Make (Config : Config.S) (Client : Client.S) =
       let state, Region.{region; _} = state#sync lexbuf in
       let state' = new Preprocessor.State.t state#pos in
       match scan region#start state' lexbuf with
-        Stdlib.Error (region, err) ->
+        Error (region, err) ->
           fail state region (Error.Invalid_directive err)
       | Ok (state', _, dir, ending) ->
           let state = state#set_pos state'#pos in
@@ -142,7 +138,7 @@ module Make (Config : Config.S) (Client : Client.S) =
       match Directive.scan_linemarker
               hash_state#pos linenum preproc_state lexbuf
       with
-        Stdlib.Error (region, error) ->
+        Error (region, error) ->
           fail hash_state region (Error.Invalid_directive error)
 
       | Ok (preproc_state, args, directive, _ending) ->
@@ -255,7 +251,7 @@ module Make (Config : Config.S) (Client : Client.S) =
       let ()  = Lexbuf.rollback lexbuf in
       let len = thread#length in
       match scan_utf8 thread state lexbuf with
-        Stdlib.Ok (thread, state) ->
+        Ok (thread, state) ->
           let delta = thread#length - len in
           let stop  = state#pos#shift_one_uchar delta
           in callback thread (state#set_pos stop) lexbuf
@@ -266,7 +262,7 @@ module Make (Config : Config.S) (Client : Client.S) =
           in fail state region error
 
     let open_block thread state =
-      Stdlib.Error (thread, state, Error.Unterminated_comment)
+      Error (thread, state, Error.Unterminated_comment)
 
 (* END HEADER *)
 }

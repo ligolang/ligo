@@ -13,13 +13,13 @@ module Lexbuf = Simple_utils.Lexbuf
 
 let sprintf = Printf.sprintf
 
-let (let*) = Caml.Result.bind
+let (let*) v f = Result.bind v ~f
 
 (* ERRORS *)
 
 type error = Region.t * Error.t
 
-let mk_Error1 region error = Stdlib.Error (region, error)
+let mk_Error1 region error = Error (region, error)
 
 let mk_Error2 lexbuf = mk_Error1 @@ Region.from_lexbuf lexbuf
 

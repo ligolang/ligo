@@ -36,8 +36,8 @@ LexerLib
 ├── Client.mli
 ├── CLI.ml
 ├── CLI.mli
-├── Core.mli
-├── Core.mll
+├── LexCore.mli
+├── LexCore.mll
 ├── Directive.ml
 ├── Directive.mli
 ├── dune
@@ -58,14 +58,14 @@ LexerLib
 
 Here is a short description of some of those files and OCaml modules:
 
-  * The OCaml module `Core` is the heart of the lexer library. It can
+  * The OCaml module `LexCore` is the heart of the lexer library. It can
     be considered as the low-level lexer engine, with lots of bells
     and whistles. It is a private module, as far as `dune` is
     concerned, that is, not to be exported by the library.
 
   * The module `API` packages types, functions and modules for the
-    client, based on `Core`. It is, in a way, a simplified view of
-    `Core`, with some specific uses in mind. This is a public module.
+    client, based on `LexCore`. It is, in a way, a simplified view of
+    `LexCore`, with some specific uses in mind. This is a public module.
 
   * The module `CLI` deals with command-line options for building a
     standalone lexer, and also exports data structures about the
@@ -176,7 +176,7 @@ requirement is specified by the type `scanner` in `Client.mli`:
 type 'token scanner =
   'token State.t ->
   Lexing.lexbuf ->
-  ('token * 'token State.t, message) Stdlib.result
+  ('token * 'token State.t, message) result
 ```
 
 A scanner of type `'token scanner` is a bit like a generic `ocamllex`
@@ -223,7 +223,7 @@ to provide:
   * A method `mk_string` that makes a string from a thread (it must be
     provided by the client because only the client knows the
     implementation of tokens, and that can be ascertained by
-    considering that they are type parameters in `Core`.).
+    considering that they are type parameters in `LexCore`.).
 
   * A method `callback` which is a lexer/scanner (both words are
     equivalent in this documentation) for tokens other than strings
@@ -273,17 +273,17 @@ The functor `Make` is one of three tightly coupled components:
   3. a functor `Make` from `LEXER` to `S`.
 
 The signature `S` is best construed as a simplification and
-specialisation of the interface of `Core`, which is a private module,
+specialisation of the interface of `LexCore`, which is a private module,
 therefore cannot be accessed by the clients of this library. We shall
-explain `Core` in section about
-[the Core interface](#the-core-interface).
+explain `LexCore` in section about
+[the LexCore interface](#the-core-interface).
 
 The purpose of the functor `Make` is to take that low-level
-representation of a lexer by instantiating `Core` with a module of
+representation of a lexer by instantiating `LexCore` with a module of
 signature `LEXER`, and produce a high-level module that enables the
 library's client to build a standalone lexer or to integrate it in the
 LIGO compiler. It would be overly complicated for casual users to use
-`Core` directly, but not exporting `Core` has a consequence: _the
+`LexCore` directly, but not exporting `LexCore` has a consequence: _the
 lexers actually exported by `API` return all the tokens or lexical
 units in their input_. This is not what is expected by parser
 generators like `menhir`. The LIGO compiler uses `menhir`, and we
@@ -306,7 +306,7 @@ Let us consider the type of lexers, as found in the signature `S` in
 
 ```
     type ('src,'dst) lexer =
-      token State.config -> 'src -> ('dst, message) Stdlib.result
+      token State.config -> 'src -> ('dst, message) result
 ```
 
 The first parameter of this functional type is `token State.config`,
@@ -642,22 +642,22 @@ different from the other methods in `mk_`. Indeed they return a value
 of type `Markup.t`, but no new state. There is a technical reason
 which can only be understood by looking at
 [the State Implementation](#the-state-implementation) and
-[the Core Implementation](#the-core-implementation).
+[the LexCore Implementation](#the-core-implementation).
 
-### The Core Interface
+### The LexCore Interface
 
-The module `Core` is the heart of the library and it is specified as
+The module `LexCore` is the heart of the library and it is specified as
 private in the file `dune`, meaning that it cannot be used directly by
 the clients of the library. Instead, the clients must use the aptly
 named module `API`. The following is therefore intended for
 maintainers of the library.
 
-Let us walk through the interface file `Core.mli` and explain some of
+Let us walk through the interface file `LexCore.mli` and explain some of
 its values and types, starting with the types that we saw in the
 section about [the API interface](#the-api-interface).
 
 Let us move now to the data structure which represents the
-feature-rich, parameterised lexer of `Core`:
+feature-rich, parameterised lexer of `LexCore`:
 
 ```
 type input =
@@ -679,7 +679,7 @@ type 'token instance = {
 A look back at `API.mli` is useful here. The functions in the modules
 `Tokens` and `LexUnits` are specialised lexers based on `read_token`
 and `read_unit`, respectively, as we will see in the section about the
-implementation of `Core`.
+implementation of `LexCore`.
 
 The type `input` is straightforward: it informs about the kind of
 input. The type `instance` is worth explaining in more details.
@@ -707,7 +707,7 @@ val open_stream :
   'token Client.t ->
   'token State.config ->
   input ->
-  ('token instance, message) Stdlib.result
+  ('token instance, message) result
 ```
 
 This is the function that makes a lexer `instance`. It is only used in
@@ -715,7 +715,7 @@ the implementation of `API`, for example:
 
 ```
     let from_file config path =
-      Core.open_stream Lexer.client config (Core.File path)
+      LexCore.open_stream Lexer.client config (LexCore.File path)
 ```
 
 ## Implementations
@@ -873,16 +873,16 @@ by means of the following:
     (* Generic lexer for all kinds of inputs *)
 
     let generic lexbuf_of config source =
-      let buffer = Core.Buffer (lexbuf_of source) in
-      Core.open_stream config ~scan:Lexer.scan buffer
+      let buffer = LexCore.Buffer (lexbuf_of source) in
+      LexCore.open_stream config ~scan:Lexer.scan buffer
 ```
 
-or its result (a lexer instance of type `token Core.instance`),
+or its result (a lexer instance of type `token LexCore.instance`),
 the exception being
 
 ```
     let from_file config path =
-      Core.open_stream Lexer.client config (Core.File path)
+      LexCore.open_stream Lexer.client config (LexCore.File path)
 ```
 
 ### The State Implementation
@@ -947,10 +947,10 @@ This is because they only make use of their _thread_ argument.
 
 The implementation of the module `Thread` is straightforward.
 
-### The Core Implementation
+### The LexCore Implementation
 
 The heart of the lexer library resides in the `ocamllex` specification
-`Core.mll` and how, from a lexer for tokens provided by the client, a
+`LexCore.mll` and how, from a lexer for tokens provided by the client, a
 lexer for the tokens _and the other lexical units_ is made. Actually,
 how several lexers are made, depending on the kind of input.
 
@@ -962,7 +962,7 @@ failed, either due to an internal error or an error in the input file.
 
 The function `lexbuf_from_input` creates a lexing buffer from the
 variety of possible inputs modelled by the type `input`. See
-[the Core Interface](#the-core-interface). Two points of note:
+[the LexCore Interface](#the-core-interface). Two points of note:
 
   1. In the case of `Buffer` as an input, we check whether the input
      configuration `config` registers a file name: if so, the lexing
@@ -975,7 +975,7 @@ variety of possible inputs modelled by the type `input`. See
 
 The next section is about lexing errors and is worth detailing here.
 As we saw in the description of
-[the Core Interface](#the-core-interface), we do not export
+[the LexCore Interface](#the-core-interface), we do not export
 exceptions. Nevertheless, it is convenient to use one exception in
 case of error in the semantic actions of the implementation. That is:
 
@@ -987,7 +987,7 @@ exception Error of string Region.reg
 
 The client of the library provides a lexer for the tokens that is not
 expected to raise exceptions. Instead, it returns a value of type
-`Stdlib.result`. See the section about
+`result`. See the section about
 [the Client Interface](#the-client-interface). We call the former
 style "exception-raising style" and the latter "error-passing
 style". We needs to convert lexers from one style to the other,
@@ -1001,14 +1001,14 @@ converters:
    error-passing style (EPS) *)
 
 let lift scanner lexbuf =
-  try Stdlib.Ok (scanner lexbuf) with
-    Error msg -> Stdlib.Error msg
+  try Ok (scanner lexbuf) with
+    Error msg -> Error msg
 
 (* Decoding a function call in EPS to ERS *)
 
 let drop scanner lexbuf =
   match scanner lexbuf with
-    Stdlib.Ok state -> state
+    Ok state -> state
   | Error msg -> raise (Error msg)
 ```
 
@@ -1040,7 +1040,7 @@ drop @@ client#callback state
 ```
 
 The additional composition with `mk_token` is due to the client only
-scanning for tokens, but `Core` uses `Unit.lex_unit`, so the
+scanning for tokens, but `LexCore` uses `Unit.lex_unit`, so the
 constructor `` `Token`` needs to wrap the tokens found by the client,
 and this is exactly what `mk_token` does.
 
@@ -1049,7 +1049,7 @@ done at the end of the function `open_stream`, as expected:
 
 ```
   match lexbuf_from_input config input with
-    Stdlib.Ok (lexbuf, close) ->
+    Ok (lexbuf, close) ->
       let read_unit  = lift read_unit
       and read_token = lift read_token in
       Ok {read_unit; read_token; input; lexbuf; close; window}
@@ -1073,8 +1073,8 @@ let fail region error =
 ### The function `open_stream`
 
 As we saw in the section about
-[the Core Interface](#the-core-interface), the function `open_stream`
-exported by the module `Core` is only used by `API` to instantiate the
+[the LexCore Interface](#the-core-interface), the function `open_stream`
+exported by the module `LexCore` is only used by `API` to instantiate the
 sundry kinds of lexers it offers. The functions is made of four parts.
 
 The first consists in defining some local variables of use in the
@@ -1145,7 +1145,7 @@ when presenting the converters `lift` and `drop`, in the context of
 
 ```
   match lexbuf_from_input config input with
-    Stdlib.Ok (lexbuf, close) ->
+    Ok (lexbuf, close) ->
       let read_unit  = lift read_unit
       and read_token = lift read_token in
       Ok {read_unit; read_token; input; lexbuf; close; window}
@@ -1210,7 +1210,7 @@ Notice how a token other than `eof` is not actually recognised
 here. Instead, the client lexer is called as a callback on a lexing
 buffer that has been rolled back, that is, its state has been patched
 so it appears as if no character was matched. (See function `rollback`
-in the header of `Core.mll`.) The client callback is supposed to scan
+in the header of `LexCore.mll`.) The client callback is supposed to scan
 for tokens, but it can of course fail, in which case it will return an
 error that is then transformed into the exception `Error`, as we saw
 in the section about [error handling](#error-handling).

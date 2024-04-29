@@ -222,8 +222,8 @@ let%expect_test _ =
 
      Module "B.A" not found. |}]
 
-let pwd = Caml.Sys.getcwd ()
-let () = Caml.Sys.chdir "../../test/contracts/build/"
+let pwd = Sys_unix.getcwd ()
+let () = Sys_unix.chdir "../../test/contracts/build/"
 
 let%expect_test _ =
   run_ligo_good
@@ -264,4 +264,4 @@ let%expect_test _ =
     ];
   [%expect {| 42 |}]
 
-let () = Caml.Sys.chdir pwd
+let () = Sys_unix.chdir pwd

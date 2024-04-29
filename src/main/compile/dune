@@ -31,4 +31,4 @@
   compiler_options
   syntax)
  (preprocess
-  (pps ppx_let)))
+  (pps ppx_jane)))

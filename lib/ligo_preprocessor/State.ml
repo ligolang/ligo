@@ -81,7 +81,7 @@ class t ?(project_root : file_path option)
 
     (* CONDITIONAL DIRECTIVES *)
 
-    method is_copy = Caml.(mode = Copy)
+    method is_copy = match mode with Copy -> true | Skip -> false
 
     method reduce_cond =
       let rec reduce = function
@@ -125,8 +125,8 @@ class t ?(project_root : file_path option)
     (* SYMBOL ENVIRONMENT *)
 
     method set_env env      = {< env >}
-    method add_symbol id    = {< env = Env.add id env >}
-    method remove_symbol id = {< env = Env.remove id env >}
+    method add_symbol id    = {< env = Set.add env id  >}
+    method remove_symbol id = {< env = Set.remove env id >}
 
     (* INPUT CHANNELS *)
 

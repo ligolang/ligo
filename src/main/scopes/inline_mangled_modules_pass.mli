@@ -1,5 +1,7 @@
 (** Mapping from mangled UID to its resolved file name. *)
-type t = string Types.Uid_map.t
+module UidMap : Core.Map.S with type Key.t = Types.Uid.t
+
+type t = string UidMap.t
 
 (** Preprocessing produces mangled modules.
     The following snippet:

@@ -17,6 +17,8 @@ let yojson_of_voting_powers : voting_powers -> Display.json = function
       ]
 
 
+open Ppx_yojson_conv_lib.Yojson_conv.Primitives
+
 type contract_env =
   { now : string option
   ; level : z option

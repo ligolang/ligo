@@ -22,11 +22,10 @@ let server_lwt port =
     Server.respond_string ~status:`OK ~body ()
   in
   let send_dao_cameligo_body () =
-    let open Caml in
     let body = !dao_cameligo_body in
-    if body != ""
-    then Server.respond_string ~status:`OK ~body ()
-    else Server.respond_string ~status:`Not_found ~body:"{}" ()
+    if String.is_empty body
+    then Server.respond_string ~status:`Not_found ~body:"{}" ()
+    else Server.respond_string ~status:`OK ~body ()
   in
   let update_dao_cameligo body =
     dao_cameligo_body := body;
@@ -43,7 +42,7 @@ let server_lwt port =
     Server.respond_string ~status:`Created ~body:"{ \"ok\": \"package removed\" }" ()
   in
   let check_auth headers callback =
-    let authorization = Caml.Option.get @@ Header.get headers "Authorization" in
+    let authorization = Option.value_exn @@ Header.get headers "Authorization" in
     if String.equal authorization "Bearer foo_token"
        || String.equal authorization "Basic foo_token"
     then callback ()

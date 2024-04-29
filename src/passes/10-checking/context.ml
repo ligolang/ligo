@@ -1,13 +1,17 @@
-(* This file represente the context which give the association of values to types *)
+(* This file represents the context which gives the association of
+   values to types *)
+
+(* FIXME: Port to Core. *)
+
 module Location = Simple_utils.Location
 module List = Simple_utils.List
 open Ligo_prim
 open Type
 
-type 'a hashable = (module Caml.Hashtbl.HashedType with type t = 'a)
+type 'a hashable = (module Stdlib.Hashtbl.HashedType with type t = 'a)
 
 let memoize (type a b) ?(size = 100) (key : a hashable) (f : a -> b) =
-  let module Hashtbl = Caml.Ephemeron.K1.Make ((val key)) in
+  let module Hashtbl = Stdlib.Ephemeron.K1.Make ((val key)) in
   let table : b Hashtbl.t = Hashtbl.create size in
   fun key ->
     match Hashtbl.find_opt table key with
@@ -25,7 +29,7 @@ let memoize2
     (key2 : b hashable)
     (f : a -> b -> c)
   =
-  let module Hashtbl = Caml.Ephemeron.K2.Make ((val key1)) ((val key2)) in
+  let module Hashtbl = Stdlib.Ephemeron.K2.Make ((val key1)) ((val key2)) in
   let table : c Hashtbl.t = Hashtbl.create size in
   fun key1 key2 ->
     match Hashtbl.find_opt table (key1, key2) with
@@ -40,7 +44,7 @@ module Phys_hashable (T : T) = struct
   include T
 
   let equal = phys_equal
-  let hash t = Caml.Hashtbl.hash t
+  let hash t = Stdlib.Hashtbl.hash t
 end
 
 module Attrs = struct

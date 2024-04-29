@@ -62,5 +62,5 @@ let rec eval env =
   | Not {value=e; _}     -> not (eval env e)
   | True  _              -> true
   | False _              -> false
-  | Ident {value=id; _}  -> Env.mem id env
+  | Ident {value=id; _}  -> Set.mem env id
   | Parens {value=e; _}  -> eval env e

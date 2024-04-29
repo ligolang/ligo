@@ -22,7 +22,7 @@ module Make (Token : TOKEN) :
 
    type message = string Region.reg
 
-   type result = (units, units * message) Stdlib.result
+   type nonrec result = (units, units * message) result
 
    val filter :
      ?print_passes:Std.t ->

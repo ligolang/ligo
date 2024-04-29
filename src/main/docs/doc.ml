@@ -10,7 +10,7 @@ let html_using_type_doc (raw_options : Raw_options.t) directory doc_args ()
   let directory =
     if Filename.is_absolute directory
     then directory
-    else FilePath.make_absolute (Caml.Sys.getcwd ()) directory
+    else FilePath.make_absolute (Sys_unix.getcwd ()) directory
   in
   let tmp_dir = Filename.temp_dir_name ^/ "ligo-doc" in
   let cleanup () = FileUtil.rm ~recurse:true [ tmp_dir ] in
@@ -51,7 +51,7 @@ let html_using_type_doc (raw_options : Raw_options.t) directory doc_args ()
           Format.pp_print_flush fmt ();
           path_to_ts)
     in
-    let output_dir = Caml.Sys.getcwd () ^/ "docs" in
+    let output_dir = Sys_unix.getcwd () ^/ "docs" in
     let doc_result =
       Commands.run_command
         ~cwd:tmp_dir
@@ -79,7 +79,7 @@ let markdown_doc
     let path =
       if Filename.is_absolute path
       then path
-      else FilePath.make_absolute (Caml.Sys.getcwd ()) path
+      else FilePath.make_absolute (Sys_unix.getcwd ()) path
     in
     FileUtil.mkdir ~parent:true path;
     (* [Filename_unix.realpath] works only with existing paths *)

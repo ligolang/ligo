@@ -1,4 +1,3 @@
-open Core
 open Cst_shared.Fold
 open CST
 open Region

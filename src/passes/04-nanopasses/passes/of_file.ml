@@ -14,16 +14,16 @@ end)
    if that fails it tries to resolve it as a relative path w.r.t. directory of [source_file]
    if that fails it tries to resolve it as a package path using [mod_res] *)
 let resolve_contract_file ~mod_res ~source_file ~contract_file =
-  match Caml.Sys.file_exists contract_file with
-  | true -> contract_file
-  | false ->
+  match Sys_unix.file_exists contract_file with
+  | `Yes -> contract_file
+  | `No | `Unknown ->
     (match source_file with
     | Some source_file ->
       let d = Filename.dirname source_file in
       let s = Filename.concat d contract_file in
-      (match Caml.Sys.file_exists s with
-      | true -> s
-      | false -> ModRes.Helpers.resolve ~file:contract_file mod_res)
+      (match Sys_unix.file_exists s with
+      | `Yes -> s
+      | `No | `Unknown -> ModRes.Helpers.resolve ~file:contract_file mod_res)
     | None -> ModRes.Helpers.resolve ~file:contract_file mod_res)
 
 
@@ -37,7 +37,7 @@ let get_file_from_location loc =
 let input_all ~raise ~loc source_file =
   try In_channel.(with_file source_file ~f:input_all) with
   | Sys_error msg -> raise.error (sys_error loc msg)
-  | e -> Caml.raise e
+  | e -> Stdlib.raise e
 
 
 let compile ~raise =

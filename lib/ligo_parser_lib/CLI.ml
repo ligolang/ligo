@@ -84,19 +84,19 @@ module Make (LexerParams: LexerLib.CLI.PARAMETERS) : PARAMETERS =
     | Some Some path -> "Some (Some " ^ path ^ ")"
 
     let set_trace_recovery path =
-      if Caml.(!trace_recovery = None)
-      then trace_recovery := Some (Some path)
-      else raise (Getopt.Error
-                    "Only one --trace-recovery option allowed.")
+      match !trace_recovery with
+        None -> trace_recovery := Some (Some path)
+      | _ -> raise (Getopt.Error
+                      "Only one --trace-recovery option allowed.")
 
     (* --width=<arg> *)
 
     let set_width (arg : string) =
-      if Caml.(!width = None)
-      then match Caml.int_of_string_opt arg with
-             None -> raise (Getopt.Error "Invalid width.")
-           | Some n -> width := Some n
-      else raise (Getopt.Error "Only one --width option allowed.")
+      match !width with
+        Some _ -> raise (Getopt.Error "Only one --width option allowed.")
+      | None -> match Stdlib.int_of_string_opt arg with
+                 None -> raise (Getopt.Error "Invalid width.")
+               | Some n -> width := Some n
 
     let print_width = function
       None -> "None"

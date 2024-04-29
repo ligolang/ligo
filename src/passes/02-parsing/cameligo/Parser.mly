@@ -1101,7 +1101,7 @@ typed_expr:
 
       * a single variable: "a" or "@0" or "@let" etc.
       * a single variable in a nested module: "A.B.a"
-      * nested fields and compoments from a variable: "a.0.1.b"
+      * nested fields and components from a variable: "a.0.1.b"
       * same within a nested module: "A.B.a.0.1.b"
       * nested fields and components from an expression: "(e).a.0.1.b" *)
 

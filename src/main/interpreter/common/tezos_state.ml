@@ -998,7 +998,7 @@ let init_ctxt
   =
   let open Lwt.Let_syntax in
   let open Tezos_raw_protocol in
-  let rng_state = Caml.Random.State.make (Caml.Array.make 1 0) in
+  let rng_state = Stdlib.Random.State.make (Core.Array.create ~len:1 0) in
   let () =
     (* check baker initial balance if the default amount is changed *)
     match initial_balances with

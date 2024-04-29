@@ -1746,4 +1746,4 @@ let compare_michelson ~raise loc a b =
     trace_option ~raise (Errors.generic_error loc "Can't compare contracts")
     @@ LC.get_michelson_code_and_type b
   in
-  Caml.compare code code'
+  Stdlib.compare code code'

@@ -1,4 +1,4 @@
-open Simple_utils
+module Trace = Simple_utils.Trace
 open Ligo_prim
 open Types
 module LMap = Types.LMap
@@ -24,14 +24,14 @@ let[@warning "-32"] pp : t Fmt.t =
      ; module_signatures: %a\n\
      ; module_env: %a\n\
      }"
-    Fmt.Dump.(seq (pair Location.pp PP.type_case))
-    (LMap.to_seq type_cases)
-    Fmt.Dump.(seq (pair Location.pp Ast_core.PP.type_expression))
-    (LMap.to_seq label_cases)
-    Fmt.Dump.(seq (pair Location.pp Ast_typed.PP.type_expression))
-    (LMap.to_seq lambda_cases)
-    Fmt.Dump.(seq (pair Location.pp PP.signature_case))
-    (LMap.to_seq module_signatures)
+    Fmt.Dump.(list (pair Location.pp PP.type_case))
+    (Map.to_alist type_cases)
+    Fmt.Dump.(list (pair Location.pp Ast_core.PP.type_expression))
+    (Map.to_alist label_cases)
+    Fmt.Dump.(list (pair Location.pp Ast_typed.PP.type_expression))
+    (Map.to_alist lambda_cases)
+    Fmt.Dump.(list (pair Location.pp PP.signature_case))
+    (Map.to_alist module_signatures)
     Env.pp
     module_env
 
@@ -46,31 +46,26 @@ let empty (module_env : Env.t) =
 
 
 let add_type_case loc type_case env =
-  { env with type_cases = LMap.add loc type_case env.type_cases }
+  { env with type_cases = Map.update env.type_cases loc ~f:(Fn.const type_case) }
 
 
 let add_label_case loc label_case env =
   { env with
     label_cases =
-      LMap.update
-        loc
-        (function
+      Map.change env.label_cases loc ~f:(function
           | Some t -> Some t
           | None -> Some label_case)
-        env.label_cases
   }
 
 
 let add_lambda_case loc typ env =
-  { env with lambda_cases = LMap.add loc typ env.lambda_cases }
+  { env with lambda_cases = Map.update env.lambda_cases loc ~f:(Fn.const typ) }
 
 
 let add_module_signature loc signature env =
   { env with
     module_signatures =
-      LMap.update
-        loc
-        (fun old ->
+      Map.change env.module_signatures loc ~f:(fun old ->
           Option.some
           @@ Option.value_map
                ~default:signature
@@ -88,7 +83,6 @@ let add_module_signature loc signature env =
                  | Resolved _ -> signature
                  | Core _ | Unresolved -> old)
                old)
-        env.module_signatures
   }
 
 
@@ -150,7 +144,7 @@ let label_bindings : _ Pattern.t -> Ast_core.ty_expr -> (Label.t * Ast_core.ty_e
 
 
 let lookup_signature : Location.t -> t -> signature_case option =
- fun key { module_signatures; _ } -> LMap.find_opt key module_signatures
+ fun key { module_signatures; _ } -> Map.find module_signatures key
 
 
 let resolve_module_path : Module_var.t Types.List.Ne.t -> t -> Module_var.t option =
@@ -763,8 +757,8 @@ module Typing_env = struct
     =
     (* During error-recovery, duplicated diagnostics may appear (e.g., multiple errors
        about underspecified types. We ignore extra ones. *)
-    List.iter (List.dedup_and_sort ws ~compare:Caml.compare) ~f:raise.warning;
-    List.iter (List.dedup_and_sort es ~compare:Caml.compare) ~f:(fun e ->
+    List.iter (List.dedup_and_sort ws ~compare:Main_warnings.compare_all) ~f:raise.warning;
+    List.iter (List.dedup_and_sort es ~compare:Stdlib.compare) ~f:(fun e ->
         raise.log_error (tracer e))
 
 
@@ -906,7 +900,7 @@ let rec patch : t -> Types.def list -> Types.def list =
  fun bindings defs ->
   List.map defs ~f:(function
       | Variable v ->
-        (match v.t, LMap.find_opt v.range bindings.type_cases with
+        (match v.t, Map.find bindings.type_cases v.range with
         | Unresolved, Some t -> Types.Variable { v with t }
         | _ -> Variable v)
       | Type t -> Type t
@@ -920,7 +914,7 @@ let rec patch : t -> Types.def list -> Types.def list =
           | Standalone_signature_or_module _ as path -> path
         in
         let m =
-          match m.signature, LMap.find_opt m.range bindings.module_signatures with
+          match m.signature, Map.find bindings.module_signatures m.range with
           | Unresolved, Some signature -> { m with signature }
           | _ -> m
         in

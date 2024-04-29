@@ -27,31 +27,28 @@ module Table = struct
     type t = string [@@deriving compare, hash, sexp]
   end
 
-  module Message = Core.Hashtbl.Make (Value_var)
-  module Unique = Core.Hashtbl.Make (UID)
-
   type t =
-    { used : unit Unique.t
-    ; message : (UID.t option * string) Message.t
+    { used : (UID.t, unit) Hashtbl.t
+    ; message : (Value_var.t, UID.t option * string) Hashtbl.t
     }
 
   let add (v : Value_var.t) (fmt : string) (t : t) : unit =
-    Message.set t.message ~key:v ~data:(format_string fmt)
+    Hashtbl.set t.message ~key:v ~data:(format_string fmt)
 
 
   let find (v : Value_var.t) (t : t) : string option =
-    match Message.find t.message v with
+    match Hashtbl.find t.message v with
     | None -> None
     | Some (None, s) -> Some s
-    | Some (Some uid, _) when Unique.mem t.used uid -> None
+    | Some (Some uid, _) when Hashtbl.mem t.used uid -> None
     | Some (Some uid, s) ->
-      Unique.set t.used ~key:uid ~data:();
+      Hashtbl.set t.used ~key:uid ~data:();
       Some s
 
 
   let create () : t =
-    let message = Message.create () in
-    let used = Unique.create () in
+    let message = Hashtbl.create (module Value_var) in
+    let used = Hashtbl.create (module UID) in
     { used; message }
 end
 

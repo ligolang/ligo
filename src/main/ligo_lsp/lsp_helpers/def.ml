@@ -63,17 +63,16 @@ let get_path : normalize:Path.normalization -> Scopes.def -> Path.t option =
 (** Gets a set with all the references of the given definition. *)
 let references_getter : normalize:Path.normalization -> t -> Def_locations.t =
  fun ~normalize def ->
-  let module LSet = Scopes.Types.LSet in
   let lset =
     match def with
-    | Variable vdef -> LSet.add vdef.range vdef.references
-    | Type tdef -> LSet.add tdef.range tdef.references
-    | Module mdef -> LSet.add mdef.range mdef.references
-    | Label ldef -> LSet.add ldef.range ldef.references
+    | Variable vdef -> Set.add vdef.references vdef.range
+    | Type tdef -> Set.add tdef.references tdef.range
+    | Module mdef -> Set.add mdef.references mdef.range
+    | Label ldef -> Set.add ldef.references ldef.range
   in
   Def_locations.of_sequence
   @@ Sequence.map ~f:(Def_location.of_loc ~normalize)
-  @@ Sequence.of_seq (LSet.to_seq lset)
+  @@ Set.to_sequence lset
 
 
 (** Checks whether the given definition is a reference to the symbol located at the given
@@ -84,7 +83,7 @@ let is_reference : normalize:Path.normalization -> Position.t -> Path.t -> t -> 
     | File { path; range } -> Range.contains_position pos range && Path.equal path file
     | StdLib _ | Virtual _ -> false
   in
-  Def_locations.exists ~f:check_pos @@ references_getter ~normalize definition
+  Set.exists ~f:check_pos @@ references_getter ~normalize definition
 
 
 (** Fold over definitions, flattening them along the fold. The [fold_control] allows you

@@ -55,7 +55,7 @@ let scopes : Format.formatter -> inlined_scopes -> unit =
 (** Prints the [references] field from a definition. *)
 let refs : Format.formatter -> LSet.t -> unit =
  fun ppf locs ->
-  match LSet.elements locs with
+  match Core.Set.to_list locs with
   | [] -> Format.fprintf ppf "references: []"
   | locs ->
     let locs = List.sort locs ~compare:Location.compare in
@@ -288,7 +288,7 @@ let rec def_to_yojson : def -> string * Yojson.Safe.t =
   in
   let content_to_yojson = option_to_yojson Ast_core.type_expression_to_yojson in
   let definition ~name ~range ~t ~references =
-    let references = LSet.elements references in
+    let references = Core.Set.to_list references in
     `Assoc
       [ "name", `String name
       ; "range", Location.to_yojson range
@@ -297,7 +297,7 @@ let rec def_to_yojson : def -> string * Yojson.Safe.t =
       ]
   in
   let type_definition ~name ~range ~content ~references =
-    let references = LSet.elements references in
+    let references = Core.Set.to_list references in
     `Assoc
       [ "name", `String name
       ; "range", Location.to_yojson range

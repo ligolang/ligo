@@ -55,8 +55,8 @@ type type_declarations = type_declaration list
 
 let c_decls : (string * type_expression list) list -> type_expression list SMap.t =
  fun cds ->
-  List.fold_left ~f:(fun old (key, data) -> SMap.set ~key ~data old) ~init:SMap.empty cds
+  List.fold_left ~f:(fun old (key, data) -> Map.set ~key ~data old) ~init:SMap.empty cds
 
 let r_decls : labelled_record_field list -> record =
  fun rds ->
-  List.fold_left ~f:(fun old (key, data) -> SMap.set ~key ~data old) ~init:SMap.empty rds
+  List.fold_left ~f:(fun old (key, data) -> Map.set ~key ~data old) ~init:SMap.empty rds

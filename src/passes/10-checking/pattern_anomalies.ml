@@ -6,9 +6,11 @@ module C = AST.Combinators
 module Location = Simple_utils.Location
 module Trace = Simple_utils.Trace
 open Ligo_prim
-module LMap = Label.Map
+module LMap = Core.Map
 module XList = Simple_utils.List
-module LSet = Caml.Set.Make (Label)
+module LSet = Core.Set
+
+let empty_set = LSet.empty (module Label)
 
 type raise = (Errors.typer_error, Main_warnings.all) Trace.raise
 
@@ -26,7 +28,7 @@ type simple_pattern =
   | SP_Constructor of Label.t * simple_pattern list * AST.type_expression
 
 let nil_constructor ~loc ty = SP_Constructor (nil_label, [ SP_Wildcard (t_unit ~loc) ], ty)
-let list_constructors = LSet.of_list [ cons_label; nil_label ]
+let list_constructors = LSet.of_list (module Label) [ cons_label; nil_label ]
 
 let rec pp_simple_pattern ppf sp =
   match sp with
@@ -280,14 +282,14 @@ let get_all_constructors (t : AST.type_expression) =
     | Some (tsum, _) ->
       let label_map = tsum.fields in
       let labels = LMap.keys label_map in
-      LSet.of_list labels
-    | None -> LSet.empty)
+      LSet.of_list (module Label) labels
+    | None -> empty_set)
 
 
 let get_constructors_from_1st_col matrix =
-  List.fold_left matrix ~init:LSet.empty ~f:(fun s row ->
+  List.fold_left matrix ~init:empty_set ~f:(fun s row ->
       match row with
-      | SP_Constructor (c, _, _) :: _ -> LSet.add c s
+      | SP_Constructor (c, _, _) :: _ -> LSet.add s c
       | SP_Wildcard _ :: _ -> s
       | [] -> s)
 
@@ -353,7 +355,8 @@ let rec algorithm_Urec ~(raise : raise) ~loc matrix vector =
          && LSet.equal complete_signature constructors
       then
         LSet.fold
-          (fun c b ->
+          complete_signature
+          ~f:(fun b c ->
             let tys = find_constuctor_arity c t in
             b
             || algorithm_Urec
@@ -361,8 +364,7 @@ let rec algorithm_Urec ~(raise : raise) ~loc matrix vector =
                  ~loc
                  (specialize_matrix c tys matrix)
                  (specialize_vector c tys vector))
-          complete_signature
-          false
+          ~init:false
       else algorithm_Urec ~raise ~loc (default_matrix matrix) q2_n
     | [] -> raise.error @@ Errors.corner_case "edge case: algorithm Urec" loc)
 
@@ -420,7 +422,8 @@ let rec algorithm_I ~(raise : raise) ~loc matrix n ts =
     if (not @@ LSet.is_empty constructors) && LSet.equal constructors complete_signature
     then
       LSet.fold
-        (fun ck p ->
+        complete_signature
+        ~f:(fun p ck ->
           if Option.is_some p
           then p
           else (
@@ -435,8 +438,7 @@ let rec algorithm_I ~(raise : raise) ~loc matrix n ts =
                      let xs, ps = List.split_n ps ak in
                      [ SP_Constructor (ck, xs, t) ] @ ps))
             | None -> None))
-        complete_signature
-        None
+        ~init:None
     else (
       let dp = default_matrix matrix in
       let ps = algorithm_I ~raise ~loc dp (n - 1) ts in
@@ -450,13 +452,13 @@ let rec algorithm_I ~(raise : raise) ~loc matrix n ts =
           let missing_constructors = LSet.diff complete_signature constructors in
           let cs =
             LSet.fold
-              (fun c cs ->
+              missing_constructors
+              ~f:(fun cs c ->
                 let tys = find_constuctor_arity c t in
                 let ps = List.map tys ~f:(fun t -> SP_Wildcard t) in
                 let c = SP_Constructor (c, ps, t) in
                 c :: cs)
-              missing_constructors
-              []
+              ~init:[]
           in
           Some
             (List.fold_left cs ~init:[] ~f:(fun new_ps c ->

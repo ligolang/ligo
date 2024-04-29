@@ -2,8 +2,8 @@ open Errors
 open Ast_unified
 open Pass_type
 open Simple_utils.Trace
-module StrSet = Caml.Set.Make (String)
-module LSet = Caml.Set.Make (Label)
+module StrSet = Core.Set
+module LSet = Core.Set
 
 (* morph discriminatory union types to sum-types and switches instructions to pattern matching *)
 let name = __MODULE__
@@ -12,7 +12,7 @@ include Flag.No_arg ()
 
 type reg =
   { label : Label.t
-  ; id_set : StrSet.t
+  ; id_set : (String.t, String.comparator_witness) StrSet.t
   ; ty : ty_expr
   }
 
@@ -46,10 +46,10 @@ let morph_t_disc ~raise ~err ~loc (rows : ty_expr Non_linear_disc_rows.t) : reg 
   match singleton_rows with
   | [] -> raise.error err
   | (label, _, _) :: _ ->
-    let id_set = StrSet.of_list (List.map ~f:snd3 singleton_rows) in
-    let label_set = LSet.of_list (List.map ~f:fst3 singleton_rows) in
+    let id_set = StrSet.of_list (module String) (List.map ~f:snd3 singleton_rows) in
+    let label_set = LSet.of_list (module Label) (List.map ~f:fst3 singleton_rows) in
     let same_label_different_id =
-      LSet.cardinal label_set = 1 && StrSet.cardinal id_set = List.length singleton_rows
+      LSet.length label_set = 1 && StrSet.length id_set = List.length singleton_rows
     in
     if same_label_different_id
     then (
@@ -62,7 +62,10 @@ let morph_t_disc ~raise ~err ~loc (rows : ty_expr Non_linear_disc_rows.t) : reg 
         t_sum_raw ~loc rows (Some label)
       in
       let reg =
-        { label; id_set = StrSet.of_list (List.map ~f:snd3 singleton_rows); ty }
+        { label
+        ; id_set = StrSet.of_list (module String) (List.map ~f:snd3 singleton_rows)
+        ; ty
+        }
       in
       reg, ty)
     else raise.error err
@@ -110,7 +113,8 @@ let compile ~raise =
       let* { ty = matching_ty; _ } =
         List.find registered_unions ~f:(fun { label; id_set; _ } ->
             let lst = List.map ~f:fst cases in
-            Label.equal label proj_name && StrSet.equal id_set (StrSet.of_list lst))
+            Label.equal label proj_name
+            && StrSet.equal id_set (StrSet.of_list (module String) lst))
       in
       let res =
         let cases =

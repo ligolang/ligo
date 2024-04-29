@@ -144,7 +144,7 @@ end = struct
     if Cohttp.Code.is_success code
     then (
       let fname = Cli_helpers.Checksum.sha1 (Uri.to_string uri) in
-      let dest = Caml.Filename.temp_file fname ".tgz" in
+      let dest = Filename_unix.temp_file fname ".tgz" in
       let stream = Body.to_stream body in
       let* () =
         Lwt_io.with_file ~mode:Lwt_io.output dest (fun chan ->

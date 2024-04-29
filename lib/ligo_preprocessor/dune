@@ -23,6 +23,9 @@
  (modules_without_implementation Config Status)
  (private_modules Version)
  (libraries
+  core
+  core_unix.filename_unix
+  core_unix.sys_unix
   ;; Vendor
   simple-utils
   GetoptLib
@@ -31,6 +34,8 @@
   fpath
   uutf
   bos)
+ (preprocess
+  (pps ppx_jane))
  (flags
   (:standard -open Core)))
 

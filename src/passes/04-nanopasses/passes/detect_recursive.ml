@@ -4,7 +4,7 @@ open Errors
 open Simple_utils.Trace
 module Location = Simple_utils.Location
 module List = Simple_utils.List
-module VarSet = Caml.Set.Make (Variable)
+module VarSet = Set
 
 (* automatically detect recursive declaration and expression *)
 
@@ -27,7 +27,7 @@ let recursify ~raise fun_name let_rhs =
     ~f:(fun let_rhs ->
       match get_e_poly_fun let_rhs with
       | Some { type_params; parameters; ret_type; body } ->
-        let is_rec = VarSet.mem fun_name (Free_vars.fv_expr let_rhs) in
+        let is_rec = VarSet.mem (Free_vars.fv_expr let_rhs) fun_name in
         if is_rec
         then (
           let fun_type =

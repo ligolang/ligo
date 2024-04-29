@@ -61,30 +61,33 @@ let is_packaged (file : string) : bool =
 
 let list_directory ?(include_library = false) ?syntax (dir : string) : string list =
   let rec aux (res : string list) : string list -> string list = function
-    | f :: fs when Caml.Sys.is_directory f ->
-      let parts = Filename.parts f in
-      let number_of_deps = List.count parts ~f:(Filename.equal ligo_package_dir) in
-      let is_hidden = List.exists parts ~f:(String.is_prefix ~prefix:".") in
-      (* We don't want to display completions and references for nested dependencies. *)
-      let is_packaged = number_of_deps = 1 in
-      let is_nested_package = number_of_deps > 1 in
-      if is_nested_package
-         || ((not include_library) && is_packaged)
-         || ((not is_packaged) && is_hidden)
-      then aux res fs
-      else
-        Caml.Sys.readdir f
-        |> Array.to_list
-        |> List.map ~f:(Filename.concat f)
-        |> List.append fs
-        |> aux res
-    | f :: fs ->
-      let _, ext = Filename.split_extension f in
-      (match Syntax.of_ext_opt ext with
-      | Some syn
-        when Option.is_none syntax || Option.mem syntax syn ~equal:Syntax_types.equal ->
-        aux (f :: res) fs
-      | _ -> aux res fs)
     | [] -> res
+    | f :: fs ->
+      (match Sys_unix.is_directory f with
+      | `Yes ->
+        let parts = Filename.parts f in
+        let number_of_deps = List.count parts ~f:(Filename.equal ligo_package_dir) in
+        let is_hidden = List.exists parts ~f:(String.is_prefix ~prefix:".") in
+        (* We don't want to display completions and references for
+           nested dependencies. *)
+        let is_packaged = number_of_deps = 1 in
+        let is_nested_package = number_of_deps > 1 in
+        if is_nested_package
+           || ((not include_library) && is_packaged)
+           || ((not is_packaged) && is_hidden)
+        then aux res fs
+        else
+          Sys_unix.readdir f
+          |> Array.to_list
+          |> List.map ~f:(Filename.concat f)
+          |> List.append fs
+          |> aux res
+      | `No | `Unknown ->
+        let _, ext = Filename.split_extension f in
+        (match Syntax.of_ext_opt ext with
+        | Some syn
+          when Option.is_none syntax || Option.mem syntax syn ~equal:Syntax_types.equal ->
+          aux (f :: res) fs
+        | _ -> aux res fs))
   in
   aux [] [ dir ]

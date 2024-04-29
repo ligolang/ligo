@@ -21,15 +21,15 @@ let get_diagnostics_test ({ file_path; max_number_of_problems } : diagnostics_te
   let _uri, actual_diagnostics =
     test_run_session ?config ~metadata_download_options @@ open_file file_path_normalized
   in
-  let module Map = Map.Make (Path) in
+  let module PMap = Map.Make (Path) in
   let to_map l =
-    match Map.of_alist l with
+    match PMap.of_alist l with
     | `Ok map -> map
     | `Duplicate_key path -> failwithf "Key duplication: %s." (Path.to_string path) ()
   in
   let actual =
     actual_diagnostics
-    |> Requests.Handler.Path_hashtbl.to_alist
+    |> Hashtbl.to_alist
     |> to_map
     |> Map.to_alist
     |> List.map ~f:(fun (path, diags) -> path_to_relative path, diags)

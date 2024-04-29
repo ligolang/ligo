@@ -6,7 +6,7 @@ module VVar = Value_var
 module TVar = Type_var
 module MVar = Module_var
 module LSet = Types.LSet
-module SMap = Map.Make (String)
+module SMap = Core.Map.Make (String)
 module Mangled_pass = Inline_mangled_modules_pass
 
 type t = def list
@@ -80,7 +80,7 @@ let rec defs_of_ty_expr ?(orig_type_loc : Location.t option)
       defs_of_row
         ~label_case:Ctor
         orig_type_loc
-        (Label.Map.to_alist row.fields)
+        (Map.to_alist row.fields)
         def_type
         mod_path
         acc
@@ -88,7 +88,7 @@ let rec defs_of_ty_expr ?(orig_type_loc : Location.t option)
       defs_of_row
         ~label_case:Field
         orig_type_loc
-        (Label.Map.to_alist row.fields)
+        (Map.to_alist row.fields)
         def_type
         mod_path
         acc
@@ -218,7 +218,7 @@ let defs_of_mvar
   else (
     let name, file_name_opt =
       let name = get_mod_binder_name mvar in
-      name, SMap.find module_deps name
+      name, Map.find module_deps name
     in
     let mdef : mdef =
       let uid : Uid.t = Uid.make name (MVar.get_location mvar) in
@@ -892,7 +892,14 @@ module Of_Ast = struct
     Hashtbl.clear mangled_uids_hashtbl;
     let defs = defs_of_decls ~waivers module_deps [] Global prg acc in
     let mangled_uids_map =
-      mangled_uids_hashtbl |> Hashtbl.to_alist |> Caml.List.to_seq |> Uid_map.of_seq
+      match mangled_uids_hashtbl |> Hashtbl.to_alist |> Mangled_pass.UidMap.of_alist with
+      | `Duplicate_key uid ->
+        failwith
+        @@ Format.asprintf
+             "Duplicate key: %a. This is an internal error, please report it."
+             Uid.pp
+             uid
+      | `Ok map -> map
     in
     mangled_uids_map, defs
 end

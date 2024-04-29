@@ -15,7 +15,7 @@ let get_references_in_file
   =
  fun ~normalize locations file cache ->
   let definitions : Def.definitions =
-    match Docs_cache.find cache file with
+    match Hashtbl.find cache file with
     | Some { definitions = Some definitions; _ } -> definitions
     | _ -> { definitions = [] }
   in
@@ -26,7 +26,7 @@ let get_references_in_file
   |> Sequence.filter_map ~f:(fun Loc_in_file.{ range; path } ->
          Option.some_if (Path.equal path file) range)
   |> Ranges.of_sequence
-  |> Ranges.to_list
+  |> Set.to_list
 
 
 (** Runs the handler for document highlight. This is normally called when the user clicks

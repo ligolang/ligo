@@ -1,8 +1,8 @@
 open Cli_expect
 
 let test basename = "./" ^ basename
-let pwd = Caml.Sys.getcwd ()
-let () = Caml.Sys.chdir "../../test/contracts/interpreter_tests/"
+let pwd = Sys_unix.getcwd ()
+let () = Sys_unix.chdir "../../test/contracts/interpreter_tests/"
 
 (* tests for timelock primitives *)
 let%expect_test _ =
@@ -160,6 +160,10 @@ let%expect_test _ =
     - test exited with value [() ; () ; () ; ()]. |}]
 
 (* tests replacing Hashlock tests *)
+
+let () = Sys_unix.chdir pwd
+let () = Sys_unix.chdir "../../test/contracts/interpreter_tests/"
+
 let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "test_hashlock.mligo" ];
   [%expect
@@ -722,6 +726,10 @@ let%expect_test _ =
     - test_reveal exited with value (). |}]
 
 (* test comparison on sum/record types *)
+
+let () = Sys_unix.chdir pwd
+let () = Sys_unix.chdir "../../test/contracts/interpreter_tests/"
+
 let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "test_compare.mligo" ];
   [%expect
@@ -777,6 +785,10 @@ let%expect_test _ =
     - test_cmp_record exited with value (). |}]
 
 (* test loops on maps *)
+
+let () = Sys_unix.chdir pwd
+let () = Sys_unix.chdir "../../test/contracts/interpreter_tests/"
+
 let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "test_loop_map.jsligo" ];
   [%expect
@@ -787,6 +799,10 @@ let%expect_test _ =
     - test_unzipped_entries exited with value ([2 ; 1 ; 0] , [4 ; 2 ; 1]). |}]
 
 (* events payload being records and not decompiled to pairs in the interpreter *)
+
+let () = Sys_unix.chdir pwd
+let () = Sys_unix.chdir "../../test/contracts/interpreter_tests/"
+
 let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "test_events_pair_vs_record.mligo" ];
   [%expect
@@ -830,6 +846,10 @@ let%expect_test _ =
     - test_foo exited with value 3n. |}]
 
 (* decompilation of timestamp *)
+
+let () = Sys_unix.chdir pwd
+let () = Sys_unix.chdir "../../test/contracts/interpreter_tests/"
+
 let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "test_timestamp_contract.mligo" ];
   [%expect
@@ -900,6 +920,9 @@ let%expect_test _ =
     Success (1279n)
     Everything at the top-level was executed.
     - test_timestamp exited with value (). |}]
+
+let () = Sys_unix.chdir pwd
+let () = Sys_unix.chdir "../../test/contracts/interpreter_tests/"
 
 let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "interpret_test.mligo" ];
@@ -2119,6 +2142,9 @@ let%expect_test _ =
   - test_concats exited with value ().
   - test_bytes_nat_int_conversion exited with value (). |}]
 
+let () = Sys_unix.chdir pwd
+let () = Sys_unix.chdir "../../test/contracts/interpreter_tests/"
+
 let%expect_test _ =
   (* This tests a possible regression on the way modules are evaluated. It is possible that the number of element in the environment explodes. *)
   run_ligo_good [ "run"; "test"; test "imported_modules/test.mligo"; "--format"; "dev" ];
@@ -2135,6 +2161,9 @@ let%expect_test _ =
 
     Everything at the top-level was executed.
     - test1 exited with value (). |}]
+
+let () = Sys_unix.chdir pwd
+let () = Sys_unix.chdir "../../test/contracts/interpreter_tests/"
 
 let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "views_test.mligo" ];
@@ -2215,6 +2244,9 @@ let%expect_test _ =
     Everything at the top-level was executed.
     - test exited with value (). |}]
 
+let () = Sys_unix.chdir pwd
+let () = Sys_unix.chdir "../../test/contracts/interpreter_tests/"
+
 let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "interpret_test_log.mligo" ];
   [%expect
@@ -2240,6 +2272,9 @@ let%expect_test _ =
     {a = 1 ; b = 2n ; c = "aaa"}
     One (())
     Everything at the top-level was executed. |}]
+
+let () = Sys_unix.chdir pwd
+let () = Sys_unix.chdir "../../test/contracts/interpreter_tests/"
 
 let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "test_fail.mligo" ];
@@ -2283,6 +2318,9 @@ let%expect_test _ =
 
     Everything at the top-level was executed.
     - test exited with value "my contract always fail". |}]
+
+let () = Sys_unix.chdir pwd
+let () = Sys_unix.chdir "../../test/contracts/interpreter_tests/"
 
 let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "test_fail_from_file.mligo" ];
@@ -2335,6 +2373,9 @@ let%expect_test _ =
 
     Everything at the top-level was executed.
     - test exited with value "my contract always fail". |}]
+
+let () = Sys_unix.chdir pwd
+let () = Sys_unix.chdir "../../test/contracts/interpreter_tests/"
 
 let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "compile_expr.mligo" ];
@@ -2488,6 +2529,9 @@ let%expect_test _ =
   - test3 exited with value ().
   - test4 exited with value (). |}]
 
+let () = Sys_unix.chdir pwd
+let () = Sys_unix.chdir "../../test/contracts/interpreter_tests/"
+
 let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "compile_expr_from_file.mligo" ];
   [%expect
@@ -2640,355 +2684,8 @@ let%expect_test _ =
   - test3 exited with value ().
   - test4 exited with value (). |}]
 
-let%expect_test _ =
-  run_ligo_good [ "run"; "test"; test "test_example.mligo" ];
-  [%expect
-    {|
-    File "contract_under_test/contract_create.mligo", line 15, characters 24-41:
-     14 |       let ops = match c with
-     15 |           Some (c) -> [ Tezos.transaction 1n 10tez c ]
-                                  ^^^^^^^^^^^^^^^^^
-     16 |         | None     -> (failwith 2 : operation list)
-    :
-    Warning: deprecated value.
-    In a future version, `Tezos` will be replaced by `Tezos.Next`, and using `Operation.transaction` from `Tezos.Next` is encouraged for a smoother migration.
-
-    File "./test_example.mligo", line 4, characters 19-41:
-      3 | let check_new_origination (src :address) : address =
-      4 |   let last_origs = Test.last_originations () in
-                             ^^^^^^^^^^^^^^^^^^^^^^
-      5 |   match Map.find_opt src last_origs with
-    :
-    Warning: deprecated value.
-    In a future version, `Test` will be replaced by `Test.Next`, and using `State.last_originations` from `Test.Next` is encouraged for a smoother migration.
-
-    File "./test_example.mligo", line 7, characters 15-26:
-      6 |     | Some new_lst -> (
-      7 |       let () = Test.assert (List.length new_lst = 1n) in
-                         ^^^^^^^^^^^
-      8 |       match new_lst with
-    :
-    Warning: deprecated value.
-    In a future version, `Test` will be replaced by `Test.Next`, and using `Assert.assert` from `Test.Next` is encouraged for a smoother migration.
-
-    File "./test_example.mligo", line 15, characters 15-41:
-     14 | let test =
-     15 |   let _baker = Test.nth_bootstrap_account 0 in
-                         ^^^^^^^^^^^^^^^^^^^^^^^^^^
-     16 |   let src = Test.nth_bootstrap_account 1 in
-    :
-    Warning: deprecated value.
-    In a future version, `Test` will be replaced by `Test.Next`, and using `Account.address` from `Test.Next` is encouraged for a smoother migration.
-
-    File "./test_example.mligo", line 16, characters 12-38:
-     15 |   let _baker = Test.nth_bootstrap_account 0 in
-     16 |   let src = Test.nth_bootstrap_account 1 in
-                      ^^^^^^^^^^^^^^^^^^^^^^^^^^
-     17 |
-    :
-    Warning: deprecated value.
-    In a future version, `Test` will be replaced by `Test.Next`, and using `Account.address` from `Test.Next` is encouraged for a smoother migration.
-
-    File "./test_example.mligo", line 18, characters 44-58:
-     17 |
-     18 |   let {addr = typed_addr; code = _; size} = Test.originate (contract_of C) None 0tez in
-                                                      ^^^^^^^^^^^^^^
-     19 |   let () = Test.assert ((None : C.storage) = (Test.get_storage typed_addr)) in
-    :
-    Warning: deprecated value.
-    In a future version, `Test` will be replaced by `Test.Next`, and using `Originate.contract` from `Test.Next` is encouraged for a smoother migration.
-
-    File "./test_example.mligo", line 19, characters 11-22:
-     18 |   let {addr = typed_addr; code = _; size} = Test.originate (contract_of C) None 0tez in
-     19 |   let () = Test.assert ((None : C.storage) = (Test.get_storage typed_addr)) in
-                     ^^^^^^^^^^^
-     20 |   let () = Test.assert (size < 300) in
-    :
-    Warning: deprecated value.
-    In a future version, `Test` will be replaced by `Test.Next`, and using `Assert.assert` from `Test.Next` is encouraged for a smoother migration.
-
-    File "./test_example.mligo", line 19, characters 46-62:
-     18 |   let {addr = typed_addr; code = _; size} = Test.originate (contract_of C) None 0tez in
-     19 |   let () = Test.assert ((None : C.storage) = (Test.get_storage typed_addr)) in
-                                                        ^^^^^^^^^^^^^^^^
-     20 |   let () = Test.assert (size < 300) in
-    :
-    Warning: deprecated value.
-    In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.get_storage` from `Test.Next` is encouraged for a smoother migration.
-
-    File "./test_example.mligo", line 20, characters 11-22:
-     19 |   let () = Test.assert ((None : C.storage) = (Test.get_storage typed_addr)) in
-     20 |   let () = Test.assert (size < 300) in
-                     ^^^^^^^^^^^
-     21 |   let new_account1 = check_new_origination src in
-    :
-    Warning: deprecated value.
-    In a future version, `Test` will be replaced by `Test.Next`, and using `Assert.assert` from `Test.Next` is encouraged for a smoother migration.
-
-    File "./test_example.mligo", line 23, characters 10-27:
-     22 |
-     23 |   let _ = Test.transfer_exn typed_addr (Main Two) 10tez in
-                    ^^^^^^^^^^^^^^^^^
-     24 |   let new_account2 = check_new_origination new_account1 in
-    :
-    Warning: deprecated value.
-    In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.transfer_exn` from `Test.Next` is encouraged for a smoother migration.
-
-    File "./test_example.mligo", line 25, characters 20-36:
-     24 |   let new_account2 = check_new_origination new_account1 in
-     25 |   let new_storage = Test.get_storage typed_addr in
-                              ^^^^^^^^^^^^^^^^
-     26 |   let expected_new_storage = Some new_account2 in
-    :
-    Warning: deprecated value.
-    In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.get_storage` from `Test.Next` is encouraged for a smoother migration.
-
-    File "./test_example.mligo", line 27, characters 11-22:
-     26 |   let expected_new_storage = Some new_account2 in
-     27 |   let () = Test.assert (new_storage = expected_new_storage) in
-                     ^^^^^^^^^^^
-     28 |
-    :
-    Warning: deprecated value.
-    In a future version, `Test` will be replaced by `Test.Next`, and using `Assert.assert` from `Test.Next` is encouraged for a smoother migration.
-
-    File "./test_example.mligo", line 29, characters 9-22:
-     28 |
-     29 |   match (Test.transfer typed_addr (Main One) 10tez : test_exec_result) with
-                   ^^^^^^^^^^^^^
-     30 |   | Success _ -> (failwith "contract did not fail" : michelson_program)
-    :
-    Warning: deprecated value.
-    In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.transfer` from `Test.Next` is encouraged for a smoother migration.
-
-    File "./test_example.mligo", line 36, characters 15-26:
-     35 |       let (v,addr) = reject_data in
-     36 |       let () = Test.assert (addr = new_account2) in
-                         ^^^^^^^^^^^
-     37 |       let () = Test.assert (addr = new_account2) in
-    :
-    Warning: deprecated value.
-    In a future version, `Test` will be replaced by `Test.Next`, and using `Assert.assert` from `Test.Next` is encouraged for a smoother migration.
-
-    File "./test_example.mligo", line 37, characters 15-26:
-     36 |       let () = Test.assert (addr = new_account2) in
-     37 |       let () = Test.assert (addr = new_account2) in
-                         ^^^^^^^^^^^
-     38 |       let () = Test.assert (Test.michelson_equal v (Test.eval 111)) in
-    :
-    Warning: deprecated value.
-    In a future version, `Test` will be replaced by `Test.Next`, and using `Assert.assert` from `Test.Next` is encouraged for a smoother migration.
-
-    File "./test_example.mligo", line 38, characters 15-26:
-     37 |       let () = Test.assert (addr = new_account2) in
-     38 |       let () = Test.assert (Test.michelson_equal v (Test.eval 111)) in
-                         ^^^^^^^^^^^
-     39 |       v
-    :
-    Warning: deprecated value.
-    In a future version, `Test` will be replaced by `Test.Next`, and using `Assert.assert` from `Test.Next` is encouraged for a smoother migration.
-
-    File "./test_example.mligo", line 38, characters 28-48:
-     37 |       let () = Test.assert (addr = new_account2) in
-     38 |       let () = Test.assert (Test.michelson_equal v (Test.eval 111)) in
-                                      ^^^^^^^^^^^^^^^^^^^^
-     39 |       v
-    :
-    Warning: deprecated value.
-    In a future version, `Test` will be replaced by `Test.Next`, and using `Compare.eq` from `Test.Next` is encouraged for a smoother migration.
-
-    File "./test_example.mligo", line 38, characters 52-61:
-     37 |       let () = Test.assert (addr = new_account2) in
-     38 |       let () = Test.assert (Test.michelson_equal v (Test.eval 111)) in
-                                                              ^^^^^^^^^
-     39 |       v
-    :
-    Warning: deprecated value.
-    In a future version, `Test` will be replaced by `Test.Next`, and using `Michelson.eval` from `Test.Next` is encouraged for a smoother migration.
-
-    File "./test_example.mligo", line 51, characters 11-27:
-     50 |   let overide_default_amounts = [ 8000tez ; 2mutez ] in // the [i]th element of the list overwrite default balance of the [i]th account
-     51 |   let () = Test.reset_state number_of_account overide_default_amounts in
-                     ^^^^^^^^^^^^^^^^
-     52 |   // And by setting the source in between calls to `Test.transfer_to_contract` or `Test.originate`
-    :
-    Warning: deprecated value.
-    In a future version, `Test` will be replaced by `Test.Next`, and using `State.reset` from `Test.Next` is encouraged for a smoother migration.
-
-    File "./test_example.mligo", line 53, characters 14-40:
-     52 |   // And by setting the source in between calls to `Test.transfer_to_contract` or `Test.originate`
-     53 |   let bsa0 = (Test.nth_bootstrap_account 0) in
-                        ^^^^^^^^^^^^^^^^^^^^^^^^^^
-     54 |   let bsa1 = (Test.nth_bootstrap_account 1) in
-    :
-    Warning: deprecated value.
-    In a future version, `Test` will be replaced by `Test.Next`, and using `Account.address` from `Test.Next` is encouraged for a smoother migration.
-
-    File "./test_example.mligo", line 54, characters 14-40:
-     53 |   let bsa0 = (Test.nth_bootstrap_account 0) in
-     54 |   let bsa1 = (Test.nth_bootstrap_account 1) in
-                        ^^^^^^^^^^^^^^^^^^^^^^^^^^
-     55 |   let bsa2 = (Test.nth_bootstrap_account 2) in
-    :
-    Warning: deprecated value.
-    In a future version, `Test` will be replaced by `Test.Next`, and using `Account.address` from `Test.Next` is encouraged for a smoother migration.
-
-    File "./test_example.mligo", line 55, characters 14-40:
-     54 |   let bsa1 = (Test.nth_bootstrap_account 1) in
-     55 |   let bsa2 = (Test.nth_bootstrap_account 2) in
-                        ^^^^^^^^^^^^^^^^^^^^^^^^^^
-     56 |   let bsa3 = (Test.nth_bootstrap_account 3) in
-    :
-    Warning: deprecated value.
-    In a future version, `Test` will be replaced by `Test.Next`, and using `Account.address` from `Test.Next` is encouraged for a smoother migration.
-
-    File "./test_example.mligo", line 56, characters 14-40:
-     55 |   let bsa2 = (Test.nth_bootstrap_account 2) in
-     56 |   let bsa3 = (Test.nth_bootstrap_account 3) in
-                        ^^^^^^^^^^^^^^^^^^^^^^^^^^
-     57 |   let () = Test.set_source bsa3 in
-    :
-    Warning: deprecated value.
-    In a future version, `Test` will be replaced by `Test.Next`, and using `Account.address` from `Test.Next` is encouraged for a smoother migration.
-
-    File "./test_example.mligo", line 57, characters 11-26:
-     56 |   let bsa3 = (Test.nth_bootstrap_account 3) in
-     57 |   let () = Test.set_source bsa3 in
-                     ^^^^^^^^^^^^^^^
-     58 |   let () = Test.set_baker bsa2 in
-    :
-    Warning: deprecated value.
-    In a future version, `Test` will be replaced by `Test.Next`, and using `State.set_source` from `Test.Next` is encouraged for a smoother migration.
-
-    File "./test_example.mligo", line 58, characters 11-25:
-     57 |   let () = Test.set_source bsa3 in
-     58 |   let () = Test.set_baker bsa2 in
-                     ^^^^^^^^^^^^^^
-     59 |   // some balance tests:
-    :
-    Warning: deprecated value.
-    In a future version, `Test` will be replaced by `Test.Next`, and using `State.set_baker` from `Test.Next` is encouraged for a smoother migration.
-
-    File "./test_example.mligo", line 61, characters 4-12:
-     60 |   let tz = fun (n:nat) ->
-     61 |     Test.run (fun (x : unit -> nat) -> x () * 1mutez) (fun (_ : unit) -> n)
-              ^^^^^^^^
-     62 |   in
-    :
-    Warning: deprecated value.
-    In a future version, `Test` will be replaced by `Test.Next`, and using `Michelson.run` from `Test.Next` is encouraged for a smoother migration.
-
-    File "./test_example.mligo", line 63, characters 11-22:
-     62 |   in
-     63 |   let () = Test.assert ((Test.get_balance_of_address bsa0) = 2000tez) in
-                     ^^^^^^^^^^^
-     64 |   let () = Test.assert ((Test.get_balance_of_address bsa1) = 0mutez) in
-    :
-    Warning: deprecated value.
-    In a future version, `Test` will be replaced by `Test.Next`, and using `Assert.assert` from `Test.Next` is encouraged for a smoother migration.
-
-    File "./test_example.mligo", line 63, characters 25-52:
-     62 |   in
-     63 |   let () = Test.assert ((Test.get_balance_of_address bsa0) = 2000tez) in
-                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^
-     64 |   let () = Test.assert ((Test.get_balance_of_address bsa1) = 0mutez) in
-    :
-    Warning: deprecated value.
-    In a future version, `Test` will be replaced by `Test.Next`, and using `Address.get_balance` from `Test.Next` is encouraged for a smoother migration.
-
-    File "./test_example.mligo", line 64, characters 11-22:
-     63 |   let () = Test.assert ((Test.get_balance_of_address bsa0) = 2000tez) in
-     64 |   let () = Test.assert ((Test.get_balance_of_address bsa1) = 0mutez) in
-                     ^^^^^^^^^^^
-     65 |   let () = Test.assert (Test.michelson_equal (Test.eval (Test.get_balance_of_address bsa1)) (tz 0n)) in
-    :
-    Warning: deprecated value.
-    In a future version, `Test` will be replaced by `Test.Next`, and using `Assert.assert` from `Test.Next` is encouraged for a smoother migration.
-
-    File "./test_example.mligo", line 64, characters 25-52:
-     63 |   let () = Test.assert ((Test.get_balance_of_address bsa0) = 2000tez) in
-     64 |   let () = Test.assert ((Test.get_balance_of_address bsa1) = 0mutez) in
-                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^
-     65 |   let () = Test.assert (Test.michelson_equal (Test.eval (Test.get_balance_of_address bsa1)) (tz 0n)) in
-    :
-    Warning: deprecated value.
-    In a future version, `Test` will be replaced by `Test.Next`, and using `Address.get_balance` from `Test.Next` is encouraged for a smoother migration.
-
-    File "./test_example.mligo", line 65, characters 11-22:
-     64 |   let () = Test.assert ((Test.get_balance_of_address bsa1) = 0mutez) in
-     65 |   let () = Test.assert (Test.michelson_equal (Test.eval (Test.get_balance_of_address bsa1)) (tz 0n)) in
-                     ^^^^^^^^^^^
-     66 |   let () = Test.assert ((Test.get_balance_of_address bsa2) = 3800000tez) in
-    :
-    Warning: deprecated value.
-    In a future version, `Test` will be replaced by `Test.Next`, and using `Assert.assert` from `Test.Next` is encouraged for a smoother migration.
-
-    File "./test_example.mligo", line 65, characters 24-44:
-     64 |   let () = Test.assert ((Test.get_balance_of_address bsa1) = 0mutez) in
-     65 |   let () = Test.assert (Test.michelson_equal (Test.eval (Test.get_balance_of_address bsa1)) (tz 0n)) in
-                                  ^^^^^^^^^^^^^^^^^^^^
-     66 |   let () = Test.assert ((Test.get_balance_of_address bsa2) = 3800000tez) in
-    :
-    Warning: deprecated value.
-    In a future version, `Test` will be replaced by `Test.Next`, and using `Compare.eq` from `Test.Next` is encouraged for a smoother migration.
-
-    File "./test_example.mligo", line 65, characters 46-55:
-     64 |   let () = Test.assert ((Test.get_balance_of_address bsa1) = 0mutez) in
-     65 |   let () = Test.assert (Test.michelson_equal (Test.eval (Test.get_balance_of_address bsa1)) (tz 0n)) in
-                                                        ^^^^^^^^^
-     66 |   let () = Test.assert ((Test.get_balance_of_address bsa2) = 3800000tez) in
-    :
-    Warning: deprecated value.
-    In a future version, `Test` will be replaced by `Test.Next`, and using `Michelson.eval` from `Test.Next` is encouraged for a smoother migration.
-
-    File "./test_example.mligo", line 65, characters 57-84:
-     64 |   let () = Test.assert ((Test.get_balance_of_address bsa1) = 0mutez) in
-     65 |   let () = Test.assert (Test.michelson_equal (Test.eval (Test.get_balance_of_address bsa1)) (tz 0n)) in
-                                                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^
-     66 |   let () = Test.assert ((Test.get_balance_of_address bsa2) = 3800000tez) in
-    :
-    Warning: deprecated value.
-    In a future version, `Test` will be replaced by `Test.Next`, and using `Address.get_balance` from `Test.Next` is encouraged for a smoother migration.
-
-    File "./test_example.mligo", line 66, characters 11-22:
-     65 |   let () = Test.assert (Test.michelson_equal (Test.eval (Test.get_balance_of_address bsa1)) (tz 0n)) in
-     66 |   let () = Test.assert ((Test.get_balance_of_address bsa2) = 3800000tez) in
-                     ^^^^^^^^^^^
-     67 |   let () = Test.assert ((Test.get_balance_of_address bsa3) = 3800000000000mutez) in
-    :
-    Warning: deprecated value.
-    In a future version, `Test` will be replaced by `Test.Next`, and using `Assert.assert` from `Test.Next` is encouraged for a smoother migration.
-
-    File "./test_example.mligo", line 66, characters 25-52:
-     65 |   let () = Test.assert (Test.michelson_equal (Test.eval (Test.get_balance_of_address bsa1)) (tz 0n)) in
-     66 |   let () = Test.assert ((Test.get_balance_of_address bsa2) = 3800000tez) in
-                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^
-     67 |   let () = Test.assert ((Test.get_balance_of_address bsa3) = 3800000000000mutez) in
-    :
-    Warning: deprecated value.
-    In a future version, `Test` will be replaced by `Test.Next`, and using `Address.get_balance` from `Test.Next` is encouraged for a smoother migration.
-
-    File "./test_example.mligo", line 67, characters 11-22:
-     66 |   let () = Test.assert ((Test.get_balance_of_address bsa2) = 3800000tez) in
-     67 |   let () = Test.assert ((Test.get_balance_of_address bsa3) = 3800000000000mutez) in
-                     ^^^^^^^^^^^
-     68 |   ()
-    :
-    Warning: deprecated value.
-    In a future version, `Test` will be replaced by `Test.Next`, and using `Assert.assert` from `Test.Next` is encouraged for a smoother migration.
-
-    File "./test_example.mligo", line 67, characters 25-52:
-     66 |   let () = Test.assert ((Test.get_balance_of_address bsa2) = 3800000tez) in
-     67 |   let () = Test.assert ((Test.get_balance_of_address bsa3) = 3800000000000mutez) in
-                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^
-     68 |   ()
-    :
-    Warning: deprecated value.
-    In a future version, `Test` will be replaced by `Test.Next`, and using `Address.get_balance` from `Test.Next` is encouraged for a smoother migration.
-
-    Everything at the top-level was executed.
-    - test exited with value 111.
-    - test2 exited with value (). |}]
+let () = Sys_unix.chdir pwd
+let () = Sys_unix.chdir "../../test/contracts/interpreter_tests/"
 
 let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "test_example.mligo" ];
@@ -3339,6 +3036,362 @@ let%expect_test _ =
     Everything at the top-level was executed.
     - test exited with value 111.
     - test2 exited with value (). |}]
+
+let () = Sys_unix.chdir pwd
+let () = Sys_unix.chdir "../../test/contracts/interpreter_tests/"
+
+let%expect_test _ =
+  run_ligo_good [ "run"; "test"; test "test_example.mligo" ];
+  [%expect
+    {|
+    File "contract_under_test/contract_create.mligo", line 15, characters 24-41:
+     14 |       let ops = match c with
+     15 |           Some (c) -> [ Tezos.transaction 1n 10tez c ]
+                                  ^^^^^^^^^^^^^^^^^
+     16 |         | None     -> (failwith 2 : operation list)
+    :
+    Warning: deprecated value.
+    In a future version, `Tezos` will be replaced by `Tezos.Next`, and using `Operation.transaction` from `Tezos.Next` is encouraged for a smoother migration.
+
+    File "./test_example.mligo", line 4, characters 19-41:
+      3 | let check_new_origination (src :address) : address =
+      4 |   let last_origs = Test.last_originations () in
+                             ^^^^^^^^^^^^^^^^^^^^^^
+      5 |   match Map.find_opt src last_origs with
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `State.last_originations` from `Test.Next` is encouraged for a smoother migration.
+
+    File "./test_example.mligo", line 7, characters 15-26:
+      6 |     | Some new_lst -> (
+      7 |       let () = Test.assert (List.length new_lst = 1n) in
+                         ^^^^^^^^^^^
+      8 |       match new_lst with
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `Assert.assert` from `Test.Next` is encouraged for a smoother migration.
+
+    File "./test_example.mligo", line 15, characters 15-41:
+     14 | let test =
+     15 |   let _baker = Test.nth_bootstrap_account 0 in
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^
+     16 |   let src = Test.nth_bootstrap_account 1 in
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `Account.address` from `Test.Next` is encouraged for a smoother migration.
+
+    File "./test_example.mligo", line 16, characters 12-38:
+     15 |   let _baker = Test.nth_bootstrap_account 0 in
+     16 |   let src = Test.nth_bootstrap_account 1 in
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^
+     17 |
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `Account.address` from `Test.Next` is encouraged for a smoother migration.
+
+    File "./test_example.mligo", line 18, characters 44-58:
+     17 |
+     18 |   let {addr = typed_addr; code = _; size} = Test.originate (contract_of C) None 0tez in
+                                                      ^^^^^^^^^^^^^^
+     19 |   let () = Test.assert ((None : C.storage) = (Test.get_storage typed_addr)) in
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `Originate.contract` from `Test.Next` is encouraged for a smoother migration.
+
+    File "./test_example.mligo", line 19, characters 11-22:
+     18 |   let {addr = typed_addr; code = _; size} = Test.originate (contract_of C) None 0tez in
+     19 |   let () = Test.assert ((None : C.storage) = (Test.get_storage typed_addr)) in
+                     ^^^^^^^^^^^
+     20 |   let () = Test.assert (size < 300) in
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `Assert.assert` from `Test.Next` is encouraged for a smoother migration.
+
+    File "./test_example.mligo", line 19, characters 46-62:
+     18 |   let {addr = typed_addr; code = _; size} = Test.originate (contract_of C) None 0tez in
+     19 |   let () = Test.assert ((None : C.storage) = (Test.get_storage typed_addr)) in
+                                                        ^^^^^^^^^^^^^^^^
+     20 |   let () = Test.assert (size < 300) in
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.get_storage` from `Test.Next` is encouraged for a smoother migration.
+
+    File "./test_example.mligo", line 20, characters 11-22:
+     19 |   let () = Test.assert ((None : C.storage) = (Test.get_storage typed_addr)) in
+     20 |   let () = Test.assert (size < 300) in
+                     ^^^^^^^^^^^
+     21 |   let new_account1 = check_new_origination src in
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `Assert.assert` from `Test.Next` is encouraged for a smoother migration.
+
+    File "./test_example.mligo", line 23, characters 10-27:
+     22 |
+     23 |   let _ = Test.transfer_exn typed_addr (Main Two) 10tez in
+                    ^^^^^^^^^^^^^^^^^
+     24 |   let new_account2 = check_new_origination new_account1 in
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.transfer_exn` from `Test.Next` is encouraged for a smoother migration.
+
+    File "./test_example.mligo", line 25, characters 20-36:
+     24 |   let new_account2 = check_new_origination new_account1 in
+     25 |   let new_storage = Test.get_storage typed_addr in
+                              ^^^^^^^^^^^^^^^^
+     26 |   let expected_new_storage = Some new_account2 in
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.get_storage` from `Test.Next` is encouraged for a smoother migration.
+
+    File "./test_example.mligo", line 27, characters 11-22:
+     26 |   let expected_new_storage = Some new_account2 in
+     27 |   let () = Test.assert (new_storage = expected_new_storage) in
+                     ^^^^^^^^^^^
+     28 |
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `Assert.assert` from `Test.Next` is encouraged for a smoother migration.
+
+    File "./test_example.mligo", line 29, characters 9-22:
+     28 |
+     29 |   match (Test.transfer typed_addr (Main One) 10tez : test_exec_result) with
+                   ^^^^^^^^^^^^^
+     30 |   | Success _ -> (failwith "contract did not fail" : michelson_program)
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.transfer` from `Test.Next` is encouraged for a smoother migration.
+
+    File "./test_example.mligo", line 36, characters 15-26:
+     35 |       let (v,addr) = reject_data in
+     36 |       let () = Test.assert (addr = new_account2) in
+                         ^^^^^^^^^^^
+     37 |       let () = Test.assert (addr = new_account2) in
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `Assert.assert` from `Test.Next` is encouraged for a smoother migration.
+
+    File "./test_example.mligo", line 37, characters 15-26:
+     36 |       let () = Test.assert (addr = new_account2) in
+     37 |       let () = Test.assert (addr = new_account2) in
+                         ^^^^^^^^^^^
+     38 |       let () = Test.assert (Test.michelson_equal v (Test.eval 111)) in
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `Assert.assert` from `Test.Next` is encouraged for a smoother migration.
+
+    File "./test_example.mligo", line 38, characters 15-26:
+     37 |       let () = Test.assert (addr = new_account2) in
+     38 |       let () = Test.assert (Test.michelson_equal v (Test.eval 111)) in
+                         ^^^^^^^^^^^
+     39 |       v
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `Assert.assert` from `Test.Next` is encouraged for a smoother migration.
+
+    File "./test_example.mligo", line 38, characters 28-48:
+     37 |       let () = Test.assert (addr = new_account2) in
+     38 |       let () = Test.assert (Test.michelson_equal v (Test.eval 111)) in
+                                      ^^^^^^^^^^^^^^^^^^^^
+     39 |       v
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `Compare.eq` from `Test.Next` is encouraged for a smoother migration.
+
+    File "./test_example.mligo", line 38, characters 52-61:
+     37 |       let () = Test.assert (addr = new_account2) in
+     38 |       let () = Test.assert (Test.michelson_equal v (Test.eval 111)) in
+                                                              ^^^^^^^^^
+     39 |       v
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `Michelson.eval` from `Test.Next` is encouraged for a smoother migration.
+
+    File "./test_example.mligo", line 51, characters 11-27:
+     50 |   let overide_default_amounts = [ 8000tez ; 2mutez ] in // the [i]th element of the list overwrite default balance of the [i]th account
+     51 |   let () = Test.reset_state number_of_account overide_default_amounts in
+                     ^^^^^^^^^^^^^^^^
+     52 |   // And by setting the source in between calls to `Test.transfer_to_contract` or `Test.originate`
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `State.reset` from `Test.Next` is encouraged for a smoother migration.
+
+    File "./test_example.mligo", line 53, characters 14-40:
+     52 |   // And by setting the source in between calls to `Test.transfer_to_contract` or `Test.originate`
+     53 |   let bsa0 = (Test.nth_bootstrap_account 0) in
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^
+     54 |   let bsa1 = (Test.nth_bootstrap_account 1) in
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `Account.address` from `Test.Next` is encouraged for a smoother migration.
+
+    File "./test_example.mligo", line 54, characters 14-40:
+     53 |   let bsa0 = (Test.nth_bootstrap_account 0) in
+     54 |   let bsa1 = (Test.nth_bootstrap_account 1) in
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^
+     55 |   let bsa2 = (Test.nth_bootstrap_account 2) in
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `Account.address` from `Test.Next` is encouraged for a smoother migration.
+
+    File "./test_example.mligo", line 55, characters 14-40:
+     54 |   let bsa1 = (Test.nth_bootstrap_account 1) in
+     55 |   let bsa2 = (Test.nth_bootstrap_account 2) in
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^
+     56 |   let bsa3 = (Test.nth_bootstrap_account 3) in
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `Account.address` from `Test.Next` is encouraged for a smoother migration.
+
+    File "./test_example.mligo", line 56, characters 14-40:
+     55 |   let bsa2 = (Test.nth_bootstrap_account 2) in
+     56 |   let bsa3 = (Test.nth_bootstrap_account 3) in
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^
+     57 |   let () = Test.set_source bsa3 in
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `Account.address` from `Test.Next` is encouraged for a smoother migration.
+
+    File "./test_example.mligo", line 57, characters 11-26:
+     56 |   let bsa3 = (Test.nth_bootstrap_account 3) in
+     57 |   let () = Test.set_source bsa3 in
+                     ^^^^^^^^^^^^^^^
+     58 |   let () = Test.set_baker bsa2 in
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `State.set_source` from `Test.Next` is encouraged for a smoother migration.
+
+    File "./test_example.mligo", line 58, characters 11-25:
+     57 |   let () = Test.set_source bsa3 in
+     58 |   let () = Test.set_baker bsa2 in
+                     ^^^^^^^^^^^^^^
+     59 |   // some balance tests:
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `State.set_baker` from `Test.Next` is encouraged for a smoother migration.
+
+    File "./test_example.mligo", line 61, characters 4-12:
+     60 |   let tz = fun (n:nat) ->
+     61 |     Test.run (fun (x : unit -> nat) -> x () * 1mutez) (fun (_ : unit) -> n)
+              ^^^^^^^^
+     62 |   in
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `Michelson.run` from `Test.Next` is encouraged for a smoother migration.
+
+    File "./test_example.mligo", line 63, characters 11-22:
+     62 |   in
+     63 |   let () = Test.assert ((Test.get_balance_of_address bsa0) = 2000tez) in
+                     ^^^^^^^^^^^
+     64 |   let () = Test.assert ((Test.get_balance_of_address bsa1) = 0mutez) in
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `Assert.assert` from `Test.Next` is encouraged for a smoother migration.
+
+    File "./test_example.mligo", line 63, characters 25-52:
+     62 |   in
+     63 |   let () = Test.assert ((Test.get_balance_of_address bsa0) = 2000tez) in
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     64 |   let () = Test.assert ((Test.get_balance_of_address bsa1) = 0mutez) in
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `Address.get_balance` from `Test.Next` is encouraged for a smoother migration.
+
+    File "./test_example.mligo", line 64, characters 11-22:
+     63 |   let () = Test.assert ((Test.get_balance_of_address bsa0) = 2000tez) in
+     64 |   let () = Test.assert ((Test.get_balance_of_address bsa1) = 0mutez) in
+                     ^^^^^^^^^^^
+     65 |   let () = Test.assert (Test.michelson_equal (Test.eval (Test.get_balance_of_address bsa1)) (tz 0n)) in
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `Assert.assert` from `Test.Next` is encouraged for a smoother migration.
+
+    File "./test_example.mligo", line 64, characters 25-52:
+     63 |   let () = Test.assert ((Test.get_balance_of_address bsa0) = 2000tez) in
+     64 |   let () = Test.assert ((Test.get_balance_of_address bsa1) = 0mutez) in
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     65 |   let () = Test.assert (Test.michelson_equal (Test.eval (Test.get_balance_of_address bsa1)) (tz 0n)) in
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `Address.get_balance` from `Test.Next` is encouraged for a smoother migration.
+
+    File "./test_example.mligo", line 65, characters 11-22:
+     64 |   let () = Test.assert ((Test.get_balance_of_address bsa1) = 0mutez) in
+     65 |   let () = Test.assert (Test.michelson_equal (Test.eval (Test.get_balance_of_address bsa1)) (tz 0n)) in
+                     ^^^^^^^^^^^
+     66 |   let () = Test.assert ((Test.get_balance_of_address bsa2) = 3800000tez) in
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `Assert.assert` from `Test.Next` is encouraged for a smoother migration.
+
+    File "./test_example.mligo", line 65, characters 24-44:
+     64 |   let () = Test.assert ((Test.get_balance_of_address bsa1) = 0mutez) in
+     65 |   let () = Test.assert (Test.michelson_equal (Test.eval (Test.get_balance_of_address bsa1)) (tz 0n)) in
+                                  ^^^^^^^^^^^^^^^^^^^^
+     66 |   let () = Test.assert ((Test.get_balance_of_address bsa2) = 3800000tez) in
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `Compare.eq` from `Test.Next` is encouraged for a smoother migration.
+
+    File "./test_example.mligo", line 65, characters 46-55:
+     64 |   let () = Test.assert ((Test.get_balance_of_address bsa1) = 0mutez) in
+     65 |   let () = Test.assert (Test.michelson_equal (Test.eval (Test.get_balance_of_address bsa1)) (tz 0n)) in
+                                                        ^^^^^^^^^
+     66 |   let () = Test.assert ((Test.get_balance_of_address bsa2) = 3800000tez) in
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `Michelson.eval` from `Test.Next` is encouraged for a smoother migration.
+
+    File "./test_example.mligo", line 65, characters 57-84:
+     64 |   let () = Test.assert ((Test.get_balance_of_address bsa1) = 0mutez) in
+     65 |   let () = Test.assert (Test.michelson_equal (Test.eval (Test.get_balance_of_address bsa1)) (tz 0n)) in
+                                                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     66 |   let () = Test.assert ((Test.get_balance_of_address bsa2) = 3800000tez) in
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `Address.get_balance` from `Test.Next` is encouraged for a smoother migration.
+
+    File "./test_example.mligo", line 66, characters 11-22:
+     65 |   let () = Test.assert (Test.michelson_equal (Test.eval (Test.get_balance_of_address bsa1)) (tz 0n)) in
+     66 |   let () = Test.assert ((Test.get_balance_of_address bsa2) = 3800000tez) in
+                     ^^^^^^^^^^^
+     67 |   let () = Test.assert ((Test.get_balance_of_address bsa3) = 3800000000000mutez) in
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `Assert.assert` from `Test.Next` is encouraged for a smoother migration.
+
+    File "./test_example.mligo", line 66, characters 25-52:
+     65 |   let () = Test.assert (Test.michelson_equal (Test.eval (Test.get_balance_of_address bsa1)) (tz 0n)) in
+     66 |   let () = Test.assert ((Test.get_balance_of_address bsa2) = 3800000tez) in
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     67 |   let () = Test.assert ((Test.get_balance_of_address bsa3) = 3800000000000mutez) in
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `Address.get_balance` from `Test.Next` is encouraged for a smoother migration.
+
+    File "./test_example.mligo", line 67, characters 11-22:
+     66 |   let () = Test.assert ((Test.get_balance_of_address bsa2) = 3800000tez) in
+     67 |   let () = Test.assert ((Test.get_balance_of_address bsa3) = 3800000000000mutez) in
+                     ^^^^^^^^^^^
+     68 |   ()
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `Assert.assert` from `Test.Next` is encouraged for a smoother migration.
+
+    File "./test_example.mligo", line 67, characters 25-52:
+     66 |   let () = Test.assert ((Test.get_balance_of_address bsa2) = 3800000tez) in
+     67 |   let () = Test.assert ((Test.get_balance_of_address bsa3) = 3800000000000mutez) in
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     68 |   ()
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `Address.get_balance` from `Test.Next` is encouraged for a smoother migration.
+
+    Everything at the top-level was executed.
+    - test exited with value 111.
+    - test2 exited with value (). |}]
+
+let () = Sys_unix.chdir pwd
+let () = Sys_unix.chdir "../../test/contracts/interpreter_tests/"
 
 let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "catch_balance_too_low.mligo" ];
@@ -3401,6 +3454,9 @@ let%expect_test _ =
     Everything at the top-level was executed.
     - test exited with value (). |}]
 
+let () = Sys_unix.chdir pwd
+let () = Sys_unix.chdir "../../test/contracts/interpreter_tests/"
+
 let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "test_subst_with_storage.mligo" ];
   [%expect
@@ -3434,6 +3490,9 @@ let%expect_test _ =
     Everything at the top-level was executed.
     - test exited with value 0. |}]
 
+let () = Sys_unix.chdir pwd
+let () = Sys_unix.chdir "../../test/contracts/interpreter_tests/"
+
 let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "test_subst_with_storage_from_file.mligo" ];
   [%expect
@@ -3466,6 +3525,9 @@ let%expect_test _ =
 
     Everything at the top-level was executed.
     - test exited with value (). |}]
+
+let () = Sys_unix.chdir pwd
+let () = Sys_unix.chdir "../../test/contracts/interpreter_tests/"
 
 let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "nesting_modules.mligo" ];
@@ -3509,6 +3571,9 @@ let%expect_test _ =
     Everything at the top-level was executed.
     - test exited with value (). |}]
 
+let () = Sys_unix.chdir pwd
+let () = Sys_unix.chdir "../../test/contracts/interpreter_tests/"
+
 let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "map_map.jsligo" ];
   [%expect
@@ -3530,6 +3595,9 @@ run_ligo_good ["run";"test" ; test "bootstrapped_contracts.mligo" ] ;
   - test_transfer exited with value ().
   |}]
 *)
+
+let () = Sys_unix.chdir pwd
+let () = Sys_unix.chdir "../../test/contracts/interpreter_tests/"
 
 let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "override_function.mligo" ];
@@ -3556,10 +3624,16 @@ let%expect_test _ =
     Everything at the top-level was executed.
     - test exited with value (). |}]
 
+let () = Sys_unix.chdir pwd
+let () = Sys_unix.chdir "../../test/contracts/interpreter_tests/"
+
 let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "test_fresh.mligo" ];
   [%expect {|
     Everything at the top-level was executed. |}]
+
+let () = Sys_unix.chdir pwd
+let () = Sys_unix.chdir "../../test/contracts/interpreter_tests/"
 
 let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "test_rec_contract.mligo" ];
@@ -3585,6 +3659,9 @@ let%expect_test _ =
 
     Everything at the top-level was executed.
     - test exited with value (). |}]
+
+let () = Sys_unix.chdir pwd
+let () = Sys_unix.chdir "../../test/contracts/interpreter_tests/"
 
 let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "test_importer.mligo" ];
@@ -3653,6 +3730,9 @@ let%expect_test _ =
 
     Everything at the top-level was executed.
     - test exited with value (). |}]
+
+let () = Sys_unix.chdir pwd
+let () = Sys_unix.chdir "../../test/contracts/interpreter_tests/"
 
 let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "test_bigmap.mligo" ];
@@ -3784,6 +3864,9 @@ let%expect_test _ =
     Everything at the top-level was executed.
     - test exited with value (). |}]
 
+let () = Sys_unix.chdir pwd
+let () = Sys_unix.chdir "../../test/contracts/interpreter_tests/"
+
 let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "test_bigmap_compare.mligo" ];
   [%expect
@@ -3908,6 +3991,9 @@ let%expect_test _ =
     Everything at the top-level was executed.
     - test exited with value (). |}]
 
+let () = Sys_unix.chdir pwd
+let () = Sys_unix.chdir "../../test/contracts/interpreter_tests/"
+
 let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "test_bigmap_set.mligo" ];
   [%expect
@@ -4006,6 +4092,9 @@ let%expect_test _ =
     Everything at the top-level was executed.
     - test exited with value (). |}]
 
+let () = Sys_unix.chdir pwd
+let () = Sys_unix.chdir "../../test/contracts/interpreter_tests/"
+
 let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "test_module.mligo" ];
   [%expect
@@ -4038,6 +4127,9 @@ let%expect_test _ =
 
     Everything at the top-level was executed.
     - test exited with value 1. |}]
+
+let () = Sys_unix.chdir pwd
+let () = Sys_unix.chdir "../../test/contracts/interpreter_tests/"
 
 let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "interpreter_nested_comparison_test.mligo" ];
@@ -4687,6 +4779,9 @@ let%expect_test _ =
     - test_equal exited with value ().
     - test_not_equal exited with value (). |}]
 
+let () = Sys_unix.chdir pwd
+let () = Sys_unix.chdir "../../test/contracts/interpreter_tests/"
+
 let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "test_no_mutation.mligo" ];
   [%expect
@@ -4777,6 +4872,9 @@ let%expect_test _ =
     - test_mutation exited with value ().
     - test_mutation_all exited with value (). |}]
 
+let () = Sys_unix.chdir pwd
+let () = Sys_unix.chdir "../../test/contracts/interpreter_tests/"
+
 let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "test_mutate_from_file.mligo" ];
   [%expect
@@ -4851,6 +4949,9 @@ let%expect_test _ =
 
     Replacing by: p ^ k.
     )]. |}]
+
+let () = Sys_unix.chdir pwd
+let () = Sys_unix.chdir "../../test/contracts/interpreter_tests/"
 
 let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "test_mutate_module.mligo" ];
@@ -4934,6 +5035,9 @@ let%expect_test _ =
 
     Replacing by: p ^ k.
     )]. |}]
+
+let () = Sys_unix.chdir pwd
+let () = Sys_unix.chdir "../../test/contracts/interpreter_tests/"
 
 let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "test_mutate_module.jsligo" ];
@@ -5029,6 +5133,9 @@ let%expect_test _ =
     Everything at the top-level was executed.
     - test exited with value (). |}]
 
+let () = Sys_unix.chdir pwd
+let () = Sys_unix.chdir "../../test/contracts/interpreter_tests/"
+
 let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "iteration.jsligo" ];
   [%expect
@@ -5036,6 +5143,9 @@ let%expect_test _ =
     Everything at the top-level was executed.
     - test_set exited with value 3.
     - test_list exited with value 3. |}]
+
+let () = Sys_unix.chdir pwd
+let () = Sys_unix.chdir "../../test/contracts/interpreter_tests/"
 
 let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "func_michelson.mligo" ];
@@ -5079,12 +5189,18 @@ let%expect_test _ =
     Everything at the top-level was executed.
     - test exited with value (). |}]
 
+let () = Sys_unix.chdir pwd
+let () = Sys_unix.chdir "../../test/contracts/interpreter_tests/"
+
 let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "func_michelson_loop.mligo" ];
   [%expect
     {|
     Everything at the top-level was executed.
     - test exited with value (). |}]
+
+let () = Sys_unix.chdir pwd
+let () = Sys_unix.chdir "../../test/contracts/interpreter_tests/"
 
 let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "test_many_imports.mligo" ];
@@ -5127,6 +5243,9 @@ let%expect_test _ =
     Everything at the top-level was executed.
     - test exited with value (). |}]
 
+let () = Sys_unix.chdir pwd
+let () = Sys_unix.chdir "../../test/contracts/interpreter_tests/"
+
 let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "switch_case_part_1.jsligo"; "--no-warn" ];
   [%expect
@@ -5150,6 +5269,9 @@ let%expect_test _ =
     - test16 exited with value ().
     - test17 exited with value ().
     - test18 exited with value (). |}]
+
+let () = Sys_unix.chdir pwd
+let () = Sys_unix.chdir "../../test/contracts/interpreter_tests/"
 
 let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "switch_case_part_2.jsligo"; "--no-warn" ];
@@ -5211,6 +5333,9 @@ let%expect_test _ =
       - test53 exited with value ().
       - test54 exited with value (). |}]
 
+let () = Sys_unix.chdir pwd
+let () = Sys_unix.chdir "../../test/contracts/interpreter_tests/"
+
 let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "switch_case_part_3.jsligo"; "--no-warn" ];
   [%expect
@@ -5236,6 +5361,9 @@ let%expect_test _ =
       - test18 exited with value ().
       - test19 exited with value (). |}]
 
+let () = Sys_unix.chdir pwd
+let () = Sys_unix.chdir "../../test/contracts/interpreter_tests/"
+
 let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "switch_case_if_else.jsligo"; "--no-warn" ];
   [%expect
@@ -5247,12 +5375,18 @@ let%expect_test _ =
       - test_switch_if_return exited with value ().
       - test_switch_switch_break exited with value (). |}]
 
+let () = Sys_unix.chdir pwd
+let () = Sys_unix.chdir "../../test/contracts/interpreter_tests/"
+
 let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "let_rec.mligo" ];
   [%expect
     {|
       Everything at the top-level was executed.
       - test exited with value true. |}]
+
+let () = Sys_unix.chdir pwd
+let () = Sys_unix.chdir "../../test/contracts/interpreter_tests/"
 
 let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "test_negative_big_map_id.mligo" ];
@@ -5278,6 +5412,9 @@ let%expect_test _ =
 
     Everything at the top-level was executed.
     - test_main exited with value (). |}]
+
+let () = Sys_unix.chdir pwd
+let () = Sys_unix.chdir "../../test/contracts/interpreter_tests/"
 
 let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "test_FA12.mligo" ];
@@ -6174,6 +6311,9 @@ let%expect_test _ =
     - test_get_balance exited with value ().
     - test_get_total_supply exited with value (). |}]
 
+let () = Sys_unix.chdir pwd
+let () = Sys_unix.chdir "../../test/contracts/interpreter_tests/"
+
 let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "pack_unpack.mligo" ];
   [%expect
@@ -6218,6 +6358,9 @@ let%expect_test _ =
     - test_int exited with value ().
     - test_string_int exited with value ().
     - test_string_string exited with value (). |}]
+
+let () = Sys_unix.chdir pwd
+let () = Sys_unix.chdir "../../test/contracts/interpreter_tests/"
 
 let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "test_pack_unpack.mligo" ];
@@ -6278,6 +6421,9 @@ let%expect_test _ =
     Everything at the top-level was executed.
     - test exited with value (). |}]
 
+let () = Sys_unix.chdir pwd
+let () = Sys_unix.chdir "../../test/contracts/interpreter_tests/"
+
 let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "pairing_check.mligo" ];
   [%expect
@@ -6301,6 +6447,9 @@ let%expect_test _ =
 
     Everything at the top-level was executed.
     - test exited with value (). |}]
+
+let () = Sys_unix.chdir pwd
+let () = Sys_unix.chdir "../../test/contracts/interpreter_tests/"
 
 let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "gas_consum.mligo" ];
@@ -6363,6 +6512,9 @@ let%expect_test _ =
     Everything at the top-level was executed.
     - test exited with value (1305n , 1510n , 1510n). |}]
 
+let () = Sys_unix.chdir pwd
+let () = Sys_unix.chdir "../../test/contracts/interpreter_tests/"
+
 let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "test_implicit_account.jsligo" ];
   [%expect
@@ -6416,6 +6568,9 @@ let%expect_test _ =
     123mutez
     Everything at the top-level was executed.
     - test_addresses exited with value [tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx]. |}]
+
+let () = Sys_unix.chdir pwd
+let () = Sys_unix.chdir "../../test/contracts/interpreter_tests/"
 
 let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "test_accounts.mligo" ];
@@ -6551,6 +6706,9 @@ let%expect_test _ =
     - test_add exited with value 110000000mutez.
     - test_new exited with value 110000000mutez.
     - test_add exited with value 110000000mutez. |}]
+
+let () = Sys_unix.chdir pwd
+let () = Sys_unix.chdir "../../test/contracts/interpreter_tests/"
 
 let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "test_baker_account.mligo" ];
@@ -6766,6 +6924,9 @@ let%expect_test _ =
     Everything at the top-level was executed.
     - test exited with value (). |}]
 
+let () = Sys_unix.chdir pwd
+let () = Sys_unix.chdir "../../test/contracts/interpreter_tests/"
+
 let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "test_register_delegate.mligo" ];
   [%expect
@@ -6980,6 +7141,9 @@ let%expect_test _ =
     Everything at the top-level was executed.
     - test exited with value (). |}]
 
+let () = Sys_unix.chdir pwd
+let () = Sys_unix.chdir "../../test/contracts/interpreter_tests/"
+
 let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "test_global_constant.mligo" ];
   [%expect
@@ -7038,6 +7202,9 @@ let%expect_test _ =
 
     Everything at the top-level was executed.
     - test exited with value (). |}]
+
+let () = Sys_unix.chdir pwd
+let () = Sys_unix.chdir "../../test/contracts/interpreter_tests/"
 
 let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "test_global_constant_2.mligo" ];
@@ -7098,6 +7265,9 @@ let%expect_test _ =
     Everything at the top-level was executed.
     - test exited with value (). |}]
 
+let () = Sys_unix.chdir pwd
+let () = Sys_unix.chdir "../../test/contracts/interpreter_tests/"
+
 let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "recursion_uncurry.mligo" ];
   [%expect
@@ -7113,6 +7283,9 @@ let%expect_test _ =
 
     Everything at the top-level was executed.
     - test exited with value 112. |}]
+
+let () = Sys_unix.chdir pwd
+let () = Sys_unix.chdir "../../test/contracts/interpreter_tests/"
 
 let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "test_timestamp.mligo" ];
@@ -7156,6 +7329,9 @@ let%expect_test _ =
     Everything at the top-level was executed.
     - test_sub exited with value ().
     - test_get_time exited with value (). |}]
+
+let () = Sys_unix.chdir pwd
+let () = Sys_unix.chdir "../../test/contracts/interpreter_tests/"
 
 let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "test_decompile_failure.mligo" ];
@@ -7217,6 +7393,9 @@ let%expect_test _ =
     (4n , ("a" , 5))
     Everything at the top-level was executed.
     - test exited with value (). |}]
+
+let () = Sys_unix.chdir pwd
+let () = Sys_unix.chdir "../../test/contracts/interpreter_tests/"
 
 let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "test_context.mligo" ];
@@ -7646,6 +7825,9 @@ let%expect_test _ =
     - test_move exited with value ().
     - test_drop exited with value (). |}]
 
+let () = Sys_unix.chdir pwd
+let () = Sys_unix.chdir "../../test/contracts/interpreter_tests/"
+
 let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "test_error_balance.jsligo"; "--no-warn" ];
   [%expect
@@ -7654,6 +7836,9 @@ let%expect_test _ =
     3799997904750mutez
     Everything at the top-level was executed.
     - test exited with value {contract_balance = 3799997904750mutez ; contract_too_low = tz1hkMbkLPkvhxyqsQoBoLPqb1mruSzZx3zy ; spend_request = 100000000000000mutez}. |}]
+
+let () = Sys_unix.chdir pwd
+let () = Sys_unix.chdir "../../test/contracts/interpreter_tests/"
 
 let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "test_inline.mligo" ];
@@ -7695,6 +7880,9 @@ let%expect_test _ =
              DROP ;
              NIL operation ;
              PAIR } } ; size = 226}. |}]
+
+let () = Sys_unix.chdir pwd
+let () = Sys_unix.chdir "../../test/contracts/interpreter_tests/"
 
 let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "test_read_contract.mligo" ];
@@ -7805,12 +7993,18 @@ let%expect_test _ =
     - test_foo exited with value ().
     - test_bar exited with value (). |}]
 
+let () = Sys_unix.chdir pwd
+let () = Sys_unix.chdir "../../test/contracts/interpreter_tests/"
+
 let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "cli_arg.mligo"; "--arg"; "[ 1 ; 2 ; 3]" ];
   [%expect
     {|
     Everything at the top-level was executed.
     - test_cli_arg exited with value [1 ; 2 ; 3]. |}]
+
+let () = Sys_unix.chdir pwd
+let () = Sys_unix.chdir "../../test/contracts/interpreter_tests/"
 
 let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "reset_time.mligo" ];
@@ -7827,6 +8021,9 @@ let%expect_test _ =
 
   Everything at the top-level was executed.
   - test_x exited with value (timestamp(1970-01-01T00:00:00Z) , timestamp(2012-02-02T10:10:10Z)). |}]
+
+let () = Sys_unix.chdir pwd
+let () = Sys_unix.chdir "../../test/contracts/interpreter_tests/"
 
 let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "test_get_account.mligo" ];
@@ -7873,6 +8070,9 @@ let%expect_test _ =
     Everything at the top-level was executed.
     - test exited with value (). |}]
 
+let () = Sys_unix.chdir pwd
+let () = Sys_unix.chdir "../../test/contracts/interpreter_tests/"
+
 let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "test_sign.mligo" ];
   [%expect
@@ -7905,6 +8105,9 @@ let%expect_test _ =
 
     Everything at the top-level was executed.
     - test exited with value (). |}]
+
+let () = Sys_unix.chdir pwd
+let () = Sys_unix.chdir "../../test/contracts/interpreter_tests/"
 
 let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "test_create.mligo" ];
@@ -7965,6 +8168,9 @@ let%expect_test _ =
     42
     Everything at the top-level was executed.
     - test exited with value (). |}]
+
+let () = Sys_unix.chdir pwd
+let () = Sys_unix.chdir "../../test/contracts/interpreter_tests/"
 
 let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "test_create2.mligo" ];
@@ -8034,6 +8240,9 @@ let%expect_test _ =
     Everything at the top-level was executed.
     - test exited with value (). |}]
 *)
+
+let () = Sys_unix.chdir pwd
+let () = Sys_unix.chdir "../../test/contracts/interpreter_tests/"
 
 let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "test_print.mligo" ];
@@ -8124,6 +8333,9 @@ let%expect_test _ =
     Everything at the top-level was executed.
     - test exited with value "(true , 42n)". |}]
 
+let () = Sys_unix.chdir pwd
+let () = Sys_unix.chdir "../../test/contracts/interpreter_tests/"
+
 let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "test_eprint.mligo" ];
   [%expect
@@ -8148,12 +8360,18 @@ let%expect_test _ =
     Everything at the top-level was executed.
     - test exited with value (). |}]
 
+let () = Sys_unix.chdir pwd
+let () = Sys_unix.chdir "../../test/contracts/interpreter_tests/"
+
 let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "test_random.mligo" ];
   [%expect
     {|
     Everything at the top-level was executed.
     - test exited with value (). |}]
+
+let () = Sys_unix.chdir pwd
+let () = Sys_unix.chdir "../../test/contracts/interpreter_tests/"
 
 let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "test_untranspile_bls.mligo" ];
@@ -8296,6 +8514,9 @@ let%expect_test _ =
     - test_g1 exited with value ().
     - test_g2 exited with value (). |}]
 
+let () = Sys_unix.chdir pwd
+let () = Sys_unix.chdir "../../test/contracts/interpreter_tests/"
+
 let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "get_contract.mligo" ];
   [%expect
@@ -8339,6 +8560,9 @@ let%expect_test _ =
     Everything at the top-level was executed.
     - test exited with value (). |}]
 
+let () = Sys_unix.chdir pwd
+let () = Sys_unix.chdir "../../test/contracts/interpreter_tests/"
+
 let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "test_key.mligo" ];
   [%expect
@@ -8381,6 +8605,9 @@ let%expect_test _ =
     edpktom5rsehpEY6Kp2NShwsnpaaEjWxKFMJ3Rjp99VMJuHS93wxD6
     Everything at the top-level was executed.
     - test exited with value Success (1719n). |}]
+
+let () = Sys_unix.chdir pwd
+let () = Sys_unix.chdir "../../test/contracts/interpreter_tests/"
 
 let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "test_tickets_and_bigmaps.mligo" ];
@@ -8470,12 +8697,18 @@ let%expect_test _ =
     Everything at the top-level was executed.
     - test_one exited with value (). |}]
 
+let () = Sys_unix.chdir pwd
+let () = Sys_unix.chdir "../../test/contracts/interpreter_tests/"
+
 let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "test_chain_id.mligo" ];
   [%expect
     {|
     Everything at the top-level was executed.
     - test exited with value 0x050a0000000400000000. |}]
+
+let () = Sys_unix.chdir pwd
+let () = Sys_unix.chdir "../../test/contracts/interpreter_tests/"
 
 let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "test_print_values.mligo" ];
@@ -8499,6 +8732,9 @@ let%expect_test _ =
     In a future version, `Test` will be replaced by `Test.Next`, and using `IO.println` from `Test.Next` is encouraged for a smoother migration.
 
     aloh |}]
+
+let () = Sys_unix.chdir pwd
+let () = Sys_unix.chdir "../../test/contracts/interpreter_tests/"
 
 let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "test_to_json.mligo" ];
@@ -8586,6 +8822,9 @@ let%expect_test _ =
     - test_reproducing exited with value "OK". |test}]
 *)
 
+let () = Sys_unix.chdir pwd
+let () = Sys_unix.chdir "../../test/contracts/interpreter_tests/"
+
 let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "tuple_long.mligo" ];
   [%expect
@@ -8600,6 +8839,9 @@ let%expect_test _ =
 
     Everything at the top-level was executed.
     - test exited with value (). |test}]
+
+let () = Sys_unix.chdir pwd
+let () = Sys_unix.chdir "../../test/contracts/interpreter_tests/"
 
 let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "test_compare_setmap.mligo" ];
@@ -8721,6 +8963,9 @@ let%expect_test _ =
     - test_big_map exited with value { Elt "tz1KeYsjjSCLEELMuiq1oXzVZmuJrZ15W4mv" 900 ;
       Elt "KT1WoTZUkky48v3QqZWzkeJCYfhWhNaVFYuC" 100 }. |test}]
 
+let () = Sys_unix.chdir pwd
+let () = Sys_unix.chdir "../../test/contracts/interpreter_tests/"
+
 let%expect_test _ =
   run_ligo_good
     [ "run"
@@ -8735,6 +8980,9 @@ let%expect_test _ =
     Everything at the top-level was executed.
     - eval exited with value [1n -> {num = 1 ; num_nat = 1n ; str = "q"}]. |test}]
 
+let () = Sys_unix.chdir pwd
+let () = Sys_unix.chdir "../../test/contracts/interpreter_tests/"
+
 let%expect_test _ =
   run_ligo_good
     [ "run"; "test"; test "display_format_json.mligo"; "--display-format"; "json" ];
@@ -8744,6 +8992,9 @@ let%expect_test _ =
       [ "test_x", [ "constant", [ "int", "65" ] ] ],
       [ "test_y", [ "constant", [ "string", "hello" ] ] ]
     ] |xxx}]
+
+let () = Sys_unix.chdir pwd
+let () = Sys_unix.chdir "../../test/contracts/interpreter_tests/"
 
 let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "record_field_assign.jsligo" ];
@@ -9002,6 +9253,9 @@ let%expect_test _ =
       - test_nested_record_assign_array_notation_level2 exited with value ().
       - test_nested_record_assign_tuple_assign_array_notation_level2 exited with value (). |}]
 
+let () = Sys_unix.chdir pwd
+let () = Sys_unix.chdir "../../test/contracts/interpreter_tests/"
+
 let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "test_originate_module.mligo" ];
   [%expect
@@ -9131,6 +9385,9 @@ let%expect_test _ =
     With storage: 0
     Storage after call: 42 |}]
 
+let () = Sys_unix.chdir pwd
+let () = Sys_unix.chdir "../../test/contracts/interpreter_tests/"
+
 let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "test_originate_module.jsligo" ];
   [%expect
@@ -9183,6 +9440,9 @@ let%expect_test _ =
     Everything at the top-level was executed.
     - test_increment exited with value (). |test}]
 
+let () = Sys_unix.chdir pwd
+let () = Sys_unix.chdir "../../test/contracts/interpreter_tests/"
+
 let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "test_originate_single_view.mligo" ];
   [%expect
@@ -9212,6 +9472,9 @@ let%expect_test _ =
     :
     Warning: deprecated value.
     In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.transfer_exn` from `Test.Next` is encouraged for a smoother migration. |}]
+
+let () = Sys_unix.chdir pwd
+let () = Sys_unix.chdir "../../test/contracts/interpreter_tests/"
 
 let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "contract_with_ticket_storage.mligo" ];
@@ -9323,6 +9586,9 @@ let%expect_test _ =
 
     Everything at the top-level was executed.
     - test_transfer_to_contract exited with value (). |}]
+
+let () = Sys_unix.chdir pwd
+let () = Sys_unix.chdir "../../test/contracts/interpreter_tests/"
 
 let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "test_prefix_posfix_ops.jsligo" ];
@@ -9796,6 +10062,9 @@ let%expect_test _ =
     - test11_ exited with value ().
     - test12_ exited with value (). |}]
 
+let () = Sys_unix.chdir pwd
+let () = Sys_unix.chdir "../../test/contracts/interpreter_tests/"
+
 let%expect_test "for loops" =
   run_ligo_good [ "run"; "test"; test "/for_loop/single_loop.jsligo" ];
   [%expect
@@ -10089,6 +10358,9 @@ let%expect_test "for loops" =
     Everything at the top-level was executed.
     - test exited with value Some ((2 , "goodbye")). |}]
 
+let () = Sys_unix.chdir pwd
+let () = Sys_unix.chdir "../../test/contracts/interpreter_tests/"
+
 let%expect_test "aggregation regression" =
   run_ligo_good [ "run"; "test"; test "agg_bar.mligo" ];
   [%expect
@@ -10106,10 +10378,11 @@ let%expect_test "aggregation regression" =
     Everything at the top-level was executed. |}]
 
 (* do not remove that :) *)
-let () = Caml.Sys.chdir pwd
+
+let () = Sys_unix.chdir pwd
 
 let () =
-  Caml.Sys.chdir
+  Sys_unix.chdir
     "../../test/contracts/interpreter_tests/originate_from_relative_path/test/a/b/"
 
 
@@ -10217,8 +10490,8 @@ let%expect_test _ =
     - test_originate_from_file_relative_path exited with value KT1MoPRoithHNa7i6LYHqeQfZB4oyWThinnS.
     - test_originate_from_file_relative_path_w_r_t_imported_file exited with value true. |}]
 
-let () = Caml.Sys.chdir pwd
-let () = Caml.Sys.chdir "../../test/contracts/interpreter_tests/"
+let () = Sys_unix.chdir pwd
+let () = Sys_unix.chdir "../../test/contracts/interpreter_tests/"
 
 let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "test_record_update.jsligo" ];
@@ -10274,10 +10547,10 @@ let%expect_test _ =
 
     Everything at the top-level was executed. |}]
 
-let () = Caml.Sys.chdir pwd
+let () = Sys_unix.chdir pwd
 
 let () =
-  Caml.Sys.chdir "../../test/contracts/interpreter_tests/originate_from_relative_path/"
+  Sys_unix.chdir "../../test/contracts/interpreter_tests/originate_from_relative_path/"
 
 
 let%expect_test _ =
@@ -10384,7 +10657,7 @@ let%expect_test _ =
     - test_originate_from_file_relative_path exited with value KT1MoPRoithHNa7i6LYHqeQfZB4oyWThinnS.
     - test_originate_from_file_relative_path_w_r_t_imported_file exited with value true. |}]
 
-let () = Caml.Sys.chdir pwd
+let () = Sys_unix.chdir pwd
 let bad_test n = bad_test ("/interpreter_tests/" ^ n)
 
 let%expect_test _ =
@@ -11065,8 +11338,8 @@ let%expect_test _ =
     Trace:
     File "../../test/contracts/negative//interpreter_tests/test_register_delegate_stake.mligo", line 12, characters 11-36 |}]
 
-let pwd = Caml.Sys.getcwd ()
-let () = Caml.Sys.chdir "../../test/contracts/negative/interpreter_tests/"
+let pwd = Sys_unix.getcwd ()
+let () = Sys_unix.chdir "../../test/contracts/negative/interpreter_tests/"
 
 (* using typed_address in Bytes.pack *)
 let%expect_test _ =
@@ -11135,7 +11408,7 @@ let%expect_test _ =
   Cannot decompile value KT1MoPRoithHNa7i6LYHqeQfZB4oyWThinnS of type typed_address (unit ,
   unit) |}]
 
-let () = Caml.Sys.chdir pwd
+let () = Sys_unix.chdir pwd
 
 let%expect_test _ =
   run_ligo_bad [ "run"; "test"; bad_test "test_michelson_non_func.mligo" ];

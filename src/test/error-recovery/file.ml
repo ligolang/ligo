@@ -36,7 +36,7 @@ let to_string (file : file) request origin =
 
 
 let files_in_dir () : file list =
-  Caml.Sys.readdir "."
+  Sys_unix.readdir "."
   |> Array.to_list
   |> List.filter ~f:(fun x ->
          match Filename.split_extension x with

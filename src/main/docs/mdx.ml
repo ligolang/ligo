@@ -14,7 +14,7 @@ open Simple_utils.Function
 let link ~text ~target = !^"[" ^^ text ^^ !^"](" ^^ target ^^ !^")"
 
 let unlines : document list -> document =
-  separate (hardline ^^ hardline) <@ List.filter ~f:(Caml.( != ) empty)
+  separate (hardline ^^ hardline) <@ List.filter ~f:(fun d -> not @@ is_empty d)
 
 
 (**  file_name is either "toplevel.md" or "A.B.md" where "A.B" is some module / module type *)

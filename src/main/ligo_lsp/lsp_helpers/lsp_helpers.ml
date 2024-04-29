@@ -29,7 +29,7 @@ module CompletionItem = struct
   include Lsp.Types.CompletionItem
 
   let pp = Helpers_pretty.pp_with_yojson yojson_of_t
-  let eq = Caml.( = )
+  let eq : t -> t -> bool = Stdlib.( = )
   let testable : t Alcotest.testable = Alcotest.testable pp eq
 end
 
@@ -37,7 +37,7 @@ module CompletionList = struct
   include Lsp.Types.CompletionList
 
   let pp = Helpers_pretty.pp_with_yojson yojson_of_t
-  let eq = Caml.( = )
+  let eq = Stdlib.( = )
   let testable : t Alcotest.testable = Alcotest.testable pp eq
 end
 
@@ -45,7 +45,7 @@ module Diagnostic = struct
   include Lsp.Types.Diagnostic
 
   let pp = Helpers_pretty.pp_with_yojson yojson_of_t
-  let eq = Caml.( = )
+  let eq = Stdlib.( = )
 
   (* We don't want to fix the numbers of identifiers during tests, so we
     replace things like "Variable \"_#123\" not found."
@@ -73,7 +73,7 @@ module Locations = struct
   let pp = Helpers_pretty.pp_with_yojson yojson_of_t
   let eq x y = Yojson.Safe.equal (yojson_of_t x) (yojson_of_t y)
 
-  (* XXX Caml.(=) didn't work. What about derived? *)
+  (* XXX Stdlib.(=) didn't work. What about derived? *)
   let testable = Alcotest.testable pp eq
 end
 
@@ -81,7 +81,7 @@ module DocumentLink = struct
   include Lsp.Types.DocumentLink
 
   let pp = Helpers_pretty.pp_with_yojson yojson_of_t
-  let eq = Caml.( = )
+  let eq = Stdlib.( = )
   let testable = Alcotest.testable pp eq
 
   let create ~(target : Path.t) =
@@ -92,7 +92,7 @@ module DocumentSymbol = struct
   include Lsp.Types.DocumentSymbol
 
   let pp = Helpers_pretty.pp_with_yojson yojson_of_t
-  let eq = Caml.( = )
+  let eq = Stdlib.( = )
   let testable = Alcotest.testable pp eq
 end
 
@@ -100,7 +100,7 @@ module FoldingRange = struct
   include Lsp.Types.FoldingRange
 
   let pp = Helpers_pretty.pp_with_yojson yojson_of_t
-  let eq = Caml.( = )
+  let eq = Stdlib.( = )
   let testable = Alcotest.testable pp eq
 end
 
@@ -114,7 +114,7 @@ module MarkupContent = struct
   include Lsp.Types.MarkupContent
 
   let pp = Helpers_pretty.pp_with_yojson yojson_of_t
-  let eq = Caml.( = )
+  let eq = Stdlib.( = )
   let testable = Alcotest.testable pp eq
 end
 
@@ -122,7 +122,7 @@ module MarkedString = struct
   include Lsp.Types.MarkedString
 
   let pp = Helpers_pretty.pp_with_yojson yojson_of_t
-  let eq = Caml.( = )
+  let eq = Stdlib.( = )
   let testable = Alcotest.testable pp eq
 end
 
@@ -138,7 +138,7 @@ module DocumentHighlightKind = struct
     | Write -> "Write"
 
 
-  let eq = Caml.( = )
+  let eq = Stdlib.( = )
   let testable = Alcotest.testable pp eq
 end
 
@@ -146,7 +146,7 @@ module DocumentHighlight = struct
   include Lsp.Types.DocumentHighlight
 
   let pp = Helpers_pretty.pp_with_yojson yojson_of_t
-  let eq = Caml.( = )
+  let eq = Stdlib.( = )
   let testable = Alcotest.testable pp eq
 end
 
@@ -154,14 +154,14 @@ module CodeLens = struct
   include Lsp.Types.CodeLens
 
   let pp = Helpers_pretty.pp_with_yojson yojson_of_t
-  let eq = Caml.( = )
+  let eq = Stdlib.( = )
 end
 
 module InlayHint = struct
   include Lsp.Types.InlayHint
 
   let pp = Helpers_pretty.pp_with_yojson yojson_of_t
-  let eq = Caml.( = )
+  let eq = Stdlib.( = )
   let testable = Alcotest.testable pp eq
 end
 
@@ -185,7 +185,7 @@ module DiagnosticSeverity = struct
 
 
   let pp = Helpers_pretty.pp_with_yojson yojson_of_t
-  let eq = Caml.( = )
+  let eq = Stdlib.( = )
   let testable = Alcotest.testable pp eq
 end
 
@@ -218,7 +218,13 @@ module SemanticTokens = Lsp.Types.SemanticTokens
 module SemanticTokensLegend = Lsp.Types.SemanticTokensLegend
 module SemanticTokensOptions = Lsp.Types.SemanticTokensOptions
 module SemanticTokensRegistrationOptions = Lsp.Types.SemanticTokensRegistrationOptions
-module SemanticTokenModifiers = Lsp.Types.SemanticTokenModifiers
+
+module SemanticTokenModifiers = struct
+  include Lsp.Types.SemanticTokenModifiers
+
+  type t = [%import: Lsp.Types.SemanticTokenModifiers.t] [@@deriving eq, ord, sexp]
+end
+
 module SemanticTokenTypes = Lsp.Types.SemanticTokenTypes
 module ServerCapabilities = Lsp.Types.ServerCapabilities
 module ShowMessageParams = Lsp.Types.ShowMessageParams

@@ -57,7 +57,7 @@ let with_code_input
       |> Seq.fold_left (fun acc (_, (_, _, _, lst)) -> lst :: acc) []
       |> List.concat
       |> List.fold_left ~init:SMap.empty ~f:(fun acc (file_name, mangled_name) ->
-             match SMap.add ~key:mangled_name ~data:file_name acc with
+             match Map.add ~key:mangled_name ~data:file_name acc with
              | `Duplicate -> acc
              | `Ok added -> added)
     in
@@ -109,8 +109,8 @@ let make_defs_and_diagnostics
     (errors, warnings, defs_opt, potential_storage_vars, lambda_types)
     : defs_and_diagnostics
   =
-  let errors = List.dedup_and_sort ~compare:Caml.compare errors in
-  let warnings = List.dedup_and_sort ~compare:Caml.compare warnings in
+  let errors = List.dedup_and_sort ~compare:Stdlib.compare errors in
+  let warnings = List.dedup_and_sort ~compare:Stdlib.compare warnings in
   let definitions = Option.value ~default:{ definitions = [] } defs_opt in
   let potential_tzip16_storages = potential_storage_vars in
   { errors; warnings; definitions; potential_tzip16_storages; lambda_types }
@@ -249,13 +249,7 @@ let following_passes_diagnostics
     ({ pr_module; pr_sig = { sig_items; sig_sort } } : Ast_typed.program)
     : unit Lwt.t
   =
-  let options =
-    Compiler_options.make
-      ~raw_options
-      ~syntax
-      ~has_env_comments:false
-      ()
-  in
+  let options = Compiler_options.make ~raw_options ~syntax ~has_env_comments:false () in
   let prg : Ast_typed.program =
     { pr_module = stdlib_program.pr_module @ pr_module
     ; pr_sig = { sig_sort; sig_items = stdlib_program.pr_sig.sig_items @ sig_items }

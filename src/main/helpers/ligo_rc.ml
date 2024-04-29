@@ -1,4 +1,4 @@
-module SMap = Caml.Map.Make (String)
+module SMap = Core.Map.Make (String)
 
 type token = string
 
@@ -7,7 +7,7 @@ type t =
   ; path : string
   }
 
-let get_token ~registry_key lrc = SMap.find_opt registry_key lrc.entries
+let get_token ~registry_key lrc = Map.find lrc.entries registry_key
 
 let read ~ligorc_path =
   let entries =
@@ -24,24 +24,26 @@ let read ~ligorc_path =
           then (
             let uri = Str.matched_group 1 e in
             let token = Str.matched_group 2 e in
-            SMap.add uri token lrc)
+            Map.set lrc ~key:uri ~data:token)
           else lrc)
     in
     { entries; path = ligorc_path }
 
 
 let update_token ~registry_key ~token ligorc =
-  { ligorc with entries = SMap.update registry_key (fun _ -> Some token) ligorc.entries }
+  { ligorc with
+    entries = Map.change ligorc.entries registry_key ~f:(fun _ -> Some token)
+  }
 
 
 let write ligorc =
   let { path; entries } = ligorc in
   let entries =
-    SMap.fold
-      (fun registry_key token acc ->
-        Format.sprintf "%s//%s:_authToken=\"%s\"\n" acc registry_key token)
+    Map.fold
       entries
-      ""
+      ~f:(fun ~key:registry_key ~data:token acc ->
+        Format.sprintf "%s//%s:_authToken=\"%s\"\n" acc registry_key token)
+      ~init:""
   in
   Out_channel.write_all path ~data:entries
 

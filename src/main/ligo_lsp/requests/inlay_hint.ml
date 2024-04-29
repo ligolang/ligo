@@ -2,7 +2,7 @@ open Lsp_helpers
 open Handler
 open Cst_shared.Fold
 open Ligo_interface
-module Range_set = Caml.Set.Make (Range)
+module Range_set = Set.Make (Range)
 
 type syntax_node =
   (Cst_cameligo.Fold.some_node, Cst_jsligo.Fold.some_node) Dialect_cst.dialect
@@ -116,7 +116,7 @@ end = struct
   let function_definitions (selection_range : Range.t) : S.cst -> fun_def_value LMap.t =
     S.fold_cst
       LMap.empty
-      (fun acc (key, value) -> LMap.add key value acc)
+      (fun acc (key, data) -> Map.set ~key ~data acc)
       (select_in_range selection_range S.function_definitions)
 
 
@@ -132,7 +132,7 @@ end = struct
   let need_parenthesis_definitions (selection_range : Range.t) : S.cst -> Range_set.t =
     S.fold_cst
       Range_set.empty
-      (fun acc ranges -> Range_set.add_seq (Caml.List.to_seq ranges) acc)
+      (fun acc ranges -> Set.union (Range_set.of_list ranges) acc)
       (select_in_range selection_range S.need_parenthesis_definitions)
 
 
@@ -403,10 +403,9 @@ let provide_hints_for_lambda_types
     ~(lambda_types : Ast_typed.type_expression LMap.t)
     ~(fun_defs : fun_def_value LMap.t)
   =
-  LMap.fold
-    (fun loc typ acc ->
+  Map.fold lambda_types ~init:[] ~f:(fun ~key:loc ~data:typ acc ->
       Option.value ~default:acc
-      @@ Option.bind (LMap.find_opt loc fun_defs) ~f:(fun { position; _ } ->
+      @@ Option.bind (Map.find fun_defs loc) ~f:(fun { position; _ } ->
              let%map.Option typ =
                try
                  Trace.to_option ~fast_fail:false
@@ -415,8 +414,6 @@ let provide_hints_for_lambda_types
                | _exn -> None
              in
              { position = Shifted position; typ } :: acc))
-    lambda_types
-    []
 
 
 (** Provides an inlay hint for the given variable definition. *)
@@ -428,7 +425,7 @@ let process_variable_def
   =
   let open Option.Let_syntax in
   let process_variable (range : Loc.t) (typ : Ast_core.ty_expr) =
-    match LMap.find_opt range fun_defs with
+    match Map.find fun_defs range with
     | Some { position; num_of_binders } ->
       let rec strip_args (typ : Ast_core.ty_expr) = function
         | 0 -> Some typ
@@ -508,7 +505,7 @@ let compile_inlay_hints ~(syntax : Syntax_types.t) ~(need_par_defs : Range_set.t
         match position with
         | Shifted _ -> None, None
         | Original reg ->
-          if Range_set.mem reg need_par_defs
+          if Set.mem need_par_defs reg
           then
             InlayHint.(
               ( Some (create ~label:(`String "(") ~position:reg.start ())

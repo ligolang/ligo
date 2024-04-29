@@ -19,7 +19,9 @@
   ligo.formatter
   cst
   msgpck
-  pprint)
+  pprint
+  core_unix
+  core_unix.sys_unix)
  (preprocess
   (pps ppx_yojson_conv ppx_let)))
 

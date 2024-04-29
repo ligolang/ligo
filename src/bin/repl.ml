@@ -20,7 +20,9 @@ let get_declarations_core (core_prg : Ast_core.program) =
       try Module_var.to_name_exn module_variable with
       | _ -> ""
     in
-    not @@ Caml.Sys.file_exists module_variable
+    match Sys_unix.file_exists module_variable with
+    | `No -> true
+    | `Yes | `Unknown -> false
   in
   let func_declarations =
     List.map ~f:(fun a -> `Value a) @@ Ligo_compile.Of_core.list_declarations core_prg
@@ -371,6 +373,16 @@ let make_output n out =
   eval [ S output ]
 
 
+let is_LTerm_Edition = function
+  | LTerm_read_line.Edition -> true
+  | _ -> false
+
+
+let is_LTerm_read_line_Accept = function
+  | LTerm_read_line.Accept -> true
+  | _ -> false
+
+
 class read_phrase ~term ~history ~n =
   object (self)
     inherit LTerm_read_line.read_line ~history:(LTerm_history.contents history) ()
@@ -380,8 +392,8 @@ class read_phrase ~term ~history ~n =
     method! exec ?(keys = []) =
       function
       | action :: actions
-        when Caml.(React.S.value self#mode = LTerm_read_line.Edition)
-             && Caml.(action = LTerm_read_line.Accept) ->
+        when is_LTerm_Edition (React.S.value self#mode)
+             && is_LTerm_read_line_Accept action ->
         Zed_macro.add self#macro action;
         let input = Zed_rope.to_string (Zed_edit.text self#edit) in
         let input_utf8 = Zed_string.to_utf8 input in
@@ -452,4 +464,4 @@ let main
     Lwt_main.run (LTerm.fprintls term (LTerm_text.eval [ S welcome_msg ]));
     (try loop ~raw_options syntax display_format term history state 1 with
     | LTerm_read_line.Interrupt -> Ok ("", "")
-    | Caml.Sys.Break -> Ok ("", ""))
+    | Sys_unix.Break -> Ok ("", ""))

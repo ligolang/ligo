@@ -1,6 +1,6 @@
 ;; A UTF8-aware lexer library
 
-(ocamllex Core)
+(ocamllex LexCore)
 
 (library
  (name LexerLib)
@@ -11,7 +11,7 @@
   Options
   CLI
   LowAPI
-  Core
+  LexCore
   Unit
   Error
   Thread
@@ -19,7 +19,7 @@
   Markup
   Version)
  (modules_without_implementation Status Client)
- (private_modules Core Error Version)
+ (private_modules LexCore Error Version)
  (libraries
   ;; Vendor
   simple-utils
