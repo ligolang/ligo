@@ -1,0 +1,7 @@
+
+author: rinderkn
+description: "\\nPreprocessing directives are not allowed between declarations inside a structure.\\n\\n"
+merge_request: '3162'
+title: "Small improvement and a fix to the front-end"
+type: added
+            

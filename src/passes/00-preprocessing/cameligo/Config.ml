@@ -14,7 +14,7 @@ let block =
 let block    = Some block
 let line     = Some "//"
 let string   = Some "\""
-let file_ext = Some ".mligo"
+let file_ext = Some "mligo"
 
 let verbatim =
   object
