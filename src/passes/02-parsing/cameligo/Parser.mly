@@ -538,7 +538,7 @@ module_expr:
 | module_path(module_name) { M_Path (mk_mod_path $1 (fun x -> x#region)) }
 
 structure:
-  "struct" ioption(nseq(declaration)) "end" {
+  "struct" ioption(nseq(top_declaration)) "end" {
     let region = cover $1#region $3#region
     and declarations =
       match $2 with
