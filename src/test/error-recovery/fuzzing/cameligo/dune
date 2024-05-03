@@ -7,4 +7,4 @@
    (glob_files original/*.mligo)))
  (libraries error_recovery)
  (preprocess
-  (pps ppx_expect)))
+  (pps ppx_jane)))

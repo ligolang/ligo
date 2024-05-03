@@ -16,15 +16,12 @@
   uri)
  (preprocess
   (pps
+   ppx_jane
    ppx_deriving.eq
    ppx_deriving.iter
    ppx_deriving.map
    ppx_deriving.fold
-   ppx_compare
    ppx_deriving_yojson
-   ppx_hash
-   ppx_sexp_conv
-   lwt_ppx
-   ppx_let))
+   lwt_ppx))
  (flags
   (:standard -open Core)))

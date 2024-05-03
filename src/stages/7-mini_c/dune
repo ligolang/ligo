@@ -6,4 +6,4 @@
  (libraries simple-utils octez-libs.micheline ligo_prim ast_expanded)
  (inline_tests)
  (preprocess
-  (pps ppx_expect ppx_here)))
+  (pps ppx_jane)))

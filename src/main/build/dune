@@ -12,4 +12,4 @@
   ligo_prim
   BuildSystem)
  (preprocess
-  (pps ppx_let)))
+  (pps ppx_jane)))

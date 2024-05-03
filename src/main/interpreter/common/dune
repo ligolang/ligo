@@ -4,7 +4,7 @@
  (instrumentation
   (backend bisect_ppx))
  (preprocess
-  (pps ppx_here ppx_let lwt_ppx))
+  (pps ppx_jane lwt_ppx))
  (libraries
   core
   ast_aggregated

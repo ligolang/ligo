@@ -6,11 +6,8 @@
  (libraries simple-utils ligo_prim backend fmt)
  (preprocess
   (staged_pps
+   ppx_jane
    ppx_woo
    ppx_map
    ppx_import
-   ppx_let
-   ppx_deriving_yojson
-   ppx_sexp_conv
-   ppx_compare
-   ppx_hash)))
+   ppx_deriving_yojson)))

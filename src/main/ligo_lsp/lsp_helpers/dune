@@ -29,13 +29,10 @@
   (libraries ligo.api))
  (preprocess
   (staged_pps
+   ppx_jane
    ppx_import
-   ppx_let
-   ppx_sexp_conv
    ppx_deriving.eq
    ppx_deriving.ord
    ppx_deriving.show
-   ppx_hash
-   ppx_expect
    ppx_deriving_yojson
    lwt_ppx)))

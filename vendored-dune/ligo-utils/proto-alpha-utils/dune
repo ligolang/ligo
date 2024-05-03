@@ -9,4 +9,4 @@
   core
   ligo.tezos-utils)
  (preprocess
-  (pps ppx_jane ppx_let)))
+  (pps ppx_jane)))

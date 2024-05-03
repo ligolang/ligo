@@ -7,4 +7,4 @@
   (backend bisect_ppx))
  (libraries lsp_helpers simple-utils syntax crunch)
  (preprocess
-  (pps ppx_let)))
+  (pps ppx_jane)))

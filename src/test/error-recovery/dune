@@ -3,7 +3,7 @@
  (public_name ligo.lsp_test.error_recovery)
  (libraries ligo ligo.unix)
  (preprocess
-  (pps ppx_let)))
+  (pps ppx_jane)))
 
 (alias
  (name recovery-test)

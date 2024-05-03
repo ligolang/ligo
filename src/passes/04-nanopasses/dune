@@ -9,8 +9,7 @@
   (flags (-stop-on-error)))
  (preprocess
   (pps
+   ppx_jane
    ppx_deriving.map
    ppx_woo
-   ppx_sexp_conv
-   ppx_expect
    ppx_poly_constructor)))

@@ -5,5 +5,5 @@
   (backend bisect_ppx))
  (libraries simple-utils octez-libs.hacl ligo.proto-alpha-utils)
  (preprocess
-  (pps ppx_expect ppx_let))
+  (pps ppx_jane))
  (inline_tests))

@@ -23,7 +23,7 @@
   core_unix
   core_unix.sys_unix)
  (preprocess
-  (pps ppx_yojson_conv ppx_let)))
+  (pps ppx_yojson_conv ppx_jane)))
 
 (rule
  (targets changelog.ml)
