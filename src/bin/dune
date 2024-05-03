@@ -3,7 +3,7 @@
  (instrumentation
   (backend bisect_ppx))
  (preprocess
-  (pps ppx_deriving_yojson ppx_compare))
+  (pps ppx_deriving_yojson ppx_jane))
  (libraries
   core_unix
   core_unix.sys_unix

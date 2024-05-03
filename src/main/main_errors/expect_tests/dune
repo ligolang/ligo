@@ -3,4 +3,4 @@
  (libraries simple-utils main_errors cst ast_typed)
  (inline_tests)
  (preprocess
-  (pps ppx_expect)))
+  (pps ppx_jane)))

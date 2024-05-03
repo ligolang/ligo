@@ -17,4 +17,4 @@
   lru
   ligo_compile)
  (preprocess
-  (pps ppx_jane ppx_let lwt_ppx)))
+  (pps ppx_jane lwt_ppx)))

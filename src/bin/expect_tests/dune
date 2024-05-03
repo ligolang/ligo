@@ -22,7 +22,7 @@
    (source_tree ../../test/projects)
    (source_tree ../../test/lexer)))
  (preprocess
-  (pps ppx_expect)))
+  (pps ppx_jane)))
 
 (library
  (name unpublish_mock_server)
