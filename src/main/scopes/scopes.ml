@@ -105,7 +105,6 @@ let run
     defs
     |> Module_aliases_pass.patch m_alias
     |> (if with_types then Types_pass.patch tenv else Fn.id)
-    |> References.patch (References.declarations stdlib_and_prg tenv.label_cases)
     |> Inline_mangled_modules_pass.patch mangled_uids
     |> wrap_definitions
   in

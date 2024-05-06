@@ -2,6 +2,40 @@
 open Simple_utils
 open Ligo_prim
 
+module Refs_tbl : sig
+  module type Var = sig
+    type t
+
+    val get_location : t -> Location.t
+  end
+
+  module Label_var : Var with type t = Label.t
+
+  type 'a tagged_tbl =
+    | Tagged_tbl : (Location.t, Location.Location_set.t) Hashtbl.t -> 'a tagged_tbl
+
+  val pp_tbl : 'a tagged_tbl Fmt.t
+
+  type t =
+    { value_tbl : Value_var.t tagged_tbl
+    ; type_tbl : Type_var.t tagged_tbl
+    ; module_tbl : Module_var.t tagged_tbl
+    ; label_tbl : Label_var.t tagged_tbl
+    }
+
+  val create : unit -> t
+  val clear : t -> unit
+  val add_ref_value : t -> key:Value_var.t -> data:Value_var.t -> unit
+  val add_ref_type : t -> key:Type_var.t -> data:Type_var.t -> unit
+  val add_ref_module : t -> key:Module_var.t -> data:Module_var.t -> unit
+  val add_ref_label : t -> key:Label_var.t -> data:Label_var.t -> unit
+  val get_value_refs : t -> key:Location.t -> Location.Location_set.t option
+  val get_type_refs : t -> key:Location.t -> Location.Location_set.t option
+  val get_module_refs : t -> key:Location.t -> Location.Location_set.t option
+  val get_label_refs : t -> key:Location.t -> Location.Location_set.t option
+  val pp : t Fmt.t
+end
+
 module Attrs : sig
   module Value : sig
     type t =
@@ -74,9 +108,42 @@ module Signature : sig
        option
 
   val get_contract_sort : sort -> (Type.t * Type.t) option
-  val get_value : t -> Value_var.t -> (Type.t * Attrs.Value.t) option
-  val get_type : t -> Type_var.t -> Type.t option
-  val get_module : t -> Module_var.t -> t option
+
+  val get_value
+    :  ?should_add_reference:bool
+    -> refs_tbl:Refs_tbl.t
+    -> t
+    -> Value_var.t
+    -> (Type.t * Attrs.Value.t) option
+
+  val get_value_with_vvar
+    :  ?should_add_reference:bool
+    -> refs_tbl:Refs_tbl.t
+    -> t
+    -> Value_var.t
+    -> (Value_var.t * Type.t * Attrs.Value.t) option
+
+  val get_type
+    :  ?should_add_reference:bool
+    -> refs_tbl:Refs_tbl.t
+    -> t
+    -> Type_var.t
+    -> Type.t option
+
+  val get_type_with_tvar
+    :  ?should_add_reference:bool
+    -> refs_tbl:Refs_tbl.t
+    -> t
+    -> Type_var.t
+    -> (Type_var.t * Type.t) option
+
+  val get_module
+    :  ?should_add_reference:bool
+    -> refs_tbl:Refs_tbl.t
+    -> t
+    -> Module_var.t
+    -> t option
+
   val pp : Format.formatter -> t -> unit
   val pp_item : Format.formatter -> item Location.wrap -> unit
 end
@@ -131,27 +198,45 @@ val add_module : t -> Module_var.t -> Signature.t -> t
 val add_module_type : t -> Module_var.t -> Signature.t -> t
 
 val get_value
-  :  t
+  :  refs_tbl:Refs_tbl.t
+  -> t
   -> Value_var.t
   -> (mutable_flag * Type.t * Attrs.Value.t, [> `Mut_var_captured | `Not_found ]) result
 
-val get_imm : t -> Value_var.t -> (Type.t * Attrs.Value.t) option
-val get_mut : t -> Value_var.t -> (Type.t, [> `Mut_var_captured | `Not_found ]) result
-val get_type : t -> Type_var.t -> Type.t option
-val get_module : t -> Module_var.t -> Signature.t option
+val get_imm : refs_tbl:Refs_tbl.t -> t -> Value_var.t -> (Type.t * Attrs.Value.t) option
+
+val get_mut
+  :  refs_tbl:Refs_tbl.t
+  -> t
+  -> Value_var.t
+  -> (Type.t, [> `Mut_var_captured | `Not_found ]) result
+
+val get_type : refs_tbl:Refs_tbl.t -> t -> Type_var.t -> Type.t option
+val get_module : refs_tbl:Refs_tbl.t -> t -> Module_var.t -> Signature.t option
 val get_type_vars : t -> Type_var.Set.t
 val get_texists_vars : t -> Type_var.Set.t
 val get_lexists_vars : t -> Layout_var.Set.t
-val get_type_var : t -> Type_var.t -> Kind.t option
+val get_type_var : refs_tbl:Refs_tbl.t -> t -> Type_var.t -> Kind.t option
 val get_texists_var : t -> Type_var.t -> Kind.t option
 val get_texists_eq : t -> Type_var.t -> Type.t option
 val get_lexists_var : t -> Layout_var.t -> fields option
 val get_lexists_eq : t -> Layout_var.t -> (fields * Type.layout) option
-val get_module_of_path : t -> Module_var.t List.Ne.t -> Signature.t option
-val get_module_type_of_path : t -> Module_var.t List.Ne.t -> Signature.t option
+
+val get_module_of_path
+  :  refs_tbl:Refs_tbl.t
+  -> t
+  -> Module_var.t List.Ne.t
+  -> Signature.t option
+
+val get_module_type_of_path
+  :  refs_tbl:Refs_tbl.t
+  -> t
+  -> Module_var.t List.Ne.t
+  -> Signature.t option
 
 val get_type_or_type_var
-  :  t
+  :  refs_tbl:Refs_tbl.t
+  -> t
   -> Type_var.t
   -> [ `Type of Type.t | `Type_var of Kind.t ] option
 
@@ -179,11 +264,16 @@ type _ exit =
 val drop_until : 'a -> on_exit:'a exit -> pos:pos -> 'a * Substitution.t
 val unlock : 'a -> on_exit:'a exit -> lock:mut_lock -> 'a * Substitution.t
 val get_record : t -> Type.t Label.Map.t -> (Type_var.t option * Type.row) option
-val get_sum : t -> Label.t -> (Type_var.t * Type_var.t list * Type.t * Type.t) list
+
+val get_sum
+  :  refs_tbl:Refs_tbl.t
+  -> t
+  -> Label.t
+  -> (Type_var.t * Type_var.t list * Type.t * Type.t) list
 
 module Well_formed : sig
-  val context : t -> bool
-  val type_ : ctx:t -> Type.t -> Kind.t option
+  val context : refs_tbl:Refs_tbl.t -> t -> bool
+  val type_ : ctx:t -> refs_tbl:Refs_tbl.t -> Type.t -> Kind.t option
   val layout : ctx:t -> Type.layout -> bool
 end
 

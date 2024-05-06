@@ -1,4 +1,4 @@
-#import "A.mligo" "C"
+[@public] #import "A.mligo" "C"
 
 module A = struct
   let f = 42

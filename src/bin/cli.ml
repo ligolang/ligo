@@ -10,7 +10,7 @@ module Deprecated_param : sig
       and will raise a warning when passed a non-empty value. *)
   type t = unit Command.Param.t
 
-  (** Creates a deprecated flag, printing a warning when [Some _] is parsed 
+  (** Creates a deprecated flag, printing a warning when [Some _] is parsed
       from the flag. *)
   val flag
     :  ?full_flag_required:unit

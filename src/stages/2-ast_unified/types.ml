@@ -381,7 +381,7 @@ and ('self, 'ty_expr, 'pattern, 'block, 'mod_expr) expression_content_ =
   | E_ctor_app of ('self * 'self Simple_utils.List.Ne.t option)
   (* FIXME: @christian
      https://gitlab.com/ligolang/ligo/-/issues/2177
-     Following the removal of PascaLIGO, it appears that this constructor might 
+     Following the removal of PascaLIGO, it appears that this constructor might
      not be necessary.
    *)
   | E_applied_constructor of 'self Constructor.t (* MyCtor (42, 43, 44), PascaLigo only *)

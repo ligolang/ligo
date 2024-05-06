@@ -104,6 +104,177 @@ module Attrs = struct
   end
 end
 
+module Refs_tbl = struct
+  module type Var = sig
+    type t
+
+    val get_location : t -> Location.t
+  end
+
+  module Label_var = struct
+    type t = Label.t
+
+    let get_location (Label.Label (_, loc)) = loc
+  end
+
+  module LSet = Location.Location_set
+
+  type 'a tagged_tbl = Tagged_tbl : (Location.t, LSet.t) Hashtbl.t -> 'a tagged_tbl
+
+  let create_tbl () : 'a tagged_tbl =
+    let module LKey = struct
+      type t = Location.t [@@deriving compare, sexp]
+
+      let hash : t -> int = function
+        | File reg -> reg#start#point_num
+        | Virtual str -> String.hash str
+    end
+    in
+    Tagged_tbl (Hashtbl.create (module LKey))
+
+
+  let pp_tbl ppf (Tagged_tbl tbl) =
+    let pp = Location.pp in
+    Fmt.Dump.(list (pair pp (list pp)))
+      ppf
+      (List.map ~f:(Tuple2.map_snd ~f:Core.Set.to_list) @@ Hashtbl.to_alist tbl)
+
+
+  let add_ref_def
+      (type v)
+      (module V : Var with type t = v)
+      (Tagged_tbl refs_tbl : v tagged_tbl)
+      (key : v)
+      (data : v)
+    =
+    let key = V.get_location key in
+    let data = V.get_location data in
+    Hashtbl.update
+      refs_tbl
+      key
+      ~f:(Option.value_map ~default:(LSet.singleton data) ~f:(Fn.flip Set.add data))
+
+
+  let get_def_refs (type v) (Tagged_tbl refs_tbl : v tagged_tbl) (key : Location.t)
+      : LSet.t option
+    =
+    Hashtbl.find refs_tbl key
+
+
+  type t =
+    { value_tbl : Value_var.t tagged_tbl
+    ; type_tbl : Type_var.t tagged_tbl
+    ; module_tbl : Module_var.t tagged_tbl
+    ; label_tbl : Label_var.t tagged_tbl
+    }
+
+  let create () =
+    { value_tbl = create_tbl ()
+    ; type_tbl = create_tbl ()
+    ; module_tbl = create_tbl ()
+    ; label_tbl = create_tbl ()
+    }
+
+
+  let clear : t -> unit =
+   fun { value_tbl = Tagged_tbl value_tbl
+       ; type_tbl = Tagged_tbl type_tbl
+       ; module_tbl = Tagged_tbl module_tbl
+       ; label_tbl = Tagged_tbl label_tbl
+       } ->
+    Hashtbl.clear value_tbl;
+    Hashtbl.clear type_tbl;
+    Hashtbl.clear module_tbl;
+    Hashtbl.clear label_tbl
+
+
+  let add_ref_value refs_tbl ~key ~data =
+    add_ref_def (module Value_var) refs_tbl.value_tbl key data
+
+
+  let add_ref_type refs_tbl ~key ~data =
+    add_ref_def (module Type_var) refs_tbl.type_tbl key data
+
+
+  let add_ref_module refs_tbl ~key ~data =
+    add_ref_def (module Module_var) refs_tbl.module_tbl key data
+
+
+  let add_ref_label refs_tbl ~key ~data =
+    add_ref_def (module Label_var) refs_tbl.label_tbl key data
+
+
+  let get_value_refs refs_tbl ~key = get_def_refs refs_tbl.value_tbl key
+  let get_type_refs refs_tbl ~key = get_def_refs refs_tbl.type_tbl key
+  let get_module_refs refs_tbl ~key = get_def_refs refs_tbl.module_tbl key
+  let get_label_refs refs_tbl ~key = get_def_refs refs_tbl.label_tbl key
+
+  let pp ppf { value_tbl; type_tbl; module_tbl; label_tbl } =
+    Format.fprintf
+      ppf
+      "{ value_tbl = %a\n; type_tbl = %a\n; module_tbl = %a\n; label_tbl = %a\n}"
+      pp_tbl
+      value_tbl
+      pp_tbl
+      type_tbl
+      pp_tbl
+      module_tbl
+      pp_tbl
+      label_tbl
+end
+
+let memoize2_with_reference_opt
+    (type a b c)
+    ?(size : int option)
+    ?(should_add_reference : bool = true)
+    ~(refs_tbl : Refs_tbl.t)
+    (key1 : a hashable)
+    (key2 : b hashable)
+    (f : a -> b -> (b * c) option)
+    (add_reference : Refs_tbl.t -> key:b -> data:b -> unit)
+    (val1 : a)
+    (val2 : b)
+    : c option
+  =
+  let%map.Option key, result = memoize2 ?size key1 key2 f val1 val2 in
+  if should_add_reference then add_reference refs_tbl ~key ~data:val2;
+  result
+
+
+let memoize2_with_reference_result
+    (type a b c e)
+    ?(size : int option)
+    ~(refs_tbl : Refs_tbl.t)
+    (key1 : a hashable)
+    (key2 : b hashable)
+    (f : a -> b -> (b * c, e) result)
+    (add_reference : Refs_tbl.t -> key:b -> data:b -> unit)
+    (val1 : a)
+    (val2 : b)
+    : (c, e) result
+  =
+  let%map.Result key, result = memoize2 ?size key1 key2 f val1 val2 in
+  add_reference refs_tbl ~key ~data:val2;
+  result
+
+
+let memoize2_with_reference_list
+    (type a b c)
+    ?(size : int option)
+    ~(refs_tbl : Refs_tbl.t)
+    (key1 : a hashable)
+    (key2 : b hashable)
+    (f : a -> b -> b list * c)
+    (add_reference : Refs_tbl.t -> key:b -> data:b -> unit)
+    (val1 : a)
+    (val2 : b)
+    : c
+  =
+  let keys, result = memoize2 ?size key1 key2 f val1 val2 in
+  List.iter keys ~f:(fun key -> add_reference refs_tbl ~key ~data:val2);
+  result
+
+
 module Signature = struct
   module T = struct
     type t =
@@ -159,48 +330,82 @@ module Signature = struct
     | Ss_module -> None
 
 
-  let get_value =
-    memoize2
+  let get_value ?(should_add_reference : bool = true) =
+    memoize2_with_reference_opt
       hashable
+      ~should_add_reference
       (module Value_var)
       (fun t var ->
         (find_map t.items ~f:(function
             | { wrap_content = S_value (var', type_, attr); location = _ }
-              when Value_var.equal var var' -> Some (type_, attr)
+              when Value_var.equal var var' -> Some (var', (type_, attr))
             | _ -> None) [@landmark "get_value"]))
+      Refs_tbl.add_ref_value
 
 
-  let get_type =
-    memoize2
+  let get_value_with_vvar ?(should_add_reference : bool = true) =
+    memoize2_with_reference_opt
       hashable
+      ~should_add_reference
+      (module Value_var)
+      (fun t var ->
+        (find_map t.items ~f:(function
+            | { wrap_content = S_value (var', type_, attr); location = _ }
+              when Value_var.equal var var' -> Some (var', (var', type_, attr))
+            | _ -> None) [@landmark "get_value_with_vvar"]))
+      Refs_tbl.add_ref_value
+
+
+  let get_type ?(should_add_reference : bool = true) =
+    memoize2_with_reference_opt
+      hashable
+      ~should_add_reference
       (module Type_var)
       (fun t tvar ->
         (find_map t.items ~f:(function
             | { wrap_content = S_type (tvar', type_, _); location = _ }
-              when Type_var.equal tvar tvar' -> Some type_
+              when Type_var.equal tvar tvar' -> Some (tvar', type_)
             | _ -> None) [@landmark "get_type"]))
+      Refs_tbl.add_ref_type
 
 
-  let get_module =
-    memoize2
+  let get_type_with_tvar ?(should_add_reference : bool = true) =
+    memoize2_with_reference_opt
       hashable
+      ~should_add_reference
+      (module Type_var)
+      (fun t tvar ->
+        (find_map t.items ~f:(function
+            | { wrap_content = S_type (tvar', type_, _); location = _ }
+              when Type_var.equal tvar tvar' -> Some (tvar', (tvar', type_))
+            | _ -> None) [@landmark "get_type_with_tvar"]))
+      Refs_tbl.add_ref_type
+
+
+  let get_module ?(should_add_reference : bool = true) =
+    memoize2_with_reference_opt
+      hashable
+      ~should_add_reference
       (module Module_var)
       (fun t mvar ->
         (find_map t.items ~f:(function
             | { wrap_content = S_module (mvar', sig_, _); location = _ }
-              when Module_var.equal mvar mvar' -> Some sig_
+              when Module_var.equal mvar mvar' -> Some (mvar', sig_)
             | _ -> None) [@landmark "get_module"]))
+      Refs_tbl.add_ref_module
 
 
-  let get_module_type =
-    memoize2
+  let get_module_type ?(should_add_reference : bool = true) =
+    memoize2_with_reference_opt
       hashable
+      ~should_add_reference
       (module Module_var)
       (fun t mvar ->
         (find_map t.items ~f:(function
             | { wrap_content = S_module_type (mvar', sig_, _); location = _ }
-              when Module_var.equal mvar mvar' -> Some sig_
+              when Module_var.equal mvar mvar' -> Some (mvar', sig_)
             | _ -> None) [@landmark "get_module"]))
+      Refs_tbl.add_ref_module
 
 
   let to_type_mapi =
@@ -374,7 +579,7 @@ let add t item = item :: t
 let join t1 t2 = t2 @ t1
 let of_list items = List.rev items
 
-(* Inifix notations for [add] and [join] *)
+(* Infix notations for [add] and [join] *)
 let ( |:: ) = add
 let ( |@ ) = join
 let add_value t var mut_flag type_ attr = t |:: C_value (var, mut_flag, type_, attr)
@@ -409,7 +614,7 @@ let add_signature_items t (sig_items : Signature.item Location.wrap list) =
 
 
 let get_value =
-  memoize2
+  memoize2_with_reference_result
     hashable
     (module Value_var)
     (fun t var ->
@@ -418,68 +623,75 @@ let get_value =
         | C_value (var', mut_flag, type_, attr) :: _ when Value_var.equal var var' ->
           (match mut_flag, locked with
           | Mutable, true -> Error `Mut_var_captured
-          | _ -> Ok (mut_flag, type_, attr))
+          | _ -> Ok (var', (mut_flag, type_, attr)))
         | C_mut_lock _ :: items -> loop ~locked:true items
         | _ :: items -> loop ~locked items
         | [] -> Error `Not_found
       in
       loop t)
+    Refs_tbl.add_ref_value
 
 
 let get_imm =
-  memoize2
+  memoize2_with_reference_opt
     hashable
     (module Value_var)
     (fun t var ->
       List.find_map t ~f:(function
           | C_value (var', Immutable, type_, attr) when Value_var.equal var var' ->
-            Some (type_, attr)
+            Some (var', (type_, attr))
           | _ -> None))
+    Refs_tbl.add_ref_value
 
 
 let get_mut =
-  memoize2
+  memoize2_with_reference_result
     hashable
     (module Value_var)
     (fun t var ->
       let rec loop ?(locked = false) = function
         | C_value (var', Mutable, type_, _) :: _ when Value_var.equal var var' ->
-          if locked then Error `Mut_var_captured else Ok type_
+          if locked then Error `Mut_var_captured else Ok (var', type_)
         | C_mut_lock _ :: items -> loop ~locked:true items
         | _ :: items -> loop ~locked items
         | [] -> Error `Not_found
       in
       loop t)
+    Refs_tbl.add_ref_value
 
 
 let get_type =
-  memoize2
+  memoize2_with_reference_opt
     hashable
     (module Type_var)
     (fun t tvar ->
       (List.find_map t ~f:(function
-          | C_type (tvar', type_) when Type_var.equal tvar tvar' -> Some type_
+          | C_type (tvar', type_) when Type_var.equal tvar tvar' -> Some (tvar', type_)
           | _ -> None) [@landmark "get_type"]))
+    Refs_tbl.add_ref_type
 
 
 let get_module =
-  memoize2
+  memoize2_with_reference_opt
     hashable
     (module Module_var)
     (fun t mvar ->
       (List.find_map t ~f:(function
-          | C_module (mvar', mctx) when Module_var.equal mvar mvar' -> Some mctx
+          | C_module (mvar', mctx) when Module_var.equal mvar mvar' -> Some (mvar', mctx)
           | _ -> None) [@landmark "get_module"]))
+    Refs_tbl.add_ref_module
 
 
 let get_module_type =
-  memoize2
+  memoize2_with_reference_opt
     hashable
     (module Module_var)
     (fun t mvar ->
       (List.find_map t ~f:(function
-          | C_module_type (mvar', mctx) when Module_var.equal mvar mvar' -> Some mctx
+          | C_module_type (mvar', mctx) when Module_var.equal mvar mvar' ->
+            Some (mvar', mctx)
           | _ -> None) [@landmark "get_module"]))
+    Refs_tbl.add_ref_module
 
 
 let get_type_vars =
@@ -538,25 +750,28 @@ let get_lexists_var =
 
 
 let get_type_var =
-  memoize2
+  memoize2_with_reference_opt
     hashable
     (module Type_var)
     (fun t tvar ->
       (List.find_map t ~f:(function
-          | C_type_var (tvar', kind) when Type_var.equal tvar tvar' -> Some kind
+          | C_type_var (tvar', kind) when Type_var.equal tvar tvar' -> Some (tvar', kind)
           | _ -> None) [@landmark "get_type_var"]))
+    Refs_tbl.add_ref_type
 
 
 let get_type_or_type_var =
-  memoize2
+  memoize2_with_reference_opt
     hashable
     (module Type_var)
     (fun t tvar ->
       (List.find_map t ~f:(function
           | C_type_var (tvar', kind) when Type_var.equal tvar tvar' ->
-            Some (`Type_var kind)
-          | C_type (tvar', type_) when Type_var.equal tvar tvar' -> Some (`Type type_)
+            Some (tvar', `Type_var kind)
+          | C_type (tvar', type_) when Type_var.equal tvar tvar' ->
+            Some (tvar', `Type type_)
           | _ -> None) [@landmark "get_type_or_type_var"]))
+    Refs_tbl.add_ref_type
 
 
 let get_lexists_eq =
@@ -843,31 +1058,31 @@ let to_module_mapi =
            | _ -> map) [@landmark "to_module_map"]))
 
 
-let get_module_of_path t ((local_module, path) : Module_var.t List.Ne.t) =
+let get_module_of_path ~refs_tbl t ((local_module, path) : Module_var.t List.Ne.t) =
   let open Option.Let_syntax in
-  List.fold path ~init:(get_module t local_module) ~f:(fun sig_ mvar ->
+  List.fold path ~init:(get_module ~refs_tbl t local_module) ~f:(fun sig_ mvar ->
       let%bind sig_ = sig_ in
-      Signature.get_module sig_ mvar)
+      Signature.get_module ~refs_tbl sig_ mvar)
 
 
-let get_module_type_of_path t module_path =
+let get_module_type_of_path ~refs_tbl t module_path =
   let module_path = List.Ne.rev module_path in
   let (local_signature, path) : Module_var.t List.Ne.t = module_path in
   let path = List.rev path in
   match path with
-  | [] -> get_module_type t local_signature
+  | [] -> get_module_type ~refs_tbl t local_signature
   | local_module :: path ->
     let open Option.Let_syntax in
-    let%bind t = get_module t local_module in
+    let%bind t = get_module ~refs_tbl t local_module in
     let rec aux module_path (t : Signature.t) =
       match module_path with
       | [] -> Some t
       | mvar :: module_path ->
-        let%bind t = Signature.get_module t mvar in
+        let%bind t = Signature.get_module ~refs_tbl t mvar in
         aux module_path t
     in
     let%bind t = aux path t in
-    Signature.get_module_type t local_signature
+    Signature.get_module_type ~refs_tbl t local_signature
 
 
 type ('a, 'ret) contextual =
@@ -990,43 +1205,50 @@ let add_shadowed_nested_t_sum tsum_list (tvar, type_) =
     let a = A 42
   Here, for [a], we find a matching type [ty] in the current scope, but we still want to warn the user that type [Mod_a.tx] matches too.
 *)
-let get_sum : t -> Label.t -> (Type_var.t * Type_var.t list * Type.t * Type.t) list =
+let get_sum ~refs_tbl
+    : t -> Label.t -> (Type_var.t * Type_var.t list * Type.t * Type.t) list
+  =
   let dedup =
     List.stable_dedup_staged ~compare:(fun (_, _, _, tsum1) (_, _, _, tsum2) ->
         Type.compare tsum1 tsum2)
     |> Staged.unstage
   in
-  memoize2
+  memoize2_with_reference_list
     hashable
     (module Label)
+    ~refs_tbl
     (fun ctx constr ->
       (let filter_tsum (var, type_) =
          let t_params, inner_type = Type.destruct_type_abstraction type_ in
          let type_ = { inner_type with abbrev = type_.abbrev } in
          match type_.content with
          | T_sum (m, _) ->
-           (match Map.find m.fields constr with
-           | Some associated_type -> Some (var, t_params, associated_type, type_)
+           (match Simple_utils.Utils.find_kv (module Label) m.fields constr with
+           | Some ((Label (_name, loc) as constr'), associated_type) ->
+             Refs_tbl.add_ref_label refs_tbl ~key:constr' ~data:constr;
+             Some (constr', (var, t_params, associated_type, type_))
            | None -> None)
          | _ -> None
        in
        (* Fetch all types declared in current module and its submodules *)
        let module_types = get_module_types ctx in
-       (*  Also add the shadowed t_sum types nested in the fetched types.
-        Since context is made of maps, all shadowed types are absent from the context.
-        However we still want the shadowed nested t_sum, see [add_shadowed_nested_t_sum] *)
+       (* Also add the shadowed t_sum types nested in the fetched types.
+          Since context is made of maps, all shadowed types are absent from the context.
+          However we still want the shadowed nested t_sum, see [add_shadowed_nested_t_sum] *)
        let module_types =
          List.fold (List.rev module_types) ~init:[] ~f:add_shadowed_nested_t_sum
        in
        (* For all types found, pick only the T_sum, and make 4-uple out of them  *)
-       let matching_t_sum = List.filter_map ~f:filter_tsum @@ module_types in
+       let matching_t_sum_with_labels = List.filter_map ~f:filter_tsum @@ module_types in
+       let labels, matching_t_sum = List.unzip matching_t_sum_with_labels in
        let matching_t_sum = dedup matching_t_sum in
        let general_type_opt =
          List.find ~f:(fun (_, tvs, _, _) -> not @@ List.is_empty tvs) matching_t_sum
        in
        match general_type_opt with
-       | Some general_type -> [ general_type ]
-       | None -> matching_t_sum) [@landmark "get_sum"])
+       | Some general_type -> labels, [ general_type ]
+       | None -> labels, matching_t_sum) [@landmark "get_sum"])
+    Refs_tbl.add_ref_label
 
 
 let get_record : t -> Type.t Label.Map.t -> (Type_var.t option * Type.row) option =
@@ -1082,11 +1304,11 @@ let get_record : t -> Type.t Label.Map.t -> (Type_var.t option * Type.row) optio
 
 
 module Well_formed : sig
-  val context : t -> bool
-  val type_ : ctx:t -> Type.t -> Kind.t option
+  val context : refs_tbl:Refs_tbl.t -> t -> bool
+  val type_ : ctx:t -> refs_tbl:Refs_tbl.t -> Type.t -> Kind.t option
   val layout : ctx:t -> Type.layout -> bool
 end = struct
-  let rec context ctx =
+  let rec context ~refs_tbl ctx =
     let rec loop t =
       match t with
       | [] -> true
@@ -1095,13 +1317,13 @@ end = struct
         &&
         (match item with
         | C_value (var, _, type', _) ->
-          (match type_ type' ~ctx with
+          (match type_ type' ~refs_tbl ~ctx with
           | Some Type -> true
           | _ ->
             Format.printf "Value %a has non-type type %a" Value_var.pp var Type.pp type';
             false)
         | C_type (_tvar, type') ->
-          (match type_ type' ~ctx with
+          (match type_ type' ~refs_tbl ~ctx with
           | Some _ -> true
           | None ->
             (* Format.printf "Type %a = %a is ill-kinded" Type_var.pp tvar Type.pp type'; *)
@@ -1118,7 +1340,7 @@ end = struct
         | C_texists_eq (evar, kind, type') ->
           (not (Set.mem (get_texists_vars t) evar))
           &&
-          (match type_ type' ~ctx with
+          (match type_ type' ~ctx ~refs_tbl with
           | Some kind' -> Kind.compare kind kind' = 0
           | _ ->
             (* Format.printf
@@ -1139,7 +1361,7 @@ end = struct
           (not (Set.mem (get_lexists_vars t) lvar)) && layout layout_ ~ctx
         | C_module (_mvar, sig_) ->
           (* Shadowing permitted *)
-          signature ~ctx sig_
+          signature ~ctx ~refs_tbl sig_
         | C_module_type _ -> true (* TODO *))
     in
     loop ctx
@@ -1151,13 +1373,13 @@ end = struct
     | L_exists lvar -> Set.mem (get_lexists_vars ctx) lvar
 
 
-  and type_ ~ctx t : Kind.t option =
+  and type_ ~ctx ~refs_tbl t : Kind.t option =
     let open Option.Let_syntax in
     let open Kind in
     let rec loop (t : Type.t) ~ctx =
       let loop ?(ctx = ctx) t = loop t ~ctx in
       match t.content with
-      | T_variable tvar -> get_type_var ctx tvar
+      | T_variable tvar -> get_type_var ~refs_tbl ctx tvar
       | T_exists tvar -> get_texists_var ctx tvar
       | T_construct { parameters; _ } ->
         (* Hack. No HKT parameters, so simply check if all params are
@@ -1198,31 +1420,32 @@ end = struct
     loop t ~ctx
 
 
-  and signature ~ctx sig_ =
-    List.for_all ~f:(signature_item ~ctx) sig_.items && signature_sort ~ctx sig_.sort
+  and signature ~ctx ~refs_tbl sig_ =
+    List.for_all ~f:(signature_item ~ctx ~refs_tbl) sig_.items
+    && signature_sort ~ctx ~refs_tbl sig_.sort
 
 
-  and signature_sort ~ctx (sig_sort : Signature.sort) =
+  and signature_sort ~ctx ~refs_tbl (sig_sort : Signature.sort) =
     match sig_sort with
     | Ss_module -> true
     | Ss_contract { storage; parameter } ->
-      (match type_ ~ctx storage, type_ ~ctx parameter with
+      (match type_ ~ctx ~refs_tbl storage, type_ ~ctx ~refs_tbl parameter with
       | Some Type, Some Type -> true
       | _ -> false)
 
 
-  and signature_item ~ctx (sig_item : Signature.item Location.wrap) =
+  and signature_item ~ctx ~refs_tbl (sig_item : Signature.item Location.wrap) =
     match Location.unwrap sig_item with
     | S_value (_var, type', _) ->
-      (match type_ ~ctx type' with
+      (match type_ ~ctx ~refs_tbl type' with
       | Some Type -> true
       | _ -> false)
     | S_type (_tvar, type', _) ->
-      (match type_ ~ctx type' with
+      (match type_ ~ctx ~refs_tbl type' with
       | Some _ -> true
       | _ -> false)
     | S_type_var (_, _) -> true (* TODO *)
-    | S_module (_mvar, sig_, _) -> signature ~ctx sig_
+    | S_module (_mvar, sig_, _) -> signature ~ctx ~refs_tbl sig_
     | S_module_type (_mvar, _sig_, _) -> true (* TODO *)
 end
 
