@@ -211,6 +211,19 @@ module Data = struct
     { env = { exp; mod_ }; content }
 
 
+  let merge_env : env -> env -> env =
+   fun { exp = exp1; mod_ = mod1 } { exp = exp2; mod_ = mod2 } ->
+    let exp =
+      List.filter exp2 ~f:(fun x ->
+          not @@ List.exists exp1 ~f:(fun y -> Value_var.equal x.old y.old))
+    in
+    let mod_ =
+      List.filter mod2 ~f:(fun x ->
+          not @@ List.exists mod1 ~f:(fun y -> Module_var.equal x.name y.name))
+    in
+    { exp = exp1 @ exp; mod_ = mod1 @ mod_ }
+
+
   let resolve_variable : env -> Value_var.t -> Value_var.t =
    fun env v ->
     match List.find env.exp ~f:(fun x -> Value_var.equal v x.old) with
@@ -333,23 +346,24 @@ module Data = struct
 
   let refresh data path = snd @@ refresh ~new_bindings:[] data path
 
-  let include_ : t -> t -> t =
+  let decls_to_env : int list -> env =
+   fun decls ->
+    let rec loop decls acc =
+      List.fold_left decls ~init:acc ~f:(fun acc decl ->
+          match get_global_decl decl with
+          | Pat { binding; _ } -> { acc with exp = pat_to_var_bindings binding @ acc.exp }
+          | Exp { binding; _ } -> { acc with exp = binding :: acc.exp }
+          | Mod mod_binding -> { acc with mod_ = mod_binding :: acc.mod_ }
+          | Incl decls -> loop decls acc)
+    in
+    loop decls empty_env
+
+
+  let include_ : t -> int list -> t =
    fun data to_include ->
-    (* TODO: would be smart to use map .. ughh .. *)
-    let exp =
-      List.filter data.env.exp ~f:(fun x ->
-          not
-          @@ List.exists to_include.env.exp ~f:(fun new_ ->
-                 Value_var.equal x.old new_.old))
-    in
-    let mod_ =
-      List.filter data.env.mod_ ~f:(fun x ->
-          not
-          @@ List.exists to_include.env.mod_ ~f:(fun new_ ->
-                 Module_var.equal x.name new_.name))
-    in
-    { env = { exp = exp @ to_include.env.exp; mod_ = mod_ @ to_include.env.mod_ }
-    ; content = data.content @ [ new_global_decl (Incl to_include.content) ]
+    let env = decls_to_env to_include in
+    { env = merge_env env data.env
+    ; content = data.content @ [ new_global_decl (Incl to_include) ]
     }
 end
 
@@ -455,7 +469,7 @@ and compile_declarations ~(raise : _ Trace.raise)
           ("INCL" :: path)
           module_
       in
-      Data.include_ acc_scope data
+      Data.include_ acc_scope data.content
     | I.D_signature _ -> acc_scope
     | I.D_import _ -> failwith "import declarations cannot be aggregated"
   in
