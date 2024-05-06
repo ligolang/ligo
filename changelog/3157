@@ -1,0 +1,7 @@
+
+author: alistair.obrien
+description: "\\n\\nfix(aggregation): on includes, don't include the module environment\\n\\n"
+merge_request: '3157'
+title: "fix(aggregation): on includes, don't include the module environment"
+type: fixed
+            
