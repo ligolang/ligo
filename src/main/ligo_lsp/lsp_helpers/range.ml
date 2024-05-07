@@ -97,4 +97,9 @@ module Construct = struct
     create
       ~start:(Position.create ~line ~character:character_start)
       ~end_:(Position.create ~line ~character:character_end)
+
+
+  (** Define an empty range at a given position *)
+  let empty ?(position : Position.t = Position.zero_position) () : t =
+    create ~start:position ~end_:position
 end
