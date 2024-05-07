@@ -506,6 +506,10 @@ class lsp_server (capability_mode : capability_mode) =
     method config_inlay_hint =
       Some (`Bool (self#is_request_enabled "textDocument/inlayHint"))
 
+    (** Declares support for selection ranges, if enabled. *)
+    method config_selection_range =
+      Some (`Bool (self#is_request_enabled "textDocument/selectionRange"))
+
     (** Provides the supported server capabilities as well as their configurations. *)
     method! config_modify_capabilities (c : ServerCapabilities.t) : ServerCapabilities.t =
       { c with
@@ -527,6 +531,7 @@ class lsp_server (capability_mode : capability_mode) =
       ; semanticTokensProvider = self#config_semantic_tokens
       ; executeCommandProvider = self#config_execute_command
       ; codeLensProvider = self#config_code_lens
+      ; selectionRangeProvider = self#config_selection_range
       }
 
     (** Handles a LSP notification from the client to the server. After the
@@ -905,5 +910,11 @@ class lsp_server (capability_mode : capability_mode) =
           let uri = textDocument.uri in
           run ~uri ~default:None
           @@ Requests.on_req_inlay_hint (DocumentUri.to_path ~normalize uri) range
+        | Client_request.SelectionRange { textDocument; positions; _ } ->
+          let uri = textDocument.uri in
+          run ~uri ~default:[]
+          @@ Requests.on_req_selection_range
+               (DocumentUri.to_path ~normalize uri)
+               positions
         | _ -> super#on_request ~notify_back ~server_request ~id r
   end

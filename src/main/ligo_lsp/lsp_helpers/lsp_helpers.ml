@@ -214,6 +214,7 @@ module OptionalVersionedTextDocumentIdentifier =
 
 module Registration = Lsp.Types.Registration
 module RenameOptions = Lsp.Types.RenameOptions
+module SelectionRange = Lsp.Types.SelectionRange
 module SemanticTokens = Lsp.Types.SemanticTokens
 module SemanticTokensLegend = Lsp.Types.SemanticTokensLegend
 module SemanticTokensOptions = Lsp.Types.SemanticTokensOptions

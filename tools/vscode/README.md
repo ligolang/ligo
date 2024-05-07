@@ -26,7 +26,7 @@ Those are being actively worked on.
 - [x] Jump to implementation
 - [x] Find references
 - [x] Folding range
-- [ ] Selection range
+- [x] Selection range
 - [x] Jump to type definition
 - [x] Document symbols
 - [x] Document links

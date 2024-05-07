@@ -15,6 +15,7 @@ include Range_formatting
 include References
 include Highlight
 include Rename
+include Selection_range
 include Semantic_highlight
 include Type_definition
 module Handler = Handler
