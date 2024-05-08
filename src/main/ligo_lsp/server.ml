@@ -84,6 +84,23 @@ let try_with_crash_handler
     IO.return default
 
 
+(** Collects information about the client that initialized LIGO LSP for analytics. *)
+type ide_info =
+  { name : string (** Name of the client. *)
+  ; version : string option (** Optional version of the client. *)
+  }
+
+(** Collects information about the initialization of LIGO LSP for analytics. *)
+type initialize_analytics =
+  { has_initialize_analytics : bool
+        (** Flag indicating whether we have completed filling this record. *)
+  ; ide_info : ide_info option
+        (** Information about the client that initialized LIGO LSP. *)
+  ; syntax : Syntax_types.t option
+        (** The syntax used for initialization. [None] may indicate that the server was
+            initialized without opening a LIGO file. *)
+  }
+
 (** LIGO Language Server class.
 
     This is the main point of interaction beetween the code checking documents (parsing,
@@ -97,13 +114,22 @@ let try_with_crash_handler
     The capability mode provided to this class is used in the boilerplate to initialize
     the language server in the language clients, allowing them to separately spawn a
     process for semantic tokens only and no semantic tokens, or both of them. See
-    {!capability_mode}. *)
-class lsp_server (capability_mode : capability_mode) =
+    {!capability_mode}.
+
+    [skip_analytics] may be set to [true] to avoid proposing and collecting analytics. If
+    [false], analytics may be not necessarily proposed or collected depending on some
+    factors, but they won't be forbid altogether. *)
+class lsp_server (capability_mode : capability_mode) ~(skip_analytics : bool) =
   object (self)
     inherit Linol_lwt.Jsonrpc2.server as super
 
     (** Used internally by linol to spawn queries. *)
     method spawn_query_handler = Linol_lwt.spawn
+
+    (** Contains data about the initialization metrics of the language server. Used for
+        analytics. *)
+    val mutable initialize_analytics : initialize_analytics =
+      { has_initialize_analytics = false; ide_info = None; syntax = None }
 
     (** A helper list with the default modes used by most request handlers to check
         whether they are enabled or not. *)
@@ -188,7 +214,15 @@ class lsp_server (capability_mode : capability_mode) =
       in
       self#on_doc_with_handler ~process_immediately
 
-    (** Handles the notification for when a document is opened. *)
+    (** Handles the notification for when a document is opened. If the capability mode is
+        either [All_capabilities] or [No_semantic_tokens], this method will also generate
+        analytics through [self#generate_lsp_analytics]. The syntax of the analytics will
+        depend on [document.uri].
+
+        The sole reason metrics are not fully handled in the [initialize] request is
+        because we also want to collect the syntax (if any), which is not available at
+        that point. [initialized] also doesn't provide us with the syntax. The next
+        request that comes is this, so we finalize adding the data here. *)
     method on_notif_doc_did_open ~notify_back document ~content : unit IO.t =
       let open Handler.Let_syntax in
       self#run_handler (Normal notify_back)
@@ -196,16 +230,69 @@ class lsp_server (capability_mode : capability_mode) =
       let { diagnostics_pull_mode; _ } = config in
       let%bind normalize = ask_normalize in
       let file = DocumentUri.to_path ~normalize document.uri in
-      match diagnostics_pull_mode, capability_mode with
-      | _, Only_semantic_tokens | `OnDocumentLinkRequest, _ | `OnDocUpdate, _ ->
-        self#on_doc file content ~version:(`New document.version)
-      (* For [`OnSave] we should process doc that was opened *)
-      | `OnSave, _ ->
-        self#on_doc_with_handler
-          ~process_immediately:true
-          ~version:(`New document.version)
-          file
-          content
+      let%bind () =
+        match diagnostics_pull_mode, capability_mode with
+        | _, Only_semantic_tokens | `OnDocumentLinkRequest, _ | `OnDocUpdate, _ ->
+          self#on_doc file content ~version:(`New document.version)
+        (* For [`OnSave] we should process doc that was opened *)
+        | `OnSave, _ ->
+          self#on_doc_with_handler
+            ~process_immediately:true
+            ~version:(`New document.version)
+            file
+            content
+      in
+      if initialize_analytics.has_initialize_analytics
+      then pass
+      else (
+        let syntax = Path.get_syntax file in
+        initialize_analytics
+          <- { initialize_analytics with has_initialize_analytics = true; syntax };
+        match capability_mode with
+        | Only_semantic_tokens -> pass
+        | All_capabilities | No_semantic_tokens -> self#generate_lsp_analytics)
+
+    (** Asks the user whether to accept or deny analytics (if its proposal is applicable),
+        edits the metrics values and pushes them to the Prometheus aggregator. *)
+    method generate_lsp_analytics : unit Handler.t =
+      let%bind.Handler () =
+        Handler.when_ (Analytics.should_propose_analytics ~skip_analytics)
+        @@
+        let yes = "Yes" in
+        let no = "No" in
+        send_message_with_buttons
+          ~message:Analytics.acceptance_condition
+          ~options:[ yes; no ]
+          ~type_:Info
+          ~handler:(function
+            | Ok None -> pass
+            | Ok (Some { title }) ->
+              if String.equal title yes
+              then return @@ Analytics.accept ()
+              else if String.equal title no
+              then return @@ Analytics.deny ()
+              else send_message ~type_:Error @@ Format.sprintf "Unknown option: %s" title
+            | Error err ->
+              send_debug_msg
+              @@ Format.sprintf "Error while collecting analytics: %s" err.message)
+      in
+      let%bind.Handler project_root = Handler.map ~f:( ! ) Handler.ask_last_project_dir in
+      Analytics.set_project_root @@ Option.map ~f:Path.to_string project_root;
+      let { has_initialize_analytics = _; ide_info; syntax } = initialize_analytics in
+      let metrics =
+        let syntax =
+          Option.value_map syntax ~default:"None" ~f:(function
+              | CameLIGO -> "CameLIGO"
+              | JsLIGO -> "JsLIGO")
+        in
+        let { version; name = ide } =
+          Option.value ide_info ~default:{ version = None; name = "Unknown" }
+        in
+        let ide_version = Option.value version ~default:"Unknown" in
+        Analytics.generate_lsp_initialize_metrics ~syntax ~ide ~ide_version ()
+      in
+      Analytics.edit_metrics_values metrics;
+      lift_io @@ Analytics.push_collected_metrics ~skip_analytics
 
     (** Handles the notification for when a document is changed. *)
     method on_notif_doc_did_change
@@ -318,7 +405,7 @@ class lsp_server (capability_mode : capability_mode) =
           @@ ShowMessage
                (ShowMessageParams.create
                   ~message:
-                    "Ligo Language Server: Diagnostics pull mode is 'on document link' \
+                    "LIGO Language Server: Diagnostics pull mode is 'on document link' \
                      while 'textDocument/documentLink' request is disabled. This can \
                      lead to missing diagnostics.\n\
                      Please enable 'textDocument/documentLink' request or change \
@@ -330,7 +417,8 @@ class lsp_server (capability_mode : capability_mode) =
 
     (** Handles the notification for when the language client requests the language server
         to initialize. Will decode and apply the configuration provided by the client and
-        cache the supported client capabilities. *)
+        cache the supported client capabilities. Initializes [initialize_analytics] with
+        [initialize_time] and [ide_info], leaving other fields with default values. *)
     method! on_req_initialize
         ~(notify_back : Linol_lwt.Jsonrpc2.notify_back)
         (init_params : InitializeParams.t)
@@ -349,6 +437,13 @@ class lsp_server (capability_mode : capability_mode) =
         | Some settings -> self#decode_apply_settings notify_back settings
       in
       client_capabilities <- init_params.capabilities;
+      initialize_analytics
+        <- { has_initialize_analytics = false
+           ; ide_info =
+               Option.map init_params.clientInfo ~f:(fun { name; version } ->
+                   { name; version })
+           ; syntax = None
+           };
       super#on_req_initialize ~notify_back init_params
 
     (** Checks whether the provided method name is a supported semantic tokens method

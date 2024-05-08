@@ -81,8 +81,4 @@
   (libraries ligo.api)
   (flags (-stop-on-error)))
  (preprocess
-  (pps
-   ppx_jane
-   ppx_map
-   ppx_deriving.map
-   ppx_poly_constructor)))
+  (pps ppx_jane ppx_map ppx_deriving.map ppx_poly_constructor)))
