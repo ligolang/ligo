@@ -1,0 +1,7 @@
+
+author: heitor.toledo
+description: "\\nAdded analytics to the initialization of the language server (only if the user has agreed to let LIGO collect them).\\n\\n"
+merge_request: '3165'
+title: "[#2183] Implement LSP initialize analytics"
+type: added
+            
