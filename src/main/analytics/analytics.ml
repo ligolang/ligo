@@ -54,6 +54,11 @@ type metric_group =
       ; syntax : string
       ; protocol : string
       }
+  | Counter_lsp_initialize of
+      { syntax : string
+      ; ide : string
+      ; ide_version : string
+      }
 
 type analytics_input =
   { group : metric_group
@@ -203,6 +208,16 @@ let gauge_compilation_size_group =
     "compilation_size"
 
 
+let counter_lsp_initialize =
+  Counter.v_labels
+    ~label_names:[ "user"; "repository"; "version"; "syntax"; "ide"; "ide_version" ]
+    ~registry:agg_registry.collectorRegistry
+    ~help:"ligo lsp initialize request"
+    ~namespace:"ligo"
+    ~subsystem:"tooling"
+    "lsp_initialize"
+
+
 let create_id () = Format.asprintf "%a" Uuid.pp (Uuid.create_random Random.State.default)
 
 let read_file path =
@@ -249,9 +264,12 @@ let is_term_already_proposed () =
   | Error _ -> false
 
 
+let accepted = "accepted"
+let denied = "denied"
+
 let is_term_accepted () =
   let term_acceptance = read_file term_acceptance_filepath in
-  if String.equal term_acceptance "accepted" then true else false
+  String.equal term_acceptance accepted
 
 
 let is_in_docker =
@@ -267,29 +285,37 @@ let is_dev_version =
   && not is_in_docker
 
 
-let rec accept () =
+let rec get_user_answer () =
   match In_channel.input_line In_channel.stdin with
   | Some v ->
     (match v with
-    | "y" -> "accepted"
-    | "n" -> "denied"
-    | _ -> accept ())
+    | "y" -> accepted
+    | "n" -> denied
+    | _ -> get_user_answer ())
   | None ->
     (match env with
-    | Docker_non_interactive -> "accepted"
-    | _ -> "denied")
+    | Docker_non_interactive -> accepted
+    | _ -> denied)
+
+
+let accept () = store accepted term_acceptance_filepath
+let deny () = store denied term_acceptance_filepath
+
+let should_propose_analytics ~skip_analytics =
+  not
+    (skip_analytics
+    || is_skip_analytics_through_env_var
+    || is_term_already_proposed ()
+    || is_in_ci
+    || is_dev_version)
 
 
 let propose_term_acceptation ~skip_analytics =
-  if skip_analytics
-     || is_skip_analytics_through_env_var
-     || is_term_already_proposed ()
-     || is_in_ci
-     || is_dev_version
+  if not (should_propose_analytics ~skip_analytics)
   then ()
   else (
     Format.eprintf "%s\n%!" acceptance_condition;
-    let user_answer = accept () in
+    let user_answer = get_user_answer () in
     store user_answer term_acceptance_filepath)
 
 
@@ -331,19 +357,17 @@ let push_collected_metrics ~skip_analytics =
      || is_in_ci
      || is_skip_analytics_through_env_var
      || is_dev_version
-  then ()
+  then Lwt.return_unit
   else (
-    let p_1 () =
-      let _ = PushableCollectorRegistry.push agg_registry in
+    let p_1 =
+      let%lwt _ = PushableCollectorRegistry.push agg_registry in
       Lwt.return_unit
     in
-    let p_2 () =
-      let _ = PushableCollectorRegistry.push registry in
+    let p_2 =
+      let%lwt _ = PushableCollectorRegistry.push registry in
       Lwt.return_unit
     in
-    let p_3 = Lwt.join [ p_1 (); p_2 () ] in
-    Lwt_main.run p_3;
-    ())
+    Lwt.join [ p_1; p_2 ])
 
 
 let determine_syntax_label_from_source source : string =
@@ -383,6 +407,13 @@ let generate_cli_metrics_with_syntax_and_protocol ~command ~raw_options ?source_
   [ execution_metric; run_metric ]
 
 
+let generate_lsp_initialize_metrics ~syntax ~ide ~ide_version () =
+  let run_metric =
+    { group = Counter_lsp_initialize { syntax; ide; ide_version }; metric_value = 1.0 }
+  in
+  [ run_metric ]
+
+
 let get_family_by_group
     : metric_group -> [ `Ctr of Counter.family | `Gauge of Gauge.family ]
   = function
@@ -392,6 +423,7 @@ let get_family_by_group
   | Counter_cli_transpile _ -> `Ctr counter_cli_transpilation_group
   | Counter_cli_init _ -> `Ctr counter_cli_init_group
   | Gauge_compilation_size _ -> `Gauge gauge_compilation_size_group
+  | Counter_lsp_initialize _ -> `Ctr counter_lsp_initialize
 
 
 let get_labels_from_group : metric_group -> string list = function
@@ -403,6 +435,7 @@ let get_labels_from_group : metric_group -> string list = function
   | Counter_cli_init { command; template } -> [ command; template ]
   | Gauge_compilation_size { contract_discriminant; syntax; protocol } ->
     [ contract_discriminant; syntax; protocol ]
+  | Counter_lsp_initialize { syntax; ide; ide_version } -> [ syntax; ide; ide_version ]
 
 
 let edit_metric_value : analytics_input -> unit =

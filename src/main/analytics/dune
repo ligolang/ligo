@@ -11,6 +11,8 @@
   compiler_options
   syntax_types
   syntax)
+ (preprocess
+  (pps lwt_ppx))
  (modules analytics version))
 
 (rule

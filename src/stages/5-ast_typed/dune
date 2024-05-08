@@ -5,9 +5,4 @@
   (backend bisect_ppx))
  (libraries simple-utils ligo_prim backend ligo.ast_core)
  (preprocess
-  (staged_pps
-   ppx_jane
-   ppx_deriving_yojson
-   ppx_import
-   ppx_map
-   ppx_woo)))
+  (staged_pps ppx_jane ppx_deriving_yojson ppx_import ppx_map ppx_woo)))

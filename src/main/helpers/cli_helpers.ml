@@ -140,7 +140,7 @@ let return_with_custom_formatter ~cli_analytics ~skip_analytics
   in
   Analytics.edit_metrics_values cli_analytics;
   match !return with
-  | Done -> Analytics.push_collected_metrics ~skip_analytics
+  | Done -> Lwt_main.run @@ Analytics.push_collected_metrics ~skip_analytics
   | Compileur_Error -> ()
   | Exception e ->
     let _e = Format.asprintf "exception %a" Exn.pp e in
@@ -204,7 +204,7 @@ let return_result_lwt ?(fast_fail = true) ~cli_analytics ~skip_analytics
   in
   (* Push analytics *)
   match !return with
-  | Done -> Analytics.push_collected_metrics ~skip_analytics
+  | Done -> Lwt_main.run @@ Analytics.push_collected_metrics ~skip_analytics
   | Compileur_Error -> ()
   | Exception _ -> ()
 
