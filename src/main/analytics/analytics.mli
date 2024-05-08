@@ -28,6 +28,11 @@ type metric_group =
       ; syntax : string
       ; protocol : string
       }
+  | Counter_lsp_initialize of
+      { syntax : string
+      ; ide : string
+      ; ide_version : string
+      }
 
 type analytics_input =
   { group : metric_group
@@ -37,9 +42,13 @@ type analytics_input =
 type analytics_inputs = analytics_input list
 
 (* Analytics *)
+val acceptance_condition : string
 val update_term_acceptance : string -> (string * string, string * string) result
 val determine_syntax_label : string -> string -> string
 val generate_cli_metric : command:string -> analytics_input
+val accept : unit -> unit
+val deny : unit -> unit
+val should_propose_analytics : skip_analytics:bool -> bool
 
 val generate_cli_metrics_with_syntax_and_protocol
   :  command:string
@@ -48,7 +57,14 @@ val generate_cli_metrics_with_syntax_and_protocol
   -> unit
   -> analytics_input list
 
-val push_collected_metrics : skip_analytics:bool -> unit
+val generate_lsp_initialize_metrics
+  :  syntax:string
+  -> ide:string
+  -> ide_version:string
+  -> unit
+  -> analytics_input list
+
+val push_collected_metrics : skip_analytics:bool -> unit Lwt.t
 val propose_term_acceptation : skip_analytics:bool -> unit
 val edit_metrics_values : analytics_inputs -> unit
 val set_project_root : string option -> unit

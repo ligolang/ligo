@@ -3480,9 +3480,14 @@ module Lsp_server = struct
   module Requests = Ligo_lsp.Server.Requests
   module Server = Ligo_lsp.Server
 
-  let run ?(log_requests = true) capability_mode () =
+  let run
+      ?(log_requests : bool = true)
+      (capability_mode : Server.capability_mode)
+      ~(skip_analytics : bool)
+      ()
+    =
     let run_lsp () =
-      let s = new Server.lsp_server capability_mode in
+      let s = new Server.lsp_server capability_mode ~skip_analytics in
       let server = Linol_lwt.Jsonrpc2.create_stdio (s :> Linol_lwt.Jsonrpc2.server) in
       let shutdown () = Poly.(s#get_status = `ReceivedExit) in
       let task = Linol_lwt.Jsonrpc2.run ~shutdown server in
@@ -3522,7 +3527,7 @@ module Lsp_server = struct
               match Logs.Src.name src with
               | "linol" -> Logs.Src.set_level src (Some Logs.Debug)
               | _ -> ());
-          let s = new Server.lsp_server capability_mode in
+          let s = new Server.lsp_server capability_mode ~skip_analytics in
           let server = Linol_lwt.Jsonrpc2.create_stdio (s :> Linol_lwt.Jsonrpc2.server) in
           let shutdown () = Poly.(s#get_status = `ReceivedExit) in
           let task = Linol_lwt.Jsonrpc2.run ~shutdown server in
@@ -3553,12 +3558,15 @@ let capability_mode =
 let lsp =
   let summary = "[BETA] launch a LIGO lsp server" in
   let readme () = "[BETA] Run the lsp server which is used by editor extensions" in
-  let f disable_logging capability_mode () =
+  let f disable_logging capability_mode skip_analytics () =
     let log_requests = not disable_logging in
     return_with_custom_formatter ~skip_analytics:true ~cli_analytics:[] ~return
-    @@ Lsp_server.run ~log_requests capability_mode
+    @@ Lsp_server.run ~log_requests capability_mode ~skip_analytics
   in
-  Command.basic ~summary ~readme (f <$> disable_lsp_request_logging <*> capability_mode)
+  Command.basic
+    ~summary
+    ~readme
+    (f <$> disable_lsp_request_logging <*> capability_mode <*> skip_analytics)
 
 
 let analytics_accept =
