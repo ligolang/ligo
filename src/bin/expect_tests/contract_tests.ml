@@ -450,15 +450,15 @@ let%expect_test _ =
                              GT ;
                              AND ;
                              IF { PUSH string "UnsafeAllowanceChange" ; FAILWITH } {} ;
-                             DIG 2 ;
+                             DIG 3 ;
+                             DIG 3 ;
                              CDR ;
                              DIG 3 ;
-                             DIG 3 ;
                              PUSH nat 0 ;
-                             DUP 4 ;
+                             DUP 3 ;
                              COMPARE ;
                              EQ ;
-                             IF { DIG 2 ; DROP ; NONE nat } { DIG 2 ; SOME } ;
+                             IF { SWAP ; DROP ; NONE nat } { SWAP ; SOME } ;
                              DIG 3 ;
                              UPDATE ;
                              UPDATE 3 }
@@ -3096,15 +3096,15 @@ let%expect_test _ =
                              GT ;
                              AND ;
                              IF { PUSH string "UnsafeAllowanceChange" ; FAILWITH } {} ;
-                             DIG 2 ;
+                             DIG 3 ;
+                             DIG 3 ;
                              CDR ;
                              DIG 3 ;
-                             DIG 3 ;
                              PUSH nat 0 ;
-                             DUP 4 ;
+                             DUP 3 ;
                              COMPARE ;
                              EQ ;
-                             IF { DIG 2 ; DROP ; NONE nat } { DIG 2 ; SOME } ;
+                             IF { SWAP ; DROP ; NONE nat } { SWAP ; SOME } ;
                              DIG 3 ;
                              UPDATE ;
                              UPDATE 3 }
