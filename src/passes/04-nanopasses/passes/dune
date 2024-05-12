@@ -62,7 +62,7 @@
   freeze_containers
   reduce_sequence
   restrict_typed_pattern
-  literalize_annotated
+  bytes_raw_code
   detect_recursive
   restrict_projections
   unpuning
