@@ -180,6 +180,11 @@ type typer_error =
     `Typer_unbound_label_edge_case of
     Label.t * Type.row * Location.t
   | `Typer_unsupported_rest_property of Ast_core.expression * Location.t
+  | `Typer_bad_key_hash of string * Location.t
+  | `Typer_bad_signature of string * Location.t
+  | `Typer_bad_key of string * Location.t
+  | `Typer_bad_timestamp of string * Location.t
+  | `Typer_bad_conversion_bytes of Location.t
   ]
 [@@deriving poly_constructor { prefix = "typer_" }]
 
@@ -590,6 +595,33 @@ let rec extract_loc_and_message
         label )
   | `Typer_unsupported_rest_property (_expr, loc) ->
     loc, Format.asprintf "@[<hv>Unsupported rest property@]"
+  (* TODO: this seems wrong *)
+  | `Typer_bad_key_hash (s, loc) ->
+    ( loc
+    , Format.asprintf
+        "@[<hv>Ill-formed key hash \"%s\".@. A Base58 encoded key hash is expected. @]"
+        s )
+  | `Typer_bad_signature (s, loc) ->
+    ( loc
+    , Format.asprintf
+        "@[<hv>Ill-formed signature \"%s\".@. A Base58 encoded signature is expected. @]"
+        s )
+  | `Typer_bad_key (s, loc) ->
+    ( loc
+    , Format.asprintf
+        "@[<hv>Ill-formed key \"%s\".@. A Base58 encoded key is expected. @]"
+        s )
+  | `Typer_bad_timestamp (t, loc) ->
+    ( loc
+    , Format.asprintf
+        "@[<hv>Ill-formed timestamp \"%s\".@.At this point, a string with a RFC3339 \
+         notation or the number of seconds since Epoch is expected. @]"
+        t )
+  | `Typer_bad_conversion_bytes loc ->
+    ( loc
+    , Format.asprintf
+        "@[<hv>Ill-formed bytes literal.@.Example of a valid bytes literal: \
+         \"ff7a7aff\". @]" )
 
 
 let error_ppformat

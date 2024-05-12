@@ -137,7 +137,9 @@ let e__type_ ~loc p : expression = make_e ~loc @@ E_literal (Literal__type_ p)
       , "operation"
       , "bls12_381_g1"
       , "bls12_381_g2"
-      , "bls12_381_fr" )]
+      , "bls12_381_fr"
+      , "chest"
+      , "chest_key" )]
 
 
 let e_constant ~loc cons_name arguments = e_constant ~loc { cons_name; arguments } ()

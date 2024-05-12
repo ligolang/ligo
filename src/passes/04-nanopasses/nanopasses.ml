@@ -103,7 +103,7 @@ let passes ~(flags : flags) : (module T) list list =
     ; entry (module Prefix_postfix_operators) ~flag:always ~arg:()
     ]
   ; [ entry (module Freeze_operators) ~flag:always ~arg:freeze_operators
-    ; entry (module Literalize_annotated) ~flag:always ~arg:()
+    ; entry (module Bytes_raw_code) ~flag:always ~arg:()
     ; entry (module Of_file) ~flag:always ~arg:mod_res
     ; entry (module List_as_function) ~flag:list_as_function ~arg:()
     ]

@@ -131,7 +131,7 @@ module Make (Options : Options.S) (Token : Token.S) =
 
     let mk_mutez nat state buffer =
       let state, Region.{region; _} = state#sync buffer in
-      match Int64.of_string_opt nat with
+      match Stdlib.Int64.of_string_opt nat with
         None -> fail region Overflow_mutez
       | Some mutez_64 ->
           if   Int64.equal mutez_64 Int64.zero && String.(nat <> "0")

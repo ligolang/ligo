@@ -478,12 +478,8 @@ let rec check_expression (expr : I.expression) (type_ : Type.t)
       assert_ (Type.equal lit_type type_) ~error:(literal_type_mismatch lit_type type_)
     in
     return expr
-  | E_literal lit, T_construct _ ->
-    let%bind lit_type, expr = infer_literal lit in
-    let%bind () =
-      assert_ (Type.equal lit_type type_) ~error:(literal_type_mismatch lit_type type_)
-    in
-    return expr
+  | E_literal lit, T_construct { language = _; constructor; parameters } ->
+    check_literal const_error_recovery ~type_ lit ~constructor
   | ( E_type_abstraction { type_binder = tvar; result }
     , T_for_all { ty_binder = tvar'; kind; type_ } ) ->
     let type_ = Type.subst_var type_ ~tvar:tvar' ~tvar':tvar in
@@ -645,6 +641,76 @@ and check_array_as_list ~type_ entries =
         | Array_repr.Rest_entry left -> list_concat ~loc ~left ~right)
   in
   check_expression list type_
+
+
+and check_literal const_error_recovery ~type_ lit ~constructor =
+  let open C in
+  let open Let_syntax in
+  let check expr = check_expression expr type_ in
+  let%bind loc = loc () in
+  let const_raise_opt ~error value default =
+    match value with
+    | Some value -> default value
+    | None ->
+      Error_recovery.raise_or_use_default ~error ~default:(const_error_recovery ())
+  in
+  match lit, constructor with
+  | Literal_string lit, Key_hash ->
+    let s = I.Ligo_string.extract lit in
+    const_raise_opt
+      ~error:(bad_key_hash s)
+      (Tezos_crypto.Signature.Public_key_hash.of_b58check_opt s)
+    @@ fun _ -> check @@ I.(e_key_hash ~loc s)
+  | Literal_string lit, Signature ->
+    let s = I.Ligo_string.extract lit in
+    const_raise_opt ~error:(bad_signature s) (Tezos_crypto.Signature.of_b58check_opt s)
+    @@ fun _ -> check @@ I.(e_signature ~loc s)
+  | Literal_string lit, Key ->
+    let s = I.Ligo_string.extract lit in
+    const_raise_opt
+      ~error:(bad_key s)
+      (Tezos_crypto.Signature.Public_key.of_b58check_opt s)
+    @@ fun _ -> check @@ I.(e_key ~loc s)
+  | Literal_string lit, Timestamp ->
+    let open Tezos_base.TzPervasives.Time.Protocol in
+    let str = I.Ligo_string.extract lit in
+    const_raise_opt ~error:(bad_timestamp str) (of_notation str)
+    @@ fun time ->
+    let lit = Z.of_int64 @@ to_seconds time in
+    check @@ I.(e_timestamp ~loc lit)
+  | Literal_int lit, Timestamp -> check @@ I.(e_timestamp ~loc lit)
+  | Literal_string lit, Chain_id ->
+    let lit = I.Ligo_string.extract lit in
+    check @@ I.(e_chain_id ~loc lit)
+  | Literal_string lit, Address ->
+    let lit = I.Ligo_string.extract lit in
+    (* TODO: bad address? *)
+    check @@ I.(e_address ~loc lit)
+  | Literal_bytes lit, Bls12_381_g1 -> check @@ I.(e_bls12_381_g1 ~loc lit)
+  | Literal_bytes lit, Bls12_381_g2 -> check @@ I.(e_bls12_381_g2 ~loc lit)
+  | Literal_bytes lit, Bls12_381_fr -> check @@ I.(e_bls12_381_fr ~loc lit)
+  | Literal_bytes lit, Chest -> check @@ I.(e_chest ~loc lit)
+  | Literal_bytes lit, Chest_key -> check @@ I.(e_chest_key ~loc lit)
+  | Literal_string lit, Bytes ->
+    let str_to_byte_opt x =
+      try Some (Hex.to_bytes (`Hex x)) with
+      | _ -> None
+    in
+    let str = I.Ligo_string.extract lit in
+    const_raise_opt ~error:bad_conversion_bytes (str_to_byte_opt str)
+    @@ fun b -> check @@ I.(e_bytes ~loc b)
+  | Literal_int lit, Nat -> check @@ I.(e_nat ~loc lit)
+  | Literal_int lit, Tez ->
+    let lit = Z.mul (Z.of_int 1_000_000) lit in
+    check @@ I.(e_mutez ~loc lit)
+  | _ ->
+    let open C in
+    let open Let_syntax in
+    let%bind lit_type, expr = infer_literal lit in
+    let%bind () =
+      assert_ (Type.equal lit_type type_) ~error:(literal_type_mismatch lit_type type_)
+    in
+    return expr
 
 
 and infer_expression (expr : I.expression)
