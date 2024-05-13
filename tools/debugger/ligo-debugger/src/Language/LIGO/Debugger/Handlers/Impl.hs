@@ -77,6 +77,7 @@ import Morley.Tezos.Address (Constrained (Constrained), ta)
 import Morley.Tezos.Core (Timestamp (Timestamp), dummyChainId, tz)
 import Morley.Tezos.Crypto (parseHash)
 
+import Language.LIGO.Analytics
 import Language.LIGO.DAP.Variables
 import Language.LIGO.Debugger.CLI
 import Language.LIGO.Debugger.Common
@@ -133,7 +134,7 @@ ligoHandlers stopAdapter = MorleyHandlers.safenHandler <$> concat
   , MorleyHandlers.stepHandlers
       & traversed %~ DAP.embedHandler onStep
   , [MorleyHandlers.setBreakpointsHandler]
-  , [ MorleyHandlers.evaluateRequestHandlerDummy ]
+  , [MorleyHandlers.evaluateRequestHandlerDummy]
 
   , ligoCustomHandlers
   ]
@@ -306,6 +307,10 @@ instance HasSpecificMessages LIGO where
       logMessage "Launching contract with arguments\n"
       logMessage $ Debug.show req <> "\n"
     asks _rcDAPState >>= \var -> atomically $ writeTVar var (Just st)
+
+    program <- getProgram
+    generateDebuggerLaunchAnalytics False program
+
     respond ()
 
   handleStackTraceRequest DAP.StackTraceRequest{} = do

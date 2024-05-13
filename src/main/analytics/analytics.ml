@@ -98,6 +98,9 @@ let is_in_ci =
 
 (* Collector registry *)
 let agg_registry =
+  (* If you change this string, then also change the one in the debugger in
+     [tools/debugger/ligo-debugger/src/Language/LIGO/Analytics.hs]. Look for the
+     [aggRegistry] variable. *)
   PushableCollectorRegistry.create "https://agg.push.analytics.ligolang.org/metrics"
 
 
