@@ -29,7 +29,7 @@ import Fmt.Utils (Doc)
 import Named (defaults, (!))
 import System.FilePath (takeFileName, (<.>), (</>))
 import Text.Interpolation.Nyan hiding (rmode')
-import UnliftIO (UnliftIO (..), askUnliftIO, withRunInIO)
+import UnliftIO (UnliftIO (..), askUnliftIO, async, withRunInIO)
 import UnliftIO.Directory (doesFileExist)
 import UnliftIO.Exception (Handler (..), catches, throwIO, try)
 import UnliftIO.STM (modifyTVar)
@@ -309,7 +309,10 @@ instance HasSpecificMessages LIGO where
     asks _rcDAPState >>= \var -> atomically $ writeTVar var (Just st)
 
     program <- getProgram
-    generateDebuggerLaunchAnalytics False program
+    -- Handle analytics in an invisible manner: the user should not notice it
+    -- running for better UX.
+    _ <- async do
+      generateDebuggerLaunchAnalytics False program `catchAny` const pass
 
     respond ()
 
