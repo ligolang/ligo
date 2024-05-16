@@ -149,8 +149,8 @@ let compare r1 r2 =
   let file_cmp = String.compare r1#file r2#file in
   let start_cmp = Pos.compare r1#start r2#start in
   let stop_cmp = Pos.compare r1#stop r2#stop in
-  (match file_cmp, start_cmp, stop_cmp with
-  | 0, 0, c | 0, c, _ | c, _, _ -> c)
+  match file_cmp, start_cmp, stop_cmp with
+  | 0, 0, c | 0, c, _ | c, _, _ -> c
 
 let lt r1 r2 = compare r1 r2 < 0
 

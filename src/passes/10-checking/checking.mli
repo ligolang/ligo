@@ -4,6 +4,15 @@ module Errors = Errors
 module Type_var_name_tbl = Type.Type_var_name_tbl
 open Errors
 open Simple_utils.Trace
+module Refs_tbl = Context.Refs_tbl
+
+val type_program_with_refs
+  :  raise:(typer_error, Main_warnings.all) raise
+  -> options:Compiler_options.middle_end
+  -> refs_tbl:Refs_tbl.t
+  -> ?env:O.signature
+  -> I.program
+  -> O.program
 
 val type_program
   :  raise:(typer_error, Main_warnings.all) raise

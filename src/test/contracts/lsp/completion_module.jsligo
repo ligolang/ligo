@@ -1,9 +1,9 @@
 namespace Foo {
-  const module_field = 5
-  const another_thing = "asdad"
+  export const module_field = 5
+  export const another_thing = "asdad"
 
-  namespace Bar {
-    const nested = { left: 1; right: 2 }
+  export namespace Bar {
+    export const nested = { left: 1; right: 2 }
   }
 }
 

@@ -10,6 +10,7 @@ module O = Ast_typed
 module C = Computation
 module E = Elaboration
 module Error_recovery = C.Error_recovery
+module Refs_tbl = Context.Refs_tbl
 
 let untype_expression = Untyper.untype_expression
 let untype_type_expression = Untyper.untype_type_expression
@@ -78,6 +79,7 @@ let rec evaluate_type ~default_layout (type_ : I.type_expression)
     let%bind loc = loc () in
     return @@ Type.{ type_ with location = loc }
   in
+  let%bind refs_tbl = refs_tbl () in
   match type_.type_content with
   | T_contract_parameter x ->
     let%bind { items = _; sort } =
@@ -152,7 +154,7 @@ let rec evaluate_type ~default_layout (type_ : I.type_expression)
             ~error:(unbound_module module_path)
         in
         Error_recovery.raise_or_use_default_opt
-          (Signature.get_type sig_ type_operator)
+          (Signature.get_type ~refs_tbl sig_ type_operator)
           ~default:Error_recovery.wildcard_type
           ~error:(unbound_type_variable type_operator)
     in
@@ -198,7 +200,7 @@ let rec evaluate_type ~default_layout (type_ : I.type_expression)
     Error_recovery.raise_or_use_default_opt
       ~error:(unbound_type_variable element)
       ~default:Error_recovery.wildcard_type
-      (Signature.get_type sig_ element)
+      (Signature.get_type ~refs_tbl sig_ element)
   | T_singleton lit -> const @@ T_singleton lit
   | T_abstraction { ty_binder; kind; type_ } ->
     let%bind type_, () =
@@ -404,6 +406,11 @@ let t_record_with_orig_var (fields : Type.t Record.t) : (Type.t, _, _) C.t =
     let%bind layout = lexists (Map.key_set fields) in
     create_type @@ Type.t_record { fields; layout }
   | Some (orig_var, row) ->
+    let%bind refs_tbl = refs_tbl () in
+    List.iter (Record.labels fields) ~f:(fun label' ->
+        Option.iter
+          (Simple_utils.Utils.find_kv (module Label) row.fields label')
+          ~f:(fun (label, _) -> Refs_tbl.add_ref_label refs_tbl ~key:label ~data:label'));
     (match orig_var with
     | None -> create_type @@ Type.t_record row
     | Some orig_var ->
@@ -412,6 +419,33 @@ let t_record_with_orig_var (fields : Type.t Record.t) : (Type.t, _, _) C.t =
         { (Type.t_record row ~loc:(Type_var.get_location orig_var) ()) with
           abbrev = Some { orig_var = path, orig_var; applied_types = [] }
         })
+
+
+let get_type_of_ctor
+    (row : Type__Type_def.row)
+    (label : Label.t)
+    ?(use_raise_opt : bool = false)
+    ~(error : 'err with_loc)
+    ~(add_ctor_reference : bool)
+    ()
+    : (Type.t, 'err, 'a) C.t
+  =
+  let open C in
+  let open Let_syntax in
+  let raise =
+    if use_raise_opt
+    then raise_opt ~error
+    else
+      Error_recovery.raise_or_use_default_opt
+        ~default:(map Error_recovery.wildcard_type ~f:(fun t -> label, t))
+        ~error
+  in
+  let%bind constr, label_row_elem =
+    raise @@ Simple_utils.Utils.find_kv (module Label) row.fields label
+  in
+  let%bind refs_tbl = refs_tbl () in
+  if add_ctor_reference then Refs_tbl.add_ref_label refs_tbl ~key:constr ~data:label;
+  return label_row_elem
 
 
 let check_record const ~expr ~type_ record (row : Type.row) try_check =
@@ -427,10 +461,12 @@ let check_record const ~expr ~type_ record (row : Type.row) try_check =
     |> Map.mapi ~f:(fun ~key:label ~data:expr ->
            (* Invariant: [Map.key_set record = Map.key_set row.fields]  *)
            let%bind type_ =
-             Error_recovery.raise_or_use_default_opt
+             get_type_of_ctor
+               ~add_ctor_reference:true
                ~error:(unbound_label_edge_case label row)
-               ~default:Error_recovery.wildcard_type
-               (Map.find row.fields label)
+               row
+               label
+               ()
            in
            try_check expr type_)
     |> all_lmap
@@ -534,10 +570,12 @@ let rec check_expression (expr : I.expression) (type_ : Type.t)
   | E_update { struct_; path; update }, T_record row ->
     let%bind struct_ = check struct_ type_ in
     let%bind field_row_elem =
-      Error_recovery.raise_or_use_default_opt
+      get_type_of_ctor
+        ~add_ctor_reference:true
         ~error:(bad_record_access path)
-        ~default:Error_recovery.wildcard_type
-        (Map.find row.fields path)
+        row
+        path
+        ()
     in
     let%bind update = check update field_row_elem in
     const
@@ -545,12 +583,14 @@ let rec check_expression (expr : I.expression) (type_ : Type.t)
         let%bind struct_ = struct_
         and update = update in
         return @@ O.E_update { struct_; path; update })
-  | E_constructor { constructor; element }, T_sum (row, _) ->
+  | E_constructor { constructor; element }, T_sum (row, disc_label) ->
     let%bind constr_row_elem =
-      Error_recovery.raise_or_use_default_opt
+      get_type_of_ctor
+        ~add_ctor_reference:(Option.is_none disc_label)
         ~error:(bad_constructor constructor type_)
-        ~default:Error_recovery.wildcard_type
-        (Map.find row.fields constructor)
+        row
+        constructor
+        ()
     in
     let%bind element = check element constr_row_elem in
     const
@@ -749,6 +789,7 @@ and infer_expression (expr : I.expression)
     in
     const (E.return @@ O.E_error expr) type_
   in
+  let%bind refs_tbl = refs_tbl () in
   match expr.expression_content with
   | E_literal lit -> infer_literal lit
   | E_constant { cons_name = const; arguments = args } -> infer_constant const args
@@ -946,10 +987,12 @@ and infer_expression (expr : I.expression)
         (Type.get_t_record record_type)
     in
     let%bind field_row_elem =
-      Error_recovery.raise_or_use_default_opt
+      get_type_of_ctor
+        ~add_ctor_reference:true
         ~error:(bad_record_access field)
-        ~default:Error_recovery.wildcard_type
-        (Map.find row.fields field)
+        row
+        field
+        ()
     in
     const
       E.(
@@ -966,10 +1009,12 @@ and infer_expression (expr : I.expression)
         (Type.get_t_record record_type)
     in
     let%bind field_row_elem =
-      Error_recovery.raise_or_use_default_opt
+      get_type_of_ctor
+        ~add_ctor_reference:true
         ~error:(bad_record_access path)
-        ~default:Error_recovery.wildcard_type
-        (Map.find row.fields path)
+        row
+        path
+        ()
     in
     let%bind update = check update field_row_elem in
     const
@@ -1048,7 +1093,7 @@ and infer_expression (expr : I.expression)
         ~default:
           (let%bind elt_type = Error_recovery.wildcard_type in
            return (elt_type, Attrs.Value.default))
-        (Signature.get_value sig_ element)
+        (Signature.get_value ~refs_tbl sig_ element)
     in
     const E.(return @@ O.E_module_accessor { module_path; element }) elt_type
   | E_let_mut_in { let_binder; rhs; let_result; attributes } ->
@@ -1577,8 +1622,17 @@ and check_pattern ~mut (pat : I.type_expression option I.Pattern.t) (type_ : Typ
       E.(
         let%bind list_pat = all list_pat in
         return @@ P.P_list (List list_pat))
-  | P_variant (label, arg_pat), T_sum (row, _) ->
-    let%bind label_row_elem = raise_opt ~error:err @@ Map.find row.fields label in
+  | P_variant (label, arg_pat), T_sum (row, disc_label) ->
+    let%bind label_row_elem =
+      C.With_frag.lift
+      @@ get_type_of_ctor
+           row
+           label
+           ~add_ctor_reference:(Option.is_none disc_label)
+           ~error:err
+           ~use_raise_opt:true
+           ()
+    in
     let%bind arg_pat = check arg_pat label_row_elem in
     const
       E.(
@@ -1589,8 +1643,14 @@ and check_pattern ~mut (pat : I.type_expression option I.Pattern.t) (type_ : Typ
       tuple_pat
       |> List.mapi ~f:(fun i pat ->
              let%bind pat_row_elem =
-               raise_opt ~error:err
-               @@ Map.find row.fields (Label.create (Int.to_string i))
+               C.With_frag.lift
+               @@ get_type_of_ctor
+                    ~add_ctor_reference:true
+                    ~error:err
+                    ~use_raise_opt:true
+                    row
+                    (Label.create (Int.to_string i))
+                    ()
              in
              let%bind pat_type = Context.tapply pat_row_elem in
              check pat pat_type)
@@ -1606,7 +1666,14 @@ and check_pattern ~mut (pat : I.type_expression option I.Pattern.t) (type_ : Typ
       record_pat
       |> Map.mapi ~f:(fun ~key:label ~data:pat ->
              let%bind label_row_elem =
-               raise_opt ~error:err @@ Map.find row.fields label
+               C.With_frag.lift
+               @@ get_type_of_ctor
+                    ~add_ctor_reference:true
+                    ~error:err
+                    ~use_raise_opt:true
+                    row
+                    label
+                    ()
              in
              let%bind pat_type = Context.tapply label_row_elem in
              check pat pat_type)
@@ -1809,6 +1876,7 @@ and compile_match (matchee : O.expression E.t) disc_label cases matchee_type
   let open Let_syntax in
   let%bind loc = loc () in
   let%bind syntax = Options.syntax () in
+  let%bind refs_tbl = refs_tbl () in
   return
     E.(
       let%bind matchee = matchee in
@@ -1816,6 +1884,15 @@ and compile_match (matchee : O.expression E.t) disc_label cases matchee_type
       let%bind matchee_type = decode matchee_type in
       let eqs = List.map cases ~f:(fun (pat, _body) -> pat, matchee_type) in
       let%bind () = check_anomalies ~loc ~syntax eqs matchee_type in
+      (match matchee_type.type_content, disc_label with
+      | T_sum (row, Some (Label (label_name, _))), Some label' ->
+        let labels = Record.labels row.fields in
+        List.iter labels ~f:(fun (Label (_, loc)) ->
+            Refs_tbl.add_ref_label
+              refs_tbl
+              ~key:(Label.create ~loc label_name)
+              ~data:label')
+      | _ -> ());
       return
       @@
       let cases =
@@ -1834,6 +1911,7 @@ and cast_items
   =
   let open C in
   let open Let_syntax in
+  let%bind refs_tbl = refs_tbl () in
   match items with
   | [] -> return ([], [])
   | `S_type (v, ty, _) :: sig_ ->
@@ -1841,7 +1919,7 @@ and cast_items
       Error_recovery.raise_or_use_default_opt
         ~error:(signature_not_found_type v)
         ~default:Error_recovery.wildcard_type
-        (Signature.get_type inferred_sig v)
+        (Signature.get_type ~refs_tbl inferred_sig v)
     in
     let%bind sig_, entries = cast_items inferred_sig sig_ in
     let%bind loc = loc () in
@@ -1857,21 +1935,23 @@ and cast_items
         ~error:(signature_not_match_type v ty ty')
         ~default:cast_items'
   | `S_value (v, ty, attr) :: sig_ ->
-    let%bind () =
-      match Signature.get_value inferred_sig v with
-      | Some (ty', attr') ->
+    let%bind v =
+      match
+        Signature.get_value_with_vvar ~should_add_reference:false ~refs_tbl inferred_sig v
+      with
+      | Some (v', ty', attr') ->
         let%bind eq = eq ty ty' in
         if Bool.equal attr.entry attr'.entry && Bool.equal attr.view attr'.view && eq
-        then return ()
+        then return v'
         else
           Error_recovery.raise_or_use_default
             ~error:(signature_not_match_value v ty ty')
-            ~default:(return ())
-      | None when attr.optional -> return ()
+            ~default:(return v')
+      | None when attr.optional -> return v
       | None ->
         Error_recovery.raise_or_use_default
           ~error:(signature_not_found_value v)
-          ~default:(return ())
+          ~default:(return v)
     in
     let%bind sig_, entries = cast_items inferred_sig sig_ in
     let entries = entries @ if attr.entry then [ v ] else [] in
@@ -1896,6 +1976,7 @@ and cast_signature (inferred_sig : Signature.t) (annoted_sig : Signature.t)
   =
   let open C in
   let open Let_syntax in
+  let%bind refs_tbl = refs_tbl () in
   let%bind tvars, items =
     (* TODO: review this *)
     Error_recovery.raise_or_use_default_opt
@@ -1905,10 +1986,19 @@ and cast_signature (inferred_sig : Signature.t) (annoted_sig : Signature.t)
   in
   let instantiate_tvar tvar r =
     let%bind insts, items = r in
-    let%bind type_ =
-      match Signature.get_type inferred_sig tvar with
+    let%bind tvar, type_ =
+      match
+        Signature.get_type_with_tvar
+          ~should_add_reference:false
+          ~refs_tbl
+          inferred_sig
+          tvar
+      with
       | None ->
-        Error_recovery.raise_or_use_default_type ~error:(signature_not_found_type tvar)
+        let%map type_ =
+          Error_recovery.raise_or_use_default_type ~error:(signature_not_found_type tvar)
+        in
+        tvar, type_
       | Some t -> return t
     in
     let%bind loc = loc () in
@@ -2259,8 +2349,8 @@ let loc_of_program =
       Location.(cover_until_file_change acc el.location))
 
 
-let type_program ~raise ~options ?env program =
-  C.run_elab
+let type_program_with_refs ~raise ~options ~refs_tbl ?env program =
+  C.run_elab_with_refs
     (let%map.C signature, program = infer_module program in
      E.(
        let%bind program = program in
@@ -2271,8 +2361,13 @@ let type_program ~raise ~options ?env program =
     ~options
     ~loc:(loc_of_program program)
     ~path:[]
+    ~refs_tbl
     ?env
     ()
+
+
+let type_program ~raise ~options ?env program =
+  type_program_with_refs ~raise ~options ~refs_tbl:(Refs_tbl.create ()) ?env program
 
 
 let type_declaration ~raise ~options ~path ?env decl =
