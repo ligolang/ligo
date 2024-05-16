@@ -1,8 +1,6 @@
 import * as vscode from 'vscode'
 
-import {
-  LanguageClient,
-} from 'vscode-languageclient/node'
+import { LanguageClient, NotificationType } from 'vscode-languageclient/node'
 import { ligoOutput } from './commands/common'
 
 import * as lc from './commands/ligoCommands'
@@ -114,6 +112,10 @@ const LigoCommands = {
     run: async (client: LanguageClient, semanticTokensClient: LanguageClient) => {
       await LigoCommands.StopServer.run(client, semanticTokensClient)
       await LigoCommands.StartServer.run(client, semanticTokensClient)
+      // Notify the server that we have restarted for analytics collection.
+      const notifType = new NotificationType<null>('ligo/analytics/restarted')
+      await client.sendNotification(notifType)
+
     },
     register: (client: LanguageClient, semanticTokensClient: LanguageClient) => vscode.commands.registerCommand(
       LigoCommands.RestartServer.name,

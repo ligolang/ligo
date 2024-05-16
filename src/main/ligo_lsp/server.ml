@@ -45,6 +45,15 @@ type initialize_analytics =
             initialized without opening a LIGO file. *)
   }
 
+(** Collects information about the runtime of LIGO LSP for analytics. *)
+type runtime_analytics =
+  { number_of_crashes_on_keystrokes : int
+        (** The number of times the crash handler ([try_with_crash_handler]) handled a
+            crash. *)
+  ; methods_times : (string, Time_float.Span.t list) Hashtbl.t
+        (** The amount of time each method took to run, each time of its execution. *)
+  }
+
 (** LIGO Language Server class.
 
     This is the main point of interaction beetween the code checking documents (parsing,
@@ -63,7 +72,11 @@ type initialize_analytics =
     [skip_analytics] may be set to [true] to avoid proposing and collecting analytics. If
     [false], analytics may be not necessarily proposed or collected depending on some
     factors, but they won't be forbid altogether. *)
-class lsp_server (capability_mode : capability_mode) ~(skip_analytics : bool) =
+class lsp_server
+  (capability_mode : capability_mode)
+  (runtime_analytics : runtime_analytics ref)
+  ~(session_id : Uuid.t)
+  ~(skip_analytics : bool) =
   object (self)
     inherit Linol_lwt.Jsonrpc2.server as super
 
@@ -117,19 +130,51 @@ class lsp_server (capability_mode : capability_mode) ~(skip_analytics : bool) =
     val mod_res : Preprocessor.ModRes.t option ref = ref None
 
     (** The [Handler.t] monad is used to run requests, but the server class operates in
-        the [IO.t] monad. This method is used to run handlers. *)
-    method run_handler : type a. notify_back_mockable -> a Handler.t -> a IO.t =
-      fun notify_back handler ->
-        Handler.run
-          handler
-          { notify_back
-          ; config
-          ; docs_cache = get_scope_buffers
-          ; last_project_dir
-          ; mod_res
-          ; normalize = self#normalize
-          ; metadata_download_options
-          }
+        the [IO.t] monad. This method is used to run handlers. This method will also
+        record each execution time in [runtime_analytics] naïvely using [Time_float.now]. *)
+    method run_handler
+        : type a.  method_name:string option
+                  -> notify_back_mockable
+                  -> a Handler.t
+                  -> a IO.t =
+      fun ~method_name notify_back handler ->
+        let start_time = Time_float.now () in
+        let result =
+          Handler.run
+            handler
+            { notify_back
+            ; config
+            ; docs_cache = get_scope_buffers
+            ; last_project_dir
+            ; mod_res
+            ; normalize = self#normalize
+            ; metadata_download_options
+            }
+        in
+        let end_time = Time_float.now () in
+        Option.iter method_name ~f:(fun name ->
+            let delta_time = Time_float.abs_diff end_time start_time in
+            Hashtbl.update !runtime_analytics.methods_times name ~f:(function
+                | None -> [ delta_time ]
+                | Some times -> delta_time :: times));
+        result
+
+    (** Increments [number_of_crashes_on_keystrokes] in [runtime_analytics] by 1 if the
+        given exception differs from the previous recorded exception in the crash state. *)
+    method inc_number_of_crashes_on_keystrokes (exn : exn) : unit =
+      let inc () =
+        runtime_analytics
+          := { !runtime_analytics with
+               number_of_crashes_on_keystrokes =
+                 !runtime_analytics.number_of_crashes_on_keystrokes + 1
+             }
+      in
+      (* N.b.: if this function was called, then a crash has just occurred, and so the
+         crash state will contain the state BEFORE it was updated. *)
+      match !crash_state with
+      | No_crash | Pressed_don't_show_again_no_crash -> inc ()
+      | Crashed previous_exn | Pressed_don't_show_again_crashed previous_exn ->
+        if Poly.equal previous_exn exn then () else inc ()
 
     (** Like [on_doc], but directly calls [Requests.on_doc] while handling crashes using
         [Crash.try_with_handler]. We assume that a crash was worked around if we could
@@ -144,12 +189,11 @@ class lsp_server (capability_mode : capability_mode) ~(skip_analytics : bool) =
         (file : Path.t)
         (content : string)
         : unit t =
-      Crash.try_with_handler crash_state ~default:(const ())
-      @@ let%bind.Handler () =
+      Crash.try_with_handler crash_state ~default:self#inc_number_of_crashes_on_keystrokes
+      @@ let%map.Handler () =
            Requests.on_doc ~process_immediately ?changes ~version file content
          in
-         crash_state := Crash.indicate_recovery !crash_state;
-         pass
+         crash_state := Crash.indicate_recovery !crash_state
 
     (** Processes the document cache, taking the [capability_mode] and
         [config.diagnostics_pull_mode] into consideration to avoid doing excessive work.
@@ -173,8 +217,8 @@ class lsp_server (capability_mode : capability_mode) ~(skip_analytics : bool) =
 
     (** Handles the notification for when a document is opened. If the capability mode is
         either [All_capabilities] or [No_semantic_tokens], this method will also generate
-        analytics through [self#generate_lsp_analytics]. The syntax of the analytics will
-        depend on [document.uri].
+        analytics through [self#generate_lsp_initialize_analytics]. The syntax of the
+        analytics will depend on [document.uri].
 
         The sole reason metrics are not fully handled in the [initialize] request is
         because we also want to collect the syntax (if any), which is not available at
@@ -182,7 +226,7 @@ class lsp_server (capability_mode : capability_mode) ~(skip_analytics : bool) =
         request that comes is this, so we finalize adding the data here. *)
     method on_notif_doc_did_open ~notify_back document ~content : unit IO.t =
       let open Handler.Let_syntax in
-      self#run_handler (Normal notify_back)
+      self#run_handler ~method_name:(Some "textDocument/didOpen") (Normal notify_back)
       @@
       let { diagnostics_pull_mode; _ } = config in
       let%bind normalize = ask_normalize in
@@ -207,32 +251,34 @@ class lsp_server (capability_mode : capability_mode) ~(skip_analytics : bool) =
           <- { initialize_analytics with has_initialize_analytics = true; syntax };
         match capability_mode with
         | Only_semantic_tokens -> pass
-        | All_capabilities | No_semantic_tokens -> self#generate_lsp_analytics)
+        | All_capabilities | No_semantic_tokens ->
+          let%bind () = self#propose_analytics_if_applicable in
+          self#generate_lsp_initialize_analytics)
 
-    (** Asks the user whether to accept or deny analytics (if its proposal is applicable),
-        edits the metrics values and pushes them to the Prometheus aggregator. *)
-    method generate_lsp_analytics : unit Handler.t =
-      let%bind.Handler () =
-        Handler.when_ (Analytics.should_propose_analytics ~skip_analytics)
-        @@
-        let yes = "Yes" in
-        let no = "No" in
-        send_message_with_buttons
-          ~message:(Analytics.acceptance_condition ())
-          ~options:[ yes; no ]
-          ~type_:Info
-          ~handler:(function
-            | Ok None -> pass
-            | Ok (Some { title }) ->
-              if String.equal title yes
-              then return @@ Analytics.accept ()
-              else if String.equal title no
-              then return @@ Analytics.deny ()
-              else send_message ~type_:Error @@ Format.sprintf "Unknown option: %s" title
-            | Error err ->
-              send_debug_msg
-              @@ Format.sprintf "Error while collecting analytics: %s" err.message)
-      in
+    (** Asks the user whether to accept or deny analytics (if its proposal is applicable). *)
+    method propose_analytics_if_applicable : unit Handler.t =
+      Handler.when_ (Analytics.should_propose_analytics ~skip_analytics)
+      @@
+      let yes = "Yes" in
+      let no = "No" in
+      send_message_with_buttons
+        ~message:(Analytics.acceptance_condition ())
+        ~options:[ yes; no ]
+        ~type_:Info
+        ~handler:(function
+          | Ok None -> pass
+          | Ok (Some { title }) ->
+            if String.equal title yes
+            then return @@ Analytics.accept ()
+            else if String.equal title no
+            then return @@ Analytics.deny ()
+            else send_message ~type_:Error @@ Format.sprintf "Unknown option: %s" title
+          | Error err ->
+            send_debug_msg
+            @@ Format.sprintf "Error while collecting analytics: %s" err.message)
+
+    (** Edits the initialize metrics values and pushes them to the Prometheus aggregator. *)
+    method generate_lsp_initialize_analytics : unit Handler.t =
       let%bind.Handler project_root = Handler.map ~f:( ! ) Handler.ask_last_project_dir in
       Analytics.set_project_root @@ Option.map ~f:Path.to_string project_root;
       let { has_initialize_analytics = _; ide_info; syntax } = initialize_analytics in
@@ -246,7 +292,7 @@ class lsp_server (capability_mode : capability_mode) ~(skip_analytics : bool) =
           Option.value ide_info ~default:{ version = None; name = "Unknown" }
         in
         let ide_version = Option.value version ~default:"Unknown" in
-        Analytics.generate_lsp_initialize_metrics ~syntax ~ide ~ide_version ()
+        Analytics.generate_lsp_initialize_metrics ~syntax ~ide ~ide_version ~session_id ()
       in
       Analytics.edit_metrics_values metrics;
       lift_io @@ Analytics.push_collected_metrics ~skip_analytics
@@ -260,7 +306,7 @@ class lsp_server (capability_mode : capability_mode) ~(skip_analytics : bool) =
         ~new_content
         : unit IO.t =
       let open Handler.Let_syntax in
-      self#run_handler (Normal notify_back)
+      self#run_handler ~method_name:(Some "textDocument/didChange") (Normal notify_back)
       @@ let%bind normalize = ask_normalize in
          let file = DocumentUri.to_path ~normalize document.uri in
          self#on_doc ~changes ~version:(`New document.version) file new_content
@@ -595,7 +641,7 @@ class lsp_server (capability_mode : capability_mode) ~(skip_analytics : bool) =
           -> server_request:Linol_lwt.Jsonrpc2.send_request
           -> Client_notification.t
           -> unit IO.t =
-      fun ~notify_back ~server_request ->
+      fun ~notify_back ~server_request notif ->
         let new_notify_back =
           new Linol_lwt.Jsonrpc2.notify_back
             ~notify_back
@@ -604,12 +650,13 @@ class lsp_server (capability_mode : capability_mode) ~(skip_analytics : bool) =
             ~partialResultToken:None
             ()
         in
-        let notif_run_handler action =
+        let notif_run_handler (action : 'a Handler.t) : unit IO.t =
+          let method_ = (Client_notification.to_jsonrpc notif).method_ in
           (* Cannot eta-reduce, mutable `config` must be taken upon `action` run *)
-          self#run_handler (Normal new_notify_back) @@ action
+          self#run_handler ~method_name:(Some method_) (Normal new_notify_back) action
         in
         let ( let* ) = IO.( let* ) in
-        function
+        match notif with
         | Client_notification.Initialized ->
           (match client_capabilities.workspace with
           | None -> IO.return ()
@@ -784,20 +831,23 @@ class lsp_server (capability_mode : capability_mode) ~(skip_analytics : bool) =
               new_notify_back#send_log_msg ~type_:MessageType.Log
               @@ Format.asprintf "Processing saved doc: %a" Path.pp path
             in
-            let new_notify_back =
-              Normal
-                (new Linol_lwt.Jsonrpc2.notify_back
-                   ~uri
-                   ~notify_back
-                   ~server_request
-                   ~workDoneToken:None
-                   ~partialResultToken:None
-                   ())
-            in
-            self#run_handler new_notify_back
-            @@ Crash.try_with_handler crash_state ~default:(const ())
+            notif_run_handler
+            @@ Crash.try_with_handler
+                 crash_state
+                 ~default:self#inc_number_of_crashes_on_keystrokes
             @@ process_doc path)
         | notification -> super#on_notification ~notify_back ~server_request notification
+
+    method! on_unknown_notification
+        : notify_back:Linol_lwt.Jsonrpc2.notify_back
+          -> Jsonrpc.Notification.t
+          -> unit IO.t =
+      fun ~notify_back ({ method_; params = _ } as notif) ->
+        match method_ with
+        | "ligo/analytics/restarted" ->
+          Analytics.edit_metrics_values (Analytics.generate_lsp_restart_metrics ());
+          Analytics.push_collected_metrics ~skip_analytics
+        | _ -> super#on_unknown_notification ~notify_back notif
 
     (** Handles a LSP request from the client to the server. This method will
         avoid running methods that have been disabled by the user, returning a
@@ -813,6 +863,19 @@ class lsp_server (capability_mode : capability_mode) ~(skip_analytics : bool) =
       fun ~notify_back ~server_request ~id (r : r Client_request.t) ->
         let open Handler.Let_syntax in
         let normalize = self#normalize in
+        let method_ = (Client_request.to_jsonrpc_request r ~id).method_ in
+        let run_handler ?(uri : DocumentUri.t option) : r Handler.t -> r IO.t =
+          self#run_handler
+            ~method_name:(Some method_)
+            (Normal
+               (new Linol_lwt.Jsonrpc2.notify_back
+                  ~notify_back
+                  ~server_request
+                  ~workDoneToken:None
+                  ~partialResultToken:None
+                  ?uri
+                  ()))
+        in
         let run
             ?(allowed_modes : capability_mode list = default_modes)
             ~(uri : DocumentUri.t)
@@ -820,7 +883,6 @@ class lsp_server (capability_mode : capability_mode) ~(skip_analytics : bool) =
             (handler : r Handler.t)
             : r IO.t
           =
-          let method_ = (Client_request.to_jsonrpc_request r ~id).method_ in
           (* If the project root changed, let's repopulate the cache by deleting existing info and
              running [Requests.on_doc] again. *)
           let repopulate_cache : unit Handler.t =
@@ -846,32 +908,13 @@ class lsp_server (capability_mode : capability_mode) ~(skip_analytics : bool) =
           in
           if self#is_request_enabled method_
              && List.mem ~equal:equal_capability_mode allowed_modes capability_mode
-          then (
-            let new_notify_back =
-              Normal
-                (new Linol_lwt.Jsonrpc2.notify_back
-                   ~uri
-                   ~notify_back
-                   ~server_request
-                   ~workDoneToken:None
-                   ~partialResultToken:None
-                   ())
-            in
-            self#run_handler new_notify_back
-            @@ Crash.try_with_handler crash_state ~default:(const default)
-            @@ Handler.(repopulate_cache >>= fun () -> handler))
+          then
+            run_handler ~uri
+            @@ Crash.try_with_handler crash_state ~default:(fun exn ->
+                   self#inc_number_of_crashes_on_keystrokes exn;
+                   default)
+            @@ Handler.(repopulate_cache >>= fun () -> handler)
           else IO.return default
-        in
-        let run_command (handler : r Handler.t) : r IO.t =
-          self#run_handler
-            (Normal
-               (new Linol_lwt.Jsonrpc2.notify_back
-                  ~notify_back
-                  ~server_request
-                  ~workDoneToken:None
-                  ~partialResultToken:None
-                  ()))
-            handler
         in
         match r with
         | Client_request.DocumentSymbol { textDocument; _ } ->
@@ -953,7 +996,7 @@ class lsp_server (capability_mode : capability_mode) ~(skip_analytics : bool) =
                (DocumentUri.to_path ~normalize uri)
                range
         | Client_request.ExecuteCommand { command; arguments; _ } ->
-          run_command @@ Requests.on_execute_command ~command ?arguments ()
+          run_handler @@ Requests.on_execute_command ~command ?arguments ()
         | Client_request.TextDocumentCodeLens { textDocument; _ } ->
           let uri = textDocument.uri in
           run ~allowed_modes:[ All_capabilities; No_semantic_tokens ] ~uri ~default:[]
