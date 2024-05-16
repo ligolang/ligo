@@ -4,6 +4,7 @@ open Types
 module LMap = Types.LMap
 module Pattern = Ast_typed.Pattern
 module Env = Env.Env_map
+module Refs_tbl = Checking.Refs_tbl
 
 type t =
   { type_cases : type_case LMap.t
@@ -11,11 +12,13 @@ type t =
   ; lambda_cases : Ast_typed.ty_expr LMap.t
   ; module_signatures : signature_case LMap.t
   ; module_env : Env.t
+  ; refs_tbl : Refs_tbl.t
   }
 
 (** For debugging. *)
 let[@warning "-32"] pp : t Fmt.t =
- fun ppf { type_cases; module_signatures; module_env; label_cases; lambda_cases } ->
+ fun ppf
+     { type_cases; module_signatures; module_env; label_cases; lambda_cases; refs_tbl } ->
   Format.fprintf
     ppf
     "{ type_cases: %a\n\
@@ -23,6 +26,7 @@ let[@warning "-32"] pp : t Fmt.t =
      ; lambda_cases: %a\n\
      ; module_signatures: %a\n\
      ; module_env: %a\n\
+     ; refs_tbl: %a\n\
      }"
     Fmt.Dump.(list (pair Location.pp PP.type_case))
     (Map.to_alist type_cases)
@@ -34,6 +38,8 @@ let[@warning "-32"] pp : t Fmt.t =
     (Map.to_alist module_signatures)
     Env.pp
     module_env
+    Checking.Refs_tbl.pp
+    refs_tbl
 
 
 let empty (module_env : Env.t) =
@@ -42,6 +48,7 @@ let empty (module_env : Env.t) =
   ; lambda_cases = LMap.empty
   ; module_signatures = LMap.empty
   ; module_env
+  ; refs_tbl = Checking.Refs_tbl.create ()
   }
 
 
@@ -773,7 +780,11 @@ module Typing_env = struct
     match
       Simple_utils.Trace.to_stdlib_result ~fast_fail:No_fast_fail
       @@ Simple_utils.Trace.trace Main_errors.checking_tracer
-      @@ Checking.type_program ~options ~env:stdlib_env prg
+      @@ Checking.type_program_with_refs
+           ~options
+           ~refs_tbl:bindings.refs_tbl
+           ~env:stdlib_env
+           prg
     with
     | Ok (({ pr_module; pr_sig = _ } as prg), es, ws) ->
       let bindings, es, ws =
@@ -898,19 +909,38 @@ let resolve
 
 let rec patch : t -> Types.def list -> Types.def list =
  fun bindings defs ->
+  let refs = bindings.refs_tbl in
+  let patch = patch bindings in
   List.map defs ~f:(function
       | Variable v ->
-        (match v.t, Map.find bindings.type_cases v.range with
-        | Unresolved, Some t -> Types.Variable { v with t }
-        | _ -> Variable v)
-      | Type t -> Type t
+        (* Such approach slightly violates passes purpose
+           but let's update references and types in one traversal. *)
+        let v =
+          match v.t, Map.find bindings.type_cases v.range with
+          | Unresolved, Some t -> { v with t }
+          | _ -> v
+        in
+        let v =
+          match Refs_tbl.get_value_refs refs ~key:v.range with
+          | None -> v
+          | Some references -> { v with references }
+        in
+        Variable v
+      | Type t ->
+        (match Refs_tbl.get_type_refs refs ~key:t.range with
+        | None -> Type t
+        | Some references -> Type { t with references })
+      | Label l ->
+        (match Refs_tbl.get_label_refs refs ~key:l.range with
+        | None -> Label l
+        | Some references -> Label { l with references })
       | Module m ->
         let patch_mod_case = function
           | Alias _ as alias -> alias
-          | Def defs -> Def (patch bindings defs)
+          | Def defs -> Def (patch defs)
         in
         let patch_implementation = function
-          | Ad_hoc_signature defs -> Ad_hoc_signature (patch bindings defs)
+          | Ad_hoc_signature defs -> Ad_hoc_signature (patch defs)
           | Standalone_signature_or_module _ as path -> path
         in
         let m =
@@ -918,9 +948,13 @@ let rec patch : t -> Types.def list -> Types.def list =
           | Unresolved, Some signature -> { m with signature }
           | _ -> m
         in
+        let m =
+          match Refs_tbl.get_module_refs refs ~key:m.range with
+          | None -> m
+          | Some references -> { m with references }
+        in
         Module
           { m with
             mod_case = patch_mod_case m.mod_case
           ; implements = List.map ~f:patch_implementation m.implements
-          }
-      | Label l -> Label l)
+          })

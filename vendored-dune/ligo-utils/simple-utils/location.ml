@@ -44,6 +44,17 @@ let compare a b =
 
 let equal a b = compare a b = 0
 
+module Location_elt = struct
+  type nonrec t = t
+
+  let compare = compare
+  let t_of_sexp = t_of_sexp
+  let sexp_of_t = sexp_of_t
+end
+
+module Location_set = Core.Set.Make (Location_elt)
+module Location_map = Core.Map.Make (Location_elt)
+
 let make (start_pos : Lexing.position) (end_pos : Lexing.position) : t =
   File (Region.make ~start:(Pos.from_byte start_pos) ~stop:(Pos.from_byte end_pos))
 

@@ -39,7 +39,15 @@ val set_poly_name_tbl
   -> ('a, 'err, 'wrn) t
   -> ('a, 'err, 'wrn) t
 
-(** {4 Error Handling} *)
+(** {4 Table with references} *)
+
+(** [refs_tbl ()] returns a table with references. *)
+val refs_tbl : unit -> (Context.Refs_tbl.t, 'err, 'wrn) t
+
+(** [set_refs_tbl refs_tbl t] sets the current table with references to [refs_tbl] in computation [t]. *)
+val set_refs_tbl : Context.Refs_tbl.t -> ('a, 'err, 'wrn) t -> ('a, 'err, 'wrn) t
+
+(** {5 Error Handling} *)
 
 (** [lift_raise f] lifts f (which may raise an error/warning) to a computation. *)
 val lift_raise : (('err, 'wrn) raise -> 'a) -> ('a, 'err, 'wrn) t
@@ -95,7 +103,7 @@ val try_all
   :  ('a, ([> `Typer_corner_case of string * Location.t ] as 'err), 'wrn) t list
   -> ('a, 'err, 'wrn) t
 
-(** {5 Compiler Options} *)
+(** {6 Compiler Options} *)
 
 (** [options ()] returns the compiler computations. *)
 val options : unit -> (Compiler_options.middle_end, 'err, 'wrn) t
@@ -119,7 +127,7 @@ module Options : sig
   val array_as_list : unit -> (bool, 'err, 'wrn) t
 end
 
-(** {6 Context} *)
+(** {7 Context} *)
 
 module Context_ = Context
 
@@ -325,7 +333,7 @@ val generalize
   :  (Type.t * 'a, 'err, 'wrn) t
   -> (Type.t * (Type_var.t * Kind.t) list * 'a, 'err, 'wrn) t
 
-(** {7 Unification and Subtyping} *)
+(** {9 Unification and Subtyping} *)
 
 (** [unify_texists tvar type_] unifies the existential (unification) variable [tvar] with the type [type_]. *)
 val unify_texists : Type_var.t -> Type.t -> (unit, [> Errors.local_unify_error ], 'wrn) t
@@ -422,7 +430,7 @@ module With_frag : sig
   val run : ('a, 'err, 'wrn) t -> (fragment * 'a, 'err, 'wrn) e
 end
 
-(** {9 Execution} *)
+(** {10 Execution} *)
 
 (** This section defines functions related to running computations. *)
 
@@ -438,6 +446,22 @@ val encode_signature
   -> Ast_typed.signature
   -> Context.Signature.t
 
+(** [run_elab_with_refs comp ~raise ~options ~loc ~refs_tbl ~env] runs and elaborates the
+    computation [comp] with the handler provided by [~raise], compiler options [~options],
+    table with references [~refs_tbl], and initial environment [~env].
+    In addition to the result of [comp], it will also fill [~refs_tbl] with references
+    collected during the elaboration. *)
+val run_elab_with_refs
+  :  ('a Elaboration.t, Errors.typer_error, Main_warnings.all) t
+  -> raise:(Errors.typer_error, Main_warnings.all) raise
+  -> options:Compiler_options.middle_end
+  -> loc:Location.t
+  -> path:Module_var.t list
+  -> refs_tbl:Context_.Refs_tbl.t
+  -> ?env:Ast_typed.signature
+  -> unit
+  -> 'a
+
 (** [run_elab comp ~raise ~options ~loc ~env] runs and elaborates the computation [comp] with the handler
     provided by [~raise], compiler options [~options] and initial environment [~env]. *)
 val run_elab
@@ -450,7 +474,7 @@ val run_elab
   -> unit
   -> 'a
 
-(** {10 Error Recovery} *)
+(** {11 Error Recovery} *)
 
 (** This section defines the [Error_recovery] module, whose functions define helpers to
     allow the typer to recover from failures, used by the language server. *)

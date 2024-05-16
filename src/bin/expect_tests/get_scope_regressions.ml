@@ -116,6 +116,7 @@ let%expect_test _ =
     ; "dev"
     ; "--with-types"
     ; "--no-stdlib"
+    ; "--typer-error-recovery"
     ];
   [%expect
     {|

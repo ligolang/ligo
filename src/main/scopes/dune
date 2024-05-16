@@ -4,10 +4,8 @@
  (instrumentation
   (backend bisect_ppx))
  (preprocess
-  (pps ppx_jane))
- ; For profiling
- ; (preprocess
- ;  (pps ppx_here ppx_let ppx_jane landmarks-ppx --auto))
+  ; For benchmarking add "landmarks-ppx" to the "pps" stanza.
+  (pps ppx_here ppx_let ppx_jane))
  (libraries
   main_errors
   ligo_compile

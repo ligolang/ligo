@@ -12,6 +12,7 @@ type t =
   ; module_signatures : Types.signature_case LMap.t
         (** A map relating locations of each module definition to their signatures. *)
   ; module_env : Env.Env_map.t (** A module environment used to resolve module paths. *)
+  ; refs_tbl : Checking.Refs_tbl.t (** A hashtable with references. *)
   }
 
 (** Creates an empty [t], using the provided module environment. *)
@@ -41,6 +42,7 @@ module Of_Ast_core : sig
     -> t
 end
 
-(** Maps each definition, replacing each [vdef]'s [type_case] and [mdef]'s
+(** Maps each definition, appropriately updating the [references] field to contain all
+    references found in [declarations] and replacing each [vdef]'s [type_case] and [mdef]'s
     [signature_case] with the annotated/inferred types/signatures, if available. *)
 val patch : t -> Types.def list -> Types.def list
