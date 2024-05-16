@@ -1,0 +1,7 @@
+
+author: DK318
+description: "Improved performance for LSP.\\n\\nThe LSP should now take less time between keystrokes.\\n\\nThis is done by stripping the references pass and moving their collection to the type checker.\\n\\n\\n"
+merge_request: '3170'
+title: "[#2143] Strip references pass and collect them in checking"
+type: performance
+            
