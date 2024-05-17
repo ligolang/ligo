@@ -50,8 +50,6 @@ end = struct
                aliases)
 end
 
-let is_dev = ref true
-
 let file_type =
   Core.Command.Arg_type.create Fn.id ~complete:(fun _ ~part ->
       let completions =
@@ -3658,6 +3656,4 @@ let run ?argv () =
   match !return with
   | Done -> 0
   | Compileur_Error -> 1
-  | Exception exn ->
-    ignore is_dev;
-    raise exn
+  | Exception exn -> raise exn
