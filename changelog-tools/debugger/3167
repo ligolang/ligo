@@ -1,0 +1,7 @@
+
+author: heitor.toledo
+description: "\\nAdded analytics to the launch of the debugger (only if the user has agreed to let LIGO collect them).\\n\\n"
+merge_request: '3167'
+title: "[#2183] Add analytics to the debugger"
+type: added
+            
