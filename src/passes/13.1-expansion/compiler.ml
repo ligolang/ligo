@@ -15,7 +15,10 @@ let rec compile_expression : I.expression -> O.expression =
   let self = compile_expression in
   let return : O.expression_content -> O.expression =
    fun expression_content ->
-    { expression_content; type_expression = exp.type_expression; location = exp.location }
+    { expression_content
+    ; type_expression = compile_type exp.type_expression
+    ; location = exp.location
+    }
   in
   match exp.expression_content with
   | E_matching { matchee; cases } ->
@@ -25,6 +28,7 @@ let rec compile_expression : I.expression -> O.expression =
       { let_binder = { wrap_content = P_var let_binder; _ }; rhs; let_result; attributes }
     ->
     (* if lhs is a simple pattern, we do not bother executing Pattern_matching *)
+    let let_binder = Binder.map compile_type let_binder in
     let rhs = self rhs in
     let let_result = self let_result in
     return (O.E_let_in { let_binder; rhs; let_result; attributes })
@@ -40,6 +44,7 @@ let rec compile_expression : I.expression -> O.expression =
       { let_binder = { wrap_content = P_var let_binder; _ }; rhs; let_result; attributes }
     ->
     (* if lhs is a simple pattern, we do not bother executing Pattern_matching *)
+    let let_binder = Binder.map compile_type let_binder in
     let rhs = self rhs in
     let let_result = self let_result in
     return (O.E_let_mut_in { let_binder; rhs; let_result; attributes })
@@ -70,15 +75,16 @@ let rec compile_expression : I.expression -> O.expression =
     return (O.E_application { lamb = a; args = b })
   | E_type_inst { forall; type_ } ->
     let forall = self forall in
+    let type_ = compile_type type_ in
     return (O.E_type_inst { forall; type_ })
   | E_lambda l ->
-    let l = Lambda.map self Fn.id l in
+    let l = Lambda.map self compile_type l in
     return (O.E_lambda l)
   | E_type_abstraction ta ->
     let ta = Type_abs.map self ta in
     return (O.E_type_abstraction ta)
   | E_recursive r ->
-    let r = Recursive.map self Fn.id r in
+    let r = Recursive.map self compile_type r in
     return (O.E_recursive r)
   | E_constant c ->
     let c = Constant.map self c in
@@ -87,7 +93,7 @@ let rec compile_expression : I.expression -> O.expression =
     let code = self code in
     return (O.E_raw_code { language; code })
   | E_assign a ->
-    let a = Assign.map self Fn.id a in
+    let a = Assign.map self compile_type a in
     return (O.E_assign a)
   | E_for f ->
     let f = For_loop.map self f in
@@ -104,6 +110,29 @@ let rec compile_expression : I.expression -> O.expression =
   | E_coerce { anno_expr; _ } -> self anno_expr
 
 
+and compile_type : I.type_expression -> O.type_expression =
+ fun ty ->
+  let self = compile_type in
+  let return type_content : O.type_expression =
+    { type_content
+    ; orig_var = Option.map ty.abbrev ~f:(fun { orig_var = _, v; _ } -> v)
+    ; location = ty.location
+    ; source_type = Some ty
+    }
+  in
+  match ty.type_content with
+  | T_variable x -> return (T_variable x)
+  | T_exists _ -> Decision_tree.corner_case "Cannot compile T_exists" __LOC__ ()
+  | T_constant { language; injection; parameters } ->
+    return (T_constant { language; injection; parameters = List.map parameters ~f:self })
+  | T_sum (r, _) -> return (T_sum (I.Row.map self r))
+  | T_record r -> return (T_record (I.Row.map self r))
+  | T_arrow x -> return (T_arrow (Arrow.map self x))
+  | T_singleton x -> return (T_singleton x)
+  | T_abstraction x -> return (T_for_all (Abstraction.map self x))
+  | T_for_all x -> return (T_for_all (Abstraction.map self x))
+
+
 and compile_matching
     :  loc:Location.t -> ?attributes:O.ValueAttr.t -> mut:bool -> O.expression
     -> (I.expression, I.type_expression) I.Match_expr.match_case list -> O.expression
@@ -116,6 +145,7 @@ and compile_matching
   let match_expr =
     let cases =
       List.map cases ~f:(fun { pattern; body } ->
+          let pattern = Linear_pattern.map compile_type pattern in
           let body = compile_expression body in
           I.Match_expr.{ pattern; body })
     in
@@ -145,7 +175,7 @@ a := a + 1 ;
 |--compile_matching-->
 ```
   let mut (a,b) = <matchee> in
-  let () = assign a (a + 1) in 
+  let () = assign a (a + 1) in
   <..>
 ```
 |--destruct_mut_let_in-->
@@ -154,7 +184,7 @@ a := a + 1 ;
   | (a,b) ->
     let mut a = a in
     let mut b = b in
-    let () = assign a (a + 1) in 
+    let () = assign a (a + 1) in
     <...>
 ```
 TODO: warn if tickets in <matchee>

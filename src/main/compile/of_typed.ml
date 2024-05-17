@@ -38,12 +38,6 @@ let compile_expression_in_context
   in
   let exp =
     Option.value_map contract_info ~default:exp ~f:(fun { storage; parameter } ->
-        let parameter, storage =
-          trace ~raise aggregation_tracer
-          @@ fun ~raise ->
-          ( Aggregation.compile_type ~raise parameter
-          , Aggregation.compile_type ~raise storage )
-        in
         trace ~raise self_ast_aggregated_tracer
         @@ Self_ast_aggregated.all_contract ~options parameter storage exp)
   in
@@ -56,12 +50,6 @@ let compile_expression ~raise ~options : Ast_typed.expression -> Ast_aggregated.
  fun e ->
   let x = trace ~raise aggregation_tracer @@ compile_expression e in
   trace ~raise self_ast_aggregated_tracer @@ Self_ast_aggregated.all_expression ~options x
-
-
-let compile_type_expression ~raise ~options
-    : Ast_typed.type_expression -> Ast_aggregated.type_expression
-  =
- fun e -> trace ~raise aggregation_tracer @@ compile_type_expression e
 
 
 let apply_to_entrypoint_with_contract_type ~raise ~options

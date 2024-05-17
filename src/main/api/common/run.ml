@@ -141,7 +141,9 @@ let dry_run
       in
       ( Decompile.Of_michelson.decompile_value_from_contract_execution
           ~raise
-          aggregated_prg.type_expression
+          (Compile.Of_aggregated.compile_type_expression
+             ~raise
+             aggregated_prg.type_expression)
           runres
       , [] ) )
 
@@ -174,6 +176,7 @@ let interpret
       let%map runres =
         Run.run_expression ~raise ~options expression.expr expression.expr_ty
       in
+      let ast_type = Compile.Of_aggregated.compile_type_expression ~raise ast_type in
       Decompile.Of_michelson.decompile_expression ~raise ast_type runres, [] )
 
 
@@ -250,7 +253,9 @@ let evaluate_call
       in
       ( Decompile.Of_michelson.decompile_expression
           ~raise
-          app_aggregated.type_expression
+          (Compile.Of_aggregated.compile_type_expression
+             ~raise
+             app_aggregated.type_expression)
           runres
       , [] ) )
 
@@ -283,4 +288,5 @@ let evaluate_expr
       let%map runres =
         Run.run_expression ~raise ~options expression.expr expression.expr_ty
       in
+      let ast_type = Compile.Of_aggregated.compile_type_expression ~raise ast_type in
       Decompile.Of_michelson.decompile_expression ~raise ast_type runres, [] )

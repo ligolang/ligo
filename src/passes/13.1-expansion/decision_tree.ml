@@ -50,7 +50,7 @@ module Label = Ligo_prim.Label
 module Record = Ligo_prim.Record
 module I = Ast_aggregated
 module O = Ast_expanded
-module C = Ast_aggregated.Combinators
+module C = Ast_expanded.Combinators
 module ConstructorSet = Core.Set (* Label *)
 module ConstructorMap = Core.Map (* Label *)
 
@@ -121,8 +121,7 @@ let get_number_of_fields : O.type_expression -> int =
 let rec n_vars ~loc n =
   if n = 0
   then []
-  else
-    SP_Var (Value_var.fresh ~loc (), I.Combinators.t_unit ~loc ()) :: n_vars ~loc (n - 1)
+  else SP_Var (Value_var.fresh ~loc (), C.t_unit ~loc ()) :: n_vars ~loc (n - 1)
 
 
 let empty_label = Label.of_string ""
@@ -260,11 +259,11 @@ let get_variant_nested_type c ty =
     if C.is_t_list ty
     then
       if Label.equal c cons_label
-      then
-        C.t_record
-          ~loc:Location.generated
-          (I.Row.create_tuple [ Option.value_exn ~here:[%here] @@ C.get_t_list ty; ty ])
-          ()
+      then (
+        let row =
+          O.Row.create_tuple [ Option.value_exn ~here:[%here] @@ C.get_t_list ty; ty ]
+        in
+        C.make_t ~loc:Location.generated (T_record row))
       else C.t_unit ~loc:Location.generated ()
     else corner_case "can't get nested type of non variant" __LOC__ ()
 

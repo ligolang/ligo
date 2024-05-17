@@ -122,7 +122,7 @@ let rec value_gen
   else if is_t_sum type_expr
   then (
     match get_t_sum_opt type_expr with
-    | Some rows ->
+    | Some (rows, _) ->
       let l = Record.to_list rows.fields in
       let gens =
         List.map

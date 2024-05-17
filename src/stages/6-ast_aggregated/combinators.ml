@@ -29,7 +29,7 @@ type type_content = [%import: Types.type_content]
     { prefixes =
         [ ( "make_t"
           , fun ~loc ?source_type type_content : type_expression ->
-              { type_content; location = loc; orig_var = None; source_type } )
+              { type_content; location = loc; abbrev = None; source_type } )
         ; ("get", fun x -> x.type_content)
         ]
     ; wrap_constructor =
@@ -116,13 +116,17 @@ let t_unforged_ticket ~loc ty : type_expression =
     ]
 
 
-let t_sum_ez ~loc ?(layout = default_layout) (lst : (string * type_expression) list)
+let t_sum_ez
+    ~loc
+    ?(layout = default_layout)
+    ?orig_name
+    (lst : (string * type_expression) list)
     : type_expression
   =
   let lst = List.map ~f:(fun (name, t) -> Label.of_string name, t) lst in
   let layout = layout @@ fields_with_no_annot lst in
   let map = Row.of_alist_exn ~layout lst in
-  make_t ~loc (T_sum map)
+  make_t ~loc (T_sum (map, orig_name))
 
 
 let t_bool ~loc () : type_expression =
@@ -139,7 +143,7 @@ let t_arrow param result ~loc ?source_type ?(param_names = []) () : type_express
 
 let get_t_bool (t : type_expression) : unit option =
   match t.type_content with
-  | T_sum { fields; _ } ->
+  | T_sum ({ fields; _ }, _) ->
     let keys = Map.key_set fields in
     if Set.length keys = 2
        && Set.mem keys (Label.T.create "True")
@@ -153,7 +157,7 @@ let get_t_option (t : type_expression) : type_expression option =
   let l_none = Label.of_string "None" in
   let l_some = Label.of_string "Some" in
   match t.type_content with
-  | T_sum { fields; _ } ->
+  | T_sum ({ fields; _ }, _) ->
     let keys = Record.labels fields in
     (match keys with
     | [ a; b ]
@@ -483,7 +487,7 @@ let get_variant_field_type (t : type_expression) (label : Label.t)
   =
   match get_t_sum_opt t with
   | None -> None
-  | Some struct_ -> Record.find_opt struct_.fields label
+  | Some (struct_, _) -> Record.find_opt struct_.fields label
 
 
 let get_type_abstractions (e : expression) =

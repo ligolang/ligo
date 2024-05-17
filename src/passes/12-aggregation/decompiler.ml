@@ -6,10 +6,7 @@ let rec decompile : I.expression -> O.expression =
  fun exp ->
   let decompile_value_attr : I.ValueAttr.t -> O.ValueAttr.t = fun x -> x in
   let return expression_content : O.expression =
-    { expression_content
-    ; location = exp.location
-    ; type_expression = decompile_type exp.type_expression
-    }
+    { expression_content; location = exp.location; type_expression = exp.type_expression }
   in
   match exp.expression_content with
   | E_literal l -> return (O.E_literal l)
@@ -22,8 +19,6 @@ let rec decompile : I.expression -> O.expression =
     let lamb = decompile lamb in
     return (O.E_application { lamb; args })
   | E_lambda { binder; output_type; result } ->
-    let binder = Param.map decompile_type binder in
-    let output_type = decompile_type output_type in
     let result = decompile result in
     return (O.E_lambda { binder; output_type; result })
   | E_type_abstraction { type_binder; result } ->
@@ -31,24 +26,19 @@ let rec decompile : I.expression -> O.expression =
     return (O.E_type_abstraction { type_binder; result })
   | E_recursive
       { fun_name; fun_type; lambda = { binder; output_type; result }; force_lambdarec } ->
-    let fun_type = decompile_type fun_type in
     let result = decompile result in
-    let output_type = decompile_type output_type in
-    let binder = Param.map decompile_type binder in
     return
       (O.E_recursive
          { fun_name; fun_type; lambda = { binder; output_type; result }; force_lambdarec })
   | E_let_in { let_binder; rhs; let_result; attributes } ->
     let rhs = decompile rhs in
     let let_result = decompile let_result in
-    let let_binder = I.Pattern.map decompile_type let_binder in
     let attributes = decompile_value_attr attributes in
     return (O.E_let_in { let_binder; rhs; let_result; attributes })
   | E_raw_code { language; code } ->
     let code = decompile code in
     return (O.E_raw_code { language; code })
   | E_type_inst { forall; type_ } ->
-    let type_ = decompile_type type_ in
     let forall = decompile forall in
     return (O.E_type_inst { forall; type_ })
   (* Variant *)
@@ -73,16 +63,13 @@ let rec decompile : I.expression -> O.expression =
   | I.E_let_mut_in { let_binder; rhs; let_result; attributes } ->
     let rhs = decompile rhs in
     let let_result = decompile let_result in
-    let let_binder = I.Pattern.map decompile_type let_binder in
     let attributes = decompile_value_attr attributes in
     return (O.E_let_mut_in { let_binder; rhs; let_result; attributes })
   | I.E_deref var -> return (O.E_deref var)
   | I.E_assign { binder; expression } ->
-    let binder = Binder.map decompile_type binder in
     let expression = decompile expression in
     return @@ O.E_assign { binder; expression }
   | I.E_coerce { anno_expr; type_annotation } ->
-    let type_annotation = decompile_type type_annotation in
     let anno_expr = decompile anno_expr in
     return @@ O.E_coerce { anno_expr; type_annotation }
   | I.E_for for_loop ->
@@ -96,36 +83,6 @@ let rec decompile : I.expression -> O.expression =
     return @@ O.E_while while_loop
 
 
-and decompile_type : I.type_expression -> O.type_expression =
- fun ty ->
-  let return type_content : O.type_expression =
-    { type_content
-    ; location = ty.location
-    ; abbrev =
-        Option.map ty.orig_var ~f:(fun v -> O.{ orig_var = [], v; applied_types = [] })
-    }
-  in
-  match ty.type_content with
-  | T_variable v -> return (O.T_variable v)
-  | T_constant { language; injection; parameters } ->
-    let parameters = List.map ~f:decompile_type parameters in
-    return (O.T_constant { language; injection; parameters })
-  | T_sum { fields; layout } ->
-    let fields = Record.map ~f:decompile_type fields in
-    return (O.T_sum ({ fields; layout }, None))
-  | T_record { fields; layout } ->
-    let fields = Record.map ~f:decompile_type fields in
-    return (O.T_record { fields; layout })
-  | T_arrow { type1; type2; param_names } ->
-    let type1 = decompile_type type1 in
-    let type2 = decompile_type type2 in
-    return (O.T_arrow { type1; type2; param_names })
-  | T_singleton l -> return (O.T_singleton l)
-  | T_for_all { ty_binder; kind; type_ } ->
-    let type_ = decompile_type type_ in
-    return (O.T_for_all { ty_binder; kind; type_ })
-
-
 and decompile_match_expr
     :  (I.expression, I.type_expression) I.Match_expr.t
     -> (O.expression, O.type_expression) O.Match_expr.t
@@ -134,7 +91,6 @@ and decompile_match_expr
   let matchee = decompile matchee in
   let cases =
     List.map cases ~f:(fun { pattern; body } ->
-        let pattern = I.Pattern.map decompile_type pattern in
         let body = decompile body in
         O.Match_expr.{ pattern; body })
   in

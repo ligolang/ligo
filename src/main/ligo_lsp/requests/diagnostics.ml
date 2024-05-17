@@ -74,6 +74,14 @@ let filter_diagnostics : Main_errors.all list -> Main_errors.all list =
         | `Aggregation_cannot_compile_texists _
         | `Aggregation_cannot_compile_erroneous_expression _ -> false
         | _ -> true)
+      | `Self_ast_aggregated_tracer e ->
+        (match e with
+        | `Self_ast_aggregated_unexpected_texists _ -> false
+        | _ -> true)
+      | `Expansion_tracer e ->
+        (match e with
+        | `Expansion_cannot_compile_texists _ -> false
+        | _ -> true)
       | _ -> true)
 
 

@@ -42,6 +42,8 @@ and type_expression =
   { type_content : type_content
   ; abbrev : abbrev option [@equal.ignore] [@hash.ignore] [@compare.ignore]
   ; location : Location.t [@equal.ignore] [@hash.ignore] [@compare.ignore]
+  ; source_type : type_expression option [@equal.ignore] [@compare.ignore] [@hash.ignore]
+        (* Used in Ast_aggregated *)
   }
 
 and ty_expr = type_expression [@@deriving equal, compare, yojson, hash]

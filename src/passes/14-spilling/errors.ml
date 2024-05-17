@@ -10,7 +10,7 @@ type spilling_error =
   | `Spilling_no_type_variable of Type_var.t
   | `Spilling_unsupported_pattern_matching of Location.t
   | `Spilling_unsupported_recursive_function of Location.t * Value_var.t
-  | `Spilling_wrong_mini_c_value of Ast_aggregated.type_expression * Mini_c.value
+  | `Spilling_wrong_mini_c_value of Ast_expanded.type_expression * Mini_c.value
   | `Spilling_bad_decompile of Mini_c.value
   | `Spilling_could_not_parse_raw_michelson of Location.t * string
   | `Spilling_raw_michelson_must_be_seq of
@@ -73,7 +73,7 @@ let error_ppformat
       let s =
         Format.asprintf
           "Invalid type.@.Expected \"%a\",@.but got \"%a\"."
-          Ast_aggregated.PP.type_expression
+          Ast_expanded.PP.type_expression
           expected
           Mini_c.PP.value
           actual
@@ -141,7 +141,7 @@ let error_json : spilling_error -> Simple_utils.Error.t =
     let message =
       Format.asprintf
         "Invalid type.@.Expected \"%a\",@.but got \"%a\"."
-        Ast_aggregated.PP.type_expression
+        Ast_expanded.PP.type_expression
         expected
         Mini_c.PP.value
         actual
