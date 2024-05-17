@@ -261,7 +261,7 @@ class lsp_server (capability_mode : capability_mode) ~(skip_analytics : bool) =
         let yes = "Yes" in
         let no = "No" in
         send_message_with_buttons
-          ~message:Analytics.acceptance_condition
+          ~message:(Analytics.acceptance_condition ())
           ~options:[ yes; no ]
           ~type_:Info
           ~handler:(function

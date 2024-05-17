@@ -3486,6 +3486,7 @@ module Lsp_server = struct
       ~(skip_analytics : bool)
       ()
     =
+    Analytics.set_is_running_lsp true;
     let run_lsp () =
       let s = new Server.lsp_server capability_mode ~skip_analytics in
       let server = Linol_lwt.Jsonrpc2.create_stdio (s :> Linol_lwt.Jsonrpc2.server) in
@@ -3527,16 +3528,8 @@ module Lsp_server = struct
               match Logs.Src.name src with
               | "linol" -> Logs.Src.set_level src (Some Logs.Debug)
               | _ -> ());
-          let s = new Server.lsp_server capability_mode ~skip_analytics in
-          let server = Linol_lwt.Jsonrpc2.create_stdio (s :> Linol_lwt.Jsonrpc2.server) in
-          let shutdown () = Poly.(s#get_status = `ReceivedExit) in
-          let task = Linol_lwt.Jsonrpc2.run ~shutdown server in
           Format.eprintf "For LIGO language server logs, see %s\n%!" log_file;
-          match Linol_lwt.run task with
-          | () -> Ok ("", "")
-          | exception e ->
-            let e = Exn.to_string e in
-            Error ("", e))
+          f ())
     in
     if log_requests then with_request_logging run_lsp () else run_lsp ()
 end
