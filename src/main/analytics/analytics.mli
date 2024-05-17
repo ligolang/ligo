@@ -1,6 +1,8 @@
 open Compiler_options
 open Prometheus_push
 
+val set_is_running_lsp : bool -> unit
+
 (* Registry *)
 
 val agg_registry : PushableCollectorRegistry.t
@@ -42,7 +44,7 @@ type analytics_input =
 type analytics_inputs = analytics_input list
 
 (* Analytics *)
-val acceptance_condition : string
+val acceptance_condition : unit -> string
 val update_term_acceptance : string -> (string * string, string * string) result
 val determine_syntax_label : string -> string -> string
 val generate_cli_metric : command:string -> analytics_input

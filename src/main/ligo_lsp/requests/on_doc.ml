@@ -144,16 +144,16 @@ let detect_or_ask_to_create_project_file (file : Path.t) : unit Handler.t =
                 let project_root =
                   Path.concat (normalize (common_prefix ^ title)) Project_root.ligoproject
                 in
+                Analytics.set_project_root @@ Option.some @@ Path.to_string project_root;
                 create_default_project_file project_root)
           in
           send_message_with_buttons ~message ~options ~type_:Info ~handler)
   | None, Some project_root ->
+    let project_root_str = Path.to_string project_root in
+    Analytics.set_project_root @@ Option.some project_root_str;
     send_log_msg
       ~type_:Info
-      (Format.sprintf
-         "Found %s at %s."
-         Project_root.ligoproject
-         (Path.to_string project_root))
+      (Format.sprintf "Found %s at %s." Project_root.ligoproject project_root_str)
   | Some _, (None | Some _) -> pass
 
 

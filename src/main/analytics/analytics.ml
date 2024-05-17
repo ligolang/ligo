@@ -7,6 +7,8 @@ open Compiler_options.Raw_options
 (* dirty, but simple *)
 let project_root : string option ref = ref None
 let set_project_root : string option -> unit = fun s -> project_root := s
+let is_running_lsp_ref = ref false
+let set_is_running_lsp is_running = is_running_lsp_ref := is_running
 
 let dot_ligo rest use_home_folder =
   let home =
@@ -32,6 +34,7 @@ type environment =
   | Tty
   | Docker_non_interactive
   | Docker_interactive
+  | Lsp
 
 type metric_group =
   | Counter_cli_execution of { command : string }
@@ -80,18 +83,22 @@ let current_process_is_in_docker =
   | None -> false
 
 
+let is_running_lsp () = !is_running_lsp_ref
 let is_tty = UnixLabels.isatty UnixLabels.stdin && UnixLabels.isatty UnixLabels.stdout
 
-let env : environment =
-  match current_process_is_in_docker, is_tty with
-  | false, false -> Ci (* = neither docker not tty *)
-  | false, true -> Tty
-  | true, false -> Docker_non_interactive
-  | true, true -> Docker_interactive
+let env () : environment =
+  if is_running_lsp ()
+  then Lsp
+  else (
+    match current_process_is_in_docker, is_tty with
+    | false, false -> Ci (* = neither docker not tty *)
+    | false, true -> Tty
+    | true, false -> Docker_non_interactive
+    | true, true -> Docker_interactive)
 
 
-let is_in_ci =
-  match env with
+let is_in_ci () =
+  match env () with
   | Ci -> true
   | _ -> false
 
@@ -129,12 +136,12 @@ let acceptance_condition_common =
      https://discord.com/invite/9rhYaEt."
 
 
-let acceptance_condition =
+let acceptance_condition () =
   acceptance_condition_common
   ^ line_separator
   ^ line_separator
   ^
-  match env with
+  match env () with
   | Docker_non_interactive ->
     "When running Ligo through Docker, which is non-interactive, the terms will be \
      automatically accepted. However, it is still possible to use 'ligo analytics \
@@ -275,17 +282,17 @@ let is_term_accepted () =
   String.equal term_acceptance accepted
 
 
-let is_in_docker =
-  match env with
+let is_in_docker () =
+  match env () with
   | Docker_non_interactive -> true
   | Docker_interactive -> true
   | _ -> false
 
 
-let is_dev_version =
+let is_dev_version () =
   (String.is_prefix Version.version ~prefix:"Rolling release"
   || String.is_empty Version.version)
-  && not is_in_docker
+  && not (is_in_docker ())
 
 
 let rec get_user_answer () =
@@ -296,7 +303,7 @@ let rec get_user_answer () =
     | "n" -> denied
     | _ -> get_user_answer ())
   | None ->
-    (match env with
+    (match env () with
     | Docker_non_interactive -> accepted
     | _ -> denied)
 
@@ -309,15 +316,15 @@ let should_propose_analytics ~skip_analytics =
     (skip_analytics
     || is_skip_analytics_through_env_var
     || is_term_already_proposed ()
-    || is_in_ci
-    || is_dev_version)
+    || is_in_ci ()
+    || is_dev_version ())
 
 
 let propose_term_acceptation ~skip_analytics =
   if not (should_propose_analytics ~skip_analytics)
   then ()
   else (
-    Format.eprintf "%s\n%!" acceptance_condition;
+    Format.eprintf "%s\n%!" (acceptance_condition ());
     let user_answer = get_user_answer () in
     store user_answer term_acceptance_filepath)
 
@@ -357,9 +364,9 @@ let inc ~counter_group ~labels ~value =
 let push_collected_metrics ~skip_analytics =
   if skip_analytics
      || (not (is_term_accepted ()))
-     || is_in_ci
+     || is_in_ci ()
      || is_skip_analytics_through_env_var
-     || is_dev_version
+     || is_dev_version ()
   then Lwt.return_unit
   else (
     let p_1 =

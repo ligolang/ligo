@@ -261,7 +261,7 @@ class lsp_server (capability_mode : capability_mode) ~(skip_analytics : bool) =
         let yes = "Yes" in
         let no = "No" in
         send_message_with_buttons
-          ~message:Analytics.acceptance_condition
+          ~message:(Analytics.acceptance_condition ())
           ~options:[ yes; no ]
           ~type_:Info
           ~handler:(function
@@ -805,6 +805,7 @@ class lsp_server (capability_mode : capability_mode) ~(skip_analytics : bool) =
           then (
             last_project_dir := None;
             mod_res := None;
+            Analytics.set_project_root None;
             IO.return ())
           else if Syntax.is_ligo file_name
           then
@@ -873,12 +874,11 @@ class lsp_server (capability_mode : capability_mode) ~(skip_analytics : bool) =
             | None -> pass
             | Some { code; _ } ->
               let last_project_dir = !last_project_dir in
-              if Option.equal
-                   Path.equal
-                   last_project_dir
-                   (Project_root.get_project_root file)
+              let project_root = Project_root.get_project_root file in
+              if Option.equal Path.equal last_project_dir project_root
               then pass
               else (
+                Analytics.set_project_root @@ Option.map ~f:Path.to_string project_root;
                 let%bind () = Requests.drop_cached_definitions file in
                 let%bind () =
                   send_log_msg
