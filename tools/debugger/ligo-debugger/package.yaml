@@ -78,6 +78,7 @@ library:
     - conduit-extra
     - containers
     - data-default
+    - directory
     - dlist
     - duplo
     - fastsum
@@ -86,6 +87,9 @@ library:
     - free
     - hashable
     - hex-text
+    - http-client
+    - http-client-tls
+    - http-types
     - lens
     - monad-stm
     - monad-validate
@@ -95,9 +99,11 @@ library:
     - msgpack-types
     - mtl
     - named
+    - network-uri
     - nyan-interpolation
     - nyan-interpolation-core
     - process
+    - prometheus
     - reflection
     - process-extras
     - record-dot-preprocessor
@@ -116,6 +122,7 @@ library:
     - unliftio
     - unliftio-core
     - unordered-containers
+    - uuid
     - vector
     - vinyl
 

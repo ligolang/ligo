@@ -1,11 +1,13 @@
 module Language.LIGO.Debugger.CLI.Call
-  ( checkCompilation
+  ( Version (..)
+  , checkCompilation
   , compileLigoContractDebug
   , compileLigoExpression
   , getAvailableModules
   , decompileLigoValues
   , resolveConfig
   , getScopes
+  , getVersion
   , decodeCST
   ) where
 
@@ -46,6 +48,10 @@ import Language.LIGO.Debugger.Handlers.Types
 ----------------------------------------------------------------------------
 -- Execution
 ----------------------------------------------------------------------------
+
+-- | Output of @ligo --version@. Use @getVersion@ to obtain an instance of this data type.
+newtype Version = Version {unVersion :: Text}
+  deriving stock (Eq, Show)
 
 -- | A command line argument to @ligo@.
 --
@@ -293,6 +299,14 @@ getScopes contractPath = withMapLigoExc do
     decodeOutput :: LByteString -> m LigoDefinitions
     decodeOutput = either (throwIO . LigoDecodeException "decoding ligo scopes" . toText) pure
       . Aeson.eitherDecode
+
+-- | @getVersion path@ returns the current version of LIGO (@ligo --version@).
+getVersion :: forall m. (HasLigoClient m) => m Version
+getVersion = withMapLigoExc do
+  callLigoBS Nothing ["--version"] >>= decodeOutput
+  where
+    decodeOutput :: LByteString -> m Version
+    decodeOutput = pure . Version . T.strip . decodeUtf8
 
 -- | @decodeCST files@ takes a batch of @files@ and produces parsed ASTs.
 -- The order of produced ASTs corresponds to the order of @files@.
