@@ -29,7 +29,7 @@ import Fmt.Utils (Doc)
 import Named (defaults, (!))
 import System.FilePath (takeFileName, (<.>), (</>))
 import Text.Interpolation.Nyan hiding (rmode')
-import UnliftIO (UnliftIO (..), askUnliftIO, withRunInIO)
+import UnliftIO (UnliftIO (..), askUnliftIO, async, withRunInIO)
 import UnliftIO.Directory (doesFileExist)
 import UnliftIO.Exception (Handler (..), catches, throwIO, try)
 import UnliftIO.STM (modifyTVar)
@@ -77,6 +77,7 @@ import Morley.Tezos.Address (Constrained (Constrained), ta)
 import Morley.Tezos.Core (Timestamp (Timestamp), dummyChainId, tz)
 import Morley.Tezos.Crypto (parseHash)
 
+import Language.LIGO.Analytics
 import Language.LIGO.DAP.Variables
 import Language.LIGO.Debugger.CLI
 import Language.LIGO.Debugger.Common
@@ -133,7 +134,7 @@ ligoHandlers stopAdapter = MorleyHandlers.safenHandler <$> concat
   , MorleyHandlers.stepHandlers
       & traversed %~ DAP.embedHandler onStep
   , [MorleyHandlers.setBreakpointsHandler]
-  , [ MorleyHandlers.evaluateRequestHandlerDummy ]
+  , [MorleyHandlers.evaluateRequestHandlerDummy]
 
   , ligoCustomHandlers
   ]
@@ -306,6 +307,13 @@ instance HasSpecificMessages LIGO where
       logMessage "Launching contract with arguments\n"
       logMessage $ Debug.show req <> "\n"
     asks _rcDAPState >>= \var -> atomically $ writeTVar var (Just st)
+
+    program <- getProgram
+    -- Handle analytics in an invisible manner: the user should not notice it
+    -- running for better UX.
+    _ <- async do
+      generateDebuggerLaunchAnalytics False program `catchAny` const pass
+
     respond ()
 
   handleStackTraceRequest DAP.StackTraceRequest{} = do

@@ -15,4 +15,7 @@ clean:
 build:
 	stack build $(STACK_DEV_OPTIONS)
 
+install-plugin:
+	$(MAKE) -C .. install-plugin
+
 .PHONY: all clean build FORCE
