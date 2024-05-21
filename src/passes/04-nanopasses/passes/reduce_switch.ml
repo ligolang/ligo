@@ -146,6 +146,9 @@ let switch_to_decl loc Switch.{ subject; cases } =
   let or_ a b = e_constant ~loc { cons_name = C_OR; arguments = [ a; b ] } in
   let not_ a = e_constant ~loc { cons_name = C_NOT; arguments = [ a ] } in
   let cases = group_cases cases in
+  let subject_var = Variable.fresh ~loc ~name:"switch_subject" () in
+  let subject_var_as_expr = e_variable ~loc subject_var in
+  let subject_var_decl = simpl_var_decl ~loc subject_var subject in
   let ft = Variable.fresh ~loc ~name:"fallthrough" () in
   let ft_var = e_variable ~loc ft in
   let ft_decl =
@@ -167,7 +170,7 @@ let switch_to_decl loc Switch.{ subject; cases } =
             (* don't take fallthrough into account for the first case *)
             let init = if Int.equal i 0 then e_false ~loc else ft_var in
             List.fold group.case_values ~init ~f:(fun acc val_ ->
-                or_ (eq subject val_) acc)
+                or_ (eq subject_var_as_expr val_) acc)
           in
           simpl_const_decl ~loc test_ test
         in
@@ -203,7 +206,7 @@ let switch_to_decl loc Switch.{ subject; cases } =
           [ s_instr ~loc @@ i_cond ~loc { test; ifso; ifnot = None } ])
   in
   let case_statements =
-    List.concat @@ ([ ft_decl ] :: List.map ~f:snd grouped_switch_cases)
+    List.concat @@ ([ subject_var_decl; ft_decl ] :: List.map ~f:snd grouped_switch_cases)
   in
   case_statements @ default_statement
 

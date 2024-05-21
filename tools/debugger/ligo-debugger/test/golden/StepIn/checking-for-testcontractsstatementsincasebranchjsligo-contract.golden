@@ -22,10 +22,6 @@ InterpretSnapshot:
       sfStack:
         [ StackItem:
           siLigoDesc:
-            elem ? of (False of (unit) | True of (unit)) in test/contracts/statements-in-case-branch.jsligo
-          siValue: False
-        , StackItem:
-          siLigoDesc:
             elem s2 of int in test/contracts/statements-in-case-branch.jsligo
           siValue: 0
         , StackItem:
@@ -44,6 +40,10 @@ InterpretSnapshot:
       sfLoc: test/contracts/statements-in-case-branch.jsligo@6:7-6:18
       sfStack:
         [ StackItem:
+          siLigoDesc:
+            elem p of string in test/contracts/statements-in-case-branch.jsligo
+          siValue: "Variant1"
+        , StackItem:
           siLigoDesc: elem ? of (False of (unit) | True of (unit)) in #generated
           siValue: True
         , StackItem:
@@ -52,16 +52,16 @@ InterpretSnapshot:
           siValue: False
         , StackItem:
           siLigoDesc:
+            elem ? of string in test/contracts/statements-in-case-branch.jsligo
+          siValue: "Variant1"
+        , StackItem:
+          siLigoDesc:
             elem s2 of int in test/contracts/statements-in-case-branch.jsligo
           siValue: 0
         , StackItem:
           siLigoDesc:
             elem s of int in test/contracts/statements-in-case-branch.jsligo
-          siValue: 0
-        , StackItem:
-          siLigoDesc:
-            elem p of string in test/contracts/statements-in-case-branch.jsligo
-          siValue: "Variant1" ] ]
+          siValue: 0 ] ]
 InterpretSnapshot:
   isStatus: running / faced statement
   isStackFrames:
