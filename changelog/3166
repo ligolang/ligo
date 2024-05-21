@@ -1,0 +1,7 @@
+
+author: DK318
+description: "Improved performance for LSP and compilation pipeline.\\n\\nThe LSP should now take less time between keystrokes.\\n\\nThis is done by optimizing `self_ast_typed` and `self_mini_c` passes.\\n\\n\\n"
+merge_request: '3166'
+title: "[#2143] Optimize following passes in LSP"
+type: performance
+            
