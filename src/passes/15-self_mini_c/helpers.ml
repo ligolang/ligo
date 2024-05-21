@@ -1,6 +1,7 @@
 module Pair = Simple_utils.Pair
 module Triple = Simple_utils.Triple
 open Mini_c
+open Ligo_prim
 
 type mapper_type = type_expression -> type_expression
 
@@ -146,3 +147,38 @@ let map_sub_level_expression : mapper -> anon_function -> anon_function =
   let ({ binder; body } : anon_function) = e in
   let body = map_expression f body in
   { binder; body }
+
+
+(* Conservative purity test: ok to treat pure things as impure, must
+   not treat impure things as pure. *)
+
+let rec is_pure : expression -> bool =
+ fun e ->
+  match e.content with
+  | E_literal _ | E_closure _ | E_rec _ | E_variable _ -> true
+  | E_if_bool (cond, bt, bf)
+  | E_if_none (cond, bt, (_, bf))
+  | E_if_cons (cond, bt, (_, bf))
+  | E_if_left (cond, (_, bt), (_, bf)) -> List.for_all ~f:is_pure [ cond; bt; bf ]
+  | E_let_in (e1, _, (_, e2)) -> List.for_all ~f:is_pure [ e1; e2 ]
+  | E_tuple exprs -> List.for_all ~f:is_pure exprs
+  | E_let_tuple (e1, (_, e2)) -> List.for_all ~f:is_pure [ e1; e2 ]
+  | E_proj (e, _i, _n) -> is_pure e
+  | E_update (expr, _i, update, _n) -> List.for_all ~f:is_pure [ expr; update ]
+  | E_constant c ->
+    Constant.constant'_is_pure c.cons_name && List.for_all ~f:is_pure c.arguments
+  | E_global_constant (_hash, _args) ->
+    (* hashed code can be impure :( *)
+    false
+  | E_create_contract _ (* very not pure *) | E_inline_michelson _ -> false
+  | E_raw_michelson _ -> true
+  (* TODO E_let_mut_in is pure when the rhs is pure and the body's
+         only impurity is assign/deref of the bound mutable variable *)
+  | E_let_mut_in _ | E_assign _ | E_deref _ -> false
+  (* these could be pure through the exception above for
+         E_let_mut_in *)
+  | E_for _ | E_for_each _ -> false
+  (* never pure in any important case *)
+  | E_while _ -> false
+  (* I'm not sure about these. Maybe can be tested better? *)
+  | E_application _ | E_iterator _ | E_fold _ | E_fold_right _ -> false

@@ -1,5 +1,6 @@
 open Ligo_prim
 open Mini_c
+open Helpers
 
 (* Reference implementation:
    https://www.cs.cornell.edu/courses/cs3110/2019sp/textbook/interp/lambda-subst/main.ml
@@ -153,196 +154,311 @@ let rec replace : expression -> var_name -> var_name -> expression =
     return @@ E_while (cond, body)
 
 
-(* Given an implementation of substitution on an arbitary type of
-   body, implements substitution on a binder (pair of bound variable
-   and body) *)
-let subst_binder
-    : type body.
-      (body:body -> x:var_name -> expr:expression -> body)
-      -> (body -> var_name -> var_name -> body)
-      -> body:var_name * body
-      -> x:var_name
-      -> expr:expression
-      -> var_name * body
-  =
- fun subst replace ~body:(y, body) ~x ~expr ->
-  (* if x is shadowed, binder doesn't change *)
-  if Value_var.equal x y
-  then y, body (* else, if no capture, subst in binder *)
-  else if not (Free_variables.mem (get_fv [] expr) y)
-  then y, subst ~body ~x ~expr (* else, avoid capture and subst in binder *)
-  else (
-    let fresh = Value_var.fresh_like y in
-    let body = replace body y fresh in
-    fresh, subst ~body ~x ~expr)
+(** Set with free variables. *)
+module Fvs = Set.Make (Value_var)
+
+(** Map with [var_name] key. *)
+module Var_map = Map.Make (Value_var)
+
+(** Variable substitution. *)
+type var_subst = var_name Var_map.t
+
+(** Expression substitution. *)
+type expr_subst = expression Var_map.t
+
+(** State for monad [t]. *)
+type state =
+  { var_subst : var_subst (** Variable substitutions. *)
+  ; expr_subst : expr_subst (** Expression substitutions. *)
+  ; fvs : Fvs.t (** Free variables. *)
+  ; changed : bool (** Flag which indicates that inlining occurred. *)
+  }
+
+(** A state monad. *)
+type 'a t = state -> 'a * state
+
+include Monad.Make (struct
+  type nonrec 'a t = 'a t
+
+  let return a state = a, state
+
+  let bind m ~f state =
+    let a, state = m state in
+    f a state
 
 
-(* extending to general n-ary binders *)
-type 'body binds = var_name list * 'body
+  let map = `Define_using_bind
+end)
 
-let replace_binds
-    : type body.
-      (body -> var_name -> var_name -> body)
-      -> body binds
-      -> var_name
-      -> var_name
-      -> body binds
-  =
- fun replace (vars, body) x y ->
-  List.map ~f:(fun v -> replace_var v x y) vars, replace body x y
+(** Pick the current state. *)
+let get_state : state t = fun state -> state, state
 
+(** Update the state. *)
+let set_state (state : state) : unit t = fun _ -> (), state
 
-let rec subst_binds
-    : type body.
-      (body:body -> x:var_name -> expr:expression -> body)
-      -> (body -> var_name -> var_name -> body)
-      -> body:body binds
-      -> x:var_name
-      -> expr:expression
-      -> body binds
-  =
- fun subst replace ~body ~x ~expr ->
-  match body with
-  | [], body -> [], subst ~body ~x ~expr
-  | v :: vs, body ->
-    let v, (vs, body) =
-      subst_binder
-        (subst_binds subst replace)
-        (replace_binds replace)
-        ~body:(v, (vs, body))
-        ~x
-        ~expr
-    in
-    v :: vs, body
+open Let_syntax
 
-
-(**
-   Computes `body[x := expr]`.
-**)
-let rec subst_expression : body:expression -> x:var_name -> expr:expression -> expression =
- fun ~body ~x ~expr ->
-  let self body = subst_expression ~body ~x ~expr in
-  let subst_binder1 = subst_binder subst_expression replace in
-  let subst_binder2 =
-    subst_binder subst_binder1 (fun (x, body) y z -> replace_var x y z, replace body y z)
+(** Add a substitution to the state. *)
+let add_subst : var_name -> expression -> unit t =
+ fun v expr ->
+  let%bind state = get_state in
+  let expr_subst = Map.update state.expr_subst v ~f:(Fn.const expr) in
+  let fvs =
+    List.fold_left (get_fv [] expr) ~init:state.fvs ~f:(fun fvs (fv, _) -> Set.add fvs fv)
   in
-  let subst_binds = subst_binds subst_expression replace in
-  let self_binder1 ~body = subst_binder1 ~body ~x ~expr in
-  let self_binder2 ~body = subst_binder2 ~body ~x ~expr in
-  let self_binds ~body = subst_binds ~body ~x ~expr in
-  let return content = { body with content } in
-  let return_id = body in
-  match body.content with
-  | E_variable x' -> if Value_var.equal x' x then expr else return_id
-  | E_closure { binder; body } ->
-    let binder, body = self_binder1 ~body:(binder, body) in
-    return @@ E_closure { binder; body }
-  | E_rec { func = { binder; body }; rec_binder } ->
-    let binder, (rec_binder, body) = self_binder2 ~body:(binder, (rec_binder, body)) in
-    return @@ E_rec { func = { binder; body }; rec_binder }
+  set_state { state with expr_subst; fvs; changed = true }
+
+
+(** Process the binder and update the state respectively. *)
+let process_binder : var_name -> var_name t =
+ fun v ->
+  let%bind state = get_state in
+  let expr_subst = (* Handle shadowing... *) Map.remove state.expr_subst v in
+  let v, var_subst =
+    if Set.mem state.fvs v
+    then (
+      (* We don't want to make a free variable to be bound.
+         Let's rename the binder and add the variable substitution to the state. *)
+      let fresh = Value_var.fresh_like v in
+      let var_subst = Map.update state.var_subst v ~f:(Fn.const fresh) in
+      fresh, var_subst)
+    else v, state.var_subst
+  in
+  let%map () = set_state { state with expr_subst; var_subst } in
+  v
+
+
+(** Find expression substitution by its variable name. *)
+let find_subst : var_name -> expression option t =
+ fun v ->
+  let%map state = get_state in
+  Map.find state.expr_subst v
+
+
+(** Lookup the correct variable name
+    taking into account all binder replacements. *)
+let find_replacement : var_name -> var_name t =
+ fun v ->
+  let%map state = get_state in
+  Option.value ~default:v (Map.find state.var_subst v)
+
+
+(** An auxiliary function which uses [t] state monad.
+    If [only_vars] is set to [true] then [let x = e1 in e2] expression
+    would be inlined if [e1] is a variable. Let-ins with [@inline] pragma
+    would be also inlined. *)
+let rec inline_lets : only_vars:bool -> expression -> expression t =
+ fun ~only_vars expr ->
+  let occurs_count : Value_var.t -> expression -> int =
+   fun x e ->
+    let fvs = get_fv [] e in
+    Free_variables.mem_count x fvs
+  in
+  let mutation_count : Value_var.t -> expression -> int =
+   fun x e ->
+    let muts = assigned_and_free_vars [] e in
+    Free_variables.mem_count x muts
+  in
+  let is_variable : expression -> bool =
+   fun e ->
+    match e.content with
+    | E_variable _ -> true
+    | _ -> false
+  in
+  let should_inline : only_vars:bool -> Value_var.t -> expression -> expression -> bool =
+   fun ~only_vars x e1 e2 -> ((not only_vars) && occurs_count x e2 <= 1) || is_variable e1
+  in
+  let should_inline_mut : Value_var.t -> expression -> bool =
+   fun x e2 -> mutation_count x e2 = 0
+  in
+  let self = inline_lets ~only_vars in
+  let self_binder1 v ~body =
+    let%bind state = get_state in
+    let%bind v = process_binder v in
+    let%bind body = self body in
+    let%map () = set_state state in
+    v, body
+  in
+  let self_binder2 (v1, v2) ~body =
+    let%bind state = get_state in
+    let%bind v1 = process_binder v1 in
+    let%bind v2 = process_binder v2 in
+    let%bind body = self body in
+    let%map () = set_state state in
+    (v1, v2), body
+  in
+  let self_binds vs ~body =
+    let%bind state = get_state in
+    let%bind vs = all @@ List.map ~f:process_binder vs in
+    let%bind body = self body in
+    let%map () = set_state state in
+    vs, body
+  in
+  let return_expr content = { expr with content } in
+  let process_variable : [> `Variable | `Deref ] -> var_name -> expression t =
+   fun expr_case v ->
+    match%bind find_subst v with
+    | Some subst -> return subst
+    | None ->
+      let%map v = find_replacement v in
+      return_expr
+        (match expr_case with
+        | `Variable -> E_variable v
+        | `Deref -> E_deref v)
+  in
+  match expr.content with
+  (* Here actual substitutions are created. *)
   | E_let_in (expr, inline, ((v, tv), body)) ->
-    let expr = self expr in
-    let v, body = self_binder1 ~body:(v, body) in
-    return @@ E_let_in (expr, inline, ((v, tv), body))
+    let%bind expr = self expr in
+    if is_pure expr && (inline || should_inline ~only_vars v expr body)
+    then (
+      let%bind () = add_subst v expr in
+      self body)
+    else (
+      let%map v, body = self_binder1 v ~body in
+      return_expr @@ E_let_in (expr, inline, ((v, tv), body)))
+  | E_let_mut_in (expr, ((v, tv), body)) ->
+    let%bind expr = self expr in
+    if is_pure expr && should_inline_mut v body
+    then (
+      let%bind () = add_subst v expr in
+      self body)
+    else (
+      let%map v, body = self_binder1 v ~body in
+      return_expr @@ E_let_mut_in (expr, ((v, tv), body)))
+  (* Variables and dereferencing. *)
+  | E_variable x' -> process_variable `Variable x'
+  | E_deref x' -> process_variable `Deref x'
+  (* Other stuff. *)
+  | E_closure { binder; body } ->
+    let%map binder, body = self_binder1 binder ~body in
+    return_expr @@ E_closure { binder; body }
+  | E_rec { func = { binder; body }; rec_binder } ->
+    let%map (binder, rec_binder), body = self_binder2 (binder, rec_binder) ~body in
+    return_expr @@ E_rec { func = { binder; body }; rec_binder }
   | E_tuple exprs ->
-    let exprs = List.map ~f:self exprs in
-    return @@ E_tuple exprs
+    let%map exprs = all @@ List.map ~f:self exprs in
+    return_expr @@ E_tuple exprs
   | E_let_tuple (expr, (vtvs, body)) ->
-    let expr = self expr in
+    let%bind expr = self expr in
     let vs, tvs = List.unzip vtvs in
-    let vs, body = self_binds ~body:(vs, body) in
+    let%map vs, body = self_binds vs ~body in
     let vtvs = List.zip_exn vs tvs in
-    return @@ E_let_tuple (expr, (vtvs, body))
+    return_expr @@ E_let_tuple (expr, (vtvs, body))
   | E_proj (expr, i, n) ->
-    let expr = self expr in
-    return @@ E_proj (expr, i, n)
+    let%map expr = self expr in
+    return_expr @@ E_proj (expr, i, n)
   | E_update (expr, i, update, n) ->
-    let expr = self expr in
-    let update = self update in
-    return @@ E_update (expr, i, update, n)
+    let%bind expr = self expr in
+    let%map update = self update in
+    return_expr @@ E_update (expr, i, update, n)
   | E_iterator (s, ((name, tv), body), collection) ->
-    let name, body = self_binder1 ~body:(name, body) in
-    let collection = self collection in
-    return @@ E_iterator (s, ((name, tv), body), collection)
+    let%bind collection = self collection in
+    let%map name, body = self_binder1 name ~body in
+    return_expr @@ E_iterator (s, ((name, tv), body), collection)
   | E_fold (((name, tv), body), collection, init) ->
-    let name, body = self_binder1 ~body:(name, body) in
-    let collection = self collection in
-    let init = self init in
-    return @@ E_fold (((name, tv), body), collection, init)
+    let%bind collection = self collection in
+    let%bind init = self init in
+    let%map name, body = self_binder1 name ~body in
+    return_expr @@ E_fold (((name, tv), body), collection, init)
   | E_fold_right (((name, tv), body), (collection, elem_tv), init) ->
-    let name, body = self_binder1 ~body:(name, body) in
-    let collection = self collection in
-    let init = self init in
-    return @@ E_fold_right (((name, tv), body), (collection, elem_tv), init)
+    let%bind collection = self collection in
+    let%bind init = self init in
+    let%map name, body = self_binder1 name ~body in
+    return_expr @@ E_fold_right (((name, tv), body), (collection, elem_tv), init)
   | E_if_none (c, n, ((name, tv), s)) ->
-    let c = self c in
-    let n = self n in
-    let name, s = self_binder1 ~body:(name, s) in
-    return @@ E_if_none (c, n, ((name, tv), s))
+    let%bind c = self c in
+    let%bind n = self n in
+    let%map name, s = self_binder1 name ~body:s in
+    return_expr @@ E_if_none (c, n, ((name, tv), s))
   | E_if_cons (c, n, (((hd, hdtv), (tl, tltv)), cons)) ->
-    let c = self c in
-    let n = self n in
-    let hd, (tl, cons) = self_binder2 ~body:(hd, (tl, cons)) in
-    return @@ E_if_cons (c, n, (((hd, hdtv), (tl, tltv)), cons))
+    let%bind c = self c in
+    let%bind n = self n in
+    let%map (hd, tl), cons = self_binder2 (hd, tl) ~body:cons in
+    return_expr @@ E_if_cons (c, n, (((hd, hdtv), (tl, tltv)), cons))
   | E_if_left (c, ((name_l, tvl), l), ((name_r, tvr), r)) ->
-    let c = self c in
-    let name_l, l = self_binder1 ~body:(name_l, l) in
-    let name_r, r = self_binder1 ~body:(name_r, r) in
-    return @@ E_if_left (c, ((name_l, tvl), l), ((name_r, tvr), r))
-  | E_raw_michelson code -> return @@ E_raw_michelson code
+    let%bind c = self c in
+    let%bind name_l, l = self_binder1 name_l ~body:l in
+    let%map name_r, r = self_binder1 name_r ~body:r in
+    return_expr @@ E_if_left (c, ((name_l, tvl), l), ((name_r, tvr), r))
+  | E_raw_michelson code -> return @@ return_expr @@ E_raw_michelson code
   | E_inline_michelson (code, args') ->
-    let args' = List.map ~f:self args' in
-    return @@ E_inline_michelson (code, args')
-  | E_literal _ -> return_id
+    let%map args' = all @@ List.map ~f:self args' in
+    return_expr @@ E_inline_michelson (code, args')
+  | E_literal _ -> return expr
   | E_constant { cons_name; arguments } ->
-    let arguments = List.map ~f:self arguments in
-    return @@ E_constant { cons_name; arguments }
+    let%map arguments = all @@ List.map ~f:self arguments in
+    return_expr @@ E_constant { cons_name; arguments }
   | E_application farg ->
-    let farg' = Simple_utils.Tuple.map2 self farg in
-    return @@ E_application farg'
+    let farg1, farg2 = Simple_utils.Tuple.map2 self farg in
+    let%bind farg1 = farg1 in
+    let%map farg2 = farg2 in
+    return_expr @@ E_application (farg1, farg2)
   | E_if_bool cab ->
-    let cab' = Simple_utils.Tuple.map3 self cab in
-    return @@ E_if_bool cab'
+    let cab1, cab2, cab3 = Simple_utils.Tuple.map3 self cab in
+    let%bind cab1 = cab1 in
+    let%bind cab2 = cab2 in
+    let%map cab3 = cab3 in
+    return_expr @@ E_if_bool (cab1, cab2, cab3)
   | E_global_constant (hash, args) ->
-    let args = List.map ~f:self args in
-    return @@ E_global_constant (hash, args)
+    let%map args = all @@ List.map ~f:self args in
+    return_expr @@ E_global_constant (hash, args)
   | E_create_contract (p, s, ((x, t), code), args) ->
-    let args = List.map ~f:self args in
-    let x, code = self_binder1 ~body:(x, code) in
-    return @@ E_create_contract (p, s, ((x, t), code), args)
+    let%bind args = all @@ List.map ~f:self args in
+    let%map x, code = self_binder1 x ~body:code in
+    return_expr @@ E_create_contract (p, s, ((x, t), code), args)
   (* Mutable stuff. We allow substituting mutable variables which
      aren't mutated because it was easy. Hmm. *)
-  | E_let_mut_in (expr, ((v, tv), body)) ->
-    let expr = self expr in
-    let v, body = self_binder1 ~body:(v, body) in
-    return @@ E_let_mut_in (expr, ((v, tv), body))
-  | E_deref x' -> if Value_var.equal x' x then expr else return_id
   | E_assign (x', e) ->
-    if Value_var.equal x' x
+    let%bind state = get_state in
+    if Map.mem state.expr_subst x'
     then
       failwith
         ("internal error, please report this as a bug: tried to substitute for mutated \
           var "
         ^ __LOC__)
     else (
-      let e = self e in
-      return @@ E_assign (x', e))
+      let%map e = self e in
+      return_expr @@ E_assign (x', e))
   | E_for (start, final, incr, ((x, a), body)) ->
-    let start = self start in
-    let final = self final in
-    let incr = self incr in
-    let x, body = self_binder1 ~body:(x, body) in
-    return @@ E_for (start, final, incr, ((x, a), body))
+    let%bind start = self start in
+    let%bind final = self final in
+    let%bind incr = self incr in
+    let%map x, body = self_binder1 x ~body in
+    return_expr @@ E_for (start, final, incr, ((x, a), body))
   | E_for_each (coll, coll_type, (xs, body)) ->
-    let coll = self coll in
+    let%bind coll = self coll in
     let xs, ts = List.unzip xs in
-    let xs, body = self_binds ~body:(xs, body) in
+    let%map xs, body = self_binds xs ~body in
     let xs = List.zip_exn xs ts in
-    return @@ E_for_each (coll, coll_type, (xs, body))
+    return_expr @@ E_for_each (coll, coll_type, (xs, body))
   | E_while (cond, body) ->
-    let cond = self cond in
-    let body = self body in
-    return @@ E_while (cond, body)
+    let%bind cond = self cond in
+    let%map body = self body in
+    return_expr @@ E_while (cond, body)
+
+
+(** Inlines all let-ins and let-mut-ins where it is possible.
+
+    If [test] is true then it inlines only variables
+    and let-ins with [@inline] pragma.
+    Otherwise, it inlines the whole expression. *)
+let inline_lets ?(test = false) : expression -> expression * bool =
+ fun expr ->
+  let state =
+    { var_subst = Var_map.empty
+    ; expr_subst = Var_map.empty
+    ; fvs = Fvs.empty
+    ; changed = false
+    }
+  in
+  (* We don't want to produce less optimal code after inlinings.
+     Let's inline variables first. *)
+  let expr, only_vars_state = inline_lets ~only_vars:true expr state in
+  let expr, not_only_vars_state =
+    if test then expr, state else inline_lets ~only_vars:false expr state
+  in
+  expr, only_vars_state.changed || not_only_vars_state.changed
 
 
 let%expect_test _ =
@@ -350,6 +466,7 @@ let%expect_test _ =
   let dummy_type = Expression.make_t @@ T_base TB_unit in
   let wrap e = Expression.make e dummy_type in
   let show_subst ~body ~(x : var_name) ~expr =
+    let expr_subst = wrap @@ E_let_in (expr, true, ((x, dummy_type), body)) in
     Format.printf
       "(%a)[%a := %a] =@ %a"
       PP.expression
@@ -359,7 +476,7 @@ let%expect_test _ =
       PP.expression
       expr
       PP.expression
-      (subst_expression ~body ~x ~expr)
+      (fst @@ inline_lets ~test:true expr_subst)
   in
   let x = Value_var.of_input_var ~loc "x" in
   let y = Value_var.of_input_var ~loc "y" in
@@ -425,12 +542,15 @@ let%expect_test _ =
   (* let-in capture avoidance *)
   Type_var.reset_counter ();
   show_subst
-    ~body:(wrap (E_let_in (var x, false, ((y, dummy_type), app (var x) (var y)))))
+    ~body:
+      (wrap
+         (E_let_in (app (var x) (var x), false, ((y, dummy_type), app (var x) (var y)))))
     ~x
     ~expr:(var y);
-  [%expect {|
-    (let y = x in (x)@(y))[x := y] =
-    let y#3 = y in (y)@(y#3)
+  [%expect
+    {|
+    (let y = (x)@(x) in (x)@(y))[x := y] =
+    let y#3 = (y)@(y) in (y)@(y#3)
   |}];
   (* iter shadowed *)
   Type_var.reset_counter ();

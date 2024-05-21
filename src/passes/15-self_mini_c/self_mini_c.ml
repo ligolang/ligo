@@ -32,53 +32,7 @@ let get_function_or_eta_expand ~raise e =
 
 (* TODO hack to specialize map_expression to identity monad *)
 let map_expression = Helpers.map_expression
-
-(* Conservative purity test: ok to treat pure things as impure, must
-   not treat impure things as pure. *)
-
-let rec is_pure : expression -> bool =
- fun e ->
-  match e.content with
-  | E_literal _ | E_closure _ | E_rec _ | E_variable _ -> true
-  | E_if_bool (cond, bt, bf)
-  | E_if_none (cond, bt, (_, bf))
-  | E_if_cons (cond, bt, (_, bf))
-  | E_if_left (cond, (_, bt), (_, bf)) -> List.for_all ~f:is_pure [ cond; bt; bf ]
-  | E_let_in (e1, _, (_, e2)) -> List.for_all ~f:is_pure [ e1; e2 ]
-  | E_tuple exprs -> List.for_all ~f:is_pure exprs
-  | E_let_tuple (e1, (_, e2)) -> List.for_all ~f:is_pure [ e1; e2 ]
-  | E_proj (e, _i, _n) -> is_pure e
-  | E_update (expr, _i, update, _n) -> List.for_all ~f:is_pure [ expr; update ]
-  | E_constant c ->
-    Constant.constant'_is_pure c.cons_name && List.for_all ~f:is_pure c.arguments
-  | E_global_constant (_hash, _args) ->
-    (* hashed code can be impure :( *)
-    false
-  | E_create_contract _ (* very not pure *) | E_inline_michelson _ -> false
-  | E_raw_michelson _ -> true
-  (* TODO E_let_mut_in is pure when the rhs is pure and the body's
-     only impurity is assign/deref of the bound mutable variable *)
-  | E_let_mut_in _ | E_assign _ | E_deref _ -> false
-  (* these could be pure through the exception above for
-     E_let_mut_in *)
-  | E_for _ | E_for_each _ -> false
-  (* never pure in any important case *)
-  | E_while _ -> false
-  (* I'm not sure about these. Maybe can be tested better? *)
-  | E_application _ | E_iterator _ | E_fold _ | E_fold_right _ -> false
-
-
-let occurs_count : Value_var.t -> expression -> int =
- fun x e ->
-  let fvs = get_fv [] e in
-  Free_variables.mem_count x fvs
-
-
-let mutation_count : Value_var.t -> expression -> int =
- fun x e ->
-  let muts = assigned_and_free_vars [] e in
-  Free_variables.mem_count x muts
-
+let is_pure : expression -> bool = Helpers.is_pure
 
 (* Let "inlining" mean transforming the code:
 
@@ -98,43 +52,11 @@ let mutation_count : Value_var.t -> expression -> int =
    - ?
 *)
 
-let is_variable : expression -> bool =
- fun e ->
-  match e.content with
-  | E_variable _ -> true
-  | _ -> false
-
-
-let should_inline : Value_var.t -> expression -> expression -> bool =
- fun x e1 e2 -> occurs_count x e2 <= 1 || is_variable e1
-
-
-let should_inline_mut : Value_var.t -> expression -> bool =
- fun x e2 -> mutation_count x e2 = 0
-
-
-let inline_let : bool ref -> expression -> expression =
- fun changed e ->
-  match e.content with
-  | E_let_in (e1, should_inline_here, ((x, _a), e2)) ->
-    if is_pure e1 && (should_inline_here || should_inline x e1 e2)
-    then (
-      let e2' = Subst.subst_expression ~body:e2 ~x ~expr:e1 in
-      changed := true;
-      e2')
-    else e
-  | E_let_mut_in (e1, ((x, _a), e2)) ->
-    if is_pure e1 && should_inline_mut x e2
-    then (
-      let e2' = Subst.subst_expression ~body:e2 ~x ~expr:e1 in
-      changed := true;
-      e2')
-    else e
-  | _ -> e
-
-
 let inline_lets : bool ref -> expression -> expression =
- fun changed -> map_expression (inline_let changed)
+ fun changed expr ->
+  let res, is_changed = Inline.inline_lets expr in
+  changed := is_changed;
+  res
 
 
 let remove_unused_e_let_tuples : bool ref -> expression -> expression =
@@ -228,7 +150,7 @@ let beta : bool ref -> expression -> expression =
   | E_let_in ({ content = E_let_in (e1, inline2, ((y, b), e2)); _ }, inline1, ((x, a), e3))
     ->
     let y' = Value_var.fresh_like y in
-    let e2 = Subst.replace e2 y y' in
+    let e2 = Inline.replace e2 y y' in
     changed := true;
     { e with
       content =
@@ -244,7 +166,7 @@ let beta : bool ref -> expression -> expression =
     if is_pure e1 || is_pure e3
     then (
       let x' = Value_var.fresh_like x in
-      let e2 = Subst.replace e2 x x' in
+      let e2 = Inline.replace e2 x x' in
       changed := true;
       { e with
         content =
@@ -257,7 +179,7 @@ let beta : bool ref -> expression -> expression =
     then (
       let vars = List.map ~f:(fun (x, a) -> x, Value_var.fresh_like x, a) vars in
       let e2 =
-        List.fold_left vars ~init:e2 ~f:(fun e2 (x, x', _a) -> Subst.replace e2 x x')
+        List.fold_left vars ~init:e2 ~f:(fun e2 (x, x', _a) -> Inline.replace e2 x x')
       in
       let vars = List.map ~f:(fun (_x, x', a) -> x', a) vars in
       changed := true;

@@ -465,36 +465,33 @@ let get_entrypoint_storage_type : program -> Module_var.t list -> type_expressio
 
 
 let to_sig_items (module_ : module_) : sig_item list =
-  List.fold module_ ~init:[] ~f:(fun ctx decl ->
+  List.fold_right module_ ~init:[] ~f:(fun decl ctx ->
       let loc = Location.get_location decl in
       match Location.unwrap decl with
       | D_irrefutable_match { pattern; expr = _; attr = { view; entry; dyn_entry; _ } } ->
-        List.fold (Pattern.binders pattern) ~init:ctx ~f:(fun ctx x ->
-            ctx
-            @ [ Location.wrap ~loc
-                @@ S_value
-                     ( Binder.get_var x
-                     , Binder.get_ascr x
-                     , { Sig_item_attr.default_attributes with dyn_entry; view; entry } )
-              ])
-      | D_value { binder; expr = _; attr = { view; entry; dyn_entry; _ } } ->
-        ctx
-        @ [ Location.wrap ~loc
+        List.fold_right (Pattern.binders pattern) ~init:ctx ~f:(fun x ctx ->
+            (Location.wrap ~loc
             @@ S_value
-                 ( Binder.get_var binder
-                 , Binder.get_ascr binder
-                 , { Sig_item_attr.default_attributes with dyn_entry; view; entry } )
-          ]
+                 ( Binder.get_var x
+                 , Binder.get_ascr x
+                 , { Sig_item_attr.default_attributes with dyn_entry; view; entry } ))
+            :: ctx)
+      | D_value { binder; expr = _; attr = { view; entry; dyn_entry; _ } } ->
+        (Location.wrap ~loc
+        @@ S_value
+             ( Binder.get_var binder
+             , Binder.get_ascr binder
+             , { Sig_item_attr.default_attributes with dyn_entry; view; entry } ))
+        :: ctx
       | D_type { type_binder; type_expr; type_attr = _ } ->
-        ctx
-        @ [ Location.wrap ~loc
-            @@ S_type (type_binder, type_expr, Sig_type_attr.default_attributes)
-          ]
+        (Location.wrap ~loc
+        @@ S_type (type_binder, type_expr, Sig_type_attr.default_attributes))
+        :: ctx
       | D_module_include x -> x.signature.sig_items
       | D_module { module_binder; module_; module_attr = _; annotation = () } ->
-        ctx @ [ Location.wrap ~loc @@ S_module (module_binder, module_.signature) ]
+        (Location.wrap ~loc @@ S_module (module_binder, module_.signature)) :: ctx
       | D_signature { signature_binder; signature; signature_attr } ->
-        ctx @ [ Location.wrap ~loc @@ S_module_type (signature_binder, signature) ]
+        (Location.wrap ~loc @@ S_module_type (signature_binder, signature)) :: ctx
       | D_import import ->
         (* Imports are hidden in signatures *)
         ctx)
