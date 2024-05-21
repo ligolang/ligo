@@ -145,8 +145,7 @@ let parse_michelson_fail
       >>? fun (Eq, _) ->
       let descr : (_, _, aft, aftr) descr = { descr with aft } in
       Ok descr)
-  | Failed { descr } ->
-    Lwt.return (Ok (descr aft))
+  | Failed { descr } -> Lwt.return (Ok (descr aft))
 
 let parse_michelson_data ?tezos_context michelson ty =
   dummy_tezos_context ?tezos_context ()

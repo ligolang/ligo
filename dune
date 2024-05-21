@@ -3,13 +3,5 @@
 (env
  (dev
   (flags
-   (:standard -w -67)))
- (_
-  (js_of_ocaml
-   (compilation_mode whole_program)
-   (flags
-    (:standard --enable effects))
-   (build_runtime_flags
-    (:standard --enable effects)))))
+   (:standard -w -67))))
 
-(copy_files vendors/tezos-ligo/*.sexp)
