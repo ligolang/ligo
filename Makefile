@@ -55,3 +55,8 @@ install-vscode:
 
 run-vscode:
 	$(MAKE) -C tools/vscode run-vscode
+
+.PHONY: lock
+lock:
+	opam exec -- dune build ligo.opam
+	opam lock .

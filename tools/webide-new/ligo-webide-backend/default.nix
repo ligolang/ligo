@@ -1,5 +1,7 @@
-{ haskell-nix, runCommand }:
-let
+{
+  haskell-nix,
+  runCommand,
+}: let
   project = haskell-nix.stackProject {
     src = haskell-nix.cleanSourceHaskell {
       src = ./.;
@@ -11,7 +13,11 @@ let
   swagger-gen = exes.swagger-gen;
   swagger-file = runCommand "swagger.json" {
     LANG = "C.UTF-8";
-    buildInputs = [ swagger-gen ];
+    buildInputs = [swagger-gen];
   } "mkdir -p $out; swagger-gen > $out/swagger.json";
-in { inherit
-       swagger-file ligo-webide-backend; }
+in {
+  inherit
+    swagger-file
+    ligo-webide-backend
+    ;
+}

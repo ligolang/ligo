@@ -2,11 +2,10 @@ opam-version: "2.0"
 name: "ligo"
 version: "~dev"
 synopsis: "A high-level language which compiles to Michelson"
-maintainer: "Galfour <contact@ligolang.org>"
 authors: ["Gabriel Alfour" "Christian Rinderknecht"]
 license: "MIT"
-homepage: "https://gitlab.com/ligolang/tezos"
-bug-reports: "https://gitlab.com/ligolang/tezos/issues"
+homepage: "https://ligolang.org"
+bug-reports: "https://gitlab.com/ligolang/ligo/issues"
 depends: [
   "aches" {= "1.0.0"}
   "aches-lwt" {= "1.0.0"}
@@ -66,6 +65,7 @@ depends: [
   "cstruct-sexp" {= "6.2.0"}
   "ctypes" {= "0.20.2"}
   "ctypes_stubs_js" {= "0.1"}
+  "data-encoding" {= "1.0.1"}
   "decompress" {= "1.5.3"}
   "digestif" {= "1.2.0"}
   "domain-name" {= "0.4.0"}
@@ -103,6 +103,8 @@ depends: [
   "jane-street-headers" {= "v0.16.0"}
   "js_of_ocaml" {= "5.7.2"}
   "js_of_ocaml-compiler" {= "5.7.2"}
+  "json-data-encoding" {= "1.0.1"}
+  "json-data-encoding-bson" {= "1.0.1"}
   "jsonm" {= "1.0.2"}
   "jsonrpc" {= "1.17.0"}
   "jst-config" {= "v0.16.0"}
@@ -154,7 +156,7 @@ depends: [
   "ocp-indent" {= "1.8.1"}
   "ocplib-endian" {= "1.2"}
   "octavius" {= "1.2.2"}
-  "odoc" {= "2.1.1"}
+  "odoc" {= "2.1.1" & with-doc}
   "odoc-parser" {= "1.0.1"}
   "optint" {= "0.3.0"}
   "ordering" {= "3.15.0"}
@@ -177,7 +179,7 @@ depends: [
   "ppx_deriving_yojson" {= "3.7.0"}
   "ppx_disable_unused_warnings" {= "v0.16.0"}
   "ppx_enumerate" {= "v0.16.0"}
-  "ppx_expect" {= "v0.16.0"}
+  "ppx_expect" {= "v0.16.0" & with-test}
   "ppx_fields_conv" {= "v0.16.0"}
   "ppx_fixed_literal" {= "v0.16.0"}
   "ppx_globalize" {= "v0.16.0"}
@@ -185,7 +187,7 @@ depends: [
   "ppx_here" {= "v0.16.0"}
   "ppx_ignore_instrumentation" {= "v0.16.0"}
   "ppx_import" {= "1.10.0"}
-  "ppx_inline_test" {= "v0.16.1"}
+  "ppx_inline_test" {= "v0.16.1" & with-test}
   "ppx_irmin" {= "3.9.0"}
   "ppx_jane" {= "v0.16.0"}
   "ppx_js_style" {= "v0.16.0"}
@@ -261,7 +263,7 @@ depends: [
   "trace" {= "0.7"}
   "trie" {= "1.0.0"}
   "typerep" {= "v0.16.0"}
-  "tyxml" {= "4.6.0"}
+  "tyxml" {= "4.6.0" & with-doc}
   "uchar" {= "0.0.2"}
   "uri" {= "4.4.0"}
   "uri-sexp" {= "4.4.0"}
@@ -277,8 +279,18 @@ depends: [
   "zarith_stubs_js" {= "v0.16.1"}
   "zed" {= "3.2.3"}
 ]
-build: ["dune" "build" "-p" name "-j" jobs]
-dev-repo: "git+https://gitlab.com/ligolang/tezos.git"
+build: [["dune" "subst"] {dev} [
+  "dune"
+  "build"
+  "-p"
+  name
+  "-j"
+  jobs
+  "@install"
+  "@runtest" {with-test}
+  "@doc" {with-doc}
+]]
+dev-repo: "git+https://gitlab.com/ligolang/ligo.git"
 pin-depends: [
   [
     "linol.0.5"

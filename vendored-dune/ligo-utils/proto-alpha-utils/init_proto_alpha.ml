@@ -48,11 +48,7 @@ module Context_init = struct
     let open Alpha_context.Constants in
     let open Error_monad in
     let open Lwt_result_syntax in
-    let Parametric.
-          { blocks_per_cycle; blocks_per_commitment; _ }
-      =
-      constants
-    in
+    let Parametric.{ blocks_per_cycle; blocks_per_commitment; _ } = constants in
     let* () =
       Error_monad.unless (blocks_per_commitment <= blocks_per_cycle) (fun () ->
           failwith

@@ -1,0 +1,7 @@
+
+author: alistair.obrien
+description: "\\n\\nfeat: add nix derivation and shell for LIGO\\n\\n"
+merge_request: '3161'
+title: "feat: add nix derivation and shell for LIGO"
+type: added
+            
