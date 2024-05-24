@@ -11,6 +11,7 @@
   src = ./.;
   package = buildYarnPackage {
     GIT_PROXY = git-proxy;
+    NODE_OPTIONS = "--openssl-legacy-provider";
     inherit src;
     # some files in ./src/ligo-components/ligo-project/Project/languages/syntaxes are symlinks
     # from some adjacent file tree, so they have to be copied explicitly
