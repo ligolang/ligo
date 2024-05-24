@@ -82,7 +82,6 @@ export class LspExtension implements vscode.Disposable {
     this.updateLigoButton(button);
   }
 
-
   /**
    * Registers all features needed for the language server's functioning,
    * initializes all states, creates status bars buttons, and registers

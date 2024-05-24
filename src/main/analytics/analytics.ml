@@ -61,6 +61,18 @@ type metric_group =
       { syntax : string
       ; ide : string
       ; ide_version : string
+      ; agg_id : Uuid.t
+      }
+  | Counter_lsp_restart
+  | Counter_lsp_number_of_crashes of
+      { user : string
+      ; agg_id : Uuid.t
+      }
+  | Gauge_lsp_method_time of
+      { user : string
+      ; agg_id : Uuid.t
+      ; name : string
+      ; index : int
       }
 
 type analytics_input =
@@ -220,12 +232,62 @@ let gauge_compilation_size_group =
 
 let counter_lsp_initialize =
   Counter.v_labels
-    ~label_names:[ "user"; "repository"; "version"; "syntax"; "ide"; "ide_version" ]
+    ~label_names:
+      [ "user"; "repository"; "version"; "syntax"; "ide"; "ide_version"; "agg_id" ]
     ~registry:agg_registry.collectorRegistry
     ~help:"ligo lsp initialize request"
     ~namespace:"ligo"
     ~subsystem:"tooling"
     "lsp_initialize"
+
+
+let counter_lsp_restart =
+  Counter.v_labels
+    ~label_names:[ "user"; "repository"; "version" ]
+    ~registry:agg_registry.collectorRegistry
+    ~help:"ligo lsp restarts counter"
+    ~namespace:"ligo"
+    ~subsystem:"tooling"
+    "lsp_restart"
+
+
+let counter_lsp_number_of_crashes =
+  Counter.v_labels
+    ~label_names:[ "repository"; "version"; "user"; "agg_id" ]
+    ~registry:agg_registry.collectorRegistry
+    ~help:"ligo lsp number of crashes on keystrokes"
+    ~namespace:"ligo"
+    ~subsystem:"tooling"
+    "lsp_number_of_crashes"
+
+
+(* HACK: [Gauge.v_labels] can't be called more than once, otherwise it will fail since the
+   metric group will already be registered. Hence we cache it for use by
+   [gauge_lsp_method_time] while its metrics are not pushed and its cache not cleared.
+
+   Moreover, the [prometheus] library offers no way to clear pushed metrics, so they'd get
+   pushed every time to the server. The [prometheus_push] library tries to get around this
+   by "resetting" the collector registry (in this case, [registry.collectorRegistry] with
+   [Prometheus.CollectorRegistry.clear ()]), which also ends up erasing its labels.
+   Therefore, we need to clear this table in [push_collected_metrics_scheduled] to
+   recreate the gauges... *)
+let method_tbl = Hashtbl.create (module String)
+
+let gauge_lsp_method_time method_name =
+  Hashtbl.find_or_add method_tbl method_name ~default:(fun () ->
+      Gauge.v_labels
+        ~label_names:[ "repository"; "version"; "user"; "agg_id"; "index" ]
+        ~registry:registry.collectorRegistry
+        ~help:"ligo lsp method execution time in miliseconds with index of metric"
+        ~namespace:"ligo"
+        ~subsystem:"tooling"
+        (* LSP methods have names like "textDocument/semanticTokens/range", we want to
+           replace these slashes with another character since Prometheus doesn't allow
+           slashes in names. More specifically, they must match the following regex:
+           ^[a-zA-Z_:][a-zA-Z0-9_:]*$ *)
+        (Format.sprintf
+           "lsp_method_execution_time:%s"
+           (String.substr_replace_all ~pattern:"/" ~with_:"_" method_name)))
 
 
 let create_id () = Format.asprintf "%a" Uuid.pp (Uuid.create_random Random.State.default)
@@ -361,14 +423,18 @@ let inc ~counter_group ~labels ~value =
   ()
 
 
+let should_push_metrics ~skip_analytics =
+  not
+    (skip_analytics
+    || (not (is_term_accepted ()))
+    || is_in_ci ()
+    || is_skip_analytics_through_env_var
+    || is_dev_version ())
+
+
 let push_collected_metrics ~skip_analytics =
-  if skip_analytics
-     || (not (is_term_accepted ()))
-     || is_in_ci ()
-     || is_skip_analytics_through_env_var
-     || is_dev_version ()
-  then Lwt.return_unit
-  else (
+  if should_push_metrics ~skip_analytics
+  then (
     let p_1 =
       let%lwt _ = PushableCollectorRegistry.push agg_registry in
       Lwt.return_unit
@@ -378,6 +444,7 @@ let push_collected_metrics ~skip_analytics =
       Lwt.return_unit
     in
     Lwt.join [ p_1; p_2 ])
+  else Lwt.return_unit
 
 
 let determine_syntax_label_from_source source : string =
@@ -417,11 +484,37 @@ let generate_cli_metrics_with_syntax_and_protocol ~command ~raw_options ?source_
   [ execution_metric; run_metric ]
 
 
-let generate_lsp_initialize_metrics ~syntax ~ide ~ide_version () =
+let generate_lsp_initialize_metrics ~syntax ~ide ~ide_version ~session_id () =
   let run_metric =
-    { group = Counter_lsp_initialize { syntax; ide; ide_version }; metric_value = 1.0 }
+    { group = Counter_lsp_initialize { syntax; ide; ide_version; agg_id = session_id }
+    ; metric_value = 1.0
+    }
   in
   [ run_metric ]
+
+
+let generate_lsp_restart_metrics () =
+  let run_metric = { group = Counter_lsp_restart; metric_value = 1.0 } in
+  [ run_metric ]
+
+
+let generate_lsp_number_of_crashes ~session_id ~number_of_crashes_on_keystrokes () =
+  let run_metric =
+    { group = Counter_lsp_number_of_crashes { user = get_user_id (); agg_id = session_id }
+    ; metric_value = float_of_int number_of_crashes_on_keystrokes
+    }
+  in
+  [ run_metric ]
+
+
+let generate_lsp_method_time ~session_id ~name ~times () =
+  let user = get_user_id () in
+  let make_run_metric index time =
+    { group = Gauge_lsp_method_time { user; agg_id = session_id; name; index }
+    ; metric_value = Time_float.Span.to_ms time
+    }
+  in
+  List.mapi ~f:make_run_metric times
 
 
 let get_family_by_group
@@ -434,6 +527,9 @@ let get_family_by_group
   | Counter_cli_init _ -> `Ctr counter_cli_init_group
   | Gauge_compilation_size _ -> `Gauge gauge_compilation_size_group
   | Counter_lsp_initialize _ -> `Ctr counter_lsp_initialize
+  | Counter_lsp_restart -> `Ctr counter_lsp_restart
+  | Counter_lsp_number_of_crashes _ -> `Ctr counter_lsp_number_of_crashes
+  | Gauge_lsp_method_time { name; _ } -> `Gauge (gauge_lsp_method_time name)
 
 
 let get_labels_from_group : metric_group -> string list = function
@@ -445,7 +541,12 @@ let get_labels_from_group : metric_group -> string list = function
   | Counter_cli_init { command; template } -> [ command; template ]
   | Gauge_compilation_size { contract_discriminant; syntax; protocol } ->
     [ contract_discriminant; syntax; protocol ]
-  | Counter_lsp_initialize { syntax; ide; ide_version } -> [ syntax; ide; ide_version ]
+  | Counter_lsp_initialize { syntax; ide; ide_version; agg_id } ->
+    [ syntax; ide; ide_version; Uuid.to_string agg_id ]
+  | Counter_lsp_restart -> []
+  | Counter_lsp_number_of_crashes { user; agg_id } -> [ user; Uuid.to_string agg_id ]
+  | Gauge_lsp_method_time { user; agg_id; name = _; index } ->
+    [ user; Uuid.to_string agg_id; Int.to_string index ]
 
 
 let edit_metric_value : analytics_input -> unit =
@@ -458,3 +559,36 @@ let edit_metric_value : analytics_input -> unit =
 
 
 let edit_metrics_values : analytics_inputs -> unit = List.iter ~f:edit_metric_value
+
+let push_collected_metrics_scheduled
+    ~skip_analytics
+    ~time_between_pushes
+    ~should_stop
+    ~collect_metrics
+  =
+  while%lwt should_push_metrics ~skip_analytics && not (should_stop ()) do
+    let should_stop_task () =
+      while%lwt not (should_stop ()) do
+        (* Wait for a second to not get 100% CPU usage. *)
+        let%lwt () = Lwt_unix.sleep 1. in
+        Lwt.pause ()
+      done
+    in
+    let%lwt () =
+      Lwt.pick
+        [ should_stop_task ()
+        ; Lwt_unix.sleep (Time_float.Span.to_sec time_between_pushes)
+        ]
+    in
+    let () = collect_metrics () in
+    let%lwt () =
+      try%lwt
+        let%lwt _ = PushableCollectorRegistry.push registry in
+        Lwt.return_unit
+      with
+      | _ -> Lwt.return_unit
+    in
+    (* See the HACK session in [method_tbl] for the reason this is needed. *)
+    Hashtbl.clear method_tbl;
+    Lwt.return_unit
+  done
