@@ -3478,6 +3478,26 @@ module Lsp_server = struct
   module Requests = Ligo_lsp.Server.Requests
   module Server = Ligo_lsp.Server
 
+  (** Edits the LSP runtime metrics values and pushes them to the Prometheus aggregator. *)
+  let generate_lsp_runtime_analytics
+      (runtime_analytics : Server.runtime_analytics)
+      ~(session_id : Uuid.t)
+      ~(skip_analytics : bool)
+      : unit Lwt.t
+    =
+    let metrics =
+      let { Server.number_of_crashes_on_keystrokes; methods_times = _ } =
+        runtime_analytics
+      in
+      Analytics.generate_lsp_number_of_crashes
+        ~session_id
+        ~number_of_crashes_on_keystrokes
+        ()
+    in
+    Analytics.edit_metrics_values metrics;
+    Analytics.push_collected_metrics ~skip_analytics
+
+
   let run
       ?(log_requests : bool = true)
       (capability_mode : Server.capability_mode)
@@ -3485,16 +3505,53 @@ module Lsp_server = struct
       ()
     =
     Analytics.set_is_running_lsp true;
+    let session_id = Uuid.create_random Random.State.default in
     let run_lsp () =
-      let s = new Server.lsp_server capability_mode ~skip_analytics in
+      let methods_times = Hashtbl.create (module String) in
+      let runtime_analytics =
+        ref { Server.number_of_crashes_on_keystrokes = 0; methods_times }
+      in
+      let s =
+        new Server.lsp_server
+          capability_mode
+          runtime_analytics
+          ~session_id
+          ~skip_analytics
+      in
       let server = Linol_lwt.Jsonrpc2.create_stdio (s :> Linol_lwt.Jsonrpc2.server) in
       let shutdown () = Poly.(s#get_status = `ReceivedExit) in
       let task = Linol_lwt.Jsonrpc2.run ~shutdown server in
-      match Linol_lwt.run task with
-      | () -> Ok ("", "")
-      | exception e ->
-        let e = Exn.to_string e in
-        Error ("", e)
+      let analytics_job =
+        match capability_mode with
+        | Only_semantic_tokens -> Lwt.return_unit
+        | All_capabilities | No_semantic_tokens ->
+          Analytics.push_collected_metrics_scheduled
+            ~skip_analytics
+            ~time_between_pushes:(Time_float.Span.of_min 5.)
+            ~should_stop:shutdown
+            ~collect_metrics:(fun () ->
+              let metrics =
+                Hashtbl.fold methods_times ~init:[] ~f:(fun ~key:name ~data:times acc ->
+                    Analytics.generate_lsp_method_time ~session_id ~name ~times () @ acc)
+              in
+              Analytics.edit_metrics_values metrics;
+              Hashtbl.clear methods_times)
+      in
+      let result =
+        match Linol_lwt.run (Lwt.join [ task; analytics_job ]) with
+        | () -> Ok ("", "")
+        | exception e ->
+          let e = Exn.to_string e in
+          Error ("", e)
+      in
+      (* The LSP client doesn't always send the shutdown/exit methods, so we handle these
+         analytics that should be sent at the end of the execution here. *)
+      (match capability_mode with
+      | Only_semantic_tokens -> ()
+      | All_capabilities | No_semantic_tokens ->
+        Lwt_main.run
+        @@ generate_lsp_runtime_analytics !runtime_analytics ~session_id ~skip_analytics);
+      result
     in
     let with_request_logging f () =
       let reporter ppf =

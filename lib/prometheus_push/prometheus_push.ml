@@ -24,16 +24,17 @@ module PushableCollectorRegistry = struct
 
   let handle_server_response response body =
     let open Cohttp_lwt in
-    let body = Lwt_main.run (Body.to_string body) in
+    Body.to_string body
+    >|= fun body ->
     print_string body;
     let code = Response.status response in
     match code with
-    | `Created -> Ok ("Metric successfully published", "")
+    | #Cohttp.Code.success_status -> Ok ("Metric successfully published", "")
     | _ -> Error (body, "")
 
   let push t =
     CollectorRegistry.collect t.collectorRegistry
-    >|= fun collected ->
+    >>= fun collected ->
     let open Cohttp_lwt_unix in
     let uri = t.url in
     let body =
@@ -54,7 +55,8 @@ module PushableCollectorRegistry = struct
       Lwt.bind body_headers (fun (body, headers) ->
           Lwt.pick [ Lwt_unix.timeout 1.0; Client.put ~headers ~body uri ])
     in
-    let response, body = Lwt_main.run r in
+    r
+    >>= fun (response, body) ->
     clean t;
     handle_server_response response body
 end
