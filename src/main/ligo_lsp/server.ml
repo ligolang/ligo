@@ -28,62 +28,6 @@ type capability_mode =
   | No_semantic_tokens (** Enable all capabilities, except semantic tokens. *)
 [@@deriving equal]
 
-(* OCaml object methods are recursive by default, but OCaml doesn't play nicely with
-   polymorphic recursion. The callers of this function have types that interact with GADTs
-   and the solution I found was to extract this into a function outside the object. *)
-
-(** If we crash, the language client (like VSCode) might spam messages notifying the user
-    that a capability has failed. To prevent this, we provide this handler which will run
-    the provided handler and prevent the LSP server from dying, and will display one crash
-    message to the user (if the [bool ref] is [false]), which may be disabled if they
-    press "Don't show again". The [bool ref] is changed to [true] if the user has clicked
-    to not display the message again. The [default] value is used in case of a crash. *)
-let try_with_crash_handler
-    (type a)
-    (has_caught_crash : bool ref)
-    (action : a t)
-    ~(default : a)
-    : a t
-  =
-  let open Handler.Let_syntax in
-  let log_crash_and_display_message (exn : exn) : unit t =
-    let stack = Printexc.get_backtrace () in
-    let%bind () =
-      send_log_msg ~type_:Error
-      @@ Format.asprintf "Unexpected exception: %a\n%s" Exn.pp exn stack
-    in
-    if !has_caught_crash
-    then pass
-    else (
-      let don't_show_again = "Don't show again" in
-      send_message_with_buttons
-        ~type_:Error
-        ~options:[ don't_show_again ]
-        ~message:
-          (Format.asprintf
-             "An unexpected exception has occurred.\n\
-              The language server will now operate at a limited capacity until the crash \
-              has been worked around. Please report this as a bug together with an \
-              example on how to reproduce this. A stack trace may be found in the logs \
-              for LIGO Language Server. Details:\n\
-              %a"
-             Exn.pp
-             exn)
-        ~handler:(function
-          | Error error -> send_log_msg ~type_:Error error.message
-          | Ok None -> pass
-          | Ok (Some { title }) ->
-            if String.equal title don't_show_again then has_caught_crash := true;
-            pass))
-  in
-  with_run_in_io
-  @@ fun { unlift_io } ->
-  try%lwt unlift_io action with
-  | exn ->
-    let%lwt () = unlift_io @@ log_crash_and_display_message exn in
-    IO.return default
-
-
 (** Collects information about the client that initialized LIGO LSP for analytics. *)
 type ide_info =
   { name : string (** Name of the client. *)
@@ -151,10 +95,9 @@ class lsp_server (capability_mode : capability_mode) ~(skip_analytics : bool) =
         previously normalized to avoid excessive IO operations for normalization. *)
     val file_normalization_tbl = Hashtbl.create (module String)
 
-    (** If [true], indicates that we reached a fatal [failwith] and the user has
-        acknowledged it. [false] indicates that we haven't reached a crash yet, or the
-        user has not yet acknowledged yet. *)
-    val has_caught_crash : bool ref = ref false
+    (** Records the current state of crashes in the language server, for use by the crash
+        handler ([Crash.try_with_handler]). *)
+    val crash_state : Crash.t ref = ref Crash.No_crash
 
     (** A sensible function to use for requests that use [~normalize]. This is also the
         function that's used by [ask_normalize]. See [file_normalization_tbl]. *)
@@ -189,10 +132,24 @@ class lsp_server (capability_mode : capability_mode) ~(skip_analytics : bool) =
           }
 
     (** Like [on_doc], but directly calls [Requests.on_doc] while handling crashes using
-        [try_with_crash_handler]. *)
-    method on_doc_with_handler ~process_immediately ?changes ~version file content =
-      try_with_crash_handler has_caught_crash ~default:()
-      @@ Requests.on_doc ~process_immediately ?changes ~version file content
+        [Crash.try_with_handler]. We assume that a crash was worked around if we could
+        successfully run [Requests.on_doc]. This is just a heuristic for avoiding spamming
+        the user with crashes and recording too many equal consecutive crashes in
+        analytics, and it's possible to set the crash state as [No_crash] simply by
+        switching files, so this is not fully robust. *)
+    method on_doc_with_handler
+        ~(process_immediately : bool)
+        ?(changes : TextDocumentContentChangeEvent.t list option)
+        ~(version : [ `New of Ligo_interface.document_version | `Unchanged ])
+        (file : Path.t)
+        (content : string)
+        : unit t =
+      Crash.try_with_handler crash_state ~default:(const ())
+      @@ let%bind.Handler () =
+           Requests.on_doc ~process_immediately ?changes ~version file content
+         in
+         crash_state := Crash.indicate_recovery !crash_state;
+         pass
 
     (** Processes the document cache, taking the [capability_mode] and
         [config.diagnostics_pull_mode] into consideration to avoid doing excessive work.
@@ -838,7 +795,7 @@ class lsp_server (capability_mode : capability_mode) ~(skip_analytics : bool) =
                    ())
             in
             self#run_handler new_notify_back
-            @@ try_with_crash_handler has_caught_crash ~default:()
+            @@ Crash.try_with_handler crash_state ~default:(const ())
             @@ process_doc path)
         | notification -> super#on_notification ~notify_back ~server_request notification
 
@@ -901,7 +858,7 @@ class lsp_server (capability_mode : capability_mode) ~(skip_analytics : bool) =
                    ())
             in
             self#run_handler new_notify_back
-            @@ try_with_crash_handler has_caught_crash ~default
+            @@ Crash.try_with_handler crash_state ~default:(const default)
             @@ Handler.(repopulate_cache >>= fun () -> handler))
           else IO.return default
         in
