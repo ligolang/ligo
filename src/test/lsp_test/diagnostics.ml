@@ -736,3 +736,18 @@ let%expect_test "TZIP-16 metadata checks: both plain warning and metadata warnin
     };
   [%expect {|
     To fill! |}] *)
+
+let%expect_test "An empty module doesn't crash the compiler" =
+  get_diagnostics_test
+    { file_path = "contracts/lsp/empty_module.mligo"; max_number_of_problems = None };
+  [%expect
+    {|
+    [("../../../../../default/src/test/contracts/lsp/empty_module.mligo",
+      [{
+         "message": "[Compiler stage: parsing] Ill-formed module declaration.\nAt this point a declaration is expected.\n",
+         "range": {
+           "end": { "character": 21, "line": 0 },
+           "start": { "character": 18, "line": 0 }
+         },
+         "severity": 1
+       }])] |}]

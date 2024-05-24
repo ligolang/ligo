@@ -239,7 +239,7 @@ and module_expr =
 
 and module_body = {
   kwd_struct   : (kwd_struct [@yojson.opaque]);
-  declarations : declaration list;
+  declarations : declaration nseq;
   kwd_end      : (kwd_end [@yojson.opaque])
 }
 

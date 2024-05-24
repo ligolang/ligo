@@ -926,7 +926,7 @@ At this point, an expression is expected.
 
 interactive_expr: With
 ##
-## Ends in an error in state: 1184.
+## Ends in an error in state: 1183.
 ##
 ## interactive_expr' -> . interactive_expr [ # ]
 ##
@@ -4091,7 +4091,7 @@ At this point, one of the following is expected:
 
 contract: Directive With
 ##
-## Ends in an error in state: 1170.
+## Ends in an error in state: 1169.
 ##
 ## nseq(top_declaration) -> top_declaration . [ End EOF ]
 ## nseq(top_declaration) -> top_declaration . nseq(top_declaration) [ End EOF ]
@@ -4108,7 +4108,7 @@ following is expected:
 
 contract: Module UIdent EQ Struct Type Ident EQ UIdent EOF
 ##
-## Ends in an error in state: 1173.
+## Ends in an error in state: 1172.
 ##
 ## structure -> Struct nseq(top_declaration) . End [ Type Module Let Include In End EOF Directive Attr ]
 ##
@@ -4124,9 +4124,9 @@ contract: Module UIdent EQ Struct Type Ident EQ UIdent EOF
 ## In state 76, spurious reduction of production variant_type(fun_type_level) -> short_variant(fun_type_level)
 ## In state 73, spurious reduction of production type_expr -> variant_type(fun_type_level)
 ## In state 126, spurious reduction of production type_decl -> Type type_name EQ type_expr
-## In state 1163, spurious reduction of production declaration -> type_decl
-## In state 1172, spurious reduction of production top_declaration -> declaration
-## In state 1170, spurious reduction of production nseq(top_declaration) -> top_declaration
+## In state 1162, spurious reduction of production declaration -> type_decl
+## In state 1171, spurious reduction of production top_declaration -> declaration
+## In state 1169, spurious reduction of production nseq(top_declaration) -> top_declaration
 ##
 
 Ill-formed module declaration.
@@ -4204,7 +4204,7 @@ interactive_expr: Module UIdent EQ UIdent Type
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
 ## In state 1158, spurious reduction of production module_expr -> module_name
-## In state 1175, spurious reduction of production module_decl -> Module module_name EQ module_expr
+## In state 1174, spurious reduction of production module_decl -> Module module_name EQ module_expr
 ##
 interactive_expr: Match Verbatim With WILD ARROW If Verbatim Then Module UIdent EQ UIdent Type
 ##
@@ -4221,7 +4221,7 @@ interactive_expr: Match Verbatim With WILD ARROW If Verbatim Then Module UIdent 
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
 ## In state 1158, spurious reduction of production module_expr -> module_name
-## In state 1175, spurious reduction of production module_decl -> Module module_name EQ module_expr
+## In state 1174, spurious reduction of production module_decl -> Module module_name EQ module_expr
 ##
 interactive_expr: If Verbatim Then Match Verbatim With WILD ARROW Module UIdent EQ UIdent Type
 ##
@@ -4238,7 +4238,7 @@ interactive_expr: If Verbatim Then Match Verbatim With WILD ARROW Module UIdent 
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
 ## In state 1158, spurious reduction of production module_expr -> module_name
-## In state 1175, spurious reduction of production module_decl -> Module module_name EQ module_expr
+## In state 1174, spurious reduction of production module_decl -> Module module_name EQ module_expr
 ##
 interactive_expr: Match Verbatim With WILD ARROW Module UIdent EQ UIdent Type
 ##
@@ -4254,7 +4254,7 @@ interactive_expr: Match Verbatim With WILD ARROW Module UIdent EQ UIdent Type
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
 ## In state 1158, spurious reduction of production module_expr -> module_name
-## In state 1175, spurious reduction of production module_decl -> Module module_name EQ module_expr
+## In state 1174, spurious reduction of production module_decl -> Module module_name EQ module_expr
 ##
 interactive_expr: If Verbatim Then Module UIdent EQ UIdent Type
 ##
@@ -4271,7 +4271,7 @@ interactive_expr: If Verbatim Then Module UIdent EQ UIdent Type
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
 ## In state 1158, spurious reduction of production module_expr -> module_name
-## In state 1175, spurious reduction of production module_decl -> Module module_name EQ module_expr
+## In state 1174, spurious reduction of production module_decl -> Module module_name EQ module_expr
 ##
 
 Ill-formed local module declaration.
@@ -4653,7 +4653,6 @@ contract: Module UIdent EQ Struct With
 ##
 ## Ends in an error in state: 175.
 ##
-## structure -> Struct . End [ Type Module Let Include In End EOF Directive Attr ]
 ## structure -> Struct . nseq(top_declaration) End [ Type Module Let Include In End EOF Directive Attr ]
 ##
 ## The known suffix of the stack is as follows:
@@ -4661,9 +4660,7 @@ contract: Module UIdent EQ Struct With
 ##
 
 Ill-formed module declaration.
-At this point, one of the following is expected:
-  * a declaration;
-  * the keyword 'end' if the module is empty.
+At this point a declaration is expected.
 
 contract: Let LPAR With
 ##
@@ -5734,7 +5731,7 @@ At this point, one of the following is expected:
 
 contract: Attr With
 ##
-## Ends in an error in state: 1162.
+## Ends in an error in state: 1161.
 ##
 ## attr_decl -> Attr . declaration [ Type Module Let Include End EOF Directive Attr ]
 ##
@@ -6919,7 +6916,7 @@ At this point, an expression is expected.
 
 interactive_expr: Ident Bytes ZWSP
 ##
-## Ends in an error in state: 1186.
+## Ends in an error in state: 1185.
 ##
 ## interactive_expr -> expr . EOF [ # ]
 ##
@@ -8543,7 +8540,7 @@ contract: Module UIdent COLON Sig ZWSP
 Ill-formed module type declaration.
 At this point, one of the following is expected:
   * a declaration;
-  * the keyword 'end' if the module is empty.
+  * the keyword 'end' if the signature is empty.
 
 contract: Module UIdent COLON Sig Val ZWSP
 ##
@@ -8632,7 +8629,7 @@ At this point, the name of the module being declared is expected.
 
 contract: Module UIdent COLON ZWSP
 ##
-## Ends in an error in state: 1176.
+## Ends in an error in state: 1175.
 ##
 ## module_constraint -> COLON . signature_expr [ EQ ]
 ##
@@ -8645,7 +8642,7 @@ At this point, the module type of the module being declared is expected.
 
 contract: Module UIdent COLON UIdent Type
 ##
-## Ends in an error in state: 1178.
+## Ends in an error in state: 1177.
 ##
 ## module_decl -> Module module_name module_constraint . EQ module_expr [ Type Module Let Include In End EOF Directive Attr ]
 ##
@@ -8657,7 +8654,7 @@ contract: Module UIdent COLON UIdent Type
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
 ## In state 157, spurious reduction of production signature_expr -> module_name
-## In state 1177, spurious reduction of production module_constraint -> COLON signature_expr
+## In state 1176, spurious reduction of production module_constraint -> COLON signature_expr
 ##
 
 Ill-formed module declaration.
@@ -8665,7 +8662,7 @@ At this point, the assignment symbol '='.
 
 contract: Module UIdent COLON UIdent EQ ZWSP
 ##
-## Ends in an error in state: 1179.
+## Ends in an error in state: 1178.
 ##
 ## module_decl -> Module module_name module_constraint EQ . module_expr [ Type Module Let Include In End EOF Directive Attr ]
 ##
@@ -8736,7 +8733,7 @@ contract: Module UIdent COLON Sig Attr ZWSP
 Ill-formed module type declaration.
 At this point, one of the following is expected:
   * a declaration;
-  * the keyword 'end' if the module is empty.
+  * the keyword 'end' if the signature is empty.
 
 contract: Include ZWSP
 ##
@@ -8814,7 +8811,7 @@ At this point, one of the following is expected:
 
 interactive_type_expr: ZWSP
 ##
-## Ends in an error in state: 1188.
+## Ends in an error in state: 1187.
 ##
 ## interactive_type_expr' -> . interactive_type_expr [ # ]
 ##
@@ -8827,7 +8824,7 @@ At this point, a type expression is expected.
 
 interactive_type_expr: UIdent ARROW
 ##
-## Ends in an error in state: 1189.
+## Ends in an error in state: 1188.
 ##
 ## interactive_type_expr -> type_expr . EOF [ # ]
 ##
@@ -8863,7 +8860,7 @@ At this point, the name of a record field is expected.
 
 contract: Directive End
 ##
-## Ends in an error in state: 1181.
+## Ends in an error in state: 1180.
 ##
 ## contract -> nseq(top_declaration) . EOF [ # ]
 ##
@@ -8874,7 +8871,7 @@ contract: Directive End
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 1170, spurious reduction of production nseq(top_declaration) -> top_declaration
+## In state 1169, spurious reduction of production nseq(top_declaration) -> top_declaration
 ##
 
 Ill-formed declaration.

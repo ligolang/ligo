@@ -1,0 +1,7 @@
+
+author: heitor.toledo
+description: "\\nFixed \"Failure tl\" crash in the compiler and language server when writing an empty module in CameLIGO.\\n\\n"
+merge_request: '3177'
+title: "[#2184] Forbid empty modules in the parser"
+type: fixed
+            

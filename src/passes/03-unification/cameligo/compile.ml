@@ -597,7 +597,7 @@ let mod_expr : Eq.mod_expr -> Folding.mod_expr =
   let ret = Location.wrap ~loc in
   match me with
   | M_Body { value; _ } ->
-    let decl = List.Ne.of_list value.declarations in
+    let decl = value.declarations in
     ret @@ O.M_body I.{ decl; eof = Lexing_cameligo.Token.ghost_eof }
   | M_Path m ->
     let m, _loc = r_split m in

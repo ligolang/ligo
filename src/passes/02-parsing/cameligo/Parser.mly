@@ -538,13 +538,9 @@ module_expr:
 | module_path(module_name) { M_Path (mk_mod_path $1 (fun x -> x#region)) }
 
 structure:
-  "struct" ioption(nseq(top_declaration)) "end" {
-    let region = cover $1#region $3#region
-    and declarations =
-      match $2 with
-        None -> []
-      | Some nseq -> Utils.nseq_to_list nseq in
-    let value  = {kwd_struct=$1; declarations; kwd_end=$3}
+  "struct" nseq(top_declaration) "end" {
+    let region = cover $1#region $3#region in
+    let value  = {kwd_struct=$1; declarations=$2; kwd_end=$3}
     in {region; value} }
 
 module_constraint:

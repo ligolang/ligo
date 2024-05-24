@@ -177,7 +177,7 @@ and print_module_expr state = function
 and print_M_Body state (node : module_body reg) =
   let Region.{value; region} = node in
   let decl = value.declarations in
-  let children = Tree.mk_children_list print_declaration decl
+  let children = Tree.mk_children_nseq print_declaration decl
   in Tree.make ~region state "M_Body" children
 
 and print_M_Path state (node : module_name module_path reg) =
