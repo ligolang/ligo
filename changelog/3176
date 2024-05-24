@@ -1,0 +1,7 @@
+
+author: heitor.toledo
+description: "\\nThe language server can now collect analytics such as the number of restarts, execution time of methods, and number of crashes. Analytics are sent only if the user has agreed to let LIGO collect analytics.\\n\\nCrashes should be a bit better handled too.\\n\\n"
+merge_request: '3176'
+title: "[#2183] Add LSP runtime analytics"
+type: added
+            
