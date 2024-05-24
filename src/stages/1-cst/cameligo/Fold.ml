@@ -498,7 +498,7 @@ let fold'
     let { kwd_struct; declarations; kwd_end } = node in
     process_list
     [ kwd_struct -| S_kwd_module
-    ; declarations -| S_list S_declaration
+    ; declarations -| S_nseq S_declaration
     ; kwd_end -| S_kwd_end ]
   | S_module_decl ->
     let { kwd_module; name; annotation; eq; module_expr} = node in
