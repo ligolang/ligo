@@ -14,6 +14,7 @@
   checking
   self_ast_typed
   aggregation
+  expansion
   ligo_interpreter
   spilling
   self_ast_aggregated

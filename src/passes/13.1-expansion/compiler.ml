@@ -1,6 +1,8 @@
 module Location = Simple_utils.Location
+module Trace = Simple_utils.Trace
 module I = Ast_aggregated
 module O = Ast_expanded
+open Errors
 open Ligo_prim
 
 (*
@@ -10,9 +12,11 @@ Mutable let destructuring (E_let_mut_in) is handled in a slightly different way 
 
 *)
 
-let rec compile_expression : I.expression -> O.expression =
+let rec compile_expression ~(raise : _ Trace.raise) : I.expression -> O.expression =
  fun exp ->
-  let self = compile_expression in
+  let self = compile_expression ~raise in
+  let compile_type = compile_type ~raise in
+  let compile_matching = compile_matching ~raise in
   let return : O.expression_content -> O.expression =
    fun expression_content ->
     { expression_content
@@ -110,9 +114,9 @@ let rec compile_expression : I.expression -> O.expression =
   | E_coerce { anno_expr; _ } -> self anno_expr
 
 
-and compile_type : I.type_expression -> O.type_expression =
+and compile_type ~(raise : _ Trace.raise) : I.type_expression -> O.type_expression =
  fun ty ->
-  let self = compile_type in
+  let self = compile_type ~raise in
   let return type_content : O.type_expression =
     { type_content
     ; orig_var = Option.map ty.abbrev ~f:(fun { orig_var = _, v; _ } -> v)
@@ -122,7 +126,7 @@ and compile_type : I.type_expression -> O.type_expression =
   in
   match ty.type_content with
   | T_variable x -> return (T_variable x)
-  | T_exists _ -> Decision_tree.corner_case "Cannot compile T_exists" __LOC__ ()
+  | T_exists _ -> raise.error @@ cannot_compile_texists ty ty.location
   | T_constant { language; injection; parameters } ->
     return (T_constant { language; injection; parameters = List.map parameters ~f:self })
   | T_sum (r, _) -> return (T_sum (I.Row.map self r))
@@ -133,7 +137,7 @@ and compile_type : I.type_expression -> O.type_expression =
   | T_for_all x -> return (T_for_all (Abstraction.map self x))
 
 
-and compile_matching
+and compile_matching ~(raise : _ Trace.raise)
     :  loc:Location.t -> ?attributes:O.ValueAttr.t -> mut:bool -> O.expression
     -> (I.expression, I.type_expression) I.Match_expr.match_case list -> O.expression
   =
@@ -145,13 +149,13 @@ and compile_matching
   let match_expr =
     let cases =
       List.map cases ~f:(fun { pattern; body } ->
-          let pattern = Linear_pattern.map compile_type pattern in
-          let body = compile_expression body in
+          let pattern = Linear_pattern.map (compile_type ~raise) pattern in
+          let body = compile_expression ~raise body in
           I.Match_expr.{ pattern; body })
     in
-    Decision_tree.compile matchee.type_expression var cases ~mut
+    Decision_tree.compile ~raise matchee.type_expression var cases ~mut
   in
-  let match_expr = if mut then destruct_mut_let_in match_expr else match_expr in
+  let match_expr = if mut then destruct_mut_let_in ~raise match_expr else match_expr in
   O.e_a_let_in
     ~loc:Location.generated
     { let_binder = Binder.make var matchee_type
@@ -190,7 +194,7 @@ a := a + 1 ;
 TODO: warn if tickets in <matchee>
 *)
 
-and destruct_mut_let_in : O.expression -> O.expression =
+and destruct_mut_let_in ~(raise : _ Trace.raise) : O.expression -> O.expression =
  fun match_expr ->
   let return expression_content = { match_expr with expression_content } in
   let loc = match_expr.location in
@@ -229,4 +233,8 @@ and destruct_mut_let_in : O.expression -> O.expression =
           { x with body })
     in
     return (O.E_matching { sum_case with cases = O.Match_variant { sums with cases } })
-  | _ -> failwith "compiling pattern did not result in a matching expression"
+  | _ ->
+    raise.error
+    @@ corner_case
+         ~loc:__LOC__
+         "compiling pattern did not result in a matching expression"

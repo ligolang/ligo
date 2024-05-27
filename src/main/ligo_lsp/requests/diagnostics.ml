@@ -71,7 +71,6 @@ let filter_diagnostics : Main_errors.all list -> Main_errors.all list =
         | _ -> true)
       | `Aggregation_tracer e ->
         (match e with
-        | `Aggregation_cannot_compile_texists _
         | `Aggregation_cannot_compile_erroneous_expression _ -> false
         | _ -> true)
       | `Self_ast_aggregated_tracer e ->

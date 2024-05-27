@@ -1849,6 +1849,7 @@ and eval_ligo ~raise ~steps ~options : AST.expression -> calltrace -> env -> val
                 (Scoping.translate_type
                    (trace ~raise Main_errors.spilling_tracer
                    @@ Spilling.compile_type
+                   @@ trace ~raise Main_errors.expansion_tracer
                    @@ Expansion.compile_type_expression e.type_expression)) ))
         args
     in
