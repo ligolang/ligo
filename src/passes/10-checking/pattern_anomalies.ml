@@ -175,7 +175,7 @@ and to_original_pattern ~raise ~loc simple_patterns (ty : AST.type_expression) =
     | _ -> raise.error @@ Errors.corner_case "edge case: not a record/tuple" ty.location)
 
 
-let print_matrix matrix =
+let[@warning "-32"] print_matrix matrix =
   let () = Format.printf "matrix: \n" in
   let () =
     List.iter matrix ~f:(fun row -> Format.printf "[%a]\n" pp_simple_pattern_list row)
@@ -183,7 +183,9 @@ let print_matrix matrix =
   Format.printf "\n"
 
 
-let print_vector vector = Format.printf "vector: \n%a\n" pp_simple_pattern_list vector
+let[@warning "-32"] print_vector vector =
+  Format.printf "vector: \n%a\n" pp_simple_pattern_list vector
+
 
 (* Specialize matrix [specialize_matrix c tys matrix]
 
