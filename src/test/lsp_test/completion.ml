@@ -114,6 +114,101 @@ let test_cases =
         ]
     ; negative_labels = []
     }
+  ; { test_name = "Complete complex record with type variables"
+    ; file_name = "contracts/lsp/completion_polymorphic_record.mligo"
+    ; position = Position.create ~line:9 ~character:12
+    ; completions =
+        [ CompletionItem.create
+            ~detail:"(int, string) map"
+            ~kind:CompletionItemKind.Field
+            ~label:"c"
+            ~sortText:"\x03"
+            ()
+        ; CompletionItem.create
+            ~detail:"a"
+            ~kind:CompletionItemKind.Field
+            ~label:"d"
+            ~sortText:"\x03"
+            ()
+        ; CompletionItem.create
+            ~detail:"int"
+            ~kind:CompletionItemKind.Field
+            ~label:"x"
+            ~sortText:"\x03"
+            ()
+        ; CompletionItem.create
+            ~detail:"int"
+            ~kind:CompletionItemKind.Field
+            ~label:"y"
+            ~sortText:"\x03"
+            ()
+        ; CompletionItem.create
+            ~detail:"int"
+            ~kind:CompletionItemKind.Field
+            ~label:"z"
+            ~sortText:"\x03"
+            ()
+        ]
+    ; negative_labels = []
+    }
+  ; { test_name = "Complete polymorphic record with abstract type filled"
+    ; file_name = "contracts/lsp/completion_polymorphic_record.mligo"
+    ; position = Position.create ~line:15 ~character:12
+    ; completions =
+        [ CompletionItem.create
+            ~detail:"a"
+            ~kind:CompletionItemKind.Field
+            ~label:"f1"
+            ~sortText:"\x03"
+            ()
+        ; CompletionItem.create
+            ~detail:"a"
+            ~kind:CompletionItemKind.Field
+            ~label:"f2"
+            ~sortText:"\x03"
+            ()
+        ]
+    ; negative_labels = []
+    }
+  ; { test_name = "Complete polymorphic record with concrete type filled"
+    ; file_name = "contracts/lsp/completion_polymorphic_record.mligo"
+    ; position = Position.create ~line:19 ~character:12
+    ; completions =
+        [ CompletionItem.create
+            ~detail:"int"
+            ~kind:CompletionItemKind.Field
+            ~label:"f1"
+            ~sortText:"\x03"
+            ()
+        ; CompletionItem.create
+            ~detail:"int"
+            ~kind:CompletionItemKind.Field
+            ~label:"f2"
+            ~sortText:"\x03"
+            ()
+        ]
+    ; negative_labels = []
+    }
+  ; { test_name =
+        "Complete record with type aliasing polymorphic record with concrete type filled"
+    ; file_name = "contracts/lsp/completion_polymorphic_record.mligo"
+    ; position = Position.create ~line:25 ~character:12
+    ; completions =
+        [ CompletionItem.create
+            ~detail:"int"
+            ~kind:CompletionItemKind.Field
+            ~label:"f1"
+            ~sortText:"\x03"
+            ()
+        ; CompletionItem.create
+            ~detail:"int"
+            ~kind:CompletionItemKind.Field
+            ~label:"f2"
+            ~sortText:"\x03"
+            ()
+        ]
+    ; negative_labels = []
+    }
   ; { test_name = "Complete nested module field"
     ; file_name = "contracts/lsp/completion_module.mligo"
     ; position = Position.create ~line:10 ~character:16
