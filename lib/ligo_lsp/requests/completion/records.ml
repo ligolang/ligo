@@ -1,6 +1,8 @@
 open Core
 open Common
 open Lsp_helpers
+open Ligo_prim
+module Row = Row.With_optional_layout
 
 (** Recursively resolves a projection path, taking the current field's path and its type.
 
@@ -14,8 +16,10 @@ let rec find_record_from_path
     (definitions : Def.definitions)
     : Ast_core.row option
   =
-  let rec find_record_in_core : Ast_core.type_content -> Ast_core.row option = function
-    | T_record row -> Some row
+  let rec find_record_in_core
+      : Ast_core.type_content -> (Ast_core.row * Type_var.t list) option
+    = function
+    | T_record row -> Some (row, [])
     | T_variable var ->
       Option.bind
         (Def.find_map definitions ~f:(function
@@ -26,11 +30,31 @@ let rec find_record_from_path
           match tdef.content with
           | None -> None
           | Some content -> find_record_in_core content.type_content)
-    | _ -> None
+    | T_for_all { type_; _ } -> find_record_in_core type_.type_content
+    | T_abstraction { type_; ty_binder; _ } ->
+      Option.map ~f:(fun (record, ty_binders) -> record, ty_binder :: ty_binders)
+      @@ find_record_in_core type_.type_content
+    | T_app { type_operator; arguments } ->
+      (match find_record_in_core @@ T_variable type_operator.element with
+      | Some (row, ty_binders) ->
+        let new_row =
+          match List.zip ty_binders arguments with
+          | Unequal_lengths -> row
+          | Ok var_value_pairs ->
+            Row.map (Ast_core.Helpers.subst_type var_value_pairs) row
+        in
+        Some (new_row, [])
+      | None -> None)
+    | T_sum _
+    | T_arrow _
+    | T_constant _
+    | T_singleton _
+    | T_module_accessor _
+    | T_contract_parameter _ -> None
   in
   let open Option.Monad_infix in
   find_record_in_core struct_type.type_content
-  >>= fun struct_type ->
+  >>= fun (struct_type, _) ->
   match field_path with
   | [] -> Some struct_type
   | selection :: field_path ->
