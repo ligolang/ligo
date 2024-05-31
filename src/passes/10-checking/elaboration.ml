@@ -48,6 +48,7 @@ let rec decode (type_ : Type.t) ~options ~path ~raise subst =
     ; abbrev =
         Option.map type_.abbrev ~f:(fun { orig_var; applied_types } ->
             O.{ orig_var; applied_types = List.map ~f:decode applied_types })
+    ; source_type = None
     ; location = type_.location
     }
   in

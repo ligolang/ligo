@@ -372,6 +372,8 @@ let rec error_ppformat
       Aggregation.Errors.error_ppformat ~display_format ~no_colour f e
     | `Self_ast_aggregated_tracer e ->
       Self_ast_aggregated.Errors.error_ppformat ~display_format ~no_colour f e
+    | `Expansion_tracer e ->
+      Expansion.Errors.error_ppformat ~display_format ~no_colour f e
     | `Self_mini_c_tracer e ->
       Self_mini_c.Errors.error_ppformat ~display_format ~no_colour f e
     | `Spilling_tracer e -> Spilling.Errors.error_ppformat ~display_format ~no_colour f e
@@ -770,6 +772,7 @@ let rec error_json : Types.all -> Simple_utils.Error.t list =
   | `Self_ast_typed_tracer e -> [ Self_ast_typed.Errors.error_json e ]
   | `Aggregation_tracer e -> [ Aggregation.Errors.error_json e ]
   | `Self_ast_aggregated_tracer e -> [ Self_ast_aggregated.Errors.error_json e ]
+  | `Expansion_tracer e -> [ Expansion.Errors.error_json e ]
   | `Spilling_tracer e -> [ Spilling.Errors.error_json e ]
   | `Self_mini_c_tracer e -> [ Self_mini_c.Errors.error_json e ]
   | `Scoping_tracer e -> [ Scoping.Errors.error_json e ]

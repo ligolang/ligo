@@ -30,6 +30,7 @@ type self_ast_aggregated_error =
     Constant.constant' * Ast_aggregated.expression
   | `Self_ast_aggregated_nested_bigmap of Location.t
   | `Self_ast_aggregated_unsolved_coerce of Location.t
+  | `Self_ast_aggregated_unexpected_texists of Ast_typed.type_expression * Location.t
   ]
 [@@deriving poly_constructor { prefix = "self_ast_aggregated_" }]
 
@@ -195,6 +196,14 @@ let error_ppformat
         f
         "@[<hv>%a@.Invalid coercion. It should have been resolved.@]"
         snippet_pp
+        loc
+    | `Self_ast_aggregated_unexpected_texists (type_, loc) ->
+      Format.fprintf
+        f
+        "@[<hv>Underspecified type \"%a\".@.Please add additional annotations.%a@]"
+        Ast_typed.PP.type_expression
+        type_
+        (Snippet.pp ~no_colour)
         loc)
 
 
@@ -323,5 +332,14 @@ let error_json : self_ast_aggregated_error -> Simple_utils.Error.t =
     make ~stage ~content
   | `Self_ast_aggregated_unsolved_coerce location ->
     let message = Format.sprintf "Unsolved coercion." in
+    let content = make_content ~message ~location () in
+    make ~stage ~content
+  | `Self_ast_aggregated_unexpected_texists (type_, location) ->
+    let message =
+      Format.asprintf
+        "Underspecified type \"%a\".@.Please add additional annotations."
+        Ast_typed.PP.type_expression
+        type_
+    in
     let content = make_content ~message ~location () in
     make ~stage ~content

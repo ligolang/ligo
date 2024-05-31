@@ -183,7 +183,7 @@ let use_var_name_if_available : type_info -> Ast_core.type_expression =
 let get_type ~(use_module_accessor : bool) (vdef : Scopes.Types.vdef) : type_info option =
   match vdef.t with
   | Core contents -> Some { var_name = None; contents }
-  | Resolved { type_content; abbrev; location } ->
+  | Resolved { type_content; abbrev; location; source_type } ->
     let%bind.Option contents =
       (* We want to preserve both the type var and type expression here, so we set
          [use_orig_var = True] so this expression will be pretty, and we also set
@@ -193,7 +193,7 @@ let get_type ~(use_module_accessor : bool) (vdef : Scopes.Types.vdef) : type_inf
         Simple_utils.Trace.to_option ~fast_fail:false
         @@ Checking.untype_type_expression
              ~use_orig_var:true
-             { type_content; abbrev = None; location }
+             { type_content; abbrev = None; location; source_type }
       with
       | _exn -> None
     in

@@ -226,7 +226,7 @@ let rec compile_type ~raise (t : AST.type_expression) : type_expression =
       raise.error
       @@ corner_case
            ~loc:__LOC__
-           (Format.asprintf "wrong constant\n%a\n" Ast_aggregated.PP.type_expression t))
+           (Format.asprintf "wrong constant\n%a\n" Ast_expanded.PP.type_expression t))
   | T_sum _ when Option.is_some (AST.get_t_bool t) -> return (T_base TB_bool)
   | T_sum _ when Option.is_some (AST.get_t_option t) ->
     let o =
@@ -343,7 +343,7 @@ let rec compile_expression ~raise (ae : AST.expression) : expression =
     let expr = List.fold ~f:aux ~init:element' path in
     expr
   | E_record m ->
-    let (record_t : Ast_aggregated.Types.row) =
+    let (record_t : Ast_expanded.row) =
       trace_option
         ~raise
         (corner_case ~loc:__LOC__ "record expected")

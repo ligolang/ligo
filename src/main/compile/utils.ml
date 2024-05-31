@@ -108,7 +108,7 @@ let type_ty_expression
        ~preprocess_define:options.frontend.preprocess_define
   |> Of_unified.compile_type_expression ~raise ~options
   |> Of_core.compile_type_expression ~raise ~options ~context:init_sig
-  |> Of_typed.compile_type_expression ~raise ~options
+  |> Of_aggregated.compile_type_expression ~raise
   |> Of_expanded.compile_type ~raise
   |> Of_mini_c.compile_type
 

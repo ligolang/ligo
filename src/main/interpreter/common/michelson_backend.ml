@@ -251,7 +251,8 @@ let compile_ast ~raise ~options aggregated_exp =
 
 let compile_type ~raise type_exp =
   let open Ligo_compile in
-  let ty = Of_expanded.compile_type ~raise type_exp in
+  let ty = Of_aggregated.compile_type_expression ~raise type_exp in
+  let ty = Of_expanded.compile_type ~raise ty in
   Of_mini_c.compile_type ty
 
 
@@ -718,7 +719,7 @@ let rec val_to_ast ~raise ~loc
     let x = string_of_chain_id s in
     e_a_chain_id ~loc x
   | V_Construct (ctor, arg) when is_t_sum ty ->
-    let map_ty =
+    let map_ty, _ =
       trace_option
         ~raise
         (Errors.generic_error
@@ -1325,7 +1326,7 @@ let rec compile_value ~raise ~options ~loc
       Tezos_micheline.Micheline.Prim ((), "Some", [ arg ], [])
     | _ -> failwith "Unexpected")
   | V_Construct (ctor, arg) when is_t_sum ty ->
-    let map_ty =
+    let map_ty, _ =
       trace_option
         ~raise
         (Errors.generic_error
@@ -1338,8 +1339,12 @@ let rec compile_value ~raise ~options ~loc
     in
     let ty' = Ligo_prim.(Record.find map_ty.fields (Label.create ctor)) in
     let%map arg = self arg ty' in
-    let ty' = Ligo_compile.Of_expanded.compile_type ~raise ty in
-    let ty_variant =
+    let ty' =
+      ty
+      |> Ligo_compile.Of_aggregated.compile_type_expression ~raise
+      |> Ligo_compile.Of_expanded.compile_type ~raise
+    in
+    let ty_variant, _ =
       trace_option ~raise (Errors.generic_error Location.generated "foo")
       @@ get_t_sum_opt ty
     in
@@ -1480,7 +1485,10 @@ let rec compile_value ~raise ~options ~loc
         | [] -> Lwt.return acc
         | (name, { item; no_mutation; inline }) :: tl ->
           let%bind mich = self item.eval_term item.ast_type in
-          let minic_ty = Ligo_compile.Of_expanded.compile_type ~raise item.ast_type in
+          let exp_ty =
+            Ligo_compile.Of_aggregated.compile_type_expression ~raise item.ast_type
+          in
+          let minic_ty = Ligo_compile.Of_expanded.compile_type ~raise exp_ty in
           let mich_ty = Ligo_compile.Of_mini_c.compile_type minic_ty in
           let mich_ty =
             Tezos_micheline.(Micheline.map_node (fun _ -> ()) (fun x -> x) mich_ty)
@@ -1582,7 +1590,8 @@ let compile_type_to_mcode ~raise
     : Ast_aggregated.type_expression -> Ligo_interpreter.Types.mcode
   =
  fun ty ->
-  let expr_ty = Ligo_compile.Of_expanded.compile_type ~raise ty in
+  let expr_ty = Ligo_compile.Of_aggregated.compile_type_expression ~raise ty in
+  let expr_ty = Ligo_compile.Of_expanded.compile_type ~raise expr_ty in
   let expr_ty = Ligo_compile.Of_mini_c.compile_type expr_ty in
   let expr_ty = clean_location_with () expr_ty in
   expr_ty
@@ -1595,7 +1604,8 @@ let compile_value ~raise ~options ~loc
  fun v ty ->
   let open Lwt.Let_syntax in
   let%map expr = compile_value ~raise ~options ~loc v ty in
-  let expr_ty = Ligo_compile.Of_expanded.compile_type ~raise ty in
+  let expr_ty = Ligo_compile.Of_aggregated.compile_type_expression ~raise ty in
+  let expr_ty = Ligo_compile.Of_expanded.compile_type ~raise expr_ty in
   let expr_ty = Ligo_compile.Of_mini_c.compile_type expr_ty in
   let expr_ty = clean_location_with () expr_ty in
   Ligo_interpreter.Types.
@@ -1608,7 +1618,7 @@ let run_michelson_func
     ~loc
     (ctxt : Tezos_state.context)
     (code : (unit, string) Tezos_micheline.Micheline.node)
-    result_ty
+    (result_ty : Ast_aggregated.type_expression)
     arg
     arg_ty
   =

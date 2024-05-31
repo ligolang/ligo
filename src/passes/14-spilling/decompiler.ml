@@ -7,7 +7,12 @@ open Mini_c
 open Simple_utils.Trace
 open Ligo_prim.Literal_types
 
-let rec decompile ~raise (v : value) (t : AST.type_expression) : AST.expression =
+let rec decompile
+    ~(raise : (spilling_error, _) raise)
+    (v : value)
+    (t : AST.type_expression)
+    : AST.expression
+  =
   let open! AST in
   let loc = Location.dummy in
   let self = decompile ~raise in
@@ -187,12 +192,12 @@ let rec decompile ~raise (v : value) (t : AST.type_expression) : AST.expression 
       @@ corner_case
            ~loc:"unspiller"
            "Wrong number of args or wrong kinds for the type constant")
-  | T_sum _ when Option.is_some (Ast_aggregated.get_t_option t) ->
+  | T_sum _ when Option.is_some (Ast_expanded.get_t_option t) ->
     (match v with
     | D_some v ->
       let tv =
         trace_option ~raise (corner_case ~loc:"unspiller" "impossible")
-        @@ Ast_aggregated.get_t_option t
+        @@ Ast_expanded.get_t_option t
       in
       let sub = self v tv in
       return

@@ -3,7 +3,7 @@ open Main_errors
 open Simple_utils.Trace
 open Simple_utils.Runned_result
 
-let decompile_value ~raise (output_type : Ast_aggregated.type_expression) (ty, value) =
+let decompile_value ~raise (output_type : Ast_expanded.type_expression) (ty, value) =
   let mini_c =
     trace ~raise main_decompile_michelson @@ Stacking.Decompiler.decompile_value ty value
   in
@@ -21,7 +21,7 @@ let decompile_value ~raise (output_type : Ast_aggregated.type_expression) (ty, v
 *)
 let decompile_value_from_contract_execution
     ~raise
-    (output_type : Ast_aggregated.type_expression)
+    (output_type : Ast_expanded.type_expression)
     runned_result
   =
   match runned_result with
@@ -29,17 +29,13 @@ let decompile_value_from_contract_execution
   | Success ex_ty_value ->
     let Ligo_prim.Arrow.{ type1 = _; type2 = return_type; param_names = _ } =
       trace_option ~raise main_entrypoint_not_a_function
-      @@ Ast_aggregated.get_t_arrow output_type
+      @@ Ast_expanded.get_t_arrow output_type
     in
     let decompiled_value = decompile_value ~raise return_type ex_ty_value in
     Success decompiled_value
 
 
-let decompile_expression
-    ~raise
-    (type_value : Ast_aggregated.type_expression)
-    runned_result
-  =
+let decompile_expression ~raise (type_value : Ast_expanded.type_expression) runned_result =
   match runned_result with
   | Fail s -> Fail s
   | Success ex_ty_value ->

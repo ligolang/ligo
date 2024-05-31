@@ -353,7 +353,7 @@ let run_typed_program_with_imperative_input
   let res =
     Decompile.Of_michelson.decompile_expression
       ~raise
-      ty
+      (Ligo_compile.Of_aggregated.compile_type_expression ~raise ty)
       (Runned_result.Success michelson_output)
   in
   match res with
@@ -389,7 +389,7 @@ let run_typed_program_with_imperative_input_twice
   let res =
     Decompile.Of_michelson.decompile_expression
       ~raise
-      ty
+      (Ligo_compile.Of_aggregated.compile_type_expression ~raise ty)
       (Runned_result.Success michelson_output)
   in
   match res with
@@ -548,7 +548,9 @@ let expect_evaluate ~raise (program : Ast_typed.program) entry_point expecter =
   let res =
     Decompile.Of_michelson.decompile_expression
       ~raise
-      aggregated.type_expression
+      (Ligo_compile.Of_aggregated.compile_type_expression
+         ~raise
+         aggregated.type_expression)
       (Runned_result.Success res_michelson)
   in
   let res' =

@@ -2,6 +2,7 @@ module PP_helpers = Simple_utils.PP_helpers
 module AST = Ast_aggregated
 open Ligo_prim
 module Row = AST.Row
+open Errors
 
 let fold_map_expression = AST.Helpers.fold_map_expression
 let map_expression = AST.Helpers.map_expression
@@ -189,14 +190,17 @@ let rec subst_external_type et t (u : AST.type_expression) =
   | T_for_all { ty_binder; kind; type_ } ->
     let type_ = self et t type_ in
     { u with type_content = T_for_all { ty_binder; kind; type_ } }
+  | T_abstraction { ty_binder; kind; type_ } ->
+    let type_ = self et t type_ in
+    { u with type_content = T_abstraction { ty_binder; kind; type_ } }
   | T_constant { injection = External _; parameters = _; _ }
     when AST.equal_type_expression et u -> t
   | T_constant { language; injection; parameters } ->
     let parameters = List.map ~f:(self et t) parameters in
     { u with type_content = T_constant { language; injection; parameters } }
-  | T_sum row ->
+  | T_sum (row, orig_name) ->
     let row = Row.map (self et t) row in
-    { u with type_content = T_sum row }
+    { u with type_content = T_sum (row, orig_name) }
   | T_record row ->
     let row = Row.map (self et t) row in
     { u with type_content = T_record row }
@@ -483,10 +487,11 @@ let check_if_polymorphism_present ~raise e =
     | T_constant { parameters; _ } ->
       List.fold_left parameters ~init:() ~f:(fun () te ->
           ignore @@ check_type_expression ~loc te)
-    | T_record row | T_sum row -> Row.iter (check_type_expression ~loc) row
+    | T_record row | T_sum (row, _) -> Row.iter (check_type_expression ~loc) row
     | T_arrow _ -> ()
     | T_singleton _ -> ()
-    | T_for_all _ -> show_error loc
+    | T_exists _ -> raise.error @@ unexpected_texists te te.location
+    | T_for_all _ | T_abstraction _ -> show_error loc
   in
   let (), e =
     fold_map_expression
@@ -554,7 +559,7 @@ let commute e =
 
 
 let mono_polymorphic_expr ~raise e =
-  let e = Deduplicate_binders.program e in
+  let e = Deduplicate_binders.program ~raise e in
   let e = commute e in
   let _, m = mono_polymorphic_expression ~raise Data.empty e in
   let m = check_if_polymorphism_present ~raise m in

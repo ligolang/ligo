@@ -131,7 +131,7 @@ let rec map_typed_type_expression_module_path
   and row : Ast_typed.row -> Ast_typed.row =
    fun { fields; layout } -> { fields = Label.Map.map fields ~f:type_expression; layout }
   and type_expression : Ast_typed.type_expression -> Ast_typed.type_expression =
-   fun { type_content = t; abbrev; location } ->
+   fun { type_content = t; abbrev; location; source_type } ->
     { type_content = type_content t
     ; abbrev =
         Option.map abbrev ~f:(fun { orig_var; applied_types } ->
@@ -141,6 +141,7 @@ let rec map_typed_type_expression_module_path
                   List.map ~f:(map_typed_type_expression_module_path f) applied_types
               })
     ; location
+    ; source_type
     }
   in
   type_expression

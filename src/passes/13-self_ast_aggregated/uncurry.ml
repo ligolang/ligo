@@ -139,8 +139,8 @@ let uncurried_rows (depth : int) (args : type_expression list) : row =
 let uncurried_record_type ~loc depth args =
   let record_type = uncurried_rows depth args in
   { type_content = T_record record_type
-  ; orig_var = None
   ; location = loc
+  ; abbrev = None
   ; source_type = None
   }
 
@@ -411,7 +411,7 @@ let uncurry_expression (expr : expression) : expression =
               ; type_expression =
                   { type_content =
                       T_arrow { type1 = record_type; type2 = ret_type; param_names = [] }
-                  ; orig_var = None
+                  ; abbrev = None
                   ; location = loc
                   ; source_type = None
                   }

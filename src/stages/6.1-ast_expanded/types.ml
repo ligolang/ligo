@@ -4,14 +4,32 @@ module Location = Simple_utils.Location
 open Ligo_prim
 module Row = Row.With_layout
 
-type type_expression = [%import: Ast_aggregated.type_expression]
+type type_content =
+  | T_variable of Type_var.t
+  | T_constant of type_injection
+  | T_sum of row
+  | T_record of row
+  | T_arrow of ty_expr Arrow.t
+  | T_singleton of Literal_value.t
+  | T_for_all of ty_expr Abstraction.t
 
-and type_content = [%import: Ast_aggregated.type_content]
-[@@deriving equal, compare, yojson, hash]
+and type_injection =
+  { language : string
+  ; injection : Ligo_prim.Literal_types.t
+  ; parameters : ty_expr list
+  }
 
-and ty_expr = type_expression
+and row = type_expression Row.t
 
-type row = [%import: Ast_aggregated.row]
+and type_expression =
+  { type_content : type_content
+  ; source_type : Ast_typed.type_expression option
+        [@equal.ignore] [@compare.ignore] [@hash.ignore]
+  ; location : Location.t [@equal.ignore] [@compare.ignore] [@hash.ignore]
+  ; orig_var : Type_var.t option [@equal.ignore] [@compare.ignore] [@hash.ignore]
+  }
+
+and ty_expr = type_expression [@@deriving equal, compare, yojson, hash]
 
 module ValueAttr = struct
   include Ast_aggregated.ValueAttr

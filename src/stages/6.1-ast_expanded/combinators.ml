@@ -50,6 +50,12 @@ let get_t_inj (t : type_expression) (v : Ligo_prim.Literal_types.t)
   | _ -> None
 
 
+let get_t_base_inj (t : type_expression) (v : Ligo_prim.Literal_types.t) : unit option =
+  match get_t_inj t v with
+  | Some [] -> Some ()
+  | _ -> None
+
+
 let get_t_unary_inj (t : type_expression) (v : Ligo_prim.Literal_types.t)
     : type_expression option
   =
@@ -96,31 +102,38 @@ let t__type_ ~loc t t' : type_expression = t_constant ~loc _type_ [ t; t' ]
   [@@map _type_, "map"]
 
 
-let get_t__type_ (t : type_expression) : type_expression option = get_t_unary_inj t _type_
+let get_t__type_ (t : type_expression) : unit option = get_t_base_inj t _type_
   [@@map
     _type_
-    , ( "list"
-      , "set"
-      , "signature"
-      , "chain_id"
-      , "string"
-      , "bytes"
-      , "key"
-      , "key_hash"
-      , "int"
-      , "address"
-      , "operation"
+    , ( "int"
       , "nat"
+      , "unit"
       , "tez"
       , "timestamp"
-      , "unit"
+      , "address"
+      , "bytes"
+      , "string"
+      , "key"
+      , "signature"
+      , "key_hash"
+      , "michelson_program"
       , "bls12_381_g1"
       , "bls12_381_g2"
       , "bls12_381_fr"
+      , "chest"
+      , "chest_key"
+      , "chain_id"
+      , "operation"
       , "never"
       , "mutation"
       , "pvss_key"
       , "baker_hash" )]
+
+
+let get_t__type_ (t : type_expression) : type_expression option = get_t_unary_inj t _type_
+  [@@map
+    _type_
+    , ("contract", "list", "set", "ticket", "sapling_state", "sapling_transaction", "gen")]
 
 
 let is_t__type_ t = Option.is_some (get_t__type_ t)
