@@ -14,7 +14,24 @@ module LSet = Set.Make (Label)
 let empty_set = Set.empty (module Label)
 
 type raise = (Errors.typer_error, Main_warnings.all) Trace.raise
+type 'a t = raise:raise -> loc:Location.t -> 'a
 
+include Monad.Make (struct
+  type nonrec 'a t = 'a t
+
+  let return result ~raise:_ ~loc:_ = result
+
+  let bind k ~f ~raise ~loc =
+    let result = k ~raise ~loc in
+    f result ~raise ~loc
+
+
+  let map = `Define_using_bind
+end)
+
+let error err : _ t = fun ~raise ~loc -> raise.error (err loc)
+let error_l ~loc err : _ t = fun ~raise ~loc:_ -> raise.error (err loc)
+let loc : Location.t t = fun ~raise:_ ~loc -> loc
 let cons_label = Label.of_string "#CONS"
 let nil_label = Label.of_string "#NIL"
 let t_unit = AST.t_unit ()
@@ -48,7 +65,7 @@ let pp_simple_pattern_list ppf sps =
   List.iter sps ~f:(fun sp -> Format.fprintf ppf "%a, " pp_simple_pattern sp)
 
 
-let get_variant_nested_type label (tsum : AST.row) =
+let get_variant_nested_type label (tsum : AST.row) : AST.type_expression =
   let label_map = tsum.fields in
   Map.find_exn label_map label
 
@@ -122,40 +139,44 @@ let are_keys_numeric keys =
   List.for_all keys ~f:(fun l -> Option.is_some @@ int_of_string_opt @@ Label.to_string l)
 
 
-let rec to_list_pattern ~(raise : raise) ~loc simple_pattern : _ AST.Pattern.t =
+let rec to_list_pattern simple_pattern : _ AST.Pattern.t t =
+  let open Let_syntax in
+  let%bind loc = loc in
   match simple_pattern with
-  | SP_Wildcard _ -> Location.wrap ~loc @@ AST.Pattern.P_var (wild_binder ~loc)
+  | SP_Wildcard _ -> return @@ Location.wrap ~loc @@ AST.Pattern.P_var (wild_binder ~loc)
   | SP_Constructor (Label ("#NIL", _), _, _) ->
-    Location.wrap ~loc @@ AST.Pattern.P_list (List [])
+    return @@ Location.wrap ~loc @@ AST.Pattern.P_list (List [])
   | SP_Constructor (Label ("#CONS", _), sps, t) ->
     let rsps = List.rev sps in
     let tl = List.hd_exn rsps in
     let hd = List.rev (List.tl_exn rsps) in
-    let hd = to_original_pattern ~raise ~loc hd (C.get_t_list_exn t) in
-    let tl = to_list_pattern ~raise ~loc tl in
-    Location.wrap ~loc @@ AST.Pattern.P_list (Cons (hd, tl))
+    let%bind hd = to_original_pattern hd (C.get_t_list_exn t) in
+    let%bind tl = to_list_pattern tl in
+    return @@ Location.wrap ~loc @@ AST.Pattern.P_list (Cons (hd, tl))
   | SP_Constructor (Label (c, _), _, _) ->
-    raise.error
-    @@ Errors.corner_case (Format.sprintf "edge case: %s in to_list_pattern" c) loc
+    error @@ Errors.corner_case (Format.sprintf "edge case: %s in to_list_pattern" c)
 
 
-and to_original_pattern ~raise ~loc simple_patterns (ty : AST.type_expression) =
+and to_original_pattern simple_patterns (ty : AST.type_expression)
+    : 'a option Linear_pattern.t t
+  =
+  let open Let_syntax in
   let open AST.Pattern in
+  let%bind loc = loc in
   match simple_patterns with
-  | [] ->
-    raise.error @@ Errors.corner_case "edge case: to_original_pattern empty patterns" loc
-  | [ SP_Wildcard t ] when AST.is_t_unit t -> Location.wrap ~loc @@ P_unit
-  | [ SP_Wildcard _ ] -> Location.wrap ~loc @@ P_var (wild_binder ~loc)
+  | [] -> error @@ Errors.corner_case "edge case: to_original_pattern empty patterns"
+  | [ SP_Wildcard t ] when AST.is_t_unit t -> return @@ Location.wrap ~loc @@ P_unit
+  | [ SP_Wildcard _ ] -> return @@ Location.wrap ~loc @@ P_var (wild_binder ~loc)
   | [ (SP_Constructor (Label ("#CONS", _), _, _) as simple_pattern) ]
   | [ (SP_Constructor (Label ("#NIL", _), _, _) as simple_pattern) ] ->
-    to_list_pattern ~raise ~loc simple_pattern
+    to_list_pattern simple_pattern
   | [ SP_Constructor (c, sps, t) ] ->
     let t =
       get_variant_nested_type
         c
         (Option.value_exn ~here:[%here] (Option.map ~f:fst @@ C.get_t_sum t))
     in
-    let ps = to_original_pattern ~raise ~loc sps t in
+    let%map ps = to_original_pattern sps t in
     Location.wrap ~loc @@ P_variant (c, ps)
   | _ ->
     (match ty.type_content with
@@ -163,16 +184,22 @@ and to_original_pattern ~raise ~loc simple_patterns (ty : AST.type_expression) =
       let kvs = Map.to_alist fields in
       let labels, tys = List.unzip kvs in
       let tys = List.map tys ~f:(fun ty -> ty) in
-      let _, ps =
-        List.fold_left tys ~init:(simple_patterns, []) ~f:(fun (sps, ps) t ->
+      let%bind _, ps =
+        List.fold_left
+          tys
+          ~init:(return (simple_patterns, []))
+          ~f:(fun ps t ->
+            let%bind sps, ps = ps in
             let n = List.length @@ destructure_type t in
             let sps, rest = List.split_n sps n in
-            rest, ps @ [ to_original_pattern ~raise ~loc sps t ])
+            let%map orig_pattern = to_original_pattern sps t in
+            rest, ps @ [ orig_pattern ])
       in
       if are_keys_numeric labels
-      then Location.wrap ~loc @@ P_tuple ps
-      else Location.wrap ~loc @@ P_record (Record.of_list (List.zip_exn labels ps))
-    | _ -> raise.error @@ Errors.corner_case "edge case: not a record/tuple" ty.location)
+      then return @@ Location.wrap ~loc @@ P_tuple ps
+      else
+        return @@ Location.wrap ~loc @@ P_record (Record.of_list (List.zip_exn labels ps))
+    | _ -> error_l ~loc:ty.location @@ Errors.corner_case "edge case: not a record/tuple")
 
 
 let[@warning "-32"] print_matrix matrix =
@@ -339,37 +366,35 @@ let get_constructors_from_1st_col matrix =
         default_matrix = [default_matrix matrix]
 
         Urec (matrix, vector) = Urec (default_matrix, (v2, ... , vn)) *)
-let rec algorithm_Urec ~(raise : raise) ~loc matrix vector =
+let rec algorithm_Urec matrix vector : bool t =
+  let open Let_syntax in
   if List.is_empty matrix
-  then true
+  then return true
   else if List.for_all matrix ~f:List.is_empty && List.is_empty vector
-  then false
+  then return false
   else (
     match vector with
     | SP_Constructor (c, _r1_n, t) :: _q2_n ->
       let a = find_constuctor_arity c t in
       let matrix = specialize_matrix c a matrix in
       let vector = specialize_vector c a vector in
-      algorithm_Urec ~raise ~loc matrix vector
+      algorithm_Urec matrix vector
     | SP_Wildcard t :: q2_n ->
       let complete_signature = get_all_constructors t in
       let constructors = get_constructors_from_1st_col matrix in
       if (not (Set.is_empty complete_signature))
          && Set.equal complete_signature constructors
       then
-        Set.fold
-          complete_signature
-          ~f:(fun b c ->
+        Set.fold complete_signature ~init:(return false) ~f:(fun b c ->
             let tys = find_constuctor_arity c t in
-            b
-            || algorithm_Urec
-                 ~raise
-                 ~loc
-                 (specialize_matrix c tys matrix)
-                 (specialize_vector c tys vector))
-          ~init:false
-      else algorithm_Urec ~raise ~loc (default_matrix matrix) q2_n
-    | [] -> raise.error @@ Errors.corner_case "edge case: algorithm Urec" loc)
+            if%bind b
+            then return true
+            else
+              algorithm_Urec
+                (specialize_matrix c tys matrix)
+                (specialize_vector c tys vector))
+      else algorithm_Urec (default_matrix matrix) q2_n
+    | [] -> error @@ Errors.corner_case "edge case: algorithm Urec")
 
 
 (* Algorithm I [algorithm_I matrix n ts]
@@ -409,14 +434,15 @@ let rec algorithm_Urec ~(raise : raise) ~loc matrix vector =
           If there more constructors that do not belong to Σ,
           we can improve by returning all the patterns that can be formed
           using the extra constructors. *)
-let rec algorithm_I ~(raise : raise) ~loc matrix n ts =
+let rec algorithm_I matrix n ts : simple_pattern list list option t =
+  let open Let_syntax in
   if n = 0
   then
     if List.is_empty matrix
-    then Some [ [] ]
+    then return @@ Some [ [] ]
     else if List.for_all matrix ~f:List.is_empty
-    then None
-    else raise.error @@ Errors.corner_case "edge case: algorithm Urec" loc
+    then return None
+    else error @@ Errors.corner_case "edge case: algorithm Urec"
   else (
     let constructors = get_constructors_from_1st_col matrix in
     let t, ts = List.split_n ts 1 in
@@ -424,50 +450,37 @@ let rec algorithm_I ~(raise : raise) ~loc matrix n ts =
     let complete_signature = get_all_constructors t in
     if (not @@ Set.is_empty constructors) && Set.equal constructors complete_signature
     then
-      Set.fold
-        complete_signature
-        ~f:(fun p ck ->
+      Set.fold complete_signature ~init:(return None) ~f:(fun p ck ->
+          let%bind p = p in
           if Option.is_some p
-          then p
+          then return p
           else (
             let tys = find_constuctor_arity ck t in
             let ak = List.length tys in
             let matrix = specialize_matrix ck tys matrix in
-            let ps = algorithm_I ~raise ~loc matrix (ak + n - 1) (tys @ ts) in
-            match ps with
-            | Some ps ->
-              Some
-                (List.map ps ~f:(fun ps ->
-                     let xs, ps = List.split_n ps ak in
-                     [ SP_Constructor (ck, xs, t) ] @ ps))
-            | None -> None))
-        ~init:None
+            let%map ps = algorithm_I matrix (ak + n - 1) (tys @ ts) in
+            let%map.Option ps = ps in
+            List.map ps ~f:(fun ps ->
+                let xs, ps = List.split_n ps ak in
+                SP_Constructor (ck, xs, t) :: ps)))
     else (
       let dp = default_matrix matrix in
-      let ps = algorithm_I ~raise ~loc dp (n - 1) ts in
-      match ps with
-      | Some ps ->
-        if Set.is_empty constructors
-        then (
-          let ps = List.map ps ~f:(fun ps -> [ SP_Wildcard t ] @ ps) in
-          Some ps)
-        else (
-          let missing_constructors = Set.diff complete_signature constructors in
-          let cs =
-            Set.fold
-              missing_constructors
-              ~f:(fun cs c ->
-                let tys = find_constuctor_arity c t in
-                let ps = List.map tys ~f:(fun t -> SP_Wildcard t) in
-                let c = SP_Constructor (c, ps, t) in
-                c :: cs)
-              ~init:[]
-          in
-          Some
-            (List.fold_left cs ~init:[] ~f:(fun new_ps c ->
-                 let ps = List.map ps ~f:(fun p -> [ c ] @ p) in
-                 ps @ new_ps)))
-      | None -> None))
+      let%map ps = algorithm_I dp (n - 1) ts in
+      let%map.Option ps = ps in
+      if Set.is_empty constructors
+      then List.map ps ~f:(fun ps -> SP_Wildcard t :: ps)
+      else (
+        let missing_constructors = Set.diff complete_signature constructors in
+        let cs =
+          Set.fold missing_constructors ~init:[] ~f:(fun cs c ->
+              let tys = find_constuctor_arity c t in
+              let ps = List.map tys ~f:(fun t -> SP_Wildcard t) in
+              let c = SP_Constructor (c, ps, t) in
+              c :: cs)
+        in
+        List.fold_left cs ~init:[] ~f:(fun new_ps c ->
+            let ps = List.map ps ~f:(fun p -> c :: p) in
+            ps @ new_ps))))
 
 
 (* Missing case analysis uses [algorithm_I matrix n] to find out the
@@ -479,13 +492,14 @@ let rec algorithm_I ~(raise : raise) ~loc matrix n ts =
        [p21, p22, ... , p2n]
         ...
        [pm1, pm2, ... , pmn]], n) *)
-let missing_case_analysis ~raise ~loc matrix t =
+let missing_case_analysis matrix t : 'a option Linear_pattern.t list option t =
+  let open Let_syntax in
   let ts = destructure_type t in
-  match algorithm_I ~raise ~loc matrix (List.length ts) ts with
+  match%bind algorithm_I matrix (List.length ts) ts with
   | Some sps ->
-    let ps = List.map sps ~f:(fun sp -> to_original_pattern ~raise ~loc sp t) in
+    let%map ps = all @@ List.map sps ~f:(fun sp -> to_original_pattern sp t) in
     Some ps
-  | None -> None
+  | None -> return None
 
 
 (* Redundant case analysis uses [algorithm_Urec] to check if any row of the
@@ -495,18 +509,20 @@ let missing_case_analysis ~raise ~loc matrix t =
           [p2]
           ...
           [p(i-1)], pi) is false *)
-let redundant_case_analysis ~raise ~loc matrix =
-  let redundant, case, _ =
+let redundant_case_analysis matrix : (bool * int) t =
+  let open Let_syntax in
+  let%map redundant, case, _ =
     List.fold_left
       matrix
-      ~init:(false, 0, [])
-      ~f:(fun (redundant_case_found, case, matrix) vector ->
+      ~init:(return (false, 0, []))
+      ~f:(fun cases vector ->
+        let%bind redundant_case_found, case, matrix = cases in
         if redundant_case_found
-        then true, case, []
+        then return (true, case, [])
         else if List.is_empty matrix
-        then false, case + 1, [ vector ]
+        then return (false, case + 1, [ vector ])
         else (
-          let redundant_case_found = not @@ algorithm_Urec matrix ~raise ~loc vector in
+          let%map redundant_case_found = map ~f:not @@ algorithm_Urec matrix vector in
           redundant_case_found, case + 1, matrix @ [ vector ]))
   in
   redundant, case
