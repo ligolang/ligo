@@ -475,6 +475,9 @@ val run_elab
   -> unit
   -> 'a
 
+(** [lift_elab comp] embeds the elaboration [comp] into the computation monad. *)
+val lift_elab : 'a Elaboration.t -> ('a, Errors.typer_error, Main_warnings.all) t
+
 (** {11 Error Recovery} *)
 
 (** This section defines the [Error_recovery] module, whose functions define helpers to

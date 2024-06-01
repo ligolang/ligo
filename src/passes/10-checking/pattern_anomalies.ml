@@ -29,6 +29,26 @@ include Monad.Make (struct
   let map = `Define_using_bind
 end)
 
+let error_opt opt ~error : _ t =
+ fun ~raise ~loc -> Simple_utils.Trace.trace_option ~raise (error loc) opt
+
+
+let get_or_error getter ty_name ty =
+  error_opt
+    ~error:
+      (Errors.corner_case
+      @@ Format.asprintf
+           "Could not get %s of type \"%a\"."
+           ty_name
+           AST.PP.type_expression
+           ty)
+  @@ getter ty
+
+
+let get_t_list = get_or_error C.get_t_list "list"
+let get_t_record = get_or_error C.get_t_record "record"
+let get_t_sum = get_or_error C.get_t_sum "sum"
+let get_record_fields = get_or_error C.get_record_fields "record fields"
 let error err : _ t = fun ~raise ~loc -> raise.error (err loc)
 let error_l ~loc err : _ t = fun ~raise ~loc:_ -> raise.error (err loc)
 let loc : Location.t t = fun ~raise:_ ~loc -> loc
@@ -65,9 +85,10 @@ let pp_simple_pattern_list ppf sps =
   List.iter sps ~f:(fun sp -> Format.fprintf ppf "%a, " pp_simple_pattern sp)
 
 
-let get_variant_nested_type label (tsum : AST.row) : AST.type_expression =
+let get_variant_nested_type label (tsum : AST.row) : AST.type_expression t =
   let label_map = tsum.fields in
-  Map.find_exn label_map label
+  error_opt ~error:(Errors.unbound_label_edge_case `Variant label tsum)
+  @@ Map.find label_map label
 
 
 let rec destructure_type (t : AST.type_expression) =
@@ -80,57 +101,82 @@ let rec destructure_type (t : AST.type_expression) =
   | _ -> [ t ]
 
 
-let rec to_simple_pattern (ty_pattern : _ AST.Pattern.t * AST.type_expression) =
+let rec to_simple_pattern (ty_pattern : _ AST.Pattern.t * AST.type_expression)
+    : simple_pattern list t
+  =
+  let open Let_syntax in
   let pattern', ty = ty_pattern in
   let loc = Location.get_location pattern' in
   let pattern = Location.unwrap pattern' in
   match pattern with
-  | P_unit -> [ SP_Wildcard ty ]
+  | P_unit -> return [ SP_Wildcard ty ]
   | P_var _ when C.is_t_record ty ->
-    let fields = Option.value_exn ~here:[%here] (C.get_record_fields ty) in
+    let%bind fields = get_record_fields ty in
     let fields = List.map ~f:snd fields in
     let ps = List.init (List.length fields) ~f:(fun _ -> pattern') in
-    let ps = List.zip_exn ps fields in
-    let ps = List.map ps ~f:to_simple_pattern in
-    List.concat ps
-  | P_var _ -> [ SP_Wildcard ty ]
+    let%bind ps =
+      match List.zip ps fields with
+      | Ok ps -> return ps
+      | Unequal_lengths ->
+        error
+        @@ Errors.corner_case
+        @@ Format.asprintf
+             "Patterns and fields with unequal lengths. %d <> %d."
+             (List.length ps)
+             (List.length fields)
+    in
+    let%bind ps = all @@ List.map ps ~f:to_simple_pattern in
+    return @@ List.concat ps
+  | P_var _ -> return [ SP_Wildcard ty ]
   | P_list (Cons (hd, tl)) ->
-    let hd_ty = Option.value_exn ~here:[%here] (C.get_t_list ty) in
-    let hd_tl = to_simple_pattern (hd, hd_ty) @ to_simple_pattern (tl, ty) in
-    [ SP_Constructor (cons_label, hd_tl, ty) ]
+    let%bind hd_ty = get_t_list ty in
+    let%bind hd_tl =
+      let%bind hd = to_simple_pattern (hd, hd_ty) in
+      let%bind tl = to_simple_pattern (tl, ty) in
+      return @@ hd @ tl
+    in
+    return [ SP_Constructor (cons_label, hd_tl, ty) ]
   | P_list (List ps) ->
-    let hd_ty = Option.value_exn ~here:[%here] (C.get_t_list ty) in
+    let%bind hd_ty = get_t_list ty in
     List.fold_right
       ps
-      ~init:[ nil_constructor ~loc ty ]
+      ~init:(return [ nil_constructor ~loc ty ])
       ~f:(fun p acc ->
-        let hd_tl = to_simple_pattern (p, hd_ty) @ acc in
+        let%bind acc = acc in
+        let%map hd_tl =
+          let%map hd = to_simple_pattern (p, hd_ty) in
+          hd @ acc
+        in
         [ SP_Constructor (cons_label, hd_tl, hd_ty) ])
   | P_variant (c, p) ->
-    let p_ty =
-      get_variant_nested_type
-        c
-        (Option.value_exn ~here:[%here] (Option.map ~f:fst @@ C.get_t_sum ty))
-    in
-    [ SP_Constructor (c, to_simple_pattern (p, p_ty), ty) ]
+    let%bind row, _ = get_t_sum ty in
+    let%bind p_ty = get_variant_nested_type c row in
+    let%map p = to_simple_pattern (p, p_ty) in
+    [ SP_Constructor (c, p, ty) ]
   | P_tuple ps ->
-    let row = Option.value_exn ~here:[%here] (C.get_t_record ty) in
-    let ps =
-      List.mapi ps ~f:(fun i p ->
-          let row_elem =
-            Option.value_exn
-              ~here:[%here]
-              (Map.find row.fields (Label.create (Int.to_string i)))
-          in
-          to_simple_pattern (p, row_elem))
+    let%bind row = get_t_record ty in
+    let%map ps =
+      all
+      @@ List.mapi ps ~f:(fun i p ->
+             let label = Label.create (Int.to_string i) in
+             let%bind row_elem =
+               error_opt ~error:(Errors.unbound_label_edge_case `Record label row)
+               @@ Map.find row.fields label
+             in
+             to_simple_pattern (p, row_elem))
     in
     List.concat ps
   | P_record lps ->
-    let row = Option.value_exn ~here:[%here] (C.get_t_record ty) in
-    let ps =
-      List.map (Record.to_list lps) ~f:(fun (label, p) ->
-          let row_elem = Option.value_exn ~here:[%here] (Map.find row.fields label) in
-          to_simple_pattern (p, row_elem))
+    let%bind row = get_t_record ty in
+    let%map ps =
+      all
+      @@ List.map (Record.to_list lps) ~f:(fun (label, p) ->
+             let%bind row_elem =
+               error_opt
+                 ~error:(Errors.unbound_label_edge_case `Record label row)
+                 (Map.find row.fields label)
+             in
+             to_simple_pattern (p, row_elem))
     in
     List.concat ps
 
@@ -148,9 +194,12 @@ let rec to_list_pattern simple_pattern : _ AST.Pattern.t t =
     return @@ Location.wrap ~loc @@ AST.Pattern.P_list (List [])
   | SP_Constructor (Label ("#CONS", _), sps, t) ->
     let rsps = List.rev sps in
-    let tl = List.hd_exn rsps in
-    let hd = List.rev (List.tl_exn rsps) in
-    let%bind hd = to_original_pattern hd (C.get_t_list_exn t) in
+    let%bind tl, hd =
+      match rsps with
+      | [] -> error @@ Errors.corner_case "empty list constructor"
+      | hd :: tl -> return (hd, List.rev tl)
+    in
+    let%bind hd = get_t_list t >>= to_original_pattern hd in
     let%bind tl = to_list_pattern tl in
     return @@ Location.wrap ~loc @@ AST.Pattern.P_list (Cons (hd, tl))
   | SP_Constructor (Label (c, _), _, _) ->
@@ -171,11 +220,7 @@ and to_original_pattern simple_patterns (ty : AST.type_expression)
   | [ (SP_Constructor (Label ("#NIL", _), _, _) as simple_pattern) ] ->
     to_list_pattern simple_pattern
   | [ SP_Constructor (c, sps, t) ] ->
-    let t =
-      get_variant_nested_type
-        c
-        (Option.value_exn ~here:[%here] (Option.map ~f:fst @@ C.get_t_sum t))
-    in
+    let%bind t = get_t_sum t >>= fun (row, _) -> get_variant_nested_type c row in
     let%map ps = to_original_pattern sps t in
     Location.wrap ~loc @@ P_variant (c, ps)
   | _ ->
@@ -183,7 +228,6 @@ and to_original_pattern simple_patterns (ty : AST.type_expression)
     | AST.T_record { fields; _ } ->
       let kvs = Map.to_alist fields in
       let labels, tys = List.unzip kvs in
-      let tys = List.map tys ~f:(fun ty -> ty) in
       let%bind _, ps =
         List.fold_left
           tys
@@ -197,8 +241,19 @@ and to_original_pattern simple_patterns (ty : AST.type_expression)
       in
       if are_keys_numeric labels
       then return @@ Location.wrap ~loc @@ P_tuple ps
-      else
-        return @@ Location.wrap ~loc @@ P_record (Record.of_list (List.zip_exn labels ps))
+      else (
+        let%bind fields =
+          match List.zip labels ps with
+          | Ok fields -> return fields
+          | Unequal_lengths ->
+            error
+            @@ Errors.corner_case
+            @@ Format.asprintf
+                 "Labels and patterns with unequal lengths. %d <> %d."
+                 (List.length labels)
+                 (List.length ps)
+        in
+        return @@ Location.wrap ~loc @@ P_record (Record.of_list fields))
     | _ -> error_l ~loc:ty.location @@ Errors.corner_case "edge case: not a record/tuple")
 
 
@@ -289,18 +344,15 @@ let default_matrix matrix =
   List.fold_right matrix ~init:[] ~f:default
 
 
-let find_constuctor_arity c (t : AST.type_expression) =
+let find_constuctor_arity c (t : AST.type_expression) : AST.type_expression list t =
+  let open Let_syntax in
   match (c : Label.t) with
   | Label ("#CONS", _) ->
-    let t' = C.get_t_list_exn t in
+    let%map t' = get_t_list t in
     destructure_type t' @ [ t ]
-  | Label ("#NIL", _) -> [ t ]
+  | Label ("#NIL", _) -> return [ t ]
   | _ ->
-    let te =
-      get_variant_nested_type
-        c
-        (Option.value_exn ~here:[%here] (Option.map ~f:fst @@ C.get_t_sum t))
-    in
+    let%map te = get_t_sum t >>= fun (row, _) -> get_variant_nested_type c row in
     destructure_type te
 
 
@@ -375,7 +427,7 @@ let rec algorithm_Urec matrix vector : bool t =
   else (
     match vector with
     | SP_Constructor (c, _r1_n, t) :: _q2_n ->
-      let a = find_constuctor_arity c t in
+      let%bind a = find_constuctor_arity c t in
       let matrix = specialize_matrix c a matrix in
       let vector = specialize_vector c a vector in
       algorithm_Urec matrix vector
@@ -386,7 +438,7 @@ let rec algorithm_Urec matrix vector : bool t =
          && Set.equal complete_signature constructors
       then
         Set.fold complete_signature ~init:(return false) ~f:(fun b c ->
-            let tys = find_constuctor_arity c t in
+            let%bind tys = find_constuctor_arity c t in
             if%bind b
             then return true
             else
@@ -446,7 +498,7 @@ let rec algorithm_I matrix n ts : simple_pattern list list option t =
   else (
     let constructors = get_constructors_from_1st_col matrix in
     let t, ts = List.split_n ts 1 in
-    let t = List.hd_exn t in
+    let%bind t = error_opt ~error:(Errors.corner_case "empty list") @@ List.hd t in
     let complete_signature = get_all_constructors t in
     if (not @@ Set.is_empty constructors) && Set.equal constructors complete_signature
     then
@@ -455,7 +507,7 @@ let rec algorithm_I matrix n ts : simple_pattern list list option t =
           if Option.is_some p
           then return p
           else (
-            let tys = find_constuctor_arity ck t in
+            let%bind tys = find_constuctor_arity ck t in
             let ak = List.length tys in
             let matrix = specialize_matrix ck tys matrix in
             let%map ps = algorithm_I matrix (ak + n - 1) (tys @ ts) in
@@ -465,22 +517,25 @@ let rec algorithm_I matrix n ts : simple_pattern list list option t =
                 SP_Constructor (ck, xs, t) :: ps)))
     else (
       let dp = default_matrix matrix in
-      let%map ps = algorithm_I dp (n - 1) ts in
-      let%map.Option ps = ps in
-      if Set.is_empty constructors
-      then List.map ps ~f:(fun ps -> SP_Wildcard t :: ps)
-      else (
-        let missing_constructors = Set.diff complete_signature constructors in
-        let cs =
-          Set.fold missing_constructors ~init:[] ~f:(fun cs c ->
-              let tys = find_constuctor_arity c t in
-              let ps = List.map tys ~f:(fun t -> SP_Wildcard t) in
-              let c = SP_Constructor (c, ps, t) in
-              c :: cs)
-        in
-        List.fold_left cs ~init:[] ~f:(fun new_ps c ->
-            let ps = List.map ps ~f:(fun p -> c :: p) in
-            ps @ new_ps))))
+      match%bind algorithm_I dp (n - 1) ts with
+      | None -> return None
+      | Some ps ->
+        if Set.is_empty constructors
+        then return @@ Option.some @@ List.map ps ~f:(fun ps -> SP_Wildcard t :: ps)
+        else (
+          let missing_constructors = Set.diff complete_signature constructors in
+          let%map cs =
+            Set.fold missing_constructors ~init:(return []) ~f:(fun cs c ->
+                let%bind cs = cs in
+                let%map tys = find_constuctor_arity c t in
+                let ps = List.map tys ~f:(fun t -> SP_Wildcard t) in
+                let c = SP_Constructor (c, ps, t) in
+                c :: cs)
+          in
+          Option.some
+          @@ List.fold_left cs ~init:[] ~f:(fun new_ps c ->
+                 let ps = List.map ps ~f:(fun p -> c :: p) in
+                 ps @ new_ps))))
 
 
 (* Missing case analysis uses [algorithm_I matrix n] to find out the
@@ -556,7 +611,7 @@ let check_anomalies
     (eqs : (AST.type_expression AST.Pattern.t * AST.type_expression) list)
     t
   =
-  let matrix = List.map eqs ~f:to_simple_pattern in
+  let matrix = List.map eqs ~f:(to_simple_pattern ~raise ~loc) in
   match missing_case_analysis ~raise ~loc matrix t with
   | Some missing_cases ->
     raise.error @@ Errors.pattern_missing_cases syntax missing_cases loc
@@ -564,7 +619,11 @@ let check_anomalies
     let redundant, case = redundant_case_analysis ~raise ~loc matrix in
     if redundant
     then (
-      let p, _ = List.nth_exn eqs (case - 1) in
+      let p, _ =
+        Option.value_or_thunk ~default:(fun () ->
+            raise.error @@ Errors.corner_case "Not enough cases for pattern list" loc)
+        @@ List.nth eqs (case - 1)
+      in
       let loc = Location.get_location p in
       raise.error @@ Errors.pattern_redundant_case loc)
     else ()

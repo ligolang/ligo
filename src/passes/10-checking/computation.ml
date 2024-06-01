@@ -156,6 +156,10 @@ let run_elab t ~raise ~options ~loc ~path ?env () =
     ()
 
 
+let lift_elab t ~raise ~options ~loc:_ ~path ~poly_name_tbl:_ ~refs_tbl:_ st =
+  st, Elaboration.run t ~options ~path ~raise (snd st)
+
+
 include Monad.Make3 (struct
   type nonrec ('a, 'err, 'wrn) t = ('a, 'err, 'wrn) t
 
