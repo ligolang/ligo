@@ -1,0 +1,7 @@
+
+author: Laucans
+description: "\\n\\nfix(docs, webide): replace marigold.dev RPC endpoints with ecadlabs endpoints\\n\\n"
+merge_request: '3178'
+title: "Laucans/rpc url migration"
+type: fixed
+            
