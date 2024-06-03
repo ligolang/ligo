@@ -2,10 +2,18 @@
   description = "LIGO Nix Flake";
 
   inputs = {
-    nixpkgs.url = "github:nixos/nixpkgs";
+    nixpkgs.url = "github:nixos/nixpkgs/23.11";
     flake-utils.url = "github:numtide/flake-utils";
     treefmt = {
       url = "github:numtide/treefmt-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    build-yarn-package = {
+      url = "github:serokell/nix-npm-buildpackage";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    haskell-nix = {
+      url = "github:input-output-hk/haskell.nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
@@ -45,12 +53,16 @@
           pkgs = import nixpkgs {
             inherit system;
             overlays = [
+              build-yarn-package.overlays.default
+              haskell-nix.overlay
               opam-nix-integration.overlays.default
               (import ./nix/overlay.nix {inherit (inputs) opam-repository linol ocaml-recovery-parser tezos-ligo;})
             ];
           };
 
           ligo = pkgs.opamPackages.ligo;
+          ligo-syntaxes = ./tools/vscode/syntaxes;
+          ligo-webide = pkgs.callPackage ./nix/webide.nix {inherit ligo-syntaxes;};
 
           fmt = treefmt.lib.evalModule pkgs {
             projectRootFile = "dune-project";
@@ -63,7 +75,11 @@
             settings.global.excludes = ["_build" "result" ".direnv" "vendors/*"];
           };
         in {
-          packages.default = ligo;
+          packages = {
+            inherit (ligo-webide) ligo-webide-backend ligo-webide-frontend;
+            ligo = ligo;
+            default = ligo;
+          };
 
           devShells.default = pkgs.mkShell {
             name = "ligo-dev-shell";
