@@ -110,7 +110,7 @@ val trace_strong : raise:('a, 'w) raise -> 'a -> (raise:('b, 'w) raise -> 'c) ->
     use this function whenever your handler returns a Lwt promise. *)
 val trace_lwt
   :  raise:('b, 'w) raise
-  -> ('a -> 'b Lwt.t)
+  -> ('a -> 'b)
   -> (raise:('a, 'w) raise -> 'c Lwt.t)
   -> 'c Lwt.t
 

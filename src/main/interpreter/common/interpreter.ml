@@ -312,7 +312,7 @@ let rec apply_comparison ~no_colour ~raise
     in
     aux row_kv
   | V_Construct (ctor_a, args_a), V_Construct (ctor_b, args_b) ->
-    let ({ fields; layout } : _ Ligo_prim.Row.With_layout.t) =
+    let ({ fields; layout } : _ Ligo_prim.Row.With_layout.t), _ =
       trace_option
         ~raise
         (Errors.generic_error ~calltrace loc "Expected a sum type")
@@ -1848,7 +1848,9 @@ and eval_ligo ~raise ~steps ~options : AST.expression -> calltrace -> env -> val
             , Stacking.To_micheline.translate_type
                 (Scoping.translate_type
                    (trace ~raise Main_errors.spilling_tracer
-                   @@ Spilling.compile_type e.type_expression)) ))
+                   @@ Spilling.compile_type
+                   @@ trace ~raise Main_errors.expansion_tracer
+                   @@ Expansion.compile_type_expression e.type_expression)) ))
         args
     in
     (match code.expression_content with

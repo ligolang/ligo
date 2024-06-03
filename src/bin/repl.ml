@@ -173,7 +173,9 @@ let try_eval ~raise ~raw_options state s =
   let x =
     Decompile.Of_michelson.decompile_expression
       ~raise
-      aggregated_exp.type_expression
+      (Ligo_compile.Of_aggregated.compile_type_expression
+         ~raise
+         aggregated_exp.type_expression)
       runres
   in
   match x with

@@ -461,7 +461,7 @@ let rec decompile_value
       let o = Option.value_exn (Ast_aggregated.get_t_option t) in
       let s' = self s o in
       v_some s')
-  | T_sum row ->
+  | T_sum (row, _) ->
     let Label (constructor, _), v, tv =
       Row.extract_constructor
         row

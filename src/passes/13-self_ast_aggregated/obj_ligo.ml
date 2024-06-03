@@ -1,24 +1,28 @@
 module Self_helpers = Helpers
 open Ligo_prim
 open Ast_aggregated
+open Errors
 
 type 'err ty_exp_mapper = type_expression -> unit
 
 let rows : ('a -> unit) -> row -> unit = Row.iter
 
-let rec traverse_type_expression : 'err ty_exp_mapper -> type_expression -> unit =
+let rec traverse_type_expression ~(raise : _ Trace.raise)
+    : 'err ty_exp_mapper -> type_expression -> unit
+  =
  fun f te ->
-  let self = traverse_type_expression f in
+  let self = traverse_type_expression ~raise f in
   let () = f te in
   match te.type_content with
-  | T_sum temap -> rows self temap
-  | T_for_all x -> self x.type_
+  | T_sum (temap, _) -> rows self temap
+  | T_for_all x | T_abstraction x -> self x.type_
   | T_record temap -> rows self temap
   | T_arrow arr ->
     let _ = Arrow.map self arr in
     ()
   | T_variable _ -> ()
   | T_singleton _ -> ()
+  | T_exists _ -> raise.error @@ unexpected_texists te te.location
   | T_constant { parameters } ->
     let _ = List.map ~f:self parameters in
     ()
@@ -70,7 +74,7 @@ let check_obj_ligo ~raise ?(blacklist = []) (t : expression) : unit =
       expr.type_expression
   in
   let () = Self_helpers.fold_expression folder_constant () t in
-  let () = Self_helpers.fold_expression folder_types () t in
+  let () = Self_helpers.fold_expression (folder_types ~raise) () t in
   ()
 
 
@@ -113,7 +117,7 @@ let check_obj_ligo_program ~raise ?(blacklist = []) ((ctxt, e) : program) : unit
     ```
 
     when encountering the <rest>, [purge_meta_ligo] will fail on any meta-ligo constructors
-    
+
     e.g.
 
     ```
@@ -130,7 +134,7 @@ let check_obj_ligo_program ~raise ?(blacklist = []) ((ctxt, e) : program) : unit
     (fun _ -> 2) (Test.log y)
     ```
     | -> FAIL
-    
+
 *)
 let purge_meta_ligo_program ~raise ((ctxt, e) : program) : program =
   let f (blacklist, ctxt) decl =

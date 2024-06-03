@@ -10687,9 +10687,8 @@ let%expect_test _ =
                                     ^
      16 |
 
-    Invalid usage of a Test type: typed_address (sum[Main -> unit({ name: Main })] ,
-    unit) in record[x -> int ,
-                    y -> typed_address (sum[Main -> unit({ name: Main })] , unit)({ name: x }, { name: y })] cannot be translated to Michelson. |}]
+    Invalid usage of a Test type: typed_address (sum[Main -> unit] ,
+    unit) in record[x -> int , y -> typed_address (sum[Main -> unit] , unit)] cannot be translated to Michelson. |}]
 
 let%expect_test _ =
   run_ligo_bad [ "run"; "test"; bad_test "test_random.mligo" ];

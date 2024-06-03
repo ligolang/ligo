@@ -32,13 +32,17 @@ module Data = struct
       together with its own environment.
   *)
 
+  module Var_map = Core.Map.Make (Value_var)
+
+  type var_binding_map = Value_var.t Var_map.t
+
   type t =
     { env : env
     ; content : int list
     }
 
   and env =
-    { exp : var_binding list
+    { exp : (var_binding_map[@sexp.opaque])
     ; mod_ : mod_ list
     }
 
@@ -109,7 +113,7 @@ module Data = struct
 
   let pp ppf data = Format.fprintf ppf "%a" Sexp.pp_hum (sexp_of_t data)
   let pp_env ppf data = Format.fprintf ppf "%a" Sexp.pp_hum (sexp_of_env data)
-  let empty_env = { exp = []; mod_ = [] }
+  let empty_env = { exp = Var_map.empty; mod_ = [] }
   let empty = { env = empty_env; content = [] }
 
   let extend_debug_path : path -> Module_var.t -> path =
@@ -164,38 +168,37 @@ module Data = struct
 
 
   let rm_exp : env -> I.expression_variable -> env =
-   fun env to_rm ->
-    { env with
-      exp = List.filter env.exp ~f:(fun x -> not @@ Value_var.equal x.old to_rm)
-    }
+   fun env to_rm -> { env with exp = Core.Map.remove env.exp to_rm }
 
 
   let add_exp : t -> exp_ -> t =
    fun { env = { exp; mod_ }; content } new_exp ->
-    let exp =
-      List.filter exp ~f:(fun x -> not (Value_var.equal x.old new_exp.binding.old))
-    in
-    { env = { exp = new_exp.binding :: exp; mod_ }
-    ; content = content @ [ new_global_decl (Exp new_exp) ]
+    { env =
+        { exp = Core.Map.set exp ~key:new_exp.binding.old ~data:new_exp.binding.fresh
+        ; mod_
+        }
+    ; content = new_global_decl (Exp new_exp) :: content
     }
 
 
-  let pat_to_var_bindings : pat_binding -> var_binding list =
+  let pat_to_var_bindings : pat_binding -> var_binding_map =
    fun { old; fresh } ->
     let names = List.map ~f:Binder.get_var @@ I.Pattern.binders old in
     let freshs = List.map ~f:Binder.get_var @@ I.Pattern.binders fresh in
-    List.map ~f:(fun (old, fresh) -> { old; fresh }) (List.zip_exn names freshs)
+    List.fold_left
+      ~init:Var_map.empty
+      ~f:(fun mp (key, data) -> Core.Map.set mp ~key ~data)
+      (List.zip_exn names freshs)
 
 
   let add_exp_pat : t -> pat_ -> t =
    fun { env = { exp; mod_ }; content } new_pat ->
     let new_bound = pat_to_var_bindings new_pat.binding in
-    let exp =
-      List.filter exp ~f:(fun x ->
-          not @@ List.exists new_bound ~f:(fun new_ -> Value_var.equal x.old new_.old))
-    in
-    { env = { exp = new_bound @ exp; mod_ }
-    ; content = content @ [ new_global_decl (Pat new_pat) ]
+    { env =
+        { exp = Core.Map.merge_skewed new_bound exp ~combine:(fun ~key:_ v1 _v2 -> v1)
+        ; mod_
+        }
+    ; content = new_global_decl (Pat new_pat) :: content
     }
 
 
@@ -205,29 +208,25 @@ module Data = struct
       { name = mod_var; in_ = new_scope }
       :: List.filter mod_ ~f:(fun x -> not (Module_var.equal x.name mod_var))
     in
-    let content =
-      content @ [ new_global_decl (Mod { name = mod_var; in_ = new_scope }) ]
-    in
+    let content = new_global_decl (Mod { name = mod_var; in_ = new_scope }) :: content in
     { env = { exp; mod_ }; content }
 
 
   let merge_env : env -> env -> env =
    fun { exp = exp1; mod_ = mod1 } { exp = exp2; mod_ = mod2 } ->
-    let exp =
-      List.filter exp2 ~f:(fun x ->
-          not @@ List.exists exp1 ~f:(fun y -> Value_var.equal x.old y.old))
-    in
     let mod_ =
       List.filter mod2 ~f:(fun x ->
           not @@ List.exists mod1 ~f:(fun y -> Module_var.equal x.name y.name))
     in
-    { exp = exp1 @ exp; mod_ = mod1 @ mod_ }
+    { exp = Core.Map.merge_skewed exp1 exp2 ~combine:(fun ~key:_ v1 _v2 -> v1)
+    ; mod_ = mod1 @ mod_
+    }
 
 
   let resolve_variable : env -> Value_var.t -> Value_var.t =
    fun env v ->
-    match List.find env.exp ~f:(fun x -> Value_var.equal v x.old) with
-    | Some x -> x.fresh
+    match Core.Map.find env.exp v with
+    | Some x -> x
     | None -> v
 
 
@@ -275,10 +274,8 @@ module Data = struct
               | _ -> None)
             new_bindings
         in
-        List.map exp ~f:(fun { old; fresh } ->
-            match List.find ~f:(fun x -> Value_var.equal x.old old) news with
-            | Some x -> x
-            | None -> { old; fresh })
+        List.fold_left news ~init:exp ~f:(fun exp { old; fresh } ->
+            Core.Map.set exp ~key:old ~data:fresh)
       in
       let mod_ =
         List.map mod_ ~f:(fun { name; in_ } ->
@@ -315,7 +312,9 @@ module Data = struct
             let env = refresh_env new_bindings env in
             let new_binding = { old; fresh = fresh_pattern old path } in
             let nb_pat =
-              List.map ~f:(fun x -> [], x) @@ pat_to_var_bindings new_binding
+              List.map ~f:(fun (old, fresh) -> [], { old; fresh })
+              @@ Core.Map.to_alist
+              @@ pat_to_var_bindings new_binding
             in
             let new_idx = new_global_decl (Pat { x with binding = new_binding; env }) in
             dedup_new_bindings @@ nb_pat @ new_bindings, new_idx
@@ -351,8 +350,16 @@ module Data = struct
     let rec loop decls acc =
       List.fold_left decls ~init:acc ~f:(fun acc decl ->
           match get_global_decl decl with
-          | Pat { binding; _ } -> { acc with exp = pat_to_var_bindings binding @ acc.exp }
-          | Exp { binding; _ } -> { acc with exp = binding :: acc.exp }
+          | Pat { binding; _ } ->
+            { acc with
+              exp =
+                Core.Map.merge_skewed
+                  (pat_to_var_bindings binding)
+                  acc.exp
+                  ~combine:(fun ~key:_ v1 _v2 -> v1)
+            }
+          | Exp { binding; _ } ->
+            { acc with exp = Core.Map.set acc.exp ~key:binding.old ~data:binding.fresh }
           | Mod mod_binding -> { acc with mod_ = mod_binding :: acc.mod_ }
           | Incl decls -> loop decls acc)
     in
@@ -363,7 +370,7 @@ module Data = struct
    fun data to_include ->
     let env = decls_to_env to_include in
     { env = merge_env env data.env
-    ; content = data.content @ [ new_global_decl (Incl to_include) ]
+    ; content = new_global_decl (Incl to_include) :: data.content
     }
 end
 
@@ -371,8 +378,8 @@ let rec aggregate_scope ~(raise : _ Trace.raise)
     : Data.t -> leaf:O.expression -> O.expression
   =
  fun { content; _ } ~leaf ->
-  let rec f : int -> O.expression -> O.expression =
-   fun d acc_exp ->
+  let rec f : O.expression -> int -> O.expression =
+   fun acc_exp d ->
     match Data.get_global_decl d with
     | Pat { binding = { old = _; fresh }; item; env; attr; loc } ->
       let item = compile_expression ~raise env item in
@@ -385,9 +392,9 @@ let rec aggregate_scope ~(raise : _ Trace.raise)
       in
       O.e_a_let_in ~loc binder item acc_exp attr
     | Mod { in_; _ } -> aggregate_scope ~raise in_ ~leaf:acc_exp
-    | Incl content -> List.fold_right content ~f ~init:acc_exp
+    | Incl content -> List.fold_left content ~f ~init:acc_exp
   in
-  List.fold_right content ~f ~init:leaf
+  List.fold_left content ~f ~init:leaf
 
 
 and build_context ~(raise : _ Trace.raise) : Data.t -> O.context =
@@ -404,9 +411,9 @@ and build_context ~(raise : _ Trace.raise) : Data.t -> O.context =
       let binder = Binder.make fresh item.type_expression in
       [ Location.wrap ~loc (O.D_value { binder; expr = item; attr }) ]
     | Mod { in_; _ } -> build_context ~raise in_
-    | Incl content -> List.join (List.map ~f content)
+    | Incl content -> List.bind ~f @@ List.rev content
   in
-  List.join (List.map ~f content)
+  List.bind ~f @@ List.rev content
 
 
 and compile ~(raise : _ Trace.raise) : Data.t -> I.expression -> I.program -> O.program =
@@ -426,7 +433,6 @@ and compile_declarations ~(raise : _ Trace.raise)
     | I.D_type _ -> acc_scope
     | I.D_irrefutable_match { pattern; expr; attr } ->
       let pat =
-        let pattern = I.Pattern.map (compile_type ~raise) pattern in
         let fresh = Data.fresh_pattern pattern path in
         (Data.
            { binding = { old = pattern; fresh }
@@ -494,29 +500,6 @@ and compile_module_expr ~(raise : _ Trace.raise) ?(copy_content = false)
     if copy_content then Data.refresh res path else { res with content = [] }
 
 
-and compile_type ~(raise : _ Trace.raise) : I.type_expression -> O.type_expression =
- fun ty ->
-  let self = compile_type ~raise in
-  let return type_content : O.type_expression =
-    { type_content
-    ; orig_var = Option.map ty.abbrev ~f:(fun { orig_var = _, v; _ } -> v)
-    ; location = ty.location
-    ; source_type = Some ty
-    }
-  in
-  match ty.type_content with
-  | T_variable x -> return (T_variable x)
-  | T_exists _ -> raise.error @@ cannot_compile_texists ty ty.location
-  | T_constant { language; injection; parameters } ->
-    return (T_constant { language; injection; parameters = List.map parameters ~f:self })
-  | T_sum (r, _) -> return (T_sum (I.Row.map self r))
-  | T_record r -> return (T_record (I.Row.map self r))
-  | T_arrow x -> return (T_arrow (Arrow.map self x))
-  | T_singleton x -> return (T_singleton x)
-  | T_abstraction x -> return (T_for_all (Abstraction.map self x))
-  | T_for_all x -> return (T_for_all (Abstraction.map self x))
-
-
 and compile_expression ~(raise : _ Trace.raise)
     : Data.env -> ?debug_path:Data.path -> I.expression -> O.expression
   =
@@ -524,9 +507,8 @@ and compile_expression ~(raise : _ Trace.raise)
   let self ?(env = env) ?(debug_path = debug_path) =
     compile_expression ~raise ~debug_path env
   in
-  let self_ty = compile_type ~raise in
   let return expression_content : O.expression =
-    let type_expression = compile_type ~raise expr.type_expression in
+    let type_expression = expr.type_expression in
     { expression_content; type_expression; location = expr.location }
   in
   match expr.expression_content with
@@ -550,18 +532,13 @@ and compile_expression ~(raise : _ Trace.raise)
               ~f:(fun env binder -> Data.rm_exp env (Binder.get_var binder))
               (I.Pattern.binders pattern)
           in
-          O.Match_expr.{ pattern = I.Pattern.map self_ty pattern; body = self ~env body })
+          O.Match_expr.{ pattern; body = self ~env body })
         cases
     in
     return (O.E_matching { matchee = self matchee; disc_label; cases })
   | I.E_lambda { binder; output_type; result } ->
     let env = Data.rm_exp env (Param.get_var binder) in
-    return
-      (O.E_lambda
-         { binder = Param.map self_ty binder
-         ; output_type = self_ty output_type
-         ; result = self ~env result
-         })
+    return (O.E_lambda { binder; output_type; result = self ~env result })
   | I.E_for { binder; start; final; incr; f_body } ->
     let env = Data.rm_exp env binder in
     return
@@ -577,9 +554,6 @@ and compile_expression ~(raise : _ Trace.raise)
     let env = Data.rm_exp env (Param.get_var binder) in
     let env = Data.rm_exp env fun_name in
     let result = self ~env result in
-    let fun_type = self_ty fun_type in
-    let output_type = self_ty output_type in
-    let binder = Param.map self_ty binder in
     return
     @@ O.E_recursive
          { fun_name; fun_type; lambda = { binder; result; output_type }; force_lambdarec }
@@ -592,7 +566,6 @@ and compile_expression ~(raise : _ Trace.raise)
     in
     let rhs = self rhs in
     let let_result = self ~env let_result in
-    let let_binder = I.Pattern.map self_ty let_binder in
     return @@ O.E_let_mut_in { let_binder; rhs; let_result; attributes }
   | I.E_let_in { let_binder; rhs; let_result; attributes } ->
     let env =
@@ -602,7 +575,6 @@ and compile_expression ~(raise : _ Trace.raise)
         (I.Pattern.binders let_binder)
     in
     let let_result = self ~env let_result in
-    let let_binder = I.Pattern.map self_ty let_binder in
     return @@ O.E_let_in { let_binder; rhs = self rhs; let_result; attributes }
   | I.E_for_each { fe_binder = b, b_opt; collection; collection_type; fe_body } ->
     let env = Data.rm_exp env b in
@@ -638,9 +610,9 @@ and compile_expression ~(raise : _ Trace.raise)
   | I.E_application x -> return (O.E_application (Application.map self x))
   | I.E_type_abstraction x -> return (O.E_type_abstraction (Type_abs.map self x))
   | I.E_type_inst { forall; type_ } ->
-    return (O.E_type_inst { forall = self forall; type_ = self_ty type_ })
+    return (O.E_type_inst { forall = self forall; type_ })
   | I.E_constant x -> return (O.E_constant (Constant.map self x))
-  | I.E_coerce x -> return (O.E_coerce (Ascription.map self self_ty x))
-  | I.E_assign x -> return (O.E_assign (Assign.map self self_ty x))
+  | I.E_coerce x -> return (O.E_coerce (Ascription.map self Fn.id x))
+  | I.E_assign x -> return (O.E_assign (Assign.map self Fn.id x))
   | I.E_deref x -> return (O.E_deref x)
   | I.E_while x -> return (O.E_while (While_loop.map self x))

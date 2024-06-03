@@ -31,7 +31,7 @@ type type_content = [%import: Types.type_content]
     { prefixes =
         [ ( "make_t"
           , fun ~loc type_content : type_expression ->
-              { type_content; location = loc; abbrev = None } )
+              { type_content; location = loc; abbrev = None; source_type = None } )
         ; ("get", fun x -> x.type_content)
         ]
     ; wrap_constructor =

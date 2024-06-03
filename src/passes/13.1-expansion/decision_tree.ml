@@ -44,15 +44,17 @@
  *)
 module Location = Simple_utils.Location
 
+module Trace = Simple_utils.Trace
 module Value_var = Ligo_prim.Value_var
 module Binder = Ligo_prim.Binder
 module Label = Ligo_prim.Label
 module Record = Ligo_prim.Record
 module I = Ast_aggregated
 module O = Ast_expanded
-module C = Ast_aggregated.Combinators
+module C = Ast_expanded.Combinators
 module ConstructorSet = Core.Set (* Label *)
 module ConstructorMap = Core.Map (* Label *)
+open Errors
 
 type 'value ctor_map = (Label.t, 'value, Label.comparator_witness) ConstructorMap.t
 
@@ -121,8 +123,7 @@ let get_number_of_fields : O.type_expression -> int =
 let rec n_vars ~loc n =
   if n = 0
   then []
-  else
-    SP_Var (Value_var.fresh ~loc (), I.Combinators.t_unit ~loc ()) :: n_vars ~loc (n - 1)
+  else SP_Var (Value_var.fresh ~loc (), C.t_unit ~loc ()) :: n_vars ~loc (n - 1)
 
 
 let empty_label = Label.of_string ""
@@ -162,12 +163,9 @@ let p_nil ~loc = p_variant ~loc nil_label (p_unit ~loc)
 (* Helper for joining [Label.t] *)
 let join_labels ls = List.fold_right ls ~init:empty_label ~f:Label.join
 
-let corner_case : type a. string -> string -> unit -> a =
- fun msg loc () -> failwith (Format.asprintf "Corner case: %s at %s" msg loc)
-
-
-let corner_case_constructor_not_found c ty =
+let corner_case_constructor_not_found ~loc c ty =
   corner_case
+    ~loc
     (Format.asprintf
        "constructor %a not found in type %a"
        Label.pp
@@ -250,23 +248,24 @@ let get_vars_and_projections
     get_variant_nested_type A a => int * int * int
     get_variant_nested_type B a => { a : int ; b : int }
     get_variant_nested_type C a => int *)
-let get_variant_nested_type c ty =
+let get_variant_nested_type ~(raise : _ Trace.raise) c ty =
   match C.get_t_sum ty with
   | Some tsum ->
     let label_map = tsum.fields in
-    Option.value_or_thunk ~default:(corner_case_constructor_not_found c ty __LOC__)
+    Option.value_or_thunk ~default:(fun () ->
+        raise.error @@ corner_case_constructor_not_found ~loc:__LOC__ c ty)
     @@ Core.Map.find label_map c
   | None ->
     if C.is_t_list ty
     then
       if Label.equal c cons_label
-      then
-        C.t_record
-          ~loc:Location.generated
-          (I.Row.create_tuple [ Option.value_exn ~here:[%here] @@ C.get_t_list ty; ty ])
-          ()
+      then (
+        let row =
+          O.Row.create_tuple [ Option.value_exn ~here:[%here] @@ C.get_t_list ty; ty ]
+        in
+        C.make_t ~loc:Location.generated (T_record row))
       else C.t_unit ~loc:Location.generated ()
-    else corner_case "can't get nested type of non variant" __LOC__ ()
+    else raise.error @@ corner_case ~loc:__LOC__ "can't get nested type of non variant"
 
 
 (** This function gets all the constructors of a sum type *)
@@ -281,11 +280,13 @@ let get_signature_of_sum_type : O.type_expression -> signature =
 (** This function converts [I.Pattern.t] to [simple_pattern list]
     record [P_record] & tuple [P_tuple] patterns are simplified by representing
     then as list of [simple_pattern]'s  *)
-let rec to_simple_pattern
+let rec to_simple_pattern ~(raise : _ Trace.raise)
     : O.type_expression -> O.type_expression I.Pattern.t -> simple_pattern list
   =
  fun ty p ->
   let open I.Pattern in
+  let to_simple_pattern = to_simple_pattern ~raise in
+  let get_variant_nested_type = get_variant_nested_type ~raise in
   let loc = Location.get_location p in
   let is_unit_pattern : _ I.Pattern.t -> bool =
    fun p ->
@@ -363,10 +364,12 @@ let get_occurrences : O.type_expression -> occurrences =
 (** This function takes a list of [occurrence] (o1, o2, ... , on) and returns the
     specialized occurrences (o1.1, ..., o1.a, o2, ..., on)
     where a is the arity of the constructor *)
-let specialize_occurrences : Label.t -> occurrences -> O.type_expression -> occurrences =
+let specialize_occurrences ~(raise : _ Trace.raise)
+    : Label.t -> occurrences -> O.type_expression -> occurrences
+  =
  fun c os ty ->
   match os with
-  | [] -> corner_case "can't specialize occurrences" __LOC__ ()
+  | [] -> raise.error @@ corner_case ~loc:__LOC__ "can't specialize occurrences"
   | (o1, _) :: o2_n ->
     let o1_a =
       List.map (get_occurrences ty) ~f:(fun (oi, ti) -> join_labels [ o1; c; oi ], ti)
@@ -400,10 +403,10 @@ let specialize : Label.t -> int -> matrix -> matrix =
 
 (** This function takes a list of [occurrence] (o1, o2, ... , on) and returns the
     default occurrences (o2, ..., on) *)
-let default_occurrences : occurrences -> occurrences =
+let default_occurrences ~(raise : _ Trace.raise) : occurrences -> occurrences =
  fun os ->
   match os with
-  | [] -> corner_case "can't get default occurrences" __LOC__ ()
+  | [] -> raise.error @@ corner_case ~loc:__LOC__ "can't get default occurrences"
   | _ :: o2_n -> o2_n
 
 
@@ -497,7 +500,7 @@ let remove_first_column : row -> row =
 
 (** This function returns the index and other info of the column which has at least
     on constructor pattern *)
-let head_constructors_of_column_with_atleast_one_constructor
+let head_constructors_of_column_with_atleast_one_constructor ~(raise : _ Trace.raise)
     : matrix -> head_constructors_info
   =
  fun matrix ->
@@ -512,7 +515,8 @@ let head_constructors_of_column_with_atleast_one_constructor
       aux matrix (idx + 1))
     else (
       let signature =
-        Option.value_or_thunk ~default:(corner_case "signature list is empty" __LOC__)
+        Option.value_or_thunk ~default:(fun () ->
+            raise.error @@ corner_case ~loc:__LOC__ "signature list is empty")
         @@ List.hd signatures
       in
       let head_constructors = label_map_of_kv_list first_column_constructors in
@@ -524,12 +528,12 @@ let head_constructors_of_column_with_atleast_one_constructor
 (** This function swaps i th element with first element.
     e.g. swap_elt 3 [ 1 ; 2 ; 3 ; 4 ; 5 ]
       => [ 4 ; 2 ; 3 ; 1 ; 5 ]  *)
-let swap_elt : int -> 'a list -> 'a list =
+let swap_elt ~(raise : _ Trace.raise) : int -> 'a list -> 'a list =
  fun idx xs ->
   let rec aux : int -> 'a list -> 'a list * 'a * 'a list =
    fun idx xs ->
     match xs with
-    | [] -> corner_case "cannot swap row" __LOC__ ()
+    | [] -> raise.error @@ corner_case ~loc:__LOC__ "cannot swap row"
     | x :: xs when idx = 0 -> [], x, xs
     | x :: xs ->
       let start, elt, rest = aux (idx - 1) xs in
@@ -542,8 +546,9 @@ let swap_elt : int -> 'a list -> 'a list =
 
 
 (** This function swaps i th column in the matrix with the first column *)
-let swap_column_in_matrix : int -> matrix -> matrix =
- fun i matrix -> List.map matrix ~f:(fun (pattern, body) -> swap_elt i pattern, body)
+let swap_column_in_matrix ~(raise : _ Trace.raise) : int -> matrix -> matrix =
+ fun i matrix ->
+  List.map matrix ~f:(fun (pattern, body) -> swap_elt ~raise i pattern, body)
 
 
 (** This function checks if a the [decision_tree] need to be wrapped in a [SwitchRecord]
@@ -607,20 +612,24 @@ let rec generate_match_record
             L = c1:A1;c2:A2;...;ck:Ak;cm1:Am1;...cmn:Amn
 
             and we emit the [SwitchConstructor] node the the list of subrers L *)
-let rec to_decision_tree : Names.t -> occurrences -> matrix -> decision_tree =
+let rec to_decision_tree ~(raise : _ Trace.raise)
+    : Names.t -> occurrences -> matrix -> decision_tree
+  =
  fun names occurrences matrix ->
+  let to_decision_tree = to_decision_tree ~raise in
   match matrix with
   | [] -> Fail
   | (row, body) :: _ when List.is_empty row -> Leaf body
   | (row, body) :: _ when has_all_var_patterns row -> Leaf body
   | matrix ->
     let { index = i; head_constructors = head_constructors_with_arity; signature } =
-      head_constructors_of_column_with_atleast_one_constructor matrix
+      head_constructors_of_column_with_atleast_one_constructor ~raise matrix
     in
     if i = 0
     then (
       let o, ot =
-        Option.value_or_thunk ~default:(corner_case "empty occurrences" __LOC__)
+        Option.value_or_thunk ~default:(fun () ->
+            raise.error @@ corner_case ~loc:__LOC__ "empty occurrences")
         @@ List.hd occurrences
       in
       let head_constructors =
@@ -640,7 +649,7 @@ let rec to_decision_tree : Names.t -> occurrences -> matrix -> decision_tree =
                let t =
                  to_decision_tree
                    names
-                   (specialize_occurrences c occurrences ty)
+                   (specialize_occurrences ~raise c occurrences ty)
                    (specialize c a matrix)
                in
                let constructor_label = join_labels [ o; c ] in
@@ -656,16 +665,21 @@ let rec to_decision_tree : Names.t -> occurrences -> matrix -> decision_tree =
             let label = join_labels [ o; c ] in
             let binder, names = Names.get label names in
             let subtree =
-              to_decision_tree names (default_occurrences occurrences) (default matrix)
+              to_decision_tree
+                names
+                (default_occurrences ~raise occurrences)
+                (default matrix)
             in
             { constructor = c; binder; subtree })
       in
       let variant_type =
-        Option.value_or_thunk ~default:(corner_case "empty parent_tys" __LOC__)
+        Option.value_or_thunk ~default:(fun () ->
+            raise.error @@ corner_case ~loc:__LOC__ "empty parent_tys")
         @@ List.hd parent_tys
       in
       let location =
-        Option.value_or_thunk ~default:(corner_case "empty locations" __LOC__)
+        Option.value_or_thunk ~default:(fun () ->
+            raise.error @@ corner_case ~loc:__LOC__ "empty locations")
         @@ List.hd locations
       in
       let o, _ = Names.get o names in
@@ -674,14 +688,15 @@ let rec to_decision_tree : Names.t -> occurrences -> matrix -> decision_tree =
       in
       SwitchConstructor { matchee = Binder.make o ot; cases; variant_type; location })
     else (
-      let swapped_matrix = swap_column_in_matrix i matrix in
-      let swapped_occurrences = swap_elt i occurrences in
+      let swapped_matrix = swap_column_in_matrix ~raise i matrix in
+      let swapped_occurrences = swap_elt ~raise i occurrences in
       to_decision_tree names swapped_occurrences swapped_matrix)
 
 
 (** This function is quite straightforward conversion from [decision_tree] to
    [O.E_matching] *)
-let rec to_match_expression : body_type:O.type_expression -> decision_tree -> O.expression
+let rec to_match_expression ~(raise : _ Trace.raise)
+    : body_type:O.type_expression -> decision_tree -> O.expression
   =
  fun ~body_type tree ->
   match tree with
@@ -689,10 +704,10 @@ let rec to_match_expression : body_type:O.type_expression -> decision_tree -> O.
     (* This case will likely never occur because we do the anomaly detection in
       an earlier pass, this case will happen only when match expression is not
       well-formed (redundant cases or non-exhaustive match) *)
-    corner_case
-      "not a well-formed match expression, this should have been caught while typing"
-      __LOC__
-      ()
+    raise.error
+    @@ corner_case
+         ~loc:__LOC__
+         "not a well-formed match expression, this should have been caught while typing"
   | Leaf e ->
     (* Body of the case *)
     e
@@ -704,7 +719,7 @@ let rec to_match_expression : body_type:O.type_expression -> decision_tree -> O.
         (O.E_variable (Binder.get_var matchee))
         (Binder.get_ascr matchee)
     in
-    let body = to_match_expression ~body_type case in
+    let body = to_match_expression ~raise ~body_type case in
     let cases = O.Match_record { fields = field_binders; body; tv = record_type } in
     O.e_matching ~loc { matchee; cases } body_type
   | SwitchConstructor { matchee; cases; variant_type; location = loc } ->
@@ -717,7 +732,7 @@ let rec to_match_expression : body_type:O.type_expression -> decision_tree -> O.
     in
     let cases =
       List.map cases ~f:(fun case ->
-          let body = to_match_expression ~body_type case.subtree in
+          let body = to_match_expression ~raise ~body_type case.subtree in
           let pattern = case.binder in
           let constructor = case.constructor in
           { O.constructor; pattern; body })
@@ -727,6 +742,7 @@ let rec to_match_expression : body_type:O.type_expression -> decision_tree -> O.
 
 
 let compile
+    ~(raise : _ Trace.raise)
     (matchee_type : O.type_expression)
     (matchee : Value_var.t)
     (cases : (O.expression, O.type_expression) I.Match_expr.match_case list)
@@ -737,8 +753,8 @@ let compile
   let matchee_loc = Value_var.get_location matchee in
   let body_type =
     let first_case =
-      Option.value_or_thunk
-        ~default:(corner_case "empty cases in match expression" __LOC__)
+      Option.value_or_thunk ~default:(fun () ->
+          raise.error @@ corner_case ~loc:__LOC__ "empty cases in match expression")
       @@ List.hd cases
     in
     first_case.body.type_expression
@@ -763,15 +779,15 @@ let compile
                 body_type
                 ~loc:Location.generated)
         in
-        names, (to_simple_pattern matchee_type pattern, body))
+        names, (to_simple_pattern ~raise matchee_type pattern, body))
   in
   let top_occurrences =
     List.map ~f:(fun (l, t) -> join_labels [ matchee_label; l ], t)
     @@ get_occurrences matchee_type
   in
-  let dt = to_decision_tree names top_occurrences matrix in
+  let dt = to_decision_tree ~raise names top_occurrences matrix in
   (* If the top-level pattern is a record pattern we wrap the decision tree in a
      [SwitchRecord] *)
   let dt = generate_match_record matchee_loc matchee_label matchee_type names dt in
-  let match_expr = to_match_expression ~body_type dt in
+  let match_expr = to_match_expression ~raise ~body_type dt in
   match_expr

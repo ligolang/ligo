@@ -16,11 +16,15 @@ let rec subst_type (binder : Type_var.t) (value : type_expression) (te : type_ex
     let type1 = self type1 in
     let type2 = self type2 in
     return @@ T_arrow { type1; type2; param_names }
-  | T_sum m -> return @@ T_sum (Row.map self m)
+  | T_sum (m, disc_label) -> return @@ T_sum (Row.map self m, disc_label)
   | T_record m -> return @@ T_record (Row.map self m)
   | T_for_all { ty_binder; kind; type_ } ->
     let type_ = self type_ in
     return @@ T_for_all { ty_binder; kind; type_ }
+  | T_abstraction { ty_binder; kind; type_ } ->
+    let type_ = self type_ in
+    return @@ T_abstraction { ty_binder; kind; type_ }
+  | T_exists t -> return @@ T_exists t
 
 
 (* This function transforms a type `∀ v1 ... vn . t` into the pair `([ v1 ; .. ; vn ] , t)` *)
@@ -89,7 +93,7 @@ let rec assert_type_expression_eq
         (List.zip_exn lsta lstb)
     else None
   | T_constant _, _ -> None
-  | T_sum sa, T_sum sb ->
+  | T_sum (sa, _), T_sum (sb, _) ->
     let sa' = Record.to_list sa.fields in
     let sb' = Record.to_list sb.fields in
     let aux ((ka, va), (kb, vb)) =
@@ -136,10 +140,12 @@ let rec assert_type_expression_eq
   | T_variable _, _ -> None
   | T_singleton a, T_singleton b -> assert_literal_eq (a, b)
   | T_singleton _, _ -> None
-  | T_for_all a, T_for_all b ->
+  | (T_for_all a | T_abstraction a), (T_for_all b | T_abstraction b) ->
     assert_type_expression_eq ~unforged_tickets (a.type_, b.type_)
     >>= fun _ -> Some (assert (Kind.equal a.kind b.kind))
   | T_for_all _, _ -> None
+  | T_abstraction _, _ -> None
+  | T_exists _, _ -> None
 
 
 and assert_literal_eq ((a, b) : Literal_value.t * Literal_value.t) : unit option =
