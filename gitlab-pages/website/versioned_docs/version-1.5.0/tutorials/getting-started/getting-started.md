@@ -279,7 +279,7 @@ Once you have your first account configured, go to a [faucet](https://faucet.mar
 Then we are going to point the Tezos client to a Ghostnet testnet node
 
 ```zsh
-octez-client --endpoint https://ghostnet.tezos.marigold.dev/ config update
+octez-client --endpoint https://ghostnet.ecadinfra.com/ config update
 ```
 
 Ghostnet is a testnet, which is a separate network from the Tezos mainnet, which can be used for testing.
