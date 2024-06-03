@@ -74,6 +74,24 @@
 
             settings.global.excludes = ["_build" "result" ".direnv" "vendors/*"];
           };
+
+          # Wrap stack to work with our haskell.nix integration.
+          # - no-nix: we don't want stack's nix integration
+          # --system-ghc: use the existing GHC on PATH (provided by haskell.nix)
+          # --no-install-ghc : don't try to install GHC if no matching GHC found on PATH
+          stack-wrapped = pkgs.symlinkJoin {
+            name = "stack"; # will be available as the usual `stack` in terminal
+            paths = [pkgs.stack];
+            buildInputs = [pkgs.makeWrapper];
+            postBuild = ''
+              wrapProgram $out/bin/stack \
+                --add-flags "\
+                  --no-nix \
+                  --system-ghc \
+                  --no-install-ghc \
+                "
+            '';
+          };
         in {
           packages = {
             inherit (ligo-webide) ligo-webide-backend ligo-webide-frontend;
@@ -81,16 +99,46 @@
             default = ligo;
           };
 
-          devShells.default = pkgs.mkShell {
-            name = "ligo-dev-shell";
+          devShells = rec {
+            default = pkgs.mkShell {
+              name = "ligo-dev-shell";
 
-            inputsFrom = [ligo];
+              inputsFrom = [ligo];
 
-            buildInputs = with pkgs; [
-              alejandra
-              shellcheck
-              python3
-            ];
+              buildInputs = with pkgs; [
+                  alejandra
+                  shellcheck
+                  python3
+              ];
+            };
+
+            webide-frontend = pkgs.mkShell {
+              name = "ligo-webide-frontend-shell";
+
+              inputsFrom = [ligo-webide.ligo-webide-frontend];
+
+              NODE_OPTIONS = "--openssl-legacy-provider";
+            };
+
+            webide-backend = ligo-webide.ligo-webide-backend.passthru.project.shellFor {
+              name = "ligo-webide-backend-shell";
+
+              # FIXME: https://github.com/input-output-hk/haskell.nix/issues/1885
+              # Adding [exactDeps = true] to avoid the build failure, this ensures
+              # that cabal doesn't choose alternate plans, so that *all* dependencies
+              # are provided by nix.
+              exactDeps = true;
+
+              buildInputs = [stack-wrapped];
+            };
+
+            webide = pkgs.mkShell {
+              name = "ligo-webide-shell";
+
+              inputsFrom = [webide-frontend webide-backend];
+
+              NODE_OPTIONS = "--openssl-legacy-provider";
+            };
           };
 
           formatter = fmt.config.build.wrapper;

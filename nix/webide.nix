@@ -18,7 +18,7 @@
   };
   ligo-webide-backend-components = ligo-webide-backend-project.ligo-webide-backend.components;
 
-  ligo-webide-backend = ligo-webide-backend-components.exes.ligo-webide-backend;
+  ligo-webide-backend = ligo-webide-backend-components.exes.ligo-webide-backend // {passthru.project = ligo-webide-backend-project;};
   ligo-webide-openapi-file =
     runCommand "swagger.json" {
       LANG = "C.UTF-8";
