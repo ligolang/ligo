@@ -1,3 +1,4 @@
+open Core
 module Handler = Requests.Handler
 
 (** The language server or LIGO (more commonly) might crash, leaving the language server

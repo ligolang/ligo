@@ -1,5 +1,6 @@
 (* This module contains wrappers for various LIGO functions:
    get-scope that collects information about definitions in a file *)
+open Core
 module Get_scope = Get_scope
 open Get_scope
 module LMap = Scopes.Types.LMap

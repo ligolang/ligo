@@ -1,3 +1,4 @@
+open Core
 module Region = Simple_utils.Region
 
 (* TODO: [Directive]'s can also be inside E_raw_code (inline michelson code)

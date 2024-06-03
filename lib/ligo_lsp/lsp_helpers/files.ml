@@ -1,3 +1,5 @@
+open Core
+
 (** Lists all files in a directory. *)
 let list_directory
     ~(normalize : Path.normalization)
@@ -7,7 +9,6 @@ let list_directory
   =
   Ligo_api.Api_helpers.list_directory ~include_library (Path.to_string dir)
   |> List.map ~f:normalize
-
 
 (** Lists all library files (i.e., [#import]ed files from the LIGO registry) in a
     directory. *)
