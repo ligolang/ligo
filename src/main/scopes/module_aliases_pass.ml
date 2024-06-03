@@ -1,11 +1,12 @@
+open Core
 open Ligo_prim
-open Simple_utils
-module AST = Ast_core
 open Env
 open Env_map
+module AST = Ast_core
 module Env = Env_map
+module Location = Simple_utils.Location
 
-type t = (Types.Uid.t list * Types.Uid.t) LMap.t
+type t = (Types.Uid.t list * Types.Uid.t) Location.Map.t
 
 (** [resolve_mpath] takes a module path [mvs] and tries to resolve in the [env]
     the final output is of type [(Types.Uid.t list * Types.Uid.t) option]
@@ -20,7 +21,7 @@ type t = (Types.Uid.t list * Types.Uid.t) LMap.t
     and then look for the rest of the module path [B.C.D] in [env] of the resolved
     module *)
 let resolve_mpath
-    : Module_var.t List.Ne.t -> env -> (Module_var.t * Types.Uid.t list) option
+    : Module_var.t Nonempty_list.t -> env -> (Module_var.t * Types.Uid.t list) option
   =
  fun mvs env ->
   let init = [] in
@@ -69,7 +70,7 @@ let resolve_mpath
 
     In the definition for [module M], [A] needs to be resolved to [S#2:13-14]. *)
 let resolve_module_alias
-    :  Module_var.t option -> Module_var.t List.Ne.t -> env -> t
+    :  Module_var.t option -> Module_var.t Nonempty_list.t -> env -> t
     -> t * defs_or_alias option
   =
  fun lhs_mv_opt mvs env m_alias ->
@@ -126,7 +127,7 @@ let rec expression : AST.expression -> t -> env -> t =
     let es = Record.values e_label_map in
     List.fold es ~init:m_alias ~f:(fun m_alias e -> expression e m_alias env)
   | E_tuple es ->
-    List.Ne.fold_left es ~init:m_alias ~f:(fun m_alias e -> expression e m_alias env)
+    Nonempty_list.fold es ~init:m_alias ~f:(fun m_alias e -> expression e m_alias env)
   | E_array entries | E_array_as_list entries ->
     List.fold_left entries ~init:m_alias ~f:(fun m_alias entry ->
         let entry =
@@ -180,7 +181,7 @@ and module_expression
       let m_alias, env = declarations decls m_alias env in
       m_alias, Some (Defs env.avail_defs), env
     | M_variable mv ->
-      let m_alias, alias_opt = resolve_module_alias parent_mod (mv, []) env m_alias in
+      let m_alias, alias_opt = resolve_module_alias parent_mod [ mv ] env m_alias in
       m_alias, alias_opt, env
     | M_module_path mvs ->
       let m_alias, alias_opt = resolve_module_alias parent_mod mvs env m_alias in
@@ -351,7 +352,7 @@ and declarations : AST.declaration list -> t -> env -> t * env =
 (** [declarations] sets up the initial env and calls [declarations] *)
 let declarations : AST.declaration list -> t * env =
  fun decls ->
-  let m_alias = LMap.empty in
+  let m_alias = Location.Map.empty in
   let env = Env.empty in
   declarations decls m_alias env
 

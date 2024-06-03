@@ -1,10 +1,11 @@
 open Main_errors
 open Tezos_utils
 open Proto_alpha_utils
-open Trace
 open Ligo_prim
 
-let check_view_restrictions ~raise : Stacking.compiled_expression list -> unit =
+let check_view_restrictions ~(raise : _ Trace.raise)
+    : Stacking.compiled_expression list -> unit
+  =
  fun views_mich ->
   (* From Tezos changelog on views:
     CREATE_CONTRACT, SET_DELEGATE and TRANSFER_TOKENS cannot be used at the top-level of a
@@ -37,7 +38,7 @@ let check_view_restrictions ~raise : Stacking.compiled_expression list -> unit =
   List.iter ~f:(fun m -> iter_prim_mich f m.expr) views_mich
 
 
-let parse_constant ~raise code =
+let parse_constant ~(raise : _ Trace.raise) code =
   let open Tezos_micheline in
   let open Tezos_micheline.Micheline in
   let code, errs = Micheline_parser.tokenize code in
@@ -85,7 +86,7 @@ let build_contract ~raise
   let open Lwt.Let_syntax in
   let build_view_f (name, (view : Stacking.compiled_expression)) =
     let view_param_ty, ret_ty =
-      trace_option ~raise (main_view_not_a_function name)
+      Trace.trace_option ~raise (main_view_not_a_function name)
       @@ (* remitodo error specific to views*)
       Self_michelson.fetch_views_ty view.expr_ty
     in
@@ -93,7 +94,7 @@ let build_contract ~raise
   in
   let views = List.map ~f:build_view_f views in
   let param_ty, storage_ty =
-    trace_option ~raise main_entrypoint_not_a_function
+    Trace.trace_option ~raise main_entrypoint_not_a_function
     @@ Self_michelson.fetch_contract_ty_inputs compiled.expr_ty
   in
   let expr = compiled.expr in

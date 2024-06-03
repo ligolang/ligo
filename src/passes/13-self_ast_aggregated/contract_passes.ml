@@ -1,7 +1,8 @@
-open Ast_aggregated.Types
-open Simple_utils.Trace
-module Ligo_string = Simple_utils.Ligo_string
 open Ligo_prim
+open Ast_aggregated.Types
+module Ligo_string = Simple_utils.Ligo_string
+module Trace = Simple_utils.Trace
+module Ligo_option = Simple_utils.Ligo_option
 
 type contract_type =
   { parameter : Ast_aggregated.type_expression
@@ -13,7 +14,7 @@ let annotation_or_label layout label =
   @@ Ast_typed.Helpers.remove_empty_annotation (Layout.annot layout label)
 
 
-let check_entrypoint_annotation_format ~raise ep (exp : expression) =
+let check_entrypoint_annotation_format ~(raise : _ Trace.raise) ep (exp : expression) =
   let allowed_annot_char c =
     match c with
     | 'a' .. 'z' | 'A' .. 'Z' | '_' | '.' | '%' | '@' | '0' .. '9' -> true
@@ -34,7 +35,9 @@ let find_annot_type layout content entrypoint =
   List.Assoc.find content ~equal:String.equal entrypoint
 
 
-let self_typing ~raise : contract_type -> expression -> bool * contract_type * expression =
+let self_typing ~(raise : _ Trace.raise)
+    : contract_type -> expression -> bool * contract_type * expression
+  =
  fun dat e ->
   let bad_self_err t =
     Main_warnings.warn_bad_self_type
@@ -70,7 +73,7 @@ let self_typing ~raise : contract_type -> expression -> bool * contract_type * e
         { dat.parameter with type_content = t }
       | T_sum (cmap, _) ->
         let content, layout =
-          trace_option ~raise (Errors.unmatched_entrypoint entrypoint_exp.location)
+          Trace.trace_option ~raise (Errors.unmatched_entrypoint entrypoint_exp.location)
           @@
           match Record.to_list cmap.fields with
           | [ (_single_entry, t) ] ->
@@ -80,13 +83,13 @@ let self_typing ~raise : contract_type -> expression -> bool * contract_type * e
               are now compiled to `| Main of p`
               This representation do not yet persist up until the michelson representation
               due to "optimisations" :  `| Main of p` compiles to `p` *)
-            let open Simple_utils.Option in
+            let open Ligo_option in
             let* row, _ = Ast_aggregated.get_t_sum t in
             Some (Record.to_list row.fields, row.layout)
           | x -> Some (x, cmap.layout)
         in
         let associated_type =
-          trace_option ~raise (Errors.unmatched_entrypoint entrypoint_exp.location)
+          Trace.trace_option ~raise (Errors.unmatched_entrypoint entrypoint_exp.location)
           @@ find_annot_type layout content entrypoint
         in
         associated_type
@@ -94,9 +97,7 @@ let self_typing ~raise : contract_type -> expression -> bool * contract_type * e
     in
     let () =
       if not @@ Ast_aggregated.equal_type_expression entrypoint_t t
-      then
-        raise.Simple_utils.Trace.warning
-        @@ bad_self_err Ast_aggregated.(t_contract ~loc t)
+      then raise.warning @@ bad_self_err Ast_aggregated.(t_contract ~loc t)
     in
     let e = Ast_aggregated.e_a_none ~loc:e.location e.type_expression in
     true, dat, e
@@ -145,7 +146,7 @@ let emit_event_typing ~raise : expression -> expression =
   | _ -> e
 
 
-let litstr_check ~raise : expression -> expression =
+let litstr_check ~(raise : _ Trace.raise) : expression -> expression =
  fun e ->
   match e.expression_content with
   | E_constant { cons_name = C_CHECK_CALL_VIEW_LITSTR; arguments = [ litstr ] } ->

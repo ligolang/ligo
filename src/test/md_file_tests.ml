@@ -1,4 +1,4 @@
-open Simple_utils.Trace
+module Trace = Simple_utils.Trace
 open Test_helpers
 open Main_errors
 
@@ -249,7 +249,7 @@ let compile_groups ~raise filename grp_list =
   let open Lwt.Let_syntax in
   let aux : (syntax * group_name) * (lang * string) -> unit Lwt.t =
    fun ((syntax, grp), (lang, contents)) ->
-    trace ~raise (test_md_file filename syntax grp contents)
+    Trace.trace ~raise (test_md_file filename syntax grp contents)
     @@ fun ~raise ->
     let options syntax =
       Compiler_options.make

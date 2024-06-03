@@ -1,11 +1,11 @@
-open Simple_utils.Trace
-open Core
-
 (*
   That monad do not seem very useful now,
   but it could become useful if we want to support multiple testing mode (against node, or memory)
 *)
 
+open Core
+open Ligo_prim
+open Errors
 module LT = Ligo_interpreter.Types
 module LC = Ligo_interpreter.Combinators
 module Exc = Ligo_interpreter_exc
@@ -14,8 +14,7 @@ module Tezos_protocol_env = Memory_proto_alpha.Alpha_environment
 module Tezos_client = Memory_proto_alpha.Client
 module Location = Simple_utils.Location
 module ModRes = Preprocessor.ModRes
-open Ligo_prim
-open Errors
+module Trace = Simple_utils.Trace
 
 type execution_trace = unit
 
@@ -214,7 +213,7 @@ module Command = struct
 
   let eval_tezos
       : type a.
-        raise:(Errors.interpreter_error, Main_warnings.all) raise
+        raise:(Errors.interpreter_error, Main_warnings.all) Trace.raise
         -> options:Compiler_options.t
         -> a tezos_command
         -> Tezos_state.context
@@ -228,7 +227,7 @@ module Command = struct
     match command with
     | Set_big_map (id, kv, bigmap_ty) ->
       let k_ty, v_ty =
-        trace_option
+        Trace.trace_option
           ~raise
           (Errors.generic_error bigmap_ty.location "Expected big_map type")
         @@ Ast_aggregated.get_t_big_map bigmap_ty
@@ -243,14 +242,16 @@ module Command = struct
     | Nth_bootstrap_typed_address (loc, n) ->
       let contract = Tezos_state.get_bootstrapped_contract ~raise n in
       let storage_ty =
-        trace_option ~raise (Errors.generic_error loc "Storage type not available")
+        Trace.trace_option ~raise (Errors.generic_error loc "Storage type not available")
         @@ List.Assoc.find
              ~equal:Tezos_state.equal_account
              ctxt.internals.storage_tys
              contract
       in
       let parameter_ty =
-        trace_option ~raise (Errors.generic_error loc "Parameter type not available")
+        Trace.trace_option
+          ~raise
+          (Errors.generic_error loc "Parameter type not available")
         @@ List.Assoc.find
              ~equal:Tezos_state.equal_account
              ctxt.internals.parameter_tys
@@ -260,18 +261,19 @@ module Command = struct
       Lwt.return ((contract, parameter_ty, storage_ty), ctxt)
     | Bootstrap_contract (mutez, contract, storage, contract_ty) ->
       let contract =
-        trace_option ~raise (corner_case ()) @@ LC.get_michelson_contract contract
+        Trace.trace_option ~raise (corner_case ()) @@ LC.get_michelson_contract contract
       in
       let Arrow.{ type1 = input_ty; type2 = _; param_names = _ } =
-        trace_option ~raise (corner_case ()) @@ Ast_aggregated.get_t_arrow contract_ty
+        Trace.trace_option ~raise (corner_case ())
+        @@ Ast_aggregated.get_t_arrow contract_ty
       in
       let parameter_ty, _ =
-        trace_option ~raise (corner_case ()) @@ Ast_aggregated.get_t_pair input_ty
+        Trace.trace_option ~raise (corner_case ()) @@ Ast_aggregated.get_t_pair input_ty
       in
       let ({ micheline_repr = { code = storage; _ }; ast_ty = storage_ty }
             : LT.typed_michelson_code)
         =
-        trace_option ~raise (corner_case ()) @@ LC.get_michelson_expr storage
+        Trace.trace_option ~raise (corner_case ()) @@ LC.get_michelson_expr storage
       in
       let next_bootstrapped_contracts =
         (mutez, contract, storage, parameter_ty, storage_ty)
@@ -286,15 +288,15 @@ module Command = struct
         Option.map initial_timestamp ~f:(fun x ->
             Proto_alpha_utils.Time.Protocol.of_seconds (Z.to_int64 x))
       in
-      let amts = trace_option ~raise (corner_case ()) @@ LC.get_list amts in
+      let amts = Trace.trace_option ~raise (corner_case ()) @@ LC.get_list amts in
       let amts =
         List.map
           ~f:(fun x ->
-            let x = trace_option ~raise (corner_case ()) @@ LC.get_mutez x in
+            let x = Trace.trace_option ~raise (corner_case ()) @@ LC.get_mutez x in
             Z.to_int64 x)
           amts
       in
-      let n = trace_option ~raise (corner_case ()) @@ LC.get_nat n in
+      let n = Trace.trace_option ~raise (corner_case ()) @@ LC.get_nat n in
       let bootstrap_contracts = List.rev ctxt.internals.next_bootstrapped_contracts in
       let baker_accounts = List.rev ctxt.internals.next_baker_accounts in
       let%map ctxt =
@@ -376,13 +378,15 @@ module Command = struct
         fail_ctor rej, ctxt
       | _ -> fail_other (), ctxt)
     | Get_balance (loc, calltrace, addr) ->
-      let addr = trace_option ~raise (corner_case ()) @@ LC.get_address addr in
+      let addr = Trace.trace_option ~raise (corner_case ()) @@ LC.get_address addr in
       let%map balance = Tezos_state.get_balance ~raise ~loc ~calltrace ctxt addr in
       let mutez = Michelson_backend.int_of_mutez balance in
       let balance = LT.V_Ct (C_mutez mutez) in
       balance, ctxt
     | Get_storage (loc, calltrace, addr) ->
-      let addr = trace_option ~raise (corner_case ()) @@ LC.get_typed_address addr in
+      let addr =
+        Trace.trace_option ~raise (corner_case ()) @@ LC.get_typed_address addr
+      in
       let%map storage', ty = Tezos_state.get_storage ~raise ~loc ~calltrace ctxt addr in
       let storage =
         storage'
@@ -439,7 +443,9 @@ module Command = struct
       let open Ligo_interpreter.Types in
       let subst_lst = Michelson_backend.make_subst_ast_env_exp ~raise f.env in
       let Arrow.{ type1 = in_ty; type2 = out_ty; param_names = _ } =
-        trace_option ~raise (Errors.generic_error loc "Trying to run a non-function?")
+        Trace.trace_option
+          ~raise
+          (Errors.generic_error loc "Trying to run a non-function?")
         @@ Ast_aggregated.get_t_arrow f.orig_lambda.type_expression
       in
       let func_typed_exp =
@@ -453,7 +459,7 @@ module Command = struct
           subst_lst
       in
       let _ =
-        trace ~raise Main_errors.self_ast_aggregated_tracer
+        Trace.trace ~raise Main_errors.self_ast_aggregated_tracer
         @@ Self_ast_aggregated.expression_obj func_typed_exp
       in
       let%bind func_code = Michelson_backend.compile_ast ~raise ~options func_typed_exp in
@@ -506,7 +512,7 @@ module Command = struct
       | Error data ->
         let data_t = Michelson_backend.compile_type ~raise result_ty in
         let data_opt =
-          to_option
+          Trace.to_option
           @@ Michelson_to_value.decompile_to_untyped_value
                ~bigmaps:[]
                (clean_locations data_t)
@@ -528,7 +534,9 @@ module Command = struct
             { arg_binder; arg_mut_flag = Immutable; body; orig_lambda; env; rec_name } ->
           let subst_lst = Michelson_backend.make_subst_ast_env_exp ~raise env in
           let Arrow.{ type1 = in_ty; type2 = out_ty; param_names = _ } =
-            trace_option ~raise (Errors.generic_error loc "Trying to run a non-function?")
+            Trace.trace_option
+              ~raise
+              (Errors.generic_error loc "Trying to run a non-function?")
             @@ Ast_aggregated.get_t_arrow orig_lambda.type_expression
           in
           Michelson_backend.build_ast
@@ -621,7 +629,7 @@ module Command = struct
       | _ -> raise.error @@ Errors.generic_error loc "Should be caught by the typer")
     | Check_storage_address (loc, addr, ty) ->
       let ligo_ty =
-        trace_option
+        Trace.trace_option
           ~raise
           (Errors.generic_error
              loc
@@ -633,13 +641,13 @@ module Command = struct
              addr
       in
       let _, ty =
-        trace_option
+        Trace.trace_option
           ~raise
           (Errors.generic_error loc "Argument expected to be a typed_address")
         @@ Ast_aggregated.get_t_typed_address ty
       in
       let () =
-        trace_option
+        Trace.trace_option
           ~raise
           (Errors.generic_error loc "Storage type does not match expected type")
         @@ Ast_aggregated.Helpers.assert_type_expression_eq (ligo_ty, ty)
@@ -648,11 +656,11 @@ module Command = struct
     | Inject_script (loc, calltrace, code, storage, amt) ->
       Tezos_state.originate_contract ~raise ~loc ~calltrace ctxt (code, storage) amt
     | Set_source source ->
-      let source = trace_option ~raise (corner_case ()) @@ LC.get_address source in
+      let source = Trace.trace_option ~raise (corner_case ()) @@ LC.get_address source in
       Lwt.return ((), { ctxt with internals = { ctxt.internals with source } })
     | Set_baker (loc, calltrace, baker_policy) ->
       let baker_policy =
-        trace_option ~raise (corner_case ()) @@ LC.get_baker_policy baker_policy
+        Trace.trace_option ~raise (corner_case ()) @@ LC.get_baker_policy baker_policy
       in
       let baker_policy = Tezos_state.baker_policy ~raise ~loc ~calltrace baker_policy in
       Lwt.return ((), { ctxt with internals = { ctxt.internals with baker_policy } })
@@ -663,7 +671,7 @@ module Command = struct
       let%map tvp = Tezos_state.get_total_voting_power ~raise ~loc ~calltrace ctxt in
       LT.V_Ct (LT.C_nat (Z.of_int64 tvp)), ctxt
     | Get_bootstrap (loc, calltrace, x) ->
-      let x = trace_option ~raise (corner_case ()) @@ LC.get_int x in
+      let x = Trace.trace_option ~raise (corner_case ()) @@ LC.get_int x in
       (match List.nth ctxt.internals.bootstrapped (Z.to_int x) with
       | Some x ->
         let%map sk, pk =
@@ -758,16 +766,16 @@ module Command = struct
       let value = LC.v_pair (V_Ct (C_string sk), V_Ct (C_key pk)) in
       Lwt.return (value, ctxt)
     | Baker_account (acc, opt) ->
-      let tez = trace_option ~raise (corner_case ()) @@ LC.get_option opt in
+      let tez = Trace.trace_option ~raise (corner_case ()) @@ LC.get_option opt in
       let tez =
         Option.map
-          ~f:(fun v -> trace_option ~raise (corner_case ()) @@ LC.get_mutez v)
+          ~f:(fun v -> Trace.trace_option ~raise (corner_case ()) @@ LC.get_mutez v)
           tez
       in
       let tez = Option.map ~f:(fun t -> Z.to_int64 t) tez in
-      let sk, pk = trace_option ~raise (corner_case ()) @@ LC.get_pair acc in
-      let sk = trace_option ~raise (corner_case ()) @@ LC.get_string sk in
-      let pk = trace_option ~raise (corner_case ()) @@ LC.get_key pk in
+      let sk, pk = Trace.trace_option ~raise (corner_case ()) @@ LC.get_pair acc in
+      let sk = Trace.trace_option ~raise (corner_case ()) @@ LC.get_string sk in
+      let pk = Trace.trace_option ~raise (corner_case ()) @@ LC.get_key pk in
       let next_baker_accounts = (sk, pk, tez) :: ctxt.internals.next_baker_accounts in
       let ctxt = { ctxt with internals = { ctxt.internals with next_baker_accounts } } in
       Lwt.return ((), ctxt)
@@ -834,7 +842,7 @@ module Command = struct
 
   let eval
       : type a.
-        raise:(Errors.interpreter_error, Main_warnings.all) raise
+        raise:(Errors.interpreter_error, Main_warnings.all) Trace.raise
         -> options:Compiler_options.t
         -> a t
         -> state
@@ -849,7 +857,7 @@ module Command = struct
       ret, { state with tezos_context = ctxt }
     | Check_obj_ligo e ->
       let _ =
-        trace ~raise Main_errors.self_ast_aggregated_tracer
+        Trace.trace ~raise Main_errors.self_ast_aggregated_tracer
         @@ Self_ast_aggregated.expression_obj e
       in
       Lwt.return ((), state)
@@ -880,7 +888,7 @@ type 'a t =
 
 let rec eval
     : type a.
-      raise:(Errors.interpreter_error, Main_warnings.all) raise
+      raise:(Errors.interpreter_error, Main_warnings.all) Trace.raise
       -> options:Compiler_options.t
       -> a t
       -> state
@@ -897,7 +905,7 @@ let rec eval
   | Return v -> Lwt.return (v, state)
   | Fail_ligo err -> raise.error err
   | Try_or (e', handler) ->
-    try_with_lwt
+    Trace.try_with_lwt
       (fun ~raise ~catch:_ -> eval ~raise ~options e' state log)
       (fun ~catch:_ -> function
         | `Main_interpret_target_lang_error _

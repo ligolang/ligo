@@ -1,5 +1,7 @@
-module Self_helpers = Helpers
 open Ligo_prim
+module Self_helpers = Helpers
+module Trace = Simple_utils.Trace
+module Ligo_string = Simple_utils.Ligo_string
 open Ast_aggregated
 open Errors
 
@@ -46,7 +48,7 @@ let check_string v =
   [blacklist] is a list of binder and location which refer to meta-ligo terms, when
   encountering a variable matching an element of this list, it fails
 *)
-let check_obj_ligo ~raise ?(blacklist = []) (t : expression) : unit =
+let check_obj_ligo ~(raise : _ Trace.raise) ?(blacklist = []) (t : expression) : unit =
   let folder_constant () expr =
     match expr.expression_content with
     | E_variable v ->
@@ -54,12 +56,12 @@ let check_obj_ligo ~raise ?(blacklist = []) (t : expression) : unit =
         List.find ~f:(fun (x, _loc) -> Value_var.equal v (Binder.get_var x)) blacklist
       in
       (match b_opt with
-      | Some (_, loc) -> raise.Trace.error @@ Errors.expected_obj_ligo loc
+      | Some (_, loc) -> raise.error @@ Errors.expected_obj_ligo loc
       | None -> ())
     | E_constant { cons_name } when Constant.constant'_is_only_interpreter cons_name ->
-      raise.Trace.error @@ Errors.expected_obj_ligo expr.location
+      raise.error @@ Errors.expected_obj_ligo expr.location
     | E_literal (Literal_string s) when not (check_string @@ Ligo_string.extract s) ->
-      raise.Trace.error @@ Errors.expected_obj_ligo expr.location
+      raise.error @@ Errors.expected_obj_ligo expr.location
     | _ -> ()
   in
   let traverser_types ~t loc expr =

@@ -1,12 +1,13 @@
 (* Temporary pieces of code to warn user on deprecated commands *)
-open Simple_utils.Trace
+
+module Trace = Simple_utils.Trace
 
 let cameligo designation attr x =
   Format.asprintf
     {|
   %s declaration through CLI is deprecated.
   Please use annotations in the source:
-  
+
   [@%s]
   let %s = ...
 |}
@@ -20,7 +21,7 @@ let jsligo designation attr x =
     {|
   %s declaration through CLI is deprecated.
   Please use annotations in the source:
-  
+
   @%s
   const %s = ...
 |}
@@ -29,7 +30,7 @@ let jsligo designation attr x =
     x
 
 
-let entry_cli ~raise syntax entries =
+let entry_cli ~(raise : _ Trace.raise) syntax entries =
   let designation = "Entry-point" in
   let attr = "entry" in
   match entries with
@@ -43,7 +44,7 @@ let entry_cli ~raise syntax entries =
   | [] -> ()
 
 
-let view_cli ~raise syntax views =
+let view_cli ~(raise : _ Trace.raise) syntax views =
   let designation = "View" in
   let attr = "view" in
   match views with

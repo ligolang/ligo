@@ -1,4 +1,4 @@
-open Simple_utils.Display
+module Display = Simple_utils.Display
 
 (** Formats definitions and scopes, for use by [ligo info get-scope] in the CLI.
 
@@ -14,7 +14,7 @@ let scope_ppformat
   =
   let () = ignore no_colour in
   match display_format with
-  | Human_readable ->
+  | Display.Human_readable ->
     Format.fprintf
       f
       "there is to human-readable pretty printer for you, use --format json"
@@ -41,7 +41,7 @@ let warn_format = Main_warnings.format
 
 (** Formats [get_scope_output], displaying errors, warnings, and [get_scope_output], in
     this order. Errors and warnings are sorted and deduped before getting formatted. *)
-let pp_get_scope_output : get_scope_output pp =
+let pp_get_scope_output : get_scope_output Display.pp =
  fun ~display_format ~no_colour f { errors; warns; info } ->
   let () =
     match info with
@@ -78,7 +78,7 @@ let to_warnings list =
 
 (** Formats [get_scope_output] to JSON, including errors, warnings, definitions, and
     scopes. *)
-let get_scope_output_to_json : get_scope_output -> json =
+let get_scope_output_to_json : get_scope_output -> Display.json =
  fun { errors; warns; info } ->
   let info_json =
     match info with
@@ -95,5 +95,5 @@ let get_scope_output_to_json : get_scope_output -> json =
 
 
 (** [Dev] and [Json] formatters for [get_scope_output]. *)
-let get_scope_format : get_scope_output format =
+let get_scope_format : get_scope_output Display.format =
   { pp = pp_get_scope_output; to_json = get_scope_output_to_json }

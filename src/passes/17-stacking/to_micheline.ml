@@ -1,9 +1,10 @@
-module List = Core.List
-module Location = Simple_utils.Location
+open Core
 open Tezos_micheline.Micheline
+open Ligo_prim
+module Location = Simple_utils.Location
+module Ligo_string = Simple_utils.Ligo_string
 module Compiler = Ligo_coq_ocaml.Compiler
 module Datatypes = Ligo_coq_ocaml.Datatypes
-open Ligo_prim
 
 type meta = Mini_c.meta
 
@@ -109,7 +110,7 @@ let literal_value (l : Literal_value.t) : (meta, string) node =
   | Literal_nat x -> Int (null, x)
   | Literal_timestamp x -> Int (null, x)
   | Literal_mutez x -> Int (null, x)
-  | Literal_string x -> String (null, Simple_utils.Ligo_string.extract x)
+  | Literal_string x -> String (null, Ligo_string.extract x)
   | Literal_bytes x -> Bytes (null, x)
   | Literal_address x -> String (null, x)
   | Literal_signature x -> String (null, x)

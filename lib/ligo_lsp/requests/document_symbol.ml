@@ -1,10 +1,11 @@
+open Core
 open Handler
 open Lsp_helpers
+module Loc = Simple_utils.Location
 
 (** Returns [Some] if the input doesn't contain a parser error recovery wrapper. *)
 let guard_ghost (input : string) : string option =
   Option.some_if (not @@ Parsing.Errors.ErrorWrapper.is_wrapped input) input
-
 
 (** Creates information relevant to the current definition that can be shown in the UI for
     document symbols. The [syntax] is used to pretty print details. *)
@@ -103,12 +104,11 @@ let make_def_info (syntax : Syntax_types.t) (def : Def.t)
   let detail = Option.bind ~f:guard_ghost detail in
   detail, kind, name, selectionRange, range
 
-
 (** Turns a hierarchy of some symbol into a hierarchically-organized document symbol. *)
 let rec get_all_symbols_hierarchy
     : Syntax_types.t -> Def.t Rose.tree -> DocumentSymbol.t option
   =
- fun syntax (Tree ((hd, tl), defs)) ->
+ fun syntax (Tree (hd :: tl, defs)) ->
   let children = get_all_symbols_hierarchies syntax defs in
   match
     if List.is_empty tl
@@ -179,7 +179,6 @@ let rec get_all_symbols_hierarchy
   | Some (children, detail, kind, name, selectionRange, range) ->
     Some (DocumentSymbol.create ?children ?detail ~kind ~name ~range ~selectionRange ())
 
-
 (** Turns a hierarchy into a hierarchically-organized list of document symbols. *)
 and get_all_symbols_hierarchies
     : Syntax_types.t -> Def.Hierarchy.t -> DocumentSymbol.t list option
@@ -188,7 +187,6 @@ and get_all_symbols_hierarchies
   match List.filter_map defs ~f:(get_all_symbols_hierarchy syntax) with
   | [] -> None
   | _ :: _ as defs -> Some defs
-
 
 (** Runs the handler for document symbol. This is usually called when the document is
     opened or after the user types something. *)

@@ -48,3 +48,10 @@ val wrap : 'a ctor
 val make : 'a ctor (* Alias of [wrap] *)
 
 val ghost : 'a -> 'a wrap
+
+(* Conversions *)
+
+type json = Yojson.Safe.t
+
+val yojson_of_wrap : ('a -> json) -> 'a wrap -> json
+val yojson_of_t    : ('a -> json) -> 'a wrap -> json (* [yojson_of_wrap] *)

@@ -2,13 +2,13 @@
 
 (* Vendor dependencies *)
 
+open Core
 module Region  = Simple_utils.Region
-module Utils   = Simple_utils.Utils
+module Ne      = Nonempty_list
 module Pos     = Simple_utils.Pos
 module Std     = Simple_utils.Std
 module Snippet = Simple_utils.Snippet
 module Lexbuf  = Simple_utils.Lexbuf
-module Unit    = LexerLib.Unit
 
 (* Generic signature of tokens *)
 
@@ -150,7 +150,7 @@ module type S =
            is not found or a lexer error occurred. *)
 
     type 'src recovery_parser =
-      'src -> (tree * message list, message Utils.nseq) result
+      'src -> (tree * message list, message Ne.t) result
 
     (* Parsing with recovery from various sources *)
 
@@ -433,7 +433,7 @@ module Make (Lexer  : LEXER)
            is not found or a lexer error occurred. *)
 
     type 'src recovery_parser =
-      'src -> (Parser.tree * message list, message Utils.nseq) result
+      'src -> (Parser.tree * message list, message Ne.t) result
 
     module EltPrinter =
       struct
@@ -611,14 +611,14 @@ module Make (Lexer  : LEXER)
           (failure  : 'a Inter.checkpoint -> message)
           (supplier : unit -> token * Lexing.position * Lexing.position)
           (initial  : 'a Inter.checkpoint)
-          : (Parser.tree * message list, message Utils.nseq) result =
+          : (Parser.tree * message list, message Ne.t) result =
           let initial = Correct initial in
           let errors : message list ref = ref []
           in
           let rec loop parser =
             match supplier () with
               exception LexingError error ->
-                Error (error.message, !errors)
+                Error Ne.(error.message ::!errors)
             | token ->
                 let result =
                   match step parser failure token with
@@ -629,8 +629,9 @@ module Make (Lexer  : LEXER)
                 | Intermediate parser  -> loop parser
                 | InternalError msg    ->
                     let value     = "Internal error: " ^ msg in
-                    let region, _ = get_current_token_region lexbuf
-                    in Error (Region.{value; region}, !errors)
+                    let region, _ = get_current_token_region lexbuf in
+                    let fst_msg   = Region.{value; region}
+                    in Error Ne.(fst_msg :: !errors)
           in loop initial
       end
 
@@ -657,7 +658,7 @@ module Make (Lexer  : LEXER)
     let recov_from_file ~no_colour (module ParErr : PAR_ERR) path =
       match lexbuf_from_file path with
         Error error ->
-          Error (error.message, [])
+          Error (Ne.singleton error.message)
       | Ok (lexbuf, close) ->
           let result = recov_from_lexbuf ~no_colour (module ParErr) lexbuf
           in (close (); result)

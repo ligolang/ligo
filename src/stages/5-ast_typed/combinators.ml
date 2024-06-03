@@ -1,9 +1,8 @@
-module Location = Simple_utils.Location
-module List = Simple_utils.List
-module Ligo_string = Simple_utils.Ligo_string
+open Core
 open Ligo_prim
 open Literal_types
 open Types
+module Location = Simple_utils.Location
 
 (* Helpers for accessing and constructing elements are derived using
    `ppx_woo` (`@@deriving ez`) *)

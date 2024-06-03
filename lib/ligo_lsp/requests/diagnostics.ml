@@ -1,4 +1,6 @@
+open Core
 open Lsp_helpers
+module Loc = Simple_utils.Location
 
 (** A [Diagnostic.t] has many fields that we don't use, which makes working with it and
     writing tests a bit annoying. This data type holds just the data we currently care
@@ -19,7 +21,6 @@ let from_simple_diagnostic : simple_diagnostic -> Diagnostic.t =
     ~message:(Format.asprintf "[Compiler stage: %s] %s" stage message)
     ~range:location.range
     ()
-
 
 (** Partition the diagnostics into each document that produced them, and sort the
     diagnostics such that the diagnostics from the current file come before every other.
@@ -57,7 +58,6 @@ let partition_simple_diagnostics
          ( DocumentUri.of_path (List.hd_exn diags).location.path
          , List.map ~f:from_simple_diagnostic diags ))
 
-
 (** We might not want to show some diagnostics, like ones about encoding/decoding/untyping
     existential types. We filter them in this function. *)
 let filter_diagnostics : Main_errors.all list -> Main_errors.all list =
@@ -82,7 +82,6 @@ let filter_diagnostics : Main_errors.all list -> Main_errors.all list =
         | `Expansion_cannot_compile_texists _ -> false
         | _ -> true)
       | _ -> true)
-
 
 (** Extract all errors and warnings for the given scopes and collect them in a list. *)
 let get_diagnostics ~(normalize : Path.normalization) (current_path : Path.t)

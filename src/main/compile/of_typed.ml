@@ -1,4 +1,5 @@
-open Simple_utils.Trace
+module Location = Simple_utils.Location
+module Trace = Simple_utils.Trace
 open Ligo_prim
 open Ast_typed
 open Aggregation
@@ -19,12 +20,12 @@ let compile_expression_in_context
   =
  fun contract_info ctxt_typed exp ->
   let ctxt, exp =
-    trace ~raise aggregation_tracer @@ Aggregation.compile_program exp ctxt_typed
+    Trace.trace ~raise aggregation_tracer @@ Aggregation.compile_program exp ctxt_typed
   in
   let ctxt, exp =
     if self_pass
     then
-      trace ~raise self_ast_aggregated_tracer
+      Trace.trace ~raise self_ast_aggregated_tracer
       @@ Self_ast_aggregated.all_program ~options ~self_program (ctxt, exp)
     else ctxt, exp
   in
@@ -32,13 +33,13 @@ let compile_expression_in_context
   let exp =
     if self_pass
     then
-      trace ~raise self_ast_aggregated_tracer
+      Trace.trace ~raise self_ast_aggregated_tracer
       @@ Self_ast_aggregated.all_aggregated_expression exp
     else exp
   in
   let exp =
     Option.value_map contract_info ~default:exp ~f:(fun { storage; parameter } ->
-        trace ~raise self_ast_aggregated_tracer
+        Trace.trace ~raise self_ast_aggregated_tracer
         @@ Self_ast_aggregated.all_contract ~options parameter storage exp)
   in
   let exp = if force_uncurry then Ast_aggregated.Combinators.uncurry_wrap exp else exp in
@@ -48,8 +49,9 @@ let compile_expression_in_context
 let compile_expression ~raise ~options : Ast_typed.expression -> Ast_aggregated.expression
   =
  fun e ->
-  let x = trace ~raise aggregation_tracer @@ compile_expression e in
-  trace ~raise self_ast_aggregated_tracer @@ Self_ast_aggregated.all_expression ~options x
+  let x = Trace.trace ~raise aggregation_tracer @@ compile_expression e in
+  Trace.trace ~raise self_ast_aggregated_tracer
+  @@ Self_ast_aggregated.all_expression ~options x
 
 
 let apply_to_entrypoint_with_contract_type ~raise ~options
@@ -90,7 +92,8 @@ let apply_to_var ~raise ~options
        it would force users to export declaration in Jsligo *)
       to_signature prg.pr_module
     in
-    trace_option ~raise main_declaration_not_found @@ Ast_typed.get_sig_value [] v sig_
+    Trace.trace_option ~raise main_declaration_not_found
+    @@ Ast_typed.get_sig_value [] v sig_
   in
   let var_ep = Ast_typed.(e_a_variable ~loc:Location.dummy v ty) in
   compile_expression_in_context ~raise ~options None prg var_ep
@@ -106,7 +109,7 @@ let assert_equal_contract_type ~raise
     | Check_storage -> storage
     | Check_parameter -> parameter
   in
-  trace ~raise checking_tracer
+  Trace.trace ~raise checking_tracer
   @@ Checking.assert_type_expression_eq Location.dummy (exp.type_expression, ty)
 
 
@@ -120,7 +123,7 @@ let apply_to_entrypoint_view ~raise ~options
    fun i (view_ty, view_binder) ->
     let a_ty, s_ty, r_ty =
       (* at this point the self-pass on views has been applied, we assume the types are correct *)
-      trace_option ~raise main_unknown @@ Ast_typed.get_view_form view_ty
+      Trace.trace_option ~raise main_unknown @@ Ast_typed.get_view_form view_ty
     in
     let ty = t_arrow ~loc (t_pair ~loc a_ty s_ty) r_ty () in
     let ep_expr =
@@ -158,7 +161,7 @@ let rec list_declarations
   let should_skip b = skip_generated && is_generated_main b in
   List.fold_left
     ~f:(fun prev el ->
-      let open Simple_utils.Location in
+      let open Location in
       match el.wrap_content with
       | D_irrefutable_match { pattern = { wrap_content = P_var binder; _ }; attr; _ }
       | D_value { binder; attr; _ }
@@ -210,7 +213,7 @@ let rec list_declarations
 let list_type_declarations (m : Ast_typed.program) : Type_var.t list =
   List.fold_left
     ~f:(fun prev el ->
-      let open Simple_utils.Location in
+      let open Location in
       match el.wrap_content with
       | D_type { type_binder; type_attr; _ } when type_attr.public -> type_binder :: prev
       | _ -> prev)

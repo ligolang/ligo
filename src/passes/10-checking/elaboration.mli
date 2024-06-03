@@ -1,6 +1,6 @@
 open Ligo_prim
 module Location = Simple_utils.Location
-open Simple_utils.Trace
+module Trace = Simple_utils.Trace
 
 type 'a t
 type error = Errors.typer_error
@@ -28,6 +28,6 @@ val run
   :  'a t
   -> options:Compiler_options.middle_end
   -> path:Module_var.t list
-  -> raise:(error, warning) raise
+  -> raise:(error, warning) Trace.raise
   -> Substitution.t
   -> 'a

@@ -1,16 +1,17 @@
-module Trace = Simple_utils.Trace
 open Ligo_prim
 open Types
-module LMap = Types.LMap
+module Trace = Simple_utils.Trace
+module Location = Simple_utils.Location
+module Ligo_option = Simple_utils.Ligo_option
 module Pattern = Ast_typed.Pattern
 module Env = Env.Env_map
 module Refs_tbl = Checking.Refs_tbl
 
 type t =
-  { type_cases : type_case LMap.t
-  ; label_cases : Ast_core.ty_expr LMap.t
-  ; lambda_cases : Ast_typed.ty_expr LMap.t
-  ; module_signatures : signature_case LMap.t
+  { type_cases : type_case Location.Map.t
+  ; label_cases : Ast_core.ty_expr Location.Map.t
+  ; lambda_cases : Ast_typed.ty_expr Location.Map.t
+  ; module_signatures : signature_case Location.Map.t
   ; module_env : Env.t
   ; refs_tbl : Refs_tbl.t
   }
@@ -43,10 +44,10 @@ let[@warning "-32"] pp : t Fmt.t =
 
 
 let empty (module_env : Env.t) =
-  { type_cases = LMap.empty
-  ; label_cases = LMap.empty
-  ; lambda_cases = LMap.empty
-  ; module_signatures = LMap.empty
+  { type_cases = Location.Map.empty
+  ; label_cases = Location.Map.empty
+  ; lambda_cases = Location.Map.empty
+  ; module_signatures = Location.Map.empty
   ; module_env
   ; refs_tbl = Checking.Refs_tbl.create ()
   }
@@ -154,7 +155,7 @@ let lookup_signature : Location.t -> t -> signature_case option =
  fun key { module_signatures; _ } -> Map.find module_signatures key
 
 
-let resolve_module_path : Module_var.t Types.List.Ne.t -> t -> Module_var.t option =
+let resolve_module_path : Module_var.t Nonempty_list.t -> t -> Module_var.t option =
  fun path { module_env; _ } ->
   let defs = Env.union_defs module_env.avail_defs module_env.parent in
   let mmap = module_env.module_map in
@@ -402,15 +403,15 @@ module Of_Ast_core = struct
       | S_path path ->
         Option.value
           ~default:[]
-          (let open Simple_utils.Option in
+          (let open Ligo_option in
           let* resolved_module = resolve_module_path path env in
           let* signature_case =
             lookup_signature (Module_var.get_location resolved_module) env
           in
           match signature_case with
           | Resolved sig_ ->
-            return @@ (Checking.untype_signature ~raise ~use_orig_var:true sig_).items
-          | Core { items } -> return @@ List.concat_map ~f items
+            Option.return (Checking.untype_signature ~raise ~use_orig_var:true sig_).items
+          | Core { items } -> Option.return @@ List.concat_map ~f items
           | Unresolved -> None))
 
 
@@ -435,12 +436,13 @@ module Of_Ast_core = struct
     | Some { wrap_content = S_path path; _ } ->
       Option.value
         ~default:env
-        (let open Simple_utils.Option in
+        (let open Ligo_option in
         let* resolved_module = resolve_module_path path env in
         let* signature_case =
           lookup_signature (Module_var.get_location resolved_module) env
         in
-        return @@ add_module_signature (Module_var.get_location v) signature_case env)
+        Option.return
+        @@ add_module_signature (Module_var.get_location v) signature_case env)
     | None -> env
 
 
@@ -541,7 +543,7 @@ module Of_Ast_core = struct
     | E_type_in { let_result; _ } -> expression bindings let_result
     | E_constructor { element; _ } -> expression bindings element
     | E_record lmap -> Record.fold lmap ~init:bindings ~f:expression
-    | E_tuple lmap -> List.Ne.fold_left lmap ~init:bindings ~f:expression
+    | E_tuple lmap -> Nonempty_list.fold lmap ~init:bindings ~f:expression
     | E_array items | E_array_as_list items ->
       List.fold_left items ~init:bindings ~f:(fun bindings item ->
           let item =

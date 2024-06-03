@@ -1,3 +1,5 @@
+module PP_helpers = Simple_utils.PP_helpers
+
 type 'a t = 'a Label.Map.t [@@deriving equal, compare, yojson, sexp]
 
 let hash_fold_t f state t = Map.hash_fold_m__t (module Label) f state t
@@ -52,22 +54,20 @@ let tuple_of_record (m : _ t) =
 
 
 let labels_of_tuple l =
-  let l = Simple_utils.List.Ne.to_list l in
-  List.mapi ~f:(fun i _ -> Label.of_int i) l
+  List.mapi ~f:(fun i _ -> Label.of_int i) @@ Nonempty_list.to_list l
 
 
 let record_of_tuple l = of_list @@ List.mapi ~f:(fun i v -> Label.of_int i, v) l
-let record_of_proper_tuple l = record_of_tuple (Simple_utils.List.Ne.to_list l)
+let record_of_proper_tuple l = record_of_tuple (Nonempty_list.to_list l)
 
 module PP = struct
   open Format
-  open Simple_utils.PP_helpers
 
   let record_sep_expr value sep ppf (m : 'a t) =
     let lst = to_list m in
     let lst = List.dedup_and_sort ~compare:(fun (a, _) (b, _) -> Label.compare a b) lst in
     let new_pp ppf (k, v) = fprintf ppf "@[<h>%a -> %a@]" Label.pp k value v in
-    fprintf ppf "%a" Simple_utils.PP_helpers.(list_sep new_pp sep) lst
+    fprintf ppf "%a" PP_helpers.(list_sep new_pp sep) lst
 
 
   (* Prints records which only contain the consecutive fields
@@ -77,7 +77,7 @@ module PP = struct
     then (
       let l = List.map ~f:snd (tuple_of_record m) in
       Tuple.pp_list value ppf l)
-    else fprintf ppf format_record (record_sep_expr value (tag sep_record)) m
+    else fprintf ppf format_record (record_sep_expr value (PP_helpers.tag sep_record)) m
 
 
   let tuple_or_record_sep_expr value =

@@ -9,6 +9,5 @@
   cohttp-lwt
   cohttp-lwt-unix
   yojson)
- (flags -open Core)
  (preprocess
   (pps ppx_deriving_yojson)))

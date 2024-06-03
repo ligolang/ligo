@@ -1,11 +1,11 @@
 open Ast_unified
 open Pass_type
-open Simple_utils
-open Ligo_prim.Constant
+module Ligo_Constant = Ligo_prim.Constant
 module Location = Simple_utils.Location
+module Ligo_string = Simple_utils.Ligo_string
 include Flag.No_arg ()
 
-let destruct_args ((str, args) : expr List.Ne.t) : (string * expr list) option =
+let destruct_args (str :: args : expr Nonempty_list.t) : (string * expr list) option =
   match get_e_literal str with
   | Some (Literal_string str) -> Some (Ligo_string.extract str, args)
   | _ -> None
@@ -22,13 +22,13 @@ let compile ~raise:_ =
       | E_tuple m ->
         (match destruct_args m with
         | Some (code, arguments) ->
-          (match read_constant' code with
+          (match Ligo_Constant.read_constant' code with
           | None -> failwith @@ "Constant cannot be externalized: " ^ code
           | Some cons_name -> e_constant ~loc { cons_name; arguments })
         | _ -> make_e ~loc e)
       | E_literal (Literal_string code) ->
-        let code = Simple_utils.Ligo_string.extract code in
-        (match Ligo_prim.Constant.read_constant' code with
+        let code = Ligo_string.extract code in
+        (match Ligo_Constant.read_constant' code with
         | None -> failwith @@ "Constant cannot be externalized: " ^ code
         | Some cons_name -> e_constant ~loc { cons_name; arguments = [] })
       | _ -> make_e ~loc e)

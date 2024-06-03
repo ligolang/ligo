@@ -1,18 +1,20 @@
 open Ast_unified
 open Pass_type
-open Simple_utils.Trace
-open Simple_utils.Function
 open Errors
+module Trace = Simple_utils.Trace
 module Location = Simple_utils.Location
+module Ligo_fun = Simple_utils.Ligo_fun
+include Flag.No_arg ()
+
+let ( <@ ) = Ligo_fun.( <@ )
 
 (* Restrictions at top-level :
    - variable declaration (warning)
    - statement (error) *)
+
 let name = __MODULE__
 
-include Flag.No_arg ()
-
-let rec silent_let_to_const ~raise d =
+let rec silent_let_to_const ~(raise : _ Trace.raise) d =
   let loc = get_d_loc d in
   match get_d d with
   | D_attr (attr, d) -> d_attr ~loc (attr, silent_let_to_const ~raise d)
@@ -25,7 +27,7 @@ let rec silent_let_to_const ~raise d =
   | d -> make_d ~loc d
 
 
-let compile ~raise =
+let compile ~(raise : _ Trace.raise) =
   let program_entry : _ program_entry_ -> program_entry = function
     | PE_top_level_instruction i -> raise.error (unsupported_top_level_statement i)
     | PE_declaration d -> pe_declaration (silent_let_to_const ~raise d)

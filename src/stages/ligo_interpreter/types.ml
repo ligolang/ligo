@@ -1,6 +1,7 @@
+module Ligo_option = Simple_utils.Ligo_option
 include Ast_aggregated.Types
 open Ligo_prim
-module Z = Simple_utils.Z
+module Ligo_z = Simple_utils.Ligo_z
 module Tezos_protocol = Memory_proto_alpha
 module Tezos_raw_protocol = Memory_proto_alpha.Raw_protocol
 module Tez = Memory_proto_alpha.Protocol.Alpha_context.Tez
@@ -85,7 +86,7 @@ module Entrypoint_repr = struct
 
 
   let of_string_opt s =
-    let open Simple_utils.Option in
+    let open Ligo_option in
     let* s = Memory_proto_alpha.Raw_protocol.Non_empty_string.of_string s in
     Memory_proto_alpha.Raw_protocol.Entrypoint_repr.of_annot_lax_opt s
 end
@@ -102,13 +103,13 @@ type contract =
 type constant_val =
   | C_unit [@name "unit"]
   | C_bool of bool [@name "bool"]
-  | C_int of Z.t [@name "int"]
+  | C_int of Ligo_z.t [@name "int"]
   | C_int64 of Int64.t [@name "int64"]
-  | C_nat of Z.t [@name "nat"]
-  | C_timestamp of Z.t [@name "timestamp"]
+  | C_nat of Ligo_z.t [@name "nat"]
+  | C_timestamp of Ligo_z.t [@name "timestamp"]
   | C_string of string [@name "string"]
   | C_bytes of bytes [@name "bytes"]
-  | C_mutez of Z.t [@name "mutez"]
+  | C_mutez of Ligo_z.t [@name "mutez"]
   | C_address of Contract.t
       (*should be represented as michelson data ? not convenient *)
       [@name "address"]

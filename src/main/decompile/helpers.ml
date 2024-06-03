@@ -1,4 +1,4 @@
-open Simple_utils.Function
+let ( <@ ) f g x = f (g x)
 
 let specialise_and_print_cameligo =
   Parsing.Cameligo.pretty_print Parsing.Cameligo.Pretty.default_state

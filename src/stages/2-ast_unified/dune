@@ -1,7 +1,12 @@
 (library
  (name ast_unified)
  (public_name ligo.ast_unified)
- (libraries LexerLib simple-utils ligo_prim nano_prim)
+ (libraries
+  LexerLib
+  simple-utils
+  ligo_prim
+  nano_prim
+  core_kernel.nonempty_list)
  (preprocess
   (staged_pps
    ppx_import

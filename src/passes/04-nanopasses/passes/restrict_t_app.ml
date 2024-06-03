@@ -1,15 +1,15 @@
 open Ast_unified
 open Pass_type
-open Simple_utils.Trace
 open Errors
+module Trace = Simple_utils.Trace
 module Location = Simple_utils.Location
-
-(*
-    T_app lhs should be a T_var , else error
-  *)
 include Flag.No_arg ()
 
-let compile ~raise =
+(*
+  T_app lhs should be a T_var , else error
+*)
+
+let compile ~(raise : _ Trace.raise) =
   let pass_ty : _ ty_expr_ -> ty_expr =
    fun t ->
     let return_self () = make_t ~loc:t.location t.wrap_content in
@@ -23,7 +23,7 @@ let compile ~raise =
   Fold { idle_fold with ty_expr = pass_ty }
 
 
-let reduction ~raise =
+let reduction ~(raise : _ Trace.raise) =
   let open Location in
   let ty_expr : ty_expr ty_expr_ -> unit =
    fun t ->
@@ -43,9 +43,8 @@ let reduction ~raise =
 let name = __MODULE__
 let decompile ~raise:_ = Nothing
 
-open Unit_test_helpers.Ty_expr
-
 let%expect_test "compile_t_app_t_var" =
+  let open Unit_test_helpers.Ty_expr in
   {|
     (T_app
       ((constr (T_var my_var))
@@ -56,6 +55,7 @@ let%expect_test "compile_t_app_t_var" =
     {| (T_app ((constr (T_var my_var)) (type_args ((T_var arg1) (T_var arg2))))) |}]
 
 let%expect_test "compile_t_app_wrong" =
+  let open Unit_test_helpers.Ty_expr in
   {|
     (T_app
       ((constr (T_arg should_be_a_t_var))

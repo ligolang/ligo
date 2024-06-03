@@ -1,8 +1,8 @@
 open Ast_unified
 open Pass_type
-open Simple_utils
 open Unit_test_helpers
 module Location = Simple_utils.Location
+module Ligo_option = Simple_utils.Ligo_option
 
 (* In case of a single switch in a block, remove the default case from the switch if it holds a return
    statement. This simplifies further reduction of switches
@@ -17,13 +17,13 @@ let last_is_return =
         | None -> false
         | Some i -> Option.is_some @@ get_i_return i
       in
-      is_return (List.Ne.last stmt))
+      is_return (Nonempty_list.last stmt))
 
 
 let block_of_default_case ~loc block_opt =
-  let s_return = List.Ne.singleton @@ s_instr ~loc (i_return ~loc None) in
+  let s_return = Nonempty_list.[ s_instr ~loc (i_return ~loc None) ] in
   Option.value_map block_opt ~default:(make_b ~loc s_return) ~f:(fun block ->
-      make_b ~loc (List.Ne.append (get_b block) s_return))
+      make_b ~loc (Ne_list.append (get_b block) s_return))
 
 
 let compile ~raise:_ =
@@ -31,9 +31,9 @@ let compile ~raise:_ =
    fun b ->
     let loc = Location.get_location b in
     match Location.unwrap b with
-    | one, [] ->
+    | [ one ] ->
       let single_switch_opt =
-        let open Option in
+        let open Ligo_option in
         let* instr = get_s_instr one in
         get_i_switch instr
       in
@@ -44,7 +44,7 @@ let compile ~raise:_ =
           s_instr ~loc @@ i_switch ~loc { subject; cases = AllCases (cases, None) }
         in
         let def_block = block_of_default_case ~loc def in
-        make_b ~loc (sw, List.Ne.to_list @@ get_b def_block)
+        make_b ~loc (Nonempty_list.cons sw @@ get_b def_block)
       | Some { subject; cases = Switch.Default def } when last_is_return def ->
         block_of_default_case ~loc def
       | Some _ | None -> make_b ~loc b.wrap_content)

@@ -1,4 +1,5 @@
 module Location = Simple_utils.Location
+module Ligo_pair = Simple_utils.Ligo_pair
 open Helpers
 
 type c_unit = Buffer.t
@@ -27,13 +28,11 @@ let compile_contract_input ~raise
   =
  fun ~meta ~preprocess_define storage parameter ->
   let storage, parameter =
-    Simple_utils.Pair.map
+    Ligo_pair.map
       ~f:(compile_expression ~raise ~meta ~preprocess_define)
       (storage, parameter)
   in
-  Ast_unified.e_tuple
-    ~loc:Location.dummy
-    (Simple_utils.List.Ne.of_list [ storage; parameter ])
+  Ast_unified.e_tuple ~loc:Location.dummy Nonempty_list.[ storage; parameter ]
 
 
 let pretty_print_cst = pretty_print_cst

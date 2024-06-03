@@ -1,12 +1,13 @@
-module Location = Simple_utils.Location
 module Row = Ligo_prim.Row.With_optional_layout
 module Value_attr = Ligo_prim.Value_attr
 module Type_or_module_attr = Ligo_prim.Type_or_module_attr
 module Sig_item_attr = Ligo_prim.Sig_item_attr
 module Sig_type_attr = Ligo_prim.Sig_type_attr
 module Signature_attr = Ligo_prim.Signature_attr
-open Simple_utils
-open Simple_utils.Trace
+module Trace = Simple_utils.Trace
+module Ne_list = Simple_utils.Ne_list
+module Location = Simple_utils.Location
+module Ligo_string = Simple_utils.Ligo_string
 
 (*
   To_core and From_core module help moving from a "fixpoint" AST representation (in the style of AST_unified)
@@ -21,17 +22,17 @@ let ig _ = Sexp.Atom "XXX"
 
 module To_core : sig
   val program
-    :  raise:(Passes.Errors.t, Main_warnings.all) Simple_utils.Trace.raise
+    :  raise:(Passes.Errors.t, Main_warnings.all) Trace.raise
     -> Ast_unified.program
     -> Ast_core.program
 
   val expression
-    :  raise:(Passes.Errors.t, Main_warnings.all) Simple_utils.Trace.raise
+    :  raise:(Passes.Errors.t, Main_warnings.all) Trace.raise
     -> Ast_unified.expr
     -> Ast_core.expression
 
   val type_expression
-    :  raise:(Passes.Errors.t, Main_warnings.all) Simple_utils.Trace.raise
+    :  raise:(Passes.Errors.t, Main_warnings.all) Trace.raise
     -> Ast_unified.ty_expr
     -> Ast_core.type_expression
 end = struct
@@ -73,7 +74,8 @@ end = struct
       }
 
 
-  and conv_vdecl_attr ~raise : Location.t -> Value_attr.t -> I.Attribute.t -> Value_attr.t
+  and conv_vdecl_attr ~(raise : _ Trace.raise)
+      : Location.t -> Value_attr.t -> I.Attribute.t -> Value_attr.t
     =
    fun loc o_attr i_attr ->
     match i_attr with
@@ -96,7 +98,7 @@ end = struct
       Value_attr.default_attributes
 
 
-  and conv_vsigitem_attr ~raise
+  and conv_vsigitem_attr ~(raise : _ Trace.raise)
       : Location.t -> Sig_item_attr.t -> I.Attribute.t -> Sig_item_attr.t
     =
    fun loc o_attr i_attr ->
@@ -111,7 +113,7 @@ end = struct
       Sig_item_attr.default_attributes
 
 
-  and conv_sigtype_attr ~raise
+  and conv_sigtype_attr ~(raise : _ Trace.raise)
       : Location.t -> Sig_type_attr.t -> I.Attribute.t -> Sig_type_attr.t
     =
    fun loc o_attr i_attr ->
@@ -123,7 +125,9 @@ end = struct
       Sig_type_attr.default_attributes
 
 
-  and conv_exp_attr ~raise : Location.t -> Value_attr.t -> I.Attribute.t -> Value_attr.t =
+  and conv_exp_attr ~(raise : _ Trace.raise)
+      : Location.t -> Value_attr.t -> I.Attribute.t -> Value_attr.t
+    =
    fun loc o_attr i_attr ->
     match i_attr with
     | { key = "inline"; value = None } -> { o_attr with inline = true }
@@ -141,7 +145,7 @@ end = struct
       Value_attr.default_attributes
 
 
-  and conv_modtydecl_attr ~raise
+  and conv_modtydecl_attr ~(raise : _ Trace.raise)
       : Location.t -> Type_or_module_attr.t -> I.Attribute.t -> Type_or_module_attr.t
     =
    fun loc o_attr i_attr ->
@@ -157,7 +161,7 @@ end = struct
       Type_or_module_attr.default_attributes
 
 
-  and conv_signature_attr ~raise
+  and conv_signature_attr ~(raise : _ Trace.raise)
       : Location.t -> Signature_attr.t -> I.Attribute.t -> Signature_attr.t
     =
    fun loc o_attr i_attr ->
@@ -278,7 +282,7 @@ end = struct
     | D_irrefutable_match { pattern; expr } ->
       ret @@ D_irrefutable_match { pattern; expr; attr = Value_attr.default_attributes }
     | D_module_include x -> ret @@ D_module_include x
-    | D_import (Import_rename { alias; module_path = imported_module, [] }) ->
+    | D_import (Import_rename { alias; module_path = [ imported_module ] }) ->
       ret
       @@ D_import
            { import_name = alias
@@ -342,14 +346,16 @@ end = struct
     | E_array_as_list entries -> ret @@ E_array_as_list entries
     | E_module_access { module_path; field; _ } ->
       ret
-      @@ E_module_accessor { module_path = List.Ne.to_list module_path; element = field }
+      @@ E_module_accessor
+           { module_path = Nonempty_list.to_list module_path; element = field }
     | E_match { expr; disc_label; cases } ->
       ret
       @@ E_matching
            { matchee = expr
            ; disc_label
            ; cases =
-               List.map (List.Ne.to_list cases) ~f:(function I.Case.{ pattern; rhs } ->
+               List.map (Nonempty_list.to_list cases) ~f:(function
+                   | I.Case.{ pattern; rhs } ->
                    let default : O.type_expression option O.Pattern.t =
                      Location.wrap
                        ~loc:rhs.location
@@ -421,7 +427,7 @@ end = struct
       ret @@ E_update { struct_; path = label; update }
     | E_record_access { struct_; label } -> ret @@ E_accessor { struct_; path = label }
     | E_let_mut_in
-        { is_rec = false; type_params = None; lhs = let_binder, []; rhs_type; rhs; body }
+        { is_rec = false; type_params = None; lhs = [ let_binder ]; rhs_type; rhs; body }
       ->
       let rhs =
         Option.value_map rhs_type ~default:rhs ~f:(fun ty ->
@@ -456,8 +462,8 @@ end = struct
       ret
       @@ T_app
            { type_operator =
-               { module_path = List.Ne.to_list module_path; element = field }
-           ; arguments = List.Ne.to_list type_args
+               { module_path = Nonempty_list.to_list module_path; element = field }
+           ; arguments = Nonempty_list.to_list type_args
            }
     | T_app { constr; type_args } ->
       (match constr with
@@ -465,7 +471,7 @@ end = struct
         ret
         @@ T_app
              { type_operator = { module_path = []; element = type_operator }
-             ; arguments = List.Ne.to_list type_args
+             ; arguments = Nonempty_list.to_list type_args
              }
       | _ -> raise.error (Passes.Errors.invariant_trivial location "type"))
     | T_fun (param_names, type1, type2) -> ret @@ T_arrow { type1; type2; param_names }
@@ -474,7 +480,8 @@ end = struct
     | T_nat (_, x) -> ret @@ T_singleton (Literal_nat x)
     | T_module_access { module_path; field; _ } ->
       ret
-      @@ T_module_accessor { module_path = List.Ne.to_list module_path; element = field }
+      @@ T_module_accessor
+           { module_path = Nonempty_list.to_list module_path; element = field }
     | T_sum (r, orig_name) -> ret @@ T_sum (r, orig_name)
     | T_record r -> ret @@ T_record r
     | T_abstraction abs -> ret @@ T_abstraction abs
@@ -641,27 +648,27 @@ end
 
 module From_core : sig
   val program
-    :  raise:(Passes.Errors.t, Main_warnings.all) Simple_utils.Trace.raise
+    :  raise:(Passes.Errors.t, Main_warnings.all) Trace.raise
     -> Ast_core.program
     -> Ast_unified.program
 
   val pattern
-    :  raise:(Passes.Errors.t, Main_warnings.all) Simple_utils.Trace.raise
+    :  raise:(Passes.Errors.t, Main_warnings.all) Trace.raise
     -> Ast_core.type_expression option Ast_core.Pattern.t
     -> Ast_unified.pattern
 
   val expression
-    :  raise:(Passes.Errors.t, Main_warnings.all) Simple_utils.Trace.raise
+    :  raise:(Passes.Errors.t, Main_warnings.all) Trace.raise
     -> Ast_core.expression
     -> Ast_unified.expr
 
   val type_expression
-    :  raise:(Passes.Errors.t, Main_warnings.all) Simple_utils.Trace.raise
+    :  raise:(Passes.Errors.t, Main_warnings.all) Trace.raise
     -> Ast_core.type_expression
     -> Ast_unified.ty_expr
 
   val signature
-    :  raise:(Passes.Errors.t, Main_warnings.all) Simple_utils.Trace.raise
+    :  raise:(Passes.Errors.t, Main_warnings.all) Trace.raise
     -> Ast_core.signature_expr
     -> Ast_unified.sig_expr
 end = struct
@@ -769,7 +776,7 @@ end = struct
     | I.S_module (_, _) | I.S_module_type (_, _) -> failwith "Impossible"
 
 
-  and expr ~raise
+  and expr ~(raise : _ Trace.raise)
       :  I.expression
       -> ( I.expression
          , I.type_expression
@@ -794,16 +801,17 @@ end = struct
     | E_array_as_list entries -> ret @@ E_array_as_list entries
     | E_module_accessor { module_path; element } ->
       let module_path =
-        match List.Ne.of_list_opt module_path with
+        match Ne_list.of_list_opt module_path with
         | Some x -> x
         | None ->
           raise.error
             (Passes.Errors.invariant_trivial e.location "module accessor decompilation")
       in
       ret @@ E_module_access { module_path; field = element; field_as_open = false }
-    | E_matching { matchee; disc_label; cases } ->
-      let cases = List.map cases ~f:(fun _ -> assert false) in
-      ret @@ E_match { expr = matchee; disc_label; cases = List.Ne.of_list cases }
+    | E_matching { matchee; disc_label; cases = fst_case :: more_cases } ->
+      let cases = Nonempty_list.(fst_case :: more_cases) in
+      let cases = Nonempty_list.map ~f:(fun _ -> assert false) cases in
+      ret @@ E_match { expr = matchee; disc_label; cases }
     | E_ascription { anno_expr; type_annotation } ->
       ret @@ E_annot (anno_expr, type_annotation)
     | E_type_in { type_binder; rhs; let_result } ->
@@ -871,21 +879,26 @@ end = struct
     | T_variable v -> ret @@ T_var v
     | T_contract_parameter x -> ret @@ T_contract_parameter x
     | T_constant (t, _) -> ret @@ T_constant (Ligo_prim.Literal_types.to_string t)
-    | T_app { type_operator = { module_path = []; element }; arguments } ->
+    | T_app
+        { type_operator = { module_path = []; element }
+        ; arguments = fst_arg :: more_args
+        } ->
+      let type_args = Nonempty_list.(fst_arg :: more_args) in
       let constr = I.make_t ~loc (T_variable element) in
-      ret @@ T_app { constr; type_args = List.Ne.of_list arguments }
-    | T_app { type_operator; arguments } ->
+      ret @@ T_app { constr; type_args }
+    | T_app { type_operator; arguments = fst_arg :: more_args } ->
+      let type_args = Nonempty_list.(fst_arg :: more_args) in
       let constr = I.make_t ~loc (T_module_accessor type_operator) in
-      ret @@ T_app { constr; type_args = List.Ne.of_list arguments }
+      ret @@ T_app { constr; type_args }
     | T_arrow { type1; type2; param_names } -> ret @@ T_fun (param_names, type1, type2)
     | T_singleton (Literal_string x) -> ret @@ T_string (Ligo_string.extract x)
     | T_singleton (Literal_int x) -> ret @@ T_int (Z.to_string x, x)
     | T_singleton _ ->
       raise.error (Passes.Errors.invariant_trivial ty.location "unknown singleton")
-    | T_module_accessor { module_path; element } ->
+    | T_module_accessor { module_path = fst_step :: more_steps; element } ->
       ret
       @@ T_module_access
-           { module_path = List.Ne.of_list module_path
+           { module_path = Nonempty_list.(fst_step :: more_steps)
            ; field = element
            ; field_as_open = false
            }
@@ -898,7 +911,7 @@ end = struct
       @@ T_app
            { constr
            ; type_args =
-               List.Ne.singleton arg
+               Nonempty_list.singleton arg
                (* XXX for some reason matching on [I.get_t_option ty] transforms "int option"
                         to "a option" so we have manual matching here instead *)
            }
@@ -912,7 +925,7 @@ end = struct
       let t =
         match Row.to_tuple row with
         | [] -> raise.error (Passes.Errors.invariant_trivial ty.location "empty record")
-        | a :: b -> a, b
+        | a :: b -> Nonempty_list.(a :: b)
       in
       ret @@ T_prod t
     | T_record { fields; layout } ->
@@ -922,6 +935,8 @@ end = struct
       ret @@ T_record_raw (conv_fields fields)
     | T_abstraction x -> ret @@ T_abstraction x
     | T_for_all x -> ret @@ T_for_all x
+    | T_app { arguments = []; _ } | T_module_accessor { module_path = []; _ } ->
+      assert false
 
 
   and pattern_

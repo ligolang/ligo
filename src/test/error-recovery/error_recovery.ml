@@ -52,7 +52,8 @@ module RecoveryTester
     (Config : Preprocessor.Config.S)
     (Token : Lexing_shared.Token.S)
     (ParErr : ParserLib.LowAPI.PAR_ERR)
-    (UnitPasses : Lexing_shared.Pipeline.PASSES with type item = Token.t LexerLib.Unit.t)
+    (UnitPasses : Lexing_shared.Pipeline.PASSES
+                    with type item = Token.t LexerLib.LexUnit.t)
     (TokenPasses : Lexing_shared.Pipeline.PASSES with type item = Token.t)
     (RawParser : RawParserType(CST).RawParser with type token = Token.t)
     (RecoverParser : RecoveryType(RawParser.MenhirInterpreter).RecoverParser) =

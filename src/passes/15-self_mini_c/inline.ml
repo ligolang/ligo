@@ -1,6 +1,7 @@
 open Ligo_prim
 open Mini_c
 open Helpers
+module Ligo_pair = Simple_utils.Ligo_pair
 
 (* Reference implementation:
    https://www.cs.cornell.edu/courses/cs3110/2019sp/textbook/interp/lambda-subst/main.ml
@@ -41,7 +42,7 @@ let rec replace : expression -> var_name -> var_name -> expression =
     let args = List.map ~f:replace c.arguments in
     return @@ E_constant { cons_name = c.cons_name; arguments = args }
   | E_application (f, x) ->
-    let f, x = Simple_utils.Tuple.map2 replace (f, x) in
+    let f, x = Ligo_pair.map ~f:replace (f, x) in
     return @@ E_application (f, x)
   | E_variable z ->
     let z = replace_var z in
@@ -390,12 +391,12 @@ let rec inline_lets : only_vars:bool -> expression -> expression t =
     let%map arguments = all @@ List.map ~f:self arguments in
     return_expr @@ E_constant { cons_name; arguments }
   | E_application farg ->
-    let farg1, farg2 = Simple_utils.Tuple.map2 self farg in
+    let farg1, farg2 = Ligo_pair.map ~f:self farg in
     let%bind farg1 = farg1 in
     let%map farg2 = farg2 in
     return_expr @@ E_application (farg1, farg2)
-  | E_if_bool cab ->
-    let cab1, cab2, cab3 = Simple_utils.Tuple.map3 self cab in
+  | E_if_bool (cab1, cab2, cab3) ->
+    let cab1, cab2, cab3 = self cab1, self cab2, self cab3 in
     let%bind cab1 = cab1 in
     let%bind cab2 = cab2 in
     let%map cab3 = cab3 in

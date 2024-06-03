@@ -1,3 +1,5 @@
+module Ne_list = Simple_utils.Ne_list
+
 type ('expr, 'block) t =
   { subject : 'expr
   ; cases : ('expr, 'block) switch_cases
@@ -5,8 +7,7 @@ type ('expr, 'block) t =
 
 and ('expr, 'block) switch_cases =
   | AllCases of
-      ('expr, 'block) switch_case Simple_utils.List.Ne.t
-      * ('block option option[@sexp.option])
+      ('expr, 'block) switch_case Ne_list.t * ('block option option[@sexp.option])
   | Default of 'block option
 
 and ('expr, 'block) switch_case =

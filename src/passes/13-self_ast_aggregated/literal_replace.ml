@@ -1,9 +1,20 @@
+open Core
 open Ligo_prim
 open Ast_aggregated
 open Ligo_prim.Constant
-open Trace
+module Trace = Simple_utils.Trace
 
-let rec list_expression ~raise : expression -> expression list =
+let to_pair = function
+  | [ a; b ] -> Some (a, b)
+  | _ -> None
+
+
+let to_singleton = function
+  | [ a ] -> Some a
+  | _ -> None
+
+
+let rec list_expression ~(raise : _ Trace.raise) : expression -> expression list =
  fun expr ->
   let self = list_expression ~raise in
   match expr.expression_content with
@@ -21,8 +32,8 @@ let pair_expression ~raise : expression -> expression * expression =
   match expr.expression_content with
   | E_constant { cons_name = C_PAIR; arguments = [ l; r ] } -> l, r
   | E_record p ->
-    trace_option ~raise (Errors.corner_case "Not a pair?")
-    @@ List.to_pair
+    Trace.trace_option ~raise (Errors.corner_case "Not a pair?")
+    @@ to_pair
     @@ Record.values p
   | _ ->
     raise.error
@@ -38,10 +49,10 @@ let expression ~raise : expression -> expression =
     (match cst with
     | C_MAP_LITERAL ->
       let elt =
-        trace_option ~raise (Errors.bad_single_arity cst expr) @@ List.to_singleton lst
+        Trace.trace_option ~raise (Errors.bad_single_arity cst expr) @@ to_singleton lst
       in
       let k_ty, v_ty =
-        trace_option ~raise (Errors.bad_map_param_type cst expr)
+        Trace.trace_option ~raise (Errors.bad_map_param_type cst expr)
         @@ get_t_map expr.type_expression
       in
       let lst = list_expression ~raise elt in
@@ -53,10 +64,10 @@ let expression ~raise : expression -> expression =
         ~init:(e_a_map_empty ~loc k_ty v_ty)
     | C_BIG_MAP_LITERAL ->
       let elt =
-        trace_option ~raise (Errors.bad_single_arity cst expr) @@ List.to_singleton lst
+        Trace.trace_option ~raise (Errors.bad_single_arity cst expr) @@ to_singleton lst
       in
       let k_ty, v_ty =
-        trace_option ~raise (Errors.bad_map_param_type cst expr)
+        Trace.trace_option ~raise (Errors.bad_map_param_type cst expr)
         @@ get_t_big_map expr.type_expression
       in
       let lst = list_expression ~raise elt in
@@ -68,10 +79,10 @@ let expression ~raise : expression -> expression =
         ~init:(e_a_big_map_empty ~loc k_ty v_ty)
     | C_BIG_SET_LITERAL ->
       let elt =
-        trace_option ~raise (Errors.bad_single_arity cst expr) @@ List.to_singleton lst
+        Trace.trace_option ~raise (Errors.bad_single_arity cst expr) @@ to_singleton lst
       in
       let k_ty, unit_ty =
-        trace_option ~raise (Errors.bad_map_param_type cst expr)
+        Trace.trace_option ~raise (Errors.bad_map_param_type cst expr)
         @@ get_t_big_map expr.type_expression
       in
       let lst = list_expression ~raise elt in
@@ -82,10 +93,10 @@ let expression ~raise : expression -> expression =
         ~init:(e_a_big_map_empty ~loc k_ty unit_ty)
     | C_SET_LITERAL ->
       let elt =
-        trace_option ~raise (Errors.bad_single_arity cst expr) @@ List.to_singleton lst
+        Trace.trace_option ~raise (Errors.bad_single_arity cst expr) @@ to_singleton lst
       in
       let v_ty =
-        trace_option ~raise (Errors.bad_set_param_type cst expr)
+        Trace.trace_option ~raise (Errors.bad_set_param_type cst expr)
         @@ get_t_set expr.type_expression
       in
       let lst = list_expression ~raise elt in

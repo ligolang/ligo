@@ -4,10 +4,10 @@
 (* Vendor dependencies *)
 
 module Region          = Simple_utils.Region
-module Utils           = Simple_utils.Utils
+module Ne              = Nonempty_list
 module Std             = Simple_utils.Std
 module Lexbuf          = Simple_utils.Lexbuf
-module Unit            = LexerLib.Unit
+module LexUnit         = LexerLib.LexUnit
 module type LEXER      = ParserLib.LowAPI.LEXER
 module type PARSER     = ParserLib.LowAPI.PARSER
 module type PARAMETERS = ParserLib.CLI.PARAMETERS
@@ -62,7 +62,7 @@ module Make
          (Parameters  : PARAMETERS)
          (ParErr      : sig val message : int -> string end)
          (Warning     : WARNING)
-         (UnitPasses  : PASSES with type item = Lexer.Token.t Unit.t)
+         (UnitPasses  : PASSES with type item = Lexer.Token.t LexUnit.t)
          (TokenPasses : PASSES with type item = Lexer.Token.t)
          (CST         : sig type t end)
          (Parser      : PARSER with type token = Lexer.Token.t
@@ -136,7 +136,7 @@ module Make
 
     type error =
       Single   of single_error
-    | Multiple of message Utils.nseq
+    | Multiple of message Ne.t
 
     (* Committing tokens to [std] *)
 
@@ -208,7 +208,7 @@ module Make
           finalise tree std; Ok (tree, [])
 
     let mk_multiple ~no_colour (std : Std.t)
-        : (Parser.tree * message list, message Utils.nseq) result ->
+        : (Parser.tree * message list, message Ne.t) result ->
           (Parser.tree * message list, error) result =
       function
         Ok (tree, []) as ok -> finalise tree std; ok
@@ -217,10 +217,10 @@ module Make
           (* Syntax errors. We drop the repaired syntax tree [_]. *)
           finalise tree std;
           format_errors ~no_colour std msg;
-          Error (Multiple (first_msg, others))
+          Error (Multiple (first_msg :: others))
 
-      | Error (first_msg, others as msg) -> (* Non-syntactical errors *)
-          format_errors ~no_colour std (first_msg::others);
+      | Error (first_msg :: others as msg) -> (* Non-syntactical errors *)
+          format_errors ~no_colour std (first_msg :: others);
           Error (Multiple msg)
 
     (* The type of the parser (which scans its tokens into a tree of

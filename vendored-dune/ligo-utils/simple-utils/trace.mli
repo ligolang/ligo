@@ -147,7 +147,7 @@ val bind_or
 
 val bind_exists
   :  raise:('a, 'w) raise
-  -> (raise:('a, 'w) raise -> 'b) * (raise:('a, 'w) raise -> 'b) list
+  -> (raise:('a, 'w) raise -> 'b) Nonempty_list.t
   -> 'b
 
 val bind_map_or

@@ -4,35 +4,43 @@
 
 [@@@warning "-30"] (* multiply-defined record labels *)
 
-module Types = Cst_shared.Types
-
 (* Vendor dependencies *)
 
-module Directive = Types.Directive
-module Utils     = Types.Utils
-module Region    = Types.Region
+module Directive = Preprocessor.Directive
+module Utils     = Simple_utils.Utils
+module Region    = Simple_utils.Region
+module Ne_list   = Simple_utils.Ne_list
 module Token     = Lexing_jsligo.Token
 
 open Ppx_yojson_conv_lib.Yojson_conv.Primitives
 
 (* Local dependencies *)
 
-module Wrap  = Types.Wrap
-module Attr  = Types.Attr
+module Wrap  = Lexing_shared.Wrap
+module Attr  = Lexing_shared.Attr
 module Nodes = Cst_shared.Nodes
 
 (* Utilities *)
 
 type 'a reg = 'a Region.reg
-type 'payload wrap = 'payload Types.wrap
+let yojson_of_reg = Region.yojson_of_reg
 
-open Utils
+type 'payload wrap = 'payload Wrap.wrap
+let yojson_of_wrap = Wrap.yojson_of_wrap
+
+(* Lexemes *)
 
 type lexeme = string
 
-(* Keywords of JsLIGO *)
+let yojson_of_lexeme s = `String s
 
-open Types
+(* Utilities *)
+
+let (<@) f g x = f (g x)
+
+open Utils
+
+(* Keywords of JsLIGO *)
 
 (* IMPORTANT: The keywords are sorted alphabetically. If you
    add or modify some, please make sure they remain in order. *)
@@ -505,7 +513,7 @@ and statement =
 | S_Switch    of switch_stmt reg
 | S_While     of while_stmt reg
 
-and statements = (statement * (semi option [@yojson.opaque])) nseq
+and statements = (statement * (semi option [@yojson.opaque])) Ne_list.t
 
 (* Export statement *)
 
@@ -567,7 +575,7 @@ and cases =
   AllCases of all_cases
 | Default  of switch_default reg
 
-and all_cases = switch_case reg nseq * switch_default reg option
+and all_cases = switch_case reg Ne_list.t * switch_default reg option
 
 and switch_case = {
   kwd_case  : (kwd_case [@yojson.opaque]);
@@ -703,7 +711,7 @@ and match_clauses =
   AllClauses    of all_match_clauses
 | DefaultClause of match_default reg
 
-and all_match_clauses = match_clause reg nseq * match_default reg option
+and all_match_clauses = match_clause reg Ne_list.t * match_default reg option
 
 and match_clause = {
   kwd_when    : (kwd_when [@yojson.opaque]);
@@ -757,7 +765,7 @@ and 'a  un_op = {op: 'a; arg: expr}
 
 and projection = {
   object_or_array : expr;
-  property_path   : selection nseq
+  property_path   : selection Ne_list.t
 }
 
 and selection =

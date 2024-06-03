@@ -1,4 +1,5 @@
 module AST = Ast_expanded
+module Trace = Simple_utils.Trace
 module Append_tree = Simple_utils.Tree.Append
 module Compiler = Compiler
 module Decompiler = Decompiler

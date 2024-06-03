@@ -1,12 +1,13 @@
 open Ast_unified
 open Pass_type
-open Simple_utils.Trace
 open Errors
 open Unit_test_helpers
+module Trace = Simple_utils.Trace
 module Location = Simple_utils.Location
-
-(* handles unpunning of record pattern, associating the field to a variable of the same name *)
 include Flag.No_arg ()
+
+(* handles unpunning of record pattern, associating the field to a
+   variable of the same name *)
 
 let name = __MODULE__
 
@@ -32,7 +33,7 @@ let compile ~raise:_ =
   Fold { idle_fold with pattern }
 
 
-let reduction ~raise =
+let reduction ~(raise : _ Trace.raise) =
   { Iter.defaults with
     pattern =
       (function

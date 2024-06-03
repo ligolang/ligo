@@ -1,3 +1,4 @@
+open Core
 open Common
 open Lsp_helpers
 
@@ -38,14 +39,12 @@ let rec find_record_from_path
     Ligo_prim.(Record.find_opt struct_type.fields (Label.of_string name))
     >>= fun struct_type -> find_record_from_path struct_type field_path definitions
 
-
 (** Helper function to create completion item from record fields. *)
 let core_record_to_completion_items ~syntax (row : Ast_core.row) : CompletionItem.t list =
   List.map (Map.to_alist row.fields) ~f:(fun (Label (label, _), texp) ->
       let detail = Pretty.show_type ~syntax texp in
       let sortText = completion_context_priority Record_field in
       CompletionItem.create ~label ~kind:CompletionItemKind.Field ~detail ~sortText ())
-
 
 (** Provides completions for the fields from the provided reference position of a record
     variable name. *)

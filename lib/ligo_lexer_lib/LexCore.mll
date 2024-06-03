@@ -1,7 +1,9 @@
 (* A library for writing UTF8-aware lexers *)
 
 {
-(* START HEADER *)
+  (* START HEADER *)
+
+open Core
 
 (* Vendor dependencies *)
 
@@ -59,7 +61,7 @@ module type S =
 
 module Make (Config : Config.S) (Client : Client.S) =
   struct
-    type lex_unit = Client.token Unit.t
+    type lex_unit = Client.token LexUnit.t
 
     type units = lex_unit list
 
@@ -75,7 +77,7 @@ module Make (Config : Config.S) (Client : Client.S) =
     (* Failure *)
 
     let fail state region error =
-      let value      = Error.to_string error in
+      let value      = LexError.to_string error in
       let message    = Region.{value; region} in
       let used_units = List.rev state#lexical_units
       in Error {used_units; message}
@@ -93,7 +95,7 @@ module Make (Config : Config.S) (Client : Client.S) =
       let state' = new Preprocessor.State.t state#pos in
       match scan region#start state' lexbuf with
         Error (region, err) ->
-          fail state region (Error.Invalid_directive err)
+          fail state region (LexError.Invalid_directive err)
       | Ok (state', _, dir, ending) ->
           let state = state#set_pos state'#pos in
           let state = state#push_directive dir in
@@ -139,7 +141,7 @@ module Make (Config : Config.S) (Client : Client.S) =
               hash_state#pos linenum preproc_state lexbuf
       with
         Error (region, error) ->
-          fail hash_state region (Error.Invalid_directive error)
+          fail hash_state region (LexError.Invalid_directive error)
 
       | Ok (preproc_state, args, directive, _ending) ->
           (* We use the current position (after reading the linemarker)
@@ -262,7 +264,7 @@ module Make (Config : Config.S) (Client : Client.S) =
           in fail state region error
 
     let open_block thread state =
-      Error (thread, state, Error.Unterminated_comment)
+      Error (thread, state, LexError.Unterminated_comment)
 
 (* END HEADER *)
 }
@@ -353,7 +355,7 @@ rule scan state = parse
     match Config.string with
       Some delimiter when String.(delimiter = lexeme) ->
         let state, Region.{region; _} = state#sync lexbuf in
-        let thread = Thread.make ~opening:region in
+        let thread = LexThread.make ~opening:region in
         let* thread, state = in_string thread state lexbuf in
         let token = Client.mk_string thread
         in scan (state#push_token token) lexbuf
@@ -366,7 +368,7 @@ rule scan state = parse
     match Config.block with
       Some block when String.(block#opening = lexeme) ->
         let state, Region.{region; _} = state#sync lexbuf in
-        let thread = Thread.make ~opening:region in
+        let thread = LexThread.make ~opening:region in
         let* thread, state = in_block block thread state lexbuf
         in scan (state#push_block thread) lexbuf
     | Some _ | None -> callback_with_cont scan state lexbuf }
@@ -376,7 +378,7 @@ rule scan state = parse
     match Config.line with
       Some opening when String.(opening = lexeme) ->
         let state, Region.{region; _} = state#sync lexbuf in
-        let thread = Thread.make ~opening:region in
+        let thread = LexThread.make ~opening:region in
         let* state = in_line thread state lexbuf
         in scan state lexbuf
     | Some _ | None -> callback_with_cont scan state lexbuf }
@@ -460,7 +462,7 @@ and in_block block thread state = parse
     and state  = state#newline lexbuf
     in in_block block thread state lexbuf }
 
-| eof { fail state thread#opening Error.Unterminated_comment }
+| eof { fail state thread#opening LexError.Unterminated_comment }
 
 | _ { scan_utf8_wrap (scan_utf8 open_block) (in_block block)
                      thread state lexbuf }
@@ -486,7 +488,7 @@ and scan_utf8 if_eof thread state = parse
           `Uchar _     -> Ok (thread, state)
         | `Malformed _
         | `End         -> Error (thread, state,
-                                 Error.Invalid_utf8_sequence)
+                                 LexError.Invalid_utf8_sequence)
         | `Await       -> scan_utf8 if_eof thread state lexbuf }
 
 (* Scanning strings *)
@@ -504,12 +506,12 @@ and in_string thread state = parse
              in in_string thread state lexbuf }
 | '\\' { let state, Region.{region; _} = state#sync lexbuf
          in unescape region thread state lexbuf }
-| nl   { fail state thread#opening Error.Newline_in_string }
-| eof  { fail state thread#opening Error.Unterminated_string }
+| nl   { fail state thread#opening LexError.Newline_in_string }
+| eof  { fail state thread#opening LexError.Unterminated_string }
 | ['\000' - '\031'] | ['\128' - '\255'] as c
            (* Control characters and 8-bit ASCII *)
        { let _, Region.{region; _} = state#sync lexbuf in
-         fail state region (Error.Invalid_character_in_string c) }
+         fail state region (LexError.Invalid_character_in_string c) }
 | _    { let state, Region.{value; _} = state#sync lexbuf in
          in_string (thread#push_string value) state lexbuf }
 

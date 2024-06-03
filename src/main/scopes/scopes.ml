@@ -3,16 +3,12 @@ open Types
 module VVar = Value_var
 module TVar = Type_var
 module MVar = Module_var
-module Formatter = Formatter
 module Api_helper = Api_helper
 module Misc = Misc
-module LSet = Types.LSet
-module LMap = Types.LMap
 module Location = Simple_utils.Location
 module Trace = Simple_utils.Trace
 module Types = Types
 module Uid = Types.Uid
-module SMap = Map.Make (String)
 
 [@@@landmark "auto"]
 
@@ -32,7 +28,7 @@ type t = Types.t =
   { definitions : definitions
   ; program : Ast_typed.program option
   ; inlined_scopes : inlined_scopes lazy_t
-  ; lambda_types : Ast_typed.ty_expr LMap.t
+  ; lambda_types : Ast_typed.ty_expr Location.Map.t
   }
 
 let scopes_declarations
@@ -70,7 +66,7 @@ let scopes
 let run
     :  raise:(Main_errors.all, Main_warnings.all) Trace.raise
     -> options:Compiler_options.middle_end -> stdlib:Ast_typed.program * Ast_core.program
-    -> prg:Ast_core.module_ -> module_deps:string SMap.t -> with_types:bool -> t
+    -> prg:Ast_core.module_ -> module_deps:string String.Map.t -> with_types:bool -> t
   =
  fun ~raise ~options ~stdlib ~prg ~module_deps ~with_types ->
   let stdlib_decls, stdlib_core, stdlib_defs =

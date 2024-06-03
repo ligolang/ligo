@@ -1,4 +1,4 @@
-open Simple_utils.Display
+module Display = Simple_utils.Display
 module Scopes = Ligo_main.Main.Scopes.Api_helper
 module InfoApi = Ligo_api.Info
 module Raw_options = Compiler_options.Raw_options
@@ -27,7 +27,7 @@ let schema_test_positive
       Lsp_helpers.Ligo_interface.Get_scope.get_scope_cli_result
         options
         ~source_file
-        ~display_format:json
+        ~display_format:Display.json
         ~no_colour
         ~defs_only
     with
@@ -57,7 +57,7 @@ let schema_test_negative
         Lsp_helpers.Ligo_interface.Get_scope.get_scope_cli_result
           options
           ~source_file
-          ~display_format:json
+          ~display_format:Display.json
           ~no_colour
           ~defs_only
       with

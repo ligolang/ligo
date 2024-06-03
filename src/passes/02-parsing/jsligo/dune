@@ -47,9 +47,9 @@
   pprint
   terminal_size
   menhirLib
-  hex)
+  hex
+  core_kernel.nonempty_list)
  (flags
-  (:standard \ -open Core)
   (-open
    Cst_jsligo ;; for CST in Parser.mli
    -open
@@ -70,9 +70,7 @@
   cst_jsligo
   ;; Third party
   hex)
- (modules ParserMain)
- (flags
-  (:standard \ -open Core)))
+ (modules ParserMain))
 
 ;; Error messages
 

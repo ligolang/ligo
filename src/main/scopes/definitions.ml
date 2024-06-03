@@ -1,13 +1,13 @@
-open Simple_utils.Function
+open Core
 open Ligo_prim
 open Types
 module AST = Ast_core
 module VVar = Value_var
 module TVar = Type_var
 module MVar = Module_var
-module LSet = Types.LSet
-module SMap = Core.Map.Make (String)
 module Mangled_pass = Inline_mangled_modules_pass
+module Trace = Simple_utils.Trace
+module Location = Simple_utils.Location
 
 type t = def list
 
@@ -32,7 +32,7 @@ let defs_of_vvar ~(decl_range : Location.t) ~(attributes : vdef_attributes optio
       let uid : Uid.t = Uid.make name (VVar.get_location vvar) in
       let range : Location.t = VVar.get_location vvar in
       let t : type_case = Unresolved (* Filled in a later pass *) in
-      let references : LSet.t = LSet.empty (* Filled in a later pass *) in
+      let references : Location.Set.t = Location.Set.empty (* Filled in a later pass *) in
       let attributes = Option.value attributes ~default:No_attributes in
       { name; uid; range; decl_range; t; references; def_type; mod_path; attributes }
     in
@@ -121,7 +121,7 @@ and defs_of_row ~(label_case : label_case) (orig_type_loc : Location.t)
           let range = loc in
           let uid = Uid.make name range in
           let decl_range = Location.cover loc ty_expr.location in
-          let references = LSet.empty (* Filled in a later pass *) in
+          let references = Location.Set.empty (* Filled in a later pass *) in
           let content = ty_expr in
           { name
           ; uid
@@ -181,7 +181,7 @@ let defs_of_tvar
       let uid : Uid.t = Uid.make name (TVar.get_location tvar) in
       let range : Location.t = TVar.get_location tvar in
       let content : Ast_core.type_expression option = bindee in
-      let references : LSet.t = LSet.empty (* Filled in a later pass *) in
+      let references : Location.Set.t = Location.Set.empty (* Filled in a later pass *) in
       let attributes = Option.value ~default:No_attributes attributes in
       { name
       ; uid
@@ -210,7 +210,7 @@ let defs_of_mvar
     ~(mod_case : mod_case)
     ~(implements : implementation list)
     ~(extends : extension list)
-    : mdef_type -> string SMap.t -> MVar.t -> def_type -> Uid.t list -> t -> t
+    : mdef_type -> string String.Map.t -> MVar.t -> def_type -> Uid.t list -> t -> t
   =
  fun mdef_type module_deps mvar def_type mod_path acc ->
   if MVar.is_generated mvar
@@ -225,7 +225,7 @@ let defs_of_mvar
       Option.iter file_name_opt ~f:(fun file_name ->
           Hashtbl.update mangled_uids_hashtbl uid ~f:(Fn.const file_name));
       let range : Location.t = MVar.get_location mvar in
-      let references : LSet.t = LSet.empty (* Filled in a later pass *) in
+      let references : Location.Set.t = Location.Set.empty (* Filled in a later pass *) in
       let signature = Unresolved (* Filled in a later pass *) in
       let attributes = Option.value ~default:No_attributes attributes in
       let inlined_name = None (* Filled in a later pass *) in
@@ -277,7 +277,7 @@ module Of_Ast = struct
       ~(decl_range : Location.t)
       ~(attributes : mdef_attributes option)
       :  mod_case:mod_case -> implements:implementation list -> extends:extension list
-      -> string SMap.t -> MVar.t -> def_type -> Uid.t list -> t -> t
+      -> string String.Map.t -> MVar.t -> def_type -> Uid.t list -> t -> t
     =
     defs_of_mvar Module ~decl_range ~attributes
 
@@ -285,15 +285,15 @@ module Of_Ast = struct
   let defs_of_mvar_sig_expr
       ~(decl_range : Location.t)
       ~(attributes : mdef_attributes option)
-      :  mod_case:mod_case -> implements:implementation list -> string SMap.t -> MVar.t
-      -> def_type -> Uid.t list -> t -> t
+      :  mod_case:mod_case -> implements:implementation list -> string String.Map.t
+      -> MVar.t -> def_type -> Uid.t list -> t -> t
     =
     defs_of_mvar Signature ~attributes ~decl_range ~extends:[]
 
 
   let defs_of_mvar_signature
-      :  decl_range:Location.t -> mod_case:mod_case -> string SMap.t -> MVar.t -> def_type
-      -> Uid.t list -> def list -> def list
+      :  decl_range:Location.t -> mod_case:mod_case -> string String.Map.t -> MVar.t
+      -> def_type -> Uid.t list -> def list -> def list
     =
     defs_of_mvar Signature ~attributes:None ~implements:[] ~extends:[]
 
@@ -319,7 +319,7 @@ module Of_Ast = struct
 
 
   let rec defs_of_expr ~(waivers : Waivers.t) ~(decl_range : Location.t)
-      : string SMap.t -> Uid.t list -> AST.expression -> t -> t
+      : string String.Map.t -> Uid.t list -> AST.expression -> t -> t
     =
    fun module_deps mod_path e acc ->
     let self =
@@ -449,7 +449,7 @@ module Of_Ast = struct
       defs_of_match_cases cases @@ self matchee acc
     (* Record *)
     | E_record r -> Record.fold ~init:acc ~f:(fun acc entry -> self entry acc) r
-    | E_tuple es -> List.Ne.fold_left ~init:acc ~f:(fun acc entry -> self entry acc) es
+    | E_tuple es -> Nonempty_list.fold ~init:acc ~f:(fun acc entry -> self entry acc) es
     | E_array es | E_array_as_list es ->
       List.fold_left
         ~init:acc
@@ -539,7 +539,7 @@ module Of_Ast = struct
     match Location.unwrap mod_expr with
     | M_struct decls -> extends_of_declarations decls acc
     | M_variable mod_var -> unresolved_path [ mod_var ] :: acc
-    | M_module_path mod_path -> unresolved_path (List.Ne.to_list mod_path) :: acc
+    | M_module_path mod_path -> unresolved_path (Nonempty_list.to_list mod_path) :: acc
 
 
   and extends : AST.module_expr -> extension list =
@@ -552,16 +552,18 @@ module Of_Ast = struct
 
   and mod_case_of_mod_expr
       :  defs_of_decls:(AST.declaration list * def_type * Uid.t list -> t -> t)
-      -> string SMap.t -> AST.module_expr -> Uid.t list -> mod_case
+      -> string String.Map.t -> AST.module_expr -> Uid.t list -> mod_case
     =
    fun ~defs_of_decls module_deps mod_expr mod_path ->
     match Location.unwrap mod_expr with
     | M_struct decls -> Def (defs_of_decls (decls, Module_field, mod_path) [])
     | M_variable mod_var -> mod_case_of_mvars [ mod_var ]
-    | M_module_path mod_path -> mod_case_of_mvars @@ List.Ne.to_list mod_path
+    | M_module_path mod_path -> mod_case_of_mvars @@ Nonempty_list.to_list mod_path
 
 
-  and mod_case_of_signature : string SMap.t -> AST.signature -> Uid.t list -> mod_case =
+  and mod_case_of_signature
+      : string String.Map.t -> AST.signature -> Uid.t list -> mod_case
+    =
    fun module_deps sig' mod_path ->
     Def (defs_of_signature module_deps sig' Module_field mod_path [])
 
@@ -613,7 +615,7 @@ module Of_Ast = struct
      definition. As of this writing, LIGO does not support first-class modules, but in
      case it ever will, we still won't consider [I.x] and [M.x] as references. *)
   and implementations_of_sig_expr_from_D_signature
-      :  string SMap.t -> AST.signature_expr -> Uid.t list
+      :  string String.Map.t -> AST.signature_expr -> Uid.t list
       -> [ `Alias of alias | `Implementations of implementation list ]
     =
    fun module_deps sig_expr mod_path ->
@@ -624,14 +626,14 @@ module Of_Ast = struct
               ; location = _
               }
             ]
-        } -> `Alias (alias_of_mvars @@ List.Ne.to_list mod_path)
+        } -> `Alias (alias_of_mvars @@ Nonempty_list.to_list mod_path)
     | S_sig sig' ->
       let Ast_core.{ items } = Misc.flatten_includes sig' in
       `Implementations
         (List.map items ~f:(fun item ->
              match Location.unwrap item with
              | S_include { wrap_content = S_path mod_path; location = _ } ->
-               standalone_mvars @@ List.Ne.to_list mod_path
+               standalone_mvars @@ Nonempty_list.to_list mod_path
              | S_value _ | S_type _ | S_type_var _ | S_module _ | S_module_type _ ->
                Ad_hoc_signature
                  (defs_of_sig_item module_deps item Module_field mod_path [])
@@ -642,11 +644,11 @@ module Of_Ast = struct
                      %a"
                     AST.PP.signature_expr
                     sig_expr))
-    | S_path mod_path -> `Alias (alias_of_mvars @@ List.Ne.to_list mod_path)
+    | S_path mod_path -> `Alias (alias_of_mvars @@ Nonempty_list.to_list mod_path)
 
 
   and implementations_of_sig_expr_from_annotation
-      : string SMap.t -> AST.signature_expr -> Uid.t list -> implementation list
+      : string String.Map.t -> AST.signature_expr -> Uid.t list -> implementation list
     =
    fun module_deps sig_expr mod_path ->
     match Location.unwrap sig_expr with
@@ -656,14 +658,14 @@ module Of_Ast = struct
           | S_include { wrap_content = S_sig sig'; location = _ } ->
             Ad_hoc_signature (defs_of_signature module_deps sig' Module_field mod_path [])
           | S_include { wrap_content = S_path mod_path; location = _ } ->
-            standalone_mvars @@ List.Ne.to_list mod_path
+            standalone_mvars @@ Nonempty_list.to_list mod_path
           | S_value _ | S_type _ | S_type_var _ | S_module _ | S_module_type _ ->
             failwith
             @@ Format.asprintf
                  "implementations_of_sig_expr_from_annotation: corner case reached: %a"
                  AST.PP.signature_expr
                  sig_expr)
-    | S_path mod_path -> [ standalone_mvars @@ List.Ne.to_list mod_path ]
+    | S_path mod_path -> [ standalone_mvars @@ Nonempty_list.to_list mod_path ]
 
 
   (* When we get a signature like [namespace M extends I1, { ... }, I3 { ... }], it will
@@ -682,14 +684,14 @@ module Of_Ast = struct
      [implementation_of_sig_expr] will handle this and interpret each [include] as the
      [implements] field of a [mdef]. *)
   and implementations_of_module_annotation
-      : string SMap.t -> AST.module_annotation -> Uid.t list -> implementation list
+      : string String.Map.t -> AST.module_annotation -> Uid.t list -> implementation list
     =
    fun module_deps { signature; filter = _ } ->
     implementations_of_sig_expr_from_annotation module_deps signature
 
 
   and defs_of_sig_expr
-      :  string SMap.t -> AST.signature_expr -> def_type -> Uid.t list -> def list
+      :  string String.Map.t -> AST.signature_expr -> def_type -> Uid.t list -> def list
       -> def list
     =
    fun module_deps sig_expr def_type mod_path acc ->
@@ -699,7 +701,8 @@ module Of_Ast = struct
 
 
   and defs_of_sig_item
-      : string SMap.t -> AST.sig_item -> def_type -> Uid.t list -> def list -> def list
+      :  string String.Map.t -> AST.sig_item -> def_type -> Uid.t list -> def list
+      -> def list
     =
    fun module_deps item def_type mod_path acc ->
     let decl_range = Location.get_location item in
@@ -737,7 +740,8 @@ module Of_Ast = struct
 
 
   and defs_of_signature
-      : string SMap.t -> AST.signature -> def_type -> Uid.t list -> def list -> def list
+      :  string String.Map.t -> AST.signature -> def_type -> Uid.t list -> def list
+      -> def list
     =
    fun module_deps { items } def_type mod_path acc ->
     List.fold items ~init:acc ~f:(fun acc sig_item ->
@@ -745,7 +749,7 @@ module Of_Ast = struct
 
 
   and defs_of_decl ~(waivers : Waivers.t)
-      : string SMap.t -> def_type -> Uid.t list -> AST.declaration -> t -> t
+      : string String.Map.t -> def_type -> Uid.t list -> AST.declaration -> t -> t
     =
    fun module_deps def_type mod_path decl acc ->
     let decl_range = Location.get_location decl in
@@ -878,7 +882,7 @@ module Of_Ast = struct
 
 
   and defs_of_decls ~(waivers : Waivers.t)
-      : string SMap.t -> Uid.t list -> def_type -> AST.declaration list -> t -> t
+      : string String.Map.t -> Uid.t list -> def_type -> AST.declaration list -> t -> t
     =
    fun module_deps mod_path def_type decls acc ->
     List.fold decls ~init:acc ~f:(fun accu decl ->
@@ -886,7 +890,7 @@ module Of_Ast = struct
 
 
   let definitions ?(waivers = Waivers.default)
-      : AST.program -> string SMap.t -> t -> Mangled_pass.t * t
+      : AST.program -> string String.Map.t -> t -> Mangled_pass.t * t
     =
    fun prg module_deps acc ->
     Hashtbl.clear mangled_uids_hashtbl;
@@ -905,7 +909,7 @@ module Of_Ast = struct
 end
 
 module Of_Stdlib_Ast = struct
-  let definitions : AST.program -> string SMap.t -> t =
+  let definitions : AST.program -> string String.Map.t -> t =
    fun prg module_deps ->
     let waivers =
       { Of_Ast.Waivers.default with d_value_expr = true; d_irrefutable_match_expr = true }

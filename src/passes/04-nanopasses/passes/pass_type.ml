@@ -1,10 +1,9 @@
 open Ast_unified
-open Simple_utils.Trace
-open Simple_utils.Function
+module Trace = Simple_utils.Trace
 include Morphing
 
 type pass = { morphing : morphing }
-type raise_t = (Errors.t, Main_warnings.all) raise
+type raise_t = (Errors.t, Main_warnings.all) Trace.raise
 
 module type T = sig
   type flag_arg
@@ -51,7 +50,6 @@ type pass_direction =
 
 let process_name =
   (* we use __MODULE__ .. can be a bit incovenient as a name to use with CLI so we process it a bit *)
-  let open Simple_utils.Function in
   String.lowercase <@ String.substr_replace_all ~pattern:"Passes__" ~with_:""
 
 

@@ -1,23 +1,15 @@
+open Core
 open Types
-module SMap = Core.Map.Make (String)
-module UidMap = Core.Map.Make (Uid)
+module UidMap = Map.Make (Uid)
+module Ligo_map = Simple_utils.Ligo_map
 
 type t = string UidMap.t
 
 (** Mapping from file name to mangled module's definitions *)
-type mangled_mdefs = mdef SMap.t
+type mangled_mdefs = mdef String.Map.t
 
 (** Mapping from mangled UIDs to resolved UIDs. *)
 type mangled_to_resolved = Uid.t UidMap.t
-
-let union f m1 m2 =
-  let f ~key = function
-    | `Left v1 -> Some v1
-    | `Right v2 -> Some v2
-    | `Both (v1, v2) -> f key v1 v2
-  in
-  Core.Map.merge ~f m1 m2
-
 
 let rec extracted_mangled_uids : def list -> mangled_to_resolved =
   List.fold ~init:UidMap.empty ~f:(fun acc -> function
@@ -25,7 +17,7 @@ let rec extracted_mangled_uids : def list -> mangled_to_resolved =
     | Module mdef ->
       (match mdef.mod_case with
       | Def defs ->
-        union (fun _uid _fst snd -> Some snd) acc (extracted_mangled_uids defs)
+        Ligo_map.union (fun _uid _fst snd -> Some snd) acc (extracted_mangled_uids defs)
       | Alias { resolve_mod_name = Unresolved_path _ } -> acc
       | Alias { resolve_mod_name = Resolved_path resolved } ->
         if Location.equal (Uid.to_location resolved.resolved_module) Location.env
@@ -37,7 +29,7 @@ let rec extracted_mangled_uids : def list -> mangled_to_resolved =
              constructor is exported twice from different imports),
              then by my observations, we'll pick the one that was
              imported first. *)
-          Core.Map.set acc ~key:resolved.resolved_module ~data:mdef.uid
+          Map.set acc ~key:resolved.resolved_module ~data:mdef.uid
         else acc))
 
 
@@ -52,9 +44,9 @@ let unmangle_module_names_in_typed_type
     else
       Hashtbl.find_or_add mvar_cache mvar ~default:(fun () ->
           Option.value_map ~default:mvar ~f:id_to_mvar
-          @@ Core.Map.find mangled_to_resolved (mvar_to_id mvar))
+          @@ Map.find mangled_to_resolved (mvar_to_id mvar))
   in
-  let unmangle_module_list = Core.List.map ~f:find_if_not_generated in
+  let unmangle_module_list = List.map ~f:find_if_not_generated in
   Misc.map_typed_type_expression_module_path unmangle_module_list
 
 
@@ -64,7 +56,7 @@ let extract_mangled_mdefs : t -> def list -> mangled_mdefs =
     | Variable _ | Type _ | Label _ -> []
     | Module mdef ->
       let first_mapping =
-        match Core.Map.find mangled_uids mdef.uid with
+        match Map.find mangled_uids mdef.uid with
         | None -> []
         | Some file_name -> [ file_name, mdef ]
       in
@@ -74,8 +66,8 @@ let extract_mangled_mdefs : t -> def list -> mangled_mdefs =
   in
   defs
   |> List.concat_map ~f:collect
-  |> List.fold_left ~init:SMap.empty ~f:(fun acc (key, data) ->
-         Core.Map.set acc ~key ~data)
+  |> List.fold_left ~init:String.Map.empty ~f:(fun acc (key, data) ->
+         Map.set acc ~key ~data)
 
 
 let strip_mangled_defs : mangled_mdefs -> t -> def list -> def list =
@@ -83,7 +75,7 @@ let strip_mangled_defs : mangled_mdefs -> t -> def list -> def list =
   let rec mangled_alias_filter : def -> def option = function
     | (Variable _ | Type _ | Label _) as def -> Some def
     | Module mdef as def ->
-      if Core.Map.mem mangled_uids mdef.uid
+      if Map.mem mangled_uids mdef.uid
       then None
       else (
         match mdef.mod_case with
@@ -123,8 +115,8 @@ let inline_mangled
             ~default:mdef
             (let open Option.Let_syntax in
             let mangled_uid = resolved.resolved_module in
-            let%bind file_name = Core.Map.find mangled_uids mangled_uid in
-            let%bind mdef_orig = Core.Map.find mangled_file_name_to_mdef file_name in
+            let%bind file_name = Map.find mangled_uids mangled_uid in
+            let%bind mdef_orig = Map.find mangled_file_name_to_mdef file_name in
             return
             @@ { mdef with mod_case = mdef_orig.mod_case; inlined_name = Some file_name })
         | Alias { resolve_mod_name = Unresolved_path _ } | Def _ -> mdef

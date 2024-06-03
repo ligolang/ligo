@@ -1,7 +1,7 @@
 open Ast_unified
 open Pass_type
-open Simple_utils.Trace
 open Errors
+module Trace = Simple_utils.Trace
 module Location = Simple_utils.Location
 include Flag.No_arg ()
 
@@ -13,7 +13,7 @@ let compile ~raise:_ =
     | E_map_lookup { map; keys } ->
       let last_proj, mk =
         List.fold
-          (List.Ne.to_list keys)
+          (Nonempty_list.to_list keys)
           ~init:(map, Fun.id)
           ~f:(fun (last_proj, mk) key ->
             let matchee = e_map_find_opt ~loc key last_proj in
@@ -27,7 +27,7 @@ let compile ~raise:_ =
   Fold { idle_fold with expr }
 
 
-let reduction ~raise =
+let reduction ~(raise : _ Trace.raise) =
   { Iter.defaults with
     expr =
       (function

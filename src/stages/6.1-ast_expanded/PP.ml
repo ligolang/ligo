@@ -2,9 +2,7 @@
 
 module Location = Simple_utils.Location
 module Var = Simple_utils.Var
-module List = Simple_utils.List
-module Ligo_string = Simple_utils.Ligo_string
-open Simple_utils.PP_helpers
+module PP_helpers = Simple_utils.PP_helpers
 open Ligo_prim
 open Types
 
@@ -26,7 +24,7 @@ and type_injection ppf { language; injection; parameters } =
     ppf
     "%s%a"
     (Literal_types.to_string injection)
-    (list_sep_d_par type_expression)
+    (PP_helpers.list_sep_d_par type_expression)
     parameters
 
 
@@ -125,7 +123,11 @@ and matching_variant_case f ppf { constructor = c; pattern; body } =
 and matching f ppf m =
   match m with
   | Match_variant { cases; tv = _ } ->
-    Format.fprintf ppf "@[%a@]" (list_sep (matching_variant_case f) (tag "@ ")) cases
+    Format.fprintf
+      ppf
+      "@[%a@]"
+      PP_helpers.(list_sep (matching_variant_case f) (tag "@ "))
+      cases
   | Match_record { fields; body; tv = _ } ->
     (* let with_annots f g ppf (a , b) = fprintf ppf "%a:%a" f a g b in *)
     Format.fprintf

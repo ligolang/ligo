@@ -1,11 +1,7 @@
-open Api_helpers
-
-(* open Simple_utils.Display *)
 module OS = Bos.OS
 module Cmd = Bos.Cmd
 module Trace = Simple_utils.Trace
 module Constants = Commands.Constants
-module T = Core
 module Formatter = Ligo_formatter
 module Checksum = Cli_helpers.Checksum
 
@@ -240,7 +236,7 @@ let determine_map ~kind =
 let list' ~kind = List.sort ~compare:String.compare @@ Map.keys (determine_map ~kind)
 
 let list ~kind ~display_format ~no_colour () =
-  format_result ~display_format ~no_colour Formatter.list_format
+  Api_helpers.format_result ~display_format ~no_colour Formatter.list_format
   @@ fun ~raise:_ -> list' ~kind
 
 
@@ -285,8 +281,8 @@ let new_project
     | Some e -> e
     | None -> template
   in
-  format_result ~display_format ~no_colour Formatter.new_project_format
-  @@ fun ~raise ->
+  Api_helpers.format_result ~display_format ~no_colour Formatter.new_project_format
+  @@ fun ~(raise : _ Trace.raise) ->
   match get_project_url_opt ~kind ~template with
   | Some project_url ->
     (match new_project' ~project_url ~project_name ~version with

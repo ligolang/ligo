@@ -1,9 +1,12 @@
 (*
  This algorithm remove duplicate variables name in the same scope to remove shadowing.
 *)
+
+open Core
 open Ligo_prim
 open Ast_aggregated
-open Errors
+module Ligo_option = Simple_utils.Ligo_option
+module Trace = Simple_utils.Trace
 
 module Scope : sig
   type t
@@ -23,8 +26,8 @@ module Scope : sig
 
   val make_swapper : t -> swapper
 end = struct
-  module VMap = Simple_utils.Map.Make (Value_var)
-  module TMap = Simple_utils.Map.Make (Type_var)
+  module VMap = Map.Make (Value_var)
+  module TMap = Map.Make (Type_var)
 
   type t =
     { value : Value_var.t VMap.t
@@ -36,23 +39,23 @@ end = struct
 
   let new_value_var map var =
     let var' =
-      match VMap.find_opt var map.value with
+      match Map.find map.value var with
       | Some v -> Value_var.fresh_like ~loc:(Value_var.get_location var) v
       | None -> Value_var.fresh_like var
     in
-    let value = VMap.add var var' map.value in
+    let value = Map.set map.value ~key:var ~data:var' in
     { map with value }, var'
 
 
   let get_value_var map var =
     (* The default value is for variable coming from other files *)
-    Option.value ~default:var @@ VMap.find_opt var map.value
+    Option.value ~default:var @@ Map.find map.value var
     |> Value_var.set_location @@ Value_var.get_location var
 
 
   let get_type_var (map : t) var =
     (* The default value is for variable coming from other files *)
-    Option.value ~default:var @@ TMap.find_opt var map.type_
+    Option.value ~default:var @@ Map.find map.type_ var
     |> Type_var.set_location @@ Type_var.get_location var
 
 
@@ -64,27 +67,33 @@ end = struct
 
   let make_swapper (scope : t) : swapper =
     let swap_value = List.map ~f:(fun (k, v) -> v, k) in
-    let value = VMap.of_list @@ swap_value @@ VMap.to_kv_list scope.value in
-    let type_ = TMap.of_list @@ swap_value @@ TMap.to_kv_list scope.type_ in
-    let mut = VMap.of_list @@ swap_value @@ VMap.to_kv_list scope.mut in
-    { value = (fun map v -> Option.value ~default:v @@ VMap.find_opt v map) value
-    ; type_ = (fun map v -> Option.value ~default:v @@ TMap.find_opt v map) type_
-    ; mut = (fun map v -> Option.value ~default:v @@ VMap.find_opt v map) mut
+    let value =
+      Map.of_alist_exn (module Value_var) @@ swap_value @@ Map.to_alist scope.value
+    in
+    let type_ =
+      Map.of_alist_exn (module Type_var) @@ swap_value @@ Map.to_alist scope.type_
+    in
+    let mut =
+      Map.of_alist_exn (module Value_var) @@ swap_value @@ Map.to_alist scope.mut
+    in
+    { value = (fun map v -> Option.value ~default:v @@ Map.find map v) value
+    ; type_ = (fun map v -> Option.value ~default:v @@ Map.find map v) type_
+    ; mut = (fun map v -> Option.value ~default:v @@ Map.find map v) mut
     }
 
 
   let get_mut_var (map : t) var =
-    Option.value ~default:var @@ VMap.find_opt var map.mut
+    Option.value ~default:var @@ Map.find map.mut var
     |> Value_var.set_location @@ Value_var.get_location var
 
 
   let new_mut_var (map : t) var =
     let var' =
-      match VMap.find_opt var map.mut with
+      match Map.find map.mut var with
       | Some v -> Value_var.fresh_like ~loc:(Value_var.get_location var) v
       | None -> Value_var.fresh_like var
     in
-    let mut = VMap.add var var' map.mut in
+    let mut = Map.set map.mut ~key:var ~data:var' in
     { map with mut }, var'
 end
 
@@ -120,7 +129,7 @@ let rec swap_type_expression ~(raise : _ Trace.raise)
     let ty_binder = swaper.type_ ty_binder in
     let type_ = self type_ in
     return @@ T_abstraction { ty_binder; kind; type_ }
-  | T_exists _ -> raise.error @@ unexpected_texists te te.location
+  | T_exists _ -> raise.error @@ Errors.unexpected_texists te te.location
 
 
 let swap_binder ~(raise : _ Trace.raise) : Scope.swapper -> _ Binder.t -> _ Binder.t =
@@ -317,7 +326,7 @@ let rec type_expression ~(raise : _ Trace.raise)
   | T_abstraction { ty_binder; kind; type_ } ->
     let type_ = self ~scope type_ in
     return @@ T_abstraction { ty_binder; kind; type_ }
-  | T_exists _ -> raise.error @@ unexpected_texists te te.location
+  | T_exists _ -> raise.error @@ Errors.unexpected_texists te te.location
 
 
 let binder_new ~(raise : _ Trace.raise) : Scope.t -> _ Binder.t -> Scope.t * _ Binder.t =
@@ -495,7 +504,7 @@ let rec expression ~(raise : _ Trace.raise)
     return ~scope @@ E_for { binder; start; final; incr; f_body }
   | E_for_each { fe_binder = binder1, binder2; collection; collection_type; fe_body } ->
     let scope, binder1 = Scope.new_value_var scope binder1 in
-    let scope, binder2 = Option.fold_map Scope.new_value_var scope binder2 in
+    let scope, binder2 = Ligo_option.fold_map Scope.new_value_var scope binder2 in
     let _, collection = self collection
     and scope, fe_body = self ~scope fe_body in
     return ~scope

@@ -1,9 +1,9 @@
 open Errors
 open Ast_aggregated
-open Simple_utils.Trace
 open Contract_passes
+module Trace = Simple_utils.Trace
 
-let rec check_no_nested_bigmap ~raise is_in_bigmap e =
+let rec check_no_nested_bigmap ~(raise : _ Trace.raise) is_in_bigmap e =
   match e.type_content with
   | T_constant { injection = Big_map; _ } when is_in_bigmap ->
     raise.error @@ nested_bigmap e.location

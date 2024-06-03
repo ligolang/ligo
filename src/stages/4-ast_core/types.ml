@@ -1,13 +1,12 @@
 open Ligo_prim
 module Location = Simple_utils.Location
-module List = Simple_utils.List
-module Ligo_string = Simple_utils.Ligo_string
 module Row = Row.With_optional_layout
+module Ne_list = Simple_utils.Ne_list
 
 type type_content =
   | T_variable of Type_var.t
   | T_constant of Literal_types.t * int
-  | T_contract_parameter of Module_var.t List.Ne.t
+  | T_contract_parameter of Module_var.t Ne_list.t
   | T_sum of row * (Label.t option[@eq.ignore] [@hash.ignore] [@compare.ignore])
     (* This [Label.t] represent an original name of field in disc union type *)
   | T_record of row
@@ -47,7 +46,7 @@ module Import_decl = Import_decl (Type_or_module_attr)
 type expression_content =
   (* Base *)
   | E_variable of Value_var.t
-  | E_contract of Module_var.t Simple_utils.List.Ne.t
+  | E_contract of Module_var.t Ne_list.t
   | E_literal of Literal_value.t
   | E_constant of
       expr Constant.t (* For language constants, like (Cons hd tl) or (plus i j) *)
@@ -119,7 +118,7 @@ and signature = { items : sig_item list }
 
 and signature_content =
   | S_sig of signature
-  | S_path of Module_var.t Simple_utils.List.Ne.t
+  | S_path of Module_var.t Ne_list.t
 
 and signature_expr = signature_content Location.wrap
 

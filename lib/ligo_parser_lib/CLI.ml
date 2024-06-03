@@ -2,6 +2,7 @@
 
 (* Vendor dependencies *)
 
+open Core
 module Argv   = Simple_utils.Argv
 module Getopt = GetoptLib.Getopt
 
@@ -148,11 +149,10 @@ module Make (LexerParams: LexerLib.CLI.PARAMETERS) : PARAMETERS =
        set to [""]), we parse the options with [Getopt.parse_cmdline]
        and we finally restore [Sys.argv] from its original copy. *)
 
-    module SSet = Argv.SSet
+    let add string set = Set.add set string
 
     let opt_wo_arg =
-      let open SSet in
-      empty
+      String.Set.empty
       |> add "--mono"
       |> add "--pretty"
       |> add "--cst"
@@ -169,8 +169,7 @@ module Make (LexerParams: LexerLib.CLI.PARAMETERS) : PARAMETERS =
       |> add "--version" |> add "-v"
 
     let opt_with_arg =
-      let open SSet in
-      empty
+      String.Set.empty
       |> add "--trace-recovery"
       |> add "--width"
 

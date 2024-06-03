@@ -1,4 +1,4 @@
-open Simple_utils.Trace
+module Trace = Simple_utils.Trace
 open Main_errors
 
 type meta = { syntax : Syntax_types.t }
@@ -17,7 +17,7 @@ let preprocess_file ~raise ~(options : Compiler_options.frontend) ~(meta : meta)
     | CameLIGO -> Cameligo.preprocess_file
     | JsLIGO -> Jsligo.preprocess_file
   in
-  trace ~raise preproc_tracer
+  Trace.trace ~raise preproc_tracer
   @@ Simple_utils.Trace.from_result
        (preprocess_file ?project_root ~preprocess_define libraries file_path)
 
@@ -35,8 +35,9 @@ let preprocess_string
     | CameLIGO -> Cameligo.preprocess_string
     | JsLIGO -> Jsligo.preprocess_string
   in
-  trace ~raise preproc_tracer
-  @@ from_result (preprocess_string ?project_root ~preprocess_define libraries file_path)
+  Trace.trace ~raise preproc_tracer
+  @@ Trace.from_result
+       (preprocess_string ?project_root ~preprocess_define libraries file_path)
 
 
 let preprocess_raw_input
@@ -53,8 +54,8 @@ let preprocess_raw_input
     | CameLIGO -> Cameligo.preprocess_raw_input
     | JsLIGO -> Jsligo.preprocess_raw_input
   in
-  trace ~raise preproc_tracer
-  @@ from_result
+  Trace.trace ~raise preproc_tracer
+  @@ Trace.from_result
        (preprocess_raw_input
           ?project_root
           ~preprocess_define
@@ -79,7 +80,8 @@ module Jsligo = Make (Preprocessing_jsligo.Config)
 let parse_and_abstract_cameligo ~raise ~preprocess_define buffer file_path =
   let module Parse = Parsing.Cameligo.Make (Cameligo.Options) in
   let raw =
-    trace ~raise parser_tracer @@ Parse.parse_file buffer ~preprocess_define file_path
+    Trace.trace ~raise parser_tracer
+    @@ Parse.parse_file buffer ~preprocess_define file_path
   in
   Unification.Cameligo.compile_program raw
 
@@ -87,7 +89,7 @@ let parse_and_abstract_cameligo ~raise ~preprocess_define buffer file_path =
 let parse_and_abstract_expression_cameligo ~raise ~preprocess_define buffer =
   let module Parse = Parsing.Cameligo.Make (Cameligo.Options) in
   let raw =
-    trace ~raise parser_tracer @@ Parse.parse_expression ~preprocess_define buffer
+    Trace.trace ~raise parser_tracer @@ Parse.parse_expression ~preprocess_define buffer
   in
   Unification.Cameligo.compile_expression raw
 
@@ -95,7 +97,8 @@ let parse_and_abstract_expression_cameligo ~raise ~preprocess_define buffer =
 let parse_and_abstract_type_expression_cameligo ~raise ~preprocess_define buffer =
   let module Parse = Parsing.Cameligo.Make (Cameligo.Options) in
   let raw =
-    trace ~raise parser_tracer @@ Parse.parse_type_expression ~preprocess_define buffer
+    Trace.trace ~raise parser_tracer
+    @@ Parse.parse_type_expression ~preprocess_define buffer
   in
   Unification.Cameligo.compile_type_expression raw
 
@@ -103,7 +106,8 @@ let parse_and_abstract_type_expression_cameligo ~raise ~preprocess_define buffer
 let parse_and_abstract_jsligo ~raise ~preprocess_define buffer file_path =
   let module Parse = Parsing.Jsligo.Make (Jsligo.Options) in
   let raw =
-    trace ~raise parser_tracer @@ Parse.parse_file ~preprocess_define buffer file_path
+    Trace.trace ~raise parser_tracer
+    @@ Parse.parse_file ~preprocess_define buffer file_path
   in
   Unification.Jsligo.compile_program raw
 
@@ -111,7 +115,7 @@ let parse_and_abstract_jsligo ~raise ~preprocess_define buffer file_path =
 let parse_and_abstract_expression_jsligo ~raise ~preprocess_define buffer =
   let module Parse = Parsing.Jsligo.Make (Jsligo.Options) in
   let raw =
-    trace ~raise parser_tracer @@ Parse.parse_expression ~preprocess_define buffer
+    Trace.trace ~raise parser_tracer @@ Parse.parse_expression ~preprocess_define buffer
   in
   Unification.Jsligo.compile_expression raw
 
@@ -119,7 +123,8 @@ let parse_and_abstract_expression_jsligo ~raise ~preprocess_define buffer =
 let parse_and_abstract_type_expression_jsligo ~raise ~preprocess_define buffer =
   let module Parse = Parsing.Jsligo.Make (Jsligo.Options) in
   let raw =
-    trace ~raise parser_tracer @@ Parse.parse_type_expression ~preprocess_define buffer
+    Trace.trace ~raise parser_tracer
+    @@ Parse.parse_type_expression ~preprocess_define buffer
   in
   Unification.Jsligo.compile_type_expression raw
 
@@ -167,13 +172,17 @@ let parse_and_abstract_type_expression
 
 let parse_and_abstract_string_cameligo ~raise ~preprocess_define buffer =
   let module Parse = Parsing.Cameligo.Make (Cameligo.Options) in
-  let raw = trace ~raise parser_tracer @@ Parse.parse_string ~preprocess_define buffer in
+  let raw =
+    Trace.trace ~raise parser_tracer @@ Parse.parse_string ~preprocess_define buffer
+  in
   Unification.Cameligo.compile_program raw
 
 
 let parse_and_abstract_string_jsligo ~raise ~preprocess_define buffer =
   let module Parse = Parsing.Jsligo.Make (Jsligo.Options) in
-  let raw = trace ~raise parser_tracer @@ Parse.parse_string ~preprocess_define buffer in
+  let raw =
+    Trace.trace ~raise parser_tracer @@ Parse.parse_string ~preprocess_define buffer
+  in
   Unification.Jsligo.compile_program raw
 
 
@@ -202,7 +211,7 @@ let pretty_print_cst ~raise ~(meta : meta) buffer file_path =
     | CameLIGO -> pretty_print_cameligo_cst
     | JsLIGO -> pretty_print_jsligo_cst
   in
-  trace ~raise parser_tracer @@ print buffer file_path
+  Trace.trace ~raise parser_tracer @@ print buffer file_path
 
 
 let pretty_print_cameligo ?jsligo ?preprocess ?project_root ~raise buffer file_path =
@@ -247,4 +256,4 @@ let pretty_print ?preprocess ~raise ~(meta : meta) buffer file_path =
     | CameLIGO -> pretty_print_cameligo
     | JsLIGO -> pretty_print_jsligo
   in
-  trace ~raise parser_tracer @@ print ?preprocess buffer file_path
+  Trace.trace ~raise parser_tracer @@ print ?preprocess buffer file_path

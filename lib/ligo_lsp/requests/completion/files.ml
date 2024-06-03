@@ -1,3 +1,4 @@
+open Core
 open Common
 open Lsp_helpers
 
@@ -32,7 +33,6 @@ let get_files_for_completions
                else Option.some @@ Path.make_relative (Path.dirname current_file) file)
         |> List.append (Files.list_library_files ~normalize project_root mod_res))
   else []
-
 
 (** Helper to create completion items from file names. *)
 let complete_files (files : string list) : CompletionItem.t list =

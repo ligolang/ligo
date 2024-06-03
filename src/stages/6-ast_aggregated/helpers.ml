@@ -1,5 +1,8 @@
+open Core
 open Ligo_prim
 open Types
+module Ligo_option = Simple_utils.Ligo_option
+module Ligo_pair = Simple_utils.Ligo_pair
 
 (* This function parse te and replace all occurence of binder by value *)
 let rec subst_type (binder : Type_var.t) (value : type_expression) (te : type_expression) =
@@ -70,7 +73,7 @@ let rec assert_type_expression_eq
     ((a, b) : type_expression * type_expression)
     : unit option
   =
-  let open Simple_utils.Option in
+  let open Ligo_option in
   match a.type_content, b.type_content with
   | ( T_constant
         { language = _; injection = Ligo_prim.Literal_types.Ticket; parameters = [ _ty ] }
@@ -141,6 +144,7 @@ let rec assert_type_expression_eq
   | T_singleton a, T_singleton b -> assert_literal_eq (a, b)
   | T_singleton _, _ -> None
   | (T_for_all a | T_abstraction a), (T_for_all b | T_abstraction b) ->
+    let open Option in
     assert_type_expression_eq ~unforged_tickets (a.type_, b.type_)
     >>= fun _ -> Some (assert (Kind.equal a.kind b.kind))
   | T_for_all _, _ -> None
@@ -182,7 +186,7 @@ let rec fold_map_expression : 'a fold_mapper -> 'a -> expression -> 'a * express
       res, return @@ E_constructor { c with element = e' }
     | E_application { lamb; args } ->
       let ab = lamb, args in
-      let res, (a, b) = Simple_utils.Pair.fold_map ~f:self ~init ab in
+      let res, (a, b) = Ligo_pair.fold_map ~f:self ~init ab in
       res, return @@ E_application { lamb = a; args = b }
     | E_let_in { let_binder; rhs; let_result; attributes } ->
       let res, rhs = self init rhs in
@@ -383,7 +387,7 @@ let rec map_expression : 'err mapper -> expression -> expression =
     return @@ E_constructor c
   | E_application { lamb; args } ->
     let ab = lamb, args in
-    let a, b = Simple_utils.Pair.map ~f:self ab in
+    let a, b = Ligo_pair.map ~f:self ab in
     return @@ E_application { lamb = a; args = b }
   | E_let_in { let_binder; rhs; let_result; attributes } ->
     let rhs = self rhs in

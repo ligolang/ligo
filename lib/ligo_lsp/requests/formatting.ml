@@ -1,3 +1,4 @@
+open Core
 open Handler
 open Lsp_helpers
 
@@ -20,7 +21,6 @@ let try_get_pp_config : Path.t -> PP_config.t option Handler.t =
     in
     let%bind () = send_message ?type_:(Some Error) msg in
     return None
-
 
 (** Gets the [pp_mode] from the provided [pp_config], notifying the user if the syntax
     used in this file is incorrect. If there is no config, then uses default values. *)
@@ -45,7 +45,6 @@ let get_pp_mode : Path.t -> FormattingOptions.t -> Pretty.pp_mode Handler.t =
            lsp_config_width
   in
   return Pretty.{ indent; width }
-
 
 (* FIXME #1765: add support for configuration file, remove code duplication with range formatting *)
 

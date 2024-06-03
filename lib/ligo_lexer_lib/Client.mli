@@ -11,8 +11,8 @@ module type S =
       Lexing.lexbuf ->
       (token * token State.t, message) result
 
-    val mk_verbatim : Thread.t -> token (* FOR FUTURE USE *)
-    val mk_string   : Thread.t -> token
+    val mk_verbatim : LexThread.t -> token (* FOR FUTURE USE *)
+    val mk_string   : LexThread.t -> token
     val mk_eof      : Region.t -> token
 
     val callback : lexer

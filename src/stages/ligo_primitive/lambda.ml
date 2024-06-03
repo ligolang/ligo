@@ -1,5 +1,3 @@
-module Option = Simple_utils.Option
-
 type ('e, 't) t =
   { binder : 't Param.t
   ; output_type : 't

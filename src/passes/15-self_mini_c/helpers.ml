@@ -1,5 +1,3 @@
-module Pair = Simple_utils.Pair
-module Triple = Simple_utils.Triple
 open Mini_c
 open Ligo_prim
 
@@ -71,38 +69,38 @@ let rec map_expression : mapper -> expression -> expression =
   | E_rec { func = af; rec_binder } ->
     let body = self af.body in
     return @@ E_rec { func = { af with body }; rec_binder }
-  | E_application farg ->
-    let farg' = Pair.map ~f:self farg in
+  | E_application (farg1, farg2) ->
+    let farg' = self farg1, self farg2 in
     return @@ E_application farg'
   | E_iterator (s, ((name, tv), body), exp) ->
-    let exp', body' = Pair.map ~f:self (exp, body) in
+    let exp', body' = self exp, self body in
     return @@ E_iterator (s, ((name, tv), body'), exp')
   | E_fold (((name, tv), body), col, init) ->
-    let body', col', init = Triple.map ~f:self (body, col, init) in
+    let body', col', init = self body, self col, self init in
     return @@ E_fold (((name, tv), body'), col', init)
   | E_fold_right (((name, tv), body), (col, el_ty), init) ->
-    let body', col', init = Triple.map ~f:self (body, col, init) in
+    let body', col', init = self body, self col, self init in
     return @@ E_fold_right (((name, tv), body'), (col', el_ty), init)
-  | E_if_bool cab ->
-    let cab' = Triple.map ~f:self cab in
+  | E_if_bool (cab1, cab2, cab3) ->
+    let cab' = self cab1, self cab2, self cab3 in
     return @@ E_if_bool cab'
   | E_if_none (c, n, ((name, tv), s)) ->
-    let c', n', s' = Triple.map ~f:self (c, n, s) in
+    let c', n', s' = self c, self n, self s in
     return @@ E_if_none (c', n', ((name, tv), s'))
   | E_if_cons (c, n, (((hd, hdtv), (tl, tltv)), cons)) ->
-    let c', n', cons' = Triple.map ~f:self (c, n, cons) in
+    let c', n', cons' = self c, self n, self cons in
     return @@ E_if_cons (c', n', (((hd, hdtv), (tl, tltv)), cons'))
   | E_if_left (c, ((name_l, tvl), l), ((name_r, tvr), r)) ->
-    let c', l', r' = Triple.map ~f:self (c, l, r) in
+    let c', l', r' = self c, self l, self r in
     return @@ E_if_left (c', ((name_l, tvl), l'), ((name_r, tvr), r'))
   | E_let_in (expr, inline, ((v, tv), body)) ->
-    let expr', body' = Pair.map ~f:self (expr, body) in
+    let expr', body' = self expr, self body in
     return @@ E_let_in (expr', inline, ((v, tv), body'))
   | E_tuple exprs ->
     let exprs = List.map ~f:self exprs in
     return @@ E_tuple exprs
   | E_let_tuple (expr, (xs, body)) ->
-    let expr', body' = Pair.map ~f:self (expr, body) in
+    let expr', body' = self expr, self body in
     return @@ E_let_tuple (expr', (xs, body'))
   | E_proj (expr, i, n) ->
     let expr = self expr in

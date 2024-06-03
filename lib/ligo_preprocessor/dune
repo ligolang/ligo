@@ -7,7 +7,7 @@
   Status
   Config
   Options
-  Error
+  PreError
   State
   Version
   CLI
@@ -35,9 +35,7 @@
   uutf
   bos)
  (preprocess
-  (pps ppx_jane))
- (flags
-  (:standard -open Core)))
+  (pps ppx_jane)))
 
 ;; Building the lexers of the preprocessor
 

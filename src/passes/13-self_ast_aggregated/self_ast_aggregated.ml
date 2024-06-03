@@ -1,6 +1,7 @@
 open Ligo_prim
 module Errors = Errors
 module Helpers = Helpers
+module Location = Simple_utils.Location
 
 let map_expression = Ast_aggregated.Helpers.map_expression
 let expression_obj ~raise e = Obj_ligo.check_obj_ligo ~raise e

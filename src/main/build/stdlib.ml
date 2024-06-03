@@ -17,7 +17,7 @@ module Cache = struct
     - multiple imports (#imports)
     - multiple compilation of contract in "ligo test"
   *)
-  module LanguageMap = Simple_utils.Map.Make (Bool)
+  module LanguageMap = Bool.Map
 
   type cache = t LanguageMap.t
 
@@ -85,10 +85,10 @@ let get ~options : t =
   else
     let open Cache in
     let k = build_key ~options in
-    match LanguageMap.find_opt k @@ !cache_ref with
+    match Map.find !cache_ref k with
     | None ->
       let lib = get ~options () in
-      cache_ref := LanguageMap.add k lib @@ !cache_ref;
+      cache_ref := Map.set !cache_ref ~key:k ~data:lib;
       lib
     | Some typed -> typed
 

@@ -1,13 +1,13 @@
+open Core
 open Ligo_prim
-module Row = Ast_typed.Row
-open Simple_utils
-open Trace
 open Errors
+module Row = Ast_typed.Row
+module Trace = Simple_utils.Trace
 
 (**
   check_view_type checks against michelson restriction (usually defined in tezos/src/proto_alpha/lib_protocol/script_ir_translator.ml)
 **)
-let check_view_type ~raise
+let check_view_type ~(raise : _ Trace.raise)
     :  err_data:Module_var.t * Ast_typed.type_expression Binder.t
     -> Ast_typed.contract_sig -> Ast_typed.type_expression -> unit
   =
@@ -28,7 +28,7 @@ let check_view_type ~raise
     | `Bad -> raise.error @@ bad_view_storage main_name c_storage view_loc
   in
   let () =
-    trace_option
+    Trace.trace_option
       ~raise
       (storage_view_contract
          view_loc

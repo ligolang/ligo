@@ -8,6 +8,7 @@ module Region   = Simple_utils.Region
 module Location = Simple_utils.Location
 module Snippet  = Simple_utils.Snippet
 module Display  = Simple_utils.Display
+module Error    = Simple_utils.Error
 
 (* Errors *)
 
@@ -45,7 +46,7 @@ let error_ppformat :
 
 let error_json : error -> Simple_utils.Error.t =
   fun error ->
-    let open Simple_utils.Error in
+    let open Error in
     match error with
       `Lexing_generic Region.{region; value} ->
          let location = Location.lift region in

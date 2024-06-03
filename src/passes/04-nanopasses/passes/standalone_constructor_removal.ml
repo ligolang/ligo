@@ -10,13 +10,12 @@
 
 open Ast_unified
 open Pass_type
-open Simple_utils.Trace
 open Errors
+module Trace = Simple_utils.Trace
 module Location = Simple_utils.Location
+include Flag.No_arg ()
 
 let name = __MODULE__
-
-include Flag.No_arg ()
 
 let compile ~raise:_ =
   let expr : (expr, ty_expr, pattern, _, _) expr_ -> expr =
@@ -59,7 +58,7 @@ let decompile ~raise:_ =
   Fold { idle_fold with expr; pattern }
 
 
-let reduction ~raise =
+let reduction ~(raise : _ Trace.raise) =
   { Iter.defaults with
     expr =
       (function

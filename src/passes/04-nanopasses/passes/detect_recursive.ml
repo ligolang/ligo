@@ -1,14 +1,13 @@
+open Core
 open Ast_unified
 open Pass_type
 open Errors
-open Simple_utils.Trace
+module Trace = Simple_utils.Trace
+module Ne_list = Simple_utils.Ne_list
 module Location = Simple_utils.Location
-module List = Simple_utils.List
-module VarSet = Set
+include Flag.No_arg ()
 
 (* automatically detect recursive declaration and expression *)
-
-include Flag.No_arg ()
 
 let name = __MODULE__
 
@@ -27,20 +26,21 @@ let recursify ~raise fun_name let_rhs =
     ~f:(fun let_rhs ->
       match get_e_poly_fun let_rhs with
       | Some { type_params; parameters; ret_type; body } ->
-        let is_rec = VarSet.mem (Free_vars.fv_expr let_rhs) fun_name in
+        let is_rec = Set.mem (Free_vars.fv_expr let_rhs) fun_name in
         if is_rec
         then (
-          let fun_type =
+          let fun_type : ty_expr Nonempty_list.t =
             let param_type_opt =
               List.map ~f:(fun x -> Option.map ~f:fst @@ get_p_typed x.pattern) parameters
             in
-            let fun_type_opt = Option.all (param_type_opt @ [ ret_type ]) in
-            trace_option ~raise (recursive_no_annot let_rhs) fun_type_opt
+            let aux = Nonempty_list.(ret_type :: List.rev param_type_opt) in
+            let fun_type_opt = Ne_list.collect (Nonempty_list.reverse aux) in
+            Trace.trace_option ~raise (recursive_no_annot let_rhs) fun_type_opt
           in
           e_poly_recursive
             ~loc:(get_e_loc let_rhs)
             { fun_name
-            ; fun_type = Extracted (List.Ne.of_list fun_type)
+            ; fun_type = Extracted fun_type
             ; lambda = { type_params; parameters; ret_type; body }
             })
         else let_rhs
@@ -67,7 +67,7 @@ let compile ~raise =
       in
       e_simple_let_in ~loc { letin with rhs }
     | E_let_in
-        ({ is_rec = false; type_params = None; lhs = pattern, []; rhs; _ } as letin) ->
+        ({ is_rec = false; type_params = None; lhs = [ pattern ]; rhs; _ } as letin) ->
       let f_binder_opt = mono_binder_opt pattern in
       let rhs =
         Option.value_map f_binder_opt ~default:rhs ~f:(fun fun_name ->
@@ -75,7 +75,7 @@ let compile ~raise =
       in
       e_let_in ~loc { letin with rhs }
     | E_let_mut_in
-        ({ is_rec = false; type_params = None; lhs = pattern, []; rhs; _ } as letin) ->
+        ({ is_rec = false; type_params = None; lhs = [ pattern ]; rhs; _ } as letin) ->
       let f_binder_opt = mono_binder_opt pattern in
       let rhs =
         Option.value_map f_binder_opt ~default:rhs ~f:(fun fun_name ->

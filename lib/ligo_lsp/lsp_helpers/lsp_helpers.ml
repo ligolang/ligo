@@ -1,4 +1,5 @@
 (* Helpers provided by this lib *)
+
 module Directive = Directive
 module Files = Files
 module Graph = Graph
@@ -21,7 +22,7 @@ module Range = Range
 module Location = Location
 
 (* LIGO (Simple_utils) reexports *)
-include Imports
+
 module Trace = Simple_utils.Trace
 
 (* Lsp.Types reexports *)
@@ -57,12 +58,10 @@ module Diagnostic = struct
         ^ Str.global_replace (Str.regexp {|_#[0-9][0-9]*|}) "_#N" s.message
     }
 
-
   let testable_pp fmt a = pp fmt (remove_underscore_numeration a)
 
   let testable_eq a b =
     eq (remove_underscore_numeration a) (remove_underscore_numeration b)
-
 
   let testable = Alcotest.testable testable_pp testable_eq
 end
@@ -137,7 +136,6 @@ module DocumentHighlightKind = struct
     | Read -> "Read"
     | Write -> "Write"
 
-
   let eq = Stdlib.( = )
   let testable = Alcotest.testable pp eq
 end
@@ -182,7 +180,6 @@ module DiagnosticSeverity = struct
     | Error, Error | Warning, Warning | Information, Information | Hint, Hint -> 0
     | Error, _ | Warning, (Information | Hint) | Information, Hint -> -1
     | Hint, _ | Information, (Error | Warning) | Warning, Error -> 1
-
 
   let pp = Helpers_pretty.pp_with_yojson yojson_of_t
   let eq = Stdlib.( = )

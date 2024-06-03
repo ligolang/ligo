@@ -5,7 +5,6 @@
 
 module Region  = Simple_utils.Region
 module Std     = Simple_utils.Std
-module Utils   = Simple_utils.Utils
 module Snippet = Simple_utils.Snippet
 
 (* Local dependencies *)
@@ -17,6 +16,8 @@ module Wrap      = Lexing_shared.Wrap
 (* Utilities *)
 
 type tokens = Token.t list
+
+let uncurry f (x,y) = f x y
 
 (* Filter (right to left) *)
 
@@ -166,7 +167,7 @@ let filter (tokens : tokens) =
   let open! Token
   in
   let rec aux acc = function
-    t :: tokens -> Utils.uncurry aux @@ hook_comments_to_token t acc tokens
+    t :: tokens -> uncurry aux @@ hook_comments_to_token t acc tokens
   | [] -> acc (* Restore original order *)
   in
   aux [] (List.rev tokens)

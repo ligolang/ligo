@@ -12,23 +12,21 @@
   CLI
   LowAPI
   LexCore
-  Unit
-  Error
-  Thread
+  LexUnit
+  LexError
+  LexThread
   State
   Markup
   Version)
  (modules_without_implementation Status Client)
- (private_modules LexCore Error Version)
+ (private_modules LexCore LexError Version)
  (libraries
   ;; Vendor
   simple-utils
   Preprocessor
   GetoptLib
   ;; Third party
-  uutf)
- (flags
-  (:standard -open Core)))
+  uutf))
 
 ;; Build of the version source (for the user, as a CLI option)
 

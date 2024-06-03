@@ -1,10 +1,10 @@
 (** Memory representation of the lock file. Contains parsing/serialising logic *)
 
+open Core
 open Package_management_alpha_shared
 module Semver = Package_management_external_libs.Ligo_semver
 module NameVersion = Name_version
 module NameVersionMap = Map.Make (NameVersion)
-open Core
 
 module Source = struct
   type dist = string [@@deriving yojson, sexp]

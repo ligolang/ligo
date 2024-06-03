@@ -1,5 +1,6 @@
 open Types
 open Ligo_prim
+module Ligo_option = Simple_utils.Ligo_option
 
 let rec assert_list_eq f a b =
   match a, b with
@@ -7,7 +8,7 @@ let rec assert_list_eq f a b =
   | [], _ -> None
   | _, [] -> None
   | hda :: tla, hdb :: tlb ->
-    Simple_utils.Option.(
+    Ligo_option.(
       let* () = f hda hdb in
       assert_list_eq f tla tlb)
 
@@ -37,7 +38,7 @@ and assert_value_eq_content a b =
     assert_value_eq ca.element cb.element
   | ( E_module_accessor { module_path = maa; element = a }
     , E_module_accessor { module_path = mab; element = b } ) ->
-    let open Simple_utils.Option in
+    let open Ligo_option in
     let* _ = if Value_var.equal a b then Some () else None in
     assert_list_eq (fun a b -> if Module_var.equal a b then Some () else None) maa mab
   | E_record sma, E_record smb -> assert_record_eq assert_value_eq sma smb

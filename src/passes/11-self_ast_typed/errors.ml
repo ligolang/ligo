@@ -1,7 +1,8 @@
 module Snippet = Simple_utils.Snippet
 module Location = Simple_utils.Location
+module Ligo_Error = Simple_utils.Error
 module PP = Ast_typed.PP
-open Simple_utils.Display
+module Display = Simple_utils.Display
 open Ligo_prim
 
 let stage = "self_ast_typed"
@@ -29,7 +30,7 @@ let type_view_io_in loc got = view_io loc got `In
 let type_view_io_out loc got = view_io loc got `Out
 
 let error_ppformat
-    :  display_format:string display_format -> no_colour:bool -> Format.formatter
+    :  display_format:string Display.display_format -> no_colour:bool -> Format.formatter
     -> self_ast_typed_error -> unit
   =
  fun ~display_format ~no_colour f a ->
@@ -120,7 +121,7 @@ let error_ppformat
 
 let error_json : self_ast_typed_error -> Simple_utils.Error.t =
  fun e ->
-  let open Simple_utils.Error in
+  let open Ligo_Error in
   match e with
   | `Self_ast_typed_not_a_contract _ ->
     let message = "No contract found" in

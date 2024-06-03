@@ -1,8 +1,8 @@
-module Nseq = Simple_utils.Utils
-module CameLIGO_pretty = Parsing.Cameligo.Pretty
-module JsLIGO_pretty = Parsing.Jsligo.Pretty
+open Core
 open Handler
 open Lsp_helpers
+module CameLIGO_pretty = Parsing.Cameligo.Pretty
+module JsLIGO_pretty = Parsing.Jsligo.Pretty
 
 (* Currently we just select all toplevel cst nodes in given range and replace "sub-cst"
    by pretty printer result *)
@@ -19,22 +19,20 @@ let decl_range : declaration -> Range.t =
        ; jsligo = Cst_jsligo.CST.statement_to_region
        }
 
-
 (** Collects all top-level declarations from the provided CST (does not visit inner
     modules). *)
-let decls_of_cst : Dialect_cst.t -> declaration Nseq.nseq =
+let decls_of_cst : Dialect_cst.t -> declaration Nonempty_list.t =
   Dialect_cst.from_dialect
     { cameligo =
         Cst_cameligo.CST.(
-          fun cst -> Nseq.nseq_map (fun x -> Dialect_cst.CameLIGO x) cst.decl)
+          fun cst -> Nonempty_list.map ~f:(fun x -> Dialect_cst.CameLIGO x) cst.decl)
     ; jsligo =
         Cst_jsligo.CST.(
           fun (cst : t) ->
-            Nseq.nseq_map
-              (fun (x, _) -> Dialect_cst.JsLIGO x)
+            Nonempty_list.map
+              ~f:(fun (x, _) -> Dialect_cst.JsLIGO x)
               cst.statements (* Type inference is not working here *))
     }
-
 
 (** Prints the provided declaration in the given syntax. *)
 let print_decl : Pretty.pp_mode -> declaration -> string =
@@ -45,7 +43,6 @@ let print_decl : Pretty.pp_mode -> declaration -> string =
     ; jsligo = uncurry JsLIGO_pretty.print_statement
     }
 
-
 (* [print_decl] produce a newline at the end of doc, which leads to a trailing newline
   inserted by range formatting in case we're not stripping it manually *)
 let strip_trailing_newline (s : string) : string = String.rstrip s
@@ -53,18 +50,21 @@ let strip_trailing_newline (s : string) : string = String.rstrip s
 (** Formats declarations whose ranges are completely inside the provided formatting range. *)
 let range_formatting
     (pp_mode : Pretty.pp_mode)
-    (decls : declaration Nseq.nseq)
+    (decls : declaration Nonempty_list.t)
     (range : Range.t)
     : TextEdit.t list option
   =
   let f decl = Range.inside ~small:(decl_range decl) ~big:range in
-  match List.filter ~f @@ Nseq.nseq_to_list decls with
+  match List.filter ~f @@ Nonempty_list.to_list decls with
   | [] -> None
   | d :: ds as declarations_in_range ->
-    (* We should create one TextEdit instead of multiple (i.e. one for each declaration)
-       because we want to have exactly one empty line between pretty-printed declarations,
-       so range formatting with [whole_file_range] is equivalent to formatting *)
-    let covering_interval = Range.cover_nseq (Nseq.nseq_map decl_range (d, ds)) in
+    (* We should create one TextEdit instead of multiple (i.e. one for
+       each declaration) because we want to have exactly one empty
+       line between pretty-printed declarations, so range formatting
+       with [whole_file_range] is equivalent to formatting *)
+    let covering_interval =
+      Range.cover_nseq (Nonempty_list.map ~f:decl_range (d :: ds))
+    in
     let content =
       declarations_in_range
       |> List.map ~f:(print_decl pp_mode)
@@ -72,7 +72,6 @@ let range_formatting
       |> strip_trailing_newline
     in
     Some [ TextEdit.create ~newText:content ~range:covering_interval ]
-
 
 (* FIXME #1765: use tab size from FormattingOptions *)
 

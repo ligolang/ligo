@@ -11,6 +11,7 @@
 
 module Region = Simple_utils.Region
 module Utils  = Simple_utils.Utils
+module Ne     = Nonempty_list
 
 (* LIGO dependencies *)
 
@@ -120,8 +121,8 @@ val mk_children_nsepseq_opt :
 val mk_children_sepseq :
   'a printer -> ?root:root -> ('a,_) Utils.sepseq -> child list
 
-val mk_children_nseq :
-  'a printer -> ?root:root -> 'a Utils.nseq -> child list
+val mk_children_ne_list :
+  'a printer -> ?root:root -> 'a Ne.t -> child list
 
 val mk_children_sep_or_term :
   'a printer -> ?root:root -> ('a,_) Utils.sep_or_term -> child list
@@ -138,7 +139,7 @@ val mk_children_nsep_or_pref :
 (* The call [of_list ?region state ?root print list] prints a tree of
    root [root] and whose children correspond to [list]. If there are
    no children, the tree is a node. This can also happen with
-   [of_sepseq], but neither [of_nsepseq] nor [of_nseq]. *)
+   [of_sepseq], but neither [of_nsepseq] nor [of_ne_list]. *)
 
 val of_list :
   ?region:Region.t
@@ -164,12 +165,12 @@ val of_sepseq :
   -> ('a,_) Utils.sepseq
   -> unit
 
-val of_nseq :
+val of_ne_list :
   ?region:Region.t
   -> state
   -> root
   -> 'a printer
-  -> 'a Utils.nseq
+  -> 'a Ne.t
   -> unit
 
 val of_sep_or_term :

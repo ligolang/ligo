@@ -1,16 +1,16 @@
 open Ast_unified
 open Pass_type
-open Simple_utils.Trace
 open Errors
-module Location = Simple_utils.Location
 open Unit_test_helpers
-
-(* This pass prevent shadowing in scopes (i.e. two bindings to the same variable in the same scope) *)
-let name = __MODULE__
-
+module Trace = Simple_utils.Trace
+module Location = Simple_utils.Location
 include Flag.No_arg ()
 
-let check_for_duplicated ~raise b =
+(* This pass prevent shadowing in scopes (i.e. two bindings to the same variable in the same scope) *)
+
+let name = __MODULE__
+
+let check_for_duplicated ~(raise : _ Trace.raise) b =
   List.iter b ~f:(fun bound ->
       let dups = List.find_a_dup ~compare:Variable.compare (List.rev bound) in
       match dups with

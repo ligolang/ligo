@@ -1,8 +1,8 @@
-module OS = Bos.OS
 open Prometheus_push
 open Prometheus
 open Core
 open Compiler_options.Raw_options
+module OS = Bos.OS
 
 (* dirty, but simple *)
 let project_root : string option ref = ref None

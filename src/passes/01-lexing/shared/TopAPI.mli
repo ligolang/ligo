@@ -3,10 +3,10 @@
 
 (* Vendor dependencies *)
 
-module Region = Simple_utils.Region
-module Std    = Simple_utils.Std
-module Lexbuf = Simple_utils.Lexbuf
-module Unit   = LexerLib.Unit
+module Region  = Simple_utils.Region
+module Std     = Simple_utils.Std
+module Lexbuf  = Simple_utils.Lexbuf
+module LexUnit = LexerLib.LexUnit
 
 module type PARAMETERS = LexerLib.CLI.PARAMETERS
 
@@ -88,7 +88,7 @@ module type S =
        preprocessor may be run before, and/or the pipeline of
        self-passes [UnitPasses] after. *)
 
-    val scan_all_units : no_colour:bool -> token Unit.t lexer
+    val scan_all_units : no_colour:bool -> token LexUnit.t lexer
 
     (* Scanning all tokens. *)
 
@@ -106,7 +106,7 @@ module Make
          (Preprocessor : Preprocessor.TopAPI.S)
          (Parameters   : PARAMETERS)
          (Token        : Token.S)
-         (UnitPasses   : Pipeline.PASSES with type item = Token.t Unit.t)
+         (UnitPasses   : Pipeline.PASSES with type item = Token.t LexUnit.t)
          (TokenPasses  : Pipeline.PASSES with type item = Token.t)
          (Warning      : WARNING)
        : S with module Token = Token

@@ -1,3 +1,4 @@
+open Core
 open Handler
 open Lsp_helpers
 
@@ -13,7 +14,6 @@ let extract_link_from_directive
   Option.map
     (Directive.extract_range_and_target ~normalize ~relative_to_dir ~mod_res directive)
     ~f:(fun (range, target) -> DocumentLink.create ~range ~target ())
-
 
 (** Runs the handler for document link. This is usually called when file is opened and on
     every edit. For VSCode, the document link might run just after some delay when the

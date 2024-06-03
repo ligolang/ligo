@@ -30,12 +30,12 @@ module Of_Ast : sig
   val definitions
     :  ?waivers:Waivers.t
     -> AST.program
-    -> string Map.Make(String).t
+    -> string String.Map.t
     -> Types.def list
     -> Inline_mangled_modules_pass.t * Types.def list
 end
 
 module Of_Stdlib_Ast : sig
   (** Like [Of_Ast.definitions], but used to collect definitions from the stdlib. *)
-  val definitions : AST.program -> string Map.Make(String).t -> Types.def list
+  val definitions : AST.program -> string String.Map.t -> Types.def list
 end

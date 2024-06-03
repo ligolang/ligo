@@ -1,14 +1,15 @@
+open Core
 open Ligo_prim
-open Simple_utils
 open Env
 open Env_list
 module Env = Env_list
 module AST = Ast_core
+module Location = Simple_utils.Location
 
-type t = def list LMap.t
+type t = def list Location.Map.t
 
 let shadow_defs : def list -> def list =
-  let ( <@ ) = Function.( <@ ) in
+  let ( <@ ) f g x = f (g x) in
   List.filter_map ~f:List.hd <@ List.sort_and_group ~compare:Def.compare_def_by_name
 
 
@@ -18,7 +19,7 @@ let add : t -> Location.t -> def list -> t =
     | None -> Some (shadow_defs defs)
     | Some value -> Some (shadow_defs @@ List.rev_append defs value)
   in
-  Core.Map.change scopes rhs_range ~f
+  Map.change scopes rhs_range ~f
 
 
 (* --------------------------- AST traversal -------------------------------- *)
@@ -143,7 +144,7 @@ module Of_Ast = struct
       let es = Record.values e_label_map in
       List.fold es ~init:scopes ~f:(fun scopes e -> self e scopes env)
     | E_tuple es ->
-      List.Ne.fold_left es ~init:scopes ~f:(fun scopes e -> self e scopes env)
+      Nonempty_list.fold es ~init:scopes ~f:(fun scopes e -> self e scopes env)
     | E_array entries | E_array_as_list entries ->
       List.fold_left entries ~init:scopes ~f:(fun scopes entry ->
           let entry =
@@ -260,8 +261,8 @@ module Of_Ast = struct
         scopes, defs_or_alias_opt, env
       | M_module_path mvs ->
         let scopes =
-          let hd_loc = Module_var.get_location (List.Ne.hd mvs) in
-          let last_loc = Module_var.get_location (List.Ne.last mvs) in
+          let hd_loc = Module_var.get_location (Nonempty_list.hd mvs) in
+          let last_loc = Module_var.get_location (Nonempty_list.last mvs) in
           add scopes (Location.cover hd_loc last_loc) current_defs
         in
         let defs_or_alias_opt =
@@ -439,7 +440,7 @@ module Of_Ast = struct
   let declarations ~(env_preload_decls : AST.declaration list) : AST.declaration list -> t
     =
    fun decls ->
-    let scopes = LMap.empty in
+    let scopes = Location.Map.empty in
     let env = Env.empty in
     let _, env =
       declarations env_preload_decls scopes env (* Preload env with stdlib if provided *)
@@ -450,5 +451,4 @@ end
 
 let inline_scopes : def_map -> t -> Types.inlined_scopes =
  fun prg_defs scopes ->
-  (*  scopes |> LMap.map (Def.defs_to_types_defs prg_defs) |> LMap.to_kv_list*)
-  Core.Map.map scopes ~f:(Def.defs_to_types_defs prg_defs) |> Core.Map.to_alist
+  Map.map scopes ~f:(Def.defs_to_types_defs prg_defs) |> Map.to_alist

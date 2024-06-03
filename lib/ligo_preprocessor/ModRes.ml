@@ -2,6 +2,7 @@
 
 (* Utilities *)
 
+open Core
 module SMap = Map.Make (String)
 
 (* Monadic bind *)

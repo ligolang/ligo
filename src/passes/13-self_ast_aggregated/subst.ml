@@ -1,6 +1,7 @@
 open Ligo_prim
 open Ast_aggregated
 module Free_variables = Helpers.Free_variables
+module Ligo_pair = Simple_utils.Ligo_pair
 
 (* Reference implementation:
    https://www.cs.cornell.edu/courses/cs3110/2019sp/textbook/interp/lambda-subst/main.ml
@@ -58,7 +59,7 @@ let rec replace : expression -> Value_var.t -> Value_var.t -> expression =
     let arguments = List.map ~f:replace arguments in
     return @@ E_constant { cons_name; arguments }
   | E_application { lamb; args } ->
-    let lamb, args = Simple_utils.Tuple.map2 replace (lamb, args) in
+    let lamb, args = Ligo_pair.map ~f:replace (lamb, args) in
     return @@ E_application { lamb; args }
   | E_type_abstraction { type_binder; result } ->
     let result = replace result in
@@ -236,7 +237,7 @@ let rec subst_expression
     let arguments = List.map ~f:self arguments in
     return @@ E_constant { cons_name; arguments }
   | E_application { lamb; args } ->
-    let lamb, args = Simple_utils.Tuple.map2 self (lamb, args) in
+    let lamb, args = Ligo_pair.map ~f:self (lamb, args) in
     return @@ E_application { lamb; args }
   | E_type_abstraction { type_binder; result } ->
     let result = self result in

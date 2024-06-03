@@ -2,6 +2,7 @@
 
 (* Vendor dependencies *)
 
+open Core
 module Argv   = Simple_utils.Argv  (* Filters the command line *)
 module Getopt = GetoptLib.Getopt   (* GNU Getopt *)
 
@@ -129,11 +130,10 @@ module Make (Config : Config.S) : PARAMETERS =
        backup after parsing the command-line: another parse is now
        possible by another client. *)
 
-    module SSet = Argv.SSet
+    let add string set = Set.add set string
 
     let opt_wo_arg =
-      let open Argv.SSet in
-      empty
+      String.Set.empty
       |> add "--show-pp"
       |> add "--no-colour"
       |> add "--columns"
@@ -144,8 +144,7 @@ module Make (Config : Config.S) : PARAMETERS =
       |> add "--version" |> add "-v"
 
     let opt_with_arg =
-      let open Argv.SSet in
-      empty
+      String.Set.empty
       |> add "-I"
       |> add "-D"
       |> add "--project-root"

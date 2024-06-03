@@ -1,3 +1,5 @@
+open Core
+
 type t = <
   byte       : Lexing.position;
   point_num  : int;
@@ -130,6 +132,10 @@ let make ~byte ~point_num ~point_bol : t =
           sprintf "%i:%i" self#line horizontal
 end
 
+let error_yojson_format format =
+  Error ("Invalid JSON value.
+          An object with the following specification is expected:"
+         ^ format)
 
 let position_to_yojson x =
   `Assoc
@@ -147,7 +153,7 @@ let position_of_yojson x =
       "pos_cnum", `Int pos_cnum] ->
       Ok (Lexing.{pos_fname; pos_lnum; pos_bol; pos_cnum})
   | _ ->
-      Utils.error_yojson_format "{pos_fname: string, pos_lnum: int, pos_bol: int, pos_cnum: int}"
+      error_yojson_format "{pos_fname: string, pos_lnum: int, pos_bol: int, pos_cnum: int}"
 
 let to_yojson x =
   `Assoc
@@ -170,7 +176,7 @@ let of_yojson x =
      Stdlib.Result.map (fun byte -> make ~byte ~point_num ~point_bol)
                        (position_of_yojson byte)
   | _ ->
-      Utils.error_yojson_format "{byte: Lexing.position, point_num: int, point_bol: int}\nwhere Lexing.position is {pos_fname: string, pos_lnum: int, pos_bol: int, pos_cnum: int}"
+      error_yojson_format "{byte: Lexing.position, point_num: int, point_bol: int}\nwhere Lexing.position is {pos_fname: string, pos_lnum: int, pos_bol: int, pos_cnum: int}"
 
 let from_byte byte =
   let point_num = byte.Lexing.pos_cnum

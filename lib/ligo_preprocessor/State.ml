@@ -2,6 +2,7 @@
 
 (* Vendor dependencies *)
 
+open Core
 module Region = Simple_utils.Region
 module Pos    = Simple_utils.Pos
 
@@ -85,18 +86,18 @@ class t ?(project_root : file_path option)
 
     method reduce_cond =
       let rec reduce = function
-                    [] -> Error Error.Dangling_endif
+                    [] -> Error PreError.Dangling_endif
       | If mode::trace -> Ok {< mode; trace >}
       |       _::trace -> reduce trace
       in reduce trace
 
     method extend cond mode =
       match cond, trace with
-        If _,   Elif _::_ -> Error Error.If_follows_elif
-      | Else,     Else::_ -> Error Error.Else_follows_else
-      | Else,          [] -> Error Error.Dangling_else
-      | Elif _,   Else::_ -> Error Error.Elif_follows_else
-      | Elif _,        [] -> Error Error.Dangling_elif
+        If _,   Elif _::_ -> Error PreError.If_follows_elif
+      | Else,     Else::_ -> Error PreError.Else_follows_else
+      | Else,          [] -> Error PreError.Dangling_else
+      | Elif _,   Else::_ -> Error PreError.Elif_follows_else
+      | Elif _,        [] -> Error PreError.Dangling_elif
       | hd,            tl -> Ok {< trace = hd::tl; mode >}
 
     method set_trace trace = {< trace >}
@@ -125,7 +126,7 @@ class t ?(project_root : file_path option)
     (* SYMBOL ENVIRONMENT *)
 
     method set_env env      = {< env >}
-    method add_symbol id    = {< env = Set.add env id  >}
+    method add_symbol id    = {< env = Set.add env id    >}
     method remove_symbol id = {< env = Set.remove env id >}
 
     (* INPUT CHANNELS *)

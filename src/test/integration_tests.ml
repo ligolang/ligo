@@ -1,4 +1,4 @@
-open Simple_utils.Trace
+module Trace = Simple_utils.Trace
 open Test_helpers
 open Main_errors
 open Ast_unified
@@ -309,7 +309,7 @@ let bytes_arithmetic ~raise f : unit =
       foototo
   in
   let () =
-    trace_assert_fail_option ~raise (test_internal __LOC__)
+    Trace.trace_assert_fail_option ~raise (test_internal __LOC__)
     @@ Ast_core.Misc.assert_value_eq (b3, b1)
   in
   ()
@@ -398,7 +398,7 @@ let crypto ~raise f : unit =
       foototo
   in
   let () =
-    trace_assert_fail_option ~raise (test_internal __LOC__)
+    Trace.trace_assert_fail_option ~raise (test_internal __LOC__)
     @@ Ast_core.Misc.assert_value_eq (b2, b1)
   in
   let%bind b4 =
@@ -417,7 +417,7 @@ let crypto ~raise f : unit =
       foototo
   in
   let () =
-    trace_assert_fail_option ~raise (test_internal __LOC__)
+    Trace.trace_assert_fail_option ~raise (test_internal __LOC__)
     @@ Ast_core.Misc.assert_value_eq (b5, b4)
   in
   ()
@@ -567,7 +567,7 @@ let record_ez_int names n =
 
 
 let tuple_ez_int names n =
-  e_tuple ~loc (List.Ne.of_list @@ List.map ~f:(fun _ -> e_int ~loc n) names)
+  e_tuple ~loc (Nonempty_list.map ~f:(fun _ -> e_int ~loc n) names)
 
 
 let multiple_parameters ~raise f : unit =
@@ -640,7 +640,7 @@ let record ~raise f : unit =
 
 let tuple ~raise f : unit =
   let program = type_file ~raise f in
-  let ez n = e_tuple ~loc (List.Ne.of_list @@ List.map ~f:(e_int ~loc) n) in
+  let ez n = e_tuple ~loc (Ne_list.map (e_int ~loc) n) in
   let () =
     let expected = ez [ 0; 0 ] in
     expect_eq_evaluate ~raise program "fb" expected
@@ -707,7 +707,7 @@ let map ~raise f : unit =
   let () =
     let make_input n =
       let m = ez [ 23, 0; 42, 0 ] in
-      e_tuple ~loc @@ List.Ne.of_list [ e_int ~loc n; m ]
+      e_tuple ~loc [ e_int ~loc n; m ]
     in
     let make_expected n = ez [ 23, n; 42, 0 ] in
     expect_eq_n_pos_small ~raise program "set_" make_input make_expected
@@ -748,7 +748,7 @@ let map ~raise f : unit =
       ~raise
       program
       "mem"
-      (e_tuple ~loc @@ List.Ne.of_list [ e_int ~loc 23; input_map ])
+      (e_tuple ~loc [ e_int ~loc 23; input_map ])
       (e_bool ~loc true)
   in
   let () =
@@ -757,7 +757,7 @@ let map ~raise f : unit =
       ~raise
       program
       "mem"
-      (e_tuple ~loc @@ List.Ne.of_list [ e_int ~loc 1000; input_map ])
+      (e_tuple ~loc [ e_int ~loc 1000; input_map ])
       (e_bool ~loc false)
   in
   let () =
@@ -807,7 +807,7 @@ let big_map ~raise f : unit =
   let () =
     let make_input n =
       let m = ez [ 23, 0; 42, 0 ] in
-      e_tuple ~loc @@ List.Ne.of_list [ e_int ~loc n; m ]
+      e_tuple ~loc [ e_int ~loc n; m ]
     in
     let make_expected n = ez [ 23, n; 42, 0 ] in
     expect_eq_n_pos_small ~raise program "set_" make_input make_expected
@@ -1109,9 +1109,7 @@ let recursion_ligo ~raise f : unit =
     expect_eq ~raise program "sum" make_input make_expected
   in
   let _ =
-    let make_input =
-      e_tuple ~loc @@ List.Ne.of_list [ e_int ~loc 10; e_int ~loc 1; e_int ~loc 1 ]
-    in
+    let make_input = e_tuple ~loc [ e_int ~loc 10; e_int ~loc 1; e_int ~loc 1 ] in
     let make_expected = e_int ~loc 89 in
     expect_eq ~raise program "fibo" make_input make_expected
   in
@@ -1375,7 +1373,7 @@ let mligo_let_multiple ~raise () : unit =
   in
   let () =
     let input = e_unit ~loc in
-    let expected = e_tuple ~loc @@ List.Ne.of_list [ e_int ~loc 23; e_int ~loc 42 ] in
+    let expected = e_tuple ~loc [ e_int ~loc 23; e_int ~loc 42 ] in
     expect_eq ~raise program "correct_values_bound" input expected
   in
   let () =
@@ -1386,17 +1384,15 @@ let mligo_let_multiple ~raise () : unit =
   let () =
     let input = e_unit ~loc in
     let expected =
-      e_tuple ~loc
-      @@ List.Ne.of_list
-           [ e_int ~loc 10; e_int ~loc 20; e_int ~loc 30; e_int ~loc 40; e_int ~loc 50 ]
+      e_tuple
+        ~loc
+        [ e_int ~loc 10; e_int ~loc 20; e_int ~loc 30; e_int ~loc 40; e_int ~loc 50 ]
     in
     expect_eq ~raise program "correct_values_big_tuple" input expected
   in
   let () =
     let input = e_unit ~loc in
-    let expected =
-      e_tuple ~loc @@ List.Ne.of_list [ e_int ~loc 10; e_string ~loc "hello" ]
-    in
+    let expected = e_tuple ~loc [ e_int ~loc 10; e_string ~loc "hello" ] in
     expect_eq ~raise program "correct_values_different_types" input expected
   in
   ()
@@ -1427,7 +1423,7 @@ let balance_test_options ~raise () =
   @@
   let open Lwt.Let_syntax in
   let balance =
-    trace_option ~raise (test_internal "could not convert balance")
+    Trace.trace_option ~raise (test_internal "could not convert balance")
     @@ Memory_proto_alpha.Protocol.Alpha_context.Tez.of_string "0"
   in
   let%bind env = Proto_alpha_utils.Memory_proto_alpha.test_environment () in
@@ -1436,7 +1432,7 @@ let balance_test_options ~raise () =
 
 let balance_constant ~raise f : unit =
   let program = type_file ~raise f in
-  let expected = e_tuple ~loc @@ List.Ne.of_list [ e_list ~loc []; e_mutez ~loc 0 ] in
+  let expected = e_tuple ~loc [ e_list ~loc []; e_mutez ~loc 0 ] in
   let options = balance_test_options ~raise () in
   expect_eq_twice ~raise ~options program "main" (e_unit ~loc) (e_mutez ~loc 0) expected
 
@@ -1540,12 +1536,12 @@ let check_signature ~raise f : unit =
   let signed = Signature.sign sk (Bytes.of_string "hello world") in
   let program = type_file ~raise f in
   let make_input =
-    e_tuple ~loc
-    @@ List.Ne.of_list
-         [ e_key ~loc pk_str
-         ; e_signature ~loc (Signature.to_b58check signed)
-         ; e_bytes_string ~loc "hello world"
-         ]
+    e_tuple
+      ~loc
+      [ e_key ~loc pk_str
+      ; e_signature ~loc (Signature.to_b58check signed)
+      ; e_bytes_string ~loc "hello world"
+      ]
   in
   let make_expected = e_bool ~loc true in
   let () = expect_eq ~raise program "check_signature" make_input make_expected in
@@ -1584,7 +1580,7 @@ let tuple_param_destruct ~raise () : unit =
       ~raise
       program
       "sum"
-      (e_tuple ~loc @@ List.Ne.of_list [ e_int ~loc 20; e_int ~loc 10 ])
+      (e_tuple ~loc [ e_int ~loc 20; e_int ~loc 10 ])
       (e_int ~loc 10)
   in
   let () =
@@ -1592,7 +1588,7 @@ let tuple_param_destruct ~raise () : unit =
       ~raise
       program
       "parentheses"
-      (e_tuple ~loc @@ List.Ne.of_list [ e_int ~loc 20; e_int ~loc 10 ])
+      (e_tuple ~loc [ e_int ~loc 20; e_int ~loc 10 ])
       (e_int ~loc 10)
   in
   ()
@@ -1605,7 +1601,7 @@ let let_in_multi_bind ~raise () : unit =
       ~raise
       program
       "sum"
-      (e_tuple ~loc @@ List.Ne.of_list [ e_int ~loc 10; e_int ~loc 10 ])
+      (e_tuple ~loc [ e_int ~loc 10; e_int ~loc 10 ])
       (e_int ~loc 20)
   in
   let () =
@@ -1613,13 +1609,13 @@ let let_in_multi_bind ~raise () : unit =
       ~raise
       program
       "sum2"
-      (e_tuple ~loc
-      @@ List.Ne.of_list
-           [ e_string ~loc "my"
-           ; e_string ~loc "name"
-           ; e_string ~loc "is"
-           ; e_string ~loc "bob"
-           ])
+      (e_tuple
+         ~loc
+         [ e_string ~loc "my"
+         ; e_string ~loc "name"
+         ; e_string ~loc "is"
+         ; e_string ~loc "bob"
+         ])
       (e_string ~loc "mynameisbob")
   in
   ()
@@ -1747,7 +1743,7 @@ let tuple_assignment_jsligo ~raise () : unit =
     program
     "tuple_assignment"
     (e_unit ~loc)
-    (e_tuple ~loc @@ List.Ne.of_list [ e_int ~loc 2; e_int ~loc 5 ])
+    (e_tuple ~loc [ e_int ~loc 2; e_int ~loc 5 ])
 
 
 let block_scope_jsligo ~raise () : unit =
@@ -2543,19 +2539,15 @@ let func_object_destruct_jsligo ~raise () : unit =
 let func_tuple_destruct_jsligo ~raise () : unit =
   let program = type_file ~raise "./contracts/jsligo_destructure_tuples.jsligo" in
   let data =
-    e_tuple ~loc
-    @@ List.Ne.of_list
-         [ e_tuple ~loc
-           @@ List.Ne.of_list
-                [ e_string ~loc "first"
-                ; e_tuple ~loc @@ List.Ne.of_list [ e_int ~loc 1; e_string ~loc "uno" ]
-                ]
-         ; e_tuple ~loc
-           @@ List.Ne.of_list
-                [ e_string ~loc "second"
-                ; e_tuple ~loc @@ List.Ne.of_list [ e_int ~loc 2; e_string ~loc "dos" ]
-                ]
-         ]
+    e_tuple
+      ~loc
+      [ e_tuple
+          ~loc
+          [ e_string ~loc "first"; e_tuple ~loc [ e_int ~loc 1; e_string ~loc "uno" ] ]
+      ; e_tuple
+          ~loc
+          [ e_string ~loc "second"; e_tuple ~loc [ e_int ~loc 2; e_string ~loc "dos" ] ]
+      ]
   in
   let _ =
     expect_eq
@@ -2563,9 +2555,7 @@ let func_tuple_destruct_jsligo ~raise () : unit =
       program
       "test"
       data
-      (e_tuple ~loc
-      @@ List.Ne.of_list
-           [ e_string ~loc "firstsecond"; e_int ~loc 3; e_string ~loc "unodos" ])
+      (e_tuple ~loc [ e_string ~loc "firstsecond"; e_int ~loc 3; e_string ~loc "unodos" ])
   in
   ()
 

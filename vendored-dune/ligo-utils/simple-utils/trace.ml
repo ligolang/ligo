@@ -1,3 +1,5 @@
+open Core
+
 (** {1 Constructors} *)
 
 (* Warnings *)
@@ -234,9 +236,9 @@ let bind_map_or ~raise handler fa fb c =
 
 let bind_or ~raise a b = bind_map_or ~raise raise.error (fun () -> a) (fun () -> b) ()
 
-let rec bind_exists ~raise = function
-  | x, [] -> x ~raise
-  | x, y :: ys -> bind_or ~raise x (bind_exists (y, ys))
+let rec bind_exists ~raise : (raise:('a, 'w) raise -> 'b) Nonempty_list.t -> 'b = function
+  | [x] -> x ~raise
+  | x :: (y :: ys) -> bind_or ~raise x (bind_exists Nonempty_list.(y :: ys))
 
 let collect ~(raise : ('a list, 'w) raise) : (raise:('a, 'w) raise -> 'b) list -> 'b list =
  fun lst ->

@@ -1,4 +1,6 @@
-open Simple_utils
+module Http_uri = Simple_utils.Http_uri
+module Location = Simple_utils.Location
+module Trace = Simple_utils.Trace
 module Compile = Ligo_compile
 module Helpers = Ligo_compile.Helpers
 module Run = Ligo_run.Of_michelson

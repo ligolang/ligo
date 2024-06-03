@@ -7,7 +7,7 @@ type error =
 | Newline_in_string
 | Invalid_character_in_string of char
 | Undefined_escape_sequence
-| Invalid_directive of Preprocessor.Error.t
+| Invalid_directive of Preprocessor.PreError.t
 
 type t = error
 

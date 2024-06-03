@@ -1,4 +1,4 @@
-open Simple_utils.Function
+let (<@) f g x = f (g x)
 
 type 'a fold_control = Stop | Skip | Continue of 'a | Last of 'a
 

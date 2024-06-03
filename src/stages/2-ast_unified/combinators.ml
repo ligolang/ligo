@@ -1,4 +1,6 @@
+open Core
 open Types
+module Ligo_string = Simple_utils.Ligo_string
 
 type ('a, 'b, 'c, 'd, 'e) expression_content_ =
   [%import: ('a, 'b, 'c, 'd, 'e) Types.expression_content_]
@@ -197,11 +199,11 @@ let e_false ~loc = e_constant ~loc { cons_name = C_FALSE; arguments = [] }
 let e_true ~loc = e_constant ~loc { cons_name = C_TRUE; arguments = [] }
 
 let e_string ~loc str : expr =
-  make_e ~loc @@ E_literal (Literal_string (Simple_utils.Ligo_string.standard str))
+  make_e ~loc @@ E_literal (Literal_string (Ligo_string.standard str))
 
 
 let e_verbatim ~loc str : expr =
-  make_e ~loc @@ E_literal (Literal_string (Simple_utils.Ligo_string.verbatim str))
+  make_e ~loc @@ E_literal (Literal_string (Ligo_string.verbatim str))
 
 
 let e_unit ~loc : expr = make_e ~loc @@ E_literal Literal_unit
@@ -262,7 +264,7 @@ let e_unopt ~loc matchee none_body (var_some, some_body) =
     let pattern = p_variant ~loc (Label.of_string "None") None in
     Case.{ pattern = Some pattern; rhs = none_body }
   in
-  e_match ~loc { expr = matchee; disc_label = None; cases = some_case, [ none_case ] }
+  e_match ~loc { expr = matchee; disc_label = None; cases = [ some_case; none_case ] }
 
 
 let let_unit_in rhs body =
@@ -270,7 +272,7 @@ let let_unit_in rhs body =
     ~loc:Location.generated
     { is_rec = false
     ; type_params = None
-    ; lhs = List.Ne.singleton @@ p_unit ~loc:Location.generated
+    ; lhs = Nonempty_list.singleton @@ p_unit ~loc:Location.generated
     ; rhs_type = None
     ; rhs
     ; body
@@ -283,7 +285,7 @@ let let_ignore_in rhs body =
     { is_rec = false
     ; type_params = None
     ; lhs =
-        List.Ne.singleton
+        Nonempty_list.singleton
         @@ p_var
              ~loc:Location.generated
              (Variable.fresh ~name:"_" ~loc:Location.generated ())
@@ -294,7 +296,7 @@ let let_ignore_in rhs body =
 
 
 let block_of_statements stmts = make_b ~loc:Location.generated stmts
-let e_pair ~loc l r = e_tuple ~loc (Simple_utils.List.Ne.of_list [ l; r ])
+let e_pair ~loc l r = e_tuple ~loc [ l; r ]
 
 let e_record_ez ~loc (lst : (string * expr) list) =
   e_record_pun ~loc
@@ -337,16 +339,12 @@ let tv__type_ ~loc () : ty_expr =
 
 
 let t__type_ ~loc t : ty_expr =
-  t_app
-    ~loc
-    { constr = tv__type_ ~loc (); type_args = Simple_utils.List.Ne.of_list [ t ] }
+  t_app ~loc { constr = tv__type_ ~loc (); type_args = Nonempty_list.singleton t }
   [@@map _type_, ("list", "set", "contract", "option")]
 
 
 let t__type_ ~loc t1 t2 : ty_expr =
-  t_app
-    ~loc
-    { constr = tv__type_ ~loc (); type_args = Simple_utils.List.Ne.of_list [ t1; t2 ] }
+  t_app ~loc { constr = tv__type_ ~loc (); type_args = [ t1; t2 ] }
   [@@map _type_, "map"]
 
 
@@ -382,13 +380,13 @@ let t_fun_of_list ~loc (lst : ty_expr list) =
 
 let e_type_abstract_ez ty_params init =
   let loc = get_e_loc init in
-  List.Ne.fold_right ty_params ~init ~f:(fun type_binder result ->
+  Nonempty_list.fold_right ty_params ~init ~f:(fun type_binder result ->
       e_type_abstraction ~loc Type_abstraction.{ type_binder; result })
 
 
 let t_type_forall_ez ty_params init =
   let loc = get_t_loc init in
-  List.Ne.fold_right ty_params ~init ~f:(fun ty_binder type_ ->
+  Nonempty_list.fold_right ty_params ~init ~f:(fun ty_binder type_ ->
       t_for_all ~loc Abstraction.{ ty_binder; kind = Type; type_ })
 
 
@@ -433,15 +431,18 @@ let expr_of_pattern_opt (p : pattern) : expr option =
       let%bind e = e in
       return @@ e_annot ~loc (e, t)
     | P_literal l -> return @@ e_literal ~loc l
-    | P_tuple_with_ellipsis (_ :: _ as l)
+    | P_tuple_with_ellipsis (hd :: tl as l)
       when List.for_all ~f:(fun { ellipsis; pattern = _ } -> not ellipsis) l ->
-      let exprs = List.map ~f:(fun { ellipsis = _; pattern } -> pattern) l in
-      let%bind exprs = Option.all exprs in
-      let exprs = List.Ne.of_list exprs in
+      let f { ellipsis = _; pattern } = pattern in
+      let hd, tl = f hd, List.map ~f tl in
+      let%bind tl = Option.all tl in
+      let%bind hd = hd in
+      let exprs : expr Nonempty_list.t = hd :: tl in
       return @@ e_tuple ~loc exprs
-    | P_tuple (_ :: _ as l) ->
-      let%bind exprs = Option.all l in
-      let exprs = List.Ne.of_list exprs in
+    | P_tuple (hd :: tl) ->
+      let%bind tl = Option.all tl in
+      let%bind hd = hd in
+      let exprs : expr Nonempty_list.t = hd :: tl in
       return @@ e_tuple ~loc exprs
     | _ -> None
   in

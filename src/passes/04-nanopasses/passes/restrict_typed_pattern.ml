@@ -1,14 +1,25 @@
-open Ast_unified
-open Pass_type
-open Simple_utils.Trace
-open Errors
-module Location = Simple_utils.Location
-
 (* note: As we do not support typed pattern in the checker yet.
   this pass aims to only restrict them to typed variable pattern
   The type is ignored when non-propagatable
-  *)
+*)
+
+open Core
+open Ast_unified
+open Pass_type
+open Errors
+module Trace = Simple_utils.Trace
+module Location = Simple_utils.Location
+module Ligo_option = Simple_utils.Ligo_option
 include Flag.No_arg ()
+
+(* Utilities *)
+
+let zip_opt a b =
+  let open List in
+  match zip a b with
+  | Or_unequal_lengths.Ok x -> Some x
+  | Or_unequal_lengths.Unequal_lengths -> None
+
 
 let name = __MODULE__
 
@@ -18,6 +29,8 @@ let annot_if_pvar : ty_expr -> pattern -> pattern =
   | Some x -> p_var_typed ~loc:(get_p_loc p) ty x
   | None -> p
 
+
+(* Main *)
 
 let compile ~raise:_ =
   let pattern : _ pattern_ -> pattern =
@@ -33,39 +46,40 @@ let compile ~raise:_ =
       | P_var x -> p_var_typed ~loc ty x
       | P_variant (label, psum) ->
         let p_typed_opt =
-          let open Simple_utils.Option in
+          let open Ligo_option in
           let* tys, _ = get_t_sum_raw ty in
           let* ty = Non_linear_rows.find_ty tys label in
           let* ty in
           let* psum in
-          return @@ annot_if_pvar ty psum
+          Option.return @@ annot_if_pvar ty psum
         in
         p_variant ~loc label p_typed_opt
       | P_tuple ptup ->
         let p_typed_opt =
-          let open Simple_utils.Option in
+          let open Ligo_option in
           let* ty_opts = get_t_record_raw ty in
           let* tys = Option.all (Non_linear_rows.get_tys ty_opts) in
-          let* pty = List.zip_opt tys ptup in
-          return @@ List.map ~f:(fun (ty, p) -> annot_if_pvar ty p) pty
+          let* pty = zip_opt tys ptup in
+          Option.return @@ List.map ~f:(fun (ty, p) -> annot_if_pvar ty p) pty
         in
         Option.value_map p_typed_opt ~default:p' ~f:(fun lst -> p_tuple ~loc lst)
       | P_tuple_with_ellipsis ptup ->
         let p_typed_opt =
-          let open Simple_utils.Option in
+          let open Ligo_option in
           let* ty_opts = get_t_record_raw ty in
           let* tys = Option.all (Non_linear_rows.get_tys ty_opts) in
-          let* pty = List.zip_opt tys ptup in
-          return @@ List.map ~f:(fun (ty, { pattern; _ }) -> annot_if_pvar ty pattern) pty
+          let* pty = zip_opt tys ptup in
+          Option.return
+          @@ List.map ~f:(fun (ty, { pattern; _ }) -> annot_if_pvar ty pattern) pty
         in
         Option.value_map p_typed_opt ~default:p' ~f:(fun lst -> p_tuple ~loc lst)
       | P_pun_record prec ->
         let p_typed_opt =
-          let open Simple_utils.Option in
+          let open Ligo_option in
           let* ty_opts = get_t_record_raw ty in
           let* tys = Option.all @@ Non_linear_rows.get_tys ty_opts in
-          let* pty = List.zip_opt tys prec in
-          return
+          let* pty = zip_opt tys prec in
+          Option.return
           @@ List.map pty ~f:(fun (ty, field) ->
                  Field.map Fun.id (fun p -> annot_if_pvar ty p) field)
         in
@@ -93,7 +107,7 @@ let decompile ~raise:_ =
   Fold { idle_fold with pattern }
 
 
-let reduction ~raise =
+let reduction ~(raise : _ Trace.raise) =
   { Iter.defaults with
     pattern =
       (function

@@ -1,12 +1,12 @@
 open Ast_unified
 open Pass_type
-open Simple_utils.Trace
 open Errors
 open Unit_test_helpers
 module Location = Simple_utils.Location
+module Trace = Simple_utils.Trace
+include Flag.No_arg ()
 
 (* Upon exported declaration 'export', attribute "public" must be added *)
-include Flag.No_arg ()
 
 let compile ~raise:_ =
   (* given a declaration, we extract all visibility attributes (in reverse order) *)
@@ -67,7 +67,7 @@ let decompile ~raise:_ =
   Fold { idle_fold with declaration }
 
 
-let reduction ~raise =
+let reduction ~(raise : _ Trace.raise) =
   { Iter.defaults with
     declaration =
       (function

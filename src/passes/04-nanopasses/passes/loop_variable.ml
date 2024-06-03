@@ -1,12 +1,11 @@
 open Ast_unified
 open Pass_type
-open Simple_utils.Trace
-open Simple_utils
 open Errors
+module Trace = Simple_utils.Trace
 module Location = Simple_utils.Location
 include Flag.No_arg ()
 
-let compile ~raise =
+let compile ~(raise : _ Trace.raise) =
   let instruction
       : (instruction, expr, pattern, statement, block) instruction_ -> instruction
     =
@@ -29,7 +28,7 @@ let compile ~raise =
           (match index_kind with
           | `Let ->
             let let_rhs =
-              trace_option ~raise (unsupported_pattern_loop loc)
+              Trace.trace_option ~raise (unsupported_pattern_loop loc)
               @@ Combinators.expr_of_pattern_opt index
             in
             let extra =
@@ -37,8 +36,8 @@ let compile ~raise =
                 ~loc
                 (d_var ~loc { type_params = None; pattern; rhs_type = None; let_rhs })
             in
-            List.Ne.(cons extra (singleton for_stmt))
-          | `Const -> List.Ne.singleton for_stmt)
+            Nonempty_list.[ extra; for_stmt ]
+          | `Const -> Nonempty_list.[ for_stmt ])
       in
       i_for_in ~loc (ForAny { pattern; collection = expr; block })
     | x -> make_i ~loc x
@@ -46,7 +45,7 @@ let compile ~raise =
   Fold { idle_fold with instruction }
 
 
-let reduction ~raise =
+let reduction ~(raise : _ Trace.raise) =
   { Iter.defaults with
     instruction =
       (function

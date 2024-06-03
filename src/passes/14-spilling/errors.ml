@@ -2,7 +2,8 @@ module Var = Simple_utils.Var
 module Tree = Simple_utils.Tree
 module Snippet = Simple_utils.Snippet
 module Location = Simple_utils.Location
-open Simple_utils.Display
+module Display = Simple_utils.Display
+module Ligo_Error = Simple_utils.Error
 open Ligo_prim
 
 type spilling_error =
@@ -27,7 +28,7 @@ let corner_case_message () =
 
 
 let error_ppformat
-    :  display_format:string display_format -> no_colour:bool -> Format.formatter
+    :  display_format:string Display.display_format -> no_colour:bool -> Format.formatter
     -> spilling_error -> unit
   =
  fun ~display_format ~no_colour f a ->
@@ -101,9 +102,9 @@ let error_ppformat
         (printable (fun s -> s) (strip_locations code)))
 
 
-let error_json : spilling_error -> Simple_utils.Error.t =
+let error_json : spilling_error -> Ligo_Error.t =
  fun e ->
-  let open Simple_utils.Error in
+  let open Ligo_Error in
   match e with
   | `Spilling_corner_case (loc, desc) ->
     let message =

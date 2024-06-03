@@ -1,10 +1,13 @@
-open Simple_utils
+open Core
+module Ligo_fun = Simple_utils.Ligo_fun
+
+let ( <@ ) = Ligo_fun.( <@ )
 
 (** A rose tree is a tree where each node has an arbitrary amount of children (zero or
     more). This implementation is a bit unconventional in the sense that each node may
     hold one or more elements. Those are the elements that compared as equal by
     [forest_of_list], which will be grouped together. *)
-type 'a tree = Tree of 'a List.Ne.t * 'a forest
+type 'a tree = Tree of 'a Nonempty_list.t * 'a forest
 
 (** A rose forest is nothing more than a list of rose trees. *)
 and 'a forest = 'a tree list
@@ -16,20 +19,17 @@ let rec pp_tree : 'a Fmt.t -> 'a tree Fmt.t =
     ppf
     "Tree (%a, %a)"
     Fmt.Dump.(list pp_elt)
-    (List.Ne.to_list parent)
+    (Nonempty_list.to_list parent)
     (pp_forest pp_elt)
     children
-
 
 (** Pretty print a rose forest for debugging. *)
 and pp_forest : 'a Fmt.t -> 'a forest Fmt.t =
  fun pp_elt ppf forest -> Fmt.Dump.(list (pp_tree pp_elt)) ppf forest
 
-
 (** Apply [f] to every element of the tree. *)
 let rec map_tree ~(f : 'a -> 'b) (Tree (parent, children) : 'a tree) : 'b tree =
-  Tree (List.Ne.map f parent, map_forest ~f children)
-
+  Tree (Nonempty_list.map ~f parent, map_forest ~f children)
 
 (** Apply [f] to every element of the forest. *)
 and map_forest ~(f : 'a -> 'b) : 'a forest -> 'b forest = List.map ~f:(map_tree ~f)
@@ -51,31 +51,28 @@ and map_forest ~(f : 'a -> 'b) : 'a forest -> 'b forest = List.map ~f:(map_tree 
 let forest_of_list ~(compare : 'a -> 'a -> int) ~(intersects : 'a -> 'a -> bool)
     : 'a list -> 'a forest
   =
-  let ( <@ ) = Simple_utils.Function.( <@ ) in
-  let rec group_by_head : 'a list -> ('a List.Ne.t * 'a list) list = function
+  let rec group_by_head : 'a list -> ('a Nonempty_list.t * 'a list) list = function
     | [] -> []
     | hd :: tl ->
       let inside, outside = List.split_while ~f:(intersects hd) tl in
       let equal, not_equal = List.split_while ~f:(Int.equal 0 <@ compare hd) inside in
-      ((hd, equal), not_equal) :: group_by_head outside
+      (hd :: equal, not_equal) :: group_by_head outside
   in
   let rec go elts =
     List.map (group_by_head elts) ~f:(fun (max, inner) -> Tree (max, go inner))
   in
   go <@ List.sort ~compare
 
-
 (** Filters the definition hierarchy, but doesn't visit inner children in case the
     predicate failed for all of the parents. *)
 let rec filter_top_down : f:('a -> bool) -> 'a forest -> 'a forest =
  fun ~f -> function
   | [] -> []
-  | Tree ((parent, parents), children) :: ts ->
+  | Tree (parent :: parents, children) :: ts ->
     let ts = filter_top_down ~f ts in
     (match List.filter ~f (parent :: parents) with
     | [] -> ts
-    | parent :: parents -> Tree ((parent, parents), filter_top_down ~f children) :: ts)
-
+    | parent :: parents -> Tree (parent :: parents, filter_top_down ~f children) :: ts)
 
 let%expect_test "Creates a rose forest out of ranges" =
   (*      0-10

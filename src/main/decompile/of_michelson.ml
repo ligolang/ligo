@@ -1,18 +1,19 @@
 module Formatter = Formatter
 open Main_errors
-open Simple_utils.Trace
-open Simple_utils.Runned_result
+module Trace = Simple_utils.Trace
+module Runned_result = Simple_utils.Runned_result
 
 let decompile_value ~raise (output_type : Ast_expanded.type_expression) (ty, value) =
   let mini_c =
-    trace ~raise main_decompile_michelson @@ Stacking.Decompiler.decompile_value ty value
+    Trace.trace ~raise main_decompile_michelson
+    @@ Stacking.Decompiler.decompile_value ty value
   in
   let aggregated =
-    trace ~raise main_decompile_mini_c @@ Spilling.decompile mini_c output_type
+    Trace.trace ~raise main_decompile_mini_c @@ Spilling.decompile mini_c output_type
   in
   let pat = Expansion.decompile aggregated in
   let typed = Aggregation.decompile pat in
-  let core = trace ~raise checking_tracer @@ Checking.untype_expression typed in
+  let core = Trace.trace ~raise checking_tracer @@ Checking.untype_expression typed in
   core
 
 
@@ -24,11 +25,12 @@ let decompile_value_from_contract_execution
     (output_type : Ast_expanded.type_expression)
     runned_result
   =
+  let open Runned_result in
   match runned_result with
   | Fail s -> Fail s
   | Success ex_ty_value ->
     let Ligo_prim.Arrow.{ type1 = _; type2 = return_type; param_names = _ } =
-      trace_option ~raise main_entrypoint_not_a_function
+      Trace.trace_option ~raise main_entrypoint_not_a_function
       @@ Ast_expanded.get_t_arrow output_type
     in
     let decompiled_value = decompile_value ~raise return_type ex_ty_value in
@@ -36,6 +38,7 @@ let decompile_value_from_contract_execution
 
 
 let decompile_expression ~raise (type_value : Ast_expanded.type_expression) runned_result =
+  let open Runned_result in
   match runned_result with
   | Fail s -> Fail s
   | Success ex_ty_value ->

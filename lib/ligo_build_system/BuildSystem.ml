@@ -3,7 +3,7 @@ module Errors = Errors
 module To_yojson = To_yojson
 module Formatter = Formatter
 include Types
-module List = Simple_utils.List
+open Core
 
 module Source_input = struct
   type file_name = string

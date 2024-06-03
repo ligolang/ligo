@@ -5,7 +5,7 @@
 module Region      = Simple_utils.Region
 module Trace       = Simple_utils.Trace
 module Lexbuf      = Simple_utils.Lexbuf
-module Unit        = LexerLib.Unit
+module LexUnit     = LexerLib.LexUnit
 module Config      = Preprocessor.Config
 module type PARSER = ParserLib.LowAPI.PARSER
 
@@ -58,7 +58,7 @@ module MakeParser
          (Config      : Config.S)
          (Token       : Token.S)
          (ParErr      : PAR_ERR)
-         (UnitPasses  : Pipeline.PASSES with type item = Token.t Unit.t)
+         (UnitPasses  : Pipeline.PASSES with type item = Token.t LexUnit.t)
          (TokenPasses : Pipeline.PASSES with type item = Token.t)
          (CST         : sig type tree end)
          (Parser      : PARSER with type token = Token.t
@@ -163,7 +163,7 @@ module MakeTwoParsers
          (Config      : Config.S)
          (Token       : Token.S)
          (ParErr      : PAR_ERR)
-         (UnitPasses  : Pipeline.PASSES with type item = Token.t Unit.t)
+         (UnitPasses  : Pipeline.PASSES with type item = Token.t LexUnit.t)
          (TokenPasses : Pipeline.PASSES with type item = Token.t)
          (CST         : sig type t type expr type type_expr end)
          (Parser      : LIGO_PARSER with type token = Token.t

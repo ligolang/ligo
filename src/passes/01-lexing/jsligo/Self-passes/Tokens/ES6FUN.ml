@@ -5,34 +5,34 @@
 
 module Region = Simple_utils.Region
 module Std    = Simple_utils.Std
-module Utils  = Simple_utils.Utils
+module Ne     = Nonempty_list
 
 (* Utilities *)
 
 type tokens = Token.t list
 
 type state = {
-  prefix : tokens;             (* Tokens up to "(" excluded.     *)
-  params : Token.t Utils.nseq; (* Tokens from "(" included.      *)
-  depth  : int                 (* Nesting of arrays and objects. *)
+  prefix : tokens;       (* Tokens up to "(" excluded.     *)
+  params : Token.t Ne.t; (* Tokens from "(" included.      *)
+  depth  : int           (* Nesting of arrays and objects. *)
 }
 
 let commit state =
-  let previous, rest = state.params
+  let previous :: rest = state.params
   in previous, rest @ state.prefix
 
 let return state =
-  List.rev (Utils.nseq_to_list state.params @ state.prefix)
+  List.rev (Ne.to_list state.params @ state.prefix)
 
 let mk_fun state =
   let {prefix; params; _} = state in
-  let previous, rest = params in
+  let previous :: rest = params in
   let es6fun = Token.(mk_ES6FUN (to_region previous))
   in previous, rest @ es6fun :: prefix
 
 let init_state acc previous current = {
   prefix = previous :: acc;
-  params = current, [];
+  params = Ne.singleton current;
   depth  = 0
 }
 
@@ -40,7 +40,7 @@ let pop  state = {state with depth = max 0 (state.depth - 1)}
 let push state = {state with depth = state.depth + 1}
 
 let shift token state =
-  {state with params = Utils.nseq_cons token state.params}
+  {state with params = Ne.cons token state.params}
 
 let rec scan (previous, acc) current tokens =
   let open Token in

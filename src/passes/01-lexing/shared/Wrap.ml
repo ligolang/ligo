@@ -74,3 +74,13 @@ let wrap ?(attributes=[]) ?directive ?comment ?line_com payload region =
 let make = wrap
 
 let ghost payload = wrap payload Region.ghost
+
+(* Conversions *)
+
+type json = Yojson.Safe.t
+
+let yojson_of_wrap f (wrapped : 'a wrap) : json =
+  `Assoc [("payload", f wrapped#payload);
+          ("region", Region.to_yojson wrapped#region)]
+
+let yojson_of_t = yojson_of_wrap

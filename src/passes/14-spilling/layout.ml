@@ -1,25 +1,10 @@
 open Ligo_prim
-open Errors
-open Simple_utils.Trace
-module Append_tree = Tree.Append
+module Trace = Simple_utils.Trace
+module Location = Simple_utils.Location
+module Append_tree = Errors.Tree.Append
 module I = Ast_expanded
 module O = Mini_c
 include Layout
-
-(* [comb_or] creates an `or` type tree from the list of annotated types [lst] 
-   `[ a ; b ; c ] => T_or (a, T_or (b,c))`
-*)
-let comb_or ?source_type lst =
-  let ne_lst = Simple_utils.List.Ne.of_list lst in
-  let rec aux lst =
-    match lst with
-    | last, [] -> last
-    | hd, tl ->
-      let rest = aux (Simple_utils.List.Ne.of_list tl) in
-      None, O.Expression.make_t ?source_type (T_or (hd, rest))
-  in
-  snd (aux ne_lst)
-
 
 (* Find actual annot to use on Michelson type *)
 let actual_annot (annot : string option) (label : Label.t) =
@@ -45,13 +30,17 @@ let actual_annot (annot : string option) (label : Label.t) =
 
 (* [from_layout] [f] [field] [layout] creates a type from [fields] which
    structure follows the one given by [layout].
-  
+
    [f] defines the structure of the Inner layout case, it could define
    any type structure but will typically be used to create a pair/or comb
 *)
 let from_layout
     : type a.
-      raise:_ -> ((string option * a) list -> a) -> a Record.t -> Ligo_prim.Layout.t -> a
+      raise:_ Trace.raise
+      -> ((string option * a) Nonempty_list.t -> a)
+      -> a Record.t
+      -> Ligo_prim.Layout.t
+      -> a
   =
  fun ~raise f fields layout ->
   let annot_layout =
@@ -60,23 +49,39 @@ let from_layout
       layout
   in
   let rec aux = function
-    | Layout.Inner [] -> raise.error (corner_case ~loc:__LOC__ "t_record empty")
-    | Inner lst -> None, f (List.map ~f:aux lst)
+    | Layout.Inner [] -> raise.error (Errors.corner_case ~loc:__LOC__ "t_record empty")
+    | Inner (hd :: tl) -> None, f (Nonempty_list.map ~f:aux (hd :: tl))
     | Field t -> t
   in
   snd @@ aux annot_layout
 
 
+(* [comb_or] creates an `or` type tree from the list of annotated types [lst]
+   `[ a ; b ; c ] => T_or (a, T_or (b,c))`
+*)
+
+let comb_or ?source_type (lst : _ Nonempty_list.t) =
+  let rec aux : _ Nonempty_list.t -> _ = function
+    | [ last ] -> last
+    | x :: y :: l ->
+      let rest = aux Nonempty_list.(y :: l) in
+      None, O.Expression.make_t ?source_type (T_or (x, rest))
+  in
+  snd (aux lst)
+
+
 (* [t_sum] and [t_record] are the specialized version of [t_layouted_type]
    for combs *)
+
 let t_sum ?source_type = from_layout (comb_or ?source_type)
 
 let t_record ?source_type =
-  from_layout (fun lst -> O.Expression.make_t ?source_type (T_tuple lst))
+  from_layout (fun (hd :: tl) -> O.Expression.make_t ?source_type (T_tuple (hd :: tl)))
 
 
 let record_to_pairs ~raise ~source_type return =
-  from_layout ~raise (fun lst ->
+  from_layout ~raise (fun (hd :: tl) ->
+      let lst = hd :: tl in
       let tv =
         let tys =
           List.map ~f:(fun (ann, (e : O.expression)) -> ann, e.type_expression) lst
@@ -195,18 +200,19 @@ type variant_tree =
 
 and variant_pair = variant_tree * Mini_c.type_expression
 
-let match_variant_to_tree ~raise ~layout ty : variant_pair =
+let match_variant_to_tree ~(raise : _ Trace.raise) ~layout ty : variant_pair =
   let layout = Layout.to_binary layout in
   let rec aux t ty =
     match t with
     | Leaf field -> `Leaf field.name, ty
     | Node (l, r) ->
       (match Mini_c.get_t_or ty with
-      | None -> raise.error (corner_case ~loc:__LOC__ "variant not translated to or")
+      | None ->
+        raise.error (Errors.corner_case ~loc:__LOC__ "variant not translated to or")
       | Some (lty, rty) ->
         let lt = aux l lty in
         let rt = aux r rty in
         `Node (lt, rt), ty)
-    | Empty -> raise.error (corner_case ~loc:__LOC__ "empty variant")
+    | Empty -> raise.error (Errors.corner_case ~loc:__LOC__ "empty variant")
   in
   aux layout ty

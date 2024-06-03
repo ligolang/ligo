@@ -1,10 +1,10 @@
 module I = Mini_c
 module O = Ligo_coq_ocaml.Compiler
 module Micheline = Tezos_micheline.Micheline
+module Trace = Simple_utils.Trace
 module Location = Simple_utils.Location
-module List = Simple_utils.List
 module Ligo_string = Simple_utils.Ligo_string
-module Option = Simple_utils.Option
+module Ligo_option = Simple_utils.Ligo_option
 module Var = Ligo_prim.Value_var
 module Errors = Errors
 
@@ -472,7 +472,7 @@ and translate_args ~raise (arguments : I.expression list) env : _ O.args =
 
 
 and translate_constant
-    ~raise
+    ~(raise : _ Trace.raise)
     (meta : meta)
     (expr : I.constant)
     (ty : I.type_expression)
@@ -550,10 +550,10 @@ and translate_constant
       let* a = Mini_c.get_t_set ty in
       return (Type_args (None, [ translate_type a ]), expr.arguments)
     | C_MAP_EMPTY | C_BIG_MAP_EMPTY ->
-      let* a, b = Option.(map_pair_or (Mini_c.get_t_map, Mini_c.get_t_big_map) ty) in
+      let* a, b = Ligo_option.(map_pair_or (Mini_c.get_t_map, Mini_c.get_t_big_map) ty) in
       return (Type_args (None, [ translate_type a; translate_type b ]), expr.arguments)
     | C_MAP_REMOVE ->
-      let* _, b = Option.(map_pair_or (Mini_c.get_t_map, Mini_c.get_t_big_map) ty) in
+      let* _, b = Ligo_option.(map_pair_or (Mini_c.get_t_map, Mini_c.get_t_big_map) ty) in
       return (Type_args (None, [ translate_type b ]), expr.arguments)
     (* TODO handle CREATE_CONTRACT sooner *)
     (* | C_CREATE_CONTRACT -> *)
@@ -589,9 +589,7 @@ and translate_constant
           x
       ]
     , arguments )
-  | None ->
-    let open Simple_utils.Trace in
-    raise.error (Errors.unsupported_primitive expr.cons_name)
+  | None -> raise.error (Errors.unsupported_primitive expr.cons_name)
 
 
 and translate_closed_function

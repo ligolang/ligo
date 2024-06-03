@@ -1,13 +1,15 @@
 open Ast_unified
 open Pass_type
-open Simple_utils.Trace
-open Simple_utils.Function
-open Simple_utils
 open Errors
+module Trace = Simple_utils.Trace
+module Ne_list = Simple_utils.Ne_list
 module Location = Simple_utils.Location
+module Ligo_fun = Simple_utils.Ligo_fun
+include Flag.No_arg ()
+
+let ( <@ ) = Ligo_fun.( <@ )
 
 (* Reduce the switch instruction to a series of if statements *)
-include Flag.No_arg ()
 
 let name = __MODULE__
 
@@ -22,7 +24,7 @@ let loc_of_statement_list lst =
   List.fold ~init:Location.dummy ~f:Location.cover (List.map ~f:get_s_loc lst)
 
 
-let split_break stmts : statement list * bool =
+let split_break (stmts : statement list) : statement list * bool =
   let f x =
     match get_s x with
     | S_instr x -> (not <@ is_i_break) x
@@ -48,7 +50,8 @@ let split_break stmts : statement list * bool =
             | _ -> false)
         ; block =
             (function
-            | { wrap_content; _ } -> List.exists (List.Ne.to_list wrap_content) ~f:Fun.id)
+            | { wrap_content; _ } ->
+              List.exists (Nonempty_list.to_list wrap_content) ~f:Fun.id)
         ; expr = (fun _ -> ())
         ; ty_expr = (fun _ -> ())
         ; pattern = (fun _ -> ())
@@ -60,12 +63,12 @@ let split_break stmts : statement list * bool =
         ; sig_entry = (fun _ -> ())
         }
     in
-    if List.is_empty stmts
-    then false
-    else
+    match stmts with
+    | [] -> false
+    | hd :: tl ->
       Catamorphism.cata_block
         ~f:folder
-        (make_b ~loc:Location.generated (List.Ne.of_list stmts))
+        (make_b ~loc:Location.generated Ne_list.(hd :: tl))
   in
   bef, has_break
 
@@ -93,7 +96,7 @@ let group_cases (cases : (expr, block) Switch.switch_case list) : group list =
         | { expr = value; case_body = None } :: tl -> agg (value :: values, stmts) tl
         | { expr = value; case_body = Some block } :: tl ->
           if List.is_empty tl
-          then value :: values, List.Ne.to_list (get_b block)
+          then value :: values, Nonempty_list.to_list (get_b block)
           else assert false
         | [] -> values, stmts
       in
@@ -117,28 +120,28 @@ let until_break ~loc ft block =
 
 let default_stmt ~loc = i_expr ~loc (e_unit ~loc)
 
-let test_clause_of_statements ~loc stmts : _ Test_clause.t =
-  match List.Ne.of_list_opt stmts with
-  | Some (one, []) ->
+let test_clause_of_statements ~loc (stmts : statement list) : _ Test_clause.t =
+  match Ne_list.of_list_opt stmts with
+  | Some [ one ] ->
     (match get_s_instr one with
     | Some i -> ClauseInstr i
-    | None -> ClauseBlock (block_of_statements (one, [])))
+    | None -> ClauseBlock (block_of_statements [ one ]))
   | Some lst -> ClauseBlock (block_of_statements lst)
   | None -> ClauseInstr (default_stmt ~loc)
 
 
-let switch_to_decl loc Switch.{ subject; cases } =
+let switch_to_decl loc Switch.{ subject; cases } : statement Nonempty_list.t =
   let cases, default_stmts_opt =
     match cases with
     | Switch.AllCases (cases, default) ->
       let default_stmts_opt =
         Option.value_map default ~default:None ~f:(fun x ->
-            Some (Option.value_map x ~default:[] ~f:(List.Ne.to_list <@ get_b)))
+            Some (Option.value_map x ~default:[] ~f:(Nonempty_list.to_list <@ get_b)))
       in
-      List.Ne.to_list cases, default_stmts_opt
+      Nonempty_list.to_list cases, default_stmts_opt
     | Switch.Default default ->
       let default_stmts_opt =
-        Option.value_map default ~default:[] ~f:(List.Ne.to_list <@ get_b)
+        Option.value_map default ~default:[] ~f:(Nonempty_list.to_list <@ get_b)
       in
       [], Some default_stmts_opt
   in
@@ -187,7 +190,7 @@ let switch_to_decl loc Switch.{ subject; cases } =
         test_var, [ test_decl; cond ])
       cases
   in
-  let default_statement =
+  let default_statement : statement list =
     (* if present, the default case is executed under the following condition:
       - always if there is no other case,
       - `ft || !(g1 || .. || gN)` otherwise
@@ -205,19 +208,18 @@ let switch_to_decl loc Switch.{ subject; cases } =
           in
           [ s_instr ~loc @@ i_cond ~loc { test; ifso; ifnot = None } ])
   in
-  let case_statements =
-    List.concat @@ ([ subject_var_decl; ft_decl ] :: List.map ~f:snd grouped_switch_cases)
+  let case_statements : statement list =
+    ft_decl :: List.concat_map ~f:snd grouped_switch_cases
   in
-  case_statements @ default_statement
+  let tail = case_statements @ default_statement in
+  Nonempty_list.(subject_var_decl :: tail)
 
 
 let reduce_clause : _ Test_clause.t -> _ Test_clause.t = function
   | ClauseBlock b -> ClauseBlock b
   | ClauseInstr i ->
     (match get_i_switch i with
-    | Some sw ->
-      ClauseBlock
-        (block_of_statements @@ List.Ne.of_list @@ switch_to_decl (get_i_loc i) sw)
+    | Some sw -> ClauseBlock (block_of_statements @@ switch_to_decl (get_i_loc i) sw)
     | None -> ClauseInstr i)
 
 
@@ -226,9 +228,9 @@ let compile ~raise:_ =
    fun block ->
     let loc = Location.get_location block in
     let lst = Location.unwrap block in
-    let expanded =
-      List.Ne.map
-        (fun stmt ->
+    let expanded : statement Ne_list.t Ne_list.t =
+      Nonempty_list.map
+        ~f:(fun stmt ->
           match get_s stmt with
           | S_instr i ->
             (match get_i i with
@@ -246,7 +248,9 @@ let compile ~raise:_ =
               [ stmt ]
             | I_case ({ cases; _ } as case) ->
               let cases =
-                List.Ne.map (fun x -> Case.{ x with rhs = reduce_clause x.rhs }) cases
+                Nonempty_list.map
+                  ~f:(fun x -> Case.{ x with rhs = reduce_clause x.rhs })
+                  cases
               in
               let stmt = s_instr ~loc @@ i_case ~loc:(get_i_loc i) { case with cases } in
               [ stmt ]
@@ -254,12 +258,12 @@ let compile ~raise:_ =
           | _ -> [ stmt ])
         lst
     in
-    make_b ~loc (List.Ne.of_list (List.Ne.concat expanded))
+    make_b ~loc (Nonempty_list.concat expanded)
   in
   Fold { idle_fold with block }
 
 
-let reduction ~raise =
+let reduction ~(raise : _ Trace.raise) =
   { Iter.defaults with
     instruction =
       (function

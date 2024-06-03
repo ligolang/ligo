@@ -1,13 +1,13 @@
 open Ast_unified
 open Pass_type
-open Simple_utils.Trace
 open Errors
+module Trace = Simple_utils.Trace
 module Location = Simple_utils.Location
-
-(* Throw errors on currently unsupported patterns (literals, rests) *)
 include Flag.No_arg ()
 
-let compile ~raise =
+(* Throw errors on currently unsupported patterns (literals, rests) *)
+
+let compile ~(raise : _ Trace.raise) =
   let pattern : _ pattern_ -> pattern = function
     | { wrap_content = P_unit; location = loc } ->
       (* For some reason we need to annotate unit pattern with unit type.

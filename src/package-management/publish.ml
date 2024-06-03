@@ -284,7 +284,7 @@ let publish ~ligo_registry ~ligorc_path ~project_root ~dry_run =
         ~bugs
     in
     let version_str = Semver.to_string version in
-    let versions = Map.set SMap.empty ~key:version_str ~data:v in
+    let versions = Map.set String.Map.empty ~key:version_str ~data:v in
     let dist_tags = { latest = version_str } in
     let body =
       PutBody.make

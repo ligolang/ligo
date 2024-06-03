@@ -1,4 +1,5 @@
-open Simple_utils
+module Display = Simple_utils.Display
+module Trace = Simple_utils.Trace
 open Compiler_options
 module Constants = Commands.Constants
 

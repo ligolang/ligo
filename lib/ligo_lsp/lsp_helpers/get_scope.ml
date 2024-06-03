@@ -1,7 +1,7 @@
 open Core
 module Raw_options = Compiler_options.Raw_options
+module Location = Simple_utils.Location
 module Trace = Simple_utils.Trace
-module SMap = Map.Make (String)
 open Scopes.Types
 
 (** Holds data collected from [Scopes] or from [following_passes_diagnostics]. [errors]
@@ -13,7 +13,7 @@ type defs_and_diagnostics =
   ; warnings : Main_warnings.all list
   ; definitions : Def.definitions
   ; potential_tzip16_storages : Ast_typed.expression_variable list
-  ; lambda_types : Ast_typed.ty_expr LMap.t
+  ; lambda_types : Ast_typed.ty_expr Location.Map.t
   }
 
 (** Compiles [code_input] from the source file up to the typed AST, providing all of its
@@ -24,7 +24,7 @@ let with_code_input
           -> syntax:Syntax_types.t
           -> stdlib:Ast_typed.program * Ast_core.program
           -> prg:Ast_core.program
-          -> module_deps:string SMap.t
+          -> module_deps:string String.Map.t
           -> 'a)
     -> raw_options:Raw_options.t -> raise:(Main_errors.all, Main_warnings.all) Trace.raise
     -> code_input:BuildSystem.Source_input.code_input -> 'a
@@ -57,7 +57,7 @@ let with_code_input
       |> Deps_map.to_seq
       |> Seq.fold_left (fun acc (_, (_, _, _, lst)) -> lst :: acc) []
       |> List.concat
-      |> List.fold_left ~init:SMap.empty ~f:(fun acc (file_name, mangled_name) ->
+      |> List.fold_left ~init:String.Map.empty ~f:(fun acc (file_name, mangled_name) ->
              match Map.add ~key:mangled_name ~data:file_name acc with
              | `Duplicate -> acc
              | `Ok added -> added)
@@ -80,7 +80,6 @@ let with_code_input
   in
   f ~options:options.middle_end ~stdlib ~prg ~syntax ~module_deps
 
-
 (** Used by CLI, formats all definitions, errors and warnings and returns strings. *)
 let get_scope_cli_result
     (raw_options : Raw_options.t)
@@ -102,7 +101,6 @@ let get_scope_cli_result
   in
   { v with inlined_scopes = (if defs_only then Lazy.from_val [] else v.inlined_scopes) }
 
-
 (** Internal function used by [get_defs_and_diagnostics] to create [defs_and_diagnostics]
     from that output. Doesn't do much besides deduping diagnostics and wrapping the data
     in the structure. *)
@@ -115,7 +113,6 @@ let make_defs_and_diagnostics
   let definitions = Option.value ~default:{ definitions = [] } defs_opt in
   let potential_tzip16_storages = potential_storage_vars in
   { errors; warnings; definitions; potential_tzip16_storages; lambda_types }
-
 
 (** We want to produce all possible warnings/errors in following passes (everything after checking pass).
     However, aggregation gets rid of unused declarations. Take this contract:
@@ -235,7 +232,6 @@ let make_common_entrypoint
   let contract_sig = { parameter = unit_type; storage = unit_type } in
   [ decl ], ep_expr, sig_items, contract_sig
 
-
 (** Compiles (Ast_typed -> Ast_aggregated -> Ast_expanded -> Mini_c -> Michelson) a
     virtual entry-point that references all other entrypoints in the file with the program
     as a context. This is enough to raise the unused variable warnings, warnings about
@@ -317,7 +313,6 @@ let following_passes_diagnostics
     ~cur_file:path
     prg
 
-
 (** Calculates the [Def.t]s and diagnostics for a given file. [code] is the source code of
     this file. [logger] is a function that will log messages (see
     [Requests.Handler.send_log_msg] for a good choice of logger).
@@ -395,4 +390,4 @@ let get_defs_and_diagnostics
          , storage_vars
          , lambda_types ))
        (fun ~catch e ->
-         Lwt.return (e :: catch.errors (), catch.warnings (), None, [], LMap.empty))
+         Lwt.return (e :: catch.errors (), catch.warnings (), None, [], Location.Map.empty))

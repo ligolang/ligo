@@ -1,3 +1,4 @@
+open Core
 open Ligo_prim
 open Ast_aggregated
 
@@ -9,17 +10,18 @@ open Ast_aggregated
 *)
 
 module V = Value_var
-module M = Simple_utils.Map.Make (V)
+module M = Map.Make (V)
+module Ligo_map = Simple_utils.Ligo_map
 
 (* A map recording if a variable is being used * a list of unused variables. *)
 type defuse = bool M.t * V.t list
 
-let defuse_union (x, a) (y, b) = M.union (fun _ x y -> Some (x || y)) x y, a @ b
+let defuse_union (x, a) (y, b) = Ligo_map.union (fun _ x y -> Some (x || y)) x y, a @ b
 let defuse_neutral = M.empty, []
 let defuse_unions defuse = List.fold_left ~f:defuse_union ~init:(defuse, [])
 
 let replace_opt k x m =
-  Option.value_map ~default:(M.remove k m) ~f:(fun x -> M.add k x m) x
+  Option.value_map ~default:(Map.remove m k) ~f:(fun x -> Map.set m ~key:k ~data:x) x
 
 
 let add_if_not_generated ?forbidden x xs b =
@@ -33,9 +35,9 @@ let add_if_not_generated ?forbidden x xs b =
 
 
 let remove_defined_var_after defuse binder f expr =
-  let old_binder = M.find_opt binder defuse in
-  let defuse, unused = f (M.add binder false defuse) expr in
-  let unused = add_if_not_generated binder unused (M.find binder defuse) in
+  let old_binder = Map.find defuse binder in
+  let defuse, unused = f (Map.set defuse ~key:binder ~data:false) expr in
+  let unused = add_if_not_generated binder unused (Map.find_exn defuse binder) in
   replace_opt binder old_binder defuse, unused
 
 
@@ -46,7 +48,7 @@ let rec defuse_of_expr defuse expr : defuse =
   | E_constructor { element; _ } -> defuse_of_expr defuse element
   | E_constant { arguments; _ } ->
     defuse_unions defuse (List.map ~f:(defuse_of_expr defuse) arguments)
-  | E_variable v -> M.add v true defuse, []
+  | E_variable v -> Map.set defuse ~key:v ~data:true, []
   | E_application { lamb; args } ->
     defuse_union (defuse_of_expr defuse lamb) (defuse_of_expr defuse args)
   | E_lambda l -> defuse_of_lambda defuse l
@@ -71,9 +73,9 @@ let rec defuse_of_expr defuse expr : defuse =
   | E_type_inst { forall; _ } -> defuse_of_expr defuse forall
   | E_assign { binder; expression } ->
     defuse_union
-      (M.add (Binder.get_var binder) true M.empty, [])
+      (Map.set ~key:(Binder.get_var binder) ~data:true M.empty, [])
       (defuse_of_expr defuse expression)
-  | E_deref var -> M.add var true defuse, []
+  | E_deref var -> Map.set ~key:var ~data:true defuse, []
   | E_coerce { anno_expr; _ } -> defuse_of_expr defuse anno_expr
   | E_for { binder; start; final; incr; f_body } ->
     defuse_unions
@@ -100,19 +102,21 @@ and defuse_of_lambda defuse { binder; output_type = _; result } =
 
 
 and defuse_of_binder defuse binder in_ =
-  let old_binder = M.find_opt binder defuse in
-  let defuse, unused = in_ (M.add binder false defuse) in
-  let unused = add_if_not_generated binder unused (M.find binder defuse) in
+  let old_binder = Map.find defuse binder in
+  let defuse, unused = in_ (Map.set ~key:binder ~data:false defuse) in
+  let unused = add_if_not_generated binder unused (Map.find_exn defuse binder) in
   replace_opt binder old_binder defuse, unused
 
 
 and defuse_of_binders defuse binders in_ =
-  let map = List.fold_left ~f:(fun m v -> M.add v false m) ~init:defuse binders in
-  let binders' = List.map ~f:(fun v -> v, M.find_opt v defuse) binders in
+  let map =
+    List.fold_left ~f:(fun m v -> Map.set ~key:v ~data:false m) ~init:defuse binders
+  in
+  let binders' = List.map ~f:(fun v -> v, Map.find defuse v) binders in
   let defuse, unused = in_ map in
   let unused =
     List.fold_left
-      ~f:(fun m v -> add_if_not_generated v m (M.find v defuse))
+      ~f:(fun m v -> add_if_not_generated v m (Map.find_exn defuse v))
       ~init:unused
       binders
   in
@@ -125,12 +129,14 @@ and defuse_of_binders defuse binders in_ =
 and defuse_of_cases defuse cases =
   List.fold_left cases ~init:(defuse, []) ~f:(fun (defuse, unused_) (pattern, body) ->
       let vars = Pattern.binders pattern |> List.rev_map ~f:Binder.get_var in
-      let map = List.fold_left ~f:(fun m v -> M.add v false m) ~init:defuse vars in
-      let vars' = List.map ~f:(fun v -> v, M.find_opt v defuse) vars in
+      let map =
+        List.fold_left ~f:(fun m v -> Map.set ~key:v ~data:false m) ~init:defuse vars
+      in
+      let vars' = List.map ~f:(fun v -> v, Map.find defuse v) vars in
       let defuse, unused = defuse_of_expr map body in
       let unused =
         List.fold_left
-          ~f:(fun m v -> add_if_not_generated v m (M.find v defuse))
+          ~f:(fun m v -> add_if_not_generated v m (Map.find_exn defuse v))
           ~init:unused
           vars
       in

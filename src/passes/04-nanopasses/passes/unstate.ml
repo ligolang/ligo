@@ -1,10 +1,13 @@
 open Ast_unified
 open Pass_type
-open Simple_utils.Trace
-open Simple_utils
 open Errors
+module Trace = Simple_utils.Trace
+module Ne_list = Simple_utils.Ne_list
 module Location = Simple_utils.Location
+module Ligo_fun = Simple_utils.Ligo_fun
 include Flag.No_arg ()
+
+let ( <@ ) = Ligo_fun.( <@ )
 
 (* Note 1: interesting, this pass is too verbose because we can't just morph blocks to expressions ..
    which would only be possible if we had "real" nanopass (as in, one type for each intermediary AST)
@@ -53,7 +56,6 @@ module Statement_result = struct
   (* merge two consecutive statement result *)
   let rec merge : t -> t -> t =
    fun bef aft ->
-    let open Simple_utils.Function in
     match bef, aft with
     | Binding a, Binding b -> Binding (a <@ b)
     | Binding a, Return b -> Return (a b)
@@ -62,7 +64,9 @@ module Statement_result = struct
     | Return a, _ -> Return a
 
 
-  let merge_block : t List.Ne.t -> t = fun (hd, tl) -> List.fold ~f:merge ~init:hd tl
+  let merge_block : t Nonempty_list.t -> t =
+   fun (hd :: tl) -> List.fold ~f:merge ~init:hd tl
+
 
   (* morph a statement_result into an expression *)
   let to_expression : t -> expr =
@@ -116,7 +120,7 @@ let rec decl : declaration -> Statement_result.t =
           ~loc
           { is_rec = false
           ; type_params
-          ; lhs = List.Ne.singleton pattern
+          ; lhs = [ pattern ]
           ; rhs_type
           ; rhs = let_rhs
           ; body = x
@@ -128,7 +132,7 @@ let rec decl : declaration -> Statement_result.t =
           ~loc
           { is_rec = false
           ; type_params
-          ; lhs = List.Ne.singleton pattern
+          ; lhs = [ pattern ]
           ; rhs_type
           ; rhs = let_rhs
           ; body = x
@@ -146,7 +150,7 @@ let rec decl : declaration -> Statement_result.t =
           ~loc
           { is_rec
           ; type_params
-          ; lhs = List.Ne.singleton (p_var ~loc:(Variable.get_location fun_name) fun_name)
+          ; lhs = Nonempty_list.[ p_var ~loc:(Variable.get_location fun_name) fun_name ]
           ; rhs_type = None
           ; rhs = e_fun ~loc { type_params; parameters; ret_type; body = return }
           ; body = x
@@ -163,7 +167,7 @@ let rec decl : declaration -> Statement_result.t =
   | D_multi_var _ | D_multi_const _ | D_type_abstraction _ ->
     failwith "removed in previous passes"
   | D_irrefutable_match { pattern; expr } ->
-    let lhs = List.Ne.singleton pattern in
+    let lhs = Nonempty_list.[ pattern ] in
     Binding
       (fun x ->
         e_let_in
@@ -183,10 +187,10 @@ and clause ~raise clause =
   | ClauseInstr instruction -> instr ~raise instruction
   | ClauseBlock block ->
     let block = get_b block in
-    Statement_result.merge_block List.Ne.(map (statement ~raise) block)
+    Statement_result.merge_block (Nonempty_list.map ~f:(statement ~raise) block)
 
 
-and instr ~raise : instruction -> Statement_result.t =
+and instr ~(raise : _ Trace.raise) : instruction -> Statement_result.t =
  fun i ->
   let loc = get_i_loc i in
   match get_i i with
@@ -194,7 +198,9 @@ and instr ~raise : instruction -> Statement_result.t =
     Return (Option.value expr_opt ~default:(e_unit ~loc:Location.generated))
   | I_block block' ->
     let block = get_b block' in
-    (match Statement_result.merge_block (List.Ne.map (statement ~raise) block) with
+    (match
+       Statement_result.merge_block (Nonempty_list.map ~f:(statement ~raise) block)
+     with
     | Binding f ->
       Binding (fun hole -> let_ignore_in (f (e_unit ~loc:Location.generated)) hole)
     | Return _ as res -> res
@@ -222,13 +228,13 @@ and instr ~raise : instruction -> Statement_result.t =
   | I_skip -> Binding Fun.id
   | I_call (f, args) -> Binding (fun x -> let_ignore_in (e_call ~loc f args) x)
   | I_case { expr; disc_label; cases } ->
-    if List.for_all (List.Ne.to_list cases) ~f:(fun x ->
+    if List.for_all (Nonempty_list.to_list cases) ~f:(fun x ->
            Statement_result.is_not_returning (clause ~raise x.rhs))
     then (
       let match_ =
         let cases =
-          List.Ne.map
-            (fun Case.{ pattern; rhs } ->
+          Nonempty_list.map
+            ~f:(fun Case.{ pattern; rhs } ->
               let rhs = Statement_result.to_expression (clause ~raise rhs) in
               Case.{ pattern; rhs })
             cases
@@ -240,8 +246,8 @@ and instr ~raise : instruction -> Statement_result.t =
       Control_flow
         (fun hole ->
           let cases =
-            List.Ne.map
-              (fun Case.{ pattern; rhs } ->
+            Nonempty_list.map
+              ~f:(fun Case.{ pattern; rhs } ->
                 let rhs = Statement_result.merge_flow (clause ~raise rhs) hole in
                 Case.{ pattern; rhs })
               cases
@@ -308,7 +314,7 @@ and instr ~raise : instruction -> Statement_result.t =
 
 and block_to_expression ~raise block =
   Statement_result.(
-    to_expression @@ merge_block (List.Ne.map (statement ~raise) (get_b block)))
+    to_expression @@ merge_block (Nonempty_list.map ~f:(statement ~raise) (get_b block)))
 
 
 and statement ~raise : statement -> Statement_result.t =
@@ -336,9 +342,8 @@ let compile ~raise =
       e_poly_fun ~loc { block_fun with body }
     | E_block_with { block; expr } ->
       let block_with_res =
-        let open List.Ne in
-        let block_res = map (statement ~raise) (get_b block) in
-        append block_res (singleton @@ Statement_result.Return expr)
+        let block_res = Nonempty_list.map ~f:(statement ~raise) (get_b block) in
+        Ne_list.append block_res [ Statement_result.Return expr ]
       in
       let res = Statement_result.(to_expression (merge_block block_with_res)) in
       { fp = { res.fp with location = loc } }
@@ -350,7 +355,7 @@ let compile ~raise =
   Fold { idle_fold with expr }
 
 
-let reduction ~raise =
+let reduction ~(raise : _ Trace.raise) =
   let fail () = raise.error (wrong_reduction __MODULE__) in
   { Iter.defaults with
     instruction = (fun _ -> fail ())

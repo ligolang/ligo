@@ -3,9 +3,11 @@
     or module, and calls [Records] or [Modules]. *)
 
 (* TODO: we should handle field completion using ast_typed rather than scopes *)
+open Core
 open Common
 open Lsp_helpers
 module Utils = Simple_utils.Utils
+module Region = Simple_utils.Region
 module Fold = Cst_shared.Fold
 
 (** A module selection might be a module type at term level, type level, or module level. *)
@@ -83,7 +85,7 @@ module type Compatible_CST = sig
 
   (** Returns a non-empty list containing the dot lexemes and selections of the given
       projection. *)
-  val selections_of_projection : projection -> selection Utils.nseq
+  val selections_of_projection : projection -> selection Nonempty_list.t
 
   (** Returns the field name lexemes from the provided [expr_kind]. *)
   val lexemes_of_module_path
@@ -117,7 +119,6 @@ module C_CameLIGO : Compatible_CST with type cst = Cst_cameligo.CST.t = struct
     | E_Proj proj -> Some proj.value
     | _ -> None
 
-
   let dot_of_selection (dot, _expr) = Some dot
 
   let lexeme_of_selection (_dot, expr) =
@@ -128,17 +129,14 @@ module C_CameLIGO : Compatible_CST with type cst = Cst_cameligo.CST.t = struct
       | Esc name -> Some ("@" ^ name#payload))
     | Component _ -> None
 
-
   let selections_of_projection node =
     let hd, tl = node.field_path in
-    (node.selector, hd), tl
-
+    Ne_list.make (node.selector, hd) tl
 
   let lexemes_of_module_path = function
     | Module_path_expr node -> Utils.nsepseq_to_list node.module_path
     | Module_path_type_expr node -> Utils.nsepseq_to_list node.module_path
     | Module_path_selection node -> Utils.nsepseq_to_list node.module_path
-
 
   let field_of_module_path node = node.field
   let cst_witness = Witness_CameLIGO
@@ -157,11 +155,9 @@ module C_JsLIGO : Compatible_CST with type cst = Cst_jsligo.CST.t = struct
     | E_Proj proj -> Some proj.value
     | _ -> None
 
-
   let dot_of_selection = function
     | PropertyName (dot, _) -> Some dot
     | _ -> None
-
 
   let lexeme_of_selection = function
     | PropertyName (_dot, v) ->
@@ -170,7 +166,6 @@ module C_JsLIGO : Compatible_CST with type cst = Cst_jsligo.CST.t = struct
       | Esc name -> Some ("@" ^ name#payload))
     | PropertyStr _ -> None
     | Component _ -> None
-
 
   let selections_of_projection node = node.property_path
 
@@ -181,7 +176,6 @@ module C_JsLIGO : Compatible_CST with type cst = Cst_jsligo.CST.t = struct
       Utils.nsepseq_to_list node.namespace_path
     | Module_path_selection (node : _ namespace_path) ->
       Utils.nsepseq_to_list node.namespace_path
-
 
   let field_of_module_path node = node.property
   let cst_witness = Witness_JsLIGO
@@ -223,7 +217,6 @@ let smallest_negative_distance_monoid : distance option Cst_shared.Fold.monoid =
           | Greater -> lhs))
   }
 
-
 (** Just like [smallest_negative_distance_monoid], but works on a [completion_distance],
     calculating it for both the [dot] and [lexeme]. *)
 let completion_distance_monoid : completion_distance Cst_shared.Fold.monoid =
@@ -235,7 +228,6 @@ let completion_distance_monoid : completion_distance Cst_shared.Fold.monoid =
         ; lexeme = dist_monoid.append lexeme_lhs lexeme_rhs
         })
   }
-
 
 (** The CST for a record projection or module path might be in a tree structure, which is
     difficult to work with. This data type represents that the structure was flattened
@@ -322,7 +314,7 @@ let get_linearized_path
   let linearize_projection (node : C.projection) : Position.t * lexeme option list =
     ( expr_start @@ C.expr_of_projection node
     , List.take_while
-        (Utils.nseq_to_list @@ C.selections_of_projection node)
+        (Nonempty_list.to_list @@ C.selections_of_projection node)
         ~f:(fun s ->
           match C.dot_of_selection s with
           | None -> false
@@ -405,7 +397,6 @@ let get_linearized_path
       in
       fold_cst None (Fn.const Option.some) instruction cst)
 
-
 (** Attempts to find the linearized record projection or module path for the provided
     input and return completion items from the resolved module or record. Currently just
     works for completing from module names or struct names. *)
@@ -423,7 +414,6 @@ let complete_fields
          | Module (def_scope, module_names_before_cursor) ->
            Modules.module_path_impl ~normalize module_names_before_cursor input def_scope)
   @@ get_linearized_path (module C) input
-
 
 (** Gets completions for record fields and module names for the provided CST and position.
     See [complete_fields] for more information. *)

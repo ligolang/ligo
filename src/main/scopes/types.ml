@@ -1,4 +1,7 @@
+open Core
 open Ligo_prim
+
+let ( <@ ) f g x = f (g x)
 
 (** Indicates that a variable is generated. *)
 let generated_flag = "#?generated"
@@ -19,9 +22,6 @@ let get_mod_binder_name : Module_var.t -> string =
 
 
 module Location = Simple_utils.Location
-module List = Simple_utils.List
-module LSet = Location.Location_set
-module LMap = Location.Location_map
 
 module Uid : sig
   (** A UID uniquely identifies some value, type, module, or label, by using its name and
@@ -155,7 +155,7 @@ type vdef =
   ; range : Location.t (** The range in which this definition's name is declared. *)
   ; decl_range : Location.t (** The range in which this definition is declared. *)
   ; t : type_case (** The type of this definition. *)
-  ; references : LSet.t (** All locations where this definition is referenced. *)
+  ; references : Location.Set.t (** All locations where this definition is referenced. *)
   ; def_type : def_type (** The kind of scope where this is declared. *)
   ; mod_path : Uid.t list (** The module path in which this is declared. *)
   ; attributes : vdef_attributes (** The attributes attached to this definition. *)
@@ -174,7 +174,7 @@ type tdef =
         (** The RHS ([u]) of a type definition [type t = u]. For signatures and
             interfaces, the type might be abstract and have no content, e.g.:
             [module type I = sig type t end], in which case it will be [None]. *)
-  ; references : LSet.t (** All locations where this definition is referenced. *)
+  ; references : Location.Set.t (** All locations where this definition is referenced. *)
   ; def_type : def_type (** The kind of scope where this is declared. *)
   ; mod_path : Uid.t list (** The module path in which this is declared. *)
   ; attributes : tdef_attributes (** The attributes attached to this definition. *)
@@ -225,7 +225,7 @@ type ldef =
   ; uid : Uid.t (** The UID of this definition. *)
   ; range : Location.t (** The range in which this definition's name is declared. *)
   ; decl_range : Location.t (** The range in which this definition is declared. *)
-  ; references : LSet.t (** All locations where this definition is referenced. *)
+  ; references : Location.Set.t (** All locations where this definition is referenced. *)
   ; content : Ast_core.type_expression
         (** The RHS ([t]) of a constructor [C of t] or record field [f : t]. *)
   ; def_type : def_type (** The kind of scope where this is declared. *)
@@ -261,7 +261,7 @@ and mdef =
   ; uid : Uid.t (** The UID of this definition. *)
   ; range : Location.t (** The range in which this definition's name is declared. *)
   ; decl_range : Location.t (** The range in which this definition is declared. *)
-  ; references : LSet.t (** All locations where this definition is referenced. *)
+  ; references : Location.Set.t (** All locations where this definition is referenced. *)
   ; mod_case : mod_case
         (** Whether this definition defines fields or aliases to another [mdef]. *)
   ; def_type : def_type (** The kind of scope where this is declared. *)
@@ -406,7 +406,7 @@ type t =
   ; inlined_scopes : inlined_scopes lazy_t
         (** Scoping result, used by the debugger. It's calculated lazily since this field
             is rarely used. *)
-  ; lambda_types : Ast_typed.ty_expr LMap.t
+  ; lambda_types : Ast_typed.ty_expr Location.Map.t
         (** A map of all labels whose types are functions. *)
   }
 
@@ -420,20 +420,19 @@ let rec flatten_defs : definitions -> def list =
   | Module ({ mod_case = Def d; _ } as mdef) :: defs ->
     (* All definitions are flattened. We're not interested in [Def] mod case. *)
     Module { mdef with mod_case = Def [] }
-    :: List.concat_map
-         ~f:Simple_utils.Function.(flatten_defs <@ wrap_definitions)
-         [ d; defs ]
+    :: List.concat_map ~f:(flatten_defs <@ wrap_definitions) [ d; defs ]
   | def :: defs -> def :: flatten_defs (wrap_definitions defs)
 
 
 (** A map whose keys are [Uid.t]s. *)
 module Uid_map = struct
-  include Simple_utils.Map.Make (Uid)
+  include Map.Make (Uid)
 
   (** Creates a map with all definitions. The same considerations from [flatten_defs]
       apply here. Used by the debugger. *)
   let of_defs_list (definitions : definitions) : def t =
     definitions
     |> flatten_defs
-    |> List.fold_left ~init:empty ~f:(fun acc elt -> add (get_def_uid elt) elt acc)
+    |> List.fold_left ~init:empty ~f:(fun acc elt ->
+           Map.set acc ~key:(get_def_uid elt) ~data:elt)
 end

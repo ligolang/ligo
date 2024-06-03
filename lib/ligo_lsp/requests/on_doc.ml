@@ -1,5 +1,7 @@
+open Core
 open Handler
 open Lsp_helpers
+module Ne_list = Simple_utils.Ne_list
 
 (** Creates a file containing [Project_root.default_project_file_contents] at the provided
     path and notifies the user about its creation. Updates the [Handler]'s
@@ -55,7 +57,6 @@ let create_default_project_file (project_root : Path.t) : unit Handler.t =
           in
           send_message ~type_:Error "Failed to create project file. Check logs."))
 
-
 (** Given the path to some contract, checks whether a project root for it exists, or asks
     the user to create one. Updates the [Handler]'s [last_project_dir] and [mod_res]
     accordingly.
@@ -95,8 +96,7 @@ let detect_or_ask_to_create_project_file (file : Path.t) : unit Handler.t =
                  if List.exists ~f:(Path.equal folder) acc then acc else folder :: acc)
           |> List.map ~f:(Fun.flip String.( ^ ) Filename.dir_sep <@ Path.to_string)
         in
-        let open Simple_utils.List in
-        match Ne.of_list_opt variants with
+        match Ne_list.of_list_opt variants with
         | None -> send_message ~type_:Error "No variants to create `ligo.json`"
         | Some variants ->
           let common_prefix_length =
@@ -104,20 +104,22 @@ let detect_or_ask_to_create_project_file (file : Path.t) : unit Handler.t =
               | (_, false) as acc -> Fun.const acc
               | n, true ->
                 fun x ->
-                  if Ne.fold
-                       (fun acc path ->
+                  if Nonempty_list.fold
+                       ~f:(fun acc path ->
                          acc && String.length path > n && Char.equal (String.get path n) x)
-                       true
+                       ~init:true
                        variants
                   then n + 1, true
                   else n, false
             in
-            Ne.hd variants |> String.fold ~init:(0, true) ~f:step |> fst
+            Nonempty_list.hd variants |> String.fold ~init:(0, true) ~f:step |> fst
           in
-          let common_prefix = String.prefix (Ne.hd variants) common_prefix_length in
+          let common_prefix =
+            String.prefix (Nonempty_list.hd variants) common_prefix_length
+          in
           let variants =
-            Ne.map
-              (fun variant ->
+            Nonempty_list.map
+              ~f:(fun variant ->
                 let variant = String.drop_prefix variant common_prefix_length in
                 if String.is_empty variant then Filename.current_dir_name else variant)
               variants
@@ -130,7 +132,7 @@ let detect_or_ask_to_create_project_file (file : Path.t) : unit Handler.t =
               common_prefix
           in
           let no = "No" in
-          let options = Ne.to_list variants @ [ no ] in
+          let options = Nonempty_list.to_list variants @ [ no ] in
           let handler
               :  (MessageActionItem.t option, Jsonrpc.Response.Error.t) result
               -> unit Handler.t
@@ -156,7 +158,6 @@ let detect_or_ask_to_create_project_file (file : Path.t) : unit Handler.t =
       (Format.sprintf "Found %s at %s." Project_root.ligoproject project_root_str)
   | Some _, (None | Some _) -> pass
 
-
 (** Clears the cache for the provided file path. This is useful, for example, if the
     project root was changed. *)
 let drop_cached_definitions : Path.t -> unit Handler.t =
@@ -174,7 +175,6 @@ let drop_cached_definitions : Path.t -> unit Handler.t =
          ; lambda_types = _
          } ->
   set_docs_cache path (Ligo_interface.empty ~syntax ~code ~document_version)
-
 
 (** We define here a helper that:
    - saves a new version of document to memory.
@@ -215,7 +215,6 @@ let on_doc
   in
   when_ process_immediately @@ process_doc file
 
-
 (** This function checks if the given [Path.t] is cached, and if it's not, will read its
     contents from the disk and set the cache, setting [None] for definitions and hierarchy.
     If the file is cached, it will do nothing.
@@ -243,7 +242,6 @@ let cache_doc_minimal : Path.t -> unit Handler.t =
          ~code
          ~document_version:None
            (* This is valid because file is not opened in the editor *)))
-
 
 (** A directed, possibly cyclic graph whose vertices are LIGO files and whose edges mean
     that a vertex [v1] [#import]s or [#include]s a vertex [v2]. *)

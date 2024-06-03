@@ -1,9 +1,10 @@
-module Option = Simple_utils.Option
-module List = Simple_utils.List
-open Errors
+open Core
+open Ligo_prim
+module Location = Simple_utils.Location
 module I = Ast_core
 module O = Ast_typed
-open Ligo_prim
+module C = Computation
+module E = Elaboration
 
 (*
   Each constant has its own type.
@@ -29,9 +30,6 @@ open Ligo_prim
   Various helpers are defined bellow.
 *)
 
-module C = Computation
-module E = Elaboration
-
 module Comparable = struct
   type ('err, 'wrn) t = Type.t -> Type.t -> (Type.t, 'err, 'wrn) C.t
 
@@ -42,7 +40,7 @@ module Comparable = struct
 
   let try_compare type1 type2 ~in_:t =
     let open C in
-    try_ t ~with_:(fun _ -> raise (uncomparable_types type1 type2))
+    try_ t ~with_:(fun _ -> raise (Errors.uncomparable_types type1 type2))
 
 
   (* [simple_comparator ~raise loc name] checks
@@ -53,24 +51,25 @@ module Comparable = struct
     let open C in
     let open Let_syntax in
     let simple_types =
-      Type.
-        [ t_address
-        ; t_bool
-        ; t_bytes
-        ; t_chain_id
-        ; t_int
-        ; t_key
-        ; t_key_hash
-        ; t_mutez
-        ; t_nat
-        ; t_signature
-        ; t_string
-        ; t_timestamp
-        ; t_unit
-        ; t_never
-        ; t_michelson_code
-        ; t_int64
-        ]
+      Type.(
+        Nonempty_list.
+          [ t_address
+          ; t_bool
+          ; t_bytes
+          ; t_chain_id
+          ; t_int
+          ; t_key
+          ; t_key_hash
+          ; t_mutez
+          ; t_nat
+          ; t_signature
+          ; t_string
+          ; t_timestamp
+          ; t_unit
+          ; t_never
+          ; t_michelson_code
+          ; t_int64
+          ])
     in
     fun type1 type2 ->
       try_compare
@@ -79,10 +78,12 @@ module Comparable = struct
         ~in_:
           (let%bind () =
              try_all
-             @@ List.map simple_types ~f:(fun type_ ->
+             @@ Nonempty_list.map
+                  ~f:(fun type_ ->
                     let%bind type_ = create_type type_ in
                     let%bind () = unify type1 type_ in
                     unify type2 type_)
+                  simple_types
            in
            create_type @@ Type.t_bool)
 
@@ -94,10 +95,10 @@ module Comparable = struct
     fun type1 type2 ->
       let%bind () = try_compare type1 type2 ~in_:(unify type1 type2) in
       let%bind row1 =
-        raise_opt ~error:(comparator_composed type1) @@ Type.get_t_record type1
+        raise_opt ~error:(Errors.comparator_composed type1) @@ Type.get_t_record type1
       in
       let%bind row2 =
-        raise_opt ~error:(comparator_composed type2) @@ Type.get_t_record type2
+        raise_opt ~error:(Errors.comparator_composed type2) @@ Type.get_t_record type2
       in
       let%bind _ =
         List.map2_exn
@@ -115,10 +116,10 @@ module Comparable = struct
     fun type1 type2 ->
       let%bind () = try_compare type1 type2 ~in_:(unify type1 type2) in
       let%bind row1, _ =
-        raise_opt ~error:(comparator_composed type1) @@ Type.get_t_sum type1
+        raise_opt ~error:(Errors.comparator_composed type1) @@ Type.get_t_sum type1
       in
       let%bind row2, _ =
-        raise_opt ~error:(comparator_composed type2) @@ Type.get_t_sum type2
+        raise_opt ~error:(Errors.comparator_composed type2) @@ Type.get_t_sum type2
       in
       let%bind _ =
         List.map2_exn
@@ -136,10 +137,10 @@ module Comparable = struct
     fun type1 type2 ->
       let%bind () = try_compare type1 type2 ~in_:(unify type1 type2) in
       let%bind elt_type1 =
-        raise_opt ~error:(comparator_composed type1) @@ Type.get_t_list type1
+        raise_opt ~error:(Errors.comparator_composed type1) @@ Type.get_t_list type1
       in
       let%bind elt_type2 =
-        raise_opt ~error:(comparator_composed type2) @@ Type.get_t_list type2
+        raise_opt ~error:(Errors.comparator_composed type2) @@ Type.get_t_list type2
       in
       comparator elt_type1 elt_type2
 
@@ -150,10 +151,10 @@ module Comparable = struct
     fun type1 type2 ->
       let%bind () = try_compare type1 type2 ~in_:(unify type1 type2) in
       let%bind elt_type1 =
-        raise_opt ~error:(comparator_composed type1) @@ Type.get_t_set type1
+        raise_opt ~error:(Errors.comparator_composed type1) @@ Type.get_t_set type1
       in
       let%bind elt_type2 =
-        raise_opt ~error:(comparator_composed type2) @@ Type.get_t_set type2
+        raise_opt ~error:(Errors.comparator_composed type2) @@ Type.get_t_set type2
       in
       comparator elt_type1 elt_type2
 
@@ -164,10 +165,10 @@ module Comparable = struct
     fun type1 type2 ->
       let%bind () = try_compare type1 type2 ~in_:(unify type1 type2) in
       let%bind key_type1, val_type1 =
-        raise_opt ~error:(comparator_composed type1) @@ Type.get_t_map type1
+        raise_opt ~error:(Errors.comparator_composed type1) @@ Type.get_t_map type1
       in
       let%bind key_type2, val_type2 =
-        raise_opt ~error:(comparator_composed type1) @@ Type.get_t_map type2
+        raise_opt ~error:(Errors.comparator_composed type1) @@ Type.get_t_map type2
       in
       let%bind _ = comparator key_type1 key_type2 in
       comparator val_type1 val_type2
@@ -179,10 +180,10 @@ module Comparable = struct
     fun type1 type2 ->
       let%bind () = try_compare type1 type2 ~in_:(unify type1 type2) in
       let%bind key_type1, val_type1 =
-        raise_opt ~error:(comparator_composed type1) @@ Type.get_t_big_map type1
+        raise_opt ~error:(Errors.comparator_composed type1) @@ Type.get_t_big_map type1
       in
       let%bind key_type2, val_type2 =
-        raise_opt ~error:(comparator_composed type1) @@ Type.get_t_big_map type2
+        raise_opt ~error:(Errors.comparator_composed type1) @@ Type.get_t_big_map type2
       in
       let%bind _ = comparator key_type1 key_type2 in
       comparator val_type1 val_type2
@@ -224,7 +225,7 @@ module Annot = struct
 
   type t =
     { mode_annot : mode list
-    ; types : type_ List.Ne.t
+    ; types : type_ Nonempty_list.t
     }
 
   module Syntax = struct
@@ -234,8 +235,8 @@ module Annot = struct
       let tvar = Type_var.of_input_var ~loc ("'" ^ tvar) in
       let result = in_ (Type.t_variable ~loc tvar ()) in
       let types =
-        List.Ne.map
-          (fun type_ -> { type_ with for_alls = (tvar, kind) :: type_.for_alls })
+        Nonempty_list.map
+          ~f:(fun type_ -> { type_ with for_alls = (tvar, kind) :: type_.for_alls })
           result.types
       in
       { result with types }
@@ -247,7 +248,7 @@ module Annot = struct
       { result with for_alls = (tvar, kind) :: result.for_alls }
 
 
-    let create ~mode_annot ~types = { mode_annot; types = List.Ne.of_list types }
+    let create ~mode_annot ~types = { mode_annot; types }
     let return ret_type = { for_alls = []; arg_types = []; ret_type }
     let ( ^~> ) arg_type ret_type = { for_alls = []; arg_types = [ arg_type ]; ret_type }
     let ( ^-> ) arg_type type_ = { type_ with arg_types = arg_type :: type_.arg_types }
@@ -271,7 +272,8 @@ let of_type ({ mode_annot; types } : Annot.t) : _ t =
   let mode =
     let table = Hashtbl.create (module Int) in
     List.iteri mode_annot ~f:(fun i mode -> Hashtbl.set table ~key:i ~data:mode);
-    fun i -> raise_opt ~error:(corner_case "bad mode annot") @@ Hashtbl.find table i
+    fun i ->
+      raise_opt ~error:(Errors.corner_case "bad mode annot") @@ Hashtbl.find table i
   in
   fun ~infer ~check args ->
     (* Instantiate prenex quantifier *)
@@ -316,7 +318,8 @@ let of_type ({ mode_annot; types } : Annot.t) : _ t =
     (* Select type using try-based unification on inferred types *)
     let%bind checked, ret_type =
       try_all
-      @@ List.map (List.Ne.to_list types) ~f:(fun type_ ->
+      @@ Nonempty_list.map
+           ~f:(fun type_ ->
              (* Instantiate *)
              let%bind arg_types, ret_type = inst type_ in
              (* Split types accordingly for [arg_types] *)
@@ -325,7 +328,7 @@ let of_type ({ mode_annot; types } : Annot.t) : _ t =
                | Ok result -> return result
                | Unequal_lengths ->
                  raise
-                   (corner_case
+                   (Errors.corner_case
                       "Unequal lengths between mode annotation and argument types")
              in
              let%bind unify_worklist, checked =
@@ -366,6 +369,7 @@ let of_type ({ mode_annot; types } : Annot.t) : _ t =
                       Hashtbl.set output_args ~key:i ~data:(type_, expr))
              in
              return (checked, ret_type))
+           types
     in
     (* Check the checked arguments *)
     let%bind () =
@@ -401,23 +405,25 @@ let of_comparator comparator : _ t =
       return (ret_type, E.(all [ arg1; arg2 ]))
     | _ ->
       raise
-        (corner_case
+        (Errors.corner_case
         @@ Format.asprintf
              "Unequal length between comparator arguments and applied arguments")
 
 
-module Const_map = Simple_utils.Map.Make (struct
-  type t = Constant.constant'
+module Comparable_const = Core.Comparable.Make (struct
+  type t = Constant.constant' [@@deriving sexp]
 
   let compare x y = Constant.compare_constant' x y
 end)
 
+module Const_map = Comparable_const.Map
+
 let constant_typer_tbl : (Errors.typer_error, Main_warnings.all) t Const_map.t =
   let open Type in
   let open Annot.Syntax in
-  Const_map.of_list
+  Const_map.of_alist_exn
     [ (* Loops *)
-      ( C_LOOP_LEFT
+      ( Constant.C_LOOP_LEFT
       , of_type
           (for_all "a"
           @@ fun a ->
@@ -895,27 +901,27 @@ let constant_typer_tbl : (Errors.typer_error, Main_warnings.all) t Const_map.t =
           (create
              ~mode_annot:[ Inferred; Inferred ]
              ~types:
-               [ t_int ~loc () ^-> t_int ~loc () ^~> t_int ~loc ()
-               ; t_nat ~loc () ^-> t_bls12_381_fr ~loc () ^~> t_bls12_381_fr ~loc ()
-               ; t_int ~loc () ^-> t_bls12_381_fr ~loc () ^~> t_bls12_381_fr ~loc ()
-               ; t_bls12_381_fr ~loc () ^-> t_nat ~loc () ^~> t_bls12_381_fr ~loc ()
-               ; t_bls12_381_fr ~loc () ^-> t_int ~loc () ^~> t_bls12_381_fr ~loc ()
-               ; t_nat ~loc () ^-> t_nat ~loc () ^~> t_nat ~loc ()
-               ; t_nat ~loc () ^-> t_mutez ~loc () ^~> t_mutez ~loc ()
-               ; t_mutez ~loc () ^-> t_nat ~loc () ^~> t_mutez ~loc ()
-               ; t_int ~loc () ^-> t_nat ~loc () ^~> t_int ~loc ()
-               ; t_nat ~loc () ^-> t_int ~loc () ^~> t_int ~loc ()
-               ; t_int64 ~loc () ^-> t_int64 ~loc () ^~> t_int64 ~loc ()
-               ; t_bls12_381_g1 ~loc ()
-                 ^-> t_bls12_381_fr ~loc ()
-                 ^~> t_bls12_381_g1 ~loc ()
-               ; t_bls12_381_g2 ~loc ()
-                 ^-> t_bls12_381_fr ~loc ()
-                 ^~> t_bls12_381_g2 ~loc ()
-               ; t_bls12_381_fr ~loc ()
-                 ^-> t_bls12_381_fr ~loc ()
-                 ^~> t_bls12_381_fr ~loc ()
-               ]) )
+               ((t_int ~loc () ^-> t_int ~loc () ^~> t_int ~loc ())
+               :: [ t_nat ~loc () ^-> t_bls12_381_fr ~loc () ^~> t_bls12_381_fr ~loc ()
+                  ; t_int ~loc () ^-> t_bls12_381_fr ~loc () ^~> t_bls12_381_fr ~loc ()
+                  ; t_bls12_381_fr ~loc () ^-> t_nat ~loc () ^~> t_bls12_381_fr ~loc ()
+                  ; t_bls12_381_fr ~loc () ^-> t_int ~loc () ^~> t_bls12_381_fr ~loc ()
+                  ; t_nat ~loc () ^-> t_nat ~loc () ^~> t_nat ~loc ()
+                  ; t_nat ~loc () ^-> t_mutez ~loc () ^~> t_mutez ~loc ()
+                  ; t_mutez ~loc () ^-> t_nat ~loc () ^~> t_mutez ~loc ()
+                  ; t_int ~loc () ^-> t_nat ~loc () ^~> t_int ~loc ()
+                  ; t_nat ~loc () ^-> t_int ~loc () ^~> t_int ~loc ()
+                  ; t_int64 ~loc () ^-> t_int64 ~loc () ^~> t_int64 ~loc ()
+                  ; t_bls12_381_g1 ~loc ()
+                    ^-> t_bls12_381_fr ~loc ()
+                    ^~> t_bls12_381_g1 ~loc ()
+                  ; t_bls12_381_g2 ~loc ()
+                    ^-> t_bls12_381_fr ~loc ()
+                    ^~> t_bls12_381_g2 ~loc ()
+                  ; t_bls12_381_fr ~loc ()
+                    ^-> t_bls12_381_fr ~loc ()
+                    ^~> t_bls12_381_fr ~loc ()
+                  ])) )
     ; ( C_SUB
       , of_type
           (create
@@ -1573,12 +1579,6 @@ let constant_typer_tbl : (Errors.typer_error, Main_warnings.all) t Const_map.t =
           create
             ~mode_annot:[ Inferred ]
             ~types:[ t_list a ~loc () ^~> t_big_map a (t_unit ~loc ()) ~loc () ]) )
-    ; ( C_SET_LITERAL
-      , of_type
-          (for_all "a"
-          @@ fun a ->
-          create ~mode_annot:[ Inferred ] ~types:[ t_list a ~loc () ^~> t_set a ~loc () ]
-          ) )
     ; ( C_TEST_INT64_OF_INT
       , of_type
           (create ~mode_annot:[ Checked ] ~types:[ t_int ~loc () ^~> t_int64 ~loc () ]) )
@@ -1652,11 +1652,11 @@ let constant_typer_tbl : (Errors.typer_error, Main_warnings.all) t Const_map.t =
 
 let infer_constant ~infer ~check const args =
   let open C in
-  match Const_map.find_opt const constant_typer_tbl with
+  match Map.find constant_typer_tbl const with
   | Some typer -> typer ~infer ~check args
   | None ->
     raise
-      (corner_case
+      (Errors.corner_case
       @@ Format.asprintf
            "Typer not implemented for constant %a"
            Constant.pp_constant'
@@ -1665,11 +1665,10 @@ let infer_constant ~infer ~check const args =
 
 module External_types = struct
   module Annot = struct
-    type t = (Type.t list * Type.t) List.Ne.t
+    type t = (Type.t list * Type.t) Nonempty_list.t
 
     module Syntax = struct
       let loc = Location.env
-      let create xs = List.Ne.of_list xs
       let ( ^~> ) arg_type ret_type = [ arg_type ], ret_type
       let ( ^-> ) arg_type (arg_types, ret_type) = arg_type :: arg_types, ret_type
     end
@@ -1682,13 +1681,14 @@ module External_types = struct
     let open Let_syntax in
     fun received_arg_types ->
       try_all
-      @@ List.map (List.Ne.to_list types) ~f:(fun (expected_arg_types, ret_type) ->
+      @@ Nonempty_list.map
+           ~f:(fun (expected_arg_types, ret_type) ->
              let%bind arg_types =
                match List.zip received_arg_types expected_arg_types with
                | Ok result -> return result
                | Unequal_lengths ->
                  raise
-                   (corner_case
+                   (Errors.corner_case
                       "Unequal lengths between mode annotation and argument types")
              in
              (* Unify args types *)
@@ -1701,6 +1701,7 @@ module External_types = struct
                |> all_unit
              in
              return ret_type)
+           types
 
 
   let map_find_opt_types : _ t =
@@ -1710,7 +1711,9 @@ module External_types = struct
     fun (received_arg_types : Type.t list) ->
       if List.length received_arg_types <> 2
       then
-        raise (corner_case "Unequal lengths between mode annotation and argument types")
+        raise
+          (Errors.corner_case
+             "Unequal lengths between mode annotation and argument types")
       else (
         let k = List.nth_exn received_arg_types 0 in
         let%bind k = Context.tapply k in
@@ -1724,7 +1727,7 @@ module External_types = struct
             | Some (k', v) -> return (k', v)
             | None ->
               raise
-                (corner_case
+                (Errors.corner_case
                    "external_find_opt: second parameter is neither big_map nor map"))
         in
         let%bind k' = Context.tapply k' in
@@ -1741,7 +1744,9 @@ module External_types = struct
     fun (received_arg_types : Type.t list) ->
       if List.length received_arg_types <> 3
       then
-        raise (corner_case "Unequal lengths between mode annotation and argument types")
+        raise
+          (Errors.corner_case
+             "Unequal lengths between mode annotation and argument types")
       else (
         let k = List.nth_exn received_arg_types 0 in
         let%bind k = Context.tapply k in
@@ -1757,7 +1762,7 @@ module External_types = struct
             | Some (k', v') -> return (k', v')
             | None ->
               raise
-                (corner_case
+                (Errors.corner_case
                    "external_find_opt: second parameter is neither big_map nor map"))
         in
         let%bind k' = Context.tapply k' in
@@ -1774,7 +1779,9 @@ module External_types = struct
     fun (received_arg_types : Type.t list) ->
       if List.length received_arg_types <> 2
       then
-        raise (corner_case "Unequal lengths between mode annotation and argument types")
+        raise
+          (Errors.corner_case
+             "Unequal lengths between mode annotation and argument types")
       else (
         let k = List.nth_exn received_arg_types 0 in
         let%bind k = Context.tapply k in
@@ -1788,7 +1795,7 @@ module External_types = struct
             | Some (k', v) -> return (k', v)
             | None ->
               raise
-                (corner_case
+                (Errors.corner_case
                    "external_find_opt: second parameter is neither big_map nor map"))
         in
         let%bind k' = Context.tapply k' in
@@ -1799,94 +1806,86 @@ module External_types = struct
   let bytes_types : (Errors.typer_error, Main_warnings.all) t =
     let open Type in
     let open Annot.Syntax in
-    of_type
-      (create [ t_int ~loc () ^~> t_bytes ~loc (); t_nat () ~loc ^~> t_bytes ~loc () ])
+    of_type [ t_int ~loc () ^~> t_bytes ~loc (); t_nat () ~loc ^~> t_bytes ~loc () ]
 
 
   let int_types : (Errors.typer_error, Main_warnings.all) t =
     let open Type in
     let open Annot.Syntax in
     of_type
-      (create
-         [ t_nat () ~loc ^~> t_int ~loc ()
-         ; t_bls12_381_fr ~loc () ^~> t_int ~loc ()
-         ; t_bytes ~loc () ^~> t_int ~loc ()
-         ])
+      [ t_nat () ~loc ^~> t_int ~loc ()
+      ; t_bls12_381_fr ~loc () ^~> t_int ~loc ()
+      ; t_bytes ~loc () ^~> t_int ~loc ()
+      ]
 
 
   let ediv_types : (Errors.typer_error, Main_warnings.all) t =
     let open Type in
     let open Annot.Syntax in
     of_type
-      (create
-         [ t_nat ~loc ()
-           ^-> t_nat ~loc ()
-           ^~> t_option (t_pair (t_nat ~loc ()) (t_nat ~loc ()) ~loc ()) ~loc ()
-         ; t_int ~loc ()
-           ^-> t_int ~loc ()
-           ^~> t_option (t_pair (t_int ~loc ()) (t_nat ~loc ()) ~loc ()) ~loc ()
-         ; t_nat ~loc ()
-           ^-> t_int ~loc ()
-           ^~> t_option (t_pair (t_int ~loc ()) (t_nat ~loc ()) ~loc ()) ~loc ()
-         ; t_int ~loc ()
-           ^-> t_nat ~loc ()
-           ^~> t_option (t_pair (t_int ~loc ()) (t_nat ~loc ()) ~loc ()) ~loc ()
-         ; t_mutez ~loc ()
-           ^-> t_mutez ~loc ()
-           ^~> t_option (t_pair (t_nat ~loc ()) (t_mutez ~loc ()) ~loc ()) ~loc ()
-         ; t_mutez ~loc ()
-           ^-> t_nat ~loc ()
-           ^~> t_option (t_pair (t_mutez ~loc ()) (t_mutez ~loc ()) ~loc ()) ~loc ()
-         ])
+      [ t_nat ~loc ()
+        ^-> t_nat ~loc ()
+        ^~> t_option (t_pair (t_nat ~loc ()) (t_nat ~loc ()) ~loc ()) ~loc ()
+      ; t_int ~loc ()
+        ^-> t_int ~loc ()
+        ^~> t_option (t_pair (t_int ~loc ()) (t_nat ~loc ()) ~loc ()) ~loc ()
+      ; t_nat ~loc ()
+        ^-> t_int ~loc ()
+        ^~> t_option (t_pair (t_int ~loc ()) (t_nat ~loc ()) ~loc ()) ~loc ()
+      ; t_int ~loc ()
+        ^-> t_nat ~loc ()
+        ^~> t_option (t_pair (t_int ~loc ()) (t_nat ~loc ()) ~loc ()) ~loc ()
+      ; t_mutez ~loc ()
+        ^-> t_mutez ~loc ()
+        ^~> t_option (t_pair (t_nat ~loc ()) (t_mutez ~loc ()) ~loc ()) ~loc ()
+      ; t_mutez ~loc ()
+        ^-> t_nat ~loc ()
+        ^~> t_option (t_pair (t_mutez ~loc ()) (t_mutez ~loc ()) ~loc ()) ~loc ()
+      ]
 
 
   let and_types : (Errors.typer_error, Main_warnings.all) t =
     let open Type in
     let open Annot.Syntax in
     of_type
-      (create
-         [ t_nat ~loc () ^-> t_nat ~loc () ^~> t_nat ~loc ()
-         ; t_int ~loc () ^-> t_nat ~loc () ^~> t_nat ~loc ()
-         ; t_bytes ~loc () ^-> t_bytes ~loc () ^~> t_bytes ~loc ()
-         ])
+      [ t_nat ~loc () ^-> t_nat ~loc () ^~> t_nat ~loc ()
+      ; t_int ~loc () ^-> t_nat ~loc () ^~> t_nat ~loc ()
+      ; t_bytes ~loc () ^-> t_bytes ~loc () ^~> t_bytes ~loc ()
+      ]
 
 
   let or_types : (Errors.typer_error, Main_warnings.all) t =
     let open Type in
     let open Annot.Syntax in
     of_type
-      (create
-         [ t_nat ~loc () ^-> t_nat ~loc () ^~> t_nat ~loc ()
-         ; t_bytes ~loc () ^-> t_bytes ~loc () ^~> t_bytes ~loc ()
-         ])
+      [ t_nat ~loc () ^-> t_nat ~loc () ^~> t_nat ~loc ()
+      ; t_bytes ~loc () ^-> t_bytes ~loc () ^~> t_bytes ~loc ()
+      ]
 
 
   let xor_types : (Errors.typer_error, Main_warnings.all) t =
     let open Type in
     let open Annot.Syntax in
     of_type
-      (create
-         [ t_nat ~loc () ^-> t_nat ~loc () ^~> t_nat ~loc ()
-         ; t_bytes ~loc () ^-> t_bytes ~loc () ^~> t_bytes ~loc ()
-         ])
+      [ t_nat ~loc () ^-> t_nat ~loc () ^~> t_nat ~loc ()
+      ; t_bytes ~loc () ^-> t_bytes ~loc () ^~> t_bytes ~loc ()
+      ]
 
 
   let lsl_types : (Errors.typer_error, Main_warnings.all) t =
     let open Type in
     let open Annot.Syntax in
     of_type
-      (create
-         [ t_nat ~loc () ^-> t_nat ~loc () ^~> t_nat ~loc ()
-         ; t_bytes ~loc () ^-> t_nat ~loc () ^~> t_bytes ~loc ()
-         ])
+      [ t_nat ~loc () ^-> t_nat ~loc () ^~> t_nat ~loc ()
+      ; t_bytes ~loc () ^-> t_nat ~loc () ^~> t_bytes ~loc ()
+      ]
 
 
   let lsr_types : (Errors.typer_error, Main_warnings.all) t =
     let open Type in
     let open Annot.Syntax in
     of_type
-      (create
-         [ t_nat ~loc () ^-> t_nat ~loc () ^~> t_nat ~loc ()
-         ; t_bytes ~loc () ^-> t_nat ~loc () ^~> t_bytes ~loc ()
-         ])
+      [ t_nat ~loc () ^-> t_nat ~loc () ^~> t_nat ~loc ()
+      ; t_bytes ~loc () ^-> t_nat ~loc () ^~> t_bytes ~loc ()
+      ]
 end

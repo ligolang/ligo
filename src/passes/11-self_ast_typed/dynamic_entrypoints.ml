@@ -1,6 +1,9 @@
-open Errors
 open Ligo_prim
-open Simple_utils.Trace
+module Trace = Simple_utils.Trace
+module Location = Simple_utils.Location
+module Ligo_option = Simple_utils.Ligo_option
+module Ligo_string = Simple_utils.Ligo_string
+
 (* Approach:
     For a module with a contract sort:
       - Generate a binder $initial_dynamic_entrypoints of type `dyn_entrypoints`
@@ -179,12 +182,12 @@ let dynamic_entries : Ast_typed.program -> Ast_typed.program =
 
 
 (* remove dynamic entries-specialized constants *)
-let rm_specialized ~raise (prg : Ast_typed.program) =
+let rm_specialized ~(raise : _ Trace.raise) (prg : Ast_typed.program) =
   let pr_module =
     Helpers.map_module
       (fun e ->
         let opt =
-          let open Simple_utils.Option in
+          let open Ligo_option in
           let* c = Ast_typed.get_e_constant e in
           match c with
           (* C_CAST_DYNAMIC_ENTRYPOINT is used to cast an dyn entry variable to a nat,
@@ -194,7 +197,7 @@ let rm_specialized ~raise (prg : Ast_typed.program) =
              but they are already reduced to nat at this point.
              Simply throw on any remaining *)
           | { cons_name = C_OPT_OUT_ENTRY; _ } ->
-            raise.error (illegal_non_initial_dynamic e.location)
+            raise.error (Errors.illegal_non_initial_dynamic e.location)
           | _ -> None
         in
         Option.value ~default:e opt)

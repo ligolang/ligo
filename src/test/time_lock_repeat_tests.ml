@@ -1,9 +1,9 @@
-module Var = Simple_utils.Var
-open Simple_utils.Trace
 open Test_helpers
 open Ligo_prim
 open Ast_unified
 open Main_errors
+module Var = Simple_utils.Var
+module Trace = Simple_utils.Trace
 module Alpha_context = Memory_proto_alpha.Protocol.Alpha_context
 
 let get_program = get_program "./contracts/timelock_repeat.mligo"
@@ -23,7 +23,7 @@ let empty_message =
     empty_op_list
 
 
-let mk_time ~raise st =
+let mk_time ~(raise : _ Trace.raise) st =
   match Memory_proto_alpha.Protocol.Script_timestamp.of_string st with
   | Some s -> s
   | None -> raise.error @@ test_internal "bad timestamp notation"

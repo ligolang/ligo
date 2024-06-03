@@ -1,9 +1,9 @@
-module SMap = Core.Map.Make (String)
+open Core
 
 type token = string
 
 type t =
-  { entries : token SMap.t
+  { entries : token String.Map.t
   ; path : string
   }
 
@@ -15,11 +15,11 @@ let read ~ligorc_path =
     | _ -> None
   in
   match entries with
-  | None -> { entries = SMap.empty; path = ligorc_path }
+  | None -> { entries = String.Map.empty; path = ligorc_path }
   | Some entries ->
     let r = Str.regexp "//\\(.*\\):_authToken=\"\\(.*\\)\"" in
     let entries =
-      List.fold_left entries ~init:SMap.empty ~f:(fun lrc e ->
+      List.fold_left entries ~init:String.Map.empty ~f:(fun lrc e ->
           if Str.string_match r e 0
           then (
             let uri = Str.matched_group 1 e in

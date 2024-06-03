@@ -11,7 +11,7 @@ module Pos    = Simple_utils.Pos
 module E_Lexer  = Preprocessor.E_Lexer
 module E_Parser = Preprocessor.E_Parser
 module State    = Preprocessor.State
-module Error    = Preprocessor.Error
+module PreError = Preprocessor.PreError
 
 (* All exits *)
 
@@ -39,7 +39,7 @@ let scan filename =
     match scan lexbuf with
       E_Parser.EOL _ as token -> print_token token
     | token -> print_token token; iter ()
-    | exception Error.Error (_buffer, msg) -> lexing_error msg
+    | exception PreError.Error (_buffer, msg) -> lexing_error msg
   in iter (); close_in in_chan
 
 (* Command-line parsing *)

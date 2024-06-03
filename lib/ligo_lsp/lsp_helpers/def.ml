@@ -1,4 +1,8 @@
-open Imports
+open Core
+module Loc = Simple_utils.Location
+module Ligo_fun = Simple_utils.Ligo_fun
+
+let ( <@ ) = Ligo_fun.( <@ )
 
 type t = Scopes.def
 type definitions = Scopes.definitions
@@ -36,7 +40,6 @@ module Def_location = struct
     | File region -> File { range = Range.of_region region; path = normalize region#file }
     | Virtual s -> Virtual s
 
-
   let pp : t Fmt.t = fun ppf -> Format.fprintf ppf "%a" Sexp.pp <@ sexp_of_t
 end
 
@@ -49,7 +52,6 @@ let to_string (def : t) = Format.asprintf "%a" Scopes.PP.definitions [ def ]
 let get_location : normalize:Path.normalization -> Scopes.def -> Def_location.t =
  fun ~normalize -> Def_location.of_loc ~normalize <@ Scopes.Types.get_range
 
-
 (** Gets the path where a [t] was declared. *)
 let get_path : normalize:Path.normalization -> Scopes.def -> Path.t option =
  fun ~normalize ->
@@ -58,7 +60,6 @@ let get_path : normalize:Path.normalization -> Scopes.def -> Path.t option =
     | File { path; _ } -> Some path
     | StdLib _ | Virtual _ -> None)
   <@ get_location ~normalize
-
 
 (** Gets a set with all the references of the given definition. *)
 let references_getter : normalize:Path.normalization -> t -> Def_locations.t =
@@ -74,7 +75,6 @@ let references_getter : normalize:Path.normalization -> t -> Def_locations.t =
   @@ Sequence.map ~f:(Def_location.of_loc ~normalize)
   @@ Set.to_sequence lset
 
-
 (** Checks whether the given definition is a reference to the symbol located at the given
     path and position (if there is no symbol there it will return [false]). *)
 let is_reference : normalize:Path.normalization -> Position.t -> Path.t -> t -> bool =
@@ -84,7 +84,6 @@ let is_reference : normalize:Path.normalization -> Position.t -> Path.t -> t -> 
     | StdLib _ | Virtual _ -> false
   in
   Set.exists ~f:check_pos @@ references_getter ~normalize definition
-
 
 (** Fold over definitions, flattening them along the fold. The [fold_control] allows you
     to choose whether to continue or stop (with or without accumulating the new value) the
@@ -106,7 +105,6 @@ let fold_definitions : init:'a -> f:('a -> t -> 'a fold_control) -> definitions 
   in
   go init definitions
 
-
 (** Searches for a definition matching the predicate [f], returning the first one for
     which it has returned [Some]. *)
 let find_map : f:(t -> 'a option) -> definitions -> 'a option =
@@ -116,12 +114,10 @@ let find_map : f:(t -> 'a option) -> definitions -> 'a option =
       | Some _ -> Last acc
       | None -> Continue (f def))
 
-
 (** Searches for a definition matching the predicate [f], returning the first one for
     which it has returned [true]. *)
 let find : f:(t -> bool) -> definitions -> t option =
  fun ~f -> find_map ~f:(fun def -> Option.some_if (f def) def)
-
 
 (** Filters the definitions while mapping each element, removing all definitions that
     caused [f] to return [None]. The returned list of elements is flattened. This
@@ -132,13 +128,11 @@ let filter_map : f:(t -> 'a option) -> definitions -> 'a list =
   <@ fold_definitions ~init:[] ~f:(fun acc def ->
          Continue (Option.value_map ~default:acc ~f:(fun x -> x :: acc) (f def)))
 
-
 (** Filters the definitions while removing all definitions that caused [f] to return
     [false]. The returned list of definitions is flattened. This function visits every
     module's definitions even if the predicate returned [false]. *)
 let filter : f:(t -> bool) -> definitions -> t list =
  fun ~f -> filter_map ~f:(fun def -> Option.some_if (f def) def)
-
 
 (** Filters the definitions while removing all definitions that were not declared in
     [file]. The returned list of definitions is flattened. This function does not visit a
@@ -151,7 +145,6 @@ let filter_file : normalize:Path.normalization -> file:Path.t -> definitions -> 
         if Path.equal (normalize region#file) file then Continue (def :: acc) else Stop
       | Virtual _ -> Stop)
 
-
 (** Gets the definition that is a reference to the symbol located at the given path and
     position (if there is no symbol there it will return [None]). *)
 let get_definition
@@ -159,7 +152,6 @@ let get_definition
   =
  fun ~normalize pos path definitions ->
   find ~f:(is_reference ~normalize pos path) definitions
-
 
 (** Returns the declaration name of a type (if there is one) as well as that type's body.
     E.g. when [type t = A | B], the type info for [A] would have [var_name] as
@@ -173,7 +165,6 @@ type type_info =
 (** Use the most compact type expression available. *)
 let use_var_name_if_available : type_info -> Ast_core.type_expression =
  fun { var_name; contents } -> Option.value ~default:contents var_name
-
 
 (** Get the [type_info] from [vdef.t]. If the type is [Resolved] and [use_module_accessor]
     is [true], then this function will try to create a [T_module_accessor] using the
@@ -223,7 +214,6 @@ let get_type ~(use_module_accessor : bool) (vdef : Scopes.Types.vdef) : type_inf
       }
   | Unresolved -> None
 
-
 (** A definition may have line or block comments attached to it, which may be easily
     retrieved using this function. *)
 let get_comments : t -> string list = function
@@ -243,7 +233,6 @@ let get_comments : t -> string list = function
     | Signature_attr attr -> attr.leading_comments
     | No_attributes -> [])
   | Label _ -> []
-
 
 (** Hierarchies of declarations. The hierarchy is based on the ranges of each symbol. A
     symbol [a] is nested inside another symbol [b] if [a] was declared inside [b]. More
@@ -276,7 +265,6 @@ module Hierarchy = struct
              let path = normalize region#file in
              Some (range, path, def)
            | Virtual _ -> None)
-
 
   (** Finds all definitions that are in-scope at the given file and position. The provided
       module path should be the one at the given position. *)
@@ -346,7 +334,7 @@ module Hierarchy = struct
     in
     let rec go : t -> Scopes.def list = function
       | [] -> []
-      | Rose.Tree ((parent, parents), children) :: ts ->
+      | Rose.Tree (parent :: parents, children) :: ts ->
         if is_def_of_interest parent
         then
           if is_parent_of_interest parent

@@ -1,3 +1,4 @@
+open Core
 open Handler
 open Lsp_helpers
 
@@ -7,7 +8,6 @@ open Lsp_helpers
 (** Helper to create a text edit from the provided string and range. *)
 let rename_reference : string -> Range.t -> TextEdit.t =
  fun newText range -> TextEdit.create ~range ~newText
-
 
 (** Runs the handler of the rename request. This is normally invoked when the user presses
     the rename button and if the prepare rename request didn't fail. *)

@@ -1,3 +1,4 @@
+open Core
 open Lsp_helpers
 
 (** An array with all semantic token types at the time the request was implemented. *)
@@ -27,7 +28,6 @@ let all_types : SemanticTokenTypes.t array =
    ; Decorator
   |]
 
-
 (** An array with all semantic token modifiers at the time the request was implemented. *)
 let all_modifiers : SemanticTokenModifiers.t array =
   [| Declaration
@@ -41,7 +41,6 @@ let all_modifiers : SemanticTokenModifiers.t array =
    ; Documentation
    ; DefaultLibrary
   |]
-
 
 (** A function mapping a semantic token type to a numeric code. *)
 let mk_type_code : SemanticTokenTypes.t -> int = function
@@ -69,7 +68,6 @@ let mk_type_code : SemanticTokenTypes.t -> int = function
   | Operator -> 21
   | Decorator -> 22
 
-
 (** A function mapping a semantic token modifier to a numeric code (flag). *)
 let mk_modifier_code : SemanticTokenModifiers.t -> int = function
   | Declaration -> 1 lsl 0
@@ -82,7 +80,6 @@ let mk_modifier_code : SemanticTokenModifiers.t -> int = function
   | Modification -> 1 lsl 7
   | Documentation -> 1 lsl 8
   | DefaultLibrary -> 1 lsl 9
-
 
 (** A function mapping a semantic token type to its LSP name. *)
 let mk_type_legend : SemanticTokenTypes.t -> string = function
@@ -110,7 +107,6 @@ let mk_type_legend : SemanticTokenTypes.t -> string = function
   | Operator -> "operator"
   | Decorator -> "decorator"
 
-
 (** A function mapping a semantic token modifier to its LSP name. *)
 let mk_modifier_legend : SemanticTokenModifiers.t -> string = function
   | Declaration -> "declaration"
@@ -123,7 +119,6 @@ let mk_modifier_legend : SemanticTokenModifiers.t -> string = function
   | Modification -> "modification"
   | Documentation -> "documentation"
   | DefaultLibrary -> "defaultLibrary"
-
 
 (** Helper to deal with tokens that may have attributes, comments, and/or directives. We
     need the tokens to be provided in order, so we may wrap them into these to help sort
@@ -144,7 +139,6 @@ let compare_wrap_fields_regs (type a b) (x : a wrap_field) (y : b wrap_field) : 
     | Payload p -> p.region
   in
   Simple_utils.Region.compare (get_reg x) (get_reg y)
-
 
 (** Given a list of tokens with absolute positions, turn into into a array of tokens with
     relative positions, as per the LSP specification. This function mutates the array
@@ -189,7 +183,6 @@ let mk_diff (tokens : int array) : unit Handler.t =
     else pass
   in
   go 0 0 1
-
 
 (** Helper to provide better control over the context during the CST fold. *)
 type env =
@@ -483,7 +476,7 @@ let semantic_tokens (cst : Dialect_cst.t) (range : Range.t) : int array =
         (* Functions *)
         | S_let_binding ->
           let { binders; type_params; rhs_type; eq; let_rhs } = node in
-          let hd, tl = binders in
+          let (hd :: tl) = binders in
           (* If we have more than one binder, it's a function. *)
           (* TODO: distinguish two definitions:
              1. let foo : int = 42
@@ -503,12 +496,12 @@ let semantic_tokens (cst : Dialect_cst.t) (range : Range.t) : int array =
           let { kwd_fun; type_params; binders; rhs_type; arrow; body } = node in
           fold_collect Normal kwd_fun S_kwd_fun;
           fold_collect Normal type_params (S_option (S_par S_type_params));
-          fold_collect FunArg binders (S_nseq S_pattern);
+          fold_collect FunArg binders (S_ne_list S_pattern);
           fold_collect Normal rhs_type (S_option S_type_annotation);
           fold_collect Normal arrow S_arrow;
           fold_collect Normal body S_expr;
           Stop
-        | S_tuple_2 (S_expr, S_nseq S_expr) ->
+        | S_tuple_2 (S_expr, S_ne_list S_expr) ->
           (match fst node with
           | E_ModPath path ->
             let { module_path; selector; field } = path.value in
@@ -534,7 +527,7 @@ let semantic_tokens (cst : Dialect_cst.t) (range : Range.t) : int array =
               fold_collect Normal init (S_list (S_tuple_2 (S_dot, S_selection)));
               fold_collect FunApp last (S_tuple_2 (S_dot, S_selection)))
           | expr -> fold_collect FunApp expr S_expr);
-          fold_collect Normal (snd node) (S_nseq S_expr);
+          fold_collect Normal (snd node) (S_ne_list S_expr);
           Stop
         (* Type applications are swapped; need to iterate in reverse order *)
         | S_reg (S_tuple_2 (S_type_expr, S_type_ctor_arg)) ->
@@ -744,7 +737,7 @@ let semantic_tokens (cst : Dialect_cst.t) (range : Range.t) : int array =
           | E_Proj proj ->
             let { object_or_array; property_path } = proj.value in
             fold_collect Normal object_or_array S_expr;
-            fold_collect FunApp property_path (S_nseq S_selection)
+            fold_collect FunApp property_path (S_ne_list S_selection)
           | expr -> fold_collect FunApp expr S_expr);
           fold_collect Normal (snd node) S_arguments;
           Stop
@@ -780,7 +773,6 @@ let semantic_tokens (cst : Dialect_cst.t) (range : Range.t) : int array =
   in
   Vector.to_array data
 
-
 (** Runs the handler for the semantic tokens (range) request. This is normally invoked
     between keystrokes. *)
 let on_req_semantic_tokens_range (path : Path.t) (range : Range.t)
@@ -797,7 +789,6 @@ let on_req_semantic_tokens_range (path : Path.t) (range : Range.t)
   let data = semantic_tokens cst range in
   let%bind () = mk_diff data in
   return (Some (SemanticTokens.create ~data ()))
-
 
 (** Runs the handler for the semantic tokens (full) request. This is normally invoked when
     a document is open or between keystrokes. *)

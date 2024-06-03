@@ -1,9 +1,9 @@
 open Ast_unified
 open Pass_type
-open Simple_utils.Trace
-open Simple_utils
 open Errors
+module Trace = Simple_utils.Trace
 module Location = Simple_utils.Location
+include Flag.No_arg ()
 
 (*
   this pass morph "structural assignments" where lhs is an expression,
@@ -16,8 +16,6 @@ module Location = Simple_utils.Location
   ```
 *)
 let name = __MODULE__
-
-include Flag.No_arg ()
 
 let label_of_access =
   let open Selection in
@@ -38,7 +36,7 @@ let label_of_access =
       - module access are forbidden (we do not support effects on module declarations)
       - any expression that is not a record/map/variable access is rejected
   *)
-let path_of_lvalue ~raise : expr -> Variable.t * expr Selection.t list =
+let path_of_lvalue ~(raise : _ Trace.raise) : expr -> Variable.t * expr Selection.t list =
  fun expr ->
   let rec aux (lhs : expr) (cpath : expr Selection.t list) =
     match get_e lhs with
@@ -46,7 +44,7 @@ let path_of_lvalue ~raise : expr -> Variable.t * expr Selection.t list =
     | E_proj (struct_, path) -> aux struct_ (path @ cpath)
     | E_map_lookup { map; keys } ->
       let sels =
-        List.map ~f:(fun e -> Selection.Component_expr e) (List.Ne.to_list keys)
+        List.map ~f:(fun e -> Selection.Component_expr e) (Nonempty_list.to_list keys)
       in
       aux map (sels @ cpath)
     | E_module_open_in _ -> (* maybe in future ? *) raise.error (wrong_lvalue expr)
@@ -274,7 +272,7 @@ let compile ~raise =
   Fold { idle_fold with instruction; expr }
 
 
-let reduction ~raise =
+let reduction ~(raise : _ Trace.raise) =
   { Iter.defaults with
     instruction =
       (function

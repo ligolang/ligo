@@ -27,9 +27,9 @@
 
 open Ast_unified
 open Pass_type
-open Simple_utils.Trace
-open Simple_utils
 open Errors
+module Trace = Simple_utils.Trace
+module Ligo_string = Simple_utils.Ligo_string
 module Location = Simple_utils.Location
 include Flag.No_arg ()
 
@@ -46,10 +46,11 @@ let compile ~raise:_ =
     in
     match Location.unwrap p with
     | P_ctor_app
-        ({ fp = { wrap_content = P_literal (Literal_string ctor_name); _ } }, args) ->
+        Nonempty_list.(
+          { fp = { wrap_content = P_literal (Literal_string ctor_name); _ } } :: args) ->
       p_variant ~loc (Label.of_string (Ligo_string.extract ctor_name)) (mk_args args)
-    | P_ctor_app ({ fp = { wrap_content = P_ctor ctor_name; _ } }, args) ->
-      p_variant ~loc ctor_name (mk_args args)
+    | P_ctor_app Nonempty_list.({ fp = { wrap_content = P_ctor ctor_name; _ } } :: args)
+      -> p_variant ~loc ctor_name (mk_args args)
     | P_app (c, args) ->
       (match get_p c with
       | P_ctor constructor -> p_variant ~loc constructor args
@@ -70,7 +71,7 @@ let decompile ~raise:_ =
   Fold { idle_fold with pattern }
 
 
-let reduction ~raise =
+let reduction ~(raise : _ Trace.raise) =
   { Iter.defaults with
     pattern =
       (function

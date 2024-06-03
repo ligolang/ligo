@@ -1,3 +1,5 @@
+open Core
+
 type content =
   { message : string
   ; location : Location.t option

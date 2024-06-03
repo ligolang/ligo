@@ -11,5 +11,3 @@ Std.ml
 Std.mli
 Utils.ml
 Utils.mli
-FQueue.ml
-FQueue.mli

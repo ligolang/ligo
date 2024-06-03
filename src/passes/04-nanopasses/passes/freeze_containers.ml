@@ -1,8 +1,10 @@
+open Core
 open Ast_unified
 open Pass_type
-open Simple_utils.Trace
 open Errors
+module Trace = Simple_utils.Trace
 module Location = Simple_utils.Location
+module Ligo_pair = Simple_utils.Ligo_pair
 include Flag.No_arg ()
 
 let compile ~raise:_ =
@@ -23,7 +25,7 @@ let compile ~raise:_ =
             op C_CONS [ el; acc ])
           ~init
       in *)
-    let compare_expr_bindings = Simple_utils.Pair.compare compare_expr compare_expr in
+    let compare_expr_bindings = Ligo_pair.compare compare_expr compare_expr in
     match Location.unwrap e with
     | E_map kvlst ->
       (* REMITODO: this would be smarter.. but makes the tests fail..
@@ -50,7 +52,7 @@ let compile ~raise:_ =
   Fold { idle_fold with expr }
 
 
-let reduction ~raise =
+let reduction ~(raise : _ Trace.raise) =
   { Iter.defaults with
     expr =
       (function

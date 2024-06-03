@@ -8,6 +8,7 @@ module Region   = Simple_utils.Region
 module Location = Simple_utils.Location
 module Snippet  = Simple_utils.Snippet
 module Display  = Simple_utils.Display
+module Error    = Simple_utils.Error
 
 (* Errors *)
 
@@ -39,7 +40,7 @@ let to_ppformat = error_ppformat
 
 let error_json : t -> Simple_utils.Error.t =
   fun error ->
-  let open Simple_utils.Error in
+  let open Error in
   match error with
     `Parsing Region.{value; region} ->
       let location = Location.lift region in

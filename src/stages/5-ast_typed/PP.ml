@@ -1,13 +1,11 @@
 [@@@coverage exclude_file]
 
-module Location = Simple_utils.Location
-module Var = Simple_utils.Var
-module List = Simple_utils.List
-module Ligo_string = Simple_utils.Ligo_string
 open Ligo_prim
 open Format
 open Types
-open Simple_utils.PP_helpers
+module Location = Simple_utils.Location
+module Var = Simple_utils.Var
+module PP_helpers = Simple_utils.PP_helpers
 
 let rec type_content_impl type_expression_impl : formatter -> type_content -> unit =
  fun ppf tc ->
@@ -44,7 +42,7 @@ and type_injection ppf { language; injection; parameters } =
     ppf
     "%s%a"
     (Literal_types.to_string injection)
-    (list_sep_d_par type_expression)
+    (PP_helpers.list_sep_d_par type_expression)
     parameters
 
 
@@ -90,7 +88,13 @@ and type_expression_orig ppf (te : type_expression) : unit =
   | None -> type_expression_impl type_content_orig ppf te
   | Some { orig_var = path, v; applied_types = [] } -> module_path v ppf path
   | Some { orig_var = path, v; applied_types = _ :: _ as applied_types } ->
-    fprintf ppf "%a%a" (module_path v) path (list_sep_d_par type_expression) applied_types
+    fprintf
+      ppf
+      "%a%a"
+      (module_path v)
+      path
+      (PP_helpers.list_sep_d_par type_expression)
+      applied_types
 
 
 let rec expression ppf (e : expression) =
@@ -106,7 +110,7 @@ and expression_content ppf (ec : expression_content) =
       ppf
       "Contract_of(%a)"
       Simple_utils.PP_helpers.(list_sep Module_var.pp (const "."))
-      (List.Ne.to_list n)
+      (Nonempty_list.to_list n)
   | E_application a -> Application.pp expression ppf a
   | E_constructor c -> Constructor.pp expression ppf c
   | E_constant c -> Constant.pp expression ppf c
@@ -179,7 +183,7 @@ and type_inst ppf { forall; type_ } =
   fprintf ppf "%a@@{%a}" expression forall type_expression type_
 
 
-and module_path ppf (mp : Module_var.t List.Ne.t) : unit =
+and module_path ppf (mp : Module_var.t Nonempty_list.t) : unit =
   Simple_utils.PP_helpers.(ne_list_sep Module_var.pp (tag ".")) ppf mp
 
 
@@ -237,7 +241,7 @@ and signature ppf (sig_ : signature) : unit =
     "@[<v>sig : %a@,@[<v1>@,%a@]@,end@]"
     signature_sort
     sig_.sig_sort
-    (list_sep sig_item (tag "@,"))
+    PP_helpers.(list_sep sig_item (tag "@,"))
     sig_.sig_items
 
 
@@ -261,11 +265,11 @@ let program_with_sig ?(use_hidden = false) ppf (p : program) =
   Format.fprintf
     ppf
     "@[<v>@,%a @,:@, %a@]"
-    (list_sep (declaration ~use_hidden) (tag "@,"))
+    PP_helpers.(list_sep (declaration ~use_hidden) (tag "@,"))
     p.pr_module
     signature
     p.pr_sig
 
 
 let program ?(use_hidden = false) ppf (p : program) =
-  list_sep (declaration ~use_hidden) (tag "@,") ppf p.pr_module
+  PP_helpers.(list_sep (declaration ~use_hidden) (tag "@,") ppf p.pr_module)

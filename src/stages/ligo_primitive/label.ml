@@ -1,4 +1,4 @@
-open Simple_utils
+module Location = Simple_utils.Location
 
 module T = struct
   type t = Label of string * (Location.t[@eq.ignore] [@hash.ignore])

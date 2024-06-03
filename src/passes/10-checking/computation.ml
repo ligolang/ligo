@@ -1,9 +1,7 @@
+open Core
+open Ligo_prim
 module Location = Simple_utils.Location
 module Trace = Simple_utils.Trace
-open Trace
-open Errors
-module List = Simple_utils.List
-open Ligo_prim
 module Row = Type.Row
 
 module State = struct
@@ -11,7 +9,7 @@ module State = struct
 end
 
 type ('a, 'err, 'wrn) t =
-  raise:('err, 'wrn) raise
+  raise:('err, 'wrn) Trace.raise
   -> options:Compiler_options.middle_end
   -> loc:Location.t
   -> path:Module_var.t list
@@ -20,7 +18,7 @@ type ('a, 'err, 'wrn) t =
   -> State.t
   -> State.t * 'a
 
-let rec encode ~raise (type_ : Ast_typed.type_expression) : Type.t =
+let rec encode ~(raise : _ Trace.raise) (type_ : Ast_typed.type_expression) : Type.t =
   let encode = encode ~raise in
   let return content : Type.t =
     { content
@@ -33,7 +31,7 @@ let rec encode ~raise (type_ : Ast_typed.type_expression) : Type.t =
   match type_.type_content with
   | T_variable tvar -> return @@ T_variable tvar
   | T_exists tvar ->
-    let () = raise.log_error @@ cannot_encode_texists tvar type_.location in
+    let () = raise.log_error @@ Errors.cannot_encode_texists tvar type_.location in
     return @@ T_exists tvar
   | T_arrow arr ->
     let arr = Arrow.map encode arr in
@@ -257,7 +255,7 @@ let raise_result result ~error : _ t =
 
 let raise_opt opt ~error : _ t =
  fun ~raise ~options:_ ~loc ~path:_ ~poly_name_tbl:_ ~refs_tbl:_ state ->
-  state, trace_option ~raise (error loc) opt
+  state, Trace.trace_option ~raise (error loc) opt
 
 
 let raise err : _ t =
@@ -547,7 +545,7 @@ let occurs_check ~tvar (type_ : Type.t) =
   let%bind loc = loc () in
   lift_raise
   @@ fun raise ->
-  let fail () = raise.log_error (occurs_check_failed tvar type_ loc) in
+  let fail () = raise.log_error (Errors.occurs_check_failed tvar type_ loc) in
   let rec loop (type_ : Type.t) =
     match type_.content with
     | T_variable _tvar' -> ()
@@ -660,14 +658,14 @@ and lift_row ~kind ~tvar ({ fields; layout } : Type.row) : (Type.row, _, _) t =
 let unify_texists tvar type_ =
   let open Let_syntax in
   let%bind () = occurs_check ~tvar type_ in
-  let%bind kind = Context.get_texists_var tvar ~error:(unbound_texists_var tvar) in
+  let%bind kind = Context.get_texists_var tvar ~error:(Errors.unbound_texists_var tvar) in
   let%bind type_ = lift ~mode:Invariant ~tvar ~kind type_ in
   if%bind
     match%map Context.Well_formed.type_ type_ with
     | Some kind' -> Kind.equal kind kind'
     | _ -> false
   then Context.add_texists_eq tvar kind type_
-  else raise_l ~loc:type_.location (ill_formed_type type_)
+  else raise_l ~loc:type_.location (Errors.ill_formed_type type_)
 
 
 let unify_layout type1 type2 ~fields (layout1 : Type.layout) (layout2 : Type.layout) =
@@ -675,7 +673,7 @@ let unify_layout type1 type2 ~fields (layout1 : Type.layout) (layout2 : Type.lay
   match layout1, layout2 with
   | L_concrete layout1, L_concrete layout2 when Layout.equal layout1 layout2 -> return ()
   | L_concrete _, L_concrete _ ->
-    log_error (cannot_unify_local_diff_layout type1 type2 layout1 layout2)
+    log_error (Errors.cannot_unify_local_diff_layout type1 type2 layout1 layout2)
   | L_exists lvar1, L_exists lvar2 when Layout_var.equal lvar1 lvar2 -> return ()
   | L_exists lvar, layout | layout, L_exists lvar ->
     let%bind layout = lift_layout ~at:(C_lexists_var (lvar, fields)) ~fields layout in
@@ -695,7 +693,7 @@ let rec unify_aux (type1 : Type.t) (type2 : Type.t)
   in
   let fail () =
     let%bind no_color = Options.no_color () in
-    log_error (cannot_unify_local no_color type1 type2)
+    log_error (Errors.cannot_unify_local no_color type1 type2)
   in
   match type1.content, type2.content with
   | T_singleton lit1, T_singleton lit2 when Literal_value.equal lit1 lit2 -> return ()
@@ -744,7 +742,7 @@ let unify (type1 : Type.t) (type2 : Type.t) : (unit, [> Errors.unify_error ], 'w
   let open Let_syntax in
   let%bind unification_loc = loc () in
   Trace.map_error
-    ~f:(fun err -> cannot_unify err type1 type2 unification_loc)
+    ~f:(fun err -> Errors.cannot_unify err type1 type2 unification_loc)
     (unify_aux type1 type2)
 
 
@@ -811,7 +809,9 @@ let rec subtype_aux ~(received : Type.t) ~(expected : Type.t)
   let subtype received expected = subtype_aux ~received ~expected in
   let subtype_texists ~mode tvar type_ =
     let%bind () = occurs_check ~tvar type_ in
-    let%bind kind = Context.get_texists_var tvar ~error:(unbound_texists_var tvar) in
+    let%bind kind =
+      Context.get_texists_var tvar ~error:(Errors.unbound_texists_var tvar)
+    in
     let%bind type_ = lift ~mode ~tvar ~kind type_ in
     let%bind () = Context.add_texists_eq tvar kind type_ in
     return E.return
@@ -903,7 +903,7 @@ let subtype ~(received : Type.t) ~(expected : Type.t)
   let open Let_syntax in
   let%bind subtyping_loc = loc () in
   Trace.map_error
-    ~f:(fun err -> cannot_subtype err received expected subtyping_loc)
+    ~f:(fun err -> Errors.cannot_subtype err received expected subtyping_loc)
     (subtype_aux ~received ~expected)
 
 
@@ -1144,13 +1144,13 @@ let try_with_diagnostics
   state, result
 
 
-let try_all (ts : ('a, 'err, 'wrn) t list) : ('a, 'err, 'wrn) t =
+let try_all (ts : ('a, 'err, 'wrn) t Nonempty_list.t) : ('a, 'err, 'wrn) t =
  fun ~raise ~options ~loc ~path ~poly_name_tbl ~refs_tbl state ->
   Trace.bind_exists
     ~raise
-    (List.Ne.of_list
-    @@ List.map ts ~f:(fun t ~raise ->
-           t ~raise ~options ~loc ~path ~poly_name_tbl ~refs_tbl state))
+    (Nonempty_list.map
+       ~f:(fun t ~raise -> t ~raise ~options ~loc ~path ~poly_name_tbl ~refs_tbl state)
+       ts)
 
 
 module With_frag = struct

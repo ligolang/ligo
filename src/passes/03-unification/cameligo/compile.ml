@@ -1,9 +1,12 @@
-open Simple_utils.Utils
-module List = Simple_utils.List
 open Unification_shared.Helpers
-module Option = Simple_utils.Option
+module Utils = Simple_utils.Utils
+module Ne_list = Simple_utils.Ne_list
+module Ligo_string = Simple_utils.Ligo_string
 module O = Ast_unified
 module I = Cst.Cameligo
+module Token = Lexing_cameligo.Token
+
+let ( <@ ) f g x = f (g x)
 
 module Eq = struct
   type expr = I.expr
@@ -25,7 +28,7 @@ end
 module Folding = Folding (Eq)
 
 module TODO_do_in_parsing = struct
-  let should_be_nseq (x : ('a, _) sepseq) = Option.value_exn x
+  let should_be_nseq (x : ('a, _) Utils.sepseq) = Option.value_exn x
 
   let conv_attr : I.attribute -> AST.Attribute.t * Location.t =
    fun attr_reg ->
@@ -81,22 +84,20 @@ module TODO_do_in_parsing = struct
 
   (* Constructors *)
 
-  let ctor_arg (lst : I.expr nseq) : I.expr =
+  let ctor_arg (lst : I.expr Nonempty_list.t) : I.expr =
     let region =
-      let lst = List.Ne.to_list lst in
+      let lst = Nonempty_list.to_list lst in
       List.fold ~init:Region.ghost ~f:Region.cover (List.map ~f:I.expr_to_region lst)
     in
     match lst with
-    | e, [] -> e (* When there's only one arg, no need to wrap it in E_Tuple *)
-    | l ->
-      I.E_Tuple
-        { region; value = nsepseq_of_nseq ~sep:Lexing_cameligo.Token.ghost_comma l }
+    | [ e ] -> e (* When there's only one arg, no need to wrap it in E_Tuple *)
+    | l -> I.E_Tuple { region; value = Utils.nsepseq_of_ne_list ~sep:Token.ghost_comma l }
 
 
   (* the I.field_path_assignment type is slightly different from other syntaxes:
      - no lenses ; labels are string ; the Path case *)
   let update_rhs (compile_lens, compile_selection) updates =
-    let lst = nsepseq_to_list updates in
+    let lst = Utils.nsepseq_to_list updates in
     let f : (I.path, _, I.expr) I.field -> I.expr O.Update.field = function
       | Punned { region; value = { attributes; pun } } ->
         weird_attributes attributes;
@@ -117,7 +118,7 @@ module TODO_do_in_parsing = struct
               | _ -> assert false (* never emited by parser *)
             in
             AST.Selection.FieldName (labelize_esc struct_name)
-            :: List.map (nsepseq_to_list field_path) ~f:compile_selection
+            :: List.map (Utils.nsepseq_to_list field_path) ~f:compile_selection
         in
         let field_lens = compile_lens field_lens in
         (* let field_rhs = self field_rhs in *)
@@ -127,11 +128,11 @@ module TODO_do_in_parsing = struct
 
 
   (* use the same type as in other CST's *)
-  let fun_binder : I.pattern nseq -> I.pattern AST.Param.t list =
+  let fun_binder : I.pattern Nonempty_list.t -> I.pattern AST.Param.t list =
    fun ps ->
     List.map
       ~f:(fun pattern -> AST.Param.{ param_kind = `Const; pattern })
-      (nseq_to_list ps)
+      (Nonempty_list.to_list ps)
 
 
   let quoted_tvar (x : I.type_var) =
@@ -144,10 +145,13 @@ module TODO_do_in_parsing = struct
 
 
   (* couldn't it be a list directly ?*)
-  let type_vars_to_lst (p : I.type_vars) : AST.Ty_variable.t List.Ne.t =
+  let type_vars_to_lst (p : I.type_vars) : AST.Ty_variable.t Nonempty_list.t =
     match p with
-    | TV_Single x -> List.Ne.singleton (quoted_tvar x)
-    | TV_Tuple x -> nseq_map (fun x -> quoted_tvar x) (nsepseq_to_nseq (r_fst x).inside)
+    | TV_Single x -> Nonempty_list.singleton (quoted_tvar x)
+    | TV_Tuple x ->
+      Nonempty_list.map
+        ~f:(fun x -> quoted_tvar x)
+        (Utils.nsepseq_to_ne_list (r_fst x).inside)
 
 
   let empty_sequence () = failwith "should a sequence be allowed to be empty ?"
@@ -162,9 +166,9 @@ module TODO_do_in_parsing = struct
   (* would be cool to use the same type if possible *)
   let compile_rows = O.Non_linear_rows.make
 
-  let make_block ~region (seq_expr : (I.expr, I.semi) nsepseq option) : I.expr =
+  let make_block ~region (seq_expr : (I.expr, I.semi) Utils.nsepseq option) : I.expr =
     match seq_expr with
-    | None -> E_Unit { value = Lexing_cameligo.Token.(ghost_lpar, ghost_rpar); region }
+    | None -> E_Unit { value = Token.(ghost_lpar, ghost_rpar); region }
     | Some _ ->
       let seq : _ Region.reg =
         { region; value = I.{ elements = seq_expr; compound = None } }
@@ -172,7 +176,7 @@ module TODO_do_in_parsing = struct
       E_Seq seq
 
 
-  let make_int i : I.expr = E_Int Lexing_cameligo.Token.(ghost_int (Z.of_int i))
+  let make_int i : I.expr = E_Int Token.(ghost_int (Z.of_int i))
 end
 
 let block = Eq.not_part_of_the_language
@@ -197,8 +201,8 @@ let rec expr : Eq.expr -> Folding.expr =
     | I.FieldName name -> FieldName (TODO_do_in_parsing.labelize_esc name)
     | I.Component c -> Component_num c#payload
   in
-  let compile_type_params : I.type_params I.par -> Ligo_prim.Type_var.t nseq =
-   fun tp -> nseq_map TODO_do_in_parsing.esc_tvar (snd (r_fst tp).inside)
+  let compile_type_params : I.type_params I.par -> Ligo_prim.Type_var.t Nonempty_list.t =
+   fun tp -> Nonempty_list.map ~f:TODO_do_in_parsing.esc_tvar (snd (r_fst tp).inside)
   in
   let compile_lens : I.lens -> AST.Update.field_lens = function
     | I.Lens_Id _ -> Lens_Id
@@ -218,10 +222,8 @@ let rec expr : Eq.expr -> Folding.expr =
   | E_True _ -> ret @@ E_constr (Ligo_prim.Label.of_string "True")
   | E_Bytes x -> ret @@ E_literal (Literal_bytes (Hex.to_bytes (snd x#payload)))
   | E_Cat c -> compile_bin_op CARET c
-  | E_String str ->
-    ret @@ E_literal (Literal_string (Simple_utils.Ligo_string.Standard str#payload))
-  | E_Verbatim str ->
-    ret @@ E_literal (Literal_string (Simple_utils.Ligo_string.Verbatim str#payload))
+  | E_String str -> ret @@ E_literal (Literal_string (Ligo_string.Standard str#payload))
+  | E_Verbatim str -> ret @@ E_literal (Literal_string (Ligo_string.Verbatim str#payload))
   | E_Add plus -> compile_bin_op PLUS plus
   | E_Sub minus -> compile_bin_op MINUS minus
   | E_Mult times -> compile_bin_op STAR times
@@ -251,7 +253,7 @@ let rec expr : Eq.expr -> Folding.expr =
   | E_Neq ne -> compile_bin_op LTGT ne
   | E_Cons cons -> compile_bin_op DCOLON cons
   | E_RevApp ra -> ret @@ E_rev_app { x = ra.value.arg1; f = ra.value.arg2 }
-  | E_Tuple { value; _ } -> ret @@ E_tuple (nsepseq_to_nseq value)
+  | E_Tuple { value; _ } -> ret @@ E_tuple (Utils.nsepseq_to_ne_list value)
   | E_Record { value = record; _ } ->
     let compile_field
         : (I.field_name, I.equal, I.expr) I.field -> (O.Label.t, I.expr) O.Field.t
@@ -268,16 +270,16 @@ let rec expr : Eq.expr -> Folding.expr =
         let label = TODO_do_in_parsing.labelize_esc field_lhs in
         AST.Field.Complete (label, field_rhs)
     in
-    let record = sepseq_to_list record.inside in
+    let record = Utils.sepseq_to_list record.inside in
     let fields = List.map ~f:compile_field record in
     ret @@ E_record_pun fields
   | E_Proj { value = { record_or_tuple; field_path; _ }; region } ->
-    let field_path = nsepseq_map compile_selection field_path in
-    ret @@ E_proj (record_or_tuple, nsepseq_to_list @@ field_path)
+    let field_path = Utils.nsepseq_map compile_selection field_path in
+    ret @@ E_proj (record_or_tuple, Utils.nsepseq_to_list @@ field_path)
   | E_ModPath { value; _ } ->
     let I.{ module_path; selector = _; field } = value in
     let module_path =
-      List.Ne.map TODO_do_in_parsing.mvar @@ nsepseq_to_nseq module_path
+      Nonempty_list.map ~f:TODO_do_in_parsing.mvar @@ Utils.nsepseq_to_ne_list module_path
     in
     let field_as_open =
       match field with
@@ -307,7 +309,7 @@ let rec expr : Eq.expr -> Folding.expr =
     let element = TODO_do_in_parsing.ctor_arg args in
     ret @@ O.(E_applied_constructor { constructor; element })
   | E_App { value = func, args; _ } ->
-    let args = List.Ne.to_list args in
+    let args = Nonempty_list.to_list args in
     let arg_loc =
       List.fold
         ~init:Location.dummy
@@ -323,7 +325,8 @@ let rec expr : Eq.expr -> Folding.expr =
       let compile_case_clause I.{ pattern; rhs; _ } =
         O.Case.{ pattern = Some pattern; rhs }
       in
-      nseq_map (compile_case_clause <@ r_fst) @@ nsepseq_to_nseq cases
+      Nonempty_list.map ~f:(compile_case_clause <@ r_fst)
+      @@ Utils.nsepseq_to_ne_list cases
     in
     Location.wrap ~loc @@ O.E_match { expr = subject; disc_label = None; cases }
   | E_Typed a ->
@@ -333,7 +336,7 @@ let rec expr : Eq.expr -> Folding.expr =
     let ifnot = Option.map ~f:snd if_not in
     ret @@ E_cond { test; ifso; ifnot }
   | E_List listcomp ->
-    let elements = sepseq_to_list listcomp.value.inside in
+    let elements = Utils.sepseq_to_list listcomp.value.inside in
     ret @@ E_list elements
   | E_LetIn { value = { kwd_rec; binding; body; _ }; _ } ->
     let I.{ type_params; binders; rhs_type; eq = _; let_rhs } = binding.value in
@@ -363,10 +366,12 @@ let rec expr : Eq.expr -> Folding.expr =
     (match elements with
     | None -> TODO_do_in_parsing.empty_sequence ()
     | Some nelst ->
-      let seq = nsepseq_to_list nelst in
+      let seq = Utils.nsepseq_to_list nelst in
       ret @@ E_sequence seq)
   | E_ContractOf c ->
-    ret @@ E_contract (List.Ne.map TODO_do_in_parsing.mvar (nsepseq_to_nseq c.value))
+    ret
+    @@ E_contract
+         (Nonempty_list.map ~f:TODO_do_in_parsing.mvar (Utils.nsepseq_to_ne_list c.value))
   | E_Assign { value = { binder; expr = expression; _ }; _ } ->
     let binder = Ligo_prim.Binder.make (TODO_do_in_parsing.esc_var binder) None in
     ret @@ E_assign_unitary { binder; expression }
@@ -415,14 +420,15 @@ let rec ty_expr : Eq.ty_expr -> Folding.ty_expr =
   let ret = Location.wrap ~loc in
   match te with
   | T_ForAll { value = generics, _, t; _ } ->
-    let ty_binders = List.map ~f:TODO_do_in_parsing.quoted_tvar @@ nseq_to_list generics
+    let ty_binders =
+      List.map ~f:TODO_do_in_parsing.quoted_tvar @@ Nonempty_list.to_list generics
     and kind = Ligo_prim.Kind.Type
     and type_ = t in
     ret @@ O.T_for_alls { ty_binders; kind; type_ }
   | T_Var v -> ret @@ TODO_do_in_parsing.mk_T_var_esc v
   | T_Arg v -> ret @@ T_var_esc (Raw (TODO_do_in_parsing.quoted_tvar v))
   | T_Attr (x, y) -> ret @@ T_attr (fst @@ TODO_do_in_parsing.conv_attr x, y)
-  | T_Cart { value = hd, _, tl; _ } -> ret @@ T_prod (hd, nsepseq_to_list tl)
+  | T_Cart { value = hd, _, tl; _ } -> ret @@ T_prod (hd :: Utils.nsepseq_to_list tl)
   | T_Variant { value = { variants; _ }; region = _ } ->
     let sum =
       let compile_variant I.{ ctor; ctor_args; attributes } =
@@ -430,14 +436,14 @@ let rec ty_expr : Eq.ty_expr -> Folding.ty_expr =
         , Option.map ~f:snd ctor_args
         , List.map (TODO_do_in_parsing.conv_attrs attributes) ~f:fst )
       in
-      let lst = List.map (nsepseq_to_list variants) ~f:(compile_variant <@ r_fst) in
+      let lst = List.map (Utils.nsepseq_to_list variants) ~f:(compile_variant <@ r_fst) in
       TODO_do_in_parsing.compile_rows lst
     in
     ret @@ T_sum_raw (sum, None)
   | T_Record { value; region = _ } ->
     let elements = TODO_do_in_parsing.should_be_nseq value.inside in
     let fields =
-      let field_decls = nseq_map r_fst @@ nsepseq_to_nseq elements in
+      let field_decls = Nonempty_list.map ~f:r_fst @@ Utils.nsepseq_to_ne_list elements in
       (* let open Ligo_prim in *)
       let compile_field_decl
           : int -> I.field_decl -> I.type_expr option O.Non_linear_rows.row
@@ -453,15 +459,15 @@ let rec ty_expr : Eq.ty_expr -> Folding.ty_expr =
         in
         l, rows
       in
-      List.mapi ~f:compile_field_decl (nseq_to_list field_decls)
+      List.mapi ~f:compile_field_decl (Nonempty_list.to_list field_decls)
     in
     ret @@ T_record_raw fields
   | T_App { value = constr, args; _ } ->
     let constr = constr in
     let type_args =
       match args with
-      | I.TC_Single te -> List.Ne.singleton te
-      | I.TC_Tuple tes -> nsepseq_to_nseq (r_fst tes).inside
+      | I.TC_Single te -> Nonempty_list.singleton te
+      | I.TC_Tuple tes -> Utils.nsepseq_to_ne_list (r_fst tes).inside
     in
     ret @@ T_app { constr; type_args }
   | T_Fun { value = te1, _, te2; _ } -> ret @@ T_fun ([], te1, te2)
@@ -476,12 +482,12 @@ let rec ty_expr : Eq.ty_expr -> Folding.ty_expr =
   | T_ModPath { value = { module_path = hd, tl; field; selector }; region } ->
     let field_as_open = TODO_do_in_parsing.field_as_open_t field in
     (* TODO: change AST_unified *)
-    (match List.Ne.of_list_opt tl with
-    | None ->
+    (match tl with
+    | [] ->
       ret
       @@ T_module_open_in
            { module_path = TODO_do_in_parsing.mvar hd; field; field_as_open }
-    | Some ((_, rhd), rtl) ->
+    | (_, rhd) :: rtl ->
       let field =
         I.T_ModPath { value = { module_path = rhd, rtl; field; selector }; region }
       in
@@ -489,8 +495,8 @@ let rec ty_expr : Eq.ty_expr -> Folding.ty_expr =
       @@ T_module_open_in
            { module_path = TODO_do_in_parsing.mvar hd; field; field_as_open })
   | T_ParameterOf { value; _ } ->
-    let path = nsepseq_map TODO_do_in_parsing.mvar value in
-    ret @@ T_contract_parameter (nsepseq_to_nseq path)
+    let path = Utils.nsepseq_map TODO_do_in_parsing.mvar value in
+    ret @@ T_contract_parameter (Utils.nsepseq_to_ne_list path)
 
 
 let rec pattern : Eq.pattern -> Folding.pattern =
@@ -511,15 +517,13 @@ let rec pattern : Eq.pattern -> Folding.pattern =
     let mutez_int64 = Z.to_int64 mutez_bigint in
     ret @@ P_literal (Literal_mutez (Z.of_int64 mutez_int64))
   | P_Bytes v -> ret @@ P_literal (Literal_bytes (Hex.to_bytes (snd (w_fst v))))
-  | P_String v ->
-    ret @@ P_literal (Literal_string (Simple_utils.Ligo_string.standard (w_fst v)))
-  | P_Verbatim v ->
-    ret @@ P_literal (Literal_string (Simple_utils.Ligo_string.verbatim (w_fst v)))
+  | P_String v -> ret @@ P_literal (Literal_string (Ligo_string.standard (w_fst v)))
+  | P_Verbatim v -> ret @@ P_literal (Literal_string (Ligo_string.verbatim (w_fst v)))
   | P_List { value; _ } ->
-    let ps = sepseq_to_list value.inside in
+    let ps = Utils.sepseq_to_list value.inside in
     ret @@ P_list (List ps)
   | P_Cons { value = p1, _, p2; _ } -> ret @@ P_list (Cons (p1, p2))
-  | P_Tuple { value = p; _ } -> ret @@ P_tuple (nsepseq_to_list p)
+  | P_Tuple { value = p; _ } -> ret @@ P_tuple (Utils.nsepseq_to_list p)
   | P_Par p -> pattern (r_fst p).inside
   | P_Record { value = { inside = p; _ }; _ } ->
     let p =
@@ -531,7 +535,7 @@ let rec pattern : Eq.pattern -> Folding.pattern =
           TODO_do_in_parsing.weird_attributes attributes;
           O.Field.Complete (TODO_do_in_parsing.labelize_esc field_lhs, field_rhs)
       in
-      List.map ~f:compile_field_pattern (sepseq_to_list p)
+      List.map ~f:compile_field_pattern (Utils.sepseq_to_list p)
     in
     ret @@ P_pun_record p
   | P_Typed { value = pattern, (_, ty); _ } -> ret @@ P_typed (ty, pattern)
@@ -543,7 +547,9 @@ let rec pattern : Eq.pattern -> Folding.pattern =
       | P_Par _ -> true
       | _ -> false
     in
-    let module_path = nseq_map TODO_do_in_parsing.mvar (nsepseq_to_nseq module_path) in
+    let module_path =
+      Nonempty_list.map ~f:TODO_do_in_parsing.mvar (Utils.nsepseq_to_ne_list module_path)
+    in
     ret @@ P_mod_access { module_path; field; field_as_open }
 
 
@@ -566,8 +572,8 @@ let declaration : Eq.declaration -> Folding.declaration =
       | Some _ -> true
     in
     let type_params =
-      let compile_type_params : I.type_params I.par -> AST.Ty_variable.t nseq =
-       fun tp -> nseq_map TODO_do_in_parsing.esc_tvar (snd tp.value.inside)
+      let compile_type_params : I.type_params I.par -> AST.Ty_variable.t Nonempty_list.t =
+       fun tp -> Nonempty_list.map ~f:TODO_do_in_parsing.esc_tvar (snd tp.value.inside)
       in
       Option.map ~f:compile_type_params type_params
     in
@@ -598,19 +604,24 @@ let mod_expr : Eq.mod_expr -> Folding.mod_expr =
   match me with
   | M_Body { value; _ } ->
     let decl = value.declarations in
-    ret @@ O.M_body I.{ decl; eof = Lexing_cameligo.Token.ghost_eof }
+    ret @@ O.M_body I.{ decl; eof = Token.ghost_eof }
   | M_Path m ->
     let m, _loc = r_split m in
     let module_path =
-      List.Ne.map TODO_do_in_parsing.mvar (nsepseq_to_nseq m.module_path)
+      Nonempty_list.map
+        ~f:TODO_do_in_parsing.mvar
+        (Utils.nsepseq_to_ne_list m.module_path)
     in
     let field = TODO_do_in_parsing.mvar m.field in
-    ret @@ M_path (List.Ne.append module_path (field, []))
+    ret @@ M_path (Ne_list.append module_path [ field ])
   | M_Var m -> ret @@ M_var (TODO_do_in_parsing.mvar m)
 
 
 let program_entry : Eq.program_entry -> Folding.program_entry = fun x -> PE_declaration x
-let program : Eq.program -> Folding.program = fun { decl; _ } -> List.Ne.to_list decl
+
+let program : Eq.program -> Folding.program =
+ fun { decl; _ } -> Nonempty_list.to_list decl
+
 
 let sig_expr : Eq.sig_expr -> Folding.sig_expr = function
   | S_Sig { value = { sig_items; kwd_sig = _; kwd_end = _ }; region } ->
@@ -619,14 +630,16 @@ let sig_expr : Eq.sig_expr -> Folding.sig_expr = function
   | S_Path { value = m; region } ->
     let loc = Location.lift region in
     let module_path =
-      List.Ne.map TODO_do_in_parsing.mvar (nsepseq_to_nseq m.module_path)
+      Nonempty_list.map
+        ~f:TODO_do_in_parsing.mvar
+        (Utils.nsepseq_to_ne_list m.module_path)
     in
     let field = TODO_do_in_parsing.mvar m.field in
-    Location.wrap ~loc @@ O.S_path (List.Ne.append module_path (field, []))
+    Location.wrap ~loc @@ O.S_path (Ne_list.append module_path [ field ])
   | S_Var name ->
     let loc = Location.lift name#region in
     let name = TODO_do_in_parsing.mvar name in
-    Location.wrap ~loc @@ O.S_path (name, [])
+    Location.wrap ~loc @@ O.S_path [ name ]
 
 
 let sig_entry : Eq.sig_entry -> Folding.sig_entry = function

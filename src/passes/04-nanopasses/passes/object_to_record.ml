@@ -1,7 +1,7 @@
 open Ast_unified
 open Pass_type
-open Simple_utils.Trace
 open Errors
+module Trace = Simple_utils.Trace
 module Location = Simple_utils.Location
 include Flag.No_arg ()
 
@@ -10,7 +10,7 @@ let label_of_var x =
   Location.wrap ~loc @@ Label.of_string (Variable.to_name_exn x)
 
 
-let field_of_property ~raise
+let field_of_property ~(raise : _ Trace.raise)
     : expr Object_.property Location.wrap -> (Label.t, expr) Field.t
   =
  fun { wrap_content = { field_id; field_rhs }; location = loc } ->
@@ -21,7 +21,7 @@ let field_of_property ~raise
   | _, None -> raise.error @@ unsupported_object_field (e_string ~loc "TODO")
 
 
-let field_update_of_property ~raise
+let field_update_of_property ~(raise : _ Trace.raise)
     : expr Object_.property Location.wrap -> expr Update.field
   =
  fun { wrap_content = { field_id; field_rhs }; location = loc } ->
@@ -33,7 +33,7 @@ let field_update_of_property ~raise
   | _, None -> raise.error @@ unsupported_object_field (e_string ~loc "TODO")
 
 
-let compile ~raise =
+let compile ~(raise : _ Trace.raise) =
   let expr : (expr, ty_expr, pattern, _, _) expr_ -> expr =
    fun e ->
     let loc = Location.get_location e in
@@ -49,7 +49,7 @@ let compile ~raise =
   Fold { idle_fold with expr }
 
 
-let reduction ~raise =
+let reduction ~(raise : _ Trace.raise) =
   { Iter.defaults with
     expr =
       (function

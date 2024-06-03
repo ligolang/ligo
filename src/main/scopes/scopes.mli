@@ -1,6 +1,6 @@
-module Formatter = Formatter
 module Api_helper = Api_helper
 module Trace = Simple_utils.Trace
+module Location = Simple_utils.Location
 module Types = Types
 module PP = PP
 module Uid = Types.Uid
@@ -21,7 +21,7 @@ type t = Types.t =
   ; inlined_scopes : inlined_scopes lazy_t
         (** Scoping result, used by the debugger. It's calculated lazily since this field
             is rarely used. *)
-  ; lambda_types : Ast_typed.ty_expr Types.LMap.t
+  ; lambda_types : Ast_typed.ty_expr Location.Map.t
         (** A map of all labels whose types are functions. *)
   }
 
@@ -32,7 +32,7 @@ val run
   -> options:Compiler_options.middle_end
   -> stdlib:Ast_typed.program * Ast_core.program
   -> prg:Ast_core.module_
-  -> module_deps:string Map.Make(String).t
+  -> module_deps:string String.Map.t
   -> with_types:bool
   -> t
 

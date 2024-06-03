@@ -182,7 +182,7 @@ val get_comments : t -> comment list
 
 (* SCANNERS *)
 
-type error = Region.t * Error.t
+type error = Region.t * PreError.t
 
 val scan_include :
   Pos.t -> State.t -> Lexing.lexbuf ->

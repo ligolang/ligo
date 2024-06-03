@@ -1,8 +1,11 @@
+open Core
 open Lsp_helpers
 open Handler
 open Cst_shared.Fold
 open Ligo_interface
 module Range_set = Set.Make (Range)
+module Loc = Simple_utils.Location
+module Region = Simple_utils.Region
 
 type syntax_node =
   (Cst_cameligo.Fold.some_node, Cst_jsligo.Fold.some_node) Dialect_cst.dialect
@@ -32,7 +35,6 @@ let is_node_in_range (selection_range : Range.t)
           | S_wrap _, wrap -> Some (get_fold_control wrap#region)
           | _ -> None)
     }
-
 
 (** An auxiliary type which represents a value
     for function definition in [LMap.t]. *)
@@ -92,7 +94,7 @@ end
 
 (** Info obtained from [Inlay_hint_syntax]. *)
 type inlay_hint_info =
-  { fun_defs : fun_def_value LMap.t
+  { fun_defs : fun_def_value Location.Map.t
   ; ban_defs : Range.t list
   ; need_par_defs : Range_set.t
   ; banned_in_core : Range.t list
@@ -112,13 +114,13 @@ end = struct
       (is_node_in_range selection_range (S.wrap_node node))
       ~default:(fun () -> instruction node)
 
-
-  let function_definitions (selection_range : Range.t) : S.cst -> fun_def_value LMap.t =
+  let function_definitions (selection_range : Range.t)
+      : S.cst -> fun_def_value Location.Map.t
+    =
     S.fold_cst
-      LMap.empty
+      Location.Map.empty
       (fun acc (key, data) -> Map.set ~key ~data acc)
       (select_in_range selection_range S.function_definitions)
-
 
   let ban_definitions ~(parse_error_ranges : Range.t list) (selection_range : Range.t)
       : S.cst -> Range.t list
@@ -128,20 +130,17 @@ end = struct
       (fun acc range -> range :: acc)
       (select_in_range selection_range (S.ban_definitions ~parse_error_ranges))
 
-
   let need_parenthesis_definitions (selection_range : Range.t) : S.cst -> Range_set.t =
     S.fold_cst
       Range_set.empty
       (fun acc ranges -> Set.union (Range_set.of_list ranges) acc)
       (select_in_range selection_range S.need_parenthesis_definitions)
 
-
   let banned_for_core (selection_range : Range.t) : S.cst -> Range.t list =
     S.fold_cst
       []
       (fun acc range -> range :: acc)
       (select_in_range selection_range S.banned_for_core)
-
 
   let provide_inlay_hint_info
       ~(parse_error_ranges : Range.t list)
@@ -173,7 +172,7 @@ module Cameligo_inlay_hint_provider = Inlay_hint_provider_Make (struct
     match sing, value with
     | S_let_binding, let_binding when Option.is_none let_binding.rhs_type ->
       (match let_binding.binders with
-      | P_Var v, _ ->
+      | P_Var v :: _ ->
         let variable_loc = Loc.lift @@ variable_to_region v in
         let end_position =
           let end_pos_type_opt =
@@ -182,7 +181,7 @@ module Cameligo_inlay_hint_provider = Inlay_hint_provider_Make (struct
           in
           let end_pos_binders =
             Position.of_pos
-              (pattern_to_region @@ Simple_utils.List.Ne.last let_binding.binders)#stop
+              (pattern_to_region @@ Nonempty_list.last let_binding.binders)#stop
           in
           Option.value_map
             end_pos_type_opt
@@ -195,17 +194,15 @@ module Cameligo_inlay_hint_provider = Inlay_hint_provider_Make (struct
         Continue
           ( variable_loc
           , { position = end_position
-            ; num_of_binders = Simple_utils.List.Ne.length let_binding.binders - 1
+            ; num_of_binders = Nonempty_list.length let_binding.binders - 1
             } )
       | _ -> Skip)
     | S_expr, E_Fun { region; value = fun_expr } when Option.is_none fun_expr.rhs_type ->
       let end_position =
-        Position.of_pos
-          (pattern_to_region @@ Simple_utils.List.Ne.last fun_expr.binders)#stop
+        Position.of_pos (pattern_to_region @@ Nonempty_list.last fun_expr.binders)#stop
       in
       Continue (Loc.lift region, { position = end_position; num_of_binders = 0 })
     | _ -> Skip
-
 
   let ban_definitions ~parse_error_ranges (Some_node (value, sing)) : Range.t fold_control
     =
@@ -226,11 +223,10 @@ module Cameligo_inlay_hint_provider = Inlay_hint_provider_Make (struct
       check_range range
     | _ -> Skip
 
-
   let need_parenthesis_definitions (Some_node (value, sing)) : Range.t list fold_control =
     match sing, value with
     | S_let_binding, { binders; _ } | S_expr, E_Fun { value = { binders; _ }; _ } ->
-      let binders = Utils.nseq_to_list binders in
+      let binders = Nonempty_list.to_list binders in
       let interesting_ranges =
         List.filter_map binders ~f:(function
             | P_Var v -> Some (Range.of_region @@ variable_to_region v)
@@ -239,7 +235,6 @@ module Cameligo_inlay_hint_provider = Inlay_hint_provider_Make (struct
       Continue interesting_ranges
     | _ -> Skip
 
-
   let banned_for_core (Some_node (value, sing)) : Range.t fold_control =
     let rec is_var_pat = function
       | P_Var _ -> true
@@ -247,7 +242,7 @@ module Cameligo_inlay_hint_provider = Inlay_hint_provider_Make (struct
       | _ -> false
     in
     match sing, value with
-    | S_let_binding, { rhs_type; binders = name, _; _ }
+    | S_let_binding, { rhs_type; binders = name :: _; _ }
       when Option.is_some rhs_type && is_var_pat name ->
       let reg = pattern_to_region name in
       Continue (Range.of_region reg)
@@ -303,7 +298,6 @@ module Jsligo_inlay_hint_provider = Inlay_hint_provider_Make (struct
       Continue (fun_loc, { position = end_position; num_of_binders = 0 })
     | _ -> Skip
 
-
   let ban_definitions ~(parse_error_ranges : Range.t list) (Some_node (value, sing))
       : Range.t fold_control
     =
@@ -312,7 +306,6 @@ module Jsligo_inlay_hint_provider = Inlay_hint_provider_Make (struct
     | S_fun_decl, { rhs_type; fun_name; _ } when Option.is_some rhs_type ->
       Continue (Range.of_region @@ variable_to_region fun_name)
     | _ -> Skip
-
 
   let need_parenthesis_definitions (Some_node (value, sing)) : Range.t list fold_control =
     match sing, value with
@@ -323,7 +316,6 @@ module Jsligo_inlay_hint_provider = Inlay_hint_provider_Make (struct
         let reg = pattern_to_region param in
         Continue [ Range.of_region reg ])
     | _ -> Skip
-
 
   let banned_for_core (Some_node (value, sing)) : Range.t fold_control =
     match sing, value with
@@ -368,7 +360,6 @@ let provide_inlay_hint_info
       selection_range
       cst
 
-
 (** In most cases we want to display hints right next to the definition.
     However, for function definitions it's not true.
     For example:
@@ -400,8 +391,8 @@ type inlay_hint =
     [lambda_types] map stores these function types associated to the whole lambda body locations.
     Using [fun_defs] we'll resolve the lambda body location to its shifted position. *)
 let provide_hints_for_lambda_types
-    ~(lambda_types : Ast_typed.type_expression LMap.t)
-    ~(fun_defs : fun_def_value LMap.t)
+    ~(lambda_types : Ast_typed.type_expression Location.Map.t)
+    ~(fun_defs : fun_def_value Location.Map.t)
   =
   Map.fold lambda_types ~init:[] ~f:(fun ~key:loc ~data:typ acc ->
       Option.value ~default:acc
@@ -415,11 +406,10 @@ let provide_hints_for_lambda_types
              in
              { position = Shifted position; typ } :: acc))
 
-
 (** Provides an inlay hint for the given variable definition. *)
 let process_variable_def
     ~(banned_in_core : Range.t list)
-    ~(fun_defs : fun_def_value LMap.t)
+    ~(fun_defs : fun_def_value Location.Map.t)
     ~(ban_defs : Range.t list)
     : Scopes.Types.vdef -> inlay_hint option
   =
@@ -466,13 +456,12 @@ let process_variable_def
     else process_variable range typ
   | { t = Unresolved; _ } -> None
 
-
 (** Computes inlay hints for variables with core types (i.e., unnanotated variables whose
     types that were inferred). *)
 let provide_hints_for_variables
     ~(normalize : Path.normalization)
     ~(banned_in_core : Range.t list)
-    ~(fun_defs : fun_def_value LMap.t)
+    ~(fun_defs : fun_def_value Location.Map.t)
     ~(ban_defs : Range.t list)
     (definitions : Def.definitions)
     (file : Path.t)
@@ -494,7 +483,6 @@ let provide_hints_for_variables
            Uid.compare lhs.uid rhs.uid)
   in
   List.filter_map vdefs ~f:(process_variable_def ~banned_in_core ~fun_defs ~ban_defs)
-
 
 (** Compile our intermediate representation of inlay hint into [InlayHint.t]. *)
 let compile_inlay_hints ~(syntax : Syntax_types.t) ~(need_par_defs : Range_set.t)
@@ -526,7 +514,6 @@ let compile_inlay_hints ~(syntax : Syntax_types.t) ~(need_par_defs : Range_set.t
         ~f:Fn.id
         [ lpar; Some (InlayHint.create ~label ~kind:Type ~position ()); rpar ])
   <@ List.sort ~compare:compare_inlay_hint
-
 
 let on_req_inlay_hint (file : Path.t) (range : Range.t)
     : InlayHint.t list option Handler.t

@@ -1,10 +1,18 @@
 module Location = Simple_utils.Location
-open Simple_utils.Trace
-open Ligo_prim
+module Trace = Simple_utils.Trace
+module Display = Simple_utils.Display
+module PP_helpers = Simple_utils.PP_helpers
+module ModRes = Preprocessor.ModRes
+module Module_var = Ligo_prim.Module_var
+module Value_var = Ligo_prim.Value_var
+module Type_var = Ligo_prim.Type_var
+module Binder = Ligo_prim.Binder
+module Module_expr = Ligo_prim.Module_expr
+module Type_or_module_attr = Ligo_prim.Type_or_module_attr
+module Run = Ligo_run.Of_michelson
+module Raw_options = Compiler_options.Raw_options
 
 (* Helpers *)
-
-module ModRes = Preprocessor.ModRes
 
 let loc = Location.repl
 
@@ -84,21 +92,19 @@ type repl_result =
   | Defined_values_typed of Ast_typed.program
   | Just_ok
 
-open Simple_utils.Display
-
 let repl_result_ppformat ~display_format ~no_colour:_ f = function
   | Expression_value expr ->
     (match display_format with
-    | Human_readable | Dev -> Ast_core.PP.expression f expr)
+    | Display.Human_readable | Dev -> Ast_core.PP.expression f expr)
   | Defined_values_core program ->
     (match display_format with
-    | Human_readable | Dev ->
-      Simple_utils.PP_helpers.list_sep_d pp_declaration f (get_declarations_core program))
+    | Display.Human_readable | Dev ->
+      PP_helpers.list_sep_d pp_declaration f (get_declarations_core program))
   | Defined_values_typed program ->
     (match display_format with
-    | Human_readable | Dev ->
-      Simple_utils.PP_helpers.list_sep_d pp_declaration f (get_declarations_typed program))
-  | Just_ok -> Simple_utils.PP_helpers.string f "Done."
+    | Display.Human_readable | Dev ->
+      PP_helpers.list_sep_d pp_declaration f (get_declarations_typed program))
+  | Just_ok -> PP_helpers.string f "Done."
 
 
 let repl_result_jsonformat = function
@@ -130,18 +136,15 @@ let repl_result_jsonformat = function
   | Just_ok -> `Assoc []
 
 
-let repl_result_format : 'a format =
+let repl_result_format : 'a Display.format =
   { pp = repl_result_ppformat; to_json = repl_result_jsonformat }
 
-
-module Run = Ligo_run.Of_michelson
-module Raw_options = Compiler_options.Raw_options
 
 type state =
   { syntax : Syntax_types.t
   ; top_level : Ast_typed.program
   ; dry_run_opts : Run.options
-  ; module_resolutions : Preprocessor.ModRes.t option
+  ; module_resolutions : ModRes.t option
   }
 
 let try_eval ~raise ~raw_options state s =
@@ -200,7 +203,7 @@ let concat_modules ~declaration (m1 : Ast_typed.program) (m2 : Ast_typed.program
 let try_declaration ~raise ~raw_options state s =
   let options = Compiler_options.make ~raw_options ~syntax:state.syntax () in
   try
-    try_with
+    Trace.try_with
       (fun ~raise ~catch:_ ->
         let typed_prg, core_prg =
           Ligo_compile.Utils.type_program_string
@@ -313,24 +316,28 @@ let parse s =
 (* REPL main and loop *)
 
 let eval display_format no_colour state c =
-  let (Ex_display_format t) = display_format in
-  match to_stdlib_result ~fast_fail:Fast_fail c with
+  let (Display.Ex_display_format t) = display_format in
+  match Trace.to_stdlib_result ~fast_fail:Fast_fail c with
   | Ok ((state, out), (), _w) ->
-    let disp = Displayable { value = out; format = repl_result_format } in
+    let disp = Display.Displayable { value = out; format = repl_result_format } in
     let out : string =
       match t with
-      | Human_readable -> convert ~display_format:t ~no_colour disp
-      | Dev -> convert ~display_format:t ~no_colour disp
-      | Json -> Yojson.Safe.pretty_to_string @@ convert ~display_format:t ~no_colour disp
+      | Human_readable -> Display.convert ~display_format:t ~no_colour disp
+      | Dev -> Display.convert ~display_format:t ~no_colour disp
+      | Json ->
+        Yojson.Safe.pretty_to_string @@ Display.convert ~display_format:t ~no_colour disp
     in
     1, state, out
   | Error (e, _w) ->
-    let disp = Displayable { value = e; format = Main_errors.Formatter.error_format } in
+    let disp =
+      Display.Displayable { value = e; format = Main_errors.Formatter.error_format }
+    in
     let out : string =
       match t with
-      | Human_readable -> convert ~display_format:t ~no_colour disp
-      | Dev -> convert ~display_format:t ~no_colour disp
-      | Json -> Yojson.Safe.pretty_to_string @@ convert ~display_format:t ~no_colour disp
+      | Human_readable -> Display.convert ~display_format:t ~no_colour disp
+      | Dev -> Display.convert ~display_format:t ~no_colour disp
+      | Json ->
+        Yojson.Safe.pretty_to_string @@ Display.convert ~display_format:t ~no_colour disp
     in
     0, state, out
 
@@ -359,7 +366,7 @@ let make_initial_state syntax dry_run_opts project_root options =
   { top_level
   ; syntax
   ; dry_run_opts
-  ; module_resolutions = Option.bind project_root ~f:Preprocessor.ModRes.make
+  ; module_resolutions = Option.bind project_root ~f:ModRes.make
   }
 
 
@@ -438,9 +445,7 @@ let main
     Ligo_run.Of_michelson.make_dry_run_options
       { now; amount; balance; sender; source; parameter_ty = None }
   in
-  match
-    Simple_utils.Trace.to_option syntax, Simple_utils.Trace.to_option dry_run_opts
-  with
+  match Trace.to_option syntax, Trace.to_option dry_run_opts with
   | None, _ -> Error ("Please check syntax name.", "")
   | _, None -> Error ("Please check run options.", "")
   | Some syntax, Some dry_run_opts ->

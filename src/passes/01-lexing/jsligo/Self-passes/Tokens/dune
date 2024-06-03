@@ -9,6 +9,7 @@
   ;; Vendors
   simple-utils
   LexerLib
+  core_kernel.nonempty_list
   ;; LIGO
   preprocessing_jsligo
   lexing_shared

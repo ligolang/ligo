@@ -1,5 +1,8 @@
-let dummy_loc : _ Recursion_schemes.Catamorphism.fold =
-  let open Simple_utils.Location in
+module Location = Simple_utils.Location
+module Catamorphism = Recursion_schemes.Catamorphism
+
+let dummy_loc : _ Catamorphism.fold =
+  let open Location in
   let rm_loc f x = f x.wrap_content in
   { expr = rm_loc (Combinators.make_e ~loc:dummy)
   ; ty_expr = rm_loc (Combinators.make_t ~loc:dummy)
@@ -54,33 +57,24 @@ let program ?(show_loc = false) ~(hide_sort : string list) =
       let sig_expr = List.exists ~f:(String.equal "sig_entry") hide_sort
     end)
   in
-  pp_as_sexp
-    ~show_loc
-    Recursion_schemes.Catamorphism.cata_program
-    Hidden_sexp.sexp_of_program
+  pp_as_sexp ~show_loc Catamorphism.cata_program Hidden_sexp.sexp_of_program
 
 
 let ty_expr ?(show_loc = false) =
-  pp_as_sexp ~show_loc Recursion_schemes.Catamorphism.cata_ty_expr S_exp.sexp_of_ty_expr
+  pp_as_sexp ~show_loc Catamorphism.cata_ty_expr S_exp.sexp_of_ty_expr
 
 
 let expr ?(show_loc = false) =
-  pp_as_sexp ~show_loc Recursion_schemes.Catamorphism.cata_expr S_exp.sexp_of_expr
+  pp_as_sexp ~show_loc Catamorphism.cata_expr S_exp.sexp_of_expr
 
 
 let statement ?(show_loc = false) =
-  pp_as_sexp
-    ~show_loc
-    Recursion_schemes.Catamorphism.cata_statement
-    S_exp.sexp_of_statement
+  pp_as_sexp ~show_loc Catamorphism.cata_statement S_exp.sexp_of_statement
 
 
 let pattern ?(show_loc = false) =
-  pp_as_sexp ~show_loc Recursion_schemes.Catamorphism.cata_pattern S_exp.sexp_of_pattern
+  pp_as_sexp ~show_loc Catamorphism.cata_pattern S_exp.sexp_of_pattern
 
 
 let declaration ?(show_loc = false) =
-  pp_as_sexp
-    ~show_loc
-    Recursion_schemes.Catamorphism.cata_declaration
-    S_exp.sexp_of_declaration
+  pp_as_sexp ~show_loc Catamorphism.cata_declaration S_exp.sexp_of_declaration

@@ -1,5 +1,5 @@
 open Main_errors
-open Simple_utils.Trace
+module Trace = Simple_utils.Trace
 open Ligo_prim
 module Location = Simple_utils.Location
 
@@ -12,12 +12,12 @@ let typecheck_with_signature
     : Ast_typed.program
   =
   let prg =
-    trace ~raise checking_tracer
+    Trace.trace ~raise checking_tracer
     @@ Checking.type_program ~options:options.middle_end ?env:context p
   in
   if self_pass
   then
-    trace ~raise self_ast_typed_tracer
+    Trace.trace ~raise self_ast_typed_tracer
     @@ fun ~raise -> Self_ast_typed.all_program ~raise prg
   else prg
 
@@ -30,10 +30,10 @@ let typecheck
     : Ast_typed.program
   =
   let typed =
-    trace ~raise checking_tracer
+    Trace.trace ~raise checking_tracer
     @@ Checking.type_program ~options:options.middle_end ?env:context p
   in
-  trace ~raise self_ast_typed_tracer (Self_ast_typed.all_program typed)
+  Trace.trace ~raise self_ast_typed_tracer (Self_ast_typed.all_program typed)
 
 
 let compile_expression
@@ -44,7 +44,7 @@ let compile_expression
     : Ast_typed.expression
   =
   let typed =
-    trace ~raise checking_tracer
+    Trace.trace ~raise checking_tracer
     @@ Checking.type_expression ~options:options.middle_end ~env:context expr ~path:[]
   in
   typed
@@ -57,7 +57,7 @@ let compile_type_expression
     (ty : Ast_core.type_expression)
     : Ast_typed.type_expression
   =
-  trace ~raise checking_tracer
+  Trace.trace ~raise checking_tracer
   @@ Checking.type_type_expression ~options:options.middle_end ~env:context ty ~path:[]
 
 

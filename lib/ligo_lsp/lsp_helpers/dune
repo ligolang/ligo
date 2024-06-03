@@ -8,6 +8,7 @@
  (libraries
   core_unix.filename_unix
   core_unix.sys_unix
+  core_kernel.nonempty_list
   ligo_api
   ligo_run
   linol

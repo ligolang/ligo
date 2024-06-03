@@ -1,8 +1,8 @@
+open Core
 open Types
 
 module Environment = struct
   open Ligo_prim
-  module List = Simple_utils.List
 
   type element = environment_element
   type t = environment

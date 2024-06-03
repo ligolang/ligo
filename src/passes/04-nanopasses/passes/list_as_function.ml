@@ -1,15 +1,15 @@
 open Ast_unified
 open Pass_type
-open Simple_utils.Trace
 open Errors
+module Trace = Simple_utils.Trace
 module Location = Simple_utils.Location
-
-(* handle TS pattern to build lists from a function (cons, and literals) *)
-let name = __MODULE__
-
 include Flag.No_arg ()
 
-let compile ~raise =
+(* handle TS pattern to build lists from a function (cons, and literals) *)
+
+let name = __MODULE__
+
+let compile ~(raise : _ Trace.raise) =
   let pass_expr : _ expr_ -> expr =
    fun e ->
     let loc = Location.get_location e in
@@ -31,7 +31,7 @@ let compile ~raise =
   Fold { idle_fold with expr = pass_expr }
 
 
-let reduction ~raise =
+let reduction ~(raise : _ Trace.raise) =
   let fail () = raise.error (wrong_reduction __MODULE__) in
   { Iter.defaults with
     expr =

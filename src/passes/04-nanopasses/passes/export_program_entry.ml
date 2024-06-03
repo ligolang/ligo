@@ -1,10 +1,10 @@
 open Ast_unified
 open Pass_type
-open Simple_utils.Trace
 open Errors
+module Trace = Simple_utils.Trace
+include Flag.No_arg ()
 
 (* Upon exported declaration 'export', attribute "public" must be added *)
-include Flag.No_arg ()
 
 let compile ~raise:_ =
   let program_entry
@@ -28,7 +28,7 @@ let decompile ~raise:_ =
   Fold { idle_fold with program_entry }
 
 
-let reduction ~raise =
+let reduction ~(raise : _ Trace.raise) =
   { Iter.defaults with
     program_entry =
       (function

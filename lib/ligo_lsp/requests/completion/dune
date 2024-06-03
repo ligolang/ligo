@@ -7,4 +7,10 @@
   (backend bisect_ppx))
  (preprocess
   (pps ppx_jane))
- (libraries lsp linol lsp_helpers compiler_options checking))
+ (libraries
+  lsp
+  linol
+  lsp_helpers
+  compiler_options
+  checking
+  core_kernel.nonempty_list))

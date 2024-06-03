@@ -54,12 +54,11 @@ let params ~raise counter msg keys is_validl f =
     let payload =
       e_tuple
         ~loc
-        (List.Ne.of_list
-           [ msg
-           ; e_nat ~loc counter
-           ; e_string ~loc (if is_valid then "MULTISIG" else "XX")
-           ; chain_id_zero
-           ])
+        [ msg
+        ; e_nat ~loc counter
+        ; e_string ~loc (if is_valid then "MULTISIG" else "XX")
+        ; chain_id_zero
+        ]
     in
     let%map signature = sign_message ~raise program payload sk in
     e_pair ~loc (e_key_hash ~loc pkh) (e_signature ~loc signature) :: acc

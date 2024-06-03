@@ -1,5 +1,11 @@
-open Imports
+open Core
 module Dialect_cst = Ligo_api.Dialect_cst
+module Loc = Simple_utils.Location
+module Region = Simple_utils.Region
+module Ligo_fun = Simple_utils.Ligo_fun
+
+let uncurry = Ligo_fun.uncurry
+let ( <@ ) = Ligo_fun.( <@ )
 
 (** Contains the number of space characters for indentation as well as the maximum line
     width to pretty print something. *)
@@ -36,7 +42,6 @@ let with_pp_mode
     pprint.cameligo (Parsing.Cameligo.Pretty.default_state, code)
   | JsLIGO code -> pprint.jsligo (set_ident Parsing.Jsligo.Pretty.default_state, code)
 
-
 (** Pretty prints the provided CST using the provided configuration. *)
 let pretty_print_cst pp_mode ~(dialect_cst : Dialect_cst.t) : string =
   with_pp_mode
@@ -45,7 +50,6 @@ let pretty_print_cst pp_mode ~(dialect_cst : Dialect_cst.t) : string =
     ; jsligo = uncurry Parsing.Jsligo.Pretty.print
     }
     dialect_cst
-
 
 (** While pretty printing a core AST node, it's possible we'll reach an error since one
     of the steps is to decompile it into the CST. The [`Nonpretty] constructor symbolizes
@@ -98,7 +102,6 @@ let pretty_print_signature
       , Helpers_pretty.doc_to_string ~width:10000
         @@ PPrint.(string (Format.asprintf "%a" Ast_core.PP.signature core_sig)) )
 
-
 let decompile_type
     :  syntax:Syntax_types.t -> Ast_core.ty_expr
     -> ( (Cst.Cameligo.type_expr, Cst.Jsligo.type_expr) Dialect_cst.dialect
@@ -121,7 +124,6 @@ let decompile_type
           CameLIGO (Unification_cameligo.Decompile.decompile_type_expression s))
   with
   | exn -> Error (`Exn exn)
-
 
 (** Pretty-prints a variant type (pair with constructors name and its type expression) in
     the given [syntax].
@@ -175,7 +177,6 @@ let pretty_print_variant
           prefix_doc ^//^ string (Format.asprintf "%a" Ast_core.PP.type_expression typ))
       )
 
-
 (** Attempts to pretty print a core AST type expression in the given [syntax], prefixing
     it with some [prefix] (e.g., ["type "]). This function gives the programmer more
     control than [show_type].
@@ -215,7 +216,6 @@ let pretty_print_type_expression
         in
         PPrint.(
           prefix_doc ^^ string (Format.asprintf "%a" Ast_core.PP.type_expression te)) )
-
 
 (** Helper to pretty print a core AST type expression in the given [syntax]. Uses a
     default [pp_mode] with 2 spaces for indentation and a maximum width of 60 characters.

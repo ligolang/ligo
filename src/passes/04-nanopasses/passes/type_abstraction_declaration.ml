@@ -1,7 +1,9 @@
 open Errors
 open Ast_unified
 open Pass_type
-open Simple_utils.Trace
+module Trace = Simple_utils.Trace
+module Ne_list = Simple_utils.Ne_list
+include Flag.No_arg ()
 
 (* in expression;
 ```
@@ -14,10 +16,8 @@ this parses incorectly (the 'a binder is ignored) : See with christian
 *)
 let name = __MODULE__
 
-include Flag.No_arg ()
-
 let abstract_type params ty_expr =
-  List.Ne.fold_right params ~init:ty_expr ~f:(fun ty_binder acc ->
+  Nonempty_list.fold_right params ~init:ty_expr ~f:(fun ty_binder acc ->
       t_abstraction ~loc:(get_t_loc ty_expr) { ty_binder; kind = Type; type_ = acc })
 
 
@@ -45,7 +45,7 @@ let compile ~raise:_ =
   Fold { idle_fold with declaration; expr }
 
 
-let reduction ~raise =
+let reduction ~(raise : _ Trace.raise) =
   { Iter.defaults with
     declaration =
       (function
@@ -74,7 +74,7 @@ let decompile ~raise:_ =
                 | Some { ty_binder; kind = _; type_ } -> aux (tv @ [ ty_binder ]) type_
               in
               let params, tail = aux [] type_expr in
-              let params = params |> List.Ne.of_list_opt in
+              let params = params |> Ne_list.of_list_opt in
               D_type_abstraction { name; params; type_expr = tail }
             | x -> x)
           decl
@@ -107,7 +107,7 @@ let%expect_test "decompile" =
         (T_abstraction
           ((ty_binder a)
            (kind Type)
-           (type_ 
+           (type_
             (T_abstraction
               ((ty_binder b)
                (kind Type)

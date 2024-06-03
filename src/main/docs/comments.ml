@@ -1,5 +1,4 @@
-open Simple_utils.Utils
-
+let ( <@ ) f g x = f (g x)
 let display_only_for_cameligo = "display-only-for-cameligo"
 let display_only_for_jsligo = "display-only-for-jsligo"
 

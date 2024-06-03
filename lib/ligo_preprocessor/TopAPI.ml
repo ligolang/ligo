@@ -1,5 +1,6 @@
 (* Vendor dependencies *)
 
+open Core
 module Region  = Simple_utils.Region
 module Std     = Simple_utils.Std
 module Lexbuf  = Simple_utils.Lexbuf

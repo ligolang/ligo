@@ -17,7 +17,7 @@ open CST (* THE ONLY GLOBAL OPENING *)
 
 (* UTILITIES *)
 
-let (<@) = Utils.(<@)
+let (<@) f g x = f (g x)
 
 type ('a,'sep) sep_or_term = ('a,'sep) Utils.sep_or_term
 
@@ -56,7 +56,7 @@ let print_variable state = function
 (* PRINTING THE CST *)
 
 let rec print_cst state (node : cst) =
-  Tree.of_nseq state "<cst>" (fun state -> print_statement state <@ fst)
+  Tree.of_ne_list state "<cst>" (fun state -> print_statement state <@ fst)
                node.statements
 
 (* DECLARATIONS *)
@@ -88,7 +88,7 @@ and print_fun_params state (node: fun_params) =
   Tree.of_sep_or_term ~region state "<parameters>" print_pattern value.inside
 
 and print_decl_fun_body state (node : statements braces) =
-  Tree.of_nseq state "<body>"
+  Tree.of_ne_list state "<body>"
     (fun state -> print_statement state <@ fst) node.value.inside
 
 (* Import declaration *)
@@ -467,7 +467,7 @@ and print_variant : 'a. 'a Tree.printer -> 'a variant reg Tree.printer =
         match app with
           `Sep p -> ctor, Utils.nsepseq_to_list p
         | `Term ctor_params ->
-             ctor, List.map ~f:fst @@ Utils.nseq_to_list ctor_params
+             ctor, List.map ~f:fst @@ Nonempty_list.to_list ctor_params
   in
   let children =
     Tree.mk_child print_ctor_app_kind ctor ::
@@ -855,7 +855,7 @@ and print_E_Do state (node : do_expr reg) =
   let Region.{region; value} = node in
   let {kwd_do=_; statements} = value in
   let stmts = statements.value.inside in
-  Tree.of_nseq ~region state "E_Do"
+  Tree.of_ne_list ~region state "E_Do"
                (fun state -> print_statement state <@ fst) stmts
 
 (* Equality *)
@@ -899,7 +899,7 @@ and print_fun_body state = function
 | ExprBody b -> print_ExprBody state b
 
 and print_StmtBody state (node: statements braces) =
-  Tree.of_nseq state "StmtBody"
+  Tree.of_ne_list state "StmtBody"
                (fun state -> print_statement state <@ fst) node.value.inside
 
 and print_ExprBody state (node: expr) =
@@ -949,7 +949,7 @@ and print_match_clauses state = function
 and print_AllClauses state (node : all_match_clauses) =
   let normal_clauses, default_clause_opt = node in
   let children = Tree.(
-    mk_children_nseq print_match_clause normal_clauses
+    mk_children_ne_list print_match_clause normal_clauses
     @ [mk_child_opt print_match_default default_clause_opt])
   in Tree.make state "AllClauses" children
 
@@ -1056,8 +1056,8 @@ and print_E_Proj state (node : projection reg) =
   let Region.{value; region} = node in
   let {object_or_array; property_path} = value in
   let children = Tree.(
-       mk_child         print_expr      object_or_array
-    :: mk_children_nseq print_selection property_path)
+       mk_child            print_expr      object_or_array
+    :: mk_children_ne_list print_selection property_path)
   in Tree.make state ~region "E_Proj" children
 
 and print_selection state = function
@@ -1206,7 +1206,7 @@ and print_S_Attr state (node: attribute * statement) =
 and print_S_Block state (node: statements braces) =
   let Region.{region; value} = node in
   let stmts = value.inside in
-  Tree.of_nseq ~region state "S_Block"
+  Tree.of_ne_list ~region state "S_Block"
                (fun state -> print_statement state <@ fst) stmts
 
 (* Break statement *)
@@ -1318,7 +1318,7 @@ and print_cases state = function
 and print_AllCases state (node: all_cases) =
   let normal_cases, default_case_opt = node in
   let children = Tree.(
-    mk_children_nseq print_case normal_cases
+    mk_children_ne_list print_case normal_cases
     @ [mk_child_opt print_switch_default default_case_opt])
   in Tree.make state "AllCases" children
 
@@ -1342,7 +1342,7 @@ and print_switch_default state (node: switch_default reg) =
       Tree.make_unary ~region state "Default" print_statements stmts
 
 and print_statements state (node: statements) =
-  Tree.of_nseq state "<statements>"
+  Tree.of_ne_list state "<statements>"
                (fun state -> print_statement state <@ fst) node
 
 (* While-loop statement *)

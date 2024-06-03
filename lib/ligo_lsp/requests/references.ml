@@ -1,3 +1,4 @@
+open Core
 open Handler
 open Lsp_helpers
 open Ligo_interface
@@ -6,6 +7,7 @@ module Def_locations = Def.Def_locations
 module Loc_in_file = Def.Loc_in_file
 module PathMap = Map.Make (Path)
 module Ranges = Set.Make (Range)
+module Location = Lsp.Types.Location
 
 (** For every location [l], returns the locations of every reference of the declaration of
     [l]. *)
@@ -24,7 +26,6 @@ let get_references
          | Def_location.File loc -> Some loc
          | Virtual _ | StdLib _ -> None)
 
-
 (** Partitions the collection of reference locations into a map whose keys are the files
     that these locations belong to, and whose keys are such ranges. *)
 let partition_references : Loc_in_file.t Sequence.t -> Ranges.t PathMap.t =
@@ -33,7 +34,6 @@ let partition_references : Loc_in_file.t Sequence.t -> Ranges.t PathMap.t =
       Map.update acc loc.path ~f:(function
           | None -> Ranges.singleton loc.range
           | Some others -> Set.add others loc.range))
-
 
 (** Like [get_all_references], but keeps the locations grouped by files. This version is
     also useful for the rename request. *)
@@ -59,7 +59,6 @@ let get_all_references_grouped_by_file
   |> Map.to_sequence
   |> Sequence.map ~f:(fun (file, refs) -> file, Set.to_sequence refs)
 
-
 (** For each location with a declaration, finds all references for that declaration and
     concats them together. *)
 let get_all_references
@@ -71,7 +70,6 @@ let get_all_references
   |> Sequence.concat_map ~f:(fun (path, ranges) ->
          Sequence.map ~f:(fun range -> Loc_in_file.{ path; range }) ranges)
   |> Sequence.to_list
-
 
 (** Tries to get all locations from definitions that relate to the given definition by
     name. We say that the definition is related to another definition if their names are
@@ -106,7 +104,6 @@ let try_to_get_all_linked_locations
       let%map.Option def = find_last_def_by_name_and_level definition defs in
       Def.get_location ~normalize def)
 
-
 (** Tries to get all locations from definitions that relate to the given definition by
     name, or returns just the location of the given definition instead ([None] case from
     [try_to_get_all_linked_locations]). We say that the definition is related to another
@@ -122,7 +119,6 @@ let get_all_linked_locations_or_def
   Option.value
     (try_to_get_all_linked_locations ~normalize definition definitions)
     ~default:[ Def.get_location ~normalize definition ]
-
 
 (** Returns a subset of the file graph containing just the transitive dependent files of
     the provided file and itself. If A imports/includes B, then we say that A is a
@@ -142,7 +138,6 @@ let get_reverse_dependencies : Path.t -> Path.t list Handler.t =
   in
   return reverse_deps
 
-
 (** Gets all definitions of the provided list of files. See [get_reverse_dependencies].
     This function assumes that the files were previously cached. *)
 let get_all_reverse_dependencies_definitions : Path.t list -> definitions Handler.t =
@@ -152,7 +147,6 @@ let get_all_reverse_dependencies_definitions : Path.t list -> definitions Handle
          with_cached_doc_pure file ~default:[]
          @@ fun { definitions = { definitions }; _ } -> definitions)
   >>| Scopes.Types.wrap_definitions
-
 
 (** Runs the handler for the references request. This is normally invoked when the user
     presses the "Go to References", "Find All References", or "Peek References" buttons.

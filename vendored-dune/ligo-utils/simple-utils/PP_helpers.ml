@@ -1,3 +1,4 @@
+open Core
 open Format
 
 let string : formatter -> string -> unit = fun ppf s -> fprintf ppf "%s" s
@@ -32,8 +33,8 @@ let list_sep_d_par f ppf lst =
 
 let list value = pp_print_list ~pp_sep:(tag "") value
 
-let ne_list_sep value separator ppf (hd, tl) =
-  pp_print_list ~pp_sep:separator value ppf (hd :: tl)
+let ne_list_sep value separator ppf ne =
+  pp_print_list ~pp_sep:separator value ppf (Nonempty_list.to_list ne)
 
 let prepend s f ppf a = fprintf ppf "%s%a" s f a
 
@@ -57,7 +58,6 @@ let map f pp ppf x = pp ppf (f x)
 let pair_sep value sep ppf (a, b) = fprintf ppf "%a %s %a" value a sep value b
 
 let smap_sep value sep ppf m =
-  let module SMap = X_map.String in
-  let lst = SMap.to_kv_list m in
+  let lst = Map.to_alist m in
   let new_pp ppf (k, v) = fprintf ppf "%s -> %a" k value v in
   fprintf ppf "%a" (list_sep new_pp sep) lst

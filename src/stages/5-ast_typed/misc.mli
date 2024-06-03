@@ -1,5 +1,10 @@
+module Location = Simple_utils.Location
+module Value_var = Ligo_prim.Value_var
+module Module_var = Ligo_prim.Module_var
+module Binder = Ligo_prim.Binder
+module Label = Ligo_prim.Label
+module Sig_item_attr = Ligo_prim.Sig_item_attr
 open Types
-open Ligo_prim
 
 val assert_no_type_vars : type_expression -> unit option
 val assert_type_expression_eq : type_expression * type_expression -> unit option
@@ -9,7 +14,7 @@ val get_type_of_entrypoint : type_expression -> (type_expression * type_expressi
 val build_entry_type : type_expression -> type_expression -> type_expression
 
 val parameter_from_entrypoints
-  :  (Value_var.t * type_expression) Simple_utils.List.Ne.t
+  :  (Value_var.t * type_expression) Nonempty_list.t
   -> ( type_expression * type_expression
      , [> `Not_entry_point_form of Types.expression_variable * Types.type_expression
        | `Storage_does_not_match of

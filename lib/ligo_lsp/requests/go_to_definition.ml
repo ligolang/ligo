@@ -1,3 +1,4 @@
+open Core
 open Handler
 open Lsp_helpers
 
@@ -66,7 +67,6 @@ let find_module_with_uid_conversion
         @@ List.map ~f:to_string (mdef.mod_path @ [ mdef.uid ]))
         mdef)
 
-
 (** Searches for a module definition that matches the provided [Uid.t] module path. *)
 let find_module_by_uid_path
     : Scopes.Uid.t list -> Scopes.Types.mdef list -> Scopes.Types.mdef option
@@ -74,13 +74,11 @@ let find_module_by_uid_path
   let to_string = Scopes.Uid.to_string in
   find_module_with_uid_conversion to_string <@ List.map ~f:to_string
 
-
 (** Searches for a module definition that matches the provided [string] module path. *)
 let find_module_by_string_path
     : string list -> Scopes.Types.mdef list -> Scopes.Types.mdef option
   =
   find_module_with_uid_conversion Scopes.Uid.to_name
-
 
 (** Searches for a definition that has the same name and level (term level, type level,
     module level, or label level) as the provided definition, that was defined as late as
@@ -97,7 +95,6 @@ let find_last_def_by_name_and_level (def : Scopes.def)
            -> String.equal (get_def_name def) (get_def_name def')
          | ( (Variable _ | Type _ | Module _ | Label _)
            , (Variable _ | Type _ | Module _ | Label _) ) -> false)
-
 
 module Mod_identifier = struct
   (** A module identifier may represent an ad-hoc signature, or a standalone signature or
@@ -122,7 +119,6 @@ module Mod_identifier = struct
     | Standalone_signature_or_module _, Ad_hoc_signature _ -> -1
     | Ad_hoc_signature _, Standalone_signature_or_module _ -> 1
     | Ad_hoc_signature u1, Ad_hoc_signature u2 -> Scopes.Uid.compare u1 u2
-
 
   let pp : t Fmt.t =
    fun ppf -> function
@@ -157,7 +153,6 @@ let rec try_to_resolve_path
   | Resolved_path { module_path = _; resolved_module_path = _; resolved_module } ->
     Some resolved_module
 
-
 (** Attempts to resolve the provided [resolve_mod_name] with [try_to_resolve_path] and
     creates a standalone signature or module identifier out of it. *)
 let path_to_identifier
@@ -166,7 +161,6 @@ let path_to_identifier
  fun mdefs ->
   Option.map ~f:(fun path -> Mod_identifier.Standalone_signature_or_module path)
   <@ try_to_resolve_path mdefs
-
 
 (** "Strips" an implementation in order to get its module identifier. Returns [None] if an
     empty ad-hoc signature was provided, or if it wasn't possible to resolve the path of a
@@ -179,12 +173,10 @@ let implementation_to_identifier
   | Ad_hoc_signature (dec :: _) -> Some (Ad_hoc_signature (Scopes.Types.get_def_uid dec))
   | Standalone_signature_or_module path -> path_to_identifier mdefs path
 
-
 (** Turns a namespace extension into an implementation. This is the same as just wrapping
     it into a [Standalone_signature_or_module]. *)
 let extension_to_implementation : Scopes.Types.extension -> Scopes.Types.implementation =
  fun path -> Standalone_signature_or_module path
-
 
 (** Gets a namespace extension's module identifier. This is the same as just calling
     [path_to_identifier]. *)
@@ -193,14 +185,12 @@ let extension_to_identifier
   =
   path_to_identifier
 
-
 (** Turns a [mod_case] into an [implementation]. A definition will become an ad-hoc
     signature, and an alias into a standalone signature or module. *)
 let mod_case_to_implementation : Scopes.Types.mod_case -> Scopes.Types.implementation
   = function
   | Def defs -> Ad_hoc_signature defs
   | Alias { resolve_mod_name } -> Standalone_signature_or_module resolve_mod_name
-
 
 (** Turns a module definition into an [implementation]. This is done by looking at its
     [mod_case] and calling [mod_case_to_implementation]. However, unlike that function
@@ -218,7 +208,6 @@ let mdef_to_implementation : Scopes.Types.mdef -> Scopes.Types.implementation =
          })
   | Standalone_signature_or_module _ as impl -> impl
 
-
 (** Creates a map from the provided list of [Module]s that allows lookup by a
     [Mod_identifier.t]. *)
 let mdefs_to_identifiers : Scopes.Types.mdef list -> Scopes.Types.implementation Mod_map.t
@@ -235,7 +224,6 @@ let mdefs_to_identifiers : Scopes.Types.mdef list -> Scopes.Types.implementation
                Option.map (extension_to_identifier mdefs ext) ~f:(fun id ->
                    id, Scopes.Types.Standalone_signature_or_module ext)))
 
-
 (** Creates a graph whose vertices are built from the provided list of [Module]s and whose
     edges represent that a vertex [m1] includes, annotates, extends, or implements another
     vertex [m2]. *)
@@ -247,7 +235,6 @@ let build_mod_graph : Scopes.Types.mdef list -> Mod_graph.t =
          , List.filter_map
              (child.implements @ List.map child.extends ~f:extension_to_implementation)
              ~f:(implementation_to_identifier mdefs) ))
-
 
 (** Given a [mod_case], tries to resolve by following aliases until it finds a definition.
     This is normally not needed since scopes should ensure that a [resolve_mod_name] has
@@ -269,12 +256,10 @@ let rec try_to_resolve_mod_case
     in
     try_to_resolve_mod_case mdefs mdef.mod_case
 
-
 (** Given some definition, look for the module/namespace and signature/interface that
     declares it. *)
 let get_declaration : Scopes.def -> Scopes.Types.mdef list -> Scopes.def list =
  fun def _mdefs -> [ def ]
-
 
 (** Tries to find the module identifier that contains the given definition, or an
     approximation using [find_last_def_by_name_and_level]. *)
@@ -291,7 +276,6 @@ let try_to_get_mdef_uid
         | _, Standalone_signature_or_module _ -> None)
     @@ Map.to_sequence mod_ids
   | Some def_mod -> Some (Mod_identifier.Standalone_signature_or_module def_mod.uid)
-
 
 (** Given some definition, look for all modules/namespaces and signatures/interfaces that
     implement it. *)
@@ -357,7 +341,6 @@ let get_implementations : Scopes.def -> Scopes.Types.mdef list -> Scopes.def lis
   | None | Some [] -> [ def ]
   | Some (_ :: _ as implementers) -> implementers
 
-
 (** Given some definition, look for all modules/namespaces and signatures/interfaces that
     define it. This function goes in the opposite way compared to [get_implementers]. *)
 let get_definitions : Scopes.def -> Scopes.Types.mdef list -> Scopes.def list =
@@ -409,13 +392,11 @@ let get_definitions : Scopes.def -> Scopes.Types.mdef list -> Scopes.def list =
   | [] -> [ def ]
   | _ :: _ as defs -> defs
 
-
 (** Extracts every [Scopes.Types.Module] from the definitions. *)
 let filter_mdefs : Scopes.definitions -> Scopes.Types.mdef list =
   Def.filter_map ~f:(function
       | Scopes.Types.Variable _ | Type _ | Label _ -> None
       | Module mdef -> Some mdef)
-
 
 (** Generic handler for a declaration, definition, or implementation. Some of the logic is
     shared between the three, hence we have this extra handler. *)
@@ -445,18 +426,15 @@ let on_req_impl : decl_def_or_impl -> Position.t -> Path.t -> Locations.t option
   | [] -> None
   | _ :: _ as definitions -> Some (`Location definitions)
 
-
 (** Runs the handler for the declaration. This is normally when the user clicks "Go to
     Declaration". *)
 let on_req_declaration : Position.t -> Path.t -> Locations.t option Handler.t =
   on_req_impl Decl
 
-
 (** Runs the handler for the definition. This is normally when the user clicks "Go to
     Definition". *)
 let on_req_definition : Position.t -> Path.t -> Locations.t option Handler.t =
   on_req_impl Def
-
 
 (** Runs the handler for the implementation. This is normally when the user clicks "Go to
     Implementation" or "Find All Implementations". *)

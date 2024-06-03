@@ -4,7 +4,7 @@ val mutate_some_value
   :  raise:(Errors.interpreter_error, Main_warnings.all) Simple_utils.Trace.raise
   -> ?syntax:Syntax_types.t
   -> Ligo_interpreter.Types.Location.t
-  -> Ligo_interpreter.Types.Z.t
+  -> Z.t
   -> Ligo_interpreter.Types.value
   -> Ligo_interpreter.Types.type_expression
   -> (Ligo_interpreter.Types.expression * Ligo_interpreter.Types.mutation) option
@@ -19,7 +19,7 @@ val value_gen
 val mutate_some_contract
   :  raise:(Errors.interpreter_error, Main_warnings.all) Simple_utils.Trace.raise
   -> ?syntax:Syntax_types.t
-  -> Ligo_interpreter.Types.Z.t
+  -> Z.t
   -> Ligo_interpreter.Types.expression
   -> (Ligo_interpreter.Types.expression * Ligo_interpreter.Types.mutation) option
 

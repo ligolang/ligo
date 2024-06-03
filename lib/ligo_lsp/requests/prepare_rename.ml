@@ -1,3 +1,4 @@
+open Core
 open Handler
 open Lsp_helpers
 
@@ -31,7 +32,6 @@ let prepare_rename
          Range.contains_position pos range && Path.equal file path)
        (* Checking if user's cursor is located on some reference *)
        locations)
-
 
 (** Runs the handler for prepare rename. This is normally called when the user presses
     the rename button. *)

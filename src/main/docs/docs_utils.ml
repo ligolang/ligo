@@ -1,6 +1,7 @@
-open Simple_utils
-open Simple_utils.Function
+module Trace = Simple_utils.Trace
 open PPrint
+
+let ( <@ ) f g x = f (g x)
 
 let with_raise ?(cleanup = fun () -> ()) f
     : ('value * unit * 'warning list, 'error * 'warning list) result

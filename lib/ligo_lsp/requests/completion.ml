@@ -1,6 +1,6 @@
+open Core
 open Handler
 open Lsp_helpers
-module Utils = Simple_utils.Utils
 
 (** A helper to create a completion list from the given completion items. Always returns
     [Some]. *)
@@ -8,7 +8,6 @@ let mk_completion_list (items : CompletionItem.t list)
     : [ `CompletionList of CompletionList.t | `List of CompletionItem.t list ] option
   =
   Option.some @@ `CompletionList (CompletionList.create ~isIncomplete:false ~items ())
-
 
 (** Runs the handler for completion. This is usually called when the user starts to type
     something, and specially after a [.] or [@]. This request may also be triggered

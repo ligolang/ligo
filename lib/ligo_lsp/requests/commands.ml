@@ -1,3 +1,4 @@
+open Core
 open Handler
 open Lsp_helpers
 
@@ -21,13 +22,11 @@ module Command = struct
       ~arguments:(command.args_encoder arguments)
       ()
 
-
   module Match = struct
     type 'r command_handler = LspHandler : 'a t * ('a -> 'r) -> 'r command_handler
 
     let arm ~(command : 'a t) ~(handler : 'a -> 'r) : 'r command_handler =
       LspHandler (command, handler)
-
 
     type 'r or_error =
       | Unknown_command
@@ -37,7 +36,7 @@ module Command = struct
     let create_matcher (handlers : 'r command_handler list)
         : command:string -> arguments:Yojson.Safe.t list -> 'r or_error
       =
-      let module HandlersMap = Map.Make (String) in
+      let module HandlersMap = String.Map in
       let handler_id = function
         | LspHandler (c, _) -> c.id
       in
@@ -72,7 +71,6 @@ let create_attr_text (name : string) (syntax : Syntax_types.t) : string =
   match syntax with
   | CameLIGO -> Format.sprintf "[%@%s]" name
   | JsLIGO -> Format.sprintf "%@%s" name
-
 
 (** Executes a command to add an attribute marking a storage as TZIP-16-compatible. See
     the code lens for more information. *)
@@ -136,7 +134,6 @@ let execute_add_tzip16_attr (storage_var_position : storage_var_position)
   in
   return `Null
 
-
 module Ligo_lsp_commands = struct
   (* On encoding/decoding command arguments, there is nothing wrong in passing
      one large JSON argument all the time. But since LSP assumes passing a list
@@ -160,7 +157,6 @@ module Ligo_lsp_commands = struct
           Ok { file = normalize p; line = l; document_version = v }
         | _ -> Error "Invalid argument types")
     }
-
 
   let match_command ~(normalize : Path.normalization)
       :  command:string -> arguments:Yojson.Safe.t list
