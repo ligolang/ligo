@@ -1,6 +1,5 @@
-open Simple_utils.Trace
 open Ligo_prim
-module List = Simple_utils.List
+module Trace = Simple_utils.Trace
 module Location = Simple_utils.Location
 
 (** [('a, 'err, 'wrn) t] computation returns a value of type ['a], potentially
@@ -50,7 +49,7 @@ val set_refs_tbl : Context.Refs_tbl.t -> ('a, 'err, 'wrn) t -> ('a, 'err, 'wrn) 
 (** {5 Error Handling} *)
 
 (** [lift_raise f] lifts f (which may raise an error/warning) to a computation. *)
-val lift_raise : (('err, 'wrn) raise -> 'a) -> ('a, 'err, 'wrn) t
+val lift_raise : (('err, 'wrn) Trace.raise -> 'a) -> ('a, 'err, 'wrn) t
 
 (** [raise err] raises the error [err] at location [loc ()] (the current location). *)
 val raise : 'err Errors.with_loc -> ('a, 'err, 'wrn) t
@@ -100,7 +99,7 @@ val try_with_diagnostics
   -> ('a, 'err, 'wrn) t
 
 val try_all
-  :  ('a, ([> `Typer_corner_case of string * Location.t ] as 'err), 'wrn) t list
+  :  ('a, ([> `Typer_corner_case of string * Location.t ] as 'err), 'wrn) t Nonempty_list.t
   -> ('a, 'err, 'wrn) t
 
 (** {6 Compiler Options} *)
@@ -210,13 +209,15 @@ module Context : sig
   (** [get_module_of_path path] returns the signature of the module path [path].
       Returning [None] if not found in the current context. *)
 
-  val get_module_of_path : Module_var.t List.Ne.t -> (Signature.t option, 'err, 'wrn) t
+  val get_module_of_path
+    :  Module_var.t Nonempty_list.t
+    -> (Signature.t option, 'err, 'wrn) t
 
   (** [get_module_type_of_path path] returns the signature of the module path [path].
       Returning [None] if not found in the current context. *)
 
   val get_module_type_of_path
-    :  Module_var.t List.Ne.t
+    :  Module_var.t Nonempty_list.t
     -> (Signature.t option, 'err, 'wrn) t
 
   (** [get_sum constr] returns a list of [(type_name, type_params, constr_type, sum_type)] for any sum type in the context
@@ -437,12 +438,12 @@ end
 (** [encode ~raise type_] encodes an [Ast_typed.type_expression] representation of a type
     into the typer's internal representation [Type.t]. *)
 val encode
-  :  raise:(Errors.typer_error, Main_warnings.all) raise
+  :  raise:(Errors.typer_error, Main_warnings.all) Trace.raise
   -> Ast_typed.type_expression
   -> Type.t
 
 val encode_signature
-  :  raise:(Errors.typer_error, Main_warnings.all) raise
+  :  raise:(Errors.typer_error, Main_warnings.all) Trace.raise
   -> Ast_typed.signature
   -> Context.Signature.t
 
@@ -453,7 +454,7 @@ val encode_signature
     collected during the elaboration. *)
 val run_elab_with_refs
   :  ('a Elaboration.t, Errors.typer_error, Main_warnings.all) t
-  -> raise:(Errors.typer_error, Main_warnings.all) raise
+  -> raise:(Errors.typer_error, Main_warnings.all) Trace.raise
   -> options:Compiler_options.middle_end
   -> loc:Location.t
   -> path:Module_var.t list
@@ -466,7 +467,7 @@ val run_elab_with_refs
     provided by [~raise], compiler options [~options] and initial environment [~env]. *)
 val run_elab
   :  ('a Elaboration.t, Errors.typer_error, Main_warnings.all) t
-  -> raise:(Errors.typer_error, Main_warnings.all) raise
+  -> raise:(Errors.typer_error, Main_warnings.all) Trace.raise
   -> options:Compiler_options.middle_end
   -> loc:Location.t
   -> path:Module_var.t list
@@ -556,12 +557,12 @@ module Error_recovery : sig
       -> (Context.Signature.t, 'err, 'wrn) t
 
     val module_of_path
-      :  Module_var.t List.Ne.t
+      :  Module_var.t Nonempty_list.t
       -> error:'err Errors.with_loc
       -> (Context.Signature.t, 'err, 'wrn) t
 
     val module_type_of_path
-      :  Module_var.t List.Ne.t
+      :  Module_var.t Nonempty_list.t
       -> error:'err Errors.with_loc
       -> (Context.Signature.t, 'err, 'wrn) t
   end

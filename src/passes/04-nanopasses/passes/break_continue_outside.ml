@@ -1,14 +1,15 @@
 open Ast_unified
 open Pass_type
-open Simple_utils.Trace
 open Errors
+module Trace = Simple_utils.Trace
+module Ne_list = Simple_utils.Ne_list
 module Location = Simple_utils.Location
 
 (* This pass should forbid break/continue outside switch statements
 *)
 include Flag.No_arg ()
 
-let compile ~raise =
+let compile ~(raise : _ Trace.raise) =
   let switch_to_unit =
     let instruction
         : (instruction, expr, pattern, statement, block) Types.instruction_ -> instruction
@@ -38,14 +39,14 @@ let compile ~raise =
                 make_s ~loc:s_loc (S_instr i)
               | _ -> make_s ~loc:s_loc s
             in
-            let b = List.Ne.map f b in
+            let b = Ne_list.map f b in
             let b = make_b ~loc:b_loc b in
             b
           in
           match cases with
           | AllCases (c, d) ->
             let c =
-              List.Ne.map
+              Ne_list.map
                 (fun x ->
                   Switch.{ x with case_body = Option.map ~f:update_block x.case_body })
                 c

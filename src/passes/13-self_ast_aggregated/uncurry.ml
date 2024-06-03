@@ -1,7 +1,8 @@
-let map_expression = Ast_aggregated.Helpers.map_expression
-
+open Core
 open Ligo_prim
 open Ast_aggregated
+
+let map_expression = Ast_aggregated.Helpers.map_expression
 
 (* Utilities *)
 

@@ -5,6 +5,7 @@
 
 (* Vendors' dependencies *)
 
+open Core
 module Region = Simple_utils.Region
 module Pos    = Simple_utils.Pos
 module Lexbuf = Simple_utils.Lexbuf
@@ -17,7 +18,7 @@ let (let*) v f = Result.bind v ~f
 
 (* ERRORS *)
 
-type error = Region.t * Error.t
+type error = Region.t * PreError.t
 
 let mk_Error1 region error = Error (region, error)
 
@@ -26,7 +27,7 @@ let mk_Error2 lexbuf = mk_Error1 @@ Region.from_lexbuf lexbuf
 let missing_space lexbuf =
   let region      = Region.from_lexbuf lexbuf in
   let zero_length = Region.empty region#start
-  in mk_Error1 zero_length Error.Missing_space
+  in mk_Error1 zero_length PreError.Missing_space
 
 (* COMPOUNDS *)
 
@@ -509,19 +510,19 @@ rule scan_include hash_pos state = parse
              Region.make ~start:hash_pos ~stop:state#pos in
            let dir = mk_include ?trailing_comment region file
            in Ok (state, dir, PP_Include dir, ending) }
-| _      { mk_Error2 lexbuf Error.Missing_filename }
+| _      { mk_Error2 lexbuf PreError.Missing_filename }
 
 and scan_in_string opening acc state = parse
   '"'    { let state, quote = state#sync lexbuf in
            let region = Region.(cover opening.region quote.region)
            and value  = mk_string acc
            in Ok (state, Region.{value; region})          }
-| nl     { mk_Error2 lexbuf Error.Newline_in_string       }
-| eof    { Error.Unterminated_string opening.Region.value
+| nl     { mk_Error2 lexbuf PreError.Newline_in_string       }
+| eof    { PreError.Unterminated_string opening.Region.value
            |> mk_Error1 opening.Region.region             }
 | ['\000' - '\031'] | ['\128' - '\255'] as c
            (* Control characters and 7-bit ASCII allowed *)
-         { Error.Invalid_character_in_string c
+         { PreError.Invalid_character_in_string c
            |> mk_Error2 lexbuf                            }
 | _ as c { let state, _ = state#sync lexbuf in
            scan_in_string opening (c::acc) state lexbuf   }
@@ -540,7 +541,7 @@ and trailing_comment state = parse
         in Ok (state, None, `EOL (state', reg)) }
 | eof { let state', reg = state#sync lexbuf
         in Ok (state, None, `EOF (state', reg.Region.region)) }
-| _   { mk_Error2 lexbuf Error.Unexpected_argument }
+| _   { mk_Error2 lexbuf PreError.Unexpected_argument }
 
 and clear_line state = parse
   nl     { let state', reg = state#newline lexbuf
@@ -549,7 +550,7 @@ and clear_line state = parse
            in Ok (state, `EOF (state', reg.Region.region)) }
 | blank+ { let state, _ = state#sync lexbuf
            in clear_line state lexbuf }
-| _      { mk_Error2 lexbuf Error.Unexpected_argument }
+| _      { mk_Error2 lexbuf PreError.Unexpected_argument }
 
 (* Scanning the rest of the line right after "#import" *)
 
@@ -568,14 +569,14 @@ and scan_import hash_pos state = parse
         let dir =
           mk_import ?trailing_comment region file module_name
         in Ok (state, dir, PP_Import dir, ending) }
-| _ { mk_Error2 lexbuf Error.Missing_filename }
+| _ { mk_Error2 lexbuf PreError.Missing_filename }
 
 and scan_module state = parse
   blank+ { let state, _ = state#sync lexbuf
            in scan_module state lexbuf             }
 | '"'    { let state, quote = state#sync lexbuf in
            scan_in_string quote [] state lexbuf    }
-| _      { mk_Error2 lexbuf Error.Missing_module   }
+| _      { mk_Error2 lexbuf PreError.Missing_module   }
 
 
 (* Scanning the rest of the line right after "#define" or "#undef" *)
@@ -590,12 +591,12 @@ and scan_def_undef mk_dir hash_pos state = parse
       Region.make ~start:hash_pos ~stop:state#pos in
     let symbol = mk_symbol ?trailing_comment region symbol
     in Ok (state, symbol, mk_dir symbol, ending) }
-| nl | eof { mk_Error2 lexbuf Error.Missing_symbol }
+| nl | eof { mk_Error2 lexbuf PreError.Missing_symbol }
 | _ { missing_space lexbuf }
 
 and symbol state = parse
   ident { Ok (state#sync lexbuf)                }
-| _     { mk_Error2 lexbuf Error.Invalid_symbol }
+| _     { mk_Error2 lexbuf PreError.Invalid_symbol }
 
 (* Discarding the rest of the line (see scan_linemarker, #else,
    #endif) *)
@@ -644,7 +645,7 @@ and scan_file_path state = parse
            scan_file_path state lexbuf }
 | '"'    { let state, quote = state#sync lexbuf in
            scan_in_string quote [] state lexbuf    }
-| _      { mk_Error2 lexbuf Error.Missing_filename }
+| _      { mk_Error2 lexbuf PreError.Missing_filename }
 
 and scan_flag state = parse
   blank+ { scan_flag (fst @@ state#sync lexbuf) lexbuf }
@@ -661,7 +662,7 @@ and scan_flag state = parse
            let flag          = Region.{flag with value = Pop} in
            let state, ending = skip_line state lexbuf
            in Ok (state, Some flag, ending) }
-| _      { mk_Error2 lexbuf Error.Invalid_flag }
+| _      { mk_Error2 lexbuf PreError.Invalid_flag }
 
 {
 (* START OF TRAILER *)
@@ -671,7 +672,7 @@ and scan_flag state = parse
   let scan_expr mk_dir hash_pos state lexbuf =
     match E_Parser.expr (E_Lexer.scan state) lexbuf with
       exception E_Parser.Error ->
-        mk_Error2 lexbuf Error.Parse_error
+        mk_Error2 lexbuf PreError.Parse_error
     | state, ast, trailing_comment, ending ->
         let stop   = state#pos in
         let region = Region.make ~start:hash_pos ~stop in

@@ -7,7 +7,7 @@ module Region    = Simple_utils.Region
 module Std       = Simple_utils.Std
 module Markup    = LexerLib.Markup
 module Directive = Preprocessor.Directive
-module Unit      = LexerLib.Unit
+module LexUnit   = LexerLib.LexUnit
 module Wrap      = Lexing_shared.Wrap
 
 (* Local dependencies *)
@@ -119,7 +119,7 @@ let add_comment (comment : string Region.reg) : Token.t -> Token.t = function
 | Upto        w -> Upto (w#add_line_comment comment)
 
 
-let filter (units : Token.t Unit.t list) : Token.t Unit.t list =
+let filter (units : Token.t LexUnit.t list) : Token.t LexUnit.t list =
   let open! Token in
   let rec aux acc = function
     `Token token :: rest -> skip_spaces token acc [] rest
@@ -136,7 +136,7 @@ let filter (units : Token.t Unit.t list) : Token.t Unit.t list =
 
 (* Exported *)
 
-type item = Token.t Unit.t
+type item = Token.t LexUnit.t
 
 type units = item list
 

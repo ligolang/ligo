@@ -5,7 +5,7 @@
 *)
 
 open Ast_aggregated.Types
-open Simple_utils.Trace
+module Trace = Simple_utils.Trace
 
 (** Looks up the expression corresponding to the contract storage
     to find the TZIP-16 contract metadata type, if it exists.
@@ -31,7 +31,7 @@ let find_storage_metadata_opt (storage : Ast_aggregated.type_expression)
 (** Verifies that the type of the [metadata] field in the storage
     is a [(string, bytes) big_map], as required by the TZIP-16 standard. *)
 let check_metadata_tzip16_type_compliance
-    ~raise
+    ~(raise : _ Trace.raise)
     ?syntax
     (storage_metadata : type_expression)
     : unit
@@ -54,4 +54,4 @@ let check_metadata_tzip16_type_compliance
   let warning =
     `Self_ast_aggregated_metadata_invalid_type (storage_metadata.location, suggested_type)
   in
-  if not pass then raise.warning @@ warning
+  if not pass then raise.warning warning

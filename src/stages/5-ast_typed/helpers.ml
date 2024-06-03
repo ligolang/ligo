@@ -1,9 +1,8 @@
-module Location = Simple_utils.Location
-module List = Simple_utils.List
-module Ligo_string = Simple_utils.Ligo_string
-module Pair = Simple_utils.Pair
+open Core
 open Ligo_prim
 open Types
+module Location = Simple_utils.Location
+module Ligo_pair = Simple_utils.Ligo_pair
 
 let remove_empty_annotation (ann : string option) : string option =
   match ann with
@@ -12,19 +11,15 @@ let remove_empty_annotation (ann : string option) : string option =
   | None -> None
 
 
-(* These tables are used during inference / for substitution *)
-module TMap = Simple_utils.Map.Make (Type_var)
-
 (* Free type variables in a type *)
-module VarSet = Set
 
-let empty_set = VarSet.empty (module Type_var)
+module VarSet = Set.Make (Type_var)
 
 (* Substitutes a type variable `v` for a type `t` in the type `u`. In
    principle, variables could be captured. But in case a binder
    (forall, abstraction) is found in `fv`, a new (fresh) binder is
    generated and subtituted to prevent capture. *)
-let rec subst_type ?(fv = empty_set) v t (u : type_expression) =
+let rec subst_type ?(fv = VarSet.empty) v t (u : type_expression) =
   let self = subst_type ~fv in
   let loc = u.location in
   match u.type_content with
@@ -33,7 +28,7 @@ let rec subst_type ?(fv = empty_set) v t (u : type_expression) =
     let type1 = self v t type1 in
     let type2 = self v t type2 in
     { u with type_content = T_arrow { type1; type2; param_names } }
-  | T_abstraction { ty_binder; kind; type_ } when VarSet.mem fv ty_binder ->
+  | T_abstraction { ty_binder; kind; type_ } when Set.mem fv ty_binder ->
     let ty_binder' = Type_var.fresh ~loc () in
     let type_ = self ty_binder (Combinators.t_variable ~loc ty_binder' ()) type_ in
     let ty_binder = ty_binder' in
@@ -41,7 +36,7 @@ let rec subst_type ?(fv = empty_set) v t (u : type_expression) =
   | T_abstraction { ty_binder; kind; type_ } when not (Type_var.equal ty_binder v) ->
     let type_ = self v t type_ in
     { u with type_content = T_abstraction { ty_binder; kind; type_ } }
-  | T_for_all { ty_binder; kind; type_ } when VarSet.mem fv ty_binder ->
+  | T_for_all { ty_binder; kind; type_ } when Set.mem fv ty_binder ->
     let ty_binder' = Type_var.fresh ~loc () in
     let type_ = self ty_binder (Combinators.t_variable ~loc ty_binder' ()) type_ in
     let ty_binder = ty_binder' in
@@ -92,7 +87,7 @@ let rec fold_map_expression : 'a fold_mapper -> 'a -> expression -> 'a * express
       res, return @@ E_constructor { c with element = e' }
     | E_application { lamb; args } ->
       let ab = lamb, args in
-      let res, (a, b) = Pair.fold_map ~f:self ~init ab in
+      let res, (a, b) = Ligo_pair.fold_map ~f:self ~init ab in
       res, return @@ E_application { lamb = a; args = b }
     | E_let_in { let_binder; rhs; let_result; attributes } ->
       let res, rhs = self init rhs in
@@ -307,7 +302,7 @@ module IdMap = struct
   (* of module type S *)
 
   module Make (Ord : OrderedType) : IdMapSig with type key = Ord.t = struct
-    module Map = Simple_utils.Map.Make (Ord)
+    module Map = Stdlib.Map.Make (Ord)
 
     type key = Ord.t
 

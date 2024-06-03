@@ -1,16 +1,20 @@
-open Simple_utils.Trace
-open Proto_alpha_utils
-module Tezos_alpha_test_helpers = Memory_proto_alpha.Test_helpers
 open Errors
 open Ligo_interpreter_exc
 open Ligo_interpreter.Types
 open Ligo_interpreter.Combinators
+module Data_encoding = Proto_alpha_utils.Data_encoding
+module Signature = Proto_alpha_utils.Signature
+module Memory_proto_alpha = Proto_alpha_utils.Memory_proto_alpha
+module Trace = Proto_alpha_utils.Trace
+module Tezos_alpha_test_helpers = Memory_proto_alpha.Test_helpers
 module Tezos_protocol = Memory_proto_alpha
 module Tezos_protocol_env = Memory_proto_alpha.Alpha_environment
 module Tezos_raw_protocol = Memory_proto_alpha.Raw_protocol
 module Tezos_protocol_parameters = Memory_proto_alpha.Parameters
 
-type r = (Errors.interpreter_error, Main_warnings.all) raise
+let ( <@ ) f g x = f (g x)
+
+type r = (Errors.interpreter_error, Main_warnings.all) Trace.raise
 
 type bootstrap_contract =
   int
@@ -99,7 +103,7 @@ let get_total_voting_power ~raise ~loc ~calltrace (ctxt : context) =
 
 
 let implicit_account
-    ~raise
+    ~(raise : _ Trace.raise)
     ~calltrace
     ~loc
     (msg : string)
@@ -111,7 +115,7 @@ let implicit_account
 
 
 let originated_account
-    ~raise
+    ~(raise : _ Trace.raise)
     ~calltrace
     ~loc
     (msg : string)
@@ -159,7 +163,7 @@ let canonical_to_ligo : canonical_repr -> ligo_repr =
   |> Tezos_micheline.Micheline.inject_locations (fun _ -> ())
 
 
-let parse_constant ~raise ~loc ~calltrace code =
+let parse_constant ~(raise : _ Trace.raise) ~loc ~calltrace code =
   let open Tezos_micheline in
   let open Tezos_micheline.Micheline in
   let code, errs = Micheline_parser.tokenize code in
@@ -234,9 +238,7 @@ let get_storage ~raise ~loc ~calltrace ctxt (m : Contract.t) =
            ~timestamp:(get_timestamp ctxt)
            ctxt.raw.context
     in
-    Lwt.map
-      Simple_utils.Function.(
-        fst <@ Trace.trace_alpha_tzresult ~raise (throw_obj_exc loc calltrace))
+    Lwt.map (fst <@ Trace.trace_alpha_tzresult ~raise (throw_obj_exc loc calltrace))
     @@ Tezos_protocol.Protocol.Script_ir_translator.parse_toplevel alpha_context x
   in
   let storage_type =
@@ -728,14 +730,14 @@ let register_constant ~raise ~loc ~calltrace (ctxt : context) ~source ~value =
   | Fail errs -> raise.error (target_lang_error loc calltrace errs)
 
 
-let read_file_constants ~raise fn =
+let read_file_constants ~(raise : _ Trace.raise) fn =
   try
     let buf = In_channel.read_all fn in
     let json = Yojson.Basic.from_string buf in
     json |> Yojson.Basic.Util.to_list |> List.map ~f:Yojson.Basic.Util.to_string
   with
-  | Sys_error _ -> raise.Trace.error (`Main_cannot_open_global_constants fn)
-  | Yojson.Json_error s -> raise.Trace.error (`Main_cannot_parse_global_constants (fn, s))
+  | Sys_error _ -> raise.error (`Main_cannot_open_global_constants fn)
+  | Yojson.Json_error s -> raise.error (`Main_cannot_parse_global_constants (fn, s))
 
 
 let register_file_constants ~raise ~loc ~calltrace fn (ctxt : context) ~source =
@@ -855,10 +857,10 @@ let originate_contract
  fun ~raise ~loc ~calltrace ctxt (contract, storage) amt ->
   let open Lwt.Let_syntax in
   let contract =
-    trace_option ~raise (corner_case ~loc ()) @@ get_michelson_contract contract
+    Trace.trace_option ~raise (corner_case ~loc ()) @@ get_michelson_contract contract
   in
   let storage, ligo_ty =
-    trace_option ~raise (corner_case ~loc ()) @@ get_michelson_code_and_type storage
+    Trace.trace_option ~raise (corner_case ~loc ()) @@ get_michelson_code_and_type storage
   in
   let open Tezos_alpha_test_helpers in
   let source = unwrap_source ~raise ~loc ~calltrace ctxt.internals.source in
@@ -987,7 +989,7 @@ let init
 
 
 let init_ctxt
-    ~raise
+    ~(raise : _ Trace.raise)
     ?(loc = Location.generated)
     ?(calltrace = [])
     ?(initial_balances = [])

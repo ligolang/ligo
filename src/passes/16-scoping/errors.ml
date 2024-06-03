@@ -1,6 +1,7 @@
 module Michelson = Tezos_utils.Michelson
 open Ligo_prim
-open Simple_utils.Display
+module Display = Simple_utils.Display
+module Ligo_Error = Simple_utils.Error
 
 type scoping_error =
   [ `Scoping_corner_case of string * string
@@ -22,7 +23,8 @@ let corner_case_msg () =
 
 
 let error_ppformat
-    : display_format:string display_format -> Format.formatter -> scoping_error -> unit
+    :  display_format:string Display.display_format -> Format.formatter -> scoping_error
+    -> unit
   =
  fun ~display_format f a ->
   match display_format with
@@ -63,9 +65,9 @@ let error_ppformat
         value)
 
 
-let error_json : scoping_error -> Simple_utils.Error.t =
+let error_json : scoping_error -> Ligo_Error.t =
  fun e ->
-  let open Simple_utils.Error in
+  let open Ligo_Error in
   match e with
   | `Scoping_unsupported_primitive c ->
     let message =

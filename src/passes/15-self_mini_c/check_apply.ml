@@ -1,11 +1,11 @@
 open Mini_c
-open Simple_utils.Trace
+module Trace = Simple_utils.Trace
 
 (* This function checks that an `E_closure` has no free variables
    which involve `contract, `operation`, `big_map` or
    `sapling_transaction` *)
 
-let capture_expression ~raise : expression -> expression =
+let capture_expression ~(raise : _ Trace.raise) : expression -> expression =
  fun e ->
   let rec has_no_bad_capture ~err t =
     let self = has_no_bad_capture ~err in

@@ -1,16 +1,17 @@
 (* This module implements pattern matching anomaly detection as described in
    the paper "Warnings for pattern matching"
    Link: http://moscova.inria.fr/~maranget/papers/warn/warn.pdf  *)
+
+open Core
+open Ligo_prim
 module AST = Ast_typed
 module C = AST.Combinators
 module Location = Simple_utils.Location
 module Trace = Simple_utils.Trace
-open Ligo_prim
-module LMap = Core.Map
-module XList = Simple_utils.List
-module LSet = Core.Set
+module LMap = Map.Make (Label)
+module LSet = Set.Make (Label)
 
-let empty_set = LSet.empty (module Label)
+let empty_set = Set.empty (module Label)
 
 type raise = (Errors.typer_error, Main_warnings.all) Trace.raise
 
@@ -28,7 +29,7 @@ type simple_pattern =
   | SP_Constructor of Label.t * simple_pattern list * AST.type_expression
 
 let nil_constructor ~loc ty = SP_Constructor (nil_label, [ SP_Wildcard (t_unit ~loc) ], ty)
-let list_constructors = LSet.of_list (module Label) [ cons_label; nil_label ]
+let list_constructors = Set.of_list (module Label) [ cons_label; nil_label ]
 
 let rec pp_simple_pattern ppf sp =
   match sp with
@@ -49,13 +50,13 @@ let pp_simple_pattern_list ppf sps =
 
 let get_variant_nested_type label (tsum : AST.row) =
   let label_map = tsum.fields in
-  LMap.find_exn label_map label
+  Map.find_exn label_map label
 
 
 let rec destructure_type (t : AST.type_expression) =
   match t.type_content with
   | AST.T_record { fields; _ } ->
-    LMap.fold
+    Map.fold
       ~f:(fun ~key:_ ~data:elt_typ ts -> ts @ destructure_type elt_typ)
       fields
       ~init:[]
@@ -71,7 +72,7 @@ let rec to_simple_pattern (ty_pattern : _ AST.Pattern.t * AST.type_expression) =
   | P_var _ when C.is_t_record ty ->
     let fields = Option.value_exn ~here:[%here] (C.get_record_fields ty) in
     let fields = List.map ~f:snd fields in
-    let ps = XList.repeat pattern' (List.length fields) in
+    let ps = List.init (List.length fields) ~f:(fun _ -> pattern') in
     let ps = List.zip_exn ps fields in
     let ps = List.map ps ~f:to_simple_pattern in
     List.concat ps
@@ -102,7 +103,7 @@ let rec to_simple_pattern (ty_pattern : _ AST.Pattern.t * AST.type_expression) =
           let row_elem =
             Option.value_exn
               ~here:[%here]
-              (LMap.find row.fields (Label.create (Int.to_string i)))
+              (Map.find row.fields (Label.create (Int.to_string i)))
           in
           to_simple_pattern (p, row_elem))
     in
@@ -111,7 +112,7 @@ let rec to_simple_pattern (ty_pattern : _ AST.Pattern.t * AST.type_expression) =
     let row = Option.value_exn ~here:[%here] (C.get_t_record ty) in
     let ps =
       List.map (Record.to_list lps) ~f:(fun (label, p) ->
-          let row_elem = Option.value_exn ~here:[%here] (LMap.find row.fields label) in
+          let row_elem = Option.value_exn ~here:[%here] (Map.find row.fields label) in
           to_simple_pattern (p, row_elem))
     in
     List.concat ps
@@ -159,7 +160,7 @@ and to_original_pattern ~raise ~loc simple_patterns (ty : AST.type_expression) =
   | _ ->
     (match ty.type_content with
     | AST.T_record { fields; _ } ->
-      let kvs = LMap.to_alist fields in
+      let kvs = Map.to_alist fields in
       let labels, tys = List.unzip kvs in
       let tys = List.map tys ~f:(fun ty -> ty) in
       let _, ps =
@@ -281,15 +282,15 @@ let get_all_constructors (t : AST.type_expression) =
     match C.get_t_sum t with
     | Some (tsum, _) ->
       let label_map = tsum.fields in
-      let labels = LMap.keys label_map in
-      LSet.of_list (module Label) labels
+      let labels = Map.keys label_map in
+      Set.of_list (module Label) labels
     | None -> empty_set)
 
 
 let get_constructors_from_1st_col matrix =
   List.fold_left matrix ~init:empty_set ~f:(fun s row ->
       match row with
-      | SP_Constructor (c, _, _) :: _ -> LSet.add s c
+      | SP_Constructor (c, _, _) :: _ -> Set.add s c
       | SP_Wildcard _ :: _ -> s
       | [] -> s)
 
@@ -351,10 +352,10 @@ let rec algorithm_Urec ~(raise : raise) ~loc matrix vector =
     | SP_Wildcard t :: q2_n ->
       let complete_signature = get_all_constructors t in
       let constructors = get_constructors_from_1st_col matrix in
-      if (not (LSet.is_empty complete_signature))
-         && LSet.equal complete_signature constructors
+      if (not (Set.is_empty complete_signature))
+         && Set.equal complete_signature constructors
       then
-        LSet.fold
+        Set.fold
           complete_signature
           ~f:(fun b c ->
             let tys = find_constuctor_arity c t in
@@ -419,9 +420,9 @@ let rec algorithm_I ~(raise : raise) ~loc matrix n ts =
     let t, ts = List.split_n ts 1 in
     let t = List.hd_exn t in
     let complete_signature = get_all_constructors t in
-    if (not @@ LSet.is_empty constructors) && LSet.equal constructors complete_signature
+    if (not @@ Set.is_empty constructors) && Set.equal constructors complete_signature
     then
-      LSet.fold
+      Set.fold
         complete_signature
         ~f:(fun p ck ->
           if Option.is_some p
@@ -444,14 +445,14 @@ let rec algorithm_I ~(raise : raise) ~loc matrix n ts =
       let ps = algorithm_I ~raise ~loc dp (n - 1) ts in
       match ps with
       | Some ps ->
-        if LSet.is_empty constructors
+        if Set.is_empty constructors
         then (
           let ps = List.map ps ~f:(fun ps -> [ SP_Wildcard t ] @ ps) in
           Some ps)
         else (
-          let missing_constructors = LSet.diff complete_signature constructors in
+          let missing_constructors = Set.diff complete_signature constructors in
           let cs =
-            LSet.fold
+            Set.fold
               missing_constructors
               ~f:(fun cs c ->
                 let tys = find_constuctor_arity c t in

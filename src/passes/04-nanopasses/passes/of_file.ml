@@ -1,8 +1,10 @@
 open Ast_unified
 open Pass_type
-open Simple_utils.Trace
 open Errors
+module Trace = Simple_utils.Trace
 module Location = Simple_utils.Location
+module Ligo_option = Simple_utils.Ligo_option
+module Ligo_string = Simple_utils.Ligo_string
 module ModRes = Preprocessor.ModRes
 
 include Flag.With_arg (struct
@@ -28,13 +30,13 @@ let resolve_contract_file ~mod_res ~source_file ~contract_file =
 
 
 let get_file_from_location loc =
-  let open Simple_utils.Option in
+  let open Ligo_option in
   let* reg = Location.get_file loc in
   let file = reg#file in
   if String.(file = "") then None else Some file
 
 
-let input_all ~raise ~loc source_file =
+let input_all ~(raise : _ Trace.raise) ~loc source_file =
   try In_channel.(with_file source_file ~f:input_all) with
   | Sys_error msg -> raise.error (sys_error loc msg)
   | e -> Stdlib.raise e
@@ -50,7 +52,7 @@ let compile ~raise =
       (match get_e code with
       | E_literal (Literal_string path) ->
         let source_file = get_file_from_location loc in
-        let path = Simple_utils.Ligo_string.extract path in
+        let path = Ligo_string.extract path in
         let source_file =
           resolve_contract_file ~mod_res ~source_file ~contract_file:path
         in
@@ -61,7 +63,7 @@ let compile ~raise =
       (match get_e code with
       | E_literal (Literal_string path) ->
         let source_file = get_file_from_location loc in
-        let path = Simple_utils.Ligo_string.extract path in
+        let path = Ligo_string.extract path in
         let source_file =
           resolve_contract_file ~mod_res ~source_file ~contract_file:path
         in
@@ -72,11 +74,16 @@ let compile ~raise =
         let ty_src =
           t_prod
             ~loc
-            ( t_option ~loc (t_constant ~loc "key_hash")
-            , [ t_constant ~loc "tez"; t_var ~loc ty_storage ] )
+            Nonempty_list.
+              [ t_option ~loc (t_constant ~loc "key_hash")
+              ; t_constant ~loc "tez"
+              ; t_var ~loc ty_storage
+              ]
         in
         let ty_tgt =
-          t_prod ~loc (t_constant ~loc "operation", [ t_constant ~loc "address" ])
+          t_prod
+            ~loc
+            Nonempty_list.(t_constant ~loc "operation" :: [ t_constant ~loc "address" ])
         in
         let ty_type_ = t_fun ~loc ([], ty_src, ty_tgt) in
         let code = e_annot ~loc (code, ty_type_) in
@@ -87,7 +94,7 @@ let compile ~raise =
         let expr_tez = e_variable ~loc tez in
         let key_hash = Variable.fresh ~loc ~name:"key_hash" () in
         let expr_key_hash = make_e ~loc (E_variable key_hash) in
-        let args = e_tuple ~loc (expr_key_hash, [ expr_tez; expr_storage ]) in
+        let args = e_tuple ~loc Nonempty_list.[ expr_key_hash; expr_tez; expr_storage ] in
         let code = e_application ~loc { lamb = code; args } in
         let code =
           e_lambda

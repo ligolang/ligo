@@ -1,8 +1,7 @@
-module Errors = Errors
-open Errors
 open Mini_c
-open Simple_utils.Trace
 open Ligo_prim
+module Errors = Errors
+module Trace = Simple_utils.Trace
 
 let eta_expand : expression -> type_expression -> type_expression -> anon_function =
  fun e in_ty out_ty ->
@@ -14,16 +13,18 @@ let eta_expand : expression -> type_expression -> type_expression -> anon_functi
 
 
 let get_t_function ~raise e =
-  trace_option ~raise not_a_function @@ Mini_c.get_t_function e
+  Trace.trace_option ~raise Errors.not_a_function @@ Mini_c.get_t_function e
 
 
-let get_t_pair ~raise e = trace_option ~raise not_a_pair @@ Mini_c.get_t_pair e
+let get_t_pair ~raise e =
+  Trace.trace_option ~raise Errors.not_a_pair @@ Mini_c.get_t_pair e
 
-let get_function_or_eta_expand ~raise e =
+
+let get_function_or_eta_expand ~(raise : _ Trace.raise) e =
   let in_ty, out_ty =
     match e.type_expression.type_content with
     | T_function t -> t
-    | _ -> raise.error (corner_case "contract do not have the type of a function")
+    | _ -> raise.error (Errors.corner_case "contract do not have the type of a function")
   in
   match e.content with
   | E_closure f -> f
@@ -301,7 +302,7 @@ let rec all_expression ~raise (options : Compiler_options.t) : expression -> exp
     if !changed then all_expression ~raise options e else e)
 
 
-let create_contract ~raise expr =
+let create_contract ~(raise : _ Trace.raise) expr =
   let _ =
     map_expression
       (fun expr ->
@@ -310,7 +311,9 @@ let create_contract ~raise expr =
           let fvs = get_fv [ x, t ] lambda in
           if Int.equal (List.length fvs) 0
           then expr
-          else raise.error @@ fvs_in_create_contract_lambda expr (fst @@ List.hd_exn fvs)
+          else
+            raise.error
+            @@ Errors.fvs_in_create_contract_lambda expr (fst @@ List.hd_exn fvs)
         | _ -> expr)
       expr
   in

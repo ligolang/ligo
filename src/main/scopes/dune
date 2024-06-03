@@ -12,4 +12,5 @@
   simple-utils
   ast_typed
   compiler_options
-  fileutils))
+  fileutils
+  core_kernel.nonempty_list))

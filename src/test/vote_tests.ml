@@ -1,4 +1,4 @@
-open Simple_utils.Trace
+module Trace = Simple_utils.Trace
 open Test_helpers
 open Main_errors
 
@@ -57,13 +57,17 @@ let init_vote ~raise () =
       "main"
       (e_pair ~loc yea (init_storage "basic"))
   in
-  let _, storage = trace_option ~raise (test_internal __LOC__) @@ extract_pair result in
-  let storage' = trace_option ~raise (test_internal __LOC__) @@ extract_record storage in
+  let _, storage =
+    Trace.trace_option ~raise (test_internal __LOC__) @@ extract_pair result
+  in
+  let storage' =
+    Trace.trace_option ~raise (test_internal __LOC__) @@ extract_record storage
+  in
   (*  let votes = List.assoc (Label "voters") storage' in
   let votes' = extract_map votes in *)
   let yea = List.Assoc.find_exn ~equal:Label.equal storage' (Label.create "yea") in
   let () =
-    trace_option ~raise (test_internal __LOC__)
+    Trace.trace_option ~raise (test_internal __LOC__)
     @@ Ast_core.Misc.assert_value_eq (yea, Ast_core.e_nat ~loc Z.one)
   in
   ()

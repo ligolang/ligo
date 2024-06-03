@@ -65,7 +65,7 @@
   bytes_raw_code
   detect_recursive
   restrict_projections
-  unpuning
+  unpunning
   disc_union_types
   prefix_postfix_operators
   for_to_while_loop
@@ -76,7 +76,8 @@
   octez-libs.crypto
   octez-libs.base
   compiler_options
-  main_warnings)
+  main_warnings
+  core_kernel.nonempty_list)
  (inline_tests
   (libraries ligo.api)
   (flags (-stop-on-error)))

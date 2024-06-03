@@ -1,7 +1,7 @@
 open Ast_unified
 open Pass_type
-open Simple_utils.Trace
 open Errors
+module Trace = Simple_utils.Trace
 module Location = Simple_utils.Location
 
 (* Handling variables that can be escaped: x or @x *)
@@ -45,7 +45,7 @@ let compile ~raise =
   Fold { idle_fold with expr; ty_expr; pattern }
 
 
-let reduction ~raise =
+let reduction ~(raise : _ Trace.raise) =
   { Iter.defaults with
     expr =
       (function

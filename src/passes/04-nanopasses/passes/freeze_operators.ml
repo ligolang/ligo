@@ -1,7 +1,7 @@
-open Simple_utils.Trace
 open Ast_unified
 open Pass_type
 open Errors
+module Trace = Simple_utils.Trace
 
 (* morph binary and unary operators/keywords to ligo internal constants
   each syntax has its own set of keywords *)
@@ -107,7 +107,7 @@ let compile ~raise:_ =
   Fold { idle_fold with expr = pass_expr }
 
 
-let reduction ~raise =
+let reduction ~(raise : _ Trace.raise) =
   let fail () = raise.error (wrong_reduction __MODULE__) in
   { Iter.defaults with
     expr =

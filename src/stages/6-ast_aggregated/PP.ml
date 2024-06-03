@@ -2,11 +2,9 @@
 
 module Location = Simple_utils.Location
 module Var = Simple_utils.Var
-module List = Simple_utils.List
-module Ligo_string = Simple_utils.Ligo_string
 open Ligo_prim
 open Types
-open Simple_utils.PP_helpers
+module PP_helpers = Simple_utils.PP_helpers
 
 let ( type_content
     , _type_injection
@@ -80,7 +78,7 @@ and declaration ppf (x : declaration) =
   | D_irrefutable_match x -> Pattern_decl.pp expression type_expression ppf x
 
 
-and context ppf (x : context) = list_sep declaration (tag "\n") ppf x
+and context ppf (x : context) = PP_helpers.(list_sep declaration (tag "\n") ppf x)
 
 module With_name_tbl = struct
   module Type_var_name_tbl : sig
@@ -180,7 +178,7 @@ module With_name_tbl = struct
       ppf
       "%s%a"
       (Literal_types.to_string injection)
-      (list_sep_d_par (pp ~name_of_tvar))
+      (PP_helpers.list_sep_d_par (pp ~name_of_tvar))
       parameters
 
 

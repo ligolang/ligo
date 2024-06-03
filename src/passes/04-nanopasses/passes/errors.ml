@@ -1,6 +1,7 @@
-open Simple_utils.Display
+module Display = Simple_utils.Display
 module Location = Simple_utils.Location
 module Snippet = Simple_utils.Snippet
+module Ligo_Error = Simple_utils.Error
 open Ast_unified
 open S_exp
 
@@ -46,8 +47,8 @@ type t =
 [@@deriving poly_constructor { prefix = "small_passes_" }, sexp]
 
 let error_ppformat
-    :  display_format:string display_format -> no_colour:bool -> Format.formatter -> t
-    -> unit
+    :  display_format:string Display.display_format -> no_colour:bool -> Format.formatter
+    -> t -> unit
   =
  fun ~display_format ~no_colour f a ->
   let snippet_pp = Snippet.pp ~no_colour in
@@ -264,9 +265,9 @@ let error_ppformat
         ^ if empty then " To create empty list, use list([]) instead of list()." else ""))
 
 
-let error_json : t -> Simple_utils.Error.t =
+let error_json : t -> Ligo_Error.t =
  fun e ->
-  let open Simple_utils.Error in
+  let open Ligo_Error in
   match e with
   | `Small_passes_invariant_trivial (location, str) ->
     let message =

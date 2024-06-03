@@ -1,7 +1,7 @@
 open Ast_unified
 open Pass_type
-open Simple_utils.Trace
 open Errors
+module Trace = Simple_utils.Trace
 module Location = Simple_utils.Location
 include Flag.No_arg ()
 
@@ -19,7 +19,7 @@ let compile ~raise:_ =
             ( Label.of_int i
             , Non_linear_rows.{ associated_type = Some ty; attributes = []; decl_pos = i }
             ))
-          (List.Ne.to_list prod)
+          (Nonempty_list.to_list prod)
       in
       t_record_raw ~loc rows
     | ty -> make_t ~loc ty
@@ -27,7 +27,7 @@ let compile ~raise:_ =
   Fold { idle_fold with ty_expr }
 
 
-let reduction ~raise =
+let reduction ~(raise : _ Trace.raise) =
   { Iter.defaults with
     ty_expr =
       (function

@@ -1,3 +1,4 @@
+open Core
 open Common
 open Lsp_helpers
 
@@ -23,16 +24,13 @@ let dialect_keyword_completions (module Built_in : Built_in) : CompletionItem.t 
         ~sortText:(completion_context_priority Keyword)
         ())
 
-
 (** Gets completions for CameLIGO keywords and operators. *)
 let cameligo_keyword_completions : CompletionItem.t list =
   dialect_keyword_completions (module Lx_ml_self_tokens.Token)
 
-
 (** Gets completions for JsLIGO keywords and operators. *)
 let jsligo_keyword_completions : CompletionItem.t list =
   dialect_keyword_completions (module Lx_js_self_tokens.Token)
-
 
 (** Gets completions for keywords and operators based on whether we're dealing with
     CameLIGO or JsLIGO. *)

@@ -1,5 +1,5 @@
 open Test_helpers
-open Simple_utils.Trace
+module Trace = Simple_utils.Trace
 module Raw_options = Compiler_options.Raw_options
 
 let dry_run_options =
@@ -34,19 +34,19 @@ let apply_repl_sequence ~raw_options init_state commands =
   trace
 
 
-let test_seq ~raise ~raw_options init_state cmds res () =
+let test_seq ~(raise : _ Trace.raise) ~raw_options init_state cmds res () =
   let r = apply_repl_sequence ~raw_options init_state cmds in
   if List.compare String.compare res r = 0 then () else raise.error @@ `Test_repl (res, r)
 
 
-let test_basic ~raise ~raw_options () =
+let test_basic ~(raise : _ Trace.raise) ~raw_options () =
   let _, _, s =
     Repl.parse_and_eval ~raw_options (Ex_display_format Dev) init_state_cameligo "1 + 3"
   in
   if String.compare s "4" = 0 then () else raise.error @@ `Test_repl ([ s ], [ "4" ])
 
 
-let test_stdlib ~raise ~raw_options () =
+let test_stdlib ~(raise : _ Trace.raise) ~raw_options () =
   let _, _, s =
     Repl.parse_and_eval
       ~raw_options
@@ -127,14 +127,14 @@ let test_long ~raise ~raw_options () =
     ()
 
 
-let test_basic_jsligo ~raise ~raw_options () =
+let test_basic_jsligo ~(raise : _ Trace.raise) ~raw_options () =
   let _, _, s =
     Repl.parse_and_eval ~raw_options (Ex_display_format Dev) init_state_jsligo "1 + 3"
   in
   if String.compare s "4" = 0 then () else raise.error @@ `Test_repl ([ s ], [ "4" ])
 
 
-let test_stdlib_jsligo ~raise ~raw_options () =
+let test_stdlib_jsligo ~(raise : _ Trace.raise) ~raw_options () =
   let _, _, s =
     Repl.parse_and_eval
       ~raw_options

@@ -3,8 +3,7 @@
 (* Vendor dependencies *)
 
 module Region = Simple_utils.Region
-module Utils  = Simple_utils.Utils
-module Unit   = LexerLib.Unit
+module Ne     = Nonempty_list
 
 (* Generic signature of tokens *)
 
@@ -148,7 +147,7 @@ module type S =
            is not found or a lexer error occurred. *)
 
     type 'src recovery_parser =
-      'src -> (tree * message list, message Utils.nseq) result
+      'src -> (tree * message list, message Ne.t) result
 
     (* Parsing with recovery from various sources *)
 

@@ -1,5 +1,6 @@
 open Ligo_prim
 module Location = Simple_utils.Location
+module Ne_list = Simple_utils.Ne_list
 module Row = Row.With_layout
 
 type type_variable = Type_var.t [@@deriving compare, hash]
@@ -67,7 +68,7 @@ module Import_decl = Import_decl (Type_or_module_attr)
 type expression_content =
   (* Base *)
   | E_variable of Value_var.t
-  | E_contract of Module_var.t Simple_utils.List.Ne.t
+  | E_contract of Module_var.t Ne_list.t
   | E_literal of Literal_value.t
   | E_constant of
       expr Constant.t (* For language constants, like (Cons hd tl) or (plus i j) *)

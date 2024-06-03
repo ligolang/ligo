@@ -25,7 +25,6 @@ let indicate_recovery : t -> t = function
   | Pressed_don't_show_again_no_crash | Pressed_don't_show_again_crashed _ ->
     Pressed_don't_show_again_no_crash
 
-
 (** Moves from a state indicating that a crash occurred using the provided exception. If
     the state already indicates a crash, then the constructor will be updated with the
     provided exception. *)
@@ -34,7 +33,6 @@ let indicate_crash : exn -> t -> t =
   | No_crash | Crashed _ -> Crashed exn
   | Pressed_don't_show_again_no_crash | Pressed_don't_show_again_crashed _ ->
     Pressed_don't_show_again_crashed exn
-
 
 (** If we crash, the language client (like VSCode) might spam messages notifying the user
     that a capability has failed. To prevent this, we provide this handler which will run

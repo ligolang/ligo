@@ -1,7 +1,7 @@
 open Ast_unified
 open Pass_type
-open Simple_utils.Trace
 open Errors
+module Trace = Simple_utils.Trace
 module Location = Simple_utils.Location
 
 (* map ty on attr *)
@@ -122,7 +122,7 @@ module Normalize_no_layout = struct
     Fold { idle_fold with ty_expr }
 
 
-  let reduction ~raise =
+  let reduction ~(raise : _ Trace.raise) =
     { Iter.defaults with
       ty_expr =
         (function

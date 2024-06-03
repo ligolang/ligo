@@ -1,4 +1,7 @@
-open Types
+open Core
+module Trace = Simple_utils.Trace
+module Ne_list = Simple_utils.Ne_list
+module Location = Simple_utils.Location
 
 (** Given some signature:
 
@@ -81,7 +84,7 @@ let map_core_type_content_in_type_expression
     provided. *)
 let map_core_type_expression_module_path
     :  (Ligo_prim.Module_var.t list -> Ligo_prim.Module_var.t list)
-    -> (Ligo_prim.Module_var.t List.Ne.t -> Ligo_prim.Module_var.t List.Ne.t)
+    -> (Ligo_prim.Module_var.t Ne_list.t -> Ligo_prim.Module_var.t Ne_list.t)
     -> Ast_core.type_expression -> Ast_core.type_expression
   =
  fun f_list f_ne_list ->
@@ -152,7 +155,7 @@ let rec map_typed_type_expression_module_path
     provided. *)
 let map_core_signature_module_path
     :  (Ligo_prim.Module_var.t list -> Ligo_prim.Module_var.t list)
-    -> (Ligo_prim.Module_var.t List.Ne.t -> Ligo_prim.Module_var.t List.Ne.t)
+    -> (Ligo_prim.Module_var.t Ne_list.t -> Ligo_prim.Module_var.t Ne_list.t)
     -> Ast_core.signature -> Ast_core.signature
   =
  fun f_list f_ne_list ->

@@ -1,6 +1,7 @@
-open Simple_utils.Function
-module PP_helpers = Simple_utils.PP_helpers
+open Core
 open Types
+module PP_helpers = Simple_utils.PP_helpers
+module Location = Simple_utils.Location
 
 (** Helper for printing a [type_case] or [signature_case]. *)
 let resolve_case
@@ -40,22 +41,20 @@ let scopes : Format.formatter -> inlined_scopes -> unit =
     let loc, defs = scope in
     let defs =
       List.sort defs ~compare:(fun d1 d2 ->
-          Simple_utils.Location.compare (get_range d1) (get_range d2))
+          Location.compare (get_range d1) (get_range d2))
     in
     let pp_bindings f = List.iter ~f:(Format.fprintf f "%a " Uid.pp <@ get_def_uid) in
     Format.fprintf f "[ %a ] %a" pp_bindings defs Location.pp loc
   in
   let pp_scopes f = List.iter ~f:(Format.fprintf f "@[<v>%a@ @]" pp_scope) in
-  let s =
-    List.sort s ~compare:(fun (l1, _) (l2, _) -> Simple_utils.Location.compare l1 l2)
-  in
+  let s = List.sort s ~compare:(fun (l1, _) (l2, _) -> Location.compare l1 l2) in
   Format.fprintf f "@[<v>Scopes:@ %a@]" pp_scopes s
 
 
 (** Prints the [references] field from a definition. *)
-let refs : Format.formatter -> LSet.t -> unit =
+let refs : Format.formatter -> Location.Set.t -> unit =
  fun ppf locs ->
-  match Core.Set.to_list locs with
+  match Set.to_list locs with
   | [] -> Format.fprintf ppf "references: []"
   | locs ->
     let locs = List.sort locs ~compare:Location.compare in
@@ -234,8 +233,7 @@ and definition : Format.formatter -> def -> unit =
 and definitions : Format.formatter -> def list -> unit =
  fun ppf defs ->
   let defs =
-    List.sort defs ~compare:(fun d1 d2 ->
-        Simple_utils.Location.compare (get_range d1) (get_range d2))
+    List.sort defs ~compare:(fun d1 d2 -> Location.compare (get_range d1) (get_range d2))
   in
   let variables, labels_types_modules =
     List.partition_tf
@@ -288,7 +286,7 @@ let rec def_to_yojson : def -> string * Yojson.Safe.t =
   in
   let content_to_yojson = option_to_yojson Ast_core.type_expression_to_yojson in
   let definition ~name ~range ~t ~references =
-    let references = Core.Set.to_list references in
+    let references = Set.to_list references in
     `Assoc
       [ "name", `String name
       ; "range", Location.to_yojson range
@@ -297,7 +295,7 @@ let rec def_to_yojson : def -> string * Yojson.Safe.t =
       ]
   in
   let type_definition ~name ~range ~content ~references =
-    let references = Core.Set.to_list references in
+    let references = Set.to_list references in
     `Assoc
       [ "name", `String name
       ; "range", Location.to_yojson range

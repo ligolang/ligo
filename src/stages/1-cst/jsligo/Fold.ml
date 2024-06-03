@@ -160,7 +160,7 @@ type _ sing =
   | S_nsep_or_pref : 'a sing * 'b sing -> ('a, 'b) Utils.nsep_or_pref sing
   | S_nsep_or_term : 'a sing * 'b sing -> ('a, 'b) Utils.nsep_or_term sing
   | S_nsepseq : 'a sing * 'b sing -> ('a, 'b) Utils.nsepseq sing
-  | S_nseq : 'a sing -> 'a Utils.nseq sing
+  | S_ne_list : 'a sing -> 'a Nonempty_list.t sing
   | S_object : 'a sing -> 'a _object sing
   | S_option : 'a sing -> 'a option sing
   | S_par : 'a sing -> 'a par sing
@@ -245,12 +245,15 @@ let fold'
   and process_list : some_node list -> unit =
     fun l -> List.iter l ~f:process
 
+  and process_ne_list : some_node Nonempty_list.t -> unit =
+    fun l -> Nonempty_list.iter l ~f:process
+
   and fold : some_node -> unit =
   function (Some_node (node, sing)) -> match sing with
     S_all_cases -> process @@ node -| S_array_2
-    (S_nseq (S_reg S_switch_case), S_option (S_reg S_switch_default))
+    (S_ne_list (S_reg S_switch_case), S_option (S_reg S_switch_default))
     | S_all_match_clauses ->
-      process @@ node -| S_array_2 (S_nseq (S_reg S_match_clause),
+      process @@ node -| S_array_2 (S_ne_list (S_reg S_match_clause),
                                     S_option (S_reg S_match_default))
   | S_sharp -> process @@ node -| S_wrap S_lexeme
   | S_arguments -> process
@@ -337,7 +340,7 @@ let fold'
     ; namespace_path -| S_par S_namespace_selection ]
   | S_cst -> let { statements; eof } = node in
     process_list
-    [ statements -| S_nseq (S_array_2 (S_statement, S_option S_semi))
+    [ statements -| S_ne_list (S_array_2 (S_statement, S_option S_semi))
     ; eof -| S_eof ]
   | S_ctor -> process @@ node -| S_wrap S_lexeme
   | S_ctor_app sing ->
@@ -665,14 +668,15 @@ let fold'
   | S_nsep_or_pref (a_sing, b_sing) -> process
     ( match node with
       `Sep node -> node -| S_nsepseq (a_sing, b_sing)
-    | `Pref node -> node -| S_nseq (S_array_2 (b_sing, a_sing)))
+    | `Pref node -> node -| S_ne_list (S_array_2 (b_sing, a_sing)))
   | S_nsep_or_term (a_sing, b_sing) -> process
     ( match node with
       `Sep node -> node -| S_nsepseq (a_sing, b_sing)
-    | `Term node -> node -| S_nseq (S_array_2 (a_sing, b_sing)))
+    | `Term node -> node -| S_ne_list (S_array_2 (a_sing, b_sing)))
   | S_nsepseq (sing_1, sing_2) ->
     process @@ node -| S_array_2 (sing_1, S_list (S_array_2 (sing_2, sing_1)))
-  | S_nseq sing -> process @@ node -| S_array_2 (sing, S_list sing)
+  | S_ne_list sing ->
+    process_ne_list @@ Nonempty_list.map ~f:(fun x -> x -| sing) node
   | S_option sing ->
     ( match node with
       None -> () (* Leaf *)
@@ -725,7 +729,7 @@ let fold'
   | S_projection -> let { object_or_array; property_path } = node in
     process_list
     [ object_or_array -| S_expr
-    ; property_path -| S_nseq S_selection ]
+    ; property_path -| S_ne_list S_selection ]
   | S_qmark -> process @@ node -| S_wrap S_lexeme
   | S_range_for -> let { initialiser; semi1; condition; semi2; afterthought } = node in
     process_list
@@ -780,7 +784,7 @@ let fold'
     | S_Switch node -> node -| S_reg S_switch_stmt
     | S_While node -> node -| S_reg S_while_stmt
     )
-  | S_statements -> process @@ node -| S_nseq (S_array_2 (S_statement, S_option S_semi))
+  | S_statements -> process @@ node -| S_ne_list (S_array_2 (S_statement, S_option S_semi))
   | S_string_literal -> process @@ node -| S_wrap S_lexeme
   | S_switch_case -> let { kwd_case; expr; colon; case_body } = node in
     process_list

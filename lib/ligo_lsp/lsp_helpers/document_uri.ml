@@ -1,4 +1,8 @@
-open Imports
+open Core
+module Ligo_fun = Simple_utils.Ligo_fun
+
+let ( <@ ) = Ligo_fun.( <@ )
+
 include Lsp.Types.DocumentUri
 
 type t = [%import: Lsp.Types.DocumentUri.t] [@@deriving eq, ord]

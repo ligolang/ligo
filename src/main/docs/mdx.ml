@@ -1,10 +1,13 @@
 (* Creates files like gitlab-pages/website/versioned_docs/version-1.2.0/reference/toplevel.md
    from LIGO source files *)
 
+open Core
 open PPrint
 open Ligo_prim
-open Simple_utils
-open Simple_utils.Function
+module Trace = Simple_utils.Trace
+module Location = Simple_utils.Location
+
+let ( <@ ) f g x = f (g x)
 
 (** FIXME see
     https://tezos-dev.slack.com/archives/GQ635HR0U/p1708798904488879?thread_ts=1708795057.966149&cid=GQ635HR0U
@@ -366,7 +369,7 @@ and module_doc
       @@ unmangle_if_needed
       @@ String.concat ~sep:"."
       @@ List.map ~f:Module_var.to_name_exn
-      @@ Utils.nseq_to_list v
+      @@ Nonempty_list.to_list v
     in
     (* FIXME: should be syntax dependant,
        but <SyntaxTitle> can't hold links for now *)

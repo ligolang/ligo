@@ -3,6 +3,11 @@
  (public_name ligo.ast_typed)
  (instrumentation
   (backend bisect_ppx))
- (libraries simple-utils ligo_prim backend ligo.ast_core)
+ (libraries
+  simple-utils
+  ligo_prim
+  backend
+  ligo.ast_core
+  core_kernel.nonempty_list)
  (preprocess
   (staged_pps ppx_jane ppx_deriving_yojson ppx_import ppx_map ppx_woo)))

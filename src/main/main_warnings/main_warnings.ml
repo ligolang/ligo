@@ -1,6 +1,8 @@
-open Simple_utils
+module Warning = Simple_utils.Warning
+module Display = Simple_utils.Display
+module Location = Simple_utils.Location
+module Snippet = Simple_utils.Snippet
 open Ligo_prim
-open Display
 
 type all =
   [ `Self_ast_aggregated_warning_unused of Location.t * string
@@ -45,13 +47,13 @@ type all =
 let warn_bad_self_type t1 t2 loc = `Self_ast_aggregated_warning_bad_self_type (t1, t2, loc)
 
 let pp
-    :  display_format:string display_format -> no_colour:bool -> Format.formatter -> all
-    -> unit
+    :  display_format:string Display.display_format -> no_colour:bool -> Format.formatter
+    -> all -> unit
   =
  fun ~display_format ~no_colour f a ->
   let snippet_pp = Snippet.pp ~no_colour in
   match display_format with
-  | Human_readable | Dev ->
+  | Display.Human_readable | Dev ->
     (match a with
     | `Use_meta_ligo loc ->
       Format.fprintf
@@ -281,9 +283,9 @@ let pp
         s)
 
 
-let to_warning : all -> Simple_utils.Warning.t =
+let to_warning : all -> Warning.t =
  fun w ->
-  let open Simple_utils.Warning in
+  let open Warning in
   match w with
   | `Use_meta_ligo location ->
     let message =
@@ -497,7 +499,7 @@ let to_warning : all -> Simple_utils.Warning.t =
 let to_json : all -> Yojson.Safe.t =
  fun w ->
   let warning = to_warning w in
-  Simple_utils.Warning.to_yojson warning
+  Warning.to_yojson warning
 
 
-let format = { pp; to_json }
+let format : all Display.format = { pp; to_json }

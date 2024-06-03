@@ -1,7 +1,16 @@
+open Core
+module Loc = Simple_utils.Location
+module Ligo_fun = Simple_utils.Ligo_fun
+
+let ( <@ ) = Ligo_fun.( <@ )
+
 open Lsp_helpers
 
-type lexeme = Cst_shared.Types.lexeme
-type 'a wrap = 'a Cst_shared.Types.wrap
+type lexeme = string
+
+module Wrap = Lexing_shared.Wrap
+
+type 'payload wrap = 'payload Wrap.wrap
 
 (** A dot [.] character wrap. *)
 type dot = lexeme wrap
@@ -52,7 +61,6 @@ let completion_context_priority
      Invariant: 0 <= [score] && [score] <= 255. *)
   String.of_char (Char.of_int_exn ((base * max_score) - score))
 
-
 let defs_to_completion_items
     ~(normalize : Path.normalization)
     (context : completion_context)
@@ -89,7 +97,6 @@ let defs_to_completion_items
       in
       CompletionItem.create ~label:name ~kind ~sortText ?detail ())
 
-
 (** Details of a (successfully parsed) file plus the cursor position.
     This type is introduced to avoid functions that have e.g. two [Position.t]s or
     [Def.t list] in arguments and to pass all arguments to functions
@@ -108,7 +115,6 @@ type input_d = Dialect_cst.t input
 (** Helper to create an [input_d]. *)
 let mk_input_d ~(cst : Dialect_cst.t) ~syntax ~path ~definitions ~pos : input_d =
   { cst; syntax; path; definitions; pos }
-
 
 (** Scopes are not perfect so sometimes they can show 2 things with same identifiers
     "belonging to our scope". To make the output more compact,

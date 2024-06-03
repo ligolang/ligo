@@ -1,4 +1,5 @@
 open Helpers
+module Ligo_pair = Simple_utils.Ligo_pair
 
 type file_path = string
 type module_name = string
@@ -21,6 +22,6 @@ let compile_contract_input ~raise
     : options:Compiler_options.t -> meta:meta -> string -> string -> c_unit * c_unit
   =
  fun ~options ~meta parameter storage ->
-  Simple_utils.Pair.map
+  Ligo_pair.map
     ~f:(preprocess_string ~raise ~options:options.frontend ~meta)
     (parameter, storage)

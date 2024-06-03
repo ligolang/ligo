@@ -1,3 +1,4 @@
+open Core
 open Tezos_micheline
 open Micheline
 

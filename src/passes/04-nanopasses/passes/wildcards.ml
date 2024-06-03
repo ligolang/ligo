@@ -1,5 +1,6 @@
 open Ast_unified
 open Pass_type
+module Ne_list = Simple_utils.Ne_list
 module Location = Simple_utils.Location
 
 (* morph wildcards (variable with name "_") into unreachable variable *)
@@ -39,7 +40,7 @@ let compile ~raise:_ =
     | M_path path ->
       m_path
         ~loc
-        (List.Ne.map
+        (Ne_list.map
            (fun v ->
              if Mod_variable.is_name v "_" then Mod_variable.fresh_like ~loc v else v)
            path)

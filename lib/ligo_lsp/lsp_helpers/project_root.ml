@@ -20,7 +20,6 @@ let get_project_root_from_dir : Path.t -> Path.t option =
   | Some project_root -> Some (Path.dirname project_root)
   | None -> None
 
-
 (** Given a file (not directory), searches for the innermost project root, if any. E.g.,
     assuming that the given path was ["/home/johndoe/example.mligo"], we'll look for the
     project root in ["/home/johndoe"], ["/home"], and ["/"], in this order, stopping at

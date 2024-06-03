@@ -1,10 +1,8 @@
-module Location = Simple_utils.Location
-module Trace = Simple_utils.Trace
-open Trace
 open Ligo_prim
-open Errors
 module I = Type
 module O = Ast_typed
+module Location = Simple_utils.Location
+module Trace = Simple_utils.Trace
 
 type error = Errors.typer_error
 type warning = Main_warnings.all
@@ -12,7 +10,7 @@ type warning = Main_warnings.all
 type 'a t =
   options:Compiler_options.middle_end
   -> path:Module_var.t list
-  -> raise:(error, warning) raise
+  -> raise:(error, warning) Trace.raise
   -> Substitution.t
   -> 'a
 
@@ -40,7 +38,7 @@ let all_lmap_unit (lmap : unit t Label.Map.t) : unit t =
 
 include Let_syntax
 
-let rec decode (type_ : Type.t) ~options ~path ~raise subst =
+let rec decode (type_ : Type.t) ~options ~path ~(raise : _ Trace.raise) subst =
   let decode type_ = decode type_ ~options ~raise ~path subst in
   let decode_row row = decode_row row ~options ~path ~raise subst in
   let return type_content : O.type_expression =
@@ -58,7 +56,7 @@ let rec decode (type_ : Type.t) ~options ~path ~raise subst =
     (match Substitution.find_texists_eq subst tvar with
     | Some (_, type_) -> decode type_
     | None ->
-      let error = cannot_decode_texists tvar type_.location in
+      let error = Errors.cannot_decode_texists tvar type_.location in
       if options.Compiler_options.typer_error_recovery
       then (
         raise.log_error error;
@@ -116,7 +114,7 @@ and decode_row ({ fields; layout } : Type.row) ~options ~path ~raise subst =
   { fields; layout }
 
 
-let decode type_ ~options ~path ~raise subst =
+let decode type_ ~options ~path ~(raise : _ Trace.raise) subst =
   (* Attempt to lift the error to the originally decoded type (improves error reporting) *)
   Trace.try_with
     ~fast_fail:raise.fast_fail
@@ -127,7 +125,7 @@ let decode type_ ~options ~path ~raise subst =
         then type_.location
         else loc
       in
-      let error = cannot_decode_texists tvar loc in
+      let error = Errors.cannot_decode_texists tvar loc in
       if options.typer_error_recovery
       then (
         raise.log_error error;

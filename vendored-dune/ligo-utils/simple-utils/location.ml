@@ -1,10 +1,4 @@
-(* type file_location = { *)
-(*   filename : string ; *)
-(*   start_line : int ; *)
-(*   start_column : int ; *)
-(*   end_line : int ; *)
-(*   end_column : int ; *)
-(* } *)
+open Core
 
 type virtual_location = string [@@deriving hash, sexp]
 
@@ -17,14 +11,19 @@ let to_yojson = function
   | File reg -> `List [ `String "File"; Region.to_yojson reg ]
   | Virtual v -> `List [ `String "Virtual"; `String v ]
 
+let error_yojson_format format =
+  Error ("Invalid JSON value.
+          An object with the following specification is expected:"
+         ^ format)
+
 let of_yojson = function
   | `List [ `String "File"; reg ] ->
     let reg = Region.of_yojson reg in
     (match reg with
     | Ok reg -> Ok (File reg)
-    | _ -> Utils.error_yojson_format "File Region.t")
+    | _ -> error_yojson_format "File Region.t")
   | `List [ `String "Virtual"; `String v ] -> Ok (Virtual v)
-  | _ -> Utils.error_yojson_format "File Region.t | Virtual String"
+  | _ -> error_yojson_format "File Region.t | Virtual String"
 
 let to_human_yojson = function
   | File reg -> Region.to_human_yojson reg
@@ -52,8 +51,8 @@ module Location_elt = struct
   let sexp_of_t = sexp_of_t
 end
 
-module Location_set = Core.Set.Make (Location_elt)
-module Location_map = Core.Map.Make (Location_elt)
+module Set = Set.Make (Location_elt)
+module Map = Map.Make (Location_elt)
 
 let make (start_pos : Lexing.position) (end_pos : Lexing.position) : t =
   File (Region.make ~start:(Pos.from_byte start_pos) ~stop:(Pos.from_byte end_pos))
@@ -98,8 +97,8 @@ let wrap_of_yojson f = function
     let location = of_yojson location in
     (match wrap_content, location with
     | Ok wrap_content, Ok location -> Ok { wrap_content; location }
-    | _ -> Utils.error_yojson_format "{wrap_content: 'a; location: location}")
-  | _ -> Utils.error_yojson_format "{wrap_content: 'a; location: location}"
+    | _ -> error_yojson_format "{wrap_content: 'a; location: location}")
+  | _ -> error_yojson_format "{wrap_content: 'a; location: location}"
 
 let compare_wrap
     compare_content

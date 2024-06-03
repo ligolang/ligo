@@ -1,4 +1,5 @@
 open Types
+open Core
 
 module Catamorphism = struct
   (* f-algebras *)

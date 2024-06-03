@@ -3,8 +3,10 @@ module O = Ast_core
 open Passes.Pass_type
 module Errors = Passes.Errors
 module Selector = Passes.Pass_type.Selector
-open Simple_utils.Function
 module ModRes = Preprocessor.ModRes
+module Ligo_fun = Simple_utils.Ligo_fun
+
+let ( <@ ) = Ligo_fun.( <@ )
 
 type flags =
   { initial_node_check : bool
@@ -85,7 +87,7 @@ let passes ~(flags : flags) : (module T) list list =
     ]
   ; [ entry (module Pattern_restriction) ~flag:always ~arg:()
     ; entry (module Pattern_heuristic) ~flag:always ~arg:()
-    ; entry (module Unpuning) ~flag:always ~arg:()
+    ; entry (module Unpunning) ~flag:always ~arg:()
     ; entry (module Module_open_restriction) ~flag:always ~arg:()
     ; entry (module Import_restriction) ~flag:always ~arg:()
     ; entry (module External_hack) ~flag:always ~arg:()

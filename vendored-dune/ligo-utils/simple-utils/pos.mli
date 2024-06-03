@@ -129,6 +129,6 @@ val compare : t -> t -> int
 
 (* CONVERSIONS *)
 
-val to_yojson       : t -> Yojson.Safe.t
-val of_yojson       : Yojson.Safe.t -> (t,string) result
-val to_human_yojson : t -> Yojson.Safe.t
+val to_yojson           : t -> Yojson.Safe.t
+val of_yojson           : Yojson.Safe.t -> (t, string) result
+val to_human_yojson     : t -> Yojson.Safe.t

@@ -1,6 +1,7 @@
+open Ligo_prim
+module Trace = Simple_utils.Trace
 module PP_helpers = Simple_utils.PP_helpers
 module AST = Ast_aggregated
-open Ligo_prim
 module Row = AST.Row
 open Errors
 
@@ -29,7 +30,7 @@ module Instance = struct
 end
 
 module Data = struct
-  module LIMap = Simple_utils.Map.Make (Value_var)
+  module LIMap = Map.Make (Value_var)
 
   type t = Instance.t list LIMap.t
 
@@ -45,18 +46,16 @@ module Data = struct
         (PP_helpers.list_sep_d Instance.pp)
         instances_of_lid
     in
-    List.iter (LIMap.to_kv_list instances) ~f
+    List.iter (Map.to_alist instances) ~f
 
 
   let instances_lookup (ev : Value_var.t) (data : t) =
-    Option.value ~default:[] @@ LIMap.find_opt ev data
+    Option.value ~default:[] @@ Map.find data ev
 
 
   let instance_add (lid : Value_var.t) (instance : Instance.t) (data : t) =
-    let lid_instances =
-      instance :: (Option.value ~default:[] @@ LIMap.find_opt lid data)
-    in
-    LIMap.add lid lid_instances data
+    let lid_instances = instance :: (Option.value ~default:[] @@ Map.find data lid) in
+    Map.set data ~key:lid ~data:lid_instances
 end
 
 (* This is not a proper substitution, it might capture variables: it should be used only with v' a fresh variable *)
@@ -272,7 +271,7 @@ let evaluate_external_typer typed rhs =
   | _ -> rhs
 
 
-let rec mono_polymorphic_expression ~raise
+let rec mono_polymorphic_expression ~(raise : _ Trace.raise)
     : Data.t -> AST.expression -> Data.t * AST.expression
   =
  fun data expr ->
@@ -313,8 +312,7 @@ let rec mono_polymorphic_expression ~raise
     let data, result = self data result in
     data, return (E_lambda { binder; output_type; result })
   | E_type_abstraction { type_binder = _; result } ->
-    raise.Trace.error
-      (Errors.monomorphisation_unexpected_type_abs expr.type_expression result)
+    raise.error (Errors.monomorphisation_unexpected_type_abs expr.type_expression result)
   | E_recursive
       { fun_name; fun_type; lambda = { binder; output_type; result }; force_lambdarec } ->
     let data, result = self data result in
@@ -330,8 +328,7 @@ let rec mono_polymorphic_expression ~raise
     let () =
       match AST.Combinators.get_t_arrow rhs.type_expression with
       | Some { type1 = _; type2 } when AST.Combinators.is_t_for_all type2 ->
-        raise.Trace.error
-          (Errors.monomorphisation_unexpected_type_abs rhs.type_expression expr)
+        raise.error (Errors.monomorphisation_unexpected_type_abs rhs.type_expression expr)
       | _ -> ()
     in
     let rhs =
@@ -439,7 +436,7 @@ let rec mono_polymorphic_expression ~raise
       match e.expression_content with
       | E_type_inst { forall; type_ } -> aux (type_ :: type_insts) forall
       | E_variable variable -> List.rev type_insts, variable
-      | _ -> raise.Trace.error (Errors.monomorphisation_non_var expr)
+      | _ -> raise.error (Errors.monomorphisation_non_var expr)
     in
     let type_instances, lid = aux [] expr in
     let type_ = expr.type_expression in
@@ -479,8 +476,8 @@ and mono_polymorphic_cases ~raise
       data, ({ pattern; body } : _ AST.Match_expr.match_case))
 
 
-let check_if_polymorphism_present ~raise e =
-  let show_error loc = raise.Trace.error @@ Errors.polymorphism_unresolved loc in
+let check_if_polymorphism_present ~(raise : _ Trace.raise) e =
+  let show_error loc = raise.error @@ Errors.polymorphism_unresolved loc in
   let rec check_type_expression ~loc (te : AST.type_expression) =
     match te.type_content with
     | T_variable _ -> show_error loc

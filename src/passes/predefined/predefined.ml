@@ -7,8 +7,6 @@
   a new constructor at all those places.
 *)
 
-module Ligo_string = Simple_utils.Ligo_string
-
 module Tree_abstraction = struct
   let pseudo_module_to_string (c : Ligo_prim.Constant.constant') =
     match c with

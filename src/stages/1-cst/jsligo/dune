@@ -12,7 +12,8 @@
   simple-utils
   ;; Third party
   hex
-  zarith)
+  zarith
+  core_kernel.nonempty_list)
  (modules CST Print Fold)
  (preprocess
   (pps ppx_yojson_conv)))

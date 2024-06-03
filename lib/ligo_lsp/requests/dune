@@ -15,4 +15,5 @@
   checking
   vector
   completion_lib
-  ligo_docs))
+  ligo_docs
+  core_kernel.nonempty_list))

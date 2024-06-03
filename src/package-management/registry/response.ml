@@ -3,7 +3,6 @@
  *)
 
 module Semver = Package_management_external_libs.Ligo_semver
-module SMap = Map.Make (String)
 open Package_management_shared
 module RepositoryUrl = Repository_url
 module Uri = Package_management_external_libs.Ligo_uri
@@ -139,7 +138,7 @@ module Version = struct
 end
 
 module Versions = struct
-  type t = Version.t SMap.t
+  type t = Version.t String.Map.t
 
   let to_yojson t =
     let kvs =
@@ -156,7 +155,7 @@ module Versions = struct
         | Ok _, Error e -> Error e
         | Error e, _ -> Error e
       in
-      let init = Ok SMap.empty in
+      let init = Ok String.Map.empty in
       kvs |> List.fold_left ~f ~init
     | _ -> Error "Versions.of_yojson failed: did not receive object as expected"
 end
@@ -188,13 +187,13 @@ module PutAttachment = struct
 end
 
 (* module PutAttachments = struct *)
-(*   type t = PutAttachment.t SMap.t *)
+(*   type t = PutAttachment.t String.Map.t *)
 
 (*   let of_yojson = function *)
 (*     | `Assoc kvs -> *)
 (*       let f acc (k, v) = *)
 (*         match acc, PutAttachment.of_yojson v with *)
-(*         | Ok acc, Ok v -> Ok (SMap.add k v acc) *)
+(*         | Ok acc, Ok v -> Ok (Map.sadd k v acc) *)
 (*         | Error e, _ -> Error e *)
 (*         | _, Error e -> Error e *)
 (*       in *)
@@ -209,7 +208,7 @@ end
 
 module type Attachments = sig
   type attachment
-  type t = attachment SMap.t
+  type t = attachment String.Map.t
 
   val of_yojson : Yojson.Safe.t -> (t, string) result
   val to_yojson : t -> Yojson.Safe.t
@@ -218,7 +217,7 @@ end
 module MakeAttachments (Attachment : Attachment) :
   Attachments with type attachment = Attachment.t = struct
   type attachment = Attachment.t
-  type t = attachment SMap.t
+  type t = attachment String.Map.t
 
   let of_yojson = function
     | `Assoc kvs ->
@@ -228,7 +227,7 @@ module MakeAttachments (Attachment : Attachment) :
         | Error e, _ -> Error e
         | _, Error e -> Error e
       in
-      let init = Ok SMap.empty in
+      let init = Ok String.Map.empty in
       kvs |> List.fold_left ~f ~init
     | _ -> Error "Attachment.of_yojson failed: did not receive object as expected"
 
@@ -273,7 +272,7 @@ module PutAttachments = struct
   let make ~(package_stats : PackageStats.t) =
     let gzipped_tarball = package_stats.PackageStats.tarball_content in
     Map.set
-      SMap.empty
+      String.Map.empty
       ~key:package_stats.PackageStats.tarball_name
       ~data:
         PutAttachment.

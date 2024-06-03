@@ -1,3 +1,4 @@
+open Core
 module Error_monad = Tezos_error_monad.Error_monad
 
 let to_string err =

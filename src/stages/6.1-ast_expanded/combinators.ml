@@ -1,7 +1,7 @@
-module Ligo_string = Simple_utils.Ligo_string
 open Ligo_prim
 open Literal_types
 open Types
+module Ligo_string = Simple_utils.Ligo_string
 
 [@@@warning "-32"]
 

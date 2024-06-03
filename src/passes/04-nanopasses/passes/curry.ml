@@ -1,9 +1,9 @@
 open Ast_unified
 open Pass_type
-open Simple_utils.Trace
-open Simple_utils
 open Errors
+module Trace = Simple_utils.Trace
 module Location = Simple_utils.Location
+module Ligo_option = Simple_utils.Ligo_option
 module Binder = Ligo_prim.Binder
 module Param = Ligo_prim.Param
 include Flag.No_arg ()
@@ -49,7 +49,7 @@ let make_ty_fun ~loc (fun_type : _ Recursive.general_fun_type) =
   | User x -> x
   | Extracted ty_lst ->
     let ret, tys =
-      let hd, tl = List.Ne.rev ty_lst in
+      let (hd :: tl) = Nonempty_list.reverse ty_lst in
       hd, List.rev tl
     in
     List.fold_right tys ~init:ret ~f:(fun ty acc -> t_fun ~loc ([], ty, acc))
@@ -101,11 +101,11 @@ let fun_return_types parameters ret_type : (_ Types.Param.t * ty_expr option) li
         let var_name =
           Option.value
             ~default:"_"
-            (let open Simple_utils.Option in
+            (let open Ligo_option in
             let _, var_name_opt = get_var_or_ty_pattern binder.pattern in
             let* var_name = var_name_opt in
             let* () = Option.some_if (not @@ Variable.is_generated var_name) () in
-            return @@ Variable.to_name_exn var_name)
+            Option.return @@ Variable.to_name_exn var_name)
         in
         let typ = Option.map ~f:(inject_param_names param_names) typ in
         zip_binders_and_types ((binder, typ) :: acc) (var_name :: param_names) (xs, ys)
@@ -155,15 +155,15 @@ let compile_curry ~raise ~loc recursive_opt parameters ret_type body =
     push_within nested_lambdas
   | Some (fun_name, fun_type) ->
     let (top_param, _, top_prelude_opt), tl =
-      match List.Ne.of_list_opt nested_lambda_data with
-      | None -> failwith "impossible ?"
-      | Some v -> v
+      match nested_lambda_data with
+      | [] -> failwith "impossible ?"
+      | hd :: tl -> hd, tl (* FIXME: Ne *)
     in
     let nested_lambdas =
       List.fold_right tl ~init:body' ~f:(fun x acc -> e_lambda ~loc (mk_lambda x acc))
     in
     let _, top_binder_ty, top_lambda_ty =
-      trace_option ~raise (recursive_no_annot body) @@ get_t_fun fun_type
+      Trace.trace_option ~raise (recursive_no_annot body) @@ get_t_fun fun_type
     in
     let binder = Param.set_ascr top_param top_binder_ty |> Param.set_initial_arg in
     let lambda = mk_lambda (binder, top_lambda_ty, top_prelude_opt) nested_lambdas in
@@ -206,7 +206,7 @@ let compile ~raise =
   Fold { idle_fold with expr }
 
 
-let reduction ~raise =
+let reduction ~(raise : _ Trace.raise) =
   { Iter.defaults with
     expr =
       (function

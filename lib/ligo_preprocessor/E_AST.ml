@@ -3,6 +3,7 @@
 
 (* Vendors' dependencies *)
 
+open Core
 module Region = Simple_utils.Region
 
 (* Boolean expressions *)

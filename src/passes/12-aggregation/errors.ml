@@ -1,4 +1,7 @@
-open Simple_utils.Display
+module Display = Simple_utils.Display
+module Location = Simple_utils.Location
+module Snippet = Simple_utils.Snippet
+module Ligo_Error = Simple_utils.Error
 
 let stage = "aggregation"
 
@@ -10,7 +13,7 @@ type aggregation_error =
 [@@deriving poly_constructor { prefix = "aggregation_" }]
 
 let error_ppformat
-    :  display_format:string display_format -> no_colour:bool -> Format.formatter
+    :  display_format:string Display.display_format -> no_colour:bool -> Format.formatter
     -> aggregation_error -> unit
   =
  fun ~display_format ~no_colour f a ->
@@ -33,9 +36,9 @@ let error_ppformat
         loc)
 
 
-let error_json : aggregation_error -> Simple_utils.Error.t =
+let error_json : aggregation_error -> Ligo_Error.t =
  fun e ->
-  let open Simple_utils.Error in
+  let open Ligo_Error in
   match e with
   | `Aggregation_corner_case desc ->
     let message =

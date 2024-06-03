@@ -6,6 +6,4 @@
   octez-libs.base
   data-encoding
   simple-utils
-  base)
- (flags
-  (:standard -open Core)))
+  base))

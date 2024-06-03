@@ -1,18 +1,19 @@
 open Ast_unified
 open Ast_unified.Catamorphism
 open Pass_type
-open Simple_utils.Trace
 open Errors
-
-(* In this pass we turn T_ForAlls into many T_ForAll,
-   and also error when generics are used in signatures *)
-let name = __MODULE__
+module Trace = Simple_utils.Trace
 
 include Flag.With_arg (struct
   type flag = bool
 end)
 
-let compile ~raise =
+(* In this pass we turn T_ForAlls into many T_ForAll,
+   and also error when generics are used in signatures *)
+
+let name = __MODULE__
+
+let compile ~(raise : _ Trace.raise) =
   let ty_expr : _ ty_expr_ -> ty_expr = function
     | { location = loc; wrap_content = T_for_alls { ty_binders; kind; type_ } } ->
       List.fold_right

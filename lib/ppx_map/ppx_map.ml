@@ -1,6 +1,5 @@
 open Core
 open Ppxlib
-open Simple_utils
 
 let rec extract_ident = function
   | Lident id -> id

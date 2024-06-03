@@ -45,4 +45,4 @@ module type S =
 (* THE FUNCTOR *)
 
 module Make (Config : Config.S) (Client : Client.S)
-       : S with type lex_unit = Client.token Unit.t
+       : S with type lex_unit = Client.token LexUnit.t

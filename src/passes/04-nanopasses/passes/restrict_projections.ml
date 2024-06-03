@@ -1,15 +1,14 @@
 open Ast_unified
 open Pass_type
-open Simple_utils.Trace
 open Errors
+module Trace = Simple_utils.Trace
 module Location = Simple_utils.Location
-open Simple_utils.Ligo_string
+module Ligo_string = Simple_utils.Ligo_string
+include Flag.No_arg ()
 
 (* projection in Jsligo have different behaviors: x["a"] is a record access , and no map access is supported *)
 
-include Flag.No_arg ()
-
-let compile ~raise =
+let compile ~(raise : _ Trace.raise) =
   let pass_expr : _ expr_ -> expr =
    fun e ->
     let loc = Location.get_location e in
@@ -18,7 +17,8 @@ let compile ~raise =
       | Component_expr rhs ->
         (match get_e_literal rhs with
         | Some (Literal_int z) -> Selection.Component_num (Z.to_string z, z)
-        | Some (Literal_string z) -> Selection.FieldName (Label.of_string (extract z))
+        | Some (Literal_string z) ->
+          Selection.FieldName (Label.of_string (Ligo_string.extract z))
         | _ -> raise.error (unsupported_projection ({ fp = e } : expr)))
       | _ -> s
     in
@@ -31,7 +31,7 @@ let compile ~raise =
   Fold { idle_fold with expr = pass_expr }
 
 
-let reduction ~raise =
+let reduction ~(raise : _ Trace.raise) =
   let is_component_expr (t : _ Selection.t) =
     match t with
     | Component_expr _ -> true

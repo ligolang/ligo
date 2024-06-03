@@ -1,6 +1,7 @@
 (* This file represente the context which give the association of values to types *)
-open Simple_utils
+
 open Ligo_prim
+module Location = Simple_utils.Location
 
 module Refs_tbl : sig
   module type Var = sig
@@ -12,7 +13,7 @@ module Refs_tbl : sig
   module Label_var : Var with type t = Label.t
 
   type 'a tagged_tbl =
-    | Tagged_tbl : (Location.t, Location.Location_set.t) Hashtbl.t -> 'a tagged_tbl
+    | Tagged_tbl : (Location.t, Location.Set.t) Hashtbl.t -> 'a tagged_tbl
 
   val pp_tbl : 'a tagged_tbl Fmt.t
 
@@ -29,10 +30,10 @@ module Refs_tbl : sig
   val add_ref_type : t -> key:Type_var.t -> data:Type_var.t -> unit
   val add_ref_module : t -> key:Module_var.t -> data:Module_var.t -> unit
   val add_ref_label : t -> key:Label_var.t -> data:Label_var.t -> unit
-  val get_value_refs : t -> key:Location.t -> Location.Location_set.t option
-  val get_type_refs : t -> key:Location.t -> Location.Location_set.t option
-  val get_module_refs : t -> key:Location.t -> Location.Location_set.t option
-  val get_label_refs : t -> key:Location.t -> Location.Location_set.t option
+  val get_value_refs : t -> key:Location.t -> Location.Set.t option
+  val get_type_refs : t -> key:Location.t -> Location.Set.t option
+  val get_module_refs : t -> key:Location.t -> Location.Set.t option
+  val get_label_refs : t -> key:Location.t -> Location.Set.t option
   val pp : t Fmt.t
 end
 
@@ -225,13 +226,13 @@ val get_lexists_eq : t -> Layout_var.t -> (fields * Type.layout) option
 val get_module_of_path
   :  refs_tbl:Refs_tbl.t
   -> t
-  -> Module_var.t List.Ne.t
+  -> Module_var.t Nonempty_list.t
   -> Signature.t option
 
 val get_module_type_of_path
   :  refs_tbl:Refs_tbl.t
   -> t
-  -> Module_var.t List.Ne.t
+  -> Module_var.t Nonempty_list.t
   -> Signature.t option
 
 val get_type_or_type_var

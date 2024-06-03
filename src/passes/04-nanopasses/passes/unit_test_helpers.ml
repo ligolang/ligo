@@ -1,10 +1,14 @@
-open Simple_utils.Trace
-open Simple_utils.Function
 open Ast_unified
 open Pass_type
+module Trace = Simple_utils.Trace
+module Location = Simple_utils.Location
+module Ligo_pair = Simple_utils.Ligo_pair
+module Ligo_fun = Simple_utils.Ligo_fun
+
+let ( <@ ) = Ligo_fun.( <@ )
 
 let try_with f in_ =
-  try_with
+  Trace.try_with
     (fun ~raise ~catch:_ ->
       let _v = f ~raise in_ in
       print_endline "This test should have failed")
@@ -57,15 +61,16 @@ module Dummies = struct
       let f str =
         S_exp.sexp_of_block
         @@ block_of_statements
-             (List.Ne.singleton
-             @@ s_decl ~loc
-             @@ d_var
-                  ~loc
-                  { type_params = None
-                  ; pattern = p_unit ~loc
-                  ; rhs_type = None
-                  ; let_rhs = e_variable ~loc (Variable.of_input_var ~loc ("#" ^ str))
-                  })
+             Nonempty_list.
+               [ s_decl ~loc
+                 @@ d_var
+                      ~loc
+                      { type_params = None
+                      ; pattern = p_unit ~loc
+                      ; rhs_type = None
+                      ; let_rhs = e_variable ~loc (Variable.of_input_var ~loc ("#" ^ str))
+                      }
+               ]
       in
       dummy "BLOCK" f
     in
@@ -84,7 +89,7 @@ module Dummies = struct
       dummy "STATEMENT" f
     in
     List.map
-      ~f:(Simple_utils.Pair.map_snd ~f:Sexp.to_string)
+      ~f:(Ligo_pair.map_snd ~f:Sexp.to_string)
       (dummy_ty_expr @ dummy_expr @ dummy_statement @ dummy_block @ dummy_declaration)
 
 
@@ -103,7 +108,7 @@ module Dummies = struct
   let post_proc_re_indent = replace
 end
 
-let raise : (Errors.t, Main_warnings.all) raise = raise_failwith "test"
+let raise : (Errors.t, Main_warnings.all) Trace.raise = Trace.raise_failwith "test"
 
 let expected_failure
     (morphers : _ Morphing.morphers)

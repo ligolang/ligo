@@ -1,7 +1,6 @@
-open Ast_aggregated.Types
-open Simple_utils.Trace
-module Ligo_string = Simple_utils.Ligo_string
 open Ligo_prim
+open Ast_aggregated.Types
+module Trace = Simple_utils.Trace
 
 let format_string format_str =
   let rec parse acc = function
@@ -68,7 +67,7 @@ let build_table : expression -> Table.t =
  fun e -> Helpers.fold_expression build_table (Table.create ()) e
 
 
-let warn ~raise ~table : unit -> expression -> unit =
+let warn ~(raise : _ Trace.raise) ~table : unit -> expression -> unit =
  fun () e ->
   match e.expression_content with
   | E_variable v

@@ -1,14 +1,14 @@
-open Simple_utils.Trace
+module Trace = Simple_utils.Trace
 open Test_helpers
 open Main_errors
 
 let wrap_test_w ~no_colour name f =
-  try_with
+  Trace.try_with
     (fun ~raise ~catch ->
       let () = f ~raise () in
       List.iter ~f:(fun w ->
           Format.printf "%a\n" (Main_warnings.pp ~display_format:Dev ~no_colour) w)
-      @@ catch.warnings ())
+      @@ catch.Trace.warnings ())
     (fun ~catch error ->
       let value = Error (test_err_tracer name error) in
       let format = Display.bind_format test_format Formatter.error_format in
@@ -16,7 +16,7 @@ let wrap_test_w ~no_colour name f =
       let s = Simple_utils.Display.convert ~display_format:Dev ~no_colour disp in
       List.iter ~f:(fun w ->
           Format.printf "%a\n" (Main_warnings.pp ~display_format:Dev ~no_colour) w)
-      @@ catch.warnings ();
+      @@ catch.Trace.warnings ();
       Format.printf "%s\n" s;
       Stdlib.raise Alcotest.Test_error)
 
@@ -66,7 +66,7 @@ let agg_file_ ~raise f test syntax () =
   in
   let prg = Test_helpers.type_file ~raise f options in
   let (_ : Ast_aggregated.program) =
-    trace ~raise aggregation_tracer
+    Trace.trace ~raise aggregation_tracer
     @@ Aggregation.compile_program (Ast_typed.e_a_unit ~loc ()) prg
   in
   ()
@@ -80,21 +80,21 @@ let mini_c_file_ ~raise f test syntax () =
   in
   let prg = Test_helpers.type_file ~raise f options in
   let ctxt, exp =
-    trace ~raise aggregation_tracer
+    Trace.trace ~raise aggregation_tracer
     @@ Aggregation.compile_program (Ast_typed.e_a_unit ~loc ()) prg
   in
   let ctxt, exp =
-    trace ~raise self_ast_aggregated_tracer
+    Trace.trace ~raise self_ast_aggregated_tracer
     @@ Self_ast_aggregated.all_program ~options:options.middle_end (ctxt, exp)
   in
   let x = Ast_aggregated.context_apply ctxt exp in
   let x =
-    trace ~raise self_ast_aggregated_tracer
+    Trace.trace ~raise self_ast_aggregated_tracer
     @@ Self_ast_aggregated.all_expression ~options:options.middle_end x
   in
-  let x = trace ~raise expansion_tracer @@ Expansion.compile x in
+  let x = Trace.trace ~raise expansion_tracer @@ Expansion.compile x in
   let (_ : Mini_c.expression) =
-    trace ~raise spilling_tracer @@ Spilling.compile_expression x
+    Trace.trace ~raise spilling_tracer @@ Spilling.compile_expression x
   in
   ()
 

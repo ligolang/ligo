@@ -1,12 +1,14 @@
-[@@@warning "-32"]
 (* Parser and pretty-printer factory *)
+
+[@@@warning "-32"]
 
 (* Vendors dependencies *)
 
 module Region      = Simple_utils.Region
 module Trace       = Simple_utils.Trace
 module Lexbuf      = Simple_utils.Lexbuf
-module Unit        = LexerLib.Unit
+module Ne          = Nonempty_list
+module LexUnit     = LexerLib.LexUnit
 module Config      = Preprocessor.Config
 module PreprocAPI  = Preprocessor.TopAPI
 module Options     = ParserLib.Options
@@ -62,7 +64,7 @@ module MakeParser
          (Config      : Config.S)
          (Token       : Token.S)
          (ParErr      : PAR_ERR)
-         (UnitPasses  : Pipeline.PASSES with type item = Token.t Unit.t)
+         (UnitPasses  : Pipeline.PASSES with type item = Token.t LexUnit.t)
          (TokenPasses : Pipeline.PASSES with type item = Token.t)
          (CST         : sig type tree end)
          (Parser      : PARSER with type token = Token.t
@@ -85,16 +87,16 @@ module MakeParser
 
     (* Lifting [Result.t] to [Trace.raise] and logging errors. *)
 
-    let log_errors ~(raise:raise) errors =
+    let log_errors ~(raise: raise) errors =
       List.iter (List.rev errors)
-                ~f:(fun e -> raise.Trace.log_error @@ `Parsing e)
+                ~f:(fun e -> raise.log_error @@ `Parsing e)
 
-    let lift ~(raise:raise) = function
+    let lift ~(raise: raise) = function
       Ok (tree, errors) ->
         log_errors ~raise errors; tree
-    | Error (error, errors) ->
+    | Error Ne.(error :: errors) ->
         log_errors ~raise errors;
-        raise.Trace.error @@ `Parsing error (* Only the first error *)
+        raise.error @@ `Parsing error (* Only the first error *)
 
     (* We always parse a string buffer of type [Buffer.t], but the
        interpretation of its contents depends on the functions
@@ -129,7 +131,7 @@ module MakeParser
       let jsligo_opt       = jsligo
         module Warning =
           struct
-            let add = raise.Trace.warning
+            let add = raise.warning
           end
         module DefaultPreprocParams =
           Preprocessor.CLI.MakeDefault (Config)
@@ -298,7 +300,7 @@ module MakeTwoParsers
          (Config      : Config.S)
          (Token       : Token.S)
          (ParErr      : PAR_ERR)
-         (UnitPasses  : Pipeline.PASSES with type item = Token.t Unit.t)
+         (UnitPasses  : Pipeline.PASSES with type item = Token.t LexUnit.t)
          (TokenPasses : Pipeline.PASSES with type item = Token.t)
          (CST         : sig type t type expr type type_expr end)
          (Parser      : LIGO_PARSER with type token = Token.t

@@ -1,24 +1,24 @@
+open Core
 open Ligo_prim
-open Simple_utils.Display
-module List = Simple_utils.List
+module Display = Simple_utils.Display
 
 let declarations_ppformat ~display_format ~no_colour f (source_file, decls) =
   (* The [no_colour] option is provided to all [_ppformat] functions by default,
      but not needed by all of them. Remove the [ignore] if you need it. *)
   let () = ignore no_colour in
   match display_format with
-  | Human_readable | Dev ->
+  | Display.Human_readable | Dev ->
     Format.fprintf f "%s declarations:\n" source_file;
     List.iter ~f:(fun decl -> Format.fprintf f "%a\n" Value_var.pp decl) decls
 
 
-let declarations_jsonformat (source_file, decls) : json =
+let declarations_jsonformat (source_file, decls) : Display.json =
   (* Use to_name instead of to_yojson for compality with IDE *)
   let json_decl = List.map ~f:(fun decl -> `String (Value_var.to_name_exn decl)) decls in
   `Assoc [ "source_file", `String source_file; "declarations", `List json_decl ]
 
 
-let declarations_format : 'a format =
+let declarations_format : 'a Display.format =
   { pp = declarations_ppformat; to_json = declarations_jsonformat }
 
 
@@ -27,12 +27,12 @@ let changelog_ppformat ~display_format ~no_colour f changelog =
      but not needed by all of them. Remove the [ignore] if you need it. *)
   let () = ignore no_colour in
   match display_format with
-  | Human_readable | Dev -> Format.fprintf f "%s" changelog
+  | Display.Human_readable | Dev -> Format.fprintf f "%s" changelog
 
 
-let changelog_jsonformat changelog : json = `String changelog
+let changelog_jsonformat changelog : Display.json = `String changelog
 
-let changelog_format : 'a format =
+let changelog_format : 'a Display.format =
   { pp = changelog_ppformat; to_json = changelog_jsonformat }
 
 
@@ -41,12 +41,12 @@ let contract_size_ppformat ~display_format ~no_colour f contract_size =
      but not needed by all of them. Remove the [ignore] if you need it. *)
   let () = ignore no_colour in
   match display_format with
-  | Human_readable | Dev -> Format.fprintf f "%d bytes" contract_size
+  | Display.Human_readable | Dev -> Format.fprintf f "%d bytes" contract_size
 
 
-let contract_size_jsonformat contract_size : json = `Int contract_size
+let contract_size_jsonformat contract_size : Display.json = `Int contract_size
 
-let contract_size_format : 'a format =
+let contract_size_format : 'a Display.format =
   { pp = contract_size_ppformat; to_json = contract_size_jsonformat }
 
 
@@ -55,33 +55,34 @@ let list_ppformat ~display_format ~no_colour f lst =
      but not needed by all of them. Remove the [ignore] if you need it. *)
   let () = ignore no_colour in
   match display_format with
-  | Human_readable | Dev ->
+  | Display.Human_readable | Dev ->
     Format.fprintf f "list of projects:\n";
     List.iter ~f:(fun str -> Format.fprintf f "%s\n" str) lst
 
 
-let list_jsonformat (_lst : string list) : json = `Null
-let list_format : 'a format = { pp = list_ppformat; to_json = list_jsonformat }
+let list_jsonformat (_lst : string list) : Display.json = `Null
+let list_format : 'a Display.format = { pp = list_ppformat; to_json = list_jsonformat }
 
 let new_project_ppformat ~display_format ~no_colour f lst =
   (* The [no_colour] option is provided to all [_ppformat] functions by default,
      but not needed by all of them. Remove the [ignore] if you need it. *)
   let () = ignore no_colour in
   match display_format with
-  | Human_readable | Dev ->
+  | Display.Human_readable | Dev ->
     Format.fprintf f "Folder created: ";
     List.iter ~f:(fun str -> Format.fprintf f "%s\n" str) lst
 
 
-let new_project_jsonformat (_lst : string list) : json = `Null
+let new_project_jsonformat (_lst : string list) : Display.json = `Null
 
-let new_project_format : 'a format =
+let new_project_format : 'a Display.format =
   { pp = new_project_ppformat; to_json = new_project_jsonformat }
 
 
 module Michelson_formatter = struct
   open Tezos_utils.Michelson
-  open Simple_utils
+  open Core
+  module Location = Simple_utils.Location
   module Row = Row.With_layout
 
   let pp_hex ppf michelson =
@@ -379,9 +380,7 @@ module Michelson_formatter = struct
       =
       let open Ligo_prim in
       let orig_var =
-        Option.map
-          ~f:(fun abbrev -> Function.(Type_var.to_name_exn <@ snd) abbrev.orig_var)
-          abbrev
+        Option.map ~f:(fun abbrev -> Type_var.to_name_exn (snd abbrev.orig_var)) abbrev
       in
       let shrink_type_content : Ast_typed.type_content -> shrunk_type_content = function
         | T_variable var_name ->
@@ -521,13 +520,15 @@ module Michelson_formatter = struct
       | `Msgpack -> pp_result_msgpack michelson_comments
     in
     match display_format with
-    | Human_readable | Dev ->
+    | Display.Human_readable | Dev ->
       let m = Format.asprintf "%a\n" (mich_pp michelson_format michelson_comments) a in
       Format.pp_print_string f m
 
 
   (* is this even used anywhere??? *)
-  let result_jsonformat michelson_format michelson_comments (a : shrunk_result) : json =
+  let result_jsonformat michelson_format michelson_comments (a : shrunk_result)
+      : Display.json
+    =
     match michelson_format with
     | `Text ->
       let code_as_str =
@@ -567,7 +568,7 @@ module Michelson_formatter = struct
         })
 
 
-  let shrunk_result_format : michelson_format -> _ -> shrunk_result format =
+  let shrunk_result_format : michelson_format -> _ -> shrunk_result Display.format =
    fun mf michelson_comments ->
     { pp = result_ppformat mf (convert_michelson_comments michelson_comments)
     ; to_json = result_jsonformat mf (convert_michelson_comments michelson_comments)
@@ -575,7 +576,7 @@ module Michelson_formatter = struct
 
 
   let michelson_format
-      : michelson_format -> _ -> (Mini_c.meta, string) Micheline.node format
+      : michelson_format -> _ -> (Mini_c.meta, string) Micheline.node Display.format
     =
    fun michelson_format michelson_comments ->
     Display.map ~f:shrink (shrunk_result_format michelson_format michelson_comments)
@@ -599,7 +600,7 @@ module Michelson_formatter = struct
       | `Msgpack -> pp_view_msgpack
     in
     match display_format with
-    | Human_readable | Dev ->
+    | Display.Human_readable | Dev ->
       let m =
         Format.asprintf "%a\n" (mich_pp michelson_format) (parameter, returnType, code)
       in
@@ -607,7 +608,7 @@ module Michelson_formatter = struct
 
 
   (* is this even used anywhere??? *)
-  let view_jsonformat michelson_format (_, parameter, returnType, code) : json =
+  let view_jsonformat michelson_format (_, parameter, returnType, code) : Display.json =
     match michelson_format with
     | `Text ->
       let code_as_str = Format.asprintf "%a" (pp_comment ~comment:(fun _ -> None)) code in
@@ -631,7 +632,7 @@ module Michelson_formatter = struct
          * (Mini_c.meta, string) Micheline.node
          * (Mini_c.meta, string) Micheline.node
          * (Mini_c.meta, string) Micheline.node)
-         format
+         Display.format
     =
    fun mf -> { pp = view_ppformat mf; to_json = view_jsonformat mf }
 
@@ -642,12 +643,12 @@ module Michelson_formatter = struct
          * (Mini_c.meta, string) Micheline.node
          * (Mini_c.meta, string) Micheline.node
          * (Mini_c.meta, string) Micheline.node)
-         format
+         Display.format
     =
    fun michelson_format -> view_result_format michelson_format
 
 
-  let michelson_constant_jsonformat michelson_format a : json =
+  let michelson_constant_jsonformat michelson_format a : Display.json =
     match michelson_format with
     | `Text ->
       let code_as_str = Format.asprintf "%a" (pp_comment ~comment:(fun _ -> None)) a in
@@ -665,7 +666,7 @@ module Michelson_formatter = struct
      but not needed by all of them. Remove the [ignore] if you need it. *)
     let () = ignore no_colour in
     match display_format with
-    | Human_readable | Dev ->
+    | Display.Human_readable | Dev ->
       let code =
         `String (Format.asprintf "%a" (pp_comment ~comment:(fun _ -> None)) a)
         |> Yojson.Safe.pretty_to_string
@@ -688,7 +689,7 @@ module Michelson_formatter = struct
   let michelson_constant_format
       : (Proto_alpha_utils.Memory_proto_alpha.Protocol.Script_expr_hash.t
         * (int, string) Micheline.node)
-      format
+      Display.format
     =
     { pp = michelson_constant_ppformat
     ; to_json = (fun (_, a) -> michelson_constant_jsonformat `Text a)

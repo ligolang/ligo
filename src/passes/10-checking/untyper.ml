@@ -1,4 +1,3 @@
-module Ligo_string = Simple_utils.Ligo_string
 module Location = Simple_utils.Location
 module Trace = Simple_utils.Trace
 module I = Ast_core

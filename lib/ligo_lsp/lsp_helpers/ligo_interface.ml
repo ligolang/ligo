@@ -1,9 +1,10 @@
 (* This module contains wrappers for various LIGO functions:
    get-scope that collects information about definitions in a file *)
+
 open Core
+module Location = Simple_utils.Location
 module Get_scope = Get_scope
 open Get_scope
-module LMap = Scopes.Types.LMap
 
 type nonrec defs_and_diagnostics = defs_and_diagnostics
 type definitions = Scopes.definitions
@@ -39,7 +40,7 @@ type ('defs, 'hierarchy, 'pot_tzip16) file_data_case =
             ]}
             If the part from [let] up to [=] contains parse error ranges
             then it's recovered. *)
-  ; lambda_types : Ast_typed.ty_expr LMap.t
+  ; lambda_types : Ast_typed.ty_expr Location.Map.t
         (** A map from lambda location to its type.
 
             Suppose we have the next declaration:
@@ -75,12 +76,11 @@ let empty
   ; code
   ; document_version
   ; parse_error_ranges = []
-  ; lambda_types = LMap.empty
+  ; lambda_types = Location.Map.empty
   ; definitions = None
   ; hierarchy = None
   ; potential_tzip16_storages = None
   }
-
 
 (** Like [unprepared_file_data], but with all [option]s removed (caches are filled). *)
 type file_data =
@@ -96,7 +96,6 @@ let lsp_raw_options : project_root:Path.t option -> Compiler_options.Raw_options
     ~project_root:(Option.map ~f:Path.to_string project_root)
     ~typer_error_recovery:true
     ()
-
 
 (** Calculates the [Def.t]s and diagnostics for a given file. See {!Project_root} on how
     to obtain the [project_root]. [code] is the source code of this file. [logger] is a

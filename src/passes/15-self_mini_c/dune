@@ -6,6 +6,4 @@
  (libraries ligo.tezos-utils mini_c octez-libs.hacl compiler_options)
  (inline_tests)
  (preprocess
-  (pps ppx_expect ppx_let ppx_poly_constructor))
- (flags
-  (:standard -open Core)))
+  (pps ppx_expect ppx_let ppx_poly_constructor)))

@@ -2,6 +2,8 @@ open! Core
 module Michelson = Tezos_utils.Michelson
 include Memory_proto_alpha
 
+let (<@) f g x = f (g x)
+
 let init_environment = Init_proto_alpha.init_environment
 let dummy_environment = Init_proto_alpha.dummy_environment
 let test_environment = Init_proto_alpha.test_environment
@@ -308,7 +310,6 @@ let make_options
   let open Tezos_micheline in
   let open Micheline in
   let open Lwt.Let_syntax in
-  let open Simple_utils.Function in
   let%bind env =
     Option.value ~default:(dummy_environment ()) (Option.map ~f:Lwt.return env)
   in

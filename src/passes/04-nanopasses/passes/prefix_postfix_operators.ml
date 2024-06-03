@@ -1,9 +1,9 @@
 open Ast_unified
 open Pass_type
-open Simple_utils.Trace
-open Simple_utils
 open Errors
+module Trace = Simple_utils.Trace
 module Location = Simple_utils.Location
+module Ligo_option = Simple_utils.Ligo_option
 module Variable = Ligo_prim.Value_var
 include Flag.No_arg ()
 
@@ -16,7 +16,7 @@ let get_operator =
   | Decrement -> MINUS
 
 
-let compile ~raise =
+let compile ~(raise : _ Trace.raise) =
   let expr : (expr, ty_expr, pattern, _, _) expr_ -> expr =
    fun e ->
     let loc = Location.get_location e in
@@ -24,7 +24,7 @@ let compile ~raise =
     match Location.unwrap e with
     | E_prefix { pre_op; expr } ->
       (* Prefix operators (++p) are turned into
-         ```      
+         ```
          let () = p := p + 1 in p
          ``` *)
       let v =
@@ -92,7 +92,7 @@ let compile ~raise =
   Fold { idle_fold with expr }
 
 
-let reduction ~raise =
+let reduction ~(raise : _ Trace.raise) =
   { Iter.defaults with
     expr =
       (function
@@ -109,7 +109,7 @@ let decompile ~raise:_ =
    fun e ->
     let loc = Location.get_location e in
     let postfix Simple_let_in.{ binder; rhs; let_result } =
-      let open Simple_utils.Option in
+      let open Ligo_option in
       let* old = get_p_var binder in
       let* var = get_e_variable rhs in
       let* Simple_let_in.{ binder; rhs; let_result } = get_e_simple_let_in let_result in
@@ -122,7 +122,7 @@ let decompile ~raise:_ =
       let* var'' = get_e_variable left in
       let* n = get_e_literal_int right in
       let* () =
-        some_if
+        Option.some_if
           Variable.(
             equal var var'
             && equal var var''
@@ -133,19 +133,19 @@ let decompile ~raise:_ =
       in
       match Location.unwrap operator with
       | PLUS ->
-        return
+        Option.return
         @@ e_postfix
              ~loc
              { post_op = Location.wrap ~loc Prefix_postfix.Increment; expr = rhs }
       | MINUS ->
-        return
+        Option.return
         @@ e_postfix
              ~loc
              { post_op = Location.wrap ~loc Prefix_postfix.Decrement; expr = rhs }
       | _ -> None
     in
     let prefix Simple_let_in.{ binder; rhs; let_result } =
-      let open Simple_utils.Option in
+      let open Ligo_option in
       let* () = get_p_unit binder in
       let* { binder; expression } = get_e_assign_unitary rhs in
       let var = binder.var in
@@ -154,16 +154,16 @@ let decompile ~raise:_ =
       let* n = get_e_literal_int right in
       let* var'' = get_e_variable let_result in
       let* () =
-        some_if Variable.(equal var var' && equal var var'' && Z.equal n Z.one) ()
+        Option.some_if Variable.(equal var var' && equal var var'' && Z.equal n Z.one) ()
       in
       match Location.unwrap operator with
       | PLUS ->
-        return
+        Option.return
         @@ e_prefix
              ~loc
              { pre_op = Location.wrap ~loc Prefix_postfix.Increment; expr = rhs }
       | MINUS ->
-        return
+        Option.return
         @@ e_prefix
              ~loc
              { pre_op = Location.wrap ~loc Prefix_postfix.Decrement; expr = rhs }
@@ -267,7 +267,7 @@ let%expect_test "compile & decompile x--" =
     |}
   |-> decompile;
   [%expect
-    {| 
+    {|
     (E_postfix
      ((post_op Decrement)
       (expr

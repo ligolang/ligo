@@ -1,11 +1,13 @@
 open Ast_unified
 open Pass_type
 open Errors
-open Simple_utils.Trace
+module Trace = Simple_utils.Trace
 module Location = Simple_utils.Location
+module Ligo_option = Simple_utils.Ligo_option
+module Ne_list = Simple_utils.Ne_list
+include Flag.No_arg ()
 
 (* A series of heuristics for patterns, focused on JsLIGO patterns *)
-include Flag.No_arg ()
 
 let rec map_pattern ~f (p : pattern) : pattern =
   let continue, p = f p in
@@ -30,15 +32,15 @@ let tuple_to_unit (p : pattern) =
 let tuple_to_list (p : pattern) =
   let loc, p = destruct_p p in
   let rec finishes_in_ellipsis (ps : pattern element_pattern list)
-      : pattern List.Ne.t option
+      : pattern Nonempty_list.t option
     =
     match ps with
     | [] -> None
-    | [ { pattern; ellipsis = true } ] -> Some (List.Ne.singleton pattern)
+    | [ { pattern; ellipsis = true } ] -> Some [ pattern ]
     | { pattern; ellipsis = false } :: tl ->
-      let open Simple_utils.Option in
+      let open Ligo_option in
       let* ps = finishes_in_ellipsis tl in
-      Some (List.Ne.cons pattern ps)
+      Some (Nonempty_list.cons pattern ps)
     | _ -> None
   in
   match p with
@@ -48,7 +50,7 @@ let tuple_to_list (p : pattern) =
     | None -> true, make_p ~loc p
     | Some ps ->
       let list_pattern =
-        List.Ne.fold_right1 ps ~f:(fun p q -> make_p ~loc (P_list (Cons (p, q))))
+        Ne_list.fold_right1 ps ~f:(fun p q -> make_p ~loc (P_list (Cons (p, q))))
       in
       true, list_pattern)
   | P_typed (t, p) -> false, make_p ~loc (P_typed (t, p))
@@ -56,7 +58,8 @@ let tuple_to_list (p : pattern) =
 
 
 (* Replace all ellipsis for tuple *)
-let remove_ellipsis ~raise (p : pattern) =
+
+let remove_ellipsis ~(raise : _ Trace.raise) (p : pattern) =
   let loc, p = destruct_p p in
   match p with
   | P_tuple_with_ellipsis l ->
@@ -87,11 +90,11 @@ let compile ~raise =
     let same = make_e ~loc e.wrap_content in
     match Location.unwrap e with
     | E_match_tc39
-        { subject; match_clauses = AllClauses (({ filter; clause_expr }, []), None) } ->
+        { subject; match_clauses = AllClauses ([ { filter; clause_expr } ], None) } ->
       let clause =
         Match_tc39.{ filter = map_pattern ~f:tuple_to_unit filter; clause_expr }
       in
-      e_match_tc39 ~loc { subject; match_clauses = AllClauses ((clause, []), None) }
+      e_match_tc39 ~loc { subject; match_clauses = AllClauses ([ clause ], None) }
     | _ -> same
   in
   Fold { idle_fold with pattern; expr }

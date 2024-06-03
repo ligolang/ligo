@@ -96,7 +96,7 @@ class t :
   (* The method [reduce_cond] is called when a #endif directive is
      found, and the trace (see type [trace] above) needs updating. *)
 
-    method reduce_cond : ('state, Error.t) result
+    method reduce_cond : ('state, PreError.t) result
 
   (* The method [extend] is called upon encountering conditional
      directives #if, #else and #elif. As its name suggests, it extends
@@ -104,7 +104,7 @@ class t :
      performing some validity checks (what would otherwise be
      interpreted as syntax for conditionals). *)
 
-    method extend : cond -> mode -> ('state, Error.t) result
+    method extend : cond -> mode -> ('state, PreError.t) result
 
   (* Setting the trace *)
 

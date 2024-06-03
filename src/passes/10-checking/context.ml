@@ -1,12 +1,11 @@
 (* This file represents the context which gives the association of
    values to types *)
 
-(* FIXME: Port to Core. *)
-
-module Location = Simple_utils.Location
-module List = Simple_utils.List
+open Core
 open Ligo_prim
 open Type
+module Ligo_map = Simple_utils.Ligo_map
+module Location = Simple_utils.Location
 
 type 'a hashable = (module Stdlib.Hashtbl.HashedType with type t = 'a)
 
@@ -117,7 +116,7 @@ module Refs_tbl = struct
     let get_location (Label.Label (_, loc)) = loc
   end
 
-  module LSet = Location.Location_set
+  module LSet = Location.Set
 
   type 'a tagged_tbl = Tagged_tbl : (Location.t, LSet.t) Hashtbl.t -> 'a tagged_tbl
 
@@ -1058,7 +1057,7 @@ let to_module_mapi =
            | _ -> map) [@landmark "to_module_map"]))
 
 
-let get_module_of_path ~refs_tbl t ((local_module, path) : Module_var.t List.Ne.t) =
+let get_module_of_path ~refs_tbl t (local_module :: path : Module_var.t Nonempty_list.t) =
   let open Option.Let_syntax in
   List.fold path ~init:(get_module ~refs_tbl t local_module) ~f:(fun sig_ mvar ->
       let%bind sig_ = sig_ in
@@ -1066,8 +1065,8 @@ let get_module_of_path ~refs_tbl t ((local_module, path) : Module_var.t List.Ne.
 
 
 let get_module_type_of_path ~refs_tbl t module_path =
-  let module_path = List.Ne.rev module_path in
-  let (local_signature, path) : Module_var.t List.Ne.t = module_path in
+  let module_path = Nonempty_list.reverse module_path in
+  let (local_signature :: path : Module_var.t Nonempty_list.t) = module_path in
   let path = List.rev path in
   match path with
   | [] -> get_module_type ~refs_tbl t local_signature
@@ -1223,7 +1222,7 @@ let get_sum ~refs_tbl
          let type_ = { inner_type with abbrev = type_.abbrev } in
          match type_.content with
          | T_sum (m, _) ->
-           (match Simple_utils.Utils.find_kv (module Label) m.fields constr with
+           (match Ligo_map.find_kv (module Label) m.fields constr with
            | Some ((Label (_name, loc) as constr'), associated_type) ->
              Refs_tbl.add_ref_label refs_tbl ~key:constr' ~data:constr;
              Some (constr', (var, t_params, associated_type, type_))

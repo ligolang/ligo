@@ -7,11 +7,12 @@
 module Trace = Simple_utils.Trace
 open Alcotest_extras
 
+let ( <@ ) f g x = f (g x)
+
 let remove_extra_spaces : string -> string =
-  Simple_utils.Function.(
-    String.concat ~sep:" "
-    <@ List.filter ~f:(not <@ String.equal "")
-    <@ String.split_on_chars ~on:[ ' '; '\r'; '\n' ])
+  String.concat ~sep:" "
+  <@ List.filter ~f:(not <@ String.equal "")
+  <@ String.split_on_chars ~on:[ ' '; '\r'; '\n' ]
 
 
 let get_defs ~(code : string) ~(syntax : Syntax_types.t) : Scopes.def list Lwt.t =

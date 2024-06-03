@@ -1,5 +1,3 @@
-module Option = Simple_utils.Option
-
 type 'a t =
   { var : Var.Value_var.t
   ; ascr : 'a

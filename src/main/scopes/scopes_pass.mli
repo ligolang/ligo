@@ -1,6 +1,9 @@
 (** The result of running this pass. Each location in the map represents the range of a
     scope, and the values represent the definitions that are in-scope. *)
-type t = Env.def list Types.LMap.t
+
+module Location = Simple_utils.Location
+
+type t = Env.def list Location.Map.t
 
 module Of_Ast : sig
   (** Collects scopes from the provided AST.

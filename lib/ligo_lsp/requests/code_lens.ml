@@ -1,3 +1,4 @@
+open Core
 open Handler
 open Lsp_helpers
 open Commands
@@ -61,7 +62,6 @@ let tzip16_compliance_lens (file : Path.t) : CodeLens.t list handler =
                      ~title:"Mark as TZIP-16 compatible storage"
                      ~arguments:storage_var_position)
                 ())
-
 
 (** Runs the handler for code lens. This is usually called when file is opened and on
     every edit. *)

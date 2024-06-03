@@ -1,3 +1,4 @@
+open Core
 open Handler
 open Lsp_helpers
 open Ligo_interface
@@ -27,7 +28,6 @@ let get_references_in_file
          Option.some_if (Path.equal path file) range)
   |> Ranges.of_sequence
   |> Set.to_list
-
 
 (** Runs the handler for document highlight. This is normally called when the user clicks
     some symbol. *)

@@ -1,5 +1,7 @@
 (* Displaying code snippets in error messages *)
 
+open Core
+
 (* Strings containing OCaml code need to be escaped before printed out
    to the terminal, but OCaml escaping function for strings escapes
    the double quotes, so we need to unescape those. *)

@@ -1,15 +1,18 @@
 open Core
-open Simple_utils.Trace
-open Simple_utils
 open Ligo_interpreter.Types
 open Ligo_interpreter.Combinators
 open Ligo_prim
+module Ligo_option = Simple_utils.Ligo_option
+module Ligo_string = Simple_utils.Ligo_string
+module PP_helpers = Simple_utils.PP_helpers
+module Snippet = Simple_utils.Snippet
+module Trace = Simple_utils.Trace
 module AST = Ast_aggregated
-include AST.Types
 module Env = Ligo_interpreter.Environment
 module Monad = Execution_monad
 module ModRes = Preprocessor.ModRes
 module TzBytes = Tezos_stdlib.TzBytes
+include AST.Types
 
 type interpreter_error = Errors.interpreter_error
 
@@ -160,7 +163,7 @@ and pattern_env_extend ~no_colour ~attributes env pattern ty value =
 
 
 let get_file_from_location loc =
-  let open Option in
+  let open Ligo_option in
   let* reg = Location.get_file loc in
   let file = reg#file in
   if String.(file = "") then None else Some file
@@ -209,7 +212,7 @@ let wrap_compare_result comp cmpres loc calltrace =
     @@ v_string "Only valid comparisons are: EQ, NEQ, LT, LE, GT, GE"
 
 
-let compare_constants ~no_colour ~raise o1 o2 loc calltrace =
+let compare_constants ~no_colour ~(raise : _ Trace.raise) o1 o2 loc calltrace =
   match o1, o2 with
   | V_Ct (C_int64 a'), V_Ct (C_int64 b') -> Int64.compare a' b'
   | V_Ct (C_int a'), V_Ct (C_int b')
@@ -241,7 +244,7 @@ let compare_constants ~no_colour ~raise o1 o2 loc calltrace =
     raise.error @@ Errors.meta_lang_eval loc calltrace @@ v_string msg
 
 
-let rec apply_comparison ~no_colour ~raise
+let rec apply_comparison ~no_colour ~(raise : _ Trace.raise)
     : Location.t -> calltrace -> Ast_aggregated.type_expression -> value -> value -> int
   =
  fun loc calltrace type_ operand operand' ->
@@ -253,13 +256,13 @@ let rec apply_comparison ~no_colour ~raise
     compare_constants ~no_colour ~raise v1 v2 loc calltrace
   | V_List xs, V_List ys ->
     let type_ =
-      trace_option ~raise (Errors.generic_error ~calltrace loc "Expected list type")
+      Trace.trace_option ~raise (Errors.generic_error ~calltrace loc "Expected list type")
       @@ AST.get_t_list type_
     in
     List.compare (apply_comparison ~no_colour ~raise loc calltrace type_) xs ys
   | V_Set s, V_Set s' ->
     let type_ =
-      trace_option ~raise (Errors.generic_error ~calltrace loc "Expected set type")
+      Trace.trace_option ~raise (Errors.generic_error ~calltrace loc "Expected set type")
       @@ AST.get_t_set type_
     in
     List.compare
@@ -272,7 +275,7 @@ let rec apply_comparison ~no_colour ~raise
          s')
   | V_Map m, V_Map m' ->
     let type_key, type_value =
-      trace_option
+      Trace.trace_option
         ~raise
         (Errors.generic_error ~calltrace loc "Expected map or big_map type")
       @@ AST.get_t_map_or_big_map type_
@@ -285,7 +288,7 @@ let rec apply_comparison ~no_colour ~raise
     List.compare compare_kv m m'
   | V_Record r, V_Record r' ->
     let (row : _ Ligo_prim.Row.With_layout.t) =
-      trace_option
+      Trace.trace_option
         ~raise
         (Errors.generic_error ~calltrace loc "Expected a record type")
         (AST.get_t_record type_)
@@ -313,7 +316,7 @@ let rec apply_comparison ~no_colour ~raise
     aux row_kv
   | V_Construct (ctor_a, args_a), V_Construct (ctor_b, args_b) ->
     let ({ fields; layout } : _ Ligo_prim.Row.With_layout.t), _ =
-      trace_option
+      Trace.trace_option
         ~raise
         (Errors.generic_error ~calltrace loc "Expected a sum type")
         (AST.get_t_sum type_)
@@ -464,7 +467,7 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t)
   in
   let div_by_zero_str = v_string "Dividing by zero" in
   let nth_type n =
-    trace_option ~raise (Errors.generic_error loc "Could not recover types")
+    Trace.trace_option ~raise (Errors.generic_error loc "Could not recover types")
     @@ List.nth types n
   in
   let return_contract_exec_exn = function
@@ -1249,9 +1252,9 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t)
   | C_TEST_NTH_BOOTSTRAP_CONTRACT, _ -> fail @@ error_type ()
   | C_TEST_STATE_RESET, [ ts_opt; n; amts ] ->
     let ts_opt =
-      let v_opt = trace_option ~raise (error_type ()) @@ LC.get_option ts_opt in
+      let v_opt = Trace.trace_option ~raise (error_type ()) @@ LC.get_option ts_opt in
       Option.map v_opt ~f:(fun x ->
-          trace_option ~raise (error_type ()) @@ LC.get_timestamp x)
+          Trace.trace_option ~raise (error_type ()) @@ LC.get_timestamp x)
     in
     let>> () = Reset_state (loc, ts_opt, calltrace, n, amts) in
     return @@ v_unit ()
@@ -1266,10 +1269,10 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t)
   | C_TEST_LAST_ORIGINATIONS, _ -> fail @@ error_type ()
   | C_TEST_LAST_EVENTS, [ V_Ct (C_string tag) ] ->
     let event_payload_type_opt =
-      let open Option in
+      let open Ligo_option in
       let* x = Ast_aggregated.get_t_list expr_ty in
       let* _addr, a = Ast_aggregated.get_t_pair x in
-      return a
+      Option.return a
     in
     (match event_payload_type_opt with
     | Some p_ty ->
@@ -1357,7 +1360,7 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t)
   | ( C_TEST_DECOMPILE
     , [ V_Michelson (Ty_code { micheline_repr = { code_ty; code }; ast_ty }) ] ) ->
     let () =
-      trace_option
+      Trace.trace_option
         ~raise
         (Errors.generic_error loc
         @@ Format.asprintf
@@ -1436,7 +1439,7 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t)
   | C_TEST_SET_BIG_MAP, _ -> fail @@ error_type ()
   | C_TEST_CAST_ADDRESS, [ V_Ct (C_address x) ] ->
     let _, ty =
-      trace_option
+      Trace.trace_option
         ~raise
         (Errors.generic_error expr_ty.location "Expected typed_address type")
       @@ Ast_aggregated.get_t_typed_address expr_ty
@@ -1632,7 +1635,8 @@ and eval_literal : Ligo_prim.Literal_value.t -> value Monad.t =
   | Literal_operation _ as l -> Monad.fail @@ Errors.literal Location.generated l
 
 
-and eval_ligo ~raise ~steps ~options : AST.expression -> calltrace -> env -> value Monad.t
+and eval_ligo ~(raise : _ Trace.raise) ~steps ~options
+    : AST.expression -> calltrace -> env -> value Monad.t
   =
  fun term calltrace env ->
   let eval_ligo ?(steps = steps - 1) v =
@@ -1847,9 +1851,9 @@ and eval_ligo ~raise ~steps ~options : AST.expression -> calltrace -> env -> val
             ( v
             , Stacking.To_micheline.translate_type
                 (Scoping.translate_type
-                   (trace ~raise Main_errors.spilling_tracer
+                   (Trace.trace ~raise Main_errors.spilling_tracer
                    @@ Spilling.compile_type
-                   @@ trace ~raise Main_errors.expansion_tracer
+                   @@ Trace.trace ~raise Main_errors.expansion_tracer
                    @@ Expansion.compile_type_expression e.type_expression)) ))
         args
     in
@@ -1975,7 +1979,9 @@ and eval_ligo ~raise ~steps ~options : AST.expression -> calltrace -> env -> val
     in
     let code = List.hd_exn vals in
     let code =
-      trace_option ~raise (Errors.generic_error term.location "could not get a string")
+      Trace.trace_option
+        ~raise
+        (Errors.generic_error term.location "could not get a string")
       @@ get_e_string code.expression_content
     in
     let args = List.tl_exn vals in
@@ -2244,7 +2250,7 @@ let eval_expression ~raise ~steps ~options
   (* Compile new context *)
   let%bind initial_state = Execution_monad.make_state ~raise ~options in
   let prg =
-    trace ~raise Main_errors.self_ast_typed_tracer @@ Self_ast_typed.all_program prg
+    Trace.trace ~raise Main_errors.self_ast_typed_tracer @@ Self_ast_typed.all_program prg
   in
   let expr =
     Ligo_compile.Of_typed.compile_expression_in_context
@@ -2255,7 +2261,7 @@ let eval_expression ~raise ~steps ~options
       expr
   in
   let expr =
-    trace ~raise Main_errors.self_ast_aggregated_tracer
+    Trace.trace ~raise Main_errors.self_ast_aggregated_tracer
     @@ Self_ast_aggregated.all_expression ~options:options.middle_end expr
   in
   let%map value, st =

@@ -1,11 +1,14 @@
+open Lexing_cameligo.Token
 module CST = Cst.Cameligo
 module AST = Ast_unified
 module Helpers = Unification_shared.Helpers
-open Simple_utils
+module Utils = Simple_utils.Utils
+module Location = Simple_utils.Location
 module Label = Ligo_prim.Label
-open Lexing_cameligo.Token
 module Value_escaped_var = Nano_prim.Value_escaped_var
 module Ty_escaped_var = Nano_prim.Ty_escaped_var
+module Abstraction = Ligo_prim.Abstraction
+module Abstractions = Ligo_prim.Abstractions
 
 let ghost_var v = ghost_ident (Format.asprintf "%a" AST.Variable.pp v)
 let decompile_var v = CST.Var (ghost_var v)
@@ -63,11 +66,12 @@ and decompile_attr : AST.Attribute.t -> CST.attribute =
 
 and decompile_mod_path
     : type a.
-      (AST.Mod_variable.t Simple_utils.List.Ne.t, a) AST.Mod_access.t -> a CST.module_path
+      (AST.Mod_variable.t Nonempty_list.t, a) AST.Mod_access.t -> a CST.module_path
   =
  fun { module_path; field; field_as_open = _ } ->
   let module_path =
-    Utils.nsepseq_of_nseq ~sep:ghost_dot @@ Utils.nseq_map decompile_mvar module_path
+    Utils.nsepseq_of_ne_list ~sep:ghost_dot
+    @@ Nonempty_list.map ~f:decompile_mvar module_path
   in
   (* XXX: What is [field_as_open]??
      answer: it basically means you need to add a parenthesis after module_path
@@ -88,17 +92,18 @@ and sig_expr
   | { wrap_content = AST.S_body sig_items; location } ->
     CST.(S_Sig (w { kwd_sig = ghost_sig; sig_items; kwd_end = ghost_end }))
   | { wrap_content = AST.S_path lst; location } ->
-    let lst = List.Ne.map decompile_mvar lst in
+    let lst = Nonempty_list.map ~f:decompile_mvar lst in
     let module_path_opt, field =
-      let last, lst = List.Ne.rev lst in
-      ( (match List.Ne.of_list_opt lst with
-        | None -> None
-        | Some lst -> Some (List.Ne.rev lst))
+      let (last :: lst) = Nonempty_list.reverse lst in
+      ( (match lst with
+        | [] -> None
+        | hd :: tl -> Some (Nonempty_list.reverse (hd :: tl)))
+        (* FIXME: Ne *)
       , last )
     in
     (match module_path_opt with
     | Some module_path ->
-      let module_path = Utils.nsepseq_of_nseq ~sep:ghost_dot lst in
+      let module_path = Utils.nsepseq_of_ne_list ~sep:ghost_dot lst in
       CST.(S_Path (w { module_path; selector = ghost_dot; field }))
     | None -> CST.(S_Var field))
 
@@ -196,7 +201,7 @@ and expr : (CST.expr, CST.type_expr, CST.pattern, unit, unit) AST.expression_ ->
   | E_literal (Literal_nat x) -> CST.E_Nat (ghost_nat x)
   | E_literal (Literal_mutez x) -> CST.E_Mutez (ghost_mutez @@ Z.to_int64 x)
   | E_module_open_in m -> E_ModPath (w @@ decompile_mod_path m)
-  | E_application { lamb; args } -> CST.E_App (w @@ (lamb, (args, [])))
+  | E_application { lamb; args } -> CST.E_App (w (lamb, Nonempty_list.[ args ]))
   | expr when AST.expr_is_not_initial expr ->
     Helpers.failwith_not_initial_node_decompiler @@ `Expr e
   | _ ->
@@ -344,7 +349,7 @@ and ty_expr : CST.type_expr AST.ty_expr_ -> CST.type_expr =
   | T_var t -> decompile_tvar t
   | T_var_esc t -> decompile_tvar_esc t
   | T_fun (_param_names, t1, t2) -> T_Fun (w (p t1, ghost_arrow, p ~arrow_rhs:true t2))
-  | T_prod (first, rest) ->
+  | T_prod (first :: rest) ->
     (match Utils.list_to_sepseq rest ghost_times with
     | Some nsepseq -> T_Cart (w (first, ghost_times, nsepseq))
     | None -> failwith "Decompiler: got a T_prod with only one element")
@@ -377,13 +382,13 @@ and ty_expr : CST.type_expr AST.ty_expr_ -> CST.type_expr =
   | T_app { constr; type_args } ->
     let constr_arg =
       match type_args with
-      | t, [] -> CST.TC_Single (p t)
+      | [ t ] -> CST.TC_Single (p t)
       | _ ->
         CST.TC_Tuple
           (w
              CST.
                { lpar = ghost_lpar
-               ; inside = Utils.nsepseq_of_nseq ~sep:ghost_comma type_args
+               ; inside = Utils.nsepseq_of_ne_list ~sep:ghost_comma type_args
                ; rpar = ghost_rpar
                })
     in
@@ -417,7 +422,7 @@ and ty_expr : CST.type_expr AST.ty_expr_ -> CST.type_expr =
     T_ModPath
       (w
       @@ decompile_mod_path
-           { module_path = module_path, []; field = parens field; field_as_open })
+           { module_path = [ module_path ]; field = parens field; field_as_open })
     (* ^ XXX Should not module path be `Ne` from the beginning here? *)
   | T_module_access { module_path; field; field_as_open } ->
     T_ModPath
@@ -426,7 +431,9 @@ and ty_expr : CST.type_expr AST.ty_expr_ -> CST.type_expr =
   | T_disc_union _ -> failwith "Decompiler: disc unions should appear only in JsLIGO"
   | T_named_fun _ -> failwith "Decompiler: Named arguments should appear only in JsLIGO"
   | T_contract_parameter x ->
-    let lst = Utils.nsepseq_of_nseq (List.Ne.map decompile_mvar x) ~sep:ghost_dot in
+    let lst =
+      Utils.nsepseq_of_ne_list (Nonempty_list.map ~f:decompile_mvar x) ~sep:ghost_dot
+    in
     T_ParameterOf (w lst)
   (* This node is not initial,
   i.e. types like [∀ a : * . option (a) -> bool] can not exist at Ast_unified level,
@@ -434,14 +441,18 @@ and ty_expr : CST.type_expr AST.ty_expr_ -> CST.type_expr =
   D_type_abstraction by type_abstraction_declaration nanopass, so this case looks impossible,
   but in some cases (e.g. LSP hovers) we just want to transform type expression to pretty string,
   so we'll just drop the quantifiers here *)
-  | T_abstraction Ligo_prim.Abstraction.{ ty_binder = _; kind = _; type_ }
-  | T_for_all Ligo_prim.Abstraction.{ ty_binder = _; kind = _; type_ } -> type_
-  | T_for_alls Ligo_prim.Abstractions.{ ty_binders = []; kind = _; type_ } -> type_
-  | T_for_alls Ligo_prim.Abstractions.{ ty_binders; kind = _; type_ } ->
+  | T_abstraction Abstraction.{ ty_binder = _; kind = _; type_ }
+  | T_for_all Abstraction.{ ty_binder = _; kind = _; type_ } -> type_
+  | T_for_alls Abstractions.{ ty_binders = []; kind = _; type_ } -> type_
+  | T_for_alls Abstractions.{ ty_binders; kind = _; type_ } ->
     let ty_binders =
       List.map ~f:(fun v -> w @@ (None, decompile_tvar_into_var v)) ty_binders
     in
-    let ty_binders : CST.type_var Utils.nseq = List.Ne.of_list ty_binders in
-    T_ForAll (w @@ (ty_binders, ghost_dot, type_))
+    let ty_binders : CST.type_var Nonempty_list.t =
+      match ty_binders with
+      | [] -> assert false
+      | hd :: tl -> Nonempty_list.( :: ) (hd, tl)
+    in
+    T_ForAll (w (ty_binders, ghost_dot, type_))
   | T_module_app _ | T_constant _ ->
     Helpers.failwith_not_initial_node_decompiler @@ `Ty_expr te

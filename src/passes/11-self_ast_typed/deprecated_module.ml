@@ -1,5 +1,5 @@
-open Errors
-open Simple_utils.Trace
+module Trace = Simple_utils.Trace
+module Location = Simple_utils.Location
 
 let mapper ~raise =
   Helpers.Declaration_mapper.map_module (fun decl ->
@@ -36,7 +36,7 @@ let mapper ~raise =
 
 
 let program
-    :  raise:(Errors.self_ast_typed_error, _) raise -> Ast_typed.program
+    :  raise:(Errors.self_ast_typed_error, _) Trace.raise -> Ast_typed.program
     -> Ast_typed.program
   =
  fun ~raise { pr_module; pr_sig } ->

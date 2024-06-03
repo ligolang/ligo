@@ -1,17 +1,18 @@
+open Core
 open Ast_unified
 open Ast_unified.Catamorphism
 open Pass_type
-open Simple_utils.Trace
 open Errors
-module Location = Simple_utils.Location
 open Unit_test_helpers
-
-(* This pass prevent shadowing in signatures (i.e. two bindings to the same variable in the same scope) *)
-let name = __MODULE__
-
+module Trace = Simple_utils.Trace
+module Location = Simple_utils.Location
 include Flag.No_arg ()
 
-let check_for_duplicated_val ~raise b =
+(* This pass prevent shadowing in signatures (i.e. two bindings to the same variable in the same scope) *)
+
+let name = __MODULE__
+
+let check_for_duplicated_val ~(raise : _ Trace.raise) b =
   List.iter b ~f:(fun bound ->
       let dups = List.find_a_dup ~compare:Variable.compare (List.rev bound) in
       match dups with
@@ -19,7 +20,7 @@ let check_for_duplicated_val ~raise b =
       | _ -> ())
 
 
-let check_for_duplicated_type ~raise b =
+let check_for_duplicated_type ~(raise : _ Trace.raise) b =
   List.iter b ~f:(fun bound ->
       let dups = List.find_a_dup ~compare:Ty_variable.compare (List.rev bound) in
       match dups with
@@ -35,8 +36,8 @@ module Type_vars = struct
 
   let union a b =
     match List.map2 a b ~f:List.append with
-    | Types.List.Or_unequal_lengths.Ok x -> x
-    | Types.List.Or_unequal_lengths.Unequal_lengths -> assert false
+    | List.Or_unequal_lengths.Ok x -> x
+    | List.Or_unequal_lengths.Unequal_lengths -> assert false
 
 
   let ftv_folder

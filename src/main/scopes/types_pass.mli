@@ -1,15 +1,15 @@
-open Simple_utils
-module LMap = Types.LMap
+module Trace = Simple_utils.Trace
+module Location = Simple_utils.Location
 
 (** The state (and final result) of running [resolve]. *)
 type t =
-  { type_cases : Types.type_case LMap.t
+  { type_cases : Types.type_case Location.Map.t
         (** A map relating locations of each definition to their types. *)
-  ; label_cases : Ast_core.ty_expr LMap.t
+  ; label_cases : Ast_core.ty_expr Location.Map.t
         (** A map relating locations of each label definition to their types. *)
-  ; lambda_cases : Ast_typed.ty_expr LMap.t
+  ; lambda_cases : Ast_typed.ty_expr Location.Map.t
         (** A map relating locations of each function definition to their types. *)
-  ; module_signatures : Types.signature_case LMap.t
+  ; module_signatures : Types.signature_case Location.Map.t
         (** A map relating locations of each module definition to their signatures. *)
   ; module_env : Env.Env_map.t (** A module environment used to resolve module paths. *)
   ; refs_tbl : Checking.Refs_tbl.t (** A hashtable with references. *)

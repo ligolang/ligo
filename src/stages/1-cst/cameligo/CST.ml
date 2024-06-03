@@ -4,35 +4,42 @@
 
 [@@@warning "-30"] (* multiply-defined record labels *)
 
-module Types = Cst_shared.Types
-
 (* Vendor dependencies *)
 
-module Directive = Types.Directive
-module Utils     = Types.Utils
-module Region    = Types.Region
+module Directive = Preprocessor.Directive
+module Utils     = Simple_utils.Utils
+module Region    = Simple_utils.Region
+module Ne_list   = Simple_utils.Ne_list
 
 open Ppx_yojson_conv_lib.Yojson_conv.Primitives
 
 (* Local dependencies *)
 
-module Wrap = Types.Wrap
-module Attr = Types.Attr
+module Wrap  = Lexing_shared.Wrap
+module Attr  = Lexing_shared.Attr
+module Nodes = Cst_shared.Nodes
 
 (* Utilities *)
 
-type 'a reg = 'a Types.reg
-type 'payload wrap = 'payload Types.wrap
+type 'a reg = 'a Region.reg
+let yojson_of_reg = Region.yojson_of_reg
 
-open Utils
+type 'payload wrap = 'payload Wrap.wrap
+let yojson_of_wrap = Wrap.yojson_of_wrap
 
 (* Lexemes *)
 
-type lexeme = Types.lexeme
+type lexeme = string
+
+let yojson_of_lexeme s = `String s
+
+(* Utilities *)
+
+let (<@) f g x = f (g x)
+
+open Utils
 
 (* Keywords of CameLIGO *)
-
-open Types
 
 (* IMPORTANT: The types are sorted alphabetically. If you add or
    modify some, please make sure they remain in order. *)
@@ -116,8 +123,7 @@ type vbar_eq  = lexeme wrap                         (* |= *)
 
 (* End-of-File *)
 
-type eof = lexeme wrap
-[@@deriving yojson_of]
+type eof = lexeme wrap [@@deriving yojson_of]
 
 (* Literals *)
 
@@ -126,8 +132,8 @@ type variable =
 | Esc of lexeme wrap (* @foo without the @ *)
 
 let yojson_of_variable : variable -> Yojson.Safe.t = function
-  Var wrapped_lexeme -> yojson_of_wrap yojson_of_lexeme wrapped_lexeme
-| Esc wrapped_lexeme -> yojson_of_wrap yojson_of_lexeme wrapped_lexeme
+  Var w -> yojson_of_wrap yojson_of_lexeme w
+| Esc w -> yojson_of_wrap yojson_of_lexeme w
 
 type field_name    = variable [@@deriving yojson_of]
 type type_name     = variable [@@deriving yojson_of]
@@ -183,7 +189,7 @@ type 'a brackets = 'a brackets' reg [@@deriving yojson_of]
 (* The Abstract Syntax Tree *)
 
 type t = {
-  decl : declaration nseq;
+  decl : declaration Ne_list.t;
   eof  : eof
 }
 
@@ -211,7 +217,7 @@ and let_decl =
   * let_binding
 
 and let_binding = {
-  binders     : pattern nseq;
+  binders     : pattern Ne_list.t;
   type_params : type_params par option;
   rhs_type    : type_annotation option;
   eq          : equal [@yojson.opaque];
@@ -220,7 +226,7 @@ and let_binding = {
 
 (* Type parameters *)
 
-and type_params = (kwd_type [@yojson.opaque]) * type_variable nseq
+and type_params = (kwd_type [@yojson.opaque]) * type_variable Ne_list.t
 
 (* Module declaration *)
 
@@ -239,7 +245,7 @@ and module_expr =
 
 and module_body = {
   kwd_struct   : (kwd_struct [@yojson.opaque]);
-  declarations : declaration nseq;
+  declarations : declaration Ne_list.t;
   kwd_end      : (kwd_end [@yojson.opaque])
 }
 
@@ -361,7 +367,7 @@ and cartesian =
 
 (* Parametric type *)
 
-and for_all = type_var nseq * (dot [@yojson.opaque]) * type_expr
+and for_all = type_var Ne_list.t * (dot [@yojson.opaque]) * type_expr
 
 (* Functional type *)
 
@@ -472,7 +478,7 @@ and the_unit = lpar * rpar [@yojson.opaque]
 and expr =
   E_Add        of plus bin_op reg        (* x + y                         *)
 | E_And        of bool_and bin_op reg    (* x && y                        *)
-| E_App        of (expr * expr nseq) reg (* f x y     C (x,y)             *)
+| E_App        of (expr * expr Ne_list.t) reg (* f x y     C (x,y)        *)
 | E_Assign     of assign reg             (* x := e                        *)
 | E_Attr       of attr_expr              (* [@a] e                        *)
 | E_Bytes      of bytes_literal          (* 0xFFFA                        *)
@@ -655,7 +661,7 @@ and module_in = {
 and fun_expr = {
   kwd_fun     : (kwd_fun [@yojson.opaque]);
   type_params : type_params par option;
-  binders     : pattern nseq;
+  binders     : pattern Ne_list.t;
   rhs_type    : type_annotation option;
   arrow       : (arrow [@yojson.opaque]);
   body        : expr
@@ -727,16 +733,6 @@ let rec last to_region = function
     [] -> Region.ghost
 |  [x] -> to_region x
 | _::t -> last to_region t
-
-let nseq_to_region to_region (hd, tl) =
-  Region.cover (to_region hd) (last to_region tl)
-
-let nsepseq_to_region to_region (hd, tl) =
-  Region.cover (to_region hd) (last (to_region <@ snd) tl)
-
-let sepseq_to_region to_region = function
-      None -> Region.ghost
-| Some seq -> nsepseq_to_region to_region seq
 
 let variable_to_region = function
   Var w | Esc w -> w#region

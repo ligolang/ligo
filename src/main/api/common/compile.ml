@@ -1,8 +1,13 @@
-open Simple_utils
+open Core
 module Helpers = Ligo_compile.Helpers
 module Run = Ligo_run.Of_michelson
 module Raw_options = Compiler_options.Raw_options
 module Formatter = Ligo_formatter
+module Location = Simple_utils.Location
+module Trace = Simple_utils.Trace
+module Runned_result = Simple_utils.Runned_result
+module Ligo_option = Simple_utils.Ligo_option
+module Http_uri = Simple_utils.Http_uri
 
 let loc = Location.dummy
 
@@ -18,7 +23,7 @@ let has_env_comments michelson_comments =
         | _ -> false))
 
 
-let read_file_constants ~raise file_constants =
+let read_file_constants ~(raise : _ Trace.raise) file_constants =
   match file_constants with
   | None -> []
   | Some fn ->
@@ -27,9 +32,8 @@ let read_file_constants ~raise file_constants =
        let json = Yojson.Basic.from_string buf in
        json |> Yojson.Basic.Util.to_list |> List.map ~f:Yojson.Basic.Util.to_string
      with
-    | Sys_error _ -> raise.Trace.error (`Main_cannot_open_global_constants fn)
-    | Yojson.Json_error s ->
-      raise.Trace.error (`Main_cannot_parse_global_constants (fn, s)))
+    | Sys_error _ -> raise.error (`Main_cannot_open_global_constants fn)
+    | Yojson.Json_error s -> raise.error (`Main_cannot_parse_global_constants (fn, s)))
 
 
 module Path = struct
@@ -233,7 +237,7 @@ let typed_contract_and_expression_impl
           *)
       let ty =
         let x =
-          Option.(
+          Ligo_option.(
             let* row = Ast_typed.get_t_record ctrct_sig.storage in
             let* _ =
               Ast_typed.Row.find_type
@@ -535,7 +539,7 @@ let storage
         | From_file file_name -> file_name
         | Raw { id; _ } -> id
         | Raw_input_lsp { file; _ } -> file
-        | HTTP uri -> Simple_utils.Http_uri.get_filename uri
+        | HTTP uri -> Http_uri.get_filename uri
       in
       let filename = extract_file_name source_file in
       let syntax = Syntax.of_string_opt ~raise (Syntax_name "auto") (Some filename) in

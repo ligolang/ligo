@@ -1,4 +1,5 @@
 module Location = Simple_utils.Location
+module Ligo_pair = Simple_utils.Ligo_pair
 module Trace = Simple_utils.Trace
 module I = Ast_aggregated
 module O = Ast_expanded
@@ -75,7 +76,7 @@ let rec compile_expression ~(raise : _ Trace.raise) : I.expression -> O.expressi
     return (O.E_constructor { c with element = e' })
   | E_application { lamb; args } ->
     let ab = lamb, args in
-    let a, b = Simple_utils.Pair.map ~f:self ab in
+    let a, b = Ligo_pair.map ~f:self ab in
     return (O.E_application { lamb = a; args = b })
   | E_type_inst { forall; type_ } ->
     let forall = self forall in

@@ -3,6 +3,8 @@
    A _region_ is a contiguous series of bytes, for example, in a text
    file. It is here denoted by the object type [t].  *)
 
+open Core
+
 (* DEFINITION *)
 
 (** The start (included) of the region is given by the field [start],
@@ -153,9 +155,13 @@ val cover : t -> t -> t
 
 (* CONVERSIONS *)
 
-val to_yojson       : t -> Yojson.Safe.t
-val of_yojson       : Yojson.Safe.t -> (t, string) Result.t
-val to_human_yojson : t -> Yojson.Safe.t
+type json = Yojson.Safe.t
+
+val to_yojson       : t -> json
+val of_yojson       : json -> (t, string) Result.t
+val to_human_yojson : t -> json
 
 val sexp_of_t : region -> Sexp.t
 val t_of_sexp : Sexp.t -> region
+
+val yojson_of_reg : ('a -> json) -> 'a reg -> json

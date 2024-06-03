@@ -32,7 +32,6 @@ let get_config_json
   | Some file -> yojson_from_file_safe file
   | None -> `File_not_found
 
-
 (** Expects absolute path to LIGO file, searches for pretty printer configuration file in
     its directory and parent directories. Tries to parse a [PP_config.t] from this file. *)
 let get_config

@@ -1,10 +1,21 @@
+open Core
 open Handler
 open Lsp_helpers
+module Loc = Simple_utils.Location
+
+let rec drop_common_prefix
+    ~(equal : 'a -> 'b -> bool)
+    ~(prefix : 'a list)
+    (list : 'b list)
+    : 'b list
+  =
+  match prefix, list with
+  | x :: xs, y :: ys when equal x y -> drop_common_prefix ~equal ~prefix:xs ys
+  | _, _ -> list
 
 (** A default [pp_mode] that looks good with hovers. *)
 let hovers_pp_mode : Pretty.pp_mode =
   { width = Helpers_pretty.default_line_width_for_hovers; indent = 2 }
-
 
 (** Replaces [T_variable]s in the provided core type for [T_module_accessor]s using the
     module path at the given position. The module path is resolved if it's an alias. *)
@@ -96,7 +107,6 @@ let insert_module_path
                 else t)
             | t -> t)
           type')
-
 
 (** Retuns the hovers for some definition. That is, its prettified type/signature and all
     documentation comments attached to it. It's possible that it won't be possible to
@@ -261,7 +271,7 @@ let hover_string
     let drop_common_module_path =
       let prefix = List.map (mdef.mod_path @ [ mdef.uid ]) ~f:Scopes.Types.id_to_mvar in
       Scopes.Misc.map_core_signature_module_path
-        (Simple_utils.List.drop_common_prefix ~equal:Ligo_prim.Module_var.equal ~prefix)
+        (drop_common_prefix ~equal:Ligo_prim.Module_var.equal ~prefix)
         Fn.id
     in
     let core_sig =
@@ -302,7 +312,6 @@ let hover_string
     let%bind project_root = ask_last_project_dir >>| fun dir -> !dir in
     let printed_module = Helpers_pretty.print_module ~project_root syntax sig_str mdef in
     return @@ `List (printed_module :: doc_comment_hovers)
-
 
 (** Runs the handler for the hover request. This is normally called when the user's mouse
     hovers over a symbol. *)

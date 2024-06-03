@@ -1,3 +1,5 @@
+open Core
+
 type t =
   | Standard of string
   | Verbatim of string
@@ -14,10 +16,15 @@ let to_yojson = function
   | Standard s -> `List [ `String "Standard"; `String s ]
   | Verbatim v -> `List [ `String "Verbatim"; `String v ]
 
+let error_yojson_format format =
+  Error ("Invalid JSON value.
+          An object with the following specification is expected:"
+         ^ format)
+
 let of_yojson = function
   | `List [ `String "Standard"; `String s ] -> Ok (Standard s)
   | `List [ `String "Verbatim"; `String v ] -> Ok (Verbatim v)
-  | _ -> Utils.error_yojson_format "Standard string | Verbatim string"
+  | _ -> error_yojson_format "Standard string | Verbatim string"
 
 let compare ?(compare = String.compare) a b =
   match a, b with

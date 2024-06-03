@@ -1,7 +1,7 @@
 open Ast_unified
 open Pass_type
-open Simple_utils.Trace
 open Errors
+module Trace = Simple_utils.Trace
 module Location = Simple_utils.Location
 include Flag.No_arg ()
 
@@ -9,7 +9,7 @@ let is_mangled mvar =
   String.is_prefix ~prefix:"Mangled_module_" (Mod_variable.to_name_exn mvar)
 
 
-let compile ~raise =
+let compile ~(raise : _ Trace.raise) =
   (* given a declaration, we extract all visibility attributes (in reverse order) *)
   let rec extract_visibility : _ -> _ =
    fun d ->
@@ -34,18 +34,18 @@ let compile ~raise =
       let open Import in
       (match i with
       | Import_all_as _ | Import_selected _ -> raise.error (unsupported_import ret)
-      | Import_rename { module_path = imported_module, []; alias }
+      | Import_rename { module_path = [ imported_module ]; alias }
         when is_mangled imported_module ->
         (* Only keep the import around if it is a module alias introduced by #import *)
         d_import
           ~loc
-          (Import_rename { alias; module_path = List.Ne.singleton imported_module })
+          (Import_rename { alias; module_path = Nonempty_list.[ imported_module ] })
       | Import_rename { alias; module_path } ->
         let mod_expr =
           let loc =
-            List.Ne.fold
-              (fun acc x -> Location.cover acc (Mod_variable.get_location x))
-              Location.generated
+            Nonempty_list.fold
+              ~f:(fun acc x -> Location.cover acc (Mod_variable.get_location x))
+              ~init:Location.generated
               module_path
           in
           m_path ~loc module_path
@@ -61,7 +61,7 @@ let compile ~raise =
         (* Translate [module <Name> = <Mangled module>] to [import <Name> = <Mangled module>] *)
         d_import
           ~loc
-          (Import_rename { alias = name; module_path = List.Ne.singleton alias })
+          (Import_rename { alias = name; module_path = Nonempty_list.[ alias ] })
       | _ -> make_d ~loc d)
     | d -> make_d ~loc d
   in
@@ -80,11 +80,11 @@ let compile ~raise =
   Fold { idle_fold with declaration; program_entry }
 
 
-let reduction ~raise =
+let reduction ~(raise : _ Trace.raise) =
   { Iter.defaults with
     declaration =
       (function
-      | { wrap_content = D_import (Import_rename { module_path = mvar, _; _ }); _ }
+      | { wrap_content = D_import (Import_rename { module_path = mvar :: _; _ }); _ }
         when not (is_mangled mvar) -> raise.error (wrong_reduction __MODULE__)
       | _ -> ())
   }

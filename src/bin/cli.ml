@@ -1,7 +1,9 @@
-open Cli_helpers
+open Core
 module Constants = Commands.Constants
 module Default_options = Compiler_options.Default_options
 module Raw_options = Compiler_options.Raw_options
+module PP_helpers = Simple_utils.PP_helpers
+module Display = Simple_utils.Display
 
 let pp_quoted ppf s = Format.fprintf ppf "`%s`" s
 
@@ -51,7 +53,7 @@ end = struct
 end
 
 let file_type =
-  Core.Command.Arg_type.create Fn.id ~complete:(fun _ ~part ->
+  Command.Arg_type.create Fn.id ~complete:(fun _ ~part ->
       let completions =
         (* `compgen -f` handles some fiddly things nicely, e.g. completing "foo" and
          "foo/" appropriately. *)
@@ -81,7 +83,7 @@ let create_arg_type_with_static_completion
     ~(items : (string * a) list)
     ~(default : string -> a)
   =
-  Core.Command.Arg_type.create
+  Command.Arg_type.create
     ~complete:(fun _ ~part ->
       List.filter (List.map ~f:fst items) ~f:(String.is_prefix ~prefix:part))
     (fun str ->
@@ -554,7 +556,7 @@ let hide_sort : _ Command.Param.t =
   let doc =
     Format.asprintf
       "restrict sorts shown in s-exp. available sorts: %a"
-      (Simple_utils.PP_helpers.list String.pp)
+      (PP_helpers.list String.pp)
       all_sorts
   in
   let sort_type = create_string_arg_type_with_static_completion ~items:all_sorts in
@@ -571,7 +573,7 @@ let hide_sort : _ Command.Param.t =
 let preprocess_define : string list Command.Param.t =
   let open Command.Param in
   let doc = "pass a list of defines to the preprocessor" in
-  let sort_type = Core.Command.Arg_type.create Fun.id in
+  let sort_type = Command.Arg_type.create Fun.id in
   let spec =
     optional_with_default []
     @@ Command.Arg_type.comma_separated
@@ -591,7 +593,6 @@ let function_body =
 
 let display_format =
   let open Command.Param in
-  let open Simple_utils.Display in
   let name = "--display-format" in
   let doc =
     "FORMAT the format that will be used by the CLI. Available formats are 'dev', \
@@ -599,9 +600,9 @@ let display_format =
      still tweaking it), please contact us and use another format in the meanwhile."
   in
   flag ~doc ~aliases:[ "--format" ] name
-  @@ optional_with_default human_readable
+  @@ optional_with_default Display.human_readable
   @@ create_arg_type_with_static_completion
-       ~items:[ "human-readable", human_readable; "dev", dev; "json", json ]
+       ~items:Display.[ "human-readable", human_readable; "dev", dev; "json", json ]
        ~default:(fun _ -> failwith "todo")
 
 
@@ -804,8 +805,8 @@ let ( <$> ) f a = Command.Param.return f <*> a
 
 (* Command run function of type () -> () and catches exception inside.
 I use a mutable variable to propagate back the effect of the result of f *)
-let return = ref Done
-let reset_return () = return := Done
+let return = ref Cli_helpers.Done
+let reset_return () = return := Cli_helpers.Done
 
 let compile_file =
   let f
@@ -868,7 +869,7 @@ let compile_file =
         ~source_file
         ()
     in
-    return_result_lwt
+    Cli_helpers.return_result_lwt
       ~skip_analytics
       ~cli_analytics
       ~return
@@ -976,7 +977,7 @@ let compile_parameter =
         ~source_file
         ()
     in
-    return_result_lwt
+    Cli_helpers.return_result_lwt
       ~skip_analytics
       ~cli_analytics
       ~return
@@ -1082,7 +1083,7 @@ let compile_expression =
         ~raw_options
         ()
     in
-    return_result_lwt
+    Cli_helpers.return_result_lwt
       ~skip_analytics
       ~cli_analytics
       ~return
@@ -1163,7 +1164,7 @@ let compile_type =
         ~raw_options
         ()
     in
-    return_result_lwt
+    Cli_helpers.return_result_lwt
       ~skip_analytics
       ~cli_analytics
       ~return
@@ -1258,7 +1259,7 @@ let compile_storage =
         ~source_file
         ()
     in
-    return_result_lwt
+    Cli_helpers.return_result_lwt
       ~skip_analytics
       ~cli_analytics
       ~return
@@ -1358,7 +1359,7 @@ let compile_constant =
         ~raw_options
         ()
     in
-    return_result_lwt
+    Cli_helpers.return_result_lwt
       ~skip_analytics
       ~cli_analytics
       ~return
@@ -1431,7 +1432,7 @@ let transpile_contract =
         ; metric_value = 1.0
         }
     in
-    return_result
+    Cli_helpers.return_result
       ~skip_analytics
       ~cli_analytics:[ cli_analytic; transpile_analytic ]
       ~return
@@ -1492,7 +1493,7 @@ let transpile_with_ast_contract =
         ; metric_value = 1.0
         }
     in
-    return_result
+    Cli_helpers.return_result
       ~skip_analytics
       ~cli_analytics:[ cli_analytic; transpile_analytic ]
       ~return
@@ -1541,7 +1542,7 @@ let transpile_with_ast_expression =
         ; metric_value = 1.0
         }
     in
-    return_result
+    Cli_helpers.return_result
       ~skip_analytics
       ~cli_analytics:[ cli_analytic; transpile_analytic ]
       ~return
@@ -1613,7 +1614,7 @@ let test =
         ~source_file
         ()
     in
-    return_result_lwt
+    Cli_helpers.return_result_lwt
       ~skip_analytics
       ~cli_analytics
       ~return
@@ -1685,7 +1686,7 @@ let test_expr =
         ~raw_options
         ()
     in
-    return_result_lwt
+    Cli_helpers.return_result_lwt
       ~skip_analytics
       ~cli_analytics
       ~return
@@ -1766,7 +1767,7 @@ let dry_run =
         ~source_file
         ()
     in
-    return_result_lwt
+    Cli_helpers.return_result_lwt
       ~skip_analytics
       ~cli_analytics
       ~return
@@ -1862,7 +1863,7 @@ let evaluate_call =
         ~source_file
         ()
     in
-    return_result_lwt
+    Cli_helpers.return_result_lwt
       ~skip_analytics
       ~cli_analytics
       ~return
@@ -1954,7 +1955,7 @@ let evaluate_expr =
         ~source_file
         ()
     in
-    return_result_lwt
+    Cli_helpers.return_result_lwt
       ~skip_analytics
       ~cli_analytics
       ~return
@@ -2040,7 +2041,7 @@ let interpret =
           ~raw_options
           ()
     in
-    return_result_lwt
+    Cli_helpers.return_result_lwt
       ~skip_analytics
       ~cli_analytics
       ~return
@@ -2115,7 +2116,7 @@ let list_declarations =
         ~source_file
         ()
     in
-    return_result
+    Cli_helpers.return_result
       ~skip_analytics
       ~cli_analytics
       ~return
@@ -2180,7 +2181,7 @@ let measure_contract =
         ~source_file
         ()
     in
-    return_result_lwt
+    Cli_helpers.return_result_lwt
       ~skip_analytics
       ~cli_analytics
       ~return
@@ -2248,7 +2249,7 @@ let get_scope =
         ~source_file
         ()
     in
-    return_with_custom_formatter ~skip_analytics:false ~cli_analytics ~return
+    Cli_helpers.return_with_custom_formatter ~skip_analytics:false ~cli_analytics ~return
     @@ fun () ->
     Lsp_helpers.Ligo_interface.Get_scope.get_scope_cli_result
       raw_options
@@ -2289,7 +2290,7 @@ let resolve_config =
         ~source_file
         ()
     in
-    return_result_lwt
+    Cli_helpers.return_result_lwt
       ~skip_analytics:true
       ~cli_analytics
       ~return
@@ -2326,7 +2327,7 @@ let dump_cst =
         ~source_file
         ()
     in
-    return_result
+    Cli_helpers.return_result
       ~return
       ~display_format
       ~skip_analytics
@@ -2386,7 +2387,7 @@ let preprocessed =
         ~source_file
         ()
     in
-    return_result
+    Cli_helpers.return_result
       ~skip_analytics
       ~cli_analytics
       ~return
@@ -2447,7 +2448,7 @@ let pretty_print =
         ~source_file
         ()
     in
-    return_result
+    Cli_helpers.return_result
       ~fast_fail:(not parser_error_recovery)
       ~skip_analytics
       ~cli_analytics
@@ -2495,7 +2496,7 @@ let print_graph =
         ~source_file
         ()
     in
-    return_result
+    Cli_helpers.return_result
       ~skip_analytics
       ~cli_analytics
       ~return
@@ -2551,7 +2552,7 @@ let print_cst =
         ~source_file
         ()
     in
-    return_result
+    Cli_helpers.return_result
       ~fast_fail:(not parser_error_recovery)
       ~skip_analytics
       ~cli_analytics
@@ -2602,7 +2603,7 @@ let print_ast_unified =
         ~source_file
         ()
     in
-    return_result
+    Cli_helpers.return_result
       ~skip_analytics
       ~cli_analytics
       ~return
@@ -2654,7 +2655,7 @@ let print_ast_core =
         ~source_file
         ()
     in
-    return_result
+    Cli_helpers.return_result
       ~skip_analytics
       ~cli_analytics
       ~return
@@ -2731,7 +2732,7 @@ let print_ast_typed =
         ~source_file
         ()
     in
-    return_result
+    Cli_helpers.return_result
       ~fast_fail:(not (typer_error_recovery || parser_error_recovery))
       ~skip_analytics
       ~cli_analytics
@@ -2809,7 +2810,7 @@ let print_ast_aggregated =
         ~source_file
         ()
     in
-    return_result
+    Cli_helpers.return_result
       ~fast_fail:(not (typer_error_recovery || parser_error_recovery))
       ~skip_analytics
       ~cli_analytics
@@ -2885,7 +2886,7 @@ let print_module_signature =
         ~source_file
         ()
     in
-    return_result
+    Cli_helpers.return_result
       ~skip_analytics
       ~cli_analytics
       ~return
@@ -2952,7 +2953,7 @@ let print_ast_expanded =
         ~source_file
         ()
     in
-    return_result
+    Cli_helpers.return_result
       ~skip_analytics
       ~cli_analytics
       ~return
@@ -3021,7 +3022,7 @@ let print_mini_c =
         ~source_file
         ()
     in
-    return_result
+    Cli_helpers.return_result
       ~skip_analytics
       ~cli_analytics
       ~return
@@ -3097,13 +3098,13 @@ let init_library =
     in
     if template_list
     then
-      return_with_custom_formatter
+      Cli_helpers.return_with_custom_formatter
         ~skip_analytics:true
         ~cli_analytics:[ cli_analytic ]
         ~return
       @@ Ligo_init.list ~kind:`LIBRARY ~display_format ~no_colour
     else
-      return_with_custom_formatter
+      Cli_helpers.return_with_custom_formatter
         ~skip_analytics
         ~cli_analytics:[ cli_analytic; init_analytic ]
         ~return
@@ -3153,13 +3154,13 @@ let init_contract =
     in
     if template_list
     then
-      return_with_custom_formatter
+      Cli_helpers.return_with_custom_formatter
         ~skip_analytics:false
         ~cli_analytics:[ cli_analytic ]
         ~return
       @@ Ligo_init.list ~kind:`CONTRACT ~display_format ~no_colour
     else
-      return_with_custom_formatter
+      Cli_helpers.return_with_custom_formatter
         ~skip_analytics
         ~cli_analytics:[ cli_analytic; init_analytic ]
         ~return
@@ -3199,7 +3200,7 @@ let init_group =
 let changelog =
   let cli_analytic = Analytics.generate_cli_metric ~command:"changelog" in
   let f display_format no_colour skip_analytics () =
-    return_result
+    Cli_helpers.return_result
       ~skip_analytics
       ~cli_analytics:[ cli_analytic ]
       ~return
@@ -3238,7 +3239,7 @@ let repl =
         ~raw_options
         ()
     in
-    return_with_custom_formatter ~skip_analytics ~cli_analytics ~return
+    Cli_helpers.return_with_custom_formatter ~skip_analytics ~cli_analytics ~return
     @@ Repl.main
          raw_options
          display_format
@@ -3280,7 +3281,10 @@ let install =
   in
   let cli_analytic = Analytics.generate_cli_metric ~command:"install" in
   let f project_root package_name cache_path ligo_registry esy_legacy skip_analytics () =
-    return_with_custom_formatter ~skip_analytics ~cli_analytics:[ cli_analytic ] ~return
+    Cli_helpers.return_with_custom_formatter
+      ~skip_analytics
+      ~cli_analytics:[ cli_analytic ]
+      ~return
     @@ fun () ->
     Install.install ~project_root ~package_name ~cache_path ~ligo_registry ~esy_legacy
   in
@@ -3305,7 +3309,10 @@ let registry_forgot_password =
   in
   let cli_analytic = Analytics.generate_cli_metric ~command:"forgot_password" in
   let f username ligo_registry ligorc_path skip_analytics () =
-    return_with_custom_formatter ~skip_analytics ~cli_analytics:[ cli_analytic ] ~return
+    Cli_helpers.return_with_custom_formatter
+      ~skip_analytics
+      ~cli_analytics:[ cli_analytic ]
+      ~return
     @@ fun () -> Forgot_password.main ~username ~ligo_registry ~ligorc_path
   in
   Command.basic
@@ -3322,7 +3329,10 @@ let registry_publish =
   in
   let cli_analytic = Analytics.generate_cli_metric ~command:"publish" in
   let f ligo_registry ligorc_path project_root dry_run skip_analytics () =
-    return_with_custom_formatter ~skip_analytics ~cli_analytics:[ cli_analytic ] ~return
+    Cli_helpers.return_with_custom_formatter
+      ~skip_analytics
+      ~cli_analytics:[ cli_analytic ]
+      ~return
     @@ fun () -> Publish.publish ~ligo_registry ~ligorc_path ~project_root ~dry_run
   in
   Command.basic
@@ -3341,7 +3351,10 @@ let registry_unpublish =
   let readme () = "[BETA] Unpublishes a package from the registry" in
   let cli_analytic = Analytics.generate_cli_metric ~command:"unpublish" in
   let f package_name package_version ligo_registry ligorc_path skip_analytics () =
-    return_with_custom_formatter ~skip_analytics ~cli_analytics:[ cli_analytic ] ~return
+    Cli_helpers.return_with_custom_formatter
+      ~skip_analytics
+      ~cli_analytics:[ cli_analytic ]
+      ~return
     @@ fun () ->
     Unpublish.unpublish
       ~name:package_name
@@ -3400,7 +3413,10 @@ let add_user =
   in
   let cli_analytic = Analytics.generate_cli_metric ~command:"add-user" in
   let f username email ligo_registry ligorc_path skip_analytics () =
-    return_with_custom_formatter ~skip_analytics ~cli_analytics:[ cli_analytic ] ~return
+    Cli_helpers.return_with_custom_formatter
+      ~skip_analytics
+      ~cli_analytics:[ cli_analytic ]
+      ~return
     @@ fun () ->
     let ( let* ) v f = Result.bind v ~f in
     let* username =
@@ -3438,7 +3454,10 @@ let login =
   in
   let cli_analytic = Analytics.generate_cli_metric ~command:"login" in
   let f username ligo_registry ligorc_path skip_analytics () =
-    return_with_custom_formatter ~skip_analytics ~cli_analytics:[ cli_analytic ] ~return
+    Cli_helpers.return_with_custom_formatter
+      ~skip_analytics
+      ~cli_analytics:[ cli_analytic ]
+      ~return
     @@ fun () ->
     let ( let* ) v f = Result.bind v ~f in
     let* username =
@@ -3608,7 +3627,10 @@ let lsp =
   let readme () = "[BETA] Run the lsp server which is used by editor extensions" in
   let f disable_logging capability_mode skip_analytics () =
     let log_requests = not disable_logging in
-    return_with_custom_formatter ~skip_analytics:true ~cli_analytics:[] ~return
+    Cli_helpers.return_with_custom_formatter
+      ~skip_analytics:true
+      ~cli_analytics:[]
+      ~return
     @@ Lsp_server.run ~log_requests capability_mode ~skip_analytics
   in
   Command.basic
@@ -3621,7 +3643,10 @@ let analytics_accept =
   let summary = "Accept analytics term" in
   let readme () = "Accept analytics term and store result in term_acceptance file" in
   let f () =
-    return_with_custom_formatter ~skip_analytics:true ~cli_analytics:[] ~return
+    Cli_helpers.return_with_custom_formatter
+      ~skip_analytics:true
+      ~cli_analytics:[]
+      ~return
     @@ fun () -> Analytics.update_term_acceptance "accepted"
   in
   Command.basic ~summary ~readme (Command.Param.return f)
@@ -3631,7 +3656,10 @@ let analytics_deny =
   let summary = "Refuse analytics term" in
   let readme () = "Refuse analytics term and store result in term_acceptance file" in
   let f () =
-    return_with_custom_formatter ~skip_analytics:true ~cli_analytics:[] ~return
+    Cli_helpers.return_with_custom_formatter
+      ~skip_analytics:true
+      ~cli_analytics:[]
+      ~return
     @@ fun () -> Analytics.update_term_acceptance "denied"
   in
   Command.basic ~summary ~readme (Command.Param.return f)
@@ -3662,7 +3690,7 @@ let doc =
         ~raw_options
         ()
     in
-    return_with_custom_formatter ~skip_analytics ~cli_analytics ~return
+    Cli_helpers.return_with_custom_formatter ~skip_analytics ~cli_analytics ~return
     @@ Ligo_docs.Doc.doc ~mdx ~type_doc ?output_directory raw_options directory doc_args
   in
   let summary = "[BETA] Generate a documentation for your project" in

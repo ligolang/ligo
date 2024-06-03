@@ -7,7 +7,7 @@ type error =
 | Newline_in_string
 | Invalid_character_in_string of char
 | Undefined_escape_sequence
-| Invalid_directive of Preprocessor.Error.t
+| Invalid_directive of Preprocessor.PreError.t
 
 type t = error
 
@@ -32,4 +32,4 @@ let to_string = function
     sprintf "Invalid character %S in string.\n\
              Hint: Remove or replace the character." (Char.escaped c)
 | Invalid_directive err ->
-    Preprocessor.Error.to_string err
+    Preprocessor.PreError.to_string err

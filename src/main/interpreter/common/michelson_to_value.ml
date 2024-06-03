@@ -1,7 +1,8 @@
-open Simple_utils.Trace
 open Ligo_interpreter.Types
 open Tezos_micheline.Micheline
 open Ligo_prim
+module Trace = Simple_utils.Trace
+module Ligo_string = Simple_utils.Ligo_string
 
 let contract_of_string ~raise s =
   Proto_alpha_utils.Trace.trace_alpha_tzresult ~raise (fun _ ->
@@ -139,7 +140,7 @@ let normalize_edo_comb_value = function
   | _ -> fun x -> x
 
 
-let rec decompile_to_untyped_value ~raise ~bigmaps
+let rec decompile_to_untyped_value ~(raise : _ Trace.raise) ~bigmaps
     : ('l, string) node -> ('l, string) node -> Ligo_interpreter.Types.value
   =
  fun ty value ->
@@ -364,14 +365,14 @@ let rec decompile_value
   | _ when Option.is_some (get_t_bool t) -> v
   | T_constant { language; injection; parameters } ->
     let () =
-      Assert.assert_true
+      Trace.Assert.assert_true
         ~raise
         (corner_case ~loc:__LOC__ ("unsupported language " ^ language))
         (String.equal language Backend.Michelson.name)
     in
     (match injection, parameters with
     | Map, [ k_ty; v_ty ] ->
-      let map = trace_option ~raise (wrong_mini_c_value t v) @@ get_map v in
+      let map = Trace.trace_option ~raise (wrong_mini_c_value t v) @@ get_map v in
       let map' =
         let aux (k, v) =
           let key = self k k_ty in
@@ -385,7 +386,7 @@ let rec decompile_value
       (match get_nat v with
       | Some _ -> raise.error @@ corner_case ~loc:"unspiller" "Big map id not supported"
       | None ->
-        let big_map = trace_option ~raise (wrong_mini_c_value t v) @@ get_map v in
+        let big_map = Trace.trace_option ~raise (wrong_mini_c_value t v) @@ get_map v in
         let big_map' =
           let aux (k, v) =
             let key = self k k_ty in
@@ -396,14 +397,14 @@ let rec decompile_value
         in
         V_Map big_map')
     | List, [ ty ] ->
-      let lst = trace_option ~raise (wrong_mini_c_value t v) @@ get_list v in
+      let lst = Trace.trace_option ~raise (wrong_mini_c_value t v) @@ get_list v in
       let lst' =
         let aux e = self e ty in
         List.map ~f:aux lst
       in
       V_List lst'
     | Set, [ ty ] ->
-      let lst = trace_option ~raise (wrong_mini_c_value t v) @@ get_set v in
+      let lst = Trace.trace_option ~raise (wrong_mini_c_value t v) @@ get_set v in
       let lst' =
         let aux e = self e ty in
         List.map ~f:aux lst
@@ -454,7 +455,7 @@ let rec decompile_value
       , _ ) -> v)
   | T_sum _ when Option.is_some (Ast_aggregated.get_t_bool t) -> v
   | T_sum _ when Option.is_some (Ast_aggregated.get_t_option t) ->
-    let opt = trace_option ~raise (wrong_mini_c_value t v) @@ get_option v in
+    let opt = Trace.trace_option ~raise (wrong_mini_c_value t v) @@ get_option v in
     (match opt with
     | None -> v_none ()
     | Some s ->
@@ -480,7 +481,7 @@ let rec decompile_value
     (* We now patch the types *)
     (* Mut flag is ignored bcs not required in the case when we patch raw code to a function *)
     let { arg_binder; arg_mut_flag = _; body; rec_name = _; orig_lambda = _; env = _ } =
-      trace_option ~raise (wrong_mini_c_value t v) @@ get_func v
+      Trace.trace_option ~raise (wrong_mini_c_value t v) @@ get_func v
     in
     (match body.expression_content with
     | E_application { lamb; args = _ } ->

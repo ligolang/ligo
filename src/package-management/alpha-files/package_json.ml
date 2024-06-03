@@ -1,6 +1,7 @@
+open Core
 open Package_management_external_libs
 module Semver = Ligo_semver
-module DependencyMap = Map.Make (String)
+module DependencyMap = String.Map
 
 type t =
   { dependencies : Semver.t DependencyMap.t

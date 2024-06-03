@@ -1,7 +1,6 @@
-open Errors
 open Mini_c.Types
 open Tezos_micheline.Micheline
-open Simple_utils.Trace
+module Trace = Simple_utils.Trace
 
 let rec comb prim loc xs =
   match xs with
@@ -27,7 +26,7 @@ let normalize_edo_comb_value = function
   | _ -> fun x -> x
 
 
-let rec decompile_value ~(raise : (stacking_error, _) raise)
+let rec decompile_value ~(raise : (Errors.stacking_error, _) Trace.raise)
     : ('l, string) node -> ('l, string) node -> value
   =
  fun ty value ->
@@ -40,7 +39,7 @@ let rec decompile_value ~(raise : (stacking_error, _) raise)
     in
     let rec aux l : value =
       match l with
-      | [] -> raise.error (untranspilable ty value)
+      | [] -> raise.error (Errors.untranspilable ty value)
       | [ x ] -> x
       | hd :: tl ->
         let tl' = aux tl in
@@ -96,7 +95,7 @@ let rec decompile_value ~(raise : (stacking_error, _) raise)
         | _ ->
           let ty = root (strip_locations ty) in
           let value = root (strip_locations value) in
-          raise.error (untranspilable ty value)
+          raise.error (Errors.untranspilable ty value)
       in
       List.map ~f:aux lst
     in
@@ -112,7 +111,7 @@ let rec decompile_value ~(raise : (stacking_error, _) raise)
         | _ ->
           let ty = root (strip_locations ty) in
           let value = root (strip_locations value) in
-          raise.error (untranspilable ty value)
+          raise.error (Errors.untranspilable ty value)
       in
       List.map ~f:aux lst
     in
@@ -134,7 +133,7 @@ let rec decompile_value ~(raise : (stacking_error, _) raise)
     D_set lst''
   | Prim (_, "operation", [], _), Bytes (_, op) -> D_operation op
   | (Prim (_, "lambda", [ _; _ ], _) as ty), Seq (_, _) ->
-    let pp_lambda = Format.asprintf "[lambda of type: %a ]" Michelson.pp ty in
+    let pp_lambda = Format.asprintf "[lambda of type: %a ]" Errors.Michelson.pp ty in
     D_string pp_lambda
   | Prim (xx, "ticket", [ ty ], _), Prim (_, "Pair", [ addr; v; amt ], _) ->
     ignore addr;
@@ -142,4 +141,4 @@ let rec decompile_value ~(raise : (stacking_error, _) raise)
     let v' = decompile_value ~raise ty v in
     let amt' = decompile_value ~raise ty_nat amt in
     D_ticket (v', amt')
-  | ty, v -> raise.error (untranspilable ty v)
+  | ty, v -> raise.error (Errors.untranspilable ty v)

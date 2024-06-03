@@ -1,7 +1,8 @@
+open Core
 open Ast_unified
 open Pass_type
-open Simple_utils.Trace
 open Errors
+module Trace = Simple_utils.Trace
 module Location = Simple_utils.Location
 include Flag.No_arg ()
 
@@ -10,7 +11,7 @@ let rec wrap_multi_bindings
       default:(a -> a)
       -> wrap:(loc:Location.t -> declaration -> a)
       -> declaration
-      -> a list
+      -> a Nonempty_list.t
   =
  fun ~default ~wrap d ->
   let loc_of_sdecl Simple_decl.{ type_params = _; pattern; rhs_type; let_rhs } =
@@ -27,51 +28,50 @@ let rec wrap_multi_bindings
     let wrap ~loc d = wrap ~loc @@ d_attr ~loc (attr, d) in
     wrap_multi_bindings ~default ~wrap x
   | D_multi_const x ->
-    List.map
+    Nonempty_list.map
       ~f:(fun x ->
         let loc = loc_of_sdecl x in
         wrap ~loc @@ d_const ~loc x)
-      (List.Ne.to_list x)
+      x
   | D_multi_var x ->
-    List.map
+    Nonempty_list.map
       ~f:(fun x ->
         let loc = loc_of_sdecl x in
         wrap ~loc @@ d_var ~loc x)
-      (List.Ne.to_list x)
+      x
   | _ -> [ default (wrap ~loc:(get_d_loc d) d) ]
 
 
 let block : _ block_ -> block =
  fun block ->
-  let dig_attr : statement -> f:(declaration -> _ program_) -> statement list =
+  let dig_attr
+      :  statement -> f:(declaration -> statement Nonempty_list.t)
+      -> statement Nonempty_list.t
+    =
    fun stmt ~f ->
-    let rec aux s acc : statement list =
+    let rec expand (s : statement) : statement Nonempty_list.t =
       let loc = get_s_loc s in
       match get_s s with
-      | S_attr (attr, pe) ->
-        let lst = aux pe [] in
-        List.map lst ~f:(fun s' -> s_attr ~loc (attr, s')) @ acc
-      | S_decl d -> f d @ acc
-      | x -> make_s ~loc x :: acc
+      | S_attr (attr, s) ->
+        Nonempty_list.map ~f:(fun s -> s_attr ~loc (attr, s)) @@ expand s
+      | S_decl d -> f d
+      | s -> [ make_s ~loc s ]
     in
-    aux stmt []
+    expand stmt
   in
-  let f : statement -> statement list -> statement list =
-   fun stmt acc ->
-    let extended =
-      (* turn one statement into multiple one in case it's a multi declaration *)
-      let f d =
-        wrap_multi_bindings
-          ~default:(Fun.const stmt)
-          ~wrap:(fun ~loc d -> s_decl ~loc d)
-          d
-      in
-      dig_attr stmt ~f
+  let extend stmt : statement Nonempty_list.t =
+    (* turn one statement into multiple one in case it's a multi declaration *)
+    let f d =
+      wrap_multi_bindings ~default:(Fun.const stmt) ~wrap:(fun ~loc d -> s_decl ~loc d) d
     in
-    extended @ acc
+    dig_attr stmt ~f
   in
-  let stmts = List.Ne.to_list (Location.unwrap block) in
-  block_of_statements (List.Ne.of_list (List.fold_right ~f ~init:[] stmts))
+  let f stmt stmts = Nonempty_list.to_list (extend stmt) @ stmts in
+  let (stmt :: stmts) = Location.unwrap block in
+  let stmts' = List.fold_right ~f ~init:[] stmts in
+  let (fst_stmt :: more_stmts) = extend stmt in
+  let tail = more_stmts @ stmts' in
+  block_of_statements Nonempty_list.(fst_stmt :: tail)
 
 
 let program : _ program_ -> program =
@@ -92,7 +92,8 @@ let program : _ program_ -> program =
     let extended =
       (* turn one program entry into multiple one in case it's a multi declaration *)
       let f d =
-        wrap_multi_bindings ~default:Fun.id ~wrap:(fun ~loc:_ d -> pe_declaration d) d
+        Nonempty_list.to_list
+        @@ wrap_multi_bindings ~default:Fun.id ~wrap:(fun ~loc:_ d -> pe_declaration d) d
       in
       dig_attr pe ~f
     in
@@ -103,7 +104,7 @@ let program : _ program_ -> program =
 
 let compile ~raise:_ = Fold { idle_fold with program; block }
 
-let reduction ~raise =
+let reduction ~(raise : _ Trace.raise) =
   { Iter.defaults with
     declaration =
       (function

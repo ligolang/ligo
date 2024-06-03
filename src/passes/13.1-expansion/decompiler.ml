@@ -1,5 +1,6 @@
 module I = Ast_expanded
 module O = Ast_aggregated
+module Ligo_pair = Simple_utils.Ligo_pair
 open Ligo_prim
 
 (*
@@ -83,7 +84,7 @@ let rec decompile_expression : I.expression -> O.expression =
     return (O.E_constructor { c with element = e' })
   | E_application { lamb; args } ->
     let ab = lamb, args in
-    let a, b = Simple_utils.Pair.map ~f:self ab in
+    let a, b = Ligo_pair.map ~f:self ab in
     return (O.E_application { lamb = a; args = b })
   | E_type_inst { forall; type_ } ->
     let forall = self forall in

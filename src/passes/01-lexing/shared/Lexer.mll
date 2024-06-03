@@ -14,12 +14,12 @@ module Array = Stdlib.Array (* Used in the generated code only *)
 
 module Region    = Simple_utils.Region
 module Lexbuf    = Simple_utils.Lexbuf
-module Options   = LexerLib.Options   (* For instantiation only *)
-module Unit      = LexerLib.Unit      (* For instantiation only *)
-module Client    = LexerLib.Client    (* For the interface only *)
-module Directive = Preprocessor.Directive (* For verbatim only  *)
+module Options   = LexerLib.Options       (* For instantiation only *)
+module LexUnit   = LexerLib.LexUnit       (* For instantiation only *)
+module Client    = LexerLib.Client        (* For the interface only *)
+module Directive = Preprocessor.Directive (* For verbatim only      *)
 module State     = LexerLib.State
-module Thread    = LexerLib.Thread
+module LexThread = LexerLib.LexThread
 
 (* The functorised interface *)
 
@@ -38,7 +38,7 @@ module Make (Options : Options.S) (Token : Token.S) =
     | Unterminated_verbatim of string
     | Overflow_mutez
     | Underflow_mutez
-    | Invalid_directive of Preprocessor.Error.t
+    | Invalid_directive of Preprocessor.PreError.t
     | Unterminated_comment
 
     let sprintf = Printf.sprintf
@@ -65,7 +65,7 @@ module Make (Options : Options.S) (Token : Token.S) =
     | Underflow_mutez ->
         "Mutez amount not an integer."
     | Invalid_directive err ->
-        Preprocessor.Error.to_string err
+        Preprocessor.PreError.to_string err
     | Unterminated_comment ->
        sprintf "Unterminated comment.\n\
                 Note: Check any ill-formed attribute."
@@ -299,7 +299,7 @@ rule scan state = parse
     let verb_open, verb_close = Token.verbatim_delimiters in
     if String.(lexeme = verb_open) then
       let state, Region.{region; _} = state#sync lexbuf in
-      let thread = Thread.make ~opening:region in
+      let thread = LexThread.make ~opening:region in
       let thread, state = scan_verbatim verb_close thread state lexbuf
       in mk_verbatim thread, state
     else mk_sym state lexbuf }

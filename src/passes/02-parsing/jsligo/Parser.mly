@@ -22,25 +22,24 @@ module Nodes = Cst_shared.Nodes
    make it easy in the semantic action to collate the information into
    CST nodes. *)
 
-let (<@) = Utils.(<@)
-let nseq_to_region = Nodes.nseq_to_region
+let (<@) f g x = f (g x)
+
 let nsepseq_to_region = Nodes.nsepseq_to_region
 let nsep_or_pref_to_region = Nodes.nsep_or_pref_to_region
-let nseq_cons = Utils.nseq_cons
 
 let mk_mod_path :
-  (namespace_name * dot) Utils.nseq * 'a ->
+  (namespace_name * dot) Nonempty_list.t * 'a ->
   ('a -> Region.t) ->
   'a CST.namespace_path Region.reg =
-  fun (nseq, property) to_region ->
-    let (first, sep), tail = nseq in
+  fun (ne_list, property) to_region ->
+    let (first, sep) :: tail = ne_list in
     let rec trans (seq, prev_sep as acc) = function
       [] -> acc
     | (item, next_sep) :: others ->
         trans ((prev_sep, item) :: seq, next_sep) others in
     let list, last_dot = trans ([], sep) tail in
     let namespace_path = first, List.rev list in
-    let region = Nodes.nseq_to_region (fun (x,_) -> x#region) nseq in
+    let region = Nodes.ne_list_to_region (fun (x,_) -> x#region) ne_list in
     let region = Region.cover region (to_region property)
     and value = {namespace_path; selector=last_dot; property}
     in {value; region}
@@ -182,8 +181,8 @@ braces(X):
 (* Non-empty sequence of items *)
 
 nseq(X):
-  X         { $1,[] }
-| X nseq(X) { let h,t = $2 in ($1, h::t) }
+  X         { Nonempty_list.singleton $1 }
+| X nseq(X) { Nonempty_list.cons $1 $2   }
 
 (* Non-empty separated sequence of items *)
 
@@ -337,12 +336,12 @@ namespace_selection:
   }
 | namespace_name { M_Alias $1 }
 
-namespace_path (selected):
+namespace_path(selected):
   namespace_name "." namespace_path(selected) {
-    let (head, tail), selected = $3 in
-    (($1,$2), head::tail), selected
+    let ne_list, selected = $3 in
+    Nonempty_list.cons ($1,$2) ne_list, selected
   }
-| namespace_name "." selected { (($1,$2), []), $3 }
+| namespace_name "." selected { Nonempty_list.singleton ($1,$2), $3 }
 
 (* Interface declaration *)
 
@@ -453,7 +452,7 @@ variant_type:
 
 attr_variant:
   nseq ("|" variant {$1,$2}) {
-    let region = nseq_to_region (variant_kind_to_region <@ snd) $1
+    let region = Nodes.ne_list_to_region (variant_kind_to_region <@ snd) $1
     in T_Variant {region; value = `Pref $1}
   }
 | "[@attr]" attr_variant { T_Attr ($1,$2) }
@@ -648,8 +647,8 @@ property_id:
 statements:
   stmt_ending_with_expr stmts_not_starting_with_expr
 | empty_return_stmt     stmts_not_starting_with_expr_nor_block
-| catenable_stmt        statements { nseq_cons ($1, None) $2 }
-| directive_stmt           { ($1, None), [] }
+| catenable_stmt        statements { Nonempty_list.cons ($1, None) $2 }
+| directive_stmt           { Nonempty_list.singleton ($1, None) }
 | last_or_more (statement) { $1 }
 
 (* Could be refined, e.g., `let` ending with a block or an object are ok: *)
@@ -704,7 +703,7 @@ stmts_not_starting_with_expr_nor_block:
   stmt_not_starting_with_expr_nor_block1 stmts_not_starting_with_expr
 | stmt_not_starting_with_expr_nor_block2 statements
 | empty_return_stmt stmts_not_starting_with_expr_nor_block
-    { nseq_cons ($1, None) $2 }
+    { Nonempty_list.cons ($1, None) $2 }
 | last_or_more (stmt_not_starting_with_expr_nor_block) { $1 }
 
 stmt_not_starting_with_expr_nor_block:
@@ -715,7 +714,7 @@ stmt_not_starting_with_expr_nor_block:
 | "[@attr]" stmt_not_starting_with_expr_nor_block { S_Attr ($1,$2) }
 
 stmts_not_starting_with_expr:
-  block_stmt statements { nseq_cons ($1, None) $2 }
+  block_stmt statements { Nonempty_list.cons ($1, None) $2 }
 | stmts_not_starting_with_expr_nor_block
 | last_or_more (block_stmt) { $1 }
 
@@ -735,11 +734,11 @@ core_stmt (right_stmt):
 closed_non_if_stmt: non_if_stmt (closed_non_if_stmt) { $1 }
 
 last_or_more (left_stmt):
-  left_stmt ioption(";")   { ($1,$2),   [] }
-| left_stmt ";" after_semi { nseq_cons ($1, Some $2) $3 }
+  left_stmt ioption(";")   { Nonempty_list.singleton ($1,$2)     }
+| left_stmt ";" after_semi { Nonempty_list.cons ($1, Some $2) $3 }
 
 after_semi:
-  literal_expr | path_expr { (S_Expr $1, None), [] }
+  literal_expr | path_expr { Nonempty_list.singleton (S_Expr $1, None) }
 | statements               { $1 }
 
 (* Break statement *)
@@ -812,7 +811,7 @@ left_hs:
 
 path (root_expr):
   root_expr nseq(selection) {
-    let stop   = nseq_to_region selection_to_region $2 in
+    let stop   = Nodes.ne_list_to_region selection_to_region $2 in
     let region = cover (expr_to_region $1) stop
     and value  = {object_or_array=$1; property_path=$2}
     in E_Proj {region; value} }
@@ -941,7 +940,7 @@ switch_case:
     let stop =
       match $4 with
         None       -> $3#region
-      | Some stmts -> nseq_to_region (statement_to_region <@ fst) stmts in
+      | Some stmts -> Nodes.ne_list_to_region (statement_to_region <@ fst) stmts in
     let region = cover $1#region stop
     and value  = {kwd_case=$1; expr=$2; colon=$3; case_body=$4}
     in {region; value} }
@@ -955,7 +954,7 @@ switch_default:
     let stop =
       match $3 with
         None       -> $2#region
-      | Some stmts -> nseq_to_region (statement_to_region <@ fst) stmts in
+      | Some stmts -> Nodes.ne_list_to_region (statement_to_region <@ fst) stmts in
     let region = cover $1#region stop
     and value  = {kwd_default=$1; colon=$2; default_body=$3}
     in {region; value} }

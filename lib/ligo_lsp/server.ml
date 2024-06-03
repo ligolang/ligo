@@ -1,7 +1,9 @@
 (* We export the request implementations for testing them *)
+
+open Core
+open Lsp_helpers
 module Requests = Requests
 module Handler = Requests.Handler
-open Lsp_helpers
 open Handler
 
 (** A sensible default configuration to use in case we have obtained no configuration from
@@ -16,7 +18,6 @@ let default_config : config =
   ; metadata_checks_downloading = true
   ; metadata_checks_download_timeout_sec = 10.
   }
-
 
 (** We support launching the language server with all capabilities, just semantic tokens,
     or no semantic tokens enabled, to provide better responsiveness for semantic tokens.

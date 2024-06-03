@@ -1,15 +1,15 @@
 open Ast_unified
 open Pass_type
-open Simple_utils.Trace
 open Errors
-module Location = Simple_utils.Location
 open Unit_test_helpers
+module Trace = Simple_utils.Trace
+module Location = Simple_utils.Location
+include Flag.No_arg ()
 
-(* 
+(*
   The reverse application operator '|>' is syntactic sugar for function application.
   This pass unsugars the E_rev_app operator into normal function application E_application
 *)
-include Flag.No_arg ()
 
 let compile ~raise:_ =
   let pass_expr : _ expr_ -> expr =
@@ -23,7 +23,7 @@ let compile ~raise:_ =
   Fold { idle_fold with expr = pass_expr }
 
 
-let reduction ~raise =
+let reduction ~(raise : _ Trace.raise) =
   let expr : _ expr_ -> unit =
    fun e ->
     match Location.unwrap e with

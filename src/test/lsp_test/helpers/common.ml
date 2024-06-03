@@ -1,4 +1,7 @@
 open Lsp_helpers
+module Ligo_fun = Simple_utils.Ligo_fun
+
+let ( <@ ) = Ligo_fun.( <@ )
 
 (** Resolves provided string path against [lsp_test] directory.
     This function assumes that the given path points to some file in [src/test]. *)

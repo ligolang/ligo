@@ -4,7 +4,7 @@
 
 module Region  = Simple_utils.Region
 module Std     = Simple_utils.Std
-module Unit    = LexerLib.Unit
+module LexUnit = LexerLib.LexUnit
 module Options = LexerLib.Options
 
 (* Local dependencies *)
@@ -16,7 +16,7 @@ module Style = Lexing_shared.Style
 
 module Make (Options : Options.S) =
   struct
-    type item = Token.t Unit.t
+    type item = Token.t LexUnit.t
 
     type items = item list
 

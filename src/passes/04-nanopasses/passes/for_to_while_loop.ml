@@ -1,9 +1,9 @@
 open Ast_unified
 open Pass_type
-open Simple_utils.Trace
-open Simple_utils
 open Errors
+module Trace = Simple_utils.Trace
 module Location = Simple_utils.Location
+module Ligo_option = Simple_utils.Ligo_option
 module Variable = Ligo_prim.Value_var
 
 include Flag.With_arg (struct
@@ -30,7 +30,7 @@ let internal_delimiter () =
 
 let is_internal_delimiter : statement -> unit option =
  fun stmt ->
-  let open Simple_utils.Option in
+  let open Ligo_option in
   let* decl = get_s_decl_opt stmt in
   let* d_const = get_d_const_opt decl in
   let Simple_decl.{ pattern; let_rhs; _ } = d_const in
@@ -41,15 +41,15 @@ let is_internal_delimiter : statement -> unit option =
 
 
 let while_loop
-    ~raise
+    ~(raise : _ Trace.raise)
     ~loc
     ~condition
-    ~(afterthought : expr List.Ne.t option)
+    ~(afterthought : expr Nonempty_list.t option)
     ~(statement : statement option)
   =
-  let afterthought =
-    Option.map afterthought ~f:(fun (afterthought : expr List.Ne.t) ->
-        let exprs = List.Ne.to_list afterthought in
+  let afterthought : (Location.t * statement list) option =
+    Option.map afterthought ~f:(fun (afterthought : expr Nonempty_list.t) ->
+        let exprs = Nonempty_list.to_list afterthought in
         let loc, stmts =
           List.fold_map exprs ~init:Location.generated ~f:(fun prev_loc expr ->
               let expr = expr.fp in
@@ -59,7 +59,7 @@ let while_loop
         in
         loc, stmts)
   in
-  let statement =
+  let statement : (Location.t * statement list) option =
     Option.map statement ~f:(fun statement ->
         let loc = Location.get_location statement.fp in
         loc, [ statement ])
@@ -72,7 +72,7 @@ let while_loop
             let internal_for_loop_identifier#125 = unit ;
          }
       *)
-      let block = Location.wrap ~loc (List.Ne.of_list [ internal_delimiter () ]) in
+      let block = Location.wrap ~loc Nonempty_list.[ internal_delimiter () ] in
       ({ fp = block } : block)
     | Some (loc, afterthought), None ->
       (* If only afterthought is present, we do
@@ -82,32 +82,40 @@ let while_loop
          }
       *)
       let block =
-        Location.wrap ~loc (List.Ne.of_list ([ internal_delimiter () ] @ afterthought))
+        Location.wrap ~loc Nonempty_list.(internal_delimiter () :: afterthought)
       in
       ({ fp = block } : block)
-    | None, Some (loc, statement) ->
+    | None, Some (loc, statements) ->
       (* If only statement is present, we do
          {
-            statement
+            statements
             let internal_for_loop_identifier#125 = unit ;
-         }
-      *)
-      let block =
-        Location.wrap ~loc (List.Ne.of_list (statement @ [ internal_delimiter () ]))
-      in
-      ({ fp = block } : block)
-    | Some (_, afterthought), Some (loc, statement) ->
-      (* If both afterthought & statement are present, we do
-         {
-            statement ;
-            let internal_for_loop_identifier#125 = unit ;
-            afterthought ;
          }
       *)
       let block =
         Location.wrap
           ~loc
-          (List.Ne.of_list (statement @ [ internal_delimiter () ] @ afterthought))
+          Nonempty_list.(reverse (internal_delimiter () :: List.rev statements))
+      in
+      ({ fp = block } : block)
+    | Some (_, afterthought), Some (loc, statements) ->
+      (* If both afterthought & statement are present, we do
+         {
+            statements ;
+            let internal_for_loop_identifier#125 = unit ;
+            afterthought ;
+         }
+      *)
+      let block =
+        (* FIXME: Ne *)
+        let seq =
+          match statements with
+          | [] -> Nonempty_list.(internal_delimiter () :: afterthought)
+          | stmt :: stmt_lst ->
+            let tail = stmt_lst @ (internal_delimiter () :: afterthought) in
+            Nonempty_list.(stmt :: tail)
+        in
+        Location.wrap ~loc seq
       in
       ({ fp = block } : block)
   in
@@ -154,19 +162,19 @@ let compile ~raise =
           }
         }
       *)
-      let statements =
-        [ internal_delimiter () ]
-        @ Option.value_map initialiser ~default:[] ~f:List.return
-        @ [ internal_delimiter () ]
-        @ [ while_loop ~raise ~loc ~condition ~afterthought ~statement ]
+      let statements : statement Nonempty_list.t =
+        internal_delimiter ()
+        :: (Option.value_map initialiser ~default:[] ~f:List.return
+           @ [ internal_delimiter () ]
+           @ [ while_loop ~raise ~loc ~condition ~afterthought ~statement ])
       in
-      i_block ~loc { fp = Location.wrap ~loc (List.Ne.of_list statements) }
+      i_block ~loc { fp = Location.wrap ~loc statements }
     | instr -> make_i ~loc instr
   in
   Fold { idle_fold with instruction }
 
 
-let reduction ~raise =
+let reduction ~(raise : _ Trace.raise) =
   { Iter.defaults with
     instruction =
       (function
@@ -183,7 +191,7 @@ let decompile ~raise:_ =
     =
    fun i ->
     let loc = Location.get_location i in
-    let open Simple_utils.Option in
+    let open Ligo_option in
     let decompile_initialiser stmts =
       match stmts with
       | initialiser :: statements when Option.is_some (is_internal_delimiter initialiser)
@@ -204,17 +212,17 @@ let decompile ~raise:_ =
     let decompile_afterthought afterthought =
       match afterthought with
       | [] -> None
-      | expr_stmts ->
-        let ne_expr_stmts = List.Ne.of_list expr_stmts in
+      | expr_stmt :: expr_stmts ->
+        let ne_expr_stmts = Nonempty_list.(expr_stmt :: expr_stmts) in
         ne_expr_stmts
-        |> List.Ne.map (fun expr_stmt ->
+        |> Nonempty_list.map ~f:(fun expr_stmt ->
                let* s = get_s_instr expr_stmt in
                let* e = get_i_expr s in
                Some e)
-        |> List.Ne.deoptionalize
+        |> Ligo_option.nonempty_all
     in
     let decompile_body_and_afterthought (b : block) =
-      let statements = List.Ne.to_list b.fp.wrap_content in
+      let statements = Nonempty_list.to_list b.fp.wrap_content in
       match statements with
       | [ internal_delimiter ]
         when Option.is_some (is_internal_delimiter internal_delimiter) -> Some (None, None)
@@ -226,7 +234,7 @@ let decompile ~raise:_ =
         Some (Some body, decompile_afterthought afterthought)
       | _ -> None
     in
-    let decompile_for_loop ~loc (statement, statements) =
+    let decompile_for_loop ~loc Nonempty_list.(statement :: statements) =
       let* () = is_internal_delimiter statement in
       let* initialiser, statements = decompile_initialiser statements in
       let* condition, block = decompile_condition statements in

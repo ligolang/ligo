@@ -1,3 +1,5 @@
+module PP_helpers = Simple_utils.PP_helpers
+
 type constant' =
   | C_UNIT [@pure]
   | C_NIL [@pure]
@@ -203,7 +205,7 @@ let pp f ppf { cons_name; arguments } =
     "@[%a@[<hv 1>(%a)@]@]"
     pp_constant'
     cons_name
-    Simple_utils.PP_helpers.(list_sep_d f)
+    PP_helpers.(list_sep_d f)
     arguments
 
 

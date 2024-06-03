@@ -1,7 +1,8 @@
+open Core
 open Ligo_prim
 open Ast_typed
 open Ast_typed.Helpers
-module Pair = Simple_utils.Pair
+module Ligo_pair = Simple_utils.Ligo_pair
 
 type 'a decl_folder = 'a -> declaration -> 'a
 type 'a folder = 'a -> expression -> 'a
@@ -23,7 +24,7 @@ let rec fold_expression : 'a folder -> 'a -> expression -> 'a =
     res
   | E_application { lamb; args } ->
     let ab = lamb, args in
-    let res = Pair.fold ~f:self ~init ab in
+    let res = Ligo_pair.fold ~f:self ~init ab in
     res
   | E_type_inst { forall = e; type_ = _ }
   | E_lambda { binder = _; output_type = _; result = e }
@@ -124,7 +125,7 @@ let rec map_expression : 'err mapper -> expression -> expression =
     return @@ E_constructor { c with element = e' }
   | E_application { lamb; args } ->
     let ab = lamb, args in
-    let a, b = Pair.map ~f:self ab in
+    let a, b = Ligo_pair.map ~f:self ab in
     return @@ E_application { lamb = a; args = b }
   | E_let_in { let_binder; rhs; let_result; attributes } ->
     let rhs = self rhs in
@@ -271,7 +272,7 @@ let update_module (type a) module_path (f : module_ -> module_ * a) (module_ : m
           ; annotation = ()
           }
         when Module_var.equal module_binder m ->
-        find_module (decl :: acc) (List.Ne.to_list module_path' @ ms) rest
+        find_module (decl :: acc) (Nonempty_list.to_list module_path' @ ms) rest
       | _ -> find_module (decl :: acc) module_path rest)
   in
   match find_module [] module_path (List.rev module_) with
@@ -290,36 +291,24 @@ let update_module (type a) module_path (f : module_ -> module_ * a) (module_ : m
 module Free_variables : sig
   val expression : expression -> Module_var.t list * Value_var.t list * Value_var.t list
 end = struct
-  module VarSet = Core.Set
-
-  type var_set = (Value_var.t, Value_var.comparator_witness) VarSet.t
-
-  let empty_var_set = VarSet.empty (module Value_var)
-
-  module ModVarSet = Core.Set
-
-  type mod_var_set = (Module_var.t, Module_var.comparator_witness) ModVarSet.t
-
-  let empty_mod_var_set = ModVarSet.empty (module Module_var)
-
-  module VarMap = Core.Map
-
-  let empty_var_map = VarMap.empty (module Module_var)
+  module VarSet = Set.Make (Value_var)
+  module ModVarSet = Set.Make (Module_var)
+  module VarMap = Map.Make (Module_var)
 
   type moduleEnv' =
-    { modVarSet : mod_var_set
+    { modVarSet : ModVarSet.t
     ; moduleEnv : moduleEnv
-    ; varSet : var_set
-    ; mutSet : var_set
+    ; varSet : VarSet.t
+    ; mutSet : VarSet.t
     }
 
-  and moduleEnv = (Module_var.t, moduleEnv', Module_var.comparator_witness) VarMap.t
+  and moduleEnv = moduleEnv' VarMap.t
 
   let empty =
-    { modVarSet = empty_mod_var_set
-    ; moduleEnv = empty_var_map
-    ; varSet = empty_var_set
-    ; mutSet = empty_var_set
+    { modVarSet = ModVarSet.empty
+    ; moduleEnv = VarMap.empty
+    ; varSet = VarSet.empty
+    ; mutSet = VarSet.empty
     }
 
 
@@ -329,7 +318,7 @@ end = struct
       | `Right v2 -> Some v2
       | `Both (v1, v2) -> f key v1 v2
     in
-    Core.Map.merge ~f m1 m2
+    Map.merge ~f m1 m2
 
 
   let rec merge
@@ -339,10 +328,10 @@ end = struct
     let aux : Module_var.t -> moduleEnv' -> moduleEnv' -> moduleEnv' option =
      fun _ a b -> Some (merge a b)
     in
-    { modVarSet = ModVarSet.union x1 x2
+    { modVarSet = Set.union x1 x2
     ; moduleEnv = union aux y1 y2
-    ; varSet = VarSet.union z1 z2
-    ; mutSet = VarSet.union m1 m2
+    ; varSet = Set.union z1 z2
+    ; mutSet = Set.union m1 m2
     }
 
 
@@ -351,10 +340,10 @@ end = struct
     List.fold
       l
       ~init:
-        { modVarSet = empty_mod_var_set
-        ; moduleEnv = empty_var_map
-        ; varSet = empty_var_set
-        ; mutSet = empty_var_set
+        { modVarSet = ModVarSet.empty
+        ; moduleEnv = VarMap.empty
+        ; varSet = VarSet.empty
+        ; mutSet = VarSet.empty
         }
       ~f:merge
 
@@ -364,22 +353,22 @@ end = struct
     let self = get_fv_expr in
     match e.expression_content with
     | E_contract x ->
-      { modVarSet = ModVarSet.of_list (module Module_var) (List.Ne.to_list x)
-      ; moduleEnv = empty_var_map
-      ; varSet = empty_var_set
-      ; mutSet = empty_var_set
+      { modVarSet = ModVarSet.of_list (Nonempty_list.to_list x)
+      ; moduleEnv = VarMap.empty
+      ; varSet = VarSet.empty
+      ; mutSet = VarSet.empty
       }
     | E_variable v ->
-      { modVarSet = empty_mod_var_set
-      ; moduleEnv = empty_var_map
-      ; varSet = VarSet.singleton (module Value_var) v
-      ; mutSet = empty_var_set
+      { modVarSet = ModVarSet.empty
+      ; moduleEnv = VarMap.empty
+      ; varSet = VarSet.singleton v
+      ; mutSet = VarSet.empty
       }
     | E_literal _ | E_raw_code _ ->
-      { modVarSet = empty_mod_var_set
-      ; moduleEnv = empty_var_map
-      ; varSet = empty_var_set
-      ; mutSet = empty_var_set
+      { modVarSet = ModVarSet.empty
+      ; moduleEnv = VarMap.empty
+      ; varSet = VarSet.empty
+      ; mutSet = VarSet.empty
       }
     | E_constant { cons_name = _; arguments } -> unions @@ List.map ~f:self arguments
     | E_application { lamb; args } -> merge (self lamb) (self args)
@@ -387,8 +376,8 @@ end = struct
     | E_lambda { binder; output_type = _; result } ->
       let env = self result in
       (match Param.get_mut_flag binder with
-      | Immutable -> { env with varSet = VarSet.remove env.varSet (Param.get_var binder) }
-      | Mutable -> { env with mutSet = VarSet.remove env.mutSet (Param.get_var binder) })
+      | Immutable -> { env with varSet = Set.remove env.varSet (Param.get_var binder) }
+      | Mutable -> { env with mutSet = Set.remove env.mutSet (Param.get_var binder) })
     | E_type_abstraction { type_binder = _; result } -> self result
     | E_recursive
         { fun_name
@@ -399,7 +388,7 @@ end = struct
       let { modVarSet; moduleEnv; varSet = fv; mutSet } = self result in
       { modVarSet
       ; moduleEnv
-      ; varSet = VarSet.remove (VarSet.remove fv (Param.get_var binder)) fun_name
+      ; varSet = Set.remove (Set.remove fv (Param.get_var binder)) fun_name
       ; mutSet
       }
     | E_constructor { constructor = _; element } -> self element
@@ -415,51 +404,45 @@ end = struct
       let { modVarSet; moduleEnv; varSet = fv2; mutSet } = self let_result in
       let binders = Pattern.binders let_binder in
       let fv2 =
-        List.fold binders ~init:fv2 ~f:(fun fv2 b -> VarSet.remove fv2 (Binder.get_var b))
+        List.fold binders ~init:fv2 ~f:(fun fv2 b -> Set.remove fv2 (Binder.get_var b))
       in
       merge (self rhs) { modVarSet; moduleEnv; varSet = fv2; mutSet }
     | E_mod_in { module_binder; rhs; let_result } ->
       let { modVarSet; moduleEnv; varSet; mutSet } = self let_result in
-      let modVarSet = ModVarSet.remove modVarSet module_binder in
+      let modVarSet = Set.remove modVarSet module_binder in
       merge (get_fv_module_expr rhs) { modVarSet; moduleEnv; varSet; mutSet }
     | E_module_accessor { module_path; element } ->
       ignore element;
-      { modVarSet =
-          ModVarSet.of_list
-            (module Module_var)
-            module_path (* FIXME: not sure about that *)
-      ; moduleEnv = empty_var_map
-      ; varSet = empty_var_set
-      ; mutSet = empty_var_set
+      { modVarSet = ModVarSet.of_list module_path (* FIXME: not sure about that *)
+      ; moduleEnv = VarMap.empty
+      ; varSet = VarSet.empty
+      ; mutSet = VarSet.empty
       }
     | E_assign { binder; expression } ->
       let fvs = self expression in
-      { fvs with mutSet = VarSet.add fvs.mutSet (Binder.get_var binder) }
+      { fvs with mutSet = Set.add fvs.mutSet (Binder.get_var binder) }
     | E_coerce { anno_expr; _ } -> self anno_expr
     | E_for { binder; start; final; incr; f_body } ->
       let f_body_fvs = self f_body in
-      let f_body_fvs =
-        { f_body_fvs with mutSet = VarSet.remove f_body_fvs.mutSet binder }
-      in
+      let f_body_fvs = { f_body_fvs with mutSet = Set.remove f_body_fvs.mutSet binder } in
       unions [ self start; self final; self incr; f_body_fvs ]
     | E_for_each { fe_binder = binder1, binder2; collection; fe_body; _ } ->
       let binders =
         binder1 :: Option.value_map binder2 ~f:(fun binder2 -> [ binder2 ]) ~default:[]
-        |> VarSet.of_list (module Value_var)
+        |> VarSet.of_list
       in
       let fe_body_fvs = self fe_body in
       let fe_body_fvs =
-        { fe_body_fvs with mutSet = VarSet.diff fe_body_fvs.mutSet binders }
+        { fe_body_fvs with mutSet = Set.diff fe_body_fvs.mutSet binders }
       in
       unions [ self collection; fe_body_fvs ]
     | E_while { cond; body } -> unions [ self cond; self body ]
-    | E_deref mut_var ->
-      { empty with mutSet = VarSet.singleton (module Value_var) mut_var }
+    | E_deref mut_var -> { empty with mutSet = VarSet.singleton mut_var }
     | E_let_mut_in { let_binder; rhs; let_result; attributes = _ } ->
       let { modVarSet; moduleEnv; varSet; mutSet = fv2 } = self let_result in
       let binders = Pattern.binders let_binder in
       let fv2 =
-        List.fold binders ~init:fv2 ~f:(fun fv2 b -> VarSet.remove fv2 (Binder.get_var b))
+        List.fold binders ~init:fv2 ~f:(fun fv2 b -> Set.remove fv2 (Binder.get_var b))
       in
       merge (self rhs) { modVarSet; moduleEnv; varSet; mutSet = fv2 }
     | E_error _ -> empty
@@ -471,7 +454,7 @@ end = struct
     @@ List.map m ~f:(fun { pattern; body } ->
            let { modVarSet; moduleEnv; varSet; mutSet } = get_fv_expr body in
            let vars = Pattern.binders pattern |> List.map ~f:Binder.get_var in
-           let varSet = List.fold vars ~init:varSet ~f:(fun vs v -> VarSet.remove vs v) in
+           let varSet = List.fold vars ~init:varSet ~f:(fun vs v -> Set.remove vs v) in
            { modVarSet; moduleEnv; varSet; mutSet })
 
 
@@ -480,16 +463,16 @@ end = struct
     match x.module_content with
     | M_struct prg -> get_fv_module prg
     | M_variable _ ->
-      { modVarSet = empty_mod_var_set
-      ; moduleEnv = empty_var_map
-      ; varSet = empty_var_set
-      ; mutSet = empty_var_set
+      { modVarSet = ModVarSet.empty
+      ; moduleEnv = VarMap.empty
+      ; varSet = VarSet.empty
+      ; mutSet = VarSet.empty
       }
     | M_module_path _ ->
-      { modVarSet = empty_mod_var_set
-      ; moduleEnv = empty_var_map
-      ; varSet = empty_var_set
-      ; mutSet = empty_var_set
+      { modVarSet = ModVarSet.empty
+      ; moduleEnv = VarMap.empty
+      ; varSet = VarSet.empty
+      ; mutSet = VarSet.empty
       }
 
 
@@ -511,9 +494,9 @@ end = struct
 
   let expression e =
     let { modVarSet; moduleEnv = _; varSet; mutSet } = get_fv_expr e in
-    let fmv = ModVarSet.fold ~f:(fun r v -> v :: r) modVarSet ~init:[] in
-    let fv = VarSet.fold ~f:(fun r v -> v :: r) varSet ~init:[] in
-    let fmutvs = VarSet.fold ~f:(fun r v -> v :: r) mutSet ~init:[] in
+    let fmv = Set.fold ~f:(fun r v -> v :: r) modVarSet ~init:[] in
+    let fv = Set.fold ~f:(fun r v -> v :: r) varSet ~init:[] in
+    let fmutvs = Set.fold ~f:(fun r v -> v :: r) mutSet ~init:[] in
     fmv, fv, fmutvs
 end
 
@@ -544,7 +527,7 @@ module Declaration_mapper = struct
       return @@ E_constructor { c with element = e' }
     | E_application { lamb; args } ->
       let ab = lamb, args in
-      let a, b = Pair.map ~f:self ab in
+      let a, b = Ligo_pair.map ~f:self ab in
       return @@ E_application { lamb = a; args = b }
     | E_let_in { let_binder; rhs; let_result; attributes } ->
       let rhs = self rhs in

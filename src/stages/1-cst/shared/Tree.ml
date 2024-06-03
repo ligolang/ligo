@@ -5,8 +5,11 @@
 
 module Region = Simple_utils.Region
 module Utils  = Simple_utils.Utils
+module Ne     = Nonempty_list
 
-let (<@) = Utils.(<@)
+(* Utilities *)
+
+let (<@) f g x = f (g x)
 
 (* Local dependencies *)
 
@@ -128,8 +131,8 @@ let mk_children_nsepseq_opt print ?root = function
 let mk_children_sepseq print ?root =
   mk_children_list print ?root <@ Utils.sepseq_to_list
 
-let mk_children_nseq print ?root =
-  mk_children_list print ?root <@ Utils.nseq_to_list
+let mk_children_ne_list print ?root =
+  mk_children_list print ?root <@ Ne.to_list
 
 let mk_children_sep_or_term print ?root =
   mk_children_list print ?root <@ Utils.sep_or_term_to_list
@@ -157,12 +160,12 @@ let of_nsepseq ?region state root print =
 let of_sepseq ?region state root print =
   of_list ?region state root print <@ Utils.sepseq_to_list
 
-let of_nseq ?region state root print =
-  of_list ?region state root print <@ Utils.nseq_to_list
+let of_ne_list ?region state root print =
+  of_list ?region state root print <@ Ne.to_list
 
 let of_nsep_or_term ?region state root print = function
   `Sep s -> of_nsepseq ?region state root print s
-| `Term (hd, tl) ->
+| `Term Ne.(hd :: tl) ->
      of_list ?region state root print @@ List.map ~f:fst (hd::tl)
 
 let of_sep_or_term ?region state root print = function
@@ -171,7 +174,7 @@ let of_sep_or_term ?region state root print = function
 
 let of_nsep_or_pref ?region state root print = function
   `Sep s -> of_nsepseq ?region state root print s
-| `Pref (hd, tl) ->
+| `Pref Ne.(hd :: tl) ->
      of_list ?region state root print @@ List.map ~f:snd (hd::tl)
 
 (* PRINTING LEAVES *)

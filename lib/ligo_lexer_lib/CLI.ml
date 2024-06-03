@@ -1,5 +1,7 @@
 (* Parsing command-line options for the lexer *)
 
+open Core
+
 (* Vendor dependencies *)
 
 module Argv   = Simple_utils.Argv
@@ -143,11 +145,10 @@ module Make (PreprocParams: Preprocessor.CLI.PARAMETERS) : PARAMETERS =
        set to [""]), we parse the options with [Getopt.parse_cmdline]
        and we finally restore [Sys.argv] from its original copy. *)
 
-    module SSet = Argv.SSet
+    let add string set = Set.add set string
 
     let opt_wo_arg =
-      let open SSet in
-      empty
+      String.Set.empty
       |> add "--copy"   |> add "-c"
       |> add "--tokens" |> add "-t"
       |> add "--units"  |> add "-u"
@@ -162,8 +163,7 @@ module Make (PreprocParams: Preprocessor.CLI.PARAMETERS) : PARAMETERS =
       |> add "--version" |> add "-v"
 
     let opt_with_arg =
-      let open SSet in
-      empty
+      String.Set.empty
       |> add "--post"
       |> add "--jsligo"
       |> add "--string"

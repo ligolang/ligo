@@ -11,5 +11,6 @@
   lexing_shared
   ;; Third party
   zarith
-  hex)
- (modules Tree Fold Nodes Types))
+  hex
+  core_kernel.nonempty_list)
+ (modules Tree Fold Nodes))

@@ -1,9 +1,11 @@
-module Snippet = Simple_utils.Snippet
-module Location = Simple_utils.Location
-module List = Simple_utils.List
-open Simple_utils.Display
 open Ligo_prim
 open Type
+module Snippet = Simple_utils.Snippet
+module Location = Simple_utils.Location
+module Display = Simple_utils.Display
+module PP_helpers = Simple_utils.PP_helpers
+module Ligo_Error = Simple_utils.Error
+module Trace = Simple_utils.Trace
 
 type 'err with_loc = Location.t -> 'err
 
@@ -18,7 +20,7 @@ let pattern_to_string p syntax =
   in
   let p =
     Nanopasses.decompile_pattern
-      ~raise:(Simple_utils.Trace.raise_failwith "couldn't decompile pattern")
+      ~raise:(Trace.raise_failwith "couldn't decompile pattern")
       ~syntax
       p
   in
@@ -36,7 +38,7 @@ let type_improve t =
     match module_path with
     | [] -> t_variable ~loc element ()
     | _ ->
-      let open Simple_utils.PP_helpers in
+      let open PP_helpers in
       let x = Format.asprintf "%a" (list_sep Module_var.pp (tag ".")) module_path in
       let y = Format.asprintf "%a" Type_var.pp element in
       t_variable ~loc (Type_var.of_input_var ~loc (x ^ "." ^ y)) ()
@@ -84,7 +86,7 @@ let pp_texists_hint ?(requires_annotations = false) ()
     Format.fprintf
       ppf
       "@.Hint: %a represent placeholder type(s)."
-      Simple_utils.PP_helpers.(
+      PP_helpers.(
         list_sep
           (fun ppf tvar ->
             Format.fprintf ppf "\"^%s\"" (Type.Type_var_name_tbl.Exists.name_of tvar))
@@ -138,7 +140,7 @@ type typer_error =
   | `Typer_assert_equal of
     Ast_typed.type_expression * Ast_typed.type_expression * Location.t
   | `Typer_unbound_module of Module_var.t list * Location.t
-  | `Typer_unbound_module_type of Module_var.t List.Ne.t * Location.t
+  | `Typer_unbound_module_type of Module_var.t Nonempty_list.t * Location.t
   | `Typer_unbound_texists_var of Type_var.t * Location.t
   | `Typer_unbound_type_variable of Type_var.t * Location.t
   | `Typer_unbound_module_variable of Module_var.t * Location.t
@@ -501,7 +503,7 @@ let rec extract_loc_and_message
     in
     loc, Format.asprintf "@[<hv> Module \"%a\" not found.@]" pp_path path
   | `Typer_unbound_module_type (path, loc) ->
-    let path = List.Ne.to_list path in
+    let path = Nonempty_list.to_list path in
     let rec pp_path ppf path =
       match path with
       | [] -> failwith "Empty path"
@@ -625,7 +627,7 @@ let rec extract_loc_and_message
 
 
 let error_ppformat
-    :  display_format:string display_format -> no_colour:bool -> Format.formatter
+    :  display_format:string Display.display_format -> no_colour:bool -> Format.formatter
     -> typer_error -> unit
   =
  fun ~display_format ~no_colour f a ->
@@ -635,9 +637,8 @@ let error_ppformat
   | Human_readable | Dev -> Format.fprintf f "@[<hv>%a@.%s@]" snippet_pp loc msg
 
 
-let error_json : typer_error -> Simple_utils.Error.t =
+let error_json : typer_error -> Ligo_Error.t =
  fun err ->
-  let open Simple_utils.Error in
   let location, message = extract_loc_and_message err in
-  let content = make_content ~message ~location () in
-  make ~stage ~content
+  let content = Ligo_Error.make_content ~message ~location () in
+  Ligo_Error.make ~stage ~content

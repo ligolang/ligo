@@ -2,9 +2,9 @@
 
 (* Vendor dependencies *)
 
-module Region = Simple_utils.Region
-module Std    = Simple_utils.Std
-module Unit   = LexerLib.Unit
+module Region  = Simple_utils.Region
+module Std     = Simple_utils.Std
+module LexUnit = LexerLib.LexUnit
 
 (* Local dependencies *)
 
@@ -12,7 +12,7 @@ module Token = Lx_ml_self_tokens.Token
 
 (* Injection *)
 
-let filter (units : Token.t Unit.lex_unit list) =
+let filter (units : Token.t LexUnit.lex_unit list) =
   let open! Token in
   let rec aux acc = function
     (`Token GT _ as gt1) :: (`Token EQ reg :: _ as units) ->
@@ -21,7 +21,7 @@ let filter (units : Token.t Unit.lex_unit list) =
   | [] -> List.rev acc
   in aux [] units
 
-type units = Token.t Unit.t list
+type units = Token.t LexUnit.t list
 
 type message = string Region.reg
 

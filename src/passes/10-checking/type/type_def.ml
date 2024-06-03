@@ -1,31 +1,40 @@
 module Location = Simple_utils.Location
-open Ligo_prim
+module Ligo_Layout = Ligo_prim.Layout
+module Layout_var = Ligo_prim.Layout_var
+module Ligo_Row = Ligo_prim.Row
+module Label = Ligo_prim.Label
+module Module_var = Ligo_prim.Module_var
+module Type_var = Ligo_prim.Type_var
+module Arrow = Ligo_prim.Arrow
+module Literal_value = Ligo_prim.Literal_value
+module Literal_types = Ligo_prim.Literal_types
+module Abstraction = Ligo_prim.Abstraction
 
 module Layout = struct
   type t =
-    | L_concrete of Layout.t
+    | L_concrete of Ligo_Layout.t
     | L_exists of Layout_var.t
   [@@deriving yojson, equal, sexp, compare, hash]
 
-  type field = Layout.field =
+  type field = Ligo_Layout.field =
     { name : Label.t
     ; annot : string option
     }
 
   let fields = function
-    | L_concrete layout -> Some (Layout.fields layout)
+    | L_concrete layout -> Some (Ligo_Layout.fields layout)
     | L_exists _lvar -> None
 
 
-  let default fields = L_concrete (Layout.default fields)
+  let default fields = L_concrete (Ligo_Layout.default fields)
 
   let pp ppf t =
     match t with
-    | L_concrete layout -> Layout.pp ppf layout
+    | L_concrete layout -> Ligo_Layout.pp ppf layout
     | L_exists lvar -> Format.fprintf ppf "^%a" Layout_var.pp lvar
 end
 
-module Row = Row.Make (Layout)
+module Row = Ligo_Row.Make (Layout)
 
 type t =
   { content : content

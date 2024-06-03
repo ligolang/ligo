@@ -1,5 +1,6 @@
 open Types
 open Ligo_prim
+module Ligo_pair = Simple_utils.Ligo_pair
 
 type 'a fold_mapper = 'a -> expression -> bool * 'a * expression
 
@@ -31,7 +32,7 @@ let rec fold_map_expression : 'a fold_mapper -> 'a -> expression -> 'a * express
       res, return @@ E_constructor { c with element = e' }
     | E_application { lamb; args } ->
       let ab = lamb, args in
-      let res, (a, b) = Simple_utils.Pair.fold_map ~f:self ~init ab in
+      let res, (a, b) = Ligo_pair.fold_map ~f:self ~init ab in
       res, return @@ E_application { lamb = a; args = b }
     | E_let_in { let_binder; rhs; let_result; attributes } ->
       let res, rhs = self init rhs in

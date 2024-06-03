@@ -110,7 +110,7 @@ type _ sing =
   | S_module_path : 'a sing -> 'a module_path sing
   | S_neq : neq sing
   | S_nsepseq : 'a sing * 'b sing -> ('a, 'b) Utils.nsepseq sing
-  | S_nseq : 'a sing -> 'a Utils.nseq sing
+  | S_ne_list : 'a sing -> 'a Nonempty_list.t sing
   | S_option : 'a sing -> 'a option sing
   | S_par : 'a sing -> 'a par sing
   | S_par' : 'a sing -> 'a par' sing
@@ -196,6 +196,9 @@ let fold'
   and process_list : some_node list -> unit =
     fun l -> List.iter l ~f:process
 
+  and process_ne_list : some_node Nonempty_list.t -> unit =
+    fun l -> Nonempty_list.iter l ~f:process
+
   and fold : some_node -> unit =
   function (Some_node (node, sing)) -> match sing with
   | S_arrow -> process @@ node -| S_wrap S_lexeme
@@ -261,7 +264,7 @@ let fold'
   | S_cst ->
       let { decl; eof } = node in
       process_list
-      [ decl -| S_nseq S_declaration
+      [ decl -| S_ne_list S_declaration
       ; eof -| S_eof ]
   | S_ctor -> process @@ node -| S_wrap S_lexeme
   | S_declaration -> process
@@ -285,7 +288,7 @@ let fold'
     (match node with
       E_Add node -> node -| S_reg (S_bin_op S_plus)
     | E_And node -> node -| S_reg (S_bin_op S_bool_and)
-    | E_App node -> node -| S_reg (S_tuple_2 (S_expr, S_nseq S_expr))
+    | E_App node -> node -| S_reg (S_tuple_2 (S_expr, S_ne_list S_expr))
     | E_Assign node -> node -| S_reg S_assign
     | E_Attr node -> node -| S_tuple_2 (S_attribute, S_expr)
     | E_Bytes node -> node -| S_wrap (S_tuple_2 (S_lexeme, S_hex))
@@ -361,7 +364,7 @@ let fold'
     ; field_type -| S_option S_type_annotation ]
   | S_field_name -> process @@ node -| S_variable
   | S_for_all ->
-    process @@ node -| S_tuple_3 (S_nseq S_type_var, S_dot, S_type_expr)
+    process @@ node -| S_tuple_3 (S_ne_list S_type_var, S_dot, S_type_expr)
   | S_for_in_loop ->
     let { kwd_for; pattern; kwd_in; collection; body } = node in
     process_list
@@ -385,7 +388,7 @@ let fold'
     process_list
     [ kwd_fun -| S_kwd_fun
     ; type_params -| S_option (S_par S_type_params)
-    ; binders -| S_nseq S_pattern
+    ; binders -| S_ne_list S_pattern
     ; rhs_type -| S_option (S_tuple_2 (S_colon, S_type_expr))
     ; arrow -| S_arrow
     ; body -| S_expr ]
@@ -445,7 +448,7 @@ let fold'
     let { type_params; binders; rhs_type; eq; let_rhs } = node in
     process_list
     [ type_params -| S_option (S_par S_type_params)
-    ; binders -| S_nseq S_pattern
+    ; binders -| S_ne_list S_pattern
     ; rhs_type -| S_option (S_tuple_2 (S_colon, S_type_expr))
     ; eq -| S_equal
     ; let_rhs -| S_expr ]
@@ -498,7 +501,7 @@ let fold'
     let { kwd_struct; declarations; kwd_end } = node in
     process_list
     [ kwd_struct -| S_kwd_module
-    ; declarations -| S_nseq S_declaration
+    ; declarations -| S_ne_list S_declaration
     ; kwd_end -| S_kwd_end ]
   | S_module_decl ->
     let { kwd_module; name; annotation; eq; module_expr} = node in
@@ -535,7 +538,8 @@ let fold'
   | S_neq -> process @@ node -| S_wrap S_lexeme
   | S_nsepseq (sing_1, sing_2) ->
     process @@ node -| S_tuple_2 (sing_1, S_list (S_tuple_2 (sing_2, sing_1)))
-  | S_nseq sing -> process @@ node -| S_tuple_2 (sing, S_list sing)
+  | S_ne_list sing ->
+    process_ne_list @@ Nonempty_list.map ~f:(fun x -> x -| sing) node
   | S_option sing ->
     (match node with
       None -> () (* Leaf *)
@@ -719,7 +723,7 @@ let fold'
     ; body -| S_expr ]
   | S_type_name -> process @@ node -| S_variable
   | S_type_params ->
-    process @@ node -| S_tuple_2 (S_kwd_type, S_nseq S_type_variable)
+    process @@ node -| S_tuple_2 (S_kwd_type, S_ne_list S_type_variable)
   | S_type_var ->
     process @@ node -| S_reg (S_tuple_2 (S_option S_quote, S_type_variable))
   | S_type_variable -> process @@ node -| S_variable

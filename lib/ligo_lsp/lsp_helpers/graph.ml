@@ -1,5 +1,8 @@
 open Core
-open Simple_utils.Utils
+
+module Ligo_fun = Simple_utils.Ligo_fun
+
+let ( <@ ) = Ligo_fun.( <@ )
 
 module type S = sig
   (** The type of nodes in the graph. *)
@@ -77,17 +80,14 @@ module Make (Ord : Map.Key) : S with type vertex = Ord.t = struct
       from
       ~f:Option.(value_map ~default:(Node_set.singleton to') ~f:(Fn.flip Set.add to'))
 
-
   let from_assoc vs g = List.fold vs ~init:g ~f:(fun g (v1, v2) -> edge v1 v2 g)
 
   let from_assocs edges g =
     List.fold edges ~init:g ~f:(fun g (node, nodes) ->
         List.fold nodes ~init:(vertex node g) ~f:(fun g v -> edge node v g))
 
-
   let to_assocs =
     List.map ~f:(Tuple2.map_snd ~f:Set.to_list) <@ Map.to_alist ~key_order:`Increasing
-
 
   let to_vertices = List.map ~f:fst <@ to_assocs
   let post node g = Option.map (Map.find g node) ~f:Set.to_list
@@ -106,15 +106,12 @@ module Make (Ord : Map.Key) : S with type vertex = Ord.t = struct
         ~init:(Set.add vis node, acc)
         ~f:(fun (vis, acc) child -> reachable_impl vis (edge node child acc) child g)
 
-
   let reachable node g =
     if mem node g then Some (snd @@ reachable_impl Node_set.empty empty node g) else None
-
 
   let transpose =
     Map.fold ~init:empty ~f:(fun ~key:parent ~data:children acc ->
         Set.fold children ~init:acc ~f:(fun acc child -> edge child parent acc))
-
 
   let overlay = Map.merge_skewed ~combine:(fun ~key:_parent -> Set.union)
   let to_undirected g = overlay g (transpose g)
@@ -132,7 +129,6 @@ module Make (Ord : Map.Key) : S with type vertex = Ord.t = struct
              Tuple2.map_snd (reachable_impl vis empty parent double_edge_g) ~f:(fun g' ->
                  Map.mapi g' ~f:(fun ~key:parent ~data:_children -> Map.find_exn g parent)
                  :: acc))
-
 
   let pp pp_node ppf =
     Map.iteri ~f:(fun ~key:parent ~data:children ->

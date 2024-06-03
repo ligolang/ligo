@@ -1,26 +1,34 @@
+open Core
 open Errors
 open Ast_unified
 open Pass_type
-open Simple_utils.Trace
-module StrSet = Core.Set
-module LSet = Core.Set
+module Trace = Simple_utils.Trace
+module Ligo_option = Simple_utils.Ligo_option
+module Ligo_string = Simple_utils.Ligo_string
+module Ne_list = Simple_utils.Ne_list
+include Flag.No_arg ()
 
 (* morph discriminatory union types to sum-types and switches instructions to pattern matching *)
-let name = __MODULE__
 
-include Flag.No_arg ()
+let name = __MODULE__
 
 type reg =
   { label : Label.t
-  ; id_set : (String.t, String.comparator_witness) StrSet.t
+  ; id_set : (String.t, String.comparator_witness) Set.t
   ; ty : ty_expr
   }
 
-let morph_t_disc ~raise ~err ~loc (rows : ty_expr Non_linear_disc_rows.t) : reg * ty_expr =
+let morph_t_disc
+    ~(raise : _ Trace.raise)
+    ~err
+    ~loc
+    (rows : ty_expr Non_linear_disc_rows.t)
+    : reg * ty_expr
+  =
   (* all type in disc must be record *)
   let rows_record =
     List.map rows ~f:(fun ((), { associated_type = ty; _ }) ->
-        trace_option ~raise err (get_t_record_raw ty))
+        Trace.trace_option ~raise err (get_t_record_raw ty))
   in
   (* all type in disc must have a string singleton *)
   let singleton_rows =
@@ -46,10 +54,10 @@ let morph_t_disc ~raise ~err ~loc (rows : ty_expr Non_linear_disc_rows.t) : reg 
   match singleton_rows with
   | [] -> raise.error err
   | (label, _, _) :: _ ->
-    let id_set = StrSet.of_list (module String) (List.map ~f:snd3 singleton_rows) in
-    let label_set = LSet.of_list (module Label) (List.map ~f:fst3 singleton_rows) in
+    let id_set = Set.of_list (module String) (List.map ~f:snd3 singleton_rows) in
+    let label_set = Set.of_list (module Label) (List.map ~f:fst3 singleton_rows) in
     let same_label_different_id =
-      LSet.length label_set = 1 && StrSet.length id_set = List.length singleton_rows
+      Set.length label_set = 1 && Set.length id_set = List.length singleton_rows
     in
     if same_label_different_id
     then (
@@ -63,7 +71,7 @@ let morph_t_disc ~raise ~err ~loc (rows : ty_expr Non_linear_disc_rows.t) : reg 
       in
       let reg =
         { label
-        ; id_set = StrSet.of_list (module String) (List.map ~f:snd3 singleton_rows)
+        ; id_set = Set.of_list (module String) (List.map ~f:snd3 singleton_rows)
         ; ty
         }
       in
@@ -88,7 +96,7 @@ let compile ~raise =
   let switch_to_match (i, registered_unions) =
     let loc = get_i_loc i in
     let opt =
-      let open Simple_utils.Option in
+      let open Ligo_option in
       let* { subject; cases } = get_i_switch i in
       let* struct_, path = get_e_proj subject in
       let* matchee_var = get_e_variable struct_ in
@@ -100,40 +108,43 @@ let compile ~raise =
       let* cases =
         match cases with
         | Switch.AllCases (b, _) ->
-          let lst =
-            List.map (List.Ne.to_list b) ~f:(fun Switch.{ expr; case_body } ->
+          let lst : (string * block option) option Nonempty_list.t =
+            Nonempty_list.map
+              ~f:(fun Switch.{ expr; case_body } ->
                 let* lit = get_e_literal expr in
                 match lit with
-                | Literal_string x -> Some (Simple_utils.Ligo_string.extract x, case_body)
+                | Literal_string x -> Some (Ligo_string.extract x, case_body)
                 | _ -> None)
+              b
           in
-          Option.all lst
+          Ne_list.collect lst
         | Switch.Default _ -> None
       in
       let* { ty = matching_ty; _ } =
         List.find registered_unions ~f:(fun { label; id_set; _ } ->
-            let lst = List.map ~f:fst cases in
+            let lst = List.map ~f:fst (Nonempty_list.to_list cases) in
             Label.equal label proj_name
-            && StrSet.equal id_set (StrSet.of_list (module String) lst))
+            && Set.equal id_set (Set.of_list (module String) lst))
       in
       let res =
         let cases =
-          List.Ne.of_list
-          @@ List.map cases ~f:(fun (str, block_opt) ->
-                 let pattern =
-                   p_variant ~loc (Label.of_string str) (Some (p_var ~loc matchee_var))
-                 in
-                 let rhs : _ Test_clause.t =
-                   match block_opt with
-                   | None -> ClauseInstr (i_skip ~loc)
-                   | Some block -> ClauseBlock block
-                 in
-                 Case.{ pattern = Some pattern; rhs })
+          Nonempty_list.map
+            ~f:(fun (str, block_opt) ->
+              let pattern =
+                p_variant ~loc (Label.of_string str) (Some (p_var ~loc matchee_var))
+              in
+              let rhs : _ Test_clause.t =
+                match block_opt with
+                | None -> ClauseInstr (i_skip ~loc)
+                | Some block -> ClauseBlock block
+              in
+              Case.{ pattern = Some pattern; rhs })
+            cases
         in
         let expr = e_annot ~loc:(get_e_loc struct_) (struct_, matching_ty) in
         i_case ~loc { expr; disc_label = Some proj_name; cases }
       in
-      return res
+      Option.return res
     in
     let i = Option.value opt ~default:i in
     default_unfold.instruction (i, registered_unions)
@@ -146,7 +157,7 @@ let compile ~raise =
     , { default_unfold with instruction = switch_to_match } )
 
 
-let reduction ~raise =
+let reduction ~(raise : _ Trace.raise) =
   { Iter.defaults with
     ty_expr =
       (function
@@ -171,7 +182,7 @@ let decompile ~raise:_ =
               let rest_lst =
                 Option.value
                   ~default:[]
-                  (let open Simple_utils.Option in
+                  (let open Ligo_option in
                   let* ty_rest in
                   (* TODO #1758 *)
                   let unit_case =
@@ -182,7 +193,7 @@ let decompile ~raise:_ =
                         (String.equal (Ty_variable.to_name_exn name) "unit")
                         ()
                     in
-                    return []
+                    Option.return []
                   in
                   let record_case = get_t_record_raw ty_rest in
                   Option.first_some unit_case record_case)

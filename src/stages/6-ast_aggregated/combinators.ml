@@ -1,9 +1,10 @@
-module Location = Simple_utils.Location
-module List = Simple_utils.List
-module Ligo_string = Simple_utils.Ligo_string
+open Core
 open Ligo_prim
 open Literal_types
 open Types
+module Location = Simple_utils.Location
+module Ligo_string = Simple_utils.Ligo_string
+module Ligo_option = Simple_utils.Ligo_option
 
 (* Helpers for accessing and constructing elements are derived using
    `ppx_woo` (`@@deriving ez`) *)
@@ -532,28 +533,29 @@ let build_type_abstractions init =
    given an expression e and a list of type variables [t1; ...; tn],
    it constructs an expression e@{t1}@...@{tn} *)
 let build_type_insts_opt ~loc init =
-  let open Simple_utils.Option in
   let f av forall =
+    let open Ligo_option in
     let* forall in
     let* Abstraction.{ ty_binder; type_ = t; kind = _ } =
       get_t_for_all forall.type_expression
     in
     let type_ = t_variable ~loc av () in
-    return
+    Option.return
       (make_e ~loc (E_type_inst { forall; type_ }) (Helpers.subst_type ty_binder type_ t))
   in
-  List.fold_right ~init:(return init) ~f
+  List.fold_right ~init:(Option.return init) ~f
 
 
 (* This function expands a function with a type T_for_all but not with
    the same amount of E_type_abstraction *)
 let forall_expand_opt ~loc (e : expression) =
-  let open Simple_utils.Option in
+  let open Option in
   let tvs, _ = Helpers.destruct_for_alls e.type_expression in
   let evs, e_without_type_abs = get_type_abstractions e in
   if List.equal Ligo_prim.Type_var.equal tvs evs
   then return e
   else
+    let open Ligo_option in
     let* e = build_type_insts_opt ~loc e_without_type_abs tvs in
     return @@ build_type_abstractions e tvs
 

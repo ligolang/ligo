@@ -1,10 +1,12 @@
-open Simple_utils.Display
+module Ligo_Error = Simple_utils.Error
+module Runned_result = Simple_utils.Runned_result
+module Display = Simple_utils.Display
 module Snippet = Simple_utils.Snippet
 module Location = Simple_utils.Location
 module PP_helpers = Simple_utils.PP_helpers
 
 let rec error_ppformat
-    :  display_format:string display_format -> no_colour:bool -> Format.formatter
+    :  display_format:string Display.display_format -> no_colour:bool -> Format.formatter
     -> Types.all -> unit
   =
  fun ~display_format ~no_colour f a ->
@@ -78,9 +80,9 @@ let rec error_ppformat
       Format.fprintf
         f
         "@[<hv>Expected:@ %a@ got:@ %a@]"
-        (Simple_utils.PP_helpers.list_sep_d Simple_utils.PP_helpers.string)
+        PP_helpers.(list_sep_d string)
         expected
-        (Simple_utils.PP_helpers.list_sep_d Simple_utils.PP_helpers.string)
+        PP_helpers.(list_sep_d string)
         actual
     | `Main_invalid_generator_name generator ->
       Format.fprintf
@@ -102,7 +104,7 @@ let rec error_ppformat
         f
         "@[<hv>Invalid protocol version '%s'. Available versions: %a"
         actual
-        (Simple_utils.PP_helpers.list_sep_d Format.pp_print_string)
+        (PP_helpers.list_sep_d Format.pp_print_string)
         possible
     | `Main_invalid_extension extension ->
       Format.fprintf
@@ -187,14 +189,14 @@ let rec error_ppformat
            ~show_source:true
            ?parsed:None)
         errs
-    | `Check_typed_arguments_tracer (Simple_utils.Runned_result.Check_parameter, err) ->
+    | `Check_typed_arguments_tracer (Runned_result.Check_parameter, err) ->
       Format.fprintf
         f
         "@[<hv>Invalid command line argument. @.The provided parameter does not have the \
          correct type for the given entrypoint.@ %a@]"
         self
         err
-    | `Check_typed_arguments_tracer (Simple_utils.Runned_result.Check_storage, err) ->
+    | `Check_typed_arguments_tracer (Runned_result.Check_storage, err) ->
       Format.fprintf
         f
         "@[<hv>Invalid command line argument. @.The provided storage does not have the \
@@ -592,22 +594,22 @@ let rec error_ppformat
       Format.fprintf
         f
         "@[<hv>%a@.%s@]"
-        Simple_utils.(PP_helpers.if_present (Snippet.pp ~no_colour))
+        (PP_helpers.if_present @@ Snippet.pp ~no_colour)
         e.content.location
         e.content.message)
 
 
 let errors_ppformat
-    :  display_format:string display_format -> no_colour:bool -> Format.formatter
+    :  display_format:string Display.display_format -> no_colour:bool -> Format.formatter
     -> Types.all list -> unit
   =
  fun ~display_format ~no_colour f errs ->
   List.iter errs ~f:(fun err -> error_ppformat ~display_format ~no_colour f err)
 
 
-let rec error_json : Types.all -> Simple_utils.Error.t list =
+let rec error_json : Types.all -> Ligo_Error.t list =
  fun a ->
-  let open Simple_utils.Error in
+  let open Ligo_Error in
   match a with
   | `Test_err_tracer (name, err) ->
     let children = error_json err in
@@ -673,7 +675,7 @@ let rec error_json : Types.all -> Simple_utils.Error.t list =
   | `Main_could_not_serialize _errs ->
     let content = make_content ~message:"Could not serialize michelson code" () in
     [ make ~stage:"michelson serialization" ~content ]
-  | `Check_typed_arguments_tracer (Simple_utils.Runned_result.Check_parameter, err) ->
+  | `Check_typed_arguments_tracer (Runned_result.Check_parameter, err) ->
     let children = error_json err in
     let message = "Passed parameter does not match the contract type" in
     let errors =
@@ -682,7 +684,7 @@ let rec error_json : Types.all -> Simple_utils.Error.t list =
           make ~stage:"contract argument typechecking" ~content)
     in
     errors
-  | `Check_typed_arguments_tracer (Simple_utils.Runned_result.Check_storage, err) ->
+  | `Check_typed_arguments_tracer (Runned_result.Check_storage, err) ->
     let children = error_json err in
     let message = "Passed storage does not match the contract type" in
     let errors =
@@ -827,15 +829,15 @@ let rec error_json : Types.all -> Simple_utils.Error.t list =
 let errors_jsonformat : Types.all list -> Yojson.Safe.t =
  fun e ->
   let errors = List.bind ~f:error_json e in
-  let errors = List.map errors ~f:Simple_utils.Error.to_yojson in
+  let errors = List.map errors ~f:Ligo_Error.to_yojson in
   `List errors
 
 
 let error_jsonformat : Types.all -> Yojson.Safe.t = fun e -> errors_jsonformat [ e ]
 
-let error_format : Types.all Simple_utils.Display.format =
+let error_format : Types.all Display.format =
   { pp = error_ppformat; to_json = error_jsonformat }
 
 
-let errors_format : Types.all list Simple_utils.Display.format =
+let errors_format : Types.all list Display.format =
   { pp = errors_ppformat; to_json = errors_jsonformat }

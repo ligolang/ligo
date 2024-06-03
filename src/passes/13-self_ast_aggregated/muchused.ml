@@ -1,8 +1,11 @@
+open Core
 open Ligo_prim
 open Ast_aggregated
 open Errors
+module Ligo_map = Simple_utils.Ligo_map
+module Trace = Simple_utils.Trace
 module V = Ligo_prim.Value_var
-module M = Simple_utils.Map.Make (V)
+module M = Map.Make (V)
 
 (* var -> # of uses * unused vars *)
 type muchuse = int M.t * V.t list
@@ -88,10 +91,10 @@ let rec is_dup ~(raise : _ Trace.raise) (t : type_expression) =
   | T_exists _ -> raise.error @@ unexpected_texists t t.location
 
 
-let muchuse_union (x, a) (y, b) = M.union (fun _ x y -> Some (x + y)) x y, a @ b
+let muchuse_union (x, a) (y, b) = Ligo_map.union (fun _ x y -> Some (x + y)) x y, a @ b
 
 let muchuse_max (x, a) (y, b) =
-  M.union (fun _ x y -> if x > y then Some x else Some y) x y, a @ b
+  Ligo_map.union (fun _ x y -> if x > y then Some x else Some y) x y, a @ b
 
 
 let muchuse_unions = List.fold_left ~f:muchuse_union ~init:muchuse_neutral
@@ -102,14 +105,14 @@ let add_if_not_dup ~(raise : _ Trace.raise) xs b v t =
 
 
 let is_much_used countuse v =
-  match M.find_opt countuse v with
+  match Map.find v countuse with
   | None -> false
   | Some n -> n > 1
 
 
 let muchuse_of_binder ~(raise : _ Trace.raise) v t (countuse, muchused) =
   let muchused = add_if_not_dup ~raise muchused (is_much_used v countuse) v t in
-  let countuse = M.remove v countuse in
+  let countuse = Map.remove countuse v in
   countuse, muchused
 
 
@@ -119,7 +122,7 @@ let rec muchuse_of_expr ~(raise : _ Trace.raise) expr : muchuse =
   | E_literal _ -> muchuse_neutral
   | E_constructor { element; _ } -> muchuse_of_expr element
   | E_constant { arguments; _ } -> muchuse_unions (List.map ~f:muchuse_of_expr arguments)
-  | E_variable v -> M.add v 1 M.empty, []
+  | E_variable v -> Map.set M.empty ~key:v ~data:1, []
   | E_application { lamb; args } ->
     muchuse_union (muchuse_of_expr lamb) (muchuse_of_expr args)
   | E_lambda _ ->
@@ -151,10 +154,10 @@ let rec muchuse_of_expr ~(raise : _ Trace.raise) expr : muchuse =
   | E_type_inst { forall; _ } -> muchuse_of_expr forall
   | E_assign { binder; expression } ->
     muchuse_union
-      (M.add (Binder.get_var binder) 1 M.empty, [])
+      (Map.set M.empty ~key:(Binder.get_var binder) ~data:1, [])
       (muchuse_of_expr expression)
   | E_coerce { anno_expr; _ } -> muchuse_of_expr anno_expr
-  | E_deref var -> M.add var 1 M.empty, []
+  | E_deref var -> Map.set M.empty ~key:var ~data:1, []
   | E_let_mut_in { let_binder; rhs; let_result; _ } ->
     let binders = Pattern.binders let_binder in
     let muchuse_let_result = muchuse_of_expr let_result in

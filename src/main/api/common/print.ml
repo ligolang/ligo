@@ -1,10 +1,10 @@
 module Location = Simple_utils.Location
 open Api_helpers
-open Simple_utils.Function
 module Compile = Ligo_compile
 module Helpers = Ligo_compile.Helpers
 module Raw_options = Compiler_options.Raw_options
 
+let ( <@ ) f g x = f (g x)
 let loc = Location.dummy
 
 let pretty_print (raw_options : Raw_options.t) source_file =

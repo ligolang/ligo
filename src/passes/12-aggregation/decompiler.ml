@@ -1,3 +1,4 @@
+open Core
 open Ligo_prim
 module I = Ast_aggregated
 module O = Ast_typed

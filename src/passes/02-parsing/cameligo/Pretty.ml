@@ -2,13 +2,13 @@
 
 (* Jane Street dependency *)
 
-module List = Core.List
+open Core
 
 (* Vendored dependencies *)
 
 module Utils  = Simple_utils.Utils
 module Region = Simple_utils.Region
-module Option = Simple_utils.Option
+module Ne     = Nonempty_list
 
 (* Local dependencies *)
 
@@ -27,7 +27,7 @@ let prefix = PrettyComb.prefix
 let (^/^)  = PrettyComb.(^/^)
 type state = PrettyComb.state
 
-let (<@) = Utils.(<@)
+let (<@) f g x = f (g x)
 
 (* Placement *)
 
@@ -141,8 +141,8 @@ let print_sepseq :
     None     -> empty
   | Some seq -> print_nsepseq terminator print seq
 
-let print_nseq : 'a.('a -> document) -> 'a Utils.nseq -> document =
-  fun print (head, tail) -> separate_map (break 1) print (head::tail)
+let print_ne_list : 'a.('a -> document) -> 'a Ne.t -> document =
+  fun print (head::tail) -> separate_map (break 1) print (head::tail)
 
 (* UTILITIES *)
 
@@ -187,29 +187,32 @@ let print_mutez (node : (lexeme * Int64.t) wrap) =
   let prefix = print_comments node#comments
                ^/^ (Int64.to_string (snd node#payload) ^ "mutez" |> string)
   in print_line_comment_opt prefix node#line_comment
-  
+
   let print_tez (node : (lexeme * Q.t) wrap) =
     let payload = snd node#payload in
     let numerator = Q.num payload in
     let denominator = Q.den payload in
-    let power_of_ten = Z.((of_string "10") ** (String.length (to_string denominator))) in
+    let power_of_ten = Z.(of_string "10" ** String.length (to_string denominator)) in
     let multiply_by = Z.(power_of_ten / denominator) in
     let adjusted_numerator = Z.(numerator * multiply_by) in
     let integral = Z.(to_string (div adjusted_numerator power_of_ten)) in
     let fractional = Z.(to_string (rem adjusted_numerator power_of_ten)) in
     let num_zeros = String.length (Z.to_string denominator) - String.length fractional in
-    let fractional_with_zeros = (String.make num_zeros '0') ^ fractional in
-    
+    let fractional_with_zeros = String.make num_zeros '0' ^ fractional in
+
     let rec remove_trailing_zeros str =
-      if String.length str > 0 && str.[String.length str - 1] = '0' then
-        remove_trailing_zeros (String.sub str 0 (String.length str - 1))
+      if String.length str > 0 && Char.(str.[String.length str - 1] = '0') then
+        remove_trailing_zeros (String.sub str ~pos:0 ~len:(String.length str - 1))
       else
         str
     in
     let fractional_no_trailing_zeros = remove_trailing_zeros fractional_with_zeros in
 
-    let prefix = print_comments node#comments
-          ^/^ (integral ^ (if fractional_no_trailing_zeros <> "" then "." ^ fractional_no_trailing_zeros else "") ^ "tez" |> string)
+    let prefix =
+      print_comments node#comments
+      ^/^ (integral ^ (if String.(fractional_no_trailing_zeros <> "")
+                       then "." ^ fractional_no_trailing_zeros
+                       else "") ^ "tez" |> string)
     in print_line_comment_opt prefix node#line_comment
 
 let print_string (node : lexeme wrap) =
@@ -246,8 +249,8 @@ let rec print state (cst: CST.t) =
 
 (* DECLARATIONS (top-level) *)
 
-and print_declarations state (node : declaration Utils.nseq) =
-  print_decl_list state (Utils.nseq_to_list node)
+and print_declarations state (node : declaration Ne.t) =
+  print_decl_list state (Ne.to_list node)
 
 and print_decl_list state (node : declaration list) =
   match node with
@@ -297,7 +300,7 @@ and print_attributes state thread attributes =
                 ^^ hardline ^^ thread)
 
 and drop_comment_attr attributes =
-  let not_a_comment w = fst (w#payload) <> "comment"
+  let not_a_comment w = String.(fst (w#payload) <> "comment")
   in List.filter ~f:not_a_comment attributes
 
 (* Preprocessing directives *)
@@ -317,7 +320,7 @@ and print_D_Let state (node : let_decl reg) =
 
 and print_let_binding state (node : let_binding) =
   let {binders; type_params; rhs_type; eq; let_rhs} = node in
-  let head, tail = binders in
+  let head :: tail = binders in
   let thread = print_type_params (print_pattern state head) type_params in
   let thread =
     if List.is_empty tail then thread
@@ -342,7 +345,7 @@ and print_type_params thread (node : type_params par option) =
     None    -> thread
   | Some {value; _ } ->
       let {lpar; inside=(kwd_type, vars); rpar} = value in
-      let params = print_nseq print_variable vars in
+      let params = print_ne_list print_variable vars in
       thread ^^ space ^^ token lpar ^^ token kwd_type ^^ space ^^ params ^^ token rpar
 
 (* Module declaration (structure) *)
@@ -567,7 +570,7 @@ and print_T_Cart state (node : cartesian reg) =
 
 and print_T_ForAll state (node : for_all reg) =
   let type_vars, dot, type_expr = node.value in
-  print_nseq print_type_var type_vars ^^ token dot
+  print_ne_list print_type_var type_vars ^^ token dot
   ^^ print_type_expr state type_expr
 
 (* Functional type *)
@@ -942,9 +945,9 @@ and print_E_And state (node : bool_and bin_op reg) =
 
 (* Application to data constructors and functions *)
 
-and print_E_App state (node : (expr * expr Utils.nseq) reg) =
+and print_E_App state (node : (expr * expr Ne.t) reg) =
   let fun_or_ctor, args = node.value in
-  let args = print_nseq (print_expr state) args in
+  let args = print_ne_list (print_expr state) args in
   group (print_expr state fun_or_ctor
          ^^ nest state#indent (break 1 ^^ args))
 
@@ -1065,7 +1068,7 @@ and print_E_Fun state (node : fun_expr reg) =
   let thread  = print_type_params thread type_params in
   let thread  = thread ^^ space
                 ^^ nest state#indent
-                        (print_nseq (print_pattern state) binders) in
+                        (print_ne_list (print_pattern state) binders) in
   let thread  = print_opt_type state thread rhs_type in
   group (thread ^^ space ^^ token arrow ^^ space
          ^^ nest state#indent (print_expr state body))

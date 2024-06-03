@@ -1,5 +1,6 @@
 module Michelson = Tezos_utils.Michelson
-open Simple_utils.Display
+module Display = Simple_utils.Display
+module Ligo_Error = Simple_utils.Error
 
 type stacking_error =
   [ `Stacking_corner_case of string * string
@@ -28,7 +29,8 @@ let untranspilable m_type m_data =
 
 
 let error_ppformat
-    : display_format:string display_format -> Format.formatter -> stacking_error -> unit
+    :  display_format:string Display.display_format -> Format.formatter -> stacking_error
+    -> unit
   =
  fun ~display_format f a ->
   match display_format with
@@ -77,9 +79,9 @@ let error_ppformat
         value)
 
 
-let error_json : stacking_error -> Simple_utils.Error.t =
+let error_json : stacking_error -> Ligo_Error.t =
  fun e ->
-  let open Simple_utils.Error in
+  let open Ligo_Error in
   match e with
   | `Stacking_unsupported_primitive c ->
     let message =

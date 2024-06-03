@@ -1,17 +1,17 @@
 open Ast_unified
 open Pass_type
-open Simple_utils.Trace
 open Errors
+module Trace = Simple_utils.Trace
 module Location = Simple_utils.Location
+
+include Flag.With_arg (struct
+  type flag = Syntax_types.t
+end)
 
 (*
     Certain types should translate directly to specific Michelson types
     and thus have their own AST node. (e.g. michelson_or, michelson_pair).
   *)
-
-include Flag.With_arg (struct
-  type flag = Syntax_types.t
-end)
 
 let t_michelson_or ~loc (l : ty_expr) l_ann (r : ty_expr) r_ann =
   t_sum_raw
@@ -29,7 +29,7 @@ let t_michelson_pair ~loc l l_ann r r_ann =
        [ Label.create "0", Some l, [ l_ann ]; Label.create "1", Some r, [ r_ann ] ])
 
 
-let compile ~raise =
+let compile ~(raise : _ Trace.raise) =
   let syntax = get_flag () in
   let pass_ty : ty_expr ty_expr_ -> ty_expr =
    fun t ->
@@ -43,7 +43,7 @@ let compile ~raise =
         let type_args =
           (* this comes from the weird jsligo syntax for michelson types *)
           match type_args with
-          | prod, [] when Syntax_types.equal syntax JsLIGO ->
+          | [ prod ] when Syntax_types.equal syntax JsLIGO ->
             (match get_t_prod prod with
             | Some tys -> tys
             | None -> type_args)
@@ -51,7 +51,7 @@ let compile ~raise =
         in
         let make_michelson_type name make_t =
           match type_args with
-          | t1, [ t2; t3; t4 ] ->
+          | [ t1; t2; t3; t4 ] ->
             (match get_t t2, get_t t4 with
             | T_string s1, T_string s2 ->
               make_t t1 (Attribute.make "annot" s1) t3 (Attribute.make "annot" s2)
@@ -69,7 +69,7 @@ let compile ~raise =
   Fold { idle_fold with ty_expr = pass_ty }
 
 
-let reduction ~raise =
+let reduction ~(raise : _ Trace.raise) =
   let () = ignore raise in
   let ty_expr : ty_expr ty_expr_ -> unit =
    fun te_ ->
@@ -89,13 +89,11 @@ let reduction ~raise =
 
 let name = __MODULE__
 let decompile ~raise:_ = Nothing
-
-open Unit_test_helpers.Ty_expr
-
 let flag_bef = !flag
 let () = flag := Some (true, CameLIGO)
 
 let%expect_test "compile_michelson_pair" =
+  let open Unit_test_helpers.Ty_expr in
   {|
       (T_app
         ((constr (T_var michelson_pair))
@@ -114,6 +112,7 @@ let%expect_test "compile_michelson_pair" =
             (decl_pos 1))))) |}]
 
 let%expect_test "compile_michelson_or" =
+  let open Unit_test_helpers.Ty_expr in
   {|
       (T_app
         ((constr (T_var michelson_or))
@@ -133,6 +132,7 @@ let%expect_test "compile_michelson_or" =
          ()) |}]
 
 let%expect_test "compile_michelson_or_wrong_arity" =
+  let open Unit_test_helpers.Ty_expr in
   {|
     (T_app
       ((constr (T_var michelson_or))
@@ -145,6 +145,7 @@ let%expect_test "compile_michelson_or_wrong_arity" =
                   (michelson_or (T_var michelson_or))) |}]
 
 let%expect_test "compile_michelson_or_type_wrong" =
+  let open Unit_test_helpers.Ty_expr in
   {|
     (T_app
       ((constr (T_var michelson_or))

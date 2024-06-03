@@ -1,5 +1,5 @@
-open Simple_utils
-open Trace
+module Trace = Simple_utils.Trace
+module Http_uri = Simple_utils.Http_uri
 open Main_errors
 open Ligo_prim
 module Stdlib = Stdlib
@@ -8,7 +8,7 @@ module Source_input = BuildSystem.Source_input
 let loc = Location.env
 
 module type Params = sig
-  val raise : (all, Main_warnings.all) raise
+  val raise : (all, Main_warnings.all) Trace.raise
   val options : Compiler_options.t
   val std_lib : Stdlib.t
   val top_level_syntax : Syntax_types.t
@@ -323,8 +323,8 @@ let unqualified_core ~raise
     let std_lib = std_lib
     let top_level_syntax = get_top_level_syntax ~options ~filename ()
   end) in
-  trace ~raise build_error_tracer
-  @@ from_result (compile_unqualified (Source_input.From_file filename))
+  Trace.trace ~raise build_error_tracer
+  @@ Trace.from_result (compile_unqualified (Source_input.From_file filename))
 
 
 let qualified_core ~raise
@@ -344,7 +344,7 @@ let qualified_core ~raise
       | Raw _ -> Syntax_types.CameLIGO
   end) in
   let ast, _ =
-    trace ~raise build_error_tracer @@ from_result (compile_qualified source)
+    Trace.trace ~raise build_error_tracer @@ Trace.from_result (compile_qualified source)
   in
   ast
 
@@ -361,8 +361,8 @@ let qualified_core_from_string ~raise
     let top_level_syntax = get_top_level_syntax ~options ~filename:input.id ()
   end) in
   let ast, _ =
-    trace ~raise build_error_tracer
-    @@ from_result (compile_qualified (Source_input.Raw input))
+    Trace.trace ~raise build_error_tracer
+    @@ Trace.from_result (compile_qualified (Source_input.Raw input))
   in
   ast
 
@@ -379,8 +379,8 @@ let qualified_core_from_raw_input ~raise
     let top_level_syntax = get_top_level_syntax ~options ~filename:file ()
   end) in
   let ast, _ =
-    trace ~raise build_error_tracer
-    @@ from_result (compile_qualified (Source_input.Raw_input_lsp { file; code }))
+    Trace.trace ~raise build_error_tracer
+    @@ Trace.from_result (compile_qualified (Source_input.Raw_input_lsp { file; code }))
   in
   ast
 
@@ -402,7 +402,7 @@ let qualified_typed ~raise
       | Raw _ -> Syntax_types.CameLIGO
   end) in
   let ast, _ =
-    trace ~raise build_error_tracer @@ from_result (compile_qualified source)
+    Trace.trace ~raise build_error_tracer @@ Trace.from_result (compile_qualified source)
   in
   ast
 
@@ -424,7 +424,9 @@ let qualified_typed_str ~raise : options:Compiler_options.t -> string -> Ast_typ
     | None -> "from_build"
   in
   let s = Source_input.Raw { code; id } in
-  let ast, _ = trace ~raise build_error_tracer @@ from_result (compile_qualified s) in
+  let ast, _ =
+    Trace.trace ~raise build_error_tracer @@ Trace.from_result (compile_qualified s)
+  in
   Ligo_compile.Of_core.typecheck ~raise ~options ast
 
 
@@ -527,7 +529,7 @@ let rec build_contract_aggregated ~raise
   let module_path = parse_module_path ~loc module_ in
   let typed_prg = qualified_typed ~raise ~options source in
   let typed_prg =
-    trace ~raise self_ast_typed_tracer @@ Self_ast_typed.all_program typed_prg
+    Trace.trace ~raise self_ast_typed_tracer @@ Self_ast_typed.all_program typed_prg
   in
   let module_path =
     let open Ast_typed.Misc in
@@ -543,7 +545,7 @@ let rec build_contract_aggregated ~raise
   in
   let _sig, contract_sig =
     let sig_ = Ast_typed.to_extended_signature typed_prg in
-    trace_option
+    Trace.trace_option
       ~raise
       (`Self_ast_typed_tracer (Self_ast_typed.Errors.not_a_contract module_))
       (Ast_typed.Misc.get_contract_signature sig_ module_path)
@@ -644,10 +646,10 @@ and build_views ~raise
     let expanded = Ligo_compile.Of_aggregated.compile_expression ~raise aggregated in
     let mini_c = Ligo_compile.Of_expanded.compile_expression ~raise expanded in
     let mini_c =
-      trace ~raise self_mini_c_tracer @@ Self_mini_c.all_expression options mini_c
+      Trace.trace ~raise self_mini_c_tracer @@ Self_mini_c.all_expression options mini_c
     in
     let mini_c_tys =
-      trace_option
+      Trace.trace_option
         ~raise
         (`Self_mini_c_tracer
           (Self_mini_c.Errors.corner_case "Error reconstructing type of views"))
@@ -656,7 +658,7 @@ and build_views ~raise
     let nb_of_views = List.length view_names in
     let aux i view =
       let idx_ty =
-        trace_option
+        Trace.trace_option
           ~raise
           (`Self_mini_c_tracer
             (Self_mini_c.Errors.corner_case "Error reconstructing type of view"))

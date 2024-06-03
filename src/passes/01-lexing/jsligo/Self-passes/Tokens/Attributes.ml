@@ -4,7 +4,6 @@
 
 module Region = Simple_utils.Region
 module Std    = Simple_utils.Std
-module Utils  = Simple_utils.Utils
 
 (* Local dependencies *)
 
@@ -14,7 +13,7 @@ module Wrap      = Lexing_shared.Wrap
 
 (* Utilities *)
 
-let (<@) = Utils.(<@)
+let (<@) f g x = f (g x)
 
 type tokens = Token.t list
 

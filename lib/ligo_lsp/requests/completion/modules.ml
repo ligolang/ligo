@@ -1,3 +1,4 @@
+open Core
 open Common
 open Lsp_helpers
 
@@ -16,7 +17,6 @@ let in_scope (def : Def.t) (scope : def_scope) : bool =
   | Variable _, Term_scope -> true
   | Type _, Type_scope -> true
   | _ -> false
-
 
 (** Provides completions for the fields from the provided reference position of a module
     variable. *)
@@ -56,7 +56,6 @@ let get_module_from_pos
   match%bind.Option Def.get_definition ~normalize module_pos path definitions with
   | Module m -> get_defs_from_mdef m
   | Variable _ | Type _ | Label _ -> None
-
 
 (** Provides completions for the fields from the provided module path. *)
 let module_path_impl

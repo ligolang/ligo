@@ -1,5 +1,10 @@
+open Core
 open Lsp_helpers
 module Path_hashtbl = Hashtbl.Make (Path)
+module Ligo_fun = Simple_utils.Ligo_fun
+
+let ( <@ ) = Ligo_fun.( <@ )
+let uncurry = Ligo_fun.uncurry
 
 (** This is a hash table that stores file data for each file path that was opened. See
     {!Ligo_interface.unprepared_file_data}. *)
@@ -92,7 +97,6 @@ module T = struct
           let* x = run t env in
           run (f x) env)
 
-
   let map = `Define_using_bind
 end
 
@@ -133,13 +137,11 @@ let ask_normalize : (string -> Path.t) t = ask >>| fun x -> x.normalize
 let ask_metadata_download_options : Tzip16_storage.download_options t =
   ask >>| fun x -> x.metadata_download_options
 
-
 (** Add or overwrite the given path to contain the provided file data. *)
 let set_docs_cache (path : Path.t) (data : Ligo_interface.unprepared_file_data) : unit t =
   let open Let_syntax in
   let%map docs_cache = ask_docs_cache in
   Hashtbl.set docs_cache ~key:path ~data
-
 
 (** Sequencing handlers *)
 
@@ -151,13 +153,11 @@ let iter (xs : 'a list) ~f:(h : 'a -> unit t) : unit t =
   in
   go xs
 
-
 (** Fold over a list while performing an action on them. *)
 let rec fold_left ~(init : 'acc) ~(f : 'acc -> 'elt -> 'acc t) : 'elt list -> 'acc t
   = function
   | [] -> return init
   | x :: xs -> f init x >>= fun init -> fold_left ~init ~f xs
-
 
 (** Map over a list while performing an action that may create more elements. Concat the
     results. *)
@@ -167,7 +167,6 @@ let concat_map ~(f : 'a -> 'b list t) : 'a list -> 'b list t =
     | x :: xs -> f x >>= fun ys -> go (List.rev_append ys acc) xs
   in
   go []
-
 
 (** Conditional computations *)
 
@@ -182,20 +181,17 @@ let when_some (m_opt : 'a option) (f : 'a -> 'b t) : 'b option t =
   | Some m -> f m >>| Option.some
   | None -> return None
 
-
 (** Iterate over [Some] performing an [unit]-producing action or [pass] otherwise. *)
 let when_some_ (m_opt : 'a option) (f : 'a -> unit t) : unit t =
   match m_opt with
   | Some m -> f m
   | None -> pass
 
-
 (** Bind over an action if it produced [Some]. *)
 let when_some' (m_opt : 'a option) (f : 'a -> 'b option t) : 'b option t =
   match m_opt with
   | Some m -> f m
   | None -> return None
-
 
 (** Sends a message to the client with the provided logging level. In VSCode, for
     instance, it will appear in the Output > LIGO Language Server window. *)
@@ -208,7 +204,6 @@ let send_log_msg ~(type_ : MessageType.t) (s : string) : unit t =
     then lift_io @@ nb#send_log_msg ~type_ s
     else pass
   | Mock _ -> pass
-
 
 (** Send diagnostics (errors, warnings) to the LSP client. *)
 let send_diagnostic (uri : DocumentUri.t) (s : Diagnostic.t list) : unit t =
@@ -230,7 +225,6 @@ let send_diagnostic (uri : DocumentUri.t) (s : Diagnostic.t list) : unit t =
       (DocumentUri.to_path ~normalize uri)
       ~f:(Option.value_map ~default:s ~f:(( @ ) s))
 
-
 (** Message will appear in log in case [logging_verbosity = MessageType.Log]. *)
 let send_debug_msg : string -> unit t = send_log_msg ~type_:MessageType.Log
 
@@ -244,7 +238,6 @@ let send_message ?(type_ : MessageType.t = Info) (message : string) : unit t =
       (nb#send_notification @@ ShowMessage (ShowMessageParams.create ~message ~type_))
   | Mock _ -> pass
 
-
 (** Helper data type to unlift a [t] action into an [IO.t] *)
 type unlift_io = { unlift_io : 'a. 'a t -> 'a IO.t }
 
@@ -252,7 +245,6 @@ type unlift_io = { unlift_io : 'a. 'a t -> 'a IO.t }
     [t]. *)
 let with_run_in_io : (unlift_io -> 'b IO.t) -> 'b t =
  fun inner -> Handler (fun env -> inner { unlift_io = (fun t -> run t env) })
-
 
 (** Sends a LSP request from the server to the client. *)
 let send_request
@@ -268,7 +260,6 @@ let send_request
     in
     pass
   | Mock _ -> pass
-
 
 (** List [send_message], but also sends a list of options that the user can click on.
     [handler] is a callback that will be called once the user has pressed some button. *)
@@ -286,7 +277,6 @@ let send_message_with_buttons
   in
   send_request smr handler
 
-
 (** Attempts to get the LIGO syntax of the provided path, or fails otherwise. *)
 let get_syntax_exn : Path.t -> Syntax_types.t t =
  fun path ->
@@ -294,7 +284,6 @@ let get_syntax_exn : Path.t -> Syntax_types.t t =
   | None ->
     lift_io @@ IO.failwith @@ "Expected file with LIGO code, got: " ^ Path.to_string path
   | Some s -> return s
-
 
 (** Use document info from cache. In case it was not found, returns the [default] value.
     This can happen only if we obtained a request for document that was not opened, so
@@ -387,7 +376,7 @@ let with_cached_doc ~(default : 'a) (path : Path.t) (f : Ligo_interface.file_dat
         then pass
         else send_diagnostic uri []
       in
-      let%bind () = iter diags_by_file ~f:(Simple_utils.Utils.uncurry send_diagnostic) in
+      let%bind () = iter diags_by_file ~f:(uncurry send_diagnostic) in
       f
         { code
         ; syntax
@@ -399,13 +388,11 @@ let with_cached_doc ~(default : 'a) (path : Path.t) (f : Ligo_interface.file_dat
         ; lambda_types = defs_and_diagnostics.lambda_types
         })
 
-
 (** Calculates definitions and scopes for the given file path, saving them to the cache
     and sending diagnostics to the client. If the document was already processed then this
     function will do nothing. *)
 let process_doc (path : Path.t) : unit t =
   with_cached_doc path ~default:() (fun _ -> pass)
-
 
 (** The same as [with_cached_doc], but the provided function doesn't need to produce a
     [t]. This is just a convenience to avoid calling [return]. *)
@@ -418,7 +405,6 @@ let with_cached_doc_pure
   let f' = return <@ f in
   with_cached_doc path ~default f'
 
-
 (** Like [with_cached_doc], but only provide the source code. *)
 let with_code (path : Path.t) ~(default : 'a) (f : string -> 'a t) : 'a t =
   let open Let_syntax in
@@ -426,7 +412,6 @@ let with_code (path : Path.t) ~(default : 'a) (f : string -> 'a t) : 'a t =
   match Hashtbl.find docs path with
   | Some file_data -> f file_data.code
   | None -> return default
-
 
 (** Like [with_cached_doc], but parses a CST from code. If [strict] is passed, then the
     error recovery for parsing will be disabled, and the [default] value will be returned
@@ -463,7 +448,6 @@ let with_cst
     let%bind () = on_error err in
     return default
   | Ok cst -> f cst
-
 
 (** Sets the project root to the provided path, by updating [last_project_dir] and
     [mod_res] accordingly.*)

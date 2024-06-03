@@ -1,5 +1,7 @@
 open Ast_unified
-open Simple_utils.Function
+module Ligo_fun = Simple_utils.Ligo_fun
+
+let ( <@ ) = Ligo_fun.( <@ )
 
 type 'a code_transformation = 'a -> 'a
 

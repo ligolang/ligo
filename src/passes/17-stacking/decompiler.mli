@@ -1,9 +1,8 @@
-open Errors
 open Mini_c.Types
-open Simple_utils.Trace
+module Trace = Simple_utils.Trace
 
 val decompile_value
-  :  raise:(stacking_error, _) raise
-  -> 'l Michelson.t
-  -> 'l Michelson.t
+  :  raise:(Errors.stacking_error, _) Trace.raise
+  -> 'l Errors.Michelson.t
+  -> 'l Errors.Michelson.t
   -> value

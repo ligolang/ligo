@@ -1,13 +1,14 @@
 open Ast_unified
 open Pass_type
-open Simple_utils.Trace
 open Errors
+module Trace = Simple_utils.Trace
+module Ne_list = Simple_utils.Ne_list
 module Location = Simple_utils.Location
-
-(* Throw an error upon module openening that can't be converted to module access *)
 include Flag.No_arg ()
 
-let rec dig_proj_until_var ~raise ~f proj =
+(* Throw an error upon module openening that can't be converted to module access *)
+
+let rec dig_proj_until_var ~(raise : _ Trace.raise) ~f proj =
   match get_e_proj proj with
   | Some (struct_, path) ->
     let struct_ =
@@ -19,7 +20,7 @@ let rec dig_proj_until_var ~raise ~f proj =
   | None -> raise.error (unsupported_module_access (`Expr proj))
 
 
-let compile ~raise =
+let compile ~(raise : _ Trace.raise) =
   let expr : (expr, _, _, _, _) expr_ -> expr =
    fun e ->
     let loc = Location.get_location e in
@@ -37,7 +38,7 @@ let compile ~raise =
         } ->
       e_module_access
         ~loc
-        { module_path = List.Ne.append mpl mpr; field; field_as_open = false }
+        { module_path = Ne_list.append mpl mpr; field; field_as_open = false }
     | E_module_open_in { module_path; field; _ } ->
       let f v = e_module_access ~loc { module_path; field = v; field_as_open = false } in
       dig_proj_until_var ~raise ~f field
@@ -61,7 +62,7 @@ let compile ~raise =
       | Some v ->
         t_module_access
           ~loc
-          { module_path = List.Ne.singleton module_path
+          { module_path = Nonempty_list.[ module_path ]
           ; field = v
           ; field_as_open = false
           }
@@ -70,16 +71,16 @@ let compile ~raise =
         | T_module_access { module_path = module_path'; field; _ } ->
           t_module_access
             ~loc
-            { module_path = List.Ne.cons module_path module_path'
+            { module_path = Nonempty_list.cons module_path module_path'
             ; field
             ; field_as_open = false
             }
         | T_app { type_args; constr } ->
           let field' =
-            trace_option ~raise (unsupported_module_access (`Type field))
+            Trace.trace_option ~raise (unsupported_module_access (`Type field))
             @@ get_t_var constr
           in
-          let module_path = List.Ne.singleton module_path in
+          let module_path = Nonempty_list.[ module_path ] in
           t_module_app
             ~loc
             { type_args; constr = { module_path; field = field'; field_as_open = false } }
@@ -90,7 +91,7 @@ let compile ~raise =
           t_module_app
             ~loc
             { constr =
-                { module_path = List.Ne.cons module_path module_path'
+                { module_path = Nonempty_list.cons module_path module_path'
                 ; field
                 ; field_as_open = false
                 }
@@ -102,7 +103,7 @@ let compile ~raise =
   Fold { idle_fold with expr; ty_expr }
 
 
-let reduction ~raise =
+let reduction ~(raise : _ Trace.raise) =
   { Iter.defaults with
     expr =
       (function

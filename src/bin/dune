@@ -112,6 +112,5 @@
   ligo.main_interpreter
   ligo.api
   cli)
- (flags -open Core)
  (modules runligo)
  (package ligo))

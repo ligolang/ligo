@@ -1,5 +1,6 @@
-module PP = Simple_utils.PP_helpers
 open Ligo_prim
+module PP_helpers = Simple_utils.PP_helpers
+module Ligo_option = Simple_utils.Ligo_option
 include Type_def
 
 type content = [%import: Type_def.content]
@@ -498,7 +499,7 @@ and pp_construct ~name_of_tvar ~name_of_exists ppf { constructor; parameters; _ 
     ppf
     "%s%a"
     (Literal_types.to_string constructor)
-    (PP.list_sep_d_par (pp ~name_of_tvar ~name_of_exists))
+    (PP_helpers.list_sep_d_par (pp ~name_of_tvar ~name_of_exists))
     parameters
 
 
@@ -612,14 +613,14 @@ let get_entrypoint ty =
 let dynamic_entrypoint : t -> (t, [> `Not_entry_point_form of t ]) result =
  fun ty ->
   Result.of_option
-    Simple_utils.Option.(
+    Ligo_option.(
       let* p, s = get_entrypoint ty in
-      return @@ t_construct ~loc:ty.location Dynamic_entrypoint [ p; s ] ())
+      Option.return @@ t_construct ~loc:ty.location Dynamic_entrypoint [ p; s ] ())
     ~error:(`Not_entry_point_form ty)
 
 
 let parameter_from_entrypoints
-    :  (Value_var.t * t) Simple_utils.List.Ne.t
+    :  (Value_var.t * t) Nonempty_list.t
     -> ( t * t
        , [> `Not_entry_point_form of Value_var.t * t
          | `Storage_does_not_match of Value_var.t * t * Value_var.t * t
@@ -634,12 +635,12 @@ let parameter_from_entrypoints
   let%bind () =
     (* check entrypoints have no duplicates *)
     entrypoints
-    |> Simple_utils.List.Ne.to_list
+    |> Nonempty_list.to_list
     |> List.find_a_dup ~compare:(fun a b -> Value_var.compare (fst a) (fst b))
     |> Option.value_map ~default:(Result.Ok ()) ~f:(fun (x, _ty) ->
            Result.Error (`Duplicate_entrypoint x))
   in
-  let (entrypoint, entrypoint_type), rest = entrypoints in
+  let ((entrypoint, entrypoint_type) :: rest) = entrypoints in
   let%bind parameter, storage =
     Result.of_option
       (get_entrypoint entrypoint_type)
@@ -665,10 +666,10 @@ let parameter_from_entrypoints
   let%bind () =
     (* If storage as a `dynamic_entrypoints` field, we expect only one extra field `storage` *)
     let opt =
-      Simple_utils.Option.(
+      Ligo_option.(
         let* rows = get_t_record storage in
         let* _ = Row.find_type rows (Label.of_string "dynamic_entrypoints") in
-        return rows)
+        Option.return rows)
     in
     match opt with
     | None -> return ()

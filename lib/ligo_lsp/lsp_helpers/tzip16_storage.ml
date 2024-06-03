@@ -16,7 +16,6 @@ let rec get_all_contract_sigs (env : Ast_typed.signature) : Ast_typed.contract_s
   in
   Option.to_list this_sig @ child_sigs
 
-
 type var_declaration_info =
   { binders : Ast_typed.type_expression Ligo_prim.Binder.t list
   ; value : Ast_typed.expression
@@ -46,7 +45,6 @@ let rec get_all_variables_info (prg : Ast_typed.declaration list)
         | M_variable _ | M_module_path _ -> Sequence.empty)
       | D_module_include _ | D_type _ | D_signature _ | D_import _ -> Sequence.empty)
 
-
 (** Makes best effort to tell whether this type is some storage type or not. *)
 let is_potential_storage_type
     (type_expr : Ast_typed.type_expression)
@@ -63,11 +61,9 @@ let is_potential_storage_type
   in
   has_metadata && has_known_type ()
 
-
 let location_is_from_file (path : Path.t) : Location.t -> bool = function
   | Virtual _ -> false
   | File reg -> String.equal (Path.to_string path) reg#file
-
 
 (** Extract all potential storages from a file *)
 let vars_to_mark_as_tzip16_compatible (cur_file : Path.t) (prg : Ast_typed.program)
@@ -97,7 +93,6 @@ let vars_to_mark_as_tzip16_compatible (cur_file : Path.t) (prg : Ast_typed.progr
            else None)
   |> Sequence.to_list
 
-
 let values_for_tzip16_check (cur_file : Path.t) (prg : Ast_typed.declaration list)
     : (Ast_typed.expression * Location.t) Sequence.t
   =
@@ -109,7 +104,6 @@ let values_for_tzip16_check (cur_file : Path.t) (prg : Ast_typed.declaration lis
          | _ -> None)
   |> Sequence.filter ~f:(fun (_expr, loc) -> location_is_from_file cur_file loc)
 
-
 type download_options = Ligo_run.Of_michelson.Checks.Json_download.options
 
 let create_download_options ~(enabled : bool) ~(timeout_sec : float) : download_options =
@@ -120,7 +114,6 @@ let create_download_options ~(enabled : bool) ~(timeout_sec : float) : download_
       ; timeout_sec = Some timeout_sec
       }
   else `Disabled
-
 
 let check_typed_storage
     ~(options : Compiler_options.t)
@@ -175,7 +168,6 @@ let check_typed_storage
     ~json_download
     ~storage_type:compiled_storage.expr_ty
     michelson_value
-
 
 let check_typed_program
     ~(options : Compiler_options.t)

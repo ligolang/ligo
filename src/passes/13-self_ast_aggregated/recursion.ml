@@ -1,6 +1,6 @@
 open Ligo_prim
 open Ast_aggregated
-open Simple_utils.Trace
+module Trace = Simple_utils.Trace
 
 let var_equal = Value_var.equal
 
@@ -10,7 +10,7 @@ let check_rec_binder_shadowed ~fun_name ~(lambda : _ Lambda.t) =
   var_equal fun_name (Param.get_var lambda.binder) || is_binder_shadowed_in_body
 
 
-let show_unused_rec_warning ~raise ~warn_unused_rec fun_name =
+let show_unused_rec_warning ~(raise : _ Trace.raise) ~warn_unused_rec fun_name =
   if warn_unused_rec
   then
     raise.warning

@@ -1,8 +1,7 @@
 open Ast_unified
 open Pass_type
-open Simple_utils.Trace
-open Simple_utils
 open Errors
+module Trace = Simple_utils.Trace
 module Location = Simple_utils.Location
 include Flag.No_arg ()
 
@@ -13,7 +12,7 @@ let unlinear_pattern pattern : bool =
 
 let unlinear_type compare vars : bool = is_some @@ List.find_a_dup vars ~compare
 
-let compile ~raise =
+let compile ~(raise : _ Trace.raise) =
   let pattern : _ pattern_ -> unit =
    fun p -> if unlinear_pattern p then raise.error (non_linear_pattern p)
   in
@@ -21,7 +20,7 @@ let compile ~raise =
    fun d ->
     match Location.unwrap d with
     | D_type_abstraction { name = _; params = Some args; type_expr = _ } ->
-      if List.contains_dup (List.Ne.to_list args) ~compare:Ty_variable.compare
+      if List.contains_dup (Nonempty_list.to_list args) ~compare:Ty_variable.compare
       then raise.error (non_linear_type (`Decl ({ fp = d } : declaration)))
     | _ -> ()
   in

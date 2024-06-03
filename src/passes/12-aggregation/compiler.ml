@@ -1,7 +1,10 @@
-module I = Ast_typed
-module O = Ast_aggregated
+open Core
 open Errors
 open Ligo_prim
+module Location = Simple_utils.Location
+module Trace = Simple_utils.Trace
+module I = Ast_typed
+module O = Ast_aggregated
 
 (*
   This pass flattens programs with module declarations into a list of simple top-level declarations.
@@ -68,7 +71,7 @@ module Data = struct
   type path = string list
 
   module IMap = Map.Make (struct
-    type t = int [@@deriving sexp_of]
+    type t = int [@@deriving sexp]
 
     let compare = Int.compare
   end)
@@ -100,13 +103,13 @@ module Data = struct
   let new_global_decl : decl -> int =
    fun d ->
     let cur_max_idx, dm = !decl_map in
-    decl_map := cur_max_idx + 1, IMap.add cur_max_idx d dm;
+    decl_map := cur_max_idx + 1, Map.set ~key:cur_max_idx ~data:d dm;
     cur_max_idx
 
 
   let get_global_decl : int -> decl =
    fun i ->
-    match IMap.find_opt i (snd @@ !decl_map) with
+    match Map.find (snd @@ !decl_map) i with
     | Some x -> x
     | None -> failwith "corner case: could not find decl in decl_map"
 
@@ -496,7 +499,7 @@ and compile_module_expr ~(raise : _ Trace.raise) ?(copy_content = false)
     let res = Data.resolve_path env [ v ] in
     if copy_content then Data.refresh res path else { res with content = [] }
   | M_module_path m_path ->
-    let res = Data.resolve_path env (List.Ne.to_list m_path) in
+    let res = Data.resolve_path env (Nonempty_list.to_list m_path) in
     if copy_content then Data.refresh res path else { res with content = [] }
 
 

@@ -1,8 +1,9 @@
+open Lexing_jsligo.Token
 module CST = Cst.Jsligo
 module AST = Ast_unified
 module Helpers = Unification_shared.Helpers
-open Simple_utils
-open Lexing_jsligo.Token
+module Utils = Simple_utils.Utils
+module Location = Simple_utils.Location
 module Value_escaped_var = Nano_prim.Value_escaped_var
 module Ty_escaped_var = Nano_prim.Ty_escaped_var
 
@@ -71,17 +72,17 @@ and sig_expr
     let inside = Utils.sep_or_term_of_list ~sep:ghost_semi ~sep_or_term:`Sep inside in
     CST.(I_Body (w { lbrace = ghost_lbrace; inside; rbrace = ghost_rbrace }))
   | { wrap_content = AST.S_path lst; location } ->
-    let lst = List.Ne.map decompile_mvar lst in
+    let lst = Nonempty_list.map ~f:decompile_mvar lst in
     let module_path_opt, property =
-      let last, lst = List.Ne.rev lst in
-      ( (match List.Ne.of_list_opt lst with
-        | None -> None
-        | Some lst -> Some (List.Ne.rev lst))
+      let (last :: lst) = Nonempty_list.reverse lst in
+      ( (match lst with
+        | [] -> None
+        | hd :: tl -> Some (Nonempty_list.reverse (hd :: tl)))
       , last )
     in
     (match module_path_opt with
     | Some namespace_path ->
-      let namespace_path = Utils.nsepseq_of_nseq ~sep:ghost_dot lst in
+      let namespace_path = Utils.nsepseq_of_ne_list ~sep:ghost_dot lst in
       let xx : _ CST.namespace_path =
         CST.{ namespace_path; selector = ghost_dot; property }
       in
@@ -128,23 +129,23 @@ and sig_entry
 
 
 and decompile_to_namespace_path
-    : type a. AST.Mod_variable.t Simple_utils.List.Ne.t -> a -> a CST.namespace_path
+    : type a. AST.Mod_variable.t Nonempty_list.t -> a -> a CST.namespace_path
   =
  fun module_path field ->
   let f v = ghost_ident @@ Format.asprintf "%a" AST.Mod_variable.pp v in
-  let module_path = List.Ne.map f module_path in
-  let namespace_path = Utils.nsepseq_of_nseq ~sep:ghost_dot module_path in
+  let module_path = Nonempty_list.map ~f module_path in
+  let namespace_path = Utils.nsepseq_of_ne_list ~sep:ghost_dot module_path in
   (* XXX: What is [field_as_open]?? Do we expect module path with more than 1 element here? *)
   CST.{ namespace_path; selector = ghost_dot; property = field }
 
 
 and decompile_to_namespace_selection
-    : AST.Mod_variable.t Simple_utils.List.Ne.t -> CST.namespace_selection
+    : AST.Mod_variable.t Nonempty_list.t -> CST.namespace_selection
   =
  fun module_path ->
   let f v = ghost_ident @@ Format.asprintf "%a" AST.Mod_variable.pp v in
-  let module_path = List.Ne.map f module_path in
-  let namespace_path = Utils.nsepseq_of_nseq ~sep:ghost_dot module_path in
+  let module_path = Nonempty_list.map ~f module_path in
+  let namespace_path = Utils.nsepseq_of_ne_list ~sep:ghost_dot module_path in
   (* XXX: What is [field_as_open]?? Do we expect module path with more than 1 element here? *)
   match namespace_path with
   | m, [] -> M_Alias m
@@ -163,12 +164,11 @@ and decompile_to_namespace_selection
 
 and decompile_namespace_path
     : type a.
-      (AST.Mod_variable.t Simple_utils.List.Ne.t, a) AST.Mod_access.t
-      -> a CST.namespace_path
+      (AST.Mod_variable.t Nonempty_list.t, a) AST.Mod_access.t -> a CST.namespace_path
   =
  fun { module_path; field; field_as_open = _ } ->
-  let module_path = List.Ne.map decompile_mvar module_path in
-  let namespace_path = Utils.nsepseq_of_nseq ~sep:ghost_dot module_path in
+  let module_path = Nonempty_list.map ~f:decompile_mvar module_path in
+  let namespace_path = Utils.nsepseq_of_ne_list ~sep:ghost_dot module_path in
   (* XXX: What is [field_as_open]?? Do we expect module path with more than 1 element here? *)
   CST.{ namespace_path; selector = ghost_dot; property = field }
 
@@ -321,7 +321,7 @@ and ty_expr : CST.type_expr AST.ty_expr_ -> CST.type_expr =
   | T_nat (_, z) -> T_Nat (ghost_nat z)
   | T_string s -> T_String (ghost_string s)
   | T_module_open_in { module_path; field; field_as_open } ->
-    let module_path = module_path, [] in
+    let module_path = Nonempty_list.[ module_path ] in
     let v : CST.type_expr CST.namespace_path =
       decompile_to_namespace_path module_path field
     in
@@ -335,13 +335,13 @@ and ty_expr : CST.type_expr AST.ty_expr_ -> CST.type_expr =
   | T_arg s -> T_Var (Var (ghost_ident s))
   (* ^ XXX is this correct? CameLIGO has separate T_Arg in CST *)
   | T_app { constr; type_args } ->
-    let params_nsepseq = Utils.nsepseq_of_nseq type_args ~sep:ghost_comma in
+    let params_nsepseq = Utils.nsepseq_of_ne_list type_args ~sep:ghost_comma in
     let params =
       CST.{ lchevron = ghost_lt; inside = `Sep params_nsepseq; rchevron = ghost_gt }
     in
     T_App (w (constr, w params))
   | T_prod types ->
-    let inside = Utils.nsepseq_of_nseq types ~sep:ghost_comma in
+    let inside = Utils.nsepseq_of_ne_list types ~sep:ghost_comma in
     let inside : (CST.type_expr, CST.comma) Utils.nsep_or_term = `Sep inside in
     let v : (CST.type_expr, CST.comma) Utils.nsep_or_term CST.brackets' =
       CST.{ lbracket = ghost_lbracket; rbracket = ghost_rbracket; inside }
@@ -441,8 +441,13 @@ and ty_expr : CST.type_expr AST.ty_expr_ -> CST.type_expr =
   | T_for_alls Ligo_prim.Abstractions.{ ty_binders = []; kind = _; type_ } -> type_
   | T_for_alls Ligo_prim.Abstractions.{ ty_binders; kind = _; type_ } ->
     let ty_binders = List.map ~f:decompile_tvar_into_var ty_binders in
-    let ty_binders = List.Ne.of_list ty_binders in
-    let generics_nsepseq = Utils.nsepseq_of_nseq ty_binders ~sep:ghost_comma in
+    let ty_binders : _ Nonempty_list.t =
+      match ty_binders with
+      | [] -> assert false
+      | hd :: tl -> Nonempty_list.( :: ) (hd, tl)
+    in
+    (* FIXME: Ne *)
+    let generics_nsepseq = Utils.nsepseq_of_ne_list ty_binders ~sep:ghost_comma in
     let generics : CST.generics =
       w
       @@ CST.

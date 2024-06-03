@@ -1,13 +1,13 @@
 open Ast_unified
 open Pass_type
-open Simple_utils.Trace
 open Errors
+module Trace = Simple_utils.Trace
+module Ne_list = Simple_utils.Ne_list
 module Location = Simple_utils.Location
+include Flag.No_arg ()
 
 (* REMITODO : create E_fun and e_poly_recursive which do not hold type_params ? *)
 (* REMITODO : t_forall on ret_type if any *)
-
-include Flag.No_arg ()
 
 let fun_type_from_parameters ~raise parameters ret_type body =
   let param_types_opt =
@@ -16,9 +16,9 @@ let fun_type_from_parameters ~raise parameters ret_type body =
   in
   let fun_type_opt = param_types_opt @ [ ret_type ] in
   let lst =
-    trace_option ~raise (recursive_no_annot body) (List.Ne.of_list_opt fun_type_opt)
+    Trace.trace_option ~raise (recursive_no_annot body) (Ne_list.of_list_opt fun_type_opt)
   in
-  List.Ne.map
+  Ne_list.map
     (function
       | Some ty -> ty
       | None -> raise.error (recursive_no_annot body))
@@ -77,7 +77,7 @@ let compile ~raise =
   Fold { idle_fold with expr; declaration }
 
 
-let reduction ~raise =
+let reduction ~(raise : _ Trace.raise) =
   { Iter.defaults with
     expr =
       (function

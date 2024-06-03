@@ -1,9 +1,9 @@
-module Location = Simple_utils.Location
-module Trace = Simple_utils.Trace
 open PPrint
 open Ligo_prim
-open Simple_utils.Function
+module Location = Simple_utils.Location
+module Trace = Simple_utils.Trace
 
+let ( <@ ) f g x = f (g x)
 let strip_empty = List.filter ~f:(fun doc -> not @@ is_empty doc)
 let unwords : document list -> document = separate space <@ strip_empty
 let unlines : document list -> document = separate hardline <@ strip_empty
@@ -131,7 +131,8 @@ let rec decl_to_typescript (decl : Ast_typed.decl) : document =
     when (not hidden) && not (Module_var.is_generated module_binder) ->
     let name = Module_var.to_name_exn module_binder in
     let doc = comments_to_doc leading_comments in
-    let import (var, vars) =
+    let import : _ Nonempty_list.t -> _ =
+     fun (var :: vars) ->
       let import_line mod_path =
         unwords [ export public; !^"import"; !^name; equals; mod_path ]
       in
@@ -155,7 +156,7 @@ let rec decl_to_typescript (decl : Ast_typed.decl) : document =
     | M_struct decls ->
       let content = unlines @@ List.map decls ~f:decl_to_typescript in
       attach_doc doc @@ unwords [ export public; !^"namespace"; !^name; braces content ]
-    | M_variable var -> import (var, [])
+    | M_variable var -> import [ var ]
     | M_module_path vars -> import vars)
   | D_module_include _ -> (* This is impossible in JsLIGO *) empty
   | D_signature

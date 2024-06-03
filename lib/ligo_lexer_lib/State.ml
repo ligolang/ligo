@@ -17,14 +17,14 @@ type 'token state = <
   decoder        : Uutf.decoder;
   supply         : Bytes.t -> int -> int -> unit;
 
-  lexical_units  : 'token Unit.lex_unit list;
+  lexical_units  : 'token LexUnit.lex_unit list;
 
   push_token     :        'token -> 'token state;
   push_directive :   Directive.t -> 'token state;
   push_markup    :      Markup.t -> 'token state;
 
-  push_line      :      Thread.t -> 'token state;
-  push_block     :      Thread.t -> 'token state;
+  push_line      :   LexThread.t -> 'token state;
+  push_block     :   LexThread.t -> 'token state;
   push_space     : Lexing.lexbuf -> 'token state;
   push_tabs      : Lexing.lexbuf -> 'token state;
   push_bom       : Lexing.lexbuf -> 'token state;

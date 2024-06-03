@@ -1,10 +1,11 @@
 open Ast_unified
 open Pass_type
-open Simple_utils.Trace
-open Simple_utils
 open Errors
+module Trace = Simple_utils.Trace
+module Ne_list = Simple_utils.Ne_list
 module Location = Simple_utils.Location
-module List = Simple_utils.List
+module Ligo_option = Simple_utils.Ligo_option
+include Flag.No_arg ()
 
 (* this pass handle the let-syntax, e.g:
   let f (type a b) x y : t = ..
@@ -14,7 +15,6 @@ module List = Simple_utils.List
 
   In essence, discriminating functions binding from a regular binding (match)
 *)
-include Flag.No_arg ()
 
 let type_lhs_to_rhs : ty_expr option -> pattern -> ty_expr option =
  fun ty_opt pattern ->
@@ -38,7 +38,7 @@ let merge_rhs type_params parameters rhs_type body =
   | Some { type_params = in_type_params; parameters = in_parameters; ret_type; body } ->
     let type_params =
       match type_params, in_type_params with
-      | Some x, Some y -> Some (List.Ne.append x y)
+      | Some x, Some y -> Some (Ne_list.append x y)
       | x, None | None, x -> x
     in
     Poly_fun.{ type_params; parameters = parameters @ in_parameters; ret_type; body }
@@ -52,10 +52,10 @@ let compile_let_rhs
     fun_pattern
     type_params
     (parameters : pattern list)
-    rhs_type
+    (rhs_type : ty_expr option)
     (body : expr)
   =
-  let param_tys_opt =
+  let param_tys_opt : ty_expr list option =
     Option.all (List.map parameters ~f:(fun x -> Option.map ~f:fst (get_p_typed x)))
   in
   let rhs =
@@ -71,23 +71,28 @@ let compile_let_rhs
         match parameters with
         | [] ->
           (* `let rec f : a -> b -> c = fun x y -> x + y` *)
-          Recursive.User (trace_option ~raise (recursive_no_annot body) rhs_type)
+          Recursive.User (Trace.trace_option ~raise (recursive_no_annot body) rhs_type)
         | _ ->
           (* let rec f (x:a) (x:b) : c = x + y *)
-          let ft_opt =
-            let open Simple_utils.Option in
+          let ft_opt : ty_expr Nonempty_list.t option =
+            let open Ligo_option in
             let* rhs_type in
             let* param_tys_opt in
-            return (List.Ne.of_list (param_tys_opt @ [ rhs_type ]))
+            let (hd, tl) : ty_expr * ty_expr list =
+              match param_tys_opt with
+              | [] -> rhs_type, []
+              | hd :: tl -> hd, tl @ [ rhs_type ]
+            in
+            Option.return Ne_list.(hd :: tl)
           in
-          Recursive.Extracted (trace_option ~raise (recursive_no_annot body) ft_opt)
+          Recursive.Extracted (Trace.trace_option ~raise (recursive_no_annot body) ft_opt)
       in
       e_poly_recursive ~loc Recursive.{ fun_name; fun_type; lambda = fun_ })
     else e_poly_fun ~loc fun_
   in
   let lhs =
     let lhs_ty_opt =
-      let open Option in
+      let open Ligo_option in
       let* param_tys_opt in
       let* rhs_type in
       let ft =
@@ -100,7 +105,7 @@ let compile_let_rhs
         | None -> ft
         | Some type_params -> t_type_forall_ez type_params ft
       in
-      return generalized
+      Option.return generalized
     in
     Option.value_map lhs_ty_opt ~default:fun_pattern ~f:(fun ty ->
         p_typed ~loc:(get_p_loc fun_pattern) ty fun_pattern)
@@ -114,14 +119,15 @@ let compile ~raise =
     let loc = Location.get_location e in
     match Location.unwrap e with
     | E_let_in
-        { is_rec = false; type_params = None; lhs = binder, []; rhs_type; rhs; body } ->
+        { is_rec = false; type_params = None; lhs = [ binder ]; rhs_type; rhs; body } ->
       let rhs_type = type_lhs_to_rhs rhs_type binder in
       let rhs =
         Option.value_map rhs_type ~default:rhs ~f:(fun t ->
             e_annot ~loc:(get_e_loc rhs) (rhs, t))
       in
       e_simple_let_in ~loc { binder; rhs; let_result = body }
-    | E_let_in { is_rec; type_params; lhs = fun_pattern, params; rhs_type; rhs; body } ->
+    | E_let_in { is_rec; type_params; lhs = fun_pattern :: params; rhs_type; rhs; body }
+      ->
       let fun_pattern, rhs =
         compile_let_rhs
           ~raise
@@ -141,7 +147,7 @@ let compile ~raise =
     let loc = Location.get_location e in
     match Location.unwrap e with
     | D_let
-        { is_rec = false; type_params = None; pattern = pattern, []; rhs_type; let_rhs }
+        { is_rec = false; type_params = None; pattern = [ pattern ]; rhs_type; let_rhs }
       ->
       let rhs_type = type_lhs_to_rhs rhs_type pattern in
       let expr =
@@ -149,7 +155,7 @@ let compile ~raise =
             e_annot ~loc:(get_e_loc let_rhs) (let_rhs, t))
       in
       d_irrefutable_match ~loc { pattern; expr }
-    | D_let { is_rec; type_params; pattern = fun_pattern, params; rhs_type; let_rhs } ->
+    | D_let { is_rec; type_params; pattern = fun_pattern :: params; rhs_type; let_rhs } ->
       let fun_pattern, rhs =
         compile_let_rhs
           ~raise
@@ -176,7 +182,7 @@ let compile ~raise =
   Fold { idle_fold with expr; declaration }
 
 
-let reduction ~raise =
+let reduction ~(raise : _ Trace.raise) =
   { Iter.defaults with
     expr =
       (function

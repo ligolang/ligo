@@ -56,10 +56,12 @@
   and lookup will hit on the first [x], thus never hitting the second, this is how shadowing is handled.
 *)
 
-open Ligo_prim
-open Simple_utils
-module LSet = Types.LSet
-module LMap = Types.LMap
+open Core
+module Value_var = Ligo_prim.Value_var
+module Type_var = Ligo_prim.Type_var
+module Module_var = Ligo_prim.Module_var
+module Label = Ligo_prim.Label
+module Location = Simple_utils.Location
 module Uid_map = Types.Uid_map
 
 (******************************************************************************)
@@ -108,7 +110,7 @@ module Def = struct
    fun new_def ->
     let open Option.Let_syntax in
     let%bind def_uid = make_uid new_def in
-    Uid_map.find_opt def_uid prg_defs
+    Map.find prg_defs def_uid
 
 
   (** Find the given [t]s in the provided [def_map] by their UIDs and return their
@@ -182,7 +184,7 @@ struct
       This is why we augment {!Module_var} with a location-aware comparison function. *)
   module Module_map = struct
     module Mvar_map = Map.Make (struct
-      type t = Module_var.t option
+      type t = Module_var.t option [@@deriving sexp]
 
       let compare =
         Option.compare (fun m1 m2 ->
@@ -201,7 +203,7 @@ struct
         in case of module alias it recusively resolves the alias in the [module_map]. *)
     let rec resolve_mvar : Module_var.t -> t -> (Module_var.t * S.defs) option =
      fun mv module_map ->
-      match%bind.Option Mvar_map.find_opt (Some mv) module_map with
+      match%bind.Option Map.find module_map (Some mv) with
       | Defs defs -> Some (mv, defs)
       | Alias mv' -> resolve_mvar mv' module_map
 
@@ -212,8 +214,8 @@ struct
       Format.fprintf
         ppf
         "%a"
-        Fmt.Dump.(seq (pair (option Module_var.pp) pp_defs_or_alias))
-        (to_seq module_map)
+        Fmt.(list (pair (option Module_var.pp) pp_defs_or_alias))
+        (Map.to_alist module_map)
   end
 
   type module_map = Module_map.t
@@ -244,7 +246,7 @@ struct
     ; avail_defs : S.defs
     ; module_map : module_map
     ; parent_mod : Module_var.t option
-    ; label_types : Ast_core.ty_expr LMap.t
+    ; label_types : Ast_core.ty_expr Location.Map.t
     }
 
   (** Shorthand alias for [env]. *)
@@ -256,7 +258,7 @@ struct
     ; avail_defs = S.empty_defs
     ; module_map = Module_map.empty
     ; parent_mod = None
-    ; label_types = LMap.empty
+    ; label_types = Location.Map.empty
     }
 
 
@@ -280,7 +282,7 @@ struct
       Fmt.Dump.(option Module_var.pp)
       parent_mod
       Fmt.Dump.(list (pair Location.pp Ast_core.PP.type_expression))
-      (Core.Map.to_alist label_types)
+      (Map.to_alist label_types)
 
 
   (******************************************************************************)
@@ -371,16 +373,16 @@ struct
     (referee, alisee and def list), otherwise it returns [None].
     *)
   let rec resolve_mpath
-      :  Module_var.t List.Ne.t -> S.defs -> module_map
+      :  Module_var.t Nonempty_list.t -> S.defs -> module_map
       -> (Module_var.t * Module_var.t * S.defs) option
     =
-   fun (hd, tl) defs mmap ->
+   fun (hd :: tl) defs mmap ->
     match resolve_mvar hd defs mmap with
     | None -> None
     | Some (_real, _m, mdefs) as res ->
       (match tl with
       | [] -> res
-      | hd' :: tl' -> resolve_mpath (hd', tl') mdefs mmap)
+      | hd' :: tl' -> resolve_mpath (hd' :: tl') mdefs mmap)
 
 
   (**
@@ -415,11 +417,11 @@ struct
 
     *)
   let rec fold_resolve_mpath
-      :  Module_var.t List.Ne.t -> S.defs -> module_map -> init:'a
+      :  Module_var.t Nonempty_list.t -> S.defs -> module_map -> init:'a
       -> f:('a -> Module_var.t * Module_var.t * Module_var.t * S.defs -> 'a)
       -> 'a * (Module_var.t * Module_var.t * S.defs) option
     =
-   fun (hd, tl) defs mmap ~init ~f ->
+   fun (hd :: tl) defs mmap ~init ~f ->
     let self mpath defs ~init = fold_resolve_mpath mpath defs mmap ~init ~f in
     match resolve_mvar hd defs mmap with
     | None -> init, None
@@ -427,7 +429,7 @@ struct
       let init = f init (hd, real, m, mdefs) in
       (match tl with
       | [] -> init, res
-      | hd' :: tl' -> self (hd', tl') mdefs ~init)
+      | hd' :: tl' -> self (hd' :: tl') mdefs ~init)
 
 
   (******************************************************************************)
@@ -458,7 +460,7 @@ struct
       ~f:(fun defs_or_alias ->
         { env with
           avail_defs = S.add_def (Module m) env.avail_defs
-        ; module_map = Module_map.add (Some m) defs_or_alias module_map
+        ; module_map = Map.set ~key:(Some m) ~data:defs_or_alias module_map
         })
 
 
@@ -490,13 +492,10 @@ struct
       { env with
         avail_defs = S.union_defs child_defs env.avail_defs
       ; module_map =
-          Module_map.update
-            env.parent_mod
-            (function
+          Map.change module_map env.parent_mod ~f:(function
               | None -> Some (Defs child_defs)
               | Some (Alias _) as alias -> alias
               | Some (Defs defs') -> Some (Defs (S.union_defs child_defs defs')))
-            module_map
       }
 
 
@@ -508,6 +507,8 @@ end
    Plus this pass uses mostly modifying operations (like [add_vvar]), so, using lists
    there would be faster. *)
 module Env_list_impl = struct
+  open Core
+
   type defs = def list
 
   let empty_defs : defs = []
@@ -530,21 +531,21 @@ module Env_map_impl = struct
      The basic idea is to store in this map original definitions. [equal] and [compare]
      for [Def.t] don't take into account the location, so, this could be used to resolve
      references. *)
-  include Core.Map.Make (Def)
+  include Map.Make (Def)
 
   type defs = def t
 
   let empty_defs : defs = empty
-  let lookup_def_opt : defs -> def -> def option = Core.Map.find
+  let lookup_def_opt : defs -> def -> def option = Map.find
 
   let add_def : def -> defs -> defs =
-   fun def defs -> Core.Map.update defs def ~f:(Fn.const def)
+   fun def defs -> Map.update defs def ~f:(Fn.const def)
 
 
-  let to_defs_list : defs -> def list = Core.Map.data
+  let to_defs_list : defs -> def list = Map.data
 
   let union_defs : defs -> defs -> defs =
-    Core.Map.merge_skewed ~combine:(fun ~key:_ lhs _rhs -> lhs)
+    Map.merge_skewed ~combine:(fun ~key:_ lhs _rhs -> lhs)
 
 
   let pp_defs : defs Fmt.t =
