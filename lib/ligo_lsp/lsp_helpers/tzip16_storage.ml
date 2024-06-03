@@ -1,3 +1,4 @@
+open Core
 open Scopes.Types
 
 (** Detects all contracts appearing in the module *)

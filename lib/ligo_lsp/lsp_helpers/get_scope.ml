@@ -1,3 +1,4 @@
+open Core
 module Raw_options = Compiler_options.Raw_options
 module Trace = Simple_utils.Trace
 module SMap = Map.Make (String)
