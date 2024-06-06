@@ -1,47 +1,14 @@
 ---
-id: address
-title: Addresses
+id: contract-address
+title: Contract addresses
 ---
 
 import Syntax from '@theme/Syntax';
 
-An address on the Tezos blockchain is a string whose suffix is the
-hash of the public key of a peer. If that peer is a smart contract,
-the address is prefixed by the string `"KT1"`; otherwise, it is
-associated to an _implicit account_, prefixed by `"kt1"`, `"kt2"` or
-`"kt3"`,
-[depending on the hashing function](https://tezos.gitlab.io/michelson-reference/#type-address).
+In most cases, contracts have addresses that start with `KT1`.
+However, they can also be tied to an implicit account and have an address that starts with `kt1`, `kt2` or `kt3`, [depending on the hashing function](https://tezos.gitlab.io/michelson-reference/#type-address).
 
-There are two ways to define and handle adresses.
-
-### The `address` type
-
-The `address` type in LIGO denotes *a well-formed* Tezos address of
-any kind (`tz1`, `tz2`, `tz3`, `tz4`, `KT1` etc.). Currently, such
-addresses are created by casting a string to the `address`
-type. Beware of failures if the address is invalid. Consider the
-following examples.
-
-<Syntax syntax="cameligo">
-
-```cameligo group=address
-let my_account : address =
-  ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" : address)
-```
-
-</Syntax>
-
-<Syntax syntax="jsligo">
-
-```jsligo group=address
-const my_account: address =
-  "tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" as address;
-```
-
-</Syntax>
-
-Note that a literal value of type `address` does not entail that it is
-the valid address on the chain, only that it is well-formed.
+For information about the type that represents contracts in code, see [Contracts](../contracts).
 
 ### Self
 
@@ -163,30 +130,5 @@ let source : address = Tezos.get_source ()
 ```jsligo group=source
 const source: address = Tezos.get_source();
 ```
-
-</Syntax>
-
-
-### The `contract` type
-
-In order to handle addresses that denote an originated account on the
-chain, we need a value of type `contract`. In fact, it is a type
-parameterised by the type of the contract's parameter. Contrary to the
-type `address`, there are no literal values of the type `contract`, so
-values have to be created by means of predefined functions.
-
-<Syntax syntax="cameligo">
-
-The call `Tezos.implicit_account kh` casts the public key hash `kh`
-into the address of its *implicit account*. Note that addresses of
-implicit accounts always have the type `unit contract`.
-
-</Syntax>
-
-<Syntax syntax="jsligo">
-
-The call `Tezos.implicit_account(kh)` casts the public key hash `kh`
-into the address of its *implicit account*. Note that addresses of
-implicit accounts always have the type `contract<unit>`.
 
 </Syntax>

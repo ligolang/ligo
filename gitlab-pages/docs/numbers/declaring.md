@@ -18,7 +18,7 @@ numbers.
 
 Contrary to integral numbers in other programming languages, numbers
 in LIGO have arbitrary-precision, that is, they do not overflow or
-underflow. (See [Tezos-specific features](../language-basics/tezos-specific.md) for more).
+underflow.
 
 Digits of large numbers can be separated by an underscore, to increase
 readability.
