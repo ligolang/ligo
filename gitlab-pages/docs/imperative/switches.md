@@ -1,6 +1,6 @@
 ---
 id: switches
-title: Switches
+title: The switch statement
 ---
 
 import Syntax from '@theme/Syntax';

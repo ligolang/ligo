@@ -1,13 +1,9 @@
 ---
-id: mutating
-title: Mutating
+id: variables
+title: Variables
 ---
 
 import Syntax from '@theme/Syntax';
-
-In _imperative programming_, the state is modified in place by
-instructions, instead of new versions of values being constructed. A
-typical example of imperative programming is loops.
 
 LIGO features mutable variables, that is, variables whose values can
 be reassigned --- contrary to constants, which can be only assigned

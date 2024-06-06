@@ -11,10 +11,10 @@ const sidebars = {
         "label": "Installation",
         "items": [
           "intro/installation",
-          "intro/editor-support"
-        ]
+          "intro/editor-support",
+        ],
       },
-      "tutorials/getting-started/getting-started"
+      "tutorials/getting-started/getting-started",
     ],
     "Writing a Contract": [
       {
@@ -22,126 +22,287 @@ const sidebars = {
         "label": "First contract",
         "items": [
           "tutorials/taco-shop/tezos-taco-shop-smart-contract",
-          "tutorials/taco-shop/tezos-taco-shop-payout"
-        ]
+          "tutorials/taco-shop/tezos-taco-shop-payout",
+        ],
       },
-      "tutorials/start-a-project-from-a-template"
+      "tutorials/start-a-project-from-a-template",
     ],
-    "Comments": [
-      "comments/comments"
+    "Syntax": [
+      "comments/comments",
+      {
+        "type": "category",
+        "label": "Variables and constants",
+        "items": [
+          "variables/constants",
+          "variables/variables",
+          "variables/silent_vars",
+        ],
+      },
+      {
+        "type": "category",
+        "label": "Functions",
+        "items": [
+          "functions/declaring",
+          "functions/lambdas",
+          "functions/higher-order",
+          "functions/inlining",
+          "functions/recursion",
+        ],
+      },
+      {
+        "type": "category",
+        "label": "Flow control",
+        "items": [
+          "imperative/looping",
+          "imperative/failing",
+          "imperative/asserting",
+          "imperative/switches",
+        ],
+      },
+      {
+        "type": "category",
+        "label": "Modules/Namespaces",
+        "items": [
+          "modules/declaring",
+          "modules/accessing",
+          "modules/nesting",
+          "modules/aliasing",
+          "modules/importing",
+          "modules/including",
+        ],
+      },
+      {
+        "type": "category",
+        "label": "Attributes/Decorators",
+        "items": [
+          "tezos/decorators/decorators",
+          "tezos/decorators/annot",
+          "tezos/decorators/deprecated",
+          "tezos/decorators/dyn_entry",
+          "tezos/decorators/entry",
+          "tezos/decorators/inline",
+          "tezos/decorators/layout",
+          "tezos/decorators/private",
+          "tezos/decorators/view",
+        ],
+      },
+      {
+        "type": "category",
+        "label": "Contracts",
+        "items": [
+          "tezos/contracts/contracts",
+          "tezos/contracts/contract-address",
+          "tezos/contracts/contract_of",
+          "tezos/contracts/michelson",
+          "tezos/contracts/michelson-injection",
+          "tezos/contracts/operation",
+          "contract/events",
+        ],
+      },
+      {
+        "type": "category",
+        "label": "Signatures/Interfaces",
+        "items": [
+          "signatures/declaring",
+          "signatures/extending",
+        ],
+      },
+      {
+        "type": "category",
+        "label": "Keywords",
+        "items": [
+          "keywords/keywords",
+          "keywords/escaped_vars",
+        ],
+      },
     ],
-    "Keywords": [
-      "keywords/keywords",
-      "keywords/escaped_vars"
-    ],
-    "Constants": [
-      "constants/constants",
-      "constants/silent_vars"
-    ],
-    "Numbers": [
-      "numbers/declaring",
-      "numbers/casting",
-      "numbers/adding",
-      "numbers/subtracting",
-      "numbers/negating",
-      "numbers/multiplying",
-      "numbers/dividing"
-    ],
-    "Booleans": [
-      "booleans/booleans",
-      "booleans/or",
-      "booleans/and",
-      "booleans/not",
-      "booleans/comparing",
-      "booleans/conditionals"
-    ],
-    "Strings": [
-      "strings/strings",
-      "strings/concatenating",
-      "strings/sizing",
-      "strings/slicing",
-      "strings/verbatim"
-    ],
-    "Tuples": [
-      "tuples/declaring",
-      "tuples/accessing"
-    ],
-    "Functions": [
-      "functions/declaring",
-      "functions/lambdas",
-      "functions/higher-order",
-      "functions/inlining",
-      "functions/recursion"
-    ],
-    "Polymorphism": [
-      "polymorphism/polymorphism",
-      "polymorphism/parametric_types",
-      "polymorphism/functions"
-    ],
-    "Variants": [
-      "variants/unit",
-      "variants/variants",
-      "variants/options",
-      "variants/matching"
-    ],
-    "Side effects": [
-      "imperative/mutating",
-      "imperative/looping",
-      "imperative/failing",
-      "imperative/asserting"
-    ],
-    "Lists": [
-      "lists/declaring",
-      "lists/adding",
-      "lists/matching",
-      "lists/updating",
-      "lists/folding",
-      "lists/mapping",
-      "lists/looping"
-    ],
-    "Records": [
-      "records/declaring",
-      "records/accessing",
-      "records/assigning"
-    ],
-    "Sets": [
-      "sets/declaring",
-      "sets/sizing",
-      "sets/searching",
-      "sets/adding",
-      "sets/removing",
-      "sets/updating",
-      "sets/folding",
-      "sets/mapping",
-      "sets/iterating",
-      "sets/looping"
-    ],
-    "Maps": [
-      "maps/declaring",
-      "maps/sizing",
-      "maps/searching",
-      "maps/adding",
-      "maps/removing",
-      "maps/updating",
-      "maps/folding",
-      "maps/mapping",
-      "maps/iterating",
-      "maps/looping"
-    ],
-    "Modules/Namespaces": [
-      "modules/declaring",
-      "modules/accessing",
-      "modules/nesting",
-      "modules/aliasing",
-      "modules/importing",
-      "modules/including"
-    ],
-    "Signatures/Interfaces": [
-      "signatures/declaring",
-      "signatures/extending"
-    ],
-    "Switches": [
-      "switches/switches"
+    "Data types": [
+      {
+        "type": "category",
+        "label": "Primitive types",
+        "items": [
+          {
+            "type": "category",
+            "label": "Numbers",
+            "items": [
+              "numbers/declaring",
+              "numbers/casting",
+              "numbers/adding",
+              "numbers/subtracting",
+              "numbers/negating",
+              "numbers/multiplying",
+              "numbers/dividing",
+            ],
+          },
+          {
+            "type": "category",
+            "label": "Booleans",
+            "items": [
+              "booleans/booleans",
+              "booleans/or",
+              "booleans/and",
+              "booleans/not",
+              "booleans/comparing",
+              "booleans/conditionals",
+            ],
+          },
+          {
+            "type": "category",
+            "label": "Strings",
+            "items": [
+              "strings/strings",
+              "strings/concatenating",
+              "strings/sizing",
+              "strings/slicing",
+              "strings/verbatim",
+            ],
+          },
+          {
+            "type": "category",
+            "label": "timestamp",
+            "items": [
+              "tezos/timestamp/timestamp",
+              "tezos/timestamp/now",
+              "tezos/timestamp/arithmetics",
+              "tezos/timestamp/comparing",
+            ],
+          },
+          {
+            "type": "category",
+            "label": "bytes",
+            "items": [
+              "tezos/bytes/bytes",
+              "tezos/bytes/concatenating",
+              "tezos/bytes/sizing",
+              "tezos/bytes/slicing",
+              "tezos/bytes/bitwise",
+              "tezos/bytes/packing",
+              "tezos/bytes/crypto",
+            ],
+          },
+        ],
+      },
+      {
+        "type": "category",
+        "label": "Complex types",
+        "items": [
+          {
+            "type": "category",
+            "label": "Tuples",
+            "items": [
+              "tuples/declaring",
+              "tuples/accessing",
+            ],
+          },
+          {
+            "type": "category",
+            "label": "Variants",
+            "items": [
+              "variants/unit",
+              "variants/variants",
+              "variants/options",
+              "variants/matching",
+            ],
+          },
+          {
+            "type": "category",
+            "label": "Lists",
+            "items": [
+              "lists/declaring",
+              "lists/adding",
+              "lists/matching",
+              "lists/updating",
+              "lists/folding",
+              "lists/mapping",
+              "lists/looping",
+            ],
+          },
+          {
+            "type": "category",
+            "label": "Records",
+            "items": [
+              "records/declaring",
+              "records/accessing",
+              "records/assigning",
+            ],
+          },
+          {
+            "type": "category",
+            "label": "Sets",
+            "items": [
+              "sets/declaring",
+              "sets/sizing",
+              "sets/searching",
+              "sets/adding",
+              "sets/removing",
+              "sets/updating",
+              "sets/folding",
+              "sets/mapping",
+              "sets/iterating",
+              "sets/looping",
+            ],
+          },
+          {
+            "type": "category",
+            "label": "Maps",
+            "items": [
+              "maps/declaring",
+              "maps/sizing",
+              "maps/searching",
+              "maps/adding",
+              "maps/removing",
+              "maps/updating",
+              "maps/folding",
+              "maps/mapping",
+              "maps/iterating",
+              "maps/looping",
+            ],
+          },
+        ],
+      },
+      {
+        "type": "category",
+        "label": "Tezos-specific types",
+        "items": [
+          "tezos/tez",
+          "tezos/key",
+          "tezos/hash_key",
+          "tezos/signature",
+          "tezos/addresses",
+          "tezos/contracts-type",
+          {
+            "type": "category",
+            "label": "Big sets",
+            "items": [
+              "tezos/big_sets/declaring",
+              "tezos/big_sets/searching",
+              "tezos/big_sets/adding",
+              "tezos/big_sets/removing",
+              "tezos/big_sets/updating",
+            ],
+          },
+          {
+            "type": "category",
+            "label": "Big maps",
+            "items": [
+              "tezos/big_maps/declaring",
+              "tezos/big_maps/searching",
+              "tezos/big_maps/adding",
+              "tezos/big_maps/removing",
+              "tezos/big_maps/updating",
+            ],
+          },
+        ],
+      },
+      {
+        "type": "category",
+        "label": "Polymorphism",
+        "items": [
+          "polymorphism/polymorphism",
+          "polymorphism/parametric_types",
+          "polymorphism/functions",
+        ],
+      },
     ],
     "Preprocessor": [
       "preprocessor/preprocessor",
@@ -151,84 +312,17 @@ const sidebars = {
       "preprocessor/define",
       "preprocessor/include",
       "preprocessor/import",
-      "preprocessor/error"
-    ],
-    "TEZOS FEATURES": [
-      "tezos/tezos"
-    ],
-    "bytes": [
-      "tezos/bytes/bytes",
-      "tezos/bytes/concatenating",
-      "tezos/bytes/sizing",
-      "tezos/bytes/slicing",
-      "tezos/bytes/bitwise",
-      "tezos/bytes/packing",
-      "tezos/bytes/crypto"
-    ],
-    "key": [
-      "tezos/key"
-    ],
-    "key_hash": [
-      "tezos/hash_key"
-    ],
-    "signature": [
-      "tezos/signature"
-    ],
-    "timestamp": [
-      "tezos/timestamp/timestamp",
-      "tezos/timestamp/now",
-      "tezos/timestamp/arithmetics",
-      "tezos/timestamp/comparing"
-    ],
-    "tez": [
-      "tezos/tez"
-    ],
-    "chain_id": [
-      "tezos/chain_id"
-    ],
-    "Big maps": [
-      "tezos/big_maps/declaring",
-      "tezos/big_maps/searching",
-      "tezos/big_maps/adding",
-      "tezos/big_maps/removing",
-      "tezos/big_maps/updating"
-    ],
-    "Big sets": [
-      "tezos/big_sets/declaring",
-      "tezos/big_sets/searching",
-      "tezos/big_sets/adding",
-      "tezos/big_sets/removing",
-      "tezos/big_sets/updating"
-    ],
-    "Attributes/Decorators": [
-      "tezos/decorators/decorators",
-      "tezos/decorators/annot",
-      "tezos/decorators/deprecated",
-      "tezos/decorators/dyn_entry",
-      "tezos/decorators/entry",
-      "tezos/decorators/inline",
-      "tezos/decorators/layout",
-      "tezos/decorators/private",
-      "tezos/decorators/view"
-    ],
-    "Contracts": [
-      "tezos/contracts/address",
-      "tezos/contracts/contracts",
-      "tezos/contracts/contract_of",
-      "tezos/contracts/michelson",
-      "tezos/contracts/michelson-injection",
-      "tezos/contracts/operation",
-      "contract/events"
+      "preprocessor/error",
     ],
     "Testing and Debugging": [
       "advanced/testing",
       "advanced/mutation-testing",
-      "advanced/michelson_testing"
+      "advanced/michelson_testing",
     ],
     "Advanced Topics": [
       "advanced/package-management",
       "tutorials/optimisation/optimisation",
-      "tutorials/security/security"
+      "tutorials/security/security",
     ]
   },
   "API": {
