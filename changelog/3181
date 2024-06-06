@@ -1,0 +1,7 @@
+
+author: krendelhoff
+description: "\\nMakes completions work for polymorphic record types.\\n\\n"
+merge_request: '3181'
+title: "[#2181] Handle more cases for record completions"
+type: fixed
+            
