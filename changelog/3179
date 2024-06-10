@@ -1,0 +1,7 @@
+
+author: heitor.toledo
+description: "\\nIf typer error recovery is enabled (on for the language server), and the user writes code where there is a mismatch between a scrutinee's type and a pattern's type, it will probably lead to a crash. For example, in the following code:\\n\\n\\n```ocaml\\ntype t = Unit\\n\\nlet Unit = ()\\n\\nlet () =\\n  match () with\\n  | Unit -> ()\\n\\n```\\n\\nThe scrutinee (`Unit : t`) and the pattern (`() : unit`) have mismatched types (`t` is not the same as `unit`), leading to a crash.\\n\\nWith the changes from this changelog, this crash should no longer occur.\\n\\n"
+merge_request: '3179'
+title: "[#2185] Do not check for pattern anomalies on type mismatch with error recovery"
+type: fixed
+            
