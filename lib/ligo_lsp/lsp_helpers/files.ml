@@ -1,5 +1,4 @@
 open Core
-
 module ModRes = Preprocessor.ModRes
 module Ligo_fun = Simple_utils.Ligo_fun
 
