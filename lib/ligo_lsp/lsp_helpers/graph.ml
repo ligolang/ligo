@@ -1,5 +1,4 @@
 open Core
-
 module Ligo_fun = Simple_utils.Ligo_fun
 
 let ( <@ ) = Ligo_fun.( <@ )

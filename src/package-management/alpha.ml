@@ -858,7 +858,7 @@ let run ~project_root package_name cache_path ligo_registry =
   match all_dependencies with
   | [] -> Lwt_result.return ()
   | _ ->
-    let* solution, cache =
+    let* solution, cache, project_name_in_lock_file =
       match get_lock_file_that_is_in_sync ~project_root ~all_dependencies with
       | Some lock_file_json ->
         let* lock_file =
@@ -869,7 +869,12 @@ let run ~project_root package_name cache_path ligo_registry =
           | Ok lock_file -> Ok lock_file
         in
         let solution = Lock_file.(Map.to_alist lock_file.node) |> List.map ~f:fst in
-        Lwt_result.return (solution, Metadata_cache.empty)
+        let project_name_in_lock_file =
+          match NameVersion.of_string lock_file.root with
+          | Ok { name; _ } -> Some name
+          | _ -> None
+        in
+        Lwt_result.return (solution, Metadata_cache.empty, project_name_in_lock_file)
       | None ->
         let* solution, cache = solve ~all_dependencies ~ligo_registry in
         remove_dir cache_path;
@@ -893,12 +898,13 @@ let run ~project_root package_name cache_path ligo_registry =
           let content = Lock_file.to_yojson lock_file_json |> Json.to_string in
           write ~content ~to_:(lock_file project_root)
         in
-        Lwt_result.return (solution, cache)
+        Lwt_result.return (solution, cache, None)
     in
     let* installation_map =
       fetch_tarballs ~ligo_registry ~project_root ~cache ~solution
     in
     let installation_json_path = installation_json project_root in
+    let project_name = Option.value project_name_in_lock_file ~default:project_name in
     let installation_json =
       generate_installation_json ~project_root ~project_name installation_map ~ligo_json
     in
