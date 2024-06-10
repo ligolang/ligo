@@ -432,20 +432,23 @@ let get_type_of_ctor
     (row : Type__Type_def.row)
     (label : Label.t)
     ?(use_raise_opt : bool = false)
-    ~(error : 'err Errors.with_loc)
+    ~(error : ('err Errors.with_loc, 'err, 'a) C.t)
     ~(add_ctor_reference : bool)
     ()
     : (Type.t, 'err, 'a) C.t
   =
   let open C in
   let open Let_syntax in
-  let raise =
-    if use_raise_opt
-    then raise_opt ~error
-    else
-      Error_recovery.raise_or_use_default_opt
-        ~default:(map Error_recovery.wildcard_type ~f:(fun t -> label, t))
-        ~error
+  let raise = function
+    | None ->
+      let%bind error = error in
+      if use_raise_opt
+      then raise error
+      else
+        Error_recovery.raise_or_use_default
+          ~default:(map Error_recovery.wildcard_type ~f:(fun t -> label, t))
+          ~error
+    | Some result -> return result
   in
   let%bind constr, label_row_elem =
     raise @@ Ligo_map.find_kv (module Label) row.fields label
@@ -470,7 +473,9 @@ let check_record const ~expr ~type_ record (row : Type.row) try_check =
            let%bind type_ =
              get_type_of_ctor
                ~add_ctor_reference:true
-               ~error:(Errors.unbound_label_edge_case label row)
+               ~error:
+                 (let%map decoded_row = lift_elab (E.decode_row row) in
+                  Errors.unbound_label_edge_case `Record label decoded_row)
                row
                label
                ()
@@ -581,7 +586,7 @@ let rec check_expression (expr : I.expression) (type_ : Type.t)
     let%bind field_row_elem =
       get_type_of_ctor
         ~add_ctor_reference:true
-        ~error:(Errors.bad_record_access path)
+        ~error:(return (Errors.bad_record_access path))
         row
         path
         ()
@@ -596,7 +601,7 @@ let rec check_expression (expr : I.expression) (type_ : Type.t)
     let%bind constr_row_elem =
       get_type_of_ctor
         ~add_ctor_reference:(Option.is_none disc_label)
-        ~error:(Errors.bad_constructor constructor type_)
+        ~error:(return (Errors.bad_constructor constructor type_))
         row
         constructor
         ()
@@ -871,6 +876,7 @@ and infer_expression (expr : I.expression)
       def_frag frags ~on_exit:Lift_type ~in_:(infer let_result)
     in
     let attributes = infer_value_attr attributes in
+    let%bind options = options () in
     const
       E.(
         let%bind rhs_type = decode rhs_type in
@@ -1005,7 +1011,7 @@ and infer_expression (expr : I.expression)
     let%bind field_row_elem =
       get_type_of_ctor
         ~add_ctor_reference:true
-        ~error:(Errors.bad_record_access field)
+        ~error:(return (Errors.bad_record_access field))
         row
         field
         ()
@@ -1027,7 +1033,7 @@ and infer_expression (expr : I.expression)
     let%bind field_row_elem =
       get_type_of_ctor
         ~add_ctor_reference:true
-        ~error:(Errors.bad_record_access path)
+        ~error:(return (Errors.bad_record_access path))
         row
         path
         ()
@@ -1123,6 +1129,7 @@ and infer_expression (expr : I.expression)
       def_frag frags ~on_exit:Lift_type ~in_:(infer let_result)
     in
     let attributes = infer_value_attr attributes in
+    let%bind options = options () in
     const
       E.(
         let%bind rhs_type = decode rhs_type in
@@ -1647,7 +1654,7 @@ and check_pattern ~mut (pat : I.type_expression option I.Pattern.t) (type_ : Typ
            row
            label
            ~add_ctor_reference:(Option.is_none disc_label)
-           ~error:err
+           ~error:(C.return err)
            ~use_raise_opt:true
            ()
     in
@@ -1664,7 +1671,7 @@ and check_pattern ~mut (pat : I.type_expression option I.Pattern.t) (type_ : Typ
                C.With_frag.lift
                @@ get_type_of_ctor
                     ~add_ctor_reference:true
-                    ~error:err
+                    ~error:(C.return err)
                     ~use_raise_opt:true
                     row
                     (Label.create (Int.to_string i))
@@ -1687,7 +1694,7 @@ and check_pattern ~mut (pat : I.type_expression option I.Pattern.t) (type_ : Typ
                C.With_frag.lift
                @@ get_type_of_ctor
                     ~add_ctor_reference:true
-                    ~error:err
+                    ~error:(C.return err)
                     ~use_raise_opt:true
                     row
                     label
@@ -1892,6 +1899,7 @@ and compile_match (matchee : O.expression E.t) disc_label cases matchee_type
   =
   let open C in
   let open Let_syntax in
+  let%bind options = options () in
   let%bind loc = loc () in
   let%bind syntax = Options.syntax () in
   let%bind refs_tbl = refs_tbl () in
@@ -2136,6 +2144,7 @@ and infer_declaration (decl : I.declaration)
       With_frag.run @@ check_pattern ~mut:false pattern matchee_type
     in
     let%bind loc = loc () in
+    let%bind options = options () in
     const
       E.(
         let%bind expr = expr

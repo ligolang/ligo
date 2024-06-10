@@ -67,6 +67,7 @@ let filter_diagnostics : Main_errors.all list -> Main_errors.all list =
         | `Typer_cannot_decode_texists _
         | `Typer_cannot_encode_texists _
         | `Typer_cannot_decompile_texists _
+        | `Typer_corner_case _
         | `Typer_unbound_label_edge_case _ -> false
         | _ -> true)
       | `Aggregation_tracer e ->

@@ -180,7 +180,7 @@ type typer_error =
   | `Typer_wrong_dynamic_storage_definition of Type.t * Location.t
   | (* Used only when error recovery is enabled. *)
     `Typer_unbound_label_edge_case of
-    Label.t * Type.row * Location.t
+    [ `Record | `Variant ] * Label.t * Ast_typed.row * Location.t
   | `Typer_unsupported_rest_property of Ast_core.expression * Location.t
   | `Typer_bad_key_hash of string * Location.t
   | `Typer_bad_signature of string * Location.t
@@ -284,7 +284,11 @@ let rec extract_loc_and_message
         (pp_texists_hint ~requires_annotations:true ())
         [ type_ ] )
   | `Typer_corner_case (desc, loc) ->
-    loc, Format.asprintf "@[<hv>A type system corner case occurred:@.%s@]" desc
+    ( loc
+    , Format.asprintf
+        "@[<hv>A type system corner case occurred:@.%s This is an internal error, is \
+         typer error recovery enabled?@]"
+        desc )
   | `Typer_occurs_check_failed (tvar, type_, loc) ->
     let type_ = type_improve type_ in
     ( loc
@@ -586,12 +590,18 @@ let rec extract_loc_and_message
         expected_type
         pp_type
         found_type )
-  | `Typer_unbound_label_edge_case (label, type_row, loc) ->
+  | `Typer_unbound_label_edge_case (record_or_variant, label, type_row, loc) ->
+    let record_or_variant, pp_record_or_variant_type =
+      match record_or_variant with
+      | `Record -> "Record", Ast_typed.Row.PP.record_type
+      | `Variant -> "Variant", Ast_typed.Row.PP.sum_type
+    in
     ( loc
     , Format.asprintf
-        "@[<hv>Record type \"%a\" does not have a label \"%a\". This is an internal \
-         error, is typer error recovery enabled?@]"
-        (Row.PP.record_type Type.pp Layout.pp)
+        "@[<hv>%s type \"%a\" does not have a label \"%a\". This is an internal error, \
+         is typer error recovery enabled?@]"
+        record_or_variant
+        (pp_record_or_variant_type Ast_typed.PP.type_expression Ast_typed.Row.L.pp)
         type_row
         Label.pp
         label )
