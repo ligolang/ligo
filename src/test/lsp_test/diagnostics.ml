@@ -751,3 +751,38 @@ let%expect_test "An empty module doesn't crash the compiler" =
          },
          "severity": 1
        }])] |}]
+
+let%expect_test "A type mismatch between scrutinee and a pattern doesn't crash the \
+                 compiler"
+  =
+  get_diagnostics_test
+    { file_path = "contracts/lsp/pattern_match_fail.mligo"
+    ; max_number_of_problems = None
+    };
+  [%expect
+    {|
+    [("../../../../../default/src/test/contracts/lsp/pattern_match_fail.mligo",
+      [{
+         "message": "[Compiler stage: expansion] An expansion corner case occurred File \"src/passes/13.1-expansion/decision_tree.ml\", line 268, characters 41-48:\ncan't get nested type of non variant",
+         "range": {
+           "end": { "character": 1, "line": 0 },
+           "start": { "character": 0, "line": 0 }
+         },
+         "severity": 1
+       };
+       {
+         "message": "[Compiler stage: typer] Can not unify the types \"t\" and \"unit\".\nType \"t\" is not compatible with type \"unit\".",
+         "range": {
+           "end": { "character": 13, "line": 2 },
+           "start": { "character": 0, "line": 2 }
+         },
+         "severity": 1
+       };
+       {
+         "message": "[Compiler stage: typer] Can not unify the types \"t\" and \"unit\".\nType \"t\" is not compatible with type \"unit\".",
+         "range": {
+           "end": { "character": 14, "line": 6 },
+           "start": { "character": 2, "line": 5 }
+         },
+         "severity": 1
+       }])] |}]

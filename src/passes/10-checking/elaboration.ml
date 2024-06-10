@@ -197,8 +197,15 @@ and decode_signature (sig_ : Context.Signature.t) ~options ~path ~raise subst
   { sig_items; sig_sort }
 
 
-let check_anomalies ~syntax ~loc eqs matchee_type ~options:_ ~path:_ ~raise _subst =
-  Pattern_anomalies.check_anomalies ~raise ~syntax ~loc eqs matchee_type
+let check_anomalies ~syntax ~loc eqs matchee_type ~options ~path:_ ~raise _subst =
+  Simple_utils.Trace.try_with
+    ~fast_fail:raise.Simple_utils.Trace.fast_fail
+    (fun ~raise ~catch:_ ->
+      Pattern_anomalies.check_anomalies ~raise ~syntax ~loc eqs matchee_type)
+    (fun ~catch:_ ->
+      if options.Compiler_options.typer_error_recovery
+      then raise.log_error
+      else raise.error)
 
 
 let run t ~options ~path ~raise subst = t ~options ~path ~raise subst

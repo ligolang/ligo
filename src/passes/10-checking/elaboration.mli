@@ -15,8 +15,14 @@ include module type of Let_syntax
 
 val decode_signature : Context.Signature.t -> Ast_typed.signature t
 val decode_sig_sort : Context.Signature.sort -> Ast_typed.sig_sort t
+val decode_row : Type.row -> Ast_typed.type_expression Ast_typed.Row.t t
 val decode : Type.t -> Ast_typed.type_expression t
 
+(** Under normal circumstances, the typer will halt if the scrutinee's type and the cases
+    types do not match. However, if error recovery is enabled, the typer will continue,
+    and will try to perform anomaly analysis while having a different pattern and
+    scrutinee type, and might reach some raises. If we reached an error and typer error
+    recovery is enabled, we recover from this error. *)
 val check_anomalies
   :  syntax:Syntax_types.t option
   -> loc:Location.t
