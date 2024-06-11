@@ -4,7 +4,7 @@ open Core
 
 (* Combinators *)
 
-let (<@) f g x = f (g x)
+let (<@) = Ligo_fun.(<@)
 
 (* Parametric rules for sequences *)
 

@@ -1,0 +1,7 @@
+
+author: rinderkn
+description: "\\n\\n"
+merge_request: '3194'
+title: "[JsLIGO] Allow parenthesised type expressions as summands of sum types (\"discriminated union\")"
+type: added
+            

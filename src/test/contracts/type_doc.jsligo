@@ -10,9 +10,9 @@ export #import "map.jsligo" "Map"
 
 /** Doc for type */
 export type t<a, b> =
-  | #["A", int]
+  | ["A", int]
   | ["B", a]
-  | #["C", b];
+  | ["C", b];
 
 /**
  * Extracts `int` value from `t<int, int>`
@@ -39,7 +39,7 @@ function process_storage (_s : storage) : bool {
   return false
 }
 
-export type d = ["D", int]
+export type d = | ["D", int]
 
 export const [a, [b, D(c)]] = [42, [42, D(42)]]
 

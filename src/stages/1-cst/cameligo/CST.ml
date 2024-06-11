@@ -35,8 +35,6 @@ let yojson_of_lexeme s = `String s
 
 (* Utilities *)
 
-let (<@) f g x = f (g x)
-
 open Utils
 
 (* Keywords of CameLIGO *)
@@ -346,7 +344,7 @@ and type_expr =
 | T_Record      of field_decl reg record           (* {a; [@x] b: t}  *)
 | T_String      of string_literal                  (* "x"             *)
 | T_Var         of type_variable                   (* x   @x          *)
-| T_Variant     of variant_type reg                (* [@a] A | B of t *)
+| T_Sum         of sum_type reg                    (* [@a] A | B of t *)
 
 (* Type application *)
 
@@ -389,9 +387,9 @@ and field_decl = {
 
 and type_annotation = (colon [@yojson.opaque]) * type_expr
 
-(* Variant type *)
+(* Sum type *)
 
-and variant_type = {
+and sum_type = {
   lead_vbar : (vbar option [@yojson.opaque]);
   variants  : (variant reg, (vbar [@yojson.opaque])) nsepseq
 }
@@ -751,7 +749,7 @@ let rec type_expr_to_region = function
 | T_ParameterOf {region; _}
 | T_Record  {region; _} -> region
 | T_String  w -> w#region
-| T_Variant {region; _} -> region
+| T_Sum     {region; _} -> region
 | T_Var     w -> variable_to_region w
 
 let rec pattern_to_region = function

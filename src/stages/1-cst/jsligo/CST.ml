@@ -36,8 +36,6 @@ let yojson_of_lexeme s = `String s
 
 (* Utilities *)
 
-let (<@) f g x = f (g x)
-
 open Utils
 
 (* Keywords of JsLIGO *)
@@ -122,7 +120,6 @@ type remainder  = lexeme wrap [@@deriving yojson_of]  (* %   *)
 type rem_eq     = lexeme wrap [@@deriving yojson_of]  (* %=  *)
 type rpar       = lexeme wrap  (* )   *)
 type semi       = lexeme wrap  (* ;   *)
-type sharp      = lexeme wrap  (* #   *)
 type slash      = lexeme wrap [@@deriving yojson_of]  (* /   *)
 type times_eq   = lexeme wrap [@@deriving yojson_of]  (* *=  *)
 type times      = lexeme wrap [@@deriving yojson_of]  (* *   *)
@@ -358,14 +355,14 @@ and type_expr =
 | T_String      of string_literal                      (* "x"               *)
 | T_Union       of union_type                          (* {kind: "C", x: t} *)
 | T_Var         of type_var                            (* t                 *)
-| T_Variant     of variant_type                        (* ["A"] | ["B", t]  *)
+| T_Sum         of sum_type                            (* ["A"] | ["B", t]  *)
 
 (* Type application *)
 
 and type_ctor_args =
   (type_expr, (comma [@yojson.opaque])) nsep_or_term chevrons
 
-(* Array type type *)
+(* Array type *)
 
 and array_type = (type_expr, (comma [@yojson.opaque])) nsep_or_term brackets
 
@@ -403,31 +400,19 @@ and property_id =
 
 (* Discriminated unions *)
 
-and union_type = (type_expr _object, (vbar [@yojson.opaque])) nsep_or_pref reg
+and union_type = (type_expr, (vbar [@yojson.opaque])) nsep_or_pref reg
 
-(* Variant type *)
+(* Sum type *)
 
-and variant_type = (type_expr variant_kind, (vbar [@yojson.opaque])) nsep_or_pref reg
+and sum_type = (type_expr variant_kind, (vbar [@yojson.opaque])) nsep_or_pref reg
 
 and 'a variant_kind =
   Variant   of 'a variant reg
-| Bracketed of 'a bracketed_variant reg
 | Legacy    of 'a legacy_variant reg
 
 and 'a variant = {
   attributes : (attribute list [@yojson.opaque]);
   tuple      : 'a ctor_app
-}
-
-and 'a bracketed_variant = {
-  attributes : (attribute list [@yojson.opaque]);
-  sharp      : (sharp [@yojson.opaque]);
-  tuple      : 'a bracketed_variant_args brackets
-}
-
-and 'a bracketed_variant_args = {
-  ctor : 'a;
-  args : ((comma [@yojson.opaque]) * ('a, (comma [@yojson.opaque])) sep_or_term) option
 }
 
 and 'a legacy_variant = {
@@ -442,15 +427,13 @@ and 'a legacy_variant_args = {
 
 (* Data constructor applications *)
 
-and 'a ctor_app = (sharp option [@yojson.opaque]) * 'a app
+and 'a ctor_app =
+  ZeroArg of ctor_app_kind
+| MultArg of (ctor_app_kind * ('a, (comma [@yojson.opaque])) nsep_or_term par)
 
 and ctor_app_kind =
   CtorStr  of string_literal
 | CtorName of ctor
-
-and 'a app =
-  ZeroArg of ctor_app_kind
-| MultArg of (ctor_app_kind * ('a, (comma [@yojson.opaque])) nsep_or_term par)
 
 (* Do-expressions *)
 
@@ -787,9 +770,8 @@ and code_inj = {
 (* Projecting regions from some nodes of the AST *)
 
 let variant_kind_to_region = function
-  Variant   {region; _}
-| Bracketed {region; _}
-| Legacy    {region; _} -> region
+  Variant {region; _}
+| Legacy  {region; _} -> region
 
 let import_decl_to_region = function
   ImportAlias {region; _}
@@ -822,7 +804,7 @@ let rec type_expr_to_region = function
 | T_String      w -> w#region
 | T_Union       {region; _} -> region
 | T_Var         v -> variable_to_region v
-| T_Variant     {region; _} -> region
+| T_Sum         {region; _} -> region
 
 let rec pattern_to_region = function
   P_Array    {region; _} -> region

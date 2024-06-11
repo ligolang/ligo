@@ -1,8 +1,9 @@
 open! Core
 module Michelson = Tezos_utils.Michelson
+module Ligo_fun = Simple_utils.Ligo_fun
 include Memory_proto_alpha
 
-let (<@) f g x = f (g x)
+let (<@) = Ligo_fun.(<@)
 
 let init_environment = Init_proto_alpha.init_environment
 let dummy_environment = Init_proto_alpha.dummy_environment

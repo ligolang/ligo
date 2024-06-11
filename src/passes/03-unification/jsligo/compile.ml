@@ -220,19 +220,10 @@ let rec expr : Eq.expr -> Folding.expr =
     return
     @@
     (match tuple with
-    | _sharp, ZeroArg ctor -> E_ctor_app (ctor_app_kind_to_expr ctor, None)
-    | _sharp, MultArg (ctor, args) ->
+    | ZeroArg ctor -> E_ctor_app (ctor_app_kind_to_expr ctor, None)
+    | MultArg (ctor, args) ->
       let args = nsep_or_term_to_nelist args.value.inside in
       E_ctor_app (ctor_app_kind_to_expr ctor, Some args))
-  | E_CtorApp (Bracketed { value = { attributes = _; sharp = _; tuple }; region = _ }) ->
-    let ({ ctor; args } : I.expr I.bracketed_variant_args) = tuple.value.inside in
-    return
-    @@
-    (match args with
-    | None -> E_ctor_app (ctor, None)
-    | Some (_comma, args) ->
-      let args = sep_or_term_to_nelist args in
-      E_ctor_app (ctor, args))
   | E_CtorApp (Legacy { value = { attributes = _; tuple }; region = _ }) ->
     let ({ ctor; args } : I.expr I.legacy_variant_args) = tuple.value.inside in
     let args = Ne_list.of_list_opt @@ List.map ~f:snd args in
@@ -468,12 +459,12 @@ let rec ty_expr : Eq.ty_expr -> Folding.ty_expr =
   | T_Array { value = { inside; _ }; _ } ->
     let t = Utils.nsep_or_term_to_ne_list inside in
     return @@ T_prod t
-  | T_Variant { value = variants; region } ->
+  | T_Sum { value = variants; region } ->
     let variants = Utils.nsep_or_pref_to_list variants in
     let destruct : I.type_expr I.variant_kind -> _ = function
       | Variant { value = { tuple; attributes }; region = _ } ->
         let ctor, ctor_params =
-          match snd tuple with
+          match tuple with
           | I.ZeroArg ctor -> ctor, None
           | MultArg (ctor, args) ->
             let args = nsep_or_term_to_nelist args.value.inside in
@@ -483,35 +474,6 @@ let rec ty_expr : Eq.ty_expr -> Folding.ty_expr =
           match ctor with
           | CtorStr s -> s
           | CtorName s -> s
-        in
-        let ctor_params : (I.type_expr, I.comma) Utils.nsep_or_term option =
-          Option.map
-            ~f:(fun x -> `Sep (Utils.nsepseq_of_ne_list ~sep:ghost x))
-            ctor_params
-        in
-        let ty =
-          match ctor_params with
-          | None -> None
-          | Some (`Sep (t, []) | `Term ((t, _) :: _)) -> Some t
-          | Some ctor_params ->
-            let inside : I.array_type =
-              Region.wrap_ghost
-              @@ I.{ lbracket = ghost; inside = ctor_params; rbracket = ghost }
-            in
-            Some (I.T_Array inside)
-        in
-        TODO_do_in_parsing.labelize ctor, ty, TODO_do_in_parsing.conv_attrs attributes
-      | Bracketed { value = { tuple; sharp; attributes }; region = _ } ->
-        let ({ ctor; args } : I.type_expr I.bracketed_variant_args) =
-          tuple.value.inside
-        in
-        let ctor =
-          match ctor with
-          | T_String s -> s
-          | _ -> failwith "Expected string from parser."
-        in
-        let ctor_params =
-          Option.value_map ~default:None ~f:(sep_or_term_to_nelist <@ snd) args
         in
         let ctor_params : (I.type_expr, I.comma) Utils.nsep_or_term option =
           Option.map
@@ -622,10 +584,8 @@ let rec ty_expr : Eq.ty_expr -> Folding.ty_expr =
     return @@ T_contract_parameter namespace_path
   | T_Union t ->
     let fields =
-      let destruct_obj (x : I.type_expr I._object)
-          : unit * I.type_expr * O.Attribute.t list
-        =
-        (), I.T_Object x, []
+      let destruct_obj (t : I.type_expr) : unit * I.type_expr * O.Attribute.t list =
+        (), t, []
       in
       let lst = List.map ~f:destruct_obj (Utils.nsep_or_pref_to_list t.value) in
       O.Non_linear_disc_rows.make lst
@@ -641,9 +601,9 @@ let pattern : Eq.pattern -> Folding.pattern =
   | P_Attr (attr, p) -> return @@ O.P_attr (TODO_do_in_parsing.conv_attr attr, p)
   | P_CtorApp variant ->
     (match variant with
-    | Variant { value = { attributes = _; tuple = _, app }; _ } ->
+    | Variant { value = { attributes = _; tuple }; _ } ->
       let ctor, args =
-        match app with
+        match tuple with
         | ZeroArg ctor -> ctor, []
         | MultArg (ctor, args) -> ctor, Utils.nsep_or_term_to_list args.value.inside
       in
@@ -653,12 +613,6 @@ let pattern : Eq.pattern -> Folding.pattern =
         | CtorName ctor -> ctor
       in
       return @@ P_ctor_app (P_String ctor :: args)
-    | Bracketed { value = { attributes = _; sharp = _; tuple }; _ } ->
-      let ({ ctor; args } : I.pattern I.bracketed_variant_args) = tuple.value.inside in
-      let args =
-        Option.value_map ~default:[] ~f:(Utils.sep_or_term_to_list <@ snd) args
-      in
-      return @@ P_ctor_app (ctor :: args)
     | Legacy { value = { attributes = _; tuple }; _ } ->
       let ({ ctor; args } : I.pattern I.legacy_variant_args) = tuple.value.inside in
       return @@ P_ctor_app (P_String ctor :: List.map ~f:snd args))

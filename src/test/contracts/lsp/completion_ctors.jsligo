@@ -2,13 +2,13 @@ type t = ["Foo"] | ["Bar", int]
 
 const x = do {
   let a =  ;
-  type k = ["Baz"];
+  type k = | ["Baz"];
   let b =  ;
   42
 }
 
 namespace M {
-  export type t = ["Aaa"]
+  export type t = | ["Aaa"]
 }
 
-const y = 
+const y =

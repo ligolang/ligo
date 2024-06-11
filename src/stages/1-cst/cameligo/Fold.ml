@@ -168,7 +168,7 @@ type _ sing =
   | S_update_expr : update_expr sing
   | S_variable : variable sing
   | S_variant : variant sing
-  | S_variant_type : variant_type sing
+  | S_sum_type : sum_type sing
   | S_vbar : vbar sing
   | S_vbar_eq : vbar_eq sing
   | S_verbatim_literal : verbatim_literal sing
@@ -712,7 +712,7 @@ let fold'
     | T_Par node -> node -| S_par S_type_expr
     | T_Record node -> node -| S_record (S_reg S_field_decl)
     | T_String node -> node -| S_string_literal
-    | T_Variant node -> node -| S_reg S_variant_type
+    | T_Sum node -> node -| S_reg S_sum_type
     | T_Var node -> node -| S_type_variable
     | T_ParameterOf node -> node -| S_reg (S_nsepseq (S_module_name, S_dot)))
   | S_type_in ->
@@ -754,7 +754,7 @@ let fold'
     [ attributes -| S_list S_attribute
     ; ctor -| S_ctor
     ; ctor_args -| S_option (S_tuple_2 (S_kwd_of, S_type_expr))]
-  | S_variant_type ->
+  | S_sum_type ->
     let { lead_vbar; variants } = node in
     process_list
     [ lead_vbar -| S_option S_vbar

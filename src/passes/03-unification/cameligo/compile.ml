@@ -2,11 +2,12 @@ open Unification_shared.Helpers
 module Utils = Simple_utils.Utils
 module Ne_list = Simple_utils.Ne_list
 module Ligo_string = Simple_utils.Ligo_string
+module Ligo_fun = Simple_utils.Ligo_fun
 module O = Ast_unified
 module I = Cst.Cameligo
 module Token = Lexing_cameligo.Token
 
-let ( <@ ) f g x = f (g x)
+let ( <@ ) = Ligo_fun.( <@ )
 
 module Eq = struct
   type expr = I.expr
@@ -429,7 +430,7 @@ let rec ty_expr : Eq.ty_expr -> Folding.ty_expr =
   | T_Arg v -> ret @@ T_var_esc (Raw (TODO_do_in_parsing.quoted_tvar v))
   | T_Attr (x, y) -> ret @@ T_attr (fst @@ TODO_do_in_parsing.conv_attr x, y)
   | T_Cart { value = hd, _, tl; _ } -> ret @@ T_prod (hd :: Utils.nsepseq_to_list tl)
-  | T_Variant { value = { variants; _ }; region = _ } ->
+  | T_Sum { value = { variants; _ }; region = _ } ->
     let sum =
       let compile_variant I.{ ctor; ctor_args; attributes } =
         ( TODO_do_in_parsing.labelize ctor

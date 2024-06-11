@@ -4,10 +4,11 @@
 
 module Region = Simple_utils.Region
 module Ne     = Nonempty_list
+module Ligo_fun = Simple_utils.Ligo_fun
 
 (* Utilities *)
 
-let (<@) f g x = f (g x)
+let (<@) = Ligo_fun.(<@)
 
 (* Lists *)
 
@@ -32,7 +33,7 @@ let nsep_or_term_to_region to_region = function
 | `Term s -> ne_list_to_region to_region s
 
 let nsep_or_pref_to_region
-  (to_region_b : 'b -> Region.t)
+  ~sep:(to_region_b : 'b -> Region.t)
   (to_region_a : 'a -> Region.t)
   : [< `Sep of 'a * ('b * 'a) list | `Pref of ('b * 'a) Ne.t ] -> Region.t
   = function

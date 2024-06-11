@@ -427,20 +427,18 @@ data TypeExpr
     -- ^ Union type.
   | TVar WrappedLexeme
     -- ^ Type variable.
-  | TVariant VariantType
+  | TSum SumType
     -- ^ Variant type.
   deriving stock (Show, Generic)
   deriving anyclass (NFData)
 
 -- | Variant type.
-type VariantType = Reg (NonEmpty (VariantKind TypeExpr))
+type SumType = Reg (NonEmpty (VariantKind TypeExpr))
 
 -- | Variant type description cases.
 data VariantKind a
   = Variant (Reg (Variant a))
     -- ^ Variant type construction.
-  | Bracketed (Reg (BracketedVariant a))
-    -- ^ Variant type defined via @#[...]@ syntax.
   | Legacy (Reg (LegacyVariant a))
     -- ^ Tupled definition.
   deriving stock (Show, Generic)
@@ -450,24 +448,6 @@ data VariantKind a
 newtype Variant a = VariantC
   { vTuple :: CtorApp a
     -- ^ Constructor application.
-  }
-  deriving stock (Show, Generic)
-  deriving anyclass (NFData)
-
--- | @#[...]@ variant's syntax definition.
-newtype BracketedVariant a = BracketedVariant
-  { bvTuple :: Par (BracketedVariantArgs a)
-    -- ^ Constructor with its arguments.
-  }
-  deriving stock (Show, Generic)
-  deriving anyclass (NFData)
-
--- | @#[...]@ variant's syntax arguments.
-data BracketedVariantArgs a = BracketedVariantArgs
-  { bvaCtor :: a
-    -- ^ Constructor.
-  , bvaArgs :: Maybe (Tuple1 [a])
-    -- ^ Arguments.
   }
   deriving stock (Show, Generic)
   deriving anyclass (NFData)
@@ -491,7 +471,7 @@ data LegacyVariantArgs a = LegacyVariantArgs
   deriving anyclass (NFData)
 
 -- | A union type.
-type UnionType = Reg (NonEmpty (Object TypeExpr))
+type UnionType = Reg (NonEmpty TypeExpr)
 
 -- | @parameter_of@ type.
 newtype ParameterOfType = ParameterOfType
@@ -775,11 +755,8 @@ newtype ContractOfExpr = ContractOfExpr
   deriving stock (Show, Generic)
   deriving anyclass (NFData)
 
--- | Constructor application.
-type CtorApp a = Tuple1 (App a)
-
 -- | Application kind.
-data App a
+data CtorApp a
   = ZeroArg CtorAppKind
     -- ^ Constructor without arguments.
   | MultArg (CtorAppKind, Par (NonEmpty a))
@@ -1050,21 +1027,9 @@ instance MessagePack Expr where
 
 instance (MessagePack a) => MessagePack (VariantKind a) where
   fromObjectWith cfg = withMsgVariant "VariantKind" \(name, arg) -> asumMsg
-    [ Variant   <$> (guardMsg (name == "Variant"  ) >> fromObjectWith cfg arg)
-    , Bracketed <$> (guardMsg (name == "Bracketed") >> fromObjectWith cfg arg)
-    , Legacy    <$> (guardMsg (name == "Legacy"   ) >> fromObjectWith cfg arg)
+    [ Variant <$> (guardMsg (name == "Variant") >> fromObjectWith cfg arg)
+    , Legacy  <$> (guardMsg (name == "Legacy" ) >> fromObjectWith cfg arg)
     ]
-
-instance (MessagePack a) => MessagePack (BracketedVariant a) where
-  fromObjectWith _ = withMsgMap "BracketedVariant" \o -> do
-    bvTuple <- o .: "tuple"
-    pure BracketedVariant{..}
-
-instance (MessagePack a) => MessagePack (BracketedVariantArgs a) where
-  fromObjectWith _ = withMsgMap "BracketedVariantArgs" \o -> do
-    bvaCtor <- o .: "ctor"
-    bvaArgs <- o .:? "args"
-    pure BracketedVariantArgs{..}
 
 instance (MessagePack a) => MessagePack (LegacyVariant a) where
   fromObjectWith _ = withMsgMap "LegacyVariant" \o -> do
@@ -1164,8 +1129,8 @@ instance (MessagePack a) => MessagePack (UnOp a) where
     uoArg <- o .: "arg"
     pure UnOp{..}
 
-instance (MessagePack a) => MessagePack (App a) where
-  fromObjectWith cfg = withMsgVariant "App" \(name, arg) -> asumMsg
+instance (MessagePack a) => MessagePack (CtorApp a) where
+  fromObjectWith cfg = withMsgVariant "CtorApp" \(name, arg) -> asumMsg
     [ ZeroArg <$> (guardMsg (name == "ZeroArg") >> fromObjectWith cfg arg)
     , MultArg <$> (guardMsg (name == "MultArg") >> fromObjectWith cfg arg)
     ]
@@ -1254,7 +1219,7 @@ instance MessagePack TypeExpr where
     , TString      <$> (guardMsg (name == "T_String"     ) >> fromObjectWith cfg arg)
     , TUnion       <$> (guardMsg (name == "T_Union"      ) >> fromObjectWith cfg arg)
     , TVar         <$> (guardMsg (name == "T_Var"        ) >> fromObjectWith cfg arg)
-    , TVariant     <$> (guardMsg (name == "T_Variant"    ) >> fromObjectWith cfg arg)
+    , TSum         <$> (guardMsg (name == "T_Sum"        ) >> fromObjectWith cfg arg)
     ]
 
 instance MessagePack UpdateExpr where
@@ -1689,7 +1654,7 @@ toAST CST{..} =
         in fastMake r (AST.Contract $ namespaceSelectionConv selection)
       ECtorApp ctorApp ->
         let
-          (r, ctor, args) = extractCtorAndArgs exprConv ctorApp
+          (r, ctor, args) = extractCtorAndArgs ctorApp
         in fastMake r (AST.Apply ctor (exprConv <$> args))
       EDiv divOp -> makeBinOp divOp
       EDivEq divEq -> makeBinOp divEq
@@ -1835,16 +1800,12 @@ toAST CST{..} =
       FStr (unpackWrap -> (rStr, str)) ->
         makeConstant rStr (AST.CString $ escapeText str)
 
-    extractCtorAndArgs :: (a -> LIGO Info) -> VariantKind a -> (Range, LIGO Info, [a])
-    extractCtorAndArgs ctorConv = \case
+    extractCtorAndArgs :: VariantKind a -> (Range, LIGO Info, [a])
+    extractCtorAndArgs = \case
       Variant (unpackReg -> (r, VariantC{..})) ->
-        case unTuple1 vTuple of
+        case vTuple of
           ZeroArg ctor -> (r, ctorAppKindConv ctor, [])
           MultArg (ctor, rValue -> Par' args) -> (r, ctorAppKindConv ctor, toList args)
-      Bracketed (unpackReg -> (r, BracketedVariant{..})) ->
-        let
-          Par' BracketedVariantArgs{..} = rValue bvTuple
-        in (r, ctorConv bvaCtor, maybe [] unTuple1 bvaArgs)
       Legacy (unpackReg -> (r, LegacyVariant{..})) ->
         let
           Par' LegacyVariantArgs{..} = rValue lvTuple
@@ -1865,7 +1826,7 @@ toAST CST{..} =
       PBytes (unpackWrap -> (r, Tuple1 bts)) -> makeConstantPattern r (AST.CBytes bts)
       PCtorApp ctorApp ->
         let
-          (r, ctor, args) = extractCtorAndArgs patternConv ctorApp
+          (r, ctor, args) = extractCtorAndArgs ctorApp
         in fastMake r (AST.IsConstr ctor (patternConv <$> args))
       PFalse (unpackWrap -> (r, _)) -> fastMake r AST.IsFalse
       PInt (unpackWrap -> (r, Tuple1 n)) -> makeConstantPattern r (AST.CInt n)
@@ -1942,15 +1903,15 @@ toAST CST{..} =
       TString str@(unpackWrap -> (r, _)) ->
         fastMake r (AST.TString $ makeWrappedLexeme AST.CString str)
       TUnion (unpackReg -> (r, objects)) ->
-        fastMake r (AST.TSum def $ typeExprConv . TObject <$> objects)
+        fastMake r (AST.TSum def $ typeExprConv <$> objects)
       TVar var@(unpackWrap -> (r, v))
         | v == "_" -> fastMake r AST.TWildcard
         | otherwise -> makeWrappedLexeme AST.TypeName var
-      TVariant (unpackReg -> (r, variants)) ->
+      TSum (unpackReg -> (r, variants)) ->
         let
           variantConv :: VariantKind TypeExpr -> LIGO Info
           variantConv variantKind =
             let
-              (r', ctor, args) = extractCtorAndArgs typeExprConv variantKind
+              (r', ctor, args) = extractCtorAndArgs variantKind
             in fastMake r' (AST.Variant ctor (typeExprConv <$> args))
         in fastMake r (AST.TSum def $ variantConv <$> variants)

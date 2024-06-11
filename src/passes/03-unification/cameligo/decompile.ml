@@ -302,7 +302,7 @@ and p : ?arrow_rhs:bool -> CST.type_expr -> CST.type_expr =
   let needs_parens : CST.type_expr -> bool = function
     (* When we apply type constr to some type, sometimes we need to add parens
       e.g. [A of int] -> [(A of int) option] vs [{a : int}] -> [{ a : int }] option. *)
-    | T_Fun _ | T_Cart _ | T_Variant _ | T_Attr _ | T_ParameterOf _ -> true
+    | T_Fun _ | T_Cart _ | T_Sum _ | T_Attr _ | T_ParameterOf _ -> true
     | T_ForAll _
     | T_Par _
     | T_App _
@@ -365,7 +365,7 @@ and ty_expr : CST.type_expr AST.ty_expr_ -> CST.type_expr =
       | None -> failwith "Decompiler: got a T_sum with no elements"
       | Some nsepseq -> Utils.nsepseq_map f nsepseq
     in
-    T_Variant (w CST.{ lead_vbar = Some ghost_vbar; variants = pairs })
+    T_Sum (w CST.{ lead_vbar = Some ghost_vbar; variants = pairs })
   | T_record { fields; layout = _ } ->
     (* XXX again not-initial node workaround *)
     let pairs =
@@ -416,8 +416,7 @@ and ty_expr : CST.type_expr AST.ty_expr_ -> CST.type_expr =
     in
     (match Utils.list_to_sepseq (List.map ~f row) ghost_vbar with
     | None -> failwith "Decompiler: got a T_sum_raw with no fields"
-    | Some nsepseq ->
-      T_Variant (w CST.{ lead_vbar = Some ghost_vbar; variants = nsepseq }))
+    | Some nsepseq -> T_Sum (w CST.{ lead_vbar = Some ghost_vbar; variants = nsepseq }))
   | T_module_open_in { module_path; field; field_as_open } ->
     T_ModPath
       (w

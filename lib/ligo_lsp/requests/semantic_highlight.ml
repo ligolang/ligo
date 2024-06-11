@@ -658,7 +658,6 @@ let semantic_tokens (cst : Dialect_cst.t) (range : Range.t) : int array =
         | S_rem_eq -> operator node
         | S_rpar -> operator node
         | S_semi -> operator node
-        | S_sharp -> operator node
         | S_slash -> operator node
         | S_times_eq -> operator node
         | S_times -> operator node

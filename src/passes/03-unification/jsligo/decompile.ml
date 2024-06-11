@@ -1,3 +1,4 @@
+open Core
 open Lexing_jsligo.Token
 module CST = Cst.Jsligo
 module AST = Ast_unified
@@ -386,20 +387,15 @@ and ty_expr : CST.type_expr AST.ty_expr_ -> CST.type_expr =
       let variant : (CST.type_expr CST.variant_kind, CST.vbar) Utils.nsep_or_pref =
         `Sep nsepseq
       in
-      T_Variant (w variant))
+      T_Sum (w variant))
   | T_disc_union objects ->
-    let f : CST.type_expr AST.Non_linear_disc_rows.row -> CST.type_expr CST._object =
-     fun (_empty_label, obj) ->
-      match obj.associated_type with
-      | T_Object obj -> obj
-      | _ -> failwith "Decompiler: field of T_disc_union should be decompiled to TObject"
+    let f : CST.type_expr AST.Non_linear_disc_rows.row -> CST.type_expr =
+     fun (_empty_label, obj) -> obj.associated_type
     in
     (match Utils.list_to_sepseq (List.map ~f objects) ghost_vbar with
     | None -> failwith "Decompiler: got a T_disc_union with no fields"
     | Some nsepseq ->
-      let variant : (CST.type_expr Cst_jsligo.CST._object, CST.vbar) Utils.nsep_or_pref =
-        `Sep nsepseq
-      in
+      let variant : (CST.type_expr, CST.vbar) Utils.nsep_or_pref = `Sep nsepseq in
       T_Union (w variant))
   | T_sum ({ fields; layout = _ }, _) ->
     (* XXX those are not initial, but backwards nanopass T_sum -> T_sum_row and
@@ -408,19 +404,19 @@ and ty_expr : CST.type_expr AST.ty_expr_ -> CST.type_expr =
      fun (constr, t) -> Legacy (w @@ decompile_variant constr (Some t) [])
     in
     let pairs =
-      match Utils.list_to_sepseq (Core.Map.to_alist fields) ghost_vbar with
+      match Utils.list_to_sepseq (Map.to_alist fields) ghost_vbar with
       | None -> failwith "Decompiler: got a T_sum with no elements"
       | Some nsepseq -> Utils.nsepseq_map f nsepseq
     in
     let variant : (CST.type_expr CST.variant_kind, CST.vbar) Utils.nsep_or_pref =
       `Sep pairs
     in
-    T_Variant (w variant)
+    T_Sum (w variant)
   | T_record { fields; layout = _ } ->
     let f : AST.Label.t * CST.type_expr -> CST.type_expr CST.property CST.reg =
      fun (field_name, t) -> w @@ decompile_field field_name t []
     in
-    (match Utils.list_to_sepseq (Core.Map.to_alist fields) ghost_semi with
+    (match Utils.list_to_sepseq (Map.to_alist fields) ghost_semi with
     | None -> failwith "Decompiler: got a T_record with no elements"
     | Some nsepseq -> T_Object (mk_object @@ Utils.nsepseq_map f nsepseq))
   | T_fun _ ->

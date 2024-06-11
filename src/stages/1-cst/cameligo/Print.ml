@@ -288,7 +288,7 @@ and print_type_expr state = function
 | T_Record      t -> print_T_Record      state t
 | T_String      t -> print_T_String      state t
 | T_Var         t -> print_T_Var         state t
-| T_Variant     t -> print_T_Variant     state t
+| T_Sum         t -> print_T_Sum         state t
 
 (* Application of type constructors *)
 
@@ -398,11 +398,11 @@ and print_field_decl state (node : field_decl reg) =
 and print_T_String state (node : string_literal) =
   Tree.make_string "T_String" state node
 
-(* Variant types *)
+(* Sum types *)
 
-and print_T_Variant state (node : variant_type reg) =
+and print_T_Sum state (node : sum_type reg) =
   let Region.{value; region} = node in
-  Tree.of_nsepseq ~region state "T_Variant" print_variant value.variants
+  Tree.of_nsepseq ~region state "T_Sum" print_variant value.variants
 
 and print_variant state (node : variant reg) =
   let Region.{value; region} = node in
