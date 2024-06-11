@@ -204,9 +204,12 @@ module Make (Config : Config.S) (Options : Options.S) =
                 None ->
                   fail state incl_region (PreError.File_not_found incl_file)
               | Some incl_path ->
-                 (match Simple_utils.File.read incl_path with
-                 | Some incl_file_str -> incl_path, incl_file_str, state
-                 | None -> PreError.Failed_opening (incl_path, (incl_path ^ "not found")) |> fail state incl_region)
+                 (match Sys_unix.is_directory incl_path with
+                      `Yes -> PreError.Failed_opening (incl_path, ("\"" ^ incl_file ^ "\"" ^ " is a directory")) |> fail state incl_region
+                    | `Unknown | `No ->
+                       (match Simple_utils.File.read incl_path with
+                            Some incl_file_str -> incl_path, incl_file_str, state
+                          | None -> PreError.Failed_opening (incl_path, (incl_path ^ " not found")) |> fail state incl_region))
             in
 
             (* We check if the current file exists in the stack of ancestors
