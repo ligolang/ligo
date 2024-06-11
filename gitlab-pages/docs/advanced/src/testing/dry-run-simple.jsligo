@@ -1,0 +1,8 @@
+namespace Counter {
+  type storage_type = int;
+  type return_type = [list<operation>, storage_type];
+
+  @entry
+  const main = (_action: unit, store: storage_type): return_type =>
+    [[], store + 1]
+}

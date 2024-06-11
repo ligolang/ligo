@@ -10,67 +10,9 @@ confident enough to write out first smart contract.
 
 We will be implementing a counter contract.
 
-## Dry-running a Contract
-
-Testing a contract can be quite easy if we utilise LIGO's built-in dry
-run feature. Dry-run works by simulating the main function execution,
-as if it were deployed on a real chain. You need to provide the
-following:
-
-- `file` - contract to run
-- `parameter` - parameter passed to the contract (in a
-  theoretical invocation operation)
-- `storage` - a mock storage value, as if it were stored on a real chain
-
-Here is a full example:
-
-<Syntax syntax="cameligo">
-
-```cameligo group=first-contract
-type storage = int
-
-[@entry]
-let main (_action : unit) (store : storage) : operation list * storage =
-  ([], store + 1)
-```
-
-```shell skip
-ligo run dry-run src/basic.mligo unit 42 ./gitlab-pages/docs/advanced/src/first-contract.mligo
-// Outputs:
-// tuple[   list[]
-//          Unit
-// ]
-```
-
-</Syntax>
-
-<Syntax syntax="jsligo">
-
-```jsligo group=first-contract
-type storage = int
-
-@entry
-const main = (_action : unit, store : storage) : [list<operation>, storage] =>
-  [[], store + 1]
-```
-
-```shell skip
-ligo run dry-run src/basic.mligo unit 42 ./gitlab-pages/docs/advanced/src/first-contract.jsligo
-// Outputs:
-// tuple[   list[]
-//          Unit
-// ]
-```
-
-</Syntax>
-
-Output of the `dry-run` is the return value of our main function, we
-can see the operations emitted (in our case an empty list, and the new
-storage value being returned) which in our case is still `Unit`.
-
 ## A Counter Contract
 
-Our counter contract will store a single `int` as it's storage, and
+Our counter contract will store a single `int` as its storage, and
 will accept an `action` variant in order to re-route our single `main`
 function to two entrypoints for `add` (addition) and `sub`
 (subtraction).
@@ -111,6 +53,18 @@ const v1 = (n : int, store : storage) : int => store + n
 
 </Syntax>
 
+## Dry-running the contract
+
+Testing a contract can be quite easy if we utilise LIGO's built-in dry
+run feature. Dry-run works by simulating the main function execution,
+as if it were deployed on a real chain. You need to provide the
+following:
+
+- `file` - contract to run
+- `parameter` - parameter passed to the contract (in a
+  theoretical invocation operation)
+- `storage` - a mock storage value, as if it were stored on a real chain
+
 To dry-run the counter contract, we will provide the `main` function
 with a variant parameter of value `Increment (5)` and an initial
 storage value of `5`.
@@ -123,6 +77,8 @@ ligo run dry-run ./gitlab-pages/docs/advanced/src/first-contract/counter.mligo "
 ```
 
 Our contract's storage has been successfully incremented to `10`.
+
+For more information about the `run dry-run` command and other ways to test contracts, see [Testing LIGO](../advanced/testing).
 
 ## Deploying and interacting with a contract on a live-chain
 
