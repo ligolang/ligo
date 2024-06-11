@@ -778,3 +778,20 @@ let%expect_test "A type mismatch between scrutinee and a pattern doesn't crash t
          },
          "severity": 1
        }])] |}]
+
+let%expect_test "Attempting to include a directory fails" =
+  get_diagnostics_test
+    { file_path = "contracts/lsp/include_directory_fail.mligo"
+    ; max_number_of_problems = None
+    };
+  [%expect
+    {|
+     [("../../../../../default/src/test/contracts/lsp/include_directory_fail.mligo",
+       [{
+          "message": "[Compiler stage: preprocessing] \"hover\" is a directory.",
+          "range": {
+            "end": { "character": 16, "line": 0 },
+            "start": { "character": 9, "line": 0 }
+          },
+          "severity": 1
+        }])] |}]
