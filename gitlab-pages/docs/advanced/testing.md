@@ -18,10 +18,6 @@ support are:
 
 * `ligo run dry-run`
 
-We will show how to use the first two, while an example on how to use
-the third one was already explained
-[here](first-contract.md#dry-running-a-contract).
-
 ### Testing with `ligo run test`
 
 The command `ligo run test` can be used to test a contract using LIGO.
@@ -743,6 +739,141 @@ arguments:
     SENDER is the sender the Michelson interpreter transaction will use.
 --source=SOURCE
     SOURCE is the source the Michelson interpreter transaction will use.
+```
+
+### Testing with `ligo run dry-run`
+
+The `ligo run dry-run` command runs the contract in a simulated
+environment. You can use it to test contracts with given parameters
+and storage values. You pass these arguments to the command:
+
+- The contract file to run
+- The parameter to pass to the contract, as a LIGO expression
+- The value of the contract storage, as a LIGO expression
+
+For example, this contract stores a number and allows callers to
+increment it by one:
+
+<Syntax syntax="cameligo">
+
+```cameligo group=dry-run-simple
+module Counter = struct
+  type storage_type = int
+  type return_type = operation list * storage_type
+
+  [@entry]
+  let main (_action: unit) (store: storage_type): return_type =
+    [], store + 1
+end
+```
+
+This command tests the contract with the `run dry-run` command:
+
+```bash
+ligo run dry-run -m Counter counter_simple.mligo 'unit' '4'
+```
+
+The result shows the new value of the storage:
+
+```
+( LIST_EMPTY() , 5 )
+```
+
+</Syntax>
+
+<Syntax syntax="jsligo">
+
+```jsligo group=dry-run-simple
+namespace Counter {
+  type storage_type = int;
+  type return_type = [list<operation>, storage_type];
+
+  @entry
+  const main = (_action: unit, store: storage_type): return_type =>
+    [[], store + 1]
+}
+```
+
+This command tests the contract with the `run dry-run` command:
+
+```bash
+ligo run dry-run -m Counter counter_simple.jsligo 'unit' '4'
+```
+
+The result shows the new value of the storage:
+
+```
+( LIST_EMPTY() , 5 )
+```
+
+</Syntax>
+
+For a more complicated example, this contract stores a map and
+provides an entrypoint that updates elements in it:
+
+<Syntax syntax="cameligo">
+
+```cameligo group=dry-run-complex
+module MyContract = struct
+  type storage_type = (nat, string) map
+  type return_type = operation list * storage_type
+
+  [@entry]
+  let update (param: nat * string) (storage: storage_type): return_type =
+    let (index, value) = param in
+    let updated_map = Map.add index value storage in
+    [], updated_map
+
+end
+```
+
+You can test the entrypoint and view the resulting operations and
+storage by running this command, which uses an empty map of the same
+type as the contract storage as the initial value of the storage:
+
+```bash
+ligo run dry-run -m MyContract dry-run-example.mligo \
+  'Update(1n, "hi")' \
+  '(Map.empty : (nat, string) map)'
+```
+
+</Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo group=dry-run-complex
+namespace MyContract {
+  type storage_type = map<nat, string>;
+  type return_type = [list<operation>, storage_type];
+
+  @entry
+  const update = (param: [nat, string], storage: storage_type): return_type => {
+    const [index, value] = param;
+    const updated_map = Map.add(index, value, storage);
+    return [[], updated_map];
+  }
+}
+```
+
+You can test the entrypoint and view the resulting operations and
+storage by running this command, which uses an empty map of the same
+type as the contract storage as the initial value of the storage:
+
+```bash
+ligo run dry-run -m MyContract dry-run-example.jsligo \
+  'Update(1n, "new value")' \
+  'Map.empty as map<nat, string>'
+```
+
+</Syntax>
+
+Note that the values of the parameter and the initial storage state
+are both LIGO expressions.
+
+The result shows the empty list of operations and the new value of the
+storage, expressed by adding elements to an empty map:
+
+```
+( LIST_EMPTY() , MAP_ADD(+1 , "new value" , MAP_EMPTY()) )
 ```
 
 ### Event testing
