@@ -1,4 +1,6 @@
-let (<@) f g x = f (g x)
+module Ligo_fun = Simple_utils.Ligo_fun
+
+let (<@) = Ligo_fun.(<@)
 
 type 'a fold_control = Stop | Skip | Continue of 'a | Last of 'a
 

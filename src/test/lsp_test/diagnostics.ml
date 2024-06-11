@@ -334,26 +334,18 @@ let%expect_test "ghost string filter" =
     {|
     [("../../../../../default/src/test/contracts/lsp/missing_string.jsligo",
       [{
-         "message": "[Compiler stage: parsing] Ill-formed variant type.\nAt this point, a string denoting a constructor is expected.\n",
+         "message": "[Compiler stage: small_passes] Unsupported disc union type",
+         "range": {
+           "end": { "character": 25, "line": 0 },
+           "start": { "character": 12, "line": 0 }
+         },
+         "severity": 1
+       };
+       {
+         "message": "[Compiler stage: parsing] Ill-formed variant type or array type.\nAt this point, one of the following is expected:\n  * a string denoting a constructor;\n  * a type denoting an element of an array type.\n",
          "range": {
            "end": { "character": 25, "line": 0 },
            "start": { "character": 24, "line": 0 }
-         },
-         "severity": 1
-       };
-       {
-         "message": "[Compiler stage: typer] Expected constructor \"Tail\" in expected sum type \"coin\".",
-         "range": {
-           "end": { "character": 23, "line": 4 },
-           "start": { "character": 17, "line": 4 }
-         },
-         "severity": 1
-       };
-       {
-         "message": "[Compiler stage: typer] Pattern not of the expected type \"coin\".",
-         "range": {
-           "end": { "character": 14, "line": 5 },
-           "start": { "character": 10, "line": 5 }
          },
          "severity": 1
        }])] |}]

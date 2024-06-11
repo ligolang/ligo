@@ -86,7 +86,7 @@ let hook_T_Attr = hook @@ fun a t -> T_Attr (a,t)
 %on_error_reduce core_type
 %on_error_reduce nsepseq(core_type,TIMES)
 %on_error_reduce fun_type_level
-%on_error_reduce variant_type(fun_type_level)
+%on_error_reduce sum_type(fun_type_level)
 %on_error_reduce cartesian_level
 %on_error_reduce short_variant(fun_type_level)
 %on_error_reduce nsepseq(core_irrefutable,COMMA)
@@ -291,7 +291,7 @@ quoted_type_var:
 interactive_type_expr: type_expr EOF { $1 }
 
 type_expr:
-  fun_type_level | variant_type(fun_type_level) { $1 }
+  fun_type_level | sum_type(fun_type_level) { $1 }
 
 (* The following subgrammar is _stratified_ in the usual manner to
    build in the grammar the different priorities between the syntactic
@@ -355,11 +355,11 @@ parameter_of_type:
 
    We parameterise the variants by the kind of type expression that
    may occur at the rightmost side of a sentence. This enables to use
-   [variant_type] in contexts that allow different types to avoid LR
+   [sum_type] in contexts that allow different types to avoid LR
    conflicts. For example, if the return type of a lambda is a
    functional type, parentheses are mandatory. *)
 
-variant_type(right_type_expr):
+sum_type(right_type_expr):
   short_variant(right_type_expr)
   ioption(long_variants(right_type_expr)) {
     let region, tail =
@@ -369,7 +369,7 @@ variant_type(right_type_expr):
           let stop = Nodes.ne_list_to_region (fun (_,v) -> v.region) long
           in cover $1.region stop, Nonempty_list.to_list long in
     let value = {lead_vbar = None; variants = ($1, tail)}
-    in T_Variant {region; value}
+    in T_Sum {region; value}
    }
 | attributes long_variants(right_type_expr) {
     (* Attributes of the variant type *)
@@ -377,7 +377,7 @@ variant_type(right_type_expr):
     let (lead_vbar, short_variant) :: list = $2 in
     let variants  = short_variant, list in
     let value     = {lead_vbar = Some lead_vbar; variants} in
-    let type_expr = T_Variant {region; value}
+    let type_expr = T_Sum {region; value}
     in hook_T_Attr $1 type_expr }
 
 long_variants(right_type_expr):
@@ -965,7 +965,7 @@ ret_type:
   ioption(type_annotation(lambda_app_type)) { $1 }
 
 lambda_app_type:
-  cartesian_level | variant_type(cartesian_level) { $1 }
+  cartesian_level | sum_type(cartesian_level) { $1 }
 
 (* Resuming stratification of [base_expr] *)
 

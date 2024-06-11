@@ -3,4 +3,4 @@ type t =
   | ["Bar", int]
   | ["Baz", unit]
   | ["Aaa", { a : int, b : bool }]
-  | #["Bbb", bool]
+  | ["Bbb", bool]

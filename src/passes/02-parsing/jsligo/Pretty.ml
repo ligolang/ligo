@@ -8,9 +8,10 @@ open Core
 
 (* Vendored dependencies *)
 
-module Utils  = Simple_utils.Utils
-module Region = Simple_utils.Region
-module Ne     = Nonempty_list
+module Utils    = Simple_utils.Utils
+module Region   = Simple_utils.Region
+module Ligo_fun = Simple_utils.Ligo_fun
+module Ne       = Nonempty_list
 
 (* Local dependencies *)
 
@@ -30,7 +31,7 @@ type state = PrettyComb.state
 let prefix = PrettyComb.prefix
 let (^/^)  = PrettyComb.(^/^)
 
-let (<@) f g x = f (g x)
+let (<@) = Ligo_fun.(<@)
 
 (* Placement *)
 
@@ -1330,7 +1331,7 @@ and print_type_expr state = function
 | T_String      t -> print_T_String            t
 | T_Union       t -> print_T_Union       state t
 | T_Var         t -> print_T_Var               t
-| T_Variant     t -> print_T_Variant     state t
+| T_Sum     t -> print_T_Sum     state t
 
 (* Type constructor application *)
 
@@ -1420,7 +1421,7 @@ and print_T_String (node : lexeme wrap) = print_string node
 (* Union type *)
 
 and print_union_type state (node : union_type) =
-  print_variant_or_union_type state print_object_type node
+  print_variant_or_union_type state print_type_expr node
 
 and print_variant_or_union_type :
   'a.state -> (state -> 'a -> document) ->
@@ -1486,33 +1487,13 @@ and print_variant_kind : 'a. (state -> 'a -> document) -> state -> 'a variant_ki
  fun printer state node ->
   match node with
     Variant node -> print_variant printer state node
-  | Bracketed node -> print_bracketed_variant printer state node
   | Legacy  node -> print_legacy_variant printer state node
 
 and print_variant : 'a. (state -> 'a -> document) -> state -> 'a variant reg -> document =
  fun printer state node ->
   let ({tuple; attributes} : 'a variant) = node.value in
-  let sharp, app = tuple in
-  let tuple = Option.value_map ~default:empty ~f:token sharp
-              ^^ print_app state printer app
+  let tuple = print_app state printer tuple
   in group (print_attributes state tuple attributes)
-
-and print_bracketed_variant : 'a. (state -> 'a -> document) -> state -> 'a bracketed_variant reg -> document =
- fun printer state node ->
-  let {attributes; sharp; tuple} = node.value in
-  let attributes = print_attributes state empty attributes in
-  let sharp = token sharp in
-  let tuple = print_brackets state (print_bracketed_variant_args printer state) tuple
-  in group (attributes ^^ sharp ^^ tuple)
-
-and print_bracketed_variant_args : 'a. (state -> 'a -> document) -> state -> 'a bracketed_variant_args -> document =
- fun printer state node ->
-  let {ctor; args} : 'a bracketed_variant_args = node in
-  let args =
-    match args with
-      None -> empty
-    | Some (comma, args) -> token comma ^/^ print_sep_or_term (break 1) (printer state) args
-  in printer state ctor ^^ args
 
 and print_legacy_variant : 'a. (state -> 'a -> document) -> state -> 'a legacy_variant reg -> document =
  fun printer state node ->
@@ -1531,7 +1512,7 @@ and print_legacy_variant_args : 'a. (state -> 'a -> document) -> state -> 'a leg
     in ctor ^^ separate_map args)
 
 and print_app :
-  'a.state -> (state -> 'a -> document) -> 'a app -> document =
+  'a.state -> (state -> 'a -> document) -> 'a ctor_app -> document =
   fun state print -> function
     ZeroArg ctor -> print_ctor_app_kind ctor ^^ string "()"
   | MultArg (ctor, args) ->
@@ -1542,10 +1523,10 @@ and print_ctor_app_kind = function
   CtorStr  node -> print_string node
 | CtorName node -> print_ctor node
 
-and print_variant_type state (node : variant_type) =
+and print_sum_type state (node : sum_type) =
   print_variant_or_union_type state (print_variant_kind print_type_expr) node
 
-and print_T_Variant state (node : variant_type) = print_variant_type state node
+and print_T_Sum state (node : sum_type) = print_sum_type state node
 
 let print_type_expr = print_type_expr
 let print_pattern   = print_pattern

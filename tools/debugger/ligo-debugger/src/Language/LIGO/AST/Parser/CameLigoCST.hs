@@ -661,7 +661,7 @@ data TypeExpr
     -- ^ String singleton.
   | TVar WrappedLexeme
     -- ^ Type variable.
-  | TVariant (Reg VariantType)
+  | TSum (Reg SumType)
     -- ^ Variant type.
   deriving stock (Show, Generic)
   deriving anyclass (NFData)
@@ -686,7 +686,7 @@ data FieldDecl = FieldDecl
   deriving anyclass (NFData)
 
 -- | Variant type.
-newtype VariantType = VariantType
+newtype SumType = SumType
   { vtVariants :: NonEmpty (Reg Variant)
     -- ^ Variant cases.
   }
@@ -899,7 +899,7 @@ instance MessagePack TypeExpr where
     , TPar         <$> (guardMsg (name == "T_Par"        ) >> fromObjectWith cfg arg)
     , TRecord      <$> (guardMsg (name == "T_Record"     ) >> fromObjectWith cfg arg)
     , TString      <$> (guardMsg (name == "T_String"     ) >> fromObjectWith cfg arg)
-    , TVariant     <$> (guardMsg (name == "T_Variant"    ) >> fromObjectWith cfg arg)
+    , TSum         <$> (guardMsg (name == "T_Sum"        ) >> fromObjectWith cfg arg)
     , TVar         <$> (guardMsg (name == "T_Var"        ) >> fromObjectWith cfg arg)
     , TParameterOf <$> (guardMsg (name == "T_ParameterOf") >> fromObjectWith cfg arg)
     ]
@@ -916,10 +916,10 @@ instance MessagePack FieldDecl where
     fdFieldType <- o .:? "field_type"
     pure FieldDecl{..}
 
-instance MessagePack VariantType where
-  fromObjectWith _ = withMsgMap "VariantType" \o -> do
+instance MessagePack SumType where
+  fromObjectWith _ = withMsgMap "SumType" \o -> do
     vtVariants <- o .: "variants"
-    pure VariantType{..}
+    pure SumType{..}
 
 instance MessagePack Variant where
   fromObjectWith _ = withMsgMap "Variant" \o -> do
@@ -1534,7 +1534,7 @@ toAST CST{..} =
         let
           strVal = makeWrappedLexeme AST.CString (escapeText <$> str)
         in fastMake r (AST.TString strVal)
-      TVariant (unpackReg -> (r, VariantType{..})) ->
+      TSum (unpackReg -> (r, SumType{..})) ->
         let
           variants = vtVariants
             <&> do \(unpackReg -> (r', Variant{..})) ->

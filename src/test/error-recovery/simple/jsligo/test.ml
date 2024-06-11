@@ -33,7 +33,7 @@ let%expect_test "error_recovery_simple_jsligo" =
     PASS, 0, 0, 0, 0, 1, ./missing_par_in_if_condition.jsligo
     FAIL : can parse test file (but shouldn't)./missing_semicolon_before_return_on_same_line.jsligo
     FAIL : can parse test file (but shouldn't)./missing_semicolon_in_top_level.jsligo
-    PASS, 2, 2, 2, 6, 0, ./missing_string.jsligo
+    PASS, 2, 12, 12, 6, 0, ./missing_string.jsligo
     FAIL : can parse test file (but shouldn't)./missing_type_annotation_in_lambda_in_match.jsligo
     PASS, 1, 9, 9, 107, 0, ./switch_with_empty_body.jsligo
     PASS, 2, 5, 5, 4, 0, ./switch_with_missing_case_value.jsligo

@@ -3981,7 +3981,7 @@ contract: Type Ident EQ String ARROW With
 
 Ill-formed functional type.
 At this point, a type expression for the codomain (range) is expected.
-Note: If you want a variant type, enclose it between parentheses.
+Note: If you want a sum type, enclose it between parentheses.
 
 interactive_expr: Fun Ident COLON UIdent Of With
 ##
@@ -4002,10 +4002,10 @@ contract: Let Ident COLON UIdent Of With
 ## Of
 ##
 
-Ill-formed variant type.
+Ill-formed sum type.
 At this point, the parameter of the constructor is expected as a type
 expression.
-Note: If you want a variant type, enclose it between parentheses.
+Note: If you want a sum type, enclose it between parentheses.
 
 contract: Type Ident EQ String TIMES UIdent With
 ##
@@ -4048,7 +4048,7 @@ contract: Type Ident EQ String TIMES With
 
 Ill-formed product type.
 At this point, a type expression is expected.
-Hint: If you want a variant type, put it between parentheses.
+Hint: If you want a sum type, put it between parentheses.
 
 contract: Type Ident EQ VBAR With
 ##
@@ -4121,8 +4121,8 @@ contract: Module UIdent EQ Struct Type Ident EQ UIdent EOF
 ## may provide an INCOMPLETE view of the future (what was expected next).
 ## In state 31, spurious reduction of production ctor -> UIdent
 ## In state 26, spurious reduction of production short_variant(fun_type_level) -> ctor
-## In state 76, spurious reduction of production variant_type(fun_type_level) -> short_variant(fun_type_level)
-## In state 73, spurious reduction of production type_expr -> variant_type(fun_type_level)
+## In state 76, spurious reduction of production sum_type(fun_type_level) -> short_variant(fun_type_level)
+## In state 75, spurious reduction of production type_expr -> sum_type(fun_type_level)
 ## In state 126, spurious reduction of production type_decl -> Type type_name EQ type_expr
 ## In state 1162, spurious reduction of production declaration -> type_decl
 ## In state 1171, spurious reduction of production top_declaration -> declaration
@@ -6659,7 +6659,7 @@ At this point, one of the following is expected:
 
 contract: Let UIdent COLON UIdent DOT LPAR Ident VBAR
 ##
-## Ends in an error in state: 74.
+## Ends in an error in state: 73.
 ##
 ## par(type_expr) -> LPAR type_expr . RPAR [ Val VBAR UIdent Type TIMES SEMI RPAR RBRACE Module Let Include In Ident End EQ EOF EIdent Directive COMMA Attr ARROW ]
 ##
@@ -6821,7 +6821,7 @@ interactive_expr: Fun UIdent COLON VBAR UIdent ZWSP
 ## ctor
 ##
 
-Ill-formed variant type.
+Ill-formed sum type.
 At this point, one of the following is expected:
   * a vertical bar '|' if the constructor is constant;
   * the keyword 'of' followed by the type of the variant;
@@ -6831,8 +6831,8 @@ interactive_expr: Fun UIdent COLON UIdent Of Ident Type
 ##
 ## Ends in an error in state: 323.
 ##
-## variant_type(cartesian_level) -> short_variant(cartesian_level) . [ ARROW ]
-## variant_type(cartesian_level) -> short_variant(cartesian_level) . long_variants(cartesian_level) [ ARROW ]
+## sum_type(cartesian_level) -> short_variant(cartesian_level) . [ ARROW ]
+## sum_type(cartesian_level) -> short_variant(cartesian_level) . long_variants(cartesian_level) [ ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## short_variant(cartesian_level)
@@ -8584,8 +8584,8 @@ contract: Module UIdent COLON Sig Val Ident COLON UIdent ARROW
 ## may provide an INCOMPLETE view of the future (what was expected next).
 ## In state 31, spurious reduction of production ctor -> UIdent
 ## In state 26, spurious reduction of production short_variant(fun_type_level) -> ctor
-## In state 76, spurious reduction of production variant_type(fun_type_level) -> short_variant(fun_type_level)
-## In state 73, spurious reduction of production type_expr -> variant_type(fun_type_level)
+## In state 76, spurious reduction of production sum_type(fun_type_level) -> short_variant(fun_type_level)
+## In state 75, spurious reduction of production type_expr -> sum_type(fun_type_level)
 ## In state 136, spurious reduction of production gen_type_expr -> type_expr
 ## In state 143, spurious reduction of production type_annotation(gen_type_expr) -> COLON gen_type_expr
 ## In state 144, spurious reduction of production sig_val -> Val variable type_annotation(gen_type_expr)
@@ -8837,8 +8837,8 @@ interactive_type_expr: UIdent ARROW
 ## may provide an INCOMPLETE view of the future (what was expected next).
 ## In state 31, spurious reduction of production ctor -> UIdent
 ## In state 26, spurious reduction of production short_variant(fun_type_level) -> ctor
-## In state 76, spurious reduction of production variant_type(fun_type_level) -> short_variant(fun_type_level)
-## In state 73, spurious reduction of production type_expr -> variant_type(fun_type_level)
+## In state 76, spurious reduction of production sum_type(fun_type_level) -> short_variant(fun_type_level)
+## In state 75, spurious reduction of production type_expr -> sum_type(fun_type_level)
 ##
 
 Ill-formed type expression.

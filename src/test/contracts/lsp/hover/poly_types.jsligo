@@ -1,4 +1,4 @@
-type func<a, b> = ["Func", (x : a) => b]
+type func<a, b> = | ["Func", (x : a) => b]
 
 const incr = Func(x => x + 1);
 
@@ -29,10 +29,10 @@ const opt = Some(42)
 const big_map = Big_map.literal([[42, 42n], [100, 100n]])
 
 namespace M {
-  export type t<a> = ["Aaa", a]
+  export type t<a> = | ["Aaa", a]
 }
 
-const x = #["Aaa", "aaa"]
+const x = Aaa("aaa")
 
 #import "poly_types_common.mligo" "Common"
 
@@ -47,7 +47,7 @@ namespace B {
     export type x<a> = a
   }
 
-  type b<a> = ["B", X.x<a>]
+  type b<a> = | ["B", X.x<a>]
 }
 
 type t = list<int>

@@ -3,13 +3,14 @@
 
 (* Vendor dependencies *)
 
-module Region = Simple_utils.Region
-module Utils  = Simple_utils.Utils
-module Ne     = Nonempty_list
+module Region   = Simple_utils.Region
+module Utils    = Simple_utils.Utils
+module Ne       = Nonempty_list
+module Ligo_fun = Simple_utils.Ligo_fun
 
 (* Utilities *)
 
-let (<@) f g x = f (g x)
+let (<@) = Ligo_fun.(<@)
 
 (* Local dependencies *)
 

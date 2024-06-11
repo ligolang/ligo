@@ -7,6 +7,7 @@
 module Directive = Preprocessor.Directive
 module Utils     = Simple_utils.Utils
 module Region    = Simple_utils.Region
+module Ligo_fun  = Simple_utils.Ligo_fun
 
 (* Internal dependencies *)
 
@@ -17,7 +18,7 @@ open CST (* THE ONLY GLOBAL OPENING *)
 
 (* UTILITIES *)
 
-let (<@) f g x = f (g x)
+let (<@) = Ligo_fun.(<@)
 
 type ('a,'sep) sep_or_term = ('a,'sep) Utils.sep_or_term
 
@@ -290,21 +291,21 @@ and print_type_annotation state (node : type_annotation) =
 (* TYPE EXPRESSIONS *)
 
 and print_type_expr state = function
-  T_App         t -> print_T_App          state t
-| T_Array       t -> print_T_Array        state t
-| T_Attr        t -> print_T_Attr         state t
-| T_ForAll      t -> print_T_ForAll       state t
-| T_Fun         t -> print_T_Fun          state t
-| T_Int         t -> print_T_Int          state t
-| T_NamePath    t -> print_T_NamePath     state t
-| T_Nat         t -> print_T_Nat          state t
-| T_Object      t -> print_T_Object       state t
-| T_Par         t -> print_T_Par          state t
-| T_ParameterOf t -> print_T_ParameterOf  state t
-| T_String      t -> print_T_String       state t
-| T_Union       t -> print_T_Union        state t
-| T_Var         t -> print_T_Var          state t
-| T_Variant     t -> print_T_Variant      state t
+  T_App         t -> print_T_App         state t
+| T_Array       t -> print_T_Array       state t
+| T_Attr        t -> print_T_Attr        state t
+| T_ForAll      t -> print_T_ForAll      state t
+| T_Fun         t -> print_T_Fun         state t
+| T_Int         t -> print_T_Int         state t
+| T_NamePath    t -> print_T_NamePath    state t
+| T_Nat         t -> print_T_Nat         state t
+| T_Object      t -> print_T_Object      state t
+| T_Par         t -> print_T_Par         state t
+| T_ParameterOf t -> print_T_ParameterOf state t
+| T_String      t -> print_T_String      state t
+| T_Union       t -> print_T_Union       state t
+| T_Var         t -> print_T_Var         state t
+| T_Sum         t -> print_T_Sum         state t
 
 (* Application of type constructors *)
 
@@ -432,35 +433,32 @@ and print_T_String state (node: string_literal) =
 (* Discriminated unions *)
 
 and print_T_Union state (node: union_type) =
-  let Region.{region; value} = node
-  and print = print_object print_type_expr "<subset>" in
-  Tree.of_nsep_or_pref ~region state "T_Union" print value
+  let Region.{region; value} = node in
+  Tree.of_nsep_or_pref ~region state "T_Union" print_type_expr value
 
 (* Type variable *)
 
 and print_T_Var state (node : variable) =
   Tree.(make_unary state "T_Var" print_variable node)
 
-(* Variant types *)
+(* Sum types *)
 
-and print_T_Variant state (node : variant_type) =
+and print_T_Sum state (node : sum_type) =
   let Region.{value; region} = node in
-  Tree.of_nsep_or_pref ~region state "T_Variant"
+  Tree.of_nsep_or_pref ~region state "T_Sum"
                        (print_variant_kind print_type_expr) value
 
 and print_variant_kind : 'a. 'a Tree.printer -> 'a variant_kind Tree.printer =
  fun printer state node ->
   match node with
-    Variant   node -> print_variant printer state node
-  | Bracketed node -> print_bracketed_variant printer state node
-  | Legacy    node -> print_legacy_variant printer state node
+    Variant node -> print_variant printer state node
+  | Legacy  node -> print_legacy_variant printer state node
 
 and print_variant : 'a. 'a Tree.printer -> 'a variant reg Tree.printer =
  fun printer state node ->
   let ({attributes; tuple} : 'a variant) = node.value in
-  let _, app = tuple in
   let ctor, ctor_params =
-    match app with
+    match tuple with
       ZeroArg ctor -> ctor, []
     | MultArg (ctor, brackets) ->
         let app = brackets.value.inside in
@@ -473,26 +471,13 @@ and print_variant : 'a. 'a Tree.printer -> 'a variant reg Tree.printer =
     Tree.mk_child print_ctor_app_kind ctor ::
     Tree.mk_children_list printer ~root:"<parameters>" ctor_params
     @ mk_children_attr attributes
-  in Tree.make ~region:node.region state "<variant>" children
+  in Tree.make ~region:node.region state "Variant" children
 
 and print_ctor_app_kind state = function
   CtorStr c ->
     Tree.(make_unary ~region:c#region state "CtorStr" make_literal c)
 | CtorName c ->
     Tree.(make_unary ~region:c#region state "CtorName" make_literal c)
-
-and print_bracketed_variant : 'a. 'a Tree.printer -> 'a bracketed_variant reg Tree.printer =
- fun printer state node ->
-  let {attributes; sharp = _; tuple} = node.value in
-  let {ctor; args} : 'a bracketed_variant_args = tuple.value.inside in
-  let ctor_params =
-    Option.value_map ~default:[] ~f:(Utils.sep_or_term_to_list <@ snd) args
-  in
-  let children =
-    Tree.mk_child printer ctor ::
-    Tree.mk_children_list printer ~root:"<parameters>" ctor_params
-    @ mk_children_attr attributes
-  in Tree.make ~region:node.region state "<bracketed_variant>" children
 
 and print_legacy_variant : 'a. 'a Tree.printer -> 'a legacy_variant reg Tree.printer =
  fun printer state node ->
@@ -503,7 +488,7 @@ and print_legacy_variant : 'a. 'a Tree.printer -> 'a legacy_variant reg Tree.pri
     Tree.mk_child (Tree.make_node ~region:ctor#region) ctor#payload ::
     Tree.mk_children_list printer ~root:"<args>" args
     @ mk_children_attr attributes
-  in Tree.make ~region:node.region state "<legacy_variant>" children
+  in Tree.make ~region:node.region state "Legacy" children
 
 (* PATTERNS *)
 

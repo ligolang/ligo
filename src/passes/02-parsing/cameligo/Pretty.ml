@@ -6,9 +6,10 @@ open Core
 
 (* Vendored dependencies *)
 
-module Utils  = Simple_utils.Utils
-module Region = Simple_utils.Region
-module Ne     = Nonempty_list
+module Utils    = Simple_utils.Utils
+module Region   = Simple_utils.Region
+module Ligo_fun = Simple_utils.Ligo_fun
+module Ne       = Nonempty_list
 
 (* Local dependencies *)
 
@@ -27,7 +28,7 @@ let prefix = PrettyComb.prefix
 let (^/^)  = PrettyComb.(^/^)
 type state = PrettyComb.state
 
-let (<@) f g x = f (g x)
+let (<@) = Ligo_fun.(<@)
 
 (* Placement *)
 
@@ -441,7 +442,7 @@ and print_S_Type state (node : sig_type reg) =
 
 and print_type_rhs state thread (node : (equal * type_expr) option) =
   let print state (eq, type_expr) =
-    let padding = match type_expr with T_Variant _ -> 0 | _ -> state#indent
+    let padding = match type_expr with T_Sum _ -> 0 | _ -> state#indent
     and rhs = print_type_expr state type_expr in
     thread ^^ space ^^ token eq ^^ space ^^ nest padding (break 1 ^^ rhs)
   in Option.value_map node ~default:thread ~f:(print state)
@@ -467,7 +468,7 @@ and print_type_decl state (node : type_decl) =
   let {kwd_type; params; name; eq; type_expr} = node in
   let name    = print_variable name
   and params  = print_type_vars params
-  and padding = match type_expr with T_Variant _ -> 0 | _ -> state#indent
+  and padding = match type_expr with T_Sum _ -> 0 | _ -> state#indent
   and t_expr  = print_type_expr state type_expr in
   token kwd_type ^^ space ^^ params ^^ name ^^ space ^^ token eq
   ^^ group (nest padding (break 1 ^^ t_expr))
@@ -503,7 +504,7 @@ and print_type_expr state = function
 | T_Par         t -> print_T_Par       state t
 | T_Record      t -> print_T_Record    state t
 | T_String      t -> print_T_String          t
-| T_Variant     t -> print_T_Variant   state t
+| T_Sum     t -> print_T_Sum   state t
 | T_Var         t -> print_T_Var             t
 | T_ParameterOf t -> print_T_ParameterOf     t
 
@@ -548,8 +549,8 @@ and print_T_Attr state (node : attribute * type_expr) =
   let attributes, type_expr = unroll_T_Attr node in
   let thread =
     match type_expr with
-      T_Variant t ->
-        print_variant_type state ~attr:(not (List.is_empty attributes)) t
+      T_Sum t ->
+        print_sum_type state ~attr:(not (List.is_empty attributes)) t
     | _ -> print_type_expr state type_expr
   in print_attributes state thread attributes
 
@@ -632,10 +633,10 @@ and print_T_String (node : lexeme wrap) = print_string node
 
 (* Variant types *)
 
-and print_T_Variant state (node : variant_type reg) =
-  print_variant_type state ~attr:false node
+and print_T_Sum state (node : sum_type reg) =
+  print_sum_type state ~attr:false node
 
-and print_variant_type state ~(attr: bool) (node : variant_type reg) =
+and print_sum_type state ~(attr: bool) (node : sum_type reg) =
   let head, tail =
     Utils.nsepseq_map (nest state#indent <@ print_variant state)
                       node.value.variants
