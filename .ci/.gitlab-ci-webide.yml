@@ -106,7 +106,7 @@ webide-new-frontend-build-and-push:
       when: always
   script:
     - docker buildx build --build-context syntaxes=tools/vscode/syntaxes
-      --build-arg backend_url=backend.ligo-webide-v2${NPR_ENVIRONMENT}.gcp-npr.marigold.dev
+      --build-arg backend_url=backend-ligo-webide-v2${NPR_ENVIRONMENT}.dev.gke.kanvas.trili.tech
       --build-arg http_protocol=https
       -f tools/webide-new/ligo-webide-frontend/ligo-ide/Dockerfile 
       tools/webide-new/ligo-webide-frontend/ligo-ide 
