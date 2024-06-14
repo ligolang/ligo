@@ -298,3 +298,19 @@ let%expect_test "Inlay hints for type recovered type variables" =
        "label": ": [^c, ^d, [^a, ^b]]",
        "position": { "character": 7, "line": 3 }
      }] |}]
+
+let%expect_test "Inlay hints show ghost identifiers as unresolved" =
+  get_inlay_hint_test "contracts/lsp/inlay_hints/ghost_identifiers_unresolved.mligo";
+  [%expect{|
+    [{
+       "kind": 1,
+       "label": ": (* Unresolved *)",
+       "position": { "character": 22, "line": 3 }
+     };
+     {
+       "kind": 1,
+       "label": ": ^b -> ^a",
+       "position": { "character": 8, "line": 1 }
+     };
+     { "kind": 1, "label": ": ^c", "position": { "character": 10, "line": 4 } };
+     { "kind": 1, "label": ": ^a", "position": { "character": 8, "line": 7 } }] |}]
