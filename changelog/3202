@@ -1,0 +1,7 @@
+
+author: krendelhoff
+description: "\\nAttempt to include a directory is highlighted as an error with proper message.\\n\\n"
+merge_request: '3202'
+title: "[#1683] Handle case user tries to include directory"
+type: fixed
+            
