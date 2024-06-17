@@ -1,0 +1,7 @@
+
+author: timothymcmackin
+description: "\\nMerges documentation pages on simple data types and moves them to /docs/data-types.\\n\\n"
+merge_request: '3199'
+title: "[doc] Consolidate simple data types"
+type: added
+            
