@@ -1,4 +1,0 @@
-const and_1 : bool = false && true;  // false
-const and_2 : bool = false && false; // false
-const and_3 : bool = true  && true;  // true
-const and_4 : bool = true  && false; // false

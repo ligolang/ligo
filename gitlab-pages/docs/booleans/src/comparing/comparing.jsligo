@@ -1,6 +1,0 @@
-const a : bool = 1 == 1;  // equality (true)
-const b : bool = 1 != 0;  // inequality (true)
-const c : bool = 1 > 0;   // greater than (true)
-const d : bool = 0 < 1;   // lower than (true)
-const e : bool = 0 >= 0;  // greater than or equal (true)
-const f : bool = 0 <= 0;  // lower than or equal (true)
