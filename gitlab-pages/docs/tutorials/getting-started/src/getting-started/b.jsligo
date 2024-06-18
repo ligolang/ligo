@@ -1,0 +1,17 @@
+namespace Counter {
+  type storage = int;
+  type return_type = [list<operation>, storage];
+
+  @entry
+  const add = (n : int, storage : storage) : return_type => [[], storage + n];
+
+  @entry
+  const sub = (n : int, storage : storage) : return_type => [[], storage - n];
+};
+
+const test_add = (() => {
+  const initial_storage = 10 as int;
+  const orig = Test.Next.Originate.contract(contract_of(Counter), initial_storage, 0tez);
+  Test.Next.Contract.transfer_exn(Test.Next.Typed_address.get_entrypoint("add", orig.taddr), 32 as int, 0tez);
+  return Assert.assert(Test.Next.Typed_address.get_storage(orig.taddr) == initial_storage + 32);
+}) ()

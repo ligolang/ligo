@@ -1,0 +1,7 @@
+
+author: timothymcmackin
+description: "\\nClarifies and updates the getting started tutorial to be more complete and use the current test framework.\\n\\n"
+merge_request: '3191'
+title: "[doc] Update getting started tutorial as a quickstart"
+type: fixed
+            
