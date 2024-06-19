@@ -1,0 +1,7 @@
+
+author: timothymcmackin
+description: "Clarifies documentation about events and adds an example.\\n\\n"
+merge_request: '3213'
+title: "Clarify emitting events and add an example"
+type: fixed
+            
