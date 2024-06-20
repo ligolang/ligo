@@ -1,3 +1,0 @@
-function f (_x) { return 0; }; // _x is silent
-const _ = 1;
-const a = _;

@@ -29,15 +29,7 @@ const sidebars = {
     ],
     "Syntax": [
       "comments/comments",
-      {
-        "type": "category",
-        "label": "Variables and constants",
-        "items": [
-          "variables/constants",
-          "variables/variables",
-          "variables/silent_vars",
-        ],
-      },
+      "syntax/variables",
       {
         "type": "category",
         "label": "Functions",
