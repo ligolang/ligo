@@ -42,6 +42,8 @@ include:
 
 changelog:
   stage: pretooling
+  tags:
+    - gcp-ubuntu
   script:
     - FORCE_GENERATION=$([ -n "$CI_COMMIT_TAG" ] && echo "false" || echo "true")
     - ./scripts/changelog-generation.sh ${FORCE_GENERATION}
@@ -64,6 +66,8 @@ changelog:
 # TODO: https://docs.gitlab.com/ee/ci/yaml/#onlychangesexceptchanges ?
 docker_build:
   stage: build
+  tags:
+    - gcp-ubuntu
   rules:
     - if: '$CI_COMMIT_REF_NAME =~ /^release/ && $CI_PROJECT_PATH == "ligolang/ligo"  &&  $TRIGGER_DOC_UPDATE != null'
       when: always
@@ -104,6 +108,8 @@ docker_build:
 
 docker_extract:
   stage: docker-extract
+  tags:
+    - gcp-ubuntu
   rules:
     - if: '$CI_COMMIT_REF_NAME =~ /^release/ && $CI_PROJECT_PATH == "ligolang/ligo"  &&  $TRIGGER_DOC_UPDATE != null'
       when: always
@@ -141,6 +147,8 @@ docker_extract:
 
 check-generated-highlighting:
   stage: tooling
+  tags:
+    - gcp-ubuntu
   dependencies:
     - docker_extract
   script:
@@ -158,12 +166,16 @@ check-generated-highlighting:
 
 .docker-image:
   stage: push
+  tags:
+    - gcp-ubuntu
   image: docker:19.03.5
   services:
     - docker:19.03.5-dind
 
 docker_push_ligo:
   stage: push
+  tags:
+    - gcp-ubuntu
   extends: .docker-image
   dependencies:
     - docker_build
@@ -187,6 +199,8 @@ docker_push_ligo:
 
 docker_push_ligo_ci:
   stage: push
+  tags:
+    - gcp-ubuntu
   extends: .docker-image
   dependencies:
     - docker_build
@@ -209,6 +223,8 @@ docker_push_ligo_ci:
 
 xrefcheck:
   stage: tooling
+  tags:
+    - gcp-ubuntu
   needs:
     - job: changelog
       artifacts: true
@@ -224,7 +240,7 @@ xrefcheck:
 .website:
   stage: push
   tags:
-    - docker
+    - gcp-docker
   image: node:20.2.0-buster
   needs:
     - job: changelog
@@ -267,6 +283,8 @@ pages-attempt:
 
 algolia-crawl:
   stage: push
+  tags:
+    - gcp-ubuntu
   needs:
     - job: pages
   script:
@@ -284,7 +302,7 @@ deploy_website_preview:
   stage: deploy
   image: node:20.2.0-buster
   tags:
-    - docker
+    - gcp-docker
   needs:
     - job: pages-attempt
       artifacts: true

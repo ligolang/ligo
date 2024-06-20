@@ -5,6 +5,8 @@
 webide-define-image-tag:
   extends: .docker-image
   stage: pretooling
+  tags:
+    - gcp-ubuntu
   needs:
     - job: changelog
       artifacts: false
@@ -37,6 +39,8 @@ webide-define-image-tag:
 webide-new-backend-build:
   extends: .docker-image
   stage: build
+  tags:
+    - gcp-ubuntu
   needs:
     - job: changelog
       artifacts: false
@@ -55,6 +59,8 @@ webide-new-backend-build:
 webide-new-frontend-build:
   extends: .docker-image
   stage: build
+  tags:
+    - gcp-ubuntu
   needs:
     - job: changelog
       artifacts: false
@@ -78,6 +84,8 @@ webide-new-frontend-build:
 webide-new-backend-build-and-push-backend:
   extends: .docker-image
   stage: deploy
+  tags:
+    - gcp-ubuntu
   needs:
     - job: webide-define-image-tag
       artifacts: true 
@@ -96,6 +104,8 @@ webide-new-backend-build-and-push-backend:
 webide-new-frontend-build-and-push:
   extends: .docker-image
   stage: deploy
+  tags:
+    - gcp-ubuntu
   needs:
     - job: webide-define-image-tag
       artifacts: true
@@ -119,6 +129,8 @@ webide-new-frontend-build-and-push:
 webide-new-release-backend-build-and-push:
   extends: .docker-image
   stage: deploy
+  tags:
+    - gcp-ubuntu
   needs:
     - job: webide-define-image-tag
       artifacts: true
@@ -137,6 +149,8 @@ webide-new-release-backend-build-and-push:
 webide-new-release-frontend-build-and-push:
   extends: .docker-image
   stage: deploy
+  tags:
+    - gcp-ubuntu
   needs:
     - job: webide-define-image-tag
       artifacts: true

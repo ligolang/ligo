@@ -5,6 +5,8 @@ include:
 
 webide-backend:
   stage: tools-build
+  tags:
+    - gcp-ubuntu
   rules: &webide_mr_dev
     - !reference [.webide_mr_changes]
     - !reference [.dev]
@@ -14,6 +16,8 @@ webide-backend:
 
 webide-frontend:
   stage: tools-build
+  tags:
+    - gcp-ubuntu
   rules: *webide_mr_dev
   needs: []
   script:
@@ -21,6 +25,8 @@ webide-frontend:
 
 webide-backend-checks:
   stage: tools-check
+  tags:
+    - gcp-ubuntu
   rules: *webide_mr_dev
   needs: [webide-backend]
   script:
@@ -35,6 +41,8 @@ webide-backend-checks:
 
 webide-frontend-checks:
   stage: tools-check
+  tags:
+    - gcp-ubuntu
   rules: *webide_mr_dev
   needs: [webide-frontend]
   script:
