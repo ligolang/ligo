@@ -218,6 +218,10 @@ module Cameligo_inlay_hint_provider = Inlay_hint_provider_Make (struct
     | S_let_mut_in, { kwd_let; binding = { value = binding; _ }; _ } ->
       let range = Range.of_region @@ Region.cover kwd_let#region binding.eq#region in
       check_range range
+    | S_let_binding, let_binding when Option.is_some let_binding.rhs_type ->
+      (match let_binding.binders with
+      | P_Var v :: _ -> Continue (Range.of_region @@ variable_to_region v)
+      | _ -> Skip)
     | S_fun_expr, { kwd_fun; arrow; _ } ->
       let range = Range.of_region @@ Region.cover kwd_fun#region arrow#region in
       check_range range
