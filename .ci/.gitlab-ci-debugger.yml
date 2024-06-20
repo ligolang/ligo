@@ -25,7 +25,7 @@ debugger-danger-instant-checks:
   allow_failure: true
   interruptible: true
   tags:
-    - docker
+    - gcp-docker
   image: ruby:3.2.2
   before_script: &install_danger
     - gem install --quiet danger-gitlab
@@ -40,7 +40,7 @@ debugger-danger-hlint:
   needs: []
   interruptible: true
   tags:
-    - docker
+    - gcp-docker
   image: ruby:3.2.2
   before_script:
     - gem install --quiet danger-gitlab
@@ -69,6 +69,8 @@ debugger-danger-premerge-checks:
 
 debugger-build:
   stage: tools-build
+  tags:
+    - gcp-ubuntu
   rules: &debugger_mr_dev
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       when: always
@@ -106,6 +108,8 @@ debugger-build-macos:
 
 debugger-test-ligo-latest:
   stage: tools-check
+  tags:
+    - gcp-ubuntu
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       when: always
@@ -117,6 +121,8 @@ debugger-test-ligo-latest:
 
 debugger-test-static-debugger-binary:
   stage: tools-check
+  tags:
+    - gcp-ubuntu
   rules: *debugger_mr_dev
   needs: [debugger-build]
   allow_failure: true
@@ -125,6 +131,8 @@ debugger-test-static-debugger-binary:
 
 debugger-build-and-publish-build-base-image:
   stage: push
+  tags:
+    - gcp-ubuntu
   variables:
     DEBUGGER_BASE_IMAGE: "${CI_REGISTRY}/${CI_PROJECT_PATH}/debugger-build-base:latest"
   rules:

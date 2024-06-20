@@ -4,6 +4,8 @@
 
 add-changelog-entry:
   stage: post-build-action
+  tags:
+    - gcp-ubuntu
   extends : .nix
   needs: []
   before_script:

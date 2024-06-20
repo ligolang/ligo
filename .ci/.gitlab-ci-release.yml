@@ -6,6 +6,8 @@
 
 initialize-ssh:
   stage: pretooling
+  tags:
+    - gcp-ubuntu
   only:
     # prefixed by release /^release/.*/
     - /^release/.*/
@@ -21,6 +23,8 @@ initialize-ssh:
 
 initialize-git:
   stage: pretooling
+  tags:
+    - gcp-ubuntu
   dependencies:
     - initialize-ssh
   only:
@@ -33,6 +37,8 @@ initialize-git:
 
 trigger_new_minor_version_generation:
   stage: pretooling
+  tags:
+    - gcp-ubuntu
   dependencies:
     - initialize-git
   script:
@@ -46,6 +52,8 @@ trigger_new_minor_version_generation:
 
 build_release_env_vars:
   stage: pretooling
+  tags:
+    - gcp-ubuntu
   script:
     - RELEASE_VERSION=${CI_COMMIT_BRANCH#"release/"}
     - echo "RELEASE_VERSION=${RELEASE_VERSION}" >> releaseversion.env
@@ -61,7 +69,9 @@ build_release_env_vars:
 # Following script is executed when branch is created
 #######################################################################
 create-tag:
-  stage: release    
+  stage: release   
+  tags:
+    - gcp-ubuntu 
   script:
     - git remote rm origin && git remote add origin "git@gitlab.com:ligolang/ligo.git"
     # Don't want to tag for testing
@@ -90,7 +100,7 @@ create-tag:
 determine_new_stable_version:
   stage: pretooling
   tags:
-    - docker
+    - gcp-docker
   before_script:
     # Have to be done here because we are using an image for this job.
     - apt-get update
@@ -145,7 +155,7 @@ docker-m1:
 release:
   stage: push
   tags:
-    - docker
+    - gcp-docker
   image: registry.gitlab.com/gitlab-org/release-cli
   rules:
     - if: '$CI_COMMIT_TAG =~ /[0-9]+\.[0-9]+\.[0-9]+/'
@@ -183,6 +193,8 @@ release:
 
 create_docker_stable_version:
   stage: push
+  tags:
+    - gcp-ubuntu
   rules:
     - if: '$CI_COMMIT_TAG =~ /[0-9]+\.[0-9]+\.0/'
       when: always
@@ -203,7 +215,7 @@ update_release_metadata:
   extends: .submodule-clone
   stage: push
   tags:
-    - docker
+    - gcp-docker
   image: node:20.12.0-buster
   rules:
     - if: '$CI_COMMIT_TAG =~ /[0-9]+\.[0-9]+\.0/'
@@ -250,6 +262,8 @@ update_release_metadata:
 #######################################################################
 initialize-aur-repo:
   stage: pretooling
+  tags:
+    - gcp-ubuntu
   script:
     - git clone "ssh://aur@aur.archlinux.org/ligo-bin.git"
   needs:
@@ -264,6 +278,8 @@ initialize-aur-repo:
 
 generate-homebrew-version:
   stage: pretooling
+  tags:
+    - gcp-ubuntu
   needs:
     - job: build_release_env_vars
       artifacts: true
@@ -278,13 +294,12 @@ generate-homebrew-version:
     - if: ($CI_COMMIT_BRANCH =~ /^release/ && $DRY_RUN_RELEASE != null)
       when: always
 
-bottle-ventura-i7:
+bottle-sonoma-i7:
   stage: pretooling
   variables:
     GIT_STRATEGY: clone
   tags:
-    - mac
-    - i7
+    - i7-mac
   needs:
     - job: generate-homebrew-version
       artifacts: true
@@ -295,8 +310,8 @@ bottle-ventura-i7:
     - BOTTLE_INFO=$(brew bottle --no-rebuild --force-core-tap ./HomebrewFormula/ligo.rb | grep sha256)
     - |
       curl --header "PRIVATE-TOKEN: ${TOKEN_API}" \
-      --upload-file ./ligo--${RELEASE_VERSION}.ventura.bottle.tar.gz \
-      "https://gitlab.com/api/v4/projects/12294987/packages/generic/ligo_bottle/current/ligo-${RELEASE_VERSION}.ventura.bottle.tar.gz"
+      --upload-file ./ligo--${RELEASE_VERSION}.sonoma.bottle.tar.gz \
+      "https://gitlab.com/api/v4/projects/12294987/packages/generic/ligo_bottle/current/ligo-${RELEASE_VERSION}.sonoma.bottle.tar.gz"
     - echo "BOTTLE_INFO_I7=${BOTTLE_INFO}" >> bottle_hash_i7.env
   after_script:
     - brew uninstall ligo || true
@@ -312,13 +327,12 @@ bottle-ventura-i7:
       dotenv: 
         - bottle_hash_i7.env
 
-bottle-ventura-m1:
+bottle-sonoma-m1:
   stage: pretooling
   variables:
     GIT_STRATEGY: clone
   tags:
-    - mac
-    - m1
+    - m2-mac
   needs:
     - job: generate-homebrew-version
       artifacts: true
@@ -329,8 +343,8 @@ bottle-ventura-m1:
     - BOTTLE_INFO=$(brew bottle --no-rebuild --force-core-tap ./HomebrewFormula/ligo.rb | grep sha256)
     - |
       curl --header "PRIVATE-TOKEN: ${TOKEN_API}" \
-      --upload-file ./ligo--${RELEASE_VERSION}.arm64_ventura.bottle.tar.gz \
-      "https://gitlab.com/api/v4/projects/12294987/packages/generic/ligo_bottle/current/ligo-${RELEASE_VERSION}.arm64_ventura.bottle.tar.gz"
+      --upload-file ./ligo--${RELEASE_VERSION}.arm64_sonoma.bottle.tar.gz \
+      "https://gitlab.com/api/v4/projects/12294987/packages/generic/ligo_bottle/current/ligo-${RELEASE_VERSION}.arm64_sonoma.bottle.tar.gz"
     - echo "BOTTLE_INFO_M1=${BOTTLE_INFO}" >> bottle_hash_m1.env
   after_script:
     - brew uninstall ligo || true
@@ -348,10 +362,12 @@ bottle-ventura-m1:
 
 update-bottle-reference:
   stage: pretooling
+  tags:
+    - gcp-ubuntu
   needs:
-      - job: bottle-ventura-i7
+      - job: bottle-sonoma-i7
         artifacts: true
-      - job: bottle-ventura-m1
+      - job: bottle-sonoma-m1
         artifacts: true
       - job: build_release_env_vars
         artifacts: true
@@ -370,6 +386,8 @@ update-bottle-reference:
 
 update-ligo-bin-PKGBUILD:
   stage: pretooling
+  tags:
+    - gcp-ubuntu
   script:
     - LAST_TAG_JOB_ID=`./.ci/scripts/release_metadata/read_release_metadata.sh LAST_TAG_JOB_ID`
     - ./.ci/scripts/AUR/create_new_pkgbuild_version.sh https://gitlab.com/ligolang/ligo/-/jobs/$LAST_TAG_JOB_ID/artifacts/raw/ligo.deb $RELEASE_VERSION
@@ -389,7 +407,7 @@ update-ligo-bin-PKGBUILD:
 create-AUR-package:
   stage: tooling
   tags:
-    - docker
+    - gcp-docker
   image: archlinux:base-devel
   script: 
     - useradd -m ligo-user
@@ -410,6 +428,8 @@ create-AUR-package:
 
 calculate_nix_SRI:
   stage: tooling
+  tags:
+    - gcp-ubuntu
   rules:
     - if: ($CI_COMMIT_BRANCH =~ /^release/ &&  $TRIGGER_DOC_UPDATE != null) 
       when: always
@@ -427,7 +447,7 @@ calculate_nix_SRI:
 update-repository-status:
   stage: tooling
   tags:
-    - docker
+    - gcp-docker
   image: node:20.12.0-buster
   before_script:
     # Have to be done here because we are using an image for this job.
@@ -470,6 +490,8 @@ update-repository-status:
 
 create-doc-update-MR:
   stage: tooling
+  tags:
+    - gcp-ubuntu
   script:
     - HOST=${CI_PROJECT_URL} CI_PROJECT_ID=${CI_PROJECT_ID} CI_COMMIT_REF_NAME=${CI_COMMIT_REF_NAME} PRIVATE_TOKEN=${TOKEN_API} ./.ci/scripts/auto_merge_request.sh
   rules:
@@ -480,6 +502,8 @@ create-doc-update-MR:
 
 publish-AUR-package:
   stage: push
+  tags:
+    - gcp-ubuntu
   script:
     - cd ligo-bin
     - git remote rm origin && git remote add origin ssh://aur@aur.archlinux.org/ligo-bin.git
@@ -504,6 +528,8 @@ publish-AUR-package:
 
 publish-nixpkg:
   stage: push
+  tags:
+    - gcp-ubuntu
   script:
     - git clone "https://github.com/NixOS/nixpkgs.git"
     - PRECEDENT_LIGO_VERSION_NIX=$(.ci/scripts/nix/retrieve_version.sh nixpkgs/pkgs/development/compilers/ligo/default.nix)
