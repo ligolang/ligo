@@ -1,0 +1,7 @@
+
+author: krendelhoff
+description: "\\nGhost identifiers in inlay hints are replaced with appropriate comment.\\n\\n"
+merge_request: '3206'
+title: "[#2171] Hide ghost idents with appropriate comment"
+type: fixed
+            
