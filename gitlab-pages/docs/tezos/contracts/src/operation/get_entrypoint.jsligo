@@ -8,6 +8,6 @@ const main = (_p: parameter, s: storage): [list<operation>, storage] => {
   let contract_addr =
     Tezos.get_entrypoint(
       "%sub", // Corresponds to the `Sub` variant of `remote_param`.
-      "tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" as address);
+      "tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx");
   return [[Tezos.transaction(Sub(2), 2mutez, contract_addr)], s];
 };

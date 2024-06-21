@@ -624,7 +624,7 @@ test_Snapshots = testGroup "Snapshots collection"
               , Range (LigoPosition 9 5) (LigoPosition 9 14) file2
               ]
             )
-          ++ [Range (LigoPosition 12 3) (LigoPosition 12 40) file2]
+          ++ [Range (LigoPosition 12 3) (LigoPosition 12 19) file2]
 
   , testCaseSteps "Execution history is lazy" \step -> do
       let file = contractsDir </> "infinite_contract.mligo"

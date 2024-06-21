@@ -91,7 +91,7 @@ const init = (p : [address, nat], store: storage) : return_ => {
   let a = p[0]; let ticketCount = p[1];
   if (ticketCount == (0 as nat)) {
     return [
-      [] as list<operation>,
+      [],
       {
         feedback,
         pokeTraces,
@@ -101,7 +101,7 @@ const init = (p : [address, nat], store: storage) : return_ => {
   } else {
     const t : ticket<string> = Option.unopt(Tezos.create_ticket("can_poke", ticketCount));
     return [
-      [] as list<operation>,
+      [],
       {
         feedback,
         pokeTraces,

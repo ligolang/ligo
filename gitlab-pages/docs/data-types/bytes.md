@@ -126,7 +126,7 @@ let raw : bytes = ("666f6f" : bytes)
 
 ```jsligo group=bytes
 // raw == from_ascii
-const raw: bytes = ("666f6f" as bytes);
+const raw: bytes = "666f6f";
 ```
 
 > Note that both syntaxes apply respectively only to *verbatim* string

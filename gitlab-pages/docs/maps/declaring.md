@@ -56,14 +56,13 @@ const empty_dict: dictionary = Map.empty;
 
 const dictionary : dictionary =
   Map.literal([
-    ["one", (["The number 1.", "A member of a group."] as definition)],
-    ["two", (["The number 2."] as definition)]]);
+    ["one", ["The number 1.", "A member of a group."]],
+    ["two", ["The number 2."]]]);
 ```
 
 The `Map.literal` predefined function builds a map from a list of
 key-value pairs, `[<key>, <value>]`.  Note also the "`,`" to separate
-individual map bindings. Note that `"<string value>" as address` means
-that we type-cast a string into an address.
+individual map bindings.
 
 Note: See the predefined
 [namespace Map](../reference/map-reference)

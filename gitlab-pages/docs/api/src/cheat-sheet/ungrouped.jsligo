@@ -12,10 +12,8 @@ const booleanLogic: bool =
     (false || false)
 const tez_amount: tez = 42tez
 const tez_amount2: tez = tez_amount + 7mutez // == 42000007mutez
-const tz1address: address =
-  "tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" as address;
-const kt1address: address =
-  "KT1JepfBfMSqkQyf9B1ndvURghGsSB8YCLMD" as address;
+const tz1address: address = "tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx";
+const kt1address: address = "KT1JepfBfMSqkQyf9B1ndvURghGsSB8YCLMD";
 const my_str : string = "Hello World!";
 const verbatim_str : string = `verbatim string`;
 const add_int: int = 3 + 4;
@@ -41,8 +39,7 @@ type middle_name = option<string>;
 const a_middle_name : middle_name = Some("Foo");
 const no_middle_name : middle_name = None();
 const age: int = 5
-const someAddress: address =
-  "tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" as address;
+const someAddress: address = "tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx";
 type person = {
   age: int,
   name: string

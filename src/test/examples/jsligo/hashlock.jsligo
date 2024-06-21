@@ -77,7 +77,7 @@ let commit = ([p, s] : [bytes, storage]) : return_ => {
   let commit_ : commit = {date: Tezos.get_now() + 86_400, salted_hash: p};
   let updated_map: commit_set = Big_map.update(Tezos.get_sender(), Some(commit_), s.commits);
   let s_ = {...s, commits: updated_map};
-  return [([] as list<operation>), s_];
+  return [[], s_];
 };
 
 let reveal = ([p, s]: [reveal, storage]) : return_ => {

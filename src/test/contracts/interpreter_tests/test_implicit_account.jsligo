@@ -10,4 +10,4 @@ const initAccount = ([accList, k]: [list<address>, key]) : list<address> => {
   
 const keys : list<key> = [("edpkuBknW28nW72KG6RoHtYW7p12T6GKc7nAbwYX5m8Wd9sDVC9yav" as key)];
 
-const test_addresses : list<address> = List.fold(initAccount, keys, [] as list<address>);
+const test_addresses : list<address> = List.fold(initAccount, keys, []);

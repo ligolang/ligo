@@ -16,7 +16,7 @@ const sub = (store: storage, delta: int): storage => store - delta;
 @entry
 const main = (action: parameter, store: storage): ret => {
   return [
-    [] as list<operation>, // No operations
+    [], // No operations
     match(action) {
         when(Increment(n)): add(store, n);
         when(Decrement(n)): sub(store, n);

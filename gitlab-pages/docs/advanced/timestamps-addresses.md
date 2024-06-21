@@ -163,8 +163,7 @@ let my_account : address =
 <Syntax syntax="jsligo">
 
 ```jsligo group=d
-const my_account: address =
-  "tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" as address;
+const my_account: address = "tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx";
 ```
 
 </Syntax>
@@ -210,8 +209,7 @@ Here is how you can define a key.
 <Syntax syntax="cameligo">
 
 ```cameligo group=f
-let my_key : key =
-  ("edpkuBknW28nW72KG6RoHtYW7p12T6GKc7nAbwYX5m8Wd9sDVC9yav" : key)
+let my_key : key = "edpkuBknW28nW72KG6RoHtYW7p12T6GKc7nAbwYX5m8Wd9sDVC9yav"
 ```
 
 </Syntax>
@@ -219,8 +217,7 @@ let my_key : key =
 <Syntax syntax="jsligo">
 
 ```jsligo group=f
-const my_key : key =
-  "edpkuBknW28nW72KG6RoHtYW7p12T6GKc7nAbwYX5m8Wd9sDVC9yav" as key;
+const my_key : key = "edpkuBknW28nW72KG6RoHtYW7p12T6GKc7nAbwYX5m8Wd9sDVC9yav";
 ```
 
 </Syntax>

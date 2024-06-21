@@ -12,4 +12,4 @@ import US_DOLLAR = EURO;
 type storage = EURO.t;
 
 const main = ([action, store]: [unit, storage]): [list<operation>, storage] =>
-  [[] as list<operation>, EURO.add([store, EURO.CONST.one])];
+  [[], EURO.add([store, EURO.CONST.one])];

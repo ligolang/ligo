@@ -173,7 +173,7 @@ namespace B {
       Tezos.transaction(Add(1) as parameter_of A,
                         0tez,
                         Tezos.get_contract(
-                          "KT1TxqZ8QtKvLu3V3JH7Gx58n7Co8pgtpQU5" as address))
+                          "KT1TxqZ8QtKvLu3V3JH7Gx58n7Co8pgtpQU5"))
     return [[operation], storage];
   }
 }
@@ -285,7 +285,7 @@ const main = (_p: parameter, s: storage): [list<operation>, storage] => {
   let contract_addr =
     Tezos.get_entrypoint(
       "%sub", // Corresponds to the `Sub` variant of `remote_param`.
-      "tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" as address);
+      "tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx");
   return [[Tezos.transaction(Sub(2), 2mutez, contract_addr)], s];
 };
 ```

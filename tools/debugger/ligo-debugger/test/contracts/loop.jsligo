@@ -8,5 +8,5 @@ let main = (_ : unit, s : int) : [list<operation>, int] => {
     i = i + 1;
   }
 
-  return [([] as list<operation>), acc]
+  return [[], acc]
 }

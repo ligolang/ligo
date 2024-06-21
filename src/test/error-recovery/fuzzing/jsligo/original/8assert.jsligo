@@ -1,6 +1,6 @@
 const main = ([p, s] : [bool, unit]):[list<operation>, unit] => {
   let _ : unit = assert (p);
-  return [([] as list<operation>), s];
+  return [[], s];
 };
 
 const some = (o : option<unit>):unit => {

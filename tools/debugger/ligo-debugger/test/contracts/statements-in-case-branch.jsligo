@@ -10,5 +10,5 @@ let main = (p : string, s : int) : [list<operation>, int] => {
       break
   }
 
-  return [([] as list<operation>), s2 + s]
+  return [[], s2 + s]
 };

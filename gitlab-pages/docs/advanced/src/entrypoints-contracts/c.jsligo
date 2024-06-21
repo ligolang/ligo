@@ -10,7 +10,7 @@ const no_tokens = (action: parameter, store: storage): result => {
     return [[], store];
   };
 };
-const owner = "tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" as address;
+const owner: address = "tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx";
 
 const owner_only = (action: parameter, store: storage): result => {
   if (Tezos.get_sender() != owner) { return failwith("Access denied."); }

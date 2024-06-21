@@ -1,4 +1,4 @@
-const ownerAddress = ("tz1TGu6TN5GSez2ndXXeDX6LgUDvLzPLqgYV" as address)
+const ownerAddress : address = "tz1TGu6TN5GSez2ndXXeDX6LgUDvLzPLqgYV"
 const receiver : contract<unit> =
   match (Tezos.get_contract_opt(ownerAddress) as option<contract<unit>>) {
     when(Some(contract)): contract;

@@ -12,7 +12,7 @@ const get = (m : foo) : option <int> => Big_map.find_opt (42, m)
 
 const empty_map : foo = Big_map.empty
 
-const map1 : foo = Big_map.literal (list([[23,0], [42,0]]));
+const map1 : foo = Big_map.literal([[23,0], [42,0]]);
 
 function mutimaps (m: foo, n: foo) : foo {
   const bar : foo = Big_map.update (42, Some (0), m)

@@ -5,10 +5,10 @@ const diag = <T>(x : T) => [x, x];
 const _rev = <T>([xs, acc] : [list<T>, list<T>]) : list<T> =>
   match(xs) {
     when([]): acc;
-    when([z,...zs]): _rev([zs, list([z,...acc])])
+    when([z,...zs]): _rev([zs, [z,...acc]])
   };
 
-const rev = <T>(xs : list<T>) : list<T> => _rev([xs, ([] as list<T>)]);
+const rev = <T>(xs : list<T>) : list<T> => _rev([xs, []]);
 
 
 const _zip = <T,U>([xs, ys, acc] : [list<T>, list<U>, list<[T, U]>]) : list<[T, U]> =>
@@ -16,16 +16,16 @@ const _zip = <T,U>([xs, ys, acc] : [list<T>, list<U>, list<[T, U]>]) : list<[T, 
     when([]):
        match(ys) {
          when([]): acc;
-         when([_y, ..._ys]): (failwith ("oops") as list<[T, U]>)
+         when([_y, ..._ys]): (failwith ("oops"))
        };
     when([z, ...zs]):
         match(ys) {
-          when([]): (failwith ("oops") as list<[T, U]>);
-          when([w, ...ws]): _zip([zs, ws, list([[z, w], ...acc])])
+          when([]): (failwith ("oops"));
+          when([w, ...ws]): _zip([zs, ws, [[z, w], ...acc]])
         };
   };
 
-const zip = <T,U>(xs : list<T>) => ((ys : list<U>) : list<[T, U]> => rev (_zip ([xs, ys, ([] as list<[T, U]>)])));
+const zip = <T,U>(xs : list<T>) => ((ys : list<U>) : list<[T, U]> => rev (_zip ([xs, ys, []])));
 
 const self_zip = <T>(lst : list<T>) : list<[T, T]> => {
   let [xs, ys] = diag(lst);

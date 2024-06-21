@@ -5,5 +5,5 @@ let main = (_ : unit, s : option<int>) : [list<operation>, option<int>] => {
     when(None): 0;
   };
 
-  return [([] as list<operation>), Some(s2)]
+  return [[], Some(s2)]
 };

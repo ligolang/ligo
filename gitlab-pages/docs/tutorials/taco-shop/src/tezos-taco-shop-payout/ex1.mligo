@@ -1,4 +1,4 @@
-let ownerAddress : address = ("tz1TGu6TN5GSez2ndXXeDX6LgUDvLzPLqgYV" : address)
+let ownerAddress : address = "tz1TGu6TN5GSez2ndXXeDX6LgUDvLzPLqgYV"
 let receiver : unit contract =
   match (Tezos.get_contract_opt ownerAddress : unit contract option) with
     Some (contract) -> contract

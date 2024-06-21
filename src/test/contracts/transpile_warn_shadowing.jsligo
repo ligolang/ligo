@@ -15,7 +15,7 @@ const x = 33;
 @entry
 const main = (_action: int, store: int): [list<operation>, int] => {
   return [
-    ([] as list<operation>), // No operations
+    [], // No operations
     store
   ]
 };

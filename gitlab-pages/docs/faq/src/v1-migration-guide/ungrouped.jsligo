@@ -46,5 +46,5 @@ let main = (p : parameter, s : storage) : returnx => {
     when([]): s;
     when([hd, ...tl]): [s[0] + hd, tl]
   };
-  return [([] as list<operation>), storage];
+  return [[], storage];
 };

@@ -5,5 +5,5 @@ let main = (p : int, s : list<int>) : [list<operation>, list<int>] => {
     when([x, ...l]): list([x, ...list([p, ...list([x, ...l])])]);
   };
 
-  return [([] as list<operation>), s2]
+  return [[], s2]
 };

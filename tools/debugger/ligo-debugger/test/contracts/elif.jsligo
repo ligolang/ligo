@@ -10,5 +10,5 @@ let main = (_ : unit, s : int) : [list<operation>, int] => {
     s2 = s / 2
   }
 
-  return [([] as list<operation>), s2]
+  return [[], s2]
 };
