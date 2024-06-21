@@ -11,8 +11,8 @@ class Ligo < Formula
 
   bottle do
     root_url "https://gitlab.com/api/v4/projects/12294987/packages/generic/ligo_bottle/current"
-  sha256 cellar: :any, arm64_ventura: "09e098ab450b300793c6351f014897a454347cba47528ab8b3f266401d6771a6"
-  sha256 cellar: :any, ventura: "17a30966abd7a7886c9ba866e3dde7f4b80df4bb6f908a0e0bbe30e3a9a8de0b"
+  sha256 cellar: :any, arm64_sonoma: "09e098ab450b300793c6351f014897a454347cba47528ab8b3f266401d6771a6"
+  sha256 cellar: :any, sonoma: "17a30966abd7a7886c9ba866e3dde7f4b80df4bb6f908a0e0bbe30e3a9a8de0b"
   end
 
   build_dependencies = %w[opam rust hidapi pkg-config gnu-sed cmake gcc]

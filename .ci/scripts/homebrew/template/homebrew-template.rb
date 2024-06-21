@@ -11,8 +11,8 @@ class LIGO_CLASS_PLACEHOLDER < Formula
 
   bottle do
     root_url "https://gitlab.com/api/v4/projects/12294987/packages/generic/ligo_bottle/current"
-  # bottle arm64_ventura
-  # bottle ventura
+  # bottle arm64_sonoma
+  # bottle sonoma
   end
 
   build_dependencies = %w[opam rust hidapi pkg-config gnu-sed cmake gcc]

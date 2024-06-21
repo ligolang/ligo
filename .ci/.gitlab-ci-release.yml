@@ -33,7 +33,7 @@ initialize-git:
     - tags
   script:
       - git config --global user.name 'InfraBot'
-      - git config --global user.email 'infra@marigold.dev'
+      - git config --global user.email 'infra@trili.tech'
 
 trigger_new_minor_version_generation:
   stage: pretooling
@@ -236,7 +236,7 @@ update_release_metadata:
     - ssh-keyscan gitlab.com  >> ~/.ssh/known_hosts
     - chmod 644 ~/.ssh/known_hosts
     - git config --global user.name 'InfraBot'
-    - git config --global user.email 'infra@marigold.dev'
+    - git config --global user.email 'infra@trili.tech'
     - apt-get update
     - apt-get install -y --no-install-recommends jq
     - wget https://github.com/mikefarah/yq/releases/download/v4.18.1/yq_linux_amd64 -O /usr/bin/yq && chmod +x /usr/bin/yq
@@ -459,7 +459,7 @@ update-repository-status:
     - ssh-keyscan gitlab.com  >> ~/.ssh/known_hosts
     - chmod 644 ~/.ssh/known_hosts
     - git config --global user.name 'InfraBot'
-    - git config --global user.email 'infra@marigold.dev'
+    - git config --global user.email 'infra@trili.tech'
     - apt-get update
     - apt-get install -y --no-install-recommends jq
     - wget https://github.com/mikefarah/yq/releases/download/v4.18.1/yq_linux_amd64 -O /usr/bin/yq && chmod +x /usr/bin/yq

@@ -1,4 +1,4 @@
-# Maintainer: LigoLang <infra at marigold dot dev>
+# Maintainer: LigoLang <infra at trili dot tech>
 pkgname=ligo-bin
 pkgver=LIGO_VERSION_PLACEHOLDER
 pkgrel=1
