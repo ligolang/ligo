@@ -411,31 +411,49 @@ let process_variable_def
     ~(banned_in_core : Range.t list)
     ~(fun_defs : fun_def_value Location.Map.t)
     ~(ban_defs : Range.t list)
+    ~(syntax : Syntax_types.t)
     : Scopes.Types.vdef -> inlay_hint option
   =
+  let is_ghost = function
+    | Ast_core.T_variable var ->
+      let open Ligo_prim in
+      (not @@ Type_var.is_generated var)
+      && (Parsing.Errors.ErrorWrapper.is_wrapped @@ Type_var.to_name_exn var)
+    | _ -> false
+  in
   let open Option.Let_syntax in
   let process_variable (range : Loc.t) (typ : Ast_core.ty_expr) =
-    match Map.find fun_defs range with
-    | Some { position; num_of_binders } ->
-      let rec strip_args (typ : Ast_core.ty_expr) = function
-        | 0 -> Some typ
-        | n ->
-          (match typ.type_content with
-          | T_arrow { type2; _ } -> strip_args type2 (n - 1)
-          | T_abstraction { type_; _ } | T_for_all { type_; _ } -> strip_args type_ n
-          | _ -> None)
+    let%bind file_range = Loc.get_file range in
+    let file_range = Range.of_region file_range in
+    if is_ghost typ.type_content
+    then (
+      let typ_content =
+        Ast_core.T_variable
+          (Lsp_helpers.Helpers_pretty.unresolved_type_as_comment syntax
+          |> Ligo_prim.Type_var.of_input_var ~loc:Location.dummy)
       in
-      let%bind typ = strip_args typ num_of_binders in
-      Option.some_if
-        (not @@ List.exists ban_defs ~f:(Range.contains_position position))
-        { position = Shifted position; typ }
-    | None ->
-      let%bind file_range = Loc.get_file range in
-      let file_range = Range.of_region file_range in
-      let%map () =
-        Option.some_if (not @@ List.exists ban_defs ~f:(Range.intersects file_range)) ()
-      in
-      { position = Original file_range; typ }
+      Some
+        { position = Original file_range; typ = { typ with type_content = typ_content } })
+    else (
+      match Map.find fun_defs range with
+      | Some { position; num_of_binders } ->
+        let rec strip_args (typ : Ast_core.ty_expr) = function
+          | 0 -> Some typ
+          | n ->
+            (match typ.type_content with
+            | T_arrow { type2; _ } -> strip_args type2 (n - 1)
+            | T_abstraction { type_; _ } | T_for_all { type_; _ } -> strip_args type_ n
+            | _ -> None)
+        in
+        let%bind typ = strip_args typ num_of_binders in
+        Option.some_if
+          (not @@ List.exists ban_defs ~f:(Range.contains_position position))
+          { position = Shifted position; typ }
+      | None ->
+        let%map () =
+          Option.some_if (not @@ List.exists ban_defs ~f:(Range.intersects file_range)) ()
+        in
+        { position = Original file_range; typ })
   in
   function
   | { range; t = Resolved typ; _ } ->
@@ -450,8 +468,9 @@ let process_variable_def
   | { range; t = Core typ; _ } ->
     let%bind region = Loc.get_file range in
     let range' = Range.of_region region in
-    if List.exists banned_in_core ~f:(fun banned_range ->
-           Range.inside ~big:banned_range ~small:range')
+    if (not @@ is_ghost typ.type_content)
+       && List.exists banned_in_core ~f:(fun banned_range ->
+              Range.inside ~big:banned_range ~small:range')
     then None
     else process_variable range typ
   | { t = Unresolved; _ } -> None
@@ -463,6 +482,7 @@ let provide_hints_for_variables
     ~(banned_in_core : Range.t list)
     ~(fun_defs : fun_def_value Location.Map.t)
     ~(ban_defs : Range.t list)
+    ~(syntax : Syntax_types.t)
     (definitions : Def.definitions)
     (file : Path.t)
     : inlay_hint list
@@ -482,7 +502,9 @@ let provide_hints_for_variables
     |> List.dedup_and_sort ~compare:(fun (lhs : (* WTF OCaml? *) vdef) rhs ->
            Uid.compare lhs.uid rhs.uid)
   in
-  List.filter_map vdefs ~f:(process_variable_def ~banned_in_core ~fun_defs ~ban_defs)
+  List.filter_map
+    vdefs
+    ~f:(process_variable_def ~banned_in_core ~fun_defs ~ban_defs ~syntax)
 
 (** Compile our intermediate representation of inlay hint into [InlayHint.t]. *)
 let compile_inlay_hints ~(syntax : Syntax_types.t) ~(need_par_defs : Range_set.t)
@@ -535,6 +557,7 @@ let on_req_inlay_hint (file : Path.t) (range : Range.t)
         ~banned_in_core
         ~fun_defs
         ~ban_defs
+        ~syntax
         definitions
         file
   in
