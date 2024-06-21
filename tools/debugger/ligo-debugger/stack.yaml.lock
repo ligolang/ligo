@@ -404,6 +404,13 @@ packages:
       size: 598
   original:
     hackage: msgpack-arbitrary-0.1.3
+- completed:
+    hackage: msgpack-testsuite-0.1.0@sha256:c7c6f36bad6eabb35abca98d48d6d2667e26e5ec8b5a4ba4228d0e2928903157,1719
+    pantry-tree:
+      sha256: 6b81e429de9e0f8d76660c75f8d80bf75e1d083ee8c9b103aa135000bc323dc6
+      size: 436
+  original:
+    hackage: msgpack-testsuite-0.1.0
 snapshots:
 - completed:
     sha256: a27a5761890ade44d7dd21a5f5f93c87e60b9c063655fff835d69dd1071474f0

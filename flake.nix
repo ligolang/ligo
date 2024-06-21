@@ -12,9 +12,21 @@
       url = "github:serokell/nix-npm-buildpackage";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    # haskell
+    stackage = {
+      url = "github:input-output-hk/stackage.nix";
+      flake = false;
+    };
+    hackage = {
+      url = "github:input-output-hk/hackage.nix";
+      flake = false;
+    };
     haskell-nix = {
       url = "github:input-output-hk/haskell.nix";
       inputs.nixpkgs.follows = "nixpkgs";
+      inputs.hackage.follows = "hackage";
+      inputs.stackage.follows = "stackage";
     };
 
     # opam
@@ -63,6 +75,7 @@
           ligo = pkgs.opamPackages.ligo;
           ligo-syntaxes = ./tools/vscode/syntaxes;
           ligo-webide = pkgs.callPackage ./nix/webide.nix {inherit ligo-syntaxes;};
+          ligo-debugger = pkgs.callPackage ./nix/debugger.nix {};
 
           fmt = treefmt.lib.evalModule pkgs {
             projectRootFile = "dune-project";
@@ -92,36 +105,10 @@
                 "
             '';
           };
-        in {
-          packages = {
-            inherit (ligo-webide) ligo-webide-backend ligo-webide-frontend;
-            ligo = ligo;
-            default = ligo;
-          };
 
-          devShells = rec {
-            default = pkgs.mkShell {
-              name = "ligo-dev-shell";
-
-              inputsFrom = [ligo];
-
-              buildInputs = with pkgs; [
-                  alejandra
-                  shellcheck
-                  python3
-              ];
-            };
-
-            webide-frontend = pkgs.mkShell {
-              name = "ligo-webide-frontend-shell";
-
-              inputsFrom = [ligo-webide.ligo-webide-frontend];
-
-              NODE_OPTIONS = "--openssl-legacy-provider";
-            };
-
-            webide-backend = ligo-webide.ligo-webide-backend.passthru.project.shellFor {
-              name = "ligo-webide-backend-shell";
+          haskellShell = name: drv:
+            drv.passthru.project.shellFor {
+              inherit name;
 
               # FIXME: https://github.com/input-output-hk/haskell.nix/issues/1885
               # Adding [exactDeps = true] to avoid the build failure, this ensures
@@ -131,6 +118,36 @@
 
               buildInputs = [stack-wrapped];
             };
+        in {
+          packages = {
+            inherit (ligo-webide) ligo-webide-backend ligo-webide-frontend;
+            inherit ligo-debugger;
+            ligo = ligo;
+            default = ligo;
+          };
+
+          devShells = with ligo-webide; rec {
+            default = pkgs.mkShell {
+              name = "ligo-dev-shell";
+
+              inputsFrom = [ligo];
+
+              buildInputs = with pkgs; [
+                alejandra
+                shellcheck
+                python3
+              ];
+            };
+
+            webide-frontend = pkgs.mkShell {
+              name = "ligo-webide-frontend-shell";
+
+              inputsFrom = [ligo-webide-frontend];
+
+              NODE_OPTIONS = "--openssl-legacy-provider";
+            };
+
+            webide-backend = haskellShell "ligo-webide-backend-shell" ligo-webide-backend;
 
             webide = pkgs.mkShell {
               name = "ligo-webide-shell";
@@ -139,6 +156,8 @@
 
               NODE_OPTIONS = "--openssl-legacy-provider";
             };
+
+            debugger = haskellShell "ligo-debugger-shell" ligo-debugger;
           };
 
           formatter = fmt.config.build.wrapper;
