@@ -1658,8 +1658,8 @@ let%expect_test "Recover from missing variable" =
     };
   [%expect
     {|
-    [{ "contents": [ { "value": "g : int", "language": "cameligo" } ] };
-     { "contents": [ { "value": "h : int", "language": "cameligo" } ] }] |}]
+    [{ "contents": [ { "value": "g : ^a", "language": "cameligo" } ] };
+     { "contents": [ { "value": "h : ^a", "language": "cameligo" } ] }] |}]
 
 let%expect_test "Recover from missing module" =
   get_hover_test

@@ -474,7 +474,7 @@ let owner_only (action : parameter) (store: storage) : result =
 <Syntax syntax="jsligo">
 
 ```jsligo group=c
-const owner = "tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" as address;
+const owner: address = "tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx";
 
 const owner_only = (action: parameter, store: storage): result => {
   if (Tezos.get_sender() != owner) { return failwith("Access denied."); }
@@ -586,7 +586,7 @@ type storage = unit;
 
 type result = [list<operation>, storage];
 
-const dest = "KT19wgxcuXG9VH4Af5Tpm1vqEKdaMFpznXT3" as address;
+const dest : address = "KT19wgxcuXG9VH4Af5Tpm1vqEKdaMFpznXT3";
 
 const proxy = (action: parameter, store: storage): result => {
   let counter : contract<parameter> = Tezos.get_contract_with_error(dest, "not found");

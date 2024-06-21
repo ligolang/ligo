@@ -1,8 +1,8 @@
 const testmap : map <int, int> =
-  Map.literal (list([
+  Map.literal ([
     [0, 1],
     [1, 2],
-    [2, 4]]));
+    [2, 4]]);
 
 const entries = (x : map<int, int>) : list<[int,int]> => {
     let lst : list<[int,int]> = [];

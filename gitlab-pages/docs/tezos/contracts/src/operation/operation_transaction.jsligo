@@ -17,7 +17,7 @@ namespace B {
       Tezos.transaction(Add(1) as parameter_of A,
                         0tez,
                         Tezos.get_contract(
-                          "KT1TxqZ8QtKvLu3V3JH7Gx58n7Co8pgtpQU5" as address))
+                          "KT1TxqZ8QtKvLu3V3JH7Gx58n7Co8pgtpQU5"))
     return [[operation], storage];
   }
 }

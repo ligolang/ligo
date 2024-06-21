@@ -13,7 +13,7 @@ let main = (p : parameter, s : storage) : returnx => {
     when([]): s;
     when([hd, ...tl]): [s[0] + hd, tl]
   };
-  return [([] as list<operation>), storage];
+  return [[], storage];
 };
 
 let size_ = (s : list <int>) : nat => List.length (s);
@@ -47,4 +47,4 @@ const filter_map_y : list<nat> = List.filter_map ((x : int) => { if (x == 3 || x
 
 const update_filter_map_y : list<nat> = List.update ((x : nat) => { if (x == (5 as nat)) { return Some(7 as nat) }; return None() }, filter_map_y);
 
-const update_with_filter_map_y : list<nat> = List.update_with ((x : nat) => x == (5 as nat), (42 as nat), [(5 as nat), ...filter_map_y]);
+const update_with_filter_map_y : list<nat> = List.update_with ((x : nat) => x == (5 as nat), (42 as nat), [5 as nat, ...filter_map_y]);

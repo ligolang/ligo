@@ -9,5 +9,5 @@ type return_ = [list<operation>, storage];
 @entry
 const main = (action: unit, store: storage): return_ => {
   let foo = [3, [1, 2 as nat]];
-  return [[] as list<operation>, foo as storage]
+  return [[], foo as storage]
 };

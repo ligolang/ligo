@@ -185,7 +185,7 @@ contract with no parameters, or an implicit account.
 <Syntax syntax="cameligo">
 
 ```cameligo group=ex1
-let ownerAddress : address = ("tz1TGu6TN5GSez2ndXXeDX6LgUDvLzPLqgYV" : address)
+let ownerAddress : address = "tz1TGu6TN5GSez2ndXXeDX6LgUDvLzPLqgYV"
 let receiver : unit contract =
   match (Tezos.get_contract_opt ownerAddress : unit contract option) with
     Some (contract) -> contract
@@ -197,7 +197,7 @@ let receiver : unit contract =
 <Syntax syntax="jsligo">
 
 ```jsligo group=ex1
-const ownerAddress = ("tz1TGu6TN5GSez2ndXXeDX6LgUDvLzPLqgYV" as address)
+const ownerAddress : address = "tz1TGu6TN5GSez2ndXXeDX6LgUDvLzPLqgYV"
 const receiver : contract<unit> =
   match (Tezos.get_contract_opt(ownerAddress) as option<contract<unit>>) {
     when(Some(contract)): contract;
@@ -321,9 +321,9 @@ namespace TacoShop {
   export type taco_supply = { current_stock: nat, max_price: tez };
   export type taco_shop_storage = map<nat, taco_supply>;
 
-  const ownerAddress = ("tz1TGu6TN5GSez2ndXXeDX6LgUDvLzPLqgYV" as address);
+  const ownerAddress : address = "tz1TGu6TN5GSez2ndXXeDX6LgUDvLzPLqgYV";
 
-  const donationAddress = ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" as address);
+  const donationAddress : address = "tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx";
 
   @entry
   function buy_taco(taco_kind_index: nat, taco_shop_storage: taco_shop_storage): [
@@ -477,8 +477,8 @@ let operations : operation list =
 <Syntax syntax="jsligo">
 
 ```jsligo group=bonus
-const ownerAddress = ("tz1TGu6TN5GSez2ndXXeDX6LgUDvLzPLqgYV" as address);
-const donationAddress = ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" as address);
+const ownerAddress : address = "tz1TGu6TN5GSez2ndXXeDX6LgUDvLzPLqgYV";
+const donationAddress : address = "tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx";
 
 const receiver : contract<unit> =
   match ((Tezos.get_contract_opt (ownerAddress)) as option<contract<unit>>) {

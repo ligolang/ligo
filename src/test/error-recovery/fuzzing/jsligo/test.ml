@@ -14,13 +14,13 @@ let%expect_test "error_recovery_fuzzing_jsligo" =
     PASS, 11, 4, 4, 30, 1, ./2local_type_decl.jsligo
     PASS, 38, 224, 68, 211, 13, ./2match_bis.jsligo
     PASS, 17, 13, 11, 137, 4, ./2super-counter.jsligo
-    PASS, 22, 131, 41, 183, 6, ./4balance_constant.jsligo
+    PASS, 22, 123, 47, 176, 6, ./4balance_constant.jsligo
     PASS, 12, 37, 19, 86, 1, ./4check_signature.jsligo
     PASS, 10, 2, 2, 13, 0, ./4if_if_return.jsligo
     PASS, 14, 132, 16, 118, 2, ./4lambda2.jsligo
     PASS, 24, 157, 59, 131, 14, ./4match.jsligo
     PASS, 39, 164, 56, 126, 12, ./4never.jsligo
     PASS, 35, 251, 47, 190, 12, ./4recursion.jsligo
-    PASS, 20, 150, 60, 142, 9, ./8assert.jsligo
+    PASS, 20, 142, 64, 135, 9, ./8assert.jsligo
     PASS, 11, 90, 12, 87, 1, ./8eq_bool.jsligo
     PASS, 16, 183, 9, 222, 0, ./8recursion.jsligo |}]

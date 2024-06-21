@@ -26,5 +26,5 @@ type return_ = [list<operation>, storage];
 
 @entry
 const main = (_p: parameter, _s: storage): return_ => {
-  return [([] as list<operation>), x]
+  return [[], x]
 };

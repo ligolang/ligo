@@ -31,5 +31,5 @@ function coucou (storage: t) : t {
 
 @entry
 function main (_: unit, storage: t): [list<operation>, t] {
-  return [([] as list<operation>), coucou(storage)]
+  return [[], coucou(storage)]
 }

@@ -4,5 +4,5 @@ let main = (_ : unit, s : int) : [list<operation>, int] => {
     failwith("no branches????")
   }
 
-  return [([] as list<operation>), s]
+  return [[], s]
 };

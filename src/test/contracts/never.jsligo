@@ -5,7 +5,7 @@ type storage = int;
 @entry
 const main = (action: parameter, store: storage): [list<operation>, storage] => {
   return [
-    ([] as list<operation>),
+    [],
     (
       match(action)
         {

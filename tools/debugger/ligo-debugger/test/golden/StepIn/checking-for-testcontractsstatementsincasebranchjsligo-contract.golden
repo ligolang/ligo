@@ -67,7 +67,7 @@ InterpretSnapshot:
   isStackFrames:
     [ StackFrame:
       sfName: main
-      sfLoc: test/contracts/statements-in-case-branch.jsligo@13:3-13:43
+      sfLoc: test/contracts/statements-in-case-branch.jsligo@13:3-13:22
       sfStack:
         [ StackItem:
           siLigoDesc:
@@ -86,7 +86,7 @@ InterpretSnapshot:
   isStackFrames:
     [ StackFrame:
       sfName: main
-      sfLoc: test/contracts/statements-in-case-branch.jsligo@13:12-13:33
+      sfLoc: test/contracts/statements-in-case-branch.jsligo@13:11-13:13
       sfStack:
         [ StackItem:
           siLigoDesc: elem ? of  in #generated

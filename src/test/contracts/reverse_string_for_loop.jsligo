@@ -1,4 +1,4 @@
-const getChar = (s: string, idx: nat): string => String.sub(idx, 1 as nat, s);
+const getChar = (s: string, idx: nat): string => String.sub(idx, 1, s);
 
 namespace C {
   @entry

@@ -530,6 +530,8 @@ let rec check_expression (expr : I.expression) (type_ : Type.t)
     return expr
   | E_literal lit, T_construct { language = _; constructor; parameters } ->
     check_literal const_error_recovery ~type_ lit ~constructor
+  | E_constant { cons_name = const; arguments = args }, _ ->
+    check_constant const args type_
   | ( E_type_abstraction { type_binder = tvar; result }
     , T_for_all { ty_binder = tvar'; kind; type_ } ) ->
     let type_ = Type.subst_var type_ ~tvar:tvar' ~tvar':tvar in
@@ -810,7 +812,10 @@ and infer_expression (expr : I.expression)
   let%bind refs_tbl = refs_tbl () in
   match expr.expression_content with
   | E_literal lit -> infer_literal lit
-  | E_constant { cons_name = const; arguments = args } -> infer_constant const args
+  | E_constant { cons_name = const; arguments = args } ->
+    let%bind type_ = exists Type in
+    let%bind expr = check_constant const args type_ in
+    return (type_, expr)
   | E_variable var ->
     let%bind mut_flag, type_, _ =
       Error_recovery.Get.value var ~error:(function
@@ -1565,27 +1570,27 @@ and infer_application (expr : I.expression) (lamb_type : Type.t) (args : I.expre
   | _ -> fail ()
 
 
-and infer_constant const args : (Type.t * O.expression E.t, _, _) C.t =
+and check_constant const args type_ : (O.expression E.t, _, _) C.t =
   let open C in
   let open Let_syntax in
-  let%bind ret_type, args =
-    Constant_typers.infer_constant
+  let%bind args, ret_coerce =
+    Constant_typers.check_constant
       ~infer:try_infer_expression
       ~check:check_expression
       const
       args
+      type_
   in
   let%bind loc = loc () in
   return
-    ( ret_type
-    , E.(
-        let%bind args = args
-        and type_ = decode ret_type in
-        return
-        @@ O.make_e
-             ~loc
-             (E_constant { cons_name = const; arguments = args })
-             { type_ with location = loc }) )
+    E.(
+      let%bind args = args
+      and type_ = decode type_ in
+      ret_coerce
+      @@ O.make_e
+           ~loc
+           (E_constant { cons_name = const; arguments = args })
+           { type_ with location = loc })
 
 
 and check_pattern ~mut (pat : I.type_expression option I.Pattern.t) (type_ : Type.t)

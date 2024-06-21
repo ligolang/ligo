@@ -13,4 +13,4 @@ const quarter = (n : int) : string => {
 type return_ = [list<operation>, storage];
 
 const main = ([a, b] : [parameter, storage]) : return_ =>
-  [[] as list<operation>, 0]
+  [[], 0]

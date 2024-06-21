@@ -50,7 +50,7 @@ constraints on your smart contracts. Consider the following scenarios.
 let today : timestamp = Tezos.get_now ()
 let one_day : int = 86_400
 let in_24_hrs : timestamp = today + one_day
-let some_date : timestamp = ("2000-01-01t10:10:10Z" : timestamp)
+let some_date : timestamp = "2000-01-01t10:10:10Z"
 let one_day_later : timestamp = some_date + one_day
 ```
 
@@ -62,7 +62,7 @@ let one_day_later : timestamp = some_date + one_day
 const today: timestamp = Tezos.get_now();
 const one_day: int = 86_400;
 const in_24_hrs: timestamp = today + one_day;
-const some_date: timestamp = "2000-01-01t10:10:10Z" as timestamp;
+const some_date: timestamp = "2000-01-01t10:10:10Z";
 const one_day_later: timestamp = some_date + one_day;
 ```
 

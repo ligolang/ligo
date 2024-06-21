@@ -2,5 +2,5 @@
 let main = (_ : unit, s : int) : [list<operation>, int] => {
   let s2 = s + 42;
 
-  return [([] as list<operation>), s2]
+  return [[], s2]
 };

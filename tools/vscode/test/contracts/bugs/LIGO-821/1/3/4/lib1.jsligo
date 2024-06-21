@@ -16,5 +16,5 @@ const foo = (xs : storage) : storage => {
 
 @entry
 const main = (_action : unit, store : storage) : return_ => {
-  return [[] as list<operation>, foo (store)]
+  return [[], foo (store)]
 };

@@ -8,5 +8,5 @@ let addone = (oldStorage: nat) : nat => {
 
 let main = (param : action, oldStorage : storage) : [list<operation>, storage] => {
     let newStorage : storage = addone (oldStorage, 1 as nat);
-    return [[] as list<operation>, newStorage];
+    return [[], newStorage];
 }

@@ -559,7 +559,7 @@ type x = | ["Left", int];
 @entry
 const main = (p: parameter, s: storage): [list<operation>, storage] => {
   let contract =
-    match (Tezos.get_entrypoint_opt("%left", "tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" as address)) {
+    match (Tezos.get_entrypoint_opt("%left", "tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx")) {
       when(Some(c)): c;
       when(None()): failwith ("contract does not match")
     };

@@ -15,4 +15,4 @@ let t3_ = (x : [ int , [int , nat] ]) : nat => {
   let [a,[b,c]] = x ;
   return c
 };
-let t3 = t3_ ([1,[2,3 as nat]])
+let t3 = t3_ ([1,[2,3]])

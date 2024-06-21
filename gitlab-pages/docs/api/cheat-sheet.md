@@ -632,10 +632,8 @@ Address
 <div className="example">
 
 ```jsligo
-const tz1address: address =
-  "tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" as address;
-const kt1address: address =
-  "KT1JepfBfMSqkQyf9B1ndvURghGsSB8YCLMD" as address;
+const tz1address: address = "tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx";
+const kt1address: address = "KT1JepfBfMSqkQyf9B1ndvURghGsSB8YCLMD";
 ```
 
 </div>
@@ -806,8 +804,7 @@ Type Annotations
 <div className="example">
 
 ```jsligo
-const someAddress: address =
-  "tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" as address;
+const someAddress: address = "tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx";
 ```
 
 </div>
@@ -885,8 +882,7 @@ Contracts & Accounts
 <div className="example">
 
 ```jsligo group=tezos_specific
-const destinationAddress: address =
-  "tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" as address;
+const destinationAddress: address = "tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx";
 
 const contract : contract<unit> =
   match(Tezos.get_contract_opt(Tezos.get_sender()) as option<contract<unit>>) {
