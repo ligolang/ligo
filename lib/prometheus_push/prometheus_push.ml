@@ -27,7 +27,7 @@ module PushableCollectorRegistry = struct
     Body.to_string body
     >|= fun body ->
     print_string body;
-    let code = Response.status response in
+    let code = Cohttp.Response.status response in
     match code with
     | #Cohttp.Code.success_status -> Ok ("Metric successfully published", "")
     | _ -> Error (body, "")

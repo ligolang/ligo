@@ -41,7 +41,7 @@ let extract_success_response response =
 let handle_server_response ~update_token response body =
   let open Cohttp_lwt in
   let body = Lwt_main.run (Body.to_string body) in
-  let code = Response.status response in
+  let code = Cohttp.Response.status response in
   match code with
   | `Unauthorized -> Error ("Access Denied: Wrong username or password", "")
   | `Created ->
