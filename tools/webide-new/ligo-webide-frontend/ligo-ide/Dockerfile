@@ -30,7 +30,7 @@ RUN yarn build:react-prod
 
 FROM ${RUNNER_IMAGE}
 
-LABEL maintainer="infra@marigold.dev"
+LABEL maintainer="infra@trili.tech"
 ENV NODE_ENV production
 ENV SERVER_FALLBACK_PAGE /public/index.html
 COPY --from=builder /app/build /public
