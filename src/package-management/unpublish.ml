@@ -6,7 +6,7 @@ module Uri = Package_management_external_libs.Ligo_uri
 let handle_server_response ~name response body =
   let open Cohttp_lwt in
   let body = Lwt_main.run (Body.to_string body) in
-  let code = Response.status response in
+  let code = Cohttp.Response.status response in
   match code with
   | `Created -> Ok ("", "")
   | `Unauthorized ->

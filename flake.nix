@@ -2,7 +2,7 @@
   description = "LIGO Nix Flake";
 
   inputs = {
-    nixpkgs.url = "github:nixos/nixpkgs/23.11";
+    nixpkgs.url = "github:nixos/nixpkgs";
     flake-utils.url = "github:numtide/flake-utils";
     treefmt = {
       url = "github:numtide/treefmt-nix";
@@ -28,27 +28,9 @@
       inputs.hackage.follows = "hackage";
       inputs.stackage.follows = "stackage";
     };
-
-    # opam
-    opam-repository = {
-      flake = false;
-      url = "github:ocaml/opam-repository";
-    };
-    opam-nix-integration = {
-      url = "github:vapourismo/opam-nix-integration";
+    ocaml-overlay = {
+      url = "github:nix-ocaml/nix-overlays";
       inputs.nixpkgs.follows = "nixpkgs";
-      inputs.flake-utils.follows = "flake-utils";
-      inputs.opam-repository.follows = "opam-repository";
-    };
-
-    # Doesn't belong here, but opam-nix-integraiton doesn't support pin-depends
-    linol = {
-      url = "github:c-cube/linol/7730eabf98f657059920369b41d43e657a231ed5";
-      flake = false;
-    };
-    ocaml-recovery-parser = {
-      url = "github:serokell/ocaml-recovery-parser/0.2.4";
-      flake = false;
     };
 
     # Also doesn't belong here, but required to avoid nix's bad UX with submodules
@@ -57,7 +39,6 @@
       flake = false;
     };
   };
-
   outputs = inputs:
     with inputs;
       flake-utils.lib.eachDefaultSystem (
@@ -67,12 +48,18 @@
             overlays = [
               build-yarn-package.overlays.default
               haskell-nix.overlay
-              opam-nix-integration.overlays.default
-              (import ./nix/overlay.nix {inherit (inputs) opam-repository linol ocaml-recovery-parser tezos-ligo;})
+              ocaml-overlay.overlays.default
+              (import ./nix/overlay.nix)
+              (_: prev:
+                with prev; {
+                  ocamlPackages = ocaml-ng.ocamlPackages_4_14;
+                  coqPackages = coqPackages_8_13;
+                  ocamlformat = ocaml-ng.ocamlPackages_4_14.ocamlformat_0_21_0;
+                })
             ];
           };
 
-          ligo = pkgs.opamPackages.ligo;
+          ligo = pkgs.callPackage ./nix/ligo.nix {inherit tezos-ligo;};
           ligo-syntaxes = ./tools/vscode/syntaxes;
           ligo-webide = pkgs.callPackage ./nix/webide.nix {inherit ligo-syntaxes;};
           ligo-debugger = pkgs.callPackage ./nix/debugger.nix {};
@@ -83,9 +70,7 @@
             programs.ocamlformat.enable = true;
             programs.alejandra.enable = true;
 
-            settings.formatter.ocamlformat.command = pkgs.lib.mkForce "${pkgs.opamPackages.ocamlformat}/bin/ocamlformat";
-
-            settings.global.excludes = ["_build" "result" ".direnv" "vendors/*"];
+            settings.global.excludes = ["_build" "result" ".direnv" "vendors/*" "vendored-dune/*"];
           };
 
           # Wrap stack to work with our haskell.nix integration.
@@ -135,7 +120,9 @@
               buildInputs = with pkgs; [
                 alejandra
                 shellcheck
-                python3
+                ocamlformat
+                ocamlPackages.utop
+                ocamlPackages.ocaml-lsp
               ];
             };
 
