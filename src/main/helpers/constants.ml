@@ -2,7 +2,7 @@ type command = string * string array
 
 let ligo_install_path = "./.ligo"
 let ligo_rc_path () = Filename.concat (Ligo_unix.home_directory ()) ".ligorc"
-let ligo_registry = "https://packages.ligolang.org"
+let ligo_registry = "https://ligo-packages.prod.gke.kanvas.trili.tech"
 let esy = "esy"
 let typedoc = "typedoc"
 let markdown_folder_to_html = "markdown-folder-to-html"

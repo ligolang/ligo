@@ -84,7 +84,7 @@ module Slow_test = struct
 
   let package_dir = "."
   let cache_path = ".ligo"
-  let ligo_registry = "https://packages.ligolang.org/-/api"
+  let ligo_registry = "https://ligo-packages.prod.gke.kanvas.trili.tech/-/api"
 
   let rec run_seq : string -> string -> (string, [> Rresult.R.msg ]) result =
    fun cwd repo ->

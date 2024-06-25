@@ -120,12 +120,12 @@ let agg_registry =
   (* If you change this string, then also change the one in the debugger in
      [tools/debugger/ligo-debugger/src/Language/LIGO/Analytics.hs]. Look for the
      [aggRegistry] variable. *)
-  PushableCollectorRegistry.create "https://agg.push.analytics.ligolang.org/metrics"
+  PushableCollectorRegistry.create "https://pushgateway-prometheus.prod.gke.kanvas.trili.tech/metrics"
 
 
 let registry =
   PushableCollectorRegistry.create
-    "https://push.analytics.ligolang.org/metrics/job/analytics"
+    "https://pushgateway-prometheus.prod.gke.kanvas.trili.tech/metrics/job/analytics"
 
 
 let term_acceptance_filepath =
