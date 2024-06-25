@@ -58,7 +58,7 @@ debugger-danger-premerge-checks:
   when: always
   interruptible: true
   tags:
-    - docker
+    - gcp-docker
   image: ruby:3.2.2
   before_script: *install_danger
   script:
@@ -94,8 +94,7 @@ debugger-build-macos:
   rules: *debugger_mr_dev
   needs: []
   tags:
-    - mac
-    - i7
+    - i7-mac
   script:
     - mkdir -p Darwin/bin
     - OUT_DIR="$PWD/Darwin/bin"

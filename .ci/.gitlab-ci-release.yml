@@ -125,8 +125,7 @@ docker-m1:
   variables:
     GIT_STRATEGY: clone
   tags:
-    - mac
-    - m1
+    - m2-mac
   needs:
     - job: changelog
       artifacts: true

@@ -76,7 +76,7 @@ aggRegistry :: URI
 aggRegistry =
   -- If you change this string, then also change the one in the compiler in
   -- @src/main/analytics/analytics.ml@. Look for the @agg_registry@ variable.
-  [uri|https://agg.push.analytics.ligolang.org/metrics|]
+  [uri|https://pushgateway-prometheus.prod.gke.kanvas.trili.tech/metrics|]
 
 -- | Looks for the path in @.ligo@ where @term_acceptance@ is stored. The optional file
 -- path is the project root, see @findProjectRoot@ and @dotLigo@.

@@ -51,7 +51,7 @@ let run_cmd_to_string : Cmd.t -> (string, [> Rresult.R.msg ]) result =
 
 let package_dir = "."
 let cache_path = ".ligo"
-let ligo_registry = "https://packages.ligolang.org/"
+let ligo_registry = "https://ligo-packages.prod.gke.kanvas.trili.tech/"
 let workflow_path = "install_tests/workflow/"
 let lockfile_path = workflow_path ^ "esy.lock/"
 let ligo_package_dir_path = workflow_path ^ ".ligo/"
