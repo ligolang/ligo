@@ -860,8 +860,8 @@ module Of_Ast = struct
         def_type
         mod_path
         (defs @ acc)
-    | D_import { import_name; imported_module; import_attr } ->
-      let inner_mod_path = add_inner_mod_path import_name mod_path in
+    | D_import (Import_rename { alias; imported_module; import_attr }) ->
+      let inner_mod_path = add_inner_mod_path alias mod_path in
       let module_expr =
         Location.wrap ~loc:Location.generated (Module_expr.M_variable imported_module)
       in
@@ -879,6 +879,7 @@ module Of_Ast = struct
         def_type
         mod_path
         acc
+    | D_import _ -> acc
 
 
   and defs_of_decls ~(waivers : Waivers.t)

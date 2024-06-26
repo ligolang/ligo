@@ -272,10 +272,12 @@ module Infer (Params : Params) = struct
        @@ fun decl ->
        let loc = decl.location in
        match Location.unwrap decl with
-       | D_import { import_name; imported_module = mangled_module_name; import_attr } ->
+       | D_import
+           (Import_rename { alias; imported_module = mangled_module_name; import_attr })
+         ->
          Location.wrap ~loc
          @@ D_module
-              { module_binder = import_name
+              { module_binder = alias
               ; module_ = Location.wrap ~loc (Module_expr.M_variable mangled_module_name)
               ; module_attr = import_attr
               ; annotation = None
