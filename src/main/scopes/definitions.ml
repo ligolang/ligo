@@ -860,6 +860,7 @@ module Of_Ast = struct
         def_type
         mod_path
         (defs @ acc)
+    (* TODO Handle all import cases for #2190 issues resolution *)
     | D_import (Import_rename { alias; imported_module; import_attr }) ->
       let inner_mod_path = add_inner_mod_path alias mod_path in
       let module_expr =

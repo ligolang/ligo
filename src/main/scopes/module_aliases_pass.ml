@@ -331,6 +331,7 @@ and declaration : AST.declaration -> t -> env -> t * env =
     in
     let env = Env.include_mvar defs_or_alias_opt module_map env in
     m_alias, env
+  (* TODO Handle all import cases for #2190 issue resolution *)
   | D_import (Import_rename { alias; imported_module; import_attr = _ }) ->
     let module_ =
       Location.wrap ~loc:Location.generated (Module_expr.M_variable imported_module)

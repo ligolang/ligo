@@ -377,6 +377,7 @@ module Of_Ast = struct
       let env = Env.include_mvar defs_or_alias_opt module_map env in
       let env = List.fold_right ~init:env ~f:Env.add_label ctors in
       scopes, env
+    (* TODO Handle all import cases for #2190 issue resolution *)
     | D_import (Import_rename { alias; imported_module; import_attr = _ }) ->
       let module_expr =
         Location.wrap ~loc:Location.generated (Module_expr.M_variable imported_module)

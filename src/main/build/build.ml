@@ -272,6 +272,7 @@ module Infer (Params : Params) = struct
        @@ fun decl ->
        let loc = decl.location in
        match Location.unwrap decl with
+       (* TODO Handle all import cases for #1991 and/or #1995 issues resolution *)
        | D_import
            (Import_rename { alias; imported_module = mangled_module_name; import_attr })
          ->
