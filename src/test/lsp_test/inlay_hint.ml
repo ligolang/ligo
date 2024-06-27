@@ -314,3 +314,82 @@ let%expect_test "Inlay hints show ghost identifiers as unresolved" =
      };
      { "kind": 1, "label": ": ^c", "position": { "character": 10, "line": 4 } };
      { "kind": 1, "label": ": ^a", "position": { "character": 8, "line": 7 } }] |}]
+
+let%expect_test "Inlay hints work correctly for all combinations of parameter type \
+                 annotations and return type"
+  =
+  get_inlay_hint_test "contracts/lsp/inlay_hints/inlay_hints_fun_defs.mligo";
+  [%expect
+    {|
+    [{ "label": "(", "position": { "character": 10, "line": 2 } };
+     { "kind": 1, "label": ": int", "position": { "character": 11, "line": 2 } };
+     { "label": ")", "position": { "character": 11, "line": 2 } };
+     { "label": "(", "position": { "character": 12, "line": 2 } };
+     { "kind": 1, "label": ": int", "position": { "character": 13, "line": 2 } };
+     { "label": ")", "position": { "character": 13, "line": 2 } };
+     { "label": "(", "position": { "character": 19, "line": 3 } };
+     { "kind": 1, "label": ": int", "position": { "character": 20, "line": 3 } };
+     { "label": ")", "position": { "character": 20, "line": 3 } };
+     { "label": "(", "position": { "character": 10, "line": 4 } };
+     { "kind": 1, "label": ": int", "position": { "character": 11, "line": 4 } };
+     { "label": ")", "position": { "character": 11, "line": 4 } };
+     { "label": "(", "position": { "character": 10, "line": 6 } };
+     { "kind": 1, "label": ": e", "position": { "character": 11, "line": 6 } };
+     { "label": ")", "position": { "character": 11, "line": 6 } };
+     { "label": "(", "position": { "character": 12, "line": 6 } };
+     { "kind": 1, "label": ": d", "position": { "character": 13, "line": 6 } };
+     { "label": ")", "position": { "character": 13, "line": 6 } };
+     { "label": "(", "position": { "character": 19, "line": 7 } };
+     { "kind": 1, "label": ": d", "position": { "character": 20, "line": 7 } };
+     { "label": ")", "position": { "character": 20, "line": 7 } };
+     { "label": "(", "position": { "character": 10, "line": 8 } };
+     { "kind": 1, "label": ": d", "position": { "character": 11, "line": 8 } };
+     { "label": ")", "position": { "character": 11, "line": 8 } };
+     { "label": "(", "position": { "character": 16, "line": 10 } };
+     { "kind": 1, "label": ": e", "position": { "character": 17, "line": 10 } };
+     { "label": ")", "position": { "character": 17, "line": 10 } };
+     { "label": "(", "position": { "character": 18, "line": 10 } };
+     { "kind": 1, "label": ": d", "position": { "character": 19, "line": 10 } };
+     { "label": ")", "position": { "character": 19, "line": 10 } };
+     { "label": "(", "position": { "character": 11, "line": 11 } };
+     { "kind": 1, "label": ": e", "position": { "character": 12, "line": 11 } };
+     { "label": ")", "position": { "character": 12, "line": 11 } };
+     { "label": "(", "position": { "character": 19, "line": 11 } };
+     { "kind": 1, "label": ": d", "position": { "character": 20, "line": 11 } };
+     { "label": ")", "position": { "character": 20, "line": 11 } };
+     {
+       "kind": 1,
+       "label": ": {x : e; y : d}",
+       "position": { "character": 13, "line": 6 }
+     };
+     {
+       "kind": 1,
+       "label": ": {x : int; y : d}",
+       "position": { "character": 20, "line": 7 }
+     };
+     {
+       "kind": 1,
+       "label": ": {x : d; y : int}",
+       "position": { "character": 20, "line": 8 }
+     };
+     { "kind": 1, "label": ": r", "position": { "character": 27, "line": 9 } };
+     {
+       "kind": 1,
+       "label": ": 'e.'e -> 'd.'d -> {x : 'e; y : 'd}",
+       "position": { "character": 9, "line": 10 }
+     };
+     {
+       "kind": 1,
+       "label": ": {x : e; y : d}",
+       "position": { "character": 19, "line": 10 }
+     };
+     {
+       "kind": 1,
+       "label": ": 'd.'d -> {x : e; y : 'd}",
+       "position": { "character": 12, "line": 11 }
+     };
+     {
+       "kind": 1,
+       "label": ": {x : e; y : d}",
+       "position": { "character": 20, "line": 11 }
+     }] |}]
