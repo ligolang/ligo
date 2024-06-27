@@ -1,0 +1,7 @@
+
+author: krendelhoff
+description: "\\nInlay hints are shown correctly for all combinations of parameter type annotations and return type.\\n\\n"
+merge_request: '3214'
+title: "[#2173] Fix inlay hints for functions"
+type: fixed
+            
