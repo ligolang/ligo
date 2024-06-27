@@ -176,6 +176,7 @@ let core_prod =
     ; comp_file "clauseblock.jsligo"
     ; comp_file "polymorphism/annotate.mligo"
     ; comp_file "deep_pattern_matching/list_pattern.mligo"
+    ; comp_file "import_decls.jsligo"
     ; comp_file_assert
         "core_abstraction/fun_type_var.mligo"
         "\n\

@@ -1,0 +1,5 @@
+import * as Foo from "./Test"
+
+import Bar = Foo
+
+import { x, y } from "./Test"
