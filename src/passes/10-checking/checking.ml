@@ -2264,9 +2264,9 @@ and infer_declaration (decl : I.declaration)
         let%bind module_ = module_ in
         return @@ O.D_module_include module_)
       sig_.items
-  | D_import { import_name; imported_module; import_attr } ->
+  | D_import (Import_rename { alias; imported_module; import_attr }) ->
     let%bind path = path () in
-    let inner_name = path @ [ import_name ] in
+    let inner_name = path @ [ alias ] in
     let%bind loc = loc () in
     (* Lookup signature of [module_path] *)
     let%bind sig_ =
@@ -2276,16 +2276,17 @@ and infer_declaration (decl : I.declaration)
     in
     set_path inner_name
     @@ const
-         E.(return @@ O.D_import { import_name; imported_module; import_attr })
+         E.(return @@ O.D_import { import_name = alias; imported_module; import_attr })
          [ Location.wrap ~loc
            @@ Signature.S_module
-                ( import_name
+                ( alias
                 , sig_
                 , (* Note that if [public] is [false] (which it is by default), then
                      the module binding is added to the context but not the signature of the
                      enclosing module. *)
                   Attrs.Module.of_core_attr import_attr )
          ]
+  | D_import _ -> Computation.raise Errors.unsupported_import_decl
 
 
 and infer_module ?is_annoted_entry (module_ : I.module_)

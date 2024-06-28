@@ -33,7 +33,7 @@ let compile ~(raise : _ Trace.raise) =
       let ret = make_d ~loc d in
       let open Import in
       (match i with
-      | Import_all_as _ | Import_selected _ -> raise.error (unsupported_import ret)
+      | Import_all_as _ | Import_selected _ -> ret
       | Import_rename { module_path = [ imported_module ]; alias }
         when is_mangled imported_module ->
         (* Only keep the import around if it is a module alias introduced by #import *)

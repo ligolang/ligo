@@ -187,6 +187,7 @@ type typer_error =
   | `Typer_bad_key of string * Location.t
   | `Typer_bad_timestamp of string * Location.t
   | `Typer_bad_conversion_bytes of Location.t
+  | `Typer_unsupported_import_decl of Location.t
   ]
 [@@deriving poly_constructor { prefix = "typer_" }]
 
@@ -634,6 +635,8 @@ let rec extract_loc_and_message
     , Format.asprintf
         "@[<hv>Ill-formed bytes literal.@.Example of a valid bytes literal: \
          \"ff7a7aff\". @]" )
+  | `Typer_unsupported_import_decl loc ->
+    loc, Format.asprintf "@[<hv>LIGO doesn't support import declarations yet. @]"
 
 
 let error_ppformat
