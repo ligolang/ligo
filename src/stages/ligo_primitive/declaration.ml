@@ -124,3 +124,66 @@ module Import_decl (Attr : Attr) = struct
       Attr.pp
       import_attr
 end
+
+module Import_decl_ext (Attr : Attr) = struct
+  module Ne_list = Simple_utils.Ne_list
+
+  type t =
+    | Import_rename of
+        { alias : Module_var.t
+        ; imported_module : Module_var.t
+        ; import_attr : Attr.t
+        }
+    | Import_all_as of
+        { alias : Module_var.t
+        ; module_str : string
+        ; import_attr : Attr.t
+        }
+    | Import_selected of
+        { imported : Value_var.t Ne_list.t
+        ; module_str : string
+        ; import_attr : Attr.t
+        }
+  [@@deriving eq, compare, yojson, hash, fold, map]
+
+  let pp ppf = function
+    | Import_rename { alias; imported_module; import_attr } ->
+      Format.fprintf
+        ppf
+        "@[<2>import %a =@ %a%a@]"
+        Module_var.pp
+        alias
+        Module_var.pp
+        imported_module
+        Attr.pp
+        import_attr
+    | Import_all_as { alias; module_str; import_attr } ->
+      Format.fprintf
+        ppf
+        "@[<2>import * as %a from %s%a@]"
+        Module_var.pp
+        alias
+        module_str
+        Attr.pp
+        import_attr
+    | Import_selected { imported; module_str; import_attr } ->
+      let imported : Value_var.t list =
+        match imported with
+        | x :: l -> x :: l
+      in
+      let rec pp_imported ppf = function
+        | [] -> ()
+        | [ x ] -> Format.fprintf ppf "%a" Value_var.pp x
+        | x :: l ->
+          Format.fprintf ppf "%a, " Value_var.pp x;
+          pp_imported ppf l
+      in
+      Format.fprintf
+        ppf
+        "@[<2>import { %a } from %s%a@]"
+        pp_imported
+        imported
+        module_str
+        Attr.pp
+        import_attr
+end

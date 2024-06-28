@@ -210,10 +210,26 @@ end = struct
            }
     | D_attr (attr, O.{ wrap_content = D_import import; _ }) ->
       ret
-      @@ D_import
-           { import with
-             import_attr = conv_modtydecl_attr ~raise location import.import_attr attr
-           }
+      @@
+      (match import with
+      | Import_rename import ->
+        D_import
+          (Import_rename
+             { import with
+               import_attr = conv_modtydecl_attr ~raise location import.import_attr attr
+             })
+      | Import_selected import ->
+        D_import
+          (Import_selected
+             { import with
+               import_attr = conv_modtydecl_attr ~raise location import.import_attr attr
+             })
+      | Import_all_as import ->
+        D_import
+          (Import_all_as
+             { import with
+               import_attr = conv_modtydecl_attr ~raise location import.import_attr attr
+             }))
     | D_attr (attr, node) ->
       if not @@ String.equal attr.key "comment"
       then raise.warning (`Nanopasses_attribute_ignored location);
@@ -285,12 +301,32 @@ end = struct
     | D_import (Import_rename { alias; module_path = [ imported_module ] }) ->
       ret
       @@ D_import
-           { import_name = alias
-           ; imported_module
-             (* By default [import] declarations are private, unless explicitly exported *)
-           ; import_attr = { Type_or_module_attr.default_attributes with public = false }
-           }
-    | D_let _ | D_export _ | D_import _ | D_var _ | D_multi_const _ | D_multi_var _
+           (Import_rename
+              { alias
+              ; imported_module
+                (* By default [import] declarations are private, unless explicitly exported *)
+              ; import_attr =
+                  { Type_or_module_attr.default_attributes with public = false }
+              })
+    | D_import (Import_all_as { alias; module_str }) ->
+      ret
+      @@ D_import
+           (Import_all_as
+              { alias
+              ; module_str
+              ; import_attr =
+                  { Type_or_module_attr.default_attributes with public = false }
+              })
+    | D_import (Import_selected { imported; module_str }) ->
+      ret
+      @@ D_import
+           (Import_selected
+              { imported
+              ; module_str
+              ; import_attr =
+                  { Type_or_module_attr.default_attributes with public = false }
+              })
+    | D_let _ | D_export _ | D_var _ | D_multi_const _ | D_multi_var _
     | D_const { type_params = Some _; _ }
     | _ ->
       raise.error
@@ -572,10 +608,26 @@ end = struct
       program_entry ~raise (PE_declaration d)
     | PE_attr (attr, O.{ wrap_content = D_import import; location }) ->
       ret location
-      @@ D_import
-           { import with
-             import_attr = conv_modtydecl_attr ~raise location import.import_attr attr
-           }
+      @@
+      (match import with
+      | Import_rename import ->
+        D_import
+          (Import_rename
+             { import with
+               import_attr = conv_modtydecl_attr ~raise location import.import_attr attr
+             })
+      | Import_selected import ->
+        D_import
+          (Import_selected
+             { import with
+               import_attr = conv_modtydecl_attr ~raise location import.import_attr attr
+             })
+      | Import_all_as import ->
+        D_import
+          (Import_all_as
+             { import with
+               import_attr = conv_modtydecl_attr ~raise location import.import_attr attr
+             }))
     | PE_attr (attr, O.{ wrap_content = D_signature x; location }) ->
       ret location
       @@ D_signature
