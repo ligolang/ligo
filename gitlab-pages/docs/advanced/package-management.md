@@ -165,7 +165,7 @@ $ ligo compile contract main.jsligo
 
 This will find the dependencies installed on the local machine, and compile the `main.mligo` file.
 
-To test the contract using LIGO's [testing framework](../advanced/testing.md) run the command
+To test the contract using LIGO's [testing framework](../testing/testing.md) run the command
 
 <Syntax syntax="cameligo">
 

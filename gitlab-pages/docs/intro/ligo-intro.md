@@ -69,7 +69,7 @@ LIGO will **bring people to web3** and by design **reduce the risk**
 But compiler design is insufficient, and LIGO uses **static analysis** to
 encourage people to write simple code, avoid anti-patterns, and use
 the
-[robust test framework](https://ligolang.org/docs/advanced/testing)
+[robust test framework](https://ligolang.org/docs/testing/testing)
 which can simulate Tezos blockchain and offer
 [mutation tests](https://ligolang.org/docs/advanced/mutation-testing)
 
@@ -105,7 +105,7 @@ Your choice to learn LIGO is already available:
 
 You will need a deeper comprehension:
 - Teach yourself how to structure your code with [Combining code](https://ligolang.org/docs/next/language-basics/modules) section
-- Learn how to [write tests](https://ligolang.org/docs/next/advanced/testing?lang=jsligo) we strongly encourage to use [breathalyzer library from the LIGO registry.](https://packages.ligolang.org/package/ligo-breathalyzer)
+- Learn how to [write tests](https://ligolang.org/docs/next/testing/testing?lang=jsligo) we strongly encourage to use [breathalyzer library from the LIGO registry.](https://packages.ligolang.org/package/ligo-breathalyzer)
 - Understand how to [secure a contract](https://ligolang.org/docs/tutorials/security)
 
 ### Dig deeper

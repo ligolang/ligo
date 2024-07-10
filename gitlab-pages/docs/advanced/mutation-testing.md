@@ -7,7 +7,7 @@ import Syntax from '@theme/Syntax';
 import Link from '@docusaurus/Link';
 
 We assume that the reader is familiar with LIGO's testing framework. A
-reference can be found [here](testing.md).
+reference can be found [here](../testing/testing.md).
 
 ## A simple testing example
 
@@ -438,8 +438,8 @@ ligo run test --library . gitlab-pages/docs/advanced/src/mutation-testing/mutati
 # File "gitlab-pages/docs/advanced/src/mutation-testing/mutation-contract-test.mligo", line 25, characters 4-65:
 #  24 |     let () = Test.log(mutation) in
 #  25 |     failwith "A mutation of the contract still passes the tests!"
-#  26 | 
-# 
+#  26 |
+#
 # An uncaught error occured:
 # Failwith: "A mutation of the contract still passes the tests!"
 # Trace:
@@ -447,7 +447,7 @@ ligo run test --library . gitlab-pages/docs/advanced/src/mutation-testing/mutati
 # Mutation at: File "gitlab-pages/docs/advanced/src/mutation-testing/mutation-contract.mligo", line 8, characters 64-77:
 #   7 | [@entry] let add (delta : int) (store : storage) : result = [], store + delta
 #   8 | [@entry] let sub (delta : int) (store : storage) : result = [], store - delta
-# 
+#
 # Replacing by: store + delta.
 ```
 
@@ -462,7 +462,7 @@ ligo run test --library . gitlab-pages/docs/advanced/src/mutation-testing/mutati
 #  26 |       Test.log(pmutation[1]);
 #  27 |       failwith("A mutation of the contract still passes the tests!");
 #  28 |     }
-# 
+#
 # An uncaught error occured:
 # Failwith: "A mutation of the contract still passes the tests!"
 # Trace:
@@ -470,7 +470,7 @@ ligo run test --library . gitlab-pages/docs/advanced/src/mutation-testing/mutati
 # Mutation at: File "gitlab-pages/docs/advanced/src/mutation-testing/mutation-contract.jsligo", line 8, characters 73-86:
 #   7 | @entry const add = (delta : int, store : storage) : result => [[], store + delta];
 #   8 | @entry const sub = (delta : int, store : storage) : result => [[], store - delta];
-# 
+#
 # Replacing by: store + delta.
 ```
 
@@ -654,7 +654,7 @@ const sub = (delta : int, store : storage) : result => {
 
 </Syntax>
 
-In the example, two mutations are prevented. The first one, 
+In the example, two mutations are prevented. The first one,
 The second one, it is on
 the function `sub`, which prevents the mutations presented in the
 example from the previous sections. is an assertion

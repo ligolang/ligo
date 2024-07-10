@@ -3,6 +3,6 @@ module Counter = struct
   type return_type = operation list * storage_type
 
   [@entry]
-  let main (_action: unit) (store: storage_type): return_type =
-    [], store + 1
+  let main (_action: unit) (storage: storage_type): return_type =
+    [], storage + 1
 end

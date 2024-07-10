@@ -1,0 +1,50 @@
+namespace Counter {
+  type storage = [int, address];
+  type return_type = [list<operation>, storage];
+
+  @entry
+  const increment = (n: int, storage: storage): return_type => {
+    const [number, admin_account] = storage;
+    return [[], [number + n, admin_account]];
+  }
+
+  @entry
+  const decrement = (n: int, storage: storage): return_type => {
+    const [number, admin_account] = storage;
+    return [[], [number - n, admin_account]];
+  }
+
+  @entry
+  const reset = (_: unit, storage: storage): return_type => {
+    const [_number, admin_account] = storage;
+
+    if (Tezos.get_sender() != admin_account) {
+      return failwith("Only the owner can call this entrypoint");
+    }
+
+    return [[], [0, admin_account]];
+  }
+};
+const test_admin = (() => {
+  const admin_account = Test.Next.Account.address(0n);
+  const user_account = Test.Next.Account.address(1n);
+
+  // Originate the contract with the admin account in storage
+  const initial_storage = [10 as int, admin_account];
+  const orig = Test.Next.Originate.contract(contract_of(Counter), initial_storage, 0tez);
+
+  // Try to call the reset entrypoint as the user and expect it to fail
+  Test.Next.State.set_source(user_account);
+  const result = Test.Next.Contract.transfer(Test.Next.Typed_address.get_entrypoint("reset", orig.taddr), unit, 0tez);
+  match(result) {
+    when(Fail(_err)): Test.Next.IO.log("Test succeeded");
+    when (Success(_s)): failwith("User should not be able to call reset");
+  };
+
+  // Call the reset entrypoint as the admin and expect it to succeed
+  Test.Next.State.set_source(admin_account);
+  Test.Next.Contract.transfer_exn(Test.Next.Typed_address.get_entrypoint("reset", orig.taddr), unit, 0tez);
+
+  const [newNumber, _admin_account] = Test.Next.Typed_address.get_storage(orig.taddr);
+  Assert.assert(newNumber == 0);
+}) ()

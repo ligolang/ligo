@@ -252,8 +252,9 @@ const sidebars = {
       "preprocessor/import",
       "preprocessor/error",
     ],
-    "Testing and Debugging": [
-      "advanced/testing",
+    "Testing": [
+      "testing/testing",
+      "testing/testing-tickets",
       "advanced/mutation-testing",
       "advanced/michelson_testing",
     ],
