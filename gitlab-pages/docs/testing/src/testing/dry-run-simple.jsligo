@@ -3,6 +3,6 @@ namespace Counter {
   type return_type = [list<operation>, storage_type];
 
   @entry
-  const main = (_action: unit, store: storage_type): return_type =>
-    [[], store + 1]
+  const main = (_action: unit, storage: storage_type): return_type =>
+    [[], storage + 1]
 }
