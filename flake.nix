@@ -124,6 +124,11 @@
                 ocamlPackages.utop
                 ocamlPackages.ocaml-lsp
               ];
+
+              shellHook = ''
+                # This is a hack to work around the hack used in the dune files
+                export OPAM_SWITCH_PREFIX="${ligo.OPAM_SWITCH_PREFIX}";
+              '';
             };
 
             webide-frontend = pkgs.mkShell {
