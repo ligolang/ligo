@@ -15,6 +15,7 @@ module Label = Ligo_prim.Label
 module Kind = Ligo_prim.Kind
 module Binder = Ligo_prim.Binder
 module Param = Ligo_prim.Param
+module Union = Ligo_prim.Union
 
 let assert_same_size a b = if List.length a = List.length b then Some () else None
 let constant_compare ia ib = Literal_types.compare ia ib
@@ -49,15 +50,22 @@ let rec assert_type_expression_eq ((a, b) : type_expression * type_expression)
         (List.zip_exn lsta lstb)
     else None
   | T_constant _, _ -> None
-  | T_sum (row1, _), T_sum (row2, _) | T_record row1, T_record row2 ->
+  | T_sum row1, T_sum row2 | T_record row1, T_record row2 ->
     Option.some_if
       (Row.equal
          (fun t1 t2 -> Option.is_some @@ assert_type_expression_eq (t1, t2))
          row1
          row2)
       ()
-  | T_record _, _ -> None
-  | T_sum _, _ -> None
+  | T_sum _, _ | T_record _, _ -> None
+  | T_union union1, T_union union2 ->
+    Option.some_if
+      (Union.equal
+         (fun t1 t2 -> Option.is_some @@ assert_type_expression_eq (t1, t2))
+         union1
+         union2)
+      ()
+  | T_union _, _ -> None
   | ( T_arrow { type1; type2; param_names = _ }
     , T_arrow { type1 = type1'; type2 = type2'; param_names = _ } ) ->
     let* _ = assert_type_expression_eq (type1, type1') in
@@ -462,7 +470,7 @@ let get_entrypoint_parameter_type
   =
  fun label parameter_ty ->
   let open Ligo_option in
-  let* rows, _ = Combinators.get_t_sum parameter_ty in
+  let* rows = Combinators.get_t_sum parameter_ty in
   let lst = Row.to_alist rows in
   match lst with
   | [ (_single_entry, ty) ] when Option.is_none label -> Some ty

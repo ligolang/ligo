@@ -128,7 +128,7 @@ module Of_Ast = struct
       scopes
     | E_raw_code { language = _; code = _ } -> add_current_expr scopes
     | E_constructor { constructor = _; element } -> self element scopes env
-    | E_matching { matchee; disc_label = _; cases } ->
+    | E_matching { matchee; cases } ->
       let scopes = self matchee scopes env (* c.f. match.mligo:6 *) in
       (* Env update logic from References *)
       List.fold cases ~init:scopes ~f:(fun scopes { pattern; body } ->
@@ -197,7 +197,7 @@ module Of_Ast = struct
   and collect_labels : AST.type_expression -> env -> env =
    fun te env ->
     match te.type_content with
-    | T_sum (row, _) ->
+    | T_sum row ->
       let labels = Record.labels row.fields in
       let types = Record.values row.fields in
       let env =
@@ -207,6 +207,7 @@ module Of_Ast = struct
     | T_record row ->
       let types = Record.values row.fields in
       List.fold_left ~init:env ~f:(fun acc typ -> collect_labels typ acc) types
+    | T_union union -> Union.fold (Fn.flip collect_labels) env union
     | T_arrow { type1; type2; param_names = _ } ->
       collect_labels type1 @@ collect_labels type2 env
     | T_app { arguments; type_operator = _ } ->

@@ -107,9 +107,9 @@ let rec swap_type_expression ~(raise : _ Trace.raise)
   | T_variable ty_var ->
     let ty_var = swaper.type_ ty_var in
     return @@ T_variable ty_var
-  | T_sum (row, orig_name) ->
+  | T_sum row ->
     let row = Row.map self row in
-    return @@ T_sum (row, orig_name)
+    return @@ T_sum row
   | T_record row ->
     let row = Row.map self row in
     return @@ T_record row
@@ -130,6 +130,7 @@ let rec swap_type_expression ~(raise : _ Trace.raise)
     let type_ = self type_ in
     return @@ T_abstraction { ty_binder; kind; type_ }
   | T_exists _ -> raise.error @@ Errors.unexpected_texists te te.location
+  | T_union _ -> impossible_because_no_union_in_ast_aggregated ()
 
 
 let swap_binder ~(raise : _ Trace.raise) : Scope.swapper -> _ Binder.t -> _ Binder.t =
@@ -238,10 +239,10 @@ let rec swap_expression ~(raise : _ Trace.raise)
   | E_constructor { constructor; element } ->
     let element = self element in
     return @@ E_constructor { constructor; element }
-  | E_matching { matchee; disc_label; cases } ->
+  | E_matching { matchee; cases } ->
     let matchee = self matchee in
     let cases = matching_cases ~raise swaper cases in
-    return @@ E_matching { matchee; disc_label; cases }
+    return @@ E_matching { matchee; cases }
   | E_record record ->
     let record = Record.map ~f:self record in
     return @@ E_record record
@@ -304,9 +305,9 @@ let rec type_expression ~(raise : _ Trace.raise)
   | T_variable ty_var ->
     let ty_var = Scope.get_type_var scope ty_var in
     return @@ T_variable ty_var
-  | T_sum (row, orig_name) ->
+  | T_sum row ->
     let row = Row.map self row in
-    return @@ T_sum (row, orig_name)
+    return @@ T_sum row
   | T_record row ->
     let row = Row.map self row in
     return @@ T_record row
@@ -327,6 +328,7 @@ let rec type_expression ~(raise : _ Trace.raise)
     let type_ = self ~scope type_ in
     return @@ T_abstraction { ty_binder; kind; type_ }
   | T_exists _ -> raise.error @@ Errors.unexpected_texists te te.location
+  | T_union _ -> impossible_because_no_union_in_ast_aggregated ()
 
 
 let binder_new ~(raise : _ Trace.raise) : Scope.t -> _ Binder.t -> Scope.t * _ Binder.t =
@@ -464,10 +466,10 @@ let rec expression ~(raise : _ Trace.raise)
   | E_constructor { constructor; element } ->
     let _, element = self element in
     return @@ E_constructor { constructor; element }
-  | E_matching { matchee; disc_label; cases } ->
+  | E_matching { matchee; cases } ->
     let _, matchee = self matchee in
     let cases = matching_cases ~raise scope cases in
-    return @@ E_matching { matchee; disc_label; cases }
+    return @@ E_matching { matchee; cases }
   | E_record record ->
     let record = Record.map ~f:(fun elem -> snd @@ self elem) record in
     return @@ E_record record

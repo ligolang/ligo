@@ -14,6 +14,7 @@ module Trace = Simple_utils.Trace
 module Location = Simple_utils.Location
 module Ligo_string = Simple_utils.Ligo_string
 module Ligo_map = Simple_utils.Ligo_map
+module Fuzzy_bool = Simple_utils.Fuzzy_bool
 module Refs_tbl = Context.Refs_tbl
 
 let untype_expression = Untyper.untype_expression
@@ -105,9 +106,15 @@ let rec evaluate_type ~default_layout (type_ : I.type_expression)
     let%bind type1 = evaluate_type ~default_layout type1 in
     let%bind type2 = evaluate_type ~default_layout type2 in
     const @@ T_arrow { type1; type2; param_names }
-  | T_sum (row, orig_label) ->
+  | T_sum row ->
     let%bind row = evaluate_row ~default_layout row in
-    const @@ T_sum (row, orig_label)
+    const @@ T_sum row
+  | T_union union ->
+    let module Comp_union = C.Make_all (Union) in
+    let%bind union =
+      union |> Union.map (evaluate_type ~default_layout) |> Comp_union.all
+    in
+    const @@ T_union union
   | T_record row ->
     let%bind row = evaluate_row ~default_layout row in
     const @@ T_record row
@@ -394,6 +401,7 @@ let infer_literal ?(singleton = false) lit : (Type.t * O.expression E.t, _, _) C
     return
       ( type_
       , E.(
+          let open Let_syntax in
           let%bind type_ = decode type_ in
           return @@ O.make_e ~loc (E_literal lit) type_) )
   in
@@ -433,7 +441,6 @@ let get_type_of_ctor
     (label : Label.t)
     ?(use_raise_opt : bool = false)
     ~(error : ('err Errors.with_loc, 'err, 'a) C.t)
-    ~(add_ctor_reference : bool)
     ()
     : (Type.t, 'err, 'a) C.t
   =
@@ -454,7 +461,7 @@ let get_type_of_ctor
     raise @@ Ligo_map.find_kv (module Label) row.fields label
   in
   let%bind refs_tbl = refs_tbl () in
-  if add_ctor_reference then Refs_tbl.add_ref_label refs_tbl ~key:constr ~data:label;
+  Refs_tbl.add_ref_label refs_tbl ~key:constr ~data:label;
   return label_row_elem
 
 
@@ -472,7 +479,6 @@ let check_record const ~expr ~type_ record (row : Type.row) try_check =
            (* Invariant: [Map.key_set record = Map.key_set row.fields]  *)
            let%bind type_ =
              get_type_of_ctor
-               ~add_ctor_reference:true
                ~error:
                  (let%map decoded_row = lift_elab (E.decode_row row) in
                   Errors.unbound_label_edge_case `Record label decoded_row)
@@ -485,8 +491,48 @@ let check_record const ~expr ~type_ record (row : Type.row) try_check =
   in
   const
     E.(
+      let open Let_syntax in
       let%bind record = all_lmap record in
       return @@ O.E_record record)
+
+
+module Union_conditional_body_thunk = struct
+  type ('expr, 'typ) t =
+    { var : Value_var.t
+    ; input_type : 'typ
+    ; output_type : 'typ
+    ; typ : 'typ
+    ; thunk : 'expr
+    }
+  [@@deriving map]
+end
+
+let inline_let_switch_condition
+    ~(let_binder : I.type_expression option Linear_pattern.t)
+    ~rhs
+    ~let_result
+    ~default
+    ~on_inline
+  =
+  let let_binder_var =
+    match let_binder.wrap_content with
+    | P_var binder -> Some binder.var
+    | _ -> None
+  in
+  match let_binder_var with
+  | None -> default ()
+  | Some let_binder_var ->
+    (* Magic hack to propagate static information  *)
+    if not
+         (Value_var.is_generated let_binder_var
+         && (Value_var.is_name_prefix let_binder_var "switch_case_condition_"
+            || Value_var.is_name_prefix let_binder_var "switch_subject"))
+    then default ()
+    else (
+      let reduced_expr =
+        I.Helpers.subst_expr ~var:let_binder_var ~by:rhs ~in_:let_result
+      in
+      on_inline reduced_expr)
 
 
 let rec check_expression (expr : I.expression) (type_ : Type.t)
@@ -503,6 +549,7 @@ let rec check_expression (expr : I.expression) (type_ : Type.t)
     let%bind loc = loc () in
     return
       E.(
+        let open Let_syntax in
         let%bind content = content in
         let%bind type_ = decode type_ in
         return @@ O.make_e ~loc content type_)
@@ -515,6 +562,7 @@ let rec check_expression (expr : I.expression) (type_ : Type.t)
     let%bind loc = loc () in
     return
       E.(
+        let open Let_syntax in
         let%bind content = content in
         let%bind type_ = decode type_ in
         return @@ O.make_e ~loc content type_)
@@ -541,6 +589,7 @@ let rec check_expression (expr : I.expression) (type_ : Type.t)
     let%bind type_ = create_type @@ Type.t_for_all { ty_binder = tvar; kind; type_ } in
     const_with_type
       E.(
+        let open Let_syntax in
         let%bind result = result in
         return @@ O.E_type_abstraction { type_binder = tvar; result })
       type_
@@ -554,12 +603,14 @@ let rec check_expression (expr : I.expression) (type_ : Type.t)
     in
     const
       E.(
+        let open Let_syntax in
         let%bind result = result in
         return @@ O.E_type_abstraction { type_binder = tvar; result })
   | E_lambda lambda, T_arrow { type1 = arg_type; type2 = ret_type; param_names = _ } ->
     let%bind lambda = check_lambda lambda arg_type ret_type in
     const
       E.(
+        let open Let_syntax in
         let%bind lambda = lambda in
         return @@ O.E_lambda lambda)
   | E_record record, T_record row ->
@@ -586,23 +637,18 @@ let rec check_expression (expr : I.expression) (type_ : Type.t)
   | E_update { struct_; path; update }, T_record row ->
     let%bind struct_ = check struct_ type_ in
     let%bind field_row_elem =
-      get_type_of_ctor
-        ~add_ctor_reference:true
-        ~error:(return (Errors.bad_record_access path))
-        row
-        path
-        ()
+      get_type_of_ctor ~error:(return (Errors.bad_record_access type_ path)) row path ()
     in
     let%bind update = check update field_row_elem in
     const
       E.(
+        let open Let_syntax in
         let%bind struct_ = struct_
         and update = update in
         return @@ O.E_update { struct_; path; update })
-  | E_constructor { constructor; element }, T_sum (row, disc_label) ->
+  | E_constructor { constructor; element }, T_sum row ->
     let%bind constr_row_elem =
       get_type_of_ctor
-        ~add_ctor_reference:(Option.is_none disc_label)
         ~error:(return (Errors.bad_constructor constructor type_))
         row
         constructor
@@ -611,38 +657,176 @@ let rec check_expression (expr : I.expression) (type_ : Type.t)
     let%bind element = check element constr_row_elem in
     const
       E.(
+        let open Let_syntax in
         let%bind element = element in
         return @@ O.E_constructor { constructor; element })
-  | E_matching { matchee; disc_label; cases }, _ ->
-    let%bind matchee_type, matchee = infer matchee in
-    let%bind matchee_type = Context.tapply matchee_type in
-    let%bind cases = check_cases cases matchee_type type_ in
-    let%bind match_expr = compile_match matchee disc_label cases matchee_type in
-    const match_expr
+  | E_matching ({ matchee; cases } as match_), _ ->
+    let handle_as_normal_match () =
+      let%bind matchee_type, matchee_typed = infer matchee in
+      let%bind matchee_type = Context.tapply matchee_type in
+      let%bind cases = check_cases cases matchee_type type_ in
+      let%bind match_expr = compile_match matchee_typed cases matchee_type in
+      const match_expr
+    in
+    (match
+       Ast_core.Helpers.Conditional_with_condition_accessor_equals_literal.of_expr expr
+     with
+    | None -> handle_as_normal_match ()
+    | Some conditional ->
+      let%bind matchee_typed = check matchee (Type.t_bool ~loc:Location.generated ()) in
+      let condition = conditional.condition in
+      let%bind struct_type, struct_typed = infer condition.struct_ in
+      (match
+         ( Type.get_t_union struct_type
+         , I.get_e_variable (I.Helpers.remove_ascriptions condition.struct_) )
+       with
+      | None, _ | _, None -> handle_as_normal_match ()
+      | Some union, Some struct_var ->
+        let fresh_union_var () =
+          Value_var.fresh_like struct_var ~generated:true ~loc:Location.generated
+        in
+        let%bind partitioned_injections =
+          partition_union_for_conditional ~condition ~union
+        in
+        let partitioned_summands =
+          Fuzzy_bool.Indexed.map
+            partitioned_injections
+            ~f:(List.map ~f:Union.Injection.source)
+        in
+        if not (List.is_empty partitioned_summands.maybe)
+        then handle_as_normal_match ()
+        else (
+          let then_subunion, else_subunion =
+            let Fuzzy_bool.Indexed.{ yes; no; _ } = partitioned_summands in
+            (yes, no) |> Tuple2.map ~f:Union.make
+          in
+          let then_subunion_as_type, else_subunion_as_type =
+            Tuple2.map (then_subunion, else_subunion) ~f:(fun union ->
+                Type.t_union union ~loc:Location.generated ())
+          in
+          let then_subunion_is_empty, else_subunion_is_empty =
+            Tuple2.map (then_subunion, else_subunion) ~f:(fun subunion ->
+                List.is_empty (Union.summands subunion))
+          in
+          let%bind then_body_thunk =
+            check_union_conditional_branch_and_make_body_thunk
+              ~name:"then_body_thunk"
+              ~struct_var
+              ~subunion:then_subunion_as_type
+              ~subunion_is_empty:then_subunion_is_empty
+              ~body:conditional.then_body
+              ~expected_body_type:type_
+              ~fresh_union_var
+          in
+          let%bind else_body_thunk =
+            check_union_conditional_branch_and_make_body_thunk
+              ~name:"else_body_thunk"
+              ~struct_var
+              ~subunion:else_subunion_as_type
+              ~subunion_is_empty:else_subunion_is_empty
+              ~body:conditional.else_body
+              ~expected_body_type:type_
+              ~fresh_union_var
+          in
+          return
+            E.(
+              let open Let_syntax in
+              let module Elab_union_conditional_body_thunk =
+                E.Make_all2 (Union_conditional_body_thunk)
+              in
+              let%bind type_ = decode type_ in
+              let%bind struct_typed = struct_typed in
+              let%bind then_body_thunk =
+                then_body_thunk
+                |> Union_conditional_body_thunk.map Fn.id decode
+                |> Elab_union_conditional_body_thunk.all
+              in
+              let%bind else_body_thunk =
+                else_body_thunk
+                |> Union_conditional_body_thunk.map Fn.id decode
+                |> Elab_union_conditional_body_thunk.all
+              in
+              let loc = expr.location in
+              let%bind after_expansion_body =
+                let%bind content =
+                  compile_union_conditional_after_expansion_body
+                    ~struct_typed
+                    ~then_body_thunk
+                    ~else_body_thunk
+                    ~fresh_union_var
+                    ~partitioned_injections
+                    ~then_subunion
+                    ~else_subunion
+                    ~then_subunion_as_type
+                    ~else_subunion_as_type
+                    ~result_type:type_
+                in
+                return @@ O.make_e content type_ ~loc
+              in
+              let%bind after_expansion =
+                compile_union_conditional_after_expansion
+                  ~then_body_thunk
+                  ~else_body_thunk
+                  ~after_expansion_body
+              in
+              let%bind before_expansion =
+                let%bind content =
+                  compile_union_conditional_before_expansion
+                    ~matchee_typed
+                    ~conditional_as_untyped_match_on_bool:match_
+                    ~then_body_thunk
+                    ~else_body_thunk
+                    ~struct_var
+                in
+                return @@ O.make_e content type_ ~loc
+              in
+              return
+              @@ O.e_union_use
+                   (Union.Use.make ~before_expansion ~after_expansion)
+                   type_
+                   ~loc))))
   | E_let_in { let_binder; rhs; let_result; attributes }, _ ->
-    let%bind rhs_type, rhs = infer rhs in
-    let%bind frag, let_binder =
-      With_frag.run @@ check_pattern ~mut:false let_binder rhs_type
+    let handle_as_normal_let_in () =
+      let%bind rhs_type, rhs = infer rhs in
+      let%bind frag, let_binder =
+        With_frag.run @@ check_pattern ~mut:false let_binder rhs_type
+      in
+      let%bind let_result = def_frag frag ~on_exit:Drop ~in_:(check let_result type_) in
+      const
+        E.(
+          let open Let_syntax in
+          let%bind let_result = let_result
+          and let_binder = let_binder
+          and rhs = rhs in
+          return @@ O.E_let_in { let_binder; rhs; let_result; attributes })
     in
-    let%bind let_result = def_frag frag ~on_exit:Drop ~in_:(check let_result type_) in
-    const
-      E.(
-        let%bind let_result = let_result
-        and let_binder = let_binder
-        and rhs = rhs in
-        return @@ O.E_let_in { let_binder; rhs; let_result; attributes })
+    inline_let_switch_condition
+      ~let_binder
+      ~rhs
+      ~let_result
+      ~default:handle_as_normal_let_in
+      ~on_inline:(fun reduced_expr -> check reduced_expr type_)
   | E_let_mut_in { let_binder; rhs; let_result; attributes }, _ ->
-    let%bind rhs_type, rhs = infer rhs in
-    let%bind frag, let_binder =
-      With_frag.run @@ check_pattern ~mut:true let_binder rhs_type
+    let handle_as_normal_let_mut_in () =
+      let%bind rhs_type, rhs = infer rhs in
+      let%bind frag, let_binder =
+        With_frag.run @@ check_pattern ~mut:true let_binder rhs_type
+      in
+      let%bind let_result = def_frag frag ~on_exit:Drop ~in_:(check let_result type_) in
+      const
+        E.(
+          let open Let_syntax in
+          let%bind let_result = let_result
+          and let_binder = let_binder
+          and rhs = rhs in
+          return @@ O.E_let_mut_in { let_binder; rhs; let_result; attributes })
     in
-    let%bind let_result = def_frag frag ~on_exit:Drop ~in_:(check let_result type_) in
-    const
-      E.(
-        let%bind let_result = let_result
-        and let_binder = let_binder
-        and rhs = rhs in
-        return @@ O.E_let_mut_in { let_binder; rhs; let_result; attributes })
+    inline_let_switch_condition
+      ~let_binder
+      ~rhs
+      ~let_result
+      ~default:handle_as_normal_let_mut_in
+      ~on_inline:(fun reduced_expr -> check reduced_expr type_)
   | E_mod_in { module_binder; rhs; let_result }, _ ->
     let%bind rhs_sig, rhs = infer_module_expr rhs in
     let%bind let_result =
@@ -650,6 +834,7 @@ let rec check_expression (expr : I.expression) (type_ : Type.t)
     in
     const
       E.(
+        let open Let_syntax in
         let%bind let_result = let_result
         and rhs = rhs in
         return @@ O.E_mod_in { module_binder; rhs; let_result })
@@ -668,6 +853,7 @@ let rec check_expression (expr : I.expression) (type_ : Type.t)
     in
     return
       E.(
+        let open Let_syntax in
         let%bind expr = expr in
         f expr)
 
@@ -773,6 +959,103 @@ and check_literal const_error_recovery ~type_ lit ~constructor =
     return expr
 
 
+and partition_union_for_conditional
+    ~(condition :
+       (I.expression, I.type_expression) I.Helpers.Condition_accessor_equals_literal.t)
+    ~(union : Type.t Union.t)
+    : ( Type.t Union.Injection.t list Fuzzy_bool.Indexed.t, Errors.typer_error
+    , Main_warnings.all ) C.t
+  =
+  let open C in
+  let open Let_syntax in
+  union
+  |> Union.Injection.injections_of_union
+  |> List.map ~f:(fun injection ->
+         let summand = Union.Injection.source injection in
+         match summand.content with
+         | T_record row ->
+           let%bind field_type =
+             get_type_of_ctor
+               ~error:(return (Errors.bad_record_access summand condition.field))
+               row
+               condition.field
+               ()
+           in
+           let condition_value : Fuzzy_bool.t =
+             match Type.get_t_singleton field_type with
+             | None -> Maybe
+             | Some lit -> if Literal_value.equal lit condition.lit then Yes else No
+           in
+           return (condition_value, injection)
+         | _ -> raise (Errors.expected_record summand))
+  |> all
+  >>| Fuzzy_bool.Indexed.of_alist_multi
+
+
+and check_union_conditional_branch_and_make_body_thunk
+    ~name
+    ~struct_var
+    ~body
+    ~subunion
+    ~subunion_is_empty
+    ~expected_body_type
+    ~fresh_union_var
+  =
+  let open C in
+  let open Let_syntax in
+  let subunion_var = fresh_union_var () in
+  let body = I.Helpers.subst_var ~old_var:struct_var ~new_var:subunion_var body in
+  let%bind body_typed =
+    if subunion_is_empty
+       && (not (Type.is_t_unit expected_body_type))
+       && I.equal_expression_content
+            body.expression_content
+            (I.E_literal Literal_value.Literal_unit)
+    then
+      (* Handle the potentially superfluous default case added by the reduce_switch nanopass *)
+      return
+        E.(
+          let open Let_syntax in
+          let%bind expected_body_type = decode expected_body_type in
+          return
+          @@ Ast_typed.e_failwith_str
+               ~loc:body.location
+               "This failwith is a placeholder for a useless body, and should have been \
+                erased before Michelson code was generated."
+               expected_body_type)
+    else
+      def
+        [ subunion_var, Immutable, subunion, Context.Attr.default ]
+        ~on_exit:Drop
+        ~in_:(check_expression body expected_body_type)
+  in
+  let body_thunk_type =
+    Type.t_arrow subunion expected_body_type ~loc:Location.generated ()
+  in
+  let body_thunk_typed =
+    E.(
+      let open Let_syntax in
+      let%bind subunion = decode subunion in
+      let%bind body_type = decode expected_body_type in
+      let%bind body_typed = body_typed in
+      let lam =
+        let binder = Param.make subunion_var subunion in
+        Lambda.{ binder; output_type = body_type; result = body_typed }
+      in
+      let%bind body_thunk_type = decode body_thunk_type in
+      return @@ O.e_lambda lam body_thunk_type ~loc:Location.generated)
+  in
+  let var = Value_var.fresh ~name ~loc:Location.generated () in
+  return
+    Union_conditional_body_thunk.
+      { var
+      ; input_type = subunion
+      ; output_type = expected_body_type
+      ; typ = body_thunk_type
+      ; thunk = body_thunk_typed
+      }
+
+
 and infer_expression (expr : I.expression)
     : (Type.t * O.expression E.t, Errors.typer_error, _) C.t
   =
@@ -786,6 +1069,7 @@ and infer_expression (expr : I.expression)
   let lift expr type_ =
     let%map loc = loc () in
     E.(
+      let open Let_syntax in
       let%map expr = expr
       and type_ = decode type_ in
       O.make_e ~loc expr.O.expression_content type_)
@@ -795,6 +1079,7 @@ and infer_expression (expr : I.expression)
     return
       ( type_
       , E.(
+          let open Let_syntax in
           let%bind content = content in
           let%bind type_ = decode type_ in
           return @@ O.make_e ~loc content type_) )
@@ -854,6 +1139,7 @@ and infer_expression (expr : I.expression)
     in
     const
       E.(
+        let open Let_syntax in
         let%bind lamb = lamb >>= f in
         let%bind args = args in
         return (O.E_application { lamb; args }))
@@ -868,29 +1154,39 @@ and infer_expression (expr : I.expression)
        in
        const
          E.(
+           let open Let_syntax in
            let%bind expr = expr in
            return (O.E_type_abstraction { type_binder = tvar; result = expr }))
          ret_type
   | E_let_in { let_binder; rhs; let_result; attributes } ->
-    let%bind rhs_type, rhs = infer rhs in
-    let%bind rhs_type = Context.tapply rhs_type in
-    let%bind frags, let_binder =
-      With_frag.run @@ check_pattern ~mut:false let_binder rhs_type
+    let handle_as_normal_let_in () =
+      let%bind rhs_type, rhs = infer rhs in
+      let%bind rhs_type = Context.tapply rhs_type in
+      let%bind frags, let_binder =
+        With_frag.run @@ check_pattern ~mut:false let_binder rhs_type
+      in
+      let%bind res_type, let_result =
+        def_frag frags ~on_exit:Lift_type ~in_:(infer let_result)
+      in
+      let attributes = infer_value_attr attributes in
+      let%bind options = options () in
+      const
+        E.(
+          let open Let_syntax in
+          let%bind rhs_type = decode rhs_type in
+          let%bind let_binder = let_binder in
+          let%bind rhs = rhs
+          and let_result = let_result in
+          let%bind () = check_let_anomalies ~options ~syntax let_binder rhs_type in
+          return (O.E_let_in { let_binder; rhs; let_result; attributes }))
+        res_type
     in
-    let%bind res_type, let_result =
-      def_frag frags ~on_exit:Lift_type ~in_:(infer let_result)
-    in
-    let attributes = infer_value_attr attributes in
-    let%bind options = options () in
-    const
-      E.(
-        let%bind rhs_type = decode rhs_type in
-        let%bind let_binder = let_binder in
-        let%bind rhs = rhs
-        and let_result = let_result in
-        let%bind () = check_let_anomalies ~options ~syntax let_binder rhs_type in
-        return (O.E_let_in { let_binder; rhs; let_result; attributes }))
-      res_type
+    inline_let_switch_condition
+      ~let_binder
+      ~rhs
+      ~let_result
+      ~default:handle_as_normal_let_in
+      ~on_inline:(fun reduced_expr -> infer reduced_expr)
   | E_type_in { type_binder = tvar; rhs; let_result } ->
     let%bind rhs = With_default_layout.evaluate_type rhs in
     let%bind res_type, let_result =
@@ -925,6 +1221,7 @@ and infer_expression (expr : I.expression)
       let func_type = build_func_type args in
       const
         E.(
+          let open Let_syntax in
           let%bind code = code
           and code_type = decode func_type
           and args = all @@ List.map ~f:snd args in
@@ -940,6 +1237,7 @@ and infer_expression (expr : I.expression)
       let%bind _, code = infer code in
       const
         E.(
+          let open Let_syntax in
           let%bind code = code
           and code_type = decode code_type in
           return
@@ -970,6 +1268,7 @@ and infer_expression (expr : I.expression)
     in
     const
       E.(
+        let open Let_syntax in
         let%bind lambda = lambda
         and fun_type = decode fun_type in
         return @@ O.E_recursive { fun_name; fun_type; lambda; force_lambdarec })
@@ -999,33 +1298,63 @@ and infer_expression (expr : I.expression)
         return
           ( array_type
           , E.(
+              let open Let_syntax in
               let%map hd = hd in
               O.e_list ~loc [ hd ] hd.type_expression) )
       | hd :: tl ->
         infer_record const (Record.record_of_proper_tuple (hd :: tl)) infer_array_item)
   | E_array_as_list entries -> infer_array_as_list entries
   | E_accessor { struct_; path = field } ->
-    let%bind record_type, struct_ = infer struct_ in
-    let%bind row =
-      let%bind record_type = Context.tapply record_type in
-      Error_recovery.raise_or_use_default_opt
-        ~error:(Errors.expected_record record_type)
-        ~default:Error_recovery.row
-        (Type.get_t_record record_type)
-    in
-    let%bind field_row_elem =
-      get_type_of_ctor
-        ~add_ctor_reference:true
-        ~error:(return (Errors.bad_record_access field))
-        row
-        field
-        ()
-    in
-    const
-      E.(
-        let%bind struct_ = struct_ in
-        return @@ O.E_accessor { struct_; path = field })
-      field_row_elem
+    let%bind struct_type, struct_typed = infer struct_ in
+    let%bind struct_type = Context.tapply struct_type in
+    (match struct_type.content with
+    | T_union union ->
+      let branches =
+        Union.Injection.injections_of_union union
+        |> List.map ~f:(fun injection ->
+               let var = Value_var.fresh () ~loc:Location.generated in
+               let pattern = Union.Match.Pattern.make ~var ~injection in
+               let body =
+                 let var_as_expr = I.e_variable var ~loc:Location.generated in
+                 I.e_accessor
+                   { struct_ = var_as_expr; path = field }
+                   ~loc:Location.generated
+                   ()
+               in
+               Union.Match.Branch.make ~pattern ~body)
+      in
+      let%bind match_type, branches = infer_union_match_branches branches in
+      let union_accessor =
+        compile_union_accessor
+          ~struct_typed
+          ~field
+          ~branches
+          ~loc:expr.location
+          ~match_type
+      in
+      const union_accessor match_type
+    | _ ->
+      let%bind record_type, struct_ = infer struct_ in
+      let%bind row =
+        let%bind record_type = Context.tapply record_type in
+        Error_recovery.raise_or_use_default_opt
+          ~error:(Errors.expected_record record_type)
+          ~default:Error_recovery.row
+          (Type.get_t_record record_type)
+      in
+      let%bind field_row_elem =
+        get_type_of_ctor
+          ~error:(return (Errors.bad_record_access record_type field))
+          row
+          field
+          ()
+      in
+      const
+        E.(
+          let open Let_syntax in
+          let%bind struct_ = struct_ in
+          return @@ O.E_accessor { struct_; path = field })
+        field_row_elem)
   | E_update { struct_; path; update } ->
     let%bind record_type, struct_ = infer struct_ in
     let%bind row =
@@ -1037,8 +1366,7 @@ and infer_expression (expr : I.expression)
     in
     let%bind field_row_elem =
       get_type_of_ctor
-        ~add_ctor_reference:true
-        ~error:(return (Errors.bad_record_access path))
+        ~error:(return (Errors.bad_record_access record_type path))
         row
         path
         ()
@@ -1046,6 +1374,7 @@ and infer_expression (expr : I.expression)
     let%bind update = check update field_row_elem in
     const
       E.(
+        let open Let_syntax in
         let%bind struct_ = struct_
         and update = update in
         return @@ O.E_update { struct_; path; update })
@@ -1088,16 +1417,15 @@ and infer_expression (expr : I.expression)
     let%bind arg = check arg arg_type in
     const
       E.(
+        let open Let_syntax in
         let%bind arg = arg in
         return @@ O.E_constructor { constructor; element = arg })
       sum_type
-  | E_matching { matchee; disc_label; cases } ->
-    let%bind matchee_type, matchee = infer matchee in
+  | E_matching _ ->
     let%bind ret_type = exists Type in
-    let%bind matchee_type = Context.tapply matchee_type in
-    let%bind cases = check_cases cases matchee_type ret_type in
-    let%bind match_expr = compile_match matchee disc_label cases matchee_type in
-    const match_expr ret_type
+    let%bind match_expr = check expr ret_type in
+    let%bind ret_type = Context.tapply ret_type in
+    return (ret_type, match_expr)
   | E_mod_in { module_binder = mvar; rhs; let_result } ->
     let%bind sig_, rhs = infer_module_expr rhs in
     let%bind ret_type, let_result =
@@ -1105,6 +1433,7 @@ and infer_expression (expr : I.expression)
     in
     const
       E.(
+        let open Let_syntax in
         let%bind let_result = let_result
         and rhs = rhs in
         return @@ O.E_mod_in { module_binder = mvar; rhs; let_result })
@@ -1125,25 +1454,34 @@ and infer_expression (expr : I.expression)
     in
     const E.(return @@ O.E_module_accessor { module_path; element }) elt_type
   | E_let_mut_in { let_binder; rhs; let_result; attributes } ->
-    let%bind rhs_type, rhs = infer rhs in
-    let%bind rhs_type = Context.tapply rhs_type in
-    let%bind frags, let_binder =
-      With_frag.run @@ check_pattern ~mut:true let_binder rhs_type
+    let handle_as_normal_let_mut_in () =
+      let%bind rhs_type, rhs = infer rhs in
+      let%bind rhs_type = Context.tapply rhs_type in
+      let%bind frags, let_binder =
+        With_frag.run @@ check_pattern ~mut:true let_binder rhs_type
+      in
+      let%bind res_type, let_result =
+        def_frag frags ~on_exit:Lift_type ~in_:(infer let_result)
+      in
+      let attributes = infer_value_attr attributes in
+      let%bind options = options () in
+      const
+        E.(
+          let open Let_syntax in
+          let%bind rhs_type = decode rhs_type in
+          let%bind let_binder = let_binder in
+          let%bind rhs = rhs
+          and let_result = let_result in
+          let%bind () = check_let_anomalies ~options ~syntax let_binder rhs_type in
+          return (O.E_let_mut_in { let_binder; rhs; let_result; attributes }))
+        res_type
     in
-    let%bind res_type, let_result =
-      def_frag frags ~on_exit:Lift_type ~in_:(infer let_result)
-    in
-    let attributes = infer_value_attr attributes in
-    let%bind options = options () in
-    const
-      E.(
-        let%bind rhs_type = decode rhs_type in
-        let%bind let_binder = let_binder in
-        let%bind rhs = rhs
-        and let_result = let_result in
-        let%bind () = check_let_anomalies ~options ~syntax let_binder rhs_type in
-        return (O.E_let_mut_in { let_binder; rhs; let_result; attributes }))
-      res_type
+    inline_let_switch_condition
+      ~let_binder
+      ~rhs
+      ~let_result
+      ~default:handle_as_normal_let_mut_in
+      ~on_inline:(fun reduced_expr -> infer reduced_expr)
   | E_assign { binder; expression } ->
     let%bind type_ =
       let var = Binder.get_var binder in
@@ -1157,6 +1495,7 @@ and infer_expression (expr : I.expression)
     let%bind ret_type = create_type Type.t_unit in
     const
       E.(
+        let open Let_syntax in
         let%bind expression = expression
         and type_ = decode type_ in
         return @@ O.E_assign { binder = Binder.set_ascr binder type_; expression })
@@ -1175,6 +1514,7 @@ and infer_expression (expr : I.expression)
     in
     const
       E.(
+        let open Let_syntax in
         let%bind start = start
         and final = final
         and incr = incr
@@ -1209,6 +1549,7 @@ and infer_expression (expr : I.expression)
     in
     const
       E.(
+        let open Let_syntax in
         let%bind collection = collection
         and fe_body = fe_body in
         return @@ O.E_for_each { fe_binder; collection; collection_type = Map; fe_body })
@@ -1255,6 +1596,7 @@ and infer_expression (expr : I.expression)
     in
     const
       E.(
+        let open Let_syntax in
         let%bind collection = collection
         and fe_body = fe_body in
         return @@ O.E_for_each { fe_binder; collection; collection_type = Map; fe_body })
@@ -1266,6 +1608,7 @@ and infer_expression (expr : I.expression)
     let%bind body = check body t_unit in
     const
       E.(
+        let open Let_syntax in
         let%bind cond = cond
         and body = body in
         return @@ O.E_while { cond; body })
@@ -1291,9 +1634,63 @@ and infer_record : type e. _ -> e Record.t -> (e -> _) -> _ =
   let%bind record_type = t_record_with_orig_var fields in
   const
     E.(
+      let open Let_syntax in
       let%bind record = all_lmap record in
       return @@ O.E_record record)
     record_type
+
+
+and infer_union_match_branches
+    :  (I.expression, Type.t) Union.Match.Branch.t list
+    -> ( Type.t * (O.expression, O.type_expression) Union.Match.Branch.t list E.t
+       , Errors.typer_error
+       , Main_warnings.all )
+       C.t
+  =
+ fun branches ->
+  let open C in
+  let open Let_syntax in
+  let%bind patterns_and_bodies =
+    branches
+    |> List.map ~f:(fun branch ->
+           let pattern = Union.Match.Branch.pattern branch in
+           let%bind body_type, body =
+             let var_in_ctx =
+               let Binder.{ var; ascr = var_typ } =
+                 pattern |> Union.Match.Pattern.to_binder
+               in
+               var, Param.Immutable, var_typ, Attrs.Value.default
+             in
+             let body = Union.Match.Branch.body branch in
+             def [ var_in_ctx ] ~on_exit:Drop ~in_:(infer_expression body)
+           in
+           return (pattern, body, body_type))
+    |> C.all
+  in
+  let body_types = List.map ~f:Tuple3.get3 patterns_and_bodies in
+  let%bind lub_of_body_types, body_types_to_lub = Computation.lub body_types in
+  let branches =
+    let branches =
+      List.map2
+        patterns_and_bodies
+        body_types_to_lub
+        ~f:(fun (pattern, body, body_type) (body_type_, body_type_to_lub) ->
+          assert (Type.equal body_type body_type_);
+          E.(
+            let open Let_syntax in
+            let module Elab_pattern = E.Make_all (Union.Match.Pattern) in
+            let%bind pattern =
+              pattern |> Union.Match.Pattern.map decode |> Elab_pattern.all
+            in
+            let%bind body = body in
+            let%bind body_in_lub = body_type_to_lub body in
+            return (Union.Match.Branch.make ~pattern ~body:body_in_lub)))
+    in
+    match branches with
+    | Unequal_lengths -> assert false
+    | Ok branches -> E.all branches
+  in
+  return (lub_of_body_types, branches)
 
 
 and infer_array_as_list entries =
@@ -1328,6 +1725,7 @@ and try_infer_expression (expr : I.expression) : (Type.t * O.expression E.t, _, 
          in
          ( ret_type
          , E.(
+             let open Let_syntax in
              let%bind ret_type = decode ret_type in
              return @@ O.make_e ~loc (E_error expr) ret_type) ))
       ~diagnostics:(fun errors warnings ->
@@ -1386,6 +1784,7 @@ and check_lambda
   in
   return
   @@ E.(
+       let open Let_syntax in
        let%bind result = result >>= f
        and arg_type = decode arg_type
        and ret_type = decode ret_type in
@@ -1404,6 +1803,7 @@ and infer_lambda ({ binder; output_type = ret_ascr; result } : _ Lambda.t)
     return
       ( type_
       , E.(
+          let open Let_syntax in
           let%bind content = content in
           let%bind type_ = decode type_ in
           return @@ O.make_e ~loc content type_) )
@@ -1457,6 +1857,7 @@ and infer_lambda ({ binder; output_type = ret_ascr; result } : _ Lambda.t)
           in
           const
             E.(
+              let open Let_syntax in
               let%bind result = result
               and arg_type = decode arg_type
               and ret_type = decode ret_type in
@@ -1478,6 +1879,7 @@ and generalize_expr (in_ : (Type.t * O.expression E.t, 'err, 'wrn) C.t)
   let%bind type_, tvars, expr = generalize in_ in
   let expr =
     E.(
+      let open Let_syntax in
       let%map expr = expr in
       List.fold_right tvars ~init:expr ~f:(fun (tvar, kind) expr ->
           O.e_type_abstraction
@@ -1502,6 +1904,7 @@ and infer_application (expr : I.expression) (lamb_type : Type.t) (args : I.expre
            ( lamb_type
            , E.return
            , E.(
+               let open Let_syntax in
                let%bind lamb_type = decode lamb_type in
                return (O.make_e ~loc (O.E_error expr) lamb_type)) ))
   in
@@ -1514,6 +1917,7 @@ and infer_application (expr : I.expression) (lamb_type : Type.t) (args : I.expre
       ( ret_type
       , E.(
           fun hole ->
+            let open Let_syntax in
             let%bind texists = decode texists in
             let%bind lamb_type = decode lamb_type in
             f
@@ -1584,6 +1988,7 @@ and check_constant const args type_ : (O.expression E.t, _, _) C.t =
   let%bind loc = loc () in
   return
     E.(
+      let open Let_syntax in
       let%bind args = args
       and type_ = decode type_ in
       ret_coerce
@@ -1609,6 +2014,7 @@ and check_pattern ~mut (pat : I.type_expression option I.Pattern.t) (type_ : Typ
     let%bind loc = loc () in
     return
       E.(
+        let open Let_syntax in
         let%bind content = content in
         return @@ (Location.wrap ~loc content : O.type_expression O.Pattern.t))
   in
@@ -1634,6 +2040,7 @@ and check_pattern ~mut (pat : I.type_expression option I.Pattern.t) (type_ : Typ
     in
     const
       E.(
+        let open Let_syntax in
         let%bind type_ = decode type_ in
         return @@ P.P_var (Binder.set_ascr binder type_))
   | ( P_list (Cons (hd_pat, tl_pat))
@@ -1642,6 +2049,7 @@ and check_pattern ~mut (pat : I.type_expression option I.Pattern.t) (type_ : Typ
     let%bind tl_pat = check tl_pat type_ in
     const
       E.(
+        let open Let_syntax in
         let%bind hd_pat = hd_pat
         and tl_pat = tl_pat in
         return @@ P.P_list (Cons (hd_pat, tl_pat)))
@@ -1650,22 +2058,18 @@ and check_pattern ~mut (pat : I.type_expression option I.Pattern.t) (type_ : Typ
     let%bind list_pat = list_pat |> List.map ~f:(fun pat -> check pat elt_type) |> all in
     const
       E.(
+        let open Let_syntax in
         let%bind list_pat = all list_pat in
         return @@ P.P_list (List list_pat))
-  | P_variant (label, arg_pat), T_sum (row, disc_label) ->
+  | P_variant (label, arg_pat), T_sum row ->
     let%bind label_row_elem =
       C.With_frag.lift
-      @@ get_type_of_ctor
-           row
-           label
-           ~add_ctor_reference:(Option.is_none disc_label)
-           ~error:(C.return err)
-           ~use_raise_opt:true
-           ()
+      @@ get_type_of_ctor row label ~error:(C.return err) ~use_raise_opt:true ()
     in
     let%bind arg_pat = check arg_pat label_row_elem in
     const
       E.(
+        let open Let_syntax in
         let%bind arg_pat = arg_pat in
         return @@ P.P_variant (label, arg_pat))
   | P_tuple tuple_pat, T_record row when Map.length row.fields = List.length tuple_pat ->
@@ -1675,7 +2079,6 @@ and check_pattern ~mut (pat : I.type_expression option I.Pattern.t) (type_ : Typ
              let%bind pat_row_elem =
                C.With_frag.lift
                @@ get_type_of_ctor
-                    ~add_ctor_reference:true
                     ~error:(C.return err)
                     ~use_raise_opt:true
                     row
@@ -1688,6 +2091,7 @@ and check_pattern ~mut (pat : I.type_expression option I.Pattern.t) (type_ : Typ
     in
     const
       E.(
+        let open Let_syntax in
         let%bind tuple_pat = all tuple_pat in
         return @@ P.P_tuple tuple_pat)
   | P_record record_pat, T_record row when Map.length row.fields = Map.length record_pat
@@ -1697,13 +2101,7 @@ and check_pattern ~mut (pat : I.type_expression option I.Pattern.t) (type_ : Typ
       |> Map.mapi ~f:(fun ~key:label ~data:pat ->
              let%bind label_row_elem =
                C.With_frag.lift
-               @@ get_type_of_ctor
-                    ~add_ctor_reference:true
-                    ~error:(C.return err)
-                    ~use_raise_opt:true
-                    row
-                    label
-                    ()
+               @@ get_type_of_ctor ~error:(C.return err) ~use_raise_opt:true row label ()
              in
              let%bind pat_type = Context.tapply label_row_elem in
              check pat pat_type)
@@ -1711,6 +2109,7 @@ and check_pattern ~mut (pat : I.type_expression option I.Pattern.t) (type_ : Typ
     in
     const
       E.(
+        let open Let_syntax in
         let%bind record_pat = all_lmap record_pat in
         return @@ P.P_record record_pat)
   | _ ->
@@ -1736,6 +2135,7 @@ and infer_pattern ~mut (pat : I.type_expression option I.Pattern.t)
     return
       ( type_
       , E.(
+          let open Let_syntax in
           let%bind content = content in
           return @@ (Location.wrap ~loc content : O.type_expression O.Pattern.t)) )
   in
@@ -1755,6 +2155,7 @@ and infer_pattern ~mut (pat : I.type_expression option I.Pattern.t)
     let%bind () = extend [ var, (if mut then Mutable else Immutable), type_ ] in
     const
       E.(
+        let open Let_syntax in
         let%bind type_ = decode type_ in
         return @@ P.P_var (Binder.set_ascr binder type_))
       type_
@@ -1767,6 +2168,7 @@ and infer_pattern ~mut (pat : I.type_expression option I.Pattern.t)
     let%bind tl_pat = check tl_pat t_list in
     const
       E.(
+        let open Let_syntax in
         let%bind hd_pat = hd_pat
         and tl_pat = tl_pat in
         return @@ P.P_list (Cons (hd_pat, tl_pat)))
@@ -1783,6 +2185,7 @@ and infer_pattern ~mut (pat : I.type_expression option I.Pattern.t)
     let%bind t_list = create_type @@ Type.t_list elt_type in
     const
       E.(
+        let open Let_syntax in
         let%bind list_pat = all list_pat in
         return @@ P.P_list (List list_pat))
       t_list
@@ -1807,6 +2210,7 @@ and infer_pattern ~mut (pat : I.type_expression option I.Pattern.t)
     in
     const
       E.(
+        let open Let_syntax in
         let%bind tuple_pat = all tuple_pat in
         return @@ P.P_tuple tuple_pat)
       tuple_type
@@ -1837,6 +2241,7 @@ and infer_pattern ~mut (pat : I.type_expression option I.Pattern.t)
     let%bind arg_pat = check arg_pat arg_type in
     const
       E.(
+        let open Let_syntax in
         let%bind arg_pat = arg_pat in
         return @@ P.P_variant (constructor, arg_pat))
       sum_type
@@ -1855,6 +2260,7 @@ and infer_pattern ~mut (pat : I.type_expression option I.Pattern.t)
     let%bind record_type = lift @@ t_record_with_orig_var fields in
     const
       E.(
+        let open Let_syntax in
         let%bind record_pat = all_lmap record_pat in
         return @@ P.P_record record_pat)
       record_type
@@ -1876,6 +2282,7 @@ and check_cases
     let%bind body = def_frag frag ~on_exit:Drop ~in_:(check_expression body ret_type) in
     return
       E.(
+        let open Let_syntax in
         let%map pattern = pattern
         and body = body in
         pattern, body)
@@ -1899,7 +2306,7 @@ and def_frag
     ~in_
 
 
-and compile_match (matchee : O.expression E.t) disc_label cases matchee_type
+and compile_match (matchee : O.expression E.t) cases matchee_type
     : (O.expression_content E.t, _, _) C.t
   =
   let open C in
@@ -1910,26 +2317,187 @@ and compile_match (matchee : O.expression E.t) disc_label cases matchee_type
   let%bind refs_tbl = refs_tbl () in
   return
     E.(
+      let open Let_syntax in
       let%bind matchee = matchee in
       let%bind cases = cases in
       let%bind matchee_type = decode matchee_type in
       let eqs = List.map cases ~f:(fun (pat, _body) -> pat, matchee_type) in
       let%bind () = check_anomalies ~loc ~syntax eqs matchee_type in
-      (match matchee_type.type_content, disc_label with
-      | T_sum (row, Some (Label (label_name, _))), Some label' ->
-        let labels = Record.labels row.fields in
-        List.iter labels ~f:(fun (Label (_, loc)) ->
-            Refs_tbl.add_ref_label
-              refs_tbl
-              ~key:(Label.create ~loc label_name)
-              ~data:label')
-      | _ -> ());
       return
       @@
       let cases =
         List.map cases ~f:(fun (pattern, body) -> O.Match_expr.{ pattern; body })
       in
-      O.E_matching { matchee; disc_label; cases })
+      O.E_matching { matchee; cases })
+
+
+and compile_union_accessor ~struct_typed ~field ~branches ~loc ~match_type =
+  E.(
+    let open Let_syntax in
+    let%bind struct_ = struct_typed in
+    let%bind match_type = decode match_type in
+    let before_expansion = O.e_accessor { struct_; path = field } match_type ~loc in
+    let%bind branches = branches in
+    let after_expansion =
+      O.e_union_match (Union.Match.make ~matchee:struct_ ~branches) match_type ~loc
+    in
+    return @@ O.E_union_use (Union.Use.make ~before_expansion ~after_expansion))
+
+
+and compile_union_injection ~union ~union_as_type ~source_index_in_union expr =
+  let module Elab_union_injection = E.Make_all (Union.Injection) in
+  let injection =
+    Union.Injection.make ~source_index_in_target:source_index_in_union ~target:union
+    |> Option.value_or_thunk ~default:(fun () -> assert false)
+  in
+  E.(
+    let open Let_syntax in
+    let%bind union_as_type = decode union_as_type in
+    let%bind injection =
+      injection |> Union.Injection.map decode |> Elab_union_injection.all
+    in
+    return
+    @@ O.e_union_injected
+         (Union.Injected.make ~expr_in_source:expr ~injection)
+         union_as_type
+         ~loc:Location.generated)
+
+
+and compile_union_conditional_before_expansion
+    ~matchee_typed
+    ~(conditional_as_untyped_match_on_bool :
+       (I.expression, I.type_expression option) I.Match_expr.t)
+    ~then_body_thunk
+    ~else_body_thunk
+    ~struct_var
+  =
+  E.(
+    let open Let_syntax in
+    let%bind matchee_typed = matchee_typed in
+    let recover_body_from_body_thunk (body_thunk : O.expression) =
+      match body_thunk.expression_content with
+      | E_lambda { binder; output_type; result } ->
+        O.Helpers.subst_var ~old_var:binder.binder.var ~new_var:struct_var result
+      | _ -> assert false
+    in
+    let cases =
+      conditional_as_untyped_match_on_bool.cases
+      |> List.map ~f:(fun case ->
+             match I.Pattern.decompose_boolean_pattern case.pattern with
+             | None -> assert false
+             | Some dbp ->
+               let pattern = O.Pattern.recompose_boolean_pattern dbp in
+               let body =
+                 recover_body_from_body_thunk
+                   (if dbp.value then then_body_thunk.thunk else else_body_thunk.thunk)
+               in
+               O.Match_expr.{ pattern; body })
+    in
+    return @@ O.E_matching O.Match_expr.{ matchee = matchee_typed; cases })
+
+
+and compile_union_conditional_branch
+    ~injections_into_union
+    ~subunion
+    ~subunion_as_type
+    ~body_thunk
+    ~fresh_union_var
+  =
+  let open Union_conditional_body_thunk in
+  let module Elab_union_injection = E.Make_all (Union.Injection) in
+  E.(
+    let open Let_syntax in
+    let%bind injections_into_union =
+      injections_into_union
+      |> List.map ~f:(fun inj ->
+             inj |> Union.Injection.map decode |> Elab_union_injection.all)
+      |> E.all
+    in
+    let make_branch index_in_subunion injection_into_union =
+      let var = fresh_union_var () in
+      let pattern = Union.Match.Pattern.make ~var ~injection:injection_into_union in
+      let summand = Union.Injection.source injection_into_union in
+      let var_as_expr = O.e_variable var summand ~loc:Location.generated in
+      let%bind var_in_subunion =
+        compile_union_injection
+          ~union:subunion
+          ~union_as_type:subunion_as_type
+          ~source_index_in_union:index_in_subunion
+          var_as_expr
+      in
+      let body_thunk_var_as_expr =
+        O.e_variable body_thunk.var body_thunk.typ ~loc:Location.generated
+      in
+      let call_body_thunk =
+        O.e_application
+          Application.{ lamb = body_thunk_var_as_expr; args = var_in_subunion }
+          body_thunk.output_type
+          ~loc:Location.generated
+      in
+      return @@ Union.Match.Branch.make ~pattern ~body:call_body_thunk
+    in
+    injections_into_union |> List.mapi ~f:make_branch |> E.all)
+
+
+and compile_union_conditional_after_expansion_body
+    ~struct_typed
+    ~then_body_thunk
+    ~else_body_thunk
+    ~fresh_union_var
+    ~(partitioned_injections : Type.t Union.Injection.t List.t Fuzzy_bool.Indexed.t)
+    ~then_subunion
+    ~else_subunion
+    ~then_subunion_as_type
+    ~else_subunion_as_type
+    ~result_type
+  =
+  E.(
+    let open Let_syntax in
+    let%bind yes_branches =
+      compile_union_conditional_branch
+        ~injections_into_union:partitioned_injections.yes
+        ~subunion:then_subunion
+        ~subunion_as_type:then_subunion_as_type
+        ~body_thunk:then_body_thunk
+        ~fresh_union_var
+    in
+    let%bind no_branches =
+      compile_union_conditional_branch
+        ~injections_into_union:partitioned_injections.no
+        ~subunion:else_subunion
+        ~subunion_as_type:else_subunion_as_type
+        ~body_thunk:else_body_thunk
+        ~fresh_union_var
+    in
+    let branches = List.append yes_branches no_branches in
+    return @@ O.E_union_match (Union.Match.make ~matchee:struct_typed ~branches))
+
+
+and compile_union_conditional_after_expansion
+    ~then_body_thunk
+    ~else_body_thunk
+    ~after_expansion_body
+  =
+  E.(
+    let open Let_syntax in
+    let add_let_in_above var var_type var_value body =
+      O.e_let_in
+        O.Let_in.
+          { let_binder =
+              { wrap_content = O.Pattern.P_var (Binder.make var var_type)
+              ; location = Location.generated
+              }
+          ; rhs = var_value
+          ; let_result = body
+          ; attributes = { O.ValueAttr.default_attributes with no_mutation = true }
+          }
+        body.type_expression
+        ~loc:Location.generated
+    in
+    return
+      (after_expansion_body
+      |> add_let_in_above else_body_thunk.var else_body_thunk.typ else_body_thunk.thunk
+      |> add_let_in_above then_body_thunk.var then_body_thunk.typ then_body_thunk.thunk))
 
 
 and cast_items
@@ -2056,6 +2624,7 @@ and infer_module_expr ?is_annoted_entry (mod_expr : I.module_expr)
     return
     @@ ( sig_
        , E.(
+           let open Let_syntax in
            let%bind module_content = content in
            let%bind signature = decode_signature sig_ in
            return ({ module_content; module_location = loc; signature } : O.module_expr))
@@ -2068,6 +2637,8 @@ and infer_module_expr ?is_annoted_entry (mod_expr : I.module_expr)
     let%bind sig_, decls = infer_module ?is_annoted_entry decls in
     const
       E.(
+        let open Let_syntax in
+        let open Let_syntax in
         let%bind decls = decls in
         return @@ M.M_struct decls)
       sig_
@@ -2098,6 +2669,7 @@ and infer_declaration (decl : I.declaration)
     return
       ( sig_item
       , E.(
+          let open Let_syntax in
           let%bind content = content in
           return [ (Location.wrap ~loc content : O.declaration) ]) )
   in
@@ -2135,6 +2707,7 @@ and infer_declaration (decl : I.declaration)
     let attr = infer_value_attr attr in
     const
       E.(
+        let open Let_syntax in
         let%bind lhs_type = decode lhs_type
         and expr = expr in
         return @@ O.D_value { binder = Binder.set_ascr binder lhs_type; expr; attr })
@@ -2152,6 +2725,7 @@ and infer_declaration (decl : I.declaration)
     let%bind options = options () in
     const
       E.(
+        let open Let_syntax in
         let%bind expr = expr
         and pattern = pattern in
         let%bind () = check_let_anomalies ~options ~syntax pattern expr.type_expression in
@@ -2170,6 +2744,7 @@ and infer_declaration (decl : I.declaration)
     let%bind loc = loc () in
     const
       E.(
+        let open Let_syntax in
         let%bind type_expr = decode type_expr in
         return @@ O.D_type { type_binder; type_expr; type_attr })
       [ Location.wrap ~loc
@@ -2187,6 +2762,7 @@ and infer_declaration (decl : I.declaration)
     let attr = infer_value_attr attr in
     const
       E.(
+        let open Let_syntax in
         let%bind expr_type = decode expr_type
         and expr = expr in
         return @@ O.D_value { binder = Binder.set_ascr binder expr_type; expr; attr })
@@ -2230,6 +2806,7 @@ and infer_declaration (decl : I.declaration)
     set_path inner_path
     @@ const
          E.(
+           let open Let_syntax in
            let%bind module_ = module_ in
            let%bind signature = decode_signature sig_ in
            return
@@ -2251,6 +2828,7 @@ and infer_declaration (decl : I.declaration)
     @@ let%bind signature = With_default_layout.evaluate_signature_expr signature in
        const
          E.(
+           let open Let_syntax in
            let%bind signature = decode_signature signature in
            return @@ O.D_signature { signature_binder; signature; signature_attr })
          [ Location.wrap ~loc
@@ -2261,6 +2839,7 @@ and infer_declaration (decl : I.declaration)
     let%bind sig_, module_ = infer_module_expr module_ in
     const
       E.(
+        let open Let_syntax in
         let%bind module_ = module_ in
         return @@ O.D_module_include module_)
       sig_.items
@@ -2308,6 +2887,7 @@ and infer_module ?is_annoted_entry (module_ : I.module_)
       return
         ( { sig_' with items = sig_items @ sig_'.items }
         , E.(
+            let open Let_syntax in
             let%bind decl = decl
             and decls = decls in
             return (decl @ decls)) )
@@ -2388,6 +2968,7 @@ let type_program_with_refs ~raise ~options ~refs_tbl ?env program =
   C.run_elab_with_refs
     (let%map.C signature, program = infer_module program in
      E.(
+       let open Let_syntax in
        let%bind program = program in
        let signature = remove_non_public signature in
        let%bind signature = decode_signature signature in

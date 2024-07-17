@@ -1,0 +1,13 @@
+const f = (x: int) => {
+    const record: { a: int, b: bool } | { a: int, c: string } = {
+        a: x,
+        b: true
+    };
+    return record.a;
+}
+
+@entry
+const entry = (_p: unit, s: int): [list<operation>, int] => {
+    let result = f(s);
+    return [list([]), result];
+}

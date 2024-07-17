@@ -375,7 +375,7 @@ and ty_expr : CST.type_expr AST.ty_expr_ -> CST.type_expr =
     (match Utils.list_to_sepseq (List.map ~f fields) ghost_semi with
     | None -> failwith "Decompiler: got a T_record_raw with no fields"
     | Some nsepseq -> T_Object (mk_object nsepseq))
-  | T_sum_raw (variants, _) ->
+  | T_sum_raw variants ->
     let f : CST.type_expr option AST.Non_linear_rows.row -> CST.type_expr CST.variant_kind
       =
      fun (constr, { associated_type; attributes; _ }) ->
@@ -388,16 +388,13 @@ and ty_expr : CST.type_expr AST.ty_expr_ -> CST.type_expr =
         `Sep nsepseq
       in
       T_Sum (w variant))
-  | T_disc_union objects ->
-    let f : CST.type_expr AST.Non_linear_disc_rows.row -> CST.type_expr =
-     fun (_empty_label, obj) -> obj.associated_type
-    in
-    (match Utils.list_to_sepseq (List.map ~f objects) ghost_vbar with
+  | T_union objects ->
+    (match Utils.list_to_sepseq objects ghost_vbar with
     | None -> failwith "Decompiler: got a T_disc_union with no fields"
     | Some nsepseq ->
       let variant : (CST.type_expr, CST.vbar) Utils.nsep_or_pref = `Sep nsepseq in
       T_Union (w variant))
-  | T_sum ({ fields; layout = _ }, _) ->
+  | T_sum { fields; layout = _ } ->
     (* XXX those are not initial, but backwards nanopass T_sum -> T_sum_row and
          T_record -> T_record_raw is not implemented, so we need to handle those here*)
     let f : AST.Label.t * CST.type_expr -> CST.type_expr CST.variant_kind =

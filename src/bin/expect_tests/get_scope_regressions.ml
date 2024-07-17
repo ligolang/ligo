@@ -181,7 +181,9 @@ let%expect_test _ =
      13 | let alice_admin : bool = alice.i
                                    ^^^^^^^
 
-    Invalid record field "i" in record.
+    Invalid record field "i" in record of type "record[id -> nat ,
+                                                       is_admin -> bool ,
+                                                       name -> string]".
     Warnings:
     File "../../test/contracts/get_scope_tests/regressions/buggy_file_with_core_types.jsligo", line 13, characters 0-32:
      12 |

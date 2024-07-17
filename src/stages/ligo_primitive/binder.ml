@@ -1,8 +1,12 @@
-type 'a t =
-  { var : Var.Value_var.t
-  ; ascr : 'a
-  }
-[@@deriving eq, compare, yojson, hash, fold, map, iter, sexp]
+module T = struct
+  type 'a t =
+    { var : Var.Value_var.t
+    ; ascr : 'a
+    }
+  [@@deriving eq, compare, yojson, hash, fold, map, iter, sexp]
+end
+
+include T
 
 let make var ascr = { var; ascr }
 let set_var (b : _ t) (var : Var.Value_var.t) = { b with var }

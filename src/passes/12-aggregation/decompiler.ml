@@ -47,8 +47,8 @@ let rec decompile : I.expression -> O.expression =
     let element = decompile element in
     return (O.E_constructor { constructor; element })
   | E_matching m ->
-    let O.Match_expr.{ matchee; disc_label; cases } = decompile_match_expr m in
-    return (O.E_matching { matchee; disc_label; cases })
+    let O.Match_expr.{ matchee; cases } = decompile_match_expr m in
+    return (O.E_matching { matchee; cases })
   (* Record *)
   | E_record map ->
     let map = Record.map ~f:decompile map in
@@ -88,11 +88,11 @@ and decompile_match_expr
     :  (I.expression, I.type_expression) I.Match_expr.t
     -> (O.expression, O.type_expression) O.Match_expr.t
   =
- fun { matchee; disc_label; cases } ->
+ fun { matchee; cases } ->
   let matchee = decompile matchee in
   let cases =
     List.map cases ~f:(fun { pattern; body } ->
         let body = decompile body in
         O.Match_expr.{ pattern; body })
   in
-  O.Match_expr.{ matchee; disc_label; cases }
+  O.Match_expr.{ matchee; cases }

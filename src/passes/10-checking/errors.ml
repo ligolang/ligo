@@ -62,9 +62,9 @@ let rec type_mapper ~f (t : Type.t) =
   | T_record row ->
     let row = row_mapper ~f row in
     return @@ T_record row
-  | T_sum (row, orig_label) ->
+  | T_sum row ->
     let row = row_mapper ~f row in
-    return @@ T_sum (row, orig_label)
+    return @@ T_sum row
   | T_for_all abs ->
     let abs = Abstraction.map (type_mapper ~f) abs in
     return @@ T_for_all abs
@@ -146,7 +146,7 @@ type typer_error =
   | `Typer_unbound_module_variable of Module_var.t * Location.t
   | `Typer_type_app_wrong_arity of Type_var.t option * int * int * Location.t
   | `Typer_literal_type_mismatch of Type.t * Type.t * Location.t
-  | `Typer_bad_record_access of Label.t * Location.t
+  | `Typer_bad_record_access of Type.t * Label.t * Location.t
   | `Typer_bad_constructor of Label.t * Type.t * Location.t
   | `Typer_unbound_variable of Value_var.t * Location.t
   | `Typer_not_annotated of Location.t
@@ -424,8 +424,14 @@ let rec extract_loc_and_message
         lamb_type
         (pp_texists_hint ~requires_annotations:true ())
         [ lamb_type ] )
-  | `Typer_bad_record_access (field, loc) ->
-    loc, Format.asprintf "@[<hv>Invalid record field \"%a\" in record.@]" Label.pp field
+  | `Typer_bad_record_access (typ, field, loc) ->
+    ( loc
+    , Format.asprintf
+        "@[<hv>Invalid record field \"%a\" in record of type \"%a\".@]"
+        Label.pp
+        field
+        Type.pp
+        typ )
   | `Typer_not_annotated loc ->
     ( loc
     , Format.asprintf

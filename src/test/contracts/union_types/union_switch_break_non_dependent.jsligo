@@ -1,0 +1,22 @@
+const f = (x: int) => {
+    const record: { a: int, b: bool } | { a: int, b: string } = {
+        a: x,
+        b: true
+    };
+    let result = -100;
+    switch (record.a) {
+        case 1:
+            result = 3;
+            break;
+        default:
+            result = 4;
+            break;
+    }
+    return result;
+}
+
+@entry
+const entry = (_p: unit, s: int): [list<operation>, int] => {
+    let result = f(s);
+    return [list([]), result];
+}

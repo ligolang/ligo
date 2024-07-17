@@ -311,7 +311,9 @@ let%expect_test _ =
       4 |   (([] : operation list) , { storage with nofield=2048} )
                                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-    Invalid record field "nofield" in record. |}]
+    Invalid record field "nofield" in record of type "record[a -> int ,
+                                                             b -> int ,
+                                                             c -> int]". |}]
 
 let%expect_test _ =
   run_ligo_bad

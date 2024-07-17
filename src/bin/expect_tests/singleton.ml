@@ -140,3 +140,20 @@ let%expect_test "wrong singleton type 3" =
   [%expect {|
     Invalid type(s).
     Expected "1", but got: "2". |}]
+
+let%expect_test "duplicate singleton type" =
+  run_ligo_bad
+    [ "compile"
+    ; "expression"
+    ; "jsligo"
+    ; {|
+                      do {
+                        const a : 1 = 2;
+                        const b = a;
+                        const c = a;
+                      }
+                      |}
+    ];
+  [%expect {|
+    Invalid type(s).
+    Expected "1", but got: "2". |}]

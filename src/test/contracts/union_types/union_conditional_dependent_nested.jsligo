@@ -1,0 +1,24 @@
+const f = (x: int) => {
+    const record: { typ: "NUMBER", number_kind: "INT", val: int }
+    | { typ: "NUMBER", number_kind: "NAT", val: nat }
+    | { typ: "STR", val: string } = {
+        typ: "NUMBER" as "NUMBER",
+        number_kind: "INT" as "INT",
+        val: x
+    };
+    if (record.typ == "NUMBER") {
+        if ((record.number_kind as string) == "NAT") {
+            return int(record.val);
+        } else {
+            return record.val + 1;
+        }
+    } else {
+        return int(String.length(record.val));
+    }
+}
+
+@entry
+const entry = (_p: unit, s: int): [list<operation>, int] => {
+    let result = f(s);
+    return [list([]), result];
+}

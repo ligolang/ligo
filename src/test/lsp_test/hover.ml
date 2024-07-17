@@ -1399,21 +1399,10 @@ let%expect_test "Disc union fields" =
     };
   [%expect
     {|
-    [{
-       "contents": [
-         { "value": "kind : [\"aaa\"] | [\"42\"]", "language": "jsligo" }
-       ]
-     };
-     {
-       "contents": [
-         { "value": "kind : [\"aaa\"] | [\"42\"]", "language": "jsligo" }
-       ]
-     };
-     {
-       "contents": [
-         { "value": "kind : [\"aaa\"] | [\"42\"]", "language": "jsligo" }
-       ]
-     }; { "contents": [ { "value": "a : int", "language": "jsligo" } ] };
+    [{ "contents": [ { "value": "kind : \"42\"", "language": "jsligo" } ] };
+     { "contents": [ { "value": "kind : \"aaa\"", "language": "jsligo" } ] };
+     { "contents": [ { "value": "kind : \"aaa\"", "language": "jsligo" } ] };
+     { "contents": [ { "value": "a : int", "language": "jsligo" } ] };
      { "contents": [ { "value": "a : int", "language": "jsligo" } ] };
      { "contents": [ { "value": "b : bool", "language": "jsligo" } ] };
      { "contents": [ { "value": "b : bool", "language": "jsligo" } ] }] |}]

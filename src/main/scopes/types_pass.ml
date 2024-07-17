@@ -123,7 +123,7 @@ let label_bindings : _ Pattern.t -> Ast_core.ty_expr -> (Label.t * Ast_core.ty_e
       | _ -> None
     in
     match p.wrap_content, ty_expr.type_content with
-    | P_variant (label, inner), T_sum (t_sum, _) -> process (label, inner) t_sum acc
+    | P_variant (label, inner), T_sum t_sum -> process (label, inner) t_sum acc
     | P_record p_record, T_record t_record ->
       List.fold_left
         ~init:acc
@@ -275,6 +275,17 @@ module Of_Ast_typed = struct
         @@ List.filter_map
              ~f:Fn.id
              [ mk_label_binding ~raise constructor exp.type_expression ]
+      | E_union_injected _ -> return []
+      | E_union_match match_ ->
+        let branches = Union.Match.branches match_ in
+        return
+        @@ List.map branches ~f:(fun branch ->
+               let open Union.Match in
+               let pattern = Branch.pattern branch in
+               let var, inj = Pattern.(var pattern, injection pattern) in
+               let typ = Union.Injection.source inj in
+               Type_binding (var, typ))
+      | E_union_use _ -> return []
       | E_lambda { binder; output_type; _ } ->
         return
           [ Type_binding (Param.get_var binder, Param.get_ascr binder)
@@ -296,7 +307,7 @@ module Of_Ast_typed = struct
                Type_binding (Binder.get_var binder, Binder.get_ascr binder))
              (Pattern.binders let_binder)
         @ labels
-      | E_matching { matchee; disc_label = _; cases } ->
+      | E_matching { matchee; cases } ->
         let ty_expr = matchee.type_expression in
         let pats = List.map ~f:(fun elt -> elt.pattern) cases in
         let labels =
@@ -620,7 +631,7 @@ module Of_Ast_core = struct
       let bindings = add_vvar_type bindings (fun_name, fun_type) in
       let bindings = add_param_type bindings binder in
       expression bindings result
-    | E_matching { matchee; disc_label = _; cases } ->
+    | E_matching { matchee; cases } ->
       let bindings =
         Option.value_map
           ~default:bindings

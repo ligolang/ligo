@@ -88,6 +88,25 @@ module Comparable = struct
            create_type @@ Type.t_bool)
 
 
+  let singleton_comparator : (_, _) t =
+    let open C in
+    let open C.Let_syntax in
+    let open Literal_value in
+    fun type1 type2 ->
+      match Type.get_t_singleton type1, Type.get_t_singleton type2 with
+      | Some lit1, Some lit2
+        when Literal_value.equal lit1 lit2
+             || Literal_types.equal (typeof lit1) (typeof lit2) ->
+        create_type @@ Type.t_bool
+      | Some lit, None ->
+        let%bind type1 = create_type @@ Type.t_construct (Literal_value.typeof lit) [] in
+        simple_comparator type1 type2
+      | None, Some lit ->
+        let%bind type2 = create_type @@ Type.t_construct (Literal_value.typeof lit) [] in
+        simple_comparator type1 type2
+      | _ -> raise (Errors.uncomparable_types type1 type2)
+
+
   (* [record_comparator] is a simple extension of [comparator] to record types. *)
   let rec record_comparator : (_, _) t =
     let open C in
@@ -115,10 +134,10 @@ module Comparable = struct
     let open Let_syntax in
     fun type1 type2 ->
       let%bind () = try_compare type1 type2 ~in_:(unify type1 type2) in
-      let%bind row1, _ =
+      let%bind row1 =
         raise_opt ~error:(Errors.comparator_composed type1) @@ Type.get_t_sum type1
       in
-      let%bind row2, _ =
+      let%bind row2 =
         raise_opt ~error:(Errors.comparator_composed type2) @@ Type.get_t_sum type2
       in
       let%bind _ =
@@ -200,6 +219,7 @@ module Comparable = struct
           ; set_comparator type1 type2
           ; map_comparator type1 type2
           ; simple_comparator type1 type2
+          ; singleton_comparator type1 type2
           ; record_comparator type1 type2
           ; sum_comparator type1 type2
           ; big_map_comparator type1 type2
@@ -207,6 +227,7 @@ module Comparable = struct
       else
         try_all
           [ simple_comparator type1 type2
+          ; singleton_comparator type1 type2
           ; record_comparator type1 type2
           ; sum_comparator type1 type2
           ]
@@ -375,9 +396,9 @@ let of_type ({ mode_parametric; mode_annot; types } : Annot.t) : _ t =
                update_worklist
                |> List.iter ~f:(fun (i, type_, f, expr) ->
                       let expr =
-                        E.(
-                          let%bind expr = expr in
-                          f expr)
+                        let open E.Let_syntax in
+                        let%bind expr = expr in
+                        f expr
                       in
                       Hashtbl.set output_args ~key:i ~data:(type_, expr))
              in

@@ -168,9 +168,10 @@ module With_name_tbl = struct
       | T_constant constant -> pp_constant ~name_of_tvar ppf constant
       | T_singleton lit -> Literal_value.pp ppf lit
       | T_for_all for_all | T_abstraction for_all -> pp_forall ~name_of_tvar ppf for_all
-      | T_sum (row, _) -> Row.PP.sum_type pp (fun _ _ -> ()) ppf row
+      | T_sum row -> Row.PP.sum_type pp (fun _ _ -> ()) ppf row
       | T_record row -> Row.PP.record_type pp (fun _ _ -> ()) ppf row
-      | T_exists tv -> Format.fprintf ppf "^%s" (name_of_tvar tv))
+      | T_exists tv -> Format.fprintf ppf "^%s" (name_of_tvar tv)
+      | T_union _ -> impossible_because_no_union_in_ast_aggregated ())
 
 
   and pp_constant ~name_of_tvar ppf { injection; parameters; _ } =

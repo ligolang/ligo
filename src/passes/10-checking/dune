@@ -21,4 +21,5 @@
    ppx_woo
    ppx_map
    ppx_import
+   ppx_deriving.map
    ppx_deriving_yojson)))

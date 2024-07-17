@@ -720,7 +720,7 @@ let rec val_to_ast ~raise ~loc
     let x = string_of_chain_id s in
     e_a_chain_id ~loc x
   | V_Construct (ctor, arg) when is_t_sum ty ->
-    let map_ty, _ =
+    let map_ty =
       Trace.trace_option
         ~raise
         (Errors.generic_error
@@ -1327,7 +1327,7 @@ let rec compile_value ~raise ~options ~loc
       Tezos_micheline.Micheline.Prim ((), "Some", [ arg ], [])
     | _ -> failwith "Unexpected")
   | V_Construct (ctor, arg) when is_t_sum ty ->
-    let map_ty, _ =
+    let map_ty =
       Trace.trace_option
         ~raise
         (Errors.generic_error
@@ -1345,7 +1345,7 @@ let rec compile_value ~raise ~options ~loc
       |> Ligo_compile.Of_aggregated.compile_type_expression ~raise
       |> Ligo_compile.Of_expanded.compile_type ~raise
     in
-    let ty_variant, _ =
+    let ty_variant =
       Trace.trace_option ~raise (Errors.generic_error Location.generated "foo")
       @@ get_t_sum_opt ty
     in

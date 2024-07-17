@@ -525,7 +525,7 @@ and compile_expression ~(raise : _ Trace.raise)
     let v = Data.resolve_variable_in_path env module_path element in
     return (O.E_variable v)
   (* bounding expressions *)
-  | I.E_matching { matchee; disc_label; cases } ->
+  | I.E_matching { matchee; cases } ->
     let cases =
       List.map
         ~f:(fun { pattern; body } ->
@@ -538,7 +538,7 @@ and compile_expression ~(raise : _ Trace.raise)
           O.Match_expr.{ pattern; body = self ~env body })
         cases
     in
-    return (O.E_matching { matchee = self matchee; disc_label; cases })
+    return (O.E_matching { matchee = self matchee; cases })
   | I.E_lambda { binder; output_type; result } ->
     let env = Data.rm_exp env (Param.get_var binder) in
     return (O.E_lambda { binder; output_type; result = self ~env result })
@@ -619,3 +619,5 @@ and compile_expression ~(raise : _ Trace.raise)
   | I.E_assign x -> return (O.E_assign (Assign.map self Fn.id x))
   | I.E_deref x -> return (O.E_deref x)
   | I.E_while x -> return (O.E_while (While_loop.map self x))
+  | I.E_union_injected _ | I.E_union_match _ | I.E_union_use _ ->
+    Ast_aggregated.impossible_because_no_union_in_ast_aggregated ()

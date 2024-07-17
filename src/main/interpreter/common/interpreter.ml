@@ -315,7 +315,7 @@ let rec apply_comparison ~no_colour ~(raise : _ Trace.raise)
     in
     aux row_kv
   | V_Construct (ctor_a, args_a), V_Construct (ctor_b, args_b) ->
-    let ({ fields; layout } : _ Ligo_prim.Row.With_layout.t), _ =
+    let ({ fields; layout } : _ Ligo_prim.Row.With_layout.t) =
       Trace.trace_option
         ~raise
         (Errors.generic_error ~calltrace loc "Expected a sum type")
@@ -1787,7 +1787,7 @@ and eval_ligo ~(raise : _ Trace.raise) ~steps ~options
   | E_constructor { constructor = Label (c, _); element } ->
     let* v' = eval_ligo element calltrace env in
     return @@ V_Construct (c, v')
-  | E_matching { matchee; disc_label = _; cases } ->
+  | E_matching { matchee; cases } ->
     let* matchee' = eval_ligo matchee calltrace env in
     let* body, env =
       (* find pattern matching the matchee value *)

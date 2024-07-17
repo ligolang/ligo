@@ -27,7 +27,6 @@ type flags =
   ; mod_res : ModRes.t option
   ; wildcards : bool
   ; t_for_alls : bool
-  ; disc_union_types : bool
   }
 
 let passes ~(flags : flags) : (module T) list list =
@@ -50,7 +49,6 @@ let passes ~(flags : flags) : (module T) list list =
       ; mod_res
       ; wildcards
       ; t_for_alls
-      ; disc_union_types
       }
     =
     flags
@@ -117,7 +115,6 @@ let passes ~(flags : flags) : (module T) list list =
     ; entry (module T_app_michelson_types) ~flag:always ~arg:t_app_michelson_types
     ; entry (module Multi_bindings) ~flag:always ~arg:()
     ; entry (module Loop_variable) ~flag:always ~arg:()
-    ; entry (module Disc_union_types) ~flag:disc_union_types ~arg:()
     ; entry (module Returns) ~flag:always ~arg:()
     ; entry (module Reduce_switch) ~flag:always ~arg:()
     ]
@@ -174,7 +171,6 @@ let extract_flags_from_options : disable_initial_check:bool -> Compiler_options.
   ; mod_res
   ; wildcards = is_cameligo
   ; t_for_alls = is_cameligo
-  ; disc_union_types = is_jsligo
   }
 
 

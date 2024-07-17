@@ -9,6 +9,7 @@ module Arrow = Ligo_prim.Arrow
 module Literal_value = Ligo_prim.Literal_value
 module Literal_types = Ligo_prim.Literal_types
 module Abstraction = Ligo_prim.Abstraction
+module Union = Ligo_prim.Union
 
 module Layout = struct
   type t =
@@ -53,8 +54,8 @@ and content =
   | T_variable of Type_var.t
   | T_exists of Type_var.t
   | T_construct of construct
-  | T_sum of row * (Label.t option[@equal.ignore] [@hash.ignore] [@compare.ignore])
-  (* This [Label.t] represent an original name of field in disc union type *)
+  | T_sum of row
+  | T_union of t Union.t
   | T_record of row
   | T_arrow of t Arrow.t
   | T_singleton of Literal_value.t

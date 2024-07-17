@@ -353,7 +353,7 @@ and ty_expr : CST.type_expr AST.ty_expr_ -> CST.type_expr =
     (match Utils.list_to_sepseq rest ghost_times with
     | Some nsepseq -> T_Cart (w (first, ghost_times, nsepseq))
     | None -> failwith "Decompiler: got a T_prod with only one element")
-  | T_sum ({ fields; layout = _ }, _) ->
+  | T_sum { fields; layout = _ } ->
     (* XXX those are not initial, but backwards nanopass T_sum -> T_sum_row and
        T_record -> T_record_raw is not implemented, so we need to handle those here*)
     let f : AST.Label.t * CST.type_expr -> CST.variant CST.reg =
@@ -409,7 +409,7 @@ and ty_expr : CST.type_expr AST.ty_expr_ -> CST.type_expr =
         ghost_semi
     in
     T_Record (w CST.{ lbrace = ghost_lbrace; inside = pairs; rbrace = ghost_rbrace })
-  | T_sum_raw (row, _) ->
+  | T_sum_raw row ->
     let f : CST.type_expr option AST.Non_linear_rows.row -> CST.variant CST.reg =
      fun (constr, { associated_type; attributes; _ }) ->
       w @@ decompile_variant constr associated_type attributes
@@ -427,7 +427,7 @@ and ty_expr : CST.type_expr AST.ty_expr_ -> CST.type_expr =
     T_ModPath
       (w
       @@ decompile_mod_path { module_path; field = decompile_tvar field; field_as_open })
-  | T_disc_union _ -> failwith "Decompiler: disc unions should appear only in JsLIGO"
+  | T_union _ -> failwith "Decompiler: union types should appear only in JsLIGO"
   | T_named_fun _ -> failwith "Decompiler: Named arguments should appear only in JsLIGO"
   | T_contract_parameter x ->
     let lst =

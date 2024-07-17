@@ -80,12 +80,12 @@ let apply_table_expr table (expr : AST.expression) =
           let fun_type = apply_table_type fun_type in
           let lambda = Lambda.map Fn.id apply_table_type lambda in
           return @@ E_recursive { fun_name; fun_type; lambda; force_lambdarec }
-        | E_matching { matchee; disc_label; cases } ->
+        | E_matching { matchee; cases } ->
           let f : _ AST.Match_expr.match_case -> _ AST.Match_expr.match_case =
            fun { pattern; body } ->
             { pattern = AST.Pattern.map apply_table_type pattern; body }
           in
-          return @@ E_matching { matchee; disc_label; cases = List.map cases ~f }
+          return @@ E_matching { matchee; cases = List.map cases ~f }
         | E_assign { binder; expression } ->
           let binder = Binder.map apply_table_type binder in
           return @@ E_assign { binder; expression }
@@ -197,9 +197,9 @@ let rec subst_external_type et t (u : AST.type_expression) =
   | T_constant { language; injection; parameters } ->
     let parameters = List.map ~f:(self et t) parameters in
     { u with type_content = T_constant { language; injection; parameters } }
-  | T_sum (row, orig_name) ->
+  | T_sum row ->
     let row = Row.map (self et t) row in
-    { u with type_content = T_sum (row, orig_name) }
+    { u with type_content = T_sum row }
   | T_record row ->
     let row = Row.map (self et t) row in
     { u with type_content = T_record row }
@@ -221,12 +221,12 @@ let subst_external_term et t (e : AST.expression) =
         | E_recursive { fun_name; fun_type; lambda; force_lambdarec } ->
           let fun_type = subst_external_type et t fun_type in
           return @@ E_recursive { fun_name; fun_type; lambda; force_lambdarec }
-        | E_matching { matchee; disc_label; cases } ->
+        | E_matching { matchee; cases } ->
           let f : _ AST.Match_expr.match_case -> _ AST.Match_expr.match_case =
            fun { pattern; body } ->
             { pattern = AST.Pattern.map (subst_external_type et t) pattern; body }
           in
-          return @@ E_matching { matchee; disc_label; cases = List.map cases ~f }
+          return @@ E_matching { matchee; cases = List.map cases ~f }
         | E_assign { binder; expression } ->
           let binder = Binder.map (subst_external_type et t) binder in
           return @@ E_assign { binder; expression }
@@ -411,10 +411,10 @@ let rec mono_polymorphic_expression ~(raise : _ Trace.raise)
   | E_constructor { constructor; element } ->
     let data, element = self data element in
     data, return (E_constructor { constructor; element })
-  | E_matching { matchee; disc_label; cases } ->
+  | E_matching { matchee; cases } ->
     let data, cases = mono_polymorphic_cases ~raise data cases in
     let data, matchee = self data matchee in
-    data, return (E_matching { matchee; disc_label; cases })
+    data, return (E_matching { matchee; cases })
   | E_record lmap ->
     let data, lmap = Record.fold_map ~f:self ~init:data lmap in
     data, return (E_record lmap)
@@ -484,11 +484,12 @@ let check_if_polymorphism_present ~(raise : _ Trace.raise) e =
     | T_constant { parameters; _ } ->
       List.fold_left parameters ~init:() ~f:(fun () te ->
           ignore @@ check_type_expression ~loc te)
-    | T_record row | T_sum (row, _) -> Row.iter (check_type_expression ~loc) row
+    | T_record row | T_sum row -> Row.iter (check_type_expression ~loc) row
     | T_arrow _ -> ()
     | T_singleton _ -> ()
     | T_exists _ -> raise.error @@ unexpected_texists te te.location
     | T_for_all _ | T_abstraction _ -> show_error loc
+    | T_union _ -> Ast_aggregated.impossible_because_no_union_in_ast_aggregated ()
   in
   let (), e =
     fold_map_expression

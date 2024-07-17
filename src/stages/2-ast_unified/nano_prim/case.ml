@@ -8,7 +8,6 @@ type ('pattern, 'branch) clause =
 
 and ('expr, 'pattern, 'branch) t =
   { expr : 'expr
-  ; disc_label : Label.t option
   ; cases : ('pattern, 'branch) clause Ne_list.t
   }
 [@@deriving yojson, map, iter, fold, sexp, eq, compare, hash]

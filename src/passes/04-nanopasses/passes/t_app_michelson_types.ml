@@ -59,7 +59,7 @@ let compile ~(raise : _ Trace.raise) =
           | _ -> raise.error @@ michelson_type_wrong_arity name constr
         in
         if Ty_variable.is_name tv "michelson_or"
-        then make_michelson_type "michelson_or" (t_michelson_or ~loc) None
+        then make_michelson_type "michelson_or" (t_michelson_or ~loc)
         else if Ty_variable.is_name tv "michelson_pair"
         then make_michelson_type "michelson_pair" (t_michelson_pair ~loc)
         else return_self ()
@@ -128,8 +128,7 @@ let%expect_test "compile_michelson_or" =
             (decl_pos 0)))
           ((Label M_right (Virtual generated))
            ((associated_type ((TY_EXPR2))) (attributes (((key annot) (value v))))
-            (decl_pos 1))))
-         ()) |}]
+            (decl_pos 1))))) |}]
 
 let%expect_test "compile_michelson_or_wrong_arity" =
   let open Unit_test_helpers.Ty_expr in

@@ -177,8 +177,7 @@ let uncurry_rhs (depth : int) (expr : expression) =
   in
   let pattern = Location.wrap ~loc (Pattern.P_record fields) in
   let result =
-    { expression_content =
-        E_matching { matchee; disc_label = None; cases = [ { pattern; body } ] }
+    { expression_content = E_matching { matchee; cases = [ { pattern; body } ] }
     ; location = loc
     ; type_expression = body.type_expression
     }
@@ -279,10 +278,10 @@ let rec uncurry_in_expression ~raise (f : Value_var.t) (depth : int) (expr : exp
   | E_constructor { constructor; element } ->
     let element = self element in
     return (E_constructor { constructor; element })
-  | E_matching { matchee; disc_label; cases } ->
+  | E_matching { matchee; cases } ->
     let matchee = self matchee in
     let cases = self_cases cases in
-    return (E_matching { matchee; disc_label; cases })
+    return (E_matching { matchee; cases })
   | E_record fields ->
     let fields = Record.map ~f:self fields in
     return (E_record fields)

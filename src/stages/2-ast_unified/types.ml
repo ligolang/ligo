@@ -51,7 +51,6 @@ module Empty_label = struct
   let to_string () = "unlabeled"
 end
 
-module Non_linear_disc_rows = Nano_prim.Non_linear_rows (Empty_label)
 module Attribute = Nano_prim.Attribute
 module Named_fun = Nano_prim.Named_fun
 module Type_app = Nano_prim.Type_app
@@ -83,10 +82,8 @@ module Rev_app = Nano_prim.Rev_app
 module Ligo_z = Simple_utils.Ligo_z
 module Ty_escaped_var = Nano_prim.Ty_escaped_var
 module Value_escaped_var = Nano_prim.Value_escaped_var
-
 (*  INFO: Node tagged with [@not_initial] should not be emited by unification
    the first nanopass do the check *)
-
 (* ========================== TYPES ======================================== *)
 
 type 'self type_expression_ = 'self type_expression_content_ Location.wrap
@@ -107,14 +104,10 @@ and 'self type_expression_content_ =
   | T_nat of string * Ligo_z.t
   | T_module_open_in of (Mod_variable.t, 'self) Mod_access.t (* A.(<...>) *)
   | T_arg of string (* 'a *)
-  | T_sum_raw of
-      'self option Non_linear_rows.t
-      * (Label.t option[@eq.ignore] [@hash.ignore] [@compare.ignore])
+  | T_sum_raw of 'self option Non_linear_rows.t
   (* A of int | B of string , initial for CameLIGO*)
-  (* This [Label.t] represent an original name of field in disc union type. Initially it's [None] *)
   | T_record_raw of 'self option Non_linear_rows.t (* {a: int; b : int} *)
-  | T_disc_union of 'self Non_linear_disc_rows.t
-    (* { kind: "A" } | { kind: "B" }, initial for JsLIGO only *)
+  | T_union of 'self list (* ty1 | ... | tyn, initial for JsLIGO only *)
   | T_abstraction of 'self Abstraction.t [@not_initial]
     (* [type 'a t = 'a * 'a] <- [t] this decl will be replaced by an abstraction
        at passes/04-nanopasses/passes/type_abstraction_declaration.ml *)
@@ -122,8 +115,7 @@ and 'self type_expression_content_ =
   | T_module_app of
       ((Mod_variable.t Ne_list.t, Ty_variable.t) Mod_access.t, 'self) Type_app.t
       [@not_initial]
-  | T_sum of 'self Row.t * (Label.t option[@eq.ignore] [@hash.ignore] [@compare.ignore])
-      [@not_initial]
+  | T_sum of 'self Row.t [@not_initial]
   | T_record of 'self Row.t [@not_initial]
   | T_for_all of 'self Abstraction.t [@not_initial]
   | T_for_alls of 'self Abstractions.t

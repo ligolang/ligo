@@ -83,7 +83,7 @@ let fv_folder =
         Set.remove result bound
       in
       Set.remove fv_lamb fun_name
-    | E_match { expr; disc_label = _; cases } ->
+    | E_match { expr; cases } ->
       let f Case.{ pattern; rhs } =
         Set.diff rhs (Option.value ~default:VarSet.empty pattern)
       in

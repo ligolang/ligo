@@ -38,10 +38,13 @@ let rec fold_expression : 'a folder -> 'a -> expression -> 'a =
   | E_constructor { element = e; constructor = _ } ->
     let res = self init e in
     res
-  | E_matching { matchee = e; disc_label = _; cases } ->
+  | E_matching { matchee = e; cases } ->
     let res = self init e in
     let res = fold_cases f res cases in
     res
+  | E_union_injected inj -> Union.Injected.fold self self_type init inj
+  | E_union_match match_ -> Union.Match.fold self self_type init match_
+  | E_union_use use -> Union.Use.fold self init use
   | E_record m ->
     let res = Record.fold ~f:self ~init m in
     res
@@ -106,10 +109,19 @@ let rec map_expression : 'err mapper -> expression -> expression =
   let e' = f e in
   let return expression_content = { e' with expression_content } in
   match e'.expression_content with
-  | E_matching { matchee = e; disc_label; cases } ->
+  | E_matching { matchee = e; cases } ->
     let e' = self e in
     let cases' = map_cases f cases in
-    return @@ E_matching { matchee = e'; disc_label; cases = cases' }
+    return @@ E_matching { matchee = e'; cases = cases' }
+  | E_union_injected inj ->
+    let inj = Union.Injected.map self Fn.id inj in
+    return @@ E_union_injected inj
+  | E_union_match match_ ->
+    let match_ = Union.Match.map self Fn.id match_ in
+    return @@ E_union_match match_
+  | E_union_use use ->
+    let use = Union.Use.map self use in
+    return @@ E_union_use use
   | E_accessor { struct_; path } ->
     let struct_ = self struct_ in
     return @@ E_accessor { struct_; path }
@@ -392,8 +404,12 @@ end = struct
       ; mutSet
       }
     | E_constructor { constructor = _; element } -> self element
-    | E_matching { matchee; disc_label = _; cases } ->
-      merge (self matchee) (get_fv_cases cases)
+    | E_matching { matchee; cases } -> merge (self matchee) (get_fv_cases cases)
+    | E_union_injected inj -> self (Union.Injected.expr_in_source inj)
+    | E_union_match match_ ->
+      let matchee, branches = Union.Match.(matchee match_, branches match_) in
+      merge (self matchee) (get_fv_match_branches branches)
+    | E_union_use use -> self (Union.Use.before_expansion use)
     | E_record m ->
       let res = Record.map ~f:self m in
       let res = Record.values res in
@@ -458,6 +474,17 @@ end = struct
            { modVarSet; moduleEnv; varSet; mutSet })
 
 
+  and get_fv_match_branches : _ Union.Match.Branch.t list -> moduleEnv' =
+   fun m ->
+    unions
+    @@ List.map m ~f:(fun branch ->
+           let pattern, body = Union.Match.Branch.(pattern branch, body branch) in
+           let { modVarSet; moduleEnv; varSet; mutSet } = get_fv_expr body in
+           let var = Union.Match.Pattern.var pattern in
+           let varSet = Set.remove varSet var in
+           { modVarSet; moduleEnv; varSet; mutSet })
+
+
   and get_fv_module_expr : module_expr -> moduleEnv' =
    fun x ->
     match x.module_content with
@@ -508,10 +535,19 @@ module Declaration_mapper = struct
     let self = map_expression f in
     let return expression_content = { e with expression_content } in
     match e.expression_content with
-    | E_matching { matchee = e; disc_label; cases } ->
+    | E_matching { matchee = e; cases } ->
       let e' = self e in
       let cases' = map_cases f cases in
-      return @@ E_matching { matchee = e'; disc_label; cases = cases' }
+      return @@ E_matching { matchee = e'; cases = cases' }
+    | E_union_injected injected ->
+      let injected = Union.Injected.map self Fn.id injected in
+      return @@ E_union_injected injected
+    | E_union_match match_ ->
+      let match_ = Union.Match.map self Fn.id match_ in
+      return @@ E_union_match match_
+    | E_union_use use ->
+      let use = Union.Use.map self use in
+      return @@ E_union_use use
     | E_accessor { struct_; path } ->
       let struct_ = self struct_ in
       return @@ E_accessor { struct_; path }
@@ -626,4 +662,132 @@ module Declaration_mapper = struct
 
   and map_decl m d = map_declaration m d
   and map_module : 'err mapper -> module_ -> module_ = fun m -> List.map ~f:(map_decl m)
+end
+
+module Type_mapper = struct
+  type mapper = type_expression -> type_expression
+
+  let rec map_expression (f : mapper) (expr : expression) : expression =
+    let map_expr expr' = map_expression f expr' in
+    let map_type typ' = map_type_expression f typ' in
+    let map_mod mod' = map_module_expression f mod' in
+    let return expression_content =
+      let type_expression = map_type expr.type_expression in
+      { expr with expression_content; type_expression }
+    in
+    match expr.expression_content with
+    | E_matching x -> return @@ E_matching (Match_expr.map map_expr map_type x)
+    | E_union_injected x ->
+      return @@ E_union_injected (Union.Injected.map map_expr map_type x)
+    | E_union_match x -> return @@ E_union_match (Union.Match.map map_expr map_type x)
+    | E_union_use x -> return @@ E_union_use (Union.Use.map map_expr x)
+    | E_accessor x -> return @@ E_accessor (Accessor.map map_expr x)
+    | E_record x -> return @@ E_record (Record.map ~f:map_expr x)
+    | E_update x -> return @@ E_update (Update.map map_expr x)
+    | E_constructor x -> return @@ E_constructor (Constructor.map map_expr x)
+    | E_application x -> return @@ E_application (Application.map map_expr x)
+    | E_let_in x -> return @@ E_let_in (Let_in.map map_expr map_type x)
+    | E_mod_in x -> return @@ E_mod_in (Mod_in.map map_expr map_mod x)
+    | E_lambda x -> return @@ E_lambda (Lambda.map map_expr map_type x)
+    | E_type_abstraction x -> return @@ E_type_abstraction (Type_abs.map map_expr x)
+    | E_type_inst x ->
+      return @@ E_type_inst { forall = map_expr x.forall; type_ = map_type x.type_ }
+    | E_recursive x -> return @@ E_recursive (Recursive.map map_expr map_type x)
+    | E_constant x -> return @@ E_constant (Constant.map map_expr x)
+    | E_assign x -> return @@ E_assign (Assign.map map_expr map_type x)
+    | E_coerce x -> return @@ E_coerce (Ascription.map map_expr map_type x)
+    | E_for x -> return @@ E_for (For_loop.map map_expr x)
+    | E_for_each x -> return @@ E_for_each (For_each_loop.map map_expr x)
+    | E_while x -> return @@ E_while (While_loop.map map_expr x)
+    | E_let_mut_in x -> return @@ E_let_mut_in (Let_in.map map_expr map_type x)
+    | ( E_module_accessor _
+      | E_deref _
+      | E_literal _
+      | E_variable _
+      | E_contract _
+      | E_raw_code _
+      | E_error _ ) as expr_content -> return expr_content
+
+
+  and map_type_expression (f : mapper) (typ : type_expression) : type_expression =
+    let map_type typ' = map_type_expression f typ' in
+    let return type_content = { typ with type_content } in
+    f
+      (match typ.type_content with
+      | T_constant { language; injection; parameters } ->
+        let parameters = List.map ~f:map_type parameters in
+        return @@ T_constant { language; injection; parameters }
+      | T_sum row -> return @@ T_sum (Row.map map_type row)
+      | T_union union -> return @@ T_union (Union.map map_type union)
+      | T_record row -> return @@ T_record (Row.map map_type row)
+      | T_arrow arr -> return @@ T_arrow (Arrow.map map_type arr)
+      | T_abstraction abs -> return @@ T_abstraction (Abstraction.map map_type abs)
+      | T_for_all abs -> return @@ T_for_all (Abstraction.map map_type abs)
+      | (T_variable _ | T_exists _ | T_singleton _) as type_content -> return type_content)
+
+
+  and map_module_expression (f : mapper) (module_ : module_expr) : module_expr =
+    let return module_content : module_expr = { module_ with module_content } in
+    let map_mod mod' = map_module f mod' in
+    match module_.module_content with
+    | M_struct decls -> return (M_struct (map_mod decls))
+    | (M_module_path _ | M_variable _) as module_content -> return module_content
+
+
+  and map_declaration (f : mapper) (decl : declaration) : declaration =
+    let return (d : declaration_content) = { decl with wrap_content = d } in
+    let map_expr expr' = map_expression f expr' in
+    let map_type typ' = map_type_expression f typ' in
+    let map_mod mod' = map_module_expression f mod' in
+    let map_sig sig' = map_signature f sig' in
+    match Location.unwrap decl with
+    | D_value val_decl -> return @@ D_value (Value_decl.map map_expr map_type val_decl)
+    | D_type t -> return @@ D_type (Type_decl.map map_type t)
+    | D_module module_decl ->
+      return @@ D_module (Module_decl.map map_mod (fun () -> ()) module_decl)
+    | D_irrefutable_match irr_match_decl ->
+      return @@ D_irrefutable_match (Pattern_decl.map map_expr map_type irr_match_decl)
+    | D_module_include module_ -> return @@ D_module_include (map_mod module_)
+    | D_signature signature_decl ->
+      return @@ D_signature (Signature_decl.map map_sig signature_decl)
+    | D_import _ as decl_content -> return decl_content
+
+
+  and map_module (f : mapper) (mod_ : module_) : module_ =
+    List.map ~f:(map_declaration f) mod_
+
+
+  and map_signature_item (f : mapper) (sig_item : sig_item) =
+    let return (wrap_content : sig_item_content) = { sig_item with wrap_content } in
+    let map_type typ' = map_type_expression f typ' in
+    let map_sig sig' = map_signature f sig' in
+    match sig_item.wrap_content with
+    | S_value (var, typ, attr) -> return @@ S_value (var, map_type typ, attr)
+    | S_type (type_var, typ, attr) -> return @@ S_type (type_var, map_type typ, attr)
+    | S_type_var _ as sig_item_content -> return sig_item_content
+    | S_module (module_var, sig_) -> return @@ S_module (module_var, map_sig sig_)
+    | S_module_type (module_var, sig_) -> return @@ S_module (module_var, map_sig sig_)
+
+
+  and map_signature_sort (f : mapper) (sig_sort : signature_sort) =
+    match sig_sort with
+    | Ss_module -> Ss_module
+    | Ss_contract contract_sig -> Ss_contract (map_contract_sig f contract_sig)
+
+
+  and map_contract_sig (f : mapper) (contract_sig : contract_sig) =
+    let map_type typ' = map_type_expression f typ' in
+    { storage = map_type contract_sig.storage
+    ; parameter = map_type contract_sig.parameter
+    }
+
+
+  and map_signature (f : mapper) (sig_ : signature) : signature =
+    { sig_items = List.map ~f:(map_signature_item f) sig_.sig_items
+    ; sig_sort = map_signature_sort f sig_.sig_sort
+    }
+
+
+  and map_program (f : mapper) (prog : program) : program =
+    { pr_module = map_module f prog.pr_module; pr_sig = map_signature f prog.pr_sig }
 end

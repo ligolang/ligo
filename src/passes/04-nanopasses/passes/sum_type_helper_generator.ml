@@ -49,7 +49,6 @@ let gen_getters : ty_expr option Non_linear_rows.t * Location.t -> declaration l
            e_match
              ~loc
              { expr = ev_x
-             ; disc_label = None
              ; cases =
                  [ { pattern = Some (p_variant ~loc label (Some p_x))
                    ; rhs = e_some ~loc ev_x
@@ -104,7 +103,7 @@ let compile ~raise:_ =
             let* d = get_pe_declaration pe in
             let* { key; value }, decl = get_d_attr d in
             let* { name; type_expr } = get_d_type decl in
-            let* sum, _ = get_t_sum_raw type_expr in
+            let* sum = get_t_sum_raw type_expr in
             if String.equal key "ppx_helpers" && Option.is_none value
             then Some (decl, name, sum, get_t_loc type_expr)
             else None
@@ -140,11 +139,10 @@ let%expect_test "compile" =
        (type_expr
         (T_sum_raw
          (((Label Foo (Virtual generated)) ((associated_type ((TY_EXPR1))) (decl_pos 0)))
-          ((Label Bar (Virtual generated)) ((associated_type ()) (decl_pos 1))))()))))))))
+          ((Label Bar (Virtual generated)) ((associated_type ()) (decl_pos 1))))))))))))
   |}
   |-> compile;
-  [%expect
-    {|
+  [%expect{|
     ((PE_declaration
       (D_type
        ((name dyn_param)
@@ -152,8 +150,7 @@ let%expect_test "compile" =
          (T_sum_raw
           (((Label Foo (Virtual generated))
             ((associated_type ((TY_EXPR1))) (decl_pos 0)))
-           ((Label Bar (Virtual generated)) ((associated_type ()) (decl_pos 1))))
-          ())))))
+           ((Label Bar (Virtual generated)) ((associated_type ()) (decl_pos 1)))))))))
      (PE_declaration
       (D_let
        ((pattern ((P_var make_foo) (P_var x)))
@@ -173,7 +170,7 @@ let%expect_test "compile" =
        ((pattern ((P_var get_foo) (P_var x)))
         (let_rhs
          (E_match
-          ((expr (E_variable x)) (disc_label ())
+          ((expr (E_variable x))
            (cases
             (((pattern ((P_variant (Label Foo (Virtual generated)) ((P_var x)))))
               (rhs
@@ -190,7 +187,7 @@ let%expect_test "compile" =
        ((pattern ((P_var get_bar) (P_var x)))
         (let_rhs
          (E_match
-          ((expr (E_variable x)) (disc_label ())
+          ((expr (E_variable x))
            (cases
             (((pattern ((P_variant (Label Bar (Virtual generated)) ((P_var x)))))
               (rhs

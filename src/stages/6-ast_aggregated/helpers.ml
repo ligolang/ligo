@@ -19,7 +19,7 @@ let rec subst_type (binder : Type_var.t) (value : type_expression) (te : type_ex
     let type1 = self type1 in
     let type2 = self type2 in
     return @@ T_arrow { type1; type2; param_names }
-  | T_sum (m, disc_label) -> return @@ T_sum (Row.map self m, disc_label)
+  | T_sum m -> return @@ T_sum (Row.map self m)
   | T_record m -> return @@ T_record (Row.map self m)
   | T_for_all { ty_binder; kind; type_ } ->
     let type_ = self type_ in
@@ -28,6 +28,7 @@ let rec subst_type (binder : Type_var.t) (value : type_expression) (te : type_ex
     let type_ = self type_ in
     return @@ T_abstraction { ty_binder; kind; type_ }
   | T_exists t -> return @@ T_exists t
+  | T_union _ -> impossible_because_no_union_in_ast_aggregated ()
 
 
 (* This function transforms a type `∀ v1 ... vn . t` into the pair `([ v1 ; .. ; vn ] , t)` *)
@@ -96,7 +97,7 @@ let rec assert_type_expression_eq
         (List.zip_exn lsta lstb)
     else None
   | T_constant _, _ -> None
-  | T_sum (sa, _), T_sum (sb, _) ->
+  | T_sum sa, T_sum sb ->
     let sa' = Record.to_list sa.fields in
     let sb' = Record.to_list sb.fields in
     let aux ((ka, va), (kb, vb)) =
@@ -150,6 +151,7 @@ let rec assert_type_expression_eq
   | T_for_all _, _ -> None
   | T_abstraction _, _ -> None
   | T_exists _, _ -> None
+  | T_union _, _ -> impossible_because_no_union_in_ast_aggregated ()
 
 
 and assert_literal_eq ((a, b) : Literal_value.t * Literal_value.t) : unit option =
@@ -168,10 +170,10 @@ let rec fold_map_expression : 'a fold_mapper -> 'a -> expression -> 'a * express
   else (
     let return expression_content = { e' with expression_content } in
     match e'.expression_content with
-    | E_matching { matchee; disc_label; cases } ->
+    | E_matching { matchee; cases } ->
       let res, matchee = self init matchee in
       let res, cases = fold_map_cases f res cases in
-      res, return @@ E_matching { matchee; disc_label; cases }
+      res, return @@ E_matching { matchee; cases }
     | E_record m ->
       let res, m' = Record.fold_map ~f:self ~init m in
       res, return @@ E_record m'
@@ -303,8 +305,7 @@ end = struct
       let fv = self result in
       remove fun_name @@ remove (Param.get_var binder) fv
     | E_constructor { element; _ } -> self element
-    | E_matching { matchee; disc_label = _; cases } ->
-      union (self matchee) (get_fv_cases cases)
+    | E_matching { matchee; cases } -> union (self matchee) (get_fv_cases cases)
     | E_record m ->
       let res = Record.map ~f:self m in
       let res = Record.values res in
@@ -369,10 +370,10 @@ let rec map_expression : 'err mapper -> expression -> expression =
   let e' = f e in
   let return expression_content = { e' with expression_content } in
   match e'.expression_content with
-  | E_matching { matchee = e; disc_label; cases } ->
+  | E_matching { matchee = e; cases } ->
     let e' = self e in
     let cases' = map_cases f cases in
-    return @@ E_matching { matchee = e'; disc_label; cases = cases' }
+    return @@ E_matching { matchee = e'; cases = cases' }
   | E_record m ->
     let m' = Record.map ~f:self m in
     return @@ E_record m'

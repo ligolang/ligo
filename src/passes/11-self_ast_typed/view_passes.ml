@@ -48,13 +48,14 @@ let check_view_type ~(raise : _ Trace.raise)
     | T_constant { injection = Operation; _ }
     | T_constant { injection = Ticket; _ } -> raise.error err
     | T_constant x -> List.iter ~f:self x.parameters
-    | T_sum (row, _) | T_record row -> Row.iter self row
+    | T_sum row | T_record row -> Row.iter self row
     | T_arrow _ ->
       (* lambdas are always OK *)
       ()
     | T_singleton _ -> ()
     | T_abstraction x -> self x.type_
     | T_for_all x -> self x.type_
+    | T_union _ -> failwith "Union types should have been removed in a earlier pass!"
   in
   let () = type_check (type_view_io_out view_loc return) return in
   let () = type_check (type_view_io_in view_loc arg) arg in

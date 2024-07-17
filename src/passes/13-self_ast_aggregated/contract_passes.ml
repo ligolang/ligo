@@ -63,15 +63,14 @@ let self_typing ~(raise : _ Trace.raise)
     in
     let entrypoint_t =
       match dat.parameter.type_content with
-      | T_sum (cmap, _) as t when String.equal "default" (String.uncapitalize entrypoint)
-        ->
+      | T_sum cmap as t when String.equal "default" (String.uncapitalize entrypoint) ->
         let t =
           match Record.to_list cmap.fields with
           | [ (_single_entry, t) ] -> t.type_content
           | _ -> t
         in
         { dat.parameter with type_content = t }
-      | T_sum (cmap, _) ->
+      | T_sum cmap ->
         let content, layout =
           Trace.trace_option ~raise (Errors.unmatched_entrypoint entrypoint_exp.location)
           @@
@@ -84,7 +83,7 @@ let self_typing ~(raise : _ Trace.raise)
               This representation do not yet persist up until the michelson representation
               due to "optimisations" :  `| Main of p` compiles to `p` *)
             let open Ligo_option in
-            let* row, _ = Ast_aggregated.get_t_sum t in
+            let* row = Ast_aggregated.get_t_sum t in
             Some (Record.to_list row.fields, row.layout)
           | x -> Some (x, cmap.layout)
         in

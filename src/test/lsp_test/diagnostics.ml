@@ -334,18 +334,18 @@ let%expect_test "ghost string filter" =
     {|
     [("../../../../../default/src/test/contracts/lsp/missing_string.jsligo",
       [{
-         "message": "[Compiler stage: small_passes] Unsupported disc union type",
-         "range": {
-           "end": { "character": 25, "line": 0 },
-           "start": { "character": 12, "line": 0 }
-         },
-         "severity": 1
-       };
-       {
          "message": "[Compiler stage: parsing] Ill-formed variant type or array type.\nAt this point, one of the following is expected:\n  * a string denoting a constructor;\n  * a type denoting an element of an array type.\n",
          "range": {
            "end": { "character": 25, "line": 0 },
            "start": { "character": 24, "line": 0 }
+         },
+         "severity": 1
+       };
+       {
+         "message": "[Compiler stage: typer] Constructor \"Head\" not found. ",
+         "range": {
+           "end": { "character": 3, "line": 6 },
+           "start": { "character": 2, "line": 3 }
          },
          "severity": 1
        }])] |}]
@@ -543,7 +543,7 @@ let%expect_test "Shows errors for type error recovery missing record field" =
     {|
     [("../../../../../default/src/test/contracts/lsp/hover/recover_missing_record_field.mligo",
       [{
-         "message": "[Compiler stage: typer] Invalid record field \"g\" in record.",
+         "message": "[Compiler stage: typer] Invalid record field \"g\" in record of type \"record[f -> unit]\".",
          "range": {
            "end": { "character": 20, "line": 0 },
            "start": { "character": 8, "line": 0 }

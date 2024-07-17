@@ -797,9 +797,12 @@ module Apply = struct
     | T_construct construct ->
       let parameters = List.map ~f:apply construct.parameters in
       return @@ T_construct { construct with parameters }
-    | T_sum (row', orig_label) ->
+    | T_sum row' ->
       let row = row ctx row' in
-      return @@ T_sum (row, orig_label)
+      return @@ T_sum row
+    | T_union union ->
+      let union = Union.map apply union in
+      return @@ T_union union
     | T_record row' ->
       let row = row ctx row' in
       return @@ T_record row
@@ -1221,7 +1224,7 @@ let get_sum ~refs_tbl
          let t_params, inner_type = Type.destruct_type_abstraction type_ in
          let type_ = { inner_type with abbrev = type_.abbrev } in
          match type_.content with
-         | T_sum (m, _) ->
+         | T_sum m ->
            (match Ligo_map.find_kv (module Label) m.fields constr with
            | Some ((Label (_name, loc) as constr'), associated_type) ->
              Refs_tbl.add_ref_label refs_tbl ~key:constr' ~data:constr;
@@ -1405,7 +1408,7 @@ end = struct
         (match%bind loop ~ctx:(ctx |:: C_type_var (tvar, kind)) type_ with
         | Type -> return Type
         | _ -> None)
-      | T_sum (rows, _) | T_record rows ->
+      | T_sum rows | T_record rows ->
         if Map.for_all
              ~f:(fun associated_type ->
                match loop associated_type with
@@ -1414,6 +1417,15 @@ end = struct
              rows.fields
            && layout ~ctx rows.layout
         then return Type
+        else None
+      | T_union union ->
+        if Union.for_all
+             (fun summand ->
+               match loop summand with
+               | Some Type -> true
+               | _ -> false)
+             union
+        then Some Type
         else None
     in
     loop t ~ctx

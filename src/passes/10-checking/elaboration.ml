@@ -7,15 +7,13 @@ module Trace = Simple_utils.Trace
 type error = Errors.typer_error
 type warning = Main_warnings.all
 
-type 'a t =
-  options:Compiler_options.middle_end
-  -> path:Module_var.t list
-  -> raise:(error, warning) Trace.raise
-  -> Substitution.t
-  -> 'a
-
-include Monad.Make (struct
-  type nonrec 'a t = 'a t
+module T = struct
+  type 'a t =
+    options:Compiler_options.middle_end
+    -> path:Module_var.t list
+    -> raise:(error, warning) Trace.raise
+    -> Substitution.t
+    -> 'a
 
   let return result ~options:_ ~path:_ ~raise:_ _subst = result
 
@@ -24,7 +22,32 @@ include Monad.Make (struct
 
 
   let map = `Define_using_bind
-end)
+end
+
+include T
+include Monad.Make (T)
+
+module Make_all (T : sig
+  type 'a t
+
+  val map : ('a1 -> 'a2) -> 'a1 t -> 'a2 t
+end) =
+struct
+  let all (t : 'a t T.t) : 'a T.t t =
+   fun ~options ~path ~raise subst -> T.map (fun t -> t ~options ~path ~raise subst) t
+end
+
+module Make_all2 (T : sig
+  type ('a, 'b) t
+
+  val map : ('a1 -> 'a2) -> ('b1 -> 'b2) -> ('a1, 'b1) t -> ('a2, 'b2) t
+end) =
+struct
+  let all (t : ('a t, 'b t) T.t) : ('a, 'b) T.t t =
+   fun ~options ~path ~raise subst ->
+    let f t = t ~options ~path ~raise subst in
+    T.map f f t
+end
 
 let all_lmap (lmap : 'a t Label.Map.t) : 'a Label.Map.t t =
  fun ~options ~path ~raise subst ->
@@ -35,8 +58,6 @@ let all_lmap_unit (lmap : unit t Label.Map.t) : unit t =
  fun ~options ~path ~raise subst ->
   Map.iter ~f:(fun t -> t ~options ~path ~raise subst) lmap
 
-
-include Let_syntax
 
 let rec decode (type_ : Type.t) ~options ~path ~(raise : _ Trace.raise) subst =
   let decode type_ = decode type_ ~options ~raise ~path subst in
@@ -75,9 +96,12 @@ let rec decode (type_ : Type.t) ~options ~path ~(raise : _ Trace.raise) subst =
   | I.T_construct { language; constructor; parameters } ->
     let parameters = List.map parameters ~f:decode in
     return @@ O.T_constant { language; injection = constructor; parameters }
-  | I.T_sum (row, orig_label) ->
+  | I.T_sum row ->
     let row = decode_row row in
-    return @@ O.T_sum (row, orig_label)
+    return @@ O.T_sum row
+  | I.T_union union ->
+    let union' = Union.map decode union in
+    return @@ O.T_union union'
   | I.T_record row ->
     let row = decode_row row in
     return @@ O.T_record row

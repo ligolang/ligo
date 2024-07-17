@@ -6,7 +6,7 @@ module type VAR = sig
   (* Create a compiler generated variable *)
   val reset_counter : unit -> unit
   val fresh : loc:Location.t -> ?name:string -> ?generated:bool -> unit -> t
-  val fresh_like : ?loc:Location.t -> t -> t
+  val fresh_like : ?loc:Location.t -> ?generated:bool -> t -> t
 
   (* Construct a user variable directly from a string. This should only
       be used for embedding user variable names. For programmatically
@@ -61,13 +61,14 @@ module Internal () = struct
     { name; counter; generated; location = loc }
 
 
-  let fresh_like ?loc v =
+  let fresh_like ?loc ?generated v =
     let counter =
       incr global_counter;
       !global_counter
     in
     let location = Option.value ~default:v.location loc in
-    { v with counter; location }
+    let generated = Option.value ~default:v.generated generated in
+    { v with counter; location; generated }
 
 
   (* should be removed in favor of a lift pass before ast_imperative *)
@@ -87,7 +88,9 @@ module Internal () = struct
   let get_location var = var.location
   let set_location location var = { var with location }
   let is_generated var = var.generated
+  
   let is_name var name = String.equal var.name name
+  let is_name_prefix var name = String.is_prefix var.name ~prefix:name
 
   (* PP *)
   let pp ppf v =

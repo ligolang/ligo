@@ -19,7 +19,9 @@ let typecheck_with_signature
   then
     Trace.trace ~raise self_ast_typed_tracer
     @@ fun ~raise -> Self_ast_typed.all_program ~raise prg
-  else prg
+  else
+    Trace.trace ~raise self_ast_typed_tracer
+    @@ fun ~raise -> Self_ast_typed.all_program_just_remove_unions ~raise prg
 
 
 let typecheck
@@ -47,7 +49,7 @@ let compile_expression
     Trace.trace ~raise checking_tracer
     @@ Checking.type_expression ~options:options.middle_end ~env:context expr ~path:[]
   in
-  typed
+  Trace.trace ~raise self_ast_typed_tracer (Self_ast_typed.all_expression typed)
 
 
 let compile_type_expression

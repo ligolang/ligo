@@ -8,6 +8,16 @@ type ('a, 'err, 'wrn) t
 
 include Monad.S3 with type ('a, 'err, 'wrn) t := ('a, 'err, 'wrn) t
 
+module Make_all : functor
+  (T : sig
+     type 'a t
+
+     val fold_map : ('acc -> 'a1 -> 'acc * 'a2) -> 'acc -> 'a1 t -> 'acc * 'a2 t
+   end)
+  -> sig
+  val all : ('a, 'err, 'wrn) t T.t -> ('a T.t, 'err, 'wrn) t
+end
+
 val all_lmap : ('a, 'err, 'wrn) t Label.Map.t -> ('a Label.Map.t, 'err, 'wrn) t
 val all_lmap_unit : (unit, 'err, 'wrn) t Label.Map.t -> (unit, 'err, 'wrn) t
 
@@ -352,13 +362,71 @@ val eq : Type.t -> Type.t -> (bool, [> Errors.local_unify_error ], 'wrn) t
 (** [subtype ~received ~expected] ensures [received] is the subtype of [expected]
     and returns a coercion [f] that accepts an expression of type [received] and
     elaborates to an expression of type [expected]. *)
-
 val subtype
   :  received:Type.t
   -> expected:Type.t
   -> ( Ast_typed.expression -> Ast_typed.expression Elaboration.t
      , [> Errors.subtype_error ]
      , 'wrn )
+     t
+
+val subtype_opt
+  :  received:Type.t
+  -> expected:Type.t
+  -> ( (Ast_typed.expression -> Ast_typed.expression Elaboration.t) option
+     , [> Errors.subtype_error ]
+     , 'a )
+     t
+
+(** [lub2_without_union type1 type2] computes tries to compute
+     a non-trivial (meaning not just [type1 | type2]) least upper bound
+     (with respect to the subtyping order) of [type1] and [type2].
+     - If it succeds, it returns [Some (lub, type1_to_lub, type2_to_lub)] where 
+       * [lub] is the least upper bound, and
+       * [typek_to_lub] is a coercion from [typek] to [lub].
+     - Otherwise, it returns [None]. *)
+val lub2_without_union
+  :  Type.t
+  -> Type.t
+  -> ( (Type.t
+       * (Ast_typed.expression -> Ast_typed.expression Elaboration.t)
+       * (Ast_typed.expression -> Ast_typed.expression Elaboration.t))
+       option
+     , [> `Typer_cannot_subtype of Errors.local_unify_error * Type.t * Type.t * Location.t
+       ]
+     , 'a )
+     t
+
+(** [lub_without_union] is the generalization of the binary [lub2_without_union] to an arbitrary arity *)
+val lub_without_union
+  :  Type.t list
+  -> ( (Type.t
+       * (Type.t * (Ast_typed.expression -> Ast_typed.expression Elaboration.t)) list)
+       option
+     , [> `Typer_cannot_subtype of Errors.local_unify_error * Type.t * Type.t * Location.t
+       ]
+     , 'a )
+     t
+
+(** [lub_union [type1; ...; typen]] returns the trivial least upper bound `[type1 | ... | typen]` *)
+val lub_union
+  :  Type.t list
+  -> ( Type.t
+       * (Type.t * (Ast_typed.expression -> Ast_typed.expression Elaboration.t)) list
+     , [> `Typer_cannot_subtype of Errors.local_unify_error * Type.t * Type.t * Location.t
+       ]
+     , 'a )
+     t
+
+(** [lub [type1; ...; typen]] tries to return the non-trivial least upper bound returned by [lub_without_union [type1; ...; typen]]
+    and if that fails, it returns the trivial least upper bound [lub_union [type1; ...; typen]] *)
+val lub
+  :  Type.t list
+  -> ( Type.t
+       * (Type.t * (Ast_typed.expression -> Ast_typed.expression Elaboration.t)) list
+     , [> `Typer_cannot_subtype of Errors.local_unify_error * Type.t * Type.t * Location.t
+       ]
+     , 'a )
      t
 
 (** {8 Fragments} *)

@@ -202,6 +202,10 @@ let e_string ~loc str : expr =
   make_e ~loc @@ E_literal (Literal_string (Ligo_string.standard str))
 
 
+let e_string_singleton ~loc str : expr =
+  e_annot ~loc @@ (e_string ~loc str, t_string ~loc str)
+
+
 let e_verbatim ~loc str : expr =
   make_e ~loc @@ E_literal (Literal_string (Ligo_string.verbatim str))
 
@@ -264,7 +268,7 @@ let e_unopt ~loc matchee none_body (var_some, some_body) =
     let pattern = p_variant ~loc (Label.of_string "None") None in
     Case.{ pattern = Some pattern; rhs = none_body }
   in
-  e_match ~loc { expr = matchee; disc_label = None; cases = [ some_case; none_case ] }
+  e_match ~loc { expr = matchee; cases = [ some_case; none_case ] }
 
 
 let let_unit_in rhs body =

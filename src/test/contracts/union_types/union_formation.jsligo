@@ -1,0 +1,37 @@
+type union = { a: int } | { b: bool }
+
+type union_deep = [int, { c: (x: bool) => union }]
+
+const union_in_term = (x: { a: int } | { b: bool }) => x
+
+const union_deep_in_term =
+    1
+    + do {
+          const f = (x: int) => {
+              const _g = (y: { a: int } | { b: bool }) => y;
+              return x;
+          };
+          return f(0);
+      }
+
+namespace Union_in_module {
+    type union = { a: int } | { b: bool }
+    type union_deep = [int, { c: (x: bool) => union }]
+    const union_in_term = (x: { a: int } | { b: bool }) => x
+    const union_deep_in_term =
+        1
+        + do {
+              const f = (x: int) => {
+                  const _g = (y: { a: int } | { b: bool }) => y;
+                  return x;
+              };
+              return f(0);
+          }
+}
+
+type union_with_duplicate = {a: int} | {a: int}
+
+type union_of_non_records = int | (bool | nat)
+
+@entry
+const entry = (_p: nat, _s: int): [list<operation>, int] => { return [[], 1]; }

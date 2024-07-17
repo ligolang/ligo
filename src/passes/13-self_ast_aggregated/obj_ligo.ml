@@ -16,7 +16,7 @@ let rec traverse_type_expression ~(raise : _ Trace.raise)
   let self = traverse_type_expression ~raise f in
   let () = f te in
   match te.type_content with
-  | T_sum (temap, _) -> rows self temap
+  | T_sum temap -> rows self temap
   | T_for_all x | T_abstraction x -> self x.type_
   | T_record temap -> rows self temap
   | T_arrow arr ->
@@ -28,6 +28,7 @@ let rec traverse_type_expression ~(raise : _ Trace.raise)
   | T_constant { parameters } ->
     let _ = List.map ~f:self parameters in
     ()
+  | T_union _ -> impossible_because_no_union_in_ast_aggregated ()
 
 
 (* Adapted from lib_protocol/script_string_repr.ml *)

@@ -1,8 +1,12 @@
-type ('e, 't) t =
-  { anno_expr : 'e
-  ; type_annotation : 't
-  }
-[@@deriving eq, compare, yojson, hash, fold, map]
+module T = struct
+  type ('e, 't) t =
+    { anno_expr : 'e
+    ; type_annotation : 't
+    }
+  [@@deriving compare, eq, fold, hash, iter, map, sexp, yojson]
+end
+
+include T
 
 let pp f g ppf { anno_expr; type_annotation } =
   Format.fprintf ppf "%a : %a" f anno_expr g type_annotation
