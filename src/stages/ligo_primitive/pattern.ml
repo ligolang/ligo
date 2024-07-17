@@ -11,15 +11,12 @@ module type Container = sig
 end
 
 module type S = sig
-  type 't t [@@deriving eq, compare, yojson, hash]
+  type 't t [@@deriving compare, eq, fold, hash, iter, map, sexp, yojson]
 
   val fold_pattern : ('a -> 'b t -> 'a) -> 'a -> 'b t -> 'a
   val fold_map_pattern : ('a -> 'b t -> 'a * 'c t) -> 'a -> 'b t -> 'a * 'c t
   val map_pattern : ('a t -> 'b t) -> 'a t -> 'b t
-  val iter : ('a -> unit) -> 'a t -> unit
-  val fold : ('a -> 'b -> 'a) -> 'a -> 'b t -> 'a
-  val map : ('a -> 'b) -> 'a t -> 'b t
-  val fold_map : ('a -> 'b -> 'a * 'b) -> 'a -> 'b t -> 'a * 'b t
+  val fold_map : ('a -> 'b1 -> 'a * 'b2) -> 'a -> 'b1 t -> 'a * 'b2 t
   val binders : 'a t -> 'a Binder.t list
   val labels : 'a t -> Label.t list
   val var : loc:Location.t -> 'a Binder.t -> 'a t
@@ -27,6 +24,14 @@ module type S = sig
 end
 
 module Make (Container : Container) = struct
+  module Container' = struct
+    include Container
+
+    let iter f t = iter ~f t
+    let map f t = map ~f t
+    let fold f init t = fold ~f ~init t
+  end
+
   type 'ty_exp list_pattern =
     | Cons of 'ty_exp t * 'ty_exp t
     | List of 'ty_exp t list
@@ -37,9 +42,10 @@ module Make (Container : Container) = struct
     | P_list of 'ty_exp list_pattern
     | P_variant of Label.t * 'ty_exp t
     | P_tuple of 'ty_exp t list
-    | P_record of 'ty_exp t Container.t
+    | P_record of 'ty_exp t Container'.t
 
-  and 't t = 't pattern_repr Location.wrap [@@deriving eq, compare, yojson, hash, sexp]
+  and 't t = 't pattern_repr Location.wrap
+  [@@deriving compare, eq, fold, hash, iter, map, sexp, yojson]
 
   let var : loc:Location.t -> 'ty Binder.t -> 'ty t =
    fun ~loc b -> Location.wrap ~loc (P_var b)
@@ -202,10 +208,10 @@ module Make (Container : Container) = struct
         | Cons (pa, pb) ->
           let acc, pa = self acc pa in
           let acc, pb = self acc pb in
-          acc, (Cons (pa, pb) : 'b list_pattern)
+          acc, (Cons (pa, pb) : 'c list_pattern)
         | List lp ->
           let acc, lp = List.fold_map ~f:self ~init:acc lp in
-          acc, (List lp : 'b list_pattern)
+          acc, (List lp : 'c list_pattern)
       in
       ret acc @@ P_list lp
     | P_variant (l, p) ->
@@ -246,6 +252,40 @@ module Make (Container : Container) = struct
           (Container.to_list record)
     in
     aux p []
+
+
+  type decomposed_boolean_pattern =
+    { value : bool
+    ; variant_location : Location.t
+    ; unit_location : Location.t
+    }
+
+  let decompose_boolean_pattern (pattern : 'a t) : decomposed_boolean_pattern option =
+    match pattern with
+    | { wrap_content =
+          P_variant (label, { wrap_content = P_unit; location = unit_location })
+      ; location = variant_location
+      } ->
+      let ret value = Some { value; variant_location; unit_location } in
+      (match Label.to_string label with
+      | "True" -> ret true
+      | "False" -> ret false
+      | _ -> None)
+    | _ -> None
+
+
+  let recompose_boolean_pattern
+      ({ value; variant_location; unit_location } : decomposed_boolean_pattern)
+      : 'a t
+    =
+    let label = Label.of_string (if value then "True" else "False") in
+    { wrap_content = P_variant (label, { wrap_content = P_unit; location = unit_location })
+    ; location = variant_location
+    }
+
+
+  let bool_of_boolean_pattern (pattern : 'a t) : bool option =
+    decompose_boolean_pattern pattern |> Option.map ~f:(fun dbp -> dbp.value)
 end
 
 module Non_linear_pattern = Make (Label.Assoc)

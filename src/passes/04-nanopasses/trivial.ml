@@ -1,4 +1,5 @@
 module Row = Ligo_prim.Row.With_optional_layout
+module Union = Ligo_prim.Union
 module Value_attr = Ligo_prim.Value_attr
 module Type_or_module_attr = Ligo_prim.Type_or_module_attr
 module Sig_item_attr = Ligo_prim.Sig_item_attr
@@ -384,11 +385,10 @@ end = struct
       ret
       @@ E_module_accessor
            { module_path = Nonempty_list.to_list module_path; element = field }
-    | E_match { expr; disc_label; cases } ->
+    | E_match { expr; cases } ->
       ret
       @@ E_matching
            { matchee = expr
-           ; disc_label
            ; cases =
                List.map (Nonempty_list.to_list cases) ~f:(function
                    | I.Case.{ pattern; rhs } ->
@@ -518,10 +518,11 @@ end = struct
       ret
       @@ T_module_accessor
            { module_path = Nonempty_list.to_list module_path; element = field }
-    | T_sum (r, orig_name) -> ret @@ T_sum (r, orig_name)
+    | T_sum r -> ret @@ T_sum r
     | T_record r -> ret @@ T_record r
     | T_abstraction abs -> ret @@ T_abstraction abs
     | T_for_all forall -> ret @@ T_for_all forall
+    | T_union summands -> ret @@ T_union (Union.make summands)
     | _ ->
       raise.error
         (Passes.Errors.invariant_trivial location
@@ -860,10 +861,10 @@ end = struct
             (Passes.Errors.invariant_trivial e.location "module accessor decompilation")
       in
       ret @@ E_module_access { module_path; field = element; field_as_open = false }
-    | E_matching { matchee; disc_label; cases = fst_case :: more_cases } ->
+    | E_matching { matchee; cases = fst_case :: more_cases } ->
       let cases = Nonempty_list.(fst_case :: more_cases) in
       let cases = Nonempty_list.map ~f:(fun _ -> assert false) cases in
-      ret @@ E_match { expr = matchee; disc_label; cases }
+      ret @@ E_match { expr = matchee; cases }
     | E_ascription { anno_expr; type_annotation } ->
       ret @@ E_annot (anno_expr, type_annotation)
     | E_type_in { type_binder; rhs; let_result } ->
@@ -956,7 +957,7 @@ end = struct
            }
     | T_sum _ when is_some (I.get_t_bool ty) ->
       ret @@ T_var (O.Ty_variable.of_input_var ~loc "bool")
-    | T_sum ({ fields; layout = _ }, _) when is_some (I.get_t_option ty) ->
+    | T_sum { fields; layout = _ } when is_some (I.get_t_option ty) ->
       let constr = I.make_t ~loc (T_variable (O.Ty_variable.of_input_var ~loc "option"))
       and arg = Core.Map.find_exn fields (Ligo_prim.Label.create "Some") in
       ret
@@ -967,11 +968,11 @@ end = struct
                (* XXX for some reason matching on [I.get_t_option ty] transforms "int option"
                         to "a option" so we have manual matching here instead *)
            }
-    | T_sum ({ fields; layout }, orig_name) ->
+    | T_sum { fields; layout } ->
       ignore layout;
       (* TODO .. ? how ? *)
       ignore conv_row_attr;
-      ret @@ T_sum_raw (conv_fields fields, orig_name)
+      ret @@ T_sum_raw (conv_fields fields)
       (* ret @@ T_attr (attr, I.make_t ~loc @@ T_record { recc with layout = None }) *)
     | T_record row when Row.is_tuple row ->
       let t =
@@ -980,6 +981,7 @@ end = struct
         | a :: b -> Nonempty_list.(a :: b)
       in
       ret @@ T_prod t
+    | T_union union -> ret @@ T_union (Union.summands union)
     | T_record { fields; layout } ->
       ignore layout;
       (* TODO .. ? how ? *)

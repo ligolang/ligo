@@ -47,7 +47,7 @@ let compile ~raise:_ =
       | P_variant (label, psum) ->
         let p_typed_opt =
           let open Ligo_option in
-          let* tys, _ = get_t_sum_raw ty in
+          let* tys = get_t_sum_raw ty in
           let* ty = Non_linear_rows.find_ty tys label in
           let* ty in
           let* psum in

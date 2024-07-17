@@ -45,6 +45,8 @@ let rec find_record_from_path
         in
         Some (new_row, [])
       | None -> None)
+    | T_union _ ->
+      (* TODO: for [t : {x : A} | {x : B}], we should have [t.x : A | B] *) None
     | T_sum _
     | T_arrow _
     | T_constant _

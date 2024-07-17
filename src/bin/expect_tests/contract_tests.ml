@@ -2788,45 +2788,35 @@ let%expect_test _ =
   run_ligo_good [ "compile"; "contract"; contract "disc_union_vbar.jsligo" ];
   [%expect
     {|
-    File "../../test/contracts/disc_union_vbar.jsligo", line 14, characters 10-20:
-     13 |   let planetType = p.planetType;
-     14 |   switch (planetType.kind) {
-                    ^^^^^^^^^^
-     15 |     case "Tellurian":
-    :
-    Warning: unused variable "planetType".
-    Hint: replace it by "_planetType" to prevent this warning.
-
-    File "../../test/contracts/disc_union_vbar.jsligo", line 14, characters 10-20:
-     13 |   let planetType = p.planetType;
-     14 |   switch (planetType.kind) {
-                    ^^^^^^^^^^
-     15 |     case "Tellurian":
-    :
-    Warning: unused variable "planetType".
-    Hint: replace it by "_planetType" to prevent this warning.
-
-    File "../../test/contracts/disc_union_vbar.jsligo", line 14, characters 10-20:
-     13 |   let planetType = p.planetType;
-     14 |   switch (planetType.kind) {
-                    ^^^^^^^^^^
-     15 |     case "Tellurian":
-    :
-    Warning: unused variable "planetType".
-    Hint: replace it by "_planetType" to prevent this warning.
-
     { parameter
         (pair (string %name)
-              (or %planetType (unit %tellurian) (or (unit %gaseous) (unit %other)))
+              (or %planetType
+                 (string %union.Injection_0)
+                 (or (string %union.Injection_1) (string %union.Injection_2)))
               (option %lord address)) ;
       storage int ;
       code { CAR ;
              PUSH int 0 ;
-             SWAP ;
+             LAMBDA (or string string) unit { DROP ; UNIT } ;
+             DUP 3 ;
              GET 3 ;
              IF_LEFT
-               { DROP ; PUSH int 1 ; ADD }
-               { IF_LEFT { DROP ; PUSH int 2 ; SWAP ; SUB } { DROP 2 ; PUSH int 0 } } ;
+               { DROP 2 ; PUSH int 1 ; ADD }
+               { IF_LEFT { LEFT string ; EXEC ; DROP } { RIGHT string ; EXEC ; DROP } } ;
+             LAMBDA (or string string) unit { DROP ; UNIT } ;
+             DUP 3 ;
+             GET 3 ;
+             IF_LEFT
+               { LEFT string ; EXEC ; DROP }
+               { IF_LEFT
+                   { DROP 2 ; PUSH int 2 ; SWAP ; SUB }
+                   { RIGHT string ; EXEC ; DROP } } ;
+             LAMBDA (or string string) unit { DROP ; UNIT } ;
+             DIG 2 ;
+             GET 3 ;
+             IF_LEFT
+               { LEFT string ; EXEC ; DROP }
+               { IF_LEFT { RIGHT string ; EXEC ; DROP } { DROP 3 ; PUSH int 0 } } ;
              NIL operation ;
              PAIR } } |}]
 

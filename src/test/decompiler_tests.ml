@@ -321,7 +321,7 @@ let decompiler_ty_expr_tests =
       }
     ; { name = "disc union with 1 argument"
       ; code = {|type t = { x: "C" } | { x: "B" }|}
-      ; expected = {|{ x: "B" } | { x: "C" }|}
+      ; expected = {|{ x: "C" } | { x: "B" }|}
       ; syntax = JsLIGO
       }
     ; { name = "union"

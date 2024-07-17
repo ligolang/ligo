@@ -1,0 +1,20 @@
+const f = (x: int) => {
+    const record: { a: int, b: bool } | { a: int, b: string } = {
+        a: x,
+        b: true
+    };
+    switch (record.a) {
+        case 1:
+            return 3;
+        default:
+            return 4;
+    }
+    return -1; // TODO: remove this line once bug in reduce_switch nanopass is fixed
+
+}
+
+@entry
+const entry = (_p: unit, s: int): [list<operation>, int] => {
+    let result = f(s);
+    return [list([]), result];
+}

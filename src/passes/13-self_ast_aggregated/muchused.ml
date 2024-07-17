@@ -63,11 +63,12 @@ let rec is_dup ~(raise : _ Trace.raise) (t : type_expression) =
           | External _ )
       ; _
       } -> true
+  | T_singleton _ -> true
   | T_constant { injection = List | Set; parameters = [ t ]; _ } -> is_dup t
   | T_constant { injection = Contract; _ } -> true
   | T_constant { injection = Big_map | Map; parameters = [ t1; t2 ]; _ } ->
     is_dup t1 && is_dup t2
-  | T_record row | T_sum (row, _) ->
+  | T_record row | T_sum row ->
     row.fields |> Record.values |> List.exists ~f:(fun v -> not (is_dup v)) |> not
   | T_arrow _ -> true
   | T_variable _ -> true
@@ -87,8 +88,8 @@ let rec is_dup ~(raise : _ Trace.raise) (t : type_expression) =
           | Baker_hash )
       ; _
       } -> false
-  | T_singleton _ -> false
   | T_exists _ -> raise.error @@ unexpected_texists t t.location
+  | T_union _ -> impossible_because_no_union_in_ast_aggregated ()
 
 
 let muchuse_union (x, a) (y, b) = Ligo_map.union (fun _ x y -> Some (x + y)) x y, a @ b

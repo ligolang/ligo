@@ -21,6 +21,7 @@ module Warning = Warning
 module File = File
 module Http_uri = Http_uri
 module Ligo_fun = Ligo_fun
+module Fuzzy_bool = Fuzzy_bool
 
 (* Originally by Christian Rinderknecht *)
 

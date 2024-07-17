@@ -111,7 +111,7 @@ let%expect_test _ =
                     ^^^^^
      14 |   j
 
-    Invalid record field "boo" in record.
+    Invalid record field "boo" in record of type "record[bar -> int , foo -> int]".
 
 |}];
   run_ligo_good

@@ -47,9 +47,9 @@ let rec subst_type ?(fv = VarSet.empty) v t (u : type_expression) =
   | T_constant { language; injection; parameters } ->
     let parameters = List.map ~f:(self v t) parameters in
     { u with type_content = T_constant { language; injection; parameters } }
-  | T_sum (row, orig_label) ->
+  | T_sum row ->
     let row = Row.map (self v t) row in
-    { u with type_content = T_sum (row, orig_label) }
+    { u with type_content = T_sum row }
   | T_record row ->
     let row = Row.map (self v t) row in
     { u with type_content = T_record row }
@@ -68,10 +68,19 @@ let rec fold_map_expression : 'a fold_mapper -> 'a -> expression -> 'a * express
   else (
     let return expression_content = { e' with expression_content } in
     match e'.expression_content with
-    | E_matching { matchee = e; disc_label; cases } ->
+    | E_matching { matchee = e; cases } ->
       let res, e' = self init e in
       let res, cases' = fold_map_cases f res cases in
-      res, return @@ E_matching { matchee = e'; disc_label; cases = cases' }
+      res, return @@ E_matching { matchee = e'; cases = cases' }
+    | E_union_injected inj ->
+      let res, inj = Union.Injected.fold_map self Tuple2.create init inj in
+      res, return @@ E_union_injected inj
+    | E_union_match match_ ->
+      let res, match_ = Union.Match.fold_map self Tuple2.create init match_ in
+      res, return @@ E_union_match match_
+    | E_union_use use ->
+      let res, use = Union.Use.fold_map self init use in
+      res, return @@ E_union_use use
     | E_accessor { struct_; path } ->
       let res, struct_ = self init struct_ in
       res, return @@ E_accessor { struct_; path }
@@ -230,9 +239,12 @@ let rec fold_map_type_expression
   | T_constant { parameters; language; injection } ->
     let init, parameters = fold_map_list parameters ~init in
     init, return @@ T_constant { parameters; language; injection }
-  | T_sum (row, orig_label) ->
+  | T_sum row ->
     let init, fields = fold_map_record ~init row in
-    init, return @@ T_sum ({ row with fields }, orig_label)
+    init, return @@ T_sum { row with fields }
+  | T_union union ->
+    let init, fields = Union.fold_map f init union in
+    init, return @@ T_union union
   | T_record row ->
     let init, fields = fold_map_record ~init row in
     init, return @@ T_record { row with fields }
@@ -270,6 +282,21 @@ let map_expression : f:(expression -> bool * expression) -> expression -> expres
          continue, (), expr)
        ()
        expr
+
+
+let subst_var ~old_var ~new_var expr =
+  map_expression
+    ~f:(fun e ->
+      let e =
+        match e.expression_content with
+        | E_variable x ->
+          if Value_var.equal x old_var
+          then { e with expression_content = E_variable new_var }
+          else e
+        | _ -> e
+      in
+      true, e)
+    expr
 
 
 let map_program f prg = snd @@ fold_map_program (fun () exp -> true, (), f exp) () prg

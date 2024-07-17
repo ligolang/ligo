@@ -20,6 +20,7 @@ module Abstractions = Abstractions
 module Type_app = Type_app
 module Type_abs = Type_abs
 module Tuple = Tuple
+module Union = Union
 
 (* Value level constructs *)
 module Access_label = Access_label

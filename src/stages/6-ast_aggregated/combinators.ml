@@ -127,7 +127,7 @@ let t_sum_ez
   let lst = List.map ~f:(fun (name, t) -> Label.of_string name, t) lst in
   let layout = layout @@ fields_with_no_annot lst in
   let map = Row.of_alist_exn ~layout lst in
-  make_t ~loc (T_sum (map, orig_name))
+  make_t ~loc (T_sum map)
 
 
 let t_bool ~loc () : type_expression =
@@ -144,7 +144,7 @@ let t_arrow param result ~loc ?source_type ?(param_names = []) () : type_express
 
 let get_t_bool (t : type_expression) : unit option =
   match t.type_content with
-  | T_sum ({ fields; _ }, _) ->
+  | T_sum { fields; _ } ->
     let keys = Map.key_set fields in
     if Set.length keys = 2
        && Set.mem keys (Label.T.create "True")
@@ -158,7 +158,7 @@ let get_t_option (t : type_expression) : type_expression option =
   let l_none = Label.of_string "None" in
   let l_some = Label.of_string "Some" in
   match t.type_content with
-  | T_sum ({ fields; _ }, _) ->
+  | T_sum { fields; _ } ->
     let keys = Record.labels fields in
     (match keys with
     | [ a; b ]
@@ -407,10 +407,7 @@ let e_a_variable ~loc v ty = e_variable ~loc v ty
 let e_a_application ~loc lamb args t = e_application ~loc { lamb; args } t
 let e_a_lambda ~loc l in_ty out_ty = e_lambda ~loc l (t_arrow ~loc in_ty out_ty ())
 let e_a_recursive ~loc l = e_recursive ~loc l l.fun_type
-
-let e_a_matching ~loc ?disc_label matchee cases t =
-  e_matching ~loc { matchee; disc_label; cases } t
-
+let e_a_matching ~loc matchee cases t = e_matching ~loc { matchee; cases } t
 
 let e_a_let_in ~loc let_binder rhs let_result attributes =
   e_let_in ~loc { let_binder; rhs; let_result; attributes } (get_type let_result)
@@ -488,7 +485,7 @@ let get_variant_field_type (t : type_expression) (label : Label.t)
   =
   match get_t_sum_opt t with
   | None -> None
-  | Some (struct_, _) -> Record.find_opt struct_.fields label
+  | Some struct_ -> Record.find_opt struct_.fields label
 
 
 let get_type_abstractions (e : expression) =

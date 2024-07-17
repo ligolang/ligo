@@ -1,0 +1,17 @@
+const f = (x: int) => {
+    const record: { a: int, b: bool } | { a: int, b: string } = {
+        a: x,
+        b: true
+    };
+    if (record.a == 1) {
+        return 3;
+    } else {
+        return 4;
+    }
+}
+
+@entry
+const entry = (_p: unit, s: int): [list<operation>, int] => {
+    let result = f(s);
+    return [list([]), result];
+}

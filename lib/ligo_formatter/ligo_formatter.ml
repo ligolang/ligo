@@ -135,6 +135,7 @@ module Michelson_formatter = struct
     | T_exists of string
     | T_constant of shrunk_type_injection
     | T_sum of shrunk_type_expression Row.t
+    | T_union of shrunk_type_expression Union.t
     | T_record of shrunk_type_expression Row.t
     | T_arrow of shrunk_type_expression Arrow.t
     | T_singleton of Literal_value.t
@@ -401,7 +402,8 @@ module Michelson_formatter = struct
           let injection = Literal_types.to_string injection in
           let parameters = List.map ~f:shrink_type parameters in
           T_constant { injection; parameters }
-        | T_sum (row_expr, _) -> T_sum (Row.With_layout.map shrink_type row_expr)
+        | T_sum row_expr -> T_sum (Row.With_layout.map shrink_type row_expr)
+        | T_union union -> T_union (Union.map shrink_type union)
         | T_record row_expr -> T_record (Row.With_layout.map shrink_type row_expr)
         | T_arrow { type1; type2; param_names } ->
           let type1 = shrink_type type1 in

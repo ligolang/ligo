@@ -1,0 +1,22 @@
+const f = (x: int) => {
+    const record: { typ: "INT", val: int } | { typ: "STR", val: string } = {
+        typ: "INT" as "INT",
+        val: x
+    };
+    let result = -100;
+    switch (record.typ) {
+        case "INT":
+            result = record.val + record.val;
+            break;
+        case "STR":
+            result = int(String.length(record.val));
+            break;
+    }
+    return result;
+}
+
+@entry
+const entry = (_p: unit, s: int): [list<operation>, int] => {
+    let result = f(s);
+    return [list([]), result];
+}

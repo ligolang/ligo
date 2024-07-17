@@ -7,8 +7,8 @@ type type_content =
   | T_variable of Type_var.t
   | T_constant of Literal_types.t * int
   | T_contract_parameter of Module_var.t Ne_list.t
-  | T_sum of row * (Label.t option[@eq.ignore] [@hash.ignore] [@compare.ignore])
-    (* This [Label.t] represent an original name of field in disc union type *)
+  | T_sum of row
+  | T_union of ty_expr Union.t
   | T_record of row
   | T_arrow of ty_expr Arrow.t
   | T_app of (Type_var.t Module_access.t, ty_expr) Type_app.t

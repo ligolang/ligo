@@ -34,9 +34,10 @@ let rec untype_type_expression
     I.T_app { type_operator; arguments }
   | _ ->
     (match t.type_content with
-    | O.T_sum ({ fields; layout }, orig_label) ->
+    | O.T_sum { fields; layout } ->
       let fields = Map.map fields ~f:self in
-      I.T_sum ({ fields; layout = Some layout }, orig_label)
+      I.T_sum { fields; layout = Some layout }
+    | O.T_union union -> I.T_union (Union.map self union)
     | O.T_record { fields; layout } ->
       let fields = Map.map fields ~f:self in
       I.T_record { fields; layout = Some layout }
@@ -116,8 +117,17 @@ and untype_expression_content ~loc ~raise (ec : O.expression_content) : I.expres
     let e = self e in
     return (e_record_update ~loc r' path e)
   | E_matching m ->
-    let I.Match_expr.{ matchee; disc_label = _; cases } = untype_match_expr ~raise m in
+    let I.Match_expr.{ matchee; cases } = untype_match_expr ~raise m in
     return (e_matching ~loc matchee cases)
+  | E_union_injected inj ->
+    let expr_in_source = self (Union.Injected.expr_in_source inj) in
+    let target = Union.Injection.target (Union.Injected.injection inj) in
+    let target = self_type (O.t_union ~loc target ()) in
+    return @@ e_ascription ~loc expr_in_source target
+  | E_union_match _ -> (* These do no exist in Ast_core*) assert false
+  | E_union_use use ->
+    let before_expansion = Union.Use.before_expansion use in
+    self before_expansion
   | E_let_in { let_binder; rhs; let_result; attributes } ->
     let rhs = self rhs in
     let result = self let_result in
@@ -176,7 +186,7 @@ and untype_match_expr ~raise
     :  (O.expression, O.type_expression) O.Match_expr.t
     -> (I.expression, I.type_expression option) I.Match_expr.t
   =
- fun { matchee; disc_label; cases } ->
+ fun { matchee; cases } ->
   let matchee = untype_expression ~raise matchee in
   let cases =
     List.map cases ~f:(fun { pattern; body } ->
@@ -184,7 +194,7 @@ and untype_match_expr ~raise
         let body = untype_expression ~raise body in
         I.Match_expr.{ pattern; body })
   in
-  I.Match_expr.{ matchee; disc_label; cases }
+  I.Match_expr.{ matchee; cases }
 
 
 (* TODO: check usage *)

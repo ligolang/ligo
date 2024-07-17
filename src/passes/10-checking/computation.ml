@@ -8,15 +8,31 @@ module State = struct
   type t = Context.t * Substitution.t
 end
 
-type ('a, 'err, 'wrn) t =
-  raise:('err, 'wrn) Trace.raise
-  -> options:Compiler_options.middle_end
-  -> loc:Location.t
-  -> path:Module_var.t list
-  -> poly_name_tbl:Type.Type_var_name_tbl.t
-  -> refs_tbl:Context.Refs_tbl.t
-  -> State.t
-  -> State.t * 'a
+module T = struct
+  type ('a, 'err, 'wrn) t =
+    raise:('err, 'wrn) Trace.raise
+    -> options:Compiler_options.middle_end
+    -> loc:Location.t
+    -> path:Module_var.t list
+    -> poly_name_tbl:Type.Type_var_name_tbl.t
+    -> refs_tbl:Context.Refs_tbl.t
+    -> State.t
+    -> State.t * 'a
+
+  let return result ~raise:_ ~options:_ ~loc:_ ~path:_ ~poly_name_tbl:_ ~refs_tbl:_ state =
+    state, result
+
+
+  let bind t ~f ~raise ~options ~loc ~path ~poly_name_tbl ~refs_tbl state =
+    let state, result = t ~raise ~options ~loc ~path ~poly_name_tbl ~refs_tbl state in
+    f result ~raise ~options ~loc ~path ~poly_name_tbl ~refs_tbl state
+
+
+  let map = `Define_using_bind
+end
+
+include T
+include Monad.Make3 (T)
 
 let rec encode ~(raise : _ Trace.raise) (type_ : Ast_typed.type_expression) : Type.t =
   let encode = encode ~raise in
@@ -46,9 +62,12 @@ let rec encode ~(raise : _ Trace.raise) (type_ : Ast_typed.type_expression) : Ty
   | T_constant { language; injection; parameters } ->
     let parameters = List.map parameters ~f:encode in
     return @@ T_construct { language; constructor = injection; parameters }
-  | T_sum (row, orig_label) ->
+  | T_sum row ->
     let row = encode_row ~raise row in
-    return @@ T_sum (row, orig_label)
+    return @@ T_sum row
+  | T_union union ->
+    let union = Union.map encode union in
+    return @@ T_union union
   | T_record row ->
     let row = encode_row ~raise row in
     return @@ T_record row
@@ -160,20 +179,72 @@ let lift_elab t ~raise ~options ~loc:_ ~path ~poly_name_tbl:_ ~refs_tbl:_ st =
   st, Elaboration.run t ~options ~path ~raise (snd st)
 
 
-include Monad.Make3 (struct
-  type nonrec ('a, 'err, 'wrn) t = ('a, 'err, 'wrn) t
+module Make_all (T : sig
+  type 'a t
 
-  let return result ~raise:_ ~options:_ ~loc:_ ~path:_ ~poly_name_tbl:_ ~refs_tbl:_ state =
-    state, result
+  val fold_map : ('acc -> 'a1 -> 'acc * 'a2) -> 'acc -> 'a1 t -> 'acc * 'a2 t
+end) =
+struct
+  let all (t : ('a, 'err, 'wrn) t T.t) : ('a T.t, 'err, 'wrn) t =
+   fun ~raise ~options ~loc ~path ~poly_name_tbl ~refs_tbl state ->
+    let f state (x : ('a, 'err, 'wrn) t) =
+      x ~raise ~options ~loc ~path ~poly_name_tbl ~refs_tbl state
+    in
+    T.fold_map f state t
+end
+
+let try_ (body : ('a, 'err, 'wrn) t) ~(with_ : 'err list -> ('a, 'err, 'wrn) t)
+    : ('a, 'err, 'wrn) t
+  =
+ fun ~raise ~options ~loc ~path ~poly_name_tbl ~refs_tbl state ->
+  let body = body ~options ~loc ~path ~poly_name_tbl ~refs_tbl state in
+  match
+    if options.typer_error_recovery
+    then Trace.to_stdlib_result ~fast_fail:No_fast_fail body
+    else Trace.cast_fast_fail_result @@ Trace.to_stdlib_result ~fast_fail:Fast_fail body
+  with
+  | Ok (result, _es, _ws) -> result
+  | Error (es, _ws) -> with_ es ~raise ~options ~loc ~path ~poly_name_tbl ~refs_tbl state
 
 
-  let bind t ~f ~raise ~options ~loc ~path ~poly_name_tbl ~refs_tbl state =
-    let state, result = t ~raise ~options ~loc ~path ~poly_name_tbl ~refs_tbl state in
-    f result ~raise ~options ~loc ~path ~poly_name_tbl ~refs_tbl state
+let try_with_diagnostics
+    (body : ('a, 'err, 'wrn) t)
+    ~(with_ : ('a, 'err, 'wrn) t)
+    ~(diagnostics : 'err list -> 'wrn list -> (unit, 'err, 'wrn) t)
+    : ('a, 'err, 'wrn) t
+  =
+ fun ~raise ~options ~loc ~path ~poly_name_tbl ~refs_tbl state ->
+  let body = body ~options ~loc ~path ~poly_name_tbl ~refs_tbl state in
+  let (state, result), es, ws =
+    match
+      if options.typer_error_recovery
+      then Trace.to_stdlib_result ~fast_fail:No_fast_fail body
+      else Trace.cast_fast_fail_result @@ Trace.to_stdlib_result ~fast_fail:Fast_fail body
+    with
+    | Ok (result, es, ws) -> result, es, ws
+    | Error (es, ws) ->
+      let result = with_ ~raise ~options ~loc ~path ~poly_name_tbl ~refs_tbl state in
+      result, es, ws
+  in
+  let state, () =
+    diagnostics es ws ~raise ~options ~loc ~path ~poly_name_tbl ~refs_tbl state
+  in
+  state, result
 
 
-  let map = `Define_using_bind
-end)
+let try_both t1 t2 ~raise ~options ~loc ~path ~poly_name_tbl ~refs_tbl state =
+  let with_args t ~raise = t ~raise ~options ~loc ~path ~poly_name_tbl ~refs_tbl state in
+  Trace.bind_or ~raise (with_args t1) (with_args t2)
+
+
+let try_all (ts : ('a, 'err, 'wrn) t Nonempty_list.t) : ('a, 'err, 'wrn) t =
+ fun ~raise ~options ~loc ~path ~poly_name_tbl ~refs_tbl state ->
+  Trace.bind_exists
+    ~raise
+    (Nonempty_list.map
+       ~f:(fun t ~raise -> t ~raise ~options ~loc ~path ~poly_name_tbl ~refs_tbl state)
+       ts)
+
 
 let all_lmap (lmap : ('a, 'err, 'wrn) t Label.Map.t) : ('a Label.Map.t, 'err, 'wrn) t =
  fun ~raise ~options ~loc ~path ~poly_name_tbl ~refs_tbl state ->
@@ -559,7 +630,8 @@ let occurs_check ~tvar (type_ : Type.t) =
       loop type2
     | T_for_all { type_; _ } | T_abstraction { type_; _ } -> loop type_
     | T_construct { parameters; _ } -> List.iter parameters ~f:loop
-    | T_record row | T_sum (row, _) -> Map.iter row.fields ~f:loop
+    | T_record row | T_sum row -> Map.iter row.fields ~f:loop
+    | T_union union -> Union.iter loop union
     | T_singleton _ -> ()
   in
   loop type_
@@ -627,9 +699,15 @@ let rec lift ~(mode : Mode.t) ~kind ~tvar (type_ : Type.t) : (Type.t, _, _) t =
     let%bind type1 = lift ~mode:(Mode.invert mode) type1 in
     let%bind type2 = Context.tapply type2 >>= lift ~mode in
     const @@ T_arrow { type1; type2; param_names }
-  | T_sum (row, orig_label) ->
+  | T_sum row ->
     let%bind row = lift_row row in
-    const @@ T_sum (row, orig_label)
+    const @@ T_sum row
+  | T_union union ->
+    let module Comp_union = Make_all (Union) in
+    let%bind union =
+      union |> Union.map (fun ty -> Context.tapply ty >>= lift ~mode) |> Comp_union.all
+    in
+    const @@ T_union union
   | T_record row ->
     let%bind row = lift_row row in
     const @@ T_record row
@@ -724,8 +802,8 @@ let rec unify_aux (type1 : Type.t) (type2 : Type.t)
     let type1 = Type.subst_var type1 ~tvar:tvar1 ~tvar':tvar in
     let type2 = Type.subst_var type2 ~tvar:tvar2 ~tvar':tvar in
     Context.add [ C_type_var (tvar, kind1) ] ~on_exit:Drop ~in_:(unify_aux type1 type2)
-  | ( T_sum ({ fields = fields1; layout = layout1 }, _)
-    , T_sum ({ fields = fields2; layout = layout2 }, _) )
+  | ( T_sum { fields = fields1; layout = layout1 }
+    , T_sum { fields = fields2; layout = layout2 } )
   | ( T_record { fields = fields1; layout = layout1 }
     , T_record { fields = fields2; layout = layout2 } )
     when equal_domains fields1 fields2 ->
@@ -782,8 +860,8 @@ let rec eq (type1 : Type.t) (type2 : Type.t) =
     let type1 = Type.subst_var type1 ~tvar:tvar1 ~tvar':tvar in
     let type2 = Type.subst_var type2 ~tvar:tvar2 ~tvar':tvar in
     Context.add [ C_type_var (tvar, kind1) ] ~on_exit:Drop ~in_:(eq type1 type2)
-  | ( T_sum ({ fields = fields1; layout = layout1 }, _)
-    , T_sum ({ fields = fields2; layout = layout2 }, _) )
+  | ( T_sum { fields = fields1; layout = layout1 }
+    , T_sum { fields = fields2; layout = layout2 } )
   | ( T_record { fields = fields1; layout = layout1 }
     , T_record { fields = fields2; layout = layout2 } )
     when equal_domains fields1 fields2 ->
@@ -831,6 +909,7 @@ let rec subtype_aux ~(received : Type.t) ~(expected : Type.t)
     return
       E.(
         fun hole ->
+          let open E.Let_syntax in
           let%bind type11 = decode type11
           and type12 = decode type12
           and type21 = decode type21
@@ -857,6 +936,7 @@ let rec subtype_aux ~(received : Type.t) ~(expected : Type.t)
     return
       E.(
         fun hole ->
+          let open E.Let_syntax in
           let%bind type' = decode type' in
           let%bind texists = decode texists in
           f (O.e_type_inst ~loc { forall = hole; type_ = texists } type'))
@@ -871,6 +951,7 @@ let rec subtype_aux ~(received : Type.t) ~(expected : Type.t)
     return
       E.(
         fun hole ->
+          let open E.Let_syntax in
           let%bind result = f hole in
           let%bind expected = decode expected in
           return @@ O.e_type_abstraction ~loc { type_binder = tvar'; result } expected)
@@ -890,15 +971,113 @@ let rec subtype_aux ~(received : Type.t) ~(expected : Type.t)
     return
       E.(
         fun hole ->
+          let open E.Let_syntax in
           let%bind expected = decode expected in
           return
           @@ O.e_coerce ~loc { anno_expr = hole; type_annotation = expected } expected)
   | T_singleton lit, T_construct _
     when Option.is_some (Type.get_t_base_inj expected (Literal_value.typeof lit)) ->
     return E.return
+  | T_union received_as_union, T_union expected_as_union ->
+    if Union.equal Type.equal received_as_union expected_as_union
+    then return E.return
+    else
+      try_both
+        (subtype_expected_union ~received ~expected ~expected_as_union)
+        (subtype_received_union ~received ~received_as_union ~expected)
+  | _, T_union expected_as_union ->
+    subtype_expected_union ~received ~expected ~expected_as_union
+  | T_union received_as_union, _ ->
+    subtype_received_union ~received ~received_as_union ~expected
   | _, _ ->
     let%bind () = unify_aux received expected in
     return E.return
+
+
+and subtype_expected_union ~expected ~expected_as_union ~received =
+  let open Let_syntax in
+  let module Elab_union_injection = E.Make_all (Union.Injection) in
+  let%bind coercion, injection =
+    let injections = Union.Injection.injections_of_union expected_as_union in
+    let coercions_and_injections =
+      injections
+      |> List.map ~f:(fun injection ->
+             let summand = Union.Injection.source injection in
+             let%bind coercion = subtype_aux ~received ~expected:summand in
+             return (coercion, injection))
+    in
+    match Nonempty_list.of_list coercions_and_injections with
+    | None ->
+      let%bind no_color = Options.no_color () in
+      raise (fun loc -> Errors.cannot_unify_local no_color received expected loc)
+    | Some coercions_and_injections_ne -> try_all coercions_and_injections_ne
+  in
+  return
+    E.(
+      fun hole ->
+        let open Let_syntax in
+        let%bind hole_in_summand = coercion hole in
+        let%bind injection =
+          injection |> Union.Injection.map decode |> Elab_union_injection.all
+        in
+        let hole_in_union =
+          Union.Injected.make ~expr_in_source:hole_in_summand ~injection
+        in
+        let%bind expected = decode expected in
+        return @@ O.e_union_injected hole_in_union expected ~loc:expected.location)
+
+
+and subtype_received_union ~received ~received_as_union ~expected =
+  let open Let_syntax in
+  let open Union in
+  let module Elab_union_injection = E.Make_all (Union.Injection) in
+  let%bind branches =
+    received_as_union
+    |> Injection.injections_of_union
+    |> List.map ~f:(fun injection ->
+           let summand = Injection.source injection in
+           let%bind coercion = subtype_aux ~received:summand ~expected in
+           let var = Value_var.fresh ~generated:true ~loc:Location.generated () in
+           return
+             E.(
+               let open Let_syntax in
+               let%bind injection =
+                 injection |> Injection.map decode |> Elab_union_injection.all
+               in
+               let pattern = Match.Pattern.make ~var ~injection in
+               let%bind body =
+                 let summand = Injection.source injection in
+                 let var_as_expr = O.e_variable var summand ~loc:Location.generated in
+                 coercion var_as_expr
+               in
+               let branch = Match.Branch.make ~pattern ~body in
+               return branch))
+    |> all
+    >>| E.all
+  in
+  return
+    E.(
+      fun hole ->
+        let open Let_syntax in
+        let%bind expected = decode expected in
+        let before_expansion =
+          O.e_coerce
+            Ascription.{ anno_expr = hole; type_annotation = expected }
+            expected
+            ~loc:expected.location
+        in
+        let%bind branches = branches in
+        let after_expansion =
+          O.e_union_match
+            (Match.make ~matchee:hole ~branches)
+            expected
+            ~loc:expected.location
+        in
+        return
+        @@ O.e_union_use
+             (Use.make ~before_expansion ~after_expansion)
+             expected
+             ~loc:expected.location)
 
 
 let subtype ~(received : Type.t) ~(expected : Type.t)
@@ -909,6 +1088,16 @@ let subtype ~(received : Type.t) ~(expected : Type.t)
   Trace.map_error
     ~f:(fun err -> Errors.cannot_subtype err received expected subtyping_loc)
     (subtype_aux ~received ~expected)
+
+
+let subtype_opt ~(received : Type.t) ~(expected : Type.t)
+    : ((Ast_typed.expression -> Ast_typed.expression Elaboration.t) option, 'b, 'a) t
+  =
+  let open Let_syntax in
+  try_
+    (let%bind res = subtype ~received ~expected in
+     return (Some res))
+    ~with_:(fun _ -> return None)
 
 
 let exists kind =
@@ -1109,54 +1298,6 @@ let create_type (constr : Type.constr) =
   return (constr ~loc ())
 
 
-let try_ (body : ('a, 'err, 'wrn) t) ~(with_ : 'err list -> ('a, 'err, 'wrn) t)
-    : ('a, 'err, 'wrn) t
-  =
- fun ~raise ~options ~loc ~path ~poly_name_tbl ~refs_tbl state ->
-  let body = body ~options ~loc ~path ~poly_name_tbl ~refs_tbl state in
-  match
-    if options.typer_error_recovery
-    then Trace.to_stdlib_result ~fast_fail:No_fast_fail body
-    else Trace.cast_fast_fail_result @@ Trace.to_stdlib_result ~fast_fail:Fast_fail body
-  with
-  | Ok (result, _es, _ws) -> result
-  | Error (es, _ws) -> with_ es ~raise ~options ~loc ~path ~poly_name_tbl ~refs_tbl state
-
-
-let try_with_diagnostics
-    (body : ('a, 'err, 'wrn) t)
-    ~(with_ : ('a, 'err, 'wrn) t)
-    ~(diagnostics : 'err list -> 'wrn list -> (unit, 'err, 'wrn) t)
-    : ('a, 'err, 'wrn) t
-  =
- fun ~raise ~options ~loc ~path ~poly_name_tbl ~refs_tbl state ->
-  let body = body ~options ~loc ~path ~poly_name_tbl ~refs_tbl state in
-  let (state, result), es, ws =
-    match
-      if options.typer_error_recovery
-      then Trace.to_stdlib_result ~fast_fail:No_fast_fail body
-      else Trace.cast_fast_fail_result @@ Trace.to_stdlib_result ~fast_fail:Fast_fail body
-    with
-    | Ok (result, es, ws) -> result, es, ws
-    | Error (es, ws) ->
-      let result = with_ ~raise ~options ~loc ~path ~poly_name_tbl ~refs_tbl state in
-      result, es, ws
-  in
-  let state, () =
-    diagnostics es ws ~raise ~options ~loc ~path ~poly_name_tbl ~refs_tbl state
-  in
-  state, result
-
-
-let try_all (ts : ('a, 'err, 'wrn) t Nonempty_list.t) : ('a, 'err, 'wrn) t =
- fun ~raise ~options ~loc ~path ~poly_name_tbl ~refs_tbl state ->
-  Trace.bind_exists
-    ~raise
-    (Nonempty_list.map
-       ~f:(fun t ~raise -> t ~raise ~options ~loc ~path ~poly_name_tbl ~refs_tbl state)
-       ts)
-
-
 module With_frag = struct
   type fragment = (Value_var.t * Param.mutable_flag * Type.t) list
   type nonrec ('a, 'err, 'wrn) t = (fragment * 'a, 'err, 'wrn) t
@@ -1240,3 +1381,79 @@ module With_frag = struct
   let unify type1 type2 = lift (unify type1 type2)
   let subtype ~received ~expected = lift (subtype ~received ~expected)
 end
+
+let rec lub2_without_union (typ1 : Type.t) (typ2 : Type.t) =
+  let open Let_syntax in
+  let%bind typ1 = Context.tapply typ1 in
+  let%bind typ2 = Context.tapply typ2 in
+  match typ1.content, typ2.content with
+  | _, _ when Type.equal typ1 typ2 -> return (Some (typ1, E.return, E.return))
+  | T_singleton lit, _ ->
+    let%bind typ1' =
+      let typ = Literal_value.typeof lit in
+      let constr = Type.t_construct typ [] in
+      create_type constr
+    in
+    let%bind typ1_to_typ1' =
+      subtype_opt ~received:typ1 ~expected:typ1'
+      >>| Option.value_or_thunk ~default:(fun () ->
+              (* Invariant: if [t : singleton_type(t')] and [t' : A] then [t : A] *)
+              assert false)
+    in
+    (match%bind lub2_without_union typ1' typ2 with
+    | None -> return None
+    | Some (lub, typ1'_to_lub, typ2_to_lub) ->
+      let typ1_to_lub expr = E.(expr |> typ1_to_typ1' >>= typ1'_to_lub) in
+      return @@ Option.some (lub, typ1_to_lub, typ2_to_lub))
+  | _, T_singleton _ ->
+    lub2_without_union typ2 typ1
+    >>| Option.map ~f:(fun (lub, typ2_to_lub, typ1_to_lub) ->
+            lub, typ1_to_lub, typ2_to_lub)
+  | _, _ -> return None
+
+
+let rec lub_without_union (types : Type.t list) =
+  let open Let_syntax in
+  match types with
+  | [] -> return None
+  | [ typ ] -> return (Some (typ, [ typ, E.return ]))
+  | typ :: types' ->
+    (match%bind lub_without_union types' with
+    | None -> return None
+    | Some (lub', types'_to_lub') ->
+      (match%bind lub2_without_union typ lub' with
+      | None -> return None
+      | Some (lub, typ_to_lub, lub'_to_lub) ->
+        let types'_to_lub =
+          types'_to_lub'
+          |> List.map ~f:(fun (typ', typ'_to_lub') ->
+                 let typ'_to_lub expr =
+                   let open E in
+                   expr |> typ'_to_lub' >>= lub'_to_lub
+                 in
+                 typ', typ'_to_lub)
+        in
+        let types_to_lub = (typ, typ_to_lub) :: types'_to_lub in
+        return (Some (lub, types_to_lub))))
+
+
+let lub_union (types : Type.t list) =
+  let open Let_syntax in
+  let union = Union.make types in
+  let lub = Type.t_union union ~loc:Location.generated () in
+  let%bind coercions =
+    types
+    |> List.map ~f:(fun typ ->
+           let%bind coercion = subtype ~received:typ ~expected:lub in
+           return (typ, coercion))
+    |> all
+  in
+  return (lub, coercions)
+
+
+let lub types =
+  let open Let_syntax in
+  let x = try_ (lub_without_union types) ~with_:(fun _ -> return None) in
+  match%bind x with
+  | Some lub -> return lub
+  | None -> lub_union types

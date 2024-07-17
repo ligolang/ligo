@@ -513,7 +513,7 @@ let rec ty_expr : Eq.ty_expr -> Folding.ty_expr =
         TODO_do_in_parsing.labelize ctor, ty, TODO_do_in_parsing.conv_attrs attributes
     in
     let variants = variants |> List.map ~f:destruct |> TODO_do_in_parsing.compile_rows in
-    return @@ T_sum_raw (variants, None)
+    return @@ T_sum_raw variants
   | T_Object { value = { inside = ne_elements; _ }; region } ->
     let fields =
       let destruct (I.{ property_id; property_rhs; attributes } : _ I.property) =
@@ -583,14 +583,8 @@ let rec ty_expr : Eq.ty_expr -> Folding.ty_expr =
     let namespace_path = Nonempty_list.map ~f:TODO_do_in_parsing.mvar namespace_path in
     return @@ T_contract_parameter namespace_path
   | T_Union t ->
-    let fields =
-      let destruct_obj (t : I.type_expr) : unit * I.type_expr * O.Attribute.t list =
-        (), t, []
-      in
-      let lst = List.map ~f:destruct_obj (Utils.nsep_or_pref_to_list t.value) in
-      O.Non_linear_disc_rows.make lst
-    in
-    Location.wrap ~loc @@ O.T_disc_union fields
+    let summands = Utils.nsep_or_pref_to_list t.value in
+    Location.wrap ~loc @@ O.T_union summands
 
 
 let pattern : Eq.pattern -> Folding.pattern =

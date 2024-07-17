@@ -11,10 +11,8 @@ type type_content =
   | T_variable of Type_var.t
   | T_exists of Type_var.t
   | T_constant of type_injection
-  | T_sum of
-      type_expression Row.t
-      * (Label.t option[@equal.ignore] [@hash.ignore] [@compare.ignore])
-  (* This [Label.t] represent an original name of field in disc union type *)
+  | T_sum of type_expression Row.t
+  | T_union of type_expression Union.t
   | T_record of type_expression Row.t
   | T_arrow of ty_expr Arrow.t
   | T_singleton of Literal_value.t
@@ -84,6 +82,10 @@ type expression_content =
   (* Variant *)
   | E_constructor of expr Constructor.t (* For user defined constructors *)
   | E_matching of (expr, ty_expr) Match_expr.t
+  (* Unions *)
+  | E_union_injected of (expr, ty_expr) Union.Injected.t
+  | E_union_match of (expr, ty_expr) Union.Match.t
+  | E_union_use of expr Union.Use.t
   (* Record *)
   | E_record of expr Record.t
   | E_accessor of expr Accessor.t

@@ -59,7 +59,7 @@ let rec decompile_expression : I.expression -> O.expression =
       O.Match_expr.{ pattern; body }
     in
     let cases = List.map ~f cases in
-    return (O.E_matching { matchee; disc_label = None; cases })
+    return (O.E_matching { matchee; cases })
   | E_let_in { let_binder; rhs; let_result; attributes } ->
     let rhs = self rhs in
     let let_result = self let_result in
@@ -139,7 +139,7 @@ and decompile_type : I.type_expression -> O.type_expression =
     return (O.T_constant { language; injection; parameters })
   | T_sum { fields; layout } ->
     let fields = Record.map ~f:decompile_type fields in
-    return (O.T_sum ({ fields; layout }, None))
+    return (O.T_sum { fields; layout })
   | T_record { fields; layout } ->
     let fields = Record.map ~f:decompile_type fields in
     return (O.T_record { fields; layout })

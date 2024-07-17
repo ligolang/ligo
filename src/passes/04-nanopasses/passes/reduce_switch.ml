@@ -163,7 +163,9 @@ let switch_to_decl loc Switch.{ subject; cases } : statement Nonempty_list.t =
   let grouped_switch_cases : (expr * statement list) list =
     List.mapi
       ~f:(fun i group ->
-        let test_ = Variable.fresh ~loc ~name:("g" ^ string_of_int i) () in
+        let test_ =
+          Variable.fresh ~loc ~name:("switch_case_condition_" ^ string_of_int i) ()
+        in
         let test_var = e_variable ~loc test_ in
         let test_decl =
           (* build one matching condition for each groups:

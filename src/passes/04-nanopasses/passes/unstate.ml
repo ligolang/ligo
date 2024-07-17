@@ -227,7 +227,7 @@ and instr ~(raise : _ Trace.raise) : instruction -> Statement_result.t =
       *))
   | I_skip -> Binding Fun.id
   | I_call (f, args) -> Binding (fun x -> let_ignore_in (e_call ~loc f args) x)
-  | I_case { expr; disc_label; cases } ->
+  | I_case { expr; cases } ->
     if List.for_all (Nonempty_list.to_list cases) ~f:(fun x ->
            Statement_result.is_not_returning (clause ~raise x.rhs))
     then (
@@ -239,7 +239,7 @@ and instr ~(raise : _ Trace.raise) : instruction -> Statement_result.t =
               Case.{ pattern; rhs })
             cases
         in
-        e_match ~loc { expr; disc_label; cases }
+        e_match ~loc { expr; cases }
       in
       Binding (fun hole -> let_unit_in match_ hole))
     else
@@ -252,7 +252,7 @@ and instr ~(raise : _ Trace.raise) : instruction -> Statement_result.t =
                 Case.{ pattern; rhs })
               cases
           in
-          e_match ~loc { expr; disc_label; cases })
+          e_match ~loc { expr; cases })
   | I_cond { test; ifso; ifnot } ->
     let ifso_res = clause ~raise ifso in
     let ifnot_res_opt = Option.map ~f:(clause ~raise) ifnot in

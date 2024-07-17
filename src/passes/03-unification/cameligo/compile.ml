@@ -329,7 +329,7 @@ let rec expr : Eq.expr -> Folding.expr =
       Nonempty_list.map ~f:(compile_case_clause <@ r_fst)
       @@ Utils.nsepseq_to_ne_list cases
     in
-    Location.wrap ~loc @@ O.E_match { expr = subject; disc_label = None; cases }
+    Location.wrap ~loc @@ O.E_match { expr = subject; cases }
   | E_Typed a ->
     let e, (_, te) = a.value.inside in
     ret @@ E_annot (e, te)
@@ -440,7 +440,7 @@ let rec ty_expr : Eq.ty_expr -> Folding.ty_expr =
       let lst = List.map (Utils.nsepseq_to_list variants) ~f:(compile_variant <@ r_fst) in
       TODO_do_in_parsing.compile_rows lst
     in
-    ret @@ T_sum_raw (sum, None)
+    ret @@ T_sum_raw sum
   | T_Record { value; region = _ } ->
     let elements = TODO_do_in_parsing.should_be_nseq value.inside in
     let fields =

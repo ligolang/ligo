@@ -76,3 +76,8 @@ and decl = declaration [@@deriving eq, compare, yojson, hash]
 
 type context = declaration list [@@deriving eq, compare, yojson, hash]
 type program = context * expression
+
+(** Since unions are expanded to match in [Self_ast_typed], they are no longer there by the time we get to [Ast_aggregated],
+but we currently have constructors for them in [Ast_aggregated] for performance reasons. This functions is meant to be used to reject
+the induced superfluous cases. *)
+let impossible_because_no_union_in_ast_aggregated () = assert false

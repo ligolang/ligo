@@ -18,7 +18,8 @@ let rec type_content_impl type_expression_impl : formatter -> type_content -> un
        these, since we convert to [T_variable] appending a ^ to it. *)
     let name = Format.asprintf "%a" Type_var.pp tv in
     Format.fprintf ppf "^%s" @@ String.chop_prefix_if_exists ~prefix:"^" name
-  | T_sum (row, _) -> Row.PP.sum_type type_expression_impl layout ppf row
+  | T_sum row -> Row.PP.sum_type type_expression_impl layout ppf row
+  | T_union union -> Union.pp type_expression_impl ppf union
   | T_record row -> Row.PP.tuple_or_record_type type_expression_impl layout ppf row
   | T_arrow a -> Arrow.pp type_expression_impl ppf a
   | T_constant tc -> type_injection ppf tc
@@ -120,6 +121,9 @@ and expression_content ppf (ec : expression_content) =
   | E_lambda l -> Lambda.pp expression type_expression ppf l
   | E_type_abstraction e -> Type_abs.pp expression ppf e
   | E_matching m -> Types.Match_expr.pp expression type_expression_annot ppf m
+  | E_union_injected a -> Union.Injected.pp expression type_expression ppf a
+  | E_union_match m -> Union.Match.pp expression type_expression ppf m
+  | E_union_use a -> Union.Use.pp expression ppf a
   | E_recursive r -> Recursive.pp expression type_expression ppf r
   | E_let_in { let_binder; rhs; let_result; attributes = { hidden = false; _ } as attr }
     ->

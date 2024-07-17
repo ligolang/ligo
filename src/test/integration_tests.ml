@@ -2500,38 +2500,38 @@ let while_and_for_loops_jsligo ~raise () : unit =
 
 let disc_union_jsligo ~raise () : unit =
   let program = type_file ~raise "./contracts/disc_union.jsligo" in
-  let data1, data2 =
-    ( e_constructor ~loc "Increment" (e_record_ez ~loc [ "amount", e_int ~loc 42 ])
-    , e_int ~loc 22 )
+  let make_operation kind summand_index amount =
+    e_constructor
+      (Format.sprintf "Union.Injection_%i" summand_index)
+      ~loc
+      (e_record_ez
+         ~loc
+         [ "kind", e_string_singleton ~loc kind; "amount", e_int ~loc amount ])
   in
+  let data1, data2 = make_operation "Increment" 0 42, e_int ~loc 22 in
   let _ = expect_eq_twice ~raise program "check" data1 data2 (e_int ~loc 64) in
-  let data1, data2 =
-    ( e_constructor ~loc "Decrement" (e_record_ez ~loc [ "amount", e_int ~loc 5 ])
-    , e_int ~loc 22 )
-  in
+  let data1, data2 = make_operation "Decrement" 1 5, e_int ~loc 22 in
   let _ = expect_eq_twice ~raise program "check" data1 data2 (e_int ~loc 17) in
   ()
 
 
 let func_object_destruct_jsligo ~raise () : unit =
   let program = type_file ~raise "./contracts/jsligo_destructure_object.jsligo" in
-  let data =
-    e_record_ez
+  let make_color color summand_index =
+    e_constructor
       ~loc
-      [ "bar", e_record_ez ~loc [ "color", e_constructor ~loc "red" (e_unit ~loc) ] ]
+      (Format.sprintf "Union.Injection_%i" summand_index)
+      (e_record_ez ~loc [ "kind", e_string_singleton ~loc color ])
   in
+  let bar_of_color color =
+    e_record_ez ~loc [ "bar", e_record_ez ~loc [ "color", color ] ]
+  in
+  let make_bar color summand_index = bar_of_color (make_color color summand_index) in
+  let data = make_bar "red" 0 in
   let _ = expect_eq ~raise program "x" data (e_int ~loc 1) in
-  let data =
-    e_record_ez
-      ~loc
-      [ "bar", e_record_ez ~loc [ "color", e_constructor ~loc "white" (e_unit ~loc) ] ]
-  in
+  let data = make_bar "white" 1 in
   let _ = expect_eq ~raise program "x" data (e_int ~loc 2) in
-  let data =
-    e_record_ez
-      ~loc
-      [ "bar", e_record_ez ~loc [ "color", e_constructor ~loc "blue" (e_unit ~loc) ] ]
-  in
+  let data = make_bar "blue" 2 in
   let _ = expect_eq ~raise program "x" data (e_int ~loc 5) in
   ()
 
@@ -2562,19 +2562,28 @@ let func_tuple_destruct_jsligo ~raise () : unit =
 
 let switch_return_jsligo ~raise () : unit =
   let program = type_file ~raise "./contracts/switch_return.jsligo" in
-  let data =
-    e_constructor ~loc "Increment" (e_record_ez ~loc [ "amount", e_int ~loc 42 ])
+  let wrap_operation summand_index operation =
+    e_constructor (Format.sprintf "Union.Injection_%i" summand_index) ~loc operation
   in
+  let make_operation_with_amount kind summand_index amount =
+    wrap_operation
+      summand_index
+      (e_record_ez
+         ~loc
+         [ "kind", e_string_singleton ~loc kind; "amount", e_int ~loc amount ])
+  in
+  let make_operation_without_arguments kind summand_index =
+    wrap_operation
+      summand_index
+      (e_record_ez ~loc [ "kind", e_string_singleton ~loc kind ])
+  in
+  let data = make_operation_with_amount "Increment" 0 42 in
   let _ = expect_eq ~raise program "check" data (e_int ~loc 51) in
-  let data =
-    e_constructor ~loc "Decrement" (e_record_ez ~loc [ "amount", e_int ~loc 5 ])
-  in
+  let data = make_operation_with_amount "Decrement" 1 5 in
   let _ = expect_eq ~raise program "check" data (e_int ~loc 2) in
-  let data =
-    e_constructor ~loc "Decrement" (e_record_ez ~loc [ "amount", e_int ~loc 3 ])
-  in
+  let data = make_operation_with_amount "Decrement" 1 3 in
   let _ = expect_eq ~raise program "check" data (e_int ~loc 5) in
-  let data = e_constructor ~loc "Reset" (e_unit ~loc) in
+  let data = make_operation_without_arguments "Reset" 2 in
   let _ = expect_eq ~raise program "check" data (e_int ~loc 3) in
   let _ = expect_eq ~raise program "check2" (e_int ~loc 0) (e_int ~loc 11) in
   let _ = expect_eq ~raise program "check2" (e_int ~loc 1) (e_int ~loc 5) in

@@ -62,7 +62,7 @@ let fv_folder =
         add bound result
       in
       add fun_name b_lamb
-    | E_match { expr = _; disc_label = _; cases } ->
+    | E_match { expr = _; cases } ->
       let f Case.{ pattern; rhs } =
         match pattern with
         | None -> []

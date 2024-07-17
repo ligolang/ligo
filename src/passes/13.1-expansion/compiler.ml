@@ -130,12 +130,13 @@ and compile_type ~(raise : _ Trace.raise) : I.type_expression -> O.type_expressi
   | T_exists _ -> raise.error @@ cannot_compile_texists ty ty.location
   | T_constant { language; injection; parameters } ->
     return (T_constant { language; injection; parameters = List.map parameters ~f:self })
-  | T_sum (r, _) -> return (T_sum (I.Row.map self r))
+  | T_sum r -> return (T_sum (I.Row.map self r))
   | T_record r -> return (T_record (I.Row.map self r))
   | T_arrow x -> return (T_arrow (Arrow.map self x))
   | T_singleton x -> return (T_singleton x)
   | T_abstraction x -> return (T_for_all (Abstraction.map self x))
   | T_for_all x -> return (T_for_all (Abstraction.map self x))
+  | T_union _ -> Ast_aggregated.impossible_because_no_union_in_ast_aggregated ()
 
 
 and compile_matching ~(raise : _ Trace.raise)

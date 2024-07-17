@@ -20,7 +20,7 @@ let compile ~raise =
     let same = make_e ~loc e.wrap_content in
     match Location.unwrap e with
     | E_match_tc39 { subject; match_clauses = DefaultClause expr } ->
-      e_match ~loc { expr = subject; disc_label = None; cases = [ wild_case expr ] }
+      e_match ~loc { expr = subject; cases = [ wild_case expr ] }
     | E_match_tc39 { subject; match_clauses = AllClauses (clauses, default_opt) } ->
       let clauses =
         Nonempty_list.map
@@ -32,7 +32,7 @@ let compile ~raise =
         Option.value_map default_opt ~default:clauses ~f:(fun expr ->
             Ne_list.append clauses [ wild_case expr ])
       in
-      e_match ~loc { expr = subject; disc_label = None; cases }
+      e_match ~loc { expr = subject; cases }
     | _ -> same
   in
   Fold { idle_fold with expr }

@@ -55,8 +55,9 @@ let map_core_type_content_in_type_expression
  fun f ->
   let open Ligo_prim in
   let rec type_content : Ast_core.type_content -> Ast_core.type_content = function
-    | T_sum (t, label) -> T_sum (row t, label)
+    | T_sum t -> T_sum (row t)
     | T_record t -> T_record (row t)
+    | T_union union -> T_union (Union.map type_expression union)
     | T_arrow { type1; type2; param_names } ->
       T_arrow
         { type1 = type_expression type1; type2 = type_expression type2; param_names }
@@ -101,6 +102,7 @@ let map_core_type_expression_module_path
         | [] -> T_variable t.element
         | _ :: _ -> T_module_accessor module_access)
       | ( T_sum _
+        | T_union _
         | T_record _
         | T_arrow _
         | T_abstraction _
@@ -121,7 +123,8 @@ let rec map_typed_type_expression_module_path
     | T_constant { language; injection; parameters } ->
       T_constant
         { language; injection; parameters = List.map parameters ~f:type_expression }
-    | T_sum (t, orig_label) -> T_sum (row t, orig_label)
+    | T_sum t -> T_sum (row t)
+    | T_union union -> T_union (Union.map type_expression union)
     | T_record t -> T_record (row t)
     | T_arrow { type1; type2; param_names } ->
       T_arrow
