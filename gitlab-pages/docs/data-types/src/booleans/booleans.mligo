@@ -1,2 +1,2 @@
-let a: bool = true
-let b: bool = false
+let a : bool = true
+let b : bool = false

@@ -56,7 +56,7 @@ const sum: tez = 5mutez + 1tez;
 
 Since subtracting two amounts could result in a negative amount,
 subtraction of two `tez` amounts result in an
-[optional amount](../variants/options.md), like so:
+[optional amount](.././data-types/variants#options), like so:
 
 <Syntax syntax="cameligo">
 

@@ -9,4 +9,4 @@ const n: nat = nat(0x7B); // n == 123n
 const i: int = int(0x7B); // i == 123
 const from_ascii: bytes = bytes`foo`; // Not a call
 // raw == from_ascii
-const raw: bytes = "666f6f";
+const raw: bytes = ("666f6f" as bytes);
