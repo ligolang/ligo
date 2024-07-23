@@ -12,7 +12,7 @@ This feature is not available in CameLIGO."
 <Syntax syntax="jsligo">
 
 TypeScript developers are familiar with the `switch` statement. By
-contrast, [pattern matching](../variants/matching.md) is a conditional
+contrast, [pattern matching](../data-types/variants#matching) is a conditional
 expression that destructures a value of almost any type to control the
 flow of execution. Switches only work on simple types, like `int`,
 `nat`, `bool`, `string` etc., which makes them akin to *enumerated

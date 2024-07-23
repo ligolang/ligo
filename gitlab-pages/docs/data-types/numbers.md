@@ -299,4 +299,4 @@ const d : nat = 120  % 9n; // int % nat yields nat
 </Syntax>
 
 > It is possible to obtain both the quotient and remainder together, by
-> means of the predefined function `ediv`: See [optional values](../variants/options.md).
+> means of the predefined function `ediv`: See [Euclidean division](./variants#euclidean-division).

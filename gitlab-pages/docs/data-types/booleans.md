@@ -9,7 +9,7 @@ The predefined type `bool` has exactly two values: `true` and `false`.
 
 <Syntax syntax="cameligo">
 
-```cameligo skip
+```cameligo group=booleans
 let a : bool = true
 let b : bool = false
 ```
@@ -18,7 +18,7 @@ let b : bool = false
 
 <Syntax syntax="jsligo">
 
-```jsligo skip
+```jsligo group=booleans
 const a: bool = true;
 const b: bool = false;
 ```
@@ -33,7 +33,7 @@ The logical disjunction ("or") is implemented by the binary operator
 `||`:
 
 
-```cameligo skip
+```cameligo group=or
 let or_1 : bool = false || true  // true
 let or_2 : bool = false || false // false
 let or_3 : bool = true  || true  // true
@@ -43,7 +43,7 @@ let or_4 : bool = true  || false // true
 Note that you can also use the keyword `or` instead of the symbol `||`
 (as in OCaml):
 
-```cameligo skip
+```cameligo group=or
 let or_1 : bool = false or true  // true
 let or_2 : bool = false or false // false
 let or_3 : bool = true  or true  // true
@@ -57,7 +57,7 @@ let or_4 : bool = true  or false // true
 The logical disjunction ("or") is implemented by the binary operator
 `||`.
 
-```jsligo skip
+```jsligo group=or
 const or_1: bool = false || true;  // true
 const or_2: bool = false || false; // false
 const or_3: bool = true  || true;  // true
@@ -73,7 +73,7 @@ The logical conjunction ("and") is implemented by the binary operator
 
 <Syntax syntax="cameligo">
 
-```cameligo skip
+```cameligo group=conjunction
 let and_1 : bool = false && true  // false
 let and_2 : bool = false && false // false
 let and_3 : bool = true  && true  // true
@@ -84,7 +84,7 @@ let and_4 : bool = true  && false // false
 
 <Syntax syntax="jsligo">
 
-```jsligo skip
+```jsligo group=conjunction
 const and_1: bool = false && true;  // false
 const and_2: bool = false && false; // false
 const and_3: bool = true  && true;  // true
@@ -100,7 +100,7 @@ const and_4: bool = true  && false; // false
 The logical negation ("not") is implemented by the unary operator
 `not`.
 
-```cameligo skip
+```cameligo group=not
 let not_1 : bool = not true  // false
 let not_2 : bool = not false // true
 ```
@@ -112,7 +112,7 @@ let not_2 : bool = not false // true
 The logical negation ("not") is implemented by the unary operator
 `!`.
 
-```jsligo skip
+```jsligo group=not
 const not_1: bool = !true  // false
 const not_2: bool = !false // true
 ```
@@ -130,7 +130,7 @@ operators are overloaded so they are defined on all comparable types.
 
 <Syntax syntax="cameligo">
 
-```cameligo skip
+```cameligo group=comparing
 let a : bool = 1 = 1   // equality (true)
 let b : bool = 1 <> 0  // inequality (true)
 let c : bool = 1 > 0   // greater than (true)
@@ -143,7 +143,7 @@ let f : bool = 0 <= 0  // lower than or equal (true)
 
 <Syntax syntax="jsligo">
 
-```jsligo skip
+```jsligo group=comparing
 const a: bool = 1 == 1;  // equality (true)
 const b: bool = 1 != 0;  // inequality (true)
 const c: bool = 1 > 0;   // greater than (true)
@@ -172,7 +172,7 @@ A conditional expression is made of three parts:
 The syntax uses the keywords `if`, `then` and `else` to separate the
 three parts, like so:
 
-```cameligo skip
+```cameligo group=conditionals
 let a = 0
 let b = 1
 let min = if a < b then a else b // min = 0
@@ -185,7 +185,7 @@ let min = if a < b then a else b // min = 0
 The syntax uses a ternary operator with the symbols `?` and `:` to
 separate the three parts:
 
-```jsligo skip
+```jsligo group=conditionals
 const a = 0;
 const b = 1;
 const min = (a < b) ? a : b; // min == 0

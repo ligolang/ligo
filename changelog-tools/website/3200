@@ -1,0 +1,7 @@
+
+author: timothymcmackin
+description: "\\nMerges documentation pages on complex data types and moves them to /docs/data-types.\\n\\n"
+merge_request: '3200'
+title: "[doc] Consolidate complex data types"
+type: added
+            
