@@ -48,7 +48,12 @@ let test_expression (raw_options : Raw_options.t) expr source_file =
         Option.value_map source_file ~f ~default
       in
       let typed =
-        Ligo_compile.Utils.type_expression ~raise ~options syntax expr init_prg.pr_sig
+        Ligo_compile.Utils.type_expression
+          ~raise
+          ~options
+          syntax
+          expr
+          (Checking.Persistent_env.of_init_sig init_prg.pr_sig)
       in
       let%map b, v = Interpreter.eval_expression ~raise ~steps ~options init_prg typed in
       (b, [ "eval", v ]), [] )
@@ -229,7 +234,9 @@ let evaluate_call
         Compile.Of_core.compile_expression
           ~raise
           ~options
-          ~context:(Ast_typed.to_signature init_prog.pr_module)
+          ~context:
+            (Checking.Persistent_env.of_init_sig
+            @@ Ast_typed.to_signature init_prog.pr_module)
           app
       in
       let app_aggregated =

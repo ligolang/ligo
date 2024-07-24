@@ -785,7 +785,7 @@ module Typing_env = struct
   let resolve
       ~(raise : (Main_errors.all, Main_warnings.all) Trace.raise)
       ~(options : Compiler_options.middle_end)
-      ~(stdlib_env : Ast_typed.signature)
+      ~(stdlib_env : Checking.Persistent_env.t)
       ~(bindings : t)
       (prg : Ast_core.program)
       : Ast_typed.program * t
@@ -913,7 +913,14 @@ let resolve
  fun ~raise ~options ~stdlib_decls ~module_env prg ->
   let stdlib_env = Ast_typed.to_extended_signature stdlib_decls in
   let bindings = Typing_env.init stdlib_decls.pr_module module_env in
-  let tprg, bindings = Typing_env.resolve ~raise ~options ~stdlib_env ~bindings prg in
+  let tprg, bindings =
+    Typing_env.resolve
+      ~raise
+      ~options
+      ~stdlib_env:(Checking.Persistent_env.of_init_sig stdlib_env)
+      ~bindings
+      prg
+  in
   (* TODO: which pass should we run first? *)
   let tprg = Typing_env.self_ast_typed_pass ~raise ~options tprg in
   let tprg = Typing_env.signature_sort_pass ~raise ~options tprg in

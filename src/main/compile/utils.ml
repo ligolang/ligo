@@ -131,7 +131,9 @@ let compile_contract_input
   in
   let core = Of_unified.compile_expression ~raise ~options unified in
   let typed =
-    let context = Ast_typed.to_signature init_prog.pr_module in
+    let context =
+      Checking.Persistent_env.of_init_sig @@ Ast_typed.to_signature init_prog.pr_module
+    in
     Of_core.compile_expression ~raise ~options ~context core
   in
   let aggregated =
