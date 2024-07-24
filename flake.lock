@@ -803,11 +803,11 @@
     "tezos-ligo": {
       "flake": false,
       "locked": {
-        "lastModified": 1718272463,
-        "narHash": "sha256-RDF1F8oxu5TfKfvjl3ZzJKcnK8o9mOJo9FgpggUmZiE=",
+        "lastModified": 1721315580,
+        "narHash": "sha256-ZT6NYa640yiLBYOTGbXEzaTWR0dL4sH9bs0E0OKrLm8=",
         "owner": "ligolang",
         "repo": "tezos-ligo",
-        "rev": "556325b0c11fa2484d1e3e03f1dc91b384964ea9",
+        "rev": "68fd3b07a23914bab33fda5f7b70e329272088e5",
         "type": "gitlab"
       },
       "original": {
