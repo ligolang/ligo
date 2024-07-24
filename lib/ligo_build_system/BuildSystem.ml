@@ -36,6 +36,7 @@ module type M = sig
   type raw_input = Source_input.raw_input
   type code_input = Source_input.code_input
   type module_name = string
+  type imports = file_name list
   type compilation_unit
   type meta_data
 
@@ -55,15 +56,23 @@ module type M = sig
     val link : t -> t -> t
     val link_interface : interface -> interface -> interface
     val init_env : environment
-    val add_module_to_environment : module_name -> interface -> environment -> environment
+
+    val add_module_to_environment
+      :  file_name
+      -> module_name
+      -> imports
+      -> interface
+      -> environment
+      -> environment
+
     val add_interface_to_environment : interface -> environment -> environment
 
     (* This should probably be taken in charge be the compiler, which should be able to handle "libraries" *)
-    val make_module_in_ast : module_name -> t -> interface -> t -> t
+    val make_module_in_ast : module_name -> t -> t -> t
     val make_module_in_interface : module_name -> interface -> interface -> interface
   end
 
-  val link_imports : AST.t -> objs:(AST.t * AST.interface) SMap.t -> AST.t
+  val link_imports : AST.t -> intfs:AST.environment -> AST.t
 
   val compile
     :  AST.environment
@@ -86,7 +95,8 @@ module Make (M : M) = struct
   type graph = G.t * vertice SMap.t
   type error = Errors.t
   type ast = M.AST.t
-  type env = M.AST.environment
+  type obj_env = ast SMap.t
+  type intf_env = M.AST.environment
   type interface = M.AST.interface
   type 'a build_error = ('a, error) result
 
@@ -135,25 +145,14 @@ module Make (M : M) = struct
       let order = TopSort.fold aux dep_g [] in
       Ok order)
 
-  let link ~objs linking_order =
-    (* Add the module at the beginning of the file *)
-    let aux map (file_name, (mangled_name, _, _, _deps_lst)) =
-      let ast, intf =
-        match SMap.find_opt file_name objs with
-        | Some ast -> ast
-        | None -> failwith "failed to find module"
-      in
-      let map = SMap.add mangled_name (ast, intf) map in
-      map
-    in
-    let mangled_objs = List.fold ~f:aux ~init:SMap.empty linking_order in
+  let link ~(objs : obj_env) ~(intfs : intf_env) linking_order =
     (* Separate the program and the dependency (those are process differently) *)
     let (file_name, (_, _, _, _deps_lst)), linking_order =
       match List.rev linking_order with
       | [] -> failwith "compiling nothing"
       | hd :: tl -> hd, tl
     in
-    let contract, contract_intf =
+    let contract =
       match SMap.find_opt file_name objs with
       | Some ast -> ast
       | None -> failwith "failed to find module"
@@ -162,63 +161,37 @@ module Make (M : M) = struct
     let add_modules (file_name, (mangled_name, _, _, _deps_lst)) =
       let module_binder = mangled_name in
       (* Get the ast_type of the module *)
-      let ast_typed, interface =
+      let ast_typed =
         match SMap.find_opt file_name objs with
         | Some ast -> ast
         | None -> failwith "failed to find module"
       in
-      module_binder, ast_typed, interface
+      module_binder, ast_typed
     in
     let header_list = List.map ~f:add_modules @@ linking_order in
-    let contract, contract_intf =
+    let contract =
       List.fold_left
-        ~f:(fun (c, ci) (module_binder, ast, interface) ->
-          ( M.AST.make_module_in_ast module_binder ast interface c
-          , M.AST.make_module_in_interface module_binder interface ci ))
-        ~init:(contract, contract_intf)
+        ~f:(fun c (module_binder, ast) -> M.AST.make_module_in_ast module_binder ast c)
+        ~init:contract
         header_list
     in
     (* Link the stdlib *)
     let contract = M.AST.link (M.lib_ast ()) contract in
-    let contract_intf = M.AST.link_interface (M.lib_interface ()) contract_intf in
     (* Finally link all the imports *)
-    let contract = M.link_imports contract ~objs:mangled_objs in
-    contract, contract_intf
+    let contract = M.link_imports contract ~intfs in
+    contract
 
-  let add_modules_in_env (env : M.AST.environment) deps =
-    let aux env (module_name, (_, intf)) =
-      M.AST.add_module_to_environment module_name intf env
-    in
-    List.fold_left ~f:aux ~init:env deps
-
-  let add_deps_to_env
-      (asts_typed : (ast * interface) SMap.t)
-      (_file_name, (_meta, _c_unit, deps))
+  let compile_file_with_deps
+      ((objs, intfs) : obj_env * intf_env)
+      (file_name, (mangled_name, meta, c_unit, _deps))
     =
-    let aux (file_name, module_name) =
-      let ast_typed =
-        match SMap.find_opt file_name asts_typed with
-        | Some ast -> ast
-        | None ->
-          failwith
-            ("Failed for "
-            ^ file_name
-            ^ " File typed before dependency. The build system is broken, contact the \
-               devs")
-      in
-      module_name, ast_typed
+    let imports = List.map ~f:(fun (x, _) -> x) _deps in
+    let ast, ast_intf = M.compile intfs file_name meta c_unit in
+    let intfs =
+      M.AST.add_module_to_environment file_name mangled_name imports ast_intf intfs
     in
-    let deps = List.map ~f:aux deps in
-    let init_env =
-      M.AST.add_interface_to_environment (M.lib_interface ()) M.AST.init_env
-    in
-    let env_with_deps = add_modules_in_env init_env deps in
-    env_with_deps
-
-  let compile_file_with_deps asts (file_name, (_mangled_name, meta, c_unit, deps)) =
-    let env_with_deps = add_deps_to_env asts (file_name, (meta, c_unit, deps)) in
-    let ast, ast_intf = M.compile env_with_deps file_name meta c_unit in
-    SMap.add file_name (ast, ast_intf) asts
+    let objs = SMap.add file_name ast objs in
+    objs, intfs
 
   let compile_unqualified : code_input -> ast build_error =
    fun main_code_input ->
@@ -226,20 +199,28 @@ module Make (M : M) = struct
     let main_file_name = Source_input.id_of_code_input main_code_input in
     match solve_graph deps main_file_name with
     | Ok ordered_deps ->
-      let asts_typed =
-        List.fold ~f:compile_file_with_deps ~init:SMap.empty ordered_deps
+      let init_env =
+        M.AST.add_interface_to_environment (M.lib_interface ()) M.AST.init_env
       in
-      Ok (fst @@ SMap.find main_file_name asts_typed)
+      let objs, _ =
+        List.fold ~f:compile_file_with_deps ~init:(SMap.empty, init_env) ordered_deps
+      in
+      Ok (SMap.find main_file_name objs)
     | Error e -> Error e
 
-  let compile_qualified : code_input -> (ast * interface) build_error =
+  let compile_qualified : code_input -> ast build_error =
    fun code_input ->
     let deps = dependency_graph code_input in
     let file_name = Source_input.id_of_code_input code_input in
     match solve_graph deps file_name with
     | Ok linking_order ->
-      let objs = List.fold ~f:compile_file_with_deps ~init:SMap.empty linking_order in
-      let contract, contract_interface = link ~objs linking_order in
-      Ok (contract, contract_interface)
+      let init_env =
+        M.AST.add_interface_to_environment (M.lib_interface ()) M.AST.init_env
+      in
+      let objs, intfs =
+        List.fold ~f:compile_file_with_deps ~init:(SMap.empty, init_env) linking_order
+      in
+      let contract = link ~objs ~intfs linking_order in
+      Ok contract
     | Error e -> Error e
 end
