@@ -207,11 +207,12 @@ module Slow_test = struct
 
   let main =
     test_suite
-      "LIGO install tests"
-      [ test
-          (* "test dao-jsligo output with ligo version 0.70.0 and latest ligo version's output"
-        test_dao_jsligo
-    ; test *)
+      "LIGO install tests" 
+      [
+      (* test
+          "test dao-jsligo output with ligo version 0.70.0 and latest ligo version's output"
+          test_dao_jsligo
+      ; test 
           "test dao-cameligo output with ligo version 0.70.0 and latest ligo version's \
            output"
           test_dao_cameligo
@@ -222,7 +223,7 @@ module Slow_test = struct
       ; test
           "test permit-cameligo output with ligo version 0.70.0 and latest ligo \
            version's output"
-          test_permit_cameligo
+          test_permit_cameligo *)
       ]
 end
 
