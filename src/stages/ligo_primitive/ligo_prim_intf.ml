@@ -1,12 +1,12 @@
 module type S1 = sig
-  type 'a t [@@deriving compare, eq, fold, hash, iter, map, sexp, yojson]
+  type 'a t [@@deriving compare, eq, fold, hash, iter, map, sexp, yojson, bin_io]
 
   val pp : (Format.formatter -> 'a -> unit) -> Format.formatter -> 'a t -> unit
   val fold_map : ('acc -> 'a1 -> 'acc * 'a2) -> 'acc -> 'a1 t -> 'acc * 'a2 t
 end
 
 module type S2 = sig
-  type ('a, 'b) t [@@deriving compare, eq, fold, hash, iter, map, sexp, yojson]
+  type ('a, 'b) t [@@deriving compare, eq, fold, hash, iter, map, sexp, yojson, bin_io]
 
   val pp
     :  (Format.formatter -> 'a -> unit)

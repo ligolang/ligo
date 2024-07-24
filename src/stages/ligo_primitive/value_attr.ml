@@ -19,7 +19,7 @@ type t =
     deprecated : string option
   ; leading_comments : string list
   }
-[@@deriving eq, compare, yojson, hash]
+[@@deriving eq, compare, yojson, hash, bin_io]
 
 open Format
 

@@ -14,10 +14,12 @@
   unix
   zarith
   str
-  uri)
+  uri
+  bin_prot)
  (preprocess
   (pps
    ppx_jane
+   ppx_bin_prot
    ppx_deriving.eq
    ppx_deriving.iter
    ppx_deriving.map
