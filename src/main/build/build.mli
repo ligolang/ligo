@@ -15,6 +15,7 @@ module M : functor (Params : Params) -> sig
   type module_name = string
   type compilation_unit = Buffer.t
   type meta_data = Ligo_compile.Helpers.meta
+  type imports = file_name list
 end
 
 module Separate : functor (Params : Params) -> sig
@@ -28,7 +29,7 @@ module Separate : functor (Params : Params) -> sig
   module AST : sig
     type t = Ast_typed.program
     type interface = Ast_typed.signature
-    type environment = Ast_typed.sig_item list
+    type environment = Checking.Persistent_env.t
   end
 end
 
