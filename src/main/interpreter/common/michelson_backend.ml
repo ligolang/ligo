@@ -1369,36 +1369,14 @@ let rec compile_value ~raise ~options ~loc
             "Expected sum type but got %a"
             Ast_aggregated.PP.type_expression
             ty)
-  | V_Record map when is_t_record ty ->
-    let map_ty =
-      Trace.trace_option
-        ~raise
-        (Errors.generic_error
-           loc
-           (Format.asprintf
-              "Expected record type but got %a"
-              Ast_aggregated.PP.type_expression
-              ty))
-      @@ get_t_record_opt ty
+  | V_Record map when is_t_ticket ty ->
+    let content_ty =
+      Trace.trace_option ~raise (Errors.generic_error loc "Impossible: expected a ticket")
+      @@ get_t_ticket ty
     in
-    let%map map_kv =
-      Lwt.map Ligo_prim.Record.of_list
-      @@ Lwt_list.map_s (fun (l, v) ->
-             let ty = Ligo_prim.Record.find map_ty.fields l in
-             let%map v = self v ty in
-             l, v)
-      @@ Ligo_prim.Record.to_list map
-    in
-    Trace.trace ~raise Main_errors.spilling_tracer
-    @@ Spilling.Layout.from_layout
-         (fun types ->
-           let types = List.map ~f:snd (Nonempty_list.to_list types) in
-           match types with
-           | [] -> Tezos_micheline.Micheline.Prim ((), "Unit", [], [])
-           | [ type_ ] -> type_
-           | types -> Tezos_micheline.Micheline.Prim ((), "Pair", types, []))
-         map_kv
-         map_ty.layout
+    let forged_ticket_ty = Ast_aggregated.t_forged_ticket ~loc content_ty in
+    compile_record ~raise ~options ~loc map forged_ticket_ty
+  | V_Record map when is_t_record ty -> compile_record ~raise ~options ~loc map ty
   | V_List lst ->
     let lst_ty =
       Trace.trace_option
@@ -1585,6 +1563,40 @@ let rec compile_value ~raise ~options ~loc
             v
             Ast_aggregated.PP.type_expression
             ty)
+
+
+and compile_record ~raise ~options ~loc map ty =
+  let open Lwt.Let_syntax in
+  let open Ast_aggregated in
+  let map_ty =
+    Trace.trace_option
+      ~raise
+      (Errors.generic_error
+         loc
+         (Format.asprintf
+            "Expected record type but got %a"
+            Ast_aggregated.PP.type_expression
+            ty))
+    @@ get_t_record_opt ty
+  in
+  let%map map_kv =
+    Lwt.map Ligo_prim.Record.of_list
+    @@ Lwt_list.map_s (fun (l, v) ->
+           let ty = Ligo_prim.Record.find map_ty.fields l in
+           let%map v = compile_value ~raise ~options ~loc v ty in
+           l, v)
+    @@ Ligo_prim.Record.to_list map
+  in
+  Trace.trace ~raise Main_errors.spilling_tracer
+  @@ Spilling.Layout.from_layout
+       (fun types ->
+         let types = List.map ~f:snd (Nonempty_list.to_list types) in
+         match types with
+         | [] -> Tezos_micheline.Micheline.Prim ((), "Unit", [], [])
+         | [ type_ ] -> type_
+         | types -> Tezos_micheline.Micheline.Prim ((), "Pair", types, []))
+       map_kv
+       map_ty.layout
 
 
 let compile_type_to_mcode ~raise

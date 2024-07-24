@@ -1,0 +1,7 @@
+
+author: alistair.obrien
+description: "\\n\\nfix(interpreter): allow performing operations on tickets in tests\\n\\nFor instance, the following demonstrates the use of `create_ticket` and `read_ticket`,\\nwhich previously resulted in an error.\\n\\n```mligo\\nlet () = \\n  let ticket = Tezos.create_ticket \"Hi\" 10n in \\n  let (ticketer, _, _, _) = Tezos.read_ticket ticket in \\n  Test.log ticketer\\n\\n```\\n\\n"
+merge_request: '3237'
+title: "fix(interpreter): allow performing operations on tickets in tests"
+type: fixed
+            

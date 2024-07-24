@@ -1,7 +1,123 @@
 open Cli_expect
 
 let test basename = "./" ^ basename
+
 let pwd = Sys_unix.getcwd ()
+let () = Sys_unix.chdir "../../test/contracts/interpreter_tests/"
+
+let%expect_test _ =
+  run_ligo_good [ "run"; "test"; test "tickets.mligo" ];
+  [%expect{|
+    File "./tickets.mligo", line 5, characters 58-70:
+      4 | let () =
+      5 |     let ticket0 = Tezos.create_ticket content0 amount0 |> Option.unopt in
+                                                                    ^^^^^^^^^^^^
+      6 |     let ((ticketer, (content1, amount1)), ticket0) = Tezos.read_ticket ticket0 in
+    :
+    Warning: deprecated value.
+    Use `Option.value_with_error` instead.
+
+    File "./tickets.mligo", line 5, characters 18-37:
+      4 | let () =
+      5 |     let ticket0 = Tezos.create_ticket content0 amount0 |> Option.unopt in
+                            ^^^^^^^^^^^^^^^^^^^
+      6 |     let ((ticketer, (content1, amount1)), ticket0) = Tezos.read_ticket ticket0 in
+    :
+    Warning: deprecated value.
+    In a future version, `Tezos` will be replaced by `Tezos.Next`, and using `Ticket.create` from `Tezos.Next` is encouraged for a smoother migration.
+
+    File "./tickets.mligo", line 6, characters 53-70:
+      5 |     let ticket0 = Tezos.create_ticket content0 amount0 |> Option.unopt in
+      6 |     let ((ticketer, (content1, amount1)), ticket0) = Tezos.read_ticket ticket0 in
+                                                               ^^^^^^^^^^^^^^^^^
+      7 |     let () = Test.assert (ticketer = Tezos.get_self_address ()) in
+    :
+    Warning: deprecated value.
+    In a future version, `Tezos` will be replaced by `Tezos.Next`, and using `Ticket.read` from `Tezos.Next` is encouraged for a smoother migration.
+
+    File "./tickets.mligo", line 7, characters 13-24:
+      6 |     let ((ticketer, (content1, amount1)), ticket0) = Tezos.read_ticket ticket0 in
+      7 |     let () = Test.assert (ticketer = Tezos.get_self_address ()) in
+                       ^^^^^^^^^^^
+      8 |     let () = Test.assert (content0 = content1) in
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `Assert.assert` from `Test.Next` is encouraged for a smoother migration.
+
+    File "./tickets.mligo", line 8, characters 13-24:
+      7 |     let () = Test.assert (ticketer = Tezos.get_self_address ()) in
+      8 |     let () = Test.assert (content0 = content1) in
+                       ^^^^^^^^^^^
+      9 |     let () = Test.assert (amount0 = amount1) in
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `Assert.assert` from `Test.Next` is encouraged for a smoother migration.
+
+    File "./tickets.mligo", line 9, characters 13-24:
+      8 |     let () = Test.assert (content0 = content1) in
+      9 |     let () = Test.assert (amount0 = amount1) in
+                       ^^^^^^^^^^^
+     10 |     let ticket1 = Tezos.create_ticket content0 amount0 |> Option.unopt in
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `Assert.assert` from `Test.Next` is encouraged for a smoother migration.
+
+    File "./tickets.mligo", line 10, characters 58-70:
+      9 |     let () = Test.assert (amount0 = amount1) in
+     10 |     let ticket1 = Tezos.create_ticket content0 amount0 |> Option.unopt in
+                                                                    ^^^^^^^^^^^^
+     11 |     let ticket2 = Tezos.join_tickets (ticket0, ticket1) |> Option.unopt in
+    :
+    Warning: deprecated value.
+    Use `Option.value_with_error` instead.
+
+    File "./tickets.mligo", line 10, characters 18-37:
+      9 |     let () = Test.assert (amount0 = amount1) in
+     10 |     let ticket1 = Tezos.create_ticket content0 amount0 |> Option.unopt in
+                            ^^^^^^^^^^^^^^^^^^^
+     11 |     let ticket2 = Tezos.join_tickets (ticket0, ticket1) |> Option.unopt in
+    :
+    Warning: deprecated value.
+    In a future version, `Tezos` will be replaced by `Tezos.Next`, and using `Ticket.create` from `Tezos.Next` is encouraged for a smoother migration.
+
+    File "./tickets.mligo", line 11, characters 59-71:
+     10 |     let ticket1 = Tezos.create_ticket content0 amount0 |> Option.unopt in
+     11 |     let ticket2 = Tezos.join_tickets (ticket0, ticket1) |> Option.unopt in
+                                                                     ^^^^^^^^^^^^
+     12 |     let ((_, (_, amount2)), _) = Tezos.read_ticket ticket2 in
+    :
+    Warning: deprecated value.
+    Use `Option.value_with_error` instead.
+
+    File "./tickets.mligo", line 11, characters 18-36:
+     10 |     let ticket1 = Tezos.create_ticket content0 amount0 |> Option.unopt in
+     11 |     let ticket2 = Tezos.join_tickets (ticket0, ticket1) |> Option.unopt in
+                            ^^^^^^^^^^^^^^^^^^
+     12 |     let ((_, (_, amount2)), _) = Tezos.read_ticket ticket2 in
+    :
+    Warning: deprecated value.
+    In a future version, `Tezos` will be replaced by `Tezos.Next`, and using `Ticket.join` from `Tezos.Next` is encouraged for a smoother migration.
+
+    File "./tickets.mligo", line 12, characters 33-50:
+     11 |     let ticket2 = Tezos.join_tickets (ticket0, ticket1) |> Option.unopt in
+     12 |     let ((_, (_, amount2)), _) = Tezos.read_ticket ticket2 in
+                                           ^^^^^^^^^^^^^^^^^
+     13 |     Test.assert (amount2 = amount0 + amount0)
+    :
+    Warning: deprecated value.
+    In a future version, `Tezos` will be replaced by `Tezos.Next`, and using `Ticket.read` from `Tezos.Next` is encouraged for a smoother migration.
+
+    File "./tickets.mligo", line 13, characters 4-15:
+     12 |     let ((_, (_, amount2)), _) = Tezos.read_ticket ticket2 in
+     13 |     Test.assert (amount2 = amount0 + amount0)
+              ^^^^^^^^^^^
+    :
+    Warning: deprecated value.
+    In a future version, `Test` will be replaced by `Test.Next`, and using `Assert.assert` from `Test.Next` is encouraged for a smoother migration.
+
+    Everything at the top-level was executed. |}]
+
+let () = Sys_unix.chdir pwd
 let () = Sys_unix.chdir "../../test/contracts/interpreter_tests/"
 
 (* tests for timelock primitives *)
@@ -11337,7 +11453,7 @@ let%expect_test _ =
     Trace:
     File "../../test/contracts/negative//interpreter_tests/test_register_delegate_stake.mligo", line 12, characters 11-36 |}]
 
-let pwd = Sys_unix.getcwd ()
+let () = Sys_unix.chdir pwd
 let () = Sys_unix.chdir "../../test/contracts/negative/interpreter_tests/"
 
 (* using typed_address in Bytes.pack *)

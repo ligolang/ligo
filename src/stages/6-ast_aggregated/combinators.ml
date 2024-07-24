@@ -117,6 +117,10 @@ let t_unforged_ticket ~loc ty : type_expression =
     ]
 
 
+let t_forged_ticket ~loc ty : type_expression =
+  t_pair ~loc (t_address ~loc ()) (t_pair ~loc ty (t_nat ~loc ()))
+
+
 let t_sum_ez
     ~loc
     ?(layout = default_layout)
@@ -299,7 +303,8 @@ let is_t__type_ t = Option.is_some (get_t__type_ t)
       , "contract"
       , "map"
       , "big_map"
-      , "typed_address" )]
+      , "typed_address"
+      , "ticket" )]
 
 
 let is_t_mutez t = is_t_tez t
