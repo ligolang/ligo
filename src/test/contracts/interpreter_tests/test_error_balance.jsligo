@@ -1,3 +1,5 @@
+import Test = Test.Next
+
 namespace C {
   type storage = int;
 
@@ -25,13 +27,13 @@ namespace C {
 
 const _test = () : test_exec_error_balance_too_low => {
   let initial_storage = 42 as int;
-  let orig = Test.originate(contract_of(C), initial_storage, 0 as tez);
-  let r = Test.transfer(orig.addr, Main((Increment (1))), 100000000 as tez);
+  let orig = Test.Originate.contract(contract_of(C), initial_storage, 0 as tez);
+  let r = Test.Typed_address.transfer(orig.taddr, Main((Increment (1))), 100000000 as tez);
   return match(r) {
     when(Success(_n)): failwith("Success");
     when(Fail(e)): match (e) {
        when(Rejected(_x)): failwith("Rejected");
-       when(Balance_too_low(x)): ((x: test_exec_error_balance_too_low) => { Test.log(x.spend_request); Test.log(x.contract_balance); return x; })(x);
+       when(Balance_too_low(x)): ((x: test_exec_error_balance_too_low) => { Test.IO.log(x.spend_request); Test.IO.log(x.contract_balance); return x; })(x);
        when(Other(_s)): failwith("Other");
      };
   };

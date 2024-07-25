@@ -1,3 +1,5 @@
+module Test = Test.Next
+
 module C = struct
   [@entry]
   let rec main (p : unit) (s : unit) : operation list * unit =
@@ -5,6 +7,6 @@ module C = struct
 end
 
 let test =
-  let {addr = taddr; code = _; size = _} = Test.originate (contract_of C) () 0tez in
-  let _contr = Test.to_contract taddr in
+  let {taddr; code = _; size = _} = Test.Originate.contract (contract_of C) () 0tez in
+  let _contr = Test.Typed_address.to_contract taddr in
   ()

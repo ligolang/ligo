@@ -1,2 +1,1 @@
-let test =
-    assert false
+let test = Assert.assert false

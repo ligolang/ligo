@@ -1,3 +1,5 @@
+module Test = Test.Next
+
 module C = struct
   let michelson_add : int * int -> int =
     [%Michelson ({| { UNPAIR ; ADD } |} : int * int -> int) ]
@@ -8,6 +10,6 @@ module C = struct
 end
 
 let test =
-  let orig = Test.originate (contract_of C) 1 0tez in
-  let _ = Test.transfer_exn orig.addr (Main 41) 0tez in
-  Test.log (Test.get_storage orig.addr)
+  let orig = Test.Originate.contract (contract_of C) 1 0tez in
+  let _ = Test.Typed_address.transfer_exn orig.taddr (Main 41) 0tez in
+  Test.IO.log (Test.Typed_address.get_storage orig.taddr)

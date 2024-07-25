@@ -4,7 +4,7 @@ let case1 = (n : int) : string => {
     let output = "";
     switch (n) {
         case 1:
-            output = output + "Hello"; 
+            output = output + "Hello";
         case 2:
             output = output + " World";
         default:
@@ -20,13 +20,13 @@ let _test1 = () : unit => {
             _2 == " World !!!" &&
             _3 == " !!!");
 };
-let test1 = _test1(); 
+let test1 = _test1();
 
 let case2 = (n : int) : string => {
     let output = "";
     switch (n) {
         case 1:
-            output = output + "Hello"; 
+            output = output + "Hello";
         case 2:
             output = output + " World";
             break;
@@ -49,7 +49,7 @@ let case3 = (n : int) : string => {
     let output = "";
     switch (n) {
         case 1:
-            output = output + "Hello"; 
+            output = output + "Hello";
         case 2:
             output = output + " World";
             return output;
@@ -72,7 +72,7 @@ let case4 = (n : int) : string => {
     let output = "";
     switch (n) {
         case 1:
-            output = output + "Hello"; 
+            output = output + "Hello";
             break;
         case 2:
             output = output + " World";
@@ -95,7 +95,7 @@ let case5 = (n : int) : string => {
     let output = "";
     switch (n) {
         case 1:
-            output = output + "Hello"; 
+            output = output + "Hello";
             break;
         case 2:
             output = output + " World";
@@ -119,7 +119,7 @@ let case6 = (n : int) : string => {
     let output = "";
     switch (n) {
         case 1:
-            output = output + "Hello"; 
+            output = output + "Hello";
             break;
         case 2:
             output = output + " World";
@@ -143,7 +143,7 @@ let case7 = (n : int) : string => {
     let output = "";
     switch (n) {
         case 1:
-            output = output + "Hello"; 
+            output = output + "Hello";
             return output;
         case 2:
             output = output + " World";
@@ -166,7 +166,7 @@ let case8 = (n : int) : string => {
     let output = "";
     switch (n) {
         case 1:
-            output = output + "Hello"; 
+            output = output + "Hello";
             return output;
         case 2:
             output = output + " World";
@@ -190,7 +190,7 @@ let case9 = (n : int) : string => {
     let output = "";
     switch (n) {
         case 1:
-            output = output + "Hello"; 
+            output = output + "Hello";
             return output;
         case 2:
             output = output + " World";
@@ -214,7 +214,7 @@ let case10 = (n : int) : string => {
     let output = "";
     switch (n) {
         case 1:
-            output = output + "Hello"; 
+            output = output + "Hello";
         case 2:
             output = output + " World";
         default:
@@ -238,7 +238,7 @@ let case11 = (n : int) : string => {
     let output = "";
     switch (n) {
         case 1:
-            output = output + "Hello"; 
+            output = output + "Hello";
         case 2:
             output = output + " World";
             break;
@@ -263,7 +263,7 @@ let case12 = (n : int) : string => {
     let output = "";
     switch (n) {
         case 1:
-            output = output + "Hello"; 
+            output = output + "Hello";
         case 2:
             output = output + " World";
             return output;

@@ -1,15 +1,18 @@
+module Test = Test.Next
+let assert = Test.Assert.assert
+
 type t = [@layout tree] | D of int | C of string
 type c = [@layout comb] | B of int | A of string
 
 type cl = c list
 
 let test_cmp =
-  let () = Test.assert (A "hello" > B 42) in
-  let () = Test.assert (C "x" < D 0) in
+  let () = assert (A "hello" > B 42) in
+  let () = assert (C "x" < D 0) in
   ()
 
 let test_cmp_list =
-  let () = Test.assert ([A "hello" ; A "bye"] > [A "hello" ; B 42]) in
+  let () = assert ([A "hello" ; A "bye"] > [A "hello" ; B 42]) in
   ()
 
 type rt = [@layout tree] { b : int ; a : string }

@@ -1,4 +1,10 @@
-let () = Test.unset_print_values ()
+module Test = Test.Next
+
+let println = Test.IO.println
+let to_string = Test.String.show
+let get_storage = Test.Typed_address.get_storage
+
+let () = Test.IO.unset_test_print ()
 
 module Bar = struct
   module Foo = struct
@@ -10,11 +16,13 @@ module Bar = struct
 end
 
 let test =
-  let {addr = ta; code = m; size = _} = Test.originate (contract_of Bar.Foo) 0 0tez in
-  let () = Test.println "Deployed the contract:" in
-  let () = Test.println (Test.to_string m) in
-  let () = Test.println ("With storage: " ^ Test.to_string (Test.get_storage ta)) in
-  let c : (Bar.Foo parameter_of) contract = Test.to_contract ta in
-  let _ = Test.transfer_to_contract_exn c (Add 42) 0tez in
-  let () = Test.println ("Storage after call: " ^ Test.to_string (Test.get_storage ta)) in
+  let {taddr = ta; code = m; size = _} =
+    Test.Originate.contract (contract_of Bar.Foo) 0 0tez in
+  let () = println "Deployed the contract:" in
+  let () = println (to_string m) in
+  let () = println ("With storage: " ^ to_string (get_storage ta)) in
+  let c : (Bar.Foo parameter_of) contract =
+    Test.Typed_address.to_contract ta in
+  let _ = Test.Contract.transfer_exn c (Add 42) 0tez in
+  let () = println ("Storage after call: " ^ to_string (get_storage ta)) in
   ()

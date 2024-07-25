@@ -1,2 +1,4 @@
+import Test = Test.Next;
+
 const foo = (x:  {b:int}):  {b:int} => {return x};
-const bar = Test.run(foo, "toto");
+const bar = Test.Michelson.run(foo, "toto");

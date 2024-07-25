@@ -1,8 +1,11 @@
 #import "test_imported.mligo" "External"
 
+module Test = Test.Next
+let assert = Assert.assert
+
 let test =
-  let orig = Test.originate (contract_of External) External.D.default.initial 0tez in
-  let contr = Test.to_contract orig.addr in
-  let () = assert (Test.get_storage orig.addr = External.D.default.initial) in
-  let _ = Test.transfer_to_contract_exn contr (Main (External.D.default.final)) 0tez in
-  assert (Test.get_storage orig.addr = External.D.default.final)
+  let orig = Test.Originate.contract (contract_of External) External.D.default.initial 0tez in
+  let contr = Test.Typed_address.to_contract orig.taddr in
+  let () = assert (Test.Typed_address.get_storage orig.taddr = External.D.default.initial) in
+  let _ = Test.Contract.transfer_exn contr (Main (External.D.default.final)) 0tez in
+  assert (Test.Typed_address.get_storage orig.taddr = External.D.default.final)

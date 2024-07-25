@@ -1,3 +1,5 @@
+let assert = Assert.assert
+
 type storage = (bytes ticket) option
 type unforged_storage = (bytes unforged_ticket) option
 
@@ -5,7 +7,7 @@ let main (() : unit) (s : storage) : operation list * storage =
   [] , (
     match s with
     | Some ticket ->
-      let (_ , t) = Tezos.read_ticket ticket in
+      let (_ , t) = Tezos.Next.Ticket.read ticket in
       Some t
     | None -> None
   )
@@ -19,7 +21,7 @@ let test_originate_contract =
 
   match unforged_storage with
   | Some { ticketer=_ ; value ; amount } ->
-    let () = Test.log ("unforged_ticket", unforged_storage) in
+    let () = Test.Next.IO.log ("unforged_ticket", unforged_storage) in
     let () = assert (value = ticket_info.0) in
     let () = assert (amount = ticket_info.1) in
     ()

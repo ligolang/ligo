@@ -1,3 +1,7 @@
+module Test = Test.Next
+
+let assert = Test.Assert.assert
+
 let test_lambda_call =
   let a = 3 in
   let foo = fun (i : int) -> i * i in
@@ -374,19 +378,19 @@ let test_bytes_sub =
   assert (Bytes.sub 0n 1n (Bytes.pack 5n) = 0x05)
 
 let test_with_error =
-  assert_with_error true "foo"
+  Assert.Error.assert true "foo"
 
 let test_some =
-  assert_some (Some 1 : int option)
+  Assert.some (Some 1 : int option)
 
 let test_some_with_error =
-  assert_some_with_error (Some 2 : int option) "bar"
+  Assert.Error.some (Some 2 : int option) "bar"
 
 let test_none =
-  assert_none (None : int option)
+  Assert.none (None : int option)
 
 let test_none_with_error =
-  assert_none_with_error (None : int option) "bar"
+  Assert.Error.none (None : int option) "bar"
 
 let test_unopt =
   assert (Option.value_with_error "option is None" (Some 1 : int option) = 1)
@@ -398,7 +402,7 @@ let test_sha256 =
   let hash5n = (0xf6c5c0ad2216920e105be5e940c4a71ead0741f9dbdb32bfab9570df57cc983a : bytes) in
   let hashempty = (0xe3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 : bytes) in
   let () = assert (Crypto.sha256 (Bytes.pack 5n) = hash5n) in
-  let () = assert (Test.eval (Crypto.sha256 (Bytes.pack 5n)) = Test.run (fun (n : nat) -> Crypto.sha256 (Bytes.pack n)) 5n) in
+  let () = assert (Test.Michelson.eval (Crypto.sha256 (Bytes.pack 5n)) = Test.Michelson.run (fun (n : nat) -> Crypto.sha256 (Bytes.pack n)) 5n) in
   assert (Crypto.sha256 (Bytes.sub 0n 0n (Bytes.pack 5n)) = hashempty)
 
 let test_sha512 =
@@ -407,34 +411,34 @@ let test_sha512 =
   let hashempty =
     (0xcf83e1357eefb8bdf1542850d66d8007d620e4050b5715dc83f4a921d36ce9ce47d0d13c5d85f2b0ff8318d2877eec2f63b931bd47417a81a538327af927da3e : bytes) in
   let () = assert (Crypto.sha512 (Bytes.pack 5n) = hash5n) in
-  let () = assert (Test.eval (Crypto.sha512 (Bytes.pack 5n)) = Test.run (fun (n : nat) -> Crypto.sha512 (Bytes.pack n)) 5n) in
+  let () = assert (Test.Michelson.eval (Crypto.sha512 (Bytes.pack 5n)) = Test.Michelson.run (fun (n : nat) -> Crypto.sha512 (Bytes.pack n)) 5n) in
   assert (Crypto.sha512 (Bytes.sub 0n 0n (Bytes.pack 5n)) = hashempty)
 
 let test_blake2b =
   let hash5n = (0x2af6f7eb61511de4fa3a667a63e2f26f9c506042b335e62fed916335d04a08ed : bytes) in
   let hashempty = (0x0e5751c026e543b2e8ab2eb06099daa1d1e5df47778f7787faab45cdf12fe3a8 : bytes) in
   let () = assert (Crypto.blake2b (Bytes.pack 5n) = hash5n) in
-  let () = assert (Test.eval (Crypto.blake2b (Bytes.pack 5n)) = Test.run (fun (n : nat) -> Crypto.blake2b (Bytes.pack n)) 5n) in
+  let () = assert (Test.Michelson.eval (Crypto.blake2b (Bytes.pack 5n)) = Test.Michelson.run (fun (n : nat) -> Crypto.blake2b (Bytes.pack n)) 5n) in
   assert (Crypto.blake2b (Bytes.sub 0n 0n (Bytes.pack 5n)) = hashempty)
 
 let test_keccak =
   let hash5n = (0xb40da68da4779bf68d31e6ab2eb21c26d950cc23e13efb4da0ec424f138000c3 : bytes) in
   let hashempty = (0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470 : bytes) in
   let () = assert (Crypto.keccak (Bytes.pack 5n) = hash5n) in
-  let () = assert (Test.eval (Crypto.keccak (Bytes.pack 5n)) = Test.run (fun (n : nat) -> Crypto.keccak (Bytes.pack n)) 5n) in
+  let () = assert (Test.Michelson.eval (Crypto.keccak (Bytes.pack 5n)) = Test.Michelson.run (fun (n : nat) -> Crypto.keccak (Bytes.pack n)) 5n) in
   assert (Crypto.keccak (Bytes.sub 0n 0n (Bytes.pack 5n)) = hashempty)
 
 let test_sha3 =
   let hash5n = (0xfe2ecff30c0281f99ad639b9cfa50970ee98b382fa1688cef0bd33c7f5b0be16 : bytes) in
   let hashempty = (0xa7ffc6f8bf1ed76651c14756a061d662f580ff4de43b49fa82d80a4b80f8434a : bytes) in
   let () = assert (Crypto.sha3 (Bytes.pack 5n) = hash5n) in
-  let () = assert (Test.eval (Crypto.sha3 (Bytes.pack 5n)) = Test.run (fun (n : nat) -> Crypto.sha3 (Bytes.pack n)) 5n) in
+  let () = assert (Test.Michelson.eval (Crypto.sha3 (Bytes.pack 5n)) = Test.Michelson.run (fun (n : nat) -> Crypto.sha3 (Bytes.pack n)) 5n) in
   assert (Crypto.sha3 (Bytes.sub 0n 0n (Bytes.pack 5n)) = hashempty)
 
 let test_key_hash =
   let key = ("edpkuBknW28nW72KG6RoHtYW7p12T6GKc7nAbwYX5m8Wd9sDVC9yav" : key) in
   let key_hash = ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" : key_hash) in
-  let () = assert (Test.eval (Crypto.hash_key key) = Test.run (fun (k : key) -> Crypto.hash_key k) key) in
+  let () = assert (Test.Michelson.eval (Crypto.hash_key key) = Test.Michelson.run (fun (k : key) -> Crypto.hash_key k) key) in
   assert (Crypto.hash_key key = key_hash)
 
 let test_check =
@@ -448,16 +452,16 @@ let test_check =
 let test_int_bls =
   let alpha = (0xe406000000000000000000000000000000000000000000000000000000000000 : bls12_381_fr) in
   let alpha_int = int alpha in
-  let mich_int = Test.run (fun (_ : unit) -> int (0xe406000000000000000000000000000000000000000000000000000000000000 : bls12_381_fr)) () in
-  assert (Test.eval alpha_int = mich_int)
+  let mich_int = Test.Michelson.run (fun (_ : unit) -> int (0xe406000000000000000000000000000000000000000000000000000000000000 : bls12_381_fr)) () in
+  assert (Test.Michelson.eval alpha_int = mich_int)
 
 let test_not =
   let f ((x, y) : nat * int) : int = x * not y in
-  assert (Test.eval (f (313n , 2938818607801353443)) = Test.run f (313n , 2938818607801353443))
+  assert (Test.Michelson.eval (f (313n , 2938818607801353443)) = Test.Michelson.run f (313n , 2938818607801353443))
 
 let test_chain_id =
-  let chain_id = Test.eval ("NetXH12Aer3be93" : chain_id) in
-  assert (chain_id = Test.eval (Tezos.get_chain_id ()))
+  let chain_id = Test.Michelson.eval ("NetXH12Aer3be93" : chain_id) in
+  assert (chain_id = Test.Michelson.eval (Tezos.get_chain_id ()))
 
 let test_concats =
   let ss = ["aa"; "bb"; ""; "cc"] in
@@ -466,8 +470,8 @@ let test_concats =
   let () = assert (Bytes.concats bs = (0x00010203 : bytes)) in
   let () = assert (String.concats [] = "") in
   let () = assert (Bytes.concats [] = Bytes.sub 0n 0n (0x00 : bytes)) in
-  let () = assert (Test.run (fun () -> String.concats ss) () = Test.eval (String.concats ss)) in
-  let () = assert (Test.run (fun () -> Bytes.concats bs) () = Test.eval (Bytes.concats bs)) in
+  let () = assert (Test.Michelson.run (fun () -> String.concats ss) () = Test.Michelson.eval (String.concats ss)) in
+  let () = assert (Test.Michelson.run (fun () -> Bytes.concats bs) () = Test.Michelson.eval (Bytes.concats bs)) in
   ()
 
 let test_bytes_nat_int_conversion =

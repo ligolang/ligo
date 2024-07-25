@@ -1,3 +1,4 @@
+let assert = Assert.assert
 
 let test_string =
   let data = "Coucou" in

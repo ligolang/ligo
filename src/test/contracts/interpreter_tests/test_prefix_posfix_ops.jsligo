@@ -1,3 +1,5 @@
+const assert = Assert.assert;
+
 const test_prefix_ops = (() => {
   let x = 0;
   assert(x++ == 0);

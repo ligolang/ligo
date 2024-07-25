@@ -1,4 +1,6 @@
-let () = Test.unset_print_values ()
+module Test = Test.Next
+
+let () = Test.IO.unset_test_print ()
 
 module Bar = struct
   module Foo = struct
@@ -9,6 +11,6 @@ module Bar = struct
 end
 
 let test =
-  let orig = Test.originate (contract_of Bar.Foo) 0 0tez in
-  let _ = Test.transfer_exn orig.addr (Add 42) 0tez in
+  let orig = Test.Originate.contract (contract_of Bar.Foo) 0 0tez in
+  let _ = Test.Typed_address.transfer_exn orig.taddr (Add 42) 0tez in
   ()

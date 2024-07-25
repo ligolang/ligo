@@ -1,3 +1,4 @@
+module Test = Test.Next
 
 let test =
-  Test.eprint ("Ooops" ^ Test.nl)
+  Test.IO.eprint ("Ooops" ^ Test.String.nl)

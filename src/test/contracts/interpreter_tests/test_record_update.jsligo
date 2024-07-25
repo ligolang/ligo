@@ -6,21 +6,21 @@ export type storage = {
 
 
 // Storage list
-let l1 = list([
+const l1 = list([
   {a : 1, b : true, c : "foo"},
   {a : 2, b : false, c : "bar"},
   {a : 3, b : true, c : "baz"},
 ]);
 
-let l2 = list([
+const l2 = list([
   {a : 1, b : true, c : "foo"},
   {a : 2, b : false, c : "bar"},
   {a : 3, b : true, c : "baz"},
 ]);
 
-let new_storage = {a : 4, b : false, c : "new"};
+const new_storage = {a : 4, b : false, c : "new"};
 
-let l_copy = list([{...new_storage,} as storage]);
+const l_copy = list([{...new_storage,} as storage]);
 
 @entry
 const main = (_ : int, s : int) : [list<operation>, int] => {

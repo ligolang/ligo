@@ -29,4 +29,4 @@ module C = struct
   }
 end
 
-let test_x = Test.originate (contract_of C) C.init_storage 0mutez
+let test_x = Test.Next.Originate.contract (contract_of C) C.init_storage 0mutez

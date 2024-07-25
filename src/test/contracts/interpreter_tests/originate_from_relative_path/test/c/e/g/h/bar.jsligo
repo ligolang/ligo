@@ -1,6 +1,8 @@
+import Test = Test.Next;
+
 const f = "../../../../../src/contract/unit.mligo";
 
 export const originate = () => {
-  const x : origination_result<unit, unit> = Test.originate_from_file(f, unit, 0mutez);
-  return x.addr
+  const x = Test.Originate.from_file(f, unit, 0mutez);
+  return x.taddr
 };

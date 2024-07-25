@@ -1,3 +1,5 @@
+module Test = Test.Next
+
 module Factory = struct
   [@entry]
   let main (i : int) (s : address list) : operation list * address list =
@@ -7,10 +9,12 @@ module Factory = struct
 end
 
 let test =
-  let orig = Test.originate (contract_of Factory) ([] : address list) 10tez in
-  let _ = Test.transfer_exn orig.addr (Main 42) 0tez in
+  let orig = Test.Originate.contract
+               (contract_of Factory) ([] : address list) 10tez in
+  let _ = Test.Typed_address.transfer_exn orig.taddr (Main 42) 0tez in
   let addr : address =
     Option.value_with_error "option is None"
-      (List.head (Test.get_storage orig.addr)) in
-  let taddr : (int, int) typed_address = Test.cast_address addr in
-  Test.log (Test.get_storage taddr)
+      (List.head (Test.Typed_address.get_storage orig.taddr)) in
+  let taddr : (int, int) typed_address =
+    Test.Address.to_typed_address addr in
+  Test.IO.log (Test.Typed_address.get_storage taddr)

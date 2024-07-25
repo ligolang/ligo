@@ -1,9 +1,12 @@
 #import "./contract_under_test/contract_create.mligo" "C"
 
+let assert = Assert.assert
+module Test = Test.Next
+
 let test =
-  let orig = Test.originate (contract_of C) None 0tez in
-  let contr = Test.to_contract orig.addr in
-  match Test.transfer_to_contract contr (Main Two) 1mutez with
+  let orig = Test.Originate.contract (contract_of C) None 0tez in
+  let contr = Test.Typed_address.to_contract orig.taddr in
+  match Test.Contract.transfer contr (Main Two) 1mutez with
   (* TODO this is a bug :( *)
   | Fail (Balance_too_low {contract_too_low = _ ; contract_balance ; spend_request}) ->
     let () = assert (contract_balance =  1mutez) in

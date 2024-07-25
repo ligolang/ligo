@@ -1,3 +1,6 @@
+import Test = Test.Next;
+const assert = Test.Assert.assert
+
 const getChar = (s: string, idx: nat): string => String.sub(idx, 1 as nat, s)
 
 const isPalindrome = (s: string): bool => {
@@ -20,15 +23,15 @@ const isPalindrome_ = (s: string): bool => {
 
 const testPalindrome = (() => {
   const abba = "abba";
-  Test.assert(isPalindrome(abba));
-  Test.assert(isPalindrome_(abba));
+  assert(isPalindrome(abba));
+  assert(isPalindrome_(abba));
   const ababa = "ababa";
-  Test.assert(isPalindrome(ababa));
-  Test.assert(isPalindrome_(ababa));
+  assert(isPalindrome(ababa));
+  assert(isPalindrome_(ababa));
   const abcd = "abcd";
-  Test.assert(!isPalindrome(abcd));
-  Test.assert(!isPalindrome_(abcd));
+  assert(!isPalindrome(abcd));
+  assert(!isPalindrome_(abcd));
   const abcde = "abcde";
-  Test.assert(!isPalindrome(abcde));
-  Test.assert(!isPalindrome_(abcde));
+  assert(!isPalindrome(abcde));
+  assert(!isPalindrome_(abcde));
 })();

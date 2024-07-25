@@ -1,3 +1,5 @@
+module Test = Test.Next
+
 type case =
   {
    case_name : string;
@@ -23,5 +25,5 @@ let suite (name : string) (cases : case list) : suite =
   }
 
 let run_suite (suite : suite) =
-  let () = Test.println ("Running " ^ "<" ^ suite.suite_name ^ ">") in
+  let () = Test.IO.println ("Running " ^ "<" ^ suite.suite_name ^ ">") in
   ()

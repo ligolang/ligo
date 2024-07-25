@@ -1,3 +1,4 @@
-const foo = (x: {field: int}): {field: int} => {return x};
-const bar = Test.run(foo, {property: "toto"});
+import Test = Test.Next;
 
+const foo = (x: {field: int}): {field: int} => {return x};
+const bar = Test.Michelson.run(foo, {property: "toto"});

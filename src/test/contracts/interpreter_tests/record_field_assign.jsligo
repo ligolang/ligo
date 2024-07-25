@@ -1,7 +1,9 @@
+const assert = Assert.assert;
+
 type r = {
-    x : { 
-        y : { 
-            z : int, 
+    x : {
+        y : {
+            z : int,
             z1 : int
         },
         y1 : int
@@ -11,9 +13,9 @@ type r = {
 
 
 type kk = {
-    x : { 
-        y : { 
-            z : (k : int) => int, 
+    x : {
+        y : {
+            z : (k : int) => int,
         }
     }
 };
@@ -26,9 +28,9 @@ namespace M {
     export const pi = 314159;
     export const pi2 = 2 * pi;
     export type d = {
-        p : { 
-            q : { 
-                r : int, 
+        p : {
+            q : {
+                r : int,
                 r1 : int
             },
             q1 : int
@@ -62,7 +64,7 @@ const make_s = () => ({ a : { b : { c : 9 } } });
 
 const test_simple_record_assign = ((() => {
     let r = make_r();
-    
+
     r.x1 = 6;
     assert(r.x1 == 6);
 
@@ -70,7 +72,7 @@ const test_simple_record_assign = ((() => {
 
 const test_nested_record_assign_level1 = ((() => {
     let r = make_r();
-    
+
     r.x.y1 = 11;
     assert(r.x.y1 == 11);
 
@@ -101,7 +103,7 @@ const test_nested_record_assign_var_level1 = ((() => {
     let r = make_r();
 
     const a = 11;
-    
+
     r.x.y1 = a;
     assert(r.x.y1 == a);
 
@@ -213,7 +215,7 @@ const test_simple_record_field_with_array_notation_assign = ((() => {
 
 const test_nested_record_assign_array_notation_level1 = ((() => {
     let r = make_r();
-    
+
     r["x"]["y1"] = 11;
     assert(r["x"]["y1"] == 11);
 

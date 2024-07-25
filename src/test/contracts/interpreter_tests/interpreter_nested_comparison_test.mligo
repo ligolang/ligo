@@ -1,3 +1,5 @@
+let assert = Assert.assert
+
 type storage = {
    tokenPool : nat ;
    cashPool : nat ;
@@ -9,7 +11,7 @@ type storage = {
    lqtAddress :  address ;
 }
 
-let initial_storage = 
+let initial_storage =
   { tokenPool = 103n ;
     cashPool = 204n ;
     lqtTotal = 10n ;

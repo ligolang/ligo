@@ -1,3 +1,5 @@
+module Test = Test.Next
+
 module Bar = struct
   let y (x : int) = 5 + x
 end
@@ -31,6 +33,6 @@ module C = struct
 end
 
 let test =
-  let orig = Test.originate (contract_of C) 0 0tez in
-  let _ = Test.transfer_exn orig.addr (Main ()) 0tez in
-  Test.log (Test.get_storage orig.addr)
+  let orig = Test.Originate.contract (contract_of C) 0 0tez in
+  let _ = Test.Typed_address.transfer_exn orig.taddr (Main ()) 0tez in
+  Test.IO.log (Test.Typed_address.get_storage orig.taddr)
