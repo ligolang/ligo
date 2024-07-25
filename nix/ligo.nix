@@ -3,6 +3,8 @@
   lib,
   pkgs,
   tezos-ligo,
+  tree-sitter,
+  tree-sitter-typescript
 }: let
   inherit (pkgs) darwin ocamlPackages python3Packages coq_8_13 tezos-rust-libs;
 in
@@ -13,6 +15,8 @@ in
       src = ./..;
 
       OPAM_SWITCH_PREFIX = "${tezos-rust-libs}";
+      TREE_SITTER = "${tree-sitter}";
+      TREE_SITTER_TYPESCRIPT = "${tree-sitter-typescript}";
 
       postPatch = ''
         mkdir -p vendors/tezos-ligo
@@ -26,6 +30,8 @@ in
         crunch
         odoc
         python3Packages.jsonschema
+        tree-sitter
+        tree-sitter-typescript
       ];
 
       propagatedBuildInputs =
@@ -97,6 +103,8 @@ in
           alcotest # with-test
           ppx_expect # with-test
           ppx_inline_test # with-test
+          ctypes
+          ctypes-foreign
         ]
         ++ lib.optionals stdenv.isDarwin [
           darwin.apple_sdk.frameworks.Security

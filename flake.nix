@@ -59,7 +59,8 @@
             ];
           };
 
-          ligo = pkgs.callPackage ./nix/ligo.nix {inherit tezos-ligo;};
+          tree-sitter-typescript = pkgs.callPackage ./nix/tree-sitter-typescript.nix {};
+          ligo = pkgs.callPackage ./nix/ligo.nix {inherit tezos-ligo tree-sitter-typescript;};
           ligo-syntaxes = ./tools/vscode/syntaxes;
           ligo-webide = pkgs.callPackage ./nix/webide.nix {inherit ligo-syntaxes;};
           ligo-debugger = pkgs.callPackage ./nix/debugger.nix {};
@@ -128,6 +129,8 @@
               shellHook = ''
                 # This is a hack to work around the hack used in the dune files
                 export OPAM_SWITCH_PREFIX="${ligo.OPAM_SWITCH_PREFIX}";
+                export TREE_SITTER="${ligo.TREE_SITTER}";
+                export TREE_SITTER_TYPESCRIPT="${ligo.TREE_SITTER_TYPESCRIPT}";
               '';
             };
 

@@ -1,0 +1,7 @@
+
+author: leo.unoki
+description: "Add tree-sitter and tree-sitter-typescript libraries\\n\\n"
+merge_request: '3238'
+title: "tree sitter foreign function interface"
+type: added
+            

@@ -1,0 +1,23 @@
+(library
+ (name tree_sitter)
+ (libraries ctypes ctypes-foreign)
+ (ctypes
+  (external_library_name tree-sitter)
+  (build_flags_resolver
+   (vendored
+    (c_flags
+     :standard
+     -I%{env:TREE_SITTER=}/include
+     -Wno-incompatible-pointer-types-discards-qualifiers)
+    (c_library_flags :standard -ltree-sitter -L%{env:TREE_SITTER=}/lib)))
+  (headers
+   (include tree_sitter/api.h))
+  (type_description
+   (instance Types)
+   (functor Api_types_desc))
+  (function_description
+   (concurrency unlocked)
+   (instance Functions)
+   (functor Api_funcs_desc))
+  (generated_types Api_types)
+  (generated_entry_point Api)))

@@ -22,6 +22,7 @@
 (using menhir 2.0)
 
 (using coq 0.8)
+(using ctypes 0.3)
 
 (package
  (name ligo)

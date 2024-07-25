@@ -1,0 +1,25 @@
+(library
+ (name tree_sitter_typescript)
+ (libraries ctypes ctypes-foreign tree_sitter)
+ (ctypes
+  (external_library_name tree-sitter-typescript)
+  (build_flags_resolver
+   (vendored
+    (c_flags :standard -I%{env:TREE_SITTER_TYPESCRIPT=}/include)
+    (c_library_flags
+     :standard
+     -L%{env:TREE_SITTER=}/lib
+     -ltree-sitter
+     -L%{env:TREE_SITTER_TYPESCRIPT=}/lib
+     -ltree-sitter-typescript)))
+  (headers
+   (include tree_sitter/tree-sitter-typescript.h))
+  (type_description
+   (instance Types)
+   (functor Api_types_desc))
+  (function_description
+   (concurrency unlocked)
+   (instance Functions)
+   (functor Api_funcs_desc))
+  (generated_types Api_types)
+  (generated_entry_point Api)))
