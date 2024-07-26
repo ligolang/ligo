@@ -1,0 +1,17 @@
+namespace Counter {
+  type storage = int;
+
+  @entry
+  const increment = (action: int, store: storage) : [list <operation>, storage] => [[], store + action];
+
+  @entry
+  const decrement = (action: int, store: storage) : [list <operation>, storage] => [[], store - action];
+};
+
+const testC = () => {
+  const initial_storage = 42;
+  const orig = Test.Next.Originate.contract(contract_of(Counter), initial_storage, 0tez);
+  const p: (parameter_of Counter) = Increment(1);
+  Test.Next.Contract.transfer_exn(orig.taddr, p, 0tez);
+  return assert(Test.Next.Contract.get_storage(orig.taddr) == initial_storage + 1);
+};

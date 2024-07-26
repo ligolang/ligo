@@ -1,2 +1,0 @@
-const not_1 : bool = !true  // false
-const not_2 : bool = !false // true

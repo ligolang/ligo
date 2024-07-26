@@ -90,7 +90,7 @@ const get_storage = (_: unit, storage: int): int => storage
 
 #### `contract_of` and `parameter_of`
 
-The aforementioned changes to `@entry` and the `main` function have affected how contracts are tested, starting from [v0.64.2](https://gitlab.com/ligolang/ligo/-/releases/0.64.2) ([changelog](/docs/intro/changelog#0642)). See [the documentation on testing](/docs/advanced/testing#testing-a-contract-declared-as-a-module-or-namespace) for examples on how to use `contract_of` and `parameter_of`.
+The aforementioned changes to `@entry` and the `main` function have affected how contracts are tested, starting from [v0.64.2](https://gitlab.com/ligolang/ligo/-/releases/0.64.2) ([changelog](/docs/intro/changelog#0642)). See [the documentation on testing](/docs/testing) for examples on how to use `contract_of` and `parameter_of`.
 
 MRs:
 

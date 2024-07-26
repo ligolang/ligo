@@ -1,0 +1,10 @@
+type parameter = ["Add", int] | ["Subtract", int];
+
+type storage = int;
+
+let main = ([p, s]: [parameter, storage]) : [list<operation>, int] => {
+  return match(p, {
+    Add: (n : int) => [[], s + n],
+    Subtract: (n : int) => [[], s - n]
+  });
+};

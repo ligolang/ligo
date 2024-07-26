@@ -1,7 +1,0 @@
-#import "./gitlab-pages/docs/language-basics/src/modules/imported.jsligo" "EURO"
-
-type storage = EURO.t;
-
-@entry
-const main = (_action: unit, store: storage): [list<operation>, storage] =>
-  [list([]), EURO.add(store, EURO.one)];

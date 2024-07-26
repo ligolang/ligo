@@ -1,0 +1,13 @@
+const today: timestamp = Tezos.get_now();
+const today: timestamp = Tezos.get_now();
+const one_day: int = 86_400;
+const in_24_hrs: timestamp = today + one_day;
+const some_date: timestamp = "2000-01-01t10:10:10Z" as timestamp;
+const one_day_later: timestamp = some_date + one_day;
+const today: timestamp = Tezos.get_now();
+const one_day: int = 86400;
+const in_24_hrs: timestamp = today - one_day;
+const today: timestamp = Tezos.get_now();
+const some_date: timestamp = "2035-01-01t10:10:10Z" as timestamp;
+const secs_until_some_date: int = some_date - today;
+const not_tomorrow: bool = (Tezos.get_now() == in_24_hrs);

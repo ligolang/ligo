@@ -1,0 +1,13 @@
+namespace C {
+  @entry
+  const main = (p: [int, int], _: unit) => {
+    const op1 = Tezos.emit("%foo", p);
+    const op2 = Tezos.emit("%foo", p[0]);
+    return [([op1, op2] as list<operation>), unit];
+  };
+}
+const test = () => {
+  const orig = Test.Next.Originate.contract(contract_of(C), unit, 0tez);
+  Test.Next.Typed_address.transfer_exn(orig.taddr, Main ([1,2]), 0tez);
+  return [Test.Next.State.last_events(orig.taddr, "foo") as list<[int, int]>, Test.Next.State.last_events(orig.taddr, "foo") as list<int>];
+};

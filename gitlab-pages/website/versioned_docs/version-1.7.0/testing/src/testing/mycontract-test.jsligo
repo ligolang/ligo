@@ -1,0 +1,12 @@
+// This is mycontract-test.jligo
+
+#import "gitlab-pages/docs/testing/src/testing/mycontract.jsligo" "MyModule"
+
+const run_test1 = () => {
+    let initial_storage = 10;
+    let orig = Test.Next.Originate.contract(contract_of(MyModule.MyContract), initial_storage, 0tez);
+    Test.Next.Contract.transfer_exn(Test.Next.Typed_address.get_entrypoint("increment", orig.taddr), 5, 0tez);
+    return Assert.assert(Test.Next.Typed_address.get_storage(orig.taddr) == initial_storage + 5);
+};
+
+const test1 = run_test1();

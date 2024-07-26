@@ -1,0 +1,12 @@
+const a : bytes = 0x70FF;
+const zero : bytes = 0x;
+const zero_too = 0x00;
+const b: bytes = bytes(123n); // 7B in hexadecimal
+const c: bytes = bytes(123);
+const d: bytes = bytes(-123); // Two's complement
+
+const n: nat = nat(0x7B); // n == 123n
+const i: int = int(0x7B); // i == 123
+const from_ascii: bytes = bytes`foo`; // Not a call
+// raw == from_ascii
+const raw: bytes = ("666f6f" as bytes);

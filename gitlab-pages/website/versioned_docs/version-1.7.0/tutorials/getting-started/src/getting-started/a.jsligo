@@ -1,0 +1,8 @@
+type storage = int;
+type return_type = [list<operation>, storage];
+
+@entry
+const add = (n : int, storage : storage) : return_type => [[], storage + n];
+
+@entry
+const sub = (n : int, storage : storage) : return_type => [[], storage - n];

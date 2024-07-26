@@ -86,14 +86,10 @@ RUN LIGO_VERSION=$ligo_version opam exec -- dune build -p ligo --profile static 
   # Run doc
   && opam exec -- dune build @doc
 
-FROM esydev/esy:nightly-alpine as esy
-
 # TODO see also ligo-docker-large in nix build
 FROM alpine:3.18 as ligo
 # This variable is used for analytics to determine if th execution of the compiler is inside docker or not
 ENV DOCKER_EXECUTION=true
-
-COPY --from=esy . .
 
 WORKDIR /root/
 RUN chmod 755 /root # so non-root users inside container can see and execute /root/ligo

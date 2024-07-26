@@ -1,3 +1,0 @@
-let my_set : set<int> = Set.literal(list([3, 2, 2, 1]));
-let contains_3 : bool = Set.mem (3, my_set);
-let updated_set = Set.remove (3, my_set);

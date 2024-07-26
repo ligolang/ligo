@@ -1,0 +1,5 @@
+const today: timestamp = Tezos.get_now();
+const one_day: int = 86_400;
+const in_24_hrs: timestamp = today + one_day;
+const some_date: timestamp = "2000-01-01t10:10:10Z" as timestamp;
+const one_day_later: timestamp = some_date + one_day;
