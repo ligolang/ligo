@@ -1,8 +1,0 @@
-// This is mutation-contract.jsligo
-export namespace C {
-  export type storage = int;
-
-  // Two entrypoints
-  @entry const add = (delta: int, store: storage): [list<operation>, storage] => [list([]),store + delta];
-  @entry const sub = (delta: int, store: storage): [list<operation>, storage] => [list([]),store - delta];
-}

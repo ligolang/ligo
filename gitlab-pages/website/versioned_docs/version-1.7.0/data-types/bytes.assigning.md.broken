@@ -1,0 +1,30 @@
+---
+id: assigning
+title: Assigning
+---
+
+import Syntax from '@theme/Syntax';
+
+<Syntax syntax="cameligo">
+
+Not available in CameLIGO.
+
+</Syntax>
+
+<Syntax syntax="jsligo">
+
+Bitwise operations on sequences of bytes can be composed with
+assignments, that is to say, mutable variables of type `bytes` can be
+updated by a side-effect as follows:
+
+```jsligo group=assigning
+const f = () => {
+  let b : bytes = 0x0005; // mutable
+  b &= 0x0106; // Bitwise "and"
+  b |= 0x0011; // Bitwise "or"
+  b ^= 0x13FF; // Bitwise "xor"
+  b <<= 8n;    // Bitwise "left shift"
+}
+```
+
+</Syntax>

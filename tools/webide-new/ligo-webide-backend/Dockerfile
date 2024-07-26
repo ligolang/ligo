@@ -1,5 +1,5 @@
 FROM tezos/tezos:latest as octez-client
-FROM ligolang/ligo:1.6.0 as ligo-compiler
+FROM ligolang/ligo:1.7.0 as ligo-compiler
 FROM ubuntu:20.04 as web-ide-builder
 
 LABEL maintainer="infra@trili.tech"

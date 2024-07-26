@@ -1,4 +1,0 @@
-const or_1 : bool = false || true;  // true
-const or_2 : bool = false || false; // false
-const or_3 : bool = true  || true;  // true
-const or_4 : bool = true  || false; // true

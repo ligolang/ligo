@@ -1,9 +1,0 @@
-type storage = int
-type result = [list<operation>, storage]
-
-let doMultiplyBy2 = (store : storage) : int => store * 2;
-
-let doMultiplyBy4 = (store : storage) : int => doMultiplyBy2(doMultiplyBy2(store));
-
-@entry const multiplyBy4 = (_u : unit, s : storage) : result => [list([]), doMultiplyBy4(s)]
-@entry const multiplyBy16 = (_u : unit, s : storage) : result => [list([]), doMultiplyBy4(doMultiplyBy4(s))]

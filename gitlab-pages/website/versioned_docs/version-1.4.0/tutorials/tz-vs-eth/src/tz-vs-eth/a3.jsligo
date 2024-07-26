@@ -1,8 +1,0 @@
-type storage = int;
-type result = [list<operation>, int]
-
-@entry
-const increment = (_u : unit, s : storage) : result => [list([]), s + 1]
-
-@entry
-const decrement = (_u : unit, s : storage) : result => [list([]), s - 1]

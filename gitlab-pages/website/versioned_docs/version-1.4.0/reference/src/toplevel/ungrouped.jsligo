@@ -1,3 +1,0 @@
-let main = (p: int, s: unit): [list<operation>, unit] => {
-  if (p > 10) { failwith ("Failure."); } else return [list([]), []];
-};

@@ -11,10 +11,10 @@ const sidebars = {
         "label": "Installation",
         "items": [
           "intro/installation",
-          "intro/editor-support",
-        ],
+          "intro/editor-support"
+        ]
       },
-      "tutorials/getting-started/getting-started",
+      "tutorials/getting-started/getting-started"
     ],
     "Writing a Contract": [
       {
@@ -22,10 +22,10 @@ const sidebars = {
         "label": "First contract",
         "items": [
           "tutorials/taco-shop/tezos-taco-shop-smart-contract",
-          "tutorials/taco-shop/tezos-taco-shop-payout",
-        ],
+          "tutorials/taco-shop/tezos-taco-shop-payout"
+        ]
       },
-      "tutorials/start-a-project-from-a-template",
+      "tutorials/start-a-project-from-a-template"
     ],
     "Syntax": [
       "comments/comments",
@@ -38,8 +38,8 @@ const sidebars = {
           "functions/lambdas",
           "functions/higher-order",
           "functions/inlining",
-          "functions/recursion",
-        ],
+          "functions/recursion"
+        ]
       },
       {
         "type": "category",
@@ -48,8 +48,8 @@ const sidebars = {
           "imperative/looping",
           "imperative/failing",
           "imperative/asserting",
-          "imperative/switches",
-        ],
+          "imperative/switches"
+        ]
       },
       {
         "type": "category",
@@ -60,8 +60,8 @@ const sidebars = {
           "modules/nesting",
           "modules/aliasing",
           "modules/importing",
-          "modules/including",
-        ],
+          "modules/including"
+        ]
       },
       {
         "type": "category",
@@ -75,8 +75,8 @@ const sidebars = {
           "tezos/decorators/inline",
           "tezos/decorators/layout",
           "tezos/decorators/private",
-          "tezos/decorators/view",
-        ],
+          "tezos/decorators/view"
+        ]
       },
       {
         "type": "category",
@@ -88,25 +88,25 @@ const sidebars = {
           "tezos/contracts/michelson",
           "tezos/contracts/michelson-injection",
           "tezos/contracts/operation",
-          "contract/events",
-        ],
+          "contract/events"
+        ]
       },
       {
         "type": "category",
         "label": "Signatures/Interfaces",
         "items": [
           "signatures/declaring",
-          "signatures/extending",
-        ],
+          "signatures/extending"
+        ]
       },
       {
         "type": "category",
         "label": "Keywords",
         "items": [
           "keywords/keywords",
-          "keywords/escaped_vars",
-        ],
-      },
+          "keywords/escaped_vars"
+        ]
+      }
     ],
     "Data types": [
       {
@@ -117,8 +117,8 @@ const sidebars = {
           "data-types/booleans",
           "data-types/strings",
           "data-types/timestamp",
-          "data-types/bytes",
-        ],
+          "data-types/bytes"
+        ]
       },
       {
         "type": "category",
@@ -129,8 +129,8 @@ const sidebars = {
           "data-types/lists",
           "data-types/records",
           "data-types/sets",
-          "data-types/maps",
-        ],
+          "data-types/maps"
+        ]
       },
       {
         "type": "category",
@@ -150,8 +150,8 @@ const sidebars = {
               "tezos/big_sets/searching",
               "tezos/big_sets/adding",
               "tezos/big_sets/removing",
-              "tezos/big_sets/updating",
-            ],
+              "tezos/big_sets/updating"
+            ]
           },
           {
             "type": "category",
@@ -161,10 +161,10 @@ const sidebars = {
               "tezos/big_maps/searching",
               "tezos/big_maps/adding",
               "tezos/big_maps/removing",
-              "tezos/big_maps/updating",
-            ],
-          },
-        ],
+              "tezos/big_maps/updating"
+            ]
+          }
+        ]
       },
       {
         "type": "category",
@@ -172,9 +172,9 @@ const sidebars = {
         "items": [
           "polymorphism/polymorphism",
           "polymorphism/parametric_types",
-          "polymorphism/functions",
-        ],
-      },
+          "polymorphism/functions"
+        ]
+      }
     ],
     "Preprocessor": [
       "preprocessor/preprocessor",
@@ -184,35 +184,35 @@ const sidebars = {
       "preprocessor/define",
       "preprocessor/include",
       "preprocessor/import",
-      "preprocessor/error",
+      "preprocessor/error"
     ],
     "Testing": [
       "testing/testing",
       "testing/testing-tickets",
       "advanced/mutation-testing",
-      "advanced/michelson_testing",
+      "advanced/michelson_testing"
     ],
     "Advanced Topics": [
       "advanced/package-management",
       "tutorials/optimisation/optimisation",
-      "tutorials/security/security",
+      "tutorials/security/security"
     ]
   },
   "API": {
     "Language": [
-      "reference/bytes-reference",
-      "reference/toplevel-reference",
-      "reference/tuple2-reference",
-      "reference/set-reference",
-      "reference/option-reference",
-      "reference/dynamic-entrypoints-reference",
       "reference/map-reference",
-      "reference/big-set-reference",
+      "reference/bytes-reference",
       "reference/string-reference",
+      "reference/option-reference",
       "reference/big-map-reference",
-      "reference/bitwise-reference",
       "reference/list-reference",
+      "reference/bitwise-reference",
+      "reference/set-reference",
+      "reference/toplevel-reference",
       "reference/crypto-reference",
+      "reference/big-set-reference",
+      "reference/dynamic-entrypoints-reference",
+      "reference/tuple2-reference",
       {
         "type": "category",
         "label": "tezos",
@@ -222,11 +222,11 @@ const sidebars = {
             "type": "category",
             "label": "next",
             "items": [
-              "reference/tezos.next.ticket-reference",
-              "reference/tezos.next-reference",
               "reference/tezos.next.sapling-reference",
               "reference/tezos.next.view-reference",
-              "reference/tezos.next.operation-reference"
+              "reference/tezos.next.operation-reference",
+              "reference/tezos.next.ticket-reference",
+              "reference/tezos.next-reference"
             ]
           }
         ]
@@ -236,38 +236,38 @@ const sidebars = {
         "label": "test",
         "items": [
           "reference/test.pbt-reference",
-          "reference/test-reference",
           "reference/test.proxy-ticket-reference",
+          "reference/test-reference",
           {
             "type": "category",
             "label": "next",
             "items": [
-              "reference/test.next.compare-reference",
-              "reference/test.next.contract-reference",
-              "reference/test.next.ticket-reference",
-              "reference/test.next.crypto-reference",
-              "reference/test.next.address-reference",
-              "reference/test.next.typed-address-reference",
-              "reference/test.next-reference",
-              "reference/test.next.io-reference",
-              "reference/test.next.string-reference",
-              "reference/test.next.dynamic-entrypoints-reference",
-              "reference/test.next.timelock-reference",
               "reference/test.next.originate-reference",
+              "reference/test.next.typed-address-reference",
+              "reference/test.next.timelock-reference",
+              "reference/test.next.compare-reference",
+              "reference/test.next.address-reference",
+              "reference/test.next.dynamic-entrypoints-reference",
+              "reference/test.next.io-reference",
+              "reference/test.next.ticket-reference",
+              "reference/test.next-reference",
+              "reference/test.next.contract-reference",
+              "reference/test.next.string-reference",
+              "reference/test.next.crypto-reference",
               {
                 "type": "category",
-                "label": "michelson",
+                "label": "state",
                 "items": [
-                  "reference/test.next.michelson-reference",
-                  "reference/test.next.michelson.contract-reference"
+                  "reference/test.next.state-reference",
+                  "reference/test.next.state.reset-reference"
                 ]
               },
               {
                 "type": "category",
-                "label": "account",
+                "label": "michelson",
                 "items": [
-                  "reference/test.next.account-reference",
-                  "reference/test.next.account.contract-reference"
+                  "reference/test.next.michelson.contract-reference",
+                  "reference/test.next.michelson-reference"
                 ]
               },
               {
@@ -280,18 +280,18 @@ const sidebars = {
               },
               {
                 "type": "category",
-                "label": "assert",
+                "label": "account",
                 "items": [
-                  "reference/test.next.assert.error-reference",
-                  "reference/test.next.assert-reference"
+                  "reference/test.next.account.contract-reference",
+                  "reference/test.next.account-reference"
                 ]
               },
               {
                 "type": "category",
-                "label": "state",
+                "label": "assert",
                 "items": [
-                  "reference/test.next.state-reference",
-                  "reference/test.next.state.reset-reference"
+                  "reference/test.next.assert.error-reference",
+                  "reference/test.next.assert-reference"
                 ]
               }
             ]
@@ -302,8 +302,8 @@ const sidebars = {
         "type": "category",
         "label": "assert",
         "items": [
-          "reference/assert.error-reference",
-          "reference/assert-reference"
+          "reference/assert-reference",
+          "reference/assert.error-reference"
         ]
       }
     ],

@@ -1,3 +1,0 @@
-const my_set: set<int> = Set.literal(list([3, 2, 2, 1]));
-const new_set = Set.remove(3, my_set);
-const contains_3 = Set.mem(3, new_set); // == false

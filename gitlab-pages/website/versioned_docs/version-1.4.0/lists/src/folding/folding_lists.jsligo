@@ -1,4 +1,0 @@
-const add1 = ([a, i]) => a + i;
-const sum1 = List.fold_left (add1, 0, list([1, 2, 3]));
-const add2 = ([i, a]) => i + a;
-const sum2 = List.fold_right (add2, list([1, 2, 3]), 0);
