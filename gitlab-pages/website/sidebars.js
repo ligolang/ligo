@@ -46,10 +46,10 @@ const sidebars = {
         "label": "Flow control",
         "items": [
           "imperative/looping",
-          "imperative/failing",
           "imperative/asserting",
-          "imperative/switches"
-        ]
+          "imperative/switches",
+          "imperative/exceptions",
+        ],
       },
       {
         "type": "category",

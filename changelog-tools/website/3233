@@ -1,0 +1,7 @@
+
+author: timothymcmackin
+description: "\\nUpdates and clarifies documentation about exceptions\\n\\n"
+merge_request: '3233'
+title: "[doc] Update docs on exceptions and eliminate duplication"
+type: fixed
+            
