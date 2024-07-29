@@ -14,18 +14,18 @@ The attribute is `[@view]` and placed just before a function, like the
 `[@entry]` attribute, for example.
 
 ```cameligo group=view
-type 'storage return = operation list * 'storage
+type storage = int
+type return_type = operation list * storage
 
 [@view]
-let add (param : int) (storage : int) : int = param + storage
+let add (param : int) (storage : storage) : int = param + storage
 
 [@view]
-let get_storage (_ : int) (storage : int) : int = storage
+let get_storage (_ : int) (storage : storage) : int = storage
 
 [@entry]
-let main () (storage : int) : int return =
+let main () (storage : storage) : return_type =
   ([] : operation list), storage
-
 ```
 
 </Syntax>
@@ -35,4 +35,20 @@ let main () (storage : int) : int return =
 The decorator is `@view` and placed just before a function, like the
 `@entry` decorator, for example.
 
+```jsligo group=view
+type return_type = [list<operation>, int];
+
+@view
+const add = (param: int, storage: int): int => param + storage
+
+@view
+const get_storage = (_ : unit, storage: int): int => storage
+
+@entry
+const main = (_ : unit, storage: int): return_type =>
+  [[], storage]
+```
+
 </Syntax>
+
+For more information about views, see [Views](../../contract/views).

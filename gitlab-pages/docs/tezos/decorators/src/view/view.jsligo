@@ -1,0 +1,11 @@
+type return_type = [list<operation>, int];
+
+@view
+const add = (param: int, storage: int): int => param + storage
+
+@view
+const get_storage = (_ : unit, storage: int): int => storage
+
+@entry
+const main = (_ : unit, storage: int): return_type =>
+  [[], storage]

@@ -1,0 +1,47 @@
+namespace ContractWithView {
+  type storage = int;
+  type return_type = [list<operation>, storage];
+
+  @entry
+  const main = (param: int, _storage: storage): return_type =>
+    [[], param];
+
+  @view
+  const multiply = (param: int, storage: storage): int =>
+    param * storage;
+}
+namespace CallView {
+  type storage = [address, int];
+  type return_type = [list<operation>, storage];
+
+  @entry
+  const callView = (param: int, storage: storage): return_type => {
+    const [targetAddress, _s] = storage;
+    const resultOpt: option<int> = Tezos.call_view(
+      "multiply",
+      param,
+      targetAddress
+    );
+    return match(resultOpt) {
+      when (None):
+        failwith("Something went wrong");
+      when (Some(newValue)):
+        [[], [targetAddress, newValue]];
+    }
+  }
+}
+const test = (() => {
+
+  // Originate ContractWithView
+  const contract1 = Test.Next.Originate.contract(contract_of(ContractWithView), 5, 0tez);
+  const addr1 = Test.Next.Typed_address.to_address(contract1.taddr);
+
+  // Originate CallView with address of ContractWithView in storage
+  const initial_storage = [addr1, 0 as int];
+  const contract2 = Test.Next.Originate.contract(contract_of(CallView), initial_storage, 0tez);
+
+  // Call callView
+  Test.Next.Contract.transfer_exn(Test.Next.Typed_address.get_entrypoint("default", contract2.taddr), 12, 0tez);
+  const [_address, integer] = Test.Next.Typed_address.get_storage(contract2.taddr);
+  Assert.assert(integer == 60);
+}) ()
