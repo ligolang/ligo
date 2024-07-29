@@ -88,8 +88,9 @@ const sidebars = {
           "tezos/contracts/michelson",
           "tezos/contracts/michelson-injection",
           "tezos/contracts/operation",
-          "contract/events"
-        ]
+          "contract/events",
+          "contract/views",
+        ],
       },
       {
         "type": "category",

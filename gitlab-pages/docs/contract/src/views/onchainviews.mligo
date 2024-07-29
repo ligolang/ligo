@@ -2,17 +2,17 @@ type storage = string
 type ret = operation list * storage
 
 [@entry]
-let main (word : string) (store : storage) : ret
-  = [] , store ^ " " ^ word
+let main (word : string) (storage : storage) : ret
+  = [] , storage ^ " " ^ word
 
-(* view 'view1', simply returns the storage *)
-[@view] let view1 (() : unit) (s : storage) : storage
-  = s
+(* This view returns the storage *)
+[@view] let view1 (() : unit) (storage : storage) : storage
+  = storage
 
-(* view 'v2', returns true if the storage has a given length *)
-[@view] let v2 (expected_length : nat) (s : storage) : bool
-  = (String.length s = expected_length)
+(* This view returns true if the storage has a given length *)
+[@view] let view2 (expected_length : nat) (storage : storage) : bool
+  = (String.length storage = expected_length)
 
-(* view 'v3' does not use its parameters and returns a constant int *)
-[@view] let v3 (() : unit) (_ : storage) : int
+(* This view does not use the parameters or storage and returns a constant int *)
+[@view] let view3 (() : unit) (_ : storage) : int
   = 42

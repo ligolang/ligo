@@ -1,20 +1,21 @@
 type storage = string
 type ret = [list<operation>, storage];
 
-const main = (word : string, store : storage) : ret
-  => [[] , store + " " + word]
+@entry
+const main = (word : string, storage : storage) : ret
+  => [[] , storage + " " + word]
 
-/* view 'view1', simply returns the storage */
+// This view returns the storage
 @view
-const view1 = (_arg : unit, s : storage) : storage
-  => s;
+const view1 = (_arg : unit, storage : storage) : storage
+  => storage;
 
-/* view 'v2', returns true if the storage has a given length */
+// This view returns true if the storage has a given length
 @view
-const v2 = (expected_length : nat , s : storage) : bool
-  => (String.length (s) == expected_length);
+const view2 = (expected_length : nat , storage : storage) : bool
+  => (String.length (storage) == expected_length);
 
-/* view 'view3' does not use its parameters and returns a constant int */
+// This view does not use the parameters or storage and returns a constant int
 @view
 const view3 = (_arg : unit , _s : storage) : int
   => 42;
