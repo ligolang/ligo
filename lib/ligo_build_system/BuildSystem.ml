@@ -208,7 +208,7 @@ module Make (M : M) = struct
       Ok (SMap.find main_file_name objs)
     | Error e -> Error e
 
-  let compile_qualified : code_input -> ast build_error =
+  let compile_qualified : code_input -> (ast * intf_env) build_error =
    fun code_input ->
     let deps = dependency_graph code_input in
     let file_name = Source_input.id_of_code_input code_input in
@@ -221,6 +221,6 @@ module Make (M : M) = struct
         List.fold ~f:compile_file_with_deps ~init:(SMap.empty, init_env) linking_order
       in
       let contract = link ~objs ~intfs linking_order in
-      Ok contract
+      Ok (contract, intfs)
     | Error e -> Error e
 end

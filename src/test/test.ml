@@ -16,5 +16,6 @@ let () =
        ; Ligo_init_tests.main
        ; Analytics_tests.main
        ; Ligo_install_tests.main
+       ; Serialization_tests.main
        ];
   ()

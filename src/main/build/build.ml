@@ -337,7 +337,7 @@ let qualified_core ~raise
       | From_file filename -> get_top_level_syntax ~options ~filename ()
       | Raw _ -> Syntax_types.CameLIGO
   end) in
-  let ast =
+  let ast, _ =
     Trace.trace ~raise build_error_tracer @@ Trace.from_result (compile_qualified source)
   in
   ast
@@ -354,7 +354,7 @@ let qualified_core_from_string ~raise
     let std_lib = std_lib
     let top_level_syntax = get_top_level_syntax ~options ~filename:input.id ()
   end) in
-  let ast =
+  let ast, _ =
     Trace.trace ~raise build_error_tracer
     @@ Trace.from_result (compile_qualified (Source_input.Raw input))
   in
@@ -372,7 +372,7 @@ let qualified_core_from_raw_input ~raise
     let std_lib = std_lib
     let top_level_syntax = get_top_level_syntax ~options ~filename:file ()
   end) in
-  let ast =
+  let ast, _ =
     Trace.trace ~raise build_error_tracer
     @@ Trace.from_result (compile_qualified (Source_input.Raw_input_lsp { file; code }))
   in
@@ -395,10 +395,33 @@ let qualified_typed ~raise
       | From_file filename -> get_top_level_syntax ~options ~filename ()
       | Raw _ -> Syntax_types.CameLIGO
   end) in
-  let ast =
+  let ast, _ =
     Trace.trace ~raise build_error_tracer @@ Trace.from_result (compile_qualified source)
   in
   ast
+
+
+let qualified_typed_with_env ~raise
+    :  options:Compiler_options.t -> Source_input.code_input
+    -> Ast_typed.program * Checking.Persistent_env.t
+  =
+ fun ~options source ->
+  let open Build_typed (struct
+    let raise = raise
+    let options = options
+    let std_lib = Stdlib.get ~options
+
+    let top_level_syntax =
+      match source with
+      | HTTP uri -> get_top_level_syntax ~options ~filename:(Http_uri.get_filename uri) ()
+      | Raw_input_lsp _ -> Syntax_types.CameLIGO
+      | From_file filename -> get_top_level_syntax ~options ~filename ()
+      | Raw _ -> Syntax_types.CameLIGO
+  end) in
+  let ast, intfs =
+    Trace.trace ~raise build_error_tracer @@ Trace.from_result (compile_qualified source)
+  in
+  ast, intfs
 
 
 let qualified_typed_str ~raise : options:Compiler_options.t -> string -> Ast_typed.program
@@ -418,7 +441,7 @@ let qualified_typed_str ~raise : options:Compiler_options.t -> string -> Ast_typ
     | None -> "from_build"
   in
   let s = Source_input.Raw { code; id } in
-  let ast =
+  let ast, _ =
     Trace.trace ~raise build_error_tracer @@ Trace.from_result (compile_qualified s)
   in
   Ligo_compile.Of_core.typecheck ~raise ~options ast
