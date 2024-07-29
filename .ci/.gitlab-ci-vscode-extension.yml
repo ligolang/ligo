@@ -93,7 +93,7 @@ vscode-extension-publish:
   needs: [vscode-extension]
   tags:
     - gcp-docker
-  image: node:18-buster
+  image: node:20-buster
   when: manual
   script:
     - yarn global add @vscode/vsce ovsx
