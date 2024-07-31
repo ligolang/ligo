@@ -97,14 +97,16 @@ It follows these basic steps:
 ```cameligo test-ligo group=mycontract-test
 (* This is mycontract-test.mligo *)
 
+module Test = Test.Next
+
 #import "gitlab-pages/docs/testing/src/testing/mycontract.mligo" "MyContract"
 
 let run_test1 =
   let initial_storage = 10 in
-  let orig = Test.Next.Originate.contract (contract_of MyContract.MyContract) initial_storage 0tez in
-  let () = Assert.assert (Test.Next.Typed_address.get_storage(orig.taddr) = initial_storage) in
-  let _: nat = Test.Next.Contract.transfer_exn (Test.Next.Typed_address.get_entrypoint "increment" orig.taddr) 32 0tez in
-  Assert.assert (Test.Next.Typed_address.get_storage(orig.taddr) = initial_storage + 32)
+  let orig = Test.Originate.contract (contract_of MyContract.MyContract) initial_storage 0tez in
+  let () = Assert.assert (Test.Typed_address.get_storage(orig.taddr) = initial_storage) in
+  let _: nat = Test.Contract.transfer_exn (Test.Typed_address.get_entrypoint "increment" orig.taddr) 32 0tez in
+  Assert.assert (Test.Typed_address.get_storage(orig.taddr) = initial_storage + 32)
 ```
 
 </Syntax>
@@ -114,13 +116,15 @@ let run_test1 =
 ```jsligo test-ligo group=mycontract-test
 // This is mycontract-test.jligo
 
+import Test = Test.Next;
+
 #import "gitlab-pages/docs/testing/src/testing/mycontract.jsligo" "MyModule"
 
 const run_test1 = () => {
     let initial_storage = 10;
-    let orig = Test.Next.Originate.contract(contract_of(MyModule.MyContract), initial_storage, 0tez);
-    Test.Next.Contract.transfer_exn(Test.Next.Typed_address.get_entrypoint("increment", orig.taddr), 5, 0tez);
-    return Assert.assert(Test.Next.Typed_address.get_storage(orig.taddr) == initial_storage + 5);
+    let orig = Test.Originate.contract(contract_of(MyModule.MyContract), initial_storage, 0tez);
+    Test.Contract.transfer_exn(Test.Typed_address.get_entrypoint("increment", orig.taddr), 5, 0tez);
+    return Assert.assert(Test.Typed_address.get_storage(orig.taddr) == initial_storage + 5);
 };
 
 const test1 = run_test1();
@@ -201,12 +205,14 @@ end
 This test verifies that the error works by passing a number larger than 5 and handling the error:
 
 ```cameligo group=mycontract-failures
+module Test = Test.Next
+
 let test_failure =
   let initial_storage = 10 in
-  let orig = Test.Next.Originate.contract (contract_of MyContract) initial_storage 0tez in
-  let result: test_exec_result = Test.Next.Contract.transfer (Test.Next.Typed_address.get_entrypoint "increment" orig.taddr) 50 0tez in
+  let orig = Test.Originate.contract (contract_of MyContract) initial_storage 0tez in
+  let result: test_exec_result = Test.Contract.transfer (Test.Typed_address.get_entrypoint "increment" orig.taddr) 50 0tez in
   match result with
-    Fail _x -> Test.Next.IO.log "Failed as expected"
+    Fail _x -> Test.IO.log "Failed as expected"
   | Success _s -> failwith "This should not succeed"
 ```
 
@@ -230,16 +236,20 @@ namespace MyContract {
 This test verifies that the error works by passing a number larger than 5 and handling the error:
 
 ```jsligo group=mycontract-failures
+import Test = Test.Next;
+
 const test_failure = () => {
   const initial_storage = 10 as int;
-  const orig = Test.Next.Originate.contract(contract_of(MyContract), initial_storage, 0tez);
-  const result = Test.Next.Contract.transfer(Test.Next.Typed_address.get_entrypoint("increment", orig.taddr), 50 as int, 0tez);
+  const orig = Test.Originate.contract(contract_of(MyContract), initial_storage, 0tez);
+  const result = Test.Contract.transfer(Test.Typed_address.get_entrypoint("increment", orig.taddr), 50 as int, 0tez);
 
   match(result) {
-    when(Fail(_x)): Test.Next.IO.log("Failed as expected");
+    when(Fail(_x)): Test.IO.log("Failed as expected");
     when(Success(_s)): failwith("This should not succeed")
   };
 }
+
+const test1 = test_failure();
 ```
 
 </Syntax>
@@ -321,25 +331,27 @@ Then it calls the `reset` entrypoint as the admin account and verifies that the 
 <Syntax syntax="cameligo">
 
 ```cameligo group=test-accounts
+module Test = Test.Next
+
 let test_admin =
-  let (admin_account, user_account) = (Test.Next.Account.address(0n), Test.Next.Account.address(1n)) in
+  let (admin_account, user_account) = (Test.Account.address(0n), Test.Account.address(1n)) in
 
   // Originate the contract with the admin account in storage
   let initial_storage = (10, admin_account) in
-  let orig = Test.Next.Originate.contract (contract_of Counter) initial_storage 0tez in
+  let orig = Test.Originate.contract (contract_of Counter) initial_storage 0tez in
 
   // Try to call the reset entrypoint as the user and expect it to fail
-  let () = Test.Next.State.set_source user_account in
-  let result = Test.Next.Contract.transfer (Test.Next.Typed_address.get_entrypoint "reset" orig.taddr ) unit 0tez in
+  let () = Test.State.set_source user_account in
+  let result = Test.Contract.transfer (Test.Typed_address.get_entrypoint "reset" orig.taddr ) unit 0tez in
   let () = match result with
-    Fail _err -> Test.Next.IO.log "Test succeeded"
+    Fail _err -> Test.IO.log "Test succeeded"
   | Success _s -> failwith "User should not be able to call reset" in
 
   // Call the reset entrypoint as the admin and expect it to succeed
-  let () = Test.Next.State.set_source admin_account in
-  let _: nat = Test.Next.Contract.transfer_exn (Test.Next.Typed_address.get_entrypoint "reset" orig.taddr) unit 0tez in
+  let () = Test.State.set_source admin_account in
+  let _: nat = Test.Contract.transfer_exn (Test.Typed_address.get_entrypoint "reset" orig.taddr) unit 0tez in
 
-  let (newNumber, _admin_account) = Test.Next.Typed_address.get_storage orig.taddr in
+  let (newNumber, _admin_account) = Test.Typed_address.get_storage orig.taddr in
   Assert.assert (newNumber = 0)
 ```
 
@@ -348,27 +360,29 @@ let test_admin =
 <Syntax syntax="jsligo">
 
 ```jsligo group=test-accounts
+import Test = Test.Next;
+
 const test_admin = (() => {
-  const admin_account = Test.Next.Account.address(0n);
-  const user_account = Test.Next.Account.address(1n);
+  const admin_account = Test.Account.address(0n);
+  const user_account = Test.Account.address(1n);
 
   // Originate the contract with the admin account in storage
   const initial_storage = [10 as int, admin_account];
-  const orig = Test.Next.Originate.contract(contract_of(Counter), initial_storage, 0tez);
+  const orig = Test.Originate.contract(contract_of(Counter), initial_storage, 0tez);
 
   // Try to call the reset entrypoint as the user and expect it to fail
-  Test.Next.State.set_source(user_account);
-  const result = Test.Next.Contract.transfer(Test.Next.Typed_address.get_entrypoint("reset", orig.taddr), unit, 0tez);
+  Test.State.set_source(user_account);
+  const result = Test.Contract.transfer(Test.Typed_address.get_entrypoint("reset", orig.taddr), unit, 0tez);
   match(result) {
-    when(Fail(_err)): Test.Next.IO.log("Test succeeded");
+    when(Fail(_err)): Test.IO.log("Test succeeded");
     when (Success(_s)): failwith("User should not be able to call reset");
   };
 
   // Call the reset entrypoint as the admin and expect it to succeed
-  Test.Next.State.set_source(admin_account);
-  Test.Next.Contract.transfer_exn(Test.Next.Typed_address.get_entrypoint("reset", orig.taddr), unit, 0tez);
+  Test.State.set_source(admin_account);
+  Test.Contract.transfer_exn(Test.Typed_address.get_entrypoint("reset", orig.taddr), unit, 0tez);
 
-  const [newNumber, _admin_account] = Test.Next.Typed_address.get_storage(orig.taddr);
+  const [newNumber, _admin_account] = Test.Typed_address.get_storage(orig.taddr);
   Assert.assert(newNumber == 0);
 }) ()
 ```
@@ -382,18 +396,20 @@ The default balance is 4000000 tez minus %5 that is frozen so the account can ac
 <Syntax syntax="cameligo">
 
 ```cameligo test-ligo group=reset
+module Test = Test.Next
+
 let test_accounts =
   let initial_balances : tez list = [] in
-  let () = Test.Next.State.reset 3n initial_balances in
-  let admin_account = Test.Next.Account.address(0n) in
-  let user_account1 = Test.Next.Account.address(1n) in
-  let user_account2 = Test.Next.Account.address(2n) in
+  let () = Test.State.reset 3n initial_balances in
+  let admin_account = Test.Account.address(0n) in
+  let user_account1 = Test.Account.address(1n) in
+  let user_account2 = Test.Account.address(2n) in
 
-  let () = Test.Next.IO.log (Test.Next.Address.get_balance admin_account) in
+  let () = Test.IO.log (Test.Address.get_balance admin_account) in
   // 3800000000000mutez
-  let () = Test.Next.IO.log (Test.Next.Address.get_balance user_account1) in
+  let () = Test.IO.log (Test.Address.get_balance user_account1) in
   // 3800000000000mutez
-  Test.Next.IO.log (Test.Next.Address.get_balance user_account2)
+  Test.IO.log (Test.Address.get_balance user_account2)
   // 3800000000000mutez
 ```
 
@@ -402,17 +418,19 @@ let test_accounts =
 <Syntax syntax="jsligo">
 
 ```jsligo test-ligo group=reset
-const test_accounts = () => {
-  Test.Next.State.reset(3n, [] as list <tez>);
-  const admin_account = Test.Next.Account.address(0n);
-  const user_account1 = Test.Next.Account.address(1n);
-  const user_account2 = Test.Next.Account.address(2n);
+import Test = Test.Next;
 
-  Test.Next.IO.log(Test.Next.Address.get_balance(admin_account));
+const test_accounts = () => {
+  Test.State.reset(3n, [] as list <tez>);
+  const admin_account = Test.Account.address(0n);
+  const user_account1 = Test.Account.address(1n);
+  const user_account2 = Test.Account.address(2n);
+
+  Test.IO.log(Test.Address.get_balance(admin_account));
   // 3800000000000mutez
-  Test.Next.IO.log(Test.Next.Address.get_balance(user_account1));
+  Test.IO.log(Test.Address.get_balance(user_account1));
   // 3800000000000mutez
-  Test.Next.IO.log(Test.Next.Address.get_balance(user_account2));
+  Test.IO.log(Test.Address.get_balance(user_account2));
   // 3800000000000mutez
 }
 ```
@@ -431,10 +449,12 @@ module C = struct
     [Tezos.emit "%foo" p ; Tezos.emit "%foo" p.0],()
 end
 
+module Test = Test.Next
+
 let test_foo =
-  let orig = Test.Next.Originate.contract (contract_of C) () 0tez in
-  let _: nat = Test.Next.Typed_address.transfer_exn orig.taddr (Main (1,2)) 0tez in
-  (Test.Next.State.last_events orig.taddr "foo" : (int*int) list),(Test.Next.State.last_events orig.taddr "foo" : int list)
+  let orig = Test.Originate.contract (contract_of C) () 0tez in
+  let _: nat = Test.Typed_address.transfer_exn orig.taddr (Main (1,2)) 0tez in
+  (Test.State.last_events orig.taddr "foo" : (int*int) list),(Test.State.last_events orig.taddr "foo" : int list)
 ```
 
 </Syntax>
@@ -450,11 +470,16 @@ namespace C {
     return [([op1, op2] as list<operation>), unit];
   };
 }
+
+import Test = Test.Next;
+
 const test = () => {
-  const orig = Test.Next.Originate.contract(contract_of(C), unit, 0tez);
-  Test.Next.Typed_address.transfer_exn(orig.taddr, Main ([1,2]), 0tez);
-  return [Test.Next.State.last_events(orig.taddr, "foo") as list<[int, int]>, Test.Next.State.last_events(orig.taddr, "foo") as list<int>];
+  const orig = Test.Originate.contract(contract_of(C), unit, 0tez);
+  Test.Typed_address.transfer_exn(orig.taddr, Main ([1,2]), 0tez);
+  return [Test.State.last_events(orig.taddr, "foo") as list<[int, int]>, Test.State.last_events(orig.taddr, "foo") as list<int>];
 };
+
+const run_test = test();
 ```
 
 </Syntax>
@@ -510,8 +535,10 @@ First, include the file under test and reset the state with 5 bootstrap accounts
 ```cameligo test-ligo group=unit-remove-balance-mixed
 #include "./gitlab-pages/docs/testing/src/testing/remove-balance.mligo"
 
+module Test = Test.Next
+
 let test_remove_balance =
-  let () = Test.Next.State.reset 5n ([]: tez list) in
+  let () = Test.State.reset 5n ([]: tez list) in
 ```
 
 </Syntax>
@@ -521,8 +548,10 @@ let test_remove_balance =
 ```jsligo test-ligo group=unit-remove-balance-mixed
 #include "./gitlab-pages/docs/testing/src/testing/remove-balance.jsligo"
 
+import Test = Test.Next;
+
 const test_remove_balance = (() => {
-  Test.Next.State.reset(5n, [] as list <tez>);
+  Test.State.reset(5n, [] as list <tez>);
 ```
 
 </Syntax>
@@ -533,7 +562,7 @@ Now build the `balances` map that serves as the test input:
 
 ```cameligo test-ligo group=unit-remove-balance-mixed
 let balances: balances =
-  let a1, a2, a3 = Test.Next.Account.address 1n, Test.Next.Account.address 2n, Test.Next.Account.address 3n
+  let a1, a2, a3 = Test.Account.address 1n, Test.Account.address 2n, Test.Account.address 3n
   in Map.literal [(a1, 10tz); (a2, 100tz); (a3, 1000tz)] in
 ```
 
@@ -542,9 +571,9 @@ let balances: balances =
 
 ```jsligo test-ligo group=unit-remove-balance-mixed
 const balances: balances =
-  Map.literal([[Test.Next.Account.address(1n), 10tez],
-              [Test.Next.Account.address(2n), 100tez],
-              [Test.Next.Account.address(3n), 1000tez]]);
+  Map.literal([[Test.Account.address(1n), 10tez],
+              [Test.Account.address(2n), 100tez],
+              [Test.Account.address(3n), 1000tez]]);
 ```
 
 </Syntax>
@@ -572,11 +601,11 @@ We also print the actual and expected sizes for good measure.
 List.iter
   (fun ((threshold , expected_size): tez * nat) ->
     let tester (balances, threshold: balances * tez) = Map.size (remove_balances_under balances threshold) in
-    let size = Test.Next.Michelson.run tester (balances, threshold) in
-    let expected_size = Test.Next.Michelson.eval expected_size in
-    let () = Test.Next.IO.log ("expected", expected_size) in
-    let () = Test.Next.IO.log ("actual", size) in
-    Assert.assert (Test.Next.Compare.eq size expected_size)
+    let size = Test.Michelson.run tester (balances, threshold) in
+    let expected_size = Test.Michelson.eval expected_size in
+    let () = Test.IO.log ("expected", expected_size) in
+    let () = Test.IO.log ("actual", size) in
+    Assert.assert (Test.Compare.eq size expected_size)
   )
   [(15tez,2n); (130tez,1n); (1200tez,0n)]
 ```
@@ -588,11 +617,11 @@ List.iter
 return List.iter(([threshold, expected_size]: [tez, nat]): unit => {
     const tester = ([balances, threshold]: [balances, tez]): nat =>
       Map.size (remove_balances_under (balances, threshold));
-    const size = Test.Next.Michelson.run(tester, [balances, threshold]);
-    const expected_size_ = Test.Next.Michelson.eval(expected_size);
-    Test.Next.IO.log(["expected", expected_size]);
-    Test.Next.IO.log(["actual", size]);
-    return (Assert.assert (Test.Next.Compare.eq(size, expected_size_)))
+    const size = Test.Michelson.run(tester, [balances, threshold]);
+    const expected_size_ = Test.Michelson.eval(expected_size);
+    Test.IO.log(["expected", expected_size]);
+    Test.IO.log(["actual", size]);
+    return (Assert.assert (Test.Compare.eq(size, expected_size_)))
   },
   list ([ [15tez, 2n], [130tez, 1n], [1200tez, 0n]]) );
 }) ()
@@ -607,19 +636,21 @@ Here is the complete test file:
 ```cameligo test-ligo group=unit-remove-balance-complete
 #include "./gitlab-pages/docs/testing/src/testing/remove-balance.mligo"
 
+module Test = Test.Next
+
 let test_remove_balance =
-  let () = Test.Next.State.reset 5n ([]: tez list) in
+  let () = Test.State.reset 5n ([]: tez list) in
 let balances: balances =
-  let a1, a2, a3 = Test.Next.Account.address 1n, Test.Next.Account.address 2n, Test.Next.Account.address 3n
+  let a1, a2, a3 = Test.Account.address 1n, Test.Account.address 2n, Test.Account.address 3n
     in Map.literal [(a1, 10tz); (a2, 100tz); (a3, 1000tz)] in
   List.iter
     (fun ((threshold , expected_size): tez * nat) ->
       let tester (balances, threshold: balances * tez) = Map.size (remove_balances_under balances threshold) in
-      let size = Test.Next.Michelson.run tester (balances, threshold) in
-      let expected_size = Test.Next.Michelson.eval expected_size in
-      let () = Test.Next.IO.log ("expected", expected_size) in
-      let () = Test.Next.IO.log ("actual", size) in
-      Assert.assert (Test.Next.Compare.eq size expected_size)
+      let size = Test.Michelson.run tester (balances, threshold) in
+      let expected_size = Test.Michelson.eval expected_size in
+      let () = Test.IO.log ("expected", expected_size) in
+      let () = Test.IO.log ("actual", size) in
+      Assert.assert (Test.Compare.eq size expected_size)
     )
     [(15tez,2n); (130tez,1n); (1200tez,0n)]
 ```
@@ -631,20 +662,22 @@ let balances: balances =
 ```jsligo test-ligo group=unit-remove-balance-complete
 #include "./gitlab-pages/docs/testing/src/testing/remove-balance.jsligo"
 
+import Test = Test.Next;
+
 const test_remove_balance = (() => {
-  Test.Next.State.reset(5n, [] as list <tez>);
+  Test.State.reset(5n, [] as list <tez>);
   const balances: balances =
-    Map.literal([[Test.Next.Account.address(1n), 10tez],
-                 [Test.Next.Account.address(2n), 100tez],
-                 [Test.Next.Account.address(3n), 1000tez]]);
+    Map.literal([[Test.Account.address(1n), 10tez],
+                 [Test.Account.address(2n), 100tez],
+                 [Test.Account.address(3n), 1000tez]]);
   return List.iter(([threshold, expected_size]: [tez, nat]): unit => {
       const tester = ([balances, threshold]: [balances, tez]): nat =>
         Map.size (remove_balances_under (balances, threshold));
-      const size = Test.Next.Michelson.run(tester, [balances, threshold]);
-      const expected_size_ = Test.Next.Michelson.eval(expected_size);
-      Test.Next.IO.log(["expected", expected_size]);
-      Test.Next.IO.log(["actual", size]);
-      return (Assert.assert (Test.Next.Compare.eq(size, expected_size_)))
+      const size = Test.Michelson.run(tester, [balances, threshold]);
+      const expected_size_ = Test.Michelson.eval(expected_size);
+      Test.IO.log(["expected", expected_size]);
+      Test.IO.log(["actual", size]);
+      return (Assert.assert (Test.Compare.eq(size, expected_size_)))
     },
     list ([ [15tez, 2n], [130tez, 1n], [1200tez, 0n]]) );
 }) ()

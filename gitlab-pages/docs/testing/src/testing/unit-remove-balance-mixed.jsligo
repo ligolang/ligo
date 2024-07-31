@@ -1,19 +1,21 @@
 #include "./gitlab-pages/docs/testing/src/testing/remove-balance.jsligo"
 
+import Test = Test.Next;
+
 const test_remove_balance = (() => {
-  Test.Next.State.reset(5n, [] as list <tez>);
+  Test.State.reset(5n, [] as list <tez>);
 const balances: balances =
-  Map.literal([[Test.Next.Account.address(1n), 10tez],
-              [Test.Next.Account.address(2n), 100tez],
-              [Test.Next.Account.address(3n), 1000tez]]);
+  Map.literal([[Test.Account.address(1n), 10tez],
+              [Test.Account.address(2n), 100tez],
+              [Test.Account.address(3n), 1000tez]]);
 return List.iter(([threshold, expected_size]: [tez, nat]): unit => {
     const tester = ([balances, threshold]: [balances, tez]): nat =>
       Map.size (remove_balances_under (balances, threshold));
-    const size = Test.Next.Michelson.run(tester, [balances, threshold]);
-    const expected_size_ = Test.Next.Michelson.eval(expected_size);
-    Test.Next.IO.log(["expected", expected_size]);
-    Test.Next.IO.log(["actual", size]);
-    return (Assert.assert (Test.Next.Compare.eq(size, expected_size_)))
+    const size = Test.Michelson.run(tester, [balances, threshold]);
+    const expected_size_ = Test.Michelson.eval(expected_size);
+    Test.IO.log(["expected", expected_size]);
+    Test.IO.log(["actual", size]);
+    return (Assert.assert (Test.Compare.eq(size, expected_size_)))
   },
   list ([ [15tez, 2n], [130tez, 1n], [1200tez, 0n]]) );
 }) ()
