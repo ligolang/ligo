@@ -3,16 +3,17 @@ type storage = unit;
 type result = [list<operation>, storage];
 
 @entry
-const no_tokens = (action: parameter, store: storage): result => {
+const no_tokens = (action: parameter, storage: storage): result => {
   if (Tezos.get_amount() > 0tez) {
     return failwith("This contract does not accept tokens.");
   } else {
-    return [[], store];
+    return [[], storage];
   };
 };
 const owner: address = "tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx";
 
-const owner_only = (action: parameter, store: storage): result => {
+@entry
+const owner_only = (action: parameter, storage: storage): result => {
   if (Tezos.get_sender() != owner) { return failwith("Access denied."); }
-  else { return [[], store]; };
+  else { return [[], storage]; };
 };

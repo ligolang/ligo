@@ -24,7 +24,7 @@ let sub (delta : int) (store : storage) : result =
 
 ## @entry to mark a function as a Smart Contract entry point
 
-The `@entry` attribute is used to indicate that a function should be available as an entry point of the smart contract. It is essentially declaring that function as one of the several "main" functions. For more information, see [Main functions and Entrypoints](../advanced/entrypoints-contracts.md)
+The `@entry` attribute is used to indicate that a function should be available as an entry point of the smart contract. It is essentially declaring that function as one of the several "main" functions. For more information, see [Entrypoints](../tezos/contracts/entrypoints).
 
 ## @dyn_entry to mark a function as a dynamic entry point
 
@@ -120,7 +120,7 @@ const sub = (delta : int, store : storage) : result =>
 
 ## @entry to mark a function as a Smart Contract entry point
 
-The `@entry` decorator is used to indicate that a function should be available as an entry point of the smart contract. It is essentially declaring that function as one of the several "main" functions. For more information, see [Main functions and Entrypoints](../advanced/entrypoints-contracts.md)
+The `@entry` decorator is used to indicate that a function should be available as an entry point of the smart contract. It is essentially declaring that function as one of the several "main" functions. For more information, see [Entrypoints](../tezos/contracts/entrypoints).
 
 ## @dyn_entry to mark a function as a dynamic entry point
 
