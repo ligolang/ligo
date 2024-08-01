@@ -83,6 +83,7 @@ const sidebars = {
         "label": "Contracts",
         "items": [
           "tezos/contracts/contracts",
+          "tezos/contracts/entrypoints",
           "tezos/contracts/contract-address",
           "tezos/contracts/contract_of",
           "tezos/contracts/michelson",
