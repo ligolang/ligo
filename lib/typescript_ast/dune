@@ -1,0 +1,23 @@
+;; Library exporting the TypeScript AST
+
+(library
+ (name ts_ast)
+ (public_name ligo.ts_ast)
+ (modules ts_ast)
+ (libraries
+  cst_shared ;; For printing the TS CST
+  hex
+  zarith
+  core
+  core_kernel.nonempty_list))
+
+;; Local build of a standalone parser for node-types.json
+
+(executable
+ (name StaticNodesReader)
+ (libraries
+  cst_shared ;; For printing the TS CST
+  core
+  core_kernel.nonempty_list
+  yojson)
+ (modules StaticNodesReader))
