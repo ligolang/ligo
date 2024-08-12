@@ -13,17 +13,16 @@
 type identifier = string
 type template_string = string
 type hash_name = string
-
 type hex_literal = string * Hex.t
 type dec_literal = string * Q.t
 type bin_literal = string * Hex.t
 type oct_literal = string * Hex.t
 
 type bigint_literal =
-  Hex_literal of hex_literal
-| Bin_literal of bin_literal
-| Oct_literal of oct_literal
-| Dec_literal of dec_literal
+  | Hex_literal of hex_literal
+  | Bin_literal of bin_literal
+  | Oct_literal of oct_literal
+  | Dec_literal of dec_literal
 
 (* Keywords *)
 
@@ -60,20 +59,20 @@ type bigint_literal =
 *)
 
 type declaration =
-  D_function_declaration of function_declaration
-| D_generator_function_declaration of generator_function_declaration
-| D_class_declaration of class_declaration
-| D_lexical_declaration of lexical_declaration
-| D_variable_declaration of variable_declaration
-| D_function_signature of function_signature
-| D_abstract_class_declaration of abstract_class_declaration
-| D_module of module_
-| D_internal_module of internal_module
-| D_type_alias_declaration of type_alias_declaration
-| D_enum_declaration of enum_declaration
-| D_interface_declaration of interface_declaration
-| D_import_alias of import_alias
-| D_ambient_declaration of ambient_declaration
+  | D_function_declaration of function_declaration
+  | D_generator_function_declaration of generator_function_declaration
+  | D_class_declaration of class_declaration
+  | D_lexical_declaration of lexical_declaration
+  | D_variable_declaration of variable_declaration
+  | D_function_signature of function_signature
+  | D_abstract_class_declaration of abstract_class_declaration
+  | D_module of module_
+  | D_internal_module of internal_module
+  | D_type_alias_declaration of type_alias_declaration
+  | D_enum_declaration of enum_declaration
+  | D_interface_declaration of interface_declaration
+  | D_import_alias of import_alias
+  | D_ambient_declaration of ambient_declaration
 
 (* Function Declaration
 
@@ -87,11 +86,10 @@ type declaration =
      field('body', $.statement_block),
      optional($._automatic_semicolon)))
 *)
-
-and function_declaration = {
-  fun_sig: function_signature;
-  body: statement_block
-}
+and function_declaration =
+  { fun_sig : function_signature
+  ; body : statement_block
+  }
 
 (* Function Signature
 
@@ -160,58 +158,57 @@ and function_declaration = {
      'is',
      field('type', $.type))
 *)
+and function_signature =
+  { async : bool
+  ; name : identifier
+  ; call_sig : call_signature
+  }
 
-and function_signature = {
-  async: bool;
-  name: identifier;
-  call_sig: call_signature;
-}
-
-and call_signature = {
-  type_parameters: type_parameter list;
-  parameters: formal_parameters;
-  return_type: call_return_type option
-}
+and call_signature =
+  { type_parameters : type_parameter list
+  ; parameters : formal_parameters
+  ; return_type : call_return_type option
+  }
 
 and formal_parameters = formal_parameter list
 
 and formal_parameter =
-  Required_parameter of formal_parameter'
-| Optional_parameter of formal_parameter'
+  | Required_parameter of formal_parameter'
+  | Optional_parameter of formal_parameter'
 
-and formal_parameter' = {
-  parameter_name: parameter_name;
-  type_: type_annotation option;
-  default: expression option
-}
+and formal_parameter' =
+  { parameter_name : parameter_name
+  ; type_ : type_annotation option
+  ; default : expression option
+  }
 
-and parameter_name = {
-  decorator: decorator;
-  access: accessibility_modifier option;
-  override: override_modifier option;
-  readonly: bool;
-  pattern: parameter_pattern
-}
+and parameter_name =
+  { decorator : decorator
+  ; access : accessibility_modifier option
+  ; override : override_modifier option
+  ; readonly : bool
+  ; pattern : parameter_pattern
+  }
 
 and parameter_pattern =
-  Parameter_pattern of pattern
-| Parameter_this
+  | Parameter_pattern of pattern
+  | Parameter_this
 
 and call_return_type =
-  Type_annotation of type_annotation
-| Asserts_annotation of asserts_annotation
-| Type_predicate_annotation of type_predicate
+  | Type_annotation of type_annotation
+  | Asserts_annotation of asserts_annotation
+  | Type_predicate_annotation of type_predicate
 
 and type_annotation = type_
 
-and type_predicate = {
-  name: type_predicate_name;
-  type_: type_
-}
+and type_predicate =
+  { name : type_predicate_name
+  ; type_ : type_
+  }
 
 and type_predicate_name =
-  Type_predicate_identifier of identifier (* Including predefined types *)
-| Type_predicate_this
+  | Type_predicate_identifier of identifier (* Including predefined types *)
+  | Type_predicate_this
 
 (* Generator Function Declaration
 
@@ -226,9 +223,8 @@ and type_predicate_name =
      field('body', $.statement_block),
      optional($._automatic_semicolon)))
 *)
-
 and generator_function_declaration =
-  Generator_function_declaration of function_declaration
+  | Generator_function_declaration of function_declaration
 
 (* Class Declaration
 
@@ -295,46 +291,44 @@ and generator_function_declaration =
      optional($._automatic_semicolon),
      field('body', $.statement_block))
 *)
-
-and class_declaration = {
-  decorators: decorator list;
-  name: type_identifier;
-  type_parameters: type_parameter list;
-  class_heritage: class_heritage option;
-  body: class_member list
-}
+and class_declaration =
+  { decorators : decorator list
+  ; name : type_identifier
+  ; type_parameters : type_parameter list
+  ; class_heritage : class_heritage option
+  ; body : class_member list
+  }
 
 and class_heritage =
-  Extends_clause of extends_clause * implements_clause option
-| Implements_clause of implements_clause
+  | Extends_clause of extends_clause * implements_clause option
+  | Implements_clause of implements_clause
 
 and extends_clause = extends_clause_single Nonempty_list.t
 
-and extends_clause_single = {
-  value: expression;
-  type_arguments: type_arguments option
-}
+and extends_clause_single =
+  { value : expression
+  ; type_arguments : type_arguments option
+  }
 
 and type_arguments = type_ Nonempty_list.t
-
 and implements_clause = type_ Nonempty_list.t
 
-and type_parameter = {
-  const: bool;
-  name: type_identifier;
-  constraint_: type_ option;
-  value: type_ option (* default *)
-}
+and type_parameter =
+  { const : bool
+  ; name : type_identifier
+  ; constraint_ : type_ option
+  ; value : type_ option (* default *)
+  }
 
 and class_body = class_member list
 
 and class_member =
-  Method_definition of decorator list * method_definition
-| Method_signature of method_signature
-| Call_static_block of statement_block
-| Abstract_method_signature of abstract_method_signature
-| Index_signature of index_signature
-| Public_field_definition of public_field_definition
+  | Method_definition of decorator list * method_definition
+  | Method_signature of method_signature
+  | Call_static_block of statement_block
+  | Abstract_method_signature of abstract_method_signature
+  | Index_signature of index_signature
+  | Public_field_definition of public_field_definition
 
 (* Method Signature
 
@@ -361,41 +355,40 @@ and class_member =
      $.number,
      $.computed_property_name),
 *)
-
-and method_signature = {
-  access: accessibility_modifier option;
-  scope: method_scope;
-  async: bool;
-  set_get_all: set_get_all option;
-  name: property_name;
-  optional: bool;
-  call_sig: call_signature
-}
+and method_signature =
+  { access : accessibility_modifier option
+  ; scope : method_scope
+  ; async : bool
+  ; set_get_all : set_get_all option
+  ; name : property_name
+  ; optional : bool
+  ; call_sig : call_signature
+  }
 
 and accessibility_modifier =
-  Public
-| Private
-| Protected
+  | Public
+  | Private
+  | Protected
 
 and override_modifier = Override
 
 and set_get_all =
-  Set
-| Get
-| All
+  | Set
+  | Get
+  | All
 
-and method_scope = {
-  static: bool;
-  override: bool;
-  readonly: bool
-}
+and method_scope =
+  { static : bool
+  ; override : bool
+  ; readonly : bool
+  }
 
 and property_name =
-  Property_identifier of identifier (* Also reserved identifiers *)
-| Private_property_identifier of hash_name
-| String
-| Number
-| Computed_property_name of expression
+  | Property_identifier of identifier (* Also reserved identifiers *)
+  | Private_property_identifier of hash_name
+  | String
+  | Number
+  | Computed_property_name of expression
 
 (* Lexical Declaration
 
@@ -455,63 +448,66 @@ and property_name =
    non_null_expression: $ =>
      prec.left('unary', seq($.expression, '!'))
 *)
+and lexical_declaration =
+  { kind : let_or_const
+  ; decls : variable_declaration
+  }
 
-and lexical_declaration = {
-  kind: let_or_const;
-  decls: variable_declaration
-}
-
-and let_or_const = Let | Const
+and let_or_const =
+  | Let
+  | Const
 
 and variable_declarator =
-  Var_decl_ident of identifier
-| Var_decl_pattern of destructuring_pattern
+  | Var_decl_ident of identifier
+  | Var_decl_pattern of destructuring_pattern
 
 and destructuring_pattern =
-  Pattern_object of object_pattern
-| Pattern_array  of array_pattern
+  | Pattern_object of object_pattern
+  | Pattern_array of array_pattern
 
 and object_pattern = member_pattern list
 
 and member_pattern =
-  Member_pair_pattern of pair_pattern
-| Member_rest_pattern of rest_pattern
-| Member_object_assignment of object_assignment_pattern
-| Member_shorthand_property of identifier (* Including reserved identifiers *)
+  | Member_pair_pattern of pair_pattern
+  | Member_rest_pattern of rest_pattern
+  | Member_object_assignment of object_assignment_pattern
+  | Member_shorthand_property of identifier (* Including reserved identifiers *)
 
-and pair_pattern = {
-  key: property_name;
-  value: pair_value_pattern
-}
+and pair_pattern =
+  { key : property_name
+  ; value : pair_value_pattern
+  }
 
 and pair_value_pattern =
-  Pair_value of pattern
-| Pair_value_assignment of assignment_pattern
+  | Pair_value of pattern
+  | Pair_value_assignment of assignment_pattern
 
 and rest_pattern = lhs_expression
 
 and lhs_expression =
-  Member_expression of member_expression
-| Subscript_expression of subscript_expression
-| Identifier of identifier (* Including reserved identifiers *)
-| Undefined
-| Pattern of destructuring_pattern
-| Non_null_expression of expression
+  | Member_expression of member_expression
+  | Subscript_expression of subscript_expression
+  | Identifier of identifier (* Including reserved identifiers *)
+  | Undefined
+  | Pattern of destructuring_pattern
+  | Non_null_expression of expression
 
-and object_assignment_pattern = {
-  left: object_lhs_pattern;
-  right: expression
-}
+and object_assignment_pattern =
+  { left : object_lhs_pattern
+  ; right : expression
+  }
 
-and object_lhs_pattern = (* Isomorphic to [variable_declarator]. *)
-  Object_lhs_ident of identifier (* Including reserved identifiers *)
-| Object_lhs of destructuring_pattern
+and object_lhs_pattern =
+  (* Isomorphic to [variable_declarator]. *)
+  | Object_lhs_ident of identifier (* Including reserved identifiers *)
+  | Object_lhs of destructuring_pattern
 
 and array_pattern = array_cell_pattern list
 
-and array_cell_pattern = (* Isomorphic to [pair_value_pattern]. *)
-  Cell_pattern of pattern
-| Cell_assignment of assignment_pattern
+and array_cell_pattern =
+  (* Isomorphic to [pair_value_pattern]. *)
+  | Cell_pattern of pattern
+  | Cell_assignment of assignment_pattern
 
 (* Variable Declaration
 
@@ -520,7 +516,6 @@ and array_cell_pattern = (* Isomorphic to [pair_value_pattern]. *)
    variable_declaration: $ =>
      seq('var', commaSep1($.variable_declarator), $._semicolon),
 *)
-
 and variable_declaration = variable_declarator Nonempty_list.t
 
 (* Abstract Class Declaration
@@ -536,14 +531,13 @@ and variable_declaration = variable_declarator Nonempty_list.t
      optional($.class_heritage),
      field('body', $.class_body)))
 *)
-
-and abstract_class_declaration = {
-  decorator: decorator list;
-  name: type_identifier;
-  type_parameters: type_parameter list;
-  class_heritage: class_heritage option;
-  body: class_body
-}
+and abstract_class_declaration =
+  { decorator : decorator list
+  ; name : type_identifier
+  ; type_parameters : type_parameter list
+  ; class_heritage : class_heritage option
+  ; body : class_body
+  }
 
 and type_identifier = identifier
 
@@ -563,11 +557,10 @@ and type_identifier = identifier
      $._call_signature,
      field('body', $.statement_block)))
 *)
-
-and method_definition = {
-  signature: method_signature;
-  body: statement_block
-}
+and method_definition =
+  { signature : method_signature
+  ; body : statement_block
+  }
 
 and statement_block = statement list
 
@@ -584,15 +577,14 @@ and statement_block = statement list
      optional('?'),
      $._call_signature)
 *)
-
-and abstract_method_signature = {
-  access: accessibility_modifier option;
-  override: override_modifier option;
-  set_get_all: set_get_all option;
-  name: property_name;
-  optional: bool;
-  call_sig: call_signature
-}
+and abstract_method_signature =
+  { access : accessibility_modifier option
+  ; override : override_modifier option
+  ; set_get_all : set_get_all option
+  ; name : property_name
+  ; optional : bool
+  ; call_sig : call_signature
+  }
 
 (* Index Signature
 
@@ -627,35 +619,36 @@ and abstract_method_signature = {
    adding_type_annotation: $ => seq('+?:', $.type),
    opting_type_annotation: $ => seq('?:', $.type)
 *)
+and index_signature =
+  { sign : sign option (* readonly *)
+  ; range : range
+  ; type_ : index_type
+  }
 
-and index_signature = {
-  sign: sign option; (* readonly *)
-  range: range;
-  type_: index_type
-}
-
-and sign = Plus | Minus
+and sign =
+  | Plus
+  | Minus
 
 and range =
-  Typed_index_clause of typed_index_clause
-| Mapped_type_clause of mapped_type_clause
+  | Typed_index_clause of typed_index_clause
+  | Mapped_type_clause of mapped_type_clause
 
-and typed_index_clause = {
-  name: identifier; (* Including reserved identifiers *)
-  index_type: type_
-}
+and typed_index_clause =
+  { name : identifier (* Including reserved identifiers *)
+  ; index_type : type_
+  }
 
-and mapped_type_clause = {
-  name: type_identifier;
-  type_: type_;
-  alias: type_ option
-}
+and mapped_type_clause =
+  { name : type_identifier
+  ; type_ : type_
+  ; alias : type_ option
+  }
 
 and index_type =
-  Type_annotation of type_
-| Omitting_type_annotation of type_
-| Adding_type_annotation of type_
-| Opting_type_annotation of type_
+  | Type_annotation of type_
+  | Omitting_type_annotation of type_
+  | Adding_type_annotation of type_
+  | Opting_type_annotation of type_
 
 (* Public Field Definition
 
@@ -680,27 +673,28 @@ and index_type =
 
    _initializer: $ => seq('=', field('value', $.expression))
 *)
+and public_field_definition =
+  { decorators : decorator list
+  ; access : accessibility_modifier option
+  ; declare : bool
+  ; scope : field_scope
+  ; name : property_name
+  ; mode : field_mode
+  ; type_ : type_annotation option
+  ; init_value : expression
+  }
 
-and public_field_definition = {
-  decorators: decorator list;
-  access: accessibility_modifier option;
-  declare: bool;
-  scope: field_scope;
-  name: property_name;
-  mode: field_mode;
-  type_: type_annotation option;
-  init_value: expression
-}
+and field_scope =
+  { static : bool
+  ; override : bool
+  ; readonly : bool
+  ; abstract : bool
+  ; accessor : bool
+  }
 
-and field_scope = {
-  static: bool;
-  override: bool;
-  readonly: bool;
-  abstract: bool;
-  accessor: bool
-}
-
-and field_mode = Optional | Definite_assert
+and field_mode =
+  | Optional
+  | Definite_assert
 
 (* Ambient Declaration
 
@@ -714,11 +708,10 @@ and field_mode = Optional | Definite_assert
        seq('module', '.', alias($.identifier, $.property_identifier),
            ':', $.type, $._semicolon)))
 *)
-
 and ambient_declaration =
-  Declaration of declaration
-| Global_declaration of statement_block
-| Module_declaration of identifier * type_ (* property identifier *)
+  | Declaration of declaration
+  | Global_declaration of statement_block
+  | Module_declaration of identifier * type_ (* property identifier *)
 
 (* Enumerated Declaration
 
@@ -744,21 +737,20 @@ and ambient_declaration =
 
    _initializer: $ => seq('=', field('value', $.expression))
 *)
-
-and enum_declaration = {
-  const: bool;
-  name: identifier;
-  body: enum_body option (* [None] denotes "{}" *)
-}
+and enum_declaration =
+  { const : bool
+  ; name : identifier
+  ; body : enum_body option (* [None] denotes "{}" *)
+  }
 
 and enum_body =
-  Enum_name of property_name
-| Enum_assignment of enum_assignment
+  | Enum_name of property_name
+  | Enum_assignment of enum_assignment
 
-and enum_assignment = {
-  name: property_name;
-  default: expression
-}
+and enum_assignment =
+  { name : property_name
+  ; default : expression
+  }
 
 (* Import Alias
 
@@ -780,18 +772,16 @@ and enum_assignment = {
      '.',
      field('property', alias($.identifier, $.property_identifier))))
 *)
-
-and import_alias = {
-  alias: identifier;
-  aliased: aliased
-}
+and import_alias =
+  { alias : identifier
+  ; aliased : aliased
+  }
 
 and aliased =
-  Ident of identifier
-| Nested of nested_identifier
+  | Ident of identifier
+  | Nested of nested_identifier
 
-and nested_identifier =
-  identifier Nonempty_list.t * identifier (* property identifier *)
+and nested_identifier = identifier Nonempty_list.t * identifier (* property identifier *)
 
 (* Interface Declaration
 
@@ -822,26 +812,24 @@ and nested_identifier =
        $.nested_type_identifier)),
      field('type_arguments', $.type_arguments)))
 *)
-
-and interface_declaration = {
-  name: type_identifier;
-  type_parameters: type_parameter list;
-  extends: extends_type_clause list;
-  body: object_type (* See TYPES *)
-}
+and interface_declaration =
+  { name : type_identifier
+  ; type_parameters : type_parameter list
+  ; extends : extends_type_clause list
+  ; body : object_type (* See TYPES *)
+  }
 
 and extends_type_clause =
-  Extends_type of type_identifier
-| Extends_nested of nested_type_identifier
-| Extends_generic of generic_type
+  | Extends_type of type_identifier
+  | Extends_nested of nested_type_identifier
+  | Extends_generic of generic_type
 
 and nested_type_identifier = identifier Nonempty_list.t * type_identifier
-
 and generic_type = generic_name * type_arguments
 
 and generic_name =
-  Generic_type of type_identifier
-| Generic_nested of nested_type_identifier
+  | Generic_type of type_identifier
+  | Generic_nested of nested_type_identifier
 
 (* Internal Module
 
@@ -853,15 +841,13 @@ and generic_name =
      field('name', choice($.string, $.identifier, $.nested_identifier)),
      field('body', optional($.statement_block))))
 *)
-
 and internal_module = module_
-
 and module_ = module_name * statement_block
 
 and module_name =
-  Module_string of string
-| Module_ident of identifier
-| Module_nested of nested_identifier
+  | Module_string of string
+  | Module_ident of identifier
+  | Module_nested of nested_identifier
 
 (*  Type Alias Declaration
 
@@ -875,12 +861,11 @@ and module_name =
       field('value', $.type),
       $._semicolon)
 *)
-
-and type_alias_declaration = {
-  name: type_identifier;
-  type_parameters: type_parameter list;
-  value: type_
-}
+and type_alias_declaration =
+  { name : type_identifier
+  ; type_parameters : type_parameter list
+  ; value : type_
+  }
 
 (* EXPRESSIONS *)
 
@@ -908,24 +893,24 @@ and type_alias_declaration = {
      $.internal_module,
      $.type_assertion}
 *)
-
 and expression =
-  E_as_expression of as_expression
-| E_assignment_expression of assignment_expression
-| E_augmented_assignment_expression of augmented_assignment_expression
-| E_await_expression of await_expression
-| E_binary_expression of binary_expression
-(*| E_glimmer_template of glimmer_template*) (* TODO? *)
-| E_instantiation_expression of instantiation_expression
-| E_internal_module of internal_module
-| E_new_expression of new_expression
-| E_primary_expression of primary_expression
-| E_satisfies_expression of satisfies_expression
-| E_ternary_expression of ternary_expression
-| E_type_assertion of type_assertion
-| E_unary_expression of unary_expression
-| E_update_expression of update_expression
-| E_yield_expression of yield_expression
+  | E_as_expression of as_expression
+  | E_assignment_expression of assignment_expression
+  | E_augmented_assignment_expression of augmented_assignment_expression
+  | E_await_expression of await_expression
+  | E_binary_expression of binary_expression
+  (*| E_glimmer_template of glimmer_template*)
+  (* TODO? *)
+  | E_instantiation_expression of instantiation_expression
+  | E_internal_module of internal_module
+  | E_new_expression of new_expression
+  | E_primary_expression of primary_expression
+  | E_satisfies_expression of satisfies_expression
+  | E_ternary_expression of ternary_expression
+  | E_type_assertion of type_assertion
+  | E_unary_expression of unary_expression
+  | E_update_expression of update_expression
+  | E_yield_expression of yield_expression
 
 (* As-expressions
 
@@ -934,12 +919,11 @@ and expression =
    as_expression: $ => prec.left('binary', seq(
      $.expression, 'as', choice('const', $.type)))
 *)
-
 and as_expression = expression * as_what
 
 and as_what =
-  As_type of type_
-| As_const
+  | As_type of type_
+  | As_const
 
 (* Assignment Expression
 
@@ -955,16 +939,15 @@ and as_what =
 
    parenthesized_expression: $ => seq('(', $._expressions, ')')
 *)
-
-and assignment_expression = {
-  using: bool;
-  left: assignment_lhs;
-  right: expression
-}
+and assignment_expression =
+  { using : bool
+  ; left : assignment_lhs
+  ; right : expression
+  }
 
 and assignment_lhs =
-  Assign_lhs_parens of expression
-| Assign_lhs of lhs_expression
+  | Assign_lhs_parens of expression
+  | Assign_lhs of lhs_expression
 
 (* Member Expression
 
@@ -977,23 +960,24 @@ and assignment_lhs =
        $.private_property_identifier,
        alias($.identifier, $.property_identifier))))),
 *)
-
-and member_expression = {
-  object_: object_member;
-  selector: selector;
-  property: property_ident
-}
+and member_expression =
+  { object_ : object_member
+  ; selector : selector
+  ; property : property_ident
+  }
 
 and object_member =
-  Object_member_expression of expression
-| Object_member_primary of primary_expression
-| Object_member_import
+  | Object_member_expression of expression
+  | Object_member_primary of primary_expression
+  | Object_member_import
 
-and selector = Dot | Optional_chain
+and selector =
+  | Dot
+  | Optional_chain
 
 and property_ident =
-  Private_property_identifier of hash_name
-| Property_identifier of identifier
+  | Private_property_identifier of hash_name
+  | Property_identifier of identifier
 
 (* Subscript Expression
 
@@ -1010,22 +994,21 @@ and property_ident =
 
    sequence_expression: $ => prec.right(commaSep1($.expression)),
 *)
-
-and subscript_expression = {
-  object_: subscripted;
-  optional_chain: optional_chain option;
-  index: expressions
-}
+and subscript_expression =
+  { object_ : subscripted
+  ; optional_chain : optional_chain option
+  ; index : expressions
+  }
 
 and subscripted =
-  Subscripted_expression of expression
-| Subscripted_primary of primary_expression
+  | Subscripted_expression of expression
+  | Subscripted_primary of primary_expression
 
 and optional_chain = Optional_chain
 
 and expressions =
-  General_expression of expression
-| Sequence_expression of sequence_expression
+  | General_expression of expression
+  | Sequence_expression of sequence_expression
 
 and sequence_expression = expression list
 
@@ -1052,36 +1035,34 @@ and sequence_expression = expression list
   _augmented_assignment_lhs: ($, previous) => choice(previous,
     $.non_null_expression)
 *)
-
-and augmented_assignment_expression = {
-  left: augmented_assignment_lhs;
-  operator: assignment_operator;
-  right: expression
-}
+and augmented_assignment_expression =
+  { left : augmented_assignment_lhs
+  ; operator : assignment_operator
+  ; right : expression
+  }
 
 and augmented_assignment_lhs =
-  Member_expression of member_expression
-| Subscript_expression of subscript_expression
-| Identifier of identifier
-| Parenthesized_expression of expression
-
+  | Member_expression of member_expression
+  | Subscript_expression of subscript_expression
+  | Identifier of identifier
+  | Parenthesized_expression of expression
 
 and assignment_operator =
-  Add_eq (* += *)
-| Sub_eq (* -= *)
-| Mult_eq (* *= *)
-| Div_eq (* /= *)
-| Rem_eq (* %= *)
-| Bit_xor_eq (* ^= *)
-| Bit_and_eq (* &= *)
-| Bit_or_eq (* |= *)
-| Bit_sr_eq (* >>= *)
-| Bit_usr_eq (* >>>= *)
-| Bit_sl_eq (* <<= *)
-| Exponent_eq (* **= *)
-| Logical_and_eq (* &&= *)
-| Logical_or_eq (* ||= *)
-| Non_null_eq (* ??= *)
+  | Add_eq (* += *)
+  | Sub_eq (* -= *)
+  | Mult_eq (* *= *)
+  | Div_eq (* /= *)
+  | Rem_eq (* %= *)
+  | Bit_xor_eq (* ^= *)
+  | Bit_and_eq (* &= *)
+  | Bit_or_eq (* |= *)
+  | Bit_sr_eq (* >>= *)
+  | Bit_usr_eq (* >>>= *)
+  | Bit_sl_eq (* <<= *)
+  | Exponent_eq (* **= *)
+  | Logical_and_eq (* &&= *)
+  | Logical_or_eq (* ||= *)
+  | Non_null_eq (* ??= *)
 
 (* Await-expression
 
@@ -1089,7 +1070,6 @@ and assignment_operator =
 
    await_expression: $ => prec('unary_void', seq('await', $.expression))
 *)
-
 and await_expression = expression
 
 (* Binary Expression
@@ -1124,33 +1104,32 @@ and await_expression = expression
          ['in', 'binary_relation']
         ].map ... // Shortened here
 *)
-
 and binary_expression =
-  Logical_and (* && *)
-| Logical_or  (* || *)
-| Bit_sr      (* >> *)
-| Bit_usr     (* >>> *)
-| Bit_sl      (* << *)
-| Bit_and     (* &  *)
-| Bit_xor     (* ^ *)
-| Bit_or      (* | *)
-| Add         (* + *)
-| Sub         (* - *)
-| Mult        (* * *)
-| Div         (* / *)
-| Rem         (* % *)
-| Exp         (* ** *)
-| Lt          (* < *)
-| Leq         (* <= *)
-| Equal       (* == *)
-| Strict_eq   (* === *)
-| Neq         (* != *)
-| Strict_neq  (* !== *)
-| Geq         (* >= *)
-| Gt          (* > *)
-| Non_null    (* ?? *)
-| Instance_of (* instanceof *)
-| In          (* in *)
+  | Logical_and (* && *)
+  | Logical_or (* || *)
+  | Bit_sr (* >> *)
+  | Bit_usr (* >>> *)
+  | Bit_sl (* << *)
+  | Bit_and (* &  *)
+  | Bit_xor (* ^ *)
+  | Bit_or (* | *)
+  | Add (* + *)
+  | Sub (* - *)
+  | Mult (* * *)
+  | Div (* / *)
+  | Rem (* % *)
+  | Exp (* ** *)
+  | Lt (* < *)
+  | Leq (* <= *)
+  | Equal (* == *)
+  | Strict_eq (* === *)
+  | Neq (* != *)
+  | Strict_neq (* !== *)
+  | Geq (* >= *)
+  | Gt (* > *)
+  | Non_null (* ?? *)
+  | Instance_of (* instanceof *)
+  | In (* in *)
 
 (* Instantiation Expression
 
@@ -1160,7 +1139,6 @@ and binary_expression =
      $.expression,
      field('type_arguments', $.type_arguments)))
 *)
-
 and instantiation_expression = expression * type_arguments
 
 (* New-expression
@@ -1180,18 +1158,17 @@ and instantiation_expression = expression * type_arguments
 
    spread_element: $ => seq('...', $.expression)
 *)
-
-and new_expression = {
-  constructor: primary_expression;
-  type_arguments: type_arguments option;
-  arguments: arguments option
-}
+and new_expression =
+  { constructor : primary_expression
+  ; type_arguments : type_arguments option
+  ; arguments : arguments option
+  }
 
 and arguments = argument list
 
 and argument =
-  Expression of expression
-| Spread_element of expression
+  | Expression of expression
+  | Spread_element of expression
 
 (* Statisfies-expression
 
@@ -1200,7 +1177,6 @@ and argument =
    satisfies_expression: $ => prec.left('binary', seq(
      $.expression, 'satisfies', $.type))
 *)
-
 and satisfies_expression = expression * type_
 
 (* Ternary Expression
@@ -1214,12 +1190,11 @@ and satisfies_expression = expression * type_
      ':',
      field('alternative', $.expression)))
 *)
-
-and ternary_expression = {
-  condition: expression;
-  consequence: expression;
-  alternative: expression
-}
+and ternary_expression =
+  { condition : expression
+  ; consequence : expression
+  ; alternative : expression
+  }
 
 (* Type Assertion
 
@@ -1228,7 +1203,6 @@ and ternary_expression = {
    type_assertion: $ => prec.left('unary', seq(
      $.type_arguments, $.expression))
 *)
-
 and type_assertion = type_arguments * expression
 
 (* Unary Expression
@@ -1239,19 +1213,18 @@ and type_assertion = type_arguments * expression
      field('operator', choice('!', '~', '-', '+', 'typeof', 'void', 'delete')),
      field('argument', $.expression)))
 *)
-
-and unary_expression = {
-  operator: unary_operator;
-  argument: expression
-}
+and unary_expression =
+  { operator : unary_operator
+  ; argument : expression
+  }
 
 and unary_operator =
-  Bang
-| Logical_negation
-| Negation
-| Typeof
-| Void
-| Delete
+  | Bang
+  | Logical_negation
+  | Negation
+  | Typeof
+  | Void
+  | Delete
 
 (* Update Expression
 
@@ -1263,19 +1236,18 @@ and unary_operator =
      seq(field('operator', choice('++', '--')),
          field('argument', $.expression))))
 *)
-
 and update_expression =
-  Update_postfix of update
-| Update_prefix  of update
+  | Update_postfix of update
+  | Update_prefix of update
 
-and update = {
-  argument: expression;
-  operator: incr_decr_operator
-}
+and update =
+  { argument : expression
+  ; operator : incr_decr_operator
+  }
 
 and incr_decr_operator =
-  Increment
-| Decrement
+  | Increment
+  | Decrement
 
 (* Yield-expression
 
@@ -1287,10 +1259,9 @@ and incr_decr_operator =
        seq('*', $.expression),
        optional($.expression))))
 *)
-
 and yield_expression =
-  Yield of expression option
-| Yield_iterable of expression
+  | Yield of expression option
+  | Yield_iterable of expression
 
 (* Primary Expression
 
@@ -1326,31 +1297,30 @@ and yield_expression =
      previous,
      $.non_null_expression)
 *)
-
 and primary_expression =
-  E_array of array
-| E_arrow_function of arrow_function
-| E_call_expression of call_expression
-| E_class of class_
-| E_false
-| E_function_expression of function_expression
-| E_generator_function of generator_function
-| E_identifier of identifier
-| E_member_expression of member_expression
-| E_meta_property of meta_property
-| E_non_null_expression of expression
-| E_null
-| E_number
-| E_object of object_
-| E_parenthesized_expression of expression
-(*| E_regex of regex*)
-| E_string
-| E_subscript_expression of subscript_expression
-| E_super
-| E_template_string of template_string
-| E_this
-| E_true
-| E_undefined
+  | E_array of array
+  | E_arrow_function of arrow_function
+  | E_call_expression of call_expression
+  | E_class of class_
+  | E_false
+  | E_function_expression of function_expression
+  | E_generator_function of generator_function
+  | E_identifier of identifier
+  | E_member_expression of member_expression
+  | E_meta_property of meta_property
+  | E_non_null_expression of expression
+  | E_null
+  | E_number
+  | E_object of object_
+  | E_parenthesized_expression of expression
+  (*| E_regex of regex*)
+  | E_string
+  | E_subscript_expression of subscript_expression
+  | E_super
+  | E_template_string of template_string
+  | E_this
+  | E_true
+  | E_undefined
 
 (* Array Expression
 
@@ -1359,7 +1329,6 @@ and primary_expression =
    array: $ => seq(
      '[', commaSep(optional(choice($.expression, $.spread_element))), ']')
 *)
-
 and array = arguments
 
 (* Arrow Function
@@ -1388,20 +1357,19 @@ and array = arguments
               $.asserts_annotation,
               $.type_predicate_annotation))))
 *)
-
-and arrow_function = {
-  async: bool;
-  parameters: parameters;
-  body: function_body
-}
+and arrow_function =
+  { async : bool
+  ; parameters : parameters
+  ; body : function_body
+  }
 
 and parameters =
-  Parameter of identifier
-| Call_signature of call_signature
+  | Parameter of identifier
+  | Call_signature of call_signature
 
 and function_body =
-  Expression of expression
-| Statement_block of statement_block
+  | Expression of expression
+  | Statement_block of statement_block
 
 (* Call Expression
 
@@ -1418,30 +1386,29 @@ and function_body =
        field('type_arguments', optional($.type_arguments)),
        field('arguments', $.arguments))))
 *)
-
 and call_expression =
-  Call of call
-| Member of call_expression_member
+  | Call of call
+  | Member of call_expression_member
 
-and call_expression_member = {
-  function_: primary_expression;
-  type_arguments: type_arguments option;
-  arguments: arguments_to_call
-}
+and call_expression_member =
+  { function_ : primary_expression
+  ; type_arguments : type_arguments option
+  ; arguments : arguments_to_call
+  }
 
 and arguments_to_call =
-  Arguments of arguments
-| Template_string of template_string
+  | Arguments of arguments
+  | Template_string of template_string
 
-and call = {
-  function_: fun_call;
-  type_arguments: type_arguments option;
-  arguments: arguments
-}
+and call =
+  { function_ : fun_call
+  ; type_arguments : type_arguments option
+  ; arguments : arguments
+  }
 
 and fun_call =
-  Fun_call of expression
-| Import
+  | Fun_call of expression
+  | Import
 
 (* Function Expression
 
@@ -1454,13 +1421,12 @@ and fun_call =
      $._call_signature,
      field('body', $.statement_block)))
 *)
-
-and function_expression = {
-  async: bool;
-  name: identifier option;
-  call_sig: call_signature;
-  body: statement_block
-}
+and function_expression =
+  { async : bool
+  ; name : identifier option
+  ; call_sig : call_signature
+  ; body : statement_block
+  }
 
 (* Generator Function
 
@@ -1474,7 +1440,6 @@ and function_expression = {
      $._call_signature,
      field('body', $.statement_block)))
 *)
-
 and generator_function = function_expression
 
 (* Metaproperty
@@ -1485,10 +1450,9 @@ and generator_function = function_expression
      seq('new', '.', 'target'),
      seq('import', '.', 'meta'))
 *)
-
 and meta_property =
-  Meta_new
-| Meta_import
+  | Meta_new
+  | Meta_import
 
 (* Object (expression)
 
@@ -1510,19 +1474,18 @@ and meta_property =
      ':',
      field('value', $.expression))
 *)
-
 and object_ = object_entry list
 
 and object_entry =
-  Object_member_pair of pair
-| Object_member_spread of expression
-| Object_member_method of method_definition
-| Object_member_shorthand of identifier
+  | Object_member_pair of pair
+  | Object_member_spread of expression
+  | Object_member_method of method_definition
+  | Object_member_shorthand of identifier
 
-and pair = {
-  key: property_name;
-  value: expression
-}
+and pair =
+  { key : property_name
+  ; value : expression
+  }
 
 (* Labeled Statement
 
@@ -1535,11 +1498,10 @@ and pair = {
      ':',
      field('body', $.statement)))
 *)
-
-and labeled_statement = {
-  label: identifier; (* Including reserved identifiers *)
-  body: statement
-}
+and labeled_statement =
+  { label : identifier (* Including reserved identifiers *)
+  ; body : statement
+  }
 
 (* Return Statement
 
@@ -1548,7 +1510,6 @@ and labeled_statement = {
    return_statement: $ =>
      seq('return', optional($._expressions), $._semicolon)
 *)
-
 and return_statement = expressions
 
 (* Switch Statement
@@ -1572,22 +1533,21 @@ and return_statement = expressions
    switch_default: $ =>
      seq('default', ':', field('body', repeat($.statement)))
 *)
-
-and switch_statement = {
-  value: expression;
-  body: switch_body
-}
+and switch_statement =
+  { value : expression
+  ; body : switch_body
+  }
 
 and switch_body = switch_entry list
 
 and switch_entry =
-  Switch_case of switch_case
-| Switch_default of switch_default
+  | Switch_case of switch_case
+  | Switch_default of switch_default
 
-and switch_case = {
-  value: expressions;
-  body: statement list
-}
+and switch_case =
+  { value : expressions
+  ; body : statement list
+  }
 
 and switch_default = statement list
 
@@ -1597,7 +1557,6 @@ and switch_default = statement list
 
    throw_statement: $ => seq('throw', $._expressions, $._semicolon)
 *)
-
 and throw_statement = expressions
 
 (* While Statement
@@ -1609,11 +1568,10 @@ and throw_statement = expressions
      field('condition', $.parenthesized_expression),
      field('body', $.statement))
 *)
-
-and while_statement = {
-  condition: expression;
-  body: statement
-}
+and while_statement =
+  { condition : expression
+  ; body : statement
+  }
 
 (* With-statement
 
@@ -1624,11 +1582,10 @@ and while_statement = {
      field('object', $.parenthesized_expression),
      field('body', $.statement))
 *)
-
-and with_statement = {
-  object_: expression;
-  body: statement
-}
+and with_statement =
+  { object_ : expression
+  ; body : statement
+  }
 
 (* PATTERNS *)
 
@@ -1638,16 +1595,15 @@ and with_statement = {
 
    pattern: $ => prec.dynamic(-1, choice($._lhs_expression, $.rest_pattern)),
 *)
-
 and pattern =
-  P_member_expression of member_expression
-| P_subscript_expression of subscript_expression
-| P_identifier of identifier (* Including reserved identifiers *)
-| P_undefined
-| P_object_pattern of object_pattern (* [destructuring_pattern] *)
-| P_array_pattern of array_pattern (* [destructuring_pattern] *)
-| P_non_null_expression of expression
-| P_rest_pattern of rest_pattern (* [rest_pattern] *)
+  | P_member_expression of member_expression
+  | P_subscript_expression of subscript_expression
+  | P_identifier of identifier (* Including reserved identifiers *)
+  | P_undefined
+  | P_object_pattern of object_pattern (* [destructuring_pattern] *)
+  | P_array_pattern of array_pattern (* [destructuring_pattern] *)
+  | P_non_null_expression of expression
+  | P_rest_pattern of rest_pattern (* [rest_pattern] *)
 
 (* TYPES *)
 
@@ -1666,15 +1622,14 @@ and pattern =
      prec(-1, alias($._type_query_call_expression_in_type_annotation,
                     $.call_expression)))
 *)
-
 and type_ =
-  T_primary_type of primary_type
-| T_function_type of function_type
-| T_readonly_type of readonly_type
-| T_constructor_type of constructor_type
-| T_infer_type of infer_type
-| T_member_expression of member_expression
-| T_call_expression of call_expression
+  | T_primary_type of primary_type
+  | T_function_type of function_type
+  | T_readonly_type of readonly_type
+  | T_constructor_type of constructor_type
+  | T_infer_type of infer_type
+  | T_member_expression of member_expression
+  | T_call_expression of call_expression
 
 (* Primary Type
 
@@ -1706,28 +1661,27 @@ and type_ =
 
    existential_type: _ => '*'
 *)
-
 and primary_type =
-  T_parenthesized_type of type_
-| T_predefined_type of predefined_type
-| T_type_identifier of type_identifier
-| T_nested_type_identifier of nested_type_identifier
-| T_generic_type of generic_type
-| T_object_type of object_type
-| T_array_type of array_type
-| T_tuple_type of tuple_type
-| T_flow_maybe_type of primary_type
-| T_type_query of type_query
-| T_index_type_query of primary_type
-| T_this
-| T_existential_type
-| T_literal_type of literal_type
-| T_lookup_type of lookup_type
-| T_conditional_type of conditional_type
-| T_template_literal_type of template_literal_type
-| T_intersection_type of intersection_type
-| T_union_type of union_type
-| T_const
+  | T_parenthesized_type of type_
+  | T_predefined_type of predefined_type
+  | T_type_identifier of type_identifier
+  | T_nested_type_identifier of nested_type_identifier
+  | T_generic_type of generic_type
+  | T_object_type of object_type
+  | T_array_type of array_type
+  | T_tuple_type of tuple_type
+  | T_flow_maybe_type of primary_type
+  | T_type_query of type_query
+  | T_index_type_query of primary_type
+  | T_this
+  | T_existential_type
+  | T_literal_type of literal_type
+  | T_lookup_type of lookup_type
+  | T_conditional_type of conditional_type
+  | T_template_literal_type of template_literal_type
+  | T_intersection_type of intersection_type
+  | T_union_type of union_type
+  | T_const
 
 (* Array Type
 
@@ -1735,7 +1689,6 @@ and primary_type =
 
    array_type: $ => seq($.primary_type, '[', ']'),
 *)
-
 and array_type = primary_type
 
 (* Conditional Type
@@ -1751,13 +1704,12 @@ and array_type = primary_type
      ':',
      field('alternative', $.type)))
 *)
-
-and conditional_type = {
-  left: type_;
-  right: type_;
-  consequence: type_;
-  alternative: type_
-}
+and conditional_type =
+  { left : type_
+  ; right : type_
+  ; consequence : type_
+  ; alternative : type_
+  }
 
 (* Intersection Type
 
@@ -1765,7 +1717,6 @@ and conditional_type = {
 
    intersection_type: $ => prec.left(seq(optional($.type), '&', $.type))
 *)
-
 and intersection_type = type_ option * type_ (* [type_ list]? *)
 
 (* Literal Type
@@ -1804,27 +1755,26 @@ and intersection_type = type_ option * type_ (* [type_ list]? *)
         bigintLiteral))   // 12n 0x12n
    },
 *)
-
 and literal_type =
-| T_unary_type of unary_type
-| T_number of number
-| T_string of string
-| T_true
-| T_false
-| T_null
-| T_undefined
+  | T_unary_type of unary_type
+  | T_number of number
+  | T_string of string
+  | T_true
+  | T_false
+  | T_null
+  | T_undefined
 
-and unary_type = {
-  operator: sign;
-  argument: number
-}
+and unary_type =
+  { operator : sign
+  ; argument : number
+  }
 
 and number =
-  Hex_literal of hex_literal
-| Dec_literal of dec_literal
-| Bin_literal of bin_literal
-| Oct_literal of oct_literal
-| Bigint_literal of bigint_literal
+  | Hex_literal of hex_literal
+  | Dec_literal of dec_literal
+  | Bin_literal of bin_literal
+  | Oct_literal of oct_literal
+  | Bigint_literal of bigint_literal
 
 (* Lookup Type
 
@@ -1832,7 +1782,6 @@ and number =
 
    lookup_type: $ => seq($.primary_type, '[', $.type, ']')
 *)
-
 and lookup_type = primary_type * type_
 
 (* Object type
@@ -1870,31 +1819,30 @@ and lookup_type = primary_type * type_
      field('parameters', $.formal_parameters),
      field('type', optional($.type_annotation))),
 *)
-
 and object_type = member_type list
 
 and member_type =
-  Export_statement of export_statement (* See STATEMENTS *)
-| Property_signature of property_signature
-| Call_signature of call_signature
-| Construct_signature of construct_signature
-| Index_signature of index_signature
-| Method_signature of method_signature
+  | Export_statement of export_statement (* See STATEMENTS *)
+  | Property_signature of property_signature
+  | Call_signature of call_signature
+  | Construct_signature of construct_signature
+  | Index_signature of index_signature
+  | Method_signature of method_signature
 
-and property_signature = {
-  access: accessibility_modifier option;
-  scope: method_scope;
-  name: property_name;
-  optional: bool;
-  type_: type_annotation option
-}
+and property_signature =
+  { access : accessibility_modifier option
+  ; scope : method_scope
+  ; name : property_name
+  ; optional : bool
+  ; type_ : type_annotation option
+  }
 
-and construct_signature = {
-  abstract: bool;
-  type_parameters: type_parameter list;
-  parameters: formal_parameters;
-  type_: type_annotation option
-}
+and construct_signature =
+  { abstract : bool
+  ; type_parameters : type_parameter list
+  ; parameters : formal_parameters
+  ; type_ : type_annotation option
+  }
 
 (* Predefined Type
 
@@ -1913,17 +1861,16 @@ and construct_signature = {
      'never',
      'object')
 *)
-
 and predefined_type =
-  T_any
-| T_number
-| T_string
-| T_symbol
-| T_unique_symbol
-| T_void
-| T_unknown
-| T_never
-| T_object
+  | T_any
+  | T_number
+  | T_string
+  | T_symbol
+  | T_unique_symbol
+  | T_void
+  | T_unknown
+  | T_never
+  | T_object
 
 (* Template Literal Type
 
@@ -1940,12 +1887,11 @@ and predefined_type =
 
    template_type: $ => seq('${', choice($.primary_type, $.infer_type), '}'),
 *)
-
 and template_literal_type = template_type list (* _template_chars? *)
 
 and template_type =
-  Template_primary_type of primary_type
-| Template_infer_type of infer_type
+  | Template_primary_type of primary_type
+  | Template_infer_type of infer_type
 
 (* Tuple Type
 
@@ -1974,21 +1920,20 @@ and template_type =
 
    rest_type: $ => seq('...', $.type)
 *)
-
 and tuple_type = tuple_type_member list
 
 and tuple_type_member =
-  Tuple_parameter of tuple_parameter
-| Tuple_optional_parameter of optional_tuple_parameter
-| Tuple_optional_type of type_
-| Tuple_rest_type of type_
-| Type_type of type_
+  | Tuple_parameter of tuple_parameter
+  | Tuple_optional_parameter of optional_tuple_parameter
+  | Tuple_optional_type of type_
+  | Tuple_rest_type of type_
+  | Type_type of type_
 
 and tuple_parameter = tuple_parameter_name * type_annotation
 
 and tuple_parameter_name =
-  Tuple_parameter_ident of identifier
-| Tuple_parameter_rest of rest_pattern
+  | Tuple_parameter_ident of identifier
+  | Tuple_parameter_rest of rest_pattern
 
 and optional_tuple_parameter = identifier * type_annotation
 
@@ -2007,14 +1952,13 @@ and optional_tuple_parameter = identifier * type_annotation
        $.identifier,
        $.this)))
 *)
-
 and type_query =
-  Typeof_subscript_expression of subscript_expression
-| Typeof_member_expression of member_expression
-| Typeof_call_expression of call_expression
-| Typeof_instantiation_expression of instantiation_expression
-| Typeof_identifier of identifier
-| Typeof_this
+  | Typeof_subscript_expression of subscript_expression
+  | Typeof_member_expression of member_expression
+  | Typeof_call_expression of call_expression
+  | Typeof_instantiation_expression of instantiation_expression
+  | Typeof_identifier of identifier
+  | Typeof_this
 
 (* Union Type
 
@@ -2022,8 +1966,7 @@ and type_query =
 
    union_type: $ => prec.left(seq(optional($.type), '|', $.type))
 *)
-
-and union_type = type_ option * type_  (* [type_ list]? *)
+and union_type = type_ option * type_ (* [type_ list]? *)
 
 (* Function Type
 
@@ -2038,22 +1981,21 @@ and union_type = type_ option * type_  (* [type_ list]? *)
    asserts: $ => seq(
      'asserts', choice($.type_predicate, $.identifier, $.this))
 *)
-
-and function_type = {
-  type_parameters: type_parameter option;
-  parameters: formal_parameters;
-  return_type: return_type
-}
+and function_type =
+  { type_parameters : type_parameter option
+  ; parameters : formal_parameters
+  ; return_type : return_type
+  }
 
 and return_type =
-  Return_type of type_
-| Return_asserts of asserts
-| Return_type_predicate of type_predicate
+  | Return_type of type_
+  | Return_asserts of asserts
+  | Return_type_predicate of type_predicate
 
 and asserts =
-  Assert_predicate of type_predicate
-| Assert_type of identifier
-| Assert_this
+  | Assert_predicate of type_predicate
+  | Assert_type of identifier
+  | Assert_this
 
 (* Readonly Type
 
@@ -2061,7 +2003,6 @@ and asserts =
 
    readonly_type: $ => seq('readonly', $.type)
 *)
-
 and readonly_type = type_
 
 (* Constructor Type
@@ -2076,13 +2017,12 @@ and readonly_type = type_
      '=>',
      field('type', $.type)))
 *)
-
-and constructor_type = {
-  abstract: bool;
-  type_parameters: type_parameter list;
-  parameters: formal_parameters;
-  type_: type_
-}
+and constructor_type =
+  { abstract : bool
+  ; type_parameters : type_parameter list
+  ; parameters : formal_parameters
+  ; type_ : type_
+  }
 
 (* Infer-type
 
@@ -2093,11 +2033,10 @@ and constructor_type = {
      $._type_identifier,
      optional(seq('extends', $.type)))),
 *)
-
-and infer_type = {
-  type_id: type_identifier;
-  extends: type_ option
-}
+and infer_type =
+  { type_id : type_identifier
+  ; extends : type_ option
+  }
 
 (* STATEMENTS
 
@@ -2131,30 +2070,27 @@ and infer_type = {
 
    empty_statement: _ => ';'
 *)
-
 and statement =
-  S_export_statement of export_statement
-| S_import_statement of import_statement
-| S_debugger_statement
-| S_expression_statement of expression_statement
-| S_declaration of declaration
-| S_statement_block of statement_block
-
-| S_if_statement of if_statement
-| S_switch_statement of switch_statement
-| S_for_statement of for_statement
-| S_for_in_statement of for_in_statement
-| S_while_statement of while_statement
-| S_do_statement of do_statement
-| S_try_statement of try_statement
-| S_with_statement of with_statement
-
-| S_break_statement of break_statement
-| S_continue_statement of continue_statement
-| S_return_statement of return_statement
-| S_throw_statement of throw_statement
-| S_empty_statement
-| S_labeled_statement of labeled_statement
+  | S_export_statement of export_statement
+  | S_import_statement of import_statement
+  | S_debugger_statement
+  | S_expression_statement of expression_statement
+  | S_declaration of declaration
+  | S_statement_block of statement_block
+  | S_if_statement of if_statement
+  | S_switch_statement of switch_statement
+  | S_for_statement of for_statement
+  | S_for_in_statement of for_in_statement
+  | S_while_statement of while_statement
+  | S_do_statement of do_statement
+  | S_try_statement of try_statement
+  | S_with_statement of with_statement
+  | S_break_statement of break_statement
+  | S_continue_statement of continue_statement
+  | S_return_statement of return_statement
+  | S_throw_statement of throw_statement
+  | S_empty_statement
+  | S_labeled_statement of labeled_statement
 
 (* Break Statement
 
@@ -2165,7 +2101,6 @@ and statement =
      field('label', optional(alias($.identifier, $.statement_identifier))),
      $._semicolon)
 *)
-
 and break_statement = identifier option
 
 (* Continue Statement
@@ -2177,7 +2112,6 @@ and break_statement = identifier option
      field('label', optional(alias($.identifier, $.statement_identifier))),
      $._semicolon),
 *)
-
 and continue_statement = identifier option
 
 (* Do-statement
@@ -2191,11 +2125,10 @@ and continue_statement = identifier option
      field('condition', $.parenthesized_expression),
      optional($._semicolon)))
 *)
-
-and do_statement = {
-  body: statement;
-  condition: expression
-}
+and do_statement =
+  { body : statement
+  ; condition : expression
+  }
 
 (* Export Statement
 
@@ -2240,46 +2173,45 @@ and do_statement = {
      seq('export', '=', $.expression, $._semicolon),
      seq('export', 'as', 'namespace', $.identifier, $._semicolon))
 *)
-
 and export_statement =
-  Export of export
-| Export_decorator of export_decorator
-| Export_type of export_clause * from_clause option
-| Export_equal of expression
-| Export_as_namespace of identifier
+  | Export of export
+  | Export_decorator of export_decorator
+  | Export_type of export_clause * from_clause option
+  | Export_equal of expression
+  | Export_as_namespace of identifier
 
 and export =
-  Export_from of from_clause
-| Export_as of namespace_export * from_clause
-| Export_clause of export_clause * from_clause option
+  | Export_from of from_clause
+  | Export_as of namespace_export * from_clause
+  | Export_clause of export_clause * from_clause option
 
 and from_clause = string
 
 and namespace_export =
-  Export_ident of identifier
-| Export_string of string
+  | Export_ident of identifier
+  | Export_string of string
 
 and export_clause = export_specifier list
 
-and export_specifier = {
-  name: module_export_name;
-  as_: module_export_name option
-}
+and export_specifier =
+  { name : module_export_name
+  ; as_ : module_export_name option
+  }
 
 and module_export_name = namespace_export
 
-and export_decorator = {
-  decorators: decorator list;
-  export_dec: export_dec
-}
+and export_decorator =
+  { decorators : decorator list
+  ; export_dec : export_dec
+  }
 
 and export_dec =
-  Export_declaration of declaration
-| Export_default of export_default
+  | Export_declaration of declaration
+  | Export_default of export_default
 
 and export_default =
-  Export_default_declaration of declaration
-| Export_default_expression of expression
+  | Export_default_declaration of declaration
+  | Export_default_expression of expression
 
 (* Expression Statement
 
@@ -2287,7 +2219,6 @@ and export_default =
 
    expression_statement: $ => seq($._expressions, $._semicolon)
 *)
-
 and expression_statement = expressions
 
 (* For-in/of Statement
@@ -2321,36 +2252,40 @@ and expression_statement = expressions
      field('right', $._expressions),
      ')')
 *)
+and for_in_statement =
+  { await : bool
+  ; for_header : for_header
+  ; body : statement
+  }
 
-and for_in_statement = {
-  await: bool;
-  for_header: for_header;
-  body: statement
-}
-
-and for_header = {
-  range: for_range;
-  operator: for_operator;
-  collection: expressions
-}
+and for_header =
+  { range : for_range
+  ; operator : for_operator
+  ; collection : expressions
+  }
 
 and for_range =
-  For_in_expression of for_in_expression
-| For_in_variable of for_in_variable
+  | For_in_expression of for_in_expression
+  | For_in_variable of for_in_variable
 
 and for_in_expression =
-  For_in_expression of lhs_expression
-| For_in_parenthesized of expression
+  | For_in_expression of lhs_expression
+  | For_in_parenthesized of expression
 
 and for_in_variable = for_in_kind * for_in_var
 
-and for_in_kind = Var | Let | Const
+and for_in_kind =
+  | Var
+  | Let
+  | Const
 
 and for_in_var =
-  For_in_ident of identifier
-| For_in_pattern of destructuring_pattern
+  | For_in_ident of identifier
+  | For_in_pattern of destructuring_pattern
 
-and for_operator = In | Of
+and for_operator =
+  | In
+  | Of
 
 (* For-statement
 
@@ -2371,23 +2306,22 @@ and for_operator = In | Of
      ')',
      field('body', $.statement))
 *)
-
-and for_statement = {
-  initializer_: for_initializer;
-  condition: for_condition;
-  increment: expressions option;
-  body: statement
-}
+and for_statement =
+  { initializer_ : for_initializer
+  ; condition : for_condition
+  ; increment : expressions option
+  ; body : statement
+  }
 
 and for_initializer =
-  For_lexical_declaration of lexical_declaration
-| For_variable_declaration of variable_declaration
-| For_expression_statement of expression_statement
-| For_empty_statement
+  | For_lexical_declaration of lexical_declaration
+  | For_variable_declaration of variable_declaration
+  | For_expression_statement of expression_statement
+  | For_empty_statement
 
 and for_condition =
-  For_condition_expression of expression_statement
-| For_condition_empty
+  | For_condition_expression of expression_statement
+  | For_condition_empty
 
 (* If-statement
 
@@ -2401,12 +2335,11 @@ and for_condition =
 
    else_clause: $ => seq('else', $.statement)
 *)
-
-and if_statement = {
-  condition: expression;
-  consequence: statement;
-  alternative: statement option
-}
+and if_statement =
+  { condition : expression
+  ; consequence : statement
+  ; alternative : statement option
+  }
 
 (* Import Statement
 
@@ -2456,51 +2389,50 @@ and if_statement = {
 
    import_attribute: $ => seq(choice('with', 'assert'), $.object),
 *)
+and import_statement =
+  { import_kind : import_kind option
+  ; import : import
+  ; import_attribute : import_attribute option
+  }
 
-and import_statement = {
-  import_kind: import_kind option;
-  import: import;
-  import_attribute: import_attribute option
-}
-
-and import_kind = Import_type | Import_typeof
+and import_kind =
+  | Import_type
+  | Import_typeof
 
 and import =
-  Import_clause of import_clause * from_clause
-| Import_require_clause of import_require_clause
-| Import_source of string
+  | Import_clause of import_clause * from_clause
+  | Import_require_clause of import_require_clause
+  | Import_source of string
 
 and import_clause =
-  Import_namespace of namespace_import
-| Import_named of named_imports
-| Import_ident of import_identifier * namespace_or_named_import option
+  | Import_namespace of namespace_import
+  | Import_named of named_imports
+  | Import_ident of import_identifier * namespace_or_named_import option
 
 and namespace_or_named_import =
-  Import_namespace of namespace_import
-| Import_named of named_imports
+  | Import_namespace of namespace_import
+  | Import_named of named_imports
 
 and namespace_import = identifier (* "* as <ident>" *)
-
 and named_imports = import_specifier list
-
 and import_specifier = import_kind * import_specifier'
 
 and import_specifier' =
-  Import_spec_name of import_identifier
-| Import_spec_alias of import_spec_alias
+  | Import_spec_name of import_identifier
+  | Import_spec_alias of import_spec_alias
 
 and import_identifier = identifier (* Including "type" *)
 
-and import_spec_alias = {
-  name: module_export_name;
-  alias: import_identifier
-}
+and import_spec_alias =
+  { name : module_export_name
+  ; alias : import_identifier
+  }
 
 and import_require_clause = identifier * string
 
 and import_attribute =
-  Import_with of object_
-| Import_assert of object_
+  | Import_with of object_
+  | Import_assert of object_
 
 (* Asserts Annotation
 
@@ -2508,7 +2440,6 @@ and import_attribute =
 
    asserts_annotation: $ => seq(seq(':', $.asserts)), // Really?
 *)
-
 and asserts_annotation = asserts
 
 (* Assignment Pattern
@@ -2518,11 +2449,10 @@ and asserts_annotation = asserts
    assignment_pattern: $ => seq(
      field('left', $.pattern), '=', field('right', $.expression))
 *)
-
-and assignment_pattern = {
-  left: pattern;
-  right: expression
-}
+and assignment_pattern =
+  { left : pattern
+  ; right : expression
+  }
 
 (* Try statement
 
@@ -2550,22 +2480,21 @@ and assignment_pattern = {
            ')')),
      field('body', $.statement_block))
 *)
+and try_statement =
+  { body : statement_block
+  ; handler : catch_clause option
+  ; finalizer : finally_clause option
+  }
 
-and try_statement = {
-  body: statement_block;
-  handler: catch_clause option;
-  finalizer: finally_clause option
-}
-
-and catch_clause = {
-  parameter: (catch_parameter * type_annotation option) option;
-  body: statement_block
-}
+and catch_clause =
+  { parameter : (catch_parameter * type_annotation option) option
+  ; body : statement_block
+  }
 
 and catch_parameter =
-  Catch_identifier of identifier
-| Catch_object_pattern of object_pattern
-| Catch_array_pattern of array_pattern
+  | Catch_identifier of identifier
+  | Catch_object_pattern of object_pattern
+  | Catch_array_pattern of array_pattern
 
 and finally_clause = statement_block
 
@@ -2581,14 +2510,13 @@ and finally_clause = statement_block
      optional($.class_heritage),
      field('body', $.class_body)))
 *)
-
-and class_ = {
-  decorators: decorator list;
-  name: type_identifier option;
-  type_parameters: type_parameter list;
-  class_heritage: class_heritage;
-  body: class_member list
-}
+and class_ =
+  { decorators : decorator list
+  ; name : type_identifier option
+  ; type_parameters : type_parameter list
+  ; class_heritage : class_heritage
+  ; body : class_member list
+  }
 
 (* DECORATOR
 
@@ -2627,29 +2555,28 @@ and class_ = {
      '.',
      field('property', alias($.identifier, $.property_identifier))))
 *)
-
 and decorator =
-  Decorator_identifier of identifier
-| Decorator_member_expression of decorator_member_expression
-| Decorator_call_expression of decorator_call_expression
-| Decorator_parenthesized_expression of decorator_parenthesized_expression
+  | Decorator_identifier of identifier
+  | Decorator_member_expression of decorator_member_expression
+  | Decorator_call_expression of decorator_call_expression
+  | Decorator_parenthesized_expression of decorator_parenthesized_expression
 
-and decorator_member_expression = {
-  object_: identifier Nonempty_list.t;
-  property: identifier
-}
+and decorator_member_expression =
+  { object_ : identifier Nonempty_list.t
+  ; property : identifier
+  }
 
-and decorator_call_expression = {
-  function_: function_or_property;
-  type_arguments: type_arguments option;
-  arguments: arguments
-}
+and decorator_call_expression =
+  { function_ : function_or_property
+  ; type_arguments : type_arguments option
+  ; arguments : arguments
+  }
 
 and function_or_property =
-  Function_name of identifier
-| Qualified_member_expression of decorator_member_expression
+  | Function_name of identifier
+  | Qualified_member_expression of decorator_member_expression
 
 and decorator_parenthesized_expression =
-  Parenthesized_ident of identifier
-| Parenthesized_member of decorator_member_expression
-| Parenthesized_call of decorator_call_expression
+  | Parenthesized_ident of identifier
+  | Parenthesized_member of decorator_member_expression
+  | Parenthesized_call of decorator_call_expression
