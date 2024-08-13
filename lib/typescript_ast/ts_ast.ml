@@ -30,6 +30,10 @@ type bigint_literal =
 
 (* The Abstract Syntax Tree *)
 
+(* The CST *)
+
+type program = statement list
+
 (* DECLARATIONS *)
 
 (* JavaScript:
@@ -58,7 +62,7 @@ type bigint_literal =
    module: $ => seq('module', $._module)
 *)
 
-type declaration =
+and declaration =
   | D_function_declaration of function_declaration
   | D_generator_function_declaration of generator_function_declaration
   | D_class_declaration of class_declaration
