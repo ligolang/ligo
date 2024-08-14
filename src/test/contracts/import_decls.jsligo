@@ -1,5 +1,24 @@
-import * as Foo from "./Test"
+import * as Foo from "./Test1"
 
 import Bar = Foo
 
-import { x, y } from "./Test"
+import { x, y } from "./Test2"
+
+namespace Test {
+  import { x1, y2 } from "./Test3"
+  import * as Bu from "./Test4"
+
+  namespace Test8 {
+    import { x1, y2 } from "./Test5"
+    import * as Bu from "./Test6"
+  }
+}
+
+namespace Test32 {
+  const x = 1
+  namespace Test33 {
+    import * as Bu from "./Test7"
+  }
+}
+
+import { x3, p8 } from "./Test8"

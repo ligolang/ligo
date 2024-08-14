@@ -38,6 +38,17 @@ let comp_file_assert ~raise f test syntax expected () =
   if not (String.equal got expected) then Stdlib.raise Alcotest.Test_error
 
 
+let comp_file_generic_assert ~raise f transform equal test syntax expected () =
+  let options =
+    let options = Test_helpers.options in
+    let options = Compiler_options.set_syntax options syntax in
+    Compiler_options.set_test_flag options test
+  in
+  let (core : Ast_core.program) = Test_helpers.core_file_unqualified ~raise f options in
+  let got = transform core in
+  if not (equal got expected) then Stdlib.raise Alcotest.Test_error
+
+
 let comp_file_ ~raise f test syntax () =
   let options =
     let options = Test_helpers.options in
@@ -124,6 +135,11 @@ let comp_file_assert f expected =
   test_case f (comp_file_assert f false None expected)
 
 
+let comp_file_generic_assert f ~transform ~equal ~expected =
+  let f = "./contracts/" ^ f in
+  test_case f (comp_file_generic_assert f transform equal false None expected)
+
+
 let aggregate_file f =
   let f = "./contracts/" ^ f in
   test_case f (agg_file_ f false None)
@@ -182,6 +198,20 @@ let core_prod =
         "\n\
          const foo : ∀ a : * . list (a) -> list (a) =\n\
         \  Λ a ->  Λ b ->  fun (init xs : list (b)) : list (b) -> xs"
+    ; comp_file_generic_assert
+        "import_decls.jsligo"
+        ~transform:(fun ast -> Ast_core.Ligo_dep_jsligo.dependencies ast)
+        ~equal:(fun got expected -> List.equal String.equal got expected)
+        ~expected:
+          [ "./Test1"
+          ; "./Test2"
+          ; "./Test3"
+          ; "./Test4"
+          ; "./Test5"
+          ; "./Test6"
+          ; "./Test7"
+          ; "./Test8"
+          ]
     ]
 
 
