@@ -1,6 +1,4 @@
-
 (executable
  (name example)
  (libraries tree_sitter tree_sitter_typescript)
- (modules example)
-)
+ (modules example))
