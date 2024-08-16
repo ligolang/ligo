@@ -2,7 +2,7 @@
  (name cameligo2)
  (modules
   (:standard \ Test))
- (libraries ast_core checking main_errors ocaml-compiler-libs.common))
+ (libraries ast_core checking main_errors ocaml-compiler-libs.common build))
 
 (executable
  (name test)
