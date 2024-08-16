@@ -1,5 +1,4 @@
 open Ocaml_common
-open Types
 open Ligo_prim
 open Ast_core
 open Caml_core
@@ -18,6 +17,12 @@ let fresh_type ident =
   Type_var.fresh ~loc:Location.dummy ~name ~generated:false ()
 
 
+let fresh_module ident =
+  (* TODO: location *)
+  let name = Ident.name ident in
+  Module_var.fresh ~loc:Location.dummy ~name ~generated:false ()
+
+
 module OCaml = struct
   module Env = Env
   module Types = Ocaml_common.Types
@@ -27,64 +32,105 @@ module Env : sig
   type env
   type t = env
 
-  val empty : env
+  type type_info =
+    | Type_unsupported_predef
+    | Type_subst_to of Type_var.t
+
+  val initial : env
   val enter_value : Ident.t -> Value_var.t -> env -> env
   val enter_type : Ident.t -> Type_var.t -> env -> env
+  val enter_module : Ident.t -> Module_var.t -> env -> (env -> env * 'a) -> env * 'a
   val solve_value_path : Path.t -> env -> Value_var.t Module_access.t
   val solve_type_path : Path.t -> env -> Type_var.t Module_access.t
+  val solve_module_path : Path.t -> env -> Module_var.t Module_access.t
 end = struct
   (* TODO: core map *)
   module String_map = Stdlib.Map.Make (String)
 
+  type type_info =
+    | Type_unsupported_predef
+    | Type_subst_to of Type_var.t
+
+  type md_env =
+    { md_values : Value_var.t String_map.t
+    ; md_types : type_info String_map.t
+    ; md_modules : (Module_var.t * md_env) String_map.t
+    }
+
+  (* TODO: try with in all OCaml functions *)
   type env =
-    { all_values : Value_var.t Ident.Map.t
-    ; values : Value_var.t String_map.t
-    ; all_types : Type_var.t Ident.Map.t
-    ; types : Type_var.t String_map.t
-    ; all_modules : (Module_var.t * env) Ident.Map.t
-    ; modules : (Module_var.t * env) String_map.t
+    { values : Value_var.t Ident.Map.t
+    ; types : type_info Ident.Map.t
+    ; modules : (Module_var.t * md_env) Ident.Map.t
+    ; local : md_env
     }
 
   type t = env
 
+  let empty_local =
+    { md_values = String_map.empty
+    ; md_types = String_map.empty
+    ; md_modules = String_map.empty
+    }
+
+
   let empty =
-    { all_values = Ident.Map.empty
-    ; values = String_map.empty
-    ; all_types = Ident.Map.empty
-    ; types = String_map.empty
-    ; all_modules = Ident.Map.empty
-    ; modules = String_map.empty
+    { values = Ident.Map.empty
+    ; types = Ident.Map.empty
+    ; modules = Ident.Map.empty
+    ; local = empty_local
     }
 
 
   let enter_value ident value_var env =
     let name = Ident.name ident in
-    let all_values = Ident.Map.add ident value_var env.all_values in
-    let values = String_map.add name value_var env.values in
-    { env with all_values; values }
+    let values = Ident.Map.add ident value_var env.values in
+    let md_values = String_map.add name value_var env.local.md_values in
+    { env with values; local = { env.local with md_values } }
+
+
+  let enter_type_info ident type_info env =
+    let { values = _; types; modules = _; local } = env in
+    let name = Ident.name ident in
+    let types = Ident.Map.add ident type_info types in
+    let md_types = String_map.add name type_info env.local.md_types in
+    { env with types; local = { env.local with md_types } }
+
+
+  let enter_module ident module_var env k =
+    let { values = _; types = _; modules; local } = env in
+    let inner_env, x = k { env with local = empty_local } in
+    let name = Ident.name ident in
+    let mod_data = module_var, inner_env.local in
+    let modules = Ident.Map.add ident mod_data modules in
+    let local =
+      let { md_values = _; md_types = _; md_modules } = local in
+      let md_modules = String_map.add name mod_data md_modules in
+      { local with md_modules }
+    in
+    { env with modules; local }, x
 
 
   let enter_type ident type_var env =
-    let name = Ident.name ident in
-    let all_types = Ident.Map.add ident type_var env.all_types in
-    let types = String_map.add name type_var env.types in
-    { env with all_types; types }
+    let type_info = Type_subst_to type_var in
+    enter_type_info ident type_info env
 
 
   (* TODO: drop all failwith *)
+  (* TODO: reduce boilerplate below *)
 
   let rec solve_module_path path env =
     let open Path in
     match path with
     | Pident ident ->
-      let { all_values; values; all_types; types; all_modules; modules } = env in
-      (match Ident.Map.find_opt ident all_modules with
-      | Some (module_, env) -> [ module_ ], env
+      (* TODO: use list not empty here *)
+      (match Ident.Map.find_opt ident env.modules with
+      | Some (module_, env) -> (module_, []), env
       | None -> failwith "unexpected module ident")
     | Pdot (left, right) ->
-      let rev_left, env = solve_module_path left env in
-      (match String_map.find_opt right env.modules with
-      | Some (module_, env) -> module_ :: rev_left, env
+      let (rev_left_hd, rev_left_tl), env = solve_module_path left env in
+      (match String_map.find_opt right env.md_modules with
+      | Some (module_, env) -> (module_, rev_left_hd :: rev_left_tl), env
       | None -> failwith "unexpected module name")
     | Papply (_, _) -> failwith "Papply not supported"
 
@@ -93,14 +139,16 @@ end = struct
     let open Path in
     match path with
     | Pident ident ->
-      (match Ident.Map.find_opt ident env.all_values with
-      | Some value -> Module_access.{ module_path = []; element = value }
+      (match Ident.Map.find_opt ident env.values with
+      | Some value ->
+        (* TODO: what about module_path *)
+        Module_access.{ module_path = []; element = value }
       | None -> failwith "unexpected value ident")
     | Pdot (module_, right) ->
-      let rev_module, env = solve_module_path module_ env in
-      (match String_map.find_opt right env.values with
+      let (rev_module_hd, rev_module_tl), env = solve_module_path module_ env in
+      (match String_map.find_opt right env.md_values with
       | Some value ->
-        let module_path = List.rev rev_module in
+        let module_path = List.rev (rev_module_hd :: rev_module_tl) in
         Module_access.{ module_path; element = value }
       | None -> failwith "unexpected value name")
     | Papply (_, _) -> failwith "Papply not supported"
@@ -110,17 +158,72 @@ end = struct
     let open Path in
     match path with
     | Pident ident ->
-      (match Ident.Map.find_opt ident env.all_types with
-      | Some type_ -> Module_access.{ module_path = []; element = type_ }
+      (match Ident.Map.find_opt ident env.types with
+      | Some Type_unsupported_predef -> failwith "unsupported type predef"
+      | Some (Type_subst_to type_) ->
+        (* TODO: what about module_path *)
+        Module_access.{ module_path = []; element = type_ }
       | None -> failwith "unexpected type ident")
     | Pdot (module_, right) ->
-      let rev_module, env = solve_module_path module_ env in
-      (match String_map.find_opt right env.types with
-      | Some type_ ->
-        let module_path = List.rev rev_module in
+      let (rev_module_hd, rev_module_tl), env = solve_module_path module_ env in
+      (match String_map.find_opt right env.md_types with
+      | Some Type_unsupported_predef -> failwith "unsupported type predef"
+      | Some (Type_subst_to type_) ->
+        let module_path = List.rev (rev_module_hd :: rev_module_tl) in
         Module_access.{ module_path; element = type_ }
       | None -> failwith "unexpected type name")
     | Papply (_, _) -> failwith "Papply not supported"
+
+
+  let solve_module_path path env =
+    let (rev_module_hd, rev_module_tl), env = solve_module_path path env in
+    let module_path = List.rev rev_module_tl in
+    Module_access.{ module_path; element = rev_module_hd }
+
+
+  (* TODO: failwith *)
+  (* TODO: this is hackish *)
+  let extract_ident path =
+    match path with
+    | Path.Pident ident -> ident
+    | Path.Pdot (_, _) | Path.Papply (_, _) -> failwith "unexpected"
+
+
+  let enter_type_predef_unsupported path =
+    enter_type_info (extract_ident path) @@ Type_unsupported_predef
+
+
+  let enter_type_predef_alias path var = enter_type (extract_ident path) var
+
+  let initial =
+    let open Predef in
+    (* TODO: hopefully this is a temporary solution *)
+    (* TODO: move ligo away from T_constant? *)
+    (* TODO: location here *)
+    let loc = Location.dummy in
+    (* TODO: this is hackish *)
+    let int_var = Type_var.of_input_var ~loc @@ Literal_types.to_string Int in
+    let string_var = Type_var.of_input_var ~loc @@ Literal_types.to_string String in
+    let unit_var = Type_var.of_input_var ~loc @@ Literal_types.to_string Unit in
+    empty
+    |> enter_type_predef_alias path_unit unit_var
+    |> enter_type_predef_alias path_int int_var
+    |> enter_type_predef_unsupported path_char
+    |> enter_type_predef_alias path_string string_var
+    |> enter_type_predef_unsupported path_bytes
+    |> enter_type_predef_unsupported path_float
+    |> enter_type_predef_unsupported path_bool
+    |> enter_type_predef_alias path_unit unit_var
+    |> enter_type_predef_unsupported path_exn
+    |> enter_type_predef_unsupported path_array
+    |> enter_type_predef_unsupported path_list
+    |> enter_type_predef_unsupported path_option
+    |> enter_type_predef_unsupported path_nativeint
+    |> enter_type_predef_unsupported path_int32
+    |> enter_type_predef_unsupported path_int64
+    |> enter_type_predef_unsupported path_lazy_t
+    |> enter_type_predef_unsupported path_extension_constructor
+    |> enter_type_predef_unsupported path_floatarray
 end
 
 (* TODO: solve is a bad word *)
@@ -130,23 +233,23 @@ let type_wrap content =
   { type_content = content; location }
 
 
-let pat_wrap content : _ Ast_core.Pattern.t =
-  (* TODO: location *)
-  let location = Location.dummy in
+let pat_wrap location content : _ Ast_core.Pattern.t =
   Location.{ wrap_content = content; location }
 
 
-let expr_wrap content =
-  (* TODO: location *)
+(* TODO: use Ligo e_stuff function *)
+let expr_wrap location content =
   (* TODO: type *)
-  let location = Location.dummy in
   { expression_content = content; location }
 
 
-let decl_wrap content : Ast_core.decl =
-  (* TODO: location *)
+let decl_wrap location content : Ast_core.decl =
   (* TODO: type *)
-  let location = Location.dummy in
+  { wrap_content = content; location }
+
+
+let mod_expr_wrap location content : Ast_core.module_expr =
+  (* TODO: type *)
   { wrap_content = content; location }
 
 
@@ -166,8 +269,16 @@ let rec solve_type env vars typ_ =
     type_wrap @@ T_variable var
   | T_constr (path, args) ->
     let type_operator = Env.solve_type_path path env in
-    let arguments = List.map args ~f:(fun type_ -> solve_type env vars type_) in
-    type_wrap @@ T_app { type_operator; arguments }
+    (match args with
+    | [] ->
+      (* TODO: fix this on ligo *)
+      (match type_operator with
+      | { module_path = []; element } -> type_wrap @@ T_variable element
+      | { module_path; element } as var -> type_wrap @@ T_module_accessor var)
+    | args ->
+      (* TODO: what about no args? *)
+      let arguments = List.map args ~f:(fun type_ -> solve_type env vars type_) in
+      type_wrap @@ T_app { type_operator; arguments })
   | T_arrow (param, return) ->
     let param = solve_type env vars param in
     let return = solve_type env vars return in
@@ -185,7 +296,7 @@ and solve_type_forall env vars ~bound body =
   match bound with
   | [] -> solve_type env vars body
   | (name, id) :: bound ->
-    let var : Type_var.t = Type_var.fresh ~loc:Location.dummy ~name ~generated:false () in
+    let var : Type_var.t = Type_var.fresh ~loc:Location.dummy ?name ~generated:false () in
     (* TODO: ensures id is not in vars *)
     Hashtbl.set vars ~key:id ~data:var;
     let body = solve_type_forall env vars ~bound body in
@@ -209,44 +320,73 @@ let solve_type_poly env vars type_ =
       type_wrap @@ T_for_all { ty_binder = var; kind = Type; type_ = body })
 
 
+let solve_type_record env vars fields =
+  let fields =
+    List.map fields ~f:(fun decl_label ->
+        let { dl_id; dl_type; dl_loc } = decl_label in
+        let label = Ident.name dl_id in
+        let type_ = solve_type_poly env vars dl_type in
+        Label.Label (label, dl_loc), type_)
+  in
+  let fields = Label.Map.of_alist_exn fields in
+  (* TODO: layout *)
+  let layout = None in
+  type_wrap @@ T_record { fields; layout }
+
+
 let solve_type_decl env vars decl : type_expression =
   match decl with
-  | T_record fields ->
-    (* TODO: test rank-2 poly  *)
-    let fields =
-      List.map fields ~f:(fun (ident, type_) ->
-          let label = Ident.name ident in
-          let type_ = solve_type_poly env vars type_ in
-          Label.Label (label, Location.dummy), type_)
+  | T_record fields -> solve_type_record env vars fields
+  | T_variant cases ->
+    let cases =
+      List.map cases ~f:(fun decl_case ->
+          match decl_case with
+          | C_tuple { dc_id; dc_fields; dc_loc } ->
+            let label = Ident.name dc_id in
+            let content =
+              match dc_fields with
+              | [] -> t_unit ~loc:dc_loc ()
+              | [ field ] -> solve_type env vars field
+              | fields ->
+                let fields =
+                  List.map fields ~f:(fun field -> solve_type env vars field)
+                in
+                type_wrap @@ T_record (Row.create_tuple fields)
+            in
+            Label.Label (label, dc_loc), content
+          | C_record { dc_id; dc_fields; dc_loc } ->
+            let label = Ident.name dc_id in
+            let content = solve_type_record env vars dc_fields in
+            Label.Label (label, dc_loc), content)
     in
-    let fields = Record.of_list fields in
+    let cases = Label.Map.of_alist_exn cases in
     (* TODO: layout *)
     let layout = None in
-    type_wrap @@ T_record { fields; layout }
+    type_wrap @@ T_sum { fields = cases; layout }
   | T_alias manifest ->
     (* TODO: not poly tho *)
     solve_type_poly env vars manifest
 
 
 let solve_var_pat env vars var_pat =
-  let { var_pat_desc; var_pat_type } = var_pat in
+  let { var_pat_desc; var_pat_type; var_pat_loc } = var_pat in
   let var_pat_type = solve_type env vars var_pat_type in
-  var_pat_desc, var_pat_type
+  var_pat_desc, var_pat_type, var_pat_loc
 
 
 let rec solve_pat env vars pat : _ * _ Pattern.t =
-  let { pat_desc; pat_type } = pat in
+  let { pat_desc; pat_type; pat_loc = loc } = pat in
   (* TODO: ascription in all types *)
   (* TODO: dummy *)
   (* TODO: poly type *)
   let type_ = Some (solve_type env vars pat_type) in
   match pat_desc with
-  | P_unit -> env, pat_wrap @@ P_unit
+  | P_unit -> env, pat_wrap loc @@ P_unit
   | P_var ident ->
     let var = fresh_value ident in
     let binder = Binder.make var type_ in
     let env = Env.enter_value ident var env in
-    env, pat_wrap @@ P_var binder
+    env, pat_wrap loc @@ P_var binder
   | P_tuple fields ->
     let env, rev_fields =
       List.fold_left fields ~init:(env, []) ~f:(fun (env, rev_fields) pat ->
@@ -254,44 +394,36 @@ let rec solve_pat env vars pat : _ * _ Pattern.t =
           env, field :: rev_fields)
     in
     let fields = List.rev rev_fields in
-    env, pat_wrap @@ P_tuple fields
+    env, pat_wrap loc @@ P_tuple fields
   | P_record fields ->
     let env, rev_fields =
       List.fold_left fields ~init:(env, []) ~f:(fun (env, rev_fields) (label, pat) ->
-          let { lbl_name
-              ; lbl_res = _
-              ; lbl_arg = _
-              ; lbl_mut = _
-              ; lbl_pos = _
-              ; lbl_all = _
-              ; lbl_repres = _
-              ; lbl_private = _
-              ; lbl_loc = _
-              ; lbl_attributes = _
-              ; lbl_uid = _
-              }
-            =
-            label
-          in
           let env, pat = solve_pat env vars pat in
-          env, (Label.Label (lbl_name, Location.dummy), pat) :: rev_fields)
+          env, (label, pat) :: rev_fields)
     in
     let fields = List.rev rev_fields in
-    env, pat_wrap @@ P_record (Record.of_list fields)
-  | P_variant _ -> error_unimplemented ()
+    env, pat_wrap loc @@ P_record (Record.of_list fields)
+  | P_variant (label, fields) ->
+    let env, fields = solve_pat env vars fields in
+    env, pat_wrap loc @@ P_variant (label, fields)
 
 
 let rec solve_expr env vars expr =
-  let { expr_desc; expr_type } = expr in
+  let { expr_desc; expr_type; expr_loc = loc } = expr in
   match expr_desc with
-  | E_var path -> solve_expr_var env vars path
-  | E_literal lit -> expr_wrap @@ E_literal lit
+  | E_var path ->
+    let var = Env.solve_value_path path env in
+    (* TODO: fix this on ligo *)
+    (match var with
+    | { module_path = []; element } -> expr_wrap loc @@ E_variable element
+    | { module_path; element } as var -> expr_wrap loc @@ E_module_accessor var)
+  | E_literal lit -> expr_wrap loc @@ E_literal lit
   | E_let (pat, value, body) ->
     (* TODO: this is poly pat? *)
     let inner_env, pat = solve_pat env vars pat in
     let value = solve_expr_poly env vars value in
     let body = solve_expr inner_env vars body in
-    expr_wrap
+    expr_wrap loc
     @@ E_let_in
          { let_binder = pat
          ; rhs = value
@@ -302,7 +434,8 @@ let rec solve_expr env vars expr =
     (* TODO: high priority *)
     error_unimplemented ()
   | E_lambda (var_pat, body) ->
-    let { var_pat_desc; var_pat_type } = var_pat in
+    (* TODO: use var_pat_loc *)
+    let { var_pat_desc; var_pat_type; var_pat_loc = _ } = var_pat in
     let var = fresh_value var_pat_desc in
     let env = Env.enter_value var_pat_desc var env in
     let body = solve_expr env vars body in
@@ -312,12 +445,12 @@ let rec solve_expr env vars expr =
       Param.make var (Some param_annot)
     in
     (* TODO: output_type *)
-    expr_wrap @@ E_lambda { binder; output_type = None; result = body }
+    expr_wrap loc @@ E_lambda { binder; output_type = None; result = body }
   | E_apply (lambda, args) ->
     let lambda = solve_expr env vars lambda in
     List.fold_left args ~init:lambda ~f:(fun lambda arg ->
         let arg = solve_expr env vars arg in
-        expr_wrap @@ E_application { lamb = lambda; args = arg })
+        expr_wrap loc @@ E_application { lamb = lambda; args = arg })
   | E_match (matchee, cases) ->
     let matchee = solve_expr env vars matchee in
     let cases =
@@ -326,35 +459,39 @@ let rec solve_expr env vars expr =
           let body = solve_expr env vars body in
           Match_expr.{ pattern = pat; body })
     in
-    expr_wrap @@ E_matching { matchee; cases }
+    expr_wrap loc @@ E_matching { matchee; cases }
   | E_tuple fields ->
     let fields = Nonempty_list.map fields ~f:(fun field -> solve_expr env vars field) in
-    expr_wrap @@ E_tuple fields
+    expr_wrap loc @@ E_tuple fields
+  | E_constructor (constructor, fields) ->
+    (* TODO: location? *)
+    let fields = List.map fields ~f:(fun field -> solve_expr env vars field) in
+    let element =
+      match fields with
+      | [] -> e_unit ~loc ()
+      | [ field ] -> field
+      | field :: fields -> e_tuple ~loc (field :: fields) ()
+    in
+    expr_wrap loc @@ E_constructor { constructor; element }
   | E_record fields ->
     let fields =
       List.map fields ~f:(fun (label, field) ->
           (* TODO: location *)
           Label.Label (label, Location.dummy), solve_expr env vars field)
     in
-    expr_wrap @@ E_record (Record.of_list fields)
+    expr_wrap loc @@ E_record (Record.of_list fields)
   | E_field (struct_, label) ->
     let struct_ = solve_expr env vars struct_ in
     let path = Label.Label (label, Location.dummy) in
-    expr_wrap @@ E_accessor { struct_; path }
-
-
-and solve_expr_var env vars path =
-  let var = Env.solve_value_path path env in
-  (* TODO: fix this on ligo *)
-  match var with
-  | { module_path = []; element } -> expr_wrap @@ E_variable element
-  | { module_path; element } as var -> expr_wrap @@ E_module_accessor var
+    expr_wrap loc @@ E_accessor { struct_; path }
 
 
 and solve_expr_poly env vars expr =
   (* TODO: this is also duplicated *)
   (* TODO: this is bad *)
+  let { expr_desc = _; expr_type = _; expr_loc = loc } = expr in
   let external_vars = Hashtbl.copy vars in
+  (* TODO: looks weird to extract here *)
   let expr = solve_expr env vars expr in
   let internal_vars =
     List.filter_map (Hashtbl.to_alist vars) ~f:(fun (id, var) ->
@@ -365,47 +502,76 @@ and solve_expr_poly env vars expr =
           Some var)
   in
   List.fold_left internal_vars ~init:expr ~f:(fun body var ->
-      expr_wrap @@ E_type_abstraction { type_binder = var; result = body })
+      expr_wrap loc @@ E_type_abstraction { type_binder = var; result = body })
 
 
-let solve_decl env vars decl =
-  let { decl_desc } = decl in
-  match decl_desc with
-  | D_value (var_pat, value) ->
-    (* TODO: duplicated logic regarding var_pat and Binder *)
-    let { var_pat_desc = ident; var_pat_type } = var_pat in
-    let var = fresh_value ident in
-    let type_ = solve_type_poly env vars var_pat_type in
-    let binder = Binder.make var (Some type_) in
-    let value = solve_expr_poly env vars value in
-    let env = Env.enter_value ident var env in
-    ( env
-    , decl_wrap @@ D_value { binder; expr = value; attr = Value_attr.default_attributes }
-    )
-  | D_type (ident, type_decl) ->
-    let type_decl = solve_type_decl env vars type_decl in
-    let var = fresh_type ident in
-    let env = Env.enter_type ident var env in
-    ( env
-    , decl_wrap
-      @@ D_type
-           { type_binder = var
-           ; type_expr = type_decl
-           ; type_attr = Type_or_module_attr.default_attributes
-           } )
-
-
-let solve_decl env decl =
-  let vars = Hashtbl.create (module Int) in
-  let env, decl = solve_decl env vars decl in
-  assert (Hashtbl.is_empty vars);
-  env, decl
-
-
-let solve_module env module_ =
+let rec solve_module env module_ =
   let env, rev_decl =
     List.fold_left module_ ~init:(env, []) ~f:(fun (env, rev_module) decl ->
         let env, decl = solve_decl env decl in
         env, decl :: rev_module)
   in
   env, List.rev rev_decl
+
+
+and solve_decl env decl =
+  let vars = Hashtbl.create (module Int) in
+  let env, decl = solve_decl_inner env vars decl in
+  assert (Hashtbl.is_empty vars);
+  env, decl
+
+
+and solve_decl_inner env vars decl =
+  let { decl_desc; decl_loc = loc } = decl in
+  match decl_desc with
+  | D_value (var_pat, value) ->
+    (* TODO: duplicated logic regarding var_pat and Binder *)
+    (* TODO: use var_pat_loc *)
+    let { var_pat_desc = ident; var_pat_type; var_pat_loc = _ } = var_pat in
+    let var = fresh_value ident in
+    let type_ = solve_type_poly env vars var_pat_type in
+    let binder = Binder.make var (Some type_) in
+    let value = solve_expr_poly env vars value in
+    let env = Env.enter_value ident var env in
+    ( env
+    , decl_wrap loc
+      @@ D_value { binder; expr = value; attr = Value_attr.default_attributes } )
+  | D_type (ident, type_decl) ->
+    let type_decl = solve_type_decl env vars type_decl in
+    let var = fresh_type ident in
+    let env = Env.enter_type ident var env in
+    ( env
+    , decl_wrap loc
+      @@ D_type
+           { type_binder = var
+           ; type_expr = type_decl
+           ; type_attr = Type_or_module_attr.default_attributes
+           } )
+  | D_module (ident, mod_expr) ->
+    let var = fresh_module ident in
+    let env, module_ =
+      Env.enter_module ident var env @@ fun env -> solve_mod_expr env mod_expr
+    in
+    (* TODO: use this inner_env? *)
+    ( env
+    , decl_wrap loc
+      @@ D_module
+           { module_binder = var
+           ; module_ (* TODO: annotation *)
+           ; annotation = None
+           ; module_attr = TypeOrModuleAttr.default_attributes
+           } )
+
+
+and solve_mod_expr env mod_expr =
+  let { mod_expr_desc; mod_expr_loc = loc } = mod_expr in
+  match mod_expr_desc with
+  | M_struct decls ->
+    let env, decls = solve_module env decls in
+    env, mod_expr_wrap loc @@ M_struct decls
+  | M_var path ->
+    (* TODO: improve this on Ligo *)
+    (match Env.solve_module_path path env with
+    | { module_path = []; element } -> env, mod_expr_wrap loc @@ M_variable element
+    | { module_path; element } ->
+      env, mod_expr_wrap loc @@ M_module_path (element :: module_path))
