@@ -133,7 +133,7 @@ and declaration ppf (d : declaration) =
     Types.Module_decl.pp module_expr PP_helpers.(option module_annotation) ppf md
   | D_module_include me -> fprintf ppf "include (%a)" module_expr me
   | D_signature sd -> Types.Signature_decl.pp signature_expr ppf sd
-  | D_import import -> Import_decl_ext.pp ppf import
+  | D_import import -> Import_decl.pp ppf import
 
 
 and decl ppf d = declaration ppf d
