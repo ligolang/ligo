@@ -1,0 +1,7 @@
+export import * as A from "A.jsligo";
+
+export import * as B from "B.jsligo";
+
+export const tata = A.toto + B.titi;
+
+export const foo = B.main(unit, 3)

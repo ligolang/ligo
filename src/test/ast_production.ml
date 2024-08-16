@@ -68,6 +68,14 @@ let type_file_ ~raise f test syntax () =
   let (_ : Ast_typed.program) = Test_helpers.type_file ~raise f options in
   ()
 
+let type_file_v2 ~raise f test syntax () =
+  let options =
+    let options = Test_helpers.options in
+    let options = Compiler_options.set_syntax options syntax in
+    Compiler_options.set_test_flag options test
+  in
+  let (_ : Ast_typed.program) = Test_helpers.type_file_v2 ~raise f options in
+  ()
 
 let agg_file_ ~raise f test syntax () =
   let options =
@@ -114,6 +122,9 @@ let type_file f =
   let f = "./contracts/" ^ f in
   test_case f (type_file_ f false None)
 
+let type_file_v2 f =
+  let f = "./contracts/" ^ f in
+  test_case f (type_file_v2 f false None)
 
 let type_tfile f =
   let f = "./contracts/" ^ f in
@@ -159,6 +170,7 @@ let typed_prod =
   Test_helpers.test_suite
     "Ast-typed productions"
     [ type_file "build/D.mligo"
+    ; type_file_v2 "build/v2/H.jsligo"
     ; type_file "build/instance/main.mligo"
     ; type_file "infer_fun_application.mligo"
     ; type_file "protocol_dalphanet.mligo"
