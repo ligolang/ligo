@@ -35,12 +35,12 @@ let string_of_char_ptr (ptr: char ptr) : string =
   done;
   Bytes.to_string buffer
 
-(* Printing a node of the CST *)
+(* Printing the tree *)
 let print_node (node: ts_tree) : unit =
   let ptr_char = TS_fun.ts_node_string node in
   Printf.printf "%s\n%!" @@ string_of_char_ptr ptr_char
 
-(* Converting a CST node to an OCaml string *)
+(* Converting a node to an OCaml string *)
 let string_of_ts_node_type (node: ts_tree) : string =
   string_of_char_ptr @@ TS_fun.ts_node_type node
 
