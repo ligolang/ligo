@@ -5,19 +5,21 @@ module Type_var_name_tbl = Type.Type_var_name_tbl
 module Trace = Simple_utils.Trace
 module Location = Simple_utils.Location
 module Refs_tbl = Context.Refs_tbl
+module Persistent_env = Persistent_env
+module Cmi = Cmi
 
 val type_program_with_refs
   :  raise:(Errors.typer_error, Main_warnings.all) Trace.raise
   -> options:Compiler_options.middle_end
   -> refs_tbl:Refs_tbl.t
-  -> ?env:O.signature
+  -> ?env:Persistent_env.t
   -> I.program
   -> O.program
 
 val type_program
   :  raise:(Errors.typer_error, Main_warnings.all) Trace.raise
   -> options:Compiler_options.middle_end
-  -> ?env:O.signature
+  -> ?env:Persistent_env.t
   -> I.program
   -> O.program
 
@@ -25,7 +27,7 @@ val type_declaration
   :  raise:(Errors.typer_error, Main_warnings.all) Trace.raise
   -> options:Compiler_options.middle_end
   -> path:Ligo_prim.Module_var.t list
-  -> ?env:O.signature
+  -> ?env:Persistent_env.t
   -> I.declaration
   -> O.declaration list
 
@@ -33,7 +35,7 @@ val type_expression
   :  raise:(Errors.typer_error, Main_warnings.all) Trace.raise
   -> options:Compiler_options.middle_end
   -> path:Ligo_prim.Module_var.t list
-  -> ?env:O.signature
+  -> ?env:Persistent_env.t
   -> ?tv_opt:O.type_expression
   -> I.expression
   -> O.expression
@@ -42,7 +44,7 @@ val type_type_expression
   :  raise:(Errors.typer_error, Main_warnings.all) Trace.raise
   -> options:Compiler_options.middle_end
   -> path:Ligo_prim.Module_var.t list
-  -> ?env:O.signature
+  -> ?env:Persistent_env.t
   -> I.type_expression
   -> O.type_expression
 
@@ -51,7 +53,7 @@ val eval_signature_sort
   -> options:Compiler_options.middle_end
   -> loc:Location.t
   -> path:Ligo_prim.Module_var.t list
-  -> ?env:O.signature
+  -> ?env:Persistent_env.t
   -> O.signature
   -> O.sig_sort
 

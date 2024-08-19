@@ -150,7 +150,10 @@ type state =
 let try_eval ~raise ~raw_options state s =
   let options = Compiler_options.make ~raw_options ~syntax:state.syntax () in
   let typed_exp =
-    let sig_ = Ast_typed.Misc.to_signature state.top_level.pr_module in
+    let sig_ =
+      Checking.Persistent_env.of_init_sig
+      @@ Ast_typed.Misc.to_signature state.top_level.pr_module
+    in
     Ligo_compile.Utils.type_expression_string ~raise ~options state.syntax s sig_
   in
   let aggregated_exp =
@@ -209,7 +212,9 @@ let try_declaration ~raise ~raw_options state s =
           Ligo_compile.Utils.type_program_string
             ~raise
             ~options
-            ~context:(Ast_typed.to_extended_signature state.top_level)
+            ~context:
+              (Checking.Persistent_env.of_init_sig
+              @@ Ast_typed.to_extended_signature state.top_level)
             state.syntax
             s
         in

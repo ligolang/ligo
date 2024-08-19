@@ -1,7 +1,7 @@
 module Location = Simple_utils.Location
 
 module type VAR = sig
-  type t [@@deriving compare, yojson, hash, sexp]
+  type t [@@deriving compare, yojson, hash, sexp, bin_io]
 
   (* Create a compiler generated variable *)
   val reset_counter : unit -> unit
@@ -18,6 +18,7 @@ module type VAR = sig
   val to_name_exn : t -> string
   val get_location : t -> Location.t
   val set_location : Location.t -> t -> t
+  val set_generated : t -> t
   val is_generated : t -> bool
   val add_prefix : string -> t -> t
 
@@ -35,7 +36,7 @@ module Internal () = struct
       ; generated : bool
       ; location : Location.t [@equal.ignore] [@compare.ignore] [@hash.ignore]
       }
-    [@@deriving equal, compare, yojson, hash]
+    [@@deriving equal, compare, yojson, hash, bin_io]
 
     let sexp_of_t ({ name; counter = _; generated = _; location = _ } : t) : Sexp.t =
       Sexp.Atom name
@@ -87,8 +88,8 @@ module Internal () = struct
   let internal_get_name_and_counter var = var.name, var.counter
   let get_location var = var.location
   let set_location location var = { var with location }
+  let set_generated var = { var with generated = true }
   let is_generated var = var.generated
-  
   let is_name var name = String.equal var.name name
   let is_name_prefix var name = String.is_prefix var.name ~prefix:name
 

@@ -211,3 +211,23 @@ let compare pos1 pos2 =
   if equal pos1 pos2
   then 0
   else if lt pos1 pos2 then -1 else 1
+
+type pos_aux = (string * int * int * int) * int * int
+  [@@deriving bin_io]
+
+let bin_shape_t = bin_shape_pos_aux
+
+let bin_size_t (pos : t) =
+  let Lexing.{ pos_fname; pos_lnum; pos_bol; pos_cnum } = pos#byte in
+  bin_size_pos_aux ((pos_fname, pos_lnum, pos_bol, pos_cnum), pos#point_num, pos#point_bol)
+
+let bin_write_t =
+  fun buf ~pos (reg_pos : t) ->
+    let Lexing.{ pos_fname; pos_lnum; pos_bol; pos_cnum } = reg_pos#byte in
+    bin_write_pos_aux buf ~pos ((pos_fname, pos_lnum, pos_bol, pos_cnum), reg_pos#point_num, reg_pos#point_bol)
+
+let bin_read_t =
+  fun buf ~pos_ref ->
+    let (pos_fname, pos_lnum, pos_bol, pos_cnum), point_num, point_bol = bin_read_pos_aux buf ~pos_ref in
+    let byte = Lexing.{ pos_fname; pos_lnum; pos_bol; pos_cnum } in
+    make ~byte ~point_num ~point_bol

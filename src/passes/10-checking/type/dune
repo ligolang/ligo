@@ -3,6 +3,18 @@
  (public_name ligo.checking.type)
  (instrumentation
   (backend bisect_ppx))
- (libraries simple-utils ligo_prim backend fmt core_kernel.nonempty_list)
+ (libraries
+  simple-utils
+  ligo_prim
+  backend
+  fmt
+  core_kernel.nonempty_list
+  bin_prot)
  (preprocess
-  (staged_pps ppx_jane ppx_woo ppx_map ppx_import ppx_deriving_yojson)))
+  (staged_pps
+   ppx_jane
+   ppx_bin_prot
+   ppx_woo
+   ppx_map
+   ppx_import
+   ppx_deriving_yojson)))

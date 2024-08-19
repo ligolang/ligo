@@ -189,7 +189,8 @@ type constant' =
   , hash
   , print_constant
   , is { tags = [ "only_interpreter"; "pure" ] }
-  , read_constant]
+  , read_constant
+  , bin_io]
 
 type rich_constant = Const of constant' [@@deriving eq, compare, yojson, hash]
 
@@ -197,7 +198,7 @@ type 'e t =
   { cons_name : constant' (* this is in enum *)
   ; arguments : 'e list [@sexp.list]
   }
-[@@deriving eq, compare, yojson, hash, fold, map, iter, sexp]
+[@@deriving eq, compare, yojson, hash, fold, map, iter, sexp, bin_io]
 
 let pp f ppf { cons_name; arguments } =
   Format.fprintf

@@ -132,3 +132,8 @@ val compare : t -> t -> int
 val to_yojson           : t -> Yojson.Safe.t
 val of_yojson           : Yojson.Safe.t -> (t, string) result
 val to_human_yojson     : t -> Yojson.Safe.t
+
+val bin_shape_t : Bin_prot.Shape.t
+val bin_size_t : t Bin_prot.Size.sizer
+val bin_write_t : t Bin_prot.Write.writer
+val bin_read_t : t Bin_prot.Read.reader

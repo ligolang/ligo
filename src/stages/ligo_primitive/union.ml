@@ -1,7 +1,7 @@
 module Type = struct
   module T = struct
     type 'typ t = { summands : 'typ list }
-    [@@unboxed] [@@deriving compare, eq, fold, hash, iter, map, sexp, yojson]
+    [@@unboxed] [@@deriving compare, eq, fold, hash, iter, map, sexp, yojson, bin_io]
   end
 
   include T
@@ -34,7 +34,7 @@ module Injection = struct
       ; target : 'typ Union.t
       ; source_index_in_target : int
       }
-    [@@deriving compare, eq, fold, hash, iter, map, sexp, yojson]
+    [@@deriving compare, eq, fold, hash, iter, map, sexp, yojson, bin_io]
   end
 
   include T
@@ -88,7 +88,7 @@ module Injected = struct
       { expr_in_source : 'expr
       ; injection : 'typ Injection.t
       }
-    [@@deriving compare, eq, fold, hash, iter, map, sexp, yojson]
+    [@@deriving compare, eq, fold, hash, iter, map, sexp, yojson, bin_io]
   end
 
   include T
@@ -119,7 +119,7 @@ module Match = struct
   module Pattern = struct
     module T = struct
       type 'typ t = (Var.Value_var.t, 'typ) Injected.t
-      [@@deriving compare, eq, fold, hash, iter, map, sexp, yojson]
+      [@@deriving compare, eq, fold, hash, iter, map, sexp, yojson, bin_io]
     end
 
     include T
@@ -144,7 +144,7 @@ module Match = struct
         { pattern : 'typ Pattern.t
         ; body : 'expr
         }
-      [@@deriving compare, eq, fold, hash, iter, map, sexp, yojson]
+      [@@deriving compare, eq, fold, hash, iter, map, sexp, yojson, bin_io]
     end
 
     include T
@@ -168,7 +168,7 @@ module Match = struct
       { matchee : 'expr
       ; branches : ('expr, 'typ) Branch.t list
       }
-    [@@deriving compare, eq, fold, hash, iter, map, sexp, yojson]
+    [@@deriving compare, eq, fold, hash, iter, map, sexp, yojson, bin_io]
   end
 
   include T
@@ -201,7 +201,7 @@ module Use = struct
     { before_expansion : 'expr
     ; after_expansion : 'expr
     }
-  [@@deriving compare, eq, fold, hash, iter, map, sexp, yojson]
+  [@@deriving compare, eq, fold, hash, iter, map, sexp, yojson, bin_io]
 
   let make ~before_expansion ~after_expansion = { before_expansion; after_expansion }
   let before_expansion use = use.before_expansion
