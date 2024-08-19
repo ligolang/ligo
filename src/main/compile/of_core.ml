@@ -6,7 +6,7 @@ module Location = Simple_utils.Location
 let typecheck_with_signature
     ~raise
     ~(options : Compiler_options.t)
-    ?(context : Ast_typed.signature option)
+    ?(context : Checking.Persistent_env.t option)
     ?(self_pass : bool = false)
     (p : Ast_core.program)
     : Ast_typed.program
@@ -27,7 +27,7 @@ let typecheck_with_signature
 let typecheck
     ~raise
     ~(options : Compiler_options.t)
-    ?(context : Ast_typed.signature option)
+    ?(context : Checking.Persistent_env.t option)
     (p : Ast_core.program)
     : Ast_typed.program
   =
@@ -41,7 +41,7 @@ let typecheck
 let compile_expression
     ~raise
     ~(options : Compiler_options.t)
-    ~(context : Ast_typed.signature)
+    ~(context : Checking.Persistent_env.t)
     (expr : Ast_core.expression)
     : Ast_typed.expression
   =
@@ -55,7 +55,7 @@ let compile_expression
 let compile_type_expression
     ~raise
     ~(options : Compiler_options.t)
-    ~(context : Ast_typed.signature)
+    ~(context : Checking.Persistent_env.t)
     (ty : Ast_core.type_expression)
     : Ast_typed.type_expression
   =

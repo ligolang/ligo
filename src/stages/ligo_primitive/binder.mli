@@ -2,7 +2,7 @@ type 'a t = private
   { var : Var.Value_var.t
   ; ascr : 'a
   }
-[@@deriving eq, compare, yojson, hash, fold, map, iter, sexp]
+[@@deriving eq, compare, yojson, hash, fold, map, iter, sexp, bin_io]
 
 val pp : (Format.formatter -> 'a -> unit) -> Format.formatter -> 'a t -> unit
 val fold_map : ('acc -> 'a -> 'acc * 'b) -> 'acc -> 'a t -> 'acc * 'b t

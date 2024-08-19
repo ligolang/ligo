@@ -1,7 +1,7 @@
 type 'field f =
   | Inner of 'field f list
   | Field of 'field
-[@@deriving map, equal, compare, yojson, hash, sexp]
+[@@deriving map, equal, compare, yojson, hash, sexp, bin_io]
 
 type t = field f
 
@@ -9,7 +9,7 @@ and field =
   { name : Label.t
   ; annot : string option
   }
-[@@deriving equal, compare, yojson, hash, sexp]
+[@@deriving equal, compare, yojson, hash, sexp, bin_io]
 
 let comb fields =
   (* this is a hack to get tuple values to work properly when their

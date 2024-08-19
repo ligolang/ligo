@@ -209,3 +209,20 @@ let t_of_sexp x = assert false
 
 let yojson_of_reg f {region; value} =
   `Assoc [("region", to_yojson region); ("value", f value)]
+
+type region_aux = Pos.t * Pos.t
+  [@@deriving bin_io]
+
+let bin_shape_t = bin_shape_region_aux
+
+let bin_size_t (reg : t) =
+  bin_size_region_aux (reg#start, reg#stop)
+
+let bin_write_t =
+  fun buf ~pos (reg : t) ->
+    bin_write_region_aux buf ~pos (reg#start, reg#stop)
+
+let bin_read_t =
+  fun buf ~pos_ref ->
+    let start, stop = bin_read_region_aux buf ~pos_ref in
+    make ~start ~stop

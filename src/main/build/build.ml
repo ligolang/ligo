@@ -25,6 +25,7 @@ module M (Params : Params) = struct
   type module_name = string
   type compilation_unit = Buffer.t
   type meta_data = Ligo_compile.Helpers.meta
+  type imports = file_name list
 
   let preprocess
       : code_input -> compilation_unit * meta_data * (file_name * module_name) list
@@ -95,29 +96,25 @@ module Separate (Params : Params) = struct
       Ast_typed.{ pr_module = m1 @ m2; pr_sig = link_interface s1 s2 }
 
 
-    type environment = Ast_typed.sig_item list
+    type environment = Checking.Persistent_env.t
 
-    let init_env : environment = []
+    let init_env : environment = Checking.Persistent_env.empty
 
-    let add_module_to_environment : module_name -> interface -> environment -> environment
+    let add_module_to_environment
+        : file_name -> module_name -> imports -> interface -> environment -> environment
       =
-     fun module_binder module_intf env ->
+     fun path module_binder imports module_intf env ->
       let module_binder = Module_var.of_input_var ~loc module_binder in
-      let module_sig =
-        Ast_typed.signature_make
-          ~sig_items:module_intf.sig_items
-          ~sig_sort:module_intf.sig_sort
-      in
-      env @ [ Location.wrap ~loc @@ Ast_typed.S_module (module_binder, module_sig) ]
+      Checking.Persistent_env.add_signature env module_binder path imports module_intf
 
 
     let add_interface_to_environment : interface -> environment -> environment =
      fun intf env ->
-      List.fold intf.sig_items ~init:env ~f:(fun env decl -> env @ [ decl ])
+      Checking.Persistent_env.add_virtual env intf
 
 
-    let make_module_in_ast : module_name -> t -> interface -> t -> t =
-     fun module_binder module_ast module_intf ast ->
+    let make_module_in_ast : module_name -> t -> t -> t =
+     fun module_binder module_ast ast ->
       let module_binder = Module_var.of_input_var ~loc module_binder in
       let new_decl =
         Location.wrap
@@ -127,10 +124,7 @@ module Separate (Params : Params) = struct
               { module_binder
               ; module_ =
                   { module_content = Module_expr.M_struct module_ast.pr_module
-                  ; signature =
-                      Ast_typed.signature_make
-                        ~sig_items:module_intf.sig_items
-                        ~sig_sort:module_intf.sig_sort
+                  ; signature = module_ast.pr_sig
                   ; module_location = loc
                   }
               ; module_attr =
@@ -168,16 +162,13 @@ module Separate (Params : Params) = struct
     let module_ = Ligo_compile.Utils.to_core ~raise ~options ~meta c_unit file_name in
     let module_ = Helpers.inject_declaration ~options ~raise syntax module_ in
     let prg =
-      let context =
-        Ast_typed.signature_make ~sig_items:env ~sig_sort:Ast_typed.ss_module
-      in
-      Ligo_compile.Of_core.typecheck_with_signature ~raise ~options ~context module_
+      Ligo_compile.Of_core.typecheck_with_signature ~raise ~options ~context:env module_
     in
     prg, prg.pr_sig
 
 
-  let link_imports : AST.t -> objs:(AST.t * AST.interface) BuildSystem.SMap.t -> AST.t =
-   fun prg ~objs ->
+  let link_imports : AST.t -> intfs:AST.environment -> AST.t =
+   fun prg ~intfs ->
     let module_ =
       prg.pr_module
       |> Self_ast_typed.Helpers.Declaration_mapper.map_module
@@ -186,9 +177,7 @@ module Separate (Params : Params) = struct
          match Location.unwrap decl with
          | D_import { import_name; imported_module = mangled_module_name; import_attr } ->
            (* Create module alias for mangled module *)
-           let _, intf =
-             BuildSystem.SMap.find (Module_var.to_name_exn mangled_module_name) objs
-           in
+           let intf = Checking.Persistent_env.find_signature intfs mangled_module_name in
            Location.wrap ~loc
            @@ Ast_typed.D_module
                 { module_binder = import_name
@@ -210,6 +199,7 @@ module Infer (Params : Params) = struct
 
   module AST = struct
     type t = Ast_core.program
+    type imports = module_name list
 
     let link t1 t2 = t1 @ t2
 
@@ -221,17 +211,18 @@ module Infer (Params : Params) = struct
 
     let init_env : environment = ()
 
-    let add_module_to_environment : module_name -> interface -> environment -> environment
+    let add_module_to_environment
+        : file_name -> module_name -> imports -> interface -> environment -> environment
       =
-     fun _ _ () -> ()
+     fun _ _ _ _ () -> ()
 
 
     let add_interface_to_environment : interface -> environment -> environment =
      fun _ () -> ()
 
 
-    let make_module_in_ast : module_name -> t -> interface -> t -> t =
-     fun module_binder module_ast _module_intf ast ->
+    let make_module_in_ast : module_name -> t -> t -> t =
+     fun module_binder module_ast ast ->
       let module_ = Location.wrap ~loc (Module_expr.M_struct module_ast) in
       let module_binder = Module_var.of_input_var ~loc module_binder in
       Location.wrap
@@ -264,8 +255,8 @@ module Infer (Params : Params) = struct
     Helpers.inject_declaration ~options ~raise syntax module_, []
 
 
-  let link_imports : AST.t -> objs:(AST.t * AST.interface) BuildSystem.SMap.t -> AST.t =
-   fun prg ~objs:_ ->
+  let link_imports : AST.t -> intfs:AST.environment -> AST.t =
+   fun prg ~intfs:_ ->
     let open Ast_core in
     prg
     |> Ast_core.Helpers.Declaration_mapper.map_module
@@ -410,6 +401,29 @@ let qualified_typed ~raise
   ast
 
 
+let qualified_typed_with_env ~raise
+    :  options:Compiler_options.t -> Source_input.code_input
+    -> Ast_typed.program * Checking.Persistent_env.t
+  =
+ fun ~options source ->
+  let open Build_typed (struct
+    let raise = raise
+    let options = options
+    let std_lib = Stdlib.get ~options
+
+    let top_level_syntax =
+      match source with
+      | HTTP uri -> get_top_level_syntax ~options ~filename:(Http_uri.get_filename uri) ()
+      | Raw_input_lsp _ -> Syntax_types.CameLIGO
+      | From_file filename -> get_top_level_syntax ~options ~filename ()
+      | Raw _ -> Syntax_types.CameLIGO
+  end) in
+  let ast, intfs =
+    Trace.trace ~raise build_error_tracer @@ Trace.from_result (compile_qualified source)
+  in
+  ast, intfs
+
+
 let qualified_typed_str ~raise : options:Compiler_options.t -> string -> Ast_typed.program
   =
  fun ~options code ->
@@ -461,7 +475,7 @@ let build_expression ~raise
     let init_sig =
       (* can't use the contract signature directly because
          it would force users to export declaration in Jsligo *)
-      Ast_typed.to_signature init_prg.pr_module
+      Checking.Persistent_env.of_init_sig @@ Ast_typed.to_signature init_prg.pr_module
     in
     Ligo_compile.Utils.type_expression ~raise ~options syntax expression init_sig
   in
@@ -500,7 +514,7 @@ let build_type_expression ~raise
   let init_sig =
     (* can't use the contract signature directly because
        it would force users to export declaration in Jsligo *)
-    Ast_typed.to_signature init_prg.pr_module
+    Checking.Persistent_env.of_init_sig @@ Ast_typed.to_signature init_prg.pr_module
   in
   Ligo_compile.Utils.type_ty_expression ~raise ~options syntax ty_expression init_sig
 

@@ -13,10 +13,13 @@
   main_warnings
   syntax_types
   ocaml-compiler-libs.common
-  simple-diff)
+  simple-diff
+  core_unix
+  bin_prot)
  (preprocess
   (pps
    ppx_jane
+   ppx_bin_prot
    ppx_poly_constructor
    ppx_woo
    ppx_map

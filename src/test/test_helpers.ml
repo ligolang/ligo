@@ -203,7 +203,7 @@ let pack_payload ~raise (program : Ast_typed.program) (payload : Ast_unified.exp
       let context =
         (* can't use the contract signature directly because
          it would force users to export declaration in Jsligo *)
-        Ast_typed.to_signature program.pr_module
+        Checking.Persistent_env.of_init_sig @@ Ast_typed.to_signature program.pr_module
       in
       Ligo_compile.Of_core.compile_expression ~raise ~options ~context core
     in
@@ -277,7 +277,7 @@ let typed_program_with_imperative_input_to_michelson
     let context =
       (* can't use the contract signature directly because
        it would force users to export declaration in Jsligo *)
-      Ast_typed.to_signature program.pr_module
+      Checking.Persistent_env.of_init_sig @@ Ast_typed.to_signature program.pr_module
     in
     Ligo_compile.Of_core.compile_expression ~raise ~options ~context app
   in
@@ -312,7 +312,7 @@ let typed_program_with_imperative_input_to_michelson_twice
     let context =
       (* can't use the contract signature directly because
        it would force users to export declaration in Jsligo *)
-      Ast_typed.to_signature program.pr_module
+      Checking.Persistent_env.of_init_sig @@ Ast_typed.to_signature program.pr_module
     in
     Ligo_compile.Of_core.compile_expression ~raise ~options ~context app
   in

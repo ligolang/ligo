@@ -8,11 +8,13 @@
   hex
   octez-libs.hacl
   core_kernel.nonempty_list
-  zarith)
+  zarith
+  bin_prot)
  (inline_tests)
  (preprocess
   (pps
    ppx_jane
+   ppx_bin_prot
    ppx_deriving.eq
    ppx_deriving.ord
    ppx_deriving.fold

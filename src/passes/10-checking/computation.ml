@@ -129,16 +129,11 @@ and encode_sig_item_attribute (attr : Sig_item_attr.t) : Context.Attrs.Value.t =
 
 
 (* Load context from the outside declarations *)
-let ctx_init_of_sig ~raise ?env () =
+let ctx_init_of_env ~raise ?env () =
   match env with
   | None -> Context.empty
-  | Some (env : Ast_typed.signature) ->
-    (* envs should be modules not contracts *)
-    assert (
-      match env.sig_sort with
-      | Ss_contract _ -> false
-      | Ss_module -> true);
-    let f ctx decl =
+  | Some (env : Persistent_env.t) ->
+    let add_items ctx decl =
       match Location.unwrap decl with
       | Ast_typed.S_value (v, ty, _attr) -> Context.add_imm ctx v (encode ~raise ty)
       | S_type (v, ty, _) -> Context.add_type ctx v (encode ~raise ty)
@@ -147,11 +142,21 @@ let ctx_init_of_sig ~raise ?env () =
       | S_module_type (v, sig_) ->
         Context.add_module_type ctx v (encode_signature ~raise sig_)
     in
-    List.fold env.sig_items ~init:Context.empty ~f
+    let add_module ctx (mv, sig_) =
+        (* envs should be modules not contracts *)
+        (* assert ( *)
+        (*   match sig_.Ast_typed.sig_sort with *)
+        (*   | Ss_contract _ -> false *)
+        (*   | Ss_module -> true); *)
+        Context.add_module ctx mv (encode_signature ~raise sig_)
+    in
+    let env_items, modules = Persistent_env.get_signatures env in
+    let init = List.fold modules ~init:Context.empty ~f:add_module in
+    List.fold env_items ~init ~f:add_items
 
 
 let run_elab_with_refs t ~raise ~options ~loc ~path ~refs_tbl ?env () =
-  let ctx = ctx_init_of_sig ~raise ?env () in
+  let ctx = ctx_init_of_env ~raise ?env () in
   (* Format.printf "@[Context:@.%a@]" Context.pp ctx; *)
   let ctx, pos = Context.mark ctx in
   let poly_name_tbl = Type.Type_var_name_tbl.create () in
@@ -176,7 +181,7 @@ let run_elab t ~raise ~options ~loc ~path ?env () =
 
 
 let lift_elab t ~raise ~options ~loc:_ ~path ~poly_name_tbl:_ ~refs_tbl:_ st =
-  st, Elaboration.run t ~options ~path ~raise (snd st)
+  st, Elaboration.run t ~options ~path ~raise (Tuple2.get2 st)
 
 
 module Make_all (T : sig

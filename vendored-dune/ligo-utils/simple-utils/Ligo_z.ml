@@ -28,3 +28,16 @@ let t_of_sexp sexp =
   | _ -> failwith "[Ligo_z.t_of_sexp] Invalid sexp encoding"
 
 let hash_fold_t st z = Hash.fold_int64 st (Z.to_int64 z)
+
+let bin_shape_t = bin_shape_string
+
+let bin_size_t (z : t) = bin_size_string @@ Z.to_string z
+
+let bin_write_t =
+  fun buf ~pos (z : t) ->
+    bin_write_string buf ~pos (Z.to_string z)
+
+let bin_read_t =
+  fun buf ~pos_ref ->
+    let str = bin_read_string buf ~pos_ref in
+    Z.of_string str
