@@ -5,6 +5,7 @@ open Caml_core
 
 let error_unimplemented () = failwith "unimplemented"
 
+(* TODO: drop all Location.dummy *)
 let fresh_value ident =
   (* TODO: location *)
   let name = Ident.name ident in
@@ -194,6 +195,7 @@ end = struct
 
 
   let enter_type_predef_alias path var = enter_type (extract_ident path) var
+  (* let enter_value_predef_alias ident var = enter_value ident var *)
 
   let initial =
     let open Predef in
@@ -224,14 +226,11 @@ end = struct
     |> enter_type_predef_unsupported path_lazy_t
     |> enter_type_predef_unsupported path_extension_constructor
     |> enter_type_predef_unsupported path_floatarray
+  (* |> enter_type_predef_unsupported *)
 end
 
 (* TODO: solve is a bad word *)
-let type_wrap content =
-  (* TODO: location *)
-  let location = Location.dummy in
-  { type_content = content; location }
-
+let type_wrap location content = { type_content = content; location }
 
 let pat_wrap location content : _ Ast_core.Pattern.t =
   Location.{ wrap_content = content; location }
@@ -255,7 +254,8 @@ let mod_expr_wrap location content : Ast_core.module_expr =
 
 (* TODO: merge env and vars *)
 let rec solve_type env vars typ_ =
-  match typ_ with
+  let { type_desc; type_loc = loc } = typ_ in
+  match type_desc with
   | T_var (name, id) ->
     let var =
       match Hashtbl.find vars id with
@@ -266,47 +266,48 @@ let rec solve_type env vars typ_ =
         Hashtbl.set vars ~key:id ~data:var;
         var
     in
-    type_wrap @@ T_variable var
+    type_wrap loc @@ T_variable var
   | T_constr (path, args) ->
     let type_operator = Env.solve_type_path path env in
     (match args with
     | [] ->
       (* TODO: fix this on ligo *)
       (match type_operator with
-      | { module_path = []; element } -> type_wrap @@ T_variable element
-      | { module_path; element } as var -> type_wrap @@ T_module_accessor var)
+      | { module_path = []; element } -> type_wrap loc @@ T_variable element
+      | { module_path; element } as var -> type_wrap loc @@ T_module_accessor var)
     | args ->
       (* TODO: what about no args? *)
       let arguments = List.map args ~f:(fun type_ -> solve_type env vars type_) in
-      type_wrap @@ T_app { type_operator; arguments })
+      type_wrap loc @@ T_app { type_operator; arguments })
   | T_arrow (param, return) ->
     let param = solve_type env vars param in
     let return = solve_type env vars return in
     (* TODO: param names? *)
-    type_wrap @@ T_arrow { type1 = param; type2 = return; param_names = [] }
+    type_wrap loc @@ T_arrow { type1 = param; type2 = return; param_names = [] }
   | T_tuple fields ->
     let fields = List.map fields ~f:(fun field -> solve_type env vars field) in
-    type_wrap @@ T_record (Row.create_tuple fields)
+    type_wrap loc @@ T_record (Row.create_tuple fields)
   | T_forall (bound, body) ->
     (* TODO: test poly and univar *)
-    solve_type_forall env vars ~bound body
+    solve_type_forall loc env vars ~bound body
 
 
-and solve_type_forall env vars ~bound body =
+and solve_type_forall loc env vars ~bound body =
   match bound with
   | [] -> solve_type env vars body
   | (name, id) :: bound ->
     let var : Type_var.t = Type_var.fresh ~loc:Location.dummy ?name ~generated:false () in
     (* TODO: ensures id is not in vars *)
     Hashtbl.set vars ~key:id ~data:var;
-    let body = solve_type_forall env vars ~bound body in
+    let body = solve_type_forall loc env vars ~bound body in
     Hashtbl.remove vars id;
-    type_wrap @@ T_for_all { ty_binder = var; kind = Type; type_ = body }
+    type_wrap loc @@ T_for_all { ty_binder = var; kind = Type; type_ = body }
 
 
 let solve_type_poly env vars type_ =
   (* TODO: this is bad *)
   let external_vars = Hashtbl.copy vars in
+  let { type_desc = _; type_loc = loc } = type_ in
   let type_ = solve_type env vars type_ in
   let internal_vars =
     List.filter_map (Hashtbl.to_alist vars) ~f:(fun (id, var) ->
@@ -317,10 +318,10 @@ let solve_type_poly env vars type_ =
           Some var)
   in
   List.fold_left internal_vars ~init:type_ ~f:(fun body var ->
-      type_wrap @@ T_for_all { ty_binder = var; kind = Type; type_ = body })
+      type_wrap loc @@ T_for_all { ty_binder = var; kind = Type; type_ = body })
 
 
-let solve_type_record env vars fields =
+let solve_type_record loc env vars fields =
   let fields =
     List.map fields ~f:(fun decl_label ->
         let { dl_id; dl_type; dl_loc } = decl_label in
@@ -331,12 +332,29 @@ let solve_type_record env vars fields =
   let fields = Label.Map.of_alist_exn fields in
   (* TODO: layout *)
   let layout = None in
-  type_wrap @@ T_record { fields; layout }
+  type_wrap loc @@ T_record { fields; layout }
 
 
-let solve_type_decl env vars decl : type_expression =
-  match decl with
-  | T_record fields -> solve_type_record env vars fields
+let rec solve_type_decl env vars decl : type_expression =
+  let { type_decl_desc; type_decl_params; type_decl_loc = loc } = decl in
+  solve_type_decl_lambda env vars loc type_decl_params type_decl_desc
+
+
+and solve_type_decl_lambda env vars loc params desc =
+  match params with
+  | [] -> solve_type_decl_body env vars loc desc
+  | (name, id) :: params ->
+    let var : Type_var.t = Type_var.fresh ~loc:Location.dummy ?name ~generated:false () in
+    (* TODO: ensures id is not in vars *)
+    Hashtbl.set vars ~key:id ~data:var;
+    let body = solve_type_decl_lambda env vars loc params desc in
+    Hashtbl.remove vars id;
+    type_wrap loc @@ T_abstraction { ty_binder = var; kind = Type; type_ = body }
+
+
+and solve_type_decl_body env vars loc desc =
+  match desc with
+  | T_record fields -> solve_type_record loc env vars fields
   | T_variant cases ->
     let cases =
       List.map cases ~f:(fun decl_case ->
@@ -351,21 +369,22 @@ let solve_type_decl env vars decl : type_expression =
                 let fields =
                   List.map fields ~f:(fun field -> solve_type env vars field)
                 in
-                type_wrap @@ T_record (Row.create_tuple fields)
+                type_wrap loc @@ T_record (Row.create_tuple fields)
             in
             Label.Label (label, dc_loc), content
           | C_record { dc_id; dc_fields; dc_loc } ->
             let label = Ident.name dc_id in
-            let content = solve_type_record env vars dc_fields in
+            let content = solve_type_record loc env vars dc_fields in
             Label.Label (label, dc_loc), content)
     in
     let cases = Label.Map.of_alist_exn cases in
     (* TODO: layout *)
     let layout = None in
-    type_wrap @@ T_sum { fields = cases; layout }
+    type_wrap loc @@ T_sum { fields = cases; layout }
   | T_alias manifest ->
     (* TODO: not poly tho *)
     solve_type_poly env vars manifest
+  | T_constant (constant, arity) -> type_wrap loc @@ T_constant (constant, arity)
 
 
 let solve_var_pat env vars var_pat =
@@ -536,6 +555,9 @@ and solve_decl_inner env vars decl =
     ( env
     , decl_wrap loc
       @@ D_value { binder; expr = value; attr = Value_attr.default_attributes } )
+  | D_value_rec _ ->
+    (* TODO: high priority *)
+    error_unimplemented ()
   | D_type (ident, type_decl) ->
     let type_decl = solve_type_decl env vars type_decl in
     let var = fresh_type ident in

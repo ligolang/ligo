@@ -6,8 +6,12 @@ open Ast_core
 (* TODO: explain, this id comes from OCaml  *)
 type var_id = int
 
-(* TODO: location on types *)
 type type_ =
+  { type_desc : type_desc
+  ; type_loc : Location.t
+  }
+
+and type_desc =
   | T_var of (label option * var_id)
   | T_constr of Path.t * type_ list
   | T_arrow of type_ * type_
@@ -15,9 +19,16 @@ type type_ =
   | T_forall of (label option * var_id) list * type_
 
 type type_decl =
+  { type_decl_desc : type_decl_desc
+  ; type_decl_params : (label option * var_id) list
+  ; type_decl_loc : Location.t
+  }
+
+and type_decl_desc =
   | T_record of type_decl_label list
   | T_variant of type_decl_case list
   | T_alias of type_
+  | T_constant of Literal_types.t * int
 
 and type_decl_label =
   { dl_id : Ident.t
@@ -94,6 +105,6 @@ and decl =
 
 and decl_desc =
   | D_value of (var_pat * expr)
-  (* TODO: type record and type abstract *)
+  | D_value_rec of (var_pat * expr)
   | D_type of (Ident.t * type_decl)
   | D_module of (Ident.t * mod_expr)
