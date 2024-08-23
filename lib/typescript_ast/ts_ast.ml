@@ -1,4 +1,4 @@
-(* Abstract Syntax Tree (AST) for TypeScript
+(** Abstract Syntax Tree (AST) for TypeScript
 
    We used the JavaScript tree-sitter grammar and the TypeScript
    tree-sitter grammar as reference. The excerpts from those grammars
@@ -6,10 +6,7 @@
 
 [@@@warning "-30"] (* Duplicate record field names *)
 
-(* Utilities *)
-
-(* Literals *)
-
+(** Literals *)
 type identifier = string
 type template_string = string
 type hash_name = string
@@ -24,44 +21,41 @@ type bigint_literal =
   | Oct_literal of oct_literal
   | Dec_literal of dec_literal
 
-(* Keywords *)
-
-(* Symbols *)
-
-(* The Abstract Syntax Tree *)
-
-(* The CST *)
-
+(** The Abstract Syntax Tree *)
 type program = statement list
 
-(* DECLARATIONS *)
+(** DECLARATIONS
 
-(* JavaScript:
+  Declarations, when they are valid, extend the current scope with
+  new types and values (including functions).
 
-   declaration: $ => choice(
-     $.function_declaration,
-     $.generator_function_declaration,
-     $.class_declaration,
-     $.lexical_declaration,
-     $.variable_declaration)
+  The related grammar rules are given by:
+  + JavaScript
+    {@js[
+     declaration: $ => choice(
+       $.function_declaration,
+       $.generator_function_declaration,
+       $.class_declaration,
+       $.lexical_declaration,
+       $.variable_declaration)
+    ]}
+  + TypeScript
+    {@js[
+     declaration: ($, previous) => choice(
+       previous,
+       $.function_signature,
+       $.abstract_class_declaration,
+       $.module,
+       prec('declaration', $.internal_module),
+       $.type_alias_declaration,
+       $.enum_declaration,
+       $.interface_declaration,
+       $.import_alias,
+       $.ambient_declaration),
 
-   TypeScript:
-
-   declaration: ($, previous) => choice(
-     previous,
-     $.function_signature,
-     $.abstract_class_declaration,
-     $.module,
-     prec('declaration', $.internal_module),
-     $.type_alias_declaration,
-     $.enum_declaration,
-     $.interface_declaration,
-     $.import_alias,
-     $.ambient_declaration),
-
-   module: $ => seq('module', $._module)
+     module: $ => seq('module', $._module)
+    ]}
 *)
-
 and declaration =
   | D_function_declaration of function_declaration
   | D_generator_function_declaration of generator_function_declaration
@@ -78,90 +72,101 @@ and declaration =
   | D_import_alias of import_alias
   | D_ambient_declaration of ambient_declaration
 
-(* Function Declaration
+(** Function Declaration
 
-   JavaScript:
+  Function declarations introduce functions in the current scope.
 
-   function_declaration: $ => prec.right('declaration', seq(
-     optional('async'),
-     'function',
-     field('name', $.identifier),
-     $._call_signature,
-     field('body', $.statement_block),
-     optional($._automatic_semicolon)))
+  Example: {@js[function f <T>(x: T) : T { return x; };]}
+
+  The related grammar rules are given by:
+  + JavaScript
+    {@js[
+     function_declaration: $ => prec.right('declaration', seq(
+       optional('async'),
+       'function',
+       field('name', $.identifier),
+       $._call_signature,
+       field('body', $.statement_block),
+       optional($._automatic_semicolon)))
+    ]}
+
+  See [function_signature] below.
 *)
 and function_declaration =
   { fun_sig : function_signature
   ; body : statement_block
   }
 
-(* Function Signature
+(** Function Signature
 
-   TypeScript:
+  A function signature introduces a functional type in the current
+  type (including type and value parameters, if any).
 
-   function_signature: $ => seq(
-     optional('async'),
-     'function',
-     field('name', $.identifier),
-     $._call_signature,
-     choice($._semicolon, $._function_signature_automatic_semicolon)),
+  Example: {@js[function f <T>(x: T) : T;]}
 
-   _call_signature: $ => seq(
-     field('type_parameters', optional($.type_parameters)),
-     field('parameters', $.formal_parameters),
-     field('return_type', optional(
-       choice($.type_annotation,
-              $.asserts_annotation,
-              $.type_predicate_annotation)))),
+  The related grammar rules are given by:
+  + TypeScript
+    {@js[
+     function_signature: $ => seq(
+       optional('async'),
+       'function',
+       field('name', $.identifier),
+       $._call_signature,
+       choice($._semicolon, $._function_signature_automatic_semicolon)),
 
-   formal_parameters: $ => seq(
-     '(',
-     optional(seq(
-       commaSep1($._formal_parameter),
-       optional(','))),
-     ')'),
+     _call_signature: $ => seq(
+       field('type_parameters', optional($.type_parameters)),
+       field('parameters', $.formal_parameters),
+       field('return_type', optional(
+         choice($.type_annotation,
+                $.asserts_annotation,
+                $.type_predicate_annotation)))),
 
-   _formal_parameter: $ => choice(
-     $.required_parameter,
-     $.optional_parameter),
+     formal_parameters: $ => seq(
+       '(', optional(seq(commaSep1($._formal_parameter), optional(','))), ')'),
 
-   required_parameter: $ => seq(
-     $._parameter_name,
-     field('type', optional($.type_annotation)),
-     optional($._initializer)),
+     _formal_parameter: $ => choice(
+       $.required_parameter,
+       $.optional_parameter),
 
-   _initializer: $ => seq('=', field('value', $.expression)),
+     required_parameter: $ => seq(
+       $._parameter_name,
+       field('type', optional($.type_annotation)),
+       optional($._initializer)),
 
-   _parameter_name: $ => seq(
-     repeat(field('decorator', $.decorator)),
-     optional($.accessibility_modifier),
-     optional($.override_modifier),
-     optional('readonly'),
-     field('pattern', choice($.pattern, $.this))),
+     _initializer: $ => seq('=', field('value', $.expression)),
 
-   accessibility_modifier: _ => choice(
-     'public',
-     'private',
-     'protected'),
+     _parameter_name: $ => seq(
+       repeat(field('decorator', $.decorator)),
+       optional($.accessibility_modifier),
+       optional($.override_modifier),
+       optional('readonly'),
+       field('pattern', choice($.pattern, $.this))),
 
-   override_modifier: _ => 'override',
+     accessibility_modifier: _ => choice(
+       'public',
+       'private',
+       'protected'),
 
-   optional_parameter: $ => seq(
-     $._parameter_name,
-     '?',
-     field('type', optional($.type_annotation)),
-     optional($._initializer)),
+     override_modifier: _ => 'override',
 
-   type_predicate_annotation: $ => seq(seq(':', $.type_predicate)), // Ouch
+     optional_parameter: $ => seq(
+       $._parameter_name,
+       '?',
+       field('type', optional($.type_annotation)),
+       optional($._initializer)),
 
-   type_predicate: $ => seq(
-     field('name', choice(
-       $.identifier,
-       $.this,
-       alias($.predefined_type, $.identifier))),
-     'is',
-     field('type', $.type))
-*)
+     type_predicate_annotation: $ => seq(seq(':', $.type_predicate)), // Ouch
+
+     type_predicate: $ => seq(
+       field('name', choice(
+         $.identifier,
+         $.this,
+         alias($.predefined_type, $.identifier))),
+       'is',
+       field('type', $.type))
+    ]}
+ *)
 and function_signature =
   { async : bool
   ; name : identifier
@@ -177,11 +182,8 @@ and call_signature =
 and formal_parameters = formal_parameter list
 
 and formal_parameter =
-  | Required_parameter of formal_parameter'
-  | Optional_parameter of formal_parameter'
-
-and formal_parameter' =
   { parameter_name : parameter_name
+  ; optional : bool
   ; type_ : type_annotation option
   ; default : expression option
   }
@@ -214,87 +216,114 @@ and type_predicate_name =
   | Type_predicate_identifier of identifier (* Including predefined types *)
   | Type_predicate_this
 
-(* Generator Function Declaration
+(** Generator Function Declaration
 
-   JavaScript:
+  A generator function is a function whose execution can be internally
+  suspended with a 'yield' instruction, and later resumed by the
+  caller (at the suspension point).
 
-   generator_function_declaration: $ => prec.right('declaration', seq(
-     optional('async'),
-     'function',
-     '*',
-     field('name', $.identifier),
-     $._call_signature,
-     field('body', $.statement_block),
-     optional($._automatic_semicolon)))
-*)
+  Example:
+  {@js[
+   function* generator(i) {
+     yield i;
+     yield i + 10;
+   }
+  ]}
+
+  The related grammar rule is given by:
+  + JavaScript
+    {@js[
+     generator_function_declaration: $ => prec.right('declaration', seq(
+       optional('async'), 'function', '*',
+       field('name', $.identifier),
+       $._call_signature,
+       field('body', $.statement_block),
+       optional($._automatic_semicolon)))
+    ]}
+ *)
 and generator_function_declaration =
   | Generator_function_declaration of function_declaration
 
-(* Class Declaration
+(** Class Declaration
 
-   TypeScript:
+  A class declaration instroduces a class type in the current scope.
 
-   class_declaration: $ => prec.left('declaration', seq(
-     repeat(field('decorator', $.decorator)),
-     'class',
-     field('name', $._type_identifier),
-     field('type_parameters', optional($.type_parameters)),
-     optional($.class_heritage),
-     field('body', $.class_body),
-     optional($._automatic_semicolon))),
+  Example:
+  {@js[
+   class Pair<T,U> {
+     a : T;
+     b : U;
+     constructor (a: T, b: U) {
+       this.a = a;
+       this.b = b}
+   }
+  ]}
 
-   type_parameters: $ =>
-     seq('<', commaSep1($.type_parameter), optional(','), '>'),
+  The related grammar rules are given by:
+  + TypeScript
+    {@js[
+     class_declaration: $ => prec.left('declaration', seq(
+       repeat(field('decorator', $.decorator)),
+       'class',
+       field('name', $._type_identifier),
+       field('type_parameters', optional($.type_parameters)),
+       optional($.class_heritage),
+       field('body', $.class_body),
+       optional($._automatic_semicolon))),
 
-   type_parameter: $ => seq(
-     optional('const'),
-     field('name', $._type_identifier),
-     field('constraint', optional($.constraint)),
-     field('value', optional($.default_type))),
+     type_parameters: $ =>
+       seq('<', commaSep1($.type_parameter), optional(','), '>'),
 
-   constraint: $ => seq(choice('extends', ':'), $.type), // What is ":"?
+     type_parameter: $ => seq(
+       optional('const'),
+       field('name', $._type_identifier),
+       field('constraint', optional($.constraint)),
+       field('value', optional($.default_type))),
 
-   default_type: $ => seq('=', $.type),
+     constraint: $ => seq(choice('extends', ':'), $.type), // What is ":"?
 
-   class_heritage: $ => choice(
-     seq($.extends_clause, optional($.implements_clause)),
-     $.implements_clause),
+     default_type: $ => seq('=', $.type),
 
-   extends_clause: $ => seq('extends', commaSep1($._extends_clause_single)),
+     class_heritage: $ => choice(
+       seq($.extends_clause, optional($.implements_clause)),
+       $.implements_clause),
 
-   _extends_clause_single: $ => prec('extends', seq(
-     field('value', $.expression),
-     field('type_arguments', optional($.type_arguments)))),
+     extends_clause: $ => seq('extends', commaSep1($._extends_clause_single)),
 
-   implements_clause: $ => seq('implements', commaSep1($.type)),
+     _extends_clause_single: $ => prec('extends', seq(
+       field('value', $.expression),
+       field('type_arguments', optional($.type_arguments)))),
 
-   type_arguments: $ => seq('<', commaSep1($.type), optional(','), '>'),
+     implements_clause: $ => seq('implements', commaSep1($.type)),
 
-   class_body: $ => seq(
-     '{',
-     repeat(choice(
-       seq(repeat(field('decorator', $.decorator)),
-           $.method_definition,
-           optional($._semicolon)),
-       seq($.method_signature,
-           choice($._function_signature_automatic_semicolon, ',')),
-       $.class_static_block,
-       seq(choice(
-             $.abstract_method_signature,
-             $.index_signature,
-             $.method_signature,
-             $.public_field_definition),
-           choice($._semicolon, ',')),
-       ';')),
-     '}')
+     type_arguments: $ => seq('<', commaSep1($.type), optional(','), '>'),
 
-   JavaScript:
-
-   class_static_block: $ => seq(
-     'static',
-     optional($._automatic_semicolon),
-     field('body', $.statement_block))
-*)
+     class_body: $ => seq(
+       '{',
+       repeat(choice(
+         seq(repeat(field('decorator', $.decorator)),
+             $.method_definition,
+             optional($._semicolon)),
+         seq($.method_signature,
+             choice($._function_signature_automatic_semicolon, ',')),
+         $.class_static_block,
+         seq(choice(
+               $.abstract_method_signature,
+               $.index_signature,
+               $.method_signature,
+               $.public_field_definition),
+             choice($._semicolon, ',')),
+         ';')),
+       '}')
+     ]}
+   + JavaScript
+     {@js[
+      class_static_block: $ => seq(
+        'static',
+        optional($._automatic_semicolon),
+        field('body', $.statement_block))
+     ]}
+ *)
 and class_declaration =
   { decorators : decorator list
   ; name : type_identifier
@@ -334,30 +363,36 @@ and class_member =
   | Index_signature of index_signature
   | Public_field_definition of public_field_definition
 
-(* Method Signature
+(** Method Signature
 
-   TypeScript:
+  A method signature is the type of a method in a class.
 
-   method_signature: $ => seq(
-     optional($.accessibility_modifier),
-     optional('static'),
-     optional($.override_modifier),
-     optional('readonly'),
-     optional('async'),
-     optional(choice('get', 'set', '*')),
-     field('name', $._property_name),
-     optional('?'),
-     $._call_signature),
+  Example: {@js[public m? (x: number) : number]}
 
-   JavaScript:
-
-   _property_name: $ => choice(
-     alias(choice($.identifier, $._reserved_identifier),
-           $.property_identifier),
-     $.private_property_identifier,
-     $.string,
-     $.number,
-     $.computed_property_name),
+  The related grammar rules are given by:
+  + TypeScript
+    {@js[
+     method_signature: $ => seq(
+       optional($.accessibility_modifier),
+       optional('static'),
+       optional($.override_modifier),
+       optional('readonly'),
+       optional('async'),
+       optional(choice('get', 'set', '*')),
+       field('name', $._property_name),
+       optional('?'),
+       $._call_signature),
+    ]}
+  + JavaScript
+    {@js[
+     _property_name: $ => choice(
+       alias(choice($.identifier, $._reserved_identifier),
+                    $.property_identifier),
+       $.private_property_identifier,
+       $.string,
+       $.number,
+       $.computed_property_name)
+    ]}
 *)
 and method_signature =
   { access : accessibility_modifier option
@@ -394,64 +429,72 @@ and property_name =
   | Number
   | Computed_property_name of expression
 
-(* Lexical Declaration
+(** Lexical Declaration
 
-   JavaScript:
+  Lexical declarations are declarations of let- or
+  const-variables. When achieved by means of object & array patterns,
+  the variables they contain are introduced in the current scope.
 
-   lexical_declaration: $ => seq(
-     field('kind', choice('let', 'const')),
-     commaSep1($.variable_declarator),
-     $._semicolon),
+  Example: {@js[const {x, y} = z;]}
 
-   variable_declarator: $ => seq(
-     field('name', choice($.identifier, $._destructuring_pattern)),
-     optional($._initializer)),
+  The related grammar rules are given by:
+  + JavaScript
+    {@js[
+     lexical_declaration: $ => seq(
+       field('kind', choice('let', 'const')),
+       commaSep1($.variable_declarator),
+       $._semicolon),
 
-   _destructuring_pattern: $ => choice($.object_pattern, $.array_pattern),
+     variable_declarator: $ => seq(
+       field('name', choice($.identifier, $._destructuring_pattern)),
+       optional($._initializer)),
 
-   object_pattern: $ => prec('object', seq(
-     '{',
-     commaSep(optional(choice(
-       $.pair_pattern,
-       $.rest_pattern,
-       $.object_assignment_pattern,
-       alias(
-         choice($.identifier, $._reserved_identifier),
-         $.shorthand_property_identifier_pattern)))),
-     '}')),
+     _destructuring_pattern: $ => choice($.object_pattern, $.array_pattern),
 
-   pair_pattern: $ => seq(
-     field('key', $._property_name),
-     ':',
-     field('value', choice($.pattern, $.assignment_pattern))),
+     object_pattern: $ => prec('object', seq(
+       '{',
+       commaSep(optional(choice(
+         $.pair_pattern,
+         $.rest_pattern,
+         $.object_assignment_pattern,
+         alias(
+           choice($.identifier, $._reserved_identifier),
+           $.shorthand_property_identifier_pattern)))),
+       '}')),
 
-   rest_pattern: $ => prec.right(seq('...', $._lhs_expression)),
+     pair_pattern: $ => seq(
+       field('key', $._property_name),
+       ':',
+       field('value', choice($.pattern, $.assignment_pattern))),
 
-   _lhs_expression: $ => choice(
-     $.member_expression,
-     $.subscript_expression,
-     $._identifier,                               // identifier + undefined
-     alias($._reserved_identifier, $.identifier),
-     $._destructuring_pattern),
+     rest_pattern: $ => prec.right(seq('...', $._lhs_expression)),
 
-   object_assignment_pattern: $ => seq(
-     field('left', choice(
-       alias(choice($._reserved_identifier, $.identifier),
-                    $.shorthand_property_identifier_pattern),
-       $._destructuring_pattern)),
-     '=',
-     field('right', $.expression)),
+     _lhs_expression: $ => choice(
+       $.member_expression,
+       $.subscript_expression,
+       $._identifier,                               // identifier + undefined
+       alias($._reserved_identifier, $.identifier),
+       $._destructuring_pattern),
 
-   array_pattern: $ => seq(
-    '[', commaSep(optional(choice($.pattern, $.assignment_pattern))), ']')
+     object_assignment_pattern: $ => seq(
+       field('left', choice(
+         alias(choice($._reserved_identifier, $.identifier),
+                      $.shorthand_property_identifier_pattern),
+         $._destructuring_pattern)),
+       '=',
+       field('right', $.expression)),
 
-   TypeScript:
+     array_pattern: $ => seq(
+      '[', commaSep(optional(choice($.pattern, $.assignment_pattern))), ']')
+    }]
+  + TypeScript
+    {@js[
+     _lhs_expression: ($, previous) => choice(previous, $.non_null_expression),
 
-   _lhs_expression: ($, previous) => choice(previous, $.non_null_expression),
-
-   non_null_expression: $ =>
-     prec.left('unary', seq($.expression, '!'))
-*)
+     non_null_expression: $ =>
+       prec.left('unary', seq($.expression, '!'))
+    ]}
+ *)
 and lexical_declaration =
   { kind : let_or_const
   ; decls : variable_declaration
@@ -461,9 +504,11 @@ and let_or_const =
   | Let
   | Const
 
-and variable_declarator =
-  | Var_decl_ident of identifier
-  | Var_decl_pattern of destructuring_pattern
+and variable_declarator = lhs_pattern
+
+and lhs_pattern =
+  | Decl_ident of identifier
+  | Decl_pattern of destructuring_pattern
 
 and destructuring_pattern =
   | Pattern_object of object_pattern
@@ -501,10 +546,7 @@ and object_assignment_pattern =
   ; right : expression
   }
 
-and object_lhs_pattern =
-  (* Isomorphic to [variable_declarator]. *)
-  | Object_lhs_ident of identifier (* Including reserved identifiers *)
-  | Object_lhs of destructuring_pattern
+and object_lhs_pattern = lhs_pattern
 
 and array_pattern = array_cell_pattern list
 
@@ -513,28 +555,54 @@ and array_cell_pattern =
   | Cell_pattern of pattern
   | Cell_assignment of assignment_pattern
 
-(* Variable Declaration
+(** Variable Declaration
 
-   JavaScript:
+  Variable declarations introduce in the current scope mutable
+  variable.
 
-   variable_declaration: $ =>
-     seq('var', commaSep1($.variable_declarator), $._semicolon),
-*)
+  Example: {@js[var x : number = 5;]}
+
+  The related grammar rule is given by:
+  + JavaScript
+    {@js[
+     variable_declaration: $ =>
+       seq('var', commaSep1($.variable_declarator), $._semicolon),
+    ]}
+ *)
 and variable_declaration = variable_declarator Nonempty_list.t
 
-(* Abstract Class Declaration
+(** Abstract Class Declaration
 
-   TypeScript:
+  An abstract class declaration is the declaration of a class that
+  cannot be instantiated (no public constructors), and are instead
+  used as a base to derive other classes, enforcing this way some
+  method implementations and the presence of certain members with
+  certain types.
 
-   abstract_class_declaration: $ => prec('declaration', seq(
-     repeat(field('decorator', $.decorator)),
-     'abstract',
-     'class',
-     field('name', $._type_identifier),
-     field('type_parameters', optional($.type_parameters)),
-     optional($.class_heritage),
-     field('body', $.class_body)))
-*)
+  Example:
+  {@js[
+   abstract class Base {
+     abstract getName(): string;
+
+     printName() {
+       console.log("Hello, " + this.getName());
+     }
+   }
+  ]}
+
+  The related grammar rules are given by:
+  + TypeScript
+    {@js[
+     abstract_class_declaration: $ => prec('declaration', seq(
+       repeat(field('decorator', $.decorator)),
+       'abstract',
+       'class',
+       field('name', $._type_identifier),
+       field('type_parameters', optional($.type_parameters)),
+       optional($.class_heritage),
+       field('body', $.class_body)))
+    }]
+ *)
 and abstract_class_declaration =
   { decorator : decorator list
   ; name : type_identifier
@@ -545,22 +613,29 @@ and abstract_class_declaration =
 
 and type_identifier = identifier
 
-(* Method Definition
+(** Method Definition
 
-   TypeScript:
+  A method is defined in a class, where it is introduced to its scope
+  (access can be modified).
 
-   method_definition: $ => prec.left(seq(
-     optional($.accessibility_modifier),
-     optional('static'),
-     optional($.override_modifier),
-     optional('readonly'),
-     optional('async'),
-     optional(choice('get', 'set', '*')),
-     field('name', $._property_name),
-     optional('?'),
-     $._call_signature,
-     field('body', $.statement_block)))
-*)
+  Example: [@js{public static id? <T>(x: T) : T { return x; }}]
+
+  The related grammar rules are given by:
+  + TypeScript
+    {@js[
+     method_definition: $ => prec.left(seq(
+       optional($.accessibility_modifier),
+       optional('static'),
+       optional($.override_modifier),
+       optional('readonly'),
+       optional('async'),
+       optional(choice('get', 'set', '*')),
+       field('name', $._property_name),
+       optional('?'),
+       $._call_signature,
+       field('body', $.statement_block)))
+    }]
+ *)
 and method_definition =
   { signature : method_signature
   ; body : statement_block
@@ -568,19 +643,35 @@ and method_definition =
 
 and statement_block = statement list
 
-(* Abstract Method Signature
+(** Abstract Method Signature
 
-   TypeScript:
+  Abstract methods are methods without a body, and thus belonging to
+  an abstract class.
 
-   abstract_method_signature: $ => seq(
-     optional($.accessibility_modifier),
-     'abstract',
-     optional($.override_modifier),
-     optional(choice('get', 'set', '*')),
-     field('name', $._property_name),
-     optional('?'),
-     $._call_signature)
-*)
+  Example:
+  {@js[
+   abstract class Base {
+     abstract getName(): string;
+
+     printName() {
+       console.log("Hello, " + this.getName());
+     }
+   }
+  ]}
+
+  The related grammar rules are given by:
+  + TypeScript
+    {@js[
+     abstract_method_signature: $ => seq(
+       optional($.accessibility_modifier),
+       'abstract',
+       optional($.override_modifier),
+       optional(choice('get', 'set', '*')),
+       field('name', $._property_name),
+       optional('?'),
+       $._call_signature)
+    ]}
+ *)
 and abstract_method_signature =
   { access : accessibility_modifier option
   ; override : override_modifier option
@@ -590,39 +681,52 @@ and abstract_method_signature =
   ; call_sig : call_signature
   }
 
-(* Index Signature
+(** Index Signature
 
-   TypeScript:
+  Classes and interfaces can declare an index signature, that is, the
+  functional type of the index operator '[]' when applied to an
+  instance of the class (as if an array).
 
-   index_signature: $ => seq(
-     optional(
-       seq(field('sign', optional(choice('-', '+'))), 'readonly')),
-     '[',
-     choice(
-       seq(
-         field('name', choice(
-           $.identifier,
-           alias($._reserved_identifier, $.identifier))),
-         ':',
-         field('index_type', $.type)),
-       $.mapped_type_clause),
-     ']',
-     field('type', choice(
-       $.type_annotation,
-       $.omitting_type_annotation,
-       $.adding_type_annotation,
-       $.opting_type_annotation))),
+  Example:
+  {@js[
+   interface StringArray {
+     [index: number]: string;
+   }
+  ]}
 
-   mapped_type_clause: $ => seq(
-     field('name', $._type_identifier),
-     'in',
-     field('type', $.type),
-     optional(seq('as', field('alias', $.type)))),
+  The related grammar rules are given by:
+  + TypeScript
+    {@js[
+     index_signature: $ => seq(
+       optional(
+         seq(field('sign', optional(choice('-', '+'))), 'readonly')),
+       '[',
+       choice(
+         seq(
+           field('name', choice(
+             $.identifier,
+             alias($._reserved_identifier, $.identifier))),
+           ':',
+           field('index_type', $.type)),
+         $.mapped_type_clause),
+       ']',
+       field('type', choice(
+         $.type_annotation,
+         $.omitting_type_annotation,
+         $.adding_type_annotation,
+         $.opting_type_annotation))),
 
-   omitting_type_annotation: $ => seq('-?:', $.type),
-   adding_type_annotation: $ => seq('+?:', $.type),
-   opting_type_annotation: $ => seq('?:', $.type)
-*)
+     mapped_type_clause: $ => seq(
+       field('name', $._type_identifier),
+       'in',
+       field('type', $.type),
+       optional(seq('as', field('alias', $.type)))),
+
+     omitting_type_annotation: $ => seq('-?:', $.type),
+     adding_type_annotation: $ => seq('+?:', $.type),
+     opting_type_annotation: $ => seq('?:', $.type)
+    ]}
+ *)
 and index_signature =
   { sign : sign option (* readonly *)
   ; range : range
@@ -654,29 +758,43 @@ and index_type =
   | Adding_type_annotation of type_
   | Opting_type_annotation of type_
 
-(* Public Field Definition
+(** Public Field Definition
 
-   TypeScript:
+  A public field definition is a property definition (variables and
+  methods). Contrary to what the name indicates, the access to the
+  property can be private or protected.
 
-   public_field_definition: $ => seq(
-     repeat(field('decorator', $.decorator)),
-     optional(choice(
-       seq('declare', optional($.accessibility_modifier)),
-       seq($.accessibility_modifier, optional('declare')))),
-     choice(
-       seq(optional('static'), optional($.override_modifier),
-           optional('readonly')),
-       seq(optional('abstract'), optional('readonly')),
-       seq(optional('readonly'), optional('abstract')), optional('accessor')),
-     field('name', $._property_name),
-     optional(choice('?', '!')),
-     field('type', optional($.type_annotation)),
-     optional($._initializer))
+  Example:
+  {@js[
+   class ClassWithStaticMethod {
+     static staticProperty = 'someValue';
+   }
+  ]}
 
-   JavaScript:
-
-   _initializer: $ => seq('=', field('value', $.expression))
-*)
+  The related grammar rules are given by:
+  + TypeScript
+    {@js[
+     public_field_definition: $ => seq(
+       repeat(field('decorator', $.decorator)),
+       optional(choice(
+         seq('declare', optional($.accessibility_modifier)),
+         seq($.accessibility_modifier, optional('declare')))), // private??
+       choice(
+         seq(optional('static'), optional($.override_modifier),
+             optional('readonly')),
+         seq(optional('abstract'), optional('readonly')),
+         seq(optional('readonly'), optional('abstract')),
+             optional('accessor')),
+       field('name', $._property_name),
+       optional(choice('?', '!')),
+       field('type', optional($.type_annotation)),
+       optional($._initializer))
+    ]}
+  + JavaScript
+    {@js[
+     _initializer: $ => seq('=', field('value', $.expression))
+    ]}
+ *)
 and public_field_definition =
   { decorators : decorator list
   ; access : accessibility_modifier option
@@ -700,47 +818,68 @@ and field_mode =
   | Optional
   | Definite_assert
 
-(* Ambient Declaration
+(** Ambient Declaration
 
-   TypeScript:
+  An ambient declaration is a declaration of a value or function that
+  is defined externally to the project (a library, for example).
 
-   ambient_declaration: $ => seq(
-     'declare',
-     choice(
-       $.declaration,
-       seq('global', $.statement_block),
-       seq('module', '.', alias($.identifier, $.property_identifier),
-           ':', $.type, $._semicolon)))
-*)
+  Example:
+  {@js[
+   declare const myVar: string;
+  ]}
+
+  The related grammar rule is given by:
+  + TypeScript
+    {@js[
+     ambient_declaration: $ => seq(
+       'declare',
+       choice(
+         $.declaration,
+         seq('global', $.statement_block),
+         seq('module', '.', alias($.identifier, $.property_identifier),
+             ':', $.type, $._semicolon)))
+    ]}
+ *)
 and ambient_declaration =
   | Declaration of declaration
   | Global_declaration of statement_block
   | Module_declaration of identifier * type_ (* property identifier *)
 
-(* Enumerated Declaration
+(** Enumerated Declaration
 
-   TypeScript:
+  An enumerated declaration introduces in the current type environment
+  a type defined by the finite union of some values, which are
+  implicitly or explicitly mapped to unique integers.
 
-   enum_declaration: $ => seq(
-     optional('const'),
-     'enum',
-     field('name', $.identifier),
-     field('body', $.enum_body)),
+  Example:
+  {@js[
+   const enum Direction {Up = 1, Down, Left, Right,}
+  ]}
 
-   enum_body: $ => seq(
-     '{',
-     optional(seq(
-       sepBy1(',', choice(
-         field('name', $._property_name),
-         $.enum_assignment)),
-      optional(','))),
-     '}'),
+  The related grammar rules are given by:
+  + TypeScript
+    {@js[
+     enum_declaration: $ => seq(
+       optional('const'),
+       'enum',
+       field('name', $.identifier),
+       field('body', $.enum_body)),
 
-   enum_assignment: $ =>
-     seq(field('name', $._property_name), $._initializer),
+     enum_body: $ => seq(
+       '{',
+       optional(seq(
+         sepBy1(',', choice(
+           field('name', $._property_name),
+           $.enum_assignment)),
+        optional(','))),
+       '}'),
 
-   _initializer: $ => seq('=', field('value', $.expression))
-*)
+     enum_assignment: $ =>
+       seq(field('name', $._property_name), $._initializer),
+
+     _initializer: $ => seq('=', field('value', $.expression))
+    }]
+ *)
 and enum_declaration =
   { const : bool
   ; name : identifier
@@ -756,26 +895,36 @@ and enum_assignment =
   ; default : expression
   }
 
-(* Import Alias
+(** Import Alias
 
-   TypeScript:
+  Import aliases introduce a new name for a (possibly qualified)
+  namespace or property.
 
-   import_alias: $ => seq(
-     'import',
-     $.identifier,
-     '=',
-     choice($.identifier, $.nested_identifier),
-     $._semicolon),
+  Example:
+  {@[
+   import n = p.q.r.s;
+  ]}
 
-   JavaScript:
-
-   nested_identifier: $ => prec('member', seq(
-     field('object',
-       choice($.identifier,
-              alias($.nested_identifier, $.member_expression))),
-     '.',
-     field('property', alias($.identifier, $.property_identifier))))
-*)
+  The related grammar rules are given by:
+  + TypeScript
+    {@js[
+     import_alias: $ => seq(
+       'import',
+       $.identifier,
+       '=',
+       choice($.identifier, $.nested_identifier),
+       $._semicolon),
+    ]}
+  + JavaScript
+    {@js[
+     nested_identifier: $ => prec('member', seq(
+       field('object',
+         choice($.identifier,
+                alias($.nested_identifier, $.member_expression))),
+       '.',
+       field('property', alias($.identifier, $.property_identifier))))
+    ]}
+ *)
 and import_alias =
   { alias : identifier
   ; aliased : aliased
@@ -787,35 +936,49 @@ and aliased =
 
 and nested_identifier = identifier Nonempty_list.t * identifier (* property identifier *)
 
-(* Interface Declaration
+(** Interface Declaration
 
-   TypeScript:
+  An interface is similar to an abstract class, except it cannot
+  contain any implementation: it's more akin to a type. Interfaces can
+  be generic and extend other interfaces (multiple inheritance).
 
-   interface_declaration: $ => seq(
-     'interface',
-     field('name', $._type_identifier),
-     field('type_parameters', optional($.type_parameters)),
-     optional($.extends_type_clause),
-     field('body', alias($.object_type, $.interface_body))),
+  Example:
+  {@js[
+   interface SquareConfig {
+     color?: string;
+    width?: number;
+   }
+  ]}
 
-   extends_type_clause: $ => seq(
-     'extends',
-     commaSep1(field('type', choice(
-       $._type_identifier,
-       $.nested_type_identifier,
-       $.generic_type)))),
+  The related grammar rules are given by:
+  + TypeScript
+    {@js[
+     interface_declaration: $ => seq(
+       'interface',
+       field('name', $._type_identifier),
+       field('type_parameters', optional($.type_parameters)),
+       optional($.extends_type_clause),
+       field('body', alias($.object_type, $.interface_body))),
 
-   nested_type_identifier: $ => prec('member', seq(
-     field('module', choice($.identifier, $.nested_identifier)),
-     '.',
-     field('name', $._type_identifier))),
+     extends_type_clause: $ => seq(
+       'extends',
+       commaSep1(field('type', choice(
+         $._type_identifier,
+         $.nested_type_identifier,
+         $.generic_type)))),
 
-   generic_type: $ => prec('call', seq(
-     field('name', choice(
-       $._type_identifier,
-       $.nested_type_identifier)),
-     field('type_arguments', $.type_arguments)))
-*)
+     nested_type_identifier: $ => prec('member', seq(
+       field('module', choice($.identifier, $.nested_identifier)),
+       '.',
+       field('name', $._type_identifier))),
+
+     generic_type: $ => prec('call', seq(
+       field('name', choice(
+         $._type_identifier,
+         $.nested_type_identifier)),
+       field('type_arguments', $.type_arguments)))
+    }]
+ *)
 and interface_declaration =
   { name : type_identifier
   ; type_parameters : type_parameter list
@@ -835,16 +998,29 @@ and generic_name =
   | Generic_type of type_identifier
   | Generic_nested of nested_type_identifier
 
-(* Internal Module
+(** Internal Module
 
-   TypeScript:
+  Internal modules, or namespaces, create a scope made of type and
+  value declarations.
 
-   internal_module: $ => seq('namespace', $._module),
+  Example:
+  {@js[
+   namespace Validation {
+     export interface StringValidator {
+       isAcceptable(s: string): boolean;
+   }
+  ]}
 
-   _module: $ => prec.right(seq(
-     field('name', choice($.string, $.identifier, $.nested_identifier)),
-     field('body', optional($.statement_block))))
-*)
+  The related grammar rules are given by:
+  + TypeScript
+    {@js[
+     internal_module: $ => seq('namespace', $._module),
+
+     _module: $ => prec.right(seq(
+       field('name', choice($.string, $.identifier, $.nested_identifier)),
+       field('body', optional($.statement_block))))
+    ]}
+ *)
 and internal_module = module_
 and module_ = module_name * statement_block
 
@@ -853,49 +1029,61 @@ and module_name =
   | Module_ident of identifier
   | Module_nested of nested_identifier
 
-(*  Type Alias Declaration
+(**  Type Alias Declaration
 
-    TypeScript:
+  Type aliases introduce in the current scope a new type name that
+  denotes a type expression.
 
-    type_alias_declaration: $ => seq(
-      'type',
-      field('name', $._type_identifier),
-      field('type_parameters', optional($.type_parameters)),
-      '=',
-      field('value', $.type),
-      $._semicolon)
-*)
+  Example:
+  {@js[
+   type t = number;
+  ]}
+
+  The related grammar rules are given by:
+  + TypeScript
+    {@js[
+     type_alias_declaration: $ => seq(
+       'type',
+       field('name', $._type_identifier),
+       field('type_parameters', optional($.type_parameters)),
+       '=',
+       field('value', $.type),
+       $._semicolon)
+    ]}
+ *)
 and type_alias_declaration =
   { name : type_identifier
   ; type_parameters : type_parameter list
   ; value : type_
   }
 
-(* EXPRESSIONS *)
+(** EXPRESSIONS
 
-(* JavaScript: // Simplified here
-
-   expression: $ => choice(
-     $.primary_expression,
-     $.glimmer_template,
-     $.assignment_expression,
-     $.augmented_assignment_expression,
-     $.await_expression,
-     $.unary_expression,
-     $.binary_expression,
-     $.ternary_expression,
-     $.update_expression,
-     $.new_expression,
-     $.yield_expression)
-
-   TypeScript: // Simplified here
-
-   expression: ($, previous) => {
-     $.as_expression,
-     $.satisfies_expression,
-     $.instantiation_expression,
-     $.internal_module,
-     $.type_assertion}
+  The related grammar rules are given by:
+  + JavaScript
+    {@js[
+     expression: $ => choice( // Simplified here
+       $.primary_expression,
+       $.glimmer_template,
+       $.assignment_expression,
+       $.augmented_assignment_expression,
+       $.await_expression,
+       $.unary_expression,
+       $.binary_expression,
+       $.ternary_expression,
+       $.update_expression,
+       $.new_expression,
+       $.yield_expression)
+    ]}
+  + TypeScript
+    {@js[
+     expression: ($, previous) => { // Simplified here
+       $.as_expression,
+       $.satisfies_expression,
+       $.instantiation_expression,
+       $.internal_module,
+       $.type_assertion}
+    ]}
 *)
 and expression =
   | E_as_expression of as_expression
@@ -904,7 +1092,6 @@ and expression =
   | E_await_expression of await_expression
   | E_binary_expression of binary_expression
   (*| E_glimmer_template of glimmer_template*)
-  (* TODO? *)
   | E_instantiation_expression of instantiation_expression
   | E_internal_module of internal_module
   | E_new_expression of new_expression
@@ -916,32 +1103,52 @@ and expression =
   | E_update_expression of update_expression
   | E_yield_expression of yield_expression
 
-(* As-expressions
+(** As-expressions
 
-   TypeScript:
+  As-expressions are expressions whose type is explicitly constrained
+  by an annotation (that is, a so-called type assertion).
 
-   as_expression: $ => prec.left('binary', seq(
-     $.expression, 'as', choice('const', $.type)))
-*)
+  Example:
+  {@js[
+   let a = '123';
+   let n = a as number;
+  ]}
+
+  The related grammar rules are given by:
+  + TypeScript
+    {@js[
+     as_expression: $ => prec.left('binary', seq(
+       $.expression, 'as', choice('const', $.type)))
+    ]}
+ *)
 and as_expression = expression * as_what
 
 and as_what =
   | As_type of type_
   | As_const
 
-(* Assignment Expression
+(** Assignment Expression
 
-   TypeScript:
+  Assignments to mutable variables.
 
-   assignment_expression: $ => prec.right('assign', seq(
-     optional('using'),
-     field('left', choice($.parenthesized_expression, $._lhs_expression)),
-     '=',
-     field('right', $.expression))),
+  Example:
+  {@js[
+   x = 5;
+  ]}
 
-   JavaScript:
-
-   parenthesized_expression: $ => seq('(', $._expressions, ')')
+  The related grammar rules are given by:
+  + TypeScript
+    {@js[
+     assignment_expression: $ => prec.right('assign', seq(
+       optional('using'),
+       field('left', choice($.parenthesized_expression, $._lhs_expression)),
+       '=',
+       field('right', $.expression)))
+    ]}
+  + JavaScript
+    {@js[
+     parenthesized_expression: $ => seq('(', $._expressions, ')')
+    ]}
 *)
 and assignment_expression =
   { using : bool
@@ -953,16 +1160,27 @@ and assignment_lhs =
   | Assign_lhs_parens of expression
   | Assign_lhs of lhs_expression
 
-(* Member Expression
+(** Member Expression
 
-   JavaScript:
+  A member expression is the selection of a property in an object.
 
-   member_expression: $ => prec('member', seq(
-     field('object', choice($.expression, $.primary_expression, $.import)),
-     choice('.', field('optional_chain', $.optional_chain)),
-     field('property', choice(
-       $.private_property_identifier,
-       alias($.identifier, $.property_identifier))))),
+  Example:
+  {@js[
+   x.m
+  ]}
+
+  The related grammar rules are given by:
+  + JavaScript
+    {@js[
+     member_expression: $ => prec('member', seq(
+       field('object', choice($.expression, $.primary_expression, $.import)),
+       choice('.', field('optional_chain', $.optional_chain)),
+       field('property', choice(
+         $.private_property_identifier,
+         alias($.identifier, $.property_identifier))))),
+
+     optional_chain: _ => '?.'
+    ]}
 *)
 and member_expression =
   { object_ : object_member
@@ -983,20 +1201,29 @@ and property_ident =
   | Private_property_identifier of hash_name
   | Property_identifier of identifier
 
-(* Subscript Expression
+(** Subscript Expression
 
-   JavaScript:
+  Projecting arrays.
 
-   subscript_expression: $ => prec.right('member', seq(
-     field('object', choice($.expression, $.primary_expression)),
-     optional(field('optional_chain', $.optional_chain)),
-     '[', field('index', $._expressions), ']')),
+  Example:
+  {@js[
+  f(x).[n]
+  ]}
 
-   optional_chain: _ => '?.',
+  The related grammar rules are given by:
+  + JavaScript
+    {@js[
+     subscript_expression: $ => prec.right('member', seq(
+       field('object', choice($.expression, $.primary_expression)),
+       optional(field('optional_chain', $.optional_chain)),
+       '[', field('index', $._expressions), ']')),
 
-   _expressions: $ => choice($.expression, $.sequence_expression),
+     optional_chain: _ => '?.',
 
-   sequence_expression: $ => prec.right(commaSep1($.expression)),
+     _expressions: $ => choice($.expression, $.sequence_expression),
+
+     sequence_expression: $ => prec.right(commaSep1($.expression))
+    ]}
 *)
 and subscript_expression =
   { object_ : subscripted
@@ -1016,28 +1243,38 @@ and expressions =
 
 and sequence_expression = expression list
 
-(* Augmented Assignment Expression
+(** Augmented Assignment Expression
 
-   JavaScript:
+  Assignments can be composed with an arithmetic, logical or bitwise
+  operator.
 
-   augmented_assignment_expression: $ => prec.right('assign', seq(
-     field('left', $._augmented_assignment_lhs),
-     field('operator', choice('+=', '-=', '*=', '/=', '%=', '^=', '&=',
-                              '|=', '>>=', '>>>=', '<<=', '**=', '&&=',
-                              '||=', '??=')),
-     field('right', $.expression))),
+  Example:
+  {@js[
+   x += 4;
+  ]}
 
-   _augmented_assignment_lhs: $ => choice(
-     $.member_expression,
-     $.subscript_expression,
-     alias($._reserved_identifier, $.identifier),
-     $.identifier,
-     $.parenthesized_expression)
+  The related grammar rules are given by:
+  + JavaScript
+    {@js[
+     augmented_assignment_expression: $ => prec.right('assign', seq(
+       field('left', $._augmented_assignment_lhs),
+       field('operator', choice('+=', '-=', '*=', '/=', '%=', '^=', '&=',
+                                '|=', '>>=', '>>>=', '<<=', '**=', '&&=',
+                                '||=', '??=')),
+       field('right', $.expression))),
 
-  TypeScript:
-
-  _augmented_assignment_lhs: ($, previous) => choice(previous,
-    $.non_null_expression)
+     _augmented_assignment_lhs: $ => choice(
+       $.member_expression,
+       $.subscript_expression,
+       alias($._reserved_identifier, $.identifier),
+       $.identifier,
+       $.parenthesized_expression)
+    ]}
+  + TypeScript
+    {@js[
+     _augmented_assignment_lhs: ($, previous) => choice(previous,
+       $.non_null_expression)
+    ]}
 *)
 and augmented_assignment_expression =
   { left : augmented_assignment_lhs
@@ -1068,100 +1305,154 @@ and assignment_operator =
   | Logical_or_eq (* ||= *)
   | Non_null_eq (* ??= *)
 
-(* Await-expression
+(** Await-expression
 
-   JavaScript:
+   Expressions introduced by the "await" keyword are promises used
+   only inside asynchronous functions (introduced by the "async"
+   keyword). Their evaluation pauses the embedding async function, but
+   do not block the main thread, so the caller can resume, until the
+   promise is either fulfilled or rejected, and handled by the async
+   function.
 
-   await_expression: $ => prec('unary_void', seq('await', $.expression))
-*)
+   Example:
+   {@js[
+    async function foo(name) {
+      console.log(name, "start");
+      await console.log(name, "middle");
+      console.log(name, "end");
+    }
+
+    foo("First");
+    foo("Second");
+
+    // First start
+    // First middle
+    // Second start
+    // Second middle
+    // First end
+    // Second end
+   ]}
+
+  The related grammar rules are given by::
+  + JavaScript
+    {@js[
+     await_expression: $ => prec('unary_void', seq('await', $.expression))
+    ]}
+ *)
 and await_expression = expression
 
-(* Binary Expression
+(** Binary Expression
 
-   JavaScript:
-
-   binary_expression: $ => choice(
-     ...[['&&', 'logical_and'],
-         ['||', 'logical_or'],
-         ['>>', 'binary_shift'],
-         ['>>>', 'binary_shift'],
-         ['<<', 'binary_shift'],
-         ['&', 'bitwise_and'],
-         ['^', 'bitwise_xor'],
-         ['|', 'bitwise_or'],
-         ['+', 'binary_plus'],
-         ['-', 'binary_plus'],
-         ['*', 'binary_times'],
-         ['/', 'binary_times'],
-         ['%', 'binary_times'],
-         ['**', 'binary_exp', 'right'],
-         ['<', 'binary_relation'],
-         ['<=', 'binary_relation'],
-         ['==', 'binary_equality'],
-         ['===', 'binary_equality'],
-         ['!=', 'binary_equality'],
-         ['!==', 'binary_equality'],
-         ['>=', 'binary_relation'],
-         ['>', 'binary_relation'],
-         ['??', 'ternary'],
-         ['instanceof', 'binary_relation'],
-         ['in', 'binary_relation']
-        ].map ... // Shortened here
+  The related grammar rules are given by:
+  + JavaScript
+   {@js[
+    binary_expression: $ => choice(
+      ...[['&&', 'logical_and'],
+          ['||', 'logical_or'],
+          ['>>', 'binary_shift'],
+          ['>>>', 'binary_shift'],
+          ['<<', 'binary_shift'],
+          ['&', 'bitwise_and'],
+          ['^', 'bitwise_xor'],
+          ['|', 'bitwise_or'],
+          ['+', 'binary_plus'],
+          ['-', 'binary_plus'],
+          ['*', 'binary_times'],
+          ['/', 'binary_times'],
+          ['%', 'binary_times'],
+          ['**', 'binary_exp', 'right'],
+          ['<', 'binary_relation'],
+          ['<=', 'binary_relation'],
+          ['==', 'binary_equality'],
+          ['===', 'binary_equality'],
+          ['!=', 'binary_equality'],
+          ['!==', 'binary_equality'],
+          ['>=', 'binary_relation'],
+          ['>', 'binary_relation'],
+          ['??', 'ternary'],
+          ['instanceof', 'binary_relation'],
+          ['in', 'binary_relation']
+         ].map ... // Shortened here
+   ]}
 *)
 and binary_expression =
-  | Logical_and (* && *)
-  | Logical_or (* || *)
-  | Bit_sr (* >> *)
-  | Bit_usr (* >>> *)
-  | Bit_sl (* << *)
-  | Bit_and (* &  *)
-  | Bit_xor (* ^ *)
-  | Bit_or (* | *)
-  | Add (* + *)
-  | Sub (* - *)
-  | Mult (* * *)
-  | Div (* / *)
-  | Rem (* % *)
-  | Exp (* ** *)
-  | Lt (* < *)
-  | Leq (* <= *)
-  | Equal (* == *)
-  | Strict_eq (* === *)
-  | Neq (* != *)
-  | Strict_neq (* !== *)
-  | Geq (* >= *)
-  | Gt (* > *)
-  | Non_null (* ?? *)
-  | Instance_of (* instanceof *)
-  | In (* in *)
+  | Logical_and (** && *)
+  | Logical_or (** || *)
+  | Bit_sr (** >> *)
+  | Bit_usr (** >>> *)
+  | Bit_sl (** << *)
+  | Bit_and (** &  *)
+  | Bit_xor (** ^ *)
+  | Bit_or (** | *)
+  | Add (** + *)
+  | Sub (** - *)
+  | Mult (** * *)
+  | Div (** / *)
+  | Rem (** % *)
+  | Exp (** ** *)
+  | Lt (** < *)
+  | Leq (** <= *)
+  | Equal (** == *)
+  | Strict_eq (** === *)
+  | Neq (** != *)
+  | Strict_neq (** !== *)
+  | Geq (** >= *)
+  | Gt (** > *)
+  | Non_null (** ?? *)
+  | Instance_of (** instanceof *)
+  | In (** in *)
 
-(* Instantiation Expression
+(** Instantiation Expression
 
-   TypeScript:
+  Instantiation expressions are a way to instantiate the type
+  parameters of a generic function.
 
-   instantiation_expression: $ => prec('instantiation', seq(
-     $.expression,
-     field('type_arguments', $.type_arguments)))
-*)
+  Example:
+  {@js[
+   const generic = <C, A>(c: C, a: A) => {
+     // do something
+     return { c, a }
+   };
+   const specialised = generic<string, number>;
+  ]}
+
+  The related grammar rules are given by:
+  + TypeScript
+   {@js[
+    instantiation_expression: $ => prec('instantiation', seq(
+      $.expression,
+      field('type_arguments', $.type_arguments)))
+   ]}
+ *)
 and instantiation_expression = expression * type_arguments
 
-(* New-expression
+(** New-expression
 
-   TypeScript:
+  New-expressions are simply the instantiation of an object by calling
+  a constructor.
 
-   new_expression: $ => prec.right('new', seq(
-     'new',
-     field('constructor', $.primary_expression),
-     field('type_arguments', optional($.type_arguments)),
-     field('arguments', optional($.arguments))))
+  Example:
+  {@js[
+  const c = new C<number>(4);
+  ]}
 
-   JavaScript:
+  The related grammar rules are given by:
+  + TypeScript
+   {@js[
+    new_expression: $ => prec.right('new', seq(
+      'new',
+      field('constructor', $.primary_expression),
+      field('type_arguments', optional($.type_arguments)),
+      field('arguments', optional($.arguments))))
+   ]}
+  + JavaScript
+   {@js[
+    arguments: $ => seq(
+      '(', commaSep(optional(choice($.expression, $.spread_element))), ')'),
 
-   arguments: $ => seq(
-     '(', commaSep(optional(choice($.expression, $.spread_element))), ')'),
-
-   spread_element: $ => seq('...', $.expression)
-*)
+    spread_element: $ => seq('...', $.expression)
+   ]}
+ *)
 and new_expression =
   { constructor : primary_expression
   ; type_arguments : type_arguments option
@@ -1174,48 +1465,81 @@ and argument =
   | Expression of expression
   | Spread_element of expression
 
-(* Statisfies-expression
+(** Satisfies-expression
 
-   TypeScript:
+  The 'satisfies' binary operator is like an `as` operator: it brings
+  together an expression and a type. The difference is that the former
+  does not change the type of the expression, only checks its
+  compatibility.
 
-   satisfies_expression: $ => prec.left('binary', seq(
-     $.expression, 'satisfies', $.type))
-*)
+  Example:
+  {@js[
+   type Colors = "red" | "green" | "blue";
+   type RGB = [red: number, green: number, blue: number];
+   const palette = {
+     red: [255, 0, 0],
+     green: "#00ff00",
+     blue: [0, 0, 255]
+   } satisfies Record<Colors, string | RGB>;
+   const greenNormalized = palette.green.toUpperCase();
+  ]}
+
+  The related grammar rules are given by:
+  + TypeScript
+   {@js[
+    satisfies_expression: $ => prec.left('binary', seq(
+      $.expression, 'satisfies', $.type))
+   ]}
+ *)
 and satisfies_expression = expression * type_
 
-(* Ternary Expression
+(** Ternary Expression
 
-   JavaScript:
+  The ternary conditional expression (equivalent to if-else as an
+  expression).
 
-   ternary_expression: $ => prec.right('ternary', seq(
-     field('condition', $.expression),
-     alias($._ternary_qmark, '?'),
-     field('consequence', $.expression),
-     ':',
-     field('alternative', $.expression)))
-*)
+  Example:
+  {@js[
+   const positive_logic = true ? 1 : 0;
+  ]}
+
+  The related grammar rules are given by:
+  + JavaScript
+   {@js[
+    ternary_expression: $ => prec.right('ternary', seq(
+      field('condition', $.expression),
+      alias($._ternary_qmark, '?'),
+      field('consequence', $.expression),
+      ':',
+      field('alternative', $.expression)))
+   ]}
+ *)
 and ternary_expression =
   { condition : expression
   ; consequence : expression
   ; alternative : expression
   }
 
-(* Type Assertion
+(** Type Assertion
 
-   TypeScript:
-
-   type_assertion: $ => prec.left('unary', seq(
-     $.type_arguments, $.expression))
+  The related grammar rules are given by:
+  + TypeScript
+   {@js[
+    type_assertion: $ => prec.left('unary', seq(
+      $.type_arguments, $.expression))
+   ]}
 *)
 and type_assertion = type_arguments * expression
 
-(* Unary Expression
+(** Unary Expression
 
-   JavaScript:
-
-   unary_expression: $ => prec.left('unary_void', seq(
-     field('operator', choice('!', '~', '-', '+', 'typeof', 'void', 'delete')),
-     field('argument', $.expression)))
+  The related grammar rules are given by:
+  + JavaScript
+   {@js[
+    unary_expression: $ => prec.left('unary_void', seq(
+      field('operator', choice('!', '~', '-', '+', 'typeof', 'void', 'delete')),
+      field('argument', $.expression)))
+   ]}
 *)
 and unary_expression =
   { operator : unary_operator
@@ -1230,15 +1554,19 @@ and unary_operator =
   | Void
   | Delete
 
-(* Update Expression
+(** Update Expression
 
-   JavaScript:
+  Incrementing or decrementing a variable.
 
-   update_expression: $ => prec.left(choice(
-     seq(field('argument', $.expression),
-         field('operator', choice('++', '--'))),
-     seq(field('operator', choice('++', '--')),
-         field('argument', $.expression))))
+  The related grammar rules are given by:
+  + JavaScript
+   {@js[
+    update_expression: $ => prec.left(choice(
+      seq(field('argument', $.expression),
+          field('operator', choice('++', '--'))),
+      seq(field('operator', choice('++', '--')),
+          field('argument', $.expression))))
+   ]}
 *)
 and update_expression =
   | Update_postfix of update
@@ -1253,53 +1581,68 @@ and incr_decr_operator =
   | Increment
   | Decrement
 
-(* Yield-expression
+(** Yield-expression
 
-   JavaScript:
+  A generator function is a function whose execution can be internally
+  suspended with a 'yield' instruction, and later resumed by the
+  caller (at the suspension point).
 
-   yield_expression: $ => prec.right(seq(
-     'yield',
-     choice(
-       seq('*', $.expression),
-       optional($.expression))))
+  Example:
+  {@js[
+   function* generator(i) {
+     yield i;
+     yield i + 10;
+   }
+  ]}
+
+  The related grammar rules are given by:
+  + JavaScript
+   {@js[
+    yield_expression: $ => prec.right(seq(
+      'yield',
+      choice(seq('*', $.expression),
+             optional($.expression))))
+   ]}
 *)
 and yield_expression =
   | Yield of expression option
   | Yield_iterable of expression
 
-(* Primary Expression
+(** Primary Expression
 
-   JavaScript:
-
-   primary_expression: $ => choice(
-     $.subscript_expression,
-     $.member_expression,
-     $.parenthesized_expression,
-     $._identifier, // identifier + undefined
-     alias($._reserved_identifier, $.identifier),
-     $.this,
-     $.super,
-     $.number,
-     $.string,
-     $.template_string,
-     $.regex,
-     $.true,
-     $.false,
-     $.null,
-     $.object,
-     $.array,
-     $.function_expression,
-     $.arrow_function,
-     $.generator_function,
-     $.class,
-     $.meta_property,
-     $.call_expression)
-
-   TypeScript:
-
-   primary_expression: ($, previous) => choice(
-     previous,
-     $.non_null_expression)
+  The related grammar rules are given by:
+  + JavaScript
+    {@js[
+     primary_expression: $ => choice(
+      $.subscript_expression,
+      $.member_expression,
+      $.parenthesized_expression,
+      $._identifier, // identifier + undefined
+      alias($._reserved_identifier, $.identifier),
+      $.this,
+      $.super,
+      $.number,
+      $.string,
+      $.template_string,
+      $.regex,
+      $.true,
+      $.false,
+      $.null,
+      $.object,
+      $.array,
+      $.function_expression,
+      $.arrow_function,
+      $.generator_function,
+      $.class,
+      $.meta_property,
+      $.call_expression)
+   }]
+  + TypeScript
+   {@js[
+    primary_expression: ($, previous) => choice(
+      previous,
+      $.non_null_expression)
+   ]}
 *)
 and primary_expression =
   | E_array of array
@@ -1326,40 +1669,54 @@ and primary_expression =
   | E_true
   | E_undefined
 
-(* Array Expression
+(** Array Expression
 
-   JavaScript:
+  Example:
+  {@js[
+   x[1,n]
+  ]}
 
-   array: $ => seq(
-     '[', commaSep(optional(choice($.expression, $.spread_element))), ']')
+  The related grammar rules are given by:
+  + JavaScript
+   {@js[
+    array: $ => seq(
+      '[', commaSep(optional(choice($.expression, $.spread_element))), ']')
+   ]}
 *)
 and array = arguments
 
-(* Arrow Function
+(** Arrow Function
 
-   JavaScript:
+  Functional expressions.
 
-   arrow_function: $ => seq(
-     optional('async'),
-     choice(
-       field('parameter', choice(
-         alias($._reserved_identifier, $.identifier),
-         $.identifier,
-       )),
-       $._call_signature,
-     ),
-     '=>',
-     field('body', choice($.expression, $.statement_block)))
+  Example:
+  {@js[
+   x => x + 1
+  ]}
 
-   TypeScript:
-
-   _call_signature: $ => seq(
-     field('type_parameters', optional($.type_parameters)),
-     field('parameters', $.formal_parameters),
-     field('return_type', optional(
-       choice($.type_annotation,
-              $.asserts_annotation,
-              $.type_predicate_annotation))))
+  The related grammar rules are given by:
+  + JavaScript:
+   {@js[
+    arrow_function: $ => seq(
+      optional('async'),
+      choice(
+        field('parameter', choice(
+          alias($._reserved_identifier, $.identifier),
+          $.identifier,)),
+        $._call_signature),
+      '=>',
+      field('body', choice($.expression, $.statement_block)))
+   ]}
+  + TypeScript
+   {@js[
+    _call_signature: $ => seq(
+      field('type_parameters', optional($.type_parameters)),
+      field('parameters', $.formal_parameters),
+      field('return_type', optional(
+        choice($.type_annotation,
+               $.asserts_annotation,
+               $.type_predicate_annotation))))
+   ]}
 *)
 and arrow_function =
   { async : bool
@@ -1375,20 +1732,22 @@ and function_body =
   | Expression of expression
   | Statement_block of statement_block
 
-(* Call Expression
+(** Call Expression
 
-   TypeScript
-
-   call_expression: $ => choice(
-     prec('call', seq(
-       field('function', choice($.expression, $.import)),
-       field('type_arguments', optional($.type_arguments)),
-       field('arguments', choice($.arguments, $.template_string)))),
-     prec('member', seq(
-       field('function', $.primary_expression),
-       '?.',
-       field('type_arguments', optional($.type_arguments)),
-       field('arguments', $.arguments))))
+  The related grammar rules are given by:
+  + TypeScript
+   {@js[
+    call_expression: $ => choice(
+      prec('call', seq(
+        field('function', choice($.expression, $.import)),
+        field('type_arguments', optional($.type_arguments)),
+        field('arguments', choice($.arguments, $.template_string)))),
+      prec('member', seq(
+        field('function', $.primary_expression),
+        '?.',
+        field('type_arguments', optional($.type_arguments)),
+        field('arguments', $.arguments))))
+   ]}
 *)
 and call_expression =
   | Call of call
@@ -1414,16 +1773,18 @@ and fun_call =
   | Fun_call of expression
   | Import
 
-(* Function Expression
+(** Function Expression
 
-   JavaScript:
-
-   function_expression: $ => prec('literal', seq(
-     optional('async'),
-     'function',
-     field('name', optional($.identifier)),
-     $._call_signature,
-     field('body', $.statement_block)))
+  The related grammar rules are given by:
+  + JavaScript
+   {@js[
+    function_expression: $ => prec('literal', seq(
+      optional('async'),
+      'function',
+      field('name', optional($.identifier)),
+      $._call_signature,
+      field('body', $.statement_block)))
+   ]}
 *)
 and function_expression =
   { async : bool
@@ -1432,51 +1793,65 @@ and function_expression =
   ; body : statement_block
   }
 
-(* Generator Function
+(** Generator Function
 
-   TypeScript:
+  A generator function is a function whose execution can be internally
+  suspended with a 'yield' instruction, and later resumed by the
+  caller (at the suspension point). The difference with a declaration
+  is that the generator can be anonymous, as it is an expression.
 
-   generator_function: $ => prec('literal', seq(
-     optional('async'),
-     'function',
-     '*',
-     field('name', optional($.identifier)),
-     $._call_signature,
-     field('body', $.statement_block)))
-*)
+  The related grammar rules are given by:
+  + TypeScript
+    {@js[
+     generator_function: $ => prec('literal', seq(
+       optional('async'), 'function', '*',
+       field('name', optional($.identifier)),
+       $._call_signature,
+       field('body', $.statement_block)))
+    ]}
+ *)
 and generator_function = function_expression
 
-(* Metaproperty
+(** Metaproperty
 
-   JavaScript:
-
-   meta_property: _ => choice(
-     seq('new', '.', 'target'),
-     seq('import', '.', 'meta'))
+  The related grammar rules are given by:
+  + JavaScript
+   {@js[
+    meta_property: _ => choice(
+      seq('new', '.', 'target'),
+      seq('import', '.', 'meta'))
+   ]}
 *)
 and meta_property =
   | Meta_new
   | Meta_import
 
-(* Object (expression)
+(** Object (expression)
 
-   JavaScript:
+  Example:
+  {@js[
+   {x: 5}
+  ]}
 
-   object: $ => prec('object', seq(
-     '{',
-     commaSep(optional(choice(
-       $.pair,
-       $.spread_element,
-       $.method_definition,
-       alias(
-         choice($.identifier, $._reserved_identifier),
-         $.shorthand_property_identifier)))),
-     '}')),
+  The related grammar rules are given by:
+  + JavaScript
+   {@js[
+    object: $ => prec('object', seq(
+      '{',
+      commaSep(optional(choice(
+        $.pair,
+        $.spread_element,
+        $.method_definition,
+        alias(
+          choice($.identifier, $._reserved_identifier),
+          $.shorthand_property_identifier)))),
+      '}')),
 
-   pair: $ => seq(
-     field('key', $._property_name),
-     ':',
-     field('value', $.expression))
+    pair: $ => seq(
+      field('key', $._property_name),
+      ':',
+      field('value', $.expression))
+   ]}
 *)
 and object_ = object_entry list
 
@@ -1491,51 +1866,57 @@ and pair =
   ; value : expression
   }
 
-(* Labeled Statement
+(** Labeled Statement
 
-   JavaScript:
-
-   labeled_statement: $ => prec.dynamic(-1, seq(
-     field('label', alias(choice($.identifier,
-                                 $._reserved_identifier),
-                          $.statement_identifier)),
-     ':',
-     field('body', $.statement)))
+  The related grammar rule is given by:
+  + JavaScript
+   {@js[
+    labeled_statement: $ => prec.dynamic(-1, seq(
+      field('label', alias(choice($.identifier,
+                                  $._reserved_identifier),
+                           $.statement_identifier)),
+      ':',
+      field('body', $.statement)))
+   ]}
 *)
 and labeled_statement =
   { label : identifier (* Including reserved identifiers *)
   ; body : statement
   }
 
-(* Return Statement
+(** Return Statement
 
-   JavaScript:
-
-   return_statement: $ =>
-     seq('return', optional($._expressions), $._semicolon)
+  The related grammar rule is given by:
+  + JavaScript
+   {@js[
+    return_statement: $ =>
+      seq('return', optional($._expressions), $._semicolon)
+   ]}
 *)
 and return_statement = expressions
 
-(* Switch Statement
+(** Switch Statement
 
-   JavaScript:
+  The related grammar rules are given by:
+  + JavaScript
+   {@js[
+    switch_statement: $ => seq(
+      'switch',
+      field('value', $.parenthesized_expression),
+      field('body', $.switch_body)),
 
-   switch_statement: $ => seq(
-     'switch',
-     field('value', $.parenthesized_expression),
-     field('body', $.switch_body)),
+    switch_body: $ =>
+      seq('{', repeat(choice($.switch_case, $.switch_default)), '}'),
 
-   switch_body: $ =>
-     seq('{', repeat(choice($.switch_case, $.switch_default)), '}'),
+    switch_case: $ => seq(
+      'case',
+      field('value', $._expressions),
+      ':',
+      field('body', repeat($.statement))),
 
-   switch_case: $ => seq(
-     'case',
-     field('value', $._expressions),
-     ':',
-     field('body', repeat($.statement))),
-
-   switch_default: $ =>
-     seq('default', ':', field('body', repeat($.statement)))
+    switch_default: $ =>
+      seq('default', ':', field('body', repeat($.statement)))
+   ]}
 *)
 and switch_statement =
   { value : expression
@@ -1555,49 +1936,55 @@ and switch_case =
 
 and switch_default = statement list
 
-(* Throw Statement
+(** Throw Statement
 
-   JavaScript:
-
-   throw_statement: $ => seq('throw', $._expressions, $._semicolon)
+  The related grammar rule is given by:
+  + JavaScript
+    {@js[
+     throw_statement: $ => seq('throw', $._expressions, $._semicolon)
+    ]}
 *)
 and throw_statement = expressions
 
-(* While Statement
+(** While Statement
 
-   JavaScript:
-
-   while_statement: $ => seq(
-     'while',
-     field('condition', $.parenthesized_expression),
-     field('body', $.statement))
+  The related grammar rule is given by:
+  + JavaScript
+    {@js[
+     while_statement: $ => seq(
+       'while',
+       field('condition', $.parenthesized_expression),
+       field('body', $.statement))
+    ]}
 *)
 and while_statement =
   { condition : expression
   ; body : statement
   }
 
-(* With-statement
+(** With-statement
 
-   JavaScript:
-
-   with_statement: $ => seq(
-     'with',
-     field('object', $.parenthesized_expression),
-     field('body', $.statement))
+  The related grammar rule is given by:
+  + JavaScript
+    {@js[
+     with_statement: $ => seq(
+       'with',
+       field('object', $.parenthesized_expression),
+       field('body', $.statement))
+    ]}
 *)
 and with_statement =
   { object_ : expression
   ; body : statement
   }
 
-(* PATTERNS *)
+(** PATTERNS
 
-(* Pattern
-
-   JavaScript:
-
-   pattern: $ => prec.dynamic(-1, choice($._lhs_expression, $.rest_pattern)),
+  The related grammar rule is given by:
+  + JavaScript
+    {@js[
+     pattern: $ => prec.dynamic(-1, choice($._lhs_expression, $.rest_pattern))
+    ]}
 *)
 and pattern =
   | P_member_expression of member_expression
@@ -1609,22 +1996,22 @@ and pattern =
   | P_non_null_expression of expression
   | P_rest_pattern of rest_pattern (* [rest_pattern] *)
 
-(* TYPES *)
+(** TYPES
 
-(* Type
-
-   TypeScript:
-
-   type: $ => choice(
-     $.primary_type,
-     $.function_type,
-     $.readonly_type,
-     $.constructor_type,
-     $.infer_type,
-     prec(-1, alias($._type_query_member_expression_in_type_annotation,
-                    $.member_expression)),
-     prec(-1, alias($._type_query_call_expression_in_type_annotation,
-                    $.call_expression)))
+  The related grammar rule is given by:
+  + TypeScript
+    {@js[
+     type: $ => choice(
+       $.primary_type,
+       $.function_type,
+       $.readonly_type,
+       $.constructor_type,
+       $.infer_type,
+       prec(-1, alias($._type_query_member_expression_in_type_annotation,
+                      $.member_expression)),
+       prec(-1, alias($._type_query_call_expression_in_type_annotation,
+                      $.call_expression)))
+    ]}
 *)
 and type_ =
   | T_primary_type of primary_type
@@ -1635,35 +2022,37 @@ and type_ =
   | T_member_expression of member_expression
   | T_call_expression of call_expression
 
-(* Primary Type
+(** Primary Type
 
-   TypeScript:
+  The related grammar rule is given by:
+  + TypeScript
+    {@js[
+     primary_type: $ => choice(
+       $.parenthesized_type,
+       $.predefined_type,
+       $._type_identifier,
+       $.nested_type_identifier,
+       $.generic_type,
+       $.object_type,
+       $.array_type,
+       $.tuple_type,
+       $.flow_maybe_type,
+       $.type_query,
+       $.index_type_query,
+       alias($.this, $.this_type),
+       $.existential_type,
+       $.literal_type,
+       $.lookup_type,
+       $.conditional_type,
+       $.template_literal_type,
+       $.intersection_type,
+       $.union_type,
+       'const'),
 
-   primary_type: $ => choice(
-     $.parenthesized_type,
-     $.predefined_type,
-     $._type_identifier,
-     $.nested_type_identifier,
-     $.generic_type,
-     $.object_type,
-     $.array_type,
-     $.tuple_type,
-     $.flow_maybe_type,
-     $.type_query,
-     $.index_type_query,
-     alias($.this, $.this_type),
-     $.existential_type,
-     $.literal_type,
-     $.lookup_type,
-     $.conditional_type,
-     $.template_literal_type,
-     $.intersection_type,
-     $.union_type,
-     'const'),
+     _type_identifier: $ => alias($.identifier, $.type_identifier),
 
-   _type_identifier: $ => alias($.identifier, $.type_identifier),
-
-   existential_type: _ => '*'
+     existential_type: _ => '*'
+    ]}
 *)
 and primary_type =
   | T_parenthesized_type of type_
@@ -1687,26 +2076,45 @@ and primary_type =
   | T_union_type of union_type
   | T_const
 
-(* Array Type
+(** Array Type
 
-   TypeScript:
-
-   array_type: $ => seq($.primary_type, '[', ']'),
+  The related grammar rule is given by:
+  + TypeScript
+    {@js[
+     array_type: $ => seq($.primary_type, '[', ']')
+    ]}
 *)
 and array_type = primary_type
 
-(* Conditional Type
+(** Conditional Type
 
-   TypeScript:
+    Conditional types are akin to the ternary conditional statements on
+    values. They are a form of test on a type, based on inheritance.
 
-   conditional_type: $ => prec.right(seq(
-     field('left', $.type),
-     'extends',
-     field('right', $.type),
-     '?',
-     field('consequence', $.type),
-     ':',
-     field('alternative', $.type)))
+    Example:
+    {@js[
+     interface Animal {
+       live(): void;
+     }
+     interface Dog extends Animal {
+       woof(): void;
+     }
+     type Example1 = Dog extends Animal ? number : string;
+     // type Example1 = number
+    ]}
+
+    The related grammar rule is given by:
+    + TypeScript
+    {@js[
+     conditional_type: $ => prec.right(seq(
+       field('left', $.type),
+       'extends',
+       field('right', $.type),
+       '?',
+       field('consequence', $.type),
+       ':',
+       field('alternative', $.type)))
+    ]}
 *)
 and conditional_type =
   { left : type_
@@ -1715,49 +2123,53 @@ and conditional_type =
   ; alternative : type_
   }
 
-(* Intersection Type
+(** Intersection Type
 
-   TypeScript:
-
-   intersection_type: $ => prec.left(seq(optional($.type), '&', $.type))
+  The related grammar rule is given by:
+  + TypeScript
+    {@js[
+     intersection_type: $ => prec.left(seq(optional($.type), '&', $.type))
+    ]}
 *)
 and intersection_type = type_ option * type_ (* [type_ list]? *)
 
-(* Literal Type
+(** Literal Type
 
-   TypeScript:
+  The related grammar rules are given by:
+  + TypeScript
+    {@js[
+     literal_type: $ => choice(
+       alias($._number, $.unary_expression),
+       $.number,
+       $.string,
+       $.true,
+       $.false,
+       $.null,
+       $.undefined),
 
-   literal_type: $ => choice(
-     alias($._number, $.unary_expression),
-     $.number,
-     $.string,
-     $.true,
-     $.false,
-     $.null,
-     $.undefined),
+     _number: $ => prec.left(1, seq(
+       field('operator', choice('-', '+')),
+       field('argument', $.number)))
+    ]}
+  + JavaScript
+    {@js[
+     number: _ => {
+       ...
+       const bigintLiteral =
+         seq(choice(hexLiteral,
+                    binaryLiteral,
+                    octalLiteral,
+                    decimalDigits),
+             'n'),
 
-   _number: $ => prec.left(1, seq(
-     field('operator', choice('-', '+')),
-     field('argument', $.number)))
-
-   JavaScript:
-
-   number: _ => {
-     ...
-     const bigintLiteral =
-       seq(choice(hexLiteral,
-                  binaryLiteral,
-                  octalLiteral,
-                  decimalDigits),
-           'n');
-
-     return token(choice(
-        hexLiteral,       // 0x12 0X12
-        decimalLiteral,   // 12.5 10E2 .5 13
-        binaryLiteral,    // 0b01 0B01
-        octalLiteral,     // 0o12 0O12
-        bigintLiteral))   // 12n 0x12n
-   },
+       return token(choice(
+         hexLiteral,       // 0x12 0X12
+         decimalLiteral,   // 12.5 10E2 .5 13
+         binaryLiteral,    // 0b01 0B01
+         octalLiteral,     // 0o12 0O12
+         bigintLiteral))   // 12n 0x12n
+     }
+    ]}
 *)
 and literal_type =
   | T_unary_type of unary_type
@@ -1780,48 +2192,52 @@ and number =
   | Oct_literal of oct_literal
   | Bigint_literal of bigint_literal
 
-(* Lookup Type
+(** Lookup Type
 
-   TypeScript:
-
-   lookup_type: $ => seq($.primary_type, '[', $.type, ']')
+  The related grammar rule is given by:
+  + TypeScript
+    {@js[
+     lookup_type: $ => seq($.primary_type, '[', $.type, ']')
+    ]}
 *)
 and lookup_type = primary_type * type_
 
-(* Object type
+(** Object type
 
-   TypeScript:
+  The related grammar rules are given by:
+  + TypeScript
+    {@js[
+     object_type: $ => seq(
+       choice('{', '{|'),             // {| from Flow!
+       optional(seq(
+         optional(choice(',', ';')),
+         sepBy1(
+           choice(',', $._semicolon),
+           choice($.export_statement,
+                  $.property_signature,
+                  $.call_signature,
+                  $.construct_signature,
+                  $.index_signature,
+                  $.method_signature)),
+         optional(choice(','3, $._semicolon)))),
+       choice('}', '|}')),            // |} from Flow!
 
-   object_type: $ => seq(
-     choice('{', '{|'),             // {| from Flow!
-     optional(seq(
-       optional(choice(',', ';')),
-       sepBy1(
-         choice(',', $._semicolon),
-         choice($.export_statement,
-                $.property_signature,
-                $.call_signature,
-                $.construct_signature,
-                $.index_signature,
-                $.method_signature)),
-       optional(choice(','3, $._semicolon)))),
-     choice('}', '|}')),            // |} from Flow!
+     property_signature: $ => seq(
+       optional($.accessibility_modifier),
+       optional('static'),
+       optional($.override_modifier),
+       optional('readonly'),
+       field('name', $._property_name),
+       optional('?'),
+       field('type', optional($.type_annotation))),
 
-   property_signature: $ => seq(
-     optional($.accessibility_modifier),
-     optional('static'),
-     optional($.override_modifier),
-     optional('readonly'),
-     field('name', $._property_name),
-     optional('?'),
-     field('type', optional($.type_annotation))),
-
-   construct_signature: $ => seq(
-     optional('abstract'),
-     'new',
-     field('type_parameters', optional($.type_parameters)),
-     field('parameters', $.formal_parameters),
-     field('type', optional($.type_annotation))),
+     construct_signature: $ => seq(
+       optional('abstract'),
+       'new',
+       field('type_parameters', optional($.type_parameters)),
+       field('parameters', $.formal_parameters),
+       field('type', optional($.type_annotation)))
+    ]}
 *)
 and object_type = member_type list
 
@@ -1848,22 +2264,24 @@ and construct_signature =
   ; type_ : type_annotation option
   }
 
-(* Predefined Type
+(** Predefined Type
 
-   TypeScript:
-
-   predefined_type: _ => choice(
-     'any',
-     'number',
-     'boolean',
-     'string',
-     'symbol',
-     alias(seq('unique', 'symbol'), 'unique symbol'),
-     'void',
-     'unknown',
-     'string', // Repeated!
-     'never',
-     'object')
+  The related grammar rule is given by:
+  + TypeScript
+    {@js[
+     predefined_type: _ => choice(
+       'any',
+       'number',
+       'boolean',
+       'string',
+       'symbol',
+       alias(seq('unique', 'symbol'), 'unique symbol'),
+       'void',
+       'unknown',
+       'string', // Repeated!
+       'never',
+       'object')
+    ]}
 *)
 and predefined_type =
   | T_any
@@ -1876,20 +2294,22 @@ and predefined_type =
   | T_never
   | T_object
 
-(* Template Literal Type
+(** Template Literal Type
 
-   TypeScript:
+  The related grammar rules are given by:
+  + TypeScript
+    {@js[
+     template_literal_type: $ => seq(
+       '`',
+       repeat(choice(
+         alias($._template_chars, $.string_fragment),
+         $.template_type)),
+       '`'),
 
-   template_literal_type: $ => seq(
-     '`',
-     repeat(choice(
-       alias($._template_chars, $.string_fragment),
-       $.template_type)),
-     '`'),
+     // _template_chars???
 
-   // _template_chars???
-
-   template_type: $ => seq('${', choice($.primary_type, $.infer_type), '}'),
+     template_type: $ => seq('${', choice($.primary_type, $.infer_type), '}')
+    ]}
 *)
 and template_literal_type = template_type list (* _template_chars? *)
 
@@ -1897,32 +2317,34 @@ and template_type =
   | Template_primary_type of primary_type
   | Template_infer_type of infer_type
 
-(* Tuple Type
+(** Tuple Type
 
-   TypeScript:
+  The related grammar rules are given by:
+  + TypeScript
+    {@js[
+     tuple_type: $ => seq(
+       '[', commaSep($._tuple_type_member), optional(','), ']'),
 
-   tuple_type: $ => seq(
-     '[', commaSep($._tuple_type_member), optional(','), ']'),
+     _tuple_type_member: $ => choice(
+       alias($.tuple_parameter, $.required_parameter),
+       alias($.optional_tuple_parameter, $.optional_parameter),
+       $.optional_type,
+       $.rest_type,
+       $.type),
 
-   _tuple_type_member: $ => choice(
-     alias($.tuple_parameter, $.required_parameter),
-     alias($.optional_tuple_parameter, $.optional_parameter),
-     $.optional_type,
-     $.rest_type,
-     $.type),
+     tuple_parameter: $ => seq(
+       field('name', choice($.identifier, $.rest_pattern)),
+       field('type', $.type_annotation)),
 
-   tuple_parameter: $ => seq(
-     field('name', choice($.identifier, $.rest_pattern)),
-     field('type', $.type_annotation)),
+     optional_tuple_parameter: $ => seq(
+       field('name', $.identifier),
+       '?',
+       field('type', $.type_annotation)),
 
-   optional_tuple_parameter: $ => seq(
-     field('name', $.identifier),
-     '?',
-     field('type', $.type_annotation)),
+     optional_type: $ => seq($.type, '?'),
 
-   optional_type: $ => seq($.type, '?'),
-
-   rest_type: $ => seq('...', $.type)
+     rest_type: $ => seq('...', $.type)
+    ]}
 *)
 and tuple_type = tuple_type_member list
 
@@ -1941,20 +2363,21 @@ and tuple_parameter_name =
 
 and optional_tuple_parameter = identifier * type_annotation
 
-(* Type Query
+(** Type Query
 
-   TypeScript:
-
-   type_query: $ => prec.right(seq(
-     'typeof',
-     choice(
-       alias($._type_query_subscript_expression, $.subscript_expression),
-       alias($._type_query_member_expression, $.member_expression),
-       alias($._type_query_call_expression, $.call_expression),
-       alias($._type_query_instantiation_expression,
-             $.instantiation_expression),
-       $.identifier,
-       $.this)))
+  + TypeScript:
+    {@js[
+     type_query: $ => prec.right(seq(
+       'typeof',
+       choice(
+         alias($._type_query_subscript_expression, $.subscript_expression),
+         alias($._type_query_member_expression, $.member_expression),
+         alias($._type_query_call_expression, $.call_expression),
+         alias($._type_query_instantiation_expression,
+               $.instantiation_expression),
+         $.identifier,
+         $.this)))
+    ]}
 *)
 and type_query =
   | Typeof_subscript_expression of subscript_expression
@@ -1964,26 +2387,40 @@ and type_query =
   | Typeof_identifier of identifier
   | Typeof_this
 
-(* Union Type
+(** Union Type
 
-   TypeScript:
+  Example:
+  {@js[
+   type t = A | B;
+  ]}
 
-   union_type: $ => prec.left(seq(optional($.type), '|', $.type))
+  The related grammar rule is given by:
+  + TypeScript
+    {@js[
+     union_type: $ => prec.left(seq(optional($.type), '|', $.type))
+    ]}
 *)
 and union_type = type_ option * type_ (* [type_ list]? *)
 
-(* Function Type
+(** Function Type
 
-   TypeScript:
+  Example:
+  {@js[
+   type t = <T>(x: T) => T;
+  ]}
 
-   function_type: $ => prec.left(seq(
-     field('type_parameters', optional($.type_parameters)),
-     field('parameters', $.formal_parameters),
-     '=>',
-     field('return_type', choice($.type, $.asserts, $.type_predicate)))),
+  The related grammar rules are given by:
+  + TypeScript
+    {@js[
+     function_type: $ => prec.left(seq(
+       field('type_parameters', optional($.type_parameters)),
+       field('parameters', $.formal_parameters),
+       '=>',
+       field('return_type', choice($.type, $.asserts, $.type_predicate)))),
 
-   asserts: $ => seq(
-     'asserts', choice($.type_predicate, $.identifier, $.this))
+     asserts: $ => seq(
+       'asserts', choice($.type_predicate, $.identifier, $.this))
+    ]}
 *)
 and function_type =
   { type_parameters : type_parameter option
@@ -2001,25 +2438,36 @@ and asserts =
   | Assert_type of identifier
   | Assert_this
 
-(* Readonly Type
+(** Readonly Type
 
-   TypeScript:
-
-   readonly_type: $ => seq('readonly', $.type)
+  The related grammar rules are given by:
+  + TypeScript
+    {@js[
+     readonly_type: $ => seq('readonly', $.type)
+    ]}
 *)
 and readonly_type = type_
 
-(* Constructor Type
+(** Constructor Type
 
-   TypeScript:
+  The type of an object constructor.
 
-   constructor_type: $ => prec.left(seq(
-     optional('abstract'),
-     'new',
-     field('type_parameters', optional($.type_parameters)),
-     field('parameters', $.formal_parameters),
-     '=>',
-     field('type', $.type)))
+  Example:
+  {@js[
+   type ctor = new <T>(x: T) => T;
+  ]}
+
+  The related grammar rules are given by:
+  + TypeScript
+    {@js[
+     constructor_type: $ => prec.left(seq(
+       optional('abstract'),
+       'new',
+       field('type_parameters', optional($.type_parameters)),
+       field('parameters', $.formal_parameters),
+       '=>',
+       field('type', $.type)))
+    ]}
 *)
 and constructor_type =
   { abstract : bool
@@ -2028,51 +2476,61 @@ and constructor_type =
   ; type_ : type_
   }
 
-(* Infer-type
+(** Infer-type
 
-   TypeScript:
+  Example:
+  {@js[
+   type MyConditionalType<T> = T extends SomeType ? TrueType : FalseType;
+   type MyInferredType<T> = T extends SomeType<infer U> ? U : FalseType;
+  ]}
 
-   infer_type: $ => prec.right(seq(
-     'infer',
-     $._type_identifier,
-     optional(seq('extends', $.type)))),
+  The related grammar rule is given by:
+  + TypeScript
+    {@js[
+     infer_type: $ => prec.right(seq(
+       'infer',
+       $._type_identifier,
+       optional(seq('extends', $.type))))
+    ]}
 *)
 and infer_type =
   { type_id : type_identifier
   ; extends : type_ option
   }
 
-(* STATEMENTS
+(** STATEMENTS
 
-   JavaScript:
+  The related grammar rule is given by:
+  + JavaScript
+    {@js[
+     statement: $ => choice(
+       $.export_statement,
+       $.import_statement,
+       $.debugger_statement,
+       $.expression_statement,
+       $.declaration,
+       $.statement_block,
 
-   statement: $ => choice(
-     $.export_statement,
-     $.import_statement,
-     $.debugger_statement,
-     $.expression_statement,
-     $.declaration,
-     $.statement_block,
+       $.if_statement,
+       $.switch_statement,
+       $.for_statement,
+       $.for_in_statement,
+       $.while_statement,
+       $.do_statement,
+       $.try_statement,
+       $.with_statement,
 
-     $.if_statement,
-     $.switch_statement,
-     $.for_statement,
-     $.for_in_statement,
-     $.while_statement,
-     $.do_statement,
-     $.try_statement,
-     $.with_statement,
+       $.break_statement,
+       $.continue_statement,
+       $.return_statement,
+       $.throw_statement,
+       $.empty_statement,
+       $.labeled_statement),
 
-     $.break_statement,
-     $.continue_statement,
-     $.return_statement,
-     $.throw_statement,
-     $.empty_statement,
-     $.labeled_statement),
+     debugger_statement: $ => seq('debugger', $._semicolon),
 
-   debugger_statement: $ => seq('debugger', $._semicolon),
-
-   empty_statement: _ => ';'
+     empty_statement: _ => ';'
+    ]}
 *)
 and statement =
   | S_export_statement of export_statement
@@ -2096,86 +2554,105 @@ and statement =
   | S_empty_statement
   | S_labeled_statement of labeled_statement
 
-(* Break Statement
+(** Break Statement
 
-   JavaScript
-
-   break_statement: $ => seq(
-     'break',
-     field('label', optional(alias($.identifier, $.statement_identifier))),
-     $._semicolon)
+  The related grammar rule is given by:
+  + JavaScript
+    {@js[
+     break_statement: $ => seq(
+       'break',
+       field('label', optional(alias($.identifier, $.statement_identifier))),
+       $._semicolon)
+    ]}
 *)
 and break_statement = identifier option
 
-(* Continue Statement
+(** Continue Statement
 
-   JavaScript:
-
-   continue_statement: $ => seq(
-     'continue',
-     field('label', optional(alias($.identifier, $.statement_identifier))),
-     $._semicolon),
+  The related grammar rule is given by:
+  + JavaScript
+    {@js[
+     continue_statement: $ => seq(
+       'continue',
+       field('label', optional(alias($.identifier, $.statement_identifier))),
+       $._semicolon)
+    ]}
 *)
 and continue_statement = identifier option
 
-(* Do-statement
+(** Do-statement
 
-   JavaScript:
-
-   do_statement: $ => prec.right(seq(
-     'do',
-     field('body', $.statement),
-     'while',
-     field('condition', $.parenthesized_expression),
-     optional($._semicolon)))
+  The related grammar rule is given by:
+  + JavaScript
+    {@js[
+     do_statement: $ => prec.right(seq(
+       'do',
+       field('body', $.statement),
+       'while',
+       field('condition', $.parenthesized_expression),
+       optional($._semicolon)))
+    ]}
 *)
 and do_statement =
   { body : statement
   ; condition : expression
   }
 
-(* Export Statement
+(** Export Statement
 
-   JavaScript:
+  Examples:
+  {@js[
+   export {};
+   export var pi = 3.14;
+   export class C {};
+   export function absolute(num: number) {
+     if (num < 0) return num * -1;
+     return num;
+   }
+  ]}
 
-   export_statement: $ => choice(
-     seq('export',
-         choice(
-           seq('*', $._from_clause),
-           seq($.namespace_export, $._from_clause),
-           seq($.export_clause, $._from_clause),
-           $.export_clause),
-         $._semicolon),
-     seq(repeat(field('decorator', $.decorator)),
-         'export',
-         choice(
-           field('declaration', $.declaration),
-           seq('default',
-               choice(
-                 field('declaration', $.declaration),
-                 seq(field('value', $.expression), $._semicolon)))))),
+  The related grammar rules are given by:
+  + JavaScript
+    {@js[
+     export_statement: $ => choice(
+       seq('export',
+           choice(
+             seq('*', $._from_clause),
+             seq($.namespace_export, $._from_clause),
+             seq($.export_clause, $._from_clause),
+             $.export_clause),
+           $._semicolon),
+       seq(repeat(field('decorator', $.decorator)),
+           'export',
+           choice(
+             field('declaration', $.declaration),
+             seq('default',
+                 choice(
+                   field('declaration', $.declaration),
+                   seq(field('value', $.expression), $._semicolon)))))),
 
-   namespace_export: $ => seq('*', 'as', $._module_export_name),
+     namespace_export: $ => seq('*', 'as', $._module_export_name),
 
-   export_clause: $ =>
-     seq('{', commaSep($.export_specifier), optional(','), '}'),
+     export_clause: $ =>
+       seq('{', commaSep($.export_specifier), optional(','), '}'),
 
-   export_specifier: $ => seq(
-     field('name', $._module_export_name),
-     optional(seq('as', field('alias', $._module_export_name)))),
+     export_specifier: $ => seq(
+       field('name', $._module_export_name),
+       optional(seq('as', field('alias', $._module_export_name)))),
 
-   _module_export_name: $ => choice($.identifier, $.string),
+     _module_export_name: $ => choice($.identifier, $.string),
 
-   _from_clause: $ => seq('from', field('source', $.string))
-
-   TypeScript:
-
-   export_statement: ($, previous) => choice(
-     previous,
-     seq('export', 'type', $.export_clause,
-         optional($._from_clause), $._semicolon),
-     seq('export', '=', $.expression, $._semicolon),
-     seq('export', 'as', 'namespace', $.identifier, $._semicolon))
+     _from_clause: $ => seq('from', field('source', $.string))
+    ]}
+  + TypeScript
+    {@js[
+     export_statement: ($, previous) => choice(
+       previous,
+       seq('export', 'type', $.export_clause,
+           optional($._from_clause), $._semicolon),
+       seq('export', '=', $.expression, $._semicolon),
+       seq('export', 'as', 'namespace', $.identifier, $._semicolon))
+    ]}
 *)
 and export_statement =
   | Export of export
@@ -2217,44 +2694,51 @@ and export_default =
   | Export_default_declaration of declaration
   | Export_default_expression of expression
 
-(* Expression Statement
+(** Expression Statement
 
-   TypeScript:
+  Expressions can used as statements, for example, a function call
+  returning nothing (unit).
 
-   expression_statement: $ => seq($._expressions, $._semicolon)
+  The related grammar rule is given by:
+  + TypeScript
+    {@js[
+     expression_statement: $ => seq($._expressions, $._semicolon)
+    ]}
 *)
 and expression_statement = expressions
 
-(* For-in/of Statement
+(** For-in/of Statement
 
-   JavaScript:
+  The related grammar rules are given by:
+  + JavaScript
+    {@js[
+     for_in_statement: $ => seq(
+       'for',
+       optional('await'),
+       $._for_header,
+       field('body', $.statement)),
 
-   for_in_statement: $ => seq(
-     'for',
-     optional('await'),
-     $._for_header,
-     field('body', $.statement)),
-
-   _for_header: $ => seq(
-     '(',
-     choice(
-       field('left', choice(
-         $._lhs_expression,
-         $.parenthesized_expression)),
-       seq(
-         field('kind', 'var'),
+     _for_header: $ => seq(
+       '(',
+       choice(
          field('left', choice(
-           $.identifier,
-           $._destructuring_pattern)),
-         optional($._initializer)),
-       seq(
-         field('kind', choice('let', 'const')),
-         field('left', choice(
-           $.identifier,
-           $._destructuring_pattern)))),
-     field('operator', choice('in', 'of')),
-     field('right', $._expressions),
-     ')')
+           $._lhs_expression,
+           $.parenthesized_expression)),
+         seq(
+           field('kind', 'var'),
+           field('left', choice(
+             $.identifier,
+             $._destructuring_pattern)),
+           optional($._initializer)),
+         seq(
+           field('kind', choice('let', 'const')),
+           field('left', choice(
+             $.identifier,
+             $._destructuring_pattern)))),
+       field('operator', choice('in', 'of')),
+       field('right', $._expressions),
+       ')')
+    ]}
 *)
 and for_in_statement =
   { await : bool
@@ -2291,24 +2775,26 @@ and for_operator =
   | In
   | Of
 
-(* For-statement
+(** For-statement
 
-   JavaScript:
-
-   for_statement: $ => seq(
-     'for',
-     '(',
-     field('initializer', choice(
-       $.lexical_declaration,
-       $.variable_declaration,
-       $.expression_statement,
-       $.empty_statement)),
-     field('condition', choice(
-       $.expression_statement,
-       $.empty_statement)),
-     field('increment', optional($._expressions)),
-     ')',
-     field('body', $.statement))
+  The related grammar rules are given by:
+  + JavaScript
+    {@js[
+     for_statement: $ => seq(
+       'for',
+       '(',
+       field('initializer', choice(
+         $.lexical_declaration,
+         $.variable_declaration,
+         $.expression_statement,
+         $.empty_statement)),
+       field('condition', choice(
+         $.expression_statement,
+         $.empty_statement)),
+       field('increment', optional($._expressions)),
+       ')',
+       field('body', $.statement))
+    ]}
 *)
 and for_statement =
   { initializer_ : for_initializer
@@ -2327,17 +2813,19 @@ and for_condition =
   | For_condition_expression of expression_statement
   | For_condition_empty
 
-(* If-statement
+(** If-statement
 
-   JavaScript:
+  The related grammar rules are given by:
+  + JavaScript
+    {@js[
+     if_statement: $ => prec.right(seq(
+       'if',
+       field('condition', $.parenthesized_expression),
+       field('consequence', $.statement),
+       optional(field('alternative', $.else_clause)))),
 
-   if_statement: $ => prec.right(seq(
-     'if',
-     field('condition', $.parenthesized_expression),
-     field('consequence', $.statement),
-     optional(field('alternative', $.else_clause)))),
-
-   else_clause: $ => seq('else', $.statement)
+     else_clause: $ => seq('else', $.statement)
+   ]}
 *)
 and if_statement =
   { condition : expression
@@ -2345,53 +2833,69 @@ and if_statement =
   ; alternative : statement option
   }
 
-(* Import Statement
+(** Import Statement
 
-   TypeScript:
+  Examples:
+  {@js[
+   import helloWorld from "./hello.js";
+   import { pi, phi, absolute } from "./maths.js";
+   import { pi as π } from "./maths.js";
+   import RandomNumberGenerator, { pi as π } from "./maths.js";
+   import { Cat, Dog } from "./animal.js";
+   import * as math from "./maths.js";
+   import type { Cat, Dog } from "./animal.js";
+   import type { createCatName } from "./animal.js";
+   import { createCatName, type Cat, type Dog } from "./animal.js";
+   import fs = require("fs");
+  ]}
 
-   import_statement: $ => seq(
-     'import',
-     optional(choice('type', 'typeof')),
-     choice(
-       seq($.import_clause, $._from_clause),
-       $.import_require_clause,
-       field('source', $.string)),
-     optional($.import_attribute),
-     $._semicolon),
+  The related grammar rules are given by:
+  + TypeScript:
+    {@js[
+     import_statement: $ => seq(
+       'import',
+       optional(choice('type', 'typeof')),
+       choice(
+         seq($.import_clause, $._from_clause),
+         $.import_require_clause,
+         field('source', $.string)),
+       optional($.import_attribute),
+       $._semicolon),
 
-   import_clause: $ => choice(
-     $.namespace_import,
-     $.named_imports,
-     seq($._import_identifier,
-         optional(seq(
-           ',',
-           choice(
-             $.namespace_import,
-             $.named_imports))))),
+     import_clause: $ => choice(
+       $.namespace_import,
+       $.named_imports,
+       seq($._import_identifier,
+           optional(seq(
+             ',',
+             choice(
+               $.namespace_import,
+               $.named_imports))))),
 
-   namespace_import: $ => seq('*', 'as', $.identifier),
+     namespace_import: $ => seq('*', 'as', $.identifier),
 
-   named_imports: $ =>
-     seq('{', commaSep($.import_specifier), optional(','), '}'),
+     named_imports: $ =>
+       seq('{', commaSep($.import_specifier), optional(','), '}'),
 
-   import_specifier: $ => seq(
-     optional(choice('type', 'typeof')),
-     choice(
-       field('name', $._import_identifier),
-       seq(field('name', choice($._module_export_name,
-                                alias('type', $.identifier))),
-           'as',
-           field('alias', $._import_identifier)))),
+     import_specifier: $ => seq(
+       optional(choice('type', 'typeof')),
+       choice(
+         field('name', $._import_identifier),
+         seq(field('name', choice($._module_export_name,
+                                  alias('type', $.identifier))),
+             'as',
+             field('alias', $._import_identifier)))),
 
-   _import_identifier: $ => // The alias is weird, honestly.
-     choice($.identifier, alias('type', $.identifier)),
+     _import_identifier: $ => // The alias is weird, honestly.
+       choice($.identifier, alias('type', $.identifier)),
 
-   _module_export_name: $ => choice($.identifier, $.string), // See exports
+     _module_export_name: $ => choice($.identifier, $.string), // See exports
 
-   import_require_clause: $ => seq(
-     $.identifier, '=', 'require', '(', field('source', $.string), ')'),
+     import_require_clause: $ => seq(
+       $.identifier, '=', 'require', '(', field('source', $.string), ')'),
 
-   import_attribute: $ => seq(choice('with', 'assert'), $.object),
+     import_attribute: $ => seq(choice('with', 'assert'), $.object)
+    ]}
 *)
 and import_statement =
   { import_kind : import_kind option
@@ -2438,51 +2942,60 @@ and import_attribute =
   | Import_with of object_
   | Import_assert of object_
 
-(* Asserts Annotation
+(** Asserts Annotation
 
-   TypeScript:
-
-   asserts_annotation: $ => seq(seq(':', $.asserts)), // Really?
+  The related grammar rule is given by:
+  + TypeScript
+    {@js[
+     asserts_annotation: $ => seq(seq(':', $.asserts)), // Really?
+    ]}
 *)
 and asserts_annotation = asserts
 
-(* Assignment Pattern
+(** Assignment Pattern
 
-   JavaScript:
-
-   assignment_pattern: $ => seq(
-     field('left', $.pattern), '=', field('right', $.expression))
+  The related grammar rule is given by:
+  + JavaScript
+    {@js[
+     assignment_pattern: $ => seq(
+       field('left', $.pattern), '=', field('right', $.expression))
+    ]}
 *)
 and assignment_pattern =
   { left : pattern
   ; right : expression
   }
 
-(* Try statement
+(** Try statement
 
-   JavaScript
+  Try-with statements enable to guard a piece of code with exception
+  handlers.
 
-   try_statement: $ => seq(
-     'try',
-     field('body', $.statement_block),
-     optional(field('handler', $.catch_clause)),
-     optional(field('finalizer', $.finally_clause)))
+  The related grammar rules are given by:
+  + JavaScript
+    {@js[
+     try_statement: $ => seq(
+      'try',
+      field('body', $.statement_block),
+      optional(field('handler', $.catch_clause)),
+      optional(field('finalizer', $.finally_clause))),
 
-   finally_clause: $ => seq('finally', field('body', $.statement_block)),
+     finally_clause: $ => seq('finally', field('body', $.statement_block)),
 
-   _destructuring_pattern: $ => choice($.object_pattern, $.array_pattern)
-
-   TypeScript:
-
-   catch_clause: $ => seq(
-     'catch',
-     optional(
-       seq('(',
-           field('parameter',
-                 choice($.identifier, $._destructuring_pattern)),
-           optional(field('type', $.type_annotation)),
-           ')')),
-     field('body', $.statement_block))
+     _destructuring_pattern: $ => choice($.object_pattern, $.array_pattern)
+    ]}
+  + TypeScript
+    {@js[
+     catch_clause: $ => seq(
+      'catch',
+      optional(
+        seq('(',
+            field('parameter',
+                  choice($.identifier, $._destructuring_pattern)),
+            optional(field('type', $.type_annotation)),
+            ')')),
+      field('body', $.statement_block))
+    ]}
 *)
 and try_statement =
   { body : statement_block
@@ -2502,17 +3015,19 @@ and catch_parameter =
 
 and finally_clause = statement_block
 
-(* Class
+(** Class
 
-   TypeScript
-
-   class: $ => prec('literal', seq(
-     repeat(field('decorator', $.decorator)),
-     'class',
-     field('name', optional($._type_identifier)),
-     field('type_parameters', optional($.type_parameters)),
-     optional($.class_heritage),
-     field('body', $.class_body)))
+  The related grammar rule is given by:
+  + TypeScript
+    {@js[
+     class: $ => prec('literal', seq(
+       repeat(field('decorator', $.decorator)),
+       'class',
+       field('name', optional($._type_identifier)),
+       field('type_parameters', optional($.type_parameters)),
+       optional($.class_heritage),
+       field('body', $.class_body)))
+    ]}
 *)
 and class_ =
   { decorators : decorator list
@@ -2522,42 +3037,44 @@ and class_ =
   ; body : class_member list
   }
 
-(* DECORATOR
+(** DECORATOR
 
-   TypeScript:
+  The related grammar rules are given by:
+  + TypeScript
+    {@js[
+     decorator: $ => seq(
+       '@',
+       choice(
+         $.identifier,
+         alias($.decorator_member_expression, $.member_expression),
+         alias($.decorator_call_expression, $.call_expression),
+         alias($.decorator_parenthesized_expression,
+               $.parenthesized_expression))),
 
-   decorator: $ => seq(
-     '@',
-     choice(
-       $.identifier,
-       alias($.decorator_member_expression, $.member_expression),
-       alias($.decorator_call_expression, $.call_expression),
-       alias($.decorator_parenthesized_expression,
-             $.parenthesized_expression))),
+     decorator_call_expression: $ => prec('call', seq(
+       field('function', choice(
+         $.identifier,
+         alias($.decorator_member_expression, $.member_expression))),
+         optional(field('type_arguments', $.type_arguments)),
+       field('arguments', $.arguments))),
 
-   decorator_call_expression: $ => prec('call', seq(
-     field('function', choice(
-       $.identifier,
-       alias($.decorator_member_expression, $.member_expression))),
-     optional(field('type_arguments', $.type_arguments)),
-     field('arguments', $.arguments))),
-
-   decorator_parenthesized_expression: $ => seq(
-     '(',
-     choice(
-       $.identifier,
-       alias($.decorator_member_expression, $.member_expression),
-       alias($.decorator_call_expression, $.call_expression)),
-     ')')
-
-   JavaScript:
-
-   decorator_member_expression: $ => prec('member', seq(
-     field('object', choice(
-       $.identifier,
-       alias($.decorator_member_expression, $.member_expression))),
-     '.',
-     field('property', alias($.identifier, $.property_identifier))))
+     decorator_parenthesized_expression: $ => seq(
+       '(',
+       choice(
+         $.identifier,
+         alias($.decorator_member_expression, $.member_expression),
+         alias($.decorator_call_expression, $.call_expression)),
+       ')')
+    ]}
+  + JavaScript
+    {@js[
+     decorator_member_expression: $ => prec('member', seq(
+       field('object', choice(
+         $.identifier,
+         alias($.decorator_member_expression, $.member_expression))),
+       '.',
+       field('property', alias($.identifier, $.property_identifier))))
+    ]}
 *)
 and decorator =
   | Decorator_identifier of identifier
