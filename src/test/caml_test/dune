@@ -1,0 +1,12 @@
+(executable
+ (name caml_test)
+ (libraries ocaml-compiler-libs.common build caml_extraction caml_solving)
+ (preprocess
+  (pps ppxlib.metaquot)))
+
+(rule
+ (alias runtest)
+ (deps
+  (:exe ./caml_test.exe))
+ (action
+  (run %{exe})))
