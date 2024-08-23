@@ -1,0 +1,8 @@
+(library
+ (name caml_extraction)
+ (public_name ligo.caml_extraction)
+ (instrumentation
+  (backend bisect_ppx))
+ (libraries caml_core)
+ (preprocess
+  (pps ppx_jane ppx_deriving.map ppx_woo ppx_poly_constructor)))

@@ -19,22 +19,6 @@ let split_arrow ~exp_env ~label type_ =
   Ctype.filter_arrow exp_env type_ label
 
 
-let type_wrap loc desc = { type_desc = desc; type_loc = loc }
-
-let type_decl_wrap loc params desc =
-  { type_decl_desc = desc; type_decl_params = params; type_decl_loc = loc }
-
-
-let pat_wrap loc type_ desc = { pat_desc = desc; pat_type = type_; pat_loc = loc }
-
-let var_pat_wrap loc type_ desc =
-  { var_pat_desc = desc; var_pat_type = type_; var_pat_loc = loc }
-
-
-let expr_wrap loc type_ desc = { expr_desc = desc; expr_type = type_; expr_loc = loc }
-let decl_wrap loc desc = { decl_desc = desc; decl_loc = loc }
-let mod_expr_wrap loc desc = { mod_expr_desc = desc; mod_expr_loc = loc }
-
 (* TODO: magic ligo stuff *)
 let extract_payload_string payload =
   match payload with
@@ -54,40 +38,6 @@ let extract_payload_string payload =
 
 
 (* TODO: ppxlib? *)
-let extract_ligo_predef payload pattern =
-  let path, expected_arity =
-    let Typedtree.
-          { pat_desc; pat_loc = _; pat_extra; pat_type; pat_env = _; pat_attributes }
-      =
-      pattern
-    in
-    assert (
-      match pat_desc with
-      | Tpat_any -> true
-      | _ -> false);
-    assert (List.is_empty pat_attributes);
-    match get_desc pat_type with
-    | Tarrow (Nolabel, left, _, _) ->
-      (match get_desc left with
-      | Tconstr (path, args, _) -> path, List.length args
-      | _ -> error_unsupported ())
-    | _ -> error_unsupported ()
-  in
-  let ident =
-    match path with
-    | Pident ident -> ident
-    | Pdot (_, _) | Papply (_, _) -> error_unsupported ()
-  in
-  let constant = extract_payload_string payload in
-  let constant =
-    match Literal_types.of_string_opt constant with
-    | Some constant -> constant
-    | None -> error_unsupported ()
-  in
-  let arity = Literal_types.to_arity constant in
-  assert (arity = expected_arity);
-  ident, constant, arity
-
 
 let extract_ligo_constant payload type_typ =
   (* TODO: assert properties of ligo constant? *)
@@ -121,7 +71,7 @@ let extract_ligo_constant payload type_typ =
 
 
 (* TODO: normal ocaml stuff *)
-let compile_loc loc : Location.t =
+let extract_loc loc : Location.t =
   let open Simple_utils in
   let Warnings.{ loc_start; loc_end; loc_ghost } = loc in
   (* TODO: Location seems to be too complex in ligo *)
@@ -135,7 +85,7 @@ let compile_loc loc : Location.t =
 
 
 (* TODO: better locations, maybe use core_type *)
-let rec compile_type loc type_ =
+let rec extract_type loc type_ =
   (* TODO: allow attributes *)
   let open Ocaml_common.Types in
   (* TODO: detect and reject rectypes *)
@@ -154,23 +104,23 @@ let rec compile_type loc type_ =
             (* TODO: is this actually guaranteed? *)
             error_unreachable ())
     in
-    let body = compile_type loc body in
+    let body = extract_type loc body in
     type_wrap loc @@ T_forall (vars, body)
   (* type constructors *)
   | Tconstr (path, args, _abbrev) ->
-    let args = List.map ~f:(fun arg -> compile_type loc arg) args in
+    let args = List.map ~f:(fun arg -> extract_type loc arg) args in
     type_wrap loc @@ T_constr (path, args)
   (* arrow *)
   | Tarrow (Nolabel, type1, type2, _comm) ->
-    let type1 = compile_type loc type1 in
-    let type2 = compile_type loc type2 in
+    let type1 = extract_type loc type1 in
+    let type2 = extract_type loc type2 in
     (* TODO: what about param_names? *)
     type_wrap loc @@ T_arrow (type1, type2)
   | Tarrow (Labelled _, _type1, _type2, _comm) -> error_unimplemented ()
   | Tarrow (Optional _, _type1, _type2, _comm) -> error_unimplemented ()
   (* tuple *)
   | Ttuple fields ->
-    let fields = List.map fields ~f:(fun field -> compile_type loc field) in
+    let fields = List.map fields ~f:(fun field -> extract_type loc field) in
     type_wrap loc @@ T_tuple fields
   (* variants *)
   | Tvariant _ -> error_unsupported ()
@@ -185,19 +135,19 @@ let rec compile_type loc type_ =
   | Tsubst (_, _) -> error_unreachable ()
 
 
-let compile_label_declaration label =
+let extract_label_declaration label =
   let { ld_id; ld_mutable; ld_type; ld_loc; ld_attributes; ld_uid = _ } = label in
   assert (
     match ld_mutable with
     | Immutable -> true
     | Mutable -> false);
   assert (List.is_empty ld_attributes);
-  let loc = compile_loc ld_loc in
-  let type_ = compile_type loc ld_type in
+  let loc = extract_loc ld_loc in
+  let type_ = extract_type loc ld_type in
   { dl_id = ld_id; dl_type = type_; dl_loc = loc }
 
 
-let compile_type_declaration decl =
+let extract_type_declaration decl =
   let { type_params
       ; type_arity = _
       ; type_kind
@@ -229,7 +179,7 @@ let compile_type_declaration decl =
   assert (List.is_empty type_attributes);
   (* TODO: what is this flag below? *)
   (* assert (not type_unboxed_default); *)
-  let loc = compile_loc loc in
+  let loc = extract_loc loc in
   let params =
     List.map type_params ~f:(fun var ->
         match get_desc var with
@@ -240,13 +190,13 @@ let compile_type_declaration decl =
   in
   match type_kind, type_manifest with
   | Type_abstract, Some manifest ->
-    let manifest = compile_type loc manifest in
+    let manifest = extract_type loc manifest in
     type_decl_wrap loc params @@ T_alias manifest
   | Type_abstract, None ->
     (* TODO: useful for aliasing *)
     error_unimplemented ()
   | Type_record (fields, Record_regular), None ->
-    let fields = List.map fields ~f:(fun label -> compile_label_declaration label) in
+    let fields = List.map fields ~f:(fun label -> extract_label_declaration label) in
     type_decl_wrap loc params @@ T_record fields
   | Type_record (cases, Record_regular), Some _ -> error_unimplemented ()
   | ( Type_record
@@ -259,14 +209,14 @@ let compile_type_declaration decl =
           (* TODO: maybe support GADTs syntax but not GADTs? *)
           assert (Option.is_none cd_res);
           assert (List.is_empty cd_attributes);
-          let loc = compile_loc cd_loc in
+          let loc = extract_loc cd_loc in
           match cd_args with
           | Cstr_tuple fields ->
-            let fields = List.map fields ~f:(fun field -> compile_type loc field) in
+            let fields = List.map fields ~f:(fun field -> extract_type loc field) in
             C_tuple { dc_id = cd_id; dc_fields = fields; dc_loc = loc }
           | Cstr_record fields ->
             let fields =
-              List.map fields ~f:(fun label -> compile_label_declaration label)
+              List.map fields ~f:(fun label -> extract_label_declaration label)
             in
             C_record { dc_id = cd_id; dc_fields = fields; dc_loc = loc })
     in
@@ -278,7 +228,7 @@ let compile_type_declaration decl =
   | Type_open, (Some _ | None) -> error_unimplemented ()
 
 
-let compile_literal constant =
+let extract_literal constant =
   let open Literal_value in
   match constant with
   | Const_int n ->
@@ -296,7 +246,7 @@ let compile_literal constant =
   | Const_nativeint _i -> error_unsupported ()
 
 
-let compile_constructor constructor =
+let extract_constructor constructor =
   let { cstr_name
       ; cstr_res = _
       ; cstr_existentials
@@ -326,7 +276,7 @@ let compile_constructor constructor =
   cstr_name
 
 
-let compile_pat_extra pat_extra =
+let extract_pat_extra pat_extra =
   match pat_extra with
   | Tpat_constraint _typ ->
     (* TODO: is this relevant? *)
@@ -340,7 +290,7 @@ let compile_pat_extra pat_extra =
   | Tpat_unpack -> error_unsupported ()
 
 
-let compile_pat_alias : type a. a general_pattern -> unit =
+let extract_pat_alias : type a. a general_pattern -> unit =
  fun pat ->
   (* TODO: this is just a check *)
   let { pat_desc; pat_loc; pat_extra; pat_type; pat_env; pat_attributes } = pat in
@@ -363,23 +313,23 @@ let compile_pat_alias : type a. a general_pattern -> unit =
   | Tpat_or (_, _, _) -> error_unsupported ()
 
 
-let compile_var_pat : type a. a general_pattern -> var_pat =
+let extract_var_pat : type a. a general_pattern -> var_pat =
  fun pat ->
   let { pat_desc; pat_loc; pat_extra; pat_type; pat_env; pat_attributes } = pat in
   let () =
     List.iter pat_extra ~f:(fun (pat_extra, _loc, pat_extra_attributes) ->
         assert (List.is_empty pat_extra_attributes);
-        compile_pat_extra pat_extra)
+        extract_pat_extra pat_extra)
   in
   assert (List.is_empty pat_attributes);
-  let loc = compile_loc pat_loc in
-  let type_ = compile_type loc pat_type in
+  let loc = extract_loc pat_loc in
+  let type_ = extract_type loc pat_type in
   match pat_desc with
   | Tpat_any -> error_unsupported ()
   | Tpat_var (ident, _label) -> var_pat_wrap loc type_ @@ ident
   | Tpat_alias (pat, ident, _label) ->
     (* TODO: this one may look easy, but linearity *)
-    let () = compile_pat_alias pat in
+    let () = extract_pat_alias pat in
     var_pat_wrap loc type_ @@ ident
   | Tpat_constant _ -> error_unsupported ()
   | Tpat_tuple _ -> error_unsupported ()
@@ -393,34 +343,34 @@ let compile_var_pat : type a. a general_pattern -> var_pat =
   | Tpat_exception _ -> error_unsupported ()
 
 
-let rec compile_pat : type a. a general_pattern -> pat =
+let rec extract_pat : type a. a general_pattern -> pat =
  fun pat ->
   let { pat_desc; pat_loc; pat_extra; pat_type; pat_env; pat_attributes } = pat in
   assert (List.is_empty pat_attributes);
   let () =
     List.iter pat_extra ~f:(fun (pat_extra, _loc, pat_extra_attributes) ->
         assert (List.is_empty pat_extra_attributes);
-        compile_pat_extra pat_extra)
+        extract_pat_extra pat_extra)
   in
-  let loc = compile_loc pat_loc in
-  let type_ = compile_type loc pat_type in
+  let loc = extract_loc pat_loc in
+  let type_ = extract_type loc pat_type in
   match pat_desc with
   | Tpat_any -> error_unimplemented ()
   | Tpat_var (ident, _label) -> pat_wrap loc type_ @@ P_var ident
   | Tpat_alias (pat, ident, _label) ->
     (* TODO: this one may look easy, but linearity *)
-    let () = compile_pat_alias pat in
+    let () = extract_pat_alias pat in
     pat_wrap loc type_ @@ P_var ident
   | Tpat_constant _ ->
     (* TODO: priority? *)
     error_unimplemented ()
   | Tpat_tuple fields ->
-    let fields = List.map fields ~f:(fun field -> compile_pat field) in
+    let fields = List.map fields ~f:(fun field -> extract_pat field) in
     pat_wrap loc type_ @@ P_tuple fields
   | Tpat_construct ({ txt = _lident; loc = lident_loc }, constructor, payload, None) ->
-    let label = compile_constructor constructor in
-    let label = Label.Label (label, compile_loc lident_loc) in
-    let payload = List.map payload ~f:(fun field -> compile_pat field) in
+    let label = extract_constructor constructor in
+    let label = Label.Label (label, extract_loc lident_loc) in
+    let payload = List.map payload ~f:(fun field -> extract_pat field) in
     let payload =
       match payload with
       | [] -> pat_wrap loc type_ @@ P_unit
@@ -452,7 +402,7 @@ let rec compile_pat : type a. a general_pattern -> pat =
             =
             label
           in
-          Label.Label (lbl_name, compile_loc lident_loc), compile_pat pat)
+          Label.Label (lbl_name, extract_loc lident_loc), extract_pat pat)
     in
     pat_wrap loc type_ @@ P_record labels
   | Tpat_record (_labels, Open) ->
@@ -465,25 +415,25 @@ let rec compile_pat : type a. a general_pattern -> pat =
     error_unsupported ()
   | Tpat_value pat ->
     (* TODO: is this right? Understand Tpat_value *)
-    compile_pat (pat :> value general_pattern)
+    extract_pat (pat :> value general_pattern)
   | Tpat_exception _ -> error_unsupported ()
 
 
-let rec compile_expr expr =
+let rec extract_expr expr =
   let { exp_desc; exp_loc; exp_extra; exp_type; exp_env; exp_attributes } = expr in
   let () =
     List.iter exp_extra ~f:(fun (exp_extra, _loc, exp_extra_attributes) ->
-        compile_expr_extra exp_extra)
+        extract_expr_extra exp_extra)
   in
   assert (List.is_empty exp_attributes);
-  let loc = compile_loc exp_loc in
-  let type_ = compile_type loc exp_type in
+  let loc = extract_loc exp_loc in
+  let type_ = extract_type loc exp_type in
   match exp_desc with
   | Texp_ident (path, _lident, value_desc) ->
     (* TODO: assert value is a valid value, aka not primitive *)
     expr_wrap loc type_ @@ E_var path
   | Texp_constant constant ->
-    let literal = compile_literal constant in
+    let literal = extract_literal constant in
     expr_wrap loc type_ @@ E_literal literal
   | Texp_let (Recursive, [ value ], body) ->
     let { vb_pat; vb_expr; vb_attributes; vb_loc } = value in
@@ -491,13 +441,13 @@ let rec compile_expr expr =
     (* TODO: locs *)
     (* TODO: attributes *)
     (* TODO: recursive *)
-    let var_pat = compile_var_pat vb_pat in
+    let var_pat = extract_var_pat vb_pat in
     (* TODO: will the type of this expression be mono? *)
     let value =
       (* TODO: poly value *)
-      compile_expr vb_expr
+      extract_expr vb_expr
     in
-    let body = compile_expr body in
+    let body = extract_expr body in
     expr_wrap loc type_ @@ E_let_rec (var_pat, value, body)
   | Texp_let (Nonrecursive, [ value ], body) ->
     (* TODO: duplicated *)
@@ -506,13 +456,13 @@ let rec compile_expr expr =
     (* TODO: locs *)
     (* TODO: attributes *)
     (* TODO: recursive *)
-    let pat = compile_pat vb_pat in
+    let pat = extract_pat vb_pat in
     (* TODO: will the type of this expression be mono? *)
     let value =
       (* TODO: poly value *)
-      compile_expr vb_expr
+      extract_expr vb_expr
     in
-    let body = compile_expr body in
+    let body = extract_expr body in
     expr_wrap loc type_ @@ E_let (pat, value, body)
   | Texp_let (Recursive, _, _) -> error_unimplemented ()
   | Texp_let (Nonrecursive, _, _) -> error_unimplemented ()
@@ -521,27 +471,27 @@ let rec compile_expr expr =
     (* TODO: test both, multiple cases and  *)
     (* TODO: type function *)
     let param_type, body_type = split_arrow ~exp_env ~label:Nolabel exp_type in
-    let param_type = compile_type loc param_type in
-    let body_type = compile_type loc body_type in
+    let param_type = extract_type loc param_type in
+    let body_type = extract_type loc body_type in
     let body =
       let matchee = expr_wrap loc param_type @@ E_var (Pident param) in
-      let cases = List.map cases ~f:(fun case -> compile_case case) in
+      let cases = List.map cases ~f:(fun case -> extract_case case) in
       expr_wrap loc body_type @@ E_match (matchee, cases)
     in
     let param = var_pat_wrap loc param_type @@ param in
     expr_wrap loc type_ @@ E_lambda (param, body)
   | Texp_function { arg_label = Nolabel; partial = Partial; _ } -> error_unimplemented ()
   | Texp_function { arg_label = Labelled _ | Optional _; _ } -> error_unimplemented ()
-  | Texp_apply (lambda, args) -> compile_expr_apply ~loc ~type_ lambda args
+  | Texp_apply (lambda, args) -> extract_expr_apply ~loc ~type_ lambda args
   | Texp_match (_, _, Partial) -> error_unimplemented ()
   | Texp_match (matchee, cases, Total) ->
     (* TODO: disc_label *)
-    let matchee = compile_expr matchee in
-    let cases = List.map cases ~f:(fun case -> compile_case case) in
+    let matchee = extract_expr matchee in
+    let cases = List.map cases ~f:(fun case -> extract_case case) in
     expr_wrap loc type_ @@ E_match (matchee, cases)
   | Texp_try (_, _) -> error_unsupported ()
   | Texp_tuple fields ->
-    let fields = List.map fields ~f:(fun field -> compile_expr field) in
+    let fields = List.map fields ~f:(fun field -> extract_expr field) in
     let fields =
       match fields with
       | [] -> error_unreachable ()
@@ -550,9 +500,9 @@ let rec compile_expr expr =
     expr_wrap loc type_ @@ E_tuple fields
   | Texp_construct ({ txt = _lident; loc = lident_loc }, constructor, fields) ->
     (* TODO: use this location? *)
-    let label = compile_constructor constructor in
-    let label = Label.Label (label, compile_loc lident_loc) in
-    let args = List.map fields ~f:(fun field -> compile_expr field) in
+    let label = extract_constructor constructor in
+    let label = Label.Label (label, extract_loc lident_loc) in
+    let args = List.map fields ~f:(fun field -> extract_expr field) in
     expr_wrap loc type_ @@ E_constructor (label, args)
   | Texp_variant (_, _) -> error_unsupported ()
   | Texp_record { fields; representation; extended_expression } ->
@@ -566,10 +516,10 @@ let rec compile_expr expr =
       | Record_float | Record_unboxed _ | Record_extension _ -> error_unimplemented ()
     in
     let fields = Array.to_list fields in
-    let fields = List.map fields ~f:(fun field -> compile_field field) in
+    let fields = List.map fields ~f:(fun field -> extract_field field) in
     expr_wrap loc type_ @@ E_record fields
   | Texp_field (record, _, description) ->
-    let record = compile_expr record in
+    let record = extract_expr record in
     (* TODO: check / use all fields *)
     let { lbl_name
         ; lbl_res = _
@@ -626,7 +576,7 @@ let rec compile_expr expr =
   | Texp_open (_, _) -> error_unimplemented ()
 
 
-and compile_expr_extra expr_extra =
+and extract_expr_extra expr_extra =
   match expr_extra with
   | Texp_constraint _ -> ()
   | Texp_coerce (_, _) -> error_unimplemented ()
@@ -638,25 +588,25 @@ and compile_expr_extra expr_extra =
     error_unimplemented ()
 
 
-and compile_expr_let value body =
+and extract_expr_let value body =
   let { vb_pat; vb_expr; vb_attributes; vb_loc } = value in
   assert (List.is_empty vb_attributes);
   (* TODO: locs *)
   (* TODO: attributes *)
   (* TODO: recursive *)
-  let pat = compile_pat vb_pat in
+  let pat = extract_pat vb_pat in
   (* TODO: will the type of this expression be mono? *)
-  let value = compile_expr vb_expr in
-  let body = compile_expr body in
+  let value = extract_expr vb_expr in
+  let body = extract_expr body in
   pat, value, body
 
 
-and compile_expr_apply ~loc ~type_ lambda args =
+and extract_expr_apply ~loc ~type_ lambda args =
   (* TODO: duplicated *)
   let { exp_desc; exp_loc; exp_extra; exp_type; exp_env; exp_attributes } = lambda in
   let () =
     List.iter exp_extra ~f:(fun (exp_extra, _loc, exp_extra_attributes) ->
-        compile_expr_extra exp_extra)
+        extract_expr_extra exp_extra)
   in
   assert (List.is_empty exp_attributes);
   (* TODO: this is really hackish *)
@@ -671,11 +621,11 @@ and compile_expr_apply ~loc ~type_ lambda args =
         ; val_uid = _
         } ) ->
     assert (List.is_empty val_attributes);
-    compile_expr_apply_primitive ~loc ~type_ prim args
-  | _ -> compile_expr_apply_fallback ~loc ~type_ lambda args
+    extract_expr_apply_primitive ~loc ~type_ prim args
+  | _ -> extract_expr_apply_fallback ~loc ~type_ lambda args
 
 
-and compile_expr_apply_primitive ~loc ~type_ prim args =
+and extract_expr_apply_primitive ~loc ~type_ prim args =
   (* TODO: check properties *)
   let Primitive.
         { prim_name
@@ -696,7 +646,7 @@ and compile_expr_apply_primitive ~loc ~type_ prim args =
       let { exp_desc; exp_loc; exp_extra; exp_type; exp_env; exp_attributes } = arg in
       let () =
         List.iter exp_extra ~f:(fun (exp_extra, _loc, exp_extra_attributes) ->
-            compile_expr_extra exp_extra)
+            extract_expr_extra exp_extra)
       in
       assert (List.is_empty exp_attributes);
       (* TODO: this is clearly disgusting  *)
@@ -704,11 +654,11 @@ and compile_expr_apply_primitive ~loc ~type_ prim args =
       | Texp_constant constant -> constant
       | _ -> error_unsupported ()
     in
-    compile_expr_ligo_literals ~loc ~type_ prim_name constant
+    extract_expr_ligo_literals ~loc ~type_ prim_name constant
   | _ -> error_unsupported ()
 
 
-and compile_expr_ligo_literals ~loc ~type_ prim constant =
+and extract_expr_ligo_literals ~loc ~type_ prim constant =
   (* TODO: this is duplicated code from checking *)
   (* TODO: this can be deleted whenever we start targetting Ast_typed *)
   match prim, constant with
@@ -724,13 +674,13 @@ and compile_expr_ligo_literals ~loc ~type_ prim constant =
   | _ -> error_unsupported ()
 
 
-and compile_expr_apply_fallback ~loc ~type_ lambda args =
-  let lambda = compile_expr lambda in
+and extract_expr_apply_fallback ~loc ~type_ lambda args =
+  let lambda = extract_expr lambda in
   let args =
     List.map
       ~f:(fun (label, arg) ->
         match label, arg with
-        | Nolabel, Some arg -> compile_expr arg
+        | Nolabel, Some arg -> extract_expr arg
         | Nolabel, None -> error_unimplemented ()
         | (Labelled _ | Optional _), _ -> error_unsupported ())
       args
@@ -738,16 +688,16 @@ and compile_expr_apply_fallback ~loc ~type_ lambda args =
   expr_wrap loc type_ @@ E_apply (lambda, args)
 
 
-and compile_case : type a. a case -> _ =
+and extract_case : type a. a case -> _ =
  fun case ->
   let { c_lhs; c_guard; c_rhs } = case in
   assert (Option.is_none c_guard);
-  let pat = compile_pat c_lhs in
-  let body = compile_expr c_rhs in
+  let pat = extract_pat c_lhs in
+  let body = extract_expr c_rhs in
   pat, body
 
 
-and compile_field (description, definition) =
+and extract_field (description, definition) =
   (* TODO: check / use all fields *)
   let { lbl_name
       ; lbl_res = _
@@ -780,31 +730,31 @@ and compile_field (description, definition) =
     error_unimplemented ()
   | Overridden (lid, value) ->
     (* TODO: check data  of lid? *)
-    let value = compile_expr value in
+    let value = extract_expr value in
     (* TODO: use proper location *)
     lbl_name, value
 
 
-let rec compile_str str =
+let rec extract_str str =
   let { str_items; str_type = _; str_final_env = _ } = str in
-  List.filter_map str_items ~f:(fun stri -> compile_stri stri)
+  List.filter_map str_items ~f:(fun stri -> extract_stri stri)
 
 
-and compile_stri stri =
+and extract_stri stri =
   (* TODO: location *)
   let { str_desc; str_loc; str_env = _ } = stri in
   match str_desc with
   | Tstr_eval _ -> error_unimplemented ()
-  | Tstr_value (Nonrecursive, [ value ]) -> Some (compile_value_binding value)
+  | Tstr_value (Nonrecursive, [ value ]) -> Some (extract_value_binding value)
   (* TODO: should `and` be supported at all?? *)
   | Tstr_value (Nonrecursive, _) -> error_unimplemented ()
   | Tstr_value (Recursive, _) ->
     (* TODO: priority *)
     error_unimplemented ()
   | Tstr_primitive value ->
-    compile_primitive value;
+    extract_primitive value;
     None
-  | Tstr_type (Nonrecursive, [ decl ]) -> Some (compile_type_decl decl)
+  | Tstr_type (Nonrecursive, [ decl ]) -> Some (extract_type_decl decl)
   (* TODO: should and be supported at all?? *)
   | Tstr_type (Nonrecursive, _) -> error_unimplemented ()
   | Tstr_type (Recursive, _) ->
@@ -812,7 +762,7 @@ and compile_stri stri =
     error_unimplemented ()
   | Tstr_typext _ -> error_unsupported ()
   | Tstr_exception _ -> error_unsupported ()
-  | Tstr_module mb -> Some (compile_module_binding mb)
+  | Tstr_module mb -> Some (extract_module_binding mb)
   | Tstr_recmodule _ -> error_unsupported ()
   | Tstr_modtype _ -> error_unimplemented ()
   | Tstr_open _ ->
@@ -824,30 +774,18 @@ and compile_stri stri =
   | Tstr_attribute _ -> error_unsupported ()
 
 
-and compile_value_binding vb =
+and extract_value_binding vb =
   (* TODO: duplicated'ish *)
   let { vb_pat; vb_expr; vb_attributes; vb_loc } = vb in
-  let loc = compile_loc vb_loc in
-  match vb_attributes with
-  | [] ->
-    (* TODO: recursive *)
-    let var_pat = compile_var_pat vb_pat in
-    (* TODO: will the type of this expression be mono? *)
-    let value = compile_expr vb_expr in
-    decl_wrap loc @@ D_value (var_pat, value)
-  | [ { attr_name = { txt = "ligo.internal.predef"; loc = _ }
-      ; attr_payload
-      ; attr_loc = _
-      }
-    ] ->
-    let ident, constant, arity = extract_ligo_predef attr_payload vb_pat in
-    (* TODO: not having params here is weird *)
-    let type_decl = type_decl_wrap loc [] @@ T_constant (constant, arity) in
-    decl_wrap loc @@ D_type (ident, type_decl)
-  | _ -> error_unsupported ()
+  let loc = extract_loc vb_loc in
+  (* TODO: recursive *)
+  let var_pat = extract_var_pat vb_pat in
+  (* TODO: will the type of this expression be mono? *)
+  let value = extract_expr vb_expr in
+  decl_wrap loc @@ D_value (var_pat, value)
 
 
-and compile_primitive vd =
+and extract_primitive vd =
   let { val_id = _
       ; val_name = _
       ; val_desc = _
@@ -867,9 +805,9 @@ and compile_primitive vd =
   | _ -> error_unsupported ()
 
 
-and compile_type_decl decl =
+and extract_type_decl decl =
   let { typ_id
-      ; typ_name = _
+      ; typ_name
       ; typ_params = _
       ; typ_type
       ; typ_cstrs = _
@@ -882,46 +820,51 @@ and compile_type_decl decl =
     =
     decl
   in
-  let loc = compile_loc typ_loc in
+  let loc = extract_loc typ_loc in
   match typ_attributes with
-  | [] -> decl_wrap loc @@ D_type (typ_id, compile_type_declaration typ_type)
-  | [ { attr_name = { txt = "ligo.internal.constant"; loc = _ }; attr_payload; attr_loc }
+  | [] -> decl_wrap loc @@ D_type (typ_id, extract_type_declaration typ_type)
+  | [ { attr_name = { txt = "ligo.internal.predef"; loc = _ }
+      ; attr_payload
+      ; attr_loc = _
+      }
     ] ->
-    let constant, arity = extract_ligo_constant attr_payload typ_type in
-    (* TODO: not having params here is weird *)
-    let type_decl =
-      type_decl_wrap loc []
-      (* TODO: not having params here is weird *) @@ T_constant (constant, arity)
+    let { txt = constant; loc = _ } = typ_name in
+    let constant =
+      match Literal_types.of_string_opt constant with
+      | Some constant -> constant
+      | None -> error_unsupported ()
     in
-    decl_wrap loc @@ D_type (typ_id, type_decl)
+    let arity = Literal_types.to_arity constant in
+    assert (arity = typ_type.type_arity);
+    decl_wrap loc @@ D_type_predef (typ_id, constant, arity)
   | _ -> error_unsupported ()
 
 
-and compile_module_binding mb =
+and extract_module_binding mb =
   let { mb_id; mb_name = _; mb_presence; mb_expr; mb_attributes; mb_loc } = mb in
   assert (
     match mb_presence with
     | Mp_present -> true
     | Mp_absent -> false);
   assert (List.is_empty mb_attributes);
-  let loc = compile_loc mb_loc in
+  let loc = extract_loc mb_loc in
   let ident =
     match mb_id with
     | Some ident -> ident
     | None -> error_unsupported ()
   in
-  let body = compile_module_expr mb_expr in
+  let body = extract_module_expr mb_expr in
   decl_wrap loc @@ D_module (ident, body)
 
 
-and compile_module_expr mod_expr =
+and extract_module_expr mod_expr =
   let { mod_desc; mod_loc; mod_type = _; mod_env = _; mod_attributes } = mod_expr in
   (* TODO: use module_type? *)
   assert (List.is_empty mod_attributes);
-  let loc = compile_loc mod_loc in
+  let loc = extract_loc mod_loc in
   match mod_desc with
   | Tmod_ident (path, _lident) -> mod_expr_wrap loc @@ M_var path
-  | Tmod_structure str -> mod_expr_wrap loc @@ M_struct (compile_str str)
+  | Tmod_structure str -> mod_expr_wrap loc @@ M_struct (extract_str str)
   | Tmod_functor (_, _) -> error_unsupported ()
   | Tmod_apply (_, _, _) -> error_unsupported ()
   | Tmod_constraint (_, _, _, _) -> error_unimplemented ()

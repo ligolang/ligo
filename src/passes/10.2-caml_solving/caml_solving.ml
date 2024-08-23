@@ -384,7 +384,6 @@ and solve_type_decl_body env vars loc desc =
   | T_alias manifest ->
     (* TODO: not poly tho *)
     solve_type_poly env vars manifest
-  | T_constant (constant, arity) -> type_wrap loc @@ T_constant (constant, arity)
 
 
 let solve_var_pat env vars var_pat =
@@ -562,6 +561,18 @@ and solve_decl_inner env vars decl =
     let type_decl = solve_type_decl env vars type_decl in
     let var = fresh_type ident in
     let env = Env.enter_type ident var env in
+    ( env
+    , decl_wrap loc
+      @@ D_type
+           { type_binder = var
+           ; type_expr = type_decl
+           ; type_attr = Type_or_module_attr.default_attributes
+           } )
+  | D_type_predef (ident, literal, arity) ->
+    (* TODO: this is brittle, what if duplicated? *)
+    let var = Type_var.of_input_var ~loc @@ Literal_types.to_string @@ literal in
+    let env = Env.enter_type ident var env in
+    let type_decl = type_wrap loc @@ T_constant (literal, arity) in
     ( env
     , decl_wrap loc
       @@ D_type

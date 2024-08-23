@@ -28,7 +28,6 @@ and type_decl_desc =
   | T_record of type_decl_label list
   | T_variant of type_decl_case list
   | T_alias of type_
-  | T_constant of Literal_types.t * int
 
 and type_decl_label =
   { dl_id : Ident.t
@@ -107,4 +106,23 @@ and decl_desc =
   | D_value of (var_pat * expr)
   | D_value_rec of (var_pat * expr)
   | D_type of (Ident.t * type_decl)
+  (* TODO: why arity here? *)
+  | D_type_predef of (Ident.t * Literal_types.t * int)
   | D_module of (Ident.t * mod_expr)
+
+(* TODO: follow Ligo style *)
+let type_wrap loc desc = { type_desc = desc; type_loc = loc }
+
+let type_decl_wrap loc params desc =
+  { type_decl_desc = desc; type_decl_params = params; type_decl_loc = loc }
+
+
+let pat_wrap loc type_ desc = { pat_desc = desc; pat_type = type_; pat_loc = loc }
+
+let var_pat_wrap loc type_ desc =
+  { var_pat_desc = desc; var_pat_type = type_; var_pat_loc = loc }
+
+
+let expr_wrap loc type_ desc = { expr_desc = desc; expr_type = type_; expr_loc = loc }
+let decl_wrap loc desc = { decl_desc = desc; decl_loc = loc }
+let mod_expr_wrap loc desc = { mod_expr_desc = desc; mod_expr_loc = loc }
