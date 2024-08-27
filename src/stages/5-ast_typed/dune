@@ -8,6 +8,13 @@
   ligo_prim
   backend
   ligo.ast_core
-  core_kernel.nonempty_list)
+  core_kernel.nonempty_list
+  bin_prot)
  (preprocess
-  (staged_pps ppx_jane ppx_deriving_yojson ppx_import ppx_map ppx_woo)))
+  (staged_pps
+   ppx_jane
+   ppx_bin_prot
+   ppx_deriving_yojson
+   ppx_import
+   ppx_map
+   ppx_woo)))

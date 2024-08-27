@@ -15,3 +15,11 @@ val t_of_sexp : Sexp.t -> t
 
 val hash_fold_t :
   Base_internalhash_types.state -> t -> Base_internalhash_types.state
+
+val bin_shape_t : Bin_prot.Shape.t
+
+val bin_size_t : t Bin_prot.Size.sizer
+
+val bin_write_t : t Bin_prot.Write.writer
+
+val bin_read_t : t Bin_prot.Read.reader

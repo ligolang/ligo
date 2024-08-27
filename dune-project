@@ -52,6 +52,10 @@
   lambda-term
   parse-argv
   msgpck
+  (bin_prot
+   (>= v0.16.0))
+  (ppx_bin_prot
+   (>= v0.16.0))
   ppx_deriving
   ppx_deriving_yojson
   ppx_yojson_conv

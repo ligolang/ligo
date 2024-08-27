@@ -3,7 +3,7 @@ open Core
 type t =
   | Standard of string
   | Verbatim of string
-[@@deriving hash, sexp]
+[@@deriving hash, sexp, bin_io]
 
 let standard : string -> t = fun s -> Standard s
 let verbatim : string -> t = fun s -> Verbatim s
@@ -17,9 +17,10 @@ let to_yojson = function
   | Verbatim v -> `List [ `String "Verbatim"; `String v ]
 
 let error_yojson_format format =
-  Error ("Invalid JSON value.
-          An object with the following specification is expected:"
-         ^ format)
+  Error
+    ("Invalid JSON value.\n\
+     \          An object with the following specification is expected:"
+    ^ format)
 
 let of_yojson = function
   | `List [ `String "Standard"; `String s ] -> Ok (Standard s)

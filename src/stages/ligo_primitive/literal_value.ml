@@ -1,7 +1,7 @@
 module Ligo_z = Simple_utils.Ligo_z
 module Ligo_string = Simple_utils.Ligo_string
 
-type ligo_string = Ligo_string.t [@@deriving eq, compare, yojson, hash, sexp]
+type ligo_string = Ligo_string.t [@@deriving eq, compare, yojson, hash, sexp, bin_io]
 
 let bytes_to_yojson b = `String (Bytes.to_string b)
 let hash_fold_bytes st b = Hash.fold_string st (Bytes.to_string b)
@@ -25,7 +25,7 @@ type t =
   | Literal_bls12_381_fr of bytes
   | Literal_chest of bytes
   | Literal_chest_key of bytes
-[@@deriving eq, compare, yojson, hash, sexp]
+[@@deriving eq, compare, yojson, hash, sexp, bin_io]
 
 let pp_operation ppf (o : bytes) : unit = Format.fprintf ppf "%a" Hex.pp (Hex.of_bytes o)
 

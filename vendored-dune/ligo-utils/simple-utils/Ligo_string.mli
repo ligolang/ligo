@@ -6,7 +6,7 @@ delimited either with double quotes (standard) or with `{|...|}` (verbatim)
 type t =
   | Standard of string
   | Verbatim of string
-[@@deriving hash, sexp]
+[@@deriving hash, sexp, bin_io]
 
 val standard : string -> t
 val verbatim : string -> t

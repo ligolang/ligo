@@ -1,6 +1,6 @@
 open Core
 
-type 'a t = 'a Nonempty_list.t = (::) of 'a * 'a list [@@deriving eq, compare, yojson, hash, sexp, fold, map, iter]
+type 'a t = 'a Nonempty_list.t = (::) of 'a * 'a list [@@deriving eq, compare, yojson, hash, sexp, fold, map, iter, bin_io]
 
 let make x l = x :: l
 

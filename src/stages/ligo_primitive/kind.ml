@@ -2,7 +2,7 @@ type t =
   | Type
   | Singleton
   | Arrow of t * t
-[@@deriving yojson, equal, compare, hash, sexp]
+[@@deriving yojson, equal, compare, hash, sexp, bin_io]
 
 let rec pp ppf t =
   match t with

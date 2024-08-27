@@ -86,7 +86,12 @@ let build_expression ~raise ?(check_config_type = false)
  fun ~options syntax expression init_prg ->
   let open Lwt.Let_syntax in
   let typed_exp =
-    Ligo_compile.Utils.type_expression ~raise ~options syntax expression init_prg.pr_sig
+    Ligo_compile.Utils.type_expression
+      ~raise
+      ~options
+      syntax
+      expression
+      (Checking.Persistent_env.of_init_sig init_prg.pr_sig)
   in
   if check_config_type
   then (

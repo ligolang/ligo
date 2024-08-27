@@ -2,7 +2,7 @@ module Location = Simple_utils.Location
 
 module T = struct
   type t = Label of string * (Location.t[@eq.ignore] [@hash.ignore])
-  [@@deriving eq, yojson, hash, sexp, iter]
+  [@@deriving eq, yojson, hash, sexp, iter, bin_io]
 
   (* hack to order tuples correctly (tuples are currently encoded as
      records with field names equal to int_of_string of the
@@ -73,6 +73,20 @@ module Map = struct
         let acc, data = f ~key ~data acc in
         let map = Core.Map.set map ~key ~data in
         acc, map)
+
+  type 'a t_aux = (T.t * 'a) list [@@deriving bin_io]
+
+  let bin_shape_t = bin_shape_t_aux
+
+  let bin_size_t (bin_size_a : 'a Bin_prot.Size.sizer) (t : 'a t) =
+    bin_size_t_aux bin_size_a @@ Core.Map.to_alist t
+
+  let bin_write_t (bin_write_a : 'a Bin_prot.Write.writer) buf ~pos (t : 'a t) =
+    bin_write_t_aux bin_write_a buf ~pos @@ Core.Map.to_alist t
+
+  let bin_read_t (bin_read_a : 'a Bin_prot.Read.reader) buf ~pos_ref =
+    let alist = bin_read_t_aux bin_read_a buf ~pos_ref in
+    of_alist_exn alist
 end
 
 let pp ppf (l : t) : unit =
@@ -90,8 +104,8 @@ let of_int i = string_of_int i |> of_string
 let of_z i = Z.to_string i |> of_string
 
 module Assoc = struct
-  type 'a assoc = (t * 'a) list [@@deriving eq, compare, yojson, hash, sexp]
-  type 'a t = 'a assoc [@@deriving eq, compare, yojson, hash, sexp]
+  type 'a assoc = (t * 'a) list [@@deriving eq, compare, yojson, hash, sexp, bin_io]
+  type 'a t = 'a assoc [@@deriving eq, compare, yojson, hash, sexp, bin_io]
 
   let iter : 'a t -> f:('a -> unit) -> unit =
    fun xs ~f -> List.iter ~f:(fun (_, x) -> f x) xs

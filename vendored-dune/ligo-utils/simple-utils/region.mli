@@ -165,3 +165,8 @@ val sexp_of_t : region -> Sexp.t
 val t_of_sexp : Sexp.t -> region
 
 val yojson_of_reg : ('a -> json) -> 'a reg -> json
+
+val bin_shape_t : Bin_prot.Shape.t
+val bin_size_t : t Bin_prot.Size.sizer
+val bin_write_t : t Bin_prot.Write.writer
+val bin_read_t : t Bin_prot.Read.reader

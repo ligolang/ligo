@@ -2,7 +2,7 @@ open Var
 module Location = Simple_utils.Location
 
 module type Attr = sig
-  type t [@@deriving eq, compare, yojson, hash]
+  type t [@@deriving eq, compare, yojson, hash, bin_io]
 
   val pp : Format.formatter -> t -> unit
   val default_attributes : t
@@ -14,7 +14,7 @@ module Value_decl (Attr : Attr) = struct
     ; expr : 'e
     ; attr : Attr.t
     }
-  [@@deriving eq, compare, yojson, hash, fold, map]
+  [@@deriving eq, compare, yojson, hash, fold, map, bin_io]
 
   let pp ?(print_type = true) f g ppf { binder; attr; expr } =
     let cond ppf b =
@@ -48,7 +48,7 @@ module Type_decl (Attr : Attr) = struct
     ; type_expr : 't
     ; type_attr : Attr.t
     }
-  [@@deriving eq, compare, yojson, hash, fold, map]
+  [@@deriving eq, compare, yojson, hash, fold, map, bin_io]
 
   let pp g ppf { type_binder; type_expr; type_attr } =
     Format.fprintf
@@ -69,7 +69,7 @@ module Module_decl (Attr : Attr) = struct
     ; annotation : 'annotation
     ; module_attr : Attr.t
     }
-  [@@deriving eq, compare, yojson, hash, fold, map]
+  [@@deriving eq, compare, yojson, hash, fold, map, bin_io]
 
   let pp h a ppf { module_binder; module_; annotation; module_attr } =
     Format.fprintf
@@ -91,7 +91,7 @@ module Signature_decl (Attr : Attr) = struct
     ; signature : 'signature_expr
     ; signature_attr : Attr.t
     }
-  [@@deriving eq, compare, yojson, hash, fold, map]
+  [@@deriving eq, compare, yojson, hash, fold, map, bin_io]
 
   let pp h ppf { signature_binder; signature; signature_attr } =
     Format.fprintf
@@ -111,7 +111,7 @@ module Import_decl (Attr : Attr) = struct
     ; imported_module : Module_var.t
     ; import_attr : Attr.t
     }
-  [@@deriving eq, compare, yojson, hash, fold, map]
+  [@@deriving eq, compare, yojson, hash, fold, map, bin_io]
 
   let pp ppf { import_name; imported_module; import_attr } =
     Format.fprintf

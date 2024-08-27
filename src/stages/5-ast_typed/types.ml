@@ -14,21 +14,21 @@ type type_content =
   | T_sum of type_expression Row.t
   | T_union of type_expression Union.t
   | T_record of type_expression Row.t
-  | T_arrow of ty_expr Arrow.t
+  | T_arrow of type_expression Arrow.t
   | T_singleton of Literal_value.t
-  | T_abstraction of ty_expr Abstraction.t
-  | T_for_all of ty_expr Abstraction.t
+  | T_abstraction of type_expression Abstraction.t
+  | T_for_all of type_expression Abstraction.t
 
 and type_injection =
   { language : string
   ; injection : Ligo_prim.Literal_types.t
-  ; parameters : ty_expr list
+  ; parameters : type_expression list
   }
 
-and row = ty_expr Row.t
+and row = type_expression Row.t
 and te_list = type_expression list
 and annot_option = string option
-and row_element = ty_expr Row.t
+and row_element = type_expression Row.t
 
 and abbrev =
   { orig_var : Module_var.t list * Type_var.t
@@ -44,8 +44,32 @@ and type_expression =
   ; source_type : type_expression option [@equal.ignore] [@compare.ignore] [@hash.ignore]
         (* Used in Ast_aggregated *)
   }
+[@@deriving equal, compare, yojson, hash, bin_io]
 
-and ty_expr = type_expression [@@deriving equal, compare, yojson, hash]
+type ty_expr = type_expression [@@deriving equal, compare, yojson, hash, bin_io]
+
+type sig_item_content =
+  | S_value of Value_var.t * ty_expr * Sig_item_attr.t
+  | S_type of Type_var.t * ty_expr * Sig_type_attr.t
+  | S_type_var of Type_var.t * Sig_type_attr.t
+  | S_module of Module_var.t * signature
+  | S_module_type of Module_var.t * signature
+
+and sig_item = sig_item_content Location.wrap
+
+and signature =
+  { sig_items : sig_item list
+  ; sig_sort : signature_sort
+  } [@@deriving equal, compare, yojson, hash, bin_io]
+
+and contract_sig =
+  { storage : ty_expr
+  ; parameter : ty_expr
+  }
+
+and signature_sort =
+  | Ss_module
+  | Ss_contract of contract_sig
 
 module ValueAttr = Value_attr
 module TypeOrModuleAttr = Type_or_module_attr
@@ -133,29 +157,6 @@ and module_expr =
   ; signature : signature
   }
 [@@deriving equal, compare, yojson, hash]
-
-and sig_item_content =
-  | S_value of Value_var.t * ty_expr * Sig_item_attr.t
-  | S_type of Type_var.t * ty_expr * Sig_type_attr.t
-  | S_type_var of Type_var.t * Sig_type_attr.t
-  | S_module of Module_var.t * signature
-  | S_module_type of Module_var.t * signature
-
-and sig_item = sig_item_content Location.wrap
-
-and signature =
-  { sig_items : sig_item list
-  ; sig_sort : signature_sort
-  }
-
-and contract_sig =
-  { storage : ty_expr
-  ; parameter : ty_expr
-  }
-
-and signature_sort =
-  | Ss_module
-  | Ss_contract of contract_sig
 
 type module_ = decl list [@@deriving equal, compare, yojson, hash]
 

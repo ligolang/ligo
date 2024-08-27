@@ -1,7 +1,7 @@
 module PP_helpers = Simple_utils.PP_helpers
 
 module Make (L : sig
-  type t [@@deriving equal, compare, yojson, sexp]
+  type t [@@deriving equal, compare, yojson, sexp, bin_io]
 
   val fields : t -> Label.Set.t option
   val default : Layout.field list -> t (* ugh *)
@@ -11,7 +11,7 @@ struct
     { fields : 'a Label.Map.t
     ; layout : L.t
     }
-  [@@deriving equal, compare, yojson, sexp]
+  [@@deriving equal, compare, yojson, sexp, bin_io]
 
   let find_type (t : 'a t) (l : Label.t) : 'a option = Map.find t.fields l
 
@@ -99,7 +99,7 @@ struct
 end
 
 module With_optional_layout = Make (struct
-  type t = Layout.t option [@@deriving equal, compare, yojson, sexp]
+  type t = Layout.t option [@@deriving equal, compare, yojson, sexp, bin_io]
 
   let fields t = Option.map t ~f:Layout.fields
   let default fields = Some (Layout.default fields)
@@ -177,4 +177,5 @@ module With_layout = struct
         | Some vs -> List.concat_map (List.zip_exn ts vs) ~f:(fun (t, v) -> aux t v))
     in
     aux row.layout value
+
 end

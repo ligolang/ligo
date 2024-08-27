@@ -3,7 +3,7 @@ type 'a t =
   ; kind : Kind.t
   ; type_ : 'a
   }
-[@@deriving eq, compare, yojson, hash, fold, map, iter, sexp]
+[@@deriving eq, compare, yojson, hash, fold, map, iter, sexp, bin_io]
 (* Lambda (a : kind). term *)
 
 let pp_forall f ppf { ty_binder; kind; type_ } : unit =

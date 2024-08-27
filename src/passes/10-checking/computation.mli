@@ -527,7 +527,7 @@ val run_elab_with_refs
   -> loc:Location.t
   -> path:Module_var.t list
   -> refs_tbl:Context_.Refs_tbl.t
-  -> ?env:Ast_typed.signature
+  -> ?env:Persistent_env.t
   -> unit
   -> 'a
 
@@ -539,7 +539,7 @@ val run_elab
   -> options:Compiler_options.middle_end
   -> loc:Location.t
   -> path:Module_var.t list
-  -> ?env:Ast_typed.signature
+  -> ?env:Persistent_env.t
   -> unit
   -> 'a
 

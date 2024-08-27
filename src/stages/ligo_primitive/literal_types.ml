@@ -14,7 +14,7 @@ module External = struct
     | Map_add
     | Map_remove
     | Map_remove_value
-  [@@deriving ord, eq, yojson, hash, sexp, is { tags = [ "only_interpreter" ] }]
+  [@@deriving ord, eq, yojson, hash, sexp, is { tags = [ "only_interpreter" ] }, bin_io]
 
   let to_string = function
     | Bytes -> "bytes"
@@ -75,7 +75,7 @@ type t =
   | Views [@only_interpreter]
   | Chest
   | Chest_key
-[@@deriving ord, eq, yojson, hash, sexp, is { tags = [ "only_interpreter" ] }]
+[@@deriving ord, eq, yojson, hash, sexp, is { tags = [ "only_interpreter" ] }, bin_io]
 
 let to_string = function
   | String -> "string"

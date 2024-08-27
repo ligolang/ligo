@@ -3,7 +3,7 @@ module T = struct
     { var : Var.Value_var.t
     ; ascr : 'a
     }
-  [@@deriving eq, compare, yojson, hash, fold, map, iter, sexp]
+  [@@deriving eq, compare, yojson, hash, fold, map, iter, sexp, bin_io]
 end
 
 include T

@@ -15,7 +15,7 @@ module Layout = struct
   type t =
     | L_concrete of Ligo_Layout.t
     | L_exists of Layout_var.t
-  [@@deriving yojson, equal, sexp, compare, hash]
+  [@@deriving yojson, equal, sexp, compare, hash, bin_io]
 
   type field = Ligo_Layout.field =
     { name : Label.t

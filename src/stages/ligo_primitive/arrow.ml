@@ -3,7 +3,7 @@ type 'a t =
   ; type2 : 'a
   ; param_names : string list [@eq.ignore] [@hash.ignore] [@compare.ignore]
   }
-[@@deriving eq, compare, yojson, hash, fold, map, sexp]
+[@@deriving eq, compare, yojson, hash, fold, map, sexp, bin_io]
 
 let pp g ppf { type1; type2; param_names } =
   let pp_param_names ppf param_names =

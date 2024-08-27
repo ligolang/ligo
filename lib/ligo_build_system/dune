@@ -2,7 +2,7 @@
  (name BuildSystem)
  (public_name ligo.build_system)
  (wrapped true)
- (libraries uri simple-utils ocamlgraph)
+ (libraries uri simple-utils ocamlgraph ligo_prim)
  (preprocess
   (pps
    bisect_ppx

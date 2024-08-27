@@ -1,4 +1,4 @@
-type t = { leading_comments : string list } [@@deriving eq, compare, yojson, hash]
+type t = { leading_comments : string list } [@@deriving eq, compare, yojson, hash, bin_io]
 
 open Format
 open Value_attr.PP_attributes

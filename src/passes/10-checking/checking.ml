@@ -16,6 +16,8 @@ module Ligo_string = Simple_utils.Ligo_string
 module Ligo_map = Simple_utils.Ligo_map
 module Fuzzy_bool = Simple_utils.Fuzzy_bool
 module Refs_tbl = Context.Refs_tbl
+module Persistent_env = Persistent_env
+module Cmi = Cmi
 
 let untype_expression = Untyper.untype_expression
 let untype_type_expression = Untyper.untype_type_expression

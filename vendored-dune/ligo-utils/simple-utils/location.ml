@@ -1,20 +1,23 @@
 open Core
 
-type virtual_location = string [@@deriving hash, sexp]
+type virtual_location = string [@@deriving hash, sexp, bin_io]
 
 type t =
   | File of Region.t (* file_location *)
   | Virtual of virtual_location
-[@@deriving sexp]
+[@@deriving sexp, bin_io]
+
+type loc = t
 
 let to_yojson = function
   | File reg -> `List [ `String "File"; Region.to_yojson reg ]
   | Virtual v -> `List [ `String "Virtual"; `String v ]
 
 let error_yojson_format format =
-  Error ("Invalid JSON value.
-          An object with the following specification is expected:"
-         ^ format)
+  Error
+    ("Invalid JSON value.\n\
+     \          An object with the following specification is expected:"
+    ^ format)
 
 let of_yojson = function
   | `List [ `String "File"; reg ] ->
@@ -77,7 +80,7 @@ type 'a wrap =
   { wrap_content : 'a
   ; location : t [@hash.ignore]
   }
-[@@deriving eq, compare, yojson, hash, iter, map, fold, sexp]
+[@@deriving eq, compare, yojson, hash, iter, map, fold, sexp, bin_io]
 
 let sexp_of_wrap : ('a -> Sexp.t) -> 'a wrap -> Sexp.t =
  fun sexp_of_content ({ wrap_content; location } as x) ->
