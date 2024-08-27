@@ -1,6 +1,12 @@
 (* This module provides a translation from the TypeScript abstract
    grammar, as provided in the JSON file node-types.json by
-   tree-sitter, to an OCaml equivalent. *)
+   tree-sitter, to an OCaml equivalent.
+
+   Run with:
+
+   $ dune build Static_nodes_reader.exe
+   $ <git path>/_build/default/lib/typescript_ast/Static_nodes_reader.exe node-types.json | less
+*)
 
 (* Dependencies *)
 
