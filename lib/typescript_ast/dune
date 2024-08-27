@@ -14,10 +14,10 @@
 ;; Local build of a standalone parser for node-types.json
 
 (executable
- (name StaticNodesReader)
+ (name Static_nodes_reader)
  (libraries
   cst_shared ;; For printing the TS CST
   core
   core_kernel.nonempty_list
   yojson)
- (modules StaticNodesReader))
+ (modules Static_nodes_reader))
