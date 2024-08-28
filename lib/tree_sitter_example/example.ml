@@ -25,6 +25,7 @@ type ts_tree_ptr = TS_types.ts_tree structure Ctypes_static.ptr
 
 (* Converting C strings of type 'char*' to OCaml strings of type
    [string]. *)
+
 let string_of_char_ptr (ptr: char ptr) : string =
   let rec get_length (p: char ptr) : int =
     if !@p = '\000' then 0 else 1 + get_length (p +@ 1) in
@@ -36,15 +37,18 @@ let string_of_char_ptr (ptr: char ptr) : string =
   Bytes.to_string buffer
 
 (* Printing the tree *)
+
 let print_node (node: ts_tree) : unit =
   let ptr_char = TS_fun.ts_node_string node in
   Printf.printf "%s\n%!" @@ string_of_char_ptr ptr_char
 
 (* Converting a node to an OCaml string *)
+
 let string_of_ts_node_type (node: ts_tree) : string =
   string_of_char_ptr @@ TS_fun.ts_node_type node
 
 (* Parsing a string expected to contain a valid TypeScript program *)
+
 let parse_typescript_string (source_code: string) : ts_tree_ptr =
   let parser     = TS_fun.ts_parser_new ()
   and language   = tree_sitter_typescript () in
@@ -63,10 +67,10 @@ let () =
   let tree : ts_tree_ptr =
     parse_typescript_string code in
   (* Extracting all the nodes *)
-  let root_node : ts_tree =
+  let program_node : ts_tree =
     TS_fun.ts_tree_root_node tree in
   let expr_stmt_node : ts_tree =
-    TS_fun.ts_node_named_child root_node (UInt32.of_int 0) in
+    TS_fun.ts_node_named_child program_node (UInt32.of_int 0) in
   let array_node : ts_tree =
     TS_fun.ts_node_named_child expr_stmt_node (UInt32.of_int 0) in
   let number_node : ts_tree =
@@ -74,15 +78,15 @@ let () =
   let null_node : ts_tree =
     TS_fun.ts_node_named_child array_node (UInt32.of_int 1) in
   (* Checking the node types *)
-  assert (string_of_ts_node_type root_node = "program");
+  assert (string_of_ts_node_type program_node = "program");
   assert (string_of_ts_node_type expr_stmt_node = "expression_statement");
   assert (string_of_ts_node_type array_node = "array");
   assert (string_of_ts_node_type number_node = "number");
   assert (string_of_ts_node_type null_node = "null");
   (* Checking the child counts *)
-  assert (TS_fun.ts_node_child_count root_node = UInt32.of_int 1);
+  assert (TS_fun.ts_node_child_count program_node = UInt32.of_int 1);
   assert (TS_fun.ts_node_child_count array_node = UInt32.of_int 5);
   assert (TS_fun.ts_node_child_count number_node = UInt32.of_int 0);
   (* Printing the tree and freeing the memory *)
-  print_node root_node;
+  print_node program_node;
   TS_fun.ts_tree_delete tree
