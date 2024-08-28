@@ -61,6 +61,8 @@ let parse_typescript_string (source_code: string) : ts_tree_ptr =
                      (UInt32.of_int @@ String.length source_code)
   in TS_fun.ts_parser_delete parser; parse_tree
 
+(* The example per se *)
+
 let () =
   let code = "[1, null]" in
   (* Parsing the code *)
