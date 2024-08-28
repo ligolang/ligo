@@ -21,7 +21,16 @@ type bigint_literal =
   | Oct_literal of oct_literal
   | Dec_literal of dec_literal
 
-(** The Abstract Syntax Tree *)
+(** The Abstract Syntax Tree
+
+  The related grammar rule is given by:
+  + JavaScript
+    {@js[
+     program: $ => seq(
+       optional($.hash_bang_line),
+       repeat($.statement))
+    ]}
+*)
 type program = statement list
 
 (** DECLARATIONS
