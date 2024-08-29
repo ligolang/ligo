@@ -87,6 +87,7 @@ let () =
   assert (string_of_ts_node_type null_node = "null");
   (* Checking the child counts *)
   assert (TS_fun.ts_node_child_count program_node = UInt32.of_int 1);
+  assert (TS_fun.ts_node_child_count expr_stmt_node = UInt32.of_int 1);
   assert (TS_fun.ts_node_child_count array_node = UInt32.of_int 5);
   assert (TS_fun.ts_node_child_count number_node = UInt32.of_int 0);
   (* Printing the tree and freeing the memory *)
