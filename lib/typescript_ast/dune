@@ -1,9 +1,9 @@
 ;; Library exporting the TypeScript AST
 
 (library
- (name ts_ast)
- (public_name ligo.ts_ast)
- (modules ts_ast)
+ (name typescript_ast)
+ (public_name ligo.typescript_ast)
+ (modules AST Print)
  (libraries
   cst_shared ;; For printing the TS CST
   hex
