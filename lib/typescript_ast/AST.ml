@@ -2708,7 +2708,7 @@ and export_default =
 
 (** Expression Statement
 
-  Expressions can used as statements, for example, a function call
+  Expressions can be used as statements, for example, a function call
   returning nothing (unit).
 
   The related grammar rule is given by:
