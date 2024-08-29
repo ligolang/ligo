@@ -33,6 +33,8 @@ type bigint_literal =
 *)
 type program = statement list
 
+and t = program
+
 (** DECLARATIONS
 
   Declarations, when they are valid, extend the current scope with

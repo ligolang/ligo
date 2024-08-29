@@ -6,6 +6,9 @@
 
    $ dune build Static_nodes_reader.exe
    $ <git path>/_build/default/lib/typescript_ast/Static_nodes_reader.exe node-types.json | less
+
+   NOTE: The conversion from JSON could perhaps be derived by means of
+   ppx_yojson_conv.
 *)
 
 (* Dependencies *)
@@ -125,7 +128,7 @@ let print_types_or_sub state root subtypes =
 
 let print_subtypes state = print_types_or_sub state "subtypes"
 
-let print_Union state rule =
+let print_union state rule =
   let { type_; named; subtypes } = rule in
   let children =
     Tree.
@@ -157,7 +160,7 @@ let print_fields state fields =
 
 let print_children state children = print_field state ("children", children)
 
-let print_Prod state rule =
+let print_prod state rule =
   let { type_; named; fields; children } = rule in
   let children' =
     Tree.
@@ -170,8 +173,8 @@ let print_Prod state rule =
   Tree.make state "Prod" children'
 
 let print_rule state = function
-  | Union rule -> print_Union state rule
-  | Prod rule -> print_Prod state rule
+  | Union rule -> print_union state rule
+  | Prod rule -> print_prod state rule
 
 let print_abs_gram state abs_gram = Tree.of_list state "<abs_gram>" print_rule abs_gram
 
