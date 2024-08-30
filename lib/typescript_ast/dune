@@ -3,7 +3,7 @@
 (library
  (name typescript_ast)
  (public_name ligo.typescript_ast)
- (modules AST Print)
+ (modules ast)
  (libraries
   cst_shared ;; For printing the TS CST
   hex
@@ -14,10 +14,10 @@
 ;; Local build of a standalone parser for node-types.json
 
 (executable
- (name Static_nodes_reader)
+ (name static_nodes_reader)
  (libraries
   cst_shared ;; For printing the TS CST
   core
   core_kernel.nonempty_list
   yojson)
- (modules Static_nodes_reader))
+ (modules static_nodes_reader))
