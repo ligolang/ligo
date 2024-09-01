@@ -11,6 +11,17 @@
   core
   core_kernel.nonempty_list))
 
+;; Decoder
+
+(executable
+ (name decoder)
+ (libraries
+    core
+    tree_sitter
+    tree_sitter_typescript
+    cst_shared)
+ (modules decoder))
+
 ;; Local build of a standalone parser for node-types.json
 
 (executable
