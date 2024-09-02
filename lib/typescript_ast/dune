@@ -14,13 +14,13 @@
 ;; Decoder
 
 (executable
- (name decoder)
+ (name decoder_main)
  (libraries
     core
     tree_sitter
     tree_sitter_typescript
     cst_shared)
- (modules decoder))
+ (modules decoder decoder_main))
 
 ;; Local build of a standalone parser for node-types.json
 
