@@ -178,21 +178,3 @@ and print_expression state node =
 
 and print_array state name _node =
   Tree.make_node state name
-
-(* Example *)
-
-let () =
-  let code = "[1, null]; f(2)" in
-  (* Parsing the code *)
-  let tree : ts_tree_ptr =
-    parse_typescript_string code in
-  (* Empty state for building the AST *)
-  let buffer = Buffer.create 1023 in
-  let state =
-    Tree.mk_state ~buffer ~regions:false ~layout:true ~offsets:true `Byte in
-  (* Extracting all the nodes *)
-  let program_node : ts_tree =
-    TS_fun.ts_tree_root_node tree in
-  let () = print_program state program_node in
-  let ast_buffer = Tree.to_buffer state
-  in Printf.printf "%s\n%!" (Buffer.contents ast_buffer)
