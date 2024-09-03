@@ -58,6 +58,7 @@ depends: [
   "lwt-canceler"
   "seqes"
   "ctypes_stubs_js"
+  "ctypes-foreign"
   "hacl-star-raw"
   "hacl-star"
   "secp256k1-internal"

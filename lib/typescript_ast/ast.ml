@@ -1671,7 +1671,7 @@ and primary_expression =
   | E_number
   | E_object of object_
   | E_parenthesized_expression of expression
-  (*| E_regex of regex*)
+  | E_regex of string
   | E_string
   | E_subscript_expression of subscript_expression
   | E_super

@@ -38,6 +38,20 @@ let string_of_char_ptr (ptr: char ptr) : string =
   done;
   Bytes.to_string buffer
 
+(* Length of string as an unsigned integer *)
+
+let uint32_len string = UInt32.of_int (String.length string)
+
+(* Node to optional node *)
+
+let node_to_opt node =
+  if TS_fun.ts_node_is_null node then None else Some node
+
+(* Wrapper for filtering fields *)
+
+let ts_node_child_by_field_name node name =
+  TS_fun.ts_node_child_by_field_name node name (uint32_len name)
+
 (* Printing the tree *)
 (*
 let print_node (node: ts_tree) : unit =
@@ -66,7 +80,7 @@ let parse_typescript_string (source_code: string) : ts_tree_ptr =
 
 (* Collating named children of a given node *)
 
-let collect_named_children (node: ts_tree) =
+let collect_named_children (node: ts_tree) : ts_tree list =
   let rec collect acc n =
     if UInt32.(equal zero n) then acc
     else let index = UInt32.pred n in
@@ -77,14 +91,20 @@ let collect_named_children (node: ts_tree) =
 let print_unexpected_node state name _node =
   Tree.make_node state (name ^ "?")
 
+let print_todo_node state name _node =
+  Tree.make_node state (name ^ "!")
+
 (* Printing the AST *)
 
-let rec print_program state program_node =
-  let node_name = string_of_ts_node_type program_node in
-  let children = collect_named_children program_node in
-  Tree.of_list state node_name print_statement children
+let rec print_program state node =
+  let name = string_of_ts_node_type node in
+  let children = collect_named_children node in
+  Tree.of_list state name print_statement children
 
-(* Statements *)
+(* Statements
+
+   The JavasScript tree-sitter grammar have the non-terminal
+   "statement" be a supertype, that is, a hidden rule. *)
 
 and print_statement state node =
   let name = string_of_ts_node_type node in
@@ -119,62 +139,218 @@ and print_import_statement state name _node =
 and print_debugger_statement state name _node =
   Tree.make_node state name
 
+(* Expression statements
+
+   {@js[
+   expression_statement: $ => seq($._expressions, $._semicolon),
+   _expressions: $ => choice($.expression, $.sequence_expression),
+   sequence_expression: $ => prec.right(commaSep1($.expression))
+   ]}
+
+   See [print_expression]. *)
+
 and print_expression_statement state name node =
   let children = collect_named_children node in
   Tree.of_list state name print_expression children
 
-and print_declaration state name _node =
+and print_declaration state name node =
+  print_todo_node state name node
+
+and print_statement_block state name node =
+  print_todo_node state name node
+
+and print_if_statement state name node =
+  print_todo_node state name node
+
+and print_switch_statement state name node =
+  print_todo_node state name node
+
+and print_for_statement state name node =
+  print_todo_node state name node
+
+and print_while_statement state name node =
+  print_todo_node state name node
+
+and print_do_statement state name node =
+  print_todo_node state name node
+
+and print_try_statement state name node =
+  print_todo_node state name node
+
+and print_with_statement state name node =
+  print_todo_node state name node
+
+and print_break_statement state name node =
+  print_todo_node state name node
+
+and print_continue_statement state name node =
+  print_todo_node state name node
+
+and print_return_statement state name node =
+  print_todo_node state name node
+
+and print_throw_statement state name node =
+  print_todo_node state name node
+
+and print_empty_statement state name node =
+  print_todo_node state name node
+
+and print_labeled_statement state name node =
+  print_todo_node state name node
+
+(* Expressions
+
+   The JavasScript tree-sitter grammar have the non-terminals
+   "expression" and "primary_expression" be supertypes, that is,
+   hidden rules. Therefore we have to match all the RHS of those
+   non-terminals in [print_expression], but also "sequence_expression"
+   from the RHS of the hidden rule "_expressions" (see
+   [print_expression_statement]). *)
+
+and print_expression ?name state node =
+  let name =
+    match name with
+      None -> string_of_ts_node_type node
+    | Some name -> name in
+  match name with
+  | "subscript_expression" -> print_subscript_expression state name node
+  | "member_expression" -> print_member_expression state name node
+  | "parenthesized_expression" -> print_parenthesized_expression state name node
+  | "identifier" -> print_identifier state name node
+  | "undefined" -> print_undefined state name node
+  | "this" -> print_this state name node
+  | "super" -> print_super state name node
+  | "number" -> print_number state name node
+  | "string" -> print_string state name node
+  | "template_string" -> print_template_string state name node
+  | "regex" -> print_regex state name node
+  | "true" -> print_true state name node
+  | "false" -> print_false state name node
+  | "null" -> print_null state name node
+  | "object" -> print_object state name node
+  | "array" -> print_array state name node
+  | "function_expression" -> function_expression state name node
+  | "arrow_function" -> print_arrow_function state name node
+  | "generator_function" -> print_generator_function state name node
+  | "class" -> print_class state name node
+  | "meta_property" -> print_meta_property state name node
+  | "call_expression" -> print_call_expression state name node
+  | "non_null_expression" -> print_non_null_expression state name node
+  | "sequence_expression" -> print_sequence_expression state name node
+  | _ -> print_unexpected_node state name node
+
+and print_subscript_expression state name node =
+  print_todo_node state name node
+
+and print_member_expression state name node =
+  print_todo_node state name node
+
+and print_parenthesized_expression state name node =
+  print_todo_node state name node
+
+and print_identifier state name _node =
   Tree.make_node state name
 
-and print_statement_block state name _node =
+and print_undefined state name _node =
   Tree.make_node state name
 
-and print_if_statement state name _node =
+and print_this state name _node =
   Tree.make_node state name
 
-and print_switch_statement state name _node =
+and print_super state name _node =
   Tree.make_node state name
 
-and print_for_statement state name _node =
+and print_number state name _node =
   Tree.make_node state name
 
-and print_while_statement state name _node =
+and print_string state name _node =
   Tree.make_node state name
 
-and print_do_statement state name _node =
+and print_template_string state name _node =
   Tree.make_node state name
 
-and print_try_statement state name _node =
+and print_regex state name _node =
   Tree.make_node state name
 
-and print_with_statement state name _node =
+and print_true state name _node =
   Tree.make_node state name
 
-and print_break_statement state name _node =
+and print_false state name _node =
   Tree.make_node state name
 
-and print_continue_statement state name _node =
+and print_null state name _node =
   Tree.make_node state name
 
-and print_return_statement state name _node =
-  Tree.make_node state name
+and print_object state name node =
+  print_todo_node state name node
 
-and print_throw_statement state name _node =
-  Tree.make_node state name
+(* Arrays *)
 
-and print_empty_statement state name _node =
-  Tree.make_node state name
+and print_array state name node =
+  let children = collect_named_children node in
+  Tree.of_list state name print_array_cell children
 
-and print_labeled_statement state name _node =
-  Tree.make_node state name
-
-(* Expressions *)
-
-and print_expression state node =
+and print_array_cell state node =
   let name = string_of_ts_node_type node in
   match name with
-    "array" -> print_array state name node
-  | _ -> print_unexpected_node state name node (* TODO *)
+  | "spread_element" -> print_spread_element state name node
+  | _ -> print_expression ~name state node
 
-and print_array state name _node =
-  Tree.make_node state name
+and print_spread_element state name node =
+  let children = collect_named_children node in
+  Tree.of_list state name print_expression children
+
+(* *)
+
+and function_expression state name node =
+  print_todo_node state name node
+
+and print_arrow_function state name node =
+  print_todo_node state name node
+
+and print_generator_function state name node =
+  print_todo_node state name node
+
+and print_class state name node =
+  print_todo_node state name node
+
+and print_meta_property state name node =
+  print_todo_node state name node
+
+(* Call expression *)
+
+and print_call_expression state name node =
+  let function_ =
+    ts_node_child_by_field_name node "function" in
+  let type_arguments =
+    node_to_opt @@ ts_node_child_by_field_name node "type_arguments" in
+  let arguments =
+    ts_node_child_by_field_name node "arguments" in
+  let print_function state node =
+    let name = string_of_ts_node_type node in
+    match name with
+      "import" -> Tree.make_node state name
+    | _ -> print_expression ~name state node in
+  let children = Tree.[
+    mk_child     print_function       function_;
+    mk_child_opt print_type_arguments type_arguments;
+    mk_child     print_arguments      arguments
+  ]
+  in Tree.make state name children
+
+and print_type_arguments state node =
+  let name = string_of_ts_node_type node in
+  print_todo_node state name node
+
+and print_arguments state node =
+  let name = string_of_ts_node_type node in
+  print_todo_node state name node
+
+(* *)
+
+and print_non_null_expression state name node =
+  print_todo_node state name node
+
+and print_sequence_expression state name node =
+  let children = collect_named_children node in
+  Tree.of_list state name print_expression children
