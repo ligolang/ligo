@@ -53,21 +53,21 @@ module Functions (S : FOREIGN) = struct
 
   (* TREE *)
 
-  (* Create a shallow copy of the syntax tree.
+  (* Create a shallow copy of the syntax tree
 
      TSTree *ts_tree_copy(const TSTree *self);
   *)
   let ts_tree_copy =
     foreign "ts_tree_copy" (ptr ts_tree @-> returning @@ ptr ts_tree)
 
-  (* Delete the syntax tree, freeing all of the memory that it used.
+  (* Delete the syntax tree, freeing all of the memory that it used
 
      void ts_tree_delete(TSTree *self);
   *)
   let ts_tree_delete =
     foreign "ts_tree_delete" (ptr ts_tree @-> returning void)
 
-  (* Get the root node of the syntax tree.
+  (* Get the root node of the syntax tree
 
      TSNode ts_tree_root_node(const TSTree *self);
   *)
@@ -76,35 +76,35 @@ module Functions (S : FOREIGN) = struct
 
   (* NODE *)
 
-  (* Get the node's type as a null-terminated string.
+  (* Get the node's type as a null-terminated string
 
      const char *ts_node_type(TSNode self);
   *)
   let ts_node_type =
     foreign "ts_node_type" (ts_node @-> returning @@ ptr char)
 
-  (* Get an S-expression representing the node as a string.
+  (* Get an S-expression representing the node as a string
 
      char *ts_node_string(TSNode self);
   *)
   let ts_node_string =
     foreign "ts_node_string" (ts_node @-> returning @@ ptr char)
 
-  (* Get the node's number of children.
+  (* Get the node's number of children
 
      uint32_t ts_node_child_count(TSNode self);
   *)
   let ts_node_child_count =
     foreign "ts_node_child_count" (ts_node @-> returning uint32_t)
 
-  (* Get the node's *named* child at the given index.
+  (* Get the node's *named* child at the given index
 
      TSNode ts_node_named_child(TSNode self, uint32_t child_index);
   *)
   let ts_node_named_child =
     foreign "ts_node_named_child" (ts_node @-> uint32_t @-> returning ts_node)
 
-  (* Get the node's number of *named* children.
+  (* Get the node's number of *named* children
 
      uint32_t ts_node_named_child_count(TSNode self);
   *)
@@ -132,10 +132,31 @@ module Functions (S : FOREIGN) = struct
   let ts_node_next_named_sibling =
     foreign "ts_node_next_named_sibling" (ts_node @-> returning ts_node)
 
-  (* Get the node's previous *named* sibling.
+  (* Get the node's previous *named* sibling
 
      TSNode ts_node_prev_named_sibling(TSNode self);
   *)
   let ts_node_prev_named_sibling =
     foreign "ts_node_prev_named_sibling" (ts_node @-> returning ts_node)
+
+  (* Get the node's child by *field*
+
+     TSNode ts_node_child_by_field_name(
+       TSNode self,
+       const char *field_name,
+       uint32_t field_name_length
+     );
+  *)
+  let ts_node_child_by_field_name =
+    foreign
+      "ts_node_child_by_field_name"
+      (ts_node @-> string @-> uint32_t @-> returning ts_node)
+
+  (* Checking is a node is null
+
+     bool ts_node_is_null(TSNode);
+  *)
+
+  let ts_node_is_null =
+    foreign "ts_node_is_null" (ts_node @-> returning bool)
 end
