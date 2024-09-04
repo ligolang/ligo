@@ -88,6 +88,18 @@ let collect_named_children (node: ts_tree) : ts_tree list =
          in collect (child :: acc) index
   in collect [] (TS_fun.ts_node_named_child_count node)
 
+(* Collating all  children of a given node *)
+
+let collect_children (node: ts_tree) : ts_tree list =
+  let rec collect acc n =
+    if UInt32.(equal zero n) then acc
+    else let index = UInt32.pred n in
+         let child = TS_fun.ts_node_child node index
+         in collect (child :: acc) index
+  in collect [] (TS_fun.ts_node_child_count node)
+
+(* Unexpected and TODO nodes *)
+
 let print_unexpected_node state name _node =
   Tree.make_node state (name ^ "?")
 
@@ -332,19 +344,23 @@ and print_call_expression state name node =
       "import" -> Tree.make_node state name
     | _ -> print_expression ~name state node in
   let children = Tree.[
-    mk_child     print_function       function_;
-    mk_child_opt print_type_arguments type_arguments;
-    mk_child     print_arguments      arguments
-  ]
+      mk_child     print_function       function_;
+      mk_child_opt print_type_arguments type_arguments;
+      mk_child     print_arguments      arguments
+    ]
   in Tree.make state name children
 
 and print_type_arguments state node =
   let name = string_of_ts_node_type node in
-  print_todo_node state name node
+  let children = collect_named_children node in
+  Tree.of_list state name print_type children
 
 and print_arguments state node =
   let name = string_of_ts_node_type node in
-  print_todo_node state name node
+  let children = collect_named_children node in
+  Tree.of_list state name print_argument children
+
+and print_argument state node = print_array_cell state node
 
 (* *)
 
@@ -354,3 +370,122 @@ and print_non_null_expression state name node =
 and print_sequence_expression state name node =
   let children = collect_named_children node in
   Tree.of_list state name print_expression children
+
+(* TYPES
+
+   The non-terminals "type" and "primary_type" are supertypes in the
+   TypeScript grammar, which means that they are hidden rules. *)
+
+and print_type state node =
+  let name = string_of_ts_node_type node in
+  match name with
+  (* The (inlined) "primary_type" cases first *)
+  | "parenthesized_type" -> print_parenthesized_type state name node
+  | "predefined_type" -> print_predefined_type state name node
+  | "type_identifier" -> print_identifier state name node (* Alias *)
+  | "nested_type_identifier" -> print_nested_type_identifier state name node
+  | "generic_type" -> print_generic_type state name node
+  | "object_type" -> print_object_type state name node
+  | "array_type" -> print_array_type state name node
+  | "tuple_type" -> print_tuple_type state name node
+  (*  | "flow_maybe_type" -> *)
+  | "type_query" -> print_type_query state name node
+  | "index_type_query" -> print_index_type_query state name node
+  | "this" -> print_this state name node
+  | "existential_type" -> print_existential_type state name node
+  | "literal_type" -> print_literal_type state name node
+  | "lookup_type" -> print_lookup_type state name node
+  | "conditional_type" -> print_conditional_type state name node
+  | "template_literal_type" -> print_template_literal_type state name node
+  | "intersection_type" -> print_intersection_type state name node
+  | "union_type" -> print_union_type state name node
+  (* Rest of the types *)
+  | "function_type" -> print_function_type state name node
+  | "readonly_type" -> print_readonly_type state name node
+  | "constructor_type" -> print_constructor_type state name node
+  | "infer_type" -> print_infer_type state name node
+  (* A couple of aliases *)
+  | "member_expression" -> print_member_expression state name node
+  | "call_expression" -> print_call_expression state name node
+  | _ -> print_unexpected_node state name node
+
+and print_parenthesized_type state name node =
+  let children = collect_named_children node in
+  Tree.of_list state name print_type children
+
+and print_predefined_type state name node =
+  match collect_children node with
+    [] -> ()
+  | child :: _ ->
+    let print state node =
+      let name = string_of_ts_node_type node in
+      match name with
+      | "any" -> Tree.make_node state name
+      | "number" -> Tree.make_node state name
+      | "boolean" -> Tree.make_node state name
+      | "string" -> Tree.make_node state name
+      | "symbol" -> Tree.make_node state name
+      | "unique symbol" -> Tree.make_node state name
+      | "void" -> Tree.make_node state name
+      | "unknown" -> Tree.make_node state name
+      | "never" -> Tree.make_node state name
+      | "object" -> Tree.make_node state name
+      | _ -> print_unexpected_node state name node
+    in Tree.make_unary state name print child
+
+and print_nested_type_identifier state name node =
+  print_todo_node state name node
+
+and print_generic_type state name node =
+  print_todo_node state name node
+
+and print_object_type state name node =
+  print_todo_node state name node
+
+and print_array_type state name node =
+  let children = collect_named_children node in
+  Tree.of_list state name print_type children
+
+and print_tuple_type state name node =
+  print_todo_node state name node
+
+and print_type_query state name node =
+  print_todo_node state name node
+
+and print_index_type_query state name node =
+  print_todo_node state name node
+
+and print_existential_type state name node =
+  print_todo_node state name node
+
+and print_literal_type state name node =
+  print_todo_node state name node
+
+and print_lookup_type state name node =
+  print_todo_node state name node
+
+and print_conditional_type state name node =
+  print_todo_node state name node
+
+and print_template_literal_type state name node =
+  print_todo_node state name node
+
+and print_intersection_type state name node =
+  print_todo_node state name node
+
+and print_union_type state name node =
+  let children = collect_named_children node in
+  Tree.of_list state name print_type children
+
+and print_function_type state name node =
+  print_todo_node state name node
+
+and print_readonly_type state name node =
+  let children = collect_named_children node in
+  Tree.of_list state name print_type children
+
+and print_constructor_type state name node =
+  print_todo_node state name node
+
+and print_infer_type state name node =
+  print_todo_node state name node

@@ -2060,6 +2060,8 @@ and type_ =
        $.union_type,
        'const'),
 
+     parenthesized_type: $ => seq('(', $.type, ')'),
+
      _type_identifier: $ => alias($.identifier, $.type_identifier),
 
      existential_type: _ => '*'
