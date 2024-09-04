@@ -1,1 +1,1 @@
-[...x, ...y, 1, null], import <T>(""); []
+f <string | unique symbol>("", x);
