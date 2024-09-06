@@ -8,6 +8,7 @@
 
 (** Literals *)
 type identifier = string
+
 type template_string = string
 type hash_name = string
 type hex_literal = string * Hex.t
@@ -558,7 +559,6 @@ and object_assignment_pattern =
   }
 
 and object_lhs_pattern = lhs_pattern
-
 and array_pattern = array_cell_pattern list
 
 and array_cell_pattern =
@@ -1033,6 +1033,7 @@ and generic_name =
     ]}
  *)
 and internal_module = module_
+
 and module_ = module_name * statement_block
 
 and module_name =
