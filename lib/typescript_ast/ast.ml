@@ -100,7 +100,10 @@ and declaration =
        field('name', $.identifier),
        $._call_signature,
        field('body', $.statement_block),
-       optional($._automatic_semicolon)))
+       optional($._automatic_semicolon))),
+
+     statement_block: $ => prec.right(seq(
+       '{', repeat($.statement), '}', optional($._automatic_semicolon)))
     ]}
 
   See [function_signature] below.
