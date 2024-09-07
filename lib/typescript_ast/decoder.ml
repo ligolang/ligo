@@ -217,7 +217,13 @@ and print_expression_statement state ?name node =
   let children = collect_named_children node in
   Tree.of_list state name (anon print_expression) children
 
-and print_statement_block state ?name node = print_todo_node state ?name node
+(* Statement blocks *)
+
+and print_statement_block state ?name node =
+  let name = get_name ?name node in
+  let children = collect_named_children node in
+  Tree.of_list state name (anon print_statement) children
+
 and print_if_statement state ?name node = print_todo_node state ?name node
 and print_switch_statement state ?name node = print_todo_node state ?name node
 and print_for_statement state ?name node = print_todo_node state ?name node
@@ -512,7 +518,7 @@ and print_type state ?name node =
   (* Errors *)
   | "ERROR" -> print_error_node state ~name node
   | "MISSING" -> print_missing_node state ~name node
-  (* Unexpected node is expression node *)
+  (* Unexpected node *)
   | _ -> print_unexpected_node state ~name node
 
 and print_parenthesized_type state ?name node =
@@ -552,7 +558,7 @@ and print_predefined_type state ?name node =
       (* Errors *)
       | "ERROR" -> print_error_node state ~name node
       | "MISSING" -> print_missing_node state ~name node
-      (* Unexpected node is expression node *)
+      (* Unexpected node *)
       | _ -> print_unexpected_node state ~name node
     in
     Tree.make_unary state name print child
@@ -630,8 +636,16 @@ and print_optional_tuple_parameter state ?name node =
   in
   Tree.make state name children
 
-and print_optional_type state ?name node = print_todo_node state ?name node
-and print_rest_type state ?name node = print_todo_node state ?name node
+and print_optional_type state ?name node =
+  let name = get_name ?name node in
+  let children = collect_named_children node in
+  Tree.of_list state name (anon print_type) children
+
+and print_rest_type state ?name node =
+  let name = get_name ?name node in
+  let children = collect_named_children node in
+  Tree.of_list state name (anon print_type) children
+
 and print_type_query state ?name node = print_todo_node state ?name node
 and print_index_type_query state ?name node = print_todo_node state ?name node
 and print_existential_type state ?name node = print_todo_node state ?name node
