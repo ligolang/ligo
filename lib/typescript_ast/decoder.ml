@@ -411,7 +411,7 @@ and print_array_cell state ?name node =
   (* Errors *)
   | "ERROR" -> print_error_node state ~name node
   | "MISSING" -> print_missing_node state ~name node
-  (* Unexpected node is expression node *)
+  (* Unexpected node is "expression" node *)
   | _ -> print_expression state ~name node
 
 and print_spread_element state ?name node =
@@ -443,7 +443,7 @@ and print_call_expression state ?name node =
     (* Errors *)
     | "ERROR" -> print_error_node state ~name node
     | "MISSING" -> print_missing_node state ~name node
-    (* Unexpected node is expression node *)
+    (* Unexpected node is "expression" node *)
     | _ -> print_expression state ~name node
   in
   let print_type_arguments = anon print_type_arguments in
@@ -590,7 +590,7 @@ and print_tuple_type_component state ?name node =
   (* Errors *)
   | "ERROR" -> print_error_node state ~name node
   | "MISSING" -> print_missing_node state ~name node
-  (* Unexpected node is type node *)
+  (* Unexpected node is "type" node *)
   | _ -> print_type state node (* "type" is a hidden rule *)
 
 and print_tuple_parameter state ?name node =
@@ -622,7 +622,28 @@ and print_type_annotation state ?name node =
   let children = collect_named_children node in
   Tree.of_list state name (anon print_type) children
 
-and print_rest_pattern state ?name node = print_todo_node state ?name node
+and print_rest_pattern state ?name node =
+  let name = get_name ?name node in
+  let children = collect_named_children node in
+  Tree.of_list state name (anon print_lhs_expression) children
+
+and print_lhs_expression state ?name node =
+  let name = get_name ?name node in
+  match name with
+  | "member_expression" -> print_member_expression state ~name node
+  | "subscript_expression" -> print_subscript_expression state ~name node
+  | "identifier" -> print_identifier state ~name node
+  | "undefined" -> print_undefined state ~name node
+  | "object_pattern" -> print_object_pattern state ~name node
+  | "array_pattern" -> print_array_pattern state ~name node
+  | "non_null_expression" -> print_non_null_expression state ~name node
+  (* Comments are ignored *)
+  | "comment" -> ()
+  (* Errors *)
+  | "ERROR" -> print_error_node state ~name node
+  | "MISSING" -> print_missing_node state ~name node
+  (* Unexpected node *)
+  | _ -> print_unexpected_node state ~name node
 
 and print_optional_tuple_parameter state ?name node =
   let name = get_name ?name node in
@@ -669,3 +690,140 @@ and print_readonly_type state ?name node =
 
 and print_constructor_type state ?name node = print_todo_node state ?name node
 and print_infer_type state ?name node = print_todo_node state ?name node
+
+(* Patterns
+
+   The JavasScript tree-sitter grammar have the non-terminal
+   "pattern" be a supertype, that is, a hidden rule. *)
+
+and print_object_pattern state ?name node =
+  let name = get_name ?name node in
+  let children = collect_named_children node in
+  Tree.of_list state name (anon print_object_pattern_field) children
+
+and print_object_pattern_field state ?name node =
+  let name = get_name ?name node in
+  match name with
+  | "pair_pattern" -> print_pair_pattern state ~name node
+  | "rest_pattern" -> print_rest_pattern state ~name node
+  | "object_assignment_pattern" ->
+      print_object_assignment_pattern state ~name node
+  | "shorthand_property_identifier_pattern" ->
+      print_shorthand_property_identifier_pattern state ~name node
+  (* Comments are ignored *)
+  | "comment" -> ()
+  (* Errors *)
+  | "ERROR" -> print_error_node state ~name node
+  | "MISSING" -> print_missing_node state ~name node
+  (* Unexpected node *)
+  | _ -> print_unexpected_node state ~name node
+
+and print_pair_pattern state ?name node =
+  let name = get_name ?name node in
+  let key_field = ts_node_child_by_field_name node "key"
+  and value_field = ts_node_child_by_field_name node "value" in
+  let print_pair_value_field state node =
+    let name = get_name node in
+    match name with
+    | "assignment_pattern" -> print_assignment_pattern state ~name node
+    (* Comments are ignored *)
+    | "comment" -> ()
+    (* Errors *)
+    | "ERROR" -> print_error_node state ~name node
+    | "MISSING" -> print_missing_node state ~name node
+    (* Unexpected node is "pattern" node *)
+    | _ -> print_pattern state ~name node
+  in
+  let children =
+    Tree.
+      [ mk_child (anon print_property_name) key_field
+      ; mk_child print_pair_value_field value_field
+      ]
+  in
+  Tree.make state name children
+
+and print_assignment_pattern state ?name node =
+  let name = get_name ?name node in
+  let left_field = ts_node_child_by_field_name node "left"
+  and right_field = ts_node_child_by_field_name node "right" in
+  let children =
+    Tree.
+      [ mk_child (anon print_pattern) left_field
+      ; mk_child (anon print_expression) right_field
+      ]
+  in
+  Tree.make state name children
+
+and print_property_name state ?name node =
+  let name = get_name ?name node in
+  match name with
+  | "property_identifier" -> print_identifier state ~name node
+  | "private_property_identifier" -> print_identifier state ~name node
+  | "string" -> print_string state ~name node
+  | "number" -> print_number state ~name node
+  | "computed_property_name" -> print_computed_property_name state ~name node
+  | "comment" -> ()
+  (* Errors *)
+  | "ERROR" -> print_error_node state ~name node
+  | "MISSING" -> print_missing_node state ~name node
+  (* Unexpected node *)
+  | _ -> print_unexpected_node state ~name node
+
+and print_computed_property_name state ?name node =
+  let name = get_name ?name node in
+  let children = collect_named_children node in
+  Tree.of_list state name (anon print_expression) children
+
+and print_object_assignment_pattern state ?name node =
+  let name = get_name ?name node in
+  let left_field = ts_node_child_by_field_name node "left"
+  and right_field = ts_node_child_by_field_name node "right" in
+  let print_left state node =
+    let name = get_name node in
+    match name with
+    | "shorthand_property_identifier_pattern" ->
+      print_shorthand_property_identifier_pattern state ~name node
+    (* _destructuring_pattern *)
+    | "object_pattern" -> print_object_pattern state ~name node
+    | "array_pattern" -> print_array_pattern state ~name node
+    (* Comments are ignored *)
+    | "comment" -> ()
+    (* Errors *)
+    | "ERROR" -> print_error_node state ~name node
+    | "MISSING" -> print_missing_node state ~name node
+    (* Unexpected node *)
+    | _ -> print_unexpected_node state ~name node
+  in
+  let children =
+    Tree.
+      [ mk_child print_left left_field
+      ; mk_child (anon print_expression) right_field
+      ]
+  in
+  Tree.make state name children
+
+and print_shorthand_property_identifier_pattern state ?name node =
+  make_node state ?name node
+
+and print_array_pattern state ?name node =
+  let name = get_name ?name node in
+  let children = collect_named_children node in
+  Tree.of_list state name (anon print_array_pattern_cell) children
+
+and print_array_pattern_cell state ?name node =
+  let name = get_name ?name node in
+  match name with
+  | "assignment_pattern" -> print_assignment_pattern state ~name node
+  (* Comments are ignored *)
+  | "comment" -> ()
+  (* Errors *)
+  | "ERROR" -> print_error_node state ~name node
+  | "MISSING" -> print_missing_node state ~name node
+  (* Unexpected node is "pattern" node (hidden rule) *)
+  | _ -> print_pattern state ~name node
+
+and print_pattern state ?name node =
+  let name = get_name ?name node in
+  match name with
+  | "rest_pattern" -> print_rest_pattern state ~name node
+  | _ -> print_lhs_expression state ~name node
