@@ -706,10 +706,9 @@ and print_object_pattern_field state ?name node =
   match name with
   | "pair_pattern" -> print_pair_pattern state ~name node
   | "rest_pattern" -> print_rest_pattern state ~name node
-  | "object_assignment_pattern" ->
-      print_object_assignment_pattern state ~name node
+  | "object_assignment_pattern" -> print_object_assignment_pattern state ~name node
   | "shorthand_property_identifier_pattern" ->
-      print_shorthand_property_identifier_pattern state ~name node
+    print_shorthand_property_identifier_pattern state ~name node
   (* Comments are ignored *)
   | "comment" -> ()
   (* Errors *)
@@ -795,10 +794,7 @@ and print_object_assignment_pattern state ?name node =
     | _ -> print_unexpected_node state ~name node
   in
   let children =
-    Tree.
-      [ mk_child print_left left_field
-      ; mk_child (anon print_expression) right_field
-      ]
+    Tree.[ mk_child print_left left_field; mk_child (anon print_expression) right_field ]
   in
   Tree.make state name children
 
