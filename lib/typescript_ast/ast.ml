@@ -407,7 +407,9 @@ and class_member =
        $.private_property_identifier,
        $.string,
        $.number,
-       $.computed_property_name)
+       $.computed_property_name),
+
+     computed_property_name: $ => seq('[', $.expression, ']')
     ]}
 *)
 and method_signature =
@@ -473,9 +475,8 @@ and property_name =
          $.pair_pattern,
          $.rest_pattern,
          $.object_assignment_pattern,
-         alias(
-           choice($.identifier, $._reserved_identifier),
-           $.shorthand_property_identifier_pattern)))),
+         alias(choice($.identifier, $._reserved_identifier),
+               $.shorthand_property_identifier_pattern)))),
        '}')),
 
      pair_pattern: $ => seq(
