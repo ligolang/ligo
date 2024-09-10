@@ -761,6 +761,7 @@ and print_property_name state ?name node =
   | "string" -> print_string state ~name node
   | "number" -> print_number state ~name node
   | "computed_property_name" -> print_computed_property_name state ~name node
+  (* Comments are ignored *)
   | "comment" -> ()
   (* Errors *)
   | "ERROR" -> print_error_node state ~name node
