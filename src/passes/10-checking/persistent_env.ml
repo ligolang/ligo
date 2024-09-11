@@ -8,10 +8,8 @@ type t =
   }
 
 let empty : t =
-  { cmis = Filename.Map.empty
-  ; path_tbl = Module_map.empty
-  ; virtual_env = []
-  }
+  { cmis = Filename.Map.empty; path_tbl = Module_map.empty; virtual_env = [] }
+
 
 let get_crc filename cmis = Map.find_exn cmis filename |> fun (_, crc) -> crc
 
@@ -26,10 +24,12 @@ let add_signature
   let path_tbl = Map.set path_tbl ~key:m ~data:path in
   { cmis; path_tbl; virtual_env }
 
+
 let add_virtual : t -> Ast_typed.signature -> t =
  fun { cmis; path_tbl; virtual_env } sig_ ->
   let virtual_env = sig_.sig_items @ virtual_env in
   { cmis; path_tbl; virtual_env }
+
 
 let get_signatures : t -> sig_item list * (Module_var.t * signature) list =
  fun { cmis; path_tbl; virtual_env; _ } ->
@@ -38,9 +38,11 @@ let get_signatures : t -> sig_item list * (Module_var.t * signature) list =
   |> List.map ~f:(fun (mv, path) -> mv, (Tuple2.get1 (Map.find_exn cmis path)).sign)
   |> fun sigs -> virtual_env, sigs
 
+
 let find_signature : t -> Module_var.t -> signature =
  fun { cmis; path_tbl; virtual_env; _ } mv ->
   let path = Map.find_exn path_tbl mv in
   Map.find_exn cmis path |> fun (cmi, crc) -> cmi.Cmi.sign
+
 
 let of_init_sig : signature -> t = fun sig_ -> add_virtual empty sig_

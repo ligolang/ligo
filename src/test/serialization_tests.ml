@@ -17,15 +17,20 @@ let test_build_test_contracts ~raise () =
           | None ->
             Core.raise @@ Failure ("Failed to deserialize " ^ path ^ ": can't read back")
           | Some (cmi, crc) ->
-            (match Md5.equal crc expected_crc, Ast_typed.equal_signature cmi.sign expected_cmi.sign with
-            | false, _ -> Core.raise
+            (match
+               ( Md5.equal crc expected_crc
+               , Ast_typed.equal_signature cmi.sign expected_cmi.sign )
+             with
+            | false, _ ->
+              Core.raise
               @@ Failure
                    (sprintf
                       "Failed to deserialize %s: crc mismatch\nExpected: %s\nGot: %s"
                       path
                       (Md5.to_hex expected_crc)
                       (Md5.to_hex crc))
-            | true, false -> Core.raise @@ Failure "Failed to deserialize: read value is different"
+            | true, false ->
+              Core.raise @@ Failure "Failed to deserialize: read value is different"
             | true, true -> ())))
   in
   Alcotest.(check unit)

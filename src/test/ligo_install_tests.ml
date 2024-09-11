@@ -176,8 +176,7 @@ let main =
   (* assert between checked-in michelson output from compiler version 0.70.0 and test generated output *)
   test_suite
     "LIGO install tests"
-    [ 
-      (* test
+    [ (* test
         "Test workflow when running [ligo install] followed by [ligo compile contract \
          ./main.mligo] in the install_tests/workflow directoy. In this test by removing \
          .ligo/ and _esy/ directories"
@@ -196,5 +195,4 @@ let main =
         "Test workflow when running [ligo install] followed by [ligo compile contract \
          ./main.mligo] in the install_tests/workflow directoy. In this test by removing \
          nothin"
-        test_remove_nothing *)
-    ]
+        test_remove_nothing *) ]
