@@ -1,6 +1,6 @@
 (library
  (name tree_sitter)
- (libraries ctypes ctypes-foreign)
+ (libraries ctypes ctypes.foreign)
  (ctypes
   (external_library_name tree-sitter)
   (build_flags_resolver
@@ -20,4 +20,8 @@
    (instance Functions)
    (functor Api_funcs_desc))
   (generated_types Api_types)
-  (generated_entry_point Api)))
+  (generated_entry_point Api))
+ (flags
+  (:standard -w -27)))
+
+;; unused variable

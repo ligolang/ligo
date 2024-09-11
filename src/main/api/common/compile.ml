@@ -224,7 +224,9 @@ let typed_contract_and_expression_impl
       (Main_errors.self_ast_typed_tracer @@ `Self_ast_typed_not_a_contract module_)
       (Ast_typed.get_contract_signature sig_ module_path)
   in
-  let app_typed_sig = Checking.Persistent_env.of_init_sig @@ Ast_typed.to_signature app_typed_prg.pr_module in
+  let app_typed_sig =
+    Checking.Persistent_env.of_init_sig @@ Ast_typed.to_signature app_typed_prg.pr_module
+  in
   let annotation =
     Trace.trace ~raise Main_errors.checking_tracer
     @@ fun ~raise ->

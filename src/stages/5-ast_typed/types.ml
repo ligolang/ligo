@@ -60,7 +60,8 @@ and sig_item = sig_item_content Location.wrap
 and signature =
   { sig_items : sig_item list
   ; sig_sort : signature_sort
-  } [@@deriving equal, compare, yojson, hash, bin_io]
+  }
+[@@deriving equal, compare, yojson, hash, bin_io]
 
 and contract_sig =
   { storage : ty_expr

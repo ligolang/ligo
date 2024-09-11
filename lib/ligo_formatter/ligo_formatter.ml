@@ -11,16 +11,13 @@ let declarations_ppformat ~display_format ~no_colour f (source_file, decls) =
     Format.fprintf f "%s declarations:\n" source_file;
     List.iter ~f:(fun decl -> Format.fprintf f "%a\n" Value_var.pp decl) decls
 
-
 let declarations_jsonformat (source_file, decls) : Display.json =
   (* Use to_name instead of to_yojson for compality with IDE *)
   let json_decl = List.map ~f:(fun decl -> `String (Value_var.to_name_exn decl)) decls in
   `Assoc [ "source_file", `String source_file; "declarations", `List json_decl ]
 
-
 let declarations_format : 'a Display.format =
   { pp = declarations_ppformat; to_json = declarations_jsonformat }
-
 
 let changelog_ppformat ~display_format ~no_colour f changelog =
   (* The [no_colour] option is provided to all [_ppformat] functions by default,
@@ -29,12 +26,10 @@ let changelog_ppformat ~display_format ~no_colour f changelog =
   match display_format with
   | Display.Human_readable | Dev -> Format.fprintf f "%s" changelog
 
-
 let changelog_jsonformat changelog : Display.json = `String changelog
 
 let changelog_format : 'a Display.format =
   { pp = changelog_ppformat; to_json = changelog_jsonformat }
-
 
 let contract_size_ppformat ~display_format ~no_colour f contract_size =
   (* The [no_colour] option is provided to all [_ppformat] functions by default,
@@ -43,12 +38,10 @@ let contract_size_ppformat ~display_format ~no_colour f contract_size =
   match display_format with
   | Display.Human_readable | Dev -> Format.fprintf f "%d bytes" contract_size
 
-
 let contract_size_jsonformat contract_size : Display.json = `Int contract_size
 
 let contract_size_format : 'a Display.format =
   { pp = contract_size_ppformat; to_json = contract_size_jsonformat }
-
 
 let list_ppformat ~display_format ~no_colour f lst =
   (* The [no_colour] option is provided to all [_ppformat] functions by default,
@@ -58,7 +51,6 @@ let list_ppformat ~display_format ~no_colour f lst =
   | Display.Human_readable | Dev ->
     Format.fprintf f "list of projects:\n";
     List.iter ~f:(fun str -> Format.fprintf f "%s\n" str) lst
-
 
 let list_jsonformat (_lst : string list) : Display.json = `Null
 let list_format : 'a Display.format = { pp = list_ppformat; to_json = list_jsonformat }
@@ -72,12 +64,10 @@ let new_project_ppformat ~display_format ~no_colour f lst =
     Format.fprintf f "Folder created: ";
     List.iter ~f:(fun str -> Format.fprintf f "%s\n" str) lst
 
-
 let new_project_jsonformat (_lst : string list) : Display.json = `Null
 
 let new_project_format : 'a Display.format =
   { pp = new_project_ppformat; to_json = new_project_jsonformat }
-
 
 module Michelson_formatter = struct
   open Tezos_utils.Michelson
@@ -88,7 +78,6 @@ module Michelson_formatter = struct
   let pp_hex ppf michelson =
     let hex = Lwt_main.run @@ Proto_alpha_utils.Memory_proto_alpha.to_hex michelson in
     Format.fprintf ppf "%a" Hex.pp hex
-
 
   type michelson_format =
     [ `Text
@@ -188,7 +177,6 @@ module Michelson_formatter = struct
         let comment = loc ^ env in
         if String.length comment = 0 then None else Some comment
 
-
   let rec yojson_to_json (x : Yojson.Safe.t) : Data_encoding.Json.t =
     match x with
     | `Tuple xs -> `A (List.map ~f:yojson_to_json xs)
@@ -203,7 +191,6 @@ module Michelson_formatter = struct
     | `String s -> `String s
     | `Int n -> `String (string_of_int n)
 
-
   let rec json_to_msgpack : Data_encoding.Json.t -> Msgpck.t =
     let open Msgpck in
     function
@@ -214,16 +201,13 @@ module Michelson_formatter = struct
     | `Null -> of_nil
     | `String str -> of_string str
 
-
   let location_to_json (location : Location.t) : Data_encoding.Json.t option =
     if Location.is_virtual location
     then None
     else Some (yojson_to_json (Location.to_human_yojson location))
 
-
   let source_type_to_json (source_type : shrunk_type_expression) : Data_encoding.Json.t =
     yojson_to_json (shrunk_type_expression_to_yojson source_type)
-
 
   let json_object (vals : (string * Data_encoding.Json.t option) list)
       : Data_encoding.Json.t
@@ -234,7 +218,6 @@ module Michelson_formatter = struct
               match v with
               | None -> []
               | Some v -> [ k, v ])))
-
 
   let application_to_json ({ applied_function; arguments } : shrunk_application_meta)
       : Data_encoding.Json.t
@@ -258,7 +241,6 @@ module Michelson_formatter = struct
       [ "applied_function", Option.map ~f:(fun s -> `String s) applied_function
       ; "arguments", Some (`A arguments)
       ]
-
 
   module TypeOrd = struct
     type t = Ast_typed.type_expression
@@ -285,18 +267,15 @@ module Michelson_formatter = struct
     | String _ -> init
     | Bytes _ -> init
 
-
   let make_variable_name_from_string_and_loc (name : string) (loc : Location.t) : string =
     let open Scopes.Types in
     if Location.is_virtual loc then name else Uid.to_string @@ Uid.make name loc
-
 
   let make_variable_name (v : Value_var.t) : string =
     let name =
       if Value_var.is_generated v then "<generated>" else Value_var.to_name_exn v
     in
     make_variable_name_from_string_and_loc name @@ Value_var.get_location v
-
 
   let shrink (node : (Mini_c.meta, 'p) Tezos_micheline.Micheline.node) : shrunk_result =
     (* first collect all source types *)
@@ -418,7 +397,6 @@ module Michelson_formatter = struct
     in
     { types = List.map ~f:shrink_type @@ TypeSet.elements type_set; michelson = node }
 
-
   let variable_meta_to_json : shrunk_variable_meta -> Data_encoding.Json.t = function
     | { location; name; source_type } ->
       let name =
@@ -435,7 +413,6 @@ module Michelson_formatter = struct
         ; "file_name", file_name
         ; "source_type", Option.map ~f:(fun n -> `String (string_of_int n)) source_type
         ]
-
 
   let meta_encoding : shrunk_meta Data_encoding.t =
     Data_encoding.(
@@ -459,12 +436,10 @@ module Michelson_formatter = struct
         (fun _s -> failwith ("internal error: not implemented @ " ^ __LOC__))
         Data_encoding.json)
 
-
   let comment_encoding michelson_comments =
     match michelson_comments with
     | { location; source = _; env } ->
       if location || env then Some meta_encoding else None
-
 
   let result_to_json michelson_comments result =
     let json = get_json ?comment:(comment_encoding michelson_comments) result.michelson in
@@ -473,16 +448,13 @@ module Michelson_formatter = struct
       `O [ "types", `A (List.map ~f:source_type_to_json result.types); "michelson", json ]
     else json
 
-
   let pp_result_msgpack michelson_comments ppf result =
     let msgpack = json_to_msgpack @@ result_to_json michelson_comments result in
     Format.fprintf ppf "%s" (Buffer.contents @@ Msgpck.BytesBuf.to_string msgpack)
 
-
   let pp_result_json michelson_comments ppf result =
     let json = result_to_json michelson_comments result in
     Format.fprintf ppf "%s" (Data_encoding.Json.to_string ~minify:true json)
-
 
   let view_to_json (parameter, returnType, code) =
     let code_json : Data_encoding.json = get_json code in
@@ -490,16 +462,13 @@ module Michelson_formatter = struct
     let parameter_json : Data_encoding.json = get_json parameter in
     `O [ "parameter", parameter_json; "returnType", returnType_json; "code", code_json ]
 
-
   let pp_view_msgpack ppf view =
     let msgpack = json_to_msgpack @@ view_to_json view in
     Format.fprintf ppf "%s" (Buffer.contents @@ Msgpck.BytesBuf.to_string msgpack)
 
-
   let pp_view_json ppf view =
     let json : Data_encoding.json = view_to_json view in
     Format.fprintf ppf "%s" (Data_encoding.Json.to_string ~minify:true json)
-
 
   let result_ppformat
       michelson_format
@@ -526,7 +495,6 @@ module Michelson_formatter = struct
       let m = Format.asprintf "%a\n" (mich_pp michelson_format michelson_comments) a in
       Format.pp_print_string f m
 
-
   (* is this even used anywhere??? *)
   let result_jsonformat michelson_format michelson_comments (a : shrunk_result)
       : Display.json
@@ -550,7 +518,6 @@ module Michelson_formatter = struct
       let code_as_str = Format.asprintf "%a" (pp_result_msgpack michelson_comments) a in
       `Assoc [ "msgpack_code", `String code_as_str ]
 
-
   let convert_michelson_comments
       : [> `All | `Env | `Location | `Source ] list -> michelson_comments
     =
@@ -569,20 +536,17 @@ module Michelson_formatter = struct
         ; env = config.env || config2.env
         })
 
-
   let shrunk_result_format : michelson_format -> _ -> shrunk_result Display.format =
    fun mf michelson_comments ->
     { pp = result_ppformat mf (convert_michelson_comments michelson_comments)
     ; to_json = result_jsonformat mf (convert_michelson_comments michelson_comments)
     }
 
-
   let michelson_format
       : michelson_format -> _ -> (Mini_c.meta, string) Micheline.node Display.format
     =
    fun michelson_format michelson_comments ->
     Display.map ~f:shrink (shrunk_result_format michelson_format michelson_comments)
-
 
   let view_ppformat
       michelson_format
@@ -608,7 +572,6 @@ module Michelson_formatter = struct
       in
       Format.pp_print_string f m
 
-
   (* is this even used anywhere??? *)
   let view_jsonformat michelson_format (_, parameter, returnType, code) : Display.json =
     match michelson_format with
@@ -627,7 +590,6 @@ module Michelson_formatter = struct
       in
       `Assoc [ "msgpack_code", `String code_as_str ]
 
-
   let view_result_format
       :  michelson_format
       -> (string
@@ -638,7 +600,6 @@ module Michelson_formatter = struct
     =
    fun mf -> { pp = view_ppformat mf; to_json = view_jsonformat mf }
 
-
   let view_michelson_format
       :  michelson_format
       -> (string
@@ -648,7 +609,6 @@ module Michelson_formatter = struct
          Display.format
     =
    fun michelson_format -> view_result_format michelson_format
-
 
   let michelson_constant_jsonformat michelson_format a : Display.json =
     match michelson_format with
@@ -661,7 +621,6 @@ module Michelson_formatter = struct
     | `Json ->
       let code_as_str = Format.asprintf "%a" (pp_json ?comment:None) a in
       `Assoc [ "json_code", `String code_as_str ]
-
 
   let michelson_constant_ppformat ~display_format ~no_colour f (hash, a) =
     (* The [no_colour] option is provided to all [_ppformat] functions by default,
@@ -686,7 +645,6 @@ module Michelson_formatter = struct
         code
         code_no_newlines
         hash
-
 
   let michelson_constant_format
       : (Proto_alpha_utils.Memory_proto_alpha.Protocol.Script_expr_hash.t

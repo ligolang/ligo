@@ -177,5 +177,4 @@ module With_layout = struct
         | Some vs -> List.concat_map (List.zip_exn ts vs) ~f:(fun (t, v) -> aux t v))
     in
     aux row.layout value
-
 end

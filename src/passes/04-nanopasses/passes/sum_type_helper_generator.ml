@@ -142,7 +142,8 @@ let%expect_test "compile" =
           ((Label Bar (Virtual generated)) ((associated_type ()) (decl_pos 1))))))))))))
   |}
   |-> compile;
-  [%expect{|
+  [%expect
+    {|
     ((PE_declaration
       (D_type
        ((name dyn_param)
