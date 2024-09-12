@@ -53,7 +53,10 @@ const sidebars = {
       },
       {
         "type": "category",
-        "label": "Modules/Namespaces",
+        "label": "Modules",
+        "customProps": {
+          "jsLigoName": "Namespaces",
+        },
         "items": [
           "modules/declaring",
           "modules/accessing",
@@ -65,7 +68,10 @@ const sidebars = {
       },
       {
         "type": "category",
-        "label": "Attributes/Decorators",
+        "label": "Attributes",
+        "customProps": {
+          "jsLigoName": "Decorators",
+        },
         "items": [
           "tezos/decorators/decorators",
           "tezos/decorators/annot",
@@ -95,7 +101,10 @@ const sidebars = {
       },
       {
         "type": "category",
-        "label": "Signatures/Interfaces",
+        "label": "Signatures",
+        "customProps": {
+          "jsLigoName": "Interfaces",
+        },
         "items": [
           "signatures/declaring",
           "signatures/extending"
