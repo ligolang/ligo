@@ -97,14 +97,14 @@ module Functions (S : FOREIGN) = struct
   let ts_node_child_count =
     foreign "ts_node_child_count" (ts_node @-> returning uint32_t)
 
-  (* Get the node's child at the given index
+  (* Get the node's child at the given index (0 is the first)
 
      TSNode ts_node_child(TSNode self, uint32_t child_index);
   *)
   let ts_node_child =
     foreign "ts_node_child" (ts_node @-> uint32_t @-> returning ts_node)
 
-  (* Get the node's *named* child at the given index
+  (* Get the node's *named* child at the given index (0 is the first)
 
      TSNode ts_node_named_child(TSNode self, uint32_t child_index);
   *)
