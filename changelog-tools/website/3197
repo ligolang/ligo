@@ -1,0 +1,7 @@
+
+author: timothymcmackin
+description: "\\nUpdated TOC so it shows terms based on the selected LIGO syntax, such as Modules for CameLIGO and Namespaces for JsLIGO.\\n\\n"
+merge_request: '3197'
+title: "[doc] Show/hide titles in the TOC based on selected language"
+type: added
+            

@@ -1,6 +1,7 @@
 ---
 id: decorators
-title: Attributes/Decorators
+title: Attributes
+jsligoTitle: Decorators
 ---
 
 import Syntax from '@theme/Syntax'
