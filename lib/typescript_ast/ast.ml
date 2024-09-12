@@ -158,10 +158,7 @@ and function_declaration =
        optional('readonly'),
        field('pattern', choice($.pattern, $.this))),
 
-     accessibility_modifier: _ => choice(
-       'public',
-       'private',
-       'protected'),
+     accessibility_modifier: _ => choice('public', 'private', 'protected'),
 
      override_modifier: _ => 'override',
 
@@ -204,7 +201,7 @@ and formal_parameter =
   }
 
 and parameter_name =
-  { decorator : decorator
+  { decorators : decorator list
   ; access : accessibility_modifier option
   ; override : override_modifier option
   ; readonly : bool
