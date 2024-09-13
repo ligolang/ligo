@@ -203,7 +203,7 @@ and formal_parameter =
 and parameter_name =
   { decorators : decorator list
   ; access : accessibility_modifier option
-  ; override : override_modifier option
+  ; override : bool
   ; readonly : bool
   ; pattern : parameter_pattern
   }
@@ -422,8 +422,6 @@ and accessibility_modifier =
   | Public
   | Private
   | Protected
-
-and override_modifier = Override
 
 and set_get_all =
   | Set
@@ -686,7 +684,7 @@ and statement_block = statement list
  *)
 and abstract_method_signature =
   { access : accessibility_modifier option
-  ; override : override_modifier option
+  ; override : bool
   ; set_get_all : set_get_all option
   ; name : property_name
   ; optional : bool
