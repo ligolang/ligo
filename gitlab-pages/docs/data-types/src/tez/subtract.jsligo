@@ -1,0 +1,2 @@
+const amount: option<tez> = 5mutez - 1mutez; /* Some (4mutez) */
+const negative: option<tez> = 1mutez - 5mutez; /* None */
