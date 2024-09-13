@@ -1,1 +1,0 @@
-const today: timestamp = Tezos.get_now();

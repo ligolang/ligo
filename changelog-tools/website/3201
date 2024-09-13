@@ -1,0 +1,7 @@
+
+author: timothymcmackin
+description: "\\nMerges documentation pages on Tezos-specific data types and moves them to /docs/data-types.\\n\\n"
+merge_request: '3201'
+title: "[doc] Consolidate Tezos-specific data types"
+type: added
+            

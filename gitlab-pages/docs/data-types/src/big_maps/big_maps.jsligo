@@ -1,0 +1,10 @@
+type word       = string;
+type definition = list<string>;
+type dictionary = big_map<word, definition>;
+
+const empty_dict: dictionary = Big_map.empty;
+
+const dictionary : dictionary =
+  Big_map.literal([
+    ["one", (["The number 1.", "A member of a group."] as definition)],
+    ["two", (["The number 2."] as definition)]]);

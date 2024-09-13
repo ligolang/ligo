@@ -1,5 +1,0 @@
-const sum: tez = 5mutez + 1tez;
-const amount: option<tez> = 5mutez - 1mutez; /* Some (4mutez) */
-const negative: option<tez> = 1mutez - 5mutez; /* None */
-const mult: tez = 5n * 5mutez;
-const div: nat = 10mutez / 3mutez;
