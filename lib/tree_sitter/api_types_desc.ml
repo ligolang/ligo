@@ -9,7 +9,7 @@ module Types (S : Ctypes.TYPE) = struct
 
   (* Some basic types *)
 
-  let ts_symbol   : Unsigned.uint16 typ = uint16_t
+  let ts_symbol : Unsigned.uint16 typ = uint16_t
   let ts_state_id : Unsigned.uint16 typ = uint16_t
   let ts_field_id : Unsigned.uint16 typ = uint16_t
 
@@ -24,8 +24,8 @@ module Types (S : Ctypes.TYPE) = struct
   type ts_point
 
   let ts_point : ts_point structure typ = structure "TSPoint"
-  let row      : _ field = field ts_point "row" uint
-  let column   : _ field = field ts_point "column" uint
+  let row : _ field = field ts_point "row" uint
+  let column : _ field = field ts_point "column" uint
   let () = seal ts_point
 
   (* Range in the source
@@ -42,9 +42,9 @@ module Types (S : Ctypes.TYPE) = struct
 
   let ts_range : ts_range structure typ = structure "TSRange"
   let start_point : _ field = field ts_range "start_point" ts_point
-  let end_point   : _ field = field ts_range "end_point" ts_point
-  let start_byte  : _ field = field ts_range "start_byte" uint32_t
-  let end_byte    : _ field = field ts_range "end_byte" uint32_t
+  let end_point : _ field = field ts_range "end_point" ts_point
+  let start_byte : _ field = field ts_range "start_byte" uint32_t
+  let end_byte : _ field = field ts_range "end_byte" uint32_t
   let () = seal ts_range
 
   (* The source language (TSLanguage) *)
@@ -78,7 +78,7 @@ module Types (S : Ctypes.TYPE) = struct
 
   let ts_node : ts_tree structure typ = structure "TSNode"
   let context : _ field = field ts_node "context" (array 4 uint32_t)
-  let id      : _ field = field ts_node "id" (ptr void)
-  let tree    : _ field = field ts_node "tree" (ptr ts_tree)
+  let id : _ field = field ts_node "id" (ptr void)
+  let tree : _ field = field ts_node "tree" (ptr ts_tree)
   let () = seal ts_node
 end

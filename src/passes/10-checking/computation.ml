@@ -143,12 +143,12 @@ let ctx_init_of_env ~raise ?env () =
         Context.add_module_type ctx v (encode_signature ~raise sig_)
     in
     let add_module ctx (mv, sig_) =
-        (* envs should be modules not contracts *)
-        (* assert ( *)
-        (*   match sig_.Ast_typed.sig_sort with *)
-        (*   | Ss_contract _ -> false *)
-        (*   | Ss_module -> true); *)
-        Context.add_module ctx mv (encode_signature ~raise sig_)
+      (* envs should be modules not contracts *)
+      (* assert ( *)
+      (*   match sig_.Ast_typed.sig_sort with *)
+      (*   | Ss_contract _ -> false *)
+      (*   | Ss_module -> true); *)
+      Context.add_module ctx mv (encode_signature ~raise sig_)
     in
     let env_items, modules = Persistent_env.get_signatures env in
     let init = List.fold modules ~init:Context.empty ~f:add_module in

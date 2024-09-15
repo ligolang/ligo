@@ -109,8 +109,7 @@ module Separate (Params : Params) = struct
 
 
     let add_interface_to_environment : interface -> environment -> environment =
-     fun intf env ->
-      Checking.Persistent_env.add_virtual env intf
+     fun intf env -> Checking.Persistent_env.add_virtual env intf
 
 
     let make_module_in_ast : module_name -> t -> t -> t =

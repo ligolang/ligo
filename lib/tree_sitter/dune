@@ -21,5 +21,7 @@
    (functor Api_funcs_desc))
   (generated_types Api_types)
   (generated_entry_point Api))
-  (flags
-   (:standard -w -27))) ;; unused variable
+ (flags
+  (:standard -w -27)))
+
+;; unused variable

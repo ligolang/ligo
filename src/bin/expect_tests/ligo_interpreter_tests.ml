@@ -1,13 +1,12 @@
 open Cli_expect
 
 let test basename = "./" ^ basename
-
 let pwd = Sys_unix.getcwd ()
 let () = Sys_unix.chdir "../../test/contracts/interpreter_tests/"
 
 let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "tickets.mligo" ];
-  [%expect{|
+  [%expect {|
     Everything at the top-level was executed. |}]
 
 let () = Sys_unix.chdir pwd
@@ -1056,7 +1055,8 @@ let () = Sys_unix.chdir "../../test/contracts/interpreter_tests/"
 
 let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "test_timestamp.mligo" ];
-  [%expect{|
+  [%expect
+    {|
     Everything at the top-level was executed.
     - test_sub exited with value ().
     - test_get_time exited with value (). |}]
@@ -1592,8 +1592,7 @@ let () = Sys_unix.chdir "../../test/contracts/interpreter_tests/"
 
 let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "test_originate_single_view.mligo" ];
-  [%expect
-    {| |}]
+  [%expect {| |}]
 
 let () = Sys_unix.chdir pwd
 let () = Sys_unix.chdir "../../test/contracts/interpreter_tests/"
@@ -1970,8 +1969,7 @@ let () = Sys_unix.chdir "../../test/contracts/interpreter_tests/"
 
 let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "test_record_update.jsligo" ];
-  [%expect
-    {|
+  [%expect {|
     Everything at the top-level was executed. |}]
 
 let () = Sys_unix.chdir pwd

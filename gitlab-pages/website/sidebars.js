@@ -53,7 +53,10 @@ const sidebars = {
       },
       {
         "type": "category",
-        "label": "Modules/Namespaces",
+        "label": "Modules",
+        "customProps": {
+          "jsLigoName": "Namespaces",
+        },
         "items": [
           "modules/declaring",
           "modules/accessing",
@@ -65,7 +68,10 @@ const sidebars = {
       },
       {
         "type": "category",
-        "label": "Attributes/Decorators",
+        "label": "Attributes",
+        "customProps": {
+          "jsLigoName": "Decorators",
+        },
         "items": [
           "tezos/decorators/decorators",
           "tezos/decorators/annot",
@@ -95,7 +101,10 @@ const sidebars = {
       },
       {
         "type": "category",
-        "label": "Signatures/Interfaces",
+        "label": "Signatures",
+        "customProps": {
+          "jsLigoName": "Interfaces",
+        },
         "items": [
           "signatures/declaring",
           "signatures/extending"
@@ -138,35 +147,15 @@ const sidebars = {
         "type": "category",
         "label": "Tezos-specific types",
         "items": [
-          "tezos/tez",
-          "tezos/key",
-          "tezos/hash_key",
-          "tezos/signature",
-          "tezos/addresses",
-          "tezos/contracts-type",
-          {
-            "type": "category",
-            "label": "Big sets",
-            "items": [
-              "tezos/big_sets/declaring",
-              "tezos/big_sets/searching",
-              "tezos/big_sets/adding",
-              "tezos/big_sets/removing",
-              "tezos/big_sets/updating"
-            ]
-          },
-          {
-            "type": "category",
-            "label": "Big maps",
-            "items": [
-              "tezos/big_maps/declaring",
-              "tezos/big_maps/searching",
-              "tezos/big_maps/adding",
-              "tezos/big_maps/removing",
-              "tezos/big_maps/updating"
-            ]
-          }
-        ]
+          "data-types/tez",
+          "data-types/key",
+          "data-types/hash_key",
+          "data-types/signature",
+          "data-types/address",
+          "data-types/contracts-type",
+          "data-types/big_sets",
+          "data-types/big_maps",
+        ],
       },
       {
         "type": "category",

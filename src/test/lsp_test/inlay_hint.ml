@@ -301,7 +301,8 @@ let%expect_test "Inlay hints for type recovered type variables" =
 
 let%expect_test "Inlay hints show ghost identifiers as unresolved" =
   get_inlay_hint_test "contracts/lsp/inlay_hints/ghost_identifiers_unresolved.mligo";
-  [%expect{|
+  [%expect
+    {|
     [{
        "kind": 1,
        "label": ": (* Unresolved *)",

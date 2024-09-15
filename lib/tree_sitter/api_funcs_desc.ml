@@ -15,15 +15,13 @@ module Functions (S : FOREIGN) = struct
 
      TSParser *ts_parser_new(void);
   *)
-  let ts_parser_new =
-    foreign "ts_parser_new" (void @-> returning @@ ptr ts_parser)
+  let ts_parser_new = foreign "ts_parser_new" (void @-> returning @@ ptr ts_parser)
 
   (* Delete the parser, freeing all of the memory that it used.
 
      void ts_parser_delete(TSParser *self);
   *)
-  let ts_parser_delete =
-    foreign "ts_parser_delete" (ptr ts_parser @-> returning void)
+  let ts_parser_delete = foreign "ts_parser_delete" (ptr ts_parser @-> returning void)
 
   (* Return a boolean indicating whether or not the language was
      successfully assigned.
@@ -31,8 +29,7 @@ module Functions (S : FOREIGN) = struct
      bool ts_parser_set_language(TSParser *self, const TSLanguage *language);
   *)
   let ts_parser_set_language =
-    foreign "ts_parser_set_language"
-            (ptr ts_parser @-> ptr ts_language @-> returning bool)
+    foreign "ts_parser_set_language" (ptr ts_parser @-> ptr ts_language @-> returning bool)
 
   (* Use the parser to parse some source code stored in one contiguous
      buffer. The first two parameters are the same as in the
@@ -57,22 +54,19 @@ module Functions (S : FOREIGN) = struct
 
      TSTree *ts_tree_copy(const TSTree *self);
   *)
-  let ts_tree_copy =
-    foreign "ts_tree_copy" (ptr ts_tree @-> returning @@ ptr ts_tree)
+  let ts_tree_copy = foreign "ts_tree_copy" (ptr ts_tree @-> returning @@ ptr ts_tree)
 
   (* Delete the syntax tree, freeing all of the memory that it used
 
      void ts_tree_delete(TSTree *self);
   *)
-  let ts_tree_delete =
-    foreign "ts_tree_delete" (ptr ts_tree @-> returning void)
+  let ts_tree_delete = foreign "ts_tree_delete" (ptr ts_tree @-> returning void)
 
   (* Get the root node of the syntax tree
 
      TSNode ts_tree_root_node(const TSTree *self);
   *)
-  let ts_tree_root_node =
-    foreign "ts_tree_root_node" (ptr ts_tree @-> returning ts_node)
+  let ts_tree_root_node = foreign "ts_tree_root_node" (ptr ts_tree @-> returning ts_node)
 
   (* NODE *)
 
@@ -80,29 +74,25 @@ module Functions (S : FOREIGN) = struct
 
      const char *ts_node_type(TSNode self);
   *)
-  let ts_node_type =
-    foreign "ts_node_type" (ts_node @-> returning @@ ptr char)
+  let ts_node_type = foreign "ts_node_type" (ts_node @-> returning @@ ptr char)
 
   (* Get an S-expression representing the node as a string
 
      char *ts_node_string(TSNode self);
   *)
-  let ts_node_string =
-    foreign "ts_node_string" (ts_node @-> returning @@ ptr char)
+  let ts_node_string = foreign "ts_node_string" (ts_node @-> returning @@ ptr char)
 
   (* Get the node's number of children
 
      uint32_t ts_node_child_count(TSNode self);
   *)
-  let ts_node_child_count =
-    foreign "ts_node_child_count" (ts_node @-> returning uint32_t)
+  let ts_node_child_count = foreign "ts_node_child_count" (ts_node @-> returning uint32_t)
 
   (* Get the node's child at the given index (0 is the first)
 
      TSNode ts_node_child(TSNode self, uint32_t child_index);
   *)
-  let ts_node_child =
-    foreign "ts_node_child" (ts_node @-> uint32_t @-> returning ts_node)
+  let ts_node_child = foreign "ts_node_child" (ts_node @-> uint32_t @-> returning ts_node)
 
   (* Get the node's *named* child at the given index (0 is the first)
 
@@ -122,15 +112,13 @@ module Functions (S : FOREIGN) = struct
 
      TSNode ts_node_next_sibling(TSNode self);
   *)
-  let ts_node_next_sibling =
-    foreign "ts_node_next_sibling" (ts_node @-> returning ts_node)
+  let ts_node_next_sibling = foreign "ts_node_next_sibling" (ts_node @-> returning ts_node)
 
   (* Get the node's previous sibling
 
      TSNode ts_node_prev_sibling(TSNode self);
   *)
-  let ts_node_prev_sibling =
-    foreign "ts_node_prev_sibling" (ts_node @-> returning ts_node)
+  let ts_node_prev_sibling = foreign "ts_node_prev_sibling" (ts_node @-> returning ts_node)
 
   (* Get the node's next *named* sibling.
 
@@ -164,6 +152,5 @@ module Functions (S : FOREIGN) = struct
      bool ts_node_is_null(TSNode);
   *)
 
-  let ts_node_is_null =
-    foreign "ts_node_is_null" (ts_node @-> returning bool)
+  let ts_node_is_null = foreign "ts_node_is_null" (ts_node @-> returning bool)
 end

@@ -74,6 +74,7 @@ module Map = struct
         let map = Core.Map.set map ~key ~data in
         acc, map)
 
+
   type 'a t_aux = (T.t * 'a) list [@@deriving bin_io]
 
   let bin_shape_t = bin_shape_t_aux
@@ -81,8 +82,10 @@ module Map = struct
   let bin_size_t (bin_size_a : 'a Bin_prot.Size.sizer) (t : 'a t) =
     bin_size_t_aux bin_size_a @@ Core.Map.to_alist t
 
+
   let bin_write_t (bin_write_a : 'a Bin_prot.Write.writer) buf ~pos (t : 'a t) =
     bin_write_t_aux bin_write_a buf ~pos @@ Core.Map.to_alist t
+
 
   let bin_read_t (bin_read_a : 'a Bin_prot.Read.reader) buf ~pos_ref =
     let alist = bin_read_t_aux bin_read_a buf ~pos_ref in
