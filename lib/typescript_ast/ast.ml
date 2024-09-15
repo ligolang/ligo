@@ -2,7 +2,7 @@
 
    We used the JavaScript tree-sitter grammar and the TypeScript
    tree-sitter grammar as reference. The excerpts from those grammars
-   are in comment before the relevant AST nodes. *)
+   are copied in a comment before the relevant AST nodes. *)
 
 [@@@warning "-30"] (* Duplicate record field names *)
 
@@ -437,10 +437,12 @@ and method_scope =
 
 and property_name =
   | Property_identifier of identifier (* Also reserved identifiers *)
-  | Private_property_identifier of hash_name
+  | Private_property_identifier of private_property_identifier
   | String
   | Number
   | Computed_property_name of expression
+
+and private_property_identifier = hash_name
 
 (** Lexical Declaration
 
@@ -2065,7 +2067,9 @@ and type_ =
 
      _type_identifier: $ => alias($.identifier, $.type_identifier),
 
-     existential_type: _ => '*'
+     existential_type: _ => '*',
+
+     index_type_query: $ => seq('keyof', $.primary_type)
     ]}
 *)
 and primary_type =
@@ -2390,16 +2394,100 @@ and optional_tuple_parameter = identifier * type_annotation
          alias($._type_query_instantiation_expression,
                $.instantiation_expression),
          $.identifier,
-         $.this)))
+         $.this))),
+
+     _type_query_subscript_expression: $ => seq(
+       field('object', choice(
+         $.identifier,
+         $.this,
+         alias($._type_query_subscript_expression, $.subscript_expression),
+         alias($._type_query_member_expression, $.member_expression),
+         alias($._type_query_call_expression, $.call_expression))),
+       optional('?.'),
+       '[', field('index', choice($.predefined_type, $.string, $.number)), ']'),
+
+     _type_query_member_expression: $ => seq(
+       field('object', choice(
+         $.identifier,
+         $.this,
+         alias($._type_query_subscript_expression, $.subscript_expression),
+         alias($._type_query_member_expression, $.member_expression),
+         alias($._type_query_call_expression, $.call_expression))),
+       choice('.', '?.'),
+       field('property', choice(
+         $.private_property_identifier,
+         alias($.identifier, $.property_identifier)))),
+
+     _type_query_call_expression: $ => seq(
+       field('function', choice(
+         $.import,
+         $.identifier,
+         alias($._type_query_member_expression, $.member_expression),
+         alias($._type_query_subscript_expression, $.subscript_expression))),
+       field('arguments', $.arguments)),
+
+     _type_query_instantiation_expression: $ => seq(
+       field('function', choice(
+         $.import,
+         $.identifier,
+         alias($._type_query_member_expression, $.member_expression),
+         alias($._type_query_subscript_expression, $.subscript_expression))),
+       field('type_arguments', $.type_arguments))
     ]}
 *)
 and type_query =
-  | Typeof_subscript_expression of subscript_expression
-  | Typeof_member_expression of member_expression
-  | Typeof_call_expression of call_expression
-  | Typeof_instantiation_expression of instantiation_expression
+  | Typeof_subscript_expression of type_query_subscript_expression
+  | Typeof_member_expression of type_query_member_expression
+  | Typeof_call_expression of type_query_call_expression
+  | Typeof_instantiation_expression of type_query_instantiation_expression
   | Typeof_identifier of identifier
   | Typeof_this
+
+and type_query_subscript_expression = {
+  object_: type_query_object;
+  optional: bool;
+  index: type_query_index;
+}
+
+and type_query_object =
+  | Type_query_object_identifier of identifier
+  | Type_query_object_this
+  | Type_query_object_subscript_expression of type_query_subscript_expression
+  | Type_query_object_type_query_member_expression of type_query_member_expression
+  | Type_query_object_call_expression of type_query_call_expression
+
+and type_query_index =
+  | Type_query_index_predefined_type of predefined_type
+  | Type_query_index_string of string
+  | Type_query_index_number of number
+
+and type_query_member_expression = {
+  object_: type_query_object;
+  optional: bool;
+  property: type_query_property;
+}
+
+and type_query_property =
+  | Type_query_property_private of private_property_identifier
+  | Type_query_property_identifier of identifier
+
+and type_query_call_expression = {
+  function_: type_query_call_function;
+  arguments: type_query_call_arguments;
+}
+
+and type_query_call_function =
+  | Type_query_call_import of import
+  | Type_query_call_identifier of identifier
+  | Type_query_call_member_expresion of type_query_member_expression
+  | Type_query_call_subscript_expression of type_query_subscript_expression
+
+and type_query_call_arguments = arguments
+
+and type_query_instantiation_expression = {
+  function_: type_query_call_function;
+  type_arguments: type_arguments
+}
 
 (** Union Type
 
