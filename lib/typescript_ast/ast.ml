@@ -2443,11 +2443,11 @@ and type_query =
   | Typeof_identifier of identifier
   | Typeof_this
 
-and type_query_subscript_expression = {
-  object_: type_query_object;
-  optional: bool;
-  index: type_query_index;
-}
+and type_query_subscript_expression =
+  { object_ : type_query_object
+  ; optional : bool
+  ; index : type_query_index
+  }
 
 and type_query_object =
   | Type_query_object_identifier of identifier
@@ -2461,20 +2461,20 @@ and type_query_index =
   | Type_query_index_string of string
   | Type_query_index_number of number
 
-and type_query_member_expression = {
-  object_: type_query_object;
-  optional: bool;
-  property: type_query_property;
-}
+and type_query_member_expression =
+  { object_ : type_query_object
+  ; optional : bool
+  ; property : type_query_property
+  }
 
 and type_query_property =
   | Type_query_property_private of private_property_identifier
   | Type_query_property_identifier of identifier
 
-and type_query_call_expression = {
-  function_: type_query_call_function;
-  arguments: type_query_call_arguments;
-}
+and type_query_call_expression =
+  { function_ : type_query_call_function
+  ; arguments : type_query_call_arguments
+  }
 
 and type_query_call_function =
   | Type_query_call_import of import
@@ -2484,10 +2484,10 @@ and type_query_call_function =
 
 and type_query_call_arguments = arguments
 
-and type_query_instantiation_expression = {
-  function_: type_query_call_function;
-  type_arguments: type_arguments
-}
+and type_query_instantiation_expression =
+  { function_ : type_query_call_function
+  ; type_arguments : type_arguments
+  }
 
 (** Union Type
 
