@@ -193,11 +193,11 @@ let make_node state ?name node =
 
 let print_unexpected_node state ?name node =
   let name = get_name ?name node in
-  Tree.make_node state (name ^ "?")
+  Tree.make_node state (name ^ "???")
 
 let print_todo_node state ?name node =
   let name = get_name ?name node in
-  Tree.make_node state (name ^ "!")
+  Tree.make_node state (name ^ "!!!")
 
 (* Filtering by name a list of nodes *)
 
@@ -438,6 +438,7 @@ and print_expression state ?name node =
 and print_subscript_expression state ?name node = print_todo_node state ?name node
 and print_member_expression state ?name node = print_todo_node state ?name node
 and print_parenthesized_expression state ?name node = print_todo_node state ?name node
+and print_import state ?name node = make_node state ?name node
 and print_identifier state ?name node = make_node state ?name node
 and print_undefined state ?name node = make_node state ?name node
 and print_this state ?name node = make_node state ?name node
@@ -487,7 +488,7 @@ and print_call_expression state ?name node =
   and print_function state node =
     let name = string_of_ts_node_type node in
     match name with
-    | "import" -> make_node state ~name node
+    | "import" -> print_import state ~name node
     | _ -> match_rest state ~name node print_expression
   in
   let children =
@@ -704,21 +705,76 @@ and print_type_query state ?name node =
   in Tree.make_unary state name print child
 
 and print_type_query_subscript_expression state ?name node =
-  print_todo_node state ?name node
+  let name = get_name ?name node
+  and object_field = ts_node_child_by_field_name_exn node "object"
+  and index_field = ts_node_child_by_field_name_exn node "index" in
+  let children =
+    Tree.[ mk_child print_object_field object_field
+         ; mk_child print_index_field index_field
+         ]
+  in Tree.make state name children
+
+and print_index_field state node =
+  let name = string_of_ts_node_type node in
+  match name with
+  | "predefined_type" -> print_predefined_type state ~name node
+  | "string" -> make_node state ~name node
+  | "number" -> print_number state ~name node
+  | _ -> match_rest state ~name node print_unexpected_node
 
 and print_type_query_member_expression state ?name node =
-  print_todo_node state ?name node
+  let name = get_name ?name node
+  and object_field = ts_node_child_by_field_name_exn node "object"
+  and property_field = ts_node_child_by_field_name_exn node "property" in
+  let children =
+    Tree.[ mk_child print_object_field object_field
+         ; mk_child print_property_field property_field
+         ]
+  in Tree.make state name children
 
-and print_type_query_call_expression state ?name node =
-  print_todo_node state ?name node
+and print_object_field state node =
+  let name = string_of_ts_node_type node in
+  match name with
+  | "identifier" -> print_identifier state ~name node
+  | "this" -> print_this state ~name node
+  | "member_expression" -> print_type_query_member_expression state ~name node
+  | "subscript_expression" -> print_type_query_subscript_expression state ~name node
+  | "call_expression" -> print_type_query_call_expression state ~name node
+  | _ -> match_rest state ~name node print_unexpected_node
+
+and print_property_field state node =
+  let name = string_of_ts_node_type node in
+  match name with
+  | "private_property_identifier" -> print_identifier state ~name node
+  | "property_identifier" -> print_identifier state ~name node
+  | _ -> match_rest state ~name node print_unexpected_node
 
 and print_type_query_instantiation_expression state ?name node =
   let name = get_name ?name node
-  and expression_child = ts_node_named_child_exn node 0
+  and function_field = ts_node_child_by_field_name_exn node "function"
   and type_arguments_field = ts_node_child_by_field_name_exn node "type_arguments" in
   let children =
-    Tree.[ mk_child (anon print_expression) expression_child
+    Tree.[ mk_child print_function_field function_field
          ; mk_child (anon print_type_arguments) type_arguments_field
+         ]
+  in Tree.make state name children
+
+and print_function_field state node =
+  let name = string_of_ts_node_type node in
+  match name with
+  | "import" -> print_import state ~name node
+  | "identifier" -> print_identifier state ~name node
+  | "member_expression" -> print_type_query_member_expression state ~name node
+  | "subscript_expression" -> print_type_query_subscript_expression state ~name node
+  | _ -> match_rest state ~name node print_unexpected_node
+
+and print_type_query_call_expression state ?name node =
+  let name = get_name ?name node
+  and function_field = ts_node_child_by_field_name_exn node "function"
+  and arguments_field = ts_node_child_by_field_name_exn node "arguments" in
+  let children =
+    Tree.[ mk_child print_function_field function_field
+         ; mk_child print_arguments arguments_field
          ]
   in Tree.make state name children
 
