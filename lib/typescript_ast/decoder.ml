@@ -1,3 +1,7 @@
+(* Misc *)
+
+let (<@) = Simple_utils.Ligo_fun.(<@)
+
 (* To print the AST in ASCII art *)
 
 module Tree = Cst_shared.Tree
@@ -197,12 +201,12 @@ let print_unexpected_node state ?name node =
 
 let print_todo_node state ?name node =
   let name = get_name ?name node in
-  Tree.make_node state (name ^ "!!!")
+  Tree.make_node state ("TODO: " ^ name)
 
 (* Filtering by name a list of nodes *)
 
 let filter_by_name name nodes =
-  let f node = String.equal name @@ string_of_ts_node_type node in
+  let f = String.equal name <@ string_of_ts_node_type in
   Core.List.filter nodes ~f
 
 let filter_first_by_name_exn name nodes =
@@ -554,7 +558,6 @@ and print_primary_type state ?name node =
   | "object_type" -> print_object_type state ~name node
   | "array_type" -> print_array_type state ~name node
   | "tuple_type" -> print_tuple_type state ~name node
-  (*  | "flow_maybe_type" -> *)
   | "type_query" -> print_type_query state ~name node
   | "index_type_query" -> print_index_type_query state ~name node
   | "this" -> print_this state ~name node
@@ -606,7 +609,141 @@ and print_predefined_type state ?name node =
 and print_nested_type_identifier state ?name node = print_todo_node state ?name node
 and print_generic_type state ?name node = print_todo_node state ?name node
 
-and print_object_type state ?name node = print_todo_node state ?name node
+(* Object type *)
+
+and print_object_type state ?name node =
+  let name = get_name ?name node
+  and children = collect_named_children node in
+  Tree.of_list state name (anon print_object_type_field) children
+
+and print_object_type_field state ?name node =
+  let name = get_name ?name node in
+  match name with
+  | "export_statement" -> print_export_statement state ~name node
+  | "property_signature" -> print_property_signature state ~name node
+  | "call_signature" -> print_call_signature state ~name node
+  | "construct_signature" -> print_construct_signature state ~name node
+  | "index_signature" -> print_index_signature state ~name node
+  | "method_signature" -> print_method_signature state ~name node
+  | _ -> match_rest state ~name node print_unexpected_node
+
+and print_property_signature state ?name node =
+  let name = get_name ?name node
+  and children = collect_children node in
+  let accessibility_modifier = filter_first_by_name "accessibility_modifier" children
+  and static = has_node_named "static" children
+  and override_modifier = filter_first_by_name "override_modifier" children
+  and readonly = has_node_named "readonly" children
+  and name_field = ts_node_child_by_field_name_exn node "name"
+  and qmark = has_node_named "?" children
+  and type_field = ts_node_child_by_field_name node "type" in
+  let children =
+    Tree.
+      [ mk_child_opt (anon print_accessibility_modifier) accessibility_modifier
+      ; mk_child_opt make_node static
+      ; mk_child_opt (anon print_override_modifier) override_modifier
+      ; mk_child_opt make_node readonly
+      ; mk_child (anon print_identifier) name_field
+      ; mk_child_opt make_node qmark
+      ; mk_child_opt (anon print_type_annotation) type_field
+      ]
+  in
+  Tree.make state name children
+
+and print_call_signature state ?name node =
+  let name = get_name ?name node
+  and type_parameters_field = ts_node_child_by_field_name node "type_parameters"
+  and parameters_field = ts_node_child_by_field_name_exn node "parameters"
+  and return_type_field = ts_node_child_by_field_name_exn node "return_type"
+  and print_return_type state node =
+    let name = string_of_ts_node_type node in
+    match name with
+    | "type_annotation" -> print_type_annotation state ~name node
+    | "asserts_annotation" -> print_asserts_annotation state ~name node
+    | _ -> match_rest state ~name node print_type_predicate_annotation
+  in
+  let children =
+    Tree.
+      [ mk_child_opt (anon print_type_parameters) type_parameters_field
+      ; mk_child (anon print_formal_parameters) parameters_field
+      ; mk_child print_return_type return_type_field
+      ]
+  in
+  Tree.make state name children
+
+and print_asserts_annotation state ?name node =
+  let name = get_name ?name node
+  and asserts = ts_node_child_exn node 1 in
+  Tree.make_unary state name (anon print_asserts) asserts
+
+and print_type_predicate_annotation state ?name node =
+  let name = get_name ?name node
+  and asserts = ts_node_child_exn node 1 in
+  Tree.make_unary state name (anon print_type_predicate) asserts
+
+and print_construct_signature state ?name node =
+  let name = get_name ?name node
+  and abstract = has_child_named "abstract" node
+  and type_parameters_field = ts_node_child_by_field_name node "type_parameters"
+  and parameters_field = ts_node_child_by_field_name_exn node "parameters"
+  and type_field = ts_node_child_by_field_name node "type" in
+  let children =
+    Tree.
+      [ mk_child_opt make_node abstract
+      ; mk_child_opt (anon print_type_parameters) type_parameters_field
+      ; mk_child (anon print_formal_parameters) parameters_field
+      ; mk_child_opt (anon print_type_annotation) type_field
+      ]
+  in
+  Tree.make state name children
+
+and print_index_signature state ?name node =
+(*  let name = get_name ?name node
+  and sign_field = ts_node_child_by_field_name node "sign"
+    and *)
+  print_todo_node state ?name node
+
+and print_method_signature state ?name node =
+  let name = get_name ?name node
+  and children = collect_children node in
+  let accessibility_modifier = filter_first_by_name "accessibility_modifier" children
+  and static = has_node_named "static" children
+  and override_modifier = filter_first_by_name "override_modifier" children
+  and readonly = has_node_named "readonly" children
+  and async = has_node_named "async" children
+  and set = has_node_named "set" children
+  and get = has_node_named "get" children
+  and star = has_node_named "*" children
+  and name_field = ts_node_child_by_field_name_exn node "name"
+  and qmark = has_node_named "?" children
+  (* "_call_signature" inlined: *)
+  and type_parameters_field = ts_node_child_by_field_name node "type_parameters"
+  and parameters_field = ts_node_child_by_field_name_exn node "parameters"
+  and return_type_field = ts_node_child_by_field_name_exn node "return_type"
+  and print_return_type state node =
+    let name = string_of_ts_node_type node in
+    match name with
+    | "type_annotation" -> print_type_annotation state ~name node
+    | "asserts_annotation" -> print_asserts_annotation state ~name node
+    | _ -> match_rest state ~name node print_type_predicate_annotation in
+  let children =
+    Tree.
+      [ mk_child_opt (anon print_accessibility_modifier) accessibility_modifier
+      ; mk_child_opt make_node static
+      ; mk_child_opt (anon print_override_modifier) override_modifier
+      ; mk_child_opt make_node readonly
+      ; mk_child_opt make_node async
+      ; mk_child_opt make_node set
+      ; mk_child_opt make_node get
+      ; mk_child_opt make_node star
+      ; mk_child (anon print_property_name) name_field
+      ; mk_child_opt make_node qmark
+      ; mk_child_opt (anon print_type_parameters) type_parameters_field
+      ; mk_child (anon print_formal_parameters) parameters_field
+      ; mk_child print_return_type return_type_field
+      ]
+  in
+  Tree.make state name children
 
 (* Array type *)
 
@@ -919,12 +1056,16 @@ and print_function_type state ?name node =
   Tree.make state name children
 
 and print_asserts state ?name node =
-  let name = get_name ?name node in
-  match name with
-  | "type_predicate" -> print_type_predicate state ~name node
-  | "identifier" -> print_identifier state ~name node
-  | "this" -> print_this state ~name node
-  | _ -> match_rest state ~name node print_unexpected_node
+  let name = get_name ?name node
+  and child = ts_node_child_exn node 1
+  and print state node =
+    let name = string_of_ts_node_type node in
+    match name with
+    | "type_predicate" -> print_type_predicate state ~name node
+    | "identifier" -> print_identifier state ~name node
+    | "this" -> print_this state ~name node
+    | _ -> match_rest state ~name node print_unexpected_node
+  in Tree.make_unary state name print child
 
 and print_type_predicate state ?name node =
   let name = get_name ?name node
@@ -1041,7 +1182,8 @@ and print_accessibility_modifier state ?name node =
     | "private" -> print_private state ~name node
     | "protected" -> print_protected state ~name node
     | _ -> match_rest state ~name node print_unexpected_node
-  in Tree.make_unary state name print child
+  in
+  Tree.make_unary state name print child
 
 and print_public state ?name node =
   let name = get_name ?name node in
