@@ -73,7 +73,13 @@ const sidebars = {
           "jsLigoName": "Decorators",
         },
         "items": [
-          "tezos/decorators/decorators",
+          {
+            "type": "doc",
+            "id": "tezos/decorators/decorators",
+            "customProps": {
+              "jsLigoName": "Decorators",
+            },
+          },
           "tezos/decorators/annot",
           "tezos/decorators/deprecated",
           "tezos/decorators/dyn_entry",

@@ -1,0 +1,7 @@
+
+author: timothymcmackin
+description: "\\nSection title \"Decorators\" is used when switching to JsLIGO (otherwise it is \"Attributes\").\\n\\n"
+merge_request: '3257'
+title: "Set the title for the Decorators page when jsligo is active"
+type: fixed
+            
