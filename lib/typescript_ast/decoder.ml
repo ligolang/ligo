@@ -1,6 +1,6 @@
 (* Misc *)
 
-let (<@) = Simple_utils.Ligo_fun.(<@)
+let ( <@ ) = Simple_utils.Ligo_fun.( <@ )
 
 (* To print the AST in ASCII art *)
 
@@ -698,7 +698,7 @@ and print_construct_signature state ?name node =
   Tree.make state name children
 
 and print_index_signature state ?name node =
-(*  let name = get_name ?name node
+  (*  let name = get_name ?name node
   and sign_field = ts_node_child_by_field_name node "sign"
     and *)
   print_todo_node state ?name node
@@ -725,7 +725,8 @@ and print_method_signature state ?name node =
     match name with
     | "type_annotation" -> print_type_annotation state ~name node
     | "asserts_annotation" -> print_asserts_annotation state ~name node
-    | _ -> match_rest state ~name node print_type_predicate_annotation in
+    | _ -> match_rest state ~name node print_type_predicate_annotation
+  in
   let children =
     Tree.
       [ mk_child_opt (anon print_accessibility_modifier) accessibility_modifier
@@ -1065,7 +1066,8 @@ and print_asserts state ?name node =
     | "identifier" -> print_identifier state ~name node
     | "this" -> print_this state ~name node
     | _ -> match_rest state ~name node print_unexpected_node
-  in Tree.make_unary state name print child
+  in
+  Tree.make_unary state name print child
 
 and print_type_predicate state ?name node =
   let name = get_name ?name node
