@@ -1720,16 +1720,6 @@ and array = arguments
       '=>',
       field('body', choice($.expression, $.statement_block)))
    ]}
-  + TypeScript
-   {@js[
-    _call_signature: $ => seq(
-      field('type_parameters', optional($.type_parameters)),
-      field('parameters', $.formal_parameters),
-      field('return_type', optional(
-        choice($.type_annotation,
-               $.asserts_annotation,
-               $.type_predicate_annotation))))
-   ]}
 *)
 and arrow_function =
   { async : bool
@@ -2247,6 +2237,8 @@ and lookup_type = primary_type * type_
        field('name', $._property_name),
        optional('?'),
        field('type', optional($.type_annotation))),
+
+     call_signature: $ => $._call_signature,
 
      construct_signature: $ => seq(
        optional('abstract'),
