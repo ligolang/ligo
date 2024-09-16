@@ -5,6 +5,7 @@
  (public_name ligo.typescript_ast)
  (modules ast)
  (libraries
+  simple_utils
   cst_shared ;; For printing the TS CST
   hex
   zarith
