@@ -397,7 +397,7 @@ and print_interface_declaration state ?name node = print_todo_node state ?name n
 and print_import_alias state ?name node = print_todo_node state ?name node
 and print_ambient_declaration state ?name node = print_todo_node state ?name node
 
-(* Expressions
+(* EXPRESSION
 
    The JavasScript tree-sitter grammar have the non-terminals
    "expression" and "primary_expression" be supertypes, that is,
@@ -452,7 +452,7 @@ and print_false state ?name node = make_node state ?name node
 and print_null state ?name node = make_node state ?name node
 and print_object state ?name node = print_todo_node state ?name node
 
-(* Arrays *)
+(* Array (expression) *)
 
 and print_array state ?name node =
   let name = get_name ?name node in
@@ -525,7 +525,7 @@ and print_sequence_expression state ?name node =
   let children = collect_named_children node in
   Tree.of_list state name (anon print_expression) children
 
-(* TYPES
+(* TYPE
 
    The non-terminals "type" and "primary_type" are supertypes in the
    TypeScript grammar, which means that they are hidden rules. *)
@@ -605,12 +605,17 @@ and print_predefined_type state ?name node =
 
 and print_nested_type_identifier state ?name node = print_todo_node state ?name node
 and print_generic_type state ?name node = print_todo_node state ?name node
+
 and print_object_type state ?name node = print_todo_node state ?name node
+
+(* Array type *)
 
 and print_array_type state ?name node =
   let name = get_name ?name node
   and child = ts_node_named_child_exn node 0 in
   Tree.make_unary state name (anon print_type) child
+
+(* Tuple type *)
 
 and print_tuple_type state ?name node =
   let name = get_name ?name node
@@ -688,6 +693,8 @@ and print_rest_type state ?name node =
   let name = get_name ?name node
   and child = ts_node_named_child_exn node 0 in
   Tree.make_unary state name (anon print_type) child
+
+(* Type query *)
 
 and print_type_query state ?name node =
   let name = get_name ?name node
@@ -791,7 +798,11 @@ and print_index_type_query state ?name node =
   and child = ts_node_named_child_exn node 0 in
   Tree.make_unary state name (anon print_primary_type) child
 
+(* Existential type *)
+
 and print_existential_type state ?name node = make_node state ?name node
+
+(* Literal type *)
 
 and print_literal_type state ?name node =
   let name = get_name ?name node
@@ -809,6 +820,8 @@ and print_literal_type state ?name node =
     | _ -> match_rest state ~name node print_unexpected_node
   in
   Tree.make_unary state name print child
+
+(* Unary expression *)
 
 and print_unary_expression state ?name node =
   let name = get_name ?name node
@@ -829,7 +842,9 @@ and print_unary_expression state ?name node =
   in
   Tree.make state name children
 
-(* The non-terminals "type" and "primary_type" are supertypes in the
+(* Look up type
+
+   The non-terminals "type" and "primary_type" are supertypes in the
    TypeScript grammar, which means that they are hidden rules. *)
 
 and print_lookup_type state ?name node =
@@ -843,6 +858,8 @@ and print_lookup_type state ?name node =
       ]
   in
   Tree.make state name children
+
+(* Conditional type *)
 
 and print_conditional_type state ?name node =
   let name = get_name ?name node
@@ -860,17 +877,25 @@ and print_conditional_type state ?name node =
   in
   Tree.make state name children
 
+(* Template literal type *)
+
 and print_template_literal_type state ?name node = make_node state ?name node
+
+(* Intersection type *)
 
 and print_intersection_type state ?name node =
   let name = get_name ?name node
   and children = collect_named_children node in
   Tree.of_list state name (anon print_type) children
 
+(* Union type *)
+
 and print_union_type state ?name node =
   let name = get_name ?name node
   and children = collect_named_children node in
   Tree.of_list state name (anon print_type) children
+
+(* Function type *)
 
 and print_function_type state ?name node =
   let name = get_name ?name node
@@ -917,10 +942,14 @@ and print_type_predicate state ?name node =
   in
   Tree.make state name children
 
+(* Readonly type *)
+
 and print_readonly_type state ?name node =
   let name = get_name ?name node
   and child = ts_node_named_child_exn node 0 in
   Tree.make_unary state name (anon print_type) child
+
+(* Constructor type *)
 
 and print_constructor_type state ?name node =
   let name = get_name ?name node
@@ -949,6 +978,8 @@ and print_formal_parameter state ?name node =
   | "required_parameter" -> print_required_parameter state ~name node
   | "optional_parameter" -> print_optional_parameter state ~name node
   | _ -> match_rest state ~name node print_unexpected_node
+
+and print_optional_parameter state ?name node = print_required_parameter state ?name node
 
 and print_required_parameter state ?name node =
   let name = get_name ?name node
@@ -982,6 +1013,8 @@ and print_required_parameter state ?name node =
   in
   make state name children
 
+(* Decorator *)
+
 and print_decorator state ?name node =
   let name = get_name ?name node
   and child = ts_node_named_child_exn node 0
@@ -996,10 +1029,19 @@ and print_decorator state ?name node =
   in
   Tree.make_unary state name print child
 
+(* Accessibility modifier *)
+
 and print_accessibility_modifier state ?name node =
   let name = get_name ?name node
-  and child = ts_node_child_exn node 0 in
-  Tree.make_unary state name (anon make_node) child
+  and child = ts_node_child_exn node 0
+  and print state node =
+    let name = string_of_ts_node_type node in
+    match name with
+    | "public" -> print_public state ~name node
+    | "private" -> print_private state ~name node
+    | "protected" -> print_protected state ~name node
+    | _ -> match_rest state ~name node print_unexpected_node
+  in Tree.make_unary state name print child
 
 and print_public state ?name node =
   let name = get_name ?name node in
@@ -1013,12 +1055,14 @@ and print_protected state ?name node =
   let name = get_name ?name node in
   make_node state ~name node
 
+(* Override modifier *)
+
 and print_override_modifier state ?name node =
   let name = get_name ?name node
   and child = ts_node_child_exn node 0 in
   Tree.make_unary state name (anon make_node) child
 
-and print_optional_parameter state ?name node = print_required_parameter state ?name node
+(* Infer type *)
 
 and print_infer_type state ?name node =
   let name = get_name ?name node
@@ -1032,10 +1076,12 @@ and print_infer_type state ?name node =
   in
   Tree.make state name children
 
-(* Patterns
+(* PATTERN
 
    The JavasScript tree-sitter grammar have the non-terminal
    "pattern" be a supertype, that is, a hidden rule. *)
+
+(* Object pattern *)
 
 and print_object_pattern state ?name node =
   let name = get_name ?name node
@@ -1051,6 +1097,8 @@ and print_object_pattern_field state ?name node =
   | "shorthand_property_identifier_pattern" ->
     print_shorthand_property_identifier_pattern state ~name node
   | _ -> match_rest state ~name node print_unexpected_node
+
+(* Pair pattern *)
 
 and print_pair_pattern state ?name node =
   let name = get_name ?name node
@@ -1070,6 +1118,8 @@ and print_pair_pattern state ?name node =
   in
   Tree.make state name children
 
+(* Assignment pattern *)
+
 and print_assignment_pattern state ?name node =
   let name = get_name ?name node
   and left_field = ts_node_child_by_field_name_exn node "left"
@@ -1081,6 +1131,8 @@ and print_assignment_pattern state ?name node =
       ]
   in
   Tree.make state name children
+
+(* Property names *)
 
 and print_property_name state ?name node =
   let name = get_name ?name node in
@@ -1096,6 +1148,11 @@ and print_computed_property_name state ?name node =
   let name = get_name ?name node in
   let children = collect_named_children node in
   Tree.of_list state name (anon print_expression) children
+
+and print_shorthand_property_identifier_pattern state ?name node =
+  make_node state ?name node
+
+(* Object assignment pattern *)
 
 and print_object_assignment_pattern state ?name node =
   let name = get_name ?name node
@@ -1116,8 +1173,7 @@ and print_object_assignment_pattern state ?name node =
   in
   Tree.make state name children
 
-and print_shorthand_property_identifier_pattern state ?name node =
-  make_node state ?name node
+(* Array pattern *)
 
 and print_array_pattern state ?name node =
   let name = get_name ?name node
@@ -1129,6 +1185,8 @@ and print_array_pattern_cell state ?name node =
   match name with
   | "assignment_pattern" -> print_assignment_pattern state ~name node
   | _ -> match_rest state ~name node print_pattern (* hidden rule *)
+
+(* General patterns (hidden rule) *)
 
 and print_pattern state ?name node =
   let name = get_name ?name node in
