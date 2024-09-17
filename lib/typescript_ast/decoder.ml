@@ -552,7 +552,7 @@ and print_primary_type state ?name node =
   match name with
   | "parenthesized_type" -> print_parenthesized_type state ~name node
   | "predefined_type" -> print_predefined_type state ~name node
-  | "type_identifier" -> print_identifier state ~name node (* Alias *)
+  | "type_identifier" -> print_type_identifier state ~name node
   | "nested_type_identifier" -> print_nested_type_identifier state ~name node
   | "generic_type" -> print_generic_type state ~name node
   | "object_type" -> print_object_type state ~name node
@@ -569,6 +569,8 @@ and print_primary_type state ?name node =
   | "intersection_type" -> print_intersection_type state ~name node
   | "union_type" -> print_union_type state ~name node
   | _ -> match_rest state ~name node print_unexpected_node
+
+and print_type_identifier state ?name node = make_node state ?name node
 
 and print_parenthesized_type state ?name node =
   let name = get_name ?name node
@@ -698,10 +700,68 @@ and print_construct_signature state ?name node =
   Tree.make state name children
 
 and print_index_signature state ?name node =
-  (*  let name = get_name ?name node
+  let name = get_name ?name node
   and sign_field = ts_node_child_by_field_name node "sign"
-    and *)
-  print_todo_node state ?name node
+  and name_field = ts_node_child_by_field_name node "name"
+  and type_field = ts_node_child_by_field_name_exn node "type"
+  and print_sign_field state node =
+    match ts_node_child node 0 with
+    | None -> Tree.make_node state "readonly"
+    | Some sign -> Tree.make_unary state "readonly" print_plus_minus sign
+  and print_type_field state node =
+    let name = get_name node in
+    match name with
+    | "type_annotation" -> print_type_annotation state ~name node
+    | "omitting_type_annotation" -> print_omitting_type_annotation state ~name node
+    | "adding_type_annotation" -> print_adding_type_annotation state ~name node
+    | "opting_type_annotation" -> print_opting_type_annotation state ~name node
+    | _ -> match_rest state ~name node print_unexpected_node
+  in
+  let children =
+    match name_field with
+    | Some name_field ->
+      let index_type_field = ts_node_child_by_field_name_exn node "index_type" in
+      Tree.
+        [ mk_child_opt print_sign_field sign_field
+        ; mk_child (anon print_identifier) name_field
+        ; mk_child (anon print_type) index_type_field
+        ; mk_child print_type_field type_field
+        ]
+    | None ->
+      let mapped_type_clause = ts_node_named_child_exn node 0 in
+      Tree.
+        [ mk_child_opt print_sign_field sign_field
+        ; mk_child (anon print_mapped_type_clause) mapped_type_clause
+        ; mk_child print_type_field type_field
+        ]
+  in
+  Tree.make state name children
+
+and print_mapped_type_clause state ?name node =
+  let name = get_name ?name node
+  and name_field = ts_node_child_by_field_name_exn node "name"
+  and type_field = ts_node_child_by_field_name_exn node "type"
+  and alias_field = ts_node_child_by_field_name node "alias" in
+  let children =
+    Tree.
+      [ mk_child (anon print_type_identifier) name_field
+      ; mk_child (anon print_type) type_field
+      ; mk_child_opt (anon print_type) alias_field
+      ]
+  in
+  Tree.make state name children
+
+and print_omitting_type_annotation state ~name node =
+  let child = ts_node_named_child_exn node 0 in
+  Tree.make_unary state name (anon print_type) child
+
+and print_adding_type_annotation state ~name node =
+  let child = ts_node_named_child_exn node 0 in
+  Tree.make_unary state name (anon print_type) child
+
+and print_opting_type_annotation state ~name node =
+  let child = ts_node_named_child_exn node 0 in
+  Tree.make_unary state name (anon print_type) child
 
 and print_method_signature state ?name node =
   let name = get_name ?name node
@@ -964,21 +1024,21 @@ and print_literal_type state ?name node =
 and print_unary_expression state ?name node =
   let name = get_name ?name node
   and operator_field = ts_node_child_by_field_name_exn node "operator"
-  and argument_field = ts_node_child_by_field_name_exn node "argument"
-  and print_operator state node =
-    let name = string_of_ts_node_type node in
-    match name with
-    | "+" -> make_node state ~name node
-    | "-" -> make_node state ~name node
-    | _ -> match_rest state ~name node print_unexpected_node
-  in
+  and argument_field = ts_node_child_by_field_name_exn node "argument" in
   let children =
     Tree.
-      [ mk_child print_operator operator_field
+      [ mk_child print_plus_minus operator_field
       ; mk_child (anon print_number) argument_field
       ]
   in
   Tree.make state name children
+
+and print_plus_minus state node =
+  let name = string_of_ts_node_type node in
+  match name with
+  | "+" -> make_node state ~name node
+  | "-" -> make_node state ~name node
+  | _ -> match_rest state ~name node print_unexpected_node
 
 (* Look up type
 
