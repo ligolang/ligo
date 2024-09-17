@@ -1,0 +1,7 @@
+
+author: timothymcmackin
+description: "\\nUpdates documentation about testing compiled contracts on sandboxes and testnets.\\n\\n"
+merge_request: '3261'
+title: "[doc] Update docs on Michelson testing"
+type: fixed
+            

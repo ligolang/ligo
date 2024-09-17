@@ -1,0 +1,12 @@
+// This is mockup_testme.jsligo
+type storage = string;
+
+type result = [list<operation>, storage];
+
+@entry
+const append = (s: string, storage: storage): result =>
+  [[], storage + s]
+
+@entry
+const reset = (_: unit, _storage: storage): result =>
+  [[], ""]
