@@ -584,7 +584,8 @@ and print_predefined_type state ?name node =
   | child :: _ ->
     (* The tree-sitter parser for TypeScript has a bug: a child node
        "unique symbol" occurs repeated, for some mysterious
-       reason. This a hack. Here is the production:
+       reason. This case of the pattern matching is a hack to work
+       around the issue. For reference, here is the production:
 
        predefined_type: _ => choice(
          ...
@@ -608,8 +609,67 @@ and print_predefined_type state ?name node =
     in
     Tree.make_unary state name print child
 
-and print_nested_type_identifier state ?name node = print_todo_node state ?name node
-and print_generic_type state ?name node = print_todo_node state ?name node
+and print_nested_type_identifier state ?name node =
+  let name = get_name ?name node
+  and module_field = ts_node_child_by_field_name_exn node "module"
+  and name_field = ts_node_child_by_field_name_exn node "name"
+  and print_module_field state node =
+    let name = string_of_ts_node_type node in
+    match name with
+    | "identifier" -> print_identifier state ~name node
+    | "nested_identifier" -> print_nested_identifier state ~name node
+    | _ -> match_rest state ~name node print_unexpected_node
+  in
+  let children =
+    Tree.
+      [ mk_child print_module_field module_field
+      ; mk_child (anon print_type_identifier) name_field
+      ]
+  in
+  Tree.make state name children
+
+and print_nested_identifier state ?name node =
+  let name = get_name ?name node
+  and object_field = ts_node_child_by_field_name_exn node "object"
+  and property_field = ts_node_child_by_field_name_exn node "property"
+  and print_object_field state node =
+    let name = string_of_ts_node_type node in
+    match name with
+    | "identifier" -> print_identifier state ~name node
+    | "member_expression" -> print_nested_identifier state ~name node
+    | _ -> match_rest state ~name node print_unexpected_node
+  and print_property_field state node =
+    let name = string_of_ts_node_type node in
+    match name with
+    | "property_identifier" -> print_identifier state ~name node
+    | _ -> match_rest state ~name node print_unexpected_node
+  in
+  let children =
+    Tree.
+      [ mk_child print_object_field object_field
+      ; mk_child print_property_field property_field
+      ]
+  in
+  Tree.make state name children
+
+and print_generic_type state ?name node =
+  let name = get_name ?name node
+  and name_field = ts_node_child_by_field_name_exn node "name"
+  and type_arguments_field = ts_node_child_by_field_name_exn node "type_arguments"
+  and print_name_field state node =
+    let name = string_of_ts_node_type node in
+    match name with
+    | "type_identifier" -> print_type_identifier state ~name node
+    | "nested_type_identifier" -> print_nested_type_identifier state ~name node
+    | _ -> match_rest state ~name node print_unexpected_node
+  in
+  let children =
+    Tree.
+      [ mk_child print_name_field name_field
+      ; mk_child (anon print_type_arguments) type_arguments_field
+      ]
+  in
+  Tree.make state name children
 
 (* Object type *)
 
