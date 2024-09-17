@@ -1,0 +1,9 @@
+// This is mutation-contract.jsligo
+export namespace AddSub {
+  export type storage = int;
+
+  @entry
+  const add = (delta: int, storage: storage): [list<operation>, storage] => [[], storage + delta];
+  @entry
+  const sub = (delta: int, storage: storage): [list<operation>, storage] => [[], storage - delta];
+}

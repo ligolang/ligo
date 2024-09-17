@@ -1,0 +1,56 @@
+// This is mutation-contract-test.jsligo
+
+#import "gitlab-pages/docs/testing/src/mutation-testing/mutation-contract.jsligo" "MutationContract"
+import Test = Test.Next;
+type storage = int;
+type param = parameter_of MutationContract.AddSub;
+const initial_storage = 7;
+
+const tester = (taddr: typed_address<param, storage>, _c: michelson_contract<param, storage> , _: int): unit => {
+  Test.Contract.transfer_exn(Test.Typed_address.get_entrypoint("add", taddr), 7, 0tez);
+  Assert.assert(Test.Typed_address.get_storage(taddr) == initial_storage + 7);
+}
+
+const test_original = (() => {
+  let orig = Test.Originate.contract(contract_of(MutationContract.AddSub), initial_storage, 0tez);
+  return tester(orig.taddr);
+})();
+const test_mutation =
+  match(Test.Mutation.contract(contract_of(MutationContract.AddSub), initial_storage, 0tez, tester)) {
+    when(None()): unit;
+    when(Some(pmutation)): do {
+      Test.IO.log(pmutation[1]);
+      // In a real program, one would write `failwith "A mutation passes"`
+      // Because we want to demonstrate the issue without an actual error
+      // a milder println is used in this document.
+      Test.IO.println("A mutation of the contract still passes the tests!");
+    }
+  };
+const tester_add_and_sub = (taddr: typed_address<param, storage>, _c: michelson_contract<param, storage>, _i: int): unit => {
+
+  Test.Contract.transfer_exn(Test.Typed_address.get_entrypoint("add", taddr), 7, 0tez);
+  Assert.assert(Test.Typed_address.get_storage(taddr) == initial_storage + 7);
+  Test.Contract.transfer_exn(Test.Typed_address.get_entrypoint("sub", taddr), 3, 0tez);
+  Assert.assert(Test.Typed_address.get_storage(taddr) == initial_storage + 4);
+}
+
+const test_mutation_sub =
+  match(Test.Mutation.contract(contract_of(MutationContract.AddSub), initial_storage, 0tez, tester_add_and_sub)) {
+    when(None()): unit;
+    when(Some(pmutation)): do {
+      Test.IO.log(pmutation[1]);
+      Test.IO.println("A mutation of the contract still passes the tests!");
+    }
+  };
+const test_mutation_all =
+  match(Test.Mutation.All.contract(contract_of(MutationContract.AddSub), initial_storage, 0tez, tester)) {
+    when([]): unit;
+    when([hd,...tl]): do {
+      let mutations = list([hd,...tl]);
+      let _p = Test.IO.println("Some mutations also pass the tests!");
+      for (const m of mutations) {
+        let [_, mutation] = m;
+        Test.IO.log(mutation);
+      };
+    }
+  };
