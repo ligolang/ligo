@@ -40,7 +40,7 @@ Views are a form of read-only entry points, that can be called synchronously. Fo
 
 ## @no_mutation
 
-See [the documentation on mutation testing](../advanced/mutation-testing.md#preventing-mutation).
+See [the documentation on mutation testing](../testing/mutation-testing.md#preventing-mutation).
 
 ## @private to prevent an identifier from being accessed outside of its defining module
 
@@ -136,7 +136,7 @@ Views are a form of read-only entry points, that can be called synchronously. Fo
 
 ## @no_mutation
 
-See [the documentation on mutation testing](../advanced/mutation-testing.md#preventing-mutation).
+See [the documentation on mutation testing](../testing/mutation-testing.md#preventing-mutation).
 
 ## @private to prevent an identifier from being accessed outside of its defining module
 

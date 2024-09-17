@@ -186,7 +186,7 @@ const sidebars = {
     "Testing": [
       "testing/testing",
       "testing/testing-tickets",
-      "advanced/mutation-testing",
+      "testing/mutation-testing",
       "advanced/michelson_testing"
     ],
     "Advanced Topics": [
