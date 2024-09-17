@@ -1,0 +1,7 @@
+
+author: timothymcmackin
+description: "\\nApplies language formatting to Michelson code blocks in the documentation.\\n\\n"
+merge_request: '3262'
+title: "[doc] Apply Michelson language formatting"
+type: added
+            
