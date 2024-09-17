@@ -1,4 +1,5 @@
-type t = {+readonly [T in number as U] ?: V}
+type t = m.n.o.p<T>;
+// type t = {+readonly [T in number as U] ?: V}
 // type t = {+readonly [x: number] -?: T}
 // type t = {public static override readonly async get foo? <T>(x: T) : T}
 // type t = {abstract new <T>(x: T) : T}
