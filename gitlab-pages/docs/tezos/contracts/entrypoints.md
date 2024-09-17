@@ -9,7 +9,8 @@ The entrypoints of a contract represent the different ways that it can be called
 A contract can have any number of internal functions, but only the functions designated as entrypoints can be called by outside consumers and other contracts.
 
 Contracts must have at least one entrypoint, and they can have as many as needed.
-For example, the following contract exports two entrypoints, named `increment` and `decrement`.
+For example, the following contract provides four entrypoints.
+The `increment` and `decrement` entrypoints increase or decrease a value in storage, the `reset` entrypoint sets the value to 0, and the `default` entrypoint increases the value by 1.
 
 <Syntax syntax="jsligo">
 
