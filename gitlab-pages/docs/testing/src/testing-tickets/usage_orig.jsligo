@@ -1,34 +1,50 @@
-type storage = option< ticket<bytes> >
-type unforged_storage = option< unforged_ticket<bytes> >
+namespace MyContract {
+  export type storage = [int, option<ticket<bytes>>];
+  export type unforged_storage = [int, option<unforged_ticket<bytes>>];
 
-const main = (_p: unit, s: storage) : [ list<operation> , storage] => {
-  let x =
-    match (s) {
-      when(Some(ticket)): ((ticket: ticket<bytes>) => {
-        let [_v , t] = Tezos.read_ticket (ticket) ;
-        return Some (t)
-      })(ticket);
-      when(None()): None()
-    };
-  return [list ([]), x]
-};
+  @entry
+  const main = (_: unit, storage: storage): [list<operation>, storage] => {
+    const [stored_value, ticket_opt] = storage;
+    const new_storage: storage =
+      match(ticket_opt) {
+        // If there is a ticket, add its amount to the int in storage
+        when(Some(ticket)): ((ticket: ticket<bytes>) => {
+          const [[_address, [_payload, amount]], new_ticket] = Tezos.Next.Ticket.read(ticket);
+          return [stored_value + int(amount), Some(new_ticket)];
+        })(ticket);
+        // If there is no ticket in storage, do nothing
+        when(None()): [stored_value, None()];
+      };
+    return [list([]), new_storage];
+  };
 
+}
 const test_originate_contract = do {
-  const mk_storage = (t:ticket<bytes>) : storage => { return (Some (t)) } ;
-  let ticket_info = [0x0202, 15n];
-  let addr = Test.Proxy_ticket.originate (ticket_info, mk_storage, main) ;
-  let unforged_storage = (Test.Proxy_ticket.get_storage (addr) as unforged_storage) ;
 
-  /* the ticket 'unforged_storage' can be manipulated freely without caring about ticket linearity */
+  // Create a function that the proxy runs to return the contract storage
+  const create_storage = (t: ticket<bytes>): MyContract.storage => [0, Some (t)];
+  const ticket_info = [0x0202, 15n];
 
-  match (unforged_storage) {
+  // Create the proxy contract and use it to originate the contract
+  const addr = Test.Proxy_ticket.originate (ticket_info, create_storage, MyContract.main);
+  // ...
+  // The ticket 'unforged_ticket_opt' can be manipulated freely without being destroyed
+  const [_stored_value, unforged_ticket_opt] = (Test.Proxy_ticket.get_storage(addr) as MyContract.unforged_storage);
+
+  // Verify that the ticket is in storage
+  match (unforged_ticket_opt) {
     when(Some(x)): do {
-      Test.log (["unforged_ticket", x]) ;
-      let { ticketer , value , amount } = x ;
-      assert (value == ticket_info[0]) ;
-      assert (amount == ticket_info[1]) ;
+      Test.Next.IO.log(["unforged_ticket", x]);
+      const { ticketer: _, value, amount } = x;
+      Assert.assert(value == ticket_info[0]);
+      Assert.assert(amount == ticket_info[1]);
       return unit
     };
     when(None()): failwith ("impossible")
-  }
+  };
+
+  // Call the entrypoint and verify that the value in storage changes
+  Test.Next.Contract.transfer_exn(Test.Next.Typed_address.get_entrypoint("default", addr), unit, 0tez);
+  const [new_stored_value, _unforged_ticket_opt] = Test.Proxy_ticket.get_storage(addr) as MyContract.unforged_storage;
+  Assert.assert(new_stored_value == int(ticket_info[1]));
 };
