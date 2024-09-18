@@ -1826,8 +1826,8 @@ and generator_function = function_expression
    ]}
 *)
 and meta_property =
-  | Meta_new
-  | Meta_import
+  | Meta_new_target
+  | Meta_import_meta
 
 (** Object (expression)
 
