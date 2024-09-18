@@ -1,4 +1,4 @@
-type t = m.n.o.p<T>;
+// type t = m.n.o.p<T>;
 // type t = {+readonly [T in number as U] ?: V}
 // type t = {+readonly [x: number] -?: T}
 // type t = {public static override readonly async get foo? <T>(x: T) : T}
@@ -29,5 +29,7 @@ type t = m.n.o.p<T>;
 //}
 // type t = readonly number;
 // f <string | (number)>("", x);
-
 // [...x, 6];
+// const x = (1+y, w)!, z;
+// const x = new.target
+const x = @foo class T<U> extends V<U,W>, Y implements A, B {}
