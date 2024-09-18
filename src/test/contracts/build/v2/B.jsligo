@@ -1,0 +1,9 @@
+export import * as A from "A.jsligo";
+
+export const toto = 32
+export const titi = A.toto + 42;
+
+@entry export const main = (_u: unit, x_: int) : [list<operation>, int] => {
+    let x : int = x_ + toto + titi;
+    return [[], x];
+};
