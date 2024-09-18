@@ -161,6 +161,7 @@ const sidebars = {
           "data-types/contracts-type",
           "data-types/big_sets",
           "data-types/big_maps",
+          "data-types/tickets",
         ],
       },
       {
