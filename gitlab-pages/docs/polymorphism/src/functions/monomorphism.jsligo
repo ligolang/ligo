@@ -1,2 +1,0 @@
-const id_int = (x: int) : int => x;
-const id_nat = (x : nat) : nat => x;
