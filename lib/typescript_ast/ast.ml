@@ -813,7 +813,7 @@ and public_field_definition =
   ; declare : bool
   ; scope : field_scope
   ; name : property_name
-  ; mode : field_mode
+  ; mode : field_mode option
   ; type_ : type_annotation option
   ; init_value : expression
   }
