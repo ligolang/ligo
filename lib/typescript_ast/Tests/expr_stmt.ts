@@ -38,4 +38,5 @@ const x = class <T>{
   g() : T;
   static {};
   abstract h();
+  declare public f = 6;
 }
