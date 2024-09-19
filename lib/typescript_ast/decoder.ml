@@ -701,7 +701,39 @@ and print_abstract_method_signature state ?name node =
   Tree.make state name children
 
 and print_public_field_definition state ?name node =
-  print_todo_node state ?name node
+  let name = get_name ?name node
+  and children = collect_children node in
+  let decorators = filter_by_name "decorator" children
+  and accessibility_modifier = filter_first_by_name "accessibility_modifier" children
+  and override_modifier = filter_first_by_name "override_modifier" children
+  and declare = has_node_named "declare" children
+  and static = has_node_named "static" children
+  and readonly = has_node_named "readonly" children
+  and accessor = has_node_named "accessor" children
+  and abstract = has_node_named "abstract" children
+  and name_field = ts_node_child_by_field_name_exn node "name"
+  and type_field = ts_node_child_by_field_name node "type"
+  (* "_initializer" inlined: *)
+  and value_field = ts_node_child_by_field_name node "value"
+  and qmark = has_node_named "?" children
+  and emark = has_node_named "!" children in
+  let open Tree in
+  let children =
+    mk_children_list (anon print_decorator) decorators
+    @ [ mk_child_opt (anon print_accessibility_modifier) accessibility_modifier
+      ; mk_child_opt make_node declare
+      ; mk_child_opt (anon print_override_modifier) override_modifier
+      ; mk_child_opt make_node static
+      ; mk_child_opt make_node readonly
+      ; mk_child_opt make_node accessor
+      ; mk_child_opt make_node abstract
+      ; mk_child (anon print_property_name) name_field
+      ; mk_child_opt make_node qmark
+      ; mk_child_opt make_node emark
+      ; mk_child_opt (anon print_type_annotation) type_field
+      ; mk_child_opt (anon print_expression) value_field
+      ]
+  in Tree.make state name children
 
 (* Meta-property *)
 
