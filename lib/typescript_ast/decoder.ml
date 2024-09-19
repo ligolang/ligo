@@ -591,6 +591,116 @@ and print_extends_clause state ?name node =
   in Tree.make state name children
 
 and print_class_body state ?name node =
+  let name = get_name ?name node
+  and children = collect_named_children node in
+  let decorators = filter_by_name "decorator" children in
+  let print state node =
+    let name = string_of_ts_node_type node in
+    match name with
+    | "decorator" -> ()
+    | "method_definition" ->
+      List.iter ~f:(print_decorator state) decorators;
+      print_method_definition state ~name node
+    | "method_signature" -> print_method_signature state ~name node
+    | "class_static_block" -> print_class_static_block state ~name node
+    | "abstract_method_signature" -> print_abstract_method_signature state ~name node
+    | "index_signature" -> print_index_signature state ~name node
+    | "public_field_definition" -> print_public_field_definition state ~name node
+    | _ -> match_rest state ~name node print_unexpected_node
+  in
+  Tree.of_list state name print children
+
+and print_method_definition state ?name node =
+  let name = get_name ?name node
+  and children = collect_children node in
+  let accessibility_modifier = filter_first_by_name "accessibility_modifier" children
+  and static = has_node_named "static" children
+  and override_modifier = filter_first_by_name "override_modifier" children
+  and readonly = has_node_named "readonly" children
+  and async = has_node_named "async" children
+  and set = has_node_named "set" children
+  and get = has_node_named "get" children
+  and star = has_node_named "*" children
+  and name_field = ts_node_child_by_field_name_exn node "name"
+  and qmark = has_node_named "?" children
+  (* "_call_signature" inlined: *)
+  and type_parameters_field = ts_node_child_by_field_name node "type_parameters"
+  and parameters_field = ts_node_child_by_field_name_exn node "parameters"
+  and return_type_field = ts_node_child_by_field_name node "return_type"
+  (* "statement_block" *)
+  and body_field = ts_node_child_by_field_name_exn node "body"
+  and print_return_type state node =
+    let name = string_of_ts_node_type node in
+    match name with
+    | "type_annotation" -> print_type_annotation state ~name node
+    | "asserts_annotation" -> print_asserts_annotation state ~name node
+    | _ -> match_rest state ~name node print_type_predicate_annotation
+  in
+  let children =
+    Tree.
+      [ mk_child_opt (anon print_accessibility_modifier) accessibility_modifier
+      ; mk_child_opt make_node static
+      ; mk_child_opt (anon print_override_modifier) override_modifier
+      ; mk_child_opt make_node readonly
+      ; mk_child_opt make_node async
+      ; mk_child_opt make_node set
+      ; mk_child_opt make_node get
+      ; mk_child_opt make_node star
+      ; mk_child (anon print_property_name) name_field
+      ; mk_child_opt make_node qmark
+      ; mk_child_opt (anon print_type_parameters) type_parameters_field
+      ; mk_child (anon print_formal_parameters) parameters_field
+      ; mk_child_opt print_return_type return_type_field
+      ; mk_child (anon print_statement_block) body_field
+      ]
+  in
+  Tree.make state name children
+
+and print_class_static_block state ?name node =
+  let name = get_name ?name node
+  and body_field = ts_node_child_by_field_name_exn node "body" in
+  Tree.make_unary state name (anon print_statement_block) body_field
+
+and print_abstract_method_signature state ?name node =
+  let name = get_name ?name node
+  and children = collect_children node in
+  let accessibility_modifier = filter_first_by_name "accessibility_modifier" children
+  and abstract = has_node_named "abstract" children
+  and override_modifier = filter_first_by_name "override_modifier" children
+  and set = has_node_named "set" children
+  and get = has_node_named "get" children
+  and star = has_node_named "*" children
+  and name_field = ts_node_child_by_field_name_exn node "name"
+  and qmark = has_node_named "?" children
+  (* "_call_signature" inlined: *)
+  and type_parameters_field = ts_node_child_by_field_name node "type_parameters"
+  and parameters_field = ts_node_child_by_field_name_exn node "parameters"
+  and return_type_field = ts_node_child_by_field_name node "return_type"
+  and print_return_type state node =
+    let name = string_of_ts_node_type node in
+    match name with
+    | "type_annotation" -> print_type_annotation state ~name node
+    | "asserts_annotation" -> print_asserts_annotation state ~name node
+    | _ -> match_rest state ~name node print_type_predicate_annotation
+  in
+  let children =
+    Tree.
+      [ mk_child_opt (anon print_accessibility_modifier) accessibility_modifier
+      ; mk_child_opt make_node abstract
+      ; mk_child_opt (anon print_override_modifier) override_modifier
+      ; mk_child_opt make_node set
+      ; mk_child_opt make_node get
+      ; mk_child_opt make_node star
+      ; mk_child (anon print_property_name) name_field
+      ; mk_child_opt make_node qmark
+      ; mk_child_opt (anon print_type_parameters) type_parameters_field
+      ; mk_child (anon print_formal_parameters) parameters_field
+      ; mk_child_opt print_return_type return_type_field
+      ]
+  in
+  Tree.make state name children
+
+and print_public_field_definition state ?name node =
   print_todo_node state ?name node
 
 (* Meta-property *)
@@ -845,7 +955,7 @@ and print_call_signature state ?name node =
   let name = get_name ?name node
   and type_parameters_field = ts_node_child_by_field_name node "type_parameters"
   and parameters_field = ts_node_child_by_field_name_exn node "parameters"
-  and return_type_field = ts_node_child_by_field_name_exn node "return_type"
+  and return_type_field = ts_node_child_by_field_name node "return_type"
   and print_return_type state node =
     let name = string_of_ts_node_type node in
     match name with
@@ -857,7 +967,7 @@ and print_call_signature state ?name node =
     Tree.
       [ mk_child_opt (anon print_type_parameters) type_parameters_field
       ; mk_child (anon print_formal_parameters) parameters_field
-      ; mk_child print_return_type return_type_field
+      ; mk_child_opt print_return_type return_type_field
       ]
   in
   Tree.make state name children
@@ -968,7 +1078,7 @@ and print_method_signature state ?name node =
   (* "_call_signature" inlined: *)
   and type_parameters_field = ts_node_child_by_field_name node "type_parameters"
   and parameters_field = ts_node_child_by_field_name_exn node "parameters"
-  and return_type_field = ts_node_child_by_field_name_exn node "return_type"
+  and return_type_field = ts_node_child_by_field_name node "return_type"
   and print_return_type state node =
     let name = string_of_ts_node_type node in
     match name with
@@ -990,7 +1100,7 @@ and print_method_signature state ?name node =
       ; mk_child_opt make_node qmark
       ; mk_child_opt (anon print_type_parameters) type_parameters_field
       ; mk_child (anon print_formal_parameters) parameters_field
-      ; mk_child print_return_type return_type_field
+      ; mk_child_opt print_return_type return_type_field
       ]
   in
   Tree.make state name children
