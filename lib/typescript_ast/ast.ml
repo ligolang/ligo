@@ -394,7 +394,7 @@ and class_member =
        optional(choice('get', 'set', '*')),
        field('name', $._property_name),
        optional('?'),
-       $._call_signature),
+       $._call_signature)
     ]}
   + JavaScript
     {@js[
