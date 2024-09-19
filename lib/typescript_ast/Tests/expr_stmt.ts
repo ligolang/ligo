@@ -32,4 +32,10 @@
 // [...x, 6];
 // const x = (1+y, w)!, z;
 // const x = new.target
-const x = @foo class T<U> extends V<U,W>, Y implements A, B {}
+// const x = @foo class T<U> extends V<U,W>, Y implements A, B {}
+const x = class <T>{
+  @foo @bar f() {};
+  g() : T;
+  static {};
+  abstract h();
+}
