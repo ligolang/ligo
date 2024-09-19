@@ -1,6 +1,3 @@
-const id = <T>(x : T) : T => x;
-const three_i : int = id(3);
-const three_s : string = id("three");
 function rev <T>(xs : list<T>) : list<T> {
   const rev = <T>([xs, acc] : [list<T>, list<T>]) : list<T> =>
     match(xs) {

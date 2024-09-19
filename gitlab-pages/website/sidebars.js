@@ -164,15 +164,7 @@ const sidebars = {
           "data-types/tickets",
         ],
       },
-      {
-        "type": "category",
-        "label": "Polymorphism",
-        "items": [
-          "polymorphism/polymorphism",
-          "polymorphism/parametric_types",
-          "polymorphism/functions"
-        ]
-      }
+      'data-types/parametric_types',
     ],
     "Preprocessor": [
       "preprocessor/preprocessor",
