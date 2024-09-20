@@ -33,10 +33,15 @@
 // const x = (1+y, w)!, z;
 // const x = new.target
 // const x = @foo class T<U> extends V<U,W>, Y implements A, B {}
-const x = class <T>{
-  @foo @bar f() {};
-  g() : T;
-  static {};
-  abstract h();
-  declare public f = 6;
-}
+// const x = class <T>{
+//   @foo @bar f() {};
+//   g() : T;
+//   static {};
+//  abstract h();
+//  declare public f = 6;
+// }
+// async function* f () {}
+// const x = async function* f () {}
+// const x = async x => {}
+// const y = <T>(x: T) : T => x
+const f = function <T>(x: T) : T { return x }
