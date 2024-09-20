@@ -1,3 +1,5 @@
+import Test = Test.Next;
+
 type @return<storage> = [list<operation>, storage];
 
 namespace A {
@@ -6,18 +8,83 @@ namespace A {
   @entry
   const add = (delta: int, storage: storage): @return<storage> =>
     [[], storage + delta];
+
+  @entry
+  const sub = (delta: int, storage: storage): @return<storage> =>
+    [[], storage - delta];
 }
 
 namespace B {
-  type storage = int;
+  type storage = address;
 
   @entry
-  const increment = (_param: unit, storage: storage): @return<storage> => {
-    const operation =
-      Tezos.transaction(Add(1) as parameter_of A,
-                        0tez,
-                        Tezos.get_contract(
-                          "KT1TxqZ8QtKvLu3V3JH7Gx58n7Co8pgtpQU5"))
-    return [[operation], storage];
+  const increment = (value: int, stored_address: storage): @return<storage> => {
+    const contract = Tezos.Next.get_contract(stored_address);
+    const parameter = Add(value) as parameter_of A;
+    const operation = Tezos.Next.Operation.transaction(parameter, 0tez, contract);
+    return [[operation], stored_address];
+  }
+
+  @entry
+  const decrement = (value: int, stored_address: storage): @return<storage> => {
+    const contract = Tezos.Next.get_contract(stored_address);
+    const parameter = Sub(value) as parameter_of A;
+    const operation = Tezos.Next.Operation.transaction(parameter, 0tez, contract);
+    return [[operation], stored_address];
+  }
+}
+
+const test = () => {
+  // Originate contract A
+  const contract_A = Test.Originate.contract(contract_of(A), 0, 0tez);
+  const contract_A_address = Test.Typed_address.to_address(contract_A.taddr);
+
+  // Originate contract B with the address of contract A in its storage
+  const contract_B = Test.Originate.contract(contract_of(B), contract_A_address, 0tez);
+
+  // Call contract B
+  Test.Contract.transfer_exn(Test.Typed_address.get_entrypoint("increment", contract_B.taddr), 10 as int, 0tez);
+  Test.Contract.transfer_exn(Test.Typed_address.get_entrypoint("decrement", contract_B.taddr), 2 as int, 0tez);
+
+  const newNumber = Test.Typed_address.get_storage(contract_A.taddr);
+  Assert.assert(newNumber == 8);
+}
+
+const result = test();
+namespace C {
+  type storage = address;
+
+  @entry
+  const increment = (value: int, stored_address: storage): @return<storage> => {
+    const contract = Tezos.Next.get_entrypoint("%add", stored_address);
+    const operation = Tezos.Next.Operation.transaction(value, 0tez, contract);
+    return [[operation], stored_address];
+  }
+
+  @entry
+  const decrement = (value: int, stored_address: storage): @return<storage> => {
+    const contract = Tezos.Next.get_entrypoint("%sub", stored_address);
+    const operation = Tezos.Next.Operation.transaction(value, 0tez, contract);
+    return [[operation], stored_address];
+  }
+}
+namespace D {
+  type storage = address;
+  type contract_a_param = michelson_or<[int, "sub", int, "add"]>;
+
+  @entry
+  const increment = (value: int, stored_address: storage): @return<storage> => {
+    const pass_to_add: contract_a_param = M_right(value);
+    const contract = Tezos.Next.get_contract(stored_address);
+    const operation = Tezos.Next.Operation.transaction(pass_to_add, 0tez, contract);
+    return [[operation], stored_address];
+  }
+
+  @entry
+  const decrement = (value: int, stored_address: storage): @return<storage> => {
+    const pass_to_sub: contract_a_param = M_left(value);
+    const contract = Tezos.Next.get_contract(stored_address);
+    const operation = Tezos.Next.Operation.transaction(pass_to_sub, 0tez, contract);
+    return [[operation], stored_address];
   }
 }

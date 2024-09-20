@@ -5,7 +5,7 @@ const main = (_: string, storage: string) : @return => {
   const entrypoint = (_param: nat, storage: string) =>
     [list([]), storage];
   const [op, _addr]: [operation, address] =
-    Tezos.create_contract(entrypoint,
+    Tezos.Next.Operation.create_contract(entrypoint,
                           (None() as option<key_hash>),
                           300000000mutez,
                           "one");

@@ -1,2 +1,3 @@
-const check = (kh: key_hash) : list<operation> =>
-  [Tezos.set_delegate (Some(kh))];
+@entry
+const changeDelegate = (new_delegate: key_hash, storage: unit): [list<operation>, unit] =>
+  [[Tezos.Next.Operation.set_delegate (Some(new_delegate))], storage];
