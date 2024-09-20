@@ -94,8 +94,7 @@ and declaration =
   + JavaScript
     {@js[
      function_declaration: $ => prec.right('declaration', seq(
-       optional('async'),
-       'function',
+       optional('async'), 'function',
        field('name', $.identifier),
        $._call_signature,
        field('body', $.statement_block),
@@ -1782,8 +1781,7 @@ and fun_call =
   + JavaScript
    {@js[
     function_expression: $ => prec('literal', seq(
-      optional('async'),
-      'function',
+      optional('async'), 'function',
       field('name', optional($.identifier)),
       $._call_signature,
       field('body', $.statement_block)))
