@@ -46,4 +46,12 @@
 // const y = <T>(x: T) : T => x
 // const f = function <T>(x: T) : T { return x }
 // const x = { a: 5, ...f(), g() {}, z }
-const a = (a.b.c)?.z
+// const a = (a.b.c)?.z
+// const c = (1)
+// const d = (1, x, f())
+// 1, x, f();
+// const b = (a.b.c)?.[1+x, 3]
+// const b = x[3]
+declare global {}
+declare const x = 4
+declare module.m : T
