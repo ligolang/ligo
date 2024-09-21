@@ -1185,6 +1185,7 @@ and assignment_lhs =
   + JavaScript
     {@js[
      member_expression: $ => prec('member', seq(
+       // Why primary_expression since it is included in expression?
        field('object', choice($.expression, $.primary_expression, $.import)),
        choice('.', field('optional_chain', $.optional_chain)),
        field('property', choice(
@@ -1843,9 +1844,8 @@ and meta_property =
         $.pair,
         $.spread_element,
         $.method_definition,
-        alias(
-          choice($.identifier, $._reserved_identifier),
-          $.shorthand_property_identifier)))),
+        alias(choice($.identifier, $._reserved_identifier),
+              $.shorthand_property_identifier)))),
       '}')),
 
     pair: $ => seq(
