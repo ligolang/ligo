@@ -1228,6 +1228,7 @@ and property_ident =
   + JavaScript
     {@js[
      subscript_expression: $ => prec.right('member', seq(
+       // Why primary_expression since it is included in expression?
        field('object', choice($.expression, $.primary_expression)),
        optional(field('optional_chain', $.optional_chain)),
        '[', field('index', $._expressions), ']')),
