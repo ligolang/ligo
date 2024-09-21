@@ -44,4 +44,6 @@
 // const x = async function* f () {}
 // const x = async x => {}
 // const y = <T>(x: T) : T => x
-const f = function <T>(x: T) : T { return x }
+// const f = function <T>(x: T) : T { return x }
+// const x = { a: 5, ...f(), g() {}, z }
+const a = (a.b.c)?.z
