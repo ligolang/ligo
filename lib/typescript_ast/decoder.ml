@@ -460,10 +460,12 @@ and print_internal_module state ?name node =
     | _ -> match_rest state ~name node print_unexpected_node
   in
   let children =
-    Tree.[ mk_child print_name name_field
-         ; mk_child_opt (anon print_statement_block) body_field
-         ]
-  in Tree.make state name children
+    Tree.
+      [ mk_child print_name name_field
+      ; mk_child_opt (anon print_statement_block) body_field
+      ]
+  in
+  Tree.make state name children
 
 (* Type alias declaration *)
 
@@ -519,10 +521,12 @@ and print_enum_declaration state ?name node =
   and name_field = ts_node_child_by_field_name_exn node "name"
   and body_field = ts_node_child_by_field_name_exn node "body" in
   let children =
-    Tree.[ mk_child (anon print_identifier) name_field
-         ; mk_child (anon print_enum_body) body_field
-    ]
-  in Tree.make state name children
+    Tree.
+      [ mk_child (anon print_identifier) name_field
+      ; mk_child (anon print_enum_body) body_field
+      ]
+  in
+  Tree.make state name children
 
 and print_enum_body state ?name node =
   let name = get_name ?name node
@@ -531,7 +535,8 @@ and print_enum_body state ?name node =
     let name = string_of_ts_node_type node in
     match name with
     | "enum_assignment" -> print_enum_assignment state ~name node
-    | _ -> match_rest state ~name node print_property_name in
+    | _ -> match_rest state ~name node print_property_name
+  in
   Tree.of_list state name print children
 
 and print_enum_assignment state ?name node =
@@ -539,10 +544,12 @@ and print_enum_assignment state ?name node =
   and name_field = ts_node_child_by_field_name_exn node "name"
   and value_field = ts_node_child_by_field_name node "value" in
   let children =
-    Tree.[ mk_child (anon print_property_name) name_field
-         ; mk_child_opt (anon print_expression) value_field
-         ]
-  in Tree.make state name children
+    Tree.
+      [ mk_child (anon print_property_name) name_field
+      ; mk_child_opt (anon print_expression) value_field
+      ]
+  in
+  Tree.make state name children
 
 (* Interface declaration *)
 
@@ -554,15 +561,16 @@ and print_interface_declaration state ?name node =
   and body_field = ts_node_child_by_field_name_exn node "body" in
   let extends_type_clause = filter_first_by_name "extends_type_clause" children in
   let children =
-    Tree.[ mk_child (anon print_type_identifier) name_field
-         ; mk_child_opt (anon print_type_parameters) type_parameters_field
-         ; mk_child_opt (anon print_extends_type_clause) extends_type_clause
-         ; mk_child (anon print_interface_body) body_field
-         ]
-  in Tree.make state name children
+    Tree.
+      [ mk_child (anon print_type_identifier) name_field
+      ; mk_child_opt (anon print_type_parameters) type_parameters_field
+      ; mk_child_opt (anon print_extends_type_clause) extends_type_clause
+      ; mk_child (anon print_interface_body) body_field
+      ]
+  in
+  Tree.make state name children
 
-and print_interface_body state ?name node =
-  print_object_type state ?name node
+and print_interface_body state ?name node = print_object_type state ?name node
 
 and print_extends_type_clause state ?name node =
   let name = get_name ?name node
@@ -588,12 +596,10 @@ and print_import_alias state ?name node =
     match name with
     | "identifier" -> print_identifier state ~name node
     | "nested_identifier" -> print_nested_identifier state ~name node
-    | _ -> match_rest state ~name node print_unexpected_node in
-  let children =
-    Tree.[ mk_child (anon print_identifier) lhs
-         ; mk_child print_rhs rhs
-         ]
-  in Tree.make state name children
+    | _ -> match_rest state ~name node print_unexpected_node
+  in
+  let children = Tree.[ mk_child (anon print_identifier) lhs; mk_child print_rhs rhs ] in
+  Tree.make state name children
 
 (* Ambient declaration *)
 
@@ -605,17 +611,21 @@ and print_ambient_declaration state ?name node =
     match snd_child_name with
     | "global" ->
       let statement_block = ts_node_child_exn node 2 in
-      Tree.[ mk_child make_node snd_child_name
-           ; mk_child (anon print_statement_block) statement_block]
+      Tree.
+        [ mk_child make_node snd_child_name
+        ; mk_child (anon print_statement_block) statement_block
+        ]
     | "module" ->
       let property_identifier = ts_node_child_exn node 3
       and type_child = ts_node_child_exn node 5 in
-      Tree.[ mk_child make_node snd_child_name
-           ; mk_child (anon print_identifier) property_identifier
-           ; mk_child (anon print_type) type_child
-           ]
-    | _ -> Tree.[mk_child (anon print_declaration) snd_child]
-  in Tree.make state name children
+      Tree.
+        [ mk_child make_node snd_child_name
+        ; mk_child (anon print_identifier) property_identifier
+        ; mk_child (anon print_type) type_child
+        ]
+    | _ -> Tree.[ mk_child (anon print_declaration) snd_child ]
+  in
+  Tree.make state name children
 
 (* EXPRESSION
 
@@ -656,7 +666,8 @@ and print_expression state ?name node =
   (* Rest of "expression": *)
   | "glimmer_template" -> print_glimmer_template state ~name node
   | "assignment_expression" -> print_assignment_expression state ~name node
-  | "augmented_assignment_expression" -> print_augmented_assignment_expression state ~name node
+  | "augmented_assignment_expression" ->
+    print_augmented_assignment_expression state ~name node
   | "await_expression" -> print_await_expression state ~name node
   | "unary_expression" -> print_unary_expression state ~name node
   | "binary_expression" -> print_binary_expression state ~name node
@@ -677,8 +688,7 @@ and print_glimmer_template state ?name node = make_node state ?name node
 
 (* Assignment expression *)
 
-and print_assignment_expression state ?name node =
-  print_todo_node state ?name node
+and print_assignment_expression state ?name node = print_todo_node state ?name node
 
 (* Augmented assignment expression *)
 
@@ -687,53 +697,53 @@ and print_augmented_assignment_expression state ?name node =
 
 (* Await expression *)
 
-and print_await_expression state ?name node =
-  print_todo_node state ?name node
+and print_await_expression state ?name node = print_todo_node state ?name node
 
 (* Binary expression *)
 
-and print_binary_expression state ?name node =
-  print_todo_node state ?name node
+and print_binary_expression state ?name node = print_todo_node state ?name node
 
 (* Ternary expression *)
 
-and print_ternary_expression state ?name node =
-  print_todo_node state ?name node
+and print_ternary_expression state ?name node = print_todo_node state ?name node
 
 (* Update expression *)
 
-and print_update_expression state ?name node =
-  print_todo_node state ?name node
+and print_update_expression state ?name node = print_todo_node state ?name node
 
 (* New expression *)
 
-and print_new_expression state ?name node =
-  print_todo_node state ?name node
+and print_new_expression state ?name node = print_todo_node state ?name node
 
 (* Yield expression *)
 
-and print_yield_expression state ?name node =
-  print_todo_node state ?name node
+and print_yield_expression state ?name node = print_todo_node state ?name node
 
 (* As-expression *)
 
-and print_as_expression state ?name node =
-  print_todo_node state ?name node
+and print_as_expression state ?name node = print_todo_node state ?name node
 
 (* Statisfies-expression *)
 
-and print_satisfies_expression state ?name node =
-  print_todo_node state ?name node
+and print_satisfies_expression state ?name node = print_todo_node state ?name node
 
 (* Instantiation expression *)
 
-and print_instantiation_expression state ?name node =
-  print_todo_node state ?name node
+and print_instantiation_expression state ?name node = print_todo_node state ?name node
 
 (* Type assertion *)
 
 and print_type_assertion state ?name node =
-  print_todo_node state ?name node
+  let name = get_name ?name node
+  and type_arguments = ts_node_named_child_exn node 0
+  and expression = ts_node_named_child_exn node 1 in
+  let children =
+    Tree.
+      [ mk_child (anon print_type_arguments) type_arguments
+      ; mk_child (anon print_expression) expression
+      ]
+  in
+  Tree.make state name children
 
 (* Subscript expression (see [print_member_expression]) *)
 
@@ -1260,8 +1270,7 @@ and print_primary_type state ?name node =
   | "union_type" -> print_union_type state ~name node
   | _ -> match_rest state ~name node print_unexpected_node
 
-and print_type_identifier state ?name node =
-  print_identifier state ?name node
+and print_type_identifier state ?name node = print_identifier state ?name node
 
 and print_parenthesized_type state ?name node =
   let name = get_name ?name node
