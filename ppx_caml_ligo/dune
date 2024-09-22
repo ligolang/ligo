@@ -1,0 +1,7 @@
+(library
+ (name ppx_caml_ligo)
+ (modules Ppx_caml_ligo)
+ (kind ppx_rewriter)
+ (libraries ppxlib)
+ (preprocess
+  (pps ppxlib.metaquot)))

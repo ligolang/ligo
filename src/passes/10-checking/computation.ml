@@ -489,7 +489,7 @@ module Context = struct
     (ctx, subst), result
 
 
-  let add (type a) items ~(on_exit : a exit) ~(in_ : (a, _, _) t) : (a, _, _) t =
+  let _add (type a) items ~(on_exit : a exit) ~(in_ : (a, _, _) t) : (a, _, _) t =
    fun ~raise ~options ~loc ~path ~poly_name_tbl ~refs_tbl (ctx, subst) ->
     let ctx, pos = Context.mark ctx in
     let ctx = List.fold_right items ~init:ctx ~f:(fun item ctx -> Context.add ctx item) in

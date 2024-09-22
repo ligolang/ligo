@@ -1,0 +1,4 @@
+(library
+ (name caml_contract)
+ (preprocess
+  (pps ppx_caml_ligo)))
