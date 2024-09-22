@@ -52,6 +52,8 @@
 // 1, x, f();
 // const b = (a.b.c)?.[1+x, 3]
 // const b = x[3]
-declare global {}
-declare const x = 4
-declare module.m : T
+// declare global {}
+// declare const x = 4
+// declare module.m : T
+import m = a.b.m
+import m = n
