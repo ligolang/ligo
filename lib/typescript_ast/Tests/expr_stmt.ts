@@ -57,4 +57,5 @@
 // declare module.m : T
 // import m = a.b.m
 // import m = n
-interface I<T> extends m.J.t<u>, K {}
+// interface I<T> extends m.J.t<u>, K {}
+enum x {a, b=4, c, d=3}
