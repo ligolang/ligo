@@ -444,7 +444,28 @@ and print_variable_declaration state ?name node = print_todo_node state ?name no
 and print_function_signature state ?name node = print_todo_node state ?name node
 and print_abstract_class_declaration state ?name node = print_todo_node state ?name node
 and print_module state ?name node = print_todo_node state ?name node
-and print_internal_module state ?name node = print_todo_node state ?name node
+
+(* Internal module *)
+
+and print_internal_module state ?name node =
+  let name = get_name ?name node
+  and name_field = ts_node_child_by_field_name_exn node "name"
+  and body_field = ts_node_child_by_field_name node "body"
+  and print_name state node =
+    let name = string_of_ts_node_type node in
+    match name with
+    | "string" -> print_string state ~name node
+    | "identifier" -> print_identifier state ~name node
+    | "nested_identifier" -> print_nested_identifier state ~name node
+    | _ -> match_rest state ~name node print_unexpected_node
+  in
+  let children =
+    Tree.[ mk_child print_name name_field
+         ; mk_child_opt (anon print_statement_block) body_field
+         ]
+  in Tree.make state name children
+
+(* Type alias declaration *)
 
 and print_type_alias_declaration state ?name node =
   let name = get_name ?name node
@@ -459,6 +480,8 @@ and print_type_alias_declaration state ?name node =
       ]
   in
   Tree.make state name children
+
+(* Type parameters *)
 
 and print_type_parameters state ?name node =
   let name = get_name ?name node
@@ -489,6 +512,8 @@ and print_default_type state ?name node =
   and children = collect_named_children node in
   Tree.of_list state name (anon print_type) children
 
+(* Enum declaration *)
+
 and print_enum_declaration state ?name node =
   let name = get_name ?name node
   and name_field = ts_node_child_by_field_name_exn node "name"
@@ -518,6 +543,8 @@ and print_enum_assignment state ?name node =
          ; mk_child_opt (anon print_expression) value_field
          ]
   in Tree.make state name children
+
+(* Interface declaration *)
 
 and print_interface_declaration state ?name node =
   let name = get_name ?name node
@@ -602,6 +629,7 @@ and print_ambient_declaration state ?name node =
 and print_expression state ?name node =
   let name = get_name ?name node in
   match name with
+  (* "primary_expression" inlined: *)
   | "subscript_expression" -> print_subscript_expression state ~name node
   | "member_expression" -> print_member_expression state ~name node
   | "parenthesized_expression" -> print_parenthesized_expression state ~name node
@@ -625,7 +653,87 @@ and print_expression state ?name node =
   | "meta_property" -> print_meta_property state ~name node
   | "call_expression" -> print_call_expression state ~name node
   | "non_null_expression" -> print_non_null_expression state ~name node
+  (* Rest of "expression": *)
+  | "glimmer_template" -> print_glimmer_template state ~name node
+  | "assignment_expression" -> print_assignment_expression state ~name node
+  | "augmented_assignment_expression" -> print_augmented_assignment_expression state ~name node
+  | "await_expression" -> print_await_expression state ~name node
+  | "unary_expression" -> print_unary_expression state ~name node
+  | "binary_expression" -> print_binary_expression state ~name node
+  | "ternary_expression" -> print_ternary_expression state ~name node
+  | "update_expression" -> print_update_expression state ~name node
+  | "new_expression" -> print_new_expression state ~name node
+  | "yield_expression" -> print_yield_expression state ~name node
+  | "as_expression" -> print_as_expression state ~name node
+  | "satisfies_expression" -> print_satisfies_expression state ~name node
+  | "instantiation_expression" -> print_instantiation_expression state ~name node
+  | "internal_module" -> print_internal_module state ~name node
+  | "type_assertion" -> print_type_assertion state ~name node
   | _ -> match_rest state ~name node print_unexpected_node
+
+(* Glimmer template (not supported) *)
+
+and print_glimmer_template state ?name node = make_node state ?name node
+
+(* Assignment expression *)
+
+and print_assignment_expression state ?name node =
+  print_todo_node state ?name node
+
+(* Augmented assignment expression *)
+
+and print_augmented_assignment_expression state ?name node =
+  print_todo_node state ?name node
+
+(* Await expression *)
+
+and print_await_expression state ?name node =
+  print_todo_node state ?name node
+
+(* Binary expression *)
+
+and print_binary_expression state ?name node =
+  print_todo_node state ?name node
+
+(* Ternary expression *)
+
+and print_ternary_expression state ?name node =
+  print_todo_node state ?name node
+
+(* Update expression *)
+
+and print_update_expression state ?name node =
+  print_todo_node state ?name node
+
+(* New expression *)
+
+and print_new_expression state ?name node =
+  print_todo_node state ?name node
+
+(* Yield expression *)
+
+and print_yield_expression state ?name node =
+  print_todo_node state ?name node
+
+(* As-expression *)
+
+and print_as_expression state ?name node =
+  print_todo_node state ?name node
+
+(* Statisfies-expression *)
+
+and print_satisfies_expression state ?name node =
+  print_todo_node state ?name node
+
+(* Instantiation expression *)
+
+and print_instantiation_expression state ?name node =
+  print_todo_node state ?name node
+
+(* Type assertion *)
+
+and print_type_assertion state ?name node =
+  print_todo_node state ?name node
 
 (* Subscript expression (see [print_member_expression]) *)
 
