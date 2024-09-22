@@ -491,7 +491,24 @@ and print_default_type state ?name node =
 
 and print_enum_declaration state ?name node = print_todo_node state ?name node
 and print_interface_declaration state ?name node = print_todo_node state ?name node
-and print_import_alias state ?name node = print_todo_node state ?name node
+
+(* Import alias *)
+
+and print_import_alias state ?name node =
+  let name = get_name ?name node
+  and lhs = ts_node_child_exn node 1
+  and rhs = ts_node_child_exn node 3
+  and print_rhs state node =
+    let name = string_of_ts_node_type node in
+    match name with
+    | "identifier" -> print_identifier state ~name node
+    | "nested_identifier" -> print_nested_identifier state ~name node
+    | _ -> match_rest state ~name node print_unexpected_node in
+  let children =
+    Tree.[ mk_child (anon print_identifier) lhs
+         ; mk_child print_rhs rhs
+         ]
+  in Tree.make state name children
 
 (* Ambient declaration *)
 
