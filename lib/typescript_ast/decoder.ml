@@ -490,7 +490,37 @@ and print_default_type state ?name node =
   Tree.of_list state name (anon print_type) children
 
 and print_enum_declaration state ?name node = print_todo_node state ?name node
-and print_interface_declaration state ?name node = print_todo_node state ?name node
+
+and print_interface_declaration state ?name node =
+  let name = get_name ?name node
+  and children = collect_children node
+  and name_field = ts_node_child_by_field_name_exn node "name"
+  and type_parameters_field = ts_node_child_by_field_name node "type_parameters"
+  and body_field = ts_node_child_by_field_name_exn node "body" in
+  let extends_type_clause = filter_first_by_name "extends_type_clause" children in
+  let children =
+    Tree.[ mk_child (anon print_type_identifier) name_field
+         ; mk_child_opt (anon print_type_parameters) type_parameters_field
+         ; mk_child_opt (anon print_extends_type_clause) extends_type_clause
+         ; mk_child (anon print_interface_body) body_field
+         ]
+  in Tree.make state name children
+
+and print_interface_body state ?name node =
+  print_object_type state ?name node
+
+and print_extends_type_clause state ?name node =
+  let name = get_name ?name node
+  and children = collect_named_children node
+  and print state node =
+    let name = string_of_ts_node_type node in
+    match name with
+    | "type_identifier" -> print_type_identifier state ~name node
+    | "nested_type_identifier" -> print_nested_type_identifier state ~name node
+    | "generic_type" -> print_generic_type state ~name node
+    | _ -> match_rest state ~name node print_unexpected_node
+  in
+  Tree.of_list state name print children
 
 (* Import alias *)
 
@@ -1094,7 +1124,8 @@ and print_primary_type state ?name node =
   | "union_type" -> print_union_type state ~name node
   | _ -> match_rest state ~name node print_unexpected_node
 
-and print_type_identifier state ?name node = make_node state ?name node
+and print_type_identifier state ?name node =
+  print_identifier state ?name node
 
 and print_parenthesized_type state ?name node =
   let name = get_name ?name node

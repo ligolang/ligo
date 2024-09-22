@@ -55,5 +55,6 @@
 // declare global {}
 // declare const x = 4
 // declare module.m : T
-import m = a.b.m
-import m = n
+// import m = a.b.m
+// import m = n
+interface I<T> extends m.J.t<u>, K {}
