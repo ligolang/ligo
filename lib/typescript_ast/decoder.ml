@@ -489,7 +489,35 @@ and print_default_type state ?name node =
   and children = collect_named_children node in
   Tree.of_list state name (anon print_type) children
 
-and print_enum_declaration state ?name node = print_todo_node state ?name node
+and print_enum_declaration state ?name node =
+  let name = get_name ?name node
+  and name_field = ts_node_child_by_field_name_exn node "name"
+  and body_field = ts_node_child_by_field_name_exn node "body" in
+  let children =
+    Tree.[ mk_child (anon print_identifier) name_field
+         ; mk_child (anon print_enum_body) body_field
+    ]
+  in Tree.make state name children
+
+and print_enum_body state ?name node =
+  let name = get_name ?name node
+  and children = collect_named_children node
+  and print state node =
+    let name = string_of_ts_node_type node in
+    match name with
+    | "enum_assignment" -> print_enum_assignment state ~name node
+    | _ -> match_rest state ~name node print_property_name in
+  Tree.of_list state name print children
+
+and print_enum_assignment state ?name node =
+  let name = get_name ?name node
+  and name_field = ts_node_child_by_field_name_exn node "name"
+  and value_field = ts_node_child_by_field_name node "value" in
+  let children =
+    Tree.[ mk_child (anon print_property_name) name_field
+         ; mk_child_opt (anon print_expression) value_field
+         ]
+  in Tree.make state name children
 
 and print_interface_declaration state ?name node =
   let name = get_name ?name node
