@@ -103,12 +103,19 @@ and decl =
   }
 
 and decl_desc =
-  | D_value of (var_pat * expr)
+  | D_value of
+      { var : var_pat
+      ; value : expr
+      ; entry : bool
+      }
   | D_value_rec of (var_pat * expr)
   | D_type of (Ident.t * type_decl)
   (* TODO: why arity here? *)
   | D_type_predef of (Ident.t * Literal_types.t * int)
+  | D_type_unsupported of Ident.t
   | D_module of (Ident.t * mod_expr)
+
+type program = decl list
 
 (* TODO: follow Ligo style *)
 let type_wrap loc desc = { type_desc = desc; type_loc = loc }
