@@ -62,4 +62,5 @@
 // namespace N
 // namespace N.M {}
 // namespace "Foo" {}
-const x = <T>y
+// const x = <T>y
+const x = y<T>
