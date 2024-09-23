@@ -729,7 +729,17 @@ and print_satisfies_expression state ?name node = print_todo_node state ?name no
 
 (* Instantiation expression *)
 
-and print_instantiation_expression state ?name node = print_todo_node state ?name node
+and print_instantiation_expression state ?name node =
+  let name = get_name ?name node
+  and expression = ts_node_named_child_exn node 0
+  and type_arguments_field = ts_node_child_by_field_name_exn node "type_arguments" in
+  let children =
+    Tree.
+      [ mk_child (anon print_expression) expression
+      ; mk_child (anon print_type_arguments) type_arguments_field
+      ]
+  in
+  Tree.make state name children
 
 (* Type assertion *)
 
