@@ -2845,7 +2845,7 @@ and infer_declaration (decl : I.declaration)
         let%bind module_ = module_ in
         return @@ O.D_module_include module_)
       sig_.items
-  | D_import (Import_rename { alias; imported_module; import_attr }) ->
+  | D_import (Import_rename { alias; imported_module; import_attr } as decl) ->
     let%bind path = path () in
     let inner_name = path @ [ alias ] in
     let%bind loc = loc () in
@@ -2857,7 +2857,7 @@ and infer_declaration (decl : I.declaration)
     in
     set_path inner_name
     @@ const
-         E.(return @@ O.D_import { import_name = alias; imported_module; import_attr })
+         E.(return @@ O.D_import decl)
          [ Location.wrap ~loc
            @@ Signature.S_module
                 ( alias
@@ -2867,7 +2867,64 @@ and infer_declaration (decl : I.declaration)
                      enclosing module. *)
                   Attrs.Module.of_core_attr import_attr )
          ]
-  | D_import _ -> Computation.raise Errors.unsupported_import_decl
+  | D_import (Import_all_as { alias; module_str; import_attr } as decl) ->
+    let%bind path = path () in
+    let inner_name = path @ [ alias ] in
+    let%bind loc = loc () in
+    let imported_module = Module_var.of_input_var ~loc module_str in
+    (* Lookup signature of [module_path] *)
+    let%bind sig_ =
+      Error_recovery.Get.module_
+        imported_module
+        ~error:(Errors.unbound_module_variable imported_module)
+    in
+    set_path inner_name
+    @@ const
+         E.(return @@ O.D_import decl)
+         [ Location.wrap ~loc
+           @@ Signature.S_module
+                ( alias
+                , sig_
+                , (* Note that if [public] is [false] (which it is by default), then
+                     the module binding is added to the context but not the signature of the
+                     enclosing module. *)
+                  Attrs.Module.of_core_attr import_attr )
+         ]
+  | D_import (Import_selected { imported; module_str; import_attr } as decl) ->
+    let%bind loc = loc () in
+    let imported_module = Module_var.of_input_var ~loc module_str in
+    let%bind { items; _ } =
+      Error_recovery.Get.module_
+        imported_module
+        ~error:(Errors.unbound_module_variable imported_module)
+    in
+    let (h :: tl) = imported in
+    let imported = h :: tl in
+    let find_var_type items var =
+      let item =
+        List.find_map items ~f:(fun item ->
+            match Location.unwrap item with
+            | Signature.S_value (v, type_, _) ->
+              if Value_var.equal v var then Some type_ else None
+            | _ -> None)
+      in
+      match item with
+      | None -> Computation.raise (Errors.unbound_variable var)
+      | Some t -> return t
+    in
+    let%bind types =
+      List.fold_right imported ~init:(return []) ~f:(fun var acc ->
+          let%bind type_ = find_var_type items var in
+          let%map acc = acc in
+          let attr =
+            { O.ValueAttr.default_attributes with public = import_attr.public }
+          in
+          Location.wrap
+            ~loc
+            (Signature.S_value (var, type_, Context.Attr.of_core_attr attr))
+          :: acc)
+    in
+    const E.(return @@ O.D_import decl) types
 
 
 and infer_module ?is_annoted_entry (module_ : I.module_)

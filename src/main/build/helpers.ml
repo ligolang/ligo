@@ -105,3 +105,23 @@ let inject_declaration ~options ~raise
     Compiler_options.(options.test_framework.cli_expr_inj)
     ~default:prg
     ~f:inject_arg_declaration
+
+
+let elaborate_imports dir prg : Ast_core.program =
+  let f Location.{ location = loc; wrap_content } =
+    Location.wrap ~loc
+    @@
+    match wrap_content with
+    | Ast_core.D_import decl ->
+      Ast_core.D_import
+        (match decl with
+        | Import_rename _ -> decl
+        | Import_all_as { alias; module_str; import_attr } ->
+          let module_str = Filename.concat dir module_str in
+          Import_all_as { alias; module_str; import_attr }
+        | Import_selected { module_str; imported; import_attr } ->
+          let module_str = Filename.concat dir module_str in
+          Import_selected { module_str; imported; import_attr })
+    | x -> x
+  in
+  List.map ~f prg

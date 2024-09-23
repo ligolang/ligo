@@ -1,0 +1,11 @@
+import * as C from "C.jsligo";
+import * as E from "E.jsligo";
+
+export const toto = E.toto + C.B.A.toto
+
+export const fb : E.F.foobar = { titi: 1; toto: toto; tata: 2; tete: 3; }
+
+@entry export const main = (p: int, s: int) : [list<operation>, int] => {
+  let s1 = p + s + toto;
+  return [[], s1];
+};
