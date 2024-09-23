@@ -106,26 +106,6 @@ module Signature_decl (Attr : Attr) = struct
 end
 
 module Import_decl (Attr : Attr) = struct
-  type t =
-    { import_name : Module_var.t
-    ; imported_module : Module_var.t
-    ; import_attr : Attr.t
-    }
-  [@@deriving eq, compare, yojson, hash, fold, map, bin_io]
-
-  let pp ppf { import_name; imported_module; import_attr } =
-    Format.fprintf
-      ppf
-      "@[<2>import %a =@ %a%a@]"
-      Module_var.pp
-      import_name
-      Module_var.pp
-      imported_module
-      Attr.pp
-      import_attr
-end
-
-module Import_decl_ext (Attr : Attr) = struct
   module Ne_list = Simple_utils.Ne_list
 
   type t =

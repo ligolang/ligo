@@ -160,11 +160,12 @@ let list_mod_declarations (m : Ast_core.program) : Module_var.t list =
       let open Location in
       match (el.wrap_content : Ast_core.declaration_content) with
       | D_module { module_binder; _ } -> module_binder :: prev
-      (* TODO Handle all import cases for #1991 and/or #1995 issues resolution *)
       | D_import (Import_rename { alias; _ }) ->
         (* CR: Is this correct? Don't we want to hide import bindings? *)
         alias :: prev
-      | D_import _
+      | D_import (Import_all_as { module_str; _ }) ->
+        Module_var.of_input_var ~loc:el.location module_str :: prev
+      | D_import (Import_selected _) -> prev
       | D_value _
       | D_irrefutable_match _
       | D_type _

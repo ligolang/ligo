@@ -7,6 +7,7 @@
 
  .codeBlockContent {
   position: relative;
+  margin-bottom: var(--ifm-leading);
 }
 
 .codeBlockTitle {

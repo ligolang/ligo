@@ -166,6 +166,9 @@ let type_file ~raise ?(st = "auto") f options =
   ignore st;
   Build.qualified_typed ~raise ~options (Build.Source_input.From_file f)
 
+let type_file_v2 ~raise ?(st = "auto") f options =
+  ignore st;
+  Build.qualified_typed_v2 ~raise ~options (Build.Source_input.From_file f)
 
 let core_file ~raise f options =
   Build.qualified_core ~raise ~options (Build.Source_input.From_file f)

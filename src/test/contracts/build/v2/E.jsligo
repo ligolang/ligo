@@ -1,0 +1,6 @@
+export import * as F from "F.jsligo";
+
+export import * as G from "G.jsligo";
+
+export const toto = 10;
+export const foo = "bar";

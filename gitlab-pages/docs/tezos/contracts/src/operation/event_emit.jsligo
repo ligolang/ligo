@@ -1,5 +1,6 @@
-type storage = unit;
-
 @entry
-const main = (param: [int, int], storage: unit) : [list<operation>, storage] =>
-  [[Tezos.emit("%foo", param), Tezos.emit("%bar", param[0])], storage];
+const emitEvents = (_: unit, storage: int): [list<operation>, int] => {
+  const event1: operation = Tezos.Next.Operation.emit("%emitEvents", "hi");
+  const event2: operation = Tezos.Next.Operation.emit("%emitEvents", 6);
+  return [[event1, event2], storage];
+}

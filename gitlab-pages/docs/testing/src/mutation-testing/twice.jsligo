@@ -1,0 +1,30 @@
+const twice = (x: int) => x + x;
+import Test = Test.Next;
+const simple_tests = (f : ((input: int) => int)) : unit => {
+  /* Test 1 */
+  Assert.assert(Test.Compare.eq(Test.Michelson.run(f, 0), Test.Michelson.eval(0)));
+  /* Test 2 */
+  Assert.assert(Test.Compare.eq(Test.Michelson.run(f, 2), Test.Michelson.eval(4)));
+};
+
+const test = simple_tests(twice);
+const test_mutation =
+  match(Test.Mutation.func(twice, simple_tests)) {
+    when(None()): unit;
+    when(Some(pmutation)): do {
+      Test.IO.log(pmutation[1]);
+      Test.IO.println("Some mutation also passes the tests! ^^")
+    }
+  };
+const get_all_mutations =
+  match(Test.Mutation.All.func(twice, simple_tests)) {
+    when([]): unit;
+    when([hd,...tl]): do {
+      let mutations = list([hd,...tl]);
+      Test.IO.println("Some mutations also pass the tests!");
+      for (const m of mutations) {
+        let [_, mutation] = m;
+        Test.IO.log(mutation);
+      };
+    }
+  };

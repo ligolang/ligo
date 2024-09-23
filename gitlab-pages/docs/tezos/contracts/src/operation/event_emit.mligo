@@ -1,5 +1,5 @@
-type storage = unit
-
 [@entry]
-let main (param : int * int) () : operation list * storage =
-  [Tezos.emit "%foo" param; Tezos.emit "%bar" param.0], ()
+let emitEvents (_ : unit) (storage : int) : operation list * int =
+  let event1 : operation = Tezos.Next.Operation.emit "%emitEvents" "hi" in
+  let event2 : operation = Tezos.Next.Operation.emit "%emitEvents" 6 in
+  [event1; event2], storage

@@ -73,7 +73,13 @@ const sidebars = {
           "jsLigoName": "Decorators",
         },
         "items": [
-          "tezos/decorators/decorators",
+          {
+            "type": "doc",
+            "id": "tezos/decorators/decorators",
+            "customProps": {
+              "jsLigoName": "Decorators",
+            },
+          },
           "tezos/decorators/annot",
           "tezos/decorators/deprecated",
           "tezos/decorators/dyn_entry",
@@ -155,17 +161,10 @@ const sidebars = {
           "data-types/contracts-type",
           "data-types/big_sets",
           "data-types/big_maps",
+          "data-types/tickets",
         ],
       },
-      {
-        "type": "category",
-        "label": "Polymorphism",
-        "items": [
-          "polymorphism/polymorphism",
-          "polymorphism/parametric_types",
-          "polymorphism/functions"
-        ]
-      }
+      'data-types/parametric_types',
     ],
     "Preprocessor": [
       "preprocessor/preprocessor",
@@ -180,8 +179,8 @@ const sidebars = {
     "Testing": [
       "testing/testing",
       "testing/testing-tickets",
-      "advanced/mutation-testing",
-      "advanced/michelson_testing"
+      "testing/mutation-testing",
+      "testing/michelson_testing"
     ],
     "Advanced Topics": [
       "advanced/package-management",

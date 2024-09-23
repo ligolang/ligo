@@ -71,6 +71,12 @@ val qualified_typed
   -> Source_input.code_input
   -> Ast_typed.program
 
+val qualified_typed_v2
+  :  raise:(Main_errors.all, Main_warnings.all) Simple_utils.Trace.raise
+  -> options:Compiler_options.t
+  -> Source_input.code_input
+  -> Ast_typed.program
+
 val qualified_typed_with_env
   :  raise:(Main_errors.all, Main_warnings.all) Simple_utils.Trace.raise
   -> options:Compiler_options.t

@@ -1,0 +1,6 @@
+import { toto, fb } from "I.jsligo";
+
+@entry export const main = (p: int, s: int) : [list<operation>, int] => {
+  let s1 = p + s + fb.titi + toto;
+  return [[], s1];
+};
