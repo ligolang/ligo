@@ -7,7 +7,7 @@ type 'dcl t =
   | M_variable of Module_var.t
   | M_module_path of module_path
 (* FUTURE: Functor ; Apply *)
-[@@deriving eq, compare, yojson, hash, fold, map]
+[@@deriving eq, compare, yojson, hash, fold, map, bin_io]
 
 and module_path = Module_var.t Ne_list.t
 

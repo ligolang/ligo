@@ -94,35 +94,35 @@ type expression_content =
   | E_contract of Module_var.t Ne_list.t
   | E_literal of Literal_value.t
   | E_constant of
-      expr Constant.t (* For language constants, like (Cons hd tl) or (plus i j) *)
-  | E_application of expr Application.t
-  | E_lambda of (expr, ty_expr) Lambda.t
-  | E_recursive of (expr, ty_expr) Recursive.t
-  | E_let_in of (expr, ty_expr) Let_in.t
-  | E_mod_in of (expr, module_expr) Mod_in.t
-  | E_raw_code of expr Raw_code.t
+      expression Constant.t (* For language constants, like (Cons hd tl) or (plus i j) *)
+  | E_application of expression Application.t
+  | E_lambda of (expression, ty_expr) Lambda.t
+  | E_recursive of (expression, ty_expr) Recursive.t
+  | E_let_in of (expression, ty_expr) Let_in.t
+  | E_mod_in of (expression, module_expr) Mod_in.t
+  | E_raw_code of expression Raw_code.t
   | E_type_inst of type_inst
-  | E_type_abstraction of expr Type_abs.t
-  | E_coerce of (expr, ty_expr) Ascription.t
+  | E_type_abstraction of expression Type_abs.t
+  | E_coerce of (expression, ty_expr) Ascription.t
   (* Variant *)
-  | E_constructor of expr Constructor.t (* For user defined constructors *)
-  | E_matching of (expr, ty_expr) Match_expr.t
+  | E_constructor of expression Constructor.t (* For user defined constructors *)
+  | E_matching of (expression, ty_expr) Match_expr.t
   (* Unions *)
-  | E_union_injected of (expr, ty_expr) Union.Injected.t
-  | E_union_match of (expr, ty_expr) Union.Match.t
-  | E_union_use of expr Union.Use.t
+  | E_union_injected of (expression, ty_expr) Union.Injected.t
+  | E_union_match of (expression, ty_expr) Union.Match.t
+  | E_union_use of expression Union.Use.t
   (* Record *)
-  | E_record of expr Record.t
-  | E_accessor of expr Accessor.t
-  | E_update of expr Update.t
+  | E_record of expression Record.t
+  | E_accessor of expression Accessor.t
+  | E_update of expression Update.t
   | E_module_accessor of Value_var.t Module_access.t
   (* Imperative *)
-  | E_let_mut_in of (expr, ty_expr) Let_in.t
-  | E_assign of (expr, ty_expr) Assign.t
+  | E_let_mut_in of (expression, ty_expr) Let_in.t
+  | E_assign of (expression, ty_expr) Assign.t
   | E_deref of Value_var.t
-  | E_for of expr For_loop.t
-  | E_for_each of expr For_each_loop.t
-  | E_while of expr While_loop.t
+  | E_for of expression For_loop.t
+  | E_for_each of expression For_each_loop.t
+  | E_while of expression While_loop.t
   (* Error recovery *)
   | E_error of Ast_core.expression
 
@@ -137,20 +137,18 @@ and expression =
   ; type_expression : type_expression
   }
 
-and expr = expression [@@deriving equal, compare, yojson, hash]
-
 and declaration_content =
-  | D_value of (expr, ty_expr) Value_decl.t
-  | D_irrefutable_match of (expr, ty_expr) Pattern_decl.t
+  | D_value of (expression, ty_expr) Value_decl.t
+  | D_irrefutable_match of (expression, ty_expr) Pattern_decl.t
   | D_type of ty_expr Type_decl.t
   | D_module of (module_expr, unit) Module_decl.t
   | D_module_include of module_expr
   | D_signature of signature Signature_decl.t
   | D_import of Import_decl.t
+[@@deriving equal, compare, yojson, hash]
 
-and declaration = declaration_content Location.wrap
-and decl = declaration [@@deriving equal, compare, yojson, hash]
-and module_content = decl Module_expr.t [@@deriving equal, compare, yojson, hash]
+and declaration = declaration_content Location.wrap [@@deriving bin_io]
+and module_content = declaration Module_expr.t [@@deriving equal, compare, yojson, hash]
 
 and module_expr =
   { module_content : module_content
@@ -159,7 +157,11 @@ and module_expr =
   }
 [@@deriving equal, compare, yojson, hash]
 
-type module_ = decl list [@@deriving equal, compare, yojson, hash]
+type expr = expression [@@deriving equal, compare, yojson, hash, bin_io]
+
+type decl = declaration [@@deriving equal, compare, yojson, hash, bin_io]
+
+type module_ = decl list [@@deriving equal, compare, yojson, hash, bin_io]
 
 type program =
   { pr_module : module_

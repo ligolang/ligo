@@ -1,6 +1,6 @@
 module PP_helpers = Simple_utils.PP_helpers
 
-type 'a t = 'a Label.Map.t [@@deriving equal, compare, yojson, sexp]
+type 'a t = 'a Label.Map.t [@@deriving equal, compare, yojson, sexp, bin_io]
 
 let hash_fold_t f state t = Map.hash_fold_m__t (module Label) f state t
 let empty = Label.Map.empty

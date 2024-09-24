@@ -4,7 +4,7 @@ type ('e, 't) t =
   ; lambda : ('e, 't) Lambda.t
   ; force_lambdarec : bool
   }
-[@@deriving eq, compare, yojson, hash, fold, map]
+[@@deriving eq, compare, yojson, hash, fold, map, bin_io]
 
 let pp f g ppf { fun_name; fun_type; lambda = l; force_lambdarec = _ } =
   Format.fprintf

@@ -1,7 +1,7 @@
 module Ne_list = Simple_utils.Ne_list
 module PP_helpers = Simple_utils.PP_helpers
 
-type 'a t = 'a Ne_list.t [@@deriving eq, compare, yojson, hash, fold, map]
+type 'a t = 'a Ne_list.t [@@deriving eq, compare, yojson, hash, fold, map, bin_io]
 
 let pp_list f ppf l =
   let open Format in

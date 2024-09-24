@@ -18,6 +18,7 @@ module Fuzzy_bool = Simple_utils.Fuzzy_bool
 module Refs_tbl = Context.Refs_tbl
 module Persistent_env = Persistent_env
 module Cmi = Cmi
+module Cmo = Cmo
 
 let untype_expression = Untyper.untype_expression
 let untype_type_expression = Untyper.untype_type_expression
