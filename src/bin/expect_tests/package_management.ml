@@ -853,7 +853,7 @@ let%expect_test _ =
         filename:      test_package_4-0.0.1.tgz
         package size:  *** kB
         unpacked size: *** kB
-        total files:   4 |}]
+        total files:   3 |}]
 
 let () = Sys_unix.chdir pwd
 let () = Sys_unix.chdir "publish_contract_gt_1mb"
@@ -875,7 +875,7 @@ let%expect_test _ =
         filename:      test_package_5-0.0.1.tgz
         package size:  *** kB
         unpacked size: *** MB
-        total files:   4 |}]
+        total files:   3 |}]
 
 let () = Sys_unix.chdir pwd
 let () = Sys_unix.chdir "publish_contract_slash_in_pkg_name"
@@ -895,9 +895,9 @@ let%expect_test _ =
         name:          @ligo/slash
         version:       0.0.1
         filename:      @ligo/slash-0.0.1.tgz
-        package size:  *** kB
-        unpacked size: *** kB
-        total files:   4 |}]
+        package size:  *** B
+        unpacked size: *** B
+        total files:   3 |}]
 
 let () = Sys_unix.chdir pwd
 let () = Sys_unix.chdir "test_ligoignore"

@@ -1,11 +1,11 @@
 module type Attr = sig
-  type t [@@deriving eq, compare, yojson, hash]
+  type t [@@deriving eq, compare, yojson, hash, bin_io]
 
   val pp : Format.formatter -> t -> unit
 end
 
 module type S = sig
-  type 'a t [@@deriving eq, compare, yojson, hash, fold, map]
+  type 'a t [@@deriving eq, compare, yojson, hash, fold, map, bin_io]
 
   val fold_map : ('a -> 'b -> 'a * 'b) -> 'a -> 'b t -> 'a * 'b t
   val pp : (Format.formatter -> 'a -> unit) -> Format.formatter -> 'a t -> unit
@@ -18,7 +18,7 @@ module Make (Pattern : S) (Attr : Attr) = struct
     ; let_result : 'e
     ; attributes : Attr.t
     }
-  [@@deriving eq, compare, yojson, hash, fold, map]
+  [@@deriving eq, compare, yojson, hash, fold, map, bin_io]
 
   let pp f g ppf { let_binder; rhs; let_result; attributes = attr } =
     Format.fprintf

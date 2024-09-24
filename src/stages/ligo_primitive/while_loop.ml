@@ -2,7 +2,7 @@ type 'e t =
   { cond : 'e
   ; body : 'e
   }
-[@@deriving eq, compare, yojson, hash, fold, map]
+[@@deriving eq, compare, yojson, hash, fold, map, bin_io]
 
 let pp f ppf { cond; body } = Format.fprintf ppf "while %a do %a" f cond f body
 

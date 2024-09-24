@@ -1,4 +1,4 @@
-type 'a t = Label.t
+type 'a t = Label.t [@@deriving bin_io]
 
 let equal _ = Label.equal
 let compare _ = Label.compare

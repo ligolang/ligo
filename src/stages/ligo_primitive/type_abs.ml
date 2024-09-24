@@ -2,7 +2,7 @@ type 'e t =
   { type_binder : Var.Type_var.t
   ; result : 'e
   }
-[@@deriving eq, compare, yojson, hash, fold, map]
+[@@deriving eq, compare, yojson, hash, fold, map, bin_io]
 
 let pp f ppf { type_binder; result } =
   Format.fprintf ppf "Λ %a -> @;@[%a@]" Var.Type_var.pp type_binder f result

@@ -13,6 +13,7 @@ let test_build_test_contracts ~raise () =
     in
     Checking.(
       Map.iteri env.cmis ~f:(fun ~key:path ~data:(expected_cmi, expected_crc) ->
+          Cmi.Serialized.output expected_cmi;
           match Cmi.Serialized.input path with
           | None ->
             Core.raise @@ Failure ("Failed to deserialize " ^ path ^ ": can't read back")

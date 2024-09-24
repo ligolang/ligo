@@ -3,13 +3,13 @@ module Make (Pattern : Pattern.S) = struct
     { pattern : 't Pattern.t
     ; body : 'e
     }
-  [@@deriving compare, eq, fold, hash, iter, map, sexp, yojson]
+  [@@deriving compare, eq, fold, hash, iter, map, sexp, yojson, bin_io]
 
   type ('e, 't) t =
     { matchee : 'e
     ; cases : ('e, 't) match_case list
     }
-  [@@deriving compare, eq, fold, hash, iter, map, sexp, yojson]
+  [@@deriving compare, eq, fold, hash, iter, map, sexp, yojson, bin_io]
 
   let fold_map_match_case f g acc { pattern; body } =
     let acc, pattern = Pattern.fold_map g acc pattern in

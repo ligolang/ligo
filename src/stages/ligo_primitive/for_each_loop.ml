@@ -3,7 +3,7 @@ type collect_type =
   | Set
   | List
   | Any
-[@@deriving eq, compare, yojson, hash]
+[@@deriving eq, compare, yojson, hash, bin_io]
 
 let pp_collect_type ppf collect_type =
   match collect_type with
@@ -19,7 +19,7 @@ type 'e t =
   ; collection_type : collect_type
   ; fe_body : 'e
   }
-[@@deriving eq, compare, yojson, hash, fold, map]
+[@@deriving eq, compare, yojson, hash, fold, map, bin_io]
 
 let option_map ppf (k, v_opt) =
   match v_opt with

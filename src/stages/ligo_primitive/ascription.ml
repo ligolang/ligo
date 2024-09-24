@@ -3,7 +3,7 @@ module T = struct
     { anno_expr : 'e
     ; type_annotation : 't
     }
-  [@@deriving compare, eq, fold, hash, iter, map, sexp, yojson]
+  [@@deriving compare, eq, fold, hash, iter, map, sexp, yojson, bin_io]
 end
 
 include T
