@@ -717,7 +717,17 @@ and print_new_expression state ?name node = print_todo_node state ?name node
 
 (* Yield expression *)
 
-and print_yield_expression state ?name node = print_todo_node state ?name node
+and print_yield_expression state ?name node =
+  let name = get_name ?name node in
+  match ts_node_child node 1 with
+  | None -> make_node state ~name node
+  | Some child ->
+    let child =
+      match string_of_ts_node_type child with
+      | "*" -> ts_node_child_exn node 2
+      | _ -> child
+    in
+    Tree.make_unary state name (anon print_expression) child
 
 (* As-expression *)
 
