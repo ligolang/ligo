@@ -1125,6 +1125,7 @@ and expression =
   {@js[
    let a = '123';
    let n = a as number;
+   const m = a as const;
   ]}
 
   The related grammar rules are given by:

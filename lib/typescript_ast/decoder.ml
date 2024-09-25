@@ -721,7 +721,20 @@ and print_yield_expression state ?name node = print_todo_node state ?name node
 
 (* As-expression *)
 
-and print_as_expression state ?name node = print_todo_node state ?name node
+and print_as_expression state ?name node =
+  let name = get_name ?name node
+  and expression = ts_node_child_exn node 0
+  and as_what = ts_node_child_exn node 2
+  and print_as state node =
+    let name = string_of_ts_node_type node in
+    match name with
+    | "const" -> make_node state ~name node
+    | _ -> match_rest state ~name node print_type
+  in
+  let children =
+    Tree.[ mk_child (anon print_expression) expression; mk_child print_as as_what ]
+  in
+  Tree.make state name children
 
 (* Statisfies-expression *)
 
@@ -730,10 +743,12 @@ and print_satisfies_expression state ?name node =
   and expression = ts_node_named_child_exn node 0
   and type_child = ts_node_named_child_exn node 1 in
   let children =
-    Tree.[ mk_child (anon print_expression) expression
-         ; mk_child (anon print_type) type_child
-         ]
-  in Tree.make state name children
+    Tree.
+      [ mk_child (anon print_expression) expression
+      ; mk_child (anon print_type) type_child
+      ]
+  in
+  Tree.make state name children
 
 (* Instantiation expression *)
 
