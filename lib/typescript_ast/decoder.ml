@@ -711,9 +711,26 @@ and print_ternary_expression state ?name node = print_todo_node state ?name node
 
 and print_update_expression state ?name node = print_todo_node state ?name node
 
-(* New expression *)
+(* New expression
 
-and print_new_expression state ?name node = print_todo_node state ?name node
+   Note that the constructor field is a primary expression, but
+   "primary_expression" is a supertyle, that is, a hidden rule. We
+   assume it is a "expression", since primary expressions are a subset
+   of them. *)
+
+and print_new_expression state ?name node =
+  let name = get_name ?name node
+  and constructor_field = ts_node_child_by_field_name_exn node "constructor"
+  and type_arguments_field = ts_node_child_by_field_name node "type_arguments"
+  and arguments_field = ts_node_child_by_field_name node "arguments" in
+  let children =
+    Tree.
+      [ mk_child (anon print_expression) constructor_field
+      ; mk_child_opt (anon print_type_arguments) type_arguments_field
+      ; mk_child_opt (anon print_arguments) arguments_field
+      ]
+  in
+  Tree.make state name children
 
 (* Yield expression *)
 
@@ -1237,7 +1254,7 @@ and print_call_expression state ?name node =
     Tree.
       [ mk_child print_function function_field
       ; mk_child_opt (anon print_type_arguments) type_arguments_field
-      ; mk_child print_arguments arguments_field
+      ; mk_child (anon print_arguments) arguments_field
       ]
   in
   Tree.make state name children
@@ -1247,13 +1264,13 @@ and print_type_arguments state ?name node =
   and children = collect_named_children node in
   Tree.of_list state name (anon print_type) children
 
-and print_arguments state node =
-  let name = string_of_ts_node_type node
+and print_arguments state ?name node =
+  let name = get_name ?name node
   and children = collect_named_children node in
-  Tree.of_list state name print_argument children
+  Tree.of_list state name (anon print_argument) children
 
-and print_argument state node =
-  let name = get_name node in
+and print_argument state ?name node =
+  let name = get_name ?name node in
   match name with
   | "spread_element" -> print_spread_element state ~name node
   | _ -> match_rest state ~name node print_expression
@@ -1775,7 +1792,7 @@ and print_type_query_call_expression state ?name node =
   let children =
     Tree.
       [ mk_child print_function_field function_field
-      ; mk_child print_arguments arguments_field
+      ; mk_child (anon print_arguments) arguments_field
       ]
   in
   Tree.make state name children
