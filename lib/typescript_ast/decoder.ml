@@ -709,7 +709,24 @@ and print_ternary_expression state ?name node = print_todo_node state ?name node
 
 (* Update expression *)
 
-and print_update_expression state ?name node = print_todo_node state ?name node
+and print_update_expression state ?name node =
+  let name = get_name ?name node
+  and argument_field = ts_node_child_by_field_name_exn node "argument"
+  and first_child = ts_node_child_exn node 0 in
+  let children =
+    match string_of_ts_node_type first_child with
+    | "++" -> Tree.[ mk_child make_node "++"
+                   ; mk_child (anon print_expression) argument_field ]
+    | "--" -> Tree.[ mk_child make_node "--"
+                   ; mk_child (anon print_expression) argument_field ]
+    | _ -> let snd_child = ts_node_child_exn node 1 in
+           match string_of_ts_node_type snd_child with
+           | "++" -> Tree.[ mk_child (anon print_expression) argument_field
+                          ; mk_child make_node "++" ]
+           | "--" -> Tree.[ mk_child (anon print_expression) argument_field
+                          ; mk_child make_node "--" ]
+           | _ -> [] (* Should not happen. *)
+  in Tree.make state name children
 
 (* New expression
 
