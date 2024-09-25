@@ -124,6 +124,10 @@
                 ocamlformat
                 ocamlPackages.utop
                 ocamlPackages.ocaml-lsp
+                ocamlPackages.merlin
+                ocamlPackages.merlin-lib
+                emacsPackages.merlin
+                emacsPackages.merlin-company
               ];
 
               shellHook = ''
