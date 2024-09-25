@@ -74,6 +74,11 @@
 //     yield;
 //   }
 
-const c = new C;
-const c = new C<number>
-const c = new C<number>(4)
+// const c = new C;
+// const c = new C<number>
+// const c = new C<number>(4)
+
+const x = ++y
+const x = --y
+const x = y++
+const x = y--
