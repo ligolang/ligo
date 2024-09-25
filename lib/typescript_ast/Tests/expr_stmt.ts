@@ -67,8 +67,13 @@
 // const x = 5 satisfies number
 // const x = 5 as const
 // const x = y as number
-   function* generator(i) {
-     yield *g;
-     yield i + 10;
-     yield;
-   }
+
+//   function* generator(i) {
+//     yield *g;
+//     yield i + 10;
+//     yield;
+//   }
+
+const c = new C;
+const c = new C<number>
+const c = new C<number>(4)
