@@ -201,7 +201,7 @@ let make_node state ?name node =
 
 let print_unexpected_node state ?name node =
   let name = get_name ?name node in
-  Tree.make_node state (name ^ "???")
+  Tree.make_node state ("UNKNOWN: " ^ name)
 
 let print_todo_node state ?name node =
   let name = get_name ?name node in
@@ -725,7 +725,15 @@ and print_as_expression state ?name node = print_todo_node state ?name node
 
 (* Statisfies-expression *)
 
-and print_satisfies_expression state ?name node = print_todo_node state ?name node
+and print_satisfies_expression state ?name node =
+  let name = get_name ?name node
+  and expression = ts_node_named_child_exn node 0
+  and type_child = ts_node_named_child_exn node 1 in
+  let children =
+    Tree.[ mk_child (anon print_expression) expression
+         ; mk_child (anon print_type) type_child
+         ]
+  in Tree.make state name children
 
 (* Instantiation expression *)
 
