@@ -64,4 +64,6 @@
 // namespace "Foo" {}
 // const x = <T>y
 // const x = y<T>
-const x = 5 satisfies number
+// const x = 5 satisfies number
+const x = 5 as const
+const x = y as number
