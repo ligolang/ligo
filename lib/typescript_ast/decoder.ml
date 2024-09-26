@@ -422,6 +422,8 @@ and print_class_declaration state ?name node =
   in
   Tree.make state name children
 
+(* Lexical declaration (see [print_variable_declaration]) *)
+
 and print_lexical_declaration state ?name node =
   let name = get_name ?name node
   and children = collect_named_children node
@@ -461,9 +463,14 @@ and print_variable_declarator state ?name node =
   in
   Tree.make state name children
 
-(* Variable declaration *)
+(* Variable declaration (see [print_lexical_declaration]) *)
 
-and print_variable_declaration state ?name node = print_todo_node state ?name node
+and print_variable_declaration state ?name node =
+  let name = get_name ?name node
+  and children = collect_named_children node in
+  let var_decls = filter_by_name "variable_declarator" children in
+  let children = Tree.mk_children_list (anon print_variable_declarator) var_decls in
+  Tree.make state name children
 
 (* Function signature (See [print_function_declaration]) *)
 
