@@ -368,7 +368,41 @@ and print_switch_default state ?name node =
 
 (* For statement *)
 
-and print_for_statement state ?name node = print_todo_node state ?name node
+and print_for_statement state ?name node =
+  let name = get_name ?name node
+  and initializer_field = ts_node_child_by_field_name_exn node "initializer"
+  and condition_field = ts_node_child_by_field_name_exn node "condition"
+  and increment_field = ts_node_child_by_field_name node "increment"
+  and body_field = ts_node_child_by_field_name_exn node "body"
+  and print_initializer state node =
+    let name = string_of_ts_node_type node in
+    match name with
+    | "lexical_declaration" -> print_lexical_declaration state ~name node
+    | "variable_declaration" -> print_variable_declaration state ~name node
+    | "expression_statement" -> print_expression_statement state ~name node
+    | "empty_statement" -> print_empty_statement state ~name node
+    | _ -> match_rest state ~name node print_unexpected_node
+  and print_condition state node =
+    let name = string_of_ts_node_type node in
+    match name with
+    | "expression_statement" -> print_expression_statement state ~name node
+    | "empty_statement" -> print_empty_statement state ~name node
+    | _ -> match_rest state ~name node print_unexpected_node
+  and print_increment state node =
+    let name = string_of_ts_node_type node in
+    match name with
+    | "sequence_expression" -> print_sequence_expression state ~name node
+    | _ -> print_expression state ~name node
+  in
+  let children =
+    Tree.
+      [ mk_child print_initializer initializer_field
+      ; mk_child print_condition condition_field
+      ; mk_child_opt print_increment increment_field
+      ; mk_child (anon print_statement) body_field
+      ]
+  in
+  Tree.make state name children
 
 (* While statement *)
 
