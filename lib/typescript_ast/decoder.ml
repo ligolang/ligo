@@ -443,6 +443,9 @@ and print_variable_declarator state ?name node =
 and print_variable_declaration state ?name node = print_todo_node state ?name node
 and print_function_signature state ?name node = print_todo_node state ?name node
 and print_abstract_class_declaration state ?name node = print_todo_node state ?name node
+
+(* Module *)
+
 and print_module state ?name node = print_todo_node state ?name node
 
 (* Internal module *)
@@ -1476,12 +1479,18 @@ and print_primary_type state ?name node =
   | "union_type" -> print_union_type state ~name node
   | _ -> match_rest state ~name node print_unexpected_node
 
+(* Type identifier *)
+
 and print_type_identifier state ?name node = print_identifier state ?name node
+
+(* Parenthesized type *)
 
 and print_parenthesized_type state ?name node =
   let name = get_name ?name node
   and child = ts_node_named_child_exn node 0 in
   Tree.make_unary state name (anon print_type) child
+
+(* Predefined type *)
 
 and print_predefined_type state ?name node =
   let name = get_name ?name node in
@@ -1515,6 +1524,8 @@ and print_predefined_type state ?name node =
     in
     Tree.make_unary state name print child
 
+(* Nested type identifier *)
+
 and print_nested_type_identifier state ?name node =
   let name = get_name ?name node
   and module_field = ts_node_child_by_field_name_exn node "module"
@@ -1533,6 +1544,8 @@ and print_nested_type_identifier state ?name node =
       ]
   in
   Tree.make state name children
+
+(* Nested identifier *)
 
 and print_nested_identifier state ?name node =
   let name = get_name ?name node
@@ -1557,6 +1570,8 @@ and print_nested_identifier state ?name node =
       ]
   in
   Tree.make state name children
+
+(* Generic type *)
 
 and print_generic_type state ?name node =
   let name = get_name ?name node
@@ -1618,6 +1633,8 @@ and print_property_signature state ?name node =
   in
   Tree.make state name children
 
+(* Call signature *)
+
 and print_call_signature state ?name node =
   let name = get_name ?name node
   and type_parameters_field = ts_node_child_by_field_name node "type_parameters"
@@ -1632,15 +1649,21 @@ and print_call_signature state ?name node =
   in
   Tree.make state name children
 
+(* Asserts annotation *)
+
 and print_asserts_annotation state ?name node =
   let name = get_name ?name node
   and asserts = ts_node_child_exn node 1 in
   Tree.make_unary state name (anon print_asserts) asserts
 
+(* Type predicate annotation *)
+
 and print_type_predicate_annotation state ?name node =
   let name = get_name ?name node
   and asserts = ts_node_child_exn node 1 in
   Tree.make_unary state name (anon print_type_predicate) asserts
+
+(* Construct signature *)
 
 and print_construct_signature state ?name node =
   let name = get_name ?name node
@@ -1657,6 +1680,8 @@ and print_construct_signature state ?name node =
       ]
   in
   Tree.make state name children
+
+(* Index signature *)
 
 and print_index_signature state ?name node =
   let name = get_name ?name node
@@ -1721,6 +1746,8 @@ and print_adding_type_annotation state ~name node =
 and print_opting_type_annotation state ~name node =
   let child = ts_node_named_child_exn node 0 in
   Tree.make_unary state name (anon print_type) child
+
+(* Method signature *)
 
 and print_method_signature state ?name node =
   let name = get_name ?name node
@@ -1800,15 +1827,33 @@ and print_tuple_parameter state ?name node =
   in
   Tree.make state name children
 
+and print_optional_tuple_parameter state ?name node =
+  let name = get_name ?name node
+  and name_field = ts_node_child_by_field_name_exn node "name"
+  and type_field = ts_node_child_by_field_name_exn node "type" in
+  let children =
+    Tree.
+      [ mk_child (anon print_identifier) name_field
+      ; mk_child (anon print_type_annotation) type_field
+      ]
+  in
+  Tree.make state name children
+
+(* Type annotation *)
+
 and print_type_annotation state ?name node =
   let name = get_name ?name node
   and child = ts_node_named_child_exn node 0 in
   Tree.make_unary state name (anon print_type) child
 
+(* Rest pattern *)
+
 and print_rest_pattern state ?name node =
   let name = get_name ?name node
   and child = ts_node_named_child_exn node 0 in
   Tree.make_unary state name (anon print_lhs_expression) child
+
+(* LHS expression *)
 
 and print_lhs_expression state ?name node =
   let name = get_name ?name node in
@@ -1821,18 +1866,6 @@ and print_lhs_expression state ?name node =
   | "array_pattern" -> print_array_pattern state ~name node
   | "non_null_expression" -> print_non_null_expression state ~name node
   | _ -> match_rest state ~name node print_unexpected_node
-
-and print_optional_tuple_parameter state ?name node =
-  let name = get_name ?name node
-  and name_field = ts_node_child_by_field_name_exn node "name"
-  and type_field = ts_node_child_by_field_name_exn node "type" in
-  let children =
-    Tree.
-      [ mk_child (anon print_identifier) name_field
-      ; mk_child (anon print_type_annotation) type_field
-      ]
-  in
-  Tree.make state name children
 
 and print_optional_type state ?name node =
   let name = get_name ?name node
