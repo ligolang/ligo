@@ -315,21 +315,59 @@ and print_statement_block state ?name node =
   let children = collect_named_children node in
   Tree.of_list state name (anon print_statement) children
 
+(* If statement *)
+
 and print_if_statement state ?name node = print_todo_node state ?name node
+
+(* Switch statement *)
+
 and print_switch_statement state ?name node = print_todo_node state ?name node
+
+(* For statement *)
+
 and print_for_statement state ?name node = print_todo_node state ?name node
+
+(* While statement *)
+
 and print_while_statement state ?name node = print_todo_node state ?name node
+
+(* Do statement *)
+
 and print_do_statement state ?name node = print_todo_node state ?name node
+
+(* Try statement *)
+
 and print_try_statement state ?name node = print_todo_node state ?name node
+
+(* With statement *)
+
 and print_with_statement state ?name node = print_todo_node state ?name node
+
+(* Break statement *)
+
 and print_break_statement state ?name node = print_todo_node state ?name node
+
+(* Continue statement *)
+
 and print_continue_statement state ?name node = print_todo_node state ?name node
+
+(* Return statement *)
+
 and print_return_statement state ?name node = print_todo_node state ?name node
+
+(* Throw statement *)
+
 and print_throw_statement state ?name node = print_todo_node state ?name node
+
+(* Empty statement *)
+
 and print_empty_statement state ?name node = print_todo_node state ?name node
+
+(* Labeled statement *)
+
 and print_labeled_statement state ?name node = print_todo_node state ?name node
 
-(* Declarations *)
+(* DECLARATION *)
 
 and print_declaration state ?name node =
   let name = get_name ?name node in
