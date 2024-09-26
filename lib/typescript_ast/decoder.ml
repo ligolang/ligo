@@ -467,10 +467,10 @@ and print_variable_declaration state ?name node = print_todo_node state ?name no
 
 and print_function_signature state ?name node = print_todo_node state ?name node
 
-(* Abstract class declaration *)
+(* Abstract class declaration ( see [print_class_declaration]) *)
 
 and print_abstract_class_declaration state ?name node =
-  print_todo_node state ?name node
+  print_class_declaration state ?name node
 
 (* Module *)
 

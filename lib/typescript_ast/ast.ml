@@ -341,7 +341,7 @@ and class_declaration =
   ; name : type_identifier
   ; type_parameters : type_parameter list
   ; class_heritage : class_heritage option
-  ; body : class_member list
+  ; body : class_body
   }
 
 and class_heritage =
@@ -615,13 +615,7 @@ and variable_declaration = variable_declarator Nonempty_list.t
        field('body', $.class_body)))
     }]
  *)
-and abstract_class_declaration =
-  { decorator : decorator list
-  ; name : type_identifier
-  ; type_parameters : type_parameter list
-  ; class_heritage : class_heritage option
-  ; body : class_body
-  }
+and abstract_class_declaration = class_declaration
 
 and type_identifier = identifier
 
