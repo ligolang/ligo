@@ -114,9 +114,15 @@
 // do {} while (true)
 // while (true) {}
 
-switch (x) {
-  case 0: ;
-  default: yield; break;
-  case x,y: break;
-  default: ;
-}
+// switch (x) {
+//   case 0: ;
+//   default: yield; break;
+//   case x,y: break;
+//   default: ;
+// }
+
+for (;;);
+for (;; i++);
+for (; i<6; i++);
+for (i=0; i<6; i++);
+for (i=0; i<6; i++) {}
