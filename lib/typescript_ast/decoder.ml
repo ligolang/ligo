@@ -693,7 +693,47 @@ and print_assignment_expression state ?name node = print_todo_node state ?name n
 (* Augmented assignment expression *)
 
 and print_augmented_assignment_expression state ?name node =
-  print_todo_node state ?name node
+  let name = get_name ?name node
+  and left_field = ts_node_child_by_field_name_exn node "left"
+  and right_field = ts_node_child_by_field_name_exn node "right"
+  and operator = ts_node_child_by_field_name_exn node "operator"
+  (* "_augmented_assignment_lhs" is hidden: *)
+  and print_left state node =
+    let name = string_of_ts_node_type node in
+    match name with
+    | "member_expression" -> print_member_expression state ~name node
+    | "subscript_expression" -> print_subscript_expression state ~name node
+    | "identifier" -> print_identifier state ~name node
+    | "parenthesized_expression" -> print_parenthesized_expression state ~name node
+    | _ -> match_rest state ~name node print_unexpected_node
+  and print_operator state node =
+    let name = string_of_ts_node_type node in
+    match name with
+    | "+=" -> make_node state ~name node
+    | "-=" -> make_node state ~name node
+    | "*=" -> make_node state ~name node
+    | "/=" -> make_node state ~name node
+    | "%=" -> make_node state ~name node
+    | "^=" -> make_node state ~name node
+    | "&=" -> make_node state ~name node
+    | "|=" -> make_node state ~name node
+    | ">>=" -> make_node state ~name node
+    | ">>>=" -> make_node state ~name node
+    | "<<=" -> make_node state ~name node
+    | "**=" -> make_node state ~name node
+    | "&&=" -> make_node state ~name node
+    | "||=" -> make_node state ~name node
+    | "??=" -> make_node state ~name node
+    | _ -> match_rest state ~name node print_unexpected_node
+  in
+  let children =
+    Tree.
+      [ mk_child print_operator operator
+      ; mk_child print_left left_field
+      ; mk_child (anon print_expression) right_field
+      ]
+  in
+  Tree.make state name children
 
 (* Await expression *)
 
@@ -742,13 +782,16 @@ and print_binary_expression state ?name node =
     | "??" -> make_node state ~name node
     | "instanceof" -> make_node state ~name node
     | "in" -> make_node state ~name node
-    | _ -> match_rest state ~name node print_unexpected_node in
+    | _ -> match_rest state ~name node print_unexpected_node
+  in
   let children =
-    Tree.[ mk_child print_operator operator
-         ; mk_child print_left left_field
-         ; mk_child (anon print_expression) right_field
-         ]
-  in Tree.make state name children
+    Tree.
+      [ mk_child print_operator operator
+      ; mk_child print_left left_field
+      ; mk_child (anon print_expression) right_field
+      ]
+  in
+  Tree.make state name children
 
 (* Ternary expression *)
 
@@ -758,11 +801,13 @@ and print_ternary_expression state ?name node =
   and consequence_field = ts_node_child_by_field_name_exn node "consequence"
   and alternative_field = ts_node_child_by_field_name_exn node "alternative" in
   let children =
-    Tree.[ mk_child (anon print_expression) condition_field
-         ; mk_child (anon print_expression) consequence_field
-         ; mk_child (anon print_expression) alternative_field
-         ]
-  in Tree.make state name children
+    Tree.
+      [ mk_child (anon print_expression) condition_field
+      ; mk_child (anon print_expression) consequence_field
+      ; mk_child (anon print_expression) alternative_field
+      ]
+  in
+  Tree.make state name children
 
 (* Update expression *)
 
@@ -772,18 +817,20 @@ and print_update_expression state ?name node =
   and first_child = ts_node_child_exn node 0 in
   let children =
     match string_of_ts_node_type first_child with
-    | "++" -> Tree.[ mk_child make_node "++"
-                   ; mk_child (anon print_expression) argument_field ]
-    | "--" -> Tree.[ mk_child make_node "--"
-                   ; mk_child (anon print_expression) argument_field ]
-    | _ -> let snd_child = ts_node_child_exn node 1 in
-           match string_of_ts_node_type snd_child with
-           | "++" -> Tree.[ mk_child (anon print_expression) argument_field
-                          ; mk_child make_node "++" ]
-           | "--" -> Tree.[ mk_child (anon print_expression) argument_field
-                          ; mk_child make_node "--" ]
-           | _ -> [] (* Should not happen. *)
-  in Tree.make state name children
+    | "++" ->
+      Tree.[ mk_child make_node "++"; mk_child (anon print_expression) argument_field ]
+    | "--" ->
+      Tree.[ mk_child make_node "--"; mk_child (anon print_expression) argument_field ]
+    | _ ->
+      let snd_child = ts_node_child_exn node 1 in
+      (match string_of_ts_node_type snd_child with
+      | "++" ->
+        Tree.[ mk_child (anon print_expression) argument_field; mk_child make_node "++" ]
+      | "--" ->
+        Tree.[ mk_child (anon print_expression) argument_field; mk_child make_node "--" ]
+      | _ -> [] (* Should not happen. *))
+  in
+  Tree.make state name children
 
 (* New expression
 
