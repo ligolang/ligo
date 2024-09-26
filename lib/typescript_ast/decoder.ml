@@ -297,9 +297,11 @@ and print_debugger_statement state ?name node = Tree.make_node state (get_name ?
 
    See [print_expression]. *)
 
-and print_expression_statement state ?name node =
+and print_expression_statement state ?name node = print_expressions state ?name node
+
+and print_expressions state ?name node =
   let name = get_name ?name node
-  and child = ts_node_named_child_exn node 0
+  and child = ts_node_child_exn node 0
   and print state node =
     let name = string_of_ts_node_type node in
     match name with
@@ -321,7 +323,48 @@ and print_if_statement state ?name node = print_todo_node state ?name node
 
 (* Switch statement *)
 
-and print_switch_statement state ?name node = print_todo_node state ?name node
+and print_switch_statement state ?name node =
+  let name = get_name ?name node
+  and value_field = ts_node_child_by_field_name_exn node "value"
+  and body_field = ts_node_child_by_field_name_exn node "body" in
+  let children =
+    Tree.
+      [ mk_child (anon print_parenthesized_expression) value_field
+      ; mk_child (anon print_switch_body) body_field
+      ]
+  in
+  Tree.make state name children
+
+and print_switch_body state ?name node =
+  let name = get_name ?name node
+  and children = collect_named_children node
+  and print state node =
+    let name = string_of_ts_node_type node in
+    match name with
+    | "switch_case" -> print_switch_case state ~name node
+    | _ -> match_rest state ~name node print_switch_default
+  in
+  Tree.of_list state name print children
+
+and print_switch_case state ?name node =
+  let name = get_name ?name node
+  and value_field = ts_node_child_by_field_name_exn node "value"
+  and body_field = ts_node_child_by_field_name_exn node "body"
+  and print state node =
+    let name = string_of_ts_node_type node in
+    match name with
+    | "sequence_expression" -> print_sequence_expression state ~name node
+    | _ -> print_expression state ~name node
+  in
+  let children =
+    Tree.[ mk_child print value_field; mk_child (anon print_switch_body) body_field ]
+  in
+  Tree.make state name children
+
+and print_switch_default state ?name node =
+  let name = get_name ?name node
+  and children = collect_named_children node in
+  Tree.of_list state name (anon print_statement) children
 
 (* For statement *)
 
@@ -444,7 +487,7 @@ and print_return_statement state ?name node =
 
 (* Throw statement *)
 
-and print_throw_statement state ?name node = print_expression_statement state ?name node
+and print_throw_statement state ?name node = print_expressions state ?name node
 
 (* Empty statement *)
 
@@ -823,9 +866,7 @@ and print_ambient_declaration state ?name node =
    The JavasScript tree-sitter grammar have the non-terminals
    "expression" and "primary_expression" be supertypes, that is,
    hidden rules. Therefore we have to match all the RHS of those
-   non-terminals in [print_expression], but also "sequence_expression"
-   from the RHS of the hidden rule "_expressions" (see
-   [print_expression_statement]). *)
+   non-terminals in [print_expression]. *)
 
 and print_expression state ?name node =
   let name = get_name ?name node in
@@ -1048,7 +1089,7 @@ and print_update_expression state ?name node =
 (* New expression
 
    Note that the constructor field is a primary expression, but
-   "primary_expression" is a supertyle, that is, a hidden rule. We
+   "primary_expression" is a supertype, that is, a hidden rule. We
    assume it is a "expression", since primary expressions are a subset
    of them. *)
 
