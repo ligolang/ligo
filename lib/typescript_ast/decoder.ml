@@ -341,11 +341,23 @@ and print_try_statement state ?name node = print_todo_node state ?name node
 
 (* With statement *)
 
-and print_with_statement state ?name node = print_todo_node state ?name node
+and print_with_statement state ?name node =
+  let name = get_name ?name node
+  and object_field = ts_node_child_by_field_name_exn node "object"
+  and body_field = ts_node_child_by_field_name_exn node "body" in
+  let children =
+    Tree.[ mk_child (anon print_parenthesized_expression) object_field
+         ; mk_child (anon print_statement) body_field
+         ]
+  in Tree.make state name children
 
 (* Break statement *)
 
-and print_break_statement state ?name node = print_todo_node state ?name node
+and print_break_statement state ?name node =
+  let name = get_name ?name node
+  and label_field = ts_node_child_by_field_name node "label" in
+  let children = Tree.[ mk_child_opt (anon print_identifier) label_field ]
+  in Tree.make state name children
 
 (* Continue statement *)
 

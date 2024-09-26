@@ -104,4 +104,6 @@
 // ;
 // return (1+y, w)!, z
 // return
-continue label
+// continue label
+// break label
+with (1+x) {y=x}
