@@ -701,7 +701,51 @@ and print_await_expression state ?name node = print_todo_node state ?name node
 
 (* Binary expression *)
 
-and print_binary_expression state ?name node = print_todo_node state ?name node
+and print_binary_expression state ?name node =
+  let name = get_name ?name node
+  and left_field = ts_node_child_by_field_name_exn node "left"
+  and right_field = ts_node_child_by_field_name_exn node "right"
+  and operator = ts_node_child_by_field_name_exn node "operator"
+  and print_left state node =
+    let name = string_of_ts_node_type node in
+    match name with
+    | "private_property_identifier" -> print_identifier state ~name node
+    | _ -> match_rest state ~name node print_expression
+  and print_operator state node =
+    let name = string_of_ts_node_type node in
+    match name with
+    | "&&" -> make_node state ~name node
+    | "||" -> make_node state ~name node
+    | ">>" -> make_node state ~name node
+    | ">>>" -> make_node state ~name node
+    | "<<" -> make_node state ~name node
+    | "&" -> make_node state ~name node
+    | "^" -> make_node state ~name node
+    | "|" -> make_node state ~name node
+    | "+" -> make_node state ~name node
+    | "-" -> make_node state ~name node
+    | "*" -> make_node state ~name node
+    | "/" -> make_node state ~name node
+    | "%" -> make_node state ~name node
+    | "**" -> make_node state ~name node
+    | "<" -> make_node state ~name node
+    | "<=" -> make_node state ~name node
+    | "==" -> make_node state ~name node
+    | "===" -> make_node state ~name node
+    | "!=" -> make_node state ~name node
+    | "!==" -> make_node state ~name node
+    | ">=" -> make_node state ~name node
+    | ">" -> make_node state ~name node
+    | "??" -> make_node state ~name node
+    | "instanceof" -> make_node state ~name node
+    | "in" -> make_node state ~name node
+    | _ -> match_rest state ~name node print_unexpected_node in
+  let children =
+    Tree.[ mk_child print_operator operator
+         ; mk_child print_left left_field
+         ; mk_child (anon print_expression) right_field
+         ]
+  in Tree.make state name children
 
 (* Ternary expression *)
 
