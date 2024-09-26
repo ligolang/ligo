@@ -121,8 +121,11 @@
 //   default: ;
 // }
 
-for (;;);
-for (;; i++);
-for (; i<6; i++);
-for (i=0; i<6; i++);
-for (i=0; i<6; i++) {}
+// for (;;);
+// for (;; i++);
+// for (; i<6; i++);
+// for (i=0; i<6; i++);
+// for (i=0; i<6; i++) {}
+
+if (x) {}
+if (x) {} else { f() }
