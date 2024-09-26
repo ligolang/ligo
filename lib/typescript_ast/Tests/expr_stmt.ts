@@ -93,7 +93,8 @@ const x = async x => {}
 
 // x += 4
 // x = 5
+// module N
+// module N.M {}
+// module "Foo" {}
 
-module N
-module N.M {}
-module "Foo" {}
+@foo class T<U> extends V<U,W>, Y implements A, B {}

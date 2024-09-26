@@ -399,7 +399,26 @@ and print_generator_function_declaration state ?name node =
   in
   Tree.make state name children
 
-and print_class_declaration state ?name node = print_todo_node state ?name node
+(* Class declaration (see [print_class] *)
+
+and print_class_declaration state ?name node =
+  let name = get_name ?name node
+  and children = collect_children node in
+  let decorators = filter_by_name "decorator" children
+  and name_field = ts_node_child_by_field_name_exn node "name"
+  and type_parameters_field = ts_node_child_by_field_name node "type_parameters"
+  and heritage_child = filter_first_by_name "class_heritage" children
+  and body_field = ts_node_child_by_field_name_exn node "body" in
+  let open Tree in
+  let children =
+    mk_children_list (anon print_decorator) decorators
+    @ [ mk_child (anon print_type_identifier) name_field
+      ; mk_child_opt (anon print_type_parameters) type_parameters_field
+      ; mk_child_opt (anon print_class_heritage) heritage_child
+      ; mk_child (anon print_class_body) body_field
+      ]
+  in
+  Tree.make state name children
 
 and print_lexical_declaration state ?name node =
   let name = get_name ?name node
@@ -440,9 +459,18 @@ and print_variable_declarator state ?name node =
   in
   Tree.make state name children
 
+(* Variable declaration *)
+
 and print_variable_declaration state ?name node = print_todo_node state ?name node
+
+(* Function signature *)
+
 and print_function_signature state ?name node = print_todo_node state ?name node
-and print_abstract_class_declaration state ?name node = print_todo_node state ?name node
+
+(* Abstract class declaration *)
+
+and print_abstract_class_declaration state ?name node =
+  print_todo_node state ?name node
 
 (* Module *)
 
