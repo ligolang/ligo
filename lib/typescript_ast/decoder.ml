@@ -349,7 +349,11 @@ and print_break_statement state ?name node = print_todo_node state ?name node
 
 (* Continue statement *)
 
-and print_continue_statement state ?name node = print_todo_node state ?name node
+and print_continue_statement state ?name node =
+  let name = get_name ?name node
+  and label_field = ts_node_child_by_field_name node "label" in
+  let children = Tree.[ mk_child_opt (anon print_identifier) label_field ]
+  in Tree.make state name children
 
 (* Return statement *)
 
