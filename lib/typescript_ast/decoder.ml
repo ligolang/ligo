@@ -361,7 +361,8 @@ and print_throw_statement state ?name node = print_expression_statement state ?n
 
 (* Empty statement *)
 
-and print_empty_statement state ?name node = print_todo_node state ?name node
+and print_empty_statement state ?name node =
+  make_node state ?name node
 
 (* Labeled statement *)
 
