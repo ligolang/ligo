@@ -1388,7 +1388,11 @@ and await_expression = expression
           ['??', 'ternary'],
           ['instanceof', 'binary_relation'],
           ['in', 'binary_relation']
-         ].map ... // Shortened here
+         ].map(([operator, precedence, associativity]) =>
+        (associativity === 'right' ? prec.right : prec.left)(precedence, seq(
+          field('left', operator === 'in' ? choice($.expression, $.private_property_identifier) : $.expression),
+          field('operator', operator),
+          field('right', $.expression)))))
    ]}
 *)
 and binary_expression =

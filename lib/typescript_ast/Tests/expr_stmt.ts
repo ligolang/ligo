@@ -83,4 +83,6 @@
 // const x = y++
 // const x = y--
 
-const t = true ? x : 0
+// const t = true ? x : 0
+
+const x = (x ^ y) >= z
