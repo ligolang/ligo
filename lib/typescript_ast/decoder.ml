@@ -351,6 +351,8 @@ and print_declaration state ?name node =
   | "ambient_declaration" -> print_ambient_declaration state ~name node
   | _ -> match_rest state ~name node print_unexpected_node
 
+(* Function declaration (see [print_function_signature]) *)
+
 and print_function_declaration state ?name node =
   let name = get_name ?name node
   and children = collect_children node in
@@ -463,9 +465,28 @@ and print_variable_declarator state ?name node =
 
 and print_variable_declaration state ?name node = print_todo_node state ?name node
 
-(* Function signature *)
+(* Function signature (See [print_function_declaration]) *)
 
-and print_function_signature state ?name node = print_todo_node state ?name node
+and print_function_signature state ?name node =
+  let name = get_name ?name node
+  and children = collect_children node in
+  let async = has_node_named "async" children
+  and name_field = ts_node_child_by_field_name_exn node "name"
+  (* "_call_signature" inlined: *)
+  and type_parameters_field = ts_node_child_by_field_name node "type_parameters"
+  and parameters_field = ts_node_child_by_field_name_exn node "parameters"
+  and return_type_field = ts_node_child_by_field_name node "return_type" in
+  (* "statement_block" *)
+  let children =
+    Tree.
+      [ mk_child_opt make_node async
+      ; mk_child (anon print_identifier) name_field
+      ; mk_child_opt (anon print_type_parameters) type_parameters_field
+      ; mk_child (anon print_formal_parameters) parameters_field
+      ; mk_child_opt (anon print_return_type) return_type_field
+      ]
+  in
+  Tree.make state name children
 
 (* Abstract class declaration ( see [print_class_declaration]) *)
 
