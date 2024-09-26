@@ -101,4 +101,6 @@
 // async function f ()
 // var x = (1+y, w)!, z
 // label: throw C()
-;
+// ;
+// return (1+y, w)!, z
+// return
