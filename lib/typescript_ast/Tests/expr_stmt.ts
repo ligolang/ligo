@@ -77,12 +77,17 @@
 // const c = new C;
 // const c = new C<number>
 // const c = new C<number>(4)
-
 // const x = ++y
 // const x = --y
 // const x = y++
 // const x = y--
-
 // const t = true ? x : 0
+// const x = (x ^ y) >= z
 
-const x = (x ^ y) >= z
+// const {[x]:[]} = {}
+
+async function foo(name) {
+  console.log(name, "start");
+  await console.log(name, "middle");
+  console.log(name, "end");
+}

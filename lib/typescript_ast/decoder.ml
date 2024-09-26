@@ -697,7 +697,10 @@ and print_augmented_assignment_expression state ?name node =
 
 (* Await expression *)
 
-and print_await_expression state ?name node = print_todo_node state ?name node
+and print_await_expression state ?name node =
+  let name = get_name ?name node
+  and expression = ts_node_child_exn node 1 in
+  Tree.make_unary state name (anon print_expression) expression
 
 (* Binary expression *)
 
@@ -2226,9 +2229,9 @@ and print_property_name state ?name node =
   | _ -> match_rest state ~name node print_unexpected_node
 
 and print_computed_property_name state ?name node =
-  let name = get_name ?name node in
-  let children = collect_named_children node in
-  Tree.of_list state name (anon print_expression) children
+  let name = get_name ?name node
+  and expression = ts_node_child_exn node 1 in
+  Tree.make_unary state name (anon print_expression) expression
 
 and print_shorthand_property_identifier_pattern state ?name node =
   make_node state ?name node
