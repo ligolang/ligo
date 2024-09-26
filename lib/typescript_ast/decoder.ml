@@ -701,13 +701,16 @@ and print_assignment_expression state ?name node =
     let name = string_of_ts_node_type node in
     match name with
     | "parenthesized_expression" -> print_parenthesized_expression state ~name node
-    | _ -> match_rest state ~name node print_lhs_expression in
+    | _ -> match_rest state ~name node print_lhs_expression
+  in
   let children =
-    Tree.[ mk_child_opt make_node using
-         ; mk_child print_left left_field
-         ; mk_child (anon print_expression) right_field
-         ]
-  in Tree.make state name children
+    Tree.
+      [ mk_child_opt make_node using
+      ; mk_child print_left left_field
+      ; mk_child (anon print_expression) right_field
+      ]
+  in
+  Tree.make state name children
 
 (* Augmented assignment expression *)
 
@@ -1101,8 +1104,11 @@ and print_function_expression state ?name node =
 
 and print_arrow_function state ?name node =
   let name = get_name ?name node
-  and children = collect_children node in  (* TODO: Check first child *)
-  let async = has_node_named "async" children
+  and async =
+    let first_child = ts_node_child_exn node 0 in
+    match string_of_ts_node_type first_child with
+    | "async" -> Some "async"
+    | _ -> None
   and parameter_field = ts_node_child_by_field_name node "parameter"
   and body_field = ts_node_child_by_field_name_exn node "body" in
   let children =
