@@ -42,7 +42,7 @@
 // }
 // async function* f () {}
 // const x = async function* f () {}
-const x = async x => {}
+// const x = async x => {}
 // const y = <T>(x: T) : T => x
 // const f = function <T>(x: T) : T { return x }
 // const x = { a: 5, ...f(), g() {}, z }
@@ -98,5 +98,5 @@ const x = async x => {}
 // module "Foo" {}
 // @foo class T<U> extends V<U,W>, Y implements A, B {}
 // @foo abstract class T<U> extends V<U,W>, Y implements A, B {}
-
-async function f ()
+// async function f ()
+var x = (1+y, w)!, z
