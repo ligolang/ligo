@@ -353,7 +353,17 @@ and print_continue_statement state ?name node = print_todo_node state ?name node
 
 (* Return statement *)
 
-and print_return_statement state ?name node = print_todo_node state ?name node
+and print_return_statement state ?name node =
+  let name = get_name ?name node
+  and child = ts_node_named_child node 0
+  and print state node =
+    let name = string_of_ts_node_type node in
+    match name with
+    | "sequence_expression" -> print_sequence_expression state ~name node
+    | _ -> print_expression state ~name node
+  in
+  let children = Tree.[ mk_child_opt print child ]
+  in Tree.make state name children
 
 (* Throw statement *)
 
