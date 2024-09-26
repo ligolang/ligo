@@ -112,4 +112,11 @@
 // try {} catch ([x,y]) {}
 // try {} catch (x: T) {} finally {}
 // do {} while (true)
-while (true) {}
+// while (true) {}
+
+switch (x) {
+  case 0: ;
+  default: yield; break;
+  case x,y: break;
+  default: ;
+}
