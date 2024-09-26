@@ -319,7 +319,24 @@ and print_statement_block state ?name node =
 
 (* If statement *)
 
-and print_if_statement state ?name node = print_todo_node state ?name node
+and print_if_statement state ?name node =
+  let name = get_name ?name node
+  and condition_field = ts_node_child_by_field_name_exn node "condition"
+  and consequence_field = ts_node_child_by_field_name_exn node "consequence"
+  and alternative_field = ts_node_child_by_field_name node "alternative" in
+  let children =
+    Tree.
+      [ mk_child (anon print_parenthesized_expression) condition_field
+      ; mk_child (anon print_statement) consequence_field
+      ; mk_child_opt (anon print_else_clause) alternative_field
+      ]
+  in
+  Tree.make state name children
+
+and print_else_clause state ?name node =
+  let name = get_name ?name node
+  and child = ts_node_child_exn node 1 in
+  Tree.make_unary state name (anon print_statement) child
 
 (* Switch statement *)
 
