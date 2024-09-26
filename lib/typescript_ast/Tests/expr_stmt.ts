@@ -99,4 +99,5 @@
 // @foo class T<U> extends V<U,W>, Y implements A, B {}
 // @foo abstract class T<U> extends V<U,W>, Y implements A, B {}
 // async function f ()
-var x = (1+y, w)!, z
+// var x = (1+y, w)!, z
+label: throw C()
