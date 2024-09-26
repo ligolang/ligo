@@ -705,7 +705,17 @@ and print_binary_expression state ?name node = print_todo_node state ?name node
 
 (* Ternary expression *)
 
-and print_ternary_expression state ?name node = print_todo_node state ?name node
+and print_ternary_expression state ?name node =
+  let name = get_name ?name node
+  and condition_field = ts_node_child_by_field_name_exn node "condition"
+  and consequence_field = ts_node_child_by_field_name_exn node "consequence"
+  and alternative_field = ts_node_child_by_field_name_exn node "alternative" in
+  let children =
+    Tree.[ mk_child (anon print_expression) condition_field
+         ; mk_child (anon print_expression) consequence_field
+         ; mk_child (anon print_expression) alternative_field
+         ]
+  in Tree.make state name children
 
 (* Update expression *)
 
