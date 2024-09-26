@@ -446,7 +446,7 @@ and print_abstract_class_declaration state ?name node = print_todo_node state ?n
 
 (* Module *)
 
-and print_module state ?name node = print_todo_node state ?name node
+and print_module state ?name node = print_internal_module state ?name node
 
 (* Internal module *)
 
