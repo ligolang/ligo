@@ -357,7 +357,7 @@ and print_return_statement state ?name node = print_todo_node state ?name node
 
 (* Throw statement *)
 
-and print_throw_statement state ?name node = print_todo_node state ?name node
+and print_throw_statement state ?name node = print_expression_statement state ?name node
 
 (* Empty statement *)
 
