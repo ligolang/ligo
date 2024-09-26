@@ -42,7 +42,7 @@
 // }
 // async function* f () {}
 // const x = async function* f () {}
-// const x = async x => {}
+const x = async x => {}
 // const y = <T>(x: T) : T => x
 // const f = function <T>(x: T) : T { return x }
 // const x = { a: 5, ...f(), g() {}, z }
@@ -92,5 +92,8 @@
 // }
 
 // x += 4
+// x = 5
 
-x = 5
+module N
+module N.M {}
+module "Foo" {}
