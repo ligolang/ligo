@@ -329,7 +329,17 @@ and print_for_statement state ?name node = print_todo_node state ?name node
 
 (* While statement *)
 
-and print_while_statement state ?name node = print_todo_node state ?name node
+and print_while_statement state ?name node =
+  let name = get_name ?name node
+  and condition_field = ts_node_child_by_field_name_exn node "condition"
+  and body_field = ts_node_child_by_field_name_exn node "body" in
+  let children =
+    Tree.
+      [ mk_child (anon print_parenthesized_expression) condition_field
+      ; mk_child (anon print_statement) body_field
+      ]
+  in
+  Tree.make state name children
 
 (* Do statement *)
 

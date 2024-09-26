@@ -111,4 +111,5 @@
 // try {} catch {}
 // try {} catch ([x,y]) {}
 // try {} catch (x: T) {} finally {}
-do {} while (true)
+// do {} while (true)
+while (true) {}
