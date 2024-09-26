@@ -123,8 +123,7 @@ and function_declaration =
   + TypeScript
     {@js[
      function_signature: $ => seq(
-       optional('async'),
-       'function',
+       optional('async'), 'function',
        field('name', $.identifier),
        $._call_signature,
        choice($._semicolon, $._function_signature_automatic_semicolon)),

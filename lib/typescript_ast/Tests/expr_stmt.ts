@@ -96,6 +96,7 @@ const x = async x => {}
 // module N
 // module N.M {}
 // module "Foo" {}
-
 // @foo class T<U> extends V<U,W>, Y implements A, B {}
-@foo abstract class T<U> extends V<U,W>, Y implements A, B {}
+// @foo abstract class T<U> extends V<U,W>, Y implements A, B {}
+
+async function f ()
