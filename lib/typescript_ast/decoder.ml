@@ -688,7 +688,26 @@ and print_glimmer_template state ?name node = make_node state ?name node
 
 (* Assignment expression *)
 
-and print_assignment_expression state ?name node = print_todo_node state ?name node
+and print_assignment_expression state ?name node =
+  let name = get_name ?name node
+  and using =
+    let first_child = ts_node_child_exn node 0 in
+    match string_of_ts_node_type first_child with
+    | "using" -> Some "using"
+    | _ -> None
+  and left_field = ts_node_child_by_field_name_exn node "left"
+  and right_field = ts_node_child_by_field_name_exn node "right"
+  and print_left state node =
+    let name = string_of_ts_node_type node in
+    match name with
+    | "parenthesized_expression" -> print_parenthesized_expression state ~name node
+    | _ -> match_rest state ~name node print_lhs_expression in
+  let children =
+    Tree.[ mk_child_opt make_node using
+         ; mk_child print_left left_field
+         ; mk_child (anon print_expression) right_field
+         ]
+  in Tree.make state name children
 
 (* Augmented assignment expression *)
 
@@ -697,9 +716,9 @@ and print_augmented_assignment_expression state ?name node =
   and left_field = ts_node_child_by_field_name_exn node "left"
   and right_field = ts_node_child_by_field_name_exn node "right"
   and operator = ts_node_child_by_field_name_exn node "operator"
-  (* "_augmented_assignment_lhs" is hidden: *)
   and print_left state node =
     let name = string_of_ts_node_type node in
+    (* "_augmented_assignment_lhs" is inlined here (hidden rule): *)
     match name with
     | "member_expression" -> print_member_expression state ~name node
     | "subscript_expression" -> print_subscript_expression state ~name node
@@ -1082,7 +1101,7 @@ and print_function_expression state ?name node =
 
 and print_arrow_function state ?name node =
   let name = get_name ?name node
-  and children = collect_children node in
+  and children = collect_children node in  (* TODO: Check first child *)
   let async = has_node_named "async" children
   and parameter_field = ts_node_child_by_field_name node "parameter"
   and body_field = ts_node_child_by_field_name_exn node "body" in
