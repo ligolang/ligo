@@ -106,4 +106,8 @@
 // return
 // continue label
 // break label
-with (1+x) {y=x}
+// with (1+x) {y=x}
+try {}
+try {} catch {}
+try {} catch ([x,y]) {}
+try {} catch (x: T) {} finally {}

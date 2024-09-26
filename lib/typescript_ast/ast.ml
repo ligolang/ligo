@@ -3071,8 +3071,6 @@ and assignment_pattern =
       optional(field('finalizer', $.finally_clause))),
 
      finally_clause: $ => seq('finally', field('body', $.statement_block)),
-
-     _destructuring_pattern: $ => choice($.object_pattern, $.array_pattern)
     ]}
   + TypeScript
     {@js[

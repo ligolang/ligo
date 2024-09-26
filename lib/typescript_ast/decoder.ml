@@ -337,7 +337,46 @@ and print_do_statement state ?name node = print_todo_node state ?name node
 
 (* Try statement *)
 
-and print_try_statement state ?name node = print_todo_node state ?name node
+and print_try_statement state ?name node =
+  let name = get_name ?name node
+  and body_field = ts_node_child_by_field_name_exn node "body"
+  and handler_field = ts_node_child_by_field_name node "handler"
+  and finalizer_field = ts_node_child_by_field_name node "finalizer" in
+  let children =
+    Tree.
+      [ mk_child (anon print_statement_block) body_field
+      ; mk_child_opt (anon print_catch_clause) handler_field
+      ; mk_child_opt (anon print_finally_clause) finalizer_field
+      ]
+  in
+  Tree.make state name children
+
+and print_catch_clause state ?name node =
+  let name = get_name ?name node
+  and body_field = ts_node_child_by_field_name_exn node "body" in
+  let children =
+    match ts_node_child_by_field_name node "parameter" with
+    | Some parameter_field ->
+      let print_parameter state node =
+        let name = string_of_ts_node_type node in
+        match name with
+        | "identifier" -> print_identifier state ~name node
+        | _ -> match_rest state ~name node print_destructuring_pattern
+      in
+      let type_field = ts_node_child_by_field_name node "type" in
+      Tree.
+        [ mk_child print_parameter parameter_field
+        ; mk_child_opt (anon print_type_annotation) type_field
+        ; mk_child (anon print_statement_block) body_field
+        ]
+    | None -> Tree.[ mk_child (anon print_statement_block) body_field ]
+  in
+  Tree.make state name children
+
+and print_finally_clause state ?name node =
+  let name = get_name ?name node
+  and body_field = ts_node_child_by_field_name_exn node "body" in
+  Tree.make_unary state name (anon print_statement_block) body_field
 
 (* With statement *)
 
@@ -346,26 +385,28 @@ and print_with_statement state ?name node =
   and object_field = ts_node_child_by_field_name_exn node "object"
   and body_field = ts_node_child_by_field_name_exn node "body" in
   let children =
-    Tree.[ mk_child (anon print_parenthesized_expression) object_field
-         ; mk_child (anon print_statement) body_field
-         ]
-  in Tree.make state name children
+    Tree.
+      [ mk_child (anon print_parenthesized_expression) object_field
+      ; mk_child (anon print_statement) body_field
+      ]
+  in
+  Tree.make state name children
 
 (* Break statement *)
 
 and print_break_statement state ?name node =
   let name = get_name ?name node
   and label_field = ts_node_child_by_field_name node "label" in
-  let children = Tree.[ mk_child_opt (anon print_identifier) label_field ]
-  in Tree.make state name children
+  let children = Tree.[ mk_child_opt (anon print_identifier) label_field ] in
+  Tree.make state name children
 
 (* Continue statement *)
 
 and print_continue_statement state ?name node =
   let name = get_name ?name node
   and label_field = ts_node_child_by_field_name node "label" in
-  let children = Tree.[ mk_child_opt (anon print_identifier) label_field ]
-  in Tree.make state name children
+  let children = Tree.[ mk_child_opt (anon print_identifier) label_field ] in
+  Tree.make state name children
 
 (* Return statement *)
 
@@ -378,8 +419,8 @@ and print_return_statement state ?name node =
     | "sequence_expression" -> print_sequence_expression state ~name node
     | _ -> print_expression state ~name node
   in
-  let children = Tree.[ mk_child_opt print child ]
-  in Tree.make state name children
+  let children = Tree.[ mk_child_opt print child ] in
+  Tree.make state name children
 
 (* Throw statement *)
 
@@ -387,8 +428,7 @@ and print_throw_statement state ?name node = print_expression_statement state ?n
 
 (* Empty statement *)
 
-and print_empty_statement state ?name node =
-  make_node state ?name node
+and print_empty_statement state ?name node = make_node state ?name node
 
 (* Labeled statement *)
 
@@ -525,10 +565,7 @@ and print_variable_declarator state ?name node =
     let name = string_of_ts_node_type node in
     match name with
     | "identifier" -> print_identifier state ~name node
-    (* "_destructuring_pattern" inlined: *)
-    | "object_pattern" -> print_object_pattern state ~name node
-    | "array_pattern" -> print_array_pattern state ~name node
-    | _ -> match_rest state ~name node print_unexpected_node
+    | _ -> match_rest state ~name node print_destructuring_pattern
   in
   let children =
     Tree.
@@ -2483,15 +2520,21 @@ and print_object_assignment_pattern state ?name node =
     match name with
     | "shorthand_property_identifier_pattern" ->
       print_shorthand_property_identifier_pattern state ~name node
-    (* Rule "_destructuring_pattern" inlined: *)
-    | "object_pattern" -> print_object_pattern state ~name node
-    | "array_pattern" -> print_array_pattern state ~name node
-    | _ -> match_rest state ~name node print_unexpected_node
+    | _ -> match_rest state ~name node print_destructuring_pattern
   in
   let children =
     Tree.[ mk_child print_left left_field; mk_child (anon print_expression) right_field ]
   in
   Tree.make state name children
+
+(* Rule "_destructuring_pattern" is inlined. *)
+
+and print_destructuring_pattern state ?name node =
+  let name = get_name ?name node in
+  match name with
+  | "object_pattern" -> print_object_pattern state ~name node
+  | "array_pattern" -> print_array_pattern state ~name node
+  | _ -> match_rest state ~name node print_unexpected_node
 
 (* Array pattern *)
 
