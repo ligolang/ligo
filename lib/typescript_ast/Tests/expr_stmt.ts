@@ -52,9 +52,6 @@
 // 1, x, f();
 // const b = (a.b.c)?.[1+x, 3]
 // const b = x[3]
-// declare global {}
-// declare const x = 4
-// declare module.m : T
 // import m = a.b.m
 // import m = n
 // interface I<T> extends m.J.t<u>, K {}
@@ -126,6 +123,23 @@
 // for (; i<6; i++);
 // for (i=0; i<6; i++);
 // for (i=0; i<6; i++) {}
+// if (x) {}
+// if (x) {} else { f() }
+declare const x = 4
+declare global {}
+declare module.m : T
+declare module M {}
+interface C { }
+declare class C { }
 
-if (x) {}
-if (x) {} else { f() }
+declare module M {
+  interface C1 { }
+  class C1 { }
+  interface C1 { }
+  interface C1 { }
+  export class C2 { }
+}
+
+declare module M {
+  export interface C2 { }
+}
