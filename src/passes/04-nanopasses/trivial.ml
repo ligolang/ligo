@@ -315,6 +315,7 @@ end = struct
            (Import_all_as
               { alias
               ; module_str
+              ; original_module_str = module_str
               ; import_attr =
                   { Type_or_module_attr.default_attributes with public = false }
               })
@@ -324,6 +325,7 @@ end = struct
            (Import_selected
               { imported
               ; module_str
+              ; original_module_str = module_str
               ; import_attr =
                   { Type_or_module_attr.default_attributes with public = false }
               })
