@@ -32,7 +32,7 @@ let dependency_graph (raw_options : Raw_options.t) source_file =
         Syntax.of_string_opt ~raise (Syntax_name raw_options.syntax) (Some source_file)
       in
       let options = Compiler_options.make ~raw_options ~syntax () in
-      let g, _ =
+      let g =
         Build.dependency_graph
           ~raise
           ~options

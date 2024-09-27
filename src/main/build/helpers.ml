@@ -107,11 +107,12 @@ let inject_declaration ~options ~raise
     ~f:inject_arg_declaration
 
 
-let mangle_imports ~f prg : Ast_core.program =
-  let f Location.{ location = loc; wrap_content } =
-    Location.wrap ~loc
-    @@
-    match wrap_content with
+let process_imports ~f prg : Ast_core.program =
+  prg |> Ast_core.Helpers.Declaration_mapper.map_module
+  @@ fun decl ->
+    let loc = decl.location in
+    Location.wrap ~loc @@
+    match decl.wrap_content with
     | Ast_core.D_import decl ->
       Ast_core.D_import
         (match decl with
@@ -123,5 +124,20 @@ let mangle_imports ~f prg : Ast_core.program =
           let module_str = f module_str in
           Import_selected { module_str; imported; import_attr; original_module_str })
     | x -> x
-  in
-  List.map ~f prg
+
+(* let add_module_aliases ~mangle imports c_unit : Ast_core.program = *)
+(*   let make_decl BuildSystem.{ file_name; original_module; _ } = *)
+(*     let loc = original_module.location in *)
+(*     let alias = Location.unwrap original_module in *)
+(*     let module_binder = Module_var.of_input_var ~loc alias in *)
+(*     let module_attr = Ligo_prim.Type_or_module_attr.default_attributes in *)
+(*     let annotation = None in *)
+(*     let module_name = mangle file_name in *)
+(*     let module_ = *)
+(*       Location.wrap ~loc *)
+(*       @@ Module_expr.M_variable (Module_var.of_input_var ~loc module_name) *)
+(*     in *)
+(*     Location.wrap ~loc *)
+(*     @@ Ast_core.D_module { module_binder; module_attr; annotation; module_ } *)
+(*   in *)
+(*   List.map ~f:make_decl imports @ c_unit *)

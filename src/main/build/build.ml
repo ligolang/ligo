@@ -4,219 +4,210 @@ open Main_errors
 open Ligo_prim
 module Stdlib = Stdlib
 module Source_input = BuildSystem.Source_input
+module Ligo_dep_cameligo = Ligo_dep_cameligo
+module Ligo_dep_jsligo = Ligo_dep_jsligo
 
 let loc = Location.env
 
 module type Params = sig
   val raise : (all, Main_warnings.all) Trace.raise
   val options : Compiler_options.t
-  val std_lib : Stdlib.t
   val top_level_syntax : Syntax_types.t
 end
+
+let get_top_level_syntax ~options ?filename () : Syntax_types.t =
+  match Compiler_options.(options.frontend.syntax) with
+  | Some x -> x
+  | None ->
+    (match Trace.to_option @@ Syntax.of_string_opt (Syntax_name "auto") filename with
+    | Some x -> x
+    | None -> failwith "Top-level syntax not found")
+
+
+let top_level_syntax_of_code_input ~options : Source_input.code_input -> Syntax_types.t =
+ fun code_input ->
+  let filename = Source_input.id_of_code_input code_input in
+  get_top_level_syntax ~options ~filename ()
+
+
+let syntax_of_code_input code_input =
+  let file_name = Source_input.id_of_code_input code_input in
+  Syntax.of_string_opt (Syntax_name "auto") @@ Some file_name
+
+
+let preprocess_code_input ~raise ~meta ~options code_input =
+  match code_input with
+  | Source_input.HTTP uri ->
+    let code = Http_uri.fetch uri in
+    Ligo_compile.Helpers.preprocess_string
+      ~raise
+      ~meta
+      ~options:options.Compiler_options.frontend
+      code
+  | From_file file_name ->
+    Ligo_compile.Helpers.preprocess_file
+      ~raise
+      ~meta
+      ~options:options.Compiler_options.frontend
+      file_name
+  | Raw { id = _; code } ->
+    Ligo_compile.Helpers.preprocess_string ~raise ~meta ~options:options.frontend code
+  | Raw_input_lsp { file; code } ->
+    Ligo_compile.Helpers.preprocess_raw_input
+      ~raise
+      ~meta
+      ~options:options.frontend
+      file
+      code
+
+
+let normalize_path path = Fpath.(path |> v |> normalize |> to_string)
+
+include BuildSystem.T
 
 module M (Params : Params) = struct
   let raise = Params.raise
   let options = Params.options
-  let std_lib = Params.std_lib
 
-  type file_name = Source_input.file_name
-  type raw_input = Source_input.raw_input
-  type code_input = Source_input.code_input
-  type module_name = string
-  type compilation_unit = Buffer.t
   type meta_data = Ligo_compile.Helpers.meta
-  type imports = file_name list
 
-  let preprocess
-      : code_input -> compilation_unit * meta_data * (file_name * module_name) list
-    =
-   fun code_input ->
-    let file_name = Source_input.id_of_code_input code_input in
-    let syntax = Syntax.of_string_opt ~raise (Syntax_name "auto") (Some file_name) in
-    let meta = Ligo_compile.Of_source.extract_meta syntax in
-    let c_unit, deps =
-      match code_input with
-      | HTTP uri ->
-        let code = Http_uri.fetch uri in
-        Ligo_compile.Helpers.preprocess_string ~raise ~meta ~options:options.frontend code
-      | From_file file_name ->
-        Ligo_compile.Helpers.preprocess_file
-          ~raise
-          ~meta
-          ~options:options.frontend
-          file_name
-      | Raw { id = _; code } ->
-        Ligo_compile.Helpers.preprocess_string ~raise ~meta ~options:options.frontend code
-      | Raw_input_lsp { file; code } ->
-        Ligo_compile.Helpers.preprocess_raw_input
-          ~raise
-          ~meta
-          ~options:options.frontend
-          file
-          code
-    in
-    c_unit, meta, deps
-end
+  module C_unit = struct
+    type t = Ast_core.program
 
-module Separate (Params : Params) = struct
-  include M (Params)
-
-  module AST = struct
-    type t = Ast_typed.program
-    type interface = Ast_typed.signature
-
-    let link_interface
-        Ast_typed.{ sig_sort = ss1; sig_items = si1 }
-        Ast_typed.{ sig_sort = ss2; sig_items = si2 }
-      =
-      let open Ast_typed in
-      let sig_sort =
-        match ss1, ss2 with
-        | Ss_contract x, Ss_module | Ss_module, Ss_contract x -> Ss_contract x
-        | Ss_contract x, Ss_contract y ->
-          ignore (x, y);
-          (* interesting  *) assert false
-        | _ -> Ss_module
-      in
-      { sig_sort; sig_items = si1 @ si2 }
-
-
-    let link
-        Ast_typed.{ pr_module = m1; pr_sig = s1 }
-        Ast_typed.{ pr_module = m2; pr_sig = s2 }
-      =
-      Ast_typed.{ pr_module = m1 @ m2; pr_sig = link_interface s1 s2 }
-
-
-    type environment = Checking.Persistent_env.t
-
-    let init_env : environment = Checking.Persistent_env.empty
-
-    let add_module_to_environment
-        : file_name -> module_name -> imports -> interface -> environment -> environment
-      =
-     fun path module_binder imports module_intf env ->
-      let module_binder = Module_var.of_input_var ~loc module_binder in
-      Checking.Persistent_env.add_signature env module_binder path imports module_intf
-
-
-    let add_interface_to_environment : interface -> environment -> environment =
-     fun intf env -> Checking.Persistent_env.add_virtual env intf
-
-
-    let make_module_in_ast : module_name -> t -> t -> t =
-     fun module_binder module_ast ast ->
-      let module_binder = Module_var.of_input_var ~loc module_binder in
-      let new_decl =
-        Location.wrap
-          ~loc
-          Ast_typed.(
-            D_module
-              { module_binder
-              ; module_ =
-                  { module_content = Module_expr.M_struct module_ast.pr_module
-                  ; signature = module_ast.pr_sig
-                  ; module_location = loc
-                  }
-              ; module_attr =
-                  { Type_or_module_attr.default_attributes with hidden = true }
-              ; annotation = ()
-              })
-      in
-      { ast with pr_module = new_decl :: ast.pr_module }
-
-
-    let make_module_in_interface : module_name -> interface -> interface -> interface =
-     fun module_binder module_intf ast ->
-      let module_binder = Module_var.of_input_var ~loc module_binder in
-      let new_item =
-        Location.wrap ~loc
-        @@ Ast_typed.S_module
-             ( module_binder
-             , Ast_typed.signature_make
-                 ~sig_items:module_intf.sig_items
-                 ~sig_sort:module_intf.sig_sort )
-      in
-      { ast with sig_items = new_item :: ast.sig_items }
+    type meta =
+      { code_input : code_input
+      ; location : Location.t
+      ; module_name : module_name
+      ; meta : meta_data
+      ; imports : imports
+      }
   end
 
-  let lib_ast : unit -> AST.t = fun () -> std_lib.content_typed
-  let lib_interface : unit -> AST.interface = fun () -> (lib_ast ()).pr_sig
+  let extract_deps ~syntax ~dirname c_unit =
+    match syntax with
+    | Syntax_types.CameLIGO ->
+      (* We are filtering out possibly false-positive external dependencies *)
+      (* If they were not false-positive, it will be revealed during typecheck *)
+      let std_lib = Stdlib.get ~options |> fun x -> x.Stdlib.content_typed.pr_module in
+      List.filter_map ~f:(fun dep ->
+          let module_name = Location.unwrap dep in
+          let location = dep.location in
+          let file_names =
+            [ module_name ^ ".mligo"; String.uncapitalize module_name ^ ".mligo" ]
+          in
+          let file_names =
+            List.map
+              ~f:(fun file_name -> normalize_path @@ Filename.concat dirname file_name)
+              file_names
+          in
+          List.find_map file_names ~f:(fun file_name ->
+              match Sys_unix.file_exists file_name with
+              | `Yes ->
+                Some
+                  { code_input = Source_input.From_file file_name
+                  ; module_name
+                  ; location
+                  }
+              | _ -> None))
+      @@ Ligo_dep_cameligo.dependencies ~std_lib c_unit
+    | JsLIGO ->
+      List.map ~f:(fun dep ->
+          let import_str = Location.unwrap dep in
+          let file_name =
+            match Filename.split_extension import_str with
+            | name, None -> name ^ ".jsligo"
+            | _ -> import_str
+          in
+          let file_name = Filename.concat dirname file_name in
+          let file_name = normalize_path file_name in
+          let module_name = file_name in
+          let location = dep.location in
+          { code_input = Source_input.From_file file_name
+          ; module_name
+          ; location
+          })
+      @@ Ligo_dep_jsligo.dependencies c_unit
 
-  let compile
-      :  AST.environment -> file_name -> meta_data -> compilation_unit
-      -> AST.t * AST.interface
-    =
-   fun env file_name meta c_unit ->
-    let syntax = Syntax.of_string_opt ~raise (Syntax_name "auto") (Some file_name) in
+
+  let compile_to_core ~raise ~options ~meta ?with_deps file_name c_unit =
+    let Ligo_compile.Helpers.{ syntax } = meta in
     let options = Compiler_options.set_syntax options (Some syntax) in
-    let module_ = Ligo_compile.Utils.to_core ~raise ~options ~meta c_unit file_name in
-    let module_ = Helpers.inject_declaration ~options ~raise syntax module_ in
-    let prg =
-      Ligo_compile.Of_core.typecheck_with_signature ~raise ~options ~context:env module_
+    let c_unit =
+      c_unit
+      |> Fn.flip (Ligo_compile.Utils.to_core ~raise ~options ~meta) file_name
+      |> Helpers.inject_declaration ~options ~raise syntax
     in
-    prg, prg.pr_sig
+    let dirname = Filename.dirname file_name in
+    let deps =
+      match with_deps with
+      | Some deps -> deps
+      | None -> extract_deps ~syntax ~dirname c_unit
+    in
+    let c_unit =
+      match syntax with
+      | JsLIGO ->
+        Helpers.process_imports
+          ~f:(fun file_name ->
+            let file_name =
+              match Filename.split_extension file_name with
+              | name, None -> name ^ ".jsligo"
+              | name, _ -> file_name
+            in
+            Helpers.normalize_path @@ Filename.concat dirname file_name)
+          c_unit
+      | CameLIGO -> c_unit
+    in
+    c_unit, deps
 
 
-  let link_imports : AST.t -> intfs:AST.environment -> AST.t =
-   fun prg ~intfs ->
-    let module_ =
-      prg.pr_module
-      |> Self_ast_typed.Helpers.Declaration_mapper.map_module
-         @@ fun decl ->
-         let loc = decl.location in
-         match Location.unwrap decl with
-         | D_import
-             (Import_rename
-               { alias = import_name; imported_module = mangled_module_name; import_attr })
-           ->
-           (* Create module alias for mangled module *)
-           let intf = Checking.Persistent_env.find_signature intfs mangled_module_name in
-           Location.wrap ~loc
-           @@ Ast_typed.D_module
-                { module_binder = import_name
-                ; module_ =
-                    { module_content = M_variable mangled_module_name
-                    ; signature = intf
-                    ; module_location = Location.generated
-                    }
-                ; module_attr = import_attr
-                ; annotation = ()
-                }
-         | _ -> decl
+  let preprocess_import ~raise ~meta ~options import =
+    let c_unit, deps =
+      Trace.map_error
+        ~raise
+        (preprocess_code_input ~meta ~options import.code_input)
+        ~f:(fun err1 ->
+          let info =
+            match err1 with
+            | `Preproc_tracer (`Preprocessing_generic e) -> e
+          in
+          if not
+             @@ String.is_substring
+                  ~substring:"No such file or directory"
+                  info.Simple_utils.Region.value
+          then (`Preproc_tracer (`Preprocessing_generic info) : Main_errors.all)
+          else (
+            let loc = import.location in
+            let module_ = Module_var.of_input_var ~loc import.module_name in
+            let error : Checking.Errors.typer_error =
+              Checking.Errors.unbound_module_variable module_ loc
+            in
+            (`Checking_tracer error : Main_errors.all)))
     in
-    { prg with pr_module = module_ }
+    c_unit, deps
+
+
+  let preprocess : import -> C_unit.t * meta_data * imports =
+   fun ({ code_input; module_name; _ } as import) ->
+    let syntax = syntax_of_code_input ~raise code_input in
+    let meta = Ligo_compile.Of_source.extract_meta syntax in
+    let c_unit, _ = preprocess_import ~raise ~meta ~options import in
+    let file_name = Source_input.id_of_code_input code_input in
+    let c_unit, imports = compile_to_core ~raise ~options ~meta file_name c_unit in
+    c_unit, meta, imports
 end
 
-module Infer (Params : Params) = struct
+module Ast_core_target (Params : Params) = struct
   include M (Params)
 
   module AST = struct
     type t = Ast_core.program
-    type imports = module_name list
 
     let link t1 t2 = t1 @ t2
 
     type interface = unit list
 
-    let link_interface t1 t2 = t1 @ t2
-
-    type environment = unit
-
-    let init_env : environment = ()
-
-    let add_module_to_environment
-        : file_name -> module_name -> imports -> interface -> environment -> environment
-      =
-     fun _ _ _ _ () -> ()
-
-
-    let add_interface_to_environment : interface -> environment -> environment =
-     fun _ () -> ()
-
-
-    let make_module_in_ast : module_name -> t -> t -> t =
-     fun module_binder module_ast ast ->
+    let make_module_in_ast : t -> module_name * interface * t -> t =
+     fun ast (module_binder, _, module_ast) ->
       let module_ = Location.wrap ~loc (Module_expr.M_struct module_ast) in
       let module_binder = Module_var.of_input_var ~loc module_binder in
       Location.wrap
@@ -229,108 +220,183 @@ module Infer (Params : Params) = struct
             ; annotation = None
             })
       :: ast
-
-
-    let make_module_in_interface : module_name -> interface -> interface -> interface =
-     fun _module_binder _ intf -> intf
   end
 
-  let lib_ast : unit -> AST.t = fun () -> std_lib.content_core
-  let lib_interface : unit -> AST.interface = fun () -> []
+  module Environment = struct
+    type t = unit
 
-  let compile
-      :  AST.environment -> file_name -> meta_data -> compilation_unit
-      -> AST.t * AST.interface
-    =
-   fun () file_name meta c_unit ->
-    let syntax = Syntax.of_string_opt ~raise (Syntax_name "auto") (Some file_name) in
-    let options = Compiler_options.set_syntax options (Some syntax) in
-    let module_ = Ligo_compile.Utils.to_core ~raise ~options ~meta c_unit file_name in
-    Helpers.inject_declaration ~options ~raise syntax module_, []
+    let init_env : t = ()
+    let add_module : t -> C_unit.meta -> AST.interface -> t = fun _ _ _ -> ()
+    let add_interface : t -> AST.interface -> t = fun _ _ -> ()
+    let find_interface : t -> module_name -> AST.interface = fun () _ -> []
+  end
+
+  let std_lib : unit -> AST.t * AST.interface =
+   fun () ->
+    let std_lib = Stdlib.get ~options in
+    std_lib.content_core, []
 
 
-  let link_imports : AST.t -> intfs:AST.environment -> AST.t =
-   fun prg ~intfs:_ ->
-    let open Ast_core in
-    prg
-    |> Ast_core.Helpers.Declaration_mapper.map_module
-       @@ fun decl ->
-       let loc = decl.location in
-       match Location.unwrap decl with
-       | D_import
-           (Import_rename { alias; imported_module = mangled_module_name; import_attr })
-         ->
-         Location.wrap ~loc
-         @@ D_module
-              { module_binder = alias
-              ; module_ = Location.wrap ~loc (Module_expr.M_variable mangled_module_name)
-              ; module_attr = import_attr
-              ; annotation = None
-              }
-       | _ -> decl
+  let compile : C_unit.t -> C_unit.meta -> Environment.t -> AST.t * AST.interface =
+   fun c_unit _ _ -> c_unit, []
+
+
+  let postprocess : AST.t -> intfs:Environment.t -> AST.t =
+   fun prg ~intfs ->
+    let module_ =
+      let rec f decl =
+        let loc = decl.Location.location in
+        match Location.unwrap decl with
+        | Ast_core.D_import
+            (Import_all_as
+              { alias = import_name; module_str; import_attr; original_module_str = _ })
+          ->
+          let imported_module = Module_var.of_input_var ~loc module_str in
+          (* Create module alias for imported module *)
+          [ Location.wrap ~loc
+            @@ Ast_core.D_module
+                 { module_binder = import_name
+                 ; module_ = Location.wrap ~loc @@ Module_expr.M_variable imported_module
+                 ; module_attr = Type_or_module_attr.default_attributes
+                 ; annotation = None
+                 }
+          ]
+        | D_import
+            (Import_selected
+              { imported; module_str; import_attr; original_module_str = _ }) ->
+          let imported_module = Module_var.of_input_var ~loc module_str in
+          let Simple_utils.Ne_list.(h :: tl) = imported in
+          let imported = h :: tl in
+          (* makes `let x = External_module_name.x` entry *)
+          let make_value var =
+            let binder = Binder.make var None in
+            let expr =
+              Ast_core.
+                { expression_content =
+                    Ast_core.E_module_accessor
+                      { module_path = [ imported_module ]; element = var }
+                ; location = Location.generated
+                }
+            in
+            let attr =
+              { Value_attr.default_attributes with public = import_attr.public }
+            in
+            Location.wrap ~loc @@ Ast_core.(D_value Value_decl.{ binder; expr; attr })
+          in
+          List.map imported ~f:make_value
+        | D_module ({ module_; _ } as decl) ->
+          let module_ =
+            let loc = module_.location in
+            let module_ = Location.unwrap module_ in
+            match module_ with
+            | M_struct module_ast ->
+              let module_ast = List.concat_map module_ast ~f in
+              Location.wrap ~loc @@ Module_expr.M_struct module_ast
+            | _ -> Location.wrap ~loc module_
+          in
+          [ Location.wrap ~loc @@ Ast_core.D_module { decl with module_ } ]
+        (* At this point all Import_rename decls must be replaced with the D_module ones *)
+        | D_import _
+        | D_value _
+        | D_irrefutable_match _
+        | D_type _
+        | D_module_include _
+        | D_signature _ -> [ decl ]
+      in
+      List.concat_map prg ~f
+    in
+    module_
 end
 
-module Separate_v2 (Params : Params) = struct
-  include Separate (Params)
+module Cmi = Checking.Cmi
 
-  let raise = Params.raise
-  let options = Params.options
+module Ast_typed_target (Params : Params) = struct
+  include M (Params)
 
-  type file_name = Source_input.file_name
-  type raw_input = Source_input.raw_input
-  type code_input = Source_input.code_input
-  type module_name = string
-  type compilation_unit = Ast_core.program
-  type meta_data = Ligo_compile.Helpers.meta
-  type imports = file_name list
-
-  let preprocess
-      : code_input -> compilation_unit * meta_data * (file_name * module_name) list
-    =
-   fun code_input ->
-    let c_unit, meta, _ = preprocess code_input in
-    let Ligo_compile.Helpers.{ syntax } = meta in
-    let file_name = Source_input.id_of_code_input code_input in
-    let dir = Filename.dirname file_name in
-    let options = Compiler_options.set_syntax options (Some syntax) in
-    let c_unit =
-      c_unit
-      |> Fn.flip (Ligo_compile.Utils.to_core ~raise ~options ~meta) file_name
-      |> Helpers.inject_declaration ~options ~raise syntax
-      |> Helpers.elaborate_imports dir
-    in
-    let get_deps =
-      match syntax with
-      | CameLIGO -> failwith "Ast_core.Ligo_dep_cameligo.dependencies missing"
-      | JsLIGO -> Ast_core.Ligo_dep_jsligo.dependencies
-    in
-    (* Duplicating path, because function signature requires file_name * module_name *)
-    (* which are the same at this point *)
-    let deps = List.map ~f:(fun path -> path, path) (get_deps c_unit) in
-    c_unit, meta, deps
+  let std_lib : unit -> Ast_typed.module_ * Ast_typed.signature =
+   fun () ->
+    let std_lib = Stdlib.get ~options in
+    let typed = std_lib.content_typed in
+    typed.pr_module, typed.pr_sig
 
 
-  let compile
-      :  AST.environment -> file_name -> meta_data -> compilation_unit
-      -> AST.t * AST.interface
-    =
-   fun env file_name meta c_unit ->
+  module AST = struct
+    type t = Ast_typed.module_
+    type interface = Ast_typed.signature
+
+    let link m1 m2 = m1 @ m2
+
+    let make_module_in_ast : t -> module_name * interface * t -> t =
+     fun ast (module_binder, sig_, module_ast) ->
+      let module_binder = Module_var.of_input_var ~loc module_binder in
+      let new_decl =
+        Location.wrap
+          ~loc
+          Ast_typed.(
+            D_module
+              { module_binder
+              ; module_ =
+                  { module_content = Module_expr.M_struct module_ast
+                  ; signature = sig_
+                  ; module_location = loc
+                  }
+              ; module_attr =
+                  { Type_or_module_attr.default_attributes with hidden = true }
+              ; annotation = ()
+              })
+      in
+      new_decl :: ast
+  end
+
+  module Environment = struct
+    type t = Checking.Persistent_env.t
+
+    let init_env : t = Checking.Persistent_env.empty
+
+    let add_module env C_unit.{ code_input; module_name = module_binder; imports; _ } sig_
+      =
+      let path = Source_input.id_of_code_input code_input in
+      let module_binder = Module_var.of_input_var ~loc module_binder in
+      let imports =
+        List.map
+          ~f:(fun { code_input; _ } -> Source_input.id_of_code_input code_input)
+          imports
+      in
+      Checking.Persistent_env.add_signature env module_binder path imports sig_
+
+
+    let add_interface : t -> AST.interface -> t =
+     fun env intf -> Checking.Persistent_env.add_virtual env intf
+
+
+    let find_interface : t -> module_name -> AST.interface =
+     fun env module_binder ->
+      let module_binder = Module_var.of_input_var ~loc module_binder in
+      Checking.Persistent_env.(find_cmi env (Module module_binder))
+      |> Tuple2.get1
+      |> fun x -> x.Cmi.sign
+  end
+
+  let compile : C_unit.t -> C_unit.meta -> Environment.t -> AST.t * AST.interface =
+   fun c_unit { meta = { syntax } as meta; imports; _ } env ->
     let Ligo_compile.Helpers.{ syntax } = meta in
     let options = Compiler_options.set_syntax options (Some syntax) in
     let prg =
       Ligo_compile.Of_core.typecheck_with_signature ~raise ~options ~context:env c_unit
     in
-    prg, prg.pr_sig
+    prg.pr_module, prg.pr_sig
 
 
-  let link_imports : AST.t -> intfs:AST.environment -> AST.t =
+  let postprocess : AST.t -> intfs:Environment.t -> AST.t =
    fun prg ~intfs ->
     let module_ =
       let rec f decl =
         let loc = decl.Location.location in
         match Location.unwrap decl with
         | Ast_typed.D_import
-            (Import_all_as { alias = import_name; module_str; import_attr }) ->
+            (Import_all_as
+              { alias = import_name; module_str; import_attr; original_module_str = _ })
+          ->
           let imported_module = Module_var.of_input_var ~loc module_str in
           (* Create module alias for imported module *)
           let intf = Checking.Persistent_env.find_signature intfs imported_module in
@@ -346,7 +412,9 @@ module Separate_v2 (Params : Params) = struct
                  ; annotation = ()
                  }
           ]
-        | D_import (Import_selected { imported; module_str; import_attr }) ->
+        | D_import
+            (Import_selected
+              { imported; module_str; import_attr; original_module_str = _ }) ->
           let imported_module = Module_var.of_input_var ~loc module_str in
           let Ast_typed.{ sig_items = intf; _ } =
             Checking.Persistent_env.find_signature intfs imported_module
@@ -390,44 +458,30 @@ module Separate_v2 (Params : Params) = struct
           in
           [ Location.wrap ~loc @@ Ast_typed.D_module { decl with module_ } ]
         (* At this point all Import_rename decls must be replaced with the D_module ones *)
-        | D_import (Import_rename _) ->
-          failwith "Import_rename declaration persists after nanopasses"
+        | D_import _
         | D_value _
         | D_irrefutable_match _
         | D_type _
         | D_module_include _
         | D_signature _ -> [ decl ]
       in
-      List.concat_map prg.pr_module ~f
+      List.concat_map prg ~f
     in
-    { prg with pr_module = module_ }
+    module_
 end
 
-module Build_typed (Params : Params) = BuildSystem.Make (Separate (Params))
-module Build_typed_v2 (Params : Params) = BuildSystem.Make (Separate_v2 (Params))
-module Build_core (Params : Params) = BuildSystem.Make (Infer (Params))
+module Build_typed (Params : Params) = BuildSystem.Make (Ast_typed_target (Params))
+module Build_core (Params : Params) = BuildSystem.Make (Ast_core_target (Params))
 
-let get_top_level_syntax ~options ?filename () : Syntax_types.t =
-  match Compiler_options.(options.frontend.syntax) with
-  | Some x -> x
-  | None ->
-    (match Trace.to_option @@ Syntax.of_string_opt (Syntax_name "auto") filename with
-    | Some x -> x
-    | None -> failwith "Top-level syntax not found")
+type graph = Graph__Persistent.Digraph.Concrete(BuildSystem__Types.Node).t
 
-
-let top_level_syntax_of_code_input ~options : Source_input.code_input -> Syntax_types.t =
- fun code_input ->
-  let filename = Source_input.id_of_code_input code_input in
-  get_top_level_syntax ~options ~filename ()
-
-
-let dependency_graph ~raise : options:Compiler_options.t -> Source_input.code_input -> _ =
+let dependency_graph ~raise
+    : options:Compiler_options.t -> Source_input.code_input -> graph
+  =
  fun ~options code_input ->
   let open Build_core (struct
     let raise = raise
     let options = options
-    let std_lib = Stdlib.get ~options
 
     let top_level_syntax =
       get_top_level_syntax
@@ -435,7 +489,39 @@ let dependency_graph ~raise : options:Compiler_options.t -> Source_input.code_in
         ~filename:(Source_input.id_of_code_input code_input)
         ()
   end) in
-  dependency_graph code_input
+  fst @@ dependency_graph code_input
+
+
+let module_deps ~raise
+    : options:Compiler_options.t -> Source_input.code_input -> string String.Map.t
+  =
+ fun ~options code_input ->
+  let filename = Source_input.id_of_code_input code_input in
+  let module B =
+    Build_core (struct
+      let raise = raise
+      let options = options
+      let top_level_syntax = get_top_level_syntax ~options ~filename ()
+    end)
+  in
+  let open B in
+  (* Getting topsorted deps *)
+  let sorted =
+    Simple_utils.Ne_list.to_list
+    @@ Trace.trace ~raise build_error_tracer
+    @@ Trace.from_result
+    @@ Fn.flip solve_graph filename
+    @@ dependency_graph code_input
+  in
+  (* Dropping file itself, since we need only deps *)
+  List.drop_last sorted
+  |> Option.value ~default:[]
+  (* Accumulation everything into map *)
+  |> List.fold_left ~init:String.Map.empty ~f:(fun acc (file_name, vertex) ->
+         let module_name = module_name_of_vertex vertex in
+         match Map.add acc ~key:module_name ~data:file_name with
+         | `Duplicate -> acc
+         | `Ok added -> added)
 
 
 (* unqualified usages : list-declaration ; print *)
@@ -443,15 +529,13 @@ let unqualified_core ~raise
     : options:Compiler_options.t -> Source_input.file_name -> Ast_core.program
   =
  fun ~options filename ->
-  let std_lib = Stdlib.get ~options in
   let open Build_core (struct
     let raise = raise
     let options = options
-    let std_lib = std_lib
     let top_level_syntax = get_top_level_syntax ~options ~filename ()
   end) in
   Trace.trace ~raise build_error_tracer
-  @@ Trace.from_result (compile_unqualified (Source_input.From_file filename))
+  @@ Trace.from_result (build_unqualified (Source_input.From_file filename))
 
 
 let qualified_core ~raise
@@ -461,7 +545,6 @@ let qualified_core ~raise
   let open Build_core (struct
     let raise = raise
     let options = options
-    let std_lib = Stdlib.get ~options
 
     let top_level_syntax =
       match source with
@@ -471,7 +554,7 @@ let qualified_core ~raise
       | Raw _ -> Syntax_types.CameLIGO
   end) in
   let ast, _ =
-    Trace.trace ~raise build_error_tracer @@ Trace.from_result (compile_qualified source)
+    Trace.trace ~raise build_error_tracer @@ Trace.from_result (build_qualified source)
   in
   ast
 
@@ -480,16 +563,14 @@ let qualified_core_from_string ~raise
     : options:Compiler_options.t -> Source_input.raw_input -> Ast_core.program
   =
  fun ~options input ->
-  let std_lib = Stdlib.get ~options in
   let open Build_core (struct
     let raise = raise
     let options = options
-    let std_lib = std_lib
     let top_level_syntax = get_top_level_syntax ~options ~filename:input.id ()
   end) in
   let ast, _ =
     Trace.trace ~raise build_error_tracer
-    @@ Trace.from_result (compile_qualified (Source_input.Raw input))
+    @@ Trace.from_result (build_qualified (Source_input.Raw input))
   in
   ast
 
@@ -498,54 +579,14 @@ let qualified_core_from_raw_input ~raise
     : options:Compiler_options.t -> string -> string -> Ast_core.program
   =
  fun ~options file code ->
-  let std_lib = Stdlib.get ~options in
   let open Build_core (struct
     let raise = raise
     let options = options
-    let std_lib = std_lib
     let top_level_syntax = get_top_level_syntax ~options ~filename:file ()
   end) in
   let ast, _ =
     Trace.trace ~raise build_error_tracer
-    @@ Trace.from_result (compile_qualified (Source_input.Raw_input_lsp { file; code }))
-  in
-  ast
-
-
-let qualified_typed ~raise
-    : options:Compiler_options.t -> Source_input.code_input -> Ast_typed.program
-  =
- fun ~options source ->
-  let open Build_typed (struct
-    let raise = raise
-    let options = options
-    let std_lib = Stdlib.get ~options
-
-    let top_level_syntax =
-      match source with
-      | HTTP uri -> get_top_level_syntax ~options ~filename:(Http_uri.get_filename uri) ()
-      | Raw_input_lsp _ -> Syntax_types.CameLIGO
-      | From_file filename -> get_top_level_syntax ~options ~filename ()
-      | Raw _ -> Syntax_types.CameLIGO
-  end) in
-  let ast, _ =
-    Trace.trace ~raise build_error_tracer @@ Trace.from_result (compile_qualified source)
-  in
-  ast
-
-
-let qualified_typed_v2 ~raise
-    : options:Compiler_options.t -> Source_input.code_input -> Ast_typed.program
-  =
- fun ~options source ->
-  let open Build_typed_v2 (struct
-    let raise = raise
-    let options = options
-    let std_lib = Stdlib.get ~options
-    let top_level_syntax = top_level_syntax_of_code_input ~options source
-  end) in
-  let ast, _ =
-    Trace.trace ~raise build_error_tracer @@ Trace.from_result (compile_qualified source)
+    @@ Trace.from_result (build_qualified (Source_input.Raw_input_lsp { file; code }))
   in
   ast
 
@@ -558,30 +599,29 @@ let qualified_typed_with_env ~raise
   let open Build_typed (struct
     let raise = raise
     let options = options
-    let std_lib = Stdlib.get ~options
-
-    let top_level_syntax =
-      match source with
-      | HTTP uri -> get_top_level_syntax ~options ~filename:(Http_uri.get_filename uri) ()
-      | Raw_input_lsp _ -> Syntax_types.CameLIGO
-      | From_file filename -> get_top_level_syntax ~options ~filename ()
-      | Raw _ -> Syntax_types.CameLIGO
+    let top_level_syntax = top_level_syntax_of_code_input ~options source
   end) in
-  let ast, intfs =
-    Trace.trace ~raise build_error_tracer @@ Trace.from_result (compile_qualified source)
+  let prg, env =
+    Trace.trace ~raise build_error_tracer @@ Trace.from_result (build_qualified source)
   in
-  ast, intfs
+  let file_name = Source_input.id_of_code_input source in
+  let intf, _ = Checking.Persistent_env.(find_cmi env (File file_name)) in
+  Ast_typed.{ pr_module = prg; pr_sig = intf.sign }, env
+
+
+let qualified_typed ~raise
+    : options:Compiler_options.t -> Source_input.code_input -> Ast_typed.program
+  =
+ fun ~options source -> qualified_typed_with_env ~raise ~options source |> Tuple2.get1
 
 
 let qualified_typed_str ~raise : options:Compiler_options.t -> string -> Ast_typed.program
   =
  fun ~options code ->
-  let std_lib = Stdlib.get ~options in
   let open Build_core (struct
-    (* idially should use Build_typed *)
+    (* FIXME notice here idially should use Build_typed *)
     let raise = raise
     let options = options
-    let std_lib = std_lib
     let top_level_syntax = get_top_level_syntax ~options ()
   end) in
   let id =
@@ -591,7 +631,7 @@ let qualified_typed_str ~raise : options:Compiler_options.t -> string -> Ast_typ
   in
   let s = Source_input.Raw { code; id } in
   let ast, _ =
-    Trace.trace ~raise build_error_tracer @@ Trace.from_result (compile_qualified s)
+    Trace.trace ~raise build_error_tracer @@ Trace.from_result (build_qualified s)
   in
   Ligo_compile.Of_core.typecheck ~raise ~options ast
 
