@@ -1,3 +1,4 @@
+open Core
 open Types
 
 type state =
@@ -23,8 +24,8 @@ let graph' f (dep_g, node) =
   let rec pp_node state set arity node rank =
     let state = pad arity rank @@ state in
     f state.pad_path @@ node;
-    if SSet.mem node set then raise (Dependency_cycle node);
-    let set = SSet.add node set in
+    if Set.mem set node then raise (Dependency_cycle node);
+    let set = Set.add set node in
     let len = len node in
     let _ = G.fold_succ (pp_node state set len) dep_g node 0 in
     rank + 1
@@ -39,13 +40,13 @@ let graph ppf (dep_g, node) =
   let module TopSort = Graph.Topological.Make (G) in
   let order, final =
     TopSort.fold
-      (fun node (m, order) -> SMap.add node order m, order + 1)
+      (fun node (m, order) -> Map.set m ~key:node ~data:order, order + 1)
       dep_g
       (SMap.empty, 1)
   in
   graph'
     (fun pad_path node ->
-      match SMap.find_opt node order with
+      match Map.find order node with
       | Some n -> Format.fprintf ppf "%s%d -- %s\n%!" pad_path (final - n) node
       | None -> ())
     (dep_g, node)
