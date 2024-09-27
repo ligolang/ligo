@@ -4,9 +4,11 @@ module Ligo_Error = Simple_utils.Error
 type t =
   [ `Build_dependency_cycle of string
   | `Build_corner_case of string * string (* TO REMOVE *)
+  | `Build_compiling_nothing
   ]
 
 let build_dependency_cycle (s : string) = `Build_dependency_cycle s
+let build_compiling_nothing = `Build_compiling_nothing
 let build_corner_case (loc : string) (msg : string) = `Build_corner_case (loc, msg)
 
 let error_ppformat
@@ -19,6 +21,8 @@ let error_ppformat
     (match a with
     | `Build_dependency_cycle trace ->
       Format.fprintf f "@[<hv>Dependency cycle detected :@, %s@]" trace
+    | `Build_compiling_nothing ->
+      Format.fprintf f "@[<hv>Compiling nothing]"
     | `Build_corner_case (loc, msg) ->
       Format.fprintf f "@[<hv>Building corner case at %s : %s@]" loc msg)
 
@@ -28,6 +32,10 @@ let error_json : t -> Ligo_Error.t =
   match e with
   | `Build_dependency_cycle trace ->
     let message = Format.asprintf "@[<hv>Dependency cycle detected :@, %s@]" trace in
+    let content = Ligo_Error.make_content ~message () in
+    Ligo_Error.make ~stage ~content
+  | `Build_compiling_nothing ->
+    let message = Format.asprintf "@[<hv>Compiling nothing]" in
     let content = Ligo_Error.make_content ~message () in
     Ligo_Error.make ~stage ~content
   | `Build_corner_case (loc, msg) ->

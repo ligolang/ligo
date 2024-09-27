@@ -12,6 +12,10 @@ val collect : 'a option t -> 'a t option
 
 val fold_right1 : f:('a -> 'a -> 'a) -> 'a t -> 'a
 
+val rev : 'a t -> 'a t
+
+val to_list : 'a t -> 'a list
+
 type json = Yojson.Safe.t
 
 val yojson_of_t : ('a -> json) -> 'a t -> json
