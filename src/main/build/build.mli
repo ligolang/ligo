@@ -1,50 +1,33 @@
 module Stdlib = Stdlib
 module Source_input = BuildSystem.Source_input
+module Ligo_dep_cameligo = Ligo_dep_cameligo
+module Ligo_dep_jsligo = Ligo_dep_jsligo
 
 module type Params = sig
   val raise : (Main_errors.all, Main_warnings.all) Simple_utils.Trace.raise
   val options : Compiler_options.t
-  val std_lib : Stdlib.t
   val top_level_syntax : Syntax_types.t
 end
 
 module M : functor (Params : Params) -> sig
-  type file_name = Source_input.file_name
-  type raw_input = Source_input.raw_input
-  type code_input = Source_input.code_input
-  type module_name = string
-  type compilation_unit = Buffer.t
   type meta_data = Ligo_compile.Helpers.meta
-  type imports = file_name list
 end
 
-module Separate : functor (Params : Params) -> sig
-  type file_name = Source_input.file_name
-  type raw_input = Source_input.raw_input
-  type code_input = Source_input.code_input
-  type module_name = string
-  type compilation_unit = Buffer.t
+module Ast_typed_target : functor (Params : Params) -> sig
   type meta_data = Ligo_compile.Helpers.meta
 
   module AST : sig
-    type t = Ast_typed.program
+    type t = Ast_typed.module_
     type interface = Ast_typed.signature
-    type environment = Checking.Persistent_env.t
   end
 end
 
-module Infer : functor (Params : Params) -> sig
-  type file_name = Source_input.file_name
-  type raw_input = Source_input.raw_input
-  type code_input = Source_input.code_input
-  type module_name = string
-  type compilation_unit = Buffer.t
+module Ast_core_target : functor (Params : Params) -> sig
   type meta_data = Ligo_compile.Helpers.meta
 
   module AST : sig
     type t = Ast_core.program
     type interface = unit list
-    type environment = unit
   end
 end
 
@@ -66,12 +49,6 @@ type contract_michelson =
 type view_michelson = (Ligo_prim.Value_var.t, Stacking.compiled_expression) named
 
 val qualified_typed
-  :  raise:(Main_errors.all, Main_warnings.all) Simple_utils.Trace.raise
-  -> options:Compiler_options.t
-  -> Source_input.code_input
-  -> Ast_typed.program
-
-val qualified_typed_v2
   :  raise:(Main_errors.all, Main_warnings.all) Simple_utils.Trace.raise
   -> options:Compiler_options.t
   -> Source_input.code_input
@@ -110,13 +87,17 @@ val build_expression
   -> string option
   -> expression_michelson Lwt.t
 
+type graph = Graph__Persistent.Digraph.Concrete(BuildSystem__Types.Node).t
+
 val dependency_graph
   :  raise:(Main_errors.all, Main_warnings.all) Simple_utils.Trace.raise
   -> options:Compiler_options.t
   -> Source_input.code_input
-  -> Graph__Persistent.Digraph.Concrete(BuildSystem__Types.Node).t
-     * (string * Ligo_compile.Helpers.meta * Buffer.t * (string * string) list)
-       Stdlib__Map.Make(Stdlib__String).t
+  -> graph
+
+val module_deps
+  :  raise:(Main_errors.all, Main_warnings.all) Simple_utils.Trace.raise
+  -> options:Compiler_options.t -> Source_input.code_input -> string String.Map.t
 
 val build_contract
   :  raise:(Main_errors.all, Main_warnings.all) Simple_utils.Trace.raise
