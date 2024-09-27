@@ -40,8 +40,6 @@
 //  abstract h();
 //  declare public f = 6;
 // }
-// async function* f () {}
-// const x = async function* f () {}
 // const x = async x => {}
 // const y = <T>(x: T) : T => x
 // const f = function <T>(x: T) : T { return x }
@@ -125,21 +123,25 @@
 // for (i=0; i<6; i++) {}
 // if (x) {}
 // if (x) {} else { f() }
-declare const x = 4
-declare global {}
-declare module.m : T
-declare module M {}
-interface C { }
-declare class C { }
+// declare const x = 4
+// declare global {}
+// declare module.m : T
+// declare module M {}
+// interface C { }
+// declare class C { }
 
-declare module M {
-  interface C1 { }
-  class C1 { }
-  interface C1 { }
-  interface C1 { }
-  export class C2 { }
-}
+// declare module M {
+//   interface C1 { }
+//   class C1 { }
+//   interface C1 { }
+//   interface C1 { }
+//   export class C2 { }
+// }
 
-declare module M {
-  export interface C2 { }
-}
+// declare module M {
+//   export interface C2 { }
+// }
+
+async function* f () {}
+async function* () {}
+const x = async function* f () {}

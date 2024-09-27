@@ -1422,7 +1422,7 @@ and print_generator_function state ?name node =
   let name = get_name ?name node
   and children = collect_children node in
   let async = has_node_named "async" children
-  and name_field = ts_node_child_by_field_name_exn node "name"
+  and name_field = ts_node_child_by_field_name node "name"
   (* "_call_signature" inlined: *)
   and type_parameters_field = ts_node_child_by_field_name node "type_parameters"
   and parameters_field = ts_node_child_by_field_name_exn node "parameters"
@@ -1432,7 +1432,7 @@ and print_generator_function state ?name node =
   let children =
     Tree.
       [ mk_child_opt make_node async
-      ; mk_child (anon print_identifier) name_field
+      ; mk_child_opt (anon print_identifier) name_field
       ; mk_child_opt (anon print_type_parameters) type_parameters_field
       ; mk_child (anon print_formal_parameters) parameters_field
       ; mk_child_opt (anon print_return_type) return_type_field
