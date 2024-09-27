@@ -2,8 +2,8 @@ module PP = PP
 module Errors = Errors
 module To_yojson = To_yojson
 module Formatter = Formatter
-include Types
 open Core
+include Types
 
 module Source_input = struct
   type file_name = string
@@ -104,10 +104,10 @@ module Make (M : M) = struct
    fun code_input ->
     let rec dfs (acc : M.file_name) (dep_g, vertices) (code_input, mangled_name) =
       let id = Source_input.id_of_code_input code_input in
-      if not @@ SMap.mem id vertices
+      if not @@ Map.mem vertices id
       then (
         let c_unit, meta_data, deps = M.preprocess code_input in
-        let vertices = SMap.add id (mangled_name, meta_data, c_unit, deps) vertices in
+        let vertices = Map.set vertices ~key:id ~data:(mangled_name, meta_data, c_unit, deps) in
         let dep_g = G.add_vertex dep_g id in
         let dep_g =
           (* Don't add a loop on the first element *)
@@ -139,7 +139,7 @@ module Make (M : M) = struct
       Error (Errors.build_dependency_cycle graph))
     else (
       let aux v order =
-        let elem = SMap.find v vertices in
+        let elem = Map.find_exn vertices v in
         (v, elem) :: order
       in
       let order = TopSort.fold aux dep_g [] in
@@ -153,7 +153,7 @@ module Make (M : M) = struct
       | hd :: tl -> hd, tl
     in
     let contract =
-      match SMap.find_opt file_name objs with
+      match Map.find objs file_name with
       | Some ast -> ast
       | None -> failwith "failed to find module"
     in
@@ -162,7 +162,7 @@ module Make (M : M) = struct
       let module_binder = mangled_name in
       (* Get the ast_type of the module *)
       let ast_typed =
-        match SMap.find_opt file_name objs with
+        match Map.find objs file_name with
         | Some ast -> ast
         | None -> failwith "failed to find module"
       in
@@ -190,7 +190,7 @@ module Make (M : M) = struct
     let intfs =
       M.AST.add_module_to_environment file_name mangled_name imports ast_intf intfs
     in
-    let objs = SMap.add file_name ast objs in
+    let objs = Map.set objs ~key:file_name ~data:ast in
     objs, intfs
 
   let compile_unqualified : code_input -> ast build_error =
@@ -205,7 +205,7 @@ module Make (M : M) = struct
       let objs, _ =
         List.fold ~f:compile_file_with_deps ~init:(SMap.empty, init_env) ordered_deps
       in
-      Ok (SMap.find main_file_name objs)
+      Ok (Map.find_exn objs main_file_name)
     | Error e -> Error e
 
   let compile_qualified : code_input -> (ast * intf_env) build_error =
