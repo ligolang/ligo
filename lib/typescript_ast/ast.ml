@@ -1013,6 +1013,7 @@ and generic_name =
    namespace Validation {
      export interface StringValidator {
        isAcceptable(s: string): boolean;
+     }
    }
   ]}
 

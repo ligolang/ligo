@@ -728,11 +728,7 @@ and print_abstract_class_declaration state ?name node =
 
 (* Module *)
 
-and print_module state ?name node = print_internal_module state ?name node
-
-(* Internal module *)
-
-and print_internal_module state ?name node =
+and print_module state ?name node =
   let name = get_name ?name node
   and name_field = ts_node_child_by_field_name_exn node "name"
   and body_field = ts_node_child_by_field_name node "body"
@@ -751,6 +747,10 @@ and print_internal_module state ?name node =
       ]
   in
   Tree.make state name children
+
+(* Internal module (a.k.a. namespaces) *)
+
+and print_internal_module state ?name node = print_module state ?name node
 
 (* Type alias declaration *)
 
@@ -890,25 +890,18 @@ and print_import_alias state ?name node =
 
 and print_ambient_declaration state ?name node =
   let name = get_name ?name node
-  and snd_child = ts_node_child_exn node 1 in
-  let snd_child_name = string_of_ts_node_type snd_child in
+  and fst_child = ts_node_named_child_exn node 0 in
+  let child_name = string_of_ts_node_type fst_child in
   let children =
-    match snd_child_name with
-    | "global" ->
-      let statement_block = ts_node_child_exn node 2 in
+    match child_name with
+    | "statement_block" -> Tree.[ mk_child (anon print_statement_block) fst_child ]
+    | "property_identifier" ->
+      let type_child = ts_node_child_exn node 5 in
       Tree.
-        [ mk_child make_node snd_child_name
-        ; mk_child (anon print_statement_block) statement_block
-        ]
-    | "module" ->
-      let property_identifier = ts_node_child_exn node 3
-      and type_child = ts_node_child_exn node 5 in
-      Tree.
-        [ mk_child make_node snd_child_name
-        ; mk_child (anon print_identifier) property_identifier
+        [ mk_child (anon print_identifier) fst_child
         ; mk_child (anon print_type) type_child
         ]
-    | _ -> Tree.[ mk_child (anon print_declaration) snd_child ]
+    | _ -> Tree.[ mk_child (anon print_declaration) fst_child ]
   in
   Tree.make state name children
 
