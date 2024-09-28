@@ -365,18 +365,27 @@ and print_switch_body state ?name node =
 
 and print_switch_case state ?name node =
   let name = get_name ?name node
+  and children = collect_children node in
+  let rec skip_until_colon = function
+    | [] -> []
+    | node :: nodes ->
+       match string_of_ts_node_type node with
+       | ":" -> nodes
+       | _ -> skip_until_colon nodes in
+  let stmt_children = skip_until_colon children
   and value_field = ts_node_child_by_field_name_exn node "value"
-  and body_field = ts_node_child_by_field_name_exn node "body"
-  and print state node =
+  and print_value state node =
     let name = string_of_ts_node_type node in
     match name with
     | "sequence_expression" -> print_sequence_expression state ~name node
     | _ -> print_expression state ~name node
   in
+  let open Tree in
   let children =
-    Tree.[ mk_child print value_field; mk_child (anon print_switch_body) body_field ]
+    mk_child print_value value_field
+    :: mk_children_list (anon print_statement) stmt_children
   in
-  Tree.make state name children
+  make state name children
 
 and print_switch_default state ?name node =
   let name = get_name ?name node
@@ -1298,11 +1307,25 @@ and print_this state ?name node = make_node state ?name node
 and print_super state ?name node = make_node state ?name node
 and print_number state ?name node = make_node state ?name node
 and print_string state ?name node = make_node state ?name node
-and print_template_string state ?name node = make_node state ?name node
 and print_regex state ?name node = make_node state ?name node
 and print_true state ?name node = make_node state ?name node
 and print_false state ?name node = make_node state ?name node
 and print_null state ?name node = make_node state ?name node
+
+(* Template strings *)
+
+and print_template_string state ?name node =
+  let name = get_name ?name node
+  and children = collect_named_children node in
+  let print state node =
+    let name = string_of_ts_node_type node in
+    match name with
+    | "string_fragment" -> make_node state ~name node
+    | "escape_sequence" -> make_node state ~name node
+    | "template_substitution" -> make_node state ~name node
+    | _ -> match_rest state ~name node print_unexpected_node
+  in
+  Tree.of_list state name print children
 
 (* Object *)
 
@@ -1320,6 +1343,8 @@ and print_object state ?name node =
     | _ -> match_rest state ~name node print_unexpected_node
   in
   Tree.of_list state name print children
+
+(* Pairs *)
 
 and print_pair state ?name node =
   let name = get_name ?name node

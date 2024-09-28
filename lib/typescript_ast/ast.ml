@@ -9,12 +9,16 @@
 (** Literals *)
 type identifier = string
 
-type template_string = string
 type hash_name = string
 type hex_literal = string * Hex.t
 type dec_literal = string * Q.t
 type bin_literal = string * Hex.t
 type oct_literal = string * Hex.t
+
+type template_string =
+  | String_fragment of string
+  | Escape_sequence of string
+  | Template_substitution of string
 
 type bigint_literal =
   | Hex_literal of hex_literal
@@ -1649,7 +1653,17 @@ and yield_expression =
       $.generator_function,
       $.class,
       $.meta_property,
-      $.call_expression)
+      $.call_expression),
+
+    template_string: $ => seq(
+      '`',
+      repeat(choice(
+        alias($._template_chars, $.string_fragment),
+        $.escape_sequence,
+        $.template_substitution)),
+      '`'),
+
+    template_substitution: $ => seq('${', $._expressions, '}')
    }]
   + TypeScript
    {@js[
