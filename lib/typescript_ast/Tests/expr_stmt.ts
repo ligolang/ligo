@@ -142,6 +142,14 @@
 //   export interface C2 { }
 // }
 
-async function* f () {}
-async function* () {}
-const x = async function* f () {}
+// async function* f () {}
+// async function* () {}
+// const x = async function* f () {}
+
+// switch (`abc${0}abc`) {
+//     case `123`:
+//     case `abc${0}abc`:
+//         `def${1}def`, a; 1;
+// }
+
+type T1<T U V> = T1
