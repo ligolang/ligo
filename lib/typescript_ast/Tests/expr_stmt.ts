@@ -32,7 +32,6 @@
 // [...x, 6];
 // const x = (1+y, w)!, z;
 // const x = new.target
-// const x = @foo class T<U> extends V<U,W>, Y implements A, B {}
 // const x = class <T>{
 //   @foo @bar f() {};
 //   g() : T;
@@ -152,4 +151,11 @@
 //         `def${1}def`, a; 1;
 // }
 
-type T1<T U V> = T1
+// type T1<T U V> = T1
+
+// const x = @foo class T<U> extends V<U,W>, Y implements A, B {}
+
+for (const [i,j] of a, b) {}
+for await (var v in c = d) {}
+for ((x) of e) {}
+for ({} in s) {}
