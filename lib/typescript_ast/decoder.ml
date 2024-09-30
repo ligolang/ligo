@@ -219,6 +219,15 @@ let mk_child_inv print = function
   | Result.Ok child -> Tree.mk_child print child
   | Error name -> Tree.(mk_child make_node name)
 
+(*
+type error = Error_node of ts_tree | Error_string of string
+
+let mk_child_err print = function
+  | Result.Ok child -> Tree.mk_child print child
+  | Error Error_string msg -> Tree.(mk_child make_node msg)
+  | Error Error_node node -> Tree.(mk_child (anon print_error_node) node)
+ *)
+
 let make_unary state name print = function
   | Result.Ok child -> Tree.make_unary state name print child
   | Error child_name -> Tree.(make_unary state name make_node child_name)
@@ -229,15 +238,15 @@ let filter_by_name name nodes =
   let f = String.equal name <@ string_of_ts_node_type in
   List.filter nodes ~f
 
-let filter_first_by_name_err name nodes =
-  match filter_by_name name nodes with
-  | node :: _ -> Result.Ok node
-  | [] -> Result.Error ()
-
 let filter_first_by_name name nodes =
   match filter_by_name name nodes with
   | node :: _ -> Some node
   | [] -> None
+
+let filter_first_by_name_inv name nodes =
+  match filter_first_by_name name nodes with
+  | None -> Result.Error (filter_first_by_name "ERROR" nodes)
+  | Some node -> Ok node
 
 let has_node_named name nodes =
   match filter_by_name name nodes with
@@ -246,6 +255,13 @@ let has_node_named name nodes =
 
 let has_child_named name node = has_node_named name @@ collect_named_children node
 let first_child_named name node = filter_first_by_name name @@ collect_named_children node
+
+(* Error child *)
+
+let internal_error_child node_name =
+  let suffix = Printf.sprintf "Node %S is missing." node_name in
+  let msg = Printf.sprintf "INTERNAL: [print_export_statement] %s" suffix in
+  Tree.[ mk_child make_node msg ]
 
 (* Printing the AST *)
 
@@ -300,9 +316,116 @@ and print_statement state ?name node =
   | "ambient_declaration" -> print_ambient_declaration state ~name node
   | _ -> match_rest state ~name node print_unexpected_node
 
-and print_export_statement state ?name node = Tree.make_node state (get_name ?name node)
-and print_import_statement state ?name node = Tree.make_node state (get_name ?name node)
-and print_debugger_statement state ?name node = Tree.make_node state (get_name ?name node)
+(* Export statement *)
+
+and print_export_statement state ?name node =
+  let name = get_name ?name node
+  and children = collect_children node in
+  let decorators = filter_by_name "decorator" children
+  and export_node = filter_first_by_name "export" children in
+  let decorators = Tree.mk_children_list (anon print_decorator) decorators in
+  (* TODO *)
+  let children =
+    match export_node with
+    | None -> internal_error_child "export"
+    | Some export_node ->
+      let after_export = TS_fun.ts_node_next_sibling export_node in
+      if TS_fun.ts_node_is_null after_export
+      then internal_error_child "after export"
+      else (
+        match string_of_ts_node_type after_export with
+        | "*" ->
+           Tree.(mk_child make_node "*")
+           ::
+           let source_field = ts_node_child_by_field_name node "source" in
+           Tree.[ mk_child_opt print_from_clause source_field ]
+        | "namespace_export" ->
+           Tree.mk_child (anon print_namespace_export) after_export
+           ::
+           let source_field = ts_node_child_by_field_name node "source" in
+           Tree.[ mk_child_opt print_from_clause source_field ]
+        | "export_clause" ->
+           Tree.mk_child (anon print_export_clause) after_export
+           ::
+           let source_field = ts_node_child_by_field_name node "source" in
+           Tree.[ mk_child_opt print_from_clause source_field ]
+        | "default" ->
+          let declaration_field = ts_node_child_by_field_name node "declaration" in
+          decorators
+          @ Tree.[ mk_child make_node "default" ]
+          @
+          (match declaration_field with
+          | Some declaration_field ->
+            Tree.[ mk_child (anon print_declaration) declaration_field ]
+          | None ->
+            let value_field = ts_node_child_by_field_name_inv node "value" in
+            [ mk_child_inv (anon print_expression) value_field ])
+        | "type" ->
+          let export_clause = TS_fun.ts_node_next_sibling after_export in
+          if TS_fun.ts_node_is_null export_clause
+          then internal_error_child "export_clause"
+          else (
+            let source_field = ts_node_child_by_field_name node "source" in
+            Tree.
+              [ mk_child make_node "type"
+              ; mk_child (anon print_export_clause) export_clause
+              ; mk_child_opt print_from_clause source_field
+              ])
+        | "=" ->
+          let expression = TS_fun.ts_node_next_sibling after_export in
+          if TS_fun.ts_node_is_null expression
+          then internal_error_child "expression"
+          else
+            Tree.[ mk_child make_node "="; mk_child (anon print_expression) expression ]
+        | "as" ->
+          let identifier = filter_first_by_name "identifier" children in
+          (match identifier with
+          | None -> internal_error_child "identifier"
+          | Some identifier ->
+            Tree.[ mk_child make_node "as"; mk_child (anon print_identifier) identifier ])
+        | _ -> decorators @ Tree.[ mk_child (anon print_declaration) after_export ])
+  in
+  Tree.make state name children
+
+and print_namespace_export state ?name node =
+  let name = get_name ?name node
+  and module_export_name = ts_node_named_child_inv node 0 in
+  make_unary state name (anon print_module_export_name) module_export_name
+
+and print_from_clause state node =
+  Tree.make_unary state "from_clause" (anon print_string) node
+
+and print_export_clause state ?name node =
+  let name = get_name ?name node
+  and children = collect_named_children node in
+  Tree.of_list state name (anon print_export_specifier) children
+
+and print_module_export_name state ?name node =
+  let name = get_name ?name node in
+  match name with
+  | "identifier" -> print_identifier state ~name node
+  | "string" -> print_string state ~name node
+  | _ -> match_rest state ~name node print_unexpected_node
+
+and print_export_specifier state ?name node =
+  let name = get_name ?name node
+  and name_field = ts_node_child_by_field_name_inv node "name"
+  and alias_field = ts_node_child_by_field_name node "alias" in
+  let children =
+    Tree.
+      [ mk_child_inv (anon print_module_export_name) name_field
+      ; mk_child_opt (anon print_module_export_name) alias_field
+      ]
+  in
+  Tree.make state name children
+
+(* Import statement *)
+
+and print_import_statement state ?name node = print_todo_node state ?name node
+
+(* Debugger statement *)
+
+and print_debugger_statement state ?name node = print_todo_node state ?name node
 
 (* Expression statements
 
@@ -328,8 +451,8 @@ and print_expressions state ?name node =
 (* Statement blocks *)
 
 and print_statement_block state ?name node =
-  let name = get_name ?name node in
-  let children = collect_named_children node in
+  let name = get_name ?name node
+  and children = collect_named_children node in
   Tree.of_list state name (anon print_statement) children
 
 (* If statement *)
@@ -460,45 +583,46 @@ and print_for_in_statement state ?name node =
     match name with
     | "in" -> make_node state ~name node
     | "of" -> make_node state ~name node
-    | _ -> match_rest state ~name node print_unexpected_node in
+    | _ -> match_rest state ~name node print_unexpected_node
+  in
   let header_children =
     match kind_field with
     | None ->
-       let print_left state node =
-         let name = string_of_ts_node_type node in
-         match name with
-         | "parenthesized_expression" -> print_parenthesized_expression state ~name node
-         | _ -> match_rest state ~name node print_lhs_expression
-       in
-       [ mk_child_inv print_left left_field ]
+      let print_left state node =
+        let name = string_of_ts_node_type node in
+        match name with
+        | "parenthesized_expression" -> print_parenthesized_expression state ~name node
+        | _ -> match_rest state ~name node print_lhs_expression
+      in
+      [ mk_child_inv print_left left_field ]
     | Some kind_field ->
-       let print_left state node =
-         let name = string_of_ts_node_type node in
-         match name with
-         | "identifier" -> print_identifier state ~name node
-         | _ -> match_rest state ~name node print_destructuring_pattern in
-       let kind_name = string_of_ts_node_type kind_field in
-       match kind_name with
-       | "var" ->
-          let value_field = ts_node_child_by_field_name node "value" in
-          Tree. [ mk_child make_node kind_name
-                ; mk_child_inv print_left left_field
-                ; mk_child_opt (anon print_expression) value_field
-                ]
-       | "let" | "const" ->
-          Tree. [ mk_child make_node kind_name
-                ; mk_child_inv print_left left_field
-                ]
-       | _ -> Tree.[ mk_child (anon print_unexpected_node) kind_field ]
+      let print_left state node =
+        let name = string_of_ts_node_type node in
+        match name with
+        | "identifier" -> print_identifier state ~name node
+        | _ -> match_rest state ~name node print_destructuring_pattern
+      in
+      let kind_name = string_of_ts_node_type kind_field in
+      (match kind_name with
+      | "var" ->
+        let value_field = ts_node_child_by_field_name node "value" in
+        Tree.
+          [ mk_child make_node kind_name
+          ; mk_child_inv print_left left_field
+          ; mk_child_opt (anon print_expression) value_field
+          ]
+      | "let" | "const" ->
+        Tree.[ mk_child make_node kind_name; mk_child_inv print_left left_field ]
+      | _ -> Tree.[ mk_child (anon print_unexpected_node) kind_field ])
   in
   let children =
-    Tree.mk_child_opt Tree.make_node await
-    :: header_children
+    (Tree.mk_child_opt Tree.make_node await :: header_children)
     @ [ mk_child_inv print_operator operator_field
       ; mk_child_inv (anon print_expressions) right_field
       ; mk_child_inv (anon print_statement) body_field
       ]
-  in Tree.make state name children
+  in
+  Tree.make state name children
 
 (* While statement *)
 
@@ -614,7 +738,10 @@ and print_return_statement state ?name node =
 
 (* Throw statement *)
 
-and print_throw_statement state ?name node = print_expressions state ?name node
+and print_throw_statement state ?name node =
+  let name = get_name ?name node
+  and child = ts_node_named_child_inv node 0 in
+  make_unary state name (anon print_expressions) child
 
 (* Empty statement *)
 
@@ -1577,7 +1704,8 @@ and print_extends_clause state ?name node =
   and children =
     match collect_children node with
     | [] -> []
-    | _extends :: clauses -> clauses in
+    | _extends :: clauses -> clauses
+  in
   let not_comma child = String.(string_of_ts_node_type child <> ",") in
   let children = List.filter children ~f:not_comma in
   let rec pair_up acc = function
@@ -1768,7 +1896,8 @@ and print_call_expression state ?name node =
     let name = string_of_ts_node_type node in
     match name with
     | "template_string" -> print_template_string state ~name node
-    | _ -> match_rest state ~name node print_arguments in
+    | _ -> match_rest state ~name node print_arguments
+  in
   let children =
     Tree.
       [ mk_child_inv print_function function_field
@@ -1839,7 +1968,7 @@ and print_primary_type state ?name node =
   | "tuple_type" -> print_tuple_type state ~name node
   | "type_query" -> print_type_query state ~name node
   | "index_type_query" -> print_index_type_query state ~name node
-  | "this" -> print_this state ~name node
+  | "this_type" -> print_this state ~name node
   | "existential_type" -> print_existential_type state ~name node
   | "literal_type" -> print_literal_type state ~name node
   | "lookup_type" -> print_lookup_type state ~name node
@@ -2390,7 +2519,8 @@ and print_unary_expression state ?name node =
     | "typeof" -> make_node state ~name node
     | "void" -> make_node state ~name node
     | "delete" -> make_node state ~name node
-    | _ -> match_rest state ~name node print_unexpected_node in
+    | _ -> match_rest state ~name node print_unexpected_node
+  in
   let children =
     [ mk_child_inv print_unary_operator operator_field
     ; mk_child_inv (anon print_number) argument_field

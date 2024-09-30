@@ -151,11 +151,24 @@
 //         `def${1}def`, a; 1;
 // }
 
-// type T1<T U V> = T1
-
 // const x = @foo class T<U> extends V<U,W>, Y implements A, B {}
+// for (const [i,j] of a, b) {}
+// for await (var v in c = d) {}
+// for ((x) of e) {}
+// for ({} in s) {}
 
-for (const [i,j] of a, b) {}
-for await (var v in c = d) {}
-for ((x) of e) {}
-for ({} in s) {}
+export * from "/path/foo.ts";
+export * as foo from "/path/foo.ts";
+export * as "foo" from "/path/foo.ts";
+export {};
+export {foo as bar, "foo" as "bar"};
+export {} from "/path/foo.ts";
+export {foo as bar, "foo" as "bar"} from "/path/foo.ts";
+export type t = number;
+export class C {};
+export default type t = number;
+export default x+1;
+export type {t, "u"};
+export type {t} from "/path/foo.ts";
+export = x+1;
+export as namespace x;
