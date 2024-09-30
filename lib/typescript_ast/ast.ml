@@ -2724,8 +2724,8 @@ and do_statement =
            choice(
              seq('*', $._from_clause),
              seq($.namespace_export, $._from_clause),
-             seq($.export_clause, $._from_clause),
-             $.export_clause),
+             seq($.export_clause, $._from_clause), // or seq($.export_clause, optional($._from_clause))
+             $.export_clause), // See above.
            $._semicolon),
        seq(repeat(field('decorator', $.decorator)),
            'export',
