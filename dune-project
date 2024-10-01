@@ -122,6 +122,7 @@
   (linol-lwt
    (= 0.5))
   data-encoding
+  grace
   ; For building, testing, or documentation 
   (dune
    (>= 3.8 :build))

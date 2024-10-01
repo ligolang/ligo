@@ -75,6 +75,7 @@ depends: [
   "linol" {= "0.5"}
   "linol-lwt" {= "0.5"}
   "data-encoding"
+  "grace"
   "dune" {>= "3.8" & "3.8" >= build}
   "coq" {>= "8.12" & < "8.14" & build}
   "alcotest" {with-test}
@@ -106,5 +107,6 @@ pin-depends: [
   [ "linol-lwt.0.5" "git+https://github.com/c-cube/linol.git#7730eabf98f657059920369b41d43e657a231ed5" ]
   [ "landmarks.1.4" "git+https://github.com/LexiFi/landmarks.git#b0c753cd2a4c4aa00dffdd3be187d8ed592fabf7" ]
   [ "landmarks-ppx.1.4" "git+https://github.com/LexiFi/landmarks.git#b0c753cd2a4c4aa00dffdd3be187d8ed592fabf7" ]
-  [ "data-encoding.1.0.1" "file://vendors/tezos-ligo/data-encoding"]
+  [ "data-encoding.1.0.1" "file://vendors/tezos-ligo/data-encoding" ]
+  [ "grace.0.2.0" "git+https://github.com/johnyob/grace.git#d15a6d7d07a2551d1a9934fa79c2cf84c918f990" ]
 ]

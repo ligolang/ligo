@@ -66,6 +66,7 @@ depends: [
   "ctypes" {= "0.20.2"}
   "ctypes_stubs_js" {= "0.1"}
   "data-encoding" {= "1.0.1"}
+  "grace" {= "0.2.0"}
   "decompress" {= "1.5.3"}
   "digestif" {= "1.2.0"}
   "domain-name" {= "0.4.0"}

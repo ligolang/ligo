@@ -5,6 +5,9 @@
  (instrumentation
   (backend bisect_ppx))
  (libraries
+  ligo.lltz_codegen
+  lltz.michelson
+  lltz.codegen
   main_errors
   simple-utils
   ligo.proto-alpha-utils
