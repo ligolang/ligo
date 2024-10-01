@@ -60,13 +60,6 @@ and pat_desc =
   | P_record of (Label.t * pat) list
   | P_variant of (Label.t * pat)
 
-(* TODO: drop var_pat? *)
-type var_pat =
-  { var_pat_desc : Ident.t
-  ; var_pat_type : type_
-  ; var_pat_loc : Location.t
-  }
-
 type expr =
   { expr_desc : expr_desc
   ; expr_type : type_
@@ -78,15 +71,19 @@ and expr_desc =
   | E_literal of Literal_value.t
   (* TODO: tag poly expressions and patterns here? *)
   | E_let of pat * expr * expr
-  | E_let_rec of var_pat * expr * expr
-  | E_lambda of var_pat * expr
+  | E_lambda of pat * expr
+  | E_lambda_rec of
+      { self : pat
+      ; param : pat
+      ; body : expr
+      }
   | E_apply of expr * expr list
   | E_match of expr * (pat * expr) list
   | E_tuple of expr Ne_list.t
   | E_constructor of Label.t * expr list
   (* TODO: label on record? *)
-  | E_record of (label * expr) list
-  | E_field of expr * label
+  | E_record of (Label.t * expr) list
+  | E_field of expr * Label.t
 
 type mod_expr =
   { mod_expr_desc : mod_expr_desc
@@ -97,23 +94,42 @@ and mod_expr_desc =
   | M_var of Path.t
   | M_struct of decl list
 
+(* TODO: rename declaration *)
 and decl =
   { decl_desc : decl_desc
   ; decl_loc : Location.t
   }
 
 and decl_desc =
-  | D_value of
-      { var : var_pat
-      ; value : expr
-      ; entry : bool
-      }
-  | D_value_rec of (var_pat * expr)
+  | D_let of (pat * expr)
   | D_type of (Ident.t * type_decl)
+  | D_module of (Ident.t * mod_expr)
+  | D_module_type of (Ident.t * sig_expr)
+  (* FFI *)
+  | D_external of Ident.t
   (* TODO: why arity here? *)
   | D_type_predef of (Ident.t * Literal_types.t * int)
   | D_type_unsupported of Ident.t
-  | D_module of (Ident.t * mod_expr)
+
+and sig_expr =
+  { sig_expr_desc : sig_expr_desc
+  ; sig_expr_loc : Location.t
+  }
+
+and sig_expr_desc =
+  | S_var of Path.t
+  | S_sig of sig_item list
+
+and sig_item =
+  { sig_item_desc : sig_item_desc
+  ; sig_item_loc : Location.t
+  }
+
+and sig_item_desc =
+  | S_value of (Ident.t * type_)
+  | S_type of (Ident.t * type_decl)
+  | S_module of (Ident.t * sig_expr)
+  | S_module_type of (Ident.t * sig_expr)
 
 type program = decl list
 
@@ -125,11 +141,8 @@ let type_decl_wrap loc params desc =
 
 
 let pat_wrap loc type_ desc = { pat_desc = desc; pat_type = type_; pat_loc = loc }
-
-let var_pat_wrap loc type_ desc =
-  { var_pat_desc = desc; var_pat_type = type_; var_pat_loc = loc }
-
-
 let expr_wrap loc type_ desc = { expr_desc = desc; expr_type = type_; expr_loc = loc }
-let decl_wrap loc desc = { decl_desc = desc; decl_loc = loc }
 let mod_expr_wrap loc desc = { mod_expr_desc = desc; mod_expr_loc = loc }
+let decl_wrap loc desc = { decl_desc = desc; decl_loc = loc }
+let sig_expr_wrap loc desc = { sig_expr_desc = desc; sig_expr_loc = loc }
+let sig_item_wrap loc desc = { sig_item_desc = desc; sig_item_loc = loc }
