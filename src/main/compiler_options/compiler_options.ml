@@ -51,6 +51,7 @@ type backend =
                                not be erased during optimisation *)
   ; no_colour : bool
   ; function_body : bool
+  ; lltz_ir : bool
   }
 
 type t =
@@ -117,6 +118,7 @@ let make
     ; has_env_comments
     ; no_colour = raw_options.no_colour
     ; function_body = raw_options.function_body
+    ; lltz_ir = raw_options.lltz_ir
     }
   in
   { frontend; tools; test_framework; middle_end; backend }

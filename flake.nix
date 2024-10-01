@@ -38,6 +38,16 @@
       url = "gitlab:ligolang/tezos-ligo/v20.0-rc1-ligo";
       flake = false;
     };
+
+    grace = {
+      url = "github:johnyob/grace";
+      flake = false;
+    };
+
+    lltz = {
+      url = "https://github.com/trilitech/lltz.git";
+      flake = false;
+    };
   };
   outputs = inputs:
     with inputs;
@@ -60,7 +70,7 @@
           };
 
           tree-sitter-typescript = pkgs.callPackage ./nix/tree-sitter-typescript.nix {};
-          ligo = pkgs.callPackage ./nix/ligo.nix {inherit tezos-ligo tree-sitter-typescript;};
+          ligo = pkgs.callPackage ./nix/ligo.nix {inherit tezos-ligo tree-sitter-typescript grace lltz;};
           ligo-syntaxes = ./tools/vscode/syntaxes;
           ligo-webide = pkgs.callPackage ./nix/webide.nix {inherit ligo-syntaxes;};
           ligo-debugger = pkgs.callPackage ./nix/debugger.nix {};

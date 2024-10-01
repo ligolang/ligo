@@ -4,31 +4,31 @@ variables:
   LIGO_CI_IMAGE_TAG: "ligo-ci:${CI_COMMIT_SHORT_SHA}-${CI_PIPELINE_ID}"
 
 stages:
-  - pretooling                      # changelog
-  - build                           # build, test, produces binaries/.deb/doc within docker
-  - post-build-action               # Post build action
-  - docker-extract                  # extract what have been built and expose them as artifact
-  - tools-precheck                  # preliminary checks done for projects from 'tools'
-  - tools-build                     # build projects from 'tools'
-  - tools-check                     # run tests for projects from 'tools'
-  - tooling                         # build miscellaneous tooling-related things (website, changelog..)
-  - test                            # e2e tests
-  - push                            # deploy docker images, pages, releases (tag)
-  - deploy                          # deploy web IDE, website preview
-  - release                         # Manage branch matching ^release/*
+  - pretooling # changelog
+  - build # build, test, produces binaries/.deb/doc within docker
+  - post-build-action # Post build action
+  - docker-extract # extract what have been built and expose them as artifact
+  - tools-precheck # preliminary checks done for projects from 'tools'
+  - tools-build # build projects from 'tools'
+  - tools-check # run tests for projects from 'tools'
+  - tooling # build miscellaneous tooling-related things (website, changelog..)
+  - test # e2e tests
+  - push # deploy docker images, pages, releases (tag)
+  - deploy # deploy web IDE, website preview
+  - release # Manage branch matching ^release/*
 
 include:
   # jobs for managing process around changelog generation
-  - '/.ci/.gitlab-ci-changelog.yml'
+  - "/.ci/.gitlab-ci-changelog.yml"
   # jobs for managing process around release
-  - '/.ci/.gitlab-ci-release.yml'
+  - "/.ci/.gitlab-ci-release.yml"
   # Manage pipeline related to webide
-  - '/.ci/.gitlab-ci-webide.yml'
+  - "/.ci/.gitlab-ci-webide.yml"
   # CI jobs for projects from 'tools'
-  - '/.ci/.gitlab-ci-vscode-extension.yml'
-  - '/.ci/.gitlab-ci-debugger.yml'
+  - "/.ci/.gitlab-ci-vscode-extension.yml"
+  - "/.ci/.gitlab-ci-debugger.yml"
   # CI manage notification
-  - '/.ci/.gitlab-ci-notify.yml'
+  - "/.ci/.gitlab-ci-notify.yml"
 .submodule-clone:
   before_script:
     - git submodule sync --recursive
@@ -81,6 +81,7 @@ docker_build:
     - job: changelog
       artifacts: true
   script:
+    - git submodule sync --recursive
     - git submodule update --init --recursive # because of a gitlab caching issue
     - .ci/scripts/pipeline_optimization/mr_dockerfile_pre_process.sh
     - VERSION=$(./scripts/version.sh)
