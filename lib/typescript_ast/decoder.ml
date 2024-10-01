@@ -421,11 +421,12 @@ and print_export_specifier state ?name node =
 
 (* Import statement *)
 
-and print_import_statement state ?name node = print_todo_node state ?name node
+and print_import_statement state ?name node =
+  print_todo_node state ?name node
 
 (* Debugger statement *)
 
-and print_debugger_statement state ?name node = print_todo_node state ?name node
+and print_debugger_statement state ?name node = make_node state ?name node
 
 (* Expression statements
 
