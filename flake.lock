@@ -510,13 +510,17 @@
     "lltz": {
       "flake": false,
       "locked": {
-        "narHash": "sha256-cLBQet8v30cC7onLHIDlqCQGpCC9y+WuvXFqn5HcWuc=",
-        "type": "file",
-        "url": "https://github.com/trilitech/lltz.git"
+        "lastModified": 1726765905,
+        "narHash": "sha256-jXDJz2ROq6tA7l51pchz41po4NVzmDKMlIV4ohnrrWM=",
+        "owner": "trilitech",
+        "repo": "lltz",
+        "rev": "2f217c1f1ec2ad5ee9963ec199dae256c229c448",
+        "type": "github"
       },
       "original": {
-        "type": "file",
-        "url": "https://github.com/trilitech/lltz.git"
+        "owner": "trilitech",
+        "repo": "lltz",
+        "type": "github"
       }
     },
     "lowdown-src": {
