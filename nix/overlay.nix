@@ -43,6 +43,7 @@ with prev; {
     });
   coq_8_13 = coq_8_13.override {
     customOCamlPackages = final.ocaml-ng.ocamlPackages_4_14;
+    buildIde = false;
   };
   tezos-rust-libs = prev.tezos-rust-libs.overrideAttrs (_: {
     version = "1.7";
