@@ -2992,7 +2992,7 @@ and if_statement =
              'as',
              field('alias', $._import_identifier)))),
 
-     _import_identifier: $ => // The alias is weird, honestly.
+     _import_identifier: $ =>
        choice($.identifier, alias('type', $.identifier)),
 
      _module_export_name: $ => choice($.identifier, $.string), // See exports

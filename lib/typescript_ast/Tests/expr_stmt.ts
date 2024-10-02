@@ -157,18 +157,38 @@
 // for ((x) of e) {}
 // for ({} in s) {}
 
-export * from "/path/foo.ts";
-export * as foo from "/path/foo.ts";
-export * as "foo" from "/path/foo.ts";
-export {};
-export {foo as bar, "foo" as "bar"};
-export {} from "/path/foo.ts";
-export {foo as bar, "foo" as "bar"} from "/path/foo.ts";
-export type t = number;
-export class C {};
-export default type t = number;
-export default x+1;
-export type {t, "u"};
-export type {t} from "/path/foo.ts";
-export = x+1;
-export as namespace x;
+// export * from "/path/foo.ts";
+// export * as foo from "/path/foo.ts";
+// export * as "foo" from "/path/foo.ts";
+// export {};
+// export {foo as bar, "foo" as "bar"};
+// export {} from "/path/foo.ts";
+// export {foo as bar, "foo" as "bar"} from "/path/foo.ts";
+// export type t = number;
+// export class C {};
+// export default type t = number;
+// export default x+1;
+// export type {t, "u"};
+// export type {t} from "/path/foo.ts";
+// export = x+1;
+// export as namespace x;
+
+// debugger;
+
+import * as x from "./hello.ts";
+import {type t, x as y} from "./hello.ts";
+import type t from "./hello.ts";
+import x, * as y from "./hello.ts";
+import x, {z as y} from "./hello.ts";
+import typeof t = require("fs");
+import type "./hello.ts" with {};
+import x from "./hello.ts" assert {};
+import helloWorld from "./hello.js";
+import { pi, phi, absolute } from "./maths.js";
+import { pi as π } from "./maths.js";
+import RandomNumberGenerator, { pi as π } from "./maths.js";
+import { Cat, Dog } from "./animal.js";
+import * as math from "./maths.js";
+import type { Cat, Dog } from "./animal.js";
+import type { createCatName } from "./animal.js";
+import { createCatName, type Cat, type Dog } from "./animal.js";
