@@ -3,7 +3,7 @@ module Make (Path : Access_path.S) = struct
     { struct_ : 'e
     ; path : 'e Path.t
     }
-  [@@deriving eq, compare, yojson, hash, fold, map, iter, sexp]
+  [@@deriving eq, compare, yojson, hash, fold, map, iter, sexp, bin_io]
 
   let pp f ppf ({ struct_; path } : _ t) =
     Format.fprintf ppf "%a.%a" f struct_ (Path.pp f) path

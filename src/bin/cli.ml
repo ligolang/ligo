@@ -590,6 +590,12 @@ let function_body =
   let doc = "compile expression as a function body" in
   flag ~doc name no_arg
 
+let lltz_ir =
+  let open Command.Param in
+  let name = "--lltz-ir" in
+  let doc = "compile using lltz intermediate representation" in
+  flag ~doc name no_arg
+
 
 let display_format =
   let open Command.Param in
@@ -838,6 +844,7 @@ let compile_file =
       warn_infinite_loop
       libraries
       array_as_list
+      lltz_ir
       ()
     =
     let raw_options =
@@ -860,6 +867,7 @@ let compile_file =
         ~libraries
         ~preprocess_define
         ~array_as_list
+        ~lltz_ir
         ()
     in
     let cli_analytics =
@@ -924,7 +932,8 @@ let compile_file =
     <*> warn_unused_rec
     <*> warn_infinite_loop
     <*> libraries
-    <*> array_as_list)
+    <*> array_as_list
+    <*> lltz_ir)
 
 
 let compile_parameter =
@@ -1057,6 +1066,7 @@ let compile_expression =
       warn_infinite_loop
       libraries
       function_body
+      lltz_ir
       array_as_list
       ()
     =
@@ -1073,6 +1083,7 @@ let compile_expression =
         ~warn_infinite_loop
         ~libraries
         ~function_body
+        ~lltz_ir
         ~preprocess_define
         ~array_as_list
         ()
@@ -1123,6 +1134,7 @@ let compile_expression =
     <*> warn_infinite_loop
     <*> libraries
     <*> function_body
+    <*> lltz_ir
     <*> array_as_list)
 
 

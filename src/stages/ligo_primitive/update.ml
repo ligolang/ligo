@@ -4,7 +4,7 @@ module Make (Path : Access_path.S) = struct
     ; path : 'e Path.t
     ; update : 'e
     }
-  [@@deriving eq, compare, yojson, hash, fold, map]
+  [@@deriving eq, compare, yojson, hash, fold, map, bin_io]
 
   let pp f ppf ({ struct_; path; update } : _ t) =
     Format.fprintf ppf "{ %a with %a = %a }" f struct_ (Path.pp f) path f update

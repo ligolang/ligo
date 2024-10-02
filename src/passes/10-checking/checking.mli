@@ -7,6 +7,7 @@ module Location = Simple_utils.Location
 module Refs_tbl = Context.Refs_tbl
 module Persistent_env = Persistent_env
 module Cmi = Cmi
+module Cmo = Cmo
 
 val type_program_with_refs
   :  raise:(Errors.typer_error, Main_warnings.all) Trace.raise

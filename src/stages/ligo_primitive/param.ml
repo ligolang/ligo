@@ -1,17 +1,17 @@
 type mutable_flag =
   | Mutable
   | Immutable
-[@@deriving eq, compare, yojson, hash, sexp]
+[@@deriving eq, compare, yojson, hash, sexp, bin_io]
 
 type forced_flag =
   | Regular
   | Forced
-[@@deriving eq, compare, yojson, hash, sexp]
+[@@deriving eq, compare, yojson, hash, sexp, bin_io]
 
 type initial_arg =
   | Initial
   | Not_initial
-[@@deriving eq, compare, yojson, hash, sexp]
+[@@deriving eq, compare, yojson, hash, sexp, bin_io]
 
 type 'a t =
   { binder : 'a Binder.t
@@ -19,7 +19,7 @@ type 'a t =
   ; mut_flag : mutable_flag
   ; forced_flag : forced_flag
   }
-[@@deriving eq, compare, yojson, hash, fold, iter, sexp, map]
+[@@deriving eq, compare, yojson, hash, fold, iter, sexp, map, bin_io]
 
 let pp_initial_arg ppf = function
   | Initial -> Format.fprintf ppf "init"

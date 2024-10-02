@@ -31,7 +31,7 @@ module Pattern_decl (Pattern : Pattern.S) (Attr : Attr) = struct
     ; expr : 'e
     ; attr : Attr.t
     }
-  [@@deriving eq, compare, yojson, hash, fold, map]
+  [@@deriving eq, compare, yojson, hash, fold, map, bin_io]
 
   let pp ?(print_type = true) f g ppf { pattern; attr; expr } =
     let cond ppf b =
@@ -124,7 +124,7 @@ module Import_decl (Attr : Attr) = struct
         ; module_str : string
         ; import_attr : Attr.t
         }
-  [@@deriving eq, compare, yojson, hash, fold, map]
+  [@@deriving eq, compare, yojson, hash, fold, map, bin_io]
 
   let pp ppf = function
     | Import_rename { alias; imported_module; import_attr } ->

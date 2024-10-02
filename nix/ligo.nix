@@ -4,7 +4,9 @@
   pkgs,
   tezos-ligo,
   tree-sitter,
-  tree-sitter-typescript
+  tree-sitter-typescript,
+  grace,
+  lltz
 }: let
   inherit (pkgs) darwin ocamlPackages python3Packages coq_8_13 tezos-rust-libs;
 in
@@ -21,6 +23,10 @@ in
       postPatch = ''
         mkdir -p vendors/tezos-ligo
         cp -r ${tezos-ligo}/. vendors/tezos-ligo/
+        mkdir -p vendors/grace
+        cp -r ${grace}/. vendors/grace/
+        mkdir -p vendors/lltz
+        cp -r ${lltz}/. vendors/lltz/
       '';
 
       nativeBuildInputs = [

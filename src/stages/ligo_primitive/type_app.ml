@@ -2,7 +2,7 @@ type ('ty_path, 'ty_exp) t =
   { type_operator : 'ty_path
   ; arguments : 'ty_exp list
   }
-[@@deriving eq, compare, yojson, hash, fold, map]
+[@@deriving eq, compare, yojson, hash, fold, map, bin_io]
 
 let pp f g ppf ({ type_operator; arguments } : ('a, 'b) t) : unit =
   Format.fprintf

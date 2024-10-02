@@ -1,7 +1,7 @@
 module Location = Simple_utils.Location
 
 module type Container = sig
-  type 'a t [@@deriving eq, compare, yojson, hash, sexp]
+  type 'a t [@@deriving eq, compare, yojson, hash, sexp, bin_io]
 
   val iter : 'a t -> f:('a -> unit) -> unit
   val map : 'a t -> f:('a -> 'b) -> 'b t
@@ -11,7 +11,7 @@ module type Container = sig
 end
 
 module type S = sig
-  type 't t [@@deriving compare, eq, fold, hash, iter, map, sexp, yojson]
+  type 't t [@@deriving compare, eq, fold, hash, iter, map, sexp, yojson, bin_io]
 
   val fold_pattern : ('a -> 'b t -> 'a) -> 'a -> 'b t -> 'a
   val fold_map_pattern : ('a -> 'b t -> 'a * 'c t) -> 'a -> 'b t -> 'a * 'c t
@@ -45,7 +45,7 @@ module Make (Container : Container) = struct
     | P_record of 'ty_exp t Container'.t
 
   and 't t = 't pattern_repr Location.wrap
-  [@@deriving compare, eq, fold, hash, iter, map, sexp, yojson]
+  [@@deriving compare, eq, fold, hash, iter, map, sexp, yojson, bin_io]
 
   let var : loc:Location.t -> 'ty Binder.t -> 'ty t =
    fun ~loc b -> Location.wrap ~loc (P_var b)

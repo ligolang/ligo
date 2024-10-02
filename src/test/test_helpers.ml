@@ -43,6 +43,7 @@ type test =
   | Test of test_case
 
 let options = Compiler_options.make ~raw_options:(Raw_options.make ()) ()
+let options_with_lltz = { options with backend = { options.backend with lltz_ir = true } }
 let loc = Location.test
 
 let test_format : 'a Display.format =
@@ -196,7 +197,7 @@ let expression_to_core ~raise expression =
   core
 
 
-let pack_payload ~raise (program : Ast_typed.program) (payload : Ast_unified.expr)
+let pack_payload ?(options = options) ~raise (program : Ast_typed.program) (payload : Ast_unified.expr)
     : bytes Lwt.t
   =
   let open Lwt.Let_syntax in
@@ -263,6 +264,7 @@ let str_keys (raw_pkh, raw_pk, raw_sk) =
 
 
 let typed_program_with_imperative_input_to_michelson
+    ?(options = options)
     ~raise
     (program : Ast_typed.program)
     (entry_point : string)
@@ -299,6 +301,7 @@ let typed_program_with_imperative_input_to_michelson
 
 
 let typed_program_with_imperative_input_to_michelson_twice
+    ?(options = options)
     ~raise
     (program : Ast_typed.program)
     (entry_point : string)
@@ -334,17 +337,18 @@ let typed_program_with_imperative_input_to_michelson_twice
   mich, aggregated.type_expression
 
 
-let run_typed_program_with_imperative_input
+let run_typed_program_with_imperative_input_single
     ~raise
     ?options
+    ~config_options
     (program : Ast_typed.program)
     (entry_point : string)
     (input : Ast_unified.expr)
-    : Ast_core.expression Lwt.t
+    : (Ast_core__Types.expression, 'a) Runned_result.runned_result Lwt.t
   =
   let open Lwt.Let_syntax in
   let%bind michelson_program, ty =
-    typed_program_with_imperative_input_to_michelson ~raise program entry_point input
+    typed_program_with_imperative_input_to_michelson ~options:config_options ~raise program entry_point input
   in
   let%map michelson_output =
     Ligo_run.Of_michelson.run_no_failwith
@@ -359,23 +363,39 @@ let run_typed_program_with_imperative_input
       (Ligo_compile.Of_aggregated.compile_type_expression ~raise ty)
       (Runned_result.Success michelson_output)
   in
-  match res with
-  | Runned_result.Success exp -> exp
-  | Runned_result.Fail _ -> raise.error test_not_expected_to_fail
+  res
+
+let run_typed_program_with_imperative_input ~raise
+    ?opt_options
+    (program : Ast_typed.program)
+    (entry_point : string)
+    (input : Ast_unified.expr)
+    : Ast_core.expression Lwt.t
+  =
+  let open Lwt.Let_syntax in
+  let%bind res1 = run_typed_program_with_imperative_input_single ~raise ?options:opt_options ~config_options:options program entry_point input in
+  let%bind res2 = run_typed_program_with_imperative_input_single ~raise ?options:opt_options ~config_options:options_with_lltz program entry_point input in
+  match res1, res2 with
+  | Runned_result.Success exp1, Runned_result.Success exp2 -> 
+    let _ = Ast_core.Misc.assert_value_eq (exp1, exp2) in
+    Lwt.return exp1
+  | _ -> raise.error test_not_expected_to_fail
 
 
-let run_typed_program_with_imperative_input_twice
+let run_typed_program_with_imperative_input_twice_single
     ~raise
     ?options
+    ~config_options
     (program : Ast_typed.program)
     (entry_point : string)
     (input1 : Ast_unified.expr)
     (input2 : Ast_unified.expr)
-    : Ast_core.expression Lwt.t
+    : (Ast_core__Types.expression, 'a) Runned_result.runned_result Lwt.t
   =
   let open Lwt.Let_syntax in
   let%bind michelson_program, ty =
     typed_program_with_imperative_input_to_michelson_twice
+      ~options:config_options
       ~raise
       program
       entry_point
@@ -395,26 +415,50 @@ let run_typed_program_with_imperative_input_twice
       (Ligo_compile.Of_aggregated.compile_type_expression ~raise ty)
       (Runned_result.Success michelson_output)
   in
-  match res with
-  | Runned_result.Success exp -> exp
-  | Runned_result.Fail _ -> raise.error test_not_expected_to_fail
+  res
+
+let run_typed_program_with_imperative_input_twice ~raise
+    ?opt_options
+    ?(with_lltz = true)
+    (program : Ast_typed.program)
+    (entry_point : string)
+    (input1 : Ast_unified.expr)
+    (input2 : Ast_unified.expr)
+    : Ast_core.expression Lwt.t
+  =
+  let open Lwt.Let_syntax in
+  if with_lltz
+  then
+    let%bind res1 = run_typed_program_with_imperative_input_twice_single ~raise ?options:opt_options ~config_options:options program entry_point input1 input2 in
+    let%bind res2 = run_typed_program_with_imperative_input_twice_single ~raise ?options:opt_options ~config_options:options_with_lltz program entry_point input1 input2 in
+    match res1, res2 with
+    | Runned_result.Success exp1, Runned_result.Success exp2 -> 
+      let _ = Ast_core.Misc.assert_value_eq (exp1, exp2) in
+      Lwt.return exp1
+    | _ -> raise.error test_not_expected_to_fail
+  else
+    let%bind res = run_typed_program_with_imperative_input_twice_single ~raise ?options:opt_options ~config_options:options program entry_point input1 input2 in
+    match res with
+    | Runned_result.Success exp -> Lwt.return exp
+    | _ -> raise.error test_not_expected_to_fail
 
 
 let expect ~raise ?options program entry_point input expecter =
   let result =
     Lwt_main.run
     @@ Trace.trace ~raise (test_run_tracer entry_point)
-    @@ run_typed_program_with_imperative_input ?options program entry_point input
+    @@ run_typed_program_with_imperative_input ?opt_options:options program entry_point input
   in
   expecter result
 
 
-let expect_twice ~raise ?options program entry_point input1 input2 expecter =
+let expect_twice ~raise ?options ?(with_lltz = true) program entry_point input1 input2 expecter =
   let result =
     Lwt_main.run
     @@ Trace.trace ~raise (test_run_tracer entry_point)
     @@ run_typed_program_with_imperative_input_twice
-         ?options
+         ?opt_options:options
+         ~with_lltz
          program
          entry_point
          input1
@@ -429,7 +473,7 @@ let expect_fail ~raise ?options program entry_point input =
   Trace.Assert.assert_fail ~raise test_expected_to_fail
   @@ fun ~raise ->
   Lwt_main.run
-  @@ run_typed_program_with_imperative_input ~raise ?options program entry_point input
+  @@ run_typed_program_with_imperative_input ~raise ?opt_options:options program entry_point input
 
 
 let expect_fail_twice ~raise ?options program entry_point input1 input2 =
@@ -440,7 +484,7 @@ let expect_fail_twice ~raise ?options program entry_point input1 input2 =
   Lwt_main.run
   @@ run_typed_program_with_imperative_input_twice
        ~raise
-       ?options
+       ?opt_options:options
        program
        entry_point
        input1
@@ -507,13 +551,13 @@ let expect_eq ~raise ?options program entry_point input expected =
   expect ~raise ?options program entry_point input expecter
 
 
-let expect_eq_twice ~raise ?options program entry_point input1 input2 expected =
+let expect_eq_twice ~raise ?options ?(with_lltz = true) program entry_point input1 input2 expected =
   let expected = expression_to_core ~raise expected in
   let expecter result =
     Trace.trace_option ~raise (test_expect_tracer expected result)
     @@ Ast_core.Misc.assert_value_eq (expected, result)
   in
-  expect_twice ~raise ?options program entry_point input1 input2 expecter
+  expect_twice ~raise ?options ~with_lltz program entry_point input1 input2 expecter
 
 
 let expect_eq_core ~raise ?options program entry_point input expected =
@@ -523,8 +567,7 @@ let expect_eq_core ~raise ?options program entry_point input expected =
   in
   expect ~raise ?options program entry_point input expecter
 
-
-let expect_evaluate ~raise (program : Ast_typed.program) entry_point expecter =
+let expect_evaluate ?(options = options) ~raise (program : Ast_typed.program) entry_point expecter =
   let open Lwt.Let_syntax in
   Trace.trace ~raise (test_run_tracer entry_point)
   @@ fun ~raise ->
@@ -570,8 +613,8 @@ let expect_eq_evaluate ~raise (program : Ast_typed.program) entry_point expected
     Trace.trace_option ~raise (test_expect_tracer expected result)
     @@ Ast_core.Misc.assert_value_eq (expected, result)
   in
-  expect_evaluate ~raise program entry_point expecter
-
+  let _ = expect_evaluate ~raise ~options program entry_point expecter in
+  expect_evaluate ~raise ~options:options_with_lltz program entry_point expecter
 
 let expect_eq_n_trace_aux_twice
     ~raise
@@ -586,7 +629,7 @@ let expect_eq_n_trace_aux_twice
     let input1, input2 = make_input n in
     let expected = make_expected n in
     Trace.trace ~raise (test_expect_n_tracer n)
-    @@ expect_eq_twice ?options program entry_point input1 input2 expected
+    @@ expect_eq_twice ?options ~with_lltz:false program entry_point input1 input2 expected
   in
   let _ = List.map ~f:aux lst in
   ()
@@ -643,7 +686,7 @@ let expect_eq_b_bool a b c =
   expect_eq_b a b (fun bool -> e_bool ~loc (c bool))
 
 
-let compile_main ~raise f () =
+let compile_main ?(options = options) ~raise f () =
   let open Lwt.Let_syntax in
   let typed_prg = get_program ~raise f () in
   let typed_prg =
@@ -663,12 +706,20 @@ let compile_main ~raise f () =
   in
   let expanded = Ligo_compile.Of_aggregated.compile_expression ~raise agg in
   let mini_c = Ligo_compile.Of_expanded.compile_expression ~raise expanded in
-  Lwt_main.run
-  @@ let%bind michelson_prg =
-       Ligo_compile.Of_mini_c.compile_contract ~raise ~options mini_c
-     in
-     let%map _contract : _ Tezos_utils.Michelson.michelson Lwt.t =
-       (* fails if the given entry point is not a valid contract *)
-       Ligo_compile.Of_michelson.build_contract ~raise michelson_prg []
-     in
-     ()
+  Lwt_main.run (
+    let%bind michelson_prg =
+      Ligo_compile.Of_mini_c.compile_contract ~raise ~options mini_c
+    in
+    let%bind _contract =
+      (* Fails if the given entry point is not a valid contract *)
+      Ligo_compile.Of_michelson.build_contract ~raise michelson_prg []
+    in
+    let%bind michelson_prg_lltz =
+      Ligo_compile.Of_mini_c.compile_contract ~raise ~options:options_with_lltz mini_c
+    in
+    let%map _contract_lltz =
+      (* Fails if the given entry point is not a valid contract *)
+      Ligo_compile.Of_michelson.build_contract ~raise michelson_prg_lltz []
+    in
+    ()
+  )

@@ -79,6 +79,7 @@ This sub-command compiles a contract to Michelson code. It expects a source file
   [--library LIBS], -l       . A comma-separated list of paths to directories
                                where to search for files to be included by the
                                preprocessor
+  [--lltz-ir]                . compile using lltz intermediate representation
   [--michelson-comments COMMENT_TYPE] ...
                              . Selects kinds of comments to be added to the
                                Michelson output. Currently 'location' and 'env'
@@ -510,6 +511,7 @@ let%expect_test _ =
       [--library LIBS], -l       . A comma-separated list of paths to directories
                                    where to search for files to be included by the
                                    preprocessor
+      [--lltz-ir]                . compile using lltz intermediate representation                      
       [--michelson-format CODE_FORMAT]
                                  . format that will be used by compile-contract for
                                    the resulting Michelson. Available formats are

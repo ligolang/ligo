@@ -5,7 +5,7 @@ type 'expr item =
   | Rest_entry of 'expr
 
 and 'expr t = 'expr item list
-[@@deriving yojson, map, fold, iter, sexp, eq, compare, hash]
+[@@deriving yojson, map, fold, iter, sexp, eq, compare, hash, bin_io]
 
 let pp f ppf (l : 'k item list) =
   let open Format in

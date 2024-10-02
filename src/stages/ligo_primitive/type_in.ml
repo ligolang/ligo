@@ -3,7 +3,7 @@ type ('e, 't) t =
   ; rhs : 't
   ; let_result : 'e
   }
-[@@deriving eq, compare, yojson, hash, fold, iter, map]
+[@@deriving eq, compare, yojson, hash, fold, iter, map, bin_io]
 
 let pp f g ppf { type_binder; rhs; let_result } =
   Format.fprintf

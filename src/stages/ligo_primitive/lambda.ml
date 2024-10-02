@@ -3,7 +3,7 @@ type ('e, 't) t =
   ; output_type : 't
   ; result : 'e
   }
-[@@deriving eq, compare, yojson, hash, iter, fold, sexp, map]
+[@@deriving eq, compare, yojson, hash, iter, fold, sexp, map, bin_io]
 
 let pp f g ppf { binder; output_type; result } =
   Format.fprintf ppf "fun (%a)%a -> %a" (Param.pp g) binder g output_type f result

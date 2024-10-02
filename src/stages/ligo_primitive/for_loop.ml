@@ -5,7 +5,7 @@ type 'e t =
   ; incr : 'e
   ; f_body : 'e
   }
-[@@deriving eq, compare, yojson, hash, fold, map]
+[@@deriving eq, compare, yojson, hash, fold, map, bin_io]
 
 let pp f ppf { binder; start; final; incr; f_body } =
   Format.fprintf
