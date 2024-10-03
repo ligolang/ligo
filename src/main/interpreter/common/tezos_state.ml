@@ -211,14 +211,14 @@ let get_storage ~raise ~loc ~calltrace ctxt (m : Contract.t) =
   let addr = originated_account ~raise ~loc ~calltrace "Trying to get a contract" m in
   let%bind st_v =
     Lwt.map (Trace.trace_tzresult ~raise (throw_obj_exc loc calltrace))
-    @@ Tezos_protocol.Protocol.Alpha_services.Contract.storage
+    @@ Tezos_protocol.Alpha_services.Contract.storage
          Tezos_alpha_test_helpers.Block.rpc_ctxt
          ctxt.raw
          addr
   in
   let%bind st_ty =
     Lwt.map (Trace.trace_tzresult ~raise (throw_obj_exc loc calltrace))
-    @@ Tezos_protocol.Protocol.Alpha_services.Contract.script
+    @@ Tezos_protocol.Alpha_services.Contract.script
          Tezos_alpha_test_helpers.Block.rpc_ctxt
          ctxt.raw
          addr
@@ -694,12 +694,12 @@ let stake ~raise ~loc ~calltrace (ctxt : context) pkh amt =
     Op.transaction
       ~force_reveal:true
       ~gas_limit:Max
-      ~fee:(Test_tez.of_int 0)
+      ~fee:(Tez_helpers.of_int 0)
       ~entrypoint
       (B ctxt.raw)
       source
       contract
-      (Test_tez.of_mutez_exn amt)
+      (Tez.of_mutez_exn amt)
   in
   match%map bake_op ~raise ~loc ~calltrace ctxt operation with
   | Success (ctxt, _) -> ctxt
@@ -839,13 +839,13 @@ let transfer ~raise ~loc ~calltrace (ctxt : context) ?entrypoint dst parameter a
     Op.transaction
       ~force_reveal:true
       ~gas_limit:Max
-      ~fee:(Test_tez.of_int 1)
+      ~fee:(Tez_helpers.of_int 1)
       ~parameters
       ?entrypoint
       (B ctxt.raw)
       source
       dst
-      (Test_tez.of_mutez_exn amt)
+      (Tez.of_mutez_exn amt)
   in
   bake_op ~raise ~loc ~calltrace ctxt operation
 
@@ -865,7 +865,7 @@ let originate_contract
   let open Tezos_alpha_test_helpers in
   let source = unwrap_source ~raise ~loc ~calltrace ctxt.internals.source in
   let amt =
-    try Some (Test_tez.of_mutez_exn (Int64.of_int (Z.to_int amt))) with
+    try Some (Tez.of_mutez_exn (Int64.of_int (Z.to_int amt))) with
     | _ -> None
   in
   let script = script_of_compiled_code ~raise ~loc ~calltrace contract storage in
@@ -878,7 +878,7 @@ let originate_contract
       (B ctxt.raw)
       source
       ?credit:amt
-      ~fee:(Test_tez.of_int 1)
+      ~fee:(Tez_helpers.of_int 1)
       ~script
   in
   match%map bake_op ~raise ~loc ~calltrace ctxt operation with

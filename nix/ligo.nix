@@ -6,9 +6,10 @@
   tree-sitter,
   tree-sitter-typescript,
   grace,
-  lltz
+  lltz,
+  libiconv
 }: let
-  inherit (pkgs) darwin ocamlPackages python3Packages coq_8_13 tezos-rust-libs;
+  inherit (pkgs) darwin ocamlPackages python3Packages coq_8_13;
 in
   with ocamlPackages;
     buildDunePackage rec {
@@ -16,7 +17,6 @@ in
       version = "dev";
       src = ./..;
 
-      OPAM_SWITCH_PREFIX = "${tezos-rust-libs}";
       TREE_SITTER = "${tree-sitter}";
       TREE_SITTER_TYPESCRIPT = "${tree-sitter-typescript}";
 
@@ -36,12 +36,13 @@ in
         crunch
         odoc
         python3Packages.jsonschema
-        tree-sitter
-        tree-sitter-typescript
       ];
 
       propagatedBuildInputs =
         [
+          tree-sitter
+          tree-sitter-typescript
+          libiconv
           core
           core_unix
           core_kernel
@@ -58,6 +59,7 @@ in
           tls
           decompress
           tar
+          tezt
           tar-unix
           lambda-term
           parse-argv
@@ -81,13 +83,11 @@ in
           qcheck-alcotest
           irmin-pack
           pure-splitmix
-          cohttp-server-lwt-unix
-          resto-cohttp-self-serving-client
-          tezos-rust-libs
           crunch
           class_group_vdf
           hex
           lwt-canceler
+          lwt-exit
           seqes
           ctypes_stubs_js
           hacl-star-raw
@@ -95,7 +95,6 @@ in
           secp256k1-internal
           mtime
           zarith
-          tezt
           lsp
           aches-lwt
           fileutils
@@ -103,7 +102,6 @@ in
           ocaml-recovery-parser
           linol
           linol-lwt
-          data-encoding
           dune-configurator # ???
           coq_8_13 # ???
           alcotest # with-test
@@ -111,6 +109,10 @@ in
           ppx_inline_test # with-test
           ctypes
           ctypes-foreign
+          logs
+          cohttp
+          conduit-lwt-unix
+          magic-mime
         ]
         ++ lib.optionals stdenv.isDarwin [
           darwin.apple_sdk.frameworks.Security

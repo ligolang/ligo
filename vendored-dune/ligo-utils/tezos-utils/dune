@@ -4,6 +4,6 @@
  (libraries
   octez-libs.micheline
   octez-libs.base
-  data-encoding
+  octez-libs.data-encoding
   simple-utils
   base))

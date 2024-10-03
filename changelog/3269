@@ -1,0 +1,5 @@
+author: rinderkn
+description: "\\nUpgrade to Quebec protocol.\\n\\n"
+merge_request: "3269"
+title: "chore: Update LIGO to protocol Quebec"
+type: added
