@@ -18,8 +18,3 @@ variables:
   if: $CI_PIPELINE_SOURCE == "merge_request_event"
   changes:
     - tools/debugger/**/*
-
-.webide_mr_changes:
-  if: $CI_PIPELINE_SOURCE == "merge_request_event"
-  changes:
-    - tools/webide-new/**/*

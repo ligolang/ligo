@@ -20,7 +20,7 @@ for i,file in enumerate(files):
     print('\033[2K[' + str(round(i * 100 / len(files), 2)) + '% ' + file + ']', file=sys.stderr, end='\r')
 
     # rules on files to skip entirely go here:
-    if file.startswith(('changelog/', 'gitlab-pages/', 'tools/webide/')):
+    if file.startswith(('changelog/', 'gitlab-pages/')):
         continue # skip file.
     
     commits = subprocess.check_output(['git', 'log', '--format=%H', file]).decode('utf-8').strip('\n').split('\n')
