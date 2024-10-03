@@ -2085,6 +2085,7 @@ and print_primary_type state ?name node =
   | "object_type" -> print_object_type state ~name node
   | "array_type" -> print_array_type state ~name node
   | "tuple_type" -> print_tuple_type state ~name node
+  | "flow_maybe_type" -> print_flow_maybe_type state ~name node
   | "type_query" -> print_type_query state ~name node
   | "index_type_query" -> print_index_type_query state ~name node
   | "this_type" -> print_this state ~name node
@@ -2096,6 +2097,16 @@ and print_primary_type state ?name node =
   | "intersection_type" -> print_intersection_type state ~name node
   | "union_type" -> print_union_type state ~name node
   | _ -> match_rest state ~name node print_unexpected_node
+
+(* Flow maybe type
+
+   flow_maybe_type: $ => prec.right(seq('?', $.primary_type))
+*)
+
+and print_flow_maybe_type state ?name node =
+  let name = get_name ?name node
+  and child = ts_node_named_child_inv node 0 in
+  make_unary state name (anon print_primary_type) child
 
 (* Type identifier *)
 
