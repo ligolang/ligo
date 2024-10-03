@@ -13,21 +13,6 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    # haskell
-    stackage = {
-      url = "github:input-output-hk/stackage.nix";
-      flake = false;
-    };
-    hackage = {
-      url = "github:input-output-hk/hackage.nix";
-      flake = false;
-    };
-    haskell-nix = {
-      url = "github:input-output-hk/haskell.nix";
-      inputs.nixpkgs.follows = "nixpkgs";
-      inputs.hackage.follows = "hackage";
-      inputs.stackage.follows = "stackage";
-    };
     ocaml-overlay = {
       url = "github:nix-ocaml/nix-overlays";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -57,7 +42,6 @@
             inherit system;
             overlays = [
               build-yarn-package.overlays.default
-              haskell-nix.overlay
               ocaml-overlay.overlays.default
               (import ./nix/overlay.nix)
               (_: prev:
@@ -81,37 +65,6 @@
 
             settings.global.excludes = ["_build" "result" ".direnv" "vendors/*" "vendored-dune/*"];
           };
-
-          # Wrap stack to work with our haskell.nix integration.
-          # - no-nix: we don't want stack's nix integration
-          # --system-ghc: use the existing GHC on PATH (provided by haskell.nix)
-          # --no-install-ghc : don't try to install GHC if no matching GHC found on PATH
-          stack-wrapped = pkgs.symlinkJoin {
-            name = "stack"; # will be available as the usual `stack` in terminal
-            paths = [pkgs.stack];
-            buildInputs = [pkgs.makeWrapper];
-            postBuild = ''
-              wrapProgram $out/bin/stack \
-                --add-flags "\
-                  --no-nix \
-                  --system-ghc \
-                  --no-install-ghc \
-                "
-            '';
-          };
-
-          haskellShell = name: drv:
-            drv.passthru.project.shellFor {
-              inherit name;
-
-              # FIXME: https://github.com/input-output-hk/haskell.nix/issues/1885
-              # Adding [exactDeps = true] to avoid the build failure, this ensures
-              # that cabal doesn't choose alternate plans, so that *all* dependencies
-              # are provided by nix.
-              exactDeps = true;
-
-              buildInputs = [stack-wrapped];
-            };
         in {
           packages = {
             ligo = ligo;
