@@ -45,7 +45,7 @@
     };
 
     lltz = {
-      url = "https://github.com/trilitech/lltz.git";
+      url = "github:trilitech/lltz";
       flake = false;
     };
   };
