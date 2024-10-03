@@ -72,7 +72,6 @@
           tree-sitter-typescript = pkgs.callPackage ./nix/tree-sitter-typescript.nix {};
           ligo = pkgs.callPackage ./nix/ligo.nix {inherit tezos-ligo tree-sitter-typescript grace lltz;};
           ligo-syntaxes = ./tools/vscode/syntaxes;
-          ligo-debugger = pkgs.callPackage ./nix/debugger.nix {};
 
           fmt = treefmt.lib.evalModule pkgs {
             projectRootFile = "dune-project";
@@ -115,7 +114,6 @@
             };
         in {
           packages = {
-            inherit ligo-debugger;
             ligo = ligo;
             default = ligo;
           };
@@ -144,8 +142,6 @@
                 export TREE_SITTER_TYPESCRIPT="${ligo.TREE_SITTER_TYPESCRIPT}";
               '';
             };
-
-            debugger = haskellShell "ligo-debugger-shell" ligo-debugger;
           };
 
           formatter = fmt.config.build.wrapper;
