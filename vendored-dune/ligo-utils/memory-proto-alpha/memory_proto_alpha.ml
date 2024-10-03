@@ -1,9 +1,10 @@
-module Proto = Tezos_protocol_019_PtParisB
-module Alpha_environment = Tezos_protocol_environment_019_PtParisB
-module Raw_protocol = Tezos_raw_protocol_019_PtParisB
-module Parameters = Tezos_protocol_019_PtParisB_parameters
-module Client = Tezos_client_019_PtParisB
-module Test_helpers = Tezos_019_PtParisB_test_helpers
+module Proto = Tezos_protocol_alpha
+module Alpha_environment = Tezos_protocol_environment_alpha
+module Raw_protocol = Tezos_raw_protocol_alpha
+module Parameters = Tezos_protocol_alpha_parameters
+module Client = Tezos_client_alpha
+module Test_helpers = Tezos_alpha_test_helpers
+module Alpha_services = Tezos_protocol_plugin_alpha.Plugin.Alpha_services
 
 (* Alcotezt redirects [Format.std_formatter] and [Format.err_formatter]
    to a buffer, we need to redirect them back to [stdout] and [stderr] *)
@@ -21,5 +22,5 @@ type 'a alpha_tzresult = 'a Alpha_environment.Error_monad.tzresult
 module Alpha_error_monad = Alpha_environment.Error_monad
 include Proto
 
-let protocol_str = "parisb"
-let protocol_def_str = "PARIS_B"
+let protocol_str = "quebeca"
+let protocol_def_str = "QUEBEC_A"

@@ -2,8 +2,8 @@
  (name memory_proto_alpha)
  (public_name ligo.tezos-memory-proto-alpha)
  (libraries
-  tezos-protocol-019-PtParisB.protocol
-  octez-protocol-019-PtParisB-libs.client
-  tezos-protocol-019-PtParisB.parameters
-  tezos-protocol-019-PtParisB.protocol.environment
-  octez-protocol-019-PtParisB-libs.test-helpers))
+  tezos-protocol-alpha.protocol
+  octez-protocol-alpha-libs.client
+  tezos-protocol-alpha.parameters
+  tezos-protocol-alpha.protocol.environment
+  octez-protocol-alpha-libs.test-helpers))

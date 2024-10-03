@@ -833,16 +833,16 @@
     "tezos-ligo": {
       "flake": false,
       "locked": {
-        "lastModified": 1721315580,
-        "narHash": "sha256-ZT6NYa640yiLBYOTGbXEzaTWR0dL4sH9bs0E0OKrLm8=",
+        "lastModified": 1723647240,
+        "narHash": "sha256-FkOR4VqFngdejBCqzwwySINfK/oNklsnIVrvQYVAfyc=",
         "owner": "ligolang",
         "repo": "tezos-ligo",
-        "rev": "68fd3b07a23914bab33fda5f7b70e329272088e5",
+        "rev": "fb4bad17f4d4a8b1df1ba5ea96935f63321e3a30",
         "type": "gitlab"
       },
       "original": {
         "owner": "ligolang",
-        "ref": "v20.0-rc1-ligo",
+        "ref": "v21-ligo",
         "repo": "tezos-ligo",
         "type": "gitlab"
       }

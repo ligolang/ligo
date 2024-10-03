@@ -26,7 +26,11 @@ let test_commit =
   let parameter = Commit salted_hash in
   let () = State.set_source first_committer in
   // 86_400 is added to the date for commits in hashlock.mligo (1 day in seconds)
-  let lock_time = Tezos.get_now () + 10 + 86_400 in
+  (* Blocks time have been reduced from 10s to 8s:
+https://gitlab.com/tezos/tezos/-/commit/5a3caeda3b165e39d5c942dc9c63d86cff00a9c1#12306a7cbb207399c3bdb11ffc2b9451996a9961
+https://gitlab.com/tezos/tezos/-/merge_requests/12716
+  *)
+  let lock_time = Tezos.get_now () + 8 + 86_400 in
   let _ = Contract.transfer_exn contr parameter 0tez in
   let new_storage = Typed_address.get_storage typed_addr in
   let commit = { date = lock_time ; salted_hash = salted_hash } in

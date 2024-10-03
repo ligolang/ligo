@@ -12,19 +12,34 @@ with prev; {
     // (with ocaml-ng; {
       ocamlPackages_4_14 = ocamlPackages_4_14.overrideScope' (_: prev:
         with prev; rec {
-          http = buildDunePackage rec {
-            pname = "http";
-            version = "6.0.0_beta2";
+          cohttp = buildDunePackage rec {
+            pname = "cohttp";
+            version = "5.3.1";
+            minimalOCamlVersion = "4.08";
             src = fetchurl {
-              url = "https://github.com/mirage/ocaml-cohttp/releases/download/v${version}/cohttp-v${version}.tbz";
-              hash = "sha256-kOzsi9WAQRtCcsAxsva5wKUEhdIGg8apxhUkLzcksBc=";
+              url = "https://github.com/mirage/ocaml-cohttp/releases/download/v${version}/cohttp-${version}.tbz";
+              hash = "sha256-9eJz08Lyn/R71+Ftsj4fPWzQGkC+ACCJhbxDTIjUV2s=";
             };
+            buildInputs = [ jsonm ppx_sexp_conv ];
+            propagatedBuildInputs = [ base64 re stringext uri-sexp ];
           };
-          cohttp-server-lwt-unix = buildDunePackage {
-            inherit (http) version src;
-            pname = "cohttp-server-lwt-unix";
-            propagatedBuildInputs = [lwt http];
-          };
+
+          tezt = buildDunePackage rec {
+            pname = "tezt";
+            version = "4.1.0";
+
+            minimalOCamlVersion = "4.12";
+
+            src = fetchFromGitLab {
+              owner = "nomadic-labs";
+              repo = pname;
+              rev = version;
+              hash = "sha256-1Cl/GOB+MDPJIl/6600PLTSL+vCYcAZGjedd6hr7rJw=";
+            };
+
+            propagatedBuildInputs = [ clap ezjsonm lwt re ];
+          };  
+
           # TODO: odoc-parser and ocamlformat are issues with nix-ocaml
           odoc-parser = prev.odoc-parser.overrideAttrs (prev: {
             propagatedBuildInputs = (prev.propagatedBuildInputs or []) ++ [result];
@@ -44,48 +59,7 @@ with prev; {
   coq_8_13 = coq_8_13.override {
     customOCamlPackages = final.ocaml-ng.ocamlPackages_4_14;
   };
-  tezos-rust-libs = prev.tezos-rust-libs.overrideAttrs (_: {
-    version = "1.7";
-    src = fetchFromGitLab {
-      owner = "tezos";
-      repo = "tezos-rust-libs";
-      rev = "v1.7";
-      sha256 = "sha256-L+8qu3DXqru5AeQWSC8Eeii+OTZnYbpw6X05K+EapNE=";
-    };
-
-    buildPhase = ''
-      runHook preBuild
-
-      cargo build \
-        --target-dir target-librustzcash \
-        --package librustzcash \
-        --release
-
-      cargo build \
-        --target-dir target-wasmer \
-        --package wasmer-c-api \
-        --no-default-features \
-        --features singlepass,cranelift,wat,middlewares \
-        --release
-
-      runHook postBuild
-    '';
-
-    installPhase = ''
-      runHook preInstall
-
-      mkdir -p $out/lib/tezos-rust-libs/rust
-      cp "librustzcash/include/librustzcash.h" \
-          "target-librustzcash/release/librustzcash.a" \
-          "wasmer-3.3.0/lib/c-api/wasm.h" \
-          "wasmer-3.3.0/lib/c-api/wasmer.h" \
-          "target-wasmer/release/libwasmer.a" \
-          "$out/lib/tezos-rust-libs"
-      cp -r "librustzcash/include/rust" "$out/lib/tezos-rust-libs"
-
-      runHook postInstall
-    '';
-  });
+  
   boehmgc = boehmgc.overrideAttrs {
     # tests for this sometimes fails on macOS
     doCheck = !prev.stdenv.isDarwin;

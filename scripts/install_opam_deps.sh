@@ -10,4 +10,3 @@ set -x
 export PATH=~/.cargo/bin:$PATH
 
 BLST_PORTABLE=y opam install -y --deps-only --with-test --with-doc --locked .
-opam install -y vendors/tezos-ligo/data-encoding
