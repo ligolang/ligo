@@ -1,9 +1,0 @@
-let fst = ([f, _] : [int, int]) : int => f;
-
-@entry
-let main = (_ : unit, s : int) : [list<operation>, int] => {
-  let pair1 = [1, s];
-  let pair2 = [3, s];
-
-  return [[], s + fst(pair1) + fst(pair2)]
-};
