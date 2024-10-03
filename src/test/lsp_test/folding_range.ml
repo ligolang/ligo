@@ -20,6 +20,22 @@ let%expect_test _ =
   get_folding_range_test "contracts/lsp/folding_range.mligo";
   [%expect
     {|
+    ((stack ((Ident _#612))) "3=before tuple")
+    ((stack ((Ident _#612))) "2=before tuple")
+    ((stack (Value (Ident _#612))) "2=after tuple")
+    ((stack (Value (Ident _#612))) "1=before tuple")
+    ((stack (Value (Ident _#612)))
+      "0=before (Nil\
+     \n ((desc Operation)\
+     \n  (range\
+     \n   ((start 0) (stop 0) (source (String ((name (generated)) (content \"\"))))))))")
+    ((stack (Value Value (Ident _#612)))
+      "0=after (Nil\
+     \n ((desc Operation)\
+     \n  (range\
+     \n   ((start 0) (stop 0) (source (String ((name (generated)) (content \"\"))))))))")
+    ((stack (Value Value (Ident _#612))) "1=after tuple")
+    ((stack (Value (Ident _#612))) "3=after tuple")
     [{
        "endCharacter": 4,
        "endLine": 17,
@@ -96,6 +112,22 @@ let%expect_test _ =
   get_folding_range_test "contracts/lsp/folding_range.jsligo";
   [%expect
     {|
+  ((stack ((Ident _#1022))) "7=before tuple")
+  ((stack ((Ident _#1022))) "6=before tuple")
+  ((stack (Value (Ident _#1022))) "6=after tuple")
+  ((stack (Value (Ident _#1022))) "5=before tuple")
+  ((stack (Value (Ident _#1022)))
+    "4=before (Nil\
+   \n ((desc Operation)\
+   \n  (range\
+   \n   ((start 0) (stop 0) (source (String ((name (generated)) (content \"\"))))))))")
+  ((stack (Value Value (Ident _#1022)))
+    "4=after (Nil\
+   \n ((desc Operation)\
+   \n  (range\
+   \n   ((start 0) (stop 0) (source (String ((name (generated)) (content \"\"))))))))")
+  ((stack (Value Value (Ident _#1022))) "5=after tuple")
+  ((stack (Value (Ident _#1022))) "7=after tuple")
   [{
      "endCharacter": 2,
      "endLine": 19,
@@ -193,6 +225,22 @@ let%expect_test _ =
   get_folding_range_test "contracts/lsp/import.jsligo";
   [%expect
     {|
+    ((stack ((Ident _#1410))) "11=before tuple")
+    ((stack ((Ident _#1410))) "10=before tuple")
+    ((stack (Value (Ident _#1410))) "10=after tuple")
+    ((stack (Value (Ident _#1410))) "9=before tuple")
+    ((stack (Value (Ident _#1410)))
+      "8=before (Nil\
+     \n ((desc Operation)\
+     \n  (range\
+     \n   ((start 0) (stop 0) (source (String ((name (generated)) (content \"\"))))))))")
+    ((stack (Value Value (Ident _#1410)))
+      "8=after (Nil\
+     \n ((desc Operation)\
+     \n  (range\
+     \n   ((start 0) (stop 0) (source (String ((name (generated)) (content \"\"))))))))")
+    ((stack (Value Value (Ident _#1410))) "9=after tuple")
+    ((stack (Value (Ident _#1410))) "11=after tuple")
     [{
        "endCharacter": 2,
        "endLine": 3,
@@ -212,6 +260,22 @@ let%expect_test _ =
   get_folding_range_test "contracts/lsp/folding_range_for_loop.jsligo";
   [%expect
     {|
+    ((stack ((Ident _#1847))) "15=before tuple")
+    ((stack ((Ident _#1847))) "14=before tuple")
+    ((stack (Value (Ident _#1847))) "14=after tuple")
+    ((stack (Value (Ident _#1847))) "13=before tuple")
+    ((stack (Value (Ident _#1847)))
+      "12=before (Nil\
+     \n ((desc Operation)\
+     \n  (range\
+     \n   ((start 0) (stop 0) (source (String ((name (generated)) (content \"\"))))))))")
+    ((stack (Value Value (Ident _#1847)))
+      "12=after (Nil\
+     \n ((desc Operation)\
+     \n  (range\
+     \n   ((start 0) (stop 0) (source (String ((name (generated)) (content \"\"))))))))")
+    ((stack (Value Value (Ident _#1847))) "13=after tuple")
+    ((stack (Value (Ident _#1847))) "15=after tuple")
     [{
        "endCharacter": 10,
        "endLine": 17,

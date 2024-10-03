@@ -69,6 +69,22 @@ let%expect_test "CameLIGO selection range" =
   run_multiple_tests tests ~test_runner:run_selection_range_test;
   [%expect
     {|
+    ((stack ((Ident _#637))) "3=before tuple")
+    ((stack ((Ident _#637))) "2=before tuple")
+    ((stack (Value (Ident _#637))) "2=after tuple")
+    ((stack (Value (Ident _#637))) "1=before tuple")
+    ((stack (Value (Ident _#637)))
+      "0=before (Nil\
+     \n ((desc Operation)\
+     \n  (range\
+     \n   ((start 0) (stop 0) (source (String ((name (generated)) (content \"\"))))))))")
+    ((stack (Value Value (Ident _#637)))
+      "0=after (Nil\
+     \n ((desc Operation)\
+     \n  (range\
+     \n   ((start 0) (stop 0) (source (String ((name (generated)) (content \"\"))))))))")
+    ((stack (Value Value (Ident _#637))) "1=after tuple")
+    ((stack (Value (Ident _#637))) "3=after tuple")
     [[
        {
          "parent": {
@@ -653,6 +669,22 @@ let%expect_test "JsLIGO selection range" =
   run_multiple_tests tests ~test_runner:run_selection_range_test;
   [%expect
     {|
+    ((stack ((Ident _#1454))) "7=before tuple")
+    ((stack ((Ident _#1454))) "6=before tuple")
+    ((stack (Value (Ident _#1454))) "6=after tuple")
+    ((stack (Value (Ident _#1454))) "5=before tuple")
+    ((stack (Value (Ident _#1454)))
+      "4=before (Nil\
+     \n ((desc Operation)\
+     \n  (range\
+     \n   ((start 0) (stop 0) (source (String ((name (generated)) (content \"\"))))))))")
+    ((stack (Value Value (Ident _#1454)))
+      "4=after (Nil\
+     \n ((desc Operation)\
+     \n  (range\
+     \n   ((start 0) (stop 0) (source (String ((name (generated)) (content \"\"))))))))")
+    ((stack (Value Value (Ident _#1454))) "5=after tuple")
+    ((stack (Value (Ident _#1454))) "7=after tuple")
     [[
        {
          "parent": {

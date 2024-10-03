@@ -85,6 +85,22 @@ let%expect_test "Namespace with implements" =
     { file_name = "contracts/signature/FA0.impl.jsligo"; range = Some (interval 13 0 35) };
   [%expect
     {|
+    ((stack ((Ident _#737))) "3=before tuple")
+    ((stack ((Ident _#737))) "2=before tuple")
+    ((stack (Value (Ident _#737))) "2=after tuple")
+    ((stack (Value (Ident _#737))) "1=before tuple")
+    ((stack (Value (Ident _#737)))
+      "0=before (Nil\
+     \n ((desc Operation)\
+     \n  (range\
+     \n   ((start 0) (stop 0) (source (String ((name (generated)) (content \"\"))))))))")
+    ((stack (Value Value (Ident _#737)))
+      "0=after (Nil\
+     \n ((desc Operation)\
+     \n  (range\
+     \n   ((start 0) (stop 0) (source (String ((name (generated)) (content \"\"))))))))")
+    ((stack (Value Value (Ident _#737))) "1=after tuple")
+    ((stack (Value (Ident _#737))) "3=after tuple")
     [{
        "line": 13,
        "start_char": 0,
@@ -133,6 +149,22 @@ let%expect_test "Module signature" =
     { file_name = "contracts/signature/simple.mligo"; range = Some (range (0, 0) (4, 3)) };
   [%expect
     {|
+    ((stack ((Ident _#1216))) "7=before tuple")
+    ((stack ((Ident _#1216))) "6=before tuple")
+    ((stack (Value (Ident _#1216))) "6=after tuple")
+    ((stack (Value (Ident _#1216))) "5=before tuple")
+    ((stack (Value (Ident _#1216)))
+      "4=before (Nil\
+     \n ((desc Operation)\
+     \n  (range\
+     \n   ((start 0) (stop 0) (source (String ((name (generated)) (content \"\"))))))))")
+    ((stack (Value Value (Ident _#1216)))
+      "4=after (Nil\
+     \n ((desc Operation)\
+     \n  (range\
+     \n   ((start 0) (stop 0) (source (String ((name (generated)) (content \"\"))))))))")
+    ((stack (Value Value (Ident _#1216))) "5=after tuple")
+    ((stack (Value (Ident _#1216))) "7=after tuple")
     [{
        "line": 0,
        "start_char": 0,
@@ -265,6 +297,22 @@ let%expect_test "Whole file" =
     { file_name = "contracts/single.parameter.jsligo"; range = None };
   [%expect
     {|
+    ((stack ((Ident _#1630))) "11=before tuple")
+    ((stack ((Ident _#1630))) "10=before tuple")
+    ((stack (Value (Ident _#1630))) "10=after tuple")
+    ((stack (Value (Ident _#1630))) "9=before tuple")
+    ((stack (Value (Ident _#1630)))
+      "8=before (Nil\
+     \n ((desc Operation)\
+     \n  (range\
+     \n   ((start 0) (stop 0) (source (String ((name (generated)) (content \"\"))))))))")
+    ((stack (Value Value (Ident _#1630)))
+      "8=after (Nil\
+     \n ((desc Operation)\
+     \n  (range\
+     \n   ((start 0) (stop 0) (source (String ((name (generated)) (content \"\"))))))))")
+    ((stack (Value Value (Ident _#1630))) "9=after tuple")
+    ((stack (Value (Ident _#1630))) "11=after tuple")
     [{
        "line": 0,
        "start_char": 0,

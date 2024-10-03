@@ -31,7 +31,56 @@ let%expect_test "CameLIGO no statements" =
       ~f:(fun r -> { file_path = "contracts/lsp/format_me.mligo"; range = r })
   in
   run_multiple_tests tests ~test_runner:get_formatting_test;
-  [%expect {| [; ; ] |}]
+  [%expect {|
+    ((stack ((Ident _#620))) "3=before tuple")
+    ((stack ((Ident _#620))) "2=before tuple")
+    ((stack (Value (Ident _#620))) "2=after tuple")
+    ((stack (Value (Ident _#620))) "1=before tuple")
+    ((stack (Value (Ident _#620)))
+      "0=before (Nil\
+     \n ((desc Operation)\
+     \n  (range\
+     \n   ((start 0) (stop 0) (source (String ((name (generated)) (content \"\"))))))))")
+    ((stack (Value Value (Ident _#620)))
+      "0=after (Nil\
+     \n ((desc Operation)\
+     \n  (range\
+     \n   ((start 0) (stop 0) (source (String ((name (generated)) (content \"\"))))))))")
+    ((stack (Value Value (Ident _#620))) "1=after tuple")
+    ((stack (Value (Ident _#620))) "3=after tuple")
+    ((stack ((Ident _#1018))) "7=before tuple")
+    ((stack ((Ident _#1018))) "6=before tuple")
+    ((stack (Value (Ident _#1018))) "6=after tuple")
+    ((stack (Value (Ident _#1018))) "5=before tuple")
+    ((stack (Value (Ident _#1018)))
+      "4=before (Nil\
+     \n ((desc Operation)\
+     \n  (range\
+     \n   ((start 0) (stop 0) (source (String ((name (generated)) (content \"\"))))))))")
+    ((stack (Value Value (Ident _#1018)))
+      "4=after (Nil\
+     \n ((desc Operation)\
+     \n  (range\
+     \n   ((start 0) (stop 0) (source (String ((name (generated)) (content \"\"))))))))")
+    ((stack (Value Value (Ident _#1018))) "5=after tuple")
+    ((stack (Value (Ident _#1018))) "7=after tuple")
+    ((stack ((Ident _#1416))) "11=before tuple")
+    ((stack ((Ident _#1416))) "10=before tuple")
+    ((stack (Value (Ident _#1416))) "10=after tuple")
+    ((stack (Value (Ident _#1416))) "9=before tuple")
+    ((stack (Value (Ident _#1416)))
+      "8=before (Nil\
+     \n ((desc Operation)\
+     \n  (range\
+     \n   ((start 0) (stop 0) (source (String ((name (generated)) (content \"\"))))))))")
+    ((stack (Value Value (Ident _#1416)))
+      "8=after (Nil\
+     \n ((desc Operation)\
+     \n  (range\
+     \n   ((start 0) (stop 0) (source (String ((name (generated)) (content \"\"))))))))")
+    ((stack (Value Value (Ident _#1416))) "9=after tuple")
+    ((stack (Value (Ident _#1416))) "11=after tuple")
+    [; ; ] |}]
 
 let%expect_test "CameLIGO one directive" =
   let tests =
@@ -45,34 +94,114 @@ let%expect_test "CameLIGO one directive" =
   run_multiple_tests tests ~test_runner:get_formatting_test;
   [%expect
     {|
+    ((stack ((Ident _#1814))) "15=before tuple")
+    ((stack ((Ident _#1814))) "14=before tuple")
+    ((stack (Value (Ident _#1814))) "14=after tuple")
+    ((stack (Value (Ident _#1814))) "13=before tuple")
+    ((stack (Value (Ident _#1814)))
+      "12=before (Nil\
+     \n ((desc Operation)\
+     \n  (range\
+     \n   ((start 0) (stop 0) (source (String ((name (generated)) (content \"\"))))))))")
+    ((stack (Value Value (Ident _#1814)))
+      "12=after (Nil\
+     \n ((desc Operation)\
+     \n  (range\
+     \n   ((start 0) (stop 0) (source (String ((name (generated)) (content \"\"))))))))")
+    ((stack (Value Value (Ident _#1814))) "13=after tuple")
+    ((stack (Value (Ident _#1814))) "15=after tuple")
     [{
        "newText": "#include \"simple.mligo\"",
        "range": {
          "end": { "character": 34, "line": 0 },
          "start": { "character": 0, "line": 0 }
        }
-     };
+     };((stack ((Ident _#2212))) "19=before tuple")
+    ((stack ((Ident _#2212))) "18=before tuple")
+    ((stack (Value (Ident _#2212))) "18=after tuple")
+    ((stack (Value (Ident _#2212))) "17=before tuple")
+    ((stack (Value (Ident _#2212)))
+      "16=before (Nil\
+     \n ((desc Operation)\
+     \n  (range\
+     \n   ((start 0) (stop 0) (source (String ((name (generated)) (content \"\"))))))))")
+    ((stack (Value Value (Ident _#2212)))
+      "16=after (Nil\
+     \n ((desc Operation)\
+     \n  (range\
+     \n   ((start 0) (stop 0) (source (String ((name (generated)) (content \"\"))))))))")
+    ((stack (Value Value (Ident _#2212))) "17=after tuple")
+    ((stack (Value (Ident _#2212))) "19=after tuple")
+
      {
        "newText": "#include \"simple.mligo\"",
        "range": {
          "end": { "character": 34, "line": 0 },
          "start": { "character": 0, "line": 0 }
        }
-     };
+     };((stack ((Ident _#2610))) "23=before tuple")
+    ((stack ((Ident _#2610))) "22=before tuple")
+    ((stack (Value (Ident _#2610))) "22=after tuple")
+    ((stack (Value (Ident _#2610))) "21=before tuple")
+    ((stack (Value (Ident _#2610)))
+      "20=before (Nil\
+     \n ((desc Operation)\
+     \n  (range\
+     \n   ((start 0) (stop 0) (source (String ((name (generated)) (content \"\"))))))))")
+    ((stack (Value Value (Ident _#2610)))
+      "20=after (Nil\
+     \n ((desc Operation)\
+     \n  (range\
+     \n   ((start 0) (stop 0) (source (String ((name (generated)) (content \"\"))))))))")
+    ((stack (Value Value (Ident _#2610))) "21=after tuple")
+    ((stack (Value (Ident _#2610))) "23=after tuple")
+
      {
        "newText": "#import \"local_module.mligo\" \"A\"",
        "range": {
          "end": { "character": 39, "line": 2 },
          "start": { "character": 0, "line": 2 }
        }
-     };
+     };((stack ((Ident _#3008))) "27=before tuple")
+    ((stack ((Ident _#3008))) "26=before tuple")
+    ((stack (Value (Ident _#3008))) "26=after tuple")
+    ((stack (Value (Ident _#3008))) "25=before tuple")
+    ((stack (Value (Ident _#3008)))
+      "24=before (Nil\
+     \n ((desc Operation)\
+     \n  (range\
+     \n   ((start 0) (stop 0) (source (String ((name (generated)) (content \"\"))))))))")
+    ((stack (Value Value (Ident _#3008)))
+      "24=after (Nil\
+     \n ((desc Operation)\
+     \n  (range\
+     \n   ((start 0) (stop 0) (source (String ((name (generated)) (content \"\"))))))))")
+    ((stack (Value Value (Ident _#3008))) "25=after tuple")
+    ((stack (Value (Ident _#3008))) "27=after tuple")
+
      {
        "newText": "#import \"local_module.mligo\" \"A\"",
        "range": {
          "end": { "character": 39, "line": 2 },
          "start": { "character": 0, "line": 2 }
        }
-     };
+     };((stack ((Ident _#3406))) "31=before tuple")
+    ((stack ((Ident _#3406))) "30=before tuple")
+    ((stack (Value (Ident _#3406))) "30=after tuple")
+    ((stack (Value (Ident _#3406))) "29=before tuple")
+    ((stack (Value (Ident _#3406)))
+      "28=before (Nil\
+     \n ((desc Operation)\
+     \n  (range\
+     \n   ((start 0) (stop 0) (source (String ((name (generated)) (content \"\"))))))))")
+    ((stack (Value Value (Ident _#3406)))
+      "28=after (Nil\
+     \n ((desc Operation)\
+     \n  (range\
+     \n   ((start 0) (stop 0) (source (String ((name (generated)) (content \"\"))))))))")
+    ((stack (Value Value (Ident _#3406))) "29=after tuple")
+    ((stack (Value (Ident _#3406))) "31=after tuple")
+
      {
        "newText": "#import \"local_module.mligo\" \"A\"",
        "range": {
@@ -93,27 +222,91 @@ let%expect_test "CameLIGO one declaration" =
   run_multiple_tests tests ~test_runner:get_formatting_test;
   [%expect
     {|
+    ((stack ((Ident _#3804))) "35=before tuple")
+    ((stack ((Ident _#3804))) "34=before tuple")
+    ((stack (Value (Ident _#3804))) "34=after tuple")
+    ((stack (Value (Ident _#3804))) "33=before tuple")
+    ((stack (Value (Ident _#3804)))
+      "32=before (Nil\
+     \n ((desc Operation)\
+     \n  (range\
+     \n   ((start 0) (stop 0) (source (String ((name (generated)) (content \"\"))))))))")
+    ((stack (Value Value (Ident _#3804)))
+      "32=after (Nil\
+     \n ((desc Operation)\
+     \n  (range\
+     \n   ((start 0) (stop 0) (source (String ((name (generated)) (content \"\"))))))))")
+    ((stack (Value Value (Ident _#3804))) "33=after tuple")
+    ((stack (Value (Ident _#3804))) "35=after tuple")
     [{
        "newText": "let format_me =\n  let x = 20 in\n  x * 2",
        "range": {
          "end": { "character": 39, "line": 4 },
          "start": { "character": 0, "line": 4 }
        }
-     };
+     };((stack ((Ident _#4202))) "39=before tuple")
+    ((stack ((Ident _#4202))) "38=before tuple")
+    ((stack (Value (Ident _#4202))) "38=after tuple")
+    ((stack (Value (Ident _#4202))) "37=before tuple")
+    ((stack (Value (Ident _#4202)))
+      "36=before (Nil\
+     \n ((desc Operation)\
+     \n  (range\
+     \n   ((start 0) (stop 0) (source (String ((name (generated)) (content \"\"))))))))")
+    ((stack (Value Value (Ident _#4202)))
+      "36=after (Nil\
+     \n ((desc Operation)\
+     \n  (range\
+     \n   ((start 0) (stop 0) (source (String ((name (generated)) (content \"\"))))))))")
+    ((stack (Value Value (Ident _#4202))) "37=after tuple")
+    ((stack (Value (Ident _#4202))) "39=after tuple")
+
      {
        "newText": "let format_me =\n  let x = 20 in\n  x * 2",
        "range": {
          "end": { "character": 39, "line": 4 },
          "start": { "character": 0, "line": 4 }
        }
-     };
+     };((stack ((Ident _#4600))) "43=before tuple")
+    ((stack ((Ident _#4600))) "42=before tuple")
+    ((stack (Value (Ident _#4600))) "42=after tuple")
+    ((stack (Value (Ident _#4600))) "41=before tuple")
+    ((stack (Value (Ident _#4600)))
+      "40=before (Nil\
+     \n ((desc Operation)\
+     \n  (range\
+     \n   ((start 0) (stop 0) (source (String ((name (generated)) (content \"\"))))))))")
+    ((stack (Value Value (Ident _#4600)))
+      "40=after (Nil\
+     \n ((desc Operation)\
+     \n  (range\
+     \n   ((start 0) (stop 0) (source (String ((name (generated)) (content \"\"))))))))")
+    ((stack (Value Value (Ident _#4600))) "41=after tuple")
+    ((stack (Value (Ident _#4600))) "43=after tuple")
+
      {
        "newText": "let format_me_2 =\n  let q = A.A.s in\n  q ^ q",
        "range": {
          "end": { "character": 40, "line": 5 },
          "start": { "character": 0, "line": 5 }
        }
-     };
+     };((stack ((Ident _#4998))) "47=before tuple")
+    ((stack ((Ident _#4998))) "46=before tuple")
+    ((stack (Value (Ident _#4998))) "46=after tuple")
+    ((stack (Value (Ident _#4998))) "45=before tuple")
+    ((stack (Value (Ident _#4998)))
+      "44=before (Nil\
+     \n ((desc Operation)\
+     \n  (range\
+     \n   ((start 0) (stop 0) (source (String ((name (generated)) (content \"\"))))))))")
+    ((stack (Value Value (Ident _#4998)))
+      "44=after (Nil\
+     \n ((desc Operation)\
+     \n  (range\
+     \n   ((start 0) (stop 0) (source (String ((name (generated)) (content \"\"))))))))")
+    ((stack (Value Value (Ident _#4998))) "45=after tuple")
+    ((stack (Value (Ident _#4998))) "47=after tuple")
+
      {
        "newText": "let format_me_2 =\n  let q = A.A.s in\n  q ^ q",
        "range": {
@@ -132,20 +325,68 @@ let%expect_test "CameLIGO two declarations" =
   (* FIXME there should be a newline between decls *)
   [%expect
     {|
+    ((stack ((Ident _#5396))) "51=before tuple")
+    ((stack ((Ident _#5396))) "50=before tuple")
+    ((stack (Value (Ident _#5396))) "50=after tuple")
+    ((stack (Value (Ident _#5396))) "49=before tuple")
+    ((stack (Value (Ident _#5396)))
+      "48=before (Nil\
+     \n ((desc Operation)\
+     \n  (range\
+     \n   ((start 0) (stop 0) (source (String ((name (generated)) (content \"\"))))))))")
+    ((stack (Value Value (Ident _#5396)))
+      "48=after (Nil\
+     \n ((desc Operation)\
+     \n  (range\
+     \n   ((start 0) (stop 0) (source (String ((name (generated)) (content \"\"))))))))")
+    ((stack (Value Value (Ident _#5396))) "49=after tuple")
+    ((stack (Value (Ident _#5396))) "51=after tuple")
     [{
        "newText": "let format_me =\n  let x = 20 in\n  x * 2\nlet format_me_2 =\n  let q = A.A.s in\n  q ^ q",
        "range": {
          "end": { "character": 40, "line": 5 },
          "start": { "character": 0, "line": 4 }
        }
-     };
+     };((stack ((Ident _#5794))) "55=before tuple")
+    ((stack ((Ident _#5794))) "54=before tuple")
+    ((stack (Value (Ident _#5794))) "54=after tuple")
+    ((stack (Value (Ident _#5794))) "53=before tuple")
+    ((stack (Value (Ident _#5794)))
+      "52=before (Nil\
+     \n ((desc Operation)\
+     \n  (range\
+     \n   ((start 0) (stop 0) (source (String ((name (generated)) (content \"\"))))))))")
+    ((stack (Value Value (Ident _#5794)))
+      "52=after (Nil\
+     \n ((desc Operation)\
+     \n  (range\
+     \n   ((start 0) (stop 0) (source (String ((name (generated)) (content \"\"))))))))")
+    ((stack (Value Value (Ident _#5794))) "53=after tuple")
+    ((stack (Value (Ident _#5794))) "55=after tuple")
+
      {
        "newText": "let format_me =\n  let x = 20 in\n  x * 2\nlet format_me_2 =\n  let q = A.A.s in\n  q ^ q",
        "range": {
          "end": { "character": 40, "line": 5 },
          "start": { "character": 0, "line": 4 }
        }
-     };
+     };((stack ((Ident _#6192))) "59=before tuple")
+    ((stack ((Ident _#6192))) "58=before tuple")
+    ((stack (Value (Ident _#6192))) "58=after tuple")
+    ((stack (Value (Ident _#6192))) "57=before tuple")
+    ((stack (Value (Ident _#6192)))
+      "56=before (Nil\
+     \n ((desc Operation)\
+     \n  (range\
+     \n   ((start 0) (stop 0) (source (String ((name (generated)) (content \"\"))))))))")
+    ((stack (Value Value (Ident _#6192)))
+      "56=after (Nil\
+     \n ((desc Operation)\
+     \n  (range\
+     \n   ((start 0) (stop 0) (source (String ((name (generated)) (content \"\"))))))))")
+    ((stack (Value Value (Ident _#6192))) "57=after tuple")
+    ((stack (Value (Ident _#6192))) "59=after tuple")
+
      {
        "newText": "let format_me =\n  let x = 20 in\n  x * 2\nlet format_me_2 =\n  let q = A.A.s in\n  q ^ q",
        "range": {

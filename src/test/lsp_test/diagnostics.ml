@@ -67,6 +67,22 @@ let%expect_test "Syntax error" =
     { file_path = "contracts/lsp/syntax_error.mligo"; max_number_of_problems = None };
   [%expect
     {|
+    ((stack ((Ident _#996))) "3=before tuple")
+    ((stack ((Ident _#996))) "2=before tuple")
+    ((stack (Value (Ident _#996))) "2=after tuple")
+    ((stack (Value (Ident _#996))) "1=before tuple")
+    ((stack (Value (Ident _#996)))
+      "0=before (Nil\
+     \n ((desc Operation)\
+     \n  (range\
+     \n   ((start 0) (stop 0) (source (String ((name (generated)) (content \"\"))))))))")
+    ((stack (Value Value (Ident _#996)))
+      "0=after (Nil\
+     \n ((desc Operation)\
+     \n  (range\
+     \n   ((start 0) (stop 0) (source (String ((name (generated)) (content \"\"))))))))")
+    ((stack (Value Value (Ident _#996))) "1=after tuple")
+    ((stack (Value (Ident _#996))) "3=after tuple")
     [("../../../../../default/src/test/contracts/lsp/syntax_error.mligo",
       [{
          "message": "[Compiler stage: parsing] Ill-formed contract.\nAt this point, if the current declaration is complete, one of the\nfollowing is expected:\n  * another declaration;\n  * the end of the file.\n",
@@ -82,6 +98,22 @@ let%expect_test "Warnings" =
     { file_path = "contracts/lsp/warnings.jsligo"; max_number_of_problems = None };
   [%expect
     {|
+    ((stack ((Ident _#1384))) "7=before tuple")
+    ((stack ((Ident _#1384))) "6=before tuple")
+    ((stack (Value (Ident _#1384))) "6=after tuple")
+    ((stack (Value (Ident _#1384))) "5=before tuple")
+    ((stack (Value (Ident _#1384)))
+      "4=before (Nil\
+     \n ((desc Operation)\
+     \n  (range\
+     \n   ((start 0) (stop 0) (source (String ((name (generated)) (content \"\"))))))))")
+    ((stack (Value Value (Ident _#1384)))
+      "4=after (Nil\
+     \n ((desc Operation)\
+     \n  (range\
+     \n   ((start 0) (stop 0) (source (String ((name (generated)) (content \"\"))))))))")
+    ((stack (Value Value (Ident _#1384))) "5=after tuple")
+    ((stack (Value (Ident _#1384))) "7=after tuple")
     [("../../../../../default/src/test/contracts/lsp/warnings.jsligo",
       [{
          "message": "[Compiler stage: abstractor] Toplevel let declaration is silently changed to const declaration.",
@@ -144,13 +176,46 @@ let%expect_test "Syntax and type errors" =
 let%expect_test "All OK" =
   get_diagnostics_test
     { file_path = "contracts/lsp/simple.mligo"; max_number_of_problems = None };
-  [%expect {| [("../../../../../default/src/test/contracts/lsp/simple.mligo", [])] |}]
+  [%expect {|
+    ((stack ((Ident _#2158))) "11=before tuple")
+    ((stack ((Ident _#2158))) "10=before tuple")
+    ((stack (Value (Ident _#2158))) "10=after tuple")
+    ((stack (Value (Ident _#2158))) "9=before tuple")
+    ((stack (Value (Ident _#2158)))
+      "8=before (Nil\
+     \n ((desc Operation)\
+     \n  (range\
+     \n   ((start 0) (stop 0) (source (String ((name (generated)) (content \"\"))))))))")
+    ((stack (Value Value (Ident _#2158)))
+      "8=after (Nil\
+     \n ((desc Operation)\
+     \n  (range\
+     \n   ((start 0) (stop 0) (source (String ((name (generated)) (content \"\"))))))))")
+    ((stack (Value Value (Ident _#2158))) "9=after tuple")
+    ((stack (Value (Ident _#2158))) "11=after tuple")
+    [("../../../../../default/src/test/contracts/lsp/simple.mligo", [])] |}]
 
 let%expect_test "Limit from 11 to 2 diagnostics in session" =
   get_diagnostics_test
     { file_path = "contracts/warning_sum_types.mligo"; max_number_of_problems = Some 2 };
   [%expect
     {|
+    ((stack ((Ident _#2565))) "15=before tuple")
+    ((stack ((Ident _#2565))) "14=before tuple")
+    ((stack (Value (Ident _#2565))) "14=after tuple")
+    ((stack (Value (Ident _#2565))) "13=before tuple")
+    ((stack (Value (Ident _#2565)))
+      "12=before (Nil\
+     \n ((desc Operation)\
+     \n  (range\
+     \n   ((start 0) (stop 0) (source (String ((name (generated)) (content \"\"))))))))")
+    ((stack (Value Value (Ident _#2565)))
+      "12=after (Nil\
+     \n ((desc Operation)\
+     \n  (range\
+     \n   ((start 0) (stop 0) (source (String ((name (generated)) (content \"\"))))))))")
+    ((stack (Value Value (Ident _#2565))) "13=after tuple")
+    ((stack (Value (Ident _#2565))) "15=after tuple")
     [("../../../../../default/src/test/contracts/warning_sum_types.mligo",
       [{
          "message": "[Compiler stage: typer] Warning: The type of \"TopTop(42)\" is ambiguous: Inferred type is \"ttop2\" but could be of type \"ttop\".\nHint: You might want to add a type annotation. \n",
@@ -174,6 +239,22 @@ let%expect_test "Polymorphic Type error" =
     { file_path = "contracts/lsp/poly_type_error.mligo"; max_number_of_problems = None };
   [%expect
     {|
+    ((stack ((Ident _#2968))) "19=before tuple")
+    ((stack ((Ident _#2968))) "18=before tuple")
+    ((stack (Value (Ident _#2968))) "18=after tuple")
+    ((stack (Value (Ident _#2968))) "17=before tuple")
+    ((stack (Value (Ident _#2968)))
+      "16=before (Nil\
+     \n ((desc Operation)\
+     \n  (range\
+     \n   ((start 0) (stop 0) (source (String ((name (generated)) (content \"\"))))))))")
+    ((stack (Value Value (Ident _#2968)))
+      "16=after (Nil\
+     \n ((desc Operation)\
+     \n  (range\
+     \n   ((start 0) (stop 0) (source (String ((name (generated)) (content \"\"))))))))")
+    ((stack (Value Value (Ident _#2968))) "17=after tuple")
+    ((stack (Value (Ident _#2968))) "19=after tuple")
     [("../../../../../default/src/test/contracts/lsp/poly_type_error.mligo",
       [{
          "message": "[Compiler stage: typer] This expression has type \"int\", but an expression was expected of type \n\"( ^a * ^b ) -> ^a\".\nType \"int\" is not compatible with type \"( ^a * ^b ) -> ^a\".\nHint: \"^b\", \"^a\" represent placeholder type(s).\n",
@@ -189,6 +270,22 @@ let%expect_test "No diagnostics for imported package." =
     { file_path = "contracts/lsp/registry.jsligo"; max_number_of_problems = None };
   [%expect
     {|
+    ((stack ((Ident _#3427))) "23=before tuple")
+    ((stack ((Ident _#3427))) "22=before tuple")
+    ((stack (Value (Ident _#3427))) "22=after tuple")
+    ((stack (Value (Ident _#3427))) "21=before tuple")
+    ((stack (Value (Ident _#3427)))
+      "20=before (Nil\
+     \n ((desc Operation)\
+     \n  (range\
+     \n   ((start 0) (stop 0) (source (String ((name (generated)) (content \"\"))))))))")
+    ((stack (Value Value (Ident _#3427)))
+      "20=after (Nil\
+     \n ((desc Operation)\
+     \n  (range\
+     \n   ((start 0) (stop 0) (source (String ((name (generated)) (content \"\"))))))))")
+    ((stack (Value Value (Ident _#3427))) "21=after tuple")
+    ((stack (Value (Ident _#3427))) "23=after tuple")
     [("../../../../../default/src/test/contracts/lsp/registry.jsligo", [])] |}]
 
 let%expect_test "Shows diagnostics from another file." =
@@ -196,6 +293,22 @@ let%expect_test "Shows diagnostics from another file." =
     { file_path = "contracts/lsp/import_warnings.jsligo"; max_number_of_problems = None };
   [%expect
     {|
+    ((stack ((Ident _#3821))) "27=before tuple")
+    ((stack ((Ident _#3821))) "26=before tuple")
+    ((stack (Value (Ident _#3821))) "26=after tuple")
+    ((stack (Value (Ident _#3821))) "25=before tuple")
+    ((stack (Value (Ident _#3821)))
+      "24=before (Nil\
+     \n ((desc Operation)\
+     \n  (range\
+     \n   ((start 0) (stop 0) (source (String ((name (generated)) (content \"\"))))))))")
+    ((stack (Value Value (Ident _#3821)))
+      "24=after (Nil\
+     \n ((desc Operation)\
+     \n  (range\
+     \n   ((start 0) (stop 0) (source (String ((name (generated)) (content \"\"))))))))")
+    ((stack (Value Value (Ident _#3821))) "25=after tuple")
+    ((stack (Value (Ident _#3821))) "27=after tuple")
     [("../../../../../default/src/test/contracts/lsp/import_warnings.jsligo", []);
      ("../../../../../default/src/test/contracts/lsp/warnings.jsligo",
       [{
@@ -220,6 +333,22 @@ let%expect_test "Shows TZIP-16 checks with a top-level storage." =
     { file_path = "contracts/lsp/test_metadata.mligo"; max_number_of_problems = None };
   [%expect
     {|
+    ((stack ((Ident _#4225))) "31=before tuple")
+    ((stack ((Ident _#4225))) "30=before tuple")
+    ((stack (Value (Ident _#4225))) "30=after tuple")
+    ((stack (Value (Ident _#4225))) "29=before tuple")
+    ((stack (Value (Ident _#4225)))
+      "28=before (Nil\
+     \n ((desc Operation)\
+     \n  (range\
+     \n   ((start 0) (stop 0) (source (String ((name (generated)) (content \"\"))))))))")
+    ((stack (Value Value (Ident _#4225)))
+      "28=after (Nil\
+     \n ((desc Operation)\
+     \n  (range\
+     \n   ((start 0) (stop 0) (source (String ((name (generated)) (content \"\"))))))))")
+    ((stack (Value Value (Ident _#4225))) "29=after tuple")
+    ((stack (Value (Ident _#4225))) "31=after tuple")
     [("../../../../../default/src/test/contracts/lsp/test_metadata.mligo", [])] |}]
 
 let%expect_test "Shows a duplicate entrypoint error." =
@@ -229,6 +358,22 @@ let%expect_test "Shows a duplicate entrypoint error." =
     };
   [%expect
     {|
+    ((stack ((Ident _#4638))) "35=before tuple")
+    ((stack ((Ident _#4638))) "34=before tuple")
+    ((stack (Value (Ident _#4638))) "34=after tuple")
+    ((stack (Value (Ident _#4638))) "33=before tuple")
+    ((stack (Value (Ident _#4638)))
+      "32=before (Nil\
+     \n ((desc Operation)\
+     \n  (range\
+     \n   ((start 0) (stop 0) (source (String ((name (generated)) (content \"\"))))))))")
+    ((stack (Value Value (Ident _#4638)))
+      "32=after (Nil\
+     \n ((desc Operation)\
+     \n  (range\
+     \n   ((start 0) (stop 0) (source (String ((name (generated)) (content \"\"))))))))")
+    ((stack (Value Value (Ident _#4638))) "33=after tuple")
+    ((stack (Value (Ident _#4638))) "35=after tuple")
     [("../../../../../default/src/test/contracts/lsp/entrypoints_repeated.mligo",
       [{
          "message": "[Compiler stage: typer] Duplicate entry-point ep_int",
@@ -246,6 +391,22 @@ let%expect_test "Shows an error when two toplevel entrypoints have different sto
     };
   [%expect
     {|
+    ((stack ((Ident _#5033))) "39=before tuple")
+    ((stack ((Ident _#5033))) "38=before tuple")
+    ((stack (Value (Ident _#5033))) "38=after tuple")
+    ((stack (Value (Ident _#5033))) "37=before tuple")
+    ((stack (Value (Ident _#5033)))
+      "36=before (Nil\
+     \n ((desc Operation)\
+     \n  (range\
+     \n   ((start 0) (stop 0) (source (String ((name (generated)) (content \"\"))))))))")
+    ((stack (Value Value (Ident _#5033)))
+      "36=after (Nil\
+     \n ((desc Operation)\
+     \n  (range\
+     \n   ((start 0) (stop 0) (source (String ((name (generated)) (content \"\"))))))))")
+    ((stack (Value Value (Ident _#5033))) "37=after tuple")
+    ((stack (Value (Ident _#5033))) "39=after tuple")
     [("../../../../../default/src/test/contracts/lsp/entrypoints_different_storage.mligo",
       [{
          "message": "[Compiler stage: typer] Storage types do not match for different entrypoints:\n- ep_int : int\n- ep_string : string",
@@ -261,6 +422,22 @@ let%expect_test "Shows views-related errors and storage warnings." =
     { file_path = "contracts/lsp/entrypoints_views.mligo"; max_number_of_problems = None };
   [%expect
     {|
+    ((stack ((Ident _#5436))) "43=before tuple")
+    ((stack ((Ident _#5436))) "42=before tuple")
+    ((stack (Value (Ident _#5436))) "42=after tuple")
+    ((stack (Value (Ident _#5436))) "41=before tuple")
+    ((stack (Value (Ident _#5436)))
+      "40=before (Nil\
+     \n ((desc Operation)\
+     \n  (range\
+     \n   ((start 0) (stop 0) (source (String ((name (generated)) (content \"\"))))))))")
+    ((stack (Value Value (Ident _#5436)))
+      "40=after (Nil\
+     \n ((desc Operation)\
+     \n  (range\
+     \n   ((start 0) (stop 0) (source (String ((name (generated)) (content \"\"))))))))")
+    ((stack (Value Value (Ident _#5436))) "41=after tuple")
+    ((stack (Value (Ident _#5436))) "43=after tuple")
     [("../../../../../default/src/test/contracts/lsp/entrypoints_views.mligo",
       [{
          "message": "[Compiler stage: self_ast_typed] The view \"bad_view_not_func\" is not a function.",
@@ -278,6 +455,22 @@ let%expect_test "Shows entrypoint-related errors in many modules simultaneously.
     };
   [%expect
     {|
+    ((stack ((Ident _#5857))) "47=before tuple")
+    ((stack ((Ident _#5857))) "46=before tuple")
+    ((stack (Value (Ident _#5857))) "46=after tuple")
+    ((stack (Value (Ident _#5857))) "45=before tuple")
+    ((stack (Value (Ident _#5857)))
+      "44=before (Nil\
+     \n ((desc Operation)\
+     \n  (range\
+     \n   ((start 0) (stop 0) (source (String ((name (generated)) (content \"\"))))))))")
+    ((stack (Value Value (Ident _#5857)))
+      "44=after (Nil\
+     \n ((desc Operation)\
+     \n  (range\
+     \n   ((start 0) (stop 0) (source (String ((name (generated)) (content \"\"))))))))")
+    ((stack (Value Value (Ident _#5857))) "45=after tuple")
+    ((stack (Value (Ident _#5857))) "47=after tuple")
     [("../../../../../default/src/test/contracts/lsp/entrypoints_modules.mligo",
       [{
          "message": "[Compiler stage: typer] Storage types do not match for different entrypoints:\n- ep_string : string\n- ep_int : int",
@@ -357,6 +550,22 @@ let%expect_test "Ghost_ident filter" =
     };
   [%expect
     {|
+    ((stack ((Ident _#7034))) "51=before tuple")
+    ((stack ((Ident _#7034))) "50=before tuple")
+    ((stack (Value (Ident _#7034))) "50=after tuple")
+    ((stack (Value (Ident _#7034))) "49=before tuple")
+    ((stack (Value (Ident _#7034)))
+      "48=before (Nil\
+     \n ((desc Operation)\
+     \n  (range\
+     \n   ((start 0) (stop 0) (source (String ((name (generated)) (content \"\"))))))))")
+    ((stack (Value Value (Ident _#7034)))
+      "48=after (Nil\
+     \n ((desc Operation)\
+     \n  (range\
+     \n   ((start 0) (stop 0) (source (String ((name (generated)) (content \"\"))))))))")
+    ((stack (Value Value (Ident _#7034))) "49=after tuple")
+    ((stack (Value (Ident _#7034))) "51=after tuple")
     [("../../../../../default/src/test/contracts/lsp/missing_module_name.mligo",
       [{
          "message": "[Compiler stage: parsing] Ill-formed module declaration.\nAt this point, the name of the module being declared is expected.\n",
@@ -404,6 +613,22 @@ let%expect_test "Shows a warning for deprecated functions" =
     { file_path = "contracts/deprecated.mligo"; max_number_of_problems = None };
   [%expect
     {|
+    ((stack ((Ident _#8230))) "55=before tuple")
+    ((stack ((Ident _#8230))) "54=before tuple")
+    ((stack (Value (Ident _#8230))) "54=after tuple")
+    ((stack (Value (Ident _#8230))) "53=before tuple")
+    ((stack (Value (Ident _#8230)))
+      "52=before (Nil\
+     \n ((desc Operation)\
+     \n  (range\
+     \n   ((start 0) (stop 0) (source (String ((name (generated)) (content \"\"))))))))")
+    ((stack (Value Value (Ident _#8230)))
+      "52=after (Nil\
+     \n ((desc Operation)\
+     \n  (range\
+     \n   ((start 0) (stop 0) (source (String ((name (generated)) (content \"\"))))))))")
+    ((stack (Value Value (Ident _#8230))) "53=after tuple")
+    ((stack (Value (Ident _#8230))) "55=after tuple")
     [("../../../../../default/src/test/contracts/deprecated.mligo",
       [{
          "message": "[Compiler stage: aggregation] \nWarning: deprecated value.\nReplace me by...\ng!\nmail: foo@bar.com\n",
@@ -418,13 +643,51 @@ let%expect_test "No diagnostics for dynamic entrypoints (mligo)." =
   get_diagnostics_test
     { file_path = "contracts/dynamic_entrypoints.mligo"; max_number_of_problems = None };
   [%expect
-    {| [("../../../../../default/src/test/contracts/dynamic_entrypoints.mligo", [])] |}]
+    {|
+      ((stack ()) "60=before let in one")
+      ((stack ((Ident _#8732))) "59=before tuple")
+      ((stack ((Ident _#8732))) "58=before tuple")
+      ((stack (Value (Ident _#8732))) "58=after tuple")
+      ((stack (Value (Ident _#8732))) "57=before tuple")
+      ((stack (Value (Ident _#8732)))
+        "56=before (Nil\
+       \n ((desc Operation)\
+       \n  (range\
+       \n   ((start 0) (stop 0) (source (String ((name (generated)) (content \"\"))))))))")
+      ((stack (Value Value (Ident _#8732)))
+        "56=after (Nil\
+       \n ((desc Operation)\
+       \n  (range\
+       \n   ((start 0) (stop 0) (source (String ((name (generated)) (content \"\"))))))))")
+      ((stack (Value Value (Ident _#8732))) "57=after tuple")
+      ((stack (Value (Ident _#8732))) "59=after tuple")
+      ((stack (Value)) "60=after let in one")
+      [("../../../../../default/src/test/contracts/dynamic_entrypoints.mligo", [])] |}]
 
 let%expect_test "No diagnostics for dynamic entrypoints (jsligo)." =
   get_diagnostics_test
     { file_path = "contracts/dynamic_entrypoints.jsligo"; max_number_of_problems = None };
   [%expect
-    {| [("../../../../../default/src/test/contracts/dynamic_entrypoints.jsligo", [])] |}]
+    {|
+      ((stack ()) "65=before let in one")
+      ((stack ((Ident _#9360))) "64=before tuple")
+      ((stack ((Ident _#9360))) "63=before tuple")
+      ((stack (Value (Ident _#9360))) "63=after tuple")
+      ((stack (Value (Ident _#9360))) "62=before tuple")
+      ((stack (Value (Ident _#9360)))
+        "61=before (Nil\
+       \n ((desc Operation)\
+       \n  (range\
+       \n   ((start 0) (stop 0) (source (String ((name (generated)) (content \"\"))))))))")
+      ((stack (Value Value (Ident _#9360)))
+        "61=after (Nil\
+       \n ((desc Operation)\
+       \n  (range\
+       \n   ((start 0) (stop 0) (source (String ((name (generated)) (content \"\"))))))))")
+      ((stack (Value Value (Ident _#9360))) "62=after tuple")
+      ((stack (Value (Ident _#9360))) "64=after tuple")
+      ((stack (Value)) "65=after let in one")
+      [("../../../../../default/src/test/contracts/dynamic_entrypoints.jsligo", [])] |}]
 
 let%expect_test "Shows errors for unsupported record fields (jsligo)." =
   get_diagnostics_test
@@ -592,6 +855,22 @@ let%expect_test "Shows errors for type error recovery 3" =
     };
   [%expect
     {|
+    ((stack ((Ident _#12213))) "69=before tuple")
+    ((stack ((Ident _#12213))) "68=before tuple")
+    ((stack (Value (Ident _#12213))) "68=after tuple")
+    ((stack (Value (Ident _#12213))) "67=before tuple")
+    ((stack (Value (Ident _#12213)))
+      "66=before (Nil\
+     \n ((desc Operation)\
+     \n  (range\
+     \n   ((start 0) (stop 0) (source (String ((name (generated)) (content \"\"))))))))")
+    ((stack (Value Value (Ident _#12213)))
+      "66=after (Nil\
+     \n ((desc Operation)\
+     \n  (range\
+     \n   ((start 0) (stop 0) (source (String ((name (generated)) (content \"\"))))))))")
+    ((stack (Value Value (Ident _#12213))) "67=after tuple")
+    ((stack (Value (Ident _#12213))) "69=after tuple")
     [("../../../../../default/src/test/contracts/lsp/hover/recover_type_error_3.mligo",
       [{
          "message": "[Compiler stage: typer] Variable \"f\" not found. ",
@@ -650,6 +929,22 @@ let%expect_test "Invalid entry point" =
     };
   [%expect
     {|
+    ((stack ((Ident _#12991))) "73=before tuple")
+    ((stack ((Ident _#12991))) "72=before tuple")
+    ((stack (Value (Ident _#12991))) "72=after tuple")
+    ((stack (Value (Ident _#12991))) "71=before tuple")
+    ((stack (Value (Ident _#12991)))
+      "70=before (Nil\
+     \n ((desc Operation)\
+     \n  (range\
+     \n   ((start 0) (stop 0) (source (String ((name (generated)) (content \"\"))))))))")
+    ((stack (Value Value (Ident _#12991)))
+      "70=after (Nil\
+     \n ((desc Operation)\
+     \n  (range\
+     \n   ((start 0) (stop 0) (source (String ((name (generated)) (content \"\"))))))))")
+    ((stack (Value Value (Ident _#12991))) "71=after tuple")
+    ((stack (Value (Ident _#12991))) "73=after tuple")
     [("../../../../../default/src/test/contracts/lsp/entrypoint_invalid.mligo",
       [{
          "message": "[Compiler stage: typer] Not an entrypoint: unit -> int -> ( list (operation) * unit )",
@@ -667,9 +962,151 @@ let%expect_test "TZIP-16 metadata checks: common" =
     };
   [%expect
     {|
+    ((stack ((Ident _#13383))) "77=before tuple")
+    ((stack ((Ident _#13383))) "76=before tuple")
+    ((stack (Value (Ident _#13383))) "76=after tuple")
+    ((stack (Value (Ident _#13383))) "75=before tuple")
+    ((stack (Value (Ident _#13383)))
+      "74=before (Nil\
+     \n ((desc Operation)\
+     \n  (range\
+     \n   ((start 0) (stop 0) (source (String ((name (generated)) (content \"\"))))))))")
+    ((stack (Value Value (Ident _#13383)))
+      "74=after (Nil\
+     \n ((desc Operation)\
+     \n  (range\
+     \n   ((start 0) (stop 0) (source (String ((name (generated)) (content \"\"))))))))")
+    ((stack (Value Value (Ident _#13383))) "75=after tuple")
+    ((stack (Value (Ident _#13383))) "77=after tuple")
+    ((stack ()) "83=before tuple")
+    ((stack ()) "82=before tuple")
+    ((stack ()) "81=before Update")
+    ((stack ())
+      "80=before (Empty_bigmap\
+     \n ((desc String)\
+     \n  (range\
+     \n   ((start 10) (stop 12)\
+     \n    (source\
+     \n     (File\
+     \n      /home/eduardo/y/ligo/_build/default/src/test/contracts/contract_metadata/metadata_tzip16_check.mligo)))))\
+     \n ((desc Bytes)\
+     \n  (range\
+     \n   ((start 10) (stop 80)\
+     \n    (source\
+     \n     (File\
+     \n      /home/eduardo/y/ligo/_build/default/src/test/contracts/contract_metadata/metadata_tzip16_check.mligo))))))")
+    ((stack (Value))
+      "80=after (Empty_bigmap\
+     \n ((desc String)\
+     \n  (range\
+     \n   ((start 10) (stop 12)\
+     \n    (source\
+     \n     (File\
+     \n      /home/eduardo/y/ligo/_build/default/src/test/contracts/contract_metadata/metadata_tzip16_check.mligo)))))\
+     \n ((desc Bytes)\
+     \n  (range\
+     \n   ((start 10) (stop 80)\
+     \n    (source\
+     \n     (File\
+     \n      /home/eduardo/y/ligo/_build/default/src/test/contracts/contract_metadata/metadata_tzip16_check.mligo))))))")
+    ((stack (Value)) "79=before Some")
+    ((stack (Value Value)) "79=after Some")
+    ((stack (Value)) "81=after Update")
+    ((stack (Value)) "82=after tuple")
+    ((stack (Value)) "78=before tuple")
+    ((stack (Value Value)) "78=after tuple")
+    ((stack (Value)) "83=after tuple")
+    ((stack ()) "89=before tuple")
+    ((stack ()) "88=before tuple")
+    ((stack ()) "87=before Update")
+    ((stack ())
+      "86=before (Empty_bigmap\
+     \n ((desc String)\
+     \n  (range\
+     \n   ((start 10) (stop 12)\
+     \n    (source\
+     \n     (File\
+     \n      /home/eduardo/y/ligo/_build/default/src/test/contracts/contract_metadata/metadata_tzip16_check.mligo)))))\
+     \n ((desc Bytes)\
+     \n  (range\
+     \n   ((start 10) (stop 93)\
+     \n    (source\
+     \n     (File\
+     \n      /home/eduardo/y/ligo/_build/default/src/test/contracts/contract_metadata/metadata_tzip16_check.mligo))))))")
+    ((stack (Value))
+      "86=after (Empty_bigmap\
+     \n ((desc String)\
+     \n  (range\
+     \n   ((start 10) (stop 12)\
+     \n    (source\
+     \n     (File\
+     \n      /home/eduardo/y/ligo/_build/default/src/test/contracts/contract_metadata/metadata_tzip16_check.mligo)))))\
+     \n ((desc Bytes)\
+     \n  (range\
+     \n   ((start 10) (stop 93)\
+     \n    (source\
+     \n     (File\
+     \n      /home/eduardo/y/ligo/_build/default/src/test/contracts/contract_metadata/metadata_tzip16_check.mligo))))))")
+    ((stack (Value)) "85=before Some")
+    ((stack (Value Value)) "85=after Some")
+    ((stack (Value)) "87=after Update")
+    ((stack (Value)) "88=after tuple")
+    ((stack (Value)) "84=before tuple")
+    ((stack (Value Value)) "84=after tuple")
+    ((stack (Value)) "89=after tuple")
+    ((stack ()) "91=before tuple")
+    ((stack ()) "90=before tuple")
+    ((stack (Value)) "90=after tuple")
+    ((stack (Value)) "91=after tuple")
+    ((stack ()) "97=before tuple")
+    ((stack ()) "96=before tuple")
+    ((stack ()) "95=before Update")
+    ((stack ())
+      "94=before (Empty_bigmap\
+     \n ((desc String)\
+     \n  (range\
+     \n   ((start 33) (stop 35)\
+     \n    (source\
+     \n     (File\
+     \n      /home/eduardo/y/ligo/_build/default/src/test/contracts/contract_metadata/metadata_tzip16_check.mligo)))))\
+     \n ((desc String)\
+     \n  (range\
+     \n   ((start 37) (stop 40)\
+     \n    (source\
+     \n     (File\
+     \n      /home/eduardo/y/ligo/_build/default/src/test/contracts/contract_metadata/metadata_tzip16_check.mligo))))))")
+    ((stack (Value))
+      "94=after (Empty_bigmap\
+     \n ((desc String)\
+     \n  (range\
+     \n   ((start 33) (stop 35)\
+     \n    (source\
+     \n     (File\
+     \n      /home/eduardo/y/ligo/_build/default/src/test/contracts/contract_metadata/metadata_tzip16_check.mligo)))))\
+     \n ((desc String)\
+     \n  (range\
+     \n   ((start 37) (stop 40)\
+     \n    (source\
+     \n     (File\
+     \n      /home/eduardo/y/ligo/_build/default/src/test/contracts/contract_metadata/metadata_tzip16_check.mligo))))))")
+    ((stack (Value)) "93=before Some")
+    ((stack (Value Value)) "93=after Some")
+    ((stack (Value)) "95=after Update")
+    ((stack (Value)) "96=after tuple")
+    ((stack (Value)) "92=before tuple")
+    ((stack (Value Value)) "92=after tuple")
+    ((stack (Value)) "97=after tuple")
     [("../../../../../default/src/test/contracts/contract_metadata/metadata_tzip16_check.mligo",
       [{
-         "message": "[Compiler stage: metadata_check] Warning: Could not download JSON in URL: https://ipfs.iasfao/iadsfdsfaspfs/QmSBc8QuynU7bArUGtjwCRhZUbJyZQArrczKnqM7hZPtfV",
+         "message": "[Compiler stage: metadata_check] Metadata field is not present.",
+         "range": {
+           "end": { "character": 16, "line": 3 },
+           "start": { "character": 4, "line": 3 }
+         },
+         "severity": 2
+       };
+       {
+         "message": "[Compiler stage: metadata_check] Metadata field is not present.",
          "range": {
            "end": { "character": 15, "line": 16 },
            "start": { "character": 4, "line": 16 }
@@ -685,7 +1122,7 @@ let%expect_test "TZIP-16 metadata checks: common" =
          "severity": 2
        };
        {
-         "message": "[Compiler stage: metadata_check] Cannot parse big-map metadata.",
+         "message": "[Compiler stage: metadata_check] Metadata field is not present.",
          "range": {
            "end": { "character": 21, "line": 32 },
            "start": { "character": 4, "line": 32 }
@@ -702,6 +1139,26 @@ let%expect_test "TZIP-16 metadata checks: both plain warning and metadata warnin
     };
   [%expect
     {|
+    ((stack ((Ident _#15312))) "101=before tuple")
+    ((stack ((Ident _#15312))) "100=before tuple")
+    ((stack (Value (Ident _#15312))) "100=after tuple")
+    ((stack (Value (Ident _#15312))) "99=before tuple")
+    ((stack (Value (Ident _#15312)))
+      "98=before (Nil\
+     \n ((desc Operation)\
+     \n  (range\
+     \n   ((start 0) (stop 0) (source (String ((name (generated)) (content \"\"))))))))")
+    ((stack (Value Value (Ident _#15312)))
+      "98=after (Nil\
+     \n ((desc Operation)\
+     \n  (range\
+     \n   ((start 0) (stop 0) (source (String ((name (generated)) (content \"\"))))))))")
+    ((stack (Value Value (Ident _#15312))) "99=after tuple")
+    ((stack (Value (Ident _#15312))) "101=after tuple")
+    ((stack ()) "103=before tuple")
+    ((stack ()) "102=before tuple")
+    ((stack (Value)) "102=after tuple")
+    ((stack (Value)) "103=after tuple")
     [("../../../../../default/src/test/contracts/contract_metadata/metadata_tzip16_two_warnings.jsligo",
       [{
          "message": "[Compiler stage: abstractor] Toplevel let declaration is silently changed to const declaration.",

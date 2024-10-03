@@ -31,6 +31,22 @@ let%expect_test _ =
   get_document_link_test "contracts/includer.mligo";
   [%expect
     {|
+    ((stack ((Ident _#612))) "3=before tuple")
+    ((stack ((Ident _#612))) "2=before tuple")
+    ((stack (Value (Ident _#612))) "2=after tuple")
+    ((stack (Value (Ident _#612))) "1=before tuple")
+    ((stack (Value (Ident _#612)))
+      "0=before (Nil\
+     \n ((desc Operation)\
+     \n  (range\
+     \n   ((start 0) (stop 0) (source (String ((name (generated)) (content \"\"))))))))")
+    ((stack (Value Value (Ident _#612)))
+      "0=after (Nil\
+     \n ((desc Operation)\
+     \n  (range\
+     \n   ((start 0) (stop 0) (source (String ((name (generated)) (content \"\"))))))))")
+    ((stack (Value Value (Ident _#612))) "1=after tuple")
+    ((stack (Value (Ident _#612))) "3=after tuple")
     [{
        "range": {
          "end": { "character": 25, "line": 2 },
@@ -43,6 +59,22 @@ let%expect_test _ =
   get_document_link_test "contracts/includer.jsligo";
   [%expect
     {|
+    ((stack ((Ident _#1002))) "7=before tuple")
+    ((stack ((Ident _#1002))) "6=before tuple")
+    ((stack (Value (Ident _#1002))) "6=after tuple")
+    ((stack (Value (Ident _#1002))) "5=before tuple")
+    ((stack (Value (Ident _#1002)))
+      "4=before (Nil\
+     \n ((desc Operation)\
+     \n  (range\
+     \n   ((start 0) (stop 0) (source (String ((name (generated)) (content \"\"))))))))")
+    ((stack (Value Value (Ident _#1002)))
+      "4=after (Nil\
+     \n ((desc Operation)\
+     \n  (range\
+     \n   ((start 0) (stop 0) (source (String ((name (generated)) (content \"\"))))))))")
+    ((stack (Value Value (Ident _#1002))) "5=after tuple")
+    ((stack (Value (Ident _#1002))) "7=after tuple")
     [{
        "range": {
          "end": { "character": 26, "line": 2 },
@@ -56,6 +88,22 @@ let%expect_test _ =
   get_document_link_test "contracts/build/E.mligo";
   [%expect
     {|
+    ((stack ((Ident _#1400))) "11=before tuple")
+    ((stack ((Ident _#1400))) "10=before tuple")
+    ((stack (Value (Ident _#1400))) "10=after tuple")
+    ((stack (Value (Ident _#1400))) "9=before tuple")
+    ((stack (Value (Ident _#1400)))
+      "8=before (Nil\
+     \n ((desc Operation)\
+     \n  (range\
+     \n   ((start 0) (stop 0) (source (String ((name (generated)) (content \"\"))))))))")
+    ((stack (Value Value (Ident _#1400)))
+      "8=after (Nil\
+     \n ((desc Operation)\
+     \n  (range\
+     \n   ((start 0) (stop 0) (source (String ((name (generated)) (content \"\"))))))))")
+    ((stack (Value Value (Ident _#1400))) "9=after tuple")
+    ((stack (Value (Ident _#1400))) "11=after tuple")
     [{
        "range": {
          "end": { "character": 17, "line": 1 },
@@ -76,6 +124,22 @@ let%expect_test _ =
   get_document_link_test "contracts/build/B.jsligo";
   [%expect
     {|
+    ((stack ((Ident _#1793))) "15=before tuple")
+    ((stack ((Ident _#1793))) "14=before tuple")
+    ((stack (Value (Ident _#1793))) "14=after tuple")
+    ((stack (Value (Ident _#1793))) "13=before tuple")
+    ((stack (Value (Ident _#1793)))
+      "12=before (Nil\
+     \n ((desc Operation)\
+     \n  (range\
+     \n   ((start 0) (stop 0) (source (String ((name (generated)) (content \"\"))))))))")
+    ((stack (Value Value (Ident _#1793)))
+      "12=after (Nil\
+     \n ((desc Operation)\
+     \n  (range\
+     \n   ((start 0) (stop 0) (source (String ((name (generated)) (content \"\"))))))))")
+    ((stack (Value Value (Ident _#1793))) "13=after tuple")
+    ((stack (Value (Ident _#1793))) "15=after tuple")
     [{
        "range": {
          "end": { "character": 18, "line": 0 },
@@ -89,6 +153,22 @@ let%expect_test _ =
   get_document_link_test "contracts/lsp/registry.jsligo";
   [%expect
     {|
+    ((stack ((Ident _#2252))) "19=before tuple")
+    ((stack ((Ident _#2252))) "18=before tuple")
+    ((stack (Value (Ident _#2252))) "18=after tuple")
+    ((stack (Value (Ident _#2252))) "17=before tuple")
+    ((stack (Value (Ident _#2252)))
+      "16=before (Nil\
+     \n ((desc Operation)\
+     \n  (range\
+     \n   ((start 0) (stop 0) (source (String ((name (generated)) (content \"\"))))))))")
+    ((stack (Value Value (Ident _#2252)))
+      "16=after (Nil\
+     \n ((desc Operation)\
+     \n  (range\
+     \n   ((start 0) (stop 0) (source (String ((name (generated)) (content \"\"))))))))")
+    ((stack (Value Value (Ident _#2252))) "17=after tuple")
+    ((stack (Value (Ident _#2252))) "19=after tuple")
     [{
        "range": {
          "end": { "character": 43, "line": 0 },

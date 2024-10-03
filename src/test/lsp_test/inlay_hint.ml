@@ -20,6 +20,22 @@ let%expect_test "Inlay hints in CameLIGO" =
   get_inlay_hint_test "contracts/lsp/inlay_hints/inlay_hints.mligo";
   [%expect
     {|
+    ((stack ((Ident _#623))) "3=before tuple")
+    ((stack ((Ident _#623))) "2=before tuple")
+    ((stack (Value (Ident _#623))) "2=after tuple")
+    ((stack (Value (Ident _#623))) "1=before tuple")
+    ((stack (Value (Ident _#623)))
+      "0=before (Nil\
+     \n ((desc Operation)\
+     \n  (range\
+     \n   ((start 0) (stop 0) (source (String ((name (generated)) (content \"\"))))))))")
+    ((stack (Value Value (Ident _#623)))
+      "0=after (Nil\
+     \n ((desc Operation)\
+     \n  (range\
+     \n   ((start 0) (stop 0) (source (String ((name (generated)) (content \"\"))))))))")
+    ((stack (Value Value (Ident _#623))) "1=after tuple")
+    ((stack (Value (Ident _#623))) "3=after tuple")
     [{ "label": "(", "position": { "character": 7, "line": 6 } };
      { "kind": 1, "label": ": int", "position": { "character": 8, "line": 6 } };
      { "label": ")", "position": { "character": 8, "line": 6 } };
@@ -138,6 +154,22 @@ let%expect_test "Inlay hints in JsLIGO" =
   get_inlay_hint_test "contracts/lsp/inlay_hints/inlay_hints.jsligo";
   [%expect
     {|
+    ((stack ((Ident _#1038))) "7=before tuple")
+    ((stack ((Ident _#1038))) "6=before tuple")
+    ((stack (Value (Ident _#1038))) "6=after tuple")
+    ((stack (Value (Ident _#1038))) "5=before tuple")
+    ((stack (Value (Ident _#1038)))
+      "4=before (Nil\
+     \n ((desc Operation)\
+     \n  (range\
+     \n   ((start 0) (stop 0) (source (String ((name (generated)) (content \"\"))))))))")
+    ((stack (Value Value (Ident _#1038)))
+      "4=after (Nil\
+     \n ((desc Operation)\
+     \n  (range\
+     \n   ((start 0) (stop 0) (source (String ((name (generated)) (content \"\"))))))))")
+    ((stack (Value Value (Ident _#1038))) "5=after tuple")
+    ((stack (Value (Ident _#1038))) "7=after tuple")
     [{ "kind": 1, "label": ": int", "position": { "character": 8, "line": 0 } };
      {
        "kind": 1,
@@ -322,6 +354,22 @@ let%expect_test "Inlay hints work correctly for all combinations of parameter ty
   get_inlay_hint_test "contracts/lsp/inlay_hints/inlay_hints_fun_defs.mligo";
   [%expect
     {|
+    ((stack ((Ident _#2201))) "11=before tuple")
+    ((stack ((Ident _#2201))) "10=before tuple")
+    ((stack (Value (Ident _#2201))) "10=after tuple")
+    ((stack (Value (Ident _#2201))) "9=before tuple")
+    ((stack (Value (Ident _#2201)))
+      "8=before (Nil\
+     \n ((desc Operation)\
+     \n  (range\
+     \n   ((start 0) (stop 0) (source (String ((name (generated)) (content \"\"))))))))")
+    ((stack (Value Value (Ident _#2201)))
+      "8=after (Nil\
+     \n ((desc Operation)\
+     \n  (range\
+     \n   ((start 0) (stop 0) (source (String ((name (generated)) (content \"\"))))))))")
+    ((stack (Value Value (Ident _#2201))) "9=after tuple")
+    ((stack (Value (Ident _#2201))) "11=after tuple")
     [{ "label": "(", "position": { "character": 10, "line": 2 } };
      { "kind": 1, "label": ": int", "position": { "character": 11, "line": 2 } };
      { "label": ")", "position": { "character": 11, "line": 2 } };

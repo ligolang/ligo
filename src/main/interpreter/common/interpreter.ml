@@ -1847,14 +1847,29 @@ and eval_ligo ~(raise : _ Trace.raise) ~steps ~options
       bind_map_list
         ~f:(fun e ->
           let* v = eval_ligo e calltrace env in
-          return
-            ( v
-            , Stacking.To_micheline.translate_type
-                (Scoping.translate_type
-                   (Trace.trace ~raise Main_errors.spilling_tracer
-                   @@ Spilling.compile_type
-                   @@ Trace.trace ~raise Main_errors.expansion_tracer
-                   @@ Expansion.compile_type_expression e.type_expression)) ))
+          let t =
+            Scoping.translate_type
+              (Trace.trace ~raise Main_errors.spilling_tracer
+              @@ Spilling.compile_type
+              @@ Trace.trace ~raise Main_errors.expansion_tracer
+              @@ Expansion.compile_type_expression e.type_expression)
+          in
+          let t = Lltz_codegen.convert_type t in
+          let dummy : Stacking.meta =
+            { location = Location.dummy
+            ; env = []
+            ; binder = None
+            ; source_type = None
+            ; application = None
+            }
+          in
+          let t =
+            Tezos_micheline.Micheline.map_node
+              (fun _ -> dummy)
+              (fun prim -> Michelson.Ast.Prim.to_string prim)
+              t
+          in
+          return (v, t))
         args
     in
     (match code.expression_content with

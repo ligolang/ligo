@@ -33,6 +33,22 @@ let%expect_test "references of term with sig items and top level ref" =
     };
   [%expect
     {|
+    ((stack ((Ident _#611))) "3=before tuple")
+    ((stack ((Ident _#611))) "2=before tuple")
+    ((stack (Value (Ident _#611))) "2=after tuple")
+    ((stack (Value (Ident _#611))) "1=before tuple")
+    ((stack (Value (Ident _#611)))
+      "0=before (Nil\
+     \n ((desc Operation)\
+     \n  (range\
+     \n   ((start 0) (stop 0) (source (String ((name (generated)) (content \"\"))))))))")
+    ((stack (Value Value (Ident _#611)))
+      "0=after (Nil\
+     \n ((desc Operation)\
+     \n  (range\
+     \n   ((start 0) (stop 0) (source (String ((name (generated)) (content \"\"))))))))")
+    ((stack (Value Value (Ident _#611))) "1=after tuple")
+    ((stack (Value (Ident _#611))) "3=after tuple")
     [{
        "range": {
          "end": { "character": 7, "line": 3 },
@@ -59,6 +75,22 @@ let%expect_test "references of type with sig items and top level ref" =
     };
   [%expect
     {|
+    ((stack ((Ident _#1000))) "7=before tuple")
+    ((stack ((Ident _#1000))) "6=before tuple")
+    ((stack (Value (Ident _#1000))) "6=after tuple")
+    ((stack (Value (Ident _#1000))) "5=before tuple")
+    ((stack (Value (Ident _#1000)))
+      "4=before (Nil\
+     \n ((desc Operation)\
+     \n  (range\
+     \n   ((start 0) (stop 0) (source (String ((name (generated)) (content \"\"))))))))")
+    ((stack (Value Value (Ident _#1000)))
+      "4=after (Nil\
+     \n ((desc Operation)\
+     \n  (range\
+     \n   ((start 0) (stop 0) (source (String ((name (generated)) (content \"\"))))))))")
+    ((stack (Value Value (Ident _#1000))) "5=after tuple")
+    ((stack (Value (Ident _#1000))) "7=after tuple")
     [{
        "range": {
          "end": { "character": 8, "line": 1 },
@@ -91,6 +123,22 @@ let%expect_test "references from inline and standalone sigs and mods" =
     };
   [%expect
     {|
+    ((stack ((Ident _#1389))) "11=before tuple")
+    ((stack ((Ident _#1389))) "10=before tuple")
+    ((stack (Value (Ident _#1389))) "10=after tuple")
+    ((stack (Value (Ident _#1389))) "9=before tuple")
+    ((stack (Value (Ident _#1389)))
+      "8=before (Nil\
+     \n ((desc Operation)\
+     \n  (range\
+     \n   ((start 0) (stop 0) (source (String ((name (generated)) (content \"\"))))))))")
+    ((stack (Value Value (Ident _#1389)))
+      "8=after (Nil\
+     \n ((desc Operation)\
+     \n  (range\
+     \n   ((start 0) (stop 0) (source (String ((name (generated)) (content \"\"))))))))")
+    ((stack (Value Value (Ident _#1389))) "9=after tuple")
+    ((stack (Value (Ident _#1389))) "11=after tuple")
     [{
        "range": {
          "end": { "character": 8, "line": 1 },
@@ -129,6 +177,22 @@ let%expect_test "references from multiple impls" =
     };
   [%expect
     {|
+    ((stack ((Ident _#1779))) "15=before tuple")
+    ((stack ((Ident _#1779))) "14=before tuple")
+    ((stack (Value (Ident _#1779))) "14=after tuple")
+    ((stack (Value (Ident _#1779))) "13=before tuple")
+    ((stack (Value (Ident _#1779)))
+      "12=before (Nil\
+     \n ((desc Operation)\
+     \n  (range\
+     \n   ((start 0) (stop 0) (source (String ((name (generated)) (content \"\"))))))))")
+    ((stack (Value Value (Ident _#1779)))
+      "12=after (Nil\
+     \n ((desc Operation)\
+     \n  (range\
+     \n   ((start 0) (stop 0) (source (String ((name (generated)) (content \"\"))))))))")
+    ((stack (Value Value (Ident _#1779))) "13=after tuple")
+    ((stack (Value (Ident _#1779))) "15=after tuple")
     [{
        "range": {
          "end": { "character": 8, "line": 1 },
@@ -161,6 +225,22 @@ let%expect_test "signature and include" =
     };
   [%expect
     {|
+    ((stack ((Ident _#2168))) "19=before tuple")
+    ((stack ((Ident _#2168))) "18=before tuple")
+    ((stack (Value (Ident _#2168))) "18=after tuple")
+    ((stack (Value (Ident _#2168))) "17=before tuple")
+    ((stack (Value (Ident _#2168)))
+      "16=before (Nil\
+     \n ((desc Operation)\
+     \n  (range\
+     \n   ((start 0) (stop 0) (source (String ((name (generated)) (content \"\"))))))))")
+    ((stack (Value Value (Ident _#2168)))
+      "16=after (Nil\
+     \n ((desc Operation)\
+     \n  (range\
+     \n   ((start 0) (stop 0) (source (String ((name (generated)) (content \"\"))))))))")
+    ((stack (Value Value (Ident _#2168))) "17=after tuple")
+    ((stack (Value (Ident _#2168))) "19=after tuple")
     [{
        "range": {
          "end": { "character": 7, "line": 1 },
@@ -187,6 +267,22 @@ let%expect_test "highlights from included type" =
     };
   [%expect
     {|
+    ((stack ((Ident _#2556))) "23=before tuple")
+    ((stack ((Ident _#2556))) "22=before tuple")
+    ((stack (Value (Ident _#2556))) "22=after tuple")
+    ((stack (Value (Ident _#2556))) "21=before tuple")
+    ((stack (Value (Ident _#2556)))
+      "20=before (Nil\
+     \n ((desc Operation)\
+     \n  (range\
+     \n   ((start 0) (stop 0) (source (String ((name (generated)) (content \"\"))))))))")
+    ((stack (Value Value (Ident _#2556)))
+      "20=after (Nil\
+     \n ((desc Operation)\
+     \n  (range\
+     \n   ((start 0) (stop 0) (source (String ((name (generated)) (content \"\"))))))))")
+    ((stack (Value Value (Ident _#2556))) "21=after tuple")
+    ((stack (Value (Ident _#2556))) "23=after tuple")
     [{
        "range": {
          "end": { "character": 8, "line": 1 },
@@ -225,6 +321,22 @@ let%expect_test "highlights of references to the same sig from different file" =
     };
   [%expect
     {|
+    ((stack ((Ident _#2948))) "27=before tuple")
+    ((stack ((Ident _#2948))) "26=before tuple")
+    ((stack (Value (Ident _#2948))) "26=after tuple")
+    ((stack (Value (Ident _#2948))) "25=before tuple")
+    ((stack (Value (Ident _#2948)))
+      "24=before (Nil\
+     \n ((desc Operation)\
+     \n  (range\
+     \n   ((start 0) (stop 0) (source (String ((name (generated)) (content \"\"))))))))")
+    ((stack (Value Value (Ident _#2948)))
+      "24=after (Nil\
+     \n ((desc Operation)\
+     \n  (range\
+     \n   ((start 0) (stop 0) (source (String ((name (generated)) (content \"\"))))))))")
+    ((stack (Value Value (Ident _#2948))) "25=after tuple")
+    ((stack (Value (Ident _#2948))) "27=after tuple")
     [{
        "range": {
          "end": { "character": 8, "line": 3 },
@@ -245,6 +357,22 @@ let%expect_test "highlights of references to the same sig from different file" =
     };
   [%expect
     {|
+    ((stack ((Ident _#3340))) "31=before tuple")
+    ((stack ((Ident _#3340))) "30=before tuple")
+    ((stack (Value (Ident _#3340))) "30=after tuple")
+    ((stack (Value (Ident _#3340))) "29=before tuple")
+    ((stack (Value (Ident _#3340)))
+      "28=before (Nil\
+     \n ((desc Operation)\
+     \n  (range\
+     \n   ((start 0) (stop 0) (source (String ((name (generated)) (content \"\"))))))))")
+    ((stack (Value Value (Ident _#3340)))
+      "28=after (Nil\
+     \n ((desc Operation)\
+     \n  (range\
+     \n   ((start 0) (stop 0) (source (String ((name (generated)) (content \"\"))))))))")
+    ((stack (Value Value (Ident _#3340))) "29=after tuple")
+    ((stack (Value (Ident _#3340))) "31=after tuple")
     [{
        "range": {
          "end": { "character": 7, "line": 4 },
@@ -265,6 +393,22 @@ let%expect_test "highlights of references to the same sig from different file" =
     };
   [%expect
     {|
+    ((stack ((Ident _#3732))) "35=before tuple")
+    ((stack ((Ident _#3732))) "34=before tuple")
+    ((stack (Value (Ident _#3732))) "34=after tuple")
+    ((stack (Value (Ident _#3732))) "33=before tuple")
+    ((stack (Value (Ident _#3732)))
+      "32=before (Nil\
+     \n ((desc Operation)\
+     \n  (range\
+     \n   ((start 0) (stop 0) (source (String ((name (generated)) (content \"\"))))))))")
+    ((stack (Value Value (Ident _#3732)))
+      "32=after (Nil\
+     \n ((desc Operation)\
+     \n  (range\
+     \n   ((start 0) (stop 0) (source (String ((name (generated)) (content \"\"))))))))")
+    ((stack (Value Value (Ident _#3732))) "33=after tuple")
+    ((stack (Value (Ident _#3732))) "35=after tuple")
     [{
        "range": {
          "end": { "character": 13, "line": 2 },
@@ -285,6 +429,22 @@ let%expect_test "highlights of shadowed type" =
     };
   [%expect
     {|
+    ((stack ((Ident _#4120))) "39=before tuple")
+    ((stack ((Ident _#4120))) "38=before tuple")
+    ((stack (Value (Ident _#4120))) "38=after tuple")
+    ((stack (Value (Ident _#4120))) "37=before tuple")
+    ((stack (Value (Ident _#4120)))
+      "36=before (Nil\
+     \n ((desc Operation)\
+     \n  (range\
+     \n   ((start 0) (stop 0) (source (String ((name (generated)) (content \"\"))))))))")
+    ((stack (Value Value (Ident _#4120)))
+      "36=after (Nil\
+     \n ((desc Operation)\
+     \n  (range\
+     \n   ((start 0) (stop 0) (source (String ((name (generated)) (content \"\"))))))))")
+    ((stack (Value Value (Ident _#4120))) "37=after tuple")
+    ((stack (Value (Ident _#4120))) "39=after tuple")
     [{
        "range": {
          "end": { "character": 8, "line": 1 },
@@ -311,6 +471,22 @@ let%expect_test "highlights of different but same-named local variables" =
     };
   [%expect
     {|
+    ((stack ((Ident _#4510))) "43=before tuple")
+    ((stack ((Ident _#4510))) "42=before tuple")
+    ((stack (Value (Ident _#4510))) "42=after tuple")
+    ((stack (Value (Ident _#4510))) "41=before tuple")
+    ((stack (Value (Ident _#4510)))
+      "40=before (Nil\
+     \n ((desc Operation)\
+     \n  (range\
+     \n   ((start 0) (stop 0) (source (String ((name (generated)) (content \"\"))))))))")
+    ((stack (Value Value (Ident _#4510)))
+      "40=after (Nil\
+     \n ((desc Operation)\
+     \n  (range\
+     \n   ((start 0) (stop 0) (source (String ((name (generated)) (content \"\"))))))))")
+    ((stack (Value Value (Ident _#4510))) "41=after tuple")
+    ((stack (Value (Ident _#4510))) "43=after tuple")
     [{
        "range": {
          "end": { "character": 18, "line": 5 },
@@ -331,6 +507,22 @@ let%expect_test "highlights of same-named variables in different functions" =
     };
   [%expect
     {|
+    ((stack ((Ident _#4900))) "47=before tuple")
+    ((stack ((Ident _#4900))) "46=before tuple")
+    ((stack (Value (Ident _#4900))) "46=after tuple")
+    ((stack (Value (Ident _#4900))) "45=before tuple")
+    ((stack (Value (Ident _#4900)))
+      "44=before (Nil\
+     \n ((desc Operation)\
+     \n  (range\
+     \n   ((start 0) (stop 0) (source (String ((name (generated)) (content \"\"))))))))")
+    ((stack (Value Value (Ident _#4900)))
+      "44=after (Nil\
+     \n ((desc Operation)\
+     \n  (range\
+     \n   ((start 0) (stop 0) (source (String ((name (generated)) (content \"\"))))))))")
+    ((stack (Value Value (Ident _#4900))) "45=after tuple")
+    ((stack (Value (Ident _#4900))) "47=after tuple")
     [{
        "range": {
          "end": { "character": 8, "line": 0 },

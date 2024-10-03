@@ -37,6 +37,56 @@ let%expect_test "Suggestions for adding tzip16_compatible attributes in CameLIGO
   get_tzip16_code_lens_test "contracts/contract_metadata/metadata_tzip16_detection.mligo";
   [%expect
     {|
+    ((stack ((Ident _#724))) "3=before tuple")
+    ((stack ((Ident _#724))) "2=before tuple")
+    ((stack (Value (Ident _#724))) "2=after tuple")
+    ((stack (Value (Ident _#724))) "1=before tuple")
+    ((stack (Value (Ident _#724)))
+      "0=before (Nil\
+     \n ((desc Operation)\
+     \n  (range\
+     \n   ((start 0) (stop 0) (source (String ((name (generated)) (content \"\"))))))))")
+    ((stack (Value Value (Ident _#724)))
+      "0=after (Nil\
+     \n ((desc Operation)\
+     \n  (range\
+     \n   ((start 0) (stop 0) (source (String ((name (generated)) (content \"\"))))))))")
+    ((stack (Value Value (Ident _#724))) "1=after tuple")
+    ((stack (Value (Ident _#724))) "3=after tuple")
+    ((stack ()) "7=before tuple")
+    ((stack ()) "6=before tuple")
+    ((stack ())
+      "5=before (Empty_bigmap\
+     \n ((desc String)\
+     \n  (range\
+     \n   ((start 17) (stop 23)\
+     \n    (source\
+     \n     (File\
+     \n      /home/eduardo/y/ligo/_build/default/src/test/contracts/contract_metadata/metadata_tzip16_detection.mligo)))))\
+     \n ((desc Bytes)\
+     \n  (range\
+     \n   ((start 25) (stop 30)\
+     \n    (source\
+     \n     (File\
+     \n      /home/eduardo/y/ligo/_build/default/src/test/contracts/contract_metadata/metadata_tzip16_detection.mligo))))))")
+    ((stack (Value))
+      "5=after (Empty_bigmap\
+     \n ((desc String)\
+     \n  (range\
+     \n   ((start 17) (stop 23)\
+     \n    (source\
+     \n     (File\
+     \n      /home/eduardo/y/ligo/_build/default/src/test/contracts/contract_metadata/metadata_tzip16_detection.mligo)))))\
+     \n ((desc Bytes)\
+     \n  (range\
+     \n   ((start 25) (stop 30)\
+     \n    (source\
+     \n     (File\
+     \n      /home/eduardo/y/ligo/_build/default/src/test/contracts/contract_metadata/metadata_tzip16_detection.mligo))))))")
+    ((stack (Value)) "6=after tuple")
+    ((stack (Value)) "4=before tuple")
+    ((stack (Value Value)) "4=after tuple")
+    ((stack (Value)) "7=after tuple")
     [{
        "command": {
          "arguments": [
@@ -99,6 +149,56 @@ let%expect_test "Suggestions for adding tzip16_compatible attributes in JsLIGO" 
   get_tzip16_code_lens_test "contracts/contract_metadata/metadata_tzip16_detection.jsligo";
   [%expect
     {|
+    ((stack ((Ident _#1730))) "11=before tuple")
+    ((stack ((Ident _#1730))) "10=before tuple")
+    ((stack (Value (Ident _#1730))) "10=after tuple")
+    ((stack (Value (Ident _#1730))) "9=before tuple")
+    ((stack (Value (Ident _#1730)))
+      "8=before (Nil\
+     \n ((desc Operation)\
+     \n  (range\
+     \n   ((start 0) (stop 0) (source (String ((name (generated)) (content \"\"))))))))")
+    ((stack (Value Value (Ident _#1730)))
+      "8=after (Nil\
+     \n ((desc Operation)\
+     \n  (range\
+     \n   ((start 0) (stop 0) (source (String ((name (generated)) (content \"\"))))))))")
+    ((stack (Value Value (Ident _#1730))) "9=after tuple")
+    ((stack (Value (Ident _#1730))) "11=after tuple")
+    ((stack ()) "15=before tuple")
+    ((stack ()) "14=before tuple")
+    ((stack ())
+      "13=before (Empty_bigmap\
+     \n ((desc String)\
+     \n  (range\
+     \n   ((start 55) (stop 61)\
+     \n    (source\
+     \n     (File\
+     \n      /home/eduardo/y/ligo/_build/default/src/test/contracts/contract_metadata/metadata_tzip16_detection.jsligo)))))\
+     \n ((desc Bytes)\
+     \n  (range\
+     \n   ((start 63) (stop 68)\
+     \n    (source\
+     \n     (File\
+     \n      /home/eduardo/y/ligo/_build/default/src/test/contracts/contract_metadata/metadata_tzip16_detection.jsligo))))))")
+    ((stack (Value))
+      "13=after (Empty_bigmap\
+     \n ((desc String)\
+     \n  (range\
+     \n   ((start 55) (stop 61)\
+     \n    (source\
+     \n     (File\
+     \n      /home/eduardo/y/ligo/_build/default/src/test/contracts/contract_metadata/metadata_tzip16_detection.jsligo)))))\
+     \n ((desc Bytes)\
+     \n  (range\
+     \n   ((start 63) (stop 68)\
+     \n    (source\
+     \n     (File\
+     \n      /home/eduardo/y/ligo/_build/default/src/test/contracts/contract_metadata/metadata_tzip16_detection.jsligo))))))")
+    ((stack (Value)) "14=after tuple")
+    ((stack (Value)) "12=before tuple")
+    ((stack (Value Value)) "12=after tuple")
+    ((stack (Value)) "15=after tuple")
     [{
        "command": {
          "arguments": [

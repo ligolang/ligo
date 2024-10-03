@@ -22,6 +22,22 @@ let%expect_test "Simple document symbols" =
   document_symbol_test "contracts/lsp/hovers.jsligo";
   [%expect
     {|
+    ((stack ((Ident _#610))) "3=before tuple")
+    ((stack ((Ident _#610))) "2=before tuple")
+    ((stack (Value (Ident _#610))) "2=after tuple")
+    ((stack (Value (Ident _#610))) "1=before tuple")
+    ((stack (Value (Ident _#610)))
+      "0=before (Nil\
+     \n ((desc Operation)\
+     \n  (range\
+     \n   ((start 0) (stop 0) (source (String ((name (generated)) (content \"\"))))))))")
+    ((stack (Value Value (Ident _#610)))
+      "0=after (Nil\
+     \n ((desc Operation)\
+     \n  (range\
+     \n   ((start 0) (stop 0) (source (String ((name (generated)) (content \"\"))))))))")
+    ((stack (Value Value (Ident _#610))) "1=after tuple")
+    ((stack (Value (Ident _#610))) "3=after tuple")
     [{
        "detail": "<param, storage>(_: entrypoint<param, storage>) => (\n  _: option<key_hash>\n) => (_: tez) => (_: storage) => [operation, address]",
        "kind": 13,
@@ -53,6 +69,22 @@ let%expect_test "Nested defs in body and constructors" =
   document_symbol_test "contracts/lsp/patterns.mligo";
   [%expect
     {|
+    ((stack ((Ident _#998))) "7=before tuple")
+    ((stack ((Ident _#998))) "6=before tuple")
+    ((stack (Value (Ident _#998))) "6=after tuple")
+    ((stack (Value (Ident _#998))) "5=before tuple")
+    ((stack (Value (Ident _#998)))
+      "4=before (Nil\
+     \n ((desc Operation)\
+     \n  (range\
+     \n   ((start 0) (stop 0) (source (String ((name (generated)) (content \"\"))))))))")
+    ((stack (Value Value (Ident _#998)))
+      "4=after (Nil\
+     \n ((desc Operation)\
+     \n  (range\
+     \n   ((start 0) (stop 0) (source (String ((name (generated)) (content \"\"))))))))")
+    ((stack (Value Value (Ident _#998))) "5=after tuple")
+    ((stack (Value (Ident _#998))) "7=after tuple")
     [{
        "children": [
          {
@@ -182,6 +214,22 @@ let%expect_test "Signature and module items" =
   document_symbol_test "contracts/lsp/go_to_implementations/inline.mligo";
   [%expect
     {|
+    ((stack ((Ident _#1386))) "11=before tuple")
+    ((stack ((Ident _#1386))) "10=before tuple")
+    ((stack (Value (Ident _#1386))) "10=after tuple")
+    ((stack (Value (Ident _#1386))) "9=before tuple")
+    ((stack (Value (Ident _#1386)))
+      "8=before (Nil\
+     \n ((desc Operation)\
+     \n  (range\
+     \n   ((start 0) (stop 0) (source (String ((name (generated)) (content \"\"))))))))")
+    ((stack (Value Value (Ident _#1386)))
+      "8=after (Nil\
+     \n ((desc Operation)\
+     \n  (range\
+     \n   ((start 0) (stop 0) (source (String ((name (generated)) (content \"\"))))))))")
+    ((stack (Value Value (Ident _#1386))) "9=after tuple")
+    ((stack (Value (Ident _#1386))) "11=after tuple")
     [{
        "children": [
          {
@@ -227,6 +275,22 @@ let%expect_test "Filters ghost identifiers" =
   document_symbol_test "contracts/lsp/hover/missing_type.mligo";
   [%expect
     {|
+    ((stack ((Ident _#1774))) "15=before tuple")
+    ((stack ((Ident _#1774))) "14=before tuple")
+    ((stack (Value (Ident _#1774))) "14=after tuple")
+    ((stack (Value (Ident _#1774))) "13=before tuple")
+    ((stack (Value (Ident _#1774)))
+      "12=before (Nil\
+     \n ((desc Operation)\
+     \n  (range\
+     \n   ((start 0) (stop 0) (source (String ((name (generated)) (content \"\"))))))))")
+    ((stack (Value Value (Ident _#1774)))
+      "12=after (Nil\
+     \n ((desc Operation)\
+     \n  (range\
+     \n   ((start 0) (stop 0) (source (String ((name (generated)) (content \"\"))))))))")
+    ((stack (Value Value (Ident _#1774))) "13=after tuple")
+    ((stack (Value (Ident _#1774))) "15=after tuple")
     [{
        "kind": 23,
        "name": "a",
@@ -244,6 +308,22 @@ let%expect_test "Missing module name still shows hierarchy" =
   document_symbol_test "contracts/lsp/missing_module_name.mligo";
   [%expect
     {|
+    ((stack ((Ident _#2163))) "19=before tuple")
+    ((stack ((Ident _#2163))) "18=before tuple")
+    ((stack (Value (Ident _#2163))) "18=after tuple")
+    ((stack (Value (Ident _#2163))) "17=before tuple")
+    ((stack (Value (Ident _#2163)))
+      "16=before (Nil\
+     \n ((desc Operation)\
+     \n  (range\
+     \n   ((start 0) (stop 0) (source (String ((name (generated)) (content \"\"))))))))")
+    ((stack (Value Value (Ident _#2163)))
+      "16=after (Nil\
+     \n ((desc Operation)\
+     \n  (range\
+     \n   ((start 0) (stop 0) (source (String ((name (generated)) (content \"\"))))))))")
+    ((stack (Value Value (Ident _#2163))) "17=after tuple")
+    ((stack (Value (Ident _#2163))) "19=after tuple")
     [{
        "children": [
          {
@@ -277,6 +357,22 @@ let%expect_test "Type hierarchy" =
   document_symbol_test "contracts/lsp/hover/ctors_and_fields.mligo";
   [%expect
     {|
+    ((stack ((Ident _#2551))) "23=before tuple")
+    ((stack ((Ident _#2551))) "22=before tuple")
+    ((stack (Value (Ident _#2551))) "22=after tuple")
+    ((stack (Value (Ident _#2551))) "21=before tuple")
+    ((stack (Value (Ident _#2551)))
+      "20=before (Nil\
+     \n ((desc Operation)\
+     \n  (range\
+     \n   ((start 0) (stop 0) (source (String ((name (generated)) (content \"\"))))))))")
+    ((stack (Value Value (Ident _#2551)))
+      "20=after (Nil\
+     \n ((desc Operation)\
+     \n  (range\
+     \n   ((start 0) (stop 0) (source (String ((name (generated)) (content \"\"))))))))")
+    ((stack (Value Value (Ident _#2551))) "21=after tuple")
+    ((stack (Value (Ident _#2551))) "23=after tuple")
     [{
        "children": [
          {
