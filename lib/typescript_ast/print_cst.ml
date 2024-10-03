@@ -80,8 +80,8 @@ let rec print_program node =
   (* Decoding the CST into an AST in [state] *)
   let name = string_of_ts_node_type node in
   let children = collect_named_children node in
-  let () = Tree.of_list state name (anon print_statement) children
-  in Buffer.contents @@ Tree.to_buffer state
+  let () = Tree.of_list state name (anon print_statement) children in
+  Buffer.contents @@ Tree.to_buffer state
 
 (* Statements
 
@@ -257,8 +257,7 @@ and print_import_statement state ?name node =
         [ mk_child_inv (anon print_string) source_field ])
   in
   let children =
-    Tree.(mk_child_opt make_node kind_node)
-    :: middle_children
+    (Tree.(mk_child_opt make_node kind_node) :: middle_children)
     @ Tree.[ mk_child_opt (anon print_import_attribute) import_attribute ]
   in
   Tree.make state name children
@@ -313,14 +312,17 @@ and print_import_specifier state ?name node =
   and name_field = ts_node_child_by_field_name_inv node "name"
   and alias_field = ts_node_child_by_field_name_opt node "alias" in
   let children =
-    Tree.(mk_child_opt make_node kind_node) ::
-    match alias_field with
+    Tree.(mk_child_opt make_node kind_node)
+    ::
+    (match alias_field with
     | None -> [ mk_child_inv (anon print_identifier) name_field ]
     | Some alias_field ->
-       Tree.[ mk_child_inv (anon print_module_export_name) name_field
-            ; mk_child (anon print_identifier) alias_field
-            ]
-  in Tree.make state name children
+      Tree.
+        [ mk_child_inv (anon print_module_export_name) name_field
+        ; mk_child (anon print_identifier) alias_field
+        ])
+  in
+  Tree.make state name children
 
 and print_import_require_clause state ?name node =
   let name = get_name ?name node
@@ -330,7 +332,8 @@ and print_import_require_clause state ?name node =
     [ mk_child_inv (anon print_identifier) identifier
     ; mk_child_inv (anon print_string) source_field
     ]
-  in Tree.make state name children
+  in
+  Tree.make state name children
 
 and print_import_attribute state ?name node =
   let name = get_name ?name node
@@ -341,10 +344,12 @@ and print_import_attribute state ?name node =
     match name with
     | "with" -> Tree.make_node state name
     | "assert" -> Tree.make_node state name
-    | _ -> match_rest state ~name node print_unexpected_node in
+    | _ -> match_rest state ~name node print_unexpected_node
+  in
   let children =
     [ mk_child_inv print_kind kind_node; mk_child_inv (anon print_object) object_node ]
-  in Tree.make state name children
+  in
+  Tree.make state name children
 
 (* Debugger statement *)
 

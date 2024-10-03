@@ -204,4 +204,6 @@ let has_node_named_opt name nodes =
   | _ -> Some name
 
 let has_child_named name node = has_node_named_opt name @@ collect_named_children node
-let first_child_named name node = filter_first_by_name_opt name @@ collect_named_children node
+
+let first_child_named name node =
+  filter_first_by_name_opt name @@ collect_named_children node
