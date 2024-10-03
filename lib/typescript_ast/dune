@@ -1,10 +1,11 @@
-;; Library exporting the TypeScript AST
+;; Library exporting the TypeScript CST and our AST
 
 (library
  (name typescript_ast)
- (public_name ligo.typescript_ast)
- (modules ast)
+ (modules ast ts_wrap print_cst decoder)
  (libraries
+  tree_sitter
+  tree_sitter_typescript
   simple-utils
   cst_shared ;; For printing the TS CST
   hex
@@ -16,8 +17,8 @@
 
 (executable
  (name decoder_main)
- (libraries core tree_sitter tree_sitter_typescript cst_shared)
- (modules decoder decoder_main))
+ (libraries typescript_ast)
+ (modules decoder_main))
 
 ;; Local build of a standalone parser for node-types.json
 
