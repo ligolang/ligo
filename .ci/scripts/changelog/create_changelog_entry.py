@@ -29,7 +29,7 @@ HOSTNAME_REGEX = re.compile("^https?://[^/]+")
 COMMENT_REGEX = re.compile("<!---.*-->")
 
 TYPE_MAP = ["fixed", "added", "breaking", "performance", "none"]
-COMPONENT_MAP = ["compiler", "website", "webide", "vscode-plugin", "debugger", "cli"]
+COMPONENT_MAP = ["compiler", "website", "vscode-plugin", "debugger", "cli"]
 
 
 def is_heading(elem, title):

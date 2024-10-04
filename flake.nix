@@ -72,7 +72,6 @@
           tree-sitter-typescript = pkgs.callPackage ./nix/tree-sitter-typescript.nix {};
           ligo = pkgs.callPackage ./nix/ligo.nix {inherit tezos-ligo tree-sitter-typescript grace lltz;};
           ligo-syntaxes = ./tools/vscode/syntaxes;
-          ligo-webide = pkgs.callPackage ./nix/webide.nix {inherit ligo-syntaxes;};
           ligo-debugger = pkgs.callPackage ./nix/debugger.nix {};
 
           fmt = treefmt.lib.evalModule pkgs {
@@ -116,13 +115,12 @@
             };
         in {
           packages = {
-            inherit (ligo-webide) ligo-webide-backend ligo-webide-frontend;
             inherit ligo-debugger;
             ligo = ligo;
             default = ligo;
           };
 
-          devShells = with ligo-webide; rec {
+          devShells = rec {
             default = pkgs.mkShell {
               name = "ligo-dev-shell";
 
@@ -145,24 +143,6 @@
                 export TREE_SITTER="${ligo.TREE_SITTER}";
                 export TREE_SITTER_TYPESCRIPT="${ligo.TREE_SITTER_TYPESCRIPT}";
               '';
-            };
-
-            webide-frontend = pkgs.mkShell {
-              name = "ligo-webide-frontend-shell";
-
-              inputsFrom = [ligo-webide-frontend];
-
-              NODE_OPTIONS = "--openssl-legacy-provider";
-            };
-
-            webide-backend = haskellShell "ligo-webide-backend-shell" ligo-webide-backend;
-
-            webide = pkgs.mkShell {
-              name = "ligo-webide-shell";
-
-              inputsFrom = [webide-frontend webide-backend];
-
-              NODE_OPTIONS = "--openssl-legacy-provider";
             };
 
             debugger = haskellShell "ligo-debugger-shell" ligo-debugger;

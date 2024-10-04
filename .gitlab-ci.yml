@@ -22,8 +22,6 @@ include:
   - "/.ci/.gitlab-ci-changelog.yml"
   # jobs for managing process around release
   - "/.ci/.gitlab-ci-release.yml"
-  # Manage pipeline related to webide
-  - "/.ci/.gitlab-ci-webide.yml"
   # CI jobs for projects from 'tools'
   - "/.ci/.gitlab-ci-vscode-extension.yml"
   - "/.ci/.gitlab-ci-debugger.yml"

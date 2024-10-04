@@ -18,7 +18,6 @@ DEB_GITLAB_ARTIFACT_URL="https://gitlab.com/ligolang/ligo/-/jobs/$1/artifacts/ra
 BINARY_GITLAB_ARTIFACT_URL="https://gitlab.com/ligolang/ligo/-/jobs/$1/artifacts/raw/ligo"
 
 FILES_PATH_TO_EDIT=(
-    "$ROOT_FOLDER/tools/webide-new/ligo-webide-backend/Dockerfile"
     "$ROOT_FOLDER/gitlab-pages/docs/intro/installation.md"
     "$ROOT_FOLDER/gitlab-pages/docs/tutorials/getting-started/getting-started.md"
     "$ROOT_FOLDER/gitlab-pages/docs/tutorials/getting-started/getting-started.md"
@@ -50,4 +49,4 @@ done
 
 # Latest ligo SRI BINARY HASH
 WEB_IDE_FLAKE_REGEX_PATTERN='"x86_64-linux" = \{ url = ".+"; hash = ".+"; \}';
-"${SED_IN_PLACE_COMMAND[@]}" -E "s|$WEB_IDE_FLAKE_REGEX_PATTERN|\"x86_64-linux\" = { url = \"$BINARY_GITLAB_ARTIFACT_URL\"; hash = \"$SRI_LIGO_BINARY_HASH\"; }|g" "$ROOT_FOLDER/tools/webide-new/flake.nix"
+"${SED_IN_PLACE_COMMAND[@]}" -E "s|$WEB_IDE_FLAKE_REGEX_PATTERN|\"x86_64-linux\" = { url = \"$BINARY_GITLAB_ARTIFACT_URL\"; hash = \"$SRI_LIGO_BINARY_HASH\"; }|g"
