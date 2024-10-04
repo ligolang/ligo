@@ -65,26 +65,21 @@
 
             settings.global.excludes = ["_build" "result" ".direnv" "vendors/*" "vendored-dune/*"];
           };
-        in {
-          packages = {
-            ligo = ligo;
-            default = ligo;
-          };
 
-          devShells = rec {
-            default = pkgs.mkShell {
+          ligo-shell = slow: {
               name = "ligo-dev-shell";
 
               inputsFrom = [ligo];
 
               buildInputs = with pkgs; [
                 alejandra
-                shellcheck
                 ocamlformat
                 ocamlPackages.utop
                 ocamlPackages.ocaml-lsp
                 ocamlPackages.merlin
                 ocamlPackages.merlin-lib
+              ] ++ lib.optionals slow [
+                shellcheck
                 emacsPackages.merlin
                 emacsPackages.merlin-company
               ];
@@ -95,6 +90,15 @@
                 export TREE_SITTER_TYPESCRIPT="${ligo.TREE_SITTER_TYPESCRIPT}";
               '';
             };
+        in {
+          packages = {
+            ligo = ligo;
+            default = ligo;
+          };
+
+          devShells = rec {
+            default = pkgs.mkShell (ligo-shell false);
+            slow = pkgs.mkShell (ligo-shell true);
           };
 
           formatter = fmt.config.build.wrapper;
