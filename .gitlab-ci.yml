@@ -24,7 +24,6 @@ include:
   - "/.ci/.gitlab-ci-release.yml"
   # CI jobs for projects from 'tools'
   - "/.ci/.gitlab-ci-vscode-extension.yml"
-  - "/.ci/.gitlab-ci-debugger.yml"
   # CI manage notification
   - "/.ci/.gitlab-ci-notify.yml"
 .submodule-clone:
