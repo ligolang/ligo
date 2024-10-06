@@ -25,7 +25,7 @@ let match_rest state node print_default =
   (* Default case *)
   | _ -> print_default state node
 
-(* Making a tree and a node *)
+(* Making trees and nodes *)
 
 let make_tree state node children =
   Tree.make state (get_label node) children
@@ -35,6 +35,9 @@ let tree_of_list state node printer children =
 
 let make_node state node =
   Tree.make_node state @@ get_label node
+
+let make_unary state root printer child =
+  Tree.make_unary state (get_label root) printer child
 
 (* Unexpected and TODO nodes *)
 
@@ -57,11 +60,9 @@ let internal_error_child parent_name child_name =
   let msg = Printf.sprintf "INTERNAL: [%s] %s" parent_name suffix in
   Tree.(mk_child make_node msg)
 
-let make_unary_res state node print =
-  let label = get_label node in
-  function
-  | Result.Ok child -> Tree.make_unary state label print child
-  | Error child_name -> Tree.(make_unary state label make_node child_name)
+let make_unary_res state node print = function
+  | Result.Ok child -> make_unary state node print child
+  | Error child_name -> make_unary state node Tree.make_node child_name
 
 (* Printing the CST *)
 
@@ -193,6 +194,8 @@ and print_export_statement state node =
 and print_namespace_export state node =
   let module_export_name = ts_node_named_child_res node 0 in
   make_unary_res state node print_module_export_name module_export_name
+
+(* The rule "_from_clause" is hidden *)
 
 and print_from_clause state node =
   Tree.make_unary state "from_clause" print_string node
@@ -1829,7 +1832,6 @@ and print_parenthesized_type state node =
 (* Predefined type *)
 
 and print_predefined_type state node =
-  let name = get_name node in
   match collect_children node with
   | [] -> ()
   | child :: _ ->
@@ -1858,7 +1860,7 @@ and print_predefined_type state node =
       | "object" -> make_node state node
       | _ -> match_rest state node print_unexpected_node
     in
-    Tree.make_unary state name print child
+    make_unary state node print child
 
 (* Nested type identifier *)
 
