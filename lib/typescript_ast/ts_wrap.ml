@@ -54,7 +54,7 @@ let uint32_len string = UInt32.of_int (String.length string)
 
 (* Wrappers for filtering fields (failure on null node or optional value) *)
 
-let ts_node_child_by_field_name_inv node field =
+let ts_node_child_by_field_name_res node field =
   let child = TS_fun.ts_node_child_by_field_name node field (uint32_len field) in
   if TS_fun.ts_node_is_null child
   then Error (Printf.sprintf "INVALID: Missing field %S." field)
@@ -135,7 +135,7 @@ let collect_children (node : ts_tree) : ts_tree list =
 
 (* Extracting a named child by its index *)
 
-let ts_node_named_child_inv node index =
+let ts_node_named_child_res node index =
   let index' = UInt32.of_int index
   and arity = TS_fun.ts_node_named_child_count node in
   match UInt32.compare index' arity with
@@ -151,7 +151,7 @@ let ts_node_named_child_opt node index =
 
 (* Extracting a child by its index *)
 
-let ts_node_child_inv (node : ts_tree) index =
+let ts_node_child_res (node : ts_tree) index =
   let index' = UInt32.of_int index
   and arity = TS_fun.ts_node_child_count node in
   match UInt32.compare index' arity with
@@ -177,7 +177,7 @@ let get_name ?name node =
   | None -> string_of_ts_node_type node
   | Some name -> name
 
-let get_name_inv (node : (ts_tree, string) Result.t) : string =
+let get_name_res (node : (ts_tree, string) Result.t) : string =
   match node with
   | Result.Ok node -> get_name node
   | Error string -> string
@@ -193,7 +193,7 @@ let filter_first_by_name_opt name nodes =
   | node :: _ -> Some node
   | [] -> None
 
-let filter_first_by_name_inv name nodes =
+let filter_first_by_name_res name nodes =
   match filter_first_by_name_opt name nodes with
   | None -> Result.Error (filter_first_by_name_opt "ERROR" nodes)
   | Some node -> Ok node
@@ -226,14 +226,7 @@ let string_of_range (range: ts_point * ts_point) : string =
   and end_string = string_of_point end_point in
   Printf.sprintf "%s - %s" start_string end_string
 
-let label_of_node (node : ts_tree) : string =
+let get_label (node : ts_tree) : string =
   let name = string_of_ts_node_type node
   and range_string = string_of_range @@ range node
   in Printf.sprintf "%s %s" name range_string
-
-    (*
-let get_label ?name node =
-  match name with
-  | None -> label_of_node node
-  | Some name -> name
-*)

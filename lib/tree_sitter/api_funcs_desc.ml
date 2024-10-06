@@ -151,8 +151,7 @@ module Functions (S : FOREIGN) = struct
      TSNode ts_node_child_by_field_name(
        TSNode self,
        const char *field_name,
-       uint32_t field_name_length
-     );
+       uint32_t field_name_length);
   *)
   let ts_node_child_by_field_name =
     foreign
@@ -164,6 +163,25 @@ module Functions (S : FOREIGN) = struct
      bool ts_node_is_null(TSNode);
   *)
 
-  let ts_node_is_null =
-    foreign "ts_node_is_null" (ts_node @-> returning bool)
+  let ts_node_is_null = foreign "ts_node_is_null" (ts_node @-> returning bool)
+
+  (* Syntax nodes store their position in the source code both in terms
+   of raw bytes and row/column coordinates:
+
+   uint32_t ts_node_start_byte(TSNode);
+   uint32_t ts_node_end_byte(TSNode);
+
+   typedef struct {
+     uint32_t row;
+     uint32_t column;
+   } TSPoint;
+
+   TSPoint ts_node_start_point(TSNode);
+   TSPoint ts_node_end_point(TSNode);
+ *)
+
+  let ts_node_start_byte = foreign "ts_node_start_byte" (ts_node @-> returning uint32_t)
+  let ts_node_end_byte = foreign "ts_node_end_byte" (ts_node @-> returning uint32_t)
+  let ts_node_start_point = foreign "ts_node_start_point" (ts_node @-> returning ts_point)
+  let ts_node_end_point = foreign "ts_node_end_point" (ts_node @-> returning ts_point)
 end
