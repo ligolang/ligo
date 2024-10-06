@@ -30,6 +30,9 @@ let match_rest state node print_default =
 let make_tree state node children =
   Tree.make state (get_label node) children
 
+let tree_of_list state node printer children =
+  Tree.of_list state (get_label node) printer children
+
 let make_node state node =
   Tree.make_node state @@ get_label node
 
@@ -67,9 +70,8 @@ let rec print_program node =
   let buffer = Buffer.create 1023 in
   let state = Tree.mk_state ~buffer ~regions:false ~layout:true ~offsets:true `Byte in
   (* Decoding the CST into an AST in [state] *)
-  let name = Ts_wrap.get_label node in
   let children = collect_named_children node in
-  let () = Tree.of_list state name print_statement children in
+  let () = tree_of_list state node print_statement children in
   Buffer.contents @@ Tree.to_buffer state
 
 (* Statements
@@ -196,9 +198,8 @@ and print_from_clause state node =
   Tree.make_unary state "from_clause" print_string node
 
 and print_export_clause state node =
-  let name = get_name node
-  and children = collect_named_children node in
-  Tree.of_list state name print_export_specifier children
+  let children = collect_named_children node in
+  tree_of_list state node print_export_specifier children
 
 and print_module_export_name state node =
   let name = get_name node in
@@ -283,9 +284,8 @@ and print_namespace_import state node =
   make_unary_res state node print_identifier identifier
 
 and print_named_imports state node =
-  let name = get_name node
-  and children = collect_named_children node in
-  Tree.of_list state name print_import_specifier children
+  let children = collect_named_children node in
+  tree_of_list state node print_import_specifier children
 
 and print_import_specifier state node =
   let children = collect_children node in
@@ -360,9 +360,8 @@ and print_expressions state node =
 (* Statement blocks *)
 
 and print_statement_block state node =
-  let name = get_name node
-  and children = collect_named_children node in
-  Tree.of_list state name print_statement children
+  let children = collect_named_children node in
+  tree_of_list state node print_statement children
 
 (* If statement *)
 
@@ -396,15 +395,14 @@ and print_switch_statement state node =
   make_tree state node children
 
 and print_switch_body state node =
-  let name = get_name node
-  and children = collect_named_children node
+  let children = collect_named_children node
   and print state node =
     let name = get_name node in
     match name with
     | "switch_case" -> print_switch_case state node
     | _ -> match_rest state node print_switch_default
   in
-  Tree.of_list state name print children
+  tree_of_list state node print children
 
 and print_switch_case state node =
   let children = collect_children node in
@@ -430,9 +428,8 @@ and print_switch_case state node =
   make_tree state node children
 
 and print_switch_default state node =
-  let name = get_name node
-  and children = collect_named_children node in
-  Tree.of_list state name print_statement children
+  let children = collect_named_children node in
+  tree_of_list state node print_statement children
 
 (* For statement *)
 
@@ -855,9 +852,8 @@ and print_type_alias_declaration state node =
 (* Type parameters *)
 
 and print_type_parameters state node =
-  let name = get_name node
-  and children = collect_named_children node in
-  Tree.of_list state name print_type_parameter children
+  let children = collect_named_children node in
+  tree_of_list state node print_type_parameter children
 
 and print_type_parameter state node =
   let name_field = ts_node_child_by_field_name_res node "name"
@@ -877,9 +873,8 @@ and print_constraint state node =
   make_unary_res state node print_type child
 
 and print_default_type state node =
-  let name = get_name node
-  and children = collect_named_children node in
-  Tree.of_list state name print_type children
+  let children = collect_named_children node in
+  tree_of_list state node print_type children
 
 (* Enum declaration *)
 
@@ -894,15 +889,14 @@ and print_enum_declaration state node =
   make_tree state node children
 
 and print_enum_body state node =
-  let name = get_name node
-  and children = collect_named_children node
+  let children = collect_named_children node
   and print state node =
     let name = get_name node in
     match name with
     | "enum_assignment" -> print_enum_assignment state node
     | _ -> match_rest state node print_property_name
   in
-  Tree.of_list state name print children
+  tree_of_list state node print children
 
 and print_enum_assignment state node =
   let name_field = ts_node_child_by_field_name_res node "name"
@@ -936,8 +930,7 @@ and print_interface_declaration state node =
 and print_interface_body state node = print_object_type state node
 
 and print_extends_type_clause state node =
-  let name = get_name node
-  and children = collect_named_children node
+  let children = collect_named_children node
   and print state node =
     let name = get_name node in
     match name with
@@ -946,7 +939,7 @@ and print_extends_type_clause state node =
     | "generic_type" -> print_generic_type state node
     | _ -> match_rest state node print_unexpected_node
   in
-  Tree.of_list state name print children
+  tree_of_list state node print children
 
 (* Import alias *)
 
@@ -1366,9 +1359,8 @@ and print_null state node = make_node state node
 (* Template strings *)
 
 and print_template_string state node =
-  let name = get_name node
-  and children = collect_named_children node in
-  let print state node =
+  let children = collect_named_children node
+  and print state node =
     let name = get_name node in
     match name with
     | "string_fragment" -> make_node state node
@@ -1376,14 +1368,13 @@ and print_template_string state node =
     | "template_substitution" -> make_node state node
     | _ -> match_rest state node print_unexpected_node
   in
-  Tree.of_list state name print children
+  tree_of_list state node print children
 
 (* Object *)
 
 and print_object state node =
-  let name = get_name node
-  and children = collect_named_children node in
-  let print state node =
+  let children = collect_named_children node
+  and print state node =
     let name = get_name node in
     match name with
     | "pair" -> print_pair state node
@@ -1393,7 +1384,7 @@ and print_object state node =
       print_shorthand_property_identifier_pattern state node
     | _ -> match_rest state node print_unexpected_node
   in
-  Tree.of_list state name print children
+  tree_of_list state node print children
 
 (* Pairs *)
 
@@ -1410,9 +1401,8 @@ and print_pair state node =
 (* Array (expression) *)
 
 and print_array state node =
-  let name = get_name node in
   let children = collect_named_children node in
-  Tree.of_list state name print_array_cell children
+  tree_of_list state node print_array_cell children
 
 and print_array_cell state node =
   let name = get_name node in
@@ -1547,9 +1537,8 @@ and print_class_heritage state node =
   make_tree state node children
 
 and print_implements_clause state node =
-  let name = get_name node
-  and children = collect_named_children node in
-  Tree.of_list state name print_type children
+  let children = collect_named_children node in
+  tree_of_list state node print_type children
 
 and print_extends_clause state node =
   let children =
@@ -1579,8 +1568,7 @@ and print_extends_clause state node =
   make_tree state node children
 
 and print_class_body state node =
-  let name = get_name node
-  and children = collect_named_children node in
+  let children = collect_named_children node in
   let decorators = filter_by_name "decorator" children in
   let print state node =
     let name = get_name node in
@@ -1596,7 +1584,7 @@ and print_class_body state node =
     | "public_field_definition" -> print_public_field_definition state node
     | _ -> match_rest state node print_unexpected_node
   in
-  Tree.of_list state name print children
+  tree_of_list state node print children
 
 and print_method_definition state node =
   let children = collect_children node in
@@ -1752,14 +1740,12 @@ and print_call_expression state node =
   make_tree state node children
 
 and print_type_arguments state node =
-  let name = get_name node
-  and children = collect_named_children node in
-  Tree.of_list state name print_type children
+  let children = collect_named_children node in
+  tree_of_list state node print_type children
 
 and print_arguments state node =
-  let name = get_name node
-  and children = collect_named_children node in
-  Tree.of_list state name print_argument children
+  let children = collect_named_children node in
+  tree_of_list state node print_argument children
 
 and print_argument state node =
   let name = get_name node in
@@ -1776,9 +1762,8 @@ and print_non_null_expression state node =
 (* Sequence expression *)
 
 and print_sequence_expression state node =
-  let name = get_name node
-  and children = collect_named_children node in
-  Tree.of_list state name print_expression children
+  let children = collect_named_children node in
+  tree_of_list state node print_expression children
 
 (* TYPE
 
@@ -1940,9 +1925,8 @@ and print_generic_type state node =
 (* Object type *)
 
 and print_object_type state node =
-  let name = get_name node
-  and children = collect_named_children node in
-  Tree.of_list state name print_object_type_field children
+  let children = collect_named_children node in
+  tree_of_list state node print_object_type_field children
 
 and print_object_type_field state node =
   let name = get_name node in
@@ -2138,9 +2122,8 @@ and print_array_type state node =
 (* Tuple type *)
 
 and print_tuple_type state node =
-  let name = get_name node
-  and children = collect_named_children node in
-  Tree.of_list state name print_tuple_type_member children
+  let children = collect_named_children node in
+  tree_of_list state node print_tuple_type_member children
 
 and print_tuple_type_member state node =
   let name = get_name node in
@@ -2392,16 +2375,14 @@ and print_template_literal_type state node = make_node state node
 (* Intersection type *)
 
 and print_intersection_type state node =
-  let name = get_name node
-  and children = collect_named_children node in
-  Tree.of_list state name print_type children
+  let children = collect_named_children node in
+  tree_of_list state node print_type children
 
 (* Union type *)
 
 and print_union_type state node =
-  let name = get_name node
-  and children = collect_named_children node in
-  Tree.of_list state name print_type children
+  let children = collect_named_children node in
+  tree_of_list state node print_type children
 
 (* Function type *)
 
@@ -2478,9 +2459,8 @@ and print_constructor_type state node =
   make_tree state node children
 
 and print_formal_parameters state node =
-  let name = get_name node
-  and children = collect_named_children node in
-  Tree.of_list state name print_formal_parameter children
+  let children = collect_named_children node in
+  tree_of_list state node print_formal_parameter children
 
 and print_formal_parameter state node =
   let name = get_name node in
@@ -2585,9 +2565,8 @@ and print_infer_type state node =
 (* Object pattern *)
 
 and print_object_pattern state node =
-  let name = get_name node
-  and children = collect_named_children node in
-  Tree.of_list state name print_object_pattern_field children
+  let children = collect_named_children node in
+  tree_of_list state node print_object_pattern_field children
 
 and print_object_pattern_field state node =
   let name = get_name node in
@@ -2679,9 +2658,8 @@ and print_destructuring_pattern state node =
 (* Array pattern *)
 
 and print_array_pattern state node =
-  let name = get_name node
-  and children = collect_named_children node in
-  Tree.of_list state name print_array_pattern_cell children
+  let children = collect_named_children node in
+  tree_of_list state node print_array_pattern_cell children
 
 and print_array_pattern_cell state node =
   let name = get_name node in
