@@ -210,7 +210,7 @@ let first_child_named name node =
 
 (* Source locations *)
 
-let string_of_point (point: ts_point) : string =
+let string_of_point (point : ts_point) : string =
   let row = getf point TS_types.row
   and column = getf point TS_types.column in
   let row_string = UInt.to_string row
@@ -220,7 +220,7 @@ let string_of_point (point: ts_point) : string =
 let range (node : ts_tree) : ts_point * ts_point =
   TS_fun.(ts_node_start_point node, ts_node_end_point node)
 
-let string_of_range (range: ts_point * ts_point) : string =
+let string_of_range (range : ts_point * ts_point) : string =
   let start_point, end_point = range in
   let start_string = string_of_point start_point
   and end_string = string_of_point end_point in
@@ -228,5 +228,5 @@ let string_of_range (range: ts_point * ts_point) : string =
 
 let get_label (node : ts_tree) : string =
   let name = string_of_ts_node_type node
-  and range_string = string_of_range @@ range node
-  in Printf.sprintf "%s %s" name range_string
+  and range_string = string_of_range @@ range node in
+  Printf.sprintf "%s %s" name range_string
