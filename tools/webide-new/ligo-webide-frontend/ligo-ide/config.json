@@ -1,12 +1,12 @@
 {
     "defaultProtocol":{
-       "showName":"ParisB",
-       "name":"parisb"
+       "showName":"QuebecA",
+       "name":"quebeca"
     },
     "protocols":[
        {
-          "showName":"ParisB",
-          "name":"parisb"
+          "showName":"QuebecA",
+          "name":"quebeca"
        }
     ],
     "networks":[

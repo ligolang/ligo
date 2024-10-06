@@ -47,8 +47,10 @@
   uri
   tls
   decompress
-  tar
-  tar-unix
+  (tar
+    (= 2.6.0))
+  (tar-unix
+    (= 2.6.0))
   lambda-term
   parse-argv
   msgpck
@@ -81,22 +83,28 @@
   qcheck-alcotest
   irmin-pack
   pure-splitmix
-  cohttp-server-lwt-unix
-  resto-cohttp-self-serving-client
-  tezos-rust-libs
+;  cohttp-server-lwt-unix
+;  resto-cohttp-self-serving-client
   crunch
   class_group_vdf
   hex
   lwt-canceler
+  lwt-exit
+  logs
+  cohttp
+  conduit-lwt-unix
+  magic-mime
   seqes
   ctypes_stubs_js
+  ctypes
+  ctypes-foreign
   hacl-star-raw
   hacl-star
   secp256k1-internal
   (mtime
    (>= 2.0.0))
   (zarith
-   (>= 1.4))
+   (= 1.13))
   (tezt
    (and
     (>= 4.0.0)
@@ -121,9 +129,8 @@
    (= 0.5))
   (linol-lwt
    (= 0.5))
-  data-encoding
   grace
-  ; For building, testing, or documentation 
+  ; For building, testing, or documentation
   (dune
    (>= 3.8 :build))
   (coq
@@ -134,7 +141,7 @@
   (alcotest :with-test)
   (ppx_expect :with-test)
   (ppx_inline_test :with-test)
-  (odoc :with-doc)
+  (odoc :with-test)
   ; For dev
   (ocamlformat
    (= 0.21.0 :dev))

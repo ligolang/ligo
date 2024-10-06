@@ -993,10 +993,10 @@ let%expect_test _ =
     3800000000000mutez
     4000000000000n
     "BALANCE AND VOTING POWER AFTER ORIGINATE"
-    3800004166666mutez
+    3800003533332mutez
     4000000000000n
     "BALANCE AND VOTING POWER AFTER TRANSFER"
-    3800008333332mutez
+    3800007066664mutez
     4000000000000n
     Everything at the top-level was executed.
     - test exited with value (). |}]
@@ -1012,10 +1012,10 @@ let%expect_test _ =
     950000000000mutez
     1000000000000n
     "BALANCE AND VOTING POWER AFTER ORIGINATE"
-    950004166666mutez
+    950003533332mutez
     1000000000000n
     "BALANCE AND VOTING POWER AFTER TRANSFER"
-    950008333332mutez
+    950007066664mutez
     1000000000000n
     Everything at the top-level was executed.
     - test exited with value (). |}]
@@ -1305,7 +1305,7 @@ let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "test_tickets_and_bigmaps.mligo" ];
   [%expect
     {|
-    Success (2672n)
+    Success (2674n)
     Everything at the top-level was executed.
     - test_one exited with value (). |}]
 
@@ -2265,7 +2265,7 @@ let%expect_test _ =
      13 |   ()
 
     An uncaught error occured:
-    { "id": "proto.019-PtParisB.operation.manual_staking_forbidden",
+    { "id": "proto.alpha.operation.manual_staking_forbidden",
       "description":
         "Manual staking operations are forbidden because staking is currently automated.",
       "data": {} }

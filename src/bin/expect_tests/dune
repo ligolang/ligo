@@ -31,4 +31,4 @@
   pkg_one_version_v5
   pkg_one_version_v4
   pkg_two_versions)
- (libraries core cohttp-lwt-unix cohttp cohttp-server-lwt-unix lwt))
+ (libraries core octez-libs.cohttp-lwt-unix cohttp lwt))

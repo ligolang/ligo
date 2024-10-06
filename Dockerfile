@@ -1,8 +1,6 @@
-FROM alpine:3.18 as ligo-builder
+FROM alpine:3.20 as ligo-builder
 
 WORKDIR /ligo
-
-ADD https://github.com/ocaml/opam/releases/download/2.1.0/opam-2.1.0-x86_64-linux /usr/local/bin/opam
 
 # Install native deps needed for Tezos (etc?)
 # Adapted from https://github.com/asbjornenge/tezos-docker
@@ -11,13 +9,9 @@ RUN apk update && apk upgrade && apk --no-cache add \
   bash ncurses-dev xz m4 git pkgconfig findutils rsync \
   gmp-dev libev-dev libressl-dev linux-headers pcre-dev perl zlib-dev hidapi-dev \
   libffi-dev \
-  cargo py3-pip cmake  \
-  && pip3 install jsonschema \
-  # install opam:
-  # not using install_opam.sh because it does `opam init` with `-a` and not `--disable-sandboxing`
-  # not using official opam installer because it requires user input
-  && chmod u+x /usr/local/bin/opam \
-  && opam init --disable-sandboxing --bare
+  cargo py3-jsonschema cmake opam
+
+RUN opam init --disable-sandboxing --bare
 
 # make bls12-381 build ???
 ENV RUSTFLAGS='--codegen target-feature=-crt-static'

@@ -6,8 +6,8 @@
   package_management_shared
   cli_helpers
   cohttp
-  cohttp-lwt
-  cohttp-lwt-unix
+  octez-libs.cohttp-lwt
+  octez-libs.cohttp-lwt-unix
   yojson)
  (preprocess
   (pps ppx_deriving_yojson)))

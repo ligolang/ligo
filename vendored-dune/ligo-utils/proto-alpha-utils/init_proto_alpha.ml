@@ -4,7 +4,7 @@ module Signature = Tezos_base.TzPervasives.Signature
 module Data_encoding = Alpha_environment.Data_encoding
 module MBytes = Bytes
 module Error_monad = X_error_monad
-module Proto_env = Tezos_protocol_environment_019_PtParisB
+module Proto_env = Tezos_protocol_environment_alpha
 open Error_monad
 open Protocol
 
@@ -214,7 +214,7 @@ module Context_init = struct
     let ( >>=? ) = Lwt_result_syntax.( let* ) in
     init n
     >>=? fun ((ctxt, header, hash), accounts, contracts) ->
-    let timestamp = Environment.Time.of_notation_exn "2022-02-20T18:57:10Z" in
+    let timestamp = Environment.Time.of_notation_exn "2022-02-20T15:40:16Z" in
     begin_construction ~timestamp ~header ~hash ctxt.context
     >>=? fun ctxt -> Lwt_result_syntax.return (ctxt, accounts, contracts)
 end

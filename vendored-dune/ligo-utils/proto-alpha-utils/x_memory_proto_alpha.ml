@@ -96,7 +96,7 @@ let ty_eq (type a b) ?tezos_context (a : (a, _) ty) (b : (b, _) ty)
 (* should not need lwt *)
 let canonical_of_strings michelson =
   let michelson, errs =
-    Tezos_client_019_PtParisB.Michelson_v1_macros.expand_rec michelson
+    Tezos_client_alpha.Michelson_v1_macros.expand_rec michelson
   in
   match errs with
   | _ :: _ -> Lwt.return (Error errs)
@@ -268,7 +268,7 @@ let fake_bake tezos_context chain_id now : Alpha_context.t Lwt.t =
         let timestamp =
           match
             Alpha_context.Timestamp.of_seconds_string
-              (Z.to_string (Z.add (Z.of_int 20) (Script_timestamp.to_zint now)))
+              (Z.to_string (Z.add (Z.of_int 16) (Script_timestamp.to_zint now)))
           with
           | Some t -> t
           | _ -> Stdlib.failwith "bad timestamp"

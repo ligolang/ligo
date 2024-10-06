@@ -3,8 +3,8 @@
  (public_name ligo.proto-alpha-utils)
  (libraries
   ligo.tezos-memory-proto-alpha
-  tezos-protocol-019-PtParisB.protocol
-  data-encoding
+  tezos-protocol-alpha.protocol
+  octez-libs.data-encoding
   simple-utils
   core
   ligo.tezos-utils)

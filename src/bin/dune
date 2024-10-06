@@ -53,9 +53,9 @@
   lwt
   lwt.unix
   yojson
-  cohttp-lwt
+  octez-libs.cohttp-lwt
   cohttp
-  cohttp-lwt-unix
+  octez-libs.cohttp-lwt-unix
   ligo_init
   ligo_unix
   package_management
