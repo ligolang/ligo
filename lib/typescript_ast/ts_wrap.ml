@@ -17,6 +17,7 @@ module TS_fun = Tree_sitter.Api.Functions
 (* Integers needed by the tree-sitter APIs above *)
 
 module UInt32 = Unsigned.UInt32
+module UInt = Unsigned.UInt
 
 (* Tree-sitter API for TypeScript *)
 
@@ -26,10 +27,12 @@ let tree_sitter_typescript = Tree_sitter_typescript.Api.Functions.tree_sitter_ty
 
 open Ctypes
 
-(* Type aliases for trees *)
+(* Type aliases *)
 
 type ts_tree = TS_types.ts_tree structure
 type ts_tree_ptr = TS_types.ts_tree structure Ctypes_static.ptr
+type ts_point = TS_types.ts_point structure
+type ts_range = TS_types.ts_range structure
 
 (* Converting C strings of type 'char*' to OCaml strings of type
    [string]. *)
@@ -75,14 +78,6 @@ let string_of_ts_node_type (node : ts_tree) : string =
   if TS_fun.ts_node_is_null node
   then "WARNING: Null node"
   else string_of_char_ptr @@ TS_fun.ts_node_type node
-
-let string_of_ts_node_type_inv (node : (ts_tree, string) Result.t) : string =
-  match node with
-  | Result.Ok node ->
-    if TS_fun.ts_node_is_null node
-    then "WARNING: Null node"
-    else string_of_char_ptr @@ TS_fun.ts_node_type node
-  | Error string -> string
 
 (* Parsing a string expected to contain a valid TypeScript program *)
 
@@ -182,6 +177,11 @@ let get_name ?name node =
   | None -> string_of_ts_node_type node
   | Some name -> name
 
+let get_name_inv (node : (ts_tree, string) Result.t) : string =
+  match node with
+  | Result.Ok node -> get_name node
+  | Error string -> string
+
 (* Filtering by name a list of nodes *)
 
 let filter_by_name name nodes =
@@ -207,3 +207,33 @@ let has_child_named name node = has_node_named_opt name @@ collect_named_childre
 
 let first_child_named name node =
   filter_first_by_name_opt name @@ collect_named_children node
+
+(* Source locations *)
+
+let string_of_point (point: ts_point) : string =
+  let row = getf point TS_types.row
+  and column = getf point TS_types.column in
+  let row_string = UInt.to_string row
+  and column_string = UInt.to_string column in
+  Printf.sprintf "[%s, %s]" row_string column_string
+
+let range (node : ts_tree) : ts_point * ts_point =
+  TS_fun.(ts_node_start_point node, ts_node_end_point node)
+
+let string_of_range (range: ts_point * ts_point) : string =
+  let start_point, end_point = range in
+  let start_string = string_of_point start_point
+  and end_string = string_of_point end_point in
+  Printf.sprintf "%s - %s" start_string end_string
+
+let label_of_node (node : ts_tree) : string =
+  let name = string_of_ts_node_type node
+  and range_string = string_of_range @@ range node
+  in Printf.sprintf "%s %s" name range_string
+
+    (*
+let get_label ?name node =
+  match name with
+  | None -> label_of_node node
+  | Some name -> name
+*)
