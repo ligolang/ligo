@@ -78,6 +78,7 @@ and expr_desc =
   | E_literal of Literal_value.t
   (* TODO: tag poly expressions and patterns here? *)
   | E_let of pat * expr * expr
+  | E_let_module of Ident.t * mod_expr * expr
   | E_lambda of var_pat * expr
   | E_lambda_rec of
       { self : var_pat
@@ -92,7 +93,7 @@ and expr_desc =
   | E_record of (Label.t * expr) list
   | E_field of expr * Label.t
 
-type mod_expr =
+and mod_expr =
   { mod_expr_desc : mod_expr_desc
   ; mod_expr_loc : Location.t
   }

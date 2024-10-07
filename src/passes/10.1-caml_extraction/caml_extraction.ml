@@ -47,7 +47,6 @@ module Context : sig
   val error_for_not_supported : context -> 'a
   val error_refutation_not_supported : context -> 'a
   val error_rec_modules_not_supported : context -> 'a
-  val error_local_modules_not_supported : context -> 'a
   val error_lazy_not_supported : context -> 'a
   val error_abstract_types_not_supported : context -> 'a
   val error_abstract_module_types_not_supported : context -> 'a
@@ -147,10 +146,6 @@ end = struct
   let error_rec_modules_not_supported ctx =
     failwith
     @@ Format.asprintf "recursive modules are not supported at %a" Location.pp ctx
-
-
-  let error_local_modules_not_supported ctx =
-    failwith @@ Format.asprintf "local modules are not supported at %a" Location.pp ctx
 
 
   let error_lazy_not_supported ctx =
@@ -660,7 +655,11 @@ let rec extract_expr ctx expr =
   | Texp_instvar (_, _, _) -> error_objects_not_supported ctx
   | Texp_setinstvar (_, _, _, _) -> error_objects_not_supported ctx
   | Texp_override (_, _) -> error_objects_not_supported ctx
-  | Texp_letmodule (_, _, _, _, _) -> error_local_modules_not_supported ctx
+  | Texp_letmodule (mb_id, _mod_name, mb_presence, mb_expr, body) ->
+    let ident, md_body, body =
+      extract_expr_module ctx ~loc ~mb_id ~mb_presence ~mb_expr body
+    in
+    expr_wrap loc type_ @@ E_let_module (ident, md_body, body)
   | Texp_letexception (_, _) -> error_exceptions_not_supported ctx
   | Texp_assert _ -> error_unimplemented ctx
   | Texp_lazy _ -> error_unsupported ctx
@@ -892,7 +891,24 @@ and extract_case : type a. _ -> a case -> _ =
   pat, body
 
 
-let rec extract_str ctx str =
+and extract_expr_module ctx ~loc ~mb_id ~mb_presence ~mb_expr body =
+  (* TODO: this is mostly duplicated *)
+  let ctx = enter_region ~loc ctx in
+  assert (
+    match mb_presence with
+    | Mp_present -> true
+    | Mp_absent -> false);
+  let ident =
+    match mb_id with
+    | Some ident -> ident
+    | None -> error_modules_without_names_not_supported ctx
+  in
+  let md_body = extract_module_expr ctx mb_expr in
+  let body = extract_expr ctx body in
+  ident, md_body, body
+
+
+and extract_str ctx str =
   let { str_items; str_type = _; str_final_env = _ } = str in
   List.map str_items ~f:(fun stri -> extract_stri ctx stri)
 
@@ -1167,7 +1183,7 @@ and extract_module_binding ctx mb =
   let ident =
     match mb_id with
     | Some ident -> ident
-    | None -> error_unsupported ctx
+    | None -> error_modules_without_names_not_supported ctx
   in
   let body = extract_module_expr ctx mb_expr in
   decl_wrap loc @@ D_module (ident, body)
