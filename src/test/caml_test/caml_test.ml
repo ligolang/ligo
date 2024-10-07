@@ -341,11 +341,15 @@ let main () =
         | B
         | C
 
+      module type S = sig
+        val x : int
+      end
+
       type return = operation list * storage
 
-      let[@entry] set new_storage (_storage : storage) : return = [], new_storage
+      let set new_storage (_storage : storage) : return = [], new_storage
 
-      let[@entry] next () (storage : storage) : return =
+      let next () (storage : storage) : return =
         let storage =
           match storage with
           | A -> B
@@ -354,6 +358,7 @@ let main () =
         in
         [], storage]
   in
+  let t1 = Core_unix.gettimeofday () in
   (* TODO: please clean this file *)
   let code = OCaml.(type_str env code) in
   let code = Ligo.(compile_str code) in
@@ -383,6 +388,7 @@ let main () =
         pp_errors
         errors
   in
+  Format.eprintf "time: %f\n%!" (Core_unix.gettimeofday () -. t1);
   let code =
     match code with
     | Ok (code, [], []) ->

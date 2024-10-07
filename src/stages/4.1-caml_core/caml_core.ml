@@ -47,6 +47,13 @@ and type_decl_case =
       ; dc_loc : Location.t
       }
 
+(* TODO: improve Ligo such that this is not required *)
+type var_pat =
+  { var_pat_desc : Ident.t
+  ; var_pat_type : type_
+  ; var_pat_loc : Location.t
+  }
+
 type pat =
   { pat_desc : pat_desc
   ; pat_type : type_
@@ -71,10 +78,10 @@ and expr_desc =
   | E_literal of Literal_value.t
   (* TODO: tag poly expressions and patterns here? *)
   | E_let of pat * expr * expr
-  | E_lambda of pat * expr
+  | E_lambda of var_pat * expr
   | E_lambda_rec of
-      { self : pat
-      ; param : pat
+      { self : var_pat
+      ; param : var_pat
       ; body : expr
       }
   | E_apply of expr * expr list
@@ -101,7 +108,7 @@ and decl =
   }
 
 and decl_desc =
-  | D_let of (pat * expr)
+  | D_let of (var_pat * expr)
   | D_type of (Ident.t * type_decl)
   | D_module of (Ident.t * mod_expr)
   | D_module_type of (Ident.t * sig_expr)
@@ -128,8 +135,8 @@ and sig_item =
 and sig_item_desc =
   | S_value of (Ident.t * type_)
   | S_type of (Ident.t * type_decl)
-  | S_module of (Ident.t * sig_expr)
-  | S_module_type of (Ident.t * sig_expr)
+  | S_module of (Ident.t * sig_item list)
+  | S_module_type of (Ident.t * sig_item list)
 
 type program = decl list
 
@@ -138,6 +145,10 @@ let type_wrap loc desc = { type_desc = desc; type_loc = loc }
 
 let type_decl_wrap loc params desc =
   { type_decl_desc = desc; type_decl_params = params; type_decl_loc = loc }
+
+
+let var_pat_wrap loc type_ desc =
+  { var_pat_desc = desc; var_pat_type = type_; var_pat_loc = loc }
 
 
 let pat_wrap loc type_ desc = { pat_desc = desc; pat_type = type_; pat_loc = loc }
