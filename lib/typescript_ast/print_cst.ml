@@ -243,8 +243,7 @@ and print_import_statement state node =
 and print_import_clause state node =
   let fst_child = ts_node_child_opt node 0
   and print_rest state node =
-    let name = get_name node in
-    match name with
+    match get_name node with
     | "namespace_import" -> print_namespace_import state node
     | "named_imports" -> print_named_imports state node
     | _ -> match_rest state node print_unexpected_node
@@ -905,9 +904,8 @@ and print_import_alias state node =
 
 and print_ambient_declaration state node =
   let fst_child = ts_node_named_child_res node 0 in
-  let child_name = get_name_res fst_child in
   let children =
-    match child_name with
+    match get_name_res fst_child with
     | "statement_block" -> [ mk_child_res print_statement_block fst_child ]
     | "property_identifier" ->
       let type_child = ts_node_child_res node 5 in
@@ -1005,8 +1003,7 @@ and print_augmented_assignment_expression state node =
     | "parenthesized_expression" -> print_parenthesized_expression state node
     | _ -> match_rest state node print_unexpected_node
   and print_assignment state node =
-    let name = get_name node in
-    match name with
+    match get_name node with
     | "+=" -> make_node state node
     | "-=" -> make_node state node
     | "*=" -> make_node state node
@@ -2165,8 +2162,8 @@ and print_existential_type state node = make_node state node
 (* Literal type *)
 
 and print_literal_type state node =
-  let child = ts_node_named_child_res node 0 in
-  let print state node =
+  let child = ts_node_named_child_res node 0
+  and print state node =
     match get_name node with
     | "unary_expression" -> print_unary_expression state node
     | "number" -> print_number state node
