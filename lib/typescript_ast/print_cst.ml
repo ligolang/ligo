@@ -56,7 +56,7 @@ let internal_error_child parent_node child_name =
   let parent_name = get_name parent_node
   and suffix = Printf.sprintf "Child %s is missing." child_name in
   let msg = Printf.sprintf "INTERNAL: [%s] %s" parent_name suffix in
-  Tree.(mk_child make_node msg)
+  Tree.[ mk_child make_node msg ]
 
 let make_unary_res state node print = function
   | Result.Ok child -> make_unary state node print child
@@ -126,11 +126,11 @@ and print_export_statement state node =
   let decorators = Tree.mk_children_list print_decorator decorators in
   let children =
     match export_node with
-    | None -> [ internal_error_child node "export" ]
+    | None -> internal_error_child node "export"
     | Some export_node ->
       let after_export = TS_fun.ts_node_next_sibling export_node in
       if TS_fun.ts_node_is_null after_export
-      then [ internal_error_child node "after \"export\"" ]
+      then internal_error_child node "after \"export\""
       else (
         match get_name after_export with
         | "*" ->
@@ -161,7 +161,7 @@ and print_export_statement state node =
         | "type" ->
           let export_clause = TS_fun.ts_node_next_sibling after_export in
           if TS_fun.ts_node_is_null export_clause
-          then [ internal_error_child node "export_clause" ]
+          then internal_error_child node "export_clause"
           else (
             let source_field = ts_node_child_by_field_name_opt node "source" in
             [ mk_child make_node after_export
@@ -171,12 +171,12 @@ and print_export_statement state node =
         | "=" ->
           let expression = TS_fun.ts_node_next_sibling after_export in
           if TS_fun.ts_node_is_null expression
-          then [ internal_error_child node "expression" ]
+          then internal_error_child node "expression"
           else [ mk_child make_node after_export; mk_child print_expression expression ]
         | "as" ->
           let identifier = filter_first_by_name_opt "identifier" children in
           (match identifier with
-          | None -> [ internal_error_child node "identifier" ]
+          | None -> internal_error_child node "identifier"
           | Some identifier ->
             [ mk_child make_node after_export; mk_child print_identifier identifier ])
         | _ -> decorators @ [ mk_child print_declaration after_export ])
@@ -251,7 +251,7 @@ and print_import_clause state node =
   in
   let children =
     match fst_child with
-    | None -> [ internal_error_child node "\"first child\"" ]
+    | None -> internal_error_child node "\"first child\""
     | Some fst_child ->
       (match get_name fst_child with
       | "namespace_import" -> [ mk_child print_namespace_import fst_child ]
@@ -263,7 +263,7 @@ and print_import_clause state node =
         | None -> []
         | Some comma ->
           (match ts_node_next_sibling_opt comma with
-          | None -> [ internal_error_child node "namespace_import/named_imports" ]
+          | None -> internal_error_child node "namespace_import/named_imports"
           | Some next -> [ mk_child print_rest next ]))
       | _ -> [ mk_child print_unexpected_node fst_child ])
   in
