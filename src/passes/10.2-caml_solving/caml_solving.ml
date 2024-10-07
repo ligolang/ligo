@@ -481,6 +481,13 @@ let rec solve_expr ctx vars expr =
     let value = solve_expr_poly ctx vars value in
     let body = solve_expr inner_ctx vars body in
     e_let_in ~loc pat value body Value_attr.default_attributes
+  | E_let_module (ident, mod_expr, body) ->
+    let var = fresh_module ident in
+    let inner_ctx, mod_expr =
+      enter_module ident var ctx @@ fun ctx -> solve_mod_expr ctx mod_expr
+    in
+    let body = solve_expr inner_ctx vars body in
+    e_mod_in ~loc var mod_expr body
   | E_lambda (param, body) ->
     let binder, body = solve_lambda ctx vars ~param ~body in
     (* TODO: output_type *)
@@ -591,7 +598,7 @@ and solve_lambda_rec ctx vars ~param ~body =
   binder, return, body
 
 
-let rec solve_module ctx module_ =
+and solve_module ctx module_ =
   let ctx, rev_decl =
     List.fold_left module_ ~init:(ctx, []) ~f:(fun (ctx, rev_module) decl ->
         let ctx, decl = solve_decl ctx decl in

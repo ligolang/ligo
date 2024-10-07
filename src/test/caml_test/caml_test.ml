@@ -347,7 +347,13 @@ let main () =
 
       type return = operation list * storage
 
-      let set new_storage (_storage : storage) : return = [], new_storage
+      let set =
+        let module X = struct
+          let set new_storage (_storage : storage) : return = [], new_storage
+        end
+        in
+        X.set
+
 
       let next () (storage : storage) : return =
         let storage =
