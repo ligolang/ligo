@@ -37,6 +37,11 @@ let make_node state node = Tree.make_node state @@ get_label node
 let make_unary state root printer child =
   Tree.make_unary state (get_label root) printer child
 
+let mk_child_opt = Tree.mk_child_opt
+
+let mk_child = Tree.mk_child
+
+
 (* Unexpected and TODO nodes *)
 
 let print_unexpected_node state node = Tree.make_node state ("UNKNOWN: " ^ get_label node)
@@ -133,28 +138,28 @@ and print_export_statement state node =
       else (
         match get_name after_export with
         | "*" ->
-          Tree.(mk_child make_node "*")
+          mk_child make_node after_export
           ::
           (let source_field = ts_node_child_by_field_name_opt node "source" in
-           Tree.[ mk_child_opt print_from_clause source_field ])
+           [ mk_child_opt print_from_clause source_field ])
         | "namespace_export" ->
           Tree.mk_child print_namespace_export after_export
           ::
           (let source_field = ts_node_child_by_field_name_opt node "source" in
-           Tree.[ mk_child_opt print_from_clause source_field ])
+           [ mk_child_opt print_from_clause source_field ])
         | "export_clause" ->
-          Tree.mk_child print_export_clause after_export
+          mk_child print_export_clause after_export
           ::
           (let source_field = ts_node_child_by_field_name_opt node "source" in
-           Tree.[ mk_child_opt print_from_clause source_field ])
+           [ mk_child_opt print_from_clause source_field ])
         | "default" ->
           let declaration_field = ts_node_child_by_field_name_opt node "declaration" in
           decorators
-          @ Tree.[ mk_child make_node "default" ]
+          @ [ mk_child make_node after_export ]
           @
           (match declaration_field with
           | Some declaration_field ->
-            Tree.[ mk_child print_declaration declaration_field ]
+            [ mk_child print_declaration declaration_field ]
           | None ->
             let value_field = ts_node_child_by_field_name_res node "value" in
             [ mk_child_res print_expression value_field ])
@@ -164,23 +169,24 @@ and print_export_statement state node =
           then [ internal_error_child name "export_clause" ]
           else (
             let source_field = ts_node_child_by_field_name_opt node "source" in
-            Tree.
-              [ mk_child make_node "type"
+            [ mk_child make_node after_export
               ; mk_child print_export_clause export_clause
               ; mk_child_opt print_from_clause source_field
-              ])
+            ])
         | "=" ->
           let expression = TS_fun.ts_node_next_sibling after_export in
           if TS_fun.ts_node_is_null expression
           then [ internal_error_child name "expression" ]
-          else Tree.[ mk_child make_node "="; mk_child print_expression expression ]
+          else [ mk_child make_node after_export
+               ; mk_child print_expression expression ]
         | "as" ->
           let identifier = filter_first_by_name_opt "identifier" children in
           (match identifier with
           | None -> [ internal_error_child name "identifier" ]
           | Some identifier ->
-            Tree.[ mk_child make_node "as"; mk_child print_identifier identifier ])
-        | _ -> decorators @ Tree.[ mk_child print_declaration after_export ])
+            [ mk_child make_node after_export
+            ; mk_child print_identifier identifier ])
+        | _ -> decorators @ [ mk_child print_declaration after_export ])
   in
   make_tree state node children
 
@@ -207,10 +213,9 @@ and print_export_specifier state node =
   let name_field = ts_node_child_by_field_name_res node "name"
   and alias_field = ts_node_child_by_field_name_opt node "alias" in
   let children =
-    Tree.
-      [ mk_child_res print_module_export_name name_field
-      ; mk_child_opt print_module_export_name alias_field
-      ]
+    [ mk_child_res print_module_export_name name_field
+    ; mk_child_opt print_module_export_name alias_field
+    ]
   in
   make_tree state node children
 
@@ -227,20 +232,19 @@ and print_import_statement state node =
     match filter_first_by_name_opt "import_clause" children with
     | Some import_clause ->
       let source_field = ts_node_child_by_field_name_res node "source" in
-      Tree.
-        [ mk_child print_import_clause import_clause
-        ; mk_child_res print_from_clause source_field
-        ]
+      [ mk_child print_import_clause import_clause
+      ; mk_child_res print_from_clause source_field
+      ]
     | None ->
       (match filter_first_by_name_opt "import_require_clause" children with
-      | Some clause -> Tree.[ mk_child print_import_require_clause clause ]
+      | Some clause -> [ mk_child print_import_require_clause clause ]
       | None ->
         let source_field = ts_node_child_by_field_name_res node "source" in
         [ mk_child_res print_string source_field ])
   in
   let children =
-    (Tree.(mk_child_opt make_node kind_node) :: middle_children)
-    @ Tree.[ mk_child_opt print_import_attribute import_attribute ]
+    (mk_child_opt make_node kind_node :: middle_children)
+    @ [ mk_child_opt print_import_attribute import_attribute ]
   in
   make_tree state node children
 
@@ -259,18 +263,18 @@ and print_import_clause state node =
     | None -> [ internal_error_child name "\"first child\"" ]
     | Some fst_child ->
       (match get_name fst_child with
-      | "namespace_import" -> Tree.[ mk_child print_namespace_import fst_child ]
-      | "named_imports" -> Tree.[ mk_child print_named_imports fst_child ]
+      | "namespace_import" -> [ mk_child print_namespace_import fst_child ]
+      | "named_imports" -> [ mk_child print_named_imports fst_child ]
       | "identifier" ->
-        Tree.mk_child print_identifier fst_child
+        mk_child print_identifier fst_child
         ::
         (match ts_node_next_sibling_opt fst_child with
         | None -> []
         | Some comma ->
           (match ts_node_next_sibling_opt comma with
           | None -> [ internal_error_child name "namespace_import/named_imports" ]
-          | Some next -> Tree.[ mk_child print_rest next ]))
-      | _ -> Tree.[ mk_child print_unexpected_node fst_child ])
+          | Some next -> [ mk_child print_rest next ]))
+      | _ -> [ mk_child print_unexpected_node fst_child ])
   in
   make_tree state node children
 
@@ -291,12 +295,11 @@ and print_import_specifier state node =
   and name_field = ts_node_child_by_field_name_res node "name"
   and alias_field = ts_node_child_by_field_name_opt node "alias" in
   let children =
-    Tree.(mk_child_opt make_node kind_node)
+    mk_child_opt make_node kind_node
     ::
     (match alias_field with
     | None -> [ mk_child_res print_identifier name_field ]
     | Some alias_field ->
-      Tree.
         [ mk_child_res print_module_export_name name_field
         ; mk_child print_identifier alias_field
         ])
@@ -317,8 +320,8 @@ and print_import_attribute state node =
   and print_kind state node =
     let name = get_name node in
     match name with
-    | "with" -> Tree.make_node state name
-    | "assert" -> Tree.make_node state name
+    | "with" -> make_node state node
+    | "assert" -> make_node state node
     | _ -> match_rest state node print_unexpected_node
   in
   let children =
@@ -363,7 +366,6 @@ and print_if_statement state node =
   and consequence_field = ts_node_child_by_field_name_res node "consequence"
   and alternative_field = ts_node_child_by_field_name_opt node "alternative" in
   let children =
-    Tree.
       [ mk_child_res print_parenthesized_expression condition_field
       ; mk_child_res print_statement consequence_field
       ; mk_child_opt print_else_clause alternative_field
@@ -452,7 +454,6 @@ and print_for_statement state node =
     | _ -> print_expression state node
   in
   let children =
-    Tree.
       [ mk_child_res print_initializer initializer_field
       ; mk_child_res print_condition condition_field
       ; mk_child_opt print_increment increment_field
@@ -495,21 +496,19 @@ and print_for_in_statement state node =
         | "identifier" -> print_identifier state node
         | _ -> match_rest state node print_destructuring_pattern
       in
-      let kind_name = get_name kind_field in
-      (match kind_name with
+      (match get_name kind_field with
       | "var" ->
         let value_field = ts_node_child_by_field_name_opt node "value" in
-        Tree.
-          [ mk_child make_node kind_name
+          [ mk_child make_node kind_field
           ; mk_child_res print_left left_field
           ; mk_child_opt print_expression value_field
           ]
       | "let" | "const" ->
-        Tree.[ mk_child make_node kind_name; mk_child_res print_left left_field ]
-      | _ -> Tree.[ mk_child print_unexpected_node kind_field ])
+        [ mk_child make_node kind_field; mk_child_res print_left left_field ]
+      | _ -> [ mk_child print_unexpected_node kind_field ])
   in
   let children =
-    Tree.(mk_child_opt make_node await :: header_children)
+    (mk_child_opt make_node await :: header_children)
     @ [ mk_child_res print_operator operator_field
       ; mk_child_res print_expressions right_field
       ; mk_child_res print_statement body_field
@@ -548,7 +547,6 @@ and print_try_statement state node =
   and handler_field = ts_node_child_by_field_name_opt node "handler"
   and finalizer_field = ts_node_child_by_field_name_opt node "finalizer" in
   let children =
-    Tree.
       [ mk_child_res print_statement_block body_field
       ; mk_child_opt print_catch_clause handler_field
       ; mk_child_opt print_finally_clause finalizer_field
@@ -568,7 +566,6 @@ and print_catch_clause state node =
         | _ -> match_rest state node print_destructuring_pattern
       in
       let type_field = ts_node_child_by_field_name_opt node "type" in
-      Tree.
         [ mk_child print_parameter parameter_field
         ; mk_child_opt print_type_annotation type_field
         ; mk_child_res print_statement_block body_field
@@ -597,14 +594,14 @@ and print_with_statement state node =
 
 and print_break_statement state node =
   let label_field = ts_node_child_by_field_name_opt node "label" in
-  let children = Tree.[ mk_child_opt print_identifier label_field ] in
+  let children = [ mk_child_opt print_identifier label_field ] in
   make_tree state node children
 
 (* Continue statement *)
 
 and print_continue_statement state node =
   let label_field = ts_node_child_by_field_name_opt node "label" in
-  let children = Tree.[ mk_child_opt print_identifier label_field ] in
+  let children = [ mk_child_opt print_identifier label_field ] in
   make_tree state node children
 
 (* Return statement *)
@@ -617,7 +614,7 @@ and print_return_statement state node =
     | "sequence_expression" -> print_sequence_expression state node
     | _ -> print_expression state node
   in
-  let children = Tree.[ mk_child_opt print child ] in
+  let children = [ mk_child_opt print child ] in
   make_tree state node children
 
 (* Throw statement *)
@@ -674,7 +671,6 @@ and print_function_declaration state node =
   (* "statement_block" *)
   and body_field = ts_node_child_by_field_name_res node "body" in
   let children =
-    Tree.
       [ mk_child_opt make_node async
       ; mk_child_res print_identifier name_field
       ; mk_child_opt print_type_parameters type_parameters_field
@@ -698,7 +694,6 @@ and print_generator_function_declaration state node =
   (* "statement_block" *)
   and body_field = ts_node_child_by_field_name_res node "body" in
   let children =
-    Tree.
       [ mk_child_opt make_node async
       ; mk_child_res print_identifier name_field
       ; mk_child_opt print_type_parameters type_parameters_field
@@ -720,8 +715,7 @@ and print_class_declaration state node =
   and body_field = ts_node_child_by_field_name_res node "body" in
   let children =
     Tree.mk_children_list print_decorator decorators
-    @ Tree.
-        [ mk_child_res print_type_identifier name_field
+    @ [ mk_child_res print_type_identifier name_field
         ; mk_child_opt print_type_parameters type_parameters_field
         ; mk_child_opt print_class_heritage heritage_child
         ; mk_child_res print_class_body body_field
@@ -758,7 +752,6 @@ and print_variable_declarator state node =
     | _ -> match_rest state node print_destructuring_pattern
   in
   let children =
-    Tree.
       [ mk_child_res print_name_field name_field
       ; mk_child_opt print_expression value_field
       ]
@@ -785,7 +778,6 @@ and print_function_signature state node =
   and return_type_field = ts_node_child_by_field_name_opt node "return_type" in
   (* "statement_block" *)
   let children =
-    Tree.
       [ mk_child_opt make_node async
       ; mk_child_res print_identifier name_field
       ; mk_child_opt print_type_parameters type_parameters_field
@@ -813,7 +805,6 @@ and print_module state node =
     | _ -> match_rest state node print_unexpected_node
   in
   let children =
-    Tree.
       [ mk_child_res print_name name_field
       ; mk_child_opt print_statement_block body_field
       ]
@@ -831,7 +822,6 @@ and print_type_alias_declaration state node =
   and type_parameters_field = ts_node_child_by_field_name_opt node "type_parameters"
   and value_field = ts_node_child_by_field_name_res node "value" in
   let children =
-    Tree.
       [ mk_child_res print_identifier name_field
       ; mk_child_opt print_type_parameters type_parameters_field
       ; mk_child_res print_type value_field
@@ -850,7 +840,6 @@ and print_type_parameter state node =
   and constraint_field = ts_node_child_by_field_name_opt node "constraint"
   and value_field = ts_node_child_by_field_name_opt node "value" in
   let children =
-    Tree.
       [ mk_child_res print_identifier name_field
       ; mk_child_opt print_constraint constraint_field
       ; mk_child_opt print_default_type value_field
@@ -890,7 +879,6 @@ and print_enum_assignment state node =
   let name_field = ts_node_child_by_field_name_res node "name"
   and value_field = ts_node_child_by_field_name_opt node "value" in
   let children =
-    Tree.
       [ mk_child_res print_property_name name_field
       ; mk_child_opt print_expression value_field
       ]
@@ -906,7 +894,6 @@ and print_interface_declaration state node =
   and body_field = ts_node_child_by_field_name_res node "body" in
   let extends_type_clause = filter_first_by_name_opt "extends_type_clause" children in
   let children =
-    Tree.
       [ mk_child_res print_type_identifier name_field
       ; mk_child_opt print_type_parameters type_parameters_field
       ; mk_child_opt print_extends_type_clause extends_type_clause
@@ -1018,11 +1005,7 @@ and print_glimmer_template state node = make_node state node
 (* Assignment expression *)
 
 and print_assignment_expression state node =
-  let using =
-    let first_child = ts_node_child_res node 0 in
-    match get_name_res first_child with
-    | "using" -> Some "using"
-    | _ -> None
+  let using = ts_node_child_opt node 0
   and left_field = ts_node_child_by_field_name_res node "left"
   and right_field = ts_node_child_by_field_name_res node "right"
   and print_left state node =
@@ -1032,7 +1015,6 @@ and print_assignment_expression state node =
     | _ -> match_rest state node print_lhs_expression
   in
   let children =
-    Tree.
       [ mk_child_opt make_node using
       ; mk_child_res print_left left_field
       ; mk_child_res print_expression right_field
@@ -1160,16 +1142,16 @@ and print_update_expression state node =
   let children =
     match get_name_res first_child with
     | "++" ->
-      Tree.[ mk_child make_node "++"; mk_child_res print_expression argument_field ]
+      [ mk_child_res make_node first_child; mk_child_res print_expression argument_field ]
     | "--" ->
-      Tree.[ mk_child make_node "--"; mk_child_res print_expression argument_field ]
+      [ mk_child_res make_node first_child; mk_child_res print_expression argument_field ]
     | _ ->
       let snd_child = ts_node_child_res node 1 in
       (match get_name_res snd_child with
       | "++" ->
-        Tree.[ mk_child_res print_expression argument_field; mk_child make_node "++" ]
+        [ mk_child_res print_expression argument_field; mk_child_res make_node snd_child ]
       | "--" ->
-        Tree.[ mk_child_res print_expression argument_field; mk_child make_node "--" ]
+        [ mk_child_res print_expression argument_field; mk_child_res make_node snd_child ]
       | _ -> [] (* Should not happen. *))
   in
   make_tree state node children
@@ -1186,7 +1168,6 @@ and print_new_expression state node =
   and type_arguments_field = ts_node_child_by_field_name_opt node "type_arguments"
   and arguments_field = ts_node_child_by_field_name_opt node "arguments" in
   let children =
-    Tree.
       [ mk_child_res print_expression constructor_field
       ; mk_child_opt print_type_arguments type_arguments_field
       ; mk_child_opt print_arguments arguments_field
@@ -1275,7 +1256,6 @@ and print_subscript_expression state node =
     | _ -> print_expression state node
   in
   let children =
-    Tree.
       [ mk_child_res print_expression object_field
       ; mk_child_opt print_chain optional_chain_field
       ; mk_child_res print_index index_field
@@ -1301,7 +1281,6 @@ and print_member_expression state node =
       make_node state node
   in
   let children =
-    Tree.
       [ mk_child_res print_object object_field
       ; mk_child print_selector optional_chain_field
       ; mk_child_res print_property_field property_field
@@ -1404,7 +1383,6 @@ and print_function_expression state node =
   (* "statement_block" *)
   and body_field = ts_node_child_by_field_name_res node "body" in
   let children =
-    Tree.
       [ mk_child_opt make_node async
       ; mk_child_opt print_identifier name_field
       ; mk_child_opt print_type_parameters type_parameters_field
@@ -1418,17 +1396,12 @@ and print_function_expression state node =
 (* Arrow function *)
 
 and print_arrow_function state node =
-  let async =
-    let first_child = ts_node_child_res node 0 in
-    match get_name_res first_child with
-    | "async" -> Some "async"
-    | _ -> None
+  let async = ts_node_child_opt node 0
   and parameter_field = ts_node_child_by_field_name_opt node "parameter"
   and body_field = ts_node_child_by_field_name_res node "body" in
   let children =
     match parameter_field with
     | Some parameter_field ->
-      Tree.
         [ mk_child_opt make_node async
         ; mk_child print_identifier parameter_field
         ; mk_child_res print_arrow_function_body body_field
@@ -1438,7 +1411,6 @@ and print_arrow_function state node =
       let type_parameters_field = ts_node_child_by_field_name_opt node "type_parameters"
       and parameters_field = ts_node_child_by_field_name_res node "parameters"
       and return_type_field = ts_node_child_by_field_name_opt node "return_type" in
-      Tree.
         [ mk_child_opt make_node async
         ; mk_child_opt print_type_parameters type_parameters_field
         ; mk_child_res print_formal_parameters parameters_field
@@ -1467,7 +1439,6 @@ and print_generator_function state node =
   (* "statement_block" *)
   and body_field = ts_node_child_by_field_name_res node "body" in
   let children =
-    Tree.
       [ mk_child_opt make_node async
       ; mk_child_opt print_identifier name_field
       ; mk_child_opt print_type_parameters type_parameters_field
@@ -1489,8 +1460,7 @@ and print_class state node =
   and body_field = ts_node_child_by_field_name_res node "body" in
   let children =
     Tree.mk_children_list print_decorator decorators
-    @ Tree.
-        [ mk_child_opt print_type_identifier name_field
+    @ [ mk_child_opt print_type_identifier name_field
         ; mk_child_opt print_type_parameters type_parameters_field
         ; mk_child_opt print_class_heritage heritage_child
         ; mk_child_res print_class_body body_field
@@ -1503,14 +1473,13 @@ and print_class_heritage state node =
     match first_child_named "extends_clause" node with
     | Some extends_clause ->
       let implements_clause = first_child_named "implements_clause" node in
-      Tree.
         [ mk_child print_extends_clause extends_clause
         ; mk_child_opt print_implements_clause implements_clause
         ]
     | None ->
       (* [implements_clause] is never [None]. *)
       let implements_clause = first_child_named "implements_clause" node in
-      Tree.[ mk_child_opt print_implements_clause implements_clause ]
+      [ mk_child_opt print_implements_clause implements_clause ]
   in
   make_tree state node children
 
@@ -1536,11 +1505,11 @@ and print_extends_clause state node =
   in
   let pairs = pair_up [] children in
   let mk_children (value, type_arguments_opt) acc =
-    let value_child = Tree.mk_child print_expression value in
+    let value_child = mk_child print_expression value in
     match type_arguments_opt with
     | None -> value_child :: acc
     | Some type_arguments ->
-      value_child :: Tree.mk_child print_type_arguments type_arguments :: acc
+      value_child :: mk_child print_type_arguments type_arguments :: acc
   in
   let children = List.fold_right ~f:mk_children pairs ~init:[] in
   make_tree state node children
@@ -1583,7 +1552,6 @@ and print_method_definition state node =
   (* "statement_block" *)
   and body_field = ts_node_child_by_field_name_res node "body" in
   let children =
-    Tree.
       [ mk_child_opt print_accessibility_modifier accessibility_modifier
       ; mk_child_opt make_node static
       ; mk_child_opt print_override_modifier override_modifier
@@ -1628,7 +1596,6 @@ and print_abstract_method_signature state node =
   and parameters_field = ts_node_child_by_field_name_res node "parameters"
   and return_type_field = ts_node_child_by_field_name_opt node "return_type" in
   let children =
-    Tree.
       [ mk_child_opt print_accessibility_modifier accessibility_modifier
       ; mk_child_opt make_node abstract
       ; mk_child_opt print_override_modifier override_modifier
@@ -1662,8 +1629,7 @@ and print_public_field_definition state node =
   and emark = has_node_named_opt "!" children in
   let children =
     Tree.mk_children_list print_decorator decorators
-    @ Tree.
-        [ mk_child_opt print_accessibility_modifier accessibility_modifier
+    @ [ mk_child_opt print_accessibility_modifier accessibility_modifier
         ; mk_child_opt make_node declare
         ; mk_child_opt print_override_modifier override_modifier
         ; mk_child_opt make_node static
@@ -1686,8 +1652,8 @@ and print_meta_property state node =
   and print state node =
     let name = get_name node in
     match name with
-    | "new" -> Tree.make_node state "new.target"
-    | "import" -> Tree.make_node state "import.meta"
+    | "new" -> make_node state node (* "new.target"? *)
+    | "import" -> make_node state node (* "import.meta"? *)
     | _ -> match_rest state node print_unexpected_node
   in
   make_unary_res state node print meta_child
@@ -1710,7 +1676,6 @@ and print_call_expression state node =
     | _ -> match_rest state node print_arguments
   in
   let children =
-    Tree.
       [ mk_child_res print_function function_field
       ; mk_child_opt print_type_arguments type_arguments_field
       ; mk_child_res print_arguments arguments_field
@@ -1927,7 +1892,6 @@ and print_property_signature state node =
   and qmark = has_node_named_opt "?" children
   and type_field = ts_node_child_by_field_name_opt node "type" in
   let children =
-    Tree.
       [ mk_child_opt print_accessibility_modifier accessibility_modifier
       ; mk_child_opt make_node static
       ; mk_child_opt print_override_modifier override_modifier
@@ -1946,7 +1910,6 @@ and print_call_signature state node =
   and parameters_field = ts_node_child_by_field_name_res node "parameters"
   and return_type_field = ts_node_child_by_field_name_opt node "return_type" in
   let children =
-    Tree.
       [ mk_child_opt print_type_parameters type_parameters_field
       ; mk_child_res print_formal_parameters parameters_field
       ; mk_child_opt print_return_type return_type_field
@@ -1974,7 +1937,6 @@ and print_construct_signature state node =
   and parameters_field = ts_node_child_by_field_name_res node "parameters"
   and type_field = ts_node_child_by_field_name_opt node "type" in
   let children =
-    Tree.
       [ mk_child_opt make_node abstract
       ; mk_child_opt print_type_parameters type_parameters_field
       ; mk_child_res print_formal_parameters parameters_field
@@ -2006,7 +1968,6 @@ and print_index_signature state node =
     match name_field with
     | Some name_field ->
       let index_type_field = ts_node_child_by_field_name_res node "index_type" in
-      Tree.
         [ mk_child_opt print_sign_field sign_field
         ; mk_child print_identifier name_field
         ; mk_child_res print_type index_type_field
@@ -2014,7 +1975,6 @@ and print_index_signature state node =
         ]
     | None ->
       let mapped_type_clause = ts_node_named_child_res node 0 in
-      Tree.
         [ mk_child_opt print_sign_field sign_field
         ; mk_child_res print_mapped_type_clause mapped_type_clause
         ; mk_child_res print_type_field type_field
@@ -2034,7 +1994,6 @@ and print_mapped_type_clause state node =
   and type_field = ts_node_child_by_field_name_res node "type"
   and alias_field = ts_node_child_by_field_name_opt node "alias" in
   let children =
-    Tree.
       [ mk_child_res print_type_identifier name_field
       ; mk_child_res print_type type_field
       ; mk_child_opt print_type alias_field
@@ -2073,7 +2032,6 @@ and print_method_signature state node =
   and parameters_field = ts_node_child_by_field_name_res node "parameters"
   and return_type_field = ts_node_child_by_field_name_opt node "return_type" in
   let children =
-    Tree.
       [ mk_child_opt print_accessibility_modifier accessibility_modifier
       ; mk_child_opt make_node static
       ; mk_child_opt print_override_modifier override_modifier
@@ -2375,7 +2333,6 @@ and print_function_type state node =
     | _ -> match_rest state node print_type
   in
   let children =
-    Tree.
       [ mk_child_opt print_type_parameters type_parameters_field
       ; mk_child_res print_formal_parameters parameters_field
       ; mk_child_res print_return_type return_type_field
@@ -2424,7 +2381,6 @@ and print_constructor_type state node =
   and parameters_field = ts_node_child_by_field_name_res node "parameters"
   and type_field = ts_node_child_by_field_name_res node "type" in
   let children =
-    Tree.
       [ mk_child_opt make_node abstract
       ; mk_child_opt print_type_parameters type_parameters_field
       ; mk_child_res print_formal_parameters parameters_field
@@ -2447,8 +2403,7 @@ and print_formal_parameter state node =
 and print_optional_parameter state node = print_required_parameter state node
 
 and print_required_parameter state node =
-  let name = get_name node
-  and children = collect_children node in
+  let children = collect_children node in
   (* "_parameter_name" inlined: *)
   let decorators = filter_by_name "decorator" children
   and accessibility_modifier = filter_first_by_name_opt "accessibility_modifier" children
@@ -2465,9 +2420,8 @@ and print_required_parameter state node =
     | "this" -> print_this state node
     | _ -> print_pattern state node
   in
-  let open Tree in
   let children =
-    mk_children_list print_decorator decorators
+    Tree.mk_children_list print_decorator decorators
     @ [ mk_child_opt print_accessibility_modifier accessibility_modifier
       ; mk_child_opt print_override_modifier override_modifier
       ; mk_child_opt make_node readonly
@@ -2476,7 +2430,7 @@ and print_required_parameter state node =
       ; mk_child_opt print_expression value_field
       ]
   in
-  make state name children
+  make_tree state node children
 
 (* Decorator *)
 
@@ -2523,7 +2477,6 @@ and print_infer_type state node =
   let type_identifier_child = ts_node_named_child_res node 0
   and type_child = ts_node_named_child_opt node 1 in
   let children =
-    Tree.
       [ mk_child_res print_identifier type_identifier_child
       ; mk_child_opt print_type type_child
       ]

@@ -201,7 +201,7 @@ let filter_first_by_name_res name nodes =
 let has_node_named_opt name nodes =
   match filter_by_name name nodes with
   | [] -> None
-  | _ -> Some name
+  | node :: _ -> Some node
 
 let has_child_named name node = has_node_named_opt name @@ collect_named_children node
 
