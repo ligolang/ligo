@@ -15,8 +15,7 @@ let print_missing_node state node = Tree.make_node state (get_label node)
 (* Concluding a pattern matching with the remaining cases *)
 
 let match_rest state node print_default =
-  let name = get_name node in
-  match name with
+  match get_name node with
   (* Comments are ignored *)
   | "comment" -> ()
   (* Errors *)
@@ -53,8 +52,9 @@ let mk_child_res print = function
 
 (* Error/Invalid child *)
 
-let internal_error_child parent_name child_name =
-  let suffix = Printf.sprintf "Child %s is missing." child_name in
+let internal_error_child parent_node child_name =
+  let parent_name = get_name parent_node
+  and suffix = Printf.sprintf "Child %s is missing." child_name in
   let msg = Printf.sprintf "INTERNAL: [%s] %s" parent_name suffix in
   Tree.(mk_child make_node msg)
 
@@ -80,8 +80,7 @@ let rec print_program node =
    rules. *)
 
 and print_statement state node =
-  let name = get_name node in
-  match name with
+  match get_name node with
   | "export_statement" -> print_export_statement state node
   | "import_statement" -> print_import_statement state node
   | "debugger_statement" -> print_debugger_statement state node
@@ -121,18 +120,17 @@ and print_statement state node =
 (* Export statement *)
 
 and print_export_statement state node =
-  let name = get_name node
-  and children = collect_children node in
+  let children = collect_children node in
   let decorators = filter_by_name "decorator" children
   and export_node = filter_first_by_name_opt "export" children in
   let decorators = Tree.mk_children_list print_decorator decorators in
   let children =
     match export_node with
-    | None -> [ internal_error_child name "export" ]
+    | None -> [ internal_error_child node "export" ]
     | Some export_node ->
       let after_export = TS_fun.ts_node_next_sibling export_node in
       if TS_fun.ts_node_is_null after_export
-      then [ internal_error_child name "after \"export\"" ]
+      then [ internal_error_child node "after \"export\"" ]
       else (
         match get_name after_export with
         | "*" ->
@@ -141,7 +139,7 @@ and print_export_statement state node =
           (let source_field = ts_node_child_by_field_name_opt node "source" in
            [ mk_child_opt print_from_clause source_field ])
         | "namespace_export" ->
-          Tree.mk_child print_namespace_export after_export
+          mk_child print_namespace_export after_export
           ::
           (let source_field = ts_node_child_by_field_name_opt node "source" in
            [ mk_child_opt print_from_clause source_field ])
@@ -163,7 +161,7 @@ and print_export_statement state node =
         | "type" ->
           let export_clause = TS_fun.ts_node_next_sibling after_export in
           if TS_fun.ts_node_is_null export_clause
-          then [ internal_error_child name "export_clause" ]
+          then [ internal_error_child node "export_clause" ]
           else (
             let source_field = ts_node_child_by_field_name_opt node "source" in
             [ mk_child make_node after_export
@@ -173,12 +171,12 @@ and print_export_statement state node =
         | "=" ->
           let expression = TS_fun.ts_node_next_sibling after_export in
           if TS_fun.ts_node_is_null expression
-          then [ internal_error_child name "expression" ]
+          then [ internal_error_child node "expression" ]
           else [ mk_child make_node after_export; mk_child print_expression expression ]
         | "as" ->
           let identifier = filter_first_by_name_opt "identifier" children in
           (match identifier with
-          | None -> [ internal_error_child name "identifier" ]
+          | None -> [ internal_error_child node "identifier" ]
           | Some identifier ->
             [ mk_child make_node after_export; mk_child print_identifier identifier ])
         | _ -> decorators @ [ mk_child print_declaration after_export ])
@@ -198,8 +196,7 @@ and print_export_clause state node =
   tree_of_list state node print_export_specifier children
 
 and print_module_export_name state node =
-  let name = get_name node in
-  match name with
+  match get_name node with
   | "identifier" -> print_identifier state node
   | "string" -> print_string state node
   | _ -> match_rest state node print_unexpected_node
@@ -244,8 +241,7 @@ and print_import_statement state node =
   make_tree state node children
 
 and print_import_clause state node =
-  let name = get_name node
-  and fst_child = ts_node_child_opt node 0
+  let fst_child = ts_node_child_opt node 0
   and print_rest state node =
     let name = get_name node in
     match name with
@@ -255,7 +251,7 @@ and print_import_clause state node =
   in
   let children =
     match fst_child with
-    | None -> [ internal_error_child name "\"first child\"" ]
+    | None -> [ internal_error_child node "\"first child\"" ]
     | Some fst_child ->
       (match get_name fst_child with
       | "namespace_import" -> [ mk_child print_namespace_import fst_child ]
@@ -267,7 +263,7 @@ and print_import_clause state node =
         | None -> []
         | Some comma ->
           (match ts_node_next_sibling_opt comma with
-          | None -> [ internal_error_child name "namespace_import/named_imports" ]
+          | None -> [ internal_error_child node "namespace_import/named_imports" ]
           | Some next -> [ mk_child print_rest next ]))
       | _ -> [ mk_child print_unexpected_node fst_child ])
   in
@@ -313,8 +309,7 @@ and print_import_attribute state node =
   let kind_node = ts_node_child_res node 0
   and object_node = ts_node_child_res node 1
   and print_kind state node =
-    let name = get_name node in
-    match name with
+    match get_name node with
     | "with" -> make_node state node
     | "assert" -> make_node state node
     | _ -> match_rest state node print_unexpected_node
@@ -343,8 +338,7 @@ and print_expression_statement state node =
   make_unary_res state node print_expressions child
 
 and print_expressions state node =
-  let name = get_name node in
-  match name with
+  match get_name node with
   | "sequence_expression" -> print_sequence_expression state node
   | _ -> print_expression state node
 
@@ -387,8 +381,7 @@ and print_switch_statement state node =
 and print_switch_body state node =
   let children = collect_named_children node
   and print state node =
-    let name = get_name node in
-    match name with
+    match get_name node with
     | "switch_case" -> print_switch_case state node
     | _ -> match_rest state node print_switch_default
   in
@@ -406,8 +399,7 @@ and print_switch_case state node =
   let stmt_children = skip_until_colon children
   and value_field = ts_node_child_by_field_name_res node "value"
   and print_value state node =
-    let name = get_name node in
-    match name with
+    match get_name node with
     | "sequence_expression" -> print_sequence_expression state node
     | _ -> print_expression state node
   in
@@ -429,22 +421,19 @@ and print_for_statement state node =
   and increment_field = ts_node_child_by_field_name_opt node "increment"
   and body_field = ts_node_child_by_field_name_res node "body"
   and print_initializer state node =
-    let name = get_name node in
-    match name with
+    match get_name node with
     | "lexical_declaration" -> print_lexical_declaration state node
     | "variable_declaration" -> print_variable_declaration state node
     | "expression_statement" -> print_expression_statement state node
     | "empty_statement" -> print_empty_statement state node
     | _ -> match_rest state node print_unexpected_node
   and print_condition state node =
-    let name = get_name node in
-    match name with
+    match get_name node with
     | "expression_statement" -> print_expression_statement state node
     | "empty_statement" -> print_empty_statement state node
     | _ -> match_rest state node print_unexpected_node
   and print_increment state node =
-    let name = get_name node in
-    match name with
+    match get_name node with
     | "sequence_expression" -> print_sequence_expression state node
     | _ -> print_expression state node
   in
@@ -468,8 +457,7 @@ and print_for_in_statement state node =
   and right_field = ts_node_child_by_field_name_res node "right"
   and kind_field = ts_node_child_by_field_name_opt node "kind" in
   let print_operator state node =
-    let name = get_name node in
-    match name with
+    match get_name node with
     | "in" -> make_node state node
     | "of" -> make_node state node
     | _ -> match_rest state node print_unexpected_node
@@ -478,16 +466,14 @@ and print_for_in_statement state node =
     match kind_field with
     | None ->
       let print_left state node =
-        let name = get_name node in
-        match name with
+        match get_name node with
         | "parenthesized_expression" -> print_parenthesized_expression state node
         | _ -> match_rest state node print_lhs_expression
       in
       [ mk_child_res print_left left_field ]
     | Some kind_field ->
       let print_left state node =
-        let name = get_name node in
-        match name with
+        match get_name node with
         | "identifier" -> print_identifier state node
         | _ -> match_rest state node print_destructuring_pattern
       in
@@ -555,8 +541,7 @@ and print_catch_clause state node =
     match ts_node_child_by_field_name_opt node "parameter" with
     | Some parameter_field ->
       let print_parameter state node =
-        let name = get_name node in
-        match name with
+        match get_name node with
         | "identifier" -> print_identifier state node
         | _ -> match_rest state node print_destructuring_pattern
       in
@@ -604,8 +589,7 @@ and print_continue_statement state node =
 and print_return_statement state node =
   let child = ts_node_named_child_opt node 0
   and print state node =
-    let name = get_name node in
-    match name with
+    match get_name node with
     | "sequence_expression" -> print_sequence_expression state node
     | _ -> print_expression state node
   in
@@ -635,8 +619,7 @@ and print_labeled_statement state node =
 (* DECLARATION *)
 
 and print_declaration state node =
-  let name = get_name node in
-  match name with
+  match get_name node with
   | "function_declaration" -> print_function_declaration state node
   | "generator_function_declaration" -> print_generator_function_declaration state node
   | "class_declaration" -> print_class_declaration state node
@@ -725,8 +708,7 @@ and print_lexical_declaration state node =
   and kind_field = ts_node_child_by_field_name_res node "kind" in
   let var_decls = filter_by_name "variable_declarator" children
   and print_set_or_const state node =
-    let name = get_name node in
-    match name with
+    match get_name node with
     | "let" -> make_node state node
     | "const" -> make_node state node
     | _ -> match_rest state node print_unexpected_node
@@ -741,8 +723,7 @@ and print_variable_declarator state node =
   let name_field = ts_node_child_by_field_name_res node "name"
   and value_field = ts_node_child_by_field_name_opt node "value"
   and print_name_field state node =
-    let name = get_name node in
-    match name with
+    match get_name node with
     | "identifier" -> print_identifier state node
     | _ -> match_rest state node print_destructuring_pattern
   in
@@ -792,8 +773,7 @@ and print_module state node =
   let name_field = ts_node_child_by_field_name_res node "name"
   and body_field = ts_node_child_by_field_name_opt node "body"
   and print_name state node =
-    let name = get_name node in
-    match name with
+    match get_name node with
     | "string" -> print_string state node
     | "identifier" -> print_identifier state node
     | "nested_identifier" -> print_nested_identifier state node
@@ -861,8 +841,7 @@ and print_enum_declaration state node =
 and print_enum_body state node =
   let children = collect_named_children node
   and print state node =
-    let name = get_name node in
-    match name with
+    match get_name node with
     | "enum_assignment" -> print_enum_assignment state node
     | _ -> match_rest state node print_property_name
   in
@@ -900,8 +879,7 @@ and print_interface_body state node = print_object_type state node
 and print_extends_type_clause state node =
   let children = collect_named_children node
   and print state node =
-    let name = get_name node in
-    match name with
+    match get_name node with
     | "type_identifier" -> print_type_identifier state node
     | "nested_type_identifier" -> print_nested_type_identifier state node
     | "generic_type" -> print_generic_type state node
@@ -915,8 +893,7 @@ and print_import_alias state node =
   let lhs = ts_node_child_res node 1
   and rhs = ts_node_child_res node 3
   and print_rhs state node =
-    let name = get_name node in
-    match name with
+    match get_name node with
     | "identifier" -> print_identifier state node
     | "nested_identifier" -> print_nested_identifier state node
     | _ -> match_rest state node print_unexpected_node
@@ -947,8 +924,7 @@ and print_ambient_declaration state node =
    non-terminals in [print_expression]. *)
 
 and print_expression state node =
-  let name = get_name node in
-  match name with
+  match get_name node with
   (* "primary_expression" inlined: *)
   | "subscript_expression" -> print_subscript_expression state node
   | "member_expression" -> print_member_expression state node
@@ -1002,8 +978,7 @@ and print_assignment_expression state node =
   and left_field = ts_node_child_by_field_name_res node "left"
   and right_field = ts_node_child_by_field_name_res node "right"
   and print_left state node =
-    let name = get_name node in
-    match name with
+    match get_name node with
     | "parenthesized_expression" -> print_parenthesized_expression state node
     | _ -> match_rest state node print_lhs_expression
   in
@@ -1022,9 +997,8 @@ and print_augmented_assignment_expression state node =
   and right_field = ts_node_child_by_field_name_res node "right"
   and operator = ts_node_child_by_field_name_res node "operator"
   and print_left state node =
-    let name = get_name node in
     (* "_augmented_assignment_lhs" is inlined here (hidden rule): *)
-    match name with
+    match get_name node with
     | "member_expression" -> print_member_expression state node
     | "subscript_expression" -> print_subscript_expression state node
     | "identifier" -> print_identifier state node
@@ -1071,13 +1045,11 @@ and print_binary_expression state node =
   and right_field = ts_node_child_by_field_name_res node "right"
   and operator = ts_node_child_by_field_name_res node "operator"
   and print_left state node =
-    let name = get_name node in
-    match name with
+    match get_name node with
     | "private_property_identifier" -> print_identifier state node
     | _ -> match_rest state node print_expression
   and print_bin_operator state node =
-    let name = get_name node in
-    match name with
+    match get_name node with
     | "&&" -> make_node state node
     | "||" -> make_node state node
     | ">>" -> make_node state node
@@ -1187,8 +1159,7 @@ and print_as_expression state node =
   let expression = ts_node_child_res node 0
   and as_what = ts_node_child_res node 2
   and print_as state node =
-    let name = get_name node in
-    match name with
+    match get_name node with
     | "const" -> make_node state node
     | _ -> match_rest state node print_type
   in
@@ -1238,13 +1209,11 @@ and print_subscript_expression state node =
   and optional_chain_field = ts_node_child_by_field_name_opt node "optional_chain"
   and index_field = ts_node_child_by_field_name_res node "index"
   and print_chain state node =
-    let name = get_name node in
-    match name with
+    match get_name node with
     | "optional_chain" -> make_node state node
     | _ -> match_rest state node print_unexpected_node
   and print_index state node =
-    let name = get_name node in
-    match name with
+    match get_name node with
     | "sequence_expression" -> print_sequence_expression state node
     | _ -> print_expression state node
   in
@@ -1263,8 +1232,7 @@ and print_member_expression state node =
   and optional_chain_field = ts_node_child_by_field_name_opt node "optional_chain"
   and property_field = ts_node_child_by_field_name_res node "property"
   and print_object state node =
-    let name = get_name node in
-    match name with
+    match get_name node with
     | "import" -> print_import state node
     | _ -> match_rest state node print_expression
   and print_selector state = function
@@ -1286,8 +1254,7 @@ and print_member_expression state node =
 and print_parenthesized_expression state node =
   let child = ts_node_named_child_res node 0
   and print state node =
-    let name = get_name node in
-    match name with
+    match get_name node with
     | "sequence_expression" -> print_sequence_expression state node
     | _ -> print_expression state node
   in
@@ -1310,8 +1277,7 @@ and print_null state node = make_node state node
 and print_template_string state node =
   let children = collect_named_children node
   and print state node =
-    let name = get_name node in
-    match name with
+    match get_name node with
     | "string_fragment" -> make_node state node
     | "escape_sequence" -> make_node state node
     | "template_substitution" -> make_node state node
@@ -1324,8 +1290,7 @@ and print_template_string state node =
 and print_object state node =
   let children = collect_named_children node
   and print state node =
-    let name = get_name node in
-    match name with
+    match get_name node with
     | "pair" -> print_pair state node
     | "spread_element" -> print_spread_element state node
     | "method_definition" -> print_method_definition state node
@@ -1354,8 +1319,7 @@ and print_array state node =
   tree_of_list state node print_array_cell children
 
 and print_array_cell state node =
-  let name = get_name node in
-  match name with
+  match get_name node with
   | "spread_element" -> print_spread_element state node
   | _ -> match_rest state node print_expression
 
@@ -1414,8 +1378,7 @@ and print_arrow_function state node =
   make_tree state node children
 
 and print_arrow_function_body state node =
-  let name = get_name node in
-  match name with
+  match get_name node with
   | "statement_block" -> print_statement_block state node
   | _ -> match_rest state node print_expression
 
@@ -1511,8 +1474,7 @@ and print_class_body state node =
   let children = collect_named_children node in
   let decorators = filter_by_name "decorator" children in
   let print state node =
-    let name = get_name node in
-    match name with
+    match get_name node with
     | "decorator" -> ()
     | "method_definition" ->
       List.iter ~f:(print_decorator state) decorators;
@@ -1564,8 +1526,7 @@ and print_method_definition state node =
   make_tree state node children
 
 and print_return_type state node =
-  let name = get_name node in
-  match name with
+  match get_name node with
   | "type_annotation" -> print_type_annotation state node
   | "asserts_annotation" -> print_asserts_annotation state node
   | _ -> match_rest state node print_type_predicate_annotation
@@ -1643,8 +1604,7 @@ and print_public_field_definition state node =
 and print_meta_property state node =
   let meta_child = ts_node_child_res node 0
   and print state node =
-    let name = get_name node in
-    match name with
+    match get_name node with
     | "new" -> make_node state node (* "new.target"? *)
     | "import" -> make_node state node (* "import.meta"? *)
     | _ -> match_rest state node print_unexpected_node
@@ -1658,13 +1618,11 @@ and print_call_expression state node =
   and type_arguments_field = ts_node_child_by_field_name_opt node "type_arguments"
   and arguments_field = ts_node_child_by_field_name_res node "arguments"
   and print_function state node =
-    let name = get_name node in
-    match name with
+    match get_name node with
     | "import" -> print_import state node
     | _ -> match_rest state node print_expression
   and print_arguments state node =
-    let name = get_name node in
-    match name with
+    match get_name node with
     | "template_string" -> print_template_string state node
     | _ -> match_rest state node print_arguments
   in
@@ -1685,8 +1643,7 @@ and print_arguments state node =
   tree_of_list state node print_argument children
 
 and print_argument state node =
-  let name = get_name node in
-  match name with
+  match get_name node with
   | "spread_element" -> print_spread_element state node
   | _ -> match_rest state node print_expression
 
@@ -1708,8 +1665,7 @@ and print_sequence_expression state node =
    TypeScript grammar, which means that they are hidden rules. *)
 
 and print_type state node =
-  let name = get_name node in
-  match name with
+  match get_name node with
   | "function_type" -> print_function_type state node
   | "readonly_type" -> print_readonly_type state node
   | "constructor_type" -> print_constructor_type state node
@@ -1721,8 +1677,7 @@ and print_type state node =
   | _ -> match_rest state node print_primary_type
 
 and print_primary_type state node =
-  let name = get_name node in
-  match name with
+  match get_name node with
   | "parenthesized_type" -> print_parenthesized_type state node
   | "predefined_type" -> print_predefined_type state node
   | "type_identifier" -> print_type_identifier state node
@@ -1780,8 +1735,7 @@ and print_predefined_type state node =
          ...)
     *)
     let print state node =
-      let name = get_name node in
-      match name with
+      match get_name node with
       | "any" -> make_node state node
       | "number" -> make_node state node
       | "boolean" -> make_node state node
@@ -1802,8 +1756,7 @@ and print_nested_type_identifier state node =
   let module_field = ts_node_child_by_field_name_res node "module"
   and name_field = ts_node_child_by_field_name_res node "name"
   and print_module_field state node =
-    let name = get_name node in
-    match name with
+    match get_name node with
     | "identifier" -> print_identifier state node
     | "nested_identifier" -> print_nested_identifier state node
     | _ -> match_rest state node print_unexpected_node
@@ -1821,14 +1774,12 @@ and print_nested_identifier state node =
   let object_field = ts_node_child_by_field_name_res node "object"
   and property_field = ts_node_child_by_field_name_res node "property"
   and print_object_field state node =
-    let name = get_name node in
-    match name with
+    match get_name node with
     | "identifier" -> print_identifier state node
     | "member_expression" -> print_nested_identifier state node
     | _ -> match_rest state node print_unexpected_node
   and print_property_field state node =
-    let name = get_name node in
-    match name with
+    match get_name node with
     | "property_identifier" -> print_identifier state node
     | _ -> match_rest state node print_unexpected_node
   in
@@ -1845,8 +1796,7 @@ and print_generic_type state node =
   let name_field = ts_node_child_by_field_name_res node "name"
   and type_arguments_field = ts_node_child_by_field_name_res node "type_arguments"
   and print_name_field state node =
-    let name = get_name node in
-    match name with
+    match get_name node with
     | "type_identifier" -> print_type_identifier state node
     | "nested_type_identifier" -> print_nested_type_identifier state node
     | _ -> match_rest state node print_unexpected_node
@@ -1865,8 +1815,7 @@ and print_object_type state node =
   tree_of_list state node print_object_type_field children
 
 and print_object_type_field state node =
-  let name = get_name node in
-  match name with
+  match get_name node with
   | "export_statement" -> print_export_statement state node
   | "property_signature" -> print_property_signature state node
   | "call_signature" -> print_call_signature state node
@@ -1949,8 +1898,7 @@ and print_index_signature state node =
     | None -> Tree.make_node state "readonly"
     | Some sign -> Tree.make_unary state "readonly" print_plus_minus sign
   and print_type_field state node =
-    let name = get_name node in
-    match name with
+    match get_name node with
     | "type_annotation" -> print_type_annotation state node
     | "omitting_type_annotation" -> print_omitting_type_annotation state node
     | "adding_type_annotation" -> print_adding_type_annotation state node
@@ -1976,8 +1924,7 @@ and print_index_signature state node =
   make_tree state node children
 
 and print_plus_minus state node =
-  let name = get_name node in
-  match name with
+  match get_name node with
   | "+" -> make_node state node
   | "-" -> make_node state node
   | _ -> match_rest state node print_unexpected_node
@@ -2055,8 +2002,7 @@ and print_tuple_type state node =
   tree_of_list state node print_tuple_type_member children
 
 and print_tuple_type_member state node =
-  let name = get_name node in
-  match name with
+  match get_name node with
   | "required_parameter" -> print_tuple_parameter state node (* Alias *)
   | "optional_parameter" -> print_optional_tuple_parameter state node (* Alias *)
   | "optional_type" -> print_optional_type state node
@@ -2067,8 +2013,7 @@ and print_tuple_parameter state node =
   let name_field = ts_node_child_by_field_name_res node "name"
   and type_field = ts_node_child_by_field_name_res node "type"
   and print_name_field state node =
-    let name = get_name node in
-    match name with
+    match get_name node with
     | "identifier" -> print_identifier state node
     | "rest_pattern" -> print_rest_pattern state node
     | _ -> match_rest state node print_unexpected_node
@@ -2105,8 +2050,7 @@ and print_rest_pattern state node =
 (* LHS expression *)
 
 and print_lhs_expression state node =
-  let name = get_name node in
-  match name with
+  match get_name node with
   | "member_expression" -> print_member_expression state node
   | "subscript_expression" -> print_subscript_expression state node
   | "identifier" -> print_identifier state node
@@ -2129,8 +2073,7 @@ and print_rest_type state node =
 and print_type_query state node =
   let child = ts_node_named_child_res node 0
   and print state node =
-    let name = get_name node in
-    match name with
+    match get_name node with
     | "subscript_expression" -> print_type_query_subscript_expression state node
     | "member_expression" -> print_type_query_member_expression state node
     | "call_expression" -> print_type_query_call_expression state node
@@ -2145,8 +2088,7 @@ and print_type_query_subscript_expression state node =
   let object_field = ts_node_child_by_field_name_res node "object"
   and index_field = ts_node_child_by_field_name_res node "index"
   and print_index_field state node =
-    let name = get_name node in
-    match name with
+    match get_name node with
     | "predefined_type" -> print_predefined_type state node
     | "string" -> make_node state node
     | "number" -> print_number state node
@@ -2170,8 +2112,7 @@ and print_type_query_member_expression state node =
   make_tree state node children
 
 and print_object_field state node =
-  let name = get_name node in
-  match name with
+  match get_name node with
   | "identifier" -> print_identifier state node
   | "this" -> print_this state node
   | "member_expression" -> print_type_query_member_expression state node
@@ -2180,8 +2121,7 @@ and print_object_field state node =
   | _ -> match_rest state node print_unexpected_node
 
 and print_property_field state node =
-  let name = get_name node in
-  match name with
+  match get_name node with
   | "private_property_identifier" -> print_identifier state node
   | "property_identifier" -> print_identifier state node
   | _ -> match_rest state node print_unexpected_node
@@ -2197,8 +2137,7 @@ and print_type_query_instantiation_expression state node =
   make_tree state node children
 
 and print_function_field state node =
-  let name = get_name node in
-  match name with
+  match get_name node with
   | "import" -> print_import state node
   | "identifier" -> print_identifier state node
   | "member_expression" -> print_type_query_member_expression state node
@@ -2228,8 +2167,7 @@ and print_existential_type state node = make_node state node
 and print_literal_type state node =
   let child = ts_node_named_child_res node 0 in
   let print state node =
-    let name = get_name node in
-    match name with
+    match get_name node with
     | "unary_expression" -> print_unary_expression state node
     | "number" -> print_number state node
     | "string" -> print_string state node
@@ -2247,8 +2185,7 @@ and print_unary_expression state node =
   let operator_field = ts_node_child_by_field_name_res node "operator"
   and argument_field = ts_node_child_by_field_name_res node "argument"
   and print_unary_operator state node =
-    let name = get_name node in
-    match name with
+    match get_name node with
     | "!" -> make_node state node
     | "~" -> make_node state node
     | "-" -> make_node state node
@@ -2319,8 +2256,7 @@ and print_function_type state node =
   and parameters_field = ts_node_child_by_field_name_res node "parameters"
   and return_type_field = ts_node_child_by_field_name_res node "return_type"
   and print_return_type state node =
-    let name = get_name node in
-    match name with
+    match get_name node with
     | "asserts" -> print_asserts state node
     | "type_predicate" -> print_type_predicate state node
     | _ -> match_rest state node print_type
@@ -2336,8 +2272,7 @@ and print_function_type state node =
 and print_asserts state node =
   let child = ts_node_child_res node 1
   and print state node =
-    let name = get_name node in
-    match name with
+    match get_name node with
     | "type_predicate" -> print_type_predicate state node
     | "identifier" -> print_identifier state node
     | "this" -> print_this state node
@@ -2349,8 +2284,7 @@ and print_type_predicate state node =
   let name_field = ts_node_child_by_field_name_res node "name"
   and type_field = ts_node_child_by_field_name_res node "type" in
   let print_name_field state node =
-    let name = get_name node in
-    match name with
+    match get_name node with
     | "identifier" -> print_identifier state node
     | "this" -> print_this state node
     | _ -> match_rest state node print_predefined_type
@@ -2387,8 +2321,7 @@ and print_formal_parameters state node =
   tree_of_list state node print_formal_parameter children
 
 and print_formal_parameter state node =
-  let name = get_name node in
-  match name with
+  match get_name node with
   | "required_parameter" -> print_required_parameter state node
   | "optional_parameter" -> print_optional_parameter state node
   | _ -> match_rest state node print_unexpected_node
@@ -2408,8 +2341,7 @@ and print_required_parameter state node =
   (* "_initializer" inlined: *)
   and value_field = ts_node_child_by_field_name_opt node "value"
   and print_pattern_field state node =
-    let name = get_name node in
-    match name with
+    match get_name node with
     | "this" -> print_this state node
     | _ -> print_pattern state node
   in
@@ -2430,8 +2362,7 @@ and print_required_parameter state node =
 and print_decorator state node =
   let child = ts_node_named_child_res node 0
   and print state node =
-    let name = get_name node in
-    match name with
+    match get_name node with
     | "identifier" -> print_identifier state node
     | "member_expression" -> print_member_expression state node
     | "call_expression" -> print_call_expression state node
@@ -2445,8 +2376,7 @@ and print_decorator state node =
 and print_accessibility_modifier state node =
   let child = ts_node_child_res node 0
   and print state node =
-    let name = get_name node in
-    match name with
+    match get_name node with
     | "public" -> print_public state node
     | "private" -> print_private state node
     | "protected" -> print_protected state node
@@ -2488,8 +2418,7 @@ and print_object_pattern state node =
   tree_of_list state node print_object_pattern_field children
 
 and print_object_pattern_field state node =
-  let name = get_name node in
-  match name with
+  match get_name node with
   | "pair_pattern" -> print_pair_pattern state node
   | "rest_pattern" -> print_rest_pattern state node
   | "object_assignment_pattern" -> print_object_assignment_pattern state node
@@ -2503,8 +2432,7 @@ and print_pair_pattern state node =
   let key_field = ts_node_child_by_field_name_res node "key"
   and value_field = ts_node_child_by_field_name_res node "value"
   and print_pair_value_field state node =
-    let name = get_name node in
-    match name with
+    match get_name node with
     | "assignment_pattern" -> print_assignment_pattern state node
     | _ -> match_rest state node print_pattern
   in
@@ -2528,8 +2456,7 @@ and print_assignment_pattern state node =
 (* Property names *)
 
 and print_property_name state node =
-  let name = get_name node in
-  match name with
+  match get_name node with
   | "property_identifier" -> print_identifier state node
   | "private_property_identifier" -> print_identifier state node
   | "string" -> print_string state node
@@ -2549,8 +2476,7 @@ and print_object_assignment_pattern state node =
   let left_field = ts_node_child_by_field_name_res node "left"
   and right_field = ts_node_child_by_field_name_res node "right"
   and print_left state node =
-    let name = get_name node in
-    match name with
+    match get_name node with
     | "shorthand_property_identifier_pattern" ->
       print_shorthand_property_identifier_pattern state node
     | _ -> match_rest state node print_destructuring_pattern
@@ -2563,8 +2489,7 @@ and print_object_assignment_pattern state node =
 (* Rule "_destructuring_pattern" is inlined. *)
 
 and print_destructuring_pattern state node =
-  let name = get_name node in
-  match name with
+  match get_name node with
   | "object_pattern" -> print_object_pattern state node
   | "array_pattern" -> print_array_pattern state node
   | _ -> match_rest state node print_unexpected_node
@@ -2576,15 +2501,13 @@ and print_array_pattern state node =
   tree_of_list state node print_array_pattern_cell children
 
 and print_array_pattern_cell state node =
-  let name = get_name node in
-  match name with
+  match get_name node with
   | "assignment_pattern" -> print_assignment_pattern state node
   | _ -> match_rest state node print_pattern (* hidden rule *)
 
 (* General patterns (hidden rule) *)
 
 and print_pattern state node =
-  let name = get_name node in
-  match name with
+  match get_name node with
   | "rest_pattern" -> print_rest_pattern state node
   | _ -> print_lhs_expression state node
