@@ -548,6 +548,24 @@ let rec extract_pat : type a. _ -> a general_pattern -> pat =
   | Tpat_exception _ -> error_exceptions_not_supported ctx
 
 
+let var_pat_of_pat ctx pat =
+  let { pat_desc; pat_type; pat_loc } = pat in
+  let ctx = enter_region ~loc:pat_loc ctx in
+  match pat_desc with
+  | P_var ident -> var_pat_wrap pat_loc pat_type ident
+  | P_unit -> error_unsupported ctx
+  | P_tuple _ -> error_unsupported ctx
+  | P_record _ -> error_unsupported ctx
+  | P_variant _ -> error_unsupported ctx
+
+
+let signature_of_sig_expr ctx sig_expr =
+  let { sig_expr_desc; sig_expr_loc } = sig_expr in
+  match sig_expr_desc with
+  | S_var _ -> error_unsupported ctx
+  | S_sig signature -> signature
+
+
 let rec extract_expr ctx expr =
   let { exp_desc; exp_loc; exp_extra; exp_type; exp_env; exp_attributes } = expr in
   let loc = extract_loc ~loc:exp_loc in
@@ -571,6 +589,7 @@ let rec extract_expr ctx expr =
   (* TODO: label, exp function *)
   | Texp_function { arg_label = Nolabel; param; cases; partial = Total } ->
     let param, body = extract_expr_function ctx ~exp_env ~exp_type ~loc param cases in
+    let param = var_pat_of_pat ctx param in
     expr_wrap loc type_ @@ E_lambda (param, body)
   | Texp_function { arg_label = Nolabel; partial = Partial; _ } -> error_unimplemented ctx
   | Texp_function { arg_label = Labelled _; _ } ->
@@ -699,7 +718,9 @@ and extract_expr_binding ctx rec_flag binding =
   let value =
     match rec_flag with
     | Nonrecursive -> extract_expr ctx vb_expr
-    | Recursive -> extract_expr_recursive ctx ~self:pat vb_expr
+    | Recursive ->
+      let pat = var_pat_of_pat ctx pat in
+      extract_expr_recursive ctx ~self:pat vb_expr
   in
   loc, pat, value
 
@@ -718,6 +739,7 @@ and extract_expr_recursive ctx ~self expr =
   (* TODO: label, exp function *)
   | Texp_function { arg_label = Nolabel; param; cases; partial = Total } ->
     let param, body = extract_expr_function ctx ~exp_env ~exp_type ~loc param cases in
+    let param = var_pat_of_pat ctx param in
     expr_wrap loc type_ @@ E_lambda_rec { self; param; body }
   | Texp_function { arg_label = Nolabel; partial = Partial; _ } -> error_unimplemented ctx
   | Texp_function { arg_label = Labelled _; _ } ->
@@ -919,6 +941,7 @@ and extract_str_let ctx rec_flag bindings =
       error_let_and_not_supported ctx
   in
   let loc, pat, value = extract_expr_binding ctx rec_flag binding in
+  let pat = var_pat_of_pat ctx pat in
   decl_wrap loc @@ D_let (pat, value)
 
 
@@ -973,7 +996,8 @@ and extract_sigi ctx sigi =
   | Tsig_recmodule _ -> error_rec_modules_not_supported ctx
   | Tsig_modtype decl ->
     let ident, sig_expr = extract_mod_type_decl ctx decl in
-    sig_item_wrap loc @@ S_module_type (ident, sig_expr)
+    let signature = signature_of_sig_expr ctx sig_expr in
+    sig_item_wrap loc @@ S_module_type (ident, signature)
   | Tsig_modtypesubst _ ->
     (* TODO: think about this one *)
     error_unsupported ctx
@@ -1061,7 +1085,9 @@ and extract_sig_module ctx decl =
     (* TODO: write tests *)
     error_unsupported ctx);
   assert (List.is_empty md_attributes);
-  sig_item_wrap loc @@ S_module (id, extract_mod_type ctx md_type)
+  let sig_expr = extract_mod_type ctx md_type in
+  let signature = signature_of_sig_expr ctx sig_expr in
+  sig_item_wrap loc @@ S_module (id, signature)
 
 
 and extract_primitive ctx ~loc vd =

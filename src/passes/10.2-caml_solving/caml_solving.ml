@@ -36,10 +36,18 @@ module Context : sig
 
   (* vars *)
   val enter_value : Ident.t -> Value_var.t -> context -> context
+  val enter_value_external : Ident.t -> context -> context
   val enter_type : Ident.t -> Type_var.t -> context -> context
   val enter_type_predef_unsupported : Ident.t -> context -> context
 
   val enter_module
+    :  Ident.t
+    -> Module_var.t
+    -> context
+    -> (context -> context * 'k)
+    -> context * 'k
+
+  val enter_signature
     :  Ident.t
     -> Module_var.t
     -> context
@@ -56,21 +64,27 @@ end = struct
   (* TODO: core map *)
   module String_map = Stdlib.Map.Make (String)
 
+  type value_info =
+    | Value_external
+    | Value_subst_to of Value_var.t
+
   type type_info =
     | Type_unsupported_predef
     | Type_subst_to of Type_var.t
 
   type md_context =
-    { md_values : Value_var.t String_map.t
+    { md_values : value_info String_map.t
     ; md_types : type_info String_map.t
     ; md_modules : (Module_var.t * md_context) String_map.t
+    ; md_signatures : (Module_var.t * md_context) String_map.t
     }
 
   (* TODO: try with in all OCaml functions *)
   type context =
-    { values : Value_var.t Ident.Map.t
+    { values : value_info Ident.Map.t
     ; types : type_info Ident.Map.t
     ; modules : (Module_var.t * md_context) Ident.Map.t
+    ; signatures : (Module_var.t * md_context) Ident.Map.t
     ; local : md_context
     }
 
@@ -80,6 +94,7 @@ end = struct
     { md_values = String_map.empty
     ; md_types = String_map.empty
     ; md_modules = String_map.empty
+    ; md_signatures = String_map.empty
     }
 
 
@@ -87,6 +102,7 @@ end = struct
     { values = Ident.Map.empty
     ; types = Ident.Map.empty
     ; modules = Ident.Map.empty
+    ; signatures = Ident.Map.empty
     ; local = empty_local
     }
 
@@ -96,15 +112,21 @@ end = struct
     | exn -> Error exn
 
 
-  let enter_value ident value_var ctx =
+  let enter_value_info ident value_info ctx =
     let name = Ident.name ident in
-    let values = Ident.Map.add ident value_var ctx.values in
-    let md_values = String_map.add name value_var ctx.local.md_values in
+    let values = Ident.Map.add ident value_info ctx.values in
+    let md_values = String_map.add name value_info ctx.local.md_values in
     { ctx with values; local = { ctx.local with md_values } }
 
 
+  let enter_value ident value_var ctx =
+    enter_value_info ident (Value_subst_to value_var) ctx
+
+
+  let enter_value_external ident ctx = enter_value_info ident Value_external ctx
+
   let enter_type_info ident type_info ctx =
-    let { values = _; types; modules = _; local } = ctx in
+    let { values = _; types; modules = _; signatures = _; local } = ctx in
     let name = Ident.name ident in
     let types = Ident.Map.add ident type_info types in
     let md_types = String_map.add name type_info ctx.local.md_types in
@@ -112,17 +134,31 @@ end = struct
 
 
   let enter_module ident module_var ctx k =
-    let { values = _; types = _; modules; local } = ctx in
+    let { values = _; types = _; modules; signatures = _; local } = ctx in
     let inner_ctx, x = k { ctx with local = empty_local } in
     let name = Ident.name ident in
     let mod_data = module_var, inner_ctx.local in
     let modules = Ident.Map.add ident mod_data modules in
     let local =
-      let { md_values = _; md_types = _; md_modules } = local in
+      let { md_values = _; md_types = _; md_modules; md_signatures = _ } = local in
       let md_modules = String_map.add name mod_data md_modules in
       { local with md_modules }
     in
     { ctx with modules; local }, x
+
+
+  let enter_signature ident module_var ctx k =
+    let { values = _; types = _; modules = _; signatures; local } = ctx in
+    let inner_ctx, x = k { ctx with local = empty_local } in
+    let name = Ident.name ident in
+    let mod_data = module_var, inner_ctx.local in
+    let signatures = Ident.Map.add ident mod_data signatures in
+    let local =
+      let { md_values = _; md_types = _; md_modules = _; md_signatures } = local in
+      let md_signatures = String_map.add name mod_data md_signatures in
+      { local with md_signatures }
+    in
+    { ctx with signatures; local }, x
 
 
   let enter_type ident type_var ctx =
@@ -158,14 +194,16 @@ end = struct
     match path with
     | Pident ident ->
       (match Ident.Map.find_opt ident ctx.values with
-      | Some value ->
+      | Some Value_external -> failwith "external value reached"
+      | Some (Value_subst_to value) ->
         (* TODO: what about module_path *)
         Module_access.{ module_path = []; element = value }
       | None -> failwith "unexpected value ident")
     | Pdot (module_, right) ->
       let (rev_module_hd, rev_module_tl), ctx = solve_module_path module_ ctx in
       (match String_map.find_opt right ctx.md_values with
-      | Some value ->
+      | Some Value_external -> failwith "external value reached"
+      | Some (Value_subst_to value) ->
         let module_path = List.rev (rev_module_hd :: rev_module_tl) in
         Module_access.{ module_path; element = value }
       | None -> failwith "unexpected value name")
@@ -419,17 +457,12 @@ let rec solve_pat ctx vars pat =
 
 
 let solve_var_pat ctx vars pat =
-  let { pat_desc; pat_type; pat_loc = loc } = pat in
+  let { var_pat_desc = ident; var_pat_type; var_pat_loc = loc } = pat in
   (* TODO: poly type *)
-  let type_ = solve_type ctx vars pat_type in
-  match pat_desc with
-  | P_var ident ->
-    let var = fresh_value ident in
-    let ctx = enter_value ident var ctx in
-    ctx, loc, var, type_
-  | P_unit | P_tuple _ | P_record _ | P_variant _ ->
-    (* TODO: proper error here *)
-    _
+  let type_ = solve_type ctx vars var_pat_type in
+  let var = fresh_value ident in
+  let ctx = enter_value ident var ctx in
+  ctx, loc, var, type_
 
 
 let rec solve_expr ctx vars expr =
@@ -449,19 +482,17 @@ let rec solve_expr ctx vars expr =
     let body = solve_expr inner_ctx vars body in
     e_let_in ~loc pat value body Value_attr.default_attributes
   | E_lambda (param, body) ->
-    let binder, body = solve_lambda ctx ~param ~body in
+    let binder, body = solve_lambda ctx vars ~param ~body in
     (* TODO: output_type *)
     e_lambda ~loc binder None body
   | E_lambda_rec { self; param; body } ->
     let inner_ctx, _var_loc, self, self_type_ = solve_var_pat ctx vars param in
     (* ctx, loc, var, type_ *)
-    let binder, body = solve_lambda inner_ctx ~param ~body in
-    let x = assert false in
+    let binder, return, body = solve_lambda_rec inner_ctx vars ~param ~body in
     (* TODO: output_type *)
     (* TODO: forcelambdarec *)
-    let lambda = Lambda.{ binder; output_type = None; result = body } in
-    let x = e_recursive ~loc self self_type_ lambda in
-    e_lambda ~loc binder None body
+    let lambda = Lambda.{ binder; output_type = return; result = body } in
+    e_recursive ~loc self self_type_ lambda
   | E_apply (lambda, args) ->
     let lambda = solve_expr ctx vars lambda in
     List.fold_left args ~init:lambda ~f:(fun lambda arg ->
@@ -547,6 +578,19 @@ and solve_lambda ctx vars ~param ~body =
   binder, body
 
 
+and solve_lambda_rec ctx vars ~param ~body =
+  let inner_ctx, _var_loc, var, var_type_ = solve_var_pat ctx vars param in
+  (* TODO: {mut,forced,initial} flag *)
+  let binder = Param.make var var_type_ in
+  let return =
+    (* TODO: this is hackish *)
+    let { expr_desc = _; expr_type = return; expr_loc = _ } = body in
+    solve_type ctx vars return
+  in
+  let body = solve_expr inner_ctx vars body in
+  binder, return, body
+
+
 let rec solve_module ctx module_ =
   let ctx, rev_decl =
     List.fold_left module_ ~init:(ctx, []) ~f:(fun (ctx, rev_module) decl ->
@@ -577,7 +621,8 @@ and solve_decl_inner ctx vars decl =
     let type_ = solve_type_poly ctx vars var_pat_type in
     let binder = Binder.make var (Some type_) in
     let value = solve_expr_poly ctx vars value in
-    let ctx = Context.enter_value ident var ctx in
+    let ctx = enter_value ident var ctx in
+    let attr = Value_attr.default_attributes in
     ctx, Some (decl_wrap loc @@ D_value { binder; expr = value; attr })
   | D_type (ident, type_decl) ->
     let type_decl = solve_type_decl ctx vars type_decl in
@@ -591,11 +636,13 @@ and solve_decl_inner ctx vars decl =
              ; type_expr = type_decl
              ; type_attr = Type_or_module_attr.default_attributes
              }) )
-  | D_external _ -> _
+  | D_external ident ->
+    let ctx = enter_value_external ident ctx in
+    ctx, None
   | D_type_predef (ident, literal, arity) ->
     (* TODO: this is brittle, what if duplicated? *)
     let var = Type_var.of_input_var ~loc @@ Literal_types.to_string @@ literal in
-    let ctx = Context.enter_type ident var ctx in
+    let ctx = enter_type ident var ctx in
     let type_decl =
       (* TODO: lacking t_constant *)
       make_t ~loc @@ T_constant (literal, arity)
@@ -609,14 +656,13 @@ and solve_decl_inner ctx vars decl =
              ; type_attr = Type_or_module_attr.default_attributes
              }) )
   | D_type_unsupported ident ->
-    let ctx = Context.enter_type_predef_unsupported ident ctx in
+    let ctx = enter_type_predef_unsupported ident ctx in
     ctx, None
   | D_module (ident, mod_expr) ->
     let var = fresh_module ident in
     let ctx, module_ =
-      Context.enter_module ident var ctx @@ fun ctx -> solve_mod_expr ctx mod_expr
+      enter_module ident var ctx @@ fun ctx -> solve_mod_expr ctx mod_expr
     in
-    (* TODO: use this inner_ctx? *)
     ( ctx
     , Some
         (decl_wrap loc
@@ -628,6 +674,9 @@ and solve_decl_inner ctx vars decl =
              }) )
   | D_module_type (ident, sig_expr) ->
     let var = fresh_module ident in
+    let ctx, signature =
+      enter_signature ident var ctx @@ fun ctx -> solve_sig_expr ctx sig_expr
+    in
     ( ctx
     , Some
         (decl_wrap loc
@@ -643,7 +692,7 @@ and solve_mod_expr ctx mod_expr =
   match mod_expr_desc with
   | M_var path ->
     (* TODO: improve this on Ligo *)
-    (match Context.solve_module_path path ctx with
+    (match solve_module_path path ctx with
     | { module_path = []; element } -> ctx, mod_expr_wrap loc @@ M_variable element
     | { module_path; element } ->
       (* TODO: is this reversing it? *)
@@ -663,7 +712,7 @@ and solve_signature ctx sig_ =
         | None -> ctx, rev_sig
         | Some sigi -> ctx, sigi :: rev_sig)
   in
-  ctx, List.rev rev_sig
+  ctx, { items = List.rev rev_sig }
 
 
 and solve_sigi ctx sigi =
@@ -677,27 +726,41 @@ and solve_sigi ctx sigi =
 and solve_sigi_inner ctx vars sigi =
   let { sig_item_desc; sig_item_loc = loc } = sigi in
   match sig_item_desc with
-  | S_value (_, _) -> _
+  | S_value (ident, type_) ->
+    let var = fresh_value ident in
+    let type_ = solve_type_poly ctx vars type_ in
+    let ctx = enter_value ident var ctx in
+    let attr = SigItemAttr.default_attributes in
+    ctx, Some (sig_item_wrap loc @@ S_value (var, type_, attr))
   | S_type (ident, type_decl) ->
-    (* TODO: duplicated *)
     let type_decl = solve_type_decl ctx vars type_decl in
     let var = fresh_type ident in
-    let ctx = Context.enter_type ident var ctx in
-    ( ctx
-    , Some (sig_item_wrap loc @@ S_type (var, type_decl, SigTypeAttr.default_attributes))
-    )
-  | S_module _ -> _
-  | S_module_type _ -> _
+    let ctx = enter_type ident var ctx in
+    let attr = SigTypeAttr.default_attributes in
+    ctx, Some (sig_item_wrap loc @@ S_type (var, type_decl, attr))
+  | S_module (ident, mod_sig) ->
+    let var = fresh_module ident in
+    let ctx, signature =
+      enter_module ident var ctx @@ fun ctx -> solve_signature ctx mod_sig
+    in
+    (* TODO: use this inner_ctx? *)
+    ctx, Some (sig_item_wrap loc @@ S_module (var, signature))
+  | S_module_type (ident, signature) ->
+    let var = fresh_module ident in
+    let ctx, signature =
+      enter_module ident var ctx @@ fun ctx -> solve_signature ctx signature
+    in
+    ctx, Some (sig_item_wrap loc @@ S_module_type (var, signature))
 
 
 and solve_sig_expr ctx sig_expr =
   let { sig_expr_desc; sig_expr_loc = loc } = sig_expr in
   match sig_expr_desc with
   | S_var path ->
-    let path = Context.solve_module_path path ctx in
+    let path = solve_module_path path ctx in
     (* TODO: is this reversing it? *)
     let Module_access.{ module_path; element } = path in
     ctx, sig_expr_wrap loc @@ S_path (element :: module_path)
-  | S_sig sig_ ->
-    let ctx, decls = solve_signature ctx sig_ in
-    assert false
+  | S_sig signature ->
+    let ctx, signature = solve_signature ctx signature in
+    ctx, sig_expr_wrap loc @@ S_sig signature
