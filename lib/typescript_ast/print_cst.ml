@@ -7,24 +7,7 @@ open Ts_wrap
 
 module Tree = Cst_shared.Tree
 
-(* Printing the ERROR and MISSING nodes *)
-
-let print_error_node state node = Tree.make_node state (get_label node)
-let print_missing_node state node = Tree.make_node state (get_label node)
-
-(* Concluding a pattern matching with the remaining cases *)
-
-let match_rest state node print_default =
-  match get_name node with
-  (* Comments are ignored *)
-  | "comment" -> ()
-  (* Errors *)
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  (* Default case *)
-  | _ -> print_default state node
-
-(* Making trees and nodes *)
+(* Making trees and nodes with labels (name + location) *)
 
 let make_tree state node children = Tree.make state (get_label node) children
 
@@ -39,16 +22,30 @@ let make_unary state root printer child =
 let mk_child_opt = Tree.mk_child_opt
 let mk_child = Tree.mk_child
 
-(* Unexpected and TODO nodes *)
+(* ERROR, MISSING, UNKNOWN and TODO nodes *)
 
+let print_error_node state node = make_node state node
+let print_missing_node state node = make_node state node
 let print_unexpected_node state node = Tree.make_node state ("UNKNOWN: " ^ get_label node)
 let print_todo_node state node = Tree.make_node state ("TODO: " ^ get_label node)
+
+(* Concluding a pattern matching with the remaining cases *)
+
+let match_rest state node print_default =
+  match get_name node with
+  (* Comments are ignored *)
+  | "comment" -> ()
+  (* Errors *)
+  | "ERROR" -> print_error_node state node
+  | "MISSING" -> print_missing_node state node
+  (* Default case *)
+  | _ -> print_default state node
 
 (* Wrappers for making trees and children, possibly invalid ones. *)
 
 let mk_child_res print = function
-  | Result.Ok child -> Tree.mk_child print child
-  | Error name -> Tree.(mk_child make_node name)
+  | Result.Ok child -> mk_child print child
+  | Error name -> mk_child Tree.make_node name
 
 (* Error/Invalid child *)
 
@@ -56,7 +53,7 @@ let internal_error_child parent_node child_name =
   let parent_name = get_name parent_node
   and suffix = Printf.sprintf "Child %s is missing." child_name in
   let msg = Printf.sprintf "INTERNAL: [%s] %s" parent_name suffix in
-  Tree.[ mk_child make_node msg ]
+  [ mk_child Tree.make_node msg ]
 
 let make_unary_res state node print = function
   | Result.Ok child -> make_unary state node print child
