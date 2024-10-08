@@ -21,6 +21,7 @@ let make_unary state root printer child =
 
 let mk_child_opt = Tree.mk_child_opt
 let mk_child = Tree.mk_child
+let mk_children_list = Tree.mk_children_list
 
 (* ERROR, MISSING, UNKNOWN and TODO nodes *)
 
@@ -120,7 +121,7 @@ and print_export_statement state node =
   let children = collect_children node in
   let decorators = filter_by_name "decorator" children
   and export_node = filter_first_by_name_opt "export" children in
-  let decorators = Tree.mk_children_list print_decorator decorators in
+  let decorators = mk_children_list print_decorator decorators in
   let children =
     match export_node with
     | None -> internal_error_child node "export"
@@ -400,8 +401,7 @@ and print_switch_case state node =
     | _ -> print_expression state node
   in
   let children =
-    mk_child_res print_value value_field
-    :: Tree.mk_children_list print_statement stmt_children
+    mk_child_res print_value value_field :: mk_children_list print_statement stmt_children
   in
   make_tree state node children
 
@@ -688,7 +688,7 @@ and print_class_declaration state node =
   and heritage_child = filter_first_by_name_opt "class_heritage" children
   and body_field = ts_node_child_by_field_name_res node "body" in
   let children =
-    Tree.mk_children_list print_decorator decorators
+    mk_children_list print_decorator decorators
     @ [ mk_child_res print_type_identifier name_field
       ; mk_child_opt print_type_parameters type_parameters_field
       ; mk_child_opt print_class_heritage heritage_child
@@ -711,7 +711,7 @@ and print_lexical_declaration state node =
   in
   let children =
     mk_child_res print_set_or_const kind_field
-    :: Tree.mk_children_list print_variable_declarator var_decls
+    :: mk_children_list print_variable_declarator var_decls
   in
   make_tree state node children
 
@@ -735,7 +735,7 @@ and print_variable_declarator state node =
 and print_variable_declaration state node =
   let children = collect_named_children node in
   let var_decls = filter_by_name "variable_declarator" children in
-  let children = Tree.mk_children_list print_variable_declarator var_decls in
+  let children = mk_children_list print_variable_declarator var_decls in
   make_tree state node children
 
 (* Function signature (See [print_function_declaration]) *)
@@ -1409,7 +1409,7 @@ and print_class state node =
   and heritage_child = filter_first_by_name_opt "class_heritage" children
   and body_field = ts_node_child_by_field_name_res node "body" in
   let children =
-    Tree.mk_children_list print_decorator decorators
+    mk_children_list print_decorator decorators
     @ [ mk_child_opt print_type_identifier name_field
       ; mk_child_opt print_type_parameters type_parameters_field
       ; mk_child_opt print_class_heritage heritage_child
@@ -1576,7 +1576,7 @@ and print_public_field_definition state node =
   and qmark = has_node_named_opt "?" children
   and emark = has_node_named_opt "!" children in
   let children =
-    Tree.mk_children_list print_decorator decorators
+    mk_children_list print_decorator decorators
     @ [ mk_child_opt print_accessibility_modifier accessibility_modifier
       ; mk_child_opt make_node declare
       ; mk_child_opt print_override_modifier override_modifier
@@ -2340,7 +2340,7 @@ and print_required_parameter state node =
     | _ -> print_pattern state node
   in
   let children =
-    Tree.mk_children_list print_decorator decorators
+    mk_children_list print_decorator decorators
     @ [ mk_child_opt print_accessibility_modifier accessibility_modifier
       ; mk_child_opt print_override_modifier override_modifier
       ; mk_child_opt make_node readonly
