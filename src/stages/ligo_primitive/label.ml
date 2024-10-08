@@ -91,6 +91,7 @@ module Map = struct
     let alist = bin_read_t_aux bin_read_a buf ~pos_ref in
     of_alist_exn alist
 
+
   let __bin_read_t__ (bin_read_a : 'a Bin_prot.Read.reader) buf ~pos_ref =
     let f = __bin_read_t_aux__ bin_read_a buf ~pos_ref in
     fun n -> of_alist_exn @@ f n

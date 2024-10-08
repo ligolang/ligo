@@ -590,6 +590,7 @@ let function_body =
   let doc = "compile expression as a function body" in
   flag ~doc name no_arg
 
+
 let lltz_ir =
   let open Command.Param in
   let name = "--lltz-ir" in

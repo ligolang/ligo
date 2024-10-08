@@ -68,6 +68,7 @@ let type_file_ ~raise f test syntax () =
   let (_ : Ast_typed.program) = Test_helpers.type_file ~raise f options in
   ()
 
+
 let type_file_v2 ~raise f test syntax () =
   let options =
     let options = Test_helpers.options in
@@ -76,6 +77,7 @@ let type_file_v2 ~raise f test syntax () =
   in
   let (_ : Ast_typed.program) = Test_helpers.type_file_v2 ~raise f options in
   ()
+
 
 let agg_file_ ~raise f test syntax () =
   let options =
@@ -122,9 +124,11 @@ let type_file f =
   let f = "./contracts/" ^ f in
   test_case f (type_file_ f false None)
 
+
 let type_file_v2 f =
   let f = "./contracts/" ^ f in
   test_case f (type_file_v2 f false None)
+
 
 let type_tfile f =
   let f = "./contracts/" ^ f in

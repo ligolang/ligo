@@ -323,8 +323,8 @@ let rec decompile_to_untyped_value ~(raise : _ Trace.raise) ~bigmaps
       }
   | ( Prim (loct, "ticket", [ ty_ticked ], _)
     , Prim (_, "Pair", [ addr; Prim (_, "Pair", [ vt; amt ], _) ], _) )
-  | ( Prim (loct, "ticket", [ ty_ticked ], _)
-    , Prim (_, "Ticket", [ addr; _; vt; amt ], _)) ->
+  | Prim (loct, "ticket", [ ty_ticked ], _), Prim (_, "Ticket", [ addr; _; vt; amt ], _)
+    ->
     (* note: the above Pair structure (pair addr (pair vt amt)) comes from tezos protocol *)
     let addr =
       Ligo_interpreter.Combinators.v_address

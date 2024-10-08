@@ -1,7 +1,15 @@
 (library
  (name ligo_lltz_codegen)
  (public_name ligo.lltz_codegen)
- (libraries ligo.tezos-utils core lltz.ir mini_c ptime lltz.codegen lltz.michelson)
+ (libraries
+  ligo.tezos-utils
+  core
+  lltz.ir
+  mini_c
+  ptime
+  lltz.codegen
+  lltz.michelson)
  (preprocess
   (pps ppx_jane))
-  (flags (:standard -w -26-27)))
+ (flags
+  (:standard -w -26-27)))
