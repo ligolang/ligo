@@ -133,7 +133,7 @@ const config = {
             items: [
               {
                 label: "Discord",
-                href: "https://discord.gg/tezos-blockchain-699325006928281720",
+                href: "https://discord.gg/tezos",
                 rel: "noopener noreferrer nofollow",
               },
               {
