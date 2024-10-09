@@ -54,7 +54,7 @@ let uint32_len string = UInt32.of_int (String.length string)
 
 (* Wrappers for filtering fields (failure on null node or optional value) *)
 
-let child_with_field_res node field =
+let child_with_field_res field node =
   let child = TS_fun.ts_node_child_by_field_name node field (uint32_len field) in
   if TS_fun.ts_node_is_null child
   then Error (Printf.sprintf "INVALID: Missing field %S." field)
@@ -62,7 +62,7 @@ let child_with_field_res node field =
 
 let node_to_opt node = if TS_fun.ts_node_is_null node then None else Some node
 
-let child_with_field_opt node field =
+let child_with_field_opt field node =
   node_to_opt @@ TS_fun.ts_node_child_by_field_name node field (uint32_len field)
 
 (* Printing the tree *)
