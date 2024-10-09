@@ -79,22 +79,10 @@ end = struct
       : Location.t -> Value_attr.t -> I.Attribute.t -> Value_attr.t
     =
    fun loc o_attr i_attr ->
-    match i_attr with
-    | { key = "inline"; value = None } -> { o_attr with inline = true }
-    | { key = "no_mutation"; value = None } -> { o_attr with no_mutation = true }
-    | { key = "view"; value = None } -> { o_attr with view = true }
-    | { key = "private"; value = None } -> { o_attr with public = false }
-    | { key = "public"; value = None } -> { o_attr with public = true }
-    | { key = "hidden"; value = None } -> { o_attr with hidden = true }
-    | { key = "thunk"; value = None } -> { o_attr with thunk = true }
-    | { key = "tzip16_compatible"; value = None } ->
-      { o_attr with tzip16_compatible = true }
-    | { key = "entry"; value = None } -> { o_attr with entry = true }
-    | { key = "comment"; value = Some comment } ->
-      { o_attr with leading_comments = comment :: o_attr.leading_comments }
-    | { key = "dyn_entry"; value = None } -> { o_attr with dyn_entry = true }
-    | { key = "deprecated"; value } -> { o_attr with deprecated = value }
-    | _ ->
+    let I.Attribute.{ key; value } = i_attr in
+    match Value_attr.apply_decl_attr ~key ~value o_attr with
+    | `Ok o_attr -> o_attr
+    | `Invalid_attribute ->
       raise.warning (`Nanopasses_attribute_ignored loc);
       Value_attr.default_attributes
 
@@ -103,13 +91,10 @@ end = struct
       : Location.t -> Sig_item_attr.t -> I.Attribute.t -> Sig_item_attr.t
     =
    fun loc o_attr i_attr ->
-    match i_attr with
-    | { key = "view"; value = None } -> { o_attr with view = true }
-    | { key = "entry"; value = None } -> { o_attr with entry = true }
-    | { key = "dyn_entry"; value = None } -> { o_attr with dyn_entry = true }
-    | { key = "comment"; value = Some comment } ->
-      { o_attr with leading_comments = comment :: o_attr.leading_comments }
-    | _ ->
+    let I.Attribute.{ key; value } = i_attr in
+    match Sig_item_attr.apply_sig_item_attr ~key ~value o_attr with
+    | `Ok o_attr -> o_attr
+    | `Invalid_attribute ->
       raise.warning (`Nanopasses_attribute_ignored loc);
       Sig_item_attr.default_attributes
 
@@ -130,18 +115,10 @@ end = struct
       : Location.t -> Value_attr.t -> I.Attribute.t -> Value_attr.t
     =
    fun loc o_attr i_attr ->
-    match i_attr with
-    | { key = "inline"; value = None } -> { o_attr with inline = true }
-    | { key = "no_mutation"; value = None } -> { o_attr with no_mutation = true }
-    | { key = "thunk"; value = None } -> { o_attr with thunk = true }
-    | { key = "tzip16_compatible"; value = None } ->
-      { o_attr with tzip16_compatible = true }
-    | { key = "private"; value = None } -> { o_attr with public = false }
-    | { key = "public"; value = None } -> { o_attr with public = true }
-    | { key = "comment"; value = Some comment } ->
-      { o_attr with leading_comments = comment :: o_attr.leading_comments }
-    | { key = "deprecated"; value } -> { o_attr with deprecated = value }
-    | _ ->
+    let I.Attribute.{ key; value } = i_attr in
+    match Value_attr.apply_expr_attr ~key ~value o_attr with
+    | `Ok o_attr -> o_attr
+    | `Invalid_attribute ->
       raise.warning (`Nanopasses_attribute_ignored loc);
       Value_attr.default_attributes
 
@@ -150,14 +127,10 @@ end = struct
       : Location.t -> Type_or_module_attr.t -> I.Attribute.t -> Type_or_module_attr.t
     =
    fun loc o_attr i_attr ->
-    match i_attr with
-    | { key = "private"; value = None } -> { o_attr with public = false }
-    | { key = "public"; value = None } -> { o_attr with public = true }
-    | { key = "hidden"; value = None } -> { o_attr with hidden = true }
-    | { key = "comment"; value = Some comment } ->
-      { o_attr with leading_comments = comment :: o_attr.leading_comments }
-    | { key = "deprecated"; value } -> { o_attr with deprecated = value }
-    | _ ->
+    let I.Attribute.{ key; value } = i_attr in
+    match Type_or_module_attr.apply_mod_or_sig ~key ~value o_attr with
+    | `Ok o_attr -> o_attr
+    | `Invalid_attribute ->
       raise.warning (`Nanopasses_attribute_ignored loc);
       Type_or_module_attr.default_attributes
 
@@ -166,12 +139,10 @@ end = struct
       : Location.t -> Signature_attr.t -> I.Attribute.t -> Signature_attr.t
     =
    fun loc o_attr i_attr ->
-    match i_attr with
-    | { key = "private"; value = None } -> { o_attr with public = false }
-    | { key = "public"; value = None } -> { o_attr with public = true }
-    | { key = "comment"; value = Some comment } ->
-      { o_attr with leading_comments = comment :: o_attr.leading_comments }
-    | _ ->
+    let I.Attribute.{ key; value } = i_attr in
+    match Signature_attr.apply_sig_attr ~key ~value o_attr with
+    | `Ok o_attr -> o_attr
+    | `Invalid_attribute ->
       raise.warning (`Nanopasses_attribute_ignored loc);
       o_attr
 

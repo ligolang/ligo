@@ -25,3 +25,14 @@ let pp ppf { public; hidden; leading_comments; deprecated } =
 
 let default_attributes =
   { public = true; hidden = false; leading_comments = []; deprecated = None }
+
+
+let apply_mod_or_sig ~key ~value attr =
+  match key, value with
+  | "private", None -> `Ok { attr with public = false }
+  | "public", None -> `Ok { attr with public = true }
+  | "hidden", None -> `Ok { attr with hidden = true }
+  | "comment", Some comment ->
+    `Ok { attr with leading_comments = comment :: attr.leading_comments }
+  | "deprecated", value -> `Ok { attr with deprecated = value }
+  | _ -> `Invalid_attribute

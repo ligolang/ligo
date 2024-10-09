@@ -93,3 +93,36 @@ let default_attributes =
   ; deprecated = None
   ; leading_comments = []
   }
+
+
+let apply_decl_attr ~key ~value attr =
+  match key, value with
+  | "inline", None -> `Ok { attr with inline = true }
+  | "no_mutation", None -> `Ok { attr with no_mutation = true }
+  | "view", None -> `Ok { attr with view = true }
+  | "private", None -> `Ok { attr with public = false }
+  | "public", None -> `Ok { attr with public = true }
+  | "hidden", None -> `Ok { attr with hidden = true }
+  | "thunk", None -> `Ok { attr with thunk = true }
+  | "tzip16_compatible", None -> `Ok { attr with tzip16_compatible = true }
+  | "entry", None -> `Ok { attr with entry = true }
+  | "comment", Some comment ->
+    `Ok { attr with leading_comments = comment :: attr.leading_comments }
+  | "dyn_entry", None -> `Ok { attr with dyn_entry = true }
+  | "deprecated", value -> `Ok { attr with deprecated = value }
+  | _ -> `Invalid_attribute
+
+
+let apply_expr_attr ~key ~value attr =
+  (* TODO: more granual failure *)
+  match key, value with
+  | "inline", None -> `Ok { attr with inline = true }
+  | "no_mutation", None -> `Ok { attr with no_mutation = true }
+  | "thunk", None -> `Ok { attr with thunk = true }
+  | "tzip16_compatible", None -> `Ok { attr with tzip16_compatible = true }
+  | "private", None -> `Ok { attr with public = false }
+  | "public", None -> `Ok { attr with public = true }
+  | "comment", Some comment ->
+    `Ok { attr with leading_comments = comment :: attr.leading_comments }
+  | "deprecated", value -> `Ok { attr with deprecated = value }
+  | _ -> `Invalid_attribute

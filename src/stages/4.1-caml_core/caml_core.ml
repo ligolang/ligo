@@ -77,7 +77,7 @@ and expr_desc =
   | E_var of Path.t
   | E_literal of Literal_value.t
   (* TODO: tag poly expressions and patterns here? *)
-  | E_let of pat * expr * expr
+  | E_let of pat * Value_attr.t * expr * expr
   | E_let_module of Ident.t * mod_expr * expr
   | E_lambda of var_pat * expr
   | E_lambda_rec of
@@ -109,10 +109,10 @@ and decl =
   }
 
 and decl_desc =
-  | D_let of (var_pat * expr)
+  | D_let of (var_pat * Value_attr.t * expr)
   | D_type of (Ident.t * type_decl)
-  | D_module of (Ident.t * mod_expr)
-  | D_module_type of (Ident.t * sig_expr)
+  | D_module of (Ident.t * Type_or_module_attr.t * mod_expr)
+  | D_module_type of (Ident.t * Signature_attr.t * sig_expr)
   (* FFI *)
   | D_external of Ident.t
   (* TODO: why arity here? *)
@@ -134,7 +134,7 @@ and sig_item =
   }
 
 and sig_item_desc =
-  | S_value of (Ident.t * type_)
+  | S_value of (Ident.t * Sig_item_attr.t * type_)
   | S_type of (Ident.t * type_decl)
   | S_module of (Ident.t * sig_item list)
   | S_module_type of (Ident.t * sig_item list)

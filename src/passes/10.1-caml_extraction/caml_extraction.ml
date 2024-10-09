@@ -243,6 +243,67 @@ let extract_payload_string ctx payload =
   | _ -> error_unsupported ctx
 
 
+let extract_attrs ctx ~init ~f attrs =
+  List.fold_left attrs ~init ~f:(fun acc attr ->
+      let { attr_name; attr_payload; attr_loc } = attr in
+      let loc = extract_loc ~loc:attr_loc in
+      let ctx = enter_region ~loc ctx in
+      assert (
+        match attr_payload with
+        | PStr [] -> true
+        | PStr _ -> false
+        | PSig _ -> false
+        | PTyp _ -> false
+        | PPat (_, _) -> false);
+      let { txt = key; loc } = attr_name in
+      let loc = extract_loc ~loc:attr_loc in
+      let ctx = enter_region ~loc ctx in
+      (* TODO: support comment attributes and proper loc for comments *)
+      match f ctx ~key acc with
+      | `Ok acc -> acc
+      | `Invalid_attribute -> error_unsupported ctx)
+
+
+let extract_decl_attrs ctx attrs =
+  extract_attrs
+    ctx
+    ~init:Value_attr.default_attributes
+    ~f:(fun ctx ~key acc -> Value_attr.apply_decl_attr ~key ~value:None acc)
+    attrs
+
+
+let extract_expr_attrs ctx attrs =
+  extract_attrs
+    ctx
+    ~init:Value_attr.default_attributes
+    ~f:(fun ctx ~key acc -> Value_attr.apply_expr_attr ~key ~value:None acc)
+    attrs
+
+
+let extract_module_attrs ctx attrs =
+  extract_attrs
+    ctx
+    ~init:Type_or_module_attr.default_attributes
+    ~f:(fun ctx ~key acc -> Type_or_module_attr.apply_mod_or_sig ~key ~value:None acc)
+    attrs
+
+
+let extract_signature_attrs ctx attrs =
+  extract_attrs
+    ctx
+    ~init:Signature_attr.default_attributes
+    ~f:(fun ctx ~key acc -> Signature_attr.apply_sig_attr ~key ~value:None acc)
+    attrs
+
+
+let extract_sig_item_attrs ctx attrs =
+  extract_attrs
+    ctx
+    ~init:Sig_item_attr.default_attributes
+    ~f:(fun ctx ~key acc -> Sig_item_attr.apply_sig_item_attr ~key ~value:None acc)
+    attrs
+
+
 (* TODO: ppxlib? *)
 
 (* TODO: use this function? *)
@@ -569,7 +630,6 @@ let rec extract_expr ctx expr =
     List.iter exp_extra ~f:(fun (exp_extra, _loc, exp_extra_attributes) ->
         extract_expr_extra ctx exp_extra)
   in
-  assert (List.is_empty exp_attributes);
   let type_ = extract_type ctx exp_type in
   match exp_desc with
   | Texp_ident (path, _lident, value_desc) ->
@@ -579,8 +639,19 @@ let rec extract_expr ctx expr =
   | Texp_constant constant ->
     let literal = extract_literal ctx constant in
     expr_wrap loc type_ @@ E_literal literal
-  | Texp_let (rec_flag, values, body) ->
-    extract_expr_let ctx ~loc ~type_ rec_flag values body
+  | Texp_let (rec_flag, bindings, body) ->
+    let binding =
+      match bindings with
+      | [] -> error_unexpected_typed_tree ctx
+      | [ value ] -> value
+      | _first :: _second :: _rest ->
+        (* TODO: support this? *)
+        error_let_and_not_supported ctx
+    in
+    let _loc, pat, attr, value = extract_expr_binding ctx rec_flag binding in
+    let attr = extract_expr_attrs ctx attr in
+    let body = extract_expr ctx body in
+    expr_wrap loc type_ @@ E_let (pat, attr, value, body)
   (* TODO: label, exp function *)
   | Texp_function { arg_label = Nolabel; param; cases; partial = Total } ->
     let param, body = extract_expr_function ctx ~exp_env ~exp_type ~loc param cases in
@@ -689,28 +760,12 @@ and extract_expr_extra ctx expr_extra =
     error_unimplemented ctx
 
 
-(* let {rec, nonrec} x = N in M *)
-and extract_expr_let ctx ~loc ~type_ rec_flag bindings body =
-  let binding =
-    match bindings with
-    | [] -> error_unexpected_typed_tree ctx
-    | [ value ] -> value
-    | _first :: _second :: _rest ->
-      (* TODO: support this? *)
-      error_let_and_not_supported ctx
-  in
-  let _loc, pat, value = extract_expr_binding ctx rec_flag binding in
-  let body = extract_expr ctx body in
-  expr_wrap loc type_ @@ E_let (pat, value, body)
-
-
-(* let {rec,nonrec} x = M *)
+(* let [@attr] {rec,nonrec} x = M *)
 and extract_expr_binding ctx rec_flag binding =
   let { vb_pat; vb_expr; vb_attributes; vb_loc = loc } = binding in
   (* TODO: export this loc? *)
   let loc = extract_loc ~loc in
   let ctx = enter_region ~loc ctx in
-  assert (List.is_empty vb_attributes);
   let pat = extract_pat ctx vb_pat in
   (* TODO: will the type of this expression be mono? *)
   (* TODO: poly value *)
@@ -721,13 +776,14 @@ and extract_expr_binding ctx rec_flag binding =
       let pat = var_pat_of_pat ctx pat in
       extract_expr_recursive ctx ~self:pat vb_expr
   in
-  loc, pat, value
+  loc, pat, vb_attributes, value
 
 
 and extract_expr_recursive ctx ~self expr =
   let { exp_desc; exp_loc; exp_extra; exp_type; exp_env; exp_attributes } = expr in
   let loc = extract_loc ~loc:exp_loc in
   let ctx = enter_region ~loc ctx in
+  (* TODO: maybe extract recursive after extract_expr? *)
   let () =
     List.iter exp_extra ~f:(fun (exp_extra, _loc, exp_extra_attributes) ->
         extract_expr_extra ctx exp_extra)
@@ -854,6 +910,7 @@ and extract_expr_apply_primitive ctx ~loc ~type_ prim args =
 and extract_expr_ligo_literals ctx ~loc ~type_ prim constant =
   (* TODO: this is duplicated code from checking *)
   (* TODO: this can be deleted whenever we start targetting Ast_typed *)
+  (* TODO: attributes here *)
   match prim, constant with
   | "%ligo.nat", Const_int n ->
     let lit = Z.of_int n in
@@ -934,8 +991,9 @@ and extract_stri ctx stri =
   | Tstr_module mb -> extract_module_binding ctx mb
   | Tstr_recmodule _ -> error_rec_modules_not_supported ctx
   | Tstr_modtype decl ->
-    let ident, sig_expr = extract_mod_type_decl ctx decl in
-    decl_wrap loc @@ D_module_type (ident, sig_expr)
+    let ident, attr, sig_expr = extract_mod_type_decl ctx decl in
+    let attr = extract_signature_attrs ctx attr in
+    decl_wrap loc @@ D_module_type (ident, attr, sig_expr)
   | Tstr_open _ ->
     (* TODO: priority *)
     error_unimplemented ctx
@@ -956,18 +1014,18 @@ and extract_str_let ctx rec_flag bindings =
       (* TODO: support this? *)
       error_let_and_not_supported ctx
   in
-  let loc, pat, value = extract_expr_binding ctx rec_flag binding in
+  let loc, pat, attr, value = extract_expr_binding ctx rec_flag binding in
   let pat = var_pat_of_pat ctx pat in
-  decl_wrap loc @@ D_let (pat, value)
+  let attr = extract_decl_attrs ctx attr in
+  decl_wrap loc @@ D_let (pat, attr, value)
 
 
 and extract_mod_type_decl ctx decl =
   let { mtd_id; mtd_name = _; mtd_type; mtd_attributes; mtd_loc } = decl in
-  assert (List.is_empty mtd_attributes);
   let loc = extract_loc ~loc:mtd_loc in
   let ctx = enter_region ~loc ctx in
   match mtd_type with
-  | Some mtd_type -> mtd_id, extract_mod_type ctx mtd_type
+  | Some mtd_type -> mtd_id, mtd_attributes, extract_mod_type ctx mtd_type
   | None -> error_abstract_module_types_not_supported ctx
 
 
@@ -1011,7 +1069,8 @@ and extract_sigi ctx sigi =
     error_unsupported ctx
   | Tsig_recmodule _ -> error_rec_modules_not_supported ctx
   | Tsig_modtype decl ->
-    let ident, sig_expr = extract_mod_type_decl ctx decl in
+    let ident, attr, sig_expr = extract_mod_type_decl ctx decl in
+    assert (List.is_empty attr);
     let signature = signature_of_sig_expr ctx sig_expr in
     sig_item_wrap loc @@ S_module_type (ident, signature)
   | Tsig_modtypesubst _ ->
@@ -1036,7 +1095,7 @@ and extract_sig_value ctx binding =
   let loc = extract_loc ~loc:val_loc in
   let ctx = enter_region ~loc ctx in
   assert (List.is_empty val_prim);
-  assert (List.is_empty val_attributes);
+  let attr = extract_sig_item_attrs ctx val_attributes in
   (* TODO: which loc to use? *)
   let type_ =
     let { val_type; val_kind; val_loc; val_attributes; val_uid = _ } = val_val in
@@ -1049,7 +1108,7 @@ and extract_sig_value ctx binding =
     let ctx = enter_region ~loc ctx in
     extract_type ctx val_type
   in
-  sig_item_wrap loc @@ S_value (val_id, type_)
+  sig_item_wrap loc @@ S_value (val_id, attr, type_)
 
 
 and extract_sig_type ctx rec_flag bindings =
@@ -1185,8 +1244,9 @@ and extract_module_binding ctx mb =
     | Some ident -> ident
     | None -> error_modules_without_names_not_supported ctx
   in
+  let attr = extract_module_attrs ctx mb_attributes in
   let body = extract_module_expr ctx mb_expr in
-  decl_wrap loc @@ D_module (ident, body)
+  decl_wrap loc @@ D_module (ident, attr, body)
 
 
 and extract_module_expr ctx mod_expr =

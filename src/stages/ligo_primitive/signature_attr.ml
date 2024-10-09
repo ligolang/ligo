@@ -12,3 +12,11 @@ let pp ppf { public; leading_comments } =
 
 
 let default_attributes = { public = true; leading_comments = [] }
+
+let apply_sig_attr ~key ~value attr =
+  match key, value with
+  | "private", None -> `Ok { attr with public = false }
+  | "public", None -> `Ok { attr with public = true }
+  | "comment", Some comment ->
+    `Ok { attr with leading_comments = comment :: attr.leading_comments }
+  | _ -> `Invalid_attribute

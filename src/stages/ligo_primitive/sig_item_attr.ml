@@ -33,3 +33,13 @@ let default_attributes =
   ; optional = false
   ; leading_comments = []
   }
+
+
+let apply_sig_item_attr ~key ~value attr =
+  match key, value with
+  | "view", None -> `Ok { attr with view = true }
+  | "entry", None -> `Ok { attr with entry = true }
+  | "dyn_entry", None -> `Ok { attr with dyn_entry = true }
+  | "comment", Some comment ->
+    `Ok { attr with leading_comments = comment :: attr.leading_comments }
+  | _ -> `Invalid_attribute

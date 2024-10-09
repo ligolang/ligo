@@ -476,11 +476,11 @@ let rec solve_expr ctx vars expr =
     | { module_path = []; element } -> e_variable ~loc element
     | { module_path; element } as var -> e_module_accessor ~loc var ())
   | E_literal lit -> e_literal ~loc lit
-  | E_let (pat, value, body) ->
+  | E_let (pat, attr, value, body) ->
     let inner_ctx, pat = solve_pat ctx vars pat in
     let value = solve_expr_poly ctx vars value in
     let body = solve_expr inner_ctx vars body in
-    e_let_in ~loc pat value body Value_attr.default_attributes
+    e_let_in ~loc pat value body attr
   | E_let_module (ident, mod_expr, body) ->
     let var = fresh_module ident in
     let inner_ctx, mod_expr =
@@ -620,7 +620,7 @@ and solve_decl ctx decl =
 and solve_decl_inner ctx vars decl =
   let { decl_desc; decl_loc = loc } = decl in
   match decl_desc with
-  | D_let (var_pat, value) ->
+  | D_let (var_pat, attr, value) ->
     (* TODO: duplicated logic regarding var_pat and Binder *)
     (* TODO: use var_pat_loc *)
     let { var_pat_desc = ident; var_pat_type; var_pat_loc = _ } = var_pat in
@@ -629,7 +629,6 @@ and solve_decl_inner ctx vars decl =
     let binder = Binder.make var (Some type_) in
     let value = solve_expr_poly ctx vars value in
     let ctx = enter_value ident var ctx in
-    let attr = Value_attr.default_attributes in
     ctx, Some (decl_wrap loc @@ D_value { binder; expr = value; attr })
   | D_type (ident, type_decl) ->
     let type_decl = solve_type_decl ctx vars type_decl in
@@ -665,7 +664,7 @@ and solve_decl_inner ctx vars decl =
   | D_type_unsupported ident ->
     let ctx = enter_type_predef_unsupported ident ctx in
     ctx, None
-  | D_module (ident, mod_expr) ->
+  | D_module (ident, attr, mod_expr) ->
     let var = fresh_module ident in
     let ctx, module_ =
       enter_module ident var ctx @@ fun ctx -> solve_mod_expr ctx mod_expr
@@ -677,9 +676,9 @@ and solve_decl_inner ctx vars decl =
              { module_binder = var
              ; module_ (* TODO: annotation *)
              ; annotation = None
-             ; module_attr = TypeOrModuleAttr.default_attributes
+             ; module_attr = attr
              }) )
-  | D_module_type (ident, sig_expr) ->
+  | D_module_type (ident, attr, sig_expr) ->
     let var = fresh_module ident in
     let ctx, signature =
       enter_signature ident var ctx @@ fun ctx -> solve_sig_expr ctx sig_expr
@@ -687,11 +686,7 @@ and solve_decl_inner ctx vars decl =
     ( ctx
     , Some
         (decl_wrap loc
-        @@ D_signature
-             { signature_binder = var
-             ; signature
-             ; signature_attr = Signature_attr.default_attributes
-             }) )
+        @@ D_signature { signature_binder = var; signature; signature_attr = attr }) )
 
 
 and solve_mod_expr ctx mod_expr =
@@ -733,11 +728,10 @@ and solve_sigi ctx sigi =
 and solve_sigi_inner ctx vars sigi =
   let { sig_item_desc; sig_item_loc = loc } = sigi in
   match sig_item_desc with
-  | S_value (ident, type_) ->
+  | S_value (ident, attr, type_) ->
     let var = fresh_value ident in
     let type_ = solve_type_poly ctx vars type_ in
     let ctx = enter_value ident var ctx in
-    let attr = SigItemAttr.default_attributes in
     ctx, Some (sig_item_wrap loc @@ S_value (var, type_, attr))
   | S_type (ident, type_decl) ->
     let type_decl = solve_type_decl ctx vars type_decl in
