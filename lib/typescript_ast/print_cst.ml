@@ -176,7 +176,7 @@ and print_export_statement state node =
   make_tree state node children
 
 and print_namespace_export state node =
-  let module_export_name = ts_node_named_child_res node 0 in
+  let module_export_name = named_child_ranked_res node 0 in
   make_unary_res state node print_module_export_name module_export_name
 
 (* The rule "_from_clause" is hidden *)
@@ -238,7 +238,7 @@ and print_import_clause state node =
     | _ -> match_rest state node print_unexpected_node
   in
   let children =
-    match ts_node_child_opt node 0 with
+    match child_ranked_opt node 0 with
     | None -> internal_error_child node "\"first child\""
     | Some fst_child ->
       (match get_name fst_child with
@@ -258,7 +258,7 @@ and print_import_clause state node =
   make_tree state node children
 
 and print_namespace_import state node =
-  let identifier = ts_node_named_child_res node 0 in
+  let identifier = named_child_ranked_res node 0 in
   make_unary_res state node print_identifier identifier
 
 and print_named_imports state node =
@@ -284,7 +284,7 @@ and print_import_specifier state node =
   make_tree state node children
 
 and print_import_require_clause state node =
-  let identifier = ts_node_named_child_res node 0
+  let identifier = named_child_ranked_res node 0
   and source_field = child_with_field_res node "source" in
   let children =
     [ mk_child_res print_identifier identifier; mk_child_res print_string source_field ]
@@ -292,8 +292,8 @@ and print_import_require_clause state node =
   make_tree state node children
 
 and print_import_attribute state node =
-  let kind_node = ts_node_child_res node 0
-  and object_node = ts_node_child_res node 1
+  let kind_node = child_ranked_res node 0
+  and object_node = child_ranked_res node 1
   and print_kind state node =
     match get_name node with
     | "with" -> make_node state node
@@ -320,7 +320,7 @@ and print_debugger_statement state node = make_node state node
    See [print_expression]. *)
 
 and print_expression_statement state node =
-  let child = ts_node_named_child_res node 0 in
+  let child = named_child_ranked_res node 0 in
   make_unary_res state node print_expressions child
 
 and print_expressions state node =
@@ -347,7 +347,7 @@ and print_if_statement state node =
   make_tree state node children
 
 and print_else_clause state node =
-  let child = ts_node_child_res node 1 in
+  let child = child_ranked_res node 1 in
   make_unary_res state node print_statement child
 
 (* Switch statement *)
@@ -566,7 +566,7 @@ and print_continue_statement state node =
 (* Return statement *)
 
 and print_return_statement state node =
-  let child = ts_node_named_child_opt node 0
+  let child = named_child_ranked_opt node 0
   and print state node =
     match get_name node with
     | "sequence_expression" -> print_sequence_expression state node
@@ -578,7 +578,7 @@ and print_return_statement state node =
 (* Throw statement *)
 
 and print_throw_statement state node =
-  let child = ts_node_named_child_res node 0 in
+  let child = named_child_ranked_res node 0 in
   make_unary_res state node print_expressions child
 
 (* Empty statement *)
@@ -764,7 +764,7 @@ and print_internal_module state node = print_module state node
 (* Type alias declaration *)
 
 and print_type_alias_declaration state node =
-  let type_kwd = ts_node_child_res node 0
+  let type_kwd = child_ranked_res node 0
   and name_field = child_with_field_res node "name"
   and type_parameters_field = child_with_field_opt node "type_parameters"
   and value_field = child_with_field_res node "value" in
@@ -795,7 +795,7 @@ and print_type_parameter state node =
   make_tree state node children
 
 and print_constraint state node =
-  let child = ts_node_named_child_res node 0 in
+  let child = named_child_ranked_res node 0 in
   make_unary_res state node print_type child
 
 and print_default_type state node = tree_of_named_children state node print_type
@@ -859,8 +859,8 @@ and print_extends_type_clause state node =
 (* Import alias *)
 
 and print_import_alias state node =
-  let lhs = ts_node_child_res node 1
-  and rhs = ts_node_child_res node 3
+  let lhs = child_ranked_res node 1
+  and rhs = child_ranked_res node 3
   and print_rhs state node =
     match get_name node with
     | "identifier" -> print_identifier state node
@@ -873,12 +873,12 @@ and print_import_alias state node =
 (* Ambient declaration *)
 
 and print_ambient_declaration state node =
-  let fst_child = ts_node_named_child_res node 0 in
+  let fst_child = named_child_ranked_res node 0 in
   let children =
     match get_name_res fst_child with
     | "statement_block" -> [ mk_child_res print_statement_block fst_child ]
     | "property_identifier" ->
-      let type_child = ts_node_child_res node 5 in
+      let type_child = child_ranked_res node 5 in
       [ mk_child_res print_identifier fst_child; mk_child_res print_type type_child ]
     | _ -> [ mk_child_res print_declaration fst_child ]
   in
@@ -942,7 +942,7 @@ and print_glimmer_template state node = make_node state node
 (* Assignment expression *)
 
 and print_assignment_expression state node =
-  let using = ts_node_child_opt node 0
+  let using = child_ranked_opt node 0
   and left_field = child_with_field_res node "left"
   and right_field = child_with_field_res node "right"
   and print_left state node =
@@ -1002,7 +1002,7 @@ and print_augmented_assignment_expression state node =
 (* Await expression *)
 
 and print_await_expression state node =
-  let expression = ts_node_child_res node 1 in
+  let expression = child_ranked_res node 1 in
   make_unary_res state node print_expression expression
 
 (* Binary expression *)
@@ -1070,7 +1070,7 @@ and print_ternary_expression state node =
 
 and print_update_expression state node =
   let argument_field = child_with_field_res node "argument"
-  and first_child = ts_node_child_res node 0 in
+  and first_child = child_ranked_res node 0 in
   let children =
     match get_name_res first_child with
     | "++" ->
@@ -1078,7 +1078,7 @@ and print_update_expression state node =
     | "--" ->
       [ mk_child_res make_node first_child; mk_child_res print_expression argument_field ]
     | _ ->
-      let snd_child = ts_node_child_res node 1 in
+      let snd_child = child_ranked_res node 1 in
       (match get_name_res snd_child with
       | "++" ->
         [ mk_child_res print_expression argument_field; mk_child_res make_node snd_child ]
@@ -1110,12 +1110,12 @@ and print_new_expression state node =
 (* Yield expression *)
 
 and print_yield_expression state node =
-  match ts_node_child_opt node 1 with
+  match child_ranked_opt node 1 with
   | None -> make_node state node
   | Some child ->
     let child =
       match get_name child with
-      | "*" -> ts_node_child_res node 2
+      | "*" -> child_ranked_res node 2
       | _ -> Result.Ok child
     in
     make_unary_res state node print_expression child
@@ -1123,8 +1123,8 @@ and print_yield_expression state node =
 (* As-expression *)
 
 and print_as_expression state node =
-  let expression = ts_node_child_res node 0
-  and as_what = ts_node_child_res node 2
+  let expression = child_ranked_res node 0
+  and as_what = child_ranked_res node 2
   and print_as state node =
     match get_name node with
     | "const" -> make_node state node
@@ -1138,8 +1138,8 @@ and print_as_expression state node =
 (* Statisfies-expression *)
 
 and print_satisfies_expression state node =
-  let expression = ts_node_named_child_res node 0
-  and type_child = ts_node_named_child_res node 1 in
+  let expression = named_child_ranked_res node 0
+  and type_child = named_child_ranked_res node 1 in
   let children =
     [ mk_child_res print_expression expression; mk_child_res print_type type_child ]
   in
@@ -1148,7 +1148,7 @@ and print_satisfies_expression state node =
 (* Instantiation expression *)
 
 and print_instantiation_expression state node =
-  let expression = ts_node_named_child_res node 0
+  let expression = named_child_ranked_res node 0
   and type_arguments_field = child_with_field_res node "type_arguments" in
   let children =
     [ mk_child_res print_expression expression
@@ -1160,8 +1160,8 @@ and print_instantiation_expression state node =
 (* Type assertion *)
 
 and print_type_assertion state node =
-  let type_arguments = ts_node_named_child_res node 0
-  and expression = ts_node_named_child_res node 1 in
+  let type_arguments = named_child_ranked_res node 0
+  and expression = named_child_ranked_res node 1 in
   let children =
     [ mk_child_res print_type_arguments type_arguments
     ; mk_child_res print_expression expression
@@ -1219,7 +1219,7 @@ and print_member_expression state node =
 (* Parenthesised expression *)
 
 and print_parenthesized_expression state node =
-  let child = ts_node_named_child_res node 0
+  let child = named_child_ranked_res node 0
   and print state node =
     match get_name node with
     | "sequence_expression" -> print_sequence_expression state node
@@ -1287,7 +1287,7 @@ and print_array_cell state node =
   | _ -> match_rest state node print_expression
 
 and print_spread_element state node =
-  let expression = ts_node_named_child_res node 0 in
+  let expression = named_child_ranked_res node 0 in
   make_unary_res state node print_expression expression
 
 (* Function (expression) *)
@@ -1315,7 +1315,7 @@ and print_function_expression state node =
 (* Arrow function *)
 
 and print_arrow_function state node =
-  let async = ts_node_child_opt node 0
+  let async = child_ranked_opt node 0
   and parameter_field = child_with_field_opt node "parameter"
   and body_field = child_with_field_res node "body" in
   let children =
@@ -1556,7 +1556,7 @@ and print_public_field_definition state node =
 (* Meta-property *)
 
 and print_meta_property state node =
-  let meta_child = ts_node_child_res node 0
+  let meta_child = child_ranked_res node 0
   and print state node =
     match get_name node with
     | "new" -> make_node state node (* "new.target"? *)
@@ -1599,7 +1599,7 @@ and print_argument state node =
 (* Non-null expression *)
 
 and print_non_null_expression state node =
-  let child = ts_node_named_child_res node 0 in
+  let child = named_child_ranked_res node 0 in
   make_unary_res state node print_expression child
 
 (* Sequence expression *)
@@ -1653,7 +1653,7 @@ and print_primary_type state node =
 *)
 
 and print_flow_maybe_type state node =
-  let child = ts_node_named_child_res node 0 in
+  let child = named_child_ranked_res node 0 in
   make_unary_res state node print_primary_type child
 
 (* Type identifier *)
@@ -1663,7 +1663,7 @@ and print_type_identifier state node = print_identifier state node
 (* Parenthesized type *)
 
 and print_parenthesized_type state node =
-  let child = ts_node_named_child_res node 0 in
+  let child = named_child_ranked_res node 0 in
   make_unary_res state node print_type child
 
 (* Predefined type *)
@@ -1808,13 +1808,13 @@ and print_call_signature state node =
 (* Asserts annotation *)
 
 and print_asserts_annotation state node =
-  let asserts = ts_node_child_res node 1 in
+  let asserts = child_ranked_res node 1 in
   make_unary_res state node print_asserts asserts
 
 (* Type predicate annotation *)
 
 and print_type_predicate_annotation state node =
-  let asserts = ts_node_child_res node 1 in
+  let asserts = child_ranked_res node 1 in
   make_unary_res state node print_type_predicate asserts
 
 (* Construct signature *)
@@ -1863,7 +1863,7 @@ and print_index_signature state node =
         ; mk_child_res print_type_field type_field
         ]
     | None ->
-      let mapped_type_clause = ts_node_named_child_res node 0 in
+      let mapped_type_clause = named_child_ranked_res node 0 in
       prefix
       @ [ mk_child_res print_mapped_type_clause mapped_type_clause
         ; mk_child_res print_type_field type_field
@@ -1879,14 +1879,14 @@ and print_plus_minus state node =
 
 and print_mapped_type_clause state node =
   let name_field = child_with_field_res node "name"
-  and in_kwd = ts_node_child_res node 1
+  and in_kwd = child_ranked_res node 1
   and type_field = child_with_field_res node "type"
   and alias_field = child_with_field_opt node "alias" in
   let alias_children =
     match alias_field with
     | None -> []
     | Some alias ->
-      let as_kwd = ts_node_child_res node 3 in
+      let as_kwd = child_ranked_res node 3 in
       [ mk_child_res make_node as_kwd; mk_child print_type alias ]
   in
   let children =
@@ -1899,15 +1899,15 @@ and print_mapped_type_clause state node =
   make_tree state node children
 
 and print_omitting_type_annotation state node =
-  let child = ts_node_named_child_res node 0 in
+  let child = named_child_ranked_res node 0 in
   make_unary_res state node print_type child
 
 and print_adding_type_annotation state node =
-  let child = ts_node_named_child_res node 0 in
+  let child = named_child_ranked_res node 0 in
   make_unary_res state node print_type child
 
 and print_opting_type_annotation state node =
-  let child = ts_node_named_child_res node 0 in
+  let child = named_child_ranked_res node 0 in
   make_unary_res state node print_type child
 
 (* Method signature *)
@@ -1948,7 +1948,7 @@ and print_method_signature state node =
 (* Array type *)
 
 and print_array_type state node =
-  let child = ts_node_named_child_res node 0 in
+  let child = named_child_ranked_res node 0 in
   make_unary_res state node print_type child
 
 (* Tuple type *)
@@ -1993,13 +1993,13 @@ and print_optional_tuple_parameter state node =
 (* Type annotation *)
 
 and print_type_annotation state node =
-  let child = ts_node_named_child_res node 0 in
+  let child = named_child_ranked_res node 0 in
   make_unary_res state node print_type child
 
 (* Rest pattern *)
 
 and print_rest_pattern state node =
-  let child = ts_node_named_child_res node 0 in
+  let child = named_child_ranked_res node 0 in
   make_unary_res state node print_lhs_expression child
 
 (* LHS expression *)
@@ -2016,17 +2016,17 @@ and print_lhs_expression state node =
   | _ -> match_rest state node print_unexpected_node
 
 and print_optional_type state node =
-  let child = ts_node_named_child_res node 0 in
+  let child = named_child_ranked_res node 0 in
   make_unary_res state node print_type child
 
 and print_rest_type state node =
-  let child = ts_node_named_child_res node 0 in
+  let child = named_child_ranked_res node 0 in
   make_unary_res state node print_type child
 
 (* Type query *)
 
 and print_type_query state node =
-  let child = ts_node_named_child_res node 0
+  let child = named_child_ranked_res node 0
   and print state node =
     match get_name node with
     | "subscript_expression" -> print_type_query_subscript_expression state node
@@ -2110,7 +2110,7 @@ and print_type_query_call_expression state node =
   make_tree state node children
 
 and print_index_type_query state node =
-  let child = ts_node_named_child_res node 0 in
+  let child = named_child_ranked_res node 0 in
   make_unary_res state node print_primary_type child
 
 (* Existential type *)
@@ -2120,7 +2120,7 @@ and print_existential_type state node = make_node state node
 (* Literal type *)
 
 and print_literal_type state node =
-  let child = ts_node_named_child_res node 0
+  let child = named_child_ranked_res node 0
   and print state node =
     match get_name node with
     | "unary_expression" -> print_unary_expression state node
@@ -2163,8 +2163,8 @@ and print_unary_expression state node =
    TypeScript grammar, which means that they are hidden rules. *)
 
 and print_lookup_type state node =
-  let primary_type_child = ts_node_named_child_res node 0
-  and type_child = ts_node_named_child_res node 1 in
+  let primary_type_child = named_child_ranked_res node 0
+  and type_child = named_child_ranked_res node 1 in
   let children =
     [ mk_child_res print_primary_type primary_type_child
     ; mk_child_res print_type type_child
@@ -2221,7 +2221,7 @@ and print_function_type state node =
   make_tree state node children
 
 and print_asserts state node =
-  let child = ts_node_child_res node 1
+  let child = child_ranked_res node 1
   and print state node =
     match get_name node with
     | "type_predicate" -> print_type_predicate state node
@@ -2248,7 +2248,7 @@ and print_type_predicate state node =
 (* Readonly type *)
 
 and print_readonly_type state node =
-  let child = ts_node_named_child_res node 0 in
+  let child = named_child_ranked_res node 0 in
   make_unary_res state node print_type child
 
 (* Constructor type *)
@@ -2309,7 +2309,7 @@ and print_required_parameter state node =
 (* Decorator *)
 
 and print_decorator state node =
-  let child = ts_node_named_child_res node 0
+  let child = named_child_ranked_res node 0
   and print state node =
     match get_name node with
     | "identifier" -> print_identifier state node
@@ -2323,7 +2323,7 @@ and print_decorator state node =
 (* Accessibility modifier *)
 
 and print_accessibility_modifier state node =
-  let child = ts_node_child_res node 0
+  let child = child_ranked_res node 0
   and print state node =
     match get_name node with
     | "public" -> print_public state node
@@ -2340,14 +2340,14 @@ and print_protected state node = make_node state node
 (* Override modifier *)
 
 and print_override_modifier state node =
-  let child = ts_node_child_res node 0 in
+  let child = child_ranked_res node 0 in
   make_unary_res state node make_node child
 
 (* Infer type *)
 
 and print_infer_type state node =
-  let type_identifier_child = ts_node_named_child_res node 0
-  and type_child = ts_node_named_child_opt node 1 in
+  let type_identifier_child = named_child_ranked_res node 0
+  and type_child = named_child_ranked_opt node 1 in
   let children =
     [ mk_child_res print_identifier type_identifier_child
     ; mk_child_opt print_type type_child
@@ -2413,7 +2413,7 @@ and print_property_name state node =
   | _ -> match_rest state node print_unexpected_node
 
 and print_computed_property_name state node =
-  let expression = ts_node_child_res node 1 in
+  let expression = child_ranked_res node 1 in
   make_unary_res state node print_expression expression
 
 and print_shorthand_property_identifier_pattern state node = make_node state node
