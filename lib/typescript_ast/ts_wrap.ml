@@ -54,7 +54,7 @@ let uint32_len string = UInt32.of_int (String.length string)
 
 (* Wrappers for filtering fields (failure on null node or optional value) *)
 
-let ts_node_child_by_field_name_res node field =
+let child_with_field_res node field =
   let child = TS_fun.ts_node_child_by_field_name node field (uint32_len field) in
   if TS_fun.ts_node_is_null child
   then Error (Printf.sprintf "INVALID: Missing field %S." field)
@@ -62,7 +62,7 @@ let ts_node_child_by_field_name_res node field =
 
 let node_to_opt node = if TS_fun.ts_node_is_null node then None else Some node
 
-let ts_node_child_by_field_name_opt node field =
+let child_with_field_opt node field =
   node_to_opt @@ TS_fun.ts_node_child_by_field_name node field (uint32_len field)
 
 (* Printing the tree *)
@@ -167,8 +167,7 @@ let ts_node_child_opt (node : ts_tree) index =
 
 (* Getting the next sibling of a node *)
 
-let ts_node_next_sibling_opt (node : ts_tree) =
-  node_to_opt @@ TS_fun.ts_node_next_sibling node
+let next_sibling_opt (node : ts_tree) = node_to_opt @@ TS_fun.ts_node_next_sibling node
 
 (* Extracting the name of a node *)
 
@@ -195,18 +194,16 @@ let filter_first_by_name_opt name nodes =
 
 let filter_first_by_name_res name nodes =
   match filter_first_by_name_opt name nodes with
-  | None -> Result.Error (filter_first_by_name_opt "ERROR" nodes)
+  | None -> Result.Error "ERROR"
   | Some node -> Ok node
 
-let has_node_named_opt name nodes =
-  match filter_by_name name nodes with
-  | [] -> None
-  | node :: _ -> Some node
+let first_child_named_opt name node =
+  filter_first_by_name_opt name @@ collect_children node
 
-let has_child_named name node = has_node_named_opt name @@ collect_named_children node
+let first_child_named_res name node =
+  filter_first_by_name_res name @@ collect_children node
 
-let first_child_named name node =
-  filter_first_by_name_opt name @@ collect_named_children node
+let children_named name node = filter_by_name name @@ collect_children node
 
 (* Source locations *)
 
