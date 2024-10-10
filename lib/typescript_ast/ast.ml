@@ -2,23 +2,54 @@
 
    We used the JavaScript tree-sitter grammar and the TypeScript
    tree-sitter grammar as reference. The excerpts from those grammars
-   are copied in a comment before the relevant AST nodes. *)
+   are copied in a comment before the relevant AST nodes.
+
+   For the sake of the LSP, we retain keywords in the tree.
+ *)
 
 [@@@warning "-30"] (* Duplicate record field names *)
 
-(** Literals *)
-type identifier = string
+(* DEPENDENCIES *)
 
-type hash_name = string
-type hex_literal = string * Hex.t
-type dec_literal = string * Q.t
-type bin_literal = string * Hex.t
-type oct_literal = string * Hex.t
+type 'a ne_list = 'a Nonempty_list.t
+
+(* METADATA *)
+
+(** Source locations (TEMPORARY) *)
+type line = int (* > 0 *)
+
+type column = int (* > 0 *)
+type location = line * column
+type start = location
+type stop = location
+type range = start * stop
+
+(** Comments *)
+type comment = string * range
+
+(** Data and metadata *)
+type 'a wrap =
+  { data : 'a
+  ; range : range (* metadata *)
+  ; comments : comment list (* metadata *)
+  }
+
+(** Literals *)
+type keyword = string wrap
+
+type symbol = string wrap
+type identifier = string wrap
+type string_literal = string wrap
+type hash_name = string wrap
+type hex_literal = (string * Hex.t) wrap
+type dec_literal = (string * Q.t) wrap
+type bin_literal = (string * Hex.t) wrap
+type oct_literal = (string * Hex.t) wrap
 
 type template_string =
-  | String_fragment of string
-  | Escape_sequence of string
-  | Template_substitution of string
+  | String_fragment of string wrap
+  | Escape_sequence of string wrap
+  | Template_substitution of string wrap
 
 type bigint_literal =
   | Hex_literal of hex_literal
@@ -36,7 +67,7 @@ type bigint_literal =
        repeat($.statement))
     ]}
 *)
-type program = statement list
+type program = statement list wrap
 
 and t = program
 
@@ -73,20 +104,20 @@ and t = program
     ]}
 *)
 and declaration =
-  | D_function_declaration of function_declaration
-  | D_generator_function_declaration of generator_function_declaration
-  | D_class_declaration of class_declaration
-  | D_lexical_declaration of lexical_declaration
-  | D_variable_declaration of variable_declaration
-  | D_function_signature of function_signature
-  | D_abstract_class_declaration of abstract_class_declaration
-  | D_module of module_
-  | D_internal_module of internal_module
-  | D_type_alias_declaration of type_alias_declaration
-  | D_enum_declaration of enum_declaration
-  | D_interface_declaration of interface_declaration
-  | D_import_alias of import_alias
-  | D_ambient_declaration of ambient_declaration
+  | D_function_declaration of function_declaration wrap
+  | D_generator_function_declaration of generator_function_declaration wrap
+  | D_class_declaration of class_declaration wrap
+  | D_lexical_declaration of lexical_declaration wrap
+  | D_variable_declaration of variable_declaration wrap
+  | D_function_signature of function_signature wrap
+  | D_abstract_class_declaration of abstract_class_declaration wrap
+  | D_module of module_ wrap
+  | D_internal_module of internal_module wrap
+  | D_type_alias_declaration of type_alias_declaration wrap
+  | D_enum_declaration of enum_declaration wrap
+  | D_interface_declaration of interface_declaration wrap
+  | D_import_alias of import_alias wrap
+  | D_ambient_declaration of ambient_declaration wrap
 
 (** Function Declaration
 
@@ -111,7 +142,7 @@ and declaration =
   See [function_signature] below.
 *)
 and function_declaration =
-  { fun_sig : function_signature
+  { fun_sig : function_signature wrap
   ; body : statement_block
   }
 
@@ -182,42 +213,46 @@ and function_declaration =
     ]}
  *)
 and function_signature =
-  { async : bool
+  { async : keyword option
+  ; function_ : keyword
   ; name : identifier
-  ; call_sig : call_signature
+  ; call_sig : call_signature wrap
   }
 
 and call_signature =
-  { type_parameters : type_parameter list
+  { type_parameters : type_parameters option
   ; parameters : formal_parameters
   ; return_type : call_return_type option
   }
 
-and formal_parameters = formal_parameter list
+and type_parameters = type_parameter list wrap
+and formal_parameters = formal_parameter wrap list wrap
 
 and formal_parameter =
-  { parameter_name : parameter_name
-  ; optional : bool
+  { parameter_name : parameter_name wrap
+  ; optional : symbol option (* "?" or not *)
   ; type_ : type_annotation option
   ; default : expression option
   }
 
 and parameter_name =
-  { decorators : decorator list
+  { decorators : decorators option
   ; access : accessibility_modifier option
-  ; override : bool
-  ; readonly : bool
+  ; override : keyword option
+  ; readonly : keyword option
   ; pattern : parameter_pattern
   }
 
+and decorators = decorator ne_list wrap
+
 and parameter_pattern =
   | Parameter_pattern of pattern
-  | Parameter_this
+  | Parameter_this of keyword
 
 and call_return_type =
   | Type_annotation of type_annotation
   | Asserts_annotation of asserts_annotation
-  | Type_predicate_annotation of type_predicate
+  | Type_predicate_annotation of type_predicate wrap
 
 and type_annotation = type_
 
@@ -228,7 +263,7 @@ and type_predicate =
 
 and type_predicate_name =
   | Type_predicate_identifier of identifier (* Including predefined types *)
-  | Type_predicate_this
+  | Type_predicate_this of keyword
 
 (** Generator Function Declaration
 
@@ -255,8 +290,7 @@ and type_predicate_name =
        optional($._automatic_semicolon)))
     ]}
  *)
-and generator_function_declaration =
-  | Generator_function_declaration of function_declaration
+and generator_function_declaration = symbol (* "*" *) * function_declaration
 
 (** Class Declaration
 
@@ -269,7 +303,8 @@ and generator_function_declaration =
      b : U;
      constructor (a: T, b: U) {
        this.a = a;
-       this.b = b}
+       this.b = b
+     }
    }
   ]}
 
@@ -339,9 +374,10 @@ and generator_function_declaration =
      ]}
  *)
 and class_declaration =
-  { decorators : decorator list
+  { decorators : decorators option
+  ; class_ : keyword
   ; name : type_identifier
-  ; type_parameters : type_parameter list
+  ; type_parameters : type_parameters
   ; class_heritage : class_heritage option
   ; body : class_body
   }
@@ -350,32 +386,32 @@ and class_heritage =
   | Extends_clause of extends_clause * implements_clause option
   | Implements_clause of implements_clause
 
-and extends_clause = extends_clause_single Nonempty_list.t
+and extends_clause = extends_clause_single ne_list wrap
 
 and extends_clause_single =
   { value : expression
   ; type_arguments : type_arguments option
   }
 
-and type_arguments = type_ Nonempty_list.t
-and implements_clause = type_ Nonempty_list.t
+and type_arguments = type_ ne_list wrap
+and implements_clause = type_ ne_list wrap
 
 and type_parameter =
-  { const : bool
+  { const : keyword option
   ; name : type_identifier
   ; constraint_ : type_ option
   ; value : type_ option (* default *)
   }
 
-and class_body = class_member list
+and class_body = class_member list wrap
 
 and class_member =
-  | Method_definition of decorator list * method_definition
-  | Method_signature of method_signature
+  | Method_definition of decorators option * method_definition
+  | Method_signature of method_signature wrap
   | Call_static_block of statement_block
-  | Abstract_method_signature of abstract_method_signature
-  | Index_signature of index_signature
-  | Public_field_definition of public_field_definition
+  | Abstract_method_signature of abstract_method_signature wrap
+  | Index_signature of index_signature wrap
+  | Public_field_definition of public_field_definition wrap
 
 (** Method Signature
 
@@ -412,35 +448,35 @@ and class_member =
 *)
 and method_signature =
   { access : accessibility_modifier option
-  ; scope : method_scope
-  ; async : bool
+  ; scope : method_scope wrap
+  ; async : keyword option
   ; set_get_all : set_get_all option
   ; name : property_name
-  ; optional : bool
-  ; call_sig : call_signature
+  ; optional : symbol option (* "?" *)
+  ; call_sig : call_signature wrap
   }
 
 and accessibility_modifier =
-  | Public
-  | Private
-  | Protected
+  | Public of keyword
+  | Private of keyword
+  | Protected of keyword
 
 and set_get_all =
-  | Set
-  | Get
-  | All
+  | Set of keyword
+  | Get of keyword
+  | All of symbol
 
 and method_scope =
-  { static : bool
-  ; override : bool
-  ; readonly : bool
+  { static : keyword option
+  ; override : keyword option
+  ; readonly : keyword option
   }
 
 and property_name =
   | Property_identifier of identifier (* Also reserved identifiers *)
   | Private_property_identifier of private_property_identifier
-  | String
-  | Number
+  | String of string_literal
+  | Number of bigint_literal (* Sign? *)
   | Computed_property_name of expression
 
 and private_property_identifier = hash_name
@@ -516,8 +552,8 @@ and lexical_declaration =
   }
 
 and let_or_const =
-  | Let
-  | Const
+  | Let of keyword
+  | Const of keyword
 
 and variable_declarator = lhs_pattern
 
@@ -529,12 +565,12 @@ and destructuring_pattern =
   | Pattern_object of object_pattern
   | Pattern_array of array_pattern
 
-and object_pattern = member_pattern list
+and object_pattern = member_pattern list wrap
 
 and member_pattern =
-  | Member_pair_pattern of pair_pattern
+  | Member_pair_pattern of pair_pattern wrap
   | Member_rest_pattern of rest_pattern
-  | Member_object_assignment of object_assignment_pattern
+  | Member_object_assignment of object_assignment_pattern wrap
   | Member_shorthand_property of identifier (* Including reserved identifiers *)
 
 and pair_pattern =
@@ -552,7 +588,7 @@ and lhs_expression =
   | Member_expression of member_expression
   | Subscript_expression of subscript_expression
   | Identifier of identifier (* Including reserved identifiers *)
-  | Undefined
+  | Undefined of keyword
   | Pattern of destructuring_pattern
   | Non_null_expression of expression
 
@@ -562,12 +598,12 @@ and object_assignment_pattern =
   }
 
 and object_lhs_pattern = lhs_pattern
-and array_pattern = array_cell_pattern list
+and array_pattern = array_cell_pattern list wrap
 
 and array_cell_pattern =
   (* Isomorphic to [pair_value_pattern]. *)
   | Cell_pattern of pattern
-  | Cell_assignment of assignment_pattern
+  | Cell_assignment of assignment_pattern wrap
 
 (** Variable Declaration
 
@@ -583,7 +619,7 @@ and array_cell_pattern =
        seq('var', commaSep1($.variable_declarator), $._semicolon),
     ]}
  *)
-and variable_declaration = variable_declarator Nonempty_list.t
+and variable_declaration = variable_declarator ne_list wrap (* TODO: "var"? *)
 
 (** Abstract Class Declaration
 
@@ -617,7 +653,15 @@ and variable_declaration = variable_declarator Nonempty_list.t
        field('body', $.class_body)))
     }]
  *)
-and abstract_class_declaration = class_declaration
+and abstract_class_declaration =
+  { decorators : decorators option
+  ; abstract : keyword
+  ; class_ : keyword
+  ; name : type_identifier
+  ; type_parameters : type_parameters
+  ; class_heritage : class_heritage option
+  ; body : class_body
+  }
 
 and type_identifier = identifier
 
@@ -649,7 +693,7 @@ and method_definition =
   ; body : statement_block
   }
 
-and statement_block = statement list
+and statement_block = statement list wrap
 
 (** Abstract Method Signature
 
@@ -682,10 +726,10 @@ and statement_block = statement list
  *)
 and abstract_method_signature =
   { access : accessibility_modifier option
-  ; override : bool
+  ; override : keyword option
   ; set_get_all : set_get_all option
   ; name : property_name
-  ; optional : bool
+  ; optional : symbol option (* '?' *)
   ; call_sig : call_signature
   }
 
@@ -737,17 +781,17 @@ and abstract_method_signature =
  *)
 and index_signature =
   { sign : sign option (* readonly *)
-  ; range : range
+  ; range : index_range
   ; type_ : index_type
   }
 
 and sign =
-  | Plus
-  | Minus
+  | Plus of symbol
+  | Minus of symbol
 
-and range =
-  | Typed_index_clause of typed_index_clause
-  | Mapped_type_clause of mapped_type_clause
+and index_range =
+  | Typed_index_clause of typed_index_clause wrap
+  | Mapped_type_clause of mapped_type_clause wrap
 
 and typed_index_clause =
   { name : identifier (* Including reserved identifiers *)
@@ -804,9 +848,9 @@ and index_type =
     ]}
  *)
 and public_field_definition =
-  { decorators : decorator list
+  { decorators : decorators option
   ; access : accessibility_modifier option
-  ; declare : bool
+  ; declare : keyword option
   ; scope : field_scope
   ; name : property_name
   ; mode : field_mode option
@@ -815,16 +859,16 @@ and public_field_definition =
   }
 
 and field_scope =
-  { static : bool
-  ; override : bool
-  ; readonly : bool
-  ; abstract : bool
-  ; accessor : bool
+  { static : keyword option
+  ; override : keyword option
+  ; readonly : keyword option
+  ; abstract : keyword option
+  ; accessor : keyword option
   }
 
 and field_mode =
-  | Optional
-  | Definite_assert
+  | Optional of symbol (* "?" *)
+  | Definite_assert of symbol (* "!" *)
 
 (** Ambient Declaration
 
@@ -889,14 +933,14 @@ and ambient_declaration =
     }]
  *)
 and enum_declaration =
-  { const : bool
+  { const : keyword option
   ; name : identifier
   ; body : enum_body option (* [None] denotes "{}" *)
   }
 
 and enum_body =
   | Enum_name of property_name
-  | Enum_assignment of enum_assignment
+  | Enum_assignment of enum_assignment wrap
 
 and enum_assignment =
   { name : property_name
@@ -934,7 +978,8 @@ and enum_assignment =
     ]}
  *)
 and import_alias =
-  { alias : identifier
+  { import : keyword
+  ; alias : identifier
   ; aliased : aliased
   }
 
@@ -942,7 +987,8 @@ and aliased =
   | Ident of identifier
   | Nested of nested_identifier
 
-and nested_identifier = identifier Nonempty_list.t * identifier (* property identifier *)
+and nested_identifier =
+  (identifier ne_list wrap * identifier) wrap (* property identifier *)
 
 (** Interface Declaration
 
@@ -954,7 +1000,7 @@ and nested_identifier = identifier Nonempty_list.t * identifier (* property iden
   {@js[
    interface SquareConfig {
      color?: string;
-    width?: number;
+     width?: number;
    }
   ]}
 
@@ -989,7 +1035,7 @@ and nested_identifier = identifier Nonempty_list.t * identifier (* property iden
  *)
 and interface_declaration =
   { name : type_identifier
-  ; type_parameters : type_parameter list
+  ; type_parameters : type_parameters
   ; extends : extends_type_clause list
   ; body : object_type (* See TYPES *)
   }
@@ -999,7 +1045,7 @@ and extends_type_clause =
   | Extends_nested of nested_type_identifier
   | Extends_generic of generic_type
 
-and nested_type_identifier = identifier Nonempty_list.t * type_identifier
+and nested_type_identifier = (identifier ne_list wrap * type_identifier) wrap
 and generic_type = generic_name * type_arguments
 
 and generic_name =
@@ -1032,7 +1078,7 @@ and generic_name =
  *)
 and internal_module = module_
 
-and module_ = module_name * statement_block
+and module_ = (module_name * statement_block) wrap
 
 and module_name =
   | Module_string of string
@@ -1063,7 +1109,7 @@ and module_name =
  *)
 and type_alias_declaration =
   { name : type_identifier
-  ; type_parameters : type_parameter list
+  ; type_parameters : type_parameters
   ; value : type_
   }
 
@@ -1132,11 +1178,11 @@ and expression =
        $.expression, 'as', choice('const', $.type)))
     ]}
  *)
-and as_expression = expression * as_what
+and as_expression = (expression * as_what) wrap
 
 and as_what =
   | As_type of type_
-  | As_const
+  | As_const of keyword
 
 (** Assignment Expression
 
@@ -1162,7 +1208,7 @@ and as_what =
     ]}
 *)
 and assignment_expression =
-  { using : bool
+  { using : keyword option
   ; left : assignment_lhs
   ; right : expression
   }
@@ -2280,7 +2326,7 @@ and property_signature =
 
 and construct_signature =
   { abstract : bool
-  ; type_parameters : type_parameter list
+  ; type_parameters : type_parameters
   ; parameters : formal_parameters
   ; type_ : type_annotation option
   }
@@ -2536,12 +2582,12 @@ and function_type =
 and return_type =
   | Return_type of type_
   | Return_asserts of asserts
-  | Return_type_predicate of type_predicate
+  | Return_type_predicate of type_predicate wrap
 
 and asserts =
-  | Assert_predicate of type_predicate
+  | Assert_predicate of type_predicate wrap
   | Assert_type of identifier
-  | Assert_this
+  | Assert_this of keyword
 
 (** Readonly Type
 
@@ -2576,7 +2622,7 @@ and readonly_type = type_
 *)
 and constructor_type =
   { abstract : bool
-  ; type_parameters : type_parameter list
+  ; type_parameters : type_parameters
   ; parameters : formal_parameters
   ; type_ : type_
   }
@@ -2787,7 +2833,7 @@ and export_specifier =
 and module_export_name = namespace_export
 
 and export_decorator =
-  { decorators : decorator list
+  { decorators : decorators option
   ; export_dec : export_dec
   }
 
@@ -3133,9 +3179,9 @@ and finally_clause = statement_block
     ]}
 *)
 and class_ =
-  { decorators : decorator list
+  { decorators : decorators option
   ; name : type_identifier option
-  ; type_parameters : type_parameter list
+  ; type_parameters : type_parameters
   ; class_heritage : class_heritage
   ; body : class_member list
   }
@@ -3158,7 +3204,7 @@ and class_ =
        field('function', choice(
          $.identifier,
          alias($.decorator_member_expression, $.member_expression))),
-         optional(field('type_arguments', $.type_arguments)),
+       optional(field('type_arguments', $.type_arguments)),
        field('arguments', $.arguments))),
 
      decorator_parenthesized_expression: $ => seq(
@@ -3181,14 +3227,18 @@ and class_ =
 *)
 and decorator =
   | Decorator_identifier of identifier
-  | Decorator_member_expression of decorator_member_expression
-  | Decorator_call_expression of decorator_call_expression
+  | Decorator_member_expression of decorator_member_expression wrap
+  | Decorator_call_expression of decorator_call_expression wrap
   | Decorator_parenthesized_expression of decorator_parenthesized_expression
 
 and decorator_member_expression =
-  { object_ : identifier Nonempty_list.t
+  { object_ : object_member_expression
   ; property : identifier
   }
+
+and object_member_expression =
+  | Object_name of identifier
+  | Qualified_member_expression of decorator_member_expression wrap
 
 and decorator_call_expression =
   { function_ : function_or_property
@@ -3198,9 +3248,9 @@ and decorator_call_expression =
 
 and function_or_property =
   | Function_name of identifier
-  | Qualified_member_expression of decorator_member_expression
+  | Qualified_member_expression of decorator_member_expression wrap
 
 and decorator_parenthesized_expression =
   | Parenthesized_ident of identifier
-  | Parenthesized_member of decorator_member_expression
-  | Parenthesized_call of decorator_call_expression
+  | Parenthesized_member of decorator_member_expression wrap
+  | Parenthesized_call of decorator_call_expression wrap
