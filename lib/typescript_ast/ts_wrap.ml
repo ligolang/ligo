@@ -194,9 +194,7 @@ let filter_first_by_name name nodes =
 let first_child_named_opt name node =
   filter_first_by_name_opt name @@ collect_children node
 
-let first_child_named name node =
-  filter_first_by_name name @@ collect_children node
-
+let first_child_named name node = filter_first_by_name name @@ collect_children node
 let children_named name node = filter_by_name name @@ collect_children node
 
 (* Arity *)
