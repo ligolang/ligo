@@ -31,6 +31,7 @@ open Ctypes
 
 type ts_tree = TS_types.ts_tree structure
 type ts_tree_ptr = TS_types.ts_tree structure Ctypes_static.ptr
+type ts_forest = ts_tree list
 type ts_point = TS_types.ts_point structure
 type ts_range = TS_types.ts_range structure
 
@@ -82,6 +83,7 @@ let string_of_ts_node_type (node : ts_tree) : string =
 (* Parsing a string expected to contain a valid TypeScript program *)
 
 let parse_typescript_string (source_code : string) : ts_tree_ptr =
+  let open Core in
   let parser = TS_fun.ts_parser_new ()
   and language = tree_sitter_typescript () in
   let (_ : bool) = TS_fun.ts_parser_set_language parser language in
@@ -97,41 +99,37 @@ let parse_typescript_string (source_code : string) : ts_tree_ptr =
   TS_fun.ts_parser_delete parser;
   parse_tree
 
-(* Collating named children of a given node (we discard comment nodes) *)
+(* Collating named/all children of a given node (we discard comment nodes) *)
 
-let collect_named_children (node : ts_tree) : ts_tree list =
+let collect select_child arity node =
   if TS_fun.ts_node_is_null node
   then []
   else (
-    let rec collect acc n =
+    let rec fold acc n =
       if UInt32.(equal zero n)
       then acc
       else (
         let index = UInt32.pred n in
-        let child = TS_fun.ts_node_named_child node index in
+        let child = select_child node index in
         match string_of_ts_node_type child with
-        | "comment" -> collect acc index
-        | _ -> collect (child :: acc) index)
+        | "comment" -> fold acc index
+        | _ -> fold (child :: acc) index)
     in
-    collect [] (TS_fun.ts_node_named_child_count node))
+    fold [] (arity node))
 
-(* Collating all children of a given node (we discard comment nodes) *)
+let collect_named_children (node : ts_tree) : ts_forest =
+  collect TS_fun.ts_node_named_child TS_fun.ts_node_named_child_count node
 
-let collect_children (node : ts_tree) : ts_tree list =
-  if TS_fun.ts_node_is_null node
-  then []
-  else (
-    let rec collect acc n =
-      if UInt32.(equal zero n)
-      then acc
-      else (
-        let index = UInt32.pred n in
-        let child = TS_fun.ts_node_child node index in
-        match string_of_ts_node_type child with
-        | "comment" -> collect acc index
-        | _ -> collect (child :: acc) index)
-    in
-    collect [] (TS_fun.ts_node_child_count node))
+let collect_children (node : ts_tree) : ts_forest =
+  collect TS_fun.ts_node_child TS_fun.ts_node_child_count node
+
+let collect_error_children (node : ts_tree) : ts_forest =
+  let open Core in
+  let children = collect_named_children node in
+  let f child acc =
+    if String.(string_of_ts_node_type child = "ERROR") then child :: acc else acc
+  in
+  List.fold_right ~f ~init:[] children
 
 (* Extracting a named child by its index *)
 
@@ -204,6 +202,10 @@ let first_child_named_res name node =
   filter_first_by_name_res name @@ collect_children node
 
 let children_named name node = filter_by_name name @@ collect_children node
+
+(* Arity *)
+
+let arity node = UInt32.to_int (TS_fun.ts_node_child_count node)
 
 (* Source locations *)
 
