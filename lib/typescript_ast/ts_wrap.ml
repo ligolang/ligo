@@ -135,14 +135,14 @@ let collect_children (node : ts_tree) : ts_tree list =
 
 (* Extracting a named child by its index *)
 
-let named_child_ranked_res node index =
+let named_child_ranked_res index node =
   let index' = UInt32.of_int index
   and arity = TS_fun.ts_node_named_child_count node in
   match UInt32.compare index' arity with
   | -1 -> Result.Ok (TS_fun.ts_node_named_child node index')
   | _ -> Error (Printf.sprintf "INVALID: Missing named child at index %i." index)
 
-let named_child_ranked_opt node index =
+let named_child_ranked_opt index node =
   let index = UInt32.of_int index
   and arity = TS_fun.ts_node_named_child_count node in
   match UInt32.compare index arity with
@@ -151,14 +151,14 @@ let named_child_ranked_opt node index =
 
 (* Extracting a child by its index *)
 
-let child_ranked_res (node : ts_tree) index =
+let child_ranked_res index (node : ts_tree) =
   let index' = UInt32.of_int index
   and arity = TS_fun.ts_node_child_count node in
   match UInt32.compare index' arity with
   | -1 -> Result.Ok (TS_fun.ts_node_child node index')
   | _ -> Error (Printf.sprintf "INVALID: Missing child at index %i" index)
 
-let child_ranked_opt (node : ts_tree) index =
+let child_ranked_opt index (node : ts_tree) =
   let index = UInt32.of_int index
   and arity = TS_fun.ts_node_child_count node in
   match UInt32.compare index arity with
