@@ -55,7 +55,7 @@ let uint32_len string = UInt32.of_int (String.length string)
 
 (* Wrappers for filtering fields (failure on null node or optional value) *)
 
-let child_with_field_res field node =
+let child_with_field field node =
   let child = TS_fun.ts_node_child_by_field_name node field (uint32_len field) in
   if TS_fun.ts_node_is_null child
   then Error (Printf.sprintf "INVALID: Missing field %S." field)
@@ -133,7 +133,7 @@ let collect_error_children (node : ts_tree) : ts_forest =
 
 (* Extracting a named child by its index *)
 
-let named_child_ranked_res index node =
+let named_child_ranked index node =
   let index' = UInt32.of_int index
   and arity = TS_fun.ts_node_named_child_count node in
   match UInt32.compare index' arity with
@@ -149,7 +149,7 @@ let named_child_ranked_opt index node =
 
 (* Extracting a child by its index *)
 
-let child_ranked_res index (node : ts_tree) =
+let child_ranked index (node : ts_tree) =
   let index' = UInt32.of_int index
   and arity = TS_fun.ts_node_child_count node in
   match UInt32.compare index' arity with
@@ -169,15 +169,11 @@ let next_sibling_opt (node : ts_tree) = node_to_opt @@ TS_fun.ts_node_next_sibli
 
 (* Extracting the name of a node *)
 
-let get_name ?name node =
-  match name with
-  | None -> string_of_ts_node_type node
-  | Some name -> name
+let get_name = string_of_ts_node_type
 
-let get_name_res (node : (ts_tree, string) Result.t) : string =
-  match node with
-  | Result.Ok node -> get_name node
-  | Error string -> string
+let get_name_res = function
+  | Ok node -> get_name node
+  | Error name -> name
 
 (* Filtering by name a list of nodes *)
 
@@ -190,7 +186,7 @@ let filter_first_by_name_opt name nodes =
   | node :: _ -> Some node
   | [] -> None
 
-let filter_first_by_name_res name nodes =
+let filter_first_by_name name nodes =
   match filter_first_by_name_opt name nodes with
   | None -> Result.Error "ERROR"
   | Some node -> Ok node
@@ -198,8 +194,8 @@ let filter_first_by_name_res name nodes =
 let first_child_named_opt name node =
   filter_first_by_name_opt name @@ collect_children node
 
-let first_child_named_res name node =
-  filter_first_by_name_res name @@ collect_children node
+let first_child_named name node =
+  filter_first_by_name name @@ collect_children node
 
 let children_named name node = filter_by_name name @@ collect_children node
 
