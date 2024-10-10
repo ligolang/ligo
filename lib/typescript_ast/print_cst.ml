@@ -9,14 +9,12 @@ module Tree = Cst_shared.Tree
 
 (* Making trees and nodes with labels (name + location) *)
 
-let make_tree state node children = Tree.make state (get_label node) children
-
 let tree_of_list state node printer children =
   Tree.of_list state (get_label node) printer children
 
 let tree_of_named_children state node printer =
   let children = collect_named_children node in
-  Tree.of_list state (get_label node) printer children
+  tree_of_list state node printer children
 
 let make_node state node = Tree.make_node state @@ get_label node
 
@@ -41,10 +39,20 @@ let make_unary_res state node print = function
   | Result.Ok child -> make_unary state node print child
   | Error child_name -> make_unary state node Tree.make_node child_name
 
-let print_error_node state node = make_node state node
+let print_error_node state node =
+  if arity node = 0
+  then make_node state node
+  else make_unary state node Tree.make_node "UNMATCHED"
+
+let mk_error_children node =
+  mk_children_list print_error_node @@ collect_error_children node
+
 let print_missing_node state node = make_node state node
 let print_unexpected_node state node = Tree.make_node state ("UNKNOWN: " ^ get_label node)
 let print_todo_node state node = Tree.make_node state ("TODO: " ^ get_label node)
+
+let make_tree state node children =
+  Tree.make state (get_label node) (mk_error_children node @ children)
 
 (* Concluding a pattern matching with a default printer *)
 
@@ -1811,6 +1819,19 @@ and print_asserts_annotation state node =
   let asserts = child_ranked_res 1 node in
   make_unary_res state node print_asserts asserts
 
+and print_asserts state node =
+  let kwd_asserts = child_ranked_res 0 node
+  and child = child_ranked_res 1 node
+  and print state node =
+    match get_name node with
+    | "type_predicate" -> print_type_predicate state node
+    | "identifier" -> print_identifier state node
+    | "this" -> print_this state node
+    | _ -> match_rest state node print_unexpected_node
+  in
+  let children = [ mk_child_res make_node kwd_asserts; mk_child_res print child ] in
+  make_tree state node children
+
 (* Type predicate annotation *)
 
 and print_type_predicate_annotation state node =
@@ -2026,7 +2047,8 @@ and print_rest_type state node =
 (* Type query *)
 
 and print_type_query state node =
-  let child = named_child_ranked_res 0 node
+  let kwd_typeof = child_ranked_res 0 node
+  and child = child_ranked_res 1 node
   and print state node =
     match get_name node with
     | "subscript_expression" -> print_type_query_subscript_expression state node
@@ -2037,7 +2059,8 @@ and print_type_query state node =
     | "this" -> print_this state node
     | _ -> match_rest state node print_unexpected_node
   in
-  make_unary_res state node print child
+  let children = [ mk_child_res make_node kwd_typeof; mk_child_res print child ] in
+  make_tree state node children
 
 and print_type_query_subscript_expression state node =
   let object_field = child_with_field_res "object" node
@@ -2220,19 +2243,9 @@ and print_function_type state node =
   in
   make_tree state node children
 
-and print_asserts state node =
-  let child = child_ranked_res 1 node
-  and print state node =
-    match get_name node with
-    | "type_predicate" -> print_type_predicate state node
-    | "identifier" -> print_identifier state node
-    | "this" -> print_this state node
-    | _ -> match_rest state node print_unexpected_node
-  in
-  make_unary_res state node print child
-
 and print_type_predicate state node =
   let name_field = child_with_field_res "name" node
+  and kwd_is = child_ranked_res 1 node
   and type_field = child_with_field_res "type" node in
   let print_name_field state node =
     match get_name node with
@@ -2241,7 +2254,10 @@ and print_type_predicate state node =
     | _ -> match_rest state node print_predefined_type
   in
   let children =
-    [ mk_child_res print_name_field name_field; mk_child_res print_type type_field ]
+    [ mk_child_res print_name_field name_field
+    ; mk_child_res make_node kwd_is
+    ; mk_child_res print_type type_field
+    ]
   in
   make_tree state node children
 
