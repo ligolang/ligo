@@ -77,7 +77,7 @@ let print_node (node: ts_tree) : unit =
 
 let string_of_ts_node_type (node : ts_tree) : string =
   if TS_fun.ts_node_is_null node
-  then "WARNING: Null node"
+  then "NULL"
   else string_of_char_ptr @@ TS_fun.ts_node_type node
 
 (* Parsing a string expected to contain a valid TypeScript program *)
@@ -124,12 +124,13 @@ let collect_children (node : ts_tree) : ts_forest =
   collect TS_fun.ts_node_child TS_fun.ts_node_child_count node
 
 let collect_error_children (node : ts_tree) : ts_forest =
-  let open Core in
   let children = collect_named_children node in
   let f child acc =
-    if String.(string_of_ts_node_type child = "ERROR") then child :: acc else acc
+    match string_of_ts_node_type child with
+    | "ERROR" -> child :: acc
+    | _ -> acc
   in
-  List.fold_right ~f ~init:[] children
+  Core.List.fold_right ~f ~init:[] children
 
 (* Extracting a named child by its index *)
 
