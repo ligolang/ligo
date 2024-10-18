@@ -4,7 +4,6 @@ open Core
 module Region = Simple_utils.Region
 
 type pos_bol = int
-
 type t = pos_bol Int.Map.t (* From line numbers to beginning-of-line offset *)
 
 let scan (file : string) : (t, string Region.reg) Result.t =
@@ -14,9 +13,10 @@ let scan (file : string) : (t, string Region.reg) Result.t =
     let init_map = Map.set init_map ~key:1 ~data:0 in
     let f (lnum, bol, map) line =
       let bol = bol + String.length line + 1 in
-      lnum+1, bol, Map.set map ~key:lnum ~data:bol in
-    let _, _, map = In_channel.fold_lines in_chan ~init:(2, 0, init_map) ~f
-    in Ok map
+      lnum + 1, bol, Map.set map ~key:lnum ~data:bol
+    in
+    let _, _, map = In_channel.fold_lines in_chan ~init:(2, 0, init_map) ~f in
+    Ok map
   with
   | Sys_error msg ->
     let region = Region.min ~file in

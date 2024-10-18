@@ -224,9 +224,9 @@ let pos_of_point file map (point : ts_point) : Pos.t =
   match Loc_map.convert file map line column with
   | None -> Pos.ghost
   | Some position ->
-        let point_num = position.Lexing.pos_cnum
-        and point_bol = position.Lexing.pos_bol in
-        Pos.make ~byte:position ~point_num ~point_bol
+    let point_num = position.Lexing.pos_cnum
+    and point_bol = position.Lexing.pos_bol in
+    Pos.make ~byte:position ~point_num ~point_bol
 
 let range (node : ts_tree) : range =
   TS_fun.(ts_node_start_point node, ts_node_end_point node)
