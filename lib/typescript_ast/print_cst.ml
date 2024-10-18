@@ -3,7 +3,8 @@
 open Core
 open Ts_wrap
 
-(* Source map for converting line-column ranges into regions *)
+(* Source map for converting vertical and horizontal offset ranges
+   into regions *)
 
 let get_region : (ts_tree -> Region.t) ref =
   ref (fun _ -> failwith "Internal error: Print_cst.get_region")

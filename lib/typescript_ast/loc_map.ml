@@ -1,4 +1,5 @@
-(* Mapping source locations as line-column to [Pos.t] *)
+(* Mapping source locations as vertical and horizontal offsets to
+   [Pos.t]. See OCaml module [Lexing]. *)
 
 open Core
 module Region = Simple_utils.Region
