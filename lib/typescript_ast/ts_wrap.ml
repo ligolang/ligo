@@ -1,6 +1,9 @@
 (* Some additional wrappers for decoding the nodes of the
    tree-sitter-generated parser in C *)
 
+module Pos = Simple_utils.Pos
+module Region = Simple_utils.Region
+
 (* Misc *)
 
 let ( <@ ) = Simple_utils.Ligo_fun.( <@ )
@@ -204,6 +207,8 @@ let arity node = UInt32.to_int (TS_fun.ts_node_child_count node)
 
 (* Source locations *)
 
+type range = ts_point * ts_point (* NOT [ts_range] *)
+
 let string_of_point (point : ts_point) : string =
   let row = getf point TS_types.row
   and column = getf point TS_types.column in
@@ -211,16 +216,37 @@ let string_of_point (point : ts_point) : string =
   and column_string = UInt.to_string column in
   Printf.sprintf "[%s, %s]" row_string column_string
 
-let range (node : ts_tree) : ts_point * ts_point =
+let pos_of_point file map (point : ts_point) : Pos.t =
+  let row = getf point TS_types.row
+  and column = getf point TS_types.column in
+  let line = UInt.to_int row
+  and column = UInt.to_int column in
+  match Loc_map.convert file map line column with
+  | None -> Pos.ghost
+  | Some position ->
+        let point_num = position.Lexing.pos_cnum
+        and point_bol = position.Lexing.pos_bol in
+        Pos.make ~byte:position ~point_num ~point_bol
+
+let range (node : ts_tree) : range =
   TS_fun.(ts_node_start_point node, ts_node_end_point node)
 
-let string_of_range (range : ts_point * ts_point) : string =
+let string_of_range (range : range) : string =
   let start_point, end_point = range in
   let start_string = string_of_point start_point
   and end_string = string_of_point end_point in
   Printf.sprintf "%s - %s" start_string end_string
 
+let region_of_range file map (range : range) : Region.t =
+  let start_point, end_point = range in
+  let start = pos_of_point file map start_point
+  and stop = pos_of_point file map end_point in
+  Region.make ~start ~stop
+
 let get_label (node : ts_tree) : string =
   let name = string_of_ts_node_type node
   and range_string = string_of_range @@ range node in
   Printf.sprintf "%s %s" name range_string
+
+let get_region file map (node : ts_tree) : Region.t =
+  region_of_range file map @@ range node

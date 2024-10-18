@@ -2,7 +2,7 @@
 
 (library
  (name typescript_ast)
- (modules ast ts_wrap print_cst decoder)
+ (modules ast ts_wrap print_cst loc_map decoder)
  (libraries
   tree_sitter
   tree_sitter_typescript
