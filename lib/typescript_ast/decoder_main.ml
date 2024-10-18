@@ -35,10 +35,10 @@ let cli_args : string array = Sys.get_argv ()
 
 let () =
   match Array.length cli_args with
-  | 2 -> (*parse @@ In_channel.read_all cli_args.(1)*)
+  | 2 ->
+    (*parse @@ In_channel.read_all cli_args.(1)*)
     let file = cli_args.(1) in
     (match Loc_map.scan file with
-     | Ok line_map -> parse file line_map (In_channel.read_all file)
-     | Error {region; value=_} ->
-       Printf.eprintf "Error: %s\n%!" (region#compact `Byte))
+    | Ok line_map -> parse file line_map (In_channel.read_all file)
+    | Error { region; value = _ } -> Printf.eprintf "Error: %s\n%!" (region#compact `Byte))
   | _ -> prerr_endline ("Usage: " ^ cli_args.(0) ^ " [file]")

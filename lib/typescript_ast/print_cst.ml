@@ -16,21 +16,21 @@ module Tree = Cst_shared.Tree
 
 let tree_of_list state node printer children =
   let region = !get_region node
-  and label = string_of_ts_node_type node
-  in Tree.of_list ~region state label printer children
+  and label = string_of_ts_node_type node in
+  Tree.of_list ~region state label printer children
 
 let tree_of_named_children state node printer =
   let children = collect_named_children node in
   tree_of_list state node printer children
 
 let make_node state node =
-  let region = !get_region node
-  in Tree.make_node ~region state @@ string_of_ts_node_type node
+  let region = !get_region node in
+  Tree.make_node ~region state @@ string_of_ts_node_type node
 
 let make_unary state root printer child =
   let region = !get_region root
-  and label = string_of_ts_node_type root
-  in Tree.make_unary ~region state label printer child
+  and label = string_of_ts_node_type root in
+  Tree.make_unary ~region state label printer child
 
 let mk_child_opt = Tree.mk_child_opt
 let mk_child = Tree.mk_child
@@ -59,15 +59,16 @@ let mk_error_children node =
   mk_children_list print_error_node @@ collect_error_children node
 
 let print_missing_node state node = make_node state node
+
 let print_unexpected_node state node =
   let region = !get_region node
-  and label = string_of_ts_node_type node
-  in Tree.make_node ~region state ("UNKNOWN: " ^ label)
+  and label = string_of_ts_node_type node in
+  Tree.make_node ~region state ("UNKNOWN: " ^ label)
 
 let make_tree state node children =
   let region = !get_region node
-  and label = string_of_ts_node_type node
-  in Tree.make ~region state label (mk_error_children node @ children)
+  and label = string_of_ts_node_type node in
+  Tree.make ~region state label (mk_error_children node @ children)
 
 (* Concluding a pattern matching with a default printer *)
 
