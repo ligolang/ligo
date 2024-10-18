@@ -17,6 +17,7 @@ let scan (file : string) : (t, string Region.reg) Result.t =
       lnum + 1, bol, Map.set map ~key:lnum ~data:bol
     in
     let _, _, map = In_channel.fold_lines in_chan ~init:(2, 0, init_map) ~f in
+    let () = In_channel.close in_chan in
     Ok map
   with
   | Sys_error msg ->
