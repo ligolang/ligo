@@ -3,6 +3,11 @@
 open Core
 open Ts_wrap
 
+(* Source map for converting line-column ranges into regions *)
+
+let get_region : (ts_tree -> Region.t) ref =
+  ref (fun _ -> failwith "Internal error: Print_cst.get_region")
+
 (* To print the AST in ASCII art *)
 
 module Tree = Cst_shared.Tree
@@ -10,16 +15,22 @@ module Tree = Cst_shared.Tree
 (* Making trees and nodes with labels (name + location) *)
 
 let tree_of_list state node printer children =
-  Tree.of_list state (get_label node) printer children
+  let region = !get_region node
+  and label = string_of_ts_node_type node
+  in Tree.of_list ~region state label printer children
 
 let tree_of_named_children state node printer =
   let children = collect_named_children node in
   tree_of_list state node printer children
 
-let make_node state node = Tree.make_node state @@ get_label node
+let make_node state node =
+  let region = !get_region node
+  in Tree.make_node ~region state @@ string_of_ts_node_type node
 
 let make_unary state root printer child =
-  Tree.make_unary state (get_label root) printer child
+  let region = !get_region root
+  and label = string_of_ts_node_type root
+  in Tree.make_unary ~region state label printer child
 
 let mk_child_opt = Tree.mk_child_opt
 let mk_child = Tree.mk_child
@@ -48,11 +59,15 @@ let mk_error_children node =
   mk_children_list print_error_node @@ collect_error_children node
 
 let print_missing_node state node = make_node state node
-let print_unexpected_node state node = Tree.make_node state ("UNKNOWN: " ^ get_label node)
-let print_todo_node state node = Tree.make_node state ("TODO: " ^ get_label node)
+let print_unexpected_node state node =
+  let region = !get_region node
+  and label = string_of_ts_node_type node
+  in Tree.make_node ~region state ("UNKNOWN: " ^ label)
 
 let make_tree state node children =
-  Tree.make state (get_label node) (mk_error_children node @ children)
+  let region = !get_region node
+  and label = string_of_ts_node_type node
+  in Tree.make ~region state label (mk_error_children node @ children)
 
 (* Concluding a pattern matching with a default printer *)
 
@@ -68,10 +83,12 @@ let match_rest state node print_default =
 
 (* Printing the CST *)
 
-let rec print_program node =
+let rec print_program file map node =
+  (* Setting up the extracting of source regions *)
+  let () = get_region := Ts_wrap.get_region file map in
   (* Empty state for building the AST *)
   let buffer = Buffer.create 1023 in
-  let state = Tree.mk_state ~buffer ~regions:false ~layout:true ~offsets:true `Byte in
+  let state = Tree.mk_state ~buffer ~regions:true ~layout:true ~offsets:true `Byte in
   (* Decoding the CST into an AST in [state] *)
   let () = tree_of_named_children state node print_statement in
   Buffer.contents @@ Tree.to_buffer state
@@ -188,10 +205,6 @@ and print_namespace_export state node =
     ]
   in
   make_tree state node children
-
-(* The rule "_from_clause" is hidden, so we call [Tree.make_unary] directly. *)
-
-and print_from_clause state node = Tree.make_unary state "from_clause" print_string node
 
 and mk_child_from_clause kwd_from node =
   let source_field = child_with_field "source" node in
