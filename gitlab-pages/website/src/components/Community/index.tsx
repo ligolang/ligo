@@ -30,7 +30,7 @@ const Community = ({ discordMembers, contributors = 78, packages }: CommunityPro
         "The Ligo community is growing fast. Join our Discord to talk about the Tezos ecosystem, find help, and discover a lot more.",
       cta: {
         label: "join our discord",
-        href: "https://discord.gg/tezos-blockchain-699325006928281720",
+        href: "https://discord.gg/tezos",
         rel: "noopener noreferrer nofollow",
       },
     },
