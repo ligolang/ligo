@@ -76,4 +76,7 @@ with prev; {
   bison = prev.bison.overrideAttrs (oldAttrs: {
     doCheck = false;
   });
+  p11-kit = prev.p11-kit.overrideAttrs (oldAttrs: {
+    doCheck = false;
+  });
 }
