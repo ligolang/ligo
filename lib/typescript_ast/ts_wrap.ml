@@ -243,10 +243,12 @@ let region_of_range file map (range : range) : Region.t =
   and stop = pos_of_point file map end_point in
   Region.make ~start ~stop
 
+(*
 let get_label (node : ts_tree) : string =
   let name = string_of_ts_node_type node
   and range_string = string_of_range @@ range node in
   Printf.sprintf "%s %s" name range_string
+*)
 
 let get_region file map (node : ts_tree) : Region.t =
   region_of_range file map @@ range node

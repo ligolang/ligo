@@ -20,7 +20,7 @@ let close_input () =
 
 (* Reading in the source a lexeme of a given region *)
 
-let read_region region : string =
+let read_lexeme region : string =
   let start_pos, stop_pos = region#byte_pos in
   let start_cnum = start_pos.Lexing.pos_cnum
   and stop_cnum = stop_pos.Lexing.pos_cnum in
@@ -55,11 +55,21 @@ let make_unary state root printer child =
 
 let make_node state node =
   let region = !get_region node in
-  let lexeme = read_region region in
+  let lexeme = read_lexeme region in
   make_unary state node Tree.make_node lexeme
 (*  Printf.eprintf "lexeme=%S\n%!" lexeme;
     Tree.make_node ~region state @@ string_of_ts_node_type node
 *)
+
+let make_kwd state node =
+  let region = !get_region node in
+  let lexeme = read_lexeme region in
+  Tree.make_node ~region state (lexeme ^ " [keyword]")
+
+let make_sym state node =
+  let region = !get_region node in
+  let lexeme = read_lexeme region in
+  Tree.make_node ~region state lexeme
 
 let mk_child_opt = Tree.mk_child_opt
 let mk_child = Tree.mk_child
@@ -182,7 +192,7 @@ and print_export_statement state node =
     match kwd_export with
     | None -> internal_error_child "export" node
     | Some kwd_export ->
-      mk_child make_node kwd_export
+      mk_child make_kwd kwd_export
       ::
       (match next_sibling_opt kwd_export with
       | None -> internal_error_child "after \"export\"" node
@@ -190,7 +200,7 @@ and print_export_statement state node =
         (match get_name after_export with
         | "*" ->
           let kwd_from = child_ranked 2 node in
-          [ mk_child make_node after_export; mk_child_from_clause kwd_from node ]
+          [ mk_child make_sym after_export; mk_child_from_clause kwd_from node ]
         | "namespace_export" ->
           let kwd_from = child_ranked 2 node in
           [ mk_child print_namespace_export after_export
@@ -201,7 +211,7 @@ and print_export_statement state node =
         | "default" ->
           let declaration_field = child_with_field_opt "declaration" node in
           decorators
-          @ [ mk_child make_node after_export ] (* "default" keyword *)
+          @ [ mk_child make_kwd after_export ] (* "default" keyword *)
           @
           (match declaration_field with
           | Some declaration_field -> [ mk_child print_declaration declaration_field ]
@@ -212,19 +222,19 @@ and print_export_statement state node =
           (match next_sibling_opt after_export with
           | None -> internal_error_child "export_clause" node
           | Some export_clause ->
-            mk_child make_node after_export
+            mk_child make_kwd after_export
             :: mk_child print_export_clause export_clause
             :: mk_child_from_clause_opt node)
         | "=" ->
           (match next_sibling_opt after_export with
           | None -> internal_error_child "expression" node
           | Some expression ->
-            [ mk_child make_node after_export; mk_child print_expression expression ])
+            [ mk_child make_sym after_export; mk_child print_expression expression ])
         | "as" ->
           let kwd_namespace = child_ranked 2 node
           and identifier = child_ranked 3 node in
-          [ mk_child make_node after_export (* "as" keyword *)
-          ; mk_child_res make_node kwd_namespace
+          [ mk_child make_kwd after_export (* "as" keyword *)
+          ; mk_child_res make_kwd kwd_namespace
           ; mk_child_res print_identifier identifier
           ]
         | _ -> decorators @ [ mk_child print_declaration after_export ]))
@@ -235,7 +245,7 @@ and print_namespace_export state node =
   let kwd_as = child_ranked 1 node
   and module_export_name = child_ranked 2 node in
   let children =
-    [ mk_child_res make_node kwd_as
+    [ mk_child_res make_kwd kwd_as
     ; mk_child_res print_module_export_name module_export_name
     ]
   in
@@ -244,7 +254,7 @@ and print_namespace_export state node =
 and mk_child_from_clause kwd_from node =
   let source_field = child_with_field "source" node in
   let children =
-    [ mk_child_res make_node kwd_from; mk_child_res print_string source_field ]
+    [ mk_child_res make_kwd kwd_from; mk_child_res print_string source_field ]
   in
   Some (fun state -> Tree.make_tree state "from_clause" children)
 
@@ -271,7 +281,7 @@ and print_export_specifier state node =
     | None -> []
     | Some alias_field ->
       let kwd_as = first_child_named "as" node in
-      [ mk_child_res make_node kwd_as; mk_child print_module_export_name alias_field ])
+      [ mk_child_res make_kwd kwd_as; mk_child print_module_export_name alias_field ])
   in
   make_tree state node children
 
@@ -297,8 +307,8 @@ and print_import_statement state node =
         [ mk_child_res print_string source_field ])
   in
   let children =
-    (mk_child_res make_node kwd_import
-    :: mk_child_opt make_node kind_node
+    (mk_child_res make_kwd kwd_import
+    :: mk_child_opt make_kwd kind_node
     :: middle_children)
     @ [ mk_child_opt print_import_attribute import_attribute ]
   in
@@ -335,7 +345,7 @@ and print_namespace_import state node =
   let kwd_as = child_ranked 1 node
   and identifier = child_ranked 2 node in
   let children =
-    [ mk_child_res make_node kwd_as; mk_child_res print_identifier identifier ]
+    [ mk_child_res make_kwd kwd_as; mk_child_res print_identifier identifier ]
   in
   make_tree state node children
 
@@ -350,14 +360,14 @@ and print_import_specifier state node =
   and name_field = child_with_field "name" node
   and alias_field = child_with_field_opt "alias" node in
   let children =
-    mk_child_opt make_node kind_node
+    mk_child_opt make_kwd kind_node
     ::
     (match alias_field with
     | None -> [ mk_child_res print_identifier name_field ]
     | Some alias_field ->
       let kwd_as = first_child_named "as" node in
       [ mk_child_res print_module_export_name name_field
-      ; mk_child_res make_node kwd_as
+      ; mk_child_res make_kwd kwd_as
       ; mk_child print_identifier alias_field
       ])
   in
@@ -369,7 +379,7 @@ and print_import_require_clause state node =
   and source_field = child_with_field "source" node in
   let children =
     [ mk_child_res print_identifier identifier
-    ; mk_child_res make_node kwd_require
+    ; mk_child_res make_kwd kwd_require
     ; mk_child_res print_string source_field
     ]
   in
@@ -380,8 +390,8 @@ and print_import_attribute state node =
   and object_node = child_ranked 1 node
   and print_kind state node =
     match get_name node with
-    | "with" -> make_node state node
-    | "assert" -> make_node state node
+    | "with" -> make_kwd state node
+    | "assert" -> make_kwd state node
     | _ -> match_rest state node print_unexpected_node
   in
   let children =
@@ -393,7 +403,7 @@ and print_import_attribute state node =
 
 and print_debugger_statement state node =
   let kwd_debugger = child_ranked 0 node in
-  make_unary_res state node make_node kwd_debugger
+  make_unary_res state node make_kwd kwd_debugger
 
 (* Expression statements
 
@@ -426,7 +436,7 @@ and print_if_statement state node =
   and consequence_field = child_with_field "consequence" node
   and alternative_field = child_with_field_opt "alternative" node in
   let children =
-    [ mk_child_res make_node kwd_if
+    [ mk_child_res make_kwd kwd_if
     ; mk_child_res print_parenthesized_expression condition_field
     ; mk_child_res print_statement consequence_field
     ; mk_child_opt print_else_clause alternative_field
@@ -438,7 +448,7 @@ and print_else_clause state node =
   let kwd_else = child_ranked 0 node
   and statement = child_ranked 1 node in
   let children =
-    [ mk_child_res make_node kwd_else; mk_child_res print_statement statement ]
+    [ mk_child_res make_kwd kwd_else; mk_child_res print_statement statement ]
   in
   make_tree state node children
 
@@ -449,7 +459,7 @@ and print_switch_statement state node =
   and value_field = child_with_field "value" node
   and body_field = child_with_field "body" node in
   let children =
-    [ mk_child_res make_node kwd_switch
+    [ mk_child_res make_kwd kwd_switch
     ; mk_child_res print_parenthesized_expression value_field
     ; mk_child_res print_switch_body body_field
     ]
@@ -482,7 +492,7 @@ and print_switch_case state node =
     | _ -> print_expression state node
   in
   let children =
-    mk_child_res make_node kwd_case
+    mk_child_res make_kwd kwd_case
     :: mk_child_res print_value value_field
     :: mk_children_list print_statement stmt_children
   in
@@ -492,7 +502,7 @@ and print_switch_default state node =
   let kwd_switch = child_ranked 0 node
   and statements = collect_named_children node in
   let children =
-    mk_child_res make_node kwd_switch :: mk_children_list print_statement statements
+    mk_child_res make_kwd kwd_switch :: mk_children_list print_statement statements
   in
   make_tree state node children
 
@@ -522,7 +532,7 @@ and print_for_statement state node =
     | _ -> print_expression state node
   in
   let children =
-    [ mk_child_res make_node kwd_for
+    [ mk_child_res make_kwd kwd_for
     ; mk_child_res print_initializer initializer_field
     ; mk_child_res print_condition condition_field
     ; mk_child_opt print_increment increment_field
@@ -543,8 +553,8 @@ and print_for_in_statement state node =
   and kind_field = child_with_field_opt "kind" node in
   let print_operator state node =
     match get_name node with
-    | "in" -> make_node state node
-    | "of" -> make_node state node
+    | "in" -> make_kwd state node
+    | "of" -> make_kwd state node
     | _ -> match_rest state node print_unexpected_node
   in
   let header_children =
@@ -565,16 +575,16 @@ and print_for_in_statement state node =
       (match get_name kind_field with
       | "var" ->
         let value_field = child_with_field_opt "value" node in
-        [ mk_child make_node kind_field
+        [ mk_child make_kwd kind_field
         ; mk_child_res print_left left_field
         ; mk_child_opt print_expression value_field
         ]
       | "let" | "const" ->
-        [ mk_child make_node kind_field; mk_child_res print_left left_field ]
+        [ mk_child make_kwd kind_field; mk_child_res print_left left_field ]
       | _ -> [ mk_child print_unexpected_node kind_field ])
   in
   let children =
-    (mk_child_res make_node kwd_for :: mk_child_opt make_node kwd_await :: header_children)
+    (mk_child_res make_kwd kwd_for :: mk_child_opt make_kwd kwd_await :: header_children)
     @ [ mk_child_res print_operator operator_field
       ; mk_child_res print_expressions right_field
       ; mk_child_res print_statement body_field
@@ -589,7 +599,7 @@ and print_while_statement state node =
   and condition_field = child_with_field "condition" node
   and body_field = child_with_field "body" node in
   let children =
-    [ mk_child_res make_node kwd_while
+    [ mk_child_res make_kwd kwd_while
     ; mk_child_res print_parenthesized_expression condition_field
     ; mk_child_res print_statement body_field
     ]
@@ -604,9 +614,9 @@ and print_do_statement state node =
   and kwd_while = child_ranked 2 node
   and condition_field = child_with_field "condition" node in
   let children =
-    [ mk_child_res make_node kwd_do
+    [ mk_child_res make_kwd kwd_do
     ; mk_child_res print_statement body_field
-    ; mk_child_res make_node kwd_while
+    ; mk_child_res make_kwd kwd_while
     ; mk_child_res print_parenthesized_expression condition_field
     ]
   in
@@ -620,7 +630,7 @@ and print_try_statement state node =
   and handler_field = child_with_field_opt "handler" node
   and finalizer_field = child_with_field_opt "finalizer" node in
   let children =
-    [ mk_child_res make_node kwd_try
+    [ mk_child_res make_kwd kwd_try
     ; mk_child_res print_statement_block body_field
     ; mk_child_opt print_catch_clause handler_field
     ; mk_child_opt print_finally_clause finalizer_field
@@ -632,7 +642,7 @@ and print_catch_clause state node =
   let kwd_catch = child_ranked 0 node
   and body_field = child_with_field "body" node in
   let children =
-    mk_child_res make_node kwd_catch
+    mk_child_res make_kwd kwd_catch
     ::
     (match child_with_field_opt "parameter" node with
     | Some parameter_field ->
@@ -654,7 +664,7 @@ and print_finally_clause state node =
   let kwd_finally = child_ranked 0 node
   and body_field = child_with_field "body" node in
   let children =
-    [ mk_child_res make_node kwd_finally; mk_child_res print_statement_block body_field ]
+    [ mk_child_res make_kwd kwd_finally; mk_child_res print_statement_block body_field ]
   in
   make_tree state node children
 
@@ -665,7 +675,7 @@ and print_with_statement state node =
   and object_field = child_with_field "object" node
   and body_field = child_with_field "body" node in
   let children =
-    [ mk_child_res make_node kwd_with
+    [ mk_child_res make_kwd kwd_with
     ; mk_child_res print_parenthesized_expression object_field
     ; mk_child_res print_statement body_field
     ]
@@ -678,7 +688,7 @@ and print_break_statement state node =
   let kwd_break = child_ranked 0 node
   and label_field = child_with_field_opt "label" node in
   let children =
-    [ mk_child_res make_node kwd_break; mk_child_opt print_identifier label_field ]
+    [ mk_child_res make_kwd kwd_break; mk_child_opt print_identifier label_field ]
   in
   make_tree state node children
 
@@ -688,7 +698,7 @@ and print_continue_statement state node =
   let kwd_continue = child_ranked 0 node
   and label_field = child_with_field_opt "label" node in
   let children =
-    [ mk_child_res make_node kwd_continue; mk_child_opt print_identifier label_field ]
+    [ mk_child_res make_kwd kwd_continue; mk_child_opt print_identifier label_field ]
   in
   make_tree state node children
 
@@ -702,7 +712,7 @@ and print_return_statement state node =
     | "sequence_expression" -> print_sequence_expression state node
     | _ -> print_expression state node
   in
-  let children = [ mk_child_res make_node kwd_return; mk_child_opt print expr ] in
+  let children = [ mk_child_res make_kwd kwd_return; mk_child_opt print expr ] in
   make_tree state node children
 
 (* Throw statement *)
@@ -711,13 +721,16 @@ and print_throw_statement state node =
   let kwd_throw = child_ranked 0 node
   and expr = child_ranked 1 node in
   let children =
-    [ mk_child_res make_node kwd_throw; mk_child_res print_expressions expr ]
+    [ mk_child_res make_kwd kwd_throw; mk_child_res print_expressions expr ]
   in
   make_tree state node children
 
 (* Empty statement *)
 
-and print_empty_statement state node = make_node state node
+and print_empty_statement state node =
+  let region = !get_region node
+  and label = string_of_ts_node_type node in
+  Tree.make ~region state label []
 
 (* Labeled statement *)
 
@@ -762,8 +775,8 @@ and print_function_declaration state node =
   (* "statement_block" *)
   and body_field = child_with_field "body" node in
   let children =
-    [ mk_child_opt make_node kwd_async
-    ; mk_child_res make_node kwd_function
+    [ mk_child_opt make_kwd kwd_async
+    ; mk_child_res make_kwd kwd_function
     ; mk_child_res print_identifier name_field
     ; mk_child_opt print_type_parameters type_parameters_field
     ; mk_child_res print_formal_parameters parameters_field
@@ -786,8 +799,8 @@ and print_generator_function_declaration state node =
   (* "statement_block" *)
   and body_field = child_with_field "body" node in
   let children =
-    [ mk_child_opt make_node kwd_async
-    ; mk_child_res make_node kwd_function
+    [ mk_child_opt make_kwd kwd_async
+    ; mk_child_res make_kwd kwd_function
     ; mk_child_res print_identifier name_field
     ; mk_child_opt print_type_parameters type_parameters_field
     ; mk_child_res print_formal_parameters parameters_field
@@ -808,7 +821,7 @@ and print_class_declaration state node =
   and body_field = child_with_field "body" node in
   let children =
     mk_children_list print_decorator decorators
-    @ [ mk_child_res make_node kwd_class
+    @ [ mk_child_res make_kwd kwd_class
       ; mk_child_res print_type_identifier name_field
       ; mk_child_opt print_type_parameters type_parameters_field
       ; mk_child_opt print_class_heritage heritage_child
@@ -824,8 +837,8 @@ and print_lexical_declaration state node =
   and var_decls = children_named "variable_declarator" node
   and print_set_or_const state node =
     match get_name node with
-    | "let" -> make_node state node
-    | "const" -> make_node state node
+    | "let" -> make_kwd state node
+    | "const" -> make_kwd state node
     | _ -> match_rest state node print_unexpected_node
   in
   let children =
@@ -855,7 +868,7 @@ and print_variable_declaration state node =
   let kwd_var = first_child_named "var" node
   and var_decls = children_named "variable_declarator" node in
   let children =
-    mk_child_res make_node kwd_var :: mk_children_list print_variable_declarator var_decls
+    mk_child_res make_kwd kwd_var :: mk_children_list print_variable_declarator var_decls
   in
   make_tree state node children
 
@@ -871,8 +884,8 @@ and print_function_signature state node =
   and return_type_field = child_with_field_opt "return_type" node in
   (* "statement_block" *)
   let children =
-    [ mk_child_opt make_node kwd_async
-    ; mk_child_res make_node kwd_function
+    [ mk_child_opt make_kwd kwd_async
+    ; mk_child_res make_kwd kwd_function
     ; mk_child_res print_identifier name_field
     ; mk_child_opt print_type_parameters type_parameters_field
     ; mk_child_res print_formal_parameters parameters_field
@@ -893,8 +906,8 @@ and print_abstract_class_declaration state node =
   and body_field = child_with_field "body" node in
   let children =
     mk_children_list print_decorator decorators
-    @ [ mk_child_res make_node kwd_abstract
-      ; mk_child_res make_node kwd_class
+    @ [ mk_child_res make_kwd kwd_abstract
+      ; mk_child_res make_kwd kwd_class
       ; mk_child_res print_type_identifier name_field
       ; mk_child_opt print_type_parameters type_parameters_field
       ; mk_child_opt print_class_heritage heritage_child
@@ -917,7 +930,7 @@ and print_module state node =
     | _ -> match_rest state node print_unexpected_node
   in
   let children =
-    [ mk_child_res make_node kwd_namespace
+    [ mk_child_res make_kwd kwd_namespace
     ; mk_child_res print_name name_field
     ; mk_child_opt print_statement_block body_field
     ]
@@ -931,12 +944,12 @@ and print_internal_module state node = print_module state node
 (* Type alias declaration *)
 
 and print_type_alias_declaration state node =
-  let type_kwd = child_ranked 0 node
+  let kwd_type = child_ranked 0 node
   and name_field = child_with_field "name" node
   and type_parameters_field = child_with_field_opt "type_parameters" node
   and value_field = child_with_field "value" node in
   let children =
-    [ mk_child_res make_node type_kwd
+    [ mk_child_res make_kwd kwd_type
     ; mk_child_res print_identifier name_field
     ; mk_child_opt print_type_parameters type_parameters_field
     ; mk_child_res print_type value_field
@@ -965,7 +978,7 @@ and print_constraint state node =
   let kwd_extends = child_ranked 0 node
   and type_child = child_ranked 1 node in
   let children =
-    [ mk_child_res make_node kwd_extends; mk_child_res print_type type_child ]
+    [ mk_child_res make_kwd kwd_extends; mk_child_res print_type type_child ]
   in
   make_tree state node children
 
@@ -979,8 +992,8 @@ and print_enum_declaration state node =
   and name_field = child_with_field "name" node
   and body_field = child_with_field "body" node in
   let children =
-    [ mk_child_opt make_node kwd_const
-    ; mk_child_res make_node kwd_enum
+    [ mk_child_opt make_kwd kwd_const
+    ; mk_child_res make_kwd kwd_enum
     ; mk_child_res print_identifier name_field
     ; mk_child_res print_enum_body body_field
     ]
@@ -1014,7 +1027,7 @@ and print_interface_declaration state node =
   and body_field = child_with_field "body" node in
   let extends_type_clause = first_child_named_opt "extends_type_clause" node in
   let children =
-    [ mk_child_res make_node kwd_interface
+    [ mk_child_res make_kwd kwd_interface
     ; mk_child_res print_type_identifier name_field
     ; mk_child_opt print_type_parameters type_parameters_field
     ; mk_child_opt print_extends_type_clause extends_type_clause
@@ -1035,7 +1048,7 @@ and print_extends_type_clause state node =
     | _ -> match_rest state node print_unexpected_node
   in
   let children =
-    mk_child_res make_node kwd_extends
+    mk_child_res make_kwd kwd_extends
     :: mk_children_list print (collect_named_children node)
   in
   make_tree state node children
@@ -1053,7 +1066,7 @@ and print_import_alias state node =
     | _ -> match_rest state node print_unexpected_node
   in
   let children =
-    [ mk_child_res make_node kwd_import
+    [ mk_child_res make_kwd kwd_import
     ; mk_child_res print_identifier lhs
     ; mk_child_res print_rhs rhs
     ]
@@ -1066,16 +1079,16 @@ and print_ambient_declaration state node =
   let kwd_declare = child_ranked 0 node
   and fst_child = named_child_ranked 0 node in
   let children =
-    mk_child_res make_node kwd_declare
+    mk_child_res make_kwd kwd_declare
     ::
     (match get_name_res fst_child with
     | "statement_block" ->
       let kwd_global = child_ranked 1 node in
-      [ mk_child_res make_node kwd_global; mk_child_res print_statement_block fst_child ]
+      [ mk_child_res make_kwd kwd_global; mk_child_res print_statement_block fst_child ]
     | "property_identifier" ->
       let kwd_module = child_ranked 1 node
       and type_child = child_ranked 5 node in
-      [ mk_child_res make_node kwd_module
+      [ mk_child_res make_kwd kwd_module
       ; mk_child_res print_identifier fst_child
       ; mk_child_res print_type type_child
       ]
@@ -1097,16 +1110,16 @@ and print_expression state node =
   | "member_expression" -> print_member_expression state node
   | "parenthesized_expression" -> print_parenthesized_expression state node
   | "identifier" -> print_identifier state node
-  | "undefined" -> print_undefined state node
-  | "this" -> print_this state node
-  | "super" -> print_super state node
+  | "undefined" -> make_kwd state node
+  | "this" -> make_kwd state node
+  | "super" -> make_kwd state node
   | "number" -> print_number state node
   | "string" -> print_string state node
   | "template_string" -> print_template_string state node
   | "regex" -> print_regex state node
-  | "true" -> print_true state node
-  | "false" -> print_false state node
-  | "null" -> print_null state node
+  | "true" -> make_kwd state node
+  | "false" -> make_kwd state node
+  | "null" -> make_kwd state node
   | "object" -> print_object state node
   | "array" -> print_array state node
   | "function_expression" -> print_function_expression state node
@@ -1173,21 +1186,21 @@ and print_augmented_assignment_expression state node =
     | _ -> match_rest state node print_unexpected_node
   and print_assignment state node =
     match get_name node with
-    | "+=" -> make_node state node
-    | "-=" -> make_node state node
-    | "*=" -> make_node state node
-    | "/=" -> make_node state node
-    | "%=" -> make_node state node
-    | "^=" -> make_node state node
-    | "&=" -> make_node state node
-    | "|=" -> make_node state node
-    | ">>=" -> make_node state node
-    | ">>>=" -> make_node state node
-    | "<<=" -> make_node state node
-    | "**=" -> make_node state node
-    | "&&=" -> make_node state node
-    | "||=" -> make_node state node
-    | "??=" -> make_node state node
+    | "+=" -> make_sym state node
+    | "-=" -> make_sym state node
+    | "*=" -> make_sym state node
+    | "/=" -> make_sym state node
+    | "%=" -> make_sym state node
+    | "^=" -> make_sym state node
+    | "&=" -> make_sym state node
+    | "|=" -> make_sym state node
+    | ">>=" -> make_sym state node
+    | ">>>=" -> make_sym state node
+    | "<<=" -> make_sym state node
+    | "**=" -> make_sym state node
+    | "&&=" -> make_sym state node
+    | "||=" -> make_sym state node
+    | "??=" -> make_sym state node
     | _ -> match_rest state node print_unexpected_node
   in
   let children =
@@ -1204,7 +1217,7 @@ and print_await_expression state node =
   let kwd_await = child_ranked 0 node
   and expression = child_ranked 1 node in
   let children =
-    [ mk_child_res make_node kwd_await; mk_child_res print_expression expression ]
+    [ mk_child_res make_kwd kwd_await; mk_child_res print_expression expression ]
   in
   make_tree state node children
 
@@ -1220,31 +1233,31 @@ and print_binary_expression state node =
     | _ -> match_rest state node print_expression
   and print_bin_operator state node =
     match get_name node with
-    | "&&" -> make_node state node
-    | "||" -> make_node state node
-    | ">>" -> make_node state node
-    | ">>>" -> make_node state node
-    | "<<" -> make_node state node
-    | "&" -> make_node state node
-    | "^" -> make_node state node
-    | "|" -> make_node state node
-    | "+" -> make_node state node
-    | "-" -> make_node state node
-    | "*" -> make_node state node
-    | "/" -> make_node state node
-    | "%" -> make_node state node
-    | "**" -> make_node state node
-    | "<" -> make_node state node
-    | "<=" -> make_node state node
-    | "==" -> make_node state node
-    | "===" -> make_node state node
-    | "!=" -> make_node state node
-    | "!==" -> make_node state node
-    | ">=" -> make_node state node
-    | ">" -> make_node state node
-    | "??" -> make_node state node
-    | "instanceof" -> make_node state node
-    | "in" -> make_node state node
+    | "&&" -> make_sym state node
+    | "||" -> make_sym state node
+    | ">>" -> make_sym state node
+    | ">>>" -> make_sym state node
+    | "<<" -> make_sym state node
+    | "&" -> make_sym state node
+    | "^" -> make_sym state node
+    | "|" -> make_sym state node
+    | "+" -> make_sym state node
+    | "-" -> make_sym state node
+    | "*" -> make_sym state node
+    | "/" -> make_sym state node
+    | "%" -> make_sym state node
+    | "**" -> make_sym state node
+    | "<" -> make_sym state node
+    | "<=" -> make_sym state node
+    | "==" -> make_sym state node
+    | "===" -> make_sym state node
+    | "!=" -> make_sym state node
+    | "!==" -> make_sym state node
+    | ">=" -> make_sym state node
+    | ">" -> make_sym state node
+    | "??" -> make_sym state node
+    | "instanceof" -> make_sym state node
+    | "in" -> make_sym state node
     | _ -> match_rest state node print_unexpected_node
   in
   let children =
@@ -1277,16 +1290,16 @@ and print_update_expression state node =
   let children =
     match get_name_res first_child with
     | "++" ->
-      [ mk_child_res make_node first_child; mk_child_res print_expression argument_field ]
+      [ mk_child_res make_sym first_child; mk_child_res print_expression argument_field ]
     | "--" ->
-      [ mk_child_res make_node first_child; mk_child_res print_expression argument_field ]
+      [ mk_child_res make_sym first_child; mk_child_res print_expression argument_field ]
     | _ ->
       let snd_child = child_ranked 1 node in
       (match get_name_res snd_child with
       | "++" ->
-        [ mk_child_res print_expression argument_field; mk_child_res make_node snd_child ]
+        [ mk_child_res print_expression argument_field; mk_child_res make_sym snd_child ]
       | "--" ->
-        [ mk_child_res print_expression argument_field; mk_child_res make_node snd_child ]
+        [ mk_child_res print_expression argument_field; mk_child_res make_sym snd_child ]
       | _ -> [] (* Should not happen. *))
   in
   make_tree state node children
@@ -1304,7 +1317,7 @@ and print_new_expression state node =
   and type_arguments_field = child_with_field_opt "type_arguments" node
   and arguments_field = child_with_field_opt "arguments" node in
   let children =
-    [ mk_child_res make_node kwd_new
+    [ mk_child_res make_kwd kwd_new
     ; mk_child_res print_expression constructor_field
     ; mk_child_opt print_type_arguments type_arguments_field
     ; mk_child_opt print_arguments arguments_field
@@ -1317,7 +1330,7 @@ and print_new_expression state node =
 and print_yield_expression state node =
   let kwd_yield = child_ranked 0 node in
   match child_ranked_opt 1 node with
-  | None -> make_unary_res state node make_node kwd_yield
+  | None -> make_unary_res state node make_kwd kwd_yield
   | Some snd_child ->
     let snd_child =
       match get_name snd_child with
@@ -1325,7 +1338,7 @@ and print_yield_expression state node =
       | _ -> Result.Ok snd_child
     in
     let children =
-      [ mk_child_res make_node kwd_yield; mk_child_res print_expression snd_child ]
+      [ mk_child_res make_kwd kwd_yield; mk_child_res print_expression snd_child ]
     in
     make_tree state node children
 
@@ -1337,12 +1350,12 @@ and print_as_expression state node =
   and as_what = child_ranked 2 node
   and print_as state node =
     match get_name node with
-    | "const" -> make_node state node
+    | "const" -> make_kwd state node
     | _ -> match_rest state node print_type
   in
   let children =
     [ mk_child_res print_expression expression
-    ; mk_child_res make_node kwd_as
+    ; mk_child_res make_kwd kwd_as
     ; mk_child_res print_as as_what
     ]
   in
@@ -1356,7 +1369,7 @@ and print_satisfies_expression state node =
   and type_child = child_ranked 2 node in
   let children =
     [ mk_child_res print_expression expression
-    ; mk_child_res make_node kwd_satisfies
+    ; mk_child_res make_kwd kwd_satisfies
     ; mk_child_res print_type type_child
     ]
   in
@@ -1417,13 +1430,13 @@ and print_member_expression state node =
   and property_field = child_with_field "property" node
   and print_object state node =
     match get_name node with
-    | "import" -> print_import state node
+    | "import" -> make_kwd state node
     | _ -> match_rest state node print_expression
   and print_selector state = function
     | None -> () (* "." *)
     | Some node ->
       (* "?." *)
-      make_node state node
+      make_sym state node
   in
   let children =
     [ mk_child_res print_object object_field
@@ -1444,17 +1457,12 @@ and print_parenthesized_expression state node =
   in
   make_unary_res state node print child
 
-and print_import state node = make_node state node
+(* Some literals *)
+
 and print_identifier state node = make_node state node
-and print_undefined state node = make_node state node
-and print_this state node = make_node state node
-and print_super state node = make_node state node
 and print_number state node = make_node state node
 and print_string state node = make_node state node
 and print_regex state node = make_node state node
-and print_true state node = make_node state node
-and print_false state node = make_node state node
-and print_null state node = make_node state node
 
 (* Template strings *)
 
@@ -1520,8 +1528,8 @@ and print_function_expression state node =
   (* "statement_block" *)
   and body_field = child_with_field "body" node in
   let children =
-    [ mk_child_opt make_node kwd_async
-    ; mk_child_res make_node kwd_function
+    [ mk_child_opt make_kwd kwd_async
+    ; mk_child_res make_kwd kwd_function
     ; mk_child_opt print_identifier name_field
     ; mk_child_opt print_type_parameters type_parameters_field
     ; mk_child_res print_formal_parameters parameters_field
@@ -1540,7 +1548,7 @@ and print_arrow_function state node =
   let children =
     match parameter_field with
     | Some parameter_field ->
-      [ mk_child_opt make_node kwd_async
+      [ mk_child_opt make_kwd kwd_async
       ; mk_child print_identifier parameter_field
       ; mk_child_res print_arrow_function_body body_field
       ]
@@ -1549,7 +1557,7 @@ and print_arrow_function state node =
       let type_parameters_field = child_with_field_opt "type_parameters" node
       and parameters_field = child_with_field "parameters" node
       and return_type_field = child_with_field_opt "return_type" node in
-      [ mk_child_opt make_node kwd_async
+      [ mk_child_opt make_kwd kwd_async
       ; mk_child_opt print_type_parameters type_parameters_field
       ; mk_child_res print_formal_parameters parameters_field
       ; mk_child_opt print_return_type return_type_field
@@ -1576,8 +1584,8 @@ and print_generator_function state node =
   (* "statement_block" *)
   and body_field = child_with_field "body" node in
   let children =
-    [ mk_child_opt make_node kwd_async
-    ; mk_child_res make_node kwd_function
+    [ mk_child_opt make_kwd kwd_async
+    ; mk_child_res make_kwd kwd_function
     ; mk_child_opt print_identifier name_field
     ; mk_child_opt print_type_parameters type_parameters_field
     ; mk_child_res print_formal_parameters parameters_field
@@ -1598,7 +1606,7 @@ and print_class state node =
   and body_field = child_with_field "body" node in
   let children =
     mk_children_list print_decorator decorators
-    @ [ mk_child_res make_node kwd_class
+    @ [ mk_child_res make_kwd kwd_class
       ; mk_child_opt print_type_identifier name_field
       ; mk_child_opt print_type_parameters type_parameters_field
       ; mk_child_opt print_class_heritage heritage_child
@@ -1626,7 +1634,7 @@ and print_implements_clause state node =
   let kwd_implements = child_ranked 0 node
   and named_children = collect_named_children node in
   let children =
-    mk_child_res make_node kwd_implements :: mk_children_list print_type named_children
+    mk_child_res make_kwd kwd_implements :: mk_children_list print_type named_children
   in
   make_tree state node children
 
@@ -1656,7 +1664,7 @@ and print_extends_clause state node =
       value_child :: mk_child print_type_arguments type_arguments :: acc
   in
   let children =
-    mk_child_res make_node kwd_extends :: List.fold_right ~f:mk_children pairs ~init:[]
+    mk_child_res make_kwd kwd_extends :: List.fold_right ~f:mk_children pairs ~init:[]
   in
   make_tree state node children
 
@@ -1683,9 +1691,9 @@ and print_method_definition state node =
   and override_modifier = first_child_named_opt "override_modifier" node
   and kwd_readonly = first_child_named_opt "readonly" node
   and kwd_async = first_child_named_opt "async" node
-  and set = first_child_named_opt "set" node
-  and get = first_child_named_opt "get" node
-  and star = first_child_named_opt "*" node
+  and kwd_set = first_child_named_opt "set" node
+  and kwd_get = first_child_named_opt "get" node
+  and sym_star = first_child_named_opt "*" node
   and name_field = child_with_field "name" node
   and qmark = first_child_named_opt "?" node
   (* "_call_signature" inlined: *)
@@ -1696,13 +1704,13 @@ and print_method_definition state node =
   and body_field = child_with_field "body" node in
   let children =
     [ mk_child_opt print_accessibility_modifier accessibility_modifier
-    ; mk_child_opt make_node kwd_static
+    ; mk_child_opt make_kwd kwd_static
     ; mk_child_opt print_override_modifier override_modifier
-    ; mk_child_opt make_node kwd_readonly
-    ; mk_child_opt make_node kwd_async
-    ; mk_child_opt make_node set
-    ; mk_child_opt make_node get
-    ; mk_child_opt make_node star
+    ; mk_child_opt make_kwd kwd_readonly
+    ; mk_child_opt make_kwd kwd_async
+    ; mk_child_opt make_kwd kwd_set
+    ; mk_child_opt make_kwd kwd_get
+    ; mk_child_opt make_sym sym_star
     ; mk_child_res print_property_name name_field
     ; mk_child_opt make_node qmark
     ; mk_child_opt print_type_parameters type_parameters_field
@@ -1723,7 +1731,7 @@ and print_class_static_block state node =
   let kwd_static = child_ranked 0 node
   and body_field = child_with_field "body" node in
   let children =
-    [ mk_child_res make_node kwd_static; mk_child_res print_statement_block body_field ]
+    [ mk_child_res make_kwd kwd_static; mk_child_res print_statement_block body_field ]
   in
   make_tree state node children
 
@@ -1731,24 +1739,24 @@ and print_abstract_method_signature state node =
   let accessibility_modifier = first_child_named_opt "accessibility_modifier" node
   and kwd_abstract = first_child_named_opt "abstract" node
   and override_modifier = first_child_named_opt "override_modifier" node
-  and set = first_child_named_opt "set" node
-  and get = first_child_named_opt "get" node
-  and star = first_child_named_opt "*" node
+  and kwd_set = first_child_named_opt "set" node
+  and kwd_get = first_child_named_opt "get" node
+  and sym_star = first_child_named_opt "*" node
   and name_field = child_with_field "name" node
-  and qmark = first_child_named_opt "?" node
+  and sym_qmark = first_child_named_opt "?" node
   (* "_call_signature" inlined: *)
   and type_parameters_field = child_with_field_opt "type_parameters" node
   and parameters_field = child_with_field "parameters" node
   and return_type_field = child_with_field_opt "return_type" node in
   let children =
     [ mk_child_opt print_accessibility_modifier accessibility_modifier
-    ; mk_child_opt make_node kwd_abstract
+    ; mk_child_opt make_kwd kwd_abstract
     ; mk_child_opt print_override_modifier override_modifier
-    ; mk_child_opt make_node set
-    ; mk_child_opt make_node get
-    ; mk_child_opt make_node star
+    ; mk_child_opt make_kwd kwd_set
+    ; mk_child_opt make_kwd kwd_get
+    ; mk_child_opt make_node sym_star
     ; mk_child_res print_property_name name_field
-    ; mk_child_opt make_node qmark
+    ; mk_child_opt make_sym sym_qmark
     ; mk_child_opt print_type_parameters type_parameters_field
     ; mk_child_res print_formal_parameters parameters_field
     ; mk_child_opt print_return_type return_type_field
@@ -1769,20 +1777,20 @@ and print_public_field_definition state node =
   and type_field = child_with_field_opt "type" node
   (* "_initializer" inlined: *)
   and value_field = child_with_field_opt "value" node
-  and qmark = first_child_named_opt "?" node
-  and emark = first_child_named_opt "!" node in
+  and sym_qmark = first_child_named_opt "?" node
+  and sym_emark = first_child_named_opt "!" node in
   let children =
     mk_children_list print_decorator decorators
-    @ [ mk_child_opt make_node kwd_declare
+    @ [ mk_child_opt make_kwd kwd_declare
       ; mk_child_opt print_accessibility_modifier accessibility_modifier
       ; mk_child_opt print_override_modifier override_modifier
-      ; mk_child_opt make_node kwd_static
-      ; mk_child_opt make_node kwd_readonly
-      ; mk_child_opt make_node kwd_accessor
-      ; mk_child_opt make_node kwd_abstract
+      ; mk_child_opt make_kwd kwd_static
+      ; mk_child_opt make_kwd kwd_readonly
+      ; mk_child_opt make_kwd kwd_accessor
+      ; mk_child_opt make_kwd kwd_abstract
       ; mk_child_res print_property_name name_field
-      ; mk_child_opt make_node qmark
-      ; mk_child_opt make_node emark
+      ; mk_child_opt make_sym sym_qmark
+      ; mk_child_opt make_sym sym_emark
       ; mk_child_opt print_type_annotation type_field
       ; mk_child_opt print_expression value_field
       ]
@@ -1794,7 +1802,7 @@ and print_public_field_definition state node =
 and print_meta_property state node =
   let fst_child = child_ranked 0 node
   and snd_child = child_ranked 2 node in
-  let children = [ mk_child_res make_node fst_child; mk_child_res make_node snd_child ] in
+  let children = [ mk_child_res make_kwd fst_child; mk_child_res make_kwd snd_child ] in
   make_tree state node children
 
 (* Call expression *)
@@ -1805,7 +1813,7 @@ and print_call_expression state node =
   and arguments_field = child_with_field "arguments" node
   and print_function state node =
     match get_name node with
-    | "import" -> print_import state node
+    | "import" -> make_kwd state node
     | _ -> match_rest state node print_expression
   and print_arguments state node =
     match get_name node with
@@ -1869,7 +1877,7 @@ and print_primary_type state node =
   | "flow_maybe_type" -> print_flow_maybe_type state node
   | "type_query" -> print_type_query state node
   | "index_type_query" -> print_index_type_query state node
-  | "this_type" -> print_this state node
+  | "this_type" -> make_kwd state node
   | "existential_type" -> print_existential_type state node
   | "literal_type" -> print_literal_type state node
   | "lookup_type" -> print_lookup_type state node
@@ -1916,16 +1924,16 @@ and print_predefined_type state node =
     *)
     let print state node =
       match get_name node with
-      | "any" -> make_node state node
-      | "number" -> make_node state node
-      | "boolean" -> make_node state node
-      | "string" -> make_node state node
-      | "symbol" -> make_node state node
-      | "unique symbol" -> make_node state node
-      | "void" -> make_node state node
-      | "unknown" -> make_node state node
-      | "never" -> make_node state node
-      | "object" -> make_node state node
+      | "any" -> make_kwd state node
+      | "number" -> make_kwd state node
+      | "boolean" -> make_kwd state node
+      | "string" -> make_kwd state node
+      | "symbol" -> make_kwd state node
+      | "unique symbol" -> make_kwd state node
+      | "void" -> make_kwd state node
+      | "unknown" -> make_kwd state node
+      | "never" -> make_kwd state node
+      | "object" -> make_kwd state node
       | _ -> match_rest state node print_unexpected_node
     in
     make_unary state node print child
@@ -2009,15 +2017,15 @@ and print_property_signature state node =
   and override_modifier = first_child_named_opt "override_modifier" node
   and kwd_readonly = first_child_named_opt "readonly" node
   and name_field = child_with_field "name" node
-  and qmark = first_child_named_opt "?" node
+  and sym_qmark = first_child_named_opt "?" node
   and type_field = child_with_field_opt "type" node in
   let children =
     [ mk_child_opt print_accessibility_modifier accessibility_modifier
-    ; mk_child_opt make_node kwd_static
+    ; mk_child_opt make_kwd kwd_static
     ; mk_child_opt print_override_modifier override_modifier
-    ; mk_child_opt make_node kwd_readonly
+    ; mk_child_opt make_kwd kwd_readonly
     ; mk_child_res print_identifier name_field
-    ; mk_child_opt make_node qmark
+    ; mk_child_opt make_sym sym_qmark
     ; mk_child_opt print_type_annotation type_field
     ]
   in
@@ -2050,10 +2058,10 @@ and print_asserts state node =
     match get_name node with
     | "type_predicate" -> print_type_predicate state node
     | "identifier" -> print_identifier state node
-    | "this" -> print_this state node
+    | "this" -> make_kwd state node
     | _ -> match_rest state node print_unexpected_node
   in
-  let children = [ mk_child_res make_node kwd_asserts; mk_child_res print child ] in
+  let children = [ mk_child_res make_kwd kwd_asserts; mk_child_res print child ] in
   make_tree state node children
 
 (* Type predicate annotation *)
@@ -2071,8 +2079,8 @@ and print_construct_signature state node =
   and parameters_field = child_with_field "parameters" node
   and type_field = child_with_field_opt "type" node in
   let children =
-    [ mk_child_opt make_node kwd_abstract
-    ; mk_child_res make_node kwd_new
+    [ mk_child_opt make_kwd kwd_abstract
+    ; mk_child_res make_kwd kwd_new
     ; mk_child_opt print_type_parameters type_parameters_field
     ; mk_child_res print_formal_parameters parameters_field
     ; mk_child_opt print_type_annotation type_field
@@ -2096,7 +2104,7 @@ and print_index_signature state node =
     | _ -> match_rest state node print_unexpected_node
   in
   let prefix =
-    [ mk_child_opt print_plus_minus sign_field; mk_child_opt make_node kwd_readonly ]
+    [ mk_child_opt print_plus_minus sign_field; mk_child_opt make_kwd kwd_readonly ]
   in
   let children =
     match name_field with
@@ -2118,8 +2126,8 @@ and print_index_signature state node =
 
 and print_plus_minus state node =
   match get_name node with
-  | "+" -> make_node state node
-  | "-" -> make_node state node
+  | "+" -> make_sym state node
+  | "-" -> make_sym state node
   | _ -> match_rest state node print_unexpected_node
 
 and print_mapped_type_clause state node =
@@ -2163,26 +2171,26 @@ and print_method_signature state node =
   and override_modifier = first_child_named_opt "override_modifier" node
   and kwd_readonly = first_child_named_opt "readonly" node
   and kwd_async = first_child_named_opt "async" node
-  and set = first_child_named_opt "set" node
-  and get = first_child_named_opt "get" node
-  and star = first_child_named_opt "*" node
+  and kwd_set = first_child_named_opt "set" node
+  and kwd_get = first_child_named_opt "get" node
+  and sym_star = first_child_named_opt "*" node
   and name_field = child_with_field "name" node
-  and qmark = first_child_named_opt "?" node
+  and sym_qmark = first_child_named_opt "?" node
   (* "_call_signature" inlined: *)
   and type_parameters_field = child_with_field_opt "type_parameters" node
   and parameters_field = child_with_field "parameters" node
   and return_type_field = child_with_field_opt "return_type" node in
   let children =
     [ mk_child_opt print_accessibility_modifier accessibility_modifier
-    ; mk_child_opt make_node kwd_static
+    ; mk_child_opt make_kwd kwd_static
     ; mk_child_opt print_override_modifier override_modifier
-    ; mk_child_opt make_node kwd_readonly
-    ; mk_child_opt make_node kwd_async
-    ; mk_child_opt make_node set
-    ; mk_child_opt make_node get
-    ; mk_child_opt make_node star
+    ; mk_child_opt make_kwd kwd_readonly
+    ; mk_child_opt make_kwd kwd_async
+    ; mk_child_opt make_kwd kwd_set
+    ; mk_child_opt make_kwd kwd_get
+    ; mk_child_opt make_sym sym_star
     ; mk_child_res print_property_name name_field
-    ; mk_child_opt make_node qmark
+    ; mk_child_opt make_sym sym_qmark
     ; mk_child_opt print_type_parameters type_parameters_field
     ; mk_child_res print_formal_parameters parameters_field
     ; mk_child_opt print_return_type return_type_field
@@ -2254,7 +2262,7 @@ and print_lhs_expression state node =
   | "member_expression" -> print_member_expression state node
   | "subscript_expression" -> print_subscript_expression state node
   | "identifier" -> print_identifier state node
-  | "undefined" -> print_undefined state node
+  | "undefined" -> make_kwd state node
   | "object_pattern" -> print_object_pattern state node
   | "array_pattern" -> print_array_pattern state node
   | "non_null_expression" -> print_non_null_expression state node
@@ -2280,10 +2288,10 @@ and print_type_query state node =
     | "call_expression" -> print_type_query_call_expression state node
     | "instantiation_expression" -> print_type_query_instantiation_expression state node
     | "identifier" -> print_identifier state node
-    | "this" -> print_this state node
+    | "this" -> make_kwd state node
     | _ -> match_rest state node print_unexpected_node
   in
-  let children = [ mk_child_res make_node kwd_typeof; mk_child_res print child ] in
+  let children = [ mk_child_res make_kwd kwd_typeof; mk_child_res print child ] in
   make_tree state node children
 
 and print_type_query_subscript_expression state node =
@@ -2316,7 +2324,7 @@ and print_type_query_member_expression state node =
 and print_object_field state node =
   match get_name node with
   | "identifier" -> print_identifier state node
-  | "this" -> print_this state node
+  | "this" -> make_kwd state node
   | "member_expression" -> print_type_query_member_expression state node
   | "subscript_expression" -> print_type_query_subscript_expression state node
   | "call_expression" -> print_type_query_call_expression state node
@@ -2340,7 +2348,7 @@ and print_type_query_instantiation_expression state node =
 
 and print_function_field state node =
   match get_name node with
-  | "import" -> print_import state node
+  | "import" -> make_kwd state node
   | "identifier" -> print_identifier state node
   | "member_expression" -> print_type_query_member_expression state node
   | "subscript_expression" -> print_type_query_subscript_expression state node
@@ -2373,10 +2381,10 @@ and print_literal_type state node =
     | "unary_expression" -> print_unary_expression state node
     | "number" -> print_number state node
     | "string" -> print_string state node
-    | "true" -> print_true state node
-    | "false" -> print_false state node
-    | "null" -> print_null state node
-    | "undefined" -> print_undefined state node
+    | "true" -> make_kwd state node
+    | "false" -> make_kwd state node
+    | "null" -> make_kwd state node
+    | "undefined" -> make_kwd state node
     | _ -> match_rest state node print_unexpected_node
   in
   make_unary_res state node print child
@@ -2388,13 +2396,13 @@ and print_unary_expression state node =
   and argument_field = child_with_field "argument" node
   and print_unary_operator state node =
     match get_name node with
-    | "!" -> make_node state node
-    | "~" -> make_node state node
-    | "-" -> make_node state node
-    | "+" -> make_node state node
-    | "typeof" -> make_node state node
-    | "void" -> make_node state node
-    | "delete" -> make_node state node
+    | "!" -> make_sym state node
+    | "~" -> make_sym state node
+    | "-" -> make_sym state node
+    | "+" -> make_sym state node
+    | "typeof" -> make_kwd state node
+    | "void" -> make_kwd state node
+    | "delete" -> make_kwd state node
     | _ -> match_rest state node print_unexpected_node
   in
   let children =
@@ -2429,7 +2437,7 @@ and print_conditional_type state node =
   and alternative_field = child_with_field "alternative" node in
   let children =
     [ mk_child_res print_type left_field
-    ; mk_child_res make_node kwd_extends
+    ; mk_child_res make_kwd kwd_extends
     ; mk_child_res print_type right_field
     ; mk_child_res print_type consequence_field
     ; mk_child_res print_type alternative_field
@@ -2476,12 +2484,12 @@ and print_type_predicate state node =
   let print_name_field state node =
     match get_name node with
     | "identifier" -> print_identifier state node
-    | "this" -> print_this state node
+    | "this" -> make_kwd state node
     | _ -> match_rest state node print_predefined_type
   in
   let children =
     [ mk_child_res print_name_field name_field
-    ; mk_child_res make_node kwd_is
+    ; mk_child_res make_kwd kwd_is
     ; mk_child_res print_type type_field
     ]
   in
@@ -2493,7 +2501,7 @@ and print_readonly_type state node =
   let kwd_readonly = child_ranked 0 node
   and type_child = child_ranked 1 node in
   let children =
-    [ mk_child_res make_node kwd_readonly; mk_child_res print_type type_child ]
+    [ mk_child_res make_kwd kwd_readonly; mk_child_res print_type type_child ]
   in
   make_tree state node children
 
@@ -2506,8 +2514,8 @@ and print_constructor_type state node =
   and parameters_field = child_with_field "parameters" node
   and type_field = child_with_field "type" node in
   let children =
-    [ mk_child_opt make_node kwd_abstract
-    ; mk_child_res make_node kwd_new
+    [ mk_child_opt make_kwd kwd_abstract
+    ; mk_child_res make_kwd kwd_new
     ; mk_child_opt print_type_parameters type_parameters_field
     ; mk_child_res print_formal_parameters parameters_field
     ; mk_child_res print_type type_field
@@ -2539,14 +2547,14 @@ and print_required_parameter state node =
   and value_field = child_with_field_opt "value" node
   and print_pattern_field state node =
     match get_name node with
-    | "this" -> print_this state node
+    | "this" -> make_kwd state node
     | _ -> print_pattern state node
   in
   let children =
     mk_children_list print_decorator decorators
     @ [ mk_child_opt print_accessibility_modifier accessibility_modifier
       ; mk_child_opt print_override_modifier override_modifier
-      ; mk_child_opt make_node kwd_readonly
+      ; mk_child_opt make_kwd kwd_readonly
       ; mk_child_res print_pattern_field pattern_field
       ; mk_child_opt print_type_annotation type_field
       ; mk_child_opt print_expression value_field
@@ -2574,22 +2582,18 @@ and print_accessibility_modifier state node =
   let child = child_ranked 0 node
   and print state node =
     match get_name node with
-    | "public" -> print_public state node
-    | "private" -> print_private state node
-    | "protected" -> print_protected state node
+    | "public" -> make_kwd state node
+    | "private" -> make_kwd state node
+    | "protected" -> make_kwd state node
     | _ -> match_rest state node print_unexpected_node
   in
   make_unary_res state node print child
-
-and print_public state node = make_node state node
-and print_private state node = make_node state node
-and print_protected state node = make_node state node
 
 (* Override modifier *)
 
 and print_override_modifier state node =
   let child = child_ranked 0 node in
-  make_unary_res state node make_node child
+  make_unary_res state node make_kwd child
 
 (* Infer type *)
 
@@ -2599,9 +2603,9 @@ and print_infer_type state node =
   and kwd_extends = child_ranked_opt 2 node
   and type_child = child_ranked_opt 3 node in
   let children =
-    [ mk_child_res make_node kwd_infer
+    [ mk_child_res make_kwd kwd_infer
     ; mk_child_res print_identifier type_identifier_child
-    ; mk_child_opt make_node kwd_extends
+    ; mk_child_opt make_kwd kwd_extends
     ; mk_child_opt print_type type_child
     ]
   in
