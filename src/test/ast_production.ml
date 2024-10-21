@@ -68,6 +68,7 @@ let type_file_ ~raise f test syntax () =
   let (_ : Ast_typed.program) = Test_helpers.type_file ~raise f options in
   ()
 
+
 let type_file_v2 ~raise f test syntax () =
   let options =
     let options = Test_helpers.options in
@@ -76,6 +77,7 @@ let type_file_v2 ~raise f test syntax () =
   in
   let (_ : Ast_typed.program) = Test_helpers.type_file_v2 ~raise f options in
   ()
+
 
 let agg_file_ ~raise f test syntax () =
   let options =
@@ -122,9 +124,11 @@ let type_file f =
   let f = "./contracts/" ^ f in
   test_case f (type_file_ f false None)
 
+
 let type_file_v2 f =
   let f = "./contracts/" ^ f in
   test_case f (type_file_v2 f false None)
+
 
 let type_tfile f =
   let f = "./contracts/" ^ f in
@@ -205,6 +209,7 @@ let core_prod =
     ; comp_file "polymorphism/annotate.mligo"
     ; comp_file "deep_pattern_matching/list_pattern.mligo"
     ; comp_file "import_decls.jsligo"
+    ; comp_file "import_decls.mligo"
     ; comp_file_assert
         "core_abstraction/fun_type_var.mligo"
         "\n\
@@ -224,6 +229,17 @@ let core_prod =
           ; "./Test7"
           ; "./Test8"
           ]
+    ; comp_file_generic_assert
+        "import_decls.mligo"
+        ~transform:(fun ast ->
+          let syntax = Syntax_types.CameLIGO in
+          let raw_options = Compiler_options.Raw_options.make () in
+          let options = Compiler_options.make ~raw_options ~syntax () in
+          let lib = Build.Stdlib.get ~options in
+          let std_lib = Build.Stdlib.select_lib_core syntax lib in
+          Ast_core.Ligo_dep_cameligo.dependencies ~std_lib ast)
+        ~equal:(fun got expected -> List.equal String.equal got expected)
+        ~expected:[ "E1"; "E2"; "E3"; "E4"; "E5"; "E6"; "E7"; "E8"; "E9" ]
     ]
 
 
