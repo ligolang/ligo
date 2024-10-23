@@ -102,7 +102,7 @@ let parse_typescript_string (source_code : string) : ts_tree_ptr =
   TS_fun.ts_parser_delete parser;
   parse_tree
 
-(* Collating named/all children of a given node (we discard comment nodes) *)
+(* Collating named/all children of a given node *)
 
 let collect select_child arity node =
   if TS_fun.ts_node_is_null node
@@ -114,9 +114,7 @@ let collect select_child arity node =
       else (
         let index = UInt32.pred n in
         let child = select_child node index in
-        match string_of_ts_node_type child with
-        | "comment" -> fold acc index
-        | _ -> fold (child :: acc) index)
+        fold (child :: acc) index)
     in
     fold [] (arity node))
 

@@ -48,6 +48,21 @@ let tree_of_named_children state node printer =
   let children = collect_named_children node in
   tree_of_list state node printer children
 
+let tree_of_list' prev_comments state node printer raw_children =
+  let region = !get_region node
+  and label = string_of_ts_node_type node
+  and f (comments, nodes) raw_child =
+    match get_name raw_child with
+    | "comment" -> raw_child :: comments, nodes
+    | _ -> let printer = printer (List.rev comments)
+           in [], Tree.mk_child printer raw_child :: nodes in
+  let _, children = List.fold_left ~f ~init:(prev_comments, []) raw_children
+  in Tree.make_tree ~region state label (List.rev children)
+
+let tree_of_named_children' comments state node printer =
+  let raw_children = collect_named_children node in
+  tree_of_list' comments state node printer raw_children
+
 let make_unary state root printer child =
   let region = !get_region root
   and label = string_of_ts_node_type root in
@@ -57,14 +72,19 @@ let make_node state node =
   let region = !get_region node in
   let lexeme = read_lexeme region in
   make_unary state node Tree.make_node lexeme
-(*  Printf.eprintf "lexeme=%S\n%!" lexeme;
-    Tree.make_node ~region state @@ string_of_ts_node_type node
-*)
+
+let print_comment state node = make_node state node
 
 let make_kwd state node =
   let region = !get_region node in
   let lexeme = read_lexeme region in
   Tree.make_node ~region state (lexeme ^ " [keyword]")
+
+let make_kwd' comments state node =
+  let region = !get_region node in
+  let lexeme = read_lexeme region in
+  let label = lexeme ^ " [keyword]" in
+  Tree.of_list ~region state label print_comment comments
 
 let make_sym state node =
   let region = !get_region node in
@@ -114,7 +134,7 @@ let make_tree state node children =
 let match_rest state node print_default =
   match get_name node with
   (* Comments are ignored *)
-  | "comment" -> ()
+  | "comment" -> print_comment state node
   (* Errors *)
   | "ERROR" -> print_error_node state node
   | "MISSING" -> print_missing_node state node
@@ -132,7 +152,7 @@ let rec print_program file map node =
   let buffer = Buffer.create 1023 in
   let state = Tree.mk_state ~buffer ~regions:true ~layout:true ~offsets:true `Byte in
   (* Decoding the CST into an AST in [state] *)
-  let () = tree_of_named_children state node print_statement in
+  let () = print_statements' state node in
   (* Closing the input channel for reading lexemes *)
   let () = close_input () in
   (* Making the output string *)
@@ -143,6 +163,9 @@ let rec print_program file map node =
    The JavasScript tree-sitter grammar have the non-terminals
    "statement" and "declaration" be supertypes, that is, hidden
    rules. *)
+
+and print_statements state node =
+  tree_of_named_children state node print_statement
 
 and print_statement state node =
   match get_name node with
@@ -182,7 +205,107 @@ and print_statement state node =
   | "ambient_declaration" -> print_ambient_declaration state node
   | _ -> match_rest state node print_unexpected_node
 
+and print_statements' state node =
+  tree_of_named_children' [] state node print_statement'
+
+and print_statement' comments state node =
+  match get_name node with
+  | "export_statement" -> print_export_statement' comments state node
+  | "import_statement" -> print_import_statement' comments state node
+  | "debugger_statement" -> print_debugger_statement' comments state node
+  | "expression_statement" -> print_expression_statement' comments state node
+  (*
+  | "statement_block" -> print_statement_block state node
+  | "if_statement" -> print_if_statement state node
+  | "switch_statement" -> print_switch_statement state node
+  | "for_statement" -> print_for_statement state node
+  | "for_in_statement" -> print_for_in_statement state node
+  | "while_statement" -> print_while_statement state node
+  | "do_statement" -> print_do_statement state node
+  | "try_statement" -> print_try_statement state node
+  | "with_statement" -> print_with_statement state node
+  | "break_statement" -> print_break_statement state node
+  | "continue_statement" -> print_continue_statement state node
+  | "return_statement" -> print_return_statement state node
+  | "throw_statement" -> print_throw_statement state node
+  | "empty_statement" -> print_empty_statement state node
+  | "labeled_statement" -> print_labeled_statement state node
+  (* Inlining declarations cases (hidden rule) *)
+  | "function_declaration" -> print_function_declaration state node
+  | "generator_function_declaration" -> print_generator_function_declaration state node
+  | "class_declaration" -> print_class_declaration state node
+  | "lexical_declaration" -> print_lexical_declaration state node
+  | "variable_declaration" -> print_variable_declaration state node
+  | "function_signature" -> print_function_signature state node
+  | "abstract_class_declaration" -> print_abstract_class_declaration state node
+  | "module" -> print_module state node
+  | "internal_module" -> print_internal_module state node
+  | "type_alias_declaration" -> print_type_alias_declaration state node
+  | "enum_declaration" -> print_enum_declaration state node
+  | "interface_declaration" -> print_interface_declaration state node
+  | "import_alias" -> print_import_alias state node
+  | "ambient_declaration" -> print_ambient_declaration state node
+  *)
+  | _ -> match_rest state node print_unexpected_node
+
 (* Export statement *)
+
+and print_export_statement' comments state node =
+  let decorators = children_named "decorator" node
+  and kwd_export = first_child_named_opt "export" node in
+  let decorators = mk_children_list print_decorator decorators in
+  let children =
+    match kwd_export with
+    | None -> internal_error_child "export" node
+    | Some kwd_export ->
+      mk_child (make_kwd' comments) kwd_export
+      ::
+      (match next_sibling_opt kwd_export with
+      | None -> internal_error_child "after \"export\"" node
+      | Some after_export ->
+        (match get_name after_export with
+        | "*" ->
+          let kwd_from = child_ranked 2 node in
+          [ mk_child make_sym after_export; mk_child_from_clause kwd_from node ]
+        | "namespace_export" ->
+          let kwd_from = child_ranked 2 node in
+          [ mk_child print_namespace_export after_export
+          ; mk_child_from_clause kwd_from node
+          ]
+        | "export_clause" ->
+          mk_child print_export_clause after_export :: mk_child_from_clause_opt node
+        | "default" ->
+          let declaration_field = child_with_field_opt "declaration" node in
+          decorators
+          @ [ mk_child make_kwd after_export ] (* "default" keyword *)
+          @
+          (match declaration_field with
+          | Some declaration_field -> [ mk_child print_declaration declaration_field ]
+          | None ->
+            let value_field = child_with_field "value" node in
+            [ mk_child_res print_expression value_field ])
+        | "type" ->
+          (match next_sibling_opt after_export with
+          | None -> internal_error_child "export_clause" node
+          | Some export_clause ->
+            mk_child make_kwd after_export
+            :: mk_child print_export_clause export_clause
+            :: mk_child_from_clause_opt node)
+        | "=" ->
+          (match next_sibling_opt after_export with
+          | None -> internal_error_child "expression" node
+          | Some expression ->
+            [ mk_child make_sym after_export; mk_child print_expression expression ])
+        | "as" ->
+          let kwd_namespace = child_ranked 2 node
+          and identifier = child_ranked 3 node in
+          [ mk_child make_kwd after_export (* "as" keyword *)
+          ; mk_child_res make_kwd kwd_namespace
+          ; mk_child_res print_identifier identifier
+          ]
+        | _ -> decorators @ [ mk_child print_declaration after_export ]))
+  in
+  make_tree state node children
 
 and print_export_statement state node =
   let decorators = children_named "decorator" node
@@ -314,6 +437,32 @@ and print_import_statement state node =
   in
   make_tree state node children
 
+and print_import_statement' comments state node =
+  let kwd_import = child_ranked 0 node
+  and kind_node =
+    match first_child_named_opt "type" node with
+    | None -> first_child_named_opt "typeof" node
+    | some -> some
+  and import_attribute = first_child_named_opt "import_attribute" node in
+  let middle_children =
+    match first_child_named_opt "import_clause" node with
+    | Some import_clause ->
+      let kwd_from = first_child_named "from" node in
+      [ mk_child print_import_clause import_clause; mk_child_from_clause kwd_from node ]
+    | None ->
+      (match first_child_named_opt "import_require_clause" node with
+      | Some clause -> [ mk_child print_import_require_clause clause ]
+      | None ->
+        let source_field = child_with_field "source" node in
+        [ mk_child_res print_string source_field ])
+  in
+  let children =
+    (mk_child_res (make_kwd' comments) kwd_import
+    :: mk_child_opt make_kwd kind_node
+    :: middle_children)
+    @ [ mk_child_opt print_import_attribute import_attribute ]
+  in
+  make_tree state node children
 and print_import_clause state node =
   let print_rest state node =
     match get_name node with
@@ -405,6 +554,11 @@ and print_debugger_statement state node =
   let kwd_debugger = child_ranked 0 node in
   make_unary_res state node make_kwd kwd_debugger
 
+and print_debugger_statement' comments state node =
+  let kwd_debugger = child_ranked 0 node in
+  let children = [ mk_child_res (make_kwd' comments) kwd_debugger ]
+  in make_tree state node children
+
 (* Expression statements
 
    {@js[
@@ -424,9 +578,19 @@ and print_expressions state node =
   | "sequence_expression" -> print_sequence_expression state node
   | _ -> print_expression state node
 
+and print_expression_statement' comments state node =
+  let raw_child = named_child_ranked 0 node in
+  let children = [ mk_child_res (print_expressions' comments) raw_child ]
+  in make_tree state node children
+
+and print_expressions' comments state node =
+  match get_name node with
+  | "sequence_expression" -> print_sequence_expression' comments state node
+  | _ -> print_expression' comments state node
+
 (* Statement blocks *)
 
-and print_statement_block state node = tree_of_named_children state node print_statement
+and print_statement_block state node = print_statements state node
 
 (* If statement *)
 
@@ -1104,6 +1268,50 @@ and print_ambient_declaration state node =
    non-terminals in [print_expression]. *)
 
 and print_expression state node =
+  match get_name node with
+  (* "primary_expression" inlined: *)
+  | "subscript_expression" -> print_subscript_expression state node
+  | "member_expression" -> print_member_expression state node
+  | "parenthesized_expression" -> print_parenthesized_expression state node
+  | "identifier" -> print_identifier state node
+  | "undefined" -> make_kwd state node
+  | "this" -> make_kwd state node
+  | "super" -> make_kwd state node
+  | "number" -> print_number state node
+  | "string" -> print_string state node
+  | "template_string" -> print_template_string state node
+  | "regex" -> print_regex state node
+  | "true" -> make_kwd state node
+  | "false" -> make_kwd state node
+  | "null" -> make_kwd state node
+  | "object" -> print_object state node
+  | "array" -> print_array state node
+  | "function_expression" -> print_function_expression state node
+  | "arrow_function" -> print_arrow_function state node
+  | "generator_function" -> print_generator_function state node
+  | "class" -> print_class state node
+  | "meta_property" -> print_meta_property state node
+  | "call_expression" -> print_call_expression state node
+  | "non_null_expression" -> print_non_null_expression state node
+  (* Rest of "expression": *)
+  | "glimmer_template" -> print_glimmer_template state node
+  | "assignment_expression" -> print_assignment_expression state node
+  | "augmented_assignment_expression" -> print_augmented_assignment_expression state node
+  | "await_expression" -> print_await_expression state node
+  | "unary_expression" -> print_unary_expression state node
+  | "binary_expression" -> print_binary_expression state node
+  | "ternary_expression" -> print_ternary_expression state node
+  | "update_expression" -> print_update_expression state node
+  | "new_expression" -> print_new_expression state node
+  | "yield_expression" -> print_yield_expression state node
+  | "as_expression" -> print_as_expression state node
+  | "satisfies_expression" -> print_satisfies_expression state node
+  | "instantiation_expression" -> print_instantiation_expression state node
+  | "internal_module" -> print_internal_module state node
+  | "type_assertion" -> print_type_assertion state node
+  | _ -> match_rest state node print_unexpected_node
+
+and print_expression' _comments state node =
   match get_name node with
   (* "primary_expression" inlined: *)
   | "subscript_expression" -> print_subscript_expression state node
@@ -1846,6 +2054,9 @@ and print_non_null_expression state node =
 
 and print_sequence_expression state node =
   tree_of_named_children state node print_expression
+
+and print_sequence_expression' comments state node =
+  tree_of_named_children' comments state node print_expression'
 
 (* TYPE
 
