@@ -53,11 +53,11 @@
     with inputs;
       flake-utils.lib.eachDefaultSystem (
         system: let
+          lib = nixpkgs.legacyPackages.${system}.lib;
+
           pkgs = import nixpkgs {
             inherit system;
             overlays = [
-              build-yarn-package.overlays.default
-              haskell-nix.overlay
               ocaml-overlay.overlays.default
               (import ./nix/overlay.nix)
               (_: prev:
@@ -71,9 +71,15 @@
 
           tree-sitter-typescript = pkgs.callPackage ./nix/tree-sitter-typescript.nix {};
           ligo = pkgs.callPackage ./nix/ligo.nix {inherit tezos-ligo tree-sitter-typescript grace lltz;};
+
+          pkgs-extended = pkgs.extend (lib.composeManyExtensions [
+              build-yarn-package.overlays.default
+              haskell-nix.overlay
+              (import ./nix/haskell-overlay.nix)
+          ]);
           ligo-syntaxes = ./tools/vscode/syntaxes;
-          ligo-webide = pkgs.callPackage ./nix/webide.nix {inherit ligo-syntaxes;};
-          ligo-debugger = pkgs.callPackage ./nix/debugger.nix {};
+          ligo-webide = pkgs-extended.callPackage ./nix/webide.nix {inherit ligo-syntaxes;};
+          ligo-debugger = pkgs-extended.callPackage ./nix/debugger.nix {};
 
           fmt = treefmt.lib.evalModule pkgs {
             projectRootFile = "dune-project";
