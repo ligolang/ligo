@@ -1,16 +1,9 @@
 final: prev:
 with prev; {
-  libsodium = libsodium.overrideAttrs (with libsodium; rec {
-    version = "1.0.18";
-    src = final.fetchurl {
-      url = "https://download.libsodium.org/libsodium/releases/${pname}-${version}.tar.gz";
-      hash = "sha256-b1BEkLNCpPikxKAvybhmy++GItXfTlRStGvhIeRmNsE=";
-    };
-  });
   ocaml-ng =
     ocaml-ng
     // (with ocaml-ng; {
-      ocamlPackages_4_14 = ocamlPackages_4_14.overrideScope' (_: prev:
+      ocamlPackages_4_14 = ocamlPackages_4_14.overrideScope (_: prev:
         with prev; rec {
           cohttp = buildDunePackage rec {
             pname = "cohttp";
@@ -60,23 +53,4 @@ with prev; {
     customOCamlPackages = final.ocaml-ng.ocamlPackages_4_14;
     buildIde = false;
   };
-  
-  boehmgc = boehmgc.overrideAttrs {
-    # tests for this sometimes fails on macOS
-    doCheck = !prev.stdenv.isDarwin;
-  };
-  perlPackages = prev.perlPackages // {
-    libnet = prev.perlPackages.libnet.overrideAttrs (oldAttrs: {
-      doCheck = false;
-    });
-  };
-  indent = prev.indent.overrideAttrs (oldAttrs: rec {
-    doCheck = false;
-  });
-  bison = prev.bison.overrideAttrs (oldAttrs: {
-    doCheck = false;
-  });
-  p11-kit = prev.p11-kit.overrideAttrs (oldAttrs: {
-    doCheck = false;
-  });
 }
