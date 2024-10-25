@@ -27,3 +27,7 @@ end
 
 let v4 = fun x -> E6.y + x
 let rec v6 (x : E7.t7) : E8.t8 = E9.y - x
+
+include E10
+
+let v7 = E11.v11
