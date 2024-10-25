@@ -5,7 +5,7 @@ let dependencies prg =
   let rec f decl =
     let Location.{ wrap_content = decl; location = loc } = decl in
     match decl with
-    | Types.D_module { module_; _ } ->
+    | Ast_core.D_module { module_; _ } ->
       (match Location.unwrap module_ with
       | M_struct decls -> List.concat_map decls ~f
       | _ -> [])

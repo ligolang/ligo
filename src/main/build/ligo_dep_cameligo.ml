@@ -18,7 +18,7 @@ let rec add_to_deps ~loc { deps; scope } var =
     used only to collect deps *)
 and collect_from_decl ({ deps; scope } as acc) decl =
   match Location.unwrap decl with
-  | Types.D_module decl -> collect_from_module_decl acc decl
+  | Ast_core.D_module decl -> collect_from_module_decl acc decl
   | D_signature sig_decl ->
     let { deps; _ } = collect_from_signature_decl acc sig_decl in
     { acc with deps }
@@ -56,7 +56,7 @@ and collect_from_signature_expr ({ deps; scope } as acc) sig_expr =
     let loc = sig_expr.location in
     match Location.unwrap sig_expr with
     (* It's not possible to be external being the module type *)
-    | Types.S_path [ mvar ] -> deps
+    | Ast_core.S_path [ mvar ] -> deps
     (* Only the first module var from the path could be external *)
     | S_path (mvar :: _) -> add_to_deps ~loc acc mvar
     | S_sig signature ->
@@ -69,7 +69,7 @@ and collect_from_signature_expr ({ deps; scope } as acc) sig_expr =
 
 (** Collects external deps from signature.
     Built up scope gets discarded after folding it. *)
-and collect_from_signature ({ deps; scope } as acc) Types.{ items } =
+and collect_from_signature ({ deps; scope } as acc) Ast_core.{ items } =
   (* We have to discard scope accumulated inside signature *)
   let { deps; _ } = List.fold items ~init:acc ~f:collect_from_sig_item in
   { acc with deps }
@@ -80,10 +80,10 @@ and collect_from_signature ({ deps; scope } as acc) Types.{ items } =
     Other branches are used only to collect deps *)
 and collect_from_sig_item ({ deps; scope } as acc) sig_item =
   match Location.unwrap sig_item with
-  | Types.S_module (mvar, signature) ->
+  | Ast_core.S_module (mvar, signature) ->
     let { deps; _ } = collect_from_signature acc signature in
     { deps; scope = Set.add scope mvar }
-  | Types.S_value (_, ty, _) ->
+  | Ast_core.S_value (_, ty, _) ->
     let { deps; _ } = collect_from_ty_expr acc ty in
     { acc with deps }
   | S_type (_, ty, _) ->
@@ -220,7 +220,7 @@ and collect_from_expr ({ deps; scope } as acc) { expression_content; location = 
     (* Discarding scope after evaluation *)
     let { deps; _ } = collect_from_expr acc let_result in
     { acc with deps }
-  | Types.E_contract (mvar :: _) ->
+  | Ast_core.E_contract (mvar :: _) ->
     (* Only the first module variable in the list could be external *)
     let deps = add_to_deps ~loc acc mvar in
     { acc with deps }
@@ -395,7 +395,7 @@ let dependencies ~std_lib prg =
   let scope =
     List.fold std_lib ~init:MSet.empty ~f:(fun acc decl ->
         match Location.unwrap decl with
-        | Types.D_module module_ -> Set.add acc module_.module_binder
+        | Ast_typed.D_module module_ -> Set.add acc module_.module_binder
         | _ -> acc)
   in
   let deps = Deps_map.empty in
