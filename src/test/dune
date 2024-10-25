@@ -15,6 +15,7 @@
   ligo.tezos-memory-proto-alpha
   ligo.main_interpreter
   ligo.checking
+  ligo.build
   ligo.api
   ligo_init
   ligo
