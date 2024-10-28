@@ -18,7 +18,8 @@ let close_input () =
   | None -> ()
   | Some channel -> In_channel.close channel
 
-(* Reading in the source a lexeme of a given region *)
+(* Reading in the source the text at a given region (expecting a
+   lexeme) *)
 
 let read_lexeme region : string =
   let start_pos, stop_pos = region#byte_pos in
@@ -311,9 +312,9 @@ and print_export_statement' comments state node =
     | Some kwd_export ->
       mk_child (make_kwd' comments) kwd_export
       ::
-      (match next_sibling_opt kwd_export with
-      | None -> internal_error_child "after \"export\"" node
-      | Some after_export ->
+      (match next_sibling kwd_export with
+      | Error _ -> internal_error_child "after \"export\"" node
+      | Ok after_export ->
         (match get_name after_export with
         | "*" ->
           let kwd_from = first_child_named "from" node in
@@ -336,20 +337,20 @@ and print_export_statement' comments state node =
             let value_field = child_with_field "value" node in
             [ mk_child_res print_expression value_field ])
         | "type" ->
-          (match next_sibling_opt after_export with
-          | None -> internal_error_child "export_clause" node
-          | Some export_clause ->
+          (match next_sibling after_export with
+          | Error _ -> internal_error_child "export_clause" node
+          | Ok export_clause ->
             mk_child make_kwd after_export
             :: mk_child print_export_clause export_clause
             :: mk_child_from_clause_opt node)
         | "=" ->
-          (match next_sibling_opt after_export with
-          | None -> internal_error_child "expression" node
-          | Some expression ->
+          (match next_sibling after_export with
+          | Error _ -> internal_error_child "expression" node
+          | Ok expression ->
             [ mk_child make_sym after_export; mk_child print_expression expression ])
         | "as" ->
           let kwd_namespace = first_child_named "namespace" node
-          and identifier = child_ranked 3 node in
+          and identifier = first_child_named "identifier" node in
           [ mk_child make_kwd after_export (* "as" keyword *)
           ; mk_child_res make_kwd kwd_namespace
           ; mk_child_res print_identifier identifier
@@ -368,9 +369,9 @@ and print_export_statement state node =
     | Some kwd_export ->
       mk_child make_kwd kwd_export
       ::
-      (match next_sibling_opt kwd_export with
-      | None -> internal_error_child "after \"export\"" node
-      | Some after_export ->
+      (match next_sibling kwd_export with
+      | Error _ -> internal_error_child "after \"export\"" node
+      | Ok after_export ->
         (match get_name after_export with
         | "*" ->
           let kwd_from = first_child_named "from" node in
@@ -393,20 +394,20 @@ and print_export_statement state node =
             let value_field = child_with_field "value" node in
             [ mk_child_res print_expression value_field ])
         | "type" ->
-          (match next_sibling_opt after_export with
-          | None -> internal_error_child "export_clause" node
-          | Some export_clause ->
+          (match next_sibling after_export with
+          | Error _ -> internal_error_child "export_clause" node
+          | Ok export_clause ->
             mk_child make_kwd after_export
             :: mk_child print_export_clause export_clause
             :: mk_child_from_clause_opt node)
         | "=" ->
-          (match next_sibling_opt after_export with
-          | None -> internal_error_child "expression" node
-          | Some expression ->
+          (match next_sibling after_export with
+          | Error _ -> internal_error_child "expression" node
+          | Ok expression ->
             [ mk_child make_sym after_export; mk_child print_expression expression ])
         | "as" ->
           let kwd_namespace = first_child_named "namespace" node
-          and identifier = child_ranked 3 node in
+          and identifier = first_child_named "identifier" node in
           [ mk_child make_kwd after_export (* "as" keyword *)
           ; mk_child_res make_kwd kwd_namespace
           ; mk_child_res print_identifier identifier
@@ -416,9 +417,9 @@ and print_export_statement state node =
   make_tree state node children
 
 and print_namespace_export state node =
-  let sym_star = child_ranked 0 node
+  let sym_star = first_child_named "*" node
   and kwd_as = first_child_named "as" node
-  and module_export_name = child_ranked 2 node in
+  and module_export_name = named_child_ranked 0 node in
   let children =
     [ mk_child_res make_sym sym_star
     ; mk_child_res make_kwd kwd_as
@@ -536,9 +537,9 @@ and print_import_clause state node =
         (match next_sibling_opt fst_child with
         | None -> []
         | Some comma ->
-          (match next_sibling_opt comma with
-          | None -> internal_error_child "namespace_import/named_imports" node
-          | Some next -> [ mk_child print_rest next ]))
+          (match next_sibling comma with
+          | Error _ -> internal_error_child "namespace_import/named_imports" node
+          | Ok next -> [ mk_child print_rest next ]))
       | _ -> [ mk_child print_unexpected_node fst_child ])
   in
   make_tree state node children

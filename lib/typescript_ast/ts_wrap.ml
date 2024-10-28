@@ -7,6 +7,7 @@ module Region = Simple_utils.Region
 (* Misc *)
 
 let ( <@ ) = Simple_utils.Ligo_fun.( <@ )
+let sprintf = Printf.sprintf
 
 (* To print the AST in ASCII art *)
 
@@ -56,15 +57,26 @@ let string_of_char_ptr (ptr : char ptr) : string =
 
 let uint32_len string = UInt32.of_int (String.length string)
 
+(* Handling of null nodes *)
+
+let node_to_opt node = if TS_fun.ts_node_is_null node then None else Some node
+
+let node_to_res node =
+  if TS_fun.ts_node_is_null node
+  then Error "INVALID: Missing node."
+  else Ok node
+
+let opt_to_res = function
+  | None -> Error "INVALID: Missing node."
+  | Some node -> Ok node
+
 (* Wrappers for filtering fields (failure on null node or optional value) *)
 
 let child_with_field field node =
   let child = TS_fun.ts_node_child_by_field_name node field (uint32_len field) in
   if TS_fun.ts_node_is_null child
-  then Error (Printf.sprintf "INVALID: Missing field %S." field)
+  then Error (sprintf "INVALID: Missing field %S." field)
   else Result.Ok child
-
-let node_to_opt node = if TS_fun.ts_node_is_null node then None else Some node
 
 let child_with_field_opt field node =
   node_to_opt @@ TS_fun.ts_node_child_by_field_name node field (uint32_len field)
@@ -90,7 +102,6 @@ let parse_typescript_string (source_code : string) : ts_tree_ptr =
   let parser = TS_fun.ts_parser_new ()
   and language = tree_sitter_typescript () in
   let (_ : bool) = TS_fun.ts_parser_set_language parser language in
-  (*[true]*)
   let null_tree = from_voidp TS_types.ts_tree null in
   let parse_tree =
     TS_fun.ts_parser_parse_string
@@ -102,7 +113,8 @@ let parse_typescript_string (source_code : string) : ts_tree_ptr =
   TS_fun.ts_parser_delete parser;
   parse_tree
 
-(* Collating named/all children of a given node *)
+(* Collating named/all children of a given node, except
+   comment/error/missing nodes *)
 
 let collect select_child arity node =
   if TS_fun.ts_node_is_null node
@@ -114,15 +126,17 @@ let collect select_child arity node =
       else (
         let index = UInt32.pred n in
         let child = select_child node index in
-        fold (child :: acc) index)
+        match string_of_ts_node_type child with
+        | "comment" | "ERROR" | "MISSING" -> fold acc index
+        | _ -> fold (child :: acc) index)
     in
     fold [] (arity node))
 
 let collect_named_children (node : ts_tree) : ts_forest =
-  collect TS_fun.ts_node_named_child TS_fun.ts_node_named_child_count node
+  TS_fun.(collect ts_node_named_child ts_node_named_child_count node)
 
 let collect_children (node : ts_tree) : ts_forest =
-  collect TS_fun.ts_node_child TS_fun.ts_node_child_count node
+  TS_fun.(collect ts_node_child ts_node_child_count node)
 
 let collect_error_children (node : ts_tree) : ts_forest =
   let children = collect_named_children node in
@@ -133,41 +147,30 @@ let collect_error_children (node : ts_tree) : ts_forest =
   in
   Core.List.fold_right ~f ~init:[] children
 
-(* Extracting a named child by its index *)
+(* Extracting a named child by its index amongst its siblings that are
+   not comment/error/missing nodes *)
 
 let named_child_ranked index node =
-  let index' = UInt32.of_int index
-  and arity = TS_fun.ts_node_named_child_count node in
-  match UInt32.compare index' arity with
-  | -1 -> Result.Ok (TS_fun.ts_node_named_child node index')
-  | _ -> Error (Printf.sprintf "INVALID: Missing named child at index %i." index)
+  let raw_children = collect_named_children node in
+  match Core.List.nth raw_children index with
+  | None -> Error (sprintf "INVALID: Missing named child at index %i." index)
+  | Some child -> Ok child
 
 let named_child_ranked_opt index node =
-  let index = UInt32.of_int index
-  and arity = TS_fun.ts_node_named_child_count node in
-  match UInt32.compare index arity with
-  | -1 -> Some (TS_fun.ts_node_named_child node index)
-  | _ -> None
+  let raw_children = collect_named_children node in
+  Core.List.nth raw_children index
 
 (* Extracting a child by its index *)
 
 let child_ranked index (node : ts_tree) =
-  let index' = UInt32.of_int index
-  and arity = TS_fun.ts_node_child_count node in
-  match UInt32.compare index' arity with
-  | -1 -> Result.Ok (TS_fun.ts_node_child node index')
-  | _ -> Error (Printf.sprintf "INVALID: Missing child at index %i" index)
+  let raw_children = collect_children node in
+  match Core.List.nth raw_children index with
+  | None -> Error (sprintf "INVALID: Missing child at index %i" index)
+  | Some child -> Ok child
 
 let child_ranked_opt index (node : ts_tree) =
-  let index = UInt32.of_int index
-  and arity = TS_fun.ts_node_child_count node in
-  match UInt32.compare index arity with
-  | -1 -> Some (TS_fun.ts_node_child node index)
-  | _ -> None
-
-(* Getting the next sibling of a node *)
-
-let next_sibling_opt (node : ts_tree) = node_to_opt @@ TS_fun.ts_node_next_sibling node
+  let raw_children = collect_children node in
+  Core.List.nth raw_children index
 
 (* Extracting the name of a node *)
 
@@ -176,6 +179,38 @@ let get_name = string_of_ts_node_type
 let get_name_res = function
   | Ok node -> get_name node
   | Error name -> name
+
+(* Getting the sibling of a node (if any) *)
+
+let rec next_sibling_opt (node : ts_tree) =
+  if TS_fun.ts_node_is_null node then None
+  else
+    let next = TS_fun.ts_node_next_sibling node in
+    match get_name next with
+    | "comment" | "ERROR" | "MISSING "-> next_sibling_opt next
+    | _ -> Some next
+
+let rec prev_sibling_opt (node : ts_tree) =
+  if TS_fun.ts_node_is_null node then None
+  else
+    let prev = TS_fun.ts_node_prev_sibling node in
+    match get_name prev with
+    | "comment" | "ERROR" | "MISSING "-> prev_sibling_opt prev
+    | _ -> Some prev
+
+let next_sibling (node : ts_tree) = opt_to_res @@ next_sibling_opt node
+let prev_sibling (node : ts_tree) = opt_to_res @@ prev_sibling_opt node
+
+let next_sibling_opt' (node : ts_tree) =
+  let rec aux comments node =
+    if TS_fun.ts_node_is_null node then None (* Drop comments *)
+    else
+      let next = TS_fun.ts_node_next_sibling node in
+      match get_name next with
+      | "comment" -> aux (next :: comments) next (* Accumulate comments *)
+      | "ERROR" | "MISSING "-> aux [] next (* Skip error/missing, drop comments *)
+      | _ -> Some (List.rev comments, next) (* Return comments *)
+  in aux [] node (* No comments to start with *)
 
 (* Filtering by name a list of nodes *)
 
@@ -190,7 +225,7 @@ let filter_first_by_name_opt name nodes =
 
 let filter_first_by_name name nodes =
   match filter_first_by_name_opt name nodes with
-  | None -> Result.Error "ERROR"
+  | None -> Error (sprintf "INVALID: Name %S missing" name)
   | Some node -> Ok node
 
 let first_child_named_opt name node =
@@ -212,7 +247,7 @@ let string_of_point (point : ts_point) : string =
   and column = getf point TS_types.column in
   let row_string = UInt.to_string row
   and column_string = UInt.to_string column in
-  Printf.sprintf "[%s, %s]" row_string column_string
+  sprintf "[%s, %s]" row_string column_string
 
 let pos_of_point file map (point : ts_point) : Pos.t =
   let row = getf point TS_types.row
@@ -233,7 +268,7 @@ let string_of_range (range : range) : string =
   let start_point, end_point = range in
   let start_string = string_of_point start_point
   and end_string = string_of_point end_point in
-  Printf.sprintf "%s - %s" start_string end_string
+  sprintf "%s - %s" start_string end_string
 
 let region_of_range file map (range : range) : Region.t =
   let start_point, end_point = range in
@@ -245,7 +280,7 @@ let region_of_range file map (range : range) : Region.t =
 let get_label (node : ts_tree) : string =
   let name = string_of_ts_node_type node
   and range_string = string_of_range @@ range node in
-  Printf.sprintf "%s %s" name range_string
+  sprintf "%s %s" name range_string
 *)
 
 let get_region file map (node : ts_tree) : Region.t =
