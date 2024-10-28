@@ -217,7 +217,7 @@ let core_prod =
         \  Λ a ->  Λ b ->  fun (init xs : list (b)) : list (b) -> xs"
     ; comp_file_generic_assert
         "import_decls.jsligo"
-        ~transform:(fun ast -> Ast_core.Ligo_dep_jsligo.dependencies ast)
+        ~transform:(fun ast -> List.map ~f:Location.unwrap @@ Ast_core.Ligo_dep_jsligo.dependencies ast)
         ~equal:(fun got expected -> List.equal String.equal got expected)
         ~expected:
           [ "./Test1"

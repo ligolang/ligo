@@ -1,3 +1,4 @@
 (** Folds over the tree, looking for import declarations.
-    Returned filenames may be relative to the file of input program. *)
-val dependencies : Types.program -> Filename.t list
+    Returned filenames are relative to the file of input program.
+    Filenames are wrapped with locations for better error reporting. *)
+val dependencies : Types.program -> Filename.t Simple_utils.Location.wrap list

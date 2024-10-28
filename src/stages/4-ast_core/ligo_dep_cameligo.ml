@@ -2,14 +2,15 @@ open Core
 open Ligo_prim
 module Location = Simple_utils.Location
 module MSet = Set.Make (Module_var)
+module Deps_map = Map.Make (Module_var)
 
 type acc =
-  { deps : MSet.t
+  { deps : Location.t Deps_map.t
   ; scope : MSet.t
   }
 
-let rec add_to_deps { deps; scope } var =
-  if Set.mem scope var then deps else Set.add deps var
+let rec add_to_deps ~loc { deps; scope } var =
+  if Set.mem scope var then deps else Map.set deps ~key:var ~data:loc
 
 
 (** Collects external deps and builds up global module scope.
@@ -52,11 +53,12 @@ and collect_from_signature_decl
     first item of the path is external *)
 and collect_from_signature_expr ({ deps; scope } as acc) sig_expr =
   let deps =
+    let loc = sig_expr.location in
     match Location.unwrap sig_expr with
     (* It's not possible to be external being the module type *)
     | Types.S_path [ mvar ] -> deps
     (* Only the first module var from the path could be external *)
-    | S_path (mvar :: _) -> add_to_deps acc mvar
+    | S_path (mvar :: _) -> add_to_deps ~loc acc mvar
     | S_sig signature ->
       (* We have to discard scope accumulated inside signature *)
       let { deps; _ } = collect_from_signature acc signature in
@@ -122,6 +124,7 @@ and collect_from_mod_in ({ deps; scope } as acc) binder mod_expr =
 
 (** Collects external deps from module expression. *)
 and collect_from_mod_expr ({ deps; scope } as acc) mod_expr =
+  let loc = mod_expr.location in
   let module_ = Location.unwrap mod_expr in
   let deps =
     match module_ with
@@ -129,8 +132,8 @@ and collect_from_mod_expr ({ deps; scope } as acc) mod_expr =
       (* Discarding scope accumulated inside module struct *)
       let { deps; _ } = List.fold decls ~init:acc ~f:collect_from_decl in
       deps
-    | M_variable var -> add_to_deps acc var
-    | M_module_path (var :: _) -> add_to_deps acc var
+    | M_variable var -> add_to_deps ~loc acc var
+    | M_module_path (var :: _) -> add_to_deps ~loc acc var
   in
   { acc with deps }
 
@@ -148,13 +151,13 @@ and collect_from_value
 
 
 (** Collects external deps from ty expr. *)
-and collect_from_ty_expr ({ deps; scope } as acc) { type_content; location = _ } =
+and collect_from_ty_expr ({ deps; scope } as acc) { type_content; location = loc } =
   match type_content with
   | T_variable _ -> acc
   | T_constant (_, _) -> acc
   | T_contract_parameter (h :: tl) ->
     let deps =
-      List.fold (h :: tl) ~init:deps ~f:(fun deps m -> add_to_deps { deps; scope } m)
+      List.fold (h :: tl) ~init:deps ~f:(fun deps m -> add_to_deps ~loc { deps; scope } m)
     in
     { acc with deps }
   | T_sum { fields; _ } ->
@@ -186,7 +189,7 @@ and collect_from_ty_expr ({ deps; scope } as acc) { type_content; location = _ }
     collect_from_ty_expr { acc with deps } type2
   | T_app { type_operator = { module_path = []; element = _ }; arguments = _ } -> acc
   | T_app { type_operator = { module_path = h :: _; element = _ }; arguments } ->
-    let deps = add_to_deps acc h in
+    let deps = add_to_deps ~loc acc h in
     let { deps; _ } =
       List.fold arguments ~init:{ acc with deps } ~f:(fun ({ deps; scope } as acc) ty ->
           collect_from_ty_expr acc ty)
@@ -194,7 +197,7 @@ and collect_from_ty_expr ({ deps; scope } as acc) { type_content; location = _ }
     { acc with deps }
   | T_module_accessor { module_path = []; element = _ } -> acc
   | T_module_accessor { module_path = h :: _; element = _ } ->
-    { acc with deps = add_to_deps acc h }
+    { acc with deps = add_to_deps ~loc acc h }
   | T_singleton _ -> acc
   | T_abstraction { type_; kind = _; ty_binder = _ } ->
     let { deps; _ } = collect_from_ty_expr acc type_ in
@@ -207,7 +210,7 @@ and collect_from_ty_expr ({ deps; scope } as acc) { type_content; location = _ }
 (** Collects external deps from expression.
     Only thing affecting local expression scope is `E_mod_in`.
     Other items are used only to collect deps *)
-and collect_from_expr ({ deps; scope } as acc) { expression_content; location = _ } =
+and collect_from_expr ({ deps; scope } as acc) { expression_content; location = loc } =
   match expression_content with
   | E_variable _ -> acc
   | E_literal _ -> acc
@@ -219,7 +222,7 @@ and collect_from_expr ({ deps; scope } as acc) { expression_content; location = 
     { acc with deps }
   | Types.E_contract (mvar :: _) ->
     (* Only the first module variable in the list could be external *)
-    let deps = add_to_deps acc mvar in
+    let deps = add_to_deps ~loc acc mvar in
     { acc with deps }
   | E_constant { arguments; cons_name = _ } ->
     List.fold arguments ~init:acc ~f:collect_from_expr
@@ -323,7 +326,7 @@ and collect_from_expr ({ deps; scope } as acc) { expression_content; location = 
     { acc with deps }
   | E_module_accessor { module_path = []; element = _ } -> acc
   | E_module_accessor { module_path = h :: _; element = _ } ->
-    { acc with deps = add_to_deps acc h }
+    { acc with deps = add_to_deps ~loc acc h }
   | E_let_mut_in { let_binder; rhs; let_result; attributes = _ } ->
     let { deps; _ } = collect_from_expr acc rhs in
     let { deps; _ } = collect_from_expr { acc with deps } let_result in
@@ -395,6 +398,8 @@ let dependencies ~std_lib prg =
         | Types.D_module module_ -> Set.add acc module_.module_binder
         | _ -> acc)
   in
-  let deps = MSet.empty in
+  let deps = Deps_map.empty in
   let { deps; _ } = List.fold prg ~init:{ deps; scope } ~f:collect_from_decl in
-  deps |> Set.to_list |> List.map ~f:Module_var.to_name_exn
+  deps
+  |> Map.fold ~init:[] ~f:(fun ~key ~data acc ->
+         Location.wrap ~loc:data (Module_var.to_name_exn key) :: acc)
