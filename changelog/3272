@@ -1,0 +1,7 @@
+
+author: heitor.toledo
+description: "\\nIntroduced module to find all references to external modules in the `Ast_core.program`.\\n\\n"
+merge_request: '3272'
+title: "[#1996] Implement ligodep for CameLIGO"
+type: added
+            
