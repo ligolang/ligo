@@ -68,11 +68,13 @@ let opt_to_res = function
   | None -> Error "INVALID: Missing node."
   | Some node -> Ok node
 
+let is_null = TS_fun.ts_node_is_null
+
 (* Wrappers for filtering fields (failure on null node or optional value) *)
 
 let child_with_field field node =
   let child = TS_fun.ts_node_child_by_field_name node field (uint32_len field) in
-  if TS_fun.ts_node_is_null child
+  if is_null child
   then Error (sprintf "INVALID: Missing field %S." field)
   else Result.Ok child
 
@@ -89,9 +91,7 @@ let print_node (node: ts_tree) : unit =
 (* Converting a node to an OCaml string *)
 
 let string_of_ts_node_type (node : ts_tree) : string =
-  if TS_fun.ts_node_is_null node
-  then "NULL"
-  else string_of_char_ptr @@ TS_fun.ts_node_type node
+  if is_null node then "NULL" else string_of_char_ptr @@ TS_fun.ts_node_type node
 
 (* Parsing a string expected to contain a valid TypeScript program *)
 
@@ -115,7 +115,7 @@ let parse_typescript_string (source_code : string) : ts_tree_ptr =
    comment/error/missing nodes *)
 
 let collect select_child arity node =
-  if TS_fun.ts_node_is_null node
+  if is_null node
   then []
   else (
     let rec fold acc n =
@@ -172,7 +172,7 @@ let child_ranked_opt index (node : ts_tree) =
 
 (* Extracting the name of a node *)
 
-let get_name = string_of_ts_node_type
+let get_name = string_of_ts_node_type (* "NULL" if null node *)
 
 let get_name_res = function
   | Ok node -> get_name node
@@ -180,40 +180,55 @@ let get_name_res = function
 
 (* Getting the sibling of a node (if any) *)
 
-let rec next_sibling_opt (node : ts_tree) =
-  if TS_fun.ts_node_is_null node
-  then None
-  else (
-    let next = TS_fun.ts_node_next_sibling node in
-    match get_name next with
-    | "comment" | "ERROR" | "MISSING " -> next_sibling_opt next
-    | _ -> Some next)
+let sibling_opt get_sibling (node : ts_tree) : ts_tree option =
+  let rec aux node =
+    let sibling = get_sibling node in
+    if is_null sibling
+    then None
+    else (
+      match get_name sibling with
+      | "comment" | "ERROR" | "MISSING" -> aux sibling
+      | _ -> Some sibling)
+    (* Cannot be "NULL" *)
+  in
+  if is_null node then None else aux node
 
-let rec prev_sibling_opt (node : ts_tree) =
-  if TS_fun.ts_node_is_null node
-  then None
-  else (
-    let prev = TS_fun.ts_node_prev_sibling node in
-    match get_name prev with
-    | "comment" | "ERROR" | "MISSING " -> prev_sibling_opt prev
-    | _ -> Some prev)
+let next_sibling_opt (node : ts_tree) : ts_tree option =
+  sibling_opt TS_fun.ts_node_next_sibling node
 
-let next_sibling (node : ts_tree) = opt_to_res @@ next_sibling_opt node
-let prev_sibling (node : ts_tree) = opt_to_res @@ prev_sibling_opt node
+let prev_sibling_opt (node : ts_tree) : ts_tree option =
+  sibling_opt TS_fun.ts_node_prev_sibling node
 
-let next_sibling_opt' (node : ts_tree) =
+let next_sibling = opt_to_res <@ next_sibling_opt
+let prev_sibling = opt_to_res <@ prev_sibling_opt
+
+let next_sibling_opt' (node : ts_tree) : (ts_forest * ts_tree) option =
   let rec aux comments node =
-    if TS_fun.ts_node_is_null node
+    let next = TS_fun.ts_node_next_sibling node in
+    if is_null next
     then None (* Drop comments *)
     else (
-      let next = TS_fun.ts_node_next_sibling node in
       match get_name next with
       | "comment" -> aux (next :: comments) next (* Accumulate comments *)
-      | "ERROR" | "MISSING " -> aux [] next (* Skip error/missing, drop comments *)
+      | "ERROR" | "MISSING" -> aux [] next (* Skip error/missing, drop comments *)
       | _ -> Some (List.rev comments, next))
-    (* Return comments *)
+    (* Return comments; cannot be "NULL" *)
   in
-  aux [] node (* No comments to start with *)
+  if is_null node then None else aux [] node (* No comments to start with *)
+
+(* Getting the comments immediately to the left of a given node *)
+
+let prev_comments (node : ts_tree) : ts_forest =
+  let rec aux comments node =
+    let prev = TS_fun.ts_node_prev_sibling node in
+    if is_null prev
+    then comments
+    else (
+      match get_name prev with
+      | "comment" -> aux (prev :: comments) prev
+      | _ -> comments)
+  in
+  if is_null node then [] else aux [] node
 
 (* Filtering by name a list of nodes *)
 
