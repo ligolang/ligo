@@ -24,6 +24,23 @@ module Serialized = struct
     Bytes.of_string "LIGOCMI"
 
 
+  let is_cmi path =
+    let suffix = Filename.check_suffix path ".cmi" in
+    let magic_bytes =
+      In_channel.with_file path ~f:(fun handle ->
+          let read_bytes = Bytes.create 8 in
+          let expected_bytes =
+            let init = Bytes.create 8 in
+            Bytes.set init 0 '\x07';
+            Bytes.blit ~dst:init ~src:magic_number ~src_pos:0 ~dst_pos:1 ~len:7;
+            init
+          in
+          ignore (In_channel.really_input handle ~buf:read_bytes ~pos:0 ~len:8);
+          Bytes.equal read_bytes expected_bytes)
+    in
+    suffix && magic_bytes
+
+
   let compute_crc t = t |> Bin_prot.Writer.to_bytes bin_writer_t |> Md5.digest_bytes
 
   let to_serialized t =
