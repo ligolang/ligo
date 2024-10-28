@@ -104,8 +104,9 @@ let make_tree state node children =
 let make_node' comments state node =
   let region = !get_region node in
   let lexeme = read_lexeme region in
-  let children = mk_children_list print_comment comments
-                 @ [ mk_child Tree.make_node lexeme ] in
+  let children =
+    mk_children_list print_comment comments @ [ mk_child Tree.make_node lexeme ]
+  in
   make_tree state node children
 
 let make_kwd state node =
@@ -124,7 +125,7 @@ let make_sym state node =
   let lexeme = read_lexeme region in
   Tree.make_node ~region state lexeme
 
-let make_sym' comments  state node =
+let make_sym' comments state node =
   let region = !get_region node in
   let lexeme = read_lexeme region in
   Tree.of_list ~region state lexeme print_comment comments
@@ -168,8 +169,7 @@ let print_enclosed' comments state node printer opening closing =
   and sym_rbrace = first_child_named closing node
   and clauses = collect_named_children node in
   let children =
-    (mk_child_res (make_sym' comments) sym_lbrace
-     :: mk_children_list printer clauses)
+    (mk_child_res (make_sym' comments) sym_lbrace :: mk_children_list printer clauses)
     @ [ mk_child_res make_sym sym_rbrace ]
   in
   make_tree state node children
@@ -828,8 +828,10 @@ and print_for_in_statement state node =
       | _ -> [ mk_child print_unexpected_node kind_field ])
   in
   let children =
-    (mk_child_res make_kwd kwd_for :: mk_child_opt make_kwd kwd_await ::
-     mk_child_res make_sym sym_lparen :: header_children)
+    (mk_child_res make_kwd kwd_for
+    :: mk_child_opt make_kwd kwd_await
+    :: mk_child_res make_sym sym_lparen
+    :: header_children)
     @ [ mk_child_res print_operator operator_field
       ; mk_child_res print_expressions right_field
       ; mk_child_res make_sym sym_rparen
@@ -1590,16 +1592,20 @@ and print_update_expression state node =
   and first_child = child_ranked 0 node in
   let children =
     match get_name_res first_child with
-    | "++" -> (* Prefix *)
+    | "++" ->
+      (* Prefix *)
       [ mk_child_res make_sym first_child; mk_child_res print_expression argument_field ]
-    | "--" -> (* Prefix *)
+    | "--" ->
+      (* Prefix *)
       [ mk_child_res make_sym first_child; mk_child_res print_expression argument_field ]
     | _ ->
       let snd_child = child_ranked 1 node in
       (match get_name_res snd_child with
-      | "++" -> (* Postfix *)
+      | "++" ->
+        (* Postfix *)
         [ mk_child_res print_expression argument_field; mk_child_res make_sym snd_child ]
-      | "--" -> (* Postfix *)
+      | "--" ->
+        (* Postfix *)
         [ mk_child_res print_expression argument_field; mk_child_res make_sym snd_child ]
       | _ -> [] (* Should not happen. *))
   in
@@ -1764,11 +1770,8 @@ and print_parenthesized_expression state node =
 (* Some literals *)
 
 and print_identifier state node = make_node state node
-
 and print_number state node = make_node state node
-
 and print_number' comments state node = make_node' comments state node
-
 and print_string state node = make_node state node
 and print_regex state node = make_node state node
 
@@ -1803,8 +1806,7 @@ and print_object state node =
 and print_pair state node =
   let key_field = child_with_field "key" node
   and value_field = child_with_field "value" node
-  and sym_colon = first_child_named ":" node
-  in
+  and sym_colon = first_child_named ":" node in
   let children =
     [ mk_child_res print_property_name key_field
     ; mk_child_res make_sym sym_colon
@@ -1825,7 +1827,8 @@ and print_array_cell state node =
 and print_spread_element state node =
   let sym_ellipsis = first_child_named "..." node
   and expr_node = named_child_ranked 0 node in
-  let children = [ mk_child_res make_sym sym_ellipsis; mk_child_res print_expression expr_node ]
+  let children =
+    [ mk_child_res make_sym sym_ellipsis; mk_child_res print_expression expr_node ]
   in
   make_tree state node children
 
@@ -3029,8 +3032,7 @@ and print_infer_type state node =
 
 (* Object pattern *)
 
-and print_object_pattern state node =
-  print_braces state node print_object_pattern_field
+and print_object_pattern state node = print_braces state node print_object_pattern_field
 
 and print_object_pattern_field state node =
   match get_name node with
