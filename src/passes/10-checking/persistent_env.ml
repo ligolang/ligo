@@ -39,9 +39,7 @@ let compute_cmi
   =
  fun ({ cmis; _ } as env) path imports sign ->
   let imports =
-    List.map
-      ~f:(fun filename -> filename, Tuple2.get2 @@ find_cmi env (File filename))
-      imports
+    List.map ~f:(fun import -> import, Tuple2.get2 @@ find_cmi env (File import)) imports
   in
   let cmi = Cmi.{ path; sign; imports } in
   let crc = Cmi.Serialized.compute_crc cmi in

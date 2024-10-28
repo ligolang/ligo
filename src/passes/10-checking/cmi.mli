@@ -1,3 +1,4 @@
+module Location = Simple_utils.Location
 type crc = Md5.t [@@deriving bin_io]
 
 type t =
