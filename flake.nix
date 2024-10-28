@@ -1,6 +1,17 @@
 {
   description = "LIGO Nix Flake";
 
+  nixConfig = {
+    extra-substituters = [
+      # haskell-nix
+      "https://cache.iog.io"
+    ];
+    extra-trusted-public-keys = [
+      # haskell-nix
+      "hydra.iohk.io:f/Ea+s+dFdN+3Y/G+FDgSq+a5NEWhJGzdjvKNGv0/EQ="
+    ];
+  };
+
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs";
     flake-utils.url = "github:numtide/flake-utils";
