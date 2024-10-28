@@ -62,9 +62,7 @@ let uint32_len string = UInt32.of_int (String.length string)
 let node_to_opt node = if TS_fun.ts_node_is_null node then None else Some node
 
 let node_to_res node =
-  if TS_fun.ts_node_is_null node
-  then Error "INVALID: Missing node."
-  else Ok node
+  if TS_fun.ts_node_is_null node then Error "INVALID: Missing node." else Ok node
 
 let opt_to_res = function
   | None -> Error "INVALID: Missing node."
@@ -183,34 +181,39 @@ let get_name_res = function
 (* Getting the sibling of a node (if any) *)
 
 let rec next_sibling_opt (node : ts_tree) =
-  if TS_fun.ts_node_is_null node then None
-  else
+  if TS_fun.ts_node_is_null node
+  then None
+  else (
     let next = TS_fun.ts_node_next_sibling node in
     match get_name next with
-    | "comment" | "ERROR" | "MISSING "-> next_sibling_opt next
-    | _ -> Some next
+    | "comment" | "ERROR" | "MISSING " -> next_sibling_opt next
+    | _ -> Some next)
 
 let rec prev_sibling_opt (node : ts_tree) =
-  if TS_fun.ts_node_is_null node then None
-  else
+  if TS_fun.ts_node_is_null node
+  then None
+  else (
     let prev = TS_fun.ts_node_prev_sibling node in
     match get_name prev with
-    | "comment" | "ERROR" | "MISSING "-> prev_sibling_opt prev
-    | _ -> Some prev
+    | "comment" | "ERROR" | "MISSING " -> prev_sibling_opt prev
+    | _ -> Some prev)
 
 let next_sibling (node : ts_tree) = opt_to_res @@ next_sibling_opt node
 let prev_sibling (node : ts_tree) = opt_to_res @@ prev_sibling_opt node
 
 let next_sibling_opt' (node : ts_tree) =
   let rec aux comments node =
-    if TS_fun.ts_node_is_null node then None (* Drop comments *)
-    else
+    if TS_fun.ts_node_is_null node
+    then None (* Drop comments *)
+    else (
       let next = TS_fun.ts_node_next_sibling node in
       match get_name next with
       | "comment" -> aux (next :: comments) next (* Accumulate comments *)
-      | "ERROR" | "MISSING "-> aux [] next (* Skip error/missing, drop comments *)
-      | _ -> Some (List.rev comments, next) (* Return comments *)
-  in aux [] node (* No comments to start with *)
+      | "ERROR" | "MISSING " -> aux [] next (* Skip error/missing, drop comments *)
+      | _ -> Some (List.rev comments, next))
+    (* Return comments *)
+  in
+  aux [] node (* No comments to start with *)
 
 (* Filtering by name a list of nodes *)
 
