@@ -2,8 +2,7 @@ module Location = Simple_utils.Location
 type crc = Md5.t [@@deriving bin_io]
 
 type t =
-  { path : Filename.t
-  ; imports : (Filename.t * crc) list
+  { imports : (Filename.t * crc) list
   ; sign : Ast_typed.signature
   }
 [@@deriving bin_io]
@@ -50,17 +49,16 @@ module Serialized = struct
     { magic; cmi; crc }
 
 
-  let make_path p =
+  let of_file_name p =
     let open Filename in
     let dir = dirname p in
     let base = chop_extension (basename p) ^ ".cmi" in
     concat dir base
 
 
-  let output t =
+  let output t cmi_path =
     let open Out_channel in
     let serialized = to_serialized t in
-    let cmi_path = make_path t.path in
     try
       with_file ~binary:true cmi_path ~f:(fun oc ->
           serialized |> Bin_prot.Writer.to_bytes bin_writer_serialized |> output_bytes oc)
@@ -71,8 +69,7 @@ module Serialized = struct
 
 
   module Of_serialized = struct
-    let read_file path =
-      let cmi_path = make_path path in
+    let read_file cmi_path =
       try
         In_channel.with_file ~binary:true cmi_path ~f:(fun ic ->
             let%bind.Option file_len = In_channel.length ic |> Int.of_int64 in
