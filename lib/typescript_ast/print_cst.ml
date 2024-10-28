@@ -42,7 +42,7 @@ module Tree = Cst_shared.Tree
 
 let tree_of_list state node printer children =
   let region = !get_region node
-  and label = string_of_ts_node_type node in
+  and label = get_name node in
   Tree.of_list ~region state label printer children
 
 let tree_of_named_children state node printer =
@@ -57,7 +57,7 @@ let tree_of_children state node printer =
 
 let tree_of_list' prev_comments state node printer raw_children =
   let region = !get_region node
-  and label = string_of_ts_node_type node
+  and label = get_name node
   and f (comments, nodes) raw_child =
     match get_name raw_child with
     | "comment" -> raw_child :: comments, nodes
@@ -74,7 +74,7 @@ let tree_of_named_children' comments state node printer =
 
 let make_unary state root printer child =
   let region = !get_region root
-  and label = string_of_ts_node_type root in
+  and label = get_name root in
   Tree.make_unary ~region state label printer child
 
 let mk_child_opt = Tree.mk_child_opt
@@ -98,7 +98,7 @@ let mk_error_children node =
 
 let make_tree state node children =
   let region = !get_region node
-  and label = string_of_ts_node_type node in
+  and label = get_name node in
   Tree.make ~region state label (mk_error_children node @ children)
 
 let make_node' comments state node =
@@ -149,7 +149,7 @@ let print_missing_node state node = make_node state node
 
 let print_unexpected_node state node =
   let region = !get_region node
-  and label = string_of_ts_node_type node in
+  and label = get_name node in
   Tree.make_node ~region state ("UNKNOWN: " ^ label)
 
 (* Printing enclosed constructs *)
@@ -188,7 +188,7 @@ let print_parens state node printer = print_enclosed state node printer "(" ")"
 let match_rest state node print_default =
   match get_name node with
   (* Comments are ignored *)
-  | "comment" -> print_comment state node
+  | "comment" -> ()
   (* Errors *)
   | "ERROR" -> print_error_node state node
   | "MISSING" -> print_missing_node state node
@@ -981,7 +981,7 @@ and print_throw_statement state node =
 
 and print_empty_statement state node =
   let region = !get_region node
-  and label = string_of_ts_node_type node in
+  and label = get_name node in
   Tree.make ~region state label []
 
 (* Labeled statement *)
