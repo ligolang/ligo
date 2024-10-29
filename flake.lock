@@ -510,11 +510,11 @@
     "lltz": {
       "flake": false,
       "locked": {
-        "lastModified": 1726765905,
-        "narHash": "sha256-jXDJz2ROq6tA7l51pchz41po4NVzmDKMlIV4ohnrrWM=",
+        "lastModified": 1729268450,
+        "narHash": "sha256-b4MHvVnzB7uYTBGW5pEgSXoWPOtEWVKprJaUihFVbFk=",
         "owner": "trilitech",
         "repo": "lltz",
-        "rev": "2f217c1f1ec2ad5ee9963ec199dae256c229c448",
+        "rev": "8f32aa728b8aadf08b662d710717f2f1c2bc3ddd",
         "type": "github"
       },
       "original": {
