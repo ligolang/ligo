@@ -1,0 +1,20 @@
+namespace ComplexParam {
+  type storage = int;
+  type returnType = [list<operation>, storage];
+  type paramType = [list<int>, list<int>, [string, string]];
+
+  const sum_fold = ([result, i]: [int, int]): int => result + i;
+  const mult_fold = ([result, i]: [int, int]): int => result * i;
+
+  @entry
+  const complexmath = (param: paramType, _s: storage): returnType => {
+    const [list1, list2, str_tuple] = param;
+    const sum: int = List.fold(sum_fold, list1, 0);
+    const product: int = List.fold(mult_fold, list2, 1);
+    const [str1, str2] = str_tuple;
+    const string_diff: int = String.length(str2) - String.length(str1);
+    const newVal = (sum + product) * string_diff;
+    return [list([]), newVal];
+  }
+
+}

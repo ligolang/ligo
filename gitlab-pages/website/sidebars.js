@@ -182,6 +182,10 @@ const sidebars = {
       "testing/mutation-testing",
       "testing/michelson_testing"
     ],
+    "Compiling": [
+      "compiling/compiling",
+      "compiling/deploying",
+    ],
     "Advanced Topics": [
       "advanced/package-management",
       "tutorials/optimisation/optimisation",

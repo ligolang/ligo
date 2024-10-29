@@ -350,7 +350,7 @@ Everything at the top-level was executed.
 ## Compiling the contract
 
 Tezos runs contracts in the Michelson stack-based language, so you must compile your contract from LIGO to Michelson.
-The process also looks for errors in the LIGO code.
+The process also looks for errors in the LIGO code but it does not run the tests.
 
 Run this command to compile the contract:
 
