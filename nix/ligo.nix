@@ -9,7 +9,7 @@
   lltz,
   libiconv
 }: let
-  inherit (pkgs) darwin ocamlPackages python3Packages coq_8_13;
+  inherit (pkgs) darwin ocamlPackages python3Packages coq_8_13 cargo rustPlatform;
 in
   with ocamlPackages;
     buildDunePackage rec {
@@ -23,11 +23,21 @@ in
       postPatch = ''
         mkdir -p vendors/tezos-ligo
         cp -r ${tezos-ligo}/. vendors/tezos-ligo/
+        cd vendors/tezos-ligo/src/rust_deps
+        find . -type d -exec chmod u+w {} +
+        patchShebangs .
+        cd ../../../..
         mkdir -p vendors/grace
         cp -r ${grace}/. vendors/grace/
         mkdir -p vendors/lltz
         cp -r ${lltz}/. vendors/lltz/
       '';
+
+      # TODO: this is not ideal, remove it when unvendor Tezos
+      cargoRoot = "vendors/tezos-ligo/src/rust_deps";
+      cargoDeps = rustPlatform.importCargoLock {
+        lockFile = "${tezos-ligo}/src/rust_deps/Cargo.lock";
+      };
 
       nativeBuildInputs = [
         menhir
@@ -36,6 +46,8 @@ in
         crunch
         odoc
         python3Packages.jsonschema
+        cargo
+        rustPlatform.cargoSetupHook
       ];
 
       propagatedBuildInputs =
