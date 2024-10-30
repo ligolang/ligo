@@ -133,24 +133,28 @@ let print_unexpected_node state node =
 
 (* Printing enclosed constructs *)
 
-let print_enclosed ?comments state node printer opening closing =
+let print_enclosed ?(comments = []) state node printer opening closing =
+  let comments = comments @ prev_comments node in
   let sym_lbrace = first_child_named opening node
   and sym_rbrace = first_child_named closing node
   and clauses = collect_named_children node in
   let children =
-    (mk_child_res (make_sym ?comments) sym_lbrace :: mk_children_list printer clauses)
+    (mk_child_res (make_sym ~comments) sym_lbrace :: mk_children_list printer clauses)
     @ [ mk_child_res make_sym sym_rbrace ]
   in
   make_tree state node children
 
-(*let print_braces state node printer = print_enclosed state node printer "{" "}"*)
-
 let print_braces ?(comments = []) state node printer =
   print_enclosed ~comments state node printer "{" "}"
 
-let print_chevrons state node printer = print_enclosed state node printer "<" ">"
-let print_brackets state node printer = print_enclosed state node printer "[" "]"
-let print_parens state node printer = print_enclosed state node printer "(" ")"
+let print_chevrons ?(comments = []) state node printer =
+  print_enclosed ~comments state node printer "<" ">"
+
+let print_brackets ?(comments = []) state node printer =
+  print_enclosed ~comments state node printer "[" "]"
+
+let print_parens ?(comments = []) state node printer =
+  print_enclosed ~comments state node printer "(" ")"
 
 (* Concluding a pattern matching with a default printer. Dropping comments. *)
 
@@ -181,11 +185,10 @@ let rec print_program file map node =
   (* Making the output string *)
   Buffer.contents @@ Tree.to_buffer state
 
-(* Statements
+(* STATEMENTS
 
-   The JavaScript tree-sitter grammar has the non-terminals
-   "statement" and "declaration" be supertypes, that is, hidden
-   rules. *)
+   The JavaScript tree-sitter grammar has the non-terminal
+   "statement" be a supertype, that is, a hidden rule. *)
 
 and print_statements state node = tree_of_named_children state node print_statement
 
@@ -287,12 +290,13 @@ and print_export_statement ?(comments = []) state node =
   in
   make_tree state node children
 
-and print_namespace_export state node =
-  let sym_star = first_child_named "*" node
+and print_namespace_export ?(comments = []) state node =
+  let comments = comments @ prev_comments node
+  and sym_star = first_child_named "*" node
   and kwd_as = first_child_named "as" node in
   let module_export_name = next_sibling_res kwd_as in
   let children =
-    [ mk_child_res make_sym sym_star
+    [ mk_child_res (make_sym ~comments) sym_star
     ; mk_child_res make_kwd kwd_as
     ; mk_child_res print_module_export_name module_export_name
     ]
@@ -313,16 +317,17 @@ and mk_child_from_clause_opt node =
 
 and print_export_clause state node = print_braces state node print_export_specifier
 
-and print_module_export_name state node =
+and print_module_export_name ?(comments = []) state node =
   match get_name node with
-  | "identifier" -> print_identifier state node
-  | "string" -> print_string state node
+  | "identifier" -> print_identifier ~comments state node
+  | "string" -> print_string ~comments state node
   | _ -> match_rest state node print_unexpected_node
 
-and print_export_specifier state node =
+and print_export_specifier ?(comments = []) state node =
+  let comments = comments @ prev_comments node in
   let name_field = child_with_field "name" node in
   let children =
-    mk_child_res print_module_export_name name_field
+    mk_child_res (print_module_export_name ~comments) name_field
     ::
     (match child_with_field_opt "alias" node with
     | None -> []
@@ -478,8 +483,6 @@ and print_expressions ?(comments = []) state (node : ts_tree) =
 
 (* Statement blocks *)
 
-(*and print_statement_block state node = print_braces state node print_statement*)
-
 and print_statement_block ?(comments = []) state node =
   print_braces ~comments state node print_statement
 
@@ -499,11 +502,12 @@ and print_if_statement ?(comments = []) state node =
   in
   make_tree state node children
 
-and print_else_clause state node =
+and print_else_clause ?(comments = []) state node =
+  let comments = comments @ prev_comments node in
   let kwd_else = first_child_named "else" node in
   let statement = next_sibling_res kwd_else in
   let children =
-    [ mk_child_res make_kwd kwd_else; mk_child_res print_statement statement ]
+    [ mk_child_res (make_kwd ~comments) kwd_else; mk_child_res print_statement statement ]
   in
   make_tree state node children
 
@@ -811,9 +815,13 @@ and print_labeled_statement state node =
   in
   make_tree state node children
 
-(* DECLARATION *)
+(* DECLARATION
 
-and print_declaration state node =
+   The JavaScript tree-sitter grammar has the non-terminal
+   "declaration" be a supertype, that is, a hidden rule. *)
+
+and print_declaration ?(comments = []) state node =
+  let comments = comments @ prev_comments node in
   match get_name node with
   | "function_declaration" -> print_function_declaration state node
   | "generator_function_declaration" -> print_generator_function_declaration state node
@@ -824,7 +832,7 @@ and print_declaration state node =
   | "abstract_class_declaration" -> print_abstract_class_declaration state node
   | "module" -> print_module state node
   | "internal_module" -> print_internal_module state node
-  | "type_alias_declaration" -> print_type_alias_declaration state node
+  | "type_alias_declaration" -> print_type_alias_declaration ~comments state node
   | "enum_declaration" -> print_enum_declaration state node
   | "interface_declaration" -> print_interface_declaration state node
   | "import_alias" -> print_import_alias state node
@@ -1012,14 +1020,14 @@ and print_internal_module state node = print_module state node
 
 (* Type alias declaration *)
 
-and print_type_alias_declaration state node =
+and print_type_alias_declaration ?(comments = []) state node =
   let kwd_type = first_child_named "type" node
   and name_field = child_with_field "name" node
   and sym_equal = first_child_named "=" node
   and type_parameters_field = child_with_field_opt "type_parameters" node
   and value_field = child_with_field "value" node in
   let children =
-    [ mk_child_res make_kwd kwd_type
+    [ mk_child_res (make_kwd ~comments) kwd_type
     ; mk_child_res print_identifier name_field
     ; mk_child_res make_sym sym_equal
     ; mk_child_opt print_type_parameters type_parameters_field
@@ -1176,59 +1184,15 @@ and print_ambient_declaration state node =
    "expression" and "primary_expression" be supertypes, that is,
    hidden rules. Therefore we have to match all the RHS of those
    non-terminals in [print_expression]. *)
-(*
-and print_expression state node =
-  match get_name node with
-  (* "primary_expression" inlined: *)
-  | "subscript_expression" -> print_subscript_expression state node
-  | "member_expression" -> print_member_expression state node
-  | "parenthesized_expression" -> print_parenthesized_expression state node
-  | "identifier" -> print_identifier state node
-  | "undefined" -> make_kwd state node
-  | "this" -> make_kwd state node
-  | "super" -> make_kwd state node
-  | "number" -> print_number state node
-  | "string" -> print_string state node
-  | "template_string" -> print_template_string state node
-  | "regex" -> print_regex state node
-  | "true" -> make_kwd state node
-  | "false" -> make_kwd state node
-  | "null" -> make_kwd state node
-  | "object" -> print_object state node
-  | "array" -> print_array state node
-  | "function_expression" -> print_function_expression state node
-  | "arrow_function" -> print_arrow_function state node
-  | "generator_function" -> print_generator_function state node
-  | "class" -> print_class state node
-  | "meta_property" -> print_meta_property state node
-  | "call_expression" -> print_call_expression state node
-  | "non_null_expression" -> print_non_null_expression state node
-  (* Rest of "expression": *)
-  | "glimmer_template" -> print_glimmer_template state node
-  | "assignment_expression" -> print_assignment_expression state node
-  | "augmented_assignment_expression" -> print_augmented_assignment_expression state node
-  | "await_expression" -> print_await_expression state node
-  | "unary_expression" -> print_unary_expression state node
-  | "binary_expression" -> print_binary_expression state node
-  | "ternary_expression" -> print_ternary_expression state node
-  | "update_expression" -> print_update_expression state node
-  | "new_expression" -> print_new_expression state node
-  | "yield_expression" -> print_yield_expression state node
-  | "as_expression" -> print_as_expression state node
-  | "satisfies_expression" -> print_satisfies_expression state node
-  | "instantiation_expression" -> print_instantiation_expression state node
-  | "internal_module" -> print_internal_module state node
-  | "type_assertion" -> print_type_assertion state node
-  | _ -> match_rest state node print_unexpected_node
-*)
 
 and print_expression ?(comments = []) state (node : ts_tree) =
+  if not (List.is_empty comments) then Printf.eprintf "print_expression: Comments. (%S).\n%!" (get_name node);
   match get_name node with
   (* "primary_expression" inlined: *)
   | "subscript_expression" -> print_subscript_expression state node
   | "member_expression" -> print_member_expression state node
   | "parenthesized_expression" -> print_parenthesized_expression state node
-  | "identifier" -> print_identifier state node
+  | "identifier" -> print_identifier ~comments state node
   | "undefined" -> make_kwd state node
   | "this" -> make_kwd state node
   | "super" -> make_kwd state node
@@ -1254,7 +1218,7 @@ and print_expression ?(comments = []) state (node : ts_tree) =
   | "augmented_assignment_expression" -> print_augmented_assignment_expression state node
   | "await_expression" -> print_await_expression state node
   | "unary_expression" -> print_unary_expression state node
-  | "binary_expression" -> print_binary_expression state node
+  | "binary_expression" -> print_binary_expression ~comments state node
   | "ternary_expression" -> print_ternary_expression state node
   | "update_expression" -> print_update_expression state node
   | "new_expression" -> print_new_expression state node
@@ -1344,14 +1308,15 @@ and print_await_expression state node =
 
 (* Binary expression *)
 
-and print_binary_expression state node =
-  let left_field = child_with_field "left" node
+and print_binary_expression ?(comments = []) state node =
+  let comments = comments @ prev_comments node
+  and left_field = child_with_field "left" node
   and right_field = child_with_field "right" node
-  and operator = child_with_field "operator" node
-  and print_left state node =
+  and operator = child_with_field "operator" node in
+  let print_left state node =
     match get_name node with
-    | "private_property_identifier" -> print_identifier state node
-    | _ -> match_rest state node print_expression
+    | "private_property_identifier" -> print_identifier ~comments state node
+    | _ -> match_rest state node (print_expression ~comments)
   and print_bin_operator state node =
     match get_name node with
     | "&&" -> make_sym state node
@@ -1382,8 +1347,8 @@ and print_binary_expression state node =
     | _ -> match_rest state node print_unexpected_node
   in
   let children =
-    [ mk_child_res print_bin_operator operator
-    ; mk_child_res print_left left_field
+    [ mk_child_res print_left left_field
+    ; mk_child_res print_bin_operator operator
     ; mk_child_res print_expression right_field
     ]
   in
@@ -1577,20 +1542,20 @@ and print_member_expression state node =
 
 (* Parenthesised expression *)
 
-and print_parenthesized_expression state node =
+and print_parenthesized_expression ?(comments=[]) state node =
   let print state node =
     match get_name node with
     | "sequence_expression" -> print_sequence_expression state node
     | _ -> print_expression state node
   in
-  print_parens state node print
+  print_parens ~comments state node print
 
 (* Some literals *)
 
-and print_identifier state node = make_node state node
+and print_identifier ?comments state node = make_node ?comments state node
 and print_number ?comments state node = make_node ?comments state node
-and print_string state node = make_node state node
-and print_regex state node = make_node state node
+and print_string ?comments state node = make_node ?comments state node
+and print_regex ?comments state node = make_node ?comments state node
 
 (* Template strings *)
 
@@ -2043,9 +2008,10 @@ and print_parenthesized_type state node = print_parens state node print_type
 
 (* Predefined type *)
 
-and print_predefined_type state node =
+and print_predefined_type ?(comments = []) state node =
+  let comments = comments @ prev_comments node in
   match collect_children node with
-  | [] -> ()
+  | [] -> () (* Should not happen *)
   | child :: _ ->
     (* The tree-sitter parser for TypeScript has a bug: a child node
        "unique symbol" occurs repeated, for some mysterious
@@ -2059,16 +2025,16 @@ and print_predefined_type state node =
     *)
     let print state node =
       match get_name node with
-      | "any" -> make_kwd state node
-      | "number" -> make_kwd state node
-      | "boolean" -> make_kwd state node
-      | "string" -> make_kwd state node
-      | "symbol" -> make_kwd state node
-      | "unique symbol" -> make_kwd state node
-      | "void" -> make_kwd state node
-      | "unknown" -> make_kwd state node
-      | "never" -> make_kwd state node
-      | "object" -> make_kwd state node
+      | "any" -> make_kwd ~comments state node
+      | "number" -> make_kwd ~comments state node
+      | "boolean" -> make_kwd ~comments state node
+      | "string" -> make_kwd ~comments state node
+      | "symbol" -> make_kwd ~comments state node
+      | "unique symbol" -> make_kwd ~comments state node
+      | "void" -> make_kwd ~comments state node
+      | "unknown" -> make_kwd ~comments state node
+      | "never" -> make_kwd ~comments state node
+      | "object" -> make_kwd ~comments state node
       | _ -> match_rest state node print_unexpected_node
     in
     make_unary state node print child
