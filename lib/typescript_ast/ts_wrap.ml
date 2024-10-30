@@ -114,7 +114,7 @@ let parse_typescript_string (source_code : string) : ts_tree_ptr =
 (* Collating named/all children of a given node, except
    comment/error/missing nodes *)
 
-let collect ?(comments=false) select_child arity node =
+let collect ?(comments = false) select_child arity node =
   if is_null node
   then []
   else (
@@ -131,10 +131,10 @@ let collect ?(comments=false) select_child arity node =
     in
     fold [] (arity node))
 
-let collect_named_children ?(comments=false) (node : ts_tree) : ts_forest =
+let collect_named_children ?(comments = false) (node : ts_tree) : ts_forest =
   TS_fun.(collect ~comments ts_node_named_child ts_node_named_child_count node)
 
-let collect_children ?(comments=false) (node : ts_tree) : ts_forest =
+let collect_children ?(comments = false) (node : ts_tree) : ts_forest =
   TS_fun.(collect ~comments ts_node_child ts_node_child_count node)
 
 let collect_error_children (node : ts_tree) : ts_forest =
