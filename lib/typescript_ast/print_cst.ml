@@ -40,7 +40,7 @@ module Tree = Cst_shared.Tree
 
 (* Making trees and nodes with labels (name + location) *)
 
-let tree_of_list ?(comments=[]) state node printer raw_children =
+let tree_of_list ?(comments = []) state node printer raw_children =
   let region = !get_region node
   and label = get_name node
   and f (comments, nodes) raw_child =
@@ -53,7 +53,7 @@ let tree_of_list ?(comments=[]) state node printer raw_children =
   let _, children = List.fold_left ~f ~init:(comments, []) raw_children in
   Tree.make_tree ~region state label (List.rev children)
 
-let tree_of_named_children ?(comments=[]) state node printer =
+let tree_of_named_children ?(comments = []) state node printer =
   let raw_children = collect_named_children ~comments:true node in
   tree_of_list ~comments state node printer raw_children
 
@@ -88,7 +88,7 @@ let make_tree state node children =
 
 (* We shadow [make_node] above *)
 
-let make_node ?(comments=[]) state node =
+let make_node ?(comments = []) state node =
   let region = !get_region node in
   let lexeme = read_lexeme region in
   let comments = comments @ prev_comments node in
@@ -97,17 +97,17 @@ let make_node ?(comments=[]) state node =
   in
   make_tree state node children
 
-let make_kwd ?(comments=[]) state node =
+let make_kwd ?(comments = []) state node =
   let region = !get_region node in
   let root = read_lexeme region ^ " [keyword]" in
-  let comments = comments @ prev_comments node
-  in Tree.of_list ~region state root print_comment comments
+  let comments = comments @ prev_comments node in
+  Tree.of_list ~region state root print_comment comments
 
-let make_sym ?(comments=[]) state node =
+let make_sym ?(comments = []) state node =
   let region = !get_region node in
   let root = read_lexeme region in
-  let comments = comments @ prev_comments node
-  in Tree.of_list ~region state root print_comment comments
+  let comments = comments @ prev_comments node in
+  Tree.of_list ~region state root print_comment comments
 
 let mk_child_res print = function
   | Result.Ok child -> mk_child print child
@@ -145,7 +145,7 @@ let print_enclosed ?comments state node printer opening closing =
 
 (*let print_braces state node printer = print_enclosed state node printer "{" "}"*)
 
-let print_braces ?(comments=[]) state node printer =
+let print_braces ?(comments = []) state node printer =
   print_enclosed ~comments state node printer "{" "}"
 
 let print_chevrons state node printer = print_enclosed state node printer "<" ">"
@@ -189,7 +189,7 @@ let rec print_program file map node =
 
 and print_statements state node = tree_of_named_children state node print_statement
 
-and print_statement ?(comments=[]) state node =
+and print_statement ?(comments = []) state node =
   match get_name node with
   | "export_statement" -> print_export_statement ~comments state node
   | "import_statement" -> print_import_statement ~comments state node
@@ -229,7 +229,7 @@ and print_statement ?(comments=[]) state node =
 
 (* Export statement *)
 
-and print_export_statement ?(comments=[]) state node =
+and print_export_statement ?(comments = []) state node =
   let decorators = children_named "decorator" node
   and kwd_export = first_child_named_opt "export" node in
   let decorators = mk_children_list print_decorator decorators in
@@ -334,7 +334,7 @@ and print_export_specifier state node =
 
 (* Import statement *)
 
-and print_import_statement ?(comments=[]) state node =
+and print_import_statement ?(comments = []) state node =
   let kwd_import = first_child_named "import" node
   and kind_node =
     match first_child_named_opt "type" node with
@@ -452,7 +452,7 @@ and print_import_attribute state node =
 
 (* Debugger statement *)
 
-and print_debugger_statement ?(comments=[]) state node =
+and print_debugger_statement ?(comments = []) state node =
   let kwd_debugger = first_child_named "debugger" node in
   let children = [ mk_child_res (make_kwd ~comments) kwd_debugger ] in
   make_tree state node children
@@ -467,11 +467,11 @@ and print_debugger_statement ?(comments=[]) state node =
 
    See [print_expression]. *)
 
-and print_expression_statement ?(comments=[]) state node =
+and print_expression_statement ?(comments = []) state node =
   let child = named_child_ranked 0 node in
   make_unary_res state node (print_expressions ~comments) child
 
-and print_expressions ?(comments=[]) state (node: ts_tree) =
+and print_expressions ?(comments = []) state (node : ts_tree) =
   match get_name node with
   | "sequence_expression" -> print_sequence_expression ~comments state node
   | _ -> print_expression ~comments state node
@@ -480,12 +480,12 @@ and print_expressions ?(comments=[]) state (node: ts_tree) =
 
 (*and print_statement_block state node = print_braces state node print_statement*)
 
-and print_statement_block ?(comments=[]) state node =
+and print_statement_block ?(comments = []) state node =
   print_braces ~comments state node print_statement
 
 (* If statement *)
 
-and print_if_statement ?(comments=[]) state node =
+and print_if_statement ?(comments = []) state node =
   let kwd_if = first_child_named "if" node
   and condition_field = child_with_field "condition" node
   and consequence_field = child_with_field "consequence" node
@@ -1222,7 +1222,7 @@ and print_expression state node =
   | _ -> match_rest state node print_unexpected_node
 *)
 
-and print_expression ?(comments=[]) state (node: ts_tree) =
+and print_expression ?(comments = []) state (node : ts_tree) =
   match get_name node with
   (* "primary_expression" inlined: *)
   | "subscript_expression" -> print_subscript_expression state node
@@ -1594,7 +1594,7 @@ and print_regex state node = make_node state node
 
 (* Template strings *)
 
-and print_template_string ?(comments=[]) state node =
+and print_template_string ?(comments = []) state node =
   let print ?comments state node =
     match get_name node with
     | "string_fragment" -> make_node ?comments state node
@@ -1981,7 +1981,7 @@ and print_non_null_expression state node =
 
 (* Sequence expression *)
 
-and print_sequence_expression ?(comments=[]) state node =
+and print_sequence_expression ?(comments = []) state node =
   tree_of_named_children ~comments state node print_expression
 
 (* TYPE
