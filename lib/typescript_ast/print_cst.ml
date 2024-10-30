@@ -1186,7 +1186,8 @@ and print_ambient_declaration state node =
    non-terminals in [print_expression]. *)
 
 and print_expression ?(comments = []) state (node : ts_tree) =
-  if not (List.is_empty comments) then Printf.eprintf "print_expression: Comments. (%S).\n%!" (get_name node);
+  if not (List.is_empty comments)
+  then Printf.eprintf "print_expression: Comments. (%S).\n%!" (get_name node);
   match get_name node with
   (* "primary_expression" inlined: *)
   | "subscript_expression" -> print_subscript_expression state node
@@ -1542,7 +1543,7 @@ and print_member_expression state node =
 
 (* Parenthesised expression *)
 
-and print_parenthesized_expression ?(comments=[]) state node =
+and print_parenthesized_expression ?(comments = []) state node =
   let print state node =
     match get_name node with
     | "sequence_expression" -> print_sequence_expression state node
