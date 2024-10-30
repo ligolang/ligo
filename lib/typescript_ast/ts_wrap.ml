@@ -114,7 +114,7 @@ let parse_typescript_string (source_code : string) : ts_tree_ptr =
 (* Collating named/all children of a given node, except
    comment/error/missing nodes *)
 
-let collect select_child arity node =
+let collect ?(comments=false) select_child arity node =
   if is_null node
   then []
   else (
@@ -125,16 +125,17 @@ let collect select_child arity node =
         let index = UInt32.pred n in
         let child = select_child node index in
         match string_of_ts_node_type child with
+        | "comment" when comments -> fold (child :: acc) index
         | "comment" | "ERROR" | "MISSING" -> fold acc index
         | _ -> fold (child :: acc) index)
     in
     fold [] (arity node))
 
-let collect_named_children (node : ts_tree) : ts_forest =
-  TS_fun.(collect ts_node_named_child ts_node_named_child_count node)
+let collect_named_children ?(comments=false) (node : ts_tree) : ts_forest =
+  TS_fun.(collect ~comments ts_node_named_child ts_node_named_child_count node)
 
-let collect_children (node : ts_tree) : ts_forest =
-  TS_fun.(collect ts_node_child ts_node_child_count node)
+let collect_children ?(comments=false) (node : ts_tree) : ts_forest =
+  TS_fun.(collect ~comments ts_node_child ts_node_child_count node)
 
 let collect_error_children (node : ts_tree) : ts_forest =
   let children = collect_named_children node in
@@ -201,6 +202,14 @@ let prev_sibling_opt (node : ts_tree) : ts_tree option =
 
 let next_sibling = opt_to_res <@ next_sibling_opt
 let prev_sibling = opt_to_res <@ prev_sibling_opt
+
+let next_sibling_res = function
+  | Ok node -> opt_to_res @@ next_sibling_opt node
+  | Error e -> Error e
+
+let prev_sibling_res = function
+  | Ok node -> opt_to_res @@ prev_sibling_opt node
+  | Error e -> Error e
 
 let next_sibling_opt' (node : ts_tree) : (ts_forest * ts_tree) option =
   let rec aux comments node =
