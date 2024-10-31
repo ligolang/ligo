@@ -40,31 +40,32 @@ module Tree = Cst_shared.Tree
 
 (* Making trees and nodes with labels (name + location) *)
 
+let mk_child_opt = Tree.mk_child_opt
+let mk_child = Tree.mk_child
+let mk_children_list = Tree.mk_children_list
+
 let tree_of_list ?(comments = []) state node printer raw_children =
   let region = !get_region node
   and label = get_name node
-  and f (comments, nodes) raw_child =
-    match get_name raw_child with
-    | "comment" -> raw_child :: comments, nodes
-    | _ ->
-      let printer = printer ?comments:(Some (List.rev comments)) in
-      [], Tree.mk_child printer raw_child :: nodes
+  and f raw_child nodes = mk_child (printer ?comments:None) raw_child :: nodes in
+  let children =
+    match raw_children with
+    | [] -> []
+    | fst_raw_child :: siblings ->
+      let printer = printer ?comments:(Some comments) in
+      let fst_child = mk_child printer fst_raw_child in
+      fst_child :: List.fold_right ~f ~init:[] siblings
   in
-  let _, children = List.fold_left ~f ~init:(comments, []) raw_children in
-  Tree.make_tree ~region state label (List.rev children)
+  Tree.make_tree ~region state label children
 
 let tree_of_named_children ?(comments = []) state node printer =
-  let raw_children = collect_named_children ~comments:true node in
+  let raw_children = collect_named_children node in
   tree_of_list ~comments state node printer raw_children
 
 let make_unary state root printer child =
   let region = !get_region root
   and label = get_name root in
   Tree.make_unary ~region state label printer child
-
-let mk_child_opt = Tree.mk_child_opt
-let mk_child = Tree.mk_child
-let mk_children_list = Tree.mk_children_list
 
 let make_node state node =
   let region = !get_region node in
@@ -216,7 +217,7 @@ and print_statement ?(comments = []) state node =
   (* Inlining declarations cases (hidden rule) *)
   | "function_declaration" -> print_function_declaration state node
   | "generator_function_declaration" -> print_generator_function_declaration state node
-  | "class_declaration" -> print_class_declaration state node
+  | "class_declaration" -> print_class_declaration ~comments state node
   | "lexical_declaration" -> print_lexical_declaration state node
   | "variable_declaration" -> print_variable_declaration state node
   | "function_signature" -> print_function_signature state node
@@ -233,7 +234,8 @@ and print_statement ?(comments = []) state node =
 (* Export statement *)
 
 and print_export_statement ?(comments = []) state node =
-  let decorators = children_named "decorator" node
+  let comments = comments @ prev_comments node
+  and decorators = children_named "decorator" node
   and kwd_export = first_child_named_opt "export" node in
   let decorators = mk_children_list print_decorator decorators in
   let children =
@@ -340,7 +342,8 @@ and print_export_specifier ?(comments = []) state node =
 (* Import statement *)
 
 and print_import_statement ?(comments = []) state node =
-  let kwd_import = first_child_named "import" node
+  let comments = comments @ prev_comments node
+  and kwd_import = first_child_named "import" node
   and kind_node =
     match first_child_named_opt "type" node with
     | None -> first_child_named_opt "typeof" node
@@ -367,7 +370,8 @@ and print_import_statement ?(comments = []) state node =
   in
   make_tree state node children
 
-and print_import_clause state node =
+and print_import_clause ?(comments = []) state node =
+  let comments = comments @ prev_comments node in
   let print_rest state node =
     match get_name node with
     | "namespace_import" -> print_namespace_import state node
@@ -379,10 +383,10 @@ and print_import_clause state node =
     | None -> internal_error_child "\"first child\"" node
     | Some fst_child ->
       (match get_name fst_child with
-      | "namespace_import" -> [ mk_child print_namespace_import fst_child ]
-      | "named_imports" -> [ mk_child print_named_imports fst_child ]
+      | "namespace_import" -> [ mk_child (print_namespace_import ~comments) fst_child ]
+      | "named_imports" -> [ mk_child (print_named_imports ~comments) fst_child ]
       | "identifier" ->
-        mk_child print_identifier fst_child
+        mk_child (print_identifier ~comments) fst_child
         ::
         (match next_sibling_opt fst_child with
         | None -> []
@@ -394,49 +398,64 @@ and print_import_clause state node =
   in
   make_tree state node children
 
-and print_namespace_import state node =
-  let sym_star = first_child_named "*" node
+and print_namespace_import ?(comments = []) state node =
+  let comments = comments @ prev_comments node
+  and sym_star = first_child_named "*" node
   and kwd_as = first_child_named "as" node in
   let identifier = next_sibling_res kwd_as in
   let children =
-    [ mk_child_res make_sym sym_star
+    [ mk_child_res (make_sym ~comments) sym_star
     ; mk_child_res make_kwd kwd_as
     ; mk_child_res print_identifier identifier
     ]
   in
   make_tree state node children
 
-and print_named_imports state node = print_braces state node print_import_specifier
+and print_named_imports ?(comments = []) state node =
+  print_braces ~comments state node print_import_specifier
 
-and print_import_specifier state node =
+and print_import_specifier ?(comments = []) state node =
+  let comments = comments @ prev_comments node in
   let kind_node =
     match first_child_named_opt "type" node with
     | None -> first_child_named_opt "typeof" node
     | some -> some
+  in
+  let fst_child_comments, snd_child_comments =
+    match kind_node with
+    | None -> [], comments
+    | Some _ -> comments, []
   and name_field = child_with_field "name" node
   and alias_field = child_with_field_opt "alias" node in
   let children =
-    mk_child_opt make_kwd kind_node
+    mk_child_opt (make_kwd ~comments:fst_child_comments) kind_node
     ::
     (match alias_field with
-    | None -> [ mk_child_res print_identifier name_field ]
+    | None -> [ mk_child_res (print_identifier ~comments:snd_child_comments) name_field ]
     | Some alias_field ->
       let kwd_as = first_child_named "as" node in
-      [ mk_child_res print_module_export_name name_field
+      [ mk_child_res (print_module_export_name ~comments:snd_child_comments) name_field
       ; mk_child_res make_kwd kwd_as
       ; mk_child print_identifier alias_field
       ])
   in
   make_tree state node children
 
-and print_import_require_clause state node =
-  let identifier = child_ranked 0 node
-  and kwd_require = first_child_named "require" node
-  and source_field = child_with_field "source" node in
+and print_import_require_clause ?(comments = []) state node =
+  let comments = comments @ prev_comments node
+  and identifier = child_ranked 0 node
+  and sym_equal = first_child_named "=" node
+  and id_require = first_child_named "require" node
+  and sym_lparen = first_child_named "(" node
+  and source_field = child_with_field "source" node
+  and sym_rparen = first_child_named ")" node in
   let children =
-    [ mk_child_res print_identifier identifier
-    ; mk_child_res make_kwd kwd_require
+    [ mk_child_res (print_identifier ~comments) identifier
+    ; mk_child_res make_sym sym_equal
+    ; mk_child_res print_identifier id_require
+    ; mk_child_res make_sym sym_lparen
     ; mk_child_res print_string source_field
+    ; mk_child_res make_sym sym_rparen
     ]
   in
   make_tree state node children
@@ -473,7 +492,8 @@ and print_debugger_statement ?(comments = []) state node =
    See [print_expression]. *)
 
 and print_expression_statement ?(comments = []) state node =
-  let child = named_child_ranked 0 node in
+  let comments = comments @ prev_comments node
+  and child = named_child_ranked 0 node in
   make_unary_res state node (print_expressions ~comments) child
 
 and print_expressions ?(comments = []) state (node : ts_tree) =
@@ -825,7 +845,7 @@ and print_declaration ?(comments = []) state node =
   match get_name node with
   | "function_declaration" -> print_function_declaration state node
   | "generator_function_declaration" -> print_generator_function_declaration state node
-  | "class_declaration" -> print_class_declaration state node
+  | "class_declaration" -> print_class_declaration ~comments state node
   | "lexical_declaration" -> print_lexical_declaration state node
   | "variable_declaration" -> print_variable_declaration state node
   | "function_signature" -> print_function_signature state node
@@ -891,8 +911,9 @@ and print_generator_function_declaration state node =
 
 (* Class declaration (see [print_class] *)
 
-and print_class_declaration state node =
-  let decorators = children_named "decorator" node
+and print_class_declaration ?(comments = []) state node =
+  let comments = comments @ prev_comments node
+  and decorators = children_named "decorator" node
   and kwd_class = first_child_named "class" node
   and name_field = child_with_field "name" node
   and type_parameters_field = child_with_field_opt "type_parameters" node
@@ -900,7 +921,7 @@ and print_class_declaration state node =
   and body_field = child_with_field "body" node in
   let children =
     mk_children_list print_decorator decorators
-    @ [ mk_child_res make_kwd kwd_class
+    @ [ mk_child_res (make_kwd ~comments) kwd_class (* Comments on "class" *)
       ; mk_child_res print_type_identifier name_field
       ; mk_child_opt print_type_parameters type_parameters_field
       ; mk_child_opt print_class_heritage heritage_child
@@ -1021,7 +1042,8 @@ and print_internal_module state node = print_module state node
 (* Type alias declaration *)
 
 and print_type_alias_declaration ?(comments = []) state node =
-  let kwd_type = first_child_named "type" node
+  let comments = comments @ prev_comments node
+  and kwd_type = first_child_named "type" node
   and name_field = child_with_field "name" node
   and sym_equal = first_child_named "=" node
   and type_parameters_field = child_with_field_opt "type_parameters" node
@@ -1186,8 +1208,6 @@ and print_ambient_declaration state node =
    non-terminals in [print_expression]. *)
 
 and print_expression ?(comments = []) state (node : ts_tree) =
-  if not (List.is_empty comments)
-  then Printf.eprintf "print_expression: Comments. (%S).\n%!" (get_name node);
   match get_name node with
   (* "primary_expression" inlined: *)
   | "subscript_expression" -> print_subscript_expression state node
@@ -2001,7 +2021,7 @@ and print_flow_maybe_type state node =
 
 (* Type identifier *)
 
-and print_type_identifier state node = print_identifier state node
+and print_type_identifier ?comments state node = print_identifier ?comments state node
 
 (* Parenthesized type *)
 
@@ -2042,13 +2062,13 @@ and print_predefined_type ?(comments = []) state node =
 
 (* Nested type identifier *)
 
-and print_nested_type_identifier state node =
+and print_nested_type_identifier ?comments state node =
   let module_field = child_with_field "module" node
   and name_field = child_with_field "name" node
   and print_module_field state node =
     match get_name node with
-    | "identifier" -> print_identifier state node
-    | "nested_identifier" -> print_nested_identifier state node
+    | "identifier" -> print_identifier ?comments state node
+    | "nested_identifier" -> print_nested_identifier ?comments state node
     | _ -> match_rest state node print_unexpected_node
   in
   let children =
@@ -2060,13 +2080,13 @@ and print_nested_type_identifier state node =
 
 (* Nested identifier *)
 
-and print_nested_identifier state node =
+and print_nested_identifier ?comments state node =
   let object_field = child_with_field "object" node
   and property_field = child_with_field "property" node
   and print_object_field state node =
     match get_name node with
-    | "identifier" -> print_identifier state node
-    | "member_expression" -> print_nested_identifier state node
+    | "identifier" -> print_identifier ?comments state node
+    | "member_expression" -> print_nested_identifier ?comments state node
     | _ -> match_rest state node print_unexpected_node
   and print_property_field state node =
     match get_name node with
@@ -2082,13 +2102,14 @@ and print_nested_identifier state node =
 
 (* Generic type *)
 
-and print_generic_type state node =
+and print_generic_type ?(comments = []) state node =
+  let comments = comments @ prev_comments node in
   let name_field = child_with_field "name" node
   and type_arguments_field = child_with_field "type_arguments" node
   and print_name_field state node =
     match get_name node with
-    | "type_identifier" -> print_type_identifier state node
-    | "nested_type_identifier" -> print_nested_type_identifier state node
+    | "type_identifier" -> print_type_identifier ~comments state node
+    | "nested_type_identifier" -> print_nested_type_identifier ~comments state node
     | _ -> match_rest state node print_unexpected_node
   in
   let children =
