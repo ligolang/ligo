@@ -6,8 +6,9 @@
  (libraries
   tree_sitter
   tree_sitter_typescript
-  simple-utils
-  cst_shared ;; For printing the TS CST
+  simple-utils ;; For source regions ([Region])
+  cst_shared ;; For printing the TS CST ([print_cst])
+  lexing_shared ;; For metadata ([Wrap])
   hex
   zarith
   core

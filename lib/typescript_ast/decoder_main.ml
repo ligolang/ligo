@@ -16,7 +16,9 @@ module TS_fun = Tree_sitter.Api.Functions
 
 (* Parsing *)
 
-let parse file line_map (input : string) =
+let parse file line_map =
+  (* Loading the code as text *)
+  let input : string = Core.In_channel.read_all file in
   (* Parsing the code *)
   let tree : Ts_wrap.ts_tree_ptr = Ts_wrap.parse_typescript_string input in
   (* Getting ahold of the root *)
@@ -36,9 +38,8 @@ let cli_args : string array = Sys.get_argv ()
 let () =
   match Array.length cli_args with
   | 2 ->
-    (*parse @@ In_channel.read_all cli_args.(1)*)
     let file = cli_args.(1) in
     (match Loc_map.scan file with
-    | Ok line_map -> parse file line_map (In_channel.read_all file)
+    | Ok line_map -> parse file line_map
     | Error { region; value = _ } -> Printf.eprintf "Error: %s\n%!" (region#compact `Byte))
   | _ -> prerr_endline ("Usage: " ^ cli_args.(0) ^ " [file]")
