@@ -215,15 +215,15 @@ and print_statement ?(comments = []) state node =
   | "empty_statement" -> print_empty_statement state node
   | "labeled_statement" -> print_labeled_statement state node
   (* Inlining declarations cases (hidden rule) *)
-  | "function_declaration" -> print_function_declaration state node
+  | "function_declaration" -> print_function_declaration ~comments state node
   | "generator_function_declaration" -> print_generator_function_declaration state node
   | "class_declaration" -> print_class_declaration ~comments state node
-  | "lexical_declaration" -> print_lexical_declaration state node
-  | "variable_declaration" -> print_variable_declaration state node
+  | "lexical_declaration" -> print_lexical_declaration ~comments state node
+  | "variable_declaration" -> print_variable_declaration ~comments state node
   | "function_signature" -> print_function_signature state node
   | "abstract_class_declaration" -> print_abstract_class_declaration state node
   | "module" -> print_module state node
-  | "internal_module" -> print_internal_module state node
+  | "internal_module" -> print_internal_module ~comments state node
   | "type_alias_declaration" -> print_type_alias_declaration state node
   | "enum_declaration" -> print_enum_declaration state node
   | "interface_declaration" -> print_interface_declaration state node
@@ -846,12 +846,12 @@ and print_declaration ?(comments = []) state node =
   | "function_declaration" -> print_function_declaration state node
   | "generator_function_declaration" -> print_generator_function_declaration state node
   | "class_declaration" -> print_class_declaration ~comments state node
-  | "lexical_declaration" -> print_lexical_declaration state node
+  | "lexical_declaration" -> print_lexical_declaration ~comments state node
   | "variable_declaration" -> print_variable_declaration state node
   | "function_signature" -> print_function_signature state node
   | "abstract_class_declaration" -> print_abstract_class_declaration state node
   | "module" -> print_module state node
-  | "internal_module" -> print_internal_module state node
+  | "internal_module" -> print_internal_module ~comments state node
   | "type_alias_declaration" -> print_type_alias_declaration ~comments state node
   | "enum_declaration" -> print_enum_declaration state node
   | "interface_declaration" -> print_interface_declaration state node
@@ -861,8 +861,9 @@ and print_declaration ?(comments = []) state node =
 
 (* Function declaration (see [print_function_signature]) *)
 
-and print_function_declaration state node =
-  let kwd_async = first_child_named_opt "async" node
+and print_function_declaration ?(comments = []) state node =
+  let comments = comments @ prev_comments node
+  and kwd_async = first_child_named_opt "async" node
   and kwd_function = first_child_named "function" node
   and name_field = child_with_field "name" node
   (* "_call_signature" inlined: *)
@@ -871,9 +872,14 @@ and print_function_declaration state node =
   and return_type_field = child_with_field_opt "return_type" node
   (* "statement_block" *)
   and body_field = child_with_field "body" node in
+  let async_comments, function_comments =
+    match kwd_async with
+    | None -> [], comments
+    | Some _ -> comments, []
+  in
   let children =
-    [ mk_child_opt make_kwd kwd_async
-    ; mk_child_res make_kwd kwd_function
+    [ mk_child_opt (make_kwd ~comments:async_comments) kwd_async
+    ; mk_child_res (make_kwd ~comments:function_comments) kwd_function
     ; mk_child_res print_identifier name_field
     ; mk_child_opt print_type_parameters type_parameters_field
     ; mk_child_res print_formal_parameters parameters_field
@@ -932,13 +938,14 @@ and print_class_declaration ?(comments = []) state node =
 
 (* Lexical declaration (see [print_variable_declaration]) *)
 
-and print_lexical_declaration state node =
-  let kind_field = child_with_field "kind" node
-  and var_decls = children_named "variable_declarator" node
-  and print_set_or_const state node =
+and print_lexical_declaration ?(comments = []) state node =
+  let comments = comments @ prev_comments node
+  and kind_field = child_with_field "kind" node
+  and var_decls = children_named "variable_declarator" node in
+  let print_set_or_const state node =
     match get_name node with
-    | "let" -> make_kwd state node
-    | "const" -> make_kwd state node
+    | "let" -> make_kwd ~comments state node
+    | "const" -> make_kwd ~comments state node
     | _ -> match_rest state node print_unexpected_node
   in
   let children =
@@ -962,11 +969,13 @@ and print_variable_declarator state node =
 
 (* Variable declaration (see [print_lexical_declaration]) *)
 
-and print_variable_declaration state node =
-  let kwd_var = first_child_named "var" node
+and print_variable_declaration ?(comments = []) state node =
+  let comments = comments @ prev_comments node
+  and kwd_var = first_child_named "var" node
   and var_decls = children_named "variable_declarator" node in
   let children =
-    mk_child_res make_kwd kwd_var :: mk_children_list print_variable_declarator var_decls
+    mk_child_res (make_kwd ~comments) kwd_var
+    :: mk_children_list print_variable_declarator var_decls
   in
   make_tree state node children
 
@@ -1016,8 +1025,9 @@ and print_abstract_class_declaration state node =
 
 (* Module *)
 
-and print_module state node =
-  let kwd_namespace = first_child_named "namespace" node
+and print_module ?(comments = []) state node =
+  let comments = comments @ prev_comments node
+  and kwd_namespace = first_child_named "namespace" node
   and name_field = child_with_field "name" node
   and body_field = child_with_field_opt "body" node
   and print_name state node =
@@ -1028,7 +1038,7 @@ and print_module state node =
     | _ -> match_rest state node print_unexpected_node
   in
   let children =
-    [ mk_child_res make_kwd kwd_namespace
+    [ mk_child_res (make_kwd ~comments) kwd_namespace
     ; mk_child_res print_name name_field
     ; mk_child_opt print_statement_block body_field
     ]
@@ -1037,7 +1047,7 @@ and print_module state node =
 
 (* Internal module (a.k.a. namespaces) *)
 
-and print_internal_module state node = print_module state node
+and print_internal_module ?comments state node = print_module ?comments state node
 
 (* Type alias declaration *)
 
@@ -1247,7 +1257,7 @@ and print_expression ?(comments = []) state (node : ts_tree) =
   | "as_expression" -> print_as_expression state node
   | "satisfies_expression" -> print_satisfies_expression state node
   | "instantiation_expression" -> print_instantiation_expression state node
-  | "internal_module" -> print_internal_module state node
+  | "internal_module" -> print_internal_module ~comments state node
   | "type_assertion" -> print_type_assertion state node
   | _ -> match_rest state node print_unexpected_node
 
