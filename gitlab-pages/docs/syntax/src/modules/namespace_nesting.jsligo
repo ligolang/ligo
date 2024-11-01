@@ -8,3 +8,7 @@ namespace Euro {
     export let two: t = 2n;
   };
 };
+type euro_balance = Euro.t;
+
+const increment = (s: euro_balance): euro_balance =>
+  Euro.add(s, Euro.Coin.one);

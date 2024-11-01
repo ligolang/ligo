@@ -10,7 +10,7 @@ module Euro =
         let two : t = 2n
       end
   end
-type storage = Euro.t
+type euro_balance = Euro.t
 
-let increment (s : storage) : storage =
+let increment (s : euro_balance) : euro_balance =
   Euro.add (s, Euro.Coin.one)

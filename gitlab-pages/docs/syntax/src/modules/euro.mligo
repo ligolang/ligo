@@ -1,3 +1,5 @@
+(* This is euro.mligo *)
+
 module Euro =
   struct
     type t = nat
@@ -5,8 +7,7 @@ module Euro =
     let one : t = 1n
     let two : t = 2n
   end
+type euro_balance = Euro.t
 
-type storage = Euro.t
-
-let tip (s : storage) : storage =
+let add_tip (s : euro_balance) : euro_balance =
   Euro.add (s, Euro.one)

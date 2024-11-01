@@ -31,6 +31,14 @@ const sidebars = {
       "comments/comments",
       "syntax/variables",
       {
+        "type": "doc",
+        "label": "Modules",
+        "customProps": {
+          "jsLigoName": "Namespaces",
+        },
+        "id": "syntax/modules",
+      },
+      {
         "type": "category",
         "label": "Functions",
         "items": [
@@ -50,21 +58,6 @@ const sidebars = {
           "imperative/switches",
           "imperative/exceptions",
         ],
-      },
-      {
-        "type": "category",
-        "label": "Modules",
-        "customProps": {
-          "jsLigoName": "Namespaces",
-        },
-        "items": [
-          "modules/declaring",
-          "modules/accessing",
-          "modules/nesting",
-          "modules/aliasing",
-          "modules/importing",
-          "modules/including"
-        ]
       },
       {
         "type": "category",
