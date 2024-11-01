@@ -9,31 +9,6 @@ open Ts_wrap
 let get_region : (ts_tree -> Region.t) ref =
   ref (fun _ -> failwith "Internal error: Print_cst.get_region")
 
-(* Input channel for reading lexemes *)
-
-let in_channel : In_channel.t option ref = ref None
-
-let close_input () =
-  match !in_channel with
-  | None -> ()
-  | Some channel -> In_channel.close channel
-
-(* Reading in the source the text at a given region (expecting a
-   lexeme) *)
-
-let read_lexeme region : string =
-  let start_pos, stop_pos = region#byte_pos in
-  let start_cnum = start_pos.Lexing.pos_cnum
-  and stop_cnum = stop_pos.Lexing.pos_cnum in
-  let len = stop_cnum - start_cnum in
-  let buf = Bytes.create len in
-  match !in_channel with
-  | None -> ""
-  | Some in_chan ->
-    In_channel.seek in_chan (Int64.of_int_exn start_cnum);
-    let (_ : int) = In_channel.input in_chan ~buf ~pos:0 ~len (* 0 is EOF *) in
-    Bytes.to_string buf
-
 (* To print the AST in ASCII art *)
 
 module Tree = Cst_shared.Tree
@@ -69,7 +44,7 @@ let make_unary state root printer child =
 
 let make_node state node =
   let region = !get_region node in
-  let lexeme = read_lexeme region in
+  let lexeme = Lexeme.read region in
   make_unary state node Tree.make_node lexeme
 
 let print_comment state node = make_node state node
@@ -91,7 +66,7 @@ let make_tree state node children =
 
 let make_node ?(comments = []) state node =
   let region = !get_region node in
-  let lexeme = read_lexeme region in
+  let lexeme = Lexeme.read region in
   let comments = comments @ prev_comments node in
   let children =
     mk_children_list print_comment comments @ [ mk_child Tree.make_node lexeme ]
@@ -100,13 +75,13 @@ let make_node ?(comments = []) state node =
 
 let make_kwd ?(comments = []) state node =
   let region = !get_region node in
-  let root = read_lexeme region ^ " [keyword]" in
+  let root = Lexeme.read region ^ " [keyword]" in
   let comments = comments @ prev_comments node in
   Tree.of_list ~region state root print_comment comments
 
 let make_sym ?(comments = []) state node =
   let region = !get_region node in
-  let root = read_lexeme region in
+  let root = Lexeme.read region in
   let comments = comments @ prev_comments node in
   Tree.of_list ~region state root print_comment comments
 
@@ -173,7 +148,7 @@ let match_rest state node print_default =
 
 let rec print_program file map node =
   (* Opening a read channel for lexemes *)
-  let () = in_channel := Some (In_channel.create file) in
+  let () = Lexeme.open_input ~file in
   (* Setting up the extracting of source regions *)
   let () = get_region := Ts_wrap.get_region file map in
   (* Empty state for building the AST *)
@@ -182,7 +157,7 @@ let rec print_program file map node =
   (* Decoding the CST into an AST in [state] *)
   let () = print_statements state node in
   (* Closing the input channel for reading lexemes *)
-  let () = close_input () in
+  let () = Lexeme.close_input () in
   (* Making the output string *)
   Buffer.contents @@ Tree.to_buffer state
 
