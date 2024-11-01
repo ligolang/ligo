@@ -23,10 +23,10 @@ let parse file line_map =
   let tree : Ts_wrap.ts_tree_ptr = Ts_wrap.parse_typescript_string input in
   (* Getting ahold of the root *)
   let program_node : Ts_wrap.ts_tree = TS_fun.ts_tree_root_node tree in
-  (* Printing the tree *)
+  (* Printing the tree from the root *)
   let cst : string = Print_cst.print_program file line_map program_node in
   Printf.printf "%s%!" cst;
-  (* Releasing the memory of the tree *)
+  (* Releasing the memory allocated to the tree *)
   TS_fun.ts_tree_delete tree
 
 (* Reading the input TypeScript, parsing and printing the AST *)
