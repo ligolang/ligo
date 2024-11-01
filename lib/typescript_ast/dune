@@ -2,12 +2,12 @@
 
 (library
  (name typescript_ast)
- (modules ast ts_wrap print_cst loc_map decoder)
+ (modules ast ts_wrap print_cst loc_map lexeme decoder)
  (libraries
   tree_sitter
   tree_sitter_typescript
   simple-utils ;; For source regions ([Region])
-  cst_shared ;; For printing the TS CST ([print_cst])
+  cst_shared ;; For printing the TS CST ([Print_cst])
   lexing_shared ;; For metadata ([Wrap])
   hex
   zarith
@@ -17,9 +17,9 @@
 ;; Decoder
 
 (executable
- (name decoder_main)
+ (name print_cst_main)
  (libraries typescript_ast)
- (modules decoder_main))
+ (modules print_cst_main))
 
 ;; Local build of a standalone parser for node-types.json
 
