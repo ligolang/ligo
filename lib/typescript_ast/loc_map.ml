@@ -9,10 +9,9 @@ type t = pos_bol Int.Map.t (* From line numbers to beginning-of-line offset *)
 
 let scan (file : string) : (t, string Region.reg) Result.t =
   try
-    let in_chan = In_channel.create file in
-    let init_map : pos_bol Int.Map.t = Int.Map.empty in
-    let init_map = Map.set init_map ~key:1 ~data:0 in
-    let f (lnum, bol, map) line =
+    let in_chan = In_channel.create file
+    and init_map : t = Map.set Int.Map.empty ~key:1 ~data:0
+    and f (lnum, bol, map) line =
       let bol = bol + String.length line + 1 in
       lnum + 1, bol, Map.set map ~key:lnum ~data:bol
     in

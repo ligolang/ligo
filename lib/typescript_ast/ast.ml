@@ -13,26 +13,9 @@
 
 type 'a ne_list = 'a Nonempty_list.t
 
-(* METADATA *)
+module Wrap = Lexing_shared.Wrap
 
-(** Source locations (TEMPORARY) *)
-type line = int (* > 0 *)
-
-type column = int (* > 0 *)
-type location = line * column
-type start = location
-type stop = location
-type range = start * stop
-
-(** Comments *)
-type comment = string * range
-
-(** Data and metadata *)
-type 'a wrap =
-  { data : 'a
-  ; range : range (* metadata *)
-  ; comments : comment list (* metadata *)
-  }
+type 'a wrap = 'a Wrap.t
 
 (** Literals *)
 type keyword = string wrap
