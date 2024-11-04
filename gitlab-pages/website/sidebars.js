@@ -28,7 +28,7 @@ const sidebars = {
       "tutorials/start-a-project-from-a-template"
     ],
     "Syntax": [
-      "comments/comments",
+      "syntax/comments",
       "syntax/variables",
       {
         "type": "doc",
