@@ -7,6 +7,9 @@ open Ligo_prim
 open Ast_core
 open Caml_core
 
+(* TODO: put this somewhere else *)
+let ( let@@ ) f x = f x
+
 (* TODO: error recovery *)
 (* TODO: non existential GADT's and FCM could be supported *)
 (* TODO: a lot of existential could also be supported *)
@@ -17,6 +20,8 @@ open Caml_core
 (* TODO: this pass mostly shrinksn the OCaml tree *)
 module Context : sig
   (* TODO: improve this docs *)
+  (* TODO: clean this module especially about errors *)
+  (* TODO: the following comment is false *)
   (* This context relies on mutation to track locations
     as long as the context is not captured and leaked, this can be
     seen as an implementation of the reader monad.
@@ -30,6 +35,7 @@ module Context : sig
   val loc : context -> Location.t
 
   (* errors *)
+  val try_guard : context -> on_error:(error -> 'a) -> (unit -> 'a) -> 'a
   val error_unexpected_typed_tree : context -> 'a
   val error_let_and_not_supported : context -> 'a
   val error_type_and_not_supported : context -> 'a
@@ -58,137 +64,112 @@ module Context : sig
 
   (* external *)
   (* TODO: stop using exn directly here *)
-  val run : (context -> 'a) -> ('a, exn) result
+  val run : (context -> 'a) -> ('a * error list, error) result
 end = struct
-  type context = Location.t
+  type context =
+    { loc : Location.t
+    ; errors : error list ref
+    }
+
   type t = context
 
+  exception Context_error of error
+
   let enter_region ~loc ctx =
-    let (_ : Location.t) = ctx in
+    (* TODO: add per region try with? *)
+    let { loc = _; errors } = ctx in
+    { loc; errors }
+
+
+  let loc ctx =
+    let { loc; errors = _ } = ctx in
     loc
 
 
   (* TODO: this function is bad *)
 
-  let loc ctx = ctx
+  let try_guard ctx ~on_error f =
+    (* TODO; *)
+    try f () with
+    | Context_error error ->
+      let { loc = _; errors } = ctx in
+      errors := error :: !errors;
+      on_error error
+    | exn ->
+      let { loc; errors } = ctx in
+      let tag = E_unexpected_error exn in
+      let error = { err_tag = tag; err_loc = loc } in
+      errors := error :: !errors;
+      on_error error
 
-  let error_unexpected_typed_tree ctx =
-    failwith @@ Format.asprintf "unexpected typed tree at %a" Location.pp ctx
+
+  let error ctx tag =
+    let { loc; errors } = ctx in
+    let error = { err_tag = tag; err_loc = loc } in
+    raise @@ Context_error error
 
 
-  let error_let_and_not_supported ctx =
-    failwith @@ Format.asprintf "let and is not supported at %a" Location.pp ctx
-
-
-  let error_type_and_not_supported ctx =
-    failwith @@ Format.asprintf "type and is not supported at %a" Location.pp ctx
-
+  let error_unexpected_typed_tree ctx = error ctx @@ E_unexpected_typed_tree
+  let error_let_and_not_supported ctx = error ctx @@ E_let_and_not_supported
+  let error_type_and_not_supported ctx = error ctx @@ E_type_and_not_supported
 
   let error_labelled_parameters_not_supported ctx =
-    failwith
-    @@ Format.asprintf "labelled parameters are not supported at %a" Location.pp ctx
+    error ctx @@ E_labelled_parameters_not_supported
 
 
   let error_optional_parameters_not_supported ctx =
-    failwith
-    @@ Format.asprintf "optional parameters are not supported at %a" Location.pp ctx
+    error ctx @@ E_optional_parameters_not_supported
 
 
-  let error_poly_vars_not_supported ctx =
-    failwith
-    @@ Format.asprintf "polymorphic variants are not supported at %a" Location.pp ctx
-
-
-  let error_fcm_not_supported ctx =
-    failwith
-    @@ Format.asprintf "first-class modules are not supported at %a" Location.pp ctx
-
-
-  let error_objects_not_supported ctx =
-    failwith
-    @@ Format.asprintf "classes and objects are not supported at %a" Location.pp ctx
-
-
-  let error_partial_match_not_supported ctx =
-    failwith
-    @@ Format.asprintf "partial pattern matching is not supported at %a" Location.pp ctx
-
-
-  let error_exceptions_not_supported ctx =
-    failwith @@ Format.asprintf "exceptions are not supported at %a" Location.pp ctx
-
+  let error_poly_vars_not_supported ctx = error ctx @@ E_poly_vars_not_supported
+  let error_fcm_not_supported ctx = error ctx @@ E_fcm_not_supported
+  let error_objects_not_supported ctx = error ctx @@ E_objects_not_supported
+  let error_partial_match_not_supported ctx = error ctx @@ E_partial_match_not_supported
+  let error_exceptions_not_supported ctx = error ctx @@ E_exceptions_not_supported
 
   let error_extensible_variants_not_supported ctx =
-    failwith
-    @@ Format.asprintf "extensible variants are not supported at %a" Location.pp ctx
+    error ctx @@ E_extensible_variants_not_supported
 
 
-  let error_mutation_not_supported ctx =
-    failwith @@ Format.asprintf "mutation is not supported at %a" Location.pp ctx
-
-
-  let error_array_not_supported ctx =
-    failwith @@ Format.asprintf "array's are not supported at %a" Location.pp ctx
-
-
-  let error_while_not_supported ctx =
-    failwith @@ Format.asprintf "while loops are not supported at %a" Location.pp ctx
-
-
-  let error_for_not_supported ctx =
-    failwith @@ Format.asprintf "for loops are not supported at %a" Location.pp ctx
-
-
-  let error_refutation_not_supported ctx =
-    failwith @@ Format.asprintf "refutation's are not supported at %a" Location.pp ctx
-
-
-  let error_rec_modules_not_supported ctx =
-    failwith
-    @@ Format.asprintf "recursive modules are not supported at %a" Location.pp ctx
-
-
-  let error_lazy_not_supported ctx =
-    failwith @@ Format.asprintf "lazy values are not supported at %a" Location.pp ctx
-
-
-  let error_abstract_types_not_supported ctx =
-    failwith
-    @@ Format.asprintf "abstract types are not supported YET at %a" Location.pp ctx
-
+  let error_mutation_not_supported ctx = error ctx @@ E_mutation_not_supported
+  let error_array_not_supported ctx = error ctx @@ E_array_not_supported
+  let error_while_not_supported ctx = error ctx @@ E_while_not_supported
+  let error_for_not_supported ctx = error ctx @@ E_for_not_supported
+  let error_refutation_not_supported ctx = error ctx @@ E_refutation_not_supported
+  let error_rec_modules_not_supported ctx = error ctx @@ E_rec_modules_not_supported
+  let error_lazy_not_supported ctx = error ctx @@ E_lazy_not_supported
+  let error_abstract_types_not_supported ctx = error ctx @@ E_abstract_types_not_supported
 
   let error_abstract_module_types_not_supported ctx =
-    failwith
-    @@ Format.asprintf "abstract module types are not supported at %a" Location.pp ctx
+    error ctx @@ E_abstract_module_types_not_supported
 
 
   let error_modules_without_names_not_supported ctx =
-    failwith
-    @@ Format.asprintf "modules without names not supported at %a" Location.pp ctx
+    error ctx @@ E_modules_without_names_not_supported
 
 
   let error_recursive_bindings_must_be_a_function ctx =
-    failwith
-    @@ Format.asprintf "recursive bindings must be a function at %a" Location.pp ctx
+    error ctx @@ E_recursive_bindings_must_be_a_function
 
 
-  let error_unimplemented ctx =
-    failwith @@ Format.asprintf "unimplemented at %a" Location.pp ctx
-
-
-  let error_unsupported ctx =
-    failwith @@ Format.asprintf "unsupported at %a" Location.pp ctx
-
-
-  let error_unreachable ctx =
-    failwith @@ Format.asprintf "unreachable at %a" Location.pp ctx
-
+  let error_unimplemented ctx = error ctx @@ E_unimplemented
+  let error_unsupported ctx = error ctx @@ E_unsupported
+  let error_unreachable ctx = error ctx @@ E_unreachable
 
   let run k =
     (* TODO: better location here? *)
-    let ctx = Location.dummy in
-    try Ok (k ctx) with
-    | exn -> Error exn
+    let errors = ref [] in
+    let ctx = { loc = Location.dummy; errors } in
+    try
+      let value = k ctx in
+      let errors = !errors in
+      Ok (value, errors)
+    with
+    | exn ->
+      (* TODO: location here *)
+      (* TODO: this is unexpected error *)
+      let tag = E_unexpected_error exn in
+      Error { err_tag = tag; err_loc = Location.dummy }
 end
 
 (* TODO: check all assert and failwith *)
@@ -549,6 +530,11 @@ let rec extract_pat : type a. _ -> a general_pattern -> pat =
   let { pat_desc; pat_loc; pat_extra; pat_type; pat_env; pat_attributes } = pat in
   let loc = extract_loc ~loc:pat_loc in
   let ctx = enter_region ~loc ctx in
+  let on_error exn =
+    let type_ = type_error loc in
+    pat_wrap loc type_ @@ P_error exn
+  in
+  let@@ () = try_guard ctx ~on_error in
   assert (List.is_empty pat_attributes);
   let () =
     List.iter pat_extra ~f:(fun (pat_extra, _loc, pat_extra_attributes) ->
@@ -613,6 +599,7 @@ let var_pat_of_pat ctx pat =
   | P_tuple _ -> error_unsupported ctx
   | P_record _ -> error_unsupported ctx
   | P_variant _ -> error_unsupported ctx
+  | P_error error -> var_pat_error error
 
 
 let signature_of_sig_expr ctx sig_expr =
@@ -626,6 +613,11 @@ let rec extract_expr ctx expr =
   let { exp_desc; exp_loc; exp_extra; exp_type; exp_env; exp_attributes } = expr in
   let loc = extract_loc ~loc:exp_loc in
   let ctx = enter_region ~loc ctx in
+  let on_error error =
+    let type_ = type_error loc in
+    expr_wrap loc type_ @@ E_error error
+  in
+  let@@ () = try_guard ctx ~on_error in
   let () =
     List.iter exp_extra ~f:(fun (exp_extra, _loc, exp_extra_attributes) ->
         extract_expr_extra ctx exp_extra)
@@ -733,7 +725,7 @@ let rec extract_expr ctx expr =
     expr_wrap loc type_ @@ E_let_module (ident, md_body, body)
   | Texp_letexception (_, _) -> error_exceptions_not_supported ctx
   | Texp_assert _ -> error_unimplemented ctx
-  | Texp_lazy _ -> error_unsupported ctx
+  | Texp_lazy _ -> error_lazy_not_supported ctx
   | Texp_object (_, _) -> error_objects_not_supported ctx
   | Texp_pack _ -> error_fcm_not_supported ctx
   | Texp_letop _ ->
@@ -974,6 +966,8 @@ and extract_stri ctx stri =
   let { str_desc; str_loc; str_env = _ } = stri in
   let loc = extract_loc ~loc:str_loc in
   let ctx = enter_region ~loc ctx in
+  let on_error error = decl_wrap loc @@ D_error error in
+  let@@ () = try_guard ctx ~on_error in
   match str_desc with
   | Tstr_eval _ -> error_unimplemented ctx
   | Tstr_value (rec_flag, bindings) -> extract_str_let ctx rec_flag bindings
@@ -984,10 +978,8 @@ and extract_stri ctx stri =
   | Tstr_type (Recursive, _) ->
     (* TODO: priority *)
     error_unimplemented ctx
-  | Tstr_typext _ ->
-    (* TODO: this is not about exceptions *)
-    error_exceptions_not_supported ctx
-  | Tstr_exception _ -> error_unsupported ctx
+  | Tstr_typext _ -> error_extensible_variants_not_supported ctx
+  | Tstr_exception _ -> error_exceptions_not_supported ctx
   | Tstr_module mb -> extract_module_binding ctx mb
   | Tstr_recmodule _ -> error_rec_modules_not_supported ctx
   | Tstr_modtype decl ->
@@ -1055,6 +1047,8 @@ and extract_sigi ctx sigi =
   let { sig_desc; sig_env = _; sig_loc } = sigi in
   let loc = extract_loc ~loc:sig_loc in
   let ctx = enter_region ctx ~loc in
+  let on_error error = sig_item_wrap loc @@ S_error error in
+  let@@ () = try_guard ctx ~on_error in
   match sig_desc with
   | Tsig_value binding -> extract_sig_value ctx binding
   | Tsig_type (rec_flag, bindings) -> extract_sig_type ctx rec_flag bindings

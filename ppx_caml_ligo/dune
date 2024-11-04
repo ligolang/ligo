@@ -2,6 +2,6 @@
  (name ppx_caml_ligo)
  (modules Ppx_caml_ligo)
  (kind ppx_rewriter)
- (libraries ppxlib)
+ (libraries ppxlib ligo.caml_extraction)
  (preprocess
   (pps ppxlib.metaquot)))

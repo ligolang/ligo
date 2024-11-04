@@ -8,7 +8,7 @@ type data =
 type storage = int * data
 type return = operation list * storage
 
-(* let[@entry] set new_storage (_storage : storage) : return = [], new_storage *)
+let[@entry] set new_storage (_storage : storage) : return = [], new_storage
 
 let[@entry] next () storage : return =
   let n, data = storage in

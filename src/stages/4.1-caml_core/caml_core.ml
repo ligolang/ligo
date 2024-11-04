@@ -3,6 +3,39 @@ open Asttypes
 open Ligo_prim
 open Ast_core
 
+type error =
+  { err_tag : error_tag
+  ; err_loc : Location.t
+  }
+
+and error_tag =
+  | E_unexpected_typed_tree
+  | E_let_and_not_supported
+  | E_type_and_not_supported
+  | E_labelled_parameters_not_supported
+  | E_optional_parameters_not_supported
+  | E_poly_vars_not_supported
+  | E_fcm_not_supported
+  | E_objects_not_supported
+  | E_partial_match_not_supported
+  | E_exceptions_not_supported
+  | E_extensible_variants_not_supported
+  | E_mutation_not_supported
+  | E_array_not_supported
+  | E_while_not_supported
+  | E_for_not_supported
+  | E_refutation_not_supported
+  | E_rec_modules_not_supported
+  | E_lazy_not_supported
+  | E_abstract_types_not_supported
+  | E_abstract_module_types_not_supported
+  | E_modules_without_names_not_supported
+  | E_recursive_bindings_must_be_a_function
+  | E_unimplemented
+  | E_unsupported
+  | E_unreachable
+  | E_unexpected_error of exn
+
 (* TODO: explain, this id comes from OCaml  *)
 type var_id = int
 
@@ -66,6 +99,7 @@ and pat_desc =
   | P_tuple of pat list
   | P_record of (Label.t * pat) list
   | P_variant of (Label.t * pat)
+  | P_error of error
 
 type expr =
   { expr_desc : expr_desc
@@ -92,6 +126,7 @@ and expr_desc =
   (* TODO: label on record? *)
   | E_record of (Label.t * expr) list
   | E_field of expr * Label.t
+  | E_error of error
 
 and mod_expr =
   { mod_expr_desc : mod_expr_desc
@@ -118,6 +153,7 @@ and decl_desc =
   (* TODO: why arity here? *)
   | D_type_predef of (Ident.t * Literal_types.t * int)
   | D_type_unsupported of Ident.t
+  | D_error of error
 
 and sig_expr =
   { sig_expr_desc : sig_expr_desc
@@ -138,6 +174,7 @@ and sig_item_desc =
   | S_type of (Ident.t * type_decl)
   | S_module of (Ident.t * sig_item list)
   | S_module_type of (Ident.t * sig_item list)
+  | S_error of error
 
 type program = decl list
 
@@ -158,3 +195,13 @@ let mod_expr_wrap loc desc = { mod_expr_desc = desc; mod_expr_loc = loc }
 let decl_wrap loc desc = { decl_desc = desc; decl_loc = loc }
 let sig_expr_wrap loc desc = { sig_expr_desc = desc; sig_expr_loc = loc }
 let sig_item_wrap loc desc = { sig_item_desc = desc; sig_item_loc = loc }
+
+(* TODO: this is not ideal *)
+let type_error loc = type_wrap loc @@ T_tuple []
+
+(* TODO: this is not ideal *)
+let var_pat_error error =
+  (* TODO: this is not ideal *)
+  let { err_tag; err_loc } = error in
+  let ident = Ident.create_local "[[error]]" in
+  { var_pat_desc = ident; var_pat_type = type_error err_loc; var_pat_loc = err_loc }

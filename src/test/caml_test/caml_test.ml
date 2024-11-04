@@ -15,10 +15,11 @@ end
 
 module Ligo = struct
   let compile_str str =
-    let* str =
+    let* str, errors =
       let open Caml_extraction in
       Context.run @@ fun ctx -> extract_str ctx str
     in
+    assert (List.is_empty errors);
     let open Caml_solving in
     Context.run
     @@ fun ctx ->
@@ -355,7 +356,7 @@ let main () =
         X.set
 
 
-      let next () (storage : storage) : return =
+      let[@entry] next () (storage : storage) : return =
         let storage =
           match storage with
           | A -> B

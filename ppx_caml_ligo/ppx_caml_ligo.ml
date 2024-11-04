@@ -1,4 +1,5 @@
 open Ppxlib
+open Ocaml_common
 
 let stdlib ~loc =
   [%str
@@ -79,19 +80,107 @@ let stdlib ~loc =
     type chest [@@ligo.internal.predef]
     type chest_key [@@ligo.internal.predef]]
 
+let show_error error =
+  let open Caml_core in
+  match error with
+  | E_unexpected_typed_tree -> "unexpected typed tree"
+  | E_let_and_not_supported -> "let and is not supported"
+  | E_type_and_not_supported -> "type and is not supported"
+  | E_labelled_parameters_not_supported -> "labelled parameters are not supported"
+  | E_optional_parameters_not_supported -> "optional parameters are not supported"
+  | E_poly_vars_not_supported -> "polymorphic variants are not supported"
+  | E_fcm_not_supported -> "first-class modules are not supported"
+  | E_objects_not_supported -> "classes and objects are not supported"
+  | E_partial_match_not_supported -> "partial pattern matching is not supported"
+  | E_exceptions_not_supported -> "exceptions are not supported"
+  | E_extensible_variants_not_supported -> "extensible variants are not supported"
+  | E_mutation_not_supported -> "mutation is not supported"
+  | E_array_not_supported -> "array's are not supported"
+  | E_while_not_supported -> "while loops are not supported"
+  | E_for_not_supported -> "for loops are not supported"
+  | E_refutation_not_supported -> "refutation's are not supported"
+  | E_rec_modules_not_supported -> "recursive modules are not supported"
+  | E_lazy_not_supported -> "lazy values are not supported"
+  | E_abstract_types_not_supported -> "abstract types are not supported YET"
+  | E_abstract_module_types_not_supported -> "abstract module types are not supported"
+  | E_modules_without_names_not_supported -> "modules without names not supported"
+  | E_recursive_bindings_must_be_a_function -> "recursive bindings must be a function"
+  | E_unimplemented -> "unimplemented"
+  | E_unsupported -> "unsupported"
+  | E_unreachable -> "unreachable"
+  | E_unexpected_error exn -> Format.asprintf "unexpected error: %a" Core.Exn.pp exn
+
+let loc_of_ligo_location ~loc =
+  match (loc : Simple_utils.Location.t) with
+  (* TODO: what is a ghost location? *)
+  | File reg when reg#is_ghost -> Ocaml_common.Location.none
+  | File reg ->
+    let loc_start = reg#start#byte in
+    let loc_end = reg#stop#byte in
+    Ocaml_common.Location.{ loc_ghost = false; loc_start; loc_end }
+  | Virtual _ -> failwith "virtual location is unsupported"
+
+(* TODO: Location seems to be too complex in ligo
+  match loc_ghost with
+  | true ->
+    (* TODO: test ghost *)
+    Location.File Region.ghost
+  | false ->
+    (* TODO: when problems cnum < bol *)
+    (* TODO: test locations *)
+    Location.make loc_start loc_end *)
+
+let stri_of_error error =
+  let open Ast_builder.Default in
+  let Caml_core.{ err_tag = tag; err_loc = loc } = error in
+  let loc = loc_of_ligo_location ~loc in
+  let message = show_error tag in
+  let label = { txt = "ocaml.error"; loc } in
+  let content = pstr_eval ~loc (estring ~loc message) [] in
+  pstr_extension ~loc (label, PStr [ content ]) []
+
+let check_extract str =
+  let errors =
+    match
+      let open Caml_extraction in
+      Context.run @@ fun ctx -> extract_str ctx str
+    with
+    | Ok (_str, errors) -> errors
+    | Error error -> [ error ]
+  in
+  List.map stri_of_error errors
+
+let env =
+  lazy
+    (Compmisc.init_path ();
+     Compmisc.initial_env ())
+
+let check_str str =
+  let env = Lazy.force_val env in
+  let tstr, _, _, _, _ = Typemod.type_structure env str in
+  tstr
+
 let () =
   let impl str =
-    List.fold_right
-      (fun stri str ->
-        let { pstr_desc; pstr_loc } = stri in
-        match pstr_desc with
-        | Pstr_attribute
-            { attr_name = { txt = "ligo"; loc = _ }
-            ; attr_payload = PStr []
-            ; attr_loc = _
-            } -> stdlib ~loc:pstr_loc @ str
-        | _ -> stri :: str)
-      str
-      []
+    let str =
+      List.fold_right
+        (fun stri str ->
+          let { pstr_desc; pstr_loc } = stri in
+          match pstr_desc with
+          | Pstr_attribute
+              { attr_name = { txt = "ligo"; loc = _ }
+              ; attr_payload = PStr []
+              ; attr_loc = _
+              } -> stdlib ~loc:pstr_loc @ str
+          | _ -> stri :: str)
+        str
+        []
+    in
+    try
+      let tstr = check_str str in
+      let errors = check_extract tstr in
+      str @ errors
+    with
+    | _exn -> str
   in
   Driver.register_transformation "ppx_caml_ligo" ~impl

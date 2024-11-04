@@ -34,6 +34,8 @@ module Context : sig
   type context
   type t = context
 
+  exception Error_found of error
+
   (* vars *)
   val enter_value : Ident.t -> Value_var.t -> context -> context
   val enter_value_external : Ident.t -> context -> context
@@ -106,6 +108,9 @@ end = struct
     ; local = empty_local
     }
 
+
+  (* TODO: this is bad *)
+  exception Error_found of error
 
   let run k =
     try Ok (k empty) with
@@ -454,6 +459,7 @@ let rec solve_pat ctx vars pat =
     | label ->
       let ctx, fields = solve_pat ctx vars fields in
       ctx, pat_wrap loc @@ P_variant (label, fields))
+  | P_error exn -> raise @@ Error_found exn
 
 
 let solve_var_pat ctx vars pat =
@@ -556,6 +562,7 @@ let rec solve_expr ctx vars expr =
   | E_field (struct_, label) ->
     let struct_ = solve_expr ctx vars struct_ in
     e_accessor ~loc { struct_; path = label } ()
+  | E_error exn -> raise @@ Error_found exn
 
 
 and solve_expr_poly ctx vars expr =
@@ -687,6 +694,7 @@ and solve_decl_inner ctx vars decl =
     , Some
         (decl_wrap loc
         @@ D_signature { signature_binder = var; signature; signature_attr = attr }) )
+  | D_error exn -> raise @@ Error_found exn
 
 
 and solve_mod_expr ctx mod_expr =
@@ -752,6 +760,7 @@ and solve_sigi_inner ctx vars sigi =
       enter_module ident var ctx @@ fun ctx -> solve_signature ctx signature
     in
     ctx, Some (sig_item_wrap loc @@ S_module_type (var, signature))
+  | S_error error -> raise @@ Error_found error
 
 
 and solve_sig_expr ctx sig_expr =
