@@ -54,7 +54,6 @@ type bigint_literal =
 type program = statements
 
 and t = program
-
 and statements = statement ne_list wrap option
 
 (** DECLARATIONS
@@ -1940,7 +1939,10 @@ and labeled_statement =
       seq('return', optional($._expressions), $._semicolon)
    ]}
 *)
-and return_statement = expressions
+and return_statement =
+  { kwd_return : keyword
+  ; expressions : expressions option
+  }
 
 (** Switch Statement
 
@@ -1991,7 +1993,10 @@ and switch_default = statement list
      throw_statement: $ => seq('throw', $._expressions, $._semicolon)
     ]}
 *)
-and throw_statement = expressions
+and throw_statement =
+  { kwd_throw : keyword
+  ; expressions : expressions
+  }
 
 (** While Statement
 
@@ -2005,7 +2010,8 @@ and throw_statement = expressions
     ]}
 *)
 and while_statement =
-  { condition : expression
+  { kwd_while : keyword
+  ; condition : expression
   ; body : statement
   }
 
@@ -2672,7 +2678,7 @@ and infer_type =
 and statement =
   | S_export_statement of export_statement
   | S_import_statement of import_statement
-  | S_debugger_statement
+  | S_debugger_statement of keyword
   | S_expression_statement of expression_statement
   | S_declaration of declaration
   | S_statement_block of statement_block
@@ -2702,7 +2708,10 @@ and statement =
        $._semicolon)
     ]}
 *)
-and break_statement = identifier option
+and break_statement =
+  { kwd_break : keyword
+  ; stmt_id : identifier option
+  }
 
 (** Continue Statement
 
@@ -2715,7 +2724,10 @@ and break_statement = identifier option
        $._semicolon)
     ]}
 *)
-and continue_statement = identifier option
+and continue_statement =
+  { kwd_continue : keyword
+  ; stmt_id : identifier option
+  }
 
 (** Do-statement
 
@@ -2967,9 +2979,10 @@ and for_condition =
    ]}
 *)
 and if_statement =
-  { condition : expression
+  { kwd_if : keyword
+  ; condition : expression
   ; consequence : statement
-  ; alternative : statement option
+  ; alternative : (keyword * statement) option (* "else" *)
   }
 
 (** Import Statement
