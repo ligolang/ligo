@@ -28,8 +28,16 @@ const sidebars = {
       "tutorials/start-a-project-from-a-template"
     ],
     "Syntax": [
-      "comments/comments",
+      "syntax/comments",
       "syntax/variables",
+      {
+        "type": "doc",
+        "label": "Modules",
+        "customProps": {
+          "jsLigoName": "Namespaces",
+        },
+        "id": "syntax/modules",
+      },
       {
         "type": "category",
         "label": "Functions",
@@ -50,21 +58,6 @@ const sidebars = {
           "imperative/switches",
           "imperative/exceptions",
         ],
-      },
-      {
-        "type": "category",
-        "label": "Modules",
-        "customProps": {
-          "jsLigoName": "Namespaces",
-        },
-        "items": [
-          "modules/declaring",
-          "modules/accessing",
-          "modules/nesting",
-          "modules/aliasing",
-          "modules/importing",
-          "modules/including"
-        ]
       },
       {
         "type": "category",
@@ -181,6 +174,10 @@ const sidebars = {
       "testing/testing-tickets",
       "testing/mutation-testing",
       "testing/michelson_testing"
+    ],
+    "Compiling": [
+      "compiling/compiling",
+      "compiling/deploying",
     ],
     "Advanced Topics": [
       "advanced/package-management",

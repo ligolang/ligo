@@ -7,7 +7,7 @@ import styles from "./index.module.scss";
 
 const COMMUNICATION_CHANNELS = [
   {
-    link: "https://discord.gg/tezos-blockchain-699325006928281720",
+    link: "https://discord.gg/tezos",
     icon: {
       src: "img/communication_channels/discord.svg",
       width: "30",
