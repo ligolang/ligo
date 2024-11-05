@@ -141,15 +141,13 @@
                 ocamlPackages.utop
                 ocamlPackages.ocaml-lsp
                 ocamlPackages.merlin
-                ocamlPackages.merlin-lib
-                emacsPackages.merlin
-                emacsPackages.merlin-company
               ];
 
               shellHook = ''
                 # This is a hack to work around the hack used in the dune files
                 export TREE_SITTER="${ligo.TREE_SITTER}";
                 export TREE_SITTER_TYPESCRIPT="${ligo.TREE_SITTER_TYPESCRIPT}";
+                export MERLIN_PATH="${pkgs.ocamlPackages.merlin}";
               '';
             };
 
