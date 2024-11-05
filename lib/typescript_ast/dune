@@ -14,12 +14,17 @@
   core
   core_kernel.nonempty_list))
 
-;; Decoder
+;; Standalones
 
 (executable
  (name print_cst_main)
  (libraries typescript_ast)
  (modules print_cst_main))
+
+(executable
+ (name decoder_main)
+ (libraries typescript_ast)
+ (modules decoder_main))
 
 ;; Local build of a standalone parser for node-types.json
 
