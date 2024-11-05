@@ -154,7 +154,7 @@ let rec print_program file map node =
   (* Empty state for building the AST *)
   let buffer = Buffer.create 1023 in
   let state = Tree.mk_state ~buffer ~regions:true ~layout:true ~offsets:true `Byte in
-  (* Decoding the CST into an AST in [state] *)
+  (* Printing the CST into a string buffer in [state] *)
   let () = print_statements state node in
   (* Closing the input channel for reading lexemes *)
   let () = Lexeme.close_input () in
@@ -890,7 +890,7 @@ and print_generator_function_declaration state node =
   in
   make_tree state node children
 
-(* Class declaration (see [print_class] *)
+(* Class declaration (see [print_class]) *)
 
 and print_class_declaration ?(comments = []) state node =
   let comments = comments @ prev_comments node
@@ -2715,7 +2715,6 @@ and print_constructor_type state node =
   make_tree state node children
 
 and print_formal_parameters state node = print_parens state node print_formal_parameter
-(*tree_of_named_children state node print_formal_parameter*)
 
 and print_formal_parameter state node =
   match get_name node with
