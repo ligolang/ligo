@@ -14,6 +14,7 @@
 type 'a ne_list = 'a Nonempty_list.t
 
 module Wrap = Lexing_shared.Wrap
+module Region = Simple_utils.Region
 
 type 'a wrap = 'a Wrap.t
 
@@ -50,9 +51,11 @@ type bigint_literal =
        repeat($.statement))
     ]}
 *)
-type program = statement list wrap
+type program = statements
 
 and t = program
+
+and statements = statement ne_list wrap option
 
 (** DECLARATIONS
 
@@ -676,7 +679,7 @@ and method_definition =
   ; body : statement_block
   }
 
-and statement_block = statement list wrap
+and statement_block = statements
 
 (** Abstract Method Signature
 
@@ -1283,7 +1286,7 @@ and expressions =
   | General_expression of expression
   | Sequence_expression of sequence_expression
 
-and sequence_expression = expression list
+and sequence_expression = expression ne_list wrap
 
 (** Augmented Assignment Expression
 
@@ -2685,7 +2688,7 @@ and statement =
   | S_continue_statement of continue_statement
   | S_return_statement of return_statement
   | S_throw_statement of throw_statement
-  | S_empty_statement
+  | S_empty_statement of Region.t
   | S_labeled_statement of labeled_statement
 
 (** Break Statement
@@ -2728,7 +2731,9 @@ and continue_statement = identifier option
     ]}
 *)
 and do_statement =
-  { body : statement
+  { kwd_do : keyword
+  ; body : statement
+  ; kwd_while : keyword
   ; condition : expression
   }
 
