@@ -1,4 +1,4 @@
-#import "gitlab-pages/docs/tezos/decorators/src/module-with-private.mligo" "ModuleWithPrivate"
+#import "gitlab-pages/docs/reference/decorators/src/private/module-with-private.mligo" "ModuleWithPrivate"
 
 const foo = ModuleWithPrivate.f(123);  // = 5167
 

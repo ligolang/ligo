@@ -1,9 +1,38 @@
 ---
 id: keywords
-title: List of keywords
+title: Keywords
 ---
 
 import Syntax from '@theme/Syntax';
+
+_Keywords_ are reserved words that cannot be used as names in declarations.
+In some cases you can escape keywords to use them as variables or record fields.
+
+## Escaping keywords
+
+Keywords cannot be used as variables or record fields. If you need to
+use a keyword as a variable, you can prefix it with `@`, like so:
+
+<Syntax syntax="cameligo">
+
+```cameligo group=keywords
+let @from = ("tz1fakefakefakefakefakefakefakcphLA5" : address)
+```
+
+</Syntax>
+
+<Syntax syntax="jsligo">
+
+```jsligo group=keywords
+const @from = ("tz1fakefakefakefakefakefakefakcphLA5" as address)
+```
+
+However, you cannot escape decorators in this way because the convention of escaping a keyword with the `@` symbol conflicts with that of *decorators*, as found in JavaScript.
+For example, `@entry` is invalid as a variable.
+
+</Syntax>
+
+## List of keywords
 
 <Syntax syntax="cameligo">
 CameLIGO's keywords are the following:
