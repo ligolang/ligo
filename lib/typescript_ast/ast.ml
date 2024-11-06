@@ -41,6 +41,19 @@ type bigint_literal =
   | Oct_literal of oct_literal
   | Dec_literal of dec_literal
 
+(* Compound constructs *)
+
+type 'a enclosed = {
+  opening : symbol;
+  contents : 'a list;
+  closing : symbol
+}
+
+type 'a braces = Braces of 'a enclosed
+type 'a chevrons = Chevrons of 'a enclosed
+type 'a brackets = Brackets of 'a enclosed
+type 'a parens = Parens of 'a enclosed
+
 (** The Abstract Syntax Tree
 
   The related grammar rule is given by:
@@ -239,7 +252,7 @@ and call_return_type =
   | Asserts_annotation of asserts_annotation
   | Type_predicate_annotation of type_predicate wrap
 
-and type_annotation = type_
+and type_annotation = symbol * type_ (* ":" *)
 
 and type_predicate =
   { name : type_predicate_name
@@ -1968,11 +1981,12 @@ and return_statement =
    ]}
 *)
 and switch_statement =
-  { value : expression
+  { kwd_switch : keyword
+  ; value : expression
   ; body : switch_body
   }
 
-and switch_body = switch_entry list
+and switch_body = switch_entry braces
 
 and switch_entry =
   | Switch_case of switch_case
@@ -2027,7 +2041,8 @@ and while_statement =
     ]}
 *)
 and with_statement =
-  { object_ : expression
+  { kwd_with : keyword
+  ; object_ : expression
   ; body : statement
   }
 
@@ -2896,6 +2911,7 @@ and for_in_statement =
   ; kwd_for : keyword
   ; sym_lparen : symbol
   ; for_header : for_header
+  ; syn_rparen : symbol
   ; body : statement
   }
 
@@ -3153,17 +3169,26 @@ and assignment_pattern =
     ]}
 *)
 and try_statement =
-  { body : statement_block
+  { kwd_try : keyword
+  ; body : statement_block
   ; handler : catch_clause option
   ; finalizer : finally_clause option
   }
 
 and catch_clause =
-  { parameter : (catch_parameter * type_annotation option) option
+  { kwd_catch : keyword
+  ; parameter : catch_parameter option
   ; body : statement_block
   }
 
 and catch_parameter =
+  { sym_lparen : symbol
+  ; catch_parameter : catch_parameter_kind
+  ; type_ : type_annotation option
+  ; sym_rparen : symbol
+  }
+
+and catch_parameter_kind =
   | Catch_identifier of identifier
   | Catch_object_pattern of object_pattern
   | Catch_array_pattern of array_pattern

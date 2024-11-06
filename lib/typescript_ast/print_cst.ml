@@ -114,12 +114,12 @@ let print_unexpected_node state node =
 
 let print_enclosed ?(comments = []) state node printer opening closing =
   let comments = comments @ prev_comments node in
-  let sym_lbrace = first_child_named opening node
-  and sym_rbrace = first_child_named closing node
+  let opening= first_child_named opening node
+  and closing = first_child_named closing node
   and clauses = collect_named_children node in
   let children =
-    (mk_child_res (make_sym ~comments) sym_lbrace :: mk_children_list printer clauses)
-    @ [ mk_child_res make_sym sym_rbrace ]
+    (mk_child_res (make_sym ~comments) opening :: mk_children_list printer clauses)
+    @ [ mk_child_res make_sym closing ]
   in
   make_tree state node children
 
@@ -703,17 +703,16 @@ and print_try_statement state node =
 
 and print_catch_clause state node =
   let kwd_catch = first_child_named "catch" node
-  and body_field = child_with_field "body" node in
+  and body_field = child_with_field "body" node
+  and parameter_field = child_with_field_opt "parameter" node
+  and print_parameter state node =
+    match get_name node with
+    | "identifier" -> print_identifier state node
+    | _ -> match_rest state node print_destructuring_pattern
+  in
   let children =
-    mk_child_res make_kwd kwd_catch
-    ::
-    (match child_with_field_opt "parameter" node with
+    match parameter_field with
     | Some parameter_field ->
-      let print_parameter state node =
-        match get_name node with
-        | "identifier" -> print_identifier state node
-        | _ -> match_rest state node print_destructuring_pattern
-      in
       let sym_lparen = first_child_named "(" node
       and type_field = child_with_field_opt "type" node
       and sym_rparen = first_child_named ")" node in
@@ -722,8 +721,9 @@ and print_catch_clause state node =
       ; mk_child_opt print_type_annotation type_field
       ; mk_child_res make_sym sym_rparen
       ]
-    | None -> [])
+    | None -> []
   in
+  let children = mk_child_res make_kwd kwd_catch :: children in
   let children = children @ [ mk_child_res print_statement_block body_field ] in
   make_tree state node children
 
