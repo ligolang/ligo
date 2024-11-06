@@ -10,10 +10,11 @@ import Syntax from '@theme/Syntax'
 The attribute `[@dyn_entry]` on a function indicates that said
 function should be made available as a *dynamic entrypoint* of the
 smart contract.
+For more information about dynamic entrypoints, see [Dynamic entrypoints](../../advanced/dynamic-entrypoints).
 
 Dynamic entry points can be removed or updated without deploying a new
-contract, unlike entrypoints attributed with `[@entry]` (those cannot
-be modified after the contract is originated). Dynamic entrypoints can
+contract, unlike entrypoints attributed with `[@entry]`, which cannot
+be modified after the contract is originated. Dynamic entrypoints can
 be used for example to implement a DAO (Decentralized Autonomous
 Organization) with a built-in update mechanism that allows
 participants to vote on upgrades to the contract, in a manner somewhat
@@ -40,10 +41,11 @@ let tick : int ticket -> int * int -> operation list * (int * int) =
 The decorator `@dyn_entry` on a function indicates that said
 function should be made available as a *dynamic entrypoint* of the
 smart contract.
+For more information about dynamic entrypoints, see [Dynamic entrypoints](../../advanced/dynamic-entrypoints).
 
 Dynamic entry points can be removed or updated without deploying a new
-contract, unlike entrypoints decorated with `@entry` (those cannot be
-modified after the contract is originated). Dynamic entrypoints can be
+contract, unlike entrypoints decorated with `@entry`, which cannot be
+modified after the contract is originated. Dynamic entrypoints can be
 used for example to implement a DAO (Decentralized Autonomous
 Organization) with a built-in update mechanism that allows
 participants to vote on upgrades to the contract, in a manner somewhat

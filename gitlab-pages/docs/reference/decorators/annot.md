@@ -7,15 +7,13 @@ import Syntax from '@theme/Syntax'
 
 <Syntax syntax="cameligo">
 
-The attribute `[@annot "foo"]` is used to set the name `%foo` of the
-Michelson equivalent of record fields or variant constructors.
+The attribute `[@annot "foo"]` sets the annotation `%foo` on the compiled Michelson code of record fields and variant constructors.
 
 </Syntax>
 
 <Syntax syntax="jsligo">
 
-The decorator `@annot("foo")` is used to set the name `%foo` of the
-Michelson equivalent of record fields or variant constructors.
+The decorator `@annot("foo")` sets the annotation `%foo` on the compiled Michelson code of record fields and variant constructors.
 
 </Syntax>
 
@@ -35,7 +33,7 @@ useful for interoperability, where a third-party programs or contracts
 expect specific Michelson annotations, even if the LIGO code might not
 use those names internally.
 
-For example,
+For example, this code assigns annotations to the fields in a record:
 
 ```cameligo group=annot
 type transfer =
@@ -51,11 +49,11 @@ type transfer =
 
 In other words, the decorator `@annot("foo")` allows the Michelson
 annotation for a given field or constructor to be customized. This is
-useful for interoperability, where a third-party programs or contracts
+useful for interoperability, where third-party programs or contracts
 expect specific Michelson annotations, even if the LIGO code might not
 use those names internally.
 
-For example,
+For example, this code assigns annotations to the fields in a record:
 
 ```jsligo group=annot
 type transfer =
@@ -66,3 +64,9 @@ type transfer =
 ```
 
 </Syntax>
+
+The resulting Michelson code has annotations on the output:
+
+```michelson
+(address %from) (address %to) (nat)
+```

@@ -22,7 +22,7 @@ let f x = g x + 1 // exported by default
 Then the following piece of code, in another file:
 
 ```cameligo group=import-module-with-private
-#import "gitlab-pages/docs/tezos/decorators/src/module-with-private.mligo" "ModuleWithPrivate"
+#import "gitlab-pages/docs/reference/decorators/src/private/module-with-private.mligo" "ModuleWithPrivate"
 
 let foo = ModuleWithPrivate.f 123  // = 5167
 
@@ -53,7 +53,7 @@ const f = x => g(x) + 1; // exported by default
 Then the following piece of code, in another file:
 
 ```jsligo group=import-module-with-private
-#import "gitlab-pages/docs/tezos/decorators/src/module-with-private.mligo" "ModuleWithPrivate"
+#import "gitlab-pages/docs/reference/decorators/src/private/module-with-private.mligo" "ModuleWithPrivate"
 
 const foo = ModuleWithPrivate.f(123);  // = 5167
 

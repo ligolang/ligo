@@ -5,8 +5,7 @@ title: view
 
 import Syntax from '@theme/Syntax'
 
-*Views* are a form of read-only entrypoints that can be called
-synchronously, and often are used to read part of the storage.
+[Views](../../contract/views) are a form of read-only entrypoints that can be called synchronously, and often are used to read part of the storage.
 
 <Syntax syntax="cameligo">
 
