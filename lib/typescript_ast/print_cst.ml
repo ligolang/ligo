@@ -1,7 +1,11 @@
 (* Printing the tree-sitter CST for TypeScript *)
 
 open Core
-open Ts_wrap
+open Typescript_ast.Ts_wrap
+
+module Lexeme = Typescript_ast.Lexeme
+module Ts_wrap = Typescript_ast.Ts_wrap
+module Loc_map = Typescript_ast.Loc_map
 
 (* Source map for converting vertical and horizontal offset ranges
    into regions *)
@@ -146,7 +150,7 @@ let match_rest state node print_default =
 
 (* Printing the CST *)
 
-let rec print_program file map node =
+let rec print_program file (map: Loc_map.t) node =
   (* Opening a read channel for lexemes *)
   let () = Lexeme.open_input ~file in
   (* Setting up the extracting of source regions *)
@@ -582,17 +586,13 @@ and print_for_statement state node =
     | "expression_statement" -> print_expression_statement state node
     | "empty_statement" -> print_empty_statement state node
     | _ -> match_rest state node print_unexpected_node
-  and print_increment state node =
-    match get_name node with
-    | "sequence_expression" -> print_sequence_expression state node
-    | _ -> print_expression state node
   in
   let children =
     [ mk_child_res make_kwd kwd_for
     ; mk_child_res make_sym sym_lparen
     ; mk_child_res print_initializer initializer_field
     ; mk_child_res print_condition condition_field
-    ; mk_child_opt print_increment increment_field
+    ; mk_child_opt print_expressions increment_field
     ; mk_child_res make_sym sym_rparen
     ; mk_child_res print_statement body_field
     ]
@@ -774,13 +774,8 @@ and print_continue_statement state node =
 
 and print_return_statement state node =
   let kwd_return = first_child_named "return" node
-  and expr = child_ranked_opt 1 node
-  and print state node =
-    match get_name node with
-    | "sequence_expression" -> print_sequence_expression state node
-    | _ -> print_expression state node
-  in
-  let children = [ mk_child_res make_kwd kwd_return; mk_child_opt print expr ] in
+  and expr = child_ranked_opt 1 node in
+  let children = [ mk_child_res make_kwd kwd_return; mk_child_opt print_expressions expr ] in
   make_tree state node children
 
 (* Throw statement *)

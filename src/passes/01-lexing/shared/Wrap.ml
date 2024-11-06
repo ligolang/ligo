@@ -43,11 +43,11 @@ type 'a t = 'a wrap
 type 'a ctor =
   ?attributes:attributes ->
   ?directive:Directive.t ->
-  ?comment:comment ->
+  ?comments:comment list ->
   ?line_com:string Region.reg ->
   'a -> Region.t -> 'a wrap
 
-let wrap ?(attributes=[]) ?directive ?comment ?line_com payload region =
+let wrap ?(attributes=[]) ?directive ?comments ?line_com payload region =
   object
     method payload      = payload
 
@@ -59,7 +59,7 @@ let wrap ?(attributes=[]) ?directive ?comment ?line_com payload region =
     val    directives   = Option.to_list directive
     method directives   = directives
 
-    val comments        = Option.to_list comment
+    val comments        = match comments with None -> [] | Some list -> list
     method comments     = comments
 
     val line_comment    = line_com

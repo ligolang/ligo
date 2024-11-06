@@ -2,7 +2,7 @@
 
 (library
  (name typescript_ast)
- (modules ast ts_wrap print_cst loc_map lexeme decoder)
+ (modules ast ts_wrap loc_map lexeme)
  (libraries
   tree_sitter
   tree_sitter_typescript
@@ -19,12 +19,12 @@
 (executable
  (name print_cst_main)
  (libraries typescript_ast)
- (modules print_cst_main))
+ (modules print_cst print_cst_main))
 
 (executable
  (name decoder_main)
  (libraries typescript_ast)
- (modules decoder_main))
+ (modules decoder decoder_main))
 
 ;; Local build of a standalone parser for node-types.json
 

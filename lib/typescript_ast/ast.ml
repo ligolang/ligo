@@ -93,7 +93,7 @@ and declaration =
   | D_generator_function_declaration of generator_function_declaration wrap
   | D_class_declaration of class_declaration wrap
   | D_lexical_declaration of lexical_declaration wrap
-  | D_variable_declaration of variable_declaration wrap
+  | D_variable_declaration of variable_declaration
   | D_function_signature of function_signature wrap
   | D_abstract_class_declaration of abstract_class_declaration wrap
   | D_module of module_ wrap
@@ -2892,7 +2892,9 @@ and expression_statement = expressions
     ]}
 *)
 and for_in_statement =
-  { await : bool
+  { await : keyword option
+  ; kwd_for : keyword
+  ; sym_lparen : symbol
   ; for_header : for_header
   ; body : statement
   }
@@ -2948,21 +2950,24 @@ and for_operator =
     ]}
 *)
 and for_statement =
-  { initializer_ : for_initializer
+  { kwd_for : keyword
+  ; sym_lparen : symbol
+  ; initializer_ : for_initializer
   ; condition : for_condition
   ; increment : expressions option
+  ; sym_rparen : symbol
   ; body : statement
   }
 
 and for_initializer =
-  | For_lexical_declaration of lexical_declaration
+  | For_lexical_declaration of lexical_declaration wrap
   | For_variable_declaration of variable_declaration
   | For_expression_statement of expression_statement
-  | For_empty_statement
+  | For_empty_statement of Region.t
 
 and for_condition =
   | For_condition_expression of expression_statement
-  | For_condition_empty
+  | For_condition_empty of Region.t
 
 (** If-statement
 

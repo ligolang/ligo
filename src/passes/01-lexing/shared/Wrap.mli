@@ -40,7 +40,7 @@ type 'a t = 'a wrap
 type 'a ctor =
   ?attributes:attributes ->
   ?directive:Directive.t ->
-  ?comment:comment ->
+  ?comments:comment list ->
   ?line_com:string Region.reg ->
   'a -> Region.t -> 'a wrap
 
