@@ -1,18 +1,19 @@
-(* Printing the tree-sitter CST for TypeScript *)
+(* Decoding the tree-sitter CST for TypeScript *)
 
-module Ts_wrap = Typescript_ast.Ts_wrap
+(* Vendored *)
 
-module Loc_map = Typescript_ast.Loc_map
 module Region = Simple_utils.Region
-
-(* To print the AST in ASCII art *)
-
-module Tree = Cst_shared.Tree
 
 (* Tree-sitter ctypes-APIs for types and related functions *)
 
 module TS_types = Tree_sitter.Api.Types
 module TS_fun = Tree_sitter.Api.Functions
+
+(* Local *)
+
+module Ts_wrap = Typescript_ast.Ts_wrap
+module Loc_map = Typescript_ast.Loc_map
+module Ast = Typescript_ast.Ast
 
 (* Parsing *)
 
@@ -24,10 +25,11 @@ let parse file line_map =
   (* Getting ahold of the root *)
   let program_node : Ts_wrap.ts_tree = TS_fun.ts_tree_root_node tree in
   (* Printing the tree from the root *)
-  let cst : string = Print_cst.print_program file line_map program_node in
-  Printf.printf "%s%!" cst;
+  let ast : Ast.t = Decoder.dec_program file line_map program_node in
   (* Releasing the memory allocated to the tree *)
-  TS_fun.ts_tree_delete tree
+  let () = TS_fun.ts_tree_delete tree in
+  (* Printing the AST *)
+  ignore ast (* TODO *)
 
 (* Reading the input TypeScript, parsing and printing the AST *)
 
