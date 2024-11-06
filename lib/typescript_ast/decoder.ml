@@ -81,30 +81,33 @@ and dec_statements ?(comments = []) node : statements =
 
 and dec_statement ?(comments = []) node : statement =
   match get_name node with
-  | "export_statement" -> dec_export_statement ~comments node
-  | "import_statement" -> dec_import_statement ~comments node
-  | "debugger_statement" -> dec_debugger_statement ~comments node
+  | "export_statement" -> S_export_statement (dec_export_statement ~comments node)
+  | "import_statement" -> S_import_statement (dec_import_statement ~comments node)
+  | "debugger_statement" -> S_debugger_statement (make_kwd ~comments node)
   | "expression_statement" ->
     S_expression_statement (dec_expression_statement ~comments node)
-  | "statement_block" -> dec_statement_block ~comments node
-  | "if_statement" -> dec_if_statement ~comments node
-  | "switch_statement" -> dec_switch_statement node
-  | "for_statement" -> dec_for_statement node
-  | "for_in_statement" -> dec_for_in_statement node
-  | "while_statement" -> dec_while_statement node
-  | "do_statement" -> dec_do_statement ~comments node
-  | "try_statement" -> dec_try_statement node
-  | "with_statement" -> dec_with_statement node
-  | "break_statement" -> dec_break_statement node
-  | "continue_statement" -> dec_continue_statement node
-  | "return_statement" -> dec_return_statement node
-  | "throw_statement" -> dec_throw_statement node
+  | "statement_block" -> S_statement_block (dec_statement_block ~comments node)
+  | "if_statement" -> S_if_statement (dec_if_statement ~comments node)
+  | "switch_statement" -> S_switch_statement (dec_switch_statement node)
+  | "for_statement" -> S_for_statement (dec_for_statement node)
+  | "for_in_statement" -> S_for_in_statement (dec_for_in_statement node)
+  | "while_statement" -> S_while_statement (dec_while_statement node)
+  | "do_statement" -> S_do_statement (dec_do_statement ~comments node)
+  | "try_statement" -> S_try_statement (dec_try_statement node)
+  | "with_statement" -> S_with_statement (dec_with_statement node)
+  | "break_statement" -> S_break_statement (dec_break_statement node)
+  | "continue_statement" -> S_continue_statement (dec_continue_statement node)
+  | "return_statement" -> S_return_statement (dec_return_statement node)
+  | "throw_statement" -> S_throw_statement (dec_throw_statement node)
   | "empty_statement" -> S_empty_statement (!get_region node)
   (* Inlining declarations cases (hidden rule) *)
-  | "function_declaration" -> S_declaration (dec_function_declaration ~comments node)
+  | "function_declaration" ->
+    S_declaration (D_function_declaration (dec_function_declaration ~comments node))
   | "generator_function_declaration" ->
-    S_declaration (dec_generator_function_declaration node)
-  | "class_declaration" -> S_declaration (dec_class_declaration ~comments node)
+    S_declaration
+      (D_generator_function_declaration (dec_generator_function_declaration node))
+  | "class_declaration" ->
+    S_declaration (D_class_declaration (dec_class_declaration ~comments node))
   | "lexical_declaration" ->
     S_declaration (D_lexical_declaration (dec_lexical_declaration ~comments node))
   | "variable_declaration" ->
@@ -140,11 +143,6 @@ and dec_import_statement ?(comments = []) node =
   ignore node;
   failwith "TODO: dec_import_statement"
 
-(* Debugger statement *)
-
-and dec_debugger_statement ?(comments = []) node =
-  S_debugger_statement (make_kwd ~comments node)
-
 (* Expression statements
 
    {@js[
@@ -167,12 +165,12 @@ and dec_expressions ?(comments = []) (node : ts_tree) : expressions =
 
 (* Statement blocks *)
 
-and dec_statement_block ?(comments = []) node =
-  S_statement_block (dec_statements ~comments node)
+and dec_statement_block ?(comments = []) node : statement_block =
+  dec_statements ~comments node
 
 (* If statement *)
 
-and dec_if_statement ?(comments = []) node =
+and dec_if_statement ?(comments = []) node : if_statement =
   ensure_Ok node
   @@ let* kwd_if = first_child_named "if" node in
      let* condition_field = child_with_field "condition" node in
@@ -185,7 +183,7 @@ and dec_if_statement ?(comments = []) node =
        ; alternative = make_opt dec_else_clause alternative_field
        }
      in
-     Ok (S_if_statement stmt)
+     Ok stmt
 
 and dec_else_clause ?(comments = []) node : keyword * statement =
   ensure_Ok node
@@ -203,7 +201,7 @@ and dec_switch_statement node =
 
 (* For statement *)
 
-and dec_for_statement node =
+and dec_for_statement node : for_statement =
   ensure_Ok node
   @@ let* kwd_for = first_child_named "for" node in
      let* sym_lparen = first_child_named "(" node in
@@ -238,17 +236,17 @@ and dec_for_statement node =
        ; body = dec_statement body_field
        }
      in
-     Ok (S_for_statement stmt)
+     Ok stmt
 
 (* For-in statement *)
 
-and dec_for_in_statement node =
+and dec_for_in_statement node : for_in_statement =
   ignore node;
   failwith "TODO: dec_for_in_statement"
 
 (* While statement *)
 
-and dec_while_statement node =
+and dec_while_statement node : while_statement =
   ensure_Ok node
   @@ let* kwd_while = first_child_named "while" node in
      let* condition_field = child_with_field "condition" node in
@@ -259,11 +257,11 @@ and dec_while_statement node =
        ; body = dec_statement body_field
        }
      in
-     Ok (S_while_statement stmt)
+     Ok stmt
 
 (* Do statement *)
 
-and dec_do_statement ?(comments = []) node : statement =
+and dec_do_statement ?(comments = []) node : do_statement =
   ensure_Ok node
   @@ let* kwd_do = first_child_named "do" node in
      let* body_field = child_with_field "body" node in
@@ -276,11 +274,11 @@ and dec_do_statement ?(comments = []) node : statement =
        ; condition = dec_parenthesized_expression condition_field
        }
      in
-     Ok (S_do_statement stmt)
+     Ok stmt
 
 (* Try statement *)
 
-and dec_try_statement node =
+and dec_try_statement node : try_statement =
   ignore node;
   failwith "dec_try_statement"
 
@@ -292,42 +290,42 @@ and dec_with_statement node =
 
 (* Break statement *)
 
-and dec_break_statement node =
+and dec_break_statement node : break_statement =
   ensure_Ok node
   @@ let* kwd_break = first_child_named "break" node in
      let label_field = child_with_field_opt "label" node in
-     let stmt =
+     let stmt : break_statement =
        { kwd_break = make_kwd kwd_break; stmt_id = make_opt dec_identifier label_field }
      in
-     Ok (S_break_statement stmt)
+     Ok stmt
 
 (* Continue statement *)
 
-and dec_continue_statement node =
+and dec_continue_statement node : continue_statement =
   ensure_Ok node
   @@ let* kwd_continue = first_child_named "continue" node in
      let label_field = child_with_field_opt "label" node in
-     let stmt =
+     let stmt : continue_statement =
        { kwd_continue = make_kwd kwd_continue
        ; stmt_id = make_opt dec_identifier label_field
        }
      in
-     Ok (S_continue_statement stmt)
+     Ok stmt
 
 (* Return statement *)
 
-and dec_return_statement node =
+and dec_return_statement node : return_statement =
   ensure_Ok node
   @@ let* kwd_return = first_child_named "return" node in
      let expr = child_ranked_opt 1 node in
-     let stmt =
+     let stmt : return_statement =
        { kwd_return = make_kwd kwd_return; expressions = make_opt dec_expressions expr }
      in
-     Ok (S_return_statement stmt)
+     Ok stmt
 
 (* Throw statement *)
 
-and dec_throw_statement node =
+and dec_throw_statement node : throw_statement =
   ignore node;
   failwith "dec_throw_statement"
 
@@ -338,20 +336,20 @@ and dec_throw_statement node =
 
 (* Function declaration (see [dec_function_signature]) *)
 
-and dec_function_declaration ?(comments = []) node =
+and dec_function_declaration ?(comments = []) node : function_declaration wrap =
   ignore comments;
   ignore node;
   failwith "dec_function_declaration"
 
 (* Generator function declaration (see function declaration) *)
 
-and dec_generator_function_declaration node =
+and dec_generator_function_declaration node : generator_function_declaration wrap =
   ignore node;
   failwith "dec_generator_function_declaration"
 
 (* Class declaration (see [dec_class]) *)
 
-and dec_class_declaration ?(comments = []) node =
+and dec_class_declaration ?(comments = []) node : class_declaration wrap =
   ignore comments;
   ignore node;
   failwith "dec_class_declaration"
@@ -372,58 +370,58 @@ and dec_variable_declaration ?(comments = []) node : variable_declaration =
 
 (* Function signature (See [dec_function_declaration]) *)
 
-and dec_function_signature node =
+and dec_function_signature node : function_signature wrap =
   ignore node;
   failwith "dec_function_signature"
 
 (* Abstract class declaration ( see [dec_class_declaration]) *)
 
-and dec_abstract_class_declaration node =
+and dec_abstract_class_declaration node : abstract_class_declaration wrap =
   ignore node;
   failwith "dec_abstract_class_declaration"
 
 (* Module *)
 
-and dec_module ?(comments = []) node =
+and dec_module ?(comments = []) node : module_ wrap =
   ignore comments;
   ignore node;
   failwith "dec_module"
 
 (* Internal module (a.k.a. namespaces) *)
 
-and dec_internal_module ?comments node =
+and dec_internal_module ?comments node : internal_module wrap =
   ignore comments;
   ignore node;
   failwith "dec_internal_module"
 
 (* Type alias declaration *)
 
-and dec_type_alias_declaration ?(comments = []) node =
+and dec_type_alias_declaration ?(comments = []) node : type_alias_declaration wrap =
   ignore comments;
   ignore node;
   failwith "dec_type_alias_declaration"
 
 (* Enum declaration *)
 
-and dec_enum_declaration node =
+and dec_enum_declaration node : enum_declaration wrap =
   ignore node;
   failwith "dec_enum_declaration"
 
 (* Interface declaration *)
 
-and dec_interface_declaration node =
+and dec_interface_declaration node : interface_declaration wrap =
   ignore node;
   failwith "dec_interface_declaration"
 
 (* Import alias *)
 
-and dec_import_alias node =
+and dec_import_alias node : import_alias wrap =
   ignore node;
   failwith "dec_import_alias"
 
 (* Ambient declaration *)
 
-and dec_ambient_declaration node =
+and dec_ambient_declaration node : ambient_declaration wrap =
   ignore node;
   failwith "dec_ambient_declaration"
 
@@ -441,7 +439,7 @@ and dec_parenthesized_expression ?(comments = []) node : expression =
 
 (* Sequence expression *)
 
-and dec_sequence_expression ?(comments = []) node =
+and dec_sequence_expression ?(comments = []) node : sequence_expression =
   ignore comments;
   ignore node;
   failwith "dec_sequence_expression"
