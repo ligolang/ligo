@@ -7,6 +7,7 @@ module Lexeme = Typescript_ast.Lexeme
 module Ast = Typescript_ast.Ast
 open Core
 open Typescript_ast.Ts_wrap
+open Ast
 
 (* Monadic let for result values *)
 
@@ -18,9 +19,15 @@ let ( let* ) v f = Result.bind v ~f
 let get_region : (Ts_wrap.ts_tree -> Region.t) ref =
   ref (fun _ -> failwith "Internal error: Decoder.get_region")
 
+(* Handling results and failing in case of error *)
+
+let ensure_Ok node = function
+  | Result.Ok ok -> ok
+  | Error msg -> failwith ((!get_region node)#compact `Byte ^ "\n" ^ msg)
+
 (* Decoding literals *)
 
-let make_node ?(comments = []) node : string Wrap.t =
+let make_node ?(comments = []) node : string wrap =
   let region = !get_region node in
   let root = Lexeme.read region
   and comments = comments @ prev_comments node in
@@ -32,17 +39,17 @@ let make_node ?(comments = []) node : string Wrap.t =
   let comments = List.map ~f comments in
   Wrap.make ~comments root region
 
-let make_kwd ?comments node : Ast.keyword = make_node ?comments node
-let make_sym ?comments node : Ast.symbol = make_node ?comments node
-let dec_identifier ?comments node : Ast.identifier = make_node ?comments node
+let make_kwd ?comments node : keyword = make_node ?comments node
+let make_sym ?comments node : symbol = make_node ?comments node
+let dec_identifier ?comments node : identifier = make_node ?comments node
 
 (* Optional nodes *)
 
 let make_opt decoder node = Option.map ~f:decoder node
 
-(* Decoding a list of nodes of the same type *)
+(* Decoding children of the same type *)
 
-let wrap_of_list ?(comments = []) decoder node =
+let wrap_children ?(comments = []) decoder node : 'a ne_list wrap option =
   let f raw_child = List.cons (decoder ?comments:None raw_child) in
   match collect_named_children node with
   | [] -> None
@@ -52,13 +59,40 @@ let wrap_of_list ?(comments = []) decoder node =
     let region = !get_region node in
     Some (Wrap.make stmts region)
 
+let list_of_children ?(comments = []) decoder children : 'a list =
+  let f raw_child = List.cons (decoder ?comments:None raw_child) in
+  match children with
+  | [] -> []
+  | fst_raw_child :: siblings ->
+    let fst_child = decoder ?comments:(Some comments) fst_raw_child in
+    fst_child :: List.fold_right ~f ~init:[] siblings
+
+(* Decoding enclosed constructs *)
+
+let decode_enclosed ?(comments = []) node decoder opening closing : 'a enclosed =
+  ensure_Ok node
+  @@ let comments = comments @ prev_comments node in
+     let* opening = first_child_named opening node in
+     let* closing = first_child_named closing node in
+     let clauses = collect_named_children node in
+     Ok { opening = make_sym ~comments opening;
+          contents = list_of_children decoder clauses;
+          closing = make_sym closing
+        }
+
+let decode_braces ?(comments = []) node decoder : 'a braces =
+  Braces (decode_enclosed ~comments node decoder "{" "}")
+
+let decode_chevrons ?(comments = []) node decoder =
+  Chevrons (decode_enclosed ~comments node decoder "<" ">")
+
+let decode_brackets ?(comments = []) node decoder =
+  Brackets (decode_enclosed ~comments node decoder "[" "]")
+
+let decode_parens ?(comments = []) node decoder =
+  Parens (decode_enclosed ~comments node decoder "(" ")")
+
 (* Decoding the CST *)
-
-open Ast
-
-let ensure_Ok node = function
-  | Result.Ok ok -> ok
-  | Error msg -> failwith ((!get_region node)#compact `Byte ^ "\n" ^ msg)
 
 let rec dec_program file map node =
   (* Opening a read channel for lexemes *)
@@ -77,7 +111,7 @@ let rec dec_program file map node =
    "statement" be a supertype, that is, a hidden rule. *)
 
 and dec_statements ?(comments = []) node : statements =
-  wrap_of_list ~comments dec_statement node
+  wrap_children ~comments dec_statement node
 
 and dec_statement ?(comments = []) node : statement =
   match get_name node with
@@ -131,14 +165,14 @@ and dec_statement ?(comments = []) node : statement =
 
 (* Export statement *)
 
-and dec_export_statement ?(comments = []) node =
+and dec_export_statement ?(comments = []) node : export_statement =
   ignore comments;
   ignore node;
   failwith "TODO: dec_export_statement"
 
 (* Import statement *)
 
-and dec_import_statement ?(comments = []) node =
+and dec_import_statement ?(comments = []) node : import_statement =
   ignore comments;
   ignore node;
   failwith "TODO: dec_import_statement"
@@ -154,9 +188,7 @@ and dec_import_statement ?(comments = []) node =
    See [doc_expression]. *)
 
 and dec_expression_statement ?(comments = []) node : expression_statement =
-  ignore comments;
-  ignore node;
-  failwith "TODO: dec_expression_statement"
+  dec_expressions ~comments node
 
 and dec_expressions ?(comments = []) (node : ts_tree) : expressions =
   match get_name node with
@@ -176,14 +208,12 @@ and dec_if_statement ?(comments = []) node : if_statement =
      let* condition_field = child_with_field "condition" node in
      let* consequence_field = child_with_field "consequence" node in
      let alternative_field = child_with_field_opt "alternative" node in
-     let stmt : if_statement =
+     Ok
        { kwd_if = make_kwd ~comments kwd_if
        ; condition = dec_expression condition_field
        ; consequence = dec_statement consequence_field
        ; alternative = make_opt dec_else_clause alternative_field
        }
-     in
-     Ok stmt
 
 and dec_else_clause ?(comments = []) node : keyword * statement =
   ensure_Ok node
@@ -195,9 +225,29 @@ and dec_else_clause ?(comments = []) node : keyword * statement =
 
 (* Switch statement *)
 
-and dec_switch_statement node =
-  ignore node;
-  failwith "TODO: dec_switch_statement"
+and dec_switch_statement node : switch_statement =
+  ensure_Ok node
+  @@ let* kwd_switch = first_child_named "switch" node in
+     let* value_field = child_with_field "value" node in
+     let* body_field = child_with_field "body" node in
+     Ok { kwd_switch = make_kwd kwd_switch
+        ; value = dec_expression value_field
+        ; body = dec_switch_body body_field
+        }
+
+and dec_switch_body node : switch_body =
+  let decode ?comments node =
+    match get_name node with
+    | "switch_case" -> Switch_case (dec_switch_case ?comments node)
+    | "switch_default" -> Switch_default (dec_switch_default ?comments node)
+    | _ -> failwith "dec_switch_body"
+  in decode_braces node decode
+
+and dec_switch_case ?(comments = []) node : switch_case =
+  ignore comments; ignore node; failwith "dec_switch_case"
+
+and dec_switch_default ?(comments = []) node : switch_default =
+  ignore comments; ignore node; failwith "dec_switch_default"
 
 (* For statement *)
 
@@ -226,7 +276,7 @@ and dec_for_statement node : for_statement =
        | "empty_statement" -> For_condition_empty (!get_region node)
        | _ -> failwith "dec_for_statement/dec_condition"
      in
-     let stmt : for_statement =
+     Ok
        { kwd_for = make_kwd kwd_for
        ; sym_lparen = make_sym sym_lparen
        ; initializer_ = dec_initializer initializer_field
@@ -235,8 +285,6 @@ and dec_for_statement node : for_statement =
        ; sym_rparen = make_sym sym_rparen
        ; body = dec_statement body_field
        }
-     in
-     Ok stmt
 
 (* For-in statement *)
 
@@ -251,13 +299,11 @@ and dec_while_statement node : while_statement =
   @@ let* kwd_while = first_child_named "while" node in
      let* condition_field = child_with_field "condition" node in
      let* body_field = child_with_field "body" node in
-     let stmt : while_statement =
+     Ok
        { kwd_while = make_kwd kwd_while
        ; condition = dec_expression condition_field
        ; body = dec_statement body_field
        }
-     in
-     Ok stmt
 
 (* Do statement *)
 
@@ -267,26 +313,78 @@ and dec_do_statement ?(comments = []) node : do_statement =
      let* body_field = child_with_field "body" node in
      let* kwd_while = first_child_named "while" node in
      let* condition_field = child_with_field "condition" node in
-     let stmt : do_statement =
+     Ok
        { kwd_do = make_kwd ~comments kwd_do
        ; body = dec_statement body_field
        ; kwd_while = make_kwd kwd_while
        ; condition = dec_parenthesized_expression condition_field
        }
-     in
-     Ok stmt
 
 (* Try statement *)
 
 and dec_try_statement node : try_statement =
-  ignore node;
-  failwith "dec_try_statement"
+  ensure_Ok node
+  @@ let* kwd_try = first_child_named "try" node in
+     let* body_field = child_with_field "body" node in
+     let handler_field = child_with_field_opt "handler" node in
+     let finalizer_field = child_with_field_opt "finalizer" node in
+     Ok
+       { kwd_try = make_kwd kwd_try
+       ; body = dec_statement_block body_field
+       ; handler = make_opt dec_catch_clause handler_field
+       ; finalizer = make_opt dec_finally_clause finalizer_field
+       }
+
+and dec_catch_clause node =
+  ensure_Ok node
+  @@ let* kwd_catch = first_child_named "catch" node in
+     let parameter_field = child_with_field_opt "parameter" node in
+     let* body_field = child_with_field "body" node in
+     Ok
+       { kwd_catch = make_kwd kwd_catch
+       ; parameter = make_opt (dec_catch_parameter node) parameter_field
+       ; body = dec_statement_block body_field
+       }
+
+and dec_catch_parameter node param : catch_parameter =
+  ensure_Ok node
+  @@ let* sym_lparen = first_child_named "(" node in
+     let type_field = child_with_field_opt "type" node in
+     let* sym_rparen = first_child_named ")" node in
+     Ok
+       { sym_lparen = make_sym sym_lparen
+       ; catch_parameter = dec_catch_parameter_kind param
+       ; type_ = make_opt dec_type_annotation type_field
+       ; sym_rparen = make_sym sym_rparen
+       }
+
+and dec_catch_parameter_kind node : catch_parameter_kind =
+  match get_name node with
+  | "identifier" -> Catch_identifier (dec_identifier node)
+  | "object_pattern" -> Catch_object_pattern (dec_object_pattern node)
+  | "array_pattern" -> Catch_array_pattern (dec_array_pattern node)
+  | _ -> failwith "dec_catch_parameter_kind"
+
+and dec_type_annotation node : type_annotation =
+  ensure_Ok node
+  @@ let* sym_colon = first_child_named ":" node in
+     let* type_child = named_child_ranked 0 node in
+     Ok (make_sym sym_colon, dec_type type_child)
+
+and dec_finally_clause node : finally_clause = dec_statement_block node
 
 (* With statement *)
 
-and dec_with_statement node =
-  ignore node;
-  failwith "dec_with_statement"
+and dec_with_statement node : with_statement =
+  ensure_Ok node
+  @@ let* kwd_with = first_child_named "with" node in
+     let* object_field = child_with_field "object" node in
+     let* body_field = child_with_field "body" node in
+     Ok
+       { kwd_with = make_kwd kwd_with
+       ; object_ = dec_expression object_field
+       ; body = dec_statement body_field
+       }
 
 (* Break statement *)
 
@@ -294,10 +392,7 @@ and dec_break_statement node : break_statement =
   ensure_Ok node
   @@ let* kwd_break = first_child_named "break" node in
      let label_field = child_with_field_opt "label" node in
-     let stmt : break_statement =
-       { kwd_break = make_kwd kwd_break; stmt_id = make_opt dec_identifier label_field }
-     in
-     Ok stmt
+     Ok { kwd_break = make_kwd kwd_break; stmt_id = make_opt dec_identifier label_field }
 
 (* Continue statement *)
 
@@ -305,12 +400,10 @@ and dec_continue_statement node : continue_statement =
   ensure_Ok node
   @@ let* kwd_continue = first_child_named "continue" node in
      let label_field = child_with_field_opt "label" node in
-     let stmt : continue_statement =
+     Ok
        { kwd_continue = make_kwd kwd_continue
        ; stmt_id = make_opt dec_identifier label_field
        }
-     in
-     Ok stmt
 
 (* Return statement *)
 
@@ -318,10 +411,7 @@ and dec_return_statement node : return_statement =
   ensure_Ok node
   @@ let* kwd_return = first_child_named "return" node in
      let expr = child_ranked_opt 1 node in
-     let stmt : return_statement =
-       { kwd_return = make_kwd kwd_return; expressions = make_opt dec_expressions expr }
-     in
-     Ok stmt
+     Ok { kwd_return = make_kwd kwd_return; expressions = make_opt dec_expressions expr }
 
 (* Throw statement *)
 
@@ -443,3 +533,26 @@ and dec_sequence_expression ?(comments = []) node : sequence_expression =
   ignore comments;
   ignore node;
   failwith "dec_sequence_expression"
+
+(* PATTERN
+
+   The JavasScript tree-sitter grammar have the non-terminal
+   "pattern" be a supertype, that is, a hidden rule. *)
+
+(* Object pattern *)
+
+and dec_object_pattern node : object_pattern =
+  ignore node;
+  failwith "dec_object_pattern"
+
+(* Array pattern *)
+
+and dec_array_pattern node : array_pattern =
+  ignore node;
+  failwith "dec_array_pattern"
+
+(** TYPES
+*)
+and dec_type node : type_ =
+  ignore node;
+  failwith "dec_type"
