@@ -1,7 +1,6 @@
 (* Printing the tree-sitter CST for TypeScript *)
 
 module Ts_wrap = Typescript_ast.Ts_wrap
-
 module Loc_map = Typescript_ast.Loc_map
 module Region = Simple_utils.Region
 

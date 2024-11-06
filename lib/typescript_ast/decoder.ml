@@ -5,7 +5,6 @@ module Wrap = Lexing_shared.Wrap
 module Ts_wrap = Typescript_ast.Ts_wrap
 module Lexeme = Typescript_ast.Lexeme
 module Ast = Typescript_ast.Ast
-
 open Core
 open Typescript_ast.Ts_wrap
 
@@ -86,7 +85,7 @@ and dec_statement ?(comments = []) node : statement =
   | "import_statement" -> dec_import_statement ~comments node
   | "debugger_statement" -> dec_debugger_statement ~comments node
   | "expression_statement" ->
-       S_expression_statement (dec_expression_statement ~comments node)
+    S_expression_statement (dec_expression_statement ~comments node)
   | "statement_block" -> dec_statement_block ~comments node
   | "if_statement" -> dec_if_statement ~comments node
   | "switch_statement" -> dec_switch_statement node
@@ -102,33 +101,29 @@ and dec_statement ?(comments = []) node : statement =
   | "throw_statement" -> dec_throw_statement node
   | "empty_statement" -> S_empty_statement (!get_region node)
   (* Inlining declarations cases (hidden rule) *)
-  | "function_declaration" ->
-      S_declaration (dec_function_declaration ~comments node)
+  | "function_declaration" -> S_declaration (dec_function_declaration ~comments node)
   | "generator_function_declaration" ->
-      S_declaration (dec_generator_function_declaration node)
-  | "class_declaration" ->
-      S_declaration (dec_class_declaration ~comments node)
+    S_declaration (dec_generator_function_declaration node)
+  | "class_declaration" -> S_declaration (dec_class_declaration ~comments node)
   | "lexical_declaration" ->
-      S_declaration (D_lexical_declaration (dec_lexical_declaration ~comments node))
+    S_declaration (D_lexical_declaration (dec_lexical_declaration ~comments node))
   | "variable_declaration" ->
-      S_declaration (D_variable_declaration (dec_variable_declaration ~comments node))
+    S_declaration (D_variable_declaration (dec_variable_declaration ~comments node))
   | "function_signature" ->
-      S_declaration (D_function_signature (dec_function_signature node))
+    S_declaration (D_function_signature (dec_function_signature node))
   | "abstract_class_declaration" ->
-      S_declaration (D_abstract_class_declaration (dec_abstract_class_declaration node))
+    S_declaration (D_abstract_class_declaration (dec_abstract_class_declaration node))
   | "module" -> S_declaration (D_module (dec_module node))
   | "internal_module" ->
-      S_declaration (D_internal_module (dec_internal_module ~comments node))
+    S_declaration (D_internal_module (dec_internal_module ~comments node))
   | "type_alias_declaration" ->
-      S_declaration (D_type_alias_declaration (dec_type_alias_declaration node))
-  | "enum_declaration" ->
-      S_declaration (D_enum_declaration (dec_enum_declaration node))
+    S_declaration (D_type_alias_declaration (dec_type_alias_declaration node))
+  | "enum_declaration" -> S_declaration (D_enum_declaration (dec_enum_declaration node))
   | "interface_declaration" ->
-      S_declaration (D_interface_declaration (dec_interface_declaration node))
-  | "import_alias" ->
-      S_declaration (D_import_alias (dec_import_alias node))
+    S_declaration (D_interface_declaration (dec_interface_declaration node))
+  | "import_alias" -> S_declaration (D_import_alias (dec_import_alias node))
   | "ambient_declaration" ->
-      S_declaration (D_ambient_declaration (dec_ambient_declaration node))
+    S_declaration (D_ambient_declaration (dec_ambient_declaration node))
   | _ -> failwith "dec_statement"
 
 (* Export statement *)
@@ -167,8 +162,7 @@ and dec_expression_statement ?(comments = []) node : expression_statement =
 
 and dec_expressions ?(comments = []) (node : ts_tree) : expressions =
   match get_name node with
-  | "sequence_expression" ->
-      Sequence_expression (dec_sequence_expression ~comments node)
+  | "sequence_expression" -> Sequence_expression (dec_sequence_expression ~comments node)
   | _ -> General_expression (dec_expression ~comments node)
 
 (* Statement blocks *)
@@ -220,30 +214,31 @@ and dec_for_statement node =
      let* body_field = child_with_field "body" node in
      let dec_initializer node : for_initializer =
        match get_name node with
-       | "lexical_declaration" ->
-            For_lexical_declaration (dec_lexical_declaration node)
+       | "lexical_declaration" -> For_lexical_declaration (dec_lexical_declaration node)
        | "variable_declaration" ->
-            For_variable_declaration (dec_variable_declaration node)
+         For_variable_declaration (dec_variable_declaration node)
        | "expression_statement" ->
-            For_expression_statement (dec_expression_statement node)
+         For_expression_statement (dec_expression_statement node)
        | "empty_statement" -> For_empty_statement (!get_region node)
        | _ -> failwith "dec_for_statement/dec_initializer"
      and dec_condition node : for_condition =
        match get_name node with
        | "expression_statement" ->
-           For_condition_expression (dec_expression_statement node)
+         For_condition_expression (dec_expression_statement node)
        | "empty_statement" -> For_condition_empty (!get_region node)
-       | _ -> failwith "dec_for_statement/dec_condition" in
-     let stmt : for_statement = {
-       kwd_for = make_kwd kwd_for
-     ; sym_lparen = make_sym sym_lparen
-     ; initializer_ = dec_initializer initializer_field
-     ; condition = dec_condition condition_field
-     ; increment = make_opt dec_expressions increment_field
-     ; sym_rparen = make_sym sym_rparen
-     ; body = dec_statement body_field
-     }
-     in Ok (S_for_statement stmt)
+       | _ -> failwith "dec_for_statement/dec_condition"
+     in
+     let stmt : for_statement =
+       { kwd_for = make_kwd kwd_for
+       ; sym_lparen = make_sym sym_lparen
+       ; initializer_ = dec_initializer initializer_field
+       ; condition = dec_condition condition_field
+       ; increment = make_opt dec_expressions increment_field
+       ; sym_rparen = make_sym sym_rparen
+       ; body = dec_statement body_field
+       }
+     in
+     Ok (S_for_statement stmt)
 
 (* For-in statement *)
 
@@ -322,15 +317,13 @@ and dec_continue_statement node =
 (* Return statement *)
 
 and dec_return_statement node =
-  ensure_Ok node @@
-  let* kwd_return = first_child_named "return" node in
-  let expr = child_ranked_opt 1 node in
-  let stmt = {
-    kwd_return = make_kwd kwd_return
-  ; expressions = make_opt dec_expressions expr
-  }
-  in
-  Ok (S_return_statement stmt)
+  ensure_Ok node
+  @@ let* kwd_return = first_child_named "return" node in
+     let expr = child_ranked_opt 1 node in
+     let stmt =
+       { kwd_return = make_kwd kwd_return; expressions = make_opt dec_expressions expr }
+     in
+     Ok (S_return_statement stmt)
 
 (* Throw statement *)
 
