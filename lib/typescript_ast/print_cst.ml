@@ -1185,7 +1185,26 @@ and print_ambient_declaration state node =
 
 and print_expression ?(comments = []) state (node : ts_tree) =
   match get_name node with
-  (* "primary_expression" inlined: *)
+  (* Rest of "expression": *)
+  | "glimmer_template" -> print_glimmer_template state node
+  | "assignment_expression" -> print_assignment_expression state node
+  | "augmented_assignment_expression" -> print_augmented_assignment_expression state node
+  | "await_expression" -> print_await_expression state node
+  | "unary_expression" -> print_unary_expression state node
+  | "binary_expression" -> print_binary_expression ~comments state node
+  | "ternary_expression" -> print_ternary_expression state node
+  | "update_expression" -> print_update_expression state node
+  | "new_expression" -> print_new_expression state node
+  | "yield_expression" -> print_yield_expression state node
+  | "as_expression" -> print_as_expression state node
+  | "satisfies_expression" -> print_satisfies_expression state node
+  | "instantiation_expression" -> print_instantiation_expression state node
+  | "internal_module" -> print_internal_module ~comments state node
+  | "type_assertion" -> print_type_assertion state node
+  | _ -> print_primary_expression ~comments state node
+
+and print_primary_expression ?(comments = []) state node =
+  match get_name node with
   | "subscript_expression" -> print_subscript_expression state node
   | "member_expression" -> print_member_expression state node
   | "parenthesized_expression" -> print_parenthesized_expression state node
@@ -1209,22 +1228,6 @@ and print_expression ?(comments = []) state (node : ts_tree) =
   | "meta_property" -> print_meta_property state node
   | "call_expression" -> print_call_expression state node
   | "non_null_expression" -> print_non_null_expression state node
-  (* Rest of "expression": *)
-  | "glimmer_template" -> print_glimmer_template state node
-  | "assignment_expression" -> print_assignment_expression state node
-  | "augmented_assignment_expression" -> print_augmented_assignment_expression state node
-  | "await_expression" -> print_await_expression state node
-  | "unary_expression" -> print_unary_expression state node
-  | "binary_expression" -> print_binary_expression ~comments state node
-  | "ternary_expression" -> print_ternary_expression state node
-  | "update_expression" -> print_update_expression state node
-  | "new_expression" -> print_new_expression state node
-  | "yield_expression" -> print_yield_expression state node
-  | "as_expression" -> print_as_expression state node
-  | "satisfies_expression" -> print_satisfies_expression state node
-  | "instantiation_expression" -> print_instantiation_expression state node
-  | "internal_module" -> print_internal_module ~comments state node
-  | "type_assertion" -> print_type_assertion state node
   | _ -> match_rest state node print_unexpected_node
 
 (* Glimmer template (not supported) *)
@@ -1908,22 +1911,30 @@ and print_meta_property state node =
 
 and print_call_expression state node =
   let function_field = child_with_field "function" node
+  and member_selection = first_child_named_opt "?." node
   and type_arguments_field = child_with_field_opt "type_arguments" node
-  and arguments_field = child_with_field "arguments" node
-  and print_function state node =
-    match get_name node with
-    | "import" -> make_kwd state node
-    | _ -> match_rest state node print_expression
-  and print_arguments state node =
-    match get_name node with
-    | "template_string" -> print_template_string state node
-    | _ -> match_rest state node print_arguments
-  in
+  and arguments_field = child_with_field "arguments" node in
   let children =
-    [ mk_child_res print_function function_field
-    ; mk_child_opt print_type_arguments type_arguments_field
-    ; mk_child_res print_arguments arguments_field
-    ]
+    match member_selection with
+    | None ->
+      let print_function state node =
+        match get_name node with
+        | "import" -> make_kwd state node
+        | _ -> match_rest state node print_expression
+      and print_arguments state node =
+        match get_name node with
+        | "template_string" -> print_template_string state node
+        | _ -> match_rest state node print_arguments
+      in
+      [ mk_child_res print_function function_field
+      ; mk_child_opt print_type_arguments type_arguments_field
+      ; mk_child_res print_arguments arguments_field
+      ]
+    | Some _ ->
+      [ mk_child_res print_primary_expression function_field
+      ; mk_child_opt print_type_arguments type_arguments_field
+      ; mk_child_res print_arguments arguments_field
+      ]
   in
   make_tree state node children
 
