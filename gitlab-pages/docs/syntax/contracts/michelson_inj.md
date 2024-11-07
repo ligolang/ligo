@@ -176,7 +176,7 @@ file with extension `.tz`.
 [@entry]
 let main (param : unit) () : operation list * unit =
   let op, _addr =
-    [%create_contract_of_file "gitlab-pages/docs/tezos/contracts/src/compiled.tz"]
+    [%create_contract_of_file "gitlab-pages/docs/syntax/contracts/src/compiled.tz"]
     None 1tez param
   in [op], ()
 ```
@@ -193,7 +193,7 @@ Michelson file with extension `.tz`.
 @entry
 const main = (param: unit, _storage: unit) : [list<operation>, unit] => {
   const [op, _addr] =
-    (create_contract_of_file `gitlab-pages/docs/tezos/contracts/src/compiled.tz`)
+    (create_contract_of_file `gitlab-pages/docs/syntax/contracts/src/compiled.tz`)
     (None(), 1tez, param)
   return [[op], []];
 }

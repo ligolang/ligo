@@ -18,7 +18,7 @@ Attributes come in three forms:
 Attributes are located just before the construct they apply to, contrary to OCaml.
 Also contrary to OCaml, LIGO attributes always use only one `@` symbol.
 
-The most common use of an attribute is to denote an [entrypoint](../tezos/contracts/entrypoints).
+The most common use of an attribute is to denote an [entrypoint](../syntax/contracts/entrypoints).
 
 Attributes are placed immediately before the code they apply to.
 You can also apply multiple attributes on one line, as in this example:
@@ -53,7 +53,7 @@ Decorators come in two forms:
 1. `@name_of_decorator`
 2. `@name_of_decorator("Some string")`
 
-The most common use of a decorator is to denote an [entrypoint](../tezos/contracts/entrypoints).
+The most common use of a decorator is to denote an [entrypoint](../syntax/contracts/entrypoints).
 
 Decorators are placed immediately before the code they apply to.
 You can also apply multiple decorators on one line, as in this example:

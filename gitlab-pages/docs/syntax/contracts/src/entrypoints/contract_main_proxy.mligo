@@ -1,4 +1,4 @@
-#import "gitlab-pages/docs/tezos/contracts/src/entrypoints/contract_main.mligo" "C"
+#import "gitlab-pages/docs/syntax/contracts/src/entrypoints/contract_main.mligo" "C"
 
 module Proxy = struct
 
