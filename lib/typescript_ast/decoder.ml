@@ -212,7 +212,7 @@ and dec_if_statement ?(comments = []) node : if_statement =
      let alternative_field = child_with_field_opt "alternative" node in
      Ok
        { kwd_if = make_kwd ~comments kwd_if
-       ; condition = dec_expression condition_field
+       ; condition = dec_parenthesized_expression condition_field
        ; consequence = dec_statement consequence_field
        ; alternative = make_opt dec_else_clause alternative_field
        }
@@ -234,7 +234,7 @@ and dec_switch_statement node : switch_statement =
      let* body_field = child_with_field "body" node in
      Ok
        { kwd_switch = make_kwd kwd_switch
-       ; value = dec_expression value_field
+       ; value = dec_parenthesized_expression value_field
        ; body = dec_switch_body body_field
        }
 
@@ -460,7 +460,7 @@ and dec_with_statement node : with_statement =
      let* body_field = child_with_field "body" node in
      Ok
        { kwd_with = make_kwd kwd_with
-       ; object_ = dec_expression object_field
+       ; object_ = dec_parenthesized_expression object_field
        ; body = dec_statement body_field
        }
 
@@ -494,8 +494,13 @@ and dec_return_statement node : return_statement =
 (* Throw statement *)
 
 and dec_throw_statement node : throw_statement =
-  ignore node;
-  failwith "dec_throw_statement"
+  ensure_Ok node
+  @@ let* kwd_throw = first_child_named "throw" node in
+     let* expr = child_ranked 1 node in
+     Ok
+       { kwd_throw = make_kwd kwd_throw
+       ; expressions = dec_expressions expr
+       }
 
 (* DECLARATION
 
@@ -600,7 +605,7 @@ and dec_expression ?(comments = []) node : expression =
   ignore node;
   failwith "dec_expression"
 
-and dec_parenthesized_expression ?(comments = []) node : expression =
+and dec_parenthesized_expression ?(comments = []) node : parenthesized_expression =
   ignore comments;
   ignore node;
   failwith "dec_parenthesized_expression"
