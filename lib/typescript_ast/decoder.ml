@@ -329,12 +329,6 @@ and dec_for_in_statement node : for_in_statement =
      let* body_field = child_with_field "body" node in
      let* operator_field = child_with_field "operator" node in
      let* right_field = child_with_field "right" node in
-     let operator : for_operator =
-       match get_name operator_field with
-       | "in" -> In (make_kwd operator_field)
-       | "of" -> Of (make_kwd operator_field)
-       | s -> failwith ("dec_for_in_statement/operator: " ^ s ^ "\n")
-     in
      let range : for_range =
        match kind_field with
        | None ->
@@ -358,6 +352,12 @@ and dec_for_in_statement node : for_in_statement =
          | "const" -> For_in_const (keyword, variable)
          | s -> failwith ("dec_for_in_statement/range:" ^ s ^ "\n"))
      in
+     let operator : for_operator =
+       match get_name operator_field with
+       | "in" -> In (make_kwd operator_field)
+       | "of" -> Of (make_kwd operator_field)
+       | s -> failwith ("dec_for_in_statement/operator: " ^ s ^ "\n")
+     in
      let for_header : for_header =
        { range; operator; collection = dec_expressions right_field }
      in
@@ -379,7 +379,7 @@ and dec_while_statement node : while_statement =
      let* body_field = child_with_field "body" node in
      Ok
        { kwd_while = make_kwd kwd_while
-       ; condition = dec_expression condition_field
+       ; condition = dec_parenthesized_expression condition_field
        ; body = dec_statement body_field
        }
 
