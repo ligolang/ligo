@@ -43,11 +43,11 @@ type bigint_literal =
 
 (* Compound constructs *)
 
-type 'a enclosed = {
-  opening : symbol;
-  contents : 'a list;
-  closing : symbol
-}
+type 'a enclosed =
+  { opening : symbol
+  ; contents : 'a list
+  ; closing : symbol
+  }
 
 type 'a braces = Braces of 'a enclosed
 type 'a chevrons = Chevrons of 'a enclosed
@@ -1993,11 +1993,15 @@ and switch_entry =
   | Switch_default of switch_default
 
 and switch_case =
-  { value : expressions
+  { kwd_case : keyword
+  ; value : expressions
   ; body : statement list
   }
 
-and switch_default = statement list
+and switch_default =
+  { kwd_default : keyword
+  ; statements : statement list
+  }
 
 (** Throw Statement
 
@@ -2907,11 +2911,11 @@ and expression_statement = expressions
     ]}
 *)
 and for_in_statement =
-  { await : keyword option
-  ; kwd_for : keyword
+  { kwd_for : keyword
+  ; kwd_await : keyword option
   ; sym_lparen : symbol
   ; for_header : for_header
-  ; syn_rparen : symbol
+  ; sym_rparen : symbol
   ; body : statement
   }
 
@@ -2922,27 +2926,25 @@ and for_header =
   }
 
 and for_range =
-  | For_in_expression of for_in_expression
-  | For_in_variable of for_in_variable
-
-and for_in_expression =
   | For_in_expression of lhs_expression
   | For_in_parenthesized of expression
-
-and for_in_variable = for_in_kind * for_in_var
-
-and for_in_kind =
-  | Var
-  | Let
-  | Const
+  | For_in_var of for_in_var
+  | For_in_let of keyword * for_in_variable
+  | For_in_const of keyword * for_in_variable
 
 and for_in_var =
+  { kwd_var : keyword
+  ; variable : for_in_variable
+  ; default : expression option
+  }
+
+and for_in_variable =
   | For_in_ident of identifier
   | For_in_pattern of destructuring_pattern
 
 and for_operator =
-  | In
-  | Of
+  | In of keyword
+  | Of of keyword
 
 (** For-statement
 
