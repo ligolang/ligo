@@ -1212,7 +1212,7 @@ and assignment_expression =
   }
 
 and assignment_lhs =
-  | Assign_lhs_parens of expression
+  | Assign_lhs_parens of parenthesized_expression
   | Assign_lhs of lhs_expression
 
 (** Member Expression
@@ -1343,7 +1343,7 @@ and augmented_assignment_lhs =
   | Member_expression of member_expression
   | Subscript_expression of subscript_expression
   | Identifier of identifier
-  | Parenthesized_expression of expression
+  | Parenthesized_expression of parenthesized_expression
 
 and assignment_operator =
   | Add_eq (* += *)
@@ -1730,7 +1730,7 @@ and primary_expression =
   | E_null
   | E_number
   | E_object of object_
-  | E_parenthesized_expression of expression
+  | E_parenthesized_expression of parenthesized_expression
   | E_regex of string
   | E_string
   | E_subscript_expression of subscript_expression
@@ -1814,25 +1814,25 @@ and call_expression =
   | Call of call
   | Member of call_expression_member
 
-and call_expression_member =
-  { function_ : primary_expression
-  ; type_arguments : type_arguments option
-  ; arguments : arguments_to_call
-  }
-
-and arguments_to_call =
-  | Arguments of arguments
-  | Template_string of template_string
-
 and call =
   { function_ : fun_call
   ; type_arguments : type_arguments option
-  ; arguments : arguments
+  ; arguments : arguments_to_call
   }
 
 and fun_call =
   | Fun_call of expression
   | Import
+
+and arguments_to_call =
+  | Arguments of arguments
+  | Template_string of template_string
+
+and call_expression_member =
+  { function_ : primary_expression
+  ; type_arguments : type_arguments option
+  ; arguments : arguments
+  }
 
 (** Function Expression
 
@@ -1982,7 +1982,7 @@ and return_statement =
 *)
 and switch_statement =
   { kwd_switch : keyword
-  ; value : expression
+  ; value : parenthesized_expression
   ; body : switch_body
   }
 
@@ -2029,7 +2029,7 @@ and throw_statement =
 *)
 and while_statement =
   { kwd_while : keyword
-  ; condition : expression
+  ; condition : parenthesized_expression
   ; body : statement
   }
 
@@ -2046,7 +2046,7 @@ and while_statement =
 *)
 and with_statement =
   { kwd_with : keyword
-  ; object_ : expression
+  ; object_ : parenthesized_expression
   ; body : statement
   }
 
@@ -2765,7 +2765,7 @@ and do_statement =
   { kwd_do : keyword
   ; body : statement
   ; kwd_while : keyword
-  ; condition : expression
+  ; condition : parenthesized_expression
   }
 
 (** Export Statement
@@ -2927,7 +2927,7 @@ and for_header =
 
 and for_range =
   | For_in_expression of lhs_expression
-  | For_in_parenthesized of expression
+  | For_in_parenthesized of parenthesized_expression
   | For_in_var of for_in_var
   | For_in_let of keyword * for_in_variable
   | For_in_const of keyword * for_in_variable
@@ -3003,10 +3003,12 @@ and for_condition =
 *)
 and if_statement =
   { kwd_if : keyword
-  ; condition : expression
+  ; condition : parenthesized_expression
   ; consequence : statement
   ; alternative : (keyword * statement) option (* "else" *)
   }
+
+and parenthesized_expression = expressions parens
 
 (** Import Statement
 
