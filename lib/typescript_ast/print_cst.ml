@@ -114,7 +114,7 @@ let print_unexpected_node state node =
 
 let print_enclosed ?(comments = []) state node printer opening closing =
   let comments = comments @ prev_comments node in
-  let opening= first_child_named opening node
+  let opening = first_child_named opening node
   and closing = first_child_named closing node
   and clauses = collect_named_children node in
   let children =
@@ -542,24 +542,19 @@ and print_switch_case state node =
       | _ -> skip_until_colon nodes)
   in
   let stmt_children = skip_until_colon children
-  and value_field = child_with_field "value" node
-  and print_value state node =
-    match get_name node with
-    | "sequence_expression" -> print_sequence_expression state node
-    | _ -> print_expression state node
-  in
+  and value_field = child_with_field "value" node in
   let children =
     mk_child_res make_kwd kwd_case
-    :: mk_child_res print_value value_field
+    :: mk_child_res print_expressions value_field
     :: mk_children_list print_statement stmt_children
   in
   make_tree state node children
 
 and print_switch_default state node =
-  let kwd_switch = first_child_named "switch" node
+  let kwd_default = first_child_named "default" node
   and statements = collect_named_children node in
   let children =
-    mk_child_res make_kwd kwd_switch :: mk_children_list print_statement statements
+    mk_child_res make_kwd kwd_default :: mk_children_list print_statement statements
   in
   make_tree state node children
 

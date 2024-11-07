@@ -71,14 +71,16 @@ let list_of_children ?(comments = []) decoder children : 'a list =
 
 let decode_enclosed ?(comments = []) node decoder opening closing : 'a enclosed =
   ensure_Ok node
-  @@ let comments = comments @ prev_comments node in
-     let* opening = first_child_named opening node in
-     let* closing = first_child_named closing node in
-     let clauses = collect_named_children node in
-     Ok { opening = make_sym ~comments opening;
-          contents = list_of_children decoder clauses;
-          closing = make_sym closing
-        }
+  @@
+  let comments = comments @ prev_comments node in
+  let* opening = first_child_named opening node in
+  let* closing = first_child_named closing node in
+  let clauses = collect_named_children node in
+  Ok
+    { opening = make_sym ~comments opening
+    ; contents = list_of_children decoder clauses
+    ; closing = make_sym closing
+    }
 
 let decode_braces ?(comments = []) node decoder : 'a braces =
   Braces (decode_enclosed ~comments node decoder "{" "}")
@@ -161,7 +163,7 @@ and dec_statement ?(comments = []) node : statement =
   | "import_alias" -> S_declaration (D_import_alias (dec_import_alias node))
   | "ambient_declaration" ->
     S_declaration (D_ambient_declaration (dec_ambient_declaration node))
-  | _ -> failwith "dec_statement"
+  | s -> failwith ("dec_statement: " ^ s ^ "\n")
 
 (* Export statement *)
 
@@ -230,24 +232,52 @@ and dec_switch_statement node : switch_statement =
   @@ let* kwd_switch = first_child_named "switch" node in
      let* value_field = child_with_field "value" node in
      let* body_field = child_with_field "body" node in
-     Ok { kwd_switch = make_kwd kwd_switch
-        ; value = dec_expression value_field
-        ; body = dec_switch_body body_field
-        }
+     Ok
+       { kwd_switch = make_kwd kwd_switch
+       ; value = dec_expression value_field
+       ; body = dec_switch_body body_field
+       }
 
 and dec_switch_body node : switch_body =
   let decode ?comments node =
     match get_name node with
     | "switch_case" -> Switch_case (dec_switch_case ?comments node)
     | "switch_default" -> Switch_default (dec_switch_default ?comments node)
-    | _ -> failwith "dec_switch_body"
-  in decode_braces node decode
+    | s -> failwith ("dec_switch_body: " ^ s ^ "\n")
+  in
+  decode_braces node decode
 
 and dec_switch_case ?(comments = []) node : switch_case =
-  ignore comments; ignore node; failwith "dec_switch_case"
+  ensure_Ok node
+  @@
+  let comments = comments @ prev_comments node in
+  let* kwd_case = first_child_named "case" node in
+  let children = collect_children node in
+  let rec skip_until_colon = function
+    | [] -> []
+    | node :: nodes ->
+      (match get_name node with
+      | ":" -> nodes
+      | _ -> skip_until_colon nodes)
+  in
+  let stmt_children = skip_until_colon children in
+  let* value_field = child_with_field "value" node in
+  Ok
+    { kwd_case = make_kwd ~comments kwd_case
+    ; value = dec_expressions value_field
+    ; body = list_of_children dec_statement stmt_children
+    }
 
 and dec_switch_default ?(comments = []) node : switch_default =
-  ignore comments; ignore node; failwith "dec_switch_default"
+  ensure_Ok node
+  @@
+  let comments = comments @ prev_comments node in
+  let* kwd_default = first_child_named "default" node in
+  let statements = collect_named_children node in
+  Ok
+    { kwd_default = make_kwd ~comments kwd_default
+    ; statements = list_of_children dec_statement statements
+    }
 
 (* For statement *)
 
@@ -268,13 +298,13 @@ and dec_for_statement node : for_statement =
        | "expression_statement" ->
          For_expression_statement (dec_expression_statement node)
        | "empty_statement" -> For_empty_statement (!get_region node)
-       | _ -> failwith "dec_for_statement/dec_initializer"
+       | s -> failwith ("dec_for_statement/dec_initializer: " ^ s ^ "\n")
      and dec_condition node : for_condition =
        match get_name node with
        | "expression_statement" ->
          For_condition_expression (dec_expression_statement node)
        | "empty_statement" -> For_condition_empty (!get_region node)
-       | _ -> failwith "dec_for_statement/dec_condition"
+       | s -> failwith ("dec_for_statement/dec_condition: " ^ s ^ "\n")
      in
      Ok
        { kwd_for = make_kwd kwd_for
@@ -289,8 +319,56 @@ and dec_for_statement node : for_statement =
 (* For-in statement *)
 
 and dec_for_in_statement node : for_in_statement =
-  ignore node;
-  failwith "TODO: dec_for_in_statement"
+  ensure_Ok node
+  @@ let* kwd_for = first_child_named "for" node in
+     let kwd_await = first_child_named_opt "await" node in
+     let* sym_lparen = first_child_named "(" node in
+     let kind_field = child_with_field_opt "kind" node in
+     let* left_field = child_with_field "left" node in
+     let* sym_rparen = first_child_named ")" node in
+     let* body_field = child_with_field "body" node in
+     let* operator_field = child_with_field "operator" node in
+     let* right_field = child_with_field "right" node in
+     let operator : for_operator =
+       match get_name operator_field with
+       | "in" -> In (make_kwd operator_field)
+       | "of" -> Of (make_kwd operator_field)
+       | s -> failwith ("dec_for_in_statement/operator: " ^ s ^ "\n")
+     in
+     let range : for_range =
+       match kind_field with
+       | None ->
+         (match get_name left_field with
+         | "parenthesized_expression" ->
+           For_in_parenthesized (dec_parenthesized_expression node)
+         | _ -> For_in_expression (dec_lhs_expression node))
+       | Some kind_field ->
+         let keyword = make_kwd kind_field
+         and variable =
+           match get_name left_field with
+           | "identifier" -> For_in_ident (dec_identifier left_field)
+           | _ -> For_in_pattern (dec_destructuring_pattern left_field)
+         in
+         (match get_name kind_field with
+         | "var" ->
+           let value_field = child_with_field_opt "value" node in
+           let default = make_opt dec_expression value_field in
+           For_in_var { kwd_var = keyword; variable; default }
+         | "let" -> For_in_let (keyword, variable)
+         | "const" -> For_in_const (keyword, variable)
+         | s -> failwith ("dec_for_in_statement/range:" ^ s ^ "\n"))
+     in
+     let for_header : for_header =
+       { range; operator; collection = dec_expressions right_field }
+     in
+     Ok
+       { kwd_for = make_kwd kwd_for
+       ; kwd_await = make_opt make_kwd kwd_await
+       ; sym_lparen = make_sym sym_lparen
+       ; for_header
+       ; sym_rparen = make_sym sym_rparen
+       ; body = dec_statement body_field
+       }
 
 (* While statement *)
 
@@ -363,7 +441,7 @@ and dec_catch_parameter_kind node : catch_parameter_kind =
   | "identifier" -> Catch_identifier (dec_identifier node)
   | "object_pattern" -> Catch_object_pattern (dec_object_pattern node)
   | "array_pattern" -> Catch_array_pattern (dec_array_pattern node)
-  | _ -> failwith "dec_catch_parameter_kind"
+  | s -> failwith ("dec_catch_parameter_kind: " ^ s ^ "\n")
 
 and dec_type_annotation node : type_annotation =
   ensure_Ok node
@@ -534,6 +612,13 @@ and dec_sequence_expression ?(comments = []) node : sequence_expression =
   ignore node;
   failwith "dec_sequence_expression"
 
+(* LHS expression *)
+
+and dec_lhs_expression ?(comments = []) node : lhs_expression =
+  ignore comments;
+  ignore node;
+  failwith "dec_lhs_expression"
+
 (* PATTERN
 
    The JavasScript tree-sitter grammar have the non-terminal
@@ -550,6 +635,12 @@ and dec_object_pattern node : object_pattern =
 and dec_array_pattern node : array_pattern =
   ignore node;
   failwith "dec_array_pattern"
+
+(* Rule "_destructuring_pattern" is inlined. *)
+
+and dec_destructuring_pattern node : destructuring_pattern =
+  ignore node;
+  failwith "dec_destructuring_pattern"
 
 (** TYPES
 *)
