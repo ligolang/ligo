@@ -12,6 +12,27 @@ Contracts must have at least one entrypoint, and they can have as many as needed
 For example, the following contract provides four entrypoints.
 The `increment` and `decrement` entrypoints increase or decrease a value in storage, the `reset` entrypoint sets the value to 0, and the `default` entrypoint increases the value by 1.
 
+<Syntax syntax="cameligo">
+
+```cameligo group=incdec
+module IncDec = struct
+  type storage = int
+  type result = operation list * storage
+
+  (* Four entrypoints *)
+  [@entry] let increment (delta : int) (storage : storage) : result =
+    [], storage + delta
+  [@entry] let default (() : unit) (storage : storage) : result =
+    increment 1 storage
+  [@entry] let decrement (delta : int) (storage : storage) : result =
+    [], storage - delta
+  [@entry] let reset (() : unit) (_ : storage) : result =
+    [], 0
+end
+```
+
+</Syntax>
+
 <Syntax syntax="jsligo">
 
 ```jsligo group=incdec
@@ -22,42 +43,21 @@ export namespace IncDec {
   // Four entrypoints
 
   @entry
-  const increment = (delta : int, store : storage) : result =>
-    [[], store + delta];
+  const increment = (delta: int, storage: storage): result =>
+    [[], storage + delta];
 
   @entry
-  const @default = (_u : unit, store : storage) : result =>
-    increment(1, store)
+  const @default = (_u: unit, storage: storage): result =>
+    increment(1, storage)
 
   @entry
-  const decrement = (delta : int, store : storage) : result =>
-    [[], store - delta];
+  const decrement = (delta: int, storage: storage): result =>
+    [[], storage - delta];
 
   @entry
-  const reset = (_p : unit, _s : storage) : result =>
+  const reset = (_p: unit, _s: storage): result =>
     [[], 0];
 };
-```
-
-</Syntax>
-
-<Syntax syntax="cameligo">
-
-```cameligo group=incdec
-module IncDec = struct
-  type storage = int
-  type result = operation list * storage
-
-  (* Four entrypoints *)
-  [@entry] let increment (delta : int) (store : storage) : result =
-    [], store + delta
-  [@entry] let default (() : unit) (store : storage) : result =
-    increment 1 store
-  [@entry] let decrement (delta : int) (store : storage) : result =
-    [], store - delta
-  [@entry] let reset (() : unit) (_ : storage) : result =
-    [], 0
-end
 ```
 
 </Syntax>
@@ -68,7 +68,7 @@ For example, this `run dry-run` command calls the `increment` entrypoint in the 
 <Syntax syntax="cameligo">
 
 ```bash
-ligo run dry-run -m IncDec gitlab-pages/docs/tezos/contracts/src/entrypoints/incdec.mligo 'Increment(5)' '4'
+ligo run dry-run -m IncDec gitlab-pages/docs/syntax/contracts/src/entrypoints/incdec.mligo 'Increment(5)' '4'
 ```
 
 </Syntax>
@@ -76,7 +76,7 @@ ligo run dry-run -m IncDec gitlab-pages/docs/tezos/contracts/src/entrypoints/inc
 <Syntax syntax="jsligo">
 
 ```bash
-ligo run dry-run -m IncDec gitlab-pages/docs/tezos/contracts/src/entrypoints/incdec.jsligo 'Increment(5)' '4'
+ligo run dry-run -m IncDec gitlab-pages/docs/syntax/contracts/src/entrypoints/incdec.jsligo 'Increment(5)' '4'
 ```
 
 </Syntax>
@@ -87,7 +87,7 @@ The response shows an empty list of transactions to run next and the new state o
 ( LIST_EMPTY() , 9 )
 ```
 
-Note that even though the entrypoint name starts with a lower-case letter, the command uses an initial upper-case letter to call it.
+Note that even though the entrypoint name starts with a lower-case letter, the `run dry-run` command uses an initial upper-case letter to call it.
 
 ## Parameters
 
@@ -159,8 +159,8 @@ LIGO entrypoints must return a tuple that contains these values:
 Unlike functions and API endpoints, entrypoints do not return a value directly to the caller.
 To return data from a smart contract, you can use one of these methods:
 
-- Use views to return data to smart contracts or off-chain applications
-- Use events to return data to off-chain applications
+- Use [views](views) to return data to smart contracts or off-chain applications
+- Use [events](events) to return data to off-chain applications
 - Include a callback parameter that sends information to another smart contract by calling one of its entrypoints
 
 ## Logic
@@ -352,6 +352,76 @@ The entrypoint cannot take advantage of any changes that these transactions make
 For example, if an entrypoint creates a transaction that sends tez to another contract and then checks its balance again before the end of the entrypoint, the balance is the same as it was at the start of the entrypoint.
 Its balance changes only when it returns the transaction at the end of the entrypoint code and that transaction runs.
 
+## Scoping
+
+<Syntax syntax="cameligo">
+
+Like other functions in CameLIGO, entrypoints are implicitly exported from modules.
+Other contracts can refer to those entrypoints.
+For example, here is a contract that re-uses entrypoints from another contract:
+
+```cameligo
+module ContractA = struct
+  type storage_type = int
+  type return_type = operation list * storage_type
+
+  [@entry]
+  let increment (delta : int) (storage : storage_type) : return_type =
+    [], storage + delta
+
+  [@entry]
+  let decrement (delta : int) (storage : storage_type) : return_type =
+    [], storage - delta
+end
+
+module ContractB = struct
+  type storage_type = int
+  type return_type = operation list * storage_type
+
+  [@entry]
+  let add = ContractA.increment
+
+  [@entry]
+  let sub = ContractA.decrement
+end
+```
+
+</Syntax>
+
+<Syntax syntax="jsligo">
+
+Unlike other functions in JsLIGO, entrypoints are implicitly exported from namespaces as if they had an `export` keyword.
+Other contracts can refer to those entrypoints.
+For example, here is a contract that re-uses entrypoints from another contract even though the entrypoints are not explicitly exported:
+
+```jsligo group=exported_entrypoints
+namespace ContractA {
+  type storage_type = int;
+  type return_type = [list<operation>, storage_type];
+
+  @entry
+  const increment = (delta: int, storage: storage_type): return_type => [[], storage + delta];
+
+  @entry
+  const decrement = (delta: int, storage: storage_type): return_type => [[], storage - delta];
+
+  @entry
+  const reset = (_: unit, _s: storage_type): return_type => [[], 0];
+}
+
+namespace ContractB {
+  type storage_type = int;
+  export type return_type = [list<operation>, storage_type];
+
+  @entry
+  const add = ContractA.increment;
+  @entry
+  const sub = ContractA.decrement;
+}
+```
+
+</Syntax>
+
 ## The default entrypoint
 
 The name `default` has a special meaning for a Tezos entrypoint.
@@ -437,7 +507,7 @@ For example, this `run dry-run` command passes the `Action_A` variant to the con
 <Syntax syntax="cameligo">
 
 ```bash
-ligo run dry-run gitlab-pages/docs/tezos/contracts/src/entrypoints/contract_main.mligo 'Action_A(5n)' '(5n, "hello")'
+ligo run dry-run gitlab-pages/docs/syntax/contracts/src/entrypoints/contract_main.mligo 'Action_A(5n)' '(5n, "hello")'
 ```
 
 </Syntax>
@@ -445,7 +515,7 @@ ligo run dry-run gitlab-pages/docs/tezos/contracts/src/entrypoints/contract_main
 <Syntax syntax="jsligo">
 
 ```bash
-ligo run dry-run gitlab-pages/docs/tezos/contracts/src/entrypoints/contract_main.jsligo 'Action_A(5n)' '[5n, "hello"]'
+ligo run dry-run gitlab-pages/docs/syntax/contracts/src/entrypoints/contract_main.jsligo 'Action_A(5n)' '[5n, "hello"]'
 ```
 
 </Syntax>
@@ -464,7 +534,7 @@ proxy file which declares a single entry point and calls the existing
 <Syntax syntax="cameligo">
 
 ```cameligo group=contract_main_proxy
-#import "gitlab-pages/docs/tezos/contracts/src/entrypoints/contract_main.mligo" "C"
+#import "gitlab-pages/docs/syntax/contracts/src/entrypoints/contract_main.mligo" "C"
 
 module Proxy = struct
 
@@ -486,7 +556,7 @@ ligo compile contract --library . -m Proxy gitlab-pages/docs/advanced/src/entryp
 <Syntax syntax="jsligo">
 
 ```jsligo group=contract_main_proxy
-#import "gitlab-pages/docs/tezos/contracts/src/entrypoints/contract_main.jsligo" "C"
+#import "gitlab-pages/docs/syntax/contracts/src/entrypoints/contract_main.jsligo" "C"
 
 namespace Proxy {
   @entry

@@ -11,7 +11,7 @@ Common types of operations that smart contracts create include:
 - Transfers (calling a smart contract or transferring tez to an account)
 - Deploying (originating) a smart contract
 - Changing the delegation for the current smart contract
-- Emitting an [event](../../contract/events)
+- Emitting an [event](../../syntax/contracts/events)
 
 For this reason, LIGO entrypoints always return a list of operations and the new state of the contract storage.
 The list can include any number of operations of any type.
@@ -81,7 +81,7 @@ const give5tez = (_: unit, storage: storage): return_value => {
 
 ### Calling a contract
 
-To call another contract, you need to get the parameter to pass to the contract, which includes the entrypoint, if the contract uses them.
+To call another contract, you must get the parameter to pass to the contract, which includes the entrypoint, if the contract uses them.
 The following example shows two contracts, A and B.
 B stores contract A's address and calls its entrypoints.
 To get the correct parameter for the transaction, contract B uses the `parameter_of` keyword to create a parameter that represents a call to contract A's entrypoints.
@@ -264,7 +264,7 @@ namespace C {
 
 </Syntax>
 
-If you don't have the source code or annotated parameter of the target contract, you must create the parameter as described in [Interoperability](../../tezos/contracts/interop).
+If you don't have the source code or annotated parameter of the target contract, you must create the parameter as described in [Interoperability](../../syntax/contracts/interop).
 
 For example, the parameter of contract A minus the annotations looks like this:
 
@@ -351,7 +351,7 @@ namespace D {
 
 </Syntax>
 
-For information about constructing more complicated parameters, see [Interoperability](../../tezos/contracts/interop).
+For information about constructing more complicated parameters, see [Interoperability](../../syntax/contracts/interop).
 
 ## Originating contracts
 
@@ -409,7 +409,7 @@ const main = (_: string, storage: string) : @return => {
 
 </Syntax>
 
-## Delegation
+## Changing delegation
 
 The `Tezos.Next.Operation.set_delegate` function creates an operation that changes the delegate for the current contract.
 Its parameter is an option with the public key hash of the new delegate or `None` to withdraw delegation.
@@ -441,7 +441,7 @@ const changeDelegate = (new_delegate: key_hash, storage: unit): [list<operation>
 
 The `Tezos.Next.Operation.Emit` function creates an event emission operation.
 Its parameters are the tag for the event and the payload for the event.
-For more information about events, see [Events](../../contract/events).
+For more information about events, see [Events](../../syntax/contracts/events).
 
 <Syntax syntax="cameligo">
 

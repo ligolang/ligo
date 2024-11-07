@@ -3,6 +3,6 @@ let michelson_add n =
 [@entry]
 let main (param : unit) () : operation list * unit =
   let op, _addr =
-    [%create_contract_of_file "gitlab-pages/docs/tezos/contracts/src/compiled.tz"]
+    [%create_contract_of_file "gitlab-pages/docs/syntax/contracts/src/compiled.tz"]
     None 1tez param
   in [op], ()

@@ -63,16 +63,22 @@ const sidebars = {
         "type": "category",
         "label": "Contracts",
         "items": [
-          "tezos/contracts/contracts",
-          "tezos/contracts/entrypoints",
-          "tezos/contracts/contract-address",
-          "tezos/contracts/contract_of",
-          "tezos/contracts/michelson",
-          "tezos/contracts/michelson-injection",
-          "tezos/contracts/operation",
-          "contract/events",
-          "contract/views",
+          "syntax/contracts/contracts",
+          "syntax/contracts/entrypoints",
+          "syntax/contracts/operation",
+          "syntax/contracts/events",
+          "syntax/contracts/views",
+          "syntax/contracts/michelson",
+          "syntax/contracts/michelson-injection",
         ],
+      },
+      {
+        "type": "doc",
+        "label": "Attributes",
+        "customProps": {
+          "jsLigoName": "Decorators",
+        },
+        "id": "syntax/decorators",
       },
       {
         "type": "category",
@@ -86,14 +92,6 @@ const sidebars = {
         ]
       },
       'syntax/keywords',
-      {
-        "type": "doc",
-        "label": "Attributes",
-        "customProps": {
-          "jsLigoName": "Decorators",
-        },
-        "id": "syntax/decorators",
-      },
     ],
     "Data types": [
       {

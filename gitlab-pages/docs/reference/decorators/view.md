@@ -5,7 +5,7 @@ title: view
 
 import Syntax from '@theme/Syntax'
 
-[Views](../../contract/views) are a form of read-only entrypoints that can be called synchronously, and often are used to read part of the storage.
+[Views](../../syntax/contracts/views) are a form of read-only entrypoints that can be called synchronously, and often are used to read part of the storage.
 
 <Syntax syntax="cameligo">
 
@@ -50,4 +50,4 @@ const main = (_ : unit, storage: int): return_type =>
 
 </Syntax>
 
-For more information about views, see [Views](../../contract/views).
+For more information about views, see [Views](../../syntax/contracts/views).

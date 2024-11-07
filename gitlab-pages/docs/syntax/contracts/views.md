@@ -7,6 +7,11 @@ import Syntax from '@theme/Syntax';
 import SyntaxTitle from '@theme/SyntaxTitle';
 
 Views are a way for contracts to expose information to other contracts and to off-chain consumers.
+Like entrypoints, views are functions that receive a parameter and the current value of the contract storage.
+Unlike entrypoints, views return a value directly to the caller, and that value can be any type.
+
+Clients can call views off-chain without paying fees or sending transactions to Tezos because clients can calculate the output of a view from the current state of the contract.
+However, when a contract calls a view on-chain as part of an operation, it increases the gas fee of the operation.
 
 Contracts can store the source code of their views either on-chain or off-chain:
 

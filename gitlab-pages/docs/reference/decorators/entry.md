@@ -7,7 +7,7 @@ import Syntax from '@theme/Syntax'
 
 <Syntax syntax="cameligo">
 
-The attribute `[@entry]` on a function marks that function as an [entrypoint](../../tezos/contracts/entrypoints) of the contract, either at top-level or in a module that is then used as a contract.
+The attribute `[@entry]` on a function marks that function as an [entrypoint](../../syntax/contracts/entrypoints) of the contract, either at top-level or in a module that is then used as a contract.
 Here is an example of entrypoints defined in a module:
 
 ```cameligo group=entry
@@ -35,7 +35,7 @@ end
 
 <Syntax syntax="jsligo">
 
-The decorator `@entry` on a function marks that function as an [entrypoint](../../tezos/contracts/entrypoints) of the contract, either at top-level or in a module that is then used as a contract.
+The decorator `@entry` on a function marks that function as an [entrypoint](../../syntax/contracts/entrypoints) of the contract, either at top-level or in a module that is then used as a contract.
 Here is an example of entrypoints defined in a module:
 
 ```jsligo group=entry
