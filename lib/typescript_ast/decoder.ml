@@ -49,6 +49,23 @@ let make_opt decoder node = Option.map ~f:decoder node
 
 (* Decoding children of the same type *)
 
+let list_of_children ?(comments = []) decoder children : 'a list =
+  let f raw_child = List.cons (decoder ?comments:None raw_child) in
+  match children with
+  | [] -> []
+  | fst_raw_child :: siblings ->
+    let fst_child = decoder ?comments:(Some comments) fst_raw_child in
+    fst_child :: List.fold_right ~f ~init:[] siblings
+
+let ne_list_of_children ?(comments = []) decoder node : 'a ne_list option =
+  let f raw_child = List.cons (decoder ?comments:None raw_child) in
+  match collect_named_children node with
+  | [] -> None
+  | fst_raw_child :: siblings ->
+    let fst_child = decoder ?comments:(Some comments) fst_raw_child in
+    Some (Nonempty_list.(fst_child :: List.fold_right ~f ~init:[] siblings))
+
+(*
 let wrap_children ?(comments = []) decoder node : 'a ne_list wrap option =
   let f raw_child = List.cons (decoder ?comments:None raw_child) in
   match collect_named_children node with
@@ -58,14 +75,7 @@ let wrap_children ?(comments = []) decoder node : 'a ne_list wrap option =
     let stmts = Nonempty_list.(fst_child :: List.fold_right ~f ~init:[] siblings) in
     let region = !get_region node in
     Some (Wrap.make stmts region)
-
-let list_of_children ?(comments = []) decoder children : 'a list =
-  let f raw_child = List.cons (decoder ?comments:None raw_child) in
-  match children with
-  | [] -> []
-  | fst_raw_child :: siblings ->
-    let fst_child = decoder ?comments:(Some comments) fst_raw_child in
-    fst_child :: List.fold_right ~f ~init:[] siblings
+*)
 
 (* Decoding enclosed constructs *)
 
@@ -78,21 +88,33 @@ let decode_enclosed ?(comments = []) node decoder opening closing : 'a enclosed 
   let clauses = collect_named_children node in
   Ok
     { opening = make_sym ~comments opening
-    ; contents = list_of_children decoder clauses
+    ; contents = decoder clauses
     ; closing = make_sym closing
     }
 
 let decode_braces ?(comments = []) node decoder : 'a braces =
   Braces (decode_enclosed ~comments node decoder "{" "}")
 
-let decode_chevrons ?(comments = []) node decoder =
+let decode_chevrons ?(comments = []) node decoder : 'a chevrons =
   Chevrons (decode_enclosed ~comments node decoder "<" ">")
 
-let decode_brackets ?(comments = []) node decoder =
+let decode_brackets ?(comments = []) node decoder : 'a brackets =
   Brackets (decode_enclosed ~comments node decoder "[" "]")
 
-let decode_parens ?(comments = []) node decoder =
+let decode_parens ?(comments = []) node decoder : 'a parens =
   Parens (decode_enclosed ~comments node decoder "(" ")")
+
+let decode_list_in_braces ?comments node decoder : 'a list braces =
+  decode_braces ?comments node (list_of_children decoder)
+
+let decode_list_in_chevrons ?comments node decoder : 'a list chevrons =
+  decode_chevrons ?comments node (list_of_children decoder)
+
+let decode_list_in_brackets ?comments node decoder : 'a list brackets =
+  decode_brackets ?comments node (list_of_children decoder)
+
+let decode_list_in_parens ?comments node decoder : 'a list parens =
+  decode_parens ?comments node (list_of_children decoder)
 
 (* Decoding the CST *)
 
@@ -113,7 +135,7 @@ let rec dec_program file map node =
    "statement" be a supertype, that is, a hidden rule. *)
 
 and dec_statements ?(comments = []) node : statements =
-  wrap_children ~comments dec_statement node
+  ne_list_of_children ~comments dec_statement node
 
 and dec_statement ?(comments = []) node : statement =
   match get_name node with
@@ -245,7 +267,7 @@ and dec_switch_body node : switch_body =
     | "switch_default" -> Switch_default (dec_switch_default ?comments node)
     | s -> failwith ("dec_switch_body: " ^ s ^ "\n")
   in
-  decode_braces node decode
+  decode_list_in_braces node decode
 
 and dec_switch_case ?(comments = []) node : switch_case =
   ensure_Ok node
@@ -509,27 +531,99 @@ and dec_throw_statement node : throw_statement =
 
 (* Function declaration (see [dec_function_signature]) *)
 
-and dec_function_declaration ?(comments = []) node : function_declaration wrap =
-  ignore comments;
-  ignore node;
-  failwith "dec_function_declaration"
+and dec_function_declaration ?(comments = []) node : function_declaration =
+  ensure_Ok node
+  @@ let comments = comments @ prev_comments node in
+     let kwd_async = first_child_named_opt "async" node in
+     let* kwd_function = first_child_named "function" node in
+     let* name_field = child_with_field "name" node in
+     (* "_call_signature" inlined: *)
+     let type_parameters_field = child_with_field_opt "type_parameters" node in
+     let* parameters_field = child_with_field "parameters" node in
+     let return_type_field = child_with_field_opt "return_type" node in
+     (* "statement_block" *)
+     let* body_field = child_with_field "body" node in
+     let async_comments, function_comments =
+       match kwd_async with
+       | None -> [], comments
+       | Some _ -> comments, []
+     in
+     let call_sig : call_signature =
+       { type_parameters = make_opt dec_type_parameters type_parameters_field
+       ; parameters = dec_formal_parameters parameters_field
+       ; return_type = make_opt dec_return_type return_type_field
+       }
+     in
+     let fun_sig : function_signature =
+       { kwd_async = make_opt (make_kwd ~comments:async_comments) kwd_async
+       ; kwd_function = make_kwd ~comments:function_comments kwd_function
+       ; name = dec_identifier name_field
+       ; call_sig
+       }
+     in
+     let fun_decl : function_declaration =
+       { fun_sig; body = dec_statement_block body_field }
+    in ignore fun_decl; Ok (failwith "dec_function_declaration")
+
+and dec_formal_parameters node : formal_parameters =
+  decode_list_in_parens node dec_formal_parameter
+
+and dec_formal_parameter ?(comments = []) node : formal_parameter =
+  match get_name node with
+  | "required_parameter" -> dec_required_parameter ~comments node
+  | "optional_parameter" -> dec_optional_parameter ~comments node
+  | s -> failwith ("dec_formal_parameter: " ^ s ^ "\n")
+
+and dec_optional_parameter ?comments node = dec_required_parameter ?comments node
+
+and dec_required_parameter ?(comments = []) node =
+  ignore comments; ignore node; failwith "dec_required_parameter"
+(*
+  (* "_parameter_name" inlined: *)
+  let decorators = children_named "decorator" node
+  and accessibility_modifier = first_child_named_opt "accessibility_modifier" node
+  and override_modifier = first_child_named_opt "override_modifier" node
+  and kwd_readonly = first_child_named_opt "readonly" node
+  and pattern_field = child_with_field "pattern" node
+  (* *)
+  and type_field = child_with_field_opt "type" node
+  and print_pattern_field state node =
+    match get_name node with
+    | "this" -> make_kwd state node
+    | _ -> print_pattern state node
+  in
+  let children =
+    mk_children_list print_decorator decorators
+    @ [ mk_child_opt print_accessibility_modifier accessibility_modifier
+      ; mk_child_opt print_override_modifier override_modifier
+      ; mk_child_opt make_kwd kwd_readonly
+      ; mk_child_res print_pattern_field pattern_field
+      ; mk_child_opt print_type_annotation type_field
+      ]
+    @ mk_child_initializer_opt node (* "_initializer" inlined *)
+  in
+  make_tree state node children
+*)
+
+and dec_return_type node : call_return_type =
+  ignore node; failwith "dec_return_type"
 
 (* Generator function declaration (see function declaration) *)
 
-and dec_generator_function_declaration node : generator_function_declaration wrap =
+and dec_generator_function_declaration node : generator_function_declaration =
   ignore node;
   failwith "dec_generator_function_declaration"
 
 (* Class declaration (see [dec_class]) *)
 
-and dec_class_declaration ?(comments = []) node : class_declaration wrap =
+and dec_class_declaration ?(comments = []) node : class_declaration =
   ignore comments;
   ignore node;
   failwith "dec_class_declaration"
 
 (* Lexical declaration (see [dec_variable_declaration]) *)
 
-and dec_lexical_declaration ?(comments = []) node : lexical_declaration wrap =
+and dec_lexical_declaration ?(comments = []) node : lexical_declaration =
   ignore comments;
   ignore node;
   failwith "dec_lexical_declaration"
@@ -543,58 +637,94 @@ and dec_variable_declaration ?(comments = []) node : variable_declaration =
 
 (* Function signature (See [dec_function_declaration]) *)
 
-and dec_function_signature node : function_signature wrap =
+and dec_function_signature node : function_signature =
   ignore node;
   failwith "dec_function_signature"
 
 (* Abstract class declaration ( see [dec_class_declaration]) *)
 
-and dec_abstract_class_declaration node : abstract_class_declaration wrap =
+and dec_abstract_class_declaration node : abstract_class_declaration =
   ignore node;
   failwith "dec_abstract_class_declaration"
 
 (* Module *)
 
-and dec_module ?(comments = []) node : module_ wrap =
+and dec_module ?(comments = []) node : module_ =
   ignore comments;
   ignore node;
   failwith "dec_module"
 
 (* Internal module (a.k.a. namespaces) *)
 
-and dec_internal_module ?comments node : internal_module wrap =
+and dec_internal_module ?comments node : internal_module =
   ignore comments;
   ignore node;
   failwith "dec_internal_module"
 
 (* Type alias declaration *)
 
-and dec_type_alias_declaration ?(comments = []) node : type_alias_declaration wrap =
+and dec_type_alias_declaration ?(comments = []) node : type_alias_declaration =
   ignore comments;
   ignore node;
   failwith "dec_type_alias_declaration"
 
+(* Type parameters *)
+
+and dec_type_parameters node : type_parameters =
+  decode_list_in_chevrons node dec_type_parameter
+
+and dec_type_parameter ?(comments = []) node =
+  ignore comments; ignore node; failwith "dec_type_parameter"
+
+(*let comments = comments @ prev_comments node in
+  let name_field = child_with_field "name" node
+  and constraint_field = child_with_field_opt "constraint" node
+  and value_field = child_with_field_opt "value" node in
+  let children =
+    [ mk_child_res (dec_identifier ~comments) name_field
+    ; mk_child_opt print_constraint constraint_field
+    ; mk_child_opt print_default_type value_field
+    ]
+  in
+  make_tree state node children
+*)
+
+and dec_constraint node = ignore node; failwith "dec_constraint"
+(*  let kwd_extends = first_child_named "extends" node
+  and type_child = child_ranked 1 node in
+  let children =
+    [ mk_child_res make_kwd kwd_extends; mk_child_res print_type type_child ]
+  in
+  make_tree state node children
+*)
+
+and dec_default_type node = ignore node; failwith "dec_default_type"
+(*  let sym_equal = first_child_named "=" node
+  and type_node = child_ranked 1 node in
+  let children = [ mk_child_res make_sym sym_equal; mk_child_res print_type type_node ] in
+    make_tree state node children *)
+
 (* Enum declaration *)
 
-and dec_enum_declaration node : enum_declaration wrap =
+and dec_enum_declaration node : enum_declaration =
   ignore node;
   failwith "dec_enum_declaration"
 
 (* Interface declaration *)
 
-and dec_interface_declaration node : interface_declaration wrap =
+and dec_interface_declaration node : interface_declaration =
   ignore node;
   failwith "dec_interface_declaration"
 
 (* Import alias *)
 
-and dec_import_alias node : import_alias wrap =
+and dec_import_alias node : import_alias =
   ignore node;
   failwith "dec_import_alias"
 
 (* Ambient declaration *)
 
-and dec_ambient_declaration node : ambient_declaration wrap =
+and dec_ambient_declaration node : ambient_declaration =
   ignore node;
   failwith "dec_ambient_declaration"
 

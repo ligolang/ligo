@@ -45,7 +45,7 @@ type bigint_literal =
 
 type 'a enclosed =
   { opening : symbol
-  ; contents : 'a list
+  ; contents : 'a
   ; closing : symbol
   }
 
@@ -67,7 +67,7 @@ type 'a parens = Parens of 'a enclosed
 type program = statements
 
 and t = program
-and statements = statement ne_list wrap option
+and statements = statement ne_list (*wrap*) option
 
 (** DECLARATIONS
 
@@ -102,20 +102,20 @@ and statements = statement ne_list wrap option
     ]}
 *)
 and declaration =
-  | D_function_declaration of function_declaration wrap
-  | D_generator_function_declaration of generator_function_declaration wrap
-  | D_class_declaration of class_declaration wrap
-  | D_lexical_declaration of lexical_declaration wrap
+  | D_function_declaration of function_declaration
+  | D_generator_function_declaration of generator_function_declaration
+  | D_class_declaration of class_declaration
+  | D_lexical_declaration of lexical_declaration
   | D_variable_declaration of variable_declaration
-  | D_function_signature of function_signature wrap
-  | D_abstract_class_declaration of abstract_class_declaration wrap
-  | D_module of module_ wrap
-  | D_internal_module of internal_module wrap
-  | D_type_alias_declaration of type_alias_declaration wrap
-  | D_enum_declaration of enum_declaration wrap
-  | D_interface_declaration of interface_declaration wrap
-  | D_import_alias of import_alias wrap
-  | D_ambient_declaration of ambient_declaration wrap
+  | D_function_signature of function_signature
+  | D_abstract_class_declaration of abstract_class_declaration
+  | D_module of module_
+  | D_internal_module of internal_module
+  | D_type_alias_declaration of type_alias_declaration
+  | D_enum_declaration of enum_declaration
+  | D_interface_declaration of interface_declaration
+  | D_import_alias of import_alias
+  | D_ambient_declaration of ambient_declaration
 
 (** Function Declaration
 
@@ -140,7 +140,7 @@ and declaration =
   See [function_signature] below.
 *)
 and function_declaration =
-  { fun_sig : function_signature wrap
+  { fun_sig : function_signature
   ; body : statement_block
   }
 
@@ -211,10 +211,10 @@ and function_declaration =
     ]}
  *)
 and function_signature =
-  { async : keyword option
-  ; function_ : keyword
+  { kwd_async : keyword option
+  ; kwd_function : keyword
   ; name : identifier
-  ; call_sig : call_signature wrap
+  ; call_sig : call_signature
   }
 
 and call_signature =
@@ -223,11 +223,11 @@ and call_signature =
   ; return_type : call_return_type option
   }
 
-and type_parameters = type_parameter list wrap
-and formal_parameters = formal_parameter wrap list wrap
+and type_parameters = type_parameter list chevrons
+and formal_parameters = formal_parameter list parens
 
 and formal_parameter =
-  { parameter_name : parameter_name wrap
+  { parameter_name : parameter_name
   ; optional : symbol option (* "?" or not *)
   ; type_ : type_annotation option
   ; default : expression option
@@ -241,7 +241,7 @@ and parameter_name =
   ; pattern : parameter_pattern
   }
 
-and decorators = decorator ne_list wrap
+and decorators = decorator ne_list (* wrap *)
 
 and parameter_pattern =
   | Parameter_pattern of pattern
@@ -250,7 +250,7 @@ and parameter_pattern =
 and call_return_type =
   | Type_annotation of type_annotation
   | Asserts_annotation of asserts_annotation
-  | Type_predicate_annotation of type_predicate wrap
+  | Type_predicate_annotation of type_predicate
 
 and type_annotation = symbol * type_ (* ":" *)
 
@@ -384,15 +384,15 @@ and class_heritage =
   | Extends_clause of extends_clause * implements_clause option
   | Implements_clause of implements_clause
 
-and extends_clause = extends_clause_single ne_list wrap
+and extends_clause = extends_clause_single ne_list (*wrap*)
 
 and extends_clause_single =
   { value : expression
   ; type_arguments : type_arguments option
   }
 
-and type_arguments = type_ ne_list wrap
-and implements_clause = type_ ne_list wrap
+and type_arguments = type_ ne_list
+and implements_clause = type_ ne_list
 
 and type_parameter =
   { const : keyword option
@@ -401,15 +401,15 @@ and type_parameter =
   ; value : type_ option (* default *)
   }
 
-and class_body = class_member list wrap
+and class_body = class_member list
 
 and class_member =
   | Method_definition of decorators option * method_definition
-  | Method_signature of method_signature wrap
+  | Method_signature of method_signature
   | Call_static_block of statement_block
-  | Abstract_method_signature of abstract_method_signature wrap
-  | Index_signature of index_signature wrap
-  | Public_field_definition of public_field_definition wrap
+  | Abstract_method_signature of abstract_method_signature
+  | Index_signature of index_signature
+  | Public_field_definition of public_field_definition
 
 (** Method Signature
 
@@ -446,12 +446,12 @@ and class_member =
 *)
 and method_signature =
   { access : accessibility_modifier option
-  ; scope : method_scope wrap
+  ; scope : method_scope
   ; async : keyword option
   ; set_get_all : set_get_all option
   ; name : property_name
   ; optional : symbol option (* "?" *)
-  ; call_sig : call_signature wrap
+  ; call_sig : call_signature
   }
 
 and accessibility_modifier =
@@ -563,12 +563,12 @@ and destructuring_pattern =
   | Pattern_object of object_pattern
   | Pattern_array of array_pattern
 
-and object_pattern = member_pattern list wrap
+and object_pattern = member_pattern list
 
 and member_pattern =
-  | Member_pair_pattern of pair_pattern wrap
+  | Member_pair_pattern of pair_pattern
   | Member_rest_pattern of rest_pattern
-  | Member_object_assignment of object_assignment_pattern wrap
+  | Member_object_assignment of object_assignment_pattern
   | Member_shorthand_property of identifier (* Including reserved identifiers *)
 
 and pair_pattern =
@@ -596,12 +596,12 @@ and object_assignment_pattern =
   }
 
 and object_lhs_pattern = lhs_pattern
-and array_pattern = array_cell_pattern list wrap
+and array_pattern = array_cell_pattern list
 
 and array_cell_pattern =
   (* Isomorphic to [pair_value_pattern]. *)
   | Cell_pattern of pattern
-  | Cell_assignment of assignment_pattern wrap
+  | Cell_assignment of assignment_pattern
 
 (** Variable Declaration
 
@@ -788,8 +788,8 @@ and sign =
   | Minus of symbol
 
 and index_range =
-  | Typed_index_clause of typed_index_clause wrap
-  | Mapped_type_clause of mapped_type_clause wrap
+  | Typed_index_clause of typed_index_clause
+  | Mapped_type_clause of mapped_type_clause
 
 and typed_index_clause =
   { name : identifier (* Including reserved identifiers *)
@@ -938,7 +938,7 @@ and enum_declaration =
 
 and enum_body =
   | Enum_name of property_name
-  | Enum_assignment of enum_assignment wrap
+  | Enum_assignment of enum_assignment
 
 and enum_assignment =
   { name : property_name
@@ -1043,7 +1043,7 @@ and extends_type_clause =
   | Extends_nested of nested_type_identifier
   | Extends_generic of generic_type
 
-and nested_type_identifier = (identifier ne_list wrap * type_identifier) wrap
+and nested_type_identifier = (identifier ne_list (*wrap*) * type_identifier)
 and generic_type = generic_name * type_arguments
 
 and generic_name =
@@ -1076,7 +1076,7 @@ and generic_name =
  *)
 and internal_module = module_
 
-and module_ = (module_name * statement_block) wrap
+and module_ = (module_name * statement_block)
 
 and module_name =
   | Module_string of string
@@ -1176,7 +1176,7 @@ and expression =
        $.expression, 'as', choice('const', $.type)))
     ]}
  *)
-and as_expression = (expression * as_what) wrap
+and as_expression = (expression * as_what)
 
 and as_what =
   | As_type of type_
@@ -1298,7 +1298,7 @@ and expressions =
   | General_expression of expression
   | Sequence_expression of sequence_expression
 
-and sequence_expression = expression ne_list wrap
+and sequence_expression = expression ne_list (*wrap*)
 
 (** Augmented Assignment Expression
 
@@ -1986,7 +1986,7 @@ and switch_statement =
   ; body : switch_body
   }
 
-and switch_body = switch_entry braces
+and switch_body = switch_entry list braces
 
 and switch_entry =
   | Switch_case of switch_case
@@ -2593,10 +2593,10 @@ and function_type =
 and return_type =
   | Return_type of type_
   | Return_asserts of asserts
-  | Return_type_predicate of type_predicate wrap
+  | Return_type_predicate of type_predicate
 
 and asserts =
-  | Assert_predicate of type_predicate wrap
+  | Assert_predicate of type_predicate
   | Assert_type of identifier
   | Assert_this of keyword
 
@@ -2978,7 +2978,7 @@ and for_statement =
   }
 
 and for_initializer =
-  | For_lexical_declaration of lexical_declaration wrap
+  | For_lexical_declaration of lexical_declaration
   | For_variable_declaration of variable_declaration
   | For_expression_statement of expression_statement
   | For_empty_statement of Region.t
@@ -3262,8 +3262,8 @@ and class_ =
 *)
 and decorator =
   | Decorator_identifier of identifier
-  | Decorator_member_expression of decorator_member_expression wrap
-  | Decorator_call_expression of decorator_call_expression wrap
+  | Decorator_member_expression of decorator_member_expression
+  | Decorator_call_expression of decorator_call_expression
   | Decorator_parenthesized_expression of decorator_parenthesized_expression
 
 and decorator_member_expression =
@@ -3273,7 +3273,7 @@ and decorator_member_expression =
 
 and object_member_expression =
   | Object_name of identifier
-  | Qualified_member_expression of decorator_member_expression wrap
+  | Qualified_member_expression of decorator_member_expression
 
 and decorator_call_expression =
   { function_ : function_or_property
@@ -3283,9 +3283,9 @@ and decorator_call_expression =
 
 and function_or_property =
   | Function_name of identifier
-  | Qualified_member_expression of decorator_member_expression wrap
+  | Qualified_member_expression of decorator_member_expression
 
 and decorator_parenthesized_expression =
   | Parenthesized_ident of identifier
-  | Parenthesized_member of decorator_member_expression wrap
-  | Parenthesized_call of decorator_call_expression wrap
+  | Parenthesized_member of decorator_member_expression
+  | Parenthesized_call of decorator_call_expression
