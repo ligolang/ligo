@@ -1,1 +1,5 @@
-type animal = | ["Elephant"] | ["Dog"] | ["Cat"];
+type animal =
+@layout("tree")
+| ["Elephant"]
+| ["Dog"]
+| ["Cat"];
