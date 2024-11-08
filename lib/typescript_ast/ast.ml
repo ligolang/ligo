@@ -1043,7 +1043,7 @@ and extends_type_clause =
   | Extends_nested of nested_type_identifier
   | Extends_generic of generic_type
 
-and nested_type_identifier = (identifier ne_list (*wrap*) * type_identifier)
+and nested_type_identifier = identifier ne_list (*wrap*) * type_identifier
 and generic_type = generic_name * type_arguments
 
 and generic_name =
@@ -1076,7 +1076,7 @@ and generic_name =
  *)
 and internal_module = module_
 
-and module_ = (module_name * statement_block)
+and module_ = module_name * statement_block
 
 and module_name =
   | Module_string of string
@@ -1176,7 +1176,7 @@ and expression =
        $.expression, 'as', choice('const', $.type)))
     ]}
  *)
-and as_expression = (expression * as_what)
+and as_expression = expression * as_what
 
 and as_what =
   | As_type of type_

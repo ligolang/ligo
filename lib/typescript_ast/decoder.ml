@@ -63,7 +63,7 @@ let ne_list_of_children ?(comments = []) decoder node : 'a ne_list option =
   | [] -> None
   | fst_raw_child :: siblings ->
     let fst_child = decoder ?comments:(Some comments) fst_raw_child in
-    Some (Nonempty_list.(fst_child :: List.fold_right ~f ~init:[] siblings))
+    Some Nonempty_list.(fst_child :: List.fold_right ~f ~init:[] siblings)
 
 (*
 let wrap_children ?(comments = []) decoder node : 'a ne_list wrap option =
@@ -519,10 +519,7 @@ and dec_throw_statement node : throw_statement =
   ensure_Ok node
   @@ let* kwd_throw = first_child_named "throw" node in
      let* expr = child_ranked 1 node in
-     Ok
-       { kwd_throw = make_kwd kwd_throw
-       ; expressions = dec_expressions expr
-       }
+     Ok { kwd_throw = make_kwd kwd_throw; expressions = dec_expressions expr }
 
 (* DECLARATION
 
@@ -533,37 +530,40 @@ and dec_throw_statement node : throw_statement =
 
 and dec_function_declaration ?(comments = []) node : function_declaration =
   ensure_Ok node
-  @@ let comments = comments @ prev_comments node in
-     let kwd_async = first_child_named_opt "async" node in
-     let* kwd_function = first_child_named "function" node in
-     let* name_field = child_with_field "name" node in
-     (* "_call_signature" inlined: *)
-     let type_parameters_field = child_with_field_opt "type_parameters" node in
-     let* parameters_field = child_with_field "parameters" node in
-     let return_type_field = child_with_field_opt "return_type" node in
-     (* "statement_block" *)
-     let* body_field = child_with_field "body" node in
-     let async_comments, function_comments =
-       match kwd_async with
-       | None -> [], comments
-       | Some _ -> comments, []
-     in
-     let call_sig : call_signature =
-       { type_parameters = make_opt dec_type_parameters type_parameters_field
-       ; parameters = dec_formal_parameters parameters_field
-       ; return_type = make_opt dec_return_type return_type_field
-       }
-     in
-     let fun_sig : function_signature =
-       { kwd_async = make_opt (make_kwd ~comments:async_comments) kwd_async
-       ; kwd_function = make_kwd ~comments:function_comments kwd_function
-       ; name = dec_identifier name_field
-       ; call_sig
-       }
-     in
-     let fun_decl : function_declaration =
-       { fun_sig; body = dec_statement_block body_field }
-    in ignore fun_decl; Ok (failwith "dec_function_declaration")
+  @@
+  let comments = comments @ prev_comments node in
+  let kwd_async = first_child_named_opt "async" node in
+  let* kwd_function = first_child_named "function" node in
+  let* name_field = child_with_field "name" node in
+  (* "_call_signature" inlined: *)
+  let type_parameters_field = child_with_field_opt "type_parameters" node in
+  let* parameters_field = child_with_field "parameters" node in
+  let return_type_field = child_with_field_opt "return_type" node in
+  (* "statement_block" *)
+  let* body_field = child_with_field "body" node in
+  let async_comments, function_comments =
+    match kwd_async with
+    | None -> [], comments
+    | Some _ -> comments, []
+  in
+  let call_sig : call_signature =
+    { type_parameters = make_opt dec_type_parameters type_parameters_field
+    ; parameters = dec_formal_parameters parameters_field
+    ; return_type = make_opt dec_return_type return_type_field
+    }
+  in
+  let fun_sig : function_signature =
+    { kwd_async = make_opt (make_kwd ~comments:async_comments) kwd_async
+    ; kwd_function = make_kwd ~comments:function_comments kwd_function
+    ; name = dec_identifier name_field
+    ; call_sig
+    }
+  in
+  let fun_decl : function_declaration =
+    { fun_sig; body = dec_statement_block body_field }
+  in
+  ignore fun_decl;
+  Ok (failwith "dec_function_declaration")
 
 and dec_formal_parameters node : formal_parameters =
   decode_list_in_parens node dec_formal_parameter
@@ -577,7 +577,9 @@ and dec_formal_parameter ?(comments = []) node : formal_parameter =
 and dec_optional_parameter ?comments node = dec_required_parameter ?comments node
 
 and dec_required_parameter ?(comments = []) node =
-  ignore comments; ignore node; failwith "dec_required_parameter"
+  ignore comments;
+  ignore node;
+  failwith "dec_required_parameter"
 (*
   (* "_parameter_name" inlined: *)
   let decorators = children_named "decorator" node
@@ -606,7 +608,8 @@ and dec_required_parameter ?(comments = []) node =
 *)
 
 and dec_return_type node : call_return_type =
-  ignore node; failwith "dec_return_type"
+  ignore node;
+  failwith "dec_return_type"
 
 (* Generator function declaration (see function declaration) *)
 
@@ -674,7 +677,9 @@ and dec_type_parameters node : type_parameters =
   decode_list_in_chevrons node dec_type_parameter
 
 and dec_type_parameter ?(comments = []) node =
-  ignore comments; ignore node; failwith "dec_type_parameter"
+  ignore comments;
+  ignore node;
+  failwith "dec_type_parameter"
 
 (*let comments = comments @ prev_comments node in
   let name_field = child_with_field "name" node
@@ -689,7 +694,9 @@ and dec_type_parameter ?(comments = []) node =
   make_tree state node children
 *)
 
-and dec_constraint node = ignore node; failwith "dec_constraint"
+and dec_constraint node =
+  ignore node;
+  failwith "dec_constraint"
 (*  let kwd_extends = first_child_named "extends" node
   and type_child = child_ranked 1 node in
   let children =
@@ -698,7 +705,9 @@ and dec_constraint node = ignore node; failwith "dec_constraint"
   make_tree state node children
 *)
 
-and dec_default_type node = ignore node; failwith "dec_default_type"
+and dec_default_type node =
+  ignore node;
+  failwith "dec_default_type"
 (*  let sym_equal = first_child_named "=" node
   and type_node = child_ranked 1 node in
   let children = [ mk_child_res make_sym sym_equal; mk_child_res print_type type_node ] in
