@@ -68,6 +68,7 @@ const sidebars = {
           "syntax/contracts/operation",
           "syntax/contracts/events",
           "syntax/contracts/views",
+          "syntax/contracts/interop",
           "syntax/contracts/michelson",
           "syntax/contracts/michelson-injection",
         ],

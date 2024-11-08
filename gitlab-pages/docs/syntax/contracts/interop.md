@@ -5,73 +5,80 @@ title: Interoperability
 
 import Syntax from '@theme/Syntax';
 
-LIGO can work together with other smart contract languages on Tezos. However,
-data structures might have different representations in Michelson and not
-correctly match the standard LIGO types.
+LIGO can work together with other smart contract languages on Tezos, such as calling them and receiving calls from them.
+However, data structures from different high-level languages might have different representations in Michelson and not how LIGO structures them by default.
+When a LIGO contract calls contracts that were written in other high-level languages, it must pass parameters that are compatible with the data structures in the other contracts.
 
 ## Michelson types and annotations
 
-Michelson types consist of `or`'s and `pair`'s, combined with field
-annotations.  Field annotations add constraints on a Michelson type,
-for example a pair of `(pair (int %foo) (string %bar))` will only work
-with the exact equivalence or the same type without the field
-annotations.
+Michelson types consist of `or` types and `pair` types, combined with field annotations.
+Field annotations add constraints on a Michelson type.
+To be compatible, two types must meet these criteria:
 
-To clarify:
+- They must have the same types in the same structure
+- Their annotations must be compatible, which means that one of the following is true:
+  - Both types have no annotations
+  - Both types have annotations that are identical
+  - One type has annotations and the other type has no annotations
 
-```michelson
-(pair (int %foo) (string %bar))
-```
-
-works with
+For example, this Michelson type is a pair that contains an integer and a string, both with annotations:
 
 ```michelson
 (pair (int %foo) (string %bar))
 ```
 
-works with
+That type is compatible with this type because it is identical:
+
+```michelson
+(pair (int %foo) (string %bar))
+```
+
+It is also compatible with this type because it has the same types minus the annotations:
 
 ```michelson
 (pair int string)
 ```
 
-works not with
-
-```michelson
-(pair (int %bar) (string %foo))
-```
-
-works not with
+However, it is not compatible with the following type because the primitive types have a different structure, even though the annotations are on the same types:
 
 ```michelson
 (pair (string %bar) (int %foo))
 ```
 
+It is also not compatible with the following type even though the following type uses the same primitive types in the same structure.
+The annotations don't match and therefore the types don't match.
+
+```michelson
+(pair (int %bar) (string %foo))
+```
+
+It is also not compatible with the following type because this type has some annotations but not all of the annotations in the other type:
+
+```michelson
+(pair (int %foo) (string))
+```
+
+In this way, to call another contract, you may need to change the output Michelson format of your types to match the type that the other contract expects.
+
 :::info
-In the case of annotated entrypoints --- the annotated `or` tree
-directly under `parameter` in a contract --- you should use
-annotations, as otherwise it is unclear which entrypoint you are
-referring to.
+
+When possible, use annotations when you define or call entrypoints.
+Annotations help make it clear which entrypoint you are referring to.
+
 :::
 
-## Michelson layout of LIGO data structures
+## Setting the Michelson layout of LIGO data structures
 
-### Right-comb tree by default
+LIGO can format types in Michelson in two basic layouts: combs and trees.
+For more information about combs and trees, see [Pairs](https://docs.tezos.com/smart-contracts/data-types/complex-data-types#pairs) on docs.tezos.com.
 
-By default, the Michelson data representation of LIGO data structures is a
-location retaining right combed tree, like this:
-
-```
-  (or
-    (unit %elephant)
-    (or (unit %dog)
-        (unit %cat)))
-```
+### Right comb layout
 
 <Syntax syntax="cameligo">
 
+Since version 1.0, the default Michelson data representation of LIGO data structures is a right comb that matches the order of the LIGO declarations.
 You can use the attribute `[@layout comb]` to make this choice
-explicitly:
+explicit, as in this example of a variant type:
 
 ```cameligo
 type animal =
@@ -85,7 +92,8 @@ type animal =
 
 <Syntax syntax="jsligo">
 
-You can use the decorator `@layout("comb")` to make this choice explicitly:
+Since version 1.0, the default Michelson data representation of LIGO data structures is a right comb that matches the order of the LIGO declarations.
+You can use the decorator `@layout("comb")` to make this choice explicit, as in this example of a variant type:
 
 ```jsligo
 type animal =
@@ -96,6 +104,15 @@ type animal =
 ```
 
 </Syntax>
+
+The resulting Michelson code looks like this:
+
+```michelson
+(or
+  (unit %elephant)
+  (or (unit %dog)
+      (unit %cat)))
+```
 
 <Syntax syntax="cameligo">
 
@@ -113,8 +130,8 @@ type artist =
 </Syntax>
 
 <Syntax syntax="jsligo">
-The decorator `@layout("comb")` can also be used on record types:
 
+The decorator `@layout("comb")` can also be used on record types:
 
 ```jsligo
 type artist =
@@ -128,31 +145,46 @@ type artist =
 
 </Syntax>
 
-The next section discusses an alternative layout, which used to be the
-default one until LIGO version 1.0.
+Unlike the variant type, the compiled Michelson code of a record type in a right comb is a nested pair.
+The previous example looks like this in Michelson:
 
-### Alternative alphabetically ordered left-balanced tree layout
+```michelson
+(pair (string %genre) (timestamp %since) (string %name))
+```
 
-Before version 1.0, LIGO used to translate its datatypes into an
-alphabetically ordered left balanced tree by default. So, for example:
+### Left-balanced tree layout
 
 <Syntax syntax="cameligo">
 
+Prior to version 1.0, LIGO formatted data types into alphabetically ordered left-balanced trees by default.
+You can get the equivalent in version 1.0 and later with the attribute `[@layout tree]`, as in this example:
+
 ```cameligo group=orig
-type animal = Elephant | Dog | Cat
+type animal =
+[@layout tree]
+| Elephant
+| Dog
+| Cat
 ```
 
 </Syntax>
 
 <Syntax syntax="jsligo">
 
+Prior to version 1.0, LIGO formatted data types into alphabetically ordered left-balanced trees by default.
+You can get the equivalent in version 1.0 and later with the decorator `@layout("tree")`, as in this example:
+
 ```jsligo group=orig
-type animal = | ["Elephant"] | ["Dog"] | ["Cat"];
+type animal =
+@layout("tree")
+| ["Elephant"]
+| ["Dog"]
+| ["Cat"];
 ```
 
 </Syntax>
 
-will translate to:
+The resulting Michelson code looks like this:
 
 ```michelson
 (or
@@ -162,15 +194,14 @@ will translate to:
   (unit %elephant))
 ```
 
-This behaviour can be obtained using `@layout("tree")`.
+Note that the variant cases are ordered alphabetically.
 
-## Different Michelson annotations
-
-If the Michelson annotation should be different from the LIGO
-attribute, give it as an argument to the LIGO attribute. For
-example:
+## Setting Michelson annotations
 
 <Syntax syntax="cameligo">
+
+To specify the annotation for a LIGO declaration, use the `annot` attribute.
+For example, this variant type has custom annotations on each case:
 
 ```cameligo group=annot
 type animal =
@@ -183,6 +214,9 @@ type animal =
 
 <Syntax syntax="jsligo">
 
+To specify the annotation for a LIGO declaration, use the `@annot` decorator.
+For example, this variant type has custom annotations on each case:
+
 ```jsligo group=annot
 type animal =
 | @annot("memory") ["Elephant"]
@@ -192,7 +226,7 @@ type animal =
 
 </Syntax>
 
-will result into:
+The resulting Michelson looks like this:
 
 ```michelson
 (or
@@ -215,9 +249,7 @@ type artist = {
 }
 ```
 
-If the `[@layout comb]` and `[@annot <name>]` attributes are not
-adequate enough for your use-case, LIGO has more advanced advanced
-interoperability features, which we will we discuss next.
+If the `@layout` and `@annot` attributes are not adequate for your use case, you can format Michelson types manually as described in the next section.
 
 </Syntax>
 
@@ -234,19 +266,21 @@ type artist = {
 }
 ```
 
-If the decorators `@layout("comb")` and `@annot("<name>")` are not
-adequate enough for your use-case, LIGO has more advanced advanced
-interoperability features, which we will we discuss next.
+If the `@layout` and `@annot` decorators are not adequate for your use case, you can format Michelson types manually as described in the next section.
 
 </Syntax>
 
-## Advanced interoperability with Michelson
+## Manually formatting Michelson types
 
 To interoperate with existing Michelson code or to be compatible with
 certain development tooling, LIGO has two special interoperation
-types: `michelson_or` and `michelson_pair`. These types give the
+types: `michelson_or` and `michelson_pair`. These types provide the
 flexibility to model the exact Michelson output, including field
 annotations.
+
+The LIGO `michelson_or` type creates a Michelson `or` type from two LIGO types and their annotations.
+Similarly, the LIGO `michelson_pair` type creates a Michelson `pair` type.
+In either case, you must provide annotations for both types, but if you provide an empty string, LIGO omits the annotation in the Michelson code.
 
 Take for example the following Michelson type that we want to
 interoperate with:
@@ -287,17 +321,14 @@ type z_or = michelson_or<[unit, "z", y_or, "other"]>;
 
 </Syntax>
 
-If you do not want to inject a Michelson annotation, the you simply
-provide an empty string.
-
 :::info
 Alternatively, if annotations are not important you can also use plain
 tuples for pairs instead. Plain tuples do not have any annotations.
 :::
 
 To use variables of type `michelson_or` you have to use `M_left` and
-`M_right`.  `M_left` picks the left `or` case while `M_right` picks
-the right `or` case.  For `michelson_pair` you need to use tuples.
+`M_right`. `M_left` picks the left `or` case while `M_right` picks
+the right `or` case. For `michelson_pair` you need to use tuples.
 
 <Syntax syntax="cameligo">
 
@@ -332,8 +363,7 @@ let x : z_or = M_right (y_1);
 ## Manual data structure conversion
 
 If you want to get your hands dirty, it is also possible to do manual
-data structure conversion. The following code can be used as
-inspiration:
+data structure conversion. The following code provides some examples:
 
 <Syntax syntax="cameligo">
 
@@ -445,12 +475,10 @@ const make_abstract_record =
 
 </Syntax>
 
-
 ## Entrypoints and annotations
 
-It is possible for a contract to have multiple entrypoints, which is
-implicitly translated in LIGO to a `parameter` with a variant type as
-shown below. The following contract:
+When a contract has multiple entrypoints, LIGO implicitly creates a parameter for it with a variant type.
+For example, the following contract has entrypoints named `left` and `right`:
 
 <Syntax syntax="cameligo">
 
@@ -482,7 +510,7 @@ const right = (i: int, x: storage) : [list<operation>, storage] =>
 
 </Syntax>
 
-is translated internally to a contract similar to this one:
+Internally, LIGO structures the contract with a parameter type:
 
 <Syntax syntax="cameligo">
 
@@ -571,12 +599,10 @@ const main = (p: parameter, s: storage): [list<operation>, storage] => {
 
 </Syntax>
 
-Notice how we directly use the `%left` entrypoint without mentioning
-the `%right` entrypoint. This is done with the help of
-annotations. Without annotations it wouldn't be clear what our `int`
-would be referring to.
+The calling contract uses the entrypoint with the `%left` annotation without mentioning the `%right` entrypoint.
+LIGO uses the annotation to determine which side of the pair to put the `int` type into.
 
-This currently only works for `or`'s or variant types in LIGO.
+This currently only works for `or`'s and variant types in LIGO.
 
 ## Amendment
 
