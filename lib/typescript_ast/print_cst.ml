@@ -2771,12 +2771,56 @@ and print_decorator state node =
   and print state node =
     match get_name node with
     | "identifier" -> print_identifier state node
-    | "member_expression" -> print_member_expression state node
-    | "call_expression" -> print_call_expression state node
-    | "parenthesized_expression" -> print_parenthesized_expression state node
+    | "member_expression" -> print_decorator_member_expression state node
+    | "call_expression" -> print_decorator_call_expression state node
+    | "parenthesized_expression" -> print_decorator_parenthesized_expression state node
     | _ -> match_rest state node print_unexpected_node
   in
   make_unary_res state node print child
+
+and print_decorator_member_expression state node =
+  let object_field = child_with_field "object" node
+  and selector = first_child_named "." node
+  and property_field = child_with_field "property" node
+  and print_object state node =
+    match get_name node with
+    | "identifier" -> print_identifier state node
+    | _ -> match_rest state node print_decorator_member_expression
+  in
+  let children =
+    [ mk_child_res print_object object_field
+    ; mk_child_res make_sym selector
+    ; mk_child_res print_identifier property_field
+    ]
+  in
+  make_tree state node children
+
+and print_decorator_call_expression state node =
+  let function_field = child_with_field "function" node
+  and type_arguments_field = child_with_field_opt "type_arguments" node
+  and arguments_field = child_with_field "arguments" node
+  and print_function state node =
+    match get_name node with
+    | "identifier" -> print_identifier state node
+    | "member_expression" -> print_decorator_member_expression state node
+    | _ -> match_rest state node print_unexpected_node
+  in
+  let children =
+    [ mk_child_res print_function function_field
+    ; mk_child_opt print_type_arguments type_arguments_field
+    ; mk_child_res print_arguments arguments_field
+    ]
+  in
+  make_tree state node children
+
+and print_decorator_parenthesized_expression ?(comments = []) state node =
+  let print state node =
+    match get_name node with
+    | "identifier" -> print_identifier state node
+    | "member_expression" -> print_decorator_member_expression state node
+    | _ -> match_rest state node print_call_expression
+  in
+  print_parens ~comments state node print
 
 (* Accessibility modifier *)
 
