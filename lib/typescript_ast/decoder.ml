@@ -57,9 +57,9 @@ let list_of_children ?(comments = []) decoder children : 'a list =
     let fst_child = decoder ?comments:(Some comments) fst_raw_child in
     fst_child :: List.fold_right ~f ~init:[] siblings
 
-let ne_list_of_children ?(comments = []) decoder node : 'a ne_list option =
+let ne_list_of_children ?(comments = []) decoder children : 'a ne_list option =
   let f raw_child = List.cons (decoder ?comments:None raw_child) in
-  match collect_named_children node with
+  match children with
   | [] -> None
   | fst_raw_child :: siblings ->
     let fst_child = decoder ?comments:(Some comments) fst_raw_child in
@@ -135,7 +135,8 @@ let rec dec_program file map node =
    "statement" be a supertype, that is, a hidden rule. *)
 
 and dec_statements ?(comments = []) node : statements =
-  ne_list_of_children ~comments dec_statement node
+  let children = collect_named_children node in
+  ne_list_of_children ~comments dec_statement children
 
 and dec_statement ?(comments = []) node : statement =
   match get_name node with
@@ -435,7 +436,7 @@ and dec_try_statement node : try_statement =
        ; finalizer = make_opt dec_finally_clause finalizer_field
        }
 
-and dec_catch_clause node =
+and dec_catch_clause node : catch_clause =
   ensure_Ok node
   @@ let* kwd_catch = first_child_named "catch" node in
      let parameter_field = child_with_field_opt "parameter" node in
@@ -559,57 +560,168 @@ and dec_function_declaration ?(comments = []) node : function_declaration =
     ; call_sig
     }
   in
-  let fun_decl : function_declaration =
-    { fun_sig; body = dec_statement_block body_field }
-  in
-  ignore fun_decl;
-  Ok (failwith "dec_function_declaration")
+  Ok { fun_sig; body = dec_statement_block body_field }
 
 and dec_formal_parameters node : formal_parameters =
   decode_list_in_parens node dec_formal_parameter
 
 and dec_formal_parameter ?(comments = []) node : formal_parameter =
-  match get_name node with
-  | "required_parameter" -> dec_required_parameter ~comments node
-  | "optional_parameter" -> dec_optional_parameter ~comments node
-  | s -> failwith ("dec_formal_parameter: " ^ s ^ "\n")
-
-and dec_optional_parameter ?comments node = dec_required_parameter ?comments node
-
-and dec_required_parameter ?(comments = []) node =
-  ignore comments;
-  ignore node;
-  failwith "dec_required_parameter"
-(*
+  ensure_Ok node
+  @@
+  let comments = comments @ prev_comments node in
   (* "_parameter_name" inlined: *)
   let decorators = children_named "decorator" node
   and accessibility_modifier = first_child_named_opt "accessibility_modifier" node
   and override_modifier = first_child_named_opt "override_modifier" node
-  and kwd_readonly = first_child_named_opt "readonly" node
-  and pattern_field = child_with_field "pattern" node
+  and kwd_readonly = first_child_named_opt "readonly" node in
+  let* pattern_field = child_with_field "pattern" node in
   (* *)
+  let qmark = first_child_named_opt "?" node
   and type_field = child_with_field_opt "type" node
-  and print_pattern_field state node =
+  and dec_pattern_field ~comments node : parameter_pattern =
     match get_name node with
-    | "this" -> make_kwd state node
-    | _ -> print_pattern state node
+    | "this" -> Parameter_this (make_kwd ~comments node)
+    | _ -> Parameter_pattern (dec_pattern ~comments node)
   in
-  let children =
-    mk_children_list print_decorator decorators
-    @ [ mk_child_opt print_accessibility_modifier accessibility_modifier
-      ; mk_child_opt print_override_modifier override_modifier
-      ; mk_child_opt make_kwd kwd_readonly
-      ; mk_child_res print_pattern_field pattern_field
-      ; mk_child_opt print_type_annotation type_field
-      ]
-    @ mk_child_initializer_opt node (* "_initializer" inlined *)
+  let parameter_name : parameter_name =
+    { decorators = ne_list_of_children dec_decorator decorators
+    ; access = make_opt dec_accessibility_modifier accessibility_modifier
+    ; override = make_opt dec_override_modifier override_modifier
+    ; readonly = make_opt make_kwd kwd_readonly
+    ; pattern = (dec_pattern_field ~comments) pattern_field (* Not perfect *)
+    }
   in
-  make_tree state node children
-*)
+  Ok
+    { parameter_name
+    ; optional = make_opt make_sym qmark
+    ; type_ = make_opt dec_type_annotation type_field
+    ; default = mk_child_initializer_opt node
+    }
+
+and mk_child_initializer_opt node : (keyword * expression) option =
+  match first_child_named_opt "=" node with
+  | None -> None
+  | Some sym_equal -> Some (mk_child_initializer sym_equal node)
+
+and mk_child_initializer sym_equal node : keyword * expression =
+  ensure_Ok node
+  @@ let* value_field = child_with_field "value" node in
+     Ok (make_sym sym_equal, dec_expression value_field)
+
+(* Accessibility modifier *)
+
+and dec_accessibility_modifier node : accessibility_modifier =
+  ensure_Ok node
+  @@ let* child = child_ranked 0 node in
+     Ok
+       (match get_name child with
+       | "public" -> Public (make_kwd node)
+       | "private" -> Private (make_kwd node)
+       | "protected" -> Protected (make_kwd node)
+       | _ -> failwith "dec_accessibility_modifier/decode")
+
+(* Override modifier *)
+
+and dec_override_modifier node : keyword =
+  ensure_Ok node
+  @@ let* child = child_ranked 0 node in
+     Ok (make_kwd child)
+
+(* Return type annotation *)
 
 and dec_return_type node : call_return_type =
+  match get_name node with
+  | "type_annotation" -> Type_annotation (dec_type_annotation node)
+  | "asserts_annotation" -> Asserts_annotation (dec_asserts_annotation node)
+  | "type_predicate_annotation" ->
+    Type_predicate_annotation (dec_type_predicate_annotation node)
+  | s -> failwith ("dec_return_type: " ^ s ^ "\n")
+
+(* Asserts annotation *)
+
+and dec_asserts_annotation node : asserts_annotation =
+  ensure_Ok node
+  @@ let* asserts = first_child_named "asserts" node in
+     Ok (dec_asserts asserts)
+
+and dec_asserts node : asserts_annotation =
+  ensure_Ok node
+  @@ let* kwd_asserts = first_child_named "asserts" node in
+     let kwd_asserts = make_kwd kwd_asserts in
+     let* child = child_ranked 1 node in
+     Ok
+       (match get_name child with
+       | "type_predicate" -> Assert_predicate (kwd_asserts, dec_type_predicate node)
+       | "identifier" -> Assert_type (kwd_asserts, dec_identifier node)
+       | "this" -> Assert_this (kwd_asserts, make_kwd node)
+       | s -> failwith ("dec_asserts/decode: " ^ s ^ "\n"))
+
+(* Type predicate annotation *)
+
+and dec_type_predicate_annotation node : type_predicate =
+  ensure_Ok node
+  @@ let* predicate = child_ranked 1 node in
+     Ok (dec_type_predicate predicate)
+
+(* Type predicate *)
+
+and dec_type_predicate node : type_predicate =
+  ensure_Ok node
+  @@ let* name_field = child_with_field "name" node in
+     let* kwd_is = first_child_named "is" node in
+     let* type_field = child_with_field "type" node in
+     let dec_name_field node =
+       match get_name node with
+       | "identifier" -> Type_predicate_identifier (dec_identifier node)
+       | "this" -> Type_predicate_this (make_kwd node)
+       | _ -> Type_predicate_type (dec_predefined_type node)
+     in
+     Ok
+       { name = dec_name_field name_field
+       ; kwd_is = make_kwd kwd_is
+       ; type_ = dec_type type_field
+       }
+
+(* Predefined type *)
+
+and dec_predefined_type ?(comments = []) node : predefined_type =
+  ignore comments;
   ignore node;
-  failwith "dec_return_type"
+  failwith "dec_predefined_type"
+
+(* Decorator *)
+
+and dec_decorator ?(comments = []) node : decorator =
+  ensure_Ok node
+  @@ let* child = named_child_ranked 0 node in
+     Ok
+       (match get_name child with
+       | "identifier" -> Decorator_identifier (dec_identifier ~comments node)
+       | "member_expression" ->
+         Decorator_member_expression (dec_decorator_member_expression ~comments node)
+       | "call_expression" ->
+         Decorator_call_expression (dec_decorator_call_expression ~comments node)
+       | "parenthesized_expression" ->
+         Decorator_parenthesized_expression
+           (dec_decorator_parenthesized_expression ~comments node)
+       | _ -> failwith "dec_decorator")
+
+and dec_decorator_member_expression ?(comments = []) node : decorator_member_expression =
+  ignore comments;
+  ignore node;
+  failwith "dec_decorator_member_expression"
+
+and dec_decorator_call_expression ?(comments = []) node : decorator_call_expression =
+  ignore comments;
+  ignore node;
+  failwith "dec_decorator_call_expression"
+
+and dec_decorator_parenthesized_expression ?(comments = []) node
+    : decorator_parenthesized_expression
+  =
+  ignore comments;
+  ignore node;
+  failwith "dec_decorator_parenthesized_expression"
 
 (* Generator function declaration (see function declaration) *)
 
@@ -676,42 +788,39 @@ and dec_type_alias_declaration ?(comments = []) node : type_alias_declaration =
 and dec_type_parameters node : type_parameters =
   decode_list_in_chevrons node dec_type_parameter
 
-and dec_type_parameter ?(comments = []) node =
-  ignore comments;
-  ignore node;
-  failwith "dec_type_parameter"
+and dec_type_parameter ?(comments = []) node : type_parameter =
+  ensure_Ok node
+  @@
+  let comments = comments @ prev_comments node in
+  let kwd_const = first_child_named_opt "const" node in
+  let* name_field = child_with_field "name" node in
+  let constraint_field = child_with_field_opt "constraint" node in
+  let value_field = child_with_field_opt "value" node in
+  Ok
+    { const = make_opt make_kwd kwd_const
+    ; name = dec_identifier ~comments name_field (* Not perfect *)
+    ; constraint_ = make_opt dec_constraint constraint_field
+    ; value = make_opt dec_default_type value_field
+    }
 
-(*let comments = comments @ prev_comments node in
-  let name_field = child_with_field "name" node
-  and constraint_field = child_with_field_opt "constraint" node
-  and value_field = child_with_field_opt "value" node in
-  let children =
-    [ mk_child_res (dec_identifier ~comments) name_field
-    ; mk_child_opt print_constraint constraint_field
-    ; mk_child_opt print_default_type value_field
-    ]
-  in
-  make_tree state node children
-*)
-
-and dec_constraint node =
+and dec_constraint node : type_ =
   ignore node;
   failwith "dec_constraint"
 (*  let kwd_extends = first_child_named "extends" node
   and type_child = child_ranked 1 node in
   let children =
-    [ mk_child_res make_kwd kwd_extends; mk_child_res print_type type_child ]
+    [ mk_child_res make_kwd kwd_extends; mk_child_res dec_type type_child ]
   in
-  make_tree state node children
+  make_tree node children
 *)
 
-and dec_default_type node =
+and dec_default_type node : type_ =
   ignore node;
   failwith "dec_default_type"
 (*  let sym_equal = first_child_named "=" node
   and type_node = child_ranked 1 node in
-  let children = [ mk_child_res make_sym sym_equal; mk_child_res print_type type_node ] in
-    make_tree state node children *)
+  let children = [ mk_child_res make_sym sym_equal; mk_child_res dec_type type_node ] in
+    make_tree node children *)
 
 (* Enum declaration *)
 
@@ -767,6 +876,11 @@ and dec_lhs_expression ?(comments = []) node : lhs_expression =
 
    The JavasScript tree-sitter grammar have the non-terminal
    "pattern" be a supertype, that is, a hidden rule. *)
+
+and dec_pattern ?(comments = []) node : pattern =
+  ignore comments;
+  ignore node;
+  failwith "dec_pattern"
 
 (* Object pattern *)
 

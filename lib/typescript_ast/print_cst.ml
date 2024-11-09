@@ -855,6 +855,12 @@ and print_function_declaration ?(comments = []) state node =
   in
   make_tree state node children
 
+and print_return_type state node =
+  match get_name node with
+  | "type_annotation" -> print_type_annotation state node
+  | "asserts_annotation" -> print_asserts_annotation state node
+  | _ -> match_rest state node print_type_predicate_annotation
+
 (* Generator function declaration (see function declaration) *)
 
 and print_generator_function_declaration state node =
@@ -1039,11 +1045,13 @@ and print_type_alias_declaration ?(comments = []) state node =
 and print_type_parameters state node = print_chevrons state node print_type_parameter
 
 and print_type_parameter state node =
-  let name_field = child_with_field "name" node
+  let kwd_const = first_child_named_opt "const" node
+  and name_field = child_with_field "name" node
   and constraint_field = child_with_field_opt "constraint" node
   and value_field = child_with_field_opt "value" node in
   let children =
-    [ mk_child_res print_identifier name_field
+    [ mk_child_opt make_kwd kwd_const
+    ; mk_child_res print_identifier name_field
     ; mk_child_opt print_constraint constraint_field
     ; mk_child_opt print_default_type value_field
     ]
@@ -1824,12 +1832,6 @@ and print_method_definition state node =
     ]
   in
   make_tree state node children
-
-and print_return_type state node =
-  match get_name node with
-  | "type_annotation" -> print_type_annotation state node
-  | "asserts_annotation" -> print_asserts_annotation state node
-  | _ -> match_rest state node print_type_predicate_annotation
 
 and print_class_static_block state node =
   let kwd_static = first_child_named "static" node
