@@ -230,7 +230,7 @@ and formal_parameter =
   { parameter_name : parameter_name
   ; optional : symbol option (* "?" or not *)
   ; type_ : type_annotation option
-  ; default : expression option
+  ; default : (keyword * expression) option (* "=" *)
   }
 
 and parameter_name =
@@ -256,12 +256,14 @@ and type_annotation = symbol * type_ (* ":" *)
 
 and type_predicate =
   { name : type_predicate_name
+  ; kwd_is : keyword
   ; type_ : type_
   }
 
 and type_predicate_name =
-  | Type_predicate_identifier of identifier (* Including predefined types *)
+  | Type_predicate_identifier of identifier
   | Type_predicate_this of keyword
+  | Type_predicate_type of predefined_type
 
 (** Generator Function Declaration
 
@@ -2596,9 +2598,9 @@ and return_type =
   | Return_type_predicate of type_predicate
 
 and asserts =
-  | Assert_predicate of type_predicate
-  | Assert_type of identifier
-  | Assert_this of keyword
+  | Assert_predicate of keyword * type_predicate (* "asserts" *)
+  | Assert_type of keyword * identifier (* "asserts t" *)
+  | Assert_this of keyword * keyword (* "asserts this" *)
 
 (** Readonly Type
 
