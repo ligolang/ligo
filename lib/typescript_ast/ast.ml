@@ -399,8 +399,8 @@ and implements_clause = type_ ne_list
 and type_parameter =
   { const : keyword option
   ; name : type_identifier
-  ; constraint_ : type_ option
-  ; value : type_ option (* default *)
+  ; constraint_ : (keyword * type_) option (* "extends t" *)
+  ; default_type : (symbol * type_) option (* "= t" *)
   }
 
 and class_body = class_member list
@@ -477,7 +477,7 @@ and property_name =
   | Private_property_identifier of private_property_identifier
   | String of string_literal
   | Number of bigint_literal (* Sign? *)
-  | Computed_property_name of expression
+  | Computed_property_name of expression brackets
 
 and private_property_identifier = hash_name
 
@@ -934,8 +934,9 @@ and ambient_declaration =
  *)
 and enum_declaration =
   { const : keyword option
+  ; enum : keyword
   ; name : identifier
-  ; body : enum_body option (* [None] denotes "{}" *)
+  ; body : enum_body list braces
   }
 
 and enum_body =

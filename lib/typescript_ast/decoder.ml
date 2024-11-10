@@ -42,6 +42,10 @@ let make_node ?(comments = []) node : string wrap =
 let make_kwd ?comments node : keyword = make_node ?comments node
 let make_sym ?comments node : symbol = make_node ?comments node
 let dec_identifier ?comments node : identifier = make_node ?comments node
+let dec_string ?comments node : string_literal = make_node ?comments node
+
+let dec_number ?comments node : bigint_literal =
+  ignore comments;  ignore node; failwith "dec_number"
 
 (* Optional nodes *)
 
@@ -798,35 +802,72 @@ and dec_type_parameter ?(comments = []) node : type_parameter =
   let value_field = child_with_field_opt "value" node in
   Ok
     { const = make_opt make_kwd kwd_const
-    ; name = dec_identifier ~comments name_field (* Not perfect *)
+    ; name = dec_type_identifier ~comments name_field (* Not perfect *)
     ; constraint_ = make_opt dec_constraint constraint_field
-    ; value = make_opt dec_default_type value_field
+    ; default_type = make_opt dec_default_type value_field
     }
 
-and dec_constraint node : type_ =
-  ignore node;
-  failwith "dec_constraint"
-(*  let kwd_extends = first_child_named "extends" node
-  and type_child = child_ranked 1 node in
-  let children =
-    [ mk_child_res make_kwd kwd_extends; mk_child_res dec_type type_child ]
-  in
-  make_tree node children
-*)
+and dec_type_identifier ?comments node : type_identifier =
+  dec_identifier ?comments node
 
-and dec_default_type node : type_ =
-  ignore node;
-  failwith "dec_default_type"
-(*  let sym_equal = first_child_named "=" node
-  and type_node = child_ranked 1 node in
-  let children = [ mk_child_res make_sym sym_equal; mk_child_res dec_type type_node ] in
-    make_tree node children *)
+and dec_constraint node : keyword * type_ =
+  ensure_Ok node
+  @@ let* kwd_extends = first_child_named "extends" node in
+     let* type_child = child_ranked 1 node in
+     Ok (make_kwd kwd_extends, dec_type type_child)
+
+and dec_default_type node : symbol * type_ =
+  ensure_Ok node
+  @@ let* sym_equal = first_child_named "=" node in
+     let* type_node = child_ranked 1 node in
+     Ok (make_sym sym_equal, dec_type type_node)
 
 (* Enum declaration *)
 
 and dec_enum_declaration node : enum_declaration =
-  ignore node;
-  failwith "dec_enum_declaration"
+  ensure_Ok node
+  @@ let kwd_const = first_child_named_opt "const" node in
+     let* kwd_enum = first_child_named "enum" node in
+     let* name_field = child_with_field "name" node in
+     let* body_field = child_with_field "body" node in
+     Ok
+       { const = make_opt make_kwd kwd_const
+       ; enum = make_kwd kwd_enum
+       ; name = dec_identifier name_field
+       ; body = dec_enum_entries body_field
+       }
+
+and dec_enum_entries node : enum_body list braces =
+  decode_list_in_braces node dec_enum_body
+
+and dec_enum_body ?(comments = []) node : enum_body =
+  ensure_Ok node
+  @@
+  Ok (match get_name node with
+     | "enum_assignment" -> Enum_assignment (dec_enum_assignment ~comments node)
+     | _ -> Enum_name (dec_property_name ~comments node))
+
+and dec_enum_assignment ?comments node : enum_assignment =
+  ignore comments; ignore node; failwith "dec_enum_assignment"
+
+(* Property names *)
+
+and dec_property_name ?(comments = []) node : property_name =
+  match get_name node with
+  | "property_identifier" -> Property_identifier (dec_identifier ~comments node)
+  | "private_property_identifier" ->
+    Private_property_identifier (dec_private_property_identifier ~comments node)
+  | "string" -> String (dec_string ~comments node)
+  | "number" -> Number (dec_number ~comments node)
+  | "computed_property_name" ->
+    Computed_property_name (dec_computed_property_name ~comments node)
+  | s -> failwith ("dec_property_name: " ^ s ^ "\n")
+
+and dec_private_property_identifier ?(comments = []) node :  private_property_identifier =
+  dec_identifier ~comments node
+
+and dec_computed_property_name ?(comments = []) node : expression brackets =
+  ignore comments; ignore node; failwith "dec_computed_property_name"
 
 (* Interface declaration *)
 
