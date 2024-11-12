@@ -7,6 +7,7 @@ module Ts_wrap = Typescript_ast.Ts_wrap
 module Loc_map = Typescript_ast.Loc_map
 module Ast = Typescript_ast.Ast (* Only for numbers *)
 module Number = Typescript_ast.Number
+module Wrap = Lexing_shared.Wrap
 
 (* Source map for converting vertical and horizontal offset ranges
    into regions *)
@@ -118,11 +119,20 @@ let print_identifier ?comments state node = make_node ?comments state node
 let print_string ?comments state node = make_node ?comments state node
 let print_regex ?comments state node = make_node ?comments state node
 
+let decode_comments ?(comments = []) node : Wrap.comment list =
+  let f node =
+    let region = !get_region node in
+    let value = Lexeme.read region in
+    Wrap.Block Region.{ value; region }
+  in
+  List.map ~f (comments @ prev_comments node)
+
 let print_number ?(comments = []) state node =
   let region = !get_region node in
   let lexeme = Lexeme.read region in
   let lexbuf = Lexing.from_string lexeme in
-  let num = Number.scan region lexbuf in
+  let w_comments = decode_comments ~comments node in
+  let num = Number.scan w_comments region lexbuf in
   let print_hex w = Hex.show (snd w#payload)
   and print_dec w = Q.to_string (snd w#payload) in
   let open Ast in
