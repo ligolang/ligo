@@ -5,11 +5,12 @@ module Wrap = Lexing_shared.Wrap
 module Ts_wrap = Typescript_ast.Ts_wrap
 module Lexeme = Typescript_ast.Lexeme
 module Ast = Typescript_ast.Ast
+module Number = Typescript_ast.Number
 open Core
 open Typescript_ast.Ts_wrap
 open Ast
 
-(* Monadic let for result values *)
+(* Monadic let-binder for result values *)
 
 let ( let* ) v f = Result.bind v ~f
 
@@ -27,16 +28,18 @@ let ensure_Ok node = function
 
 (* Decoding literals *)
 
-let make_node ?(comments = []) node : string wrap =
-  let region = !get_region node in
-  let root = Lexeme.read region
-  and comments = comments @ prev_comments node in
+let decode_comments ?(comments = []) node : Wrap.comment list =
   let f node =
     let region = !get_region node in
     let value = Lexeme.read region in
     Wrap.Block Region.{ value; region }
   in
-  let comments = List.map ~f comments in
+  List.map ~f (comments @ prev_comments node)
+
+let make_node ?comments node : string wrap =
+  let region = !get_region node in
+  let root = Lexeme.read region
+  and comments = decode_comments ?comments node in
   Wrap.make ~comments root region
 
 let make_kwd ?comments node : keyword = make_node ?comments node
@@ -44,8 +47,12 @@ let make_sym ?comments node : symbol = make_node ?comments node
 let dec_identifier ?comments node : identifier = make_node ?comments node
 let dec_string ?comments node : string_literal = make_node ?comments node
 
-let dec_number ?comments node : bigint_literal =
-  ignore comments;  ignore node; failwith "dec_number"
+let dec_number ?(comments = []) node : number =
+  let region = !get_region node in
+  let lexeme = Lexeme.read region in
+  let lexbuf = Lexing.from_string lexeme
+  and comments = decode_comments ~comments node in
+  Number.scan comments region lexbuf
 
 (* Optional nodes *)
 
@@ -807,8 +814,7 @@ and dec_type_parameter ?(comments = []) node : type_parameter =
     ; default_type = make_opt dec_default_type value_field
     }
 
-and dec_type_identifier ?comments node : type_identifier =
-  dec_identifier ?comments node
+and dec_type_identifier ?comments node : type_identifier = dec_identifier ?comments node
 
 and dec_constraint node : keyword * type_ =
   ensure_Ok node
@@ -826,29 +832,30 @@ and dec_default_type node : symbol * type_ =
 
 and dec_enum_declaration node : enum_declaration =
   ensure_Ok node
-  @@ let kwd_const = first_child_named_opt "const" node in
-     let* kwd_enum = first_child_named "enum" node in
-     let* name_field = child_with_field "name" node in
-     let* body_field = child_with_field "body" node in
-     Ok
-       { const = make_opt make_kwd kwd_const
-       ; enum = make_kwd kwd_enum
-       ; name = dec_identifier name_field
-       ; body = dec_enum_entries body_field
-       }
+  @@
+  let kwd_const = first_child_named_opt "const" node in
+  let* kwd_enum = first_child_named "enum" node in
+  let* name_field = child_with_field "name" node in
+  let* body_field = child_with_field "body" node in
+  Ok
+    { const = make_opt make_kwd kwd_const
+    ; enum = make_kwd kwd_enum
+    ; name = dec_identifier name_field
+    ; body = dec_enum_entries body_field
+    }
 
 and dec_enum_entries node : enum_body list braces =
   decode_list_in_braces node dec_enum_body
 
 and dec_enum_body ?(comments = []) node : enum_body =
-  ensure_Ok node
-  @@
-  Ok (match get_name node with
-     | "enum_assignment" -> Enum_assignment (dec_enum_assignment ~comments node)
-     | _ -> Enum_name (dec_property_name ~comments node))
+  match get_name node with
+  | "enum_assignment" -> Enum_assignment (dec_enum_assignment ~comments node)
+  | _ -> Enum_name (dec_property_name ~comments node)
 
 and dec_enum_assignment ?comments node : enum_assignment =
-  ignore comments; ignore node; failwith "dec_enum_assignment"
+  ignore comments;
+  ignore node;
+  failwith "dec_enum_assignment"
 
 (* Property names *)
 
@@ -863,11 +870,13 @@ and dec_property_name ?(comments = []) node : property_name =
     Computed_property_name (dec_computed_property_name ~comments node)
   | s -> failwith ("dec_property_name: " ^ s ^ "\n")
 
-and dec_private_property_identifier ?(comments = []) node :  private_property_identifier =
+and dec_private_property_identifier ?(comments = []) node : private_property_identifier =
   dec_identifier ~comments node
 
 and dec_computed_property_name ?(comments = []) node : expression brackets =
-  ignore comments; ignore node; failwith "dec_computed_property_name"
+  ignore comments;
+  ignore node;
+  failwith "dec_computed_property_name"
 
 (* Interface declaration *)
 
