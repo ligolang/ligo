@@ -20,25 +20,25 @@ module Array  = Stdlib.Array  (* Used in the generated code only *)
 
 let ( let* ) v f = Result.bind v ~f
 
-let make_bytes lexbuf literal region : (string * Hex.t) wrap =
+let make_bytes comments lexbuf literal region : (string * Hex.t) wrap =
   let normalised = Str.(global_replace (regexp "_") "" literal)
   and lexeme = Lexing.lexeme lexbuf in
-  Wrap.make (lexeme, `Hex normalised) region
+  Wrap.make ~comments (lexeme, `Hex normalised) region
 
-let make_hex lexbuf literal region is_big : number =
-  Hex (make_bytes lexbuf literal region, is_big)
+let make_hex comments lexbuf literal region is_big : number =
+  Hex (make_bytes comments lexbuf literal region, is_big)
 
-let make_bin lexbuf literal region is_big : number =
-  Bin (make_bytes lexbuf literal region, is_big)
+let make_bin comments lexbuf literal region is_big : number =
+  Bin (make_bytes comments lexbuf literal region, is_big)
 
-let make_oct lexbuf literal region is_big : number =
-  Oct (make_bytes lexbuf literal region, is_big)
+let make_oct comments lexbuf literal region is_big : number =
+  Oct (make_bytes comments lexbuf literal region, is_big)
 
-let make_dec lexbuf ?(integral="0") ?(fractional="0") ?(exponent="")
+let make_dec comments lexbuf ?(integral="0") ?(fractional="0") ?(exponent="")
              region is_big : number =
   let lexeme = Lexing.lexeme lexbuf
   and q = Q.of_string (integral ^ "." ^ fractional ^ exponent)
-  in Dec (Wrap.make (lexeme, q) region, is_big)
+  in Dec (Wrap.make ~comments (lexeme, q) region, is_big)
 
 (* END HEADER *)
 }
@@ -80,26 +80,26 @@ let bigintLiteral =
 
 (* RULES (SCANNERS) *)
 
-rule scan region = parse
-  hexLiteral     { make_hex lexbuf hex region false }
-| binaryLiteral  { make_bin lexbuf bin region false }
-| octalLiteral   { make_oct lexbuf oct region false }
+rule scan comments region = parse
+  hexLiteral     { make_hex comments lexbuf hex region false }
+| binaryLiteral  { make_bin comments lexbuf bin region false }
+| octalLiteral   { make_oct comments lexbuf oct region false }
 (* bigintLiteral *)
-| hexLiteral 'n'    { make_hex lexbuf hex region true }
-| binaryLiteral 'n' { make_bin lexbuf bin region true }
-| octalLiteral 'n'  { make_oct lexbuf oct region true }
-| natural 'n'       { make_dec lexbuf ~integral:nat region true }
+| hexLiteral 'n'    { make_hex comments lexbuf hex region true }
+| binaryLiteral 'n' { make_bin comments lexbuf bin region true }
+| octalLiteral 'n'  { make_oct comments lexbuf oct region true }
+| natural 'n'       { make_dec comments lexbuf ~integral:nat region true }
 (* decimalLiteral *)
 | integralPart '.' fractionalPart? exponentPart? {
-    make_dec lexbuf ~integral ?fractional ?exponent region false
+    make_dec comments lexbuf ~integral ?fractional ?exponent region false
   }
 | '.' fractionalPart exponentPart? {
-    make_dec lexbuf ~fractional ?exponent region false
+    make_dec comments lexbuf ~fractional ?exponent region false
   }
 | integralPart exponentPart {
-    make_dec lexbuf ~integral ~exponent region false
+    make_dec comments lexbuf ~integral ~exponent region false
   }
-| natural { make_dec lexbuf ~integral:nat region false }
+| natural { make_dec comments lexbuf ~integral:nat region false }
 
 (* END LEXER DEFINITION *)
 
