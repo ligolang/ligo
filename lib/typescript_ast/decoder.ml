@@ -880,7 +880,8 @@ and dec_computed_property_name ?(comments = []) node : expression brackets =
   let* opening = first_child_named "[" node in
   let* closing = first_child_named "]" node in
   let* expression = first_child_named "expression" node in
-  Ok (Brackets
+  Ok
+    (Brackets
        { opening = make_sym ~comments opening
        ; contents = dec_expression expression
        ; closing = make_sym closing
@@ -948,9 +949,21 @@ and dec_object_pattern node : object_pattern =
 
 (* Array pattern *)
 
-and dec_array_pattern node : array_pattern =
+and dec_array_pattern ?comments node : array_pattern =
+  decode_list_in_brackets ?comments node dec_array_cell_pattern
+
+and dec_array_cell_pattern ?comments node : array_cell_pattern =
+  match get_name node with
+  | "assignment_pattern" -> Cell_assignment (dec_assignment_pattern ?comments node)
+  | _ -> Cell_pattern (dec_pattern ?comments node)
+(* hidden rule *)
+
+(* Assignment pattern *)
+
+and dec_assignment_pattern ?comments node =
+  ignore comments;
   ignore node;
-  failwith "dec_array_pattern"
+  failwith "dec_assignment_pattern"
 
 (* Rule "_destructuring_pattern" is inlined. *)
 
