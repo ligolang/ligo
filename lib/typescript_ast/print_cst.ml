@@ -5,6 +5,8 @@ open Typescript_ast.Ts_wrap
 module Lexeme = Typescript_ast.Lexeme
 module Ts_wrap = Typescript_ast.Ts_wrap
 module Loc_map = Typescript_ast.Loc_map
+module Ast = Typescript_ast.Ast (* Only for numbers *)
+module Number = Typescript_ast.Number
 
 (* Source map for converting vertical and horizontal offset ranges
    into regions *)
@@ -109,6 +111,35 @@ let print_unexpected_node state node =
   let region = !get_region node
   and label = get_name node in
   Tree.make_node ~region state ("UNKNOWN: " ^ label)
+
+(* Some literals *)
+
+let print_identifier ?comments state node = make_node ?comments state node
+let print_string ?comments state node = make_node ?comments state node
+let print_regex ?comments state node = make_node ?comments state node
+
+let print_number ?(comments = []) state node =
+  let region = !get_region node in
+  let lexeme = Lexeme.read region in
+  let lexbuf = Lexing.from_string lexeme in
+  let num = Number.scan region lexbuf in
+  let open Ast in
+  let print_kind state = function
+    | Hex (_, false) -> Tree.make_node state "hex"
+    | Hex (_, true) -> Tree.make_node state "bigint/hex"
+    | Bin (_, false) -> Tree.make_node state "bin"
+    | Bin (_, true) -> Tree.make_node state "bigint/bin"
+    | Oct (_, false) -> Tree.make_node state "oct"
+    | Oct (_, true) -> Tree.make_node state "bigint/oct"
+    | Dec (_, false) -> Tree.make_node state "dec"
+    | Dec (_, true) -> Tree.make_node state "bigint/dec"
+  in
+  let comments = comments @ prev_comments node in
+  let children =
+    mk_children_list print_comment comments
+    @ [ mk_child print_kind num; mk_child Tree.make_node lexeme ]
+  in
+  make_tree state node children
 
 (* Printing enclosed constructs *)
 
@@ -1557,13 +1588,6 @@ and print_parenthesized_expression ?(comments = []) state node =
     | _ -> print_expression state node
   in
   print_parens ~comments state node print
-
-(* Some literals *)
-
-and print_identifier ?comments state node = make_node ?comments state node
-and print_number ?comments state node = make_node ?comments state node
-and print_string ?comments state node = make_node ?comments state node
-and print_regex ?comments state node = make_node ?comments state node
 
 (* Template strings *)
 
