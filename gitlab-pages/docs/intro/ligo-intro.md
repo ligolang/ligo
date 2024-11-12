@@ -111,8 +111,7 @@ You will need a deeper comprehension:
 ### Dig deeper
 
 In the end, maybe you will want to:
-- [Optimize your code](https://ligolang.org/docs/tutorials/optimisation/),
-- Understand [link between LIGO and Michelson](https://ligolang.org/docs/advanced/michelson-and-ligo)
+- [Optimize your code](https://ligolang.org/docs/tutorials/optimisation/)
 - [Interact with other contracts](https://ligolang.org/docs/tutorials/inter-contract-calls/)
 
 <!-- updated use of entry -->
