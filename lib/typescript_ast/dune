@@ -2,7 +2,7 @@
 
 (library
  (name typescript_ast)
- (modules ast ts_wrap loc_map lexeme)
+ (modules ast ts_wrap loc_map lexeme number)
  (libraries
   tree_sitter
   tree_sitter_typescript
@@ -36,3 +36,7 @@
   core_kernel.nonempty_list
   yojson)
  (modules static_nodes_reader))
+
+;; Lexer for numbers
+
+(ocamllex number)
