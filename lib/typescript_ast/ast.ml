@@ -25,21 +25,28 @@ type symbol = string wrap
 type identifier = string wrap
 type string_literal = string wrap
 type hash_name = string wrap
-type hex_literal = (string * Hex.t) wrap
-type dec_literal = (string * Q.t) wrap
-type bin_literal = (string * Hex.t) wrap
-type oct_literal = (string * Hex.t) wrap
 
 type template_string =
   | String_fragment of string wrap
   | Escape_sequence of string wrap
   | Template_substitution of string wrap
 
-type bigint_literal =
-  | Hex_literal of hex_literal
-  | Bin_literal of bin_literal
-  | Oct_literal of oct_literal
-  | Dec_literal of dec_literal
+(* Numbers
+
+   Note: Only [dec_literal] used [Q.t]: the values for the other types
+   are meant to be translated into Michelson bytes. *)
+
+type hex_literal = (string * Hex.t) wrap
+type bin_literal = (string * Hex.t) wrap
+type oct_literal = (string * Hex.t) wrap
+type dec_literal = (string * Q.t) wrap
+type big = bool
+
+type number =
+  | Hex of hex_literal * big
+  | Bin of bin_literal * big
+  | Oct of oct_literal * big
+  | Dec of dec_literal * big
 
 (* Compound constructs *)
 
@@ -476,7 +483,7 @@ and property_name =
   | Property_identifier of identifier (* Also reserved identifiers *)
   | Private_property_identifier of private_property_identifier
   | String of string_literal
-  | Number of bigint_literal (* Sign? *)
+  | Number of number
   | Computed_property_name of expression brackets
 
 and private_property_identifier = hash_name
@@ -2263,13 +2270,6 @@ and unary_type =
   { operator : sign
   ; argument : number
   }
-
-and number =
-  | Hex_literal of hex_literal
-  | Dec_literal of dec_literal
-  | Bin_literal of bin_literal
-  | Oct_literal of oct_literal
-  | Bigint_literal of bigint_literal
 
 (** Lookup Type
 
