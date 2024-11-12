@@ -605,7 +605,7 @@ and object_assignment_pattern =
   }
 
 and object_lhs_pattern = lhs_pattern
-and array_pattern = array_cell_pattern list
+and array_pattern = array_cell_pattern list brackets
 
 and array_cell_pattern =
   (* Isomorphic to [pair_value_pattern]. *)
