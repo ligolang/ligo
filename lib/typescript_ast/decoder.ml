@@ -874,9 +874,17 @@ and dec_private_property_identifier ?(comments = []) node : private_property_ide
   dec_identifier ~comments node
 
 and dec_computed_property_name ?(comments = []) node : expression brackets =
-  ignore comments;
-  ignore node;
-  failwith "dec_computed_property_name"
+  ensure_Ok node
+  @@
+  let comments = comments @ prev_comments node in
+  let* opening = first_child_named "[" node in
+  let* closing = first_child_named "]" node in
+  let* expression = first_child_named "expression" node in
+  Ok (Brackets
+       { opening = make_sym ~comments opening
+       ; contents = dec_expression expression
+       ; closing = make_sym closing
+       })
 
 (* Interface declaration *)
 
