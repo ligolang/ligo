@@ -955,15 +955,22 @@ and dec_array_pattern ?comments node : array_pattern =
 and dec_array_cell_pattern ?comments node : array_cell_pattern =
   match get_name node with
   | "assignment_pattern" -> Cell_assignment (dec_assignment_pattern ?comments node)
-  | _ -> Cell_pattern (dec_pattern ?comments node)
-(* hidden rule *)
+  | _ ->
+    (* hidden rule *)
+    Cell_pattern (dec_pattern ?comments node)
 
 (* Assignment pattern *)
 
 and dec_assignment_pattern ?comments node =
-  ignore comments;
-  ignore node;
-  failwith "dec_assignment_pattern"
+  ensure_Ok node
+  @@ let* left_field = child_with_field "left" node in
+     let* sym_equal = first_child_named "=" node in
+     let* right_field = child_with_field "right" node in
+     Ok
+       { left = dec_pattern ?comments left_field
+       ; sym_equal = make_sym sym_equal
+       ; right = dec_expression right_field
+       }
 
 (* Rule "_destructuring_pattern" is inlined. *)
 

@@ -3143,6 +3143,7 @@ and asserts_annotation = asserts
 *)
 and assignment_pattern =
   { left : pattern
+  ; sym_equal : symbol
   ; right : expression
   }
 
