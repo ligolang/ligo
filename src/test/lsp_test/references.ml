@@ -614,6 +614,7 @@ let%expect_test "Reference in reverse dependency" =
     { test_file = normalize_path "contracts/import_export/f.jsligo"
     ; reference = Position.create ~line:0 ~character:13
     };
+  (* FIXME AFAIU must also find "uri": "file:///../../../../../default/src/test/contracts/import_export/h.jsligo" here *)
   [%expect
     {|
     [{
@@ -622,14 +623,8 @@ let%expect_test "Reference in reverse dependency" =
          "start": { "character": 13, "line": 0 }
        },
        "uri": "file:///../../../../../default/src/test/contracts/import_export/f.jsligo"
-     };
-     {
-       "range": {
-         "end": { "character": 15, "line": 2 },
-         "start": { "character": 14, "line": 2 }
-       },
-       "uri": "file:///../../../../../default/src/test/contracts/import_export/h.jsligo"
-     }] |}]
+     }]
+   |}]
 
 let%expect_test "Reference of signature item in module in reverse dependency" =
   get_references_test

@@ -1,0 +1,9 @@
+export namespace M {
+  export const x = 42
+  export type t = int;
+
+  export namespace N {
+    export type t = string;
+    export const y = 100;
+  }
+}

@@ -268,8 +268,8 @@ let%expect_test "Whole file" =
     [{
        "line": 0,
        "start_char": 0,
-       "length": 43,
-       "token_type": "macro",
+       "length": 6,
+       "token_type": "keyword",
        "token_modifiers": []
      };
      {
