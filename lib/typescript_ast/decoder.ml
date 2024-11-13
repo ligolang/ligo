@@ -68,13 +68,18 @@ let list_of_children ?(comments = []) decoder children : 'a list =
     let fst_child = decoder ?comments:(Some comments) fst_raw_child in
     fst_child :: List.fold_right ~f ~init:[] siblings
 
-let ne_list_of_children ?(comments = []) decoder children : 'a ne_list option =
+let ne_list_opt_of_children ?(comments = []) decoder children : 'a ne_list option =
   let f raw_child = List.cons (decoder ?comments:None raw_child) in
   match children with
   | [] -> None
   | fst_raw_child :: siblings ->
     let fst_child = decoder ?comments:(Some comments) fst_raw_child in
     Some Nonempty_list.(fst_child :: List.fold_right ~f ~init:[] siblings)
+
+let ne_list_of_children ?(comments = []) decoder children : ('a ne_list, _) result =
+  match ne_list_opt_of_children ~comments decoder children with
+  | None -> Error "Expected at least one child."
+  | Some ne_list -> Ok ne_list
 
 (*
 let wrap_children ?(comments = []) decoder node : 'a ne_list wrap option =
@@ -90,7 +95,7 @@ let wrap_children ?(comments = []) decoder node : 'a ne_list wrap option =
 
 (* Decoding enclosed constructs *)
 
-let decode_enclosed ?(comments = []) node decoder opening closing : 'a enclosed =
+let decode_enclosed_list ?(comments = []) node decoder opening closing : 'a list enclosed =
   ensure_Ok node
   @@
   let comments = comments @ prev_comments node in
@@ -99,33 +104,49 @@ let decode_enclosed ?(comments = []) node decoder opening closing : 'a enclosed 
   let clauses = collect_named_children node in
   Ok
     { opening = make_sym ~comments opening
-    ; contents = decoder clauses
+    ; contents = list_of_children decoder clauses
     ; closing = make_sym closing
     }
 
-let decode_braces ?(comments = []) node decoder : 'a braces =
-  Braces (decode_enclosed ~comments node decoder "{" "}")
-
-let decode_chevrons ?(comments = []) node decoder : 'a chevrons =
-  Chevrons (decode_enclosed ~comments node decoder "<" ">")
-
-let decode_brackets ?(comments = []) node decoder : 'a brackets =
-  Brackets (decode_enclosed ~comments node decoder "[" "]")
-
-let decode_parens ?(comments = []) node decoder : 'a parens =
-  Parens (decode_enclosed ~comments node decoder "(" ")")
+(* Enclosed lists *)
 
 let decode_list_in_braces ?comments node decoder : 'a list braces =
-  decode_braces ?comments node (list_of_children decoder)
+  Braces (decode_enclosed_list ?comments node decoder "{" "}")
 
 let decode_list_in_chevrons ?comments node decoder : 'a list chevrons =
-  decode_chevrons ?comments node (list_of_children decoder)
+  Chevrons (decode_enclosed_list ?comments node decoder "<" ">")
 
 let decode_list_in_brackets ?comments node decoder : 'a list brackets =
-  decode_brackets ?comments node (list_of_children decoder)
+  Brackets (decode_enclosed_list ?comments node decoder "[" "]")
 
 let decode_list_in_parens ?comments node decoder : 'a list parens =
-  decode_parens ?comments node (list_of_children decoder)
+  Parens (decode_enclosed_list ?comments node decoder "(" ")")
+
+(* Enclosed non-empty lists *)
+
+let decode_enclosed_ne_list ?(comments = []) node decoder opening closing
+    : 'a ne_list enclosed
+  =
+  ensure_Ok node
+  @@
+  let comments = comments @ prev_comments node in
+  let* opening = first_child_named opening node in
+  let* closing = first_child_named closing node in
+  let clauses = collect_named_children node in
+  let* contents = ne_list_of_children decoder clauses in
+  Ok { opening = make_sym ~comments opening; contents; closing = make_sym closing }
+
+let decode_ne_list_in_braces ?comments node decoder : 'a ne_list braces =
+  Braces (decode_enclosed_ne_list ?comments node decoder "{" "}")
+
+let decode_ne_list_in_chevrons ?comments node decoder : 'a ne_list chevrons =
+  Chevrons (decode_enclosed_ne_list ?comments node decoder "<" ">")
+
+let decode_ne_list_in_brackets ?comments node decoder : 'a ne_list brackets =
+  Brackets (decode_enclosed_ne_list ?comments node decoder "[" "]")
+
+let decode_ne_list_in_parens ?comments node decoder : 'a ne_list parens =
+  Parens (decode_enclosed_ne_list ?comments node decoder "(" ")")
 
 (* Decoding the CST *)
 
@@ -147,7 +168,7 @@ let rec dec_program file map node =
 
 and dec_statements ?(comments = []) node : statements =
   let children = collect_named_children node in
-  ne_list_of_children ~comments dec_statement children
+  ne_list_opt_of_children ~comments dec_statement children
 
 and dec_statement ?(comments = []) node : statement =
   match get_name node with
@@ -228,8 +249,8 @@ and dec_expression_statement ?(comments = []) node : expression_statement =
 
 and dec_expressions ?(comments = []) (node : ts_tree) : expressions =
   match get_name node with
-  | "sequence_expression" -> Sequence_expression (dec_sequence_expression ~comments node)
-  | _ -> General_expression (dec_expression ~comments node)
+  | "sequence_expression" -> dec_sequence_expression ~comments node
+  | _ -> [ dec_expression ~comments node ]
 
 (* Statement blocks *)
 
@@ -595,7 +616,7 @@ and dec_formal_parameter ?(comments = []) node : formal_parameter =
     | _ -> Parameter_pattern (dec_pattern ~comments node)
   in
   let parameter_name : parameter_name =
-    { decorators = ne_list_of_children dec_decorator decorators
+    { decorators = ne_list_opt_of_children dec_decorator decorators
     ; access = make_opt dec_accessibility_modifier accessibility_modifier
     ; override = make_opt dec_override_modifier override_modifier
     ; readonly = make_opt make_kwd kwd_readonly
@@ -698,7 +719,7 @@ and dec_type_predicate node : type_predicate =
 and dec_predefined_type ?(comments = []) node : predefined_type =
   ignore comments;
   ignore node;
-  failwith "dec_predefined_type"
+  failwith "TODO: dec_predefined_type"
 
 (* Decorator *)
 
@@ -720,79 +741,79 @@ and dec_decorator ?(comments = []) node : decorator =
 and dec_decorator_member_expression ?(comments = []) node : decorator_member_expression =
   ignore comments;
   ignore node;
-  failwith "dec_decorator_member_expression"
+  failwith "TODO: dec_decorator_member_expression"
 
 and dec_decorator_call_expression ?(comments = []) node : decorator_call_expression =
   ignore comments;
   ignore node;
-  failwith "dec_decorator_call_expression"
+  failwith "TODO: dec_decorator_call_expression"
 
 and dec_decorator_parenthesized_expression ?(comments = []) node
     : decorator_parenthesized_expression
   =
   ignore comments;
   ignore node;
-  failwith "dec_decorator_parenthesized_expression"
+  failwith "TODO: dec_decorator_parenthesized_expression"
 
 (* Generator function declaration (see function declaration) *)
 
 and dec_generator_function_declaration node : generator_function_declaration =
   ignore node;
-  failwith "dec_generator_function_declaration"
+  failwith "TODO: dec_generator_function_declaration"
 
 (* Class declaration (see [dec_class]) *)
 
 and dec_class_declaration ?(comments = []) node : class_declaration =
   ignore comments;
   ignore node;
-  failwith "dec_class_declaration"
+  failwith "TODO: dec_class_declaration"
 
 (* Lexical declaration (see [dec_variable_declaration]) *)
 
 and dec_lexical_declaration ?(comments = []) node : lexical_declaration =
   ignore comments;
   ignore node;
-  failwith "dec_lexical_declaration"
+  failwith "TODO: dec_lexical_declaration"
 
 (* Variable declaration (see [dec_lexical_declaration]) *)
 
 and dec_variable_declaration ?(comments = []) node : variable_declaration =
   ignore comments;
   ignore node;
-  failwith "dec_variable_declaration"
+  failwith "TODO: dec_variable_declaration"
 
 (* Function signature (See [dec_function_declaration]) *)
 
 and dec_function_signature node : function_signature =
   ignore node;
-  failwith "dec_function_signature"
+  failwith "TODO: dec_function_signature"
 
 (* Abstract class declaration ( see [dec_class_declaration]) *)
 
 and dec_abstract_class_declaration node : abstract_class_declaration =
   ignore node;
-  failwith "dec_abstract_class_declaration"
+  failwith "TODO: dec_abstract_class_declaration"
 
 (* Module *)
 
 and dec_module ?(comments = []) node : module_ =
   ignore comments;
   ignore node;
-  failwith "dec_module"
+  failwith "TODO: dec_module"
 
 (* Internal module (a.k.a. namespaces) *)
 
 and dec_internal_module ?comments node : internal_module =
   ignore comments;
   ignore node;
-  failwith "dec_internal_module"
+  failwith "TODO: dec_internal_module"
 
 (* Type alias declaration *)
 
 and dec_type_alias_declaration ?(comments = []) node : type_alias_declaration =
   ignore comments;
   ignore node;
-  failwith "dec_type_alias_declaration"
+  failwith "TODO: dec_type_alias_declaration"
 
 (* Type parameters *)
 
@@ -855,7 +876,7 @@ and dec_enum_body ?(comments = []) node : enum_body =
 and dec_enum_assignment ?comments node : enum_assignment =
   ignore comments;
   ignore node;
-  failwith "dec_enum_assignment"
+  failwith "TODO: dec_enum_assignment"
 
 (* Property names *)
 
@@ -891,45 +912,45 @@ and dec_computed_property_name ?(comments = []) node : expression brackets =
 
 and dec_interface_declaration node : interface_declaration =
   ignore node;
-  failwith "dec_interface_declaration"
+  failwith "TODO: dec_interface_declaration"
 
 (* Import alias *)
 
 and dec_import_alias node : import_alias =
   ignore node;
-  failwith "dec_import_alias"
+  failwith "TODO: dec_import_alias"
 
 (* Ambient declaration *)
 
 and dec_ambient_declaration node : ambient_declaration =
   ignore node;
-  failwith "dec_ambient_declaration"
+  failwith "TODO: dec_ambient_declaration"
 
 (* EXPRESSIONS *)
 
 and dec_expression ?(comments = []) node : expression =
   ignore comments;
   ignore node;
-  failwith "dec_expression"
+  failwith "TODO: dec_expression"
 
 and dec_parenthesized_expression ?(comments = []) node : parenthesized_expression =
-  ignore comments;
-  ignore node;
-  failwith "dec_parenthesized_expression"
+  (*  ignore comments; ignore node; failwith "dec_parenthesized_expression"*)
+  decode_ne_list_in_parens ~comments node dec_expression
 
 (* Sequence expression *)
 
 and dec_sequence_expression ?(comments = []) node : sequence_expression =
-  ignore comments;
-  ignore node;
-  failwith "dec_sequence_expression"
+  ensure_Ok node
+  @@
+  let raw_children = collect_named_children node in
+  ne_list_of_children ~comments dec_expression raw_children
 
 (* LHS expression *)
 
 and dec_lhs_expression ?(comments = []) node : lhs_expression =
   ignore comments;
   ignore node;
-  failwith "dec_lhs_expression"
+  failwith "TODO: dec_lhs_expression"
 
 (* PATTERN
 
@@ -939,13 +960,60 @@ and dec_lhs_expression ?(comments = []) node : lhs_expression =
 and dec_pattern ?(comments = []) node : pattern =
   ignore comments;
   ignore node;
-  failwith "dec_pattern"
+  failwith "TODO: dec_pattern"
 
 (* Object pattern *)
 
-and dec_object_pattern node : object_pattern =
+and dec_object_pattern ?comments node : object_pattern =
+  decode_list_in_braces ?comments node dec_member_pattern
+
+and dec_member_pattern ?(comments = []) node : member_pattern =
+  match get_name node with
+  | "pair_pattern" -> Member_pair_pattern (dec_pair_pattern ~comments node)
+  | "rest_pattern" -> Member_rest_pattern (dec_rest_pattern ~comments node)
+  | "object_assignment_pattern" ->
+    Member_object_assignment (dec_object_assignment_pattern node)
+  | "shorthand_property_identifier_pattern" ->
+    Member_shorthand_property (dec_shorthand_property_identifier_pattern node)
+  | s -> failwith ("dec_object_pattern: " ^ s ^ "\n")
+
+(* Pair pattern *)
+
+and dec_pair_pattern ?(comments = []) node : pair_pattern =
+  ensure_Ok node
+  @@ let* key_field = child_with_field "key" node in
+     let* sym_colon = first_child_named ":" node in
+     let* value_field = child_with_field "value" node in
+     let decode_value node =
+       match get_name node with
+       | "assignment_pattern" -> Pair_value_assignment (dec_assignment_pattern node)
+       | _ ->
+         (* Hidden rule *)
+         Pair_value (dec_pattern node)
+     in
+     Ok
+       { key = dec_property_name ~comments key_field
+       ; sym_colon = make_sym sym_colon
+       ; value = decode_value value_field
+       }
+
+(* Rest pattern *)
+
+and dec_rest_pattern ?comments node : rest_pattern = dec_lhs_expression ?comments node
+
+(* Assignment pattern *)
+
+and dec_object_assignment_pattern ?comments node : object_assignment_pattern =
+  ignore comments;
   ignore node;
-  failwith "dec_object_pattern"
+  failwith "TODO: dec_object_assignment_pattern"
+
+(* Shorthand property identifier pattern *)
+
+and dec_shorthand_property_identifier_pattern ?comments node : identifier =
+  ignore comments;
+  ignore node;
+  failwith "TODO: dec_shorthand_property_identifier_pattern"
 
 (* Array pattern *)
 
@@ -975,11 +1043,13 @@ and dec_assignment_pattern ?comments node =
 (* Rule "_destructuring_pattern" is inlined. *)
 
 and dec_destructuring_pattern node : destructuring_pattern =
-  ignore node;
-  failwith "dec_destructuring_pattern"
+  match get_name node with
+  | "object_pattern" -> Pattern_object (dec_object_pattern node)
+  | "array_pattern" -> Pattern_array (dec_array_pattern node)
+  | s -> failwith ("dec_destructuring_pattern: " ^ s ^ "\n")
 
 (** TYPES
 *)
 and dec_type node : type_ =
   ignore node;
-  failwith "dec_type"
+  failwith "TODO: dec_type"

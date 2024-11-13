@@ -572,7 +572,7 @@ and destructuring_pattern =
   | Pattern_object of object_pattern
   | Pattern_array of array_pattern
 
-and object_pattern = member_pattern list
+and object_pattern = member_pattern list braces
 
 and member_pattern =
   | Member_pair_pattern of pair_pattern
@@ -582,6 +582,7 @@ and member_pattern =
 
 and pair_pattern =
   { key : property_name
+  ; sym_colon : symbol
   ; value : pair_value_pattern
   }
 
@@ -1303,11 +1304,7 @@ and subscripted =
   | Subscripted_primary of primary_expression
 
 and optional_chain = Optional_chain
-
-and expressions =
-  | General_expression of expression
-  | Sequence_expression of sequence_expression
-
+and expressions = sequence_expression
 and sequence_expression = expression ne_list (*wrap*)
 
 (** Augmented Assignment Expression

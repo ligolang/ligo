@@ -2917,17 +2917,17 @@ and print_object_pattern_field state node =
 
 and print_pair_pattern state node =
   let key_field = child_with_field "key" node
-  and value_field = child_with_field "value" node
   and sym_colon = first_child_named ":" node
-  and print_pair_value_field state node =
+  and value_field = child_with_field "value" node
+  and print_value state node =
     match get_name node with
     | "assignment_pattern" -> print_assignment_pattern state node
-    | _ -> match_rest state node print_pattern
+    | _ -> match_rest state node print_pattern (* Hidden rule *)
   in
   let children =
     [ mk_child_res print_property_name key_field
     ; mk_child_res make_sym sym_colon
-    ; mk_child_res print_pair_value_field value_field
+    ; mk_child_res print_value value_field
     ]
   in
   make_tree state node children
