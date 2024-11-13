@@ -7,7 +7,7 @@ let test_build_test_contracts ~raise () =
       let options = Compiler_options.set_syntax options None in
       Compiler_options.set_test_flag options false
     in
-    let f = "./contracts/build/d.mligo" in
+    let f = "./contracts/build/D.mligo" in
     let (_, env) : Ast_typed.program * Checking.Persistent_env.t =
       Build.qualified_typed_with_env ~raise ~options (Build.Source_input.From_file f)
     in

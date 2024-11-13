@@ -31,3 +31,7 @@ let rec v6 (x : E7.t7) : E8.t8 = E9.y - x
 include E10
 
 let v7 = E11.v11
+
+let v8 = Directory.E12.v12
+
+let v9 : Directory_2.Directory_3.E13.t13 = Super__.E13.v14

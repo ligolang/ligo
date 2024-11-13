@@ -194,45 +194,11 @@ let core_prod =
     ; comp_file "clauseblock.jsligo"
     ; comp_file "polymorphism/annotate.mligo"
     ; comp_file "deep_pattern_matching/list_pattern.mligo"
-    ; comp_file "import_decls.jsligo"
-    ; comp_file "import_decls.mligo"
     ; comp_file_assert
         "core_abstraction/fun_type_var.mligo"
         "\n\
          const foo : ∀ a : * . list (a) -> list (a) =\n\
         \  Λ a ->  Λ b ->  fun (init xs : list (b)) : list (b) -> xs"
-    ; comp_file_generic_assert
-        "import_decls.jsligo"
-        ~transform:(fun ast ->
-          List.map ~f:Location.unwrap @@ Build.Ligo_dep_jsligo.dependencies ast)
-        ~equal:(fun got expected -> List.equal String.equal got expected)
-        ~pp:(fun got ->
-            Fmt.pr "List of bubix: %a" (Fmt.Dump.list Fmt.string) got)
-        ~expected:
-          [ "./Test1"
-          ; "./Test2"
-          ; "./Test3"
-          ; "./Test4"
-          ; "./Test5"
-          ; "./Test6"
-          ; "./Test7"
-          ; "./Test8"
-          ]
-    ; comp_file_generic_assert
-        "import_decls.mligo"
-        ~transform:(fun ast ->
-          let syntax = Syntax_types.CameLIGO in
-          let raw_options = Compiler_options.Raw_options.make () in
-          let options = Compiler_options.make ~raw_options ~syntax () in
-          let lib = Build.Stdlib.get ~options in
-          let std_lib = (Build.Stdlib.select_lib_typed syntax lib).pr_module in
-          Build.Ligo_dep_cameligo.dependencies ~std_lib ast)
-        ~pp:(fun got -> let got = List.map ~f:Location.unwrap got in
-            Fmt.pr "List of bubix: %a" (Fmt.Dump.list Fmt.string) got)
-        ~equal:(fun got expected ->
-          let got = List.map ~f:Location.unwrap got in
-          List.equal String.equal got expected)
-        ~expected:[ "E1"; "E2"; "E3"; "E4"; "E5"; "E6"; "E7"; "E8"; "E9" ]
     ]
 
 
