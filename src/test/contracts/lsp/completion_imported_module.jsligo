@@ -1,4 +1,4 @@
-#import "completion_x.mligo" "A"
+import * as A from "completion_x.jsligo";
 
 import M = 
 

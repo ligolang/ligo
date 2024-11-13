@@ -1,3 +1,3 @@
-#import "inner/inner.mligo" "Inner"
+module Inner = Inner.Inner
 
 let test = Inner.Outer.K.B.bar

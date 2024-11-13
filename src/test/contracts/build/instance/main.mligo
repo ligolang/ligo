@@ -1,10 +1,6 @@
-module Errors = struct
-  #include "../common/errors.mligo"
-end
+module Errors = Super__.Common.Errors
 
-module Storage = struct
-  #include "../common/storage.mligo"
-end
+module Storage = Super__.Common.Storage
 
 [@entry]
 let main (_ : unit) (_ : Storage.t) : operation list * Storage.t =

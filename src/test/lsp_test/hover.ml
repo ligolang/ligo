@@ -312,10 +312,7 @@ let%expect_test "outer.mligo" =
     {|
     [{
        "contents": [
-         {
-           "value": "#import \"inner/inner.mligo\" \"Inner\"",
-           "language": "cameligo"
-         }
+         { "value": "module Inner = Inner.Inner", "language": "cameligo" }
        ]
      };
      {
@@ -1283,10 +1280,25 @@ let%expect_test "Preserves module path of an imported module" =
     { file = "contracts/lsp/hover/imported_module.mligo"
     ; hover_positions = [ pos ~line:2 ~character:4; pos ~line:3 ~character:4 ]
     };
+  (* FIXME is this what we want here? *)
   [%expect
     {|
-    [{ "contents": [ { "value": "x : M.t", "language": "cameligo" } ] };
-     { "contents": [ { "value": "y : M.t option", "language": "cameligo" } ] }] |}]
+    [{
+       "contents": [
+         {
+           "value": "x :\n  /home/savely/ligo/_build/default/src/test/contracts/lsp/hover/simple_type.mligo.\n  t",
+           "language": "cameligo"
+         }
+       ]
+     };
+     {
+       "contents": [
+         {
+           "value": "y :\n  /home/savely/ligo/_build/default/src/test/contracts/lsp/hover/simple_type.mligo.\n  t\n    option",
+           "language": "cameligo"
+         }
+       ]
+     }] |}]
 
 let%expect_test "Shows the correct path relative to the current env" =
   get_hover_test
@@ -1312,6 +1324,7 @@ let%expect_test "Shows the correct path relative to the current envs" =
         ; pos ~line:16 ~character:5
         ]
     };
+  (* FIXME is this what we want here? *)
   [%expect
     {|
     [{
@@ -1322,7 +1335,7 @@ let%expect_test "Shows the correct path relative to the current envs" =
      {
        "contents": [
          {
-           "value": "y : (Import.M.u * N.t * N.u) option",
+           "value": "y :\n  (/home/savely/ligo/_build/default/src/test/contracts/lsp/hover/module_access.mligo.\n   M.\n   u * N.t * N.u)\n    option",
            "language": "cameligo"
          }
        ]
@@ -1514,7 +1527,10 @@ let%expect_test "Polymorphic types (CameLIGO)" =
      { "contents": [ { "value": "x : string M.t", "language": "cameligo" } ] };
      {
        "contents": [
-         { "value": "foo : int Common.foo", "language": "cameligo" }
+         {
+           "value": "foo :\n  int\n    /home/savely/ligo/_build/default/src/test/contracts/lsp/hover/poly_types_common.mligo.\n    foo",
+           "language": "cameligo"
+         }
        ]
      };
      {

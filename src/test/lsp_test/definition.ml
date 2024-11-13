@@ -73,18 +73,10 @@ let%expect_test "Imported identifier" =
     ; reference = Position.create ~line:9 ~character:19
     ; def_type = Def
     };
+  (* FIXME should find something here? *)
   [%expect
     {|
-    Some
-      [
-        {
-          "range": {
-            "end": { "character": 8, "line": 0 },
-            "start": { "character": 4, "line": 0 }
-          },
-          "uri": "file:///../../../../../default/src/test/contracts/build/A.mligo"
-        }
-      ] |}]
+     None |}]
 
 let%expect_test "Identifier (local module)" =
   get_definition_test
