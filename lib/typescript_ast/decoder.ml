@@ -999,21 +999,44 @@ and dec_pair_pattern ?(comments = []) node : pair_pattern =
 
 (* Rest pattern *)
 
-and dec_rest_pattern ?comments node : rest_pattern = dec_lhs_expression ?comments node
+and dec_rest_pattern ?(comments = []) node : rest_pattern =
+  ensure_Ok node
+  @@ let* sym_ellipsis = first_child_named "..." node in
+     let* expr_child = named_child_ranked 0 node in
+     Ok
+       { sym_ellipsis = make_sym ~comments sym_ellipsis
+       ; expression = dec_lhs_expression expr_child
+       }
 
 (* Assignment pattern *)
 
 and dec_object_assignment_pattern ?comments node : object_assignment_pattern =
-  ignore comments;
-  ignore node;
-  failwith "TODO: dec_object_assignment_pattern"
+  ensure_Ok node
+  @@ let* left_field = child_with_field "left" node in
+     let* sym_equal = first_child_named "=" node in
+     let* right_field = child_with_field "right" node in
+     Ok
+       ({ left = dec_object_lhs_pattern ?comments left_field
+        ; sym_equal = make_kwd sym_equal
+        ; right = dec_expression right_field
+        }
+         : object_assignment_pattern)
+
+and dec_object_lhs_pattern ?comments node : object_lhs_pattern =
+  dec_lhs_pattern ?comments node
+
+and dec_lhs_pattern ?comments node : lhs_pattern =
+  match get_name node with
+  | "shorthand_property_identifier_pattern" ->
+    Decl_ident (dec_shorthand_property_identifier_pattern ?comments node)
+  | _ ->
+    (* Hidden rule *)
+    Decl_pattern (dec_destructuring_pattern ?comments node)
 
 (* Shorthand property identifier pattern *)
 
 and dec_shorthand_property_identifier_pattern ?comments node : identifier =
-  ignore comments;
-  ignore node;
-  failwith "TODO: dec_shorthand_property_identifier_pattern"
+  dec_identifier ?comments node
 
 (* Array pattern *)
 
@@ -1042,10 +1065,10 @@ and dec_assignment_pattern ?comments node =
 
 (* Rule "_destructuring_pattern" is inlined. *)
 
-and dec_destructuring_pattern node : destructuring_pattern =
+and dec_destructuring_pattern ?comments node : destructuring_pattern =
   match get_name node with
-  | "object_pattern" -> Pattern_object (dec_object_pattern node)
-  | "array_pattern" -> Pattern_array (dec_array_pattern node)
+  | "object_pattern" -> Pattern_object (dec_object_pattern ?comments node)
+  | "array_pattern" -> Pattern_array (dec_array_pattern ?comments node)
   | s -> failwith ("dec_destructuring_pattern: " ^ s ^ "\n")
 
 (** TYPES

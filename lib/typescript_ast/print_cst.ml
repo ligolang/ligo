@@ -2964,21 +2964,23 @@ and print_shorthand_property_identifier_pattern state node = make_node state nod
 
 and print_object_assignment_pattern state node =
   let left_field = child_with_field "left" node
-  and right_field = child_with_field "right" node
   and sym_equal = first_child_named "=" node
-  and print_left state node =
-    match get_name node with
-    | "shorthand_property_identifier_pattern" ->
-      print_shorthand_property_identifier_pattern state node
-    | _ -> match_rest state node print_destructuring_pattern
-  in
+  and right_field = child_with_field "right" node in
   let children =
-    [ mk_child_res print_left left_field
+    [ mk_child_res print_object_lhs_pattern left_field
     ; mk_child_res make_sym sym_equal
     ; mk_child_res print_expression right_field
     ]
   in
   make_tree state node children
+
+and print_object_lhs_pattern state node = print_lhs_pattern state node
+
+and print_lhs_pattern state node =
+  match get_name node with
+  | "shorthand_property_identifier_pattern" ->
+    print_shorthand_property_identifier_pattern state node
+  | _ -> match_rest state node print_destructuring_pattern
 
 (* Rule "_destructuring_pattern" is inlined. *)
 

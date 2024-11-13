@@ -590,7 +590,10 @@ and pair_value_pattern =
   | Pair_value of pattern
   | Pair_value_assignment of assignment_pattern
 
-and rest_pattern = lhs_expression
+and rest_pattern =
+  { sym_ellipsis : symbol
+  ; expression : lhs_expression
+  }
 
 and lhs_expression =
   | Member_expression of member_expression
@@ -602,6 +605,7 @@ and lhs_expression =
 
 and object_assignment_pattern =
   { left : object_lhs_pattern
+  ; sym_equal : symbol
   ; right : expression
   }
 
