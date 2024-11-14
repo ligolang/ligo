@@ -179,7 +179,7 @@ let test_use_jsligo ~raise ~raw_options () =
     ~raise
     ~raw_options
     init_state_jsligo
-    [ "#use \"contracts/build/A.mligo\""; "toto" ]
+    [ "#use \"contracts/build/A.jsligo\""; "toto" ]
     [ "toto"; "1" ]
     ()
 
@@ -194,7 +194,7 @@ let test_long_jsligo ~raise ~raw_options () =
     ; "#import \"contracts/build/B.jsligo\" \"MYMOD\""
     ; "MYMOD.toto"
     ; "MYMOD.A.toto"
-    ; "let f = (x : int) : [list<operation>, int] => MYMOD.f (unit, x)"
+    ; "let f = (x : int) : [list<operation>, int] => MYMOD.main (unit, x)"
     ; "f(4)"
     ; "namespace EURO {\n\
        export type t = nat;\n\
@@ -213,7 +213,7 @@ let test_long_jsligo ~raise ~raw_options () =
     ; "32"
     ; "1"
     ; "f"
-    ; "( LIST_EMPTY() , 48 )"
+    ; "( LIST_EMPTY() , 79 )"
     ; "EURO"
     ; "US_DOLLAR"
     ; "+32"
