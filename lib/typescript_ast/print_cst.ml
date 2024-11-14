@@ -2851,14 +2851,14 @@ and print_decorator_call_expression state node =
   in
   make_tree state node children
 
-and print_decorator_parenthesized_expression ?(comments = []) state node =
+and print_decorator_parenthesized_expression ?comments state node =
   let print state node =
     match get_name node with
     | "identifier" -> print_identifier state node
     | "member_expression" -> print_decorator_member_expression state node
     | _ -> match_rest state node print_call_expression
   in
-  print_parens ~comments state node print
+  print_parens ?comments state node print
 
 (* Accessibility modifier *)
 
