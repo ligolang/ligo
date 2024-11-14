@@ -905,9 +905,14 @@ and field_mode =
     ]}
  *)
 and ambient_declaration =
+  { kwd_declare : keyword
+  ; ambient_kind : ambient_kind
+  }
+
+and ambient_kind =
   | Declaration of declaration
-  | Global_declaration of statement_block
-  | Module_declaration of identifier * type_ (* property identifier *)
+  | Global_declaration of keyword * statement_block (* "global {...}" *)
+  | Module_declaration of keyword * identifier * type_ (* "module", property identifier *)
 
 (** Enumerated Declaration
 
@@ -2366,15 +2371,16 @@ and construct_signature =
     ]}
 *)
 and predefined_type =
-  | T_any
-  | T_number
-  | T_string
-  | T_symbol
-  | T_unique_symbol
-  | T_void
-  | T_unknown
-  | T_never
-  | T_object
+  | T_any of keyword
+  | T_number of keyword
+  | T_boolean of keyword
+  | T_string of keyword
+  | T_symbol of keyword
+  | T_unique_symbol of keyword
+  | T_void of keyword
+  | T_unknown of keyword
+  | T_never of keyword
+  | T_object of keyword
 
 (** Template Literal Type
 
