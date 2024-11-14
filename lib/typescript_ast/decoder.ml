@@ -559,6 +559,30 @@ and dec_throw_statement node : throw_statement =
    The JavaScript tree-sitter grammar has the non-terminal
    "declaration" be a supertype, that is, a hidden rule. *)
 
+and dec_declaration ?(comments = []) node : declaration =
+  let comments = comments @ prev_comments node in
+  match get_name node with
+  | "function_declaration" ->
+    D_function_declaration (dec_function_declaration ~comments node)
+  | "generator_function_declaration" ->
+    D_generator_function_declaration (dec_generator_function_declaration node)
+  | "class_declaration" -> D_class_declaration (dec_class_declaration ~comments node)
+  | "lexical_declaration" ->
+    D_lexical_declaration (dec_lexical_declaration ~comments node)
+  | "variable_declaration" -> D_variable_declaration (dec_variable_declaration node)
+  | "function_signature" -> D_function_signature (dec_function_signature node)
+  | "abstract_class_declaration" ->
+    D_abstract_class_declaration (dec_abstract_class_declaration node)
+  | "module" -> D_module (dec_module node)
+  | "internal_module" -> D_internal_module (dec_internal_module ~comments node)
+  | "type_alias_declaration" ->
+    D_type_alias_declaration (dec_type_alias_declaration ~comments node)
+  | "enum_declaration" -> D_enum_declaration (dec_enum_declaration node)
+  | "interface_declaration" -> D_interface_declaration (dec_interface_declaration node)
+  | "import_alias" -> D_import_alias (dec_import_alias node)
+  | "ambient_declaration" -> D_ambient_declaration (dec_ambient_declaration node)
+  | s -> failwith ("dec_declaration: " ^ s ^ "\n")
+
 (* Function declaration (see [dec_function_signature]) *)
 
 and dec_function_declaration ?(comments = []) node : function_declaration =
@@ -686,7 +710,7 @@ and dec_asserts node : asserts_annotation =
        | "type_predicate" -> Assert_predicate (kwd_asserts, dec_type_predicate node)
        | "identifier" -> Assert_type (kwd_asserts, dec_identifier node)
        | "this" -> Assert_this (kwd_asserts, make_kwd node)
-       | s -> failwith ("dec_asserts/decode: " ^ s ^ "\n"))
+       | s -> failwith ("dec_asserts: " ^ s ^ "\n"))
 
 (* Type predicate annotation *)
 
@@ -717,9 +741,32 @@ and dec_type_predicate node : type_predicate =
 (* Predefined type *)
 
 and dec_predefined_type ?(comments = []) node : predefined_type =
-  ignore comments;
-  ignore node;
-  failwith "TODO: dec_predefined_type"
+  let comments = comments @ prev_comments node in
+  match collect_children node with
+  | [] -> failwith "dec_predefined_type: No children."
+  | child :: _ ->
+    (* The tree-sitter parser for TypeScript has a bug: a child node
+       "unique symbol" occurs repeated, for some mysterious
+       reason. This case of the pattern matching is a hack to work
+       around the issue. For reference, here is the production:
+
+       predefined_type: _ => choice(
+         ...
+         alias(seq('unique', 'symbol'), 'unique symbol')
+         ...)
+    *)
+    (match get_name child with
+    | "any" -> T_any (make_kwd ~comments child)
+    | "number" -> T_number (make_kwd ~comments child)
+    | "boolean" -> T_boolean (make_kwd ~comments child)
+    | "string" -> T_string (make_kwd ~comments child)
+    | "symbol" -> T_symbol (make_kwd ~comments child)
+    | "unique symbol" -> T_unique_symbol (make_kwd ~comments child)
+    | "void" -> T_void (make_kwd ~comments child)
+    | "unknown" -> T_unknown (make_kwd ~comments child)
+    | "never" -> T_never (make_kwd ~comments child)
+    | "object" -> T_object (make_kwd ~comments child)
+    | s -> failwith ("dec_predefined_type/decode: " ^ s ^ "\n"))
 
 (* Decorator *)
 
@@ -922,9 +969,25 @@ and dec_import_alias node : import_alias =
 
 (* Ambient declaration *)
 
-and dec_ambient_declaration node : ambient_declaration =
-  ignore node;
-  failwith "TODO: dec_ambient_declaration"
+and dec_ambient_declaration ?comments node : ambient_declaration =
+  ensure_Ok node
+  @@ let* kwd_declare = first_child_named "declare" node in
+     let* fst_child = named_child_ranked 0 node in
+     let* ambient_kind =
+       match get_name fst_child with
+       | "statement_block" ->
+         let* kwd_global = first_child_named "global" node in
+         Ok (Global_declaration (make_kwd kwd_global, dec_statement_block fst_child))
+       | "property_identifier" ->
+         let* kwd_module = first_child_named "module" node in
+         let* type_child = child_ranked 5 node in
+         let keyword = make_kwd kwd_module
+         and identifier = dec_identifier fst_child
+         and type_ = dec_type type_child in
+         Ok (Module_declaration (keyword, identifier, type_))
+       | _ -> Ok (Declaration (dec_declaration fst_child))
+     in
+     Ok { kwd_declare = make_kwd ?comments kwd_declare; ambient_kind }
 
 (* EXPRESSIONS *)
 
@@ -934,7 +997,6 @@ and dec_expression ?(comments = []) node : expression =
   failwith "TODO: dec_expression"
 
 and dec_parenthesized_expression ?(comments = []) node : parenthesized_expression =
-  (*  ignore comments; ignore node; failwith "dec_parenthesized_expression"*)
   decode_ne_list_in_parens ~comments node dec_expression
 
 (* Sequence expression *)
