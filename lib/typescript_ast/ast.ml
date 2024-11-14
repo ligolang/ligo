@@ -400,7 +400,7 @@ and extends_clause_single =
   ; type_arguments : type_arguments option
   }
 
-and type_arguments = type_ ne_list
+and type_arguments = type_ ne_list chevrons
 and implements_clause = type_ ne_list
 
 and type_parameter =
@@ -1536,7 +1536,7 @@ and new_expression =
   ; arguments : arguments option
   }
 
-and arguments = argument list
+and arguments = argument list parens
 
 and argument =
   | Expression of expression
@@ -3275,10 +3275,11 @@ and decorator =
   | Decorator_identifier of identifier
   | Decorator_member_expression of decorator_member_expression
   | Decorator_call_expression of decorator_call_expression
-  | Decorator_parenthesized_expression of decorator_parenthesized_expression
+  | Decorator_parenthesized_expression of decorator_parenthesized_expression parens
 
 and decorator_member_expression =
   { object_ : object_member_expression
+  ; sym_dot : symbol
   ; property : identifier
   }
 

@@ -93,7 +93,34 @@ let wrap_children ?(comments = []) decoder node : 'a ne_list wrap option =
     Some (Wrap.make stmts region)
 *)
 
-(* Decoding enclosed constructs *)
+(* Decoding enclosed unique child *)
+
+let decode_enclosed ?(comments = []) node decoder opening closing : 'a enclosed =
+  ensure_Ok node
+  @@
+  let comments = comments @ prev_comments node in
+  let* opening = first_child_named opening node in
+  let* closing = first_child_named closing node in
+  let* child = (* We assume one child *) child_ranked 1 node in
+  Ok
+    { opening = make_sym ~comments opening
+    ; contents = decoder child
+    ; closing = make_sym closing
+    }
+
+let decode_braces ?comments node decoder : 'a braces =
+  Braces (decode_enclosed ?comments node decoder "{" "}")
+
+let decode_chevrons ?comments node decoder : 'a chevrons =
+  Chevrons (decode_enclosed ?comments node decoder "<" ">")
+
+let decode_brackets ?comments node decoder : 'a brackets =
+  Brackets (decode_enclosed ?comments node decoder "[" "]")
+
+let decode_parens ?comments node decoder : 'a parens =
+  Parens (decode_enclosed ?comments node decoder "(" ")")
+
+(* Decoding enclosed lists *)
 
 let decode_enclosed_list ?(comments = []) node decoder opening closing : 'a list enclosed =
   ensure_Ok node
@@ -108,8 +135,6 @@ let decode_enclosed_list ?(comments = []) node decoder opening closing : 'a list
     ; closing = make_sym closing
     }
 
-(* Enclosed lists *)
-
 let decode_list_in_braces ?comments node decoder : 'a list braces =
   Braces (decode_enclosed_list ?comments node decoder "{" "}")
 
@@ -122,7 +147,7 @@ let decode_list_in_brackets ?comments node decoder : 'a list brackets =
 let decode_list_in_parens ?comments node decoder : 'a list parens =
   Parens (decode_enclosed_list ?comments node decoder "(" ")")
 
-(* Enclosed non-empty lists *)
+(* Decoding enclosed non-empty lists *)
 
 let decode_enclosed_ne_list ?(comments = []) node decoder opening closing
     : 'a ne_list enclosed
@@ -786,21 +811,64 @@ and dec_decorator ?(comments = []) node : decorator =
        | _ -> failwith "dec_decorator")
 
 and dec_decorator_member_expression ?(comments = []) node : decorator_member_expression =
-  ignore comments;
-  ignore node;
-  failwith "TODO: dec_decorator_member_expression"
+  ensure_Ok node
+  @@ let* object_field = child_with_field "object" node in
+     let* selector = first_child_named "." node in
+     let* property_field = child_with_field "property" node in
+     let decode_object node =
+       match get_name node with
+       | "identifier" -> Object_name (dec_identifier ~comments node)
+       | _ -> Qualified_member_expression (dec_decorator_member_expression ~comments node)
+     in
+     Ok
+       { object_ = decode_object object_field
+       ; sym_dot = make_sym selector
+       ; property = dec_identifier property_field
+       }
 
 and dec_decorator_call_expression ?(comments = []) node : decorator_call_expression =
-  ignore comments;
-  ignore node;
-  failwith "TODO: dec_decorator_call_expression"
+  ensure_Ok node
+  @@ let* function_field = child_with_field "function" node in
+     let type_arguments_field = child_with_field_opt "type_arguments" node in
+     let* arguments_field = child_with_field "arguments" node in
+     let decode_function node : function_or_property =
+       match get_name node with
+       | "identifier" -> Function_name (dec_identifier ~comments node)
+       | "member_expression" ->
+         Qualified_member_expression (dec_decorator_member_expression ~comments node)
+       | s -> failwith ("dec_decorator_call_expression/decode_function: " ^ s ^ "\n")
+     in
+     Ok
+       { function_ = decode_function function_field
+       ; type_arguments = make_opt dec_type_arguments type_arguments_field
+       ; arguments = dec_arguments arguments_field
+       }
 
-and dec_decorator_parenthesized_expression ?(comments = []) node
-    : decorator_parenthesized_expression
+and dec_decorator_parenthesized_expression ?comments node
+    : decorator_parenthesized_expression parens
   =
-  ignore comments;
-  ignore node;
-  failwith "TODO: dec_decorator_parenthesized_expression"
+  let decode node =
+    match get_name node with
+    | "identifier" -> Parenthesized_ident (dec_identifier node)
+    | "member_expression" -> Parenthesized_member (dec_decorator_member_expression node)
+    | _ -> Parenthesized_call (dec_decorator_call_expression node)
+  in
+  decode_parens ?comments node decode
+
+(* Type arguments *)
+
+and dec_type_arguments ?comments node : type_arguments =
+  decode_ne_list_in_chevrons ?comments node dec_type
+
+(* Function arguments *)
+
+and dec_arguments ?comments node : arguments =
+  decode_list_in_parens ?comments node dec_argument
+
+and dec_argument ?comments node : argument =
+  match get_name node with
+  | "spread_element" -> Spread_element (dec_expression ?comments node)
+  | _ -> Expression (dec_expression ?comments node)
 
 (* Generator function declaration (see function declaration) *)
 
@@ -1135,6 +1203,7 @@ and dec_destructuring_pattern ?comments node : destructuring_pattern =
 
 (** TYPES
 *)
-and dec_type node : type_ =
+and dec_type ?comments node : type_ =
+  ignore comments;
   ignore node;
   failwith "TODO: dec_type"
