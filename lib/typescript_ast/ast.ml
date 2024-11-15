@@ -962,7 +962,7 @@ and enum_body =
 
 and enum_assignment =
   { name : property_name
-  ; default : expression
+  ; default : symbol * expression (* "=" *)
   }
 
 (** Import Alias
@@ -998,6 +998,7 @@ and enum_assignment =
 and import_alias =
   { import : keyword
   ; alias : identifier
+  ; sym_equal : symbol
   ; aliased : aliased
   }
 
@@ -1005,8 +1006,7 @@ and aliased =
   | Ident of identifier
   | Nested of nested_identifier
 
-and nested_identifier =
-  (identifier ne_list wrap * identifier) wrap (* property identifier *)
+and nested_identifier = identifier ne_list * identifier (* property identifier *)
 
 (** Interface Declaration
 
@@ -1094,12 +1094,20 @@ and generic_name =
        field('body', optional($.statement_block))))
     ]}
  *)
-and internal_module = module_
+and internal_module =
+  { kwd_namespace : keyword
+  ; module_name : module_name
+  ; module_body : statement_block option
+  }
 
-and module_ = module_name * statement_block
+and module_ =
+  { kwd_module : keyword
+  ; module_name : module_name
+  ; module_body : statement_block option
+  }
 
 and module_name =
-  | Module_string of string
+  | Module_string of string_literal
   | Module_ident of identifier
   | Module_nested of nested_identifier
 
