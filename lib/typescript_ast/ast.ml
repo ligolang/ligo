@@ -555,7 +555,7 @@ and private_property_identifier = hash_name
  *)
 and lexical_declaration =
   { kind : let_or_const
-  ; decls : variable_declaration
+  ; decls : variable_declarator ne_list
   }
 
 and let_or_const =
@@ -631,7 +631,7 @@ and array_cell_pattern =
        seq('var', commaSep1($.variable_declarator), $._semicolon),
     ]}
  *)
-and variable_declaration = variable_declarator ne_list wrap (* TODO: "var"? *)
+and variable_declaration = symbol * variable_declarator ne_list (* "var" *)
 
 (** Abstract Class Declaration
 
@@ -1266,12 +1266,11 @@ and member_expression =
 
 and object_member =
   | Object_member_expression of expression
-  | Object_member_primary of primary_expression
-  | Object_member_import
+  | Object_member_import of keyword
 
 and selector =
-  | Dot
-  | Optional_chain
+  | Dot of symbol
+  | Optional_chain of symbol
 
 and property_ident =
   | Private_property_identifier of hash_name
@@ -1303,16 +1302,12 @@ and property_ident =
     ]}
 *)
 and subscript_expression =
-  { object_ : subscripted
+  { object_ : expression
   ; optional_chain : optional_chain option
-  ; index : expressions
+  ; index : expressions brackets
   }
 
-and subscripted =
-  | Subscripted_expression of expression
-  | Subscripted_primary of primary_expression
-
-and optional_chain = Optional_chain
+and optional_chain = Optional_chain of symbol
 and expressions = sequence_expression
 and sequence_expression = expression ne_list (*wrap*)
 
