@@ -1042,6 +1042,28 @@ and print_abstract_class_declaration state node =
 
 and print_module ?(comments = []) state node =
   let comments = comments @ prev_comments node
+  and kwd_module = first_child_named "module" node
+  and name_field = child_with_field "name" node
+  and body_field = child_with_field_opt "body" node
+  and print_name state node =
+    match get_name node with
+    | "string" -> print_string state node
+    | "identifier" -> print_identifier state node
+    | "nested_identifier" -> print_nested_identifier state node
+    | _ -> match_rest state node print_unexpected_node
+  in
+  let children =
+    [ mk_child_res (make_kwd ~comments) kwd_module
+    ; mk_child_res print_name name_field
+    ; mk_child_opt print_statement_block body_field
+    ]
+  in
+  make_tree state node children
+
+(* Internal module (a.k.a. namespaces) *)
+
+and print_internal_module ?(comments = []) state node =
+  let comments = comments @ prev_comments node
   and kwd_namespace = first_child_named "namespace" node
   and name_field = child_with_field "name" node
   and body_field = child_with_field_opt "body" node
@@ -1059,10 +1081,6 @@ and print_module ?(comments = []) state node =
     ]
   in
   make_tree state node children
-
-(* Internal module (a.k.a. namespaces) *)
-
-and print_internal_module ?comments state node = print_module ?comments state node
 
 (* Type alias declaration *)
 
