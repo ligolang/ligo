@@ -1134,8 +1134,10 @@ and module_name =
     ]}
  *)
 and type_alias_declaration =
-  { name : type_identifier
-  ; type_parameters : type_parameters
+  { kwd_type : keyword
+  ; name : type_identifier
+  ; type_parameters : type_parameters option
+  ; sym_equal : symbol
   ; value : type_
   }
 

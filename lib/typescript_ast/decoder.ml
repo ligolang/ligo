@@ -985,9 +985,21 @@ and dec_internal_module ?(comments = []) node : internal_module =
 (* Type alias declaration *)
 
 and dec_type_alias_declaration ?(comments = []) node : type_alias_declaration =
-  ignore comments;
-  ignore node;
-  failwith "TODO: dec_type_alias_declaration"
+  ensure_Ok node
+  @@
+  let comments = comments @ prev_comments node in
+  let* kwd_type = first_child_named "type" node in
+  let* name_field = child_with_field "name" node in
+  let* sym_equal = first_child_named "=" node in
+  let type_parameters_field = child_with_field_opt "type_parameters" node in
+  let* value_field = child_with_field "value" node in
+  Ok
+    { kwd_type = make_kwd ~comments kwd_type
+    ; name = dec_type_identifier name_field
+    ; type_parameters = make_opt dec_type_parameters type_parameters_field
+    ; sym_equal = make_sym sym_equal
+    ; value = dec_type value_field
+    }
 
 (* Type parameters *)
 
