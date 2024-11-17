@@ -1006,7 +1006,8 @@ and aliased =
   | Ident of identifier
   | Nested of nested_identifier
 
-and nested_identifier = identifier ne_list * identifier (* property identifier *)
+and 'a nested = identifier ne_list * 'a
+and nested_identifier = identifier nested (* property identifier *)
 
 (** Interface Declaration
 
@@ -1043,32 +1044,27 @@ and nested_identifier = identifier ne_list * identifier (* property identifier *
        field('module', choice($.identifier, $.nested_identifier)),
        '.',
        field('name', $._type_identifier))),
-
-     generic_type: $ => prec('call', seq(
-       field('name', choice(
-         $._type_identifier,
-         $.nested_type_identifier)),
-       field('type_arguments', $.type_arguments)))
     }]
  *)
 and interface_declaration =
-  { name : type_identifier
-  ; type_parameters : type_parameters
-  ; extends : extends_type_clause list
+  { kwd_interface : keyword
+  ; name : type_identifier
+  ; type_parameters : type_parameters option
+  ; extends : extends_type_clause option
   ; body : object_type (* See TYPES *)
   }
 
 and extends_type_clause =
+  { kwd_extends : keyword
+  ; extensions : type_extension ne_list
+  }
+
+and type_extension =
   | Extends_type of type_identifier
   | Extends_nested of nested_type_identifier
   | Extends_generic of generic_type
 
-and nested_type_identifier = identifier ne_list (*wrap*) * type_identifier
-and generic_type = generic_name * type_arguments
-
-and generic_name =
-  | Generic_type of type_identifier
-  | Generic_nested of nested_type_identifier
+and nested_type_identifier = type_identifier nested
 
 (** Internal Module
 
@@ -2172,6 +2168,25 @@ and primary_type =
   | T_intersection_type of intersection_type
   | T_union_type of union_type
   | T_const
+
+(** Generic type
+
+  The related grammar rules are given by:
+  + TypeScript
+    {@js[
+     generic_type: $ => prec('call', seq(
+       field('name', choice(
+         $._type_identifier,
+         $.nested_type_identifier)),
+       field('type_arguments', $.type_arguments)))
+    }]
+
+    *)
+and generic_type = generic_name * type_arguments
+
+and generic_name =
+  | Generic_type of type_identifier
+  | Generic_nested of nested_type_identifier
 
 (** Array Type
 

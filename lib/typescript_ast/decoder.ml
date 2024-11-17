@@ -1090,8 +1090,50 @@ and dec_computed_property_name ?comments node : expression brackets =
 (* Interface declaration *)
 
 and dec_interface_declaration node : interface_declaration =
-  ignore node;
-  failwith "TODO: dec_interface_declaration"
+  ensure_Ok node
+  @@ let* kwd_interface = first_child_named "interface" node in
+     let* name_field = child_with_field "name" node in
+     let type_parameters_field = child_with_field_opt "type_parameters" node in
+     let extends_type_clause = first_child_named_opt "extends_type_clause" node in
+     let* body_field = child_with_field "body" node in
+     Ok
+       { kwd_interface = make_kwd kwd_interface
+       ; name = dec_type_identifier name_field
+       ; type_parameters = make_opt dec_type_parameters type_parameters_field
+       ; extends = make_opt dec_extends_type_clause extends_type_clause
+       ; body = dec_object_type body_field
+       }
+
+and dec_extends_type_clause node : extends_type_clause =
+  ensure_Ok node
+  @@ let* kwd_extends = first_child_named "extends" node in
+     let named_children = collect_named_children node in
+     let* extensions = ne_list_of_children decode_type_extension named_children in
+     Ok { kwd_extends = make_kwd kwd_extends; extensions }
+
+and decode_type_extension ?comments node : type_extension =
+  match get_name node with
+  | "type_identifier" -> Extends_type (dec_type_identifier ?comments node)
+  | "nested_type_identifier" -> Extends_nested (dec_nested_type_identifier ?comments node)
+  | "generic_type" -> Extends_generic (dec_generic_type ?comments node)
+  | s -> failwith ("dec_extends_type_clause: " ^ s)
+
+(* Nested type identifier *)
+
+and dec_nested_type_identifier ?comments node : nested_type_identifier =
+  ensure_Ok node
+  @@ let* module_field = child_with_field "module" node in
+     let* name_field = child_with_field "name" node in
+     let decode_module_path node : identifier ne_list =
+       match get_name node with
+       | "identifier" -> Nonempty_list.[ dec_type_identifier ?comments node ]
+       | "nested_identifier" ->
+         let path, id = dec_nested_identifier ?comments node in
+         Nonempty_list.cons id path
+       | s -> failwith ("dec_nested_identifier/decode_module_path: " ^ s)
+     in
+     let path = Nonempty_list.reverse (decode_module_path module_field) in
+     Ok (path, dec_type_identifier name_field)
 
 (* Import alias *)
 
@@ -1120,21 +1162,21 @@ and dec_nested_identifier ?comments node : nested_identifier =
   ensure_Ok node
   @@ let* object_field = child_with_field "object" node in
      let* property_field = child_with_field "property" node in
-     let dec_object node : identifier ne_list =
+     let decode_object node : identifier ne_list =
        match get_name node with
        | "identifier" -> Nonempty_list.[ dec_identifier ?comments node ]
        | "member_expression" ->
          let path, id = dec_nested_identifier ?comments node in
          Nonempty_list.cons id path
-       | s -> failwith ("dec_nested_identifier/dec_object: " ^ s)
+       | s -> failwith ("dec_nested_identifier/decode_object: " ^ s)
      in
-     let dec_property node : identifier =
+     let decode_property node : identifier =
        match get_name node with
        | "property_identifier" -> dec_identifier node
-       | s -> failwith ("dec_property: " ^ s)
+       | s -> failwith ("dec_nested_identifier/decode_property: " ^ s)
      in
-     let path = Nonempty_list.reverse (dec_object object_field) in
-     Ok (path, dec_property property_field)
+     let path = Nonempty_list.reverse (decode_object object_field) in
+     Ok (path, decode_property property_field)
 
 (* Ambient declaration *)
 
@@ -1158,37 +1200,133 @@ and dec_ambient_declaration ?comments node : ambient_declaration =
      in
      Ok { kwd_declare = make_kwd ?comments kwd_declare; ambient_kind }
 
-(* EXPRESSIONS *)
+(* EXPRESSION
+
+   The JavasScript tree-sitter grammar have the non-terminals
+   "expression" and "primary_expression" be supertypes, that is,
+   hidden rules. Therefore we have to match all the RHS of those
+   non-terminals in [print_expression]. *)
 
 and dec_expression ?(comments = []) node : expression =
-  ignore comments;
-  ignore node;
-  failwith "TODO: dec_expression"
-
-and dec_parenthesized_expression ?(comments = []) node : parenthesized_expression =
-  decode_ne_list_in_parens ~comments node dec_expression
-
-(* Sequence expression *)
-
-and dec_sequence_expression ?(comments = []) node : sequence_expression =
-  ensure_Ok node
-  @@
-  let raw_children = collect_named_children node in
-  ne_list_of_children ~comments dec_expression raw_children
-
-(* LHS expression *)
-
-and dec_lhs_expression ?comments node : lhs_expression =
   match get_name node with
-  | "member_expression" -> Member_expression (dec_member_expression ?comments node)
-  | "subscript_expression" ->
-    Subscript_expression (dec_subscript_expression ?comments node)
-  | "identifier" -> Identifier (dec_identifier ?comments node)
-  | "undefined" -> Undefined (make_kwd ?comments node)
-  | "object_pattern" -> Pattern (Pattern_object (dec_object_pattern ?comments node))
-  | "array_pattern" -> Pattern (Pattern_array (dec_array_pattern ?comments node))
-  | "non_null_expression" -> Non_null_expression (dec_non_null_expression ?comments node)
-  | s -> failwith ("dec_lhs_expression: " ^ s)
+  (* Rest of "expression": *)
+  (*  | "glimmer_template" -> E_glimmer_template (dec_glimmer_template node) *)
+  | "assignment_expression" -> E_assignment_expression (dec_assignment_expression node)
+  | "augmented_assignment_expression" ->
+    E_augmented_assignment_expression (dec_augmented_assignment_expression node)
+  | "await_expression" -> E_await_expression (dec_await_expression node)
+  | "unary_expression" -> E_unary_expression (dec_unary_expression node)
+  | "binary_expression" -> E_binary_expression (dec_binary_expression ~comments node)
+  | "ternary_expression" -> E_ternary_expression (dec_ternary_expression node)
+  | "update_expression" -> E_update_expression (dec_update_expression node)
+  | "new_expression" -> E_new_expression (dec_new_expression node)
+  | "yield_expression" -> E_yield_expression (dec_yield_expression node)
+  | "as_expression" -> E_as_expression (dec_as_expression node)
+  | "satisfies_expression" -> E_satisfies_expression (dec_satisfies_expression node)
+  | "instantiation_expression" ->
+    E_instantiation_expression (dec_instantiation_expression node)
+  | "internal_module" -> E_internal_module (dec_internal_module ~comments node)
+  | "type_assertion" -> E_type_assertion (dec_type_assertion node)
+  | _ -> E_primary_expression (dec_primary_expression ~comments node)
+
+(* Assignment expression *)
+
+and dec_assignment_expression node : assignment_expression =
+  ignore node; failwith "TODO: dec_assignment_expression"
+
+(* Augmented assignment expression *)
+
+and dec_augmented_assignment_expression node : augmented_assignment_expression =
+  ignore node; failwith "TODO: dec_augmented_assignment_expression"
+
+(* Await expression *)
+
+and dec_await_expression node : await_expression =
+  ignore node; failwith "TODO: dec_await_expression"
+
+(* Unary expression *)
+
+and dec_unary_expression node : unary_expression =
+  ignore node; failwith "TODO: dec_unary_expression"
+
+(* Binary expression *)
+
+and dec_binary_expression ?(comments = []) node : binary_expression =
+  ignore comments;  ignore node; failwith "TODO: dec_binary_expression"
+
+(* Ternary expression *)
+
+and dec_ternary_expression node : ternary_expression =
+  ignore node; failwith "dec_ternary_expression"
+
+(* Update expression *)
+
+and dec_update_expression node : update_expression =
+  ignore node; failwith "TODO: dec_update_expression"
+
+(* New expression
+
+   Note that the constructor field is a primary expression, but
+   "primary_expression" is a supertype, that is, a hidden rule. We
+   assume it is an "expression", since primary expressions are a subset
+   of them. *)
+
+and dec_new_expression node : new_expression =
+  ignore node; failwith "TODO: dec_new_expression"
+
+(* Yield expression *)
+
+and dec_yield_expression node : yield_expression =
+  ignore node; failwith "TODO: dec_yield_expression"
+
+(* As-expression *)
+
+and dec_as_expression node : as_expression =
+  ignore node; failwith "TODO: dec_as_expression"
+
+(* Statisfies-expression *)
+
+and dec_satisfies_expression node : satisfies_expression =
+  ignore node; failwith "TODO: dec_satisfies_expression"
+
+(* Instantiation expression *)
+
+and dec_instantiation_expression node : instantiation_expression =
+  ignore node; failwith "TODO: dec_instantiation_expression"
+
+(* Type assertion *)
+
+and dec_type_assertion node : type_assertion =
+  ignore node; failwith "TODO: dec_type_assertion"
+
+(* Subscript expression (see [dec_member_expression]) *)
+
+(* Subscript expression (see [dec_member_expression]) *)
+
+and dec_subscript_expression ?(comments = []) node : subscript_expression =
+  ensure_Ok node
+  @@ let* object_field = child_with_field "object" node in
+     let optional_chain_field = child_with_field_opt "optional_chain" node in
+     let* index_field = child_with_field "index" node in
+     let* sym_lbracket = first_child_named "[" node in
+     let* sym_rbracket = first_child_named "]" node in
+     let index : expressions enclosed =
+       { opening = make_sym sym_lbracket
+       ; contents = dec_expressions index_field
+       ; closing = make_sym sym_rbracket
+       }
+     in
+     let index : expressions brackets = Brackets index in
+     Ok
+       { object_ = dec_expression ~comments object_field
+       ; optional_chain = make_opt dec_optional_chain optional_chain_field
+       ; index
+       }
+
+and dec_optional_chain node : optional_chain =
+  match get_name node with
+  | "optional_chain" -> Optional_chain (make_sym node)
+  | s -> failwith ("dec_optional_chain: " ^ s)
 
 (* Member expression *)
 
@@ -1222,32 +1360,37 @@ and dec_property_ident ?comments node : property_ident =
   | "property_identifier" -> Property_identifier (dec_identifier ?comments node)
   | s -> failwith ("dec_property_ident: " ^ s)
 
-(* Subscript expression (see [dec_member_expression]) *)
+(* Parenthesised expression *)
 
-and dec_subscript_expression ?(comments = []) node : subscript_expression =
+and dec_parenthesized_expression ?(comments = []) node : parenthesized_expression =
+  decode_ne_list_in_parens ~comments node dec_expression
+
+(* Primary expression *)
+
+and dec_primary_expression ?(comments = []) node : primary_expression =
+  ignore comments; ignore node; failwith "TODO: dec_primary_expression"
+
+(* Sequence expression *)
+
+and dec_sequence_expression ?(comments = []) node : sequence_expression =
   ensure_Ok node
-  @@ let* object_field = child_with_field "object" node in
-     let optional_chain_field = child_with_field_opt "optional_chain" node in
-     let* index_field = child_with_field "index" node in
-     let* sym_lbracket = first_child_named "[" node in
-     let* sym_rbracket = first_child_named "]" node in
-     let index : expressions enclosed =
-       { opening = make_sym sym_lbracket
-       ; contents = dec_expressions index_field
-       ; closing = make_sym sym_rbracket
-       }
-     in
-     let index : expressions brackets = Brackets index in
-     Ok
-       { object_ = dec_expression ~comments object_field
-       ; optional_chain = make_opt dec_optional_chain optional_chain_field
-       ; index
-       }
+  @@
+  let raw_children = collect_named_children node in
+  ne_list_of_children ~comments dec_expression raw_children
 
-and dec_optional_chain node : optional_chain =
+(* LHS expression *)
+
+and dec_lhs_expression ?comments node : lhs_expression =
   match get_name node with
-  | "optional_chain" -> Optional_chain (make_sym node)
-  | s -> failwith ("dec_optional_chain: " ^ s)
+  | "member_expression" -> Member_expression (dec_member_expression ?comments node)
+  | "subscript_expression" ->
+    Subscript_expression (dec_subscript_expression ?comments node)
+  | "identifier" -> Identifier (dec_identifier ?comments node)
+  | "undefined" -> Undefined (make_kwd ?comments node)
+  | "object_pattern" -> Pattern (Pattern_object (dec_object_pattern ?comments node))
+  | "array_pattern" -> Pattern (Pattern_array (dec_array_pattern ?comments node))
+  | "non_null_expression" -> Non_null_expression (dec_non_null_expression ?comments node)
+  | s -> failwith ("dec_lhs_expression: " ^ s)
 
 (* Non-null expression *)
 
@@ -1378,3 +1521,12 @@ and dec_type ?comments node : type_ =
   ignore comments;
   ignore node;
   failwith "TODO: dec_type"
+
+and dec_generic_type ?comments node : generic_type =
+  ignore comments;
+  ignore node;
+  failwith "TODO: dec_generic_type"
+
+and dec_object_type node : object_type =
+  ignore node;
+  failwith "TODO: dec_object_type"

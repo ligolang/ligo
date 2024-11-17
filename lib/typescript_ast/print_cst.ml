@@ -1171,8 +1171,8 @@ and print_interface_declaration state node =
   let kwd_interface = first_child_named "interface" node
   and name_field = child_with_field "name" node
   and type_parameters_field = child_with_field_opt "type_parameters" node
+  and extends_type_clause = first_child_named_opt "extends_type_clause" node
   and body_field = child_with_field "body" node in
-  let extends_type_clause = first_child_named_opt "extends_type_clause" node in
   let children =
     [ mk_child_res make_kwd kwd_interface
     ; mk_child_res print_type_identifier name_field
@@ -1375,6 +1375,29 @@ and print_await_expression state node =
   in
   make_tree state node children
 
+(* Unary expression *)
+
+and print_unary_expression state node =
+  let operator_field = child_with_field "operator" node
+  and argument_field = child_with_field "argument" node
+  and print_unary_operator state node =
+    match get_name node with
+    | "!" -> make_sym state node
+    | "~" -> make_sym state node
+    | "-" -> make_sym state node
+    | "+" -> make_sym state node
+    | "typeof" -> make_kwd state node
+    | "void" -> make_kwd state node
+    | "delete" -> make_kwd state node
+    | _ -> match_rest state node print_unexpected_node
+  in
+  let children =
+    [ mk_child_res print_unary_operator operator_field
+    ; mk_child_res print_number argument_field
+    ]
+  in
+  make_tree state node children
+
 (* Binary expression *)
 
 and print_binary_expression ?(comments = []) state node =
@@ -1467,7 +1490,7 @@ and print_update_expression state node =
 
    Note that the constructor field is a primary expression, but
    "primary_expression" is a supertype, that is, a hidden rule. We
-   assume it is a "expression", since primary expressions are a subset
+   assume it is an "expression", since primary expressions are a subset
    of them. *)
 
 and print_new_expression state node =
@@ -2587,29 +2610,6 @@ and print_literal_type state node =
     | _ -> match_rest state node print_unexpected_node
   in
   make_unary_res state node print child
-
-(* Unary expression *)
-
-and print_unary_expression state node =
-  let operator_field = child_with_field "operator" node
-  and argument_field = child_with_field "argument" node
-  and print_unary_operator state node =
-    match get_name node with
-    | "!" -> make_sym state node
-    | "~" -> make_sym state node
-    | "-" -> make_sym state node
-    | "+" -> make_sym state node
-    | "typeof" -> make_kwd state node
-    | "void" -> make_kwd state node
-    | "delete" -> make_kwd state node
-    | _ -> match_rest state node print_unexpected_node
-  in
-  let children =
-    [ mk_child_res print_unary_operator operator_field
-    ; mk_child_res print_number argument_field
-    ]
-  in
-  make_tree state node children
 
 (* Look up type
 
