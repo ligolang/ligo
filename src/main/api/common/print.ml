@@ -41,6 +41,96 @@ let dependency_graph (raw_options : Raw_options.t) source_file =
       (g, source_file), [] )
 
 
+module Ligo_deps = struct
+  module Display = Simple_utils.Display
+  module Ligo_Error = Simple_utils.Error
+
+  let ligo_dep_pp ppf (deps, imports) =
+    if not @@ List.is_empty deps
+    then (
+      Format.fprintf ppf "Extracted:\n";
+      List.iter ~f:(fun dep -> Format.fprintf ppf "%s\n" dep) deps;
+      Format.fprintf ppf "Resolved:\n";
+      List.iter
+        ~f:(fun (mod_path, module_name) ->
+          Format.fprintf ppf "%s -> %s\n" mod_path module_name)
+        imports)
+    else ()
+
+
+  let ligo_dep_ppformat ~display_format ~no_colour f g =
+    (* The [no_colour] option is provided to all [_ppformat] functions by default,
+      but not needed by all of them. Remove the [ignore] if you need it. *)
+    let () = ignore no_colour in
+    match display_format with
+    | Display.Human_readable | Dev -> ligo_dep_pp f g
+
+
+  let ligo_dep_json g : Ligo_Error.t =
+    let stage = "build system" in
+    let message = Format.asprintf "%a" ligo_dep_pp g in
+    let content = Ligo_Error.make_content ~message () in
+    Ligo_Error.make ~stage ~content
+
+
+  let ligo_dep_jsonformat g : Yojson.Safe.t = Ligo_Error.to_yojson (ligo_dep_json g)
+
+  let ligo_dep_format : 'a Display.format =
+    { pp = ligo_dep_ppformat; to_json = ligo_dep_jsonformat }
+end
+
+let ligo_dep (raw_options : Raw_options.t) source_file =
+  ( Ligo_deps.ligo_dep_format
+  , fun ~raise ->
+      let syntax =
+        Syntax.of_string_opt ~raise (Syntax_name raw_options.syntax) (Some source_file)
+      in
+      let options = Compiler_options.make ~raw_options ~syntax () in
+      let meta = Ligo_compile.Of_source.extract_meta syntax in
+      let c_unit, _ =
+        Ligo_compile.Of_source.preprocess_file
+          ~raise
+          ~options:options.frontend
+          ~meta
+          source_file
+      in
+      let core = Ligo_compile.Utils.to_core ~raise ~options ~meta c_unit source_file in
+      let deps =
+        match syntax with
+        | Syntax_types.CameLIGO ->
+          let stdlib = Build.Stdlib.get ~options in
+          let deps =
+            Build.Ligo_dep_cameligo.dependencies
+              ~std_lib:stdlib.content_typed.pr_module
+              core
+          in
+          let imports =
+            Build.Ligo_dep_cameligo.imports_of_deps ~options source_file deps
+          in
+          let deps = List.map ~f:Location.unwrap deps in
+          let deps = List.map ~f:(String.concat ~sep:".") deps in
+          let imports =
+            List.map
+              ~f:(fun ({ module_name; _ }, mod_path) ->
+                String.concat ~sep:"." mod_path, module_name)
+              imports
+          in
+          deps, imports
+        | JsLIGO ->
+          let deps = Build.Ligo_dep_jsligo.dependencies core in
+          let imports = Build.Ligo_dep_jsligo.imports_of_deps ~options source_file deps in
+          let deps = List.map ~f:Location.unwrap deps in
+          let imports =
+            List.map
+              ~f:(fun ({ module_name; _ }, mod_path) ->
+                String.concat ~sep:"." mod_path, module_name)
+              imports
+          in
+          deps, imports
+      in
+      deps, [] )
+
+
 let preprocess (raw_options : Raw_options.t) source_file =
   ( Parsing.Formatter.ppx_format
   , fun ~raise ->

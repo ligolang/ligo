@@ -2489,6 +2489,51 @@ let pretty_print =
      <*> libraries
      <*> parser_error_recovery)
 
+let print_ligo_dep =
+  let f
+      source_file
+      syntax
+      display_format
+      project_root
+      no_colour
+      skip_analytics
+      libraries
+      ()
+    =
+    let raw_options = Raw_options.make ~syntax ~project_root ~no_colour ~libraries () in
+    let cli_analytics =
+      Analytics.generate_cli_metrics_with_syntax_and_protocol
+        ~command:"print_dependency-graph"
+        ~raw_options
+        ~source_file
+        ()
+    in
+    Cli_helpers.return_result
+      ~skip_analytics
+      ~cli_analytics
+      ~return
+      ~display_format
+      ~no_colour
+      ~warning_as_error:raw_options.warning_as_error
+    @@ Api.Print.ligo_dep raw_options source_file
+  in
+  let summary =
+    "print the ligo dep.\n\
+     Warning: Intended for development of LIGO and can break at any time."
+  in
+  let readme () =
+    "This sub-command prints ligo dep."
+  in
+  Command.basic ~summary ~readme
+  @@ (f
+     <$> source_file
+     <*> syntax
+     <*> display_format
+     <*> project_root
+     <*> no_colour
+     <*> skip_analytics
+     <*> libraries)
+
 
 let print_graph =
   let f
@@ -3080,6 +3125,7 @@ let print_group =
      ; "pretty", pretty_print
      ; "signature", print_module_signature
      ; "dependency-graph", print_graph
+     ; "ligo-dep", print_ligo_dep
      ; "cst", print_cst
      ; "ast-core", print_ast_core
      ; "ast-unified", print_ast_unified
