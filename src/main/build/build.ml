@@ -61,8 +61,6 @@ let preprocess_code_input ~raise ~meta ~options code_input =
       code
 
 
-let normalize_path path = Fpath.(path |> v |> normalize |> to_string)
-
 include BuildSystem.T
 
 module M (Params : Params) = struct
@@ -83,34 +81,19 @@ module M (Params : Params) = struct
       }
   end
 
-  let extract_deps ~syntax ~dirname c_unit =
+  let extract_deps ~syntax ~file_name c_unit =
     match syntax with
     | Syntax_types.CameLIGO ->
-      (* We are filtering out possibly false-positive external dependencies *)
-      (* If they were not false-positive, it will be revealed during typecheck *)
-      let std_lib = Stdlib.get ~options |> fun x -> x.Stdlib.content_typed.pr_module in
-      List.filter_map ~f:(fun dep ->
-          let module_name = Location.unwrap dep in
-          let location = dep.location in
-          let file_names =
-            [ module_name ^ ".mligo"; String.uncapitalize module_name ^ ".mligo" ]
-          in
-          let file_names =
-            List.map
-              ~f:(fun file_name -> normalize_path @@ Filename.concat dirname file_name)
-              file_names
-          in
-          List.find_map file_names ~f:(fun file_name ->
-              match Sys_unix.file_exists file_name with
-              | `Yes ->
-                Some
-                  { code_input = Source_input.From_file file_name
-                  ; module_name
-                  ; location
-                  }
-              | _ -> None))
+      let std_lib =
+        (* We need stdlib for [Build.Stdlib.get],
+          because if [no_stdlib] we get [Build.Stdlib.empty] *)
+        let options = Compiler_options.set_no_stdlib options false in
+        Stdlib.get ~options |> fun x -> x.Stdlib.content_typed.pr_module
+      in
+      Ligo_dep_cameligo.imports_of_deps ~options file_name
       @@ Ligo_dep_cameligo.dependencies ~std_lib c_unit
     | JsLIGO ->
+      let dirname = Filename.dirname file_name in
       List.map ~f:(fun dep ->
           let import_str = Location.unwrap dep in
           let file_name =
@@ -119,17 +102,15 @@ module M (Params : Params) = struct
             | _ -> import_str
           in
           let file_name = Filename.concat dirname file_name in
-          let file_name = normalize_path file_name in
+          let file_name = Helpers.normalize_path file_name in
           let module_name = file_name in
           let location = dep.location in
-          { code_input = Source_input.From_file file_name
-          ; module_name
-          ; location
-          })
+          ( { code_input = Source_input.From_file file_name; module_name; location }
+          , [ module_name ] ))
       @@ Ligo_dep_jsligo.dependencies c_unit
 
 
-  let compile_to_core ~raise ~options ~meta ?with_deps file_name c_unit =
+  let compile_to_core ~raise ~options ~meta file_name c_unit =
     let Ligo_compile.Helpers.{ syntax } = meta in
     let options = Compiler_options.set_syntax options (Some syntax) in
     let c_unit =
@@ -137,12 +118,8 @@ module M (Params : Params) = struct
       |> Fn.flip (Ligo_compile.Utils.to_core ~raise ~options ~meta) file_name
       |> Helpers.inject_declaration ~options ~raise syntax
     in
+    let deps = extract_deps ~syntax ~file_name c_unit in
     let dirname = Filename.dirname file_name in
-    let deps =
-      match with_deps with
-      | Some deps -> deps
-      | None -> extract_deps ~syntax ~dirname c_unit
-    in
     let c_unit =
       match syntax with
       | JsLIGO ->
@@ -155,8 +132,9 @@ module M (Params : Params) = struct
             in
             Helpers.normalize_path @@ Filename.concat dirname file_name)
           c_unit
-      | CameLIGO -> c_unit
+      | CameLIGO -> Helpers.add_module_aliases c_unit deps
     in
+    let deps = List.map deps ~f:Tuple2.get1 in
     c_unit, deps
 
 
