@@ -2855,44 +2855,45 @@ and do_statement =
     ]}
 *)
 and export_statement =
-  | Export of export
-  | Export_decorator of export_decorator
-  | Export_type of export_clause * from_clause option
-  | Export_equal of expression
-  | Export_as_namespace of identifier
+  { kwd_export : keyword
+  ; export_kind : export_kind
+  }
 
-and export =
+and export_kind =
   | Export_from of from_clause
   | Export_as of namespace_export * from_clause
   | Export_clause of export_clause * from_clause option
+  | Export_declaration of declaration decorated
+  | Export_default_declaration of (keyword * declaration) decorated (* "default" *)
+  | Export_default_expression of (keyword * expression) decorated (* "default" *)
+  | Export_type of export_type (* "type" *)
+  | Export_equal of symbol * expression (* "=" *)
+  | Export_as_namespace of keyword * identifier (* "as" *)
 
-and from_clause = string
+and from_clause = symbol * string_literal (* "* \"foo.ts\"" *)
 
 and namespace_export =
-  | Export_ident of identifier
-  | Export_string of string
+  { sym_star : symbol
+  ; kwd_as : keyword
+  ; namespace_name : module_export_name
+  }
 
-and export_clause = export_specifier list
+and export_clause = export_specifier list braces
 
 and export_specifier =
   { name : module_export_name
-  ; as_ : module_export_name option
+  ; alias : (keyword * module_export_name) option (* "as foo" *)
   }
 
-and module_export_name = namespace_export
+and module_export_name =
+  | Export_ident of identifier
+  | Export_string of string_literal
 
-and export_decorator =
-  { decorators : decorators option
-  ; export_dec : export_dec
+and export_type =
+  { kwd_type : keyword
+  ; export_clause : export_clause
+  ; from_clause : from_clause option
   }
-
-and export_dec =
-  | Export_declaration of declaration
-  | Export_default of export_default
-
-and export_default =
-  | Export_default_declaration of declaration
-  | Export_default_expression of expression
 
 (** Expression Statement
 
@@ -3296,6 +3297,11 @@ and decorator =
   | Decorator_member_expression of decorator_member_expression
   | Decorator_call_expression of decorator_call_expression
   | Decorator_parenthesized_expression of decorator_parenthesized_expression parens
+
+and 'a decorated =
+  { decorators : decorators option
+  ; decorated : 'a
+  }
 
 and decorator_member_expression =
   { object_ : object_member_expression
