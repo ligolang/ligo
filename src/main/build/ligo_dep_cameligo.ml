@@ -2,15 +2,24 @@ open Core
 open Ligo_prim
 module Location = Simple_utils.Location
 module MSet = Set.Make (Module_var)
-module Deps_map = Map.Make (Module_var)
+
+module Module_path = struct
+  type t = Module_var.t list [@@deriving sexp, compare]
+end
+
+module Deps_map = Map.Make (Module_path)
 
 type acc =
   { deps : Location.t Deps_map.t
   ; scope : MSet.t
   }
 
-let rec add_to_deps ~loc { deps; scope } var =
-  if Set.mem scope var then deps else Map.set deps ~key:var ~data:loc
+let butlast l = List.take l (List.length l - 1)
+
+let rec add_to_deps ~loc { deps; scope } path =
+  match path with
+  | var :: _ -> if Set.mem scope var then deps else Map.set deps ~key:path ~data:loc
+  | [] -> deps
 
 
 (** Collects external deps and builds up global module scope.
@@ -57,8 +66,9 @@ and collect_from_signature_expr ({ deps; scope } as acc) sig_expr =
     match Location.unwrap sig_expr with
     (* It's not possible to be external being the module type *)
     | Ast_core.S_path [ mvar ] -> deps
-    (* Only the first module var from the path could be external *)
-    | S_path (mvar :: _) -> add_to_deps ~loc acc mvar
+    (* Discarding last element since it is module type already *)
+    | S_path (mvar :: tl) -> add_to_deps ~loc acc @@ (mvar :: butlast tl)
+    (* We have to discard scope accumulated inside signature *)
     | S_sig signature ->
       (* We have to discard scope accumulated inside signature *)
       let { deps; _ } = collect_from_signature acc signature in
@@ -132,8 +142,8 @@ and collect_from_mod_expr ({ deps; scope } as acc) mod_expr =
       (* Discarding scope accumulated inside module struct *)
       let { deps; _ } = List.fold decls ~init:acc ~f:collect_from_decl in
       deps
-    | M_variable var -> add_to_deps ~loc acc var
-    | M_module_path (var :: _) -> add_to_deps ~loc acc var
+    | M_variable var -> add_to_deps ~loc acc [ var ]
+    | M_module_path (var :: tl) -> add_to_deps ~loc acc @@ (var :: tl)
   in
   { acc with deps }
 
@@ -156,9 +166,8 @@ and collect_from_ty_expr ({ deps; scope } as acc) { type_content; location = loc
   | T_variable _ -> acc
   | T_constant (_, _) -> acc
   | T_contract_parameter (h :: tl) ->
-    let deps =
-      List.fold (h :: tl) ~init:deps ~f:(fun deps m -> add_to_deps ~loc { deps; scope } m)
-    in
+    (* Discarding last element since it is contract parameter already *)
+    let deps = add_to_deps ~loc acc @@ (h :: butlast tl) in
     { acc with deps }
   | T_sum { fields; _ } ->
     let { deps; _ } =
@@ -188,16 +197,16 @@ and collect_from_ty_expr ({ deps; scope } as acc) { type_content; location = loc
     let { deps; _ } = collect_from_ty_expr acc type1 in
     collect_from_ty_expr { acc with deps } type2
   | T_app { type_operator = { module_path = []; element = _ }; arguments = _ } -> acc
-  | T_app { type_operator = { module_path = h :: _; element = _ }; arguments } ->
-    let deps = add_to_deps ~loc acc h in
+  | T_app { type_operator = { module_path = path; element = _ }; arguments } ->
+    let deps = add_to_deps ~loc acc path in
     let { deps; _ } =
       List.fold arguments ~init:{ acc with deps } ~f:(fun ({ deps; scope } as acc) ty ->
           collect_from_ty_expr acc ty)
     in
     { acc with deps }
   | T_module_accessor { module_path = []; element = _ } -> acc
-  | T_module_accessor { module_path = h :: _; element = _ } ->
-    { acc with deps = add_to_deps ~loc acc h }
+  | T_module_accessor { module_path = path; element = _ } ->
+    { acc with deps = add_to_deps ~loc acc path }
   | T_singleton _ -> acc
   | T_abstraction { type_; kind = _; ty_binder = _ } ->
     let { deps; _ } = collect_from_ty_expr acc type_ in
@@ -220,9 +229,8 @@ and collect_from_expr ({ deps; scope } as acc) { expression_content; location = 
     (* Discarding scope after evaluation *)
     let { deps; _ } = collect_from_expr acc let_result in
     { acc with deps }
-  | Ast_core.E_contract (mvar :: _) ->
-    (* Only the first module variable in the list could be external *)
-    let deps = add_to_deps ~loc acc mvar in
+  | Ast_core.E_contract (mvar :: tl) ->
+    let deps = add_to_deps ~loc acc @@ (mvar :: butlast tl) in
     { acc with deps }
   | E_constant { arguments; cons_name = _ } ->
     List.fold arguments ~init:acc ~f:collect_from_expr
@@ -325,8 +333,8 @@ and collect_from_expr ({ deps; scope } as acc) { expression_content; location = 
     let { deps; _ } = collect_from_ty_expr { acc with deps } type_annotation in
     { acc with deps }
   | E_module_accessor { module_path = []; element = _ } -> acc
-  | E_module_accessor { module_path = h :: _; element = _ } ->
-    { acc with deps = add_to_deps ~loc acc h }
+  | E_module_accessor { module_path = path; element = _ } ->
+    { acc with deps = add_to_deps ~loc acc path }
   | E_let_mut_in { let_binder; rhs; let_result; attributes = _ } ->
     let { deps; _ } = collect_from_expr acc rhs in
     let { deps; _ } = collect_from_expr { acc with deps } let_result in
@@ -402,4 +410,80 @@ let dependencies ~std_lib prg =
   let { deps; _ } = List.fold prg ~init:{ deps; scope } ~f:collect_from_decl in
   deps
   |> Map.fold ~init:[] ~f:(fun ~key ~data acc ->
-         Location.wrap ~loc:data (Module_var.to_name_exn key) :: acc)
+         Location.wrap ~loc:data (List.map key ~f:Module_var.to_name_exn) :: acc)
+
+
+let imports_of_deps file_name deps =
+  (* We are filtering out possibly false-positive external dependencies *)
+  (* If they were not false-positive, it will be revealed during typecheck *)
+  let dirname = Filename.dirname file_name in
+  List.filter_map
+    ~f:(fun mod_path ->
+      let location = mod_path.Location.location in
+      let mod_path = Location.unwrap mod_path in
+      let orig_mod_path = mod_path in
+      let mod_path =
+        let supers = List.take_while mod_path ~f:(fun x -> String.equal x "Super__") in
+        let amount = List.length supers in
+        let supers = List.map ~f:(fun _ -> "..") supers in
+        supers @ List.drop mod_path amount
+      in
+      let orig_file_name = file_name in
+      let make_paths_options path =
+        let uncap_path = String.uncapitalize path in
+        let replace_underscore = Str.global_replace (Str.regexp_string "_") "-" in
+        [ path; uncap_path; replace_underscore path; replace_underscore uncap_path ]
+      in
+      let rec find_file acc mod_path =
+        match mod_path with
+        | [] -> None
+        | [ path ] ->
+          let paths = make_paths_options path in
+          let paths =
+            List.map
+              ~f:(fun file_name -> Filename.concat acc @@ file_name ^ ".mligo")
+              paths
+          in
+          List.find_map paths ~f:(fun path ->
+              let%bind.Option stat =
+                try Some (Core_unix.stat path) with
+                | _ -> None
+              in
+              match stat.st_kind with
+              | S_REG -> if Filename.equal orig_file_name path then None else Some path
+              | _ -> None)
+        | path :: tl ->
+          let paths = make_paths_options path in
+          let paths = List.map ~f:(Filename.concat acc) paths in
+          List.find_map paths ~f:(fun path ->
+              let file =
+                let file_path = path ^ ".mligo" in
+                let%bind.Option stat =
+                  try Some (Core_unix.stat file_path) with
+                  | _ -> None
+                in
+                match stat.st_kind with
+                | S_REG ->
+                  if Filename.equal orig_file_name file_path then None else Some file_path
+                | _ -> None
+              in
+              match file with
+              | None ->
+                let%bind.Option stat =
+                  try Some (Core_unix.stat path) with
+                  | _ -> None
+                in
+                (match stat.st_kind with
+                | S_DIR -> find_file path tl
+                | _ -> None)
+              | Some path -> Some path)
+      in
+      match find_file dirname mod_path with
+      | None -> None
+      | Some path ->
+        let path = Helpers.normalize_path path in
+        Some
+          ( BuildSystem.
+              { code_input = Source_input.From_file path; module_name = path; location }
+          , orig_mod_path ))
+    deps

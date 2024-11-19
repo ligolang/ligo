@@ -106,38 +106,85 @@ let inject_declaration ~options ~raise
     ~default:prg
     ~f:inject_arg_declaration
 
-
+(* Used to elaborate imports paths for proper typecheck *)
 let process_imports ~f prg : Ast_core.program =
-  prg |> Ast_core.Helpers.Declaration_mapper.map_module
-  @@ fun decl ->
-    let loc = decl.location in
-    Location.wrap ~loc @@
-    match decl.wrap_content with
-    | Ast_core.D_import decl ->
-      Ast_core.D_import
-        (match decl with
-        | Import_rename _ -> decl
-        | Import_all_as { alias; module_str; import_attr; original_module_str } ->
-          let module_str = f module_str in
-          Import_all_as { alias; module_str; import_attr; original_module_str }
-        | Import_selected { module_str; imported; import_attr; original_module_str } ->
-          let module_str = f module_str in
-          Import_selected { module_str; imported; import_attr; original_module_str })
-    | x -> x
+  prg
+  |> Ast_core.Helpers.Declaration_mapper.map_module
+     @@ fun decl ->
+     let loc = decl.location in
+     Location.wrap ~loc
+     @@
+     match decl.wrap_content with
+     | Ast_core.D_import decl ->
+       Ast_core.D_import
+         (match decl with
+         | Import_rename _ -> decl
+         | Import_all_as { alias; module_str; import_attr; original_module_str } ->
+           let module_str = f module_str in
+           Import_all_as { alias; module_str; import_attr; original_module_str }
+         | Import_selected { module_str; imported; import_attr; original_module_str } ->
+           let module_str = f module_str in
+           Import_selected { module_str; imported; import_attr; original_module_str })
+     | x -> x
 
-(* let add_module_aliases ~mangle imports c_unit : Ast_core.program = *)
-(*   let make_decl BuildSystem.{ file_name; original_module; _ } = *)
-(*     let loc = original_module.location in *)
-(*     let alias = Location.unwrap original_module in *)
-(*     let module_binder = Module_var.of_input_var ~loc alias in *)
-(*     let module_attr = Ligo_prim.Type_or_module_attr.default_attributes in *)
-(*     let annotation = None in *)
-(*     let module_name = mangle file_name in *)
-(*     let module_ = *)
-(*       Location.wrap ~loc *)
-(*       @@ Module_expr.M_variable (Module_var.of_input_var ~loc module_name) *)
-(*     in *)
-(*     Location.wrap ~loc *)
-(*     @@ Ast_core.D_module { module_binder; module_attr; annotation; module_ } *)
-(*   in *)
-(*   List.map ~f:make_decl imports @ c_unit *)
+
+(* Creates inline modules with references to external modules in the leaves, so
+   that typechecker could resolve module paths used in cameligo contract.
+   Assuming program has this references to external modules: M1.M2.M3, Super__.M1.M2, Super__.M3;
+   The result would be
+   module M1 = struct
+     module M2 = struct
+       module M3 = m1/m2/m3.mligo
+     end
+   end
+   module Super__ = struct
+     module M1 = struct
+       module M2 = ../m1/m2.mligo
+     end
+     module M3 = ../m3.mligo
+   end
+*)
+let add_module_aliases c_unit deps =
+  let rec make_aliases deps =
+    match deps with
+    | [] -> []
+    | (import, []) :: _ -> []
+    | (import, [ module_name ]) :: tl ->
+      let loc = import.BuildSystem.location in
+      let mvar = Module_var.of_input_var ~loc import.BuildSystem.module_name in
+      let module_binder = Module_var.of_input_var ~loc module_name in
+      let module_attr = Ligo_prim.Type_or_module_attr.default_attributes in
+      let annotation = None in
+      let module_ = Location.wrap ~loc @@ Module_expr.M_variable mvar in
+      [ Location.wrap ~loc
+        @@ Ast_core.D_module { module_binder; module_attr; annotation; module_ }
+      ] @ make_aliases tl
+    | (import, module_name :: path) :: tl ->
+      let loc = import.BuildSystem.location in
+      let same, others =
+        List.partition_tf tl ~f:(fun (_, l) ->
+            match l with
+            | hd :: _ -> String.equal hd module_name
+            | _ -> false)
+      in
+      let paths =
+        (import, path)
+        :: List.map same ~f:(fun (a, l) ->
+               ( a
+               , match l with
+                 | hd :: tl -> tl
+                 | [] -> [] ))
+      in
+      let inner = make_aliases paths in
+      let module_binder = Module_var.of_input_var ~loc module_name in
+      let module_attr = Ligo_prim.Type_or_module_attr.default_attributes in
+      let annotation = None in
+      let module_ = Location.wrap ~loc @@ Module_expr.M_struct inner in
+      [ Location.wrap ~loc
+        @@ Ast_core.D_module { module_binder; module_attr; annotation; module_ }
+      ]
+      @ make_aliases others
+  in
+  make_aliases deps @ c_unit
+
+let normalize_path path = Fpath.(path |> v |> normalize |> to_string)
