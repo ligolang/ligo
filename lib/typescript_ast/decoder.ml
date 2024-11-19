@@ -248,9 +248,119 @@ and dec_statement ?(comments = []) node : statement =
 (* Export statement *)
 
 and dec_export_statement ?(comments = []) node : export_statement =
-  ignore comments;
-  ignore node;
-  failwith "TODO: dec_export_statement"
+  ensure_Ok node
+  @@
+  let comments = comments @ prev_comments node in
+  let* kwd_export = first_child_named "export" node in
+  let* after_export = next_sibling kwd_export in
+  let kwd_export = make_kwd ~comments kwd_export in
+  let* export_kind =
+    match get_name after_export with
+    | "*" ->
+      let* kwd_from = first_child_named "from" node in
+      Ok (Export_from (dec_from_clause node kwd_from))
+    | "namespace_export" ->
+      let* kwd_from = first_child_named "from" node in
+      let namespace_export = dec_namespace_export after_export in
+      Ok (Export_as (namespace_export, dec_from_clause node kwd_from))
+    | "export_clause" ->
+      let kwd_from = first_child_named_opt "from" node in
+      let export_clause = dec_export_clause after_export
+      and from_clause = make_opt (dec_from_clause node) kwd_from in
+      Ok (Export_clause (export_clause, from_clause))
+    | "default" -> Ok (dec_export_default after_export node)
+    | "type" -> Ok (Export_type (dec_export_type after_export node))
+    | "=" ->
+      let* expression = next_sibling after_export in
+      let expression = dec_expression expression in
+      Ok (Export_equal (make_sym after_export, expression))
+    | "as" ->
+      let* kwd_namespace = first_child_named "namespace" node in
+      let* identifier = first_child_named "identifier" node in
+      Ok (Export_as_namespace (make_kwd kwd_namespace, dec_identifier identifier))
+    | _ -> Ok (Export_declaration (dec_export_declaration after_export node))
+  in
+  Ok { kwd_export; export_kind }
+
+and dec_export_type after_export node : export_type =
+  ensure_Ok node
+  @@
+  let* export_clause = next_sibling after_export in
+  let kwd_type = make_kwd after_export in
+  let export_clause = dec_export_clause export_clause in
+  let kwd_from = first_child_named_opt "from" node in
+  let from_clause = make_opt (dec_from_clause node) kwd_from in
+  Ok { kwd_type; export_clause; from_clause }
+
+and dec_export_declaration after_export node : declaration decorated =
+  ensure_Ok node
+  @@
+  let decorators = children_named "decorator" node in
+  let declaration = dec_declaration after_export in
+  Ok (dec_decorated decorators declaration)
+
+and dec_decorated : 'a. ts_forest -> 'a -> 'a decorated =
+ fun decorators decorated ->
+  let decorators = ne_list_opt_of_children dec_decorator decorators in
+  { decorators; decorated }
+
+and dec_export_clause node : export_clause =
+  decode_list_in_braces node dec_export_specifier
+
+and dec_export_specifier ?(comments = []) node : export_specifier =
+  ensure_Ok node
+  @@
+  let comments = comments @ prev_comments node in
+  let* name_field = child_with_field "name" node in
+  let name = dec_module_export_name ~comments name_field in
+  let alias_field = child_with_field_opt "alias" node in
+  let alias = make_opt dec_module_export_name alias_field in
+  let* alias =
+    match alias with
+    | None -> Ok None
+    | Some alias ->
+      let* kwd_as = first_child_named "as" node in
+      Ok (Some (make_kwd kwd_as, alias))
+  in
+  Ok ({ name; alias } : export_specifier)
+
+and dec_module_export_name ?(comments = []) node : module_export_name =
+  match get_name node with
+  | "identifier" -> Export_ident (dec_identifier ~comments node)
+  | "string" -> Export_string (dec_string ~comments node)
+  | s -> failwith ("dec_module_export_name: " ^ s)
+
+and dec_from_clause node kwd_from : from_clause =
+  ensure_Ok node
+  @@ let* source_field = child_with_field "source" node in
+     Ok (make_kwd kwd_from, dec_string source_field)
+
+and dec_namespace_export ?(comments = []) node : namespace_export =
+  ensure_Ok node
+  @@
+  let comments = comments @ prev_comments node in
+  let* sym_star = first_child_named "*" node in
+  let* kwd_as = first_child_named "as" node in
+  let* module_export_name = next_sibling kwd_as in
+  Ok
+    { sym_star = make_sym ~comments sym_star
+    ; kwd_as = make_kwd kwd_as
+    ; namespace_name = dec_module_export_name module_export_name
+    }
+
+and dec_export_default after_export node : export_kind =
+  ensure_Ok node
+  @@
+  let decorators = children_named "decorator" node in
+  let kwd_default = make_kwd after_export in
+  match child_with_field_opt "declaration" node with
+  | None ->
+    let* value_field = child_with_field "value" node in
+    let contents = kwd_default, dec_expression value_field in
+    Ok (Export_default_expression (dec_decorated decorators contents))
+  | Some declaration ->
+    let contents = kwd_default, dec_declaration declaration in
+    Ok (Export_default_declaration (dec_decorated decorators contents))
 
 (* Import statement *)
 
@@ -1232,37 +1342,45 @@ and dec_expression ?(comments = []) node : expression =
 (* Assignment expression *)
 
 and dec_assignment_expression node : assignment_expression =
-  ignore node; failwith "TODO: dec_assignment_expression"
+  ignore node;
+  failwith "TODO: dec_assignment_expression"
 
 (* Augmented assignment expression *)
 
 and dec_augmented_assignment_expression node : augmented_assignment_expression =
-  ignore node; failwith "TODO: dec_augmented_assignment_expression"
+  ignore node;
+  failwith "TODO: dec_augmented_assignment_expression"
 
 (* Await expression *)
 
 and dec_await_expression node : await_expression =
-  ignore node; failwith "TODO: dec_await_expression"
+  ignore node;
+  failwith "TODO: dec_await_expression"
 
 (* Unary expression *)
 
 and dec_unary_expression node : unary_expression =
-  ignore node; failwith "TODO: dec_unary_expression"
+  ignore node;
+  failwith "TODO: dec_unary_expression"
 
 (* Binary expression *)
 
 and dec_binary_expression ?(comments = []) node : binary_expression =
-  ignore comments;  ignore node; failwith "TODO: dec_binary_expression"
+  ignore comments;
+  ignore node;
+  failwith "TODO: dec_binary_expression"
 
 (* Ternary expression *)
 
 and dec_ternary_expression node : ternary_expression =
-  ignore node; failwith "dec_ternary_expression"
+  ignore node;
+  failwith "dec_ternary_expression"
 
 (* Update expression *)
 
 and dec_update_expression node : update_expression =
-  ignore node; failwith "TODO: dec_update_expression"
+  ignore node;
+  failwith "TODO: dec_update_expression"
 
 (* New expression
 
@@ -1272,32 +1390,38 @@ and dec_update_expression node : update_expression =
    of them. *)
 
 and dec_new_expression node : new_expression =
-  ignore node; failwith "TODO: dec_new_expression"
+  ignore node;
+  failwith "TODO: dec_new_expression"
 
 (* Yield expression *)
 
 and dec_yield_expression node : yield_expression =
-  ignore node; failwith "TODO: dec_yield_expression"
+  ignore node;
+  failwith "TODO: dec_yield_expression"
 
 (* As-expression *)
 
 and dec_as_expression node : as_expression =
-  ignore node; failwith "TODO: dec_as_expression"
+  ignore node;
+  failwith "TODO: dec_as_expression"
 
 (* Statisfies-expression *)
 
 and dec_satisfies_expression node : satisfies_expression =
-  ignore node; failwith "TODO: dec_satisfies_expression"
+  ignore node;
+  failwith "TODO: dec_satisfies_expression"
 
 (* Instantiation expression *)
 
 and dec_instantiation_expression node : instantiation_expression =
-  ignore node; failwith "TODO: dec_instantiation_expression"
+  ignore node;
+  failwith "TODO: dec_instantiation_expression"
 
 (* Type assertion *)
 
 and dec_type_assertion node : type_assertion =
-  ignore node; failwith "TODO: dec_type_assertion"
+  ignore node;
+  failwith "TODO: dec_type_assertion"
 
 (* Subscript expression (see [dec_member_expression]) *)
 
@@ -1368,7 +1492,9 @@ and dec_parenthesized_expression ?(comments = []) node : parenthesized_expressio
 (* Primary expression *)
 
 and dec_primary_expression ?(comments = []) node : primary_expression =
-  ignore comments; ignore node; failwith "TODO: dec_primary_expression"
+  ignore comments;
+  ignore node;
+  failwith "TODO: dec_primary_expression"
 
 (* Sequence expression *)
 
