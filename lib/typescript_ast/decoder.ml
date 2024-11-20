@@ -364,9 +364,139 @@ and dec_export_default after_export node : export_kind =
 (* Import statement *)
 
 and dec_import_statement ?(comments = []) node : import_statement =
-  ignore comments;
-  ignore node;
-  failwith "TODO: dec_import_statement"
+  ensure_Ok node
+  @@
+  let comments = comments @ prev_comments node in
+  let* kwd_import = first_child_named "import" node in
+  let kwd_import = make_kwd ~comments kwd_import in
+  let import_kind =
+    match first_child_named_opt "type" node with
+    | Some kwd_type -> Some (Import_type (make_kwd kwd_type))
+    | None ->
+      (match first_child_named_opt "typeof" node with
+      | None -> None
+      | Some kwd_typeof -> Some (Import_typeof (make_kwd kwd_typeof)))
+  in
+  let import_attribute = first_child_named_opt "import_attribute" node in
+  let import_attribute = make_opt dec_import_attribute import_attribute in
+  let* (import : import) =
+    match first_child_named_opt "import_clause" node with
+    | Some import_clause ->
+      let* kwd_from = first_child_named "from" node in
+      let import_clause = dec_import_clause import_clause in
+      let from_clause = dec_from_clause node kwd_from in
+      Ok (Import_clause (import_clause, from_clause))
+    | None ->
+      (match first_child_named_opt "import_require_clause" node with
+      | Some clause -> Ok (Import_require_clause (dec_import_require_clause clause))
+      | None ->
+        let* source_field = child_with_field "source" node in
+        Ok (Import_source (dec_string source_field)))
+  in
+  Ok { kwd_import; import_kind; import; import_attribute }
+
+and dec_import_clause ?(comments = []) node : import_clause =
+  ensure_Ok node
+  @@
+  let comments = comments @ prev_comments node in
+  let* fst_child = child_ranked 0 node in
+  match get_name fst_child with
+  | "namespace_import" ->
+    let namespace_import = dec_namespace_import ~comments fst_child in
+    Ok (Import_namespace namespace_import : import_clause)
+  | "named_imports" -> Ok (Import_named (dec_named_imports ~comments fst_child))
+  | "identifier" ->
+    let ident = dec_identifier ~comments fst_child in
+    let* from =
+      match next_sibling_opt fst_child with
+      | None -> Ok None
+      | Some comma ->
+        let* next = next_sibling comma in
+        Ok (Some (dec_namespace_or_named_imports next))
+    in
+    Ok (Import_ident (ident, from))
+  | s -> failwith ("dec_import_clause: " ^ s)
+
+and dec_namespace_or_named_imports node : namespace_or_named_imports =
+  match get_name node with
+  | "namespace_import" -> Import_namespace (dec_namespace_import node)
+  | "named_imports" -> Import_named (dec_named_imports node)
+  | s -> failwith ("dec_namespace_or_named_imports: " ^ s)
+
+and dec_namespace_import ?(comments = []) node : namespace_import =
+  ensure_Ok node
+  @@
+  let comments = comments @ prev_comments node in
+  let* sym_star = first_child_named "*" node in
+  let* kwd_as = first_child_named "as" node in
+  let* identifier = next_sibling kwd_as in
+  Ok
+    { sym_star = make_sym ~comments sym_star
+    ; kwd_as = make_kwd kwd_as
+    ; identifier = dec_identifier identifier
+    }
+
+and dec_named_imports ?(comments = []) node : named_imports =
+  decode_list_in_braces ~comments node dec_import_specifier
+
+and dec_import_specifier ?(comments = []) node : import_specifier =
+  ensure_Ok node
+  @@
+  let comments = comments @ prev_comments node in
+  let import_kind : import_kind option =
+    match first_child_named_opt "type" node with
+    | Some kwd_type -> Some (Import_type (make_kwd ~comments kwd_type))
+    | None ->
+      (match first_child_named_opt "typeof" node with
+      | None -> None
+      | Some kwd_typeof -> Some (Import_typeof (make_kwd ~comments kwd_typeof)))
+  in
+  let snd_child_comments =
+    match import_kind with
+    | None -> comments
+    | Some _ -> []
+  in
+  let* name_field = child_with_field "name" node in
+  let* (import_specifier' : import_specifier') =
+    match child_with_field_opt "alias" node with
+    | None ->
+      Ok (Import_spec_name (dec_identifier ~comments:snd_child_comments name_field))
+    | Some alias_field ->
+      let* kwd_as = first_child_named "as" node in
+      let name = dec_module_export_name ~comments:snd_child_comments name_field in
+      let kwd_as = make_kwd kwd_as in
+      let alias = dec_identifier alias_field in
+      Ok (Import_spec_alias { name; kwd_as; alias })
+  in
+  Ok (import_kind, import_specifier')
+
+and dec_import_require_clause ?(comments = []) node : import_require_clause =
+  ensure_Ok node
+  @@
+  let comments = comments @ prev_comments node in
+  let* identifier = child_ranked 0 node in
+  let* sym_equal = first_child_named "=" node in
+  let* kwd_require = first_child_named "require" node in
+  let* sym_lpar = first_child_named "(" node in
+  let* source_field = child_with_field "source" node in
+  let* sym_rpar = first_child_named ")" node in
+  Ok
+    { ident = dec_identifier ~comments identifier
+    ; sym_equal = make_sym sym_equal
+    ; kwd_require = make_kwd kwd_require
+    ; sym_lpar = make_sym sym_lpar
+    ; source = dec_string source_field
+    ; sym_rpar = make_sym sym_rpar
+    }
+
+and dec_import_attribute node : import_attribute =
+  ensure_Ok node
+  @@ let* kind_node = child_ranked 0 node in
+     let* object_node = child_ranked 1 node in
+     match get_name kind_node with
+     | "with" -> Ok (Import_with (make_kwd kind_node, dec_object object_node))
+     | "assert" -> Ok (Import_assert (make_kwd kind_node, dec_object object_node))
+     | s -> failwith ("dec_import_attribute: " ^ s)
 
 (* Expression statements
 
@@ -376,7 +506,7 @@ and dec_import_statement ?(comments = []) node : import_statement =
     sequence_expression: $ => prec.right(commaSep1($.expression))
    ]}
 
-   See [doc_expression]. *)
+   See [dc_expression]. *)
 
 and dec_expression_statement ?(comments = []) node : expression_statement =
   dec_expressions ~comments node
@@ -649,7 +779,7 @@ and dec_with_statement node : with_statement =
      let* body_field = child_with_field "body" node in
      Ok
        { kwd_with = make_kwd kwd_with
-       ; object_ = dec_parenthesized_expression object_field
+       ; object_expr = dec_parenthesized_expression object_field
        ; body = dec_statement body_field
        }
 
@@ -859,7 +989,7 @@ and dec_decorator_member_expression ?(comments = []) node : decorator_member_exp
        | _ -> Qualified_member_expression (dec_decorator_member_expression ~comments node)
      in
      Ok
-       { object_ = decode_object object_field
+       { object_expr = decode_object object_field
        ; sym_dot = make_sym selector
        ; property = dec_identifier property_field
        }
@@ -1502,6 +1632,13 @@ and dec_sequence_expression ?(comments = []) node : sequence_expression =
   @@
   let raw_children = collect_named_children node in
   ne_list_of_children ~comments dec_expression raw_children
+
+(* Object expression *)
+
+and dec_object ?(comments = []) node : object_expr =
+  ignore comments;
+  ignore node;
+  failwith "dec_object"
 
 (* LHS expression *)
 
