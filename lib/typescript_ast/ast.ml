@@ -18,9 +18,9 @@ module Region = Simple_utils.Region
 
 type 'a wrap = 'a Wrap.t
 
-(** Literals *)
-type keyword = string wrap
+(* Literals *)
 
+type keyword = string wrap
 type symbol = string wrap
 type identifier = string wrap
 type string_literal = string wrap
@@ -47,6 +47,94 @@ type number =
   | Bin of bin_literal * big
   | Oct of oct_literal * big
   | Dec of dec_literal * big
+
+(* Keywords
+
+   TODO: Use unique data constructors for each keyword.
+*)
+
+type kwd_as = keyword
+type kwd_async = keyword
+type kwd_function = keyword
+type kwd_override = keyword
+type kwd_readonly = keyword
+type kwd_public = keyword
+type kwd_private = keyword
+type kwd_protected = keyword
+type kwd_set = keyword
+type kwd_get = keyword
+type kwd_all = keyword
+type kwd_static = keyword
+type kwd_this = keyword
+type kwd_is = keyword
+type kwd_class = keyword
+type kwd_const = keyword
+type kwd_constraint = keyword
+type kwd_let = keyword
+type kwd_undefined = keyword
+type kwd_abstract = keyword
+type kwd_declare = keyword
+type kwd_accessor = keyword
+type kwd_global = keyword
+type kwd_module = keyword
+type kwd_enum = keyword
+type kwd_import = keyword
+type kwd_interface = keyword
+type kwd_extends = keyword
+type kwd_namespace = keyword
+type kwd_type = keyword
+type kwd_using = keyword
+type kwd_return = keyword
+type kwd_switch = keyword
+type kwd_case = keyword
+type kwd_default = keyword
+type kwd_throw = keyword
+type kwd_while = keyword
+type kwd_with = keyword
+type kwd_any = keyword
+type kwd_number = keyword
+type kwd_boolean = keyword
+type kwd_string = keyword
+type kwd_symbol = keyword
+type kwd_unique_symbol = keyword
+type kwd_void = keyword
+type kwd_unknown = keyword
+type kwd_never = keyword
+type kwd_object = keyword
+type kwd_asserts = keyword
+type kwd_debugger = keyword
+type kwd_break = keyword
+type kwd_continue = keyword
+type kwd_do = keyword
+type kwd_export = keyword
+type kwd_for = keyword
+type kwd_await = keyword
+type kwd_var = keyword
+type kwd_in = keyword
+type kwd_of = keyword
+type kwd_if = keyword
+type kwd_else = keyword
+type kwd_typeof = keyword
+type kwd_try = keyword
+type kwd_catch = keyword
+
+(* Symbols
+
+   TODO: Use unique data constructors for each symbol.
+*)
+
+type sym_qmark = symbol (* ? *)
+type sym_equal = symbol (* = *)
+type sym_colon = symbol (* : *)
+type sym_star = symbol (* * *)
+type sym_ellipsis = symbol (* ... *)
+type sym_plus = symbol (* + *)
+type sym_minus = symbol (* - *)
+type sym_bang = symbol (* ! *)
+type sym_dot = symbol (* . *)
+type sym_opt_chain = symbol (* ?. *)
+type sym_lpar = symbol (* ( *)
+type sym_rpar = symbol (* ) *)
 
 (* Compound constructs *)
 
@@ -218,8 +306,8 @@ and function_declaration =
     ]}
  *)
 and function_signature =
-  { kwd_async : keyword option
-  ; kwd_function : keyword
+  { kwd_async : kwd_async option
+  ; kwd_function : kwd_function
   ; name : identifier
   ; call_sig : call_signature
   }
@@ -235,16 +323,16 @@ and formal_parameters = formal_parameter list parens
 
 and formal_parameter =
   { parameter_name : parameter_name
-  ; optional : symbol option (* "?" or not *)
-  ; type_ : type_annotation option
-  ; default : (keyword * expression) option (* "=" *)
+  ; optional : sym_qmark option
+  ; type_opt : type_annotation option
+  ; default : (sym_equal * expression) option
   }
 
 and parameter_name =
   { decorators : decorators option
   ; access : accessibility_modifier option
-  ; override : keyword option
-  ; readonly : keyword option
+  ; kwd_override : kwd_override option
+  ; kwd_readonly : kwd_readonly option
   ; pattern : parameter_pattern
   }
 
@@ -252,24 +340,24 @@ and decorators = decorator ne_list (* wrap *)
 
 and parameter_pattern =
   | Parameter_pattern of pattern
-  | Parameter_this of keyword
+  | Parameter_this of kwd_this
 
 and call_return_type =
   | Type_annotation of type_annotation
   | Asserts_annotation of asserts_annotation
   | Type_predicate_annotation of type_predicate
 
-and type_annotation = symbol * type_ (* ":" *)
+and type_annotation = sym_colon * type_
 
 and type_predicate =
   { name : type_predicate_name
-  ; kwd_is : keyword
+  ; kwd_is : kwd_is
   ; type_ : type_
   }
 
 and type_predicate_name =
   | Type_predicate_identifier of identifier
-  | Type_predicate_this of keyword
+  | Type_predicate_this of kwd_this
   | Type_predicate_type of predefined_type
 
 (** Generator Function Declaration
@@ -297,7 +385,7 @@ and type_predicate_name =
        optional($._automatic_semicolon)))
     ]}
  *)
-and generator_function_declaration = symbol (* "*" *) * function_declaration
+and generator_function_declaration = sym_star * function_declaration
 
 (** Class Declaration
 
@@ -382,7 +470,7 @@ and generator_function_declaration = symbol (* "*" *) * function_declaration
  *)
 and class_declaration =
   { decorators : decorators option
-  ; class_ : keyword
+  ; kwd_class_ : kwd_class
   ; name : type_identifier
   ; type_parameters : type_parameters
   ; class_heritage : class_heritage option
@@ -404,10 +492,10 @@ and type_arguments = type_ ne_list chevrons
 and implements_clause = type_ ne_list
 
 and type_parameter =
-  { const : keyword option
+  { kwd_const : kwd_const option
   ; name : type_identifier
-  ; constraint_ : (keyword * type_) option (* "extends t" *)
-  ; default_type : (symbol * type_) option (* "= t" *)
+  ; constraint_ : (kwd_constraint * type_) option
+  ; default_type : (sym_equal * type_) option
   }
 
 and class_body = class_member list
@@ -456,27 +544,27 @@ and class_member =
 and method_signature =
   { access : accessibility_modifier option
   ; scope : method_scope
-  ; async : keyword option
+  ; kwd_async : kwd_async option
   ; set_get_all : set_get_all option
   ; name : property_name
-  ; optional : symbol option (* "?" *)
+  ; optional : sym_qmark option
   ; call_sig : call_signature
   }
 
 and accessibility_modifier =
-  | Public of keyword
-  | Private of keyword
-  | Protected of keyword
+  | Public of kwd_public
+  | Private of kwd_private
+  | Protected of kwd_protected
 
 and set_get_all =
-  | Set of keyword
-  | Get of keyword
-  | All of symbol
+  | Set of kwd_set
+  | Get of kwd_get
+  | All of kwd_all
 
 and method_scope =
-  { static : keyword option
-  ; override : keyword option
-  ; readonly : keyword option
+  { static : kwd_static option
+  ; override : kwd_override option
+  ; readonly : kwd_readonly option
   }
 
 and property_name =
@@ -559,8 +647,8 @@ and lexical_declaration =
   }
 
 and let_or_const =
-  | Let of keyword
-  | Const of keyword
+  | Let of kwd_let
+  | Const of kwd_const
 
 and variable_declarator = lhs_pattern
 
@@ -582,7 +670,7 @@ and member_pattern =
 
 and pair_pattern =
   { key : property_name
-  ; sym_colon : symbol
+  ; sym_colon : sym_colon
   ; value : pair_value_pattern
   }
 
@@ -591,7 +679,7 @@ and pair_value_pattern =
   | Pair_value_assignment of assignment_pattern
 
 and rest_pattern =
-  { sym_ellipsis : symbol
+  { sym_ellipsis : sym_ellipsis
   ; expression : lhs_expression
   }
 
@@ -599,13 +687,13 @@ and lhs_expression =
   | Member_expression of member_expression
   | Subscript_expression of subscript_expression
   | Identifier of identifier (* Including reserved identifiers *)
-  | Undefined of keyword
+  | Undefined of kwd_undefined
   | Pattern of destructuring_pattern
   | Non_null_expression of expression
 
 and object_assignment_pattern =
   { left : object_lhs_pattern
-  ; sym_equal : symbol
+  ; sym_equal : sym_equal
   ; right : expression
   }
 
@@ -631,7 +719,7 @@ and array_cell_pattern =
        seq('var', commaSep1($.variable_declarator), $._semicolon),
     ]}
  *)
-and variable_declaration = symbol * variable_declarator ne_list (* "var" *)
+and variable_declaration = kwd_var * variable_declarator ne_list
 
 (** Abstract Class Declaration
 
@@ -667,8 +755,8 @@ and variable_declaration = symbol * variable_declarator ne_list (* "var" *)
  *)
 and abstract_class_declaration =
   { decorators : decorators option
-  ; abstract : keyword
-  ; class_ : keyword
+  ; kwd_abstract : kwd_abstract
+  ; kwd_class : kwd_class
   ; name : type_identifier
   ; type_parameters : type_parameters
   ; class_heritage : class_heritage option
@@ -738,10 +826,10 @@ and statement_block = statements
  *)
 and abstract_method_signature =
   { access : accessibility_modifier option
-  ; override : keyword option
+  ; kwd_override : kwd_override option
   ; set_get_all : set_get_all option
   ; name : property_name
-  ; optional : symbol option (* '?' *)
+  ; optional : sym_qmark option
   ; call_sig : call_signature
   }
 
@@ -798,8 +886,8 @@ and index_signature =
   }
 
 and sign =
-  | Plus of symbol
-  | Minus of symbol
+  | Plus of sym_plus
+  | Minus of sym_minus
 
 and index_range =
   | Typed_index_clause of typed_index_clause
@@ -862,7 +950,7 @@ and index_type =
 and public_field_definition =
   { decorators : decorators option
   ; access : accessibility_modifier option
-  ; declare : keyword option
+  ; kwd_declare : kwd_declare option
   ; scope : field_scope
   ; name : property_name
   ; mode : field_mode option
@@ -871,16 +959,16 @@ and public_field_definition =
   }
 
 and field_scope =
-  { static : keyword option
-  ; override : keyword option
-  ; readonly : keyword option
-  ; abstract : keyword option
-  ; accessor : keyword option
+  { kwd_static : kwd_static option
+  ; kwd_override : kwd_override option
+  ; kwd_readonly : kwd_readonly option
+  ; kwd_abstract : kwd_abstract option
+  ; kwd_accessor : kwd_accessor option
   }
 
 and field_mode =
-  | Optional of symbol (* "?" *)
-  | Definite_assert of symbol (* "!" *)
+  | Optional of sym_qmark
+  | Definite_assert of sym_bang
 
 (** Ambient Declaration
 
@@ -905,14 +993,15 @@ and field_mode =
     ]}
  *)
 and ambient_declaration =
-  { kwd_declare : keyword
+  { kwd_declare : kwd_declare
   ; ambient_kind : ambient_kind
   }
 
 and ambient_kind =
   | Declaration of declaration
-  | Global_declaration of keyword * statement_block (* "global {...}" *)
-  | Module_declaration of keyword * identifier * type_ (* "module", property identifier *)
+  | Global_declaration of kwd_global * statement_block
+  | Module_declaration of
+      kwd_module * identifier * type_ (* "module", property identifier *)
 
 (** Enumerated Declaration
 
@@ -950,8 +1039,8 @@ and ambient_kind =
     }]
  *)
 and enum_declaration =
-  { const : keyword option
-  ; enum : keyword
+  { kwd_const : kwd_const option
+  ; kwd_enum : kwd_enum
   ; name : identifier
   ; body : enum_body list braces
   }
@@ -962,7 +1051,7 @@ and enum_body =
 
 and enum_assignment =
   { name : property_name
-  ; default : symbol * expression (* "=" *)
+  ; default : sym_equal * expression
   }
 
 (** Import Alias
@@ -996,9 +1085,9 @@ and enum_assignment =
     ]}
  *)
 and import_alias =
-  { import : keyword
+  { kwd_import : kwd_import
   ; alias : identifier
-  ; sym_equal : symbol
+  ; sym_equal : sym_equal
   ; aliased : aliased
   }
 
@@ -1047,7 +1136,7 @@ and nested_identifier = identifier nested (* property identifier *)
     }]
  *)
 and interface_declaration =
-  { kwd_interface : keyword
+  { kwd_interface : kwd_interface
   ; name : type_identifier
   ; type_parameters : type_parameters option
   ; extends : extends_type_clause option
@@ -1055,7 +1144,7 @@ and interface_declaration =
   }
 
 and extends_type_clause =
-  { kwd_extends : keyword
+  { kwd_extends : kwd_extends
   ; extensions : type_extension ne_list
   }
 
@@ -1091,13 +1180,13 @@ and nested_type_identifier = type_identifier nested
     ]}
  *)
 and internal_module =
-  { kwd_namespace : keyword
+  { kwd_namespace : kwd_namespace
   ; module_name : module_name
   ; module_body : statement_block option
   }
 
 and module_ =
-  { kwd_module : keyword
+  { kwd_module : kwd_module
   ; module_name : module_name
   ; module_body : statement_block option
   }
@@ -1130,11 +1219,11 @@ and module_name =
     ]}
  *)
 and type_alias_declaration =
-  { kwd_type : keyword
+  { kwd_type : kwd_type
   ; name : type_identifier
   ; type_parameters : type_parameters option
-  ; sym_equal : symbol
-  ; value : type_
+  ; sym_equal : sym_equal
+  ; type_expr : type_
   }
 
 (** EXPRESSIONS
@@ -1202,11 +1291,11 @@ and expression =
        $.expression, 'as', choice('const', $.type)))
     ]}
  *)
-and as_expression = expression * as_what
+and as_expression = expression * kwd_as * as_what
 
 and as_what =
   | As_type of type_
-  | As_const of keyword
+  | As_const of kwd_const
 
 (** Assignment Expression
 
@@ -1232,7 +1321,7 @@ and as_what =
     ]}
 *)
 and assignment_expression =
-  { using : keyword option
+  { kwd_using : kwd_using option
   ; left : assignment_lhs
   ; right : expression
   }
@@ -1272,11 +1361,11 @@ and member_expression =
 
 and object_member =
   | Object_member_expression of expression
-  | Object_member_import of keyword
+  | Object_member_import of kwd_import
 
 and selector =
-  | Dot of symbol
-  | Optional_chain of symbol
+  | Dot of sym_dot
+  | Optional_chain of sym_opt_chain
 
 and property_ident =
   | Private_property_identifier of hash_name
@@ -1313,7 +1402,7 @@ and subscript_expression =
   ; index : expressions brackets
   }
 
-and optional_chain = Optional_chain of symbol
+and optional_chain = Optional_chain of sym_opt_chain
 and expressions = sequence_expression
 and sequence_expression = expression ne_list (*wrap*)
 
@@ -1970,7 +2059,7 @@ and labeled_statement =
    ]}
 *)
 and return_statement =
-  { kwd_return : keyword
+  { kwd_return : kwd_return
   ; expressions : expressions option
   }
 
@@ -1998,7 +2087,7 @@ and return_statement =
    ]}
 *)
 and switch_statement =
-  { kwd_switch : keyword
+  { kwd_switch : kwd_switch
   ; value : parenthesized_expression
   ; body : switch_body
   }
@@ -2010,13 +2099,13 @@ and switch_entry =
   | Switch_default of switch_default
 
 and switch_case =
-  { kwd_case : keyword
+  { kwd_case : kwd_case
   ; value : expressions
   ; body : statement list
   }
 
 and switch_default =
-  { kwd_default : keyword
+  { kwd_default : kwd_default
   ; statements : statement list
   }
 
@@ -2029,7 +2118,7 @@ and switch_default =
     ]}
 *)
 and throw_statement =
-  { kwd_throw : keyword
+  { kwd_throw : kwd_throw
   ; expressions : expressions
   }
 
@@ -2045,7 +2134,7 @@ and throw_statement =
     ]}
 *)
 and while_statement =
-  { kwd_while : keyword
+  { kwd_while : kwd_while
   ; condition : parenthesized_expression
   ; body : statement
   }
@@ -2062,7 +2151,7 @@ and while_statement =
     ]}
 *)
 and with_statement =
-  { kwd_with : keyword
+  { kwd_with : kwd_with
   ; object_ : parenthesized_expression
   ; body : statement
   }
@@ -2391,16 +2480,16 @@ and construct_signature =
     ]}
 *)
 and predefined_type =
-  | T_any of keyword
-  | T_number of keyword
-  | T_boolean of keyword
-  | T_string of keyword
-  | T_symbol of keyword
-  | T_unique_symbol of keyword
-  | T_void of keyword
-  | T_unknown of keyword
-  | T_never of keyword
-  | T_object of keyword
+  | T_any of kwd_any
+  | T_number of kwd_number
+  | T_boolean of kwd_boolean
+  | T_string of kwd_string
+  | T_symbol of kwd_symbol
+  | T_unique_symbol of kwd_unique_symbol
+  | T_void of kwd_void
+  | T_unknown of kwd_unknown
+  | T_never of kwd_never
+  | T_object of kwd_object
 
 (** Template Literal Type
 
@@ -2626,9 +2715,9 @@ and return_type =
   | Return_type_predicate of type_predicate
 
 and asserts =
-  | Assert_predicate of keyword * type_predicate (* "asserts" *)
-  | Assert_type of keyword * identifier (* "asserts t" *)
-  | Assert_this of keyword * keyword (* "asserts this" *)
+  | Assert_predicate of kwd_asserts * type_predicate
+  | Assert_type of kwd_asserts * identifier
+  | Assert_this of kwd_asserts * kwd_this
 
 (** Readonly Type
 
@@ -2727,7 +2816,7 @@ and infer_type =
 and statement =
   | S_export_statement of export_statement
   | S_import_statement of import_statement
-  | S_debugger_statement of keyword
+  | S_debugger_statement of kwd_debugger
   | S_expression_statement of expression_statement
   | S_declaration of declaration
   | S_statement_block of statement_block
@@ -2758,7 +2847,7 @@ and statement =
     ]}
 *)
 and break_statement =
-  { kwd_break : keyword
+  { kwd_break : kwd_break
   ; stmt_id : identifier option
   }
 
@@ -2774,7 +2863,7 @@ and break_statement =
     ]}
 *)
 and continue_statement =
-  { kwd_continue : keyword
+  { kwd_continue : kwd_continue
   ; stmt_id : identifier option
   }
 
@@ -2792,9 +2881,9 @@ and continue_statement =
     ]}
 *)
 and do_statement =
-  { kwd_do : keyword
+  { kwd_do : kwd_do
   ; body : statement
-  ; kwd_while : keyword
+  ; kwd_while : kwd_while
   ; condition : parenthesized_expression
   }
 
@@ -2855,7 +2944,7 @@ and do_statement =
     ]}
 *)
 and export_statement =
-  { kwd_export : keyword
+  { kwd_export : kwd_export
   ; export_kind : export_kind
   }
 
@@ -2864,17 +2953,17 @@ and export_kind =
   | Export_as of namespace_export * from_clause
   | Export_clause of export_clause * from_clause option
   | Export_declaration of declaration decorated
-  | Export_default_declaration of (keyword * declaration) decorated (* "default" *)
-  | Export_default_expression of (keyword * expression) decorated (* "default" *)
+  | Export_default_declaration of (kwd_default * declaration) decorated
+  | Export_default_expression of (kwd_default * expression) decorated
   | Export_type of export_type (* "type" *)
-  | Export_equal of symbol * expression (* "=" *)
-  | Export_as_namespace of keyword * identifier (* "as" *)
+  | Export_equal of sym_equal * expression
+  | Export_as_namespace of kwd_as * identifier
 
-and from_clause = symbol * string_literal (* "* \"foo.ts\"" *)
+and from_clause = sym_star * string_literal
 
 and namespace_export =
-  { sym_star : symbol
-  ; kwd_as : keyword
+  { sym_star : sym_star
+  ; kwd_as : kwd_as
   ; namespace_name : module_export_name
   }
 
@@ -2882,7 +2971,7 @@ and export_clause = export_specifier list braces
 
 and export_specifier =
   { name : module_export_name
-  ; alias : (keyword * module_export_name) option (* "as foo" *)
+  ; alias : (kwd_as * module_export_name) option
   }
 
 and module_export_name =
@@ -2890,7 +2979,7 @@ and module_export_name =
   | Export_string of string_literal
 
 and export_type =
-  { kwd_type : keyword
+  { kwd_type : kwd_type
   ; export_clause : export_clause
   ; from_clause : from_clause option
   }
@@ -2942,11 +3031,11 @@ and expression_statement = expressions
     ]}
 *)
 and for_in_statement =
-  { kwd_for : keyword
-  ; kwd_await : keyword option
-  ; sym_lparen : symbol
+  { kwd_for : kwd_for
+  ; kwd_await : kwd_await option
+  ; sym_lpar : sym_lpar
   ; for_header : for_header
-  ; sym_rparen : symbol
+  ; sym_rpar : sym_rpar
   ; body : statement
   }
 
@@ -2960,11 +3049,11 @@ and for_range =
   | For_in_expression of lhs_expression
   | For_in_parenthesized of parenthesized_expression
   | For_in_var of for_in_var
-  | For_in_let of keyword * for_in_variable
-  | For_in_const of keyword * for_in_variable
+  | For_in_let of kwd_let * for_in_variable
+  | For_in_const of kwd_const * for_in_variable
 
 and for_in_var =
-  { kwd_var : keyword
+  { kwd_var : kwd_var
   ; variable : for_in_variable
   ; default : expression option
   }
@@ -2974,8 +3063,8 @@ and for_in_variable =
   | For_in_pattern of destructuring_pattern
 
 and for_operator =
-  | In of keyword
-  | Of of keyword
+  | In of kwd_in
+  | Of of kwd_of
 
 (** For-statement
 
@@ -2999,12 +3088,12 @@ and for_operator =
     ]}
 *)
 and for_statement =
-  { kwd_for : keyword
-  ; sym_lparen : symbol
+  { kwd_for : kwd_for
+  ; sym_lpar : sym_lpar
   ; initializer_ : for_initializer
   ; condition : for_condition
   ; increment : expressions option
-  ; sym_rparen : symbol
+  ; sym_rpar : sym_rpar
   ; body : statement
   }
 
@@ -3033,10 +3122,10 @@ and for_condition =
    ]}
 *)
 and if_statement =
-  { kwd_if : keyword
+  { kwd_if : kwd_if
   ; condition : parenthesized_expression
   ; consequence : statement
-  ; alternative : (keyword * statement) option (* "else" *)
+  ; alternative : (kwd_else * statement) option
   }
 
 and parenthesized_expression = expressions parens
@@ -3106,30 +3195,36 @@ and parenthesized_expression = expressions parens
     ]}
 *)
 and import_statement =
-  { import_kind : import_kind option
+  { kwd_import : kwd_import
+  ; import_kind : import_kind option
   ; import : import
   ; import_attribute : import_attribute option
   }
 
 and import_kind =
-  | Import_type
-  | Import_typeof
+  | Import_type of kwd_type
+  | Import_typeof of kwd_typeof
 
 and import =
   | Import_clause of import_clause * from_clause
   | Import_require_clause of import_require_clause
-  | Import_source of string
+  | Import_source of string_literal
 
 and import_clause =
   | Import_namespace of namespace_import
   | Import_named of named_imports
-  | Import_ident of import_identifier * namespace_or_named_import option
+  | Import_ident of import_identifier * namespace_or_named_imports option
 
-and namespace_or_named_import =
+and namespace_or_named_imports =
   | Import_namespace of namespace_import
   | Import_named of named_imports
 
-and namespace_import = identifier (* "* as <ident>" *)
+and namespace_import =
+  { sym_star : sym_star
+  ; kwd_as : kwd_as
+  ; identifier : identifier
+  }
+
 and named_imports = import_specifier list
 and import_specifier = import_kind * import_specifier'
 
@@ -3141,10 +3236,11 @@ and import_identifier = identifier (* Including "type" *)
 
 and import_spec_alias =
   { name : module_export_name
+  ; kwd_as : kwd_as
   ; alias : import_identifier
   }
 
-and import_require_clause = identifier * string
+and import_require_clause = identifier * string_literal
 
 and import_attribute =
   | Import_with of object_
@@ -3171,7 +3267,7 @@ and asserts_annotation = asserts
 *)
 and assignment_pattern =
   { left : pattern
-  ; sym_equal : symbol
+  ; sym_equal : sym_equal
   ; right : expression
   }
 
@@ -3205,23 +3301,23 @@ and assignment_pattern =
     ]}
 *)
 and try_statement =
-  { kwd_try : keyword
+  { kwd_try : kwd_try
   ; body : statement_block
   ; handler : catch_clause option
   ; finalizer : finally_clause option
   }
 
 and catch_clause =
-  { kwd_catch : keyword
+  { kwd_catch : kwd_catch
   ; parameter : catch_parameter option
   ; body : statement_block
   }
 
 and catch_parameter =
-  { sym_lparen : symbol
+  { sym_lpar : sym_lpar
   ; catch_parameter : catch_parameter_kind
-  ; type_ : type_annotation option
-  ; sym_rparen : symbol
+  ; type_opt : type_annotation option
+  ; sym_rpar : sym_rpar
   }
 
 and catch_parameter_kind =
@@ -3305,7 +3401,7 @@ and 'a decorated =
 
 and decorator_member_expression =
   { object_ : object_member_expression
-  ; sym_dot : symbol
+  ; sym_dot : sym_dot
   ; property : identifier
   }
 
