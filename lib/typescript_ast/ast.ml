@@ -53,6 +53,7 @@ type number =
    TODO: Use unique data constructors for each keyword.
 *)
 
+type kwd_assert = keyword
 type kwd_as = keyword
 type kwd_async = keyword
 type kwd_function = keyword
@@ -117,6 +118,7 @@ type kwd_else = keyword
 type kwd_typeof = keyword
 type kwd_try = keyword
 type kwd_catch = keyword
+type kwd_require = keyword
 
 (* Symbols
 
@@ -1835,7 +1837,7 @@ and primary_expression =
   | E_non_null_expression of expression
   | E_null
   | E_number
-  | E_object of object_
+  | E_object of object_expr
   | E_parenthesized_expression of parenthesized_expression
   | E_regex of string
   | E_string
@@ -2018,7 +2020,7 @@ and meta_property =
       field('value', $.expression))
    ]}
 *)
-and object_ = object_entry list
+and object_expr = object_entry list
 
 and object_entry =
   | Object_member_pair of pair
@@ -2152,7 +2154,7 @@ and while_statement =
 *)
 and with_statement =
   { kwd_with : kwd_with
-  ; object_ : parenthesized_expression
+  ; object_expr : parenthesized_expression
   ; body : statement
   }
 
@@ -2623,7 +2625,7 @@ and type_query =
   | Typeof_this
 
 and type_query_subscript_expression =
-  { object_ : type_query_object
+  { object_expr : type_query_object
   ; optional : bool
   ; index : type_query_index
   }
@@ -2641,7 +2643,7 @@ and type_query_index =
   | Type_query_index_number of number
 
 and type_query_member_expression =
-  { object_ : type_query_object
+  { object_expr : type_query_object
   ; optional : bool
   ; property : type_query_property
   }
@@ -3225,8 +3227,8 @@ and namespace_import =
   ; identifier : identifier
   }
 
-and named_imports = import_specifier list
-and import_specifier = import_kind * import_specifier'
+and named_imports = import_specifier list braces
+and import_specifier = import_kind option * import_specifier'
 
 and import_specifier' =
   | Import_spec_name of import_identifier
@@ -3240,11 +3242,18 @@ and import_spec_alias =
   ; alias : import_identifier
   }
 
-and import_require_clause = identifier * string_literal
+and import_require_clause =
+  { ident : identifier
+  ; sym_equal : sym_equal
+  ; kwd_require : kwd_require
+  ; sym_lpar : sym_lpar
+  ; source : string_literal
+  ; sym_rpar : sym_rpar
+  }
 
 and import_attribute =
-  | Import_with of object_
-  | Import_assert of object_
+  | Import_with of kwd_with * object_expr
+  | Import_assert of kwd_assert * object_expr
 
 (** Asserts Annotation
 
@@ -3400,7 +3409,7 @@ and 'a decorated =
   }
 
 and decorator_member_expression =
-  { object_ : object_member_expression
+  { object_expr : object_member_expression
   ; sym_dot : sym_dot
   ; property : identifier
   }
