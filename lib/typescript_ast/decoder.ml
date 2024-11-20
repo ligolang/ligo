@@ -284,13 +284,12 @@ and dec_export_statement ?(comments = []) node : export_statement =
 
 and dec_export_type after_export node : export_type =
   ensure_Ok node
-  @@
-  let* export_clause = next_sibling after_export in
-  let kwd_type = make_kwd after_export in
-  let export_clause = dec_export_clause export_clause in
-  let kwd_from = first_child_named_opt "from" node in
-  let from_clause = make_opt (dec_from_clause node) kwd_from in
-  Ok { kwd_type; export_clause; from_clause }
+  @@ let* export_clause = next_sibling after_export in
+     let kwd_type = make_kwd after_export in
+     let export_clause = dec_export_clause export_clause in
+     let kwd_from = first_child_named_opt "from" node in
+     let from_clause = make_opt (dec_from_clause node) kwd_from in
+     Ok { kwd_type; export_clause; from_clause }
 
 and dec_export_declaration after_export node : declaration decorated =
   ensure_Ok node
@@ -474,11 +473,11 @@ and dec_switch_default ?(comments = []) node : switch_default =
 and dec_for_statement node : for_statement =
   ensure_Ok node
   @@ let* kwd_for = first_child_named "for" node in
-     let* sym_lparen = first_child_named "(" node in
+     let* sym_lpar = first_child_named "(" node in
      let* initializer_field = child_with_field "initializer" node in
      let* condition_field = child_with_field "condition" node in
      let increment_field = child_with_field_opt "increment" node in
-     let* sym_rparen = first_child_named ")" node in
+     let* sym_rpar = first_child_named ")" node in
      let* body_field = child_with_field "body" node in
      let dec_initializer node : for_initializer =
        match get_name node with
@@ -498,11 +497,11 @@ and dec_for_statement node : for_statement =
      in
      Ok
        { kwd_for = make_kwd kwd_for
-       ; sym_lparen = make_sym sym_lparen
+       ; sym_lpar = make_sym sym_lpar
        ; initializer_ = dec_initializer initializer_field
        ; condition = dec_condition condition_field
        ; increment = make_opt dec_expressions increment_field
-       ; sym_rparen = make_sym sym_rparen
+       ; sym_rpar = make_sym sym_rpar
        ; body = dec_statement body_field
        }
 
@@ -512,10 +511,10 @@ and dec_for_in_statement node : for_in_statement =
   ensure_Ok node
   @@ let* kwd_for = first_child_named "for" node in
      let kwd_await = first_child_named_opt "await" node in
-     let* sym_lparen = first_child_named "(" node in
+     let* sym_lpar = first_child_named "(" node in
      let kind_field = child_with_field_opt "kind" node in
      let* left_field = child_with_field "left" node in
-     let* sym_rparen = first_child_named ")" node in
+     let* sym_rpar = first_child_named ")" node in
      let* body_field = child_with_field "body" node in
      let* operator_field = child_with_field "operator" node in
      let* right_field = child_with_field "right" node in
@@ -554,9 +553,9 @@ and dec_for_in_statement node : for_in_statement =
      Ok
        { kwd_for = make_kwd kwd_for
        ; kwd_await = make_opt make_kwd kwd_await
-       ; sym_lparen = make_sym sym_lparen
+       ; sym_lpar = make_sym sym_lpar
        ; for_header
-       ; sym_rparen = make_sym sym_rparen
+       ; sym_rpar = make_sym sym_rpar
        ; body = dec_statement body_field
        }
 
@@ -616,14 +615,14 @@ and dec_catch_clause node : catch_clause =
 
 and dec_catch_parameter node param : catch_parameter =
   ensure_Ok node
-  @@ let* sym_lparen = first_child_named "(" node in
+  @@ let* sym_lpar = first_child_named "(" node in
      let type_field = child_with_field_opt "type" node in
-     let* sym_rparen = first_child_named ")" node in
+     let* sym_rpar = first_child_named ")" node in
      Ok
-       { sym_lparen = make_sym sym_lparen
+       { sym_lpar = make_sym sym_lpar
        ; catch_parameter = dec_catch_parameter_kind param
-       ; type_ = make_opt dec_type_annotation type_field
-       ; sym_rparen = make_sym sym_rparen
+       ; type_opt = make_opt dec_type_annotation type_field
+       ; sym_rpar = make_sym sym_rpar
        }
 
 and dec_catch_parameter_kind node : catch_parameter_kind =
@@ -1020,15 +1019,15 @@ and dec_formal_parameter ?(comments = []) node : formal_parameter =
   let parameter_name : parameter_name =
     { decorators = ne_list_opt_of_children dec_decorator decorators
     ; access = make_opt dec_accessibility_modifier accessibility_modifier
-    ; override = make_opt dec_override_modifier override_modifier
-    ; readonly = make_opt make_kwd kwd_readonly
+    ; kwd_override = make_opt dec_override_modifier override_modifier
+    ; kwd_readonly = make_opt make_kwd kwd_readonly
     ; pattern = (dec_pattern_field ~comments) pattern_field (* Not perfect *)
     }
   in
   Ok
     { parameter_name
     ; optional = make_opt make_sym qmark
-    ; type_ = make_opt dec_type_annotation type_field
+    ; type_opt = make_opt dec_type_annotation type_field
     ; default = mk_child_initializer_opt node
     }
 
@@ -1108,7 +1107,7 @@ and dec_type_alias_declaration ?(comments = []) node : type_alias_declaration =
     ; name = dec_type_identifier name_field
     ; type_parameters = make_opt dec_type_parameters type_parameters_field
     ; sym_equal = make_sym sym_equal
-    ; value = dec_type value_field
+    ; type_expr = dec_type value_field
     }
 
 (* Type parameters *)
@@ -1125,7 +1124,7 @@ and dec_type_parameter ?(comments = []) node : type_parameter =
   let constraint_field = child_with_field_opt "constraint" node in
   let value_field = child_with_field_opt "value" node in
   Ok
-    { const = make_opt make_kwd kwd_const
+    { kwd_const = make_opt make_kwd kwd_const
     ; name = dec_type_identifier ~comments name_field (* Not perfect *)
     ; constraint_ = make_opt dec_constraint constraint_field
     ; default_type = make_opt dec_default_type value_field
@@ -1155,8 +1154,8 @@ and dec_enum_declaration node : enum_declaration =
   let* name_field = child_with_field "name" node in
   let* body_field = child_with_field "body" node in
   Ok
-    { const = make_opt make_kwd kwd_const
-    ; enum = make_kwd kwd_enum
+    { kwd_const = make_opt make_kwd kwd_const
+    ; kwd_enum = make_kwd kwd_enum
     ; name = dec_identifier name_field
     ; body = dec_enum_entries body_field
     }
@@ -1260,7 +1259,7 @@ and dec_import_alias ?comments node : import_alias =
        | s -> failwith ("dec_import_alias: " ^ s)
      in
      Ok
-       { import = make_kwd ?comments kwd_import
+       { kwd_import = make_kwd ?comments kwd_import
        ; alias = dec_identifier lhs
        ; sym_equal = make_sym sym_equal
        ; aliased = decode_rhs rhs
