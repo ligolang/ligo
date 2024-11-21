@@ -17,7 +17,7 @@ module Ast = Typescript_ast.Ast
 
 (* Parsing *)
 
-let parse file line_map =
+let parse file line_map : (Ast.t, string) result =
   (* Loading the code as text *)
   let input : string = Core.In_channel.read_all file in
   (* Parsing the code *)
@@ -25,11 +25,10 @@ let parse file line_map =
   (* Getting ahold of the root *)
   let program_node : Ts_wrap.ts_tree = TS_fun.ts_tree_root_node tree in
   (* Printing the tree from the root *)
-  let ast : Ast.t = Decoder.dec_program file line_map program_node in
+  let ast = Decoder.dec_program file line_map program_node in
   (* Releasing the memory allocated to the tree *)
   let () = TS_fun.ts_tree_delete tree in
-  (* Printing the AST *)
-  ignore ast (* TODO *)
+  ast
 
 (* Reading the input TypeScript, parsing and printing the AST *)
 
@@ -42,6 +41,9 @@ let () =
   | 2 ->
     let file = cli_args.(1) in
     (match Loc_map.scan file with
-    | Ok line_map -> parse file line_map
+    | Ok line_map ->
+      (match parse file line_map with
+      | Ok _ast -> () (* TODO: Print *)
+      | Error msg -> Printf.eprintf "Error: %s\n%!" msg)
     | Error { region; value = _ } -> Printf.eprintf "Error: %s\n%!" (region#compact `Byte))
   | _ -> prerr_endline ("Usage: " ^ cli_args.(0) ^ " [file]")
