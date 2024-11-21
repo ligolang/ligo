@@ -354,7 +354,7 @@ and type_annotation = sym_colon * type_
 and type_predicate =
   { name : type_predicate_name
   ; kwd_is : kwd_is
-  ; type_ : type_
+  ; type_expr : type_
   }
 
 and type_predicate_name =
@@ -472,9 +472,9 @@ and generator_function_declaration = sym_star * function_declaration
  *)
 and class_declaration =
   { decorators : decorators option
-  ; kwd_class_ : kwd_class
+  ; kwd_class : kwd_class
   ; name : type_identifier
-  ; type_parameters : type_parameters
+  ; type_parameters : type_parameters option
   ; class_heritage : class_heritage option
   ; body : class_body
   }
