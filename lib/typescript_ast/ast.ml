@@ -206,7 +206,7 @@ and declaration =
   | D_variable_declaration of variable_declaration
   | D_function_signature of function_signature
   | D_abstract_class_declaration of abstract_class_declaration
-  | D_module of module_
+  | D_module of module_declaration
   | D_internal_module of internal_module
   | D_type_alias_declaration of type_alias_declaration
   | D_enum_declaration of enum_declaration
@@ -349,12 +349,12 @@ and call_return_type =
   | Asserts_annotation of asserts_annotation
   | Type_predicate_annotation of type_predicate
 
-and type_annotation = sym_colon * type_
+and type_annotation = sym_colon * type_expr
 
 and type_predicate =
   { name : type_predicate_name
   ; kwd_is : kwd_is
-  ; type_expr : type_
+  ; type_expr : type_expr
   }
 
 and type_predicate_name =
@@ -490,14 +490,14 @@ and extends_clause_single =
   ; type_arguments : type_arguments option
   }
 
-and type_arguments = type_ ne_list chevrons
-and implements_clause = type_ ne_list
+and type_arguments = type_expr ne_list chevrons
+and implements_clause = type_expr ne_list
 
 and type_parameter =
   { kwd_const : kwd_const option
   ; name : type_identifier
-  ; constraint_ : (kwd_constraint * type_) option
-  ; default_type : (sym_equal * type_) option
+  ; constraint_expr : (kwd_constraint * type_expr) option
+  ; default_type : (sym_equal * type_expr) option
   }
 
 and class_body = class_member list
@@ -897,20 +897,20 @@ and index_range =
 
 and typed_index_clause =
   { name : identifier (* Including reserved identifiers *)
-  ; index_type : type_
+  ; index_type : type_expr
   }
 
 and mapped_type_clause =
   { name : type_identifier
-  ; type_ : type_
-  ; alias : type_ option
+  ; type_ : type_expr
+  ; alias : type_expr option
   }
 
 and index_type =
-  | Type_annotation of type_
-  | Omitting_type_annotation of type_
-  | Adding_type_annotation of type_
-  | Opting_type_annotation of type_
+  | Type_annotation of type_expr
+  | Omitting_type_annotation of type_expr
+  | Adding_type_annotation of type_expr
+  | Opting_type_annotation of type_expr
 
 (** Public Field Definition
 
@@ -1003,7 +1003,7 @@ and ambient_kind =
   | Declaration of declaration
   | Global_declaration of kwd_global * statement_block
   | Module_declaration of
-      kwd_module * identifier * type_ (* "module", property identifier *)
+      kwd_module * identifier * type_expr (* "module", property identifier *)
 
 (** Enumerated Declaration
 
@@ -1187,7 +1187,7 @@ and internal_module =
   ; module_body : statement_block option
   }
 
-and module_ =
+and module_declaration =
   { kwd_module : kwd_module
   ; module_name : module_name
   ; module_body : statement_block option
@@ -1225,7 +1225,7 @@ and type_alias_declaration =
   ; name : type_identifier
   ; type_parameters : type_parameters option
   ; sym_equal : sym_equal
-  ; type_expr : type_
+  ; type_expr : type_expr
   }
 
 (** EXPRESSIONS
@@ -1296,7 +1296,7 @@ and expression =
 and as_expression = expression * kwd_as * as_what
 
 and as_what =
-  | As_type of type_
+  | As_type of type_expr
   | As_const of kwd_const
 
 (** Assignment Expression
@@ -1660,7 +1660,7 @@ and argument =
       $.expression, 'satisfies', $.type))
    ]}
  *)
-and satisfies_expression = expression * type_
+and satisfies_expression = expression * type_expr
 
 (** Ternary Expression
 
@@ -2193,7 +2193,7 @@ and pattern =
                       $.call_expression)))
     ]}
 *)
-and type_ =
+and type_expr =
   | T_primary_type of primary_type
   | T_function_type of function_type
   | T_readonly_type of readonly_type
@@ -2239,7 +2239,7 @@ and type_ =
     ]}
 *)
 and primary_type =
-  | T_parenthesized_type of type_
+  | T_parenthesized_type of type_expr
   | T_predefined_type of predefined_type
   | T_type_identifier of type_identifier
   | T_nested_type_identifier of nested_type_identifier
@@ -2320,10 +2320,10 @@ and array_type = primary_type
     ]}
 *)
 and conditional_type =
-  { left : type_
-  ; right : type_
-  ; consequence : type_
-  ; alternative : type_
+  { left : type_expr
+  ; right : type_expr
+  ; consequence : type_expr
+  ; alternative : type_expr
   }
 
 (** Intersection Type
@@ -2334,7 +2334,7 @@ and conditional_type =
      intersection_type: $ => prec.left(seq(optional($.type), '&', $.type))
     ]}
 *)
-and intersection_type = type_ option * type_ (* [type_ list]? *)
+and intersection_type = type_expr option * type_expr (* [type_ list]? *)
 
 (** Literal Type
 
@@ -2396,7 +2396,7 @@ and unary_type =
      lookup_type: $ => seq($.primary_type, '[', $.type, ']')
     ]}
 *)
-and lookup_type = primary_type * type_
+and lookup_type = primary_type * type_expr
 
 (** Object type
 
@@ -2550,9 +2550,9 @@ and tuple_type = tuple_type_member list
 and tuple_type_member =
   | Tuple_parameter of tuple_parameter
   | Tuple_optional_parameter of optional_tuple_parameter
-  | Tuple_optional_type of type_
-  | Tuple_rest_type of type_
-  | Type_type of type_
+  | Tuple_optional_type of type_expr
+  | Tuple_rest_type of type_expr
+  | Type_type of type_expr
 
 and tuple_parameter = tuple_parameter_name * type_annotation
 
@@ -2683,7 +2683,7 @@ and type_query_instantiation_expression =
      union_type: $ => prec.left(seq(optional($.type), '|', $.type))
     ]}
 *)
-and union_type = type_ option * type_ (* [type_ list]? *)
+and union_type = type_expr option * type_expr (* [type_expr list]? *)
 
 (** Function Type
 
@@ -2712,7 +2712,7 @@ and function_type =
   }
 
 and return_type =
-  | Return_type of type_
+  | Return_type of type_expr
   | Return_asserts of asserts
   | Return_type_predicate of type_predicate
 
@@ -2729,7 +2729,7 @@ and asserts =
      readonly_type: $ => seq('readonly', $.type)
     ]}
 *)
-and readonly_type = type_
+and readonly_type = type_expr
 
 (** Constructor Type
 
@@ -2756,7 +2756,7 @@ and constructor_type =
   { abstract : bool
   ; type_parameters : type_parameters
   ; parameters : formal_parameters
-  ; type_ : type_
+  ; type_expr : type_expr
   }
 
 (** Infer-type
@@ -2778,7 +2778,7 @@ and constructor_type =
 *)
 and infer_type =
   { type_id : type_identifier
-  ; extends : type_ option
+  ; extends : type_expr option
   }
 
 (** STATEMENTS
