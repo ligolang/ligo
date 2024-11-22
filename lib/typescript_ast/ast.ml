@@ -1356,7 +1356,7 @@ and assignment_lhs =
     ]}
 *)
 and member_expression =
-  { object_ : object_member
+  { object_expr : object_member
   ; selector : selector
   ; property : property_ident
   }
@@ -1399,7 +1399,7 @@ and property_ident =
     ]}
 *)
 and subscript_expression =
-  { object_ : expression
+  { object_expr : expression
   ; optional_chain : optional_chain option
   ; index : expressions brackets
   }
