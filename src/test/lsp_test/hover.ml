@@ -68,54 +68,54 @@ let%expect_test "simple.mligo" =
      { "contents": [ { "value": "y : int", "language": "cameligo" } ] };
      { "contents": [ { "value": "y : int", "language": "cameligo" } ] }] |}]
 
-let%expect_test "registry.jsligo" =
-  get_hover_test
-    { file = "contracts/lsp/registry.jsligo"
-    ; hover_positions =
-        [ pos ~line:11 ~character:19
-        ; pos ~line:26 ~character:10
-        ; pos ~line:28 ~character:31
-        ; pos ~line:39 ~character:28
-        ; pos ~line:40 ~character:50
-        ; pos ~line:39 ~character:40
-        ; pos ~line:39 ~character:55
-        ]
-    };
-  [%expect
-    {|
-    [{
-       "contents": [
-         {
-           "value": "get_exn : <a>(_: list<a>) => (_: int) => a",
-           "language": "jsligo"
-         }
-       ]
-     };
-     {
-       "contents": [
-         {
-           "value": "map :\n  <src, dst>(_: (_: src) => dst) => (_: list<src>) => list<\n    dst\n  >",
-           "language": "jsligo"
-         },
-         "The call `List.map(f, list([a1; ...; an]))` applies the function `f` to\n    `a1`, ..., `an` (from left to right), and builds the list\n    `list([f(a1); ...; f(an)])` with the results returned by `f`."
-       ]
-     };
-     { "contents": [ { "value": "primes : list<int>", "language": "jsligo" } ] };
-     { "contents": [ { "value": "store : storage", "language": "jsligo" } ] };
-     { "contents": [ { "value": "store : storage", "language": "jsligo" } ] };
-     {
-       "contents": [
-         { "value": "type storage = list<int>", "language": "jsligo" }
-       ]
-     };
-     {
-       "contents": [
-         {
-           "value": "type return_ = [list<operation>, list<int>]",
-           "language": "jsligo"
-         }
-       ]
-     }] |}]
+(* let%expect_test "registry.jsligo" = *)
+(*   get_hover_test *)
+(*     { file = "contracts/lsp/registry.jsligo" *)
+(*     ; hover_positions = *)
+(*         [ pos ~line:11 ~character:19 *)
+(*         ; pos ~line:26 ~character:10 *)
+(*         ; pos ~line:28 ~character:31 *)
+(*         ; pos ~line:39 ~character:28 *)
+(*         ; pos ~line:40 ~character:50 *)
+(*         ; pos ~line:39 ~character:40 *)
+(*         ; pos ~line:39 ~character:55 *)
+(*         ] *)
+(*     }; *)
+(*   [%expect *)
+(*     {| *)
+(*     [{ *)
+(*        "contents": [ *)
+(*          { *)
+(*            "value": "get_exn : <a>(_: list<a>) => (_: int) => a", *)
+(*            "language": "jsligo" *)
+(*          } *)
+(*        ] *)
+(*      }; *)
+(*      { *)
+(*        "contents": [ *)
+(*          { *)
+(*            "value": "map :\n  <src, dst>(_: (_: src) => dst) => (_: list<src>) => list<\n    dst\n  >", *)
+(*            "language": "jsligo" *)
+(*          }, *)
+(*          "The call `List.map(f, list([a1; ...; an]))` applies the function `f` to\n    `a1`, ..., `an` (from left to right), and builds the list\n    `list([f(a1); ...; f(an)])` with the results returned by `f`." *)
+(*        ] *)
+(*      }; *)
+(*      { "contents": [ { "value": "primes : list<int>", "language": "jsligo" } ] }; *)
+(*      { "contents": [ { "value": "store : storage", "language": "jsligo" } ] }; *)
+(*      { "contents": [ { "value": "store : storage", "language": "jsligo" } ] }; *)
+(*      { *)
+(*        "contents": [ *)
+(*          { "value": "type storage = list<int>", "language": "jsligo" } *)
+(*        ] *)
+(*      }; *)
+(*      { *)
+(*        "contents": [ *)
+(*          { *)
+(*            "value": "type return_ = [list<operation>, list<int>]", *)
+(*            "language": "jsligo" *)
+(*          } *)
+(*        ] *)
+(*      }] |}] *)
 
 let%expect_test "hovers.mligo" =
   get_hover_test

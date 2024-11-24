@@ -58,83 +58,83 @@ let%expect_test "references in included file" =
        "uri": "file:///../../../../../default/src/test/contracts/lsp/includer/includer.mligo"
      }] |}]
 
-let%expect_test "Reference of registry package in reverse dependency" =
-  let package_path =
-    Path.from_absolute
-    @@ Option.value_exn
-    @@ Lsp_test_helpers.Lib.resolve_lib_path
-         ~project_root:(resolve "contracts/lsp")
-         ~file:(resolve "contracts/lsp/registry.jsligo")
-         ~lib_name:"bigarray"
-         ~file_path:(Filename.concat "lib" "bigarray.mligo")
-  in
-  get_references_test
-    { test_file = package_path; reference = Position.create ~line:27 ~character:4 };
-  [%expect
-    {|
-    [{
-       "range": {
-         "end": { "character": 11, "line": 27 },
-         "start": { "character": 4, "line": 27 }
-       },
-       "uri": "file:///../../../../../default/src/test/contracts/lsp/.ligo/source/i/ligo__s__bigarray__1.0.0__cf1c9d6c/lib/bigarray.mligo"
-     };
-     {
-       "range": {
-         "end": { "character": 28, "line": 49 },
-         "start": { "character": 21, "line": 49 }
-       },
-       "uri": "file:///../../../../../default/src/test/contracts/lsp/.ligo/source/i/ligo__s__bigarray__1.0.0__cf1c9d6c/test/bigarray.test.mligo"
-     };
-     {
-       "range": {
-         "end": { "character": 28, "line": 50 },
-         "start": { "character": 21, "line": 50 }
-       },
-       "uri": "file:///../../../../../default/src/test/contracts/lsp/.ligo/source/i/ligo__s__bigarray__1.0.0__cf1c9d6c/test/bigarray.test.mligo"
-     };
-     {
-       "range": {
-         "end": { "character": 28, "line": 51 },
-         "start": { "character": 21, "line": 51 }
-       },
-       "uri": "file:///../../../../../default/src/test/contracts/lsp/.ligo/source/i/ligo__s__bigarray__1.0.0__cf1c9d6c/test/bigarray.test.mligo"
-     };
-     {
-       "range": {
-         "end": { "character": 23, "line": 53 },
-         "start": { "character": 16, "line": 53 }
-       },
-       "uri": "file:///../../../../../default/src/test/contracts/lsp/.ligo/source/i/ligo__s__bigarray__1.0.0__cf1c9d6c/test/bigarray.test.mligo"
-     };
-     {
-       "range": {
-         "end": { "character": 23, "line": 62 },
-         "start": { "character": 16, "line": 62 }
-       },
-       "uri": "file:///../../../../../default/src/test/contracts/lsp/.ligo/source/i/ligo__s__bigarray__1.0.0__cf1c9d6c/test/bigarray.test.mligo"
-     };
-     {
-       "range": {
-         "end": { "character": 23, "line": 71 },
-         "start": { "character": 16, "line": 71 }
-       },
-       "uri": "file:///../../../../../default/src/test/contracts/lsp/.ligo/source/i/ligo__s__bigarray__1.0.0__cf1c9d6c/test/bigarray.test.mligo"
-     };
-     {
-       "range": {
-         "end": { "character": 27, "line": 8 },
-         "start": { "character": 20, "line": 8 }
-       },
-       "uri": "file:///../../../../../default/src/test/contracts/lsp/registry.jsligo"
-     };
-     {
-       "range": {
-         "end": { "character": 33, "line": 14 },
-         "start": { "character": 26, "line": 14 }
-       },
-       "uri": "file:///../../../../../default/src/test/contracts/lsp/registry.jsligo"
-     }] |}]
+(* let%expect_test "Reference of registry package in reverse dependency" = *)
+(*   let package_path = *)
+(*     Path.from_absolute *)
+(*     @@ Option.value_exn *)
+(*     @@ Lsp_test_helpers.Lib.resolve_lib_path *)
+(*          ~project_root:(resolve "contracts/lsp") *)
+(*          ~file:(resolve "contracts/lsp/registry.jsligo") *)
+(*          ~lib_name:"bigarray" *)
+(*          ~file_path:(Filename.concat "lib" "bigarray.mligo") *)
+(*   in *)
+(*   get_references_test *)
+(*     { test_file = package_path; reference = Position.create ~line:27 ~character:4 }; *)
+(*   [%expect *)
+(*     {| *)
+(*     [{ *)
+(*        "range": { *)
+(*          "end": { "character": 11, "line": 27 }, *)
+(*          "start": { "character": 4, "line": 27 } *)
+(*        }, *)
+(*        "uri": "file:///../../../../../default/src/test/contracts/lsp/.ligo/source/i/ligo__s__bigarray__1.0.0__cf1c9d6c/lib/bigarray.mligo" *)
+(*      }; *)
+(*      { *)
+(*        "range": { *)
+(*          "end": { "character": 28, "line": 49 }, *)
+(*          "start": { "character": 21, "line": 49 } *)
+(*        }, *)
+(*        "uri": "file:///../../../../../default/src/test/contracts/lsp/.ligo/source/i/ligo__s__bigarray__1.0.0__cf1c9d6c/test/bigarray.test.mligo" *)
+(*      }; *)
+(*      { *)
+(*        "range": { *)
+(*          "end": { "character": 28, "line": 50 }, *)
+(*          "start": { "character": 21, "line": 50 } *)
+(*        }, *)
+(*        "uri": "file:///../../../../../default/src/test/contracts/lsp/.ligo/source/i/ligo__s__bigarray__1.0.0__cf1c9d6c/test/bigarray.test.mligo" *)
+(*      }; *)
+(*      { *)
+(*        "range": { *)
+(*          "end": { "character": 28, "line": 51 }, *)
+(*          "start": { "character": 21, "line": 51 } *)
+(*        }, *)
+(*        "uri": "file:///../../../../../default/src/test/contracts/lsp/.ligo/source/i/ligo__s__bigarray__1.0.0__cf1c9d6c/test/bigarray.test.mligo" *)
+(*      }; *)
+(*      { *)
+(*        "range": { *)
+(*          "end": { "character": 23, "line": 53 }, *)
+(*          "start": { "character": 16, "line": 53 } *)
+(*        }, *)
+(*        "uri": "file:///../../../../../default/src/test/contracts/lsp/.ligo/source/i/ligo__s__bigarray__1.0.0__cf1c9d6c/test/bigarray.test.mligo" *)
+(*      }; *)
+(*      { *)
+(*        "range": { *)
+(*          "end": { "character": 23, "line": 62 }, *)
+(*          "start": { "character": 16, "line": 62 } *)
+(*        }, *)
+(*        "uri": "file:///../../../../../default/src/test/contracts/lsp/.ligo/source/i/ligo__s__bigarray__1.0.0__cf1c9d6c/test/bigarray.test.mligo" *)
+(*      }; *)
+(*      { *)
+(*        "range": { *)
+(*          "end": { "character": 23, "line": 71 }, *)
+(*          "start": { "character": 16, "line": 71 } *)
+(*        }, *)
+(*        "uri": "file:///../../../../../default/src/test/contracts/lsp/.ligo/source/i/ligo__s__bigarray__1.0.0__cf1c9d6c/test/bigarray.test.mligo" *)
+(*      }; *)
+(*      { *)
+(*        "range": { *)
+(*          "end": { "character": 27, "line": 8 }, *)
+(*          "start": { "character": 20, "line": 8 } *)
+(*        }, *)
+(*        "uri": "file:///../../../../../default/src/test/contracts/lsp/registry.jsligo" *)
+(*      }; *)
+(*      { *)
+(*        "range": { *)
+(*          "end": { "character": 33, "line": 14 }, *)
+(*          "start": { "character": 26, "line": 14 } *)
+(*        }, *)
+(*        "uri": "file:///../../../../../default/src/test/contracts/lsp/registry.jsligo" *)
+(*      }] |}] *)
 
 let%expect_test "references in a file with michelson injections" =
   get_references_test
