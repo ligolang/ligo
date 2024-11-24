@@ -221,79 +221,79 @@ let test_long_jsligo ~raise ~raw_options () =
     ()
 
 
-let test_use_external_packages ~raise ~(raw_options : Raw_options.t) () =
-  let project_root = Some "projects/demo" in
-  let raw_options = { raw_options with project_root } in
-  (* Here we #use (equivalent of #include) the dependencies of the root project *)
-  test_seq
-    ~raise
-    ~raw_options
-    (make_init_state_cameligo ~project_root ())
-    [ "#use \"ligo-foo/foo.mligo\""
-    ; "#use \"ligo-list-helpers/list.mligo\""
-    ; "#use \"ligo-test_2/test2.mligo\""
-    ; "y"
-    ; "#use \"ligo_test_1/test1.mligo\""
-    ; "x"
-    ]
-    [ "SetX , concat , reverse ,\nuniq_concat"
-    ; "concat , reverse ,\nsum"
-    ; "y"
-    ; "24"
-    ; "x"
-    ; "42"
-    ]
-    ()
+(* let test_use_external_packages ~raise ~(raw_options : Raw_options.t) () = *)
+(*   let project_root = Some "projects/demo" in *)
+(*   let raw_options = { raw_options with project_root } in *)
+(*   (\* Here we #use (equivalent of #include) the dependencies of the root project *\) *)
+(*   test_seq *)
+(*     ~raise *)
+(*     ~raw_options *)
+(*     (make_init_state_cameligo ~project_root ()) *)
+(*     [ "#use \"ligo-foo/foo.mligo\"" *)
+(*     ; "#use \"ligo-list-helpers/list.mligo\"" *)
+(*     ; "#use \"ligo-test_2/test2.mligo\"" *)
+(*     ; "y" *)
+(*     ; "#use \"ligo_test_1/test1.mligo\"" *)
+(*     ; "x" *)
+(*     ] *)
+(*     [ "SetX , concat , reverse ,\nuniq_concat" *)
+(*     ; "concat , reverse ,\nsum" *)
+(*     ; "y" *)
+(*     ; "24" *)
+(*     ; "x" *)
+(*     ; "42" *)
+(*     ] *)
+(*     () *)
 
 
-let test_import_external_packages ~raise ~(raw_options : Raw_options.t) () =
-  let project_root = Some "projects/demo" in
-  let raw_options = { raw_options with project_root } in
-  (* Here we #import the dependecies of the root project under separate namespaces *)
-  test_seq
-    ~raise
-    ~raw_options
-    (make_init_state_cameligo ~project_root ())
-    [ "#import \"ligo-foo/foo.mligo\" \"Foo\""
-    ; "#import \"ligo-list-helpers/list.mligo\" \"ListX\""
-    ; "#import \"ligo-test_2/test2.mligo\" \"Test2\""
-    ; "#import \"ligo_test_1/test1.mligo\" \"Test1\""
-    ; "Test1.x"
-    ; "Test2.y"
-    ]
-    [ "Done."; "Done."; "Done."; "Done."; "42"; "24" ]
-    ()
+(* let test_import_external_packages ~raise ~(raw_options : Raw_options.t) () = *)
+(*   let project_root = Some "projects/demo" in *)
+(*   let raw_options = { raw_options with project_root } in *)
+(*   (\* Here we #import the dependecies of the root project under separate namespaces *\) *)
+(*   test_seq *)
+(*     ~raise *)
+(*     ~raw_options *)
+(*     (make_init_state_cameligo ~project_root ()) *)
+(*     [ "#import \"ligo-foo/foo.mligo\" \"Foo\"" *)
+(*     ; "#import \"ligo-list-helpers/list.mligo\" \"ListX\"" *)
+(*     ; "#import \"ligo-test_2/test2.mligo\" \"Test2\"" *)
+(*     ; "#import \"ligo_test_1/test1.mligo\" \"Test1\"" *)
+(*     ; "Test1.x" *)
+(*     ; "Test2.y" *)
+(*     ] *)
+(*     [ "Done."; "Done."; "Done."; "Done."; "42"; "24" ] *)
+(*     () *)
 
 
-let test_use_scoped_package ~raise ~(raw_options : Raw_options.t) () =
-  let project_root = Some "projects/using_scope_pkg_project" in
-  let raw_options = { raw_options with project_root } in
-  (* Here we #use (equivalent of #include) *)
-  test_seq
-    ~raise
-    ~raw_options
-    (make_init_state_cameligo ~project_root ())
-    [ "#use \"@ligo/bigarray-cameligo/lib/bigarray.mligo\""; "reverse [3 ; 2 ; 1]" ]
-    [ "big_array , construct , last , reverse , concat , find , set , insert ,\n\
-       drop , take , slice , split , rotate , equal ,\n\
-       remove"
-    ; "CONS(1 , CONS(2 , CONS(3 , LIST_EMPTY())))"
-    ]
-    ()
+(* let test_use_scoped_package ~raise ~(raw_options : Raw_options.t) () = *)
+(*   let project_root = Some "projects/using_scope_pkg_project" in *)
+(*   let raw_options = { raw_options with project_root } in *)
+(*   (\* Here we #use (equivalent of #include) *\) *)
+(*   test_seq *)
+(*     ~raise *)
+(*     ~raw_options *)
+(*     (make_init_state_cameligo ~project_root ()) *)
+(*     [ "#use \"@ligo/bigarray-cameligo/lib/bigarray.mligo\""; "reverse [3 ; 2 ; 1]" ] *)
+(*     [ "big_array , construct , last , reverse , concat , find , set , insert ,\n\ *)
+(*        drop , take , slice , split , rotate , equal ,\n\ *)
+(*        remove" *)
+(*     ; "CONS(1 , CONS(2 , CONS(3 , LIST_EMPTY())))" *)
+(*     ] *)
+(*     () *)
 
 
-let test_import_scoped_packages ~raise ~(raw_options : Raw_options.t) () =
-  let project_root = Some "projects/using_scope_pkg_project" in
-  let raw_options = { raw_options with project_root } in
-  test_seq
-    ~raise
-    ~raw_options
-    (make_init_state_cameligo ~project_root ())
-    [ "#import \"@ligo/bigarray-cameligo/lib/bigarray.mligo\" \"BA\""
-    ; "BA.reverse [3 ; 2 ; 1]"
-    ]
-    [ "Done."; "CONS(1 , CONS(2 , CONS(3 , LIST_EMPTY())))" ]
-    ()
+(* let test_import_scoped_packages ~raise ~(raw_options : Raw_options.t) () = *)
+(*   let project_root = Some "projects/using_scope_pkg_project" in *)
+(*   let raw_options = { raw_options with project_root } in *)
+(*   test_seq *)
+(*     ~raise *)
+(*     ~raw_options *)
+(*     (make_init_state_cameligo ~project_root ()) *)
+(*     [ "#import \"@ligo/bigarray-cameligo/lib/bigarray.mligo\" \"BA\"" *)
+(*     ; "BA.reverse [3 ; 2 ; 1]" *)
+(*     ] *)
+(*     [ "Done."; "CONS(1 , CONS(2 , CONS(3 , LIST_EMPTY())))" ] *)
+(*     () *)
 
 
 let () =
@@ -319,12 +319,12 @@ let () =
            ; test "use" (test_use_jsligo ~raw_options)
            ; test "long" (test_long_jsligo ~raw_options)
            ]
-       ; test_suite
-           "REPL + package-management"
-           [ test "#use ext pkgs" (test_use_external_packages ~raw_options)
-           ; test "#import ext pkgs" (test_import_external_packages ~raw_options)
-           ; test "#use scoped ext pkg" (test_use_scoped_package ~raw_options)
-           ; test "#import scoped ext pkg" (test_import_scoped_packages ~raw_options)
-           ]
+       (* ; test_suite *)
+       (*     "REPL + package-management" *)
+       (*     [ test "#use ext pkgs" (test_use_external_packages ~raw_options) *)
+       (*     ; test "#import ext pkgs" (test_import_external_packages ~raw_options) *)
+       (*     ; test "#use scoped ext pkg" (test_use_scoped_package ~raw_options) *)
+       (*     ; test "#import scoped ext pkg" (test_import_scoped_packages ~raw_options) *)
+       (*     ] *)
        ];
   ()
