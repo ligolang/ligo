@@ -1857,22 +1857,36 @@ and print_extends_clause state node =
   in
   make_tree state node children
 
-and print_class_body state node =
-  let decorators = children_named "decorator" node in
-  let print state node =
-    match get_name node with
-    | "decorator" -> ()
-    | "method_definition" ->
-      List.iter ~f:(print_decorator state) decorators;
-      print_method_definition state node
-    | "method_signature" -> print_method_signature state node
-    | "class_static_block" -> print_class_static_block state node
-    | "abstract_method_signature" -> print_abstract_method_signature state node
-    | "index_signature" -> print_index_signature state node
-    | "public_field_definition" -> print_public_field_definition state node
-    | _ -> match_rest state node print_unexpected_node
+and print_class_body ?(comments = []) state node =
+  let comments = comments @ prev_comments node in
+  let opening = first_child_named "{" node
+  and closing = first_child_named "}" node
+  and named_children = collect_named_children node in
+  let pair (decorators, acc) child =
+    match get_name child with
+    | "decorator" -> child :: decorators, acc
+    | _ -> [], (List.rev decorators, child) :: acc
   in
-  print_braces state node print
+  let _, pairs = List.fold_left ~f:pair ~init:([], []) named_children in
+  let pairs = List.rev pairs in
+  let children =
+    (mk_child_res (make_sym ~comments) opening
+    :: mk_children_list print_class_member pairs)
+    @ [ mk_child_res make_sym closing ]
+  in
+  make_tree state node children
+
+and print_class_member state (decorators, node) =
+  match get_name node with
+  | "method_definition" ->
+    List.iter ~f:(print_decorator state) decorators;
+    print_method_definition state node
+  | "method_signature" -> print_method_signature state node
+  | "class_static_block" -> print_class_static_block state node
+  | "abstract_method_signature" -> print_abstract_method_signature state node
+  | "index_signature" -> print_index_signature state node
+  | "public_field_definition" -> print_public_field_definition state node
+  | _ -> match_rest state node print_unexpected_node
 
 and print_method_definition state node =
   let accessibility_modifier = first_child_named_opt "accessibility_modifier" node
