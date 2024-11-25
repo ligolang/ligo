@@ -53,6 +53,7 @@ type number =
    TODO: Use unique data constructors for each keyword.
 *)
 
+type kwd_implements = keyword
 type kwd_assert = keyword
 type kwd_as = keyword
 type kwd_async = keyword
@@ -338,7 +339,9 @@ and parameter_name =
   ; pattern : parameter_pattern
   }
 
-and decorators = decorator ne_list (* wrap *)
+and decorators = decorator ne_list
+(* wrap *)
+(* TODO: Why? It's always composed with [option] *)
 
 and parameter_pattern =
   | Parameter_pattern of pattern
@@ -483,7 +486,7 @@ and class_heritage =
   | Extends_clause of extends_clause * implements_clause option
   | Implements_clause of implements_clause
 
-and extends_clause = extends_clause_single ne_list (*wrap*)
+and extends_clause = kwd_extends * extends_clause_single ne_list (*wrap*)
 
 and extends_clause_single =
   { value : expression
@@ -491,7 +494,7 @@ and extends_clause_single =
   }
 
 and type_arguments = type_expr ne_list chevrons
-and implements_clause = type_expr ne_list
+and implements_clause = kwd_implements * type_expr ne_list
 
 and type_parameter =
   { kwd_const : kwd_const option
@@ -500,7 +503,7 @@ and type_parameter =
   ; default_type : (sym_equal * type_expr) option
   }
 
-and class_body = class_member list
+and class_body = class_member list braces
 
 and class_member =
   | Method_definition of decorators option * method_definition
@@ -561,12 +564,12 @@ and accessibility_modifier =
 and set_get_all =
   | Set of kwd_set
   | Get of kwd_get
-  | All of kwd_all
+  | All of sym_star
 
 and method_scope =
-  { static : kwd_static option
-  ; override : kwd_override option
-  ; readonly : kwd_readonly option
+  { kwd_static : kwd_static option
+  ; kwd_override : kwd_override option
+  ; kwd_readonly : kwd_readonly option
   }
 
 and property_name =

@@ -1006,7 +1006,7 @@ and dec_override_modifier node : (kwd_override, _) result =
 
 (* Return type annotation *)
 
-and dec_return_type node : (call_return_type, _) result =
+and dec_call_return_type node : (call_return_type, _) result =
   match get_name node with
   | "type_annotation" ->
     let* annotation = dec_type_annotation node in
@@ -1017,7 +1017,7 @@ and dec_return_type node : (call_return_type, _) result =
   | "type_predicate_annotation" ->
     let* annotation = dec_type_predicate_annotation node in
     Ok (Type_predicate_annotation annotation)
-  | s -> Error ("dec_return_type: " ^ s)
+  | s -> Error ("dec_call_return_type: " ^ s)
 
 (* Asserts annotation *)
 
@@ -1219,16 +1219,171 @@ and dec_class_heritage node : (class_heritage, _) result =
     Ok (Implements_clause implements_clause)
 
 and dec_extends_clause node : (extends_clause, _) result =
-  ignore node;
-  Error "TODO: dec_extends_clause"
+  let* kwd_extends = first_child_named "extends" node in
+  let kwd_extends = make_kwd kwd_extends in
+  let raw_children : ts_forest =
+    match collect_children node with
+    | [] | [ _ ] -> []
+    | _extends :: clauses -> clauses
+  in
+  let not_comma child = String.(get_name child <> ",") in
+  let raw_clauses : ts_forest = List.filter raw_children ~f:not_comma in
+  let rec pair_up acc = function
+    | value :: snd :: nodes ->
+      if String.equal (get_name snd) "type_arguments"
+      then pair_up ((value, Some snd) :: acc) nodes
+      else pair_up ((value, None) :: acc) (snd :: nodes)
+    | [ value ] -> List.rev ((value, None) :: acc)
+    | [] -> List.rev acc
+  in
+  let pairs : (ts_tree * ts_tree option) list = pair_up [] raw_clauses in
+  let mk_clause (value, type_arguments_opt) : (extends_clause_single, string) result =
+    let* value = dec_expression value in
+    let* type_arguments =
+      match type_arguments_opt with
+      | None -> Ok None
+      | Some type_arguments ->
+        let* args = dec_type_arguments type_arguments in
+        Ok (Some args)
+    in
+    Ok { value; type_arguments }
+  in
+  let* extends_clauses = Result.all @@ List.map ~f:mk_clause pairs in
+  let* extends_clauses =
+    match extends_clauses with
+    | [] -> Error "dec_extends_clause: One clause is expected."
+    | clause :: clauses -> Ok Nonempty_list.(clause :: clauses)
+  in
+  Ok (kwd_extends, extends_clauses)
 
 and dec_implements_clause node : (implements_clause, _) result =
-  ignore node;
-  Error "TODO: dec_implements_clause"
+  let* kwd_implements = first_child_named "implements" node in
+  let kwd_implements = make_kwd kwd_implements in
+  let raw_clauses = collect_named_children node in
+  let* type_exprs = ne_list_of_children_res dec_type raw_clauses in
+  Ok (kwd_implements, type_exprs)
 
-and dec_class_body node : (class_body, _) result =
+and dec_class_body ?(comments = []) node : (class_body, _) result =
+  let comments = comments @ prev_comments node in
+  let* opening = first_child_named "{" node in
+  let opening = make_sym ~comments opening in
+  let* closing = first_child_named "}" node in
+  let closing = make_sym closing in
+  let named_children = collect_named_children node in
+  let pair (decorators, acc) child =
+    match get_name child with
+    | "decorator" -> child :: decorators, acc
+    | _ -> [], (List.rev decorators, child) :: acc
+  in
+  let _, pairs = List.fold_left ~f:pair ~init:([], []) named_children in
+  let contents = List.map ~f:decode_class_member @@ List.rev pairs in
+  let* contents = Result.all contents in
+  Ok (Braces { opening; contents; closing })
+
+and decode_class_member ?(comments = []) (decorators, node) : (class_member, _) result =
+  match get_name node with
+  | "method_definition" ->
+    let* decorators = ne_list_opt_of_children_res dec_decorator decorators in
+    let* definition = dec_method_definition ~comments node in
+    (* Not perfect *)
+    Ok (Method_definition (decorators, definition))
+  | "method_signature" ->
+    let* signature = dec_method_signature node in
+    Ok (Method_signature signature : class_member)
+  | "class_static_block" ->
+    let* block = dec_class_static_block node in
+    Ok (Call_static_block block)
+  | "abstract_method_signature" ->
+    let* signature = dec_abstract_method_signature node in
+    Ok (Abstract_method_signature signature)
+  | "index_signature" ->
+    let* signature = dec_index_signature node in
+    Ok (Index_signature signature : class_member)
+  | "public_field_definition" ->
+    let* definition = dec_public_field_definition node in
+    Ok (Public_field_definition definition)
+  | s -> Error ("decode_class_member: " ^ s)
+
+(* Method definition *)
+
+and dec_method_definition ?(comments = []) node : (method_definition, _) result =
+  let accessibility_modifier = first_child_named_opt "accessibility_modifier" node in
+  let* access = make_opt_res dec_accessibility_modifier accessibility_modifier in
+  let kwd_static = first_child_named_opt "static" node
+  and kwd_override = first_child_named_opt "override_modifier" node
+  and kwd_readonly = first_child_named_opt "readonly" node in
+  let scope : method_scope =
+    { kwd_static = make_opt make_kwd kwd_static
+    ; kwd_override = make_opt make_kwd kwd_override
+    ; kwd_readonly = make_opt make_kwd kwd_readonly
+    }
+  in
+  let kwd_async = first_child_named_opt "async" node in
+  let kwd_async = make_opt make_kwd kwd_async in
+  let kwd_set = first_child_named_opt "set" node
+  and kwd_get = first_child_named_opt "get" node
+  and sym_star = first_child_named_opt "*" node in
+  let set_get_all : set_get_all option =
+    match kwd_set, kwd_get, sym_star with
+    | None, None, None -> None
+    | Some kwd_set, _, _ -> Some (Set (make_kwd kwd_set))
+    | _, Some kwd_get, _ -> Some (Get (make_kwd kwd_get))
+    | _, _, Some sym_star -> Some (All (make_sym sym_star))
+  in
+  let* name_field = child_with_field "name" node in
+  let* name = dec_property_name ~comments name_field in
+  let sym_qmark = first_child_named_opt "?" node in
+  let optional = make_opt make_sym sym_qmark in
+  (* "_call_signature" inlined: *)
+  let type_parameters_field = child_with_field_opt "type_parameters" node in
+  let* type_parameters = make_opt_res dec_type_parameters type_parameters_field in
+  let* parameters_field = child_with_field "parameters" node in
+  let* parameters = dec_formal_parameters parameters_field in
+  let return_type_field = child_with_field_opt "return_type" node in
+  let* return_type = make_opt_res dec_call_return_type return_type_field in
+  let call_sig : call_signature = { type_parameters; parameters; return_type } in
+  (* "statement_block" *)
+  let* body_field = child_with_field "body" node in
+  let* body = dec_statement_block body_field in
+  let signature : method_signature =
+    { access; scope; kwd_async; set_get_all; name; optional; call_sig }
+  in
+  Ok { signature; body }
+
+(* Method signature *)
+
+and dec_method_signature ?comments node : (method_signature, _) result =
+  ignore comments;
   ignore node;
-  Error "TODO: dec_class_body"
+  Error "TODO: dec_method_signature"
+
+(* Class static block *)
+
+and dec_class_static_block ?comments node : (statement_block, _) result =
+  ignore comments;
+  ignore node;
+  Error "TODO: dec_class_static_block"
+
+(* Abstract method signature *)
+
+and dec_abstract_method_signature ?comments node : (abstract_method_signature, _) result =
+  ignore comments;
+  ignore node;
+  Error "TODO: dec_abstract_method_signature"
+
+(* Index signature *)
+
+and dec_index_signature ?comments node : (index_signature, _) result =
+  ignore comments;
+  ignore node;
+  Error "TODO: dec_index_signature"
+
+(* Public field definition *)
+
+and dec_public_field_definition ?comments node : (public_field_definition, _) result =
+  ignore comments;
+  ignore node;
+  Error "TODO: dec_public_field_definition"
 
 (* Lexical declaration (see [dec_variable_declaration]) *)
 
@@ -1283,7 +1438,7 @@ and dec_function_signature ?(comments = []) node : (function_signature, _) resul
   let* parameters_field = child_with_field "parameters" node in
   let* parameters = dec_formal_parameters parameters_field in
   let return_type_field = child_with_field_opt "return_type" node in
-  let* return_type = make_opt_res dec_return_type return_type_field in
+  let* return_type = make_opt_res dec_call_return_type return_type_field in
   let call_sig : call_signature = { type_parameters; parameters; return_type } in
   Ok { kwd_async; kwd_function; name; call_sig }
 
