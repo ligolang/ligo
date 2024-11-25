@@ -1291,8 +1291,8 @@ and decode_class_member ?(comments = []) (decorators, node) : (class_member, _) 
     let* signature = dec_method_signature node in
     Ok (Method_signature signature : class_member)
   | "class_static_block" ->
-    let* block = dec_class_static_block node in
-    Ok (Call_static_block block)
+    let* static_block = dec_class_static_block node in
+    Ok (Call_static_block static_block)
   | "abstract_method_signature" ->
     let* signature = dec_abstract_method_signature node in
     Ok (Abstract_method_signature signature)
@@ -1352,17 +1352,21 @@ and dec_method_definition ?(comments = []) node : (method_definition, _) result 
 
 (* Method signature *)
 
-and dec_method_signature ?comments node : (method_signature, _) result =
+and dec_method_signature ?(comments = []) node : (method_signature, _) result =
   ignore comments;
   ignore node;
   Error "TODO: dec_method_signature"
 
 (* Class static block *)
 
-and dec_class_static_block ?comments node : (statement_block, _) result =
-  ignore comments;
-  ignore node;
-  Error "TODO: dec_class_static_block"
+and dec_class_static_block ?(comments = []) node
+    : (kwd_static * statement_block, _) result
+  =
+  let* kwd_static = first_child_named "static" node in
+  let kwd_static = make_kwd ~comments kwd_static in
+  let* body_field = child_with_field "bodya" node in
+  let* block = dec_statement_block body_field in
+  Ok (kwd_static, block)
 
 (* Abstract method signature *)
 
