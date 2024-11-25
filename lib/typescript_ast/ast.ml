@@ -332,16 +332,14 @@ and formal_parameter =
   }
 
 and parameter_name =
-  { decorators : decorators option
+  { decorators : decorators
   ; access : accessibility_modifier option
   ; kwd_override : kwd_override option
   ; kwd_readonly : kwd_readonly option
   ; pattern : parameter_pattern
   }
 
-and decorators = decorator ne_list
-(* wrap *)
-(* TODO: Why? It's always composed with [option] *)
+and decorators = decorator list
 
 and parameter_pattern =
   | Parameter_pattern of pattern
@@ -474,7 +472,7 @@ and generator_function_declaration = sym_star * function_declaration
      ]}
  *)
 and class_declaration =
-  { decorators : decorators option
+  { decorators : decorators
   ; kwd_class : kwd_class
   ; name : type_identifier
   ; type_parameters : type_parameters option
@@ -506,7 +504,7 @@ and type_parameter =
 and class_body = class_member list braces
 
 and class_member =
-  | Method_definition of decorators option * method_definition
+  | Method_definition of decorators * method_definition
   | Method_signature of method_signature
   | Call_static_block of statement_block
   | Abstract_method_signature of abstract_method_signature
@@ -759,7 +757,7 @@ and variable_declaration = kwd_var * variable_declarator ne_list
     }]
  *)
 and abstract_class_declaration =
-  { decorators : decorators option
+  { decorators : decorators
   ; kwd_abstract : kwd_abstract
   ; kwd_class : kwd_class
   ; name : type_identifier
@@ -953,7 +951,7 @@ and index_type =
     ]}
  *)
 and public_field_definition =
-  { decorators : decorators option
+  { decorators : decorators
   ; access : accessibility_modifier option
   ; kwd_declare : kwd_declare option
   ; scope : field_scope
@@ -3354,7 +3352,7 @@ and finally_clause = statement_block
     ]}
 *)
 and class_ =
-  { decorators : decorators option
+  { decorators : decorators
   ; name : type_identifier option
   ; type_parameters : type_parameters
   ; class_heritage : class_heritage
@@ -3407,7 +3405,7 @@ and decorator =
   | Decorator_parenthesized_expression of decorator_parenthesized_expression parens
 
 and 'a decorated =
-  { decorators : decorators option
+  { decorators : decorators
   ; decorated : 'a
   }
 

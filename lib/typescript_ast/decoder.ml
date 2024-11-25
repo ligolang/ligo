@@ -425,7 +425,7 @@ and dec_export_declaration after_export node : (declaration decorated, _) result
 
 and dec_decorated : 'a. ts_forest -> 'a -> ('a decorated, _) result =
  fun decorators decorated ->
-  let* decorators = ne_list_opt_of_children_res dec_decorator decorators in
+  let* decorators = list_of_children_res dec_decorator decorators in
   Ok { decorators; decorated }
 
 and dec_export_clause node : (export_clause, _) result =
@@ -1193,7 +1193,7 @@ and dec_generator_function_declaration ?(comments = []) node
 and dec_class_declaration ?(comments = []) node : (class_declaration, _) result =
   let comments = comments @ prev_comments node in
   let decorators = children_named "decorator" node in
-  let* decorators = ne_list_opt_of_children_res dec_decorator decorators in
+  let* decorators = list_of_children_res dec_decorator decorators in
   let* kwd_class = first_child_named "class" node in
   let kwd_class = make_kwd ~comments kwd_class in
   let* name_field = child_with_field "name" node in
@@ -1283,7 +1283,7 @@ and dec_class_body ?(comments = []) node : (class_body, _) result =
 and decode_class_member ?(comments = []) (decorators, node) : (class_member, _) result =
   match get_name node with
   | "method_definition" ->
-    let* decorators = ne_list_opt_of_children_res dec_decorator decorators in
+    let* decorators = list_of_children_res dec_decorator decorators in
     let* definition = dec_method_definition ~comments node in
     (* Not perfect *)
     Ok (Method_definition (decorators, definition))
@@ -1451,7 +1451,7 @@ and dec_formal_parameter ?(comments = []) node : (formal_parameter, _) result =
   let comments = comments @ prev_comments node in
   (* "_parameter_name" inlined: *)
   let decorators = children_named "decorator" node in
-  let* decorators = ne_list_opt_of_children_res dec_decorator decorators in
+  let* decorators = list_of_children_res dec_decorator decorators in
   let accessibility_modifier = first_child_named_opt "accessibility_modifier" node in
   let* access = make_opt_res dec_accessibility_modifier accessibility_modifier in
   let override_modifier = first_child_named_opt "override_modifier" node in
