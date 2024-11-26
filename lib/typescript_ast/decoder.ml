@@ -1365,7 +1365,8 @@ and dec_class_static_block ?(comments = []) node
 (* Abstract method signature *)
 
 and dec_abstract_method_signature ?(comments = []) node
-        : (abstract_method_signature, _) result =
+    : (abstract_method_signature, _) result
+  =
   let accessibility_modifier = first_child_named_opt "accessibility_modifier" node in
   let* access = make_opt_res dec_accessibility_modifier accessibility_modifier in
   let* kwd_abstract = first_child_named "abstract" node in
@@ -1374,10 +1375,11 @@ and dec_abstract_method_signature ?(comments = []) node
   let* kwd_override = make_opt_res dec_override_modifier override_modifier in
   let set_get_all = mk_set_get_all node in
   let* name_field = child_with_field "name" node in
-  let* name = dec_property_name ~comments name_field in (* Not ideal *)
+  (* Not ideal *)
+  let* name = dec_property_name ~comments name_field in
   let sym_qmark = first_child_named_opt "?" node in
   let optional = make_opt make_sym sym_qmark in
-  let* call_sig = dec_call_signature node  in
+  let* call_sig = dec_call_signature node in
   Ok { access; kwd_abstract; kwd_override; set_get_all; name; optional; call_sig }
 
 (* Call signature *)
