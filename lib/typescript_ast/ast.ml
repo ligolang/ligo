@@ -829,6 +829,7 @@ and statement_block = statements
  *)
 and abstract_method_signature =
   { access : accessibility_modifier option
+  ; kwd_abstract : kwd_abstract
   ; kwd_override : kwd_override option
   ; set_get_all : set_get_all option
   ; name : property_name
