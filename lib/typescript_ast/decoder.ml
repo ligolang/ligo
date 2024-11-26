@@ -74,6 +74,15 @@ let make_opt_res decoder = function
     | Ok decoded -> Ok (Some decoded)
     | Error msg -> Error msg)
 
+(* Handling some modifiers *)
+
+let mk_set_get_all kwd_set kwd_get sym_star : set_get_all option =
+  match kwd_set, kwd_get, sym_star with
+  | None, None, None -> None
+  | Some kwd_set, _, _ -> Some (Set (make_kwd kwd_set))
+  | _, Some kwd_get, _ -> Some (Get (make_kwd kwd_get))
+  | _, _, Some sym_star -> Some (All (make_sym sym_star))
+
 (* Decoding children of the same type *)
 
 let list_of_children_res ?(comments = []) decoder children : ('a list, _) result =
@@ -1329,25 +1338,12 @@ and dec_method_signature ?(comments = []) node : (method_signature, _) result =
   let kwd_set = first_child_named_opt "set" node
   and kwd_get = first_child_named_opt "get" node
   and sym_star = first_child_named_opt "*" node in
-  let set_get_all : set_get_all option =
-    match kwd_set, kwd_get, sym_star with
-    | None, None, None -> None
-    | Some kwd_set, _, _ -> Some (Set (make_kwd kwd_set))
-    | _, Some kwd_get, _ -> Some (Get (make_kwd kwd_get))
-    | _, _, Some sym_star -> Some (All (make_sym sym_star))
-  in
+  let set_get_all = mk_set_get_all kwd_set kwd_get sym_star in
   let* name_field = child_with_field "name" node in
   let* name = dec_property_name ~comments name_field in
   let sym_qmark = first_child_named_opt "?" node in
   let optional = make_opt make_sym sym_qmark in
-  (* "_call_signature" inlined: *)
-  let type_parameters_field = child_with_field_opt "type_parameters" node in
-  let* type_parameters = make_opt_res dec_type_parameters type_parameters_field in
-  let* parameters_field = child_with_field "parameters" node in
-  let* parameters = dec_formal_parameters parameters_field in
-  let return_type_field = child_with_field_opt "return_type" node in
-  let* return_type = make_opt_res dec_call_return_type return_type_field in
-  let call_sig : call_signature = { type_parameters; parameters; return_type } in
+  let* call_sig = dec_call_signature node in
   Ok { access; scope; kwd_async; set_get_all; name; optional; call_sig }
 
 (* Class static block *)
@@ -1364,28 +1360,36 @@ and dec_class_static_block ?(comments = []) node
 (* Abstract method signature *)
 
 and dec_abstract_method_signature ?comments node : (abstract_method_signature, _) result =
-  (*
+(*
   let accessibility_modifier = first_child_named_opt "accessibility_modifier" node in
   let* access = make_opt_res dec_accessibility_modifier accessibility_modifier in
   let kwd_abstract = first_child_named_opt "abstract" node in
-  let* kwd_abstract = make_opt make_kwd kwd_abstract in
-
-  let kwd_override = first_child_named_opt "override_modifier" node in
-let* kwd_override = make_opt_res dec_override_modifier override_modifier in
-
-  and kwd_set = first_child_named_opt "set" node
+  let kwd_abstract = make_opt make_kwd kwd_abstract in
+  let override_modifier = first_child_named_opt "override_modifier" node in
+  let* kwd_override = make_opt_res dec_override_modifier override_modifier in
+  let kwd_set = first_child_named_opt "set" node
   and kwd_get = first_child_named_opt "get" node
-  and sym_star = first_child_named_opt "*" node
-  and name_field = child_with_field "name" node
-  and sym_qmark = first_child_named_opt "?" node
-  (* "_call_signature" inlined: *)
-  and type_parameters_field = child_with_field_opt "type_parameters" node
-  and parameters_field = child_with_field "parameters" node
-  and return_type_field = child_with_field_opt "return_type" node in
+  and sym_star = first_child_named_opt "*" node in
+  let set_get_all = mk_set_get_all kwd_set kwd_get sym_star in
+  let* name_field = child_with_field "name" node in
+  let* name = dec_property_name ~comments name_field in
+  let sym_qmark = first_child_named_opt "?" node in
+  let optional = make_opt make_sym sym_qmark in
+  let* call_sig : call_signature = dec_call_signature node  in
+Error ""
 *)
-  ignore comments;
-  ignore node;
-  Error "TODO: dec_abstract_method_signature"
+  ignore comments; ignore node; Error "TODO: dec_abstract_method_signature"
+
+(* Call signature *)
+
+and dec_call_signature node : (call_signature, _) result =
+  let type_parameters_field = child_with_field_opt "type_parameters" node in
+  let* type_parameters = make_opt_res dec_type_parameters type_parameters_field in
+  let* parameters_field = child_with_field "parameters" node in
+  let* parameters = dec_formal_parameters parameters_field in
+  let return_type_field = child_with_field_opt "return_type" node in
+  let* return_type = make_opt_res dec_call_return_type return_type_field in
+  Ok ({ type_parameters; parameters; return_type } : call_signature)
 
 (* Index signature *)
 
@@ -1448,14 +1452,7 @@ and dec_function_signature ?(comments = []) node : (function_signature, _) resul
   let kwd_function = make_kwd ~comments:function_comments kwd_function in
   let* name_field = child_with_field "name" node in
   let name = dec_identifier name_field in
-  (* "_call_signature" inlined: *)
-  let type_parameters_field = child_with_field_opt "type_parameters" node in
-  let* type_parameters = make_opt_res dec_type_parameters type_parameters_field in
-  let* parameters_field = child_with_field "parameters" node in
-  let* parameters = dec_formal_parameters parameters_field in
-  let return_type_field = child_with_field_opt "return_type" node in
-  let* return_type = make_opt_res dec_call_return_type return_type_field in
-  let call_sig : call_signature = { type_parameters; parameters; return_type } in
+  let* call_sig = dec_call_signature node in
   Ok { kwd_async; kwd_function; name; call_sig }
 
 (* Formal parameters *)

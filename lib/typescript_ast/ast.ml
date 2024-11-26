@@ -2707,7 +2707,7 @@ and union_type = type_expr option * type_expr (* [type_expr list]? *)
     ]}
 *)
 and function_type =
-  { type_parameters : type_parameter option
+  { type_parameters : type_parameters option
   ; parameters : formal_parameters
   ; return_type : return_type
   }
