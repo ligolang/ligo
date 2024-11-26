@@ -1307,6 +1307,14 @@ and decode_class_member ?(comments = []) (decorators, node) : (class_member, _) 
 (* Method definition *)
 
 and dec_method_definition ?(comments = []) node : (method_definition, _) result =
+  let* signature = dec_method_signature ~comments node in
+  let* body_field = child_with_field "body" node in
+  let* body = dec_statement_block body_field in
+  Ok { signature; body }
+
+(* Method signature *)
+
+and dec_method_signature ?(comments = []) node : (method_signature, _) result =
   let accessibility_modifier = first_child_named_opt "accessibility_modifier" node in
   let* access = make_opt_res dec_accessibility_modifier accessibility_modifier in
   let kwd_static = first_child_named_opt "static" node
@@ -1342,20 +1350,7 @@ and dec_method_definition ?(comments = []) node : (method_definition, _) result 
   let return_type_field = child_with_field_opt "return_type" node in
   let* return_type = make_opt_res dec_call_return_type return_type_field in
   let call_sig : call_signature = { type_parameters; parameters; return_type } in
-  (* "statement_block" *)
-  let* body_field = child_with_field "body" node in
-  let* body = dec_statement_block body_field in
-  let signature : method_signature =
-    { access; scope; kwd_async; set_get_all; name; optional; call_sig }
-  in
-  Ok { signature; body }
-
-(* Method signature *)
-
-and dec_method_signature ?(comments = []) node : (method_signature, _) result =
-  ignore comments;
-  ignore node;
-  Error "TODO: dec_method_signature"
+  Ok { access; scope; kwd_async; set_get_all; name; optional; call_sig }
 
 (* Class static block *)
 
