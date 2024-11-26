@@ -76,7 +76,10 @@ let make_opt_res decoder = function
 
 (* Handling some modifiers *)
 
-let mk_set_get_all kwd_set kwd_get sym_star : set_get_all option =
+let mk_set_get_all node : set_get_all option =
+  let kwd_set = first_child_named_opt "set" node
+  and kwd_get = first_child_named_opt "get" node
+  and sym_star = first_child_named_opt "*" node in
   match kwd_set, kwd_get, sym_star with
   | None, None, None -> None
   | Some kwd_set, _, _ -> Some (Set (make_kwd kwd_set))
@@ -1294,7 +1297,7 @@ and decode_class_member ?(comments = []) (decorators, node) : (class_member, _) 
   | "method_definition" ->
     let* decorators = list_of_children_res dec_decorator decorators in
     let* definition = dec_method_definition ~comments node in
-    (* Not perfect *)
+    (* Not ideal *)
     Ok (Method_definition (decorators, definition))
   | "method_signature" ->
     let* signature = dec_method_signature node in
@@ -1326,25 +1329,27 @@ and dec_method_definition ?(comments = []) node : (method_definition, _) result 
 and dec_method_signature ?(comments = []) node : (method_signature, _) result =
   let accessibility_modifier = first_child_named_opt "accessibility_modifier" node in
   let* access = make_opt_res dec_accessibility_modifier accessibility_modifier in
-  let kwd_static = first_child_named_opt "static" node in
-  let kwd_static = make_opt make_kwd kwd_static in
-  let override_modifier = first_child_named_opt "override_modifier" node in
-  let* kwd_override = make_opt_res dec_override_modifier override_modifier in
-  let kwd_readonly = first_child_named_opt "readonly" node in
-  let kwd_readonly = make_opt make_kwd kwd_readonly in
-  let scope : method_scope = { kwd_static; kwd_override; kwd_readonly } in
+  let* scope = dec_method_scope node in
   let kwd_async = first_child_named_opt "async" node in
   let kwd_async = make_opt make_kwd kwd_async in
-  let kwd_set = first_child_named_opt "set" node
-  and kwd_get = first_child_named_opt "get" node
-  and sym_star = first_child_named_opt "*" node in
-  let set_get_all = mk_set_get_all kwd_set kwd_get sym_star in
+  let set_get_all = mk_set_get_all node in
   let* name_field = child_with_field "name" node in
   let* name = dec_property_name ~comments name_field in
   let sym_qmark = first_child_named_opt "?" node in
   let optional = make_opt make_sym sym_qmark in
   let* call_sig = dec_call_signature node in
   Ok { access; scope; kwd_async; set_get_all; name; optional; call_sig }
+
+(* Method scope *)
+
+and dec_method_scope node : (method_scope, _) result =
+  let kwd_static = first_child_named_opt "static" node in
+  let kwd_static = make_opt make_kwd kwd_static in
+  let override_modifier = first_child_named_opt "override_modifier" node in
+  let* kwd_override = make_opt_res dec_override_modifier override_modifier in
+  let kwd_readonly = first_child_named_opt "readonly" node in
+  let kwd_readonly = make_opt make_kwd kwd_readonly in
+  Ok { kwd_static; kwd_override; kwd_readonly }
 
 (* Class static block *)
 
@@ -1359,26 +1364,21 @@ and dec_class_static_block ?(comments = []) node
 
 (* Abstract method signature *)
 
-and dec_abstract_method_signature ?comments node : (abstract_method_signature, _) result =
-(*
+and dec_abstract_method_signature ?(comments = []) node
+        : (abstract_method_signature, _) result =
   let accessibility_modifier = first_child_named_opt "accessibility_modifier" node in
   let* access = make_opt_res dec_accessibility_modifier accessibility_modifier in
-  let kwd_abstract = first_child_named_opt "abstract" node in
-  let kwd_abstract = make_opt make_kwd kwd_abstract in
+  let* kwd_abstract = first_child_named "abstract" node in
+  let kwd_abstract = make_kwd kwd_abstract in
   let override_modifier = first_child_named_opt "override_modifier" node in
   let* kwd_override = make_opt_res dec_override_modifier override_modifier in
-  let kwd_set = first_child_named_opt "set" node
-  and kwd_get = first_child_named_opt "get" node
-  and sym_star = first_child_named_opt "*" node in
-  let set_get_all = mk_set_get_all kwd_set kwd_get sym_star in
+  let set_get_all = mk_set_get_all node in
   let* name_field = child_with_field "name" node in
-  let* name = dec_property_name ~comments name_field in
+  let* name = dec_property_name ~comments name_field in (* Not ideal *)
   let sym_qmark = first_child_named_opt "?" node in
   let optional = make_opt make_sym sym_qmark in
-  let* call_sig : call_signature = dec_call_signature node  in
-Error ""
-*)
-  ignore comments; ignore node; Error "TODO: dec_abstract_method_signature"
+  let* call_sig = dec_call_signature node  in
+  Ok { access; kwd_abstract; kwd_override; set_get_all; name; optional; call_sig }
 
 (* Call signature *)
 
@@ -1472,7 +1472,7 @@ and dec_formal_parameter ?(comments = []) node : (formal_parameter, _) result =
   let kwd_readonly = first_child_named_opt "readonly" node in
   let kwd_readonly = make_opt make_kwd kwd_readonly in
   let* pattern_field = child_with_field "pattern" node in
-  let* pattern = decode_parameter_pattern ~comments pattern_field (* Not perfect *) in
+  let* pattern = decode_parameter_pattern ~comments pattern_field (* Not ideal *) in
   (* *)
   let parameter_name = { decorators; access; kwd_override; kwd_readonly; pattern } in
   let qmark = first_child_named_opt "?" node in
@@ -1566,7 +1566,7 @@ and dec_type_parameter ?(comments = []) node : (type_parameter, _) result =
   let kwd_const = first_child_named_opt "const" node in
   let kwd_const = make_opt make_kwd kwd_const in
   let* name_field = child_with_field "name" node in
-  let name = dec_type_identifier ~comments name_field (* Not perfect *) in
+  let name = dec_type_identifier ~comments name_field (* Not ideal *) in
   let constraint_field = child_with_field_opt "constraint" node in
   let* constraint_expr = make_opt_res dec_constraint constraint_field in
   let value_field = child_with_field_opt "value" node in
