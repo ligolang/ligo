@@ -1317,15 +1317,13 @@ and dec_method_definition ?(comments = []) node : (method_definition, _) result 
 and dec_method_signature ?(comments = []) node : (method_signature, _) result =
   let accessibility_modifier = first_child_named_opt "accessibility_modifier" node in
   let* access = make_opt_res dec_accessibility_modifier accessibility_modifier in
-  let kwd_static = first_child_named_opt "static" node
-  and kwd_override = first_child_named_opt "override_modifier" node
-  and kwd_readonly = first_child_named_opt "readonly" node in
-  let scope : method_scope =
-    { kwd_static = make_opt make_kwd kwd_static
-    ; kwd_override = make_opt make_kwd kwd_override
-    ; kwd_readonly = make_opt make_kwd kwd_readonly
-    }
-  in
+  let kwd_static = first_child_named_opt "static" node in
+  let kwd_static = make_opt make_kwd kwd_static in
+  let override_modifier = first_child_named_opt "override_modifier" node in
+  let* kwd_override = make_opt_res dec_override_modifier override_modifier in
+  let kwd_readonly = first_child_named_opt "readonly" node in
+  let kwd_readonly = make_opt make_kwd kwd_readonly in
+  let scope : method_scope = { kwd_static; kwd_override; kwd_readonly } in
   let kwd_async = first_child_named_opt "async" node in
   let kwd_async = make_opt make_kwd kwd_async in
   let kwd_set = first_child_named_opt "set" node
@@ -1366,6 +1364,25 @@ and dec_class_static_block ?(comments = []) node
 (* Abstract method signature *)
 
 and dec_abstract_method_signature ?comments node : (abstract_method_signature, _) result =
+  (*
+  let accessibility_modifier = first_child_named_opt "accessibility_modifier" node in
+  let* access = make_opt_res dec_accessibility_modifier accessibility_modifier in
+  let kwd_abstract = first_child_named_opt "abstract" node in
+  let* kwd_abstract = make_opt make_kwd kwd_abstract in
+
+  let kwd_override = first_child_named_opt "override_modifier" node in
+let* kwd_override = make_opt_res dec_override_modifier override_modifier in
+
+  and kwd_set = first_child_named_opt "set" node
+  and kwd_get = first_child_named_opt "get" node
+  and sym_star = first_child_named_opt "*" node
+  and name_field = child_with_field "name" node
+  and sym_qmark = first_child_named_opt "?" node
+  (* "_call_signature" inlined: *)
+  and type_parameters_field = child_with_field_opt "type_parameters" node
+  and parameters_field = child_with_field "parameters" node
+  and return_type_field = child_with_field_opt "return_type" node in
+*)
   ignore comments;
   ignore node;
   Error "TODO: dec_abstract_method_signature"
