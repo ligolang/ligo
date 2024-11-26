@@ -506,7 +506,7 @@ and class_body = class_member list braces
 and class_member =
   | Method_definition of decorators * method_definition
   | Method_signature of method_signature
-  | Call_static_block of statement_block
+  | Call_static_block of (kwd_static * statement_block)
   | Abstract_method_signature of abstract_method_signature
   | Index_signature of index_signature
   | Public_field_definition of public_field_definition
