@@ -732,6 +732,11 @@ and variable_declaration = kwd_var * variable_declarator ne_list
   method implementations and the presence of certain members with
   certain types.
 
+  NOTE: We could have had the type [abstract_class_declaration] reuse
+  the type [class_declaration], but we did not because of the
+  different handling of comments (to which keyword they should be
+  hooked, e.g., "class" or "abstract").
+
   Example:
   {@js[
    abstract class Base {
@@ -761,7 +766,7 @@ and abstract_class_declaration =
   ; kwd_abstract : kwd_abstract
   ; kwd_class : kwd_class
   ; name : type_identifier
-  ; type_parameters : type_parameters
+  ; type_parameters : type_parameters option
   ; class_heritage : class_heritage option
   ; body : class_body
   }
@@ -1330,6 +1335,7 @@ and as_what =
 and assignment_expression =
   { kwd_using : kwd_using option
   ; left : assignment_lhs
+  ; sym_equal : sym_equal
   ; right : expression
   }
 
@@ -1832,7 +1838,7 @@ and primary_expression =
   | E_array of array
   | E_arrow_function of arrow_function
   | E_call_expression of call_expression
-  | E_class of class_
+  | E_class of class_expression
   | E_false
   | E_function_expression of function_expression
   | E_generator_function of generator_function
@@ -3355,12 +3361,12 @@ and finally_clause = statement_block
        field('body', $.class_body)))
     ]}
 *)
-and class_ =
+and class_expression =
   { decorators : decorators
   ; name : type_identifier option
-  ; type_parameters : type_parameters
+  ; type_parameters : type_parameters option
   ; class_heritage : class_heritage
-  ; body : class_member list
+  ; body : class_body
   }
 
 (** DECORATOR
