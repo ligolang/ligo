@@ -2038,8 +2038,22 @@ and dec_await_expression node : (await_expression, _) result =
 (* Unary expression *)
 
 and dec_unary_expression node : (unary_expression, _) result =
-  ignore node;
-  Error "TODO: dec_unary_expression"
+  let* operator_field = child_with_field "operator" node in
+  let* operator = decode_unary_operator operator_field in
+  let* argument_field = child_with_field "argument" node in
+  let* argument = dec_expression argument_field in
+  Ok ({ operator; argument } : unary_expression)
+
+and decode_unary_operator node : (unary_operator, _) result =
+  match get_name node with
+  | "!" -> Ok (Bang (make_sym node))
+  | "~" -> Ok (Not (make_sym node))
+  | "-" -> Ok (Unary_sub (make_sym node))
+  | "+" -> Ok (Unary_add (make_sym node))
+  | "typeof" -> Ok (Typeof (make_kwd node))
+  | "void" -> Ok (Void (make_kwd node))
+  | "delete" -> Ok (Delete (make_kwd node))
+  | s -> Error ("decode_unary_operator: " ^ s)
 
 (* Binary expression *)
 
