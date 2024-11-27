@@ -1712,7 +1712,9 @@ and satisfies_expression = expression * type_expr
  *)
 and ternary_expression =
   { condition : expression
+  ; sym_qmark : sym_qmark
   ; consequence : expression
+  ; sym_colon : sym_colon
   ; alternative : expression
   }
 
