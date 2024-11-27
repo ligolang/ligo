@@ -2058,9 +2058,51 @@ and decode_unary_operator node : (unary_operator, _) result =
 (* Binary expression *)
 
 and dec_binary_expression ?(comments = []) node : (binary_expression, _) result =
-  ignore comments;
-  ignore node;
-  Error "TODO: dec_binary_expression"
+  let comments = comments @ prev_comments node in
+  let* left_field = child_with_field "left" node in
+  let* lhs_expr = decode_lhs_bin_expression ~comments left_field in
+  let* operator = child_with_field "operator" node in
+  let* operator = decode_binary_operator operator in
+  let* right_field = child_with_field "right" node in
+  let* rhs_expr = dec_expression right_field in
+  Ok { lhs_expr; operator; rhs_expr }
+
+and decode_lhs_bin_expression ~comments node : (lhs_bin_expression, _) result =
+  match get_name node with
+  | "private_property_identifier" ->
+    Ok (Lhs_bin_hash (dec_private_property_identifier ~comments node))
+  | _ ->
+    let* hash = dec_expression ~comments node in
+    Ok (Lhs_bin_expression hash)
+
+and decode_binary_operator node : (binary_operator, _) result =
+  match get_name node with
+  | "&&" -> Ok (Log_and (make_sym node))
+  | "||" -> Ok (Log_or (make_sym node))
+  | ">>" -> Ok (Bit_sr (make_sym node))
+  | ">>>" -> Ok (Bit_usr (make_sym node))
+  | "<<" -> Ok (Bit_sl (make_sym node))
+  | "&" -> Ok (Bit_and (make_sym node))
+  | "^" -> Ok (Bit_xor (make_sym node))
+  | "|" -> Ok (Bit_or (make_sym node))
+  | "+" -> Ok (Add (make_sym node))
+  | "-" -> Ok (Sub (make_sym node))
+  | "*" -> Ok (Mult (make_sym node))
+  | "/" -> Ok (Div (make_sym node))
+  | "%" -> Ok (Rem (make_sym node))
+  | "**" -> Ok (Exp (make_sym node))
+  | "<" -> Ok (Lt (make_sym node))
+  | "<=" -> Ok (Leq (make_sym node))
+  | "==" -> Ok (Equal (make_sym node))
+  | "===" -> Ok (Strict_eq (make_sym node))
+  | "!=" -> Ok (Neq (make_sym node))
+  | "!==" -> Ok (Strict_neq (make_sym node))
+  | ">=" -> Ok (Geq (make_sym node))
+  | ">" -> Ok (Gt (make_sym node))
+  | "??" -> Ok (Non_null (make_sym node))
+  | "instanceof" -> Ok (Instance_of (make_kwd node))
+  | "in" -> Ok (In (make_kwd node))
+  | s -> Error ("decode_binary_operator: " ^ s)
 
 (* Ternary expression *)
 

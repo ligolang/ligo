@@ -53,6 +53,7 @@ type number =
    TODO: Use unique data constructors for each keyword.
 *)
 
+type kwd_instanceof = keyword
 type kwd_implements = keyword
 type kwd_assert = keyword
 type kwd_as = keyword
@@ -1561,8 +1562,18 @@ and await_expression =
    ]}
 *)
 and binary_expression =
-  | Logical_and of symbol (** && *)
-  | Logical_or of symbol (** || *)
+  { lhs_expr : lhs_bin_expression
+  ; operator : binary_operator
+  ; rhs_expr : expression
+  }
+
+and lhs_bin_expression =
+  | Lhs_bin_expression of expression
+  | Lhs_bin_hash of private_property_identifier
+
+and binary_operator =
+  | Log_and of symbol (** && *)
+  | Log_or of symbol (** || *)
   | Bit_sr of symbol (** >> *)
   | Bit_usr of symbol (** >>> *)
   | Bit_sl of symbol (** << *)
@@ -1584,8 +1595,8 @@ and binary_expression =
   | Geq of symbol (** >= *)
   | Gt of symbol (** > *)
   | Non_null of symbol (** ?? *)
-  | Instance_of of symbol (** instanceof *)
-  | In of symbol (** in *)
+  | Instance_of of kwd_instanceof (** instanceof *)
+  | In of kwd_in (** in *)
 
 (** Instantiation Expression
 
