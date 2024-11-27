@@ -884,9 +884,9 @@ and abstract_method_signature =
     ]}
  *)
 and index_signature =
-  { sign : sign option (* readonly *)
-  ; range : index_range
-  ; type_ : index_type
+  { sign : (sign option * kwd_readonly) option
+  ; range : index_range brackets
+  ; annotation : index_annotation
   }
 
 and sign =
@@ -899,20 +899,23 @@ and index_range =
 
 and typed_index_clause =
   { name : identifier (* Including reserved identifiers *)
+  ; sym_colon : sym_colon
   ; index_type : type_expr
   }
 
 and mapped_type_clause =
   { name : type_identifier
-  ; type_ : type_expr
-  ; alias : type_expr option
+  ; kwd_in : kwd_in
+  ; type_expr : type_expr
+  ; alias : (kwd_as * type_expr) option
   }
 
-and index_type =
-  | Type_annotation of type_expr
-  | Omitting_type_annotation of type_expr
-  | Adding_type_annotation of type_expr
-  | Opting_type_annotation of type_expr
+and index_annotation =
+  | Type_annotation of type_annotation
+  | Omitting_type_annotation of (symbol * type_expr) (* "-?" *)
+  | Adding_type_annotation of (symbol * type_expr) (* "+?:" *)
+  | Opting_type_annotation of (symbol * type_expr)
+(* "?: " *)
 
 (** Public Field Definition
 
@@ -959,7 +962,7 @@ and public_field_definition =
   ; name : property_name
   ; mode : field_mode option
   ; type_ : type_annotation option
-  ; init_value : expression
+  ; default : (sym_equal * expression) option
   }
 
 and field_scope =
