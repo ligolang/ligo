@@ -1985,8 +1985,46 @@ and decode_assignment_lhs node : (assignment_lhs, _) result =
 
 and dec_augmented_assignment_expression node : (augmented_assignment_expression, _) result
   =
-  ignore node;
-  Error "TODO: dec_augmented_assignment_expression"
+  let* left_field = child_with_field "left" node in
+  let* left = decode_augmented_assignment_lhs left_field in
+  let* operator = child_with_field "operator" node in
+  let* operator = decode_assignment_operator operator in
+  let* right_field = child_with_field "right" node in
+  let* right = dec_expression right_field in
+  Ok { left; operator; right }
+
+and decode_assignment_operator node : (assignment_operator, _) result =
+  match get_name node with
+  | "+=" -> Ok (Add_eq (make_sym node))
+  | "-=" -> Ok (Sub_eq (make_sym node))
+  | "*=" -> Ok (Mult_eq (make_sym node))
+  | "/=" -> Ok (Div_eq (make_sym node))
+  | "%=" -> Ok (Rem_eq (make_sym node))
+  | "^=" -> Ok (Bit_xor_eq (make_sym node))
+  | "&=" -> Ok (Bit_and_eq (make_sym node))
+  | "|=" -> Ok (Bit_or_eq (make_sym node))
+  | ">>=" -> Ok (Bit_sr_eq (make_sym node))
+  | ">>>=" -> Ok (Bit_usr_eq (make_sym node))
+  | "<<=" -> Ok (Bit_sl_eq (make_sym node))
+  | "**=" -> Ok (Exp_eq (make_sym node))
+  | "&&=" -> Ok (Log_and_eq (make_sym node))
+  | "||=" -> Ok (Log_or_eq (make_sym node))
+  | "??=" -> Ok (Non_null_eq (make_sym node))
+  | s -> Error ("decode_assignment_operator: " ^ s)
+
+and decode_augmented_assignment_lhs node : (augmented_assignment_lhs, _) result =
+  match get_name node with
+  | "member_expression" ->
+    let* expression = dec_member_expression node in
+    Ok (Member_expression expression)
+  | "subscript_expression" ->
+    let* expression = dec_subscript_expression node in
+    Ok (Subscript_expression expression)
+  | "identifier" -> Ok (Identifier (dec_identifier node))
+  | "parenthesized_expression" ->
+    let* expression = dec_parenthesized_expression node in
+    Ok (Parenthesized_expression expression)
+  | s -> Error ("decode_augmented_assignment_lhs: " ^ s)
 
 (* Await expression *)
 

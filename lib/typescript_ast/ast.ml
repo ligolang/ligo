@@ -1465,21 +1465,21 @@ and augmented_assignment_lhs =
   | Parenthesized_expression of parenthesized_expression
 
 and assignment_operator =
-  | Add_eq (* += *)
-  | Sub_eq (* -= *)
-  | Mult_eq (* *= *)
-  | Div_eq (* /= *)
-  | Rem_eq (* %= *)
-  | Bit_xor_eq (* ^= *)
-  | Bit_and_eq (* &= *)
-  | Bit_or_eq (* |= *)
-  | Bit_sr_eq (* >>= *)
-  | Bit_usr_eq (* >>>= *)
-  | Bit_sl_eq (* <<= *)
-  | Exponent_eq (* **= *)
-  | Logical_and_eq (* &&= *)
-  | Logical_or_eq (* ||= *)
-  | Non_null_eq (* ??= *)
+  | Add_eq of symbol (* += *)
+  | Sub_eq of symbol (* -= *)
+  | Mult_eq of symbol (* *= *)
+  | Div_eq of symbol (* /= *)
+  | Rem_eq of symbol (* %= *)
+  | Bit_xor_eq of symbol (* ^= *)
+  | Bit_and_eq of symbol (* &= *)
+  | Bit_or_eq of symbol (* |= *)
+  | Bit_sr_eq of symbol (* >>= *)
+  | Bit_usr_eq of symbol (* >>>= *)
+  | Bit_sl_eq of symbol (* <<= *)
+  | Exp_eq of symbol (* **= *)
+  | Log_and_eq of symbol (* &&= *)
+  | Log_or_eq of symbol (* ||= *)
+  | Non_null_eq of symbol (* ??= *)
 
 (** Await-expression
 
