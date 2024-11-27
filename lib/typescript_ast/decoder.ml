@@ -1395,17 +1395,140 @@ and dec_call_signature node : (call_signature, _) result =
 
 (* Index signature *)
 
-and dec_index_signature ?comments node : (index_signature, _) result =
-  ignore comments;
-  ignore node;
-  Error "TODO: dec_index_signature"
+and dec_index_signature ?(comments = []) node : (index_signature, _) result =
+  let kwd_readonly = first_child_named_opt "readonly" node in
+  let kwd_readonly = make_opt make_kwd kwd_readonly in
+  let sign_field = child_with_field_opt "sign" node in
+  let* sign = make_opt_res dec_sign sign_field in
+  let sign =
+    match kwd_readonly with
+    | None -> None
+    | Some kwd -> Some (sign, kwd)
+  in
+  let name_field = child_with_field_opt "name" node in
+  let* type_field = child_with_field "type" node in
+  let* annotation = decode_index_annotation type_field in
+  let* sym_lbracket = first_child_named "[" node in
+  (* Not ideal *)
+  let opening = make_sym ~comments sym_lbracket in
+  let* sym_rbracket = first_child_named "]" node in
+  let closing = make_sym sym_rbracket in
+  let* (range : index_range) =
+    match name_field with
+    | Some name_field ->
+      let name = dec_type_identifier name_field in
+      let* sym_colon = first_child_named ":" node in
+      let sym_colon = make_sym sym_colon in
+      let* index_type_field = child_with_field "index_type" node in
+      let* index_type = dec_type index_type_field in
+      Ok (Typed_index_clause { name; sym_colon; index_type })
+    | None ->
+      let* mapped_type_clause = named_child_ranked 0 node in
+      let* mapped_type_clause = dec_mapped_type_clause mapped_type_clause in
+      Ok (Mapped_type_clause mapped_type_clause)
+  in
+  let range = Brackets { opening; contents = range; closing } in
+  Ok { sign; range; annotation }
+
+and dec_mapped_type_clause node : (mapped_type_clause, _) result =
+  let* name_field = child_with_field "name" node in
+  let name = dec_type_identifier name_field in
+  let* kwd_in = first_child_named "in" node in
+  let kwd_in = make_kwd kwd_in in
+  let* type_field = child_with_field "type" node in
+  let* type_expr = dec_type type_field in
+  let alias_field = child_with_field_opt "alias" node in
+  let* alias =
+    match alias_field with
+    | None -> Ok None
+    | Some alias ->
+      let* kwd_as = first_child_named "as" node in
+      let* type_expr = dec_type alias in
+      Ok (Some (make_kwd kwd_as, type_expr))
+  in
+  Ok { name; kwd_in; type_expr; alias }
+
+and dec_omitting_type_annotation node : (symbol * type_expr, _) result =
+  let* sym_kind = first_child_named "-?:" node in
+  let* type_child = named_child_ranked 0 node in
+  let* type_expr = dec_type type_child in
+  Ok (make_kwd sym_kind, type_expr)
+
+and dec_adding_type_annotation node : (symbol * type_expr, _) result =
+  let* sym_kind = first_child_named "+?:" node in
+  let* type_child = named_child_ranked 0 node in
+  let* type_expr = dec_type type_child in
+  Ok (make_kwd sym_kind, type_expr)
+
+and dec_opting_type_annotation node : (symbol * type_expr, _) result =
+  let* sym_kind = first_child_named "?:" node in
+  let* type_child = named_child_ranked 0 node in
+  let* type_expr = dec_type type_child in
+  Ok (make_kwd sym_kind, type_expr)
+
+and decode_index_annotation node : (index_annotation, _) result =
+  match get_name node with
+  | "type_annotation" ->
+    let* annotation = dec_type_annotation node in
+    Ok (Type_annotation annotation)
+  | "omitting_type_annotation" ->
+    let* annotation = dec_omitting_type_annotation node in
+    Ok (Omitting_type_annotation annotation)
+  | "adding_type_annotation" ->
+    let* annotation = dec_adding_type_annotation node in
+    Ok (Adding_type_annotation annotation)
+  | "opting_type_annotation" ->
+    let* annotation = dec_opting_type_annotation node in
+    Ok (Opting_type_annotation annotation)
+  | s -> Error ("dec_index_annotation: " ^ s)
+
+and dec_sign node : (sign, _) result =
+  match get_name node with
+  | "+" -> Ok (Plus (make_sym node))
+  | "-" -> Ok (Minus (make_sym node))
+  | s -> Error ("dec_sign: " ^ s)
 
 (* Public field definition *)
 
-and dec_public_field_definition ?comments node : (public_field_definition, _) result =
-  ignore comments;
-  ignore node;
-  Error "TODO: dec_public_field_definition"
+and dec_public_field_definition ?(comments = []) node
+    : (public_field_definition, _) result
+  =
+  let decorators = children_named "decorator" node in
+  let* decorators = list_of_children_res dec_decorator decorators in
+  let accessibility_modifier = first_child_named_opt "accessibility_modifier" node in
+  let* access = make_opt_res dec_accessibility_modifier accessibility_modifier in
+  let kwd_declare = first_child_named_opt "declare" node in
+  let kwd_declare = make_opt make_kwd kwd_declare in
+  let* scope = decode_field_scope node in
+  let* name_field = child_with_field "name" node in
+  let* name = dec_property_name ~comments name_field in
+  let mode = decode_field_mode_opt node in
+  let type_field = child_with_field_opt "type" node in
+  let* type_ = make_opt_res dec_type_annotation type_field in
+  let* default = mk_child_initializer_opt node in
+  Ok { decorators; access; kwd_declare; scope; name; mode; type_; default }
+
+and decode_field_mode_opt node : field_mode option =
+  let sym_qmark = first_child_named_opt "?" node in
+  match sym_qmark with
+  | Some sym -> Some (Optional (make_sym sym))
+  | None ->
+    (match first_child_named_opt "!" node with
+    | None -> None
+    | Some sym -> Some (Definite_assert (make_sym sym)))
+
+and decode_field_scope node : (field_scope, _) result =
+  let override_modifier = first_child_named_opt "override_modifier" node in
+  let* kwd_override = make_opt_res dec_override_modifier override_modifier in
+  let kwd_abstract = first_child_named_opt "abstract" node in
+  let kwd_abstract = make_opt make_kwd kwd_abstract in
+  let kwd_static = first_child_named_opt "static" node in
+  let kwd_static = make_opt make_kwd kwd_static in
+  let kwd_readonly = first_child_named_opt "readonly" node in
+  let kwd_readonly = make_opt make_kwd kwd_readonly in
+  let kwd_accessor = first_child_named_opt "accessor" node in
+  let kwd_accessor = make_opt make_kwd kwd_accessor in
+  Ok { kwd_static; kwd_override; kwd_readonly; kwd_abstract; kwd_accessor }
 
 (* Lexical declaration (see [dec_variable_declaration]) *)
 
@@ -1763,7 +1886,7 @@ and dec_ambient_declaration ?comments node : (ambient_declaration, _) result =
    The JavasScript tree-sitter grammar have the non-terminals
    "expression" and "primary_expression" be supertypes, that is,
    hidden rules. Therefore we have to match all the RHS of those
-   non-terminals in [print_expression]. *)
+   non-terminals in [dec_expression]. *)
 
 and dec_expression ?(comments = []) node : (expression, _) result =
   match get_name node with
