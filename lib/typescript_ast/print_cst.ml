@@ -2299,7 +2299,6 @@ and print_index_signature state node =
   and type_field = child_with_field "type" node
   and sym_lbracket = first_child_named "[" node
   and sym_rbracket = first_child_named "]" node
-  and sym_colon = first_child_named ":" node
   and print_type_field state node =
     match get_name node with
     | "type_annotation" -> print_type_annotation state node
@@ -2316,7 +2315,8 @@ and print_index_signature state node =
     @ [ mk_child_res make_sym sym_lbracket ]
     @ (match name_field with
       | Some name_field ->
-        let index_type_field = child_with_field "index_type" node in
+        let sym_colon = first_child_named ":" node
+        and index_type_field = child_with_field "index_type" node in
         [ mk_child print_identifier name_field
         ; mk_child_res make_sym sym_colon
         ; mk_child_res print_type index_type_field
