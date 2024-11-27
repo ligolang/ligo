@@ -120,24 +120,26 @@ type kwd_typeof = keyword
 type kwd_try = keyword
 type kwd_catch = keyword
 type kwd_require = keyword
+type kwd_delete = keyword
 
 (* Symbols
 
    TODO: Use unique data constructors for each symbol.
 *)
 
-type sym_qmark = symbol (* ? *)
-type sym_equal = symbol (* = *)
-type sym_colon = symbol (* : *)
-type sym_star = symbol (* * *)
-type sym_ellipsis = symbol (* ... *)
-type sym_plus = symbol (* + *)
-type sym_minus = symbol (* - *)
-type sym_bang = symbol (* ! *)
-type sym_dot = symbol (* . *)
-type sym_opt_chain = symbol (* ?. *)
-type sym_lpar = symbol (* ( *)
-type sym_rpar = symbol (* ) *)
+type sym_qmark = symbol (* "?" *)
+type sym_equal = symbol (* "=" *)
+type sym_colon = symbol (* ":" *)
+type sym_star = symbol (* "*" *)
+type sym_ellipsis = symbol (* "..." *)
+type sym_plus = symbol (* "+" *)
+type sym_minus = symbol (* "-" *)
+type sym_bang = symbol (* "!" *)
+type sym_dot = symbol (* "." *)
+type sym_opt_chain = symbol (* "?." *)
+type sym_lpar = symbol (* "(" *)
+type sym_rpar = symbol (* ")" *)
+type sym_tilde = symbol (* "~" *)
 
 (* Compound constructs *)
 
@@ -1559,31 +1561,31 @@ and await_expression =
    ]}
 *)
 and binary_expression =
-  | Logical_and (** && *)
-  | Logical_or (** || *)
-  | Bit_sr (** >> *)
-  | Bit_usr (** >>> *)
-  | Bit_sl (** << *)
-  | Bit_and (** &  *)
-  | Bit_xor (** ^ *)
-  | Bit_or (** | *)
-  | Add (** + *)
-  | Sub (** - *)
-  | Mult (** * *)
-  | Div (** / *)
-  | Rem (** % *)
-  | Exp (** ** *)
-  | Lt (** < *)
-  | Leq (** <= *)
-  | Equal (** == *)
-  | Strict_eq (** === *)
-  | Neq (** != *)
-  | Strict_neq (** !== *)
-  | Geq (** >= *)
-  | Gt (** > *)
-  | Non_null (** ?? *)
-  | Instance_of (** instanceof *)
-  | In (** in *)
+  | Logical_and of symbol (** && *)
+  | Logical_or of symbol (** || *)
+  | Bit_sr of symbol (** >> *)
+  | Bit_usr of symbol (** >>> *)
+  | Bit_sl of symbol (** << *)
+  | Bit_and of symbol (** &  *)
+  | Bit_xor of symbol (** ^ *)
+  | Bit_or of symbol (** | *)
+  | Add of symbol (** + *)
+  | Sub of symbol (** - *)
+  | Mult of symbol (** * *)
+  | Div of symbol (** / *)
+  | Rem of symbol (** % *)
+  | Exp of symbol (** ** *)
+  | Lt of symbol (** < *)
+  | Leq of symbol (** <= *)
+  | Equal of symbol (** == *)
+  | Strict_eq of symbol (** === *)
+  | Neq of symbol (** != *)
+  | Strict_neq of symbol (** !== *)
+  | Geq of symbol (** >= *)
+  | Gt of symbol (** > *)
+  | Non_null of symbol (** ?? *)
+  | Instance_of of symbol (** instanceof *)
+  | In of symbol (** in *)
 
 (** Instantiation Expression
 
@@ -1730,12 +1732,13 @@ and unary_expression =
   }
 
 and unary_operator =
-  | Bang
-  | Logical_negation
-  | Negation
-  | Typeof
-  | Void
-  | Delete
+  | Bang of sym_bang
+  | Not of sym_tilde
+  | Unary_sub of sym_minus
+  | Unary_add of sym_plus
+  | Typeof of kwd_typeof
+  | Void of kwd_void
+  | Delete of kwd_delete
 
 (** Update Expression
 
