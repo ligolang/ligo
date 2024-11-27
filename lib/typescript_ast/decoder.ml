@@ -2107,8 +2107,17 @@ and decode_binary_operator node : (binary_operator, _) result =
 (* Ternary expression *)
 
 and dec_ternary_expression node : (ternary_expression, _) result =
-  ignore node;
-  Error "dec_ternary_expression"
+  let* condition_field = child_with_field "condition" node in
+  let* condition = dec_expression condition_field in
+  let* sym_qmark = first_child_named "?" node in
+  let sym_qmark = make_sym sym_qmark in
+  let* consequence_field = child_with_field "consequence" node in
+  let* consequence = dec_expression consequence_field in
+  let* sym_colon = first_child_named ":" node in
+  let sym_colon = make_sym sym_colon in
+  let* alternative_field = child_with_field "alternative" node in
+  let* alternative = dec_expression alternative_field in
+  Ok { condition; sym_qmark; consequence; sym_colon; alternative }
 
 (* Update expression *)
 
