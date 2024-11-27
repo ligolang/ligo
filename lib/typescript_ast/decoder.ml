@@ -2029,8 +2029,11 @@ and decode_augmented_assignment_lhs node : (augmented_assignment_lhs, _) result 
 (* Await expression *)
 
 and dec_await_expression node : (await_expression, _) result =
-  ignore node;
-  Error "TODO: dec_await_expression"
+  let* kwd_await = first_child_named "await" node in
+  let kwd_await = make_kwd kwd_await in
+  let* expression = child_ranked 1 node in
+  let* expression = dec_expression expression in
+  Ok { kwd_await; expression }
 
 (* Unary expression *)
 

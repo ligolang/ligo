@@ -1515,7 +1515,10 @@ and assignment_operator =
      await_expression: $ => prec('unary_void', seq('await', $.expression))
     ]}
  *)
-and await_expression = expression
+and await_expression =
+  { kwd_await : kwd_await
+  ; expression : expression
+  }
 
 (** Binary Expression
 
