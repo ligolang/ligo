@@ -1626,11 +1626,33 @@ and mk_child_initializer sym_equal node : (sym_equal * expression, _) result =
   let* expression = dec_expression value_field in
   Ok (make_sym sym_equal, expression)
 
-(* Abstract class declaration ( see [dec_class_declaration]) *)
+(* Abstract class declaration
 
-and dec_abstract_class_declaration node : (abstract_class_declaration, _) result =
-  ignore node;
-  Error "TODO: dec_abstract_class_declaration"
+   The difference with [dec_class_declaration] is the decoding of the
+   keyword "abstract". The AST of abstract class definitions do not
+   reuse that for class definitions because of the handling of the
+   comments, which should be hooked either on the keyword "class" or
+   "abstract". *)
+
+and dec_abstract_class_declaration ?(comments = []) node
+    : (abstract_class_declaration, _) result
+  =
+  let comments = comments @ prev_comments node in
+  let decorators = children_named "decorator" node in
+  let* decorators = list_of_children_res dec_decorator decorators in
+  let* kwd_abstract = first_child_named "abstract" node in
+  let kwd_abstract = make_kwd ~comments kwd_abstract in
+  let* kwd_class = first_child_named "class" node in
+  let kwd_class = make_kwd kwd_class in
+  let* name_field = child_with_field "name" node in
+  let name = dec_identifier name_field in
+  let type_parameters_field = child_with_field_opt "type_parameters" node in
+  let* type_parameters = make_opt_res dec_type_parameters type_parameters_field in
+  let heritage_child = first_child_named_opt "class_heritage" node in
+  let* class_heritage = make_opt_res dec_class_heritage heritage_child in
+  let* body_field = child_with_field "body" node in
+  let* body = dec_class_body body_field in
+  Ok { decorators; kwd_abstract; kwd_class; name; type_parameters; class_heritage; body }
 
 (* Module *)
 
@@ -1940,8 +1962,24 @@ and dec_expression ?(comments = []) node : (expression, _) result =
 (* Assignment expression *)
 
 and dec_assignment_expression node : (assignment_expression, _) result =
-  ignore node;
-  Error "TODO: dec_assignment_expression"
+  let kwd_using = first_child_named_opt "using" node in
+  let kwd_using = make_opt make_kwd kwd_using in
+  let* left_field = child_with_field "left" node in
+  let* left = decode_assignment_lhs left_field in
+  let* sym_equal = first_child_named "=" node in
+  let sym_equal = make_sym sym_equal in
+  let* right_field = child_with_field "right" node in
+  let* right = dec_expression right_field in
+  Ok { kwd_using; left; sym_equal; right }
+
+and decode_assignment_lhs node : (assignment_lhs, _) result =
+  match get_name node with
+  | "parenthesized_expression" ->
+    let* expression = dec_parenthesized_expression node in
+    Ok (Assign_lhs_parens expression)
+  | _ ->
+    let* expression = dec_lhs_expression node in
+    Ok (Assign_lhs expression)
 
 (* Augmented assignment expression *)
 
@@ -2079,13 +2117,6 @@ and dec_property_ident ?comments node : (property_ident, _) result =
 and dec_parenthesized_expression ?comments node : (parenthesized_expression, _) result =
   decode_ne_list_in_parens_res ?comments node dec_expression
 
-(* Primary expression *)
-
-and dec_primary_expression ?(comments = []) node : (primary_expression, _) result =
-  ignore comments;
-  ignore node;
-  Error "TODO: dec_primary_expression"
-
 (* Sequence expression *)
 
 and dec_sequence_expression ?(comments = []) node : (sequence_expression, _) result =
@@ -2126,6 +2157,20 @@ and dec_lhs_expression ?comments node : (lhs_expression, _) result =
 
 and dec_non_null_expression ?comments node : (expression, _) result =
   dec_expression ?comments node
+
+(* PRIMARY EXPRESSION *)
+
+and dec_primary_expression ?(comments = []) node : (primary_expression, _) result =
+  ignore comments;
+  ignore node;
+  Error "TODO: dec_primary_expression"
+
+(* Class expression ("class_" in the grammar) *)
+
+and dec_class_expression ?(comments = []) node : (class_expression, _) result =
+  ignore comments;
+  ignore node;
+  Error "TODO: dec_class_expression"
 
 (* PATTERN
 
