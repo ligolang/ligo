@@ -2211,8 +2211,11 @@ and dec_instantiation_expression node : (instantiation_expression, _) result =
 (* Type assertion *)
 
 and dec_type_assertion node : (type_assertion, _) result =
-  ignore node;
-  Error "TODO: dec_type_assertion"
+  let* type_arguments = named_child_ranked 0 node in
+  let* type_arguments = dec_type_arguments type_arguments in
+  let* expression = named_child_ranked 1 node in
+  let* expression = dec_expression expression in
+  Ok (type_arguments, expression)
 
 (* Subscript expression (see [dec_member_expression]) *)
 
