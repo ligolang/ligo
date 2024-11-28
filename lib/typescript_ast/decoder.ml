@@ -2122,8 +2122,21 @@ and dec_ternary_expression node : (ternary_expression, _) result =
 (* Update expression *)
 
 and dec_update_expression node : (update_expression, _) result =
-  ignore node;
-  Error "TODO: dec_update_expression"
+  let* argument_field = child_with_field "argument" node in
+  let* argument = dec_expression argument_field in
+  let* operator_field = child_with_field "operator" node in
+  let* operator = decode_incr_decr_operator operator_field in
+  let update : update = { argument; operator } in
+  let* first_child = child_ranked 0 node in
+  match get_name first_child with
+  | "++" | "--" -> Ok (Update_prefix update)
+  | _ -> Ok (Update_postfix update)
+
+and decode_incr_decr_operator node : (incr_decr_operator, _) result =
+  match get_name node with
+  | "++" -> Ok (Increment (make_sym node))
+  | "--" -> Ok (Decrement (make_sym node))
+  | s -> Error ("decode_incr_decr_operator: " ^ s)
 
 (* New expression
 
