@@ -20,6 +20,9 @@ in
       TREE_SITTER = "${tree-sitter}";
       TREE_SITTER_TYPESCRIPT = "${tree-sitter-typescript}";
 
+      # TODO: needed due to racing condition on inline_tests
+      enableParallelBuilding = false;
+
       postPatch = ''
         mkdir -p vendors/tezos-ligo
         cp -r ${tezos-ligo}/. vendors/tezos-ligo/

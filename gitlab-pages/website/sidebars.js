@@ -31,14 +31,6 @@ const sidebars = {
       "syntax/comments",
       "syntax/variables",
       {
-        "type": "doc",
-        "label": "Modules",
-        "customProps": {
-          "jsLigoName": "Namespaces",
-        },
-        "id": "syntax/modules",
-      },
-      {
         "type": "category",
         "label": "Functions",
         "items": [
@@ -60,43 +52,34 @@ const sidebars = {
         ],
       },
       {
-        "type": "category",
-        "label": "Attributes",
+        "type": "doc",
+        "label": "Modules",
         "customProps": {
-          "jsLigoName": "Decorators",
+          "jsLigoName": "Namespaces",
         },
-        "items": [
-          {
-            "type": "doc",
-            "id": "tezos/decorators/decorators",
-            "customProps": {
-              "jsLigoName": "Decorators",
-            },
-          },
-          "tezos/decorators/annot",
-          "tezos/decorators/deprecated",
-          "tezos/decorators/dyn_entry",
-          "tezos/decorators/entry",
-          "tezos/decorators/inline",
-          "tezos/decorators/layout",
-          "tezos/decorators/private",
-          "tezos/decorators/view"
-        ]
+        "id": "syntax/modules",
       },
       {
         "type": "category",
         "label": "Contracts",
         "items": [
-          "tezos/contracts/contracts",
-          "tezos/contracts/entrypoints",
-          "tezos/contracts/contract-address",
-          "tezos/contracts/contract_of",
-          "tezos/contracts/michelson",
-          "tezos/contracts/michelson-injection",
-          "tezos/contracts/operation",
-          "contract/events",
-          "contract/views",
+          "syntax/contracts/contracts",
+          "syntax/contracts/entrypoints",
+          "syntax/contracts/operation",
+          "syntax/contracts/events",
+          "syntax/contracts/views",
+          "syntax/contracts/dynamic-entrypoints",
+          "syntax/contracts/interop",
+          "syntax/contracts/michelson-injection",
         ],
+      },
+      {
+        "type": "doc",
+        "label": "Attributes",
+        "customProps": {
+          "jsLigoName": "Decorators",
+        },
+        "id": "syntax/decorators",
       },
       {
         "type": "category",
@@ -109,14 +92,7 @@ const sidebars = {
           "signatures/extending"
         ]
       },
-      {
-        "type": "category",
-        "label": "Keywords",
-        "items": [
-          "keywords/keywords",
-          "keywords/escaped_vars"
-        ]
-      }
+      'syntax/keywords',
     ],
     "Data types": [
       {
@@ -200,6 +176,23 @@ const sidebars = {
       "reference/big-set-reference",
       "reference/dynamic-entrypoints-reference",
       "reference/tuple2-reference",
+      {
+        "type": "category",
+        "label": "Attributes",
+        "customProps": {
+          "jsLigoName": "Decorators",
+        },
+        "items": [
+          "reference/decorators/annot",
+          "reference/decorators/deprecated",
+          "reference/decorators/dyn_entry",
+          "reference/decorators/entry",
+          "reference/decorators/inline",
+          "reference/decorators/layout",
+          "reference/decorators/private",
+          "reference/decorators/view"
+        ],
+      },
       {
         "type": "category",
         "label": "tezos",

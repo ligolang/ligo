@@ -1,0 +1,23 @@
+name: Check and Build Ligo
+
+on:
+  push:
+    branches:
+      - stable
+    tags:
+      - "v*.*.*"
+  pull_request:
+    branches:
+      - stable
+
+jobs:
+  build_nix:
+    name: Build Ligo ${{ matrix.system }}
+    strategy:
+      matrix:
+        system: [ubuntu-24.04, macos-14]
+    runs-on: ${{ matrix.system }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: cachix/install-nix-action@v30
+      - run: nix build -L .#ligo

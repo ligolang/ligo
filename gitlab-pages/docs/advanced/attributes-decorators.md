@@ -22,13 +22,13 @@ let sub (delta : int) (store : storage) : result =
   [], store - delta
 ```
 
-## @entry to mark a function as a Smart Contract entry point
+## @entry to mark a function as a Smart Contract entrypoint
 
-The `@entry` attribute is used to indicate that a function should be available as an entry point of the smart contract. It is essentially declaring that function as one of the several "main" functions. For more information, see [Entrypoints](../tezos/contracts/entrypoints).
+The `@entry` attribute is used to indicate that a function should be available as an entrypoint of the smart contract. It is essentially declaring that function as one of the several "main" functions. For more information, see [Entrypoints](../syntax/contracts/entrypoints).
 
-## @dyn_entry to mark a function as a dynamic entry point
+## @dyn_entry to mark a function as a dynamic entrypoint
 
-The `@dyn_entry` attribute is used to indicate that a function should be available as a dynamic entry point of the smart contract. Dynamic entry points can be removed or updated without deploying a new contract, unlike entry points marked with `@entry`, which cannot be modified after the contract is originated. Dynamic entry points can be used for example to implement a DAO (Decentralized Autonomous Organization) with a built-in update mechanism that allows participants to vote on upgrades to the contract, somewhat akin to the process which allows to amend the Tezos protocol. For more information, see [Dynamic entrypoints](../advanced/dynamic-entrypoints.md).
+The `@dyn_entry` attribute is used to indicate that a function should be available as a dynamic entrypoint of the smart contract. Dynamic entrypoints can be removed or updated without deploying a new contract, unlike entrypoints marked with `@entry`, which cannot be modified after the contract is originated. Dynamic entrypoints can be used for example to implement a DAO (Decentralized Autonomous Organization) with a built-in update mechanism that allows participants to vote on upgrades to the contract, somewhat akin to the process which allows to amend the Tezos protocol. For more information, see [Dynamic entrypoints](../syntax/contracts/dynamic-entrypoints.md).
 
 ## @inline to ensure a function is inlined at its call sites
 
@@ -36,7 +36,7 @@ The `@inline` attribute indicates that the code of the function it annotates mus
 
 ## @view to mark a function as a Smart Contract on-chain view
 
-Views are a form of read-only entry points, that can be called synchronously. For more information, see [LIGO views](../contract/views.md).
+Views are a form of read-only entrypoints, that can be called synchronously. For more information, see [LIGO views](../syntax/contracts/views).
 
 ## @no_mutation
 
@@ -74,13 +74,13 @@ This attribute can be used to choose the name of the Michelson equivalent of rec
 
 Using `@annot`, the Michelson annotation for a given field or constructor can be customized. This is useful for interoperability, where a third-party program or contract expects specific Michelson annotations, even if the LIGO code might not use these names internally.
 
-For more information, see [Interop: Different Michelson annotations](../tezos/contracts/interop.md#different-michelson-annotations)?
+For more information, see [Interop: Different Michelson annotations](../syntax/contracts/interop.md#different-michelson-annotations)?
 
 ## @layout to specify the Michelson layout of composite data types (structures and variants)
 
 Michelson does not natively support records or variants. These have to be encoded using nested `pair`s or nested `or`s. Many tree representations could translate to the same linear sequence of fields or constructors. LIGO makes it possible to choose between a right comb which preserves the order or the fields or constructors as declared in the source code, and a left-balanced, alphabetically ordered binary tree. The attributes `[@layout comb]` and `[@layout tree]` can be placed before the `{ ... }` for records and before the first constructor or leading `|` for variants, in order to explicitly choose the desired layout.
 
-For more information, see [Interop: Michelson layout of LIGO data structures](../tezos/contracts/interop.md##michelson-layout-of-ligo-data-structures).
+For more information, see [Interop: Michelson layout of LIGO data structures](../syntax/contracts/interop.md##michelson-layout-of-ligo-data-structures).
 
 ## @tzip16_compatible to enable TZIP-16 storage checks
 
@@ -118,13 +118,13 @@ const sub = (delta : int, store : storage) : result =>
   [[], store - delta]
 ```
 
-## @entry to mark a function as a Smart Contract entry point
+## @entry to mark a function as a Smart Contract entrypoint
 
-The `@entry` decorator is used to indicate that a function should be available as an entry point of the smart contract. It is essentially declaring that function as one of the several "main" functions. For more information, see [Entrypoints](../tezos/contracts/entrypoints).
+The `@entry` decorator is used to indicate that a function should be available as an entrypoint of the smart contract. It is essentially declaring that function as one of the several "main" functions. For more information, see [Entrypoints](../syntax/contracts/entrypoints).
 
-## @dyn_entry to mark a function as a dynamic entry point
+## @dyn_entry to mark a function as a dynamic entrypoint
 
-The `@dyn_entry` decorator is used to indicate that a function should be available as a dynamic entry point of the smart contract. Dynamic entry points can be removed or updated without deploying a new contract, unlike entry points marked with `@entry`, which cannot be modified after the contract is originated. Dynamic entry points can be used for example to implement a DAO (Decentralized Autonomous Organization) with a built-in update mechanism that allows participants to vote on upgrades to the contract, somewhat akin to the process which allows to amend the Tezos protocol. For more information, see [Dynamic entrypoints](../advanced/dynamic-entrypoints.md).
+The `@dyn_entry` decorator is used to indicate that a function should be available as a dynamic entrypoint of the smart contract. Dynamic entrypoints can be removed or updated without deploying a new contract, unlike entrypoints marked with `@entry`, which cannot be modified after the contract is originated. Dynamic entrypoints can be used for example to implement a DAO (Decentralized Autonomous Organization) with a built-in update mechanism that allows participants to vote on upgrades to the contract, somewhat akin to the process which allows to amend the Tezos protocol. For more information, see [Dynamic entrypoints](../syntax/contracts/dynamic-entrypoints.md).
 
 ## @inline to ensure a function is inlined at its call sites
 
@@ -132,7 +132,7 @@ The `@inline` decorator indicates that the code of the function it annotates mus
 
 ## @view to mark a function as a Smart Contract on-chain view
 
-Views are a form of read-only entry points, that can be called synchronously. For more information, see [LIGO views](../contract/views.md).
+Views are a form of read-only entrypoints, that can be called synchronously. For more information, see [LIGO views](../syntax/contracts/views).
 
 ## @no_mutation
 
@@ -148,13 +148,13 @@ This decorator can be used to choose the name of the Michelson equivalent of rec
 
 Using `@annot`, the Michelson annotation for a given field or constructor can be customized. This is useful for interoperability, where a third-party program or contract expects specific Michelson annotations, even if the LIGO code might not use these names internally.
 
-For more information, see [Interop: Different Michelson annotations](../tezos/contracts/interop.md#different-michelson-annotations)?
+For more information, see [Interop: Different Michelson annotations](../syntax/contracts/interop.md#different-michelson-annotations)?
 
 ## @layout to specify the Michelson layout of composite data types (structures and variants)
 
 Michelson does not natively support records or variants. These have to be encoded using nested `pair`s or nested `or`s. Many tree representations could translate to the same linear sequence of fields or constructors. LIGO makes it possible to choose between a right comb which preserves the order or the fields or constructors as declared in the source code, and a left-balanced, alphabetically ordered binary tree. The decorators `@layout("comb")` and `@layout("tree")` can be placed before the `{ ... }` for records and before the first constructor or leading `|` for variants, in order to explicitly choose the desired layout.
 
-For more information, see [Interop: Michelson layout of LIGO data structures](../tezos/contracts/interop.md##michelson-layout-of-ligo-data-structures).
+For more information, see [Interop: Michelson layout of LIGO data structures](../syntax/contracts/interop.md##michelson-layout-of-ligo-data-structures).
 
 ## @tzip16_compatible to enable TZIP-16 storage checks
 
