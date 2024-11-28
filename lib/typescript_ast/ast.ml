@@ -53,6 +53,7 @@ type number =
    TODO: Use unique data constructors for each keyword.
 *)
 
+type kwd_satisfies = keyword
 type kwd_yield = keyword
 type kwd_new = keyword
 type kwd_instanceof = keyword
@@ -1669,7 +1670,7 @@ and argument =
 (** Satisfies-expression
 
   The 'satisfies' binary operator is like an `as` operator: it brings
-  together an expression and a type. The difference is that the former
+  together an expression and a type. The difference is that the latter
   does not change the type of the expression, only checks its
   compatibility.
 
@@ -1692,7 +1693,7 @@ and argument =
       $.expression, 'satisfies', $.type))
    ]}
  *)
-and satisfies_expression = expression * type_expr
+and satisfies_expression = expression * kwd_satisfies * type_expr
 
 (** Ternary Expression
 
