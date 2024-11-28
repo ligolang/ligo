@@ -1948,7 +1948,8 @@ and dec_expression ?(comments = []) node : (expression, _) result =
     let* expression = dec_satisfies_expression node in
     Ok (E_satisfies_expression expression)
   | "instantiation_expression" ->
-    Ok (E_instantiation_expression (dec_instantiation_expression node))
+    let* expression = dec_instantiation_expression node in
+    Ok (E_instantiation_expression expression)
   | "internal_module" ->
     let* declaration = dec_internal_module ~comments node in
     Ok (E_internal_module declaration)
@@ -2200,9 +2201,12 @@ and dec_satisfies_expression node : (satisfies_expression, _) result =
 
 (* Instantiation expression *)
 
-and dec_instantiation_expression node : instantiation_expression =
-  ignore node;
-  failwith "TODO: dec_instantiation_expression"
+and dec_instantiation_expression node : (instantiation_expression, _) result =
+  let* expression = named_child_ranked 0 node in
+  let* expression = dec_expression expression in
+  let* type_arguments_field = child_with_field "type_arguments" node in
+  let* type_arguments = dec_type_arguments type_arguments_field in
+  Ok (expression, type_arguments)
 
 (* Type assertion *)
 
