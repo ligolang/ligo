@@ -53,6 +53,7 @@ type number =
    TODO: Use unique data constructors for each keyword.
 *)
 
+type kwd_new = keyword
 type kwd_instanceof = keyword
 type kwd_implements = keyword
 type kwd_assert = keyword
@@ -1652,7 +1653,8 @@ and instantiation_expression = expression * type_arguments
    ]}
  *)
 and new_expression =
-  { constructor : primary_expression
+  { kwd_new : kwd_new
+  ; constructor : primary_expression
   ; type_arguments : type_arguments option
   ; arguments : arguments option
   }
