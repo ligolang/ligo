@@ -2138,16 +2138,18 @@ and decode_incr_decr_operator node : (incr_decr_operator, _) result =
   | "--" -> Ok (Decrement (make_sym node))
   | s -> Error ("decode_incr_decr_operator: " ^ s)
 
-(* New expression
-
-   Note that the constructor field is a primary expression, but
-   "primary_expression" is a supertype, that is, a hidden rule. We
-   assume it is an "expression", since primary expressions are a subset
-   of them. *)
+(* New expression *)
 
 and dec_new_expression node : (new_expression, _) result =
-  ignore node;
-  Error "TODO: dec_new_expression"
+  let* kwd_new = first_child_named "new" node in
+  let kwd_new = make_kwd kwd_new in
+  let* constructor_field = child_with_field "constructor" node in
+  let* constructor = dec_primary_expression constructor_field in
+  let type_arguments_field = child_with_field_opt "type_arguments" node in
+  let* type_arguments = make_opt_res dec_type_arguments type_arguments_field in
+  let arguments_field = child_with_field_opt "arguments" node in
+  let* arguments = make_opt_res dec_arguments arguments_field in
+  Ok { kwd_new; constructor; type_arguments; arguments }
 
 (* Yield expression *)
 
