@@ -2172,8 +2172,20 @@ and dec_yield_expression node : (yield_expression, _) result =
 (* As-expression *)
 
 and dec_as_expression node : (as_expression, _) result =
-  ignore node;
-  Error "TODO: dec_as_expression"
+  let* expression = child_ranked 0 node in
+  let* expression = dec_expression expression in
+  let* kwd_as = first_child_named "as" node in
+  let kwd_as = make_kwd kwd_as in
+  let* as_what = child_ranked 2 node in
+  let* as_what = decode_as_what as_what in
+  Ok (expression, kwd_as, as_what)
+
+and decode_as_what node : (as_what, _) result =
+  match get_name node with
+  | "const" -> Ok (As_const (make_kwd node))
+  | _ ->
+    let* type_expr = dec_type node in
+    Ok (As_type type_expr)
 
 (* Statisfies-expression *)
 
