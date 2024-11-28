@@ -2190,8 +2190,13 @@ and decode_as_what node : (as_what, _) result =
 (* Statisfies-expression *)
 
 and dec_satisfies_expression node : (satisfies_expression, _) result =
-  ignore node;
-  Error "TODO: dec_satisfies_expression"
+  let* expression = child_ranked 0 node in
+  let* expression = dec_expression expression in
+  let* kwd_satisfies = first_child_named "satisfies" node in
+  let kwd_satisfies = make_kwd kwd_satisfies in
+  let* type_child = child_ranked 2 node in
+  let* type_expr = dec_type type_child in
+  Ok (expression, kwd_satisfies, type_expr)
 
 (* Instantiation expression *)
 
