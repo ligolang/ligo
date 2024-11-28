@@ -53,6 +53,7 @@ type number =
    TODO: Use unique data constructors for each keyword.
 *)
 
+type kwd_yield = keyword
 type kwd_new = keyword
 type kwd_instanceof = keyword
 type kwd_implements = keyword
@@ -1808,8 +1809,8 @@ and incr_decr_operator =
    ]}
 *)
 and yield_expression =
-  | Yield of expression option
-  | Yield_iterable of expression
+  | Yield of kwd_yield * expression option
+  | Yield_iterable of kwd_yield * sym_star * expression
 
 (** Primary Expression
 
