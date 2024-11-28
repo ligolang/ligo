@@ -2154,8 +2154,20 @@ and dec_new_expression node : (new_expression, _) result =
 (* Yield expression *)
 
 and dec_yield_expression node : (yield_expression, _) result =
-  ignore node;
-  Error "TODO: dec_yield_expression"
+  let* kwd_yield = first_child_named "yield" node in
+  let kwd_yield = make_kwd kwd_yield in
+  match child_ranked_opt 1 node with
+  | None -> Ok (Yield (kwd_yield, None))
+  | Some snd_child ->
+    (match get_name snd_child with
+    | "*" ->
+      let sym_star = make_sym snd_child in
+      let* expression = child_ranked 2 node in
+      let* expression = dec_expression expression in
+      Ok (Yield_iterable (kwd_yield, sym_star, expression))
+    | _ ->
+      let* expression = dec_expression snd_child in
+      Ok (Yield (kwd_yield, Some expression)))
 
 (* As-expression *)
 
