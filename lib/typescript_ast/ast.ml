@@ -141,6 +141,8 @@ type sym_opt_chain = symbol (* "?." *)
 type sym_lpar = symbol (* "(" *)
 type sym_rpar = symbol (* ")" *)
 type sym_tilde = symbol (* "~" *)
+type sym_incr = symbol (* "++" *)
+type sym_decr = symbol (* "--" *)
 
 (* Compound constructs *)
 
@@ -1777,8 +1779,8 @@ and update =
   }
 
 and incr_decr_operator =
-  | Increment
-  | Decrement
+  | Increment of sym_incr
+  | Decrement of sym_decr
 
 (** Yield-expression
 
