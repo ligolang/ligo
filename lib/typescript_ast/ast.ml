@@ -53,6 +53,10 @@ type number =
    TODO: Use unique data constructors for each keyword.
 *)
 
+type kwd_false = keyword
+type kwd_true = keyword
+type kwd_super = keyword
+type kwd_null = keyword
 type kwd_satisfies = keyword
 type kwd_yield = keyword
 type kwd_new = keyword
@@ -1862,25 +1866,25 @@ and primary_expression =
   | E_arrow_function of arrow_function
   | E_call_expression of call_expression
   | E_class of class_expression
-  | E_false
+  | E_false of kwd_false
   | E_function_expression of function_expression
   | E_generator_function of generator_function
   | E_identifier of identifier
   | E_member_expression of member_expression
   | E_meta_property of meta_property
   | E_non_null_expression of expression
-  | E_null
-  | E_number
+  | E_null of kwd_null
+  | E_number of number
   | E_object of object_expr
   | E_parenthesized_expression of parenthesized_expression
-  | E_regex of string
-  | E_string
+  | E_regex of string_literal
+  | E_string of string_literal
   | E_subscript_expression of subscript_expression
-  | E_super
+  | E_super of kwd_super
   | E_template_string of template_string
-  | E_this
-  | E_true
-  | E_undefined
+  | E_this of kwd_this
+  | E_true of kwd_true
+  | E_undefined of kwd_undefined
 
 (** Array Expression
 
@@ -1953,27 +1957,25 @@ and function_body =
    ]}
 *)
 and call_expression =
-  | Call of call
+  | Call of non_member_call
   | Member of call_expression_member
 
-and call =
-  { function_ : fun_call
-  ; type_arguments : type_arguments option
-  ; arguments : arguments_to_call
-  }
+and non_member_call = (fun_call, arguments_to_call) call
 
 and fun_call =
   | Fun_call of expression
-  | Import
+  | Import of kwd_import
 
 and arguments_to_call =
   | Arguments of arguments
   | Template_string of template_string
 
-and call_expression_member =
-  { function_ : primary_expression
+and call_expression_member = (primary_expression, arguments) call
+
+and ('lambda, 'arguments) call =
+  { lambda : 'lambda
   ; type_arguments : type_arguments option
-  ; arguments : arguments
+  ; arguments : 'arguments
   }
 
 (** Function Expression
@@ -2025,8 +2027,8 @@ and generator_function = function_expression
    ]}
 *)
 and meta_property =
-  | Meta_new_target
-  | Meta_import_meta
+  | Meta_new_target of kwd_new
+  | Meta_import_meta of kwd_import
 
 (** Object (expression)
 
