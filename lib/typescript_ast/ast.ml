@@ -53,6 +53,8 @@ type number =
    TODO: Use unique data constructors for each keyword.
 *)
 
+type kwd_meta = keyword
+type kwd_target = keyword
 type kwd_false = keyword
 type kwd_true = keyword
 type kwd_super = keyword
@@ -2027,8 +2029,8 @@ and generator_function = function_expression
    ]}
 *)
 and meta_property =
-  | Meta_new_target of kwd_new
-  | Meta_import_meta of kwd_import
+  | Meta_new_target of kwd_new * kwd_target
+  | Meta_import_meta of kwd_import * kwd_meta
 
 (** Object (expression)
 
