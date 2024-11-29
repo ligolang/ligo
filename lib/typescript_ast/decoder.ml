@@ -1226,7 +1226,7 @@ and dec_class_declaration ?(comments = []) node : (class_declaration, _) result 
   let* class_heritage = make_opt_res dec_class_heritage heritage_child in
   let* body_field = child_with_field "body" node in
   let* body = dec_class_body body_field in
-  Ok { decorators; kwd_class; name; type_parameters; class_heritage; body }
+  Ok ({ decorators; kwd_class; name; type_parameters; class_heritage; body } : class_declaration)
 
 and dec_class_heritage node : (class_heritage, _) result =
   match first_child_named_opt "extends_clause" node with
@@ -2452,7 +2452,20 @@ and dec_meta_property ?(comments = []) node : (meta_property, _) result =
 (* Class *)
 
 and dec_class ?(comments = []) node : (class_expression, _) result =
-  ignore comments; ignore node; Error "TODO: dec_class"
+  let comments = comments @ prev_comments node in
+  let decorators = children_named "decorator" node in
+  let* decorators = list_of_children_res dec_decorator decorators in
+  let* kwd_class = first_child_named "class" node in
+  let kwd_class = make_kwd ~comments kwd_class in
+  let name_field = child_with_field_opt "name" node in
+  let name = make_opt dec_identifier name_field in
+  let type_parameters_field = child_with_field_opt "type_parameters" node in
+  let* type_parameters = make_opt_res dec_type_parameters type_parameters_field in
+  let heritage_child = first_child_named_opt "class_heritage" node in
+  let* class_heritage = make_opt_res dec_class_heritage heritage_child in
+  let* body_field = child_with_field "body" node in
+  let* body = dec_class_body body_field in
+  Ok { decorators; kwd_class; name; type_parameters; class_heritage; body }
 
 (* Generator function *)
 
