@@ -1902,7 +1902,7 @@ and primary_expression =
       '[', commaSep(optional(choice($.expression, $.spread_element))), ']')
    ]}
 *)
-and array = arguments
+and array = argument list brackets
 
 (** Arrow Function
 
