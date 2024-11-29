@@ -1993,7 +1993,8 @@ and ('lambda, 'arguments) call =
    ]}
 *)
 and function_expression =
-  { async : bool
+  { kwd_async : kwd_async option
+  ; kwd_function : kwd_function
   ; name : identifier option
   ; call_sig : call_signature
   ; body : statement_block
@@ -2016,7 +2017,7 @@ and function_expression =
        field('body', $.statement_block)))
     ]}
  *)
-and generator_function = function_expression
+and generator_function = sym_star * function_expression
 
 (** Metaproperty
 
