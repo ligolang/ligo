@@ -624,10 +624,10 @@ and dec_import_attribute node : (import_attribute, _) result =
   let* object_node = child_ranked 1 node in
   match get_name kind_node with
   | "with" ->
-    let* expression = dec_object object_node in
+    let* expression = dec_object_expr object_node in
     Ok (Import_with (make_kwd kind_node, expression))
   | "assert" ->
-    let* expression = dec_object object_node in
+    let* expression = dec_object_expr object_node in
     Ok (Import_assert (make_kwd kind_node, expression))
   | s -> Error ("dec_import_attribute: " ^ s)
 
@@ -1188,8 +1188,17 @@ and dec_arguments ?comments node : (arguments, _) result =
 and dec_argument ?comments node : (argument, _) result =
   let* expression = dec_expression ?comments node in
   match get_name node with
-  | "spread_element" -> Ok (Spread_element expression)
+  | "spread_element" ->
+    let* spread = dec_spread_element node in
+    Ok (Spread_element spread)
   | _ -> Ok (Expression expression)
+
+and dec_spread_element ?(comments = []) node : (spread_element, _) result =
+  let* sym_ellipsis = first_child_named "..." node in
+  let sym_ellipsis = make_sym ~comments sym_ellipsis in
+  let* expression = named_child_ranked 0 node in
+  let* expression = dec_expression expression in
+  Ok (sym_ellipsis, expression)
 
 (* Generator function declaration (see function declaration) *)
 
@@ -2282,10 +2291,33 @@ and dec_sequence_expression ?(comments = []) node : (sequence_expression, _) res
 
 (* Object expression *)
 
-and dec_object ?(comments = []) node : (object_expr, _) result =
-  ignore comments;
-  ignore node;
-  Error "TODO: dec_object"
+and dec_object_expr ?(comments = []) node : (object_expr, _) result =
+  decode_list_in_braces_res ~comments node decode_object_entry
+
+and decode_object_entry ?(comments = []) node : (object_entry, _) result =
+  match get_name node with
+  | "pair" ->
+    let* pair = dec_pair ~comments node in
+    Ok (Object_entry_pair pair)
+  | "spread_element" ->
+    let* spread = dec_spread_element ~comments node in
+    Ok (Object_entry_spread spread)
+  | "method_definition" ->
+    let* definition = dec_method_definition ~comments node in
+    Ok (Object_entry_method definition)
+  | "shorthand_property_identifier" ->
+    let pattern = dec_shorthand_property_identifier_pattern ~comments node in
+    Ok (Object_entry_shorthand pattern)
+  | s -> Error ("decode_object_entry: " ^ s)
+
+and dec_pair ?(comments = []) node : (pair, string) result =
+  let* key_field = child_with_field "key" node in
+  let* key = dec_property_name ~comments key_field in
+  let* sym_colon = first_child_named ":" node in
+  let sym_colon = make_sym sym_colon in
+  let* value_field = child_with_field "value" node in
+  let* value = dec_expression value_field in
+  Ok { key; sym_colon; value }
 
 (* LHS expression *)
 
