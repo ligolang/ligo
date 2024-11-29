@@ -994,7 +994,6 @@ and dec_declaration ?(comments = []) node : (declaration, _) result =
 (* Function declaration (see [dec_function_signature]) *)
 
 and dec_function_declaration ?(comments = []) node : (function_declaration, _) result =
-  (* "statement_block" *)
   let* fun_sig = dec_function_signature ~comments node in
   let* body_field = child_with_field "body" node in
   let* body = dec_statement_block body_field in
@@ -2470,7 +2469,9 @@ and dec_class ?(comments = []) node : (class_expression, _) result =
 (* Generator function *)
 
 and dec_generator_function ?(comments = []) node : (generator_function, _) result =
-  ignore comments; ignore node; Error "TODO: dec_generator_function"
+  let* fun_decl = dec_function_expression ~comments node in
+  let* sym_star = first_child_named "*" node in
+  Ok (make_sym sym_star, fun_decl)
 
 (* Arrow function *)
 
@@ -2480,7 +2481,22 @@ and dec_arrow_function ?(comments = []) node : (arrow_function, _) result =
 (* Function (expression) *)
 
 and dec_function_expression ?(comments = []) node : (function_expression, _) result =
-  ignore comments; ignore node; Error "TODO: dec_function_expression"
+  let comments = comments @ prev_comments node in
+  let kwd_async = first_child_named_opt "async" node in
+  let async_comments, function_comments =
+    match kwd_async with
+    | None -> [], comments
+    | Some _ -> comments, []
+  in
+  let kwd_async = make_opt (make_kwd ~comments:async_comments) kwd_async in
+  let* kwd_function = first_child_named "function" node in
+  let kwd_function = make_kwd ~comments:function_comments kwd_function in
+  let name_field = child_with_field_opt "name" node in
+  let name = make_opt dec_identifier name_field in
+  let* call_sig = dec_call_signature node in
+  let* body_field = child_with_field "body" node in
+  let* body = dec_statement_block body_field in
+  Ok { kwd_async; kwd_function; name; call_sig; body }
 
 (* Array (expression) *)
 
