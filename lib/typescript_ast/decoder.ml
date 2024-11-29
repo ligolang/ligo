@@ -2436,7 +2436,18 @@ and decode_arguments_to_call node : (arguments_to_call, _) result =
 (* Meta-property *)
 
 and dec_meta_property ?(comments = []) node : (meta_property, _) result =
-  ignore comments; ignore node; Error "TODO: dec_meta_property"
+  let* fst_child = child_ranked 0 node in
+  let* snd_child = child_ranked 2 node in
+  match get_name fst_child with
+  | "new" ->
+    let kwd_new = make_kwd ~comments fst_child
+    and kwd_target = make_kwd snd_child in
+    Ok (Meta_new_target (kwd_new, kwd_target))
+  | "import" ->
+    let kwd_import = make_kwd ~comments fst_child
+    and kwd_meta = make_kwd snd_child in
+    Ok (Meta_import_meta (kwd_import, kwd_meta))
+  | s -> Error ("dec_meta_property: " ^ s)
 
 (* Class *)
 
