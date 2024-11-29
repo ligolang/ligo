@@ -679,11 +679,7 @@ and member_pattern =
   | Member_object_assignment of object_assignment_pattern
   | Member_shorthand_property of identifier (* Including reserved identifiers *)
 
-and pair_pattern =
-  { key : property_name
-  ; sym_colon : sym_colon
-  ; value : pair_value_pattern
-  }
+and pair_pattern = (property_name, pair_value_pattern) key_value
 
 and pair_value_pattern =
   | Pair_value of pattern
@@ -1665,7 +1661,9 @@ and arguments = argument list parens
 
 and argument =
   | Expression of expression
-  | Spread_element of expression
+  | Spread_element of spread_element
+
+and spread_element = sym_ellipsis * expression
 
 (** Satisfies-expression
 
@@ -2056,17 +2054,20 @@ and meta_property =
       field('value', $.expression))
    ]}
 *)
-and object_expr = object_entry list
+and object_expr = object_entry list braces
 
 and object_entry =
-  | Object_member_pair of pair
-  | Object_member_spread of expression
-  | Object_member_method of method_definition
-  | Object_member_shorthand of identifier
+  | Object_entry_pair of pair
+  | Object_entry_spread of spread_element
+  | Object_entry_method of method_definition
+  | Object_entry_shorthand of identifier
 
-and pair =
-  { key : property_name
-  ; value : expression
+and pair = (property_name, expression) key_value
+
+and ('key, 'value) key_value =
+  { key : 'key
+  ; sym_colon : sym_colon
+  ; value : 'value
   }
 
 (** Labeled Statement
