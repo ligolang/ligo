@@ -3393,9 +3393,10 @@ and finally_clause = statement_block
 *)
 and class_expression =
   { decorators : decorators
+  ; kwd_class : kwd_class
   ; name : type_identifier option
   ; type_parameters : type_parameters option
-  ; class_heritage : class_heritage
+  ; class_heritage : class_heritage option
   ; body : class_body
   }
 
