@@ -55,6 +55,7 @@ let make_kwd ?comments node : keyword = make_node ?comments node
 let make_sym ?comments node : symbol = make_node ?comments node
 let dec_identifier ?comments node : identifier = make_node ?comments node
 let dec_string ?comments node : string_literal = make_node ?comments node
+let dec_regex ?comments node : string_literal = make_node ?comments node
 
 let dec_number ?(comments = []) node : number =
   let region = !get_region node in
@@ -2350,9 +2351,122 @@ and dec_non_null_expression ?comments node : (expression, _) result =
 (* PRIMARY EXPRESSION *)
 
 and dec_primary_expression ?(comments = []) node : (primary_expression, _) result =
-  ignore comments;
-  ignore node;
-  Error "TODO: dec_primary_expression"
+  match get_name node with
+  | "subscript_expression" ->
+    let* expression = dec_subscript_expression node in
+    Ok (E_subscript_expression expression)
+  | "member_expression" ->
+    let* expression = dec_member_expression node in
+    Ok (E_member_expression expression)
+  | "parenthesized_expression" ->
+    let* expression = dec_parenthesized_expression node in
+    Ok (E_parenthesized_expression expression)
+  | "identifier" -> Ok (E_identifier (dec_identifier ~comments node))
+  | "undefined" -> Ok (E_undefined (make_kwd node))
+  | "this" -> Ok (E_this (make_kwd node))
+  | "super" -> Ok (E_super (make_kwd node))
+  | "number" -> Ok (E_number (dec_number ~comments node))
+  | "string" -> Ok (E_string (dec_string node))
+  | "template_string" -> Ok (E_template_string (dec_template_string node))
+  | "regex" -> Ok (E_regex (dec_regex node))
+  | "true" -> Ok (E_true (make_kwd node))
+  | "false" -> Ok (E_false (make_kwd node))
+  | "null" -> Ok (E_null (make_kwd node))
+  | "object" ->
+    let* expression = dec_object_expr node in
+    Ok (E_object expression)
+  | "array" ->
+    let* expression = dec_array node in
+    Ok (E_array expression)
+  | "function_expression" ->
+    let* expression = dec_function_expression node in
+    Ok (E_function_expression expression)
+  | "arrow_function" ->
+    let* expression = dec_arrow_function node in
+    Ok (E_arrow_function expression)
+  | "generator_function" ->
+    let* expression = dec_generator_function node in
+    Ok (E_generator_function expression)
+  | "class" ->
+    let* expression = dec_class node in
+    Ok (E_class expression)
+  | "meta_property" ->
+    let* expression = dec_meta_property node in
+    Ok (E_meta_property expression)
+  | "call_expression" ->
+    let* expression = dec_call_expression node in
+    Ok (E_call_expression expression)
+  | "non_null_expression" ->
+    let* expression = dec_non_null_expression node in
+    Ok (E_non_null_expression expression)
+  | s -> Error ("dec_primary_expression: " ^ s)
+
+(* Call expression *)
+
+and dec_call_expression ?(comments = []) node : (call_expression, _) result =
+  let* function_field = child_with_field "function" node in
+  let member_selection = first_child_named_opt "?." node in
+  let type_arguments_field = child_with_field_opt "type_arguments" node in
+  let* type_arguments = make_opt_res dec_type_arguments type_arguments_field in
+  let* arguments_field = child_with_field "arguments" node in
+  match member_selection with
+  | None ->
+    let* lambda = decode_fun_call ~comments function_field in
+    let* arguments = decode_arguments_to_call arguments_field in
+    Ok (Call { lambda; type_arguments; arguments })
+  | Some _ ->
+    let* lambda = dec_primary_expression ~comments function_field in
+    let* arguments = dec_arguments arguments_field in
+    Ok (Member { lambda; type_arguments; arguments })
+
+and decode_fun_call ?(comments = []) node : (fun_call, _) result =
+  match get_name node with
+  | "import" -> Ok (Import (make_kwd ~comments node))
+  | _ ->
+    let* expression = dec_expression ~comments node in
+    Ok (Fun_call expression)
+
+and decode_arguments_to_call node : (arguments_to_call, _) result =
+  match get_name node with
+  | "template_string" -> Ok (Template_string (dec_template_string node))
+  | _ ->
+    let* arguments = dec_arguments node in
+    Ok (Arguments arguments)
+
+(* Meta-property *)
+
+and dec_meta_property ?(comments = []) node : (meta_property, _) result =
+  ignore comments; ignore node; Error "TODO: dec_meta_property"
+
+(* Class *)
+
+and dec_class ?(comments = []) node : (class_expression, _) result =
+  ignore comments; ignore node; Error "TODO: dec_class"
+
+(* Generator function *)
+
+and dec_generator_function ?(comments = []) node : (generator_function, _) result =
+  ignore comments; ignore node; Error "TODO: dec_generator_function"
+
+(* Arrow function *)
+
+and dec_arrow_function ?(comments = []) node : (arrow_function, _) result =
+  ignore comments; ignore node; Error "TODO: dec_arrow_function"
+
+(* Function (expression) *)
+
+and dec_function_expression ?(comments = []) node : (function_expression, _) result =
+  ignore comments; ignore node; Error "TODO: dec_function_expression"
+
+(* Array (expression) *)
+
+and dec_array ?(comments = []) node : (array, _) result =
+  ignore comments; ignore node; Error "TODO: dec_array"
+
+(* Template strings *)
+
+and dec_template_string ?(comments = []) node : template_string =
+  ignore comments; ignore node; failwith "TODO: dec_template_string"
 
 (* Class expression ("class_" in the grammar) *)
 
