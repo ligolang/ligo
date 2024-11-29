@@ -1225,7 +1225,9 @@ and dec_class_declaration ?(comments = []) node : (class_declaration, _) result 
   let* class_heritage = make_opt_res dec_class_heritage heritage_child in
   let* body_field = child_with_field "body" node in
   let* body = dec_class_body body_field in
-  Ok ({ decorators; kwd_class; name; type_parameters; class_heritage; body } : class_declaration)
+  Ok
+    ({ decorators; kwd_class; name; type_parameters; class_heritage; body }
+      : class_declaration)
 
 and dec_class_heritage node : (class_heritage, _) result =
   match first_child_named_opt "extends_clause" node with
@@ -2476,7 +2478,9 @@ and dec_generator_function ?(comments = []) node : (generator_function, _) resul
 (* Arrow function *)
 
 and dec_arrow_function ?(comments = []) node : (arrow_function, _) result =
-  ignore comments; ignore node; Error "TODO: dec_arrow_function"
+  ignore comments;
+  ignore node;
+  Error "TODO: dec_arrow_function"
 
 (* Function (expression) *)
 
@@ -2500,13 +2504,15 @@ and dec_function_expression ?(comments = []) node : (function_expression, _) res
 
 (* Array (expression) *)
 
-and dec_array ?(comments = []) node : (array, _) result =
-  ignore comments; ignore node; Error "TODO: dec_array"
+and dec_array ?comments node : (array, _) result =
+  decode_list_in_brackets_res ?comments node dec_argument
 
 (* Template strings *)
 
 and dec_template_string ?(comments = []) node : template_string =
-  ignore comments; ignore node; failwith "TODO: dec_template_string"
+  ignore comments;
+  ignore node;
+  failwith "TODO: dec_template_string"
 
 (* Class expression ("class_" in the grammar) *)
 
