@@ -22,7 +22,7 @@ let f x = g x + 1 // exported by default
 Then the following piece of code, in another file:
 
 ```cameligo group=import-module-with-private
-#import "gitlab-pages/docs/reference/decorators/src/private/module-with-private.mligo" "ModuleWithPrivate"
+module ModuleWithPrivate = Gitlab_pages.Docs.Reference.Decorators.Src.Private.Module_with_private
 
 let foo = ModuleWithPrivate.f 123  // = 5167
 
@@ -53,7 +53,7 @@ const f = x => g(x) + 1; // exported by default
 Then the following piece of code, in another file:
 
 ```jsligo group=import-module-with-private
-#import "gitlab-pages/docs/reference/decorators/src/private/module-with-private.mligo" "ModuleWithPrivate"
+import * as ModuleWithPrivate from "gitlab-pages/docs/reference/decorators/src/private/module-with-private.mligo";
 
 const foo = ModuleWithPrivate.f(123);  // = 5167
 

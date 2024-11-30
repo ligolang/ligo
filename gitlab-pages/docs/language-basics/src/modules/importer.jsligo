@@ -1,4 +1,4 @@
-#import "gitlab-pages/docs/language-basics/src/modules/imported.jsligo" "EURO"
+import * as EURO from "gitlab-pages/docs/language-basics/src/modules/imported.jsligo";
 
 type storage = EURO.t;
 

@@ -307,7 +307,7 @@ Note that the test uses a function named `tester` to deploy the contract and run
 ```cameligo test-ligo group=mutation-contract-test
 (* This is mutation-contract-test.mligo *)
 
-#import "gitlab-pages/docs/testing/src/mutation-testing/mutation-contract.mligo" "MutationContract"
+module MutationContract = Gitlab_pages.Docs.Testing.Src.Mutation_testing.Mutation_contract
 module Test = Test.Next
 type storage = MutationContract.AddSub.storage
 type param = MutationContract.AddSub parameter_of
@@ -329,7 +329,7 @@ let test_original =
 ```jsligo test-ligo group=mutation-contract-test
 // This is mutation-contract-test.jsligo
 
-#import "gitlab-pages/docs/testing/src/mutation-testing/mutation-contract.jsligo" "MutationContract"
+import * as MutationContract from "gitlab-pages/docs/testing/src/mutation-testing/mutation-contract.jsligo";
 import Test = Test.Next;
 type storage = int;
 type param = parameter_of MutationContract.AddSub;

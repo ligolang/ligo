@@ -1,5 +1,5 @@
 (* This is gitlab-pages/docs/advanced/src/attributes-decorators/import-module-with-private.mligo *)
-#import "gitlab-pages/docs/advanced/src/attributes-decorators/module-with-private.mligo" "ModuleWithPrivate"
+module ModuleWithPrivate = Gitlab_pages.Docs.Advanced.Src.Attributes_decorators.Module_with_private
 
 (* foo = 5167 = (123 * 42) + 1 *)
 let foo = ModuleWithPrivate.f 123

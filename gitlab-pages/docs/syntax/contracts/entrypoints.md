@@ -586,7 +586,7 @@ proxy file which declares a single entry point and calls the existing
 <Syntax syntax="cameligo">
 
 ```cameligo group=contract_main_proxy
-#import "gitlab-pages/docs/syntax/contracts/src/entrypoints/contract_main.mligo" "C"
+module C = Gitlab_pages.Docs.Syntax.Contracts.Src.Entrypoints.Contract_main
 
 module Proxy = struct
 
@@ -608,7 +608,7 @@ ligo compile contract --library . -m Proxy gitlab-pages/docs/advanced/src/entryp
 <Syntax syntax="jsligo">
 
 ```jsligo group=contract_main_proxy
-#import "gitlab-pages/docs/syntax/contracts/src/entrypoints/contract_main.jsligo" "C"
+import * as C from "gitlab-pages/docs/syntax/contracts/src/entrypoints/contract_main.jsligo";
 
 namespace Proxy {
   @entry

@@ -2,7 +2,7 @@
 
 import Test = Test.Next;
 
-#import "gitlab-pages/docs/testing/src/testing/mycontract.jsligo" "MyModule"
+import * as MyModule from "gitlab-pages/docs/testing/src/testing/mycontract.jsligo";
 
 const run_test1 = () => {
     let initial_storage = 10;
