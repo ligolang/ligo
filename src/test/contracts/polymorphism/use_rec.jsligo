@@ -1,4 +1,4 @@
-#import "rec.jsligo" "Contract"
+import * as Contract from "rec.jsligo";
 
 const _test = (_t : unit) : int => {
    let orig = Test.originate(contract_of (Contract), 0, 0 as tez);

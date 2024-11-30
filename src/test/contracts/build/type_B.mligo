@@ -1,4 +1,4 @@
-#import "type_A.mligo" "A"
+module A = Type_A
 [@entry]
 let main (p : A.titi) (s : A.toto) =
   let s = s + 1 in

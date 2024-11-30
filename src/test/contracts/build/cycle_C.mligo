@@ -1,3 +1,3 @@
-#import "cycle_A.mligo" "A"
+module A = Cycle_A
 
 let titi = 3

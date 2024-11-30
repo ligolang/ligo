@@ -1,5 +1,5 @@
-#import "Xlist.mligo" "XList"
-#import "Xset.mligo" "XSet"
+module XList = Xlist
+module XSet = Xset
 
 let x = XList.x
 

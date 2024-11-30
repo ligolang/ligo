@@ -348,10 +348,10 @@ let%expect_test _ =
 
 let%expect_test _ =
   run_ligo_good
-    [ "compile"; "contract"; contract "FA1.2.interface.mligo"; "-m"; "FA12_ENTRIES" ];
+    [ "compile"; "contract"; contract "FA1_2_interface.mligo"; "-m"; "FA12_ENTRIES" ];
   [%expect
     {|
-    File "../../test/contracts/FA1.2.entries.mligo", line 108, characters 3-20:
+    File "../../test/contracts/FA1_2_entries.mligo", line 108, characters 3-20:
     107 |     | None -> 0n in
     108 |   [Tezos.transaction value 0mutez param.callback], storage
              ^^^^^^^^^^^^^^^^^
@@ -360,7 +360,7 @@ let%expect_test _ =
     Warning: deprecated value.
     In a future version, `Tezos` will be replaced by `Tezos.Next`, and using `Operation.transaction` from `Tezos.Next` is encouraged for a smoother migration.
 
-    File "../../test/contracts/FA1.2.entries.mligo", line 116, characters 3-20:
+    File "../../test/contracts/FA1_2_entries.mligo", line 116, characters 3-20:
     115 |     | None -> 0n in
     116 |   [Tezos.transaction value 0mutez param.callback], storage
              ^^^^^^^^^^^^^^^^^
@@ -369,7 +369,7 @@ let%expect_test _ =
     Warning: deprecated value.
     In a future version, `Tezos` will be replaced by `Tezos.Next`, and using `Operation.transaction` from `Tezos.Next` is encouraged for a smoother migration.
 
-    File "../../test/contracts/FA1.2.entries.mligo", line 121, characters 3-20:
+    File "../../test/contracts/FA1_2_entries.mligo", line 121, characters 3-20:
     120 |   let total = storage.total_supply in
     121 |   [Tezos.transaction total 0mutez param.callback],storage
              ^^^^^^^^^^^^^^^^^
@@ -2984,10 +2984,10 @@ let%expect_test _ =
              PAIR } } |}]
 
 let%expect_test _ =
-  run_ligo_good [ "compile"; "contract"; contract "FA1.2.entries.mligo" ];
+  run_ligo_good [ "compile"; "contract"; contract "FA1_2_entries.mligo" ];
   [%expect
     {|
-    File "../../test/contracts/FA1.2.entries.mligo", line 108, characters 3-20:
+    File "../../test/contracts/FA1_2_entries.mligo", line 108, characters 3-20:
     107 |     | None -> 0n in
     108 |   [Tezos.transaction value 0mutez param.callback], storage
              ^^^^^^^^^^^^^^^^^
@@ -2996,7 +2996,7 @@ let%expect_test _ =
     Warning: deprecated value.
     In a future version, `Tezos` will be replaced by `Tezos.Next`, and using `Operation.transaction` from `Tezos.Next` is encouraged for a smoother migration.
 
-    File "../../test/contracts/FA1.2.entries.mligo", line 116, characters 3-20:
+    File "../../test/contracts/FA1_2_entries.mligo", line 116, characters 3-20:
     115 |     | None -> 0n in
     116 |   [Tezos.transaction value 0mutez param.callback], storage
              ^^^^^^^^^^^^^^^^^
@@ -3005,7 +3005,7 @@ let%expect_test _ =
     Warning: deprecated value.
     In a future version, `Tezos` will be replaced by `Tezos.Next`, and using `Operation.transaction` from `Tezos.Next` is encouraged for a smoother migration.
 
-    File "../../test/contracts/FA1.2.entries.mligo", line 121, characters 3-20:
+    File "../../test/contracts/FA1_2_entries.mligo", line 121, characters 3-20:
     120 |   let total = storage.total_supply in
     121 |   [Tezos.transaction total 0mutez param.callback],storage
              ^^^^^^^^^^^^^^^^^
@@ -3176,13 +3176,13 @@ let%expect_test _ =
   run_ligo_good
     [ "compile"
     ; "parameter"
-    ; contract "FA1.2.entries.mligo"
+    ; contract "FA1_2_entries.mligo"
     ; "Approve { spender = (\"tz1fakefakefakefakefakefakefakcphLA5\" : address) ; value \
        = 3n }"
     ];
   [%expect
     {|
-      File "../../test/contracts/FA1.2.entries.mligo", line 108, characters 3-20:
+      File "../../test/contracts/FA1_2_entries.mligo", line 108, characters 3-20:
       107 |     | None -> 0n in
       108 |   [Tezos.transaction value 0mutez param.callback], storage
                ^^^^^^^^^^^^^^^^^
@@ -3191,7 +3191,7 @@ let%expect_test _ =
       Warning: deprecated value.
       In a future version, `Tezos` will be replaced by `Tezos.Next`, and using `Operation.transaction` from `Tezos.Next` is encouraged for a smoother migration.
 
-      File "../../test/contracts/FA1.2.entries.mligo", line 116, characters 3-20:
+      File "../../test/contracts/FA1_2_entries.mligo", line 116, characters 3-20:
       115 |     | None -> 0n in
       116 |   [Tezos.transaction value 0mutez param.callback], storage
                ^^^^^^^^^^^^^^^^^
@@ -3200,7 +3200,7 @@ let%expect_test _ =
       Warning: deprecated value.
       In a future version, `Tezos` will be replaced by `Tezos.Next`, and using `Operation.transaction` from `Tezos.Next` is encouraged for a smoother migration.
 
-      File "../../test/contracts/FA1.2.entries.mligo", line 121, characters 3-20:
+      File "../../test/contracts/FA1_2_entries.mligo", line 121, characters 3-20:
       120 |   let total = storage.total_supply in
       121 |   [Tezos.transaction total 0mutez param.callback],storage
                ^^^^^^^^^^^^^^^^^

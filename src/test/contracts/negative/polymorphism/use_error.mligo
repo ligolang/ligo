@@ -1,4 +1,4 @@
-#import "error_monad.mligo" "M"
+module M = Error_monad
 
 type t = M.t
 

@@ -1,5 +1,3 @@
-#import "main.mligo" "Main"
-
 module Test = Test.Next
 
 let test1 =

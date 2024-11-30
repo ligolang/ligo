@@ -1,4 +1,4 @@
-#import "./agg_foo.mligo" "Foo"
+module Foo = Agg_foo
 
 let case_cons_1 =
   Foo.case

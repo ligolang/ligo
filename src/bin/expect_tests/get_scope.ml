@@ -2190,17 +2190,16 @@ let%expect_test _ =
   [%expect
     {|
     Scopes:
-    [  ] File "../../test/contracts/get_scope_tests/import_x.mligo", line 1, characters 11-94
-    [ X#1:7-8  ] File "../../test/contracts/get_scope_tests/import_x.mligo", line 3, characters 8-13
+    [ X#1:8-13  ] File "../../test/contracts/get_scope_tests/import_x.mligo", line 1, characters 8-13
     [  ] File "../../test/contracts/get_scope_tests/x.mligo", line 1, characters 9-33
     [ x#1:5-6  ] File "../../test/contracts/get_scope_tests/x.mligo", line 3, characters 8-9
     [ x#1:5-6 y#3:4-5  ] File "../../test/contracts/get_scope_tests/x.mligo", line 4, characters 14-15
     [ x#1:5-6 y#3:4-5  ] File "../../test/contracts/get_scope_tests/x.mligo", line 4, characters 22-24
 
     Variable definitions:
-    (z#3:4-5 -> z)
-    Range: File "../../test/contracts/get_scope_tests/import_x.mligo", line 3, characters 4-5
-    Decl Range: File "../../test/contracts/get_scope_tests/import_x.mligo", line 3, characters 0-13
+    (z#1:4-5 -> z)
+    Range: File "../../test/contracts/get_scope_tests/import_x.mligo", line 1, characters 4-5
+    Decl Range: File "../../test/contracts/get_scope_tests/import_x.mligo", line 1, characters 0-13
     Content: |resolved: int|
     references: []
     Mod Path =
@@ -2208,9 +2207,9 @@ let%expect_test _ =
     Type definitions:
     Constructors and fields:
     Module definitions:
-    (X#1:7-8 -> X)
-    Range: File "../../test/contracts/get_scope_tests/import_x.mligo", line 1, characters 7-8
-    Decl Range: File "../../test/contracts/get_scope_tests/import_x.mligo", line 1, characters 0-94
+    (X#1:8-13 -> X)
+    Range: File "../../test/contracts/get_scope_tests/import_x.mligo", line 1, characters 8-13
+    Decl Range: File "../../test/contracts/get_scope_tests/import_x.mligo", line 1, characters 8-13
     Content: Members: Variable definitions:
                       (y#3:4-5 -> y)
                       Range: File "../../test/contracts/get_scope_tests/x.mligo", line 3, characters 4-5
@@ -2218,15 +2217,15 @@ let%expect_test _ =
                       Content: |resolved: int|
                       references:
                         File "../../test/contracts/get_scope_tests/x.mligo", line 4, characters 14-15
-                      Mod Path = "Mangled_module__p__p__s__p__p__s_test_s_contracts_s_get_u_scope_u_tests_s_x_p_mligo"
+                      Mod Path = "../../test/contracts/get_scope_tests/x.mligo"
                       Def Type = Module_field
                       (x#4:4-5 -> x)
                       Range: File "../../test/contracts/get_scope_tests/x.mligo", line 4, characters 4-5
                       Decl Range: File "../../test/contracts/get_scope_tests/x.mligo", line 4, characters 0-25
-                      Content: |resolved: X.x|
+                      Content: |resolved: ../../test/contracts/get_scope_tests/x.mligo.x|
                       references:
-                        File "../../test/contracts/get_scope_tests/import_x.mligo", line 3, characters 10-11
-                      Mod Path = "Mangled_module__p__p__s__p__p__s_test_s_contracts_s_get_u_scope_u_tests_s_x_p_mligo"
+                        File "../../test/contracts/get_scope_tests/import_x.mligo", line 1, characters 10-11
+                      Mod Path = "../../test/contracts/get_scope_tests/x.mligo"
                       Def Type = Module_field
                       Type definitions:
                       (x#1:5-6 -> x)
@@ -2251,7 +2250,7 @@ let%expect_test _ =
                       Module definitions:
 
     references:
-      File "../../test/contracts/get_scope_tests/import_x.mligo", line 3, characters 8-9 |}];
+      File "../../test/contracts/get_scope_tests/import_x.mligo", line 1, characters 8-9 |}];
   run_ligo_good
     [ "info"
     ; "get-scope"

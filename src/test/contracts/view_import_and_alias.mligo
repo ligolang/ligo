@@ -1,4 +1,3 @@
-#import "view.mligo" "View"
 [@view]
 let v1 = View.v1
 

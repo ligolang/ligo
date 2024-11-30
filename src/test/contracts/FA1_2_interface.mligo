@@ -1,4 +1,4 @@
-#import "FA1.2.entries.mligo" "FA12_IMPL_ENTRIES"
+module FA12_IMPL_ENTRIES = FA1_2_entries
 
 module type FA12_IFACE = sig
 
