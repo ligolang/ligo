@@ -815,12 +815,8 @@ and declaration : Eq.declaration -> Folding.declaration =
         let module_str = file_path#payload in
         O.Import.Import_all_as { alias; module_str }
       | ImportFrom { value = { imported; file_path; _ }; _ } ->
-        let imported =
-          match sep_or_term_to_nelist (r_fst imported).inside with
-          | Some imported -> imported
-          | None -> failwith "Expected imported name?"
-        in
-        let imported = Nonempty_list.map ~f:TODO_do_in_parsing.esc_var imported in
+        let imported = Utils.sep_or_term_to_list (r_fst imported).inside in
+        let imported = List.map ~f:TODO_do_in_parsing.esc_var imported in
         let module_str = file_path#payload in
         O.Import.Import_selected { imported; module_str }
     in

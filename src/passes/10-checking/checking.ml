@@ -2901,8 +2901,6 @@ and infer_declaration (decl : I.declaration)
         imported_module
         ~error:(Errors.unbound_module_variable orig_module)
     in
-    let (h :: tl) = imported in
-    let imported = h :: tl in
     let find_var_type items var =
       let item =
         List.find_map items ~f:(fun item ->

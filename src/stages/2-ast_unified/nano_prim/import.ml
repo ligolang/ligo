@@ -12,7 +12,7 @@ type t =
       ; module_str : string
       }
   | Import_selected of
-      { imported : Value_var.t Ne_list.t
+      { imported : Value_var.t list
       ; module_str : string
       }
 [@@deriving yojson, map, iter, fold, sexp, eq, compare, hash]

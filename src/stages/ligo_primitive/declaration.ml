@@ -123,7 +123,7 @@ module Import_decl (Attr : Attr) = struct
         ; import_attr : Attr.t
         }
     | Import_selected of
-        { imported : Value_var.t Ne_list.t
+        { imported : Value_var.t list
         ; original_module_str : string
         ; module_str : string
         ; import_attr : Attr.t
@@ -151,10 +151,6 @@ module Import_decl (Attr : Attr) = struct
         Attr.pp
         import_attr
     | Import_selected { imported; original_module_str = module_str; import_attr; _ } ->
-      let imported : Value_var.t list =
-        match imported with
-        | x :: l -> x :: l
-      in
       let rec pp_imported ppf = function
         | [] -> ()
         | [ x ] -> Format.fprintf ppf "%a" Value_var.pp x
