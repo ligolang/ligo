@@ -1,1 +1,1 @@
-#import "import.mligo" "Import"
+module Import = Import

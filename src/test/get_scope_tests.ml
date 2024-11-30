@@ -110,8 +110,8 @@ let _main =
         ; schema_test_positive ~with_types:true "contracts/address.mligo"
         ; schema_test_positive ~with_types:false "contracts/incr_decr.mligo"
         ; schema_test_positive ~with_types:true "contracts/incr_decr.mligo"
-        ; schema_test_positive ~with_types:false "contracts/FA1.2.mligo"
-        ; schema_test_positive ~with_types:true "contracts/FA1.2.mligo"
+        ; schema_test_positive ~with_types:false "contracts/FA1_2.mligo"
+        ; schema_test_positive ~with_types:true "contracts/FA1_2.mligo"
         ] )
     ; ( "negative"
       , [ schema_test_negative

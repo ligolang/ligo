@@ -23,15 +23,15 @@ let%expect_test _ =
   [%expect
     {|
     //@ts-nocheck
-    import * as SomeFile from '/../../test/contracts/tuples_sequences_functions'
-    export import SomeFile = SomeFile
+    export import SomeFile =
+    ../../test/contracts/tuples_sequences_functions.jsligo
+    export import MligoWontBeInTheOutput = ../../test/contracts/address.mligo
 
     /**
      * Top level value doc
      */
     export const top_level_value : int = "..."
-    import * as Map from '/../../test/contracts/map'
-    export import Map = Map
+    export import Map = ../../test/contracts/map.jsligo
 
     /** Doc for type */
     export type t <a,b> = ["A", int] | ["B", a] | ["C", b]

@@ -1,4 +1,4 @@
-#import "../hashlock.mligo" "Hashlock"
+module Hashlock = Super__.Hashlock
 
 module Test = Test.Next
 module State = Test.State

@@ -1,4 +1,4 @@
-#import "./contract_under_test/contract_create.mligo" "C"
+module C = Contract_under_test.Contract_create
 
 let assert = Assert.assert
 module Test = Test.Next

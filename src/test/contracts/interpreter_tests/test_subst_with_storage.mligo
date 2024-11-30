@@ -1,4 +1,4 @@
-#import "./contract_under_test/contract_record_storage_ty.mligo" "C"
+module C = Contract_under_test.Contract_record_storage_ty
 
 module Test = Test.Next
 

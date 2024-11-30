@@ -1,6 +1,6 @@
 open Test_helpers
 
-let mfile_FA12 = "./contracts/FA1.2.mligo"
+let mfile_FA12 = "./contracts/FA1_2.mligo"
 let compile_main ~raise f _s () = Test_helpers.compile_main ~raise f ()
 
 open Ast_unified

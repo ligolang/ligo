@@ -1,5 +1,3 @@
-#import "parameter.mligo" "Parameter"
-#import "storage.mligo" "Storage"
 [@entry]
 let main (p : Parameter.t) (s : Storage.t) : operation list * Storage.t =
   match p with

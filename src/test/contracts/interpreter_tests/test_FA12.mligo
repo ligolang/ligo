@@ -1,4 +1,4 @@
-#import "../FA1.2.mligo" "C"
+module C = Super__.FA1_2
 
 let assert = Assert.assert
 
