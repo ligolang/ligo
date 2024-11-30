@@ -243,8 +243,6 @@ module Ast_core_target (Params : Params) = struct
             (Import_selected
               { imported; module_str; import_attr; original_module_str = _ }) ->
           let imported_module = Module_var.of_input_var ~loc module_str in
-          let Simple_utils.Ne_list.(h :: tl) = imported in
-          let imported = h :: tl in
           (* makes `let x = External_module_name.x` entry *)
           let make_value var =
             let binder = Binder.make var None in
@@ -397,8 +395,6 @@ module Ast_typed_target (Params : Params) = struct
           let Ast_typed.{ sig_items = intf; _ } =
             Checking.Persistent_env.find_signature intfs imported_module
           in
-          let Simple_utils.Ne_list.(h :: tl) = imported in
-          let imported = h :: tl in
           let get_value_type (var : Value_var.t) : Ast_typed.type_expression =
             (* Type of the imported value must be inside the signature after typecheck *)
             List.find_map_exn intf ~f:(fun item ->
