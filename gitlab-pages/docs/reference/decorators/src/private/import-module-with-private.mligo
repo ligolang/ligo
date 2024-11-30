@@ -1,4 +1,4 @@
-#import "gitlab-pages/docs/reference/decorators/src/private/module-with-private.mligo" "ModuleWithPrivate"
+module ModuleWithPrivate = Gitlab_pages.Docs.Reference.Decorators.Src.Private.Module_with_private
 
 let foo = ModuleWithPrivate.f 123  // = 5167
 

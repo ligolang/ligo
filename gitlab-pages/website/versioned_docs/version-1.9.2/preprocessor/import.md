@@ -37,7 +37,7 @@ definitions. For example, we can create a `main.mligo` that imports
 all definitions from `euro.mligo` as the module `Euro`:
 
 ```cameligo group=main_importer
-#import "gitlab-pages/docs/preprocessor/src/import/euro.mligo" "Euro"
+module Euro = Gitlab_pages.Docs.Preprocessor.Src.Import.Euro
 
 type storage = Euro.t
 
@@ -76,7 +76,7 @@ its definitions. For example, we can create a `main.jsligo` that
 imports all definitions from `euro.jsligo` as the namespace `Euro`:
 
 ```jsligo group=main_importer
-#import "gitlab-pages/docs/preprocessor/src/import/euro.jsligo" "Euro"
+import * as Euro from "gitlab-pages/docs/preprocessor/src/import/euro.jsligo";
 
 type storage = Euro.t;
 
@@ -110,7 +110,7 @@ namespace Euro {
 Because the namespace is public, you can access it as a sub-namespace when you import the file into another file:
 
 ```jsligo group=import_euro_public
-#import "gitlab-pages/docs/preprocessor/src/import/euro_namespace_public.jsligo" "Euro_import"
+import * as Euro_import from "gitlab-pages/docs/preprocessor/src/import/euro_namespace_public.jsligo";
 
 type euro_balance = Euro_import.Euro.t;
 

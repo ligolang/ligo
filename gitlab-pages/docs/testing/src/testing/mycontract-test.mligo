@@ -2,7 +2,7 @@
 
 module Test = Test.Next
 
-#import "gitlab-pages/docs/testing/src/testing/mycontract.mligo" "MyContract"
+module MyContract = Gitlab_pages.Docs.Testing.Src.Testing.Mycontract
 
 let run_test1 =
   let initial_storage = 10 in

@@ -1,6 +1,6 @@
 (* This is mutation-contract-test.mligo *)
 
-#import "gitlab-pages/docs/testing/src/mutation-testing/mutation-contract.mligo" "MutationContract"
+module MutationContract = Gitlab_pages.Docs.Testing.Src.Mutation_testing.Mutation_contract
 module Test = Test.Next
 type storage = MutationContract.AddSub.storage
 type param = MutationContract.AddSub parameter_of
