@@ -2297,7 +2297,7 @@ and primary_type =
   | T_array_type of array_type
   | T_tuple_type of tuple_type
   | T_flow_maybe_type of primary_type
-  | T_type_query of type_query
+  | T_type_query of (kwd_keyof * type_query)
   | T_index_type_query of (kwd_keyof * primary_type)
   | T_this of kwd_this
   | T_existential_type of sym_star
@@ -2678,7 +2678,7 @@ and type_query =
   | Typeof_call_expression of type_query_call_expression
   | Typeof_instantiation_expression of type_query_instantiation_expression
   | Typeof_identifier of identifier
-  | Typeof_this
+  | Typeof_this of kwd_this
 
 and type_query_subscript_expression =
   { object_expr : type_query_object

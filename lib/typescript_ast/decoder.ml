@@ -2854,10 +2854,41 @@ and dec_index_type_query ?(comments = []) node : (kwd_keyof * primary_type, _) r
 
 (* Type query *)
 
-and dec_type_query ?(comments = []) node : (type_query, _) result =
-  ignore comments;
-  ignore node;
-  Error "TODO: dec_type_query"
+and dec_type_query ?(comments = []) node : (kwd_keyof * type_query, _) result =
+  let* kwd_typeof = first_child_named "typeof" node in
+  let kwd_typeof = make_kwd ~comments kwd_typeof in
+  let* child = child_ranked 1 node in
+  let* type_query =
+    match get_name child with
+    | "subscript_expression" ->
+      let* expression = dec_type_query_subscript_expression child in
+      Ok (Typeof_subscript_expression expression)
+    | "member_expression" ->
+      let* expression = dec_type_query_member_expression child in
+      Ok (Typeof_member_expression expression)
+    | "call_expression" ->
+      let* expression = dec_type_query_call_expression child in
+      Ok (Typeof_call_expression expression)
+    | "instantiation_expression" ->
+      let* expression = dec_type_query_instantiation_expression child in
+      Ok (Typeof_instantiation_expression expression)
+    | "identifier" -> Ok (Typeof_identifier (dec_identifier child))
+    | "this" -> Ok (Typeof_this (make_kwd child))
+    | s -> Error ("dec_type_query: " ^ s)
+  in
+  Ok (kwd_typeof, type_query)
+
+and dec_type_query_subscript_expression ?(comments = []) node : (type_query_subscript_expression, _) result =
+  ignore comments; ignore node; Error "TODO: dec_type_query_subscript_expression"
+
+and dec_type_query_member_expression ?(comments = []) node : (type_query_member_expression, _) result =
+  ignore comments; ignore node; Error "TODO: dec_type_query_member_expression"
+
+and dec_type_query_call_expression ?(comments = []) node : (type_query_call_expression, _) result =
+  ignore comments; ignore node; Error "TODO: dec_type_query_call_expression"
+
+and dec_type_query_instantiation_expression ?(comments = []) node : (type_query_instantiation_expression, _) result =
+  ignore comments; ignore node; Error "TODO: dec_type_query_instantiation_expression"
 
 (* Flow maybe type *)
 
