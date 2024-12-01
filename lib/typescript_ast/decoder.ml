@@ -2822,19 +2822,10 @@ and dec_conditional_type ?(comments = []) node : (conditional_type, _) result =
    TypeScript grammar, which means that they are hidden rules. *)
 
 and dec_lookup_type ?(comments = []) node : (lookup_type, _) result =
-(*  let primary_type_child = named_child_ranked 0 node
-  and sym_lbracket = first_child_named "[" node
-  and sym_rbracket = first_child_named "]" node
-  and type_child = named_child_ranked 1 node in
-  let children =
-    [ mk_child_res print_primary_type primary_type_child
-    ; mk_child_res make_sym sym_lbracket
-    ; mk_child_res print_type type_child
-    ; mk_child_res make_sym sym_rbracket
-    ]
-  in XXX
-*)
-  ignore comments; ignore node; Error "dec_lookup_type"
+  let* primary_type_child = named_child_ranked 0 node in
+  let* primary_type = dec_primary_type ~comments primary_type_child in
+  let* index_type = decode_brackets_res node dec_type in
+  Ok (primary_type, index_type)
 
 (* Literal type *)
 
