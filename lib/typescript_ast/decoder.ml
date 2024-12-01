@@ -2990,8 +2990,8 @@ and dec_tuple_type_member ?(comments = []) node : (tuple_type_member, _) result 
     let* parameter = dec_optional_tuple_parameter ~comments node in
     Ok (Tuple_optional_parameter parameter)
   | "optional_type" ->
-    let* type_expr = dec_optional_type ~comments node in
-    Ok (Tuple_optional_type type_expr)
+    let* opt_type = dec_optional_type ~comments node in
+    Ok (Tuple_optional_type opt_type)
   | "rest_type" ->
     let* type_expr = dec_rest_type ~comments node in
     Ok (Tuple_rest_type type_expr)
@@ -3003,11 +3003,9 @@ and dec_tuple_type_member ?(comments = []) node : (tuple_type_member, _) result 
 and dec_tuple_parameter ?(comments = []) node : (tuple_parameter, _) result =
   let* name_field = child_with_field "name" node in
   let* name = dec_tuple_parameter_name ~comments name_field in
-  let* sym_qmark = first_child_named "?" node in
-  let sym_qmark = make_sym sym_qmark in
   let* type_field = child_with_field "type" node in
   let* annotation = dec_type_annotation type_field in
-  Ok (name, sym_qmark, annotation)
+  Ok (name, annotation)
 
 and dec_tuple_parameter_name ?(comments = []) node : (tuple_parameter_name, _) result =
   match get_name node with
@@ -3020,19 +3018,27 @@ and dec_tuple_parameter_name ?(comments = []) node : (tuple_parameter_name, _) r
 and dec_optional_tuple_parameter ?(comments = []) node
     : (optional_tuple_parameter, _) result
   =
-  ignore comments;
-  ignore node;
-  Error "TODO: dec_optional_tuple_parameter"
+  let* name_field = child_with_field "name" node in
+  let name = dec_identifier ~comments name_field in
+  let* sym_qmark = first_child_named "?" node in
+  let sym_qmark = make_sym sym_qmark in
+  let* type_field = child_with_field "type" node in
+  let* annotation = dec_type_annotation type_field in
+  Ok (name, sym_qmark, annotation)
 
-and dec_optional_type ?(comments = []) node : (type_expr, _) result =
-  ignore comments;
-  ignore node;
-  Error "TODO: dec_optional_type"
+and dec_optional_type ?(comments = []) node : (type_expr * sym_qmark, _) result =
+  let* type_node = child_ranked 0 node in
+  let* type_expr = dec_type ~comments type_node in
+  let* sym_qmark = child_ranked 1 node in
+  let sym_qmark = make_sym sym_qmark in
+  Ok (type_expr, sym_qmark)
 
-and dec_rest_type ?(comments = []) node : (type_expr, _) result =
-  ignore comments;
-  ignore node;
-  Error "TODO: dec_rest_type"
+and dec_rest_type ?(comments = []) node : (sym_ellipsis * type_expr, _) result =
+  let* sym_ellipsis = first_child_named "..." node in
+  let sym_ellipsis = make_sym ~comments sym_ellipsis in
+  let* type_child = named_child_ranked 0 node in
+  let* type_expr = dec_type type_child in
+  Ok (sym_ellipsis, type_expr)
 
 (* Array type *)
 
