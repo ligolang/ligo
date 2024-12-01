@@ -133,6 +133,7 @@ type kwd_delete = keyword
    TODO: Use unique data constructors for each symbol.
 *)
 
+type sym_arrow = symbol (* "=>" *)
 type sym_lbracket = symbol (* "[" *)
 type sym_rbracket = symbol (* "]" *)
 type sym_ampersand = symbol (* "&" *)
@@ -1938,8 +1939,9 @@ and array = argument list brackets
    ]}
 *)
 and arrow_function =
-  { async : bool
+  { kwd_async : kwd_async option
   ; parameters : parameters
+  ; sym_arrow : sym_arrow
   ; body : function_body
   }
 
