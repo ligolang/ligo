@@ -93,20 +93,7 @@ module M (Params : Params) = struct
       Ligo_dep_cameligo.imports_of_deps ~options file_name
       @@ Ligo_dep_cameligo.dependencies ~std_lib c_unit
     | JsLIGO ->
-      let dirname = Filename.dirname file_name in
-      List.map ~f:(fun dep ->
-          let import_str = Location.unwrap dep in
-          let file_name =
-            match Filename.split_extension import_str with
-            | name, None -> name ^ ".jsligo"
-            | _ -> import_str
-          in
-          let file_name = Filename.concat dirname file_name in
-          let file_name = Helpers.normalize_path file_name in
-          let module_name = file_name in
-          let location = dep.location in
-          ( { code_input = Source_input.From_file file_name; module_name; location }
-          , [ module_name ] ))
+      Ligo_dep_jsligo.imports_of_deps ~options file_name
       @@ Ligo_dep_jsligo.dependencies c_unit
 
 

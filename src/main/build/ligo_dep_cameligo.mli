@@ -7,6 +7,7 @@ val dependencies
 
 (** Converts module paths into file paths *)
 val imports_of_deps
-  :  Filename.t
+  :  options:Compiler_options.t
+  -> Filename.t
   -> String.t list Simple_utils.Location.wrap list
   -> (BuildSystem.import * String.t list) list
