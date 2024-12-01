@@ -2801,7 +2801,21 @@ and dec_union_type ?(comments = []) node : (union_type, _) result =
 (* Intersection type *)
 
 and dec_intersection_type ?(comments = []) node : (intersection_type, _) result =
-  ignore comments; ignore node; Error "TODO: dec_intersection_type"
+  let* first_child = child_ranked 0 node in
+  let* sym_ampersand = first_child_named "&" node in
+  match get_name first_child with
+  | "&" ->
+    let sym_ampersand = make_sym ~comments sym_ampersand in
+    let* single_type_node = child_ranked 1 node in
+    let* type_expr = dec_type single_type_node in
+    Ok (None, sym_ampersand, type_expr)
+  | _ ->
+    (* "type" is a supertype, therefore a hidden rule *)
+    let* left_type = dec_type ~comments first_child in
+    let sym_ampersand = make_sym sym_ampersand in
+    let* right_type = child_ranked 2 node in
+    let* right_type = dec_type right_type in
+    Ok (Some left_type, sym_ampersand, right_type)
 
 (* Template literal type *)
 
