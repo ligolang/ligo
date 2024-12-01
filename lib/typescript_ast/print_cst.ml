@@ -2568,8 +2568,8 @@ and print_object_field state node =
   match get_name node with
   | "identifier" -> print_identifier state node
   | "this" -> make_kwd state node
-  | "member_expression" -> print_type_query_member_expression state node
   | "subscript_expression" -> print_type_query_subscript_expression state node
+  | "member_expression" -> print_type_query_member_expression state node
   | "call_expression" -> print_type_query_call_expression state node
   | _ -> match_rest state node print_unexpected_node
 
