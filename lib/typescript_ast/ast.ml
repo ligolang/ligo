@@ -2603,16 +2603,16 @@ and template_type =
      rest_type: $ => seq('...', $.type)
     ]}
 *)
-and tuple_type = tuple_type_member list
+and tuple_type = tuple_type_member list brackets
 
 and tuple_type_member =
   | Tuple_parameter of tuple_parameter
   | Tuple_optional_parameter of optional_tuple_parameter
   | Tuple_optional_type of type_expr
   | Tuple_rest_type of type_expr
-  | Type_type of type_expr
+  | Tuple_type of type_expr
 
-and tuple_parameter = tuple_parameter_name * type_annotation
+and tuple_parameter = tuple_parameter_name * sym_qmark * type_annotation
 
 and tuple_parameter_name =
   | Tuple_parameter_ident of identifier
