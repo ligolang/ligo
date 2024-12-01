@@ -2523,7 +2523,9 @@ and dec_template_string ?(comments = []) node : (template_string, _) result =
   let closing = make_sym closing in
   Ok (opening, fragments, closing)
 
-and decode_template_string_fragment ?(comments = [] ) node : (template_string_fragment, _) result =
+and decode_template_string_fragment ?(comments = []) node
+    : (template_string_fragment, _) result
+  =
   match get_name node with
   | "string_fragment" -> Ok (String_fragment (make_node ~comments node))
   | "escape_sequence" -> Ok (Escape_sequence (make_node ~comments node))
@@ -2533,9 +2535,19 @@ and decode_template_string_fragment ?(comments = [] ) node : (template_string_fr
 (* Class expression ("class_" in the grammar) *)
 
 and dec_class_expression ?(comments = []) node : (class_expression, _) result =
-  ignore comments;
-  ignore node;
-  Error "TODO: dec_class_expression"
+  let decorators = children_named "decorator" node in
+  let* decorators = list_of_children_res dec_decorator decorators in
+  let* kwd_class = first_child_named "class" node in
+  let kwd_class = make_kwd ~comments kwd_class in
+  let name_field = child_with_field_opt "name" node in
+  let name = make_opt dec_identifier name_field in
+  let type_parameters_field = child_with_field_opt "type_parameters" node in
+  let* type_parameters = make_opt_res dec_type_parameters type_parameters_field in
+  let heritage_child = first_child_named_opt "class_heritage" node in
+  let* class_heritage = make_opt_res dec_class_heritage heritage_child in
+  let* body_field = child_with_field "body" node in
+  let* body = dec_class_body body_field in
+  Ok { decorators; kwd_class; name; type_parameters; class_heritage; body }
 
 (* PATTERN
 
@@ -2543,9 +2555,19 @@ and dec_class_expression ?(comments = []) node : (class_expression, _) result =
    "pattern" be a supertype, that is, a hidden rule. *)
 
 and dec_pattern ?(comments = []) node : (pattern, _) result =
-  ignore comments;
-  ignore node;
-  Error "TODO: dec_pattern"
+  match get_name node with
+  | "rest_pattern" ->
+    let* pattern = dec_rest_pattern ~comments node in
+    Ok (P_rest_pattern pattern)
+  | _ ->
+    (match dec_lhs_expression ~comments node with
+    | Ok (Member_expression expression) -> Ok (P_member_expression expression)
+    | Ok (Subscript_expression expression) -> Ok (P_subscript_expression expression)
+    | Ok (Identifier identifier) -> Ok (P_identifier identifier)
+    | Ok (Undefined kwd_undefined) -> Ok (P_undefined kwd_undefined)
+    | Ok (Pattern pattern) -> Ok (P_destructuring_pattern pattern)
+    | Ok (Non_null_expression expression) -> Ok (P_non_null_expression expression)
+    | Error msg -> Error msg)
 
 (* Object pattern *)
 
