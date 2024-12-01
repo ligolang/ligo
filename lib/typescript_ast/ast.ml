@@ -2447,7 +2447,7 @@ and unary_type =
      lookup_type: $ => seq($.primary_type, '[', $.type, ']')
     ]}
 *)
-and lookup_type = primary_type * type_expr
+and lookup_type = primary_type * type_expr brackets
 
 (** Object type
 
