@@ -2976,10 +2976,63 @@ and dec_flow_maybe_type ?(comments = []) node : (sym_qmark * primary_type, _) re
 
 (* Tuple type *)
 
-and dec_tuple_type ?(comments = []) node : (tuple_type, _) result =
+and dec_tuple_type ?comments node : (tuple_type, _) result =
+  dec_list_in_brackets_res ?comments node dec_tuple_type_member
+
+and dec_tuple_type_member ?(comments = []) node : (tuple_type_member, _) result =
+  match get_name node with
+  | "required_parameter" ->
+    (* Alias *)
+    let* parameter = dec_tuple_parameter ~comments node in
+    Ok (Tuple_parameter parameter)
+  | "optional_parameter" ->
+    (* Alias *)
+    let* parameter = dec_optional_tuple_parameter ~comments node in
+    Ok (Tuple_optional_parameter parameter)
+  | "optional_type" ->
+    let* type_expr = dec_optional_type ~comments node in
+    Ok (Tuple_optional_type type_expr)
+  | "rest_type" ->
+    let* type_expr = dec_rest_type ~comments node in
+    Ok (Tuple_rest_type type_expr)
+  | _ ->
+    (* "type" is a hidden rule *)
+    let* type_expr = dec_type ~comments node in
+    Ok (Tuple_type type_expr)
+
+and dec_tuple_parameter ?(comments = []) node : (tuple_parameter, _) result =
+  let* name_field = child_with_field "name" node in
+  let* name = dec_tuple_parameter_name ~comments name_field in
+  let* sym_qmark = first_child_named "?" node in
+  let sym_qmark = make_sym sym_qmark in
+  let* type_field = child_with_field "type" node in
+  let* annotation = dec_type_annotation type_field in
+  Ok (name, sym_qmark, annotation)
+
+and dec_tuple_parameter_name ?(comments = []) node : (tuple_parameter_name, _) result =
+  match get_name node with
+  | "identifier" -> Ok (Tuple_parameter_ident (dec_identifier ~comments node))
+  | "rest_pattern" ->
+    let* pattern = dec_rest_pattern ~comments node in
+    Ok (Tuple_parameter_rest pattern)
+  | s -> Error ("dec_tuple_parameter_name: " ^ s)
+
+and dec_optional_tuple_parameter ?(comments = []) node
+    : (optional_tuple_parameter, _) result
+  =
   ignore comments;
   ignore node;
-  Error "TODO: dec_tuple_type"
+  Error "TODO: dec_optional_tuple_parameter"
+
+and dec_optional_type ?(comments = []) node : (type_expr, _) result =
+  ignore comments;
+  ignore node;
+  Error "TODO: dec_optional_type"
+
+and dec_rest_type ?(comments = []) node : (type_expr, _) result =
+  ignore comments;
+  ignore node;
+  Error "TODO: dec_rest_type"
 
 (* Array type *)
 
