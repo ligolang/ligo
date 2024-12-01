@@ -2845,10 +2845,12 @@ and dec_literal_type ?(comments = []) node : (literal_type, _) result =
 
 (* Index type query *)
 
-and dec_index_type_query ?(comments = []) node : (primary_type, _) result =
-  ignore comments;
-  ignore node;
-  Error "TODO: dec_index_type_query"
+and dec_index_type_query ?(comments = []) node : (kwd_keyof * primary_type, _) result =
+  let* kwd_keyof = first_child_named "keyof" node in
+  let kwd_keyof = make_kwd ~comments kwd_keyof in
+  let* type_node = child_ranked 1 node in
+  let* primary_type = dec_primary_type type_node in
+  Ok (kwd_keyof, primary_type)
 
 (* Type query *)
 
