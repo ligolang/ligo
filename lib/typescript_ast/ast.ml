@@ -132,6 +132,7 @@ type kwd_delete = keyword
    TODO: Use unique data constructors for each symbol.
 *)
 
+type sym_vbar = symbol (* "|" *)
 type sym_qmark = symbol (* "?" *)
 type sym_equal = symbol (* "=" *)
 type sym_colon = symbol (* ":" *)
@@ -2728,8 +2729,9 @@ and type_query_instantiation_expression =
     {@js[
      union_type: $ => prec.left(seq(optional($.type), '|', $.type))
     ]}
-*)
-and union_type = type_expr option * type_expr (* [type_expr list]? *)
+
+  NOTE:  [type_expr list] would have been better *)
+and union_type = type_expr option * sym_vbar * type_expr
 
 (** Function Type
 
