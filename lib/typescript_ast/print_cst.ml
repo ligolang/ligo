@@ -1645,6 +1645,9 @@ and print_parenthesized_expression ?(comments = []) state node =
 (* Template strings *)
 
 and print_template_string ?(comments = []) state node =
+  let opening = child_ranked 0 node in
+  let closing = last_child node in
+  let raw_children = collect_named_children node in
   let print ?comments state node =
     match get_name node with
     | "string_fragment" -> make_node ?comments state node
@@ -1652,7 +1655,11 @@ and print_template_string ?(comments = []) state node =
     | "template_substitution" -> make_node ?comments state node
     | _ -> match_rest state node print_unexpected_node
   in
-  tree_of_named_children ~comments state node print
+  let children =
+    (mk_child_res (make_sym ~comments) opening :: mk_children_list print raw_children)
+    @ [ mk_child_res make_sym closing ]
+  in
+  make_tree state node children
 
 (* Object *)
 

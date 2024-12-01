@@ -156,8 +156,7 @@ type template_string_fragment =
   | Escape_sequence of string wrap
   | Template_substitution of string wrap
 
-type template_string =
-  sym_bquote * template_string_fragment list * sym_bquote
+type template_string = sym_bquote * template_string_fragment list * sym_bquote
 
 (* Compound constructs *)
 
