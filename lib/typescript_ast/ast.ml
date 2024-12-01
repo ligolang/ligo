@@ -48,6 +48,7 @@ type number =
    TODO: Use unique data constructors for each keyword.
 *)
 
+type kwd_keyof = keyword
 type kwd_meta = keyword
 type kwd_target = keyword
 type kwd_false = keyword
@@ -2297,7 +2298,7 @@ and primary_type =
   | T_tuple_type of tuple_type
   | T_flow_maybe_type of primary_type
   | T_type_query of type_query
-  | T_index_type_query of primary_type
+  | T_index_type_query of (kwd_keyof * primary_type)
   | T_this of kwd_this
   | T_existential_type of sym_star
   | T_literal_type of literal_type
