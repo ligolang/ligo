@@ -154,8 +154,8 @@ type sym_bquote = symbol (* "`" *)
 (* Template string *)
 
 type template_string_fragment =
-  | String_fragment of string wrap
-  | Escape_sequence of string wrap
+  | String_fragment of string_literal
+  | Escape_sequence of string_literal
   | Template_substitution of string wrap
 
 type template_string = sym_bquote * template_string_fragment list * sym_bquote
@@ -2369,8 +2369,11 @@ and array_type = primary_type
 *)
 and conditional_type =
   { left : type_expr
+  ; kwd_extends : kwd_extends
   ; right : type_expr
+  ; sym_qmark : sym_qmark
   ; consequence : type_expr
+  ; sym_colon : sym_colon
   ; alternative : type_expr
   }
 
@@ -2558,11 +2561,15 @@ and predefined_type =
      template_type: $ => seq('${', choice($.primary_type, $.infer_type), '}')
     ]}
 *)
-and template_literal_type = template_type list (* _template_chars? *)
+and template_literal_type = sym_bquote * template_type_fragment list * sym_bquote
+
+and template_type_fragment =
+  | Template_type_string of string_literal
+  | Template_type of template_type
 
 and template_type =
-  | Template_primary_type of primary_type
-  | Template_infer_type of infer_type
+  | Template_type_primary of primary_type
+  | Template_type_infer of infer_type
 
 (** Tuple Type
 
