@@ -38,7 +38,7 @@ let ensure_Ok node = function
 
 (* Decoding literals *)
 
-let decode_comments ?(comments = []) node : Wrap.comment list =
+let dec_comments ?(comments = []) node : Wrap.comment list =
   let f node =
     let region = !get_region node in
     let value = Lexeme.read region in
@@ -49,7 +49,7 @@ let decode_comments ?(comments = []) node : Wrap.comment list =
 let make_node ?comments node : string wrap =
   let region = !get_region node in
   let root = Lexeme.read region
-  and comments = decode_comments ?comments node in
+  and comments = dec_comments ?comments node in
   Wrap.make ~comments root region
 
 let make_kwd ?comments node : keyword = make_node ?comments node
@@ -62,7 +62,7 @@ let dec_number ?(comments = []) node : number =
   let region = !get_region node in
   let lexeme = Lexeme.read region in
   let lexbuf = Lexing.from_string lexeme
-  and comments = decode_comments ~comments node in
+  and comments = dec_comments ~comments node in
   Number.scan comments region lexbuf
 
 (* Optional nodes *)
@@ -121,7 +121,7 @@ let ne_list_of_children_res ?(comments = []) decoder children : ('a ne_list, _) 
 
 (* Decoding enclosed unique child *)
 
-let decode_enclosed_res ?(comments = []) node decoder opening closing
+let dec_enclosed_res ?(comments = []) node decoder opening closing
     : ('a enclosed, _) result
   =
   let comments = comments @ prev_comments node in
@@ -133,23 +133,23 @@ let decode_enclosed_res ?(comments = []) node decoder opening closing
   let* contents = decoder child in
   Ok { opening; contents; closing }
 
-let decode_braces_res ?comments node decoder : ('a braces, _) result =
-  let* braces = decode_enclosed_res ?comments node decoder "{" "}" in
+let dec_braces_res ?comments node decoder : ('a braces, _) result =
+  let* braces = dec_enclosed_res ?comments node decoder "{" "}" in
   Ok (Braces braces)
 
-let decode_chevrons_res ?comments node decoder : ('a chevrons, _) result =
-  let* chevrons = decode_enclosed_res ?comments node decoder "<" ">" in
+let dec_chevrons_res ?comments node decoder : ('a chevrons, _) result =
+  let* chevrons = dec_enclosed_res ?comments node decoder "<" ">" in
   Ok (Chevrons chevrons)
 
-let decode_brackets_res ?comments node decoder : ('a brackets, _) result =
-  let* brackets = decode_enclosed_res ?comments node decoder "[" "]" in
+let dec_brackets_res ?comments node decoder : ('a brackets, _) result =
+  let* brackets = dec_enclosed_res ?comments node decoder "[" "]" in
   Ok (Brackets brackets)
 
-let decode_parens_res ?comments node decoder : ('a parens, _) result =
-  let* parens = decode_enclosed_res ?comments node decoder "(" ")" in
+let dec_parens_res ?comments node decoder : ('a parens, _) result =
+  let* parens = dec_enclosed_res ?comments node decoder "(" ")" in
   Ok (Parens parens)
 
-let decode_enclosed_list_res ?(comments = []) node decoder opening closing
+let dec_enclosed_list_res ?(comments = []) node decoder opening closing
     : ('a list enclosed, _) result
   =
   let comments = comments @ prev_comments node in
@@ -161,25 +161,25 @@ let decode_enclosed_list_res ?(comments = []) node decoder opening closing
   let* contents = list_of_children_res decoder clauses in
   Ok { opening; contents; closing }
 
-let decode_list_in_braces_res ?comments node decoder : ('a list braces, _) result =
-  let* list = decode_enclosed_list_res ?comments node decoder "{" "}" in
+let dec_list_in_braces_res ?comments node decoder : ('a list braces, _) result =
+  let* list = dec_enclosed_list_res ?comments node decoder "{" "}" in
   Ok (Braces list)
 
-let decode_list_in_chevrons_res ?comments node decoder : ('a list chevrons, _) result =
-  let* list = decode_enclosed_list_res ?comments node decoder "<" ">" in
+let dec_list_in_chevrons_res ?comments node decoder : ('a list chevrons, _) result =
+  let* list = dec_enclosed_list_res ?comments node decoder "<" ">" in
   Ok (Chevrons list)
 
-let decode_list_in_brackets_res ?comments node decoder : ('a list brackets, _) result =
-  let* list = decode_enclosed_list_res ?comments node decoder "[" "]" in
+let dec_list_in_brackets_res ?comments node decoder : ('a list brackets, _) result =
+  let* list = dec_enclosed_list_res ?comments node decoder "[" "]" in
   Ok (Brackets list)
 
-let decode_list_in_parens_res ?comments node decoder : ('a list parens, _) result =
-  let* list = decode_enclosed_list_res ?comments node decoder "(" ")" in
+let dec_list_in_parens_res ?comments node decoder : ('a list parens, _) result =
+  let* list = dec_enclosed_list_res ?comments node decoder "(" ")" in
   Ok (Parens list)
 
 (* Decoding enclosed non-empty lists *)
 
-let decode_enclosed_ne_list_res ?(comments = []) node decoder opening closing
+let dec_enclosed_ne_list_res ?(comments = []) node decoder opening closing
     : ('a ne_list enclosed, string) result
   =
   let comments = comments @ prev_comments node in
@@ -191,24 +191,20 @@ let decode_enclosed_ne_list_res ?(comments = []) node decoder opening closing
   let* contents = ne_list_of_children_res decoder clauses in
   Ok { opening; contents; closing }
 
-let decode_ne_list_in_braces_res ?comments node decoder : ('a ne_list braces, _) result =
-  let* braces = decode_enclosed_ne_list_res ?comments node decoder "{" "}" in
+let dec_ne_list_in_braces_res ?comments node decoder : ('a ne_list braces, _) result =
+  let* braces = dec_enclosed_ne_list_res ?comments node decoder "{" "}" in
   Ok (Braces braces)
 
-let decode_ne_list_in_chevrons_res ?comments node decoder
-    : ('a ne_list chevrons, _) result
-  =
-  let* chevrons = decode_enclosed_ne_list_res ?comments node decoder "<" ">" in
+let dec_ne_list_in_chevrons_res ?comments node decoder : ('a ne_list chevrons, _) result =
+  let* chevrons = dec_enclosed_ne_list_res ?comments node decoder "<" ">" in
   Ok (Chevrons chevrons)
 
-let decode_ne_list_in_brackets_res ?comments node decoder
-    : ('a ne_list brackets, _) result
-  =
-  let* brackets = decode_enclosed_ne_list_res ?comments node decoder "[" "]" in
+let dec_ne_list_in_brackets_res ?comments node decoder : ('a ne_list brackets, _) result =
+  let* brackets = dec_enclosed_ne_list_res ?comments node decoder "[" "]" in
   Ok (Brackets brackets)
 
-let decode_ne_list_in_parens_res ?comments node decoder : ('a ne_list parens, _) result =
-  let* parens = decode_enclosed_ne_list_res ?comments node decoder "(" ")" in
+let dec_ne_list_in_parens_res ?comments node decoder : ('a ne_list parens, _) result =
+  let* parens = dec_enclosed_ne_list_res ?comments node decoder "(" ")" in
   Ok (Parens parens)
 
 (* Decoding the CST *)
@@ -390,7 +386,7 @@ and dec_decorated : 'a. ts_forest -> 'a -> ('a decorated, _) result =
   Ok { decorators; decorated }
 
 and dec_export_clause node : (export_clause, _) result =
-  decode_list_in_braces_res node dec_export_specifier
+  dec_list_in_braces_res node dec_export_specifier
 
 and dec_export_specifier ?(comments = []) node : (export_specifier, _) result =
   let comments = comments @ prev_comments node in
@@ -521,7 +517,7 @@ and dec_namespace_import ?(comments = []) node : (namespace_import, _) result =
   Ok { sym_star; kwd_as; identifier }
 
 and dec_named_imports ?(comments = []) node : (named_imports, _) result =
-  decode_list_in_braces_res ~comments node dec_import_specifier
+  dec_list_in_braces_res ~comments node dec_import_specifier
 
 and dec_import_specifier ?(comments = []) node : (import_specifier, _) result =
   let comments = comments @ prev_comments node in
@@ -637,9 +633,9 @@ and dec_switch_statement node : (switch_statement, _) result =
   Ok { kwd_switch; value; body }
 
 and dec_switch_body node : (switch_body, _) result =
-  decode_list_in_braces_res node decode_switch_entry
+  dec_list_in_braces_res node dec_switch_entry
 
-and decode_switch_entry ?(comments = []) node : (switch_entry, _) result =
+and dec_switch_entry ?(comments = []) node : (switch_entry, _) result =
   match get_name node with
   | "switch_case" ->
     let* switch_case = dec_switch_case ~comments node in
@@ -676,9 +672,9 @@ and dec_for_statement node : (for_statement, _) result =
   let* sym_lpar = first_child_named "(" node in
   let sym_lpar = make_sym sym_lpar in
   let* initializer_field = child_with_field "initializer" node in
-  let* initializer_ = decode_for_initializer initializer_field in
+  let* initializer_ = dec_for_initializer initializer_field in
   let* condition_field = child_with_field "condition" node in
-  let* condition = decode_for_condition condition_field in
+  let* condition = dec_for_condition condition_field in
   let increment_field = child_with_field_opt "increment" node in
   let* increment = make_opt_res dec_expressions increment_field in
   let* sym_rpar = first_child_named ")" node in
@@ -687,7 +683,7 @@ and dec_for_statement node : (for_statement, _) result =
   let* body = dec_statement body_field in
   Ok { kwd_for; sym_lpar; initializer_; condition; increment; sym_rpar; body }
 
-and decode_for_initializer node : (for_initializer, _) result =
+and dec_for_initializer node : (for_initializer, _) result =
   match get_name node with
   | "lexical_declaration" ->
     let* declaration = dec_lexical_declaration node in
@@ -699,15 +695,15 @@ and decode_for_initializer node : (for_initializer, _) result =
     let* expression = dec_expression_statement node in
     Ok (For_expression_statement expression)
   | "empty_statement" -> Ok (For_empty_statement (!get_region node))
-  | s -> Error ("decode_for_initializer: " ^ s)
+  | s -> Error ("dec_for_initializer: " ^ s)
 
-and decode_for_condition node : (for_condition, _) result =
+and dec_for_condition node : (for_condition, _) result =
   match get_name node with
   | "expression_statement" ->
     let* expression = dec_expression_statement node in
     Ok (For_condition_expression expression)
   | "empty_statement" -> Ok (For_condition_empty (!get_region node))
-  | s -> Error ("decode_for_condition: " ^ s)
+  | s -> Error ("dec_for_condition: " ^ s)
 
 (* For-in statement *)
 
@@ -725,7 +721,7 @@ and dec_for_in_statement node : (for_in_statement, _) result =
   let* body_field = child_with_field "body" node in
   let* body = dec_statement body_field in
   let* operator_field = child_with_field "operator" node in
-  let* operator = decode_for_operator operator_field in
+  let* operator = dec_for_operator operator_field in
   let* right_field = child_with_field "right" node in
   let* collection = dec_expressions right_field in
   let* (range : for_range) =
@@ -759,11 +755,11 @@ and dec_for_in_statement node : (for_in_statement, _) result =
   let for_header : for_header = { range; operator; collection } in
   Ok { kwd_for; kwd_await; sym_lpar; for_header; sym_rpar; body }
 
-and decode_for_operator node : (for_operator, _) result =
+and dec_for_operator node : (for_operator, _) result =
   match get_name node with
   | "in" -> Ok (In (make_kwd node))
   | "of" -> Ok (Of (make_kwd node))
-  | s -> Error ("decode_for_operator: " ^ s)
+  | s -> Error ("dec_for_operator: " ^ s)
 
 (* While statement *)
 
@@ -1007,14 +1003,14 @@ and dec_type_predicate_annotation node : (type_predicate, _) result =
 
 and dec_type_predicate node : (type_predicate, _) result =
   let* name_field = child_with_field "name" node in
-  let* name = decode_type_predicate_name name_field in
+  let* name = dec_type_predicate_name name_field in
   let* kwd_is = first_child_named "is" node in
   let kwd_is = make_kwd kwd_is in
   let* type_field = child_with_field "type" node in
   let* type_expr = dec_type type_field in
   Ok { name; kwd_is; type_expr }
 
-and decode_type_predicate_name node : (type_predicate_name, _) result =
+and dec_type_predicate_name node : (type_predicate_name, _) result =
   match get_name node with
   | "identifier" -> Ok (Type_predicate_identifier (dec_identifier node))
   | "this" -> Ok (Type_predicate_this (make_kwd node))
@@ -1073,14 +1069,14 @@ and dec_decorator_member_expression ?(comments = []) node
     : (decorator_member_expression, _) result
   =
   let* object_field = child_with_field "object" node in
-  let* object_expr = decode_object_member_expression ~comments object_field in
+  let* object_expr = dec_object_member_expression ~comments object_field in
   let* dot = first_child_named "." node in
   let sym_dot = make_sym dot in
   let* property_field = child_with_field "property" node in
   let property = dec_identifier property_field in
   Ok { object_expr; sym_dot; property }
 
-and decode_object_member_expression ?(comments = []) node
+and dec_object_member_expression ?(comments = []) node
     : (object_member_expression, _) result
   =
   match get_name node with
@@ -1093,20 +1089,20 @@ and dec_decorator_call_expression ?(comments = []) node
     : (decorator_call_expression, _) result
   =
   let* function_field = child_with_field "function" node in
-  let* function_ = decode_function_or_property ~comments function_field in
+  let* function_ = dec_function_or_property ~comments function_field in
   let type_arguments_field = child_with_field_opt "type_arguments" node in
   let* type_arguments = make_opt_res dec_type_arguments type_arguments_field in
   let* arguments_field = child_with_field "arguments" node in
   let* arguments = dec_arguments arguments_field in
   Ok { function_; type_arguments; arguments }
 
-and decode_function_or_property ?(comments = []) node : (function_or_property, _) result =
+and dec_function_or_property ?(comments = []) node : (function_or_property, _) result =
   match get_name node with
   | "identifier" -> Ok (Function_name (dec_identifier ~comments node))
   | "member_expression" ->
     let* member_expression = dec_decorator_member_expression ~comments node in
     Ok (Qualified_member_expression member_expression)
-  | s -> Error ("decode_function_or_property: " ^ s)
+  | s -> Error ("dec_function_or_property: " ^ s)
 
 and dec_decorator_parenthesized_expression ?comments node
     : (decorator_parenthesized_expression parens, _) result
@@ -1121,17 +1117,17 @@ and dec_decorator_parenthesized_expression ?comments node
       let* call_expression = dec_decorator_call_expression node in
       Ok (Parenthesized_call call_expression)
   in
-  decode_parens_res ?comments node decode
+  dec_parens_res ?comments node decode
 
 (* Type arguments *)
 
 and dec_type_arguments ?comments node : (type_arguments, _) result =
-  decode_ne_list_in_chevrons_res ?comments node dec_type
+  dec_ne_list_in_chevrons_res ?comments node dec_type
 
 (* Function arguments *)
 
 and dec_arguments ?comments node : (arguments, _) result =
-  decode_list_in_parens_res ?comments node dec_argument
+  dec_list_in_parens_res ?comments node dec_argument
 
 and dec_argument ?comments node : (argument, _) result =
   let* expression = dec_expression ?comments node in
@@ -1247,11 +1243,11 @@ and dec_class_body ?(comments = []) node : (class_body, _) result =
     | _ -> [], (List.rev decorators, child) :: acc
   in
   let _, pairs = List.fold_left ~f:pair ~init:([], []) named_children in
-  let contents = List.map ~f:decode_class_member @@ List.rev pairs in
+  let contents = List.map ~f:dec_class_member @@ List.rev pairs in
   let* contents = Result.all contents in
   Ok (Braces { opening; contents; closing })
 
-and decode_class_member ?(comments = []) (decorators, node) : (class_member, _) result =
+and dec_class_member ?(comments = []) (decorators, node) : (class_member, _) result =
   match get_name node with
   | "method_definition" ->
     let* decorators = list_of_children_res dec_decorator decorators in
@@ -1273,7 +1269,7 @@ and decode_class_member ?(comments = []) (decorators, node) : (class_member, _) 
   | "public_field_definition" ->
     let* definition = dec_public_field_definition node in
     Ok (Public_field_definition definition)
-  | s -> Error ("decode_class_member: " ^ s)
+  | s -> Error ("dec_class_member: " ^ s)
 
 (* Method definition *)
 
@@ -1366,7 +1362,7 @@ and dec_index_signature ?(comments = []) node : (index_signature, _) result =
   in
   let name_field = child_with_field_opt "name" node in
   let* type_field = child_with_field "type" node in
-  let* annotation = decode_index_annotation type_field in
+  let* annotation = dec_index_annotation type_field in
   let* sym_lbracket = first_child_named "[" node in
   (* Not ideal *)
   let opening = make_sym ~comments sym_lbracket in
@@ -1425,7 +1421,7 @@ and dec_opting_type_annotation node : (symbol * type_expr, _) result =
   let* type_expr = dec_type type_child in
   Ok (make_kwd sym_kind, type_expr)
 
-and decode_index_annotation node : (index_annotation, _) result =
+and dec_index_annotation node : (index_annotation, _) result =
   match get_name node with
   | "type_annotation" ->
     let* annotation = dec_type_annotation node in
@@ -1458,16 +1454,16 @@ and dec_public_field_definition ?(comments = []) node
   let* access = make_opt_res dec_accessibility_modifier accessibility_modifier in
   let kwd_declare = first_child_named_opt "declare" node in
   let kwd_declare = make_opt make_kwd kwd_declare in
-  let* scope = decode_field_scope node in
+  let* scope = dec_field_scope node in
   let* name_field = child_with_field "name" node in
   let* name = dec_property_name ~comments name_field in
-  let mode = decode_field_mode_opt node in
+  let mode = dec_field_mode_opt node in
   let type_field = child_with_field_opt "type" node in
   let* type_ = make_opt_res dec_type_annotation type_field in
   let* default = mk_child_initializer_opt node in
   Ok { decorators; access; kwd_declare; scope; name; mode; type_; default }
 
-and decode_field_mode_opt node : field_mode option =
+and dec_field_mode_opt node : field_mode option =
   let sym_qmark = first_child_named_opt "?" node in
   match sym_qmark with
   | Some sym -> Some (Optional (make_sym sym))
@@ -1476,7 +1472,7 @@ and decode_field_mode_opt node : field_mode option =
     | None -> None
     | Some sym -> Some (Definite_assert (make_sym sym)))
 
-and decode_field_scope node : (field_scope, _) result =
+and dec_field_scope node : (field_scope, _) result =
   let override_modifier = first_child_named_opt "override_modifier" node in
   let* kwd_override = make_opt_res dec_override_modifier override_modifier in
   let kwd_abstract = first_child_named_opt "abstract" node in
@@ -1542,7 +1538,7 @@ and dec_function_signature ?(comments = []) node : (function_signature, _) resul
 (* Formal parameters *)
 
 and dec_formal_parameters node : (formal_parameters, _) result =
-  decode_list_in_parens_res node dec_formal_parameter
+  dec_list_in_parens_res node dec_formal_parameter
 
 and dec_formal_parameter ?(comments = []) node : (formal_parameter, _) result =
   let comments = comments @ prev_comments node in
@@ -1556,7 +1552,7 @@ and dec_formal_parameter ?(comments = []) node : (formal_parameter, _) result =
   let kwd_readonly = first_child_named_opt "readonly" node in
   let kwd_readonly = make_opt make_kwd kwd_readonly in
   let* pattern_field = child_with_field "pattern" node in
-  let* pattern = decode_parameter_pattern ~comments pattern_field (* Not ideal *) in
+  let* pattern = dec_parameter_pattern ~comments pattern_field (* Not ideal *) in
   (* *)
   let parameter_name = { decorators; access; kwd_override; kwd_readonly; pattern } in
   let qmark = first_child_named_opt "?" node in
@@ -1566,7 +1562,7 @@ and dec_formal_parameter ?(comments = []) node : (formal_parameter, _) result =
   let* default = mk_child_initializer_opt node in
   Ok { parameter_name; optional; type_opt; default }
 
-and decode_parameter_pattern ?(comments = []) node : (parameter_pattern, _) result =
+and dec_parameter_pattern ?(comments = []) node : (parameter_pattern, _) result =
   match get_name node with
   | "this" -> Ok (Parameter_this (make_kwd ~comments node))
   | _ ->
@@ -1665,7 +1661,7 @@ and dec_type_alias_declaration ?(comments = []) node : (type_alias_declaration, 
 (* Type parameters *)
 
 and dec_type_parameters node : (type_parameters, _) result =
-  decode_list_in_chevrons_res node dec_type_parameter
+  dec_list_in_chevrons_res node dec_type_parameter
 
 and dec_type_parameter ?(comments = []) node : (type_parameter, _) result =
   let comments = comments @ prev_comments node in
@@ -1707,7 +1703,7 @@ and dec_enum_declaration node : (enum_declaration, _) result =
   Ok { kwd_const; kwd_enum; name; body }
 
 and dec_enum_entries node : (enum_body list braces, _) result =
-  decode_list_in_braces_res node dec_enum_body
+  dec_list_in_braces_res node dec_enum_body
 
 and dec_enum_body ?(comments = []) node : (enum_body, _) result =
   match get_name node with
@@ -1743,7 +1739,7 @@ and dec_private_property_identifier ?(comments = []) node : private_property_ide
   dec_identifier ~comments node
 
 and dec_computed_property_name ?comments node : (expression brackets, _) result =
-  decode_brackets_res ?comments node dec_expression
+  dec_brackets_res ?comments node dec_expression
 
 (* Interface declaration *)
 
@@ -1782,17 +1778,17 @@ and dec_type_extension ?(comments = []) node : (type_extension, _) result =
 and dec_nested_type_identifier ?(comments = []) node : (nested_type_identifier, _) result =
   let* module_field = child_with_field "module" node in
   let* name_field = child_with_field "name" node in
-  let* path = decode_module_path ~comments module_field in
+  let* path = dec_module_path ~comments module_field in
   let path = Nonempty_list.reverse path in
   Ok (path, dec_type_identifier name_field)
 
-and decode_module_path ?(comments = []) node : (identifier ne_list, _) result =
+and dec_module_path ?(comments = []) node : (identifier ne_list, _) result =
   match get_name node with
   | "identifier" -> Ok Nonempty_list.[ dec_type_identifier ~comments node ]
   | "nested_identifier" ->
     let* path, id = dec_nested_identifier ~comments node in
     Ok (Nonempty_list.cons id path)
-  | s -> Error ("decode_module_path: " ^ s)
+  | s -> Error ("dec_module_path: " ^ s)
 
 (* Import alias *)
 
@@ -1804,39 +1800,39 @@ and dec_import_alias ?(comments = []) node : (import_alias, _) result =
   let* sym_equal = first_child_named "=" node in
   let sym_equal = make_sym sym_equal in
   let* rhs = child_ranked 3 node in
-  let* aliased = decode_aliased rhs in
+  let* aliased = dec_aliased rhs in
   Ok { kwd_import; alias; sym_equal; aliased }
 
-and decode_aliased node : (aliased, _) result =
+and dec_aliased node : (aliased, _) result =
   match get_name node with
   | "identifier" -> Ok (Ident (dec_identifier node))
   | "nested_identifier" ->
     let* nested = dec_nested_identifier node in
     Ok (Nested nested)
-  | s -> Error ("decode_aliased: " ^ s)
+  | s -> Error ("dec_aliased: " ^ s)
 
 (* Nested identifier *)
 
 and dec_nested_identifier ?(comments = []) node : (nested_identifier, _) result =
   let* object_field = child_with_field "object" node in
   let* property_field = child_with_field "property" node in
-  let* path = decode_object_path ~comments object_field in
+  let* path = dec_object_path ~comments object_field in
   let path = Nonempty_list.reverse path in
-  let* property = decode_property property_field in
+  let* property = dec_property property_field in
   Ok (path, property)
 
-and decode_property node : (identifier, _) result =
+and dec_property node : (identifier, _) result =
   match get_name node with
   | "property_identifier" -> Ok (dec_identifier node)
-  | s -> Error ("decode_property: " ^ s)
+  | s -> Error ("dec_property: " ^ s)
 
-and decode_object_path ?(comments = []) node : (identifier ne_list, _) result =
+and dec_object_path ?(comments = []) node : (identifier ne_list, _) result =
   match get_name node with
   | "identifier" -> Ok Nonempty_list.[ dec_identifier ~comments node ]
   | "member_expression" ->
     let* path, id = dec_nested_identifier ~comments node in
     Ok (Nonempty_list.cons id path)
-  | s -> Error ("decode_object_path: " ^ s)
+  | s -> Error ("dec_object_path: " ^ s)
 
 (* Ambient declaration *)
 
@@ -1926,14 +1922,14 @@ and dec_assignment_expression node : (assignment_expression, _) result =
   let kwd_using = first_child_named_opt "using" node in
   let kwd_using = make_opt make_kwd kwd_using in
   let* left_field = child_with_field "left" node in
-  let* left = decode_assignment_lhs left_field in
+  let* left = dec_assignment_lhs left_field in
   let* sym_equal = first_child_named "=" node in
   let sym_equal = make_sym sym_equal in
   let* right_field = child_with_field "right" node in
   let* right = dec_expression right_field in
   Ok { kwd_using; left; sym_equal; right }
 
-and decode_assignment_lhs node : (assignment_lhs, _) result =
+and dec_assignment_lhs node : (assignment_lhs, _) result =
   match get_name node with
   | "parenthesized_expression" ->
     let* expression = dec_parenthesized_expression node in
@@ -1947,14 +1943,14 @@ and decode_assignment_lhs node : (assignment_lhs, _) result =
 and dec_augmented_assignment_expression node : (augmented_assignment_expression, _) result
   =
   let* left_field = child_with_field "left" node in
-  let* left = decode_augmented_assignment_lhs left_field in
+  let* left = dec_augmented_assignment_lhs left_field in
   let* operator = child_with_field "operator" node in
-  let* operator = decode_assignment_operator operator in
+  let* operator = dec_assignment_operator operator in
   let* right_field = child_with_field "right" node in
   let* right = dec_expression right_field in
   Ok { left; operator; right }
 
-and decode_assignment_operator node : (assignment_operator, _) result =
+and dec_assignment_operator node : (assignment_operator, _) result =
   match get_name node with
   | "+=" -> Ok (Add_eq (make_sym node))
   | "-=" -> Ok (Sub_eq (make_sym node))
@@ -1971,9 +1967,9 @@ and decode_assignment_operator node : (assignment_operator, _) result =
   | "&&=" -> Ok (Log_and_eq (make_sym node))
   | "||=" -> Ok (Log_or_eq (make_sym node))
   | "??=" -> Ok (Non_null_eq (make_sym node))
-  | s -> Error ("decode_assignment_operator: " ^ s)
+  | s -> Error ("dec_assignment_operator: " ^ s)
 
-and decode_augmented_assignment_lhs node : (augmented_assignment_lhs, _) result =
+and dec_augmented_assignment_lhs node : (augmented_assignment_lhs, _) result =
   match get_name node with
   | "member_expression" ->
     let* expression = dec_member_expression node in
@@ -1985,7 +1981,7 @@ and decode_augmented_assignment_lhs node : (augmented_assignment_lhs, _) result 
   | "parenthesized_expression" ->
     let* expression = dec_parenthesized_expression node in
     Ok (Parenthesized_expression expression)
-  | s -> Error ("decode_augmented_assignment_lhs: " ^ s)
+  | s -> Error ("dec_augmented_assignment_lhs: " ^ s)
 
 (* Await expression *)
 
@@ -2000,12 +1996,12 @@ and dec_await_expression node : (await_expression, _) result =
 
 and dec_unary_expression ?(comments = []) node : (unary_expression, _) result =
   let* operator_field = child_with_field "operator" node in
-  let* operator = decode_unary_operator ~comments operator_field in
+  let* operator = dec_unary_operator ~comments operator_field in
   let* argument_field = child_with_field "argument" node in
   let* argument = dec_expression argument_field in
   Ok ({ operator; argument } : unary_expression)
 
-and decode_unary_operator ?(comments = []) node : (unary_operator, _) result =
+and dec_unary_operator ?(comments = []) node : (unary_operator, _) result =
   match get_name node with
   | "!" -> Ok (Bang (make_sym ~comments node))
   | "~" -> Ok (Not (make_sym ~comments node))
@@ -2014,21 +2010,21 @@ and decode_unary_operator ?(comments = []) node : (unary_operator, _) result =
   | "typeof" -> Ok (Typeof (make_kwd ~comments node))
   | "void" -> Ok (Void (make_kwd ~comments node))
   | "delete" -> Ok (Delete (make_kwd ~comments node))
-  | s -> Error ("decode_unary_operator: " ^ s)
+  | s -> Error ("dec_unary_operator: " ^ s)
 
 (* Binary expression *)
 
 and dec_binary_expression ?(comments = []) node : (binary_expression, _) result =
   let comments = comments @ prev_comments node in
   let* left_field = child_with_field "left" node in
-  let* lhs_expr = decode_lhs_bin_expression ~comments left_field in
+  let* lhs_expr = dec_lhs_bin_expression ~comments left_field in
   let* operator = child_with_field "operator" node in
-  let* operator = decode_binary_operator operator in
+  let* operator = dec_binary_operator operator in
   let* right_field = child_with_field "right" node in
   let* rhs_expr = dec_expression right_field in
   Ok { lhs_expr; operator; rhs_expr }
 
-and decode_lhs_bin_expression ~comments node : (lhs_bin_expression, _) result =
+and dec_lhs_bin_expression ~comments node : (lhs_bin_expression, _) result =
   match get_name node with
   | "private_property_identifier" ->
     Ok (Lhs_bin_hash (dec_private_property_identifier ~comments node))
@@ -2036,7 +2032,7 @@ and decode_lhs_bin_expression ~comments node : (lhs_bin_expression, _) result =
     let* hash = dec_expression ~comments node in
     Ok (Lhs_bin_expression hash)
 
-and decode_binary_operator node : (binary_operator, _) result =
+and dec_binary_operator node : (binary_operator, _) result =
   match get_name node with
   | "&&" -> Ok (Log_and (make_sym node))
   | "||" -> Ok (Log_or (make_sym node))
@@ -2063,7 +2059,7 @@ and decode_binary_operator node : (binary_operator, _) result =
   | "??" -> Ok (Non_null (make_sym node))
   | "instanceof" -> Ok (Instance_of (make_kwd node))
   | "in" -> Ok (In (make_kwd node))
-  | s -> Error ("decode_binary_operator: " ^ s)
+  | s -> Error ("dec_binary_operator: " ^ s)
 
 (* Ternary expression *)
 
@@ -2086,18 +2082,18 @@ and dec_update_expression node : (update_expression, _) result =
   let* argument_field = child_with_field "argument" node in
   let* argument = dec_expression argument_field in
   let* operator_field = child_with_field "operator" node in
-  let* operator = decode_incr_decr_operator operator_field in
+  let* operator = dec_incr_decr_operator operator_field in
   let update : update = { argument; operator } in
   let* first_child = child_ranked 0 node in
   match get_name first_child with
   | "++" | "--" -> Ok (Update_prefix update)
   | _ -> Ok (Update_postfix update)
 
-and decode_incr_decr_operator node : (incr_decr_operator, _) result =
+and dec_incr_decr_operator node : (incr_decr_operator, _) result =
   match get_name node with
   | "++" -> Ok (Increment (make_sym node))
   | "--" -> Ok (Decrement (make_sym node))
-  | s -> Error ("decode_incr_decr_operator: " ^ s)
+  | s -> Error ("dec_incr_decr_operator: " ^ s)
 
 (* New expression *)
 
@@ -2138,10 +2134,10 @@ and dec_as_expression node : (as_expression, _) result =
   let* kwd_as = first_child_named "as" node in
   let kwd_as = make_kwd kwd_as in
   let* as_what = child_ranked 2 node in
-  let* as_what = decode_as_what as_what in
+  let* as_what = dec_as_what as_what in
   Ok (expression, kwd_as, as_what)
 
-and decode_as_what node : (as_what, _) result =
+and dec_as_what node : (as_what, _) result =
   match get_name node with
   | "const" -> Ok (As_const (make_kwd node))
   | _ ->
@@ -2213,7 +2209,7 @@ and dec_member_expression ?(comments = []) node : (member_expression, _) result 
       Ok (Dot (make_sym selector))
     | Some node -> Ok (Optional_chain (make_sym node))
   in
-  Ok { object_expr; selector; property }
+  Ok ({ object_expr; selector; property } : member_expression)
 
 and dec_object_member ?comments node : (object_member, _) result =
   match get_name node with
@@ -2232,7 +2228,7 @@ and dec_property_ident ?comments node : (property_ident, _) result =
 (* Parenthesised expression *)
 
 and dec_parenthesized_expression ?comments node : (parenthesized_expression, _) result =
-  decode_ne_list_in_parens_res ?comments node dec_expression
+  dec_ne_list_in_parens_res ?comments node dec_expression
 
 (* Sequence expression *)
 
@@ -2243,9 +2239,9 @@ and dec_sequence_expression ?(comments = []) node : (sequence_expression, _) res
 (* Object expression *)
 
 and dec_object_expr ?(comments = []) node : (object_expr, _) result =
-  decode_list_in_braces_res ~comments node decode_object_entry
+  dec_list_in_braces_res ~comments node dec_object_entry
 
-and decode_object_entry ?(comments = []) node : (object_entry, _) result =
+and dec_object_entry ?(comments = []) node : (object_entry, _) result =
   match get_name node with
   | "pair" ->
     let* pair = dec_pair ~comments node in
@@ -2259,7 +2255,7 @@ and decode_object_entry ?(comments = []) node : (object_entry, _) result =
   | "shorthand_property_identifier" ->
     let pattern = dec_shorthand_property_identifier_pattern ~comments node in
     Ok (Object_entry_shorthand pattern)
-  | s -> Error ("decode_object_entry: " ^ s)
+  | s -> Error ("dec_object_entry: " ^ s)
 
 and dec_pair ?(comments = []) node : (pair, string) result =
   let* key_field = child_with_field "key" node in
@@ -2363,22 +2359,22 @@ and dec_call_expression ?(comments = []) node : (call_expression, _) result =
   let* arguments_field = child_with_field "arguments" node in
   match member_selection with
   | None ->
-    let* lambda = decode_fun_call ~comments function_field in
-    let* arguments = decode_arguments_to_call arguments_field in
+    let* lambda = dec_fun_call ~comments function_field in
+    let* arguments = dec_arguments_to_call arguments_field in
     Ok (Call { lambda; type_arguments; arguments })
   | Some _ ->
     let* lambda = dec_primary_expression ~comments function_field in
     let* arguments = dec_arguments arguments_field in
     Ok (Member { lambda; type_arguments; arguments })
 
-and decode_fun_call ?(comments = []) node : (fun_call, _) result =
+and dec_fun_call ?(comments = []) node : (fun_call, _) result =
   match get_name node with
   | "import" -> Ok (Import (make_kwd ~comments node))
   | _ ->
     let* expression = dec_expression ~comments node in
     Ok (Fun_call expression)
 
-and decode_arguments_to_call node : (arguments_to_call, _) result =
+and dec_arguments_to_call node : (arguments_to_call, _) result =
   match get_name node with
   | "template_string" ->
     let* expression = dec_template_string node in
@@ -2458,7 +2454,7 @@ and dec_function_expression ?(comments = []) node : (function_expression, _) res
 (* Array (expression) *)
 
 and dec_array ?comments node : (array, _) result =
-  decode_list_in_brackets_res ?comments node dec_argument
+  dec_list_in_brackets_res ?comments node dec_argument
 
 (* Template strings *)
 
@@ -2466,20 +2462,20 @@ and dec_template_string ?(comments = []) node : (template_string, _) result =
   let* opening_bquote = child_ranked 0 node in
   let opening_bquote = make_sym ~comments opening_bquote in
   let named_children = collect_named_children node in
-  let fragments = List.map ~f:decode_template_string_fragment named_children in
+  let fragments = List.map ~f:dec_template_string_fragment named_children in
   let* fragments = Result.all fragments in
   let* closing_bquote = last_child node in
   let closing_bquote = make_sym closing_bquote in
   Ok (opening_bquote, fragments, closing_bquote)
 
-and decode_template_string_fragment ?(comments = []) node
+and dec_template_string_fragment ?(comments = []) node
     : (template_string_fragment, _) result
   =
   match get_name node with
   | "string_fragment" -> Ok (String_fragment (make_node ~comments node))
   | "escape_sequence" -> Ok (Escape_sequence (make_node ~comments node))
   | "template_substitution" -> Ok (Template_substitution (make_node ~comments node))
-  | s -> Error ("decode_template_string_fragment: " ^ s)
+  | s -> Error ("dec_template_string_fragment: " ^ s)
 
 (* Class expression ("class_" in the grammar) *)
 
@@ -2521,7 +2517,7 @@ and dec_pattern ?(comments = []) node : (pattern, _) result =
 (* Object pattern *)
 
 and dec_object_pattern ?comments node : (object_pattern, _) result =
-  decode_list_in_braces_res ?comments node dec_member_pattern
+  dec_list_in_braces_res ?comments node dec_member_pattern
 
 and dec_member_pattern ?(comments = []) node : (member_pattern, _) result =
   match get_name node with
@@ -2546,10 +2542,10 @@ and dec_pair_pattern ?(comments = []) node : (pair_pattern, _) result =
   let* sym_colon = first_child_named ":" node in
   let sym_colon = make_sym sym_colon in
   let* value_field = child_with_field "value" node in
-  let* value = decode_pair_value_pattern value_field in
+  let* value = dec_pair_value_pattern value_field in
   Ok { key; sym_colon; value }
 
-and decode_pair_value_pattern node : (pair_value_pattern, _) result =
+and dec_pair_value_pattern node : (pair_value_pattern, _) result =
   match get_name node with
   | "assignment_pattern" ->
     let* pattern = dec_assignment_pattern node in
@@ -2601,7 +2597,7 @@ and dec_shorthand_property_identifier_pattern ?comments node : identifier =
 (* Array pattern *)
 
 and dec_array_pattern ?comments node : (array_pattern, _) result =
-  decode_list_in_brackets_res ?comments node dec_array_cell_pattern
+  dec_list_in_brackets_res ?comments node dec_array_cell_pattern
 
 and dec_array_cell_pattern ?comments node : (array_cell_pattern, _) result =
   match get_name node with
@@ -2770,21 +2766,19 @@ and dec_template_literal_type ?(comments = []) node : (template_literal_type, _)
   let* opening_bquote = child_ranked 0 node in
   let opening_bquote = make_sym ~comments opening_bquote in
   let named_children = collect_named_children node in
-  let fragments = List.map ~f:decode_template_type_fragment named_children in
+  let fragments = List.map ~f:dec_template_type_fragment named_children in
   let* fragments = Result.all fragments in
   let* closing_bquote = last_child node in
   let closing_bquote = make_sym closing_bquote in
   Ok (opening_bquote, fragments, closing_bquote)
 
-and decode_template_type_fragment ?(comments = []) node
-    : (template_type_fragment, _) result
-  =
+and dec_template_type_fragment ?(comments = []) node : (template_type_fragment, _) result =
   match get_name node with
   | "string_fragment" -> Ok (Template_type_string (dec_string ~comments node))
   | "template_type" ->
     let* type_expr = dec_template_type ~comments node in
     Ok (Template_type type_expr)
-  | s -> Error ("decode_template_string_fragment: " ^ s)
+  | s -> Error ("dec_template_string_fragment: " ^ s)
 
 and dec_template_type ?(comments = []) node : (template_type, _) result =
   let* type_node = child_ranked 1 node in
@@ -2824,7 +2818,7 @@ and dec_conditional_type ?(comments = []) node : (conditional_type, _) result =
 and dec_lookup_type ?(comments = []) node : (lookup_type, _) result =
   let* primary_type_child = named_child_ranked 0 node in
   let* primary_type = dec_primary_type ~comments primary_type_child in
-  let* index_type = decode_brackets_res node dec_type in
+  let* index_type = dec_brackets_res node dec_type in
   Ok (primary_type, index_type)
 
 (* Literal type *)
@@ -2878,17 +2872,98 @@ and dec_type_query ?(comments = []) node : (kwd_keyof * type_query, _) result =
   in
   Ok (kwd_typeof, type_query)
 
-and dec_type_query_subscript_expression ?(comments = []) node : (type_query_subscript_expression, _) result =
-  ignore comments; ignore node; Error "TODO: dec_type_query_subscript_expression"
+and dec_type_query_subscript_expression ?(comments = []) node
+    : (type_query_subscript_expression, _) result
+  =
+  let* object_field = child_with_field "object" node in
+  let* object_expr = dec_type_query_object ~comments object_field in
+  let* optional = first_child_named "?." node in
+  let optional = make_sym optional in
+  let* index = dec_brackets_res node dec_type_query_index in
+  Ok { object_expr; optional; index }
 
-and dec_type_query_member_expression ?(comments = []) node : (type_query_member_expression, _) result =
-  ignore comments; ignore node; Error "TODO: dec_type_query_member_expression"
+and dec_type_query_object ?(comments = []) node : (type_query_object, _) result =
+  match get_name node with
+  | "identifier" -> Ok (Type_query_object_identifier (dec_identifier ~comments node))
+  | "this" -> Ok (Type_query_object_this (make_kwd ~comments node))
+  | "subscript_expression" ->
+    let* expression = dec_type_query_subscript_expression ~comments node in
+    Ok (Type_query_object_subscript_expression expression)
+  | "member_expression" ->
+    let* expression = dec_type_query_member_expression ~comments node in
+    Ok (Type_query_object_member_expression expression)
+  | "call_expression" ->
+    let* expression = dec_type_query_call_expression ~comments node in
+    Ok (Type_query_object_call_expression expression)
+  | s -> Error ("dec_type_query_object: " ^ s)
 
-and dec_type_query_call_expression ?(comments = []) node : (type_query_call_expression, _) result =
-  ignore comments; ignore node; Error "TODO: dec_type_query_call_expression"
+and dec_type_query_index node : (type_query_index, _) result =
+  match get_name node with
+  | "predefined_type" ->
+    let* type_expr = dec_predefined_type node in
+    Ok (Type_query_index_predefined_type type_expr)
+  | "string" -> Ok (Type_query_index_string (dec_string node))
+  | "number" -> Ok (Type_query_index_number (dec_number node))
+  | s -> Error ("dec_type_query_index: " ^ s)
 
-and dec_type_query_instantiation_expression ?(comments = []) node : (type_query_instantiation_expression, _) result =
-  ignore comments; ignore node; Error "TODO: dec_type_query_instantiation_expression"
+and dec_type_query_member_expression ?(comments = []) node
+    : (type_query_member_expression, _) result
+  =
+  let* object_field = child_with_field "object" node in
+  let* object_expr = dec_type_query_object ~comments object_field in
+  let* property_field = child_with_field "property" node in
+  let* property = dec_type_query_property property_field in
+  let* selector = Ts_wrap.prev_sibling property_field in
+  let* selector = dec_query_selector selector in
+  Ok { object_expr; selector; property }
+
+and dec_query_selector node : (query_selector, _) result =
+  match get_name node with
+  | "." -> Ok (Query_selector_dot (make_sym node))
+  | "?." -> Ok (Query_selector_opt_chain (make_sym node))
+  | s -> Error ("dec_query_selector: " ^ s)
+
+and dec_type_query_property node : (type_query_property, _) result =
+  match get_name node with
+  | "private_property_identifier" ->
+    Ok (Type_query_property_private (dec_private_property_identifier node))
+  | "property_identifier" -> Ok (Type_query_property_identifier (dec_identifier node))
+  | s -> Error ("dec_type_query_property: " ^ s)
+
+and dec_type_query_call_expression ?(comments = []) node
+    : (type_query_call_expression, _) result
+  =
+  let* function_field = child_with_field "function" node in
+  let* lambda = dec_type_query_call_function ~comments function_field in
+  let* arguments_field = child_with_field "arguments" node in
+  let* arguments = dec_type_query_call_arguments arguments_field in
+  Ok ({ lambda; arguments } : type_query_call_expression)
+
+and dec_type_query_call_function ?(comments = []) node
+    : (type_query_call_function, _) result
+  =
+  match get_name node with
+  | "import" -> Ok (Type_query_call_import (make_kwd ~comments node))
+  | "identifier" -> Ok (Type_query_call_identifier (dec_identifier ~comments node))
+  | "member_expression" ->
+    let* expression = dec_type_query_member_expression ~comments node in
+    Ok (Type_query_call_member_expression expression)
+  | "subscript_expression" ->
+    let* expression = dec_type_query_subscript_expression ~comments node in
+    Ok (Type_query_call_subscript_expression expression)
+  | s -> Error ("dec_type_query_call_function: " ^ s)
+
+and dec_type_query_call_arguments node : (type_query_call_arguments, _) result =
+  dec_arguments node
+
+and dec_type_query_instantiation_expression ?(comments = []) node
+    : (type_query_instantiation_expression, _) result
+  =
+  let* function_field = child_with_field "function" node in
+  let* lambda = dec_type_query_call_function ~comments function_field in
+  let* type_arguments_field = child_with_field "type_arguments" node in
+  let* type_arguments = dec_type_arguments type_arguments_field in
+  Ok { lambda; type_arguments }
 
 (* Flow maybe type *)
 

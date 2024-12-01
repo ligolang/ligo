@@ -2682,47 +2682,51 @@ and type_query =
 
 and type_query_subscript_expression =
   { object_expr : type_query_object
-  ; optional : bool
-  ; index : type_query_index
+  ; optional : sym_opt_chain (* "?." *)
+  ; index : type_query_index brackets
   }
 
 and type_query_object =
   | Type_query_object_identifier of identifier
-  | Type_query_object_this
+  | Type_query_object_this of kwd_this
   | Type_query_object_subscript_expression of type_query_subscript_expression
-  | Type_query_object_type_query_member_expression of type_query_member_expression
+  | Type_query_object_member_expression of type_query_member_expression
   | Type_query_object_call_expression of type_query_call_expression
 
 and type_query_index =
   | Type_query_index_predefined_type of predefined_type
-  | Type_query_index_string of string
+  | Type_query_index_string of string_literal
   | Type_query_index_number of number
 
 and type_query_member_expression =
   { object_expr : type_query_object
-  ; optional : bool
+  ; selector : query_selector
   ; property : type_query_property
   }
+
+and query_selector =
+  | Query_selector_dot of sym_dot
+  | Query_selector_opt_chain of sym_opt_chain
 
 and type_query_property =
   | Type_query_property_private of private_property_identifier
   | Type_query_property_identifier of identifier
 
 and type_query_call_expression =
-  { function_ : type_query_call_function
+  { lambda : type_query_call_function
   ; arguments : type_query_call_arguments
   }
 
 and type_query_call_function =
-  | Type_query_call_import of import
+  | Type_query_call_import of kwd_import
   | Type_query_call_identifier of identifier
-  | Type_query_call_member_expresion of type_query_member_expression
+  | Type_query_call_member_expression of type_query_member_expression
   | Type_query_call_subscript_expression of type_query_subscript_expression
 
 and type_query_call_arguments = arguments
 
 and type_query_instantiation_expression =
-  { function_ : type_query_call_function
+  { lambda : type_query_call_function
   ; type_arguments : type_arguments
   }
 
