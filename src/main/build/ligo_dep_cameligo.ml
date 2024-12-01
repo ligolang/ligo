@@ -412,78 +412,89 @@ let dependencies ~std_lib prg =
   |> Map.fold ~init:[] ~f:(fun ~key ~data acc ->
          Location.wrap ~loc:data (List.map key ~f:Module_var.to_name_exn) :: acc)
 
-
-let imports_of_deps file_name deps =
-  (* We are filtering out possibly false-positive external dependencies *)
-  (* If they were not false-positive, it will be revealed during typecheck *)
-  let dirname = Filename.dirname file_name in
-  List.filter_map
+(* We convert module paths into file paths by the rough rule `M1.M2.M3 -> m1/m2/m3.mligo`
+   with nuances described below.
+   1. `Super__` module variable in the start of the modpath is considered to be `..`.
+      So `Super__.Super__.M3` gets converted into `../../m3.mligo`.
+      `Super__` in the middle of the mod path is considered regular module name. (`Super__.M1.Super__ -> ../m1/super__.mligo`)
+   2. There is ambiguity in how to resolve module paths into file paths, since
+      `M1.M2.M3` could mean access to the `M3` module defined in `m1/m2.mligo` as well as referencing `m1/m2/m3.mligo`.
+      To avoid this, we always consider only shortest resolved path. So if `m1/m2.mligo` file
+      exists, we go with the former case and don't look futher.
+   3. The requirements on the filenames are not so strict as on module names, so this
+      `Module_name` module could resolve to `Module_name`, `module_name`, `Module-name` and `module-name`
+      in this order. The same as above, once it finds existing file, it doesn't look futher.
+   4. We are also filtering out possibly false-positive external dependencies.
+      If they were not false-positive, it will be revealed during typecheck. *)
+let imports_of_deps ~options file_name deps =
+  List.filter_map deps
     ~f:(fun mod_path ->
-      let location = mod_path.Location.location in
-      let mod_path = Location.unwrap mod_path in
-      let orig_mod_path = mod_path in
-      let mod_path =
-        let supers = List.take_while mod_path ~f:(fun x -> String.equal x "Super__") in
-        let amount = List.length supers in
-        let supers = List.map ~f:(fun _ -> "..") supers in
-        supers @ List.drop mod_path amount
-      in
-      let orig_file_name = file_name in
-      let make_paths_options path =
-        let uncap_path = String.uncapitalize path in
-        let replace_underscore = Str.global_replace (Str.regexp_string "_") "-" in
-        [ path; uncap_path; replace_underscore path; replace_underscore uncap_path ]
-      in
-      let rec find_file acc mod_path =
-        match mod_path with
-        | [] -> None
-        | [ path ] ->
-          let paths = make_paths_options path in
-          let paths =
-            List.map
-              ~f:(fun file_name -> Filename.concat acc @@ file_name ^ ".mligo")
-              paths
-          in
-          List.find_map paths ~f:(fun path ->
-              let%bind.Option stat =
-                try Some (Core_unix.stat path) with
-                | _ -> None
-              in
-              match stat.st_kind with
-              | S_REG -> if Filename.equal orig_file_name path then None else Some path
-              | _ -> None)
-        | path :: tl ->
-          let paths = make_paths_options path in
-          let paths = List.map ~f:(Filename.concat acc) paths in
-          List.find_map paths ~f:(fun path ->
-              let file =
-                let file_path = path ^ ".mligo" in
-                let%bind.Option stat =
-                  try Some (Core_unix.stat file_path) with
-                  | _ -> None
-                in
-                match stat.st_kind with
-                | S_REG ->
-                  if Filename.equal orig_file_name file_path then None else Some file_path
-                | _ -> None
-              in
-              match file with
-              | None ->
+      let dirnames = Filename.dirname file_name :: options.Compiler_options.frontend.libraries in
+      List.find_map dirnames ~f:(fun dirname ->
+        let location = mod_path.Location.location in
+        let mod_path = Location.unwrap mod_path in
+        let orig_mod_path = mod_path in
+        let mod_path =
+          let supers = List.take_while mod_path ~f:(fun x -> String.equal x "Super__") in
+          let amount = List.length supers in
+          let supers = List.map ~f:(fun _ -> "..") supers in
+          supers @ List.drop mod_path amount
+        in
+        let orig_file_name = file_name in
+        let make_paths_options path =
+          let uncap_path = String.uncapitalize path in
+          let replace_underscore = Str.global_replace (Str.regexp_string "_") "-" in
+          [ path; uncap_path; replace_underscore path; replace_underscore uncap_path ]
+        in
+        let rec find_file acc mod_path =
+          match mod_path with
+          | [] -> None
+          | [ path ] ->
+            let paths = make_paths_options path in
+            let paths =
+              List.map
+                ~f:(fun file_name -> Filename.concat acc @@ file_name ^ ".mligo")
+                paths
+            in
+            List.find_map paths ~f:(fun path ->
                 let%bind.Option stat =
                   try Some (Core_unix.stat path) with
                   | _ -> None
                 in
-                (match stat.st_kind with
-                | S_DIR -> find_file path tl
+                match stat.st_kind with
+                | S_REG -> if Filename.equal orig_file_name path then None else Some path
                 | _ -> None)
-              | Some path -> Some path)
-      in
-      match find_file dirname mod_path with
-      | None -> None
-      | Some path ->
-        let path = Helpers.normalize_path path in
-        Some
-          ( BuildSystem.
-              { code_input = Source_input.From_file path; module_name = path; location }
-          , orig_mod_path ))
-    deps
+          | path :: tl ->
+            let paths = make_paths_options path in
+            let paths = List.map ~f:(Filename.concat acc) paths in
+            List.find_map paths ~f:(fun path ->
+                let file =
+                  let file_path = path ^ ".mligo" in
+                  let%bind.Option stat =
+                    try Some (Core_unix.stat file_path) with
+                    | _ -> None
+                  in
+                  match stat.st_kind with
+                  | S_REG ->
+                    if Filename.equal orig_file_name file_path then None else Some file_path
+                  | _ -> None
+                in
+                match file with
+                | None ->
+                  let%bind.Option stat =
+                    try Some (Core_unix.stat path) with
+                    | _ -> None
+                  in
+                  (match stat.st_kind with
+                  | S_DIR -> find_file path tl
+                  | _ -> None)
+                | Some path -> Some path)
+        in
+        match find_file dirname mod_path with
+        | None -> None
+        | Some path ->
+          let path = Helpers.normalize_path path in
+          Some
+            ( BuildSystem.
+                { code_input = Source_input.From_file path; module_name = path; location }
+            , orig_mod_path )))
