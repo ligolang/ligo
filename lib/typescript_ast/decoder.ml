@@ -2437,9 +2437,30 @@ and dec_generator_function ?(comments = []) node : (generator_function, _) resul
 (* Arrow function *)
 
 and dec_arrow_function ?(comments = []) node : (arrow_function, _) result =
-  ignore comments;
-  ignore node;
-  Error "TODO: dec_arrow_function"
+  let kwd_async = first_child_named_opt "async" node in
+  let kwd_async = make_opt make_kwd kwd_async in
+  let* sym_arrow = first_child_named "=>" node in
+  let sym_arrow = make_sym sym_arrow in
+  let* body_field = child_with_field "body" node in
+  let* body = dec_function_body body_field in
+  let parameter_field = child_with_field_opt "parameter" node in
+  match parameter_field with
+  | Some parameter_field ->
+    let parameters = Parameter (dec_identifier ~comments parameter_field) in
+    Ok { kwd_async; parameters; sym_arrow; body }
+  | None ->
+    let* signature = dec_call_signature ~comments node in
+    let parameters : parameters = Call_signature signature in
+    Ok { kwd_async; parameters; sym_arrow; body }
+
+and dec_function_body ?(comments = []) node : (function_body, _) result =
+  match get_name node with
+  | "statement_block" ->
+    let* statement = dec_statement_block ~comments node in
+    Ok (Statement_block statement)
+  | _ ->
+    let* expression = dec_expression ~comments node in
+    Ok (Expression expression)
 
 (* Function (expression) *)
 
