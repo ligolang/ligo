@@ -2607,6 +2607,8 @@ and print_type_query_call_expression state node =
   in
   make_tree state node children
 
+(* Index type query *)
+
 and print_index_type_query state node =
   let child = named_child_ranked 0 node in
   make_unary_res state node print_primary_type child
