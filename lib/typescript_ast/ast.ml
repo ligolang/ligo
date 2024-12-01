@@ -2493,7 +2493,7 @@ and lookup_type = primary_type * type_expr brackets
        field('type', optional($.type_annotation)))
     ]}
 *)
-and object_type = member_type list
+and object_type = member_type list braces
 
 and member_type =
   | Export_statement of export_statement (* See STATEMENTS *)
