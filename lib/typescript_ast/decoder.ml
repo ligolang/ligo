@@ -1339,11 +1339,17 @@ and dec_abstract_method_signature ?(comments = []) node
 
 (* Call signature *)
 
-and dec_call_signature node : (call_signature, _) result =
+and dec_call_signature ?(comments = []) node : (call_signature, _) result =
   let type_parameters_field = child_with_field_opt "type_parameters" node in
-  let* type_parameters = make_opt_res dec_type_parameters type_parameters_field in
   let* parameters_field = child_with_field "parameters" node in
-  let* parameters = dec_formal_parameters parameters_field in
+  let type_params_comments, params_comments =
+    match type_parameters_field with
+    | None -> [], comments
+    | _ -> comments, [] in
+  let* type_parameters =
+    make_opt_res (dec_type_parameters ~comments:type_params_comments) type_parameters_field in
+
+  let* parameters = dec_formal_parameters ~comments:params_comments parameters_field in
   let return_type_field = child_with_field_opt "return_type" node in
   let* return_type = make_opt_res dec_call_return_type return_type_field in
   Ok ({ type_parameters; parameters; return_type } : call_signature)
@@ -1537,8 +1543,8 @@ and dec_function_signature ?(comments = []) node : (function_signature, _) resul
 
 (* Formal parameters *)
 
-and dec_formal_parameters node : (formal_parameters, _) result =
-  dec_list_in_parens_res node dec_formal_parameter
+and dec_formal_parameters ?comments node : (formal_parameters, _) result =
+  dec_list_in_parens_res ?comments node dec_formal_parameter
 
 and dec_formal_parameter ?(comments = []) node : (formal_parameter, _) result =
   let comments = comments @ prev_comments node in
@@ -1660,8 +1666,8 @@ and dec_type_alias_declaration ?(comments = []) node : (type_alias_declaration, 
 
 (* Type parameters *)
 
-and dec_type_parameters node : (type_parameters, _) result =
-  dec_list_in_chevrons_res node dec_type_parameter
+and dec_type_parameters ?comments node : (type_parameters, _) result =
+  dec_list_in_chevrons_res ?comments node dec_type_parameter
 
 and dec_type_parameter ?(comments = []) node : (type_parameter, _) result =
   let comments = comments @ prev_comments node in
@@ -3053,10 +3059,36 @@ and dec_array_type ?(comments = []) node : (array_type, _) result =
 
 (* Object type *)
 
-and dec_object_type ?(comments = []) node : (object_type, _) result =
-  ignore comments;
-  ignore node;
-  Error "TODO: dec_object_type"
+and dec_object_type ?comments node : (object_type, _) result =
+  dec_list_in_braces_res ?comments node dec_member_type
+
+and dec_member_type ?(comments = []) node : (member_type, _) result =
+  match get_name node with
+  | "export_statement" ->
+    let* statement = dec_export_statement ~comments node in
+    Ok (Export_statement statement)
+  | "property_signature" ->
+    let* signature = dec_property_signature ~comments node in
+    Ok (Property_signature signature)
+  | "call_signature" ->
+    let* signature = dec_call_signature ~comments node in
+    Ok (Call_signature signature)
+  | "construct_signature" ->
+    let* signature = dec_construct_signature ~comments node in
+    Ok (Construct_signature signature)
+  | "index_signature" ->
+    let* signature = dec_index_signature ~comments node in
+    Ok (Index_signature signature)
+  | "method_signature" ->
+    let* signature = dec_method_signature ~comments node in
+    Ok (Method_signature signature)
+  | s -> Error ("dec_member_type: " ^ s)
+
+and dec_property_signature ?(comments = []) node : (property_signature, _) result =
+  ignore comments; ignore node; Error "TODO: dec_property_signature"
+
+and dec_construct_signature ?(comments = []) node : (construct_signature, _) result =
+  ignore comments; ignore node; Error "TODO: dec_construct_signature"
 
 (* Parenthesized type *)
 
