@@ -132,6 +132,7 @@ type kwd_delete = keyword
    TODO: Use unique data constructors for each symbol.
 *)
 
+type sym_ampersand = symbol (* "&" *)
 type sym_vbar = symbol (* "|" *)
 type sym_qmark = symbol (* "?" *)
 type sym_equal = symbol (* "=" *)
@@ -2380,8 +2381,8 @@ and conditional_type =
     {@js[
      intersection_type: $ => prec.left(seq(optional($.type), '&', $.type))
     ]}
-*)
-and intersection_type = type_expr option * type_expr (* [type_ list]? *)
+  NOTE: [type_expr list] would have been better. *)
+and intersection_type = type_expr option * sym_ampersand * type_expr
 
 (** Literal Type
 
