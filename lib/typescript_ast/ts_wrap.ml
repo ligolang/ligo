@@ -264,7 +264,6 @@ let children_named name node = filter_by_name name @@ collect_children node
 (* Arity *)
 
 let arity node = UInt32.to_int (TS_fun.ts_node_child_count node)
-
 let last_child node = child_ranked (arity node - 1) node
 
 (* Source locations *)
