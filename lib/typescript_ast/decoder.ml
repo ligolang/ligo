@@ -30,10 +30,11 @@ let get_region : (Ts_wrap.ts_tree -> Region.t) ref =
   ref (fun _ -> failwith "Internal error: Decoder.get_region")
 
 (* Handling results and failing in case of error *)
-
+(*
 let ensure_Ok node = function
   | Result.Ok ok -> ok
   | Error msg -> failwith ((!get_region node)#compact `Byte ^ "\n" ^ msg)
+*)
 
 (* Decoding literals *)
 
@@ -148,33 +149,6 @@ let decode_parens_res ?comments node decoder : ('a parens, _) result =
   let* parens = decode_enclosed_res ?comments node decoder "(" ")" in
   Ok (Parens parens)
 
-(* Decoding enclosed lists *)
-(*
-let decode_enclosed_list ?(comments = []) node decoder opening closing : 'a list enclosed =
-  ensure_Ok node
-  @@
-  let comments = comments @ prev_comments node in
-  let* opening = first_child_named opening node in
-  let opening = make_sym ~comments opening in
-  let* closing = first_child_named closing node in
-  let closing = make_sym closing in
-  let clauses = collect_named_children node in
-  let contents = list_of_children decoder clauses in
-  Ok { opening; contents; closing }
-
-let decode_list_in_braces ?comments node decoder : 'a list braces =
-  Braces (decode_enclosed_list ?comments node decoder "{" "}")
-
-let decode_list_in_chevrons ?comments node decoder : 'a list chevrons =
-  Chevrons (decode_enclosed_list ?comments node decoder "<" ">")
-
-let decode_list_in_brackets ?comments node decoder : 'a list brackets =
-  Brackets (decode_enclosed_list ?comments node decoder "[" "]")
-
-let decode_list_in_parens ?comments node decoder : 'a list parens =
-  Parens (decode_enclosed_list ?comments node decoder "(" ")")
-*)
-
 let decode_enclosed_list_res ?(comments = []) node decoder opening closing
     : ('a list enclosed, _) result
   =
@@ -204,33 +178,6 @@ let decode_list_in_parens_res ?comments node decoder : ('a list parens, _) resul
   Ok (Parens list)
 
 (* Decoding enclosed non-empty lists *)
-(*
-let decode_enclosed_ne_list ?(comments = []) node decoder opening closing
-    : 'a ne_list enclosed
-  =
-  ensure_Ok node
-  @@
-  let comments = comments @ prev_comments node in
-  let* opening = first_child_named opening node in
-  let opening = make_sym ~comments opening in
-  let* closing = first_child_named closing node in
-  let closing = make_sym closing in
-  let clauses = collect_named_children node in
-  let* contents = ne_list_of_children decoder clauses in
-  Ok { opening; contents; closing }
-
-let decode_ne_list_in_braces ?comments node decoder : 'a ne_list braces =
-  Braces (decode_enclosed_ne_list ?comments node decoder "{" "}")
-
-let decode_ne_list_in_chevrons ?comments node decoder : 'a ne_list chevrons =
-  Chevrons (decode_enclosed_ne_list ?comments node decoder "<" ">")
-
-let decode_ne_list_in_brackets ?comments node decoder : 'a ne_list brackets =
-  Brackets (decode_enclosed_ne_list ?comments node decoder "[" "]")
-
-let decode_ne_list_in_parens ?comments node decoder : 'a ne_list parens =
-  Parens (decode_enclosed_ne_list ?comments node decoder "(" ")")
-*)
 
 let decode_enclosed_ne_list_res ?(comments = []) node decoder opening closing
     : ('a ne_list enclosed, string) result
@@ -296,7 +243,8 @@ and dec_statement ?(comments = []) node : (statement, _) result =
     Ok (S_import_statement statement)
   | "debugger_statement" -> Ok (S_debugger_statement (make_kwd ~comments node))
   | "expression_statement" ->
-    Ok (S_expression_statement (dec_expression_statement ~comments node))
+    let* expression = dec_expression_statement ~comments node in
+    Ok (S_expression_statement expression)
   | "statement_block" ->
     let* statement = dec_statement_block ~comments node in
     Ok (S_statement_block statement)
@@ -642,12 +590,10 @@ and dec_import_attribute node : (import_attribute, _) result =
 
    See [dec_expression]. *)
 
-and dec_expression_statement ?(comments = []) node : expression_statement =
+and dec_expression_statement ?(comments = []) node : (expression_statement, _) result =
   dec_expressions ~comments node
 
-and dec_expressions ?(comments = []) (node : ts_tree) : expressions =
-  ensure_Ok node
-  @@
+and dec_expressions ?(comments = []) (node : ts_tree) : (expressions, _) result =
   match get_name node with
   | "sequence_expression" -> dec_sequence_expression ~comments node
   | _ ->
@@ -708,7 +654,7 @@ and dec_switch_case ?(comments = []) node : (switch_case, _) result =
   let* kwd_case = first_child_named "case" node in
   let kwd_case = make_kwd ~comments kwd_case in
   let* value_field = child_with_field "value" node in
-  let value = dec_expressions value_field in
+  let* value = dec_expressions value_field in
   let children = collect_children node in
   let stmt_children = skip_until_colon children in
   let* body = list_of_children_res dec_statement stmt_children in
@@ -734,7 +680,7 @@ and dec_for_statement node : (for_statement, _) result =
   let* condition_field = child_with_field "condition" node in
   let* condition = decode_for_condition condition_field in
   let increment_field = child_with_field_opt "increment" node in
-  let increment = make_opt dec_expressions increment_field in
+  let* increment = make_opt_res dec_expressions increment_field in
   let* sym_rpar = first_child_named ")" node in
   let sym_rpar = make_sym sym_rpar in
   let* body_field = child_with_field "body" node in
@@ -750,14 +696,16 @@ and decode_for_initializer node : (for_initializer, _) result =
     let* declaration = dec_variable_declaration node in
     Ok (For_variable_declaration declaration)
   | "expression_statement" ->
-    Ok (For_expression_statement (dec_expression_statement node))
+    let* expression = dec_expression_statement node in
+    Ok (For_expression_statement expression)
   | "empty_statement" -> Ok (For_empty_statement (!get_region node))
   | s -> Error ("decode_for_initializer: " ^ s)
 
 and decode_for_condition node : (for_condition, _) result =
   match get_name node with
   | "expression_statement" ->
-    Ok (For_condition_expression (dec_expression_statement node))
+    let* expression = dec_expression_statement node in
+    Ok (For_condition_expression expression)
   | "empty_statement" -> Ok (For_condition_empty (!get_region node))
   | s -> Error ("decode_for_condition: " ^ s)
 
@@ -779,7 +727,7 @@ and dec_for_in_statement node : (for_in_statement, _) result =
   let* operator_field = child_with_field "operator" node in
   let* operator = decode_for_operator operator_field in
   let* right_field = child_with_field "right" node in
-  let collection = dec_expressions right_field in
+  let* collection = dec_expressions right_field in
   let* (range : for_range) =
     match kind_field with
     | None ->
@@ -927,7 +875,7 @@ and dec_return_statement node : (return_statement, _) result =
   let* kwd_return = first_child_named "return" node in
   let kwd_return = make_kwd kwd_return in
   let expr = child_ranked_opt 1 node in
-  let expressions = make_opt dec_expressions expr in
+  let* expressions = make_opt_res dec_expressions expr in
   Ok { kwd_return; expressions }
 
 (* Throw statement *)
@@ -936,7 +884,7 @@ and dec_throw_statement node : (throw_statement, _) result =
   let* kwd_throw = first_child_named "throw" node in
   let kwd_throw = make_kwd kwd_throw in
   let* expr = child_ranked 1 node in
-  let expressions = dec_expressions expr in
+  let* expressions = dec_expressions expr in
   Ok { kwd_throw; expressions }
 
 (* DECLARATION
@@ -1787,14 +1735,15 @@ and dec_property_name ?(comments = []) node : (property_name, _) result =
   | "string" -> Ok (String (dec_string ~comments node))
   | "number" -> Ok (Number (dec_number ~comments node))
   | "computed_property_name" ->
-    Ok (Computed_property_name (dec_computed_property_name ~comments node))
+    let* expression = dec_computed_property_name ~comments node in
+    Ok (Computed_property_name expression)
   | s -> Error ("dec_property_name: " ^ s)
 
 and dec_private_property_identifier ?(comments = []) node : private_property_identifier =
   dec_identifier ~comments node
 
-and dec_computed_property_name ?comments node : expression brackets =
-  ensure_Ok node @@ decode_brackets_res ?comments node dec_expression
+and dec_computed_property_name ?comments node : (expression brackets, _) result =
+  decode_brackets_res ?comments node dec_expression
 
 (* Interface declaration *)
 
@@ -2236,7 +2185,7 @@ and dec_subscript_expression ?(comments = []) node : (subscript_expression, _) r
   let optional_chain_field = child_with_field_opt "optional_chain" node in
   let* optional_chain = make_opt_res dec_optional_chain optional_chain_field in
   let* index_field = child_with_field "index" node in
-  let contents = dec_expressions index_field in
+  let* contents = dec_expressions index_field in
   let* sym_lbracket = first_child_named "[" node in
   let opening = make_sym sym_lbracket in
   let* sym_rbracket = first_child_named "]" node in
@@ -2867,12 +2816,25 @@ and dec_conditional_type ?(comments = []) node : (conditional_type, _) result =
   let* alternative = dec_type alternative_field in
   Ok { left; kwd_extends; right; sym_qmark; consequence; sym_colon; alternative }
 
-(* Lookup type *)
+(* Look up type
+
+   The non-terminals "type" and "primary_type" are supertypes in the
+   TypeScript grammar, which means that they are hidden rules. *)
 
 and dec_lookup_type ?(comments = []) node : (lookup_type, _) result =
-  ignore comments;
-  ignore node;
-  Error "TODO: dec_lookup_type"
+(*  let primary_type_child = named_child_ranked 0 node
+  and sym_lbracket = first_child_named "[" node
+  and sym_rbracket = first_child_named "]" node
+  and type_child = named_child_ranked 1 node in
+  let children =
+    [ mk_child_res print_primary_type primary_type_child
+    ; mk_child_res make_sym sym_lbracket
+    ; mk_child_res print_type type_child
+    ; mk_child_res make_sym sym_rbracket
+    ]
+  in XXX
+*)
+  ignore comments; ignore node; Error "dec_lookup_type"
 
 (* Literal type *)
 
