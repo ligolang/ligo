@@ -2967,10 +2967,12 @@ and dec_type_query_instantiation_expression ?(comments = []) node
 
 (* Flow maybe type *)
 
-and dec_flow_maybe_type ?(comments = []) node : (primary_type, _) result =
-  ignore comments;
-  ignore node;
-  Error "TODO: dec_primary_type"
+and dec_flow_maybe_type ?(comments = []) node : (sym_qmark * primary_type, _) result =
+  let* sym_qmark = child_ranked 0 node in
+  let sym_qmark = make_sym ~comments sym_qmark in
+  let* type_node = child_ranked 1 node in
+  let* primary_type = dec_primary_type type_node in
+  Ok (sym_qmark, primary_type)
 
 (* Tuple type *)
 

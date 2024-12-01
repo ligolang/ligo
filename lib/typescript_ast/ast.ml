@@ -2278,6 +2278,8 @@ and type_expr =
        $.union_type,
        'const'),
 
+     flow_maybe_type: $ => prec.right(seq('?', $.primary_type)),
+
      parenthesized_type: $ => seq('(', $.type, ')'),
 
      _type_identifier: $ => alias($.identifier, $.type_identifier),
@@ -2296,7 +2298,7 @@ and primary_type =
   | T_object_type of object_type
   | T_array_type of array_type
   | T_tuple_type of tuple_type
-  | T_flow_maybe_type of primary_type
+  | T_flow_maybe_type of (sym_qmark * primary_type)
   | T_type_query of (kwd_keyof * type_query)
   | T_index_type_query of (kwd_keyof * primary_type)
   | T_this of kwd_this
