@@ -2687,17 +2687,70 @@ and dec_destructuring_pattern ?comments node : (destructuring_pattern, _) result
     Ok (Pattern_array pattern)
   | s -> Error ("dec_destructuring_pattern: " ^ s)
 
-(** TYPES
-*)
-and dec_type ?comments node : (type_expr, _) result =
-  ignore comments;
-  ignore node;
-  Error "TODO: dec_type"
+(* TYPES
+
+   The non-terminals "type" and "primary_type" are supertypes in the
+   TypeScript grammar, which means that they are hidden rules. *)
+
+and dec_type ?(comments = []) node : (type_expr, _) result =
+  match get_name node with
+  | "function_type" ->
+    let* type_expr = dec_function_type ~comments node in
+    Ok (T_function_type type_expr)
+  | "readonly_type" ->
+    let* type_expr = dec_readonly_type ~comments node in
+    Ok (T_readonly_type type_expr)
+  | "constructor_type" ->
+    let* type_expr = dec_constructor_type ~comments node in
+    Ok (T_constructor_type type_expr)
+  | "infer_type" ->
+    let* type_expr = dec_infer_type ~comments node in
+    Ok (T_infer_type type_expr)
+  (* A couple of aliases *)
+  | "member_expression" ->
+    let* expression = dec_member_expression ~comments node in
+    Ok (T_member_expression expression)
+  | "call_expression" ->
+    let* expression = dec_call_expression ~comments node in
+    Ok (T_call_expression expression)
+  (* "primary_type" is hidden *)
+  | _ ->
+    let* type_expr = dec_primary_type ~comments node in
+    Ok (T_primary_type type_expr)
+
+(* Primary type *)
+
+and dec_primary_type ?(comments = []) node : (primary_type, _) result =
+  ignore comments; ignore node; Error "TODO: dec_primary_type"
+
+(* Infer type *)
+
+and dec_infer_type ?(comments = []) node : (infer_type, _) result =
+  ignore comments; ignore node; Error "TODO: dec_infer_type"
+
+(* Constructor type *)
+
+and dec_constructor_type ?(comments = []) node : (constructor_type, _) result =
+  ignore comments; ignore node; Error "TODO: dec_constructor_type"
+
+(* Function type *)
+
+and dec_function_type ?(comments = []) node : (function_type, _) result =
+  ignore comments; ignore node; Error "TODO: dec_function_type"
+
+(* Readonly type *)
+
+and dec_readonly_type ?(comments = []) node : (readonly_type, _) result =
+  ignore comments; ignore node; Error "TODO: dec_readonly_type"
+
+(* Generic type *)
 
 and dec_generic_type ?comments node : (generic_type, _) result =
   ignore comments;
   ignore node;
   Error "TODO: dec_generic_type"
+
+(* Object type *)
 
 and dec_object_type node : (object_type, _) result =
   ignore node;
