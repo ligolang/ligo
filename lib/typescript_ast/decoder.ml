@@ -2782,7 +2782,21 @@ and dec_primary_type ?(comments = []) node : (primary_type, _) result =
 (* Union type *)
 
 and dec_union_type ?(comments = []) node : (union_type, _) result =
-  ignore comments; ignore node; Error "TODO: dec_union_type"
+  let* first_child = child_ranked 0 node in
+  let* sym_vbar = first_child_named "|" node in
+  match get_name first_child with
+  | "|" ->
+    let sym_vbar = make_sym ~comments sym_vbar in
+    let* single_type_node = child_ranked 1 node in
+    let* type_expr = dec_type single_type_node in
+    Ok (None, sym_vbar, type_expr)
+  | _ ->
+    (* "type" is a supertype, therefore a hidden rule *)
+    let* left_type = dec_type ~comments first_child in
+    let sym_vbar = make_sym sym_vbar in
+    let* right_type = child_ranked 2 node in
+    let* right_type = dec_type right_type in
+    Ok (Some left_type, sym_vbar, right_type)
 
 (* Intersection type *)
 
