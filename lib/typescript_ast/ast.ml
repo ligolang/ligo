@@ -2217,11 +2217,10 @@ and pattern =
   | P_member_expression of member_expression
   | P_subscript_expression of subscript_expression
   | P_identifier of identifier (* Including reserved identifiers *)
-  | P_undefined
-  | P_object_pattern of object_pattern (* [destructuring_pattern] *)
-  | P_array_pattern of array_pattern (* [destructuring_pattern] *)
+  | P_undefined of kwd_undefined
+  | P_destructuring_pattern of destructuring_pattern
   | P_non_null_expression of expression
-  | P_rest_pattern of rest_pattern (* [rest_pattern] *)
+  | P_rest_pattern of rest_pattern
 
 (** TYPES
 
