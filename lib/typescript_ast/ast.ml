@@ -26,11 +26,6 @@ type identifier = string wrap
 type string_literal = string wrap
 type hash_name = string wrap
 
-type template_string =
-  | String_fragment of string wrap
-  | Escape_sequence of string wrap
-  | Template_substitution of string wrap
-
 (* Numbers
 
    Note: Only [dec_literal] used [Q.t]: the values for the other types
@@ -152,6 +147,17 @@ type sym_rpar = symbol (* ")" *)
 type sym_tilde = symbol (* "~" *)
 type sym_incr = symbol (* "++" *)
 type sym_decr = symbol (* "--" *)
+type sym_bquote = symbol (* "`" *)
+
+(* Template string *)
+
+type template_string_fragment =
+  | String_fragment of string wrap
+  | Escape_sequence of string wrap
+  | Template_substitution of string wrap
+
+type template_string =
+  sym_bquote * template_string_fragment list * sym_bquote
 
 (* Compound constructs *)
 

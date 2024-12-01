@@ -2368,7 +2368,9 @@ and dec_primary_expression ?(comments = []) node : (primary_expression, _) resul
   | "super" -> Ok (E_super (make_kwd node))
   | "number" -> Ok (E_number (dec_number ~comments node))
   | "string" -> Ok (E_string (dec_string node))
-  | "template_string" -> Ok (E_template_string (dec_template_string node))
+  | "template_string" ->
+    let* expression = dec_template_string node in
+    Ok (E_template_string expression)
   | "regex" -> Ok (E_regex (dec_regex node))
   | "true" -> Ok (E_true (make_kwd node))
   | "false" -> Ok (E_false (make_kwd node))
@@ -2429,7 +2431,9 @@ and decode_fun_call ?(comments = []) node : (fun_call, _) result =
 
 and decode_arguments_to_call node : (arguments_to_call, _) result =
   match get_name node with
-  | "template_string" -> Ok (Template_string (dec_template_string node))
+  | "template_string" ->
+    let* expression = dec_template_string node in
+    Ok (Template_string expression)
   | _ ->
     let* arguments = dec_arguments node in
     Ok (Arguments arguments)
@@ -2509,10 +2513,22 @@ and dec_array ?comments node : (array, _) result =
 
 (* Template strings *)
 
-and dec_template_string ?(comments = []) node : template_string =
-  ignore comments;
-  ignore node;
-  failwith "TODO: dec_template_string"
+and dec_template_string ?(comments = []) node : (template_string, _) result =
+  let* opening = child_ranked 0 node in
+  let opening = make_sym ~comments opening in
+  let named_children = collect_named_children node in
+  let fragments = List.map ~f:decode_template_string_fragment named_children in
+  let* fragments = Result.all fragments in
+  let* closing = last_child node in
+  let closing = make_sym closing in
+  Ok (opening, fragments, closing)
+
+and decode_template_string_fragment ?(comments = [] ) node : (template_string_fragment, _) result =
+  match get_name node with
+  | "string_fragment" -> Ok (String_fragment (make_node ~comments node))
+  | "escape_sequence" -> Ok (Escape_sequence (make_node ~comments node))
+  | "template_substitution" -> Ok (Template_substitution (make_node ~comments node))
+  | s -> Error ("decode_template_string_fragment: " ^ s)
 
 (* Class expression ("class_" in the grammar) *)
 
