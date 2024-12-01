@@ -133,6 +133,8 @@ type kwd_delete = keyword
    TODO: Use unique data constructors for each symbol.
 *)
 
+type sym_lbracket = symbol (* "[" *)
+type sym_rbracket = symbol (* "]" *)
 type sym_ampersand = symbol (* "&" *)
 type sym_vbar = symbol (* "|" *)
 type sym_qmark = symbol (* "?" *)
@@ -2338,7 +2340,7 @@ and generic_name =
      array_type: $ => seq($.primary_type, '[', ']')
     ]}
 *)
-and array_type = primary_type
+and array_type = primary_type * sym_lbracket * sym_rbracket
 
 (** Conditional Type
 

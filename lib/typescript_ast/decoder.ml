@@ -3043,9 +3043,13 @@ and dec_rest_type ?(comments = []) node : (sym_ellipsis * type_expr, _) result =
 (* Array type *)
 
 and dec_array_type ?(comments = []) node : (array_type, _) result =
-  ignore comments;
-  ignore node;
-  Error "TODO: dec_array_type"
+  let* type_child = child_ranked 0 node in
+  let* type_expr = dec_primary_type ~comments type_child in
+  let* sym_lbracket = first_child_named "[" node in
+  let sym_lbracket = make_sym sym_lbracket in
+  let* sym_rbracket = first_child_named "]" node in
+  let sym_rbracket = make_sym sym_rbracket in
+  Ok (type_expr, sym_lbracket, sym_rbracket)
 
 (* Object type *)
 
