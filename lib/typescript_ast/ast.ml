@@ -2426,13 +2426,13 @@ and intersection_type = type_expr option * sym_ampersand * type_expr
     ]}
 *)
 and literal_type =
-  | T_unary_type of unary_type
+  | T_unary_type of unary_expression
   | T_number of number
-  | T_string of string
-  | T_true
-  | T_false
-  | T_null
-  | T_undefined
+  | T_string of string_literal
+  | T_true of kwd_true
+  | T_false of kwd_false
+  | T_null of kwd_null
+  | T_undefined of kwd_undefined
 
 and unary_type =
   { operator : sign

@@ -1884,7 +1884,7 @@ and dec_expression ?(comments = []) node : (expression, _) result =
     let* expression = dec_await_expression node in
     Ok (E_await_expression expression)
   | "unary_expression" ->
-    let* expression = dec_unary_expression node in
+    let* expression = dec_unary_expression ~comments node in
     Ok (E_unary_expression expression)
   | "binary_expression" ->
     let* expression = dec_binary_expression ~comments node in
@@ -1998,22 +1998,22 @@ and dec_await_expression node : (await_expression, _) result =
 
 (* Unary expression *)
 
-and dec_unary_expression node : (unary_expression, _) result =
+and dec_unary_expression ?(comments = []) node : (unary_expression, _) result =
   let* operator_field = child_with_field "operator" node in
-  let* operator = decode_unary_operator operator_field in
+  let* operator = decode_unary_operator ~comments operator_field in
   let* argument_field = child_with_field "argument" node in
   let* argument = dec_expression argument_field in
   Ok ({ operator; argument } : unary_expression)
 
-and decode_unary_operator node : (unary_operator, _) result =
+and decode_unary_operator ?(comments = []) node : (unary_operator, _) result =
   match get_name node with
-  | "!" -> Ok (Bang (make_sym node))
-  | "~" -> Ok (Not (make_sym node))
-  | "-" -> Ok (Unary_sub (make_sym node))
-  | "+" -> Ok (Unary_add (make_sym node))
-  | "typeof" -> Ok (Typeof (make_kwd node))
-  | "void" -> Ok (Void (make_kwd node))
-  | "delete" -> Ok (Delete (make_kwd node))
+  | "!" -> Ok (Bang (make_sym ~comments node))
+  | "~" -> Ok (Not (make_sym ~comments node))
+  | "-" -> Ok (Unary_sub (make_sym ~comments node))
+  | "+" -> Ok (Unary_add (make_sym ~comments node))
+  | "typeof" -> Ok (Typeof (make_kwd ~comments node))
+  | "void" -> Ok (Void (make_kwd ~comments node))
+  | "delete" -> Ok (Delete (make_kwd ~comments node))
   | s -> Error ("decode_unary_operator: " ^ s)
 
 (* Binary expression *)
@@ -2830,9 +2830,18 @@ and dec_lookup_type ?(comments = []) node : (lookup_type, _) result =
 (* Literal type *)
 
 and dec_literal_type ?(comments = []) node : (literal_type, _) result =
-  ignore comments;
-  ignore node;
-  Error "TODO: dec_literal_type"
+  let* child = named_child_ranked 0 node in
+  match get_name child with
+  | "unary_expression" ->
+    let* expression = dec_unary_expression ~comments child in
+    Ok (T_unary_type expression)
+  | "number" -> Ok (T_number (dec_number ~comments child))
+  | "string" -> Ok (T_string (dec_string ~comments child))
+  | "true" -> Ok (T_true (make_kwd ~comments child))
+  | "false" -> Ok (T_false (make_kwd ~comments child))
+  | "null" -> Ok (T_null (make_kwd ~comments child))
+  | "undefined" -> Ok (T_undefined (make_kwd ~comments child))
+  | s -> Error ("dec_literal_type: " ^ s)
 
 (* Index type query *)
 
