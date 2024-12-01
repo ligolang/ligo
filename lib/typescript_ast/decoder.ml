@@ -2514,14 +2514,14 @@ and dec_array ?comments node : (array, _) result =
 (* Template strings *)
 
 and dec_template_string ?(comments = []) node : (template_string, _) result =
-  let* opening = child_ranked 0 node in
-  let opening = make_sym ~comments opening in
+  let* opening_bquote = child_ranked 0 node in
+  let opening_bquote = make_sym ~comments opening_bquote in
   let named_children = collect_named_children node in
   let fragments = List.map ~f:decode_template_string_fragment named_children in
   let* fragments = Result.all fragments in
-  let* closing = last_child node in
-  let closing = make_sym closing in
-  Ok (opening, fragments, closing)
+  let* closing_bquote = last_child node in
+  let closing_bquote = make_sym closing_bquote in
+  Ok (opening_bquote, fragments, closing_bquote)
 
 and decode_template_string_fragment ?(comments = []) node
     : (template_string_fragment, _) result
@@ -2755,10 +2755,8 @@ and dec_primary_type ?(comments = []) node : (primary_type, _) result =
   | "index_type_query" ->
     let* type_expr = dec_index_type_query ~comments node in
     Ok (T_index_type_query type_expr)
-  | "this_type" ->
-    Ok (T_this (make_kwd ~comments node))
-  | "existential_type" ->
-    Ok (T_existential_type (make_sym ~comments node))
+  | "this_type" -> Ok (T_this (make_kwd ~comments node))
+  | "existential_type" -> Ok (T_existential_type (make_sym ~comments node))
   | "literal_type" ->
     let* type_expr = dec_literal_type ~comments node in
     Ok (T_literal_type type_expr)
@@ -2820,77 +2818,145 @@ and dec_intersection_type ?(comments = []) node : (intersection_type, _) result 
 (* Template literal type *)
 
 and dec_template_literal_type ?(comments = []) node : (template_literal_type, _) result =
-  ignore comments; ignore node; Error "TODO: dec_template_literal_type"
+  let* opening_bquote = child_ranked 0 node in
+  let opening_bquote = make_sym ~comments opening_bquote in
+  let named_children = collect_named_children node in
+  let fragments = List.map ~f:decode_template_type_fragment named_children in
+  let* fragments = Result.all fragments in
+  let* closing_bquote = last_child node in
+  let closing_bquote = make_sym closing_bquote in
+  Ok (opening_bquote, fragments, closing_bquote)
+
+and decode_template_type_fragment ?(comments = []) node
+    : (template_type_fragment, _) result
+  =
+  match get_name node with
+  | "string_fragment" -> Ok (Template_type_string (dec_string ~comments node))
+  | "template_type" ->
+    let* type_expr = dec_template_type ~comments node in
+    Ok (Template_type type_expr)
+  | s -> Error ("decode_template_string_fragment: " ^ s)
+
+and dec_template_type ?(comments = []) node : (template_type, _) result =
+  let* type_node = child_ranked 1 node in
+  match get_name type_node with
+  | "infer_type" ->
+    let* type_expr = dec_infer_type ~comments node in
+    Ok (Template_type_infer type_expr)
+    (* "primary_type" is hidden *)
+  | _ ->
+    let* type_expr = dec_primary_type ~comments node in
+    Ok (Template_type_primary type_expr)
 
 (* Conditional type *)
 
 and dec_conditional_type ?(comments = []) node : (conditional_type, _) result =
-  ignore comments; ignore node; Error "TODO: dec_conditional_type"
+  let* left_field = child_with_field "left" node in
+  let* left = dec_type ~comments left_field in
+  let* kwd_extends = first_child_named "extends" node in
+  let kwd_extends = make_kwd kwd_extends in
+  let* right_field = child_with_field "right" node in
+  let* right = dec_type right_field in
+  let* sym_qmark = first_child_named "?" node in
+  let sym_qmark = make_sym sym_qmark in
+  let* consequence_field = child_with_field "consequence" node in
+  let* consequence = dec_type consequence_field in
+  let* sym_colon = first_child_named ":" node in
+  let sym_colon = make_sym sym_colon in
+  let* alternative_field = child_with_field "alternative" node in
+  let* alternative = dec_type alternative_field in
+  Ok { left; kwd_extends; right; sym_qmark; consequence; sym_colon; alternative }
 
 (* Lookup type *)
 
 and dec_lookup_type ?(comments = []) node : (lookup_type, _) result =
-  ignore comments; ignore node; Error "TODO: dec_lookup_type"
+  ignore comments;
+  ignore node;
+  Error "TODO: dec_lookup_type"
 
 (* Literal type *)
 
 and dec_literal_type ?(comments = []) node : (literal_type, _) result =
-  ignore comments; ignore node; Error "TODO: dec_literal_type"
+  ignore comments;
+  ignore node;
+  Error "TODO: dec_literal_type"
 
 (* Index type query *)
 
 and dec_index_type_query ?(comments = []) node : (primary_type, _) result =
-  ignore comments; ignore node; Error "TODO: dec_index_type_query"
+  ignore comments;
+  ignore node;
+  Error "TODO: dec_index_type_query"
 
 (* Type query *)
 
 and dec_type_query ?(comments = []) node : (type_query, _) result =
-  ignore comments; ignore node; Error "TODO: dec_type_query"
+  ignore comments;
+  ignore node;
+  Error "TODO: dec_type_query"
 
 (* Flow maybe type *)
 
 and dec_flow_maybe_type ?(comments = []) node : (primary_type, _) result =
-  ignore comments; ignore node; Error "TODO: dec_primary_type"
+  ignore comments;
+  ignore node;
+  Error "TODO: dec_primary_type"
 
 (* Tuple type *)
 
 and dec_tuple_type ?(comments = []) node : (tuple_type, _) result =
-  ignore comments; ignore node; Error "TODO: dec_tuple_type"
+  ignore comments;
+  ignore node;
+  Error "TODO: dec_tuple_type"
 
 (* Array type *)
 
 and dec_array_type ?(comments = []) node : (array_type, _) result =
-  ignore comments; ignore node; Error "TODO: dec_array_type"
+  ignore comments;
+  ignore node;
+  Error "TODO: dec_array_type"
 
 (* Object type *)
 
 and dec_object_type ?(comments = []) node : (object_type, _) result =
-  ignore comments; ignore node; Error "TODO: dec_object_type"
+  ignore comments;
+  ignore node;
+  Error "TODO: dec_object_type"
 
 (* Parenthesized type *)
 
 and dec_parenthesized_type ?(comments = []) node : (type_expr, _) result =
-  ignore comments; ignore node; Error "TODO: dec_parenthesize_type"
+  ignore comments;
+  ignore node;
+  Error "TODO: dec_parenthesize_type"
 
 (* Infer type *)
 
 and dec_infer_type ?(comments = []) node : (infer_type, _) result =
-  ignore comments; ignore node; Error "TODO: dec_infer_type"
+  ignore comments;
+  ignore node;
+  Error "TODO: dec_infer_type"
 
 (* Constructor type *)
 
 and dec_constructor_type ?(comments = []) node : (constructor_type, _) result =
-  ignore comments; ignore node; Error "TODO: dec_constructor_type"
+  ignore comments;
+  ignore node;
+  Error "TODO: dec_constructor_type"
 
 (* Function type *)
 
 and dec_function_type ?(comments = []) node : (function_type, _) result =
-  ignore comments; ignore node; Error "TODO: dec_function_type"
+  ignore comments;
+  ignore node;
+  Error "TODO: dec_function_type"
 
 (* Readonly type *)
 
 and dec_readonly_type ?(comments = []) node : (readonly_type, _) result =
-  ignore comments; ignore node; Error "TODO: dec_readonly_type"
+  ignore comments;
+  ignore node;
+  Error "TODO: dec_readonly_type"
 
 (* Generic type *)
 
