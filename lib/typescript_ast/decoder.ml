@@ -2721,7 +2721,128 @@ and dec_type ?(comments = []) node : (type_expr, _) result =
 (* Primary type *)
 
 and dec_primary_type ?(comments = []) node : (primary_type, _) result =
+  match get_name node with
+  | "parenthesized_type" ->
+    let* type_expr = dec_parenthesized_type ~comments node in
+    Ok (T_parenthesized_type type_expr)
+  | "predefined_type" ->
+    let* type_expr = dec_predefined_type ~comments node in
+    Ok (T_predefined_type type_expr)
+  | "type_identifier" ->
+    let identifier = dec_type_identifier ~comments node in
+    Ok (T_type_identifier identifier)
+  | "nested_type_identifier" ->
+    let* nested_id = dec_nested_type_identifier ~comments node in
+    Ok (T_nested_type_identifier nested_id)
+  | "generic_type" ->
+    let* type_expr = dec_generic_type ~comments node in
+    Ok (T_generic_type type_expr)
+  | "object_type" ->
+    let* type_expr = dec_object_type ~comments node in
+    Ok (T_object_type type_expr)
+  | "array_type" ->
+    let* type_expr = dec_array_type ~comments node in
+    Ok (T_array_type type_expr)
+  | "tuple_type" ->
+    let* type_expr = dec_tuple_type ~comments node in
+    Ok (T_tuple_type type_expr)
+  | "flow_maybe_type" ->
+    let* type_expr = dec_flow_maybe_type ~comments node in
+    Ok (T_flow_maybe_type type_expr)
+  | "type_query" ->
+    let* type_query = dec_type_query ~comments node in
+    Ok (T_type_query type_query)
+  | "index_type_query" ->
+    let* type_expr = dec_index_type_query ~comments node in
+    Ok (T_index_type_query type_expr)
+  | "this_type" ->
+    Ok (T_this (make_kwd ~comments node))
+  | "existential_type" ->
+    Ok (T_existential_type (make_sym ~comments node))
+  | "literal_type" ->
+    let* type_expr = dec_literal_type ~comments node in
+    Ok (T_literal_type type_expr)
+  | "lookup_type" ->
+    let* type_expr = dec_lookup_type ~comments node in
+    Ok (T_lookup_type type_expr)
+  | "conditional_type" ->
+    let* type_expr = dec_conditional_type ~comments node in
+    Ok (T_conditional_type type_expr)
+  | "template_literal_type" ->
+    let* type_expr = dec_template_literal_type ~comments node in
+    Ok (T_template_literal_type type_expr)
+  | "intersection_type" ->
+    let* type_expr = dec_intersection_type ~comments node in
+    Ok (T_intersection_type type_expr)
+  | "union_type" ->
+    let* type_expr = dec_union_type ~comments node in
+    Ok (T_union_type type_expr)
+  | s -> Error ("dec_primary_type: " ^ s)
+
+(* Union type *)
+
+and dec_union_type ?(comments = []) node : (union_type, _) result =
+  ignore comments; ignore node; Error "TODO: dec_union_type"
+
+(* Intersection type *)
+
+and dec_intersection_type ?(comments = []) node : (intersection_type, _) result =
+  ignore comments; ignore node; Error "TODO: dec_intersection_type"
+
+(* Template literal type *)
+
+and dec_template_literal_type ?(comments = []) node : (template_literal_type, _) result =
+  ignore comments; ignore node; Error "TODO: dec_template_literal_type"
+
+(* Conditional type *)
+
+and dec_conditional_type ?(comments = []) node : (conditional_type, _) result =
+  ignore comments; ignore node; Error "TODO: dec_conditional_type"
+
+(* Lookup type *)
+
+and dec_lookup_type ?(comments = []) node : (lookup_type, _) result =
+  ignore comments; ignore node; Error "TODO: dec_lookup_type"
+
+(* Literal type *)
+
+and dec_literal_type ?(comments = []) node : (literal_type, _) result =
+  ignore comments; ignore node; Error "TODO: dec_literal_type"
+
+(* Index type query *)
+
+and dec_index_type_query ?(comments = []) node : (primary_type, _) result =
+  ignore comments; ignore node; Error "TODO: dec_index_type_query"
+
+(* Type query *)
+
+and dec_type_query ?(comments = []) node : (type_query, _) result =
+  ignore comments; ignore node; Error "TODO: dec_type_query"
+
+(* Flow maybe type *)
+
+and dec_flow_maybe_type ?(comments = []) node : (primary_type, _) result =
   ignore comments; ignore node; Error "TODO: dec_primary_type"
+
+(* Tuple type *)
+
+and dec_tuple_type ?(comments = []) node : (tuple_type, _) result =
+  ignore comments; ignore node; Error "TODO: dec_tuple_type"
+
+(* Array type *)
+
+and dec_array_type ?(comments = []) node : (array_type, _) result =
+  ignore comments; ignore node; Error "TODO: dec_array_type"
+
+(* Object type *)
+
+and dec_object_type ?(comments = []) node : (object_type, _) result =
+  ignore comments; ignore node; Error "TODO: dec_object_type"
+
+(* Parenthesized type *)
+
+and dec_parenthesized_type ?(comments = []) node : (type_expr, _) result =
+  ignore comments; ignore node; Error "TODO: dec_parenthesize_type"
 
 (* Infer type *)
 
@@ -2749,9 +2870,3 @@ and dec_generic_type ?comments node : (generic_type, _) result =
   ignore comments;
   ignore node;
   Error "TODO: dec_generic_type"
-
-(* Object type *)
-
-and dec_object_type node : (object_type, _) result =
-  ignore node;
-  Error "TODO: dec_object_type"
