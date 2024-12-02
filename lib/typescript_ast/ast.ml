@@ -2103,6 +2103,7 @@ and ('key, 'value) key_value =
 *)
 and labeled_statement =
   { label : identifier (* Including reserved identifiers *)
+  ; sym_colon : sym_colon
   ; body : statement
   }
 

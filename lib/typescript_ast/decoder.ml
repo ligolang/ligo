@@ -286,6 +286,9 @@ and dec_statement ?(comments = []) node : (statement, _) result =
     let* statement = dec_throw_statement node in
     Ok (S_throw_statement statement)
   | "empty_statement" -> Ok (S_empty_statement (!get_region node))
+  | "labeled_statement" ->
+    let* statement = dec_labeled_statement node
+    in Ok (S_labeled_statement statement)
   (* Inlining declarations cases (hidden rule) *)
   | "function_declaration" ->
     let* declaration = dec_function_declaration ~comments node in
@@ -330,6 +333,17 @@ and dec_statement ?(comments = []) node : (statement, _) result =
     let* declaration = dec_ambient_declaration node in
     Ok (S_declaration (D_ambient_declaration declaration))
   | _ -> error "dec_statement" node
+
+(* Labeled statement *)
+
+and dec_labeled_statement node : (labeled_statement, _) result =
+  let* label_field = child_with_field "label" node in
+  let label = dec_identifier label_field in
+  let* sym_colon = first_child_named ":" node in
+  let sym_colon = make_sym sym_colon in
+  let* body_field = child_with_field "body" node in
+  let* body = dec_statement body_field in
+  Ok { label; sym_colon; body }
 
 (* Export statement *)
 
