@@ -2822,9 +2822,11 @@ and readonly_type = type_expr
     ]}
 *)
 and constructor_type =
-  { abstract : bool
-  ; type_parameters : type_parameters
+  { kwd_abstract : kwd_abstract option
+  ; kwd_new : kwd_new
+  ; type_parameters : type_parameters option
   ; parameters : formal_parameters
+  ; sym_arrow : sym_arrow
   ; type_expr : type_expr
   }
 
