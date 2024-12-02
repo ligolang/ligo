@@ -2509,7 +2509,7 @@ and property_signature =
   { access : accessibility_modifier option
   ; scope : method_scope
   ; name : property_name
-  ; optional : bool
+  ; sym_qmark : sym_qmark option
   ; type_ : type_annotation option
   }
 

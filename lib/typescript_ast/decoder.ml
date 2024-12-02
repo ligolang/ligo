@@ -121,9 +121,7 @@ let ne_list_of_children ?(comments = []) decoder children : ('a ne_list, _) resu
 
 (* Decoding enclosed unique child *)
 
-let dec_enclosed ?(comments = []) node decoder opening closing
-    : ('a enclosed, _) result
-  =
+let dec_enclosed ?(comments = []) node decoder opening closing : ('a enclosed, _) result =
   let comments = comments @ prev_comments node in
   let* opening = first_child_named opening node in
   let opening = make_sym ~comments opening in
@@ -1349,10 +1347,13 @@ and dec_call_signature ?(comments = []) node : (call_signature, _) result =
   let type_params_comments, params_comments =
     match type_parameters_field with
     | None -> [], comments
-    | _ -> comments, [] in
+    | _ -> comments, []
+  in
   let* type_parameters =
-    make_opt_res (dec_type_parameters ~comments:type_params_comments) type_parameters_field in
-
+    make_opt_res
+      (dec_type_parameters ~comments:type_params_comments)
+      type_parameters_field
+  in
   let* parameters = dec_formal_parameters ~comments:params_comments parameters_field in
   let return_type_field = child_with_field_opt "return_type" node in
   let* return_type = make_opt_res dec_call_return_type return_type_field in
@@ -3110,10 +3111,21 @@ and dec_member_type ?(comments = []) node : (member_type, _) result =
   | s -> Error ("dec_member_type: " ^ s)
 
 and dec_property_signature ?(comments = []) node : (property_signature, _) result =
-  ignore comments; ignore node; Error "TODO: dec_property_signature"
+  let accessibility_modifier = first_child_named_opt "accessibility_modifier" node in
+  let* access = make_opt_res dec_accessibility_modifier accessibility_modifier in
+  let* scope = dec_method_scope node in
+  let* name_field = child_with_field "name" node in
+  let* name = dec_property_name ~comments name_field in
+  let sym_qmark = first_child_named_opt "?" node in
+  let sym_qmark = make_opt make_sym sym_qmark in
+  let type_field = child_with_field_opt "type" node in
+  let* type_ = make_opt_res dec_type_annotation type_field in
+  Ok { access; scope; name; sym_qmark; type_ }
 
 and dec_construct_signature ?(comments = []) node : (construct_signature, _) result =
-  ignore comments; ignore node; Error "TODO: dec_construct_signature"
+  ignore comments;
+  ignore node;
+  Error "TODO: dec_construct_signature"
 
 (* Parenthesized type *)
 
