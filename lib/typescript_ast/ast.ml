@@ -2294,7 +2294,7 @@ and type_expr =
     ]}
 *)
 and primary_type =
-  | T_parenthesized_type of type_expr
+  | T_parenthesized_type of type_expr parens
   | T_predefined_type of predefined_type
   | T_type_identifier of type_identifier
   | T_nested_type_identifier of nested_type_identifier
