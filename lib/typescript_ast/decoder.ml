@@ -2856,7 +2856,13 @@ and dec_conditional_type ?(comments = []) node : (conditional_type, _) result =
 and dec_lookup_type ?(comments = []) node : (lookup_type, _) result =
   let* primary_type_child = named_child_ranked 0 node in
   let* primary_type = dec_primary_type ~comments primary_type_child in
-  let* index_type = dec_brackets node dec_type in
+  let* sym_lbracket = first_child_named "[" node in
+  let opening = make_sym sym_lbracket in
+  let* type_child = next_sibling sym_lbracket in
+  let* contents = dec_type type_child in
+  let* sym_rbracket = first_child_named "]" node in
+  let closing = make_sym sym_rbracket in
+  let index_type = Brackets { opening; contents; closing } in
   Ok (primary_type, index_type)
 
 (* Literal type *)
@@ -2917,7 +2923,13 @@ and dec_type_query_subscript_expression ?(comments = []) node
   let* object_expr = dec_type_query_object ~comments object_field in
   let* optional = first_child_named "?." node in
   let optional = make_sym optional in
-  let* index = dec_brackets node dec_type_query_index in
+  let* sym_lbracket = first_child_named "[" node in
+  let opening = make_sym sym_lbracket in
+  let* index_field = child_with_field "index" node in
+  let* contents = dec_type_query_index index_field in
+  let* sym_rbracket = first_child_named "]" node in
+  let closing = make_sym sym_rbracket in
+  let index = Brackets {opening; contents; closing } in
   Ok { object_expr; optional; index }
 
 and dec_type_query_object ?(comments = []) node : (type_query_object, _) result =
