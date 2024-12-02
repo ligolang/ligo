@@ -2514,8 +2514,9 @@ and property_signature =
   }
 
 and construct_signature =
-  { abstract : bool
-  ; type_parameters : type_parameters
+  { kwd_abstract : kwd_abstract option
+  ; kwd_new : kwd_new
+  ; type_parameters : type_parameters option
   ; parameters : formal_parameters
   ; type_ : type_annotation option
   }
