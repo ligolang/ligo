@@ -992,10 +992,10 @@ and dec_asserts node : (asserts_annotation, _) result =
   let* child = child_ranked 1 node in
   match get_name child with
   | "type_predicate" ->
-    let* predicate = dec_type_predicate node in
+    let* predicate = dec_type_predicate child in
     Ok (Assert_predicate (kwd_asserts, predicate))
-  | "identifier" -> Ok (Assert_type (kwd_asserts, dec_identifier node))
-  | "this" -> Ok (Assert_this (kwd_asserts, make_kwd node))
+  | "identifier" -> Ok (Assert_type (kwd_asserts, dec_identifier child))
+  | "this" -> Ok (Assert_this (kwd_asserts, make_kwd child))
   | _ -> error "dec_asserts" child
 
 (* Type predicate annotation *)
@@ -1058,15 +1058,15 @@ and dec_predefined_type ?(comments = []) node : (predefined_type, _) result =
 and dec_decorator ?(comments = []) node : (decorator, _) result =
   let* child = named_child_ranked 0 node in
   match get_name child with
-  | "identifier" -> Ok (Decorator_identifier (dec_identifier ~comments node))
+  | "identifier" -> Ok (Decorator_identifier (dec_identifier ~comments child))
   | "member_expression" ->
-    let* member_expression = dec_decorator_member_expression ~comments node in
+    let* member_expression = dec_decorator_member_expression ~comments child in
     Ok (Decorator_member_expression member_expression)
   | "call_expression" ->
-    let* call_expression = dec_decorator_call_expression ~comments node in
+    let* call_expression = dec_decorator_call_expression ~comments child in
     Ok (Decorator_call_expression call_expression)
   | "parenthesized_expression" ->
-    let* expression = dec_decorator_parenthesized_expression ~comments node in
+    let* expression = dec_decorator_parenthesized_expression ~comments child in
     Ok (Decorator_parenthesized_expression expression)
   | _ -> error "dec_decorator" child
 
