@@ -2777,6 +2777,7 @@ and union_type = type_expr option * sym_vbar * type_expr
 and function_type =
   { type_parameters : type_parameters option
   ; parameters : formal_parameters
+  ; sym_arrow : sym_arrow
   ; return_type : return_type
   }
 

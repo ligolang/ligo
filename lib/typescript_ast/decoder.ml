@@ -3178,9 +3178,27 @@ and dec_constructor_type ?(comments = []) node : (constructor_type, _) result =
 (* Function type *)
 
 and dec_function_type ?(comments = []) node : (function_type, _) result =
-  ignore comments;
-  ignore node;
-  Error "TODO: dec_function_type"
+  let type_parameters_field = child_with_field_opt "type_parameters" node in
+  let* type_parameters = make_opt_res dec_type_parameters type_parameters_field in
+  let* parameters_field = child_with_field "parameters" node in
+  let* parameters = dec_formal_parameters ~comments parameters_field in
+  let* sym_arrow = first_child_named "=>" node in
+  let sym_arrow = make_sym sym_arrow in
+  let* return_type_field = child_with_field "return_type" node in
+  let* return_type = dec_return_type return_type_field in
+  Ok { type_parameters; parameters; sym_arrow; return_type }
+
+and dec_return_type node : (return_type, _) result =
+  match get_name node with
+  | "asserts" ->
+    let* annotation = dec_asserts node in
+    Ok (Return_asserts annotation)
+  | "type_predicate" ->
+    let* predicate = dec_type_predicate node in
+    Ok (Return_type_predicate predicate)
+  | _ ->
+    let* type_expr = dec_type node in
+    Ok (Return_type type_expr)
 
 (* Readonly type *)
 
