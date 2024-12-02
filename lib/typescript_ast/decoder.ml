@@ -112,12 +112,9 @@ let ne_list_opt_of_children ?(comments = []) decoder children
   match children with
   | [] -> Ok None
   | fst_raw_child :: siblings ->
-    let fst_child = decoder ?comments:(Some comments) fst_raw_child in
-    (match fst_child with
-    | Ok fst_child ->
-      let* tail = List.fold_right ~f ~init:[] siblings |> Result.all in
-      Ok (Some Nonempty_list.(fst_child :: tail))
-    | Error msg -> Error msg)
+    let* fst_child = decoder ?comments:(Some comments) fst_raw_child in
+    let* tail = List.fold_right ~f ~init:[] siblings |> Result.all in
+    Ok (Some Nonempty_list.(fst_child :: tail))
 
 let ne_list_of_children ?(comments = []) decoder children : ('a ne_list, _) result =
   match ne_list_opt_of_children ~comments decoder children with

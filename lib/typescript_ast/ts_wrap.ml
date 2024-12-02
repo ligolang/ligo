@@ -70,12 +70,26 @@ let opt_to_res = function
 
 let is_null = TS_fun.ts_node_is_null
 
+(* Converting a node to an OCaml string *)
+
+let string_of_ts_node_type (node : ts_tree) : string =
+  if is_null node then "NULL" else string_of_char_ptr @@ TS_fun.ts_node_type node
+
+(* Extracting the name of a node *)
+
+let get_name = string_of_ts_node_type (* "NULL" if null node *)
+
+let get_name_res = function
+  | Ok node -> get_name node
+  | Error name -> name
+
 (* Wrappers for filtering fields (failure on null node or optional value) *)
 
 let child_with_field field node =
   let child = TS_fun.ts_node_child_by_field_name node field (uint32_len field) in
+  let name = get_name node in
   if is_null child
-  then Error (sprintf "INVALID: Missing field %S." field)
+  then Error (sprintf "INVALID: Node %S is missing the field %S." name field)
   else Result.Ok child
 
 let child_with_field_opt field node =
@@ -87,11 +101,6 @@ let print_node (node: ts_tree) : unit =
   let ptr_char = TS_fun.ts_node_string node in
   Printf.printf "%s\n%!" @@ string_of_char_ptr ptr_char
 *)
-
-(* Converting a node to an OCaml string *)
-
-let string_of_ts_node_type (node : ts_tree) : string =
-  if is_null node then "NULL" else string_of_char_ptr @@ TS_fun.ts_node_type node
 
 (* Parsing a string expected to contain a valid TypeScript program *)
 
@@ -152,7 +161,10 @@ let collect_error_children (node : ts_tree) : ts_forest =
 let named_child_ranked index node =
   let raw_children = collect_named_children node in
   match Core.List.nth raw_children index with
-  | None -> Error (sprintf "INVALID: Missing named child at index %i." index)
+  | None ->
+    let name = get_name node in
+    let msg = sprintf "INVALID: Node %S has no named child at index %i." name index
+    in Error msg
   | Some child -> Ok child
 
 let named_child_ranked_opt index node =
@@ -164,20 +176,15 @@ let named_child_ranked_opt index node =
 let child_ranked index (node : ts_tree) =
   let raw_children = collect_children node in
   match Core.List.nth raw_children index with
-  | None -> Error (sprintf "INVALID: Missing child at index %i" index)
+  | None ->
+    let name = get_name node in
+    let msg = sprintf "INVALID: Node %S has no child at index %i" name index
+    in Error msg
   | Some child -> Ok child
 
 let child_ranked_opt index (node : ts_tree) =
   let raw_children = collect_children node in
   Core.List.nth raw_children index
-
-(* Extracting the name of a node *)
-
-let get_name = string_of_ts_node_type (* "NULL" if null node *)
-
-let get_name_res = function
-  | Ok node -> get_name node
-  | Error name -> name
 
 (* Getting the sibling of a node (if any) *)
 
