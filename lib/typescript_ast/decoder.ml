@@ -3137,10 +3137,8 @@ and dec_construct_signature ?(comments = []) node : (construct_signature, _) res
 
 (* Parenthesized type *)
 
-and dec_parenthesized_type ?(comments = []) node : (type_expr, _) result =
-  ignore comments;
-  ignore node;
-  Error "TODO: dec_parenthesize_type"
+and dec_parenthesized_type ?comments node : (type_expr parens, _) result =
+  dec_parens ?comments node dec_type
 
 (* Infer type *)
 
