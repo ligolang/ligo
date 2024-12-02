@@ -3143,9 +3143,20 @@ and dec_parenthesized_type ?comments node : (type_expr parens, _) result =
 (* Infer type *)
 
 and dec_infer_type ?(comments = []) node : (infer_type, _) result =
-  ignore comments;
-  ignore node;
-  Error "TODO: dec_infer_type"
+  let* kwd_infer = first_child_named "infer" node in
+  let kwd_infer = make_kwd ~comments kwd_infer in
+  let* type_identifier_child = child_ranked 1 node (* name "type_identifier"? *) in
+  let type_id = dec_type_identifier type_identifier_child in
+  let* extends =
+    match first_child_named_opt "extends" node with
+    | None -> Ok None
+    | Some kwd_extends ->
+      let kwd_extends = make_kwd kwd_extends in
+      let* type_child = child_ranked 3 node in
+      let* type_expr = dec_type type_child in
+      Ok (Some (kwd_extends, type_expr))
+  in
+  Ok { kwd_infer; type_id; extends }
 
 (* Constructor type *)
 

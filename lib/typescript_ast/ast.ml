@@ -48,6 +48,7 @@ type number =
    TODO: Use unique data constructors for each keyword.
 *)
 
+type kwd_infer = keyword
 type kwd_keyof = keyword
 type kwd_meta = keyword
 type kwd_target = keyword
@@ -2845,8 +2846,9 @@ and constructor_type =
     ]}
 *)
 and infer_type =
-  { type_id : type_identifier
-  ; extends : type_expr option
+  { kwd_infer : kwd_infer
+  ; type_id : type_identifier
+  ; extends : (kwd_extends * type_expr) option
   }
 
 (** STATEMENTS
