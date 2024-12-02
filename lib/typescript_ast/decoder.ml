@@ -3211,7 +3211,18 @@ and dec_readonly_type ?(comments = []) node : (readonly_type, _) result =
 
 (* Generic type *)
 
-and dec_generic_type ?comments node : (generic_type, _) result =
-  ignore comments;
-  ignore node;
-  Error "TODO: dec_generic_type"
+and dec_generic_type ?(comments = []) node : (generic_type, _) result =
+  let comments = comments @ prev_comments node in
+  let* name_field = child_with_field "name" node in
+  let* generic_name = dec_generic_name ~comments name_field in
+  let* type_arguments_field = child_with_field "type_arguments" node in
+  let* type_arguments = dec_type_arguments type_arguments_field in
+  Ok (generic_name, type_arguments)
+
+and dec_generic_name ?(comments = []) node : (generic_name, _) result =
+  match get_name node with
+  | "type_identifier" -> Ok (Generic_type (dec_type_identifier ~comments node))
+  | "nested_type_identifier" ->
+    let* nested = dec_nested_type_identifier ~comments node in
+    Ok (Generic_nested nested)
+  | s -> Error ("dec_generic_name: " ^ s)
