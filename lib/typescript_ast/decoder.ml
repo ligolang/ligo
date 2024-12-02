@@ -117,10 +117,10 @@ let ne_list_opt_of_children ?(comments = []) decoder children
     Ok (Some Nonempty_list.(fst_child :: tail))
 
 let ne_list_of_children ?(comments = []) decoder children : ('a ne_list, _) result =
-  match ne_list_opt_of_children ~comments decoder children with
-  | Ok None -> Error "Expected at least one child."
-  | Ok (Some ne_list) -> Ok ne_list
-  | Error msg -> Error msg
+  let* list = ne_list_opt_of_children ~comments decoder children in
+  match list with
+  | None -> Error "Expected at least one child."
+  | Some ne_list -> Ok ne_list
 
 (* Decoding enclosed unique child *)
 
@@ -592,7 +592,9 @@ and dec_import_attribute node : (import_attribute, _) result =
    See [dec_expression]. *)
 
 and dec_expression_statement ?(comments = []) node : (expression_statement, _) result =
-  dec_expressions ~comments node
+  let comments = comments @ prev_comments node in
+  let* child = named_child_ranked 0 node in
+  dec_expressions ~comments child
 
 and dec_expressions ?(comments = []) (node : ts_tree) : (expressions, _) result =
   match get_name node with
@@ -953,9 +955,9 @@ and dec_function_declaration ?(comments = []) node : (function_declaration, _) r
 and dec_accessibility_modifier node : (accessibility_modifier, _) result =
   let* child = child_ranked 0 node in
   match get_name child with
-  | "public" -> Ok (Public (make_kwd node))
-  | "private" -> Ok (Private (make_kwd node))
-  | "protected" -> Ok (Protected (make_kwd node))
+  | "public" -> Ok (Public (make_kwd child))
+  | "private" -> Ok (Private (make_kwd child))
+  | "protected" -> Ok (Protected (make_kwd child))
   | _ -> error "dec_accessibility_modifier" child
 
 (* Override modifier *)
