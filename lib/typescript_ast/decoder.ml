@@ -3123,9 +3123,17 @@ and dec_property_signature ?(comments = []) node : (property_signature, _) resul
   Ok { access; scope; name; sym_qmark; type_ }
 
 and dec_construct_signature ?(comments = []) node : (construct_signature, _) result =
-  ignore comments;
-  ignore node;
-  Error "TODO: dec_construct_signature"
+  let kwd_abstract = first_child_named_opt "abstract" node in
+  let kwd_abstract = make_opt make_kwd kwd_abstract in
+  let* kwd_new = first_child_named "new" node in
+  let kwd_new = make_kwd ~comments kwd_new in
+  let type_parameters_field = child_with_field_opt "type_parameters" node in
+  let* type_parameters = make_opt_res dec_type_parameters type_parameters_field in
+  let* parameters_field = child_with_field "parameters" node in
+  let* parameters = dec_formal_parameters parameters_field in
+  let type_field = child_with_field_opt "type" node in
+  let* type_ = make_opt_res dec_type_annotation type_field in
+  Ok { kwd_abstract; kwd_new; type_parameters; parameters; type_ }
 
 (* Parenthesized type *)
 
