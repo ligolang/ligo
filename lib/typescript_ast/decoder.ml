@@ -36,6 +36,13 @@ let ensure_Ok node = function
   | Error msg -> failwith ((!get_region node)#compact `Byte ^ "\n" ^ msg)
 *)
 
+(* Region of a node as a string *)
+
+let error fun_name node : (_, string) result =
+  let region = (!get_region node)#compact `Byte
+  and node_name = get_name node in
+  Error (Printf.sprintf "%s: %S (%s)" fun_name node_name region)
+
 (* Decoding literals *)
 
 let dec_comments ?(comments = []) node : Wrap.comment list =
@@ -69,12 +76,11 @@ let dec_number ?(comments = []) node : number =
 
 let make_opt decoder node = Option.map ~f:decoder node
 
-let make_opt_res decoder = function
+let make_opt_res decode = function
   | None -> Ok None
   | Some value ->
-    (match decoder value with
-    | Ok decoded -> Ok (Some decoded)
-    | Error msg -> Error msg)
+    let* decoded = decode value in
+    Ok (Some decoded)
 
 (* Handling some modifiers *)
 
@@ -326,7 +332,7 @@ and dec_statement ?(comments = []) node : (statement, _) result =
   | "ambient_declaration" ->
     let* declaration = dec_ambient_declaration node in
     Ok (S_declaration (D_ambient_declaration declaration))
-  | s -> Error ("dec_statement: " ^ s)
+  | _ -> error "dec_statement" node
 
 (* Export statement *)
 
@@ -409,7 +415,7 @@ and dec_module_export_name ?(comments = []) node : (module_export_name, _) resul
   match get_name node with
   | "identifier" -> Ok (Export_ident (dec_identifier ~comments node))
   | "string" -> Ok (Export_string (dec_string ~comments node))
-  | s -> Error ("dec_module_export_name: " ^ s)
+  | _ -> error "dec_module_export_name" node
 
 and dec_from_clause node kwd_from : (from_clause, _) result =
   let* source_field = child_with_field "source" node in
@@ -496,7 +502,7 @@ and dec_import_clause ?(comments = []) node : (import_clause, _) result =
         Ok (Some next)
     in
     Ok (Import_ident (ident, from))
-  | s -> Error ("dec_import_clause: " ^ s)
+  | _ -> error "dec_import_clause" fst_child
 
 and dec_namespace_or_named_imports node : (namespace_or_named_imports, _) result =
   match get_name node with
@@ -506,7 +512,7 @@ and dec_namespace_or_named_imports node : (namespace_or_named_imports, _) result
   | "named_imports" ->
     let* named_imports = dec_named_imports node in
     Ok (Import_named named_imports)
-  | s -> Error ("dec_namespace_or_named_imports: " ^ s)
+  | _ -> error "dec_namespace_or_named_imports" node
 
 and dec_namespace_import ?(comments = []) node : (namespace_import, _) result =
   let comments = comments @ prev_comments node in
@@ -576,7 +582,7 @@ and dec_import_attribute node : (import_attribute, _) result =
   | "assert" ->
     let* expression = dec_object_expr object_node in
     Ok (Import_assert (make_kwd kind_node, expression))
-  | s -> Error ("dec_import_attribute: " ^ s)
+  | _ -> error "dec_import_attribute" kind_node
 
 (* Expression statements
 
@@ -645,7 +651,7 @@ and dec_switch_entry ?(comments = []) node : (switch_entry, _) result =
   | "switch_default" ->
     let* default = dec_switch_default ~comments node in
     Ok (Switch_default default)
-  | s -> Error ("dec_switch_entry: " ^ s)
+  | _ -> error "dec_switch_entry" node
 
 and dec_switch_case ?(comments = []) node : (switch_case, _) result =
   let comments = comments @ prev_comments node in
@@ -697,7 +703,7 @@ and dec_for_initializer node : (for_initializer, _) result =
     let* expression = dec_expression_statement node in
     Ok (For_expression_statement expression)
   | "empty_statement" -> Ok (For_empty_statement (!get_region node))
-  | s -> Error ("dec_for_initializer: " ^ s)
+  | _ -> error "dec_for_initializer" node
 
 and dec_for_condition node : (for_condition, _) result =
   match get_name node with
@@ -705,7 +711,7 @@ and dec_for_condition node : (for_condition, _) result =
     let* expression = dec_expression_statement node in
     Ok (For_condition_expression expression)
   | "empty_statement" -> Ok (For_condition_empty (!get_region node))
-  | s -> Error ("dec_for_condition: " ^ s)
+  | _ -> error "dec_for_condition" node
 
 (* For-in statement *)
 
@@ -752,7 +758,7 @@ and dec_for_in_statement node : (for_in_statement, _) result =
         Ok (For_in_var { kwd_var = keyword; variable; default })
       | "let" -> Ok (For_in_let (keyword, variable))
       | "const" -> Ok (For_in_const (keyword, variable))
-      | s -> Error ("dec_for_in_statement: " ^ s))
+      | _ -> error "dec_for_in_statement" kind_field)
   in
   let for_header : for_header = { range; operator; collection } in
   Ok { kwd_for; kwd_await; sym_lpar; for_header; sym_rpar; body }
@@ -761,7 +767,7 @@ and dec_for_operator node : (for_operator, _) result =
   match get_name node with
   | "in" -> Ok (In (make_kwd node))
   | "of" -> Ok (Of (make_kwd node))
-  | s -> Error ("dec_for_operator: " ^ s)
+  | _ -> error "dec_for_operator" node
 
 (* While statement *)
 
@@ -828,7 +834,7 @@ and dec_catch_parameter_kind node : (catch_parameter_kind, _) result =
   | "array_pattern" ->
     let* pattern = dec_array_pattern node in
     Ok (Catch_array_pattern pattern)
-  | s -> Error ("dec_catch_parameter_kind: " ^ s)
+  | _ -> error "dec_catch_parameter_kind" node
 
 and dec_type_annotation node : (type_annotation, _) result =
   let* sym_colon = first_child_named ":" node in
@@ -935,7 +941,7 @@ and dec_declaration ?(comments = []) node : (declaration, _) result =
   | "ambient_declaration" ->
     let* declaration = dec_ambient_declaration node in
     Ok (D_ambient_declaration declaration)
-  | s -> Error ("dec_declaration: " ^ s)
+  | _ -> error "dec_declaration" node
 
 (* Function declaration (see [dec_function_signature]) *)
 
@@ -953,7 +959,7 @@ and dec_accessibility_modifier node : (accessibility_modifier, _) result =
   | "public" -> Ok (Public (make_kwd node))
   | "private" -> Ok (Private (make_kwd node))
   | "protected" -> Ok (Protected (make_kwd node))
-  | s -> Error ("dec_accessibility_modifier: " ^ s)
+  | _ -> error "dec_accessibility_modifier" child
 
 (* Override modifier *)
 
@@ -975,7 +981,7 @@ and dec_call_return_type node : (call_return_type, _) result =
   | "type_predicate_annotation" ->
     let* annotation = dec_type_predicate_annotation node in
     Ok (Type_predicate_annotation annotation)
-  | s -> Error ("dec_call_return_type: " ^ s)
+  | _ -> error "dec_call_return_type" node
 
 (* Asserts annotation *)
 
@@ -993,7 +999,7 @@ and dec_asserts node : (asserts_annotation, _) result =
     Ok (Assert_predicate (kwd_asserts, predicate))
   | "identifier" -> Ok (Assert_type (kwd_asserts, dec_identifier node))
   | "this" -> Ok (Assert_this (kwd_asserts, make_kwd node))
-  | s -> Error ("dec_asserts: " ^ s)
+  | _ -> error "dec_asserts" child
 
 (* Type predicate annotation *)
 
@@ -1048,7 +1054,7 @@ and dec_predefined_type ?(comments = []) node : (predefined_type, _) result =
     | "unknown" -> Ok (T_unknown (make_kwd ~comments child))
     | "never" -> Ok (T_never (make_kwd ~comments child))
     | "object" -> Ok (T_object (make_kwd ~comments child))
-    | s -> Error ("dec_predefined_type: " ^ s))
+    | _ -> error "dec_predefined_type" child)
 
 (* Decorator *)
 
@@ -1065,7 +1071,7 @@ and dec_decorator ?(comments = []) node : (decorator, _) result =
   | "parenthesized_expression" ->
     let* expression = dec_decorator_parenthesized_expression ~comments node in
     Ok (Decorator_parenthesized_expression expression)
-  | s -> Error ("dec_decorator: " ^ s)
+  | _ -> error "dec_decorator" child
 
 and dec_decorator_member_expression ?(comments = []) node
     : (decorator_member_expression, _) result
@@ -1104,7 +1110,7 @@ and dec_function_or_property ?(comments = []) node : (function_or_property, _) r
   | "member_expression" ->
     let* member_expression = dec_decorator_member_expression ~comments node in
     Ok (Qualified_member_expression member_expression)
-  | s -> Error ("dec_function_or_property: " ^ s)
+  | _ -> error "dec_function_or_property" node
 
 and dec_decorator_parenthesized_expression ?comments node
     : (decorator_parenthesized_expression parens, _) result
@@ -1271,7 +1277,7 @@ and dec_class_member ?(comments = []) (decorators, node) : (class_member, _) res
   | "public_field_definition" ->
     let* definition = dec_public_field_definition node in
     Ok (Public_field_definition definition)
-  | s -> Error ("dec_class_member: " ^ s)
+  | _ -> error "dec_class_member" node
 
 (* Method definition *)
 
@@ -1446,13 +1452,13 @@ and dec_index_annotation node : (index_annotation, _) result =
   | "opting_type_annotation" ->
     let* annotation = dec_opting_type_annotation node in
     Ok (Opting_type_annotation annotation)
-  | s -> Error ("dec_index_annotation: " ^ s)
+  | _ -> error "dec_index_annotation" node
 
 and dec_sign node : (sign, _) result =
   match get_name node with
   | "+" -> Ok (Plus (make_sym node))
   | "-" -> Ok (Minus (make_sym node))
-  | s -> Error ("dec_sign: " ^ s)
+  | _ -> error "dec_sign" node
 
 (* Public field definition *)
 
@@ -1507,7 +1513,7 @@ and dec_lexical_declaration ?(comments = []) node : (lexical_declaration, _) res
     match get_name kind_field with
     | "let" -> Ok (Let (make_kwd ~comments kind_field))
     | "const" -> Ok (Const (make_kwd ~comments kind_field))
-    | s -> Error ("dec_lexical_declaration: " ^ s)
+    | _ -> error "dec_lexical_declaration" kind_field
   in
   Ok { kind; decls }
 
@@ -1639,7 +1645,7 @@ and dec_module_name node : (module_name, _) result =
   | "nested_identifier" ->
     let* nested = dec_nested_identifier node in
     Ok (Module_nested nested)
-  | s -> Error ("dec_module_name: " ^ s)
+  | _ -> error "dec_module_name" node
 
 (* Internal module (a.k.a. namespaces) *)
 
@@ -1744,7 +1750,7 @@ and dec_property_name ?(comments = []) node : (property_name, _) result =
   | "computed_property_name" ->
     let* expression = dec_computed_property_name ~comments node in
     Ok (Computed_property_name expression)
-  | s -> Error ("dec_property_name: " ^ s)
+  | _ -> error "dec_property_name" node
 
 and dec_private_property_identifier ?(comments = []) node : private_property_identifier =
   dec_identifier ~comments node
@@ -1782,7 +1788,7 @@ and dec_type_extension ?(comments = []) node : (type_extension, _) result =
   | "generic_type" ->
     let* type_expr = dec_generic_type ~comments node in
     Ok (Extends_generic type_expr)
-  | s -> Error ("dec_type_extension: " ^ s)
+  | _ -> error "dec_type_extension" node
 
 (* Nested type identifier *)
 
@@ -1799,7 +1805,7 @@ and dec_module_path ?(comments = []) node : (identifier ne_list, _) result =
   | "nested_identifier" ->
     let* path, id = dec_nested_identifier ~comments node in
     Ok (Nonempty_list.cons id path)
-  | s -> Error ("dec_module_path: " ^ s)
+  | _ -> error "dec_module_path" node
 
 (* Import alias *)
 
@@ -1820,7 +1826,7 @@ and dec_aliased node : (aliased, _) result =
   | "nested_identifier" ->
     let* nested = dec_nested_identifier node in
     Ok (Nested nested)
-  | s -> Error ("dec_aliased: " ^ s)
+  | _ -> error "dec_aliased" node
 
 (* Nested identifier *)
 
@@ -1835,7 +1841,7 @@ and dec_nested_identifier ?(comments = []) node : (nested_identifier, _) result 
 and dec_property node : (identifier, _) result =
   match get_name node with
   | "property_identifier" -> Ok (dec_identifier node)
-  | s -> Error ("dec_property: " ^ s)
+  | _ -> error "dec_property" node
 
 and dec_object_path ?(comments = []) node : (identifier ne_list, _) result =
   match get_name node with
@@ -1843,7 +1849,7 @@ and dec_object_path ?(comments = []) node : (identifier ne_list, _) result =
   | "member_expression" ->
     let* path, id = dec_nested_identifier ~comments node in
     Ok (Nonempty_list.cons id path)
-  | s -> Error ("dec_object_path: " ^ s)
+  | _ -> error "dec_object_path" node
 
 (* Ambient declaration *)
 
@@ -1978,7 +1984,7 @@ and dec_assignment_operator node : (assignment_operator, _) result =
   | "&&=" -> Ok (Log_and_eq (make_sym node))
   | "||=" -> Ok (Log_or_eq (make_sym node))
   | "??=" -> Ok (Non_null_eq (make_sym node))
-  | s -> Error ("dec_assignment_operator: " ^ s)
+  | _ -> error "dec_assignment_operator" node
 
 and dec_augmented_assignment_lhs node : (augmented_assignment_lhs, _) result =
   match get_name node with
@@ -1992,7 +1998,7 @@ and dec_augmented_assignment_lhs node : (augmented_assignment_lhs, _) result =
   | "parenthesized_expression" ->
     let* expression = dec_parenthesized_expression node in
     Ok (Parenthesized_expression expression)
-  | s -> Error ("dec_augmented_assignment_lhs: " ^ s)
+  | _ -> error "dec_augmented_assignment_lhs" node
 
 (* Await expression *)
 
@@ -2021,7 +2027,7 @@ and dec_unary_operator ?(comments = []) node : (unary_operator, _) result =
   | "typeof" -> Ok (Typeof (make_kwd ~comments node))
   | "void" -> Ok (Void (make_kwd ~comments node))
   | "delete" -> Ok (Delete (make_kwd ~comments node))
-  | s -> Error ("dec_unary_operator: " ^ s)
+  | _ -> error "dec_unary_operator" node
 
 (* Binary expression *)
 
@@ -2070,7 +2076,7 @@ and dec_binary_operator node : (binary_operator, _) result =
   | "??" -> Ok (Non_null (make_sym node))
   | "instanceof" -> Ok (Instance_of (make_kwd node))
   | "in" -> Ok (In (make_kwd node))
-  | s -> Error ("dec_binary_operator: " ^ s)
+  | _ -> error "dec_binary_operator" node
 
 (* Ternary expression *)
 
@@ -2104,7 +2110,7 @@ and dec_incr_decr_operator node : (incr_decr_operator, _) result =
   match get_name node with
   | "++" -> Ok (Increment (make_sym node))
   | "--" -> Ok (Decrement (make_sym node))
-  | s -> Error ("dec_incr_decr_operator: " ^ s)
+  | _ -> error "dec_incr_decr_operator" node
 
 (* New expression *)
 
@@ -2203,7 +2209,7 @@ and dec_subscript_expression ?(comments = []) node : (subscript_expression, _) r
 and dec_optional_chain node : (optional_chain, _) result =
   match get_name node with
   | "optional_chain" -> Ok (Optional_chain (make_sym node))
-  | s -> Error ("dec_optional_chain: " ^ s)
+  | _ -> error "dec_optional_chain" node
 
 (* Member expression *)
 
@@ -2234,7 +2240,7 @@ and dec_property_ident ?comments node : (property_ident, _) result =
   match get_name node with
   | "private_property_identifier" -> Ok (Private_property_identifier identifier)
   | "property_identifier" -> Ok (Property_identifier identifier)
-  | s -> Error ("dec_property_ident: " ^ s)
+  | _ -> error "dec_property_ident" node
 
 (* Parenthesised expression *)
 
@@ -2266,7 +2272,7 @@ and dec_object_entry ?(comments = []) node : (object_entry, _) result =
   | "shorthand_property_identifier" ->
     let pattern = dec_shorthand_property_identifier_pattern ~comments node in
     Ok (Object_entry_shorthand pattern)
-  | s -> Error ("dec_object_entry: " ^ s)
+  | _ -> error "dec_object_entry" node
 
 and dec_pair ?(comments = []) node : (pair, string) result =
   let* key_field = child_with_field "key" node in
@@ -2298,7 +2304,7 @@ and dec_lhs_expression ?comments node : (lhs_expression, _) result =
   | "non_null_expression" ->
     let* expression = dec_non_null_expression ?comments node in
     Ok (Non_null_expression expression)
-  | s -> Error ("dec_lhs_expression: " ^ s)
+  | _ -> error "dec_lhs_expression" node
 
 (* Non-null expression *)
 
@@ -2358,7 +2364,7 @@ and dec_primary_expression ?(comments = []) node : (primary_expression, _) resul
   | "non_null_expression" ->
     let* expression = dec_non_null_expression node in
     Ok (E_non_null_expression expression)
-  | s -> Error ("dec_primary_expression: " ^ s)
+  | _ -> error "dec_primary_expression" node
 
 (* Call expression *)
 
@@ -2408,7 +2414,7 @@ and dec_meta_property ?(comments = []) node : (meta_property, _) result =
     let kwd_import = make_kwd ~comments fst_child
     and kwd_meta = make_kwd snd_child in
     Ok (Meta_import_meta (kwd_import, kwd_meta))
-  | s -> Error ("dec_meta_property: " ^ s)
+  | _ -> error "dec_meta_property" fst_child
 
 (* Class *)
 
@@ -2507,7 +2513,7 @@ and dec_template_string_fragment ?(comments = []) node
   | "string_fragment" -> Ok (String_fragment (make_node ~comments node))
   | "escape_sequence" -> Ok (Escape_sequence (make_node ~comments node))
   | "template_substitution" -> Ok (Template_substitution (make_node ~comments node))
-  | s -> Error ("dec_template_string_fragment: " ^ s)
+  | _ -> error "dec_template_string_fragment" node
 
 (* Class expression ("class_" in the grammar) *)
 
@@ -2537,14 +2543,14 @@ and dec_pattern ?(comments = []) node : (pattern, _) result =
     let* pattern = dec_rest_pattern ~comments node in
     Ok (P_rest_pattern pattern)
   | _ ->
-    (match dec_lhs_expression ~comments node with
-    | Ok (Member_expression expression) -> Ok (P_member_expression expression)
-    | Ok (Subscript_expression expression) -> Ok (P_subscript_expression expression)
-    | Ok (Identifier identifier) -> Ok (P_identifier identifier)
-    | Ok (Undefined kwd_undefined) -> Ok (P_undefined kwd_undefined)
-    | Ok (Pattern pattern) -> Ok (P_destructuring_pattern pattern)
-    | Ok (Non_null_expression expression) -> Ok (P_non_null_expression expression)
-    | Error msg -> Error msg)
+    let* expression = dec_lhs_expression ~comments node in
+    (match expression with
+    | Member_expression expression -> Ok (P_member_expression expression)
+    | Subscript_expression expression -> Ok (P_subscript_expression expression)
+    | Identifier identifier -> Ok (P_identifier identifier)
+    | Undefined kwd_undefined -> Ok (P_undefined kwd_undefined)
+    | Pattern pattern -> Ok (P_destructuring_pattern pattern)
+    | Non_null_expression expression -> Ok (P_non_null_expression expression))
 
 (* Object pattern *)
 
@@ -2564,7 +2570,7 @@ and dec_member_pattern ?(comments = []) node : (member_pattern, _) result =
     Ok (Member_object_assignment pattern)
   | "shorthand_property_identifier_pattern" ->
     Ok (Member_shorthand_property (dec_shorthand_property_identifier_pattern node))
-  | s -> Error ("dec_member_pattern: " ^ s)
+  | _ -> error "dec_member_pattern" node
 
 (* Pair pattern *)
 
@@ -2662,7 +2668,7 @@ and dec_destructuring_pattern ?comments node : (destructuring_pattern, _) result
   | "array_pattern" ->
     let* pattern = dec_array_pattern ?comments node in
     Ok (Pattern_array pattern)
-  | s -> Error ("dec_destructuring_pattern: " ^ s)
+  | _ -> error "dec_destructuring_pattern" node
 
 (* TYPES
 
@@ -2752,7 +2758,7 @@ and dec_primary_type ?(comments = []) node : (primary_type, _) result =
   | "union_type" ->
     let* type_expr = dec_union_type ~comments node in
     Ok (T_union_type type_expr)
-  | s -> Error ("dec_primary_type: " ^ s)
+  | _ -> error "dec_primary_type" node
 
 (* Union type *)
 
@@ -2810,7 +2816,7 @@ and dec_template_type_fragment ?(comments = []) node : (template_type_fragment, 
   | "template_type" ->
     let* type_expr = dec_template_type ~comments node in
     Ok (Template_type type_expr)
-  | s -> Error ("dec_template_string_fragment: " ^ s)
+  | _ -> error "dec_template_string_fragment" node
 
 and dec_template_type ?(comments = []) node : (template_type, _) result =
   let* type_node = child_ranked 1 node in
@@ -2867,7 +2873,7 @@ and dec_literal_type ?(comments = []) node : (literal_type, _) result =
   | "false" -> Ok (T_false (make_kwd ~comments child))
   | "null" -> Ok (T_null (make_kwd ~comments child))
   | "undefined" -> Ok (T_undefined (make_kwd ~comments child))
-  | s -> Error ("dec_literal_type: " ^ s)
+  | _ -> error "dec_literal_type" child
 
 (* Index type query *)
 
@@ -2900,7 +2906,7 @@ and dec_type_query ?(comments = []) node : (kwd_keyof * type_query, _) result =
       Ok (Typeof_instantiation_expression expression)
     | "identifier" -> Ok (Typeof_identifier (dec_identifier child))
     | "this" -> Ok (Typeof_this (make_kwd child))
-    | s -> Error ("dec_type_query: " ^ s)
+    | _ -> error "dec_type_query" child
   in
   Ok (kwd_typeof, type_query)
 
@@ -2927,7 +2933,7 @@ and dec_type_query_object ?(comments = []) node : (type_query_object, _) result 
   | "call_expression" ->
     let* expression = dec_type_query_call_expression ~comments node in
     Ok (Type_query_object_call_expression expression)
-  | s -> Error ("dec_type_query_object: " ^ s)
+  | _ -> error "dec_type_query_object" node
 
 and dec_type_query_index node : (type_query_index, _) result =
   match get_name node with
@@ -2936,7 +2942,7 @@ and dec_type_query_index node : (type_query_index, _) result =
     Ok (Type_query_index_predefined_type type_expr)
   | "string" -> Ok (Type_query_index_string (dec_string node))
   | "number" -> Ok (Type_query_index_number (dec_number node))
-  | s -> Error ("dec_type_query_index: " ^ s)
+  | _ -> error "dec_type_query_index" node
 
 and dec_type_query_member_expression ?(comments = []) node
     : (type_query_member_expression, _) result
@@ -2953,14 +2959,14 @@ and dec_query_selector node : (query_selector, _) result =
   match get_name node with
   | "." -> Ok (Query_selector_dot (make_sym node))
   | "?." -> Ok (Query_selector_opt_chain (make_sym node))
-  | s -> Error ("dec_query_selector: " ^ s)
+  | _ -> error "dec_query_selector" node
 
 and dec_type_query_property node : (type_query_property, _) result =
   match get_name node with
   | "private_property_identifier" ->
     Ok (Type_query_property_private (dec_private_property_identifier node))
   | "property_identifier" -> Ok (Type_query_property_identifier (dec_identifier node))
-  | s -> Error ("dec_type_query_property: " ^ s)
+  | _ -> error "dec_type_query_property" node
 
 and dec_type_query_call_expression ?(comments = []) node
     : (type_query_call_expression, _) result
@@ -2983,7 +2989,7 @@ and dec_type_query_call_function ?(comments = []) node
   | "subscript_expression" ->
     let* expression = dec_type_query_subscript_expression ~comments node in
     Ok (Type_query_call_subscript_expression expression)
-  | s -> Error ("dec_type_query_call_function: " ^ s)
+  | _ -> error "dec_type_query_call_function" node
 
 and dec_type_query_call_arguments node : (type_query_call_arguments, _) result =
   dec_arguments node
@@ -3045,7 +3051,7 @@ and dec_tuple_parameter_name ?(comments = []) node : (tuple_parameter_name, _) r
   | "rest_pattern" ->
     let* pattern = dec_rest_pattern ~comments node in
     Ok (Tuple_parameter_rest pattern)
-  | s -> Error ("dec_tuple_parameter_name: " ^ s)
+  | _ -> error "dec_tuple_parameter_name" node
 
 and dec_optional_tuple_parameter ?(comments = []) node
     : (optional_tuple_parameter, _) result
@@ -3108,7 +3114,7 @@ and dec_member_type ?(comments = []) node : (member_type, _) result =
   | "method_signature" ->
     let* signature = dec_method_signature ~comments node in
     Ok (Method_signature signature)
-  | s -> Error ("dec_member_type: " ^ s)
+  | _ -> error "dec_member_type" node
 
 and dec_property_signature ?(comments = []) node : (property_signature, _) result =
   let accessibility_modifier = first_child_named_opt "accessibility_modifier" node in
@@ -3225,4 +3231,4 @@ and dec_generic_name ?(comments = []) node : (generic_name, _) result =
   | "nested_type_identifier" ->
     let* nested = dec_nested_type_identifier ~comments node in
     Ok (Generic_nested nested)
-  | s -> Error ("dec_generic_name: " ^ s)
+  | _ -> error "dec_generic_name" node
