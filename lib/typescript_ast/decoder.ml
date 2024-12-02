@@ -3203,9 +3203,11 @@ and dec_return_type node : (return_type, _) result =
 (* Readonly type *)
 
 and dec_readonly_type ?(comments = []) node : (readonly_type, _) result =
-  ignore comments;
-  ignore node;
-  Error "TODO: dec_readonly_type"
+  let* kwd_readonly = first_child_named "readonly" node in
+  let kwd_readonly = make_kwd ~comments kwd_readonly in
+  let* type_child = child_ranked 1 node in
+  let* type_expr = dec_type type_child in
+  Ok (kwd_readonly, type_expr)
 
 (* Generic type *)
 

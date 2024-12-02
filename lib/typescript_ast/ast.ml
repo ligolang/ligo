@@ -2799,7 +2799,7 @@ and asserts =
      readonly_type: $ => seq('readonly', $.type)
     ]}
 *)
-and readonly_type = type_expr
+and readonly_type = kwd_readonly * type_expr
 
 (** Constructor Type
 
