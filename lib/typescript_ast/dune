@@ -22,9 +22,9 @@
  (modules print_cst print_cst_main))
 
 (executable
- (name decoder_main)
+ (name decode_main)
  (libraries typescript_ast)
- (modules decoder decoder_main))
+ (modules decode decode_main))
 
 ;; Local build of a standalone parser for node-types.json
 
