@@ -287,8 +287,8 @@ and dec_statement ?(comments = []) node : (statement, _) result =
     Ok (S_throw_statement statement)
   | "empty_statement" -> Ok (S_empty_statement (!get_region node))
   | "labeled_statement" ->
-    let* statement = dec_labeled_statement node
-    in Ok (S_labeled_statement statement)
+    let* statement = dec_labeled_statement node in
+    Ok (S_labeled_statement statement)
   (* Inlining declarations cases (hidden rule) *)
   | "function_declaration" ->
     let* declaration = dec_function_declaration ~comments node in
@@ -2943,7 +2943,7 @@ and dec_type_query_subscript_expression ?(comments = []) node
   let* contents = dec_type_query_index index_field in
   let* sym_rbracket = first_child_named "]" node in
   let closing = make_sym sym_rbracket in
-  let index = Brackets {opening; contents; closing } in
+  let index = Brackets { opening; contents; closing } in
   Ok { object_expr; optional; index }
 
 and dec_type_query_object ?(comments = []) node : (type_query_object, _) result =
