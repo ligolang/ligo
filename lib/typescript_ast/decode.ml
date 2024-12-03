@@ -2862,11 +2862,11 @@ and dec_template_type ?(comments = []) node : (template_type, _) result =
   let* type_node = child_ranked 1 node in
   match get_name type_node with
   | "infer_type" ->
-    let* type_expr = dec_infer_type ~comments node in
+    let* type_expr = dec_infer_type ~comments type_node in
     Ok (Template_type_infer type_expr)
     (* "primary_type" is hidden *)
   | _ ->
-    let* type_expr = dec_primary_type ~comments node in
+    let* type_expr = dec_primary_type ~comments type_node in
     Ok (Template_type_primary type_expr)
 
 (* Conditional type *)
