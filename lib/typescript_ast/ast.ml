@@ -284,6 +284,8 @@ and function_declaration =
        $._call_signature,
        choice($._semicolon, $._function_signature_automatic_semicolon)),
 
+     _semicolon: $ => choice($._automatic_semicolon, ';'),
+
      _call_signature: $ => seq(
        field('type_parameters', optional($.type_parameters)),
        field('parameters', $.formal_parameters),

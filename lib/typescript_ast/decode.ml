@@ -27,7 +27,11 @@ let rec skip_until_colon = function
    into regions *)
 
 let get_region : (Ts_wrap.ts_tree -> Region.t) ref =
-  ref (fun _ -> failwith "Internal error: Decoder.get_region")
+  ref (fun _ -> failwith "Internal error: Decode.get_region")
+
+let named_child_ranked = Ts_wrap.named_child_ranked ~get_region
+let child_ranked = Ts_wrap.child_ranked ~get_region
+let child_with_field = Ts_wrap.child_with_field ~get_region
 
 (* Handling results and failing in case of error *)
 (*
@@ -886,17 +890,32 @@ and dec_continue_statement node : (continue_statement, _) result =
   let stmt_id = make_opt dec_identifier label_field in
   Ok { kwd_continue; stmt_id }
 
-(* Return statement *)
+(* Return statement
+
+   NOTE: The Javascript grammar states:
+
+   {@js[
+   return_statement: $ =>
+     seq('return', optional($._expressions), $._semicolon),
+
+   _semicolon: $ => choice($._automatic_semicolon, ';')
+   ]}
+
+   but the child of rank 1 is sometimes missing, as if
+   "_automatic_semicolon" can be the empty word. Other rules use
+   `optional(_automatic_semicolon)`, which adds to the mystery. *)
 
 and dec_return_statement node : (return_statement, _) result =
   let* kwd_return = first_child_named "return" node in
   let kwd_return = make_kwd kwd_return in
-  let* snd_child = child_ranked 1 node in
-  match get_name snd_child with
-  | ";" -> Ok { kwd_return; expressions = None }
-  | _ ->
-    let* expressions = dec_expressions snd_child in
-    Ok { kwd_return; expressions = Some expressions }
+  match child_ranked_opt 1 node with
+  | None -> Ok { kwd_return; expressions = None }
+  | Some snd_child ->
+    (match get_name snd_child with
+    | ";" -> Ok { kwd_return; expressions = None }
+    | _ ->
+      let* expressions = dec_expressions snd_child in
+      Ok { kwd_return; expressions = Some expressions })
 
 (* Throw statement *)
 
@@ -1338,7 +1357,7 @@ and dec_class_static_block ?(comments = []) node
   =
   let* kwd_static = first_child_named "static" node in
   let kwd_static = make_kwd ~comments kwd_static in
-  let* body_field = child_with_field "bodya" node in
+  let* body_field = child_with_field "body" node in
   let* block = dec_statement_block body_field in
   Ok (kwd_static, block)
 
