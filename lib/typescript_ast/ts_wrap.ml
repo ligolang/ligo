@@ -85,11 +85,17 @@ let get_name_res = function
 
 (* Wrappers for filtering fields (failure on null node or optional value) *)
 
-let child_with_field field node =
+let child_with_field ?(get_region : (ts_tree -> Region.t) ref option) field node =
   let child = TS_fun.ts_node_child_by_field_name node field (uint32_len field) in
-  let name = get_name node in
   if is_null child
-  then Error (sprintf "INVALID: Node %S is missing the field %S." name field)
+  then (
+    let name = get_name node in
+    let region =
+      match get_region with
+      | None -> ""
+      | Some get_region -> " (" ^ (!get_region node)#compact `Byte ^ ")"
+    in
+    Error (sprintf "INVALID: Node %S%s is missing the field %S." name region field))
   else Result.Ok child
 
 let child_with_field_opt field node =
@@ -158,12 +164,17 @@ let collect_error_children (node : ts_tree) : ts_forest =
 (* Extracting a named child by its index amongst its siblings that are
    not comment/error/missing nodes *)
 
-let named_child_ranked index node =
+let named_child_ranked ?(get_region : (ts_tree -> Region.t) ref option) index node =
   let raw_children = collect_named_children node in
   match Core.List.nth raw_children index with
   | None ->
     let name = get_name node in
-    Error (sprintf "INVALID: Node %S has no named child at index %i." name index)
+    let region =
+      match get_region with
+      | None -> ""
+      | Some get_region -> " (" ^ (!get_region node)#compact `Byte ^ ")"
+    in
+    Error (sprintf "INVALID: Node %S%s has no named child at index %i." name region index)
   | Some child -> Ok child
 
 let named_child_ranked_opt index node =
@@ -172,12 +183,17 @@ let named_child_ranked_opt index node =
 
 (* Extracting a child by its index *)
 
-let child_ranked index (node : ts_tree) =
+let child_ranked ?(get_region : (ts_tree -> Region.t) ref option) index (node : ts_tree) =
   let raw_children = collect_children node in
   match Core.List.nth raw_children index with
   | None ->
     let name = get_name node in
-    Error (sprintf "INVALID: Node %S has no child at index %i" name index)
+    let region =
+      match get_region with
+      | None -> ""
+      | Some get_region -> " (" ^ (!get_region node)#compact `Byte ^ ")"
+    in
+    Error (sprintf "INVALID: Node %S%s has no child at index %i" name region index)
   | Some child -> Ok child
 
 let child_ranked_opt index (node : ts_tree) =

@@ -809,18 +809,33 @@ and print_continue_statement state node =
   in
   make_tree state node children
 
-(* Return statement *)
+(* Return statement
+
+   NOTE: The Javascript grammar states:
+
+   {@js[
+   return_statement: $ =>
+     seq('return', optional($._expressions), $._semicolon),
+
+   _semicolon: $ => choice($._automatic_semicolon, ';')
+   ]}
+
+   but the child of rank 1 is sometimes missing, as if
+   "_automatic_semicolon" can be the empty word. Other rules use
+   `optional(_automatic_semicolon)`, which adds to the mystery. *)
 
 and print_return_statement state node =
   let kwd_return = first_child_named "return" node in
-  let snd_child = child_ranked 1 node in
-  match get_name_res snd_child with
-  | ";" -> make_unary_res state node make_kwd kwd_return
-  | _ ->
-    let children =
-      [ mk_child_res make_kwd kwd_return; mk_child_res print_expressions snd_child ]
-    in
-    make_tree state node children
+  match child_ranked_opt 1 node with
+  | None -> make_unary_res state node make_kwd kwd_return
+  | Some snd_child ->
+    (match get_name snd_child with
+    | ";" -> make_unary_res state node make_kwd kwd_return
+    | _ ->
+      let children =
+        [ mk_child_res make_kwd kwd_return; mk_child print_expressions snd_child ]
+      in
+      make_tree state node children)
 
 (* Throw statement *)
 
