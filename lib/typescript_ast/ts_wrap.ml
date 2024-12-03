@@ -163,8 +163,8 @@ let named_child_ranked index node =
   match Core.List.nth raw_children index with
   | None ->
     let name = get_name node in
-    let msg = sprintf "INVALID: Node %S has no named child at index %i." name index
-    in Error msg
+    let msg = sprintf "INVALID: Node %S has no named child at index %i." name index in
+    Error msg
   | Some child -> Ok child
 
 let named_child_ranked_opt index node =
@@ -178,8 +178,8 @@ let child_ranked index (node : ts_tree) =
   match Core.List.nth raw_children index with
   | None ->
     let name = get_name node in
-    let msg = sprintf "INVALID: Node %S has no child at index %i" name index
-    in Error msg
+    let msg = sprintf "INVALID: Node %S has no child at index %i" name index in
+    Error msg
   | Some child -> Ok child
 
 let child_ranked_opt index (node : ts_tree) =
