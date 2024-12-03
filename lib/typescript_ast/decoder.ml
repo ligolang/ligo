@@ -1898,7 +1898,6 @@ and dec_ambient_declaration ?comments node : (ambient_declaration, _) result =
 
 and dec_expression ?(comments = []) node : (expression, _) result =
   match get_name node with
-  (* Rest of "expression": *)
   (*  | "glimmer_template" -> Ok (E_glimmer_template (dec_glimmer_template node)) *)
   | "assignment_expression" ->
     let* expression = dec_assignment_expression node in
@@ -2258,7 +2257,7 @@ and dec_property_ident ?comments node : (property_ident, _) result =
 (* Parenthesised expression *)
 
 and dec_parenthesized_expression ?comments node : (parenthesized_expression, _) result =
-  dec_ne_list_in_parens ?comments node dec_expression
+  dec_parens ?comments node dec_expressions
 
 (* Sequence expression *)
 
@@ -2322,7 +2321,8 @@ and dec_lhs_expression ?comments node : (lhs_expression, _) result =
 (* Non-null expression *)
 
 and dec_non_null_expression ?comments node : (expression, _) result =
-  dec_expression ?comments node
+  let* child = named_child_ranked 0 node in
+  dec_expression ?comments child
 
 (* PRIMARY EXPRESSION *)
 
