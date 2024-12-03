@@ -81,25 +81,27 @@ let bigintLiteral =
 (* RULES (SCANNERS) *)
 
 rule scan comments region = parse
-  hexLiteral     { make_hex comments lexbuf hex region false }
-| binaryLiteral  { make_bin comments lexbuf bin region false }
-| octalLiteral   { make_oct comments lexbuf oct region false }
+  hexLiteral     { Ok (make_hex comments lexbuf hex region false) }
+| binaryLiteral  { Ok (make_bin comments lexbuf bin region false) }
+| octalLiteral   { Ok (make_oct comments lexbuf oct region false) }
 (* bigintLiteral *)
-| hexLiteral 'n'    { make_hex comments lexbuf hex region true }
-| binaryLiteral 'n' { make_bin comments lexbuf bin region true }
-| octalLiteral 'n'  { make_oct comments lexbuf oct region true }
-| natural 'n'       { make_dec comments lexbuf ~integral:nat region true }
+| hexLiteral 'n'    { Ok (make_hex comments lexbuf hex region true) }
+| binaryLiteral 'n' { Ok (make_bin comments lexbuf bin region true) }
+| octalLiteral 'n'  { Ok (make_oct comments lexbuf oct region true) }
+| natural 'n'       { Ok (make_dec comments lexbuf ~integral:nat region true) }
 (* decimalLiteral *)
 | integralPart '.' fractionalPart? exponentPart? {
-    make_dec comments lexbuf ~integral ?fractional ?exponent region false
+    Ok (make_dec comments lexbuf ~integral ?fractional ?exponent region false)
   }
 | '.' fractionalPart exponentPart? {
-    make_dec comments lexbuf ~fractional ?exponent region false
+    Ok (make_dec comments lexbuf ~fractional ?exponent region false)
   }
 | integralPart exponentPart {
-    make_dec comments lexbuf ~integral ~exponent region false
+    Ok (make_dec comments lexbuf ~integral ~exponent region false)
   }
-| natural { make_dec comments lexbuf ~integral:nat region false }
+| natural { Ok (make_dec comments lexbuf ~integral:nat region false) }
+| _ as c {
+  Error (Printf.sprintf "Error: Number.mll: Unexpected character %c." c) }
 
 (* END LEXER DEFINITION *)
 
