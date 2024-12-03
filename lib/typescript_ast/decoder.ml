@@ -1151,12 +1151,13 @@ and dec_arguments ?comments node : (arguments, _) result =
   dec_list_in_parens ?comments node dec_argument
 
 and dec_argument ?comments node : (argument, _) result =
-  let* expression = dec_expression ?comments node in
   match get_name node with
   | "spread_element" ->
     let* spread = dec_spread_element node in
     Ok (Spread_element spread)
-  | _ -> Ok (Expression expression)
+  | _ ->
+    let* expression = dec_expression ?comments node in
+    Ok (Expression expression : argument)
 
 and dec_spread_element ?(comments = []) node : (spread_element, _) result =
   let* sym_ellipsis = first_child_named "..." node in
