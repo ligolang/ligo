@@ -25,7 +25,7 @@ let parse file line_map : (Ast.t, string) result =
   (* Getting ahold of the root *)
   let program_node : Ts_wrap.ts_tree = TS_fun.ts_tree_root_node tree in
   (* Printing the tree from the root *)
-  let ast = Decoder.dec_program file line_map program_node in
+  let ast = Decode.dec_program file line_map program_node in
   (* Releasing the memory allocated to the tree *)
   let () = TS_fun.ts_tree_delete tree in
   ast
