@@ -65,7 +65,7 @@ let dec_identifier ?comments node : identifier = make_node ?comments node
 let dec_string ?comments node : string_literal = make_node ?comments node
 let dec_regex ?comments node : string_literal = make_node ?comments node
 
-let dec_number ?(comments = []) node : number =
+let dec_number ?(comments = []) node : (number, _) result =
   let region = !get_region node in
   let lexeme = Lexeme.read region in
   let lexbuf = Lexing.from_string lexeme
@@ -891,9 +891,12 @@ and dec_continue_statement node : (continue_statement, _) result =
 and dec_return_statement node : (return_statement, _) result =
   let* kwd_return = first_child_named "return" node in
   let kwd_return = make_kwd kwd_return in
-  let expr = child_ranked_opt 1 node in
-  let* expressions = make_opt_res dec_expressions expr in
-  Ok { kwd_return; expressions }
+  let* snd_child = child_ranked 1 node in
+  match get_name snd_child with
+  | ";" -> Ok { kwd_return; expressions = None }
+  | _ ->
+    let* expressions = dec_expressions snd_child in
+    Ok { kwd_return; expressions = Some expressions }
 
 (* Throw statement *)
 
@@ -1760,7 +1763,9 @@ and dec_property_name ?(comments = []) node : (property_name, _) result =
   | "private_property_identifier" ->
     Ok (Private_property_identifier (dec_private_property_identifier ~comments node))
   | "string" -> Ok (String (dec_string ~comments node))
-  | "number" -> Ok (Number (dec_number ~comments node))
+  | "number" ->
+    let* number = dec_number ~comments node in
+    Ok (Number number)
   | "computed_property_name" ->
     let* expression = dec_computed_property_name ~comments node in
     Ok (Computed_property_name expression)
@@ -2342,7 +2347,9 @@ and dec_primary_expression ?(comments = []) node : (primary_expression, _) resul
   | "undefined" -> Ok (E_undefined (make_kwd node))
   | "this" -> Ok (E_this (make_kwd node))
   | "super" -> Ok (E_super (make_kwd node))
-  | "number" -> Ok (E_number (dec_number ~comments node))
+  | "number" ->
+    let* number = dec_number ~comments node in
+    Ok (E_number number)
   | "string" -> Ok (E_string (dec_string node))
   | "template_string" ->
     let* expression = dec_template_string node in
@@ -2887,7 +2894,9 @@ and dec_literal_type ?(comments = []) node : (literal_type, _) result =
   | "unary_expression" ->
     let* expression = dec_unary_expression ~comments child in
     Ok (T_unary_type expression)
-  | "number" -> Ok (T_number (dec_number ~comments child))
+  | "number" ->
+    let* number = dec_number ~comments child in
+    Ok (T_number number : literal_type)
   | "string" -> Ok (T_string (dec_string ~comments child))
   | "true" -> Ok (T_true (make_kwd ~comments child))
   | "false" -> Ok (T_false (make_kwd ~comments child))
@@ -2967,7 +2976,9 @@ and dec_type_query_index node : (type_query_index, _) result =
     let* type_expr = dec_predefined_type node in
     Ok (Type_query_index_predefined_type type_expr)
   | "string" -> Ok (Type_query_index_string (dec_string node))
-  | "number" -> Ok (Type_query_index_number (dec_number node))
+  | "number" ->
+    let* number = dec_number node in
+    Ok (Type_query_index_number number)
   | _ -> error "dec_type_query_index" node
 
 and dec_type_query_member_expression ?(comments = []) node

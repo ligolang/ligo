@@ -132,26 +132,28 @@ let print_number ?(comments = []) state node =
   let lexeme = Lexeme.read region in
   let lexbuf = Lexing.from_string lexeme in
   let w_comments = decode_comments ~comments node in
-  let num = Number.scan w_comments region lexbuf in
-  let print_hex w = Hex.show (snd w#payload)
-  and print_dec w = Q.to_string (snd w#payload) in
-  let open Ast in
-  let print_kind state = function
-    | Hex (w, false) -> Tree.make_node state ("hex (" ^ print_hex w ^ ")")
-    | Hex (w, true) -> Tree.make_node state ("bigint/hex (" ^ print_hex w ^ ")")
-    | Bin (w, false) -> Tree.make_node state ("bin (" ^ print_hex w ^ ")")
-    | Bin (w, true) -> Tree.make_node state ("bigint/bin (" ^ print_hex w ^ ")")
-    | Oct (w, false) -> Tree.make_node state ("oct (" ^ print_hex w ^ ")")
-    | Oct (w, true) -> Tree.make_node state ("bigint/oct (" ^ print_hex w ^ ")")
-    | Dec (w, false) -> Tree.make_node state ("dec (" ^ print_dec w ^ ")")
-    | Dec (w, true) -> Tree.make_node state ("bigint/dec (" ^ print_dec w ^ ")")
-  in
-  let comments = comments @ prev_comments node in
-  let children =
-    mk_children_list print_comment comments
-    @ [ mk_child print_kind num; mk_child Tree.make_node lexeme ]
-  in
-  make_tree state node children
+  match Number.scan w_comments region lexbuf with
+  | Ok num ->
+    let print_hex w = Hex.show (snd w#payload) in
+    let print_dec w = Q.to_string (snd w#payload) in
+    let open Ast in
+    let print_kind state = function
+      | Hex (w, false) -> Tree.make_node state ("hex (" ^ print_hex w ^ ")")
+      | Hex (w, true) -> Tree.make_node state ("bigint/hex (" ^ print_hex w ^ ")")
+      | Bin (w, false) -> Tree.make_node state ("bin (" ^ print_hex w ^ ")")
+      | Bin (w, true) -> Tree.make_node state ("bigint/bin (" ^ print_hex w ^ ")")
+      | Oct (w, false) -> Tree.make_node state ("oct (" ^ print_hex w ^ ")")
+      | Oct (w, true) -> Tree.make_node state ("bigint/oct (" ^ print_hex w ^ ")")
+      | Dec (w, false) -> Tree.make_node state ("dec (" ^ print_dec w ^ ")")
+      | Dec (w, true) -> Tree.make_node state ("bigint/dec (" ^ print_dec w ^ ")")
+    in
+    let comments = comments @ prev_comments node in
+    let children =
+      mk_children_list print_comment comments
+      @ [ mk_child print_kind num; mk_child Tree.make_node lexeme ]
+    in
+    make_tree state node children
+  | Error msg -> make_unary state node Tree.make_node msg
 
 (* Printing enclosed constructs *)
 
@@ -810,12 +812,15 @@ and print_continue_statement state node =
 (* Return statement *)
 
 and print_return_statement state node =
-  let kwd_return = first_child_named "return" node
-  and expr = child_ranked_opt 1 node in
-  let children =
-    [ mk_child_res make_kwd kwd_return; mk_child_opt print_expressions expr ]
-  in
-  make_tree state node children
+  let kwd_return = first_child_named "return" node in
+  let snd_child = child_ranked 1 node in
+  match get_name_res snd_child with
+  | ";" -> make_unary_res state node make_kwd kwd_return
+  | _ ->
+    let children =
+      [ mk_child_res make_kwd kwd_return; mk_child_res print_expressions snd_child ]
+    in
+    make_tree state node children
 
 (* Throw statement *)
 
