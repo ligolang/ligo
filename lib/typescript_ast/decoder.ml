@@ -750,10 +750,10 @@ and dec_for_in_statement node : (for_in_statement, _) result =
     | None ->
       (match get_name left_field with
       | "parenthesized_expression" ->
-        let* expression = dec_parenthesized_expression node in
+        let* expression = dec_parenthesized_expression left_field in
         Ok (For_in_parenthesized expression)
       | _ ->
-        let* expression = dec_lhs_expression node in
+        let* expression = dec_lhs_expression left_field in
         Ok (For_in_expression expression))
     | Some kind_field ->
       let keyword = make_kwd kind_field in
