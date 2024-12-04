@@ -155,7 +155,7 @@ let wrap_ne_list_of_children ?(comments = []) decode children : ('a ne_list wrap
 
 (* Decoding enclosed unique child *)
 
-let dec_enclosed ?(comments = []) node decode opening closing : ('a enclosed, _) result =
+let dec_enclosed ?(comments = []) node decode opening closing : ('a enclosed wrap, _) result =
   let comments = comments @ prev_comments node in
   let* opening = first_child_named opening node in
   let opening = make_sym ~comments opening in
@@ -163,7 +163,8 @@ let dec_enclosed ?(comments = []) node decode opening closing : ('a enclosed, _)
   let closing = make_sym closing in
   let* child = (* We assume one child *) child_ranked 1 node in
   let* contents = decode child in
-  Ok { opening; contents; closing }
+  let region = !get_region node in
+  Ok (Wrap.make { opening; contents; closing } region)
 
 (*
 let dec_braces ?comments node decode : ('a braces, _) result =
@@ -184,7 +185,7 @@ let dec_parens ?comments node decode : ('a parens, _) result =
   Ok (Parens parens)
 
 let dec_enclosed_list ?(comments = []) node decode opening closing
-    : ('a list enclosed, _) result
+    : ('a list enclosed wrap, _) result
   =
   let comments = comments @ prev_comments node in
   let* opening = first_child_named opening node in
@@ -193,7 +194,8 @@ let dec_enclosed_list ?(comments = []) node decode opening closing
   let closing = make_sym closing in
   let clauses = collect_named_children node in
   let* contents = list_of_children decode clauses in
-  Ok { opening; contents; closing }
+  let region = !get_region node in
+  Ok (Wrap.make { opening; contents; closing } region)
 
 let dec_list_in_braces ?comments node decode : ('a list braces, _) result =
   let* list = dec_enclosed_list ?comments node decode "{" "}" in
@@ -214,7 +216,7 @@ let dec_list_in_parens ?comments node decode : ('a list parens, _) result =
 (* Decoding enclosed non-empty lists *)
 
 let dec_enclosed_ne_list ?(comments = []) node decode opening closing
-    : ('a ne_list enclosed, string) result
+    : ('a ne_list enclosed wrap, string) result
   =
   let comments = comments @ prev_comments node in
   let* opening = first_child_named opening node in
@@ -223,7 +225,8 @@ let dec_enclosed_ne_list ?(comments = []) node decode opening closing
   let closing = make_sym closing in
   let clauses = collect_named_children node in
   let* contents = ne_list_of_children decode clauses in
-  Ok { opening; contents; closing }
+  let region = !get_region node in
+  Ok (Wrap.make { opening; contents; closing } region)
 
 (*
 let dec_ne_list_in_braces ?comments node decode : ('a ne_list braces, _) result =
@@ -1276,7 +1279,8 @@ and dec_class_body ?(comments = []) node : (class_body, _) result =
   let _, pairs = List.fold_left ~f:pair ~init:([], []) named_children in
   let contents = List.map ~f:dec_class_member @@ List.rev pairs in
   let* contents = Result.all contents in
-  Ok (Braces { opening; contents; closing })
+  let region = !get_region node in
+  Ok (Braces (Wrap.make { opening; contents; closing } region))
 
 and dec_class_member ?(comments = []) (decorators, node) : (class_member, _) result =
   match get_name node with
@@ -1422,7 +1426,9 @@ and dec_index_signature ?(comments = []) node : (index_signature, _) result =
       let* mapped_type_clause = dec_mapped_type_clause mapped_type_clause in
       Ok (Mapped_type_clause mapped_type_clause)
   in
-  let range = Brackets { opening; contents = range; closing } in
+  let region = !get_region node in
+  let brackets = { opening; contents = range; closing } in
+  let range = Brackets (Wrap.make brackets region) in
   Ok { sign; range; annotation }
 
 and dec_mapped_type_clause node : (mapped_type_clause, _) result =
@@ -2228,7 +2234,9 @@ and dec_subscript_expression ?(comments = []) node : (subscript_expression, _) r
   let opening = make_sym sym_lbracket in
   let* sym_rbracket = first_child_named "]" node in
   let closing = make_sym sym_rbracket in
-  let index = Brackets { opening; contents; closing } in
+  let region = !get_region node in
+  let brackets = { opening; contents; closing } in
+  let index = Brackets (Wrap.make brackets region) in
   Ok { object_expr; optional_chain; index }
 
 and dec_optional_chain node : (optional_chain, _) result =
@@ -2890,7 +2898,9 @@ and dec_lookup_type ?(comments = []) node : (lookup_type, _) result =
   let* contents = dec_type type_child in
   let* sym_rbracket = first_child_named "]" node in
   let closing = make_sym sym_rbracket in
-  let index_type = Brackets { opening; contents; closing } in
+  let region = !get_region node in
+  let brackets = { opening; contents; closing } in
+  let index_type = Brackets (Wrap.make brackets region) in
   Ok (primary_type, index_type)
 
 (* Literal type *)
@@ -2959,7 +2969,9 @@ and dec_type_query_subscript_expression ?(comments = []) node
   let* contents = dec_type_query_index index_field in
   let* sym_rbracket = first_child_named "]" node in
   let closing = make_sym sym_rbracket in
-  let index = Brackets { opening; contents; closing } in
+  let region = !get_region node in
+  let brackets =  { opening; contents; closing } in
+  let index = Brackets (Wrap.make brackets region) in
   Ok { object_expr; optional; index }
 
 and dec_type_query_object ?(comments = []) node : (type_query_object, _) result =
