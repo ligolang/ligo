@@ -173,10 +173,10 @@ type 'a enclosed =
   ; closing : symbol
   }
 
-type 'a braces = Braces of 'a enclosed
-type 'a chevrons = Chevrons of 'a enclosed
-type 'a brackets = Brackets of 'a enclosed
-type 'a parens = Parens of 'a enclosed
+type 'a braces = Braces of 'a enclosed wrap
+type 'a chevrons = Chevrons of 'a enclosed wrap
+type 'a brackets = Brackets of 'a enclosed wrap
+type 'a parens = Parens of 'a enclosed wrap
 
 (** The Abstract Syntax Tree
 
