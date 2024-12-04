@@ -29,6 +29,10 @@ let rec skip_until_colon = function
 let get_region : (Ts_wrap.ts_tree -> Region.t) ref =
   ref (fun _ -> failwith "Internal error: Decode.get_region")
 
+let wrap decode ?comments node : ('a Wrap.t, _) result =
+  let* decoded_node = decode ?comments node in
+  Ok (Wrap.make decoded_node (!get_region node))
+
 let named_child_ranked = Ts_wrap.named_child_ranked ~get_region
 let child_ranked = Ts_wrap.child_ranked ~get_region
 let child_with_field = Ts_wrap.child_with_field ~get_region
@@ -100,63 +104,86 @@ let mk_set_get_all node : set_get_all option =
 
 (* Decoding children of the same type *)
 
-let list_of_children ?(comments = []) decoder children : ('a list, _) result =
-  let f raw_child = List.cons (decoder ?comments:None raw_child) in
+let list_of_children ?(comments = []) decode children : ('a list, _) result =
+  let f raw_child = List.cons (decode ?comments:None raw_child) in
   match children with
   | [] -> Ok []
   | fst_raw_child :: siblings ->
-    let fst_child = decoder ?comments:(Some comments) fst_raw_child in
+    let fst_child = decode ?comments:(Some comments) fst_raw_child in
     let children = fst_child :: List.fold_right ~f ~init:[] siblings in
     Result.all children
 
-let ne_list_opt_of_children ?(comments = []) decoder children
+let ne_list_opt_of_children ?(comments = []) decode children
     : ('a ne_list option, _) result
   =
-  let f raw_child = List.cons (decoder ?comments:None raw_child) in
+  let f raw_child = List.cons (decode ?comments:None raw_child) in
   match children with
   | [] -> Ok None
   | fst_raw_child :: siblings ->
-    let* fst_child = decoder ?comments:(Some comments) fst_raw_child in
+    let* fst_child = decode ?comments:(Some comments) fst_raw_child in
     let* tail = List.fold_right ~f ~init:[] siblings |> Result.all in
     Ok (Some Nonempty_list.(fst_child :: tail))
 
-let ne_list_of_children ?(comments = []) decoder children : ('a ne_list, _) result =
-  let* list = ne_list_opt_of_children ~comments decoder children in
+let ne_list_of_children ?(comments = []) decode children : ('a ne_list, _) result =
+  let* list = ne_list_opt_of_children ~comments decode children in
+  match list with
+  | None -> Error "Expected at least one child."
+  | Some ne_list -> Ok ne_list
+
+let wrap_ne_list_opt_of_children ?(comments = []) decode children
+    : ('a ne_list wrap option, _) result
+  =
+  let f raw_child = List.cons (decode ?comments:None raw_child) in
+  match children with
+  | [] -> Ok None
+  | fst_raw_child :: siblings ->
+    let* fst_child = decode ?comments:(Some comments) fst_raw_child in
+    let fst_region = !get_region fst_raw_child in
+    let* tail = List.fold_right ~f ~init:[] siblings |> Result.all in
+    let region =
+      match List.last siblings with
+      | None -> fst_region
+      | Some last_child -> Region.cover fst_region (!get_region last_child) in
+    let ne_list = Nonempty_list.(fst_child :: tail) in
+    Ok (Some (Wrap.make ne_list region))
+
+let wrap_ne_list_of_children ?(comments = []) decode children : ('a ne_list wrap, _) result =
+  let* list = wrap_ne_list_opt_of_children ~comments decode children in
   match list with
   | None -> Error "Expected at least one child."
   | Some ne_list -> Ok ne_list
 
 (* Decoding enclosed unique child *)
 
-let dec_enclosed ?(comments = []) node decoder opening closing : ('a enclosed, _) result =
+let dec_enclosed ?(comments = []) node decode opening closing : ('a enclosed, _) result =
   let comments = comments @ prev_comments node in
   let* opening = first_child_named opening node in
   let opening = make_sym ~comments opening in
   let* closing = first_child_named closing node in
   let closing = make_sym closing in
   let* child = (* We assume one child *) child_ranked 1 node in
-  let* contents = decoder child in
+  let* contents = decode child in
   Ok { opening; contents; closing }
 
 (*
-let dec_braces ?comments node decoder : ('a braces, _) result =
-  let* braces = dec_enclosed ?comments node decoder "{" "}" in
+let dec_braces ?comments node decode : ('a braces, _) result =
+  let* braces = dec_enclosed ?comments node decode "{" "}" in
   Ok (Braces braces)
 
-let dec_chevrons ?comments node decoder : ('a chevrons, _) result =
-  let* chevrons = dec_enclosed ?comments node decoder "<" ">" in
+let dec_chevrons ?comments node decode : ('a chevrons, _) result =
+  let* chevrons = dec_enclosed ?comments node decode "<" ">" in
   Ok (Chevrons chevrons)
 *)
 
-let dec_brackets ?comments node decoder : ('a brackets, _) result =
-  let* brackets = dec_enclosed ?comments node decoder "[" "]" in
+let dec_brackets ?comments node decode : ('a brackets, _) result =
+  let* brackets = dec_enclosed ?comments node decode "[" "]" in
   Ok (Brackets brackets)
 
-let dec_parens ?comments node decoder : ('a parens, _) result =
-  let* parens = dec_enclosed ?comments node decoder "(" ")" in
+let dec_parens ?comments node decode : ('a parens, _) result =
+  let* parens = dec_enclosed ?comments node decode "(" ")" in
   Ok (Parens parens)
 
-let dec_enclosed_list ?(comments = []) node decoder opening closing
+let dec_enclosed_list ?(comments = []) node decode opening closing
     : ('a list enclosed, _) result
   =
   let comments = comments @ prev_comments node in
@@ -165,28 +192,28 @@ let dec_enclosed_list ?(comments = []) node decoder opening closing
   let* closing = first_child_named closing node in
   let closing = make_sym closing in
   let clauses = collect_named_children node in
-  let* contents = list_of_children decoder clauses in
+  let* contents = list_of_children decode clauses in
   Ok { opening; contents; closing }
 
-let dec_list_in_braces ?comments node decoder : ('a list braces, _) result =
-  let* list = dec_enclosed_list ?comments node decoder "{" "}" in
+let dec_list_in_braces ?comments node decode : ('a list braces, _) result =
+  let* list = dec_enclosed_list ?comments node decode "{" "}" in
   Ok (Braces list)
 
-let dec_list_in_chevrons ?comments node decoder : ('a list chevrons, _) result =
-  let* list = dec_enclosed_list ?comments node decoder "<" ">" in
+let dec_list_in_chevrons ?comments node decode : ('a list chevrons, _) result =
+  let* list = dec_enclosed_list ?comments node decode "<" ">" in
   Ok (Chevrons list)
 
-let dec_list_in_brackets ?comments node decoder : ('a list brackets, _) result =
-  let* list = dec_enclosed_list ?comments node decoder "[" "]" in
+let dec_list_in_brackets ?comments node decode : ('a list brackets, _) result =
+  let* list = dec_enclosed_list ?comments node decode "[" "]" in
   Ok (Brackets list)
 
-let dec_list_in_parens ?comments node decoder : ('a list parens, _) result =
-  let* list = dec_enclosed_list ?comments node decoder "(" ")" in
+let dec_list_in_parens ?comments node decode : ('a list parens, _) result =
+  let* list = dec_enclosed_list ?comments node decode "(" ")" in
   Ok (Parens list)
 
 (* Decoding enclosed non-empty lists *)
 
-let dec_enclosed_ne_list ?(comments = []) node decoder opening closing
+let dec_enclosed_ne_list ?(comments = []) node decode opening closing
     : ('a ne_list enclosed, string) result
   =
   let comments = comments @ prev_comments node in
@@ -195,25 +222,25 @@ let dec_enclosed_ne_list ?(comments = []) node decoder opening closing
   let* closing = first_child_named closing node in
   let closing = make_sym closing in
   let clauses = collect_named_children node in
-  let* contents = ne_list_of_children decoder clauses in
+  let* contents = ne_list_of_children decode clauses in
   Ok { opening; contents; closing }
 
 (*
-let dec_ne_list_in_braces ?comments node decoder : ('a ne_list braces, _) result =
-  let* braces = dec_enclosed_ne_list ?comments node decoder "{" "}" in
+let dec_ne_list_in_braces ?comments node decode : ('a ne_list braces, _) result =
+  let* braces = dec_enclosed_ne_list ?comments node decode "{" "}" in
   Ok (Braces braces)
 *)
 
-let dec_ne_list_in_chevrons ?comments node decoder : ('a ne_list chevrons, _) result =
-  let* chevrons = dec_enclosed_ne_list ?comments node decoder "<" ">" in
+let dec_ne_list_in_chevrons ?comments node decode : ('a ne_list chevrons, _) result =
+  let* chevrons = dec_enclosed_ne_list ?comments node decode "<" ">" in
   Ok (Chevrons chevrons)
 
-let dec_ne_list_in_brackets ?comments node decoder : ('a ne_list brackets, _) result =
-  let* brackets = dec_enclosed_ne_list ?comments node decoder "[" "]" in
+let dec_ne_list_in_brackets ?comments node decode : ('a ne_list brackets, _) result =
+  let* brackets = dec_enclosed_ne_list ?comments node decode "[" "]" in
   Ok (Brackets brackets)
 
-let dec_ne_list_in_parens ?comments node decoder : ('a ne_list parens, _) result =
-  let* parens = dec_enclosed_ne_list ?comments node decoder "(" ")" in
+let dec_ne_list_in_parens ?comments node decode : ('a ne_list parens, _) result =
+  let* parens = dec_enclosed_ne_list ?comments node decode "(" ")" in
   Ok (Parens parens)
 
 (* Decoding the CST *)
@@ -231,20 +258,20 @@ let rec dec_program file map node : (Ast.t, string) result =
 
 (* STATEMENTS
 
-   The JavaScript tree-sitter grammar has the non-terminal
+   The JavaScript tree-sitter grammar has the non-terminals
    "statement" be a supertype, that is, a hidden rule. *)
 
 and dec_statements ?(comments = []) node : (statements, _) result =
   let children = collect_named_children node in
-  ne_list_opt_of_children ~comments dec_statement children
+  wrap_ne_list_opt_of_children ~comments dec_statement children
 
 and dec_statement ?(comments = []) node : (statement, _) result =
   match get_name node with
   | "export_statement" ->
-    let* statement = dec_export_statement ~comments node in
+    let* statement = wrap dec_export_statement ~comments node in
     Ok (S_export_statement statement)
   | "import_statement" ->
-    let* statement = dec_import_statement ~comments node in
+    let* statement = wrap dec_import_statement ~comments node in
     Ok (S_import_statement statement)
   | "debugger_statement" -> Ok (S_debugger_statement (make_kwd ~comments node))
   | "expression_statement" ->
@@ -254,95 +281,54 @@ and dec_statement ?(comments = []) node : (statement, _) result =
     let* statement = dec_statement_block ~comments node in
     Ok (S_statement_block statement)
   | "if_statement" ->
-    let* statement = dec_if_statement ~comments node in
+    let* statement = wrap dec_if_statement ~comments node in
     Ok (S_if_statement statement)
   | "switch_statement" ->
-    let* statement = dec_switch_statement node in
+    let* statement = wrap dec_switch_statement node in
     Ok (S_switch_statement statement)
   | "for_statement" ->
-    let* statement = dec_for_statement node in
+    let* statement = wrap dec_for_statement node in
     Ok (S_for_statement statement)
   | "for_in_statement" ->
-    let* statement = dec_for_in_statement node in
+    let* statement = wrap dec_for_in_statement node in
     Ok (S_for_in_statement statement)
   | "while_statement" ->
-    let* statement = dec_while_statement node in
+    let* statement = wrap dec_while_statement node in
     Ok (S_while_statement statement)
   | "do_statement" ->
-    let* statement = dec_do_statement ~comments node in
+    let* statement = wrap dec_do_statement ~comments node in
     Ok (S_do_statement statement)
   | "try_statement" ->
-    let* statement = dec_try_statement node in
+    let* statement = wrap dec_try_statement node in
     Ok (S_try_statement statement)
   | "with_statement" ->
-    let* statement = dec_with_statement node in
+    let* statement = wrap dec_with_statement node in
     Ok (S_with_statement statement)
   | "break_statement" ->
-    let* statement = dec_break_statement node in
+    let* statement = wrap dec_break_statement node in
     Ok (S_break_statement statement)
   | "continue_statement" ->
-    let* statement = dec_continue_statement node in
+    let* statement = wrap dec_continue_statement node in
     Ok (S_continue_statement statement)
   | "return_statement" ->
-    let* statement = dec_return_statement node in
+    let* statement = wrap dec_return_statement node in
     Ok (S_return_statement statement)
   | "throw_statement" ->
-    let* statement = dec_throw_statement node in
+    let* statement = wrap dec_throw_statement node in
     Ok (S_throw_statement statement)
   | "empty_statement" -> Ok (S_empty_statement (!get_region node))
   | "labeled_statement" ->
-    let* statement = dec_labeled_statement node in
+    let* statement = wrap dec_labeled_statement node in
     Ok (S_labeled_statement statement)
-  (* Inlining declarations cases (hidden rule) *)
-  | "function_declaration" ->
-    let* declaration = dec_function_declaration ~comments node in
-    Ok (S_declaration (D_function_declaration declaration))
-  | "generator_function_declaration" ->
-    let* declaration = dec_generator_function_declaration node in
-    Ok (S_declaration (D_generator_function_declaration declaration))
-  | "class_declaration" ->
-    let* declaration = dec_class_declaration ~comments node in
-    Ok (S_declaration (D_class_declaration declaration))
-  | "lexical_declaration" ->
-    let* declaration = dec_lexical_declaration ~comments node in
-    Ok (S_declaration (D_lexical_declaration declaration))
-  | "variable_declaration" ->
-    let* declaration = dec_variable_declaration ~comments node in
-    Ok (S_declaration (D_variable_declaration declaration))
-  | "function_signature" ->
-    let* declaration = dec_function_signature node in
-    Ok (S_declaration (D_function_signature declaration))
-  | "abstract_class_declaration" ->
-    let* declaration = dec_abstract_class_declaration node in
-    Ok (S_declaration (D_abstract_class_declaration declaration))
-  | "module" ->
-    let* declaration = dec_module_declaration node in
-    Ok (S_declaration (D_module declaration))
-  | "internal_module" ->
-    let* declaration = dec_internal_module ~comments node in
-    Ok (S_declaration (D_internal_module declaration))
-  | "type_alias_declaration" ->
-    let* declaration = dec_type_alias_declaration node in
-    Ok (S_declaration (D_type_alias_declaration declaration))
-  | "enum_declaration" ->
-    let* declaration = dec_enum_declaration node in
-    Ok (S_declaration (D_enum_declaration declaration))
-  | "interface_declaration" ->
-    let* declaration = dec_interface_declaration node in
-    Ok (S_declaration (D_interface_declaration declaration))
-  | "import_alias" ->
-    let* declaration = dec_import_alias node in
-    Ok (S_declaration (D_import_alias declaration))
-  | "ambient_declaration" ->
-    let* declaration = dec_ambient_declaration node in
-    Ok (S_declaration (D_ambient_declaration declaration))
-  | _ -> error "dec_statement" node
+  (* "declaration" is a hidden rule *)
+  | _ -> let* declaration = dec_declaration ~comments node in
+         Ok (S_declaration declaration)
 
 (* Labeled statement *)
 
-and dec_labeled_statement node : (labeled_statement, _) result =
+and dec_labeled_statement ?(comments = []) node : (labeled_statement, _) result =
   let* label_field = child_with_field "label" node in
-  let label = dec_identifier label_field in
+  let label = dec_identifier ~comments label_field in
   let* sym_colon = first_child_named ":" node in
   let sym_colon = make_sym sym_colon in
   let* body_field = child_with_field "body" node in
@@ -619,7 +605,8 @@ and dec_expressions ?(comments = []) (node : ts_tree) : (expressions, _) result 
   | "sequence_expression" -> dec_sequence_expression ~comments node
   | _ ->
     let* expression = dec_expression ~comments node in
-    Ok Nonempty_list.[ expression ]
+    let region = !get_region node in
+    Ok (Wrap.make Nonempty_list.[ expression ] region)
 
 (* Statement blocks *)
 
@@ -648,9 +635,9 @@ and dec_else_clause ?(comments = []) node : (kwd_else * statement, _) result =
 
 (* Switch statement *)
 
-and dec_switch_statement node : (switch_statement, _) result =
+and dec_switch_statement ?(comments = []) node : (switch_statement, _) result =
   let* kwd_switch = first_child_named "switch" node in
-  let kwd_switch = make_kwd kwd_switch in
+  let kwd_switch = make_kwd ~comments kwd_switch in
   let* value_field = child_with_field "value" node in
   let* value = dec_parenthesized_expression value_field in
   let* body_field = child_with_field "body" node in
@@ -691,9 +678,9 @@ and dec_switch_default ?(comments = []) node : (switch_default, _) result =
 
 (* For statement *)
 
-and dec_for_statement node : (for_statement, _) result =
+and dec_for_statement ?(comments = []) node : (for_statement, _) result =
   let* kwd_for = first_child_named "for" node in
-  let kwd_for = make_kwd kwd_for in
+  let kwd_for = make_kwd ~comments kwd_for in
   let* sym_lpar = first_child_named "(" node in
   let sym_lpar = make_sym sym_lpar in
   let* initializer_field = child_with_field "initializer" node in
@@ -711,7 +698,7 @@ and dec_for_statement node : (for_statement, _) result =
 and dec_for_initializer node : (for_initializer, _) result =
   match get_name node with
   | "lexical_declaration" ->
-    let* declaration = dec_lexical_declaration node in
+    let* declaration = wrap dec_lexical_declaration node in
     Ok (For_lexical_declaration declaration)
   | "variable_declaration" ->
     let* declaration = dec_variable_declaration node in
@@ -732,9 +719,9 @@ and dec_for_condition node : (for_condition, _) result =
 
 (* For-in statement *)
 
-and dec_for_in_statement node : (for_in_statement, _) result =
+and dec_for_in_statement ?(comments = []) node : (for_in_statement, _) result =
   let* kwd_for = first_child_named "for" node in
-  let kwd_for = make_kwd kwd_for in
+  let kwd_for = make_kwd ~comments kwd_for in
   let kwd_await = first_child_named_opt "await" node in
   let kwd_await = make_opt make_kwd kwd_await in
   let* sym_lpar = first_child_named "(" node in
@@ -788,9 +775,9 @@ and dec_for_operator node : (for_operator, _) result =
 
 (* While statement *)
 
-and dec_while_statement node : (while_statement, _) result =
+and dec_while_statement ?(comments = []) node : (while_statement, _) result =
   let* kwd_while = first_child_named "while" node in
-  let kwd_while = make_kwd kwd_while in
+  let kwd_while = make_kwd ~comments kwd_while in
   let* condition_field = child_with_field "condition" node in
   let* condition = dec_parenthesized_expression condition_field in
   let* body_field = child_with_field "body" node in
@@ -812,9 +799,9 @@ and dec_do_statement ?(comments = []) node : (do_statement, _) result =
 
 (* Try statement *)
 
-and dec_try_statement node : (try_statement, _) result =
+and dec_try_statement ?(comments = []) node : (try_statement, _) result =
   let* kwd_try = first_child_named "try" node in
-  let kwd_try = make_kwd kwd_try in
+  let kwd_try = make_kwd ~comments kwd_try in
   let* body_field = child_with_field "body" node in
   let* body = dec_statement_block body_field in
   let handler_field = child_with_field_opt "handler" node in
@@ -863,9 +850,9 @@ and dec_finally_clause node : (finally_clause, _) result = dec_statement_block n
 
 (* With statement *)
 
-and dec_with_statement node : (with_statement, _) result =
+and dec_with_statement ?(comments = []) node : (with_statement, _) result =
   let* kwd_with = first_child_named "with" node in
-  let kwd_with = make_kwd kwd_with in
+  let kwd_with = make_kwd ~comments kwd_with in
   let* object_field = child_with_field "object" node in
   let* object_expr = dec_parenthesized_expression object_field in
   let* body_field = child_with_field "body" node in
@@ -874,19 +861,19 @@ and dec_with_statement node : (with_statement, _) result =
 
 (* Break statement *)
 
-and dec_break_statement node : (break_statement, _) result =
+and dec_break_statement ?(comments = []) node : (break_statement, _) result =
   let* kwd_break = first_child_named "break" node in
-  let kwd_break = make_kwd kwd_break in
+  let kwd_break = make_kwd ~comments kwd_break in
   let label_field = child_with_field_opt "label" node in
   let stmt_id = make_opt dec_identifier label_field in
   Ok { kwd_break; stmt_id }
 
 (* Continue statement *)
 
-and dec_continue_statement node : (continue_statement, _) result =
+and dec_continue_statement ?(comments = []) node : (continue_statement, _) result =
   let* kwd_continue = first_child_named "continue" node in
-  let kwd_continue = make_kwd kwd_continue in
-  let label_field = child_with_field_opt "label" node in
+  let kwd_continue = make_kwd ~comments kwd_continue in
+  let label_field = child_with_field_opt "labe<l" node in
   let stmt_id = make_opt dec_identifier label_field in
   Ok { kwd_continue; stmt_id }
 
@@ -902,12 +889,12 @@ and dec_continue_statement node : (continue_statement, _) result =
    ]}
 
    but the child of rank 1 is sometimes missing, as if
-   "_automatic_semicolon" can be the empty word. Other rules use
-   `optional(_automatic_semicolon)`, which adds to the mystery. *)
+   "_automatic_semicolon" could derive the empty word. Other rules use
+   "optional(_automatic_semicolon)", which adds to the mystery. *)
 
-and dec_return_statement node : (return_statement, _) result =
+and dec_return_statement ?(comments = []) node : (return_statement, _) result =
   let* kwd_return = first_child_named "return" node in
-  let kwd_return = make_kwd kwd_return in
+  let kwd_return = make_kwd ~comments kwd_return in
   match child_ranked_opt 1 node with
   | None -> Ok { kwd_return; expressions = None }
   | Some snd_child ->
@@ -919,9 +906,9 @@ and dec_return_statement node : (return_statement, _) result =
 
 (* Throw statement *)
 
-and dec_throw_statement node : (throw_statement, _) result =
+and dec_throw_statement ?(comments = []) node : (throw_statement, _) result =
   let* kwd_throw = first_child_named "throw" node in
-  let kwd_throw = make_kwd kwd_throw in
+  let kwd_throw = make_kwd ~comments kwd_throw in
   let* expr = child_ranked 1 node in
   let* expressions = dec_expressions expr in
   Ok { kwd_throw; expressions }
@@ -935,46 +922,46 @@ and dec_declaration ?(comments = []) node : (declaration, _) result =
   let comments = comments @ prev_comments node in
   match get_name node with
   | "function_declaration" ->
-    let* fun_decl = dec_function_declaration ~comments node in
+    let* fun_decl = wrap dec_function_declaration ~comments node in
     Ok (D_function_declaration fun_decl)
   | "generator_function_declaration" ->
-    let* generator = dec_generator_function_declaration ~comments node in
+    let* generator = wrap dec_generator_function_declaration ~comments node in
     Ok (D_generator_function_declaration generator)
   | "class_declaration" ->
-    let* declaration = dec_class_declaration ~comments node in
+    let* declaration = wrap dec_class_declaration ~comments node in
     Ok (D_class_declaration declaration)
   | "lexical_declaration" ->
-    let* declaration = dec_lexical_declaration ~comments node in
+    let* declaration = wrap dec_lexical_declaration ~comments node in
     Ok (D_lexical_declaration declaration)
   | "variable_declaration" ->
     let* declaration = dec_variable_declaration node in
     Ok (D_variable_declaration declaration)
   | "function_signature" ->
-    let* declaration = dec_function_signature node in
+    let* declaration = wrap dec_function_signature node in
     Ok (D_function_signature declaration)
   | "abstract_class_declaration" ->
-    let* declaration = dec_abstract_class_declaration node in
+    let* declaration = wrap dec_abstract_class_declaration node in
     Ok (D_abstract_class_declaration declaration)
   | "module" ->
-    let* declaration = dec_module_declaration node in
+    let* declaration = wrap dec_module_declaration node in
     Ok (D_module declaration)
   | "internal_module" ->
-    let* declaration = dec_internal_module ~comments node in
+    let* declaration = wrap dec_internal_module ~comments node in
     Ok (D_internal_module declaration)
   | "type_alias_declaration" ->
-    let* declaration = dec_type_alias_declaration ~comments node in
+    let* declaration = wrap dec_type_alias_declaration ~comments node in
     Ok (D_type_alias_declaration declaration)
   | "enum_declaration" ->
-    let* declaration = dec_enum_declaration node in
+    let* declaration = wrap dec_enum_declaration node in
     Ok (D_enum_declaration declaration)
   | "interface_declaration" ->
-    let* declaration = dec_interface_declaration node in
+    let* declaration = wrap dec_interface_declaration node in
     Ok (D_interface_declaration declaration)
   | "import_alias" ->
-    let* declaration = dec_import_alias node in
+    let* declaration = wrap dec_import_alias node in
     Ok (D_import_alias declaration)
   | "ambient_declaration" ->
-    let* declaration = dec_ambient_declaration node in
+    let* declaration = wrap dec_ambient_declaration node in
     Ok (D_ambient_declaration declaration)
   | _ -> error "dec_declaration" node
 
@@ -1591,7 +1578,7 @@ and dec_function_signature ?(comments = []) node : (function_signature, _) resul
 (* Formal parameters *)
 
 and dec_formal_parameters ?comments node : (formal_parameters, _) result =
-  dec_list_in_parens ?comments node dec_formal_parameter
+  dec_list_in_parens ?comments node (wrap dec_formal_parameter)
 
 and dec_formal_parameter ?(comments = []) node : (formal_parameter, _) result =
   let comments = comments @ prev_comments node in
@@ -1716,7 +1703,7 @@ and dec_type_alias_declaration ?(comments = []) node : (type_alias_declaration, 
 and dec_type_parameters ?comments node : (type_parameters, _) result =
   dec_list_in_chevrons ?comments node dec_type_parameter
 
-and dec_type_parameter ?(comments = []) node : (type_parameter, _) result =
+and dec_type_parameter ?(comments = []) node : (type_parameter wrap, _) result =
   let comments = comments @ prev_comments node in
   let kwd_const = first_child_named_opt "const" node in
   let kwd_const = make_opt make_kwd kwd_const in
@@ -1726,7 +1713,8 @@ and dec_type_parameter ?(comments = []) node : (type_parameter, _) result =
   let* constraint_expr = make_opt_res dec_constraint constraint_field in
   let value_field = child_with_field_opt "value" node in
   let* default_type = make_opt_res dec_default_type value_field in
-  Ok { kwd_const; name; constraint_expr; default_type }
+  let type_parameter = { kwd_const; name; constraint_expr; default_type } in
+  Ok (Wrap.make type_parameter (!get_region node))
 
 and dec_type_identifier ?comments node : type_identifier = dec_identifier ?comments node
 
@@ -1744,11 +1732,11 @@ and dec_default_type node : (sym_equal * type_expr, _) result =
 
 (* Enum declaration *)
 
-and dec_enum_declaration node : (enum_declaration, _) result =
+and dec_enum_declaration ?(comments = []) node : (enum_declaration, _) result =
   let kwd_const = first_child_named_opt "const" node in
   let kwd_const = make_opt make_kwd kwd_const in
   let* kwd_enum = first_child_named "enum" node in
-  let kwd_enum = make_kwd kwd_enum in
+  let kwd_enum = make_kwd ~comments kwd_enum in
   let* name_field = child_with_field "name" node in
   let name = dec_identifier name_field in
   let* body_field = child_with_field "body" node in
@@ -1798,9 +1786,9 @@ and dec_computed_property_name ?comments node : (expression brackets, _) result 
 
 (* Interface declaration *)
 
-and dec_interface_declaration node : (interface_declaration, _) result =
+and dec_interface_declaration ?(comments = []) node : (interface_declaration, _) result =
   let* kwd_interface = first_child_named "interface" node in
-  let kwd_interface = make_kwd kwd_interface in
+  let kwd_interface = make_kwd ~comments kwd_interface in
   let* name_field = child_with_field "name" node in
   let name = dec_type_identifier name_field in
   let type_parameters_field = child_with_field_opt "type_parameters" node in
@@ -2288,7 +2276,7 @@ and dec_parenthesized_expression ?comments node : (parenthesized_expression, _) 
 
 and dec_sequence_expression ?(comments = []) node : (sequence_expression, _) result =
   let raw_children = collect_named_children node in
-  ne_list_of_children ~comments dec_expression raw_children
+  wrap_ne_list_of_children ~comments dec_expression raw_children
 
 (* Object expression *)
 
@@ -3153,7 +3141,7 @@ and dec_object_type ?comments node : (object_type, _) result =
 and dec_member_type ?(comments = []) node : (member_type, _) result =
   match get_name node with
   | "export_statement" ->
-    let* statement = dec_export_statement ~comments node in
+    let* statement = wrap dec_export_statement ~comments node in
     Ok (Export_statement statement)
   | "property_signature" ->
     let* signature = dec_property_signature ~comments node in
