@@ -191,7 +191,7 @@ type 'a parens = Parens of 'a enclosed
 type program = statements
 
 and t = program
-and statements = statement ne_list (*wrap*) option
+and statements = statement ne_list wrap option
 
 (** DECLARATIONS
 
@@ -226,20 +226,20 @@ and statements = statement ne_list (*wrap*) option
     ]}
 *)
 and declaration =
-  | D_function_declaration of function_declaration
-  | D_generator_function_declaration of generator_function_declaration
-  | D_class_declaration of class_declaration
-  | D_lexical_declaration of lexical_declaration
+  | D_function_declaration of function_declaration wrap
+  | D_generator_function_declaration of generator_function_declaration wrap
+  | D_class_declaration of class_declaration wrap
+  | D_lexical_declaration of lexical_declaration wrap
   | D_variable_declaration of variable_declaration
-  | D_function_signature of function_signature
-  | D_abstract_class_declaration of abstract_class_declaration
-  | D_module of module_declaration
-  | D_internal_module of internal_module
-  | D_type_alias_declaration of type_alias_declaration
-  | D_enum_declaration of enum_declaration
-  | D_interface_declaration of interface_declaration
-  | D_import_alias of import_alias
-  | D_ambient_declaration of ambient_declaration
+  | D_function_signature of function_signature wrap
+  | D_abstract_class_declaration of abstract_class_declaration wrap
+  | D_module of module_declaration wrap
+  | D_internal_module of internal_module wrap
+  | D_type_alias_declaration of type_alias_declaration wrap
+  | D_enum_declaration of enum_declaration wrap
+  | D_interface_declaration of interface_declaration wrap
+  | D_import_alias of import_alias wrap
+  | D_ambient_declaration of ambient_declaration wrap
 
 (** Function Declaration
 
@@ -349,8 +349,8 @@ and call_signature =
   ; return_type : call_return_type option
   }
 
-and type_parameters = type_parameter list chevrons
-and formal_parameters = formal_parameter list parens
+and type_parameters = type_parameter wrap list chevrons
+and formal_parameters = formal_parameter wrap list parens
 
 and formal_parameter =
   { parameter_name : parameter_name
@@ -1441,7 +1441,7 @@ and subscript_expression =
 
 and optional_chain = Optional_chain of sym_opt_chain
 and expressions = sequence_expression
-and sequence_expression = expression ne_list (*wrap*)
+and sequence_expression = expression ne_list wrap
 
 (** Augmented Assignment Expression
 
@@ -2502,7 +2502,7 @@ and lookup_type = primary_type * type_expr brackets
 and object_type = member_type list braces
 
 and member_type =
-  | Export_statement of export_statement (* See STATEMENTS *)
+  | Export_statement of export_statement wrap (* See STATEMENTS *)
   | Property_signature of property_signature
   | Call_signature of call_signature
   | Construct_signature of construct_signature
@@ -2892,26 +2892,26 @@ and infer_type =
     ]}
 *)
 and statement =
-  | S_export_statement of export_statement
-  | S_import_statement of import_statement
+  | S_export_statement of export_statement wrap
+  | S_import_statement of import_statement wrap
   | S_debugger_statement of kwd_debugger
   | S_expression_statement of expression_statement
   | S_declaration of declaration
   | S_statement_block of statement_block
-  | S_if_statement of if_statement
-  | S_switch_statement of switch_statement
-  | S_for_statement of for_statement
-  | S_for_in_statement of for_in_statement
-  | S_while_statement of while_statement
-  | S_do_statement of do_statement
-  | S_try_statement of try_statement
-  | S_with_statement of with_statement
-  | S_break_statement of break_statement
-  | S_continue_statement of continue_statement
-  | S_return_statement of return_statement
-  | S_throw_statement of throw_statement
+  | S_if_statement of if_statement wrap
+  | S_switch_statement of switch_statement wrap
+  | S_for_statement of for_statement wrap
+  | S_for_in_statement of for_in_statement wrap
+  | S_while_statement of while_statement wrap
+  | S_do_statement of do_statement wrap
+  | S_try_statement of try_statement wrap
+  | S_with_statement of with_statement wrap
+  | S_break_statement of break_statement wrap
+  | S_continue_statement of continue_statement wrap
+  | S_return_statement of return_statement wrap
+  | S_throw_statement of throw_statement wrap
   | S_empty_statement of Region.t
-  | S_labeled_statement of labeled_statement
+  | S_labeled_statement of labeled_statement wrap
 
 (** Break Statement
 
@@ -3176,7 +3176,7 @@ and for_statement =
   }
 
 and for_initializer =
-  | For_lexical_declaration of lexical_declaration
+  | For_lexical_declaration of lexical_declaration wrap
   | For_variable_declaration of variable_declaration
   | For_expression_statement of expression_statement
   | For_empty_statement of Region.t
@@ -3509,3 +3509,8 @@ and decorator_parenthesized_expression =
   | Parenthesized_ident of identifier
   | Parenthesized_member of decorator_member_expression
   | Parenthesized_call of decorator_call_expression
+
+(* Projecting regions from nodes *)
+
+(* TODO *)
+let region_of _ = Region.ghost
