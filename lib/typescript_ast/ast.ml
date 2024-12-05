@@ -512,7 +512,7 @@ and class_heritage =
   | Extends_clause of extends_clause * implements_clause option
   | Implements_clause of implements_clause
 
-and extends_clause = kwd_extends * extends_clause_single ne_list (*wrap*)
+and extends_clause = kwd_extends * extends_clause_single wrap ne_list
 
 and extends_clause_single =
   { value : expression
@@ -711,7 +711,7 @@ and rest_pattern =
   }
 
 and lhs_expression =
-  | Member_expression of member_expression
+  | Member_expression of member_expression wrap
   | Subscript_expression of subscript_expression
   | Identifier of identifier (* Including reserved identifiers *)
   | Undefined of kwd_undefined
@@ -1483,7 +1483,7 @@ and augmented_assignment_expression =
   }
 
 and augmented_assignment_lhs =
-  | Member_expression of member_expression
+  | Member_expression of member_expression wrap
   | Subscript_expression of subscript_expression
   | Identifier of identifier
   | Parenthesized_expression of parenthesized_expression
@@ -1886,7 +1886,7 @@ and primary_expression =
   | E_function_expression of function_expression
   | E_generator_function of generator_function
   | E_identifier of identifier
-  | E_member_expression of member_expression
+  | E_member_expression of member_expression wrap
   | E_meta_property of meta_property
   | E_non_null_expression of expression
   | E_null of kwd_null
@@ -1974,10 +1974,8 @@ and function_body =
    ]}
 *)
 and call_expression =
-  | Call of non_member_call
-  | Member of call_expression_member
-
-and non_member_call = (fun_call, arguments_to_call) call
+  | Call of (fun_call, arguments_to_call) call wrap
+  | Member of (primary_expression, arguments) call wrap
 
 and fun_call =
   | Fun_call of expression
@@ -1986,8 +1984,6 @@ and fun_call =
 and arguments_to_call =
   | Arguments of arguments
   | Template_string of template_string
-
-and call_expression_member = (primary_expression, arguments) call
 
 and ('lambda, 'arguments) call =
   { lambda : 'lambda
@@ -2225,7 +2221,7 @@ and with_statement =
     ]}
 *)
 and pattern =
-  | P_member_expression of member_expression
+  | P_member_expression of member_expression wrap
   | P_subscript_expression of subscript_expression
   | P_identifier of identifier (* Including reserved identifiers *)
   | P_undefined of kwd_undefined
@@ -2252,11 +2248,11 @@ and pattern =
 *)
 and type_expr =
   | T_primary_type of primary_type
-  | T_function_type of function_type
+  | T_function_type of function_type wrap
   | T_readonly_type of readonly_type
-  | T_constructor_type of constructor_type
-  | T_infer_type of infer_type
-  | T_member_expression of member_expression
+  | T_constructor_type of constructor_type wrap
+  | T_infer_type of infer_type wrap
+  | T_member_expression of member_expression wrap
   | T_call_expression of call_expression
 
 (** Primary Type
