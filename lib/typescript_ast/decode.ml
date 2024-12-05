@@ -1587,8 +1587,16 @@ and dec_formal_parameters ?comments node : (formal_parameters, _) result =
   dec_list_in_parens ?comments node (wrap dec_formal_parameter)
 
 and dec_formal_parameter ?(comments = []) node : (formal_parameter, _) result =
+  let* parameter_name = wrap dec_parameter_name ~comments node in
+  let qmark = first_child_named_opt "?" node in
+  let optional = make_opt make_sym qmark in
+  let type_field = child_with_field_opt "type" node in
+  let* type_opt = make_opt_res dec_type_annotation type_field in
+  let* default = mk_child_initializer_opt node in
+  Ok { parameter_name; optional; type_opt; default }
+
+and dec_parameter_name ?(comments = []) node : (parameter_name, _) result =
   let comments = comments @ prev_comments node in
-  (* "_parameter_name" inlined: *)
   let decorators = children_named "decorator" node in
   let* decorators = list_of_children dec_decorator decorators in
   let accessibility_modifier = first_child_named_opt "accessibility_modifier" node in
@@ -1599,14 +1607,7 @@ and dec_formal_parameter ?(comments = []) node : (formal_parameter, _) result =
   let kwd_readonly = make_opt make_kwd kwd_readonly in
   let* pattern_field = child_with_field "pattern" node in
   let* pattern = dec_parameter_pattern ~comments pattern_field (* Not ideal *) in
-  (* *)
-  let parameter_name = { decorators; access; kwd_override; kwd_readonly; pattern } in
-  let qmark = first_child_named_opt "?" node in
-  let optional = make_opt make_sym qmark in
-  let type_field = child_with_field_opt "type" node in
-  let* type_opt = make_opt_res dec_type_annotation type_field in
-  let* default = mk_child_initializer_opt node in
-  Ok { parameter_name; optional; type_opt; default }
+  Ok { decorators; access; kwd_override; kwd_readonly; pattern }
 
 and dec_parameter_pattern ?(comments = []) node : (parameter_pattern, _) result =
   match get_name node with

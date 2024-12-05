@@ -353,7 +353,7 @@ and type_parameters = type_parameter wrap list chevrons
 and formal_parameters = formal_parameter wrap list parens
 
 and formal_parameter =
-  { parameter_name : parameter_name
+  { parameter_name : parameter_name wrap
   ; optional : sym_qmark option
   ; type_opt : type_annotation option
   ; default : (sym_equal * expression) option
