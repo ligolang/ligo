@@ -1291,7 +1291,7 @@ and type_alias_declaration =
     ]}
 *)
 and expression =
-  | E_as_expression of as_expression
+  | E_as_expression of as_expression wrap
   | E_assignment_expression of assignment_expression
   | E_augmented_assignment_expression of augmented_assignment_expression
   | E_await_expression of await_expression
