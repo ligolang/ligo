@@ -1925,46 +1925,46 @@ and dec_expression ?(comments = []) node : (expression, _) result =
   match get_name node with
   (*  | "glimmer_template" -> Ok (E_glimmer_template (dec_glimmer_template node)) *)
   | "assignment_expression" ->
-    let* expression = dec_assignment_expression node in
+    let* expression = wrap dec_assignment_expression node in
     Ok (E_assignment_expression expression)
   | "augmented_assignment_expression" ->
-    let* expression = dec_augmented_assignment_expression node in
+    let* expression = wrap dec_augmented_assignment_expression node in
     Ok (E_augmented_assignment_expression expression)
   | "await_expression" ->
-    let* expression = dec_await_expression node in
+    let* expression = wrap dec_await_expression node in
     Ok (E_await_expression expression)
   | "unary_expression" ->
-    let* expression = dec_unary_expression ~comments node in
+    let* expression = wrap dec_unary_expression ~comments node in
     Ok (E_unary_expression expression)
   | "binary_expression" ->
-    let* expression = dec_binary_expression ~comments node in
+    let* expression = wrap dec_binary_expression ~comments node in
     Ok (E_binary_expression expression)
   | "ternary_expression" ->
-    let* expression = dec_ternary_expression node in
+    let* expression = wrap dec_ternary_expression ~comments node in
     Ok (E_ternary_expression expression)
   | "update_expression" ->
-    let* expression = dec_update_expression node in
+    let* expression = dec_update_expression ~comments node in
     Ok (E_update_expression expression)
   | "new_expression" ->
-    let* expression = dec_new_expression node in
+    let* expression = wrap dec_new_expression ~comments node in
     Ok (E_new_expression expression)
   | "yield_expression" ->
     let* expression = dec_yield_expression node in
     Ok (E_yield_expression expression)
   | "as_expression" ->
-    let* expression = wrap dec_as_expression node in
+    let* expression = wrap dec_as_expression ~comments node in
     Ok (E_as_expression expression)
   | "satisfies_expression" ->
-    let* expression = dec_satisfies_expression node in
+    let* expression = wrap dec_satisfies_expression ~comments node in
     Ok (E_satisfies_expression expression)
   | "instantiation_expression" ->
-    let* expression = dec_instantiation_expression node in
+    let* expression = wrap dec_instantiation_expression ~comments node in
     Ok (E_instantiation_expression expression)
   | "internal_module" ->
-    let* declaration = dec_internal_module ~comments node in
+    let* declaration = wrap dec_internal_module ~comments node in
     Ok (E_internal_module declaration)
   | "type_assertion" ->
-    let* assertion = dec_type_assertion node in
+    let* assertion = wrap dec_type_assertion ~comments node in
     Ok (E_type_assertion assertion)
   | _ ->
     let* expression = dec_primary_expression ~comments node in
@@ -1972,32 +1972,32 @@ and dec_expression ?(comments = []) node : (expression, _) result =
 
 (* Assignment expression *)
 
-and dec_assignment_expression node : (assignment_expression, _) result =
+and dec_assignment_expression ?(comments = []) node : (assignment_expression, _) result =
   let kwd_using = first_child_named_opt "using" node in
   let kwd_using = make_opt make_kwd kwd_using in
   let* left_field = child_with_field "left" node in
-  let* left = dec_assignment_lhs left_field in
+  let* left = dec_assignment_lhs ~comments left_field in
   let* sym_equal = first_child_named "=" node in
   let sym_equal = make_sym sym_equal in
   let* right_field = child_with_field "right" node in
   let* right = dec_expression right_field in
   Ok { kwd_using; left; sym_equal; right }
 
-and dec_assignment_lhs node : (assignment_lhs, _) result =
+and dec_assignment_lhs ?(comments = []) node : (assignment_lhs, _) result =
   match get_name node with
   | "parenthesized_expression" ->
-    let* expression = dec_parenthesized_expression node in
+    let* expression = dec_parenthesized_expression ~comments node in
     Ok (Assign_lhs_parens expression)
   | _ ->
-    let* expression = dec_lhs_expression node in
+    let* expression = dec_lhs_expression ~comments node in
     Ok (Assign_lhs expression)
 
 (* Augmented assignment expression *)
 
-and dec_augmented_assignment_expression node : (augmented_assignment_expression, _) result
+and dec_augmented_assignment_expression ?(comments = []) node : (augmented_assignment_expression, _) result
   =
   let* left_field = child_with_field "left" node in
-  let* left = dec_augmented_assignment_lhs left_field in
+  let* left = dec_augmented_assignment_lhs ~comments left_field in
   let* operator = child_with_field "operator" node in
   let* operator = dec_assignment_operator operator in
   let* right_field = child_with_field "right" node in
@@ -2023,25 +2023,25 @@ and dec_assignment_operator node : (assignment_operator, _) result =
   | "??=" -> Ok (Non_null_eq (make_sym node))
   | _ -> error "dec_assignment_operator" node
 
-and dec_augmented_assignment_lhs node : (augmented_assignment_lhs, _) result =
+and dec_augmented_assignment_lhs ?(comments = []) node : (augmented_assignment_lhs, _) result =
   match get_name node with
   | "member_expression" ->
-    let* expression = wrap dec_member_expression node in
+    let* expression = wrap dec_member_expression ~comments node in
     Ok (Member_expression expression)
   | "subscript_expression" ->
-    let* expression = dec_subscript_expression node in
+    let* expression = dec_subscript_expression ~comments node in
     Ok (Subscript_expression expression)
-  | "identifier" -> Ok (Identifier (dec_identifier node))
+  | "identifier" -> Ok (Identifier (dec_identifier ~comments node))
   | "parenthesized_expression" ->
-    let* expression = dec_parenthesized_expression node in
+    let* expression = dec_parenthesized_expression ~comments node in
     Ok (Parenthesized_expression expression)
   | _ -> error "dec_augmented_assignment_lhs" node
 
 (* Await expression *)
 
-and dec_await_expression node : (await_expression, _) result =
+and dec_await_expression ?(comments = []) node : (await_expression, _) result =
   let* kwd_await = first_child_named "await" node in
-  let kwd_await = make_kwd kwd_await in
+  let kwd_await = make_kwd ~comments kwd_await in
   let* expression = child_ranked 1 node in
   let* expression = dec_expression expression in
   Ok { kwd_await; expression }
@@ -2117,9 +2117,9 @@ and dec_binary_operator node : (binary_operator, _) result =
 
 (* Ternary expression *)
 
-and dec_ternary_expression node : (ternary_expression, _) result =
+and dec_ternary_expression ?(comments = []) node : (ternary_expression, _) result =
   let* condition_field = child_with_field "condition" node in
-  let* condition = dec_expression condition_field in
+  let* condition = dec_expression ~comments condition_field in
   let* sym_qmark = first_child_named "?" node in
   let sym_qmark = make_sym sym_qmark in
   let* consequence_field = child_with_field "consequence" node in
@@ -2132,28 +2132,38 @@ and dec_ternary_expression node : (ternary_expression, _) result =
 
 (* Update expression *)
 
-and dec_update_expression node : (update_expression, _) result =
-  let* argument_field = child_with_field "argument" node in
-  let* argument = dec_expression argument_field in
-  let* operator_field = child_with_field "operator" node in
-  let* operator = dec_incr_decr_operator operator_field in
-  let update : update = { argument; operator } in
+and dec_update_expression ?(comments = []) node : (update_expression, _) result =
+  let region = !get_region node in
   let* first_child = child_ranked 0 node in
   match get_name first_child with
-  | "++" | "--" -> Ok (Update_prefix update)
-  | _ -> Ok (Update_postfix update)
+  | "++" | "--" ->
+    let* operator_field = child_with_field "operator" node in
+    let* operator = dec_incr_decr_operator ~comments operator_field in
+    let* argument_field = child_with_field "argument" node in
+    let* argument = dec_expression argument_field in
+    let update : update = { argument; operator } in
+    let update = Wrap.make update region in
+    Ok (Update_prefix update)
+  | _ ->
+    let* argument_field = child_with_field "argument" node in
+    let* argument = dec_expression ~comments argument_field in
+    let* operator_field = child_with_field "operator" node in
+    let* operator = dec_incr_decr_operator operator_field in
+    let update : update = { argument; operator } in
+    let update = Wrap.make update region in
+    Ok (Update_postfix update)
 
-and dec_incr_decr_operator node : (incr_decr_operator, _) result =
+and dec_incr_decr_operator ?(comments = []) node : (incr_decr_operator, _) result =
   match get_name node with
-  | "++" -> Ok (Increment (make_sym node))
-  | "--" -> Ok (Decrement (make_sym node))
+  | "++" -> Ok (Increment (make_sym ~comments node))
+  | "--" -> Ok (Decrement (make_sym ~comments node))
   | _ -> error "dec_incr_decr_operator" node
 
 (* New expression *)
 
-and dec_new_expression node : (new_expression, _) result =
+and dec_new_expression ?(comments = []) node : (new_expression, _) result =
   let* kwd_new = first_child_named "new" node in
-  let kwd_new = make_kwd kwd_new in
+  let kwd_new = make_kwd ~comments kwd_new in
   let* constructor_field = child_with_field "constructor" node in
   let* constructor = dec_primary_expression constructor_field in
   let type_arguments_field = child_with_field_opt "type_arguments" node in
@@ -2165,20 +2175,23 @@ and dec_new_expression node : (new_expression, _) result =
 (* Yield expression *)
 
 and dec_yield_expression node : (yield_expression, _) result =
+  let region = !get_region node in
   let* kwd_yield = first_child_named "yield" node in
   let kwd_yield = make_kwd kwd_yield in
   match child_ranked_opt 1 node with
-  | None -> Ok (Yield (kwd_yield, None))
+  | None -> Ok (Yield (Wrap.make (kwd_yield, None) region))
   | Some snd_child ->
     (match get_name snd_child with
     | "*" ->
       let sym_star = make_sym snd_child in
       let* expression = child_ranked 2 node in
       let* expression = dec_expression expression in
-      Ok (Yield_iterable (kwd_yield, sym_star, expression))
+      let iterable = kwd_yield, sym_star, expression in
+      Ok (Yield_iterable (Wrap.make iterable region))
     | _ ->
       let* expression = dec_expression snd_child in
-      Ok (Yield (kwd_yield, Some expression)))
+      let yield = kwd_yield, Some expression in
+      Ok (Yield (Wrap.make yield region)))
 
 (* As-expression *)
 
@@ -2200,9 +2213,9 @@ and dec_as_what node : (as_what, _) result =
 
 (* Statisfies-expression *)
 
-and dec_satisfies_expression node : (satisfies_expression, _) result =
+and dec_satisfies_expression ?(comments = []) node : (satisfies_expression, _) result =
   let* expression = child_ranked 0 node in
-  let* expression = dec_expression expression in
+  let* expression = dec_expression ~comments expression in
   let* kwd_satisfies = first_child_named "satisfies" node in
   let kwd_satisfies = make_kwd kwd_satisfies in
   let* type_child = child_ranked 2 node in
@@ -2211,18 +2224,18 @@ and dec_satisfies_expression node : (satisfies_expression, _) result =
 
 (* Instantiation expression *)
 
-and dec_instantiation_expression node : (instantiation_expression, _) result =
+and dec_instantiation_expression ?(comments = []) node : (instantiation_expression, _) result =
   let* expression = named_child_ranked 0 node in
-  let* expression = dec_expression expression in
+  let* expression = dec_expression ~comments expression in
   let* type_arguments_field = child_with_field "type_arguments" node in
   let* type_arguments = dec_type_arguments type_arguments_field in
   Ok (expression, type_arguments)
 
 (* Type assertion *)
 
-and dec_type_assertion node : (type_assertion, _) result =
+and dec_type_assertion ?(comments = []) node : (type_assertion, _) result =
   let* type_arguments = named_child_ranked 0 node in
-  let* type_arguments = dec_type_arguments type_arguments in
+  let* type_arguments = dec_type_arguments ~comments type_arguments in
   let* expression = named_child_ranked 1 node in
   let* expression = dec_expression expression in
   Ok (type_arguments, expression)
@@ -2919,7 +2932,7 @@ and dec_literal_type ?(comments = []) node : (literal_type, _) result =
   let* child = named_child_ranked 0 node in
   match get_name child with
   | "unary_expression" ->
-    let* expression = dec_unary_expression ~comments child in
+    let* expression = wrap dec_unary_expression ~comments child in
     Ok (T_unary_type expression)
   | "number" ->
     let* number = dec_number ~comments child in

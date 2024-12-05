@@ -1292,19 +1292,19 @@ and type_alias_declaration =
 *)
 and expression =
   | E_as_expression of as_expression wrap
-  | E_assignment_expression of assignment_expression
-  | E_augmented_assignment_expression of augmented_assignment_expression
-  | E_await_expression of await_expression
-  | E_binary_expression of binary_expression
+  | E_assignment_expression of assignment_expression wrap
+  | E_augmented_assignment_expression of augmented_assignment_expression wrap
+  | E_await_expression of await_expression wrap
+  | E_binary_expression of binary_expression wrap
   (*| E_glimmer_template of glimmer_template*)
-  | E_instantiation_expression of instantiation_expression
-  | E_internal_module of internal_module
-  | E_new_expression of new_expression
+  | E_instantiation_expression of instantiation_expression wrap
+  | E_internal_module of internal_module wrap
+  | E_new_expression of new_expression wrap
   | E_primary_expression of primary_expression
-  | E_satisfies_expression of satisfies_expression
-  | E_ternary_expression of ternary_expression
-  | E_type_assertion of type_assertion
-  | E_unary_expression of unary_expression
+  | E_satisfies_expression of satisfies_expression wrap
+  | E_ternary_expression of ternary_expression wrap
+  | E_type_assertion of type_assertion wrap
+  | E_unary_expression of unary_expression wrap
   | E_update_expression of update_expression
   | E_yield_expression of yield_expression
 
@@ -1792,8 +1792,8 @@ and unary_operator =
    ]}
 *)
 and update_expression =
-  | Update_postfix of update
-  | Update_prefix of update
+  | Update_postfix of update wrap
+  | Update_prefix of update wrap
 
 and update =
   { argument : expression
@@ -1828,8 +1828,8 @@ and incr_decr_operator =
    ]}
 *)
 and yield_expression =
-  | Yield of kwd_yield * expression option
-  | Yield_iterable of kwd_yield * sym_star * expression
+  | Yield of (kwd_yield * expression option) wrap
+  | Yield_iterable of (kwd_yield * sym_star * expression) wrap
 
 (** Primary Expression
 
@@ -2433,7 +2433,7 @@ and intersection_type = type_expr option * sym_ampersand * type_expr
     ]}
 *)
 and literal_type =
-  | T_unary_type of unary_expression
+  | T_unary_type of unary_expression wrap
   | T_number of number
   | T_string of string_literal
   | T_true of kwd_true
@@ -3509,4 +3509,29 @@ and decorator_parenthesized_expression =
 (* Projecting regions from nodes *)
 
 (* TODO *)
-let region_of _ = Region.ghost
+let region_of_primary_expression _ = Region.ghost
+
+let region_of_update_expression = function
+  | Update_postfix e -> e#region
+  | Update_prefix e -> e#region
+
+let region_of_yield_expression = function
+  | Yield e -> e#region
+  | Yield_iterable e -> e#region
+
+let region_of_expression = function
+  | E_as_expression e -> e#region
+  | E_assignment_expression e -> e#region
+  | E_augmented_assignment_expression e -> e#region
+  | E_await_expression e -> e#region
+  | E_binary_expression e -> e#region
+  | E_instantiation_expression e -> e#region
+  | E_internal_module e -> e#region
+  | E_new_expression e -> e#region
+  | E_primary_expression e -> region_of_primary_expression e
+  | E_satisfies_expression e -> e#region
+  | E_ternary_expression e -> e#region
+  | E_type_assertion e -> e#region
+  | E_unary_expression e -> e#region
+  | E_update_expression e -> region_of_update_expression e
+  | E_yield_expression e -> region_of_yield_expression e
