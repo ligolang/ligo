@@ -1,6 +1,48 @@
 open Ppxlib
 open Ocaml_common
 
+include (
+  struct
+    [@@@ocaml.warning "-34"]
+
+    type nonrec unit = unit = () [@@ligo.internal.predef]
+
+    (* OCaml predefs *)
+
+    type nonrec int = int [@@ligo.internal.predef]
+    type nonrec char = char [@@ligo.internal.predef.unsupported]
+    type nonrec string = string [@@ligo.internal.predef]
+    type nonrec bytes = bytes [@@ligo.internal.predef]
+    type nonrec float = float [@@ligo.internal.predef.unsupported]
+
+    type nonrec bool = bool =
+      | false
+      | true
+
+    type nonrec exn = exn [@@ligo.internal.predef.unsupported]
+    type nonrec 'a array = 'a array [@@ligo.internal.predef.unsupported]
+
+    type nonrec 'a list = 'a list =
+      | []
+      | ( :: ) of 'a * 'a list
+    [@@ligo.internal.predef]
+
+    type nonrec 'a option = 'a option =
+      | None
+      | Some of 'a
+
+    type nonrec nativeint = nativeint [@@ligo.internal.predef.unsupported]
+    type nonrec int32 = int32 [@@ligo.internal.predef.unsupported]
+    type nonrec int64 = int64 [@@ligo.internal.predef]
+    type nonrec 'a lazy_t = 'a lazy_t [@@ligo.internal.predef.unsupported]
+
+    type nonrec extension_constructor = extension_constructor
+    [@@ligo.internal.predef.unsupported]
+
+    type nonrec floatarray = floatarray [@@ligo.internal.predef.unsupported]
+  end :
+    sig end)
+
 let stdlib ~loc =
   [%str
     (* TODO: major concern on using aliases
@@ -80,36 +122,6 @@ let stdlib ~loc =
     type chest [@@ligo.internal.predef]
     type chest_key [@@ligo.internal.predef]]
 
-let show_error error =
-  let open Caml_core in
-  match error with
-  | E_unexpected_typed_tree -> "unexpected typed tree"
-  | E_let_and_not_supported -> "let and is not supported"
-  | E_type_and_not_supported -> "type and is not supported"
-  | E_labelled_parameters_not_supported -> "labelled parameters are not supported"
-  | E_optional_parameters_not_supported -> "optional parameters are not supported"
-  | E_poly_vars_not_supported -> "polymorphic variants are not supported"
-  | E_fcm_not_supported -> "first-class modules are not supported"
-  | E_objects_not_supported -> "classes and objects are not supported"
-  | E_partial_match_not_supported -> "partial pattern matching is not supported"
-  | E_exceptions_not_supported -> "exceptions are not supported"
-  | E_extensible_variants_not_supported -> "extensible variants are not supported"
-  | E_mutation_not_supported -> "mutation is not supported"
-  | E_array_not_supported -> "array's are not supported"
-  | E_while_not_supported -> "while loops are not supported"
-  | E_for_not_supported -> "for loops are not supported"
-  | E_refutation_not_supported -> "refutation's are not supported"
-  | E_rec_modules_not_supported -> "recursive modules are not supported"
-  | E_lazy_not_supported -> "lazy values are not supported"
-  | E_abstract_types_not_supported -> "abstract types are not supported YET"
-  | E_abstract_module_types_not_supported -> "abstract module types are not supported"
-  | E_modules_without_names_not_supported -> "modules without names not supported"
-  | E_recursive_bindings_must_be_a_function -> "recursive bindings must be a function"
-  | E_unimplemented -> "unimplemented"
-  | E_unsupported -> "unsupported"
-  | E_unreachable -> "unreachable"
-  | E_unexpected_error exn -> Format.asprintf "unexpected error: %a" Core.Exn.pp exn
-
 let loc_of_ligo_location ~loc =
   match (loc : Simple_utils.Location.t) with
   (* TODO: what is a ghost location? *)
@@ -118,7 +130,9 @@ let loc_of_ligo_location ~loc =
     let loc_start = reg#start#byte in
     let loc_end = reg#stop#byte in
     Ocaml_common.Location.{ loc_ghost = false; loc_start; loc_end }
-  | Virtual _ -> failwith "virtual location is unsupported"
+  | Virtual _ ->
+    (* TODO: is None okay? *)
+    Location.none
 
 (* TODO: Location seems to be too complex in ligo
   match loc_ghost with
@@ -131,24 +145,29 @@ let loc_of_ligo_location ~loc =
     Location.make loc_start loc_end *)
 
 let stri_of_error error =
+  let open Caml_solving in
   let open Ast_builder.Default in
-  let Caml_core.{ err_tag = tag; err_loc = loc } = error in
+  let Caml_error.{ err_tag = tag; err_loc = loc } = error in
   let loc = loc_of_ligo_location ~loc in
-  let message = show_error tag in
+  let message = Format.asprintf "%a" Caml_error.pp_hum_error_tag tag in
   let label = { txt = "ocaml.error"; loc } in
   let content = pstr_eval ~loc (estring ~loc message) [] in
   pstr_extension ~loc (label, PStr [ content ]) []
 
 let check_extract str =
-  let errors =
-    match
-      let open Caml_extraction in
-      Context.run @@ fun ctx -> extract_str ctx str
-    with
-    | Ok (_str, errors) -> errors
-    | Error error -> [ error ]
-  in
-  List.map stri_of_error errors
+  let open Caml_solving in
+  let ( let* ) v f = Result.bind v f in
+  let* str = Caml_extract.extract_str str in
+  let* str = Caml_solve.solve_module str in
+  let errors = Caml_error_collect.collect_module str in
+  Ok (List.map stri_of_error errors)
+
+let check_extract str =
+  (* TODO: this should not be like this *)
+  match check_extract str with
+  | Ok errors -> errors
+  | Error error -> [ stri_of_error error ]
+  | exception _exn -> assert false
 
 let env =
   lazy
@@ -176,11 +195,13 @@ let () =
         str
         []
     in
-    try
-      let tstr = check_str str in
+    match check_str str with
+    | tstr ->
       let errors = check_extract tstr in
+      (* TODO: @? *)
       str @ errors
-    with
-    | _exn -> str
+    | exception _exn ->
+      (* TODO: debug this? *)
+      str
   in
   Driver.register_transformation "ppx_caml_ligo" ~impl

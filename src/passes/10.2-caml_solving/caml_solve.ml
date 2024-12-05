@@ -1,7 +1,6 @@
 open Ocaml_common
 open Ligo_prim
 open Ast_core
-open Caml_core
 
 (* TODO: either there should be no errors here
   or we should support error recovery *)
@@ -32,9 +31,6 @@ end
 
 module Context : sig
   type context
-  type t = context
-
-  exception Error_found of error
 
   (* vars *)
   val enter_value : Ident.t -> Value_var.t -> context -> context
@@ -61,7 +57,7 @@ module Context : sig
   val solve_module_path : Path.t -> context -> Module_var.t Module_access.t
 
   (* external *)
-  val run : (context -> 'k) -> ('k, exn) result
+  val run : (context -> 'k) -> 'k
 end = struct
   (* TODO: core map *)
   module String_map = Stdlib.Map.Make (String)
@@ -90,8 +86,6 @@ end = struct
     ; local : md_context
     }
 
-  type t = context
-
   let empty_local =
     { md_values = String_map.empty
     ; md_types = String_map.empty
@@ -109,13 +103,7 @@ end = struct
     }
 
 
-  (* TODO: this is bad *)
-  exception Error_found of error
-
-  let run k =
-    try Ok (k empty) with
-    | exn -> Error exn
-
+  let run k = k empty
 
   let enter_value_info ident value_info ctx =
     let name = Ident.name ident in
@@ -243,37 +231,12 @@ end = struct
 end
 
 open Context
-
-(* TODO: solve is a bad word *)
-
-(* TODO: either fully commit to combinators, or add expr_wrap and type_wrap *)
-let pat_wrap location content : _ Ast_core.Pattern.t =
-  Location.{ wrap_content = content; location }
-
-
-let decl_wrap location content : Ast_core.decl =
-  (* TODO: type *)
-  { wrap_content = content; location }
-
-
-let mod_expr_wrap location content : Ast_core.module_expr =
-  (* TODO: type *)
-  { wrap_content = content; location }
-
-
-let sig_item_wrap location content : Ast_core.sig_item =
-  (* TODO: type *)
-  { wrap_content = content; location }
-
-
-let sig_expr_wrap location content : Ast_core.signature_expr =
-  (* TODO: type *)
-  { wrap_content = content; location }
-
+open Caml_core
+open Caml_pre_core
 
 (* TODO: merge ctx and vars *)
 let rec solve_type ctx vars typ_ =
-  let { type_desc; type_loc = loc } = typ_ in
+  let Caml_core.{ type_desc; type_loc = loc } = typ_ in
   match type_desc with
   | T_var (name, id) ->
     let var =
@@ -285,31 +248,24 @@ let rec solve_type ctx vars typ_ =
         Hashtbl.set vars ~key:id ~data:var;
         var
     in
-    t_variable ~loc var ()
+    type_wrap loc @@ T_var var
   | T_constr (path, args) ->
-    let type_operator = solve_type_path path ctx in
-    (match args with
-    | [] ->
-      (* TODO: fix this on ligo *)
-      (match type_operator with
-      | { module_path = []; element } -> t_variable ~loc element ()
-      | { module_path; element } as var -> t_module_accessor ~loc var ())
-    | args ->
-      (* TODO: what about no args? *)
-      let arguments = List.map args ~f:(fun type_ -> solve_type ctx vars type_) in
-      t_app ~loc { type_operator; arguments } ())
+    let path = solve_type_path path ctx in
+    let args = List.map args ~f:(solve_type ctx vars) in
+    type_wrap loc @@ T_constr (path, args)
   | T_arrow (param, return) ->
     let param = solve_type ctx vars param in
     let return = solve_type ctx vars return in
     (* TODO: param names? *)
-    t_arrow ~loc { type1 = param; type2 = return; param_names = [] } ()
+    type_wrap loc @@ T_arrow (param, return)
   | T_tuple fields ->
     let fields = List.map fields ~f:(fun field -> solve_type ctx vars field) in
-    t_record ~loc (Row.create_tuple fields) ()
+    type_wrap loc @@ T_tuple fields
   | T_forall (bound, body) ->
     (* TODO: this should fail if not poly *)
     (* TODO: test poly and univar *)
     solve_type_forall loc ctx vars ~bound body
+  | T_error error -> type_wrap loc @@ T_error error
 
 
 and solve_type_forall loc ctx vars ~bound body =
@@ -321,13 +277,13 @@ and solve_type_forall loc ctx vars ~bound body =
     Hashtbl.set vars ~key:id ~data:var;
     let body = solve_type_forall loc ctx vars ~bound body in
     Hashtbl.remove vars id;
-    t_for_all ~loc { ty_binder = var; kind = Type; type_ = body } ()
+    type_wrap loc @@ T_forall (var, body)
 
 
 let solve_type_poly ctx vars type_ =
   (* TODO: this is bad *)
   let external_vars = Hashtbl.copy vars in
-  let { type_desc = _; type_loc = loc } = type_ in
+  let Caml_core.{ type_desc = _; type_loc = loc } = type_ in
   let type_ = solve_type ctx vars type_ in
   let internal_vars =
     List.filter_map (Hashtbl.to_alist vars) ~f:(fun (id, var) ->
@@ -338,10 +294,19 @@ let solve_type_poly ctx vars type_ =
           Some var)
   in
   List.fold_left internal_vars ~init:type_ ~f:(fun body var ->
-      t_for_all ~loc { ty_binder = var; kind = Type; type_ = body } ())
+      type_wrap loc @@ T_forall (var, body))
 
 
-let solve_type_record loc ctx vars fields =
+let rec solve_type_decl ctx vars decl =
+  let Caml_core.{ type_decl_desc; type_decl_params; type_decl_loc = loc } = decl in
+  let params, body =
+    solve_type_decl_lambda ctx vars loc type_decl_params type_decl_desc
+  in
+  List.iter type_decl_params ~f:(fun (_name, id) -> Hashtbl.remove vars id);
+  type_decl_wrap loc params body
+
+
+and solve_type_decl_record_fields ctx vars fields =
   let fields =
     List.map fields ~f:(fun decl_label ->
         let { dl_id; dl_type; dl_loc } = decl_label in
@@ -349,84 +314,72 @@ let solve_type_record loc ctx vars fields =
         let type_ = solve_type_poly ctx vars dl_type in
         Label.Label (label, dl_loc), type_)
   in
-  let fields = Label.Map.of_alist_exn fields in
-  (* TODO: layout *)
-  let layout = None in
-  t_record ~loc { fields; layout } ()
+  (* TODO: this exn? Check all of them *)
+  Label.Map.of_alist_exn fields
 
 
-let rec solve_type_decl ctx vars decl : type_expression =
-  let { type_decl_desc; type_decl_params; type_decl_loc = loc } = decl in
-  solve_type_decl_lambda ctx vars loc type_decl_params type_decl_desc
-
-
-and solve_type_decl_lambda ctx vars loc params desc =
-  match params with
-  | [] -> solve_type_decl_body ctx vars loc desc
-  | (name, id) :: params ->
-    let var : Type_var.t = Type_var.fresh ~loc:Location.dummy ?name ~generated:false () in
-    (* TODO: ensures id is not in vars *)
-    Hashtbl.set vars ~key:id ~data:var;
-    let body = solve_type_decl_lambda ctx vars loc params desc in
-    Hashtbl.remove vars id;
-    t_abstraction ~loc { ty_binder = var; kind = Type; type_ = body } ()
-
-
-and solve_type_decl_body ctx vars loc desc =
-  match desc with
-  | T_record fields -> solve_type_record loc ctx vars fields
+and solve_type_decl_desc ctx vars desc =
+  (* TODO: this is really weird right now *)
+  match (desc : Caml_core.type_decl_desc) with
+  | T_record fields ->
+    let fields = solve_type_decl_record_fields ctx vars fields in
+    T_record fields
   | T_variant cases ->
     let cases =
       List.map cases ~f:(fun decl_case ->
           match decl_case with
           | C_tuple { dc_id; dc_fields; dc_loc } ->
-            let label = Ident.name dc_id in
-            let content =
-              match dc_fields with
-              | [] -> t_unit ~loc:dc_loc ()
-              | [ field ] -> solve_type ctx vars field
-              | fields ->
-                let fields =
-                  List.map fields ~f:(fun field -> solve_type ctx vars field)
-                in
-                t_record ~loc (Row.create_tuple fields) ()
+            let dc_id =
+              (* TODO: disgusting hack *)
+              match Ident.name dc_id with
+              | "true" -> Label.Label ("True", dc_loc)
+              | "false" -> Label.Label ("False", dc_loc)
+              | name -> Label.Label (name, dc_loc)
             in
-            Label.Label (label, dc_loc), content
+            let dc_fields =
+              List.map dc_fields ~f:(fun field -> solve_type ctx vars field)
+            in
+            (* TODO: helpers here? *)
+            dc_id, C_tuple { dc_id; dc_fields; dc_loc }
           | C_record { dc_id; dc_fields; dc_loc } ->
-            let label = Ident.name dc_id in
-            let content = solve_type_record loc ctx vars dc_fields in
-            Label.Label (label, dc_loc), content)
-    in
-    let cases =
-      List.map cases ~f:(fun (label, content) ->
-          let open Label in
-          match label with
-          | Label ("true", loc) -> Label ("True", loc), content
-          | Label ("false", loc) -> Label ("False", loc), content
-          | label -> label, content)
+            let dc_id = Label.Label (Ident.name dc_id, dc_loc) in
+            let dc_fields = solve_type_decl_record_fields ctx vars dc_fields in
+            dc_id, C_record { dc_id; dc_fields; dc_loc })
     in
     let cases = Label.Map.of_alist_exn cases in
-    (* TODO: layout *)
-    let layout = None in
-    t_sum ~loc { fields = cases; layout } ()
+    T_variant cases
   | T_alias manifest ->
     (* TODO: not poly tho *)
-    solve_type_poly ctx vars manifest
+    let manifest = solve_type_poly ctx vars manifest in
+    T_alias manifest
+  | T_error error -> T_error error
+
+
+and solve_type_decl_lambda ctx vars loc params desc =
+  match params with
+  | [] -> [], solve_type_decl_desc ctx vars desc
+  | (name, id) :: params ->
+    (* TODO: fresh something *)
+    let var : Type_var.t = Type_var.fresh ~loc:Location.dummy ?name ~generated:false () in
+    (* TODO: ensures id is not in vars *)
+    Hashtbl.set vars ~key:id ~data:var;
+    let params, body = solve_type_decl_lambda ctx vars loc params desc in
+    Hashtbl.remove vars id;
+    var :: params, body
 
 
 let rec solve_pat ctx vars pat =
-  let { pat_desc; pat_type; pat_loc = loc } = pat in
+  let Caml_core.{ pat_desc; pat_type; pat_loc = loc } = pat in
   (* TODO: ascription in all types *)
   (* TODO: dummy *)
   (* TODO: poly type *)
-  let type_ = Some (solve_type ctx vars pat_type) in
+  let type_ = solve_type ctx vars pat_type in
   match pat_desc with
-  | P_unit -> ctx, pat_wrap loc @@ P_unit
+  | P_unit -> ctx, pat_wrap loc type_ @@ P_unit
   | P_var ident ->
     let var = fresh_value ident in
-    let binder = Binder.make var type_ in
     let ctx = enter_value ident var ctx in
-    ctx, pat_wrap loc @@ P_var binder
+    ctx, pat_wrap loc type_ @@ P_var var
   | P_tuple fields ->
     let ctx, rev_fields =
       List.fold_left fields ~init:(ctx, []) ~f:(fun (ctx, rev_fields) pat ->
@@ -434,7 +387,7 @@ let rec solve_pat ctx vars pat =
           ctx, field :: rev_fields)
     in
     let fields = List.rev rev_fields in
-    ctx, pat_wrap loc @@ P_tuple fields
+    ctx, pat_wrap loc type_ @@ P_tuple fields
   | P_record fields ->
     let ctx, rev_fields =
       List.fold_left fields ~init:(ctx, []) ~f:(fun (ctx, rev_fields) (label, pat) ->
@@ -442,14 +395,14 @@ let rec solve_pat ctx vars pat =
           ctx, (label, pat) :: rev_fields)
     in
     let fields = List.rev rev_fields in
-    ctx, pat_wrap loc @@ P_record (Record.of_list fields)
+    ctx, pat_wrap loc type_ @@ P_record (Record.of_list fields)
   | P_variant (label, fields) ->
     (match label with
     (* TODO: this is very hackish *)
     | Label ("()", _loc) ->
       (* TODO: assert fields *)
       (* assert (List.is_empty fields); *)
-      ctx, pat_wrap loc @@ P_unit
+      ctx, pat_wrap loc type_ @@ P_unit
     (* | Label ("::", _loc) ->
       let arguments = List.map fields ~f:(fun field -> solve_expr ctx vars field) in
       ctx, pat_wrap loc @@ E_constant { cons_name = C_CONS; arguments }
@@ -458,84 +411,90 @@ let rec solve_pat ctx vars pat =
       ctx, pat_wrap loc @@ E_constant { cons_name = C_LIST_EMPTY; arguments } *)
     | label ->
       let ctx, fields = solve_pat ctx vars fields in
-      ctx, pat_wrap loc @@ P_variant (label, fields))
-  | P_error exn -> raise @@ Error_found exn
+      ctx, pat_wrap loc type_ @@ P_variant (label, fields))
+  | P_error error ->
+    (* TODO: why raise here *)
+    ctx, pat_wrap loc type_ @@ P_error error
 
 
 let solve_var_pat ctx vars pat =
-  let { var_pat_desc = ident; var_pat_type; var_pat_loc = loc } = pat in
-  (* TODO: poly type *)
-  let type_ = solve_type ctx vars var_pat_type in
-  let var = fresh_value ident in
-  let ctx = enter_value ident var ctx in
-  ctx, loc, var, type_
+  let Caml_core.{ pat_desc; pat_type; pat_loc = loc } = pat in
+  let type_ = solve_type ctx vars pat_type in
+  match pat_desc with
+  | P_var ident ->
+    let var = fresh_value ident in
+    let ctx = enter_value ident var ctx in
+    ctx, var_pat_wrap loc type_ @@ VP_var var
+  | P_unit | P_tuple _ | P_record _ | P_variant _ ->
+    (* TODO: making this here is weird *)
+    ( ctx
+    , var_pat_wrap loc type_
+      @@ VP_error { err_tag = E_only_variable_patterns_supported; err_loc = loc } )
+  | P_error error -> ctx, var_pat_wrap loc type_ @@ VP_error error
 
 
 let rec solve_expr ctx vars expr =
-  let { expr_desc; expr_type; expr_loc = loc } = expr in
+  let Caml_core.{ expr_desc; expr_type; expr_loc = loc } = expr in
   (* TODO: use this expr_type *)
+  let type_ = solve_type ctx vars expr_type in
   match expr_desc with
   | E_var path ->
     let var = solve_value_path path ctx in
-    (* TODO: fix this on ligo *)
-    (match var with
-    | { module_path = []; element } -> e_variable ~loc element
-    | { module_path; element } as var -> e_module_accessor ~loc var ())
-  | E_literal lit -> e_literal ~loc lit
-  | E_let (pat, attr, value, body) ->
-    let inner_ctx, pat = solve_pat ctx vars pat in
-    let value = solve_expr_poly ctx vars value in
+    expr_wrap loc type_ @@ E_var var
+  | E_literal lit -> expr_wrap loc type_ @@ E_literal lit
+  | E_let (binder, attr, value, body) ->
+    (* TODO: recursive *)
+    let inner_ctx, binder = solve_pat ctx vars binder in
+    let foralls, value = solve_expr_poly ctx vars value in
     let body = solve_expr inner_ctx vars body in
-    e_let_in ~loc pat value body attr
+    expr_wrap loc type_ @@ E_let { binder; foralls; attr; value; body }
   | E_let_module (ident, mod_expr, body) ->
     let var = fresh_module ident in
     let inner_ctx, mod_expr =
       enter_module ident var ctx @@ fun ctx -> solve_mod_expr ctx mod_expr
     in
     let body = solve_expr inner_ctx vars body in
-    e_mod_in ~loc var mod_expr body
+    expr_wrap loc type_ @@ E_let_module (var, mod_expr, body)
   | E_lambda (param, body) ->
-    let binder, body = solve_lambda ctx vars ~param ~body in
-    (* TODO: output_type *)
-    e_lambda ~loc binder None body
+    let inner_ctx, param = solve_var_pat ctx vars param in
+    let body = solve_expr inner_ctx vars body in
+    expr_wrap loc type_ @@ E_lambda (param, body)
   | E_lambda_rec { self; param; body } ->
-    let inner_ctx, _var_loc, self, self_type_ = solve_var_pat ctx vars param in
-    (* ctx, loc, var, type_ *)
-    let binder, return, body = solve_lambda_rec inner_ctx vars ~param ~body in
+    let inner_ctx, self = solve_var_pat ctx vars self in
+    let inner_ctx, param = solve_var_pat inner_ctx vars param in
     (* TODO: output_type *)
     (* TODO: forcelambdarec *)
-    let lambda = Lambda.{ binder; output_type = return; result = body } in
-    e_recursive ~loc self self_type_ lambda
+    let body = solve_expr inner_ctx vars body in
+    expr_wrap loc type_ @@ E_lambda_rec { self; param; body }
   | E_apply (lambda, args) ->
     let lambda = solve_expr ctx vars lambda in
-    List.fold_left args ~init:lambda ~f:(fun lambda arg ->
-        let arg = solve_expr ctx vars arg in
-        e_application ~loc lambda arg)
+    let args = List.map args ~f:(fun arg -> solve_expr ctx vars arg) in
+    expr_wrap loc type_ @@ E_apply (lambda, args)
   | E_match (matchee, cases) ->
     let matchee = solve_expr ctx vars matchee in
     let cases =
       List.map cases ~f:(fun (pat, body) ->
           let ctx, pat = solve_pat ctx vars pat in
           let body = solve_expr ctx vars body in
-          Match_expr.{ pattern = pat; body })
+          pat, body)
     in
-    e_matching ~loc matchee cases
+    expr_wrap loc type_ @@ E_match (matchee, cases)
   | E_tuple fields ->
     let fields = Nonempty_list.map fields ~f:(fun field -> solve_expr ctx vars field) in
-    e_tuple ~loc fields ()
+    expr_wrap loc type_ @@ E_tuple fields
   | E_constructor (constructor, fields) ->
     (* TODO: high priority *)
     (match constructor with
     (* TODO: this is very hackish *)
     | Label ("()", _loc) ->
       assert (List.is_empty fields);
-      e_literal ~loc Literal_unit
+      expr_wrap loc type_ @@ E_literal Literal_unit
     | Label ("::", _loc) ->
       let arguments = List.map fields ~f:(fun field -> solve_expr ctx vars field) in
-      e_constant ~loc C_CONS arguments
+      expr_wrap loc type_ @@ E_constant { cons_name = C_CONS; arguments }
     | Label ("[]", _loc) ->
       let arguments = List.map fields ~f:(fun field -> solve_expr ctx vars field) in
-      e_constant ~loc C_LIST_EMPTY arguments
+      expr_wrap loc type_ @@ E_constant { cons_name = C_LIST_EMPTY; arguments }
     | _ ->
       (* TODO: location? *)
       let constructor =
@@ -547,32 +506,25 @@ let rec solve_expr ctx vars expr =
         | Label (_label, _loc) -> constructor
       in
       let fields = List.map fields ~f:(fun field -> solve_expr ctx vars field) in
-      let element =
-        match fields with
-        | [] -> e_unit ~loc ()
-        | [ field ] -> field
-        | field :: fields -> e_tuple ~loc (field :: fields) ()
-      in
-      e_constructor ~loc constructor element)
+      expr_wrap loc type_ @@ E_constructor (constructor, fields))
   | E_record fields ->
     let fields =
       List.map fields ~f:(fun (label, field) -> label, solve_expr ctx vars field)
     in
-    e_record ~loc (Record.of_list fields) ()
+    expr_wrap loc type_ @@ E_record (Record.of_list fields)
   | E_field (struct_, label) ->
     let struct_ = solve_expr ctx vars struct_ in
-    e_accessor ~loc { struct_; path = label } ()
-  | E_error exn -> raise @@ Error_found exn
+    expr_wrap loc type_ @@ E_field (struct_, label)
+  | E_error error -> expr_wrap loc type_ @@ E_error error
 
 
 and solve_expr_poly ctx vars expr =
   (* TODO: this is also duplicated *)
   (* TODO: this is bad *)
-  let { expr_desc = _; expr_type = _; expr_loc = loc } = expr in
   let external_vars = Hashtbl.copy vars in
   (* TODO: looks weird to extract here *)
   let expr = solve_expr ctx vars expr in
-  let internal_vars =
+  let foralls =
     List.filter_map (Hashtbl.to_alist vars) ~f:(fun (id, var) ->
         match Hashtbl.mem external_vars id with
         | true -> None
@@ -580,29 +532,7 @@ and solve_expr_poly ctx vars expr =
           Hashtbl.remove vars id;
           Some var)
   in
-  List.fold_left internal_vars ~init:expr ~f:(fun body var ->
-      e_type_abstraction ~loc { type_binder = var; result = body } ())
-
-
-and solve_lambda ctx vars ~param ~body =
-  let inner_ctx, _var_loc, var, var_type_ = solve_var_pat ctx vars param in
-  (* TODO: {mut,forced,initial} flag *)
-  let binder = Param.make var (Some var_type_) in
-  let body = solve_expr inner_ctx vars body in
-  binder, body
-
-
-and solve_lambda_rec ctx vars ~param ~body =
-  let inner_ctx, _var_loc, var, var_type_ = solve_var_pat ctx vars param in
-  (* TODO: {mut,forced,initial} flag *)
-  let binder = Param.make var var_type_ in
-  let return =
-    (* TODO: this is hackish *)
-    let { expr_desc = _; expr_type = return; expr_loc = _ } = body in
-    solve_type ctx vars return
-  in
-  let body = solve_expr inner_ctx vars body in
-  binder, return, body
+  foralls, expr
 
 
 and solve_module ctx module_ =
@@ -625,49 +555,28 @@ and solve_decl ctx decl =
 
 
 and solve_decl_inner ctx vars decl =
-  let { decl_desc; decl_loc = loc } = decl in
+  let Caml_core.{ decl_desc; decl_loc = loc } = decl in
   match decl_desc with
-  | D_let (var_pat, attr, value) ->
-    (* TODO: duplicated logic regarding var_pat and Binder *)
-    (* TODO: use var_pat_loc *)
-    let { var_pat_desc = ident; var_pat_type; var_pat_loc = _ } = var_pat in
-    let var = fresh_value ident in
-    let type_ = solve_type_poly ctx vars var_pat_type in
-    let binder = Binder.make var (Some type_) in
-    let value = solve_expr_poly ctx vars value in
-    let ctx = enter_value ident var ctx in
-    ctx, Some (decl_wrap loc @@ D_value { binder; expr = value; attr })
+  | D_let (binder, attr, value) ->
+    let inner_ctx, binder = solve_var_pat ctx vars binder in
+    let foralls, value = solve_expr_poly ctx vars value in
+    inner_ctx, Some (decl_wrap loc @@ D_let { binder; foralls; value; attr })
   | D_type (ident, type_decl) ->
     let type_decl = solve_type_decl ctx vars type_decl in
     let var = fresh_type ident in
     let ctx = Context.enter_type ident var ctx in
-    ( ctx
-    , Some
-        (decl_wrap loc
-        @@ D_type
-             { type_binder = var
-             ; type_expr = type_decl
-             ; type_attr = Type_or_module_attr.default_attributes
-             }) )
+    (* TODO: attributes here *)
+    let attr = Type_or_module_attr.default_attributes in
+    ctx, Some (decl_wrap loc @@ D_type (var, attr, type_decl))
   | D_external ident ->
+    (* TODO: remove the need for this? *)
     let ctx = enter_value_external ident ctx in
     ctx, None
   | D_type_predef (ident, literal, arity) ->
     (* TODO: this is brittle, what if duplicated? *)
     let var = Type_var.of_input_var ~loc @@ Literal_types.to_string @@ literal in
     let ctx = enter_type ident var ctx in
-    let type_decl =
-      (* TODO: lacking t_constant *)
-      make_t ~loc @@ T_constant (literal, arity)
-    in
-    ( ctx
-    , Some
-        (decl_wrap loc
-        @@ D_type
-             { type_binder = var
-             ; type_expr = type_decl
-             ; type_attr = Type_or_module_attr.default_attributes
-             }) )
+    ctx, Some (decl_wrap loc @@ D_type_predef (var, literal, arity))
   | D_type_unsupported ident ->
     let ctx = enter_type_predef_unsupported ident ctx in
     ctx, None
@@ -676,53 +585,35 @@ and solve_decl_inner ctx vars decl =
     let ctx, module_ =
       enter_module ident var ctx @@ fun ctx -> solve_mod_expr ctx mod_expr
     in
-    ( ctx
-    , Some
-        (decl_wrap loc
-        @@ D_module
-             { module_binder = var
-             ; module_ (* TODO: annotation *)
-             ; annotation = None
-             ; module_attr = attr
-             }) )
+    ctx, Some (decl_wrap loc @@ D_module (var, attr, module_))
   | D_module_type (ident, attr, sig_expr) ->
     let var = fresh_module ident in
     let ctx, signature =
       enter_signature ident var ctx @@ fun ctx -> solve_sig_expr ctx sig_expr
     in
-    ( ctx
-    , Some
-        (decl_wrap loc
-        @@ D_signature { signature_binder = var; signature; signature_attr = attr }) )
-  | D_error exn -> raise @@ Error_found exn
+    ctx, Some (decl_wrap loc @@ D_module_type (var, attr, signature))
+  | D_error error -> ctx, Some (decl_wrap loc @@ D_error error)
 
 
 and solve_mod_expr ctx mod_expr =
-  let { mod_expr_desc; mod_expr_loc = loc } = mod_expr in
+  let Caml_core.{ mod_expr_desc; mod_expr_loc = loc } = mod_expr in
   match mod_expr_desc with
-  | M_var path ->
-    (* TODO: improve this on Ligo *)
-    (match solve_module_path path ctx with
-    | { module_path = []; element } -> ctx, mod_expr_wrap loc @@ M_variable element
-    | { module_path; element } ->
-      (* TODO: is this reversing it? *)
-      ctx, mod_expr_wrap loc @@ M_module_path (element :: module_path))
+  | M_var var ->
+    (* TODO: why the unchanged context is returned here? *)
+    let var = solve_module_path var ctx in
+    ctx, mod_expr_wrap loc @@ M_var var
   | M_struct decls ->
     let ctx, decls = solve_module ctx decls in
     ctx, mod_expr_wrap loc @@ M_struct decls
 
 
 and solve_signature ctx sig_ =
-  (* TODO: duplicated from solve module *)
   let ctx, rev_sig =
     List.fold_left sig_ ~init:(ctx, []) ~f:(fun (ctx, rev_sig) decl ->
         let ctx, sigi = solve_sigi ctx decl in
-        (* TODO: this is ugly *)
-        match sigi with
-        | None -> ctx, rev_sig
-        | Some sigi -> ctx, sigi :: rev_sig)
+        ctx, sigi :: rev_sig)
   in
-  ctx, { items = List.rev rev_sig }
+  ctx, List.rev rev_sig
 
 
 and solve_sigi ctx sigi =
@@ -734,43 +625,50 @@ and solve_sigi ctx sigi =
 
 
 and solve_sigi_inner ctx vars sigi =
-  let { sig_item_desc; sig_item_loc = loc } = sigi in
+  let Caml_core.{ sig_item_desc; sig_item_loc = loc } = sigi in
   match sig_item_desc with
   | S_value (ident, attr, type_) ->
     let var = fresh_value ident in
     let type_ = solve_type_poly ctx vars type_ in
     let ctx = enter_value ident var ctx in
-    ctx, Some (sig_item_wrap loc @@ S_value (var, type_, attr))
+    ctx, sig_item_wrap loc @@ S_value (var, attr, type_)
   | S_type (ident, type_decl) ->
     let type_decl = solve_type_decl ctx vars type_decl in
     let var = fresh_type ident in
     let ctx = enter_type ident var ctx in
     let attr = SigTypeAttr.default_attributes in
-    ctx, Some (sig_item_wrap loc @@ S_type (var, type_decl, attr))
+    ctx, sig_item_wrap loc @@ S_type (var, attr, type_decl)
   | S_module (ident, mod_sig) ->
     let var = fresh_module ident in
     let ctx, signature =
       enter_module ident var ctx @@ fun ctx -> solve_signature ctx mod_sig
     in
     (* TODO: use this inner_ctx? *)
-    ctx, Some (sig_item_wrap loc @@ S_module (var, signature))
+    ctx, sig_item_wrap loc @@ S_module (var, signature)
   | S_module_type (ident, signature) ->
     let var = fresh_module ident in
     let ctx, signature =
       enter_module ident var ctx @@ fun ctx -> solve_signature ctx signature
     in
-    ctx, Some (sig_item_wrap loc @@ S_module_type (var, signature))
-  | S_error error -> raise @@ Error_found error
+    ctx, sig_item_wrap loc @@ S_module_type (var, signature)
+  | S_error error -> ctx, sig_item_wrap loc @@ S_error error
 
 
 and solve_sig_expr ctx sig_expr =
-  let { sig_expr_desc; sig_expr_loc = loc } = sig_expr in
+  let Caml_core.{ sig_expr_desc; sig_expr_loc = loc } = sig_expr in
   match sig_expr_desc with
-  | S_var path ->
-    let path = solve_module_path path ctx in
-    (* TODO: is this reversing it? *)
-    let Module_access.{ module_path; element } = path in
-    ctx, sig_expr_wrap loc @@ S_path (element :: module_path)
+  | S_var var ->
+    let var = solve_module_path var ctx in
+    ctx, sig_expr_wrap loc @@ S_var var
   | S_sig signature ->
     let ctx, signature = solve_signature ctx signature in
     ctx, sig_expr_wrap loc @@ S_sig signature
+
+
+let solve_module module_ =
+  (* TODO: drop all failwith from this module *)
+  (* TODO: proper location here *)
+  let loc = Location.dummy in
+  Caml_error.wrap_exn ~loc (fun () ->
+      let _ctx, module_ = Context.run @@ fun ctx -> solve_module ctx module_ in
+      module_)

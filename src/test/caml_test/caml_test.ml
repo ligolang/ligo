@@ -1,7 +1,5 @@
 open Parsetree
 
-let ( let* ) v f = Result.bind v ~f
-
 module OCaml = struct
   open Ocaml_common
 
@@ -15,15 +13,22 @@ end
 
 module Ligo = struct
   let compile_str str =
-    let* str, errors =
-      let open Caml_extraction in
-      Context.run @@ fun ctx -> extract_str ctx str
-    in
-    assert (List.is_empty errors);
     let open Caml_solving in
-    Context.run
-    @@ fun ctx ->
-    let _ctx, str = solve_module ctx str in
+    let str =
+      match Caml_extract.extract_str str with
+      | Ok str -> str
+      | Error _error -> failwith "extract error"
+    in
+    let str =
+      match Caml_solve.solve_module str with
+      | Ok str -> str
+      | Error _error -> failwith "solve error"
+    in
+    let str =
+      match Caml_trivial.lower_module str with
+      | Ok str -> str
+      | Error _error -> failwith "lower error"
+    in
     str
 end
 
@@ -342,21 +347,9 @@ let main () =
         | B
         | C
 
-      module type S = sig
-        val x : int
-      end
-
       type return = operation list * storage
 
-      let set =
-        let module X = struct
-          let set new_storage (_storage : storage) : return = [], new_storage
-        end
-        in
-        X.set
-
-
-      let[@entry] next () (storage : storage) : return =
+      let next () (storage : storage) : return =
         let storage =
           match storage with
           | A -> B
@@ -369,12 +362,6 @@ let main () =
   (* TODO: please clean this file *)
   let code = OCaml.(type_str env code) in
   let code = Ligo.(compile_str code) in
-  let code =
-    match code with
-    | Ok code -> code
-    | Error exn ->
-      failwith @@ Format.asprintf "an exception at compile %s" (Exn.to_string exn)
-  in
   let code =
     let raw_options = Compiler_options.Raw_options.make () in
     let options = Compiler_options.make ~raw_options () in

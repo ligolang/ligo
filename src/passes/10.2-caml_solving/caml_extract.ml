@@ -6,6 +6,7 @@ open Typedtree
 open Ligo_prim
 open Ast_core
 open Caml_core
+open Caml_error
 
 (* TODO: put this somewhere else *)
 let ( let@@ ) f x = f x
@@ -18,164 +19,9 @@ let ( let@@ ) f x = f x
   is that it only accepts code in more or less strict format
   simple things such as adding a let may break extraction  *)
 (* TODO: this pass mostly shrinksn the OCaml tree *)
-module Context : sig
-  (* TODO: improve this docs *)
-  (* TODO: clean this module especially about errors *)
-  (* TODO: the following comment is false *)
-  (* This context relies on mutation to track locations
-    as long as the context is not captured and leaked, this can be
-    seen as an implementation of the reader monad.
-    
-    In general it leads to a nicer API with smaller types. *)
-  type context
-  type t = context
-
-  (* location *)
-  val enter_region : loc:Location.t -> context -> context
-  val loc : context -> Location.t
-
-  (* errors *)
-  val try_guard : context -> on_error:(error -> 'a) -> (unit -> 'a) -> 'a
-  val error_unexpected_typed_tree : context -> 'a
-  val error_let_and_not_supported : context -> 'a
-  val error_type_and_not_supported : context -> 'a
-  val error_labelled_parameters_not_supported : context -> 'a
-  val error_optional_parameters_not_supported : context -> 'a
-  val error_poly_vars_not_supported : context -> 'a
-  val error_fcm_not_supported : context -> 'a
-  val error_objects_not_supported : context -> 'a
-  val error_partial_match_not_supported : context -> 'a
-  val error_exceptions_not_supported : context -> 'a
-  val error_extensible_variants_not_supported : context -> 'a
-  val error_mutation_not_supported : context -> 'a
-  val error_array_not_supported : context -> 'a
-  val error_while_not_supported : context -> 'a
-  val error_for_not_supported : context -> 'a
-  val error_refutation_not_supported : context -> 'a
-  val error_rec_modules_not_supported : context -> 'a
-  val error_lazy_not_supported : context -> 'a
-  val error_abstract_types_not_supported : context -> 'a
-  val error_abstract_module_types_not_supported : context -> 'a
-  val error_modules_without_names_not_supported : context -> 'a
-  val error_recursive_bindings_must_be_a_function : context -> 'a
-  val error_unimplemented : context -> 'a
-  val error_unsupported : context -> 'a
-  val error_unreachable : context -> 'a
-
-  (* external *)
-  (* TODO: stop using exn directly here *)
-  val run : (context -> 'a) -> ('a * error list, error) result
-end = struct
-  type context =
-    { loc : Location.t
-    ; errors : error list ref
-    }
-
-  type t = context
-
-  exception Context_error of error
-
-  let enter_region ~loc ctx =
-    (* TODO: add per region try with? *)
-    let { loc = _; errors } = ctx in
-    { loc; errors }
-
-
-  let loc ctx =
-    let { loc; errors = _ } = ctx in
-    loc
-
-
-  (* TODO: this function is bad *)
-
-  let try_guard ctx ~on_error f =
-    (* TODO; *)
-    try f () with
-    | Context_error error ->
-      let { loc = _; errors } = ctx in
-      errors := error :: !errors;
-      on_error error
-    | exn ->
-      let { loc; errors } = ctx in
-      let tag = E_unexpected_error exn in
-      let error = { err_tag = tag; err_loc = loc } in
-      errors := error :: !errors;
-      on_error error
-
-
-  let error ctx tag =
-    let { loc; errors } = ctx in
-    let error = { err_tag = tag; err_loc = loc } in
-    raise @@ Context_error error
-
-
-  let error_unexpected_typed_tree ctx = error ctx @@ E_unexpected_typed_tree
-  let error_let_and_not_supported ctx = error ctx @@ E_let_and_not_supported
-  let error_type_and_not_supported ctx = error ctx @@ E_type_and_not_supported
-
-  let error_labelled_parameters_not_supported ctx =
-    error ctx @@ E_labelled_parameters_not_supported
-
-
-  let error_optional_parameters_not_supported ctx =
-    error ctx @@ E_optional_parameters_not_supported
-
-
-  let error_poly_vars_not_supported ctx = error ctx @@ E_poly_vars_not_supported
-  let error_fcm_not_supported ctx = error ctx @@ E_fcm_not_supported
-  let error_objects_not_supported ctx = error ctx @@ E_objects_not_supported
-  let error_partial_match_not_supported ctx = error ctx @@ E_partial_match_not_supported
-  let error_exceptions_not_supported ctx = error ctx @@ E_exceptions_not_supported
-
-  let error_extensible_variants_not_supported ctx =
-    error ctx @@ E_extensible_variants_not_supported
-
-
-  let error_mutation_not_supported ctx = error ctx @@ E_mutation_not_supported
-  let error_array_not_supported ctx = error ctx @@ E_array_not_supported
-  let error_while_not_supported ctx = error ctx @@ E_while_not_supported
-  let error_for_not_supported ctx = error ctx @@ E_for_not_supported
-  let error_refutation_not_supported ctx = error ctx @@ E_refutation_not_supported
-  let error_rec_modules_not_supported ctx = error ctx @@ E_rec_modules_not_supported
-  let error_lazy_not_supported ctx = error ctx @@ E_lazy_not_supported
-  let error_abstract_types_not_supported ctx = error ctx @@ E_abstract_types_not_supported
-
-  let error_abstract_module_types_not_supported ctx =
-    error ctx @@ E_abstract_module_types_not_supported
-
-
-  let error_modules_without_names_not_supported ctx =
-    error ctx @@ E_modules_without_names_not_supported
-
-
-  let error_recursive_bindings_must_be_a_function ctx =
-    error ctx @@ E_recursive_bindings_must_be_a_function
-
-
-  let error_unimplemented ctx = error ctx @@ E_unimplemented
-  let error_unsupported ctx = error ctx @@ E_unsupported
-  let error_unreachable ctx = error ctx @@ E_unreachable
-
-  let run k =
-    (* TODO: better location here? *)
-    let errors = ref [] in
-    let ctx = { loc = Location.dummy; errors } in
-    try
-      let value = k ctx in
-      let errors = !errors in
-      Ok (value, errors)
-    with
-    | exn ->
-      (* TODO: location here *)
-      (* TODO: this is unexpected error *)
-      let tag = E_unexpected_error exn in
-      Error { err_tag = tag; err_loc = Location.dummy }
-end
 
 (* TODO: check all assert and failwith *)
 (* TODO: improve error messages *)
-
-open Context
 
 (* TODO: ideally this would not be needed  *)
 let split_arrow ~exp_env ~label type_ =
@@ -207,7 +53,7 @@ let extract_field_name lid =
 
 
 (* TODO: magic ligo stuff *)
-let extract_payload_string ctx payload =
+let extract_payload_string payload =
   match payload with
   | PStr
       [ { pstr_desc =
@@ -221,14 +67,14 @@ let extract_payload_string ctx payload =
         ; pstr_loc = _
         }
       ] -> payload
-  | _ -> error_unsupported ctx
+  | _ -> raise_pre_error @@ E_unsupported
 
 
-let extract_attrs ctx ~init ~f attrs =
+let extract_attrs ~init ~f attrs =
   List.fold_left attrs ~init ~f:(fun acc attr ->
       let { attr_name; attr_payload; attr_loc } = attr in
       let loc = extract_loc ~loc:attr_loc in
-      let ctx = enter_region ~loc ctx in
+      let@@ () = try_enhance ~loc in
       assert (
         match attr_payload with
         | PStr [] -> true
@@ -237,58 +83,51 @@ let extract_attrs ctx ~init ~f attrs =
         | PTyp _ -> false
         | PPat (_, _) -> false);
       let { txt = key; loc } = attr_name in
-      let loc = extract_loc ~loc:attr_loc in
-      let ctx = enter_region ~loc ctx in
       (* TODO: support comment attributes and proper loc for comments *)
-      match f ctx ~key acc with
+      match f ~key acc with
       | `Ok acc -> acc
-      | `Invalid_attribute -> error_unsupported ctx)
+      | `Invalid_attribute -> raise_pre_error @@ E_unsupported)
 
 
-let extract_decl_attrs ctx attrs =
+let extract_decl_attrs attrs =
   extract_attrs
-    ctx
     ~init:Value_attr.default_attributes
-    ~f:(fun ctx ~key acc -> Value_attr.apply_decl_attr ~key ~value:None acc)
+    ~f:(fun ~key acc -> Value_attr.apply_decl_attr ~key ~value:None acc)
     attrs
 
 
-let extract_expr_attrs ctx attrs =
+let extract_expr_attrs attrs =
   extract_attrs
-    ctx
     ~init:Value_attr.default_attributes
-    ~f:(fun ctx ~key acc -> Value_attr.apply_expr_attr ~key ~value:None acc)
+    ~f:(fun ~key acc -> Value_attr.apply_expr_attr ~key ~value:None acc)
     attrs
 
 
-let extract_module_attrs ctx attrs =
+let extract_module_attrs attrs =
   extract_attrs
-    ctx
     ~init:Type_or_module_attr.default_attributes
-    ~f:(fun ctx ~key acc -> Type_or_module_attr.apply_mod_or_sig ~key ~value:None acc)
+    ~f:(fun ~key acc -> Type_or_module_attr.apply_mod_or_sig ~key ~value:None acc)
     attrs
 
 
-let extract_signature_attrs ctx attrs =
+let extract_signature_attrs attrs =
   extract_attrs
-    ctx
     ~init:Signature_attr.default_attributes
-    ~f:(fun ctx ~key acc -> Signature_attr.apply_sig_attr ~key ~value:None acc)
+    ~f:(fun ~key acc -> Signature_attr.apply_sig_attr ~key ~value:None acc)
     attrs
 
 
-let extract_sig_item_attrs ctx attrs =
+let extract_sig_item_attrs attrs =
   extract_attrs
-    ctx
     ~init:Sig_item_attr.default_attributes
-    ~f:(fun ctx ~key acc -> Sig_item_attr.apply_sig_item_attr ~key ~value:None acc)
+    ~f:(fun ~key acc -> Sig_item_attr.apply_sig_item_attr ~key ~value:None acc)
     attrs
 
 
 (* TODO: ppxlib? *)
 
 (* TODO: use this function? *)
-let _extract_ligo_constant ctx payload type_typ =
+let _extract_ligo_constant payload type_typ =
   (* TODO: assert properties of ligo constant? *)
   let { type_params = _
       ; type_arity = expected_arity
@@ -309,24 +148,26 @@ let _extract_ligo_constant ctx payload type_typ =
     type_typ
   in
   let loc = extract_loc ~loc in
-  let ctx = enter_region ~loc ctx in
-  let constant = extract_payload_string ctx payload in
+  let@@ () = try_enhance ~loc in
+  let constant = extract_payload_string payload in
   let constant =
     match Literal_types.of_string_opt constant with
     | Some constant -> constant
-    | None -> error_unsupported ctx
+    | None -> raise_pre_error @@ E_unsupported
   in
   let arity = Literal_types.to_arity constant in
   assert (arity = expected_arity);
   constant, arity
 
 
-(* TODO: better locations, maybe use core_type *)
-let rec extract_type ctx type_ =
+(* TODO: better locations, probably using core_type *)
+(* TODO: equirecursive types *)
+let rec extract_type ~loc type_ =
   (* TODO: allow attributes *)
   let open Ocaml_common.Types in
   (* TODO: detect and reject rectypes *)
-  let loc = loc ctx in
+  let on_error exn = type_wrap loc @@ T_error exn in
+  let@@ () = try_recover ~loc ~on_error in
   match get_desc type_ with
   (* polymorphism *)
   | Tvar name | Tunivar name ->
@@ -340,56 +181,56 @@ let rec extract_type ctx type_ =
           | Tunivar name -> name, get_id var
           | _ ->
             (* TODO: is this actually guaranteed? *)
-            error_unreachable ctx)
+            raise_pre_error @@ E_unreachable)
     in
-    let body = extract_type ctx body in
+    let body = extract_type ~loc body in
     type_wrap loc @@ T_forall (vars, body)
   (* type constructors *)
   | Tconstr (path, args, _abbrev) ->
-    let args = List.map ~f:(fun arg -> extract_type ctx arg) args in
+    let args = List.map ~f:(fun arg -> extract_type ~loc arg) args in
     type_wrap loc @@ T_constr (path, args)
   (* arrow *)
   | Tarrow (Nolabel, type1, type2, _comm) ->
-    let type1 = extract_type ctx type1 in
-    let type2 = extract_type ctx type2 in
+    let type1 = extract_type ~loc type1 in
+    let type2 = extract_type ~loc type2 in
     (* TODO: what about param_names? *)
     type_wrap loc @@ T_arrow (type1, type2)
   | Tarrow (Labelled _, _type1, _type2, _comm) ->
-    error_labelled_parameters_not_supported ctx
+    raise_pre_error @@ E_labelled_parameters_not_supported
   | Tarrow (Optional _, _type1, _type2, _comm) ->
-    error_optional_parameters_not_supported ctx
+    raise_pre_error @@ E_optional_parameters_not_supported
   (* tuple *)
   | Ttuple fields ->
-    let fields = List.map fields ~f:(fun field -> extract_type ctx field) in
+    let fields = List.map fields ~f:(fun field -> extract_type ~loc field) in
     type_wrap loc @@ T_tuple fields
   (* variants *)
-  | Tvariant _ -> error_poly_vars_not_supported ctx
+  | Tvariant _ -> raise_pre_error @@ E_poly_vars_not_supported
   (* first-class modules *)
-  | Tpackage _ -> error_fcm_not_supported ctx
+  | Tpackage _ -> raise_pre_error @@ E_fcm_not_supported
   (* objects *)
-  | Tobject _ -> error_objects_not_supported ctx
-  | Tfield _ -> error_objects_not_supported ctx
-  | Tnil -> error_objects_not_supported ctx
+  | Tobject _ -> raise_pre_error @@ E_objects_not_supported
+  | Tfield _ -> raise_pre_error @@ E_objects_not_supported
+  | Tnil -> raise_pre_error @@ E_objects_not_supported
   (* machinery *)
-  | Tlink _ -> error_unexpected_typed_tree ctx
-  | Tsubst (_, _) -> error_unexpected_typed_tree ctx
+  | Tlink _ -> raise_pre_error @@ E_unexpected_typed_tree
+  | Tsubst (_, _) -> raise_pre_error @@ E_unexpected_typed_tree
 
 
-let extract_label_declaration ctx label =
+let extract_label_declaration label =
   let { ld_id; ld_mutable; ld_type; ld_loc = loc; ld_attributes; ld_uid = _ } = label in
   let loc = extract_loc ~loc in
-  let ctx = enter_region ~loc ctx in
+  let@@ () = try_enhance ~loc in
   assert (
     match ld_mutable with
     | Immutable -> true
     | Mutable -> false);
   assert (List.is_empty ld_attributes);
-  let type_ = extract_type ctx ld_type in
+  let type_ = extract_type ~loc ld_type in
   (* TODO: type_decl_label_wrap? *)
   { dl_id = ld_id; dl_type = type_; dl_loc = loc }
 
 
-let extract_type_declaration ctx decl =
+let extract_type_declaration decl =
   let { type_params
       ; type_arity = _
       ; type_kind
@@ -409,7 +250,12 @@ let extract_type_declaration ctx decl =
     decl
   in
   let loc = extract_loc ~loc in
-  let ctx = enter_region ~loc ctx in
+  let on_error exn =
+    (* TODO: params *)
+    let params = [] in
+    type_decl_wrap loc params @@ T_error exn
+  in
+  let@@ () = try_recover ~loc ~on_error in
   assert (
     match type_private with
     | Private -> false
@@ -429,135 +275,130 @@ let extract_type_declaration ctx decl =
         | Tvar name -> name, get_id var
         | _ ->
           (* TODO: this may be false with constraints *)
-          error_unreachable ctx)
+          raise_pre_error @@ E_unreachable)
   in
   match type_kind, type_manifest with
   | Type_abstract, Some manifest ->
-    let manifest = extract_type ctx manifest in
+    let manifest = extract_type ~loc manifest in
     type_decl_wrap loc params @@ T_alias manifest
-  | Type_abstract, None -> error_abstract_types_not_supported ctx
+  | Type_abstract, None -> raise_pre_error @@ E_abstract_types_not_supported
   | Type_record (fields, Record_regular), (None | Some _) ->
     (* TODO: does this manifest matters? *)
-    let fields = List.map fields ~f:(fun label -> extract_label_declaration ctx label) in
+    let fields = List.map fields ~f:extract_label_declaration in
     type_decl_wrap loc params @@ T_record fields
   | ( Type_record
         (_, (Record_float | Record_unboxed _ | Record_inlined _ | Record_extension _))
-    , (Some _ | None) ) -> error_unimplemented ctx
+    , (Some _ | None) ) -> raise_pre_error @@ E_unimplemented
   | Type_variant (cases, Variant_regular), (None | Some _) ->
     (* TODO: does this manifest matters? *)
     let cases =
       List.map cases ~f:(fun case ->
           let { cd_id; cd_args; cd_res; cd_loc; cd_attributes; cd_uid } = case in
           let loc = extract_loc ~loc:cd_loc in
-          let ctx = enter_region ~loc ctx in
+          let@@ () = try_enhance ~loc in
           (* TODO: maybe support GADTs syntax but not GADTs? *)
           assert (Option.is_none cd_res);
           assert (List.is_empty cd_attributes);
           match cd_args with
           | Cstr_tuple fields ->
-            let fields = List.map fields ~f:(fun field -> extract_type ctx field) in
+            let fields = List.map fields ~f:(fun field -> extract_type ~loc field) in
             C_tuple { dc_id = cd_id; dc_fields = fields; dc_loc = loc }
           | Cstr_record fields ->
-            let fields =
-              List.map fields ~f:(fun label -> extract_label_declaration ctx label)
-            in
+            let fields = List.map fields ~f:extract_label_declaration in
             C_record { dc_id = cd_id; dc_fields = fields; dc_loc = loc })
     in
     type_decl_wrap loc params @@ T_variant cases
   | Type_variant (_, Variant_unboxed), (Some _ | None) ->
     (* TODO: high priority *)
-    error_unimplemented ctx
-  | Type_open, (Some _ | None) -> error_unimplemented ctx
+    raise_pre_error @@ E_unimplemented
+  | Type_open, (Some _ | None) -> raise_pre_error @@ E_unimplemented
 
 
-let extract_literal ctx constant =
+let extract_literal constant =
   let open Literal_value in
   match constant with
   | Const_int n ->
     let n = Z.of_int n in
     Literal_int n
-  | Const_char _ -> error_unsupported ctx
+  | Const_char _ -> raise_pre_error @@ E_unsupported
   | Const_string (content, _loc, None) ->
     (* TODO: use string loc? *)
     (* TODO: standard vs verbatin *)
     Literal_string (Standard content)
-  | Const_string (_content, _loc, Some _tag) -> error_unsupported ctx
-  | Const_float _ -> error_unsupported ctx
-  | Const_int32 _ -> error_unsupported ctx
-  | Const_int64 _ -> error_unsupported ctx
-  | Const_nativeint _i -> error_unsupported ctx
+  | Const_string (_content, _loc, Some _tag) -> raise_pre_error @@ E_unsupported
+  | Const_float _ -> raise_pre_error @@ E_unsupported
+  | Const_int32 _ -> raise_pre_error @@ E_unsupported
+  | Const_int64 _ -> raise_pre_error @@ E_unsupported
+  | Const_nativeint _i -> raise_pre_error @@ E_unsupported
 
 
-let extract_pat_extra ctx pat_extra =
+let extract_pat_extra pat_extra =
+  let pat_extra, _loc, pat_extra_attributes = pat_extra in
+  (* TODO: put this in Caml_core and add loc *)
+  assert (List.is_empty pat_extra_attributes);
   match pat_extra with
   | Tpat_constraint _typ ->
     (* TODO: is this relevant? *)
     ()
   | Tpat_type (_, _) ->
     (* TODO: maybe *)
-    error_unsupported ctx
+    raise_pre_error @@ E_unsupported
   | Tpat_open (_, _, _) ->
     (* TODO: QoL *)
-    error_unimplemented ctx
-  | Tpat_unpack -> error_fcm_not_supported ctx
+    raise_pre_error @@ E_unimplemented
+  | Tpat_unpack -> raise_pre_error @@ E_fcm_not_supported
 
 
-let extract_pat_alias : type a. _ -> a general_pattern -> unit =
- fun ctx pat ->
+let extract_pat_alias : type a. a general_pattern -> unit =
+ fun pat ->
   (* TODO: this is just a check *)
   let { pat_desc; pat_loc; pat_extra; pat_type; pat_env; pat_attributes } = pat in
+  (* TOOD: use this pat_loc? *)
   assert (List.is_empty pat_extra);
   assert (List.is_empty pat_attributes);
   (* TODO: this should definitely be removed *)
   match pat_desc with
   | Tpat_any -> ()
-  | Tpat_var (_, _) -> error_unsupported ctx
-  | Tpat_alias (_, _, _) -> error_unsupported ctx
-  | Tpat_constant _ -> error_unsupported ctx
-  | Tpat_tuple _ -> error_unsupported ctx
-  | Tpat_construct (_, _, _, _) -> error_unsupported ctx
-  | Tpat_variant (_, _, _) -> error_unsupported ctx
-  | Tpat_record (_, _) -> error_unsupported ctx
-  | Tpat_array _ -> error_unsupported ctx
-  | Tpat_lazy _ -> error_lazy_not_supported ctx
-  | Tpat_value _ -> error_unsupported ctx
-  | Tpat_exception _ -> error_unsupported ctx
-  | Tpat_or (_, _, _) -> error_unsupported ctx
+  | Tpat_var (_, _) -> raise_pre_error @@ E_unsupported
+  | Tpat_alias (_, _, _) -> raise_pre_error @@ E_unsupported
+  | Tpat_constant _ -> raise_pre_error @@ E_unsupported
+  | Tpat_tuple _ -> raise_pre_error @@ E_unsupported
+  | Tpat_construct (_, _, _, _) -> raise_pre_error @@ E_unsupported
+  | Tpat_variant (_, _, _) -> raise_pre_error @@ E_unsupported
+  | Tpat_record (_, _) -> raise_pre_error @@ E_unsupported
+  | Tpat_array _ -> raise_pre_error @@ E_unsupported
+  | Tpat_lazy _ -> raise_pre_error @@ E_lazy_not_supported
+  | Tpat_value _ -> raise_pre_error @@ E_unsupported
+  | Tpat_exception _ -> raise_pre_error @@ E_unsupported
+  | Tpat_or (_, _, _) -> raise_pre_error @@ E_unsupported
 
 
-let rec extract_pat : type a. _ -> a general_pattern -> pat =
- fun ctx pat ->
+let rec extract_pat : type a. a general_pattern -> pat =
+ fun pat ->
   let { pat_desc; pat_loc; pat_extra; pat_type; pat_env; pat_attributes } = pat in
   let loc = extract_loc ~loc:pat_loc in
-  let ctx = enter_region ~loc ctx in
-  let on_error exn =
-    let type_ = type_error loc in
-    pat_wrap loc type_ @@ P_error exn
-  in
-  let@@ () = try_guard ctx ~on_error in
+  let@@ () = try_enhance ~loc in
+  let type_ = extract_type ~loc pat_type in
+  let on_error exn = pat_wrap loc type_ @@ P_error exn in
+  let@@ () = try_recover ~loc ~on_error in
   assert (List.is_empty pat_attributes);
-  let () =
-    List.iter pat_extra ~f:(fun (pat_extra, _loc, pat_extra_attributes) ->
-        assert (List.is_empty pat_extra_attributes);
-        extract_pat_extra ctx pat_extra)
-  in
-  let type_ = extract_type ctx pat_type in
+  let () = List.iter pat_extra ~f:extract_pat_extra in
   match pat_desc with
-  | Tpat_any -> error_unimplemented ctx
+  | Tpat_any -> raise_pre_error @@ E_unimplemented
   | Tpat_var (ident, _label) -> pat_wrap loc type_ @@ P_var ident
   | Tpat_alias (pat, ident, _label) ->
     (* TODO: this one may look easy, but linearity *)
-    let () = extract_pat_alias ctx pat in
+    let () = extract_pat_alias pat in
     pat_wrap loc type_ @@ P_var ident
   | Tpat_constant _ ->
     (* TODO: priority? *)
-    error_unimplemented ctx
+    raise_pre_error @@ E_unimplemented
   | Tpat_tuple fields ->
-    let fields = List.map fields ~f:(fun field -> extract_pat ctx field) in
+    let fields = List.map fields ~f:extract_pat in
     pat_wrap loc type_ @@ P_tuple fields
   | Tpat_construct (lident, constructor, payload, None) ->
     let label = extract_field_name lident in
-    let payload = List.map payload ~f:(fun field -> extract_pat ctx field) in
+    let payload = List.map payload ~f:extract_pat in
     let payload =
       match payload with
       | [] -> pat_wrap loc type_ @@ P_unit
@@ -567,114 +408,96 @@ let rec extract_pat : type a. _ -> a general_pattern -> pat =
     pat_wrap loc type_ @@ P_variant (label, payload)
   | Tpat_construct (_, _, _, Some _) ->
     (* TODO: weird cases, likely should be supported *)
-    error_unimplemented ctx
-  | Tpat_variant (_, _, _) -> error_poly_vars_not_supported ctx
+    raise_pre_error @@ E_unimplemented
+  | Tpat_variant (_, _, _) -> raise_pre_error @@ E_poly_vars_not_supported
   | Tpat_record (labels, Closed) ->
     (* TODO: priority *)
     let labels =
       List.map labels ~f:(fun (lident, _label, pat) ->
-          extract_field_name lident, extract_pat ctx pat)
+          extract_field_name lident, extract_pat pat)
     in
     pat_wrap loc type_ @@ P_record labels
   | Tpat_record (_labels, Open) ->
     (* TODO: priority, but linearity *)
-    error_unimplemented ctx
-  | Tpat_array _ -> error_array_not_supported ctx
-  | Tpat_lazy _ -> error_lazy_not_supported ctx
+    raise_pre_error @@ E_unimplemented
+  | Tpat_array _ -> raise_pre_error @@ E_array_not_supported
+  | Tpat_lazy _ -> raise_pre_error @@ E_lazy_not_supported
   | Tpat_or (_, _, _) ->
     (* TODO: how hard would this one be? *)
-    error_unsupported ctx
+    raise_pre_error @@ E_unsupported
   | Tpat_value pat ->
     (* TODO: is this right? Understand Tpat_value *)
-    extract_pat ctx (pat :> value general_pattern)
-  | Tpat_exception _ -> error_exceptions_not_supported ctx
+    extract_pat (pat :> value general_pattern)
+  | Tpat_exception _ -> raise_pre_error @@ E_exceptions_not_supported
 
 
-let var_pat_of_pat ctx pat =
-  let { pat_desc; pat_type; pat_loc } = pat in
-  let ctx = enter_region ~loc:pat_loc ctx in
-  match pat_desc with
-  | P_var ident -> var_pat_wrap pat_loc pat_type ident
-  | P_unit -> error_unsupported ctx
-  | P_tuple _ -> error_unsupported ctx
-  | P_record _ -> error_unsupported ctx
-  | P_variant _ -> error_unsupported ctx
-  | P_error error -> var_pat_error error
-
-
-let signature_of_sig_expr ctx sig_expr =
+let signature_of_sig_expr sig_expr =
   let { sig_expr_desc; sig_expr_loc } = sig_expr in
   match sig_expr_desc with
-  | S_var _ -> error_unsupported ctx
+  | S_var _ -> raise_pre_error @@ E_unsupported
   | S_sig signature -> signature
 
 
-let rec extract_expr ctx expr =
+let rec extract_expr expr =
   let { exp_desc; exp_loc; exp_extra; exp_type; exp_env; exp_attributes } = expr in
   let loc = extract_loc ~loc:exp_loc in
-  let ctx = enter_region ~loc ctx in
-  let on_error error =
-    let type_ = type_error loc in
-    expr_wrap loc type_ @@ E_error error
-  in
-  let@@ () = try_guard ctx ~on_error in
-  let () =
-    List.iter exp_extra ~f:(fun (exp_extra, _loc, exp_extra_attributes) ->
-        extract_expr_extra ctx exp_extra)
-  in
-  let type_ = extract_type ctx exp_type in
+  let@@ () = try_enhance ~loc in
+  let type_ = extract_type ~loc exp_type in
+  let on_error error = expr_wrap loc type_ @@ E_error error in
+  let@@ () = try_recover ~loc ~on_error in
+  let () = List.iter exp_extra ~f:extract_expr_extra in
   match exp_desc with
   | Texp_ident (path, _lident, value_desc) ->
     (* TODO: high priority *)
     (* TODO: assert value is a valid value, aka not primitive *)
     expr_wrap loc type_ @@ E_var path
   | Texp_constant constant ->
-    let literal = extract_literal ctx constant in
+    let literal = extract_literal constant in
     expr_wrap loc type_ @@ E_literal literal
   | Texp_let (rec_flag, bindings, body) ->
     let binding =
       match bindings with
-      | [] -> error_unexpected_typed_tree ctx
+      | [] -> raise_pre_error @@ E_unexpected_typed_tree
       | [ value ] -> value
       | _first :: _second :: _rest ->
         (* TODO: support this? *)
-        error_let_and_not_supported ctx
+        raise_pre_error @@ E_let_and_not_supported
     in
-    let _loc, pat, attr, value = extract_expr_binding ctx rec_flag binding in
-    let attr = extract_expr_attrs ctx attr in
-    let body = extract_expr ctx body in
+    let _loc, pat, attr, value = extract_expr_binding rec_flag binding in
+    let attr = extract_expr_attrs attr in
+    let body = extract_expr body in
     expr_wrap loc type_ @@ E_let (pat, attr, value, body)
   (* TODO: label, exp function *)
   | Texp_function { arg_label = Nolabel; param; cases; partial = Total } ->
-    let param, body = extract_expr_function ctx ~exp_env ~exp_type ~loc param cases in
-    let param = var_pat_of_pat ctx param in
+    let param, body = extract_expr_function ~exp_env ~exp_type ~loc param cases in
     expr_wrap loc type_ @@ E_lambda (param, body)
-  | Texp_function { arg_label = Nolabel; partial = Partial; _ } -> error_unimplemented ctx
+  | Texp_function { arg_label = Nolabel; partial = Partial; _ } ->
+    raise_pre_error @@ E_unimplemented
   | Texp_function { arg_label = Labelled _; _ } ->
-    error_labelled_parameters_not_supported ctx
+    raise_pre_error @@ E_labelled_parameters_not_supported
   | Texp_function { arg_label = Optional _; _ } ->
-    error_optional_parameters_not_supported ctx
-  | Texp_apply (lambda, args) -> extract_expr_apply ctx ~loc ~type_ lambda args
+    raise_pre_error @@ E_optional_parameters_not_supported
+  | Texp_apply (lambda, args) -> extract_expr_apply ~loc ~type_ lambda args
   | Texp_match (matchee, cases, Total) ->
     (* TODO: disc_label *)
-    let matchee = extract_expr ctx matchee in
-    let cases = List.map cases ~f:(fun case -> extract_case ctx case) in
+    let matchee = extract_expr matchee in
+    let cases = List.map cases ~f:(fun case -> extract_case case) in
     expr_wrap loc type_ @@ E_match (matchee, cases)
-  | Texp_match (_, _, Partial) -> error_partial_match_not_supported ctx
-  | Texp_try (_, _) -> error_exceptions_not_supported ctx
+  | Texp_match (_, _, Partial) -> raise_pre_error @@ E_partial_match_not_supported
+  | Texp_try (_, _) -> raise_pre_error @@ E_exceptions_not_supported
   | Texp_tuple fields ->
-    let fields = List.map fields ~f:(fun field -> extract_expr ctx field) in
+    let fields = List.map fields ~f:(fun field -> extract_expr field) in
     let fields =
       match fields with
-      | [] -> error_unreachable ctx
+      | [] -> raise_pre_error @@ E_unreachable
       | field :: fields -> Ne_list.(field :: fields)
     in
     expr_wrap loc type_ @@ E_tuple fields
   | Texp_construct (lident, _constructor, fields) ->
     let label = extract_field_name lident in
-    let args = List.map fields ~f:(fun field -> extract_expr ctx field) in
+    let args = List.map fields ~f:(fun field -> extract_expr field) in
     expr_wrap loc type_ @@ E_constructor (label, args)
-  | Texp_variant (_, _) -> error_poly_vars_not_supported ctx
+  | Texp_variant (_, _) -> raise_pre_error @@ E_poly_vars_not_supported
   | Texp_record { fields; representation; extended_expression } ->
     assert (Option.is_none extended_expression);
     let () =
@@ -683,7 +506,8 @@ let rec extract_expr ctx expr =
       | Record_inlined _ ->
         (* TODO: is this one always okay? *)
         ()
-      | Record_float | Record_unboxed _ | Record_extension _ -> error_unimplemented ctx
+      | Record_float | Record_unboxed _ | Record_extension _ ->
+        raise_pre_error @@ E_unimplemented
     in
     let fields = Array.to_list fields in
     let fields =
@@ -691,108 +515,106 @@ let rec extract_expr ctx expr =
           match definition with
           | Kept _typ ->
             (* TODO: priority *)
-            error_unimplemented ctx
+            raise_pre_error @@ E_unimplemented
           | Overridden (lid, value) ->
             (* TODO: check data  of lid? *)
-            let value = extract_expr ctx value in
+            let value = extract_expr value in
             (* TODO: use proper location *)
             extract_field_name lid, value)
     in
     expr_wrap loc type_ @@ E_record fields
   | Texp_field (record, field, _label) ->
     let field = extract_field_name field in
-    let record = extract_expr ctx record in
+    let record = extract_expr record in
     expr_wrap loc type_ @@ E_field (record, field)
-  | Texp_setfield (_, _, _, _) -> error_mutation_not_supported ctx
-  | Texp_array _ -> error_array_not_supported ctx
+  | Texp_setfield (_, _, _, _) -> raise_pre_error @@ E_mutation_not_supported
+  | Texp_array _ -> raise_pre_error @@ E_array_not_supported
   | Texp_ifthenelse (_, _, _) ->
     (* TODO: priority *)
-    error_unimplemented ctx
+    raise_pre_error @@ E_unimplemented
   | Texp_sequence (_, _) ->
     (* TODO: support this? *)
-    error_unimplemented ctx
-  | Texp_while (_, _) -> error_while_not_supported ctx
-  | Texp_for (_, _, _, _, _, _) -> error_for_not_supported ctx
-  | Texp_send (_, _) -> error_objects_not_supported ctx
-  | Texp_new (_, _, _) -> error_objects_not_supported ctx
-  | Texp_instvar (_, _, _) -> error_objects_not_supported ctx
-  | Texp_setinstvar (_, _, _, _) -> error_objects_not_supported ctx
-  | Texp_override (_, _) -> error_objects_not_supported ctx
+    raise_pre_error @@ E_unimplemented
+  | Texp_while (_, _) -> raise_pre_error @@ E_while_not_supported
+  | Texp_for (_, _, _, _, _, _) -> raise_pre_error @@ E_for_not_supported
+  | Texp_send (_, _) -> raise_pre_error @@ E_objects_not_supported
+  | Texp_new (_, _, _) -> raise_pre_error @@ E_objects_not_supported
+  | Texp_instvar (_, _, _) -> raise_pre_error @@ E_objects_not_supported
+  | Texp_setinstvar (_, _, _, _) -> raise_pre_error @@ E_objects_not_supported
+  | Texp_override (_, _) -> raise_pre_error @@ E_objects_not_supported
   | Texp_letmodule (mb_id, _mod_name, mb_presence, mb_expr, body) ->
     let ident, md_body, body =
-      extract_expr_module ctx ~loc ~mb_id ~mb_presence ~mb_expr body
+      extract_expr_module ~loc ~mb_id ~mb_presence ~mb_expr body
     in
     expr_wrap loc type_ @@ E_let_module (ident, md_body, body)
-  | Texp_letexception (_, _) -> error_exceptions_not_supported ctx
-  | Texp_assert _ -> error_unimplemented ctx
-  | Texp_lazy _ -> error_lazy_not_supported ctx
-  | Texp_object (_, _) -> error_objects_not_supported ctx
-  | Texp_pack _ -> error_fcm_not_supported ctx
+  | Texp_letexception (_, _) -> raise_pre_error @@ E_exceptions_not_supported
+  | Texp_assert _ -> raise_pre_error @@ E_unimplemented
+  | Texp_lazy _ -> raise_pre_error @@ E_lazy_not_supported
+  | Texp_object (_, _) -> raise_pre_error @@ E_objects_not_supported
+  | Texp_pack _ -> raise_pre_error @@ E_fcm_not_supported
   | Texp_letop _ ->
     (* TODO: support this? Why? Option binding? *)
-    error_unimplemented ctx
-  | Texp_unreachable -> error_refutation_not_supported ctx
+    raise_pre_error @@ E_unimplemented
+  | Texp_unreachable -> raise_pre_error @@ E_refutation_not_supported
   | Texp_extension_constructor (_, _) ->
     (* TODO: this is very niche, probably not a good idea *)
-    error_unsupported ctx
+    raise_pre_error @@ E_unsupported
   | Texp_open (_, _) ->
     (* TODO: priority *)
-    error_unimplemented ctx
+    raise_pre_error @@ E_unimplemented
 
 
-and extract_expr_extra ctx expr_extra =
+and extract_expr_extra expr_extra =
+  let expr_extra, _loc, _expr_extra_attributes = expr_extra in
+  (* TODO: use this loc *)
+  (* TODO: state about attributes on expressions *)
   match expr_extra with
   | Texp_constraint _ -> ()
-  | Texp_coerce (_, _) -> error_unimplemented ctx
+  | Texp_coerce (_, _) -> raise_pre_error @@ E_unimplemented
   | Texp_poly _ ->
     (* TODO: what is this? *)
-    error_unimplemented ctx
+    raise_pre_error @@ E_unimplemented
   | Texp_newtype _ ->
     (* TODO: supporting this is a good idea? *)
-    error_unimplemented ctx
+    raise_pre_error @@ E_unimplemented
 
 
 (* let [@attr] {rec,nonrec} x = M *)
-and extract_expr_binding ctx rec_flag binding =
+and extract_expr_binding rec_flag binding =
   let { vb_pat; vb_expr; vb_attributes; vb_loc = loc } = binding in
   (* TODO: export this loc? *)
   let loc = extract_loc ~loc in
-  let ctx = enter_region ~loc ctx in
-  let pat = extract_pat ctx vb_pat in
+  let@@ () = try_enhance ~loc in
+  let pat = extract_pat vb_pat in
   (* TODO: will the type of this expression be mono? *)
   (* TODO: poly value *)
   let value =
     match rec_flag with
-    | Nonrecursive -> extract_expr ctx vb_expr
-    | Recursive ->
-      let pat = var_pat_of_pat ctx pat in
-      extract_expr_recursive ctx ~self:pat vb_expr
+    | Nonrecursive -> extract_expr vb_expr
+    | Recursive -> extract_expr_recursive ~self:pat vb_expr
   in
   loc, pat, vb_attributes, value
 
 
-and extract_expr_recursive ctx ~self expr =
+and extract_expr_recursive ~self expr =
   let { exp_desc; exp_loc; exp_extra; exp_type; exp_env; exp_attributes } = expr in
   let loc = extract_loc ~loc:exp_loc in
-  let ctx = enter_region ~loc ctx in
+  let@@ () = try_enhance ~loc in
   (* TODO: maybe extract recursive after extract_expr? *)
-  let () =
-    List.iter exp_extra ~f:(fun (exp_extra, _loc, exp_extra_attributes) ->
-        extract_expr_extra ctx exp_extra)
-  in
+  let () = List.iter exp_extra ~f:extract_expr_extra in
   assert (List.is_empty exp_attributes);
-  let type_ = extract_type ctx exp_type in
+  let type_ = extract_type ~loc exp_type in
   match exp_desc with
   (* TODO: label, exp function *)
   | Texp_function { arg_label = Nolabel; param; cases; partial = Total } ->
-    let param, body = extract_expr_function ctx ~exp_env ~exp_type ~loc param cases in
-    let param = var_pat_of_pat ctx param in
+    let param, body = extract_expr_function ~exp_env ~exp_type ~loc param cases in
     expr_wrap loc type_ @@ E_lambda_rec { self; param; body }
-  | Texp_function { arg_label = Nolabel; partial = Partial; _ } -> error_unimplemented ctx
+  | Texp_function { arg_label = Nolabel; partial = Partial; _ } ->
+    raise_pre_error @@ E_unimplemented
   | Texp_function { arg_label = Labelled _; _ } ->
-    error_labelled_parameters_not_supported ctx
+    raise_pre_error @@ E_labelled_parameters_not_supported
   | Texp_function { arg_label = Optional _; _ } ->
-    error_optional_parameters_not_supported ctx
+    raise_pre_error @@ E_optional_parameters_not_supported
   | Texp_ident (_, _, _)
   | Texp_constant _
   | Texp_let (_, _, _)
@@ -821,33 +643,30 @@ and extract_expr_recursive ctx ~self expr =
   | Texp_object (_, _)
   | Texp_pack _ | Texp_letop _ | Texp_unreachable
   | Texp_extension_constructor (_, _)
-  | Texp_open (_, _) -> error_recursive_bindings_must_be_a_function ctx
+  | Texp_open (_, _) -> raise_pre_error @@ E_recursive_bindings_must_be_a_function
 
 
-and extract_expr_function ctx ~exp_env ~exp_type ~loc param cases =
+and extract_expr_function ~exp_env ~exp_type ~loc param cases =
   (* TODO: test both, multiple cases and single cases *)
   let param_type, body_type = split_arrow ~exp_env ~label:Nolabel exp_type in
-  let param_type = extract_type ctx param_type in
-  let body_type = extract_type ctx body_type in
+  let param_type = extract_type ~loc param_type in
+  let body_type = extract_type ~loc body_type in
   let body =
     let matchee = expr_wrap loc param_type @@ E_var (Pident param) in
-    let cases = List.map cases ~f:(fun case -> extract_case ctx case) in
+    let cases = List.map cases ~f:extract_case in
     expr_wrap loc body_type @@ E_match (matchee, cases)
   in
   let param = pat_wrap loc param_type @@ P_var param in
   param, body
 
 
-and extract_expr_apply ctx ~loc ~type_ lambda args =
+and extract_expr_apply ~loc ~type_ lambda args =
   (* TODO: duplicated *)
   let { exp_desc; exp_loc; exp_extra; exp_type; exp_env; exp_attributes } = lambda in
   let () =
     let loc = extract_loc ~loc:exp_loc in
-    let ctx = enter_region ~loc ctx in
-    let () =
-      List.iter exp_extra ~f:(fun (exp_extra, _loc, exp_extra_attributes) ->
-          extract_expr_extra ctx exp_extra)
-    in
+    let@@ () = try_enhance ~loc in
+    let () = List.iter exp_extra ~f:extract_expr_extra in
     assert (List.is_empty exp_attributes)
   in
   (* TODO: this is really hackish *)
@@ -862,11 +681,11 @@ and extract_expr_apply ctx ~loc ~type_ lambda args =
         ; val_uid = _
         } ) ->
     assert (List.is_empty val_attributes);
-    extract_expr_apply_primitive ctx ~loc ~type_ prim args
-  | _ -> extract_expr_apply_fallback ctx ~loc ~type_ lambda args
+    extract_expr_apply_primitive ~loc ~type_ prim args
+  | _ -> extract_expr_apply_fallback ~loc ~type_ lambda args
 
 
-and extract_expr_apply_primitive ctx ~loc ~type_ prim args =
+and extract_expr_apply_primitive ~loc ~type_ prim args =
   (* TODO: check properties *)
   let Primitive.
         { prim_name
@@ -885,21 +704,18 @@ and extract_expr_apply_primitive ctx ~loc ~type_ prim args =
     let constant =
       (* TODO: duplicated *)
       let { exp_desc; exp_loc; exp_extra; exp_type; exp_env; exp_attributes } = arg in
-      let () =
-        List.iter exp_extra ~f:(fun (exp_extra, _loc, exp_extra_attributes) ->
-            extract_expr_extra ctx exp_extra)
-      in
+      let () = List.iter exp_extra ~f:extract_expr_extra in
       assert (List.is_empty exp_attributes);
       (* TODO: this is clearly disgusting  *)
       match exp_desc with
       | Texp_constant constant -> constant
-      | _ -> error_unsupported ctx
+      | _ -> raise_pre_error @@ E_unsupported
     in
-    extract_expr_ligo_literals ctx ~loc ~type_ prim_name constant
-  | _ -> error_unsupported ctx
+    extract_expr_ligo_literals ~loc ~type_ prim_name constant
+  | _ -> raise_pre_error @@ E_unsupported
 
 
-and extract_expr_ligo_literals ctx ~loc ~type_ prim constant =
+and extract_expr_ligo_literals ~loc ~type_ prim constant =
   (* TODO: this is duplicated code from checking *)
   (* TODO: this can be deleted whenever we start targetting Ast_typed *)
   (* TODO: attributes here *)
@@ -913,36 +729,35 @@ and extract_expr_ligo_literals ctx ~loc ~type_ prim constant =
     expr_wrap loc type_ @@ E_literal (Literal_mutez lit)
   | "%ligo.address", Const_string (lit, _loc, None) ->
     expr_wrap loc type_ @@ E_literal (Literal_address lit)
-  | _ -> error_unsupported ctx
+  | _ -> raise_pre_error @@ E_unsupported
 
 
-and extract_expr_apply_fallback ctx ~loc ~type_ lambda args =
-  let lambda = extract_expr ctx lambda in
+and extract_expr_apply_fallback ~loc ~type_ lambda args =
+  let lambda = extract_expr lambda in
   let args =
     List.map
       ~f:(fun (label, arg) ->
         match label, arg with
-        | Nolabel, Some arg -> extract_expr ctx arg
-        | Nolabel, None -> error_unimplemented ctx
-        | Labelled _, _ -> error_labelled_parameters_not_supported ctx
-        | Optional _, _ -> error_labelled_parameters_not_supported ctx)
+        | Nolabel, Some arg -> extract_expr arg
+        | Nolabel, None -> raise_pre_error @@ E_unimplemented
+        | Labelled _, _ -> raise_pre_error @@ E_labelled_parameters_not_supported
+        | Optional _, _ -> raise_pre_error @@ E_labelled_parameters_not_supported)
       args
   in
   expr_wrap loc type_ @@ E_apply (lambda, args)
 
 
-and extract_case : type a. _ -> a case -> _ =
- fun ctx case ->
+and extract_case : type a. a case -> _ =
+ fun case ->
   let { c_lhs; c_guard; c_rhs } = case in
   assert (Option.is_none c_guard);
-  let pat = extract_pat ctx c_lhs in
-  let body = extract_expr ctx c_rhs in
+  let pat = extract_pat c_lhs in
+  let body = extract_expr c_rhs in
   pat, body
 
 
-and extract_expr_module ctx ~loc ~mb_id ~mb_presence ~mb_expr body =
+and extract_expr_module ~loc ~mb_id ~mb_presence ~mb_expr body =
   (* TODO: this is mostly duplicated *)
-  let ctx = enter_region ~loc ctx in
   assert (
     match mb_presence with
     | Mp_present -> true
@@ -950,169 +765,202 @@ and extract_expr_module ctx ~loc ~mb_id ~mb_presence ~mb_expr body =
   let ident =
     match mb_id with
     | Some ident -> ident
-    | None -> error_modules_without_names_not_supported ctx
+    | None -> raise_pre_error @@ E_modules_without_names_not_supported
   in
-  let md_body = extract_module_expr ctx mb_expr in
-  let body = extract_expr ctx body in
+  let md_body = extract_module_expr mb_expr in
+  let body = extract_expr body in
   ident, md_body, body
 
 
-and extract_str ctx str =
+and extract_str str =
   let { str_items; str_type = _; str_final_env = _ } = str in
-  List.map str_items ~f:(fun stri -> extract_stri ctx stri)
+  List.map str_items ~f:extract_stri
 
 
-and extract_stri ctx stri =
+and extract_stri stri =
   let { str_desc; str_loc; str_env = _ } = stri in
   let loc = extract_loc ~loc:str_loc in
-  let ctx = enter_region ~loc ctx in
   let on_error error = decl_wrap loc @@ D_error error in
-  let@@ () = try_guard ctx ~on_error in
+  let@@ () = try_recover ~loc ~on_error in
   match str_desc with
-  | Tstr_eval _ -> error_unimplemented ctx
-  | Tstr_value (rec_flag, bindings) -> extract_str_let ctx rec_flag bindings
-  | Tstr_primitive value -> extract_primitive ctx ~loc value
-  | Tstr_type (_, [ decl ]) -> extract_type_decl ctx decl
+  | Tstr_eval _ -> raise_pre_error @@ E_unimplemented
+  | Tstr_value (rec_flag, bindings) -> extract_str_let rec_flag bindings
+  | Tstr_primitive value -> extract_primitive ~loc value
+  | Tstr_type (_, [ decl ]) -> extract_type_decl decl
   (* TODO: should and be supported at all?? *)
-  | Tstr_type (Nonrecursive, _) -> error_unimplemented ctx
+  | Tstr_type (Nonrecursive, _) -> raise_pre_error @@ E_unimplemented
   | Tstr_type (Recursive, _) ->
     (* TODO: priority *)
-    error_unimplemented ctx
-  | Tstr_typext _ -> error_extensible_variants_not_supported ctx
-  | Tstr_exception _ -> error_exceptions_not_supported ctx
-  | Tstr_module mb -> extract_module_binding ctx mb
-  | Tstr_recmodule _ -> error_rec_modules_not_supported ctx
+    raise_pre_error @@ E_unimplemented
+  | Tstr_typext _ -> raise_pre_error @@ E_extensible_variants_not_supported
+  | Tstr_exception _ -> raise_pre_error @@ E_exceptions_not_supported
+  | Tstr_module mb -> extract_module_binding mb
+  | Tstr_recmodule _ -> raise_pre_error @@ E_rec_modules_not_supported
   | Tstr_modtype decl ->
-    let ident, attr, sig_expr = extract_mod_type_decl ctx decl in
-    let attr = extract_signature_attrs ctx attr in
+    let ident, attr, sig_expr = extract_mod_type_decl decl in
+    let attr = extract_signature_attrs attr in
     decl_wrap loc @@ D_module_type (ident, attr, sig_expr)
   | Tstr_open _ ->
     (* TODO: priority *)
-    error_unimplemented ctx
-  | Tstr_class _ -> error_objects_not_supported ctx
-  | Tstr_class_type _ -> error_objects_not_supported ctx
-  | Tstr_include _ ->
-    (* TODO: judge this *)
-    error_unimplemented ctx
-  | Tstr_attribute _ -> error_unsupported ctx
+    raise_pre_error @@ E_unimplemented
+  | Tstr_class _ -> raise_pre_error @@ E_objects_not_supported
+  | Tstr_class_type _ -> raise_pre_error @@ E_objects_not_supported
+  | Tstr_include include_decl ->
+    let mod_expr = extract_str_include include_decl in
+    decl_wrap loc @@ D_module_include mod_expr
+  | Tstr_attribute _ -> raise_pre_error @@ E_unsupported
 
 
-and extract_str_let ctx rec_flag bindings =
+and extract_str_let rec_flag bindings =
   let binding =
     match bindings with
-    | [] -> error_unexpected_typed_tree ctx
+    | [] -> raise_pre_error @@ E_unexpected_typed_tree
     | [ value ] -> value
     | _first :: _second :: _rest ->
       (* TODO: support this? *)
-      error_let_and_not_supported ctx
+      raise_pre_error @@ E_let_and_not_supported
   in
-  let loc, pat, attr, value = extract_expr_binding ctx rec_flag binding in
-  let pat = var_pat_of_pat ctx pat in
-  let attr = extract_decl_attrs ctx attr in
+  let loc, pat, attr, value = extract_expr_binding rec_flag binding in
+  let attr = extract_decl_attrs attr in
   decl_wrap loc @@ D_let (pat, attr, value)
 
 
-and extract_mod_type_decl ctx decl =
+and extract_str_include include_decl =
+  let { incl_mod; incl_type = _; incl_loc = loc; incl_attributes } = include_decl in
+  let loc = extract_loc ~loc in
+  let@@ () = try_enhance ~loc in
+  match incl_attributes with
+  | [] -> extract_module_expr incl_mod
+  | [ { attr_name = { txt = "ligo.internal.ocaml.predef"; loc }
+      ; attr_payload = PStr []
+      ; attr_loc = _loc
+      }
+    ] -> extract_str_include_ocaml_predef incl_mod
+  | _ ->
+    (* TODO: better error here *)
+    assert false
+
+
+and extract_str_include_ocaml_predef incl_mod =
+  let { mod_desc; mod_loc; mod_type = _; mod_env = _; mod_attributes } = incl_mod in
+  let loc = extract_loc ~loc:mod_loc in
+  let@@ () = try_enhance ~loc in
+  (* TODO: this is weird *)
+  let mod_expr =
+    match mod_desc with
+    | Tmod_constraint (mod_expr, _mod_type, _mod_type_constraint, _mod_coercion) ->
+      mod_expr
+    | Tmod_ident (_, _)
+    | Tmod_structure _
+    | Tmod_functor (_, _)
+    | Tmod_apply (_, _, _)
+    | Tmod_unpack (_, _) -> failwith "ocaml predef should have a signature"
+  in
+  let { mod_desc; mod_loc; mod_type = _; mod_env = _; mod_attributes } = mod_expr in
+  let loc = extract_loc ~loc:mod_loc in
+  let@@ () = try_enhance ~loc in
+  assert false
+
+
+and extract_mod_type_decl decl =
   let { mtd_id; mtd_name = _; mtd_type; mtd_attributes; mtd_loc } = decl in
   let loc = extract_loc ~loc:mtd_loc in
-  let ctx = enter_region ~loc ctx in
+  let@@ () = try_enhance ~loc in
   match mtd_type with
-  | Some mtd_type -> mtd_id, mtd_attributes, extract_mod_type ctx mtd_type
-  | None -> error_abstract_module_types_not_supported ctx
+  | Some mtd_type -> mtd_id, mtd_attributes, extract_mod_type mtd_type
+  | None -> raise_pre_error @@ E_abstract_module_types_not_supported
 
 
-and extract_mod_type ctx mty =
+and extract_mod_type mty =
   let { mty_desc; mty_type = _; mty_env = _; mty_loc; mty_attributes } = mty in
   let loc = extract_loc ~loc:mty_loc in
-  let ctx = enter_region ~loc ctx in
+  let@@ () = try_enhance ~loc in
   assert (List.is_empty mty_attributes);
   match mty_desc with
   | Tmty_ident (path, _lident) -> sig_expr_wrap loc @@ S_var path
-  | Tmty_signature sig_ -> sig_expr_wrap loc @@ S_sig (extract_sig ctx sig_)
-  | Tmty_functor (_, _) -> error_unsupported ctx
-  | Tmty_with (_, _) -> error_unsupported ctx
-  | Tmty_typeof _ -> error_unsupported ctx
+  | Tmty_signature sig_ -> sig_expr_wrap loc @@ S_sig (extract_sig sig_)
+  | Tmty_functor (_, _) -> raise_pre_error @@ E_unsupported
+  | Tmty_with (_, _) -> raise_pre_error @@ E_unsupported
+  | Tmty_typeof _ -> raise_pre_error @@ E_unsupported
   (* TODO: this is a nice one *)
-  | Tmty_alias (_, _) -> error_unsupported ctx
+  | Tmty_alias (_, _) -> raise_pre_error @@ E_unsupported
 
 
-and extract_sig ctx sig_ =
+and extract_sig sig_ =
   let { sig_items; sig_type = _; sig_final_env = _ } = sig_ in
   (* TODO: this could be extracted from sig_type
       it erases some of the syntax sugar, such as Tsig_modsubst *)
-  List.map sig_items ~f:(fun sigi -> extract_sigi ctx sigi)
+  List.map sig_items ~f:(fun sigi -> extract_sigi sigi)
 
 
-and extract_sigi ctx sigi =
+and extract_sigi sigi =
   let { sig_desc; sig_env = _; sig_loc } = sigi in
   let loc = extract_loc ~loc:sig_loc in
-  let ctx = enter_region ctx ~loc in
   let on_error error = sig_item_wrap loc @@ S_error error in
-  let@@ () = try_guard ctx ~on_error in
+  let@@ () = try_recover ~loc ~on_error in
   match sig_desc with
-  | Tsig_value binding -> extract_sig_value ctx binding
-  | Tsig_type (rec_flag, bindings) -> extract_sig_type ctx rec_flag bindings
+  | Tsig_value binding -> extract_sig_value binding
+  | Tsig_type (rec_flag, bindings) -> extract_sig_type rec_flag bindings
   | Tsig_typesubst _ ->
     (* TODO: think about this one *)
-    error_unsupported ctx
-  | Tsig_typext _ -> error_extensible_variants_not_supported ctx
-  | Tsig_exception _ -> error_exceptions_not_supported ctx
-  | Tsig_module decl -> extract_sig_module ctx decl
+    raise_pre_error @@ E_unsupported
+  | Tsig_typext _ -> raise_pre_error @@ E_extensible_variants_not_supported
+  | Tsig_exception _ -> raise_pre_error @@ E_exceptions_not_supported
+  | Tsig_module decl -> extract_sig_module decl
   | Tsig_modsubst _ ->
     (* TODO: think about this one *)
-    error_unsupported ctx
-  | Tsig_recmodule _ -> error_rec_modules_not_supported ctx
+    raise_pre_error @@ E_unsupported
+  | Tsig_recmodule _ -> raise_pre_error @@ E_rec_modules_not_supported
   | Tsig_modtype decl ->
-    let ident, attr, sig_expr = extract_mod_type_decl ctx decl in
+    let ident, attr, sig_expr = extract_mod_type_decl decl in
     assert (List.is_empty attr);
-    let signature = signature_of_sig_expr ctx sig_expr in
+    let signature = signature_of_sig_expr sig_expr in
     sig_item_wrap loc @@ S_module_type (ident, signature)
   | Tsig_modtypesubst _ ->
     (* TODO: think about this one *)
-    error_unsupported ctx
+    raise_pre_error @@ E_unsupported
   | Tsig_open _ ->
     (* TODO: priority *)
-    error_unsupported ctx
+    raise_pre_error @@ E_unsupported
   | Tsig_include _ ->
     (* TODO: priority *)
-    error_unsupported ctx
-  | Tsig_class _ -> error_objects_not_supported ctx
-  | Tsig_class_type _ -> error_objects_not_supported ctx
-  | Tsig_attribute _ -> error_unsupported ctx
+    raise_pre_error @@ E_unsupported
+  | Tsig_class _ -> raise_pre_error @@ E_objects_not_supported
+  | Tsig_class_type _ -> raise_pre_error @@ E_objects_not_supported
+  | Tsig_attribute _ -> raise_pre_error @@ E_unsupported
 
 
-and extract_sig_value ctx binding =
+and extract_sig_value binding =
   (* TODO: assert not a primitive? *)
   let { val_id; val_name = _; val_desc = _; val_val; val_prim; val_loc; val_attributes } =
     binding
   in
   let loc = extract_loc ~loc:val_loc in
-  let ctx = enter_region ~loc ctx in
+  let@@ () = try_enhance ~loc in
   assert (List.is_empty val_prim);
-  let attr = extract_sig_item_attrs ctx val_attributes in
+  let attr = extract_sig_item_attrs val_attributes in
   (* TODO: which loc to use? *)
   let type_ =
     let { val_type; val_kind; val_loc; val_attributes; val_uid = _ } = val_val in
     (match val_kind with
     | Val_reg -> ()
     | Val_prim _ | Val_ivar (_, _) | Val_self (_, _, _, _) | Val_anc (_, _, _) ->
-      error_unsupported ctx);
+      raise_pre_error @@ E_unsupported);
     assert (List.is_empty val_attributes);
     let loc = extract_loc ~loc:val_loc in
-    let ctx = enter_region ~loc ctx in
-    extract_type ctx val_type
+    extract_type ~loc val_type
   in
   sig_item_wrap loc @@ S_value (val_id, attr, type_)
 
 
-and extract_sig_type ctx rec_flag bindings =
+and extract_sig_type rec_flag bindings =
   let binding =
     match bindings with
-    | [] -> error_unexpected_typed_tree ctx
+    | [] -> raise_pre_error @@ E_unexpected_typed_tree
     | [ value ] -> value
     | _first :: _second :: _rest ->
       (* TODO: support this? *)
-      error_type_and_not_supported ctx
+      raise_pre_error @@ E_type_and_not_supported
   in
   (* TODO: this is duplicated code *)
   (* TODO: support type constructors? *)
@@ -1132,34 +980,32 @@ and extract_sig_type ctx rec_flag bindings =
     binding
   in
   let loc = extract_loc ~loc:typ_loc in
-  let ctx = enter_region ~loc ctx in
   (* TODO: handle attributes such as ligo.internal.predef *)
   assert (List.is_empty typ_attributes);
-  sig_item_wrap loc @@ S_type (typ_id, extract_type_declaration ctx typ_type)
+  sig_item_wrap loc @@ S_type (typ_id, extract_type_declaration typ_type)
 
 
-and extract_sig_module ctx decl =
+and extract_sig_module decl =
   let { md_id; md_name = _; md_presence; md_type; md_attributes; md_loc } = decl in
   let loc = extract_loc ~loc:md_loc in
-  let ctx = enter_region ~loc ctx in
   let id =
     match md_id with
     | Some id -> id
-    | None -> error_modules_without_names_not_supported ctx
+    | None -> raise_pre_error @@ E_modules_without_names_not_supported
   in
   (match md_presence with
   | Mp_present -> ()
   | Mp_absent ->
     (* TODO: when is this the case? *)
     (* TODO: write tests *)
-    error_unsupported ctx);
+    raise_pre_error @@ E_unsupported);
   assert (List.is_empty md_attributes);
-  let sig_expr = extract_mod_type ctx md_type in
-  let signature = signature_of_sig_expr ctx sig_expr in
+  let sig_expr = extract_mod_type md_type in
+  let signature = signature_of_sig_expr sig_expr in
   sig_item_wrap loc @@ S_module (id, signature)
 
 
-and extract_primitive ctx ~loc vd =
+and extract_primitive ~loc vd =
   let { val_id
       ; val_name = _
       ; val_desc = _
@@ -1171,6 +1017,7 @@ and extract_primitive ctx ~loc vd =
     =
     vd
   in
+  (* TODO: use val_loc? *)
   (* TODO: check val_desc type? *)
   assert (List.is_empty val_attributes);
   match val_prim with
@@ -1178,10 +1025,10 @@ and extract_primitive ctx ~loc vd =
   | [ ("%ligo.nat" | "%ligo.tez" | "%ligo.address") ] ->
     (* TODO: store which primitve? *)
     decl_wrap loc @@ D_external val_id
-  | _ -> error_unsupported ctx
+  | _ -> raise_pre_error @@ E_unsupported
 
 
-and extract_type_decl ctx decl =
+and extract_type_decl decl =
   (* TODO: support type constructors? *)
   (* TODO: check all of those below *)
   let { typ_id
@@ -1199,9 +1046,9 @@ and extract_type_decl ctx decl =
     decl
   in
   let loc = extract_loc ~loc:typ_loc in
-  let ctx = enter_region ~loc ctx in
+  let@@ () = try_enhance ~loc in
   match typ_attributes with
-  | [] -> decl_wrap loc @@ D_type (typ_id, extract_type_declaration ctx typ_type)
+  | [] -> decl_wrap loc @@ D_type (typ_id, extract_type_declaration typ_type)
   | [ { attr_name = { txt = "ligo.internal.predef"; loc = _ }
       ; attr_payload = PStr []
       ; attr_loc = _
@@ -1211,7 +1058,7 @@ and extract_type_decl ctx decl =
     let constant =
       match Literal_types.of_string_opt constant with
       | Some constant -> constant
-      | None -> error_unsupported ctx
+      | None -> raise_pre_error @@ E_unsupported
     in
     let arity = Literal_types.to_arity constant in
     assert (arity = typ_type.type_arity);
@@ -1221,13 +1068,13 @@ and extract_type_decl ctx decl =
       ; attr_loc = _
       }
     ] -> decl_wrap loc @@ D_type_unsupported typ_id
-  | _ -> error_unsupported ctx
+  | _ -> raise_pre_error @@ E_unsupported
 
 
-and extract_module_binding ctx mb =
+and extract_module_binding mb =
   let { mb_id; mb_name = _; mb_presence; mb_expr; mb_attributes; mb_loc } = mb in
   let loc = extract_loc ~loc:mb_loc in
-  let ctx = enter_region ~loc ctx in
+  let@@ () = try_enhance ~loc in
   assert (
     match mb_presence with
     | Mp_present -> true
@@ -1236,23 +1083,29 @@ and extract_module_binding ctx mb =
   let ident =
     match mb_id with
     | Some ident -> ident
-    | None -> error_modules_without_names_not_supported ctx
+    | None -> raise_pre_error @@ E_modules_without_names_not_supported
   in
-  let attr = extract_module_attrs ctx mb_attributes in
-  let body = extract_module_expr ctx mb_expr in
+  let attr = extract_module_attrs mb_attributes in
+  let body = extract_module_expr mb_expr in
   decl_wrap loc @@ D_module (ident, attr, body)
 
 
-and extract_module_expr ctx mod_expr =
+and extract_module_expr mod_expr =
   let { mod_desc; mod_loc; mod_type = _; mod_env = _; mod_attributes } = mod_expr in
   let loc = extract_loc ~loc:mod_loc in
-  let ctx = enter_region ~loc ctx in
+  let@@ () = try_enhance ~loc in
   (* TODO: use module_type? *)
   assert (List.is_empty mod_attributes);
   match mod_desc with
   | Tmod_ident (path, _lident) -> mod_expr_wrap loc @@ M_var path
-  | Tmod_structure str -> mod_expr_wrap loc @@ M_struct (extract_str ctx str)
-  | Tmod_functor (_, _) -> error_unsupported ctx
-  | Tmod_apply (_, _, _) -> error_unsupported ctx
-  | Tmod_constraint (_, _, _, _) -> error_unimplemented ctx
-  | Tmod_unpack (_, _) -> error_unsupported ctx
+  | Tmod_structure str -> mod_expr_wrap loc @@ M_struct (extract_str str)
+  | Tmod_functor (_, _) -> raise_pre_error @@ E_unsupported
+  | Tmod_apply (_, _, _) -> raise_pre_error @@ E_unsupported
+  | Tmod_constraint (_, _, _, _) -> raise_pre_error @@ E_unimplemented
+  | Tmod_unpack (_, _) -> raise_pre_error @@ E_unsupported
+
+
+let extract_str str =
+  (* TODO: proper location here *)
+  let loc = Location.dummy in
+  wrap_exn ~loc (fun () -> extract_str str)

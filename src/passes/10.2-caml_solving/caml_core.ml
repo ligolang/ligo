@@ -1,41 +1,9 @@
-open Ocaml_common
 open Asttypes
 open Ligo_prim
 open Ast_core
+open Caml_error
 
-type error =
-  { err_tag : error_tag
-  ; err_loc : Location.t
-  }
-
-and error_tag =
-  | E_unexpected_typed_tree
-  | E_let_and_not_supported
-  | E_type_and_not_supported
-  | E_labelled_parameters_not_supported
-  | E_optional_parameters_not_supported
-  | E_poly_vars_not_supported
-  | E_fcm_not_supported
-  | E_objects_not_supported
-  | E_partial_match_not_supported
-  | E_exceptions_not_supported
-  | E_extensible_variants_not_supported
-  | E_mutation_not_supported
-  | E_array_not_supported
-  | E_while_not_supported
-  | E_for_not_supported
-  | E_refutation_not_supported
-  | E_rec_modules_not_supported
-  | E_lazy_not_supported
-  | E_abstract_types_not_supported
-  | E_abstract_module_types_not_supported
-  | E_modules_without_names_not_supported
-  | E_recursive_bindings_must_be_a_function
-  | E_unimplemented
-  | E_unsupported
-  | E_unreachable
-  | E_unexpected_error of exn
-
+(* TODO: better names *)
 (* TODO: explain, this id comes from OCaml  *)
 type var_id = int
 
@@ -50,6 +18,7 @@ and type_desc =
   | T_arrow of type_ * type_
   | T_tuple of type_ list
   | T_forall of (label option * var_id) list * type_
+  | T_error of error
 
 type type_decl =
   { type_decl_desc : type_decl_desc
@@ -61,6 +30,7 @@ and type_decl_desc =
   | T_record of type_decl_label list
   | T_variant of type_decl_case list
   | T_alias of type_
+  | T_error of error
 
 and type_decl_label =
   { dl_id : Ident.t
@@ -80,13 +50,6 @@ and type_decl_case =
       ; dc_loc : Location.t
       }
 
-(* TODO: improve Ligo such that this is not required *)
-type var_pat =
-  { var_pat_desc : Ident.t
-  ; var_pat_type : type_
-  ; var_pat_loc : Location.t
-  }
-
 type pat =
   { pat_desc : pat_desc
   ; pat_type : type_
@@ -97,6 +60,7 @@ and pat_desc =
   | P_unit
   | P_var of Ident.t
   | P_tuple of pat list
+  (* TODO: Label.t? *)
   | P_record of (Label.t * pat) list
   | P_variant of (Label.t * pat)
   | P_error of error
@@ -111,12 +75,13 @@ and expr_desc =
   | E_var of Path.t
   | E_literal of Literal_value.t
   (* TODO: tag poly expressions and patterns here? *)
+  (* TODO: Value_attr errors *)
   | E_let of pat * Value_attr.t * expr * expr
   | E_let_module of Ident.t * mod_expr * expr
-  | E_lambda of var_pat * expr
+  | E_lambda of pat * expr
   | E_lambda_rec of
-      { self : var_pat
-      ; param : var_pat
+      { self : pat
+      ; param : pat
       ; body : expr
       }
   | E_apply of expr * expr list
@@ -144,9 +109,11 @@ and decl =
   }
 
 and decl_desc =
-  | D_let of (var_pat * Value_attr.t * expr)
+  | D_let of (pat * Value_attr.t * expr)
   | D_type of (Ident.t * type_decl)
   | D_module of (Ident.t * Type_or_module_attr.t * mod_expr)
+  (* TODO: annotations on module and include *)
+  | D_module_include of mod_expr
   | D_module_type of (Ident.t * Signature_attr.t * sig_expr)
   (* FFI *)
   | D_external of Ident.t
@@ -185,23 +152,9 @@ let type_decl_wrap loc params desc =
   { type_decl_desc = desc; type_decl_params = params; type_decl_loc = loc }
 
 
-let var_pat_wrap loc type_ desc =
-  { var_pat_desc = desc; var_pat_type = type_; var_pat_loc = loc }
-
-
 let pat_wrap loc type_ desc = { pat_desc = desc; pat_type = type_; pat_loc = loc }
 let expr_wrap loc type_ desc = { expr_desc = desc; expr_type = type_; expr_loc = loc }
 let mod_expr_wrap loc desc = { mod_expr_desc = desc; mod_expr_loc = loc }
 let decl_wrap loc desc = { decl_desc = desc; decl_loc = loc }
 let sig_expr_wrap loc desc = { sig_expr_desc = desc; sig_expr_loc = loc }
 let sig_item_wrap loc desc = { sig_item_desc = desc; sig_item_loc = loc }
-
-(* TODO: this is not ideal *)
-let type_error loc = type_wrap loc @@ T_tuple []
-
-(* TODO: this is not ideal *)
-let var_pat_error error =
-  (* TODO: this is not ideal *)
-  let { err_tag; err_loc } = error in
-  let ident = Ident.create_local "[[error]]" in
-  { var_pat_desc = ident; var_pat_type = type_error err_loc; var_pat_loc = err_loc }

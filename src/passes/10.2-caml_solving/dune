@@ -3,6 +3,6 @@
  (public_name ligo.caml_solving)
  (instrumentation
   (backend bisect_ppx))
- (libraries caml_core)
+ (libraries ast_core ocaml-compiler-libs.common)
  (preprocess
   (pps ppx_jane ppx_deriving.map ppx_woo ppx_poly_constructor)))
