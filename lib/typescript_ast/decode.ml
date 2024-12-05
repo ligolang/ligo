@@ -2586,7 +2586,7 @@ and dec_class_expression ?(comments = []) node : (class_expression, _) result =
 and dec_pattern ?(comments = []) node : (pattern, _) result =
   match get_name node with
   | "rest_pattern" ->
-    let* pattern = dec_rest_pattern ~comments node in
+    let* pattern = wrap dec_rest_pattern ~comments node in
     Ok (P_rest_pattern pattern)
   | _ ->
     let* expression = dec_lhs_expression ~comments node in
@@ -2609,7 +2609,7 @@ and dec_member_pattern ?(comments = []) node : (member_pattern, _) result =
     let* pattern = dec_pair_pattern ~comments node in
     Ok (Member_pair_pattern pattern)
   | "rest_pattern" ->
-    let* pattern = dec_rest_pattern ~comments node in
+    let* pattern = wrap dec_rest_pattern ~comments node in
     Ok (Member_rest_pattern pattern)
   | "object_assignment_pattern" ->
     let* pattern = dec_object_assignment_pattern node in
@@ -3115,7 +3115,7 @@ and dec_tuple_parameter_name ?(comments = []) node : (tuple_parameter_name, _) r
   match get_name node with
   | "identifier" -> Ok (Tuple_parameter_ident (dec_identifier ~comments node))
   | "rest_pattern" ->
-    let* pattern = dec_rest_pattern ~comments node in
+    let* pattern = wrap dec_rest_pattern ~comments node in
     Ok (Tuple_parameter_rest pattern)
   | _ -> error "dec_tuple_parameter_name" node
 
