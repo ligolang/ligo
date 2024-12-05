@@ -1952,7 +1952,7 @@ and dec_expression ?(comments = []) node : (expression, _) result =
     let* expression = dec_yield_expression node in
     Ok (E_yield_expression expression)
   | "as_expression" ->
-    let* expression = dec_as_expression node in
+    let* expression = wrap dec_as_expression node in
     Ok (E_as_expression expression)
   | "satisfies_expression" ->
     let* expression = dec_satisfies_expression node in
@@ -2182,9 +2182,9 @@ and dec_yield_expression node : (yield_expression, _) result =
 
 (* As-expression *)
 
-and dec_as_expression node : (as_expression, _) result =
+and dec_as_expression ?(comments = []) node : (as_expression, _) result =
   let* expression = child_ranked 0 node in
-  let* expression = dec_expression expression in
+  let* expression = dec_expression ~comments expression in
   let* kwd_as = first_child_named "as" node in
   let kwd_as = make_kwd kwd_as in
   let* as_what = child_ranked 2 node in
