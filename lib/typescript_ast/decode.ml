@@ -2369,7 +2369,7 @@ and dec_non_null_expression ?comments node : (expression, _) result =
 and dec_primary_expression ?(comments = []) node : (primary_expression, _) result =
   match get_name node with
   | "subscript_expression" ->
-    let* expression = dec_subscript_expression node in
+    let* expression = wrap dec_subscript_expression node in
     Ok (E_subscript_expression expression)
   | "member_expression" ->
     let* expression = wrap dec_member_expression node in
@@ -2386,7 +2386,7 @@ and dec_primary_expression ?(comments = []) node : (primary_expression, _) resul
     Ok (E_number number)
   | "string" -> Ok (E_string (dec_string node))
   | "template_string" ->
-    let* expression = dec_template_string node in
+    let* expression = wrap dec_template_string ~comments node in
     Ok (E_template_string expression)
   | "regex" -> Ok (E_regex (dec_regex node))
   | "true" -> Ok (E_true (make_kwd node))
@@ -2399,16 +2399,16 @@ and dec_primary_expression ?(comments = []) node : (primary_expression, _) resul
     let* expression = dec_array node in
     Ok (E_array expression)
   | "function_expression" ->
-    let* expression = dec_function_expression node in
+    let* expression = wrap dec_function_expression node in
     Ok (E_function_expression expression)
   | "arrow_function" ->
-    let* expression = dec_arrow_function node in
+    let* expression = wrap dec_arrow_function node in
     Ok (E_arrow_function expression)
   | "generator_function" ->
-    let* expression = dec_generator_function node in
+    let* expression = wrap dec_generator_function node in
     Ok (E_generator_function expression)
   | "class" ->
-    let* expression = dec_class node in
+    let* expression = wrap dec_class node in
     Ok (E_class expression)
   | "meta_property" ->
     let* expression = dec_meta_property node in
@@ -2462,17 +2462,20 @@ and dec_arguments_to_call node : (arguments_to_call, _) result =
 (* Meta-property *)
 
 and dec_meta_property ?(comments = []) node : (meta_property, _) result =
+  let region = !get_region node in
   let* fst_child = child_ranked 0 node in
   let* snd_child = child_ranked 2 node in
   match get_name fst_child with
   | "new" ->
     let kwd_new = make_kwd ~comments fst_child
     and kwd_target = make_kwd snd_child in
-    Ok (Meta_new_target (kwd_new, kwd_target))
+    let meta = kwd_new, kwd_target in
+    Ok (Meta_new_target (Wrap.make meta region))
   | "import" ->
     let kwd_import = make_kwd ~comments fst_child
     and kwd_meta = make_kwd snd_child in
-    Ok (Meta_import_meta (kwd_import, kwd_meta))
+    let meta = kwd_import, kwd_meta in
+    Ok (Meta_import_meta (Wrap.make meta region))
   | _ -> error "dec_meta_property" fst_child
 
 (* Class *)
@@ -2496,7 +2499,7 @@ and dec_class ?(comments = []) node : (class_expression, _) result =
 (* Generator function *)
 
 and dec_generator_function ?(comments = []) node : (generator_function, _) result =
-  let* fun_decl = dec_function_expression ~comments node in
+  let* fun_decl = wrap dec_function_expression ~comments node in
   let* sym_star = first_child_named "*" node in
   Ok (make_sym sym_star, fun_decl)
 

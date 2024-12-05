@@ -1879,12 +1879,12 @@ and yield_expression =
 *)
 and primary_expression =
   | E_array of array
-  | E_arrow_function of arrow_function
+  | E_arrow_function of arrow_function wrap
   | E_call_expression of call_expression
-  | E_class of class_expression
+  | E_class of class_expression wrap
   | E_false of kwd_false
-  | E_function_expression of function_expression
-  | E_generator_function of generator_function
+  | E_function_expression of function_expression wrap
+  | E_generator_function of generator_function wrap
   | E_identifier of identifier
   | E_member_expression of member_expression wrap
   | E_meta_property of meta_property
@@ -1895,9 +1895,9 @@ and primary_expression =
   | E_parenthesized_expression of parenthesized_expression
   | E_regex of string_literal
   | E_string of string_literal
-  | E_subscript_expression of subscript_expression
+  | E_subscript_expression of subscript_expression wrap
   | E_super of kwd_super
-  | E_template_string of template_string
+  | E_template_string of template_string wrap
   | E_this of kwd_this
   | E_true of kwd_true
   | E_undefined of kwd_undefined
@@ -2028,7 +2028,7 @@ and function_expression =
        field('body', $.statement_block)))
     ]}
  *)
-and generator_function = sym_star * function_expression
+and generator_function = sym_star * function_expression wrap
 
 (** Metaproperty
 
@@ -2041,8 +2041,8 @@ and generator_function = sym_star * function_expression
    ]}
 *)
 and meta_property =
-  | Meta_new_target of kwd_new * kwd_target
-  | Meta_import_meta of kwd_import * kwd_meta
+  | Meta_new_target of (kwd_new * kwd_target) wrap
+  | Meta_import_meta of (kwd_import * kwd_meta) wrap
 
 (** Object (expression)
 
