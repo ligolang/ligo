@@ -695,7 +695,7 @@ and object_pattern = member_pattern list braces
 
 and member_pattern =
   | Member_pair_pattern of pair_pattern
-  | Member_rest_pattern of rest_pattern
+  | Member_rest_pattern of rest_pattern wrap
   | Member_object_assignment of object_assignment_pattern
   | Member_shorthand_property of identifier (* Including reserved identifiers *)
 
@@ -2227,7 +2227,7 @@ and pattern =
   | P_undefined of kwd_undefined
   | P_destructuring_pattern of destructuring_pattern
   | P_non_null_expression of expression
-  | P_rest_pattern of rest_pattern
+  | P_rest_pattern of rest_pattern wrap
 
 (** TYPES
 
@@ -2621,7 +2621,7 @@ and tuple_parameter = tuple_parameter_name * type_annotation
 
 and tuple_parameter_name =
   | Tuple_parameter_ident of identifier
-  | Tuple_parameter_rest of rest_pattern
+  | Tuple_parameter_rest of rest_pattern wrap
 
 and optional_tuple_parameter = identifier * sym_qmark * type_annotation
 
