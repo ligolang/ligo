@@ -1238,7 +1238,12 @@ and dec_extends_clause node : (extends_clause, _) result =
     | [] -> List.rev acc
   in
   let pairs : (ts_tree * ts_tree option) list = pair_up [] raw_clauses in
-  let mk_clause (value, type_arguments_opt) : (extends_clause_single, string) result =
+  let mk_clause (value, type_arguments_opt) : (extends_clause_single wrap, string) result =
+    let region =
+      match type_arguments_opt with
+      | None -> !get_region value
+      | Some type_args ->
+        Region.cover (!get_region value) (!get_region type_args) in
     let* value = dec_expression value in
     let* type_arguments =
       match type_arguments_opt with
@@ -1247,7 +1252,7 @@ and dec_extends_clause node : (extends_clause, _) result =
         let* args = dec_type_arguments type_arguments in
         Ok (Some args)
     in
-    Ok { value; type_arguments }
+    Ok (Wrap.make { value; type_arguments } region)
   in
   let* extends_clauses = Result.all @@ List.map ~f:mk_clause pairs in
   let* extends_clauses =
@@ -2021,7 +2026,7 @@ and dec_assignment_operator node : (assignment_operator, _) result =
 and dec_augmented_assignment_lhs node : (augmented_assignment_lhs, _) result =
   match get_name node with
   | "member_expression" ->
-    let* expression = dec_member_expression node in
+    let* expression = wrap dec_member_expression node in
     Ok (Member_expression expression)
   | "subscript_expression" ->
     let* expression = dec_subscript_expression node in
@@ -2322,7 +2327,7 @@ and dec_pair ?(comments = []) node : (pair, string) result =
 and dec_lhs_expression ?comments node : (lhs_expression, _) result =
   match get_name node with
   | "member_expression" ->
-    let* expression = dec_member_expression ?comments node in
+    let* expression = wrap dec_member_expression ?comments node in
     Ok (Member_expression expression : lhs_expression)
   | "subscript_expression" ->
     let* expression = dec_subscript_expression ?comments node in
@@ -2354,7 +2359,7 @@ and dec_primary_expression ?(comments = []) node : (primary_expression, _) resul
     let* expression = dec_subscript_expression node in
     Ok (E_subscript_expression expression)
   | "member_expression" ->
-    let* expression = dec_member_expression node in
+    let* expression = wrap dec_member_expression node in
     Ok (E_member_expression expression)
   | "parenthesized_expression" ->
     let* expression = dec_parenthesized_expression node in
@@ -2415,11 +2420,15 @@ and dec_call_expression ?(comments = []) node : (call_expression, _) result =
   | None ->
     let* lambda = dec_fun_call ~comments function_field in
     let* arguments = dec_arguments_to_call arguments_field in
-    Ok (Call { lambda; type_arguments; arguments })
+    let call = { lambda; type_arguments; arguments } in
+    let region = !get_region node in
+    Ok (Call (Wrap.make call region))
   | Some _ ->
     let* lambda = dec_primary_expression ~comments function_field in
     let* arguments = dec_arguments arguments_field in
-    Ok (Member { lambda; type_arguments; arguments })
+    let call = { lambda; type_arguments; arguments } in
+    let region = !get_region node in
+    Ok (Member (Wrap.make call region))
 
 and dec_fun_call ?(comments = []) node : (fun_call, _) result =
   match get_name node with
@@ -2715,20 +2724,20 @@ and dec_destructuring_pattern ?comments node : (destructuring_pattern, _) result
 and dec_type ?(comments = []) node : (type_expr, _) result =
   match get_name node with
   | "function_type" ->
-    let* type_expr = dec_function_type ~comments node in
+    let* type_expr = wrap dec_function_type ~comments node in
     Ok (T_function_type type_expr)
   | "readonly_type" ->
     let* type_expr = dec_readonly_type ~comments node in
     Ok (T_readonly_type type_expr)
   | "constructor_type" ->
-    let* type_expr = dec_constructor_type ~comments node in
+    let* type_expr = wrap dec_constructor_type ~comments node in
     Ok (T_constructor_type type_expr)
   | "infer_type" ->
-    let* type_expr = dec_infer_type ~comments node in
+    let* type_expr = wrap dec_infer_type ~comments node in
     Ok (T_infer_type type_expr)
   (* A couple of aliases *)
   | "member_expression" ->
-    let* expression = dec_member_expression ~comments node in
+    let* expression = wrap dec_member_expression ~comments node in
     Ok (T_member_expression expression)
   | "call_expression" ->
     let* expression = dec_call_expression ~comments node in
