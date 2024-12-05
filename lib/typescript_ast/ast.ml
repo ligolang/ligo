@@ -1983,7 +1983,7 @@ and fun_call =
 
 and arguments_to_call =
   | Arguments of arguments
-  | Template_string of template_string
+  | Template_string of template_string wrap
 
 and ('lambda, 'arguments) call =
   { lambda : 'lambda
