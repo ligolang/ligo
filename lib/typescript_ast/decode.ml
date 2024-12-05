@@ -2453,7 +2453,7 @@ and dec_fun_call ?(comments = []) node : (fun_call, _) result =
 and dec_arguments_to_call node : (arguments_to_call, _) result =
   match get_name node with
   | "template_string" ->
-    let* expression = dec_template_string node in
+    let* expression = wrap dec_template_string node in
     Ok (Template_string expression)
   | _ ->
     let* arguments = dec_arguments node in
