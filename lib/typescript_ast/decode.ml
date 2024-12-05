@@ -143,11 +143,14 @@ let wrap_ne_list_opt_of_children ?(comments = []) decode children
     let region =
       match List.last siblings with
       | None -> fst_region
-      | Some last_child -> Region.cover fst_region (!get_region last_child) in
+      | Some last_child -> Region.cover fst_region (!get_region last_child)
+    in
     let ne_list = Nonempty_list.(fst_child :: tail) in
     Ok (Some (Wrap.make ne_list region))
 
-let wrap_ne_list_of_children ?(comments = []) decode children : ('a ne_list wrap, _) result =
+let wrap_ne_list_of_children ?(comments = []) decode children
+    : ('a ne_list wrap, _) result
+  =
   let* list = wrap_ne_list_opt_of_children ~comments decode children in
   match list with
   | None -> Error "Expected at least one child."
@@ -155,7 +158,9 @@ let wrap_ne_list_of_children ?(comments = []) decode children : ('a ne_list wrap
 
 (* Decoding enclosed unique child *)
 
-let dec_enclosed ?(comments = []) node decode opening closing : ('a enclosed wrap, _) result =
+let dec_enclosed ?(comments = []) node decode opening closing
+    : ('a enclosed wrap, _) result
+  =
   let comments = comments @ prev_comments node in
   let* opening = first_child_named opening node in
   let opening = make_sym ~comments opening in
@@ -324,8 +329,9 @@ and dec_statement ?(comments = []) node : (statement, _) result =
     let* statement = wrap dec_labeled_statement node in
     Ok (S_labeled_statement statement)
   (* "declaration" is a hidden rule *)
-  | _ -> let* declaration = dec_declaration ~comments node in
-         Ok (S_declaration declaration)
+  | _ ->
+    let* declaration = dec_declaration ~comments node in
+    Ok (S_declaration declaration)
 
 (* Labeled statement *)
 
@@ -653,10 +659,10 @@ and dec_switch_body node : (switch_body, _) result =
 and dec_switch_entry ?(comments = []) node : (switch_entry, _) result =
   match get_name node with
   | "switch_case" ->
-    let* switch_case = dec_switch_case ~comments node in
+    let* switch_case = wrap dec_switch_case ~comments node in
     Ok (Switch_case switch_case)
   | "switch_default" ->
-    let* default = dec_switch_default ~comments node in
+    let* default = wrap dec_switch_default ~comments node in
     Ok (Switch_default default)
   | _ -> error "dec_switch_entry" node
 
@@ -1165,7 +1171,7 @@ and dec_arguments ?comments node : (arguments, _) result =
 and dec_argument ?comments node : (argument, _) result =
   match get_name node with
   | "spread_element" ->
-    let* spread = dec_spread_element node in
+    let* spread = wrap dec_spread_element node in
     Ok (Spread_element spread)
   | _ ->
     let* expression = dec_expression ?comments node in
@@ -1242,8 +1248,8 @@ and dec_extends_clause node : (extends_clause, _) result =
     let region =
       match type_arguments_opt with
       | None -> !get_region value
-      | Some type_args ->
-        Region.cover (!get_region value) (!get_region type_args) in
+      | Some type_args -> Region.cover (!get_region value) (!get_region type_args)
+    in
     let* value = dec_expression value in
     let* type_arguments =
       match type_arguments_opt with
@@ -1994,7 +2000,8 @@ and dec_assignment_lhs ?(comments = []) node : (assignment_lhs, _) result =
 
 (* Augmented assignment expression *)
 
-and dec_augmented_assignment_expression ?(comments = []) node : (augmented_assignment_expression, _) result
+and dec_augmented_assignment_expression ?(comments = []) node
+    : (augmented_assignment_expression, _) result
   =
   let* left_field = child_with_field "left" node in
   let* left = dec_augmented_assignment_lhs ~comments left_field in
@@ -2023,7 +2030,9 @@ and dec_assignment_operator node : (assignment_operator, _) result =
   | "??=" -> Ok (Non_null_eq (make_sym node))
   | _ -> error "dec_assignment_operator" node
 
-and dec_augmented_assignment_lhs ?(comments = []) node : (augmented_assignment_lhs, _) result =
+and dec_augmented_assignment_lhs ?(comments = []) node
+    : (augmented_assignment_lhs, _) result
+  =
   match get_name node with
   | "member_expression" ->
     let* expression = wrap dec_member_expression ~comments node in
@@ -2224,7 +2233,9 @@ and dec_satisfies_expression ?(comments = []) node : (satisfies_expression, _) r
 
 (* Instantiation expression *)
 
-and dec_instantiation_expression ?(comments = []) node : (instantiation_expression, _) result =
+and dec_instantiation_expression ?(comments = []) node
+    : (instantiation_expression, _) result
+  =
   let* expression = named_child_ranked 0 node in
   let* expression = dec_expression ~comments expression in
   let* type_arguments_field = child_with_field "type_arguments" node in
@@ -2316,10 +2327,10 @@ and dec_object_entry ?(comments = []) node : (object_entry, _) result =
     let* pair = dec_pair ~comments node in
     Ok (Object_entry_pair pair)
   | "spread_element" ->
-    let* spread = dec_spread_element ~comments node in
+    let* spread = wrap dec_spread_element ~comments node in
     Ok (Object_entry_spread spread)
   | "method_definition" ->
-    let* definition = dec_method_definition ~comments node in
+    let* definition = wrap dec_method_definition ~comments node in
     Ok (Object_entry_method definition)
   | "shorthand_property_identifier" ->
     let pattern = dec_shorthand_property_identifier_pattern ~comments node in
@@ -2743,7 +2754,7 @@ and dec_type ?(comments = []) node : (type_expr, _) result =
     let* type_expr = wrap dec_function_type ~comments node in
     Ok (T_function_type type_expr)
   | "readonly_type" ->
-    let* type_expr = dec_readonly_type ~comments node in
+    let* type_expr = wrap dec_readonly_type ~comments node in
     Ok (T_readonly_type type_expr)
   | "constructor_type" ->
     let* type_expr = wrap dec_constructor_type ~comments node in
@@ -2996,7 +3007,7 @@ and dec_type_query_subscript_expression ?(comments = []) node
   let* sym_rbracket = first_child_named "]" node in
   let closing = make_sym sym_rbracket in
   let region = !get_region node in
-  let brackets =  { opening; contents; closing } in
+  let brackets = { opening; contents; closing } in
   let index = Brackets (Wrap.make brackets region) in
   Ok { object_expr; optional; index }
 

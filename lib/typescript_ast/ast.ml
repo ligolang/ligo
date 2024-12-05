@@ -1681,7 +1681,7 @@ and arguments = argument list parens
 
 and argument =
   | Expression of expression
-  | Spread_element of spread_element
+  | Spread_element of spread_element wrap
 
 and spread_element = sym_ellipsis * expression
 
@@ -2074,8 +2074,8 @@ and object_expr = object_entry list braces
 
 and object_entry =
   | Object_entry_pair of pair
-  | Object_entry_spread of spread_element
-  | Object_entry_method of method_definition
+  | Object_entry_spread of spread_element wrap
+  | Object_entry_method of method_definition wrap
   | Object_entry_shorthand of identifier
 
 and pair = (property_name, expression) key_value
@@ -2151,8 +2151,8 @@ and switch_statement =
 and switch_body = switch_entry list braces
 
 and switch_entry =
-  | Switch_case of switch_case
-  | Switch_default of switch_default
+  | Switch_case of switch_case wrap
+  | Switch_default of switch_default wrap
 
 and switch_case =
   { kwd_case : kwd_case
@@ -2249,7 +2249,7 @@ and pattern =
 and type_expr =
   | T_primary_type of primary_type
   | T_function_type of function_type wrap
-  | T_readonly_type of readonly_type
+  | T_readonly_type of readonly_type wrap
   | T_constructor_type of constructor_type wrap
   | T_infer_type of infer_type wrap
   | T_member_expression of member_expression wrap
@@ -3506,10 +3506,22 @@ and decorator_parenthesized_expression =
   | Parenthesized_member of decorator_member_expression
   | Parenthesized_call of decorator_call_expression
 
-(* Projecting regions from nodes *)
+(* PROJECTIONS *)
 
-(* TODO *)
-let region_of_primary_expression _ = Region.ghost
+(* Regions (a.k.a. source locations) *)
+
+let region_of_braces (Braces w) = w#region
+let region_of_chevrons (Chevrons w) = w#region
+let region_of_brackets (Brackets w) = w#region
+let region_of_parens (Parens w) = w#region
+
+let region_of_call_expression = function
+  | Call e -> e#region
+  | Member e -> e#region
+
+let region_of_meta_property = function
+  | Meta_new_target e -> e#region
+  | Meta_import_meta e -> e#region
 
 let region_of_update_expression = function
   | Update_postfix e -> e#region
@@ -3519,7 +3531,38 @@ let region_of_yield_expression = function
   | Yield e -> e#region
   | Yield_iterable e -> e#region
 
-let region_of_expression = function
+let region_of_number = function
+  | Hex (e, _) -> e#region
+  | Bin (e, _) -> e#region
+  | Oct (e, _) -> e#region
+  | Dec (e, _) -> e#region
+
+let rec region_of_primary_expression = function
+  | E_array e -> region_of_brackets e
+  | E_arrow_function e -> e#region
+  | E_call_expression e -> region_of_call_expression e
+  | E_class e -> e#region
+  | E_false e -> e#region
+  | E_function_expression e -> e#region
+  | E_generator_function e -> e#region
+  | E_identifier e -> e#region
+  | E_member_expression e -> e#region
+  | E_meta_property e -> region_of_meta_property e
+  | E_non_null_expression e -> region_of_expression e
+  | E_null e -> e#region
+  | E_number e -> region_of_number e
+  | E_object e -> region_of_braces e
+  | E_parenthesized_expression e -> region_of_parens e
+  | E_regex e -> e#region
+  | E_string e -> e#region
+  | E_subscript_expression e -> e#region
+  | E_super e -> e#region
+  | E_template_string e -> e#region
+  | E_this e -> e#region
+  | E_true e -> e#region
+  | E_undefined e -> e#region
+
+and region_of_expression = function
   | E_as_expression e -> e#region
   | E_assignment_expression e -> e#region
   | E_augmented_assignment_expression e -> e#region
