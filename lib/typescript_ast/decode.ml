@@ -171,11 +171,11 @@ let dec_enclosed ?(comments = []) node decode opening closing
   let region = !get_region node in
   Ok (Wrap.make { opening; contents; closing } region)
 
-(*
 let dec_braces ?comments node decode : ('a braces, _) result =
   let* braces = dec_enclosed ?comments node decode "{" "}" in
   Ok (Braces braces)
 
+(*
 let dec_chevrons ?comments node decode : ('a chevrons, _) result =
   let* chevrons = dec_enclosed ?comments node decode "<" ">" in
   Ok (Chevrons chevrons)
@@ -620,7 +620,7 @@ and dec_expressions ?(comments = []) (node : ts_tree) : (expressions, _) result 
 (* Statement blocks *)
 
 and dec_statement_block ?(comments = []) node : (statement_block, _) result =
-  dec_statements ~comments node
+  dec_braces ~comments node dec_statements
 
 (* If statement *)
 
@@ -710,7 +710,7 @@ and dec_for_initializer node : (for_initializer, _) result =
     let* declaration = wrap dec_lexical_declaration node in
     Ok (For_lexical_declaration declaration)
   | "variable_declaration" ->
-    let* declaration = dec_variable_declaration node in
+    let* declaration = wrap dec_variable_declaration node in
     Ok (For_variable_declaration declaration)
   | "expression_statement" ->
     let* expression = dec_expression_statement node in
@@ -943,7 +943,7 @@ and dec_declaration ?(comments = []) node : (declaration, _) result =
     let* declaration = wrap dec_lexical_declaration ~comments node in
     Ok (D_lexical_declaration declaration)
   | "variable_declaration" ->
-    let* declaration = dec_variable_declaration node in
+    let* declaration = wrap dec_variable_declaration node in
     Ok (D_variable_declaration declaration)
   | "function_signature" ->
     let* declaration = wrap dec_function_signature node in
@@ -2038,7 +2038,7 @@ and dec_augmented_assignment_lhs ?(comments = []) node
     let* expression = wrap dec_member_expression ~comments node in
     Ok (Member_expression expression)
   | "subscript_expression" ->
-    let* expression = dec_subscript_expression ~comments node in
+    let* expression = wrap dec_subscript_expression ~comments node in
     Ok (Subscript_expression expression)
   | "identifier" -> Ok (Identifier (dec_identifier ~comments node))
   | "parenthesized_expression" ->
@@ -2354,7 +2354,7 @@ and dec_lhs_expression ?comments node : (lhs_expression, _) result =
     let* expression = wrap dec_member_expression ?comments node in
     Ok (Member_expression expression : lhs_expression)
   | "subscript_expression" ->
-    let* expression = dec_subscript_expression ?comments node in
+    let* expression = wrap dec_subscript_expression ?comments node in
     Ok (Subscript_expression expression : lhs_expression)
   | "identifier" -> Ok (Identifier (dec_identifier ?comments node))
   | "undefined" -> Ok (Undefined (make_kwd ?comments node))
