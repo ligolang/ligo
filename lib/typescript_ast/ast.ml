@@ -230,7 +230,7 @@ and declaration =
   | D_generator_function_declaration of generator_function_declaration wrap
   | D_class_declaration of class_declaration wrap
   | D_lexical_declaration of lexical_declaration wrap
-  | D_variable_declaration of variable_declaration
+  | D_variable_declaration of variable_declaration wrap
   | D_function_signature of function_signature wrap
   | D_abstract_class_declaration of abstract_class_declaration wrap
   | D_module of module_declaration wrap
@@ -712,7 +712,7 @@ and rest_pattern =
 
 and lhs_expression =
   | Member_expression of member_expression wrap
-  | Subscript_expression of subscript_expression
+  | Subscript_expression of subscript_expression wrap
   | Identifier of identifier (* Including reserved identifiers *)
   | Undefined of kwd_undefined
   | Pattern of destructuring_pattern
@@ -825,7 +825,7 @@ and method_definition =
   ; body : statement_block
   }
 
-and statement_block = statements
+and statement_block = statements braces
 
 (** Abstract Method Signature
 
@@ -1484,7 +1484,7 @@ and augmented_assignment_expression =
 
 and augmented_assignment_lhs =
   | Member_expression of member_expression wrap
-  | Subscript_expression of subscript_expression
+  | Subscript_expression of subscript_expression wrap
   | Identifier of identifier
   | Parenthesized_expression of parenthesized_expression
 
@@ -2222,7 +2222,7 @@ and with_statement =
 *)
 and pattern =
   | P_member_expression of member_expression wrap
-  | P_subscript_expression of subscript_expression
+  | P_subscript_expression of subscript_expression wrap
   | P_identifier of identifier (* Including reserved identifiers *)
   | P_undefined of kwd_undefined
   | P_destructuring_pattern of destructuring_pattern
@@ -3173,7 +3173,7 @@ and for_statement =
 
 and for_initializer =
   | For_lexical_declaration of lexical_declaration wrap
-  | For_variable_declaration of variable_declaration
+  | For_variable_declaration of variable_declaration wrap
   | For_expression_statement of expression_statement
   | For_empty_statement of Region.t
 
@@ -3578,3 +3578,53 @@ and region_of_expression = function
   | E_unary_expression e -> e#region
   | E_update_expression e -> region_of_update_expression e
   | E_yield_expression e -> region_of_yield_expression e
+
+let region_of_destructuring_pattern = function
+  | Pattern_object (Braces b) -> b#region
+  | Pattern_array (Brackets b) -> b#region
+
+let region_of_pattern = function
+  | P_member_expression p -> p#region
+  | P_subscript_expression e -> e#region
+  | P_identifier p -> p#region
+  | P_undefined p -> p#region
+  | P_destructuring_pattern p -> region_of_destructuring_pattern p
+  | P_non_null_expression e -> region_of_expression e
+  | P_rest_pattern p -> p#region
+let region_of_declaration = function
+  | D_function_declaration d -> d#region
+  | D_generator_function_declaration d -> d#region
+  | D_class_declaration d -> d#region
+  | D_lexical_declaration d -> d#region
+  | D_variable_declaration d -> d#region
+  | D_function_signature d -> d#region
+  | D_abstract_class_declaration d -> d#region
+  | D_module d -> d#region
+  | D_internal_module d -> d#region
+  | D_type_alias_declaration d -> d#region
+  | D_enum_declaration d -> d#region
+  | D_interface_declaration d -> d#region
+  | D_import_alias d -> d#region
+  | D_ambient_declaration d -> d#region
+
+let region_of_statement = function
+  | S_export_statement s -> s#region
+  | S_import_statement s -> s#region
+  | S_debugger_statement s -> s#region
+  | S_expression_statement s -> s#region
+  | S_declaration d -> region_of_declaration d
+  | S_statement_block (Braces s) -> s#region
+  | S_if_statement s -> s#region
+  | S_switch_statement s -> s#region
+  | S_for_statement s -> s#region
+  | S_for_in_statement s -> s#region
+  | S_while_statement s -> s#region
+  | S_do_statement s -> s#region
+  | S_try_statement s -> s#region
+  | S_with_statement s -> s#region
+  | S_break_statement s -> s#region
+  | S_continue_statement s -> s#region
+  | S_return_statement s -> s#region
+  | S_throw_statement s -> s#region
+  | S_empty_statement r -> r
+  | S_labeled_statement s -> s#region
