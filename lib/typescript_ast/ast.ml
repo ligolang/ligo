@@ -532,12 +532,12 @@ and type_parameter =
 and class_body = class_member list braces
 
 and class_member =
-  | Method_definition of decorators * method_definition
-  | Method_signature of method_signature
+  | Method_definition of decorators * method_definition wrap
+  | Method_signature of method_signature wrap
   | Call_static_block of (kwd_static * statement_block)
-  | Abstract_method_signature of abstract_method_signature
-  | Index_signature of index_signature
-  | Public_field_definition of public_field_definition
+  | Abstract_method_signature of abstract_method_signature wrap
+  | Index_signature of index_signature wrap
+  | Public_field_definition of public_field_definition wrap
 
 (** Method Signature
 
@@ -696,14 +696,14 @@ and object_pattern = member_pattern list braces
 and member_pattern =
   | Member_pair_pattern of pair_pattern
   | Member_rest_pattern of rest_pattern wrap
-  | Member_object_assignment of object_assignment_pattern
+  | Member_object_assignment of object_assignment_pattern wrap
   | Member_shorthand_property of identifier (* Including reserved identifiers *)
 
 and pair_pattern = (property_name, pair_value_pattern) key_value
 
 and pair_value_pattern =
   | Pair_value of pattern
-  | Pair_value_assignment of assignment_pattern
+  | Pair_value_assignment of assignment_pattern wrap
 
 and rest_pattern =
   { sym_ellipsis : sym_ellipsis
@@ -1083,7 +1083,7 @@ and enum_declaration =
 
 and enum_body =
   | Enum_name of property_name
-  | Enum_assignment of enum_assignment
+  | Enum_assignment of enum_assignment wrap
 
 and enum_assignment =
   { name : property_name
@@ -2576,7 +2576,7 @@ and template_type_fragment =
 
 and template_type =
   | Template_type_primary of primary_type
-  | Template_type_infer of infer_type
+  | Template_type_infer of infer_type wrap
 
 (** Tuple Type
 
@@ -2610,10 +2610,10 @@ and template_type =
 and tuple_type = tuple_type_member list brackets
 
 and tuple_type_member =
-  | Tuple_parameter of tuple_parameter
-  | Tuple_optional_parameter of optional_tuple_parameter
-  | Tuple_optional_type of (type_expr * sym_qmark)
-  | Tuple_rest_type of (sym_ellipsis * type_expr)
+  | Tuple_parameter of tuple_parameter wrap
+  | Tuple_optional_parameter of optional_tuple_parameter wrap
+  | Tuple_optional_type of (type_expr * sym_qmark) wrap
+  | Tuple_rest_type of (sym_ellipsis * type_expr) wrap
   | Tuple_type of type_expr
 
 and tuple_parameter = tuple_parameter_name * type_annotation
@@ -3280,16 +3280,16 @@ and import_kind =
 
 and import =
   | Import_clause of import_clause * from_clause
-  | Import_require_clause of import_require_clause
+  | Import_require_clause of import_require_clause wrap
   | Import_source of string_literal
 
 and import_clause =
-  | Import_namespace of namespace_import
+  | Import_namespace of namespace_import wrap
   | Import_named of named_imports
   | Import_ident of import_identifier * namespace_or_named_imports option
 
 and namespace_or_named_imports =
-  | Import_namespace of namespace_import
+  | Import_namespace of namespace_import wrap
   | Import_named of named_imports
 
 and namespace_import =
@@ -3686,3 +3686,11 @@ let region_of_type_expr = function
   | T_member_expression t -> t#region
   | T_call_expression (Call t) -> t#region
   | T_call_expression (Member t) -> t#region
+
+let region_of_template_type = function
+  | Template_type_primary t -> region_of_primary_type t
+  | Template_type_infer t -> t#region
+
+let region_of_template_type_fragment = function
+  | Template_type_string s -> s#region
+  | Template_type t -> region_of_template_type t

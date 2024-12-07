@@ -483,7 +483,7 @@ and dec_import_statement ?(comments = []) node : (import_statement, _) result =
     | None ->
       (match first_child_named_opt "import_require_clause" node with
       | Some clause ->
-        let* require_clause = dec_import_require_clause clause in
+        let* require_clause = wrap dec_import_require_clause clause in
         Ok (Import_require_clause require_clause)
       | None ->
         let* source_field = child_with_field "source" node in
@@ -496,7 +496,7 @@ and dec_import_clause ?(comments = []) node : (import_clause, _) result =
   let* fst_child = child_ranked 0 node in
   match get_name fst_child with
   | "namespace_import" ->
-    let* namespace_import = dec_namespace_import ~comments fst_child in
+    let* namespace_import = wrap dec_namespace_import ~comments fst_child in
     Ok (Import_namespace namespace_import : import_clause)
   | "named_imports" ->
     let* named_imports = dec_named_imports ~comments fst_child in
@@ -517,7 +517,7 @@ and dec_import_clause ?(comments = []) node : (import_clause, _) result =
 and dec_namespace_or_named_imports node : (namespace_or_named_imports, _) result =
   match get_name node with
   | "namespace_import" ->
-    let* namespace_import = dec_namespace_import node in
+    let* namespace_import = wrap dec_namespace_import node in
     Ok (Import_namespace namespace_import)
   | "named_imports" ->
     let* named_imports = dec_named_imports node in
@@ -1299,23 +1299,23 @@ and dec_class_member ?(comments = []) (decorators, node) : (class_member, _) res
   match get_name node with
   | "method_definition" ->
     let* decorators = list_of_children dec_decorator decorators in
-    let* definition = dec_method_definition ~comments node in
+    let* definition = wrap dec_method_definition ~comments node in
     (* Not ideal *)
     Ok (Method_definition (decorators, definition))
   | "method_signature" ->
-    let* signature = dec_method_signature node in
+    let* signature = wrap dec_method_signature node in
     Ok (Method_signature signature : class_member)
   | "class_static_block" ->
     let* static_block = dec_class_static_block node in
     Ok (Call_static_block static_block)
   | "abstract_method_signature" ->
-    let* signature = dec_abstract_method_signature node in
+    let* signature = wrap dec_abstract_method_signature node in
     Ok (Abstract_method_signature signature)
   | "index_signature" ->
-    let* signature = dec_index_signature node in
+    let* signature = wrap dec_index_signature node in
     Ok (Index_signature signature : class_member)
   | "public_field_definition" ->
-    let* definition = dec_public_field_definition node in
+    let* definition = wrap dec_public_field_definition node in
     Ok (Public_field_definition definition)
   | _ -> error "dec_class_member" node
 
@@ -1769,7 +1769,7 @@ and dec_enum_entries node : (enum_body list braces, _) result =
 and dec_enum_body ?(comments = []) node : (enum_body, _) result =
   match get_name node with
   | "enum_assignment" ->
-    let* assignment = dec_enum_assignment ~comments node in
+    let* assignment = wrap dec_enum_assignment ~comments node in
     Ok (Enum_assignment assignment)
   | _ ->
     let* property = dec_property_name ~comments node in
@@ -2641,7 +2641,7 @@ and dec_member_pattern ?(comments = []) node : (member_pattern, _) result =
     let* pattern = wrap dec_rest_pattern ~comments node in
     Ok (Member_rest_pattern pattern)
   | "object_assignment_pattern" ->
-    let* pattern = dec_object_assignment_pattern node in
+    let* pattern = wrap dec_object_assignment_pattern node in
     Ok (Member_object_assignment pattern)
   | "shorthand_property_identifier_pattern" ->
     Ok (Member_shorthand_property (dec_shorthand_property_identifier_pattern node))
@@ -2661,7 +2661,7 @@ and dec_pair_pattern ?(comments = []) node : (pair_pattern, _) result =
 and dec_pair_value_pattern node : (pair_value_pattern, _) result =
   match get_name node with
   | "assignment_pattern" ->
-    let* pattern = dec_assignment_pattern node in
+    let* pattern = wrap dec_assignment_pattern node in
     Ok (Pair_value_assignment pattern)
   | _ ->
     (* Hidden rule *)
@@ -2897,7 +2897,7 @@ and dec_template_type ?(comments = []) node : (template_type, _) result =
   let* type_node = child_ranked 1 node in
   match get_name type_node with
   | "infer_type" ->
-    let* type_expr = dec_infer_type ~comments type_node in
+    let* type_expr = wrap dec_infer_type ~comments type_node in
     Ok (Template_type_infer type_expr)
     (* "primary_type" is hidden *)
   | _ ->
@@ -3116,17 +3116,17 @@ and dec_tuple_type_member ?(comments = []) node : (tuple_type_member, _) result 
   match get_name node with
   | "required_parameter" ->
     (* Alias *)
-    let* parameter = dec_tuple_parameter ~comments node in
+    let* parameter = wrap dec_tuple_parameter ~comments node in
     Ok (Tuple_parameter parameter)
   | "optional_parameter" ->
     (* Alias *)
-    let* parameter = dec_optional_tuple_parameter ~comments node in
+    let* parameter = wrap dec_optional_tuple_parameter ~comments node in
     Ok (Tuple_optional_parameter parameter)
   | "optional_type" ->
-    let* opt_type = dec_optional_type ~comments node in
+    let* opt_type = wrap dec_optional_type ~comments node in
     Ok (Tuple_optional_type opt_type)
   | "rest_type" ->
-    let* type_expr = dec_rest_type ~comments node in
+    let* type_expr = wrap dec_rest_type ~comments node in
     Ok (Tuple_rest_type type_expr)
   | _ ->
     (* "type" is a hidden rule *)
