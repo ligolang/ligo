@@ -2098,7 +2098,7 @@ and print_primary_type state node =
   match get_name node with
   | "parenthesized_type" -> print_parenthesized_type state node
   | "predefined_type" -> print_predefined_type state node
-  | "type_identifier" -> print_type_identifier state node
+  | "type_identifier" -> print_type_identifier state node (* Including "const" *)
   | "nested_type_identifier" -> print_nested_type_identifier state node
   | "generic_type" -> print_generic_type state node
   | "object_type" -> print_object_type state node
