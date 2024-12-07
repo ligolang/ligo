@@ -376,7 +376,7 @@ and parameter_pattern =
 and call_return_type =
   | Type_annotation of type_annotation
   | Asserts_annotation of asserts_annotation
-  | Type_predicate_annotation of type_predicate
+  | Type_predicate_annotation of type_predicate wrap
 
 and type_annotation = sym_colon * type_expr
 
@@ -1186,8 +1186,8 @@ and extends_type_clause =
 
 and type_extension =
   | Extends_type of type_identifier
-  | Extends_nested of nested_type_identifier
-  | Extends_generic of generic_type
+  | Extends_nested of nested_type_identifier wrap
+  | Extends_generic of generic_type wrap
 
 and nested_type_identifier = type_identifier nested
 
@@ -2297,23 +2297,22 @@ and primary_type =
   | T_parenthesized_type of type_expr parens
   | T_predefined_type of predefined_type
   | T_type_identifier of type_identifier
-  | T_nested_type_identifier of nested_type_identifier
-  | T_generic_type of generic_type
+  | T_nested_type_identifier of nested_type_identifier wrap
+  | T_generic_type of generic_type wrap
   | T_object_type of object_type
-  | T_array_type of array_type
+  | T_array_type of array_type wrap
   | T_tuple_type of tuple_type
-  | T_flow_maybe_type of (sym_qmark * primary_type)
-  | T_type_query of (kwd_keyof * type_query)
-  | T_index_type_query of (kwd_keyof * primary_type)
+  | T_flow_maybe_type of (sym_qmark * primary_type) wrap
+  | T_type_query of (kwd_keyof * type_query) wrap
+  | T_index_type_query of (kwd_keyof * primary_type) wrap
   | T_this of kwd_this
   | T_existential_type of sym_star
   | T_literal_type of literal_type
-  | T_lookup_type of lookup_type
-  | T_conditional_type of conditional_type
-  | T_template_literal_type of template_literal_type
-  | T_intersection_type of intersection_type
-  | T_union_type of union_type
-  | T_const
+  | T_lookup_type of lookup_type wrap
+  | T_conditional_type of conditional_type wrap
+  | T_template_literal_type of template_literal_type wrap
+  | T_intersection_type of intersection_type wrap
+  | T_union_type of union_type wrap
 
 (** Generic type
 
@@ -2332,7 +2331,7 @@ and generic_type = generic_name * type_arguments
 
 and generic_name =
   | Generic_type of type_identifier
-  | Generic_nested of nested_type_identifier
+  | Generic_nested of nested_type_identifier wrap
 
 (** Array Type
 
@@ -2783,10 +2782,10 @@ and function_type =
 and return_type =
   | Return_type of type_expr
   | Return_asserts of asserts
-  | Return_type_predicate of type_predicate
+  | Return_type_predicate of type_predicate wrap
 
 and asserts =
-  | Assert_predicate of kwd_asserts * type_predicate
+  | Assert_predicate of kwd_asserts * type_predicate wrap
   | Assert_type of kwd_asserts * identifier
   | Assert_this of kwd_asserts * kwd_this
 
@@ -3472,8 +3471,8 @@ and class_expression =
 *)
 and decorator =
   | Decorator_identifier of identifier
-  | Decorator_member_expression of decorator_member_expression
-  | Decorator_call_expression of decorator_call_expression
+  | Decorator_member_expression of decorator_member_expression wrap
+  | Decorator_call_expression of decorator_call_expression wrap
   | Decorator_parenthesized_expression of decorator_parenthesized_expression parens
 
 and 'a decorated =
@@ -3489,7 +3488,7 @@ and decorator_member_expression =
 
 and object_member_expression =
   | Object_name of identifier
-  | Qualified_member_expression of decorator_member_expression
+  | Qualified_member_expression of decorator_member_expression wrap
 
 and decorator_call_expression =
   { function_ : function_or_property
@@ -3499,12 +3498,12 @@ and decorator_call_expression =
 
 and function_or_property =
   | Function_name of identifier
-  | Qualified_member_expression of decorator_member_expression
+  | Qualified_member_expression of decorator_member_expression wrap
 
 and decorator_parenthesized_expression =
   | Parenthesized_ident of identifier
-  | Parenthesized_member of decorator_member_expression
-  | Parenthesized_call of decorator_call_expression
+  | Parenthesized_member of decorator_member_expression wrap
+  | Parenthesized_call of decorator_call_expression wrap
 
 (* PROJECTIONS *)
 
@@ -3591,6 +3590,7 @@ let region_of_pattern = function
   | P_destructuring_pattern p -> region_of_destructuring_pattern p
   | P_non_null_expression e -> region_of_expression e
   | P_rest_pattern p -> p#region
+
 let region_of_declaration = function
   | D_function_declaration d -> d#region
   | D_generator_function_declaration d -> d#region
@@ -3628,3 +3628,61 @@ let region_of_statement = function
   | S_throw_statement s -> s#region
   | S_empty_statement r -> r
   | S_labeled_statement s -> s#region
+
+let region_of_decorator = function
+  | Decorator_identifier d -> d#region
+  | Decorator_member_expression d -> d#region
+  | Decorator_call_expression d -> d#region
+  | Decorator_parenthesized_expression (Parens d) -> d#region
+
+let region_of_predefined_type = function
+  | T_any t -> t#region
+  | T_number t -> t#region
+  | T_boolean t -> t#region
+  | T_string t -> t#region
+  | T_symbol t -> t#region
+  | T_unique_symbol t -> t#region
+  | T_void t -> t#region
+  | T_unknown t -> t#region
+  | T_never t -> t#region
+  | T_object t -> t#region
+
+let region_of_literal_type = function
+  | T_unary_type t -> t#region
+  | T_number n -> region_of_number n
+  | T_string t -> t#region
+  | T_true t -> t#region
+  | T_false t -> t#region
+  | T_null t -> t#region
+  | T_undefined t -> t#region
+
+let region_of_primary_type = function
+  | T_parenthesized_type (Parens t) -> t#region
+  | T_predefined_type t -> region_of_predefined_type t
+  | T_type_identifier t -> t#region
+  | T_nested_type_identifier t -> t#region
+  | T_generic_type t -> t#region
+  | T_object_type (Braces t) -> t#region
+  | T_array_type t -> t#region
+  | T_tuple_type (Brackets t) -> t#region
+  | T_flow_maybe_type t -> t#region
+  | T_type_query t -> t#region
+  | T_index_type_query t -> t#region
+  | T_this t -> t#region
+  | T_existential_type t -> t#region
+  | T_literal_type t -> region_of_literal_type t
+  | T_lookup_type t -> t#region
+  | T_conditional_type t -> t#region
+  | T_template_literal_type t -> t#region
+  | T_intersection_type t -> t#region
+  | T_union_type t -> t#region
+
+let region_of_type_expr = function
+  | T_primary_type t -> region_of_primary_type t
+  | T_function_type t -> t#region
+  | T_readonly_type t -> t#region
+  | T_constructor_type t -> t#region
+  | T_infer_type t -> t#region
+  | T_member_expression t -> t#region
+  | T_call_expression (Call t) -> t#region
+  | T_call_expression (Member t) -> t#region
