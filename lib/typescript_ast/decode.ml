@@ -1010,7 +1010,7 @@ and dec_call_return_type node : (call_return_type, _) result =
     let* annotation = dec_asserts_annotation node in
     Ok (Asserts_annotation annotation)
   | "type_predicate_annotation" ->
-    let* annotation = dec_type_predicate_annotation node in
+    let* annotation = wrap dec_type_predicate_annotation node in
     Ok (Type_predicate_annotation annotation)
   | _ -> error "dec_call_return_type" node
 
@@ -1026,7 +1026,7 @@ and dec_asserts node : (asserts_annotation, _) result =
   let* child = child_ranked 1 node in
   match get_name child with
   | "type_predicate" ->
-    let* predicate = dec_type_predicate child in
+    let* predicate = wrap dec_type_predicate child in
     Ok (Assert_predicate (kwd_asserts, predicate))
   | "identifier" -> Ok (Assert_type (kwd_asserts, dec_identifier child))
   | "this" -> Ok (Assert_this (kwd_asserts, make_kwd child))
@@ -1034,27 +1034,29 @@ and dec_asserts node : (asserts_annotation, _) result =
 
 (* Type predicate annotation *)
 
-and dec_type_predicate_annotation node : (type_predicate, _) result =
+and dec_type_predicate_annotation ?comments node : (type_predicate, _) result =
   let* predicate = child_ranked 1 node in
-  dec_type_predicate predicate
+  dec_type_predicate ?comments predicate
 
 (* Type predicate *)
 
-and dec_type_predicate node : (type_predicate, _) result =
+and dec_type_predicate ?(comments = []) node : (type_predicate, _) result =
   let* name_field = child_with_field "name" node in
-  let* name = dec_type_predicate_name name_field in
+  let* name = dec_type_predicate_name ~comments name_field in
   let* kwd_is = first_child_named "is" node in
   let kwd_is = make_kwd kwd_is in
   let* type_field = child_with_field "type" node in
   let* type_expr = dec_type type_field in
   Ok { name; kwd_is; type_expr }
 
-and dec_type_predicate_name node : (type_predicate_name, _) result =
+and dec_type_predicate_name ?(comments = []) node : (type_predicate_name, _) result =
   match get_name node with
-  | "identifier" -> Ok (Type_predicate_identifier (dec_identifier node))
-  | "this" -> Ok (Type_predicate_this (make_kwd node))
+  | "identifier" ->
+    let ident = dec_identifier ~comments node in
+    Ok (Type_predicate_identifier ident)
+  | "this" -> Ok (Type_predicate_this (make_kwd ~comments node))
   | _ ->
-    let* type_expr = dec_predefined_type node in
+    let* type_expr = dec_predefined_type ~comments node in
     Ok (Type_predicate_type type_expr)
 
 (* Predefined type *)
@@ -1094,10 +1096,10 @@ and dec_decorator ?(comments = []) node : (decorator, _) result =
   match get_name child with
   | "identifier" -> Ok (Decorator_identifier (dec_identifier ~comments child))
   | "member_expression" ->
-    let* member_expression = dec_decorator_member_expression ~comments child in
+    let* member_expression = wrap dec_decorator_member_expression ~comments child in
     Ok (Decorator_member_expression member_expression)
   | "call_expression" ->
-    let* call_expression = dec_decorator_call_expression ~comments child in
+    let* call_expression = wrap dec_decorator_call_expression ~comments child in
     Ok (Decorator_call_expression call_expression)
   | "parenthesized_expression" ->
     let* expression = dec_decorator_parenthesized_expression ~comments child in
@@ -1121,7 +1123,7 @@ and dec_object_member_expression ?(comments = []) node
   match get_name node with
   | "identifier" -> Ok (Object_name (dec_identifier ~comments node))
   | _ ->
-    let* member_expression = dec_decorator_member_expression ~comments node in
+    let* member_expression = wrap dec_decorator_member_expression ~comments node in
     Ok (Qualified_member_expression member_expression : object_member_expression)
 
 and dec_decorator_call_expression ?(comments = []) node
@@ -1139,7 +1141,7 @@ and dec_function_or_property ?(comments = []) node : (function_or_property, _) r
   match get_name node with
   | "identifier" -> Ok (Function_name (dec_identifier ~comments node))
   | "member_expression" ->
-    let* member_expression = dec_decorator_member_expression ~comments node in
+    let* member_expression = wrap dec_decorator_member_expression ~comments node in
     Ok (Qualified_member_expression member_expression)
   | _ -> error "dec_function_or_property" node
 
@@ -1150,10 +1152,10 @@ and dec_decorator_parenthesized_expression ?comments node
     match get_name node with
     | "identifier" -> Ok (Parenthesized_ident (dec_identifier node))
     | "member_expression" ->
-      let* member_expression = dec_decorator_member_expression node in
+      let* member_expression = wrap dec_decorator_member_expression node in
       Ok (Parenthesized_member member_expression)
     | _ ->
-      let* call_expression = dec_decorator_call_expression node in
+      let* call_expression = wrap dec_decorator_call_expression node in
       Ok (Parenthesized_call call_expression)
   in
   dec_parens ?comments node decode
@@ -1827,10 +1829,10 @@ and dec_type_extension ?(comments = []) node : (type_extension, _) result =
   match get_name node with
   | "type_identifier" -> Ok (Extends_type (dec_type_identifier ~comments node))
   | "nested_type_identifier" ->
-    let* nested = dec_nested_type_identifier ~comments node in
+    let* nested = wrap dec_nested_type_identifier ~comments node in
     Ok (Extends_nested nested)
   | "generic_type" ->
-    let* type_expr = dec_generic_type ~comments node in
+    let* type_expr = wrap dec_generic_type ~comments node in
     Ok (Extends_generic type_expr)
   | _ -> error "dec_type_extension" node
 
@@ -2788,28 +2790,28 @@ and dec_primary_type ?(comments = []) node : (primary_type, _) result =
     let identifier = dec_type_identifier ~comments node in
     Ok (T_type_identifier identifier)
   | "nested_type_identifier" ->
-    let* nested_id = dec_nested_type_identifier ~comments node in
+    let* nested_id = wrap dec_nested_type_identifier ~comments node in
     Ok (T_nested_type_identifier nested_id)
   | "generic_type" ->
-    let* type_expr = dec_generic_type ~comments node in
+    let* type_expr = wrap dec_generic_type ~comments node in
     Ok (T_generic_type type_expr)
   | "object_type" ->
     let* type_expr = dec_object_type ~comments node in
     Ok (T_object_type type_expr)
   | "array_type" ->
-    let* type_expr = dec_array_type ~comments node in
+    let* type_expr = wrap dec_array_type ~comments node in
     Ok (T_array_type type_expr)
   | "tuple_type" ->
     let* type_expr = dec_tuple_type ~comments node in
     Ok (T_tuple_type type_expr)
   | "flow_maybe_type" ->
-    let* type_expr = dec_flow_maybe_type ~comments node in
+    let* type_expr = wrap dec_flow_maybe_type ~comments node in
     Ok (T_flow_maybe_type type_expr)
   | "type_query" ->
-    let* type_query = dec_type_query ~comments node in
+    let* type_query = wrap dec_type_query ~comments node in
     Ok (T_type_query type_query)
   | "index_type_query" ->
-    let* type_expr = dec_index_type_query ~comments node in
+    let* type_expr = wrap dec_index_type_query ~comments node in
     Ok (T_index_type_query type_expr)
   | "this_type" -> Ok (T_this (make_kwd ~comments node))
   | "existential_type" -> Ok (T_existential_type (make_sym ~comments node))
@@ -2817,19 +2819,19 @@ and dec_primary_type ?(comments = []) node : (primary_type, _) result =
     let* type_expr = dec_literal_type ~comments node in
     Ok (T_literal_type type_expr)
   | "lookup_type" ->
-    let* type_expr = dec_lookup_type ~comments node in
+    let* type_expr = wrap dec_lookup_type ~comments node in
     Ok (T_lookup_type type_expr)
   | "conditional_type" ->
-    let* type_expr = dec_conditional_type ~comments node in
+    let* type_expr = wrap dec_conditional_type ~comments node in
     Ok (T_conditional_type type_expr)
   | "template_literal_type" ->
-    let* type_expr = dec_template_literal_type ~comments node in
+    let* type_expr = wrap dec_template_literal_type ~comments node in
     Ok (T_template_literal_type type_expr)
   | "intersection_type" ->
-    let* type_expr = dec_intersection_type ~comments node in
+    let* type_expr = wrap dec_intersection_type ~comments node in
     Ok (T_intersection_type type_expr)
   | "union_type" ->
-    let* type_expr = dec_union_type ~comments node in
+    let* type_expr = wrap dec_union_type ~comments node in
     Ok (T_union_type type_expr)
   | _ -> error "dec_primary_type" node
 
@@ -3293,7 +3295,7 @@ and dec_return_type node : (return_type, _) result =
     let* annotation = dec_asserts node in
     Ok (Return_asserts annotation)
   | "type_predicate" ->
-    let* predicate = dec_type_predicate node in
+    let* predicate = wrap dec_type_predicate node in
     Ok (Return_type_predicate predicate)
   | _ ->
     let* type_expr = dec_type node in
@@ -3320,8 +3322,10 @@ and dec_generic_type ?(comments = []) node : (generic_type, _) result =
 
 and dec_generic_name ?(comments = []) node : (generic_name, _) result =
   match get_name node with
-  | "type_identifier" -> Ok (Generic_type (dec_type_identifier ~comments node))
+  | "type_identifier" ->
+    let identifier = dec_type_identifier ~comments node in
+    Ok (Generic_type identifier)
   | "nested_type_identifier" ->
-    let* nested = dec_nested_type_identifier ~comments node in
+    let* nested = wrap dec_nested_type_identifier ~comments node in
     Ok (Generic_nested nested)
   | _ -> error "dec_generic_name" node
