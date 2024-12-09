@@ -35,6 +35,7 @@ let syntax_of_code_input code_input =
   Syntax.of_string_opt (Syntax_name "auto") @@ Some file_name
 
 
+(** Actually performs preprocessing *)
 let preprocess_code_input ~raise ~meta ~options code_input =
   match code_input with
   | Source_input.HTTP uri ->
@@ -70,6 +71,8 @@ module M (Params : Params) = struct
   type meta_data = Ligo_compile.Helpers.meta
 
   module C_unit = struct
+    (** Initially compilation is driven up to Ast_core in order
+        to be able to extract its dependencies *)
     type t = Ast_core.program
 
     type meta =
@@ -81,6 +84,7 @@ module M (Params : Params) = struct
       }
   end
 
+  (** Returns actual filepaths contents of which will included into resulting ast *)
   let extract_deps ~syntax ~file_name c_unit =
     match syntax with
     | Syntax_types.CameLIGO ->
@@ -97,6 +101,7 @@ module M (Params : Params) = struct
       @@ Ligo_dep_jsligo.dependencies c_unit
 
 
+  (** Compiles preprocessed input into Ast_core *)
   let compile_to_core ~raise ~options ~meta file_name c_unit =
     let Ligo_compile.Helpers.{ syntax } = meta in
     let options = Compiler_options.set_syntax options (Some syntax) in
@@ -125,6 +130,7 @@ module M (Params : Params) = struct
     c_unit, deps
 
 
+  (** Performs preprocessing and reports error in case of failure *)
   let preprocess_import ~raise ~meta ~options import =
     let c_unit, deps =
       Trace.map_error
@@ -161,6 +167,7 @@ module M (Params : Params) = struct
     c_unit, meta, imports
 end
 
+(** Compiles program and all its deps into Ast_core and aggregates it into single Ast_core.program *)
 module Ast_core_target (Params : Params) = struct
   include M (Params)
 
@@ -273,6 +280,7 @@ end
 
 module Cmi = Checking.Cmi
 
+(** Compiles program and all its dependencies into Ast_typed and aggregates them into single Ast_typed.program *)
 module Ast_typed_target (Params : Params) = struct
   include M (Params)
 
