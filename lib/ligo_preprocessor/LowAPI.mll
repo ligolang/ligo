@@ -329,7 +329,7 @@ module Make (Config : Config.S) (Options : Options.S) =
           else callback state lexbuf
 
 (* Scanning #import directives *)
-
+(*
 let import_action ~callback hash_pos state lexbuf =
   match Directive.scan_import hash_pos state lexbuf with
     Error (region, error) -> fail state region error
@@ -362,6 +362,7 @@ let import_action ~callback hash_pos state lexbuf =
          identical to the original #import. *)
       let () = state#copy_nl lexbuf
       in callback state lexbuf
+*)
 
 (* Scanning #if directives *)
 
@@ -601,8 +602,9 @@ rule scan state = parse
     match id with
       "include" ->
         include_action ~callback:scan region#start state lexbuf
-    | "import" ->
-        import_action  ~callback:scan region#start state lexbuf
+(* NOTE: import directive is deprecated *)
+(*    | "import" ->
+        import_action  ~callback:scan region#start state lexbuf *)
     | "define" ->
         define_action  ~callback:scan region#start state lexbuf
     | "undef" ->
