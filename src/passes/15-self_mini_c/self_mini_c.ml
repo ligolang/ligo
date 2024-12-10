@@ -150,15 +150,13 @@ let beta : bool ref -> expression -> expression =
   (* (let x = (let y = e1 in e2) in e3) ↦ (let y = e1 in let x = e2 in e3) *)
   | E_let_in ({ content = E_let_in (e1, inline2, ((y, b), e2)); _ }, inline1, ((x, a), e3))
     ->
-    let y' = Value_var.fresh_like y in
-    let e2 = Inline.replace e2 y y' in
     changed := true;
     { e with
       content =
         E_let_in
           ( e1
           , inline2
-          , ((y', b), { e with content = E_let_in (e2, inline1, ((x, a), e3)) }) )
+          , ((y, b), { e with content = E_let_in (e2, inline1, ((x, a), e3)) }) )
     }
   (* note: E_let_tuple/E_let_in and E_let_in/E_let_tuple conversions
      not implemented yet because they don't seem important (?) *)
@@ -166,23 +164,16 @@ let beta : bool ref -> expression -> expression =
   | E_application ({ content = E_let_in (e1, inline, ((x, a), e2)); _ }, e3) ->
     if is_pure e1 || is_pure e3
     then (
-      let x' = Value_var.fresh_like x in
-      let e2 = Inline.replace e2 x x' in
       changed := true;
       { e with
         content =
-          E_let_in (e1, inline, ((x', a), { e with content = E_application (e2, e3) }))
+          E_let_in (e1, inline, ((x, a), { e with content = E_application (e2, e3) }))
       })
     else e
   (* (let (x, y, ...) = e1 in e2)@e3 ↦ let (x, y, ...) = e1 in e2@e3  (if e1 or e3 is pure) *)
   | E_application ({ content = E_let_tuple (e1, (vars, e2)); _ }, e3) ->
     if is_pure e1 || is_pure e3
     then (
-      let vars = List.map ~f:(fun (x, a) -> x, Value_var.fresh_like x, a) vars in
-      let e2 =
-        List.fold_left vars ~init:e2 ~f:(fun e2 (x, x', _a) -> Inline.replace e2 x x')
-      in
-      let vars = List.map ~f:(fun (_x, x', a) -> x', a) vars in
       changed := true;
       { e with
         content = E_let_tuple (e1, (vars, { e with content = E_application (e2, e3) }))
@@ -295,6 +286,7 @@ let rec all_expression ~raise (options : Compiler_options.t) : expression -> exp
   else (
     let changed = ref false in
     let e = inline_lets changed e in
+    let e = Rename.rename e in
     let e = betas changed e in
     let e = etas changed e in
     let e = not_comparable ~raise e in
