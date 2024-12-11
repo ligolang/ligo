@@ -84,3 +84,5 @@ let yojson_of_wrap f (wrapped : 'a wrap) : json =
           ("region", Region.to_yojson wrapped#region)]
 
 let yojson_of_t = yojson_of_wrap
+
+let to_region w = Region.{value = w#payload; region = w#region}

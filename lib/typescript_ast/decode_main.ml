@@ -14,6 +14,7 @@ module TS_fun = Tree_sitter.Api.Functions
 module Ts_wrap = Typescript_ast.Ts_wrap
 module Loc_map = Typescript_ast.Loc_map
 module Ast = Typescript_ast.Ast
+module Ast_to_cst = Typescript_ast.Ast_to_cst
 
 (* Parsing *)
 
