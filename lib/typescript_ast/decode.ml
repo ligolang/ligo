@@ -331,7 +331,7 @@ and dec_statement ?(comments = []) node : (statement, _) result =
   (* "declaration" is a hidden rule *)
   | _ ->
     let* declaration = dec_declaration ~comments node in
-    Ok (S_declaration declaration)
+    Ok (S_declaration_statement declaration)
 
 (* Labeled statement *)
 

@@ -2891,7 +2891,7 @@ and statement =
   | S_import_statement of import_statement wrap
   | S_debugger_statement of kwd_debugger
   | S_expression_statement of expression_statement
-  | S_declaration of declaration
+  | S_declaration_statement of declaration
   | S_statement_block of statement_block
   | S_if_statement of if_statement wrap
   | S_switch_statement of switch_statement wrap
@@ -3612,7 +3612,7 @@ let region_of_statement = function
   | S_import_statement s -> s#region
   | S_debugger_statement s -> s#region
   | S_expression_statement s -> s#region
-  | S_declaration d -> region_of_declaration d
+  | S_declaration_statement d -> region_of_declaration d
   | S_statement_block (Braces s) -> s#region
   | S_if_statement s -> s#region
   | S_switch_statement s -> s#region
