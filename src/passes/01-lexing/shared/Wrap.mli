@@ -55,3 +55,5 @@ type json = Yojson.Safe.t
 
 val yojson_of_wrap : ('a -> json) -> 'a wrap -> json
 val yojson_of_t    : ('a -> json) -> 'a wrap -> json (* [yojson_of_wrap] *)
+
+val to_region : 'a wrap -> 'a Region.reg
