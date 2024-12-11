@@ -1,0 +1,474 @@
+(* Abstract Syntax Tree (AST) for JsLIGO *)
+
+(* Disabling warnings *)
+
+[@@@warning "-30"] (* multiply-defined record labels *)
+
+(* Vendor dependencies *)
+
+module Utils = Simple_utils.Utils
+module Region = Simple_utils.Region
+
+(* Local dependencies *)
+
+module Wrap = Lexing_shared.Wrap
+module Attr = Lexing_shared.Attr
+
+(* Utilities *)
+
+type 'a reg = 'a Region.reg
+type 'a wrap = 'a Wrap.wrap
+type decorator = Attr.t wrap
+
+(* Literals *)
+
+type variable = string wrap
+type file_path = string wrap
+type bytes_literal = (string * Hex.t) wrap
+type int_literal = (string * Z.t) wrap
+type string_literal = string wrap
+
+(* The Abstract Syntax Tree *)
+
+type t = statement list
+
+(* STATEMENTS *)
+
+(* IMPORTANT: The data constructors are sorted alphabetically. If you
+   add or modify some, please make sure they remain in order. *)
+and statement =
+  | S_block of statement list reg
+  | S_break of Region.t
+  | S_decl of declaration
+  | S_export of declaration
+  | S_expr of expr
+  | S_for of for_stmt reg
+  | S_for_of of for_of_stmt reg
+  | S_if of if_stmt reg
+  | S_return of expr option reg
+  | S_switch of switch_stmt reg
+  | S_while of while_stmt reg
+
+(* Conditional statement *)
+and if_stmt =
+  { test : expr
+  ; if_so : statement
+  ; if_not : statement option
+  }
+
+(* For-loops *)
+and for_stmt =
+  { initialiser : statement option
+  ; condition : expr option
+  ; afterthought : expr list
+  ; for_body : statement option
+  }
+
+(* For-of loops *)
+and for_of_stmt =
+  { index_kind : var_kind
+  ; index : pattern
+  ; expr : expr
+  ; for_of_body : statement
+  }
+
+and var_kind =
+  [ `Let of Region.t
+  | `Const of Region.t
+  ]
+
+(* Switch statement *)
+and switch_stmt = expr * cases
+
+and cases =
+  | All_cases of all_cases
+  | Default of switch_default
+
+and all_cases = switch_case reg Nonempty_list.t * switch_default
+and switch_case = expr * statement list
+and switch_default = statement list
+
+(* While-loop *)
+and while_stmt = expr * statement list
+
+(* DECLARATIONS *)
+
+(* IMPORTANT: The data constructors are sorted alphabetically. If you
+   add or modify some, please make sure they remain in order. *)
+and declaration =
+  | D_fun of fun_decl reg
+  | D_import of import_decl
+  | D_interface of interface_decl reg
+  | D_namespace of namespace_decl reg
+  | D_type of type_decl reg
+  | D_value of value_decl reg
+
+(* Function declaration *)
+and fun_decl =
+  { decorators : decorator list (* From the keyword "function" *)
+  ; fun_name : variable
+  ; generics : variable list
+  ; parameters : pattern list
+  ; rhs_type : type_expr option
+  ; fun_body : statement list
+  }
+
+(* Import declaration *)
+and import_decl =
+  | Import_alias of import_alias reg
+  | Import_all_as of import_all_as reg
+  | Import_from of import_from reg
+
+and import_alias =
+  { alias : variable
+  ; namespace_path : variable list
+  }
+
+and import_all_as =
+  { alias : variable
+  ; file_path : file_path
+  }
+
+and import_from =
+  { imported : variable Nonempty_list.t
+  ; file_path : file_path
+  }
+
+(* Interfaces *)
+and interface_decl =
+  { intf_name : variable
+  ; intf_extends : intf_expr list
+  ; intf_body : intf_entry list
+  }
+
+and intf_entry =
+  { entry_name : variable
+  ; entry_optional : bool
+  ; entry_type : type_expr
+  }
+
+and intf_expr =
+  | I_body of intf_entry list reg
+  | I_path of variable list reg
+
+(* Namespace declaration *)
+and namespace_decl =
+  { namespace_name : variable
+  ; namespace_body : statement list
+  }
+
+(* Type declarations *)
+and type_decl =
+  { name : variable
+  ; generics : variable list
+  ; type_expr : type_expr
+  }
+
+(* Value declaration *)
+and value_decl =
+  { decorators : decorator list (* From the keyword "let" or "const" *)
+  ; kind : var_kind
+  ; bindings : val_binding reg Nonempty_list.t
+  }
+
+and val_binding =
+  { pattern : pattern
+  ; rhs_type : type_expr option
+  ; rhs_expr : expr
+  }
+
+(* TYPE EXPRESSIONS *)
+
+(* IMPORTANT: The data constructors are sorted alphabetically. If you
+   add or modify some, please make sure they remain in order. *)
+and type_expr =
+  | T_array of array_type (* [t, [u, v]] *)
+  | T_for_all of (variable list * type_expr) reg (* <T,U>(x: T) => U *)
+  | T_fun of fun_type reg (* (a : t) => u *)
+  | T_int of int_literal (* 42 *)
+  | T_object of type_expr _object (* {x; @a y : t} *)
+  | T_string of string_literal (* "x" *)
+  | T_union of union_type (* number | string *)
+  | T_var of (variable Nonempty_list.t * type_ctor_args option) reg (* M.t<u,v> t M.t *)
+
+(* Type application *)
+and type_ctor_args = type_expr Nonempty_list.t reg
+
+(* Array type *)
+and array_type = type_expr Nonempty_list.t reg
+
+(* Functional type *)
+and fun_type = fun_type_params * type_expr
+and fun_type_params = fun_type_param reg list
+and fun_type_param = variable * type_expr
+
+(* Object type *)
+and 'a _object = 'a property reg list reg
+
+and 'a property =
+  { decorators : decorator list
+  ; property_id : property_id
+  ; property_rhs : 'a
+  }
+
+and property_id =
+  | F_int of int_literal
+  | F_name of variable
+  | F_str of string_literal
+
+(* Union type *)
+and union_type = type_expr Nonempty_list.t reg
+
+(* PATTERNS *)
+
+(* IMPORTANT: The data constructors are sorted alphabetically. If you
+   add or modify some, please make sure they remain in order. *)
+and pattern =
+  | P_array of pattern _array (* [x, ...y, z] [] *)
+  | P_bytes of bytes_literal (* 0xFFFA *)
+  | P_false of Region.t (* false *)
+  | P_int of int_literal (* 42 *)
+  | P_object of pattern _object (* {x, y : 0} *)
+  | P_string of string_literal (* "string" *)
+  | P_true of Region.t (* true *)
+  | P_typed of typed_pattern reg (* [x,y] : t *)
+  | P_var of variable Nonempty_list.t reg (* x  M.N.t *)
+
+(* Array pattern *)
+and 'a _array = 'a element list reg
+
+and 'a element =
+  | Spread of 'a
+  | Element of 'a
+
+(* Typed patterns (function parameters) *)
+and typed_pattern = pattern * type_expr
+
+(* EXPRESSIONS *)
+
+(* IMPORTANT: The data constructors are sorted alphabetically. If you
+   add or modify some, please make sure they remain in order. *)
+and expr =
+  | E_add of (expr * expr) reg (* x + y *)
+  | E_add_eq of (expr * expr) reg (* x += y *)
+  | E_and of (expr * expr) reg (* x && y *)
+  | E_app of (expr * expr list) reg (* f(x,y)  foo() *)
+  | E_array of expr _array (* [x, ...y, z]  [] *)
+  | E_arrow_fun of arrow_fun_expr reg (* (x : int) => e *)
+  | E_assign of (expr * expr) reg (* x = y *)
+  | E_bit_and of (expr * expr) reg (* x & y *)
+  | E_bit_and_eq of (expr * expr) reg (* x &= y *)
+  | E_bit_neg of (expr * expr) reg (* ~x *)
+  | E_bit_or of (expr * expr) reg (* x | y *)
+  | E_bit_or_eq of (expr * expr) reg (* x |= y *)
+  | E_bit_sl of (expr * expr) reg (* x << y *)
+  | E_bit_sl_seq of (expr * expr) reg (* x <<= y *)
+  | E_bit_sr of (expr * expr) reg (* x >> y *)
+  | E_bit_sr_eq of (expr * expr) reg (* x >>= y *)
+  | E_bit_xor of (expr * expr) reg (* x ^ y *)
+  | E_bit_xor_eq of (expr * expr) reg (* x ^= y *)
+  | E_bytes of bytes_literal (* 0xFFFA *)
+  | E_code_inj of code_inj reg
+  | E_div of (expr * expr) reg (* x / y *)
+  | E_div_eq of (expr * expr) reg (* x /= y *)
+  | E_equal of (expr * expr) reg (* x == y *)
+  | E_false of Region.t (* false *)
+  | E_function of function_expr reg (* function (x) {...} *)
+  | E_geq of (expr * expr) reg (* x >= y *)
+  | E_gt of (expr * expr) reg (* x > y *)
+  | E_int of int_literal (* 42 *)
+  | E_leq of (expr * expr) reg (* x <= y *)
+  | E_lt of (expr * expr) reg (* x < y *)
+  | E_mult of (expr * expr) reg (* x * y *)
+  | E_mult_eq of (expr * expr) reg (* x *= y *)
+  | E_neg of (expr * expr) reg (* -x *)
+  | E_neq of (expr * expr) reg (* x != y *)
+  | E_not of expr reg (* !x *)
+  | E_object of expr _object (* {x : e, y} *)
+  | E_or of (expr * expr) reg (* x || y *)
+  | E_post_decr of variable reg (* x-- *)
+  | E_post_incr of variable reg (* x++ *)
+  | E_pre_decr of variable reg (* --x *)
+  | E_pre_incr of variable reg (* ++x *)
+  | E_proj of projection reg (* e.x.1 *)
+  | E_rem of (expr * expr) reg (* x % n*)
+  | E_rem_eq of (expr * expr) reg (* x %= y*)
+  | E_string of string_literal (* "abcdef" *)
+  | E_sub of (expr * expr) reg (* x - y *)
+  | E_sub_eq of (expr * expr) reg (* x -= y *)
+  | E_ternary of ternary reg (* x ? y : z *)
+  | E_true of Region.t (* true *)
+  | E_typed of typed_expr reg (* e as t *)
+  | E_update of update_expr reg (* {...x, y : z} *)
+  | E_var of variable Nonempty_list.t reg (* M.N.x  y *)
+  | E_xor of (expr * expr) reg (* x ^^ y *)
+
+(* Functional expressions *)
+and arrow_fun_expr =
+  { generics : variable list
+  ; parameters : arrow_fun_params
+  ; rhs_type : type_expr option
+  ; fun_body : fun_body
+  }
+
+and function_expr =
+  { generics : variable list
+  ; parameters : arrow_fun_params
+  ; rhs_type : type_expr option
+  ; fun_body : fun_body
+  }
+
+and arrow_fun_params =
+  | Par_params of pattern list reg
+  | Naked_param of pattern
+
+and fun_body =
+  | Stmt_body of statement list reg
+  | Expr_body of expr
+
+(* Functional update of object expressions *)
+and update_expr =
+  { obj_expr : expr
+  ; updates : expr property list
+  }
+
+(* Ternary conditional *)
+and ternary =
+  { condition : expr
+  ; truthy : expr
+  ; falsy : expr
+  }
+
+(* Typed expression *)
+and typed_expr = expr (* "as" *) * type_expr
+
+(* Projections *)
+and projection =
+  { object_or_array : expr
+  ; property_path : selection Nonempty_list.t
+  }
+
+and selection =
+  | Property_name of variable (* Objects *)
+  | Property_str of string_literal (* Objects *)
+  | Component of int_literal (* Arrays  *)
+
+(* Code injection *)
+and code_inj = variable * expr
+
+(* PROJECTIONS *)
+
+(* Projecting regions from some nodes of the AST *)
+
+let import_decl_to_region = function
+  | Import_alias { region; _ } | Import_all_as { region; _ } | Import_from { region; _ }
+    -> region
+
+let declaration_to_region = function
+  | D_fun { region; _ } -> region
+  | D_import d -> import_decl_to_region d
+  | D_interface { region; _ } | D_namespace { region; _ } | D_type { region; _ } -> region
+  | D_value { region; _ } -> region
+
+let type_expr_to_region = function
+  | T_array { region; _ } -> region
+  | T_for_all { region; _ } | T_fun { region; _ } -> region
+  | T_int w -> w#region
+  | T_object { region; _ } -> region
+  | T_string w -> w#region
+  | T_union { region; _ } -> region
+  | T_var { region; _ } -> region
+
+let pattern_to_region = function
+  | P_array { region; _ } -> region
+  | P_bytes w -> w#region
+  | P_false r -> r
+  | P_int w -> w#region
+  | P_object { region; _ } -> region
+  | P_string w -> w#region
+  | P_true r -> r
+  | P_typed { region; _ } -> region
+  | P_var { region; _ } -> region
+
+let expr_to_region = function
+  | E_add { region; _ }
+  | E_add_eq { region; _ }
+  | E_and { region; _ }
+  | E_app { region; _ }
+  | E_array { region; _ }
+  | E_arrow_fun { region; _ }
+  | E_assign { region; _ }
+  | E_bit_and { region; _ }
+  | E_bit_and_eq { region; _ }
+  | E_bit_neg { region; _ }
+  | E_bit_or { region; _ }
+  | E_bit_or_eq { region; _ }
+  | E_bit_sl { region; _ }
+  | E_bit_sl_seq { region; _ }
+  | E_bit_sr { region; _ }
+  | E_bit_sr_eq { region; _ }
+  | E_bit_xor { region; _ }
+  | E_bit_xor_eq { region; _ } -> region
+  | E_bytes w -> w#region
+  | E_code_inj { region; _ }
+  | E_div { region; _ }
+  | E_div_eq { region; _ }
+  | E_equal { region; _ } -> region
+  | E_false r -> r
+  | E_function { region; _ } | E_geq { region; _ } | E_gt { region; _ } -> region
+  | E_int w -> w#region
+  | E_leq { region; _ }
+  | E_lt { region; _ }
+  | E_mult { region; _ }
+  | E_mult_eq { region; _ }
+  | E_neg { region; _ }
+  | E_neq { region; _ }
+  | E_not { region; _ }
+  | E_object { region; _ }
+  | E_or { region; _ }
+  | E_post_decr { region; _ }
+  | E_post_incr { region; _ }
+  | E_pre_decr { region; _ }
+  | E_pre_incr { region; _ }
+  | E_proj { region; _ }
+  | E_rem { region; _ }
+  | E_rem_eq { region; _ } -> region
+  | E_string w -> w#region
+  | E_sub { region; _ } | E_sub_eq { region; _ } | E_ternary { region; _ } -> region
+  | E_true r -> r
+  | E_typed { region; _ } | E_update { region; _ } -> region
+  | E_var { region; _ } -> region
+  | E_xor { region; _ } -> region
+
+let statement_to_region = function
+  | S_block { region; _ } -> region
+  | S_break r -> r
+  | S_decl d | S_export d -> declaration_to_region d
+  | S_expr e -> expr_to_region e
+  | S_for { region; _ } | S_for_of { region; _ } | S_if { region; _ } -> region
+  | S_return { region; _ } | S_switch { region; _ } | S_while { region; _ } -> region
+
+let var_kind_to_region = function
+  | `Let w | `Const w -> w#region
+
+let property_id_to_region = function
+  | F_name i -> i#region
+  | F_int i -> i#region
+  | F_str i -> i#region
+
+let fun_body_to_region = function
+  | Stmt_body { region; _ } -> region
+  | Expr_body e -> expr_to_region e
+
+let selection_to_region = function
+  | Property_name name -> name#region
+  | Property_str str -> str#region
+  | Component int -> int#region
+
+let intf_expr_to_region = function
+  | I_body { region; _ } -> region
+  | I_path { region; _ } -> region
+
+let parameters_to_region = function
+  | Par_params { region; _ } -> region
+  | Naked_param p -> pattern_to_region p
