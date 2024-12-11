@@ -12,4 +12,4 @@ fi
 opam update
 
 # Install local dependencies
-BLST_PORTABLE=y opam install -y --deps-only --with-test . --locked
+BLST_PORTABLE=y opam install -y --deps-only --with-test .
