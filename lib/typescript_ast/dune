@@ -27,6 +27,11 @@
  (libraries typescript_ast)
  (modules decode decode_main))
 
+(executable
+ (name strip_main)
+ (libraries typescript_ast)
+ (modules decode strip strip_main))
+
 ;; Local build of a standalone parser for node-types.json
 
 (executable
