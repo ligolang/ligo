@@ -79,12 +79,7 @@ and var_kind =
 
 (* Switch statement *)
 and switch_stmt = expr * cases
-
-and cases =
-  | All_cases of all_cases
-  | Default of switch_default
-
-and all_cases = switch_case reg Nonempty_list.t * switch_default
+and cases = switch_case reg list * switch_default
 and switch_case = expr * statement list
 and switch_default = statement list
 
