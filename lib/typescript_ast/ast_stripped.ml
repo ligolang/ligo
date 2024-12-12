@@ -370,8 +370,7 @@ let type_expr_to_region = function
   | T_array { region; _ } -> region
   | T_for_all { region; _ } | T_fun { region; _ } -> region
   | T_int w -> w#region
-  | T_object { region; _ }
-  | T_parameter_of { region; _ } -> region
+  | T_object { region; _ } | T_parameter_of { region; _ } -> region
   | T_string w -> w#region
   | T_union { region; _ } -> region
   | T_var { region; _ } -> region
