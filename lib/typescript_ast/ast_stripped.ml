@@ -88,7 +88,7 @@ and var_kind =
 
 (* Switch statement *)
 and switch_stmt = expr * cases
-and cases = switch_case reg list * switch_default
+and cases = switch_case list * switch_default
 and switch_case = expr * statement list
 and switch_default = statement list
 
@@ -100,7 +100,7 @@ and while_stmt = expr * statement list
 (* IMPORTANT: The data constructors are sorted alphabetically. If you
    add or modify some, please make sure they remain in order. *)
 and declaration =
-  | D_fun of fun_decl reg
+  | D_function of fun_decl reg
   | D_import of import_decl
   | D_interface of interface_decl reg
   | D_namespace of namespace_decl reg
@@ -150,10 +150,7 @@ and intf_expr =
   | I_path of variable list reg
 
 (* Namespace declaration *)
-and namespace_decl =
-  { namespace_name : variable
-  ; namespace_body : statement list
-  }
+and namespace_decl = variable * statement list
 
 (* Type declarations *)
 and type_decl =
@@ -197,8 +194,7 @@ and type_ctor_args = type_expr Nonempty_list.t reg
 and array_type = type_expr Nonempty_list.t reg
 
 (* Functional type *)
-and fun_type = fun_type_params * type_expr
-and fun_type_params = fun_type_param reg list
+and fun_type = fun_type_param reg list * type_expr
 and fun_type_param = variable * type_expr
 
 (* Object type *)
@@ -322,8 +318,8 @@ and function_expr =
   }
 
 and arrow_fun_params =
-  | Par_params of pattern list reg
-  | Naked_param of pattern
+  | Par_params of pattern list reg (* (x) => y *)
+  | Naked_param of variable (* x => y *)
 
 and fun_body =
   | Stmt_body of statement list reg
@@ -365,7 +361,7 @@ let import_decl_to_region = function
     -> region
 
 let declaration_to_region = function
-  | D_fun { region; _ } -> region
+  | D_function { region; _ } -> region
   | D_import d -> import_decl_to_region d
   | D_interface { region; _ } | D_namespace { region; _ } | D_type { region; _ } -> region
   | D_value { region; _ } -> region
@@ -473,4 +469,4 @@ let intf_expr_to_region = function
 
 let parameters_to_region = function
   | Par_params { region; _ } -> region
-  | Naked_param p -> pattern_to_region p
+  | Naked_param p -> p#region
