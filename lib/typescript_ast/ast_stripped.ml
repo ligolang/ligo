@@ -28,6 +28,15 @@ type bytes_literal = (string * Hex.t) wrap
 type int_literal = (string * Z.t) wrap
 type string_literal = string wrap
 
+(* Paths in reverse order
+
+   M
+   M.N
+   M.N.x.1
+ *)
+
+type path = variable Nonempty_list.t reg
+
 (* The Abstract Syntax Tree *)
 
 type t = statement list
@@ -108,26 +117,20 @@ and fun_decl =
   ; fun_body : statement list
   }
 
-(* Import declaration *)
+(* All import declarations *)
 and import_decl =
   | Import_alias of import_alias reg
   | Import_all_as of import_all_as reg
   | Import_from of import_from reg
 
-and import_alias =
-  { alias : variable
-  ; namespace_path : variable list
-  }
+(* import M = N.O *)
+and import_alias = variable * path
 
-and import_all_as =
-  { alias : variable
-  ; file_path : file_path
-  }
+(* import * as M from "/my/path.ts" *)
+and import_all_as = variable * file_path
 
-and import_from =
-  { imported : variable Nonempty_list.t
-  ; file_path : file_path
-  }
+(* import {x, y} from "/my/path.ts" *)
+and import_from = variable Nonempty_list.t * file_path
 
 (* Interfaces *)
 and interface_decl =
@@ -182,13 +185,10 @@ and type_expr =
   | T_fun of fun_type reg (* (a : t) => u *)
   | T_int of int_literal (* 42 *)
   | T_object of type_expr _object (* {x; @a y : t} *)
-  | T_parameter_of of parameter_of_type reg (* parameter_of<C> *)
+  | T_parameter_of of path (* parameter_of<C> *)
   | T_string of string_literal (* "x" *)
   | T_union of union_type (* number | string *)
-  | T_var of (variable Nonempty_list.t * type_ctor_args option) reg (* M.t<u,v> t M.t *)
-
-(* Parameter of type *)
-and parameter_of_type = variable Nonempty_list.t
+  | T_var of (path * type_ctor_args option) reg (* M.t<u,v> t M.t *)
 
 (* Type application *)
 and type_ctor_args = type_expr Nonempty_list.t reg
@@ -231,7 +231,7 @@ and pattern =
   | P_string of string_literal (* "string" *)
   | P_true of Region.t (* true *)
   | P_typed of typed_pattern reg (* [x,y] : t *)
-  | P_var of variable Nonempty_list.t reg (* x  M.N.t *)
+  | P_var of path (* x  M.N.t *)
 
 (* Array pattern *)
 and 'a _array = 'a element list reg
@@ -267,7 +267,7 @@ and expr =
   | E_bit_xor of (expr * expr) reg (* x ^ y *)
   | E_bit_xor_eq of (expr * expr) reg (* x ^= y *)
   | E_bytes of bytes_literal (* 0xFFFA *)
-  | E_contract_of of contract_of_expr reg (* contract_of (M.N)  *)
+  | E_contract_of of path (* contract_of (M.N)  *)
   | E_div of (expr * expr) reg (* x / y *)
   | E_div_eq of (expr * expr) reg (* x /= y *)
   | E_equal of (expr * expr) reg (* x == y *)
@@ -300,14 +300,11 @@ and expr =
   | E_true of Region.t (* true *)
   | E_typed of typed_expr reg (* e as t *)
   | E_update of update_expr reg (* {...x, y : z} *)
-  | E_var of variable Nonempty_list.t reg (* M.N.x  y *)
+  | E_var of path (* M.N.x  y *)
   | E_xor of (expr * expr) reg (* x ^^ y *)
 
-(* Michelson injection *)
+(* Michelson injection: "Michelson (`{ADD}`) as t" *)
 and michelson_expr = (variable * string_literal * type_expr) reg
-
-(* Contract of expression *)
-and contract_of_expr = variable Nonempty_list.t
 
 (* Functional expressions *)
 and arrow_fun_expr =

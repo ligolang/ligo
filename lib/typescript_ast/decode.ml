@@ -37,13 +37,6 @@ let named_child_ranked = Ts_wrap.named_child_ranked ~get_region
 let child_ranked = Ts_wrap.child_ranked ~get_region
 let child_with_field = Ts_wrap.child_with_field ~get_region
 
-(* Handling results and failing in case of error *)
-(*
-let ensure_Ok node = function
-  | Result.Ok ok -> ok
-  | Error msg -> failwith ((!get_region node)#compact `Byte ^ "\n" ^ msg)
-*)
-
 (* Region of a node as a string *)
 
 let error fun_name node : (_, string) result =
