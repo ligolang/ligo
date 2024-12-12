@@ -32,7 +32,7 @@ type string_literal = string wrap
 
    M
    M.N
-   M.N.x.1
+   M.N.x.y
  *)
 
 type path = variable Nonempty_list.t reg
