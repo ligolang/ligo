@@ -27,23 +27,9 @@ type 'a reg = 'a Region.reg
 type 'a wrap = 'a Wrap.wrap
 
 let ( let* ) v f = Result.bind v ~f
+let ( <@ ) f g x = f (g x)
 
 let mk_reg region value = Region.{region; value}
-
-let rev_erase_options =
-  let f acc = function
-    | None -> acc
-    | Some elt -> elt :: acc
-  in
-  List.fold_left ~f ~init:[]
-
-let strip_opt strip = Option.map ~f:strip
-
-let strip_list_opt strip = function
-  | None -> Ok []
-  | Some list -> strip list
-
-(* Errors (temporary) *)
 
 let error_reg ?(hint: string option) (region : Region.t) (msg : string) =
   let hint =
@@ -53,6 +39,34 @@ let error_reg ?(hint: string option) (region : Region.t) (msg : string) =
   Error (Printf.sprintf "%s:\n%s%s" (region#to_string `Byte) msg hint)
 
 let error ?hint (wrap : 'a wrap) (msg : string) = error_reg ?hint wrap#region msg
+
+let rev_erase_options =
+  let f acc = function
+    | None -> acc
+    | Some elt -> elt :: acc
+  in
+  List.fold_left ~f ~init:[]
+
+let strip_opt strip = function
+  | None -> Ok None
+  | Some node -> strip node
+
+let strip_list_opt strip = function
+  | None -> Ok []
+  | Some list -> strip list
+
+let opt_to_error strip (node: _ wrap) msg =
+  match strip node with
+  | None -> error node msg
+  | Some node -> Ok node
+
+(*
+let only_one strip (node: _ wrap) msg =
+  match strip node with
+  | Ok [node] -> Ok node
+  | Ok _ -> error node msg
+  | Error msg -> Error msg
+*)
 
 (* Stripping *)
 
@@ -133,7 +147,34 @@ and strip_statement_block (node : Ast.statement_block) : (S.statement list reg, 
 (* If statement *)
 
 and strip_S_if_statement (node : Ast.if_statement wrap) : (S.statement option, _) result =
-  ignore node; Error "TODO: strip_S_if_statement"
+  let if_stmt, region = node#payload, node#region in
+  let Ast.{kwd_if=_; condition; consequence; alternative} = if_stmt in
+  let* test = strip_parenthesized_expression condition in
+  let* test =
+    match test with
+    | [test] -> Ok test
+    | _ -> let region = Ast.region_of_parens condition
+           and msg = "Exactly one test expression is supported in JsLIGO." in
+           error_reg region msg in
+  let* if_so = strip_statement consequence in
+  let* if_so =
+    match if_so with
+    | None -> let region = Ast.region_of_statement consequence
+              and msg = "Empty consequence is not supported in JsLIGO." in
+              error_reg region msg
+    | Some if_so -> Ok if_so in
+  let* if_not = strip_opt (strip_statement <@ snd) alternative in
+  let if_stmt = S.{test; if_so; if_not} in
+  Ok (Some (S.S_if (mk_reg region if_stmt)))
+
+and strip_parenthesized_expression (node : Ast.parenthesized_expression) : (S.expr list, _) result =
+  let Ast.Parens expressions = node in
+  let expressions = expressions#payload.contents in
+  strip_expressions expressions
+
+and strip_expressions (node : Ast.expressions) : (S.expr list, _) result =
+  let expressions = Nonempty_list.to_list node#payload in
+  Result.all @@ List.map ~f:strip_expression expressions
 
 (* Switch statement *)
 
