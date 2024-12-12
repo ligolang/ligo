@@ -30,14 +30,18 @@ let ( let* ) v f = Result.bind v ~f
 
 let mk_reg region value = Region.{region; value}
 
-(* List of options to reversed list without options *)
-
 let rev_erase_options =
   let f acc = function
     | None -> acc
     | Some elt -> elt :: acc
   in
   List.fold_left ~f ~init:[]
+
+let strip_opt strip = Option.map ~f:strip
+
+let strip_list_opt strip = function
+  | None -> Ok []
+  | Some list -> strip list
 
 (* Errors (temporary) *)
 
@@ -238,7 +242,8 @@ and strip_D_lexical_declaration (node : Ast.lexical_declaration wrap) : (S.decla
 (* Variable declaration *)
 
 and strip_D_variable_declaration (node : Ast.variable_declaration wrap) : (S.declaration, _) result =
-  ignore node; Error "TODO: strip_D_variable_declaration"
+  error node "Variable declared with 'var' are not supported in JsLIGO."
+        ~hint:"Use the 'let' modifier."
 
 (* Function signature *)
 
@@ -263,7 +268,32 @@ and strip_D_internal_module (node : Ast.internal_module wrap) : (S.declaration, 
 (* Type alias declaration *)
 
 and strip_D_type_alias_declaration (node : Ast.type_alias_declaration wrap) : (S.declaration, _) result =
-  ignore node; Error "TODO: strip_D_type_alias_declaration"
+  let type_decl, region = node#payload, node#region in
+  let Ast.{kwd_type=_; name; type_parameters; sym_equal=_; type_expr} = type_decl in
+  let  name = strip_type_identifier name in
+  let* generics = strip_list_opt strip_type_parameters type_parameters in
+  let* type_expr = strip_type_expr type_expr in
+  let type_decl' = S.{name; generics; type_expr} in
+  Ok (S.D_type (mk_reg region type_decl'))
+
+and strip_type_identifier (node: Ast.type_identifier) : S.variable = node
+
+and strip_type_parameters (node : Ast.type_parameters) : (S.variable list, _) result =
+  let Ast.Chevrons type_params = node in
+  let type_params = type_params#payload.contents in
+  Result.all @@ (List.map ~f:strip_type_parameter type_params)
+
+and strip_type_parameter (node : Ast.type_parameter wrap) : (S.variable, _) result =
+  let Ast.{kwd_const=_; name; constraint_expr; default_type} = node#payload in
+  match constraint_expr, default_type with
+  | None, None ->
+     Ok name
+  | Some (_, type_expr), _ ->
+     let region = Ast.region_of_type_expr type_expr in
+     error_reg region "Constraints on type parameters are not supported in JsLIGO."
+  | _, Some (_, type_expr) ->
+     let region = Ast.region_of_type_expr type_expr in
+     error_reg region "Defaults of type parameters are not supported in JsLIGO."
 
 (* Enum declaration *)
 
@@ -287,7 +317,7 @@ and strip_D_ambient_declaration (node : Ast.ambient_declaration wrap) : (S.decla
 
 (* TYPES *)
 
-and strip_type_expression (node : Ast.type_expr) : (S.type_expr, _) result =
+and strip_type_expr (node : Ast.type_expr) : (S.type_expr, _) result =
   match node with
   | T_primary_type t -> strip_T_primary_type t
   | T_function_type t -> strip_T_function_type t
