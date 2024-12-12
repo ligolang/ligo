@@ -272,7 +272,6 @@ and expr =
   | E_bit_xor of (expr * expr) reg (* x ^ y *)
   | E_bit_xor_eq of (expr * expr) reg (* x ^= y *)
   | E_bytes of bytes_literal (* 0xFFFA *)
-  | E_code_inj of code_inj reg
   | E_contract_of of contract_of_expr reg (* contract_of (M.N)  *)
   | E_div of (expr * expr) reg (* x / y *)
   | E_div_eq of (expr * expr) reg (* x /= y *)
@@ -284,6 +283,7 @@ and expr =
   | E_int of int_literal (* 42 *)
   | E_leq of (expr * expr) reg (* x <= y *)
   | E_lt of (expr * expr) reg (* x < y *)
+  | E_michelson of michelson_expr (* michelson (`{ADD}`) as t *)
   | E_mult of (expr * expr) reg (* x * y *)
   | E_mult_eq of (expr * expr) reg (* x *= y *)
   | E_neg of (expr * expr) reg (* -x *)
@@ -307,6 +307,9 @@ and expr =
   | E_update of update_expr reg (* {...x, y : z} *)
   | E_var of variable Nonempty_list.t reg (* M.N.x  y *)
   | E_xor of (expr * expr) reg (* x ^^ y *)
+
+(* Michelson injection *)
+and michelson_expr = (variable * string_literal * type_expr) reg
 
 (* Contract of expression *)
 and contract_of_expr = variable Nonempty_list.t
@@ -359,10 +362,7 @@ and projection =
 and selection =
   | Property_name of variable (* Objects *)
   | Property_str of string_literal (* Objects *)
-  | Component of int_literal (* Arrays  *)
-
-(* Code injection *)
-and code_inj = variable * expr
+  | Component of int_literal (* Arrays *)
 
 (* PROJECTIONS *)
 
@@ -419,7 +419,6 @@ let expr_to_region = function
   | E_bit_xor { region; _ }
   | E_bit_xor_eq { region; _ } -> region
   | E_bytes w -> w#region
-  | E_code_inj { region; _ }
   | E_contract_of { region; _ }
   | E_div { region; _ }
   | E_div_eq { region; _ }
@@ -429,6 +428,7 @@ let expr_to_region = function
   | E_int w -> w#region
   | E_leq { region; _ }
   | E_lt { region; _ }
+  | E_michelson { region; _ }
   | E_mult { region; _ }
   | E_mult_eq { region; _ }
   | E_neg { region; _ }
