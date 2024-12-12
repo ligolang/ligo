@@ -187,9 +187,13 @@ and type_expr =
   | T_fun of fun_type reg (* (a : t) => u *)
   | T_int of int_literal (* 42 *)
   | T_object of type_expr _object (* {x; @a y : t} *)
+  | T_parameter_of of parameter_of_type reg (* parameter_of<C> *)
   | T_string of string_literal (* "x" *)
   | T_union of union_type (* number | string *)
   | T_var of (variable Nonempty_list.t * type_ctor_args option) reg (* M.t<u,v> t M.t *)
+
+(* Parameter of type *)
+and parameter_of_type = variable Nonempty_list.t
 
 (* Type application *)
 and type_ctor_args = type_expr Nonempty_list.t reg
@@ -269,6 +273,7 @@ and expr =
   | E_bit_xor_eq of (expr * expr) reg (* x ^= y *)
   | E_bytes of bytes_literal (* 0xFFFA *)
   | E_code_inj of code_inj reg
+  | E_contract_of of contract_of_expr reg (* contract_of (M.N)  *)
   | E_div of (expr * expr) reg (* x / y *)
   | E_div_eq of (expr * expr) reg (* x /= y *)
   | E_equal of (expr * expr) reg (* x == y *)
@@ -302,6 +307,9 @@ and expr =
   | E_update of update_expr reg (* {...x, y : z} *)
   | E_var of variable Nonempty_list.t reg (* M.N.x  y *)
   | E_xor of (expr * expr) reg (* x ^^ y *)
+
+(* Contract of expression *)
+and contract_of_expr = variable Nonempty_list.t
 
 (* Functional expressions *)
 and arrow_fun_expr =
@@ -374,7 +382,8 @@ let type_expr_to_region = function
   | T_array { region; _ } -> region
   | T_for_all { region; _ } | T_fun { region; _ } -> region
   | T_int w -> w#region
-  | T_object { region; _ } -> region
+  | T_object { region; _ }
+  | T_parameter_of { region; _ } -> region
   | T_string w -> w#region
   | T_union { region; _ } -> region
   | T_var { region; _ } -> region
@@ -411,6 +420,7 @@ let expr_to_region = function
   | E_bit_xor_eq { region; _ } -> region
   | E_bytes w -> w#region
   | E_code_inj { region; _ }
+  | E_contract_of { region; _ }
   | E_div { region; _ }
   | E_div_eq { region; _ }
   | E_equal { region; _ } -> region
