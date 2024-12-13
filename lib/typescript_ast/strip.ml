@@ -265,8 +265,16 @@ and strip_S_continue_statement (node : Ast.continue_statement wrap)
 and strip_S_return_statement (node : Ast.return_statement wrap)
     : (S.statement option, _) result
   =
-  ignore node;
-  Error "TODO: strip_return_statement"
+  let Ast.{kwd_return=_; expressions} = node#payload in
+  match expressions with
+  | None -> Ok (Some (S.S_return (mk_reg node#region None)))
+  | Some exprs ->
+     let* exprs = strip_expressions exprs in
+     match exprs with
+     | [] -> Ok (Some (S.S_return (mk_reg node#region None)))
+     | [expr] ->
+        Ok (Some (S.S_return (mk_reg node#region (Some expr))))
+     | _ -> error node "Multiple values in return are not supported in JsLIGO."
 
 (* Throw statement *)
 
