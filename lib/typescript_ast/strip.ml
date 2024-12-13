@@ -580,34 +580,29 @@ and strip_T_tuple_type (node : Ast.tuple_type) : (S.type_expr, _) result =
 and strip_T_flow_maybe_type (node : (Ast.sym_qmark * Ast.primary_type) wrap)
     : (S.type_expr, _) result
   =
-  ignore node;
-  Error "TODO: strip_T_flow_maybe_type"
+  error node "Maybe types are not supported in JsLIGO."
 
 (* Type query *)
 
 and strip_T_type_query (node : (Ast.kwd_keyof * Ast.type_query) wrap)
     : (S.type_expr, _) result
   =
-  ignore node;
-  Error "TODO: strip_T_type_query"
+  error node "Type queries are not supported in JsLIGO."
 
 (* Index type query *)
 
 and strip_T_index_type_query (node : (Ast.kwd_keyof * Ast.primary_type) wrap)
     : (S.type_expr, _) result
   =
-  ignore node;
-  Error "TODO: strip_T_index_type_query"
+  error node "Index type queries are not supported in JsLIGO."
 
-(* This as a type *)
+(* "This" as a type *)
 
 and strip_T_this (node : Ast.kwd_this) : (S.type_expr, _) result =
-  ignore node;
-  Error "TODO: strip_T_this"
+  error node "Type 'this' is not supported by JsLIGO."
 
 and strip_T_existential_type (node : Ast.sym_star) : (S.type_expr, _) result =
-  ignore node;
-  Error "TODO: strip_T_existential_type"
+  error node "Existential types are not supported by JsLIGO."
 
 (* Literal type *)
 
@@ -618,22 +613,19 @@ and strip_T_literal_type (node : Ast.literal_type) : (S.type_expr, _) result =
 (* Lookup type *)
 
 and strip_T_lookup_type (node : Ast.lookup_type wrap) : (S.type_expr, _) result =
-  ignore node;
-  Error "TODO: strip_T_lookup_type"
+  error node "Lookup types are not supported in JsLIGO."
 
 (* Conditional type *)
 
 and strip_T_conditional_type (node : Ast.conditional_type wrap) : (S.type_expr, _) result =
-  ignore node;
-  Error "TODO: strip_T_conditional_type"
+  error node "Conditional types are not supported in JsLIGO."
 
 (* Template literal type *)
 
 and strip_T_template_literal_type (node : Ast.template_literal_type wrap)
     : (S.type_expr, _) result
   =
-  ignore node;
-  Error "TODO: strip_T_template_literal_type"
+  error node "Template literal type are not supported in JsLIGO."
 
 (* Intersection type *)
 
