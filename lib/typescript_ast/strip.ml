@@ -131,8 +131,11 @@ and strip_S_debugger_statement (node : Ast.kwd_debugger) : (S.statement option, 
 and strip_S_expression_statement (node : Ast.expression_statement)
     : (S.statement option, _) result
   =
-  ignore node;
-  Error "TODO: strip_S_expression_statement"
+  let* exprs = strip_expressions node in
+  match exprs with
+  | [] -> Ok None (* Should not happen *)
+  | [ expr ] -> Ok (Some (S.S_expr expr))
+  | _ -> error node "Multiple values are not supported in JsLIGO."
 
 (* Declaration statement *)
 
