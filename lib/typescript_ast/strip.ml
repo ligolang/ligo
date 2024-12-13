@@ -472,40 +472,42 @@ and strip_T_primary_type (node : Ast.primary_type) : (S.type_expr, _) result =
 
 (* Parenthesized type *)
 
-and strip_T_parenthesized_type (node : Ast.type_expr Ast.parens) : (S.type_expr, _) result =
-  let Parens parens = node in
+and strip_T_parenthesized_type (node : Ast.type_expr Ast.parens) : (S.type_expr, _) result
+  =
+  let (Parens parens) = node in
   strip_type_expr parens#payload.contents
 
 (* Predefined type *)
 
 and strip_T_predefined_type (node : Ast.predefined_type) : (S.type_expr, _) result =
   match node with
-  | T_any kwd_any ->
-     error_reg kwd_any#region "The type 'any' is not supported in JsLIGO."
+  | T_any kwd_any -> error_reg kwd_any#region "The type 'any' is not supported in JsLIGO."
   | T_number kwd_number ->
-     error_reg kwd_number#region "The type 'number' is not supported in JsLIGO."
-     ~hint:"Use 'bigint' or 'nat'."
-  | T_boolean kwd_boolean -> (* The pipeline uses "bool" instead *)
-     let region = kwd_boolean#region in
-     let bool = Wrap.make "bool" region in
-     let path = mk_reg region (Nonempty_list.singleton bool) in
-     Ok (T_var (mk_reg region (path, [])))
+    error_reg
+      kwd_number#region
+      "The type 'number' is not supported in JsLIGO."
+      ~hint:"Use 'bigint' or 'nat'."
+  | T_boolean kwd_boolean ->
+    (* The pipeline uses "bool" instead *)
+    let region = kwd_boolean#region in
+    let bool = Wrap.make "bool" region in
+    let path = mk_reg region (Nonempty_list.singleton bool) in
+    Ok (T_var (mk_reg region (path, [])))
   | T_string kwd_string ->
-     let region = kwd_string#region in
-     let path = mk_reg region (Nonempty_list.singleton kwd_string) in
-     Ok (T_var (mk_reg region (path, [])))
+    let region = kwd_string#region in
+    let path = mk_reg region (Nonempty_list.singleton kwd_string) in
+    Ok (T_var (mk_reg region (path, [])))
   | T_symbol kwd_symbol ->
-     error_reg kwd_symbol#region "The type 'symbol' is not supported in JsLIGO."
+    error_reg kwd_symbol#region "The type 'symbol' is not supported in JsLIGO."
   | T_unique_symbol kwd_unique_symbol ->
-     error_reg kwd_unique_symbol#region "Type 'unique symbol' is not supported in JsLIGO."
-  | T_void kwd_void ->
-     error_reg kwd_void#region "Type 'void' is not supported in JsLIGO."
+    error_reg kwd_unique_symbol#region "Type 'unique symbol' is not supported in JsLIGO."
+  | T_void kwd_void -> error_reg kwd_void#region "Type 'void' is not supported in JsLIGO."
   | T_unknown kwd_unknown ->
-     error_reg kwd_unknown#region "Type 'unknown' is not supported in JsLIGO."
+    error_reg kwd_unknown#region "Type 'unknown' is not supported in JsLIGO."
   | T_never kwd_never ->
-     error_reg kwd_never#region "Type 'never' is not supported in JsLIGO."
+    error_reg kwd_never#region "Type 'never' is not supported in JsLIGO."
   | T_object kwd_object ->
-     error_reg kwd_object#region "Type 'object' is not supported in JsLIGO"
+    error_reg kwd_object#region "Type 'object' is not supported in JsLIGO"
 
 (* Type identifier *)
 
@@ -607,8 +609,47 @@ and strip_T_existential_type (node : Ast.sym_star) : (S.type_expr, _) result =
 (* Literal type *)
 
 and strip_T_literal_type (node : Ast.literal_type) : (S.type_expr, _) result =
+  match node with
+  | T_unary_type t -> strip_T_unary_type t
+  | T_number t -> strip_T_number t
+  | T_string t -> strip_T_string t
+  | T_true t -> strip_T_true t
+  | T_false t -> strip_T_false t
+  | T_null t -> strip_T_null t
+  | T_undefined t -> strip_T_undefined t
+
+and strip_T_unary_type (node : Ast.unary_expression wrap) : (S.type_expr, _) result =
   ignore node;
-  Error "TODO: strip_T_literal_type"
+  Error "TODO: strip_T_unary_type"
+
+and strip_T_number (node : Ast.number) : (S.type_expr, _) result =
+  let region = Ast.region_of_number node in
+  match node with
+  | Hex _ | Bin _ | Oct _ ->
+    error_reg region "This number literal as a type is not supported by JsLIGO."
+  | Dec (literal, _) ->
+    let lexeme, q = literal#payload in
+    if Z.equal (Q.den q) Z.one
+    then (
+      let z = Q.to_bigint q in
+      let literal = Wrap.make (lexeme, z) literal#region in
+      Ok (T_int literal))
+    else error_reg region "Non-integer numbers as types are not supported by JsLIGO."
+
+and strip_T_string (node : Ast.string_literal) : (S.type_expr, _) result =
+  Ok (S.T_string node)
+
+and strip_T_true (node : Ast.kwd_true) : (S.type_expr, _) result =
+  error node "The singleton type 'true' is not supported by JsLIGO."
+
+and strip_T_false (node : Ast.kwd_false) : (S.type_expr, _) result =
+  error node "The singleton type 'false' is not supported by JsLIGO."
+
+and strip_T_null (node : Ast.kwd_null) : (S.type_expr, _) result =
+  error node "The type 'null' is not supported by JsLIGO."
+
+and strip_T_undefined (node : Ast.kwd_undefined) : (S.type_expr, _) result =
+  error node "The type 'undefined' is not supported by JsLIGO."
 
 (* Lookup type *)
 
@@ -644,8 +685,9 @@ and strip_T_union_type (node : Ast.union_type wrap) : (S.type_expr, _) result =
     match type_1_opt with
     | None -> Ok (Nonempty_list.singleton type_2)
     | Some type_1 ->
-       let* type_1 = strip_type_expr type_1 in
-       Ok (Nonempty_list.(type_1 :: [type_2])) in
+      let* type_1 = strip_type_expr type_1 in
+      Ok Nonempty_list.(type_1 :: [ type_2 ])
+  in
   Ok (S.T_union (mk_reg region union_type))
 
 (* Function type *)
