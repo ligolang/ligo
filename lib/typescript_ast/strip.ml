@@ -633,8 +633,7 @@ and strip_T_literal_type (node : Ast.literal_type) : (S.type_expr, _) result =
   | T_undefined t -> strip_T_undefined t
 
 and strip_T_unary_type (node : Ast.unary_expression wrap) : (S.type_expr, _) result =
-  ignore node;
-  Error "TODO: strip_T_unary_type"
+  error node "Unary type are not supported in JsLIGO."
 
 and strip_T_number (node : Ast.number) : (S.type_expr, _) result =
   let region = Ast.region_of_number node in
