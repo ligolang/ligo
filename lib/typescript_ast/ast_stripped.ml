@@ -180,7 +180,7 @@ and val_binding =
 (* IMPORTANT: The data constructors are sorted alphabetically. If you
    add or modify some, please make sure they remain in order. *)
 and type_expr =
-  | T_array of array_type (* [t, [u, v]] *)
+  | T_tuple of tuple_type (* [t, [u, v]] *)
   | T_for_all of (variable list * type_expr) reg (* <T,U>(x: T) => U *)
   | T_fun of fun_type reg (* (a : t) => u *)
   | T_int of int_literal (* 42 *)
@@ -190,8 +190,8 @@ and type_expr =
   | T_union of union_type (* number | string *)
   | T_var of (path * type_expr list) reg (* M.t<u,v> t M.t *)
 
-(* Array type *)
-and array_type = type_expr Nonempty_list.t reg
+(* Tuple type *)
+and tuple_type = type_expr Nonempty_list.t reg
 
 (* Functional type *)
 and fun_type = fun_type_param reg list * type_expr
@@ -368,7 +368,7 @@ let declaration_to_region = function
   | D_value { region; _ } -> region
 
 let type_expr_to_region = function
-  | T_array { region; _ } -> region
+  | T_tuple { region; _ } -> region
   | T_for_all { region; _ } | T_fun { region; _ } -> region
   | T_int w -> w#region
   | T_object { region; _ } | T_parameter_of { region; _ } -> region
