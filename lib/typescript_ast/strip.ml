@@ -426,7 +426,14 @@ and strip_expression (node : Ast.expression) : (S.expr, _) result =
 (* As-expression *)
 
 and strip_E_as_expression (node : Ast.as_expression wrap) : (S.expr, _) result =
-  ignore node; Error "TODO: strip_E_as_expression"
+  let as_expr, region = node#payload, node#region in
+  let expr, _, as_what = as_expr in
+  match as_what with
+  | Ast.As_type type_expr ->
+     let* expr = strip_expression expr in
+     let* type_expr = strip_type_expr type_expr in
+     Ok (S.E_typed (mk_reg region (expr, type_expr)))
+  | As_const kwd_const -> error kwd_const "Const not supported here in JsLIGO."
 
 (* Assignment expression *)
 
