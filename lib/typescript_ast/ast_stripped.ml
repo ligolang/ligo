@@ -19,6 +19,7 @@ module Attr = Lexing_shared.Attr
 type 'a reg = 'a Region.reg
 type 'a wrap = 'a Wrap.wrap
 type decorator = Attr.t wrap
+type comment = string wrap
 
 (* Literals *)
 
@@ -28,11 +29,11 @@ type bytes_literal = (string * Hex.t) wrap
 type int_literal = (string * Z.t) wrap
 type string_literal = string wrap
 
-(* Paths in reverse order
+(* Paths in _reverse order_:
 
-   M
-   M.N
-   M.N.x.y
+   M       -> [M]
+   M.N     -> [N; M]
+   M.N.x.y -> [y; x; N; M]
  *)
 
 type path = variable Nonempty_list.t reg
@@ -110,6 +111,7 @@ and declaration =
 (* Function declaration *)
 and fun_decl =
   { decorators : decorator list (* From the keyword "function" *)
+  ; comments : comment list (* From the keyword "function" *)
   ; fun_name : variable
   ; generics : variable list
   ; parameters : pattern list
@@ -162,6 +164,7 @@ and type_decl =
 (* Value declaration *)
 and value_decl =
   { decorators : decorator list (* From the keyword "let" or "const" *)
+  ; comments : comment list (* From the keyword "let" or "const" *)
   ; kind : var_kind
   ; bindings : val_binding reg Nonempty_list.t
   }
@@ -201,7 +204,8 @@ and fun_type_param = variable * type_expr
 and 'a _object = 'a property reg list reg
 
 and 'a property =
-  { decorators : decorator list
+  { decorators : decorator list (* From the property identifier *)
+  ; comments : comment list (* From the property identifier *)
   ; property_id : property_id
   ; property_rhs : 'a
   }
