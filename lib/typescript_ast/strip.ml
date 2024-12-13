@@ -472,10 +472,9 @@ and strip_T_primary_type (node : Ast.primary_type) : (S.type_expr, _) result =
 
 (* Parenthesized type *)
 
-and strip_T_parenthesized_type (node : Ast.type_expr Ast.parens) : (S.type_expr, _) result
-  =
-  ignore node;
-  Error "TODO: strip_T_parenthesized_type"
+and strip_T_parenthesized_type (node : Ast.type_expr Ast.parens) : (S.type_expr, _) result =
+  let Parens parens = node in
+  strip_type_expr parens#payload.contents
 
 (* Predefined type *)
 
