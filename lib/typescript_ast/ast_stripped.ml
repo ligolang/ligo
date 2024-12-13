@@ -180,7 +180,7 @@ and val_binding =
 (* IMPORTANT: The data constructors are sorted alphabetically. If you
    add or modify some, please make sure they remain in order. *)
 and type_expr =
-  | T_tuple of tuple_type (* [t, [u, v]] *)
+  | T_tuple of type_expr list reg (* [t, [u, v]] *)
   | T_for_all of (variable list * type_expr) reg (* <T,U>(x: T) => U *)
   | T_fun of fun_type reg (* (a : t) => u *)
   | T_int of int_literal (* 42 *)
@@ -190,12 +190,8 @@ and type_expr =
   | T_union of union_type (* number | string *)
   | T_var of (path * type_expr list) reg (* M.t<u,v> t M.t *)
 
-(* Tuple type *)
-and tuple_type = type_expr Nonempty_list.t reg
-
 (* Functional type *)
-and fun_type = fun_type_param reg list * type_expr
-and fun_type_param = variable * type_expr
+and fun_type = (variable * type_expr) list * type_expr
 
 (* Object type *)
 and 'a _object = 'a property reg list reg
@@ -357,17 +353,17 @@ and selection =
 
 (* Projecting regions from some nodes of the AST *)
 
-let import_decl_to_region = function
+let region_of_import_decl = function
   | Import_alias { region; _ } | Import_all_as { region; _ } | Import_from { region; _ }
     -> region
 
-let declaration_to_region = function
+let region_of_declaration = function
   | D_function { region; _ } -> region
-  | D_import d -> import_decl_to_region d
+  | D_import d -> region_of_import_decl d
   | D_interface { region; _ } | D_namespace { region; _ } | D_type { region; _ } -> region
   | D_value { region; _ } -> region
 
-let type_expr_to_region = function
+let region_of_type_expr = function
   | T_tuple { region; _ } -> region
   | T_for_all { region; _ } | T_fun { region; _ } -> region
   | T_int w -> w#region
@@ -376,7 +372,7 @@ let type_expr_to_region = function
   | T_union { region; _ } -> region
   | T_var { region; _ } -> region
 
-let pattern_to_region = function
+let region_of_pattern = function
   | P_array { region; _ } -> region
   | P_bytes w -> w#region
   | P_false r -> r
@@ -387,7 +383,7 @@ let pattern_to_region = function
   | P_typed { region; _ } -> region
   | P_var { region; _ } -> region
 
-let expr_to_region = function
+let region_of_expr = function
   | E_add { region; _ }
   | E_add_eq { region; _ }
   | E_and { region; _ }
@@ -438,35 +434,35 @@ let expr_to_region = function
   | E_var { region; _ } -> region
   | E_xor { region; _ } -> region
 
-let statement_to_region = function
+let region_of_statement = function
   | S_block { region; _ } -> region
   | S_break r -> r
-  | S_decl d | S_export d -> declaration_to_region d
-  | S_expr e -> expr_to_region e
+  | S_decl d | S_export d -> region_of_declaration d
+  | S_expr e -> region_of_expr e
   | S_for { region; _ } | S_for_of { region; _ } | S_if { region; _ } -> region
   | S_return { region; _ } | S_switch { region; _ } | S_while { region; _ } -> region
 
-let var_kind_to_region = function
+let region_of_var_kind = function
   | `Let w | `Const w -> w#region
 
-let property_id_to_region = function
+let region_of_property_id = function
   | F_name i -> i#region
   | F_int i -> i#region
   | F_str i -> i#region
 
-let fun_body_to_region = function
+let region_of_fun_body_to_region = function
   | Stmt_body { region; _ } -> region
-  | Expr_body e -> expr_to_region e
+  | Expr_body e -> region_of_expr e
 
-let selection_to_region = function
+let region_of_selection = function
   | Property_name name -> name#region
   | Property_str str -> str#region
   | Component int -> int#region
 
-let intf_expr_to_region = function
+let region_of_intf_expr = function
   | I_body { region; _ } -> region
   | I_path { region; _ } -> region
 
-let parameters_to_region = function
+let region_of_parameters = function
   | Par_params { region; _ } -> region
   | Naked_param p -> p#region
