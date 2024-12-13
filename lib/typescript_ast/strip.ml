@@ -640,8 +640,7 @@ and strip_T_template_literal_type (node : Ast.template_literal_type wrap)
 and strip_T_intersection_type (node : Ast.intersection_type wrap)
     : (S.type_expr, _) result
   =
-  ignore node;
-  Error "TODO: strip_T_intersection_type"
+  error node "Intersection types are not supported in JsLIGO."
 
 (* Union type *)
 
