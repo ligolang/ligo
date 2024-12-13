@@ -248,8 +248,10 @@ and strip_S_with_statement (node : Ast.with_statement wrap)
 and strip_S_break_statement (node : Ast.break_statement wrap)
     : (S.statement option, _) result
   =
-  ignore node;
-  Error "TODO: strip_break_statement"
+  let Ast.{kwd_break; stmt_id} = node#payload in
+    match stmt_id with
+    | Some ident -> error ident "Labels in breaks are not supported in JsLIGO."
+    | None -> Ok (Some (S.S_break kwd_break#region))
 
 (* Continue statement *)
 
