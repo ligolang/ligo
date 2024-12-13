@@ -479,8 +479,33 @@ and strip_T_parenthesized_type (node : Ast.type_expr Ast.parens) : (S.type_expr,
 (* Predefined type *)
 
 and strip_T_predefined_type (node : Ast.predefined_type) : (S.type_expr, _) result =
-  ignore node;
-  Error "TODO: strip_T_predefined_type"
+  match node with
+  | T_any kwd_any ->
+     error_reg kwd_any#region "The type 'any' is not supported in JsLIGO."
+  | T_number kwd_number ->
+     error_reg kwd_number#region "The type 'number' is not supported in JsLIGO."
+     ~hint:"Use 'bigint' or 'nat'."
+  | T_boolean kwd_boolean -> (* The pipeline uses "bool" instead *)
+     let region = kwd_boolean#region in
+     let bool = Wrap.make "bool" region in
+     let path = mk_reg region (Nonempty_list.singleton bool) in
+     Ok (T_var (mk_reg region (path, [])))
+  | T_string kwd_string ->
+     let region = kwd_string#region in
+     let path = mk_reg region (Nonempty_list.singleton kwd_string) in
+     Ok (T_var (mk_reg region (path, [])))
+  | T_symbol kwd_symbol ->
+     error_reg kwd_symbol#region "The type 'symbol' is not supported in JsLIGO."
+  | T_unique_symbol kwd_unique_symbol ->
+     error_reg kwd_unique_symbol#region "Type 'unique symbol' is not supported in JsLIGO."
+  | T_void kwd_void ->
+     error_reg kwd_void#region "Type 'void' is not supported in JsLIGO."
+  | T_unknown kwd_unknown ->
+     error_reg kwd_unknown#region "Type 'unknown' is not supported in JsLIGO."
+  | T_never kwd_never ->
+     error_reg kwd_never#region "Type 'never' is not supported in JsLIGO."
+  | T_object kwd_object ->
+     error_reg kwd_object#region "Type 'object' is not supported in JsLIGO"
 
 (* Type identifier *)
 
