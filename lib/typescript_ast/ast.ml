@@ -1139,7 +1139,6 @@ and aliased =
   | Nested of nested_identifier
 
 (* The order is reversed in the path, e.g., A.B.c becomes [c; B; A] *)
-
 and 'a nested = identifier ne_list * 'a
 and nested_identifier = identifier nested (* property identifier *)
 
