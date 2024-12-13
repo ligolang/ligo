@@ -573,8 +573,23 @@ and strip_T_array_type (node : Ast.array_type wrap) : (S.type_expr, _) result =
 (* Tuple type *)
 
 and strip_T_tuple_type (node : Ast.tuple_type) : (S.type_expr, _) result =
-  ignore node;
-  Error "TODO: strip_T_tuple_type"
+  let (Brackets brackets) = node in
+  let members = brackets#payload.contents in
+  let* members = Result.all @@ List.map ~f:strip_tuple_type_member members in
+  Ok (S.T_tuple (mk_reg brackets#region members))
+
+and strip_tuple_type_member (node : Ast.tuple_type_member) : (S.type_expr, _) result =
+  let region = Ast.region_of_tuple_type_member node in
+  match node with
+  | Ast.Tuple_parameter _
+  | Tuple_optional_parameter _
+  | Tuple_optional_type _
+  | Tuple_rest_type _ ->
+    error_reg
+      region
+      "This tuple type member is not supported in JsLIGO."
+      ~hint:"Use a single type expression."
+  | Tuple_type type_expr -> strip_type_expr type_expr
 
 (* Flow maybe type *)
 
