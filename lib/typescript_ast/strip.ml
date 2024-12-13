@@ -413,17 +413,43 @@ and strip_T_type_identifier (node : Ast.type_identifier) : (S.type_expr, _) resu
 (* Nested type identifier (access path is reversed) *)
 
 and strip_T_nested_type_identifier (node : Ast.nested_type_identifier wrap) : (S.type_expr, _) result =
+  let region = node#region in
+  let path = strip_nested_type_identifier node in
+  Ok (T_var (mk_reg region (path, None)))
+
+and strip_nested_type_identifier (node : Ast.nested_type_identifier wrap) : S.path =
   let path, selected = node#payload
   and region = node#region in
   let path = Nonempty_list.map ~f:strip_type_identifier path
   and selected = strip_type_identifier selected in
-  let path = Nonempty_list.cons selected path in
-  Ok (T_var (mk_reg region (mk_reg region path, None)))
+  mk_reg region (Nonempty_list.cons selected path)
 
-(* Generic type *)
+(* Generic type
+
+   TODO: Test the order of the type arguments.
+*)
 
 and strip_T_generic_type (node : Ast.generic_type wrap) : (S.type_expr, _) result =
-  ignore node; Error "TODO: strip_T_generic_type"
+  let region = node#region
+  and name, type_args = node#payload in
+  let path = strip_generic_name name in
+  let* type_args = strip_type_arguments type_args in
+  Ok (S.T_var (mk_reg region (path, type_args)))
+
+and strip_generic_name (node : Ast.generic_name) : S.path =
+  match node with
+  | Generic_type type_identifier ->
+     let region = type_identifier#region in
+     let ident = strip_type_identifier type_identifier in
+     mk_reg region (Nonempty_list.singleton ident)
+  | Generic_nested nested ->
+     strip_nested_type_identifier nested
+
+and strip_type_arguments (node : Ast.type_arguments) : (S.type_expr list, _) result =
+  let Chevrons chevrons = node in
+  let type_args = chevrons#payload.contents in
+  let type_args = Nonempty_list.to_list type_args in
+  Result.all @@ List.map ~f:strip_type_expr type_args
 
 (* Object type *)
 

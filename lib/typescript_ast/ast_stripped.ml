@@ -188,10 +188,7 @@ and type_expr =
   | T_parameter_of of path (* parameter_of<C> *)
   | T_string of string_literal (* "x" *)
   | T_union of union_type (* number | string *)
-  | T_var of (path * type_ctor_args option) reg (* M.t<u,v> t M.t *)
-
-(* Type application *)
-and type_ctor_args = type_expr Nonempty_list.t reg
+  | T_var of (path * type_expr list) reg (* M.t<u,v> t M.t *)
 
 (* Array type *)
 and array_type = type_expr Nonempty_list.t reg
