@@ -706,8 +706,108 @@ and strip_T_union_type (node : Ast.union_type wrap) : (S.type_expr, _) result =
 (* Function type *)
 
 and strip_T_function_type (node : Ast.function_type wrap) : (S.type_expr, _) result =
-  ignore node;
-  Error "TODO: strip_T_function_type"
+  let Ast.{ type_parameters; parameters; sym_arrow = _; return_type } = node#payload in
+  let* t_params = strip_list_opt strip_type_parameters type_parameters in
+  let* v_params = strip_formal_parameters parameters in
+  let* ret_type = strip_return_type return_type in
+  let fun_type = v_params, ret_type in
+  let fun_type_reg =
+    let (Ast.Parens parens) = parameters in
+    Region.cover parens#region (Ast.region_of_return_type return_type)
+  in
+  let fun_type = S.T_fun (mk_reg fun_type_reg fun_type) in
+  match t_params with
+  | [] -> Ok fun_type
+  | _ -> Ok (S.T_for_all (mk_reg node#region (t_params, fun_type)))
+
+and strip_formal_parameters (node : Ast.formal_parameters)
+    : ((S.variable * S.type_expr) list, _) result
+  =
+  let (Ast.Parens parens) = node in
+  let parameters = parens#payload.contents in
+  Result.all @@ List.map ~f:strip_formal_parameter parameters
+
+and strip_formal_parameter (node : Ast.formal_parameter wrap)
+    : (S.variable * S.type_expr, _) result
+  =
+  let Ast.{ parameter_name; optional; type_opt; default } = node#payload in
+  let* parameter = strip_parameter_name parameter_name in
+  let* () =
+    match optional with
+    | None -> Ok ()
+    | Some sym_qmark ->
+      error_reg sym_qmark#region "Optional parameters are not supported in JsLIGO."
+  in
+  let* type_expr =
+    match type_opt with
+    | None -> error node "Untyped parameters are not supported in JsLIGO."
+    | Some (_, type_expr) -> strip_type_expr type_expr
+  in
+  let* () =
+    match default with
+    | None -> Ok ()
+    | Some (_, expr) ->
+      let region = Ast.region_of_expression expr in
+      error_reg region "Default parameter values are not supported in JsLIGO."
+  in
+  Ok (parameter, type_expr)
+
+and strip_parameter_name (node : Ast.parameter_name wrap) : (S.variable, _) result =
+  let Ast.{ decorators; access; kwd_override; kwd_readonly; pattern } = node#payload in
+  let* () =
+    match decorators with
+    | [] -> Ok ()
+    | decorator :: _ ->
+      let region = Ast.region_of_decorator decorator in
+      error_reg region "Decorators on function parameters are not supported in JsLIGO."
+  in
+  let* () =
+    match access with
+    | None -> Ok ()
+    | Some modifier ->
+      let region = Ast.region_of_accessibility_modifier modifier in
+      error_reg
+        region
+        "Accessibility modifiers on function parameters are not supported in JsLIGO."
+  in
+  let* () =
+    match kwd_override with
+    | None -> Ok ()
+    | Some kwd_override ->
+      error_reg
+        kwd_override#region
+        "Override modifier on function parameters not supported in JsLIGO."
+  in
+  let* () =
+    match kwd_readonly with
+    | None -> Ok ()
+    | Some kwd_readonly ->
+      error_reg
+        kwd_readonly#region
+        "Read-only modifier on function parameters not supported in JsLIGO."
+  in
+  strip_parameter_pattern pattern
+
+and strip_parameter_pattern (node : Ast.parameter_pattern) : (S.variable, _) result =
+  match node with
+  | Parameter_pattern (P_identifier ident) -> Ok (strip_identifier ident)
+  | Parameter_pattern pattern ->
+    let region = Ast.region_of_pattern pattern in
+    error_reg region "Only variables are supported as function parameters in JsLIGO."
+  | Parameter_this kwd_this ->
+    error_reg
+      kwd_this#region
+      "The `this` identifier is not supported in JsLIGO"
+      ~hint:"Rename it."
+
+and strip_identifier (node : Ast.identifier) : S.variable = node
+
+and strip_return_type (node : Ast.return_type) : (S.type_expr, _) result =
+  let region = Ast.region_of_return_type node in
+  match node with
+  | Return_type type_expr -> strip_type_expr type_expr
+  | Return_asserts _ -> error_reg region "Type assertion not supported in JsLIGO."
+  | Return_type_predicate _ -> error_reg region "Type predicate not supported in JsLIGO."
 
 (* Readonly type *)
 
