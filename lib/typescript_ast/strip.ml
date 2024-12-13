@@ -448,7 +448,7 @@ and strip_E_augmented_assignment_expression (node : Ast.augmented_assignment_exp
 (* Await-expression *)
 
 and strip_E_await_expression (node : Ast.await_expression wrap) : (S.expr, _) result =
-  ignore node; Error "TODO: strip_E_await_expression"
+  error node "Await-expressions are not supported in JsLIGO."
 
 (* Binary expression *)
 
@@ -458,7 +458,7 @@ and strip_E_binary_expression (node : Ast.binary_expression wrap) : (S.expr, _) 
 (* Instantiation expression *)
 
 and strip_E_instantiation_expression (node : Ast.instantiation_expression wrap) : (S.expr, _) result =
-  ignore node; Error "TODO: strip_E_instantiation_expression"
+  error node "Instantiation of type parameters is not supported in JsLIGO."
 
 (* Internal module expression *)
 
@@ -468,7 +468,7 @@ and strip_E_internal_module (node : Ast.internal_module wrap) : (S.expr, _) resu
 (* New-expression *)
 
 and strip_E_new_expression (node : Ast.new_expression wrap) : (S.expr, _) result =
-  ignore node; Error "TODO: strip_E_new_expression"
+  error node "Instantiation of classes is not supported in JsLIGO."
 
 (* Primary expression *)
 
@@ -478,7 +478,7 @@ and strip_E_primary_expression (node : Ast.primary_expression) : (S.expr, _) res
 (* Statisfies-expression *)
 
 and strip_E_satisfies_expression (node : Ast.satisfies_expression wrap) : (S.expr, _) result =
-  ignore node; Error "TODO: strip_E_satisfies_expression"
+  error node "Type checks are not supported in JsLIGO."
 
 (* Ternary expression *)
 
@@ -488,7 +488,7 @@ and strip_E_ternary_expression (node : Ast.ternary_expression wrap) : (S.expr, _
 (* Type assertion (expression) *)
 
 and strip_E_type_assertion (node : Ast.type_assertion wrap) : (S.expr, _) result =
-  ignore node; Error "TODO: strip_E_type_assertion"
+  error node "Type assertions are not supported in JsLIGO."
 
 (* Unary expression *)
 
@@ -503,7 +503,8 @@ and strip_E_update_expression (node : Ast.update_expression) : (S.expr, _) resul
 (* Yield-expression *)
 
 and strip_E_yield_expression (node : Ast.yield_expression) : (S.expr, _) result =
-  ignore node; Error "TODO: strip_E_yield_expression"
+  let region = Ast.region_of_yield_expression node in
+  error_reg region "Yield expressions are not supported in JsLIGO."
 
 (* PATTERNS *)
 
