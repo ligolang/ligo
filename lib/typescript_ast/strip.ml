@@ -371,7 +371,120 @@ and strip_type_expr (node : Ast.type_expr) : (S.type_expr, _) result =
 (* Primary type *)
 
 and strip_T_primary_type (node : Ast.primary_type) : (S.type_expr, _) result =
-  ignore node; Error "TODO: strip_T_primary_type"
+  match node with
+  | T_parenthesized_type t -> strip_T_parenthesized_type t
+  | T_predefined_type t -> strip_T_predefined_type t
+  | T_type_identifier t -> strip_T_type_identifier t
+  | T_nested_type_identifier t -> strip_T_nested_type_identifier t
+  | T_generic_type t -> strip_T_generic_type t
+  | T_object_type t -> strip_T_object_type t
+  | T_array_type t -> strip_T_array_type t
+  | T_tuple_type t -> strip_T_tuple_type t
+  | T_flow_maybe_type t -> strip_T_flow_maybe_type t
+  | T_type_query t -> strip_T_type_query t
+  | T_index_type_query t -> strip_T_index_type_query t
+  | T_this t -> strip_T_this t
+  | T_existential_type t -> strip_T_existential_type t
+  | T_literal_type t -> strip_T_literal_type t
+  | T_lookup_type t -> strip_T_lookup_type t
+  | T_conditional_type t -> strip_T_conditional_type t
+  | T_template_literal_type t -> strip_T_template_literal_type t
+  | T_intersection_type t -> strip_T_intersection_type t
+  | T_union_type t -> strip_T_union_type t
+
+(* Parenthesized type *)
+
+and strip_T_parenthesized_type (node : Ast.type_expr Ast.parens) : (S.type_expr, _) result =
+  ignore node; Error "TODO: strip_T_parenthesized_type"
+
+(* Predefined type *)
+
+and strip_T_predefined_type (node : Ast.predefined_type) : (S.type_expr, _) result =
+  ignore node; Error "TODO: strip_T_predefined_type"
+
+(* Type identifier *)
+
+and strip_T_type_identifier (node : Ast.type_identifier) : (S.type_expr, _) result =
+  ignore node; Error "TODO: strip_T_type_identifier"
+
+(* Nested type identifier *)
+
+and strip_T_nested_type_identifier (node : Ast.nested_type_identifier wrap) : (S.type_expr, _) result =
+  ignore node; Error "TODO: strip_T_nested_type_identifier"
+
+(* Generic type *)
+
+and strip_T_generic_type (node : Ast.generic_type wrap) : (S.type_expr, _) result =
+  ignore node; Error "TODO: strip_T_generic_type"
+
+(* Object type *)
+
+and strip_T_object_type (node : Ast.object_type) : (S.type_expr, _) result =
+  ignore node; Error "TODO: strip_T_object_type"
+
+(* Array type *)
+
+and strip_T_array_type (node : Ast.array_type wrap) : (S.type_expr, _) result =
+  ignore node; Error "TODO: strip_T_array_type"
+
+(* Tuple type *)
+
+and strip_T_tuple_type (node : Ast.tuple_type) : (S.type_expr, _) result =
+  ignore node; Error "TODO: strip_T_tuple_type"
+
+(* Flow maybe type *)
+
+and strip_T_flow_maybe_type (node : (Ast.sym_qmark * Ast.primary_type) wrap) : (S.type_expr, _) result =
+  ignore node; Error "TODO: strip_T_flow_maybe_type"
+
+(* Type query *)
+
+and strip_T_type_query (node : (Ast.kwd_keyof * Ast.type_query) wrap) :
+(S.type_expr, _) result =
+  ignore node; Error "TODO: strip_T_type_query"
+
+(* Index type query *)
+
+and strip_T_index_type_query (node : (Ast.kwd_keyof * Ast.primary_type) wrap) : (S.type_expr, _) result =
+  ignore node; Error "TODO: strip_T_index_type_query"
+
+(* This as a type *)
+
+and strip_T_this (node : Ast.kwd_this) : (S.type_expr, _) result =
+  ignore node; Error "TODO: strip_T_this"
+
+and strip_T_existential_type (node : Ast.sym_star) : (S.type_expr, _) result =
+  ignore node; Error "TODO: strip_T_existential_type"
+
+(* Literal type *)
+
+and strip_T_literal_type (node : Ast.literal_type) : (S.type_expr, _) result =
+  ignore node; Error "TODO: strip_T_literal_type"
+
+(* Lookup type *)
+
+and strip_T_lookup_type (node : Ast.lookup_type wrap) : (S.type_expr, _) result =
+  ignore node; Error "TODO: strip_T_lookup_type"
+
+(* Conditional type *)
+
+and strip_T_conditional_type (node : Ast.conditional_type wrap) : (S.type_expr, _) result =
+  ignore node; Error "TODO: strip_T_conditional_type"
+
+(* Template literal type *)
+
+and strip_T_template_literal_type (node : Ast.template_literal_type wrap) : (S.type_expr, _) result =
+  ignore node; Error "TODO: strip_T_template_literal_type"
+
+(* Intersection type *)
+
+and strip_T_intersection_type (node : Ast.intersection_type wrap) : (S.type_expr, _) result =
+  ignore node; Error "TODO: strip_T_intersection_type"
+
+(* Union type *)
+
+and strip_T_union_type (node : Ast.union_type wrap) : (S.type_expr, _) result =
+  ignore node; Error "TODO: strip_T_union_type"
 
 (* Function type *)
 
