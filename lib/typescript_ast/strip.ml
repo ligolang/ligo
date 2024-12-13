@@ -405,12 +405,20 @@ and strip_T_predefined_type (node : Ast.predefined_type) : (S.type_expr, _) resu
 (* Type identifier *)
 
 and strip_T_type_identifier (node : Ast.type_identifier) : (S.type_expr, _) result =
-  ignore node; Error "TODO: strip_T_type_identifier"
+  let type_ident = strip_type_identifier node in
+  let region = node#region in
+  let path = Nonempty_list.singleton type_ident in
+  Ok (T_var (mk_reg region (mk_reg region path, None)))
 
-(* Nested type identifier *)
+(* Nested type identifier (access path is reversed) *)
 
 and strip_T_nested_type_identifier (node : Ast.nested_type_identifier wrap) : (S.type_expr, _) result =
-  ignore node; Error "TODO: strip_T_nested_type_identifier"
+  let path, selected = node#payload
+  and region = node#region in
+  let path = Nonempty_list.map ~f:strip_type_identifier path
+  and selected = strip_type_identifier selected in
+  let path = Nonempty_list.cons selected path in
+  Ok (T_var (mk_reg region (mk_reg region path, None)))
 
 (* Generic type *)
 
