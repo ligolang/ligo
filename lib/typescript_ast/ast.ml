@@ -3702,3 +3702,27 @@ let region_of_template_type = function
 let region_of_template_type_fragment = function
   | Template_type_string s -> s#region
   | Template_type t -> region_of_template_type t
+
+let region_of_tuple_type_member = function
+  | Tuple_parameter w -> w#region
+  | Tuple_optional_parameter w -> w#region
+  | Tuple_optional_type w -> w#region
+  | Tuple_rest_type w -> w#region
+  | Tuple_type type_expr -> region_of_type_expr type_expr
+
+let region_of_asserts = function
+  | Assert_predicate (kwd_asserts, type_predicate) ->
+    Region.cover kwd_asserts#region type_predicate#region
+  | Assert_type (kwd_asserts, identifier) ->
+    Region.cover kwd_asserts#region identifier#region
+  | Assert_this (kwd_asserts, kwd_this) -> Region.cover kwd_asserts#region kwd_this#region
+
+let region_of_return_type = function
+  | Return_type t -> region_of_type_expr t
+  | Return_asserts a -> region_of_asserts a
+  | Return_type_predicate w -> w#region
+
+let region_of_accessibility_modifier = function
+  | Public kwd_public -> kwd_public#region
+  | Private kwd_private -> kwd_private#region
+  | Protected kwd_protected -> kwd_protected#region
