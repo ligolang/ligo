@@ -455,8 +455,8 @@ and strip_type_expr (node : Ast.type_expr) : (S.type_expr, _) result =
   | T_readonly_type t -> strip_T_readonly_type t
   | T_constructor_type t -> strip_T_constructor_type t
   | T_infer_type t -> strip_T_infer_type t
-  | T_member_expression t -> strip_T_member_expression t
-  | T_call_expression t -> strip_T_call_expression t
+  | T_member_expression t -> strip_T_type_query_member_expression_in_type_annotation t
+  | T_call_expression t -> strip_T_type_query_call_expression_in_type_annotation t
 
 (* Primary type *)
 
@@ -836,19 +836,21 @@ and strip_T_constructor_type (node : Ast.constructor_type wrap) : (S.type_expr, 
 and strip_T_infer_type (node : Ast.infer_type wrap) : (S.type_expr, _) result =
   error node "Infer types are not supported in JsLIGO."
 
-(* Member expression (type expresion) *)
+(* Member expression (in type expressions) *)
 
-and strip_T_member_expression (node : Ast.member_expression wrap)
+and strip_T_type_query_member_expression_in_type_annotation
+    (node : Ast.type_query_member_expression_in_type_annotation wrap)
     : (S.type_expr, _) result
   =
-  ignore node;
-  Error "TODO: strip_T_member_expression"
+  error node "Member expressions in type queries are not supported by JsLIGO."
 
-(* Call expression *)
+(* Call expression (in type expressions) *)
 
-and strip_T_call_expression (node : Ast.call_expression) : (S.type_expr, _) result =
-  ignore node;
-  Error "TODO: strip_T_call_expression"
+and strip_T_type_query_call_expression_in_type_annotation
+    (node : Ast.type_query_call_expression_in_type_annotation wrap)
+    : (S.type_expr, _) result
+  =
+  error node "Call expressions in type queries are not supported in JsLIGO."
 
 (* EXPRESSIONS *)
 
@@ -996,11 +998,17 @@ and strip_P_subscript_expression (node : Ast.subscript_expression wrap)
   ignore node;
   Error "TODO: strip_P_subscript_expression"
 
-(* Identifier (pattern) *)
+(* Identifier and booleans (pattern) *)
 
 and strip_P_identifier (node : Ast.identifier) : (S.pattern, _) result =
-  ignore node;
-  Error "TODO: strip_P_identifier"
+  let region = node#region
+  and identifier = strip_identifier node in
+  match identifier#payload with
+  | "false" -> Ok (S.P_false region)
+  | "true" -> Ok (S.P_true region)
+  | _ ->
+    let path = mk_reg region (Nonempty_list.singleton identifier) in
+    Ok (S.P_var path)
 
 (* Undefined (pattern) *)
 
@@ -1018,8 +1026,8 @@ and strip_P_destructuring_pattern (node : Ast.destructuring_pattern)
 (* Non-null expression (pattern) *)
 
 and strip_P_non_null_expression (node : Ast.expression) : (S.pattern, _) result =
-  ignore node;
-  Error "TODO: strip_P_non_null_expression"
+  let region = Ast.region_of_expression node in
+  error_reg region "Non-null patterns are not supported in JsLIGO."
 
 (* Rest pattern *)
 
