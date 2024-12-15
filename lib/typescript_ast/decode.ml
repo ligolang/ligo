@@ -2759,15 +2759,69 @@ and dec_type ?(comments = []) node : (type_expr, _) result =
     Ok (T_infer_type type_expr)
   (* A couple of aliases *)
   | "member_expression" ->
-    let* expression = wrap dec_member_expression ~comments node in
+    let* expression =
+      wrap dec_type_query_member_expression_in_type_annotation ~comments node
+    in
     Ok (T_member_expression expression)
   | "call_expression" ->
-    let* expression = dec_call_expression ~comments node in
+    let* expression =
+      wrap dec_type_query_call_expression_in_type_annotation ~comments node
+    in
     Ok (T_call_expression expression)
   (* "primary_type" is hidden *)
   | _ ->
     let* type_expr = dec_primary_type ~comments node in
     Ok (T_primary_type type_expr)
+
+(* Type queries in type annotations (expressions)
+   NOTE: Rather mysterious. See ast.ml. *)
+
+and dec_type_query_member_expression_in_type_annotation ?(comments = []) node
+    : (type_query_member_expression_in_type_annotation, _) result
+  =
+  let* object_field = child_with_field "object" node in
+  let* selector = first_child_named "." node in
+  let* property_field = child_with_field "property" node in
+  let dec_object_field node =
+    match get_name node with
+    | "import" -> Ok (Type_query_object_import (make_kwd ~comments node))
+    | "member_expression" ->
+      let* member =
+        wrap dec_type_query_member_expression_in_type_annotation ~comments node
+      in
+      Ok (Type_query_object_member member)
+    | "call_expression" ->
+      let* expression =
+        wrap dec_type_query_call_expression_in_type_annotation ~comments node
+      in
+      Ok (Type_query_object_call expression)
+    | _ -> error "dec_type_query_member_expression_in_type_annotation" node
+  in
+  let* object_expr = dec_object_field object_field in
+  let selector = make_sym selector in
+  let* property = dec_type_query_property property_field in
+  Ok
+    ({ object_expr; selector; property }
+      : type_query_member_expression_in_type_annotation)
+
+and dec_type_query_call_expression_in_type_annotation ?(comments = []) node
+    : (type_query_call_expression_in_type_annotation, _) result
+  =
+  let* function_field = child_with_field "function" node in
+  let* arguments_field = child_with_field "arguments" node in
+  let* lambda = dec_type_query_call_lambda ~comments function_field in
+  let* arguments = dec_arguments arguments_field in
+  Ok ({ lambda; arguments } : type_query_call_expression_in_type_annotation)
+
+and dec_type_query_call_lambda ?(comments = []) node : (type_query_call_lambda, _) result =
+  match get_name node with
+  | "import" -> Ok (Type_query_call_import (make_kwd ~comments node))
+  | "member_expression" ->
+    let* expression =
+      dec_type_query_member_expression_in_type_annotation ~comments node
+    in
+    Ok (Type_query_call_member expression)
+  | _ -> error "dec_type_query_call_lambda" node
 
 (* Primary type *)
 
