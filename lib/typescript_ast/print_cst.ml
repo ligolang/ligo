@@ -2089,10 +2089,58 @@ and print_type state node =
   | "constructor_type" -> print_constructor_type state node
   | "infer_type" -> print_infer_type state node
   (* A couple of aliases *)
-  | "member_expression" -> print_member_expression state node
-  | "call_expression" -> print_call_expression state node
+  | "member_expression" ->
+    print_type_query_member_expression_in_type_annotation state node
+  | "call_expression" -> print_type_query_call_expression_in_type_annotation state node
   (* "primary_type" is hidden *)
   | _ -> match_rest state node print_primary_type
+
+(* Type queries in type annotations (expressions) *)
+
+and print_type_query_member_expression_in_type_annotation state node =
+  let object_field = child_with_field "object" node
+  and selector = first_child_named "." node
+  and property_field = child_with_field "property" node
+  and print_object_field state node =
+    match get_name node with
+    | "import" -> make_kwd state node
+    | "member_expression" ->
+      print_type_query_member_expression_in_type_annotation state node
+    | "call_expression" -> print_type_query_call_expression_in_type_annotation state node
+    | _ -> match_rest state node print_unexpected_node
+  in
+  let children =
+    [ mk_child_res print_object_field object_field
+    ; mk_child_res make_sym selector
+    ; mk_child_res print_type_query_property property_field
+    ]
+  in
+  make_tree state node children
+
+and print_type_query_property state node =
+  match get_name node with
+  | "property_identifier" -> print_identifier state node
+  | "private_property_identifier" -> print_identifier state node
+  | _ -> match_rest state node print_unexpected_node
+
+and print_type_query_call_expression_in_type_annotation state node =
+  let function_field = child_with_field "function" node
+  and arguments_field = child_with_field "arguments" node
+  and print_function_field state node =
+    match get_name node with
+    | "import" -> make_kwd state node
+    | "member_expression" ->
+      print_type_query_member_expression_in_type_annotation state node
+    | _ -> match_rest state node print_unexpected_node
+  in
+  let children =
+    [ mk_child_res print_function_field function_field
+    ; mk_child_res print_arguments arguments_field
+    ]
+  in
+  make_tree state node children
+
+(* Primary type *)
 
 and print_primary_type state node =
   match get_name node with

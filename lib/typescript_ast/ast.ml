@@ -2260,8 +2260,58 @@ and type_expr =
   | T_readonly_type of readonly_type wrap
   | T_constructor_type of constructor_type wrap
   | T_infer_type of infer_type wrap
-  | T_member_expression of member_expression wrap
-  | T_call_expression of call_expression
+  | T_member_expression of type_query_member_expression_in_type_annotation wrap
+  | T_call_expression of type_query_call_expression_in_type_annotation wrap
+
+(** Type queries in type annotations (expressions)
+
+  The related grammar rules ar given by:
+  + TypeScript
+    {@js[
+      _type_query_member_expression_in_type_annotation: $ => seq(
+        field('object', choice(
+          $.import,
+          alias($._type_query_member_expression_in_type_annotation, $.member_expression),
+          alias($._type_query_call_expression_in_type_annotation, $.call_expression))),
+        '.',
+        field('property', choice(
+          $.private_property_identifier,
+          alias($.identifier, $.property_identifier)))),
+
+      _type_query_call_expression_in_type_annotation: $ => seq(
+        field('function', choice(
+          $.import,
+          alias($._type_query_member_expression_in_type_annotation, $.member_expression))),
+        field('arguments', $.arguments))
+    }]
+
+    NOTE: The type expression "M.t" is parsed as a primary_type ->
+    nested_type_identifier instead of a
+    _type_query_member_expression_in_type_annotation. Looks like an
+    ambiguity resolved elsewhere (either a "conflict" clause or
+    perhaps order of definition). Likewise, "f(x)" does not parse as a
+    type_query_call_expression_in_type_annotation, for some reason ("import(x)" does,
+    though).
+ *)
+and type_query_member_expression_in_type_annotation =
+  { object_expr : type_query_member_expression_object
+  ; selector : sym_dot
+  ; property : type_query_property
+  }
+
+and type_query_member_expression_object =
+  | Type_query_object_import of kwd_import
+  | Type_query_object_member of type_query_member_expression_in_type_annotation wrap
+  | Type_query_object_call of type_query_call_expression_in_type_annotation wrap
+
+and type_query_call_expression_in_type_annotation =
+  { lambda : type_query_call_lambda
+  ; arguments : arguments
+  }
+
+and type_query_call_lambda =
+  | Type_query_call_import of kwd_import
+  | Type_query_call_member of type_query_member_expression_in_type_annotation
 
 (** Primary Type
 
@@ -3692,8 +3742,7 @@ let region_of_type_expr = function
   | T_constructor_type t -> t#region
   | T_infer_type t -> t#region
   | T_member_expression t -> t#region
-  | T_call_expression (Call t) -> t#region
-  | T_call_expression (Member t) -> t#region
+  | T_call_expression t -> t#region
 
 let region_of_template_type = function
   | Template_type_primary t -> region_of_primary_type t
