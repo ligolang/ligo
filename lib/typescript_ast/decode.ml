@@ -1863,7 +1863,7 @@ and dec_aliased node : (aliased, _) result =
   match get_name node with
   | "identifier" -> Ok (Ident (dec_identifier node))
   | "nested_identifier" ->
-    let* nested = dec_nested_identifier node in
+    let* nested = wrap dec_nested_identifier node in
     Ok (Nested nested)
   | _ -> error "dec_aliased" node
 
