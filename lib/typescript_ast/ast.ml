@@ -1136,7 +1136,7 @@ and import_alias =
 
 and aliased =
   | Ident of identifier
-  | Nested of nested_identifier
+  | Nested of nested_identifier wrap
 
 (* The order is reversed in the path, e.g., A.B.c becomes [c; B; A] *)
 and 'a nested = identifier ne_list * 'a
