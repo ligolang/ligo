@@ -436,8 +436,26 @@ and strip_D_interface_declaration (node : Ast.interface_declaration wrap)
 (* Import alias *)
 
 and strip_D_import_alias (node : Ast.import_alias wrap) : (S.declaration, _) result =
-  ignore node;
-  Error "TODO: strip_D_import_alias"
+  let Ast.{kwd_import=_; alias; sym_equal=_; aliased} = node#payload
+  and region = node#region in
+  let alias = strip_identifier alias in
+  let path = strip_aliased aliased in
+  let import = alias, path in
+  Ok S.(D_import (S.Import_alias (mk_reg region import)))
+
+and strip_aliased (node : Ast.aliased) : S.path =
+  match node with
+  | Ident ident ->
+     let singleton = Nonempty_list.singleton (strip_identifier ident) in
+     mk_reg ident#region singleton
+  | Nested nested -> strip_nested_identifier nested
+
+and strip_nested_identifier (node : Ast.nested_identifier wrap) : S.path =
+  let path, selected = node#payload
+  and region = node#region in
+  let path = Nonempty_list.map ~f:strip_type_identifier path
+  and selected = strip_type_identifier selected in
+  mk_reg region (Nonempty_list.cons selected path)
 
 (* Ambient declaration *)
 
