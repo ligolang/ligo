@@ -2,7 +2,7 @@
 
 (library
  (name typescript_ast)
- (modules ast ts_wrap loc_map lexeme number ast_stripped)
+ (modules ast ts_wrap loc_map lexeme number decorator ast_stripped)
  (libraries
   tree_sitter
   tree_sitter_typescript
@@ -30,7 +30,7 @@
 (executable
  (name strip_main)
  (libraries typescript_ast)
- (modules strip strip_main))
+ (modules decode strip strip_main))
 
 ;; Local build of a standalone parser for node-types.json
 
@@ -43,6 +43,6 @@
   yojson)
  (modules static_nodes_reader))
 
-;; Lexer for numbers
+;; Lexers
 
-(ocamllex number)
+(ocamllex number decorator)

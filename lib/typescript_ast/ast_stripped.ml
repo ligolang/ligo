@@ -18,8 +18,10 @@ module Attr = Lexing_shared.Attr
 
 type 'a reg = 'a Region.reg
 type 'a wrap = 'a Wrap.wrap
-type decorator = Attr.t wrap
 type comment = string wrap
+type key = string
+type value = string
+type decorator = (key * value option) wrap
 
 (* Literals *)
 
@@ -114,10 +116,12 @@ and fun_decl =
   ; comments : comment list (* From the keyword "function" *)
   ; fun_name : variable
   ; generics : variable list
-  ; parameters : pattern list
+  ; parameters : parameter list
   ; rhs_type : type_expr option
-  ; fun_body : statement list
+  ; fun_body : statement list reg
   }
+
+and parameter = pattern * type_expr option
 
 (* All import declarations *)
 and import_decl =
@@ -223,7 +227,6 @@ and pattern =
   | P_object of pattern _object (* {x, y : 0} *)
   | P_string of string_literal (* "string" *)
   | P_true of Region.t (* true *)
-  | P_typed of typed_pattern reg (* [x,y] : t *)
   | P_var of path (* x  M.N.t *)
 
 (* Array pattern *)
@@ -232,9 +235,6 @@ and 'a _array = 'a element list reg
 and 'a element =
   | Spread of 'a
   | Element of 'a
-
-(* Typed patterns (function parameters) *)
-and typed_pattern = pattern * type_expr
 
 (* EXPRESSIONS *)
 
@@ -302,21 +302,12 @@ and michelson_expr = (variable * string_literal * type_expr) reg
 (* Functional expressions *)
 and arrow_fun_expr =
   { generics : variable list
-  ; parameters : arrow_fun_params
+  ; parameters : parameter list
   ; rhs_type : type_expr option
   ; fun_body : fun_body
   }
 
-and function_expr =
-  { generics : variable list
-  ; parameters : arrow_fun_params
-  ; rhs_type : type_expr option
-  ; fun_body : fun_body
-  }
-
-and arrow_fun_params =
-  | Par_params of pattern list reg (* (x) => y *)
-  | Naked_param of variable (* x => y *)
+and function_expr = arrow_fun_expr
 
 and fun_body =
   | Stmt_body of statement list reg
@@ -380,7 +371,7 @@ let region_of_pattern = function
   | P_object { region; _ } -> region
   | P_string w -> w#region
   | P_true r -> r
-  | P_typed { region; _ } -> region
+  (*  | P_typed { region; _ } -> region*)
   | P_var { region; _ } -> region
 
 let region_of_expr = function
@@ -462,7 +453,3 @@ let region_of_selection = function
 let region_of_intf_expr = function
   | I_body { region; _ } -> region
   | I_path { region; _ } -> region
-
-let region_of_parameters = function
-  | Par_params { region; _ } -> region
-  | Naked_param p -> p#region
