@@ -8,7 +8,6 @@ open Core
 
 (* Vendor dependencies *)
 
-module Utils = Simple_utils.Utils
 module Region = Simple_utils.Region
 
 (* LIGO dependencies *)
@@ -20,6 +19,7 @@ module Attr = Lexing_shared.Attr
 
 module Ast = Typescript_ast.Ast
 module S = Typescript_ast.Ast_stripped
+module Decorator = Typescript_ast.Decorator
 
 (* Utilities *)
 
@@ -55,10 +55,22 @@ let strip_list_opt strip = function
   | None -> Ok []
   | Some list -> strip list
 
+let map_opt strip = function
+  | None -> Ok None
+  | Some node ->
+    let* node = strip node in
+    Ok (Some node)
+
 let opt_to_error strip (node : _ wrap) msg =
   match strip node with
   | None -> error node msg
   | Some node -> Ok node
+
+type call_signature =
+  { generics : S.variable list
+  ; parameters : S.parameter list
+  ; rhs_type : S.type_expr option
+  }
 
 (*
 let only_one strip (node: _ wrap) msg =
@@ -322,8 +334,75 @@ and strip_declaration (node : Ast.declaration) : (S.declaration, _) result =
 and strip_D_function_declaration (node : Ast.function_declaration wrap)
     : (S.declaration, _) result
   =
-  ignore node;
-  Error "TODO: strip_D_function_declaration"
+  let Ast.{ fun_sig; body } = node#payload in
+  let (Ast.{ kwd_async; kwd_function; name; call_sig } : Ast.function_signature) =
+    fun_sig
+  in
+  let* () =
+    match kwd_async with
+    | None -> Ok ()
+    | Some kwd_async ->
+      error_reg kwd_async#region "Asynchronicity is not supported in JsLIGO."
+  in
+  let comments = kwd_function#comments in
+  let comments = strip_comments comments in
+  let decorators = extract_decorators comments in
+  let fun_name = strip_identifier name in
+  let* call_sig = strip_call_signature call_sig in
+  let { generics; parameters; rhs_type } = call_sig in
+  let* fun_body = strip_statement_block body in
+  let fun_decl =
+    S.{ decorators; comments; fun_name; generics; parameters; rhs_type; fun_body }
+  in
+  Ok (S.D_function (mk_reg node#region fun_decl))
+
+and strip_comments (node : Wrap.comment list) : S.comment list =
+  let f comment =
+    let region = Wrap.comment_to_region comment
+    and contents = Wrap.comment_to_string comment in
+    Wrap.make contents region
+  in
+  List.map ~f node
+
+and extract_decorators (node : S.comment list) : S.decorator list =
+  let filter comment =
+    comment#region, Decorator.scan (Lexing.from_string comment#payload)
+  in
+  let decorators = List.map ~f:filter node in
+  let rec clean = function
+    | [] -> []
+    | (_, None) :: decorators -> clean decorators
+    | (region, Some decorator) :: decorators ->
+      Wrap.make decorator region :: clean decorators
+  in
+  clean decorators
+
+and strip_call_signature (node : Ast.call_signature) : (call_signature, _) result =
+  let (Ast.{ type_parameters; parameters; return_type } : Ast.call_signature) = node in
+  let* generics = strip_list_opt strip_type_parameters type_parameters in
+  let* parameters = strip_formal_parameters parameters in
+  let parameters = format_parameters_into_patterns parameters in
+  let* rhs_type = map_opt strip_call_return_type return_type in
+  Ok { generics; parameters; rhs_type }
+
+and format_parameters_into_patterns (node : (S.variable * S.type_expr option) list)
+    : S.parameter list
+  =
+  let make_parameter (variable, opt) =
+    let path = Nonempty_list.singleton variable in
+    S.P_var (mk_reg variable#region path), opt
+  in
+  List.map ~f:make_parameter node
+
+and strip_call_return_type (node : Ast.call_return_type) : (S.type_expr, _) result =
+  match node with
+  | Ast.Type_annotation (_, type_expr) ->
+    let* type_expr = strip_type_expr type_expr in
+    Ok type_expr
+  | Asserts_annotation a ->
+    let region = Ast.region_of_asserts a in
+    error_reg region "Assertions in return types are not supported in JsLIGO."
+  | Type_predicate_annotation w -> error w "Type predicates are not supported in JsLIGO."
 
 (* Generator function declaration *)
 
@@ -436,7 +515,7 @@ and strip_D_interface_declaration (node : Ast.interface_declaration wrap)
 (* Import alias *)
 
 and strip_D_import_alias (node : Ast.import_alias wrap) : (S.declaration, _) result =
-  let Ast.{kwd_import=_; alias; sym_equal=_; aliased} = node#payload
+  let Ast.{ kwd_import = _; alias; sym_equal = _; aliased } = node#payload
   and region = node#region in
   let alias = strip_identifier alias in
   let path = strip_aliased aliased in
@@ -446,8 +525,8 @@ and strip_D_import_alias (node : Ast.import_alias wrap) : (S.declaration, _) res
 and strip_aliased (node : Ast.aliased) : S.path =
   match node with
   | Ident ident ->
-     let singleton = Nonempty_list.singleton (strip_identifier ident) in
-     mk_reg ident#region singleton
+    let singleton = Nonempty_list.singleton (strip_identifier ident) in
+    mk_reg ident#region singleton
   | Nested nested -> strip_nested_identifier nested
 
 and strip_nested_identifier (node : Ast.nested_identifier wrap) : S.path =
@@ -739,6 +818,7 @@ and strip_T_function_type (node : Ast.function_type wrap) : (S.type_expr, _) res
   let Ast.{ type_parameters; parameters; sym_arrow = _; return_type } = node#payload in
   let* t_params = strip_list_opt strip_type_parameters type_parameters in
   let* v_params = strip_formal_parameters parameters in
+  let* v_params = filter_type_annotations v_params in
   let* ret_type = strip_return_type return_type in
   let fun_type = v_params, ret_type in
   let fun_type_reg =
@@ -750,15 +830,27 @@ and strip_T_function_type (node : Ast.function_type wrap) : (S.type_expr, _) res
   | [] -> Ok fun_type
   | _ -> Ok (S.T_for_all (mk_reg node#region (t_params, fun_type)))
 
-and strip_formal_parameters (node : Ast.formal_parameters)
+and filter_type_annotations (node : (S.variable * S.type_expr option) list)
     : ((S.variable * S.type_expr) list, _) result
+  =
+  let check = function
+    | variable, None ->
+      error_reg
+        variable#region
+        "Type annotations in function types are mandatory in JsLIGO."
+    | variable, Some type_expr -> Ok (variable, type_expr)
+  in
+  Result.all @@ List.map ~f:check node
+
+and strip_formal_parameters (node : Ast.formal_parameters)
+    : ((S.variable * S.type_expr option) list, _) result
   =
   let (Ast.Parens parens) = node in
   let parameters = parens#payload.contents in
   Result.all @@ List.map ~f:strip_formal_parameter parameters
 
 and strip_formal_parameter (node : Ast.formal_parameter wrap)
-    : (S.variable * S.type_expr, _) result
+    : (S.variable * S.type_expr option, _) result
   =
   let Ast.{ parameter_name; optional; type_opt; default } = node#payload in
   let* parameter = strip_parameter_name parameter_name in
@@ -770,8 +862,10 @@ and strip_formal_parameter (node : Ast.formal_parameter wrap)
   in
   let* type_expr =
     match type_opt with
-    | None -> error node "Untyped parameters are not supported in JsLIGO."
-    | Some (_, type_expr) -> strip_type_expr type_expr
+    | None -> Ok None
+    | Some (_, type_expr) ->
+      let* type_expr = strip_type_expr type_expr in
+      Ok (Some type_expr)
   in
   let* () =
     match default with
