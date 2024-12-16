@@ -220,8 +220,36 @@ and strip_S_switch_statement (node : Ast.switch_statement wrap)
 
 and strip_S_for_statement (node : Ast.for_statement wrap) : (S.statement option, _) result
   =
+  let Ast.
+        { kwd_for = _
+        ; sym_lpar = _
+        ; initializer_
+        ; condition
+        ; increment
+        ; sym_rpar = _
+        ; body
+        }
+    =
+    node#payload
+  in
+  let* initialiser = strip_for_initializer initializer_ in
+  let* condition = strip_for_condition condition in
+  let* afterthought =
+    match increment with
+    | None -> Ok []
+    | Some increment -> strip_expressions increment
+  in
+  let* for_body = strip_statement body in
+  let for_stmt = S.{ initialiser; condition; afterthought; for_body } in
+  Ok (Some (S.S_for (mk_reg node#region for_stmt)))
+
+and strip_for_initializer (node : Ast.for_initializer) : (S.statement option, _) result =
   ignore node;
-  Error "TODO: strip_S_for_statement"
+  Error "TODO: strip_for_initializer"
+
+and strip_for_condition (node : Ast.for_condition) : (S.expr option, _) result =
+  ignore node;
+  Error "TODO: strip_for_condition"
 
 (* For-in statement *)
 
