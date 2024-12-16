@@ -143,10 +143,16 @@ and strip_S_debugger_statement (node : Ast.kwd_debugger) : (S.statement option, 
 and strip_S_expression_statement (node : Ast.expression_statement)
     : (S.statement option, _) result
   =
+  let* expr = strip_expression_statement node in
+  Ok (Option.map ~f:(fun e -> S.S_expr e) expr)
+
+and strip_expression_statement (node : Ast.expression_statement)
+    : (S.expr option, _) result
+  =
   let* exprs = strip_expressions node in
   match exprs with
   | [] -> Ok None (* Should not happen *)
-  | [ expr ] -> Ok (Some (S.S_expr expr))
+  | [ expr ] -> Ok (Some expr)
   | _ -> error node "Multiple values are not supported in JsLIGO."
 
 (* Declaration statement *)
@@ -244,12 +250,20 @@ and strip_S_for_statement (node : Ast.for_statement wrap) : (S.statement option,
   Ok (Some (S.S_for (mk_reg node#region for_stmt)))
 
 and strip_for_initializer (node : Ast.for_initializer) : (S.statement option, _) result =
-  ignore node;
-  Error "TODO: strip_for_initializer"
+  match node with
+  | For_lexical_declaration decl ->
+    let* declaration = strip_lexical_declaration decl in
+    Ok (Some (S.S_decl declaration))
+  | For_variable_declaration decl ->
+    let* declaration = strip_variable_declaration decl in
+    Ok (Some (S.S_decl declaration))
+  | For_expression_statement stmt -> strip_S_expression_statement stmt
+  | For_empty_statement _ -> Ok None
 
 and strip_for_condition (node : Ast.for_condition) : (S.expr option, _) result =
-  ignore node;
-  Error "TODO: strip_for_condition"
+  match node with
+  | For_condition_expression expr_stmt -> strip_expression_statement expr_stmt
+  | For_condition_empty _ -> Ok None
 
 (* For-in statement *)
 
@@ -456,6 +470,12 @@ and strip_D_lexical_declaration (node : Ast.lexical_declaration wrap)
   ignore node;
   Error "TODO: strip_D_lexical_declaration"
 
+and strip_lexical_declaration (node : Ast.lexical_declaration wrap)
+    : (S.declaration, _) result
+  =
+  ignore node;
+  Error "TODO: strip_lexical_declaration"
+
 (* Variable declaration *)
 
 and strip_D_variable_declaration (node : Ast.variable_declaration wrap)
@@ -465,6 +485,11 @@ and strip_D_variable_declaration (node : Ast.variable_declaration wrap)
     node
     "Variable declared with 'var' are not supported in JsLIGO."
     ~hint:"Use the 'let' modifier."
+
+and strip_variable_declaration (node : Ast.variable_declaration wrap)
+    : (S.declaration, _) result
+  =
+  strip_D_variable_declaration node
 
 (* Function signature *)
 
