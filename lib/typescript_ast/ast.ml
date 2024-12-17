@@ -3775,3 +3775,15 @@ let region_of_accessibility_modifier = function
   | Public kwd_public -> kwd_public#region
   | Private kwd_private -> kwd_private#region
   | Protected kwd_protected -> kwd_protected#region
+
+let region_of_lhs_expression = function
+  | Member_expression w -> w#region
+  | Subscript_expression w -> w#region
+  | Identifier var -> var#region
+  | Undefined kwd_undefined -> kwd_undefined#region
+  | Pattern p -> region_of_destructuring_pattern p
+  | Non_null_expression e -> region_of_expression e
+
+let region_of_for_in_variable = function
+  | For_in_ident ident -> ident#region
+  | For_in_pattern p -> region_of_destructuring_pattern p
