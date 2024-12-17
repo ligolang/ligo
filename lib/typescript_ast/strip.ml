@@ -27,7 +27,6 @@ type 'a wrap = 'a Wrap.wrap
 let ( let* ) v f = Result.bind v ~f
 let ( <@ ) f g x = f (g x)
 let mk_reg region value = Region.{ region; value }
-
 let error = Strip_err.make
 let error_reg = Strip_err.of_region
 
@@ -361,7 +360,9 @@ and strip_for_in_var (node : Ast.for_in_var) =
 
 (* While statement *)
 
-and strip_S_while_statement (node : Ast.while_statement wrap) : (S.statement option, _) result =
+and strip_S_while_statement (node : Ast.while_statement wrap)
+    : (S.statement option, _) result
+  =
   let* stmt = strip_while_statement node in
   Ok (Some (S.S_while (mk_reg node#region stmt)))
 

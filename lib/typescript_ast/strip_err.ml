@@ -17,5 +17,4 @@ let of_region ?(hint : string option) (region : Region.t) (msg : string) =
   Error (Printf.sprintf "%s:\n%s%s" (region#to_string `Byte) msg hint)
 
 let error ?hint wrap msg = of_region ?hint wrap#region msg
-
 let make = error
