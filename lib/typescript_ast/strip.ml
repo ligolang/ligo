@@ -31,11 +31,6 @@ let mk_reg region value = Region.{ region; value }
 let error = Strip_err.make
 let error_reg = Strip_err.of_region
 
-let opt_to_error strip (node : _ wrap) msg =
-  match strip node with
-  | None -> error node msg
-  | Some node -> Ok node
-
 let rev_erase_options =
   let f acc = function
     | None -> acc
