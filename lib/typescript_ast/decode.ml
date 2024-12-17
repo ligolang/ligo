@@ -2,12 +2,8 @@
 
 module Region = Simple_utils.Region
 module Wrap = Lexing_shared.Wrap
-module Ts_wrap = Typescript_ast.Ts_wrap
-module Lexeme = Typescript_ast.Lexeme
-module Ast = Typescript_ast.Ast
-module Number = Typescript_ast.Number
 open Core
-open Typescript_ast.Ts_wrap
+open Ts_wrap
 open Ast
 
 (* Monadic let-binder for result values *)

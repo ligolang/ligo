@@ -17,9 +17,7 @@ module Attr = Lexing_shared.Attr
 
 (* Local dependencies *)
 
-module Ast = Typescript_ast.Ast
-module S = Typescript_ast.Ast_stripped
-module Decorator = Typescript_ast.Decorator
+module S = Ast_stripped
 
 (* Utilities *)
 
@@ -30,19 +28,13 @@ let ( let* ) v f = Result.bind v ~f
 let ( <@ ) f g x = f (g x)
 let mk_reg region value = Region.{ region; value }
 
-let check_single = function
-  | Nonempty_list.[ head ] -> Some head
-  | _ -> None
+let error = Strip_err.make
+let error_reg = Strip_err.of_region
 
-let error_reg ?(hint : string option) (region : Region.t) (msg : string) =
-  let hint =
-    match hint with
-    | None | Some "" -> ""
-    | Some msg -> "\nHint: " ^ msg
-  in
-  Error (Printf.sprintf "%s:\n%s%s" (region#to_string `Byte) msg hint)
-
-let error ?hint (wrap : 'a wrap) (msg : string) = error_reg ?hint wrap#region msg
+let opt_to_error strip (node : _ wrap) msg =
+  match strip node with
+  | None -> error node msg
+  | Some node -> Ok node
 
 let rev_erase_options =
   let f acc = function
@@ -65,10 +57,7 @@ let map_opt strip = function
     let* node = strip node in
     Ok (Some node)
 
-let opt_to_error strip (node : _ wrap) msg =
-  match strip node with
-  | None -> error node msg
-  | Some node -> Ok node
+(* Temporary data structures *)
 
 type call_signature =
   { generics : S.variable list
@@ -81,14 +70,6 @@ type for_header =
   ; index : S.key * S.value option
   ; expr : S.expr
   }
-
-(*
-let only_one strip (node: _ wrap) msg =
-  match strip node with
-  | Ok [node] -> Ok node
-  | Ok _ -> error node msg
-  | Error msg -> Error msg
-*)
 
 (* Stripping *)
 
