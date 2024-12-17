@@ -19,9 +19,9 @@ module Attr = Lexing_shared.Attr
 type 'a reg = 'a Region.reg
 type 'a wrap = 'a Wrap.wrap
 type comment = string wrap
-type key = string
-type value = string
-type decorator = (key * value option) wrap
+type dec_name = string
+type dec_param = string
+type decorator = (dec_name * dec_param option) wrap
 
 (* Literals *)
 
@@ -78,11 +78,14 @@ and for_stmt =
 
 (* For-of loops *)
 and for_of_stmt =
-  { index_kind : var_kind
-  ; index : pattern
+  { index_kind : var_kind option
+  ; index : key * value option
   ; expr : expr
-  ; for_of_body : statement
+  ; for_of_body : statement option
   }
+
+and key = variable
+and value = variable
 
 and var_kind =
   [ `Let of Region.t
