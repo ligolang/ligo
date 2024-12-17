@@ -30,6 +30,10 @@ let ( let* ) v f = Result.bind v ~f
 let ( <@ ) f g x = f (g x)
 let mk_reg region value = Region.{ region; value }
 
+let check_single = function
+  | Nonempty_list.[ head ] -> Some head
+  | _ -> None
+
 let error_reg ?(hint : string option) (region : Region.t) (msg : string) =
   let hint =
     match hint with
@@ -70,6 +74,12 @@ type call_signature =
   { generics : S.variable list
   ; parameters : S.parameter list
   ; rhs_type : S.type_expr option
+  }
+
+type for_header =
+  { index_kind : S.var_kind option
+  ; index : S.key * S.value option
+  ; expr : S.expr
   }
 
 (*
@@ -270,8 +280,108 @@ and strip_for_condition (node : Ast.for_condition) : (S.expr option, _) result =
 and strip_S_for_in_statement (node : Ast.for_in_statement wrap)
     : (S.statement option, _) result
   =
-  error node "For-in loops are not supported in JsLIGO."
-        ~hint:"Use a for or for-of loop instead."
+  let Ast.{ kwd_for = _; kwd_await; sym_lpar = _; for_header; sym_rpar = _; body } =
+    node#payload
+  in
+  let* () =
+    match kwd_await with
+    | None -> Ok ()
+    | Some kwd_await ->
+      error_reg kwd_await#region "Asynchronicity is not supported in JsLIGO."
+  in
+  let* { index_kind; index; expr } = strip_for_header for_header in
+  let* for_of_body = strip_statement body in
+  let for_of_stmt = S.{ index_kind; index; expr; for_of_body } in
+  let for_of_stmt = mk_reg node#region for_of_stmt in
+  Ok (Some (S.S_for_of for_of_stmt))
+
+and strip_for_header (node : Ast.for_header) : (for_header, _) result =
+  let Ast.{ range; operator; collection } = node in
+  let* in_region =
+    match operator with
+    | In kwd_in -> Ok kwd_in#region
+    | Of kwd_of ->
+      error_reg
+        kwd_of#region
+        "Loops ranging with 'of' are not supported in JsLIGO."
+        ~hint:"Try using 'in' instead."
+  in
+  let* index_kind, index = strip_for_range range in
+  let* exprs = strip_expressions collection in
+  let* expr =
+    match exprs with
+    | [ expr ] -> Ok expr
+    | _ -> error_reg in_region "Iterated collections are one expression in JsLIGO."
+  in
+  Ok { index_kind; index; expr }
+
+and strip_for_range (node : Ast.for_range)
+    : (S.var_kind option * (S.key * S.value option), _) result
+  =
+  match node with
+  | For_in_expression (Identifier v) ->
+    let variable = strip_identifier v in
+    Ok (None, (variable, None))
+  | For_in_expression e ->
+    let region = Ast.region_of_lhs_expression e in
+    error_reg region "Only variables can range in JsLIGO loops. "
+  | For_in_parenthesized e ->
+    let region = Ast.region_of_parens e in
+    error_reg region "Only variables can range in JsLIGO loops. "
+  | For_in_var for_in_var -> strip_for_in_var for_in_var
+  | For_in_let (kwd_let, for_in_variable) ->
+    let var_kind = `Let kwd_let#region in
+    let* index = strip_for_in_variable for_in_variable in
+    Ok (Some var_kind, index)
+  | For_in_const (kwd_const, for_in_variable) ->
+    let var_kind = `Const kwd_const#region in
+    let* index = strip_for_in_variable for_in_variable in
+    Ok (Some var_kind, index)
+
+and strip_for_in_variable (node : Ast.for_in_variable)
+    : (S.key * S.value option, _) result
+  =
+  let region = Ast.region_of_for_in_variable node in
+  match node with
+  | For_in_ident ident -> Ok (strip_identifier ident, None)
+  | For_in_pattern p ->
+    let* pattern = strip_destructuring_pattern p in
+    (match pattern with
+    | S.P_array array ->
+      (match array.value with
+      | [ elem_1; elem_2 ] ->
+        let* elem_1 = force_single_var elem_1 in
+        let* elem_2 = force_single_var elem_2 in
+        Ok (elem_1, Some elem_2)
+      | _ ->
+        error_reg
+          region
+          "Only a variable or an array of two variables (key, value of maps) can range \
+           over collections in JsLIGO.")
+    | _ ->
+      error_reg
+        region
+        "Only a variable or an array of two variables (key, value of maps) can range \
+         over collections in JsLIGO.")
+
+and force_single_var (node : S.pattern S.element) : (S.variable, _) result =
+  match node with
+  | Element (P_var path as pattern) ->
+    (match path.Region.value with
+    | Nonempty_list.[ variable ] -> Ok variable
+    | _ ->
+      let region = S.region_of_pattern pattern in
+      error_reg region "Expected a variable.")
+  | Element pattern | Spread pattern ->
+    let region = S.region_of_pattern pattern in
+    error_reg region "Expected a variable."
+
+and strip_for_in_var (node : Ast.for_in_var) =
+  let Ast.{ kwd_var; variable = _; default = _ } = node in
+  error_reg
+    kwd_var#region
+    "'var' variables are not supported in JsLIGO"
+    ~hint:"Use 'let' or 'const'."
 
 (* While statement *)
 
@@ -1187,6 +1297,24 @@ and strip_P_destructuring_pattern (node : Ast.destructuring_pattern)
   =
   ignore node;
   Error "TODO: strip_P_destructuring_pattern"
+
+and strip_destructuring_pattern (node : Ast.destructuring_pattern) : (S.pattern, _) result
+  =
+  match node with
+  | Pattern_object p ->
+    let* pattern = strip_object_pattern p in
+    Ok (S.P_object pattern)
+  | Pattern_array p ->
+    let* pattern = strip_array_pattern p in
+    Ok (S.P_array pattern)
+
+and strip_object_pattern (node : Ast.object_pattern) : (S.pattern S._object, _) result =
+  ignore node;
+  Error "TODO: strip_object_pattern"
+
+and strip_array_pattern (node : Ast.array_pattern) : (S.pattern S._array, _) result =
+  ignore node;
+  Error "TODO: strip_array_pattern"
 
 (* Non-null expression (pattern) *)
 
