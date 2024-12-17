@@ -270,8 +270,8 @@ and strip_for_condition (node : Ast.for_condition) : (S.expr option, _) result =
 and strip_S_for_in_statement (node : Ast.for_in_statement wrap)
     : (S.statement option, _) result
   =
-  ignore node;
-  Error "TODO: strip_S_for_in_statement"
+  error node "For-in loops are not supported in JsLIGO."
+        ~hint:"Use a for or for-of loop instead."
 
 (* While statement *)
 
