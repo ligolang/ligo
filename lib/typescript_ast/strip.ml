@@ -385,11 +385,21 @@ and strip_for_in_var (node : Ast.for_in_var) =
 
 (* While statement *)
 
-and strip_S_while_statement (node : Ast.while_statement wrap)
-    : (S.statement option, _) result
-  =
-  ignore node;
-  Error "TODO: strip_S_while_statement"
+and strip_S_while_statement (node : Ast.while_statement wrap) : (S.statement option, _) result =
+  let* stmt = strip_while_statement node in
+  Ok (Some (S.S_while (mk_reg node#region stmt)))
+
+and strip_while_statement (node : Ast.while_statement wrap) : (S.while_stmt, _) result =
+  let (Ast.{ kwd_while; condition; body } : Ast.while_statement) = node#payload in
+  let* exprs = strip_parenthesized_expression condition in
+  let* expr =
+    match exprs with
+    | [ expr ] -> Ok expr
+    | _ ->
+      error_reg kwd_while#region "Only one expression as invariant in JsLIGO is valid."
+  in
+  let* statement = strip_statement body in
+  Ok (expr, statement)
 
 (* Do statement *)
 
