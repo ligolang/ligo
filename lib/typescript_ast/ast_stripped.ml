@@ -99,7 +99,7 @@ and switch_case = expr * statement list
 and switch_default = statement list
 
 (* While-loop *)
-and while_stmt = expr * statement list
+and while_stmt = expr * statement option
 
 (* DECLARATIONS *)
 
