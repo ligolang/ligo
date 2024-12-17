@@ -1,44 +1,49 @@
 type t = m.n.o.p<T>;
 type t = {+readonly [T in number as U] ?: V}
-type t = {+readonly [x: number] -?: T}
+type t = {readonly [x: number] -?: T}
 type t = {public static override readonly async get foo? <T>(x: T) : T}
 type t = {abstract new <T>(x: T) : T}
-type t = {<T>(x: T) : X is Y}
+type t = {<T>(x: T = v) : X is Y}
 type t = {<T>(x: T) : asserts F}
 type t = {public static override readonly x?: number}
 type t = typeof f["goo"][string];
 type t = typeof f.#foo;
-type t = typeof f (6);
+type t = typeof f(6);
 type t = typeof x?.[number];
 type t = typeof import<T>;
-type t = typeof (M | number);
 type t = *
 type t = +10;
 type t = T[number];
 type t = A extends B ? {} : number;
 type t = number & string;
+type t = & string;
 type t = <T>(x: T) => T is number;
 type t = <T>(x: T) => asserts U is V;
 type t = abstract new <T>(@foo @bar("baz") public override readonly this:T=v, y?:T) => T;
 type t = infer u extends {};
+type t = infer u;
 type a = [...[{y=4}, x=5] : c];
 type a = [...{...f, x, k:v, y=3} : c];
+
 {
 type t<T extends U = A> = [x: T, y?: number, string?, ...string, any[]];
 {}
 }
 type t = readonly number;
+f <| (number)>("", x);
 f <string | (number)>("", x);
 [...x, 6];
-const x = (1+y, w)!, z;
+const x = (1+y, w)!, z=4, t;
 const x = new.target
+
 const x = class <T>{
   @foo @bar f() {};
   g() : T;
   static {};
- abstract h();
- declare public f = 6;
+  abstract h();
+  declare public f = 6;
 }
+
 const x = async x => {}
 const y = <T>(x: T) : T => x
 const f = function <T>(x: T) : T { return x }
@@ -52,7 +57,7 @@ const b = x[3]
 import m = a.b.m
 import m = n
 interface I<T> extends m.J.t<u>, K {}
-enum x {a, b=4, c, d=3}
+const enum x {a, b=4, c, d=3}
 namespace N
 namespace N.M {}
 namespace "Foo" {}
@@ -62,11 +67,11 @@ const x = 5 satisfies number
 const x = 5 as const
 const x = y as number
 
-  function* generator(i) {
-    yield *g;
-    yield i + 10;
-    yield;
-  }
+function* generator(i) {
+  yield *g;
+  yield i + 10;
+  yield;
+}
 
 const c = new C;
 const c = new C<number>
@@ -92,6 +97,7 @@ module N.M {}
 module "Foo" {}
 @foo class T<U> extends V<U,W>, Y implements A, B {}
 @foo abstract class T<U> extends V<U,W>, Y implements A, B {}
+
 async function f ()
 var x = (1+y, w)!, z
 label: throw C()
@@ -100,7 +106,8 @@ return (1+y, w)!, z
 return
 continue label
 break label
-with (1+x) {y=x}
+with (1+x) {using y=x; z=t}
+
 try {}
 try {} catch {}
 try {} catch ([x,y]) {}
@@ -146,9 +153,9 @@ async function* () {}
 const x = async function* f () {}
 
 switch (`abc${0}abc`) {
-    case `123`:
-    case `abc${0}abc`:
-        `def${1}def`, a; 1;
+  case `123`:
+  case `abc${0}abc`:
+       `def${1}def`, a; 1;
 }
 
 const x = @foo class T<U> extends V<U,W>, Y implements A, B {}
@@ -164,8 +171,9 @@ export {};
 export {foo as bar, "foo" as "bar"};
 export {} from "/path/foo.ts";
 export {foo as bar, "foo" as "bar"} from "/path/foo.ts";
+
 export type t = number;
-export class C {};
+export class C {}; //  An empty statement is parsed at the comma: why?
 export default type t = number;
 export default x+1;
 export type {t, "u"};
@@ -182,7 +190,7 @@ import x, * as y from "./hello.ts";
 import x, {z as y} from "./hello.ts";
 import typeof t = require("fs");
 import type "./hello.ts" with {};
-import x from "./hello.ts" assert {};
+import x from "./hello.ts" with {};
 import helloWorld from "./hello.js";
 import { pi, phi, absolute } from "./maths.js";
 import { pi as π } from "./maths.js";
@@ -190,5 +198,4 @@ import RandomNumberGenerator, { pi as π } from "./maths.js";
 import { Cat, Dog } from "./animal.js";
 import * as math from "./maths.js";
 import type { Cat, Dog } from "./animal.js";
-import type { createCatName } from "./animal.js";
 import { createCatName, type Cat, type Dog } from "./animal.js";
