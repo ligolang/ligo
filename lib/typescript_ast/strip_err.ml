@@ -8,13 +8,153 @@ module Region = Simple_utils.Region
 
 module Wrap = Lexing_shared.Wrap
 
-let of_region ?(hint : string option) (region : Region.t) (msg : string) =
+(* Errors *)
+
+type t =
+  | Debugger_statement
+  | Multiple_values
+  | Empty_consequence
+  | Asynchronicity
+  | Range_over_keys
+  | Invalid_loop_index
+  | Not_a_variable
+  | Var_declaration
+  | Do_while_loop
+  | Exception
+  | With_statement
+  | Label
+  | Continue
+  | Type_assertion
+  | Type_predicate
+  | Abstract_class
+  | Module
+  | Type_constraint
+  | Default_type_parameter
+  | Enumerated
+  | Ambient_declaration
+  | Any_type
+  | Number_type
+  | Symbol_type
+  | Unique_symbol_type
+  | Void_type
+  | Unknown_type
+  | Never_type
+  | Object_type
+  | Array_type
+  | Unsupported_tuple_member
+  | Maybe_type
+  | Type_query
+  | Index_type_query
+  | This_type
+  | Existential_type
+  | Unsupported_number
+  | Non_integer_as_type
+  | Unary_type
+  | Singleton_type_true
+  | Singleton_type_false
+  | Null_type
+  | Undefined_type
+  | Lookup_type
+  | Conditional_type
+  | Template_literal_type
+  | Intersection_type
+  | Readonly_type
+  | Constructor_type
+  | Type_parameter_instantiation
+  | Class_instantiation
+  | Type_check
+  | Generator
+  | Undefined_value
+  | Missing_type
+  | Optional_parameter
+  | Default_argument
+  | Decorated_parameter
+  | Access_parameter
+  | Override_parameter
+  | Readonly_parameter
+  | Non_variable_parameter
+  | Constant_type
+  | Non_null_pattern
+
+type error = t
+
+let to_string = function
+  | Debugger_statement -> "Debugger statements are not supported in JsLIGO."
+  | Multiple_values -> "Multiple values are not supported in JsLIGO."
+  | Empty_consequence -> "Empty consequences are not supported in JsLIGO."
+  | Asynchronicity -> "Asynchronicity is not supported in JsLIGO."
+  | Range_over_keys -> "Ranging over keys only is not supported in JsLIGO"
+  | Invalid_loop_index ->
+    "Only a variable or a pair key-value (for maps) can index loops in JsLIGO."
+  | Not_a_variable -> "Expected a variable."
+  | Var_declaration -> "'var' declarations are not supported in JsLIGO."
+  | Do_while_loop -> "'do-while' loops are not supported in JsLIGO."
+  | Exception -> "Exceptions are not supported in JsLIGO."
+  | With_statement -> "'with' statements are not supported in JsLIGO."
+  | Label -> "Branching on labels is not supported in JsLIGO."
+  | Continue -> "'continue' statements are not supported in JsLIGO."
+  | Type_assertion -> "Type assertions are not supported in JsLIGO."
+  | Type_predicate -> "Type predicates are not supported in JsLIGO."
+  | Abstract_class -> "Abstract classes are not supported in JsLIGO."
+  | Module -> "Modules are not supported in JsLIGO."
+  | Type_constraint -> "Type constraints are not supported in JsLIGO."
+  | Default_type_parameter -> "Default type parameters are not supported in JsLIGO."
+  | Enumerated -> "Enumerated values are not supported in JsLIGO."
+  | Ambient_declaration -> "Ambient declarations are not supported in JsLIGO."
+  | Any_type -> "The type 'any' is not supported in JsLIGO."
+  | Number_type -> "The type 'number' is not supported in JsLIGO."
+  | Symbol_type -> "The type 'symbol' is not supported in JsLIGO."
+  | Unique_symbol_type -> "The type 'unique symbol' is not supported in JsLIGO."
+  | Void_type -> "The type type 'void' is not supported by JsLIGO."
+  | Unknown_type -> "The type 'unknown' is not supported by JsLIGO."
+  | Never_type -> "Type type 'never' is not supported by JsLIGO."
+  | Object_type -> "The type 'object' is not supported by JsLIGO."
+  | Array_type -> "The type 'array' is not supported by JsLIGO."
+  | Unsupported_tuple_member -> "Unsupported tuple member in JsLIGO."
+  | Maybe_type -> "Maybe types are not supported in JsLIGO."
+  | Type_query -> "Type queries are not supported in JsLIGO."
+  | Index_type_query -> "Index type queries are not supported in JsLIGO."
+  | This_type -> "Type 'this' is not supported in JsLIGO."
+  | Existential_type -> "Existential types are not supported in JsLIGO."
+  | Unsupported_number -> "This number literal is not supported in JsLIGO."
+  | Non_integer_as_type -> "Non-integer numbers as types are not supported by JsLIGO."
+  | Unary_type -> "Unary type are not supported in JsLIGO."
+  | Singleton_type_true -> "The singleton type 'true' is not supported by JsLIGO."
+  | Singleton_type_false -> "The singleton type 'false' is not supported by JsLIGO."
+  | Null_type -> "The type 'null' is not supported by JsLIGO."
+  | Undefined_type -> "The type 'undefined' is not supported by JsLIGO."
+  | Lookup_type -> "Lookup types are not supported in JsLIGO."
+  | Conditional_type -> "Conditional types are not supported in JsLIGO."
+  | Template_literal_type -> "Template literal type are not supported in JsLIGO."
+  | Intersection_type -> "Intersection types are not supported in JsLIGO."
+  | Readonly_type -> "Read-only types are not supported in JsLIGO."
+  | Constructor_type -> "Constructor types are not supported in JsLIGO."
+  | Type_parameter_instantiation -> "Instantiation of type parameters is not supported in JsLIGO."
+  | Class_instantiation -> "Instantiation of classes is not supported in JsLIGO."
+  | Type_check -> "Type checks are not supported in JsLIGO."
+  | Generator -> "Generators are not supported in JsLIGO."
+  | Undefined_value -> "Undefined values are not supported in patterns in JsLIGO."
+  | Missing_type -> "Type annotations in function types are mandatory in JsLIGO."
+  | Optional_parameter -> "Optional parameters are not supported in JsLIGO."
+  | Default_argument -> "Default parameter values are not supported in JsLIGO."
+  | Decorated_parameter -> "Decorators on function parameters are not supported in JsLIGO."
+  | Access_parameter ->
+     "Accessibility modifiers on function parameters are not supported in JsLIGO."
+  | Override_parameter ->
+     "Override modifier on function parameters not supported in JsLIGO."
+  | Readonly_parameter ->
+     "Read-only modifier on function parameters not supported in JsLIGO."
+  | Non_variable_parameter ->
+     "Only variables are supported as function parameters in JsLIGO."
+  | Constant_type -> "Constant types are not supported in JsLIGO."
+  | Non_null_pattern -> "Non-null patterns are not supported in JsLIGO."
+
+(* Creating errors *)
+
+let make ?(hint : string option) (region : Region.t) (error : t) =
   let hint =
     match hint with
     | None | Some "" -> ""
     | Some msg -> "\nHint: " ^ msg
   in
-  Error (Printf.sprintf "%s:\n%s%s" (region#to_string `Byte) msg hint)
-
-let error ?hint wrap msg = of_region ?hint wrap#region msg
-let make = error
+  Error (Printf.sprintf "%s:\n%s%s" (region#to_string `Byte) (to_string error) hint)
