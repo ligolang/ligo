@@ -27,8 +27,6 @@ type 'a wrap = 'a Wrap.wrap
 let ( let* ) v f = Result.bind v ~f
 let ( <@ ) f g x = f (g x)
 let mk_reg region value = Region.{ region; value }
-let error = Strip_err.make
-let error_reg = Strip_err.of_region
 
 let rev_erase_options =
   let f acc = function
@@ -121,7 +119,7 @@ and strip_S_import_statement (node : Ast.import_statement wrap)
 (* Debugger statement *)
 
 and strip_S_debugger_statement (node : Ast.kwd_debugger) : (S.statement option, _) result =
-  error node "Debugger statements are not supported in JsLIGO."
+  Strip_err.(make node#region Debugger_statement)
 
 (* Expression statement *)
 
@@ -138,7 +136,7 @@ and strip_expression_statement (node : Ast.expression_statement)
   match exprs with
   | [] -> Ok None (* Should not happen *)
   | [ expr ] -> Ok (Some expr)
-  | _ -> error node "Multiple values are not supported in JsLIGO."
+  | _ -> Strip_err.(make node#region Multiple_values)
 
 (* Declaration statement *)
 
@@ -171,17 +169,15 @@ and strip_S_if_statement (node : Ast.if_statement wrap) : (S.statement option, _
     match test with
     | [ test ] -> Ok test
     | _ ->
-      let region = Ast.region_of_parens condition
-      and msg = "Exactly one test expression is supported in JsLIGO." in
-      error_reg region msg
+      let region = Ast.region_of_parens condition in
+      Strip_err.(make region Multiple_values)
   in
   let* if_so = strip_statement consequence in
   let* if_so =
     match if_so with
     | None ->
-      let region = Ast.region_of_statement consequence
-      and msg = "Empty consequence is not supported in JsLIGO." in
-      error_reg region msg
+      let region = Ast.region_of_statement consequence in
+      Strip_err.(make region Empty_consequence)
     | Some if_so -> Ok if_so
   in
   let* if_not = strip_opt (strip_statement <@ snd) alternative in
@@ -261,8 +257,7 @@ and strip_S_for_in_statement (node : Ast.for_in_statement wrap)
   let* () =
     match kwd_await with
     | None -> Ok ()
-    | Some kwd_await ->
-      error_reg kwd_await#region "Asynchronicity is not supported in JsLIGO."
+    | Some kwd_await -> Strip_err.(make kwd_await#region Asynchronicity)
   in
   let* { index_kind; index; expr } = strip_for_header for_header in
   let* for_of_body = strip_statement body in
@@ -276,17 +271,14 @@ and strip_for_header (node : Ast.for_header) : (for_header, _) result =
     match operator with
     | In kwd_in -> Ok kwd_in#region
     | Of kwd_of ->
-      error_reg
-        kwd_of#region
-        "Loops ranging with 'of' are not supported in JsLIGO."
-        ~hint:"Try using 'in' instead."
+      Strip_err.(make kwd_of#region Range_over_keys ~hint:"Try using 'in' instead.")
   in
   let* index_kind, index = strip_for_range range in
   let* exprs = strip_expressions collection in
   let* expr =
     match exprs with
     | [ expr ] -> Ok expr
-    | _ -> error_reg in_region "Iterated collections are one expression in JsLIGO."
+    | _ -> Strip_err.(make in_region Multiple_values)
   in
   Ok { index_kind; index; expr }
 
@@ -299,10 +291,10 @@ and strip_for_range (node : Ast.for_range)
     Ok (None, (variable, None))
   | For_in_expression e ->
     let region = Ast.region_of_lhs_expression e in
-    error_reg region "Only variables can range in JsLIGO loops. "
+    Strip_err.(make region Invalid_loop_index)
   | For_in_parenthesized e ->
     let region = Ast.region_of_parens e in
-    error_reg region "Only variables can range in JsLIGO loops. "
+    Strip_err.(make region Invalid_loop_index)
   | For_in_var for_in_var -> strip_for_in_var for_in_var
   | For_in_let (kwd_let, for_in_variable) ->
     let var_kind = `Let kwd_let#region in
@@ -328,16 +320,8 @@ and strip_for_in_variable (node : Ast.for_in_variable)
         let* elem_1 = force_single_var elem_1 in
         let* elem_2 = force_single_var elem_2 in
         Ok (elem_1, Some elem_2)
-      | _ ->
-        error_reg
-          region
-          "Only a variable or an array of two variables (key, value of maps) can range \
-           over collections in JsLIGO.")
-    | _ ->
-      error_reg
-        region
-        "Only a variable or an array of two variables (key, value of maps) can range \
-         over collections in JsLIGO.")
+      | _ -> Strip_err.(make region Invalid_loop_index))
+    | _ -> Strip_err.(make region Invalid_loop_index))
 
 and force_single_var (node : S.pattern S.element) : (S.variable, _) result =
   match node with
@@ -346,17 +330,14 @@ and force_single_var (node : S.pattern S.element) : (S.variable, _) result =
     | Nonempty_list.[ variable ] -> Ok variable
     | _ ->
       let region = S.region_of_pattern pattern in
-      error_reg region "Expected a variable.")
+      Strip_err.(make region Not_a_variable))
   | Element pattern | Spread pattern ->
     let region = S.region_of_pattern pattern in
-    error_reg region "Expected a variable."
+    Strip_err.(make region Not_a_variable)
 
 and strip_for_in_var (node : Ast.for_in_var) =
   let Ast.{ kwd_var; variable = _; default = _ } = node in
-  error_reg
-    kwd_var#region
-    "'var' variables are not supported in JsLIGO"
-    ~hint:"Use 'let' or 'const'."
+  Strip_err.(make kwd_var#region Var_declaration ~hint:"Use 'let' or 'const'.")
 
 (* While statement *)
 
@@ -372,8 +353,7 @@ and strip_while_statement (node : Ast.while_statement wrap) : (S.while_stmt, _) 
   let* expr =
     match exprs with
     | [ expr ] -> Ok expr
-    | _ ->
-      error_reg kwd_while#region "Only one expression as invariant in JsLIGO is valid."
+    | _ -> Strip_err.(make kwd_while#region Multiple_values)
   in
   let* statement = strip_statement body in
   Ok (expr, statement)
@@ -381,21 +361,20 @@ and strip_while_statement (node : Ast.while_statement wrap) : (S.while_stmt, _) 
 (* Do statement *)
 
 and strip_S_do_statement (node : Ast.do_statement wrap) : (S.statement option, _) result =
-  error node "Do-while loops are not supported in JsLIGO."
+  Strip_err.(make node#region Do_while_loop)
 
 (* Try statement *)
 
 and strip_S_try_statement (node : Ast.try_statement wrap) : (S.statement option, _) result
   =
-  error node "Exceptions are not supported in JsLIGO."
+  Strip_err.(make node#region Exception)
 
 (* With statement *)
 
 and strip_S_with_statement (node : Ast.with_statement wrap)
     : (S.statement option, _) result
   =
-  ignore node;
-  Error "With-statements are not supported in JsLIGO."
+  Strip_err.(make node#region With_statement)
 
 (* Break statement *)
 
@@ -404,7 +383,7 @@ and strip_S_break_statement (node : Ast.break_statement wrap)
   =
   let Ast.{ kwd_break; stmt_id } = node#payload in
   match stmt_id with
-  | Some ident -> error ident "Labels in breaks are not supported in JsLIGO."
+  | Some ident -> Strip_err.(make ident#region Label)
   | None -> Ok (Some (S.S_break kwd_break#region))
 
 (* Continue statement *)
@@ -412,7 +391,7 @@ and strip_S_break_statement (node : Ast.break_statement wrap)
 and strip_S_continue_statement (node : Ast.continue_statement wrap)
     : (S.statement option, _) result
   =
-  error node "Continue statements are not supported in JsLIGO."
+  Strip_err.(make node#region Continue)
 
 (* Return statement *)
 
@@ -427,14 +406,14 @@ and strip_S_return_statement (node : Ast.return_statement wrap)
     (match exprs with
     | [] -> Ok (Some (S.S_return (mk_reg node#region None)))
     | [ expr ] -> Ok (Some (S.S_return (mk_reg node#region (Some expr))))
-    | _ -> error node "Multiple values in return are not supported in JsLIGO.")
+    | _ -> Strip_err.(make node#region Multiple_values))
 
 (* Throw statement *)
 
 and strip_S_throw_statement (node : Ast.throw_statement wrap)
     : (S.statement option, _) result
   =
-  error node "Exceptions are not supported in JsLIGO."
+  Strip_err.(make node#region Exception)
 
 (* Empty statement *)
 
@@ -447,7 +426,7 @@ and strip_S_empty_statement (node : Region.t) : (S.statement option, _) result =
 and strip_S_labeled_statement (node : Ast.labeled_statement wrap)
     : (S.statement option, _) result
   =
-  error node "Labeled statements are not supported in JsLIGO."
+  Strip_err.(make node#region Label)
 
 (* DECLARATIONS *)
 
@@ -480,8 +459,7 @@ and strip_D_function_declaration (node : Ast.function_declaration wrap)
   let* () =
     match kwd_async with
     | None -> Ok ()
-    | Some kwd_async ->
-      error_reg kwd_async#region "Asynchronicity is not supported in JsLIGO."
+    | Some kwd_async -> Strip_err.(make kwd_async#region Asynchronicity)
   in
   let comments = kwd_function#comments in
   let comments = strip_comments comments in
@@ -540,8 +518,8 @@ and strip_call_return_type (node : Ast.call_return_type) : (S.type_expr, _) resu
     Ok type_expr
   | Asserts_annotation a ->
     let region = Ast.region_of_asserts a in
-    error_reg region "Assertions in return types are not supported in JsLIGO."
-  | Type_predicate_annotation w -> error w "Type predicates are not supported in JsLIGO."
+    Strip_err.(make region Type_assertion)
+  | Type_predicate_annotation w -> Strip_err.(make w#region Type_predicate)
 
 (* Generator function declaration *)
 
@@ -549,7 +527,7 @@ and strip_D_generator_function_declaration
     (node : Ast.generator_function_declaration wrap)
     : (S.declaration, _) result
   =
-  error node "Generator functions are not supported in JsLIGO."
+  Strip_err.(make node#region Generator)
 
 (* Class declaration *)
 
@@ -578,10 +556,7 @@ and strip_lexical_declaration (node : Ast.lexical_declaration wrap)
 and strip_D_variable_declaration (node : Ast.variable_declaration wrap)
     : (S.declaration, _) result
   =
-  error
-    node
-    "Variable declared with 'var' are not supported in JsLIGO."
-    ~hint:"Use the 'let' modifier."
+  Strip_err.(make node#region Var_declaration ~hint:"Use the 'let' modifier.")
 
 and strip_variable_declaration (node : Ast.variable_declaration wrap)
     : (S.declaration, _) result
@@ -601,20 +576,20 @@ and strip_D_function_signature (node : Ast.function_signature wrap)
 and strip_D_abstract_class_declaration (node : Ast.abstract_class_declaration wrap)
     : (S.declaration, _) result
   =
-  error node "Abstract classes are not supported in JsLIGO."
+  Strip_err.(make node#region Abstract_class)
 
 (* Module declaration *)
 
 and strip_D_module_declaration (node : Ast.module_declaration wrap)
     : (S.declaration, _) result
   =
-  error node "Modules are not supported in JsLIGO." ~hint:"Try using namespaces."
+  Strip_err.(make node#region Module ~hint:"Try using namespaces.")
 
-(* Internal module declaration *)
+(* Namespace declaration *)
 
 and strip_D_internal_module (node : Ast.internal_module wrap) : (S.declaration, _) result =
   ignore node;
-  Error "TODO: strip_D_internal_module_declaration"
+  Error "TODO: strip_D_internal_module"
 
 (* Type alias declaration *)
 
@@ -642,17 +617,17 @@ and strip_type_parameter (node : Ast.type_parameter wrap) : (S.variable, _) resu
   | None, None -> Ok name
   | Some (_, type_expr), _ ->
     let region = Ast.region_of_type_expr type_expr in
-    error_reg region "Constraints on type parameters are not supported in JsLIGO."
+    Strip_err.(make region Type_constraint)
   | _, Some (_, type_expr) ->
     let region = Ast.region_of_type_expr type_expr in
-    error_reg region "Defaults of type parameters are not supported in JsLIGO."
+    Strip_err.(make region Default_type_parameter)
 
 (* Enum declaration *)
 
 and strip_D_enum_declaration (node : Ast.enum_declaration wrap)
     : (S.declaration, _) result
   =
-  error node "Enumerated values are not supported in JsLIGO."
+  Strip_err.(make node#region Enumerated)
 
 (* Interface declaration *)
 
@@ -691,7 +666,7 @@ and strip_nested_identifier (node : Ast.nested_identifier wrap) : S.path =
 and strip_D_ambient_declaration (node : Ast.ambient_declaration wrap)
     : (S.declaration, _) result
   =
-  error node "Ambient declarations are not supported in JsLIGO."
+  Strip_err.(make node#region Ambient_declaration)
 
 (* TYPES *)
 
@@ -740,12 +715,9 @@ and strip_T_parenthesized_type (node : Ast.type_expr Ast.parens) : (S.type_expr,
 
 and strip_T_predefined_type (node : Ast.predefined_type) : (S.type_expr, _) result =
   match node with
-  | T_any kwd_any -> error_reg kwd_any#region "The type 'any' is not supported in JsLIGO."
+  | T_any kwd_any -> Strip_err.(make kwd_any#region Any_type)
   | T_number kwd_number ->
-    error_reg
-      kwd_number#region
-      "The type 'number' is not supported in JsLIGO."
-      ~hint:"Use 'bigint' or 'nat'."
+    Strip_err.(make kwd_number#region Number_type ~hint:"Use 'bigint' or 'nat'.")
   | T_boolean kwd_boolean ->
     (* The pipeline uses "bool" instead *)
     let region = kwd_boolean#region in
@@ -757,16 +729,17 @@ and strip_T_predefined_type (node : Ast.predefined_type) : (S.type_expr, _) resu
     let path = mk_reg region (Nonempty_list.singleton kwd_string) in
     Ok (T_var (mk_reg region (path, [])))
   | T_symbol kwd_symbol ->
-    error_reg kwd_symbol#region "The type 'symbol' is not supported in JsLIGO."
+    Strip_err.(make kwd_symbol#region Symbol_type)
   | T_unique_symbol kwd_unique_symbol ->
-    error_reg kwd_unique_symbol#region "Type 'unique symbol' is not supported in JsLIGO."
-  | T_void kwd_void -> error_reg kwd_void#region "Type 'void' is not supported in JsLIGO."
+    Strip_err.(make kwd_unique_symbol#region Unique_symbol_type)
+  | T_void kwd_void ->
+    Strip_err.(make kwd_void#region Void_type)
   | T_unknown kwd_unknown ->
-    error_reg kwd_unknown#region "Type 'unknown' is not supported in JsLIGO."
+    Strip_err.(make kwd_unknown#region Unknown_type)
   | T_never kwd_never ->
-    error_reg kwd_never#region "Type 'never' is not supported in JsLIGO."
+    Strip_err.(make kwd_never#region Never_type)
   | T_object kwd_object ->
-    error_reg kwd_object#region "Type 'object' is not supported in JsLIGO"
+    Strip_err.(make kwd_object#region Object_type)
 
 (* Type identifier *)
 
@@ -827,7 +800,7 @@ and strip_T_object_type (node : Ast.object_type) : (S.type_expr, _) result =
 (* Array type *)
 
 and strip_T_array_type (node : Ast.array_type wrap) : (S.type_expr, _) result =
-  error node "Array types are not supported in JsLIGO."
+  Strip_err.(make node#region Array_type)
 
 (* Tuple type *)
 
@@ -844,10 +817,8 @@ and strip_tuple_type_member (node : Ast.tuple_type_member) : (S.type_expr, _) re
   | Tuple_optional_parameter _
   | Tuple_optional_type _
   | Tuple_rest_type _ ->
-    error_reg
-      region
-      "This tuple type member is not supported in JsLIGO."
-      ~hint:"Use a single type expression."
+    Strip_err.(make region Unsupported_tuple_member
+                 ~hint:"Use a single type expression.")
   | Tuple_type type_expr -> strip_type_expr type_expr
 
 (* Flow maybe type *)
@@ -855,29 +826,29 @@ and strip_tuple_type_member (node : Ast.tuple_type_member) : (S.type_expr, _) re
 and strip_T_flow_maybe_type (node : (Ast.sym_qmark * Ast.primary_type) wrap)
     : (S.type_expr, _) result
   =
-  error node "Maybe types are not supported in JsLIGO."
+  Strip_err.(make node#region Maybe_type)
 
 (* Type query *)
 
 and strip_T_type_query (node : (Ast.kwd_keyof * Ast.type_query) wrap)
     : (S.type_expr, _) result
   =
-  error node "Type queries are not supported in JsLIGO."
+  Strip_err.(make node#region Type_query)
 
 (* Index type query *)
 
 and strip_T_index_type_query (node : (Ast.kwd_keyof * Ast.primary_type) wrap)
     : (S.type_expr, _) result
   =
-  error node "Index type queries are not supported in JsLIGO."
+  Strip_err.(make node#region Index_type_query)
 
 (* "This" as a type *)
 
 and strip_T_this (node : Ast.kwd_this) : (S.type_expr, _) result =
-  error node "Type 'this' is not supported by JsLIGO."
+  Strip_err.(make node#region This_type)
 
 and strip_T_existential_type (node : Ast.sym_star) : (S.type_expr, _) result =
-  error node "Existential types are not supported by JsLIGO."
+  Strip_err.(make node#region Existential_type)
 
 (* Literal type *)
 
@@ -892,60 +863,59 @@ and strip_T_literal_type (node : Ast.literal_type) : (S.type_expr, _) result =
   | T_undefined t -> strip_T_undefined t
 
 and strip_T_unary_type (node : Ast.unary_expression wrap) : (S.type_expr, _) result =
-  error node "Unary type are not supported in JsLIGO."
+  Strip_err.(make node#region Unary_type)
 
 and strip_T_number (node : Ast.number) : (S.type_expr, _) result =
   let region = Ast.region_of_number node in
   match node with
   | Hex _ | Bin _ | Oct _ ->
-    error_reg region "This number literal as a type is not supported by JsLIGO."
+    Strip_err.(make region Unsupported_number ~hint:"Use a decimal.")
   | Dec (literal, _) ->
     let lexeme, q = literal#payload in
     if Z.equal (Q.den q) Z.one
     then (
-      let z = Q.to_bigint q in
-      let literal = Wrap.make (lexeme, z) literal#region in
+      let literal = Wrap.make (lexeme, Q.to_bigint q) literal#region in
       Ok (T_int literal))
-    else error_reg region "Non-integer numbers as types are not supported by JsLIGO."
+    else Strip_err.(make region Non_integer_as_type)
 
 and strip_T_string (node : Ast.string_literal) : (S.type_expr, _) result =
   Ok (S.T_string node)
 
 and strip_T_true (node : Ast.kwd_true) : (S.type_expr, _) result =
-  error node "The singleton type 'true' is not supported by JsLIGO."
+  Strip_err.(make node#region Singleton_type_true)
 
 and strip_T_false (node : Ast.kwd_false) : (S.type_expr, _) result =
-  error node "The singleton type 'false' is not supported by JsLIGO."
+  Strip_err.(make node#region Singleton_type_false)
 
 and strip_T_null (node : Ast.kwd_null) : (S.type_expr, _) result =
-  error node "The type 'null' is not supported by JsLIGO."
+  Strip_err.(make node#region Null_type)
 
 and strip_T_undefined (node : Ast.kwd_undefined) : (S.type_expr, _) result =
-  error node "The type 'undefined' is not supported by JsLIGO."
+  Strip_err.(make node#region Undefined_type)
 
 (* Lookup type *)
 
 and strip_T_lookup_type (node : Ast.lookup_type wrap) : (S.type_expr, _) result =
-  error node "Lookup types are not supported in JsLIGO."
+  Strip_err.(make node#region Lookup_type)
 
 (* Conditional type *)
 
 and strip_T_conditional_type (node : Ast.conditional_type wrap) : (S.type_expr, _) result =
-  error node "Conditional types are not supported in JsLIGO."
+  Strip_err.(make node#region Conditional_type)
 
 (* Template literal type *)
 
 and strip_T_template_literal_type (node : Ast.template_literal_type wrap)
     : (S.type_expr, _) result
   =
-  error node "Template literal type are not supported in JsLIGO."
+  Strip_err.(make node#region Template_literal_type)
 
 (* Intersection type *)
 
 and strip_T_intersection_type (node : Ast.intersection_type wrap)
     : (S.type_expr, _) result
   =
-  error node "Intersection types are not supported in JsLIGO."
+  Strip_err.(make node#region Intersection_type)
 
 (* Union type *)
 
@@ -985,9 +955,7 @@ and filter_type_annotations (node : (S.variable * S.type_expr option) list)
   =
   let check = function
     | variable, None ->
-      error_reg
-        variable#region
-        "Type annotations in function types are mandatory in JsLIGO."
+      Strip_err.(make variable#region Missing_type)
     | variable, Some type_expr -> Ok (variable, type_expr)
   in
   Result.all @@ List.map ~f:check node
@@ -1008,7 +976,7 @@ and strip_formal_parameter (node : Ast.formal_parameter wrap)
     match optional with
     | None -> Ok ()
     | Some sym_qmark ->
-      error_reg sym_qmark#region "Optional parameters are not supported in JsLIGO."
+      Strip_err.(make sym_qmark#region Optional_parameter)
   in
   let* type_expr =
     match type_opt with
@@ -1022,7 +990,7 @@ and strip_formal_parameter (node : Ast.formal_parameter wrap)
     | None -> Ok ()
     | Some (_, expr) ->
       let region = Ast.region_of_expression expr in
-      error_reg region "Default parameter values are not supported in JsLIGO."
+      Strip_err.(make region Default_argument)
   in
   Ok (parameter, type_expr)
 
@@ -1033,32 +1001,26 @@ and strip_parameter_name (node : Ast.parameter_name wrap) : (S.variable, _) resu
     | [] -> Ok ()
     | decorator :: _ ->
       let region = Ast.region_of_decorator decorator in
-      error_reg region "Decorators on function parameters are not supported in JsLIGO."
+      Strip_err.(make region Decorated_parameter)
   in
   let* () =
     match access with
     | None -> Ok ()
     | Some modifier ->
       let region = Ast.region_of_accessibility_modifier modifier in
-      error_reg
-        region
-        "Accessibility modifiers on function parameters are not supported in JsLIGO."
+      Strip_err.(make region Access_parameter)
   in
   let* () =
     match kwd_override with
     | None -> Ok ()
     | Some kwd_override ->
-      error_reg
-        kwd_override#region
-        "Override modifier on function parameters not supported in JsLIGO."
+      Strip_err.(make kwd_override#region Override_parameter)
   in
   let* () =
     match kwd_readonly with
     | None -> Ok ()
     | Some kwd_readonly ->
-      error_reg
-        kwd_readonly#region
-        "Read-only modifier on function parameters not supported in JsLIGO."
+      Strip_err.(make kwd_readonly#region Readonly_parameter)
   in
   strip_parameter_pattern pattern
 
@@ -1067,12 +1029,10 @@ and strip_parameter_pattern (node : Ast.parameter_pattern) : (S.variable, _) res
   | Parameter_pattern (P_identifier ident) -> Ok (strip_identifier ident)
   | Parameter_pattern pattern ->
     let region = Ast.region_of_pattern pattern in
-    error_reg region "Only variables are supported as function parameters in JsLIGO."
+    Strip_err.(make region Non_variable_parameter)
   | Parameter_this kwd_this ->
-    error_reg
-      kwd_this#region
-      "The `this` identifier is not supported in JsLIGO"
-      ~hint:"Rename it."
+     Strip_err.(make kwd_this#region Non_variable_parameter
+                  ~hint:"Rename 'this'.")
 
 and strip_identifier (node : Ast.identifier) : S.variable = node
 
@@ -1080,23 +1040,23 @@ and strip_return_type (node : Ast.return_type) : (S.type_expr, _) result =
   let region = Ast.region_of_return_type node in
   match node with
   | Return_type type_expr -> strip_type_expr type_expr
-  | Return_asserts _ -> error_reg region "Type assertion not supported in JsLIGO."
-  | Return_type_predicate _ -> error_reg region "Type predicate not supported in JsLIGO."
+  | Return_asserts _ -> Strip_err.(make region Type_assertion)
+  | Return_type_predicate _ -> Strip_err.(make region Type_predicate)
 
 (* Readonly type *)
 
 and strip_T_readonly_type (node : Ast.readonly_type wrap) : (S.type_expr, _) result =
-  error node "Read-only types are not supported in JsLIGO."
+  Strip_err.(make node#region Readonly_type)
 
 (* Constructor type *)
 
 and strip_T_constructor_type (node : Ast.constructor_type wrap) : (S.type_expr, _) result =
-  error node "Constructor types are not supported in JsLIGO."
+  Strip_err.(make node#region Constructor_type)
 
 (* Infer type *)
 
 and strip_T_infer_type (node : Ast.infer_type wrap) : (S.type_expr, _) result =
-  error node "Infer types are not supported in JsLIGO."
+  Strip_err.(make node#region Conditional_type)
 
 (* Member expression (in type expressions) *)
 
@@ -1104,7 +1064,7 @@ and strip_T_type_query_member_expression_in_type_annotation
     (node : Ast.type_query_member_expression_in_type_annotation wrap)
     : (S.type_expr, _) result
   =
-  error node "Member expressions in type queries are not supported by JsLIGO."
+  Strip_err.(make node#region Type_query)
 
 (* Call expression (in type expressions) *)
 
@@ -1112,7 +1072,7 @@ and strip_T_type_query_call_expression_in_type_annotation
     (node : Ast.type_query_call_expression_in_type_annotation wrap)
     : (S.type_expr, _) result
   =
-  error node "Call expressions in type queries are not supported in JsLIGO."
+  Strip_err.(make node#region Type_query)
 
 (* EXPRESSIONS *)
 
@@ -1144,7 +1104,7 @@ and strip_E_as_expression (node : Ast.as_expression wrap) : (S.expr, _) result =
     let* expr = strip_expression expr in
     let* type_expr = strip_type_expr type_expr in
     Ok (S.E_typed (mk_reg region (expr, type_expr)))
-  | As_const kwd_const -> error kwd_const "Const not supported here in JsLIGO."
+  | As_const kwd_const -> Strip_err.(make kwd_const#region Constant_type)
 
 (* Assignment expression *)
 
@@ -1166,7 +1126,7 @@ and strip_E_augmented_assignment_expression
 (* Await-expression *)
 
 and strip_E_await_expression (node : Ast.await_expression wrap) : (S.expr, _) result =
-  error node "Await-expressions are not supported in JsLIGO."
+  Strip_err.(make node#region Asynchronicity)
 
 (* Binary expression *)
 
@@ -1179,7 +1139,7 @@ and strip_E_binary_expression (node : Ast.binary_expression wrap) : (S.expr, _) 
 and strip_E_instantiation_expression (node : Ast.instantiation_expression wrap)
     : (S.expr, _) result
   =
-  error node "Instantiation of type parameters is not supported in JsLIGO."
+  Strip_err.(make node#region Type_parameter_instantiation)
 
 (* Internal module expression *)
 
@@ -1190,7 +1150,7 @@ and strip_E_internal_module (node : Ast.internal_module wrap) : (S.expr, _) resu
 (* New-expression *)
 
 and strip_E_new_expression (node : Ast.new_expression wrap) : (S.expr, _) result =
-  error node "Instantiation of classes is not supported in JsLIGO."
+  Strip_err.(make node#region Class_instantiation)
 
 (* Primary expression *)
 
@@ -1203,7 +1163,7 @@ and strip_E_primary_expression (node : Ast.primary_expression) : (S.expr, _) res
 and strip_E_satisfies_expression (node : Ast.satisfies_expression wrap)
     : (S.expr, _) result
   =
-  error node "Type checks are not supported in JsLIGO."
+  Strip_err.(make node#region Type_check)
 
 (* Ternary expression *)
 
@@ -1214,7 +1174,7 @@ and strip_E_ternary_expression (node : Ast.ternary_expression wrap) : (S.expr, _
 (* Type assertion (expression) *)
 
 and strip_E_type_assertion (node : Ast.type_assertion wrap) : (S.expr, _) result =
-  error node "Type assertions are not supported in JsLIGO."
+  Strip_err.(make node#region Type_assertion)
 
 (* Unary expression *)
 
@@ -1232,7 +1192,7 @@ and strip_E_update_expression (node : Ast.update_expression) : (S.expr, _) resul
 
 and strip_E_yield_expression (node : Ast.yield_expression) : (S.expr, _) result =
   let region = Ast.region_of_yield_expression node in
-  error_reg region "Yield expressions are not supported in JsLIGO."
+  Strip_err.(make region Generator)
 
 (* PATTERNS *)
 
@@ -1275,7 +1235,7 @@ and strip_P_identifier (node : Ast.identifier) : (S.pattern, _) result =
 (* Undefined (pattern) *)
 
 and strip_P_undefined (node : Ast.kwd_undefined) : (S.pattern, _) result =
-  error node "The undefined value is not supported in patterns in JsLIGO."
+  Strip_err.(make node#region Undefined_value)
 
 (* Destructuring pattern *)
 
@@ -1307,7 +1267,7 @@ and strip_array_pattern (node : Ast.array_pattern) : (S.pattern S._array, _) res
 
 and strip_P_non_null_expression (node : Ast.expression) : (S.pattern, _) result =
   let region = Ast.region_of_expression node in
-  error_reg region "Non-null patterns are not supported in JsLIGO."
+  Strip_err.(make region Non_null_pattern)
 
 (* Rest pattern *)
 
