@@ -617,7 +617,7 @@ and private_property_identifier = hash_name
 (** Lexical Declaration
 
   Lexical declarations are declarations of let- or
-  const-variables. When achieved by means of object & array patterns,
+  const-variables. When achieved by means of object & tuple patterns,
   the variables they contain are introduced in the current scope.
 
   Example: {@js[const {x, y} = z;]}
@@ -629,10 +629,6 @@ and private_property_identifier = hash_name
        field('kind', choice('let', 'const')),
        commaSep1($.variable_declarator),
        $._semicolon),
-
-     variable_declarator: $ => seq(
-       field('name', choice($.identifier, $._destructuring_pattern)),
-       optional($._initializer)),
 
      _destructuring_pattern: $ => choice($.object_pattern, $.array_pattern),
 
@@ -673,6 +669,17 @@ and private_property_identifier = hash_name
     }]
   + TypeScript
     {@js[
+      variable_declarator: $ => choice(
+        seq(
+          field('name', choice($.identifier, $._destructuring_pattern)),
+          field('type', optional($.type_annotation)),
+          optional($._initializer),
+        ),
+        prec('declaration', seq(
+          field('name', $.identifier),
+          '!',
+          field('type', $.type_annotation)))),
+
      _lhs_expression: ($, previous) => choice(previous, $.non_null_expression),
 
      non_null_expression: $ =>
@@ -688,7 +695,17 @@ and let_or_const =
   | Let of kwd_let
   | Const of kwd_const
 
-and variable_declarator = lhs_pattern
+and variable_declarator =
+  | Var_decl of var_decl_lhs
+  | Var_decl_assertion of var_decl_assertion
+
+and var_decl_assertion = identifier * sym_qmark * type_annotation
+
+and var_decl_lhs =
+  { var_names : lhs_pattern
+  ; var_type : type_annotation option
+  ; default : (sym_equal * expression) option
+  }
 
 and lhs_pattern =
   | Decl_ident of identifier
@@ -914,6 +931,7 @@ and abstract_method_signature =
        field('type', $.type),
        optional(seq('as', field('alias', $.type)))),
 
+     type_annotation: $ => seq(':', $.type),
      omitting_type_annotation: $ => seq('-?:', $.type),
      adding_type_annotation: $ => seq('+?:', $.type),
      opting_type_annotation: $ => seq('?:', $.type)
@@ -984,10 +1002,6 @@ and index_annotation =
        optional(choice('?', '!')),
        field('type', optional($.type_annotation)),
        optional($._initializer))
-    ]}
-  + JavaScript
-    {@js[
-     _initializer: $ => seq('=', field('value', $.expression))
     ]}
  *)
 and public_field_definition =
@@ -1076,9 +1090,7 @@ and ambient_kind =
        '}'),
 
      enum_assignment: $ =>
-       seq(field('name', $._property_name), $._initializer),
-
-     _initializer: $ => seq('=', field('value', $.expression))
+       seq(field('name', $._property_name), $._initializer)
     }]
  *)
 and enum_declaration =
@@ -3792,3 +3804,7 @@ let region_of_module_name = function
   | Module_string literal -> literal#region
   | Module_ident ident -> ident#region
   | Module_nested nested -> nested#region
+
+let region_of_var_names = function
+  | Decl_ident id -> id#region
+  | Decl_pattern p -> region_of_destructuring_pattern p
