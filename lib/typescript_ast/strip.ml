@@ -68,14 +68,15 @@ type for_header =
 let rec strip_statements (node : Ast.statements) : (S.t, _) result =
   match node with
   | None -> Ok []
-  | Some stmts ->
-    let stmts = Nonempty_list.to_list stmts#payload in
-    let f acc stmt =
-      let* stmt' = strip_statement stmt in
-      Ok (stmt' :: acc)
-    in
-    let* stmts = List.fold_result ~f ~init:[] stmts in
-    Ok (rev_erase_options stmts)
+  | Some stmts -> strip_statement_list @@ Nonempty_list.to_list stmts#payload
+
+and strip_statement_list (node : Ast.statement list) : (S.statement list, _) result =
+  let f acc stmt =
+    let* stmt' = strip_statement stmt in
+    Ok (stmt' :: acc)
+  in
+  let* stmts = List.fold_result ~f ~init:[] node in
+  Ok (rev_erase_options stmts)
 
 and strip_statement (node : Ast.statement) : (S.statement option, _) result =
   match node with
@@ -200,8 +201,52 @@ and strip_expressions (node : Ast.expressions) : (S.expr list, _) result =
 and strip_S_switch_statement (node : Ast.switch_statement wrap)
     : (S.statement option, _) result
   =
-  ignore node;
-  Error "TODO: strip_S_switch_statement"
+  let* stmt = strip_switch_statement node in
+  Ok (Some (S.S_switch (mk_reg node#region stmt)))
+
+and strip_switch_statement (node : Ast.switch_statement wrap) : (S.switch_stmt, _) result =
+  let Ast.{ kwd_switch; value; body } = node#payload in
+  let* exprs = strip_parenthesized_expression value in
+  let* expr =
+    match exprs with
+    | [ expr ] -> Ok expr
+    | _ -> Strip_err.(make kwd_switch#region Multiple_values)
+  in
+  let* cases = strip_switch_body body in
+  Ok (expr, cases)
+
+and strip_switch_body (node : Ast.switch_body) : (S.cases, _) result =
+  let (Ast.Braces braces) = node in
+  let entries = braces#payload.contents in
+  let filter case (case_acc, default_acc) =
+    match case with
+    | Ast.Switch_case case -> case :: case_acc, default_acc
+    | Switch_default default -> case_acc, default :: default_acc
+  in
+  let cases, defaults = List.fold_right entries ~init:([], []) ~f:filter in
+  let* cases = Result.all @@ List.map ~f:strip_switch_case cases in
+  match defaults with
+  | [] -> Ok (cases, [])
+  | [ default ] ->
+    let* default = strip_switch_default default in
+    Ok (cases, default)
+  | _ :: default :: _ -> Strip_err.(make default#region Multiple_defaults)
+
+and strip_switch_case (node : Ast.switch_case wrap) : (S.switch_case, _) result =
+  let Ast.{ kwd_case = _; value; body } = node#payload in
+  match value#payload with
+  | Nonempty_list.[ expr ] ->
+    let* expr = strip_expression expr in
+    let* body = strip_statement_list body in
+    Ok (expr, body)
+  | _ :: expr :: _ ->
+    let region = Ast.region_of_expression expr in
+    Strip_err.(make region Multiple_values)
+
+and strip_switch_default (node : Ast.switch_default wrap) : (S.switch_default, _) result =
+  let Ast.{ kwd_default = _; statements } = node#payload in
+  let* statements = strip_statement_list statements in
+  Ok statements
 
 (* For statement *)
 
@@ -728,18 +773,13 @@ and strip_T_predefined_type (node : Ast.predefined_type) : (S.type_expr, _) resu
     let region = kwd_string#region in
     let path = mk_reg region (Nonempty_list.singleton kwd_string) in
     Ok (T_var (mk_reg region (path, [])))
-  | T_symbol kwd_symbol ->
-    Strip_err.(make kwd_symbol#region Symbol_type)
+  | T_symbol kwd_symbol -> Strip_err.(make kwd_symbol#region Symbol_type)
   | T_unique_symbol kwd_unique_symbol ->
     Strip_err.(make kwd_unique_symbol#region Unique_symbol_type)
-  | T_void kwd_void ->
-    Strip_err.(make kwd_void#region Void_type)
-  | T_unknown kwd_unknown ->
-    Strip_err.(make kwd_unknown#region Unknown_type)
-  | T_never kwd_never ->
-    Strip_err.(make kwd_never#region Never_type)
-  | T_object kwd_object ->
-    Strip_err.(make kwd_object#region Object_type)
+  | T_void kwd_void -> Strip_err.(make kwd_void#region Void_type)
+  | T_unknown kwd_unknown -> Strip_err.(make kwd_unknown#region Unknown_type)
+  | T_never kwd_never -> Strip_err.(make kwd_never#region Never_type)
+  | T_object kwd_object -> Strip_err.(make kwd_object#region Object_type)
 
 (* Type identifier *)
 
@@ -817,8 +857,7 @@ and strip_tuple_type_member (node : Ast.tuple_type_member) : (S.type_expr, _) re
   | Tuple_optional_parameter _
   | Tuple_optional_type _
   | Tuple_rest_type _ ->
-    Strip_err.(make region Unsupported_tuple_member
-                 ~hint:"Use a single type expression.")
+    Strip_err.(make region Unsupported_tuple_member ~hint:"Use a single type expression.")
   | Tuple_type type_expr -> strip_type_expr type_expr
 
 (* Flow maybe type *)
@@ -954,8 +993,7 @@ and filter_type_annotations (node : (S.variable * S.type_expr option) list)
     : ((S.variable * S.type_expr) list, _) result
   =
   let check = function
-    | variable, None ->
-      Strip_err.(make variable#region Missing_type)
+    | variable, None -> Strip_err.(make variable#region Missing_type)
     | variable, Some type_expr -> Ok (variable, type_expr)
   in
   Result.all @@ List.map ~f:check node
@@ -975,8 +1013,7 @@ and strip_formal_parameter (node : Ast.formal_parameter wrap)
   let* () =
     match optional with
     | None -> Ok ()
-    | Some sym_qmark ->
-      Strip_err.(make sym_qmark#region Optional_parameter)
+    | Some sym_qmark -> Strip_err.(make sym_qmark#region Optional_parameter)
   in
   let* type_expr =
     match type_opt with
@@ -1013,14 +1050,12 @@ and strip_parameter_name (node : Ast.parameter_name wrap) : (S.variable, _) resu
   let* () =
     match kwd_override with
     | None -> Ok ()
-    | Some kwd_override ->
-      Strip_err.(make kwd_override#region Override_parameter)
+    | Some kwd_override -> Strip_err.(make kwd_override#region Override_parameter)
   in
   let* () =
     match kwd_readonly with
     | None -> Ok ()
-    | Some kwd_readonly ->
-      Strip_err.(make kwd_readonly#region Readonly_parameter)
+    | Some kwd_readonly -> Strip_err.(make kwd_readonly#region Readonly_parameter)
   in
   strip_parameter_pattern pattern
 
@@ -1031,8 +1066,7 @@ and strip_parameter_pattern (node : Ast.parameter_pattern) : (S.variable, _) res
     let region = Ast.region_of_pattern pattern in
     Strip_err.(make region Non_variable_parameter)
   | Parameter_this kwd_this ->
-     Strip_err.(make kwd_this#region Non_variable_parameter
-                  ~hint:"Rename 'this'.")
+    Strip_err.(make kwd_this#region Non_variable_parameter ~hint:"Rename 'this'.")
 
 and strip_identifier (node : Ast.identifier) : S.variable = node
 

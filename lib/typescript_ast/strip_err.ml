@@ -75,6 +75,7 @@ type t =
   | Non_variable_parameter
   | Constant_type
   | Non_null_pattern
+  | Multiple_defaults
 
 type error = t
 
@@ -129,7 +130,8 @@ let to_string = function
   | Intersection_type -> "Intersection types are not supported in JsLIGO."
   | Readonly_type -> "Read-only types are not supported in JsLIGO."
   | Constructor_type -> "Constructor types are not supported in JsLIGO."
-  | Type_parameter_instantiation -> "Instantiation of type parameters is not supported in JsLIGO."
+  | Type_parameter_instantiation ->
+    "Instantiation of type parameters is not supported in JsLIGO."
   | Class_instantiation -> "Instantiation of classes is not supported in JsLIGO."
   | Type_check -> "Type checks are not supported in JsLIGO."
   | Generator -> "Generators are not supported in JsLIGO."
@@ -137,17 +139,19 @@ let to_string = function
   | Missing_type -> "Type annotations in function types are mandatory in JsLIGO."
   | Optional_parameter -> "Optional parameters are not supported in JsLIGO."
   | Default_argument -> "Default parameter values are not supported in JsLIGO."
-  | Decorated_parameter -> "Decorators on function parameters are not supported in JsLIGO."
+  | Decorated_parameter ->
+    "Decorators on function parameters are not supported in JsLIGO."
   | Access_parameter ->
-     "Accessibility modifiers on function parameters are not supported in JsLIGO."
+    "Accessibility modifiers on function parameters are not supported in JsLIGO."
   | Override_parameter ->
-     "Override modifier on function parameters not supported in JsLIGO."
+    "Override modifier on function parameters not supported in JsLIGO."
   | Readonly_parameter ->
-     "Read-only modifier on function parameters not supported in JsLIGO."
+    "Read-only modifier on function parameters not supported in JsLIGO."
   | Non_variable_parameter ->
-     "Only variables are supported as function parameters in JsLIGO."
+    "Only variables are supported as function parameters in JsLIGO."
   | Constant_type -> "Constant types are not supported in JsLIGO."
   | Non_null_pattern -> "Non-null patterns are not supported in JsLIGO."
+  | Multiple_defaults -> "Multiple default switch cases are not supported in JsLIGO."
 
 (* Creating errors *)
 
