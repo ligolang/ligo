@@ -75,6 +75,7 @@ type t =
   | Non_variable_parameter
   | Constant_type
   | Non_null_pattern
+  | Multiple_defaults
 
 type error = t
 
