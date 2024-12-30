@@ -1,3 +1,4 @@
+let y! : number;
 type t = m.n.o.p<T>;
 type t = {+readonly [T in number as U] ?: V}
 type t = {readonly [x: number] -?: T}
