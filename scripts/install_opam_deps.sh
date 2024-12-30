@@ -9,4 +9,4 @@ set -x
 # Install local dependencies
 export PATH=~/.cargo/bin:$PATH
 
-BLST_PORTABLE=y opam install -y --deps-only --with-test --with-doc --locked .
+BLST_PORTABLE=y opam install -y --deps-only --with-test --with-doc .
