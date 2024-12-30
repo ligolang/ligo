@@ -1557,12 +1557,29 @@ and dec_variable_declaration ?(comments = []) node : (variable_declaration, _) r
   let* var_decls = ne_list_of_children dec_variable_declarator var_decls in
   Ok (make_sym ~comments kwd_var, var_decls)
 
-and dec_variable_declarator ?comments node : (variable_declarator, _) result =
+and dec_variable_declarator ?(comments = []) node : (variable_declarator, _) result =
+  let comments = comments @ prev_comments node in
   let* name_field = child_with_field "name" node in
-  match get_name name_field with
-  | "identifier" -> Ok (Decl_ident (dec_identifier ?comments name_field))
+  let sym_qmark = first_child_named_opt "!" node in
+  match sym_qmark with
+  | None ->
+     let* var_names = dec_lhs_pattern ~comments name_field in
+     let type_field = child_with_field_opt "type" node in
+     let* var_type = make_opt_res dec_type_annotation type_field in
+     let* default = mk_child_initializer_opt node in
+     Ok (Var_decl {var_names; var_type; default})
+  | Some sym_qmark ->
+     let identifier = dec_identifier ~comments name_field in
+     let sym_qmark = make_sym sym_qmark in
+     let* type_field = child_with_field "type" node in
+     let* var_type = dec_type_annotation type_field in
+     Ok (Var_decl_assertion (identifier, sym_qmark, var_type))
+
+and dec_lhs_pattern ?comments node : (lhs_pattern, _) result =
+  match get_name node with
+  | "identifier" -> Ok (Decl_ident (dec_identifier ?comments node))
   | _ ->
-    let* pattern = dec_destructuring_pattern ?comments name_field in
+    let* pattern = dec_destructuring_pattern ?comments node in
     Ok (Decl_pattern pattern)
 
 (* Function signature (See [dec_function_declaration]) *)
@@ -2681,9 +2698,6 @@ and dec_object_assignment_pattern ?(comments = []) node
   Ok ({ left; sym_equal; right } : object_assignment_pattern)
 
 and dec_object_lhs_pattern ?comments node : (object_lhs_pattern, _) result =
-  dec_lhs_pattern ?comments node
-
-and dec_lhs_pattern ?comments node : (lhs_pattern, _) result =
   match get_name node with
   | "shorthand_property_identifier_pattern" ->
     Ok (Decl_ident (dec_shorthand_property_identifier_pattern ?comments node))

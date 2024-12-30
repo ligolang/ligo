@@ -990,17 +990,27 @@ and print_lexical_declaration ?(comments = []) state node =
   make_tree state node children
 
 and print_variable_declarator state node =
-  let name_field = child_with_field "name" node
-  and print_name_field state node =
-    match get_name node with
-    | "identifier" -> print_identifier state node
-    | _ -> match_rest state node print_destructuring_pattern
-  in
+  let name_field = child_with_field "name" node in
+  let sym_qmark = first_child_named_opt "!" node in
   let children =
-    mk_child_res print_name_field name_field
-    :: mk_child_initializer_opt node (* "_initializer" inlined *)
+    match sym_qmark with
+    | None ->
+       let type_field = child_with_field_opt "type" node in
+       mk_child_res print_lhs_pattern name_field
+       :: mk_child_opt print_type_annotation type_field
+       :: mk_child_initializer_opt node (* "_initializer" inlined *)
+    | Some sym_qmark ->
+       let type_field = child_with_field "type" node in
+       mk_child_res print_identifier name_field
+       :: mk_child make_sym sym_qmark
+       :: [ mk_child_res print_type_annotation type_field ]
   in
   make_tree state node children
+
+and print_lhs_pattern state node =
+  match get_name node with
+  | "identifier" -> print_identifier state node
+  | _ -> match_rest state node print_destructuring_pattern
 
 (* Variable declaration (see [print_lexical_declaration]) *)
 
@@ -3083,9 +3093,7 @@ and print_object_assignment_pattern state node =
   in
   make_tree state node children
 
-and print_object_lhs_pattern state node = print_lhs_pattern state node
-
-and print_lhs_pattern state node =
+and print_object_lhs_pattern state node =
   match get_name node with
   | "shorthand_property_identifier_pattern" ->
     print_shorthand_property_identifier_pattern state node
