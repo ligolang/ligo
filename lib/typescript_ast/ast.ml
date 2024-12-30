@@ -1238,7 +1238,7 @@ and module_declaration =
 and module_name =
   | Module_string of string_literal
   | Module_ident of identifier
-  | Module_nested of nested_identifier
+  | Module_nested of nested_identifier wrap
 
 (**  Type Alias Declaration
 
@@ -3787,3 +3787,8 @@ let region_of_lhs_expression = function
 let region_of_for_in_variable = function
   | For_in_ident ident -> ident#region
   | For_in_pattern p -> region_of_destructuring_pattern p
+
+let region_of_module_name = function
+  | Module_string literal -> literal#region
+  | Module_ident ident -> ident#region
+  | Module_nested nested -> nested#region

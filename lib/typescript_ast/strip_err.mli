@@ -76,6 +76,8 @@ type t =
   | Constant_type
   | Non_null_pattern
   | Multiple_defaults
+  | Namespace_string
+  | Namespace_nested
 
 type error = t
 

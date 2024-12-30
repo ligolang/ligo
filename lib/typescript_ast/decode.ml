@@ -1676,6 +1676,7 @@ and dec_module_name node : (module_name, _) result =
   | "identifier" -> Ok (Module_ident (dec_identifier node))
   | "nested_identifier" ->
     let* nested = dec_nested_identifier node in
+    let nested = Wrap.make nested (!get_region node) in
     Ok (Module_nested nested)
   | _ -> error "dec_module_name" node
 
