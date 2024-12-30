@@ -76,6 +76,8 @@ type t =
   | Constant_type
   | Non_null_pattern
   | Multiple_defaults
+  | Namespace_string
+  | Namespace_nested
 
 type error = t
 
@@ -152,6 +154,8 @@ let to_string = function
   | Constant_type -> "Constant types are not supported in JsLIGO."
   | Non_null_pattern -> "Non-null patterns are not supported in JsLIGO."
   | Multiple_defaults -> "Multiple default switch cases are not supported in JsLIGO."
+  | Namespace_string -> "Namespace names as strings are not supported in JsLIGO."
+  | Namespace_nested -> "Nested namespace names are not supported in JsLIGO."
 
 (* Creating errors *)
 

@@ -633,8 +633,29 @@ and strip_D_module_declaration (node : Ast.module_declaration wrap)
 (* Namespace declaration *)
 
 and strip_D_internal_module (node : Ast.internal_module wrap) : (S.declaration, _) result =
-  ignore node;
-  Error "TODO: strip_D_internal_module"
+  let* namespace_decl = strip_internal_module node in
+  Ok (S.D_namespace namespace_decl)
+
+and strip_internal_module (node : Ast.internal_module wrap)
+    : (S.namespace_decl reg, _) result
+  =
+  let Ast.{ kwd_namespace = _; module_name; module_body } = node#payload in
+  let* (namespace_name : S.variable) = strip_module_name module_name in
+  let* (statements : S.statement list) =
+    match module_body with
+    | None -> Ok []
+    | Some block ->
+      let* stmts = strip_statement_block block in
+      Ok (stmts.Region.value : S.statement list)
+  in
+  let decl = namespace_name, statements in
+  Ok (mk_reg node#region decl)
+
+and strip_module_name (node : Ast.module_name) : (S.variable, _) result =
+  match node with
+  | Module_string str -> Strip_err.(make str#region Namespace_string)
+  | Module_ident ident -> Ok ident
+  | Module_nested nested -> Strip_err.(make nested#region Namespace_nested)
 
 (* Type alias declaration *)
 
