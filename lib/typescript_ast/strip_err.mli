@@ -92,6 +92,8 @@ type t =
   | Log_or_eq
   | Non_null_eq
   | Complex_lhs
+  | Unary_add
+  | Typeof_void_delete
 
 type error = t
 
