@@ -1338,12 +1338,8 @@ and strip_E_unary_expression (node : Ast.unary_expression wrap) : (S.expr, _) re
 
 and strip_E_update_expression (node : Ast.update_expression) : (S.expr, _) result =
   match node with
-  | Update_postfix update ->
-    let* _expr = strip_update `Post update in
-    Error "TODO: strip_E_update_expression"
-  | Update_prefix update ->
-    let* _expr = strip_update `Pre update in
-    Error "TODO: strip_E_update_expression"
+  | Update_postfix update -> strip_update `Post update
+  | Update_prefix update -> strip_update `Pre update
 
 and strip_update (kind : [ `Pre | `Post ]) (node : Ast.update wrap) : (S.expr, _) result =
   let (Ast.{ argument; operator } : Ast.update) = node#payload in
