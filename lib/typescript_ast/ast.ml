@@ -178,13 +178,6 @@ type 'a chevrons = Chevrons of 'a enclosed wrap
 type 'a brackets = Brackets of 'a enclosed wrap
 type 'a parens = Parens of 'a enclosed wrap
 
-(*
-let region_of_braces (Braces braces) = braces#region
-let region_of_chevrons (Chevrons chevrons) = chevrons#region
-let region_of_brackets (Brackets brackets) = brackets#region
-let region_of_parens (Parens parens) = parens#region
-*)
-
 (** The Abstract Syntax Tree
 
   The related grammar rule is given by:
@@ -3812,3 +3805,10 @@ let region_of_lhs_pattern = function
 let region_of_array_cell_pattern = function
   | Cell_pattern pattern -> region_of_pattern pattern
   | Cell_assignment pattern -> pattern#region
+
+let region_of_augmented_assignment_lhs (node : augmented_assignment_lhs) =
+  match node with
+  | Member_expression w -> w#region
+  | Subscript_expression w -> w#region
+  | Identifier ident -> ident#region
+  | Parenthesized_expression expr -> region_of_parens expr

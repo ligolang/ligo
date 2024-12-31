@@ -1223,8 +1223,58 @@ and strip_E_augmented_assignment_expression
     (node : Ast.augmented_assignment_expression wrap)
     : (S.expr, _) result
   =
-  ignore node;
-  Error "TODO: strip_E_augmented_assignment_expression"
+  let Ast.{ left; operator; right } = node#payload in
+  let* lhs = strip_augmented_assignment_lhs left in
+  let* rhs = strip_expression right in
+  let* op = strip_assignment_operator operator in
+  Ok (op (mk_reg node#region (lhs, rhs)))
+
+and strip_augmented_assignment_lhs (node : Ast.augmented_assignment_lhs)
+    : (S.expr, _) result
+  =
+  match node with
+  | Member_expression w -> Strip_err.(make w#region Complex_lhs ~hint:"Use a variable.")
+  | Subscript_expression w ->
+    Strip_err.(make w#region Complex_lhs ~hint:"Use a variable.")
+  | Identifier ident ->
+    let path = Nonempty_list.singleton (strip_identifier ident) in
+    Ok (S.E_var (mk_reg ident#region path))
+  | Parenthesized_expression expr ->
+    let* exprs = strip_parenthesized_expression expr in
+    let* expr =
+      match exprs with
+      | [ expr ] -> Ok expr
+      | _ ->
+        let region = Ast.region_of_augmented_assignment_lhs node in
+        Strip_err.(make region Multiple_values)
+    in
+    Ok expr
+
+and strip_assignment_operator (node : Ast.assignment_operator)
+    : ((S.expr * S.expr) reg -> S.expr, _) result
+  =
+  match node with
+  | Add_eq _ -> Ok (fun args -> S.E_add_eq args) (* += *)
+  | Sub_eq _ -> Ok (fun args -> S.E_sub_eq args) (* -= *)
+  | Mult_eq _ -> Ok (fun args -> S.E_mult_eq args) (* *= *)
+  | Div_eq _ -> Ok (fun args -> S.E_div_eq args) (* /= *)
+  | Rem_eq _ -> Ok (fun args -> S.E_rem_eq args) (* %= *)
+  | Bit_xor_eq _ -> Ok (fun args -> S.E_bit_xor_eq args) (* ^= *)
+  | Bit_and_eq _ -> Ok (fun args -> S.E_bit_and_eq args) (* &= *)
+  | Bit_or_eq _ -> Ok (fun args -> S.E_bit_or_eq args) (* |= *)
+  | Bit_sr_eq _ -> Ok (fun args -> S.E_bit_sr_eq args) (* >>= *)
+  | Bit_usr_eq sym -> Strip_err.(make sym#region Bit_usr_eq) (* >>>= *)
+  | Bit_sl_eq _ -> Ok (fun args -> S.E_bit_sl_seq args) (* <<= *)
+  | Exp_eq sym -> Strip_err.(make sym#region Exp_eq) (* **= *)
+  | Log_and_eq sym ->
+    (* &&= *)
+    Strip_err.(make sym#region Log_and_eq ~hint:"Use \"=\" and \"&&\" separately.")
+  | Log_or_eq sym ->
+    (* ||= *)
+    Strip_err.(make sym#region Log_or_eq ~hint:"Use \"=\" and \"||\" separately.")
+  | Non_null_eq sym ->
+    (* ??= *)
+    Strip_err.(make sym#region Non_null_eq)
 
 (* Await-expression *)
 
