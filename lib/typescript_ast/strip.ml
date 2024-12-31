@@ -1398,8 +1398,7 @@ and strip_P_non_null_expression (node : Ast.expression) : (S.pattern, _) result 
 (* Rest pattern *)
 
 and strip_P_rest_pattern (node : Ast.rest_pattern wrap) : (S.pattern, _) result =
-  ignore node;
-  Error "TODO: strip_P_rest_pattern"
+  Strip_err.(make node#region Top_rest_pattern)
 
 (* Alias for external access by means of [Strip.statements] *)
 
