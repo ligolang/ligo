@@ -82,6 +82,8 @@ type t =
   | Unitialised_variable
   | Namespace_expression
   | Top_rest_pattern
+  | Asgmt_pattern_in_array
+  | Complex_rest_pattern
 
 type error = t
 
@@ -166,6 +168,8 @@ let to_string = function
   | Namespace_expression -> "Namespace expressions are not supported in JsLIGO."
   | Top_rest_pattern ->
     "Rest patterns are only supported in the arrays/tuples/lists of JsLIGO."
+  | Asgmt_pattern_in_array -> "Assignments in array patterns are not supported in JsLIGO."
+  | Complex_rest_pattern -> "Complex rest patterns are not supported in JsLIGO."
 
 (* Creating errors *)
 
