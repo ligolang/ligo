@@ -278,7 +278,7 @@ and strip_S_for_statement (node : Ast.for_statement wrap) : (S.statement option,
 and strip_for_initializer (node : Ast.for_initializer) : (S.statement option, _) result =
   match node with
   | For_lexical_declaration decl ->
-    let* declaration = strip_lexical_declaration decl in
+    let* declaration = strip_D_lexical_declaration decl in
     Ok (Some (S.S_decl declaration))
   | For_variable_declaration decl ->
     let* declaration = strip_variable_declaration decl in
@@ -331,9 +331,7 @@ and strip_for_range (node : Ast.for_range)
     : (S.var_kind option * (S.key * S.value option), _) result
   =
   match node with
-  | For_in_expression (Identifier v) ->
-    let variable = strip_identifier v in
-    Ok (None, (variable, None))
+  | For_in_expression (Identifier v) -> Ok (None, (strip_identifier v, None))
   | For_in_expression e ->
     let region = Ast.region_of_lhs_expression e in
     Strip_err.(make region Invalid_loop_index)
@@ -587,14 +585,64 @@ and strip_D_class_declaration (node : Ast.class_declaration wrap)
 and strip_D_lexical_declaration (node : Ast.lexical_declaration wrap)
     : (S.declaration, _) result
   =
-  ignore node;
-  Error "TODO: strip_D_lexical_declaration"
+  let* decl = strip_lexical_declaration node in
+  Ok (S.D_value decl)
 
 and strip_lexical_declaration (node : Ast.lexical_declaration wrap)
-    : (S.declaration, _) result
+    : (S.value_decl reg, _) result
   =
-  ignore node;
-  Error "TODO: strip_lexical_declaration"
+  let Ast.{ kind; decls } = node#payload in
+  let kind, comments =
+    match kind with
+    | Ast.Let kwd_let -> `Let kwd_let#region, kwd_let#comments
+    | Const kwd_const -> `Const kwd_const#region, kwd_const#comments
+  in
+  let comments = strip_comments comments in
+  let decorators = extract_decorators comments in
+  let* bindings = strip_variable_declarators decls in
+  let value_decl = S.{ decorators; comments; kind; bindings } in
+  Ok (mk_reg node#region value_decl)
+
+and strip_variable_declarators (node : Ast.variable_declarator Ast.ne_list)
+    : (S.val_binding reg Nonempty_list.t, _) result
+  =
+  let (var_decl :: var_decls) = node in
+  let* var_decl = strip_variable_declarator var_decl in
+  let* var_decls = Result.all @@ List.map ~f:strip_variable_declarator var_decls in
+  Ok Nonempty_list.(var_decl :: var_decls)
+
+and strip_variable_declarator (node : Ast.variable_declarator)
+    : (S.val_binding reg, _) result
+  =
+  match node with
+  | Var_decl lhs -> strip_var_decl_lhs lhs
+  | Var_decl_assertion (_, sym_qmark, _) ->
+    Strip_err.(make sym_qmark#region Definite_asgmt_assertion)
+
+and strip_var_decl_lhs (node : Ast.var_decl_lhs wrap) : (S.val_binding reg, _) result =
+  let Ast.{ var_names; var_type; default } = node#payload in
+  let* pattern =
+    match var_names with
+    | Decl_ident ident ->
+      let path = Nonempty_list.singleton (strip_identifier ident) in
+      Ok (S.P_var (mk_reg ident#region path))
+    | Decl_pattern p -> strip_destructuring_pattern p
+  in
+  let* rhs_type = map_opt strip_type_annotation var_type in
+  let* rhs_expr =
+    match default with
+    | None ->
+      let region = Ast.region_of_lhs_pattern var_names in
+      Strip_err.(make region Unitialised_variable)
+    | Some (_, expr) ->
+      let* expr = strip_expression expr in
+      Ok expr
+  in
+  let val_binding = S.{ pattern; rhs_type; rhs_expr } in
+  Ok (mk_reg node#region val_binding)
+
+and strip_type_annotation (node : Ast.type_annotation) : (S.type_expr, _) result =
+  strip_type_expr @@ snd node
 
 (* Variable declaration *)
 
