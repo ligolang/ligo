@@ -1343,8 +1343,7 @@ and strip_P_member_expression (node : Ast.member_expression wrap) : (S.pattern, 
 and strip_P_subscript_expression (node : Ast.subscript_expression wrap)
     : (S.pattern, _) result
   =
-  ignore node;
-  Error "TODO: strip_P_subscript_expression"
+  Strip_err.(make node#region Subscript_pattern)
 
 (* Identifier and booleans (pattern) *)
 
