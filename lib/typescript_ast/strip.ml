@@ -1247,8 +1247,7 @@ and strip_E_instantiation_expression (node : Ast.instantiation_expression wrap)
 (* Internal module expression *)
 
 and strip_E_internal_module (node : Ast.internal_module wrap) : (S.expr, _) result =
-  ignore node;
-  Error "TODO: strip_E_internal_module"
+  Strip_err.(make node#region Namespace_expression)
 
 (* New-expression *)
 

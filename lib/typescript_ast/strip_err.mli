@@ -80,6 +80,7 @@ type t =
   | Namespace_nested
   | Definite_asgmt_assertion
   | Unitialised_variable
+  | Namespace_expression
 
 type error = t
 
