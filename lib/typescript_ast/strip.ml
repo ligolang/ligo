@@ -1368,8 +1368,7 @@ and strip_P_undefined (node : Ast.kwd_undefined) : (S.pattern, _) result =
 and strip_P_destructuring_pattern (node : Ast.destructuring_pattern)
     : (S.pattern, _) result
   =
-  ignore node;
-  Error "TODO: strip_P_destructuring_pattern"
+  strip_destructuring_pattern node
 
 and strip_destructuring_pattern (node : Ast.destructuring_pattern) : (S.pattern, _) result
   =
@@ -1381,9 +1380,13 @@ and strip_destructuring_pattern (node : Ast.destructuring_pattern) : (S.pattern,
     let* pattern = strip_array_pattern p in
     Ok (S.P_array pattern)
 
+(* Object pattern *)
+
 and strip_object_pattern (node : Ast.object_pattern) : (S.pattern S._object, _) result =
   ignore node;
   Error "TODO: strip_object_pattern"
+
+(* Array pattern *)
 
 and strip_array_pattern (node : Ast.array_pattern) : (S.pattern S._array, _) result =
   ignore node;
