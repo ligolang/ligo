@@ -1388,9 +1388,23 @@ and strip_object_pattern (node : Ast.object_pattern) : (S.pattern S._object, _) 
 
 (* Array pattern *)
 
-and strip_array_pattern (node : Ast.array_pattern) : (S.pattern S._array, _) result =
-  ignore node;
-  Error "TODO: strip_array_pattern"
+and strip_array_pattern (node : Ast.array_pattern) : (S.pattern S.array, _) result =
+  let (Ast.Brackets brackets) = node in
+  let list = brackets#payload.contents in
+  let* array = Result.all @@ List.map ~f:strip_array_cell_pattern list in
+  Ok (mk_reg brackets#region array)
+
+and strip_array_cell_pattern (node : Ast.array_cell_pattern)
+    : (S.pattern S.element, _) result
+  =
+  match node with
+  | Cell_pattern (P_rest_pattern rest) ->
+    let* pattern = strip_rest_pattern rest in
+    Ok (S.Spread pattern)
+  | Cell_pattern pattern ->
+    let* pattern = strip_pattern pattern in
+    Ok (S.Element pattern)
+  | Cell_assignment pattern -> Strip_err.(make pattern#region Asgmt_pattern_in_array)
 
 (* Non-null expression (pattern) *)
 
@@ -1402,6 +1416,26 @@ and strip_P_non_null_expression (node : Ast.expression) : (S.pattern, _) result 
 
 and strip_P_rest_pattern (node : Ast.rest_pattern wrap) : (S.pattern, _) result =
   Strip_err.(make node#region Top_rest_pattern)
+
+and strip_rest_pattern (node : Ast.rest_pattern wrap) : (S.pattern, _) result =
+  let Ast.{ sym_ellipsis = _; expression } = node#payload in
+  match expression with
+  | Member_expression expr -> strip_P_member_expression expr
+  | Pattern (Pattern_object pattern) ->
+    let* pattern = strip_object_pattern pattern in
+    Ok (S.P_object pattern)
+  | Pattern (Pattern_array pattern) ->
+    let* pattern = strip_array_pattern pattern in
+    Ok (S.P_array pattern)
+  | Identifier ident ->
+    let path = Nonempty_list.singleton (strip_identifier ident) in
+    Ok (S.P_var (mk_reg ident#region path))
+  | _ ->
+    Strip_err.(
+      make
+        node#region
+        Complex_rest_pattern
+        ~hint:"Use variables or array/object patterns.")
 
 (* Alias for external access by means of [Strip.statements] *)
 

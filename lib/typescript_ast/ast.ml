@@ -754,7 +754,7 @@ and array_pattern = array_cell_pattern list brackets
 and array_cell_pattern =
   (* Isomorphic to [pair_value_pattern]. *)
   | Cell_pattern of pattern
-  | Cell_assignment of assignment_pattern
+  | Cell_assignment of assignment_pattern wrap
 
 (** Variable Declaration
 
@@ -3808,3 +3808,7 @@ let region_of_module_name = function
 let region_of_lhs_pattern = function
   | Decl_ident id -> id#region
   | Decl_pattern p -> region_of_destructuring_pattern p
+
+let region_of_array_cell_pattern = function
+  | Cell_pattern pattern -> region_of_pattern pattern
+  | Cell_assignment pattern -> pattern#region
