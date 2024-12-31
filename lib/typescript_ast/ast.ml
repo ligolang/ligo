@@ -1782,13 +1782,13 @@ and unary_expression =
   }
 
 and unary_operator =
-  | Bang of sym_bang
-  | Not of sym_tilde
-  | Unary_sub of sym_minus
-  | Unary_add of sym_plus
-  | Typeof of kwd_typeof
-  | Void of kwd_void
-  | Delete of kwd_delete
+  | Bang of sym_bang (* !x *)
+  | Not of sym_tilde (* ~x *)
+  | Unary_sub of sym_minus (* -x *)
+  | Unary_add of sym_plus (* +x *)
+  | Typeof of kwd_typeof (* typeof x *)
+  | Void of kwd_void (* void x *)
+  | Delete of kwd_delete (* delete x *)
 
 (** Update Expression
 
