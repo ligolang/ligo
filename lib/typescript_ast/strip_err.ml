@@ -81,6 +81,7 @@ type t =
   | Definite_asgmt_assertion
   | Unitialised_variable
   | Namespace_expression
+  | Top_rest_pattern
 
 type error = t
 
@@ -163,6 +164,8 @@ let to_string = function
     "Definite assignment assertions are not supported in JsLIGO."
   | Unitialised_variable -> "Unitialised variables are not supported in JsLIGO."
   | Namespace_expression -> "Namespace expressions are not supported in JsLIGO."
+  | Top_rest_pattern ->
+    "Rest patterns are only supported in the arrays/tuples/lists of JsLIGO."
 
 (* Creating errors *)
 
