@@ -1335,8 +1335,7 @@ and strip_pattern (node : Ast.pattern) : (S.pattern, _) result =
 (* Member expression (pattern) *)
 
 and strip_P_member_expression (node : Ast.member_expression wrap) : (S.pattern, _) result =
-  ignore node;
-  Error "TODO: strip_P_member_expression"
+  Strip_err.(make node#region Member_pattern ~hint:"Use a variable.")
 
 (* Subscript expression (pattern) *)
 

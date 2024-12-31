@@ -85,6 +85,7 @@ type t =
   | Asgmt_pattern_in_array
   | Complex_rest_pattern
   | Subscript_pattern
+  | Member_pattern
 
 type error = t
 
