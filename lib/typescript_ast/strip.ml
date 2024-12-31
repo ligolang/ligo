@@ -1320,8 +1320,13 @@ and strip_E_satisfies_expression (node : Ast.satisfies_expression wrap)
 (* Ternary expression *)
 
 and strip_E_ternary_expression (node : Ast.ternary_expression wrap) : (S.expr, _) result =
-  ignore node;
-  Error "TODO: strip_E_ternary_expression"
+  let Ast.{ condition; sym_qmark = _; consequence; sym_colon = _; alternative } =
+    node#payload
+  in
+  let* condition = strip_expression condition in
+  let* truthy = strip_expression consequence in
+  let* falsy = strip_expression alternative in
+  Ok (S.E_ternary (mk_reg node#region S.{ condition; truthy; falsy }))
 
 (* Type assertion (expression) *)
 
