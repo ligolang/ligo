@@ -223,7 +223,7 @@ and union_type = type_expr Nonempty_list.t reg
 (* IMPORTANT: The data constructors are sorted alphabetically. If you
    add or modify some, please make sure they remain in order. *)
 and pattern =
-  | P_array of pattern _array (* [x, ...y, z] [] *)
+  | P_array of pattern array (* [x, ...y, z] [] *)
   | P_bytes of bytes_literal (* 0xFFFA *)
   | P_false of Region.t (* false *)
   | P_int of int_literal (* 42 *)
@@ -232,8 +232,8 @@ and pattern =
   | P_true of Region.t (* true *)
   | P_var of path (* x  M.N.t *)
 
-(* Array pattern *)
-and 'a _array = 'a element list reg
+(* Array pattern (shadowing the predefined type [array]) *)
+and 'a array = 'a element list reg
 
 and 'a element =
   | Spread of 'a
@@ -248,7 +248,7 @@ and expr =
   | E_add_eq of (expr * expr) reg (* x += y *)
   | E_and of (expr * expr) reg (* x && y *)
   | E_app of (expr * expr list) reg (* f(x,y)  foo() *)
-  | E_array of expr _array (* [x, ...y, z]  [] *)
+  | E_array of expr array (* [x, ...y, z]  [] *)
   | E_arrow_fun of arrow_fun_expr reg (* (x : int) => e *)
   | E_assign of (expr * expr) reg (* x = y *)
   | E_bit_and of (expr * expr) reg (* x & y *)

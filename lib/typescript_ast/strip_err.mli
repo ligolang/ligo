@@ -82,6 +82,8 @@ type t =
   | Unitialised_variable
   | Namespace_expression
   | Top_rest_pattern
+  | Asgmt_pattern_in_array
+  | Complex_rest_pattern
 
 type error = t
 
