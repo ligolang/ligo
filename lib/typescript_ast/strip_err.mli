@@ -86,6 +86,12 @@ type t =
   | Complex_rest_pattern
   | Subscript_pattern
   | Member_pattern
+  | Bit_usr_eq
+  | Exp_eq
+  | Log_and_eq
+  | Log_or_eq
+  | Non_null_eq
+  | Complex_lhs
 
 type error = t
 

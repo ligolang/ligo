@@ -86,6 +86,12 @@ type t =
   | Complex_rest_pattern
   | Subscript_pattern
   | Member_pattern
+  | Bit_usr_eq
+  | Exp_eq
+  | Log_and_eq
+  | Log_or_eq
+  | Non_null_eq
+  | Complex_lhs
 
 type error = t
 
@@ -174,6 +180,12 @@ let to_string = function
   | Complex_rest_pattern -> "Complex rest patterns are not supported in JsLIGO."
   | Subscript_pattern -> "Subscript patterns are not supported in JsLIGO."
   | Member_pattern -> "Member patterns are not supported in JsLIGO."
+  | Bit_usr_eq -> "The augmented unsigned bitwise shift-right is not supported in JsLIGO."
+  | Exp_eq -> "The augmented exponent is not supported in JsLIGO."
+  | Log_and_eq -> "The augmented logical conjunction is not supported in JsLIGO."
+  | Log_or_eq -> "The augmented logical disjunction is not supported in JsLIGO."
+  | Non_null_eq -> "The augmented non-null test is not supported in JsLIGO."
+  | Complex_lhs -> "Complex left-hand sides are not supported in JsLIGO."
 
 (* Creating errors *)
 
