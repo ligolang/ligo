@@ -85,6 +85,7 @@ type t =
   | Asgmt_pattern_in_array
   | Complex_rest_pattern
   | Subscript_pattern
+  | Member_pattern
 
 type error = t
 
@@ -172,6 +173,7 @@ let to_string = function
   | Asgmt_pattern_in_array -> "Assignments in array patterns are not supported in JsLIGO."
   | Complex_rest_pattern -> "Complex rest patterns are not supported in JsLIGO."
   | Subscript_pattern -> "Subscript patterns are not supported in JsLIGO."
+  | Member_pattern -> "Member patterns are not supported in JsLIGO."
 
 (* Creating errors *)
 
