@@ -1287,8 +1287,32 @@ and strip_E_unary_expression (node : Ast.unary_expression wrap) : (S.expr, _) re
 (* Update expression *)
 
 and strip_E_update_expression (node : Ast.update_expression) : (S.expr, _) result =
-  ignore node;
-  Error "TODO: strip_E_update_expression"
+  match node with
+  | Update_postfix update ->
+    let* _expr = strip_update `Post update in
+    Error "TODO: strip_E_update_expression"
+  | Update_prefix update ->
+    let* _expr = strip_update `Pre update in
+    Error "TODO: strip_E_update_expression"
+
+and strip_update (kind : [ `Pre | `Post ]) (node : Ast.update wrap) : (S.expr, _) result =
+  let (Ast.{ argument; operator } : Ast.update) = node#payload in
+  let* expr = strip_expression argument in
+  let* var =
+    match expr with
+    | S.E_var path ->
+      (match path.value with
+      | Nonempty_list.[ variable ] -> Ok (mk_reg path.region variable)
+      | _ ->
+        Strip_err.(make node#region Not_a_variable ~hint:"Define a temporary variable."))
+    | _ ->
+      Strip_err.(make node#region Not_a_variable ~hint:"Define a temporary variable.")
+  in
+  match kind, operator with
+  | `Pre, Increment _ -> Ok (S.E_pre_incr var)
+  | `Pre, Decrement _ -> Ok (S.E_pre_decr var)
+  | `Post, Increment _ -> Ok (S.E_post_incr var)
+  | `Post, Decrement _ -> Ok (S.E_post_decr var)
 
 (* Yield-expression *)
 
