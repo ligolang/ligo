@@ -92,6 +92,8 @@ type t =
   | Log_or_eq
   | Non_null_eq
   | Complex_lhs
+  | Unary_add
+  | Typeof_void_delete
 
 type error = t
 
@@ -186,6 +188,9 @@ let to_string = function
   | Log_or_eq -> "The augmented logical disjunction is not supported in JsLIGO."
   | Non_null_eq -> "The augmented non-null test is not supported in JsLIGO."
   | Complex_lhs -> "Complex left-hand sides are not supported in JsLIGO."
+  | Unary_add -> "Unary plus is not supported in JsLIGO."
+  | Typeof_void_delete ->
+    "Only arithmetic and logical unary operators are supported in JsLIGO."
 
 (* Creating errors *)
 

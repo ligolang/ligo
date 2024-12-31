@@ -1336,8 +1336,27 @@ and strip_E_type_assertion (node : Ast.type_assertion wrap) : (S.expr, _) result
 (* Unary expression *)
 
 and strip_E_unary_expression (node : Ast.unary_expression wrap) : (S.expr, _) result =
-  ignore node;
-  Error "TODO: strip_E_unary_expression"
+  let (Ast.{ operator; argument } : Ast.unary_expression) = node#payload in
+  let* expr = strip_expression argument in
+  let expr = mk_reg node#region expr in
+  let* op = strip_unary_operator operator in
+  Ok (op expr)
+
+and strip_unary_operator (node : Ast.unary_operator) : (S.expr reg -> S.expr, _) result =
+  match node with
+  | Bang _ -> Ok (fun arg -> S.E_not arg) (* !x *)
+  | Not _ -> Ok (fun arg -> S.E_bit_neg arg) (* ~x *)
+  | Unary_sub _ -> Ok (fun arg -> S.E_neg arg) (* -x *)
+  | Unary_add sym -> Strip_err.(make sym#region Unary_add) (* +x *)
+  | Typeof kwd_typeof ->
+    (* typeof x *)
+    Strip_err.(make kwd_typeof#region Typeof_void_delete)
+  | Void kwd_void ->
+    (* void *)
+    Strip_err.(make kwd_void#region Typeof_void_delete)
+  | Delete kwd_delete ->
+    (* delete *)
+    Strip_err.(make kwd_delete#region Typeof_void_delete)
 
 (* Update expression *)
 
