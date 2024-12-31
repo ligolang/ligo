@@ -78,6 +78,8 @@ type t =
   | Multiple_defaults
   | Namespace_string
   | Namespace_nested
+  | Definite_asgmt_assertion
+  | Unitialised_variable
 
 type error = t
 

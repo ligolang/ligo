@@ -696,7 +696,7 @@ and let_or_const =
   | Const of kwd_const
 
 and variable_declarator =
-  | Var_decl of var_decl_lhs
+  | Var_decl of var_decl_lhs wrap
   | Var_decl_assertion of var_decl_assertion
 
 and var_decl_assertion = identifier * sym_qmark * type_annotation
@@ -3805,6 +3805,6 @@ let region_of_module_name = function
   | Module_ident ident -> ident#region
   | Module_nested nested -> nested#region
 
-let region_of_var_names = function
+let region_of_lhs_pattern = function
   | Decl_ident id -> id#region
   | Decl_pattern p -> region_of_destructuring_pattern p

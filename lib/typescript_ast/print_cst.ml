@@ -995,15 +995,15 @@ and print_variable_declarator state node =
   let children =
     match sym_qmark with
     | None ->
-       let type_field = child_with_field_opt "type" node in
-       mk_child_res print_lhs_pattern name_field
-       :: mk_child_opt print_type_annotation type_field
-       :: mk_child_initializer_opt node (* "_initializer" inlined *)
+      let type_field = child_with_field_opt "type" node in
+      mk_child_res print_lhs_pattern name_field
+      :: mk_child_opt print_type_annotation type_field
+      :: mk_child_initializer_opt node (* "_initializer" inlined *)
     | Some sym_qmark ->
-       let type_field = child_with_field "type" node in
-       mk_child_res print_identifier name_field
-       :: mk_child make_sym sym_qmark
-       :: [ mk_child_res print_type_annotation type_field ]
+      let type_field = child_with_field "type" node in
+      mk_child_res print_identifier name_field
+      :: mk_child make_sym sym_qmark
+      :: [ mk_child_res print_type_annotation type_field ]
   in
   make_tree state node children
 
