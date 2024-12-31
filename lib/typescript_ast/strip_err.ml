@@ -78,6 +78,8 @@ type t =
   | Multiple_defaults
   | Namespace_string
   | Namespace_nested
+  | Definite_asgmt_assertion
+  | Unitialised_variable
 
 type error = t
 
@@ -156,6 +158,9 @@ let to_string = function
   | Multiple_defaults -> "Multiple default switch cases are not supported in JsLIGO."
   | Namespace_string -> "Namespace names as strings are not supported in JsLIGO."
   | Namespace_nested -> "Nested namespace names are not supported in JsLIGO."
+  | Definite_asgmt_assertion ->
+    "Definite assignment assertions are not supported in JsLIGO."
+  | Unitialised_variable -> "Unitialised variables are not supported in JsLIGO."
 
 (* Creating errors *)
 

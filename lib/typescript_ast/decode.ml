@@ -1563,17 +1563,18 @@ and dec_variable_declarator ?(comments = []) node : (variable_declarator, _) res
   let sym_qmark = first_child_named_opt "!" node in
   match sym_qmark with
   | None ->
-     let* var_names = dec_lhs_pattern ~comments name_field in
-     let type_field = child_with_field_opt "type" node in
-     let* var_type = make_opt_res dec_type_annotation type_field in
-     let* default = mk_child_initializer_opt node in
-     Ok (Var_decl {var_names; var_type; default})
+    let* var_names = dec_lhs_pattern ~comments name_field in
+    let type_field = child_with_field_opt "type" node in
+    let* var_type = make_opt_res dec_type_annotation type_field in
+    let* default = mk_child_initializer_opt node in
+    let decl = { var_names; var_type; default } in
+    Ok (Var_decl (Wrap.make decl (!get_region node)))
   | Some sym_qmark ->
-     let identifier = dec_identifier ~comments name_field in
-     let sym_qmark = make_sym sym_qmark in
-     let* type_field = child_with_field "type" node in
-     let* var_type = dec_type_annotation type_field in
-     Ok (Var_decl_assertion (identifier, sym_qmark, var_type))
+    let identifier = dec_identifier ~comments name_field in
+    let sym_qmark = make_sym sym_qmark in
+    let* type_field = child_with_field "type" node in
+    let* var_type = dec_type_annotation type_field in
+    Ok (Var_decl_assertion (identifier, sym_qmark, var_type))
 
 and dec_lhs_pattern ?comments node : (lhs_pattern, _) result =
   match get_name node with
