@@ -2721,7 +2721,8 @@ and dec_array_cell_pattern ?comments node : (array_cell_pattern, _) result =
   match get_name node with
   | "assignment_pattern" ->
     let* pattern = dec_assignment_pattern ?comments node in
-    Ok (Cell_assignment pattern)
+    let region = !get_region node in
+    Ok (Cell_assignment (Wrap.make pattern region))
   | _ ->
     (* hidden rule *)
     let* pattern = dec_pattern ?comments node in
