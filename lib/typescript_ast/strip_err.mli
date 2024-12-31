@@ -81,6 +81,7 @@ type t =
   | Definite_asgmt_assertion
   | Unitialised_variable
   | Namespace_expression
+  | Top_rest_pattern
 
 type error = t
 
