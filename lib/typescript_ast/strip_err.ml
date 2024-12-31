@@ -80,6 +80,7 @@ type t =
   | Namespace_nested
   | Definite_asgmt_assertion
   | Unitialised_variable
+  | Namespace_expression
 
 type error = t
 
@@ -161,6 +162,7 @@ let to_string = function
   | Definite_asgmt_assertion ->
     "Definite assignment assertions are not supported in JsLIGO."
   | Unitialised_variable -> "Unitialised variables are not supported in JsLIGO."
+  | Namespace_expression -> "Namespace expressions are not supported in JsLIGO."
 
 (* Creating errors *)
 
