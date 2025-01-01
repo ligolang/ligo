@@ -45,7 +45,7 @@ type t =
   | Maybe_type
   | Type_query
   | Index_type_query
-  | This_type
+  | This
   | Existential_type
   | Unsupported_number
   | Non_integer_as_type
@@ -74,7 +74,7 @@ type t =
   | Readonly_parameter
   | Non_variable_parameter
   | Constant_type
-  | Non_null_pattern
+  | Non_null
   | Multiple_defaults
   | Namespace_string
   | Namespace_nested
@@ -94,6 +94,14 @@ type t =
   | Complex_lhs
   | Unary_add
   | Typeof_void_delete
+  | Class_expression
+  | Metaproperty
+  | Null_value
+  | Binary_octal
+  | Non_integer
+  | Regex
+  | Super
+  | Template_string
 
 type error = t
 

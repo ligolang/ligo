@@ -263,7 +263,7 @@ and expr =
   | E_bit_xor of (expr * expr) reg (* x ^ y *)
   | E_bit_xor_eq of (expr * expr) reg (* x ^= y *)
   | E_bytes of bytes_literal (* 0xFFFA *)
-  | E_contract_of of path (* contract_of (M.N)  *)
+  | E_contract_of of path (* contract_of (M.N) *)
   | E_div of (expr * expr) reg (* x / y *)
   | E_div_eq of (expr * expr) reg (* x /= y *)
   | E_equal of (expr * expr) reg (* x == y *)

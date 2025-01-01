@@ -953,7 +953,7 @@ and strip_T_index_type_query (node : (Ast.kwd_keyof * Ast.primary_type) wrap)
 (* "This" as a type *)
 
 and strip_T_this (node : Ast.kwd_this) : (S.type_expr, _) result =
-  Strip_err.(make node#region This_type)
+  Strip_err.(make node#region This)
 
 and strip_T_existential_type (node : Ast.sym_star) : (S.type_expr, _) result =
   Strip_err.(make node#region Existential_type)
@@ -1307,8 +1307,175 @@ and strip_E_new_expression (node : Ast.new_expression wrap) : (S.expr, _) result
 (* Primary expression *)
 
 and strip_E_primary_expression (node : Ast.primary_expression) : (S.expr, _) result =
+  match node with
+  | E_array expr -> strip_E_array expr
+  | E_arrow_function expr -> strip_E_arrow_function expr
+  | E_call_expression expr -> strip_E_call_expression expr
+  | E_class expr -> strip_E_class expr
+  | E_false expr -> strip_E_false expr
+  | E_function_expression expr -> strip_E_function_expression expr
+  | E_generator_function expr -> strip_E_generator_function expr
+  | E_identifier expr -> strip_E_identifier expr
+  | E_member_expression expr -> strip_E_member_expression expr
+  | E_meta_property expr -> strip_E_meta_property expr
+  | E_non_null_expression expr -> strip_E_non_null_expression expr
+  | E_null expr -> strip_E_null expr
+  | E_number expr -> strip_E_number expr
+  | E_object expr -> strip_E_object expr
+  | E_parenthesized_expression expr -> strip_E_parenthesized_expression expr
+  | E_regex expr -> strip_E_regex expr
+  | E_string expr -> strip_E_string expr
+  | E_subscript_expression expr -> strip_E_subscript_expression expr
+  | E_super expr -> strip_E_super expr
+  | E_template_string expr -> strip_E_template_string expr
+  | E_this expr -> strip_E_this expr
+  | E_true expr -> strip_E_true expr
+  | E_undefined expr -> strip_E_undefined expr
+
+(* Array expression *)
+
+and strip_E_array (node : Ast.array) : (S.expr, _) result =
   ignore node;
-  Error "TODO: strip_E_primary_expression"
+  Error "TODO: strip_E_array"
+
+(* Arrow function (expression) *)
+
+and strip_E_arrow_function (node : Ast.arrow_function wrap) : (S.expr, _) result =
+  ignore node;
+  Error "TODO: strip_E_arrow_function"
+
+(* Call expression *)
+
+and strip_E_call_expression (node : Ast.call_expression) : (S.expr, _) result =
+  ignore node;
+  Error "TODO: strip_E_call_expression"
+
+(* Class (expression) *)
+
+and strip_E_class (node : Ast.class_expression wrap) : (S.expr, _) result =
+  Strip_err.(make node#region Class_expression)
+
+(* False expression *)
+
+and strip_E_false (node : Ast.kwd_false) : (S.expr, _) result = Ok (S.E_false node#region)
+
+(* Function expression *)
+
+and strip_E_function_expression (node : Ast.function_expression wrap) : (S.expr, _) result
+  =
+  ignore node;
+  Error "TODO: strip_E_function_expression"
+
+(* Generator function (expression) *)
+
+and strip_E_generator_function (node : Ast.generator_function wrap) : (S.expr, _) result =
+  Strip_err.(make node#region Generator)
+
+(* Identifier (expression) *)
+
+and strip_E_identifier (node : Ast.identifier) : (S.expr, _) result =
+  let path = Nonempty_list.singleton (strip_identifier node) in
+  Ok (S.E_var (mk_reg node#region path))
+
+(* Member expression *)
+
+and strip_E_member_expression (node : Ast.member_expression wrap) : (S.expr, _) result =
+  ignore node;
+  Error "TODO: strip_E_member_expression"
+
+(* Meta-property *)
+
+and strip_E_meta_property (node : Ast.meta_property) : (S.expr, _) result =
+  Strip_err.(make (Ast.region_of_meta_property node) Metaproperty)
+
+(* Non-null expression *)
+
+and strip_E_non_null_expression (node : Ast.expression) : (S.expr, _) result =
+  Strip_err.(make (Ast.region_of_expression node) Non_null)
+
+(* Null (expression) *)
+
+and strip_E_null (node : Ast.kwd_null) : (S.expr, _) result =
+  Strip_err.(make node#region Null_value)
+
+(* Number (expression) *)
+
+and strip_E_number (node : Ast.number) : (S.expr, _) result =
+  match node with
+  | Hex (hex, _) -> strip_hex hex
+  | Bin (bin, _) -> Strip_err.(make bin#region Binary_octal)
+  | Oct (oct, _) -> Strip_err.(make oct#region Binary_octal)
+  | Dec (dec, _) -> strip_dec dec
+
+and strip_hex (node : Ast.hex_literal) : (S.expr, _) result = Ok (S.E_bytes node)
+
+and strip_dec (node : Ast.dec_literal) : (S.expr, _) result =
+  let lexeme, q = node#payload in
+  if Z.equal (Q.den q) Z.one
+  then (
+    let int = Wrap.make (lexeme, Q.to_bigint q) node#region in
+    Ok (S.E_int int))
+  else Strip_err.(make node#region Non_integer)
+
+(* Object (expression) *)
+
+and strip_E_object (node : Ast.object_expr) : (S.expr, _) result =
+  ignore node;
+  Error "TODO: strip_E_object"
+
+(* Parenthesized expression *)
+
+and strip_E_parenthesized_expression (node : Ast.parenthesized_expression)
+    : (S.expr, _) result
+  =
+  let* exprs = strip_parenthesized_expression node in
+  let* expr =
+    match exprs with
+    | [ expr ] -> Ok expr
+    | _ -> Strip_err.(make (Ast.region_of_parens node) Multiple_values)
+  in
+  Ok expr
+
+(* Regex *)
+
+and strip_E_regex (node : Ast.string_literal) : (S.expr, _) result =
+  Strip_err.(make node#region Regex)
+
+(* String (expression) *)
+
+and strip_E_string (node : Ast.string_literal) : (S.expr, _) result = Ok (S.E_string node)
+
+(* Subscript expression *)
+
+and strip_E_subscript_expression (node : Ast.subscript_expression wrap)
+    : (S.expr, _) result
+  =
+  ignore node;
+  Error "TODO: strip_E_subscript_expression"
+
+(* Super (expression) *)
+
+and strip_E_super (node : Ast.kwd_super) : (S.expr, _) result =
+  Strip_err.(make node#region Super)
+
+(* Template string *)
+
+and strip_E_template_string (node : Ast.template_string wrap) : (S.expr, _) result =
+  Strip_err.(make node#region Template_string)
+
+(* This (expression) *)
+
+and strip_E_this (node : Ast.kwd_this) : (S.expr, _) result =
+  Strip_err.(make node#region This)
+
+(* True (expression) *)
+
+and strip_E_true (node : Ast.kwd_true) : (S.expr, _) result = Ok (S.E_true node#region)
+
+(* Undefined (expression) *)
+
+and strip_E_undefined (node : Ast.kwd_undefined) : (S.expr, _) result =
+  Strip_err.(make node#region Undefined_value)
 
 (* Statisfies-expression *)
 
@@ -1478,7 +1645,7 @@ and strip_array_cell_pattern (node : Ast.array_cell_pattern)
 
 and strip_P_non_null_expression (node : Ast.expression) : (S.pattern, _) result =
   let region = Ast.region_of_expression node in
-  Strip_err.(make region Non_null_pattern)
+  Strip_err.(make region Non_null)
 
 (* Rest pattern *)
 
