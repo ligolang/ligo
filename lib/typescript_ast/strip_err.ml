@@ -45,7 +45,7 @@ type t =
   | Maybe_type
   | Type_query
   | Index_type_query
-  | This_type
+  | This
   | Existential_type
   | Unsupported_number
   | Non_integer_as_type
@@ -74,7 +74,7 @@ type t =
   | Readonly_parameter
   | Non_variable_parameter
   | Constant_type
-  | Non_null_pattern
+  | Non_null
   | Multiple_defaults
   | Namespace_string
   | Namespace_nested
@@ -94,6 +94,14 @@ type t =
   | Complex_lhs
   | Unary_add
   | Typeof_void_delete
+  | Class_expression
+  | Metaproperty
+  | Null_value
+  | Binary_octal
+  | Non_integer
+  | Regex
+  | Super
+  | Template_string
 
 type error = t
 
@@ -133,7 +141,7 @@ let to_string = function
   | Maybe_type -> "Maybe types are not supported in JsLIGO."
   | Type_query -> "Type queries are not supported in JsLIGO."
   | Index_type_query -> "Index type queries are not supported in JsLIGO."
-  | This_type -> "Type 'this' is not supported in JsLIGO."
+  | This -> "Keyword 'this' is not supported in JsLIGO."
   | Existential_type -> "Existential types are not supported in JsLIGO."
   | Unsupported_number -> "This number literal is not supported in JsLIGO."
   | Non_integer_as_type -> "Non-integer numbers as types are not supported by JsLIGO."
@@ -168,7 +176,7 @@ let to_string = function
   | Non_variable_parameter ->
     "Only variables are supported as function parameters in JsLIGO."
   | Constant_type -> "Constant types are not supported in JsLIGO."
-  | Non_null_pattern -> "Non-null patterns are not supported in JsLIGO."
+  | Non_null -> "Non-null values are not supported in JsLIGO."
   | Multiple_defaults -> "Multiple default switch cases are not supported in JsLIGO."
   | Namespace_string -> "Namespace names as strings are not supported in JsLIGO."
   | Namespace_nested -> "Nested namespace names are not supported in JsLIGO."
@@ -191,6 +199,14 @@ let to_string = function
   | Unary_add -> "Unary plus is not supported in JsLIGO."
   | Typeof_void_delete ->
     "Only arithmetic and logical unary operators are supported in JsLIGO."
+  | Class_expression -> "Class expressions are not supported in JsLIGO."
+  | Metaproperty -> "Meta-properties are not supported in JsLIGO."
+  | Null_value -> "The null value is not supported in JsLIGO."
+  | Binary_octal -> "Binary and octal numbers are not supported in JsLIGO."
+  | Non_integer -> "Non-integer numbers are not supported in JsLIGO."
+  | Regex -> "Regular expressions are not supported in JsLIGO."
+  | Super -> "Superclasses are not supported in JsLIGO."
+  | Template_string -> "Template strings are not supported in JsLIGO."
 
 (* Creating errors *)
 
