@@ -90,7 +90,6 @@ type t =
   | Exp_eq
   | Log_and_eq
   | Log_or_eq
-  | Non_null_eq
   | Complex_lhs
   | Unary_add
   | Typeof_void_delete
@@ -104,6 +103,10 @@ type t =
   | Template_string
   | Return_type_absent
   | Named_lambda
+  | Hash_name_lhs
+  | Strict_equality
+  | Instanceof
+  | In
 
 type error = t
 

@@ -1328,7 +1328,7 @@ and strip_assignment_operator (node : Ast.assignment_operator)
     Strip_err.(make sym#region Log_or_eq ~hint:"Use \"=\" and \"||\" separately.")
   | Non_null_eq sym ->
     (* ??= *)
-    Strip_err.(make sym#region Non_null_eq)
+    Strip_err.(make sym#region Non_null)
 
 (* Await-expression *)
 
@@ -1338,8 +1338,57 @@ and strip_E_await_expression (node : Ast.await_expression wrap) : (S.expr, _) re
 (* Binary expression *)
 
 and strip_E_binary_expression (node : Ast.binary_expression wrap) : (S.expr, _) result =
-  ignore node;
-  Error "TODO: strip_E_binary_expression"
+  let Ast.{ lhs_expr; operator; rhs_expr } = node#payload in
+  let* lhs_expr = strip_lhs_bin_expression lhs_expr in
+  let* rhs_expr = strip_expression rhs_expr in
+  let* op = strip_binary_operator operator in
+  let arg = mk_reg node#region (lhs_expr, rhs_expr) in
+  Ok (op arg)
+
+and strip_binary_operator (node : Ast.binary_operator)
+    : ((S.expr * S.expr) reg -> S.expr, _) result
+  =
+  match node with
+  | Log_and _ -> Ok (fun arg -> S.E_and arg) (* && *)
+  | Log_or _ -> Ok (fun arg -> S.E_or arg) (* || *)
+  | Bit_sr _ -> Ok (fun arg -> S.E_bit_sr arg) (* >> *)
+  | Bit_usr sym -> Strip_err.(make sym#region Bit_usr_eq) (* >>> *)
+  | Bit_sl _ -> Ok (fun arg -> S.E_bit_sl arg) (* << *)
+  | Bit_and _ -> Ok (fun arg -> S.E_bit_and arg) (* & *)
+  | Bit_xor _ -> Ok (fun arg -> S.E_bit_xor arg) (* ^ *)
+  | Bit_or _ -> Ok (fun arg -> S.E_bit_or arg) (* | *)
+  | Add _ -> Ok (fun arg -> S.E_add arg) (* + *)
+  | Sub _ -> Ok (fun arg -> S.E_sub arg) (* - *)
+  | Mult _ -> Ok (fun arg -> S.E_mult arg) (* * *)
+  | Div _ -> Ok (fun arg -> S.E_div arg) (* / *)
+  | Rem _ -> Ok (fun arg -> S.E_rem arg) (* % *)
+  | Exp sym -> Strip_err.(make sym#region Exp_eq) (* * *)
+  | Lt _ -> Ok (fun arg -> S.E_lt arg) (* < *)
+  | Leq _ -> Ok (fun arg -> S.E_leq arg) (* <= *)
+  | Equal _ -> Ok (fun arg -> S.E_equal arg) (* == *)
+  | Strict_eq sym ->
+    (* === *)
+    Strip_err.(make sym#region Strict_equality ~hint:"Use '=='")
+  | Neq _ -> Ok (fun arg -> S.E_neq arg) (* != *)
+  | Strict_neq sym ->
+    (* !== *)
+    Strip_err.(make sym#region Strict_equality ~hint:"Use '!='")
+  | Geq _ -> Ok (fun arg -> S.E_geq arg) (* >= *)
+  | Gt _ -> Ok (fun arg -> S.E_gt arg) (* > *)
+  | Non_null sym -> Strip_err.(make sym#region Non_null) (* ?? *)
+  | Instance_of kwd_instanceof ->
+    (* instanceof *)
+    Strip_err.(make kwd_instanceof#region Instanceof)
+  | In kwd_in ->
+    (* in *)
+    Strip_err.(make kwd_in#region In)
+
+and strip_lhs_bin_expression (node : Ast.lhs_bin_expression) : (S.expr, _) result =
+  match node with
+  | Lhs_bin_expression expr ->
+    let* expr = strip_expression expr in
+    Ok expr
+  | Lhs_bin_hash hash -> Strip_err.(make hash#region Hash_name_lhs)
 
 (* Instantiation expression *)
 
