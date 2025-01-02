@@ -1376,7 +1376,8 @@ and dec_abstract_method_signature ?(comments = []) node
 
 (* Call signature *)
 
-and dec_call_signature ?(comments = []) node : (call_signature, _) result =
+and dec_call_signature ?(comments = []) node : (call_signature wrap, _) result =
+  let region = !get_region node in
   let type_parameters_field = child_with_field_opt "type_parameters" node in
   let* parameters_field = child_with_field "parameters" node in
   let type_params_comments, params_comments =
@@ -1392,7 +1393,8 @@ and dec_call_signature ?(comments = []) node : (call_signature, _) result =
   let* parameters = dec_formal_parameters ~comments:params_comments parameters_field in
   let return_type_field = child_with_field_opt "return_type" node in
   let* return_type = make_opt_res dec_call_return_type return_type_field in
-  Ok ({ type_parameters; parameters; return_type } : call_signature)
+  let call_sig : call_signature = { type_parameters; parameters; return_type } in
+  Ok (Wrap.make call_sig region)
 
 (* Index signature *)
 
