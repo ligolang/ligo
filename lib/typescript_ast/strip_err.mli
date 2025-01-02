@@ -107,6 +107,10 @@ type t =
   | Strict_equality
   | Instanceof
   | In
+  | Import
+  | Spread_expression
+  | Optional_chaining
+  | Type_parameters_on_args
 
 type error = t
 

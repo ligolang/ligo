@@ -107,6 +107,10 @@ type t =
   | Strict_equality
   | Instanceof
   | In
+  | Import
+  | Spread_expression
+  | Optional_chaining
+  | Type_parameters_on_args
 
 type error = t
 
@@ -218,6 +222,10 @@ let to_string = function
   | Strict_equality -> "Strict equality is not supported in JsLIGO."
   | Instanceof -> "The operator 'instanceof' is not supported in JsLIGO."
   | In -> "The operator 'in' is not supported in JsLIGO."
+  | Import -> "Keyword 'import' is not supported here in JsLIGO."
+  | Spread_expression -> "Spread expressions are not supported here in JsLIGO."
+  | Optional_chaining -> "Optional chaining is not supported in JsLIGO."
+  | Type_parameters_on_args -> "Type parameters on arguments are not supported in JsLIGO."
 
 (* Creating errors *)
 

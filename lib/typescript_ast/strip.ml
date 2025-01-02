@@ -79,6 +79,17 @@ let filter_out_await (node : Ast.kwd_await option) : (unit, _) result =
   | None -> Ok ()
   | Some kwd_await -> Strip_err.(make kwd_await#region Asynchronicity)
 
+let filter_out_spread (node : Ast.arguments) : (Ast.expression list, _) result =
+  let (Ast.Parens args) = node in
+  let args = args#payload.contents in
+  let filter (arg : Ast.argument) acc =
+    match arg with
+    | Ast.Expression expr -> Ok expr :: acc
+    | Ast.Spread_element spread -> Strip_err.(make spread#region Spread_expression) :: acc
+  in
+  let* exprs = Result.all @@ List.fold_right args ~init:[] ~f:filter in
+  Ok exprs
+
 (* Stripping *)
 
 let rec strip_statements (node : Ast.statements) : (S.t, _) result =
@@ -1511,8 +1522,39 @@ and strip_parameters (node : Ast.parameters) : (parameters, _) result =
 (* Call expression *)
 
 and strip_E_call_expression (node : Ast.call_expression) : (S.expr, _) result =
-  ignore node;
-  Error "TODO: strip_E_call_expression"
+  match node with
+  | Call fun_call -> strip_call_fun fun_call
+  | Member expr_call -> Strip_err.(make expr_call#region Optional_chaining)
+
+and strip_call_fun (node : (Ast.fun_call, Ast.arguments_to_call) Ast.call wrap)
+    : (S.expr, _) result
+  =
+  let Ast.{ lambda; type_arguments; arguments } = node#payload in
+  let* (lambda : S.expr) = strip_fun_call lambda in
+  let* () =
+    match type_arguments with
+    | None -> Ok ()
+    | Some type_args ->
+      let region = Ast.region_of_chevrons type_args in
+      Strip_err.(make region Type_parameters_on_args)
+  in
+  let* (arguments : S.expr list) = strip_arguments_to_call arguments in
+  Ok (S.E_app (mk_reg node#region (lambda, arguments)))
+
+and strip_fun_call (node : Ast.fun_call) : (S.expr, _) result =
+  match node with
+  | Fun_call expr ->
+    let* expr = strip_expression expr in
+    Ok expr
+  | Import kwd_import -> Strip_err.(make kwd_import#region Import)
+
+and strip_arguments_to_call (node : Ast.arguments_to_call) : (S.expr list, _) result =
+  match node with
+  | Arguments arguments ->
+    let* arguments = filter_out_spread arguments in
+    let* arguments = Result.all @@ List.map ~f:strip_expression arguments in
+    Ok arguments
+  | Template_string string -> Strip_err.(make string#region Template_string)
 
 (* Class (expression) *)
 
