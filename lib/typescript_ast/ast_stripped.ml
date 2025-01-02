@@ -189,7 +189,7 @@ and val_binding =
 and type_expr =
   | T_tuple of type_expr list reg (* [t, [u, v]] *)
   | T_for_all of (variable list * type_expr) reg (* <T,U>(x: T) => U *)
-  | T_fun of fun_type reg (* (a : t) => u *)
+  | T_fun of fun_type reg (* (x : T) => U *)
   | T_int of int_literal (* 42 *)
   | T_object of type_expr _object (* {x; @a y : t} *)
   | T_parameter_of of path (* parameter_of<C> *)

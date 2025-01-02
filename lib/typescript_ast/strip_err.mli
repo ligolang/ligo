@@ -102,6 +102,7 @@ type t =
   | Regex
   | Super
   | Template_string
+  | Return_type_absent
 
 type error = t
 

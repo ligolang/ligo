@@ -340,7 +340,7 @@ and function_signature =
   { kwd_async : kwd_async option
   ; kwd_function : kwd_function
   ; name : identifier
-  ; call_sig : call_signature
+  ; call_sig : call_signature wrap
   }
 
 and call_signature =
@@ -579,7 +579,7 @@ and method_signature =
   ; set_get_all : set_get_all option
   ; name : property_name
   ; optional : sym_qmark option
-  ; call_sig : call_signature
+  ; call_sig : call_signature wrap
   }
 
 and accessibility_modifier =
@@ -880,7 +880,7 @@ and abstract_method_signature =
   ; set_get_all : set_get_all option
   ; name : property_name
   ; optional : sym_qmark option
-  ; call_sig : call_signature
+  ; call_sig : call_signature wrap
   }
 
 (** Index Signature
@@ -1963,7 +1963,7 @@ and arrow_function =
 
 and parameters =
   | Parameter of identifier
-  | Call_signature of call_signature
+  | Call_signature of call_signature wrap
 
 and function_body =
   | Expression of expression
@@ -2020,7 +2020,7 @@ and function_expression =
   { kwd_async : kwd_async option
   ; kwd_function : kwd_function
   ; name : identifier option
-  ; call_sig : call_signature
+  ; call_sig : call_signature wrap
   ; body : statement_block
   }
 
@@ -2562,7 +2562,7 @@ and object_type = member_type list braces
 and member_type =
   | Export_statement of export_statement wrap (* See STATEMENTS *)
   | Property_signature of property_signature
-  | Call_signature of call_signature
+  | Call_signature of call_signature wrap
   | Construct_signature of construct_signature
   | Index_signature of index_signature
   | Method_signature of method_signature
