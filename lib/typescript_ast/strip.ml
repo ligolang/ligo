@@ -1672,8 +1672,7 @@ and strip_E_string (node : Ast.string_literal) : (S.expr, _) result = Ok (S.E_st
 and strip_E_subscript_expression (node : Ast.subscript_expression wrap)
     : (S.expr, _) result
   =
-  ignore node;
-  Error "TODO: strip_E_subscript_expression"
+  Strip_err.(make node#region Subscript ~hint:"Use a property name.")
 
 (* Super (expression) *)
 
