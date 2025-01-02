@@ -90,7 +90,6 @@ type t =
   | Exp_eq
   | Log_and_eq
   | Log_or_eq
-  | Non_null_eq
   | Complex_lhs
   | Unary_add
   | Typeof_void_delete
@@ -104,6 +103,10 @@ type t =
   | Template_string
   | Return_type_absent
   | Named_lambda
+  | Hash_name_lhs
+  | Strict_equality
+  | Instanceof
+  | In
 
 type error = t
 
@@ -196,7 +199,6 @@ let to_string = function
   | Exp_eq -> "The augmented exponent is not supported in JsLIGO."
   | Log_and_eq -> "The augmented logical conjunction is not supported in JsLIGO."
   | Log_or_eq -> "The augmented logical disjunction is not supported in JsLIGO."
-  | Non_null_eq -> "The augmented non-null test is not supported in JsLIGO."
   | Complex_lhs -> "Complex left-hand sides are not supported in JsLIGO."
   | Unary_add -> "Unary plus is not supported in JsLIGO."
   | Typeof_void_delete ->
@@ -212,6 +214,10 @@ let to_string = function
   | Return_type_absent ->
     "Function signatures without return types are not supported in JsLIGO."
   | Named_lambda -> "Named lambdas are not supported in JsLIGO."
+  | Hash_name_lhs -> "Private property names are not supported in JsLIGO."
+  | Strict_equality -> "Strict equality is not supported in JsLIGO."
+  | Instanceof -> "The operator 'instanceof' is not supported in JsLIGO."
+  | In -> "The operator 'in' is not supported in JsLIGO."
 
 (* Creating errors *)
 
