@@ -111,6 +111,7 @@ type t =
   | Spread_expression
   | Optional_chaining
   | Type_parameters_on_args
+  | Subscript
 
 type error = t
 
@@ -226,6 +227,7 @@ let to_string = function
   | Spread_expression -> "Spread expressions are not supported here in JsLIGO."
   | Optional_chaining -> "Optional chaining is not supported in JsLIGO."
   | Type_parameters_on_args -> "Type parameters on arguments are not supported in JsLIGO."
+  | Subscript -> "Subscript expressions are not supported in JsLIGO."
 
 (* Creating errors *)
 
