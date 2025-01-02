@@ -103,6 +103,7 @@ type t =
   | Super
   | Template_string
   | Return_type_absent
+  | Named_lambda
 
 type error = t
 
@@ -210,6 +211,7 @@ let to_string = function
   | Template_string -> "Template strings are not supported in JsLIGO."
   | Return_type_absent ->
     "Function signatures without return types are not supported in JsLIGO."
+  | Named_lambda -> "Named lambdas are not supported in JsLIGO."
 
 (* Creating errors *)
 

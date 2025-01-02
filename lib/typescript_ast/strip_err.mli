@@ -103,6 +103,7 @@ type t =
   | Super
   | Template_string
   | Return_type_absent
+  | Named_lambda
 
 type error = t
 

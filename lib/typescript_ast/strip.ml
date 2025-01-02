@@ -1413,10 +1413,10 @@ and strip_E_arrow_function (node : Ast.arrow_function wrap) : (S.expr, _) result
 and strip_arrow_function (node : Ast.arrow_function wrap) : (S.arrow_fun_expr, _) result =
   let Ast.{ kwd_async; parameters; sym_arrow = _; body } = node#payload in
   let* () = filter_out_async kwd_async in
-  let* (parameters : parameters) = strip_parameters parameters in
-  let* (generics : S.variable list) = get_generics parameters in
-  let* (rhs_type : S.type_expr option) = get_rhs_type parameters in
-  let* (parameters : S.parameter list) = get_parameters parameters in
+  let* parameters = strip_parameters parameters in
+  let* generics = get_generics parameters in
+  let* rhs_type = get_rhs_type parameters in
+  let* parameters = get_parameters parameters in
   let* fun_body = strip_function_body body in
   Ok S.{ generics; parameters; rhs_type; fun_body }
 
@@ -1484,13 +1484,18 @@ and strip_E_function_expression (node : Ast.function_expression wrap) : (S.expr,
 and strip_function_expression (node : Ast.function_expression wrap)
     : (S.function_expr, _) result
   =
-  (*
-  let Ast.{} = node#payload in
-
-  let function_expr = S.{ generics; parameters; rhs_type; fun_body }
-       *)
-  ignore node;
-  Error "TODO: strip_E_function_expression"
+  let Ast.{ kwd_async; kwd_function = _; name; call_sig; body } = node#payload in
+  let* () = filter_out_async kwd_async in
+  let* () =
+    match name with
+    | None -> Ok ()
+    | Some name -> Strip_err.(make name#region Named_lambda ~hint:"Declare a function.")
+  in
+  let* call_sig = strip_call_signature call_sig in
+  let { generics; parameters; rhs_type } = call_sig.value in
+  let* fun_body = strip_statement_block body in
+  let fun_body = S.Stmt_body fun_body in
+  Ok S.{ generics; parameters; rhs_type; fun_body }
 
 (* Generator function (expression) *)
 
