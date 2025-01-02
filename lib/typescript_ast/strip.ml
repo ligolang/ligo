@@ -57,11 +57,27 @@ type call_signature =
   ; rhs_type : S.type_expr option
   }
 
+type parameters =
+  | Parameter of S.variable
+  | Call_signature of call_signature reg
+
 type for_header =
   { index_kind : S.var_kind option
   ; index : S.key * S.value option
   ; expr : S.expr
   }
+
+(* Filters *)
+
+let filter_out_async (node : Ast.kwd_async option) : (unit, _) result =
+  match node with
+  | None -> Ok ()
+  | Some kwd_async -> Strip_err.(make kwd_async#region Asynchronicity)
+
+let filter_out_await (node : Ast.kwd_await option) : (unit, _) result =
+  match node with
+  | None -> Ok ()
+  | Some kwd_await -> Strip_err.(make kwd_await#region Asynchronicity)
 
 (* Stripping *)
 
@@ -299,11 +315,7 @@ and strip_S_for_in_statement (node : Ast.for_in_statement wrap)
   let Ast.{ kwd_for = _; kwd_await; sym_lpar = _; for_header; sym_rpar = _; body } =
     node#payload
   in
-  let* () =
-    match kwd_await with
-    | None -> Ok ()
-    | Some kwd_await -> Strip_err.(make kwd_await#region Asynchronicity)
-  in
+  let* () = filter_out_await kwd_await in
   let* { index_kind; index; expr } = strip_for_header for_header in
   let* for_of_body = strip_statement body in
   let for_of_stmt = S.{ index_kind; index; expr; for_of_body } in
@@ -499,11 +511,7 @@ and strip_D_function_declaration (node : Ast.function_declaration wrap)
   let (Ast.{ kwd_async; kwd_function; name; call_sig } : Ast.function_signature) =
     fun_sig
   in
-  let* () =
-    match kwd_async with
-    | None -> Ok ()
-    | Some kwd_async -> Strip_err.(make kwd_async#region Asynchronicity)
-  in
+  let* () = filter_out_async kwd_async in
   let comments = kwd_function#comments in
   let comments = strip_comments comments in
   let decorators = extract_decorators comments in
@@ -678,11 +686,7 @@ and strip_D_function_signature (node : Ast.function_signature wrap)
   let (Ast.{ kwd_async; kwd_function = _; name; call_sig } : Ast.function_signature) =
     node#payload
   in
-  let* () =
-    match kwd_async with
-    | None -> Ok ()
-    | Some kwd_async -> Strip_err.(make kwd_async#region Asynchronicity)
-  in
+  let* () = filter_out_async kwd_async in
   let name = strip_identifier name in
   let* call_sig = strip_call_signature call_sig in
   let { generics; parameters; rhs_type } = call_sig.value in
@@ -1403,8 +1407,57 @@ and strip_argument (node : Ast.argument) : (S.expr S.element, _) result =
 (* Arrow function (expression) *)
 
 and strip_E_arrow_function (node : Ast.arrow_function wrap) : (S.expr, _) result =
-  ignore node;
-  Error "TODO: strip_E_arrow_function"
+  let* arrow_fun_expr = strip_arrow_function node in
+  Ok (S.E_arrow_fun (mk_reg node#region arrow_fun_expr))
+
+and strip_arrow_function (node : Ast.arrow_function wrap) : (S.arrow_fun_expr, _) result =
+  let Ast.{ kwd_async; parameters; sym_arrow = _; body } = node#payload in
+  let* () = filter_out_async kwd_async in
+  let* (parameters : parameters) = strip_parameters parameters in
+  let* (generics : S.variable list) = get_generics parameters in
+  let* (rhs_type : S.type_expr option) = get_rhs_type parameters in
+  let* (parameters : S.parameter list) = get_parameters parameters in
+  let* fun_body = strip_function_body body in
+  Ok S.{ generics; parameters; rhs_type; fun_body }
+
+and get_parameters (node : parameters) : (S.parameter list, _) result =
+  match node with
+  | Parameter variable ->
+    let path = Nonempty_list.singleton variable in
+    Ok [ S.P_var (mk_reg variable#region path), None ]
+  | Call_signature call_sig ->
+    let { generics = _; parameters; rhs_type = _ } = call_sig.value in
+    Ok parameters
+
+and get_generics (node : parameters) : (S.variable list, _) result =
+  match node with
+  | Parameter _ -> Ok []
+  | Call_signature call_sig ->
+    let { generics; parameters = _; rhs_type = _ } = call_sig.value in
+    Ok generics
+
+and get_rhs_type (node : parameters) : (S.type_expr option, _) result =
+  match node with
+  | Parameter _ -> Ok None
+  | Call_signature call_sig ->
+    let { generics = _; parameters = _; rhs_type } = call_sig.value in
+    Ok rhs_type
+
+and strip_function_body (node : Ast.function_body) : (S.fun_body, _) result =
+  match node with
+  | Expression expr ->
+    let* expr = strip_expression expr in
+    Ok (S.Expr_body expr)
+  | Statement_block block ->
+    let* statements = strip_statement_block block in
+    Ok (S.Stmt_body statements)
+
+and strip_parameters (node : Ast.parameters) : (parameters, _) result =
+  match node with
+  | Parameter ident -> Ok (Parameter (strip_identifier ident))
+  | Call_signature call_sig ->
+    let* call_sig = strip_call_signature call_sig in
+    Ok (Call_signature call_sig)
 
 (* Call expression *)
 
@@ -1425,6 +1478,17 @@ and strip_E_false (node : Ast.kwd_false) : (S.expr, _) result = Ok (S.E_false no
 
 and strip_E_function_expression (node : Ast.function_expression wrap) : (S.expr, _) result
   =
+  let* function_expr = strip_function_expression node in
+  Ok (S.E_function (mk_reg node#region function_expr))
+
+and strip_function_expression (node : Ast.function_expression wrap)
+    : (S.function_expr, _) result
+  =
+  (*
+  let Ast.{} = node#payload in
+
+  let function_expr = S.{ generics; parameters; rhs_type; fun_body }
+       *)
   ignore node;
   Error "TODO: strip_E_function_expression"
 
