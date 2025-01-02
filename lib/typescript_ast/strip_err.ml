@@ -102,6 +102,7 @@ type t =
   | Regex
   | Super
   | Template_string
+  | Return_type_absent
 
 type error = t
 
@@ -207,6 +208,8 @@ let to_string = function
   | Regex -> "Regular expressions are not supported in JsLIGO."
   | Super -> "Superclasses are not supported in JsLIGO."
   | Template_string -> "Template strings are not supported in JsLIGO."
+  | Return_type_absent ->
+    "Function signatures without return types are not supported in JsLIGO."
 
 (* Creating errors *)
 

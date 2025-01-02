@@ -509,7 +509,7 @@ and strip_D_function_declaration (node : Ast.function_declaration wrap)
   let decorators = extract_decorators comments in
   let fun_name = strip_identifier name in
   let* call_sig = strip_call_signature call_sig in
-  let { generics; parameters; rhs_type } = call_sig in
+  let { generics; parameters; rhs_type } = call_sig.value in
   let* fun_body = strip_statement_block body in
   let fun_decl =
     S.{ decorators; comments; fun_name; generics; parameters; rhs_type; fun_body }
@@ -537,13 +537,17 @@ and extract_decorators (node : S.comment list) : S.decorator list =
   in
   clean decorators
 
-and strip_call_signature (node : Ast.call_signature) : (call_signature, _) result =
-  let (Ast.{ type_parameters; parameters; return_type } : Ast.call_signature) = node in
+and strip_call_signature (node : Ast.call_signature wrap) : (call_signature reg, _) result
+  =
+  let (Ast.{ type_parameters; parameters; return_type } : Ast.call_signature) =
+    node#payload
+  in
   let* generics = strip_list_opt strip_type_parameters type_parameters in
   let* parameters = strip_formal_parameters parameters in
   let parameters = format_parameters_into_patterns parameters in
   let* rhs_type = map_opt strip_call_return_type return_type in
-  Ok { generics; parameters; rhs_type }
+  let call_sig = { generics; parameters; rhs_type } in
+  Ok (mk_reg node#region call_sig)
 
 and format_parameters_into_patterns (node : (S.variable * S.type_expr option) list)
     : S.parameter list
@@ -656,13 +660,59 @@ and strip_variable_declaration (node : Ast.variable_declaration wrap)
   =
   strip_D_variable_declaration node
 
-(* Function signature *)
+(* Function signature
+
+   The function signature
+
+   {@js[function f <T>(x: T) : T;]}
+
+   is transformed internally here into the transform of the following
+   type declaration:
+
+   {@js[type f = <T>(x: T) => T;]}
+ *)
 
 and strip_D_function_signature (node : Ast.function_signature wrap)
     : (S.declaration, _) result
   =
-  ignore node;
-  Error "TODO: strip_D_function_signature"
+  let (Ast.{ kwd_async; kwd_function = _; name; call_sig } : Ast.function_signature) =
+    node#payload
+  in
+  let* () =
+    match kwd_async with
+    | None -> Ok ()
+    | Some kwd_async -> Strip_err.(make kwd_async#region Asynchronicity)
+  in
+  let name = strip_identifier name in
+  let* call_sig = strip_call_signature call_sig in
+  let { generics; parameters; rhs_type } = call_sig.value in
+  let* v_params = Result.all @@ List.map ~f:filter_parameter parameters in
+  let* v_params = filter_type_annotations v_params in
+  let* rhs_type =
+    match rhs_type with
+    | None -> Strip_err.(make node#region Return_type_absent)
+    | Some rhs_type -> Ok rhs_type
+  in
+  let fun_type = v_params, rhs_type in
+  let type_expr = S.T_fun (mk_reg call_sig.region fun_type) in
+  let type_expr =
+    match generics with
+    | [] -> type_expr
+    | _ -> S.T_for_all (mk_reg call_sig.region (generics, type_expr))
+  in
+  let type_decl = S.{ name; generics; type_expr } in
+  Ok (S.D_type (mk_reg node#region type_decl))
+
+and filter_parameter (node : S.parameter) : (S.variable * S.type_expr option, _) result =
+  let pattern, type_expr = node in
+  match pattern with
+  | S.P_var path ->
+    (match path.Region.value with
+    | Nonempty_list.[ variable ] -> Ok (variable, type_expr)
+    | _ ->
+      let region = S.region_of_pattern pattern in
+      Strip_err.(make region Not_a_variable))
+  | _ -> Strip_err.(make (S.region_of_pattern pattern) Not_a_variable)
 
 (* Abstract class declaration *)
 
