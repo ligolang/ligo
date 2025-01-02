@@ -1385,8 +1385,20 @@ and strip_E_primary_expression (node : Ast.primary_expression) : (S.expr, _) res
 (* Array expression *)
 
 and strip_E_array (node : Ast.array) : (S.expr, _) result =
-  ignore node;
-  Error "TODO: strip_E_array"
+  let (Ast.Brackets brackets) = node in
+  let list = brackets#payload.contents in
+  let* array = Result.all @@ List.map ~f:strip_argument list in
+  Ok (S.E_array (mk_reg brackets#region array))
+
+and strip_argument (node : Ast.argument) : (S.expr S.element, _) result =
+  match node with
+  | Expression expr ->
+    let* expr = strip_expression expr in
+    Ok (S.Element expr)
+  | Spread_element spread ->
+    let _, expr = spread#payload in
+    let* expr = strip_expression expr in
+    Ok (S.Spread expr)
 
 (* Arrow function (expression) *)
 
