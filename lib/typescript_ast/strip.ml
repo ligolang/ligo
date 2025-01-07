@@ -1672,7 +1672,27 @@ and strip_E_string (node : Ast.string_literal) : (S.expr, _) result = Ok (S.E_st
 and strip_E_subscript_expression (node : Ast.subscript_expression wrap)
     : (S.expr, _) result
   =
-  Strip_err.(make node#region Subscript ~hint:"Use a property name.")
+  let Ast.{ object_expr; optional_chain; index } = node#payload in
+  let* () =
+    match optional_chain with
+    | None -> Ok ()
+    | Some Ast.(Optional_chain sym) -> Strip_err.(make sym#region Optional_chaining)
+  in
+  let Ast.(Brackets brackets) = index in
+  let exprs = brackets#payload.contents in
+  let* exprs = strip_expressions exprs in
+  let* expr =
+    match exprs with
+    | [ expr ] -> Ok expr
+    | _ -> Strip_err.(make (Ast.region_of_brackets index) Multiple_values)
+  in
+  match expr with
+  | E_int nat ->
+    let* obj = strip_expression object_expr in
+    Ok (S.E_subscript (mk_reg node#region (obj, nat)))
+  | _ ->
+    Strip_err.(
+      make node#region Invalid_subscript ~hint:"Use a natural number as an index.")
 
 (* Super (expression) *)
 

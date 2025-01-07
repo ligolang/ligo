@@ -291,6 +291,7 @@ and expr =
   | E_rem_eq of (expr * expr) reg (* x %= y*)
   | E_string of string_literal (* "abcdef" *)
   | E_sub of (expr * expr) reg (* x - y *)
+  | E_subscript of (expr * int_literal) reg (* x.[1] *)
   | E_sub_eq of (expr * expr) reg (* x -= y *)
   | E_ternary of ternary reg (* x ? y : z *)
   | E_true of Region.t (* true *)
@@ -422,7 +423,10 @@ let region_of_expr = function
   | E_rem { region; _ }
   | E_rem_eq { region; _ } -> region
   | E_string w -> w#region
-  | E_sub { region; _ } | E_sub_eq { region; _ } | E_ternary { region; _ } -> region
+  | E_sub { region; _ }
+  | E_subscript { region; _ }
+  | E_sub_eq { region; _ }
+  | E_ternary { region; _ } -> region
   | E_true r -> r
   | E_typed { region; _ } | E_update { region; _ } -> region
   | E_var { region; _ } -> region
