@@ -55,6 +55,7 @@ let rec compile_type ~(raise : _ Trace.raise) (t : AST.type_expression) : type_e
     | Nat, [] -> return (T_base TB_nat)
     | Timestamp, [] -> return (T_base TB_timestamp)
     | Tez, [] -> return (T_base TB_mutez)
+    | Bool, [] -> return (T_base TB_bool)
     | String, [] -> return (T_base TB_string)
     | Bytes, [] -> return (T_base TB_bytes)
     | Typed_address, [ _; _ ] -> return (T_base TB_address)
@@ -96,6 +97,9 @@ let rec compile_type ~(raise : _ Trace.raise) (t : AST.type_expression) : type_e
     | Big_map, [ k; v ] ->
       let kv' = Ligo_pair.map ~f:compile_type (k, v) in
       return (T_big_map kv')
+    | Option, [ t ] ->
+      let t' = compile_type t in
+      return (T_option t')
     | List, [ t ] ->
       let t' = compile_type t in
       return (T_list t')
@@ -173,6 +177,7 @@ let rec compile_type ~(raise : _ Trace.raise) (t : AST.type_expression) : type_e
         | Michelson_pair
         | Set
         | Mutation
+        | Option
         | List
         | Gen
         | External _
@@ -185,6 +190,7 @@ let rec compile_type ~(raise : _ Trace.raise) (t : AST.type_expression) : type_e
         | Nat
         | Timestamp
         | Michelson_or
+        | Bool
         | String
         | Gen
         | Address
@@ -215,6 +221,7 @@ let rec compile_type ~(raise : _ Trace.raise) (t : AST.type_expression) : type_e
         | Mutation
         | Typed_address
         | External _
+        | Option
         | List
         | Tx_rollup_l2_address
         | Views
@@ -226,8 +233,11 @@ let rec compile_type ~(raise : _ Trace.raise) (t : AST.type_expression) : type_e
       @@ corner_case
            ~loc:__LOC__
            (Format.asprintf "wrong constant\n%a\n" Ast_expanded.PP.type_expression t))
-  | T_sum _ when Option.is_some (AST.get_t_bool t) -> return (T_base TB_bool)
+  | T_sum _ when Option.is_some (AST.get_t_bool t) ->
+    (* TODO: this could be handled somewhere else *)
+    return (T_base TB_bool)
   | T_sum _ when Option.is_some (AST.get_t_option t) ->
+    (* TODO: this could be handled somewhere else *)
     let o =
       Trace.trace_option ~raise (corner_case ~loc:__LOC__ "impossible")
       @@ AST.get_t_option t

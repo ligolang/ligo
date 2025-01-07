@@ -84,6 +84,7 @@ let literal_type_prim (l : Literal_value.t) : string =
   | Literal_nat _ -> "nat"
   | Literal_timestamp _ -> "timestamp"
   | Literal_mutez _ -> "mutez"
+  | Literal_bool _ -> "bool"
   | Literal_string _ -> "string"
   | Literal_bytes _ -> "bytes"
   | Literal_address _ -> "address"
@@ -110,6 +111,13 @@ let literal_value (l : Literal_value.t) : (meta, string) node =
   | Literal_nat x -> Int (null, x)
   | Literal_timestamp x -> Int (null, x)
   | Literal_mutez x -> Int (null, x)
+  | Literal_bool x ->
+    let x =
+      match x with
+      | true -> "True"
+      | false -> "False"
+    in
+    Prim (null, x, [], [])
   | Literal_string x -> String (null, Ligo_string.extract x)
   | Literal_bytes x -> Bytes (null, x)
   | Literal_address x -> String (null, x)

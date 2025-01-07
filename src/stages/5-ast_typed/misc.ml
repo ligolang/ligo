@@ -107,6 +107,9 @@ and assert_literal_eq ((a, b) : Literal_value.t * Literal_value.t) : unit option
   | Literal_mutez a, Literal_mutez b when Z.equal a b -> Some ()
   | Literal_mutez _, Literal_mutez _ -> None
   | Literal_mutez _, _ -> None
+  | Literal_bool a, Literal_bool b when Bool.equal a b -> Some ()
+  | Literal_bool _, Literal_bool _ -> None
+  | Literal_bool _, _ -> None
   | Literal_string a, Literal_string b when Ligo_string.equal a b -> Some ()
   | Literal_string _, Literal_string _ -> None
   | Literal_string _, _ -> None

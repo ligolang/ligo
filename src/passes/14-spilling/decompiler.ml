@@ -45,6 +45,9 @@ let rec decompile
     | Tez, [] ->
       let n = Trace.trace_option ~raise (Errors.wrong_mini_c_value t v) @@ get_mutez v in
       return (E_literal (Literal_mutez n))
+    | Bool, [] ->
+      let n = Trace.trace_option ~raise (Errors.wrong_mini_c_value t v) @@ get_bool v in
+      return (E_literal (Literal_bool n))
     | String, [] ->
       let n = Trace.trace_option ~raise (Errors.wrong_mini_c_value t v) @@ get_string v in
       let n = Ligo_string.Standard n in
@@ -178,9 +181,11 @@ let rec decompile
         | Michelson_program
         | Michelson_contract
         | Gen
+        | Bool
         | String
         | Typed_address
         | Mutation
+        | Option
         | List
         | Int
         | Key_hash

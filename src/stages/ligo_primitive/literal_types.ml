@@ -33,6 +33,7 @@ end
 
 (* type constants *)
 type t =
+  | Bool
   | String
   | Bytes
   | Int
@@ -46,6 +47,7 @@ type t =
   | Key_hash
   | Timestamp
   | Chain_id
+  | Option
   | List
   | Map
   | Big_map
@@ -78,6 +80,7 @@ type t =
 [@@deriving ord, eq, yojson, hash, sexp, is { tags = [ "only_interpreter" ] }, bin_io]
 
 let to_string = function
+  | Bool -> "bool"
   | String -> "string"
   | Bytes -> "bytes"
   | Int -> "int"
@@ -91,6 +94,7 @@ let to_string = function
   | Key_hash -> "key_hash"
   | Timestamp -> "timestamp"
   | Chain_id -> "chain_id"
+  | Option -> "option"
   | List -> "list"
   | Map -> "map"
   | Big_map -> "big_map"
@@ -123,6 +127,7 @@ let to_string = function
 
 
 let of_string_opt = function
+  | "bool" -> Some Bool
   | "string" -> Some String
   | "bytes" -> Some Bytes
   | "int" -> Some Int
@@ -136,6 +141,7 @@ let of_string_opt = function
   | "key_hash" -> Some Key_hash
   | "timestamp" -> Some Timestamp
   | "chain_id" -> Some Chain_id
+  | "option" -> Some Option
   | "list" -> Some List
   | "map" -> Some Map
   | "big_map" -> Some Big_map
@@ -180,6 +186,7 @@ let of_string_opt = function
 
 
 let to_arity = function
+  | Bool -> 0
   | String -> 0
   | Bytes -> 0
   | Int -> 0
@@ -193,6 +200,7 @@ let to_arity = function
   | Key_hash -> 0
   | Timestamp -> 0
   | Chain_id -> 0
+  | Option -> 1
   | List -> 1
   | Map -> 2
   | Big_map -> 2
@@ -235,6 +243,7 @@ let to_arity = function
   | Chest_key -> 0
 
 
+let bool = Bool
 let string = String
 let dynamic_entrypoint = Dynamic_entrypoint
 let bytes = Bytes
@@ -249,6 +258,7 @@ let key = Key
 let key_hash = Key_hash
 let timestamp = Timestamp
 let chain_id = Chain_id
+let option = Option
 let list = List
 let map = Map
 let big_map = Big_map
@@ -278,7 +288,7 @@ let int64 = Int64
 let views = Views
 let chest = Chest
 let chest_key = Chest_key
-let v_bool = Type_var.of_input_var "bool"
+let v_bool = Type_var.of_input_var (to_string Bool)
 let v_string = Type_var.of_input_var (to_string String)
 let v_bytes = Type_var.of_input_var (to_string Bytes)
 let v_int = Type_var.of_input_var (to_string Int)
@@ -292,7 +302,7 @@ let v_key = Type_var.of_input_var (to_string Key)
 let v_key_hash = Type_var.of_input_var (to_string Key_hash)
 let v_timestamp = Type_var.of_input_var (to_string Timestamp)
 let v_chain_id = Type_var.of_input_var (to_string Chain_id)
-let v_option = Type_var.of_input_var "option"
+let v_option = Type_var.of_input_var (to_string Option)
 let v_list = Type_var.of_input_var (to_string List)
 let v_map = Type_var.of_input_var (to_string Map)
 let v_big_map = Type_var.of_input_var (to_string Big_map)

@@ -32,6 +32,7 @@ let rec is_dup ~(raise : _ Trace.raise) (t : type_expression) =
           | Int
           | Nat
           | Unit
+          | Bool
           | String
           | Bytes
           | Chain_id
@@ -64,7 +65,7 @@ let rec is_dup ~(raise : _ Trace.raise) (t : type_expression) =
       ; _
       } -> true
   | T_singleton _ -> true
-  | T_constant { injection = List | Set; parameters = [ t ]; _ } -> is_dup t
+  | T_constant { injection = Option | List | Set; parameters = [ t ]; _ } -> is_dup t
   | T_constant { injection = Contract; _ } -> true
   | T_constant { injection = Big_map | Map; parameters = [ t1; t2 ]; _ } ->
     is_dup t1 && is_dup t2
@@ -78,6 +79,7 @@ let rec is_dup ~(raise : _ Trace.raise) (t : type_expression) =
       { injection =
           ( Map
           | Big_map
+          | Option
           | List
           | Set
           | Michelson_or

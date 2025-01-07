@@ -12,6 +12,7 @@ type t =
   | Literal_nat of Ligo_z.t
   | Literal_timestamp of Ligo_z.t
   | Literal_mutez of Ligo_z.t
+  | Literal_bool of bool
   | Literal_string of ligo_string
   | Literal_bytes of bytes
   | Literal_address of string
@@ -37,6 +38,7 @@ let pp ppf (l : t) =
   | Literal_nat z -> fprintf ppf "+%a" Z.pp_print z
   | Literal_timestamp z -> fprintf ppf "+%a" Z.pp_print z
   | Literal_mutez z -> fprintf ppf "%amutez" Z.pp_print z
+  | Literal_bool b -> fprintf ppf "%b" b
   | Literal_string s -> fprintf ppf "%a" Ligo_string.pp s
   | Literal_bytes b -> fprintf ppf "0x%a" Hex.pp (Hex.of_bytes b)
   | Literal_address s -> fprintf ppf "@%S" s
@@ -57,6 +59,7 @@ let assert_eq (a, b) = if equal a b then Some () else None
 let typeof lit =
   match lit with
   | Literal_unit -> Literal_types.unit
+  | Literal_bool _ -> Literal_types.bool
   | Literal_string _ -> Literal_types.string
   | Literal_key _ -> Literal_types.key
   | Literal_key_hash _ -> Literal_types.key_hash
