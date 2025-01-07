@@ -103,7 +103,7 @@ type t =
   | Template_string
   | Return_type_absent
   | Named_lambda
-  | Hash_name_lhs
+  | Private_property
   | Strict_equality
   | Instanceof
   | In
@@ -223,7 +223,7 @@ let to_string = function
   | Return_type_absent ->
     "Function signatures without return types are not supported in JsLIGO."
   | Named_lambda -> "Named lambdas are not supported in JsLIGO."
-  | Hash_name_lhs -> "Private property names are not supported in JsLIGO."
+  | Private_property -> "Private property names are not supported in JsLIGO."
   | Strict_equality -> "Strict equality is not supported in JsLIGO."
   | Instanceof -> "The operator 'instanceof' is not supported in JsLIGO."
   | In -> "The operator 'in' is not supported in JsLIGO."
