@@ -206,14 +206,9 @@ and 'a _object = 'a property reg list reg
 and 'a property =
   { decorators : decorator list (* From the property identifier *)
   ; comments : comment list (* From the property identifier *)
-  ; property_id : property_id
+  ; property_name : variable
   ; property_rhs : 'a
   }
-
-and property_id =
-  | F_int of int_literal
-  | F_name of variable
-  | F_str of string_literal
 
 (* Union type *)
 and union_type = type_expr Nonempty_list.t reg
@@ -227,10 +222,10 @@ and pattern =
   | P_bytes of bytes_literal (* 0xFFFA *)
   | P_false of Region.t (* false *)
   | P_int of int_literal (* 42 *)
-  | P_object of pattern _object (* {x, y : 0} *)
+  | P_object of pattern _object (* {x, y:z} *)
   | P_string of string_literal (* "string" *)
   | P_true of Region.t (* true *)
-  | P_var of simple_path (* x  M.N.t *)
+  | P_var of simple_path (* x  M.N.x *)
 
 (* Array pattern (shadowing the predefined type [array]) *)
 and 'a array = 'a element list reg
@@ -431,11 +426,6 @@ let region_of_statement = function
 
 let region_of_var_kind = function
   | `Let w | `Const w -> w#region
-
-let region_of_property_id = function
-  | F_name i -> i#region
-  | F_int i -> i#region
-  | F_str i -> i#region
 
 let region_of_fun_body_to_region = function
   | Stmt_body { region; _ } -> region

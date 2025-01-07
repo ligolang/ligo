@@ -116,6 +116,11 @@ type t =
   | Assignment_in_pattern
   | Rest_pattern_in_lhs
   | Object_pattern_in_lhs
+  | Rest_in_object_pattern
+  | Asgmt_in_object_pattern
+  | Property_as_string
+  | Property_as_number
+  | Computed_property_name
 
 type error = t
 

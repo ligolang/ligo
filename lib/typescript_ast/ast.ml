@@ -715,7 +715,7 @@ and destructuring_pattern =
 and object_pattern = member_pattern list braces
 
 and member_pattern =
-  | Member_pair_pattern of pair_pattern
+  | Member_pair_pattern of pair_pattern wrap
   | Member_rest_pattern of rest_pattern wrap
   | Member_object_assignment of object_assignment_pattern wrap
   | Member_shorthand_property of identifier (* Including reserved identifiers *)
@@ -3821,6 +3821,13 @@ let region_of_assignment_lhs (node : assignment_lhs) =
   match node with
   | Assign_lhs_parens expr -> region_of_parens expr
   | Assign_lhs expr -> region_of_lhs_expression expr
+
+let region_of_member_pattern (node : member_pattern) =
+  match node with
+  | Member_pair_pattern w -> w#region
+  | Member_rest_pattern w -> w#region
+  | Member_object_assignment w -> w#region
+  | Member_shorthand_property ident -> ident#region
 
 (* From some patterns in assignments to expressions *)
 

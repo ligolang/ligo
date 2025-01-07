@@ -116,6 +116,11 @@ type t =
   | Assignment_in_pattern
   | Rest_pattern_in_lhs
   | Object_pattern_in_lhs
+  | Rest_in_object_pattern
+  | Asgmt_in_object_pattern
+  | Property_as_string
+  | Property_as_number
+  | Computed_property_name
 
 type error = t
 
@@ -238,6 +243,12 @@ let to_string = function
     "Rest patterns in left-hand sides of assignments are not supported in JsLIGO."
   | Object_pattern_in_lhs ->
     "Object patterns in left-hand sides of assignments are not supported in JsLIGO."
+  | Rest_in_object_pattern -> "Rest in object patterns are not supported in JsLIGO."
+  | Asgmt_in_object_pattern ->
+    "Assignments in object patterns are not supported in JsLIGO."
+  | Property_as_string -> "Property names as strings are not supported in JsLIGO."
+  | Property_as_number -> "Property names as numbers are not supported in JsLIGO."
+  | Computed_property_name -> "Computed property names are not supported in JsLIGO."
 
 (* Creating errors *)
 
