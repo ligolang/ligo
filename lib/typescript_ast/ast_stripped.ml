@@ -274,6 +274,7 @@ and expr =
   | E_int of int_literal (* 42 *)
   | E_leq of (expr * expr) reg (* x <= y *)
   | E_lt of (expr * expr) reg (* x < y *)
+  | E_member of (expr * variable) reg (* e.x *)
   | E_michelson of michelson_expr (* michelson (`{ADD}`) as t *)
   | E_mult of (expr * expr) reg (* x * y *)
   | E_mult_eq of (expr * expr) reg (* x *= y *)
@@ -286,7 +287,6 @@ and expr =
   | E_post_incr of variable reg (* x++ *)
   | E_pre_decr of variable reg (* --x *)
   | E_pre_incr of variable reg (* ++x *)
-  | E_member of projection reg (* e.x *)
   | E_rem of (expr * expr) reg (* x % n*)
   | E_rem_eq of (expr * expr) reg (* x %= y*)
   | E_string of string_literal (* "abcdef" *)
@@ -332,16 +332,6 @@ and ternary =
 
 (* Typed expression *)
 and typed_expr = expr (* "as" *) * type_expr
-
-(* Projections *)
-and projection =
-  { object_or_array : expr
-  ; property_path : selection Nonempty_list.t
-  }
-
-and selection =
-  | Property_name of variable (* Objects *)
-  | Component of int_literal (* Arrays *)
 
 (* PROJECTIONS *)
 
@@ -406,6 +396,7 @@ let region_of_expr = function
   | E_int w -> w#region
   | E_leq { region; _ }
   | E_lt { region; _ }
+  | E_member { region; _ }
   | E_michelson { region; _ }
   | E_mult { region; _ }
   | E_mult_eq { region; _ }
@@ -418,7 +409,6 @@ let region_of_expr = function
   | E_post_incr { region; _ }
   | E_pre_decr { region; _ }
   | E_pre_incr { region; _ }
-  | E_member { region; _ }
   | E_rem { region; _ }
   | E_rem_eq { region; _ } -> region
   | E_string w -> w#region
@@ -450,10 +440,6 @@ let region_of_property_id = function
 let region_of_fun_body_to_region = function
   | Stmt_body { region; _ } -> region
   | Expr_body e -> region_of_expr e
-
-let region_of_selection = function
-  | Property_name name -> name#region
-  | Component int -> int#region
 
 let region_of_intf_expr = function
   | I_body { region; _ } -> region
