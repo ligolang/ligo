@@ -2565,10 +2565,10 @@ and object_type = member_type list braces
 
 and member_type =
   | Export_statement of export_statement wrap (* See STATEMENTS *)
-  | Property_signature of property_signature
+  | Property_signature of property_signature wrap
   | Call_signature of call_signature wrap
-  | Construct_signature of construct_signature
-  | Index_signature of index_signature
+  | Construct_signature of construct_signature wrap
+  | Index_signature of index_signature wrap
   | Method_signature of method_signature
 
 and property_signature =

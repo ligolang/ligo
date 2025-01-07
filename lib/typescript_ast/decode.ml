@@ -3258,16 +3258,16 @@ and dec_member_type ?(comments = []) node : (member_type, _) result =
     let* statement = wrap dec_export_statement ~comments node in
     Ok (Export_statement statement)
   | "property_signature" ->
-    let* signature = dec_property_signature ~comments node in
+    let* signature = wrap dec_property_signature ~comments node in
     Ok (Property_signature signature)
   | "call_signature" ->
     let* signature = dec_call_signature ~comments node in
     Ok (Call_signature signature)
   | "construct_signature" ->
-    let* signature = dec_construct_signature ~comments node in
+    let* signature = wrap dec_construct_signature ~comments node in
     Ok (Construct_signature signature)
   | "index_signature" ->
-    let* signature = dec_index_signature ~comments node in
+    let* signature = wrap dec_index_signature ~comments node in
     Ok (Index_signature signature)
   | "method_signature" ->
     let* signature = dec_method_signature ~comments node in
