@@ -123,6 +123,12 @@ type t =
   | Computed_property_name
   | Invalid_parameter_of
   | Invalid_contract_of
+  | Export_member
+  | Constructor
+  | Index_signature
+  | Call_signature
+  | Property_access
+  | Property_scope
 
 type error = t
 
@@ -183,7 +189,7 @@ let to_string = function
   | Type_check -> "Type checks are not supported in JsLIGO."
   | Generator -> "Generators are not supported in JsLIGO."
   | Undefined_value -> "Undefined values are not supported in patterns in JsLIGO."
-  | Missing_type -> "Type annotations in function types are mandatory in JsLIGO."
+  | Missing_type -> "Type annotations in function/property types are mandatory in JsLIGO."
   | Optional_parameter -> "Optional parameters are not supported in JsLIGO."
   | Default_argument -> "Default parameter values are not supported in JsLIGO."
   | Decorated_parameter ->
@@ -253,6 +259,12 @@ let to_string = function
   | Computed_property_name -> "Computed property names are not supported in JsLIGO."
   | Invalid_parameter_of -> "Multiple parameters of contract."
   | Invalid_contract_of -> "Multiple arguments for creating a contract."
+  | Export_member -> "Exported members are not supported in JsLIGO."
+  | Constructor -> "Constructors are not supported in JsLIGO."
+  | Index_signature -> "Index signatures are not supported in JsLIGO."
+  | Call_signature -> "Call signatures in object types are not supported in JsLIGO."
+  | Property_access -> "Only public access is supported in JsLIGO."
+  | Property_scope -> "Property scoping is not supported in JsLIGO."
 
 (* Creating errors *)
 
