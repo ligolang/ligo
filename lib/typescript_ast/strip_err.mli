@@ -112,6 +112,10 @@ type t =
   | Optional_chaining
   | Type_parameters_on_args
   | Invalid_subscript
+  | Finalised_const
+  | Assignment_in_pattern
+  | Rest_pattern_in_lhs
+  | Object_pattern_in_lhs
 
 type error = t
 

@@ -9,6 +9,10 @@
 
 [@@@warning "-30"] (* Duplicate record field names *)
 
+open Core
+
+let ( let* ) v f = Result.bind v ~f
+
 (* DEPENDENCIES *)
 
 type 'a ne_list = 'a Nonempty_list.t
@@ -3812,3 +3816,48 @@ let region_of_augmented_assignment_lhs (node : augmented_assignment_lhs) =
   | Subscript_expression w -> w#region
   | Identifier ident -> ident#region
   | Parenthesized_expression expr -> region_of_parens expr
+
+let region_of_assignment_lhs (node : assignment_lhs) =
+  match node with
+  | Assign_lhs_parens expr -> region_of_parens expr
+  | Assign_lhs expr -> region_of_lhs_expression expr
+
+(* From some patterns in assignments to expressions *)
+
+let rec destructuring_pattern_to_expression (node : destructuring_pattern)
+    : (expression, _) result
+  =
+  match node with
+  | Pattern_object obj -> Strip_err.(make (region_of_braces obj) Object_pattern_in_lhs)
+  | Pattern_array array -> array_pattern_to_expression array
+
+and pattern_to_argument (node : pattern) : (argument, _) result =
+  match node with
+  | P_member_expression expr ->
+    Ok (Expression (E_primary_expression (E_member_expression expr)))
+  | P_subscript_expression expr ->
+    Ok (Expression (E_primary_expression (E_subscript_expression expr)))
+  | P_identifier ident -> Ok (Expression (E_primary_expression (E_identifier ident)))
+  | P_undefined kwd_undefined ->
+    Ok (Expression (E_primary_expression (E_undefined kwd_undefined)))
+  | P_destructuring_pattern pattern ->
+    let* expr = destructuring_pattern_to_expression pattern in
+    Ok (Expression expr)
+  | P_non_null_expression expr ->
+    Ok (Expression (E_primary_expression (E_non_null_expression expr)))
+  | P_rest_pattern rest -> Strip_err.(make rest#region Rest_pattern_in_lhs)
+
+and array_cell_pattern_to_argument (node : array_cell_pattern) : (argument, _) result =
+  match node with
+  | Cell_pattern p -> pattern_to_argument p
+  | Cell_assignment asgnmt -> Strip_err.(make asgnmt#region Assignment_in_pattern)
+
+and array_pattern_to_expression (node : array_pattern) : (expression, _) result =
+  let (Brackets brackets) = node in
+  let enclosed = brackets#payload in
+  let cells = enclosed.contents in
+  let* arguments = Result.all @@ List.map ~f:array_cell_pattern_to_argument cells in
+  let enclosed = { enclosed with contents = arguments } in
+  let arguments = Wrap.make enclosed brackets#region in
+  let array = Brackets arguments in
+  Ok (E_primary_expression (E_array array))
