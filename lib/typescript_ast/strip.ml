@@ -966,8 +966,26 @@ and strip_type_arguments (node : Ast.type_arguments) : (S.type_expr list, _) res
 (* Object type *)
 
 and strip_T_object_type (node : Ast.object_type) : (S.type_expr, _) result =
+  let* object_type = strip_object_type node in
+  Ok (S.T_object object_type)
+
+and strip_object_type (node : Ast.object_type) : (S.type_expr S._object, _) result =
+  let Ast.(Braces braces) = node in
+  let member_types = braces#payload.contents in
+  let* members = Result.all @@ List.map ~f:strip_member_type member_types in
+  Ok (mk_reg braces#region members)
+
+and strip_member_type (node : Ast.member_type) : (S.type_expr S.property reg, _) result =
+  (*  match node with
+  | Export_statement stmt -> (* export_statement wrap *)
+  | Property_signature signature ->  (* property_signature *)
+  | Call_signature signature -> (* call_signature wrap *)
+  | Construct_signature signature -> (* construct_signature *)
+  | Index_signature signature -> (* index_signature *)
+  | Method_signature signature -> (* method_signature *)
+ *)
   ignore node;
-  Error "TODO: strip_T_object_type"
+  Error "TODO: strip_member_type"
 
 (* Array type *)
 
@@ -1567,13 +1585,20 @@ and strip_call_fun (node : (Ast.fun_call, Ast.arguments_to_call) Ast.call wrap)
       Strip_err.(make region Type_parameters_on_args)
   in
   let* (arguments : S.expr list) = strip_arguments_to_call arguments in
-  Ok (S.E_app (mk_reg node#region (lambda, arguments)))
+  let app = mk_reg node#region (lambda, arguments) in
+  match lambda with
+  | S.E_var path ->
+    (match path.value with
+    | [ variable ] ->
+      (match variable#payload with
+      | "contract_of" -> Ok (S.E_contract_of path)
+      | _ -> Ok (S.E_app app))
+    | _ -> Ok (S.E_app app))
+  | _ -> Ok (S.E_app app)
 
 and strip_fun_call (node : Ast.fun_call) : (S.expr, _) result =
   match node with
-  | Fun_call expr ->
-    let* expr = strip_expression expr in
-    Ok expr
+  | Fun_call expr -> strip_expression expr
   | Import kwd_import -> Strip_err.(make kwd_import#region Import)
 
 and strip_arguments_to_call (node : Ast.arguments_to_call) : (S.expr list, _) result =
