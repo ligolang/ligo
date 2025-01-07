@@ -123,6 +123,12 @@ type t =
   | Computed_property_name
   | Invalid_parameter_of
   | Invalid_contract_of
+  | Export_member
+  | Constructor
+  | Index_signature
+  | Call_signature
+  | Property_access
+  | Property_scope
 
 type error = t
 

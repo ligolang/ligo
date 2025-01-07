@@ -989,16 +989,47 @@ and strip_object_type (node : Ast.object_type) : (S.type_expr S._object, _) resu
   Ok (mk_reg braces#region members)
 
 and strip_member_type (node : Ast.member_type) : (S.type_expr S.property reg, _) result =
-  (*  match node with
-  | Export_statement stmt -> (* export_statement wrap *)
-  | Property_signature signature ->  (* property_signature *)
-  | Call_signature signature -> (* call_signature wrap *)
-  | Construct_signature signature -> (* construct_signature *)
-  | Index_signature signature -> (* index_signature *)
-  | Method_signature signature -> (* method_signature *)
- *)
+  match node with
+  | Export_statement stmt -> Strip_err.(make stmt#region Export_member)
+  | Property_signature signature -> strip_property_signature signature
+  | Call_signature signature -> Strip_err.(make signature#region Call_signature)
+  | Construct_signature signature -> Strip_err.(make signature#region Constructor)
+  | Index_signature signature -> Strip_err.(make signature#region Index_signature)
+  | Method_signature signature -> strip_method_signature signature
+
+and strip_property_signature (node : Ast.property_signature wrap)
+    : (S.type_expr S.property reg, _) result
+  =
+  let Ast.{ access; scope; name; sym_qmark = _; type_ } = node#payload in
+  let* () =
+    match access with
+    | None -> Ok ()
+    | Some (Public kwd) | Some (Private kwd) | Some (Protected kwd) ->
+      Strip_err.(make kwd#region Property_access)
+  in
+  let* () =
+    match scope with
+    | { kwd_static = None; kwd_override = None; kwd_readonly = None } -> Ok ()
+    | { kwd_static = Some kwd; _ }
+    | { kwd_override = Some kwd; _ }
+    | { kwd_readonly = Some kwd; _ } -> Strip_err.(make kwd#region Property_scope)
+  in
+  let* property_name = strip_property_name name in
+  let* rhs_type = map_opt strip_type_annotation type_ in
+  match rhs_type with
+  | None -> Strip_err.(make node#region Missing_type)
+  | Some property_rhs ->
+    let comments = property_name#comments in
+    let comments = strip_comments comments in
+    let decorators = extract_decorators comments in
+    let property = S.{ decorators; comments; property_name; property_rhs } in
+    Ok (mk_reg node#region property)
+
+and strip_method_signature (node : Ast.method_signature)
+    : (S.type_expr S.property reg, _) result
+  =
   ignore node;
-  Error "TODO: strip_member_type"
+  Error "TODO: strip_method_signature"
 
 (* Array type *)
 
