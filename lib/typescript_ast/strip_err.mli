@@ -121,6 +121,8 @@ type t =
   | Property_as_string
   | Property_as_number
   | Computed_property_name
+  | Invalid_parameter_of
+  | Invalid_contract_of
 
 type error = t
 

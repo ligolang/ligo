@@ -920,23 +920,21 @@ and strip_T_type_identifier (node : Ast.type_identifier) : (S.type_expr, _) resu
   let type_ident = strip_type_identifier node in
   let region = node#region in
   let path = Nonempty_list.singleton type_ident in
-  Ok (T_var (mk_reg region (mk_reg region path, [])))
+  Ok (S.T_var (mk_reg region (mk_reg region path, [])))
 
 (* Nested type identifier (access path is reversed) *)
 
 and strip_T_nested_type_identifier (node : Ast.nested_type_identifier wrap)
     : (S.type_expr, _) result
   =
-  let region = node#region in
   let path = strip_nested_type_identifier node in
-  Ok (T_var (mk_reg region (path, [])))
+  Ok (S.T_var (mk_reg node#region (path, [])))
 
 and strip_nested_type_identifier (node : Ast.nested_type_identifier wrap) : S.simple_path =
-  let path, selected = node#payload
-  and region = node#region in
+  let path, selected = node#payload in
   let path = Nonempty_list.map ~f:strip_type_identifier path
   and selected = strip_type_identifier selected in
-  mk_reg region (Nonempty_list.cons selected path)
+  mk_reg node#region (Nonempty_list.cons selected path)
 
 (* Generic type
 
@@ -947,7 +945,22 @@ and strip_T_generic_type (node : Ast.generic_type wrap) : (S.type_expr, _) resul
   let name, type_args = node#payload in
   let path = strip_generic_name name in
   let* type_args = strip_type_arguments type_args in
-  Ok (S.T_var (mk_reg node#region (path, type_args)))
+  let var = mk_reg node#region (path, type_args) in
+  let ok = Ok (S.T_var var) in
+  let ko = Strip_err.(make node#region Invalid_parameter_of) in
+  match path.value with
+  | [ variable ] ->
+    (match variable#payload with
+    | "parameter_of" ->
+      (match type_args with
+      | [ type_arg ] ->
+        (match type_arg with
+        | S.T_var { value = path, []; _ } ->
+          Ok (S.T_parameter_of (mk_reg node#region path))
+        | _ -> ko)
+      | _ -> ko)
+    | _ -> ok)
+  | _ -> ok
 
 and strip_generic_name (node : Ast.generic_name) : S.simple_path =
   match node with
@@ -1586,15 +1599,23 @@ and strip_call_fun (node : (Ast.fun_call, Ast.arguments_to_call) Ast.call wrap)
   in
   let* (arguments : S.expr list) = strip_arguments_to_call arguments in
   let app = mk_reg node#region (lambda, arguments) in
+  let ok = Ok (S.E_app app) in
+  let ko = Strip_err.(make node#region Invalid_contract_of) in
   match lambda with
   | S.E_var path ->
     (match path.value with
     | [ variable ] ->
       (match variable#payload with
-      | "contract_of" -> Ok (S.E_contract_of path)
-      | _ -> Ok (S.E_app app))
-    | _ -> Ok (S.E_app app))
-  | _ -> Ok (S.E_app app)
+      | "contract_of" ->
+        (match arguments with
+        | [ expr ] ->
+          (match expr with
+          | S.E_var path -> Ok (S.E_contract_of (mk_reg node#region path))
+          | _ -> ko)
+        | _ -> ko)
+      | _ -> ok)
+    | _ -> ok)
+  | _ -> ok
 
 and strip_fun_call (node : Ast.fun_call) : (S.expr, _) result =
   match node with

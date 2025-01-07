@@ -121,6 +121,8 @@ type t =
   | Property_as_string
   | Property_as_number
   | Computed_property_name
+  | Invalid_parameter_of
+  | Invalid_contract_of
 
 type error = t
 
@@ -249,6 +251,8 @@ let to_string = function
   | Property_as_string -> "Property names as strings are not supported in JsLIGO."
   | Property_as_number -> "Property names as numbers are not supported in JsLIGO."
   | Computed_property_name -> "Computed property names are not supported in JsLIGO."
+  | Invalid_parameter_of -> "Multiple parameters of contract."
+  | Invalid_contract_of -> "Multiple arguments for creating a contract."
 
 (* Creating errors *)
 
