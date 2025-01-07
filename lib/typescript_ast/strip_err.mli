@@ -111,7 +111,7 @@ type t =
   | Spread_expression
   | Optional_chaining
   | Type_parameters_on_args
-  | Subscript
+  | Invalid_subscript
 
 type error = t
 
