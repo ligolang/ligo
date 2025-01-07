@@ -826,19 +826,18 @@ and strip_D_import_alias (node : Ast.import_alias wrap) : (S.declaration, _) res
   let import = alias, path in
   Ok S.(D_import (S.Import_alias (mk_reg region import)))
 
-and strip_aliased (node : Ast.aliased) : S.path =
+and strip_aliased (node : Ast.aliased) : S.simple_path =
   match node with
   | Ident ident ->
     let singleton = Nonempty_list.singleton (strip_identifier ident) in
     mk_reg ident#region singleton
   | Nested nested -> strip_nested_identifier nested
 
-and strip_nested_identifier (node : Ast.nested_identifier wrap) : S.path =
-  let path, selected = node#payload
-  and region = node#region in
+and strip_nested_identifier (node : Ast.nested_identifier wrap) : S.simple_path =
+  let path, selected = node#payload in
   let path = Nonempty_list.map ~f:strip_type_identifier path
   and selected = strip_type_identifier selected in
-  mk_reg region (Nonempty_list.cons selected path)
+  mk_reg node#region (Nonempty_list.cons selected path)
 
 (* Ambient declaration *)
 
@@ -932,7 +931,7 @@ and strip_T_nested_type_identifier (node : Ast.nested_type_identifier wrap)
   let path = strip_nested_type_identifier node in
   Ok (T_var (mk_reg region (path, [])))
 
-and strip_nested_type_identifier (node : Ast.nested_type_identifier wrap) : S.path =
+and strip_nested_type_identifier (node : Ast.nested_type_identifier wrap) : S.simple_path =
   let path, selected = node#payload
   and region = node#region in
   let path = Nonempty_list.map ~f:strip_type_identifier path
@@ -951,7 +950,7 @@ and strip_T_generic_type (node : Ast.generic_type wrap) : (S.type_expr, _) resul
   let* type_args = strip_type_arguments type_args in
   Ok (S.T_var (mk_reg region (path, type_args)))
 
-and strip_generic_name (node : Ast.generic_name) : S.path =
+and strip_generic_name (node : Ast.generic_name) : S.simple_path =
   match node with
   | Generic_type type_identifier ->
     let region = type_identifier#region in
@@ -1429,7 +1428,7 @@ and strip_lhs_bin_expression (node : Ast.lhs_bin_expression) : (S.expr, _) resul
   | Lhs_bin_expression expr ->
     let* expr = strip_expression expr in
     Ok expr
-  | Lhs_bin_hash hash -> Strip_err.(make hash#region Hash_name_lhs)
+  | Lhs_bin_hash hash -> Strip_err.(make hash#region Private_property)
 
 (* Instantiation expression *)
 
@@ -1632,8 +1631,26 @@ and strip_E_identifier (node : Ast.identifier) : (S.expr, _) result =
 (* Member expression *)
 
 and strip_E_member_expression (node : Ast.member_expression wrap) : (S.expr, _) result =
-  ignore node;
+  let (Ast.{ object_expr; selector; property } : Ast.member_expression) = node#payload in
+  let* expr = strip_object_member object_expr in
+  let* () =
+    match selector with
+    | Ast.Dot _ -> Ok ()
+    | Optional_chain sym -> Strip_err.(make sym#region Optional_chaining)
+  in
+  let* ident = strip_property_ident property in
+  ignore expr;
+  ignore ident;
   Error "TODO: strip_E_member_expression"
+
+and strip_object_member (node : Ast.object_member) : (S.expr, _) result =
+  ignore node;
+  Error "TODO: strip_object_member"
+
+and strip_property_ident (node : Ast.property_ident) : (S.variable, _) result =
+  match node with
+  | Private_property_identifier hash -> Strip_err.(make hash#region Private_property)
+  | Property_identifier ident -> Ok (strip_identifier ident)
 
 (* Meta-property *)
 

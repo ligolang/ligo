@@ -38,7 +38,7 @@ type string_literal = string wrap
    M.N.x.y -> [y; x; N; M]
  *)
 
-type path = variable Nonempty_list.t reg
+type simple_path = variable Nonempty_list.t reg
 
 (* The Abstract Syntax Tree *)
 
@@ -133,7 +133,7 @@ and import_decl =
   | Import_from of import_from reg
 
 (* import M = N.O *)
-and import_alias = variable * path
+and import_alias = variable * simple_path
 
 (* import * as M from "/my/path.ts" *)
 and import_all_as = variable * file_path
@@ -192,10 +192,10 @@ and type_expr =
   | T_fun of fun_type reg (* (x : T) => U *)
   | T_int of int_literal (* 42 *)
   | T_object of type_expr _object (* {x; @a y : t} *)
-  | T_parameter_of of path (* parameter_of<C> *)
+  | T_parameter_of of simple_path (* parameter_of<C> *)
   | T_string of string_literal (* "x" *)
   | T_union of union_type (* number | string *)
-  | T_var of (path * type_expr list) reg (* M.t<u,v> t M.t *)
+  | T_var of (simple_path * type_expr list) reg (* M.t<u,v> t M.t *)
 
 (* Functional type *)
 and fun_type = (variable * type_expr) list * type_expr
@@ -230,7 +230,7 @@ and pattern =
   | P_object of pattern _object (* {x, y : 0} *)
   | P_string of string_literal (* "string" *)
   | P_true of Region.t (* true *)
-  | P_var of path (* x  M.N.t *)
+  | P_var of simple_path (* x  M.N.t *)
 
 (* Array pattern (shadowing the predefined type [array]) *)
 and 'a array = 'a element list reg
@@ -263,7 +263,7 @@ and expr =
   | E_bit_xor of (expr * expr) reg (* x ^ y *)
   | E_bit_xor_eq of (expr * expr) reg (* x ^= y *)
   | E_bytes of bytes_literal (* 0xFFFA *)
-  | E_contract_of of path (* contract_of (M.N) *)
+  | E_contract_of of simple_path (* contract_of (M.N) *)
   | E_div of (expr * expr) reg (* x / y *)
   | E_div_eq of (expr * expr) reg (* x /= y *)
   | E_equal of (expr * expr) reg (* x == y *)
@@ -286,18 +286,18 @@ and expr =
   | E_post_incr of variable reg (* x++ *)
   | E_pre_decr of variable reg (* --x *)
   | E_pre_incr of variable reg (* ++x *)
-  | E_proj of projection reg (* e.x.1 *)
+  | E_member of projection reg (* e.x *)
   | E_rem of (expr * expr) reg (* x % n*)
   | E_rem_eq of (expr * expr) reg (* x %= y*)
   | E_string of string_literal (* "abcdef" *)
   | E_sub of (expr * expr) reg (* x - y *)
-  | E_subscript of (expr * int_literal) reg (* x.[1] *)
+  | E_subscript of (expr * int_literal) reg (* e[1] *)
   | E_sub_eq of (expr * expr) reg (* x -= y *)
   | E_ternary of ternary reg (* x ? y : z *)
   | E_true of Region.t (* true *)
   | E_typed of typed_expr reg (* e as t *)
   | E_update of update_expr reg (* {...x, y : z} *)
-  | E_var of path (* M.N.x  y *)
+  | E_var of simple_path (* M.N.x  y *)
   | E_xor of (expr * expr) reg (* x ^^ y *)
 
 (* Michelson injection: "Michelson (`{ADD}`) as t" *)
@@ -341,7 +341,6 @@ and projection =
 
 and selection =
   | Property_name of variable (* Objects *)
-  | Property_str of string_literal (* Objects *)
   | Component of int_literal (* Arrays *)
 
 (* PROJECTIONS *)
@@ -419,7 +418,7 @@ let region_of_expr = function
   | E_post_incr { region; _ }
   | E_pre_decr { region; _ }
   | E_pre_incr { region; _ }
-  | E_proj { region; _ }
+  | E_member { region; _ }
   | E_rem { region; _ }
   | E_rem_eq { region; _ } -> region
   | E_string w -> w#region
@@ -454,7 +453,6 @@ let region_of_fun_body_to_region = function
 
 let region_of_selection = function
   | Property_name name -> name#region
-  | Property_str str -> str#region
   | Component int -> int#region
 
 let region_of_intf_expr = function
