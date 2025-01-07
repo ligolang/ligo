@@ -947,7 +947,7 @@ and strip_T_generic_type (node : Ast.generic_type wrap) : (S.type_expr, _) resul
   let* type_args = strip_type_arguments type_args in
   let var = mk_reg node#region (path, type_args) in
   let ok = Ok (S.T_var var) in
-  let ko = Strip_err.(make node#region Invalid_parameter_of) in
+  let error = Strip_err.(make node#region Invalid_parameter_of) in
   match path.value with
   | [ variable ] ->
     (match variable#payload with
@@ -957,8 +957,8 @@ and strip_T_generic_type (node : Ast.generic_type wrap) : (S.type_expr, _) resul
         (match type_arg with
         | S.T_var { value = path, []; _ } ->
           Ok (S.T_parameter_of (mk_reg node#region path))
-        | _ -> ko)
-      | _ -> ko)
+        | _ -> error)
+      | _ -> error)
     | _ -> ok)
   | _ -> ok
 
@@ -1600,7 +1600,7 @@ and strip_call_fun (node : (Ast.fun_call, Ast.arguments_to_call) Ast.call wrap)
   let* (arguments : S.expr list) = strip_arguments_to_call arguments in
   let app = mk_reg node#region (lambda, arguments) in
   let ok = Ok (S.E_app app) in
-  let ko = Strip_err.(make node#region Invalid_contract_of) in
+  let error = Strip_err.(make node#region Invalid_contract_of) in
   match lambda with
   | S.E_var path ->
     (match path.value with
@@ -1611,8 +1611,8 @@ and strip_call_fun (node : (Ast.fun_call, Ast.arguments_to_call) Ast.call wrap)
         | [ expr ] ->
           (match expr with
           | S.E_var path -> Ok (S.E_contract_of (mk_reg node#region path))
-          | _ -> ko)
-        | _ -> ko)
+          | _ -> error)
+        | _ -> error)
       | _ -> ok)
     | _ -> ok)
   | _ -> ok
