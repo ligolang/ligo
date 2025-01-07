@@ -2659,14 +2659,15 @@ and dec_member_pattern ?(comments = []) node : (member_pattern, _) result =
 
 (* Pair pattern *)
 
-and dec_pair_pattern ?(comments = []) node : (pair_pattern, _) result =
+and dec_pair_pattern ?(comments = []) node : (pair_pattern wrap, _) result =
   let* key_field = child_with_field "key" node in
   let* key = dec_property_name ~comments key_field in
   let* sym_colon = first_child_named ":" node in
   let sym_colon = make_sym sym_colon in
   let* value_field = child_with_field "value" node in
   let* value = dec_pair_value_pattern value_field in
-  Ok { key; sym_colon; value }
+  let region = !get_region node in
+  Ok (Wrap.make { key; sym_colon; value } region)
 
 and dec_pair_value_pattern node : (pair_value_pattern, _) result =
   match get_name node with

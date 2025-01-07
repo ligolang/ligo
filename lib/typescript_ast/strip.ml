@@ -1901,11 +1901,70 @@ and strip_destructuring_pattern (node : Ast.destructuring_pattern) : (S.pattern,
     let* pattern = strip_array_pattern p in
     Ok (S.P_array pattern)
 
-(* Object pattern *)
+(* Object pattern
+
+   {@js[const {x, y:alias} = {x:0, y:1};]}
+ *)
 
 and strip_object_pattern (node : Ast.object_pattern) : (S.pattern S._object, _) result =
-  ignore node;
-  Error "TODO: strip_object_pattern"
+  let Ast.(Braces braces) = node in
+  let member_patterns = braces#payload.contents in
+  let* object_pattern = Result.all @@ List.map ~f:strip_member_pattern member_patterns in
+  Ok (mk_reg braces#region object_pattern)
+
+and strip_member_pattern (node : Ast.member_pattern)
+    : (S.pattern S.property reg, _) result
+  =
+  match node with
+  | Member_pair_pattern pattern -> strip_pair_pattern pattern
+  | Member_rest_pattern rest -> Strip_err.(make rest#region Rest_in_object_pattern)
+  | Member_object_assignment asgmt ->
+    Strip_err.(make asgmt#region Asgmt_in_object_pattern)
+  | Member_shorthand_property ident ->
+    let comments = ident#comments in
+    let comments = strip_comments comments in
+    let decorators = extract_decorators comments in
+    let property_name = strip_identifier ident in
+    let path = Nonempty_list.singleton property_name in
+    let property_rhs = S.P_var (mk_reg ident#region path) in
+    let property : S.pattern S.property =
+      { decorators; comments; property_name; property_rhs }
+    in
+    let region = Ast.region_of_member_pattern node in
+    Ok (mk_reg region property)
+
+and strip_property_name (node : Ast.property_name) : (S.variable, _) result =
+  match node with
+  | Property_identifier ident -> Ok (strip_identifier ident)
+  | Private_property_identifier hash -> Strip_err.(make hash#region Private_property)
+  | String str_literal -> Strip_err.(make str_literal#region Property_as_string)
+  | Number n -> Strip_err.(make (Ast.region_of_number n) Property_as_number)
+  | Computed_property_name brackets ->
+    Strip_err.(make (Ast.region_of_brackets brackets) Computed_property_name)
+
+and strip_pair_pattern (node : Ast.pair_pattern wrap)
+    : (S.pattern S.property reg, _) result
+  =
+  let Ast.{ key; sym_colon = _; value } = node#payload in
+  let comments = comments_of_property_name key in
+  let comments = strip_comments comments in
+  let decorators = extract_decorators comments in
+  let* property_name = strip_property_name key in
+  let* property_rhs = strip_pair_value_pattern value in
+  let property : S.pattern S.property =
+    { decorators; comments; property_name; property_rhs }
+  in
+  Ok (mk_reg node#region property)
+
+and strip_pair_value_pattern (node : Ast.pair_value_pattern) : (S.pattern, _) result =
+  match node with
+  | Pair_value pattern -> strip_pattern pattern
+  | Pair_value_assignment asgmt -> Strip_err.(make asgmt#region Asgmt_in_object_pattern)
+
+and comments_of_property_name (node : Ast.property_name) : Wrap.comment list =
+  match node with
+  | Property_identifier ident -> ident#comments
+  | Private_property_identifier _ | String _ | Number _ | Computed_property_name _ -> []
 
 (* Array pattern *)
 
