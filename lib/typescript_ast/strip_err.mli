@@ -103,7 +103,7 @@ type t =
   | Template_string
   | Return_type_absent
   | Named_lambda
-  | Hash_name_lhs
+  | Private_property
   | Strict_equality
   | Instanceof
   | In
