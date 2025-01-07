@@ -944,11 +944,10 @@ and strip_nested_type_identifier (node : Ast.nested_type_identifier wrap) : S.si
 *)
 
 and strip_T_generic_type (node : Ast.generic_type wrap) : (S.type_expr, _) result =
-  let region = node#region
-  and name, type_args = node#payload in
+  let name, type_args = node#payload in
   let path = strip_generic_name name in
   let* type_args = strip_type_arguments type_args in
-  Ok (S.T_var (mk_reg region (path, type_args)))
+  Ok (S.T_var (mk_reg node#region (path, type_args)))
 
 and strip_generic_name (node : Ast.generic_name) : S.simple_path =
   match node with
@@ -1638,14 +1637,13 @@ and strip_E_member_expression (node : Ast.member_expression wrap) : (S.expr, _) 
     | Ast.Dot _ -> Ok ()
     | Optional_chain sym -> Strip_err.(make sym#region Optional_chaining)
   in
-  let* ident = strip_property_ident property in
-  ignore expr;
-  ignore ident;
-  Error "TODO: strip_E_member_expression"
+  let* property = strip_property_ident property in
+  Ok (S.E_member (mk_reg node#region (expr, property)))
 
 and strip_object_member (node : Ast.object_member) : (S.expr, _) result =
-  ignore node;
-  Error "TODO: strip_object_member"
+  match node with
+  | Object_member_expression expr -> strip_expression expr
+  | Object_member_import kwd_import -> Strip_err.(make kwd_import#region Import)
 
 and strip_property_ident (node : Ast.property_ident) : (S.variable, _) result =
   match node with
