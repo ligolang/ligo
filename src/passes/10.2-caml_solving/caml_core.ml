@@ -118,6 +118,7 @@ and decl_desc =
   (* FFI *)
   | D_external of Ident.t
   (* TODO: why arity here? *)
+  | D_type_predef_weird of (Ident.t * int)
   | D_type_predef of (Ident.t * Literal_types.t * int)
   | D_type_unsupported of Ident.t
   | D_error of error

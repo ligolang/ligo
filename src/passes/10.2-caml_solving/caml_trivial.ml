@@ -248,6 +248,9 @@ and lower_decl decl =
          ; annotation = None
          ; module_attr = attr
          }
+  | D_module_include mod_expr ->
+    let mod_expr = lower_mod_expr mod_expr in
+    decl_wrap loc @@ D_module_include mod_expr
   | D_module_type (var, attr, sig_expr) ->
     let signature = lower_sig_expr sig_expr in
     decl_wrap loc

@@ -108,6 +108,7 @@ and collect_decl errors decl =
   | D_type (_var, _attr, type_decl) -> collect_type_decl errors type_decl
   | D_type_predef (_var, _literal, _arity) -> ()
   | D_module (_var, _attr, mod_expr) -> collect_mod_expr errors mod_expr
+  | D_module_include mod_expr -> collect_mod_expr errors mod_expr
   | D_module_type (_var, _attr, sig_expr) -> collect_sig_expr errors sig_expr
   | D_error error -> write_error errors ~loc error
 

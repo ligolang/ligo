@@ -6,7 +6,7 @@ type data =
   | C
 
 type storage = data
-type return = operation list * storage
+type return = operation option * storage
 
 let x = 1
 
@@ -17,4 +17,4 @@ let[@entry] next () storage : return =
     | B -> C
     | C -> A
   in
-  [], storage
+  None, storage

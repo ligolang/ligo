@@ -125,6 +125,7 @@ and decl_desc =
   | D_type of (Type_var.t * Type_or_module_attr.t * type_decl)
   | D_type_predef of (Type_var.t * Literal_types.t * int)
   | D_module of (Module_var.t * Type_or_module_attr.t * mod_expr)
+  | D_module_include of mod_expr
   | D_module_type of (Module_var.t * Signature_attr.t * sig_expr)
   | D_error of error
 

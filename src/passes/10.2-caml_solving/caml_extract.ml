@@ -808,7 +808,9 @@ and extract_stri stri =
   | Tstr_include include_decl ->
     let mod_expr = extract_str_include include_decl in
     decl_wrap loc @@ D_module_include mod_expr
-  | Tstr_attribute _ -> raise_pre_error @@ E_unsupported
+  | Tstr_attribute attr ->
+    (* TODO: priority ocaml.warning *)
+    raise_pre_error @@ E_unsupported
 
 
 and extract_str_let rec_flag bindings =
@@ -836,9 +838,7 @@ and extract_str_include include_decl =
       ; attr_loc = _loc
       }
     ] -> extract_str_include_ocaml_predef incl_mod
-  | _ ->
-    (* TODO: better error here *)
-    assert false
+  | _ -> raise_pre_error @@ E_unsupported
 
 
 and extract_str_include_ocaml_predef incl_mod =
@@ -849,6 +849,7 @@ and extract_str_include_ocaml_predef incl_mod =
   let mod_expr =
     match mod_desc with
     | Tmod_constraint (mod_expr, _mod_type, _mod_type_constraint, _mod_coercion) ->
+      (* TODO: properties of the constraint should be (sig end) *)
       mod_expr
     | Tmod_ident (_, _)
     | Tmod_structure _
@@ -856,10 +857,7 @@ and extract_str_include_ocaml_predef incl_mod =
     | Tmod_apply (_, _, _)
     | Tmod_unpack (_, _) -> failwith "ocaml predef should have a signature"
   in
-  let { mod_desc; mod_loc; mod_type = _; mod_env = _; mod_attributes } = mod_expr in
-  let loc = extract_loc ~loc:mod_loc in
-  let@@ () = try_enhance ~loc in
-  assert false
+  extract_module_expr mod_expr
 
 
 and extract_mod_type_decl decl =
@@ -1059,6 +1057,21 @@ and extract_type_decl decl =
       match Literal_types.of_string_opt constant with
       | Some constant -> constant
       | None -> raise_pre_error @@ E_unsupported
+    in
+    let arity = Literal_types.to_arity constant in
+    assert (arity = typ_type.type_arity);
+    decl_wrap loc @@ D_type_predef (typ_id, constant, arity)
+  | [ { attr_name = { txt = "ligo.internal.predef.weird"; loc = _ }
+      ; attr_payload = PStr []
+      ; attr_loc = _
+      }
+    ] ->
+    let { txt = constant; loc = _ } = typ_name in
+    let constant =
+      match constant with
+      | "option" -> _
+      | "list" -> _
+      | _ -> raise_pre_error @@ E_unsupported
     in
     let arity = Literal_types.to_arity constant in
     assert (arity = typ_type.type_arity);

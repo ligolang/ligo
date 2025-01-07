@@ -1,6 +1,7 @@
 open Ocaml_common
 open Ligo_prim
 open Ast_core
+open Caml_error
 
 (* TODO: either there should be no errors here
   or we should support error recovery *)
@@ -52,9 +53,19 @@ module Context : sig
     -> (context -> context * 'k)
     -> context * 'k
 
-  val solve_value_path : Path.t -> context -> Value_var.t Module_access.t
-  val solve_type_path : Path.t -> context -> Type_var.t Module_access.t
-  val solve_module_path : Path.t -> context -> Module_var.t Module_access.t
+  val solve_value_path
+    :  loc:Location.t
+    -> Path.t
+    -> context
+    -> Value_var.t Module_access.t
+
+  val solve_type_path : loc:Location.t -> Path.t -> context -> Type_var.t Module_access.t
+
+  val solve_module_path
+    :  loc:Location.t
+    -> Path.t
+    -> context
+    -> Module_var.t Module_access.t
 
   (* external *)
   val run : (context -> 'k) -> 'k
@@ -163,26 +174,42 @@ end = struct
     enter_type_info ident Type_unsupported_predef ctx
 
 
+  let error_unexpected_module ~loc () =
+    raise_error @@ { err_loc = loc; err_tag = E_solve_error_unexpected_module }
+
+
+  let error_unexpected_value ~loc () =
+    raise_error @@ { err_loc = loc; err_tag = E_solve_error_unexpected_value }
+
+
+  let error_unexpected_type ~loc () =
+    raise_error @@ { err_loc = loc; err_tag = E_solve_error_unexpected_type }
+
+
+  let error_functor_not_supported ~loc () =
+    raise_error @@ { err_loc = loc; err_tag = E_solve_error_functor_not_supported }
+
+
   (* TODO: drop all failwith *)
   (* TODO: reduce boilerplate below *)
 
-  let rec solve_module_path path ctx =
+  let rec solve_module_path ~loc path ctx =
     let open Path in
     match path with
     | Pident ident ->
       (* TODO: use list not empty here *)
       (match Ident.Map.find_opt ident ctx.modules with
       | Some (module_, ctx) -> (module_, []), ctx
-      | None -> failwith "unexpected module ident")
+      | None -> error_unexpected_module ~loc ())
     | Pdot (left, right) ->
-      let (rev_left_hd, rev_left_tl), ctx = solve_module_path left ctx in
+      let (rev_left_hd, rev_left_tl), ctx = solve_module_path ~loc left ctx in
       (match String_map.find_opt right ctx.md_modules with
       | Some (module_, ctx) -> (module_, rev_left_hd :: rev_left_tl), ctx
-      | None -> failwith "unexpected module name")
-    | Papply (_, _) -> failwith "Papply not supported"
+      | None -> error_unexpected_module ~loc ())
+    | Papply (_, _) -> error_functor_not_supported ~loc ()
 
 
-  let solve_value_path path ctx =
+  let solve_value_path ~loc path ctx =
     let open Path in
     match path with
     | Pident ident ->
@@ -191,19 +218,19 @@ end = struct
       | Some (Value_subst_to value) ->
         (* TODO: what about module_path *)
         Module_access.{ module_path = []; element = value }
-      | None -> failwith "unexpected value ident")
+      | None -> error_unexpected_value ~loc ())
     | Pdot (module_, right) ->
-      let (rev_module_hd, rev_module_tl), ctx = solve_module_path module_ ctx in
+      let (rev_module_hd, rev_module_tl), ctx = solve_module_path ~loc module_ ctx in
       (match String_map.find_opt right ctx.md_values with
       | Some Value_external -> failwith "external value reached"
       | Some (Value_subst_to value) ->
         let module_path = List.rev (rev_module_hd :: rev_module_tl) in
         Module_access.{ module_path; element = value }
-      | None -> failwith "unexpected value name")
-    | Papply (_, _) -> failwith "Papply not supported"
+      | None -> error_unexpected_value ~loc ())
+    | Papply (_, _) -> error_functor_not_supported ~loc ()
 
 
-  let solve_type_path path ctx =
+  let solve_type_path ~loc path ctx =
     let open Path in
     match path with
     | Pident ident ->
@@ -212,20 +239,22 @@ end = struct
       | Some (Type_subst_to type_) ->
         (* TODO: what about module_path *)
         Module_access.{ module_path = []; element = type_ }
-      | None -> failwith "unexpected type ident")
+      | None ->
+        Format.eprintf "ident: %a@.%!" Ident.print ident;
+        error_unexpected_type ~loc ())
     | Pdot (module_, right) ->
-      let (rev_module_hd, rev_module_tl), ctx = solve_module_path module_ ctx in
+      let (rev_module_hd, rev_module_tl), ctx = solve_module_path ~loc module_ ctx in
       (match String_map.find_opt right ctx.md_types with
       | Some Type_unsupported_predef -> failwith "unsupported type predef"
       | Some (Type_subst_to type_) ->
         let module_path = List.rev (rev_module_hd :: rev_module_tl) in
         Module_access.{ module_path; element = type_ }
-      | None -> failwith "unexpected type name")
-    | Papply (_, _) -> failwith "Papply not supported"
+      | None -> error_unexpected_type ~loc ())
+    | Papply (_, _) -> error_functor_not_supported ~loc ()
 
 
-  let solve_module_path path ctx =
-    let (rev_module_hd, rev_module_tl), ctx = solve_module_path path ctx in
+  let solve_module_path ~loc path ctx =
+    let (rev_module_hd, rev_module_tl), ctx = solve_module_path ~loc path ctx in
     let module_path = List.rev rev_module_tl in
     Module_access.{ module_path; element = rev_module_hd }
 end
@@ -250,7 +279,7 @@ let rec solve_type ctx vars typ_ =
     in
     type_wrap loc @@ T_var var
   | T_constr (path, args) ->
-    let path = solve_type_path path ctx in
+    let path = solve_type_path ~loc path ctx in
     let args = List.map args ~f:(solve_type ctx vars) in
     type_wrap loc @@ T_constr (path, args)
   | T_arrow (param, return) ->
@@ -439,7 +468,7 @@ let rec solve_expr ctx vars expr =
   let type_ = solve_type ctx vars expr_type in
   match expr_desc with
   | E_var path ->
-    let var = solve_value_path path ctx in
+    let var = solve_value_path ~loc path ctx in
     expr_wrap loc type_ @@ E_var var
   | E_literal lit -> expr_wrap loc type_ @@ E_literal lit
   | E_let (binder, attr, value, body) ->
@@ -586,6 +615,9 @@ and solve_decl_inner ctx vars decl =
       enter_module ident var ctx @@ fun ctx -> solve_mod_expr ctx mod_expr
     in
     ctx, Some (decl_wrap loc @@ D_module (var, attr, module_))
+  | D_module_include mod_expr ->
+    let ctx, module_ = solve_mod_expr ctx mod_expr in
+    ctx, Some (decl_wrap loc @@ D_module_include module_)
   | D_module_type (ident, attr, sig_expr) ->
     let var = fresh_module ident in
     let ctx, signature =
@@ -600,7 +632,7 @@ and solve_mod_expr ctx mod_expr =
   match mod_expr_desc with
   | M_var var ->
     (* TODO: why the unchanged context is returned here? *)
-    let var = solve_module_path var ctx in
+    let var = solve_module_path ~loc var ctx in
     ctx, mod_expr_wrap loc @@ M_var var
   | M_struct decls ->
     let ctx, decls = solve_module ctx decls in
@@ -658,7 +690,7 @@ and solve_sig_expr ctx sig_expr =
   let Caml_core.{ sig_expr_desc; sig_expr_loc = loc } = sig_expr in
   match sig_expr_desc with
   | S_var var ->
-    let var = solve_module_path var ctx in
+    let var = solve_module_path ~loc var ctx in
     ctx, sig_expr_wrap loc @@ S_var var
   | S_sig signature ->
     let ctx, signature = solve_signature ctx signature in
@@ -666,7 +698,6 @@ and solve_sig_expr ctx sig_expr =
 
 
 let solve_module module_ =
-  (* TODO: drop all failwith from this module *)
   (* TODO: proper location here *)
   let loc = Location.dummy in
   Caml_error.wrap_exn ~loc (fun () ->

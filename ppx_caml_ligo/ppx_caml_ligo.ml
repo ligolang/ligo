@@ -1,14 +1,10 @@
 open Ppxlib
 open Ocaml_common
 
-include (
-  struct
-    [@@@ocaml.warning "-34"]
-
-    type nonrec unit = unit = () [@@ligo.internal.predef]
-
+let ocaml_predef ~loc =
+  [%str
     (* OCaml predefs *)
-
+    type nonrec unit = unit = () [@@ligo.internal.predef]
     type nonrec int = int [@@ligo.internal.predef]
     type nonrec char = char [@@ligo.internal.predef.unsupported]
     type nonrec string = string [@@ligo.internal.predef]
@@ -18,6 +14,7 @@ include (
     type nonrec bool = bool =
       | false
       | true
+    [@@ligo.internal.predef.weird]
 
     type nonrec exn = exn [@@ligo.internal.predef.unsupported]
     type nonrec 'a array = 'a array [@@ligo.internal.predef.unsupported]
@@ -30,6 +27,7 @@ include (
     type nonrec 'a option = 'a option =
       | None
       | Some of 'a
+    [@@ligo.internal.predef.weird]
 
     type nonrec nativeint = nativeint [@@ligo.internal.predef.unsupported]
     type nonrec int32 = int32 [@@ligo.internal.predef.unsupported]
@@ -39,50 +37,13 @@ include (
     type nonrec extension_constructor = extension_constructor
     [@@ligo.internal.predef.unsupported]
 
-    type nonrec floatarray = floatarray [@@ligo.internal.predef.unsupported]
-  end :
-    sig end)
+    type nonrec floatarray = floatarray [@@ligo.internal.predef.unsupported]]
 
 let stdlib ~loc =
+  let open Ast_builder.Default in
+  let ocaml_predef = pmod_structure ~loc @@ ocaml_predef ~loc in
   [%str
-    (* TODO: major concern on using aliases
-      is about shadowing names on the LSP *)
-    (* used by variants *)
-    type nonrec unit = unit = () [@@ligo.internal.predef]
-
-    (* OCaml predefs *)
-
-    type nonrec int = int [@@ligo.internal.predef]
-    type nonrec char = char [@@ligo.internal.predef.unsupported]
-    type nonrec string = string [@@ligo.internal.predef]
-    type nonrec bytes = bytes [@@ligo.internal.predef]
-    type nonrec float = float [@@ligo.internal.predef.unsupported]
-
-    type nonrec bool = bool =
-      | false
-      | true
-
-    type nonrec exn = exn [@@ligo.internal.predef.unsupported]
-    type nonrec 'a array = 'a array [@@ligo.internal.predef.unsupported]
-
-    type nonrec 'a list = 'a list =
-      | []
-      | ( :: ) of 'a * 'a list
-    [@@ligo.internal.predef]
-
-    type nonrec 'a option = 'a option =
-      | None
-      | Some of 'a
-
-    type nonrec nativeint = nativeint [@@ligo.internal.predef.unsupported]
-    type nonrec int32 = int32 [@@ligo.internal.predef.unsupported]
-    type nonrec int64 = int64 [@@ligo.internal.predef]
-    type nonrec 'a lazy_t = 'a lazy_t [@@ligo.internal.predef.unsupported]
-
-    type nonrec extension_constructor = extension_constructor
-    [@@ligo.internal.predef.unsupported]
-
-    type nonrec floatarray = floatarray [@@ligo.internal.predef.unsupported]
+    include ([%m ocaml_predef] : sig end) [@@ligo.internal.ocaml.predef]
 
     (* Ligo Constants *)
     (* TODO: better letters for constructors *)

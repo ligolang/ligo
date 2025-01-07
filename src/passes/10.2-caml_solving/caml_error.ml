@@ -29,6 +29,10 @@ and error_tag =
   | E_modules_without_names_not_supported
   | E_recursive_bindings_must_be_a_function
   | E_only_variable_patterns_supported
+  | E_solve_error_unexpected_module
+  | E_solve_error_unexpected_value
+  | E_solve_error_unexpected_type
+  | E_solve_error_functor_not_supported
   | E_unimplemented
   | E_unsupported
   | E_unreachable
@@ -69,6 +73,11 @@ let pp_hum_error_tag fmt error =
     fprintf fmt "recursive bindings must be a function"
   | E_only_variable_patterns_supported ->
     fprintf fmt "only variable patterns supported here"
+  | E_solve_error_unexpected_module -> fprintf fmt "unexpected module during solving"
+  | E_solve_error_unexpected_value -> fprintf fmt "unexpected value during solving"
+  | E_solve_error_unexpected_type -> fprintf fmt "unexpected type during solving"
+  | E_solve_error_functor_not_supported ->
+    fprintf fmt "functors are not supported during solving"
   | E_unimplemented -> fprintf fmt "unimplemented"
   | E_unsupported -> fprintf fmt "unsupported"
   | E_unreachable -> fprintf fmt "unreachable"
@@ -88,14 +97,7 @@ let try_enhance ~loc f =
     raise @@ Caml_error { err_tag = tag; err_loc = loc }
 
 
-let try_recover ~loc ~on_error f =
-  try f () with
-  | Caml_pre_error tag -> on_error @@ { err_tag = tag; err_loc = loc }
-  | Caml_error error -> on_error error
-  | exn ->
-    let tag = E_unexpected_error exn in
-    on_error @@ { err_tag = tag; err_loc = loc }
-
+let try_recover ~loc ~on_error f = f ()
 
 let wrap_exn ~loc f =
   try Ok (f ()) with
