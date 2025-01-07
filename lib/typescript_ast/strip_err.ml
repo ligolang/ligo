@@ -112,6 +112,10 @@ type t =
   | Optional_chaining
   | Type_parameters_on_args
   | Invalid_subscript
+  | Finalised_const
+  | Assignment_in_pattern
+  | Rest_pattern_in_lhs
+  | Object_pattern_in_lhs
 
 type error = t
 
@@ -228,6 +232,12 @@ let to_string = function
   | Optional_chaining -> "Optional chaining is not supported in JsLIGO."
   | Type_parameters_on_args -> "Type parameters on arguments are not supported in JsLIGO."
   | Invalid_subscript -> "Only number literals as indices are supported in JsLIGO."
+  | Finalised_const -> "Finalised (\"using\") constants are not supported in JsLIGO."
+  | Assignment_in_pattern -> "Assignments in patterns are not supported in vJsLIGO."
+  | Rest_pattern_in_lhs ->
+    "Rest patterns in left-hand sides of assignments are not supported in JsLIGO."
+  | Object_pattern_in_lhs ->
+    "Object patterns in left-hand sides of assignments are not supported in JsLIGO."
 
 (* Creating errors *)
 

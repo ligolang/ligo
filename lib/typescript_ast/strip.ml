@@ -1279,8 +1279,38 @@ and strip_E_as_expression (node : Ast.as_expression wrap) : (S.expr, _) result =
 and strip_E_assignment_expression (node : Ast.assignment_expression wrap)
     : (S.expr, _) result
   =
-  ignore node;
-  Error "TODO: strip_E_assignment_expression"
+  let Ast.{ kwd_using; left; sym_equal = _; right } = node#payload in
+  let* () =
+    match kwd_using with
+    | None -> Ok ()
+    | Some kwd -> Strip_err.(make kwd#region Finalised_const)
+  in
+  let* left = strip_assignment_lhs left in
+  let* right = strip_expression right in
+  Ok (S.E_assign (mk_reg node#region (left, right)))
+
+and strip_assignment_lhs (node : Ast.assignment_lhs) : (S.expr, _) result =
+  match node with
+  | Ast.Assign_lhs expr -> strip_lhs_expression expr
+  | Assign_lhs_parens expr ->
+    let* exprs = strip_parenthesized_expression expr in
+    (match exprs with
+    | [ expr ] -> Ok expr
+    | _ ->
+      let region = Ast.region_of_assignment_lhs node in
+      Strip_err.(make region Multiple_values))
+
+and strip_lhs_expression (node : Ast.lhs_expression) : (S.expr, _) result =
+  let* (lhs : Ast.expression) =
+    match node with
+    | Member_expression expr -> Ok (Ast.E_primary_expression (E_member_expression expr))
+    | Subscript_expression expr -> Ok (E_primary_expression (E_subscript_expression expr))
+    | Identifier ident -> Ok (E_primary_expression (E_identifier ident))
+    | Undefined kwd_undefined -> Ok (E_primary_expression (E_undefined kwd_undefined))
+    | Pattern pattern -> Ast.destructuring_pattern_to_expression pattern
+    | Non_null_expression expr -> Ok (E_primary_expression (E_non_null_expression expr))
+  in
+  strip_expression lhs
 
 (* Augmented assignment expression *)
 
