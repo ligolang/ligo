@@ -130,7 +130,17 @@ type t =
   | Property_access
   | Property_scope
   | Set_get_all
-  | Optional_method
+  | Extends_clause
+  | Member_decorator
+  | Type_arguments_in_decorator
+  | Multiple_arguments_in_decorator
+  | Invalid_decorator_argument
+  | Abstract_method
+  | Call_static_block
+  | Method_signature_in_class
+  | Public_field_scope
+  | Declare_definition
+  | Field_mode
 
 type error = t
 
