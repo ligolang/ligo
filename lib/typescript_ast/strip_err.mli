@@ -129,6 +129,8 @@ type t =
   | Call_signature
   | Property_access
   | Property_scope
+  | Set_get_all
+  | Optional_method
 
 type error = t
 
