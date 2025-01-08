@@ -130,7 +130,17 @@ type t =
   | Property_access
   | Property_scope
   | Set_get_all
-  | Optional_method
+  | Extends_clause
+  | Member_decorator
+  | Type_arguments_in_decorator
+  | Multiple_arguments_in_decorator
+  | Invalid_decorator_argument
+  | Abstract_method
+  | Call_static_block
+  | Method_signature_in_class
+  | Public_field_scope
+  | Declare_definition
+  | Field_mode
 
 type error = t
 
@@ -268,7 +278,21 @@ let to_string = function
   | Property_access -> "Only public access is supported in JsLIGO."
   | Property_scope -> "Property scoping is not supported in JsLIGO."
   | Set_get_all -> "Setters and getters are not supported in JsLIGO."
-  | Optional_method -> "Optional methods are not supported in JsLIGO."
+  | Extends_clause -> "Extension of classes are not supported in JsLIGO."
+  | Member_decorator -> "Decorators as member expressions are not supported in JsLIGO."
+  | Type_arguments_in_decorator ->
+    "Type arguments in decorators are not supported in JsLIGO."
+  | Multiple_arguments_in_decorator ->
+    "Multiple arguments in decorator are not supported in JsLIGO."
+  | Invalid_decorator_argument ->
+    "Only unqualified variables and strings can be decorators' argument in JsLIGO."
+  | Abstract_method -> "Abstract methods are not supported in JsLIGO."
+  | Call_static_block -> "Call static blocks are not supported in JsLIGO."
+  | Method_signature_in_class ->
+    "Method signatures in classes are not supported in JsLIGO."
+  | Public_field_scope -> "The only public field scoping is \"static\" in JsLIGO."
+  | Declare_definition -> "External definitions are not supported in JsLIGO."
+  | Field_mode -> "Field modes are not suppored in JsLIGO."
 
 (* Creating errors *)
 
