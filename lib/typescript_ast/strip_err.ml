@@ -141,6 +141,8 @@ type t =
   | Public_field_scope
   | Declare_definition
   | Field_mode
+  | Interface_with_type_parameters
+  | Generic_class_extension
 
 type error = t
 
@@ -293,6 +295,9 @@ let to_string = function
   | Public_field_scope -> "The only public field scoping is \"static\" in JsLIGO."
   | Declare_definition -> "External definitions are not supported in JsLIGO."
   | Field_mode -> "Field modes are not suppored in JsLIGO."
+  | Interface_with_type_parameters ->
+    "Interfaces with type parameters are not supported in JsLIGO."
+  | Generic_class_extension -> "Generic class extensions are not supported in JsLIGO."
 
 (* Creating errors *)
 
