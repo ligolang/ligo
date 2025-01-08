@@ -90,6 +90,19 @@ let filter_out_spread (node : Ast.arguments) : (Ast.expression list, _) result =
   let* exprs = Result.all @@ List.fold_right args ~init:[] ~f:filter in
   Ok exprs
 
+let filter_out_scope (node : Ast.method_scope) : (unit, _) result =
+  match node with
+  | { kwd_static = None; kwd_override = None; kwd_readonly = None } -> Ok ()
+  | { kwd_static = Some kwd; _ }
+  | { kwd_override = Some kwd; _ }
+  | { kwd_readonly = Some kwd; _ } -> Strip_err.(make kwd#region Property_scope)
+
+let filter_out_access (node : Ast.accessibility_modifier option) : (unit, _) result =
+  match node with
+  | None -> Ok ()
+  | Some (Public kwd) | Some (Private kwd) | Some (Protected kwd) ->
+    Strip_err.(make kwd#region Property_access)
+
 (* Stripping *)
 
 let rec strip_statements (node : Ast.statements) : (S.t, _) result =
@@ -1001,19 +1014,8 @@ and strip_property_signature (node : Ast.property_signature wrap)
     : (S.type_expr S.property reg, _) result
   =
   let Ast.{ access; scope; name; sym_qmark = _; type_ } = node#payload in
-  let* () =
-    match access with
-    | None -> Ok ()
-    | Some (Public kwd) | Some (Private kwd) | Some (Protected kwd) ->
-      Strip_err.(make kwd#region Property_access)
-  in
-  let* () =
-    match scope with
-    | { kwd_static = None; kwd_override = None; kwd_readonly = None } -> Ok ()
-    | { kwd_static = Some kwd; _ }
-    | { kwd_override = Some kwd; _ }
-    | { kwd_readonly = Some kwd; _ } -> Strip_err.(make kwd#region Property_scope)
-  in
+  let* () = filter_out_access access in
+  let* () = filter_out_scope scope in
   let* property_name = strip_property_name name in
   let* rhs_type = map_opt strip_type_annotation type_ in
   match rhs_type with
@@ -1025,11 +1027,48 @@ and strip_property_signature (node : Ast.property_signature wrap)
     let property = S.{ decorators; comments; property_name; property_rhs } in
     Ok (mk_reg node#region property)
 
-and strip_method_signature (node : Ast.method_signature)
+and strip_method_signature (node : Ast.method_signature wrap)
     : (S.type_expr S.property reg, _) result
   =
-  ignore node;
-  Error "TODO: strip_method_signature"
+  let Ast.{ access; scope; kwd_async; set_get_all; name; optional; call_sig } =
+    node#payload
+  in
+  let* () = filter_out_access access in
+  let* () = filter_out_scope scope in
+  let* () = filter_out_async kwd_async in
+  let* () =
+    match set_get_all with
+    | None -> Ok ()
+    | Some (Set kwd | Get kwd) -> Strip_err.(make kwd#region Set_get_all)
+    | Some (All sym) -> Strip_err.(make sym#region Set_get_all)
+  in
+  let* property_name = strip_property_name name in
+  let* () =
+    match optional with
+    | None -> Ok ()
+    | Some sym_qmark -> Strip_err.(make sym_qmark#region Optional_method)
+  in
+  let* call_sig = strip_call_signature call_sig in
+  let { generics; parameters; rhs_type } = call_sig.value in
+  let* v_params = Result.all @@ List.map ~f:filter_parameter parameters in
+  let* v_params = filter_type_annotations v_params in
+  let* rhs_type =
+    match rhs_type with
+    | None -> Strip_err.(make node#region Return_type_absent)
+    | Some rhs_type -> Ok rhs_type
+  in
+  let fun_type = v_params, rhs_type in
+  let type_expr = S.T_fun (mk_reg call_sig.region fun_type) in
+  let property_rhs =
+    match generics with
+    | [] -> type_expr
+    | _ -> S.T_for_all (mk_reg call_sig.region (generics, type_expr))
+  in
+  let comments = property_name#comments in
+  let comments = strip_comments comments in
+  let decorators = extract_decorators comments in
+  let property = S.{ decorators; comments; property_name; property_rhs } in
+  Ok (mk_reg node#region property)
 
 (* Array type *)
 

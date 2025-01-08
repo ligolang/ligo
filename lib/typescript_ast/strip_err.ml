@@ -129,6 +129,8 @@ type t =
   | Call_signature
   | Property_access
   | Property_scope
+  | Set_get_all
+  | Optional_method
 
 type error = t
 
@@ -265,6 +267,8 @@ let to_string = function
   | Call_signature -> "Call signatures in object types are not supported in JsLIGO."
   | Property_access -> "Only public access is supported in JsLIGO."
   | Property_scope -> "Property scoping is not supported in JsLIGO."
+  | Set_get_all -> "Setters and getters are not supported in JsLIGO."
+  | Optional_method -> "Optional methods are not supported in JsLIGO."
 
 (* Creating errors *)
 

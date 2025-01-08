@@ -2569,7 +2569,7 @@ and member_type =
   | Call_signature of call_signature wrap
   | Construct_signature of construct_signature wrap
   | Index_signature of index_signature wrap
-  | Method_signature of method_signature
+  | Method_signature of method_signature wrap
 
 and property_signature =
   { access : accessibility_modifier option
