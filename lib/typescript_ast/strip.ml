@@ -1012,8 +1012,57 @@ and strip_D_enum_declaration (node : Ast.enum_declaration wrap)
 and strip_D_interface_declaration (node : Ast.interface_declaration wrap)
     : (S.declaration, _) result
   =
-  ignore node;
-  Error "TODO: strip_D_interface_declaration"
+  let* decl = strip_interface_declaration node in
+  Ok (S.D_interface decl)
+
+and strip_interface_declaration (node : Ast.interface_declaration wrap)
+    : (S.interface_decl reg, _) result
+  =
+  let Ast.{ kwd_interface = _; name; type_parameters; extends; body } = node#payload in
+  let intf_name = strip_identifier name in
+  let* () =
+    match type_parameters with
+    | None -> Ok ()
+    | Some chevrons ->
+      let region = Ast.region_of_chevrons chevrons in
+      Strip_err.(make region Interface_with_type_parameters)
+  in
+  let* intf_extends =
+    match extends with
+    | None -> Ok []
+    | Some extensions -> strip_extends extensions
+  in
+  let* _object = strip_object_type body in
+  let properties = _object.value in
+  let* intf_body = Result.all @@ List.map ~f:conv_property_to_intf_entry properties in
+  let decl = S.{ intf_name; intf_extends; intf_body } in
+  Ok (mk_reg node#region decl)
+
+and conv_property_to_intf_entry (node : S.type_expr S.property reg)
+    : (S.intf_entry, _) result
+  =
+  let S.{ decorators; comments; property_name; static; optional; property_rhs } =
+    node.value
+  in
+  let () = ignore decorators in
+  let () = ignore static in
+  let entry_name = property_name
+  and entry_optional = optional
+  and entry_type = property_rhs in
+  Ok S.{ comments; entry_name; entry_optional; entry_type }
+
+and strip_extends (node : Ast.extends_type_clause) : (S.simple_path list, _) result =
+  let Ast.{ kwd_extends = _; extensions } = node in
+  let extensions = Nonempty_list.to_list extensions in
+  Result.all @@ List.map ~f:strip_type_extension extensions
+
+and strip_type_extension (node : Ast.type_extension) : (S.simple_path, _) result =
+  match node with
+  | Extends_type ident ->
+    let singleton = Nonempty_list.singleton (strip_type_identifier ident) in
+    Ok (mk_reg ident#region singleton)
+  | Extends_nested nested -> Ok (strip_nested_type_identifier nested)
+  | Extends_generic gen_type -> Strip_err.(make gen_type#region Generic_class_extension)
 
 (* Import alias *)
 

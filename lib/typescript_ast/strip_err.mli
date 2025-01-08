@@ -141,6 +141,8 @@ type t =
   | Public_field_scope
   | Declare_definition
   | Field_mode
+  | Interface_with_type_parameters
+  | Generic_class_extension
 
 type error = t
 

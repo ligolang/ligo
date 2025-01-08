@@ -173,19 +173,16 @@ and import_from = variable Nonempty_list.t * file_path
 (* Interfaces *)
 and interface_decl =
   { intf_name : variable
-  ; intf_extends : intf_expr list
+  ; intf_extends : simple_path list
   ; intf_body : intf_entry list
   }
 
 and intf_entry =
-  { entry_name : variable
+  { comments : comment list
+  ; entry_name : variable
   ; entry_optional : bool
   ; entry_type : type_expr
   }
-
-and intf_expr =
-  | I_body of intf_entry list reg
-  | I_path of variable list reg
 
 (* Namespace declaration *)
 and namespace_decl = variable * statement list
@@ -461,7 +458,3 @@ let region_of_var_kind = function
 let region_of_fun_body_to_region = function
   | Stmt_body { region; _ } -> region
   | Expr_body e -> region_of_expr e
-
-let region_of_intf_expr = function
-  | I_body { region; _ } -> region
-  | I_path { region; _ } -> region
