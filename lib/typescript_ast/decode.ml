@@ -3270,7 +3270,7 @@ and dec_member_type ?(comments = []) node : (member_type, _) result =
     let* signature = wrap dec_index_signature ~comments node in
     Ok (Index_signature signature)
   | "method_signature" ->
-    let* signature = dec_method_signature ~comments node in
+    let* signature = wrap dec_method_signature ~comments node in
     Ok (Method_signature signature)
   | _ -> error "dec_member_type" node
 

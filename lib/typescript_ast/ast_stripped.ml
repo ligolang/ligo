@@ -192,7 +192,7 @@ and type_expr =
   | T_fun of fun_type reg (* (x : T) => U *)
   | T_int of int_literal (* 42 *)
   | T_object of type_expr _object (* {x; @a y : t} *)
-  | T_parameter_of of simple_path reg (* parameter_of<C> *)
+  | T_parameter_of of simple_path reg (* parameter_of<N.C> *)
   | T_string of string_literal (* "x" *)
   | T_union of union_type (* number | string *)
   | T_var of (simple_path * type_expr list) reg (* M.t<u,v> t M.t *)
