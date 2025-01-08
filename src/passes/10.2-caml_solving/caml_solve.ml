@@ -624,6 +624,7 @@ and solve_decl_inner ctx vars decl =
       enter_signature ident var ctx @@ fun ctx -> solve_sig_expr ctx sig_expr
     in
     ctx, Some (decl_wrap loc @@ D_module_type (var, attr, signature))
+  | D_attribute -> ctx, None
   | D_error error -> ctx, Some (decl_wrap loc @@ D_error error)
 
 

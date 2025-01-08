@@ -116,11 +116,10 @@ and decl_desc =
   | D_module_include of mod_expr
   | D_module_type of (Ident.t * Signature_attr.t * sig_expr)
   (* FFI *)
-  | D_external of Ident.t
-  (* TODO: why arity here? *)
-  | D_type_predef_weird of (Ident.t * int)
+  | D_external of Ident.t (* TODO: why arity here? *)
   | D_type_predef of (Ident.t * Literal_types.t * int)
   | D_type_unsupported of Ident.t
+  | D_attribute
   | D_error of error
 
 and sig_expr =

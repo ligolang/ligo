@@ -6,6 +6,7 @@ type error =
   }
 
 and error_tag =
+  | E_missing_ligo_attribute
   | E_unexpected_typed_tree
   | E_let_and_not_supported
   | E_type_and_not_supported
@@ -42,6 +43,7 @@ and error_tag =
 let pp_hum_error_tag fmt error =
   let open Format in
   match error with
+  | E_missing_ligo_attribute -> fprintf fmt "missing ligo attribute [@@@ligo]"
   | E_unexpected_typed_tree -> fprintf fmt "unexpected typed tree"
   | E_let_and_not_supported -> fprintf fmt "let and is not supported"
   | E_type_and_not_supported -> fprintf fmt "type and is not supported"

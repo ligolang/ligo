@@ -808,9 +808,7 @@ and extract_stri stri =
   | Tstr_include include_decl ->
     let mod_expr = extract_str_include include_decl in
     decl_wrap loc @@ D_module_include mod_expr
-  | Tstr_attribute attr ->
-    (* TODO: priority ocaml.warning *)
-    raise_pre_error @@ E_unsupported
+  | Tstr_attribute attr -> extract_str_attr attr
 
 
 and extract_str_let rec_flag bindings =
@@ -833,7 +831,7 @@ and extract_str_include include_decl =
   let@@ () = try_enhance ~loc in
   match incl_attributes with
   | [] -> extract_module_expr incl_mod
-  | [ { attr_name = { txt = "ligo.internal.ocaml.predef"; loc }
+  | [ { attr_name = { txt = "ligo.internal.ocaml"; loc }
       ; attr_payload = PStr []
       ; attr_loc = _loc
       }
@@ -858,6 +856,16 @@ and extract_str_include_ocaml_predef incl_mod =
     | Tmod_unpack (_, _) -> failwith "ocaml predef should have a signature"
   in
   extract_module_expr mod_expr
+
+
+and extract_str_attr attr =
+  let { attr_name; attr_payload = _; attr_loc } = attr in
+  let loc = extract_loc ~loc:attr_loc in
+  let { txt = attr_name; loc = _ } = attr_name in
+  let@@ () = try_enhance ~loc in
+  match attr_name with
+  | "ocaml.warning" -> decl_wrap loc @@ D_attribute
+  | _ -> raise_pre_error @@ E_unimplemented
 
 
 and extract_mod_type_decl decl =
@@ -1036,7 +1044,7 @@ and extract_type_decl decl =
       ; typ_cstrs = _
       ; typ_kind = _
       ; typ_private = _
-      ; typ_manifest = _
+      ; typ_manifest
       ; typ_loc
       ; typ_attributes
       }
@@ -1044,6 +1052,31 @@ and extract_type_decl decl =
     decl
   in
   let loc = extract_loc ~loc:typ_loc in
+  let typ_manifest_id manifest =
+    let manifest =
+      match manifest with
+      | Some manifest -> manifest
+      | None -> raise_pre_error @@ E_unsupported
+    in
+    let { ctyp_desc; ctyp_type; ctyp_env; ctyp_loc; ctyp_attributes } = manifest in
+    let path =
+      match ctyp_desc with
+      | Ttyp_constr (path, _, _) -> path
+      | Ttyp_any | Ttyp_var _
+      | Ttyp_arrow (_, _, _)
+      | Ttyp_tuple _
+      | Ttyp_object (_, _)
+      | Ttyp_class (_, _, _)
+      | Ttyp_alias (_, _)
+      | Ttyp_variant (_, _, _)
+      | Ttyp_poly (_, _)
+      | Ttyp_package _ -> raise_pre_error @@ E_unsupported
+    in
+    match path with
+    | Pident id -> id
+    | Pdot (_, _) -> raise_pre_error @@ E_unsupported
+    | Papply (_, _) -> raise_pre_error @@ E_unsupported
+  in
   let@@ () = try_enhance ~loc in
   match typ_attributes with
   | [] -> decl_wrap loc @@ D_type (typ_id, extract_type_declaration typ_type)
@@ -1061,27 +1094,43 @@ and extract_type_decl decl =
     let arity = Literal_types.to_arity constant in
     assert (arity = typ_type.type_arity);
     decl_wrap loc @@ D_type_predef (typ_id, constant, arity)
-  | [ { attr_name = { txt = "ligo.internal.predef.weird"; loc = _ }
+  | [ { attr_name = { txt = "ligo.internal.ocaml.predef"; loc = _ }
       ; attr_payload = PStr []
       ; attr_loc = _
       }
     ] ->
-    let { txt = constant; loc = _ } = typ_name in
+    let typ_id = typ_manifest_id typ_manifest in
+    let constant = Ident.name typ_id in
     let constant =
-      match constant with
-      | "option" -> _
-      | "list" -> _
-      | _ -> raise_pre_error @@ E_unsupported
+      match Literal_types.of_string_opt constant with
+      | Some constant -> constant
+      | None -> raise_pre_error @@ E_unsupported
     in
     let arity = Literal_types.to_arity constant in
     assert (arity = typ_type.type_arity);
     decl_wrap loc @@ D_type_predef (typ_id, constant, arity)
-  | [ { attr_name = { txt = "ligo.internal.predef.unsupported"; loc = _ }
+  | [ { attr_name = { txt = "ligo.internal.ocaml.predef.weird"; loc = _ }
       ; attr_payload = PStr []
       ; attr_loc = _
       }
-    ] -> decl_wrap loc @@ D_type_unsupported typ_id
-  | _ -> raise_pre_error @@ E_unsupported
+    ] ->
+    let typ_id = typ_manifest_id typ_manifest in
+    let typ_type = { typ_type with type_attributes = [] } in
+    decl_wrap loc @@ D_type (typ_id, extract_type_declaration typ_type)
+  | [ { attr_name = { txt = "ligo.internal.ocaml.predef.unsupported"; loc = _ }
+      ; attr_payload = PStr []
+      ; attr_loc = _
+      }
+    ] ->
+    let typ_id = typ_manifest_id typ_manifest in
+    decl_wrap loc @@ D_type_unsupported typ_id
+  (* TODO: better error here *)
+  (* | [ { attr_name = { txt; loc = _ }; attr_payload = PStr []; attr_loc = _ } ] ->
+    Format.eprintf "Unsupported attribute: %s@." txt;
+    raise_pre_error @@ E_unsupported *)
+  | _ ->
+    let () = assert false in
+    raise_pre_error @@ E_unsupported
 
 
 and extract_module_binding mb =

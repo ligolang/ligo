@@ -3,47 +3,49 @@ open Ocaml_common
 
 let ocaml_predef ~loc =
   [%str
+    [@@@ocaml.warning "-34"]
+
     (* OCaml predefs *)
-    type nonrec unit = unit = () [@@ligo.internal.predef]
-    type nonrec int = int [@@ligo.internal.predef]
-    type nonrec char = char [@@ligo.internal.predef.unsupported]
-    type nonrec string = string [@@ligo.internal.predef]
-    type nonrec bytes = bytes [@@ligo.internal.predef]
-    type nonrec float = float [@@ligo.internal.predef.unsupported]
+    type nonrec unit = unit = () [@@ligo.internal.ocaml.predef]
+    type nonrec int = int [@@ligo.internal.ocaml.predef]
+    type nonrec char = char [@@ligo.internal.ocaml.predef.unsupported]
+    type nonrec string = string [@@ligo.internal.ocaml.predef]
+    type nonrec bytes = bytes [@@ligo.internal.ocaml.predef]
+    type nonrec float = float [@@ligo.internal.ocaml.predef.unsupported]
 
     type nonrec bool = bool =
       | false
       | true
-    [@@ligo.internal.predef.weird]
+    [@@ligo.internal.ocaml.predef.weird]
 
-    type nonrec exn = exn [@@ligo.internal.predef.unsupported]
-    type nonrec 'a array = 'a array [@@ligo.internal.predef.unsupported]
+    type nonrec exn = exn [@@ligo.internal.ocaml.predef.unsupported]
+    type nonrec 'a array = 'a array [@@ligo.internal.ocaml.predef.unsupported]
 
     type nonrec 'a list = 'a list =
       | []
       | ( :: ) of 'a * 'a list
-    [@@ligo.internal.predef]
+    [@@ligo.internal.ocaml.predef]
 
     type nonrec 'a option = 'a option =
       | None
       | Some of 'a
-    [@@ligo.internal.predef.weird]
+    [@@ligo.internal.ocaml.predef.weird]
 
-    type nonrec nativeint = nativeint [@@ligo.internal.predef.unsupported]
-    type nonrec int32 = int32 [@@ligo.internal.predef.unsupported]
-    type nonrec int64 = int64 [@@ligo.internal.predef]
-    type nonrec 'a lazy_t = 'a lazy_t [@@ligo.internal.predef.unsupported]
+    type nonrec nativeint = nativeint [@@ligo.internal.ocaml.predef.unsupported]
+    type nonrec int32 = int32 [@@ligo.internal.ocaml.predef.unsupported]
+    type nonrec int64 = int64 [@@ligo.internal.ocaml.predef]
+    type nonrec 'a lazy_t = 'a lazy_t [@@ligo.internal.ocaml.predef.unsupported]
 
     type nonrec extension_constructor = extension_constructor
-    [@@ligo.internal.predef.unsupported]
+    [@@ligo.internal.ocaml.predef.unsupported]
 
-    type nonrec floatarray = floatarray [@@ligo.internal.predef.unsupported]]
+    type nonrec floatarray = floatarray [@@ligo.internal.ocaml.predef.unsupported]]
 
 let stdlib ~loc =
   let open Ast_builder.Default in
   let ocaml_predef = pmod_structure ~loc @@ ocaml_predef ~loc in
   [%str
-    include ([%m ocaml_predef] : sig end) [@@ligo.internal.ocaml.predef]
+    include ([%m ocaml_predef] : sig end) [@@ligo.internal.ocaml]
 
     (* Ligo Constants *)
     (* TODO: better letters for constructors *)
@@ -115,6 +117,17 @@ let stri_of_error error =
   let content = pstr_eval ~loc (estring ~loc message) [] in
   pstr_extension ~loc (label, PStr [ content ]) []
 
+let env =
+  lazy
+    (Compmisc.init_path ();
+     Compmisc.initial_env ())
+
+let check_str str =
+  (* TODO: better env thingy? *)
+  let env = Lazy.force_val env in
+  let tstr, _, _, _, _ = Typemod.type_structure env str in
+  tstr
+
 let check_extract str =
   let open Caml_solving in
   let ( let* ) v f = Result.bind v f in
@@ -125,44 +138,44 @@ let check_extract str =
 
 let check_extract str =
   (* TODO: this should not be like this *)
-  match check_extract str with
+  match check_extract @@ check_str str with
   | Ok errors -> errors
   | Error error -> [ stri_of_error error ]
   | exception _exn -> assert false
 
-let env =
-  lazy
-    (Compmisc.init_path ();
-     Compmisc.initial_env ())
-
-let check_str str =
-  let env = Lazy.force_val env in
-  let tstr, _, _, _, _ = Typemod.type_structure env str in
-  tstr
-
 let () =
   let impl str =
-    let str =
-      List.fold_right
-        (fun stri str ->
-          let { pstr_desc; pstr_loc } = stri in
-          match pstr_desc with
-          | Pstr_attribute
-              { attr_name = { txt = "ligo"; loc = _ }
-              ; attr_payload = PStr []
-              ; attr_loc = _
-              } -> stdlib ~loc:pstr_loc @ str
-          | _ -> stri :: str)
-        str
-        []
+    let additional_errors, str =
+      match str with
+      | { pstr_desc =
+            Pstr_attribute
+              { attr_name = { txt = "ligo"; loc = _ }; attr_payload; attr_loc = _ }
+        ; pstr_loc = loc
+        }
+        :: str ->
+        assert (attr_payload = PStr []);
+        [], stdlib ~loc @ str
+      | _ ->
+        (* TODO: double locations *)
+        let error_missing_ligo_attribute =
+          let loc = Simple_utils.Location.dummy in
+          stri_of_error @@ { err_tag = E_missing_ligo_attribute; err_loc = loc }
+        in
+        let loc = Location.none in
+        (* TODO: is it okay to drop str here? *)
+        [ error_missing_ligo_attribute ], stdlib ~loc @ str
     in
-    match check_str str with
-    | tstr ->
-      let errors = check_extract tstr in
-      (* TODO: @? *)
-      str @ errors
-    | exception _exn ->
-      (* TODO: debug this? *)
-      str
+    let errors = check_extract str in
+    (* TODO: @? *)
+    additional_errors @ errors @ str
+  in
+  let impl str =
+    try impl str with
+    | exn ->
+      let loc = Simple_utils.Location.dummy in
+      let error_stri =
+        stri_of_error @@ { err_tag = E_unexpected_error exn; err_loc = loc }
+      in
+      error_stri :: str
   in
   Driver.register_transformation "ppx_caml_ligo" ~impl
