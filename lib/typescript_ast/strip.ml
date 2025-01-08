@@ -613,8 +613,14 @@ and strip_D_generator_function_declaration
 and strip_D_class_declaration (node : Ast.class_declaration wrap)
     : (S.declaration, _) result
   =
-  ignore node;
+  let Ast.{ decorators; kwd_class=_; name; type_parameters;
+            class_heritage; body } : Ast.class_declaration = node#payload in
+  let* decorators = strip_decorators decorators in
+  ignore (decorators, name, type_parameters, class_heritage, body);
   Error "TODO: strip_D_class_declaration"
+
+and strip_decorators (node : Ast.decorators) : (S.decorator list, _) result =
+  ignore node; Error "TODO: strip_decorators"
 
 (* Lexical declaration *)
 
