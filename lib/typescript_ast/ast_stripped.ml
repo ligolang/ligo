@@ -110,8 +110,37 @@ and declaration =
   | D_import of import_decl
   | D_interface of interface_decl reg
   | D_namespace of namespace_decl reg
+  | D_class of class_decl reg
   | D_type of type_decl reg
   | D_value of value_decl reg
+
+(* Class declaration *)
+and class_decl =
+  { decorators : decorator list
+  ; comments : comment list (* From the keyword "class" *)
+  ; class_name : variable
+  ; generics : variable list
+  ; implements : type_expr list
+  ; class_body : class_member list
+  }
+
+and class_member =
+  | Method_definition of method_definition reg
+  | Public_field_definition of public_field_definition reg
+
+and method_definition =
+  { decorators : decorator list
+  ; method_sig : type_expr property reg
+  ; method_body : statement list reg
+  }
+
+and public_field_definition =
+  { decorators : decorator list
+  ; static : bool
+  ; name : variable
+  ; field_type : type_expr
+  ; expr : expr
+  }
 
 (* Function declaration *)
 and fun_decl =
@@ -207,6 +236,8 @@ and 'a property =
   { decorators : decorator list (* From the property identifier *)
   ; comments : comment list (* From the property identifier *)
   ; property_name : variable
+  ; static : bool
+  ; optional : bool
   ; property_rhs : 'a
   }
 
@@ -337,7 +368,7 @@ let region_of_import_decl = function
     -> region
 
 let region_of_declaration = function
-  | D_function { region; _ } -> region
+  | D_class { region; _ } | D_function { region; _ } -> region
   | D_import d -> region_of_import_decl d
   | D_interface { region; _ } | D_namespace { region; _ } | D_type { region; _ } -> region
   | D_value { region; _ } -> region

@@ -1311,7 +1311,7 @@ and dec_class_member ?(comments = []) (decorators, node) : (class_member, _) res
 (* Method definition *)
 
 and dec_method_definition ?(comments = []) node : (method_definition, _) result =
-  let* signature = dec_method_signature ~comments node in
+  let* signature = wrap dec_method_signature ~comments node in
   let* body_field = child_with_field "body" node in
   let* body = dec_statement_block body_field in
   Ok { signature; body }

@@ -69,17 +69,29 @@ type for_header =
 
 (* Filters *)
 
-let filter_out_async (node : Ast.kwd_async option) : (unit, _) result =
+let filter_decorator_argument (node : S.expr) : (string, _) result =
+  match node with
+  | S.E_var path ->
+    let Region.{ value; region } = path in
+    (match value with
+    | [ variable ] -> Ok variable#payload
+    | _ -> Strip_err.(make region Invalid_decorator_argument))
+  | E_string literal -> Ok literal#payload
+  | _ ->
+    let region = S.region_of_expr node in
+    Strip_err.(make region Invalid_decorator_argument)
+
+let filter_async (node : Ast.kwd_async option) : (unit, _) result =
   match node with
   | None -> Ok ()
   | Some kwd_async -> Strip_err.(make kwd_async#region Asynchronicity)
 
-let filter_out_await (node : Ast.kwd_await option) : (unit, _) result =
+let filter_await (node : Ast.kwd_await option) : (unit, _) result =
   match node with
   | None -> Ok ()
   | Some kwd_await -> Strip_err.(make kwd_await#region Asynchronicity)
 
-let filter_out_spread (node : Ast.arguments) : (Ast.expression list, _) result =
+let filter_spread (node : Ast.arguments) : (Ast.expression list, _) result =
   let (Ast.Parens args) = node in
   let args = args#payload.contents in
   let filter (arg : Ast.argument) acc =
@@ -90,14 +102,30 @@ let filter_out_spread (node : Ast.arguments) : (Ast.expression list, _) result =
   let* exprs = Result.all @@ List.fold_right args ~init:[] ~f:filter in
   Ok exprs
 
-let filter_out_scope (node : Ast.method_scope) : (unit, _) result =
+let filter_method_scope (node : Ast.method_scope) : (bool, _) result =
   match node with
-  | { kwd_static = None; kwd_override = None; kwd_readonly = None } -> Ok ()
-  | { kwd_static = Some kwd; _ }
-  | { kwd_override = Some kwd; _ }
-  | { kwd_readonly = Some kwd; _ } -> Strip_err.(make kwd#region Property_scope)
+  | { kwd_static = None; kwd_override = None; kwd_readonly = None } -> Ok false
+  | { kwd_static = Some _; _ } -> Ok true
+  | { kwd_override = Some kwd; _ } | { kwd_readonly = Some kwd; _ } ->
+    Strip_err.(make kwd#region Property_scope)
 
-let filter_out_access (node : Ast.accessibility_modifier option) : (unit, _) result =
+let filter_field_scope (node : Ast.field_scope) : (bool, _) result =
+  match node with
+  | { kwd_static
+    ; kwd_override = None
+    ; kwd_readonly = None
+    ; kwd_abstract = None
+    ; kwd_accessor = None
+    } ->
+    (match kwd_static with
+    | None -> Ok false
+    | Some _ -> Ok true)
+  | { kwd_override = Some kwd; _ }
+  | { kwd_readonly = Some kwd; _ }
+  | { kwd_abstract = Some kwd; _ }
+  | { kwd_accessor = Some kwd; _ } -> Strip_err.(make kwd#region Public_field_scope)
+
+let filter_access (node : Ast.accessibility_modifier option) : (unit, _) result =
   match node with
   | None -> Ok ()
   | Some (Public kwd) | Some (Private kwd) | Some (Protected kwd) ->
@@ -339,7 +367,7 @@ and strip_S_for_in_statement (node : Ast.for_in_statement wrap)
   let Ast.{ kwd_for = _; kwd_await; sym_lpar = _; for_header; sym_rpar = _; body } =
     node#payload
   in
-  let* () = filter_out_await kwd_await in
+  let* () = filter_await kwd_await in
   let* { index_kind; index; expr } = strip_for_header for_header in
   let* for_of_body = strip_statement body in
   let for_of_stmt = S.{ index_kind; index; expr; for_of_body } in
@@ -535,7 +563,7 @@ and strip_D_function_declaration (node : Ast.function_declaration wrap)
   let (Ast.{ kwd_async; kwd_function; name; call_sig } : Ast.function_signature) =
     fun_sig
   in
-  let* () = filter_out_async kwd_async in
+  let* () = filter_async kwd_async in
   let comments = kwd_function#comments in
   let comments = strip_comments comments in
   let decorators = extract_decorators comments in
@@ -613,14 +641,166 @@ and strip_D_generator_function_declaration
 and strip_D_class_declaration (node : Ast.class_declaration wrap)
     : (S.declaration, _) result
   =
-  let Ast.{ decorators; kwd_class=_; name; type_parameters;
-            class_heritage; body } : Ast.class_declaration = node#payload in
+  let* decl = strip_class_declaration node in
+  Ok (S.D_class (mk_reg node#region decl))
+
+and strip_class_declaration (node : Ast.class_declaration wrap) : (S.class_decl, _) result
+  =
+  let (Ast.{ decorators; kwd_class; name; type_parameters; class_heritage; body }
+        : Ast.class_declaration)
+    =
+    node#payload
+  in
   let* decorators = strip_decorators decorators in
-  ignore (decorators, name, type_parameters, class_heritage, body);
-  Error "TODO: strip_D_class_declaration"
+  let comments = strip_comments kwd_class#comments in
+  let class_name = strip_identifier name in
+  let* generics = strip_list_opt strip_type_parameters type_parameters in
+  let* implements = strip_class_heritage class_heritage in
+  let* class_body = strip_class_body body in
+  Ok S.{ decorators; comments; class_name; generics; implements; class_body }
+
+and strip_class_body (node : Ast.class_body) : (S.class_member list, _) result =
+  let Ast.(Braces braces) = node in
+  let members = braces#payload.contents in
+  Result.all @@ List.map ~f:strip_class_member members
+
+and strip_class_member (node : Ast.class_member) : (S.class_member, _) result =
+  match node with
+  | Method_definition (decorators, definition) ->
+    let* def = strip_method_definition decorators definition in
+    Ok (S.Method_definition def)
+  | Method_signature signature ->
+    Strip_err.(
+      make signature#region Method_signature_in_class ~hint:"Provide a method body.")
+  | Call_static_block (kwd_static, _) ->
+    Strip_err.(make kwd_static#region Call_static_block)
+  | Abstract_method_signature signature ->
+    Strip_err.(make signature#region Abstract_method)
+  | Index_signature signature -> Strip_err.(make signature#region Index_signature)
+  | Public_field_definition definition ->
+    let* def = strip_public_field_definition definition in
+    Ok (S.Public_field_definition def)
+
+and strip_method_definition decorators (node : Ast.method_definition wrap)
+    : (S.method_definition reg, _) result
+  =
+  let* decorators = strip_decorators decorators in
+  let Ast.{ signature; body } = node#payload in
+  let* method_sig = strip_method_signature signature in
+  let* method_body = strip_statement_block body in
+  let region = node#region in
+  Ok (mk_reg region S.{ decorators; method_sig; method_body })
+
+and strip_public_field_definition (node : Ast.public_field_definition wrap)
+    : (S.public_field_definition reg, _) result
+  =
+  let Ast.{ decorators; access; kwd_declare; scope; name; mode; type_; default } =
+    node#payload
+  in
+  let* decorators = strip_decorators decorators in
+  let* () = filter_access access in
+  let* () =
+    match kwd_declare with
+    | None -> Ok ()
+    | Some kwd_declare -> Strip_err.(make kwd_declare#region Declare_definition)
+  in
+  let* static = filter_field_scope scope in
+  let* name = strip_property_name name in
+  let* () =
+    match mode with
+    | None -> Ok ()
+    | Some (Optional sym | Definite_assert sym) -> Strip_err.(make sym#region Field_mode)
+  in
+  let* field_type = map_opt strip_type_annotation type_ in
+  let* field_type =
+    match field_type with
+    | None -> Strip_err.(make node#region Missing_type)
+    | Some field_type -> Ok field_type
+  in
+  let* expr =
+    match default with
+    | None -> Strip_err.(make node#region Unitialised_variable)
+    | Some (_, expr) -> strip_expression expr
+  in
+  let def = S.{ decorators; static; name; field_type; expr } in
+  Ok (mk_reg node#region def)
+
+and strip_class_heritage (node : Ast.class_heritage option) : (S.type_expr list, _) result
+  =
+  match node with
+  | None -> Ok []
+  | Some (Extends_clause ((kwd_extends, _), _)) ->
+    Strip_err.(make kwd_extends#region Extends_clause)
+  | Some (Implements_clause (_, type_exprs)) ->
+    let type_exprs = Nonempty_list.to_list type_exprs in
+    Result.all @@ List.map ~f:strip_type_expr type_exprs
+
+(* DECORATORS *)
 
 and strip_decorators (node : Ast.decorators) : (S.decorator list, _) result =
-  ignore node; Error "TODO: strip_decorators"
+  Result.all @@ List.map ~f:strip_decorator node
+
+and strip_decorator (node : Ast.decorator) : (S.decorator, _) result =
+  let region = Ast.region_of_decorator node in
+  match node with
+  | Decorator_identifier ident ->
+    let name = strip_identifier ident in
+    Ok (Wrap.make (name#payload, None) region)
+  | Decorator_member_expression _ -> Strip_err.(make region Member_decorator)
+  | Decorator_call_expression call -> strip_decorator_call_expression call
+  | Decorator_parenthesized_expression parens ->
+    strip_decorator_parenthesized_expression parens
+
+and strip_decorator_parenthesized_expression
+    (node : Ast.decorator_parenthesized_expression Ast.parens)
+    : (S.decorator, _) result
+  =
+  let Ast.(Parens parens) = node in
+  let par_expr = parens#payload.contents in
+  match par_expr with
+  | Parenthesized_ident ident ->
+    let dec_name = strip_identifier ident in
+    Ok (Wrap.make (dec_name#payload, None) parens#region)
+  | Parenthesized_member _ -> Strip_err.(make parens#region Member_decorator)
+  | Parenthesized_call call -> strip_decorator_call_expression call
+
+and strip_decorator_call_expression (node : Ast.decorator_call_expression wrap)
+    : (S.decorator, _) result
+  =
+  let Ast.{ function_; type_arguments; arguments } = node#payload in
+  let* dec_name = strip_function_or_property function_ in
+  let* () =
+    match type_arguments with
+    | None -> Ok ()
+    | Some type_args ->
+      let Ast.(Chevrons chevrons) = type_args in
+      Strip_err.(make chevrons#region Type_arguments_in_decorator)
+  in
+  let Ast.(Parens parens) = arguments in
+  let arguments = parens#payload.contents in
+  match arguments with
+  | [] -> Ok (Wrap.make (dec_name, None) node#region)
+  | [ argument ] ->
+    let* expr = strip_argument argument in
+    (match expr with
+    | S.Element expr ->
+      let* dec_param = filter_decorator_argument expr in
+      Ok (Wrap.make (dec_name, Some dec_param) node#region)
+    | Spread expr ->
+      let region = S.region_of_expr expr in
+      Strip_err.(make region Spread_expression))
+  | _ :: snd_arg :: _ ->
+    let region = Ast.region_of_argument snd_arg in
+    Strip_err.(make region Multiple_arguments_in_decorator)
+
+and strip_function_or_property (node : Ast.function_or_property) : (string, _) result =
+  match node with
+  | Function_name ident ->
+    let variable = strip_identifier ident in
+    Ok variable#payload
+  | Qualified_member_expression _ ->
+    let region = Ast.region_of_function_or_property node in
+    Strip_err.(make region Member_decorator)
 
 (* Lexical declaration *)
 
@@ -716,7 +896,7 @@ and strip_D_function_signature (node : Ast.function_signature wrap)
   let (Ast.{ kwd_async; kwd_function = _; name; call_sig } : Ast.function_signature) =
     node#payload
   in
-  let* () = filter_out_async kwd_async in
+  let* () = filter_async kwd_async in
   let name = strip_identifier name in
   let* call_sig = strip_call_signature call_sig in
   let { generics; parameters; rhs_type } = call_sig.value in
@@ -1020,9 +1200,10 @@ and strip_property_signature (node : Ast.property_signature wrap)
     : (S.type_expr S.property reg, _) result
   =
   let Ast.{ access; scope; name; sym_qmark = _; type_ } = node#payload in
-  let* () = filter_out_access access in
-  let* () = filter_out_scope scope in
+  let* () = filter_access access in
+  let* static = filter_method_scope scope in
   let* property_name = strip_property_name name in
+  let optional = false in
   let* rhs_type = map_opt strip_type_annotation type_ in
   match rhs_type with
   | None -> Strip_err.(make node#region Missing_type)
@@ -1030,7 +1211,9 @@ and strip_property_signature (node : Ast.property_signature wrap)
     let comments = property_name#comments in
     let comments = strip_comments comments in
     let decorators = extract_decorators comments in
-    let property = S.{ decorators; comments; property_name; property_rhs } in
+    let property =
+      S.{ decorators; comments; property_name; static; optional; property_rhs }
+    in
     Ok (mk_reg node#region property)
 
 and strip_method_signature (node : Ast.method_signature wrap)
@@ -1039,9 +1222,9 @@ and strip_method_signature (node : Ast.method_signature wrap)
   let Ast.{ access; scope; kwd_async; set_get_all; name; optional; call_sig } =
     node#payload
   in
-  let* () = filter_out_access access in
-  let* () = filter_out_scope scope in
-  let* () = filter_out_async kwd_async in
+  let* () = filter_access access in
+  let* static = filter_method_scope scope in
+  let* () = filter_async kwd_async in
   let* () =
     match set_get_all with
     | None -> Ok ()
@@ -1049,10 +1232,10 @@ and strip_method_signature (node : Ast.method_signature wrap)
     | Some (All sym) -> Strip_err.(make sym#region Set_get_all)
   in
   let* property_name = strip_property_name name in
-  let* () =
+  let optional =
     match optional with
-    | None -> Ok ()
-    | Some sym_qmark -> Strip_err.(make sym_qmark#region Optional_method)
+    | None -> false
+    | Some _ -> true
   in
   let* call_sig = strip_call_signature call_sig in
   let { generics; parameters; rhs_type } = call_sig.value in
@@ -1073,7 +1256,9 @@ and strip_method_signature (node : Ast.method_signature wrap)
   let comments = property_name#comments in
   let comments = strip_comments comments in
   let decorators = extract_decorators comments in
-  let property = S.{ decorators; comments; property_name; property_rhs } in
+  let property =
+    S.{ decorators; comments; property_name; static; optional; property_rhs }
+  in
   Ok (mk_reg node#region property)
 
 (* Array type *)
@@ -1607,7 +1792,7 @@ and strip_E_arrow_function (node : Ast.arrow_function wrap) : (S.expr, _) result
 
 and strip_arrow_function (node : Ast.arrow_function wrap) : (S.arrow_fun_expr, _) result =
   let Ast.{ kwd_async; parameters; sym_arrow = _; body } = node#payload in
-  let* () = filter_out_async kwd_async in
+  let* () = filter_async kwd_async in
   let* parameters = strip_parameters parameters in
   let* generics = get_generics parameters in
   let* rhs_type = get_rhs_type parameters in
@@ -1701,7 +1886,7 @@ and strip_fun_call (node : Ast.fun_call) : (S.expr, _) result =
 and strip_arguments_to_call (node : Ast.arguments_to_call) : (S.expr list, _) result =
   match node with
   | Arguments arguments ->
-    let* arguments = filter_out_spread arguments in
+    let* arguments = filter_spread arguments in
     let* arguments = Result.all @@ List.map ~f:strip_expression arguments in
     Ok arguments
   | Template_string string -> Strip_err.(make string#region Template_string)
@@ -1726,7 +1911,7 @@ and strip_function_expression (node : Ast.function_expression wrap)
     : (S.function_expr, _) result
   =
   let Ast.{ kwd_async; kwd_function = _; name; call_sig; body } = node#payload in
-  let* () = filter_out_async kwd_async in
+  let* () = filter_async kwd_async in
   let* () =
     match name with
     | None -> Ok ()
@@ -2049,8 +2234,10 @@ and strip_member_pattern (node : Ast.member_pattern)
     let property_name = strip_identifier ident in
     let path = Nonempty_list.singleton property_name in
     let property_rhs = S.P_var (mk_reg ident#region path) in
+    let optional = false in
+    let static = false in
     let property : S.pattern S.property =
-      { decorators; comments; property_name; property_rhs }
+      { decorators; comments; property_name; static; optional; property_rhs }
     in
     let region = Ast.region_of_member_pattern node in
     Ok (mk_reg region property)
@@ -2072,9 +2259,11 @@ and strip_pair_pattern (node : Ast.pair_pattern wrap)
   let comments = strip_comments comments in
   let decorators = extract_decorators comments in
   let* property_name = strip_property_name key in
+  let optional = false in
+  let static = false in
   let* property_rhs = strip_pair_value_pattern value in
   let property : S.pattern S.property =
-    { decorators; comments; property_name; property_rhs }
+    { decorators; comments; property_name; static; optional; property_rhs }
   in
   Ok (mk_reg node#region property)
 

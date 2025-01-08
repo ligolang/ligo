@@ -842,7 +842,7 @@ and type_identifier = identifier
     }]
  *)
 and method_definition =
-  { signature : method_signature
+  { signature : method_signature wrap
   ; body : statement_block
   }
 
@@ -3702,6 +3702,10 @@ let region_of_decorator = function
   | Decorator_call_expression d -> d#region
   | Decorator_parenthesized_expression (Parens d) -> d#region
 
+let region_of_function_or_property = function
+  | Function_name ident -> ident#region
+  | Qualified_member_expression member -> member#region
+
 let region_of_predefined_type = function
   | T_any t -> t#region
   | T_number t -> t#region
@@ -3809,6 +3813,10 @@ let region_of_lhs_pattern = function
 let region_of_array_cell_pattern = function
   | Cell_pattern pattern -> region_of_pattern pattern
   | Cell_assignment pattern -> pattern#region
+
+let region_of_argument = function
+  | Expression expr -> region_of_expression expr
+  | Spread_element w -> w#region
 
 let region_of_augmented_assignment_lhs (node : augmented_assignment_lhs) =
   match node with
