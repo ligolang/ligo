@@ -681,7 +681,9 @@ and strip_class_member (node : Ast.class_member) : (S.class_member, _) result =
     let* def = strip_public_field_definition definition in
     Ok (S.Public_field_definition def)
 
-and strip_method_definition decorators (node : Ast.method_definition wrap)
+and strip_method_definition
+    (decorators : Ast.decorators)
+    (node : Ast.method_definition wrap)
     : (S.method_definition reg, _) result
   =
   let* decorators = strip_decorators decorators in
@@ -1034,22 +1036,55 @@ and strip_interface_declaration (node : Ast.interface_declaration wrap)
   in
   let* _object = strip_object_type body in
   let properties = _object.value in
-  let* intf_body = Result.all @@ List.map ~f:conv_property_to_intf_entry properties in
+  let* intf_body = Result.all @@ List.map ~f:conv_member_types_to_intf_entry properties in
   let decl = S.{ intf_name; intf_extends; intf_body } in
   Ok (mk_reg node#region decl)
 
-and conv_property_to_intf_entry (node : S.type_expr S.property reg)
+and conv_member_types_to_intf_entry (node : S.member_type) : (S.intf_entry, _) result =
+  match node with
+  | Property_sig signature -> conv_property_sig_to_intf_entry signature
+  | Method_sig signature -> conv_method_sig_to_intf_entry signature
+
+and conv_property_sig_to_intf_entry (node : S.property_signature reg)
     : (S.intf_entry, _) result
   =
-  let S.{ decorators; comments; property_name; static; optional; property_rhs } =
+  let S.{ decorators; comments; static; optional; property_name; rhs_type } =
     node.value
   in
-  let () = ignore decorators in
   let () = ignore static in
-  let entry_name = property_name
-  and entry_optional = optional
-  and entry_type = property_rhs in
-  Ok S.{ comments; entry_name; entry_optional; entry_type }
+  let entry_name = property_name in
+  let entry_optional = optional in
+  let entry_type = rhs_type in
+  Ok S.{ decorators; comments; entry_name; entry_optional; entry_type }
+
+and conv_method_sig_to_intf_entry (node : S.method_signature reg)
+    : (S.intf_entry, _) result
+  =
+  let S.
+        { decorators
+        ; comments
+        ; static
+        ; optional
+        ; method_name
+        ; generics
+        ; parameters
+        ; rhs_type
+        }
+    =
+    node.value
+  in
+  let () = ignore static in
+  let entry_name = method_name
+  and entry_optional = optional in
+  let entry_type = parameters, rhs_type in
+  (* [node.region] is an approximation *)
+  let entry_type = S.T_fun (mk_reg node.region entry_type) in
+  let entry_type =
+    match generics with
+    | [] -> entry_type
+    | _ -> S.T_for_all (mk_reg node.region (generics, entry_type))
+  in
+  Ok S.{ decorators; comments; entry_name; entry_optional; entry_type }
 
 and strip_extends (node : Ast.extends_type_clause) : (S.simple_path list, _) result =
   let Ast.{ kwd_extends = _; extensions } = node in
@@ -1230,23 +1265,27 @@ and strip_T_object_type (node : Ast.object_type) : (S.type_expr, _) result =
   let* object_type = strip_object_type node in
   Ok (S.T_object object_type)
 
-and strip_object_type (node : Ast.object_type) : (S.type_expr S._object, _) result =
+and strip_object_type (node : Ast.object_type) : (S.member_type list reg, _) result =
   let Ast.(Braces braces) = node in
   let member_types = braces#payload.contents in
   let* members = Result.all @@ List.map ~f:strip_member_type member_types in
   Ok (mk_reg braces#region members)
 
-and strip_member_type (node : Ast.member_type) : (S.type_expr S.property reg, _) result =
+and strip_member_type (node : Ast.member_type) : (S.member_type, _) result =
   match node with
   | Export_statement stmt -> Strip_err.(make stmt#region Export_member)
-  | Property_signature signature -> strip_property_signature signature
+  | Property_signature signature ->
+    let* signature = strip_property_signature signature in
+    Ok (S.Property_sig signature)
   | Call_signature signature -> Strip_err.(make signature#region Call_signature)
   | Construct_signature signature -> Strip_err.(make signature#region Constructor)
   | Index_signature signature -> Strip_err.(make signature#region Index_signature)
-  | Method_signature signature -> strip_method_signature signature
+  | Method_signature signature ->
+    let* signature = strip_method_signature signature in
+    Ok (S.Method_sig signature)
 
 and strip_property_signature (node : Ast.property_signature wrap)
-    : (S.type_expr S.property reg, _) result
+    : (S.property_signature reg, _) result
   =
   let Ast.{ access; scope; name; sym_qmark = _; type_ } = node#payload in
   let* () = filter_access access in
@@ -1256,17 +1295,17 @@ and strip_property_signature (node : Ast.property_signature wrap)
   let* rhs_type = map_opt strip_type_annotation type_ in
   match rhs_type with
   | None -> Strip_err.(make node#region Missing_type)
-  | Some property_rhs ->
+  | Some rhs_type ->
     let comments = property_name#comments in
     let comments = strip_comments comments in
     let decorators = extract_decorators comments in
-    let property =
-      S.{ decorators; comments; property_name; static; optional; property_rhs }
+    let signature =
+      S.{ decorators; comments; static; optional; property_name; rhs_type }
     in
-    Ok (mk_reg node#region property)
+    Ok (mk_reg node#region signature)
 
 and strip_method_signature (node : Ast.method_signature wrap)
-    : (S.type_expr S.property reg, _) result
+    : (S.method_signature reg, _) result
   =
   let Ast.{ access; scope; kwd_async; set_get_all; name; optional; call_sig } =
     node#payload
@@ -1280,7 +1319,7 @@ and strip_method_signature (node : Ast.method_signature wrap)
     | Some (Set kwd | Get kwd) -> Strip_err.(make kwd#region Set_get_all)
     | Some (All sym) -> Strip_err.(make sym#region Set_get_all)
   in
-  let* property_name = strip_property_name name in
+  let* method_name = strip_property_name name in
   let optional =
     match optional with
     | None -> false
@@ -1288,27 +1327,34 @@ and strip_method_signature (node : Ast.method_signature wrap)
   in
   let* call_sig = strip_call_signature call_sig in
   let { generics; parameters; rhs_type } = call_sig.value in
-  let* v_params = Result.all @@ List.map ~f:filter_parameter parameters in
-  let* v_params = filter_type_annotations v_params in
+  let* parameters = Result.all @@ List.map ~f:filter_parameter parameters in
+  let* parameters = filter_type_annotations parameters in
   let* rhs_type =
     match rhs_type with
     | None -> Strip_err.(make node#region Return_type_absent)
     | Some rhs_type -> Ok rhs_type
   in
-  let fun_type = v_params, rhs_type in
-  let type_expr = S.T_fun (mk_reg call_sig.region fun_type) in
-  let property_rhs =
+  let rhs_type =
     match generics with
-    | [] -> type_expr
-    | _ -> S.T_for_all (mk_reg call_sig.region (generics, type_expr))
+    | [] -> rhs_type
+    | _ -> S.T_for_all (mk_reg call_sig.region (generics, rhs_type))
   in
-  let comments = property_name#comments in
+  let comments = method_name#comments in
   let comments = strip_comments comments in
   let decorators = extract_decorators comments in
-  let property =
-    S.{ decorators; comments; property_name; static; optional; property_rhs }
+  let signature =
+    S.
+      { decorators
+      ; comments
+      ; static
+      ; method_name
+      ; optional
+      ; generics
+      ; parameters
+      ; rhs_type
+      }
   in
-  Ok (mk_reg node#region property)
+  Ok (mk_reg node#region signature)
 
 (* Array type *)
 
@@ -2043,8 +2089,59 @@ and strip_dec (node : Ast.dec_literal) : (S.expr, _) result =
 (* Object (expression) *)
 
 and strip_E_object (node : Ast.object_expr) : (S.expr, _) result =
+  let* obj = strip_object_expr node in
+  Ok (S.E_object obj)
+
+and strip_object_expr (node : Ast.object_expr) : (S.expr S._object, _) result =
+  let Ast.(Braces braces) = node in
+  let entries = braces#payload.contents in
+  let* properties = Result.all @@ List.map ~f:strip_object_entry entries in
+  Ok (mk_reg braces#region properties)
+
+and strip_object_entry (node : Ast.object_entry) : (S.expr S.property reg, _) result =
+  (*
+  match node with
+  | Object_entry_pair pair -> strip_pair pair
+  | Object_entry_spread spread -> Strip_err.(make spread#region Spread_expression)
+  | Object_entry_method definition ->
+     let* def = strip_method_definition [] definition in
+     let S.{ decorators=dec; method_sig; method_body } = def.value in
+     let S.{ decorators; comments; property_name; static; optional; property_rhs } = method_sig.value in
+     let decorators = dec @ decorators in
+     let () = ignore comments in
+
+     let fun_body = S.Stmt_body method_body in
+     let parameters = in
+     let rhs_type = in
+     let property_rhs : S.function_expr =
+       S.{generics=[]; parameters; rhs_type; fun_body } in
+     let property_rhs : S.expr = (* [method_body.region] is an approximation *)
+       S.E_function (mk_reg method_body.region property_rhs) in
+    let property : S.expr S.property =
+      { decorators; comments; property_name; static; optional; property_rhs }
+    in
+    Ok (mk_reg definition#region property)
+
+  | Object_entry_shorthand ident ->
+    let comments = ident#comments in
+    let comments = strip_comments comments in
+    let decorators = extract_decorators comments in
+    let property_name = strip_identifier ident in
+    let path = Nonempty_list.singleton property_name in
+    let property_rhs = S.E_var (mk_reg ident#region path) in
+    let optional = false in
+    let static = false in
+    let property : S.expr S.property =
+      { decorators; comments; property_name; static; optional; property_rhs }
+    in
+    Ok (mk_reg ident#region property)
+ *)
   ignore node;
-  Error "TODO: strip_E_object"
+  Error "TODO: strip_object_entry"
+
+and strip_pair (node : Ast.pair wrap) : (S.expr S.property reg, _) result =
+  ignore node;
+  Error "TODO: strip_pair"
 
 (* Parenthesized expression *)
 
