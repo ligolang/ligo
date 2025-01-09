@@ -2139,29 +2139,44 @@ and strip_object_expr (node : Ast.object_expr) : (S.expr S._object, _) result =
   Ok (mk_reg braces#region properties)
 
 and strip_object_entry (node : Ast.object_entry) : (S.expr S.property reg, _) result =
-  (*
   match node with
   | Object_entry_pair pair -> strip_pair pair
   | Object_entry_spread spread -> Strip_err.(make spread#region Spread_expression)
   | Object_entry_method definition ->
-     let* def = strip_method_definition [] definition in
-     let S.{ decorators=dec; method_sig; method_body } = def.value in
-     let S.{ decorators; comments; property_name; static; optional; property_rhs } = method_sig.value in
-     let decorators = dec @ decorators in
-     let () = ignore comments in
-
-     let fun_body = S.Stmt_body method_body in
-     let parameters = in
-     let rhs_type = in
-     let property_rhs : S.function_expr =
-       S.{generics=[]; parameters; rhs_type; fun_body } in
-     let property_rhs : S.expr = (* [method_body.region] is an approximation *)
-       S.E_function (mk_reg method_body.region property_rhs) in
+    let make_parameter (node : S.variable * S.type_expr) : S.parameter =
+      let variable, type_expr = node in
+      let path = mk_reg variable#region (Nonempty_list.singleton variable) in
+      S.P_var path, Some type_expr
+    in
+    let* def = strip_method_definition [] definition in
+    let S.{ decorators = dec; method_sig; method_body } = def.value in
+    let S.
+          { decorators
+          ; comments
+          ; static
+          ; method_name
+          ; optional
+          ; generics
+          ; parameters
+          ; rhs_type
+          }
+      =
+      method_sig.value
+    in
+    let decorators = dec @ decorators in
+    let property_name = method_name in
+    let fun_body = S.Stmt_body method_body in
+    let parameters = List.map ~f:make_parameter parameters in
+    let rhs_type = Some rhs_type in
+    let property_rhs : S.function_expr = S.{ generics; parameters; rhs_type; fun_body } in
+    let property_rhs : S.expr =
+      (* [method_body.region] is an approximation *)
+      S.E_function (mk_reg method_body.region property_rhs)
+    in
     let property : S.expr S.property =
       { decorators; comments; property_name; static; optional; property_rhs }
     in
     Ok (mk_reg definition#region property)
-
   | Object_entry_shorthand ident ->
     let comments = ident#comments in
     let comments = strip_comments comments in
@@ -2175,13 +2190,20 @@ and strip_object_entry (node : Ast.object_entry) : (S.expr S.property reg, _) re
       { decorators; comments; property_name; static; optional; property_rhs }
     in
     Ok (mk_reg ident#region property)
- *)
-  ignore node;
-  Error "TODO: strip_object_entry"
 
 and strip_pair (node : Ast.pair wrap) : (S.expr S.property reg, _) result =
-  ignore node;
-  Error "TODO: strip_pair"
+  let Ast.{ key; sym_colon = _; value } = node#payload in
+  let comments = Ast.comments_of_property_name key in
+  let comments = strip_comments comments in
+  let decorators = extract_decorators comments in
+  let* property_name = strip_property_name key in
+  let* property_rhs = strip_expression value in
+  let optional = false in
+  let static = false in
+  let property : S.expr S.property =
+    { decorators; comments; property_name; static; optional; property_rhs }
+  in
+  Ok (mk_reg node#region property)
 
 (* Parenthesized expression *)
 
