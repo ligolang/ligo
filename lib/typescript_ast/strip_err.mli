@@ -143,6 +143,7 @@ type t =
   | Field_mode
   | Interface_with_type_parameters
   | Generic_class_extension
+  | Default_field_value
 
 type error = t
 
