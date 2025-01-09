@@ -229,7 +229,7 @@ and type_expr =
   | T_for_all of (variable list * type_expr) reg (* <T,U>(x: T) => U *)
   | T_fun of fun_type reg (* (x : T) => U *)
   | T_int of int_literal (* 42 *)
-  | T_object of member_type list reg (* {x; @a y : t} *)
+  | T_object of member_type reg list reg (* {x; @a y : t} *)
   | T_parameter_of of simple_path reg (* parameter_of<N.C> *)
   | T_string of string_literal (* "x" *)
   | T_union of union_type (* number | string *)
@@ -237,10 +237,6 @@ and type_expr =
 
 (* Object type *)
 and member_type =
-  | Property_sig of property_signature reg
-  | Method_sig of method_signature reg
-
-and property_signature =
   { decorators : decorator list
   ; comments : comment list
   ; static : bool
