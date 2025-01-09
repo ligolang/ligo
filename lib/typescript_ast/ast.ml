@@ -2090,7 +2090,7 @@ and meta_property =
 and object_expr = object_entry list braces
 
 and object_entry =
-  | Object_entry_pair of pair
+  | Object_entry_pair of pair wrap
   | Object_entry_spread of spread_element wrap
   | Object_entry_method of method_definition wrap
   | Object_entry_shorthand of identifier
@@ -3836,6 +3836,12 @@ let region_of_member_pattern (node : member_pattern) =
   | Member_rest_pattern w -> w#region
   | Member_object_assignment w -> w#region
   | Member_shorthand_property ident -> ident#region
+
+let region_of_object_entry = function
+  | Object_entry_pair pair -> pair#region
+  | Object_entry_spread spread -> spread#region
+  | Object_entry_method def -> def#region
+  | Object_entry_shorthand ident -> ident#region
 
 (* From some patterns in assignments to expressions *)
 

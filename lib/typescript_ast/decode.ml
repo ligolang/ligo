@@ -2336,7 +2336,7 @@ and dec_object_expr ?(comments = []) node : (object_expr, _) result =
 and dec_object_entry ?(comments = []) node : (object_entry, _) result =
   match get_name node with
   | "pair" ->
-    let* pair = dec_pair ~comments node in
+    let* pair = wrap dec_pair ~comments node in
     Ok (Object_entry_pair pair)
   | "spread_element" ->
     let* spread = wrap dec_spread_element ~comments node in

@@ -130,8 +130,19 @@ and class_member =
 
 and method_definition =
   { decorators : decorator list
-  ; method_sig : type_expr property reg
+  ; method_sig : method_signature reg
   ; method_body : statement list reg
+  }
+
+and method_signature =
+  { decorators : decorator list
+  ; comments : comment list
+  ; static : bool
+  ; method_name : variable
+  ; optional : bool
+  ; generics : variable list
+  ; parameters : (variable * type_expr) list
+  ; rhs_type : type_expr
   }
 
 and public_field_definition =
@@ -178,7 +189,8 @@ and interface_decl =
   }
 
 and intf_entry =
-  { comments : comment list
+  { decorators : decorator list
+  ; comments : comment list
   ; entry_name : variable
   ; entry_optional : bool
   ; entry_type : type_expr
@@ -217,11 +229,25 @@ and type_expr =
   | T_for_all of (variable list * type_expr) reg (* <T,U>(x: T) => U *)
   | T_fun of fun_type reg (* (x : T) => U *)
   | T_int of int_literal (* 42 *)
-  | T_object of type_expr _object (* {x; @a y : t} *)
+  | T_object of member_type list reg (* {x; @a y : t} *)
   | T_parameter_of of simple_path reg (* parameter_of<N.C> *)
   | T_string of string_literal (* "x" *)
   | T_union of union_type (* number | string *)
   | T_var of (simple_path * type_expr list) reg (* M.t<u,v> t M.t *)
+
+(* Object type *)
+and member_type =
+  | Property_sig of property_signature reg
+  | Method_sig of method_signature reg
+
+and property_signature =
+  { decorators : decorator list
+  ; comments : comment list
+  ; static : bool
+  ; property_name : variable
+  ; optional : bool
+  ; rhs_type : type_expr
+  }
 
 (* Functional type *)
 and fun_type = (variable * type_expr) list * type_expr
