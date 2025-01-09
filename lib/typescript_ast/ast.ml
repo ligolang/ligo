@@ -3882,3 +3882,14 @@ and array_pattern_to_expression (node : array_pattern) : (expression, _) result 
   let arguments = Wrap.make enclosed brackets#region in
   let array = Brackets arguments in
   Ok (E_primary_expression (E_array array))
+
+(* Extracting comments *)
+
+let comments_of_property_name = function
+  | Property_identifier ident -> ident#comments
+  | Private_property_identifier ident -> ident#comments
+  | String string -> string#comments
+  | Number _ -> []
+  | Computed_property_name brackets ->
+    let (Brackets brackets) = brackets in
+    brackets#comments
