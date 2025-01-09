@@ -143,6 +143,7 @@ type t =
   | Field_mode
   | Interface_with_type_parameters
   | Generic_class_extension
+  | Default_field_value
 
 type error = t
 
@@ -298,6 +299,7 @@ let to_string = function
   | Interface_with_type_parameters ->
     "Interfaces with type parameters are not supported in JsLIGO."
   | Generic_class_extension -> "Generic class extensions are not supported in JsLIGO."
+  | Default_field_value -> "Default values for fields are not supported in JsLIGO."
 
 (* Creating errors *)
 

@@ -150,7 +150,6 @@ and public_field_definition =
   ; static : bool
   ; name : variable
   ; field_type : type_expr
-  ; expr : expr
   }
 
 (* Function declaration *)
