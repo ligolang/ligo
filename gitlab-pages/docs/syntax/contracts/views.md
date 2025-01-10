@@ -290,4 +290,6 @@ const test = (() => {
 
 </Syntax>
 
+To call views directly in tests, see [Testing views](../../testing#testing-views).
+
 <!-- updated use of entry -->
