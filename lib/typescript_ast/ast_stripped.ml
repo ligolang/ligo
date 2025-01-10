@@ -168,9 +168,9 @@ and parameter = pattern * type_expr option
 
 (* All import declarations *)
 and import_decl =
-  | Import_alias of import_alias reg
-  | Import_all_as of import_all_as reg
-  | Import_from of import_from reg
+  | Import_alias of decorator list * import_alias reg
+  | Import_all_as of decorator list * import_all_as reg
+  | Import_from of decorator list * import_from reg
 
 (* import M = N.O *)
 and import_alias = variable * simple_path
@@ -183,7 +183,8 @@ and import_from = variable Nonempty_list.t * file_path
 
 (* Interfaces *)
 and interface_decl =
-  { intf_name : variable
+  { decorators : decorator list
+  ; intf_name : variable
   ; intf_extends : simple_path list
   ; intf_body : intf_entry list
   }
@@ -197,11 +198,16 @@ and intf_entry =
   }
 
 (* Namespace declaration *)
-and namespace_decl = variable * statement list
+and namespace_decl =
+  { decorators : decorator list
+  ; namespace_name : variable
+  ; namespace_body : statement list
+  }
 
 (* Type declarations *)
 and type_decl =
-  { name : variable
+  { decorators : decorator list
+  ; name : variable
   ; generics : variable list
   ; type_expr : type_expr
   }
@@ -383,7 +389,7 @@ and typed_expr = expr (* "as" *) * type_expr
 (* Projecting regions from some nodes of the AST *)
 
 let region_of_import_decl = function
-  | Import_alias { region; _ } | Import_all_as { region; _ } | Import_from { region; _ }
+  | Import_alias (_, { region; _ }) | Import_all_as (_, { region; _ }) | Import_from (_, { region; _ })
     -> region
 
 let region_of_declaration = function
