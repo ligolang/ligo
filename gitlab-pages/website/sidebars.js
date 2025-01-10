@@ -190,6 +190,7 @@ const sidebars = {
           "reference/decorators/inline",
           "reference/decorators/layout",
           "reference/decorators/private",
+          "reference/decorators/public",
           "reference/decorators/view"
         ],
       },

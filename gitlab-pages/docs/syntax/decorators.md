@@ -39,7 +39,6 @@ You may encounter them when exporting the Abstract Syntax Tree (AST) after a cer
 
 * `[@thunk]`
 * `[@hidden]`
-* `[@public]`
 
 ## List of attributes
 
@@ -83,4 +82,5 @@ LIGO supports these decorators:
 - [`inline`](../reference/decorators/inline)
 - [`layout`](../reference/decorators/layout)
 - [`private`](../reference/decorators/private)
+- [`public`](../reference/decorators/public)
 - [`view`](../reference/decorators/view)

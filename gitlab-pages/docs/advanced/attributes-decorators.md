@@ -96,7 +96,6 @@ Furthermore, the following attributes are used internally by the compiler, you m
 
 * `@thunk`
 * `@hidden`
-* `@public`
 * `@deprecated`
 
 </Syntax>
