@@ -32,7 +32,7 @@ The `@dyn_entry` attribute is used to indicate that a function should be availab
 
 ## @inline to ensure a function is inlined at its call sites
 
-The `@inline` attribute indicates that the code of the function it annotates must be inlined wherever it is called. This allows some optimizations to be performed, possibly at the expense of a larger compiled code. Benchmarks and profiling can help decide whether a function should be inlined or nor. For more information, see [Inlining](../advanced/inline.md)
+The `@inline` attribute indicates that the code of the function it annotates must be inlined wherever it is called. This allows some optimizations to be performed, possibly at the expense of a larger compiled code. Benchmarks and profiling can help decide whether a function should be inlined or nor. For more information, see [Inlining](../syntax/functions#inlining).
 
 ## @view to mark a function as a Smart Contract on-chain view
 
@@ -128,7 +128,7 @@ The `@dyn_entry` decorator is used to indicate that a function should be availab
 
 ## @inline to ensure a function is inlined at its call sites
 
-The `@inline` decorator indicates that the code of the function it annotates must be inlined wherever it is called. This allows some optimizations to be performed, possibly at the expense of a larger compiled code. Benchmarks and profiling can help decide whether a function should be inlined or nor. For more information, see [Inlining](../advanced/inline.md)
+The `@inline` decorator indicates that the code of the function it annotates must be inlined wherever it is called. This allows some optimizations to be performed, possibly at the expense of a larger compiled code. Benchmarks and profiling can help decide whether a function should be inlined or nor. For more information, see [Inlining](../syntax/functions#inlining).
 
 ## @view to mark a function as a Smart Contract on-chain view
 

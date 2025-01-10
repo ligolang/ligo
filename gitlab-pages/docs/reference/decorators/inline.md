@@ -13,7 +13,7 @@ This enables some optimisations, possibly at the expense of a
 larger compiled code. Benchmarks and profiling help decide whether
 a function should be inlined or not.
 
-For more information about inlining functions, see [Inlining](../../functions/inlining).
+For more information about inlining functions, see [Inlining](../../syntax/functions#inlining).
 
 Inlining also makes it cheap to create aliases of functions. For
 example:
@@ -33,7 +33,7 @@ This enables some optimisations, possibly at the expense of a
 larger compiled code. Benchmarks and profiling help decide whether
 a function should be inlined or not.
 
-For more information about inlining functions, see [Inlining](../../functions/inlining).
+For more information about inlining functions, see [Inlining](../../syntax/functions#inlining).
 
 Inlining also makes it cheap to create aliases of functions. For
 example:
