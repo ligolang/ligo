@@ -735,13 +735,12 @@ and strip_public_field_definition (node : Ast.public_field_definition wrap)
     | None -> Strip_err.(make node#region Missing_type)
     | Some field_type -> Ok field_type
   in
-  let* () =
+  let* field_value =
     match default with
-    | None -> Ok ()
-    | Some (_, expr) ->
-      Strip_err.(make (Ast.region_of_expression expr) Default_field_value)
+    | None -> Strip_err.(make name#region No_default)
+    | Some (_, expr) -> strip_expression expr
   in
-  let def = S.{ decorators; static; name; field_type } in
+  let def = S.{ decorators; static; name; field_type; field_value } in
   Ok (mk_reg node#region def)
 
 and strip_class_heritage (node : Ast.class_heritage option) : (S.type_expr list, _) result
