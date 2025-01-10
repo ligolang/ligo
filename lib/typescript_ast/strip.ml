@@ -192,9 +192,9 @@ and strip_decorated_declaration (node : Ast.declaration Ast.decorated)
     : (S.declaration, _) result
   =
   let (Ast.{ decorators; decorated } : _ Ast.decorated) = node in
+  let* decorators = strip_decorators decorators in
   let* decl = strip_declaration decorated in
-  ignore (decorators, decl);
-  Error "TODO: strip_decorated_declaration"
+  Ok (S.decorate_decl decorators decl)
 
 (* Import statement *)
 
