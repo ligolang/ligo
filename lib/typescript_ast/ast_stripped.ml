@@ -389,8 +389,9 @@ and typed_expr = expr (* "as" *) * type_expr
 (* Projecting regions from some nodes of the AST *)
 
 let region_of_import_decl = function
-  | Import_alias (_, { region; _ }) | Import_all_as (_, { region; _ }) | Import_from (_, { region; _ })
-    -> region
+  | Import_alias (_, { region; _ })
+  | Import_all_as (_, { region; _ })
+  | Import_from (_, { region; _ }) -> region
 
 let region_of_declaration = function
   | D_class { region; _ } | D_function { region; _ } -> region
@@ -486,3 +487,45 @@ let region_of_var_kind = function
 let region_of_fun_body_to_region = function
   | Stmt_body { region; _ } -> region
   | Expr_body e -> region_of_expr e
+
+(* INJECTIONS *)
+
+let decorate_fun_decl decorators (fun_decl : fun_decl) : fun_decl =
+  { fun_decl with decorators = decorators @ fun_decl.decorators }
+
+let decorate_import_decl decorators (import_decl : import_decl) : import_decl =
+  match import_decl with
+  | Import_alias (decorators', alias) -> Import_alias (decorators @ decorators', alias)
+  | Import_all_as (decorators', import_all_as) ->
+    Import_all_as (decorators @ decorators', import_all_as)
+  | Import_from (decorators', import_from) ->
+    Import_from (decorators @ decorators', import_from)
+
+let decorate_interface_decl decorators (intf_decl : interface_decl) =
+  { intf_decl with decorators = decorators @ intf_decl.decorators }
+
+let decorate_namespace_decl decorators (name_decl : namespace_decl) =
+  { name_decl with decorators = decorators @ name_decl.decorators }
+
+let decorate_class_decl decorators (class_decl : class_decl) : class_decl =
+  { class_decl with decorators = decorators @ class_decl.decorators }
+
+let decorate_type_decl decorators (type_decl : type_decl) : type_decl =
+  { type_decl with decorators = decorators @ type_decl.decorators }
+
+let decorate_value_decl decorators (value_decl : value_decl) : value_decl =
+  { value_decl with decorators = decorators @ value_decl.decorators }
+
+let decorate_decl decorators = function
+  | D_function decl ->
+    D_function { decl with value = decorate_fun_decl decorators decl.value }
+  | D_import decl -> D_import (decorate_import_decl decorators decl)
+  | D_interface decl ->
+    D_interface { decl with value = decorate_interface_decl decorators decl.value }
+  | D_namespace decl ->
+    D_namespace { decl with value = decorate_namespace_decl decorators decl.value }
+  | D_class decl ->
+    D_class { decl with value = decorate_class_decl decorators decl.value }
+  | D_type decl -> D_type { decl with value = decorate_type_decl decorators decl.value }
+  | D_value decl ->
+    D_value { decl with value = decorate_value_decl decorators decl.value }
