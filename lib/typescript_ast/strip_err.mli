@@ -144,6 +144,7 @@ type t =
   | Interface_with_type_parameters
   | Generic_class_extension
   | Default_field_value
+  | Invalid_export
 
 type error = t
 
