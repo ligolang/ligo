@@ -121,6 +121,7 @@ type kwd_continue = keyword
 type kwd_do = keyword
 type kwd_export = keyword
 type kwd_for = keyword
+type kwd_from = keyword
 type kwd_await = keyword
 type kwd_var = keyword
 type kwd_in = keyword
@@ -3099,7 +3100,7 @@ and export_kind =
   | Export_equal of sym_equal * expression
   | Export_as_namespace of kwd_as * identifier
 
-and from_clause = sym_star * string_literal
+and from_clause = kwd_from * string_literal
 
 and namespace_export =
   { sym_star : sym_star
@@ -3345,8 +3346,17 @@ and import_kind =
   | Import_type of kwd_type
   | Import_typeof of kwd_typeof
 
+(*
+  import * as M from "/my/path.ts"
+  ~>
+  Import_clause (Import_namespace {sym_star; kwd_as; ident}, (kwd_from, string))
+
+  import {x} from "/my/path.ts"
+  ~>
+  Import_clause (Import_named (Braces [Import_spec_name "x"]), (kwd_from, string))
+ *)
 and import =
-  | Import_clause of import_clause * from_clause
+  | Import_clause of (import_clause * from_clause)
   | Import_require_clause of import_require_clause wrap
   | Import_source of string_literal
 

@@ -201,8 +201,102 @@ and strip_decorated_declaration (node : Ast.declaration Ast.decorated)
 and strip_S_import_statement (node : Ast.import_statement wrap)
     : (S.statement option, _) result
   =
-  ignore node;
-  Error "TODO: strip_S_import_statement"
+  let* statement = strip_import_statement node in
+  Ok (Some statement)
+
+and strip_import_statement (node : Ast.import_statement wrap) : (S.statement, _) result =
+  let Ast.{ kwd_import = _; import_kind; import; import_attribute } = node#payload in
+  let* () =
+    match import_kind with
+    | None -> Ok ()
+    | Some (Import_type kwd) | Some (Import_typeof kwd) ->
+      Strip_err.(make kwd#region Invalid_import)
+  in
+  let* () =
+    match import_attribute with
+    | None -> Ok ()
+    | Some (Import_with (kwd, _)) | Some (Import_assert (kwd, _)) ->
+      Strip_err.(make kwd#region Invalid_import)
+  in
+  let* import_decl = strip_import node#region import in
+  Ok (S.S_decl import_decl)
+
+and strip_import region (node : Ast.import) : (S.declaration, _) result =
+  match node with
+  | Import_clause clause -> strip_Import_clause region clause
+  | Import_require_clause clause -> strip_Import_require_clause clause
+  | Import_source string -> strip_Import_source string
+
+and strip_Import_clause region (node : Ast.import_clause * Ast.from_clause)
+    : (S.declaration, _) result
+  =
+  let import_clause, from_clause = node in
+  let _, file_path = from_clause in
+  let* import_decl = strip_import_clause region file_path import_clause in
+  Ok (S.D_import import_decl)
+
+and strip_import_clause region file_path (node : Ast.import_clause)
+    : (S.import_decl, _) result
+  =
+  match node with
+  | Import_namespace import -> strip_namespace_import region file_path import
+  | Import_named import -> strip_named_imports region file_path import
+  | Import_ident (ident, _) ->
+    Strip_err.(make ident#region Invalid_import ~hint:"Use named imports.")
+
+and strip_namespace_import region file_path (node : Ast.namespace_import wrap)
+    : (S.import_decl, _) result
+  =
+  let Ast.{ sym_star = _; kwd_as = _; identifier } = node#payload in
+  let import_alias = strip_identifier identifier, file_path in
+  let import_alias = mk_reg region import_alias in
+  Ok (S.Import_all_as ([], import_alias))
+
+and strip_named_imports region file_path (node : Ast.named_imports)
+    : (S.import_decl, _) result
+  =
+  let Ast.(Braces braces) = node in
+  match braces#payload.contents with
+  | [] -> Strip_err.(make region Empty_import_list)
+  | fst_import :: more_imports ->
+    let* fst_import = strip_import_specifier fst_import in
+    let* more_imports = Result.all @@ List.map ~f:strip_import_specifier more_imports in
+    let imported_vars = Nonempty_list.(fst_import :: more_imports) in
+    let import_from = mk_reg region (imported_vars, file_path) in
+    Ok (S.Import_from ([], import_from))
+
+and strip_import_specifier (node : Ast.import_specifier) : (S.variable, _) result =
+  let import_kind, spec = node in
+  let* () =
+    match import_kind with
+    | None -> Ok ()
+    | Some (Import_type kwd) | Some (Import_typeof kwd) ->
+      Strip_err.(make kwd#region Invalid_import)
+  in
+  strip_import_specifier' spec
+
+and strip_import_specifier' (node : Ast.import_specifier') : (S.variable, _) result =
+  match node with
+  | Import_spec_name ident -> Ok (strip_identifier ident)
+  | Import_spec_alias alias ->
+    Strip_err.(
+      make
+        alias.Ast.kwd_as#region
+        Import_and_rename
+        ~hint:"Declare a new name after the import.")
+
+and strip_Import_require_clause (node : Ast.import_require_clause wrap)
+    : (S.declaration, _) result
+  =
+  let Ast.
+        { ident = _; sym_equal = _; kwd_require; sym_lpar = _; source = _; sym_rpar = _ }
+    =
+    node#payload
+  in
+  Strip_err.(make kwd_require#region Invalid_import)
+
+and strip_Import_source (node : Ast.string_literal) : (S.declaration, _) result =
+  Strip_err.(make node#region Invalid_import)
 
 (* Debugger statement *)
 
