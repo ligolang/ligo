@@ -144,6 +144,7 @@ type t =
   | Interface_with_type_parameters
   | Generic_class_extension
   | Default_field_value
+  | Invalid_export
 
 type error = t
 
@@ -300,6 +301,7 @@ let to_string = function
     "Interfaces with type parameters are not supported in JsLIGO."
   | Generic_class_extension -> "Generic class extensions are not supported in JsLIGO."
   | Default_field_value -> "Default values for fields are not supported in JsLIGO."
+  | Invalid_export -> "Only exports of one declaration at a time is supported in JsLIGO."
 
 (* Creating errors *)
 
