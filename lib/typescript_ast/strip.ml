@@ -932,7 +932,7 @@ and strip_D_function_signature (node : Ast.function_signature wrap)
     | [] -> type_expr
     | _ -> S.T_for_all (mk_reg call_sig.region (generics, type_expr))
   in
-  let type_decl = S.{ name; generics; type_expr } in
+  let type_decl = S.{ decorators = []; name; generics; type_expr } in
   Ok (S.D_type (mk_reg node#region type_decl))
 
 and filter_parameter (node : S.parameter) : (S.variable * S.type_expr option, _) result =
@@ -971,14 +971,19 @@ and strip_internal_module (node : Ast.internal_module wrap)
   =
   let Ast.{ kwd_namespace = _; module_name; module_body } = node#payload in
   let* (namespace_name : S.variable) = strip_module_name module_name in
-  let* (statements : S.statement list) =
+  let* (namespace_body : S.statement list) =
     match module_body with
     | None -> Ok []
     | Some block ->
       let* stmts = strip_statement_block block in
       Ok (stmts.Region.value : S.statement list)
   in
-  let decl = namespace_name, statements in
+  let decl : S.namespace_decl =
+    { decorators = []
+    ; namespace_name
+    ; namespace_body
+    }
+  in
   Ok (mk_reg node#region decl)
 
 and strip_module_name (node : Ast.module_name) : (S.variable, _) result =
@@ -997,8 +1002,8 @@ and strip_D_type_alias_declaration (node : Ast.type_alias_declaration wrap)
   let name = strip_type_identifier name in
   let* generics = strip_list_opt strip_type_parameters type_parameters in
   let* type_expr = strip_type_expr type_expr in
-  let type_decl' = S.{ name; generics; type_expr } in
-  Ok (S.D_type (mk_reg region type_decl'))
+  let type_decl = S.{ decorators = []; name; generics; type_expr } in
+  Ok (S.D_type (mk_reg region type_decl))
 
 and strip_type_identifier (node : Ast.type_identifier) : S.variable = node
 
@@ -1053,7 +1058,7 @@ and strip_interface_declaration (node : Ast.interface_declaration wrap)
   let* _object = strip_object_type body in
   let properties = _object.value in
   let* intf_body = Result.all @@ List.map ~f:conv_member_type_to_intf_entry properties in
-  let decl = S.{ intf_name; intf_extends; intf_body } in
+  let decl = S.{ decorators = []; intf_name; intf_extends; intf_body } in
   Ok (mk_reg node#region decl)
 
 and conv_member_type_to_intf_entry (node : S.member_type reg) : (S.intf_entry, _) result =
@@ -1116,7 +1121,7 @@ and strip_D_import_alias (node : Ast.import_alias wrap) : (S.declaration, _) res
   let alias = strip_identifier alias in
   let path = strip_aliased aliased in
   let import = alias, path in
-  Ok S.(D_import (S.Import_alias (mk_reg region import)))
+  Ok S.(D_import (S.Import_alias ([], mk_reg region import)))
 
 and strip_aliased (node : Ast.aliased) : S.simple_path =
   match node with
