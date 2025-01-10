@@ -145,6 +145,9 @@ type t =
   | Generic_class_extension
   | No_default
   | Invalid_export
+  | Invalid_import
+  | Empty_import_list
+  | Import_and_rename
 
 type error = t
 
