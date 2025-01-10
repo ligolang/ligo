@@ -185,13 +185,16 @@ and strip_S_export_statement (node : Ast.export_statement wrap)
   | Export_equal _
   | Export_as_namespace _ -> Strip_err.(make kwd_export#region Invalid_export)
   | Export_declaration decl ->
-     let* declaration = strip_decorated_declaration decl in
-     Ok (Some (S.S_export declaration))
+    let* declaration = strip_decorated_declaration decl in
+    Ok (Some (S.S_export declaration))
 
-and strip_decorated_declaration (node : Ast.declaration Ast.decorated) : (S.declaration, _) result =
-  let Ast.{ decorators; decorated } : _ Ast.decorated = node in
+and strip_decorated_declaration (node : Ast.declaration Ast.decorated)
+    : (S.declaration, _) result
+  =
+  let (Ast.{ decorators; decorated } : _ Ast.decorated) = node in
   let* decl = strip_declaration decorated in
-  ignore (decorators, decl); Error "TODO: strip_decorated_declaration"
+  ignore (decorators, decl);
+  Error "TODO: strip_decorated_declaration"
 
 (* Import statement *)
 
@@ -978,12 +981,7 @@ and strip_internal_module (node : Ast.internal_module wrap)
       let* stmts = strip_statement_block block in
       Ok (stmts.Region.value : S.statement list)
   in
-  let decl : S.namespace_decl =
-    { decorators = []
-    ; namespace_name
-    ; namespace_body
-    }
-  in
+  let decl : S.namespace_decl = { decorators = []; namespace_name; namespace_body } in
   Ok (mk_reg node#region decl)
 
 and strip_module_name (node : Ast.module_name) : (S.variable, _) result =
