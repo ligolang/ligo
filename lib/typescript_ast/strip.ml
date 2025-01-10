@@ -174,8 +174,24 @@ and strip_statement (node : Ast.statement) : (S.statement option, _) result =
 and strip_S_export_statement (node : Ast.export_statement wrap)
     : (S.statement option, _) result
   =
-  ignore node;
-  Error "TODO: strip_S_export_statement"
+  let Ast.{ kwd_export; export_kind } = node#payload in
+  match export_kind with
+  | Export_from _
+  | Export_as _
+  | Export_clause _
+  | Export_default_declaration _
+  | Export_default_expression _
+  | Export_type _
+  | Export_equal _
+  | Export_as_namespace _ -> Strip_err.(make kwd_export#region Invalid_export)
+  | Export_declaration decl ->
+     let* declaration = strip_decorated_declaration decl in
+     Ok (Some (S.S_export declaration))
+
+and strip_decorated_declaration (node : Ast.declaration Ast.decorated) : (S.declaration, _) result =
+  let Ast.{ decorators; decorated } : _ Ast.decorated = node in
+  let* decl = strip_declaration decorated in
+  ignore (decorators, decl); Error "TODO: strip_decorated_declaration"
 
 (* Import statement *)
 
