@@ -73,8 +73,9 @@ let filter_decorator_argument (node : S.expr) : (string, _) result =
   match node with
   | S.E_var path ->
     let Region.{ value; region } = path in
-    (match value with
-    | [ variable ] -> Ok variable#payload
+    let S.{ path; selected } = value in
+    (match path with
+    | [] -> Ok selected#payload
     | _ -> Strip_err.(make region Invalid_decorator_argument))
   | E_string literal -> Ok literal#payload
   | _ ->
@@ -546,8 +547,9 @@ and strip_for_in_variable (node : Ast.for_in_variable)
 and force_single_var (node : S.pattern S.element) : (S.variable, _) result =
   match node with
   | Element (P_var path as pattern) ->
-    (match path.Region.value with
-    | Nonempty_list.[ variable ] -> Ok variable
+    let S.{ path; selected } = path.value in
+    (match path with
+    | [] -> Ok selected
     | _ ->
       let region = S.region_of_pattern pattern in
       Strip_err.(make region Not_a_variable))
@@ -726,7 +728,7 @@ and format_parameters_into_patterns (node : (S.variable * S.type_expr option) li
     : S.parameter list
   =
   let make_parameter (variable, opt) =
-    let path = Nonempty_list.singleton variable in
+    let path = S.{ path = []; selected = variable } in
     S.P_var (mk_reg variable#region path), opt
   in
   List.map ~f:make_parameter node
@@ -961,7 +963,7 @@ and strip_var_decl_lhs (node : Ast.var_decl_lhs wrap) : (S.val_binding reg, _) r
   let* pattern =
     match var_names with
     | Decl_ident ident ->
-      let path = Nonempty_list.singleton (strip_identifier ident) in
+      let path = S.{ path = []; selected = strip_identifier ident } in
       Ok (S.P_var (mk_reg ident#region path))
     | Decl_pattern p -> strip_destructuring_pattern p
   in
@@ -1036,8 +1038,9 @@ and filter_parameter (node : S.parameter) : (S.variable * S.type_expr option, _)
   let pattern, type_expr = node in
   match pattern with
   | S.P_var path ->
-    (match path.Region.value with
-    | Nonempty_list.[ variable ] -> Ok (variable, type_expr)
+    let S.{ path; selected } = path.value in
+    (match path with
+    | [] -> Ok (selected, type_expr)
     | _ ->
       let region = S.region_of_pattern pattern in
       Strip_err.(make region Not_a_variable))
@@ -1192,16 +1195,16 @@ and conv_method_sig_to_intf_entry (node : S.method_signature reg)
   in
   Ok S.{ decorators; comments; entry_name; entry_optional; entry_type }
 
-and strip_extends (node : Ast.extends_type_clause) : (S.simple_path list, _) result =
+and strip_extends (node : Ast.extends_type_clause) : (S.simple_path reg list, _) result =
   let Ast.{ kwd_extends = _; extensions } = node in
   let extensions = Nonempty_list.to_list extensions in
   Result.all @@ List.map ~f:strip_type_extension extensions
 
-and strip_type_extension (node : Ast.type_extension) : (S.simple_path, _) result =
+and strip_type_extension (node : Ast.type_extension) : (S.simple_path reg, _) result =
   match node with
   | Extends_type ident ->
-    let singleton = Nonempty_list.singleton (strip_type_identifier ident) in
-    Ok (mk_reg ident#region singleton)
+    let path = S.{ path = []; selected = strip_type_identifier ident } in
+    Ok (mk_reg ident#region path)
   | Extends_nested nested -> Ok (strip_nested_type_identifier nested)
   | Extends_generic gen_type -> Strip_err.(make gen_type#region Generic_class_extension)
 
@@ -1215,18 +1218,19 @@ and strip_D_import_alias (node : Ast.import_alias wrap) : (S.declaration, _) res
   let import = alias, path in
   Ok S.(D_import (S.Import_alias ([], mk_reg region import)))
 
-and strip_aliased (node : Ast.aliased) : S.simple_path =
+and strip_aliased (node : Ast.aliased) : S.simple_path reg =
   match node with
   | Ident ident ->
-    let singleton = Nonempty_list.singleton (strip_identifier ident) in
-    mk_reg ident#region singleton
+    let path = S.{ path = []; selected = strip_identifier ident } in
+    mk_reg ident#region path
   | Nested nested -> strip_nested_identifier nested
 
-and strip_nested_identifier (node : Ast.nested_identifier wrap) : S.simple_path =
+and strip_nested_identifier (node : Ast.nested_identifier wrap) : S.simple_path reg =
   let path, selected = node#payload in
-  let path = Nonempty_list.map ~f:strip_type_identifier path
+  let path = List.rev (Nonempty_list.to_list path) in
+  let path = List.map ~f:strip_type_identifier path
   and selected = strip_type_identifier selected in
-  mk_reg node#region (Nonempty_list.cons selected path)
+  mk_reg node#region S.{ path; selected }
 
 (* Ambient declaration *)
 
@@ -1289,11 +1293,11 @@ and strip_T_predefined_type (node : Ast.predefined_type) : (S.type_expr, _) resu
     (* The pipeline uses "bool" instead *)
     let region = kwd_boolean#region in
     let bool = Wrap.make "bool" region in
-    let path = mk_reg region (Nonempty_list.singleton bool) in
+    let path = mk_reg region S.{ path = []; selected = bool } in
     Ok (T_var (mk_reg region (path, [])))
   | T_string kwd_string ->
     let region = kwd_string#region in
-    let path = mk_reg region (Nonempty_list.singleton kwd_string) in
+    let path = mk_reg region S.{ path = []; selected = kwd_string } in
     Ok (T_var (mk_reg region (path, [])))
   | T_symbol kwd_symbol -> Strip_err.(make kwd_symbol#region Symbol_type)
   | T_unique_symbol kwd_unique_symbol ->
@@ -1306,9 +1310,9 @@ and strip_T_predefined_type (node : Ast.predefined_type) : (S.type_expr, _) resu
 (* Type identifier *)
 
 and strip_T_type_identifier (node : Ast.type_identifier) : (S.type_expr, _) result =
-  let type_ident = strip_type_identifier node in
+  let selected = strip_type_identifier node in
   let region = node#region in
-  let path = Nonempty_list.singleton type_ident in
+  let path = S.{ path = []; selected } in
   Ok (S.T_var (mk_reg region (mk_reg region path, [])))
 
 (* Nested type identifier (access path is reversed) *)
@@ -1319,11 +1323,14 @@ and strip_T_nested_type_identifier (node : Ast.nested_type_identifier wrap)
   let path = strip_nested_type_identifier node in
   Ok (S.T_var (mk_reg node#region (path, [])))
 
-and strip_nested_type_identifier (node : Ast.nested_type_identifier wrap) : S.simple_path =
+and strip_nested_type_identifier (node : Ast.nested_type_identifier wrap)
+    : S.simple_path reg
+  =
   let path, selected = node#payload in
-  let path = Nonempty_list.map ~f:strip_type_identifier path
+  let path = List.rev (Nonempty_list.to_list path) in
+  let path = List.map ~f:strip_type_identifier path
   and selected = strip_type_identifier selected in
-  mk_reg node#region (Nonempty_list.cons selected path)
+  mk_reg node#region S.{ path; selected }
 
 (* Generic type
 
@@ -1337,9 +1344,10 @@ and strip_T_generic_type (node : Ast.generic_type wrap) : (S.type_expr, _) resul
   let var = mk_reg node#region (path, type_args) in
   let ok = Ok (S.T_var var) in
   let error = Strip_err.(make node#region Invalid_parameter_of) in
-  match path.value with
-  | [ variable ] ->
-    (match variable#payload with
+  let S.{ path; selected } = path.value in
+  match path with
+  | [] ->
+    (match selected#payload with
     | "parameter_of" ->
       (match type_args with
       | [ type_arg ] ->
@@ -1351,12 +1359,12 @@ and strip_T_generic_type (node : Ast.generic_type wrap) : (S.type_expr, _) resul
     | _ -> ok)
   | _ -> ok
 
-and strip_generic_name (node : Ast.generic_name) : S.simple_path =
+and strip_generic_name (node : Ast.generic_name) : S.simple_path reg =
   match node with
   | Generic_type type_identifier ->
     let region = type_identifier#region in
-    let ident = strip_type_identifier type_identifier in
-    mk_reg region (Nonempty_list.singleton ident)
+    let selected = strip_type_identifier type_identifier in
+    mk_reg region S.{ path = []; selected }
   | Generic_nested nested -> strip_nested_type_identifier nested
 
 and strip_type_arguments (node : Ast.type_arguments) : (S.type_expr list, _) result =
@@ -1869,7 +1877,7 @@ and strip_augmented_assignment_lhs (node : Ast.augmented_assignment_lhs)
   | Subscript_expression w ->
     Strip_err.(make w#region Complex_lhs ~hint:"Use a variable.")
   | Identifier ident ->
-    let path = Nonempty_list.singleton (strip_identifier ident) in
+    let path = S.{ path = []; selected = strip_identifier ident } in
     Ok (S.E_var (mk_reg ident#region path))
   | Parenthesized_expression expr ->
     let* exprs = strip_parenthesized_expression expr in
@@ -2050,7 +2058,7 @@ and strip_arrow_function (node : Ast.arrow_function wrap) : (S.arrow_fun_expr, _
 and get_parameters (node : parameters) : (S.parameter list, _) result =
   match node with
   | Parameter variable ->
-    let path = Nonempty_list.singleton variable in
+    let path = S.{ path = []; selected = variable } in
     Ok [ S.P_var (mk_reg variable#region path), None ]
   | Call_signature call_sig ->
     let { generics = _; parameters; rhs_type = _ } = call_sig.value in
@@ -2111,9 +2119,10 @@ and strip_call_fun (node : (Ast.fun_call, Ast.arguments_to_call) Ast.call wrap)
   let error = Strip_err.(make node#region Invalid_contract_of) in
   match lambda with
   | S.E_var path ->
-    (match path.value with
-    | [ variable ] ->
-      (match variable#payload with
+    let S.{ path; selected } = path.value in
+    (match path with
+    | [] ->
+      (match selected#payload with
       | "contract_of" ->
         (match arguments with
         | [ expr ] ->
@@ -2178,7 +2187,7 @@ and strip_E_generator_function (node : Ast.generator_function wrap) : (S.expr, _
 (* Identifier (expression) *)
 
 and strip_E_identifier (node : Ast.identifier) : (S.expr, _) result =
-  let path = Nonempty_list.singleton (strip_identifier node) in
+  let path = S.{ path = []; selected = strip_identifier node } in
   Ok (S.E_var (mk_reg node#region path))
 
 (* Member expression *)
@@ -2257,7 +2266,7 @@ and strip_object_entry (node : Ast.object_entry) : (S.expr S.property reg, _) re
   | Object_entry_method definition ->
     let make_parameter (node : S.variable * S.type_expr) : S.parameter =
       let variable, type_expr = node in
-      let path = mk_reg variable#region (Nonempty_list.singleton variable) in
+      let path = mk_reg variable#region S.{ path = []; selected = variable } in
       S.P_var path, Some type_expr
     in
     let* def = strip_method_definition [] definition in
@@ -2294,7 +2303,7 @@ and strip_object_entry (node : Ast.object_entry) : (S.expr S.property reg, _) re
     let comments = strip_comments comments in
     let decorators = extract_decorators comments in
     let property_name = strip_identifier ident in
-    let path = Nonempty_list.singleton property_name in
+    let path = S.{ path = []; selected = property_name } in
     let property_rhs = S.E_var (mk_reg ident#region path) in
     let optional = false in
     let static = false in
@@ -2450,9 +2459,10 @@ and strip_update (kind : [ `Pre | `Post ]) (node : Ast.update wrap) : (S.expr, _
   let* expr = strip_expression argument in
   let* var =
     match expr with
-    | S.E_var path ->
-      (match path.value with
-      | Nonempty_list.[ variable ] -> Ok (mk_reg path.region variable)
+    | S.E_var simple_path ->
+      let S.{ path; selected } = simple_path.value in
+      (match path with
+      | [] -> Ok (mk_reg simple_path.region selected)
       | _ ->
         Strip_err.(make node#region Not_a_variable ~hint:"Define a temporary variable."))
     | _ ->
@@ -2503,7 +2513,7 @@ and strip_P_identifier (node : Ast.identifier) : (S.pattern, _) result =
   | "false" -> Ok (S.P_false region)
   | "true" -> Ok (S.P_true region)
   | _ ->
-    let path = mk_reg region (Nonempty_list.singleton identifier) in
+    let path = mk_reg region S.{ path = []; selected = identifier } in
     Ok (S.P_var path)
 
 (* Undefined (pattern) *)
@@ -2552,7 +2562,7 @@ and strip_member_pattern (node : Ast.member_pattern)
     let comments = strip_comments comments in
     let decorators = extract_decorators comments in
     let property_name = strip_identifier ident in
-    let path = Nonempty_list.singleton property_name in
+    let path = S.{ path = []; selected = property_name } in
     let property_rhs = S.P_var (mk_reg ident#region path) in
     let optional = false in
     let static = false in
@@ -2639,7 +2649,7 @@ and strip_rest_pattern (node : Ast.rest_pattern wrap) : (S.pattern, _) result =
     let* pattern = strip_array_pattern pattern in
     Ok (S.P_array pattern)
   | Identifier ident ->
-    let path = Nonempty_list.singleton (strip_identifier ident) in
+    let path = S.{ path = []; selected = strip_identifier ident } in
     Ok (S.P_var (mk_reg ident#region path))
   | _ ->
     Strip_err.(

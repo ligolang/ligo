@@ -1852,7 +1852,6 @@ and dec_nested_type_identifier ?(comments = []) node : (nested_type_identifier, 
   let* module_field = child_with_field "module" node in
   let* name_field = child_with_field "name" node in
   let* path = dec_module_path ~comments module_field in
-  (*  let path = Nonempty_list.reverse path in *)
   Ok (path, dec_type_identifier name_field)
 
 and dec_module_path ?(comments = []) node : (identifier ne_list, _) result =
@@ -1890,7 +1889,6 @@ and dec_nested_identifier ?(comments = []) node : (nested_identifier, _) result 
   let* object_field = child_with_field "object" node in
   let* property_field = child_with_field "property" node in
   let* path = dec_object_path ~comments object_field in
-  (*  let path = Nonempty_list.reverse path in *)
   let* property = dec_property property_field in
   Ok (path, property)
 
