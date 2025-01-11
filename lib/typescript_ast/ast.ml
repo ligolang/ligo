@@ -3853,6 +3853,11 @@ let region_of_object_entry = function
   | Object_entry_method def -> def#region
   | Object_entry_shorthand ident -> ident#region
 
+let region_of_type_extension = function
+  | Extends_type ident -> ident#region
+  | Extends_nested nested -> nested#region
+  | Extends_generic gen -> gen#region
+
 (* From some patterns in assignments to expressions *)
 
 let rec destructuring_pattern_to_expression (node : destructuring_pattern)
@@ -3903,3 +3908,11 @@ let comments_of_property_name = function
   | Computed_property_name brackets ->
     let (Brackets brackets) = brackets in
     brackets#comments
+
+(* TEMPORARY *)
+
+let print_nested (ne_list, ident) =
+  let list = Nonempty_list.to_list ne_list in
+  let app v acc = if String.(acc = "") then v#payload else v#payload ^ "." ^ acc in
+  let string = Core.List.fold_right ~f:app ~init:"" list in
+  Printf.eprintf "%s__%s\n%!" ident#payload string
