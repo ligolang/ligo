@@ -31,14 +31,24 @@ type bytes_literal = (string * Hex.t) wrap
 type int_literal = (string * Z.t) wrap
 type string_literal = string wrap
 
-(* Paths in _reverse order_:
+(* Paths (NOT IN REVERSE ORDER. Compare with ast.ml)
 
-   M       -> [M]
-   M.N     -> [N; M]
-   M.N.x.y -> [y; x; N; M]
+   M.N.x.y -> [M; N; x], y
  *)
 
-type simple_path = variable Nonempty_list.t reg
+type simple_path =
+  { path : variable list
+  ; selected : variable
+  }
+
+(* TEMPORARY *)
+
+let print_path (path : simple_path) : unit =
+  let { path; selected } = path in
+  let app v acc = if acc = "" then v#payload else v#payload ^ "." ^ acc in
+  let path = Core.List.fold_right ~f:app ~init:"" path in
+  let path = if path = "" then path else path ^ "." in
+  Printf.eprintf "%s%s\n%!" path selected#payload
 
 (* The Abstract Syntax Tree *)
 
@@ -173,7 +183,7 @@ and import_decl =
   | Import_from of decorator list * import_from reg
 
 (* import M = N.O *)
-and import_alias = variable * simple_path
+and import_alias = variable * simple_path reg
 
 (* import * as M from "/my/path.ts" *)
 and import_all_as = variable * file_path
@@ -185,7 +195,7 @@ and import_from = variable Nonempty_list.t * file_path
 and interface_decl =
   { decorators : decorator list
   ; intf_name : variable
-  ; intf_extends : simple_path list
+  ; intf_extends : simple_path reg list
   ; intf_body : intf_entry list
   }
 
@@ -236,10 +246,10 @@ and type_expr =
   | T_fun of fun_type reg (* (x : T) => U *)
   | T_int of int_literal (* 42 *)
   | T_object of member_type reg list reg (* {x; @a y : t} *)
-  | T_parameter_of of simple_path reg (* parameter_of<N.C> *)
+  | T_parameter_of of simple_path reg reg (* parameter_of<N.C> *)
   | T_string of string_literal (* "x" *)
   | T_union of union_type (* number | string *)
-  | T_var of (simple_path * type_expr list) reg (* M.t<u,v> t M.t *)
+  | T_var of (simple_path reg * type_expr list) reg (* M.t<u,v> t M.t *)
 
 (* Object type *)
 and member_type =
@@ -281,7 +291,7 @@ and pattern =
   | P_object of pattern _object (* {x, y:z} *)
   | P_string of string_literal (* "string" *)
   | P_true of Region.t (* true *)
-  | P_var of simple_path (* x  M.N.x *)
+  | P_var of simple_path reg (* x  M.N.x *)
 
 (* Array pattern (shadowing the predefined type [array]) *)
 and 'a array = 'a element list reg
@@ -314,7 +324,7 @@ and expr =
   | E_bit_xor of (expr * expr) reg (* x ^ y *)
   | E_bit_xor_eq of (expr * expr) reg (* x ^= y *)
   | E_bytes of bytes_literal (* 0xFFFA *)
-  | E_contract_of of simple_path reg (* contract_of (M.N) *)
+  | E_contract_of of simple_path reg reg (* contract_of (M.N) *)
   | E_div of (expr * expr) reg (* x / y *)
   | E_div_eq of (expr * expr) reg (* x /= y *)
   | E_equal of (expr * expr) reg (* x == y *)
@@ -348,7 +358,7 @@ and expr =
   | E_true of Region.t (* true *)
   | E_typed of typed_expr reg (* e as t *)
   | E_update of update_expr reg (* {...x, y : z} *)
-  | E_var of simple_path (* M.N.x  y *)
+  | E_var of simple_path reg (* M.N.x  y *)
   | E_xor of (expr * expr) reg (* x ^^ y *)
 
 (* Michelson injection: "Michelson (`{ADD}`) as t" *)
