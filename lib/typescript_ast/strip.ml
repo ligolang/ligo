@@ -53,7 +53,7 @@ let map_opt strip = function
 
 type call_signature =
   { generics : S.variable list
-  ; parameters : S.parameter list
+  ; parameters : S.parameter reg list
   ; rhs_type : S.type_expr option
   }
 
@@ -724,12 +724,12 @@ and strip_call_signature (node : Ast.call_signature wrap) : (call_signature reg,
   let call_sig = { generics; parameters; rhs_type } in
   Ok (mk_reg node#region call_sig)
 
-and format_parameters_into_patterns (node : (S.variable * S.type_expr option) list)
-    : S.parameter list
+and format_parameters_into_patterns (node : (S.variable * S.type_expr option) reg list)
+    : S.parameter reg list
   =
-  let make_parameter (variable, opt) =
+  let make_parameter Region.{ value = variable, opt; region } =
     let path = S.{ path = []; selected = variable } in
-    S.P_var (mk_reg variable#region path), opt
+    Region.{ value = S.P_var (mk_reg variable#region path), opt; region }
   in
   List.map ~f:make_parameter node
 
@@ -1034,13 +1034,15 @@ and strip_D_function_signature (node : Ast.function_signature wrap)
   let type_decl = S.{ decorators = []; name; generics; type_expr } in
   Ok (S.D_type (mk_reg node#region type_decl))
 
-and filter_parameter (node : S.parameter) : (S.variable * S.type_expr option, _) result =
-  let pattern, type_expr = node in
+and filter_parameter (node : S.parameter reg)
+    : ((S.variable * S.type_expr option) reg, _) result
+  =
+  let pattern, type_expr = node.value in
   match pattern with
   | S.P_var path ->
     let S.{ path; selected } = path.value in
     (match path with
-    | [] -> Ok (selected, type_expr)
+    | [] -> Ok (mk_reg node.region (selected, type_expr))
     | _ ->
       let region = S.region_of_pattern pattern in
       Strip_err.(make region Not_a_variable))
@@ -1668,24 +1670,25 @@ and strip_T_function_type (node : Ast.function_type wrap) : (S.type_expr, _) res
   | [] -> Ok fun_type
   | _ -> Ok (S.T_for_all (mk_reg node#region (t_params, fun_type)))
 
-and filter_type_annotations (node : (S.variable * S.type_expr option) list)
-    : ((S.variable * S.type_expr) list, _) result
+and filter_type_annotations (node : (S.variable * S.type_expr option) reg list)
+    : ((S.variable * S.type_expr) reg list, _) result
   =
-  let check = function
+  let check Region.{ value; region } =
+    match value with
     | variable, None -> Strip_err.(make variable#region Missing_type)
-    | variable, Some type_expr -> Ok (variable, type_expr)
+    | variable, Some type_expr -> Ok Region.{ value = variable, type_expr; region }
   in
   Result.all @@ List.map ~f:check node
 
 and strip_formal_parameters (node : Ast.formal_parameters)
-    : ((S.variable * S.type_expr option) list, _) result
+    : ((S.variable * S.type_expr option) reg list, _) result
   =
   let (Ast.Parens parens) = node in
   let parameters = parens#payload.contents in
   Result.all @@ List.map ~f:strip_formal_parameter parameters
 
 and strip_formal_parameter (node : Ast.formal_parameter wrap)
-    : (S.variable * S.type_expr option, _) result
+    : ((S.variable * S.type_expr option) reg, _) result
   =
   let Ast.{ parameter_name; optional; type_opt; default } = node#payload in
   let* parameter = strip_parameter_name parameter_name in
@@ -1708,7 +1711,18 @@ and strip_formal_parameter (node : Ast.formal_parameter wrap)
       let region = Ast.region_of_expression expr in
       Strip_err.(make region Default_argument)
   in
-  Ok (parameter, type_expr)
+  let region =
+    match default with
+    | Some (_, expr) -> Ast.region_of_expression expr
+    | _ ->
+      (match type_opt with
+      | Some (_, type_expr) -> Ast.region_of_type_expr type_expr
+      | None ->
+        (match optional with
+        | Some sym -> sym#region
+        | None -> parameter_name#region))
+  in
+  Ok (mk_reg region (parameter, type_expr))
 
 and strip_parameter_name (node : Ast.parameter_name wrap) : (S.variable, _) result =
   let Ast.{ decorators; access; kwd_override; kwd_readonly; pattern } = node#payload in
@@ -2055,11 +2069,12 @@ and strip_arrow_function (node : Ast.arrow_function wrap) : (S.arrow_fun_expr, _
   let* fun_body = strip_function_body body in
   Ok S.{ generics; parameters; rhs_type; fun_body }
 
-and get_parameters (node : parameters) : (S.parameter list, _) result =
+and get_parameters (node : parameters) : (S.parameter reg list, _) result =
   match node with
   | Parameter variable ->
     let path = S.{ path = []; selected = variable } in
-    Ok [ S.P_var (mk_reg variable#region path), None ]
+    let param = S.P_var (mk_reg variable#region path), None in
+    Ok [ mk_reg variable#region param ]
   | Call_signature call_sig ->
     let { generics = _; parameters; rhs_type = _ } = call_sig.value in
     Ok parameters
@@ -2264,10 +2279,10 @@ and strip_object_entry (node : Ast.object_entry) : (S.expr S.property reg, _) re
   | Object_entry_pair pair -> strip_pair pair
   | Object_entry_spread spread -> Strip_err.(make spread#region Spread_expression)
   | Object_entry_method definition ->
-    let make_parameter (node : S.variable * S.type_expr) : S.parameter =
-      let variable, type_expr = node in
+    let make_parameter (node : (S.variable * S.type_expr) reg) : S.parameter reg =
+      let variable, type_expr = node.value in
       let path = mk_reg variable#region S.{ path = []; selected = variable } in
-      S.P_var path, Some type_expr
+      mk_reg node.region (S.P_var path, Some type_expr)
     in
     let* def = strip_method_definition [] definition in
     let S.{ decorators = dec; method_sig; method_body } = def.value in
