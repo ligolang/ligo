@@ -83,7 +83,14 @@ let stdlib ~loc =
     type 'a pbt_gen [@@ligo.internal.predef]
     type 'a views [@@ligo.internal.predef]
     type chest [@@ligo.internal.predef]
-    type chest_key [@@ligo.internal.predef]]
+    type chest_key [@@ligo.internal.predef]
+
+    module Int = struct
+      external add : int -> int -> int = "ADD" [@@ligo.internal.michelson]
+      external sub : int -> int -> int = "SUB" [@@ligo.internal.michelson]
+
+      let x = add 1 2
+    end]
 
 let loc_of_ligo_location ~loc =
   match (loc : Simple_utils.Location.t) with
@@ -118,6 +125,7 @@ let stri_of_error error =
   pstr_extension ~loc (label, PStr [ content ]) []
 
 let env =
+  (* TODO: disable stdlib *)
   lazy
     (Compmisc.init_path ();
      Compmisc.initial_env ())

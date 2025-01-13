@@ -11,6 +11,7 @@ open Caml_error
 (* TODO: put this somewhere else *)
 let ( let@@ ) f x = f x
 
+(* TODO: should OCaml int map to Ligo int? What about overflow? *)
 (* TODO: error recovery *)
 (* TODO: non existential GADT's and FCM could be supported *)
 (* TODO: a lot of existential could also be supported *)
@@ -53,7 +54,8 @@ let extract_field_name lid =
 
 
 (* TODO: magic ligo stuff *)
-let extract_payload_string payload =
+(* TODO: use this function?  *)
+let _extract_payload_string payload =
   match payload with
   | PStr
       [ { pstr_desc =
@@ -122,42 +124,6 @@ let extract_sig_item_attrs attrs =
     ~init:Sig_item_attr.default_attributes
     ~f:(fun ~key acc -> Sig_item_attr.apply_sig_item_attr ~key ~value:None acc)
     attrs
-
-
-(* TODO: ppxlib? *)
-
-(* TODO: use this function? *)
-let _extract_ligo_constant payload type_typ =
-  (* TODO: assert properties of ligo constant? *)
-  let { type_params = _
-      ; type_arity = expected_arity
-      ; type_kind = _
-      ; type_private = _
-      ; type_manifest = _
-      ; type_variance = _
-      ; type_separability = _
-      ; type_is_newtype = _
-      ; type_expansion_scope = _
-      ; type_loc = loc
-      ; type_attributes = _
-      ; type_immediate = _
-      ; type_unboxed_default = _
-      ; type_uid = _
-      }
-    =
-    type_typ
-  in
-  let loc = extract_loc ~loc in
-  let@@ () = try_enhance ~loc in
-  let constant = extract_payload_string payload in
-  let constant =
-    match Literal_types.of_string_opt constant with
-    | Some constant -> constant
-    | None -> raise_pre_error @@ E_unsupported
-  in
-  let arity = Literal_types.to_arity constant in
-  assert (arity = expected_arity);
-  constant, arity
 
 
 (* TODO: better locations, probably using core_type *)
@@ -843,6 +809,7 @@ and extract_str_include_ocaml_predef incl_mod =
   let { mod_desc; mod_loc; mod_type = _; mod_env = _; mod_attributes } = incl_mod in
   let loc = extract_loc ~loc:mod_loc in
   let@@ () = try_enhance ~loc in
+  assert (List.is_empty mod_attributes);
   (* TODO: this is weird *)
   let mod_expr =
     match mod_desc with
@@ -944,6 +911,7 @@ and extract_sig_value binding =
   let loc = extract_loc ~loc:val_loc in
   let@@ () = try_enhance ~loc in
   assert (List.is_empty val_prim);
+  assert (List.is_empty val_attributes);
   let attr = extract_sig_item_attrs val_attributes in
   (* TODO: which loc to use? *)
   let type_ =
@@ -1025,13 +993,21 @@ and extract_primitive ~loc vd =
   in
   (* TODO: use val_loc? *)
   (* TODO: check val_desc type? *)
-  assert (List.is_empty val_attributes);
-  match val_prim with
-  (* TODO: those names are duplicated *)
-  | [ ("%ligo.nat" | "%ligo.tez" | "%ligo.address") ] ->
-    (* TODO: store which primitve? *)
-    decl_wrap loc @@ D_external val_id
-  | _ -> raise_pre_error @@ E_unsupported
+  match val_attributes, val_prim with
+  | ( [ { attr_name = { txt = "ligo.internal.constant"; loc = _ }
+        ; attr_payload = PStr []
+        ; attr_loc = _
+        }
+      ]
+    , [ prim ] ) ->
+    (* TODO: store which constant' *)
+    let constant' =
+      match Constant.read_constant' prim with
+      | Some constant' -> constant'
+      | None -> raise_pre_error @@ E_unsupported
+    in
+    decl_wrap loc @@ D_constant (val_id, constant')
+  | ([] | _ :: _), prim -> raise_pre_error @@ E_unsupported
 
 
 and extract_type_decl decl =
@@ -1128,9 +1104,7 @@ and extract_type_decl decl =
   (* | [ { attr_name = { txt; loc = _ }; attr_payload = PStr []; attr_loc = _ } ] ->
     Format.eprintf "Unsupported attribute: %s@." txt;
     raise_pre_error @@ E_unsupported *)
-  | _ ->
-    let () = assert false in
-    raise_pre_error @@ E_unsupported
+  | _ -> raise_pre_error @@ E_unsupported
 
 
 and extract_module_binding mb =

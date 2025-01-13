@@ -1,4 +1,6 @@
 (library
  (name caml_contract)
+ (flags
+  (:standard -nostdlib -nopervasives))
  (preprocess
-  (pps ppx_caml_ligo)))
+  (staged_pps ppx_caml_ligo)))

@@ -99,6 +99,14 @@ let try_enhance ~loc f =
     raise @@ Caml_error { err_tag = tag; err_loc = loc }
 
 
+(* let try_recover ~loc ~on_error f =
+  try f () with
+  | Caml_pre_error tag -> on_error @@ { err_tag = tag; err_loc = loc }
+  | Caml_error error -> on_error error
+  | exn ->
+    let tag = E_unexpected_error exn in
+    on_error @@ { err_tag = tag; err_loc = loc } *)
+
 let try_recover ~loc ~on_error f = f ()
 
 let wrap_exn ~loc f =
