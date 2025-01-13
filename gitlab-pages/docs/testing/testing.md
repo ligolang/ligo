@@ -437,6 +437,104 @@ const test_accounts = () => {
 
 </Syntax>
 
+### Testing views
+
+You can call views in tests and verify the results.
+However, the process for calling a view in a test is different from calling an entrypoint.
+
+For example, this contract stores a string.
+It has entrypoints that change the string and a view that returns the string:
+
+<Syntax syntax="cameligo">
+
+```cameligo group=test_views
+module Testviews = struct
+
+  type storage = string
+
+  type return_type = operation list * storage
+
+  [@entry]
+  let set (inputStr : storage) (_storage: storage) : return_type =
+   [], inputStr
+
+  [@entry]
+  let reset (_u : unit) (_storage : storage) : return_type =
+    [], ""
+
+  [@view]
+  let getString (_u : unit) (storage : storage) : string =
+    storage
+end
+```
+
+This test casts the contract's typed address to an ordinary address type and uses that address to call the view with the function `Tezos.Next.View.call` and pass the parameter `unit`.
+This function returns an option, so the test matches the option to verify the response from the view:
+
+```cameligo group=test_views
+module Test = Test.Next
+module Tezos = Tezos.Next
+
+let test_view =
+  let contract = Test.Originate.contract (contract_of Testviews) "" 0tez in
+  let _ : nat = Test.Contract.transfer_exn (Test.Typed_address.get_entrypoint "set" contract.taddr) "hello" 0tez in
+  let address = Test.Typed_address.to_address contract.taddr in
+  let viewResultOption : string option = Tezos.View.call "getString" unit address in
+  let viewResult = match viewResultOption with
+    | Some str -> str
+    | None -> ""
+  in
+  Assert.assert (Test.Compare.eq viewResult "hello")
+```
+
+</Syntax>
+
+<Syntax syntax="jsligo">
+
+```jsligo group=test_views
+namespace Testviews {
+
+  type storage = string;
+
+  type return_type = [list<operation>, storage];
+
+  @entry
+  const set = (inputStr: storage, _storage: storage): return_type =>
+    [list([]), inputStr];
+
+  @entry
+  const reset = (_u: unit, _storage: storage): return_type =>
+    [list([]), ""];
+
+  @view
+  const getString = (_u: unit, storage: storage): string =>
+    storage;
+}
+```
+
+This test casts the contract's typed address to an ordinary address type and uses that address to call the view with the function `Tezos.Next.View.call`.
+This function returns an option, so the test matches the option to verify the response from the view:
+
+```jsligo group=test_views
+import Test = Test.Next;
+import Tezos = Tezos.Next;
+
+const test_view = () => {
+  const contract = Test.Originate.contract(contract_of(Testviews), "", 0tez);
+  Test.Contract.transfer_exn(Test.Typed_address.get_entrypoint("set", contract.taddr), "hello", 0tez);
+  const address = Test.Typed_address.to_address(contract.taddr);
+  const viewResultOption: option<string> = Tezos.View.call("getString", unit, address);
+  const viewResult = match(viewResultOption) {
+    when(Some(str)): str;
+    when(None()): "";
+  };
+  Assert.assert(Test.Compare.eq(viewResult, "hello"));
+};
+const test1 = test_view();
+```
+
+</Syntax>
+
 ### Testing events
 
 To test events, emit them as usual with the `Tezos.emit` function and use the `Test.Next.State.last_events` function to capture the most recent events, as in this example:
