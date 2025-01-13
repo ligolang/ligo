@@ -30,17 +30,7 @@ const sidebars = {
     "Syntax": [
       "syntax/comments",
       "syntax/variables",
-      {
-        "type": "category",
-        "label": "Functions",
-        "items": [
-          "functions/declaring",
-          "functions/lambdas",
-          "functions/higher-order",
-          "functions/inlining",
-          "functions/recursion"
-        ]
-      },
+      "syntax/functions",
       {
         "type": "category",
         "label": "Flow control",
