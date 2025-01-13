@@ -151,7 +151,7 @@ and method_signature =
   ; method_name : variable
   ; optional : bool
   ; generics : variable list
-  ; parameters : (variable * type_expr) list
+  ; parameters : (variable * type_expr) reg list
   ; rhs_type : type_expr
   }
 
@@ -169,7 +169,7 @@ and fun_decl =
   ; comments : comment list (* From the keyword "function" *)
   ; fun_name : variable
   ; generics : variable list
-  ; parameters : parameter list
+  ; parameters : parameter reg list
   ; rhs_type : type_expr option
   ; fun_body : statement list reg
   }
@@ -262,9 +262,9 @@ and member_type =
   }
 
 (* Functional type *)
-and fun_type = (variable * type_expr) list * type_expr
+and fun_type = (variable * type_expr) reg list * type_expr
 
-(* Object type *)
+(* Object *)
 and 'a _object = 'a property reg list reg
 
 and 'a property =
@@ -292,6 +292,7 @@ and pattern =
   | P_string of string_literal (* "string" *)
   | P_true of Region.t (* true *)
   | P_var of simple_path reg (* x  M.N.x *)
+  | P_typed of (pattern * type_expr) reg (* NOTE: ONLY INTERNAL *)
 
 (* Array pattern (shadowing the predefined type [array]) *)
 and 'a array = 'a element list reg
@@ -367,7 +368,7 @@ and michelson_expr = (variable * string_literal * type_expr) reg
 (* Functional expressions *)
 and arrow_fun_expr =
   { generics : variable list
-  ; parameters : parameter list
+  ; parameters : parameter reg list
   ; rhs_type : type_expr option
   ; fun_body : fun_body
   }
@@ -426,8 +427,8 @@ let region_of_pattern = function
   | P_object { region; _ } -> region
   | P_string w -> w#region
   | P_true r -> r
-  (*  | P_typed { region; _ } -> region*)
   | P_var { region; _ } -> region
+  | P_typed { region; _ } -> region
 
 let region_of_expr = function
   | E_add { region; _ }
