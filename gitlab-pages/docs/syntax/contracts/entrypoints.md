@@ -430,6 +430,58 @@ Because `default` is a reserved keyword in JsLIGO, if you want to create an entr
 
 For more information about the default entrypoint and its internal behavior, see [Implementation details: the default entrypoint](https://docs.tezos.com/smart-contracts/entrypoints#implementation-details-the-default-entrypoint) on docs.tezos.com.
 
+If a contract has only one entrypoint, that entrypoint becomes the default entrypoint and loses its name.
+For example, this contract has only one entrypoint, which is named `increment`.
+When it is compiled it becomes the default entrypoint, so the test calls the `default` entrypoint instead of `increment`:
+
+<Syntax syntax="cameligo">
+
+```cameligo group=lost_entrypoint_name
+module OneEntrypoint = struct
+  type storage = int
+  type return_type = operation list * storage
+
+  [@entry]
+  let increment (_ : unit) (storage : storage) : return_type =
+    [], storage + 1
+
+end
+
+module Test = Test.Next
+
+let test_one_entrypoint =
+  let initial_storage = 42 in
+  let contract = Test.Originate.contract (contract_of OneEntrypoint) initial_storage 0tez in
+  let _ : nat = Test.Contract.transfer_exn (Test.Typed_address.get_entrypoint "default" contract.taddr) unit 0tez in
+  Assert.assert ((Test.Typed_address.get_storage contract.taddr) = initial_storage + 1)
+```
+
+</Syntax>
+
+<Syntax syntax="jsligo">
+
+```jsligo group=lost_entrypoint_name
+namespace OneEntrypoint {
+  type storage = int;
+  type return_type = [list<operation>, storage];
+
+  @entry
+  const increment = (_: unit, storage: storage): return_type =>
+    [[], storage + 1];
+};
+
+import Test = Test.Next;
+
+const test_one_entrypoint = (() => {
+  let initial_storage = 42;
+  let contract = Test.Originate.contract(contract_of(OneEntrypoint), initial_storage, 0tez);
+  Test.Contract.transfer_exn(Test.Typed_address.get_entrypoint("default", contract.taddr), unit, 0tez);
+  return Assert.assert(Test.Typed_address.get_storage(contract.taddr) == initial_storage + 1);
+}) ();
+```
+
+</Syntax>
+
 ## The main function
 
 In earlier versions of LIGO, it was possible to write a contract that had a single main function named `main` that branched according to the parameter passed to it.
