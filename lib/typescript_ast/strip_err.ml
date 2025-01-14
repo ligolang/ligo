@@ -251,7 +251,7 @@ let to_string = function
   | Non_integer -> "Non-integer numbers are not supported in JsLIGO."
   | Regex -> "Regular expressions are not supported in JsLIGO."
   | Super -> "Superclasses are not supported in JsLIGO."
-  | Template_string -> "Template strings are not supported in JsLIGO."
+  | Template_string -> "Multi-part template strings are not supported in JsLIGO."
   | Return_type_absent ->
     "Function signatures without return types are not supported in JsLIGO."
   | Named_lambda -> "Named lambdas are not supported in JsLIGO."
