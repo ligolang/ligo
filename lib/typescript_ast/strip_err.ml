@@ -148,6 +148,7 @@ type t =
   | Invalid_import
   | Empty_import_list
   | Import_and_rename
+  | Multiple_spreads_in_object
 
 type error = t
 
@@ -308,6 +309,8 @@ let to_string = function
   | Invalid_import -> "This form of import is not supported in JsLIGO."
   | Empty_import_list -> "Empty import lists are not supported in JsLIGO."
   | Import_and_rename -> "Importing with a renaming is not supported in JsLIGO."
+  | Multiple_spreads_in_object ->
+    "Multiple spreads in objects are not supported in JsLIGO."
 
 (* Creating errors *)
 

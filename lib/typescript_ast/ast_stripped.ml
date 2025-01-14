@@ -383,7 +383,7 @@ and fun_body =
 (* Functional update of object expressions *)
 and update_expr =
   { obj_expr : expr
-  ; updates : expr property list
+  ; updates : expr property reg list
   }
 
 (* Ternary conditional *)
