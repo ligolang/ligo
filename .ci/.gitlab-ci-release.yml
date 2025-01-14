@@ -293,39 +293,6 @@ generate-homebrew-version:
     - if: ($CI_COMMIT_BRANCH =~ /^release/ && $DRY_RUN_RELEASE != null)
       when: always
 
-bottle-sonoma-i7:
-  stage: pretooling
-  variables:
-    GIT_STRATEGY: clone
-  tags:
-    - i7-mac
-  needs:
-    - job: generate-homebrew-version
-      artifacts: true
-    - job: build_release_env_vars
-      artifacts: true
-  script:
-    - brew install --build-bottle ./HomebrewFormula/ligo.rb --verbose
-    - BOTTLE_INFO=$(brew bottle --no-rebuild --force-core-tap ./HomebrewFormula/ligo.rb | grep sha256)
-    - |
-      curl --header "PRIVATE-TOKEN: ${TOKEN_API}" \
-      --upload-file ./ligo--${RELEASE_VERSION}.sonoma.bottle.tar.gz \
-      "https://gitlab.com/api/v4/projects/12294987/packages/generic/ligo_bottle/current/ligo-${RELEASE_VERSION}.sonoma.bottle.tar.gz"
-    - echo "BOTTLE_INFO_I7=${BOTTLE_INFO}" >> bottle_hash_i7.env
-  after_script:
-    - brew uninstall ligo || true
-    # Remove cache in case of rebuild of the bottle
-    - rm -rf ~/Library/Caches/Homebrew/ligo--git || true
-  rules:
-    - if: ($CI_COMMIT_BRANCH =~ /^release/ &&  $TRIGGER_DOC_UPDATE != null) 
-      when: always
-    - if: ($CI_COMMIT_BRANCH =~ /^release/ && $DRY_RUN_RELEASE != null)
-      when: always
-  artifacts:
-    reports:
-      dotenv: 
-        - bottle_hash_i7.env
-
 bottle-sonoma-m1:
   stage: pretooling
   variables:
@@ -364,8 +331,6 @@ update-bottle-reference:
   tags:
     - gcp-ubuntu
   needs:
-      - job: bottle-sonoma-i7
-        artifacts: true
       - job: bottle-sonoma-m1
         artifacts: true
       - job: build_release_env_vars
