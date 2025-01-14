@@ -1846,7 +1846,12 @@ and strip_E_as_expression (node : Ast.as_expression wrap) : (S.expr, _) result =
             | _, [ String_fragment literal ], _ ->
               let code_inj = fun_name, literal, type_expr in
               let code_inj = mk_reg node#region code_inj in
-              Ok (S.E_michelson code_inj)
+              (* [NOTE][TEMPORARY]: The wrapping of a S.E_typed
+                 constructor (with duplication of the type annotation)
+                 is not strictly necessary, but it helps with the
+                 compilation to the unified AST. *)
+              let typed_expr = S.E_michelson code_inj, type_expr in
+              Ok S.(E_typed (mk_reg node#region typed_expr))
             | _ -> ok)
           | _ -> ok)
         | _ -> ok)
