@@ -7,4 +7,5 @@
   ligo.tezos-utils
   cst
   ast_unified
-  predefined))
+  predefined
+  typescript_ast))

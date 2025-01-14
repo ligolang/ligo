@@ -1,17 +1,36 @@
 open Core
 open Unification_shared.Helpers
+open Region
 module Utils = Simple_utils.Utils
 module Ligo_option = Simple_utils.Ligo_option
 module Ligo_string = Simple_utils.Ligo_string
 module Ne_list = Simple_utils.Ne_list
 module O = Ast_unified
 module I = Cst.Jsligo
+module T = Typescript_ast.Ast_stripped
 
 (* Utilities *)
 
 let ( <@ ) f g x = f (g x)
+let mk_reg region value = Region.{ region; value }
+
+(* Is this really needed? Check unified -> core translation. *)
+(*
+let rec unspool_path : T.expr -> T.expr * T.variable list = function
+  | E_member expr ->
+     let expr, name = expr.value in
+     let expr, path = unspool_path expr in
+     expr, name :: path
+  | expr -> expr, []
+
+let unspool_path expr =
+  let expr, path = unspool_path expr in
+  expr, List.rev path
+ *)
 
 (* Generics *)
+
+(* OLD *)
 
 let split_for_all = function
   | I.T_ForAll { value = generics, type_expr; _ } -> Some generics, type_expr
@@ -24,6 +43,24 @@ let split_for_all_opt = function
     let gen, te = split_for_all te in
     gen, Some te
 
+
+(* NEW *)
+
+let split_for_all' = function
+  | T.T_for_all { value = type_vars, type_expr; _ } -> Some type_vars, type_expr
+  | type_expr -> None, type_expr
+
+
+let split_for_all_opt' = function
+  | None -> None, None
+  | Some te ->
+    let gen, te = split_for_all' te in
+    gen, Some te
+
+
+(* LISTS *)
+
+(* TODO: Remove *)
 
 let ghost : string I.wrap = I.Wrap.ghost ""
 
@@ -46,6 +83,8 @@ let nsep_or_term_hd : ('a, 'b) Utils.nsep_or_term -> 'a * ('a, 'b) Utils.sep_or_
   | `Term ((a, s) :: (a_, b) :: tl) -> a, Some (`Term ((a_, b) :: tl))
 
 
+(* In parsing *)
+
 module TODO_do_in_parsing = struct
   let conv_attr attr_reg =
     let (key, value), _loc = w_split attr_reg in
@@ -57,11 +96,11 @@ module TODO_do_in_parsing = struct
 
 
   let conv_attrs = List.map ~f:conv_attr
-  let weird_attr _ = ()
-  let unused_node () = failwith "unused node, can we clean ?"
+  let ignore_attr _ = ()
   let labelize x = O.Label.T.create ~loc:(w_snd x) (w_fst x)
   let pattern_to_param pattern = O.Param.{ pattern; param_kind = `Const }
 
+  (* TODO: Remove *)
   let field_as_open_t (ma : I.type_expr) =
     (* here, we should use module expressions, maybe ? *)
     match ma with
@@ -69,6 +108,7 @@ module TODO_do_in_parsing = struct
     | _ -> None
 
 
+  (* TODO: Remove *)
   let is_open = function
     | I.E_Par _ -> true
     | _ -> false
@@ -92,24 +132,45 @@ module TODO_do_in_parsing = struct
     | _ -> O.Test_clause.ClauseBlock (single_stmt_block x)
 
 
+  let control_flow_clause' compile_statement (x : T.statement)
+      : (T.statement, T.statement list) O.Test_clause.t
+    =
+    (* if the statement is a block containing a single instruction,
+       we do not want to emit a ClauseBlock, but a ClauseInstr *)
+    match Location.unwrap @@ compile_statement x with
+    | O.S_instr (T.S_block { value; _ }) ->
+      (match value with
+      | [ one ] ->
+        (match Location.unwrap @@ compile_statement one with
+        | S_instr i -> O.Test_clause.ClauseInstr i
+        | _ -> O.Test_clause.ClauseBlock [ x ])
+      | _ -> O.Test_clause.ClauseBlock value)
+    | S_instr i -> O.Test_clause.ClauseInstr i
+    | _ -> O.Test_clause.ClauseBlock [ x ]
+
+
+  (* TODO: Remove *)
   let get_var = function
     | I.Var v | I.Esc v -> v
 
-
-  let mvar x = Ligo_prim.Module_var.of_input_var ~loc:(Location.File x#region) x#payload
-  let var x = Ligo_prim.Value_var.of_input_var ~loc:(Location.File x#region) x#payload
 
   let esc_var x =
     let x = get_var x in
     Ligo_prim.Value_var.of_input_var ~loc:(Location.File x#region) x#payload
 
 
-  let tvar x = Ligo_prim.Type_var.of_input_var ~loc:(Location.File x#region) x#payload
-
   let esc_tvar x =
     let x = get_var x in
     Ligo_prim.Type_var.of_input_var ~loc:(Location.File x#region) x#payload
 
+
+  (* Keep *)
+
+  let mvar x = Ligo_prim.Module_var.of_input_var ~loc:(Location.File x#region) x#payload
+  let var x = Ligo_prim.Value_var.of_input_var ~loc:(Location.File x#region) x#payload
+  let tvar x = Ligo_prim.Type_var.of_input_var ~loc:(Location.File x#region) x#payload
+
+  (* OLD *)
 
   let selection_path (t : I.namespace_selection) =
     match t with
@@ -120,8 +181,19 @@ module TODO_do_in_parsing = struct
       Ne_list.append init (Nonempty_list.singleton last)
 
 
+  (* NEW *)
+
+  let selection_path' (t : T.simple_path reg) =
+    let T.{ path; selected } = t.value in
+    let rev_path = List.rev path in
+    let rev_path = Nonempty_list.(selected :: rev_path) in
+    Nonempty_list.reverse rev_path
+
+
   let compile_rows = O.Non_linear_rows.make
 end
+
+(* OLD *)
 
 module Eq = struct
   type expr = I.expr
@@ -136,14 +208,40 @@ module Eq = struct
   type program = I.t
   type sig_expr = I.intf_expr
   type sig_entry = I.intf_entry
+end
 
-  let not_part_of_the_language _ = assert false
+(* NEW *)
+
+module Eq' = struct
+  type expr = T.expr
+  type ty_expr = T.type_expr
+  type pattern = T.pattern
+  type statement = T.statement
+  type block = T.statement list
+  type mod_expr = T.statement list
+  type instruction = T.statement
+  type declaration = T.declaration
+  type program_entry = T.statement
+  type program = T.t
+  type sig_expr = T.simple_path
+  type sig_entry = T.intf_entry
 end
 
 let pattern_of_expr x = `Expr x
 let pattern_of_pattern x = `Pattern x
 
+(* OLD *)
+
+module Folding_orig = Folding (* TEMPORARY (shadowing) *)
 module Folding = Folding (Eq)
+
+(* NEW *)
+
+module Folding' = Folding_orig (Eq')
+
+(* Expressions *)
+
+(* OLD *)
 
 let rec expr : Eq.expr -> Folding.expr =
  fun e ->
@@ -153,18 +251,23 @@ let rec expr : Eq.expr -> Folding.expr =
     let I.{ op = _; arg1; arg2 } = r_fst op in
     O.E_binary_op { operator = Location.wrap ~loc sign; left = arg1; right = arg2 }
   in
-  let compile_unary_op (sign : AST.Operators.op) op =
+  let compile_unary_op (sign : O.Operators.op) op =
     let I.{ op = _; arg } = r_fst op in
     O.E_unary_op { operator = Location.wrap ~loc sign; arg }
   in
-  let compile_function (type_vars : I.generics option) parameters rhs_type fun_body =
-    let type_params =
+  let compile_function
+      (type_vars : I.generics option)
+      (parameters : I.arrow_fun_params)
+      (rhs_type : I.type_annotation option)
+      (fun_body : I.fun_body)
+    =
+    let type_params : O.Ty_variable.t Nonempty_list.t option =
       let open Ligo_option in
       let* type_vars in
       let* tvs = sep_or_term_to_nelist type_vars.value.inside in
       Option.return (Nonempty_list.map ~f:TODO_do_in_parsing.esc_tvar tvs)
     in
-    let parameters =
+    let parameters : I.pattern O.Param.t list =
       match parameters with
       | I.ParParams x ->
         x.value.inside
@@ -172,7 +275,7 @@ let rec expr : Eq.expr -> Folding.expr =
         |> List.map ~f:TODO_do_in_parsing.pattern_to_param
       | NakedParam x -> [ TODO_do_in_parsing.pattern_to_param x ]
     in
-    let ret_type = Option.map ~f:snd rhs_type in
+    let ret_type : I.type_expr option = Option.map ~f:snd rhs_type in
     match fun_body with
     | I.StmtBody body ->
       return
@@ -242,7 +345,7 @@ let rec expr : Eq.expr -> Folding.expr =
     let f x =
       let I.{ attributes; property_id; property_rhs } = r_fst x in
       let loc = r_snd x in
-      TODO_do_in_parsing.weird_attr attributes;
+      TODO_do_in_parsing.ignore_attr attributes;
       let open O.Object_ in
       let field_id =
         match property_id with
@@ -260,7 +363,7 @@ let rec expr : Eq.expr -> Folding.expr =
     let f x =
       let I.{ attributes; property_id; property_rhs } = r_fst x in
       let loc = r_snd x in
-      TODO_do_in_parsing.weird_attr attributes;
+      TODO_do_in_parsing.ignore_attr attributes;
       let open O.Object_ in
       let field_id =
         match property_id with
@@ -432,6 +535,194 @@ let rec expr : Eq.expr -> Folding.expr =
     let I.{ kwd_do = _; statements } = value in
     return @@ E_do statements.value.inside
 
+
+(* NEW *)
+
+let expr' : Eq'.expr -> Folding'.expr =
+ (*rec*)
+ fun e ->
+  let loc = Location.lift (T.region_of_expr e) in
+  let return x = Location.wrap ~loc x in
+  let compile_bin_op (sign : O.Operators.op) (op : (T.expr * T.expr) Region.reg) =
+    let left, right = op.Region.value in
+    return @@ O.E_binary_op { operator = Location.wrap ~loc sign; left; right }
+  in
+  let compile_unary_op (sign : O.Operators.op) (op : T.expr Region.reg) =
+    let arg = op.Region.value in
+    return @@ O.E_unary_op { operator = Location.wrap ~loc sign; arg }
+  in
+  let compile_postfix_op (expr : T.variable reg) op =
+    let loc = Location.lift expr.region in
+    let post_op = Location.wrap ~loc op in
+    let var = T.{ path = []; selected = expr.value } in
+    let expr = T.E_var (mk_reg expr.region var) in
+    return @@ O.E_postfix { post_op; expr }
+  in
+  let compile_prefix_op (expr : T.variable reg) op =
+    let loc = Location.lift expr.region in
+    let pre_op = Location.wrap ~loc op in
+    let var = T.{ path = []; selected = expr.value } in
+    let expr = T.E_var (mk_reg expr.region var) in
+    return @@ O.E_prefix { pre_op; expr }
+  in
+  let compile_property (property : 'a T.property reg) =
+    let T.
+          { decorators = _
+          ; comments = _
+          ; property_name
+          ; static = _
+          ; optional = _
+          ; property_rhs
+          }
+      =
+      property.value
+    in
+    let field_id = O.Object_.F_Name TODO_do_in_parsing.(labelize property_name) in
+    let field_rhs = Some property_rhs in
+    let object_ = O.Object_.{ field_id; field_rhs } in
+    Location.wrap ~loc:(Location.lift property.region) object_
+  in
+  let compile_properties (properties : 'a T.property reg list) =
+    List.map ~f:compile_property properties
+  in
+  let compile_function (expr : T.arrow_fun_expr reg) =
+    let T.{ generics; parameters; rhs_type; fun_body } = expr.value in
+    let type_params : O.Ty_variable.t Nonempty_list.t option =
+      match generics with
+      | [] -> None
+      | t_var :: t_vars ->
+        let t_var = TODO_do_in_parsing.tvar t_var
+        and t_vars = List.map ~f:TODO_do_in_parsing.tvar t_vars in
+        Some Nonempty_list.(t_var :: t_vars)
+    in
+    let parameters : T.pattern O.Param.t list =
+      let f parameter =
+        let Region.{ value; region } = parameter in
+        let pattern, t_expr_opt = value in
+        let pattern =
+          match t_expr_opt with
+          | None -> pattern
+          | Some t_expr -> T.P_typed (mk_reg region (pattern, t_expr))
+        in
+        TODO_do_in_parsing.pattern_to_param pattern
+      in
+      List.map ~f parameters
+    in
+    let ret_type = rhs_type in
+    match fun_body with
+    | T.Stmt_body body ->
+      return
+      @@ O.E_block_poly_fun { type_params; parameters; ret_type; body = body.value }
+    | Expr_body body -> return @@ O.E_poly_fun { type_params; parameters; ret_type; body }
+  in
+  let compile_chain_assignment op { value = expr1, expr2; _ } =
+    let op = O.Assign_chainable.Assignment_operator op in
+    return @@ O.E_struct_assign_chainable { expr1; op; expr2 }
+  in
+  match e with
+  | E_add expr -> compile_bin_op PLUS expr
+  | E_add_eq expr -> compile_chain_assignment Plus_eq expr
+  | E_and expr -> compile_bin_op DAMPERSAND expr
+  | E_app { value = expr, args; _ } -> return @@ O.E_call (expr, return args)
+  | E_array { value = items; _ } ->
+    let f : T.expr T.element -> _ AST.Array_repr.item = function
+      | Spread expr -> Rest_entry expr
+      | Element expr -> Expr_entry expr
+    in
+    return @@ O.E_array (List.map ~f items)
+  | E_arrow_fun expr -> compile_function expr
+  | E_assign { value = expr1, expr2; _ } ->
+    return @@ O.E_struct_assign_chainable { expr1; op = Eq; expr2 }
+  | E_bit_and expr -> compile_bin_op WORD_LAND expr
+  | E_bit_and_eq expr -> compile_chain_assignment BitAnd_eq expr
+  | E_bit_neg expr -> compile_unary_op WORD_NOT expr
+  | E_bit_or expr -> compile_bin_op WORD_LOR expr
+  | E_bit_or_eq expr -> compile_chain_assignment BitOr_eq expr
+  | E_bit_sl expr -> compile_bin_op WORD_LSL expr
+  | E_bit_sl_eq expr -> compile_chain_assignment BitSl_eq expr
+  | E_bit_sr expr -> compile_bin_op WORD_LSR expr
+  | E_bit_sr_eq expr -> compile_chain_assignment BitSr_eq expr
+  | E_bit_xor expr -> compile_bin_op WORD_LXOR expr
+  | E_bit_xor_eq expr -> compile_chain_assignment BitXor_eq expr
+  | E_bytes expr ->
+    let hex = snd expr#payload in
+    return @@ O.E_literal (Literal_bytes (Hex.to_bytes hex))
+  | E_contract_of expr ->
+    let path = TODO_do_in_parsing.selection_path' expr.value in
+    let lst = Nonempty_list.map ~f:TODO_do_in_parsing.mvar path in
+    return @@ O.E_contract lst
+  | E_div expr -> compile_bin_op SLASH expr
+  | E_div_eq expr -> compile_chain_assignment Div_eq expr
+  | E_equal expr -> compile_bin_op DEQ expr
+  | E_false _ -> return @@ O.E_constr (Ligo_prim.Label.of_string "False")
+  | E_function expr -> compile_function expr
+  | E_geq expr -> compile_bin_op GE expr
+  | E_gt expr -> compile_bin_op GT expr
+  | E_int expr -> return @@ O.E_literal (Literal_int (snd expr#payload))
+  | E_leq expr -> compile_bin_op LE expr
+  | E_lt expr -> compile_bin_op LT expr
+  | E_member expr ->
+    (* We assume that there is no need for unspooling [expr]. Correct? *)
+    let expr, name = expr.value in
+    let name = O.Selection.FieldName (TODO_do_in_parsing.labelize name) in
+    return @@ O.E_proj (expr, [ name ])
+  | E_michelson expr ->
+    (* Module [Strip] wraps for now a [E_typed] around the
+        [E_michelson], so we can safely ignore here the type
+        expression. *)
+    let language, code, _type_expr = expr.value in
+    let code = T.E_template code in
+    return @@ O.E_raw_code { language = language#payload; code }
+  | E_mult expr -> compile_bin_op STAR expr
+  | E_mult_eq expr -> compile_chain_assignment Times_eq expr
+  | E_neg expr -> compile_unary_op MINUS expr
+  | E_neq expr -> compile_bin_op EQ_SLASH_EQ expr
+  | E_not expr -> compile_unary_op EX_MARK expr
+  | E_object expr -> return @@ O.E_object (compile_properties expr.value)
+  | E_or expr -> compile_bin_op DPIPE expr
+  | E_post_decr expr -> compile_postfix_op expr O.Prefix_postfix.Decrement
+  | E_post_incr expr -> compile_postfix_op expr O.Prefix_postfix.Increment
+  | E_pre_decr expr -> compile_prefix_op expr O.Prefix_postfix.Decrement
+  | E_pre_incr expr -> compile_prefix_op expr O.Prefix_postfix.Increment
+  | E_rem expr -> compile_bin_op PRCENT expr
+  | E_rem_eq expr -> compile_chain_assignment Mod_eq expr
+  | E_string expr ->
+    return @@ O.E_literal (Literal_string (Ligo_string.Standard expr#payload))
+  | E_sub expr -> compile_bin_op MINUS expr
+  | E_subscript expr ->
+    (* We assume that there is no need for unspooling [expr]. Correct? *)
+    let expr, int = expr.value in
+    let index = O.Selection.Component_num int#payload in
+    return @@ O.E_proj (expr, [ index ])
+  | E_sub_eq expr -> compile_chain_assignment Min_eq expr
+  | E_template expr ->
+    return @@ O.E_literal (Literal_string (Ligo_string.Verbatim expr#payload))
+  | E_ternary expr ->
+    let T.{ condition; truthy; falsy } = expr.value in
+    let ifnot = Some falsy in
+    return @@ O.E_cond { test = condition; ifso = truthy; ifnot }
+  | E_true _ -> return @@ O.E_constr (Ligo_prim.Label.of_string "True")
+  | E_typed expr ->
+    let expr, type_expr = expr.value in
+    return @@ O.E_annot (expr, type_expr)
+  | E_update expr ->
+     let T.{ obj_expr; updates } = expr.value in
+     let updates = compile_properties updates in
+     return @@ O.E_object_update { object_ = obj_expr; updates }
+  | E_var expr ->
+    let T.{ path; selected } = expr.value in
+    (match path with
+    | [] -> return @@ O.E_variable_esc (Raw (TODO_do_in_parsing.var selected))
+    | fst_mod :: other_mods ->
+      let module_path = Nonempty_list.(fst_mod :: other_mods) in
+      let module_path : O.Mod_variable.t Nonempty_list.t =
+        Nonempty_list.map ~f:TODO_do_in_parsing.mvar module_path
+      in
+      let field_as_open = false in
+      let field = T.{ path = []; selected } in
+      let field = T.E_var (mk_reg selected#region field) in
+      return @@ O.E_module_open_in { module_path; field; field_as_open })
+  | E_xor expr -> compile_bin_op WORD_XOR expr
 
 let rec ty_expr : Eq.ty_expr -> Folding.ty_expr =
  fun t ->
