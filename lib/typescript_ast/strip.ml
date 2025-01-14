@@ -1918,7 +1918,7 @@ and strip_assignment_operator (node : Ast.assignment_operator)
   | Bit_or_eq _ -> Ok (fun args -> S.E_bit_or_eq args) (* |= *)
   | Bit_sr_eq _ -> Ok (fun args -> S.E_bit_sr_eq args) (* >>= *)
   | Bit_usr_eq sym -> Strip_err.(make sym#region Bit_usr_eq) (* >>>= *)
-  | Bit_sl_eq _ -> Ok (fun args -> S.E_bit_sl_seq args) (* <<= *)
+  | Bit_sl_eq _ -> Ok (fun args -> S.E_bit_sl_eq args) (* <<= *)
   | Exp_eq sym -> Strip_err.(make sym#region Exp_eq) (* **= *)
   | Log_and_eq sym ->
     (* &&= *)

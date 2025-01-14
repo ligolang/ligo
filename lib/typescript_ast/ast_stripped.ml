@@ -319,7 +319,7 @@ and expr =
   | E_bit_or of (expr * expr) reg (* x | y *)
   | E_bit_or_eq of (expr * expr) reg (* x |= y *)
   | E_bit_sl of (expr * expr) reg (* x << y *)
-  | E_bit_sl_seq of (expr * expr) reg (* x <<= y *)
+  | E_bit_sl_eq of (expr * expr) reg (* x <<= y *)
   | E_bit_sr of (expr * expr) reg (* x >> y *)
   | E_bit_sr_eq of (expr * expr) reg (* x >>= y *)
   | E_bit_xor of (expr * expr) reg (* x ^ y *)
@@ -444,7 +444,7 @@ let region_of_expr = function
   | E_bit_or { region; _ }
   | E_bit_or_eq { region; _ }
   | E_bit_sl { region; _ }
-  | E_bit_sl_seq { region; _ }
+  | E_bit_sl_eq { region; _ }
   | E_bit_sr { region; _ }
   | E_bit_sr_eq { region; _ }
   | E_bit_xor { region; _ }
