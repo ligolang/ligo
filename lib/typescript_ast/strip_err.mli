@@ -148,6 +148,7 @@ type t =
   | Invalid_import
   | Empty_import_list
   | Import_and_rename
+  | Multiple_spreads_in_object
 
 type error = t
 

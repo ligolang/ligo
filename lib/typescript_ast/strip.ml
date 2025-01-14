@@ -1390,17 +1390,11 @@ and strip_object_type (node : Ast.object_type) : (S.member_type reg list reg, _)
 and strip_member_type (node : Ast.member_type) : (S.member_type reg, _) result =
   match node with
   | Export_statement stmt -> Strip_err.(make stmt#region Export_member)
-  | Property_signature signature ->
-    (*    let* signature = strip_property_signature signature in
-    Ok (S.Property_sig signature) *)
-    strip_property_signature signature
+  | Property_signature signature -> strip_property_signature signature
   | Call_signature signature -> Strip_err.(make signature#region Call_signature)
   | Construct_signature signature -> Strip_err.(make signature#region Constructor)
   | Index_signature signature -> Strip_err.(make signature#region Index_signature)
-  | Method_signature signature ->
-    (*    let* signature = strip_method_signature signature in
-    Ok (S.Method_sig signature) *)
-    strip_method_signature_as_property signature
+  | Method_signature signature -> strip_method_signature_as_property signature
 
 and strip_property_signature (node : Ast.property_signature wrap)
     : (S.member_type reg, _) result
@@ -2293,19 +2287,45 @@ and strip_dec (node : Ast.dec_literal) : (S.expr, _) result =
 (* Object (expression) *)
 
 and strip_E_object (node : Ast.object_expr) : (S.expr, _) result =
-  let* obj = strip_object_expr node in
-  Ok (S.E_object obj)
-
-and strip_object_expr (node : Ast.object_expr) : (S.expr S._object, _) result =
   let Ast.(Braces braces) = node in
   let entries = braces#payload.contents in
+  let spreads : Ast.spread_element wrap list =
+    let app entry acc =
+      match entry with
+      | Ast.Object_entry_spread spread -> spread :: acc
+      | _ -> acc
+    in
+    List.fold_right ~f:app ~init:[] entries
+  in
   let* properties = Result.all @@ List.map ~f:strip_object_entry entries in
-  Ok (mk_reg braces#region properties)
+  let properties = Option.all properties in
+  let properties =
+    match properties with
+    | None -> []
+    | Some list -> list
+  in
+  match spreads with
+  | [] -> Ok (S.E_object (mk_reg braces#region properties))
+  | [ spread ] ->
+    let _sym_ellipsis, expr = spread#payload in
+    let* obj_expr = strip_expression expr in
+    let update_expr = S.{ obj_expr; updates = properties } in
+    Ok (S.E_update (mk_reg braces#region update_expr))
+  | _ :: snd_spread :: _ ->
+    Strip_err.(
+      make
+        snd_spread#region
+        Multiple_spreads_in_object
+        ~hint:"Expand in place on of them.")
 
-and strip_object_entry (node : Ast.object_entry) : (S.expr S.property reg, _) result =
+and strip_object_entry (node : Ast.object_entry)
+    : (S.expr S.property reg option, _) result
+  =
   match node with
-  | Object_entry_pair pair -> strip_pair pair
-  | Object_entry_spread spread -> Strip_err.(make spread#region Spread_expression)
+  | Object_entry_pair pair ->
+    let* pair = strip_pair pair in
+    Ok (Some pair)
+  | Object_entry_spread _ -> Ok None
   | Object_entry_method definition ->
     let make_parameter (node : (S.variable * S.type_expr) reg) : S.parameter reg =
       let variable, type_expr = node.value in
@@ -2340,7 +2360,7 @@ and strip_object_entry (node : Ast.object_entry) : (S.expr S.property reg, _) re
     let property : S.expr S.property =
       { decorators; comments; property_name; static; optional; property_rhs }
     in
-    Ok (mk_reg definition#region property)
+    Ok (Some (mk_reg definition#region property))
   | Object_entry_shorthand ident ->
     let comments = ident#comments in
     let comments = strip_comments comments in
@@ -2353,7 +2373,7 @@ and strip_object_entry (node : Ast.object_entry) : (S.expr S.property reg, _) re
     let property : S.expr S.property =
       { decorators; comments; property_name; static; optional; property_rhs }
     in
-    Ok (mk_reg ident#region property)
+    Ok (Some (mk_reg ident#region property))
 
 and strip_pair (node : Ast.pair wrap) : (S.expr S.property reg, _) result =
   let Ast.{ key; sym_colon = _; value } = node#payload in
