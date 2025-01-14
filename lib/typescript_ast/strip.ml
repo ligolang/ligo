@@ -1828,9 +1828,30 @@ and strip_E_as_expression (node : Ast.as_expression wrap) : (S.expr, _) result =
   let expr, _, as_what = as_expr in
   match as_what with
   | Ast.As_type type_expr ->
-    let* expr = strip_expression expr in
+    (* Filtering Michelson code injections *)
+    let* expr' = strip_expression expr in
     let* type_expr = strip_type_expr type_expr in
-    Ok (S.E_typed (mk_reg region (expr, type_expr)))
+    let ok = Ok (S.E_typed (mk_reg region (expr', type_expr))) in
+    (match expr with
+    | Ast.E_primary_expression (E_call_expression (Call call)) ->
+      let Ast.{ lambda; type_arguments; arguments } = call#payload in
+      (match lambda with
+      | Ast.Fun_call (E_primary_expression (E_identifier fun_name))
+        when String.(fun_name#payload = "michelson" || fun_name#payload = "Michelson") ->
+        (match type_arguments with
+        | None ->
+          (match arguments with
+          | Ast.Template_string w ->
+            (match w#payload with
+            | _, [ String_fragment literal ], _ ->
+              let code_inj = fun_name, literal, type_expr in
+              let code_inj = mk_reg node#region code_inj in
+              Ok (S.E_michelson code_inj)
+            | _ -> ok)
+          | _ -> ok)
+        | _ -> ok)
+      | _ -> ok)
+    | _ -> ok)
   | As_const kwd_const -> Strip_err.(make kwd_const#region Constant_type)
 
 (* Assignment expression *)
@@ -2160,7 +2181,9 @@ and strip_arguments_to_call (node : Ast.arguments_to_call) : (S.expr list, _) re
     let* arguments = filter_spread arguments in
     let* arguments = Result.all @@ List.map ~f:strip_expression arguments in
     Ok arguments
-  | Template_string string -> Strip_err.(make string#region Template_string)
+  | Template_string string ->
+    let* expr = strip_template_string string in
+    Ok [ expr ]
 
 (* Class (expression) *)
 
@@ -2398,7 +2421,12 @@ and strip_E_super (node : Ast.kwd_super) : (S.expr, _) result =
 (* Template string *)
 
 and strip_E_template_string (node : Ast.template_string wrap) : (S.expr, _) result =
-  Strip_err.(make node#region Template_string)
+  strip_template_string node
+
+and strip_template_string (node : Ast.template_string wrap) : (S.expr, _) result =
+  match node#payload with
+  | _, [ String_fragment literal ], _ -> Ok (S.E_template literal)
+  | _ -> Strip_err.(make node#region Template_string)
 
 (* This (expression) *)
 
