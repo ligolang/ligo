@@ -151,6 +151,8 @@ type t =
   | Multiple_spreads_in_object
   | Complex_path
   | Empty_tuple_type
+  | Optional_member
+  | Static_member
 
 type error = t
 
