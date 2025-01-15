@@ -1528,7 +1528,11 @@ and strip_T_tuple_type (node : Ast.tuple_type) : (S.type_expr, _) result =
   let (Brackets brackets) = node in
   let members = brackets#payload.contents in
   let* members = Result.all @@ List.map ~f:strip_tuple_type_member members in
-  Ok (S.T_tuple (mk_reg brackets#region members))
+  match members with
+  | [] -> Strip_err.(make brackets#region Empty_tuple_type)
+  | fst_comp :: components ->
+     let members = Nonempty_list.(fst_comp :: components) in
+     Ok (S.T_tuple (mk_reg brackets#region members))
 
 and strip_tuple_type_member (node : Ast.tuple_type_member) : (S.type_expr, _) result =
   let region = Ast.region_of_tuple_type_member node in

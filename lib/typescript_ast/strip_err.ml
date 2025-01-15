@@ -150,6 +150,7 @@ type t =
   | Import_and_rename
   | Multiple_spreads_in_object
   | Complex_path
+  | Empty_tuple_type
 
 type error = t
 
@@ -313,6 +314,7 @@ let to_string = function
   | Multiple_spreads_in_object ->
     "Multiple spreads in objects are not supported in JsLIGO."
   | Complex_path -> "Only a simple path is supported here in JsLIGO."
+  | Empty_tuple_type -> "The empty tuple type is not supported in JsLIGO."
 
 (* Creating errors *)
 
