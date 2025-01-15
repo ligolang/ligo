@@ -195,7 +195,7 @@ create_docker_stable_version:
   tags:
     - gcp-ubuntu
   rules:
-    - if: '$CI_COMMIT_TAG =~ /[0-9]+\.[0-9]+\.0/'
+    - if: '$CI_COMMIT_TAG =~ /[0-9]+\.[0-9]+\.[0-9]+/'
       when: always
     - if: ($CI_COMMIT_BRANCH =~ /^release/ && $DRY_RUN_RELEASE != null)
       when: always
@@ -217,7 +217,7 @@ update_release_metadata:
     - gcp-docker
   image: node:20.12.0-buster
   rules:
-    - if: '$CI_COMMIT_TAG =~ /[0-9]+\.[0-9]+\.0/'
+    - if: '$CI_COMMIT_TAG =~ /[0-9]+\.[0-9]+\.[0-9]+/'
       when: always
     - if: ($CI_COMMIT_BRANCH =~ /^release/ && $DRY_RUN_RELEASE != null)
       when: always
