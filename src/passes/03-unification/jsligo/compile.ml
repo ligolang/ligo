@@ -885,9 +885,8 @@ let rec type_expr' (type_expr : Eq'.ty_expr) : Folding'.ty_expr =
       | fst_arg :: more_args ->
         let type_args = Nonempty_list.(fst_arg :: more_args) in
         return @@ O.T_app { constr; type_args })
-(*
-  | T_tuple of type_expr list reg (* [t, [u, v]] *)
- *)
+  | T_tuple type_expr ->
+     return @@ O.T_prod type_expr.value
   | T_for_all type_expr ->
      let type_vars, type_expr = type_expr.value in
      let ty_binders = List.map ~f:TODO_do_in_parsing.tvar type_vars
