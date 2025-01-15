@@ -868,15 +868,6 @@ let rec ty_expr : Eq.ty_expr -> Folding.ty_expr =
 let rec type_expr' (type_expr : Eq'.ty_expr) : Folding'.ty_expr =
   let loc = Location.lift (T.region_of_type_expr type_expr) in
   let return x = Location.wrap ~loc x in
-(*  let get_type_var' = function
-    | T.T_var v -> Some v
-    | _ -> None
-  in
-  let get_pattern_var' = function
-    | T.P_var v -> Some v
-    | _ -> None
-    in
- *)
   match type_expr with
   | T_apply type_expr ->
      let constr, args = type_expr.value in
@@ -917,8 +908,9 @@ let rec type_expr' (type_expr : Eq'.ty_expr) : Folding'.ty_expr =
          return @@ O.T_module_access { module_path; field; field_as_open })
 (*
   | T_parameter_of of simple_path reg reg (* parameter_of<N.C> *)
-  | T_string of string_literal (* "x" *)
-  | T_union of union_type (* number | string *)
+ *)
+  | T_string type_expr -> return @@ O.T_string type_expr#payload
+(*  | T_union of union_type (* number | string *)
 *)
   | _ -> failwith "TODO: type_expr'"
 
