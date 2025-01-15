@@ -94,8 +94,14 @@ module TODO_do_in_parsing = struct
     in
     Nano_prim.Attribute.{ key; value = Option.map ~f value }
 
-
   let conv_attrs = List.map ~f:conv_attr
+
+  let conv_decorator dec =
+    let key, value = dec#payload in
+    Nano_prim.Attribute.{ key; value }
+
+  let conv_decorators = List.map ~f:conv_decorator
+
   let ignore_attr _ = ()
   let labelize x = O.Label.T.create ~loc:(w_snd x) (w_fst x)
   let pattern_to_param pattern = O.Param.{ pattern; param_kind = `Const }
@@ -896,8 +902,18 @@ let rec type_expr' (type_expr : Eq'.ty_expr) : Folding'.ty_expr =
   | T_int t ->
     let s, z = t#payload in
     return @@ O.T_int (s, z)
-  (*  | T_object of member_type reg list reg (* {x; @a y : t} *)
- *)
+  | T_object type_expr ->
+     let member_types = type_expr.value in
+     let compile_member_type (member : T.member_type reg) =
+       let T.{decorators; comments=_; static=_; property_name;
+              optional=_; rhs_type} = member.value in
+       let decorators = TODO_do_in_parsing.conv_decorators decorators in
+       let property_name = TODO_do_in_parsing.(labelize property_name) in
+       let property_rhs = Some rhs_type in
+       property_name, property_rhs, decorators in
+     let members = List.map ~f:compile_member_type member_types in
+     let fields = O.Non_linear_rows.make members in
+     return @@ O.T_record_raw fields
   | T_path type_expr ->
     let T.{ path; selected } = type_expr.value in
     (match path with
@@ -916,8 +932,6 @@ let rec type_expr' (type_expr : Eq'.ty_expr) : Folding'.ty_expr =
   | T_union type_expr ->
     let variants = Nonempty_list.to_list type_expr.value in
     return @@ O.T_union variants
-  | _ -> failwith "TODO: type_expr'"
-
 
 let pattern : Eq.pattern -> Folding.pattern =
  fun p ->
