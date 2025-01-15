@@ -893,8 +893,13 @@ let rec type_expr' (type_expr : Eq'.ty_expr) : Folding'.ty_expr =
      and kind = Ligo_prim.Kind.Type
      and type_ = type_expr in
      return @@ O.T_for_alls { ty_binders; kind; type_ }
-(*  | T_fun of fun_type reg (* (x : T) => U *)
- *)
+  | T_fun type_expr ->
+     let parameters, ret_type = type_expr.value in
+     let compile_parameter param : _ O.Named_fun.fun_type_arg =
+       let name, type_expr = param.value in
+       { name = name#payload; type_expr } in
+     let parameters = List.map ~f:compile_parameter parameters in
+     return @@ O.T_named_fun (parameters, ret_type)
   | T_int t ->
      let s, z = t#payload in
      return @@ O.T_int (s, z)
