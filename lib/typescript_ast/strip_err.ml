@@ -151,6 +151,8 @@ type t =
   | Multiple_spreads_in_object
   | Complex_path
   | Empty_tuple_type
+  | Optional_member
+  | Static_member
 
 type error = t
 
@@ -315,6 +317,9 @@ let to_string = function
     "Multiple spreads in objects are not supported in JsLIGO."
   | Complex_path -> "Only a simple path is supported here in JsLIGO."
   | Empty_tuple_type -> "The empty tuple type is not supported in JsLIGO."
+  | Optional_member ->
+    "Optional members are only supported in class declarations in JsLIGO."
+  | Static_member -> "Static members are only supported in class declarations in JsLIGO."
 
 (* Creating errors *)
 

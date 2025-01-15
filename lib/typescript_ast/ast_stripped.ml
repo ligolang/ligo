@@ -12,7 +12,7 @@ module Region = Simple_utils.Region
 (* Local dependencies *)
 
 module Wrap = Lexing_shared.Wrap
-module Attr = Lexing_shared.Attr
+(*module Attr = Lexing_shared.Attr*)
 
 (* Utilities *)
 
@@ -147,9 +147,9 @@ and method_definition =
 and method_signature =
   { decorators : decorator list
   ; comments : comment list
-  ; static : bool
+  ; static : Region.t option
   ; method_name : variable
-  ; optional : bool
+  ; optional : Region.t option
   ; generics : variable list
   ; parameters : (variable * type_expr) reg list
   ; rhs_type : type_expr
@@ -203,7 +203,7 @@ and intf_entry =
   { decorators : decorator list
   ; comments : comment list
   ; entry_name : variable
-  ; entry_optional : bool
+  ; entry_optional : Region.t option
   ; entry_type : type_expr
   }
 
@@ -252,13 +252,13 @@ and type_expr =
   | T_tuple of type_expr Nonempty_list.t reg (* [t, [u, v]] *)
   | T_union of union_type (* number | string *)
 
-(* Object type *)
+(* Object type and class bodies *)
 and member_type =
   { decorators : decorator list
   ; comments : comment list
-  ; static : bool
+  ; static : Region.t option
   ; property_name : variable
-  ; optional : bool
+  ; optional : Region.t option
   ; rhs_type : type_expr
   }
 
@@ -272,8 +272,8 @@ and 'a property =
   { decorators : decorator list (* From the property identifier *)
   ; comments : comment list (* From the property identifier *)
   ; property_name : variable
-  ; static : bool
-  ; optional : bool
+  ; static : Region.t option
+  ; optional : Region.t option
   ; property_rhs : 'a
   }
 
