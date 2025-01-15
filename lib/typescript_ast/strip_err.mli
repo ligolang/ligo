@@ -150,6 +150,7 @@ type t =
   | Import_and_rename
   | Multiple_spreads_in_object
   | Complex_path
+  | Empty_tuple_type
 
 type error = t
 

@@ -247,10 +247,10 @@ and type_expr =
   | T_int of int_literal (* 42 *)
   | T_object of member_type reg list reg (* {x; @a y : t} *)
   | T_parameter_of of simple_path reg reg (* parameter_of<N.C> *)
-  | T_string of string_literal (* "x" *)
-  | T_tuple of type_expr list reg (* [t, [u, v]] *)
-  | T_union of union_type (* number | string *)
   | T_path of simple_path reg (* M.t *)
+  | T_string of string_literal (* "x" *)
+  | T_tuple of type_expr Nonempty_list.t reg (* [t, [u, v]] *)
+  | T_union of union_type (* number | string *)
 
 (* Object type *)
 and member_type =
