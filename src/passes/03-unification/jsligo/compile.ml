@@ -895,8 +895,11 @@ let rec type_expr' (type_expr : Eq'.ty_expr) : Folding'.ty_expr =
      and type_ = type_expr in
      return @@ O.T_for_alls { ty_binders; kind; type_ }
 (*  | T_fun of fun_type reg (* (x : T) => U *)
-  | T_int of int_literal (* 42 *)
-  | T_object of member_type reg list reg (* {x; @a y : t} *)
+ *)
+  | T_int t ->
+     let s, z = t#payload in
+     return @@ O.T_int (s, z)
+(*  | T_object of member_type reg list reg (* {x; @a y : t} *)
  *)
   | T_path type_expr ->
      let T.{ path; selected } = type_expr.value in
