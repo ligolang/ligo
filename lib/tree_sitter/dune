@@ -1,5 +1,6 @@
 (library
  (name tree_sitter)
+ (public_name ligo.tree_sitter)
  (libraries ctypes ctypes.foreign)
  (ctypes
   (external_library_name tree-sitter)
