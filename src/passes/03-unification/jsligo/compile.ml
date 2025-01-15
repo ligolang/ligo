@@ -865,7 +865,7 @@ let rec ty_expr : Eq.ty_expr -> Folding.ty_expr =
 
 (* NEW *)
 
-let type_expr' (type_expr : Eq'.ty_expr) : Folding'.ty_expr =
+let rec type_expr' (type_expr : Eq'.ty_expr) : Folding'.ty_expr =
   let loc = Location.lift (T.region_of_type_expr type_expr) in
   let return x = Location.wrap ~loc x in
 (*  let get_type_var' = function
@@ -878,8 +878,14 @@ let type_expr' (type_expr : Eq'.ty_expr) : Folding'.ty_expr =
     in
  *)
   match type_expr with
+  | T_apply type_expr ->
+     let constr, args = type_expr.value in
+     (match args with
+      | [] -> (* Should not happen *) type_expr' constr
+      | fst_arg :: more_args ->
+        let type_args = Nonempty_list.(fst_arg :: more_args) in
+        return @@ O.T_app { constr; type_args })
 (*
-  | T_apply of (type_expr * type_expr list) reg (* t<u,v> *)
   | T_tuple of type_expr list reg (* [t, [u, v]] *)
   | T_for_all of (variable list * type_expr) reg (* <T,U>(x: T) => U *)
   | T_fun of fun_type reg (* (x : T) => U *)
