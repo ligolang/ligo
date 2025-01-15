@@ -887,8 +887,14 @@ let rec type_expr' (type_expr : Eq'.ty_expr) : Folding'.ty_expr =
         return @@ O.T_app { constr; type_args })
 (*
   | T_tuple of type_expr list reg (* [t, [u, v]] *)
-  | T_for_all of (variable list * type_expr) reg (* <T,U>(x: T) => U *)
-  | T_fun of fun_type reg (* (x : T) => U *)
+ *)
+  | T_for_all type_expr ->
+     let type_vars, type_expr = type_expr.value in
+     let ty_binders = List.map ~f:TODO_do_in_parsing.tvar type_vars
+     and kind = Ligo_prim.Kind.Type
+     and type_ = type_expr in
+     return @@ O.T_for_alls { ty_binders; kind; type_ }
+(*  | T_fun of fun_type reg (* (x : T) => U *)
   | T_int of int_literal (* 42 *)
   | T_object of member_type reg list reg (* {x; @a y : t} *)
  *)
