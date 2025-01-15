@@ -149,6 +149,7 @@ type t =
   | Empty_import_list
   | Import_and_rename
   | Multiple_spreads_in_object
+  | Complex_path
 
 type error = t
 

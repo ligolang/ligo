@@ -241,13 +241,13 @@ and val_binding =
 (* IMPORTANT: The data constructors are sorted alphabetically. If you
    add or modify some, please make sure they remain in order. *)
 and type_expr =
-  | T_tuple of type_expr list reg (* [t, [u, v]] *)
   | T_for_all of (variable list * type_expr) reg (* <T,U>(x: T) => U *)
   | T_fun of fun_type reg (* (x : T) => U *)
   | T_int of int_literal (* 42 *)
   | T_object of member_type reg list reg (* {x; @a y : t} *)
   | T_parameter_of of simple_path reg reg (* parameter_of<N.C> *)
   | T_string of string_literal (* "x" *)
+  | T_tuple of type_expr list reg (* [t, [u, v]] *)
   | T_union of union_type (* number | string *)
   | T_var of (simple_path reg * type_expr list) reg (* M.t<u,v> t M.t *)
 
@@ -360,7 +360,7 @@ and expr =
   | E_true of Region.t (* true *)
   | E_typed of typed_expr reg (* e as t *)
   | E_update of update_expr reg (* {...x, y : z} *)
-  | E_var of simple_path reg (* M.N.x  y *)
+  | E_var of variable (* x *)
   | E_xor of (expr * expr) reg (* x ^^ y *)
 
 (* Michelson injection: "Michelson (`{ADD}`) as t" *)
@@ -481,7 +481,7 @@ let region_of_expr = function
   | E_ternary { region; _ } -> region
   | E_true r -> r
   | E_typed { region; _ } | E_update { region; _ } -> region
-  | E_var { region; _ } -> region
+  | E_var w -> w#region
   | E_xor { region; _ } -> region
 
 let region_of_statement = function

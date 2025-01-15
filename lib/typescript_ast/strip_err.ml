@@ -149,6 +149,7 @@ type t =
   | Empty_import_list
   | Import_and_rename
   | Multiple_spreads_in_object
+  | Complex_path
 
 type error = t
 
@@ -293,7 +294,7 @@ let to_string = function
   | Multiple_arguments_in_decorator ->
     "Multiple arguments in decorator are not supported in JsLIGO."
   | Invalid_decorator_argument ->
-    "Only unqualified variables and strings can be decorators' argument in JsLIGO."
+    "Only variables and strings can be decorators' argument in JsLIGO."
   | Abstract_method -> "Abstract methods are not supported in JsLIGO."
   | Call_static_block -> "Call static blocks are not supported in JsLIGO."
   | Method_signature_in_class ->
@@ -311,6 +312,7 @@ let to_string = function
   | Import_and_rename -> "Importing with a renaming is not supported in JsLIGO."
   | Multiple_spreads_in_object ->
     "Multiple spreads in objects are not supported in JsLIGO."
+  | Complex_path -> "Only a simple path is supported here in JsLIGO."
 
 (* Creating errors *)
 
