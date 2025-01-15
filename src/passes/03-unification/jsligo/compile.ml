@@ -538,10 +538,8 @@ let rec expr : Eq.expr -> Folding.expr =
 
 (* NEW *)
 
-let expr' : Eq'.expr -> Folding'.expr =
- (*rec*)
- fun e ->
-  let loc = Location.lift (T.region_of_expr e) in
+let expr' (expr : Eq'.expr) : Folding'.expr =
+  let loc = Location.lift (T.region_of_expr expr) in
   let return x = Location.wrap ~loc x in
   let compile_bin_op (sign : O.Operators.op) (op : (T.expr * T.expr) Region.reg) =
     let left, right = op.Region.value in
@@ -554,15 +552,13 @@ let expr' : Eq'.expr -> Folding'.expr =
   let compile_postfix_op (expr : T.variable reg) op =
     let loc = Location.lift expr.region in
     let post_op = Location.wrap ~loc op in
-    let var = T.{ path = []; selected = expr.value } in
-    let expr = T.E_var (mk_reg expr.region var) in
+    let expr = T.E_var expr.value in
     return @@ O.E_postfix { post_op; expr }
   in
   let compile_prefix_op (expr : T.variable reg) op =
     let loc = Location.lift expr.region in
     let pre_op = Location.wrap ~loc op in
-    let var = T.{ path = []; selected = expr.value } in
-    let expr = T.E_var (mk_reg expr.region var) in
+    let expr = T.E_var expr.value in
     return @@ O.E_prefix { pre_op; expr }
   in
   let compile_property (property : 'a T.property reg) =
@@ -619,7 +615,7 @@ let expr' : Eq'.expr -> Folding'.expr =
     let op = O.Assign_chainable.Assignment_operator op in
     return @@ O.E_struct_assign_chainable { expr1; op; expr2 }
   in
-  match e with
+  match expr with
   | E_add expr -> compile_bin_op PLUS expr
   | E_add_eq expr -> compile_chain_assignment Plus_eq expr
   | E_and expr -> compile_bin_op DAMPERSAND expr
@@ -709,20 +705,11 @@ let expr' : Eq'.expr -> Folding'.expr =
      let T.{ obj_expr; updates } = expr.value in
      let updates = compile_properties updates in
      return @@ O.E_object_update { object_ = obj_expr; updates }
-  | E_var expr ->
-    let T.{ path; selected } = expr.value in
-    (match path with
-    | [] -> return @@ O.E_variable_esc (Raw (TODO_do_in_parsing.var selected))
-    | fst_mod :: other_mods ->
-      let module_path = Nonempty_list.(fst_mod :: other_mods) in
-      let module_path : O.Mod_variable.t Nonempty_list.t =
-        Nonempty_list.map ~f:TODO_do_in_parsing.mvar module_path
-      in
-      let field_as_open = false in
-      let field = T.{ path = []; selected } in
-      let field = T.E_var (mk_reg selected#region field) in
-      return @@ O.E_module_open_in { module_path; field; field_as_open })
+  | E_var v ->
+     return @@ O.E_variable_esc (Raw (TODO_do_in_parsing.var v))
   | E_xor expr -> compile_bin_op WORD_XOR expr
+
+(* OLD *)
 
 let rec ty_expr : Eq.ty_expr -> Folding.ty_expr =
  fun t ->
@@ -877,6 +864,50 @@ let rec ty_expr : Eq.ty_expr -> Folding.ty_expr =
     let summands = Utils.nsep_or_pref_to_list t.value in
     Location.wrap ~loc @@ O.T_union summands
 
+(* NEW *)
+
+let type_expr' (type_expr : Eq'.ty_expr) : Folding'.ty_expr =
+  let loc = Location.lift (T.region_of_type_expr type_expr) in
+  let _return x = Location.wrap ~loc x in
+(*  let get_type_var' = function
+    | T.T_var v -> Some v
+    | _ -> None
+  in
+  let get_pattern_var' = function
+    | T.P_var v -> Some v
+    | _ -> None
+    in
+ *)
+  match type_expr with
+(*
+  | T_apply of (type_expr * type_expr list) reg (* t<u,v> *)
+  | T_tuple of type_expr list reg (* [t, [u, v]] *)
+  | T_for_all of (variable list * type_expr) reg (* <T,U>(x: T) => U *)
+  | T_fun of fun_type reg (* (x : T) => U *)
+  | T_int of int_literal (* 42 *)
+  | T_object of member_type reg list reg (* {x; @a y : t} *)
+  | T_parameter_of of simple_path reg reg (* parameter_of<N.C> *)
+  | T_string of string_literal (* "x" *)
+  | T_union of union_type (* number | string *)
+
+  | T_var t_expr ->
+    let path, type_params = t_expr.value in
+    let T.{ path; selected } = path.value in
+    let type_expr =
+      (match path with
+    | [] -> return @@ O.T_var_esc (Raw (TODO_do_in_parsing.tvar selected))
+    | fst_mod :: other_mods ->
+      let module_path = Nonempty_list.(fst_mod :: other_mods) in
+      let module_path : O.Mod_variable.t Nonempty_list.t =
+        Nonempty_list.map ~f:TODO_do_in_parsing.mvar module_path
+      in
+      let field_as_open = false in
+      let field = T.{ path = []; selected } in
+      let field = T.T_var (mk_reg selected#region field) in
+      return @@ O.E_module_open_in { module_path; field; field_as_open })
+ *)
+  (*of (simple_path reg * type_expr list) reg (* M.t<u,v> t M.t *)*)
+  | _ -> failwith "TODO: type_expr'"
 
 let pattern : Eq.pattern -> Folding.pattern =
  fun p ->
