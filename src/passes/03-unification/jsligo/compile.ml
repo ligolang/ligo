@@ -183,12 +183,11 @@ module TODO_do_in_parsing = struct
 
   (* NEW *)
 
-  let selection_path' (t : T.simple_path reg) =
+  let selection_path' (t : T.simple_path reg) : T.variable Nonempty_list.t =
     let T.{ path; selected } = t.value in
     let rev_path = List.rev path in
     let rev_path = Nonempty_list.(selected :: rev_path) in
     Nonempty_list.reverse rev_path
-
 
   let compile_rows = O.Non_linear_rows.make
 end
@@ -833,8 +832,6 @@ let rec ty_expr : Eq.ty_expr -> Folding.ty_expr =
     let type_expr = te2 in
     return @@ T_named_fun (fun_type_args, type_expr)
   | T_Par t -> ty_expr (r_fst t).inside
-  | T_Var (Var t) -> return @@ T_var_esc (Raw (TODO_do_in_parsing.tvar t))
-  | T_Var (Esc t) -> return @@ T_var_esc (Esc (TODO_do_in_parsing.tvar t))
   | T_String t -> return @@ T_string t#payload
   | T_Int t ->
     let s, z = t#payload in
@@ -842,6 +839,8 @@ let rec ty_expr : Eq.ty_expr -> Folding.ty_expr =
   | T_Nat t ->
     let s, z = t#payload in
     return @@ T_nat (s, z)
+  | T_Var (Var t) -> return @@ T_var_esc (Raw (TODO_do_in_parsing.tvar t))
+  | T_Var (Esc t) -> return @@ T_var_esc (Esc (TODO_do_in_parsing.tvar t))
   | T_NamePath { value = { namespace_path; property; _ }; _ } ->
     let namespace_path = Utils.nsepseq_to_ne_list namespace_path in
     let module_path = Nonempty_list.map ~f:TODO_do_in_parsing.mvar namespace_path in
@@ -868,7 +867,7 @@ let rec ty_expr : Eq.ty_expr -> Folding.ty_expr =
 
 let type_expr' (type_expr : Eq'.ty_expr) : Folding'.ty_expr =
   let loc = Location.lift (T.region_of_type_expr type_expr) in
-  let _return x = Location.wrap ~loc x in
+  let return x = Location.wrap ~loc x in
 (*  let get_type_var' = function
     | T.T_var v -> Some v
     | _ -> None
@@ -886,27 +885,22 @@ let type_expr' (type_expr : Eq'.ty_expr) : Folding'.ty_expr =
   | T_fun of fun_type reg (* (x : T) => U *)
   | T_int of int_literal (* 42 *)
   | T_object of member_type reg list reg (* {x; @a y : t} *)
+ *)
+  | T_path type_expr ->
+     let T.{ path; selected } = type_expr.value in
+     (match path with
+      | [] -> return @@ O.T_var_esc (Raw (TODO_do_in_parsing.tvar selected))
+      | fst_mod :: other_mods ->
+         let path = Nonempty_list.(fst_mod :: other_mods) in
+         let module_path = Nonempty_list.map ~f:TODO_do_in_parsing.mvar path in
+         let field_as_open = false in
+         let field = TODO_do_in_parsing.tvar selected in
+         return @@ O.T_module_access { module_path; field; field_as_open })
+(*
   | T_parameter_of of simple_path reg reg (* parameter_of<N.C> *)
   | T_string of string_literal (* "x" *)
   | T_union of union_type (* number | string *)
-
-  | T_var t_expr ->
-    let path, type_params = t_expr.value in
-    let T.{ path; selected } = path.value in
-    let type_expr =
-      (match path with
-    | [] -> return @@ O.T_var_esc (Raw (TODO_do_in_parsing.tvar selected))
-    | fst_mod :: other_mods ->
-      let module_path = Nonempty_list.(fst_mod :: other_mods) in
-      let module_path : O.Mod_variable.t Nonempty_list.t =
-        Nonempty_list.map ~f:TODO_do_in_parsing.mvar module_path
-      in
-      let field_as_open = false in
-      let field = T.{ path = []; selected } in
-      let field = T.T_var (mk_reg selected#region field) in
-      return @@ O.E_module_open_in { module_path; field; field_as_open })
- *)
-  (*of (simple_path reg * type_expr list) reg (* M.t<u,v> t M.t *)*)
+*)
   | _ -> failwith "TODO: type_expr'"
 
 let pattern : Eq.pattern -> Folding.pattern =
