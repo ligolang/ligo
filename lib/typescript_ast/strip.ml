@@ -71,12 +71,7 @@ type for_header =
 
 let filter_decorator_argument (node : S.expr) : (string, _) result =
   match node with
-  | S.E_var path ->
-    let Region.{ value; region } = path in
-    let S.{ path; selected } = value in
-    (match path with
-    | [] -> Ok selected#payload
-    | _ -> Strip_err.(make region Invalid_decorator_argument))
+  | S.E_var variable -> Ok variable#payload
   | E_string literal -> Ok literal#payload
   | _ ->
     let region = S.region_of_expr node in
@@ -131,6 +126,21 @@ let filter_access (node : Ast.accessibility_modifier option) : (unit, _) result 
   | None -> Ok ()
   | Some (Public kwd) | Some (Private kwd) | Some (Protected kwd) ->
     Strip_err.(make kwd#region Property_access)
+
+let rec filter_path (expr : S.expr) : (S.simple_path reg, _) result =
+  match expr with
+  | S.E_member {value = e, v; region} ->
+     let* path = filter_path e in
+     let S.{ path; selected } = path.value in
+     Ok (mk_reg region S.{path = selected :: path; selected = v})
+  | S.E_var v ->
+     Ok (mk_reg v#region S.{path = []; selected = v})
+  | _ -> Strip_err.(make (S.region_of_expr expr) Complex_path)
+
+let filter_path (expr : S.expr) : (S.simple_path reg, _) result =
+  let* {value; region} = filter_path expr in
+  let S.{path; selected} = value in
+  Ok (mk_reg region S.{path = List.rev path; selected})
 
 (* Stripping *)
 
@@ -1296,11 +1306,11 @@ and strip_T_predefined_type (node : Ast.predefined_type) : (S.type_expr, _) resu
     let region = kwd_boolean#region in
     let bool = Wrap.make "bool" region in
     let path = mk_reg region S.{ path = []; selected = bool } in
-    Ok (T_var (mk_reg region (path, [])))
+    Ok (S.T_var (mk_reg region (path, [])))
   | T_string kwd_string ->
     let region = kwd_string#region in
     let path = mk_reg region S.{ path = []; selected = kwd_string } in
-    Ok (T_var (mk_reg region (path, [])))
+    Ok (S.T_var (mk_reg region (path, [])))
   | T_symbol kwd_symbol -> Strip_err.(make kwd_symbol#region Symbol_type)
   | T_unique_symbol kwd_unique_symbol ->
     Strip_err.(make kwd_unique_symbol#region Unique_symbol_type)
@@ -1589,7 +1599,7 @@ and strip_T_number (node : Ast.number) : (S.type_expr, _) result =
     if Z.equal (Q.den q) Z.one
     then (
       let literal = Wrap.make (lexeme, Q.to_bigint q) literal#region in
-      Ok (T_int literal))
+      Ok (S.T_int literal))
     else Strip_err.(make region Non_integer_as_type)
 
 and strip_T_string (node : Ast.string_literal) : (S.type_expr, _) result =
@@ -1910,9 +1920,7 @@ and strip_augmented_assignment_lhs (node : Ast.augmented_assignment_lhs)
   | Member_expression w -> Strip_err.(make w#region Complex_lhs ~hint:"Use a variable.")
   | Subscript_expression w ->
     Strip_err.(make w#region Complex_lhs ~hint:"Use a variable.")
-  | Identifier ident ->
-    let path = S.{ path = []; selected = strip_identifier ident } in
-    Ok (S.E_var (mk_reg ident#region path))
+  | Identifier ident -> Ok (S.E_var (strip_identifier ident))
   | Parenthesized_expression expr ->
     let* exprs = strip_parenthesized_expression expr in
     let* expr =
@@ -2153,20 +2161,15 @@ and strip_call_fun (node : (Ast.fun_call, Ast.arguments_to_call) Ast.call wrap)
   let ok = Ok (S.E_app app) in
   let error = Strip_err.(make node#region Invalid_contract_of) in
   match lambda with
-  | S.E_var path ->
-    let S.{ path; selected } = path.value in
-    (match path with
-    | [] ->
-      (match selected#payload with
+  | S.E_var var ->
+     (match var#payload with
       | "contract_of" ->
-        (match arguments with
-        | [ expr ] ->
-          (match expr with
-          | S.E_var path -> Ok (S.E_contract_of (mk_reg node#region path))
+         (match arguments with
+          | [ expr ] ->
+             let* path = filter_path expr in
+             Ok (S.E_contract_of (mk_reg node#region path))
           | _ -> error)
-        | _ -> error)
       | _ -> ok)
-    | _ -> ok)
   | _ -> ok
 
 and strip_fun_call (node : Ast.fun_call) : (S.expr, _) result =
@@ -2224,8 +2227,7 @@ and strip_E_generator_function (node : Ast.generator_function wrap) : (S.expr, _
 (* Identifier (expression) *)
 
 and strip_E_identifier (node : Ast.identifier) : (S.expr, _) result =
-  let path = S.{ path = []; selected = strip_identifier node } in
-  Ok (S.E_var (mk_reg node#region path))
+  Ok (S.E_var (strip_identifier node))
 
 (* Member expression *)
 
@@ -2366,8 +2368,7 @@ and strip_object_entry (node : Ast.object_entry)
     let comments = strip_comments comments in
     let decorators = extract_decorators comments in
     let property_name = strip_identifier ident in
-    let path = S.{ path = []; selected = property_name } in
-    let property_rhs = S.E_var (mk_reg ident#region path) in
+    let property_rhs = S.E_var property_name in
     let optional = false in
     let static = false in
     let property : S.expr S.property =
@@ -2527,12 +2528,7 @@ and strip_update (kind : [ `Pre | `Post ]) (node : Ast.update wrap) : (S.expr, _
   let* expr = strip_expression argument in
   let* var =
     match expr with
-    | S.E_var simple_path ->
-      let S.{ path; selected } = simple_path.value in
-      (match path with
-      | [] -> Ok (mk_reg simple_path.region selected)
-      | _ ->
-        Strip_err.(make node#region Not_a_variable ~hint:"Define a temporary variable."))
+    | S.E_var v -> Ok (mk_reg node#region v)
     | _ ->
       Strip_err.(make node#region Not_a_variable ~hint:"Define a temporary variable.")
   in
