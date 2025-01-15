@@ -189,6 +189,7 @@ module TODO_do_in_parsing = struct
     let rev_path = Nonempty_list.(selected :: rev_path) in
     Nonempty_list.reverse rev_path
 
+
   let compile_rows = O.Non_linear_rows.make
 end
 
@@ -701,12 +702,12 @@ let expr' (expr : Eq'.expr) : Folding'.expr =
     let expr, type_expr = expr.value in
     return @@ O.E_annot (expr, type_expr)
   | E_update expr ->
-     let T.{ obj_expr; updates } = expr.value in
-     let updates = compile_properties updates in
-     return @@ O.E_object_update { object_ = obj_expr; updates }
-  | E_var v ->
-     return @@ O.E_variable_esc (Raw (TODO_do_in_parsing.var v))
+    let T.{ obj_expr; updates } = expr.value in
+    let updates = compile_properties updates in
+    return @@ O.E_object_update { object_ = obj_expr; updates }
+  | E_var v -> return @@ O.E_variable_esc (Raw (TODO_do_in_parsing.var v))
   | E_xor expr -> compile_bin_op WORD_XOR expr
+
 
 (* OLD *)
 
@@ -863,6 +864,7 @@ let rec ty_expr : Eq.ty_expr -> Folding.ty_expr =
     let summands = Utils.nsep_or_pref_to_list t.value in
     Location.wrap ~loc @@ O.T_union summands
 
+
 (* NEW *)
 
 let rec type_expr' (type_expr : Eq'.ty_expr) : Folding'.ty_expr =
@@ -870,50 +872,52 @@ let rec type_expr' (type_expr : Eq'.ty_expr) : Folding'.ty_expr =
   let return x = Location.wrap ~loc x in
   match type_expr with
   | T_apply type_expr ->
-     let constr, args = type_expr.value in
-     (match args with
-      | [] -> (* Should not happen *) type_expr' constr
-      | fst_arg :: more_args ->
-        let type_args = Nonempty_list.(fst_arg :: more_args) in
-        return @@ O.T_app { constr; type_args })
-  | T_tuple type_expr ->
-     return @@ O.T_prod type_expr.value
+    let constr, args = type_expr.value in
+    (match args with
+    | [] -> (* Should not happen *) type_expr' constr
+    | fst_arg :: more_args ->
+      let type_args = Nonempty_list.(fst_arg :: more_args) in
+      return @@ O.T_app { constr; type_args })
+  | T_tuple type_expr -> return @@ O.T_prod type_expr.value
   | T_for_all type_expr ->
-     let type_vars, type_expr = type_expr.value in
-     let ty_binders = List.map ~f:TODO_do_in_parsing.tvar type_vars
-     and kind = Ligo_prim.Kind.Type
-     and type_ = type_expr in
-     return @@ O.T_for_alls { ty_binders; kind; type_ }
+    let type_vars, type_expr = type_expr.value in
+    let ty_binders = List.map ~f:TODO_do_in_parsing.tvar type_vars
+    and kind = Ligo_prim.Kind.Type
+    and type_ = type_expr in
+    return @@ O.T_for_alls { ty_binders; kind; type_ }
   | T_fun type_expr ->
-     let parameters, ret_type = type_expr.value in
-     let compile_parameter param : _ O.Named_fun.fun_type_arg =
-       let name, type_expr = param.value in
-       { name = name#payload; type_expr } in
-     let parameters = List.map ~f:compile_parameter parameters in
-     return @@ O.T_named_fun (parameters, ret_type)
+    let parameters, ret_type = type_expr.value in
+    let compile_parameter param : _ O.Named_fun.fun_type_arg =
+      let name, type_expr = param.value in
+      { name = name#payload; type_expr }
+    in
+    let parameters = List.map ~f:compile_parameter parameters in
+    return @@ O.T_named_fun (parameters, ret_type)
   | T_int t ->
-     let s, z = t#payload in
-     return @@ O.T_int (s, z)
-(*  | T_object of member_type reg list reg (* {x; @a y : t} *)
+    let s, z = t#payload in
+    return @@ O.T_int (s, z)
+  (*  | T_object of member_type reg list reg (* {x; @a y : t} *)
  *)
   | T_path type_expr ->
-     let T.{ path; selected } = type_expr.value in
-     (match path with
-      | [] -> return @@ O.T_var_esc (Raw (TODO_do_in_parsing.tvar selected))
-      | fst_mod :: other_mods ->
-         let path = Nonempty_list.(fst_mod :: other_mods) in
-         let module_path = Nonempty_list.map ~f:TODO_do_in_parsing.mvar path in
-         let field_as_open = false in
-         let field = TODO_do_in_parsing.tvar selected in
-         return @@ O.T_module_access { module_path; field; field_as_open })
+    let T.{ path; selected } = type_expr.value in
+    (match path with
+    | [] -> return @@ O.T_var_esc (Raw (TODO_do_in_parsing.tvar selected))
+    | fst_mod :: other_mods ->
+      let path = Nonempty_list.(fst_mod :: other_mods) in
+      let module_path = Nonempty_list.map ~f:TODO_do_in_parsing.mvar path in
+      let field_as_open = false in
+      let field = TODO_do_in_parsing.tvar selected in
+      return @@ O.T_module_access { module_path; field; field_as_open })
   | T_parameter_of type_expr ->
     let path = TODO_do_in_parsing.selection_path' type_expr.value in
     let path = Nonempty_list.map ~f:TODO_do_in_parsing.mvar path in
     return @@ O.T_contract_parameter path
   | T_string type_expr -> return @@ O.T_string type_expr#payload
-(*  | T_union of union_type (* number | string *)
-*)
+  | T_union type_expr ->
+    let variants = Nonempty_list.to_list type_expr.value in
+    return @@ O.T_union variants
   | _ -> failwith "TODO: type_expr'"
+
 
 let pattern : Eq.pattern -> Folding.pattern =
  fun p ->
