@@ -98,10 +98,10 @@ let filter_spread (node : Ast.arguments) : (Ast.expression list, _) result =
   let* exprs = Result.all @@ List.fold_right args ~init:[] ~f:filter in
   Ok exprs
 
-let filter_method_scope (node : Ast.method_scope) : (bool, _) result =
+let filter_method_scope (node : Ast.method_scope) : (Region.t option, _) result =
   match node with
-  | { kwd_static = None; kwd_override = None; kwd_readonly = None } -> Ok false
-  | { kwd_static = Some _; _ } -> Ok true
+  | { kwd_static = None; kwd_override = None; kwd_readonly = None } -> Ok None
+  | { kwd_static = Some kwd_static; _ } -> Ok (Some kwd_static#region)
   | { kwd_override = Some kwd; _ } | { kwd_readonly = Some kwd; _ } ->
     Strip_err.(make kwd#region Property_scope)
 
@@ -1384,6 +1384,15 @@ and strip_type_arguments (node : Ast.type_arguments) : (S.type_expr list, _) res
 
 and strip_T_object_type (node : Ast.object_type) : (S.type_expr, _) result =
   let* object_type = strip_object_type node in
+  let filter (m : S.member_type reg) : (S.member_type reg, _) result =
+    let (S.{ static; optional; _ } : S.member_type) = m.value in
+    match static, optional with
+    | Some region, _ -> Strip_err.(make region Static_member)
+    | _, Some region -> Strip_err.(make region Optional_member)
+    | _ -> Ok m
+  in
+  let* member_types = Result.all @@ List.map ~f:filter object_type.value in
+  let object_type = { object_type with value = member_types } in
   Ok (S.T_object object_type)
 
 and strip_object_type (node : Ast.object_type) : (S.member_type reg list reg, _) result =
@@ -1408,7 +1417,7 @@ and strip_property_signature (node : Ast.property_signature wrap)
   let* () = filter_access access in
   let* static = filter_method_scope scope in
   let* property_name = strip_property_name name in
-  let optional = false in
+  let optional = None in
   let* rhs_type = map_opt strip_type_annotation type_ in
   match rhs_type with
   | None -> Strip_err.(make node#region Missing_type)
@@ -1439,8 +1448,8 @@ and strip_method_signature_as_property (node : Ast.method_signature wrap)
   let* property_name = strip_property_name name in
   let optional =
     match optional with
-    | None -> false
-    | Some _ -> true
+    | None -> None
+    | Some sym_qmark -> Some sym_qmark#region
   in
   let* call_sig = strip_call_signature call_sig in
   let { generics; parameters; rhs_type } = call_sig.value in
@@ -1483,8 +1492,8 @@ and strip_method_signature (node : Ast.method_signature wrap)
   let* method_name = strip_property_name name in
   let optional =
     match optional with
-    | None -> false
-    | Some _ -> true
+    | None -> None
+    | Some sym_qmark -> Some sym_qmark#region
   in
   let* call_sig = strip_call_signature call_sig in
   let { generics; parameters; rhs_type } = call_sig.value in
@@ -1531,8 +1540,8 @@ and strip_T_tuple_type (node : Ast.tuple_type) : (S.type_expr, _) result =
   match members with
   | [] -> Strip_err.(make brackets#region Empty_tuple_type)
   | fst_comp :: components ->
-     let members = Nonempty_list.(fst_comp :: components) in
-     Ok (S.T_tuple (mk_reg brackets#region members))
+    let members = Nonempty_list.(fst_comp :: components) in
+    Ok (S.T_tuple (mk_reg brackets#region members))
 
 and strip_tuple_type_member (node : Ast.tuple_type_member) : (S.type_expr, _) result =
   let region = Ast.region_of_tuple_type_member node in
@@ -2368,8 +2377,8 @@ and strip_object_entry (node : Ast.object_entry)
     let decorators = extract_decorators comments in
     let property_name = strip_identifier ident in
     let property_rhs = S.E_var property_name in
-    let optional = false in
-    let static = false in
+    let optional = None in
+    let static = None in
     let property : S.expr S.property =
       { decorators; comments; property_name; static; optional; property_rhs }
     in
@@ -2382,8 +2391,8 @@ and strip_pair (node : Ast.pair wrap) : (S.expr S.property reg, _) result =
   let decorators = extract_decorators comments in
   let* property_name = strip_property_name key in
   let* property_rhs = strip_expression value in
-  let optional = false in
-  let static = false in
+  let optional = None in
+  let static = None in
   let property : S.expr S.property =
     { decorators; comments; property_name; static; optional; property_rhs }
   in
@@ -2627,8 +2636,8 @@ and strip_member_pattern (node : Ast.member_pattern)
     let property_name = strip_identifier ident in
     let path = S.{ path = []; selected = property_name } in
     let property_rhs = S.P_var (mk_reg ident#region path) in
-    let optional = false in
-    let static = false in
+    let optional = None in
+    let static = None in
     let property : S.pattern S.property =
       { decorators; comments; property_name; static; optional; property_rhs }
     in
@@ -2652,8 +2661,8 @@ and strip_pair_pattern (node : Ast.pair_pattern wrap)
   let comments = strip_comments comments in
   let decorators = extract_decorators comments in
   let* property_name = strip_property_name key in
-  let optional = false in
-  let static = false in
+  let optional = None in
+  let static = None in
   let* property_rhs = strip_pair_value_pattern value in
   let property : S.pattern S.property =
     { decorators; comments; property_name; static; optional; property_rhs }
