@@ -1,5 +1,6 @@
 (library
  (name tree_sitter_typescript)
+ (public_name ligo.tree_sitter_typescript)
  (libraries ctypes ctypes.foreign tree_sitter)
  (ctypes
   (external_library_name tree-sitter-typescript)
