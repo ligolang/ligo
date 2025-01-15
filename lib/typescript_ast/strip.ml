@@ -129,18 +129,17 @@ let filter_access (node : Ast.accessibility_modifier option) : (unit, _) result 
 
 let rec filter_path (expr : S.expr) : (S.simple_path reg, _) result =
   match expr with
-  | S.E_member {value = e, v; region} ->
-     let* path = filter_path e in
-     let S.{ path; selected } = path.value in
-     Ok (mk_reg region S.{path = selected :: path; selected = v})
-  | S.E_var v ->
-     Ok (mk_reg v#region S.{path = []; selected = v})
+  | S.E_member { value = e, v; region } ->
+    let* path = filter_path e in
+    let S.{ path; selected } = path.value in
+    Ok (mk_reg region S.{ path = selected :: path; selected = v })
+  | S.E_var v -> Ok (mk_reg v#region S.{ path = []; selected = v })
   | _ -> Strip_err.(make (S.region_of_expr expr) Complex_path)
 
 let filter_path (expr : S.expr) : (S.simple_path reg, _) result =
-  let* {value; region} = filter_path expr in
-  let S.{path; selected} = value in
-  Ok (mk_reg region S.{path = List.rev path; selected})
+  let* { value; region } = filter_path expr in
+  let S.{ path; selected } = value in
+  Ok (mk_reg region S.{ path = List.rev path; selected })
 
 (* Stripping *)
 
@@ -1306,11 +1305,11 @@ and strip_T_predefined_type (node : Ast.predefined_type) : (S.type_expr, _) resu
     let region = kwd_boolean#region in
     let bool = Wrap.make "bool" region in
     let path = mk_reg region S.{ path = []; selected = bool } in
-    Ok (S.T_var (mk_reg region (path, [])))
+    Ok (S.T_path path)
   | T_string kwd_string ->
     let region = kwd_string#region in
     let path = mk_reg region S.{ path = []; selected = kwd_string } in
-    Ok (S.T_var (mk_reg region (path, [])))
+    Ok (S.T_path path)
   | T_symbol kwd_symbol -> Strip_err.(make kwd_symbol#region Symbol_type)
   | T_unique_symbol kwd_unique_symbol ->
     Strip_err.(make kwd_unique_symbol#region Unique_symbol_type)
@@ -1325,15 +1324,14 @@ and strip_T_type_identifier (node : Ast.type_identifier) : (S.type_expr, _) resu
   let selected = strip_type_identifier node in
   let region = node#region in
   let path = S.{ path = []; selected } in
-  Ok (S.T_var (mk_reg region (mk_reg region path, [])))
+  Ok (S.T_path (mk_reg region path))
 
 (* Nested type identifier (access path is reversed) *)
 
 and strip_T_nested_type_identifier (node : Ast.nested_type_identifier wrap)
     : (S.type_expr, _) result
   =
-  let path = strip_nested_type_identifier node in
-  Ok (S.T_var (mk_reg node#region (path, [])))
+  Ok (S.T_path (strip_nested_type_identifier node))
 
 and strip_nested_type_identifier (node : Ast.nested_type_identifier wrap)
     : S.simple_path reg
@@ -1351,21 +1349,18 @@ and strip_nested_type_identifier (node : Ast.nested_type_identifier wrap)
 
 and strip_T_generic_type (node : Ast.generic_type wrap) : (S.type_expr, _) result =
   let name, type_args = node#payload in
-  let path = strip_generic_name name in
+  let path = S.T_path (strip_generic_name name) in
   let* type_args = strip_type_arguments type_args in
-  let var = mk_reg node#region (path, type_args) in
-  let ok = Ok (S.T_var var) in
+  let ok = Ok (S.T_apply (mk_reg node#region (path, type_args))) in
   let error = Strip_err.(make node#region Invalid_parameter_of) in
-  let S.{ path; selected } = path.value in
-  match path with
-  | [] ->
-    (match selected#payload with
+  match name with
+  | Ast.Generic_type type_ident ->
+    (match type_ident#payload with
     | "parameter_of" ->
       (match type_args with
       | [ type_arg ] ->
         (match type_arg with
-        | S.T_var { value = path, []; _ } ->
-          Ok (S.T_parameter_of (mk_reg node#region path))
+        | S.T_path path -> Ok (S.T_parameter_of (mk_reg node#region path))
         | _ -> error)
       | _ -> error)
     | _ -> ok)
@@ -2162,14 +2157,14 @@ and strip_call_fun (node : (Ast.fun_call, Ast.arguments_to_call) Ast.call wrap)
   let error = Strip_err.(make node#region Invalid_contract_of) in
   match lambda with
   | S.E_var var ->
-     (match var#payload with
-      | "contract_of" ->
-         (match arguments with
-          | [ expr ] ->
-             let* path = filter_path expr in
-             Ok (S.E_contract_of (mk_reg node#region path))
-          | _ -> error)
-      | _ -> ok)
+    (match var#payload with
+    | "contract_of" ->
+      (match arguments with
+      | [ expr ] ->
+        let* path = filter_path expr in
+        Ok (S.E_contract_of (mk_reg node#region path))
+      | _ -> error)
+    | _ -> ok)
   | _ -> ok
 
 and strip_fun_call (node : Ast.fun_call) : (S.expr, _) result =

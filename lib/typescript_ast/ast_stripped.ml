@@ -241,6 +241,7 @@ and val_binding =
 (* IMPORTANT: The data constructors are sorted alphabetically. If you
    add or modify some, please make sure they remain in order. *)
 and type_expr =
+  | T_apply of (type_expr * type_expr list) reg (* t<u,v> *)
   | T_for_all of (variable list * type_expr) reg (* <T,U>(x: T) => U *)
   | T_fun of fun_type reg (* (x : T) => U *)
   | T_int of int_literal (* 42 *)
@@ -249,7 +250,7 @@ and type_expr =
   | T_string of string_literal (* "x" *)
   | T_tuple of type_expr list reg (* [t, [u, v]] *)
   | T_union of union_type (* number | string *)
-  | T_var of (simple_path reg * type_expr list) reg (* M.t<u,v> t M.t *)
+  | T_path of simple_path reg (* M.t *)
 
 (* Object type *)
 and member_type =
@@ -412,13 +413,13 @@ let region_of_declaration = function
   | D_value { region; _ } -> region
 
 let region_of_type_expr = function
-  | T_tuple { region; _ } -> region
-  | T_for_all { region; _ } | T_fun { region; _ } -> region
+  | T_apply { region; _ } | T_for_all { region; _ } | T_fun { region; _ } -> region
   | T_int w -> w#region
   | T_object { region; _ } | T_parameter_of { region; _ } -> region
   | T_string w -> w#region
+  | T_tuple { region; _ } -> region
   | T_union { region; _ } -> region
-  | T_var { region; _ } -> region
+  | T_path { region; _ } -> region
 
 let region_of_pattern = function
   | P_array { region; _ } -> region
