@@ -644,8 +644,8 @@ let expr' (expr : Eq'.expr) : Folding'.expr =
     return @@ O.E_literal (Literal_bytes (Hex.to_bytes hex))
   | E_contract_of expr ->
     let path = TODO_do_in_parsing.selection_path' expr.value in
-    let lst = Nonempty_list.map ~f:TODO_do_in_parsing.mvar path in
-    return @@ O.E_contract lst
+    let path = Nonempty_list.map ~f:TODO_do_in_parsing.mvar path in
+    return @@ O.E_contract path
   | E_div expr -> compile_bin_op SLASH expr
   | E_div_eq expr -> compile_chain_assignment Div_eq expr
   | E_equal expr -> compile_bin_op DEQ expr
@@ -906,9 +906,10 @@ let rec type_expr' (type_expr : Eq'.ty_expr) : Folding'.ty_expr =
          let field_as_open = false in
          let field = TODO_do_in_parsing.tvar selected in
          return @@ O.T_module_access { module_path; field; field_as_open })
-(*
-  | T_parameter_of of simple_path reg reg (* parameter_of<N.C> *)
- *)
+  | T_parameter_of type_expr ->
+    let path = TODO_do_in_parsing.selection_path' type_expr.value in
+    let path = Nonempty_list.map ~f:TODO_do_in_parsing.mvar path in
+    return @@ O.T_contract_parameter path
   | T_string type_expr -> return @@ O.T_string type_expr#payload
 (*  | T_union of union_type (* number | string *)
 *)
