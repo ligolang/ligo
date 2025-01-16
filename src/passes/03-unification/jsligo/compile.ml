@@ -94,14 +94,15 @@ module TODO_do_in_parsing = struct
     in
     Nano_prim.Attribute.{ key; value = Option.map ~f value }
 
+
   let conv_attrs = List.map ~f:conv_attr
 
   let conv_decorator dec =
     let key, value = dec#payload in
     Nano_prim.Attribute.{ key; value }
 
-  let conv_decorators = List.map ~f:conv_decorator
 
+  let conv_decorators = List.map ~f:conv_decorator
   let ignore_attr _ = ()
   let labelize x = O.Label.T.create ~loc:(w_snd x) (w_fst x)
   let pattern_to_param pattern = O.Param.{ pattern; param_kind = `Const }
@@ -903,17 +904,27 @@ let rec type_expr' (type_expr : Eq'.ty_expr) : Folding'.ty_expr =
     let s, z = t#payload in
     return @@ O.T_int (s, z)
   | T_object type_expr ->
-     let member_types = type_expr.value in
-     let compile_member_type (member : T.member_type reg) =
-       let T.{decorators; comments=_; static=_; property_name;
-              optional=_; rhs_type} = member.value in
-       let decorators = TODO_do_in_parsing.conv_decorators decorators in
-       let property_name = TODO_do_in_parsing.(labelize property_name) in
-       let property_rhs = Some rhs_type in
-       property_name, property_rhs, decorators in
-     let members = List.map ~f:compile_member_type member_types in
-     let fields = O.Non_linear_rows.make members in
-     return @@ O.T_record_raw fields
+    let member_types = type_expr.value in
+    let compile_member_type (member : T.member_type reg) =
+      let T.
+            { decorators
+            ; comments = _
+            ; static = _
+            ; property_name
+            ; optional = _
+            ; rhs_type
+            }
+        =
+        member.value
+      in
+      let decorators = TODO_do_in_parsing.conv_decorators decorators in
+      let property_name = TODO_do_in_parsing.(labelize property_name) in
+      let property_rhs = Some rhs_type in
+      property_name, property_rhs, decorators
+    in
+    let members = List.map ~f:compile_member_type member_types in
+    let fields = O.Non_linear_rows.make members in
+    return @@ O.T_record_raw fields
   | T_path type_expr ->
     let T.{ path; selected } = type_expr.value in
     (match path with
@@ -932,6 +943,9 @@ let rec type_expr' (type_expr : Eq'.ty_expr) : Folding'.ty_expr =
   | T_union type_expr ->
     let variants = Nonempty_list.to_list type_expr.value in
     return @@ O.T_union variants
+
+
+(* OLD *)
 
 let pattern : Eq.pattern -> Folding.pattern =
  fun p ->
@@ -1007,6 +1021,33 @@ let pattern : Eq.pattern -> Folding.pattern =
       in
       return @@ P_tuple_with_ellipsis (List.map ~f p))
 
+
+(* NEW *)
+
+let pattern' (pattern : Eq'.pattern) : Folding'.pattern =
+  let loc = Location.lift (T.region_of_pattern pattern) in
+  let return x = Location.wrap ~loc x in
+  match pattern with
+  | P_array { value; _ } ->
+    let f (elem : T.pattern T.element) =
+      match elem with
+      | Spread pattern -> O.{ pattern; ellipsis = true }
+      | Element pattern -> O.{ pattern; ellipsis = false }
+    in
+    return @@ O.P_tuple_with_ellipsis (List.map ~f value)
+  | _ -> failwith "TODO: pattern'"
+
+
+(*
+  | P_bytes of bytes_literal (* 0xFFFA *)
+  | P_false of Region.t (* false *)
+  | P_int of int_literal (* 42 *)
+  | P_object of pattern _object (* {x, y:z} *)
+  | P_string of string_literal (* "string" *)
+  | P_true of Region.t (* true *)
+  | P_var of simple_path reg (* x  M.N.x *)
+  | P_typed of (pattern * type_expr) reg (* NOTE: ONLY INTERNAL *)
+ *)
 
 (* in JSLIGO, instruction ; statements and declaration are all statements *)
 
