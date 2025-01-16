@@ -8,11 +8,11 @@
 
 module Utils = Simple_utils.Utils
 module Region = Simple_utils.Region
+module Ne_list = Nonempty_list
 
 (* Local dependencies *)
 
 module Wrap = Lexing_shared.Wrap
-(*module Attr = Lexing_shared.Attr*)
 
 (* Utilities *)
 
@@ -52,14 +52,16 @@ let print_path (path : simple_path) : unit =
 
 (* The Abstract Syntax Tree *)
 
-type t = statement list
+type t = statements
+
+and statements = statement Ne_list.t
 
 (* STATEMENTS *)
 
 (* IMPORTANT: The data constructors are sorted alphabetically. If you
    add or modify some, please make sure they remain in order. *)
 and statement =
-  | S_block of statement list reg
+  | S_block of statements reg
   | S_break of Region.t
   | S_decl of declaration
   | S_export of declaration
@@ -104,9 +106,9 @@ and var_kind =
 
 (* Switch statement *)
 and switch_stmt = expr * cases
-and cases = switch_case list * switch_default
-and switch_case = expr * statement list
-and switch_default = statement list
+and cases = switch_case list * switch_default option
+and switch_case = expr * statements reg
+and switch_default = statements reg
 
 (* While-loop *)
 and while_stmt = expr * statement option
@@ -141,7 +143,7 @@ and class_member =
 and method_definition =
   { decorators : decorator list
   ; method_sig : method_signature reg
-  ; method_body : statement list reg
+  ; method_body : statements reg
   }
 
 and method_signature =
@@ -171,7 +173,7 @@ and fun_decl =
   ; generics : variable list
   ; parameters : parameter reg list
   ; rhs_type : type_expr option
-  ; fun_body : statement list reg
+  ; fun_body : statements reg
   }
 
 and parameter = pattern * type_expr option
@@ -189,7 +191,7 @@ and import_alias = variable * simple_path reg
 and import_all_as = variable * file_path
 
 (* import {x, y} from "/my/path.ts" *)
-and import_from = variable Nonempty_list.t * file_path
+and import_from = variable Ne_list.t * file_path
 
 (* Interfaces *)
 and interface_decl =
@@ -211,7 +213,7 @@ and intf_entry =
 and namespace_decl =
   { decorators : decorator list
   ; namespace_name : variable
-  ; namespace_body : statement list
+  ; namespace_body : statements reg
   }
 
 (* Type declarations *)
@@ -227,7 +229,7 @@ and value_decl =
   { decorators : decorator list (* From the keyword "let" or "const" *)
   ; comments : comment list (* From the keyword "let" or "const" *)
   ; kind : var_kind
-  ; bindings : val_binding reg Nonempty_list.t
+  ; bindings : val_binding reg Ne_list.t
   }
 
 and val_binding =
@@ -249,7 +251,7 @@ and type_expr =
   | T_parameter_of of simple_path reg reg (* parameter_of<N.C> *)
   | T_path of simple_path reg (* M.t *)
   | T_string of string_literal (* "x" *)
-  | T_tuple of type_expr Nonempty_list.t reg (* [t, [u, v]] *)
+  | T_tuple of type_expr Ne_list.t reg (* [t, [u, v]] *)
   | T_union of union_type (* number | string *)
 
 (* Object type and class bodies *)
@@ -278,7 +280,7 @@ and 'a property =
   }
 
 (* Union type *)
-and union_type = type_expr Nonempty_list.t reg
+and union_type = type_expr Ne_list.t reg
 
 (* PATTERNS *)
 
@@ -378,7 +380,7 @@ and arrow_fun_expr =
 and function_expr = arrow_fun_expr
 
 and fun_body =
-  | Stmt_body of statement list reg
+  | Stmt_body of statements reg
   | Expr_body of expr
 
 (* Functional update of object expressions *)

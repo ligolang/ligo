@@ -153,6 +153,7 @@ type t =
   | Empty_tuple_type
   | Optional_member
   | Static_member
+  | No_statements
 
 type error = t
 
