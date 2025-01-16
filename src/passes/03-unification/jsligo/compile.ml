@@ -1077,11 +1077,10 @@ let pattern' (pattern : Eq'.pattern) : Folding'.pattern =
   | P_string pattern ->
      let string = Ligo_string.standard pattern#payload in
      return @@ O.P_literal (Literal_string string)
+  | P_true _ -> return @@ O.P_ctor (Ligo_prim.Label.of_string "True")
   | _ -> failwith "TODO: pattern'"
 
-
 (*
-  | P_true of Region.t (* true *)
   | P_var of simple_path reg (* x  M.N.x *)
   | P_typed of (pattern * type_expr) reg (* NOTE: ONLY INTERNAL *)
  *)
