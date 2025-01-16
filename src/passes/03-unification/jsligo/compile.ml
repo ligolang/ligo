@@ -1074,11 +1074,13 @@ let pattern' (pattern : Eq'.pattern) : Folding'.pattern =
   | P_object pattern ->
     let fields = List.map ~f:compile_property_pattern pattern.value in
     return @@ O.P_pun_record fields
+  | P_string pattern ->
+     let string = Ligo_string.standard pattern#payload in
+     return @@ O.P_literal (Literal_string string)
   | _ -> failwith "TODO: pattern'"
 
 
 (*
-  | P_string of string_literal (* "string" *)
   | P_true of Region.t (* true *)
   | P_var of simple_path reg (* x  M.N.x *)
   | P_typed of (pattern * type_expr) reg (* NOTE: ONLY INTERNAL *)
