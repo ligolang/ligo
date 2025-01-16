@@ -663,7 +663,7 @@ and dec_switch_case ?(comments = []) node : (switch_case, _) result =
   let* value = dec_expressions value_field in
   let children = collect_children node in
   let stmt_children = skip_until_colon children in
-  let* body = list_of_children dec_statement stmt_children in
+  let* body = wrap_ne_list_opt_of_children dec_statement stmt_children in
   Ok { kwd_case; value; body }
 
 and dec_switch_default ?(comments = []) node : (switch_default, _) result =
@@ -671,7 +671,7 @@ and dec_switch_default ?(comments = []) node : (switch_default, _) result =
   let* kwd_default = first_child_named "default" node in
   let kwd_default = make_kwd ~comments kwd_default in
   let statements = collect_named_children node in
-  let* statements = list_of_children dec_statement statements in
+  let* statements = wrap_ne_list_opt_of_children dec_statement statements in
   Ok { kwd_default; statements }
 
 (* For statement *)

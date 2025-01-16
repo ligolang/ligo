@@ -2175,12 +2175,12 @@ and switch_entry =
 and switch_case =
   { kwd_case : kwd_case
   ; value : expressions
-  ; body : statement list
+  ; body : statements
   }
 
 and switch_default =
   { kwd_default : kwd_default
-  ; statements : statement list
+  ; statements : statements
   }
 
 (** Throw Statement
