@@ -1,6 +1,7 @@
 open Core
 open Unification_shared.Helpers
 open Region
+
 module Utils = Simple_utils.Utils
 module Ligo_option = Simple_utils.Ligo_option
 module Ligo_string = Simple_utils.Ligo_string
@@ -151,7 +152,7 @@ module TODO_do_in_parsing = struct
         (match Location.unwrap @@ compile_statement one with
         | S_instr i -> O.Test_clause.ClauseInstr i
         | _ -> O.Test_clause.ClauseBlock [ x ])
-      | _ -> O.Test_clause.ClauseBlock value)
+      | _ -> O.Test_clause.ClauseBlock (Nonempty_list.to_list value))
     | S_instr i -> O.Test_clause.ClauseInstr i
     | _ -> O.Test_clause.ClauseBlock [ x ]
 
@@ -224,8 +225,8 @@ module Eq' = struct
   type ty_expr = T.type_expr
   type pattern = T.pattern
   type statement = T.statement
-  type block = T.statement list
-  type mod_expr = T.statement list
+  type block = T.statements
+  type mod_expr = T.statements
   type instruction = T.statement
   type declaration = T.declaration
   type program_entry = T.statement
@@ -246,7 +247,7 @@ module Folding = Folding (Eq)
 
 module Folding' = Folding_orig (Eq')
 
-(* Expressions *)
+(* EXPRESSIONS *)
 
 (* OLD *)
 
@@ -542,7 +543,6 @@ let rec expr : Eq.expr -> Folding.expr =
     let I.{ kwd_do = _; statements } = value in
     return @@ E_do statements.value.inside
 
-
 (* NEW *)
 
 let compile_property (property : 'a T.property reg) =
@@ -562,27 +562,18 @@ let compile_property (property : 'a T.property reg) =
   let object_ = O.Object_.{ field_id; field_rhs } in
   Location.wrap ~loc:(Location.lift property.region) object_
 
-
 let compile_properties (properties : 'a T.property reg list) =
   List.map ~f:compile_property properties
-
-
-(*
-let return_expr' expr = Location.wrap ~loc:(Location.lift (T.region_of_expr expr))
-let return_expr region = Location.wrap ~loc:(Location.lift region)
- *)
 
 let compile_bin_op (sign : O.Operators.op) (op : (T.expr * T.expr) Region.reg) =
   let return x = Location.(wrap ~loc:(lift op.region)) x in
   let left, right = op.Region.value in
   return @@ O.E_binary_op { operator = return sign; left; right }
 
-
 let compile_unary_op (sign : O.Operators.op) (op : T.expr Region.reg) =
   let return x = Location.(wrap ~loc:(lift op.region)) x in
   let arg = op.Region.value in
   return @@ O.E_unary_op { operator = return sign; arg }
-
 
 let compile_postfix_op (expr : T.variable reg) op =
   let loc = Location.lift expr.region in
@@ -591,7 +582,6 @@ let compile_postfix_op (expr : T.variable reg) op =
   let expr = T.E_var expr.value in
   return @@ O.E_postfix { post_op; expr }
 
-
 let compile_prefix_op (expr : T.variable reg) op =
   let loc = Location.lift expr.region in
   let return x = Location.wrap ~loc x in
@@ -599,6 +589,12 @@ let compile_prefix_op (expr : T.variable reg) op =
   let expr = T.E_var expr.value in
   return @@ O.E_prefix { pre_op; expr }
 
+let compile_chain_assignment op expr =
+  let { value = expr1, expr2; region } = expr in
+  let loc = Location.lift expr.region in
+  let return x = Location.wrap ~loc x in
+  let op = O.Assign_chainable.Assignment_operator op in
+  return @@ O.E_struct_assign_chainable { expr1; op; expr2 }
 
 let compile_function (expr : T.arrow_fun_expr reg) =
   let loc = Location.lift expr.region in
@@ -626,19 +622,11 @@ let compile_function (expr : T.arrow_fun_expr reg) =
     List.map ~f parameters
   in
   let ret_type = rhs_type in
+  return @@
   match fun_body with
   | T.Stmt_body body ->
-    return @@ O.E_block_poly_fun { type_params; parameters; ret_type; body = body.value }
-  | Expr_body body -> return @@ O.E_poly_fun { type_params; parameters; ret_type; body }
-
-
-let compile_chain_assignment op expr =
-  let { value = expr1, expr2; region } = expr in
-  let loc = Location.lift expr.region in
-  let return x = Location.wrap ~loc x in
-  let op = O.Assign_chainable.Assignment_operator op in
-  return @@ O.E_struct_assign_chainable { expr1; op; expr2 }
-
+    O.E_block_poly_fun { type_params; parameters; ret_type; body = body.value }
+  | Expr_body body -> O.E_poly_fun { type_params; parameters; ret_type; body }
 
 let expr' (expr : Eq'.expr) : Folding'.expr =
   let loc = Location.lift (T.region_of_expr expr) in
@@ -736,6 +724,7 @@ let expr' (expr : Eq'.expr) : Folding'.expr =
   | E_var v -> return @@ O.E_variable_esc (Raw (TODO_do_in_parsing.var v))
   | E_xor expr -> compile_bin_op WORD_XOR expr
 
+(* TYPE EXPRESSIONS *)
 
 (* OLD *)
 
@@ -892,7 +881,6 @@ let rec ty_expr : Eq.ty_expr -> Folding.ty_expr =
     let summands = Utils.nsep_or_pref_to_list t.value in
     Location.wrap ~loc @@ O.T_union summands
 
-
 (* NEW *)
 
 let compile_member_type (member : T.member_type reg) =
@@ -904,11 +892,9 @@ let compile_member_type (member : T.member_type reg) =
   let property_rhs = Some rhs_type in
   property_name, property_rhs, decorators
 
-
 let compile_parameter param : _ O.Named_fun.fun_type_arg =
   let name, type_expr = param.value in
   { name = name#payload; type_expr }
-
 
 let rec type_expr' (type_expr : Eq'.ty_expr) : Folding'.ty_expr =
   let loc = Location.lift (T.region_of_type_expr type_expr) in
@@ -958,6 +944,7 @@ let rec type_expr' (type_expr : Eq'.ty_expr) : Folding'.ty_expr =
     let variants = Nonempty_list.to_list type_expr.value in
     return @@ O.T_union variants
 
+(* PATTERNS *)
 
 (* OLD *)
 
@@ -1035,7 +1022,6 @@ let pattern : Eq.pattern -> Folding.pattern =
       in
       return @@ P_tuple_with_ellipsis (List.map ~f p))
 
-
 (* NEW *)
 
 let compile_property_pattern (property : T.pattern T.property Region.reg)
@@ -1054,7 +1040,6 @@ let compile_property_pattern (property : T.pattern T.property Region.reg)
   in
   let property_name = TODO_do_in_parsing.(labelize property_name) in
   O.Field.Complete (property_name, property_rhs)
-
 
 let pattern' (pattern : Eq'.pattern) : Folding'.pattern =
   let loc = Location.lift (T.region_of_pattern pattern) in
@@ -1095,6 +1080,8 @@ let pattern' (pattern : Eq'.pattern) : Folding'.pattern =
 
 (* in JSLIGO, instruction ; statements and declaration are all statements *)
 
+(* OLD *)
+
 let block : Eq.block -> Folding.block =
  fun statements ->
   let locs =
@@ -1106,6 +1093,21 @@ let block : Eq.block -> Folding.block =
   let statements = Nonempty_list.map ~f:fst statements in
   Location.wrap ~loc statements
 
+(* NEW *)
+
+(* Shouldn't we use the type [statement list reg] for blocks? *)
+
+(*
+let block' : Eq'.block -> Folding'.block =
+ fun statements ->
+  let locs =
+    List.map
+      ~f:(fun stmt -> Location.lift @@ T.region_of_statement stmt)
+      statements
+  in
+  let loc = List.fold_right ~f:Location.cover locs in
+  Location.wrap ~loc statements
+ *)
 
 (* It seems we do no have module expressions in JsLIGO? *)
 let mod_expr : Eq.mod_expr -> Folding.mod_expr =
@@ -1117,7 +1119,6 @@ let mod_expr : Eq.mod_expr -> Folding.mod_expr =
   in
   let loc = Ne_list.fold_right1 ~f:Location.cover locs in
   Location.wrap ~loc (O.M_body I.{ statements; eof = ghost })
-
 
 let rec statement : Eq.statement -> Folding.statement =
  fun s ->
