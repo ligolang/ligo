@@ -1040,11 +1040,11 @@ let pattern' (pattern : Eq'.pattern) : Folding'.pattern =
      in return @@ O.P_literal (Literal_bytes bytes)
   | P_false _ ->
      return @@ O.P_ctor (Ligo_prim.Label.of_string "False")
+  | P_int pattern ->
+     return @@ O.P_literal (Literal_int (snd pattern#payload))
   | _ -> failwith "TODO: pattern'"
 
-
 (*
-  | P_int of int_literal (* 42 *)
   | P_object of pattern _object (* {x, y:z} *)
   | P_string of string_literal (* "string" *)
   | P_true of Region.t (* true *)
