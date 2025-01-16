@@ -1089,12 +1089,9 @@ let pattern' (pattern : Eq'.pattern) : Folding'.pattern =
       let field_as_open = false in
       let field = T.P_var (mk_reg selected#region T.{ path = []; selected }) in
       return @@ O.P_mod_access { module_path; field; field_as_open })
-  | _ -> failwith "TODO: pattern'"
-
-
-(*
-  | P_typed of (pattern * type_expr) reg (* NOTE: ONLY INTERNAL *)
- *)
+  | P_typed pattern ->
+    let pattern, type_expr = pattern.value in
+    return @@ O.P_typed (type_expr, pattern)
 
 (* in JSLIGO, instruction ; statements and declaration are all statements *)
 
