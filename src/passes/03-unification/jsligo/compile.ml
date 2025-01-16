@@ -1038,11 +1038,12 @@ let pattern' (pattern : Eq'.pattern) : Folding'.pattern =
   | P_bytes pattern ->
      let bytes = Hex.to_bytes (snd pattern#payload)
      in return @@ O.P_literal (Literal_bytes bytes)
+  | P_false _ ->
+     return @@ O.P_ctor (Ligo_prim.Label.of_string "False")
   | _ -> failwith "TODO: pattern'"
 
 
 (*
-  | P_false of Region.t (* false *)
   | P_int of int_literal (* 42 *)
   | P_object of pattern _object (* {x, y:z} *)
   | P_string of string_literal (* "string" *)
