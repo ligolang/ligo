@@ -103,7 +103,8 @@ exception Out_of_order_pos of string * string
     respectively, are raised. *)
 val make : start:Pos.t -> stop:Pos.t -> t
 
-val empty : Pos.t -> t (* Special case of [make] when [stop] is [stop]. *)
+(** Special case of [make ~start ~stop] when [start] is [stop]. *)
+val empty : Pos.t -> t
 
 (* SPECIAL REGIONS *)
 
