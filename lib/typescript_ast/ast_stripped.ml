@@ -289,7 +289,7 @@ and pattern =
   | P_bytes of bytes_literal (* 0xFFFA *)
   | P_false of Region.t (* false *)
   | P_int of int_literal (* 42 *)
-  | P_object of pattern _object (* {x, y:z} *)
+  | P_object of pattern _object (* {x, y: z} *)
   | P_string of string_literal (* "string" *)
   | P_true of Region.t (* true *)
   | P_var of simple_path reg (* x  M.N.x *)

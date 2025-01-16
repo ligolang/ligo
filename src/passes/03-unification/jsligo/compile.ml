@@ -1055,6 +1055,7 @@ let compile_property_pattern (property : T.pattern T.property Region.reg)
   let property_name = TODO_do_in_parsing.(labelize property_name) in
   O.Field.Complete (property_name, property_rhs)
 
+
 let pattern' (pattern : Eq'.pattern) : Folding'.pattern =
   let loc = Location.lift (T.region_of_pattern pattern) in
   let return x = Location.wrap ~loc x in
@@ -1075,13 +1076,23 @@ let pattern' (pattern : Eq'.pattern) : Folding'.pattern =
     let fields = List.map ~f:compile_property_pattern pattern.value in
     return @@ O.P_pun_record fields
   | P_string pattern ->
-     let string = Ligo_string.standard pattern#payload in
-     return @@ O.P_literal (Literal_string string)
+    let string = Ligo_string.standard pattern#payload in
+    return @@ O.P_literal (Literal_string string)
   | P_true _ -> return @@ O.P_ctor (Ligo_prim.Label.of_string "True")
+  | P_var pattern ->
+    let T.{ path; selected } = pattern.value in
+    (match path with
+    | [] -> return @@ O.P_var_esc (Raw (TODO_do_in_parsing.var selected))
+    | fst_mod :: other_mods ->
+      let path = Nonempty_list.(fst_mod :: other_mods) in
+      let module_path = Nonempty_list.map ~f:TODO_do_in_parsing.mvar path in
+      let field_as_open = false in
+      let field = T.P_var (mk_reg selected#region T.{ path = []; selected }) in
+      return @@ O.P_mod_access { module_path; field; field_as_open })
   | _ -> failwith "TODO: pattern'"
 
+
 (*
-  | P_var of simple_path reg (* x  M.N.x *)
   | P_typed of (pattern * type_expr) reg (* NOTE: ONLY INTERNAL *)
  *)
 
