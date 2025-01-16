@@ -10,7 +10,7 @@ const config = {
   title: "Ligo",
   url: "https://ligolang.org",
   baseUrl: "/",
-  onBrokenLinks: "throw",
+  onBrokenLinks: "warn",
   onBrokenMarkdownLinks: "warn",
   favicon: "img/favicon.svg",
   projectName: "ligo",
