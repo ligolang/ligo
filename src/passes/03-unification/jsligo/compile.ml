@@ -44,6 +44,8 @@ let split_for_all_opt = function
     gen, Some te
 
 
+let single_stmt_block (x : I.statement) = Nonempty_list.singleton (x, None)
+
 (* NEW *)
 
 let split_for_all' = function
@@ -126,7 +128,6 @@ module TODO_do_in_parsing = struct
     =
     (* if the statement is a block containing a single instruction,
        we do not want to emit a ClauseBlock, but a ClauseInstr *)
-    let single_stmt_block (x : I.statement) = Nonempty_list.singleton (x, None) in
     match Location.unwrap @@ compile_statement x with
     | O.S_instr (I.S_Block { value = { inside; _ }; _ }) ->
       (match Nonempty_list.to_list inside with
@@ -140,7 +141,7 @@ module TODO_do_in_parsing = struct
 
 
   let control_flow_clause' compile_statement (x : T.statement)
-      : (T.statement, T.statement list) O.Test_clause.t
+      : (T.statement, T.statements) O.Test_clause.t
     =
     (* if the statement is a block containing a single instruction,
        we do not want to emit a ClauseBlock, but a ClauseInstr *)
@@ -151,7 +152,7 @@ module TODO_do_in_parsing = struct
         (match Location.unwrap @@ compile_statement one with
         | S_instr i -> O.Test_clause.ClauseInstr i
         | _ -> O.Test_clause.ClauseBlock [ x ])
-      | _ -> O.Test_clause.ClauseBlock (Nonempty_list.to_list value))
+      | _ -> O.Test_clause.ClauseBlock value)
     | S_instr i -> O.Test_clause.ClauseInstr i
     | _ -> O.Test_clause.ClauseBlock [ x ]
 
@@ -644,16 +645,16 @@ let expr' (expr : Eq'.expr) : Folding'.expr =
   | E_add expr -> compile_bin_op PLUS expr
   | E_add_eq expr -> compile_chain_assignment Plus_eq expr
   | E_and expr -> compile_bin_op DAMPERSAND expr
-  | E_app { value = expr, args; _ } -> return @@ O.E_call (expr, return args)
+  | E_app { value = expr, args; _ } -> return (O.E_call (expr, return args))
   | E_array { value = items; _ } ->
     let f : T.expr T.element -> _ AST.Array_repr.item = function
       | Spread expr -> Rest_entry expr
       | Element expr -> Expr_entry expr
     in
-    return @@ O.E_array (List.map ~f items)
+    return (O.E_array (List.map ~f items))
   | E_arrow_fun expr -> compile_function expr
   | E_assign { value = expr1, expr2; _ } ->
-    return @@ O.E_struct_assign_chainable { expr1; op = Eq; expr2 }
+    return (O.E_struct_assign_chainable { expr1; op = Eq; expr2 })
   | E_bit_and expr -> compile_bin_op WORD_LAND expr
   | E_bit_and_eq expr -> compile_chain_assignment BitAnd_eq expr
   | E_bit_neg expr -> compile_unary_op WORD_NOT expr
@@ -671,7 +672,7 @@ let expr' (expr : Eq'.expr) : Folding'.expr =
   | E_contract_of expr ->
     let path = TODO_do_in_parsing.selection_path' expr.value in
     let path = Nonempty_list.map ~f:TODO_do_in_parsing.mvar path in
-    return @@ O.E_contract path
+    return (O.E_contract path)
   | E_div expr -> compile_bin_op SLASH expr
   | E_div_eq expr -> compile_chain_assignment Div_eq expr
   | E_equal expr -> compile_bin_op DEQ expr
@@ -686,20 +687,20 @@ let expr' (expr : Eq'.expr) : Folding'.expr =
     (* We assume that there is no need for unspooling [expr]. Correct? *)
     let expr, name = expr.value in
     let name = O.Selection.FieldName (TODO_do_in_parsing.labelize name) in
-    return @@ O.E_proj (expr, [ name ])
+    return (O.E_proj (expr, [ name ]))
   | E_michelson expr ->
     (* Module [Strip] wraps for now a [E_typed] around the
         [E_michelson], so we can safely ignore here the type
         expression. *)
     let language, code, _type_expr = expr.value in
     let code = T.E_template code in
-    return @@ O.E_raw_code { language = language#payload; code }
+    return (O.E_raw_code { language = language#payload; code })
   | E_mult expr -> compile_bin_op STAR expr
   | E_mult_eq expr -> compile_chain_assignment Times_eq expr
   | E_neg expr -> compile_unary_op MINUS expr
   | E_neq expr -> compile_bin_op EQ_SLASH_EQ expr
   | E_not expr -> compile_unary_op EX_MARK expr
-  | E_object expr -> return @@ O.E_object (compile_properties expr.value)
+  | E_object expr -> return (O.E_object (compile_properties expr.value))
   | E_or expr -> compile_bin_op DPIPE expr
   | E_post_decr expr -> compile_postfix_op expr O.Prefix_postfix.Decrement
   | E_post_incr expr -> compile_postfix_op expr O.Prefix_postfix.Increment
@@ -714,22 +715,22 @@ let expr' (expr : Eq'.expr) : Folding'.expr =
     (* We assume that there is no need for unspooling [expr]. Correct? *)
     let expr, int = expr.value in
     let index = O.Selection.Component_num int#payload in
-    return @@ O.E_proj (expr, [ index ])
+    return (O.E_proj (expr, [ index ]))
   | E_sub_eq expr -> compile_chain_assignment Min_eq expr
   | E_template expr ->
     return @@ O.E_literal (Literal_string (Ligo_string.Verbatim expr#payload))
   | E_ternary expr ->
     let T.{ condition; truthy; falsy } = expr.value in
     let ifnot = Some falsy in
-    return @@ O.E_cond { test = condition; ifso = truthy; ifnot }
-  | E_true _ -> return @@ O.E_constr (Ligo_prim.Label.of_string "True")
+    return (O.E_cond { test = condition; ifso = truthy; ifnot })
+  | E_true _ -> return (O.E_constr (Ligo_prim.Label.of_string "True"))
   | E_typed expr ->
     let expr, type_expr = expr.value in
-    return @@ O.E_annot (expr, type_expr)
+    return (O.E_annot (expr, type_expr))
   | E_update expr ->
     let T.{ obj_expr; updates } = expr.value in
     let updates = compile_properties updates in
-    return @@ O.E_object_update { object_ = obj_expr; updates }
+    return (O.E_object_update { object_ = obj_expr; updates })
   | E_var v -> return @@ O.E_variable_esc (Raw (TODO_do_in_parsing.var v))
   | E_xor expr -> compile_bin_op WORD_XOR expr
 
@@ -919,25 +920,25 @@ let rec type_expr' (type_expr : Eq'.ty_expr) : Folding'.ty_expr =
     | [] -> (* Should not happen *) type_expr' constr
     | fst_arg :: more_args ->
       let type_args = Nonempty_list.(fst_arg :: more_args) in
-      return @@ O.T_app { constr; type_args })
-  | T_tuple type_expr -> return @@ O.T_prod type_expr.value
+      return (O.T_app { constr; type_args }))
+  | T_tuple type_expr -> return (O.T_prod type_expr.value)
   | T_for_all type_expr ->
     let type_vars, type_expr = type_expr.value in
     let ty_binders = List.map ~f:TODO_do_in_parsing.tvar type_vars
     and kind = Ligo_prim.Kind.Type
     and type_ = type_expr in
-    return @@ O.T_for_alls { ty_binders; kind; type_ }
+    return (O.T_for_alls { ty_binders; kind; type_ })
   | T_fun type_expr ->
     let parameters, ret_type = type_expr.value in
     let parameters = List.map ~f:compile_parameter parameters in
-    return @@ O.T_named_fun (parameters, ret_type)
+    return (O.T_named_fun (parameters, ret_type))
   | T_int t ->
     let s, z = t#payload in
-    return @@ O.T_int (s, z)
+    return (O.T_int (s, z))
   | T_object type_expr ->
     let members = List.map ~f:compile_member_type type_expr.value in
     let fields = O.Non_linear_rows.make members in
-    return @@ O.T_record_raw fields
+    return (O.T_record_raw fields)
   | T_path type_expr ->
     let T.{ path; selected } = type_expr.value in
     (match path with
@@ -951,11 +952,11 @@ let rec type_expr' (type_expr : Eq'.ty_expr) : Folding'.ty_expr =
   | T_parameter_of type_expr ->
     let path = TODO_do_in_parsing.selection_path' type_expr.value in
     let path = Nonempty_list.map ~f:TODO_do_in_parsing.mvar path in
-    return @@ O.T_contract_parameter path
+    return (O.T_contract_parameter path)
   | T_string type_expr -> return @@ O.T_string type_expr#payload
   | T_union type_expr ->
     let variants = Nonempty_list.to_list type_expr.value in
-    return @@ O.T_union variants
+    return (O.T_union variants)
 
 
 (* PATTERNS *)
@@ -1113,19 +1114,13 @@ let block : Eq.block -> Folding.block =
 
 (* NEW *)
 
-(* Shouldn't we use the type [statement list reg] for blocks? *)
+let block' (stmts : Eq'.block) : Folding'.block =
+  let locs = Nonempty_list.map ~f:(Location.lift <@ T.region_of_statement) stmts in
+  let loc = Ne_list.fold_right1 ~f:Location.cover locs in
+  Location.wrap ~loc stmts
 
-(*
-let block' : Eq'.block -> Folding'.block =
- fun statements ->
-  let locs =
-    List.map
-      ~f:(fun stmt -> Location.lift @@ T.region_of_statement stmt)
-      statements
-  in
-  let loc = List.fold_right ~f:Location.cover locs in
-  Location.wrap ~loc statements
- *)
+
+(* OLD *)
 
 (* It seems we do no have module expressions in JsLIGO? *)
 let mod_expr : Eq.mod_expr -> Folding.mod_expr =
@@ -1139,7 +1134,17 @@ let mod_expr : Eq.mod_expr -> Folding.mod_expr =
   Location.wrap ~loc (O.M_body I.{ statements; eof = ghost })
 
 
-let rec statement : Eq.statement -> Folding.statement =
+(* NEW *)
+
+let mod_expr' (stmts : Eq'.mod_expr) : Folding'.mod_expr =
+  let locs = Nonempty_list.map ~f:(Location.lift <@ T.region_of_statement) stmts in
+  let loc = Ne_list.fold_right1 ~f:Location.cover locs in
+  Location.wrap ~loc (O.M_body stmts)
+
+
+(* OLD *)
+
+let statement : Eq.statement -> Folding.statement =
  fun s ->
   let loc = Location.lift (I.statement_to_region s) in
   let return = Location.wrap ~loc in
@@ -1160,11 +1165,25 @@ let rec statement : Eq.statement -> Folding.statement =
   | S_For _ -> return @@ S_instr s
 
 
-and instruction : Eq.instruction -> Folding.instruction =
+(* NEW *)
+
+let statement' (stmt : Eq'.statement) : Folding'.statement =
+  let loc = Location.lift (T.region_of_statement stmt) in
+  let return = Location.wrap ~loc in
+  match stmt with
+  | S_block _ | S_break _ -> return @@ O.S_instr stmt
+  | S_decl decl -> return @@ O.S_decl decl
+  | S_export decl -> return @@ O.S_export decl
+  | S_expr _ | S_for _ | S_for_of _ | S_if _ | S_return _ | S_switch _ | S_while _ ->
+    return @@ O.S_instr stmt
+
+
+(* OLD *)
+
+let instruction : Eq.instruction -> Folding.instruction =
  fun i ->
   let loc = Location.lift (I.statement_to_region i) in
   let return = Location.wrap ~loc in
-  let single_stmt_block (x : I.statement) = Nonempty_list.singleton @@ (x, None) in
   match i with
   | S_Continue _ -> return @@ O.I_continue
   | S_Block s -> return @@ O.I_block s.value.inside
@@ -1218,7 +1237,73 @@ and instruction : Eq.instruction -> Folding.instruction =
   | S_Directive _ | S_Decl _ | S_Export _ | S_Attr _ -> assert false
 
 
-and declaration : Eq.declaration -> Folding.declaration =
+(* NEW *)
+
+let instruction' (instr : Eq'.instruction) : Folding'.instruction =
+  let loc = Location.lift (T.region_of_statement instr) in
+  let return = Location.wrap ~loc in
+  match instr with
+  | S_block stmts -> return (O.I_block stmts.value)
+  | S_break _ -> return O.I_break
+  | S_decl _ | S_export _ -> assert false
+  | S_expr expr -> return (O.I_expr expr)
+  | S_for stmt ->
+    let T.{ initialiser; condition; afterthought; for_body } = stmt.value in
+    let afterthought =
+      match afterthought with
+      | [] -> None
+      | fst_expr :: more_exprs -> Some Nonempty_list.(fst_expr :: more_exprs)
+    in
+    let statement = for_body in
+    return @@ O.I_for_stmt { initialiser; condition; afterthought; statement }
+  | S_for_of stmt ->
+    let T.{ index_kind; index; expr; for_of_body } = stmt.value in
+    let index_kind =
+      match index_kind with
+      | Some (`Let _) -> `Let
+      | _ -> `Const
+    in
+    let index' : T.pattern T.element list =
+      match index.value with
+      | var, None ->
+        let var = T.{ path = []; selected = var } in
+        let var = mk_reg index.region var in
+        [ T.Element (T.P_var var) ]
+      | key, Some value ->
+        let key' = T.{ path = []; selected = key } in
+        let key' = mk_reg key#region key' in
+        let value' = T.{ path = []; selected = value } in
+        let value' = mk_reg value#region value' in
+        [ T.Element (T.P_var key'); T.Element (T.P_var value') ]
+    in
+    let index = T.P_array (mk_reg index.region index') in
+    return (O.I_for_of { index_kind; index; expr; for_stmt = for_of_body })
+  | S_if stmt ->
+    let T.{ test; if_so; if_not } = stmt.value in
+    let compile = TODO_do_in_parsing.control_flow_clause' statement' in
+    let ifso = compile if_so
+    and ifnot = Option.map if_not ~f:compile in
+    return @@ O.I_cond { test; ifso; ifnot }
+  | S_return stmt -> return (O.I_return stmt.value)
+  | S_switch stmt ->
+    let switch_subject, cases = stmt.value in
+    let switch_cases, default_case = cases in
+    let f (case : T.switch_case) : _ O.Switch.switch_case =
+      let case_subject, statements = case in
+      O.Switch.{ expr = case_subject; case_body = statements }
+    in
+    let cases = Nonempty_list.map ~f switch_cases in
+    let cases = O.Switch.AllCases (cases, default_case) in
+    return @@ O.I_switch { subject = switch_subject; cases }
+  | S_while stmt ->
+    let cond, statement = stmt.value in
+    let block = Nonempty_list.singleton statement in
+    return (O.I_while { cond; block })
+
+
+(* OLD *)
+
+let declaration : Eq.declaration -> Folding.declaration =
  fun d ->
   let region = I.declaration_to_region d in
   let loc = Location.lift region in
@@ -1325,10 +1410,22 @@ and declaration : Eq.declaration -> Folding.declaration =
     return @@ O.D_multi_const [ { type_params; pattern; rhs_type = None; let_rhs } ]
 
 
-and program_entry : Eq.program_entry -> Folding.program_entry =
+(* NEW *)
+
+let declaration' (decl : Eq'.declaration) : Folding'.declaration =
+  let region = T.region_of_declaration decl in
+  let loc = Location.lift region in
+  let return = Location.wrap ~loc in
+  ignore return;
+  failwith "TODO: declaration'"
+
+
+(* OLD *)
+
+let program_entry : Eq.program_entry -> Folding.program_entry =
  fun s ->
   match Location.unwrap @@ statement s with
-  | O.S_export d -> PE_export I.(S_Decl d)
+  | O.S_export d -> PE_export (I.S_Decl d)
   | O.S_decl d -> PE_declaration d
   | O.S_instr _ -> PE_top_level_instruction s
   | O.S_directive () -> PE_preproc_directive ()
