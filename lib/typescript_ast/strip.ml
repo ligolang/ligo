@@ -421,6 +421,10 @@ and strip_switch_body (node : Ast.switch_body) : (S.cases, _) result =
   in
   let cases, defaults = List.fold_right entries ~init:([], []) ~f:filter in
   let* cases = Result.all @@ List.map ~f:strip_switch_case cases in
+  let* cases =
+    match cases with
+    | [] -> Strip_err.(make braces#region Empty_switch)
+    | fst_case :: more_cases -> Ok Nonempty_list.(fst_case :: more_cases) in
   match defaults with
   | [] -> Ok (cases, None)
   | [ default ] ->
@@ -434,6 +438,7 @@ and strip_switch_case (node : Ast.switch_case wrap) : (S.switch_case, _) result 
   | Ne_list.[ expr ] ->
     let* expr = strip_expression expr in
     let* body = strip_statements body in
+    let body = Option.map ~f:(fun stmt -> stmt.value) body in
     Ok (expr, body)
   | _ :: expr :: _ ->
     let region = Ast.region_of_expression expr in
@@ -441,7 +446,8 @@ and strip_switch_case (node : Ast.switch_case wrap) : (S.switch_case, _) result 
 
 and strip_switch_default (node : Ast.switch_default wrap) : (S.switch_default, _) result =
   let Ast.{ kwd_default = _; statements } = node#payload in
-  strip_statements statements
+  let* statements = strip_statements statements in
+  Ok (Option.map ~f:(fun stmt -> stmt.value) statements)
 
 (* For statement *)
 
@@ -598,7 +604,9 @@ and strip_while_statement (node : Ast.while_statement wrap) : (S.while_stmt, _) 
     | _ -> Strip_err.(make kwd_while#region Multiple_values)
   in
   let* statement = strip_statement body in
-  Ok (expr, statement)
+  match statement with
+  | None -> Strip_err.(make node#region Empty_while)
+  | Some statement -> Ok (expr, statement)
 
 (* Do statement *)
 
