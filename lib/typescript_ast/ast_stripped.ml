@@ -92,7 +92,7 @@ and for_of_stmt =
   { index_kind : var_kind option
   ; index : (key * value option) reg
   ; expr : expr
-  ; for_of_body : statement option
+  ; for_of_body : statement
   }
 
 and key = variable
