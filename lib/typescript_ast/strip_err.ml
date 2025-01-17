@@ -321,7 +321,8 @@ let to_string = function
   | Optional_member ->
     "Optional members are only supported in class declarations in JsLIGO."
   | Static_member -> "Static members are only supported in class declarations in JsLIGO."
-  | No_statements -> "Empty contracts and empty blocks of statements are not supported in JsLIGO."
+  | No_statements ->
+    "Empty contracts and empty blocks of statements are not supported in JsLIGO."
 
 (* Creating errors *)
 
