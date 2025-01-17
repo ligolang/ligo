@@ -144,9 +144,9 @@ let filter_path (expr : S.expr) : (S.simple_path reg, _) result =
 
 (* Stripping *)
 
-let rec strip_statements (node : Ast.statements) : (S.statements reg, _) result =
+let rec strip_statements (node : Ast.statements) : (S.statements reg option, _) result =
   match node with
-  | None -> Strip_err.(make (Region.min ~file:"") No_statements)
+  | None -> Ok None
   | Some stmts ->
     let f acc stmt =
       let* stmt' = strip_statement stmt in
@@ -155,8 +155,10 @@ let rec strip_statements (node : Ast.statements) : (S.statements reg, _) result 
     let* stmts' = Nonempty_list.fold_result ~f ~init:[] stmts#payload in
     let stmts' = rev_erase_options stmts' in
     (match stmts' with
-    | [] -> Strip_err.(make stmts#region No_statements)
-    | fst_stmt :: more_stmts -> Ok (mk_reg stmts#region Ne_list.(fst_stmt :: more_stmts)))
+    | [] -> Ok None
+    | fst_stmt :: more_stmts ->
+       let stmts' = Ne_list.(fst_stmt :: more_stmts) in
+       Ok (Some (mk_reg stmts#region stmts')))
 
 and strip_statement (node : Ast.statement) : (S.statement option, _) result =
   match node with
@@ -348,8 +350,11 @@ and strip_S_statement_block (node : Ast.statement_block) : (S.statement option, 
 
 and strip_statement_block (node : Ast.statement_block) : (S.statements reg, _) result =
   let (Braces statements) = node in
-  let statements = statements#payload.contents in
-  strip_statements statements
+  let statements' = statements#payload.contents in
+  let* stmts = strip_statements statements' in
+  match stmts with
+  | None -> Strip_err.(make statements#region No_statements)
+  | Some stmts -> Ok stmts
 
 (* If statement *)
 
