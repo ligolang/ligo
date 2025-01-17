@@ -1,0 +1,4 @@
+const add = ([x, y]) => x + y;           // Uncurried
+const add_curry = (x, y) => add([x, y]); // Curried
+const increment = add_curry(1);          // Partial application
+const one = increment(0);

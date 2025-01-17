@@ -1,0 +1,6 @@
+#import "gitlab-pages/docs/preprocessor/src/import/euro_namespace_public.jsligo" "Euro_import"
+
+type euro_balance = Euro_import.Euro.t;
+
+const add_tip = (s: euro_balance): euro_balance =>
+  Euro_import.Euro.add(s, Euro_import.Euro.one);

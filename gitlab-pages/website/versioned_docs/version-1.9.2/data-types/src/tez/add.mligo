@@ -1,0 +1,1 @@
+let sum : tez = 5mutez + 0.000_010tez
