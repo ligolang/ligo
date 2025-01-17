@@ -154,6 +154,8 @@ type t =
   | Optional_member
   | Static_member
   | No_statements
+  | Empty_switch
+  | Empty_while
 
 type error = t
 

@@ -154,6 +154,8 @@ type t =
   | Optional_member
   | Static_member
   | No_statements
+  | Empty_switch
+  | Empty_while
 
 type error = t
 
@@ -322,6 +324,8 @@ let to_string = function
     "Optional members are only supported in class declarations in JsLIGO."
   | Static_member -> "Static members are only supported in class declarations in JsLIGO."
   | No_statements -> "At least one statement is expected here in JsLIGO."
+  | Empty_switch -> "Empty switches are not supported in JsLIGO."
+  | Empty_while -> "Empty while-loops are not supported in JsLIGO."
 
 (* Creating errors *)
 

@@ -105,12 +105,12 @@ and var_kind =
 
 (* Switch statement *)
 and switch_stmt = expr * cases
-and cases = switch_case list * switch_default option
-and switch_case = expr * statements reg option
-and switch_default = statements reg option
+and cases = switch_case Nonempty_list.t * switch_default option
+and switch_case = expr * statements option
+and switch_default = statements option
 
 (* While-loop *)
-and while_stmt = expr * statement option
+and while_stmt = expr * statement
 
 (* DECLARATIONS *)
 
