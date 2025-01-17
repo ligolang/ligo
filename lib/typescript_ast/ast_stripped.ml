@@ -53,7 +53,6 @@ let print_path (path : simple_path) : unit =
 (* The Abstract Syntax Tree *)
 
 type t = statements
-
 and statements = statement Ne_list.t
 
 (* STATEMENTS *)
@@ -91,7 +90,7 @@ and for_stmt =
 (* For-of loops *)
 and for_of_stmt =
   { index_kind : var_kind option
-  ; index : key * value option
+  ; index : (key * value option) reg
   ; expr : expr
   ; for_of_body : statement option
   }
