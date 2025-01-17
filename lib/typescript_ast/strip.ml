@@ -492,6 +492,11 @@ and strip_S_for_in_statement (node : Ast.for_in_statement wrap)
   let* () = filter_await kwd_await in
   let* { index_kind; index; expr } = strip_for_header for_header in
   let* for_of_body = strip_statement body in
+  let* for_of_body =
+    match for_of_body with
+    | None -> Strip_err.(make node#region No_statements)
+    | Some statement -> Ok statement
+  in
   let for_of_stmt = S.{ index_kind; index; expr; for_of_body } in
   let for_of_stmt = mk_reg node#region for_of_stmt in
   Ok (Some (S.S_for_of for_of_stmt))
