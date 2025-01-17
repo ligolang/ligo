@@ -1,5 +1,0 @@
-const drop = (x, _y) => x; // _y silently ignored
-function convoluted_doubling (x) {
-  const addX = y => x + y;  // x is bound by convoluted_doubling
-  return addX(x);
-}

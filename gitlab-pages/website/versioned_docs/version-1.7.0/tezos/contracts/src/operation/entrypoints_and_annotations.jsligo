@@ -1,9 +1,0 @@
-type storage = int
-
-@entry
-const sub = (i: int, x: storage) : [list<operation>, storage] =>
-  [[], x - i]
-
-@entry
-const add = (i: int, x: storage) : [list<operation>, storage] =>
-  [[], x + i]
