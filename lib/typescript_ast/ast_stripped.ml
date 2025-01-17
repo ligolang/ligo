@@ -106,8 +106,8 @@ and var_kind =
 (* Switch statement *)
 and switch_stmt = expr * cases
 and cases = switch_case list * switch_default option
-and switch_case = expr * statements reg
-and switch_default = statements reg
+and switch_case = expr * statements reg option
+and switch_default = statements reg option
 
 (* While-loop *)
 and while_stmt = expr * statement option
