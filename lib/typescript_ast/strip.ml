@@ -64,7 +64,7 @@ type parameters =
 
 type for_header =
   { index_kind : S.var_kind option
-  ; index : S.key * S.value option
+  ; index : (S.key * S.value option) reg
   ; expr : S.expr
   }
 
@@ -148,16 +148,15 @@ let rec strip_statements (node : Ast.statements) : (S.statements reg, _) result 
   match node with
   | None -> Strip_err.(make (Region.min ~file:"") No_statements)
   | Some stmts ->
-     let f acc stmt =
-       let* stmt' = strip_statement stmt in
-       Ok (stmt' :: acc)
-     in
-     let* stmts' = Nonempty_list.fold_result ~f ~init:[] stmts#payload in
-     let stmts' = rev_erase_options stmts' in
-     match stmts' with
-     | [] -> Strip_err.(make stmts#region No_statements)
-     | fst_stmt :: more_stmts ->
-        Ok (mk_reg stmts#region Ne_list.(fst_stmt :: more_stmts))
+    let f acc stmt =
+      let* stmt' = strip_statement stmt in
+      Ok (stmt' :: acc)
+    in
+    let* stmts' = Nonempty_list.fold_result ~f ~init:[] stmts#payload in
+    let stmts' = rev_erase_options stmts' in
+    (match stmts' with
+    | [] -> Strip_err.(make stmts#region No_statements)
+    | fst_stmt :: more_stmts -> Ok (mk_reg stmts#region Ne_list.(fst_stmt :: more_stmts)))
 
 and strip_statement (node : Ast.statement) : (S.statement option, _) result =
   match node with
@@ -515,10 +514,11 @@ and strip_for_header (node : Ast.for_header) : (for_header, _) result =
   Ok { index_kind; index; expr }
 
 and strip_for_range (node : Ast.for_range)
-    : (S.var_kind option * (S.key * S.value option), _) result
+    : (S.var_kind option * (S.key * S.value option) reg, _) result
   =
   match node with
-  | For_in_expression (Identifier v) -> Ok (None, (strip_identifier v, None))
+  | For_in_expression (Identifier v) ->
+    Ok (None, mk_reg v#region (strip_identifier v, None))
   | For_in_expression e ->
     let region = Ast.region_of_lhs_expression e in
     Strip_err.(make region Invalid_loop_index)
@@ -536,11 +536,11 @@ and strip_for_range (node : Ast.for_range)
     Ok (Some var_kind, index)
 
 and strip_for_in_variable (node : Ast.for_in_variable)
-    : (S.key * S.value option, _) result
+    : ((S.key * S.value option) reg, _) result
   =
   let region = Ast.region_of_for_in_variable node in
   match node with
-  | For_in_ident ident -> Ok (strip_identifier ident, None)
+  | For_in_ident ident -> Ok (mk_reg ident#region (strip_identifier ident, None))
   | For_in_pattern p ->
     let* pattern = strip_destructuring_pattern p in
     (match pattern with
@@ -549,7 +549,8 @@ and strip_for_in_variable (node : Ast.for_in_variable)
       | [ elem_1; elem_2 ] ->
         let* elem_1 = force_single_var elem_1 in
         let* elem_2 = force_single_var elem_2 in
-        Ok (elem_1, Some elem_2)
+        let region = Ast.region_of_destructuring_pattern p in
+        Ok (mk_reg region (elem_1, Some elem_2))
       | _ -> Strip_err.(make region Invalid_loop_index))
     | _ -> Strip_err.(make region Invalid_loop_index))
 
