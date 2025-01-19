@@ -56,9 +56,6 @@ type t = statements
 and statements = statement Ne_list.t
 
 (* STATEMENTS *)
-
-(* IMPORTANT: The data constructors are sorted alphabetically. If you
-   add or modify some, please make sure they remain in order. *)
 and statement =
   | S_block of statements reg
   | S_break of Region.t
@@ -113,22 +110,19 @@ and switch_default = statements option
 and while_stmt = expr * statement
 
 (* DECLARATIONS *)
-
-(* IMPORTANT: The data constructors are sorted alphabetically. If you
-   add or modify some, please make sure they remain in order. *)
 and declaration =
+  | D_class of class_decl reg
+  | D_decorated of decorator * declaration
   | D_function of fun_decl reg
   | D_import of import_decl
   | D_interface of interface_decl reg
   | D_namespace of namespace_decl reg
-  | D_class of class_decl reg
   | D_type of type_decl reg
   | D_value of value_decl reg
 
 (* Class declaration *)
 and class_decl =
-  { decorators : decorator list
-  ; comments : comment list (* From the keyword "class" *)
+  { comments : comment list (* From the keyword "class" *)
   ; class_name : variable
   ; generics : variable list
   ; implements : type_expr list
@@ -166,8 +160,7 @@ and public_field_definition =
 
 (* Function declaration *)
 and fun_decl =
-  { decorators : decorator list (* From the keyword "function" *)
-  ; comments : comment list (* From the keyword "function" *)
+  { comments : comment list (* From the keyword "function" *)
   ; fun_name : variable
   ; generics : variable list
   ; parameters : parameter reg list
@@ -179,9 +172,9 @@ and parameter = pattern * type_expr option
 
 (* All import declarations *)
 and import_decl =
-  | Import_alias of decorator list * import_alias reg
-  | Import_all_as of decorator list * import_all_as reg
-  | Import_from of decorator list * import_from reg
+  | Import_alias of import_alias reg
+  | Import_all_as of import_all_as reg
+  | Import_from of import_from reg
 
 (* import M = N.O *)
 and import_alias = variable * simple_path reg
@@ -194,8 +187,7 @@ and import_from = variable Ne_list.t * file_path
 
 (* Interfaces *)
 and interface_decl =
-  { decorators : decorator list
-  ; intf_name : variable
+  { intf_name : variable
   ; intf_extends : simple_path reg list
   ; intf_body : intf_entry list
   }
@@ -210,23 +202,20 @@ and intf_entry =
 
 (* Namespace declaration *)
 and namespace_decl =
-  { decorators : decorator list
-  ; namespace_name : variable
+  { namespace_name : variable
   ; namespace_body : statements reg
   }
 
 (* Type declarations *)
 and type_decl =
-  { decorators : decorator list
-  ; name : variable
+  { name : variable
   ; generics : variable list
   ; type_expr : type_expr
   }
 
 (* Value declaration *)
 and value_decl =
-  { decorators : decorator list (* From the keyword "let" or "const" *)
-  ; comments : comment list (* From the keyword "let" or "const" *)
+  { comments : comment list (* From the keyword "let" or "const" *)
   ; kind : var_kind
   ; bindings : val_binding reg Ne_list.t
   }
@@ -238,9 +227,6 @@ and val_binding =
   }
 
 (* TYPE EXPRESSIONS *)
-
-(* IMPORTANT: The data constructors are sorted alphabetically. If you
-   add or modify some, please make sure they remain in order. *)
 and type_expr =
   | T_apply of (type_expr * type_expr list) reg (* t<u,v> *)
   | T_for_all of (variable list * type_expr) reg (* <T,U>(x: T) => U *)
@@ -282,9 +268,6 @@ and 'a property =
 and union_type = type_expr Ne_list.t reg
 
 (* PATTERNS *)
-
-(* IMPORTANT: The data constructors are sorted alphabetically. If you
-   add or modify some, please make sure they remain in order. *)
 and pattern =
   | P_array of pattern array (* [x, ...y, z] [] *)
   | P_bytes of bytes_literal (* 0xFFFA *)
@@ -304,9 +287,6 @@ and 'a element =
   | Element of 'a
 
 (* EXPRESSIONS *)
-
-(* IMPORTANT: The data constructors are sorted alphabetically. If you
-   add or modify some, please make sure they remain in order. *)
 and expr =
   | E_add of (expr * expr) reg (* x + y *)
   | E_add_eq of (expr * expr) reg (* x += y *)
@@ -403,12 +383,14 @@ and typed_expr = expr (* "as" *) * type_expr
 (* Projecting regions from some nodes of the AST *)
 
 let region_of_import_decl = function
-  | Import_alias (_, { region; _ })
-  | Import_all_as (_, { region; _ })
-  | Import_from (_, { region; _ }) -> region
+  | Import_alias { region; _ }
+  | Import_all_as { region; _ }
+  | Import_from { region; _ } -> region
 
-let region_of_declaration = function
-  | D_class { region; _ } | D_function { region; _ } -> region
+let rec region_of_declaration = function
+  | D_class { region; _ } -> region
+  | D_decorated (_, decl) -> region_of_declaration decl
+  | D_function { region; _ } -> region
   | D_import d -> region_of_import_decl d
   | D_interface { region; _ } | D_namespace { region; _ } | D_type { region; _ } -> region
   | D_value { region; _ } -> region
@@ -500,45 +482,3 @@ let region_of_var_kind = function
 let region_of_fun_body_to_region = function
   | Stmt_body { region; _ } -> region
   | Expr_body e -> region_of_expr e
-
-(* INJECTIONS *)
-
-let decorate_fun_decl decorators (fun_decl : fun_decl) : fun_decl =
-  { fun_decl with decorators = decorators @ fun_decl.decorators }
-
-let decorate_import_decl decorators (import_decl : import_decl) : import_decl =
-  match import_decl with
-  | Import_alias (decorators', alias) -> Import_alias (decorators @ decorators', alias)
-  | Import_all_as (decorators', import_all_as) ->
-    Import_all_as (decorators @ decorators', import_all_as)
-  | Import_from (decorators', import_from) ->
-    Import_from (decorators @ decorators', import_from)
-
-let decorate_interface_decl decorators (intf_decl : interface_decl) =
-  { intf_decl with decorators = decorators @ intf_decl.decorators }
-
-let decorate_namespace_decl decorators (name_decl : namespace_decl) =
-  { name_decl with decorators = decorators @ name_decl.decorators }
-
-let decorate_class_decl decorators (class_decl : class_decl) : class_decl =
-  { class_decl with decorators = decorators @ class_decl.decorators }
-
-let decorate_type_decl decorators (type_decl : type_decl) : type_decl =
-  { type_decl with decorators = decorators @ type_decl.decorators }
-
-let decorate_value_decl decorators (value_decl : value_decl) : value_decl =
-  { value_decl with decorators = decorators @ value_decl.decorators }
-
-let decorate_decl decorators = function
-  | D_function decl ->
-    D_function { decl with value = decorate_fun_decl decorators decl.value }
-  | D_import decl -> D_import (decorate_import_decl decorators decl)
-  | D_interface decl ->
-    D_interface { decl with value = decorate_interface_decl decorators decl.value }
-  | D_namespace decl ->
-    D_namespace { decl with value = decorate_namespace_decl decorators decl.value }
-  | D_class decl ->
-    D_class { decl with value = decorate_class_decl decorators decl.value }
-  | D_type decl -> D_type { decl with value = decorate_type_decl decorators decl.value }
-  | D_value decl ->
-    D_value { decl with value = decorate_value_decl decorators decl.value }

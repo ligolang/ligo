@@ -3100,6 +3100,11 @@ and export_kind =
   | Export_equal of sym_equal * expression
   | Export_as_namespace of kwd_as * identifier
 
+and 'a decorated =
+  { decorators : decorators
+  ; decorated : 'a
+  }
+
 and from_clause = kwd_from * string_literal
 
 and namespace_export =
@@ -3551,11 +3556,6 @@ and decorator =
   | Decorator_member_expression of decorator_member_expression wrap
   | Decorator_call_expression of decorator_call_expression wrap
   | Decorator_parenthesized_expression of decorator_parenthesized_expression parens
-
-and 'a decorated =
-  { decorators : decorators
-  ; decorated : 'a
-  }
 
 and decorator_member_expression =
   { object_expr : object_member_expression
