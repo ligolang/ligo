@@ -1438,8 +1438,29 @@ let declaration' (decl : Eq'.declaration) : Folding'.declaration =
      return @@ O.D_multi_const Nonempty_list.[ const ]
   | D_decorated (decorator, decl) ->
      return @@ O.D_attr (TODO.conv_decorator decorator, decl)
+  | D_import decl ->
+     let import =
+       match decl with
+       | T.Import_alias import ->
+          let alias, path = import.value in
+          let alias = TODO.mvar alias in
+          let module_path = TODO.selection_path' path in
+          let module_path = Nonempty_list.map ~f:TODO.mvar module_path in
+          O.Import.Import_rename { alias; module_path }
+       | T.Import_all_as import ->
+          let alias, file_path = import.value in
+          let alias = TODO.mvar alias in
+          let module_str = file_path#payload in
+          O.Import.Import_all_as { alias; module_str }
+       | T.Import_from import ->
+          let imported, file_path = import.value in
+          let imported = Nonempty_list.map ~f:TODO.var imported in
+          let module_str = file_path#payload in
+          O.Import.Import_selected { imported; module_str }
+     in
+     return @@ O.D_import import
 
-(*  | D_import of import_decl
+(*
   | D_interface of interface_decl reg
   | D_namespace of namespace_decl reg
   | D_class of class_decl reg
