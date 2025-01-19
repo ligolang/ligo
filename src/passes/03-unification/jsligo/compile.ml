@@ -280,9 +280,7 @@ let rec expr : Eq.expr -> Folding.expr =
     let parameters : I.pattern O.Param.t list =
       match parameters with
       | I.ParParams x ->
-        x.value.inside
-        |> Utils.sep_or_term_to_list
-        |> List.map ~f:TODO.pattern_to_param
+        x.value.inside |> Utils.sep_or_term_to_list |> List.map ~f:TODO.pattern_to_param
       | NakedParam x -> [ TODO.pattern_to_param x ]
     in
     let ret_type : I.type_expr option = Option.map ~f:snd rhs_type in
@@ -390,8 +388,7 @@ let rec expr : Eq.expr -> Folding.expr =
   | E_Proj { value = { object_or_array; property_path }; _ } ->
     let f : I.selection -> _ O.Selection.t = function
       | I.PropertyStr fstr -> Component_expr I.(E_String fstr.value.inside)
-      | I.PropertyName (_dot, name) ->
-        FieldName TODO.(labelize @@ get_var name)
+      | I.PropertyName (_dot, name) -> FieldName TODO.(labelize @@ get_var name)
       | Component comp ->
         let comp = (r_fst comp).inside#payload in
         Component_num comp
@@ -758,8 +755,7 @@ let rec ty_expr : Eq.ty_expr -> Folding.ty_expr =
   match t with
   | T_ForAll { value = generics, t; _ } ->
     let ty_binders =
-      List.map ~f:TODO.esc_tvar
-      @@ Utils.sep_or_term_to_list (r_fst generics).inside
+      List.map ~f:TODO.esc_tvar @@ Utils.sep_or_term_to_list (r_fst generics).inside
     and kind = Ligo_prim.Kind.Type
     and type_ = t in
     return @@ O.T_for_alls { ty_binders; kind; type_ }
@@ -989,9 +985,7 @@ let pattern : Eq.pattern -> Folding.pattern =
       return @@ P_ctor_app (P_String ctor :: List.map ~f:snd args))
   | P_NamePath { value = { namespace_path; property; _ }; _ } ->
     let module_path =
-      Nonempty_list.map
-        ~f:TODO.mvar
-        (Utils.nsepseq_to_ne_list namespace_path)
+      Nonempty_list.map ~f:TODO.mvar (Utils.nsepseq_to_ne_list namespace_path)
     in
     return @@ P_mod_access { module_path; field = property; field_as_open = false }
   | P_False _ -> return @@ P_ctor (Ligo_prim.Label.of_string "False")
@@ -1193,9 +1187,7 @@ let instruction : Eq.instruction -> Folding.instruction =
     let c = c.value in
     let I.{ if_so = if_so, _; if_not; test; _ } = c in
     let ifso = TODO.control_flow_clause statement if_so in
-    let ifnot =
-      Option.map if_not ~f:(TODO.control_flow_clause statement <@ snd)
-    in
+    let ifnot = Option.map if_not ~f:(TODO.control_flow_clause statement <@ snd) in
     return @@ I_cond { test = test.value.inside; ifso; ifnot }
   | S_Return s -> return @@ I_return (snd s.value)
   | S_Switch { value = { cases; subject; _ }; _ } ->
@@ -1342,9 +1334,7 @@ let declaration : Eq.declaration -> Folding.declaration =
       | ImportAlias { value = { alias; namespace_path; _ }; _ } ->
         let alias = TODO.mvar alias in
         let module_path =
-          Nonempty_list.map
-            ~f:TODO.mvar
-            (TODO.selection_path namespace_path)
+          Nonempty_list.map ~f:TODO.mvar (TODO.selection_path namespace_path)
         in
         O.Import.Import_rename { alias; module_path }
       | ImportAllAs { value = { alias; file_path; _ }; _ } ->
@@ -1419,48 +1409,48 @@ let declaration' (decl : Eq'.declaration) : Folding'.declaration =
   let return = Location.wrap ~loc in
   match decl with
   | T.D_function decl ->
-     let T.{ comments=_; fun_name; generics; parameters;
-             rhs_type; fun_body } = decl.value in
-     let type_params =
-       match generics with
-       | [] -> None
-       | fst_gen :: more_gen ->
-          let t_vars = Nonempty_list.(fst_gen :: more_gen) in
-          Some (Nonempty_list.map ~f:TODO.tvar t_vars) in
-     let fun_body : T.fun_body = T.Stmt_body fun_body in
-     let fun_expr : T.function_expr =
-       T.{ generics; parameters; rhs_type; fun_body } in
-     let fun_expr = mk_reg region fun_expr in
-     let let_rhs : T.expr = T.E_function fun_expr in
-     let path = T.{ path = []; selected = fun_name }  in
-     let pattern : T.pattern = T.P_var (mk_reg fun_name#region path) in
-     let const = O.Simple_decl.{ type_params; pattern; rhs_type = None; let_rhs } in
-     return @@ O.D_multi_const Nonempty_list.[ const ]
+    let T.{ comments = _; fun_name; generics; parameters; rhs_type; fun_body } =
+      decl.value
+    in
+    let type_params =
+      match generics with
+      | [] -> None
+      | fst_gen :: more_gen ->
+        let t_vars = Nonempty_list.(fst_gen :: more_gen) in
+        Some (Nonempty_list.map ~f:TODO.tvar t_vars)
+    in
+    let fun_body : T.fun_body = T.Stmt_body fun_body in
+    let fun_expr : T.function_expr = T.{ generics; parameters; rhs_type; fun_body } in
+    let fun_expr = mk_reg region fun_expr in
+    let let_rhs : T.expr = T.E_function fun_expr in
+    let path = T.{ path = []; selected = fun_name } in
+    let pattern : T.pattern = T.P_var (mk_reg fun_name#region path) in
+    let const = O.Simple_decl.{ type_params; pattern; rhs_type = None; let_rhs } in
+    return @@ O.D_multi_const Nonempty_list.[ const ]
   | D_decorated (decorator, decl) ->
-     return @@ O.D_attr (TODO.conv_decorator decorator, decl)
+    return @@ O.D_attr (TODO.conv_decorator decorator, decl)
   | D_import decl ->
-     let import =
-       match decl with
-       | T.Import_alias import ->
-          let alias, path = import.value in
-          let alias = TODO.mvar alias in
-          let module_path = TODO.selection_path' path in
-          let module_path = Nonempty_list.map ~f:TODO.mvar module_path in
-          O.Import.Import_rename { alias; module_path }
-       | T.Import_all_as import ->
-          let alias, file_path = import.value in
-          let alias = TODO.mvar alias in
-          let module_str = file_path#payload in
-          O.Import.Import_all_as { alias; module_str }
-       | T.Import_from import ->
-          let imported, file_path = import.value in
-          let imported = Nonempty_list.map ~f:TODO.var imported in
-          let module_str = file_path#payload in
-          O.Import.Import_selected { imported; module_str }
-     in
-     return @@ O.D_import import
-
-(*
+    let import =
+      match decl with
+      | T.Import_alias import ->
+        let alias, path = import.value in
+        let alias = TODO.mvar alias in
+        let module_path = TODO.selection_path' path in
+        let module_path = Nonempty_list.map ~f:TODO.mvar module_path in
+        O.Import.Import_rename { alias; module_path }
+      | T.Import_all_as import ->
+        let alias, file_path = import.value in
+        let alias = TODO.mvar alias in
+        let module_str = file_path#payload in
+        O.Import.Import_all_as { alias; module_str }
+      | T.Import_from import ->
+        let imported, file_path = import.value in
+        let imported = Nonempty_list.map ~f:TODO.var imported in
+        let module_str = file_path#payload in
+        O.Import.Import_selected { imported; module_str }
+    in
+    return @@ O.D_import import
+  (*
   | D_interface of interface_decl reg
   | D_namespace of namespace_decl reg
   | D_class of class_decl reg
@@ -1468,8 +1458,8 @@ let declaration' (decl : Eq'.declaration) : Folding'.declaration =
   | D_value of value_decl reg
  *)
   | _ ->
-  ignore return;
-  failwith "TODO: declaration'"
+    ignore return;
+    failwith "TODO: declaration'"
 
 
 (* OLD *)
@@ -1519,8 +1509,7 @@ and sig_entry : Eq.sig_entry -> Folding.sig_entry =
   let loc = get_intf_entry_loc se in
   match se with
   | I_Attr (attr, entry) ->
-    return ~loc
-    @@ (O.S_attr (TODO.conv_attr attr, entry) : _ O.sig_entry_content_)
+    return ~loc @@ (O.S_attr (TODO.conv_attr attr, entry) : _ O.sig_entry_content_)
   | I_Type { value; _ } ->
     let I.{ kwd_type = _; type_name; type_rhs; generics } = value in
     let var = TODO.esc_tvar type_name in
@@ -1528,8 +1517,7 @@ and sig_entry : Eq.sig_entry -> Folding.sig_entry =
       match generics with
       | None -> []
       | Some generics ->
-        List.map ~f:TODO.esc_tvar
-        @@ Utils.sep_or_term_to_list (r_fst generics).inside
+        List.map ~f:TODO.esc_tvar @@ Utils.sep_or_term_to_list (r_fst generics).inside
     in
     (match type_rhs with
     | None -> return ~loc @@ O.S_type_var var
