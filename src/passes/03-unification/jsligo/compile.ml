@@ -1432,10 +1432,10 @@ let declaration' (decl : Eq'.declaration) : Folding'.declaration =
      let pattern : T.pattern = T.P_var (mk_reg fun_name#region path) in
      let const = O.Simple_decl.{ type_params; pattern; rhs_type = None; let_rhs } in
      return @@ O.D_multi_const Nonempty_list.[ const ]
+  | D_decorated (decorator, decl) ->
+     return @@ O.D_attr (TODO.conv_decorator decorator, decl)
 
-  (*
-  | D_decorated of decorator * declaration
-  | D_import of import_decl
+(*  | D_import of import_decl
   | D_interface of interface_decl reg
   | D_namespace of namespace_decl reg
   | D_class of class_decl reg
