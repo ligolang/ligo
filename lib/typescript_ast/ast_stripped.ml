@@ -133,8 +133,7 @@ and class_member =
   | Public_field_definition of public_field_definition reg
 
 and method_definition =
-  { decorators : decorator list
-  ; method_sig : method_signature reg
+  { method_sig : method_signature reg
   ; method_body : statements reg
   }
 

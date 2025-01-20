@@ -841,12 +841,11 @@ and strip_method_definition
     (node : Ast.method_definition wrap)
     : (S.method_definition reg, _) result
   =
-  let* decorators = strip_decorators decorators in
   let Ast.{ signature; body } = node#payload in
-  let* method_sig = strip_method_signature signature in
+  let* method_sig = strip_method_signature decorators signature in
   let* method_body = strip_statement_block body in
   let region = node#region in
-  Ok (mk_reg region S.{ decorators; method_sig; method_body })
+  Ok (mk_reg region S.{ method_sig; method_body })
 
 and strip_public_field_definition (node : Ast.public_field_definition wrap)
     : (S.public_field_definition reg, _) result
@@ -1494,7 +1493,7 @@ and strip_method_signature_as_property (node : Ast.method_signature wrap)
   in
   Ok (mk_reg node#region signature)
 
-and strip_method_signature (node : Ast.method_signature wrap)
+and strip_method_signature decorators (node : Ast.method_signature wrap)
     : (S.method_signature reg, _) result
   =
   let Ast.{ access; scope; kwd_async; set_get_all; name; optional; call_sig } =
@@ -1531,7 +1530,8 @@ and strip_method_signature (node : Ast.method_signature wrap)
   in
   let comments = method_name#comments in
   let comments = strip_comments comments in
-  let decorators = extract_decorators comments in
+  let* decorators = strip_decorators decorators in
+  let decorators = decorators @ extract_decorators comments in
   let signature =
     S.
       { decorators
@@ -2363,7 +2363,7 @@ and strip_object_entry (node : Ast.object_entry)
       mk_reg node.region (S.P_var path, Some type_expr)
     in
     let* def = strip_method_definition [] definition in
-    let S.{ decorators = dec; method_sig; method_body } = def.value in
+    let S.{ method_sig; method_body } = def.value in
     let S.
           { decorators
           ; comments
@@ -2377,7 +2377,6 @@ and strip_object_entry (node : Ast.object_entry)
       =
       method_sig.value
     in
-    let decorators = dec @ decorators in
     let property_name = method_name in
     let fun_body = S.Stmt_body method_body in
     let parameters = List.map ~f:make_parameter parameters in
