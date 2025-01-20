@@ -250,7 +250,6 @@ and type_expr =
 and member_type =
   { decorators : decorator list
   ; comments : comment list
-  ; static : Region.t option
   ; property_name : variable
   ; rhs_type : type_expr
   }
