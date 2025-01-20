@@ -124,7 +124,7 @@ and declaration =
 and class_decl =
   { comments : comment list (* From the keyword "class" *)
   ; class_name : variable
-  ; implements : type_expr list
+  ; implements : simple_path reg list
   ; class_body : class_member list
   }
 
@@ -243,7 +243,7 @@ and type_expr =
   | T_int of int_literal (* 42 *)
   | T_object of member_type reg list reg (* {x; @a y : t} *)
   | T_parameter_of of simple_path reg reg (* parameter_of<N.C> *)
-  | T_path of simple_path reg (* M.t *)
+  | T_path of simple_path reg (* t  M.t *)
   | T_string of string_literal (* "x" *)
   | T_tuple of type_expr Ne_list.t reg (* [t, [u, v]] *)
   | T_union of union_type (* number | string *)

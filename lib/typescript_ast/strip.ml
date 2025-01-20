@@ -875,7 +875,8 @@ and strip_public_field_definition (node : Ast.public_field_definition wrap)
   let def = S.{ decorators; static; name; field_type; field_value } in
   Ok (mk_reg node#region def)
 
-and strip_class_heritage (node : Ast.class_heritage option) : (S.type_expr list, _) result
+and strip_class_heritage (node : Ast.class_heritage option)
+    : (S.simple_path reg list, _) result
   =
   match node with
   | None -> Ok []
@@ -883,7 +884,13 @@ and strip_class_heritage (node : Ast.class_heritage option) : (S.type_expr list,
     Strip_err.(make kwd_extends#region Extends_clause)
   | Some (Implements_clause (_, type_exprs)) ->
     let type_exprs = Ne_list.to_list type_exprs in
-    Result.all @@ List.map ~f:strip_type_expr type_exprs
+    let* type_exprs = Result.all @@ List.map ~f:strip_type_expr type_exprs in
+    let filter type_expr =
+      match type_expr with
+      | S.T_path path -> Ok path
+      | _ -> Strip_err.(make (S.region_of_type_expr type_expr) Invalid_implements)
+    in
+    Result.all @@ List.map ~f:filter type_exprs
 
 (* DECORATORS *)
 
