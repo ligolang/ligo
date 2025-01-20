@@ -1456,13 +1456,15 @@ let declaration' (decl : Eq'.declaration) : Folding'.declaration =
     let extends = List.map ~f:(fun p -> T.I_Path p) intf_extends in
     return @@ O.D_signature { name; sig_expr = I_Body intf_body; extends }
   | D_namespace decl ->
-    let T.{ namespace_name; namespace_body } = decl.value in
-    let annotation = O.Mod_decl.{ signatures = []; filter = false } in
+    let T.{ namespace_name; namespace_type; namespace_body } = decl.value in
+    let annotation = O.Mod_decl.{ signatures = namespace_type; filter = false } in
     let name = TODO.mvar namespace_name in
     let mod_expr = namespace_body.value in
     return @@ O.D_module { name; mod_expr; annotation }
+
   (*
-  | D_class of class_decl reg
+  | D_class decl ->
+    let T.{comments=_; class_name; implements; class_body} = decl.value in
   | D_type of type_decl reg
   | D_value of value_decl reg
  *)
