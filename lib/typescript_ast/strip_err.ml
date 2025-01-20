@@ -324,7 +324,7 @@ let to_string = function
   | Complex_path -> "Only a simple path is supported here in JsLIGO."
   | Empty_tuple_type -> "The empty tuple type is not supported in JsLIGO."
   | Optional_member ->
-    "Optional members are only supported in class declarations in JsLIGO."
+    "Optional members are only supported in interfaces in JsLIGO."
   | Static_member -> "Static members are only supported in class declarations in JsLIGO."
   | No_statements -> "At least one statement is expected here in JsLIGO."
   | Empty_switch -> "Empty switches are not supported in JsLIGO."
