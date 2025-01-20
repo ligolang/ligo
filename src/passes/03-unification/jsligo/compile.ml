@@ -1439,8 +1439,7 @@ let compile_class_member (node : T.class_member) : T.statement =
 
 let rec declaration' (decl : Eq'.declaration) : Folding'.declaration =
   let region = T.region_of_declaration decl in
-  let loc = Location.lift region in
-  let return = Location.wrap ~loc in
+  let return = Location.wrap ~loc:(Location.lift region) in
   match decl with
   | T.D_function decl ->
     let T.{ comments = _; fun_name; generics; parameters; rhs_type; fun_body } =
@@ -1453,12 +1452,12 @@ let rec declaration' (decl : Eq'.declaration) : Folding'.declaration =
         let t_vars = Nonempty_list.(fst_gen :: more_gen) in
         Some (Nonempty_list.map ~f:TODO.tvar t_vars)
     in
-    let fun_body : T.fun_body = T.Stmt_body fun_body in
-    let fun_expr : T.function_expr = T.{ generics; parameters; rhs_type; fun_body } in
-    let fun_expr = mk_reg region fun_expr in
-    let let_rhs : T.expr = T.E_function fun_expr in
+    let fun_body = T.Stmt_body fun_body in
+    let function_expr = T.{ generics; parameters; rhs_type; fun_body } in
+    let function_expr = mk_reg region function_expr in
+    let let_rhs = T.E_function function_expr in
     let path = T.{ path = []; selected = fun_name } in
-    let pattern : T.pattern = T.P_var (mk_reg fun_name#region path) in
+    let pattern = T.P_var (mk_reg fun_name#region path) in
     let const = O.Simple_decl.{ type_params; pattern; rhs_type = None; let_rhs } in
     return @@ O.D_multi_const Nonempty_list.[ const ]
   | D_decorated (decorator, decl) ->
@@ -1499,9 +1498,7 @@ let rec declaration' (decl : Eq'.declaration) : Folding'.declaration =
     let T.{ comments = _; class_name; implements; class_body } = decl.value in
     let namespace_name = class_name in
     let namespace_type = List.map ~f:(fun p -> T.I_Path p) implements in
-    let namespace_body : T.statements =
-      Nonempty_list.map ~f:compile_class_member class_body.value
-    in
+    let namespace_body = Nonempty_list.map ~f:compile_class_member class_body.value in
     let namespace_body = mk_reg class_body.region namespace_body in
     let decl' = T.{ namespace_name; namespace_type; namespace_body } in
     declaration' (T.D_namespace (mk_reg decl.region decl'))
