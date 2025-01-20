@@ -99,12 +99,19 @@ let filter_spread (node : Ast.arguments) : (Ast.expression list, _) result =
   let* exprs = Result.all @@ List.fold_right args ~init:[] ~f:filter in
   Ok exprs
 
-let filter_method_scope (node : Ast.method_scope) : (Region.t option, _) result =
+let filter_static (node : Ast.method_scope) : (Region.t option, _) result =
   match node with
   | { kwd_static = None; kwd_override = None; kwd_readonly = None } -> Ok None
   | { kwd_static = Some kwd_static; _ } -> Ok (Some kwd_static#region)
   | { kwd_override = Some kwd; _ } | { kwd_readonly = Some kwd; _ } ->
     Strip_err.(make kwd#region Property_scope)
+
+let filter_method_scope (node : Ast.method_scope) : (unit, _) result =
+  match node with
+  | { kwd_static = None; kwd_override = None; kwd_readonly = None } -> Ok ()
+  | { kwd_static = Some kwd; _ }
+  | { kwd_override = Some kwd; _ }
+  | { kwd_readonly = Some kwd; _ } -> Strip_err.(make kwd#region Property_scope)
 
 let filter_field_scope (node : Ast.field_scope) : (bool, _) result =
   match node with
@@ -127,6 +134,11 @@ let filter_access (node : Ast.accessibility_modifier option) : (unit, _) result 
   | None -> Ok ()
   | Some (Public kwd) | Some (Private kwd) | Some (Protected kwd) ->
     Strip_err.(make kwd#region Property_access)
+
+let filter_optional (node : Ast.sym_qmark option) error : (unit, _) result =
+  match node with
+  | None -> Ok ()
+  | Some sym_qmark -> Strip_err.(make sym_qmark#region error)
 
 let rec filter_path (expr : S.expr) : (S.simple_path reg, _) result =
   match expr with
@@ -1203,12 +1215,7 @@ and strip_property_signature_as_intf_entry (node : Ast.property_signature wrap)
   =
   let Ast.{ access; scope; name; sym_qmark = _; type_ } = node#payload in
   let* () = filter_access access in
-  let* static = filter_method_scope scope in
-  let* () =
-    match static with
-    | None -> Ok ()
-    | Some region -> Strip_err.(make region Property_scope)
-  in
+  let* () = filter_method_scope scope in
   let* entry_name = strip_property_name name in
   let entry_optional = None in
   let* entry_type = map_opt strip_type_annotation type_ in
@@ -1227,12 +1234,7 @@ and strip_method_signature_as_intf_entry (node : Ast.method_signature wrap)
     node#payload
   in
   let* () = filter_access access in
-  let* static = filter_method_scope scope in
-  let* () =
-    match static with
-    | None -> Ok ()
-    | Some region -> Strip_err.(make region Property_scope)
-  in
+  let* () = filter_method_scope scope in
   let* () = filter_async kwd_async in
   let* () =
     match set_get_all with
@@ -1444,14 +1446,7 @@ and strip_type_arguments (node : Ast.type_arguments) : (S.type_expr list, _) res
 
 and strip_T_object_type (node : Ast.object_type) : (S.type_expr, _) result =
   let* object_type = strip_object_type node in
-  let filter (m : S.member_type reg) : (S.member_type reg, _) result =
-    let (S.{ static; _ } : S.member_type) = m.value in
-    match static with
-    | Some region -> Strip_err.(make region Static_member)
-    | _ -> Ok m
-  in
-  let* member_types = Result.all @@ List.map ~f:filter object_type.value in
-  let object_type = { object_type with value = member_types } in
+  let object_type = { object_type with value = object_type.value } in
   Ok (S.T_object object_type)
 
 and strip_object_type (node : Ast.object_type) : (S.member_type reg list reg, _) result =
@@ -1474,7 +1469,7 @@ and strip_property_signature (node : Ast.property_signature wrap)
   =
   let Ast.{ access; scope; name; sym_qmark = _; type_ } = node#payload in
   let* () = filter_access access in
-  let* static = filter_method_scope scope in
+  let* () = filter_method_scope scope in
   let* property_name = strip_property_name name in
   let* rhs_type = map_opt strip_type_annotation type_ in
   match rhs_type with
@@ -1483,7 +1478,7 @@ and strip_property_signature (node : Ast.property_signature wrap)
     let comments = property_name#comments in
     let comments = strip_comments comments in
     let decorators = extract_decorators comments in
-    let signature = S.{ decorators; comments; static; property_name; rhs_type } in
+    let signature = S.{ decorators; comments; property_name; rhs_type } in
     Ok (mk_reg node#region signature)
 
 and strip_method_signature_as_property (node : Ast.method_signature wrap)
@@ -1493,7 +1488,7 @@ and strip_method_signature_as_property (node : Ast.method_signature wrap)
     node#payload
   in
   let* () = filter_access access in
-  let* static = filter_method_scope scope in
+  let* () = filter_method_scope scope in
   let* () = filter_async kwd_async in
   let* () =
     match set_get_all with
@@ -1502,11 +1497,7 @@ and strip_method_signature_as_property (node : Ast.method_signature wrap)
     | Some (All sym) -> Strip_err.(make sym#region Set_get_all)
   in
   let* property_name = strip_property_name name in
-  let* () =
-    match optional with
-    | None -> Ok ()
-    | Some sym_qmark -> Strip_err.(make sym_qmark#region Optional_member)
-  in
+  let* () = filter_optional optional Optional_member in
   let* call_sig = strip_call_signature call_sig in
   let { generics; parameters; rhs_type } = call_sig.value in
   let* parameters = Result.all @@ List.map ~f:filter_parameter parameters in
@@ -1525,9 +1516,7 @@ and strip_method_signature_as_property (node : Ast.method_signature wrap)
   let comments = property_name#comments in
   let comments = strip_comments comments in
   let decorators = extract_decorators comments in
-  let signature : S.member_type =
-    S.{ decorators; comments; static; property_name; rhs_type }
-  in
+  let signature : S.member_type = S.{ decorators; comments; property_name; rhs_type } in
   Ok (mk_reg node#region signature)
 
 and strip_method_signature decorators (node : Ast.method_signature wrap)
@@ -1537,7 +1526,7 @@ and strip_method_signature decorators (node : Ast.method_signature wrap)
     node#payload
   in
   let* () = filter_access access in
-  let* static = filter_method_scope scope in
+  let* static = filter_static scope in
   let* () = filter_async kwd_async in
   let* () =
     match set_get_all with
@@ -1546,11 +1535,7 @@ and strip_method_signature decorators (node : Ast.method_signature wrap)
     | Some (All sym) -> Strip_err.(make sym#region Set_get_all)
   in
   let* method_name = strip_property_name name in
-  let* () =
-    match optional with
-    | None -> Ok ()
-    | Some sym_qmark -> Strip_err.(make sym_qmark#region Optional_member)
-  in
+  let* () = filter_optional optional Optional_member in
   let* call_sig = strip_call_signature call_sig in
   let { generics; parameters; rhs_type } = call_sig.value in
   let* parameters = Result.all @@ List.map ~f:filter_parameter parameters in
@@ -1752,11 +1737,7 @@ and strip_formal_parameter (node : Ast.formal_parameter wrap)
   =
   let Ast.{ parameter_name; optional; type_opt; default } = node#payload in
   let* parameter = strip_parameter_name parameter_name in
-  let* () =
-    match optional with
-    | None -> Ok ()
-    | Some sym_qmark -> Strip_err.(make sym_qmark#region Optional_parameter)
-  in
+  let* () = filter_optional optional Optional_parameter in
   let* type_expr =
     match type_opt with
     | None -> Ok None
