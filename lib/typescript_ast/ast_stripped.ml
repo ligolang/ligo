@@ -125,7 +125,7 @@ and class_decl =
   { comments : comment list (* From the keyword "class" *)
   ; class_name : variable
   ; implements : simple_path reg list
-  ; class_body : class_member Nonempty_list.t
+  ; class_body : class_member Nonempty_list.t reg
   }
 
 and class_member =
