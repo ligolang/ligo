@@ -233,7 +233,7 @@ module Eq' = struct
   type declaration = T.declaration
   type program_entry = T.statement
   type program = T.t
-  type sig_expr = T.simple_path
+  type sig_expr = T.intf_expr
   type sig_entry = T.intf_entry
 end
 
@@ -1446,8 +1446,12 @@ let declaration' (decl : Eq'.declaration) : Folding'.declaration =
         O.Import.Import_selected { imported; module_str }
     in
     return @@ O.D_import import
+  | D_interface decl ->
+    let T.{ intf_name; intf_extends; intf_body } = decl.value in
+    let name = TODO.mvar intf_name in
+    let extends = List.map ~f:(fun p -> T.I_Path p) intf_extends in
+    return @@ O.D_signature { name; sig_expr = I_Body intf_body; extends }
   (*
-  | D_interface of interface_decl reg
   | D_namespace of namespace_decl reg
   | D_class of class_decl reg
   | D_type of type_decl reg
