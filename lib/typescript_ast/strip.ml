@@ -807,14 +807,17 @@ and strip_D_class_declaration (node : Ast.class_declaration wrap)
   let f dec decl = S.D_decorated (dec, decl) in
   Ok (List.fold_right ~f ~init:decl decorators)
 
-and strip_class_body (node : Ast.class_body) : (S.class_member Nonempty_list.t, _) result =
+and strip_class_body (node : Ast.class_body)
+    : (S.class_member Nonempty_list.t reg, _) result
+  =
   let Ast.(Braces braces) = node in
   match braces#payload.contents with
   | [] -> Strip_err.(make braces#region Empty_class)
   | fst_memb :: more_memb ->
     let* fst_memb = strip_class_member fst_memb in
     let* more_memb = Result.all @@ List.map ~f:strip_class_member more_memb in
-    Ok Nonempty_list.(fst_memb :: more_memb)
+    let members = Nonempty_list.(fst_memb :: more_memb) in
+    Ok (mk_reg braces#region members)
 
 and strip_class_member (node : Ast.class_member) : (S.class_member, _) result =
   match node with
