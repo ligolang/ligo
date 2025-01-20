@@ -1190,39 +1190,13 @@ and conv_member_type_to_intf_entry (node : S.member_type reg) : (S.intf_entry, _
   let S.{ decorators; comments; static; property_name; optional; rhs_type } =
     node.value
   in
-  let () = ignore static in
+  let* () =
+    match static with
+    | None -> Ok ()
+    | Some region -> Strip_err.(make region Static_member) in
   let entry_name = property_name in
   let entry_optional = optional in
   let entry_type = rhs_type in
-  Ok S.{ decorators; comments; entry_name; entry_optional; entry_type }
-
-and conv_method_sig_to_intf_entry (node : S.method_signature reg)
-    : (S.intf_entry, _) result
-  =
-  let S.
-        { decorators
-        ; comments
-        ; static
-        ; optional
-        ; method_name
-        ; generics
-        ; parameters
-        ; rhs_type
-        }
-    =
-    node.value
-  in
-  let () = ignore static in
-  let entry_name = method_name
-  and entry_optional = optional in
-  let entry_type = parameters, rhs_type in
-  (* [node.region] is an approximation *)
-  let entry_type = S.T_fun (mk_reg node.region entry_type) in
-  let entry_type =
-    match generics with
-    | [] -> entry_type
-    | _ -> S.T_for_all (mk_reg node.region (generics, entry_type))
-  in
   Ok S.{ decorators; comments; entry_name; entry_optional; entry_type }
 
 and strip_extends (node : Ast.extends_type_clause) : (S.simple_path reg list, _) result =
@@ -1509,11 +1483,10 @@ and strip_method_signature decorators (node : Ast.method_signature wrap)
     | Some (All sym) -> Strip_err.(make sym#region Set_get_all)
   in
   let* method_name = strip_property_name name in
-  let optional =
+  let* () =
     match optional with
-    | None -> None
-    | Some sym_qmark -> Some sym_qmark#region
-  in
+    | None -> Ok ()
+    | Some sym_qmark -> Strip_err.(make sym_qmark#region Optional_member) in
   let* call_sig = strip_call_signature call_sig in
   let { generics; parameters; rhs_type } = call_sig.value in
   let* parameters = Result.all @@ List.map ~f:filter_parameter parameters in
@@ -1538,7 +1511,6 @@ and strip_method_signature decorators (node : Ast.method_signature wrap)
       ; comments
       ; static
       ; method_name
-      ; optional
       ; generics
       ; parameters
       ; rhs_type
@@ -2369,7 +2341,6 @@ and strip_object_entry (node : Ast.object_entry)
           ; comments
           ; static
           ; method_name
-          ; optional
           ; generics
           ; parameters
           ; rhs_type
@@ -2387,7 +2358,7 @@ and strip_object_entry (node : Ast.object_entry)
       S.E_function (mk_reg method_body.region property_rhs)
     in
     let property : S.expr S.property =
-      { decorators; comments; property_name; static; optional; property_rhs }
+      { decorators; comments; property_name; static; property_rhs }
     in
     Ok (Some (mk_reg definition#region property))
   | Object_entry_shorthand ident ->
@@ -2396,10 +2367,9 @@ and strip_object_entry (node : Ast.object_entry)
     let decorators = extract_decorators comments in
     let property_name = strip_identifier ident in
     let property_rhs = S.E_var property_name in
-    let optional = None in
     let static = None in
     let property : S.expr S.property =
-      { decorators; comments; property_name; static; optional; property_rhs }
+      { decorators; comments; property_name; static; property_rhs }
     in
     Ok (Some (mk_reg ident#region property))
 
@@ -2410,10 +2380,9 @@ and strip_pair (node : Ast.pair wrap) : (S.expr S.property reg, _) result =
   let decorators = extract_decorators comments in
   let* property_name = strip_property_name key in
   let* property_rhs = strip_expression value in
-  let optional = None in
   let static = None in
   let property : S.expr S.property =
-    { decorators; comments; property_name; static; optional; property_rhs }
+    { decorators; comments; property_name; static; property_rhs }
   in
   Ok (mk_reg node#region property)
 
@@ -2655,10 +2624,9 @@ and strip_member_pattern (node : Ast.member_pattern)
     let property_name = strip_identifier ident in
     let path = S.{ path = []; selected = property_name } in
     let property_rhs = S.P_var (mk_reg ident#region path) in
-    let optional = None in
     let static = None in
     let property : S.pattern S.property =
-      { decorators; comments; property_name; static; optional; property_rhs }
+      { decorators; comments; property_name; static; property_rhs }
     in
     let region = Ast.region_of_member_pattern node in
     Ok (mk_reg region property)
@@ -2680,11 +2648,10 @@ and strip_pair_pattern (node : Ast.pair_pattern wrap)
   let comments = strip_comments comments in
   let decorators = extract_decorators comments in
   let* property_name = strip_property_name key in
-  let optional = None in
   let static = None in
   let* property_rhs = strip_pair_value_pattern value in
   let property : S.pattern S.property =
-    { decorators; comments; property_name; static; optional; property_rhs }
+    { decorators; comments; property_name; static; property_rhs }
   in
   Ok (mk_reg node#region property)
 

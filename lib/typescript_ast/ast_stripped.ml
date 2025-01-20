@@ -142,7 +142,6 @@ and method_signature =
   ; comments : comment list
   ; static : Region.t option
   ; method_name : variable
-  ; optional : Region.t option
   ; generics : variable list
   ; parameters : (variable * type_expr) reg list
   ; rhs_type : type_expr
@@ -253,7 +252,7 @@ and member_type =
   ; comments : comment list
   ; static : Region.t option
   ; property_name : variable
-  ; optional : Region.t option
+  ; optional : Region.t option (* Only interfaces *)
   ; rhs_type : type_expr
   }
 
@@ -268,7 +267,6 @@ and 'a property =
   ; comments : comment list (* From the property identifier *)
   ; property_name : variable
   ; static : Region.t option
-  ; optional : Region.t option
   ; property_rhs : 'a
   }
 
@@ -489,3 +487,7 @@ let region_of_var_kind = function
 let region_of_fun_body_to_region = function
   | Stmt_body { region; _ } -> region
   | Expr_body e -> region_of_expr e
+
+let region_of_class_member = function
+  | Method_definition { region; _ }
+  | Public_field_definition { region; _ } -> region
