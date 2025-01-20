@@ -113,7 +113,7 @@ let filter_method_scope (node : Ast.method_scope) : (unit, _) result =
   | { kwd_override = Some kwd; _ }
   | { kwd_readonly = Some kwd; _ } -> Strip_err.(make kwd#region Property_scope)
 
-let filter_field_scope (node : Ast.field_scope) : (bool, _) result =
+let filter_field_scope (node : Ast.field_scope) : (Region.t option, _) result =
   match node with
   | { kwd_static
     ; kwd_override = None
@@ -122,8 +122,8 @@ let filter_field_scope (node : Ast.field_scope) : (bool, _) result =
     ; kwd_accessor = None
     } ->
     (match kwd_static with
-    | None -> Ok false
-    | Some _ -> Ok true)
+    | None -> Ok None
+    | Some kwd_static -> Ok (Some kwd_static#region))
   | { kwd_override = Some kwd; _ }
   | { kwd_readonly = Some kwd; _ }
   | { kwd_abstract = Some kwd; _ }

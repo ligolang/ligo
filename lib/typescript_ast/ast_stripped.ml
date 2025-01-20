@@ -149,7 +149,7 @@ and method_signature =
 
 and public_field_definition =
   { decorators : decorator list
-  ; static : bool
+  ; static : Region.t option
   ; name : variable
   ; field_type : type_expr
   ; field_value : expr
