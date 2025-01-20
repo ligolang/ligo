@@ -124,7 +124,6 @@ and declaration =
 and class_decl =
   { comments : comment list (* From the keyword "class" *)
   ; class_name : variable
-  ; generics : variable list
   ; implements : type_expr list
   ; class_body : class_member list
   }
@@ -185,7 +184,10 @@ and import_all_as = variable * file_path
 (* import {x, y} from "/my/path.ts" *)
 and import_from = variable Ne_list.t * file_path
 
-(* Interfaces *)
+(* Interfaces
+
+  Note: No value for the type [intf_expr] is decoded: only for further
+  translation to unified AST.  *)
 and interface_decl =
   { intf_name : variable
   ; intf_extends : simple_path reg list
@@ -199,6 +201,10 @@ and intf_entry =
   ; entry_optional : Region.t option
   ; entry_type : type_expr
   }
+
+and intf_expr =
+  | I_Body of intf_entry list
+  | I_Path of simple_path reg
 
 (* Namespace declaration *)
 and namespace_decl =
@@ -383,9 +389,8 @@ and typed_expr = expr (* "as" *) * type_expr
 (* Projecting regions from some nodes of the AST *)
 
 let region_of_import_decl = function
-  | Import_alias { region; _ }
-  | Import_all_as { region; _ }
-  | Import_from { region; _ } -> region
+  | Import_alias { region; _ } | Import_all_as { region; _ } | Import_from { region; _ }
+    -> region
 
 let rec region_of_declaration = function
   | D_class { region; _ } -> region

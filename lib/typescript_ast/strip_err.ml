@@ -156,6 +156,7 @@ type t =
   | No_statements
   | Empty_switch
   | Empty_while
+  | Generic_class
 
 type error = t
 
@@ -326,6 +327,7 @@ let to_string = function
   | No_statements -> "At least one statement is expected here in JsLIGO."
   | Empty_switch -> "Empty switches are not supported in JsLIGO."
   | Empty_while -> "Empty while-loops are not supported in JsLIGO."
+  | Generic_class -> "Generic classes are not supported in JsLIGO."
 
 (* Creating errors *)
 

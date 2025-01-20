@@ -156,6 +156,7 @@ type t =
   | No_statements
   | Empty_switch
   | Empty_while
+  | Generic_class
 
 type error = t
 
