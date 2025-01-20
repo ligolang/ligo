@@ -716,9 +716,7 @@ and strip_D_function_declaration (node : Ast.function_declaration wrap)
   let* call_sig = strip_call_signature call_sig in
   let { generics; parameters; rhs_type } = call_sig.value in
   let* fun_body = strip_statement_block body in
-  let fun_decl =
-    S.{ comments; fun_name; generics; parameters; rhs_type; fun_body }
-  in
+  let fun_decl = S.{ comments; fun_name; generics; parameters; rhs_type; fun_body } in
   let decl = S.D_function (mk_reg node#region fun_decl) in
   let f dec decl = S.D_decorated (dec, decl) in
   Ok (List.fold_right ~f ~init:decl decorators)
@@ -797,9 +795,14 @@ and strip_D_class_declaration (node : Ast.class_declaration wrap)
   let comments = strip_comments kwd_class#comments in
   let class_name = strip_identifier name in
   let* generics = strip_list_opt strip_type_parameters type_parameters in
+  let* () =
+    match generics with
+    | [] -> Ok ()
+    | type_var :: _ -> Strip_err.(make type_var#region Generic_class)
+  in
   let* implements = strip_class_heritage class_heritage in
   let* class_body = strip_class_body body in
-  let class_decl = S.{ comments; class_name; generics; implements; class_body } in
+  let class_decl = S.{ comments; class_name; implements; class_body } in
   let decl = S.D_class (mk_reg node#region class_decl) in
   let f dec decl = S.D_decorated (dec, decl) in
   Ok (List.fold_right ~f ~init:decl decorators)
@@ -1100,7 +1103,6 @@ and strip_D_internal_module (node : Ast.internal_module wrap) : (S.declaration, 
   in
   let decl : S.namespace_decl = S.{ namespace_name; namespace_body } in
   Ok (S.D_namespace (mk_reg node#region decl))
-
 
 and strip_module_name (node : Ast.module_name) : (S.variable, _) result =
   match node with
