@@ -158,6 +158,7 @@ type t =
   | Empty_while
   | Generic_class
   | Invalid_implements
+  | Empty_class
 
 type error = t
 
