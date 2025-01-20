@@ -1101,7 +1101,7 @@ and strip_D_internal_module (node : Ast.internal_module wrap) : (S.declaration, 
     | None -> Strip_err.(make node#region No_statements)
     | Some block -> strip_statement_block block
   in
-  let decl : S.namespace_decl = S.{ namespace_name; namespace_body } in
+  let decl = S.{ namespace_name; namespace_type = []; namespace_body } in
   Ok (S.D_namespace (mk_reg node#region decl))
 
 and strip_module_name (node : Ast.module_name) : (S.variable, _) result =
