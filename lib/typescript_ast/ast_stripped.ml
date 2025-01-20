@@ -202,6 +202,8 @@ and intf_entry =
   ; entry_type : type_expr
   }
 
+(* NOTE: Type [intf_expr] is not initial: it is used by the
+   translation to the unified AST. *)
 and intf_expr =
   | I_Body of intf_entry list
   | I_Path of simple_path reg
@@ -209,6 +211,7 @@ and intf_expr =
 (* Namespace declaration *)
 and namespace_decl =
   { namespace_name : variable
+  ; namespace_type : intf_expr list (* Not initial. See [intf_expr]. *)
   ; namespace_body : statements reg
   }
 
