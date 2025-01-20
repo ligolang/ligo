@@ -252,7 +252,6 @@ and member_type =
   ; comments : comment list
   ; static : Region.t option
   ; property_name : variable
-  ; optional : Region.t option (* Only interfaces *)
   ; rhs_type : type_expr
   }
 
@@ -489,5 +488,4 @@ let region_of_fun_body_to_region = function
   | Expr_body e -> region_of_expr e
 
 let region_of_class_member = function
-  | Method_definition { region; _ }
-  | Public_field_definition { region; _ } -> region
+  | Method_definition { region; _ } | Public_field_definition { region; _ } -> region
