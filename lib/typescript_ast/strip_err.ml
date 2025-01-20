@@ -158,6 +158,7 @@ type t =
   | Empty_while
   | Generic_class
   | Invalid_implements
+  | Empty_class
 
 type error = t
 
@@ -331,6 +332,7 @@ let to_string = function
   | Generic_class -> "Generic classes are not supported in JsLIGO."
   | Invalid_implements ->
     "General types in implements clauses are not supported in JsLIGO."
+  | Empty_class -> "Empty classes are not supported in JsLIGO."
 
 (* Creating errors *)
 
