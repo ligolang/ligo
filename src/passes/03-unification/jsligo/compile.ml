@@ -546,15 +546,7 @@ let rec expr : Eq.expr -> Folding.expr =
 (* NEW *)
 
 let compile_property (property : 'a T.property reg) =
-  let T.
-        { decorators = _
-        ; comments = _
-        ; property_name
-        ; static = _
-        ; optional = _
-        ; property_rhs
-        }
-    =
+  let T.{ decorators = _; comments = _; property_name; static = _; property_rhs } =
     property.value
   in
   let field_id = O.Object_.F_Name TODO.(labelize property_name) in
@@ -894,9 +886,7 @@ let rec ty_expr : Eq.ty_expr -> Folding.ty_expr =
 (* NEW *)
 
 let compile_member_type (member : T.member_type reg) =
-  let T.{ decorators; comments = _; static = _; property_name; optional = _; rhs_type } =
-    member.value
-  in
+  let T.{ decorators; comments = _; property_name; rhs_type } = member.value in
   let decorators = TODO.conv_decorators decorators in
   let property_name = TODO.(labelize property_name) in
   let property_rhs = Some rhs_type in
@@ -1038,15 +1028,7 @@ let pattern : Eq.pattern -> Folding.pattern =
 let compile_property_pattern (property : T.pattern T.property Region.reg)
     : (O.Label.t, T.pattern) O.Field.t
   =
-  let T.
-        { decorators = _
-        ; comments = _
-        ; property_name
-        ; static = _
-        ; optional = _
-        ; property_rhs
-        }
-    =
+  let T.{ decorators = _; comments = _; property_name; static = _; property_rhs } =
     property.value
   in
   let property_name = TODO.(labelize property_name) in
@@ -1403,7 +1385,59 @@ let declaration : Eq.declaration -> Folding.declaration =
 
 (* NEW *)
 
-let declaration' (decl : Eq'.declaration) : Folding'.declaration =
+let compile_method_definition (node : T.method_definition reg) : T.statement =
+  let T.{ method_sig; method_body } = node.value in
+  let T.{ decorators; comments; static; method_name; generics; parameters; rhs_type } =
+    method_sig.value
+  in
+  let fun_name = method_name in
+  let mk_param (param : (T.variable * T.type_expr) reg) : T.parameter reg =
+    let var, type_expr = param.value in
+    let path = T.{ path = []; selected = var } in
+    let pattern = T.P_var (mk_reg var#region path) in
+    mk_reg param.region (pattern, Some type_expr)
+  in
+  let parameters = List.map ~f:mk_param parameters in
+  let rhs_type = Some rhs_type in
+  let fun_body = method_body in
+  let fun_decl : T.fun_decl =
+    T.{ comments; fun_name; generics; parameters; rhs_type; fun_body }
+  in
+  let decl = T.D_function (mk_reg node.region fun_decl) in
+  let decorate dec decl = T.D_decorated (dec, decl) in
+  let decl = List.fold_right ~f:decorate ~init:decl decorators in
+  match static with
+  | None -> T.S_decl decl
+  | Some _ -> T.S_export decl
+
+
+let compile_public_field_definition (node : T.public_field_definition reg) : T.statement =
+  let T.{ decorators; static; name; field_type; field_value } = node.value in
+  let kind = `Const Region.ghost in
+  let var = T.{ path = []; selected = name } in
+  let pattern = T.P_var (mk_reg name#region var) in
+  let rhs_type = Some field_type in
+  let rhs_expr = field_value in
+  let region = Region.cover name#region (T.region_of_expr rhs_expr) in
+  let binding = T.{ pattern; rhs_type; rhs_expr } in
+  let binding = mk_reg region binding in
+  let bindings = Nonempty_list.singleton binding in
+  let value_decl = T.{ comments = []; kind; bindings } in
+  let decl = T.D_value (mk_reg node.region value_decl) in
+  let decorate dec decl = T.D_decorated (dec, decl) in
+  let decl = List.fold_right ~f:decorate ~init:decl decorators in
+  match static with
+  | None -> T.S_decl decl
+  | Some _ -> T.S_export decl
+
+
+let compile_class_member (node : T.class_member) : T.statement =
+  match node with
+  | T.Method_definition def -> compile_method_definition def
+  | Public_field_definition def -> compile_public_field_definition def
+
+
+let rec declaration' (decl : Eq'.declaration) : Folding'.declaration =
   let region = T.region_of_declaration decl in
   let loc = Location.lift region in
   let return = Location.wrap ~loc in
@@ -1457,14 +1491,21 @@ let declaration' (decl : Eq'.declaration) : Folding'.declaration =
     return @@ O.D_signature { name; sig_expr = I_Body intf_body; extends }
   | D_namespace decl ->
     let T.{ namespace_name; namespace_type; namespace_body } = decl.value in
-    let annotation = O.Mod_decl.{ signatures = namespace_type; filter = false } in
     let name = TODO.mvar namespace_name in
     let mod_expr = namespace_body.value in
+    let annotation = O.Mod_decl.{ signatures = namespace_type; filter = false } in
     return @@ O.D_module { name; mod_expr; annotation }
-
-  (*
   | D_class decl ->
-    let T.{comments=_; class_name; implements; class_body} = decl.value in
+    let T.{ comments = _; class_name; implements; class_body } = decl.value in
+    let namespace_name = class_name in
+    let namespace_type = List.map ~f:(fun p -> T.I_Path p) implements in
+    let namespace_body : T.statements =
+      Nonempty_list.map ~f:compile_class_member class_body.value
+    in
+    let namespace_body = mk_reg class_body.region namespace_body in
+    let decl' = T.{ namespace_name; namespace_type; namespace_body } in
+    declaration' (T.D_namespace (mk_reg decl.region decl'))
+  (*
   | D_type of type_decl reg
   | D_value of value_decl reg
  *)
