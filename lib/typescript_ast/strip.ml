@@ -1196,10 +1196,11 @@ and strip_D_interface_declaration (node : Ast.interface_declaration wrap)
   let intf_decl = S.{ intf_name; intf_extends; intf_body } in
   Ok (S.D_interface (mk_reg node#region intf_decl))
 
-and strip_interface_body (node : Ast.object_type) : (S.intf_entry list, _) result =
+and strip_interface_body (node : Ast.object_type) : (S.intf_entry list reg, _) result =
   let Ast.(Braces braces) = node in
   let member_types = braces#payload.contents in
-  Result.all @@ List.map ~f:strip_intf_entry member_types
+  let* entries = Result.all @@ List.map ~f:strip_intf_entry member_types in
+  Ok (mk_reg braces#region entries)
 
 and strip_intf_entry (node : Ast.member_type) : (S.intf_entry, _) result =
   match node with

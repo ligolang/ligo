@@ -189,7 +189,7 @@ and import_from = variable Ne_list.t * file_path
 and interface_decl =
   { intf_name : variable
   ; intf_extends : simple_path reg list
-  ; intf_body : intf_entry list
+  ; intf_body : intf_entry list reg
   }
 
 and intf_entry =
@@ -203,8 +203,8 @@ and intf_entry =
 (* NOTE: Type [intf_expr] is not initial: it is used by the
    translation to the unified AST. *)
 and intf_expr =
-  | I_Body of intf_entry list
-  | I_Path of simple_path reg
+  | I_body of intf_entry list reg
+  | I_path of simple_path reg
 
 (* Namespace declaration *)
 and namespace_decl =
