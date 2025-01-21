@@ -1433,52 +1433,84 @@ let compile_class_member (node : T.class_member) : T.statement =
   | Public_field_definition def -> compile_public_field_definition def
 
 
+let compile_val_binding (node : T.val_binding reg)
+    : (Eq'.pattern, T.expr, T.type_expr) O.Simple_decl.t
+  =
+  let T.{ pattern; rhs_type; rhs_expr } = node.value in
+  let type_params, rhs_type =
+    match rhs_type with
+    | None -> None, None
+    | Some (T_for_all { value = var :: vars, type_expr; _ }) ->
+      let vars = Nonempty_list.(var :: vars) in
+      let vars = Nonempty_list.map ~f:TODO.tvar vars in
+      Some vars, Some type_expr
+    | Some type_expr -> None, Some type_expr
+  in
+  O.Simple_decl.{ type_params; pattern; rhs_type; let_rhs = rhs_expr }
+
+
+let compile_import_decl = function
+  | T.Import_alias import ->
+    let alias, path = import.value in
+    let alias = TODO.mvar alias in
+    let module_path = TODO.selection_path' path in
+    let module_path = Nonempty_list.map ~f:TODO.mvar module_path in
+    O.Import.Import_rename { alias; module_path }
+  | T.Import_all_as import ->
+    let alias, file_path = import.value in
+    let alias = TODO.mvar alias in
+    let module_str = file_path#payload in
+    O.Import.Import_all_as { alias; module_str }
+  | T.Import_from import ->
+    let imported, file_path = import.value in
+    let imported = Nonempty_list.map ~f:TODO.var imported in
+    let module_str = file_path#payload in
+    O.Import.Import_selected { imported; module_str }
+
+
+let compile_fun_decl (node : T.fun_decl reg) =
+  let T.{ comments = _; fun_name; generics; parameters; rhs_type; fun_body } =
+    node.value
+  in
+  let type_params =
+    match generics with
+    | [] -> None
+    | fst_gen :: more_gen ->
+      let t_vars = Nonempty_list.(fst_gen :: more_gen) in
+      Some (Nonempty_list.map ~f:TODO.tvar t_vars)
+  in
+  let fun_body = T.Stmt_body fun_body in
+  let function_expr = T.{ generics; parameters; rhs_type; fun_body } in
+  let function_expr = mk_reg node.region function_expr in
+  let let_rhs = T.E_function function_expr in
+  let path = T.{ path = []; selected = fun_name } in
+  let pattern = T.P_var (mk_reg fun_name#region path) in
+  O.Simple_decl.{ type_params; pattern; rhs_type = None; let_rhs }
+
+
+let compile_type_decl (node : T.type_decl reg) =
+  let T.{ name; generics; type_expr } = node.value in
+  let name = TODO.tvar name in
+  let params =
+    match generics with
+    | [] -> None
+    | fst_var :: more_vars ->
+      let params = Nonempty_list.(fst_var :: more_vars) in
+      Some (Nonempty_list.map ~f:TODO.tvar params)
+  in
+  O.Type_abstraction_decl.{ name; params; type_expr }
+
+
 let rec declaration' (decl : Eq'.declaration) : Folding'.declaration =
   let region = T.region_of_declaration decl in
   let return = Location.wrap ~loc:(Location.lift region) in
   match decl with
   | T.D_function decl ->
-    let T.{ comments = _; fun_name; generics; parameters; rhs_type; fun_body } =
-      decl.value
-    in
-    let type_params =
-      match generics with
-      | [] -> None
-      | fst_gen :: more_gen ->
-        let t_vars = Nonempty_list.(fst_gen :: more_gen) in
-        Some (Nonempty_list.map ~f:TODO.tvar t_vars)
-    in
-    let fun_body = T.Stmt_body fun_body in
-    let function_expr = T.{ generics; parameters; rhs_type; fun_body } in
-    let function_expr = mk_reg region function_expr in
-    let let_rhs = T.E_function function_expr in
-    let path = T.{ path = []; selected = fun_name } in
-    let pattern = T.P_var (mk_reg fun_name#region path) in
-    let const = O.Simple_decl.{ type_params; pattern; rhs_type = None; let_rhs } in
+    let const = compile_fun_decl decl in
     return @@ O.D_multi_const Nonempty_list.[ const ]
   | D_decorated (decorator, decl) ->
     return @@ O.D_attr (TODO.conv_decorator decorator, decl)
-  | D_import decl ->
-    let import =
-      match decl with
-      | T.Import_alias import ->
-        let alias, path = import.value in
-        let alias = TODO.mvar alias in
-        let module_path = TODO.selection_path' path in
-        let module_path = Nonempty_list.map ~f:TODO.mvar module_path in
-        O.Import.Import_rename { alias; module_path }
-      | T.Import_all_as import ->
-        let alias, file_path = import.value in
-        let alias = TODO.mvar alias in
-        let module_str = file_path#payload in
-        O.Import.Import_all_as { alias; module_str }
-      | T.Import_from import ->
-        let imported, file_path = import.value in
-        let imported = Nonempty_list.map ~f:TODO.var imported in
-        let module_str = file_path#payload in
-        O.Import.Import_selected { imported; module_str }
-    in
-    return @@ O.D_import import
+  | D_import decl -> return @@ O.D_import (compile_import_decl decl)
   | D_interface decl ->
     let T.{ intf_name; intf_extends; intf_body } = decl.value in
     let name = TODO.mvar intf_name in
@@ -1498,23 +1530,15 @@ let rec declaration' (decl : Eq'.declaration) : Folding'.declaration =
     let namespace_body = mk_reg class_body.region namespace_body in
     let decl' = T.{ namespace_name; namespace_type; namespace_body } in
     declaration' (T.D_namespace (mk_reg decl.region decl'))
-  | D_type decl ->
-    let T.{ name; generics; type_expr } = decl.value in
-    let name = TODO.tvar name in
-    let params =
-      match generics with
-      | [] -> None
-      | fst_var :: more_vars ->
-        let params = Nonempty_list.(fst_var :: more_vars) in
-        Some (Nonempty_list.map ~f:TODO.tvar params)
-    in
-    return @@ O.D_type_abstraction { name; params; type_expr }
-  (*
-  | D_value of value_decl reg
- *)
-  | _ ->
-    ignore return;
-    failwith "TODO: declaration'"
+  | D_type decl -> return @@ O.D_type_abstraction (compile_type_decl decl)
+  | D_value decl ->
+    let T.{ comments = _; kind; bindings } = decl.value in
+    let bindings = Nonempty_list.map ~f:compile_val_binding bindings in
+    return
+    @@
+    (match kind with
+    | `Let _ -> O.D_multi_var bindings
+    | `Const _ -> O.D_multi_const bindings)
 
 
 (* OLD *)
