@@ -1196,13 +1196,13 @@ and strip_D_interface_declaration (node : Ast.interface_declaration wrap)
   let intf_decl = S.{ intf_name; intf_extends; intf_body } in
   Ok (S.D_interface (mk_reg node#region intf_decl))
 
-and strip_interface_body (node : Ast.object_type) : (S.intf_entry list reg, _) result =
+and strip_interface_body (node : Ast.object_type) : (S.intf_entry reg list reg, _) result =
   let Ast.(Braces braces) = node in
   let member_types = braces#payload.contents in
   let* entries = Result.all @@ List.map ~f:strip_intf_entry member_types in
   Ok (mk_reg braces#region entries)
 
-and strip_intf_entry (node : Ast.member_type) : (S.intf_entry, _) result =
+and strip_intf_entry (node : Ast.member_type) : (S.intf_entry reg, _) result =
   match node with
   | Export_statement stmt -> Strip_err.(make stmt#region Export_member)
   | Property_signature signature -> strip_property_signature_as_intf_entry signature
@@ -1212,7 +1212,7 @@ and strip_intf_entry (node : Ast.member_type) : (S.intf_entry, _) result =
   | Method_signature signature -> strip_method_signature_as_intf_entry signature
 
 and strip_property_signature_as_intf_entry (node : Ast.property_signature wrap)
-    : (S.intf_entry, _) result
+    : (S.intf_entry reg, _) result
   =
   let Ast.{ access; scope; name; sym_qmark = _; type_ } = node#payload in
   let* () = filter_access access in
@@ -1226,10 +1226,11 @@ and strip_property_signature_as_intf_entry (node : Ast.property_signature wrap)
     let comments = entry_name#comments in
     let comments = strip_comments comments in
     let decorators = extract_decorators comments in
-    Ok S.{ decorators; comments; entry_name; entry_optional; entry_type }
+    let entry = S.{ decorators; comments; entry_name; entry_optional; entry_type } in
+    Ok (mk_reg node#region entry)
 
 and strip_method_signature_as_intf_entry (node : Ast.method_signature wrap)
-    : (S.intf_entry, _) result
+    : (S.intf_entry reg, _) result
   =
   let Ast.{ access; scope; kwd_async; set_get_all; name; optional; call_sig } =
     node#payload
@@ -1267,7 +1268,8 @@ and strip_method_signature_as_intf_entry (node : Ast.method_signature wrap)
   let comments = entry_name#comments in
   let comments = strip_comments comments in
   let decorators = extract_decorators comments in
-  Ok S.{ decorators; comments; entry_name; entry_optional; entry_type }
+  let entry = S.{ decorators; comments; entry_name; entry_optional; entry_type } in
+  Ok (mk_reg node#region entry)
 
 and strip_extends (node : Ast.extends_type_clause) : (S.simple_path reg list, _) result =
   let Ast.{ kwd_extends = _; extensions } = node in
