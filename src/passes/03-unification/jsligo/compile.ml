@@ -234,7 +234,7 @@ module Eq' = struct
   type program_entry = T.statement
   type program = T.t
   type sig_expr = T.intf_expr
-  type sig_entry = T.intf_entry
+  type sig_entry = T.intf_entry reg
 end
 
 let pattern_of_expr x = `Expr x
@@ -1591,26 +1591,18 @@ let sig_expr : Eq.sig_expr -> Folding.sig_expr = function
     Location.wrap ~loc @@ O.S_path value
 
 (* NEW *)
-(*
+
 let sig_expr' : Eq'.sig_expr -> Folding'.sig_expr = function
-  | I_body { value = { inside; lbrace = _; rbrace = _ }; region } ->
+  | I_body { value = entries; region } ->
     let loc = Location.lift region in
-    let sig_items = Utils.sep_or_term_to_list inside in
-    Location.wrap ~loc @@ O.S_body sig_items
-  | I_path selection ->
-    let selection = TODO.selection_path selection in
-    let locs =
-      Nonempty_list.map
-        ~f:(fun (n : I.namespace_name) -> Location.lift n#region)
-        selection
-    in
-    let loc = Ne_list.fold_right1 ~f:Location.cover locs in
-    let value = Nonempty_list.map ~f:TODO.mvar selection in
+    Location.wrap ~loc @@ O.S_body entries
+  | I_path path ->
+    let loc = Location.lift path.region in
+    let path = TODO.selection_path' path in
+    let value = Nonempty_list.map ~f:TODO.mvar path in
     Location.wrap ~loc @@ O.S_path value
- *)
 
 (* OLD *)
-
 
 let sig_entry : Eq.sig_entry -> Folding.sig_entry =
  fun se ->
@@ -1644,3 +1636,18 @@ let sig_entry : Eq.sig_entry -> Folding.sig_entry =
     let var = TODO.esc_var const_name in
     let _, type_ = const_type in
     return ~loc @@ O.S_value (var, type_, Option.is_some const_optional)
+
+(* NEW *)
+
+let sig_entry' (node : Eq'.sig_entry) : Folding'.sig_entry =
+  let return = Location.wrap ~loc:(Location.lift node.region) in
+  let T.{ decorators; comments = _; entry_name; entry_optional; entry_type } = node.value in
+  return @@
+  match decorators with
+  | fst_dec :: more_decs ->
+     let entry' = {node.value with decorators = more_decs} in
+     let entry' = {node with value = entry'} in
+     (O.S_attr (TODO.conv_decorator fst_dec, entry') : _ O.sig_entry_content_)
+  | [] ->
+     let var = TODO.var entry_name in
+     O.S_value (var, entry_type, Option.is_some entry_optional)
