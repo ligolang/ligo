@@ -1514,8 +1514,8 @@ let rec declaration' (decl : Eq'.declaration) : Folding'.declaration =
   | D_interface decl ->
     let T.{ intf_name; intf_extends; intf_body } = decl.value in
     let name = TODO.mvar intf_name in
-    let extends = List.map ~f:(fun p -> T.I_Path p) intf_extends in
-    return @@ O.D_signature { name; sig_expr = I_Body intf_body; extends }
+    let extends = List.map ~f:(fun p -> T.I_path p) intf_extends in
+    return @@ O.D_signature { name; sig_expr = I_body intf_body; extends }
   | D_namespace decl ->
     let T.{ namespace_name; namespace_type; namespace_body } = decl.value in
     let name = TODO.mvar namespace_name in
@@ -1525,7 +1525,7 @@ let rec declaration' (decl : Eq'.declaration) : Folding'.declaration =
   | D_class decl ->
     let T.{ comments = _; class_name; implements; class_body } = decl.value in
     let namespace_name = class_name in
-    let namespace_type = List.map ~f:(fun p -> T.I_Path p) implements in
+    let namespace_type = List.map ~f:(fun p -> T.I_path p) implements in
     let namespace_body = Nonempty_list.map ~f:compile_class_member class_body.value in
     let namespace_body = mk_reg class_body.region namespace_body in
     let decl' = T.{ namespace_name; namespace_type; namespace_body } in
@@ -1552,12 +1552,29 @@ let program_entry : Eq.program_entry -> Folding.program_entry =
   | O.S_directive () -> PE_preproc_directive ()
   | O.S_attr (attr, s) -> PE_attr (attr, s)
 
+(* NEW *)
 
-and program : Eq.program -> Folding.program = function
+let program_entry' (stmt : Eq'.program_entry) : Folding'.program_entry =
+  match Location.unwrap @@ statement' stmt with
+  | O.S_export decl -> PE_export (T.S_decl decl)
+  | O.S_decl decl -> PE_declaration decl
+  | O.S_instr _ -> PE_top_level_instruction stmt
+  | O.S_directive () -> PE_preproc_directive ()
+  | O.S_attr (attr, s) -> PE_attr (attr, stmt)
+
+(* OLD *)
+
+let program : Eq.program -> Folding.program = function
   | { statements; eof = _ } -> List.map ~f:fst @@ Nonempty_list.to_list statements
 
+(* NEW *)
 
-and sig_expr : Eq.sig_expr -> Folding.sig_expr = function
+let program' (stmts : Eq'.program) : Folding'.program =
+  Nonempty_list.to_list stmts
+
+(* OLD *)
+
+let sig_expr : Eq.sig_expr -> Folding.sig_expr = function
   | I_Body { value = { inside; lbrace = _; rbrace = _ }; region } ->
     let loc = Location.lift region in
     let sig_items = Utils.sep_or_term_to_list inside in
@@ -1573,11 +1590,32 @@ and sig_expr : Eq.sig_expr -> Folding.sig_expr = function
     let value = Nonempty_list.map ~f:TODO.mvar selection in
     Location.wrap ~loc @@ O.S_path value
 
+(* NEW *)
+(*
+let sig_expr' : Eq'.sig_expr -> Folding'.sig_expr = function
+  | I_body { value = { inside; lbrace = _; rbrace = _ }; region } ->
+    let loc = Location.lift region in
+    let sig_items = Utils.sep_or_term_to_list inside in
+    Location.wrap ~loc @@ O.S_body sig_items
+  | I_path selection ->
+    let selection = TODO.selection_path selection in
+    let locs =
+      Nonempty_list.map
+        ~f:(fun (n : I.namespace_name) -> Location.lift n#region)
+        selection
+    in
+    let loc = Ne_list.fold_right1 ~f:Location.cover locs in
+    let value = Nonempty_list.map ~f:TODO.mvar selection in
+    Location.wrap ~loc @@ O.S_path value
+ *)
 
-and sig_entry : Eq.sig_entry -> Folding.sig_entry =
+(* OLD *)
+
+
+let sig_entry : Eq.sig_entry -> Folding.sig_entry =
  fun se ->
   let return ~loc = Location.wrap ~loc in
-  (* TODO: Wouldn't it better to have a region in I_Attr? *)
+  (* TODO: Wouldn't it be better to have a region in I_Attr? *)
   let rec get_intf_entry_loc (x : I.intf_entry) : Location.t =
     match x with
     | I_Type { region; _ } -> Location.lift region
