@@ -1498,8 +1498,18 @@ let rec declaration' (decl : Eq'.declaration) : Folding'.declaration =
     let namespace_body = mk_reg class_body.region namespace_body in
     let decl' = T.{ namespace_name; namespace_type; namespace_body } in
     declaration' (T.D_namespace (mk_reg decl.region decl'))
+  | D_type decl ->
+    let T.{ name; generics; type_expr } = decl.value in
+    let name = TODO.tvar name in
+    let params =
+      match generics with
+      | [] -> None
+      | fst_var :: more_vars ->
+        let params = Nonempty_list.(fst_var :: more_vars) in
+        Some (Nonempty_list.map ~f:TODO.tvar params)
+    in
+    return @@ O.D_type_abstraction { name; params; type_expr }
   (*
-  | D_type of type_decl reg
   | D_value of value_decl reg
  *)
   | _ ->
