@@ -1,13 +1,14 @@
 open Core
-open Unification_shared.Helpers
-open Region
-module Utils = Simple_utils.Utils
-module Ligo_option = Simple_utils.Ligo_option
+module Location = Unification_shared.Helpers.Location
+module Make_Folding = Unification_shared.Helpers.Folding
+module Region = Simple_utils.Region
 module Ligo_string = Simple_utils.Ligo_string
-module Ne_list = Simple_utils.Ne_list
 module O = Ast_unified
-module I = Cst.Jsligo
 module T = Typescript_ast.Ast_stripped
+
+(*open Region*)
+
+type 'a reg = 'a Region.reg
 
 (* Utilities *)
 
@@ -65,7 +66,10 @@ let compile_branch compile_statement (stmt : T.statement)
     O.Test_clause.ClauseBlock singleton
 
 
-let labelize x : O.Label.t = O.Label.T.create ~loc:(w_snd x) (w_fst x)
+let mk_label (v : T.variable) : O.Label.t =
+  O.Label.T.create ~loc:(Location.lift v#region) v#payload
+
+
 let pattern_to_param pattern = O.Param.{ pattern; param_kind = `Const }
 
 module Eq = struct
@@ -88,7 +92,7 @@ module Folding_orig = Folding (* TEMPORARY (shadowing) *)
 module Folding' = Folding_orig (Eq')
  *)
 
-module Folding = Folding (Eq)
+module Folding = Make_Folding (Eq)
 
 (* EXPRESSIONS *)
 
@@ -96,7 +100,7 @@ let compile_property (property : 'a T.property reg) =
   let T.{ decorators = _; comments = _; property_name; static = _; property_rhs } =
     property.value
   in
-  let field_id = O.Object_.F_Name (labelize property_name) in
+  let field_id = O.Object_.F_Name (mk_label property_name) in
   let field_rhs = Some property_rhs in
   let object_ = O.Object_.{ field_id; field_rhs } in
   Location.wrap ~loc:(Location.lift property.region) object_
@@ -135,7 +139,7 @@ let compile_prefix_op (expr : T.variable reg) op =
 
 
 let compile_chain_assignment op expr =
-  let { value = expr1, expr2; region } = expr in
+  let Region.{ value = expr1, expr2; region } = expr in
   let loc = Location.lift expr.region in
   let return x = Location.wrap ~loc x in
   let op = O.Assign_chainable.Assignment_operator op in
@@ -185,7 +189,7 @@ let expr (expr : Eq.expr) : Folding.expr =
   | E_and expr -> compile_bin_op DAMPERSAND expr
   | E_app { value = expr, args; _ } -> return (O.E_call (expr, return args))
   | E_array { value = items; _ } ->
-    let f : T.expr T.element -> _ AST.Array_repr.item = function
+    let f : T.expr T.element -> _ O.Array_repr.item = function
       | Spread expr -> Rest_entry expr
       | Element expr -> Expr_entry expr
     in
@@ -221,7 +225,7 @@ let expr (expr : Eq.expr) : Folding.expr =
   | E_member expr ->
     (* We assume that there is no need for unspooling [expr]. Correct? *)
     let expr, name = expr.value in
-    let name = O.Selection.FieldName (labelize name) in
+    let name = O.Selection.FieldName (mk_label name) in
     return (O.E_proj (expr, [ name ]))
   | E_michelson expr ->
     (* Module [Strip] wraps for now a [E_typed] around the
@@ -275,13 +279,13 @@ let expr (expr : Eq.expr) : Folding.expr =
 let compile_member_type (member : T.member_type reg) =
   let T.{ decorators; comments = _; property_name; rhs_type } = member.value in
   let decorators = compile_decorators decorators in
-  let property_name = labelize property_name in
+  let property_name = mk_label property_name in
   let property_rhs = Some rhs_type in
   property_name, property_rhs, decorators
 
 
 let compile_parameter param : _ O.Named_fun.fun_type_arg =
-  let name, type_expr = param.value in
+  let name, type_expr = param.Region.value in
   { name = name#payload; type_expr }
 
 
@@ -340,7 +344,7 @@ let compile_property_pattern (property : T.pattern T.property Region.reg)
   let T.{ decorators = _; comments = _; property_name; static = _; property_rhs } =
     property.value
   in
-  let property_name = labelize property_name in
+  let property_name = mk_label property_name in
   O.Field.Complete (property_name, property_rhs)
 
 
@@ -648,9 +652,13 @@ let sig_entry (node : Eq.sig_entry) : Folding.sig_entry =
     O.S_value (var, entry_type, Option.is_some entry_optional)
 
 
+(* BLOCKS *)
+
 let block (node : Eq.block) : Folding.block =
   Location.wrap ~loc:(Location.lift node.region) node.value
 
+
+(* MODULE EXPRESSIONS *)
 
 let mod_expr (node : Eq.mod_expr) : Folding.mod_expr =
   Location.wrap ~loc:(Location.lift node.region) (O.M_body node)
