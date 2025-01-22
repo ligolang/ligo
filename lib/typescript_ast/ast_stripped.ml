@@ -53,11 +53,12 @@ let print_path (path : simple_path) : unit =
 (* The Abstract Syntax Tree *)
 
 type t = statements
-and statements = statement Ne_list.t
 
 (* STATEMENTS *)
+and statements = statement Ne_list.t reg
+
 and statement =
-  | S_block of statements reg
+  | S_block of statements
   | S_break of Region.t
   | S_decl of declaration
   | S_export of declaration
@@ -134,7 +135,7 @@ and class_member =
 
 and method_definition =
   { method_sig : method_signature reg
-  ; method_body : statements reg
+  ; method_body : statements
   }
 
 and method_signature =
@@ -162,7 +163,7 @@ and fun_decl =
   ; generics : variable list
   ; parameters : parameter reg list
   ; rhs_type : type_expr option
-  ; fun_body : statements reg
+  ; fun_body : statements
   }
 
 and parameter = pattern * type_expr option
@@ -210,7 +211,7 @@ and intf_expr =
 and namespace_decl =
   { namespace_name : variable
   ; namespace_type : intf_expr list (* Not initial. See [intf_expr]. *)
-  ; namespace_body : statements reg
+  ; namespace_body : statements
   }
 
 (* Type declarations *)
@@ -363,7 +364,7 @@ and arrow_fun_expr =
 and function_expr = arrow_fun_expr
 
 and fun_body =
-  | Stmt_body of statements reg
+  | Stmt_body of statements
   | Expr_body of expr
 
 (* Functional update of object expressions *)
