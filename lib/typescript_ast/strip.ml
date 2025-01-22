@@ -156,7 +156,7 @@ let filter_path (expr : S.expr) : (S.simple_path reg, _) result =
 
 (* Stripping *)
 
-let rec strip_statements (node : Ast.statements) : (S.statements reg option, _) result =
+let rec strip_statements (node : Ast.statements) : (S.statements option, _) result =
   match node with
   | None -> Ok None
   | Some stmts ->
@@ -361,7 +361,7 @@ and strip_S_statement_block (node : Ast.statement_block) : (S.statement option, 
   let* statements = strip_statement_block node in
   Ok (Some (S.S_block statements))
 
-and strip_statement_block (node : Ast.statement_block) : (S.statements reg, _) result =
+and strip_statement_block (node : Ast.statement_block) : (S.statements, _) result =
   let (Braces statements) = node in
   let statements' = statements#payload.contents in
   let* stmts = strip_statements statements' in
@@ -452,7 +452,6 @@ and strip_switch_case (node : Ast.switch_case wrap) : (S.switch_case, _) result 
   | Ne_list.[ expr ] ->
     let* expr = strip_expression expr in
     let* body = strip_statements body in
-    let body = Option.map ~f:(fun stmt -> stmt.value) body in
     Ok (expr, body)
   | _ :: expr :: _ ->
     let region = Ast.region_of_expression expr in
@@ -460,8 +459,7 @@ and strip_switch_case (node : Ast.switch_case wrap) : (S.switch_case, _) result 
 
 and strip_switch_default (node : Ast.switch_default wrap) : (S.switch_default, _) result =
   let Ast.{ kwd_default = _; statements } = node#payload in
-  let* statements = strip_statements statements in
-  Ok (Option.map ~f:(fun stmt -> stmt.value) statements)
+  strip_statements statements
 
 (* For statement *)
 
@@ -1121,7 +1119,7 @@ and strip_D_module_declaration (node : Ast.module_declaration wrap)
 and strip_D_internal_module (node : Ast.internal_module wrap) : (S.declaration, _) result =
   let Ast.{ kwd_namespace = _; module_name; module_body } = node#payload in
   let* (namespace_name : S.variable) = strip_module_name module_name in
-  let* (namespace_body : S.statements reg) =
+  let* (namespace_body : S.statements) =
     match module_body with
     | None -> Strip_err.(make node#region No_statements)
     | Some block -> strip_statement_block block
