@@ -45,25 +45,30 @@ let compile_path (t : T.simple_path reg) : O.Mod_variable.t Nonempty_list.t =
    statement is a block containing a single instruction, we do not
    want to emit a [ClauseBlock], but a [ClauseInstr]. *)
 
-let compile_branch compile_statement (x : T.statement)
+let compile_branch compile_statement (stmt : T.statement)
     : (T.statement, T.statements) O.Test_clause.t
   =
-  match Location.unwrap @@ compile_statement x with
-  | O.S_instr (T.S_block { value; _ }) ->
-    (match value with
+  let region = T.region_of_statement stmt in
+  match Location.unwrap @@ compile_statement stmt with
+  | O.S_instr (T.S_block block) ->
+    (match block.value with
     | [ one ] ->
       (match Location.unwrap @@ compile_statement one with
       | S_instr i -> O.Test_clause.ClauseInstr i
-      | _ -> O.Test_clause.ClauseBlock [ x ])
-    | _ -> O.Test_clause.ClauseBlock value)
+      | _ ->
+        let singleton = mk_reg region Nonempty_list.[ stmt ] in
+        O.Test_clause.ClauseBlock singleton)
+    | _ -> O.Test_clause.ClauseBlock block)
   | S_instr i -> O.Test_clause.ClauseInstr i
-  | _ -> O.Test_clause.ClauseBlock [ x ]
+  | _ ->
+    let singleton = mk_reg region Nonempty_list.[ stmt ] in
+    O.Test_clause.ClauseBlock singleton
 
 
 let labelize x : O.Label.t = O.Label.T.create ~loc:(w_snd x) (w_fst x)
 let pattern_to_param pattern = O.Param.{ pattern; param_kind = `Const }
 
-module Eq' = struct
+module Eq = struct
   type expr = T.expr
   type ty_expr = T.type_expr
   type pattern = T.pattern
@@ -73,13 +78,17 @@ module Eq' = struct
   type instruction = T.statement
   type declaration = T.declaration
   type program_entry = T.statement
-  type program = T.t
+  type program = T.statements
   type sig_expr = T.intf_expr
   type sig_entry = T.intf_entry reg
 end
 
+(*
 module Folding_orig = Folding (* TEMPORARY (shadowing) *)
 module Folding' = Folding_orig (Eq')
+ *)
+
+module Folding = Folding (Eq)
 
 (* EXPRESSIONS *)
 
@@ -163,12 +172,11 @@ let compile_function (expr : T.arrow_fun_expr reg) =
   return
   @@
   match fun_body with
-  | T.Stmt_body body ->
-    O.E_block_poly_fun { type_params; parameters; ret_type; body = body.value }
+  | T.Stmt_body body -> O.E_block_poly_fun { type_params; parameters; ret_type; body }
   | Expr_body body -> O.E_poly_fun { type_params; parameters; ret_type; body }
 
 
-let expr' (expr : Eq'.expr) : Folding'.expr =
+let expr (expr : Eq.expr) : Folding.expr =
   let loc = Location.lift (T.region_of_expr expr) in
   let return x = Location.wrap ~loc x in
   match expr with
@@ -277,32 +285,32 @@ let compile_parameter param : _ O.Named_fun.fun_type_arg =
   { name = name#payload; type_expr }
 
 
-let rec type_expr' (type_expr : Eq'.ty_expr) : Folding'.ty_expr =
-  let loc = Location.lift (T.region_of_type_expr type_expr) in
+let rec ty_expr (t_expr : Eq.ty_expr) : Folding.ty_expr =
+  let loc = Location.lift (T.region_of_type_expr t_expr) in
   let return x = Location.wrap ~loc x in
-  match type_expr with
-  | T_apply type_expr ->
-    let constr, args = type_expr.value in
+  match t_expr with
+  | T_apply t_expr ->
+    let constr, args = t_expr.value in
     (match args with
-    | [] -> (* Should not happen *) type_expr' constr
+    | [] -> (* Should not happen *) ty_expr constr
     | fst_arg :: more_args ->
       let type_args = Nonempty_list.(fst_arg :: more_args) in
       return (O.T_app { constr; type_args }))
-  | T_tuple type_expr -> return (O.T_prod type_expr.value)
-  | T_for_all type_expr ->
-    let type_vars, type_ = type_expr.value in
+  | T_tuple t_expr -> return (O.T_prod t_expr.value)
+  | T_for_all t_expr ->
+    let type_vars, type_ = t_expr.value in
     let ty_binders = List.map ~f:compile_tvar type_vars
     and kind = Ligo_prim.Kind.Type in
     return (O.T_for_alls { ty_binders; kind; type_ })
-  | T_fun type_expr ->
-    let parameters, ret_type = type_expr.value in
+  | T_fun t_expr ->
+    let parameters, ret_type = t_expr.value in
     let parameters = List.map ~f:compile_parameter parameters in
     return (O.T_named_fun (parameters, ret_type))
   | T_int t ->
     let s, z = t#payload in
     return (O.T_int (s, z))
-  | T_object type_expr ->
-    let members = List.map ~f:compile_member_type type_expr.value in
+  | T_object t_expr ->
+    let members = List.map ~f:compile_member_type t_expr.value in
     let fields = O.Non_linear_rows.make members in
     return (O.T_record_raw fields)
   | T_path simple_path ->
@@ -315,12 +323,12 @@ let rec type_expr' (type_expr : Eq'.ty_expr) : Folding'.ty_expr =
       let field_as_open = false in
       let field = compile_tvar selected in
       return @@ O.T_module_access { module_path; field; field_as_open })
-  | T_parameter_of type_expr ->
-    let path = compile_path type_expr.value in
+  | T_parameter_of t_expr ->
+    let path = compile_path t_expr.value in
     return (O.T_contract_parameter path)
-  | T_string type_expr -> return @@ O.T_string type_expr#payload
-  | T_union type_expr ->
-    let variants = Nonempty_list.to_list type_expr.value in
+  | T_string t_expr -> return @@ O.T_string t_expr#payload
+  | T_union t_expr ->
+    let variants = Nonempty_list.to_list t_expr.value in
     return (O.T_union variants)
 
 
@@ -336,7 +344,7 @@ let compile_property_pattern (property : T.pattern T.property Region.reg)
   O.Field.Complete (property_name, property_rhs)
 
 
-let pattern' (pattern : Eq'.pattern) : Folding'.pattern =
+let pattern (pattern : Eq.pattern) : Folding.pattern =
   Location.wrap ~loc:(Location.lift (T.region_of_pattern pattern))
   @@
   match pattern with
@@ -376,7 +384,7 @@ let pattern' (pattern : Eq'.pattern) : Folding'.pattern =
 
 (* STATEMENTS *)
 
-let statement' (stmt : Eq'.statement) : Folding'.statement =
+let statement (stmt : Eq.statement) : Folding.statement =
   let loc = Location.lift (T.region_of_statement stmt) in
   let return = Location.wrap ~loc in
   match stmt with
@@ -389,11 +397,11 @@ let statement' (stmt : Eq'.statement) : Folding'.statement =
 
 (* INSTRUCTIONS *)
 
-let instruction' (instr : Eq'.instruction) : Folding'.instruction =
+let instruction (instr : Eq.instruction) : Folding.instruction =
   let loc = Location.lift (T.region_of_statement instr) in
   let return = Location.wrap ~loc in
   match instr with
-  | S_block stmts -> return (O.I_block stmts.value)
+  | S_block stmts -> return (O.I_block stmts)
   | S_break _ -> return O.I_break
   | S_decl _ | S_export _ -> assert false
   | S_expr expr -> return (O.I_expr expr)
@@ -430,7 +438,7 @@ let instruction' (instr : Eq'.instruction) : Folding'.instruction =
     return (O.I_for_of { index_kind; index; expr; for_stmt = for_of_body })
   | S_if stmt ->
     let T.{ test; if_so; if_not } = stmt.value in
-    let compile_branch = compile_branch statement' in
+    let compile_branch = compile_branch statement in
     let ifso = compile_branch if_so
     and ifnot = Option.map if_not ~f:compile_branch in
     return @@ O.I_cond { test; ifso; ifnot }
@@ -439,8 +447,8 @@ let instruction' (instr : Eq'.instruction) : Folding'.instruction =
     let switch_subject, cases = stmt.value in
     let switch_cases, default_case = cases in
     let f (case : T.switch_case) : _ O.Switch.switch_case =
-      let case_subject, statements = case in
-      O.Switch.{ expr = case_subject; case_body = statements }
+      let case_subject, case_body = case in
+      O.Switch.{ expr = case_subject; case_body }
     in
     let cases = Nonempty_list.map ~f switch_cases in
     let cases = O.Switch.AllCases (cases, default_case) in
@@ -448,6 +456,7 @@ let instruction' (instr : Eq'.instruction) : Folding'.instruction =
   | S_while stmt ->
     let cond, statement = stmt.value in
     let block = Nonempty_list.singleton statement in
+    let block = mk_reg stmt.region block in
     return (O.I_while { cond; block })
 
 
@@ -506,7 +515,7 @@ let compile_class_member (node : T.class_member) : T.statement =
 
 
 let compile_val_binding (node : T.val_binding reg)
-    : (Eq'.pattern, T.expr, T.type_expr) O.Simple_decl.t
+    : (Eq.pattern, T.expr, T.type_expr) O.Simple_decl.t
   =
   let T.{ pattern; rhs_type; rhs_expr } = node.value in
   let type_params, rhs_type =
@@ -558,7 +567,7 @@ let compile_type_decl (node : T.type_decl reg) =
   O.Type_abstraction_decl.{ name; params; type_expr }
 
 
-let rec declaration' (decl : Eq'.declaration) : Folding'.declaration =
+let rec declaration (decl : Eq.declaration) : Folding.declaration =
   let region = T.region_of_declaration decl in
   let return = Location.wrap ~loc:(Location.lift region) in
   match decl with
@@ -575,7 +584,7 @@ let rec declaration' (decl : Eq'.declaration) : Folding'.declaration =
   | D_namespace decl ->
     let T.{ namespace_name; namespace_type; namespace_body } = decl.value in
     let name = compile_mvar namespace_name in
-    let mod_expr = namespace_body.value in
+    let mod_expr = namespace_body in
     let annotation = O.Mod_decl.{ signatures = namespace_type; filter = false } in
     return @@ O.D_module { name; mod_expr; annotation }
   | D_class decl ->
@@ -585,7 +594,7 @@ let rec declaration' (decl : Eq'.declaration) : Folding'.declaration =
     let namespace_body = Nonempty_list.map ~f:compile_class_member class_body.value in
     let namespace_body = mk_reg class_body.region namespace_body in
     let decl' = T.{ namespace_name; namespace_type; namespace_body } in
-    declaration' (T.D_namespace (mk_reg decl.region decl'))
+    declaration (T.D_namespace (mk_reg decl.region decl'))
   | D_type decl -> return @@ O.D_type_abstraction (compile_type_decl decl)
   | D_value decl ->
     let T.{ comments = _; kind; bindings } = decl.value in
@@ -599,8 +608,8 @@ let rec declaration' (decl : Eq'.declaration) : Folding'.declaration =
 
 (* PROGRAM *)
 
-let program_entry' (stmt : Eq'.program_entry) : Folding'.program_entry =
-  match Location.unwrap @@ statement' stmt with
+let program_entry (stmt : Eq.program_entry) : Folding.program_entry =
+  match Location.unwrap @@ statement stmt with
   | O.S_export decl -> PE_export (T.S_decl decl)
   | O.S_decl decl -> PE_declaration decl
   | O.S_instr _ -> PE_top_level_instruction stmt
@@ -608,11 +617,11 @@ let program_entry' (stmt : Eq'.program_entry) : Folding'.program_entry =
   | O.S_attr (attr, s) -> PE_attr (attr, stmt)
 
 
-let program' (stmts : Eq'.program) : Folding'.program = Nonempty_list.to_list stmts
+let program (stmts : Eq.program) : Folding.program = Nonempty_list.to_list stmts.value
 
 (* INTERFACES *)
 
-let sig_expr' : Eq'.sig_expr -> Folding'.sig_expr = function
+let sig_expr : Eq.sig_expr -> Folding.sig_expr = function
   | I_body { value = entries; region } ->
     let loc = Location.lift region in
     Location.wrap ~loc @@ O.S_body entries
@@ -622,7 +631,7 @@ let sig_expr' : Eq'.sig_expr -> Folding'.sig_expr = function
     Location.wrap ~loc @@ O.S_path path
 
 
-let sig_entry' (node : Eq'.sig_entry) : Folding'.sig_entry =
+let sig_entry (node : Eq.sig_entry) : Folding.sig_entry =
   let return = Location.wrap ~loc:(Location.lift node.region) in
   let T.{ decorators; comments = _; entry_name; entry_optional; entry_type } =
     node.value
@@ -639,8 +648,15 @@ let sig_entry' (node : Eq'.sig_entry) : Folding'.sig_entry =
     O.S_value (var, entry_type, Option.is_some entry_optional)
 
 
-(* ==========================  OLD  =============================================== *)
+let block (node : Eq.block) : Folding.block =
+  Location.wrap ~loc:(Location.lift node.region) node.value
 
+
+let mod_expr (node : Eq.mod_expr) : Folding.mod_expr =
+  Location.wrap ~loc:(Location.lift node.region) (O.M_body node)
+
+(* ==========================  OLD  ====================================== *)
+(*
 let split_for_all = function
   | I.T_ForAll { value = generics, type_expr; _ } -> Some generics, type_expr
   | type_expr -> None, type_expr
@@ -1554,3 +1570,4 @@ let sig_entry : Eq.sig_entry -> Folding.sig_entry =
     let var = TODO.esc_var const_name in
     let _, type_ = const_type in
     return ~loc @@ O.S_value (var, type_, Option.is_some const_optional)
+ *)
