@@ -42,14 +42,14 @@ Even if LIGO currently offers **two syntaxes**, you'll need to **choose only one
   let store_hello (delta : int) (store : storage) : operation list * storage = [], "Hello"
 ```
 
-A significant advantage of the multi-syntax feature is to share knowledge, toolings, and [modules](https://ligolang.org/docs/language-basics/modules) (like [libraries](https://ligolang.org/docs/advanced/package-management) onto [registry](https://packages.ligolang.org/packages)) in a larger community.
+A significant advantage of the multi-syntax feature is to share knowledge, toolings, and [modules](../language-basics/modules) (like [libraries](../advanced/package-management) onto [registry](https://packages.ligolang.org/packages)) in a larger community.
 
 ### LIGO, designed to be cost-effective
 
 Unlike desktop, mobile, or web application development, smart
 contracts cannot rely on cheap CPU time and memory.  All resources
 contracts use are expensive and tracked as
-['gas costs'](https://ligolang.org/docs/tutorials/optimisation/#tezos-gas-model).
+['gas costs'](../tutorials/optimisation/#tezos-gas-model).
 
 The LIGO compiler generates optimised Michelson code, which will
 be cost-effective on Tezos.
@@ -69,9 +69,9 @@ LIGO will **bring people to web3** and by design **reduce the risk**
 But compiler design is insufficient, and LIGO uses **static analysis** to
 encourage people to write simple code, avoid anti-patterns, and use
 the
-[robust test framework](https://ligolang.org/docs/testing/testing)
+[robust test framework](../testing)
 which can simulate Tezos blockchain and offer
-[mutation tests](https://ligolang.org/docs/advanced/mutation-testing)
+[mutation tests](../testing/mutation-testing)
 
 For critical code, LIGO also keeps its compiled output unbloated making **possible to formally verify** the compiled output using a project like
 [Mi-Cho-Coq](https://gitlab.com/nomadic-labs/mi-cho-coq/).
@@ -92,26 +92,26 @@ For critical code, LIGO also keeps its compiled output unbloated making **possib
 
 ### Do you want to try LIGO?
 
-For a quick overview, [get-started]( https://ligolang.org/docs/tutorials/getting-started) is a good choice. [Webide](https://ide.ligolang.org/) can be used to avoid installation onto your laptop.
+For a quick overview, [get-started](../tutorials/getting-started) is a good choice. [Webide](https://ide.ligolang.org/) can be used to avoid installation onto your laptop.
 
 ### Do you want to learn LIGO?
 
 Your choice to learn LIGO is already available:
-- Read [basics](https://ligolang.org/docs/language-basics/types) to have a basic comprehension
-- Write your first [smart contract](https://ligolang.org/docs/tutorials/taco-shop/tezos-taco-shop-smart-contract).
+- Read [basics](../language-basics/types) to have a basic comprehension
+- Write your first [smart contract](../tutorials/taco-shop/tezos-taco-shop-smart-contract).
 - Others resources are available on [marigold.dev](https://www.marigold.dev/learn)
 
 ### Do you want to build a production-ready project?
 
 You will need a deeper comprehension:
-- Teach yourself how to structure your code with [Combining code](https://ligolang.org/docs/next/language-basics/modules) section
-- Learn how to [write tests](https://ligolang.org/docs/next/testing/testing?lang=jsligo) we strongly encourage to use [breathalyzer library from the LIGO registry.](https://packages.ligolang.org/package/ligo-breathalyzer)
-- Understand how to [secure a contract](https://ligolang.org/docs/tutorials/security)
+- Teach yourself how to structure your code with [Combining code](../language-basics/modules) section
+- Learn how to [write tests](../testing) we strongly encourage to use [breathalyzer library from the LIGO registry.](https://packages.ligolang.org/package/ligo-breathalyzer)
+- Understand how to [secure a contract](../tutorials/security)
 
 ### Dig deeper
 
 In the end, maybe you will want to:
-- [Optimize your code](https://ligolang.org/docs/tutorials/optimisation/)
-- [Interact with other contracts](https://ligolang.org/docs/tutorials/inter-contract-calls/)
+- [Optimize your code](../tutorials/optimisation/)
+- [Interact with other contracts](../tutorials/inter-contract-calls/)
 
 <!-- updated use of entry -->

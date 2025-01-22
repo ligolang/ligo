@@ -16,7 +16,7 @@ You can also try LIGO in a Gitpod environment
 
 Releases are available at the [releases page of GitLab project](https://gitlab.com/ligolang/ligo/-/releases). All the artifacts are attached there.
 
-If you wish to see the changelog, you can either run `ligo changelog` or go to [this page](https://ligolang.org/docs/next/intro/changelog). It contains links to corresponding releases, should you wish to download the artifacts.
+If you wish to see the changelog, you can either run `ligo changelog` or go to [this page](./changelog). It contains links to corresponding releases, should you wish to download the artifacts.
 
 ## Install
 <Tabs
