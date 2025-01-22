@@ -133,7 +133,7 @@ let compile_chain_assignment op expr =
   return @@ O.E_struct_assign_chainable { expr1; op; expr2 }
 
 
-let compile_generics (node : T.variable list) =
+let compile_generics (node : T.variable list) : O.Ty_variable.t Nonempty_list.t option =
   match node with
   | [] -> None
   | t_var :: t_vars ->
@@ -145,7 +145,7 @@ let compile_function (expr : T.arrow_fun_expr reg) =
   let loc = Location.lift expr.region in
   let return x = Location.wrap ~loc x in
   let T.{ generics; parameters; rhs_type; fun_body } = expr.value in
-  let type_params : O.Ty_variable.t Nonempty_list.t option = compile_generics generics in
+  let type_params = compile_generics generics in
   let parameters : T.pattern O.Param.t list =
     let f parameter =
       let Region.{ value; region } = parameter in
