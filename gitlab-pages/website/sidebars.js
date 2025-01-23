@@ -72,15 +72,12 @@ const sidebars = {
         "id": "syntax/decorators"
       },
       {
-        "type": "category",
+        "type": "doc",
         "label": "Signatures",
         "customProps": {
           "jsLigoName": "Interfaces"
         },
-        "items": [
-          "signatures/declaring",
-          "signatures/extending"
-        ]
+        "id": "syntax/signatures",
       },
       "syntax/keywords"
     ],
