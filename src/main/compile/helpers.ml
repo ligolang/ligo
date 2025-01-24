@@ -103,31 +103,127 @@ let parse_and_abstract_type_expression_cameligo ~raise ~preprocess_define buffer
   Unification.Cameligo.compile_type_expression raw
 
 
-let parse_and_abstract_jsligo ~raise ~preprocess_define buffer file_path =
-  let module Parse = Parsing.Jsligo.Make (Jsligo.Options) in
-  let raw =
-    Trace.trace ~raise parser_tracer
-    @@ Parse.parse_file ~preprocess_define buffer file_path
-  in
-  Unification.Jsligo.compile_program raw
+(* Tree-sitter ctypes-APIs for types and related functions *)
+
+module TS_types = Tree_sitter.Api.Types
+module TS_fun = Tree_sitter.Api.Functions
+module Ts_wrap = Typescript_ast.Ts_wrap
+module Loc_map = Typescript_ast.Loc_map
+module Decode = Typescript_ast.Decode
+module Strip = Typescript_ast.Strip
+module Ast = Typescript_ast.Ast
+module Ast_stripped = Typescript_ast.Ast_stripped
+module Region = Simple_utils.Region
+
+let ( let* ) v f = Result.bind v ~f
+
+let lift ~(raise : (Main_errors.all, Main_warnings.all) Simple_utils.Trace.raise)
+  = function
+  | Ok tree -> tree
+  | Error error -> raise.error @@ `Parser_tracer (`Parsing error)
+
+
+(* JsLIGO programs *)
+
+(* Note: The parameter [buffer] to [parse_and_abstract_jsligo] is a
+   string buffer expected to contain the result of preprocessing the
+   input. For now, we let the preprocessor run, but we ignore the
+   resulting buffer. *)
+
+let decode_jsligo_program ~raise file : (Ast.t, string Region.reg) result =
+  let* line_map = Loc_map.scan file in
+  (* Loading the code as a string *)
+  let input : string = Core.In_channel.read_all file in
+  (* Parsing the code into a tree *)
+  let tree : Ts_wrap.ts_tree_ptr = Ts_wrap.parse_typescript_string input in
+  (* Getting ahold of the root of the tree *)
+  let program_node : Ts_wrap.ts_tree = TS_fun.ts_tree_root_node tree in
+  (* Decoding the tree *)
+  let ast = Decode.dec_program file line_map program_node in
+  (* Releasing the memory allocated to the tree *)
+  let () = TS_fun.ts_tree_delete tree in
+  match ast with
+  | Error internal_error -> Error (Region.wrap_ghost internal_error)
+  | Ok ast -> Ok ast
+
+
+let decode_jsligo_program ~raise file = lift ~raise @@ decode_jsligo_program ~raise file
+
+let parse_and_abstract_jsligo ~raise ~preprocess_define (buffer : Buffer.t) file_path =
+  ignore preprocess_define;
+  ignore buffer;
+  let ast = decode_jsligo_program ~raise file_path in
+  let stripped = lift ~raise (Strip.statements ast) in
+  Unification.Jsligo.compile_program stripped
+
+
+(* JsLIGO expressions *)
+
+let decode_jsligo_expression ~raise buffer : (Ast.expression, string Region.reg) result =
+  let line_map : Loc_map.t = Map.set Int.Map.empty ~key:1 ~data:0 in
+  let input = Buffer.contents buffer in
+  (* Parsing the code into a tree *)
+  let tree : Ts_wrap.ts_tree_ptr = Ts_wrap.parse_typescript_string input in
+  (* Getting ahold of the root of the tree *)
+  let program_node : Ts_wrap.ts_tree = TS_fun.ts_tree_root_node tree in
+  (* Decoding the tree *)
+  let ast = Decode.dec_standalone_expression line_map program_node in
+  (* Releasing the memory allocated to the tree *)
+  let () = TS_fun.ts_tree_delete tree in
+  match ast with
+  | Error internal_error ->
+    let region = Region.min ~file:"" in
+    Error Region.{ value = internal_error; region }
+  | Ok ast -> Ok ast
+
+
+let decode_jsligo_expression ~raise buffer =
+  lift ~raise @@ decode_jsligo_expression ~raise buffer
 
 
 let parse_and_abstract_expression_jsligo ~raise ~preprocess_define buffer =
-  let module Parse = Parsing.Jsligo.Make (Jsligo.Options) in
-  let raw =
-    Trace.trace ~raise parser_tracer @@ Parse.parse_expression ~preprocess_define buffer
-  in
-  Unification.Jsligo.compile_expression raw
+  ignore preprocess_define;
+  let ast = decode_jsligo_expression ~raise buffer in
+  let stripped = lift ~raise (Strip.strip_expression ast) in
+  Unification.Jsligo.compile_expression stripped
+
+
+(* JsLIGO type expressions *)
+
+let decode_jsligo_type_expression ~raise buffer
+    : (Ast.type_expr, string Region.reg) result
+  =
+  let line_map : Loc_map.t = Map.set Int.Map.empty ~key:1 ~data:0 in
+  let input = Buffer.contents buffer in
+  (* We prefix the string "type t = " to the input to parse it as a program *)
+  let input = "type t = " ^ input in
+  (* Parsing the code into a tree *)
+  let tree : Ts_wrap.ts_tree_ptr = Ts_wrap.parse_typescript_string input in
+  (* Getting ahold of the root of the tree *)
+  let program_node : Ts_wrap.ts_tree = TS_fun.ts_tree_root_node tree in
+  (* Decoding the tree *)
+  let ast = Decode.dec_standalone_type_expr line_map program_node in
+  (* Releasing the memory allocated to the tree *)
+  let () = TS_fun.ts_tree_delete tree in
+  match ast with
+  | Error internal_error ->
+    let region = Region.min ~file:"" in
+    Error Region.{ value = internal_error; region }
+  | Ok ast -> Ok ast
+
+
+let decode_jsligo_type_expression ~raise buffer =
+  lift ~raise @@ decode_jsligo_type_expression ~raise buffer
 
 
 let parse_and_abstract_type_expression_jsligo ~raise ~preprocess_define buffer =
-  let module Parse = Parsing.Jsligo.Make (Jsligo.Options) in
-  let raw =
-    Trace.trace ~raise parser_tracer
-    @@ Parse.parse_type_expression ~preprocess_define buffer
-  in
-  Unification.Jsligo.compile_type_expression raw
+  ignore preprocess_define;
+  let ast = decode_jsligo_type_expression ~raise buffer in
+  let stripped = lift ~raise (Strip.strip_type_expr ast) in
+  Unification.Jsligo.compile_type_expression stripped
 
+
+(* CameLIGO or JsLIGO *)
 
 let parse_and_abstract ~raise ~(meta : meta) ~preprocess_define buffer file_path
     : Ast_unified.program
@@ -178,15 +274,34 @@ let parse_and_abstract_string_cameligo ~raise ~preprocess_define buffer =
   Unification.Cameligo.compile_program raw
 
 
-let parse_and_abstract_string_jsligo ~raise ~preprocess_define buffer =
-  let module Parse = Parsing.Jsligo.Make (Jsligo.Options) in
-  let raw =
-    Trace.trace ~raise parser_tracer @@ Parse.parse_string ~preprocess_define buffer
-  in
-  Unification.Jsligo.compile_program raw
+let decode_string_jsligo ~raise buffer : (Ast.t, string Region.reg) result =
+  let line_map : Loc_map.t = Map.set Int.Map.empty ~key:1 ~data:0 in
+  let input = Buffer.contents buffer in
+  (* Parsing the code into a tree *)
+  let tree : Ts_wrap.ts_tree_ptr = Ts_wrap.parse_typescript_string input in
+  (* Getting ahold of the root of the tree *)
+  let program_node : Ts_wrap.ts_tree = TS_fun.ts_tree_root_node tree in
+  (* Decoding the tree *)
+  let ast = Decode.dec_program "" line_map program_node in
+  (* Releasing the memory allocated to the tree *)
+  let () = TS_fun.ts_tree_delete tree in
+  match ast with
+  | Error internal_error ->
+    let region = Region.min ~file:"" in
+    Error Region.{ value = internal_error; region }
+  | Ok ast -> Ok ast
 
 
-let parse_and_abstract_string ~raise (syntax : Syntax_types.t) buffer =
+let decode_string_jsligo ~raise buffer = lift ~raise @@ decode_string_jsligo ~raise buffer
+
+let parse_and_abstract_string_jsligo ~raise ~preprocess_define (buffer : Buffer.t) =
+  ignore preprocess_define;
+  let ast = decode_string_jsligo ~raise buffer in
+  let stripped = lift ~raise (Strip.statements ast) in
+  Unification.Jsligo.compile_program stripped
+
+
+let parse_and_abstract_string ~raise (syntax : Syntax_types.t) (buffer : Buffer.t) =
   let parse_and_abstract =
     match syntax with
     | CameLIGO -> parse_and_abstract_string_cameligo
