@@ -9,7 +9,7 @@
   lltz,
   libiconv
 }: let
-  inherit (pkgs) darwin ocamlPackages python3Packages coq_8_13 cargo rustPlatform;
+  inherit (pkgs) darwin ocamlPackages python3Packages coq_8_13 rustc cargo rustPlatform;
 in
   with ocamlPackages;
     buildDunePackage rec {
@@ -49,6 +49,7 @@ in
         crunch
         odoc
         python3Packages.jsonschema
+        rustc
         cargo
         rustPlatform.cargoSetupHook
       ];
