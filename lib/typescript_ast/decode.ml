@@ -240,25 +240,12 @@ let dec_ne_list_in_parens ?comments node decode : ('a ne_list parens, _) result 
   let* parens = dec_enclosed_ne_list ?comments node decode "(" ")" in
   Ok (Parens parens)
 
-(* Decoding the CST *)
-
-let rec dec_program file map node : (Ast.t, string) result =
-  (* Opening a read channel for lexemes *)
-  let () = Lexeme.open_input ~file in
-  (* Setting up the extracting of source regions *)
-  let () = get_region := Ts_wrap.get_region file map in
-  (* Decoding the CST into an AST *)
-  let ast = dec_statements node in
-  (* Closing the input channel for reading lexemes *)
-  let () = Lexeme.close_input () in
-  ast
-
 (* STATEMENTS
 
    The JavaScript tree-sitter grammar has the non-terminals
    "statement" be a supertype, that is, a hidden rule. *)
 
-and dec_statements ?(comments = []) node : (statements, _) result =
+let rec dec_statements ?(comments = []) node : (statements, _) result =
   let children = collect_named_children node in
   wrap_ne_list_opt_of_children ~comments dec_statement children
 
@@ -3390,3 +3377,65 @@ and dec_generic_name ?(comments = []) node : (generic_name, _) result =
     let* nested = wrap dec_nested_type_identifier ~comments node in
     Ok (Generic_nested nested)
   | _ -> error "dec_generic_name" node
+
+(* Decoding the CST *)
+
+let dec_program file map node : (Ast.t, string) result =
+  (* Opening a read channel for lexemes *)
+  let () = Lexeme.open_input ~file in
+  (* Setting up the extraction of source regions *)
+  let () = get_region := Ts_wrap.get_region file map in
+  (* Decoding the CST into an AST *)
+  let ast = dec_statements node in
+  (* Closing the input channel for reading lexemes *)
+  let () = Lexeme.close_input () in
+  ast
+
+(* The parameter [node] is the root of a Typescript CST, *not of an
+   expression*. That's why we have to find the expression below the
+   root. This is because tree-sitter does not provide the generated
+   parsers with multiple entry-points. *)
+
+let dec_standalone_expression map node : (Ast.expression, string) result =
+  (* Setting up the extraction of source regions *)
+  let () = get_region := Ts_wrap.get_region "" map in
+  (* Decoding the CST into an AST *)
+  let* ast = dec_statements node in
+  match ast with
+  | None -> Strip_err.(make (Region.min ~file:"") No_single_expression)
+  | Some stmts ->
+    (match stmts#payload with
+    | _ :: stmt2 :: _ -> Strip_err.(make (region_of_statement stmt2) No_single_expression)
+    | Nonempty_list.[ stmt ] ->
+      (match stmt with
+      | S_expression_statement expr_stmt ->
+        (match expr_stmt#payload with
+        | _ :: expr2 :: _ ->
+          Strip_err.(make (region_of_expression expr2) No_single_expression)
+        | Nonempty_list.[ expr ] -> Ok expr)
+      | _ -> Strip_err.(make (region_of_statement stmt) No_single_expression)))
+
+(* The parameter [node] is the root of a Typescript CST, *not of a
+   type expression*. tree-sitter does not provide the generated
+   parsers with multiple entry-points, so, in order to parse a type
+   expression, we assume that the input string starts with "type t = ",
+   so we fetch the type in the produced CST (last child of the root,
+   which is an type_alias_declaration). *)
+
+let dec_standalone_type_expr map node : (Ast.type_expr, string) result =
+  (* Setting up the extraction of source regions *)
+  let () = get_region := Ts_wrap.get_region "" map in
+  (* Decoding the CST into an AST *)
+  let* ast = dec_statements node in
+  match ast with
+  | None -> Strip_err.(make (Region.min ~file:"") No_single_type_expr)
+  | Some stmts ->
+     (match stmts#payload with
+      | _ :: stmt2 :: _ -> Strip_err.(make (region_of_statement stmt2) No_single_type_expr)
+      | Nonempty_list.[ stmt ] ->
+         (match stmt with
+          | S_declaration_statement (D_type_alias_declaration decl) ->
+             let Ast.{kwd_type=_; name=_; type_parameters=_;
+                      sym_equal=_; type_expr } = decl#payload in
+             Ok type_expr
+          | _ -> Strip_err.(make (region_of_statement stmt) No_single_type_expr)))
