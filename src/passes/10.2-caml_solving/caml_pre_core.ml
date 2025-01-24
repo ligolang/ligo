@@ -127,6 +127,9 @@ and decl_desc =
   | D_module of (Module_var.t * Type_or_module_attr.t * mod_expr)
   | D_module_include of mod_expr
   | D_module_type of (Module_var.t * Signature_attr.t * sig_expr)
+  (* FFI *)
+  | D_type_unsupported
+  | D_attribute
   | D_error of error
 
 and sig_expr =

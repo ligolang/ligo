@@ -1,16 +1,27 @@
 open Ppxlib
 open Ocaml_common
 
+(* let coerce = 
+  let x =
+    (let module M = struct
+       external magic : unit -> 'a = "%identity" [@@ligo.internal.michelson]
+     end
+     in
+     M.magic ()
+      : nat)
+    [@@ligo.internal.coerce 1] *)
 let ocaml_predef ~loc =
   [%str
     [@@@ocaml.warning "-34"]
 
     (* OCaml predefs *)
-    type nonrec unit = unit = () [@@ligo.internal.ocaml.predef]
-    type nonrec int = int [@@ligo.internal.ocaml.predef]
+    type nonrec unit = unit = () [@@ligo.internal.ocaml.predef.register]
+
+    (* TODO: different int for Ligo? *)
+    type nonrec int = int [@@ligo.internal.ocaml.predef.register]
     type nonrec char = char [@@ligo.internal.ocaml.predef.unsupported]
-    type nonrec string = string [@@ligo.internal.ocaml.predef]
-    type nonrec bytes = bytes [@@ligo.internal.ocaml.predef]
+    type nonrec string = string [@@ligo.internal.ocaml.predef.register]
+    type nonrec bytes = bytes [@@ligo.internal.ocaml.predef.register]
     type nonrec float = float [@@ligo.internal.ocaml.predef.unsupported]
 
     type nonrec bool = bool =
@@ -24,7 +35,7 @@ let ocaml_predef ~loc =
     type nonrec 'a list = 'a list =
       | []
       | ( :: ) of 'a * 'a list
-    [@@ligo.internal.ocaml.predef]
+    [@@ligo.internal.ocaml.predef.register]
 
     type nonrec 'a option = 'a option =
       | None
@@ -33,7 +44,7 @@ let ocaml_predef ~loc =
 
     type nonrec nativeint = nativeint [@@ligo.internal.ocaml.predef.unsupported]
     type nonrec int32 = int32 [@@ligo.internal.ocaml.predef.unsupported]
-    type nonrec int64 = int64 [@@ligo.internal.ocaml.predef]
+    type nonrec int64 = int64 [@@ligo.internal.ocaml.predef.register]
     type nonrec 'a lazy_t = 'a lazy_t [@@ligo.internal.ocaml.predef.unsupported]
 
     type nonrec extension_constructor = extension_constructor
@@ -45,7 +56,7 @@ let stdlib ~loc =
   let open Ast_builder.Default in
   let ocaml_predef = pmod_structure ~loc @@ ocaml_predef ~loc in
   [%str
-    include ([%m ocaml_predef] : sig end) [@@ligo.internal.ocaml]
+    include ([%m ocaml_predef] : sig end) [@@ligo.internal.ocaml.predef]
 
     (* Ligo Constants *)
     (* TODO: better letters for constructors *)
@@ -85,12 +96,15 @@ let stdlib ~loc =
     type chest [@@ligo.internal.predef]
     type chest_key [@@ligo.internal.predef]
 
-    module Int = struct
-      external add : int -> int -> int = "ADD" [@@ligo.internal.michelson]
+    (* module Int = struct
+      external add : int -> int -> int = "%ligo" [@@ligo.internal.constant "ADD"]
+
+      let add x y = add x y
+
       external sub : int -> int -> int = "SUB" [@@ligo.internal.michelson]
 
-      let x = add 1 2
-    end]
+      let f x y = add 1 2
+    end *)]
 
 let loc_of_ligo_location ~loc =
   match (loc : Simple_utils.Location.t) with
@@ -149,7 +163,9 @@ let check_extract str =
   match check_extract @@ check_str str with
   | Ok errors -> errors
   | Error error -> [ stri_of_error error ]
-  | exception _exn -> assert false
+  | exception _exn ->
+    (* TODO: properly manage this *)
+    assert false
 
 let () =
   let impl str =

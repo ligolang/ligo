@@ -8,6 +8,18 @@ open Ast_core
 open Caml_core
 open Caml_error
 
+(* TODO: assert false and failwith *)
+module Utils = struct
+  let assert_no_attributes attrs =
+    List.iter attrs ~f:(fun attr ->
+        let { attr_name; attr_payload; attr_loc } = attr in
+        (* TODO: better error here *)
+        let { txt = attr_name; loc = _ } = attr_name in
+        match attr_name with
+        | "merlin.loc" -> ()
+        | attr_name -> failwith @@ Format.sprintf "found attribute : %s" attr_name)
+end
+
 (* TODO: put this somewhere else *)
 let ( let@@ ) f x = f x
 
@@ -46,6 +58,83 @@ let extract_loc ~loc : Location.t =
     Location.make loc_start loc_end
 
 
+module Attributes = struct
+  type type_attr_ligo =
+    | Ligo_internal_ocaml_predef_register
+    | Ligo_internal_ocaml_predef_unsupported
+    | Ligo_internal_ocaml_predef_weird
+    | Ligo_internal_predef
+
+  (* type expr_attr = Ligo_internal_literal of { l : Literal_value.t } *)
+  type prim_attr = Ligo_internal_constant of { constant : Constant.constant' }
+
+  let attr_wrap ~loc desc = Location.wrap ~loc desc
+  let error_unknown_attribute () = raise_pre_error @@ E_unsupported
+
+  let extract_type_attr ~loc name payload =
+    (* TODO: return result *)
+    match name, payload with
+    | "ligo.internal.ocaml.predef.register", PStr [] ->
+      attr_wrap ~loc @@ Ligo_internal_ocaml_predef_register
+    | "ligo.internal.ocaml.predef.register", _ -> failwith "bad predef register"
+    | "ligo.internal.ocaml.predef.unsupported", PStr [] ->
+      attr_wrap ~loc @@ Ligo_internal_ocaml_predef_unsupported
+    | "ligo.internal.ocaml.predef.unsupported", _ -> failwith "bad predef unsupported"
+    | "ligo.internal.ocaml.predef.weird", PStr [] ->
+      attr_wrap ~loc @@ Ligo_internal_ocaml_predef_weird
+    | "ligo.internal.ocaml.predef.weird", _ -> failwith "bad predef weird"
+    | "ligo.internal.predef", PStr [] -> attr_wrap ~loc @@ Ligo_internal_predef
+    | "ligo.internal.predef", _ -> failwith "bad predef"
+    | _ -> error_unknown_attribute ()
+
+
+  let extract_prim_attr ~loc name payload =
+    match name, payload with
+    | ( "ligo.internal.constant"
+      , PStr
+          [ { pstr_desc =
+                Pstr_eval
+                  ( { pexp_desc = Pexp_constant (Pconst_string (str, str_loc, None))
+                    ; pexp_loc
+                    ; pexp_loc_stack = _
+                    ; pexp_attributes = []
+                    }
+                  , [] )
+            ; pstr_loc
+            }
+          ] ) ->
+      (match Constant.read_constant' str with
+      | Some constant -> attr_wrap ~loc @@ Ligo_internal_constant { constant }
+      | None -> failwith "bad constant")
+    | "ligo.internal.constant", _ -> failwith "bad constant payload"
+    | _ -> error_unknown_attribute ()
+
+
+  let extract_ocaml_attr ~loc name payload =
+    (* TODO: what to do with this payload? *)
+    let _ = loc in
+    let _ = payload in
+    match name with
+    | "ocaml.warning" | "merlin.loc" -> true
+    | _ -> false
+
+
+  let extract_attributes f attrs =
+    (* TODO: recover if one of the attributes is bad? *)
+    List.filter_map attrs ~f:(fun attr ->
+        let { attr_name = { txt = attr_name; loc = _ }; attr_payload; attr_loc } = attr in
+        let loc = extract_loc ~loc:attr_loc in
+        let@@ () = try_enhance ~loc in
+        match extract_ocaml_attr ~loc attr_name attr_payload with
+        | true -> None
+        | false -> Some (f ~loc attr_name attr_payload))
+
+
+  (* TODO: move Ligo attributes to this *)
+  let extract_type_attrs attrs = extract_attributes extract_type_attr attrs
+  let extract_prim_attrs attrs = extract_attributes extract_prim_attr attrs
+end
+
 (* TODO: this is a bad name *)
 let extract_field_name lid =
   let { txt = lid; loc } = lid in
@@ -53,25 +142,7 @@ let extract_field_name lid =
   Label.Label (Longident.last lid, loc)
 
 
-(* TODO: magic ligo stuff *)
-(* TODO: use this function?  *)
-let _extract_payload_string payload =
-  match payload with
-  | PStr
-      [ { pstr_desc =
-            Pstr_eval
-              ( { pexp_desc = Pexp_constant (Pconst_string (payload, _, _))
-                ; pexp_loc = _
-                ; pexp_loc_stack = _
-                ; pexp_attributes = []
-                }
-              , y )
-        ; pstr_loc = _
-        }
-      ] -> payload
-  | _ -> raise_pre_error @@ E_unsupported
-
-
+(* TODO: integrate the Ligo attributes with the extract attributes *)
 let extract_attrs ~init ~f attrs =
   List.fold_left attrs ~init ~f:(fun acc attr ->
       let { attr_name; attr_payload; attr_loc } = attr in
@@ -190,7 +261,7 @@ let extract_label_declaration label =
     match ld_mutable with
     | Immutable -> true
     | Mutable -> false);
-  assert (List.is_empty ld_attributes);
+  Utils.assert_no_attributes ld_attributes;
   let type_ = extract_type ~loc ld_type in
   (* TODO: type_decl_label_wrap? *)
   { dl_id = ld_id; dl_type = type_; dl_loc = loc }
@@ -232,7 +303,7 @@ let extract_type_declaration decl =
   (* assert (List.is_empty type_separability); *)
   (* TODO: support new type *)
   assert (not type_is_newtype);
-  assert (List.is_empty type_attributes);
+  Utils.assert_no_attributes type_attributes;
   (* TODO: what is this flag below? *)
   (* assert (not type_unboxed_default); *)
   let params =
@@ -264,7 +335,7 @@ let extract_type_declaration decl =
           let@@ () = try_enhance ~loc in
           (* TODO: maybe support GADTs syntax but not GADTs? *)
           assert (Option.is_none cd_res);
-          assert (List.is_empty cd_attributes);
+          Utils.assert_no_attributes cd_attributes;
           match cd_args with
           | Cstr_tuple fields ->
             let fields = List.map fields ~f:(fun field -> extract_type ~loc field) in
@@ -301,7 +372,7 @@ let extract_literal constant =
 let extract_pat_extra pat_extra =
   let pat_extra, _loc, pat_extra_attributes = pat_extra in
   (* TODO: put this in Caml_core and add loc *)
-  assert (List.is_empty pat_extra_attributes);
+  Utils.assert_no_attributes pat_extra_attributes;
   match pat_extra with
   | Tpat_constraint _typ ->
     (* TODO: is this relevant? *)
@@ -321,7 +392,7 @@ let extract_pat_alias : type a. a general_pattern -> unit =
   let { pat_desc; pat_loc; pat_extra; pat_type; pat_env; pat_attributes } = pat in
   (* TOOD: use this pat_loc? *)
   assert (List.is_empty pat_extra);
-  assert (List.is_empty pat_attributes);
+  Utils.assert_no_attributes pat_attributes;
   (* TODO: this should definitely be removed *)
   match pat_desc with
   | Tpat_any -> ()
@@ -347,7 +418,7 @@ let rec extract_pat : type a. a general_pattern -> pat =
   let type_ = extract_type ~loc pat_type in
   let on_error exn = pat_wrap loc type_ @@ P_error exn in
   let@@ () = try_recover ~loc ~on_error in
-  assert (List.is_empty pat_attributes);
+  Utils.assert_no_attributes pat_attributes;
   let () = List.iter pat_extra ~f:extract_pat_extra in
   match pat_desc with
   | Tpat_any -> raise_pre_error @@ E_unimplemented
@@ -531,9 +602,10 @@ let rec extract_expr expr =
 
 
 and extract_expr_extra expr_extra =
-  let expr_extra, _loc, _expr_extra_attributes = expr_extra in
+  let expr_extra, _loc, expr_extra_attributes = expr_extra in
   (* TODO: use this loc *)
   (* TODO: state about attributes on expressions *)
+  Utils.assert_no_attributes expr_extra_attributes;
   match expr_extra with
   | Texp_constraint _ -> ()
   | Texp_coerce (_, _) -> raise_pre_error @@ E_unimplemented
@@ -568,7 +640,7 @@ and extract_expr_recursive ~self expr =
   let@@ () = try_enhance ~loc in
   (* TODO: maybe extract recursive after extract_expr? *)
   let () = List.iter exp_extra ~f:extract_expr_extra in
-  assert (List.is_empty exp_attributes);
+  Utils.assert_no_attributes exp_attributes;
   let type_ = extract_type ~loc exp_type in
   match exp_desc with
   (* TODO: label, exp function *)
@@ -633,7 +705,7 @@ and extract_expr_apply ~loc ~type_ lambda args =
     let loc = extract_loc ~loc:exp_loc in
     let@@ () = try_enhance ~loc in
     let () = List.iter exp_extra ~f:extract_expr_extra in
-    assert (List.is_empty exp_attributes)
+    Utils.assert_no_attributes exp_attributes
   in
   (* TODO: this is really hackish *)
   match exp_desc with
@@ -646,7 +718,7 @@ and extract_expr_apply ~loc ~type_ lambda args =
         ; val_attributes
         ; val_uid = _
         } ) ->
-    assert (List.is_empty val_attributes);
+    Utils.assert_no_attributes val_attributes;
     extract_expr_apply_primitive ~loc ~type_ prim args
   | _ -> extract_expr_apply_fallback ~loc ~type_ lambda args
 
@@ -671,7 +743,7 @@ and extract_expr_apply_primitive ~loc ~type_ prim args =
       (* TODO: duplicated *)
       let { exp_desc; exp_loc; exp_extra; exp_type; exp_env; exp_attributes } = arg in
       let () = List.iter exp_extra ~f:extract_expr_extra in
-      assert (List.is_empty exp_attributes);
+      Utils.assert_no_attributes exp_attributes;
       (* TODO: this is clearly disgusting  *)
       match exp_desc with
       | Texp_constant constant -> constant
@@ -795,9 +867,10 @@ and extract_str_include include_decl =
   let { incl_mod; incl_type = _; incl_loc = loc; incl_attributes } = include_decl in
   let loc = extract_loc ~loc in
   let@@ () = try_enhance ~loc in
+  (* TODO: merlin.loc here *)
   match incl_attributes with
   | [] -> extract_module_expr incl_mod
-  | [ { attr_name = { txt = "ligo.internal.ocaml"; loc }
+  | [ { attr_name = { txt = "ligo.internal.ocaml.predef"; loc }
       ; attr_payload = PStr []
       ; attr_loc = _loc
       }
@@ -809,7 +882,7 @@ and extract_str_include_ocaml_predef incl_mod =
   let { mod_desc; mod_loc; mod_type = _; mod_env = _; mod_attributes } = incl_mod in
   let loc = extract_loc ~loc:mod_loc in
   let@@ () = try_enhance ~loc in
-  assert (List.is_empty mod_attributes);
+  Utils.assert_no_attributes mod_attributes;
   (* TODO: this is weird *)
   let mod_expr =
     match mod_desc with
@@ -830,8 +903,9 @@ and extract_str_attr attr =
   let loc = extract_loc ~loc:attr_loc in
   let { txt = attr_name; loc = _ } = attr_name in
   let@@ () = try_enhance ~loc in
+  (* TODO: improve this *)
   match attr_name with
-  | "ocaml.warning" -> decl_wrap loc @@ D_attribute
+  | "ocaml.warning" | "merlin.loc" -> decl_wrap loc @@ D_attribute
   | _ -> raise_pre_error @@ E_unimplemented
 
 
@@ -848,7 +922,7 @@ and extract_mod_type mty =
   let { mty_desc; mty_type = _; mty_env = _; mty_loc; mty_attributes } = mty in
   let loc = extract_loc ~loc:mty_loc in
   let@@ () = try_enhance ~loc in
-  assert (List.is_empty mty_attributes);
+  Utils.assert_no_attributes mty_attributes;
   match mty_desc with
   | Tmty_ident (path, _lident) -> sig_expr_wrap loc @@ S_var path
   | Tmty_signature sig_ -> sig_expr_wrap loc @@ S_sig (extract_sig sig_)
@@ -911,7 +985,6 @@ and extract_sig_value binding =
   let loc = extract_loc ~loc:val_loc in
   let@@ () = try_enhance ~loc in
   assert (List.is_empty val_prim);
-  assert (List.is_empty val_attributes);
   let attr = extract_sig_item_attrs val_attributes in
   (* TODO: which loc to use? *)
   let type_ =
@@ -920,7 +993,7 @@ and extract_sig_value binding =
     | Val_reg -> ()
     | Val_prim _ | Val_ivar (_, _) | Val_self (_, _, _, _) | Val_anc (_, _, _) ->
       raise_pre_error @@ E_unsupported);
-    assert (List.is_empty val_attributes);
+    Utils.assert_no_attributes val_attributes;
     let loc = extract_loc ~loc:val_loc in
     extract_type ~loc val_type
   in
@@ -955,7 +1028,7 @@ and extract_sig_type rec_flag bindings =
   in
   let loc = extract_loc ~loc:typ_loc in
   (* TODO: handle attributes such as ligo.internal.predef *)
-  assert (List.is_empty typ_attributes);
+  Utils.assert_no_attributes typ_attributes;
   sig_item_wrap loc @@ S_type (typ_id, extract_type_declaration typ_type)
 
 
@@ -973,7 +1046,7 @@ and extract_sig_module decl =
     (* TODO: when is this the case? *)
     (* TODO: write tests *)
     raise_pre_error @@ E_unsupported);
-  assert (List.is_empty md_attributes);
+  Utils.assert_no_attributes md_attributes;
   let sig_expr = extract_mod_type md_type in
   let signature = signature_of_sig_expr sig_expr in
   sig_item_wrap loc @@ S_module (id, signature)
@@ -991,23 +1064,18 @@ and extract_primitive ~loc vd =
     =
     vd
   in
+  (* TODO: better this *)
+  assert (
+    match val_prim with
+    | [ "%ligo" ] -> true
+    | _ -> false);
   (* TODO: use val_loc? *)
   (* TODO: check val_desc type? *)
-  match val_attributes, val_prim with
-  | ( [ { attr_name = { txt = "ligo.internal.constant"; loc = _ }
-        ; attr_payload = PStr []
-        ; attr_loc = _
-        }
-      ]
-    , [ prim ] ) ->
-    (* TODO: store which constant' *)
-    let constant' =
-      match Constant.read_constant' prim with
-      | Some constant' -> constant'
-      | None -> raise_pre_error @@ E_unsupported
-    in
-    decl_wrap loc @@ D_constant (val_id, constant')
-  | ([] | _ :: _), prim -> raise_pre_error @@ E_unsupported
+  (* TODO: merlin.loc *)
+  match Attributes.extract_prim_attrs val_attributes with
+  | [ { wrap_content = Ligo_internal_constant { constant }; location = _ } ] ->
+    decl_wrap loc @@ D_constant (val_id, constant)
+  | [] | _ :: _ -> raise_pre_error @@ E_unsupported
 
 
 and extract_type_decl decl =
@@ -1054,13 +1122,9 @@ and extract_type_decl decl =
     | Papply (_, _) -> raise_pre_error @@ E_unsupported
   in
   let@@ () = try_enhance ~loc in
-  match typ_attributes with
+  match Attributes.extract_type_attrs typ_attributes with
   | [] -> decl_wrap loc @@ D_type (typ_id, extract_type_declaration typ_type)
-  | [ { attr_name = { txt = "ligo.internal.predef"; loc = _ }
-      ; attr_payload = PStr []
-      ; attr_loc = _
-      }
-    ] ->
+  | [ { wrap_content = Ligo_internal_predef; location = _ } ] ->
     let { txt = constant; loc = _ } = typ_name in
     let constant =
       match Literal_types.of_string_opt constant with
@@ -1070,11 +1134,7 @@ and extract_type_decl decl =
     let arity = Literal_types.to_arity constant in
     assert (arity = typ_type.type_arity);
     decl_wrap loc @@ D_type_predef (typ_id, constant, arity)
-  | [ { attr_name = { txt = "ligo.internal.ocaml.predef"; loc = _ }
-      ; attr_payload = PStr []
-      ; attr_loc = _
-      }
-    ] ->
+  | [ { wrap_content = Ligo_internal_ocaml_predef_register; location = _ } ] ->
     let typ_id = typ_manifest_id typ_manifest in
     let constant = Ident.name typ_id in
     let constant =
@@ -1085,26 +1145,16 @@ and extract_type_decl decl =
     let arity = Literal_types.to_arity constant in
     assert (arity = typ_type.type_arity);
     decl_wrap loc @@ D_type_predef (typ_id, constant, arity)
-  | [ { attr_name = { txt = "ligo.internal.ocaml.predef.weird"; loc = _ }
-      ; attr_payload = PStr []
-      ; attr_loc = _
-      }
-    ] ->
+  | [ { wrap_content = Ligo_internal_ocaml_predef_weird; location = _ } ] ->
     let typ_id = typ_manifest_id typ_manifest in
     let typ_type = { typ_type with type_attributes = [] } in
     decl_wrap loc @@ D_type (typ_id, extract_type_declaration typ_type)
-  | [ { attr_name = { txt = "ligo.internal.ocaml.predef.unsupported"; loc = _ }
-      ; attr_payload = PStr []
-      ; attr_loc = _
-      }
-    ] ->
+  | [ { wrap_content = Ligo_internal_ocaml_predef_unsupported; location } ] ->
     let typ_id = typ_manifest_id typ_manifest in
     decl_wrap loc @@ D_type_unsupported typ_id
-  (* TODO: better error here *)
-  (* | [ { attr_name = { txt; loc = _ }; attr_payload = PStr []; attr_loc = _ } ] ->
-    Format.eprintf "Unsupported attribute: %s@." txt;
-    raise_pre_error @@ E_unsupported *)
-  | _ -> raise_pre_error @@ E_unsupported
+  | _ ->
+    (* TODO: better error *)
+    raise_pre_error @@ E_unsupported
 
 
 and extract_module_binding mb =
@@ -1115,7 +1165,6 @@ and extract_module_binding mb =
     match mb_presence with
     | Mp_present -> true
     | Mp_absent -> false);
-  assert (List.is_empty mb_attributes);
   let ident =
     match mb_id with
     | Some ident -> ident
@@ -1131,7 +1180,7 @@ and extract_module_expr mod_expr =
   let loc = extract_loc ~loc:mod_loc in
   let@@ () = try_enhance ~loc in
   (* TODO: use module_type? *)
-  assert (List.is_empty mod_attributes);
+  Utils.assert_no_attributes mod_attributes;
   match mod_desc with
   | Tmod_ident (path, _lident) -> mod_expr_wrap loc @@ M_var path
   | Tmod_structure str -> mod_expr_wrap loc @@ M_struct (extract_str str)

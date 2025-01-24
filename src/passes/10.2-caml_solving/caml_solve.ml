@@ -568,10 +568,7 @@ and solve_module ctx module_ =
   let ctx, rev_decl =
     List.fold_left module_ ~init:(ctx, []) ~f:(fun (ctx, rev_module) decl ->
         let ctx, decl = solve_decl ctx decl in
-        (* TODO: this is ugly *)
-        match decl with
-        | None -> ctx, rev_module
-        | Some decl -> ctx, decl :: rev_module)
+        ctx, decl :: rev_module)
   in
   ctx, List.rev rev_decl
 
@@ -585,19 +582,21 @@ and solve_decl ctx decl =
 
 and solve_decl_inner ctx vars decl =
   let Caml_core.{ decl_desc; decl_loc = loc } = decl in
+  (* TODO: enhance solving error? *)
   match decl_desc with
   | D_let (binder, attr, value) ->
     let inner_ctx, binder = solve_var_pat ctx vars binder in
     let foralls, value = solve_expr_poly ctx vars value in
-    inner_ctx, Some (decl_wrap loc @@ D_let { binder; foralls; value; attr })
+    inner_ctx, decl_wrap loc @@ D_let { binder; foralls; value; attr }
   | D_type (ident, type_decl) ->
     let type_decl = solve_type_decl ctx vars type_decl in
     let var = fresh_type ident in
     let ctx = Context.enter_type ident var ctx in
     (* TODO: attributes here *)
     let attr = Type_or_module_attr.default_attributes in
-    ctx, Some (decl_wrap loc @@ D_type (var, attr, type_decl))
-  | D_external ident ->
+    ctx, decl_wrap loc @@ D_type (var, attr, type_decl)
+  | D_constant (ident, constant) ->
+    let _ = assert false in
     (* TODO: remove the need for this? *)
     let ctx = enter_value_external ident ctx in
     ctx, None
@@ -605,27 +604,27 @@ and solve_decl_inner ctx vars decl =
     (* TODO: this is brittle, what if duplicated? *)
     let var = Type_var.of_input_var ~loc @@ Literal_types.to_string @@ literal in
     let ctx = enter_type ident var ctx in
-    ctx, Some (decl_wrap loc @@ D_type_predef (var, literal, arity))
+    ctx, decl_wrap loc @@ D_type_predef (var, literal, arity)
   | D_type_unsupported ident ->
     let ctx = enter_type_predef_unsupported ident ctx in
-    ctx, None
+    ctx, decl_wrap loc @@ D_type_unsupported
   | D_module (ident, attr, mod_expr) ->
     let var = fresh_module ident in
     let ctx, module_ =
       enter_module ident var ctx @@ fun ctx -> solve_mod_expr ctx mod_expr
     in
-    ctx, Some (decl_wrap loc @@ D_module (var, attr, module_))
+    ctx, decl_wrap loc @@ D_module (var, attr, module_)
   | D_module_include mod_expr ->
     let ctx, module_ = solve_mod_expr ctx mod_expr in
-    ctx, Some (decl_wrap loc @@ D_module_include module_)
+    ctx, decl_wrap loc @@ D_module_include module_
   | D_module_type (ident, attr, sig_expr) ->
     let var = fresh_module ident in
     let ctx, signature =
       enter_signature ident var ctx @@ fun ctx -> solve_sig_expr ctx sig_expr
     in
-    ctx, Some (decl_wrap loc @@ D_module_type (var, attr, signature))
-  | D_attribute -> ctx, None
-  | D_error error -> ctx, Some (decl_wrap loc @@ D_error error)
+    ctx, decl_wrap loc @@ D_module_type (var, attr, signature)
+  | D_attribute -> ctx, decl_wrap loc @@ D_attribute
+  | D_error error -> ctx, decl_wrap loc @@ D_error error
 
 
 and solve_mod_expr ctx mod_expr =

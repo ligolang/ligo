@@ -116,7 +116,6 @@ and decl_desc =
   | D_module_include of mod_expr
   | D_module_type of (Ident.t * Signature_attr.t * sig_expr)
   (* FFI *)
-  | D_external of Ident.t (* TODO: why arity here? *)
   | D_constant of Ident.t * Constant.constant'
   | D_type_predef of (Ident.t * Literal_types.t * int)
   | D_type_unsupported of Ident.t

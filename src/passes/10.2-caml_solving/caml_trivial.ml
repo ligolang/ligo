@@ -211,7 +211,7 @@ let rec lower_expr expr =
   | E_error error -> raise_error error
 
 
-and lower_module module_ = List.map module_ ~f:lower_decl
+and lower_module module_ = List.filter_map module_ ~f:lower_decl
 
 and lower_decl decl =
   let { decl_desc; decl_loc = loc } = decl in
@@ -222,10 +222,12 @@ and lower_decl decl =
       Binder.make var (Some type_)
     in
     let value = wrap_foralls ~loc foralls @@ lower_expr value in
-    decl_wrap loc @@ D_value { binder; expr = value; attr }
+    Some (decl_wrap loc @@ D_value { binder; expr = value; attr })
   | D_type (var, attr, type_decl) ->
     let type_decl = lower_type_decl type_decl in
-    decl_wrap loc @@ D_type { type_binder = var; type_expr = type_decl; type_attr = attr }
+    Some
+      (decl_wrap loc
+      @@ D_type { type_binder = var; type_expr = type_decl; type_attr = attr })
   | D_type_predef (var, literal, arity) ->
     (* TODO: maybe this should be a special type_decl instead? *)
     let type_decl =
@@ -233,28 +235,33 @@ and lower_decl decl =
       make_t ~loc @@ T_constant (literal, arity)
     in
     (* TODO; attributes here? *)
-    decl_wrap loc
-    @@ D_type
-         { type_binder = var
-         ; type_expr = type_decl
-         ; type_attr = Type_or_module_attr.default_attributes
-         }
+    Some
+      (decl_wrap loc
+      @@ D_type
+           { type_binder = var
+           ; type_expr = type_decl
+           ; type_attr = Type_or_module_attr.default_attributes
+           })
   | D_module (var, attr, mod_expr) ->
     let module_ = lower_mod_expr mod_expr in
-    decl_wrap loc
-    @@ D_module
-         { module_binder = var
-         ; module_ (* TODO: annotation *)
-         ; annotation = None
-         ; module_attr = attr
-         }
+    Some
+      (decl_wrap loc
+      @@ D_module
+           { module_binder = var
+           ; module_ (* TODO: annotation *)
+           ; annotation = None
+           ; module_attr = attr
+           })
   | D_module_include mod_expr ->
     let mod_expr = lower_mod_expr mod_expr in
-    decl_wrap loc @@ D_module_include mod_expr
+    Some (decl_wrap loc @@ D_module_include mod_expr)
   | D_module_type (var, attr, sig_expr) ->
     let signature = lower_sig_expr sig_expr in
-    decl_wrap loc
-    @@ D_signature { signature_binder = var; signature; signature_attr = attr }
+    Some
+      (decl_wrap loc
+      @@ D_signature { signature_binder = var; signature; signature_attr = attr })
+  | D_type_unsupported -> None
+  | D_attribute -> None
   | D_error error -> raise_error error
 
 
