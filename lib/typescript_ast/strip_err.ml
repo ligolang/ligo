@@ -159,6 +159,8 @@ type t =
   | Generic_class
   | Invalid_implements
   | Empty_class
+  | No_single_expression (* When parsing an expression *)
+  | No_single_type_expr (* When parsing a type expression *)
 
 type error = t
 
@@ -332,6 +334,8 @@ let to_string = function
   | Invalid_implements ->
     "General types in implements clauses are not supported in JsLIGO."
   | Empty_class -> "Empty classes are not supported in JsLIGO."
+  | No_single_expression -> "No single expression found."
+  | No_single_type_expr -> "No single type expression found."
 
 (* Creating errors *)
 
@@ -342,3 +346,11 @@ let make ?(hint : string option) (region : Region.t) (error : t) =
     | Some msg -> "\nHint: " ^ msg
   in
   Error (Printf.sprintf "%s:\n%s%s" (region#to_string `Byte) (to_string error) hint)
+
+let pack ?(hint : string option) (region : Region.t) (error : t) =
+  let hint =
+    match hint with
+    | None | Some "" -> ""
+    | Some msg -> "\nHint: " ^ msg
+  in
+  Error Region.{ region; value = to_string error ^ hint }

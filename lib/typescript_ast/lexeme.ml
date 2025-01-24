@@ -23,3 +23,14 @@ let open_input, read, close_input =
       match !in_channel with
       | None -> ()
       | Some channel -> In_channel.close channel )
+
+(* UNTESTED
+
+let read_buffer buffer region : string =
+  let start_pos, stop_pos = region#byte_pos in
+  let start_cnum = start_pos.Lexing.pos_cnum
+  and stop_cnum = stop_pos.Lexing.pos_cnum in
+  let len = stop_cnum - start_cnum in
+  let bytes = Buffer.sub buffer ~pos:start_cnum ~len in
+  Bytes.to_string bytes
+ *)
