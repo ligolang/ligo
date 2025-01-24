@@ -76,17 +76,17 @@ let filter_decorator_argument (node : S.expr) : (string, _) result =
   | E_string literal -> Ok literal#payload
   | _ ->
     let region = S.region_of_expr node in
-    Strip_err.(make region Invalid_decorator_argument)
+    Strip_err.(pack region Invalid_decorator_argument)
 
 let filter_async (node : Ast.kwd_async option) : (unit, _) result =
   match node with
   | None -> Ok ()
-  | Some kwd_async -> Strip_err.(make kwd_async#region Asynchronicity)
+  | Some kwd_async -> Strip_err.(pack kwd_async#region Asynchronicity)
 
 let filter_await (node : Ast.kwd_await option) : (unit, _) result =
   match node with
   | None -> Ok ()
-  | Some kwd_await -> Strip_err.(make kwd_await#region Asynchronicity)
+  | Some kwd_await -> Strip_err.(pack kwd_await#region Asynchronicity)
 
 let filter_spread (node : Ast.arguments) : (Ast.expression list, _) result =
   let (Ast.Parens args) = node in
@@ -94,7 +94,7 @@ let filter_spread (node : Ast.arguments) : (Ast.expression list, _) result =
   let filter (arg : Ast.argument) acc =
     match arg with
     | Ast.Expression expr -> Ok expr :: acc
-    | Ast.Spread_element spread -> Strip_err.(make spread#region Spread_expression) :: acc
+    | Ast.Spread_element spread -> Strip_err.(pack spread#region Spread_expression) :: acc
   in
   let* exprs = Result.all @@ List.fold_right args ~init:[] ~f:filter in
   Ok exprs
@@ -104,14 +104,14 @@ let filter_static (node : Ast.method_scope) : (Region.t option, _) result =
   | { kwd_static = None; kwd_override = None; kwd_readonly = None } -> Ok None
   | { kwd_static = Some kwd_static; _ } -> Ok (Some kwd_static#region)
   | { kwd_override = Some kwd; _ } | { kwd_readonly = Some kwd; _ } ->
-    Strip_err.(make kwd#region Property_scope)
+    Strip_err.(pack kwd#region Property_scope)
 
 let filter_method_scope (node : Ast.method_scope) : (unit, _) result =
   match node with
   | { kwd_static = None; kwd_override = None; kwd_readonly = None } -> Ok ()
   | { kwd_static = Some kwd; _ }
   | { kwd_override = Some kwd; _ }
-  | { kwd_readonly = Some kwd; _ } -> Strip_err.(make kwd#region Property_scope)
+  | { kwd_readonly = Some kwd; _ } -> Strip_err.(pack kwd#region Property_scope)
 
 let filter_field_scope (node : Ast.field_scope) : (Region.t option, _) result =
   match node with
@@ -127,18 +127,18 @@ let filter_field_scope (node : Ast.field_scope) : (Region.t option, _) result =
   | { kwd_override = Some kwd; _ }
   | { kwd_readonly = Some kwd; _ }
   | { kwd_abstract = Some kwd; _ }
-  | { kwd_accessor = Some kwd; _ } -> Strip_err.(make kwd#region Public_field_scope)
+  | { kwd_accessor = Some kwd; _ } -> Strip_err.(pack kwd#region Public_field_scope)
 
 let filter_access (node : Ast.accessibility_modifier option) : (unit, _) result =
   match node with
   | None -> Ok ()
   | Some (Public kwd) | Some (Private kwd) | Some (Protected kwd) ->
-    Strip_err.(make kwd#region Property_access)
+    Strip_err.(pack kwd#region Property_access)
 
 let filter_optional (node : Ast.sym_qmark option) error : (unit, _) result =
   match node with
   | None -> Ok ()
-  | Some sym_qmark -> Strip_err.(make sym_qmark#region error)
+  | Some sym_qmark -> Strip_err.(pack sym_qmark#region error)
 
 let rec filter_path (expr : S.expr) : (S.simple_path reg, _) result =
   match expr with
@@ -147,12 +147,55 @@ let rec filter_path (expr : S.expr) : (S.simple_path reg, _) result =
     let S.{ path; selected } = path.value in
     Ok (mk_reg region S.{ path = selected :: path; selected = v })
   | S.E_var v -> Ok (mk_reg v#region S.{ path = []; selected = v })
-  | _ -> Strip_err.(make (S.region_of_expr expr) Complex_path)
+  | _ -> Strip_err.(pack (S.region_of_expr expr) Complex_path)
 
 let filter_path (expr : S.expr) : (S.simple_path reg, _) result =
   let* { value; region } = filter_path expr in
   let S.{ path; selected } = value in
   Ok (mk_reg region S.{ path = List.rev path; selected })
+
+(* From some patterns in assignments to expressions *)
+
+let rec destructuring_pattern_to_expression (node : Ast.destructuring_pattern)
+    : (Ast.expression, _) result
+  =
+  match node with
+  | Pattern_object obj ->
+    Strip_err.(pack (Ast.region_of_braces obj) Object_pattern_in_lhs)
+  | Pattern_array array -> array_pattern_to_expression array
+
+and pattern_to_argument (node : Ast.pattern) : (Ast.argument, _) result =
+  match node with
+  | P_member_expression expr ->
+    Ok (Expression (E_primary_expression (E_member_expression expr)))
+  | P_subscript_expression expr ->
+    Ok (Expression (E_primary_expression (E_subscript_expression expr)))
+  | P_identifier ident -> Ok (Expression (E_primary_expression (E_identifier ident)))
+  | P_undefined kwd_undefined ->
+    Ok (Expression (E_primary_expression (E_undefined kwd_undefined)))
+  | P_destructuring_pattern pattern ->
+    let* expr = destructuring_pattern_to_expression pattern in
+    Ok (Expression expr : Ast.argument)
+  | P_non_null_expression expr ->
+    Ok (Expression (E_primary_expression (E_non_null_expression expr)))
+  | P_rest_pattern rest -> Strip_err.(pack rest#region Rest_pattern_in_lhs)
+
+and array_cell_pattern_to_argument (node : Ast.array_cell_pattern)
+    : (Ast.argument, _) result
+  =
+  match node with
+  | Cell_pattern p -> pattern_to_argument p
+  | Cell_assignment asgnmt -> Strip_err.(pack asgnmt#region Assignment_in_pattern)
+
+and array_pattern_to_expression (node : Ast.array_pattern) : (Ast.expression, _) result =
+  let (Brackets brackets) = node in
+  let enclosed = brackets#payload in
+  let cells = enclosed.contents in
+  let* arguments = Result.all @@ List.map ~f:array_cell_pattern_to_argument cells in
+  let enclosed = { enclosed with contents = arguments } in
+  let arguments = Wrap.make enclosed brackets#region in
+  let array = Ast.Brackets arguments in
+  Ok Ast.(E_primary_expression (E_array array))
 
 (* Stripping *)
 
@@ -209,7 +252,7 @@ and strip_S_export_statement (node : Ast.export_statement wrap)
   | Export_default_expression _
   | Export_type _
   | Export_equal _
-  | Export_as_namespace _ -> Strip_err.(make kwd_export#region Invalid_export)
+  | Export_as_namespace _ -> Strip_err.(pack kwd_export#region Invalid_export)
   | Export_declaration decl ->
     let* declaration = strip_decorated_declaration decl in
     Ok (Some (S.S_export declaration))
@@ -237,13 +280,13 @@ and strip_import_statement (node : Ast.import_statement wrap) : (S.statement, _)
     match import_kind with
     | None -> Ok ()
     | Some (Import_type kwd) | Some (Import_typeof kwd) ->
-      Strip_err.(make kwd#region Invalid_import)
+      Strip_err.(pack kwd#region Invalid_import)
   in
   let* () =
     match import_attribute with
     | None -> Ok ()
     | Some (Import_with (kwd, _)) | Some (Import_assert (kwd, _)) ->
-      Strip_err.(make kwd#region Invalid_import)
+      Strip_err.(pack kwd#region Invalid_import)
   in
   let* import_decl = strip_import node#region import in
   Ok (S.S_decl import_decl)
@@ -269,7 +312,7 @@ and strip_import_clause region file_path (node : Ast.import_clause)
   | Import_namespace import -> strip_namespace_import region file_path import
   | Import_named import -> strip_named_imports region file_path import
   | Import_ident (ident, _) ->
-    Strip_err.(make ident#region Invalid_import ~hint:"Use named imports.")
+    Strip_err.(pack ident#region Invalid_import ~hint:"Use named imports.")
 
 and strip_namespace_import region file_path (node : Ast.namespace_import wrap)
     : (S.import_decl, _) result
@@ -284,7 +327,7 @@ and strip_named_imports region file_path (node : Ast.named_imports)
   =
   let Ast.(Braces braces) = node in
   match braces#payload.contents with
-  | [] -> Strip_err.(make region Empty_import_list)
+  | [] -> Strip_err.(pack region Empty_import_list)
   | fst_import :: more_imports ->
     let* fst_import = strip_import_specifier fst_import in
     let* more_imports = Result.all @@ List.map ~f:strip_import_specifier more_imports in
@@ -298,7 +341,7 @@ and strip_import_specifier (node : Ast.import_specifier) : (S.variable, _) resul
     match import_kind with
     | None -> Ok ()
     | Some (Import_type kwd) | Some (Import_typeof kwd) ->
-      Strip_err.(make kwd#region Invalid_import)
+      Strip_err.(pack kwd#region Invalid_import)
   in
   strip_import_specifier' spec
 
@@ -307,7 +350,7 @@ and strip_import_specifier' (node : Ast.import_specifier') : (S.variable, _) res
   | Import_spec_name ident -> Ok (strip_identifier ident)
   | Import_spec_alias alias ->
     Strip_err.(
-      make
+      pack
         alias.Ast.kwd_as#region
         Import_and_rename
         ~hint:"Declare a new name after the import.")
@@ -320,15 +363,15 @@ and strip_Import_require_clause (node : Ast.import_require_clause wrap)
     =
     node#payload
   in
-  Strip_err.(make kwd_require#region Invalid_import)
+  Strip_err.(pack kwd_require#region Invalid_import)
 
 and strip_Import_source (node : Ast.string_literal) : (S.declaration, _) result =
-  Strip_err.(make node#region Invalid_import)
+  Strip_err.(pack node#region Invalid_import)
 
 (* Debugger statement *)
 
 and strip_S_debugger_statement (node : Ast.kwd_debugger) : (S.statement option, _) result =
-  Strip_err.(make node#region Debugger_statement)
+  Strip_err.(pack node#region Debugger_statement)
 
 (* Expression statement *)
 
@@ -345,7 +388,7 @@ and strip_expression_statement (node : Ast.expression_statement)
   match exprs with
   | [] -> Ok None (* Should not happen *)
   | [ expr ] -> Ok (Some expr)
-  | _ -> Strip_err.(make node#region Multiple_values)
+  | _ -> Strip_err.(pack node#region Multiple_values)
 
 (* Declaration statement *)
 
@@ -366,7 +409,7 @@ and strip_statement_block (node : Ast.statement_block) : (S.statements, _) resul
   let statements' = statements#payload.contents in
   let* stmts = strip_statements statements' in
   match stmts with
-  | None -> Strip_err.(make statements#region No_statements)
+  | None -> Strip_err.(pack statements#region No_statements)
   | Some stmts -> Ok stmts
 
 (* If statement *)
@@ -380,14 +423,14 @@ and strip_S_if_statement (node : Ast.if_statement wrap) : (S.statement option, _
     | [ test ] -> Ok test
     | _ ->
       let region = Ast.region_of_parens condition in
-      Strip_err.(make region Multiple_values)
+      Strip_err.(pack region Multiple_values)
   in
   let* if_so = strip_statement consequence in
   let* if_so =
     match if_so with
     | None ->
       let region = Ast.region_of_statement consequence in
-      Strip_err.(make region Empty_consequence)
+      Strip_err.(pack region Empty_consequence)
     | Some if_so -> Ok if_so
   in
   let* if_not = strip_opt (strip_statement <@ snd) alternative in
@@ -419,7 +462,7 @@ and strip_switch_statement (node : Ast.switch_statement wrap) : (S.switch_stmt, 
   let* expr =
     match exprs with
     | [ expr ] -> Ok expr
-    | _ -> Strip_err.(make kwd_switch#region Multiple_values)
+    | _ -> Strip_err.(pack kwd_switch#region Multiple_values)
   in
   let* cases = strip_switch_body body in
   Ok (expr, cases)
@@ -436,7 +479,7 @@ and strip_switch_body (node : Ast.switch_body) : (S.cases, _) result =
   let* cases = Result.all @@ List.map ~f:strip_switch_case cases in
   let* cases =
     match cases with
-    | [] -> Strip_err.(make braces#region Empty_switch)
+    | [] -> Strip_err.(pack braces#region Empty_switch)
     | fst_case :: more_cases -> Ok Nonempty_list.(fst_case :: more_cases)
   in
   match defaults with
@@ -444,7 +487,7 @@ and strip_switch_body (node : Ast.switch_body) : (S.cases, _) result =
   | [ default ] ->
     let* default = strip_switch_default default in
     Ok (cases, Some default)
-  | _ :: default :: _ -> Strip_err.(make default#region Multiple_defaults)
+  | _ :: default :: _ -> Strip_err.(pack default#region Multiple_defaults)
 
 and strip_switch_case (node : Ast.switch_case wrap) : (S.switch_case, _) result =
   let Ast.{ kwd_case = _; value; body } = node#payload in
@@ -455,7 +498,7 @@ and strip_switch_case (node : Ast.switch_case wrap) : (S.switch_case, _) result 
     Ok (expr, body)
   | _ :: expr :: _ ->
     let region = Ast.region_of_expression expr in
-    Strip_err.(make region Multiple_values)
+    Strip_err.(pack region Multiple_values)
 
 and strip_switch_default (node : Ast.switch_default wrap) : (S.switch_default, _) result =
   let Ast.{ kwd_default = _; statements } = node#payload in
@@ -517,7 +560,7 @@ and strip_S_for_in_statement (node : Ast.for_in_statement wrap)
   let* for_of_body = strip_statement body in
   let* for_of_body =
     match for_of_body with
-    | None -> Strip_err.(make node#region No_statements)
+    | None -> Strip_err.(pack node#region No_statements)
     | Some statement -> Ok statement
   in
   let for_of_stmt = S.{ index_kind; index; expr; for_of_body } in
@@ -530,14 +573,14 @@ and strip_for_header (node : Ast.for_header) : (for_header, _) result =
     match operator with
     | In kwd_in -> Ok kwd_in#region
     | Of kwd_of ->
-      Strip_err.(make kwd_of#region Range_over_keys ~hint:"Try using 'in' instead.")
+      Strip_err.(pack kwd_of#region Range_over_keys ~hint:"Try using 'in' instead.")
   in
   let* index_kind, index = strip_for_range range in
   let* exprs = strip_expressions collection in
   let* expr =
     match exprs with
     | [ expr ] -> Ok expr
-    | _ -> Strip_err.(make in_region Multiple_values)
+    | _ -> Strip_err.(pack in_region Multiple_values)
   in
   Ok { index_kind; index; expr }
 
@@ -549,10 +592,10 @@ and strip_for_range (node : Ast.for_range)
     Ok (None, mk_reg v#region (strip_identifier v, None))
   | For_in_expression e ->
     let region = Ast.region_of_lhs_expression e in
-    Strip_err.(make region Invalid_loop_index)
+    Strip_err.(pack region Invalid_loop_index)
   | For_in_parenthesized e ->
     let region = Ast.region_of_parens e in
-    Strip_err.(make region Invalid_loop_index)
+    Strip_err.(pack region Invalid_loop_index)
   | For_in_var for_in_var -> strip_for_in_var for_in_var
   | For_in_let (kwd_let, for_in_variable) ->
     let var_kind = `Let kwd_let#region in
@@ -579,8 +622,8 @@ and strip_for_in_variable (node : Ast.for_in_variable)
         let* elem_2 = force_single_var elem_2 in
         let region = Ast.region_of_destructuring_pattern p in
         Ok (mk_reg region (elem_1, Some elem_2))
-      | _ -> Strip_err.(make region Invalid_loop_index))
-    | _ -> Strip_err.(make region Invalid_loop_index))
+      | _ -> Strip_err.(pack region Invalid_loop_index))
+    | _ -> Strip_err.(pack region Invalid_loop_index))
 
 and force_single_var (node : S.pattern S.element) : (S.variable, _) result =
   match node with
@@ -590,14 +633,14 @@ and force_single_var (node : S.pattern S.element) : (S.variable, _) result =
     | [] -> Ok selected
     | _ ->
       let region = S.region_of_pattern pattern in
-      Strip_err.(make region Not_a_variable))
+      Strip_err.(pack region Not_a_variable))
   | Element pattern | Spread pattern ->
     let region = S.region_of_pattern pattern in
-    Strip_err.(make region Not_a_variable)
+    Strip_err.(pack region Not_a_variable)
 
 and strip_for_in_var (node : Ast.for_in_var) =
   let Ast.{ kwd_var; variable = _; default = _ } = node in
-  Strip_err.(make kwd_var#region Var_declaration ~hint:"Use 'let' or 'const'.")
+  Strip_err.(pack kwd_var#region Var_declaration ~hint:"Use 'let' or 'const'.")
 
 (* While statement *)
 
@@ -613,30 +656,30 @@ and strip_while_statement (node : Ast.while_statement wrap) : (S.while_stmt, _) 
   let* expr =
     match exprs with
     | [ expr ] -> Ok expr
-    | _ -> Strip_err.(make kwd_while#region Multiple_values)
+    | _ -> Strip_err.(pack kwd_while#region Multiple_values)
   in
   let* statement = strip_statement body in
   match statement with
-  | None -> Strip_err.(make node#region Empty_while)
+  | None -> Strip_err.(pack node#region Empty_while)
   | Some statement -> Ok (expr, statement)
 
 (* Do statement *)
 
 and strip_S_do_statement (node : Ast.do_statement wrap) : (S.statement option, _) result =
-  Strip_err.(make node#region Do_while_loop)
+  Strip_err.(pack node#region Do_while_loop)
 
 (* Try statement *)
 
 and strip_S_try_statement (node : Ast.try_statement wrap) : (S.statement option, _) result
   =
-  Strip_err.(make node#region Exception)
+  Strip_err.(pack node#region Exception)
 
 (* With statement *)
 
 and strip_S_with_statement (node : Ast.with_statement wrap)
     : (S.statement option, _) result
   =
-  Strip_err.(make node#region With_statement)
+  Strip_err.(pack node#region With_statement)
 
 (* Break statement *)
 
@@ -645,7 +688,7 @@ and strip_S_break_statement (node : Ast.break_statement wrap)
   =
   let Ast.{ kwd_break; stmt_id } = node#payload in
   match stmt_id with
-  | Some ident -> Strip_err.(make ident#region Label)
+  | Some ident -> Strip_err.(pack ident#region Label)
   | None -> Ok (Some (S.S_break kwd_break#region))
 
 (* Continue statement *)
@@ -653,7 +696,7 @@ and strip_S_break_statement (node : Ast.break_statement wrap)
 and strip_S_continue_statement (node : Ast.continue_statement wrap)
     : (S.statement option, _) result
   =
-  Strip_err.(make node#region Continue)
+  Strip_err.(pack node#region Continue)
 
 (* Return statement *)
 
@@ -668,14 +711,14 @@ and strip_S_return_statement (node : Ast.return_statement wrap)
     (match exprs with
     | [] -> Ok (Some (S.S_return (mk_reg node#region None)))
     | [ expr ] -> Ok (Some (S.S_return (mk_reg node#region (Some expr))))
-    | _ -> Strip_err.(make node#region Multiple_values))
+    | _ -> Strip_err.(pack node#region Multiple_values))
 
 (* Throw statement *)
 
 and strip_S_throw_statement (node : Ast.throw_statement wrap)
     : (S.statement option, _) result
   =
-  Strip_err.(make node#region Exception)
+  Strip_err.(pack node#region Exception)
 
 (* Empty statement *)
 
@@ -688,7 +731,7 @@ and strip_S_empty_statement (node : Region.t) : (S.statement option, _) result =
 and strip_S_labeled_statement (node : Ast.labeled_statement wrap)
     : (S.statement option, _) result
   =
-  Strip_err.(make node#region Label)
+  Strip_err.(pack node#region Label)
 
 (* DECLARATIONS *)
 
@@ -780,8 +823,8 @@ and strip_call_return_type (node : Ast.call_return_type) : (S.type_expr, _) resu
     Ok type_expr
   | Asserts_annotation a ->
     let region = Ast.region_of_asserts a in
-    Strip_err.(make region Type_assertion)
-  | Type_predicate_annotation w -> Strip_err.(make w#region Type_predicate)
+    Strip_err.(pack region Type_assertion)
+  | Type_predicate_annotation w -> Strip_err.(pack w#region Type_predicate)
 
 (* Generator function declaration *)
 
@@ -789,7 +832,7 @@ and strip_D_generator_function_declaration
     (node : Ast.generator_function_declaration wrap)
     : (S.declaration, _) result
   =
-  Strip_err.(make node#region Generator)
+  Strip_err.(pack node#region Generator)
 
 (* Class declaration *)
 
@@ -808,7 +851,7 @@ and strip_D_class_declaration (node : Ast.class_declaration wrap)
   let* () =
     match generics with
     | [] -> Ok ()
-    | type_var :: _ -> Strip_err.(make type_var#region Generic_class)
+    | type_var :: _ -> Strip_err.(pack type_var#region Generic_class)
   in
   let* implements = strip_class_heritage class_heritage in
   let* class_body = strip_class_body body in
@@ -822,7 +865,7 @@ and strip_class_body (node : Ast.class_body)
   =
   let Ast.(Braces braces) = node in
   match braces#payload.contents with
-  | [] -> Strip_err.(make braces#region Empty_class)
+  | [] -> Strip_err.(pack braces#region Empty_class)
   | fst_memb :: more_memb ->
     let* fst_memb = strip_class_member fst_memb in
     let* more_memb = Result.all @@ List.map ~f:strip_class_member more_memb in
@@ -836,12 +879,12 @@ and strip_class_member (node : Ast.class_member) : (S.class_member, _) result =
     Ok (S.Method_definition def)
   | Method_signature signature ->
     Strip_err.(
-      make signature#region Method_signature_in_class ~hint:"Provide a method body.")
+      pack signature#region Method_signature_in_class ~hint:"Provide a method body.")
   | Call_static_block (kwd_static, _) ->
-    Strip_err.(make kwd_static#region Call_static_block)
+    Strip_err.(pack kwd_static#region Call_static_block)
   | Abstract_method_signature signature ->
-    Strip_err.(make signature#region Abstract_method)
-  | Index_signature signature -> Strip_err.(make signature#region Index_signature)
+    Strip_err.(pack signature#region Abstract_method)
+  | Index_signature signature -> Strip_err.(pack signature#region Index_signature)
   | Public_field_definition definition ->
     let* def = strip_public_field_definition definition in
     Ok (S.Public_field_definition def)
@@ -868,24 +911,24 @@ and strip_public_field_definition (node : Ast.public_field_definition wrap)
   let* () =
     match kwd_declare with
     | None -> Ok ()
-    | Some kwd_declare -> Strip_err.(make kwd_declare#region Declare_definition)
+    | Some kwd_declare -> Strip_err.(pack kwd_declare#region Declare_definition)
   in
   let* static = filter_field_scope scope in
   let* name = strip_property_name name in
   let* () =
     match mode with
     | None -> Ok ()
-    | Some (Optional sym | Definite_assert sym) -> Strip_err.(make sym#region Field_mode)
+    | Some (Optional sym | Definite_assert sym) -> Strip_err.(pack sym#region Field_mode)
   in
   let* field_type = map_opt strip_type_annotation type_ in
   let* field_type =
     match field_type with
-    | None -> Strip_err.(make node#region Missing_type)
+    | None -> Strip_err.(pack node#region Missing_type)
     | Some field_type -> Ok field_type
   in
   let* field_value =
     match default with
-    | None -> Strip_err.(make name#region No_default)
+    | None -> Strip_err.(pack name#region No_default)
     | Some (_, expr) -> strip_expression expr
   in
   let def = S.{ decorators; static; name; field_type; field_value } in
@@ -897,14 +940,14 @@ and strip_class_heritage (node : Ast.class_heritage option)
   match node with
   | None -> Ok []
   | Some (Extends_clause ((kwd_extends, _), _)) ->
-    Strip_err.(make kwd_extends#region Extends_clause)
+    Strip_err.(pack kwd_extends#region Extends_clause)
   | Some (Implements_clause (_, type_exprs)) ->
     let type_exprs = Ne_list.to_list type_exprs in
     let* type_exprs = Result.all @@ List.map ~f:strip_type_expr type_exprs in
     let filter type_expr =
       match type_expr with
       | S.T_path path -> Ok path
-      | _ -> Strip_err.(make (S.region_of_type_expr type_expr) Invalid_implements)
+      | _ -> Strip_err.(pack (S.region_of_type_expr type_expr) Invalid_implements)
     in
     Result.all @@ List.map ~f:filter type_exprs
 
@@ -919,7 +962,7 @@ and strip_decorator (node : Ast.decorator) : (S.decorator, _) result =
   | Decorator_identifier ident ->
     let name = strip_identifier ident in
     Ok (Wrap.make (name#payload, None) region)
-  | Decorator_member_expression _ -> Strip_err.(make region Member_decorator)
+  | Decorator_member_expression _ -> Strip_err.(pack region Member_decorator)
   | Decorator_call_expression call -> strip_decorator_call_expression call
   | Decorator_parenthesized_expression parens ->
     strip_decorator_parenthesized_expression parens
@@ -934,7 +977,7 @@ and strip_decorator_parenthesized_expression
   | Parenthesized_ident ident ->
     let dec_name = strip_identifier ident in
     Ok (Wrap.make (dec_name#payload, None) parens#region)
-  | Parenthesized_member _ -> Strip_err.(make parens#region Member_decorator)
+  | Parenthesized_member _ -> Strip_err.(pack parens#region Member_decorator)
   | Parenthesized_call call -> strip_decorator_call_expression call
 
 and strip_decorator_call_expression (node : Ast.decorator_call_expression wrap)
@@ -947,7 +990,7 @@ and strip_decorator_call_expression (node : Ast.decorator_call_expression wrap)
     | None -> Ok ()
     | Some type_args ->
       let Ast.(Chevrons chevrons) = type_args in
-      Strip_err.(make chevrons#region Type_arguments_in_decorator)
+      Strip_err.(pack chevrons#region Type_arguments_in_decorator)
   in
   let Ast.(Parens parens) = arguments in
   let arguments = parens#payload.contents in
@@ -961,10 +1004,10 @@ and strip_decorator_call_expression (node : Ast.decorator_call_expression wrap)
       Ok (Wrap.make (dec_name, Some dec_param) node#region)
     | Spread expr ->
       let region = S.region_of_expr expr in
-      Strip_err.(make region Spread_expression))
+      Strip_err.(pack region Spread_expression))
   | _ :: snd_arg :: _ ->
     let region = Ast.region_of_argument snd_arg in
-    Strip_err.(make region Multiple_arguments_in_decorator)
+    Strip_err.(pack region Multiple_arguments_in_decorator)
 
 and strip_function_or_property (node : Ast.function_or_property) : (string, _) result =
   match node with
@@ -973,7 +1016,7 @@ and strip_function_or_property (node : Ast.function_or_property) : (string, _) r
     Ok variable#payload
   | Qualified_member_expression _ ->
     let region = Ast.region_of_function_or_property node in
-    Strip_err.(make region Member_decorator)
+    Strip_err.(pack region Member_decorator)
 
 (* Lexical declaration *)
 
@@ -1008,7 +1051,7 @@ and strip_variable_declarator (node : Ast.variable_declarator)
   match node with
   | Var_decl lhs -> strip_var_decl_lhs lhs
   | Var_decl_assertion (_, sym_qmark, _) ->
-    Strip_err.(make sym_qmark#region Definite_asgmt_assertion)
+    Strip_err.(pack sym_qmark#region Definite_asgmt_assertion)
 
 and strip_var_decl_lhs (node : Ast.var_decl_lhs wrap) : (S.val_binding reg, _) result =
   let Ast.{ var_names; var_type; default } = node#payload in
@@ -1024,7 +1067,7 @@ and strip_var_decl_lhs (node : Ast.var_decl_lhs wrap) : (S.val_binding reg, _) r
     match default with
     | None ->
       let region = Ast.region_of_lhs_pattern var_names in
-      Strip_err.(make region Unitialised_variable)
+      Strip_err.(pack region Unitialised_variable)
     | Some (_, expr) ->
       let* expr = strip_expression expr in
       Ok expr
@@ -1040,7 +1083,7 @@ and strip_type_annotation (node : Ast.type_annotation) : (S.type_expr, _) result
 and strip_D_variable_declaration (node : Ast.variable_declaration wrap)
     : (S.declaration, _) result
   =
-  Strip_err.(make node#region Var_declaration ~hint:"Use the 'let' modifier.")
+  Strip_err.(pack node#region Var_declaration ~hint:"Use the 'let' modifier.")
 
 and strip_variable_declaration (node : Ast.variable_declaration wrap)
     : (S.declaration, _) result
@@ -1073,7 +1116,7 @@ and strip_D_function_signature (node : Ast.function_signature wrap)
   let* v_params = filter_type_annotations v_params in
   let* rhs_type =
     match rhs_type with
-    | None -> Strip_err.(make node#region Return_type_absent)
+    | None -> Strip_err.(pack node#region Return_type_absent)
     | Some rhs_type -> Ok rhs_type
   in
   let fun_type = v_params, rhs_type in
@@ -1097,22 +1140,22 @@ and filter_parameter (node : S.parameter reg)
     | [] -> Ok (mk_reg node.region (selected, type_expr))
     | _ ->
       let region = S.region_of_pattern pattern in
-      Strip_err.(make region Not_a_variable))
-  | _ -> Strip_err.(make (S.region_of_pattern pattern) Not_a_variable)
+      Strip_err.(pack region Not_a_variable))
+  | _ -> Strip_err.(pack (S.region_of_pattern pattern) Not_a_variable)
 
 (* Abstract class declaration *)
 
 and strip_D_abstract_class_declaration (node : Ast.abstract_class_declaration wrap)
     : (S.declaration, _) result
   =
-  Strip_err.(make node#region Abstract_class)
+  Strip_err.(pack node#region Abstract_class)
 
 (* Module declaration *)
 
 and strip_D_module_declaration (node : Ast.module_declaration wrap)
     : (S.declaration, _) result
   =
-  Strip_err.(make node#region Module ~hint:"Try using namespaces.")
+  Strip_err.(pack node#region Module ~hint:"Try using namespaces.")
 
 (* Namespace declaration *)
 
@@ -1121,7 +1164,7 @@ and strip_D_internal_module (node : Ast.internal_module wrap) : (S.declaration, 
   let* (namespace_name : S.variable) = strip_module_name module_name in
   let* (namespace_body : S.statements) =
     match module_body with
-    | None -> Strip_err.(make node#region No_statements)
+    | None -> Strip_err.(pack node#region No_statements)
     | Some block -> strip_statement_block block
   in
   let decl = S.{ namespace_name; namespace_type = []; namespace_body } in
@@ -1129,9 +1172,9 @@ and strip_D_internal_module (node : Ast.internal_module wrap) : (S.declaration, 
 
 and strip_module_name (node : Ast.module_name) : (S.variable, _) result =
   match node with
-  | Module_string str -> Strip_err.(make str#region Namespace_string)
+  | Module_string str -> Strip_err.(pack str#region Namespace_string)
   | Module_ident ident -> Ok ident
-  | Module_nested nested -> Strip_err.(make nested#region Namespace_nested)
+  | Module_nested nested -> Strip_err.(pack nested#region Namespace_nested)
 
 (* Type alias declaration *)
 
@@ -1159,17 +1202,17 @@ and strip_type_parameter (node : Ast.type_parameter wrap) : (S.variable, _) resu
   | None, None -> Ok name
   | Some (_, type_expr), _ ->
     let region = Ast.region_of_type_expr type_expr in
-    Strip_err.(make region Type_constraint)
+    Strip_err.(pack region Type_constraint)
   | _, Some (_, type_expr) ->
     let region = Ast.region_of_type_expr type_expr in
-    Strip_err.(make region Default_type_parameter)
+    Strip_err.(pack region Default_type_parameter)
 
 (* Enum declaration *)
 
 and strip_D_enum_declaration (node : Ast.enum_declaration wrap)
     : (S.declaration, _) result
   =
-  Strip_err.(make node#region Enumerated)
+  Strip_err.(pack node#region Enumerated)
 
 (* Interface declaration *)
 
@@ -1183,7 +1226,7 @@ and strip_D_interface_declaration (node : Ast.interface_declaration wrap)
     | None -> Ok ()
     | Some chevrons ->
       let region = Ast.region_of_chevrons chevrons in
-      Strip_err.(make region Interface_with_type_parameters)
+      Strip_err.(pack region Interface_with_type_parameters)
   in
   let* intf_extends =
     match extends with
@@ -1202,11 +1245,11 @@ and strip_interface_body (node : Ast.object_type) : (S.intf_entry reg list reg, 
 
 and strip_intf_entry (node : Ast.member_type) : (S.intf_entry reg, _) result =
   match node with
-  | Export_statement stmt -> Strip_err.(make stmt#region Export_member)
+  | Export_statement stmt -> Strip_err.(pack stmt#region Export_member)
   | Property_signature signature -> strip_property_signature_as_intf_entry signature
-  | Call_signature signature -> Strip_err.(make signature#region Call_signature)
-  | Construct_signature signature -> Strip_err.(make signature#region Constructor)
-  | Index_signature signature -> Strip_err.(make signature#region Index_signature)
+  | Call_signature signature -> Strip_err.(pack signature#region Call_signature)
+  | Construct_signature signature -> Strip_err.(pack signature#region Constructor)
+  | Index_signature signature -> Strip_err.(pack signature#region Index_signature)
   | Method_signature signature -> strip_method_signature_as_intf_entry signature
 
 and strip_property_signature_as_intf_entry (node : Ast.property_signature wrap)
@@ -1219,7 +1262,7 @@ and strip_property_signature_as_intf_entry (node : Ast.property_signature wrap)
   let entry_optional = None in
   let* entry_type = map_opt strip_type_annotation type_ in
   match entry_type with
-  | None -> Strip_err.(make node#region Missing_type)
+  | None -> Strip_err.(pack node#region Missing_type)
   | Some entry_type ->
     let comments = entry_name#comments in
     let comments = strip_comments comments in
@@ -1239,8 +1282,8 @@ and strip_method_signature_as_intf_entry (node : Ast.method_signature wrap)
   let* () =
     match set_get_all with
     | None -> Ok ()
-    | Some (Set kwd | Get kwd) -> Strip_err.(make kwd#region Set_get_all)
-    | Some (All sym) -> Strip_err.(make sym#region Set_get_all)
+    | Some (Set kwd | Get kwd) -> Strip_err.(pack kwd#region Set_get_all)
+    | Some (All sym) -> Strip_err.(pack sym#region Set_get_all)
   in
   let* entry_name = strip_property_name name in
   let entry_optional =
@@ -1254,7 +1297,7 @@ and strip_method_signature_as_intf_entry (node : Ast.method_signature wrap)
   let* parameters = filter_type_annotations parameters in
   let* rhs_type =
     match rhs_type with
-    | None -> Strip_err.(make node#region Return_type_absent)
+    | None -> Strip_err.(pack node#region Return_type_absent)
     | Some rhs_type -> Ok rhs_type
   in
   let rhs_type = S.T_fun (mk_reg call_sig.region (parameters, rhs_type)) in
@@ -1280,7 +1323,7 @@ and strip_type_extension (node : Ast.type_extension) : (S.simple_path reg, _) re
     let path = S.{ path = []; selected = strip_type_identifier ident } in
     Ok (mk_reg ident#region path)
   | Extends_nested nested -> Ok (strip_nested_type_identifier nested)
-  | Extends_generic gen_type -> Strip_err.(make gen_type#region Generic_class_extension)
+  | Extends_generic gen_type -> Strip_err.(pack gen_type#region Generic_class_extension)
 
 (* Import alias *)
 
@@ -1311,7 +1354,7 @@ and strip_nested_identifier (node : Ast.nested_identifier wrap) : S.simple_path 
 and strip_D_ambient_declaration (node : Ast.ambient_declaration wrap)
     : (S.declaration, _) result
   =
-  Strip_err.(make node#region Ambient_declaration)
+  Strip_err.(pack node#region Ambient_declaration)
 
 (* TYPES *)
 
@@ -1360,9 +1403,9 @@ and strip_T_parenthesized_type (node : Ast.type_expr Ast.parens) : (S.type_expr,
 
 and strip_T_predefined_type (node : Ast.predefined_type) : (S.type_expr, _) result =
   match node with
-  | T_any kwd_any -> Strip_err.(make kwd_any#region Any_type)
+  | T_any kwd_any -> Strip_err.(pack kwd_any#region Any_type)
   | T_number kwd_number ->
-    Strip_err.(make kwd_number#region Number_type ~hint:"Use 'bigint' or 'nat'.")
+    Strip_err.(pack kwd_number#region Number_type ~hint:"Use 'bigint' or 'nat'.")
   | T_boolean kwd_boolean ->
     (* The pipeline uses "bool" instead *)
     let region = kwd_boolean#region in
@@ -1373,13 +1416,13 @@ and strip_T_predefined_type (node : Ast.predefined_type) : (S.type_expr, _) resu
     let region = kwd_string#region in
     let path = mk_reg region S.{ path = []; selected = kwd_string } in
     Ok (S.T_path path)
-  | T_symbol kwd_symbol -> Strip_err.(make kwd_symbol#region Symbol_type)
+  | T_symbol kwd_symbol -> Strip_err.(pack kwd_symbol#region Symbol_type)
   | T_unique_symbol kwd_unique_symbol ->
-    Strip_err.(make kwd_unique_symbol#region Unique_symbol_type)
-  | T_void kwd_void -> Strip_err.(make kwd_void#region Void_type)
-  | T_unknown kwd_unknown -> Strip_err.(make kwd_unknown#region Unknown_type)
-  | T_never kwd_never -> Strip_err.(make kwd_never#region Never_type)
-  | T_object kwd_object -> Strip_err.(make kwd_object#region Object_type)
+    Strip_err.(pack kwd_unique_symbol#region Unique_symbol_type)
+  | T_void kwd_void -> Strip_err.(pack kwd_void#region Void_type)
+  | T_unknown kwd_unknown -> Strip_err.(pack kwd_unknown#region Unknown_type)
+  | T_never kwd_never -> Strip_err.(pack kwd_never#region Never_type)
+  | T_object kwd_object -> Strip_err.(pack kwd_object#region Object_type)
 
 (* Type identifier *)
 
@@ -1415,7 +1458,7 @@ and strip_T_generic_type (node : Ast.generic_type wrap) : (S.type_expr, _) resul
   let path = S.T_path (strip_generic_name name) in
   let* type_args = strip_type_arguments type_args in
   let ok = Ok (S.T_apply (mk_reg node#region (path, type_args))) in
-  let error = Strip_err.(make node#region Invalid_parameter_of) in
+  let error = Strip_err.(pack node#region Invalid_parameter_of) in
   match name with
   | Ast.Generic_type type_ident ->
     (match type_ident#payload with
@@ -1458,11 +1501,11 @@ and strip_object_type (node : Ast.object_type) : (S.member_type reg list reg, _)
 
 and strip_member_type (node : Ast.member_type) : (S.member_type reg, _) result =
   match node with
-  | Export_statement stmt -> Strip_err.(make stmt#region Export_member)
+  | Export_statement stmt -> Strip_err.(pack stmt#region Export_member)
   | Property_signature signature -> strip_property_signature signature
-  | Call_signature signature -> Strip_err.(make signature#region Call_signature)
-  | Construct_signature signature -> Strip_err.(make signature#region Constructor)
-  | Index_signature signature -> Strip_err.(make signature#region Index_signature)
+  | Call_signature signature -> Strip_err.(pack signature#region Call_signature)
+  | Construct_signature signature -> Strip_err.(pack signature#region Constructor)
+  | Index_signature signature -> Strip_err.(pack signature#region Index_signature)
   | Method_signature signature -> strip_method_signature_as_property signature
 
 and strip_property_signature (node : Ast.property_signature wrap)
@@ -1474,7 +1517,7 @@ and strip_property_signature (node : Ast.property_signature wrap)
   let* property_name = strip_property_name name in
   let* rhs_type = map_opt strip_type_annotation type_ in
   match rhs_type with
-  | None -> Strip_err.(make node#region Missing_type)
+  | None -> Strip_err.(pack node#region Missing_type)
   | Some rhs_type ->
     let comments = property_name#comments in
     let comments = strip_comments comments in
@@ -1494,8 +1537,8 @@ and strip_method_signature_as_property (node : Ast.method_signature wrap)
   let* () =
     match set_get_all with
     | None -> Ok ()
-    | Some (Set kwd | Get kwd) -> Strip_err.(make kwd#region Set_get_all)
-    | Some (All sym) -> Strip_err.(make sym#region Set_get_all)
+    | Some (Set kwd | Get kwd) -> Strip_err.(pack kwd#region Set_get_all)
+    | Some (All sym) -> Strip_err.(pack sym#region Set_get_all)
   in
   let* property_name = strip_property_name name in
   let* () = filter_optional optional Optional_member in
@@ -1505,7 +1548,7 @@ and strip_method_signature_as_property (node : Ast.method_signature wrap)
   let* parameters = filter_type_annotations parameters in
   let* rhs_type =
     match rhs_type with
-    | None -> Strip_err.(make node#region Return_type_absent)
+    | None -> Strip_err.(pack node#region Return_type_absent)
     | Some rhs_type -> Ok rhs_type
   in
   let rhs_type = S.T_fun (mk_reg call_sig.region (parameters, rhs_type)) in
@@ -1532,8 +1575,8 @@ and strip_method_signature decorators (node : Ast.method_signature wrap)
   let* () =
     match set_get_all with
     | None -> Ok ()
-    | Some (Set kwd | Get kwd) -> Strip_err.(make kwd#region Set_get_all)
-    | Some (All sym) -> Strip_err.(make sym#region Set_get_all)
+    | Some (Set kwd | Get kwd) -> Strip_err.(pack kwd#region Set_get_all)
+    | Some (All sym) -> Strip_err.(pack sym#region Set_get_all)
   in
   let* method_name = strip_property_name name in
   let* () = filter_optional optional Optional_member in
@@ -1543,7 +1586,7 @@ and strip_method_signature decorators (node : Ast.method_signature wrap)
   let* parameters = filter_type_annotations parameters in
   let* rhs_type =
     match rhs_type with
-    | None -> Strip_err.(make node#region Return_type_absent)
+    | None -> Strip_err.(pack node#region Return_type_absent)
     | Some rhs_type -> Ok rhs_type
   in
   let rhs_type =
@@ -1563,7 +1606,7 @@ and strip_method_signature decorators (node : Ast.method_signature wrap)
 (* Array type *)
 
 and strip_T_array_type (node : Ast.array_type wrap) : (S.type_expr, _) result =
-  Strip_err.(make node#region Array_type)
+  Strip_err.(pack node#region Array_type)
 
 (* Tuple type *)
 
@@ -1572,7 +1615,7 @@ and strip_T_tuple_type (node : Ast.tuple_type) : (S.type_expr, _) result =
   let members = brackets#payload.contents in
   let* members = Result.all @@ List.map ~f:strip_tuple_type_member members in
   match members with
-  | [] -> Strip_err.(make brackets#region Empty_tuple_type)
+  | [] -> Strip_err.(pack brackets#region Empty_tuple_type)
   | fst_comp :: components ->
     let members = Ne_list.(fst_comp :: components) in
     Ok (S.T_tuple (mk_reg brackets#region members))
@@ -1584,7 +1627,7 @@ and strip_tuple_type_member (node : Ast.tuple_type_member) : (S.type_expr, _) re
   | Tuple_optional_parameter _
   | Tuple_optional_type _
   | Tuple_rest_type _ ->
-    Strip_err.(make region Unsupported_tuple_member ~hint:"Use a single type expression.")
+    Strip_err.(pack region Unsupported_tuple_member ~hint:"Use a single type expression.")
   | Tuple_type type_expr -> strip_type_expr type_expr
 
 (* Flow maybe type *)
@@ -1592,29 +1635,29 @@ and strip_tuple_type_member (node : Ast.tuple_type_member) : (S.type_expr, _) re
 and strip_T_flow_maybe_type (node : (Ast.sym_qmark * Ast.primary_type) wrap)
     : (S.type_expr, _) result
   =
-  Strip_err.(make node#region Maybe_type)
+  Strip_err.(pack node#region Maybe_type)
 
 (* Type query *)
 
 and strip_T_type_query (node : (Ast.kwd_keyof * Ast.type_query) wrap)
     : (S.type_expr, _) result
   =
-  Strip_err.(make node#region Type_query)
+  Strip_err.(pack node#region Type_query)
 
 (* Index type query *)
 
 and strip_T_index_type_query (node : (Ast.kwd_keyof * Ast.primary_type) wrap)
     : (S.type_expr, _) result
   =
-  Strip_err.(make node#region Index_type_query)
+  Strip_err.(pack node#region Index_type_query)
 
 (* "This" as a type *)
 
 and strip_T_this (node : Ast.kwd_this) : (S.type_expr, _) result =
-  Strip_err.(make node#region This)
+  Strip_err.(pack node#region This)
 
 and strip_T_existential_type (node : Ast.sym_star) : (S.type_expr, _) result =
-  Strip_err.(make node#region Existential_type)
+  Strip_err.(pack node#region Existential_type)
 
 (* Literal type *)
 
@@ -1629,59 +1672,59 @@ and strip_T_literal_type (node : Ast.literal_type) : (S.type_expr, _) result =
   | T_undefined t -> strip_T_undefined t
 
 and strip_T_unary_type (node : Ast.unary_expression wrap) : (S.type_expr, _) result =
-  Strip_err.(make node#region Unary_type)
+  Strip_err.(pack node#region Unary_type)
 
 and strip_T_number (node : Ast.number) : (S.type_expr, _) result =
   let region = Ast.region_of_number node in
   match node with
   | Hex _ | Bin _ | Oct _ ->
-    Strip_err.(make region Unsupported_number ~hint:"Use a decimal.")
+    Strip_err.(pack region Unsupported_number ~hint:"Use a decimal.")
   | Dec (literal, _) ->
     let lexeme, q = literal#payload in
     if Z.equal (Q.den q) Z.one
     then (
       let literal = Wrap.make (lexeme, Q.to_bigint q) literal#region in
       Ok (S.T_int literal))
-    else Strip_err.(make region Non_integer_as_type)
+    else Strip_err.(pack region Non_integer_as_type)
 
 and strip_T_string (node : Ast.string_literal) : (S.type_expr, _) result =
   Ok (S.T_string node)
 
 and strip_T_true (node : Ast.kwd_true) : (S.type_expr, _) result =
-  Strip_err.(make node#region Singleton_type_true)
+  Strip_err.(pack node#region Singleton_type_true)
 
 and strip_T_false (node : Ast.kwd_false) : (S.type_expr, _) result =
-  Strip_err.(make node#region Singleton_type_false)
+  Strip_err.(pack node#region Singleton_type_false)
 
 and strip_T_null (node : Ast.kwd_null) : (S.type_expr, _) result =
-  Strip_err.(make node#region Null_type)
+  Strip_err.(pack node#region Null_type)
 
 and strip_T_undefined (node : Ast.kwd_undefined) : (S.type_expr, _) result =
-  Strip_err.(make node#region Undefined_type)
+  Strip_err.(pack node#region Undefined_type)
 
 (* Lookup type *)
 
 and strip_T_lookup_type (node : Ast.lookup_type wrap) : (S.type_expr, _) result =
-  Strip_err.(make node#region Lookup_type)
+  Strip_err.(pack node#region Lookup_type)
 
 (* Conditional type *)
 
 and strip_T_conditional_type (node : Ast.conditional_type wrap) : (S.type_expr, _) result =
-  Strip_err.(make node#region Conditional_type)
+  Strip_err.(pack node#region Conditional_type)
 
 (* Template literal type *)
 
 and strip_T_template_literal_type (node : Ast.template_literal_type wrap)
     : (S.type_expr, _) result
   =
-  Strip_err.(make node#region Template_literal_type)
+  Strip_err.(pack node#region Template_literal_type)
 
 (* Intersection type *)
 
 and strip_T_intersection_type (node : Ast.intersection_type wrap)
     : (S.type_expr, _) result
   =
-  Strip_err.(make node#region Intersection_type)
+  Strip_err.(pack node#region Intersection_type)
 
 (* Union type *)
 
@@ -1721,7 +1764,7 @@ and filter_type_annotations (node : (S.variable * S.type_expr option) reg list)
   =
   let check Region.{ value; region } =
     match value with
-    | variable, None -> Strip_err.(make variable#region Missing_type)
+    | variable, None -> Strip_err.(pack variable#region Missing_type)
     | variable, Some type_expr -> Ok Region.{ value = variable, type_expr; region }
   in
   Result.all @@ List.map ~f:check node
@@ -1751,7 +1794,7 @@ and strip_formal_parameter (node : Ast.formal_parameter wrap)
     | None -> Ok ()
     | Some (_, expr) ->
       let region = Ast.region_of_expression expr in
-      Strip_err.(make region Default_argument)
+      Strip_err.(pack region Default_argument)
   in
   let region =
     match default with
@@ -1773,24 +1816,24 @@ and strip_parameter_name (node : Ast.parameter_name wrap) : (S.variable, _) resu
     | [] -> Ok ()
     | decorator :: _ ->
       let region = Ast.region_of_decorator decorator in
-      Strip_err.(make region Decorated_parameter)
+      Strip_err.(pack region Decorated_parameter)
   in
   let* () =
     match access with
     | None -> Ok ()
     | Some modifier ->
       let region = Ast.region_of_accessibility_modifier modifier in
-      Strip_err.(make region Access_parameter)
+      Strip_err.(pack region Access_parameter)
   in
   let* () =
     match kwd_override with
     | None -> Ok ()
-    | Some kwd_override -> Strip_err.(make kwd_override#region Override_parameter)
+    | Some kwd_override -> Strip_err.(pack kwd_override#region Override_parameter)
   in
   let* () =
     match kwd_readonly with
     | None -> Ok ()
-    | Some kwd_readonly -> Strip_err.(make kwd_readonly#region Readonly_parameter)
+    | Some kwd_readonly -> Strip_err.(pack kwd_readonly#region Readonly_parameter)
   in
   strip_parameter_pattern pattern
 
@@ -1799,9 +1842,9 @@ and strip_parameter_pattern (node : Ast.parameter_pattern) : (S.variable, _) res
   | Parameter_pattern (P_identifier ident) -> Ok (strip_identifier ident)
   | Parameter_pattern pattern ->
     let region = Ast.region_of_pattern pattern in
-    Strip_err.(make region Non_variable_parameter)
+    Strip_err.(pack region Non_variable_parameter)
   | Parameter_this kwd_this ->
-    Strip_err.(make kwd_this#region Non_variable_parameter ~hint:"Rename 'this'.")
+    Strip_err.(pack kwd_this#region Non_variable_parameter ~hint:"Rename 'this'.")
 
 and strip_identifier (node : Ast.identifier) : S.variable = node
 
@@ -1809,23 +1852,23 @@ and strip_return_type (node : Ast.return_type) : (S.type_expr, _) result =
   let region = Ast.region_of_return_type node in
   match node with
   | Return_type type_expr -> strip_type_expr type_expr
-  | Return_asserts _ -> Strip_err.(make region Type_assertion)
-  | Return_type_predicate _ -> Strip_err.(make region Type_predicate)
+  | Return_asserts _ -> Strip_err.(pack region Type_assertion)
+  | Return_type_predicate _ -> Strip_err.(pack region Type_predicate)
 
 (* Readonly type *)
 
 and strip_T_readonly_type (node : Ast.readonly_type wrap) : (S.type_expr, _) result =
-  Strip_err.(make node#region Readonly_type)
+  Strip_err.(pack node#region Readonly_type)
 
 (* Constructor type *)
 
 and strip_T_constructor_type (node : Ast.constructor_type wrap) : (S.type_expr, _) result =
-  Strip_err.(make node#region Constructor_type)
+  Strip_err.(pack node#region Constructor_type)
 
 (* Infer type *)
 
 and strip_T_infer_type (node : Ast.infer_type wrap) : (S.type_expr, _) result =
-  Strip_err.(make node#region Conditional_type)
+  Strip_err.(pack node#region Conditional_type)
 
 (* Member expression (in type expressions) *)
 
@@ -1833,7 +1876,7 @@ and strip_T_type_query_member_expression_in_type_annotation
     (node : Ast.type_query_member_expression_in_type_annotation wrap)
     : (S.type_expr, _) result
   =
-  Strip_err.(make node#region Type_query)
+  Strip_err.(pack node#region Type_query)
 
 (* Call expression (in type expressions) *)
 
@@ -1841,7 +1884,7 @@ and strip_T_type_query_call_expression_in_type_annotation
     (node : Ast.type_query_call_expression_in_type_annotation wrap)
     : (S.type_expr, _) result
   =
-  Strip_err.(make node#region Type_query)
+  Strip_err.(pack node#region Type_query)
 
 (* EXPRESSIONS *)
 
@@ -1899,7 +1942,7 @@ and strip_E_as_expression (node : Ast.as_expression wrap) : (S.expr, _) result =
         | _ -> ok)
       | _ -> ok)
     | _ -> ok)
-  | As_const kwd_const -> Strip_err.(make kwd_const#region Constant_type)
+  | As_const kwd_const -> Strip_err.(pack kwd_const#region Constant_type)
 
 (* Assignment expression *)
 
@@ -1910,7 +1953,7 @@ and strip_E_assignment_expression (node : Ast.assignment_expression wrap)
   let* () =
     match kwd_using with
     | None -> Ok ()
-    | Some kwd -> Strip_err.(make kwd#region Finalised_const)
+    | Some kwd -> Strip_err.(pack kwd#region Finalised_const)
   in
   let* left = strip_assignment_lhs left in
   let* right = strip_expression right in
@@ -1925,7 +1968,7 @@ and strip_assignment_lhs (node : Ast.assignment_lhs) : (S.expr, _) result =
     | [ expr ] -> Ok expr
     | _ ->
       let region = Ast.region_of_assignment_lhs node in
-      Strip_err.(make region Multiple_values))
+      Strip_err.(pack region Multiple_values))
 
 and strip_lhs_expression (node : Ast.lhs_expression) : (S.expr, _) result =
   let* (lhs : Ast.expression) =
@@ -1934,7 +1977,7 @@ and strip_lhs_expression (node : Ast.lhs_expression) : (S.expr, _) result =
     | Subscript_expression expr -> Ok (E_primary_expression (E_subscript_expression expr))
     | Identifier ident -> Ok (E_primary_expression (E_identifier ident))
     | Undefined kwd_undefined -> Ok (E_primary_expression (E_undefined kwd_undefined))
-    | Pattern pattern -> Ast.destructuring_pattern_to_expression pattern
+    | Pattern pattern -> destructuring_pattern_to_expression pattern
     | Non_null_expression expr -> Ok (E_primary_expression (E_non_null_expression expr))
   in
   strip_expression lhs
@@ -1955,9 +1998,9 @@ and strip_augmented_assignment_lhs (node : Ast.augmented_assignment_lhs)
     : (S.expr, _) result
   =
   match node with
-  | Member_expression w -> Strip_err.(make w#region Complex_lhs ~hint:"Use a variable.")
+  | Member_expression w -> Strip_err.(pack w#region Complex_lhs ~hint:"Use a variable.")
   | Subscript_expression w ->
-    Strip_err.(make w#region Complex_lhs ~hint:"Use a variable.")
+    Strip_err.(pack w#region Complex_lhs ~hint:"Use a variable.")
   | Identifier ident -> Ok (S.E_var (strip_identifier ident))
   | Parenthesized_expression expr ->
     let* exprs = strip_parenthesized_expression expr in
@@ -1966,7 +2009,7 @@ and strip_augmented_assignment_lhs (node : Ast.augmented_assignment_lhs)
       | [ expr ] -> Ok expr
       | _ ->
         let region = Ast.region_of_augmented_assignment_lhs node in
-        Strip_err.(make region Multiple_values)
+        Strip_err.(pack region Multiple_values)
     in
     Ok expr
 
@@ -1983,23 +2026,23 @@ and strip_assignment_operator (node : Ast.assignment_operator)
   | Bit_and_eq _ -> Ok (fun args -> S.E_bit_and_eq args) (* &= *)
   | Bit_or_eq _ -> Ok (fun args -> S.E_bit_or_eq args) (* |= *)
   | Bit_sr_eq _ -> Ok (fun args -> S.E_bit_sr_eq args) (* >>= *)
-  | Bit_usr_eq sym -> Strip_err.(make sym#region Bit_usr_eq) (* >>>= *)
+  | Bit_usr_eq sym -> Strip_err.(pack sym#region Bit_usr_eq) (* >>>= *)
   | Bit_sl_eq _ -> Ok (fun args -> S.E_bit_sl_eq args) (* <<= *)
-  | Exp_eq sym -> Strip_err.(make sym#region Exp_eq) (* **= *)
+  | Exp_eq sym -> Strip_err.(pack sym#region Exp_eq) (* **= *)
   | Log_and_eq sym ->
     (* &&= *)
-    Strip_err.(make sym#region Log_and_eq ~hint:"Use \"=\" and \"&&\" separately.")
+    Strip_err.(pack sym#region Log_and_eq ~hint:"Use \"=\" and \"&&\" separately.")
   | Log_or_eq sym ->
     (* ||= *)
-    Strip_err.(make sym#region Log_or_eq ~hint:"Use \"=\" and \"||\" separately.")
+    Strip_err.(pack sym#region Log_or_eq ~hint:"Use \"=\" and \"||\" separately.")
   | Non_null_eq sym ->
     (* ??= *)
-    Strip_err.(make sym#region Non_null)
+    Strip_err.(pack sym#region Non_null)
 
 (* Await-expression *)
 
 and strip_E_await_expression (node : Ast.await_expression wrap) : (S.expr, _) result =
-  Strip_err.(make node#region Asynchronicity)
+  Strip_err.(pack node#region Asynchronicity)
 
 (* Binary expression *)
 
@@ -2018,7 +2061,7 @@ and strip_binary_operator (node : Ast.binary_operator)
   | Log_and _ -> Ok (fun arg -> S.E_and arg) (* && *)
   | Log_or _ -> Ok (fun arg -> S.E_or arg) (* || *)
   | Bit_sr _ -> Ok (fun arg -> S.E_bit_sr arg) (* >> *)
-  | Bit_usr sym -> Strip_err.(make sym#region Bit_usr_eq) (* >>> *)
+  | Bit_usr sym -> Strip_err.(pack sym#region Bit_usr_eq) (* >>> *)
   | Bit_sl _ -> Ok (fun arg -> S.E_bit_sl arg) (* << *)
   | Bit_and _ -> Ok (fun arg -> S.E_bit_and arg) (* & *)
   | Bit_xor _ -> Ok (fun arg -> S.E_bit_xor arg) (* ^ *)
@@ -2028,50 +2071,50 @@ and strip_binary_operator (node : Ast.binary_operator)
   | Mult _ -> Ok (fun arg -> S.E_mult arg) (* * *)
   | Div _ -> Ok (fun arg -> S.E_div arg) (* / *)
   | Rem _ -> Ok (fun arg -> S.E_rem arg) (* % *)
-  | Exp sym -> Strip_err.(make sym#region Exp_eq) (* * *)
+  | Exp sym -> Strip_err.(pack sym#region Exp_eq) (* * *)
   | Lt _ -> Ok (fun arg -> S.E_lt arg) (* < *)
   | Leq _ -> Ok (fun arg -> S.E_leq arg) (* <= *)
   | Equal _ -> Ok (fun arg -> S.E_equal arg) (* == *)
   | Strict_eq sym ->
     (* === *)
-    Strip_err.(make sym#region Strict_equality ~hint:"Use '=='")
+    Strip_err.(pack sym#region Strict_equality ~hint:"Use '=='")
   | Neq _ -> Ok (fun arg -> S.E_neq arg) (* != *)
   | Strict_neq sym ->
     (* !== *)
-    Strip_err.(make sym#region Strict_equality ~hint:"Use '!='")
+    Strip_err.(pack sym#region Strict_equality ~hint:"Use '!='")
   | Geq _ -> Ok (fun arg -> S.E_geq arg) (* >= *)
   | Gt _ -> Ok (fun arg -> S.E_gt arg) (* > *)
-  | Non_null sym -> Strip_err.(make sym#region Non_null) (* ?? *)
+  | Non_null sym -> Strip_err.(pack sym#region Non_null) (* ?? *)
   | Instance_of kwd_instanceof ->
     (* instanceof *)
-    Strip_err.(make kwd_instanceof#region Instanceof)
+    Strip_err.(pack kwd_instanceof#region Instanceof)
   | In kwd_in ->
     (* in *)
-    Strip_err.(make kwd_in#region In)
+    Strip_err.(pack kwd_in#region In)
 
 and strip_lhs_bin_expression (node : Ast.lhs_bin_expression) : (S.expr, _) result =
   match node with
   | Lhs_bin_expression expr ->
     let* expr = strip_expression expr in
     Ok expr
-  | Lhs_bin_hash hash -> Strip_err.(make hash#region Private_property)
+  | Lhs_bin_hash hash -> Strip_err.(pack hash#region Private_property)
 
 (* Instantiation expression *)
 
 and strip_E_instantiation_expression (node : Ast.instantiation_expression wrap)
     : (S.expr, _) result
   =
-  Strip_err.(make node#region Type_parameter_instantiation)
+  Strip_err.(pack node#region Type_parameter_instantiation)
 
 (* Internal module expression *)
 
 and strip_E_internal_module (node : Ast.internal_module wrap) : (S.expr, _) result =
-  Strip_err.(make node#region Namespace_expression)
+  Strip_err.(pack node#region Namespace_expression)
 
 (* New-expression *)
 
 and strip_E_new_expression (node : Ast.new_expression wrap) : (S.expr, _) result =
-  Strip_err.(make node#region Class_instantiation)
+  Strip_err.(pack node#region Class_instantiation)
 
 (* Primary expression *)
 
@@ -2180,7 +2223,7 @@ and strip_parameters (node : Ast.parameters) : (parameters, _) result =
 and strip_E_call_expression (node : Ast.call_expression) : (S.expr, _) result =
   match node with
   | Call fun_call -> strip_call_fun fun_call
-  | Member expr_call -> Strip_err.(make expr_call#region Optional_chaining)
+  | Member expr_call -> Strip_err.(pack expr_call#region Optional_chaining)
 
 and strip_call_fun (node : (Ast.fun_call, Ast.arguments_to_call) Ast.call wrap)
     : (S.expr, _) result
@@ -2192,12 +2235,12 @@ and strip_call_fun (node : (Ast.fun_call, Ast.arguments_to_call) Ast.call wrap)
     | None -> Ok ()
     | Some type_args ->
       let region = Ast.region_of_chevrons type_args in
-      Strip_err.(make region Type_parameters_on_args)
+      Strip_err.(pack region Type_parameters_on_args)
   in
   let* (arguments : S.expr list) = strip_arguments_to_call arguments in
   let app = mk_reg node#region (lambda, arguments) in
   let ok = Ok (S.E_app app) in
-  let error = Strip_err.(make node#region Invalid_contract_of) in
+  let error = Strip_err.(pack node#region Invalid_contract_of) in
   match lambda with
   | S.E_var var ->
     (match var#payload with
@@ -2213,7 +2256,7 @@ and strip_call_fun (node : (Ast.fun_call, Ast.arguments_to_call) Ast.call wrap)
 and strip_fun_call (node : Ast.fun_call) : (S.expr, _) result =
   match node with
   | Fun_call expr -> strip_expression expr
-  | Import kwd_import -> Strip_err.(make kwd_import#region Import)
+  | Import kwd_import -> Strip_err.(pack kwd_import#region Import)
 
 and strip_arguments_to_call (node : Ast.arguments_to_call) : (S.expr list, _) result =
   match node with
@@ -2228,7 +2271,7 @@ and strip_arguments_to_call (node : Ast.arguments_to_call) : (S.expr list, _) re
 (* Class (expression) *)
 
 and strip_E_class (node : Ast.class_expression wrap) : (S.expr, _) result =
-  Strip_err.(make node#region Class_expression)
+  Strip_err.(pack node#region Class_expression)
 
 (* False expression *)
 
@@ -2249,7 +2292,7 @@ and strip_function_expression (node : Ast.function_expression wrap)
   let* () =
     match name with
     | None -> Ok ()
-    | Some name -> Strip_err.(make name#region Named_lambda ~hint:"Declare a function.")
+    | Some name -> Strip_err.(pack name#region Named_lambda ~hint:"Declare a function.")
   in
   let* call_sig = strip_call_signature call_sig in
   let { generics; parameters; rhs_type } = call_sig.value in
@@ -2260,7 +2303,7 @@ and strip_function_expression (node : Ast.function_expression wrap)
 (* Generator function (expression) *)
 
 and strip_E_generator_function (node : Ast.generator_function wrap) : (S.expr, _) result =
-  Strip_err.(make node#region Generator)
+  Strip_err.(pack node#region Generator)
 
 (* Identifier (expression) *)
 
@@ -2275,7 +2318,7 @@ and strip_E_member_expression (node : Ast.member_expression wrap) : (S.expr, _) 
   let* () =
     match selector with
     | Ast.Dot _ -> Ok ()
-    | Optional_chain sym -> Strip_err.(make sym#region Optional_chaining)
+    | Optional_chain sym -> Strip_err.(pack sym#region Optional_chaining)
   in
   let* property = strip_property_ident property in
   Ok (S.E_member (mk_reg node#region (expr, property)))
@@ -2283,35 +2326,35 @@ and strip_E_member_expression (node : Ast.member_expression wrap) : (S.expr, _) 
 and strip_object_member (node : Ast.object_member) : (S.expr, _) result =
   match node with
   | Object_member_expression expr -> strip_expression expr
-  | Object_member_import kwd_import -> Strip_err.(make kwd_import#region Import)
+  | Object_member_import kwd_import -> Strip_err.(pack kwd_import#region Import)
 
 and strip_property_ident (node : Ast.property_ident) : (S.variable, _) result =
   match node with
-  | Private_property_identifier hash -> Strip_err.(make hash#region Private_property)
+  | Private_property_identifier hash -> Strip_err.(pack hash#region Private_property)
   | Property_identifier ident -> Ok (strip_identifier ident)
 
 (* Meta-property *)
 
 and strip_E_meta_property (node : Ast.meta_property) : (S.expr, _) result =
-  Strip_err.(make (Ast.region_of_meta_property node) Metaproperty)
+  Strip_err.(pack (Ast.region_of_meta_property node) Metaproperty)
 
 (* Non-null expression *)
 
 and strip_E_non_null_expression (node : Ast.expression) : (S.expr, _) result =
-  Strip_err.(make (Ast.region_of_expression node) Non_null)
+  Strip_err.(pack (Ast.region_of_expression node) Non_null)
 
 (* Null (expression) *)
 
 and strip_E_null (node : Ast.kwd_null) : (S.expr, _) result =
-  Strip_err.(make node#region Null_value)
+  Strip_err.(pack node#region Null_value)
 
 (* Number (expression) *)
 
 and strip_E_number (node : Ast.number) : (S.expr, _) result =
   match node with
   | Hex (hex, _) -> strip_hex hex
-  | Bin (bin, _) -> Strip_err.(make bin#region Binary_octal)
-  | Oct (oct, _) -> Strip_err.(make oct#region Binary_octal)
+  | Bin (bin, _) -> Strip_err.(pack bin#region Binary_octal)
+  | Oct (oct, _) -> Strip_err.(pack oct#region Binary_octal)
   | Dec (dec, _) -> strip_dec dec
 
 and strip_hex (node : Ast.hex_literal) : (S.expr, _) result = Ok (S.E_bytes node)
@@ -2322,7 +2365,7 @@ and strip_dec (node : Ast.dec_literal) : (S.expr, _) result =
   then (
     let int = Wrap.make (lexeme, Q.to_bigint q) node#region in
     Ok (S.E_int int))
-  else Strip_err.(make node#region Non_integer)
+  else Strip_err.(pack node#region Non_integer)
 
 (* Object (expression) *)
 
@@ -2353,7 +2396,7 @@ and strip_E_object (node : Ast.object_expr) : (S.expr, _) result =
     Ok (S.E_update (mk_reg braces#region update_expr))
   | _ :: snd_spread :: _ ->
     Strip_err.(
-      make
+      pack
         snd_spread#region
         Multiple_spreads_in_object
         ~hint:"Expand in place on of them.")
@@ -2424,14 +2467,14 @@ and strip_E_parenthesized_expression (node : Ast.parenthesized_expression)
   let* expr =
     match exprs with
     | [ expr ] -> Ok expr
-    | _ -> Strip_err.(make (Ast.region_of_parens node) Multiple_values)
+    | _ -> Strip_err.(pack (Ast.region_of_parens node) Multiple_values)
   in
   Ok expr
 
 (* Regex *)
 
 and strip_E_regex (node : Ast.string_literal) : (S.expr, _) result =
-  Strip_err.(make node#region Regex)
+  Strip_err.(pack node#region Regex)
 
 (* String (expression) *)
 
@@ -2446,7 +2489,7 @@ and strip_E_subscript_expression (node : Ast.subscript_expression wrap)
   let* () =
     match optional_chain with
     | None -> Ok ()
-    | Some Ast.(Optional_chain sym) -> Strip_err.(make sym#region Optional_chaining)
+    | Some Ast.(Optional_chain sym) -> Strip_err.(pack sym#region Optional_chaining)
   in
   let Ast.(Brackets brackets) = index in
   let exprs = brackets#payload.contents in
@@ -2454,7 +2497,7 @@ and strip_E_subscript_expression (node : Ast.subscript_expression wrap)
   let* expr =
     match exprs with
     | [ expr ] -> Ok expr
-    | _ -> Strip_err.(make (Ast.region_of_brackets index) Multiple_values)
+    | _ -> Strip_err.(pack (Ast.region_of_brackets index) Multiple_values)
   in
   match expr with
   | E_int nat ->
@@ -2462,12 +2505,12 @@ and strip_E_subscript_expression (node : Ast.subscript_expression wrap)
     Ok (S.E_subscript (mk_reg node#region (obj, nat)))
   | _ ->
     Strip_err.(
-      make node#region Invalid_subscript ~hint:"Use a natural number as an index.")
+      pack node#region Invalid_subscript ~hint:"Use a natural number as an index.")
 
 (* Super (expression) *)
 
 and strip_E_super (node : Ast.kwd_super) : (S.expr, _) result =
-  Strip_err.(make node#region Super)
+  Strip_err.(pack node#region Super)
 
 (* Template string *)
 
@@ -2477,12 +2520,12 @@ and strip_E_template_string (node : Ast.template_string wrap) : (S.expr, _) resu
 and strip_template_string (node : Ast.template_string wrap) : (S.expr, _) result =
   match node#payload with
   | _, [ String_fragment literal ], _ -> Ok (S.E_template literal)
-  | _ -> Strip_err.(make node#region Template_string)
+  | _ -> Strip_err.(pack node#region Template_string)
 
 (* This (expression) *)
 
 and strip_E_this (node : Ast.kwd_this) : (S.expr, _) result =
-  Strip_err.(make node#region This)
+  Strip_err.(pack node#region This)
 
 (* True (expression) *)
 
@@ -2491,14 +2534,14 @@ and strip_E_true (node : Ast.kwd_true) : (S.expr, _) result = Ok (S.E_true node#
 (* Undefined (expression) *)
 
 and strip_E_undefined (node : Ast.kwd_undefined) : (S.expr, _) result =
-  Strip_err.(make node#region Undefined_value)
+  Strip_err.(pack node#region Undefined_value)
 
 (* Statisfies-expression *)
 
 and strip_E_satisfies_expression (node : Ast.satisfies_expression wrap)
     : (S.expr, _) result
   =
-  Strip_err.(make node#region Type_check)
+  Strip_err.(pack node#region Type_check)
 
 (* Ternary expression *)
 
@@ -2514,7 +2557,7 @@ and strip_E_ternary_expression (node : Ast.ternary_expression wrap) : (S.expr, _
 (* Type assertion (expression) *)
 
 and strip_E_type_assertion (node : Ast.type_assertion wrap) : (S.expr, _) result =
-  Strip_err.(make node#region Type_assertion)
+  Strip_err.(pack node#region Type_assertion)
 
 (* Unary expression *)
 
@@ -2530,16 +2573,16 @@ and strip_unary_operator (node : Ast.unary_operator) : (S.expr reg -> S.expr, _)
   | Bang _ -> Ok (fun arg -> S.E_not arg) (* !x *)
   | Not _ -> Ok (fun arg -> S.E_bit_neg arg) (* ~x *)
   | Unary_sub _ -> Ok (fun arg -> S.E_neg arg) (* -x *)
-  | Unary_add sym -> Strip_err.(make sym#region Unary_add) (* +x *)
+  | Unary_add sym -> Strip_err.(pack sym#region Unary_add) (* +x *)
   | Typeof kwd_typeof ->
     (* typeof x *)
-    Strip_err.(make kwd_typeof#region Typeof_void_delete)
+    Strip_err.(pack kwd_typeof#region Typeof_void_delete)
   | Void kwd_void ->
     (* void *)
-    Strip_err.(make kwd_void#region Typeof_void_delete)
+    Strip_err.(pack kwd_void#region Typeof_void_delete)
   | Delete kwd_delete ->
     (* delete *)
-    Strip_err.(make kwd_delete#region Typeof_void_delete)
+    Strip_err.(pack kwd_delete#region Typeof_void_delete)
 
 (* Update expression *)
 
@@ -2555,7 +2598,7 @@ and strip_update (kind : [ `Pre | `Post ]) (node : Ast.update wrap) : (S.expr, _
     match expr with
     | S.E_var v -> Ok (mk_reg node#region v)
     | _ ->
-      Strip_err.(make node#region Not_a_variable ~hint:"Define a temporary variable.")
+      Strip_err.(pack node#region Not_a_variable ~hint:"Define a temporary variable.")
   in
   match kind, operator with
   | `Pre, Increment _ -> Ok (S.E_pre_incr var)
@@ -2567,7 +2610,7 @@ and strip_update (kind : [ `Pre | `Post ]) (node : Ast.update wrap) : (S.expr, _
 
 and strip_E_yield_expression (node : Ast.yield_expression) : (S.expr, _) result =
   let region = Ast.region_of_yield_expression node in
-  Strip_err.(make region Generator)
+  Strip_err.(pack region Generator)
 
 (* PATTERNS *)
 
@@ -2584,14 +2627,14 @@ and strip_pattern (node : Ast.pattern) : (S.pattern, _) result =
 (* Member expression (pattern) *)
 
 and strip_P_member_expression (node : Ast.member_expression wrap) : (S.pattern, _) result =
-  Strip_err.(make node#region Member_pattern ~hint:"Use a variable.")
+  Strip_err.(pack node#region Member_pattern ~hint:"Use a variable.")
 
 (* Subscript expression (pattern) *)
 
 and strip_P_subscript_expression (node : Ast.subscript_expression wrap)
     : (S.pattern, _) result
   =
-  Strip_err.(make node#region Subscript_pattern)
+  Strip_err.(pack node#region Subscript_pattern)
 
 (* Identifier and booleans (pattern) *)
 
@@ -2608,7 +2651,7 @@ and strip_P_identifier (node : Ast.identifier) : (S.pattern, _) result =
 (* Undefined (pattern) *)
 
 and strip_P_undefined (node : Ast.kwd_undefined) : (S.pattern, _) result =
-  Strip_err.(make node#region Undefined_value)
+  Strip_err.(pack node#region Undefined_value)
 
 (* Destructuring pattern *)
 
@@ -2643,9 +2686,9 @@ and strip_member_pattern (node : Ast.member_pattern)
   =
   match node with
   | Member_pair_pattern pattern -> strip_pair_pattern pattern
-  | Member_rest_pattern rest -> Strip_err.(make rest#region Rest_in_object_pattern)
+  | Member_rest_pattern rest -> Strip_err.(pack rest#region Rest_in_object_pattern)
   | Member_object_assignment asgmt ->
-    Strip_err.(make asgmt#region Asgmt_in_object_pattern)
+    Strip_err.(pack asgmt#region Asgmt_in_object_pattern)
   | Member_shorthand_property ident ->
     let comments = ident#comments in
     let comments = strip_comments comments in
@@ -2663,11 +2706,11 @@ and strip_member_pattern (node : Ast.member_pattern)
 and strip_property_name (node : Ast.property_name) : (S.variable, _) result =
   match node with
   | Property_identifier ident -> Ok (strip_identifier ident)
-  | Private_property_identifier hash -> Strip_err.(make hash#region Private_property)
-  | String str_literal -> Strip_err.(make str_literal#region Property_as_string)
-  | Number n -> Strip_err.(make (Ast.region_of_number n) Property_as_number)
+  | Private_property_identifier hash -> Strip_err.(pack hash#region Private_property)
+  | String str_literal -> Strip_err.(pack str_literal#region Property_as_string)
+  | Number n -> Strip_err.(pack (Ast.region_of_number n) Property_as_number)
   | Computed_property_name brackets ->
-    Strip_err.(make (Ast.region_of_brackets brackets) Computed_property_name)
+    Strip_err.(pack (Ast.region_of_brackets brackets) Computed_property_name)
 
 and strip_pair_pattern (node : Ast.pair_pattern wrap)
     : (S.pattern S.property reg, _) result
@@ -2687,7 +2730,7 @@ and strip_pair_pattern (node : Ast.pair_pattern wrap)
 and strip_pair_value_pattern (node : Ast.pair_value_pattern) : (S.pattern, _) result =
   match node with
   | Pair_value pattern -> strip_pattern pattern
-  | Pair_value_assignment asgmt -> Strip_err.(make asgmt#region Asgmt_in_object_pattern)
+  | Pair_value_assignment asgmt -> Strip_err.(pack asgmt#region Asgmt_in_object_pattern)
 
 and comments_of_property_name (node : Ast.property_name) : Wrap.comment list =
   match node with
@@ -2712,18 +2755,18 @@ and strip_array_cell_pattern (node : Ast.array_cell_pattern)
   | Cell_pattern pattern ->
     let* pattern = strip_pattern pattern in
     Ok (S.Element pattern)
-  | Cell_assignment pattern -> Strip_err.(make pattern#region Asgmt_pattern_in_array)
+  | Cell_assignment pattern -> Strip_err.(pack pattern#region Asgmt_pattern_in_array)
 
 (* Non-null expression (pattern) *)
 
 and strip_P_non_null_expression (node : Ast.expression) : (S.pattern, _) result =
   let region = Ast.region_of_expression node in
-  Strip_err.(make region Non_null)
+  Strip_err.(pack region Non_null)
 
 (* Rest pattern *)
 
 and strip_P_rest_pattern (node : Ast.rest_pattern wrap) : (S.pattern, _) result =
-  Strip_err.(make node#region Top_rest_pattern)
+  Strip_err.(pack node#region Top_rest_pattern)
 
 and strip_rest_pattern (node : Ast.rest_pattern wrap) : (S.pattern, _) result =
   let Ast.{ sym_ellipsis = _; expression } = node#payload in
@@ -2740,11 +2783,15 @@ and strip_rest_pattern (node : Ast.rest_pattern wrap) : (S.pattern, _) result =
     Ok (S.P_var (mk_reg ident#region path))
   | _ ->
     Strip_err.(
-      make
+      pack
         node#region
         Complex_rest_pattern
         ~hint:"Use variables or array/object patterns.")
 
 (* Alias for external access by means of [Strip.statements] *)
 
-let statements = strip_statements
+let statements (node : Ast.t) : (Ast_stripped.t, _) result =
+  let* stmts = strip_statements node in
+  match stmts with
+  | None -> Strip_err.(pack (Region.min ~file:"") No_statements)
+  | Some stmts -> Ok stmts
