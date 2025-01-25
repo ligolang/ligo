@@ -113,10 +113,10 @@ let ne_list_opt_of_children ?(comments = []) decode children
     let* tail = List.fold_right ~f ~init:[] siblings |> Result.all in
     Ok (Some Nonempty_list.(fst_child :: tail))
 
-let ne_list_of_children ?(comments = []) decode children : ('a ne_list, _) result =
+let ne_list_of_children ?(comments = []) decode error children : ('a ne_list, _) result =
   let* list = ne_list_opt_of_children ~comments decode children in
   match list with
-  | None -> Error "Expected at least one child."
+  | None -> error
   | Some ne_list -> Ok ne_list
 
 let wrap_ne_list_opt_of_children ?(comments = []) decode children
@@ -137,14 +137,6 @@ let wrap_ne_list_opt_of_children ?(comments = []) decode children
     let ne_list = Nonempty_list.(fst_child :: tail) in
     Ok (Some (Wrap.make ne_list region))
 
-let wrap_ne_list_of_children ?(comments = []) decode children
-    : ('a ne_list wrap, _) result
-  =
-  let* list = wrap_ne_list_opt_of_children ~comments decode children in
-  match list with
-  | None -> Error "Expected at least one child."
-  | Some ne_list -> Ok ne_list
-
 (* Decoding enclosed unique child *)
 
 let dec_enclosed ?(comments = []) node decode opening closing
@@ -160,11 +152,11 @@ let dec_enclosed ?(comments = []) node decode opening closing
   let region = !get_region node in
   Ok (Wrap.make { opening; contents; closing } region)
 
-let dec_braces ?comments node decode : ('a braces, _) result =
+(*
+  let dec_braces ?comments node decode : ('a braces, _) result =
   let* braces = dec_enclosed ?comments node decode "{" "}" in
   Ok (Braces braces)
 
-(*
 let dec_chevrons ?comments node decode : ('a chevrons, _) result =
   let* chevrons = dec_enclosed ?comments node decode "<" ">" in
   Ok (Chevrons chevrons)
@@ -177,6 +169,8 @@ let dec_brackets ?comments node decode : ('a brackets, _) result =
 let dec_parens ?comments node decode : ('a parens, _) result =
   let* parens = dec_enclosed ?comments node decode "(" ")" in
   Ok (Parens parens)
+
+(* Decoding enclosed lists of children *)
 
 let dec_enclosed_list ?(comments = []) node decode opening closing
     : ('a list enclosed wrap, _) result
@@ -209,7 +203,7 @@ let dec_list_in_parens ?comments node decode : ('a list parens, _) result =
 
 (* Decoding enclosed non-empty lists *)
 
-let dec_enclosed_ne_list ?(comments = []) node decode opening closing
+let dec_enclosed_ne_list ?(comments = []) node decode error opening closing
     : ('a ne_list enclosed wrap, string) result
   =
   let comments = comments @ prev_comments node in
@@ -218,7 +212,7 @@ let dec_enclosed_ne_list ?(comments = []) node decode opening closing
   let* closing = first_child_named closing node in
   let closing = make_sym closing in
   let clauses = collect_named_children node in
-  let* contents = ne_list_of_children decode clauses in
+  let* contents = ne_list_of_children decode error clauses in
   let region = !get_region node in
   Ok (Wrap.make { opening; contents; closing } region)
 
@@ -226,19 +220,19 @@ let dec_enclosed_ne_list ?(comments = []) node decode opening closing
 let dec_ne_list_in_braces ?comments node decode : ('a ne_list braces, _) result =
   let* braces = dec_enclosed_ne_list ?comments node decode "{" "}" in
   Ok (Braces braces)
-*)
-
-let dec_ne_list_in_chevrons ?comments node decode : ('a ne_list chevrons, _) result =
-  let* chevrons = dec_enclosed_ne_list ?comments node decode "<" ">" in
-  Ok (Chevrons chevrons)
-
-let dec_ne_list_in_brackets ?comments node decode : ('a ne_list brackets, _) result =
-  let* brackets = dec_enclosed_ne_list ?comments node decode "[" "]" in
-  Ok (Brackets brackets)
 
 let dec_ne_list_in_parens ?comments node decode : ('a ne_list parens, _) result =
   let* parens = dec_enclosed_ne_list ?comments node decode "(" ")" in
   Ok (Parens parens)
+*)
+
+let dec_ne_list_in_chevrons ?comments node decode error : ('a ne_list chevrons, _) result =
+  let* chevrons = dec_enclosed_ne_list ?comments node decode error "<" ">" in
+  Ok (Chevrons chevrons)
+
+let dec_ne_list_in_brackets ?comments node decode error : ('a ne_list brackets, _) result =
+  let* brackets = dec_enclosed_ne_list ?comments node decode error "[" "]" in
+  Ok (Brackets brackets)
 
 (* STATEMENTS
 
@@ -596,7 +590,17 @@ and dec_expressions ?(comments = []) (node : ts_tree) : (expressions, _) result 
 (* Statement blocks *)
 
 and dec_statement_block ?(comments = []) node : (statement_block, _) result =
-  dec_braces ~comments node dec_statements
+  let comments = comments @ prev_comments node in
+  let* opening = first_child_named "{" node in
+  let opening = make_sym ~comments opening in
+  let* closing = first_child_named "}" node in
+  let closing = make_sym closing in
+  let clauses = collect_named_children node in
+  let* contents = wrap_ne_list_opt_of_children dec_statement clauses in
+  let region = !get_region node in
+  let braces = Wrap.make { opening; contents; closing } region in
+  Ok (Braces braces)
+
 
 (* If statement *)
 
@@ -1139,7 +1143,8 @@ and dec_decorator_parenthesized_expression ?comments node
 (* Type arguments *)
 
 and dec_type_arguments ?comments node : (type_arguments, _) result =
-  dec_ne_list_in_chevrons ?comments node dec_type
+  let error = error "dec_type_arguments" node in
+  dec_ne_list_in_chevrons ?comments node dec_type error
 
 (* Function arguments *)
 
@@ -1250,7 +1255,8 @@ and dec_implements_clause node : (implements_clause, _) result =
   let* kwd_implements = first_child_named "implements" node in
   let kwd_implements = make_kwd kwd_implements in
   let raw_clauses = collect_named_children node in
-  let* type_exprs = ne_list_of_children dec_type raw_clauses in
+  let error = error "dec_implements_clause" node in
+  let* type_exprs = ne_list_of_children dec_type error raw_clauses in
   Ok (kwd_implements, type_exprs)
 
 and dec_class_body ?(comments = []) node : (class_body, _) result =
@@ -1528,7 +1534,8 @@ and dec_lexical_declaration ?(comments = []) node : (lexical_declaration, _) res
   let comments = comments @ prev_comments node in
   let* kind_field = child_with_field "kind" node in
   let decls = children_named "variable_declarator" node in
-  let* decls = ne_list_of_children dec_variable_declarator decls in
+  let error' = error "dec_lexical_declaration" node in
+  let* decls = ne_list_of_children dec_variable_declarator error' decls in
   let* kind =
     match get_name kind_field with
     | "let" -> Ok (Let (make_kwd ~comments kind_field))
@@ -1543,7 +1550,8 @@ and dec_variable_declaration ?(comments = []) node : (variable_declaration, _) r
   let comments = comments @ prev_comments node in
   let* kwd_var = first_child_named "var" node in
   let var_decls = children_named "variable_declarator" node in
-  let* var_decls = ne_list_of_children dec_variable_declarator var_decls in
+  let error = error "dec_variable_declaration" node in
+  let* var_decls = ne_list_of_children dec_variable_declarator error var_decls in
   Ok (make_sym ~comments kwd_var, var_decls)
 
 and dec_variable_declarator ?(comments = []) node : (variable_declarator, _) result =
@@ -1819,7 +1827,8 @@ and dec_interface_declaration ?(comments = []) node : (interface_declaration, _)
 and dec_extends_type_clause node : (extends_type_clause, _) result =
   let* kwd_extends = first_child_named "extends" node in
   let named_children = collect_named_children node in
-  let* extensions = ne_list_of_children dec_type_extension named_children in
+  let error = error "dec_extends_type_clause" node in
+  let* extensions = ne_list_of_children dec_type_extension error named_children in
   Ok { kwd_extends = make_kwd kwd_extends; extensions }
 
 and dec_type_extension ?(comments = []) node : (type_extension, _) result =
@@ -2311,7 +2320,11 @@ and dec_parenthesized_expression ?comments node : (parenthesized_expression, _) 
 
 and dec_sequence_expression ?(comments = []) node : (sequence_expression, _) result =
   let raw_children = collect_named_children node in
-  wrap_ne_list_of_children ~comments dec_expression raw_children
+  let* list =
+    wrap_ne_list_opt_of_children ~comments dec_expression raw_children in
+  match list with
+  | Some ne_list -> Ok ne_list
+  | None -> error "dec_sequence_expression" node
 
 (* Object expression *)
 
