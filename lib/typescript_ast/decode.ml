@@ -601,7 +601,6 @@ and dec_statement_block ?(comments = []) node : (statement_block, _) result =
   let braces = Wrap.make { opening; contents; closing } region in
   Ok (Braces braces)
 
-
 (* If statement *)
 
 and dec_if_statement ?(comments = []) node : (if_statement, _) result =
@@ -2320,8 +2319,7 @@ and dec_parenthesized_expression ?comments node : (parenthesized_expression, _) 
 
 and dec_sequence_expression ?(comments = []) node : (sequence_expression, _) result =
   let raw_children = collect_named_children node in
-  let* list =
-    wrap_ne_list_opt_of_children ~comments dec_expression raw_children in
+  let* list = wrap_ne_list_opt_of_children ~comments dec_expression raw_children in
   match list with
   | Some ne_list -> Ok ne_list
   | None -> error "dec_sequence_expression" node
@@ -3443,12 +3441,13 @@ let dec_standalone_type_expr map node : (Ast.type_expr, string) result =
   match ast with
   | None -> Strip_err.(make (Region.min ~file:"") No_single_type_expr)
   | Some stmts ->
-     (match stmts#payload with
-      | _ :: stmt2 :: _ -> Strip_err.(make (region_of_statement stmt2) No_single_type_expr)
-      | Nonempty_list.[ stmt ] ->
-         (match stmt with
-          | S_declaration_statement (D_type_alias_declaration decl) ->
-             let Ast.{kwd_type=_; name=_; type_parameters=_;
-                      sym_equal=_; type_expr } = decl#payload in
-             Ok type_expr
-          | _ -> Strip_err.(make (region_of_statement stmt) No_single_type_expr)))
+    (match stmts#payload with
+    | _ :: stmt2 :: _ -> Strip_err.(make (region_of_statement stmt2) No_single_type_expr)
+    | Nonempty_list.[ stmt ] ->
+      (match stmt with
+      | S_declaration_statement (D_type_alias_declaration decl) ->
+        let Ast.{ kwd_type = _; name = _; type_parameters = _; sym_equal = _; type_expr } =
+          decl#payload
+        in
+        Ok type_expr
+      | _ -> Strip_err.(make (region_of_statement stmt) No_single_type_expr)))

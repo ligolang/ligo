@@ -802,19 +802,9 @@ and strip_call_signature (node : Ast.call_signature wrap) : (call_signature reg,
   in
   let* generics = strip_list_opt strip_type_parameters type_parameters in
   let* parameters = strip_formal_parameters parameters in
-  let parameters = format_parameters_into_patterns parameters in
   let* rhs_type = map_opt strip_call_return_type return_type in
   let call_sig = { generics; parameters; rhs_type } in
   Ok (mk_reg node#region call_sig)
-
-and format_parameters_into_patterns (node : (S.variable * S.type_expr option) reg list)
-    : S.parameter reg list
-  =
-  let make_parameter Region.{ value = variable, opt; region } =
-    let path = S.{ path = []; selected = variable } in
-    Region.{ value = S.P_var (mk_reg variable#region path), opt; region }
-  in
-  List.map ~f:make_parameter node
 
 and strip_call_return_type (node : Ast.call_return_type) : (S.type_expr, _) result =
   match node with
@@ -1747,6 +1737,7 @@ and strip_T_function_type (node : Ast.function_type wrap) : (S.type_expr, _) res
   let Ast.{ type_parameters; parameters; sym_arrow = _; return_type } = node#payload in
   let* t_params = strip_list_opt strip_type_parameters type_parameters in
   let* v_params = strip_formal_parameters parameters in
+  let* v_params = Result.all @@ List.map ~f:filter_parameter v_params in
   let* v_params = filter_type_annotations v_params in
   let* ret_type = strip_return_type return_type in
   let fun_type = v_params, ret_type in
@@ -1770,14 +1761,14 @@ and filter_type_annotations (node : (S.variable * S.type_expr option) reg list)
   Result.all @@ List.map ~f:check node
 
 and strip_formal_parameters (node : Ast.formal_parameters)
-    : ((S.variable * S.type_expr option) reg list, _) result
+    : ((S.pattern * S.type_expr option) reg list, _) result
   =
   let (Ast.Parens parens) = node in
   let parameters = parens#payload.contents in
   Result.all @@ List.map ~f:strip_formal_parameter parameters
 
 and strip_formal_parameter (node : Ast.formal_parameter wrap)
-    : ((S.variable * S.type_expr option) reg, _) result
+    : ((S.pattern * S.type_expr option) reg, _) result
   =
   let Ast.{ parameter_name; optional; type_opt; default } = node#payload in
   let* parameter = strip_parameter_name parameter_name in
@@ -1809,7 +1800,7 @@ and strip_formal_parameter (node : Ast.formal_parameter wrap)
   in
   Ok (mk_reg region (parameter, type_expr))
 
-and strip_parameter_name (node : Ast.parameter_name wrap) : (S.variable, _) result =
+and strip_parameter_name (node : Ast.parameter_name wrap) : (S.pattern, _) result =
   let Ast.{ decorators; access; kwd_override; kwd_readonly; pattern } = node#payload in
   let* () =
     match decorators with
@@ -1837,12 +1828,9 @@ and strip_parameter_name (node : Ast.parameter_name wrap) : (S.variable, _) resu
   in
   strip_parameter_pattern pattern
 
-and strip_parameter_pattern (node : Ast.parameter_pattern) : (S.variable, _) result =
+and strip_parameter_pattern (node : Ast.parameter_pattern) : (S.pattern, _) result =
   match node with
-  | Parameter_pattern (P_identifier ident) -> Ok (strip_identifier ident)
-  | Parameter_pattern pattern ->
-    let region = Ast.region_of_pattern pattern in
-    Strip_err.(pack region Non_variable_parameter)
+  | Parameter_pattern pattern -> strip_pattern pattern
   | Parameter_this kwd_this ->
     Strip_err.(pack kwd_this#region Non_variable_parameter ~hint:"Rename 'this'.")
 
