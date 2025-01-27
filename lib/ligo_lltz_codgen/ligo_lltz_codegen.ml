@@ -2,7 +2,10 @@ open Core
 open Grace
 open Ligo_prim
 module I = Mini_c
-module O = Lltz_ir
+module O = struct
+  include Lltz_ir
+  module Dsl = Lltz_ir.Ast_builder.Default
+end
 module Ligo_string = Simple_utils.Ligo_string
 module Location = Simple_utils.Location
 module Lltz_codegen = Lltz_codegen
@@ -64,7 +67,7 @@ let rec compile_type_expression (type_ : I.type_expression) : O.Type.t =
   | T_base TB_bls12_381_fr -> return Bls12_381_fr
   | T_base TB_never -> return Never
   | T_base TB_tx_rollup_l2_address -> return Tx_rollup_l2_address
-  | T_base (TB_type_int _) -> return Int
+  | T_base (TB_type_int memo) -> return @@ Sapling_state { memo = (Z.to_int memo) }
   | T_base TB_chest -> return Chest
   | T_base TB_chest_key -> return Chest_key
   (* dead baker account support *)
@@ -161,27 +164,27 @@ let compile_constant (const : Constant.constant') (args: O.Expr.t list) (return_
   | C_LSR -> mk_prim Lsr
   | C_EQ -> (
     match args with
-    | a::b::tl -> mk_prim ~args:((O.Dsl.compare_ ~range a b)::tl) Eq
+    | a::b::tl -> mk_prim ~args:((O.Dsl.compare ~range a b)::tl) Eq
     | _ -> assert false)
   | C_NEQ -> (
     match args with
-    | a::b::tl -> mk_prim ~args:((O.Dsl.compare_ ~range a b)::tl) Neq
+    | a::b::tl -> mk_prim ~args:((O.Dsl.compare ~range a b)::tl) Neq
     | _ -> assert false)
   | C_LT -> (
     match args with
-    | a::b::tl -> mk_prim ~args:((O.Dsl.compare_ ~range a b)::tl) Lt
+    | a::b::tl -> mk_prim ~args:((O.Dsl.compare ~range a b)::tl) Lt
     | _ -> assert false)
   | C_GT -> (
     match args with
-    | a::b::tl -> mk_prim ~args:((O.Dsl.compare_ ~range a b)::tl) Gt
+    | a::b::tl -> mk_prim ~args:((O.Dsl.compare ~range a b)::tl) Gt
     | _ -> assert false)
   | C_LE -> (
     match args with
-    | a::b::tl -> mk_prim ~args:((O.Dsl.compare_ ~range a b)::tl) Le
+    | a::b::tl -> mk_prim ~args:((O.Dsl.compare ~range a b)::tl) Le
     | _ -> assert false)
   | C_GE -> (
     match args with
-    | a::b::tl -> mk_prim ~args:((O.Dsl.compare_ ~range a b)::tl) Ge
+    | a::b::tl -> mk_prim ~args:((O.Dsl.compare ~range a b)::tl) Ge
     | _ -> assert false)
   | C_CONCAT -> mk_prim Concat2
   | C_CONCATS -> mk_prim Concat1
@@ -190,9 +193,9 @@ let compile_constant (const : Constant.constant') (args: O.Expr.t list) (return_
   | C_SLICE -> (
     match args with
     | offset::length::seq::tl -> (
-      O.Dsl.if_none (O.Dsl.slice ~range offset ~length ~seq)
-        ~some:(let var_name = O.Dsl.gen_name () in
-          O.Dsl.annon_function var_name seq.type_ ~body:(O.Dsl.variable (Var var_name) seq.type_))
+      O.Dsl.if_none ~range (O.Dsl.slice ~range offset ~length ~seq)
+        ~some:(let var_name = O.Dsl.gen_name in
+          O.Dsl.annon_function var_name seq.type_ ~body:(O.Dsl.variable ~range (Var var_name) seq.type_))
         ~none:(O.Dsl.failwith ~range (O.Dsl.string ~range "Slice out of bounds"))
       ).desc
     | _ -> assert false)
@@ -268,10 +271,10 @@ let compile_constant (const : Constant.constant') (args: O.Expr.t list) (return_
   | C_MAP_FIND -> (
     match args with
     | key::coll::tl -> (
-      O.Dsl.if_none (O.Dsl.get ~range key coll)
-        ~some:(let var_name = O.Dsl.gen_name () in
+      O.Dsl.if_none ~range (O.Dsl.get ~range key coll)
+        ~some:(let var_name = O.Dsl.gen_name in
           (match coll.type_ with
-          | { desc = Map (key_ty, value_ty); _ } -> O.Dsl.annon_function var_name value_ty ~body:(O.Dsl.variable (Var var_name) value_ty)
+          | { desc = Map (key_ty, value_ty); _ } -> O.Dsl.annon_function var_name value_ty ~body:(O.Dsl.variable ~range (Var var_name) value_ty)
           | _ -> assert false)
           )
         ~none:(O.Dsl.failwith ~range (O.Dsl.string ~range "Key not found"))
@@ -365,8 +368,16 @@ let compile_constant (const : Constant.constant') (args: O.Expr.t list) (return_
     (* only interpreter *)
     assert false
   | C_GLOBAL_CONSTANT ->
-    (* TODO: removed in ?? *) 
-    assert false 
+    (match args with
+    | hash::args -> (
+      match hash with
+      | { desc = Const (String s); _ } -> (
+        match return_ty with
+        | { desc = O.Type.Function (param_ty, return_ty); _ } -> (
+          O.Dsl.global_constant ~range s args return_ty).desc
+        | _ -> assert false)
+      | _ -> assert false)
+    | _ -> assert false)
   | C_POLYMORPHIC_ADD ->
     (* removed in checking *)
     assert false
@@ -404,11 +415,11 @@ let compile_micheline_seq nodes =
   in
   Micheline.Seq (range, nodes)
 
-let rec compile_expression (expr : I.expression) : O.Expr.t =
+let rec compile_expression  (expr : I.expression) : O.Expr.t =
   let return_ty = compile_type_expression expr.type_expression in
   let range = compile_location expr.location in
   let return (desc : O.Expr.desc) : O.Expr.t =
-    { desc; range = range; type_ = return_ty }
+    { desc; range = range; type_ = return_ty; annotations = O.Annotations.empty }
   in
   match expr.content with
   | E_literal lit -> return @@ Const (compile_literal lit)
@@ -426,93 +437,94 @@ let rec compile_expression (expr : I.expression) : O.Expr.t =
     | _ -> assert false) in
     return @@ Lambda_rec { mu_var = (rec_var, return_ty); lambda ={lam_var = (var, var_ty); body} }
   | E_constant { cons_name; arguments } ->
-    let args = List.map arguments ~f:compile_expression in
+    let args = List.map arguments ~f:(compile_expression ) in
     return @@ (compile_constant cons_name args return_ty range)
   | E_application (abs, arg) ->
-    let abs = compile_expression abs in
-    let arg = compile_expression arg in
+    let abs = compile_expression  abs in
+    let arg = compile_expression  arg in
     return @@ App { abs; arg }
-  | E_variable var -> return @@ (Variable (compile_var var))
+  | E_variable var -> 
+    return @@ (Variable (compile_var var))
   | E_let_in (rhs, _inline, (binder, in_)) ->
     let (let_var, _) = compile_binder binder in
-    let rhs = compile_expression rhs in
-    let in_ = compile_expression in_ in
+    let rhs = compile_expression  rhs in
+    let in_ = compile_expression  in_ in
     return @@ Let_in { let_var; rhs; in_ }
   | E_let_mut_in (rhs, (binder, in_)) ->
     let let_var, _ = compile_mut_binder binder in
-    let rhs = compile_expression rhs in
-    let in_ = compile_expression in_ in
+    let rhs = compile_expression  rhs in
+    let in_ = compile_expression  in_ in
     return @@ Let_mut_in { let_var; rhs; in_ }
   | E_deref var -> return @@ Deref (compile_mut_var var)
   | E_assign (var, value) ->
     let var = compile_mut_var var in
-    let value = compile_expression value in
+    let value = compile_expression  value in
     return @@ Assign (var, value)
   | E_if_bool (condition, if_true, if_false) ->
-    let condition = compile_expression condition in
-    let if_true = compile_expression if_true in
-    let if_false = compile_expression if_false in
+    let condition = compile_expression  condition in
+    let if_true = compile_expression  if_true in
+    let if_false = compile_expression  if_false in
     return @@ If_bool { condition; if_true; if_false }
   | E_if_cons (subject, if_nil, ((hd_binder, tl_binder), if_cons)) -> 
-    let subject = compile_expression subject in
-    let if_nil = compile_expression if_nil in
+    let subject = compile_expression  subject in
+    let if_nil = compile_expression  if_nil in
     let hd_binder = compile_binder hd_binder in
     let tl_binder = compile_binder tl_binder in
-    let if_cons = compile_expression if_cons in
+    let if_cons = compile_expression  if_cons in
     return @@ If_cons { subject; if_empty = if_nil; if_nonempty = {lam_var1 = hd_binder; lam_var2 = tl_binder; body = if_cons} }
   | E_if_none (subject, if_none, (binder, if_some)) ->
-    let subject = compile_expression subject in
-    let if_none = compile_expression if_none in
+    let subject = compile_expression  subject in
+    let if_none = compile_expression  if_none in
     let binder = compile_binder binder in
-    let if_some = compile_expression if_some in
+    let if_some = compile_expression  if_some in
     return @@ If_none { subject; if_none; if_some = {lam_var = binder; body = if_some} }
   | E_if_left (subject, (left_binder, if_left), (right_binder, if_right)) ->
-    let subject = compile_expression subject in
+    let subject = compile_expression  subject in
     let left_binder = compile_binder left_binder in
-    let if_left = compile_expression if_left in
+    let if_left = compile_expression  if_left in
     let right_binder = compile_binder right_binder in
-    let if_right = compile_expression if_right in
+    let if_right = compile_expression  if_right in
     return
     @@ If_left
          { subject; if_left = {lam_var = left_binder; body = if_left}; if_right = {lam_var = right_binder; body=if_right} }
   | E_while (cond, body) ->
-    let cond = compile_expression cond in
-    let body = compile_expression body in
+    let cond = compile_expression  cond in
+    let body = compile_expression  body in
     return @@ While { cond; body }
   | E_for (start, stop, step, (index, body)) ->
-    let start = compile_expression start in
-    let stop = compile_expression stop in
-    let step = compile_expression step in
+    let start = compile_expression  start in
+    let stop = compile_expression  stop in
+    let step = compile_expression  step in
     let index, index_ty = compile_mut_binder index in
-    let body = compile_expression body in
+    let body = compile_expression  body in
     return @@ For { init = start; 
       cond = O.Dsl.le ~range (O.Dsl.deref ~range index index_ty) (stop); 
-      update = O.Dsl.assign index (O.Dsl.add ~range (O.Dsl.deref ~range index index_ty) step); 
+      update = O.Dsl.assign ~range index (O.Dsl.add ~range (O.Dsl.deref ~range index index_ty) step); 
       index; body }
   | E_for_each (collection, _type, (binders, body)) ->
-    let collection = compile_expression collection in
-    let var, body = compile_binders binders ~in_:(compile_expression body) in
+    let collection = compile_expression  collection in
+    let var, body = compile_binders binders ~in_:(compile_expression  body) in
     return @@ For_each { collection; body = {lam_var = var; body} }
   | E_tuple elts ->
-    let elts = List.map elts ~f:compile_expression in
+    let elts = List.map elts ~f:(compile_expression ) in
     let row = O.Row.(Node (List.map elts ~f:(fun elt -> Leaf (None, elt)))) in
     return @@ Tuple row
   | E_proj (tuple, index, _tuple_size) ->
-    let tuple = compile_expression tuple in
+    let tuple = compile_expression  tuple in
     return @@ Proj (tuple, O.Row.Path.Here [ index ])
   | E_update (tuple, index, update, _tuple_size) ->
-    let tuple = compile_expression tuple in
-    let update = compile_expression update in
+    let tuple = compile_expression  tuple in
+    let update = compile_expression  update in
     return @@ Update { tuple; component = O.Row.Path.Here [ index ]; update }
   | E_let_tuple (rhs, (binders, in_)) ->
     let components = List.map (List.map binders ~f:compile_binder) ~f:fst in
-    let rhs = compile_expression rhs in
-    let in_ = compile_expression in_ in
+    let rhs = compile_expression  rhs in
+    let in_ = compile_expression  in_ in
     return @@ Let_tuple_in { components; rhs; in_ }
   | E_iterator (iter_const, (binder, body), collection) ->
-    let collection = compile_expression collection in
+    let collection = compile_expression  collection in
     let binder = compile_binder binder in
-    let body = compile_expression body in
+    let body = compile_expression  body in
     (match iter_const with
     | Constant.C_ITER -> return @@ For_each { collection; body = {lam_var = binder; body} }
     | Constant.C_MAP -> return @@ Map { collection; map = {lam_var = binder; body} }
@@ -520,16 +532,16 @@ let rec compile_expression (expr : I.expression) : O.Expr.t =
       return @@ While_left { cond = collection; body = {lam_var = binder; body} }
     | _ -> assert false)
   | E_fold ((binder, body), collection, init) ->
-    let collection = compile_expression collection in
-    let init = compile_expression init in
+    let collection = compile_expression  collection in
+    let init = compile_expression  init in
     let binder = compile_binder binder in
-    let body = compile_expression body in
+    let body = compile_expression  body in
     return @@ Fold_left { collection; init; fold = {lam_var=binder; body} }
   | E_fold_right ((binder, body), (collection, _elt_type), init) ->
-    let collection = compile_expression collection in
-    let init = compile_expression init in
+    let collection = compile_expression  collection in
+    let init = compile_expression  init in
     let binder = compile_binder binder in
-    let body = compile_expression body in
+    let body = compile_expression  body in
     return @@ Fold_right { collection; init; fold = {lam_var=binder; body} }
   | I.E_raw_michelson nodes ->
     let micheline = compile_micheline_seq nodes in
@@ -539,7 +551,7 @@ let rec compile_expression (expr : I.expression) : O.Expr.t =
       return
       @@ Lambda
            { lam_var = (var, var_ty)
-           ; body = {desc = Raw_michelson { michelson = micheline; args = [ O.Dsl.variable ~range var var_ty ]}; range = range; type_= body_ty}
+           ; body = {desc = Raw_michelson { michelson = micheline; args = [ O.Dsl.variable ~range var var_ty ]}; range = range; type_= body_ty; annotations = O.Annotations.empty}
            }
     | _ -> assert false)
   | E_inline_michelson (code, args') ->
@@ -547,7 +559,9 @@ let rec compile_expression (expr : I.expression) : O.Expr.t =
     return @@ Raw_michelson { michelson = micheline; args }
 
   | I.E_global_constant (hash, args) ->
-    assert false
+    let args = List.map args ~f:(compile_expression ) in
+    return @@ Global_constant { hash; args }
+
     (*TODO: let args = List.map args ~f:compile_expression in
     return @@ Global_constant { hash; args }
 
@@ -565,10 +579,10 @@ let rec compile_expression (expr : I.expression) : O.Expr.t =
     let parameter = compile_type_expression parameter_type in
     let storage = compile_type_expression storage_type in
     let binder = compile_binder binder in
-    let code = compile_expression code in
-    let delegate = compile_expression delegate in
-    let initial_balance = compile_expression initial_balance in
-    let initial_storage = compile_expression initial_storage in
+    let code = compile_expression  code in
+    let delegate = compile_expression  delegate in
+    let initial_balance = compile_expression  initial_balance in
+    let initial_storage = compile_expression  initial_storage in
     return
     @@ Create_contract
          { 
@@ -580,22 +594,22 @@ let rec compile_expression (expr : I.expression) : O.Expr.t =
          }
   | E_create_contract _ -> assert false
 
-and compile_contract (binder:Value_var.t) (input_ty: I.type_expression) (body:I.expression) =
+and compile_contract  (binder:Value_var.t) (input_ty: I.type_expression) (body:I.expression) =
   let binder = compile_var binder in
   let input_ty = compile_type_expression input_ty in
-  let body = compile_expression body in
+  let body = compile_expression  body in
   binder, input_ty, body
 
 and compile_function ({ binder; body } : I.anon_function) =
   let ret_ty = compile_type_expression body.type_expression in
-  let body = compile_expression body in
+  let body = compile_expression  body in
   let lam_var = compile_var binder in
   lam_var, ret_ty, body
 
 and compile_tuple_index (index : int) : O.Row.Path.t = O.Row.Path.Here [ index ]
 
 and compile_binders binders ~(in_ : O.Expr.t) : (O.Expr.var * O.Type.t) * O.Expr.t =
-  let create_expr (desc : O.Expr.desc) : O.Expr.t = { desc = desc; range = in_.range; type_ = in_.type_  } in
+  let create_expr (desc : O.Expr.desc) : O.Expr.t = { desc = desc; range = in_.range; type_ = in_.type_; annotations = O.Annotations.empty  } in
   match binders with
   | [] -> assert false
   | [ binder ] -> compile_binder binder, in_
@@ -609,7 +623,7 @@ and compile_binders binders ~(in_ : O.Expr.t) : (O.Expr.var * O.Type.t) * O.Expr
 and compile_inline_michelson (code, args') =
   let args_compiled = List.map args' ~f:(
       fun e -> (
-        compile_expression e
+        compile_expression  e
     )) in
     let args_ty = List.map args' ~f:(
       fun e -> (
@@ -624,6 +638,20 @@ and compile_inline_michelson (code, args') =
     let replace m =
       let open Tezos_micheline.Micheline in
       match m with
+      | Prim (_, "SAPLING_EMPTY_STATE", [Prim (_, s, [], [id])], [])
+        when String.equal "typeopt" s && String.is_prefix ~prefix:"$" id ->
+        let id = String.chop_prefix_exn ~prefix:"$" id in
+        let id = Int.of_string id in
+        used := id :: !used;
+        (match List.nth args_ty id with
+        | Some (prim) ->
+          (match (Lltz_codegen.convert_type prim) with
+          | (Prim (_, Michelson.Ast.Prim.T Michelson.Ast.Prim.Type.Option, [ Prim (_, _, [Int(_,z)], _) ], _))  
+          -> 
+            let instruction = Michelson.Ast.Instruction.sapling_empty_state (Int.of_string (Z.to_string z)) in
+            Tezos_micheline.Micheline.map_node (fun _ -> ()) (fun prim -> Michelson.Ast.Prim.to_string prim) (instruction)
+          | _ -> raise_s [%message "could not resolve (SAPLING_EMPTY_STATE $)" (id : int)])
+        | _ -> assert false)
       | Prim (_, s, [], [ id ])
         when String.equal "typeopt" s && String.is_prefix ~prefix:"$" id ->
         let id = String.chop_prefix_exn ~prefix:"$" id in
@@ -707,5 +735,5 @@ and compile_inline_michelson (code, args') =
     in
     let code = (List.map ~f:(wipe_locations (dummy_loc)) code) in
     let micheline = compile_micheline_seq code in
-    let args = List.map args' ~f:compile_expression in
+    let args = List.map args' ~f:(compile_expression ) in
     micheline, args
