@@ -87,11 +87,6 @@ module Eq = struct
   type sig_entry = T.intf_entry reg
 end
 
-(*
-module Folding_orig = Folding (* TEMPORARY (shadowing) *)
-module Folding' = Folding_orig (Eq')
- *)
-
 module Folding = Make_Folding (Eq)
 
 (* EXPRESSIONS *)
@@ -140,10 +135,9 @@ let compile_prefix_op (expr : T.variable reg) op =
 
 let compile_chain_assignment op expr =
   let Region.{ value = expr1, expr2; region } = expr in
-  let loc = Location.lift expr.region in
-  let return x = Location.wrap ~loc x in
+  let loc = Location.lift region in
   let op = O.Assign_chainable.Assignment_operator op in
-  return @@ O.E_struct_assign_chainable { expr1; op; expr2 }
+  Location.wrap ~loc @@ O.E_struct_assign_chainable { expr1; op; expr2 }
 
 
 let compile_generics (node : T.variable list) : O.Ty_variable.t Nonempty_list.t option =
@@ -155,8 +149,6 @@ let compile_generics (node : T.variable list) : O.Ty_variable.t Nonempty_list.t 
 
 
 let compile_function (expr : T.arrow_fun_expr reg) =
-  let loc = Location.lift expr.region in
-  let return x = Location.wrap ~loc x in
   let T.{ generics; parameters; rhs_type; fun_body } = expr.value in
   let type_params = compile_generics generics in
   let parameters : T.pattern O.Param.t list =
@@ -173,11 +165,61 @@ let compile_function (expr : T.arrow_fun_expr reg) =
     List.map ~f parameters
   in
   let ret_type = rhs_type in
-  return
+  Location.wrap ~loc:(Location.lift expr.region)
   @@
   match fun_body with
   | T.Stmt_body body -> O.E_block_poly_fun { type_params; parameters; ret_type; body }
   | Expr_body body -> O.E_poly_fun { type_params; parameters; ret_type; body }
+
+
+let rec extract_rev_path ((expr, property) : T.expr * T.variable) =
+  match expr with
+  | T.E_member member ->
+    let sub_expr, properties = extract_rev_path member.value in
+    sub_expr, Nonempty_list.cons property properties
+  | _ -> expr, Nonempty_list.[ property ]
+
+
+let extract_rev_path (node : T.expr * T.variable) : T.expr * T.variable list =
+  let expr, path = extract_rev_path node in
+  expr, Nonempty_list.to_list path
+
+
+let split_rev_path (node : T.variable list) : T.variable list * T.variable list =
+  let rec filter vars property_path =
+    match vars with
+    | [] -> [], property_path
+    | v :: path ->
+      if String.is_empty v#payload
+      then filter vars property_path (* Should not happen *)
+      else if Char.is_lowercase v#payload.[0]
+      then filter path (v :: property_path)
+      else List.rev vars, property_path
+  in
+  filter node []
+
+
+let compile_member (node : (T.expr * T.variable) reg) =
+  let loc = Location.lift node.region in
+  let return x = Location.wrap ~loc x in
+  let expr, path = extract_rev_path node.value in
+  let module_path, property_path = split_rev_path path in
+  return
+  @@
+  match expr, module_path, property_path with
+  | T.E_var v, m, p1 :: p when Char.is_uppercase v#payload.[0] ->
+    let module_path = Nonempty_list.(v :: m) in
+    let module_path = Nonempty_list.map ~f:compile_mvar module_path in
+    let f acc var =
+      let region = Region.cover (T.region_of_expr acc) var#region in
+      T.E_member Region.{ region; value = acc, var }
+    in
+    let field = List.fold_left ~f ~init:(T.E_var p1) p in
+    O.E_module_open_in { module_path; field; field_as_open = false }
+  | _ ->
+    let f variable = O.Selection.FieldName (mk_label variable) in
+    let property_path = List.map ~f property_path in
+    O.E_proj (expr, property_path)
 
 
 let expr (expr : Eq.expr) : Folding.expr =
@@ -222,11 +264,7 @@ let expr (expr : Eq.expr) : Folding.expr =
   | E_int expr -> return @@ O.E_literal (Literal_int (snd expr#payload))
   | E_leq expr -> compile_bin_op LE expr
   | E_lt expr -> compile_bin_op LT expr
-  | E_member expr ->
-    (* We assume that there is no need for unspooling [expr]. Correct? *)
-    let expr, name = expr.value in
-    let name = O.Selection.FieldName (mk_label name) in
-    return (O.E_proj (expr, [ name ]))
+  | E_member expr -> compile_member expr
   | E_michelson expr ->
     (* Module [Strip] wraps for now a [E_typed] around the
        [E_michelson], so we can safely ignore here the type
