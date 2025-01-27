@@ -41,9 +41,7 @@ type simple_path =
   ; selected : variable
   }
 
-(* TEMPORARY *)
-
-let print_path (path : simple_path) : unit =
+let print_simple_path (path : simple_path) : unit =
   let { path; selected } = path in
   let app v acc = if acc = "" then v#payload else v#payload ^ "." ^ acc in
   let path = Core.List.fold_right ~f:app ~init:"" path in
