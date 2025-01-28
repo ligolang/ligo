@@ -15,6 +15,13 @@ module Wrap = Lexing_shared.Wrap
 let get_region : (ts_tree -> Region.t) ref =
   ref (fun _ -> failwith "Internal error: Print_cst.get_region")
 
+(* Partially evaluating wrappers so they print regions in case of
+   error (shadowing) *)
+
+let child_with_field = child_with_field ~get_region
+let named_child_ranked = named_child_ranked ~get_region
+let child_ranked = child_ranked ~get_region
+
 (* To print the AST in ASCII art *)
 
 module Tree = Cst_shared.Tree
@@ -24,24 +31,6 @@ module Tree = Cst_shared.Tree
 let mk_child_opt = Tree.mk_child_opt
 let mk_child = Tree.mk_child
 let mk_children_list = Tree.mk_children_list
-
-let tree_of_list ?(comments = []) state node printer raw_children =
-  let region = !get_region node
-  and label = get_name node
-  and f raw_child nodes = mk_child (printer ?comments:None) raw_child :: nodes in
-  let children =
-    match raw_children with
-    | [] -> []
-    | fst_raw_child :: siblings ->
-      let printer = printer ?comments:(Some comments) in
-      let fst_child = mk_child printer fst_raw_child in
-      fst_child :: List.fold_right ~f ~init:[] siblings
-  in
-  Tree.make_tree ~region state label children
-
-let tree_of_named_children ?(comments = []) state node printer =
-  let raw_children = collect_named_children node in
-  tree_of_list ~comments state node printer raw_children
 
 let make_unary state root printer child =
   let region = !get_region root
@@ -60,13 +49,26 @@ let print_error_node state node =
   then make_node state node
   else make_unary state node Tree.make_node "UNMATCHED"
 
-let mk_error_children node =
-  mk_children_list print_error_node @@ collect_error_children node
-
 let make_tree state node children =
   let region = !get_region node
   and label = get_name node in
-  Tree.make ~region state label (mk_error_children node @ children)
+  Tree.make ~region state label children
+
+let tree_of_list ?(comments = []) state node printer raw_children =
+  let f raw_child nodes = mk_child (printer ?comments:None) raw_child :: nodes in
+  let children =
+    match raw_children with
+    | [] -> []
+    | fst_raw_child :: siblings ->
+      let printer = printer ?comments:(Some comments) in
+      let fst_child = mk_child printer fst_raw_child in
+      fst_child :: List.fold_right ~f ~init:[] siblings
+  in
+  make_tree state node children
+
+let tree_of_named_children ?(comments = []) state node printer =
+  let raw_children = collect_named_children node in
+  tree_of_list ~comments state node printer raw_children
 
 (* We shadow [make_node] above *)
 

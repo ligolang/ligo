@@ -13,13 +13,13 @@
   decode
   ast_stripped
   strip_err
-  strip)
+  strip
+  check)
  (libraries
   tree_sitter
   tree_sitter_typescript
   simple-utils ;; For source regions ([Region])
   cst_shared ;; For printing the TS CST ([Print_cst])
-             ;;  cst_jsligo ;; For mapping the TS CST to JsLIGO CST
   lexing_shared ;; For metadata ([Wrap])
   hex
   zarith
@@ -42,6 +42,11 @@
  (name strip_main)
  (libraries typescript_ast)
  (modules strip_main))
+
+(executable
+ (name check_main)
+ (libraries typescript_ast)
+ (modules check_main))
 
 ;; Local build of a standalone parser for node-types.json
 
