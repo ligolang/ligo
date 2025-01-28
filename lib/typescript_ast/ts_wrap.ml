@@ -87,15 +87,16 @@ let get_name_res = function
 
 let child_with_field ?(get_region : (ts_tree -> Region.t) ref option) field node =
   let child = TS_fun.ts_node_child_by_field_name node field (uint32_len field) in
-  if is_null child
-  then (
-    let name = get_name node in
-    let region =
-      match get_region with
-      | None -> ""
-      | Some get_region -> " (" ^ (!get_region node)#compact `Byte ^ ")"
-    in
-    Error (sprintf "INVALID: Node %S%s is missing the field %S." name region field))
+  let name = get_name node in
+  let region =
+    match get_region with
+    | None -> ""
+    | Some get_region ->
+      let region = !get_region child in
+      if Region.is_empty region then "" else " (" ^ region#compact `Byte ^ ")"
+  in
+  if is_null child || Core.String.is_empty region
+  then Error (sprintf "ERROR: Node %S%s is missing the field %S." name region field)
   else Result.Ok child
 
 let child_with_field_opt field node =
