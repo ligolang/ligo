@@ -228,20 +228,6 @@ and lower_decl decl =
     Some
       (decl_wrap loc
       @@ D_type { type_binder = var; type_expr = type_decl; type_attr = attr })
-  | D_type_predef (var, literal, arity) ->
-    (* TODO: maybe this should be a special type_decl instead? *)
-    let type_decl =
-      (* TODO: lacking t_constant *)
-      make_t ~loc @@ T_constant (literal, arity)
-    in
-    (* TODO; attributes here? *)
-    Some
-      (decl_wrap loc
-      @@ D_type
-           { type_binder = var
-           ; type_expr = type_decl
-           ; type_attr = Type_or_module_attr.default_attributes
-           })
   | D_module (var, attr, mod_expr) ->
     let module_ = lower_mod_expr mod_expr in
     Some
@@ -260,6 +246,20 @@ and lower_decl decl =
     Some
       (decl_wrap loc
       @@ D_signature { signature_binder = var; signature; signature_attr = attr })
+  | D_type_predef (var, literal, arity) ->
+    (* TODO: maybe this should be a special type_decl instead? *)
+    let type_decl =
+      (* TODO: lacking t_constant *)
+      make_t ~loc @@ T_constant (literal, arity)
+    in
+    (* TODO; attributes here? *)
+    Some
+      (decl_wrap loc
+      @@ D_type
+           { type_binder = var
+           ; type_expr = type_decl
+           ; type_attr = Type_or_module_attr.default_attributes
+           })
   | D_type_unsupported -> None
   | D_attribute -> None
   | D_error error -> raise_error error

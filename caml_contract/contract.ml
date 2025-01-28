@@ -1,25 +1,27 @@
 [@@@ligo]
 
-type data =
+(* contract *)
+type storage =
   | A
   | B
   | C
 
-type storage = data
-type return = operation option * storage
+type return = operation list * storage
 
-external add : int -> int -> int = "%ligo" [@@ligo.internal.constant "ADD"]
+let x : nat =
+  (let module M = struct
+     external magic : unit -> 'a = "%identity"
+   end
+   in
+  M.magic ()) [@ligo.internal.literal 1n]
 
-let[@entry] next () storage : return =
-  let storage =
-    match storage with
-    | A -> B
-    | B -> C
-    | C -> A
-  in
-  None, storage
+let add (x : nat) (y : nat) : nat =
+  ((let module M = struct
+      external magic : unit -> 'a = "%identity"
+    end
+    in
+   M.magic ())
+     x
+     y [@ocaml.warning "-20"] [@ligo.internal.constant "ADD"])
 
-let x = "OCaml in Ligo"
-let x = "x.ligo.ml"
-let y = "TypeScript in Ligo"
-let y = "x.ligo.ts"
+let next () (storage : storage) : return = [], storage

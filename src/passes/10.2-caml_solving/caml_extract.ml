@@ -66,7 +66,9 @@ module Attributes = struct
     | Ligo_internal_predef
 
   (* type expr_attr = Ligo_internal_literal of { l : Literal_value.t } *)
-  type prim_attr = Ligo_internal_constant of { constant : Constant.constant' }
+  type expr_attr =
+    | Ligo_internal_constant of { constant : Constant.constant' }
+    | Ligo_internal_literal of { literal : Literal_value.t }
 
   let attr_wrap ~loc desc = Location.wrap ~loc desc
   let error_unknown_attribute () = raise_pre_error @@ E_unsupported
@@ -88,7 +90,7 @@ module Attributes = struct
     | _ -> error_unknown_attribute ()
 
 
-  let extract_prim_attr ~loc name payload =
+  let extract_expr_attr ~loc name payload =
     match name, payload with
     | ( "ligo.internal.constant"
       , PStr
@@ -107,6 +109,41 @@ module Attributes = struct
       | Some constant -> attr_wrap ~loc @@ Ligo_internal_constant { constant }
       | None -> failwith "bad constant")
     | "ligo.internal.constant", _ -> failwith "bad constant payload"
+    | ( "ligo.internal.literal"
+      , PStr
+          [ { pstr_desc =
+                Pstr_eval
+                  ( { pexp_desc = Pexp_constant constant
+                    ; pexp_loc
+                    ; pexp_loc_stack = _
+                    ; pexp_attributes = []
+                    }
+                  , [] )
+            ; pstr_loc
+            }
+          ] ) ->
+      (* TODO: this is almost duplicated from the typer *)
+      let open Literal_value in
+      let literal =
+        match constant with
+        | Pconst_integer (n, Some 'n') ->
+          (* TODO: exception here *)
+          let n = Z.of_string n in
+          Literal_nat n
+        | Pconst_integer (n, Some 'i') ->
+          (* TODO: exception here *)
+          let n = Z.of_string n in
+          Literal_int n
+        | Pconst_string (s, _loc, None) ->
+          (* TODO: verbatim vs standard? *)
+          Literal_string (Ligo_string.standard s)
+        | Pconst_integer (_, _)
+        | Pconst_char _
+        | Pconst_string (_, _, _)
+        | Pconst_float (_, _) -> failwith "bad literal payload"
+      in
+      attr_wrap ~loc @@ Ligo_internal_literal { literal }
+    | "ligo.internal.literal", _ -> failwith "bad literal payload"
     | _ -> error_unknown_attribute ()
 
 
@@ -132,7 +169,7 @@ module Attributes = struct
 
   (* TODO: move Ligo attributes to this *)
   let extract_type_attrs attrs = extract_attributes extract_type_attr attrs
-  let extract_prim_attrs attrs = extract_attributes extract_prim_attr attrs
+  let extract_expr_attrs attrs = extract_attributes extract_expr_attr attrs
 end
 
 (* TODO: this is a bad name *)
@@ -483,6 +520,21 @@ let rec extract_expr expr =
   let on_error error = expr_wrap loc type_ @@ E_error error in
   let@@ () = try_recover ~loc ~on_error in
   let () = List.iter exp_extra ~f:extract_expr_extra in
+  match Attributes.extract_expr_attrs exp_attributes with
+  | [ { wrap_content = Ligo_internal_constant { constant }; location = _ } ] ->
+    extract_expr_constant ~loc ~type_ constant exp_desc
+  | [ { wrap_content = Ligo_internal_literal { literal }; location = _ } ] ->
+    expr_wrap loc type_ @@ E_literal literal
+  | [] -> extract_expr_desc ~loc ~type_ ~exp_env ~exp_desc ~exp_type
+  | _ :: _ ->
+    (* TODO: better errors *)
+    raise_pre_error @@ E_unsupported
+
+
+(* TODO: this is not ideal *)
+
+and extract_expr_desc ~loc ~type_ ~exp_env ~exp_desc ~exp_type =
+  (* TODO: exp_type? *)
   match exp_desc with
   | Texp_ident (path, _lident, value_desc) ->
     (* TODO: high priority *)
@@ -615,6 +667,52 @@ and extract_expr_extra expr_extra =
   | Texp_newtype _ ->
     (* TODO: supporting this is a good idea? *)
     raise_pre_error @@ E_unimplemented
+
+
+and extract_expr_constant ~loc ~type_ constant exp_desc =
+  match exp_desc with
+  | Texp_apply (_funct, args) ->
+    (* TODO: sanitize funct *)
+    let arguments =
+      List.map
+        ~f:(fun (label, arg) ->
+          match label, arg with
+          | Nolabel, Some arg -> extract_expr arg
+          | Nolabel, None -> raise_pre_error @@ E_unimplemented
+          | Labelled _, _ -> raise_pre_error @@ E_labelled_parameters_not_supported
+          | Optional _, _ -> raise_pre_error @@ E_labelled_parameters_not_supported)
+        args
+    in
+    expr_wrap loc type_ @@ E_constant { cons_name = constant; arguments }
+  | Texp_ident (_, _, _)
+  | Texp_constant _
+  | Texp_let (_, _, _)
+  | Texp_function _
+  | Texp_match (_, _, _)
+  | Texp_try (_, _)
+  | Texp_tuple _
+  | Texp_construct (_, _, _)
+  | Texp_variant (_, _)
+  | Texp_record _
+  | Texp_field (_, _, _)
+  | Texp_setfield (_, _, _, _)
+  | Texp_array _
+  | Texp_ifthenelse (_, _, _)
+  | Texp_sequence (_, _)
+  | Texp_while (_, _)
+  | Texp_for (_, _, _, _, _, _)
+  | Texp_send (_, _)
+  | Texp_new (_, _, _)
+  | Texp_instvar (_, _, _)
+  | Texp_setinstvar (_, _, _, _)
+  | Texp_override (_, _)
+  | Texp_letmodule (_, _, _, _, _)
+  | Texp_letexception (_, _)
+  | Texp_assert _ | Texp_lazy _
+  | Texp_object (_, _)
+  | Texp_pack _ | Texp_letop _ | Texp_unreachable
+  | Texp_extension_constructor (_, _)
+  | Texp_open (_, _) -> raise_pre_error @@ E_unsupported
 
 
 (* let [@attr] {rec,nonrec} x = M *)
@@ -823,7 +921,7 @@ and extract_stri stri =
   match str_desc with
   | Tstr_eval _ -> raise_pre_error @@ E_unimplemented
   | Tstr_value (rec_flag, bindings) -> extract_str_let rec_flag bindings
-  | Tstr_primitive value -> extract_primitive ~loc value
+  | Tstr_primitive _ -> raise_pre_error @@ E_unsupported
   | Tstr_type (_, [ decl ]) -> extract_type_decl decl
   (* TODO: should and be supported at all?? *)
   | Tstr_type (Nonrecursive, _) -> raise_pre_error @@ E_unimplemented
@@ -1050,32 +1148,6 @@ and extract_sig_module decl =
   let sig_expr = extract_mod_type md_type in
   let signature = signature_of_sig_expr sig_expr in
   sig_item_wrap loc @@ S_module (id, signature)
-
-
-and extract_primitive ~loc vd =
-  let { val_id
-      ; val_name = _
-      ; val_desc = _
-      ; val_val = _
-      ; val_prim
-      ; val_loc = _
-      ; val_attributes
-      }
-    =
-    vd
-  in
-  (* TODO: better this *)
-  assert (
-    match val_prim with
-    | [ "%ligo" ] -> true
-    | _ -> false);
-  (* TODO: use val_loc? *)
-  (* TODO: check val_desc type? *)
-  (* TODO: merlin.loc *)
-  match Attributes.extract_prim_attrs val_attributes with
-  | [ { wrap_content = Ligo_internal_constant { constant }; location = _ } ] ->
-    decl_wrap loc @@ D_constant (val_id, constant)
-  | [] | _ :: _ -> raise_pre_error @@ E_unsupported
 
 
 and extract_type_decl decl =

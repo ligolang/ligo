@@ -164,6 +164,7 @@ let check_extract str =
   | Ok errors -> errors
   | Error error -> [ stri_of_error error ]
   | exception _exn ->
+    Format.eprintf "%s\n%!" (Printexc.get_backtrace ());
     (* TODO: properly manage this *)
     assert false
 

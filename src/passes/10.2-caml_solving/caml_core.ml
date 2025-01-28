@@ -74,6 +74,7 @@ type expr =
 and expr_desc =
   | E_var of Path.t
   | E_literal of Literal_value.t
+  | E_constant of expr Constant.t
   (* TODO: tag poly expressions and patterns here? *)
   (* TODO: Value_attr errors *)
   | E_let of pat * Value_attr.t * expr * expr
@@ -116,7 +117,6 @@ and decl_desc =
   | D_module_include of mod_expr
   | D_module_type of (Ident.t * Signature_attr.t * sig_expr)
   (* FFI *)
-  | D_constant of Ident.t * Constant.constant'
   | D_type_predef of (Ident.t * Literal_types.t * int)
   | D_type_unsupported of Ident.t
   | D_attribute

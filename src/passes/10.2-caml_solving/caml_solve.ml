@@ -35,7 +35,6 @@ module Context : sig
 
   (* vars *)
   val enter_value : Ident.t -> Value_var.t -> context -> context
-  val enter_value_external : Ident.t -> context -> context
   val enter_type : Ident.t -> Type_var.t -> context -> context
   val enter_type_predef_unsupported : Ident.t -> context -> context
 
@@ -73,16 +72,12 @@ end = struct
   (* TODO: core map *)
   module String_map = Stdlib.Map.Make (String)
 
-  type value_info =
-    | Value_external
-    | Value_subst_to of Value_var.t
-
   type type_info =
     | Type_unsupported_predef
     | Type_subst_to of Type_var.t
 
   type md_context =
-    { md_values : value_info String_map.t
+    { md_values : Value_var.t String_map.t
     ; md_types : type_info String_map.t
     ; md_modules : (Module_var.t * md_context) String_map.t
     ; md_signatures : (Module_var.t * md_context) String_map.t
@@ -90,7 +85,7 @@ end = struct
 
   (* TODO: try with in all OCaml functions *)
   type context =
-    { values : value_info Ident.Map.t
+    { values : Value_var.t Ident.Map.t
     ; types : type_info Ident.Map.t
     ; modules : (Module_var.t * md_context) Ident.Map.t
     ; signatures : (Module_var.t * md_context) Ident.Map.t
@@ -123,11 +118,7 @@ end = struct
     { ctx with values; local = { ctx.local with md_values } }
 
 
-  let enter_value ident value_var ctx =
-    enter_value_info ident (Value_subst_to value_var) ctx
-
-
-  let enter_value_external ident ctx = enter_value_info ident Value_external ctx
+  let enter_value ident var ctx = enter_value_info ident var ctx
 
   let enter_type_info ident type_info ctx =
     let { values = _; types; modules = _; signatures = _; local } = ctx in
@@ -214,16 +205,14 @@ end = struct
     match path with
     | Pident ident ->
       (match Ident.Map.find_opt ident ctx.values with
-      | Some Value_external -> failwith "external value reached"
-      | Some (Value_subst_to value) ->
+      | Some value ->
         (* TODO: what about module_path *)
         Module_access.{ module_path = []; element = value }
       | None -> error_unexpected_value ~loc ())
     | Pdot (module_, right) ->
       let (rev_module_hd, rev_module_tl), ctx = solve_module_path ~loc module_ ctx in
       (match String_map.find_opt right ctx.md_values with
-      | Some Value_external -> failwith "external value reached"
-      | Some (Value_subst_to value) ->
+      | Some value ->
         let module_path = List.rev (rev_module_hd :: rev_module_tl) in
         Module_access.{ module_path; element = value }
       | None -> error_unexpected_value ~loc ())
@@ -471,6 +460,9 @@ let rec solve_expr ctx vars expr =
     let var = solve_value_path ~loc path ctx in
     expr_wrap loc type_ @@ E_var var
   | E_literal lit -> expr_wrap loc type_ @@ E_literal lit
+  | E_constant constant ->
+    let constant = Constant.map (fun expr -> solve_expr ctx vars expr) constant in
+    expr_wrap loc type_ @@ E_constant constant
   | E_let (binder, attr, value, body) ->
     (* TODO: recursive *)
     let inner_ctx, binder = solve_pat ctx vars binder in
@@ -576,6 +568,7 @@ and solve_module ctx module_ =
 and solve_decl ctx decl =
   let vars = Hashtbl.create (module Int) in
   let ctx, decl = solve_decl_inner ctx vars decl in
+  (* TODO: this may be triggered by a generic return *)
   assert (Hashtbl.is_empty vars);
   ctx, decl
 
@@ -595,19 +588,6 @@ and solve_decl_inner ctx vars decl =
     (* TODO: attributes here *)
     let attr = Type_or_module_attr.default_attributes in
     ctx, decl_wrap loc @@ D_type (var, attr, type_decl)
-  | D_constant (ident, constant) ->
-    let _ = assert false in
-    (* TODO: remove the need for this? *)
-    let ctx = enter_value_external ident ctx in
-    ctx, None
-  | D_type_predef (ident, literal, arity) ->
-    (* TODO: this is brittle, what if duplicated? *)
-    let var = Type_var.of_input_var ~loc @@ Literal_types.to_string @@ literal in
-    let ctx = enter_type ident var ctx in
-    ctx, decl_wrap loc @@ D_type_predef (var, literal, arity)
-  | D_type_unsupported ident ->
-    let ctx = enter_type_predef_unsupported ident ctx in
-    ctx, decl_wrap loc @@ D_type_unsupported
   | D_module (ident, attr, mod_expr) ->
     let var = fresh_module ident in
     let ctx, module_ =
@@ -623,6 +603,14 @@ and solve_decl_inner ctx vars decl =
       enter_signature ident var ctx @@ fun ctx -> solve_sig_expr ctx sig_expr
     in
     ctx, decl_wrap loc @@ D_module_type (var, attr, signature)
+  | D_type_predef (ident, literal, arity) ->
+    (* TODO: this is brittle, what if duplicated? *)
+    let var = Type_var.of_input_var ~loc @@ Literal_types.to_string @@ literal in
+    let ctx = enter_type ident var ctx in
+    ctx, decl_wrap loc @@ D_type_predef (var, literal, arity)
+  | D_type_unsupported ident ->
+    let ctx = enter_type_predef_unsupported ident ctx in
+    ctx, decl_wrap loc @@ D_type_unsupported
   | D_attribute -> ctx, decl_wrap loc @@ D_attribute
   | D_error error -> ctx, decl_wrap loc @@ D_error error
 

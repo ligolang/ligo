@@ -252,6 +252,104 @@ let _tests =
 (* TODO: by the end ensure the OCaml produced stdlib
   is equivalent to the Ligo one in names and types *)
 
+let ocaml_predef ~loc =
+  [%str
+    [@@@ocaml.warning "-34"]
+
+    (* OCaml predefs *)
+    type nonrec unit = unit = () [@@ligo.internal.ocaml.predef.register]
+
+    (* TODO: different int for Ligo? *)
+    type nonrec int = int [@@ligo.internal.ocaml.predef.register]
+    type nonrec char = char [@@ligo.internal.ocaml.predef.unsupported]
+    type nonrec string = string [@@ligo.internal.ocaml.predef.register]
+    type nonrec bytes = bytes [@@ligo.internal.ocaml.predef.register]
+    type nonrec float = float [@@ligo.internal.ocaml.predef.unsupported]
+
+    type nonrec bool = bool =
+      | false
+      | true
+    [@@ligo.internal.ocaml.predef.weird]
+
+    type nonrec exn = exn [@@ligo.internal.ocaml.predef.unsupported]
+    type nonrec 'a array = 'a array [@@ligo.internal.ocaml.predef.unsupported]
+
+    type nonrec 'a list = 'a list =
+      | []
+      | ( :: ) of 'a * 'a list
+    [@@ligo.internal.ocaml.predef.register]
+
+    type nonrec 'a option = 'a option =
+      | None
+      | Some of 'a
+    [@@ligo.internal.ocaml.predef.weird]
+
+    type nonrec nativeint = nativeint [@@ligo.internal.ocaml.predef.unsupported]
+    type nonrec int32 = int32 [@@ligo.internal.ocaml.predef.unsupported]
+    type nonrec int64 = int64 [@@ligo.internal.ocaml.predef.register]
+    type nonrec 'a lazy_t = 'a lazy_t [@@ligo.internal.ocaml.predef.unsupported]
+
+    type nonrec extension_constructor = extension_constructor
+    [@@ligo.internal.ocaml.predef.unsupported]
+
+    type nonrec floatarray = floatarray [@@ligo.internal.ocaml.predef.unsupported]]
+
+
+let stdlib ~loc =
+  let open Ppxlib.Ast_builder.Default in
+  let ocaml_predef = pmod_structure ~loc @@ ocaml_predef ~loc in
+  [%str
+    include ([%m ocaml_predef] : sig end) [@@ligo.internal.ocaml.predef]
+
+    (* Ligo Constants *)
+    (* TODO: better letters for constructors *)
+    type operation [@@ligo.internal.predef]
+    type nat [@@ligo.internal.predef]
+    type tez [@@ligo.internal.predef]
+    type address [@@ligo.internal.predef]
+    type signature [@@ligo.internal.predef]
+    type key [@@ligo.internal.predef]
+    type key_hash [@@ligo.internal.predef]
+    type timestamp [@@ligo.internal.predef]
+    type chain_id [@@ligo.internal.predef]
+    type ('k, 'v) map [@@ligo.internal.predef]
+    type ('k, 'v) big_map [@@ligo.internal.predef]
+    type 'v set [@@ligo.internal.predef]
+    type 'a contract [@@ligo.internal.predef]
+    type ('l, 'r) michelson_or [@@ligo.internal.predef]
+    type ('l, 'r) michelson_pair [@@ligo.internal.predef]
+    type baker_hash [@@ligo.internal.predef]
+    type pvss_key [@@ligo.internal.predef]
+    type 'a sapling_transaction [@@ligo.internal.predef]
+    type 'a sapling_state [@@ligo.internal.predef]
+    type baker_operation [@@ligo.internal.predef]
+    type bls12_381_g1 [@@ligo.internal.predef]
+    type bls12_381_g2 [@@ligo.internal.predef]
+    type bls12_381_fr [@@ligo.internal.predef]
+    type never [@@ligo.internal.predef]
+    type 'd ticket [@@ligo.internal.predef]
+    type ('a, 'b) dynamic_entrypoint [@@ligo.internal.predef]
+    type michelson_program [@@ligo.internal.predef]
+    type ('a, 'b) michelson_contract [@@ligo.internal.predef]
+    type ('a, 'b) typed_address [@@ligo.internal.predef]
+    type mutation [@@ligo.internal.predef]
+    type tx_rollup_l2_address [@@ligo.internal.predef]
+    type 'a pbt_gen [@@ligo.internal.predef]
+    type 'a views [@@ligo.internal.predef]
+    type chest [@@ligo.internal.predef]
+    type chest_key [@@ligo.internal.predef]
+
+    (* module Int = struct
+        external add : int -> int -> int = "%ligo" [@@ligo.internal.constant "ADD"]
+  
+        let add x y = add x y
+  
+        external sub : int -> int -> int = "SUB" [@@ligo.internal.michelson]
+  
+        let f x y = add 1 2
+      end *)]
+
+
 let main () =
   let loc =
     let fname, lnum, cnum, enum = __POS__ in
@@ -262,101 +360,29 @@ let main () =
     Warnings.{ loc_start; loc_end; loc_ghost = false }
   in
   let code =
-    [%str
-      (* TODO: major concern on using aliases
-        is about shadowing names on the LSP *)
-      (* used by variants *)
-      type nonrec unit = unit = () [@@ligo.internal.predef]
+    stdlib ~loc
+    @ [%str
+        (* contract *)
+        type storage =
+          | A
+          | B
+          | C
 
-      (* OCaml predefs *)
+        type return = operation list * storage
 
-      type nonrec int = int [@@ligo.internal.predef]
-      type nonrec char = char [@@ligo.internal.predef.unsupported]
-      type nonrec string = string [@@ligo.internal.predef]
-      type nonrec bytes = bytes [@@ligo.internal.predef]
-      type nonrec float = float [@@ligo.internal.predef.unsupported]
+        let add (x : nat) (y : nat) =
+          ((let module M = struct
+              type t = nat -> nat -> nat
 
-      type nonrec bool = bool =
-        | false
-        | true
+              external magic : unit -> t = "%identity"
+            end
+            in
+           M.magic ())
+             x
+             y [@ligo.internal.constant "ADD"])
 
-      type nonrec exn = exn [@@ligo.internal.predef.unsupported]
-      type nonrec 'a array = 'a array [@@ligo.internal.predef.unsupported]
 
-      type nonrec 'a list = 'a list =
-        | []
-        | ( :: ) of 'a * 'a list
-      [@@ligo.internal.predef]
-
-      type nonrec 'a option = 'a option =
-        | None
-        | Some of 'a
-
-      type nonrec nativeint = nativeint [@@ligo.internal.predef.unsupported]
-      type nonrec int32 = int32 [@@ligo.internal.predef.unsupported]
-      type nonrec int64 = int64 [@@ligo.internal.predef]
-      type nonrec 'a lazy_t = 'a lazy_t [@@ligo.internal.predef.unsupported]
-
-      type nonrec extension_constructor = extension_constructor
-      [@@ligo.internal.predef.unsupported]
-
-      type nonrec floatarray = floatarray [@@ligo.internal.predef.unsupported]
-
-      (* Ligo Constants *)
-      (* TODO: better letters for constructors *)
-      type operation [@@ligo.internal.predef]
-      type nat [@@ligo.internal.predef]
-      type tez [@@ligo.internal.predef]
-      type address [@@ligo.internal.predef]
-      type signature [@@ligo.internal.predef]
-      type key [@@ligo.internal.predef]
-      type key_hash [@@ligo.internal.predef]
-      type timestamp [@@ligo.internal.predef]
-      type chain_id [@@ligo.internal.predef]
-      type ('k, 'v) map [@@ligo.internal.predef]
-      type ('k, 'v) big_map [@@ligo.internal.predef]
-      type 'v set [@@ligo.internal.predef]
-      type 'a contract [@@ligo.internal.predef]
-      type ('l, 'r) michelson_or [@@ligo.internal.predef]
-      type ('l, 'r) michelson_pair [@@ligo.internal.predef]
-      type baker_hash [@@ligo.internal.predef]
-      type pvss_key [@@ligo.internal.predef]
-      type 'a sapling_transaction [@@ligo.internal.predef]
-      type 'a sapling_state [@@ligo.internal.predef]
-      type baker_operation [@@ligo.internal.predef]
-      type bls12_381_g1 [@@ligo.internal.predef]
-      type bls12_381_g2 [@@ligo.internal.predef]
-      type bls12_381_fr [@@ligo.internal.predef]
-      type never [@@ligo.internal.predef]
-      type 'd ticket [@@ligo.internal.predef]
-      type ('a, 'b) dynamic_entrypoint [@@ligo.internal.predef]
-      type michelson_program [@@ligo.internal.predef]
-      type ('a, 'b) michelson_contract [@@ligo.internal.predef]
-      type ('a, 'b) typed_address [@@ligo.internal.predef]
-      type mutation [@@ligo.internal.predef]
-      type tx_rollup_l2_address [@@ligo.internal.predef]
-      type 'a pbt_gen [@@ligo.internal.predef]
-      type 'a views [@@ligo.internal.predef]
-      type chest [@@ligo.internal.predef]
-      type chest_key [@@ligo.internal.predef]
-
-      (* contract *)
-
-      type storage =
-        | A
-        | B
-        | C
-
-      type return = operation list * storage
-
-      let next () (storage : storage) : return =
-        let storage =
-          match storage with
-          | A -> B
-          | B -> C
-          | C -> A
-        in
-        [], storage]
+        let next () (storage : storage) : return = [], storage]
   in
   let t1 = Core_unix.gettimeofday () in
   (* TODO: please clean this file *)
