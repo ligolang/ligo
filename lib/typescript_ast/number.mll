@@ -100,8 +100,9 @@ rule scan comments region = parse
     Ok (make_dec comments lexbuf ~integral ~exponent region false)
   }
 | natural { Ok (make_dec comments lexbuf ~integral:nat region false) }
+| eof { Error "INVALID: Number.mll: Empty number." }
 | _ as c {
-  Error (Printf.sprintf "Error: Number.mll: Unexpected character %c." c) }
+  Error (Printf.sprintf "INVALID: Number.mll: Unexpected character %c." c) }
 
 (* END LEXER DEFINITION *)
 
