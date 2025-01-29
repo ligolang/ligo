@@ -1667,12 +1667,26 @@ and print_member_expression state node =
 (* Parenthesised expression *)
 
 and print_parenthesized_expression ?(comments = []) state node =
-  let print state node =
-    match get_name node with
-    | "sequence_expression" -> print_sequence_expression state node
-    | _ -> print_expression state node
-  in
-  print_parens ~comments state node print
+  let comments = comments @ prev_comments node in
+  let opening = first_child_named "(" node
+  and closing = first_child_named ")" node
+  and first_named_child = child_ranked 1 node
+  and type_field = child_with_field_opt "type" node in
+  let children =
+    match type_field with
+    | Some type_field ->
+       [ mk_child_res print_expression first_named_child
+       ; mk_child print_type_annotation type_field ]
+    | None ->
+       let print state node =
+         match get_name node with
+         | "sequence_expression" -> print_sequence_expression state node
+         | _ -> print_expression state node in
+       [ mk_child_res print first_named_child ] in
+  let children =
+    (mk_child_res (make_sym ~comments) opening :: children)
+    @ [ mk_child_res make_sym closing ]
+  in make_tree state node children
 
 (* Template strings *)
 
