@@ -442,7 +442,17 @@ and strip_parenthesized_expression (node : Ast.parenthesized_expression)
   =
   let (Ast.Parens expressions) = node in
   let expressions = expressions#payload.contents in
-  strip_expressions expressions
+  strip_in_expressions expressions
+
+and strip_in_expressions (node : Ast.in_expressions) : (S.expr list, _) result =
+  match node with
+  | Typed_expression (expression, type_annotation) ->
+     let* expr = strip_expression expression in
+     let* type_expr = strip_type_annotation type_annotation in
+     let region = Ast.region_of_in_expressions node in
+     Ok [ S.E_typed (mk_reg region (expr, type_expr)) ]
+  | Sequence_expression expressions ->
+     strip_expressions expressions
 
 and strip_expressions (node : Ast.expressions) : (S.expr list, _) result =
   let expressions = Ne_list.to_list node#payload in

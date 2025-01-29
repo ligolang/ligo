@@ -1369,10 +1369,6 @@ and as_what =
        '=',
        field('right', $.expression)))
     ]}
-  + JavaScript
-    {@js[
-     parenthesized_expression: $ => seq('(', $._expressions, ')')
-    ]}
 *)
 and assignment_expression =
   { kwd_using : kwd_using option
@@ -3274,7 +3270,26 @@ and if_statement =
   ; alternative : (kwd_else * statement) option
   }
 
-and parenthesized_expression = expressions parens
+(** Parenthesized Expression
+
+  The related grammar rule is given by:
+  + TypeScript
+    {@js[
+     parenthesized_expression: $ => seq(
+       '(',
+       choice(
+         seq($.expression, field('type', optional($.type_annotation))),
+         $.sequence_expression),
+      ')')
+    ]}
+
+  NOTE: This rule overwrites the one in the JavaScript grammar.
+*)
+and parenthesized_expression = in_expressions parens
+
+and in_expressions =
+  Sequence_expression of sequence_expression
+| Typed_expression of expression * type_annotation
 
 (** Import Statement
 
@@ -3857,6 +3872,13 @@ let region_of_type_extension = function
   | Extends_type ident -> ident#region
   | Extends_nested nested -> nested#region
   | Extends_generic gen -> gen#region
+
+let region_of_in_expressions = function
+  | Sequence_expression expressions -> expressions#region
+  | Typed_expression (expression, (_, type_expr)) ->
+     let start = region_of_expression expression in
+     let stop = region_of_type_expr type_expr in
+     Region.cover start stop
 
 (* Extracting comments *)
 

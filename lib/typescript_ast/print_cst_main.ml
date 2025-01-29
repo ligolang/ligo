@@ -40,5 +40,5 @@ let () =
     let file = cli_args.(1) in
     (match Loc_map.scan file with
     | Ok line_map -> parse file line_map
-    | Error { region; value = _ } -> Printf.eprintf "Error: %s\n%!" (region#compact `Byte))
+    | Error { region = _; value } -> Printf.eprintf "Error: %s\n%!" value)
   | _ -> prerr_endline ("Usage: " ^ cli_args.(0) ^ " [file]")
