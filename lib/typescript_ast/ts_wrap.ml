@@ -61,13 +61,6 @@ let uint32_len string = UInt32.of_int (String.length string)
 
 let node_to_opt node = if TS_fun.ts_node_is_null node then None else Some node
 
-let node_to_res node =
-  if TS_fun.ts_node_is_null node then Error "INVALID: Missing node." else Ok node
-
-let opt_to_res = function
-  | None -> Error "INVALID: Missing node."
-  | Some node -> Ok node
-
 let is_null = TS_fun.ts_node_is_null
 
 (* Converting a node to an OCaml string *)
@@ -141,8 +134,7 @@ let collect ?(comments = false) select_child arity node =
         let index = UInt32.pred n in
         let child = select_child node index in
         match string_of_ts_node_type child with
-        | "comment" when comments -> fold (child :: acc) index
-        | "comment" | "ERROR" | "MISSING" -> fold acc index
+        | "comment" when not comments -> fold acc index
         | _ -> fold (child :: acc) index)
     in
     fold [] (arity node))
@@ -152,15 +144,6 @@ let collect_named_children ?(comments = false) (node : ts_tree) : ts_forest =
 
 let collect_children ?(comments = false) (node : ts_tree) : ts_forest =
   TS_fun.(collect ~comments ts_node_child ts_node_child_count node)
-
-let collect_error_children (node : ts_tree) : ts_forest =
-  let children = collect_named_children node in
-  let f child acc =
-    match string_of_ts_node_type child with
-    | "ERROR" -> child :: acc
-    | _ -> acc
-  in
-  Core.List.fold_right ~f ~init:[] children
 
 (* Extracting a named child by its index amongst its siblings that are
    not comment/error/missing nodes *)
@@ -175,7 +158,7 @@ let named_child_ranked ?(get_region : (ts_tree -> Region.t) ref option) index no
       | None -> ""
       | Some get_region -> " (" ^ (!get_region node)#compact `Byte ^ ")"
     in
-    Error (sprintf "INVALID: Node %S%s has no named child at index %i." name region index)
+    Error (sprintf "INTERNAL: Node %S%s has no named child at index %i." name region index)
   | Some child -> Ok child
 
 let named_child_ranked_opt index node =
@@ -194,7 +177,7 @@ let child_ranked ?(get_region : (ts_tree -> Region.t) ref option) index (node : 
       | None -> ""
       | Some get_region -> " (" ^ (!get_region node)#compact `Byte ^ ")"
     in
-    Error (sprintf "INVALID: Node %S%s has no child at index %i" name region index)
+    Error (sprintf "INTERNAL: Node %S%s has no child at index %i" name region index)
   | Some child -> Ok child
 
 let child_ranked_opt index (node : ts_tree) =
@@ -203,6 +186,7 @@ let child_ranked_opt index (node : ts_tree) =
 
 (* Getting the sibling of a node (if any) *)
 
+(*
 let sibling_opt get_sibling (node : ts_tree) : ts_tree option =
   let rec aux node =
     let sibling = get_sibling node in
@@ -215,6 +199,13 @@ let sibling_opt get_sibling (node : ts_tree) : ts_tree option =
     (* Cannot be "NULL" *)
   in
   if is_null node then None else aux node
+ *)
+
+let sibling_opt get_sibling (node : ts_tree) : ts_tree option =
+  if is_null node then None
+  else let sibling = get_sibling node in
+       if is_null sibling then None
+       else Some sibling
 
 let next_sibling_opt (node : ts_tree) : ts_tree option =
   sibling_opt TS_fun.ts_node_next_sibling node
@@ -222,30 +213,21 @@ let next_sibling_opt (node : ts_tree) : ts_tree option =
 let prev_sibling_opt (node : ts_tree) : ts_tree option =
   sibling_opt TS_fun.ts_node_prev_sibling node
 
-let next_sibling = opt_to_res <@ next_sibling_opt
-let prev_sibling = opt_to_res <@ prev_sibling_opt
+let next_sibling (node : ts_tree) : (ts_tree, string) result =
+  match next_sibling_opt node with
+  | Some sibling -> Ok sibling
+  | None -> Error (sprintf "ERROR: Node %S has no next sibling." (get_name node))
 
-let next_sibling_res = function
-  | Ok node -> opt_to_res @@ next_sibling_opt node
-  | Error e -> Error e
+let prev_sibling (node : ts_tree) : (ts_tree, string) result =
+  match prev_sibling_opt node with
+  | Some sibling -> Ok sibling
+  | None -> Error (sprintf "ERROR: Node %S has no previous sibling." (get_name node))
 
-let prev_sibling_res = function
-  | Ok node -> opt_to_res @@ prev_sibling_opt node
-  | Error e -> Error e
+let next_sibling_res (node : (ts_tree, string) result) : (ts_tree, string) result =
+  Core.Result.bind node ~f:next_sibling
 
-let next_sibling_opt' (node : ts_tree) : (ts_forest * ts_tree) option =
-  let rec aux comments node =
-    let next = TS_fun.ts_node_next_sibling node in
-    if is_null next
-    then None (* Drop comments *)
-    else (
-      match get_name next with
-      | "comment" -> aux (next :: comments) next (* Accumulate comments *)
-      | "ERROR" | "MISSING" -> aux [] next (* Skip error/missing, drop comments *)
-      | _ -> Some (List.rev comments, next))
-    (* Return comments; cannot be "NULL" *)
-  in
-  if is_null node then None else aux [] node (* No comments to start with *)
+let prev_sibling_res (node : (ts_tree, string) result) : (ts_tree, string) result =
+  Core.Result.bind node ~f:prev_sibling
 
 (* Getting the comments immediately to the left of a given node *)
 
@@ -274,7 +256,7 @@ let filter_first_by_name_opt name nodes =
 
 let filter_first_by_name name nodes =
   match filter_first_by_name_opt name nodes with
-  | None -> Error (sprintf "INVALID: Name %S missing" name)
+  | None -> Error (sprintf "INTERNAL: Name %S missing" name)
   | Some node -> Ok node
 
 let first_child_named_opt name node =
