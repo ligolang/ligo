@@ -2312,7 +2312,9 @@ and dec_property_ident ?comments node : (property_ident, _) result =
 
 (* Parenthesised expression *)
 
-and dec_parenthesized_expression ?(comments = []) node : (parenthesized_expression, _) result =
+and dec_parenthesized_expression ?(comments = []) node
+    : (parenthesized_expression, _) result
+  =
   let comments = comments @ prev_comments node in
   let* sym_lpar = first_child_named "(" node in
   let opening = make_sym ~comments sym_lpar in
@@ -2320,26 +2322,26 @@ and dec_parenthesized_expression ?(comments = []) node : (parenthesized_expressi
   let closing = make_sym sym_rpar in
   let* first_named_child = child_ranked 1 node in
   let type_field = child_with_field_opt "type" node in
-  let* contents : in_expressions =
+  let* (contents : in_expressions) =
     match type_field with
     | Some type_field ->
-       let* expression = dec_expression first_named_child in
-       let* type_annotation = dec_type_annotation type_field in
-       Ok (Typed_expression (expression, type_annotation))
+      let* expression = dec_expression first_named_child in
+      let* type_annotation = dec_type_annotation type_field in
+      Ok (Typed_expression (expression, type_annotation))
     | None ->
-       let* seq_expr =
-         match get_name first_named_child with
-         | "sequence_expression" ->
-            dec_sequence_expression first_named_child
-         | _ -> let* expression = dec_expression first_named_child in
-                let expressions = Nonempty_list.singleton expression in
-                let region = !get_region first_named_child in
-                Ok (Wrap.make expressions region) in
-       Ok (Sequence_expression seq_expr) in
+      let* seq_expr =
+        match get_name first_named_child with
+        | "sequence_expression" -> dec_sequence_expression first_named_child
+        | _ ->
+          let* expression = dec_expression first_named_child in
+          let expressions = Nonempty_list.singleton expression in
+          let region = !get_region first_named_child in
+          Ok (Wrap.make expressions region)
+      in
+      Ok (Sequence_expression seq_expr)
+  in
   let region = !get_region node in
   Ok (Parens (Wrap.make { opening; contents; closing } region))
-
-  (*  dec_parens ?comments node dec_expressions*)
 
 (* Sequence expression *)
 

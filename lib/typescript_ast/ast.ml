@@ -3288,8 +3288,8 @@ and if_statement =
 and parenthesized_expression = in_expressions parens
 
 and in_expressions =
-  Sequence_expression of sequence_expression
-| Typed_expression of expression * type_annotation
+  | Sequence_expression of sequence_expression
+  | Typed_expression of expression * type_annotation
 
 (** Import Statement
 
@@ -3876,9 +3876,9 @@ let region_of_type_extension = function
 let region_of_in_expressions = function
   | Sequence_expression expressions -> expressions#region
   | Typed_expression (expression, (_, type_expr)) ->
-     let start = region_of_expression expression in
-     let stop = region_of_type_expr type_expr in
-     Region.cover start stop
+    let start = region_of_expression expression in
+    let stop = region_of_type_expr type_expr in
+    Region.cover start stop
 
 (* Extracting comments *)
 
