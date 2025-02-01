@@ -60,7 +60,6 @@ let uint32_len string = UInt32.of_int (String.length string)
 (* Handling of null nodes *)
 
 let node_to_opt node = if TS_fun.ts_node_is_null node then None else Some node
-
 let is_null = TS_fun.ts_node_is_null
 
 (* Converting a node to an OCaml string *)
@@ -158,7 +157,8 @@ let named_child_ranked ?(get_region : (ts_tree -> Region.t) ref option) index no
       | None -> ""
       | Some get_region -> " (" ^ (!get_region node)#compact `Byte ^ ")"
     in
-    Error (sprintf "INTERNAL: Node %S%s has no named child at index %i." name region index)
+    Error
+      (sprintf "INTERNAL: Node %S%s has no named child at index %i." name region index)
   | Some child -> Ok child
 
 let named_child_ranked_opt index node =
@@ -202,10 +202,11 @@ let sibling_opt get_sibling (node : ts_tree) : ts_tree option =
  *)
 
 let sibling_opt get_sibling (node : ts_tree) : ts_tree option =
-  if is_null node then None
-  else let sibling = get_sibling node in
-       if is_null sibling then None
-       else Some sibling
+  if is_null node
+  then None
+  else (
+    let sibling = get_sibling node in
+    if is_null sibling then None else Some sibling)
 
 let next_sibling_opt (node : ts_tree) : ts_tree option =
   sibling_opt TS_fun.ts_node_next_sibling node
