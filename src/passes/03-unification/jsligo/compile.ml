@@ -4,7 +4,7 @@ module Make_Folding = Unification_shared.Helpers.Folding
 module Region = Simple_utils.Region
 module Ligo_string = Simple_utils.Ligo_string
 module O = Ast_unified
-module T = Typescript_ast.Ast_stripped
+module T = Typescript_stripper.Ast_stripped
 
 (*open Region*)
 

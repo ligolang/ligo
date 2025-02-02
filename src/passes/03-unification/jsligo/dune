@@ -8,4 +8,5 @@
   cst
   ast_unified
   predefined
-  typescript_ast))
+  typescript_ast
+  typescript_stripper))

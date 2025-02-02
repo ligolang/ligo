@@ -130,6 +130,8 @@ let make ~(start : Pos.t) ~(stop : Pos.t) =
 
 let empty pos = make ~start:pos ~stop:pos
 
+let is_empty region = (Pos.compare region#start region#stop = 0)
+
 (* Making a region from the matched prefix of a lexing buffer *)
 
 let from_lexbuf lexbuf =
