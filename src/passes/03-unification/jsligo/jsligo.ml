@@ -1,5 +1,5 @@
 module CST = Cst.Jsligo
-module Stripped = Typescript_ast.Ast_stripped
+module Stripped = Typescript_stripper.Ast_stripped
 module AST = Ast_unified
 open Unification_shared.Helpers.Make_unification (Compile)
 
