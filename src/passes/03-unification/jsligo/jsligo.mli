@@ -1,5 +1,5 @@
 module CST = Cst.Jsligo
-module Stripped = Typescript_ast.Ast_stripped
+module Stripped = Typescript_stripper.Ast_stripped
 module AST = Ast_unified
 
 val compile_expression : Stripped.expr -> AST.expr

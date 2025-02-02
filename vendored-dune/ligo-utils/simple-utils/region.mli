@@ -106,6 +106,9 @@ val make : start:Pos.t -> stop:Pos.t -> t
 (** Special case of [make ~start ~stop] when [start] is [stop]. *)
 val empty : Pos.t -> t
 
+(* Emptiness *)
+val is_empty : t -> bool
+
 (* SPECIAL REGIONS *)
 
 (** To deal with ghost expressions, that is, pieces of abstract syntax
