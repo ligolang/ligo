@@ -1,20 +1,16 @@
+;; LIBRARIES
+
 ;; Library exporting the TypeScript CST and our AST
 
 (library
  (name typescript_ast)
- (public_name ligo.typescript)
+ (public_name ligo.typescript_ast)
  (modules
   ast
   ts_wrap
   loc_map
   lexeme
-  number
-  decorator
-  decode
-  ast_stripped
-  strip_err
-  strip
-  check)
+  number)
  (libraries
   tree_sitter
   tree_sitter_typescript
@@ -26,27 +22,58 @@
   core
   core_kernel.nonempty_list))
 
-;; Standalones
+;; Library for decoding the TypeScript CST
+
+(library
+ (name typescript_decoder)
+ (public_name ligo.typescript_decoder)
+ (modules
+  decode
+  decode_err)
+ (libraries
+  typescript_ast))
+
+;; Library for stripping the TypeScript AST
+
+(library
+ (name typescript_stripper)
+ (public_name ligo.typescript_stripper)
+ (modules
+  ast_stripped
+  decorator
+  strip
+  strip_err)
+ (libraries
+  typescript_ast
+  typescript_decoder))
+
+;; STANDALONES
+
+;; Standalone for printing the CST
 
 (executable
  (name print_cst_main)
  (libraries typescript_ast)
  (modules print_cst print_cst_main))
 
+;; Standalone for decoding the CST into the AST
+
 (executable
  (name decode_main)
- (libraries typescript_ast)
+ (libraries typescript_decoder)
  (modules decode_main))
+
+;; Standalone for decoding and stripping the AST
 
 (executable
  (name strip_main)
- (libraries typescript_ast)
+ (libraries typescript_stripper)
  (modules strip_main))
 
-(executable
- (name check_main)
- (libraries typescript_ast)
- (modules check_main))
+;; (executable
+;;  (name check_main)
+;;  (libraries typescript_ast)
+;;  (modules check_main))
 
 ;; Local build of a standalone parser for node-types.json
 

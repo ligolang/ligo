@@ -159,8 +159,6 @@ type t =
   | Generic_class
   | Invalid_implements
   | Empty_class
-  | No_single_expression (* When parsing an expression *)
-  | No_single_type_expr (* When parsing a type expression *)
 
 type error = t
 

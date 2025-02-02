@@ -18,6 +18,7 @@ module Attr = Lexing_shared.Attr
 
 (* Local dependencies *)
 
+module Ast = Typescript_ast.Ast
 module S = Ast_stripped
 
 (* Utilities *)
