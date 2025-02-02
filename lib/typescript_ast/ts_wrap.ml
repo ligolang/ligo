@@ -59,17 +59,13 @@ let uint32_len string = UInt32.of_int (String.length string)
 
 (* Handling of null nodes *)
 
-let node_to_opt node = if TS_fun.ts_node_is_null node then None else Some node
 let is_null = TS_fun.ts_node_is_null
+let node_to_opt node = if is_null node then None else Some node
 
-(* Converting a node to an OCaml string *)
+(* Converting a node to an OCaml string ("NULL" is null) *)
 
-let string_of_ts_node_type (node : ts_tree) : string =
+let get_name (node : ts_tree) : string =
   if is_null node then "NULL" else string_of_char_ptr @@ TS_fun.ts_node_type node
-
-(* Extracting the name of a node *)
-
-let get_name = string_of_ts_node_type (* "NULL" if null node *)
 
 let get_name_res = function
   | Ok node -> get_name node
@@ -94,12 +90,11 @@ let child_with_field ?(get_region : (ts_tree -> Region.t) ref option) field node
 let child_with_field_opt field node =
   node_to_opt @@ TS_fun.ts_node_child_by_field_name node field (uint32_len field)
 
-(* Printing the tree *)
-(*
+(* Printing the tree (debug) *)
+
 let print_node (node: ts_tree) : unit =
   let ptr_char = TS_fun.ts_node_string node in
   Printf.printf "%s\n%!" @@ string_of_char_ptr ptr_char
-*)
 
 (* Parsing a string expected to contain a valid TypeScript program *)
 
@@ -132,7 +127,7 @@ let collect ?(comments = false) select_child arity node =
       else (
         let index = UInt32.pred n in
         let child = select_child node index in
-        match string_of_ts_node_type child with
+        match get_name child with
         | "comment" when not comments -> fold acc index
         | _ -> fold (child :: acc) index)
     in
@@ -186,27 +181,10 @@ let child_ranked_opt index (node : ts_tree) =
 
 (* Getting the sibling of a node (if any) *)
 
-(*
-let sibling_opt get_sibling (node : ts_tree) : ts_tree option =
-  let rec aux node =
-    let sibling = get_sibling node in
-    if is_null sibling
-    then None
-    else (
-      match get_name sibling with
-      | "comment" | "ERROR" | "MISSING" -> aux sibling
-      | _ -> Some sibling)
-    (* Cannot be "NULL" *)
-  in
-  if is_null node then None else aux node
- *)
-
 let sibling_opt get_sibling (node : ts_tree) : ts_tree option =
   if is_null node
   then None
-  else (
-    let sibling = get_sibling node in
-    if is_null sibling then None else Some sibling)
+  else node_to_opt (get_sibling node)
 
 let next_sibling_opt (node : ts_tree) : ts_tree option =
   sibling_opt TS_fun.ts_node_next_sibling node
@@ -247,7 +225,7 @@ let prev_comments (node : ts_tree) : ts_forest =
 (* Filtering by name a list of nodes *)
 
 let filter_by_name name nodes =
-  let f = String.equal name <@ string_of_ts_node_type in
+  let f = String.equal name <@ get_name in
   Core.List.filter nodes ~f
 
 let filter_first_by_name_opt name nodes =
@@ -311,7 +289,7 @@ let region_of_range file map (range : range) : Region.t =
 
 (*
 let get_label (node : ts_tree) : string =
-  let name = string_of_ts_node_type node
+  let name = get_name node
   and range_string = string_of_range @@ range node in
   sprintf "%s %s" name range_string
 *)
