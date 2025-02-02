@@ -2,6 +2,11 @@
 
 module Region = Simple_utils.Region
 module Wrap = Lexing_shared.Wrap
+module Ts_wrap = Typescript_ast.Ts_wrap
+module Ast = Typescript_ast.Ast
+module Lexeme = Typescript_ast.Lexeme
+module Number = Typescript_ast.Number
+
 open Core
 open Ts_wrap
 open Ast
@@ -3441,18 +3446,18 @@ let dec_standalone_expression map node : (Ast.expression, string) result =
   (* Decoding the CST into an AST *)
   let* ast = dec_statements node in
   match ast with
-  | None -> Strip_err.(make (Region.min ~file:"") No_single_expression)
+  | None -> Decode_err.(make (Region.min ~file:"") No_single_expression)
   | Some stmts ->
     (match stmts#payload with
-    | _ :: stmt2 :: _ -> Strip_err.(make (region_of_statement stmt2) No_single_expression)
+    | _ :: stmt2 :: _ -> Decode_err.(make (region_of_statement stmt2) No_single_expression)
     | Nonempty_list.[ stmt ] ->
       (match stmt with
       | S_expression_statement expr_stmt ->
         (match expr_stmt#payload with
         | _ :: expr2 :: _ ->
-          Strip_err.(make (region_of_expression expr2) No_single_expression)
+          Decode_err.(make (region_of_expression expr2) No_single_expression)
         | Nonempty_list.[ expr ] -> Ok expr)
-      | _ -> Strip_err.(make (region_of_statement stmt) No_single_expression)))
+      | _ -> Decode_err.(make (region_of_statement stmt) No_single_expression)))
 
 (* The parameter [node] is the root of a Typescript CST, *not of a
    type expression*. tree-sitter does not provide the generated
@@ -3467,10 +3472,10 @@ let dec_standalone_type_expr map node : (Ast.type_expr, string) result =
   (* Decoding the CST into an AST *)
   let* ast = dec_statements node in
   match ast with
-  | None -> Strip_err.(make (Region.min ~file:"") No_single_type_expr)
+  | None -> Decode_err.(make (Region.min ~file:"") No_single_type_expr)
   | Some stmts ->
     (match stmts#payload with
-    | _ :: stmt2 :: _ -> Strip_err.(make (region_of_statement stmt2) No_single_type_expr)
+    | _ :: stmt2 :: _ -> Decode_err.(make (region_of_statement stmt2) No_single_type_expr)
     | Nonempty_list.[ stmt ] ->
       (match stmt with
       | S_declaration_statement (D_type_alias_declaration decl) ->
@@ -3478,4 +3483,4 @@ let dec_standalone_type_expr map node : (Ast.type_expr, string) result =
           decl#payload
         in
         Ok type_expr
-      | _ -> Strip_err.(make (region_of_statement stmt) No_single_type_expr)))
+      | _ -> Decode_err.(make (region_of_statement stmt) No_single_type_expr)))
