@@ -1,7 +1,7 @@
 (library
  (name test_dsl)
- (libraries core ligo.lltz_codegen fmt octez-libs.micheline)
- (modules test_nodes test_free_vars)
+ (libraries core ligo.lltz_codegen fmt octez-libs.micheline lltz.michelson)
+ (modules test_nodes test_free_vars test_all_vars test_used_vars test_last_vars)
  (inline_tests)
  (preprocess (pps ppx_jane))
  (flags (:standard -verbose -ccopt --verbose))

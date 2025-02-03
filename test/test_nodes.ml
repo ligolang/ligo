@@ -592,11 +592,17 @@ let%expect_test "assign same var multiple branches" =
       DUP 2 ;
       COMPARE ;
       EQ ;
-      IF { DROP ; PUSH nat 50 ; NEVER } { DROP ; PUSH nat 10 ; NEVER } }
+      IF { PUSH nat 50 ; SWAP ; SUB ; DROP ; UNIT }
+         { PUSH nat 10 ; SWAP ; SUB ; DROP ; UNIT } }
 
     Optimised:
-    { PUSH bool True ;
-      IF { PUSH nat 50 ; NEVER } { PUSH nat 10 ; NEVER } } |}]
+    { PUSH nat 100 ;
+      DUP ;
+      DUP 2 ;
+      COMPARE ;
+      EQ ;
+      IF { PUSH int -50 ; ADD ; DROP } { PUSH int -10 ; ADD ; DROP } ;
+      UNIT } |}]
 
 let%expect_test "assign inside for loop" =
   let idx = mut_var "i" in
@@ -1325,8 +1331,8 @@ let%expect_test "while with complex body" =
              DUP 2 ;
              COMPARE ;
              GE ;
-             IF { DROP ; PUSH nat 2 ; DROP ; UNIT }
-                { DROP ; PUSH nat 2 ; DROP ; UNIT } ;
+             IF { PUSH nat 2 ; SWAP ; DROP ; DROP ; UNIT }
+                { PUSH nat 2 ; SWAP ; DROP ; DROP ; UNIT } ;
              DROP ;
              PUSH nat 10 ;
              PUSH nat 0 ;
@@ -1843,7 +1849,7 @@ let%expect_test "match three branch" =
 (* Raw michelson *)
 let push_int n = 
   let open Tezos_micheline.Micheline in
-  Prim ( Ast_builder.Dummy_range.v, "PUSH", [Int (Ast_builder.Dummy_range.v, Z.of_int n) ], ["int"])
+  Prim ( Ast_builder.Dummy_range.v, "PUSH", [Tezos_micheline.Micheline.Prim (Ast_builder.Dummy_range.v, "int", [], []); Int (Ast_builder.Dummy_range.v, Z.of_int n) ], [])
 let seq_of_prim prim = Tezos_micheline.Micheline.Seq (Ast_builder.Dummy_range.v, [prim])
 let seq instrs = Tezos_micheline.Micheline.Seq (Ast_builder.Dummy_range.v, instrs)
 
@@ -1853,8 +1859,12 @@ let%expect_test "raw michelson single push int" =
     seq_of_prim (push_int 42)
   in
   let expr = raw_michelson michelson_ast [] int_ty in
-  test_expr ~optimise:false expr;
-  [%expect {| { { PUSH int 42 } } |}]
+  test_expr expr;
+  [%expect {|
+    { { PUSH int 42 } }
+
+    Optimised:
+    { PUSH int 42 } |}]
 
 let%expect_test "raw michelson multiple instructions" =
   let open Tezos_micheline.Micheline in
@@ -1867,8 +1877,12 @@ let%expect_test "raw michelson multiple instructions" =
       ])
   in
   let expr = raw_michelson michelson_ast [] int_ty in
-  test_expr ~optimise:false expr;
-  [%expect {| { { PUSH int 3 ; PUSH int 5 ; ADD } } |}]
+  test_expr expr;
+  [%expect {|
+    { { PUSH int 3 ; PUSH int 5 ; ADD } }
+
+    Optimised:
+    { PUSH int 8 } |}]
 
 let%expect_test "raw michelson with arguments" =
   let open Tezos_micheline.Micheline in
@@ -1877,20 +1891,28 @@ let%expect_test "raw michelson with arguments" =
       (Prim (Ast_builder.Dummy_range.v, "MUL", [], []))
   in
   let expr = raw_michelson michelson_ast [int 2; int 8] int_ty in
-  test_expr ~optimise:false expr;
-  [%expect {| { PUSH int 8 ; PUSH int 2 ; { MUL } } |}]
+  test_expr expr;
+  [%expect {|
+    { PUSH int 8 ; PUSH int 2 ; { MUL } }
+
+    Optimised:
+    { PUSH int 16 } |}]
 
 let%expect_test "raw michelson returning string" =
   let open Tezos_micheline.Micheline in
   let michelson_ast =
     Seq (Ast_builder.Dummy_range.v,
       [
-        Prim (Ast_builder.Dummy_range.v, "PUSH", [String (Ast_builder.Dummy_range.v, "hello")], ["string"])
+        Prim (Ast_builder.Dummy_range.v, "PUSH", [Tezos_micheline.Micheline.Prim (Ast_builder.Dummy_range.v, "string", [], []); String (Ast_builder.Dummy_range.v, "hello")], [])
       ])
   in
   let expr = raw_michelson michelson_ast [] string_ty in
-  test_expr ~optimise:false expr;
-  [%expect {| { { PUSH string "hello" } } |}]
+  test_expr expr;
+  [%expect {|
+    { { PUSH string "hello" } }
+
+    Optimised:
+    { PUSH string "hello" } |}]
 
 let%expect_test "raw michelson complex seq" =
   let open Tezos_micheline.Micheline in
@@ -1908,8 +1930,12 @@ let%expect_test "raw michelson complex seq" =
     Leaf (None, int_ty)
   ]))
   in
-  test_expr ~optimise:false expr;
-  [%expect {| { { PUSH int 10 ; PUSH int 20 ; PAIR ; DUP } } |}]
+  test_expr expr;
+  [%expect {|
+    { { PUSH int 10 ; PUSH int 20 ; PAIR ; DUP } }
+
+    Optimised:
+    { PUSH int 10 ; PUSH int 20 ; PAIR ; DUP } |}]
 
 let operation_list_ty =
   list_ty (operation_ty)
@@ -2229,7 +2255,7 @@ test_expr expr;
                NIL operation ;
                PAIR } } ;
     PAIR }
-  
+
   Optimised:
   { PUSH nat 10 ;
     PUSH mutez 1000 ;
