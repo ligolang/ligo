@@ -94,7 +94,7 @@ let child_with_field ?(debug = true) ?get_region ?msg field node =
         | None -> default
         | Some msg -> sprintf "%s%s" msg region)
     in
-    Error msg')
+    Error ("ERROR: " ^ msg'))
   else Result.Ok child
 
 let child_with_field_opt field node =
