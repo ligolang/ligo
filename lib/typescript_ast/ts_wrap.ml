@@ -73,9 +73,8 @@ let get_name_res = function
 
 (* Wrappers for filtering fields (failure on null node or optional value) *)
 
-let child_with_field ?(get_region : (ts_tree -> Region.t) ref option) field node =
+let child_with_field ?(debug = true) ?get_region ?msg field node =
   let child = TS_fun.ts_node_child_by_field_name node field (uint32_len field) in
-  let name = get_name node in
   let region =
     match get_region with
     | None -> ""
@@ -84,7 +83,18 @@ let child_with_field ?(get_region : (ts_tree -> Region.t) ref option) field node
       if Region.is_empty region then "" else " (" ^ region#compact `Byte ^ ")"
   in
   if is_null child || Core.String.is_empty region
-  then Error (sprintf "ERROR: Node %S%s is missing the field %S." name region field)
+  then (
+    let name = get_name node in
+    let default = sprintf "Node %S%s is missing the field %S." name region field in
+    let msg' =
+      match debug with
+      | true -> default
+      | false ->
+        (match msg with
+        | None -> default
+        | Some msg -> sprintf "%s%s" msg region)
+    in
+    Error msg')
   else Result.Ok child
 
 let child_with_field_opt field node =
@@ -92,7 +102,7 @@ let child_with_field_opt field node =
 
 (* Printing the tree (debug) *)
 
-let print_node (node: ts_tree) : unit =
+let print_node (node : ts_tree) : unit =
   let ptr_char = TS_fun.ts_node_string node in
   Printf.printf "%s\n%!" @@ string_of_char_ptr ptr_char
 
@@ -182,9 +192,7 @@ let child_ranked_opt index (node : ts_tree) =
 (* Getting the sibling of a node (if any) *)
 
 let sibling_opt get_sibling (node : ts_tree) : ts_tree option =
-  if is_null node
-  then None
-  else node_to_opt (get_sibling node)
+  if is_null node then None else node_to_opt (get_sibling node)
 
 let next_sibling_opt (node : ts_tree) : ts_tree option =
   sibling_opt TS_fun.ts_node_next_sibling node
