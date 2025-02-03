@@ -24,7 +24,7 @@ let get_region : (ts_tree -> Region.t) ref =
 (* Partially evaluating wrappers so they print regions in case of
    error (shadowing) *)
 
-let child_with_field = child_with_field ~get_region
+let child_with_field = child_with_field ~debug:false ~get_region
 let named_child_ranked = named_child_ranked ~get_region
 let child_ranked = child_ranked ~get_region
 
@@ -94,13 +94,13 @@ let print_unexpected_node state node =
   and label = get_name node in
   Tree.make_node ~region state ("INTERNAL: " ^ label)
 
-let print_null_node state =
-  Tree.make_node state "INTERNAL: Null node"
+let print_null_node state = Tree.make_node state "INTERNAL: Null node"
 
 let make_kwd ?(comments = []) state node =
   match get_name node with
   | "ERROR" -> print_error_node state node
   | "MISSING" -> print_missing_node state node
+  | "NULL" -> print_null_node state
   | _ ->
     let region = !get_region node in
     let root = Lexeme.read region ^ " [keyword]" in
@@ -111,6 +111,7 @@ let make_sym ?(comments = []) state node =
   match get_name node with
   | "ERROR" -> print_error_node state node
   | "MISSING" -> print_missing_node state node
+  | "NULL" -> print_null_node state
   | _ ->
     let region = !get_region node in
     let root = Lexeme.read region in
@@ -121,16 +122,29 @@ let mk_child_res print = function
   | Result.Ok child -> mk_child print child
   | Error name -> mk_child Tree.make_node name
 
-let internal_error_child child_name parent_node =
-  let child_name = if String.(child_name = "") then child_name else " " ^ child_name in
-  let parent_name = get_name parent_node
-  and suffix = Printf.sprintf "Child%s is missing." child_name in
-  let msg = Printf.sprintf "INTERNAL: [%s] %s" parent_name suffix in
-  [ mk_child Tree.make_node msg ]
-
 let make_unary_res state node print = function
   | Result.Ok child -> make_unary state node print child
   | Error child_name -> make_unary state node Tree.make_node child_name
+
+let internal_error ~debug ?msg child_name parent_node =
+  let child_name = if String.(child_name = "") then child_name else " " ^ child_name in
+  let parent_name = get_name parent_node
+  and suffix = Printf.sprintf "Child%s is missing." child_name in
+  let default_msg = Printf.sprintf "INTERNAL: [%s] %s" parent_name suffix in
+  let default = mk_child Tree.make_node default_msg in
+  match debug with
+  | true -> default
+  | false ->
+    (match msg with
+    | None -> default
+    | Some msg ->
+      let region = !get_region parent_node in
+      let region =
+        if Region.is_empty region then "" else " (" ^ region#compact `Byte ^ ")"
+      in
+      mk_child Tree.make_node (sprintf "%s%s" msg region))
+
+let internal_error = internal_error ~debug:false
 
 (* Some literals *)
 
@@ -138,18 +152,21 @@ let print_identifier ?comments state node =
   match get_name node with
   | "ERROR" -> print_error_node state node
   | "MISSING" -> print_missing_node state node
+  | "NULL" -> print_null_node state
   | _ -> make_node ?comments state node
 
 let print_string ?comments state node =
   match get_name node with
   | "ERROR" -> print_error_node state node
   | "MISSING" -> print_missing_node state node
+  | "NULL" -> print_null_node state
   | _ -> make_node ?comments state node
 
 let print_regex ?comments state node =
   match get_name node with
   | "ERROR" -> print_error_node state node
   | "MISSING" -> print_missing_node state node
+  | "NULL" -> print_null_node state
   | _ -> make_node ?comments state node
 
 let decode_comments ?(comments = []) node : Wrap.comment list =
@@ -164,6 +181,7 @@ let print_number ?(comments = []) state node =
   match get_name node with
   | "ERROR" -> print_error_node state node
   | "MISSING" -> print_missing_node state node
+  | "NULL" -> print_null_node state
   | _ ->
     let region = !get_region node in
     let lexeme = Lexeme.read region in
@@ -198,6 +216,7 @@ let print_enclosed ?(comments = []) state node printer opening closing =
   match get_name node with
   | "ERROR" -> print_error_node state node
   | "MISSING" -> print_missing_node state node
+  | "NULL" -> print_null_node state
   | _ ->
     let comments = comments @ prev_comments node in
     let opening = first_child_named opening node
@@ -315,13 +334,18 @@ and print_export_statement ?(comments = []) state node =
     let decorators = mk_children_list print_decorator decorators in
     let children =
       match kwd_export with
-      | None -> internal_error_child "export" node
+      | None -> [ internal_error "export" node ~msg:"The keyword 'export' is expected." ]
       | Some kwd_export ->
         (* Previous comments are hooked to the keyword "export" *)
         mk_child (make_kwd ~comments) kwd_export
         ::
         (match next_sibling kwd_export with
-        | Error _ -> internal_error_child "after \"export\"" node
+        | Error _ ->
+          [ internal_error
+              "after \"export\""
+              node
+              ~msg:"An export clause or '*' is expected."
+          ]
         | Ok after_export ->
           (match get_name after_export with
           | "*" ->
@@ -342,18 +366,22 @@ and print_export_statement ?(comments = []) state node =
             (match declaration_field with
             | Some declaration_field -> [ mk_child print_declaration declaration_field ]
             | None ->
-              let value_field = child_with_field "value" node in
+              let value_field =
+                child_with_field "value" node ~msg:"An expression is expected."
+              in
               [ mk_child_res print_expression value_field ])
           | "type" ->
             (match next_sibling after_export with
-            | Error _ -> internal_error_child "export_clause" node
+            | Error _ ->
+              [ internal_error "export_clause" node ~msg:"An export clause is expected." ]
             | Ok export_clause ->
               mk_child make_kwd after_export
               :: mk_child print_export_clause export_clause
               :: mk_child_from_clause_opt node)
           | "=" ->
             (match next_sibling after_export with
-            | Error _ -> internal_error_child "expression" node
+            | Error _ ->
+              [ internal_error "expression" node ~msg:"An expression is expected." ]
             | Ok expression ->
               [ mk_child make_sym after_export; mk_child print_expression expression ])
           | "as" ->
@@ -484,7 +512,12 @@ and print_import_clause ?(comments = []) state node =
     in
     let children =
       match child_ranked_opt 0 node with
-      | None -> internal_error_child "\"first child\"" node
+      | None ->
+        [ internal_error
+            "\"first child\""
+            node
+            ~msg:"Named imports or '*' or identifier are expected."
+        ]
       | Some fst_child ->
         (match get_name fst_child with
         | "namespace_import" -> [ mk_child (print_namespace_import ~comments) fst_child ]
@@ -496,7 +529,12 @@ and print_import_clause ?(comments = []) state node =
           | None -> []
           | Some comma ->
             (match next_sibling comma with
-            | Error _ -> internal_error_child "namespace_import/named_imports" node
+            | Error _ ->
+              [ internal_error
+                  "namespace_import/named_imports"
+                  node
+                  ~msg:"Named imports or '*' are expected."
+              ]
             | Ok next -> [ mk_child print_rest next ]))
         | _ -> [ mk_child print_unexpected_node fst_child ])
     in
@@ -3548,7 +3586,7 @@ and print_intersection_type state node =
     and sym_ampersand = first_child_named "&" node in
     let children =
       match first_child with
-      | None -> internal_error_child "" node
+      | None -> [ internal_error "" node ~msg:"A type or '&' is expected." ]
       | Some left_type ->
         (match get_name left_type with
         | "&" ->
@@ -3576,7 +3614,7 @@ and print_union_type state node =
     and sym_vbar = first_child_named "|" node in
     let children =
       match first_child with
-      | None -> internal_error_child "" node
+      | None -> [ internal_error "" node ~msg:"A type or '|' is expected." ]
       | Some left_type ->
         (match get_name left_type with
         | "|" ->
