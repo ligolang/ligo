@@ -158,9 +158,7 @@ and module_expr =
 [@@deriving equal, compare, yojson, hash]
 
 type expr = expression [@@deriving equal, compare, yojson, hash, bin_io]
-
 type decl = declaration [@@deriving equal, compare, yojson, hash, bin_io]
-
 type module_ = decl list [@@deriving equal, compare, yojson, hash, bin_io]
 
 type program =

@@ -73,9 +73,9 @@
           ligo = pkgs.callPackage ./nix/ligo.nix {inherit tezos-ligo tree-sitter-typescript grace lltz;};
 
           pkgs-extended = pkgs.extend (lib.composeManyExtensions [
-              build-yarn-package.overlays.default
-              haskell-nix.overlay
-              (import ./nix/haskell-overlay.nix)
+            build-yarn-package.overlays.default
+            haskell-nix.overlay
+            (import ./nix/haskell-overlay.nix)
           ]);
           ligo-syntaxes = ./tools/vscode/syntaxes;
           ligo-webide = pkgs-extended.callPackage ./nix/webide.nix {inherit ligo-syntaxes;};

@@ -12,7 +12,8 @@ val get_deps : t -> Filename.t list
 module Serialized : sig
   val input : Filename.t -> (t * crc) option
   val output : t -> unit
-  (** Makes cmi path from original file path *)
+
+  (* Makes cmi path from original file path *)
   val make_path : Filename.t -> Filename.t
   val compute_crc : t -> crc
 end

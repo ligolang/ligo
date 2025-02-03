@@ -1,6 +1,5 @@
 final: prev:
-with prev;
-{
+with prev; {
   libsodium = libsodium.overrideAttrs (with libsodium; rec {
     version = "1.0.18";
     src = final.fetchurl {

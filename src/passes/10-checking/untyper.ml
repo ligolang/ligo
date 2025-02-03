@@ -344,8 +344,7 @@ and untype_declaration ~raise =
     | D_signature ds ->
       let ds = untype_declaration_signature ~raise ds in
       return @@ D_signature ds
-    | D_import decl ->
-      return @@ D_import decl
+    | D_import decl -> return @@ D_import decl
 
 
 and untype_decl ~raise : O.decl -> I.decl =

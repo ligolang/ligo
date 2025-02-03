@@ -7,7 +7,7 @@
   tree-sitter-typescript,
   grace,
   lltz,
-  libiconv
+  libiconv,
 }: let
   inherit (pkgs) darwin ocamlPackages python3Packages coq_8_13 rustc cargo rustPlatform;
 in

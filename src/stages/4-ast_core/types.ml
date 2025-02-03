@@ -24,6 +24,7 @@ and type_expression =
   ; location : Location.t [@deriving.ignore] [@hash.ignore]
   }
 [@@deriving eq, compare, yojson, hash, bin_io]
+
 and type_expression_option = type_expression option [@@deriving eq, compare, yojson, hash]
 
 type ty_expr = type_expression [@@deriving eq, compare, yojson, hash, bin_io]
@@ -124,6 +125,5 @@ and signature_expr = signature_content Location.wrap
 
 type expr = expression [@@deriving eq, compare, yojson, hash, bin_io]
 type decl = declaration [@@deriving eq, compare, yojson, hash, bin_io]
-
 type module_ = decl list [@@deriving eq, compare, yojson, hash]
 type program = declaration list [@@deriving eq, compare, yojson, hash]
