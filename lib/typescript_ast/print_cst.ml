@@ -148,25 +148,21 @@ let make_unary_res state node print = function
   | Result.Ok child -> make_unary state node print child
   | Error child_name -> make_unary state node Tree.make_node child_name
 
-let internal_error ~debug ?msg child_name parent_node =
+let internal_error ~debug ~msg child_name parent_node =
   let child_name = if String.(child_name = "") then child_name else " " ^ child_name in
   let parent_name = get_name parent_node
   and suffix = Printf.sprintf "Child%s is missing." child_name in
   let default_msg = Printf.sprintf "INTERNAL: [%s] %s" parent_name suffix in
   let default = mk_child Tree.make_node default_msg in
-  match debug with
-  | true -> default
-  | false ->
-    (match msg with
-    | None -> default
-    | Some msg ->
-      let region = !get_region parent_node in
-      let region =
-        if Region.is_empty region then "" else " (" ^ region#compact `Byte ^ ")"
-      in
-      mk_child Tree.make_node (sprintf "%s%s" msg region))
+  if debug then default
+  else
+    let region = !get_region parent_node in
+    let region =
+      if Region.is_empty region then "" else " (" ^ region#compact `Byte ^ ")"
+    in
+    mk_child Tree.make_node (sprintf "%s%s" msg region)
 
-let internal_error = internal_error ~debug:false
+let internal_error = internal_error ~debug
 
 (* Some literals *)
 
