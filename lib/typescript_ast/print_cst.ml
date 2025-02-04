@@ -2,6 +2,10 @@
 
 [@@@warning "-32"]
 
+let debug = false
+
+(* Dependencies and scopes *)
+
 open Core
 open Typescript_ast.Ts_wrap
 module Lexeme = Typescript_ast.Lexeme
@@ -24,7 +28,25 @@ let get_region : (ts_tree -> Region.t) ref =
 (* Partially evaluating wrappers so they print regions in case of
    error (shadowing) *)
 
-let child_with_field = child_with_field ~debug:false ~get_region
+let child_with_field ~msg field node =
+  match Ts_wrap.child_with_field ~get_region field node with
+  | Ok child -> Ok child
+  | Error () ->
+    let region = !get_region node in
+    let region =
+      if Region.is_empty region then "" else " (" ^ region#compact `Byte ^ ")"
+    in
+    let msg =
+      if debug
+      then (
+        let name = get_name node in
+        if String.equal name "NULL"
+        then sprintf "NULL parent of field %S." field
+        else sprintf "ERROR: Node %S%s is missing the field %S." name region field)
+      else sprintf "ERROR: %s%s" msg region
+    in
+    Error msg
+
 let named_child_ranked = named_child_ranked ~get_region
 let child_ranked = child_ranked ~get_region
 
@@ -416,8 +438,9 @@ and print_namespace_export ?(comments = []) state node =
 (* Argument [node] cannot be an ERROR/MISSING node. See [print_export_statement]. *)
 
 and mk_child_from_clause kwd_from node =
-  let source_field = child_with_field "source" node
-                       ~msg:"A file path in a string is expected." in
+  let source_field =
+    child_with_field "source" node ~msg:"A file path in a string is expected."
+  in
   let children =
     [ mk_child_res make_kwd kwd_from; mk_child_res print_string source_field ]
   in
@@ -450,8 +473,9 @@ and print_export_specifier ?(comments = []) state node =
   | "NULL" -> print_null_node state
   | _ ->
     let comments = comments @ prev_comments node in
-    let name_field = child_with_field "name" node
-                       ~msg:"An identifier or string is expected." in
+    let name_field =
+      child_with_field "name" node ~msg:"An identifier or string is expected."
+    in
     let children =
       mk_child_res (print_module_export_name ~comments) name_field
       ::
@@ -487,8 +511,9 @@ and print_import_statement ?(comments = []) state node =
         (match first_child_named_opt "import_require_clause" node with
         | Some clause -> [ mk_child print_import_require_clause clause ]
         | None ->
-          let source_field = child_with_field "source" node
-                               ~msg:"A string is expected." in
+          let source_field =
+            child_with_field "source" node ~msg:"A string is expected."
+          in
           [ mk_child_res print_string source_field ])
     in
     let children =
@@ -699,10 +724,10 @@ and print_if_statement ?(comments = []) state node =
   | "NULL" -> print_null_node state
   | _ ->
     let kwd_if = first_child_named "if" node
-    and condition_field = child_with_field "condition" node
-                            ~msg:"A parenthesized expression is expected."
-    and consequence_field = child_with_field "consequence" node
-                              ~msg:"A statement is expected."
+    and condition_field =
+      child_with_field "condition" node ~msg:"A parenthesized expression is expected."
+    and consequence_field =
+      child_with_field "consequence" node ~msg:"A statement is expected."
     and alternative_field = child_with_field_opt "alternative" node in
     let children =
       [ mk_child_res (make_kwd ~comments) kwd_if
@@ -738,10 +763,11 @@ and print_switch_statement state node =
   | "NULL" -> print_null_node state
   | _ ->
     let kwd_switch = first_child_named "switch" node
-    and value_field = child_with_field "value" node
-                        ~msg:"A parenthesized expression is expected."
-    and body_field = child_with_field "body" node
-                       ~msg:"The body of the switch is expected." in
+    and value_field =
+      child_with_field "value" node ~msg:"A parenthesized expression is expected."
+    and body_field =
+      child_with_field "body" node ~msg:"The body of the switch is expected."
+    in
     let children =
       [ mk_child_res make_kwd kwd_switch
       ; mk_child_res print_parenthesized_expression value_field
@@ -779,8 +805,7 @@ and print_switch_case state node =
         | _ -> skip_until_colon nodes)
     in
     let stmt_children = skip_until_colon children
-    and value_field = child_with_field "value" node
-                        ~msg:"An expression is expected." in
+    and value_field = child_with_field "value" node ~msg:"An expression is expected." in
     let children =
       mk_child_res make_kwd kwd_case
       :: mk_child_res print_expressions value_field
@@ -811,10 +836,10 @@ and print_for_statement state node =
   | _ ->
     let kwd_for = first_child_named "for" node
     and sym_lparen = first_child_named "(" node
-    and initializer_field = child_with_field "initializer" node
-                              ~msg:"An initial value is expected."
-    and condition_field = child_with_field "condition" node
-                            ~msg:"An expression or a semicolon is expected."
+    and initializer_field =
+      child_with_field "initializer" node ~msg:"An initial value is expected."
+    and condition_field =
+      child_with_field "condition" node ~msg:"An expression or a semicolon is expected."
     and increment_field = child_with_field_opt "increment" node
     and sym_rparen = first_child_named ")" node
     and body_field = child_with_field "body" node ~msg:"A statement is expected."
@@ -857,8 +882,8 @@ and print_for_in_statement state node =
     and left_field = child_with_field "left" node ~msg:"An expression is expected."
     and sym_rparen = first_child_named ")" node
     and body_field = child_with_field "body" node ~msg:"A statement is expected."
-    and operator_field = child_with_field "operator" node
-                           ~msg:"The keyword 'in' or 'of' is expected."
+    and operator_field =
+      child_with_field "operator" node ~msg:"The keyword 'in' or 'of' is expected."
     and right_field = child_with_field "right" node ~msg:"An expression is expected."
     and kind_field = child_with_field_opt "kind" node in
     let print_operator state node =
@@ -915,10 +940,9 @@ and print_while_statement state node =
   | "NULL" -> print_null_node state
   | _ ->
     let kwd_while = first_child_named "while" node
-    and condition_field = child_with_field "condition" node
-                            ~msg:"A parenthesized expression is expected."
-    and body_field = child_with_field "body" node
-                       ~msg:"A statement is expected." in
+    and condition_field =
+      child_with_field "condition" node ~msg:"A parenthesized expression is expected."
+    and body_field = child_with_field "body" node ~msg:"A statement is expected." in
     let children =
       [ mk_child_res make_kwd kwd_while
       ; mk_child_res print_parenthesized_expression condition_field
@@ -938,7 +962,9 @@ and print_do_statement state node =
     let kwd_do = first_child_named "do" node
     and body_field = child_with_field "body" node ~msg:"A statement is expected."
     and kwd_while = first_child_named "while" node
-    and condition_field = child_with_field "condition" node ~msg:"A parenthesized expression is expected." in
+    and condition_field =
+      child_with_field "condition" node ~msg:"A parenthesized expression is expected."
+    in
     let children =
       [ mk_child_res make_kwd kwd_do
       ; mk_child_res print_statement body_field
@@ -957,7 +983,8 @@ and print_try_statement state node =
   | "NULL" -> print_null_node state
   | _ ->
     let kwd_try = first_child_named "try" node
-    and body_field = child_with_field "body" node ~msg:"A block of statements is expected."
+    and body_field =
+      child_with_field "body" node ~msg:"A block of statements is expected."
     and handler_field = child_with_field_opt "handler" node
     and finalizer_field = child_with_field_opt "finalizer" node in
     let children =
@@ -976,7 +1003,8 @@ and print_catch_clause state node =
   | "NULL" -> print_null_node state
   | _ ->
     let kwd_catch = first_child_named "catch" node
-    and body_field = child_with_field "body" node ~msg:"A block of statements is expected."
+    and body_field =
+      child_with_field "body" node ~msg:"A block of statements is expected."
     and parameter_field = child_with_field_opt "parameter" node
     and print_parameter state node =
       match get_name node with
@@ -1007,7 +1035,9 @@ and print_finally_clause state node =
   | "NULL" -> print_null_node state
   | _ ->
     let kwd_finally = first_child_named "finally" node
-    and body_field = child_with_field "body" node ~msg:"A block of statements is expected." in
+    and body_field =
+      child_with_field "body" node ~msg:"A block of statements is expected."
+    in
     let children =
       [ mk_child_res make_kwd kwd_finally; mk_child_res print_statement_block body_field ]
     in
@@ -1022,7 +1052,8 @@ and print_with_statement state node =
   | "NULL" -> print_null_node state
   | _ ->
     let kwd_with = first_child_named "with" node
-    and object_field = child_with_field "object" node ~msg:"A parenthesized expression is expected."
+    and object_field =
+      child_with_field "object" node ~msg:"A parenthesized expression is expected."
     and body_field = child_with_field "body" node ~msg:"A statement is expected." in
     let children =
       [ mk_child_res make_kwd kwd_with
@@ -1182,10 +1213,13 @@ and print_function_declaration ?(comments = []) state node =
     and name_field = child_with_field "name" node ~msg:"A function name is expected."
     (* "_call_signature" inlined: *)
     and type_parameters_field = child_with_field_opt "type_parameters" node
-    and parameters_field = child_with_field "parameters" node ~msg:"Parameters are expected."
+    and parameters_field =
+      child_with_field "parameters" node ~msg:"Parameters are expected."
     and return_type_field = child_with_field_opt "return_type" node
     (* "statement_block" *)
-    and body_field = child_with_field "body" node ~msg:"A block of statements is expected." in
+    and body_field =
+      child_with_field "body" node ~msg:"A block of statements is expected."
+    in
     let async_comments, function_comments =
       match kwd_async with
       | None -> [], comments
@@ -1223,10 +1257,13 @@ and print_generator_function_declaration state node =
     and name_field = child_with_field "name" node ~msg:"A function name is expected."
     (* "_call_signature" inlined: *)
     and type_parameters_field = child_with_field_opt "type_parameters" node
-    and parameters_field = child_with_field "parameters" node ~msg:"Parameters are expected."
+    and parameters_field =
+      child_with_field "parameters" node ~msg:"Parameters are expected."
     and return_type_field = child_with_field_opt "return_type" node
     (* "statement_block" *)
-    and body_field = child_with_field "body" node ~msg:"A block of statements is expected." in
+    and body_field =
+      child_with_field "body" node ~msg:"A block of statements is expected."
+    in
     let children =
       [ mk_child_opt make_kwd kwd_async
       ; mk_child_res make_kwd kwd_function
@@ -1275,7 +1312,8 @@ and print_lexical_declaration ?(comments = []) state node =
   | "NULL" -> print_null_node state
   | _ ->
     let comments = comments @ prev_comments node
-    and kind_field = child_with_field "kind" node ~msg:"The keyword 'let' or 'const' is expected."
+    and kind_field =
+      child_with_field "kind" node ~msg:"The keyword 'let' or 'const' is expected."
     and var_decls = children_named "variable_declarator" node in
     let print_set_or_const state node =
       match get_name node with
@@ -1305,7 +1343,9 @@ and print_variable_declarator state node =
         :: mk_child_opt print_type_annotation type_field
         :: mk_child_initializer_opt node (* "_initializer" inlined *)
       | Some sym_qmark ->
-        let type_field = child_with_field "type" node ~msg:"A type annotation is expected." in
+        let type_field =
+          child_with_field "type" node ~msg:"A type annotation is expected."
+        in
         mk_child_res print_identifier name_field
         :: mk_child make_sym sym_qmark
         :: [ mk_child_res print_type_annotation type_field ]
@@ -1347,7 +1387,8 @@ and print_function_signature state node =
     and name_field = child_with_field "name" node ~msg:"A function name is expected."
     (* "_call_signature" inlined: *)
     and type_parameters_field = child_with_field_opt "type_parameters" node
-    and parameters_field = child_with_field "parameters" node ~msg:"Parameters are expected."
+    and parameters_field =
+      child_with_field "parameters" node ~msg:"Parameters are expected."
     and return_type_field = child_with_field_opt "return_type" node in
     (* "statement_block" *)
     let children =
@@ -1560,7 +1601,9 @@ and print_enum_assignment state node =
   | "MISSING" -> print_missing_node state node
   | "NULL" -> print_null_node state
   | _ ->
-    let name_field = child_with_field "name" node ~msg:"An enumerated name is expected." in
+    let name_field =
+      child_with_field "name" node ~msg:"An enumerated name is expected."
+    in
     let children =
       mk_child_res print_property_name name_field
       :: mk_child_initializer_opt node (* "_initializer" inlined *)
@@ -1766,8 +1809,11 @@ and print_augmented_assignment_expression state node =
   | _ ->
     let left_field = child_with_field "left" node ~msg:"An expression is expected."
     and right_field = child_with_field "right" node ~msg:"An expression is expected."
-    and operator = child_with_field "operator" node
-                     ~msg:"An augmented assignment operator is expected."
+    and operator =
+      child_with_field
+        "operator"
+        node
+        ~msg:"An augmented assignment operator is expected."
     and print_left state node =
       (* "_augmented_assignment_lhs" is inlined here (hidden rule): *)
       match get_name node with
@@ -1826,8 +1872,10 @@ and print_unary_expression state node =
   | "MISSING" -> print_missing_node state node
   | "NULL" -> print_null_node state
   | _ ->
-    let operator_field = child_with_field "operator" node ~msg:"A unary operator is expected."
-    and argument_field = child_with_field "argument" node ~msg:"An expression is expected."
+    let operator_field =
+      child_with_field "operator" node ~msg:"A unary operator is expected."
+    and argument_field =
+      child_with_field "argument" node ~msg:"An expression is expected."
     and print_unary_operator state node =
       match get_name node with
       | "!" -> make_sym state node
@@ -1855,9 +1903,11 @@ and print_binary_expression ?(comments = []) state node =
   | "NULL" -> print_null_node state
   | _ ->
     let comments = comments @ prev_comments node
-    and left_field = child_with_field "left" node
-    and right_field = child_with_field "right" node
-    and operator = child_with_field "operator" node in
+    and left_field = child_with_field "left" node ~msg:"An expression is expected."
+    and right_field = child_with_field "right" node ~msg:"An expression is expected."
+    and operator =
+      child_with_field "operator" node ~msg:"A binary operator is expected."
+    in
     let print_left state node =
       match get_name node with
       | "private_property_identifier" -> print_identifier ~comments state node
@@ -1907,9 +1957,13 @@ and print_ternary_expression state node =
   | "MISSING" -> print_missing_node state node
   | "NULL" -> print_null_node state
   | _ ->
-    let condition_field = child_with_field "condition" node
-    and consequence_field = child_with_field "consequence" node
-    and alternative_field = child_with_field "alternative" node in
+    let condition_field =
+      child_with_field "condition" node ~msg:"An expression is expected."
+    and consequence_field =
+      child_with_field "consequence" node ~msg:"An expression is expected."
+    and alternative_field =
+      child_with_field "alternative" node ~msg:"An expression is expected."
+    in
     let children =
       [ mk_child_res print_expression condition_field
       ; mk_child_res print_expression consequence_field
@@ -1926,7 +1980,8 @@ and print_update_expression state node =
   | "MISSING" -> print_missing_node state node
   | "NULL" -> print_null_node state
   | _ ->
-    let argument_field = child_with_field "argument" node
+    let argument_field =
+      child_with_field "argument" node ~msg:"An expression is expected."
     and first_child = child_ranked 0 node in
     let children =
       match get_name_res first_child with
@@ -1971,7 +2026,8 @@ and print_new_expression state node =
   | "NULL" -> print_null_node state
   | _ ->
     let kwd_new = first_child_named "new" node
-    and constructor_field = child_with_field "constructor" node
+    and constructor_field =
+      child_with_field "constructor" node ~msg:"An expression is expected."
     and type_arguments_field = child_with_field_opt "type_arguments" node
     and arguments_field = child_with_field_opt "arguments" node in
     let children =
@@ -2057,7 +2113,9 @@ and print_instantiation_expression state node =
   | "NULL" -> print_null_node state
   | _ ->
     let expression = named_child_ranked 0 node
-    and type_arguments_field = child_with_field "type_arguments" node in
+    and type_arguments_field =
+      child_with_field "type_arguments" node ~msg:"Type arguments are expected."
+    in
     let children =
       [ mk_child_res print_expression expression
       ; mk_child_res print_type_arguments type_arguments_field
@@ -2090,9 +2148,9 @@ and print_subscript_expression state node =
   | "MISSING" -> print_missing_node state node
   | "NULL" -> print_null_node state
   | _ ->
-    let object_field = child_with_field "object" node
+    let object_field = child_with_field "object" node ~msg:"An expression is expected."
     and optional_chain_field = child_with_field_opt "optional_chain" node
-    and index_field = child_with_field "index" node
+    and index_field = child_with_field "index" node ~msg:"An expression is expected."
     and sym_lbracket = first_child_named "[" node
     and sym_rbracket = first_child_named "]" node
     and print_chain state node =
@@ -2122,9 +2180,10 @@ and print_member_expression state node =
   | "MISSING" -> print_missing_node state node
   | "NULL" -> print_null_node state
   | _ ->
-    let object_field = child_with_field "object" node
+    let object_field = child_with_field "object" node ~msg:"An expression is expected."
     and optional_chain_field = child_with_field_opt "optional_chain" node
-    and property_field = child_with_field "property" node
+    and property_field =
+      child_with_field "property" node ~msg:"A property identifier is expected."
     and print_object state node =
       match get_name node with
       | "import" -> make_kwd state node
@@ -2227,8 +2286,8 @@ and print_pair state node =
   | "MISSING" -> print_missing_node state node
   | "NULL" -> print_null_node state
   | _ ->
-    let key_field = child_with_field "key" node
-    and value_field = child_with_field "value" node
+    let key_field = child_with_field "key" node ~msg:"A property name is expected."
+    and value_field = child_with_field "value" node ~msg:"An expression is expected."
     and sym_colon = first_child_named ":" node in
     let children =
       [ mk_child_res print_property_name key_field
@@ -2278,10 +2337,13 @@ and print_function_expression state node =
     and name_field = child_with_field_opt "name" node
     (* "_call_signature" inlined: *)
     and type_parameters_field = child_with_field_opt "type_parameters" node
-    and parameters_field = child_with_field "parameters" node
+    and parameters_field =
+      child_with_field "parameters" node ~msg:"Parameters are expected."
     and return_type_field = child_with_field_opt "return_type" node
     (* "statement_block" *)
-    and body_field = child_with_field "body" node in
+    and body_field =
+      child_with_field "body" node ~msg:"A block of statements is expected."
+    in
     let children =
       [ mk_child_opt make_kwd kwd_async
       ; mk_child_res make_kwd kwd_function
@@ -2305,7 +2367,12 @@ and print_arrow_function state node =
     let kwd_async = first_child_named_opt "async" node
     and parameter_field = child_with_field_opt "parameter" node
     and sym_arrow = first_child_named "=>" node
-    and body_field = child_with_field "body" node in
+    and body_field =
+      child_with_field
+        "body"
+        node
+        ~msg:"A block of statements or an expression is expected."
+    in
     let children =
       match parameter_field with
       | Some parameter_field ->
@@ -2317,7 +2384,8 @@ and print_arrow_function state node =
       | None ->
         (* "_call_signature" inlined: *)
         let type_parameters_field = child_with_field_opt "type_parameters" node
-        and parameters_field = child_with_field "parameters" node
+        and parameters_field =
+          child_with_field "parameters" node ~msg:"Parameters are expected."
         and return_type_field = child_with_field_opt "return_type" node in
         [ mk_child_opt make_kwd kwd_async
         ; mk_child_opt print_type_parameters type_parameters_field
@@ -2348,10 +2416,13 @@ and print_generator_function state node =
     and name_field = child_with_field_opt "name" node
     (* "_call_signature" inlined: *)
     and type_parameters_field = child_with_field_opt "type_parameters" node
-    and parameters_field = child_with_field "parameters" node
+    and parameters_field =
+      child_with_field "parameters" node ~msg:"Parameters are expected."
     and return_type_field = child_with_field_opt "return_type" node
     (* "statement_block" *)
-    and body_field = child_with_field "body" node in
+    and body_field =
+      child_with_field "body" node ~msg:"A block of statements is expected."
+    in
     let children =
       [ mk_child_opt make_kwd kwd_async
       ; mk_child_res make_kwd kwd_function
@@ -2378,7 +2449,9 @@ and print_class state node =
     and name_field = child_with_field_opt "name" node
     and type_parameters_field = child_with_field_opt "type_parameters" node
     and heritage_child = first_child_named_opt "class_heritage" node
-    and body_field = child_with_field "body" node in
+    and body_field =
+      child_with_field "body" node ~msg:"The body of a class is expected."
+    in
     let children =
       mk_children_list print_decorator decorators
       @ [ mk_child_res make_kwd kwd_class
@@ -2508,14 +2581,17 @@ and print_method_definition state node =
     and kwd_set = first_child_named_opt "set" node
     and kwd_get = first_child_named_opt "get" node
     and sym_star = first_child_named_opt "*" node
-    and name_field = child_with_field "name" node
+    and name_field = child_with_field "name" node ~msg:"A property name is expected."
     and qmark = first_child_named_opt "?" node
     (* "_call_signature" inlined: *)
     and type_parameters_field = child_with_field_opt "type_parameters" node
-    and parameters_field = child_with_field "parameters" node
+    and parameters_field =
+      child_with_field "parameters" node ~msg:"Parameters are expected."
     and return_type_field = child_with_field_opt "return_type" node
     (* "statement_block" *)
-    and body_field = child_with_field "body" node in
+    and body_field =
+      child_with_field "body" node ~msg:"A block of statements is expected."
+    in
     let children =
       [ mk_child_opt print_accessibility_modifier accessibility_modifier
       ; mk_child_opt make_kwd kwd_static
@@ -2542,7 +2618,9 @@ and print_class_static_block state node =
   | "NULL" -> print_null_node state
   | _ ->
     let kwd_static = first_child_named "static" node
-    and body_field = child_with_field "body" node in
+    and body_field =
+      child_with_field "body" node ~msg:"A block of statements is expected."
+    in
     let children =
       [ mk_child_res make_kwd kwd_static; mk_child_res print_statement_block body_field ]
     in
@@ -2560,11 +2638,12 @@ and print_abstract_method_signature state node =
     and kwd_set = first_child_named_opt "set" node
     and kwd_get = first_child_named_opt "get" node
     and sym_star = first_child_named_opt "*" node
-    and name_field = child_with_field "name" node
+    and name_field = child_with_field "name" node ~msg:"A property name is expected."
     and sym_qmark = first_child_named_opt "?" node
     (* "_call_signature" inlined: *)
     and type_parameters_field = child_with_field_opt "type_parameters" node
-    and parameters_field = child_with_field "parameters" node
+    and parameters_field =
+      child_with_field "parameters" node ~msg:"Parameters are expected."
     and return_type_field = child_with_field_opt "return_type" node in
     let children =
       [ mk_child_opt print_accessibility_modifier accessibility_modifier
@@ -2596,7 +2675,7 @@ and print_public_field_definition state node =
     and kwd_readonly = first_child_named_opt "readonly" node
     and kwd_accessor = first_child_named_opt "accessor" node
     and kwd_abstract = first_child_named_opt "abstract" node
-    and name_field = child_with_field "name" node
+    and name_field = child_with_field "name" node ~msg:"A property name is expected."
     and type_field = child_with_field_opt "type" node
     and sym_qmark = first_child_named_opt "?" node
     and sym_emark = first_child_named_opt "!" node in
@@ -2639,10 +2718,13 @@ and print_call_expression state node =
   | "MISSING" -> print_missing_node state node
   | "NULL" -> print_null_node state
   | _ ->
-    let function_field = child_with_field "function" node
+    let function_field =
+      child_with_field "function" node ~msg:"An expression is expected."
     and member_selection = first_child_named_opt "?." node
     and type_arguments_field = child_with_field_opt "type_arguments" node
-    and arguments_field = child_with_field "arguments" node in
+    and arguments_field =
+      child_with_field "arguments" node ~msg:"Arguments are expected."
+    in
     let children =
       match member_selection with
       | None ->
@@ -2732,9 +2814,11 @@ and print_type_query_member_expression_in_type_annotation state node =
   | "MISSING" -> print_missing_node state node
   | "NULL" -> print_null_node state
   | _ ->
-    let object_field = child_with_field "object" node
+    let object_field =
+      child_with_field "object" node ~msg:"A member or call expression is expected."
     and selector = first_child_named "." node
-    and property_field = child_with_field "property" node
+    and property_field =
+      child_with_field "property" node ~msg:"A property identifier is expected."
     and print_object_field state node =
       match get_name node with
       | "import" -> make_kwd state node
@@ -2764,8 +2848,9 @@ and print_type_query_call_expression_in_type_annotation state node =
   | "MISSING" -> print_missing_node state node
   | "NULL" -> print_null_node state
   | _ ->
-    let function_field = child_with_field "function" node
-    and arguments_field = child_with_field "arguments" node
+    let function_field =
+      child_with_field "function" node ~msg:"A member expression is expected."
+    and arguments_field = child_with_field "arguments" node ~msg:"Arguments are expected."
     and print_function_field state node =
       match get_name node with
       | "import" -> make_kwd state node
@@ -2883,8 +2968,9 @@ and print_nested_type_identifier ?comments state node =
   | "MISSING" -> print_missing_node state node
   | "NULL" -> print_null_node state
   | _ ->
-    let module_field = child_with_field "module" node
-    and name_field = child_with_field "name" node
+    let module_field =
+      child_with_field "module" node ~msg:"An identifier, perhaps qualified, is expected."
+    and name_field = child_with_field "name" node ~msg:"A type identifier is expected."
     and print_module_field state node =
       match get_name node with
       | "identifier" -> print_identifier ?comments state node
@@ -2906,8 +2992,13 @@ and print_nested_identifier ?comments state node =
   | "MISSING" -> print_missing_node state node
   | "NULL" -> print_null_node state
   | _ ->
-    let object_field = child_with_field "object" node
-    and property_field = child_with_field "property" node
+    let object_field =
+      child_with_field
+        "object"
+        node
+        ~msg:"An identifier or a member expression is expected."
+    and property_field =
+      child_with_field "property" node ~msg:"A property identifier is expected."
     and print_object_field state node =
       match get_name node with
       | "identifier" -> print_identifier ?comments state node
@@ -2934,8 +3025,13 @@ and print_generic_type ?(comments = []) state node =
   | "NULL" -> print_null_node state
   | _ ->
     let comments = comments @ prev_comments node in
-    let name_field = child_with_field "name" node
-    and type_arguments_field = child_with_field "type_arguments" node
+    let name_field =
+      child_with_field
+        "name"
+        node
+        ~msg:"A type identifier, perhaps qualified, is expected."
+    and type_arguments_field =
+      child_with_field "type_arguments" node ~msg:"Type arguments are expected."
     and print_name_field state node =
       match get_name node with
       | "type_identifier" -> print_type_identifier ~comments state node
@@ -2978,7 +3074,7 @@ and print_property_signature state node =
     and kwd_static = first_child_named_opt "static" node
     and override_modifier = first_child_named_opt "override_modifier" node
     and kwd_readonly = first_child_named_opt "readonly" node
-    and name_field = child_with_field "name" node
+    and name_field = child_with_field "name" node ~msg:"An identifier is expected."
     and sym_qmark = first_child_named_opt "?" node
     and type_field = child_with_field_opt "type" node in
     let children =
@@ -3002,7 +3098,8 @@ and print_call_signature state node =
   | "NULL" -> print_null_node state
   | _ ->
     let type_parameters_field = child_with_field_opt "type_parameters" node
-    and parameters_field = child_with_field "parameters" node
+    and parameters_field =
+      child_with_field "parameters" node ~msg:"Parameters are expected."
     and return_type_field = child_with_field_opt "return_type" node in
     let children =
       [ mk_child_opt print_type_parameters type_parameters_field
@@ -3063,7 +3160,8 @@ and print_construct_signature state node =
     let kwd_abstract = first_child_named_opt "abstract" node
     and kwd_new = first_child_named "new" node
     and type_parameters_field = child_with_field_opt "type_parameters" node
-    and parameters_field = child_with_field "parameters" node
+    and parameters_field =
+      child_with_field "parameters" node ~msg:"Parameters are expected."
     and type_field = child_with_field_opt "type" node in
     let children =
       [ mk_child_opt make_kwd kwd_abstract
@@ -3086,7 +3184,7 @@ and print_index_signature state node =
     let kwd_readonly = first_child_named_opt "readonly" node
     and sign_field = child_with_field_opt "sign" node
     and name_field = child_with_field_opt "name" node
-    and type_field = child_with_field "type" node
+    and type_field = child_with_field "type" node ~msg:"A type annotation is expected."
     and sym_lbracket = first_child_named "[" node
     and sym_rbracket = first_child_named "]" node
     and print_type_field state node =
@@ -3106,7 +3204,9 @@ and print_index_signature state node =
       @ (match name_field with
         | Some name_field ->
           let sym_colon = first_child_named ":" node
-          and index_type_field = child_with_field "index_type" node in
+          and index_type_field =
+            child_with_field "index_type" node ~msg:"A type is expected."
+          in
           [ mk_child print_identifier name_field
           ; mk_child_res make_sym sym_colon
           ; mk_child_res print_type index_type_field
@@ -3133,9 +3233,9 @@ and print_mapped_type_clause state node =
   | "MISSING" -> print_missing_node state node
   | "NULL" -> print_null_node state
   | _ ->
-    let name_field = child_with_field "name" node
+    let name_field = child_with_field "name" node ~msg:"A type identifier is expected."
     and kwd_in = first_child_named "in" node
-    and type_field = child_with_field "type" node
+    and type_field = child_with_field "type" node ~msg:"A type is expected."
     and alias_field = child_with_field_opt "alias" node in
     let alias_children =
       match alias_field with
@@ -3208,11 +3308,12 @@ and print_method_signature state node =
     and kwd_set = first_child_named_opt "set" node
     and kwd_get = first_child_named_opt "get" node
     and sym_star = first_child_named_opt "*" node
-    and name_field = child_with_field "name" node
+    and name_field = child_with_field "name" node ~msg:"A property name is expected."
     and sym_qmark = first_child_named_opt "?" node
     (* "_call_signature" inlined: *)
     and type_parameters_field = child_with_field_opt "type_parameters" node
-    and parameters_field = child_with_field "parameters" node
+    and parameters_field =
+      child_with_field "parameters" node ~msg:"Parameters are expected."
     and return_type_field = child_with_field_opt "return_type" node in
     let children =
       [ mk_child_opt print_accessibility_modifier accessibility_modifier
@@ -3274,8 +3375,9 @@ and print_tuple_parameter state node =
   | "MISSING" -> print_missing_node state node
   | "NULL" -> print_null_node state
   | _ ->
-    let name_field = child_with_field "name" node
-    and type_field = child_with_field "type" node
+    let name_field =
+      child_with_field "name" node ~msg:"An identifier or a rest pattern is expected."
+    and type_field = child_with_field "type" node ~msg:"A type annotation is expected."
     and print_name_field state node =
       match get_name node with
       | "identifier" -> print_identifier state node
@@ -3295,8 +3397,8 @@ and print_optional_tuple_parameter state node =
   | "MISSING" -> print_missing_node state node
   | "NULL" -> print_null_node state
   | _ ->
-    let name_field = child_with_field "name" node
-    and type_field = child_with_field "type" node in
+    let name_field = child_with_field "name" node ~msg:"An identifier is expected,"
+    and type_field = child_with_field "type" node ~msg:"A type annotation is expected." in
     let children =
       [ mk_child_res print_identifier name_field
       ; mk_child_res print_type_annotation type_field
@@ -3398,8 +3500,10 @@ and print_type_query_subscript_expression state node =
   | "MISSING" -> print_missing_node state node
   | "NULL" -> print_null_node state
   | _ ->
-    let object_field = child_with_field "object" node
-    and index_field = child_with_field "index" node
+    let object_field =
+      child_with_field "object" node ~msg:"An object denotation is expected."
+    and index_field =
+      child_with_field "index" node ~msg:"A type, string or number is expected."
     and sym_lbracket = first_child_named "[" node
     and sym_rbracket = first_child_named "]" node
     and print_index_field state node =
@@ -3424,8 +3528,11 @@ and print_type_query_member_expression state node =
   | "MISSING" -> print_missing_node state node
   | "NULL" -> print_null_node state
   | _ ->
-    let object_field = child_with_field "object" node
-    and property_field = child_with_field "property" node in
+    let object_field =
+      child_with_field "object" node ~msg:"An object denotation is expected."
+    and property_field =
+      child_with_field "property" node ~msg:"A property identifier is expected."
+    in
     let children =
       [ mk_child_res print_object_field object_field
       ; mk_child_res print_property_field property_field
@@ -3442,11 +3549,7 @@ and print_object_field state node =
   | "call_expression" -> print_type_query_call_expression state node
   | _ -> match_rest state node print_unexpected_node
 
-and print_property_field state node =
-  match get_name node with
-  | "private_property_identifier" -> print_identifier state node
-  | "property_identifier" -> print_identifier state node
-  | _ -> match_rest state node print_unexpected_node
+and print_property_field state node = print_type_query_property state node
 
 and print_type_query_instantiation_expression state node =
   match get_name node with
@@ -3454,8 +3557,11 @@ and print_type_query_instantiation_expression state node =
   | "MISSING" -> print_missing_node state node
   | "NULL" -> print_null_node state
   | _ ->
-    let function_field = child_with_field "function" node
-    and type_arguments_field = child_with_field "type_arguments" node in
+    let function_field =
+      child_with_field "function" node ~msg:"A function denotation is expected."
+    and type_arguments_field =
+      child_with_field "type_arguments" node ~msg:"Type arguments are expected."
+    in
     let children =
       [ mk_child_res print_function_field function_field
       ; mk_child_res print_type_arguments type_arguments_field
@@ -3477,8 +3583,11 @@ and print_type_query_call_expression state node =
   | "MISSING" -> print_missing_node state node
   | "NULL" -> print_null_node state
   | _ ->
-    let function_field = child_with_field "function" node
-    and arguments_field = child_with_field "arguments" node in
+    let function_field =
+      child_with_field "function" node ~msg:"A function denotation is expected."
+    and arguments_field =
+      child_with_field "arguments" node ~msg:"Arguments are expected."
+    in
     let children =
       [ mk_child_res print_function_field function_field
       ; mk_child_res print_arguments arguments_field
@@ -3560,11 +3669,11 @@ and print_conditional_type state node =
   | "MISSING" -> print_missing_node state node
   | "NULL" -> print_null_node state
   | _ ->
-    let left_field = child_with_field "left" node
+    let left_field = child_with_field "left" node ~msg:"A type is expected."
     and kwd_extends = first_child_named "extends" node
-    and right_field = child_with_field "right" node
-    and consequence_field = child_with_field "consequence" node
-    and alternative_field = child_with_field "alternative" node
+    and right_field = child_with_field "right" node ~msg:"A type is expected."
+    and consequence_field = child_with_field "consequence" node ~msg:"A type is expected."
+    and alternative_field = child_with_field "alternative" node ~msg:"A type is expected."
     and sym_qmark = first_child_named "?" node
     and sym_colon = first_child_named ":" node in
     let children =
@@ -3653,8 +3762,9 @@ and print_function_type state node =
   | "NULL" -> print_null_node state
   | _ ->
     let type_parameters_field = child_with_field_opt "type_parameters" node
-    and parameters_field = child_with_field "parameters" node
-    and return_type_field = child_with_field "return_type" node
+    and parameters_field =
+      child_with_field "parameters" node ~msg:"Parameters are expected."
+    and return_type_field = child_with_field "return_type" node ~msg:"A type is expected."
     and sym_arrow = first_child_named "=>" node
     and print_return_type state node =
       match get_name node with
@@ -3677,9 +3787,10 @@ and print_type_predicate state node =
   | "MISSING" -> print_missing_node state node
   | "NULL" -> print_null_node state
   | _ ->
-    let name_field = child_with_field "name" node
+    let name_field =
+      child_with_field "name" node ~msg:"An identifier or a predefined type is expected."
     and kwd_is = first_child_named "is" node
-    and type_field = child_with_field "type" node in
+    and type_field = child_with_field "type" node ~msg:"A type is expected." in
     let print_name_field state node =
       match get_name node with
       | "identifier" -> print_identifier state node
@@ -3720,9 +3831,10 @@ and print_constructor_type state node =
     let kwd_abstract = first_child_named_opt "abstract" node
     and kwd_new = first_child_named "new" node
     and type_parameters_field = child_with_field_opt "type_parameters" node
-    and parameters_field = child_with_field "parameters" node
+    and parameters_field =
+      child_with_field "parameters" node ~msg:"Parameters are expected."
     and sym_arrow = first_child_named "=>" node
-    and type_field = child_with_field "type" node in
+    and type_field = child_with_field "type" node ~msg:"A type is expected." in
     let children =
       [ mk_child_opt make_kwd kwd_abstract
       ; mk_child_res make_kwd kwd_new
@@ -3760,7 +3872,7 @@ and print_required_parameter state node =
     and accessibility_modifier = first_child_named_opt "accessibility_modifier" node
     and override_modifier = first_child_named_opt "override_modifier" node
     and kwd_readonly = first_child_named_opt "readonly" node
-    and pattern_field = child_with_field "pattern" node
+    and pattern_field = child_with_field "pattern" node ~msg:"A pattern is expected."
     (* *)
     and type_field = child_with_field_opt "type" node
     and print_pattern_field state node =
@@ -3781,7 +3893,7 @@ and print_required_parameter state node =
     make_tree state node children
 
 and mk_child_initializer sym_equal node =
-  let value_field = child_with_field "value" node in
+  let value_field = child_with_field "value" node ~msg:"An expression is expected." in
   let children =
     [ mk_child_res make_sym sym_equal; mk_child_res print_expression value_field ]
   in
@@ -3817,9 +3929,14 @@ and print_decorator_member_expression state node =
   | "MISSING" -> print_missing_node state node
   | "NULL" -> print_null_node state
   | _ ->
-    let object_field = child_with_field "object" node
+    let object_field =
+      child_with_field
+        "object"
+        node
+        ~msg:"An identifier or a member expression is expected."
     and selector = first_child_named "." node
-    and property_field = child_with_field "property" node
+    and property_field =
+      child_with_field "property" node ~msg:"A property identifier is expected."
     and print_object state node =
       match get_name node with
       | "identifier" -> print_identifier state node
@@ -3839,9 +3956,13 @@ and print_decorator_call_expression state node =
   | "MISSING" -> print_missing_node state node
   | "NULL" -> print_null_node state
   | _ ->
-    let function_field = child_with_field "function" node
+    let function_field =
+      child_with_field
+        "function"
+        node
+        ~msg:"An identifier or a member expression is expected."
     and type_arguments_field = child_with_field_opt "type_arguments" node
-    and arguments_field = child_with_field "arguments" node
+    and arguments_field = child_with_field "arguments" node ~msg:"Arguments are expected."
     and print_function state node =
       match get_name node with
       | "identifier" -> print_identifier state node
@@ -3951,9 +4072,9 @@ and print_pair_pattern state node =
   | "MISSING" -> print_missing_node state node
   | "NULL" -> print_null_node state
   | _ ->
-    let key_field = child_with_field "key" node
+    let key_field = child_with_field "key" node ~msg:"A property name is expected."
     and sym_colon = first_child_named ":" node
-    and value_field = child_with_field "value" node
+    and value_field = child_with_field "value" node ~msg:"A pattern is expected."
     and print_value state node =
       match get_name node with
       | "assignment_pattern" -> print_assignment_pattern state node
@@ -3975,8 +4096,8 @@ and print_assignment_pattern state node =
   | "MISSING" -> print_missing_node state node
   | "NULL" -> print_null_node state
   | _ ->
-    let left_field = child_with_field "left" node
-    and right_field = child_with_field "right" node
+    let left_field = child_with_field "left" node ~msg:"A pattern is expected."
+    and right_field = child_with_field "right" node ~msg:"An expression is expected."
     and sym_equal = first_child_named "=" node in
     let children =
       [ mk_child_res print_pattern left_field
@@ -4019,9 +4140,9 @@ and print_object_assignment_pattern state node =
   | "MISSING" -> print_missing_node state node
   | "NULL" -> print_null_node state
   | _ ->
-    let left_field = child_with_field "left" node
+    let left_field = child_with_field "left" node ~msg:"A pattern is expected."
     and sym_equal = first_child_named "=" node
-    and right_field = child_with_field "right" node in
+    and right_field = child_with_field "right" node ~msg:"An expression is expected." in
     let children =
       [ mk_child_res print_object_lhs_pattern left_field
       ; mk_child_res make_sym sym_equal
