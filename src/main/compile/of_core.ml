@@ -166,10 +166,7 @@ let list_mod_declarations (m : Ast_core.program) : Module_var.t list =
       | D_import (Import_all_as { module_str; _ }) ->
         Module_var.of_input_var ~loc:el.location module_str :: prev
       | D_import (Import_selected _) -> prev
-      | D_value _
-      | D_irrefutable_match _
-      | D_type _
-      | D_signature _
-      | D_module_include _ -> prev)
+      | D_value _ | D_irrefutable_match _ | D_type _ | D_signature _ | D_module_include _
+        -> prev)
     ~init:[]
     m

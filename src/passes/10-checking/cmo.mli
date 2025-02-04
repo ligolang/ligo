@@ -7,6 +7,7 @@ type t =
 module Serialized : sig
   val input : Filename.t -> t option
   val output : t -> unit
-  (** Makes cmo path from original file path *)
+
+  (* Makes cmo path from original file path *)
   val make_path : Filename.t -> Filename.t
 end

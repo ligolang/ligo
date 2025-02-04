@@ -4,7 +4,6 @@ open Proto_alpha_utils
 open Trace
 open! Stacking
 open Tezos_micheline
-
 open Ligo_lltz_codegen
 open Lltz_codegen
 
@@ -62,49 +61,72 @@ let compile_contract ~raise
  fun ~options e_contract ->
   let open Lwt.Let_syntax in
   let input_ty, contract = optimize_for_contract ~raise options e_contract in
-
-  let optimize = 
-    function expr -> 
-        Self_michelson.optimize
-          ~experimental_disable_optimizations_for_debugging:
-            options.backend.experimental_disable_optimizations_for_debugging
-          ~has_comment:(has_comment options)
-          expr
+  let optimize = function
+    | expr ->
+      Self_michelson.optimize
+        ~experimental_disable_optimizations_for_debugging:
+          options.backend.experimental_disable_optimizations_for_debugging
+        ~has_comment:(has_comment options)
+        expr
   in
   let%map expr =
-    if options.backend.lltz_ir then
-      let e_simplified = trace ~raise self_mini_c_tracer @@ Self_mini_c.all_expression options contract.body in
-
-      let expr_unoptimised = 
-        let (Var lltz_var, lltz_ty, lltz_body) = Ligo_lltz_codegen.compile_contract contract.binder input_ty e_simplified in
-        Lltz_codegen.compile_contract_to_micheline ~optimize:false lltz_var lltz_ty lltz_body [] in
-      let expr_unoptimised = Micheline.map_node (fun _ -> dummy) (fun prim -> Michelson.Ast.Prim.to_string prim) expr_unoptimised in 
-      
-      let expr_optimised = 
-        let (Var lltz_var, lltz_ty, lltz_body) = Ligo_lltz_codegen.compile_contract contract.binder input_ty e_simplified in
-        Lltz_codegen.compile_contract_to_micheline ~optimize:true lltz_var lltz_ty lltz_body [] in
-      let expr_optimised = Micheline.map_node (fun _ -> dummy) (fun prim -> Michelson.Ast.Prim.to_string prim) expr_optimised in 
-
-      let%bind size_optimised = Of_michelson.measure ~raise (expr_optimised) in
+    if options.backend.lltz_ir
+    then (
+      let e_simplified =
+        trace ~raise self_mini_c_tracer
+        @@ Self_mini_c.all_expression options contract.body
+      in
+      let expr_unoptimised =
+        let Var lltz_var, lltz_ty, lltz_body =
+          Ligo_lltz_codegen.compile_contract contract.binder input_ty e_simplified
+        in
+        Lltz_codegen.compile_contract_to_micheline
+          ~optimize:false
+          lltz_var
+          lltz_ty
+          lltz_body
+          []
+      in
+      let expr_unoptimised =
+        Micheline.map_node
+          (fun _ -> dummy)
+          (fun prim -> Michelson.Ast.Prim.to_string prim)
+          expr_unoptimised
+      in
+      let expr_optimised =
+        let Var lltz_var, lltz_ty, lltz_body =
+          Ligo_lltz_codegen.compile_contract contract.binder input_ty e_simplified
+        in
+        Lltz_codegen.compile_contract_to_micheline
+          ~optimize:true
+          lltz_var
+          lltz_ty
+          lltz_body
+          []
+      in
+      let expr_optimised =
+        Micheline.map_node
+          (fun _ -> dummy)
+          (fun prim -> Michelson.Ast.Prim.to_string prim)
+          expr_optimised
+      in
+      let%bind size_optimised = Of_michelson.measure ~raise expr_optimised in
       let%bind size_unoptimised = Of_michelson.measure ~raise expr_unoptimised in
-
       (* Assert that size with lltz is smaller than without *)
-      if size_optimised > size_unoptimised then
-        assert false
-      else
-        Lwt.return expr_optimised
-    else
+      if size_optimised > size_unoptimised
+      then assert false
+      else Lwt.return expr_optimised)
+    else (
       let de_bruijn =
         trace ~raise scoping_tracer @@ Scoping.translate_closed_function contract input_ty
       in
       let%bind expr = Stacking.Program.compile_function_body de_bruijn in
       let optimised_expr = optimize expr in
-
-      Lwt.return optimised_expr
+      Lwt.return optimised_expr)
   in
-    let expr_ty = compile_type e_contract.type_expression in
-    let expr_ty = dummy_locations expr_ty in
-    ({ expr_ty; expr } : Stacking.Program.compiled_expression)
+  let expr_ty = compile_type e_contract.type_expression in
+  let expr_ty = dummy_locations expr_ty in
+  ({ expr_ty; expr } : Stacking.Program.compiled_expression)
 
 
 let compile_view ~raise
@@ -148,46 +170,58 @@ let compile_view ~raise
 let compile_expression ~raise
     : options:Compiler_options.t -> expression -> compiled_expression Lwt.t
   =
-    fun ~options e ->
-      let e = trace ~raise self_mini_c_tracer @@ Self_mini_c.all_expression options e in
-      let open Lwt.Let_syntax in
-
-      let optimize = 
-        function expr -> 
-            Self_michelson.optimize
-              ~experimental_disable_optimizations_for_debugging:
-                options.backend.experimental_disable_optimizations_for_debugging
-              ~has_comment:(has_comment options)
-              expr
+ fun ~options e ->
+  let e = trace ~raise self_mini_c_tracer @@ Self_mini_c.all_expression options e in
+  let open Lwt.Let_syntax in
+  let optimize = function
+    | expr ->
+      Self_michelson.optimize
+        ~experimental_disable_optimizations_for_debugging:
+          options.backend.experimental_disable_optimizations_for_debugging
+        ~has_comment:(has_comment options)
+        expr
+  in
+  let%map expr =
+    if options.backend.lltz_ir
+    then (
+      let expr_lltz_opt =
+        Lltz_codegen.compile_to_micheline
+          ~optimize:true
+          (Ligo_lltz_codegen.compile_expression e)
+          []
       in
-
-      let%map expr = 
-        if options.backend.lltz_ir then
-          let expr_lltz_opt = Lltz_codegen.compile_to_micheline ~optimize:true (Ligo_lltz_codegen.compile_expression e) [] in
-          let expr_optimised =
-            Micheline.map_node (fun _ -> dummy) (fun prim -> Michelson.Ast.Prim.to_string prim) expr_lltz_opt
-          in
-
-          let expr_lltz_unopt = Lltz_codegen.compile_to_micheline ~optimize:false (Ligo_lltz_codegen.compile_expression e) [] in
-          let expr_unoptimised =
-            Micheline.map_node (fun _ -> dummy) (fun prim -> Michelson.Ast.Prim.to_string prim) expr_lltz_unopt
-          in
-
-          let%bind size_optimised = Of_michelson.measure ~raise expr_optimised in
-          let%bind size_unoptimised = Of_michelson.measure ~raise expr_unoptimised in
-
-          (* Assert that size with lltz michelson optimisations is smaller than without *)
-          if size_optimised > size_unoptimised then
-            assert false
-          else
-            Lwt.return expr_optimised
-        else
-          let expr = trace ~raise scoping_tracer @@ Scoping.translate_expression e [] in
-          let%bind expr = Stacking.Program.compile_expr [] expr in
-          Lwt.return (optimize expr)
+      let expr_optimised =
+        Micheline.map_node
+          (fun _ -> dummy)
+          (fun prim -> Michelson.Ast.Prim.to_string prim)
+          expr_lltz_opt
       in
-        let expr_ty = compile_type e.type_expression in
-        (({ expr_ty; expr } : Program.compiled_expression))
+      let expr_lltz_unopt =
+        Lltz_codegen.compile_to_micheline
+          ~optimize:false
+          (Ligo_lltz_codegen.compile_expression e)
+          []
+      in
+      let expr_unoptimised =
+        Micheline.map_node
+          (fun _ -> dummy)
+          (fun prim -> Michelson.Ast.Prim.to_string prim)
+          expr_lltz_unopt
+      in
+      let%bind size_optimised = Of_michelson.measure ~raise expr_optimised in
+      let%bind size_unoptimised = Of_michelson.measure ~raise expr_unoptimised in
+      (* Assert that size with lltz michelson optimisations is smaller than without *)
+      if size_optimised > size_unoptimised
+      then assert false
+      else Lwt.return expr_optimised)
+    else (
+      let expr = trace ~raise scoping_tracer @@ Scoping.translate_expression e [] in
+      let%bind expr = Stacking.Program.compile_expr [] expr in
+      Lwt.return (optimize expr))
+  in
+  let expr_ty = compile_type e.type_expression in
+  ({ expr_ty; expr } : Program.compiled_expression)
+
 
 let compile_expression_function ~raise
     : options:Compiler_options.t -> expression -> compiled_expression Lwt.t

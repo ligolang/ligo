@@ -180,9 +180,7 @@ let rec uncurry_in_expression (f : Value_var.t) (depth : int) (expr : expression
   let self_binder vars e =
     if List.mem ~equal:Value_var.equal vars f then e else uncurry_in_expression f depth e
   in
-  let return e' = 
-    { expr with content = e' } 
-  in
+  let return e' = { expr with content = e' } in
   let return_id = expr in
   match expr.content with
   | E_application app ->
@@ -192,13 +190,14 @@ let rec uncurry_in_expression (f : Value_var.t) (depth : int) (expr : expression
       (* the interesting part... *)
       let args = comb_expr args in
       let args = self args in
-      let lamb = {
-        lamb with 
-        type_expression = {
-          lamb.type_expression with 
-          type_content = T_function (args.type_expression, expr.type_expression)
-          }
-      } in
+      let lamb =
+        { lamb with
+          type_expression =
+            { lamb.type_expression with
+              type_content = T_function (args.type_expression, expr.type_expression)
+            }
+        }
+      in
       return (E_application (lamb, args)))
     else (
       let lamb, args = app in
