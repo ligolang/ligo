@@ -25,8 +25,7 @@ let ( let* ) v f = Result.bind v ~f
 let get_region : (ts_tree -> Region.t) ref =
   ref (fun _ -> failwith "Internal error: Print_cst.get_region")
 
-(* Partially evaluating wrappers so they print regions in case of
-   error (shadowing) *)
+(* Tayloring the fetching of a field with error messages *)
 
 let child_with_field ~err field node =
   match Ts_wrap.child_with_field ~get_region field node with
@@ -46,6 +45,9 @@ let child_with_field ~err field node =
       else sprintf "ERROR: %s%s" (Print_err.to_string err) region
     in
     Error msg
+
+(* Partially evaluating wrappers so they print regions in case of
+   error (shadowing) *)
 
 let named_child_ranked = named_child_ranked ~get_region
 let child_ranked = child_ranked ~get_region
