@@ -1,12 +1,15 @@
 (* Decoding the tree-sitter CST for TypeScript *)
 
+let debug = true
+
+(* Dependencies and scopes *)
+
 module Region = Simple_utils.Region
 module Wrap = Lexing_shared.Wrap
 module Ts_wrap = Typescript_ast.Ts_wrap
 module Ast = Typescript_ast.Ast
 module Lexeme = Typescript_ast.Lexeme
 module Number = Typescript_ast.Number
-
 open Core
 open Ts_wrap
 open Ast
@@ -36,7 +39,27 @@ let wrap decode ?comments node : ('a Wrap.t, _) result =
 
 let named_child_ranked = Ts_wrap.named_child_ranked ~get_region
 let child_ranked = Ts_wrap.child_ranked ~get_region
-let child_with_field = Ts_wrap.child_with_field ~get_region
+
+(*let child_with_field = Ts_wrap.child_with_field ~get_region*)
+
+let child_with_field ?(msg = "") field node =
+  match Ts_wrap.child_with_field ~get_region field node with
+  | Ok child -> Ok child
+  | Error () ->
+    let region = !get_region node in
+    let region =
+      if Region.is_empty region then "" else " (" ^ region#compact `Byte ^ ")"
+    in
+    let msg =
+      if debug
+      then (
+        let name = get_name node in
+        if String.equal name "NULL"
+        then sprintf "NULL parent of field %S." field
+        else sprintf "ERROR: Node %S%s is missing the field %S." name region field)
+      else sprintf "ERROR: %s%s" msg region
+    in
+    Error msg
 
 (* Region of a node as a string *)
 
@@ -3449,7 +3472,8 @@ let dec_standalone_expression map node : (Ast.expression, string) result =
   | None -> Decode_err.(make (Region.min ~file:"") No_single_expression)
   | Some stmts ->
     (match stmts#payload with
-    | _ :: stmt2 :: _ -> Decode_err.(make (region_of_statement stmt2) No_single_expression)
+    | _ :: stmt2 :: _ ->
+      Decode_err.(make (region_of_statement stmt2) No_single_expression)
     | Nonempty_list.[ stmt ] ->
       (match stmt with
       | S_expression_statement expr_stmt ->

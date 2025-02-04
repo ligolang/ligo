@@ -5,12 +5,7 @@
 (library
  (name typescript_ast)
  (public_name ligo.typescript_ast)
- (modules
-  ast
-  ts_wrap
-  loc_map
-  lexeme
-  number)
+ (modules ast ts_wrap loc_map lexeme number)
  (libraries
   tree_sitter
   tree_sitter_typescript
@@ -27,25 +22,16 @@
 (library
  (name typescript_decoder)
  (public_name ligo.typescript_decoder)
- (modules
-  decode
-  decode_err)
- (libraries
-  typescript_ast))
+ (modules decode decode_err)
+ (libraries typescript_ast))
 
 ;; Library for stripping the TypeScript AST
 
 (library
  (name typescript_stripper)
  (public_name ligo.typescript_stripper)
- (modules
-  ast_stripped
-  decorator
-  strip
-  strip_err)
- (libraries
-  typescript_ast
-  typescript_decoder))
+ (modules ast_stripped decorator strip strip_err)
+ (libraries typescript_ast typescript_decoder))
 
 ;; STANDALONES
 
@@ -54,7 +40,7 @@
 (executable
  (name print_cst_main)
  (libraries typescript_ast)
- (modules print_cst print_cst_main))
+ (modules print_err print_cst print_cst_main))
 
 ;; Standalone for decoding the CST into the AST
 

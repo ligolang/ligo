@@ -73,29 +73,18 @@ let get_name_res = function
 
 (* Wrappers for filtering fields (failure on null node or optional value) *)
 
-let child_with_field ?(debug = true) ?get_region ?msg field node =
-  let child = TS_fun.ts_node_child_by_field_name node field (uint32_len field) in
-  let region =
-    match get_region with
-    | None -> ""
-    | Some get_region ->
-      let region = !get_region child in
-      if Region.is_empty region then "" else " (" ^ region#compact `Byte ^ ")"
-  in
-  if is_null child || Core.String.is_empty region
-  then (
-    let name = get_name node in
-    let default = sprintf "Node %S%s is missing the field %S." name region field in
-    let msg' =
-      match debug with
-      | true -> default
-      | false ->
-        (match msg with
-        | None -> default
-        | Some msg -> sprintf "%s%s" msg region)
-    in
-    Error ("ERROR: " ^ msg'))
-  else Result.Ok child
+let child_with_field ?get_region field node =
+  if is_null node || Core.String.is_empty field
+  then Error ()
+  else (
+    let child = TS_fun.ts_node_child_by_field_name node field (uint32_len field) in
+    if is_null child
+    then Error ()
+    else (
+      match get_region with
+      | None -> Ok child
+      | Some get_region ->
+        if Region.is_empty (!get_region child) then Error () else Ok child))
 
 let child_with_field_opt field node =
   node_to_opt @@ TS_fun.ts_node_child_by_field_name node field (uint32_len field)
