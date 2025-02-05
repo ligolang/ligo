@@ -133,6 +133,7 @@ type kwd_try = keyword
 type kwd_catch = keyword
 type kwd_require = keyword
 type kwd_delete = keyword
+type kwd_finally = keyword
 
 (* Symbols
 

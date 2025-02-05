@@ -3,9 +3,146 @@
 (* Errors *)
 
 type t =
+  (* Keywords *)
+  | Infer
+  | Keyof
+  | Meta
+  | Target
+  | False
+  | True
+  | Super
+  | Null
+  | Satisfies
+  | Yield
+  | New
+  | Instanceof
+  | Implements
+  | Assert
+  | As
+  | Async
+  | Function
+  | Override
+  | Readonly
+  | Public
+  | Private
+  | Protected
+  | Set
+  | Get
+  | All
+  | Static
+  | This
+  | Is
+  | Class
+  | Const
+  | Constraint
+  | Let
+  | Undefined
+  | Abstract
+  | Declare
+  | Accessor
+  | Global
+  | Module
+  | Enum
+  | Import
+  | Interface
+  | Extends
+  | Namespace
+  | Type
+  | Using
+  | Return
+  | Switch
+  | Case
+  | Default
+  | Throw
+  | While
+  | With
+  | Any
+  | Number
+  | Boolean
+  | String
+  | Symbol
+  | Unique_symbol
+  | Void
+  | Unknown
+  | Never
+  | Object
+  | Asserts
+  | Debugger
+  | Break
+  | Continue
+  | Do
+  | Export
+  | For
+  | From
+  | Await
+  | Var
+  | In
+  | Of
+  | If
+  | Else
+  | Typeof
+  | Try
+  | Catch
+  | Require
+  | Delete
+  | Finally
+  (* Symbols *)
+  | Left_brace
+  | Right_brace
+  | Left_chevron
+  | Right_chevron
+  | Left_bracket
+  | Right_bracket
+  | Left_parenthesis
+  | Right_parenthesis
+  | Asterisk
+  | Equal
+  | Question_mark
+  | Plus_equal
+  | Minus_equal
+  | Mult_equal
+  | Div_equal
+  | Rem_equal
+  | Xor_equal
+  | And_equal
+  | Or_equal
+  | Right_shift_equal
+  | Unsigned_right_shift_equal
+  | Left_shift_equal
+  | Unsigned_left_shift_equal
+  | Exponent_equal
+  | Conjunction_equal
+  | Disjunction_equal
+  | Non_null_equal
+  | Exclamation_mark
+  | Tilde
+  | Minus
+  | Plus
+
+  | Conjunction
+  | Disjunction
+  | Right_shift
+  | Unsigned_right_shift
+  | Left_shift
+  | Unsigned_left_shift
+  | And
+  | Xor
+  | Or
+  | Div
+  | Rem
+  | Exponent
+  | Lower_than
+  | Lower_than_or_equal
+  | No_conv_equal
+  | Different
+  | No_conv_different
+  | Greater_than_or_equal
+  | Greater_than
+  | Non_null
+
+  (* Syntax errors *)
   | Expression
   | Export_clause
-  | Export
   | Export_clause_or_all
   | Named_imports_or_all_or_id
   | Named_imports_or_all
@@ -13,7 +150,6 @@ type t =
   | Type_or_disjunction
   | File_path
   | Identifier_or_string
-  | String
   | Identifier
   | Parenthesized_expression
   | Statement
@@ -33,7 +169,7 @@ type t =
   | Module_name
   | Namespace_name
   | Type_name
-  | Type
+  | Type_expression
   | Type_parameter
   | Enumeration_name
   | Enumeration
@@ -58,6 +194,15 @@ type t =
   | Identifier_or_type
   | Pattern
   | Identifier_or_path
+  | Type_or_typeof
+  | New_or_import
+  | Target_or_meta
+  | String_literal
+  | Regexp
+  | Number_literal
+  | Namespace_export
+  | Import_clause
+  | Namespace_or_named_imports
 
 type error = t
 
