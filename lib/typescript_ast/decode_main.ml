@@ -18,7 +18,7 @@ module Decode = Typescript_decoder.Decode
 
 (* Parsing *)
 
-let parse file line_map : (Ast.t, string) result =
+let decode file line_map : (Ast.t, string) result =
   (* Loading the code as a string *)
   let input : string = Core.In_channel.read_all file in
   (* Parsing the code into a tree *)
@@ -43,8 +43,8 @@ let () =
     let file = cli_args.(1) in
     (match Loc_map.scan file with
     | Ok line_map ->
-      (match parse file line_map with
-      | Ok _ast -> () (* TODO: Print *)
+      (match decode file line_map with
+      | Ok _ast -> Printf.printf "Decoded.\n%!"
       | Error msg -> Printf.eprintf "Error: %s\n%!" msg)
     | Error { region; value = _ } -> Printf.eprintf "Error: %s\n%!" (region#compact `Byte))
   | _ -> prerr_endline ("Usage: " ^ cli_args.(0) ^ " [file]")

@@ -45,7 +45,11 @@ let () =
     (match Loc_map.scan file with
     | Ok line_map ->
       (match parse file line_map with
-      | Ok ast -> ignore @@ Strip.statements ast (* TODO: Print *)
-      | Error msg -> Printf.eprintf "Error: %s\n%!" msg)
+       | Error msg -> Printf.eprintf "Error: %s\n%!" msg
+       | Ok ast ->
+          match Strip.statements ast with
+          | Ok _ -> Printf.printf "Stripped.\n%!"
+          | Error { region; value } ->
+             Printf.eprintf "Error: %s\n%s\n%!" value (region#compact `Byte))
     | Error { region; value = _ } -> Printf.eprintf "Error: %s\n%!" (region#compact `Byte))
   | _ -> prerr_endline ("Usage: " ^ cli_args.(0) ^ " [file]")

@@ -461,7 +461,7 @@ and generator_function_declaration = sym_star * function_declaration
        field('constraint', optional($.constraint)),
        field('value', optional($.default_type))),
 
-     constraint: $ => seq(choice('extends', ':'), $.type), // What is ":"?
+     constraint: $ => seq(choice('extends', ':'), $.type), // What is ':'?
 
      default_type: $ => seq('=', $.type),
 
