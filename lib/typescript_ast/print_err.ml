@@ -201,6 +201,113 @@ type t =
   | Namespace_export
   | Import_clause
   | Namespace_or_named_imports
+  | Namespace_import
+  | Named_imports
+  | Import_specifier
+  | Import_require_clause
+  | Import_attribute
+  | For_or_await
+  | Empty_statement
+  | Declaration
+  | Function_declaration
+  | Generator_function_declaration
+  | Class_declaration
+  | Async_or_function
+  | Const_or_type_name
+  | Const_or_enum
+  | Glimmer_template
+  | Using_or_expression
+  | LHS_of_augmented_assgmnt
+  | Template_string
+  | Object_expression
+  | Key_value_pair
+  | Array
+  | Type_parameters
+  | Spread
+  | Function_expression
+  | Arrow_function
+  | Generator_function
+  | Class_expression
+  | Extends_or_implements
+  | Implements_clause
+  | Extends_clause
+  | Method_definition
+  | Static_block
+  | Abstract_method_signature
+  | Public_field_definition
+  | Meta_property
+  | Call_expression
+  | Non_null_expression
+  | Parenthesized_type
+  | Predefined_type
+  | Nested_type_identifier
+  | Generic_type
+  | Object_type
+  | Property_signature
+  | Call_signature
+  | Asserts_annotation
+  | Type_predicate_annotation
+  | Construct_signature
+  | Index_signature
+  | Mapped_type_signature
+  | Omitting_type_annotation
+  | Adding_type_annotation
+  | Opting_type_annotation
+  | Method_signature
+  | Array_type
+  | Tuple_type
+  | Tuple_parameter
+  | Optional_tuple_parameter
+  | Rest_pattern
+  | Optional_type
+  | Rest_type
+  | Type_query
+  | Type_query_subscript
+  | Type_query_member
+  | Type_query_instantiation
+  | Type_query_call
+  | Index_type_query
+  | Existential_type
+  | Literal_type
+  | Lookup_type
+  | Conditional_type
+  | Template_literal_type
+  | Intersection_type
+  | Union_type
+  | Function_type
+  | Type_predicate
+  | Readonly_type
+  | Constructor_type
+  | Required_parameter
+  | Decorator
+  | Decorator_member
+  | Decorator_call
+  | Parenthesized_decorator
+  | Public_private_protected
+  | Object_pattern
+  | Pair_pattern
+  | Assignment_pattern
+  | Computed_property_name
+  | Object_assignment_pattern
+  | Array_pattern
+  | Let_or_const_or_var
+  | Const_or_type
+  | Optional_chain
+  | Index_expression
+  | Object_field
+  | Array_cell
+  | Class_member
+  | Import_or_expression
+  | Argument
+  | Object_type_field
+  | Asserted
+  | Type_of_index_signature
+  | Plus_or_minus
+  | Parameter
+  | Object_pattern_field
+  | Value_of_pair_pattern
+  | Object_or_array_pattern
+  | Array_cell_pattern
 
 type error = t
 
@@ -341,7 +448,6 @@ let to_string : t -> string = function
   | Greater_than_or_equal -> "The symbol '>=' is expected."
   | Greater_than -> "The symbol '>' is expected."
   | Non_null -> "The symbol '??' is expected."
-
   (* Syntax errors *)
   | Expression -> "An expression is expected."
   | Export_clause -> "An export clause is expected."
@@ -404,4 +510,115 @@ let to_string : t -> string = function
   | Number_literal -> "A number is expected."
   | Namespace_export -> "A namespace export clause is expected."
   | Import_clause -> "An import clause is expected."
-  | Namespace_or_named_imports -> "A namespace import clause or named imports are expected."
+  | Namespace_or_named_imports ->
+    "A namespace import clause or named imports are expected."
+  | Namespace_import -> "A namespace import ('* as') is expected."
+  | Named_imports -> "Named imports (between braces) are expected."
+  | Import_specifier ->
+    "An import specifier ('type', 'typeof', identifier, string) is expected."
+  | Import_require_clause -> "An import requirement is expected."
+  | Import_attribute -> "The keyword 'with' or 'assert' is expected."
+  | For_or_await -> "The keyword 'for' or 'await' is expected."
+  | Empty_statement -> "An empty statement was expected."
+  | Declaration -> "A declaration is expected."
+  | Function_declaration -> "A function declaration is expected."
+  | Generator_function_declaration -> "A generator function declaration is expected."
+  | Class_declaration -> "A class declaration is expected."
+  | Async_or_function -> "The keyword 'async' or 'function' is expected."
+  | Const_or_type_name -> "A type name or the keyword 'const' is expected."
+  | Const_or_enum -> "The keyword 'const' or 'enum' is expected."
+  | Glimmer_template -> "A glimmer template is expected."
+  | Using_or_expression -> "The keyword 'using' or an expression is expected."
+  | LHS_of_augmented_assgmnt -> "The left-hand side of an assignment is expected."
+  | Template_string -> "A template string is expected."
+  | Object_expression -> "A object is expected."
+  | Key_value_pair -> "A key-value pair is expected."
+  | Array -> "An array is expected."
+  | Type_parameters -> "Type parameters are expected."
+  | Spread -> "A spread element is expected."
+  | Function_expression -> "A function expression is expected."
+  | Arrow_function -> "An arrow function is expected."
+  | Generator_function -> "A generator function is expected."
+  | Class_expression -> "A class is expected."
+  | Extends_or_implements -> "A class 'extends' or 'implements' clause is expected."
+  | Implements_clause -> "An 'implements' clause is expected."
+  | Extends_clause -> "An 'extends' clause is expected."
+  | Method_definition -> "A method definition is expected."
+  | Static_block -> "A static block is expected."
+  | Abstract_method_signature -> "An abstract method signature is expected."
+  | Public_field_definition -> "A public field definition is expected."
+  | Meta_property -> "A meta-property is expected."
+  | Call_expression -> "A call expression is expected."
+  | Non_null_expression -> "A non-null expression is expected."
+  | Parenthesized_type -> "A parenthesized type is expected."
+  | Predefined_type -> "A predefined type is expected."
+  | Nested_type_identifier -> "A type name, perhaps qualified, is expected."
+  | Generic_type -> "A generic type is expected."
+  | Object_type -> "An object type is expected."
+  | Property_signature -> "A property signature is expected."
+  | Call_signature -> "A call signature is expected."
+  | Asserts_annotation -> "An 'asserts' annotation is expected."
+  | Type_predicate_annotation -> "A type predicate annotation is expected."
+  | Construct_signature -> "A construct signature is expected."
+  | Index_signature -> "An index signature is expected."
+  | Mapped_type_signature ->
+    "A mapped type signature is expected in this index signature."
+  | Omitting_type_annotation -> "A type omission annotation '-?:' is expected."
+  | Adding_type_annotation -> "A type addition annotation '+?:' is expected."
+  | Opting_type_annotation -> "An optional type annotation '?:' is expected."
+  | Method_signature -> "A method signature is expected."
+  | Array_type -> "An array type is expected."
+  | Tuple_type -> "A tuple type is expected."
+  | Tuple_parameter -> "A tuple parameter is expected."
+  | Optional_tuple_parameter -> "Optional tuple parameter expected."
+  | Rest_pattern -> "A rest pattern ('...') is expected."
+  | Optional_type -> "An optional type ('?') is expected."
+  | Rest_type -> "A rest type ('...') is expected."
+  | Type_query -> "A type query ('typeof') is expected."
+  | Type_query_subscript -> "A subscript expression is expected in a type query."
+  | Type_query_member -> "A member expression is expected in a type query."
+  | Type_query_instantiation -> "An instantiation is expected in a type query."
+  | Type_query_call -> "A function call is expected in a type query."
+  | Index_type_query -> "An index type query is expected."
+  | Existential_type -> "An existential type ('*') is expected."
+  | Literal_type -> "A literal type is expected."
+  | Lookup_type -> "A lookup type is expected."
+  | Conditional_type -> "A conditional type is expected."
+  | Template_literal_type -> "A template literal type is expected."
+  | Intersection_type -> "An intersection type is expected."
+  | Union_type -> "A union type is expected."
+  | Function_type -> "A function type is expected."
+  | Type_predicate -> "A type predicate is expected."
+  | Readonly_type -> "A readonly type is expected."
+  | Constructor_type -> "A constructor type is expected."
+  | Required_parameter -> "A required parameter is expected."
+  | Decorator -> "A decorator is expected."
+  | Decorator_member -> "A member expression is expected as a decorator."
+  | Decorator_call -> "A decorator with an argument is expected."
+  | Parenthesized_decorator -> "A parenthesized decorator is expected."
+  | Public_private_protected ->
+    "The keyword 'public', private, or 'protected' is expected."
+  | Object_pattern -> "An object pattern is expected."
+  | Pair_pattern -> "A pattern for a key-value pair is expected."
+  | Assignment_pattern -> "An assignment pattern is expected."
+  | Computed_property_name -> "A property name is expected between brackets."
+  | Object_assignment_pattern -> "A assignment pattern for an object is expected."
+  | Array_pattern -> "An array pattern is expected."
+  | Let_or_const_or_var -> "The keyword 'let' or 'const' or 'var' is expected."
+  | Const_or_type -> "The keyword 'const' or a type is expected."
+  | Optional_chain -> "An optional chain '?.' is expected."
+  | Index_expression -> "An index expression is expected."
+  | Object_field -> "An object field is expected."
+  | Array_cell -> "An array cell is expected."
+  | Class_member -> "A class member is expected."
+  | Import_or_expression -> "The keyword 'import' or an expression is expected."
+  | Argument -> "An argument is expected."
+  | Object_type_field -> "A field for the object type is expected."
+  | Asserted -> "A type predicate, or identifier or keyword `this` is expected."
+  | Type_of_index_signature -> "A type annotation for the index signature is expected."
+  | Plus_or_minus -> "The operator '+' or '-' is expected."
+  | Parameter -> "A parameter is expected."
+  | Object_pattern_field -> "A field in the object pattern is expected."
+  | Value_of_pair_pattern -> "A pattern for the value of a key-value pair is expected."
+  | Object_or_array_pattern -> "An object or array pattern is expected."
+  | Array_cell_pattern -> "A pattern for an array element is expected."

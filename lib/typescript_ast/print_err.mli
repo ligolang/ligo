@@ -118,7 +118,6 @@ type t =
   | Tilde
   | Minus
   | Plus
-
   | Conjunction
   | Disjunction
   | Right_shift
@@ -139,7 +138,6 @@ type t =
   | Greater_than_or_equal
   | Greater_than
   | Non_null
-
   (* Syntax errors *)
   | Expression
   | Export_clause
@@ -203,6 +201,113 @@ type t =
   | Namespace_export
   | Import_clause
   | Namespace_or_named_imports
+  | Namespace_import
+  | Named_imports
+  | Import_specifier
+  | Import_require_clause
+  | Import_attribute
+  | For_or_await
+  | Empty_statement
+  | Declaration
+  | Function_declaration
+  | Generator_function_declaration
+  | Class_declaration
+  | Async_or_function
+  | Const_or_type_name
+  | Const_or_enum
+  | Glimmer_template
+  | Using_or_expression
+  | LHS_of_augmented_assgmnt
+  | Template_string
+  | Object_expression
+  | Key_value_pair
+  | Array
+  | Type_parameters
+  | Spread
+  | Function_expression
+  | Arrow_function
+  | Generator_function
+  | Class_expression
+  | Extends_or_implements
+  | Implements_clause
+  | Extends_clause
+  | Method_definition
+  | Static_block
+  | Abstract_method_signature
+  | Public_field_definition
+  | Meta_property
+  | Call_expression
+  | Non_null_expression
+  | Parenthesized_type
+  | Predefined_type
+  | Nested_type_identifier
+  | Generic_type
+  | Object_type
+  | Property_signature
+  | Call_signature
+  | Asserts_annotation
+  | Type_predicate_annotation
+  | Construct_signature
+  | Index_signature
+  | Mapped_type_signature
+  | Omitting_type_annotation
+  | Adding_type_annotation
+  | Opting_type_annotation
+  | Method_signature
+  | Array_type
+  | Tuple_type
+  | Tuple_parameter
+  | Optional_tuple_parameter
+  | Rest_pattern
+  | Optional_type
+  | Rest_type
+  | Type_query
+  | Type_query_subscript
+  | Type_query_member
+  | Type_query_instantiation
+  | Type_query_call
+  | Index_type_query
+  | Existential_type
+  | Literal_type
+  | Lookup_type
+  | Conditional_type
+  | Template_literal_type
+  | Intersection_type
+  | Union_type
+  | Function_type
+  | Type_predicate
+  | Readonly_type
+  | Constructor_type
+  | Required_parameter
+  | Decorator
+  | Decorator_member
+  | Decorator_call
+  | Parenthesized_decorator
+  | Public_private_protected
+  | Object_pattern
+  | Pair_pattern
+  | Assignment_pattern
+  | Computed_property_name
+  | Object_assignment_pattern
+  | Array_pattern
+  | Let_or_const_or_var
+  | Const_or_type
+  | Optional_chain
+  | Index_expression
+  | Object_field
+  | Array_cell
+  | Class_member
+  | Import_or_expression
+  | Argument
+  | Object_type_field
+  | Asserted
+  | Type_of_index_signature
+  | Plus_or_minus
+  | Parameter
+  | Object_pattern_field
+  | Value_of_pair_pattern
+  | Object_or_array_pattern
+  | Array_cell_pattern
 
 type error = t
 
