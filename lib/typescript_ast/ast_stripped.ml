@@ -150,7 +150,7 @@ and public_field_definition =
   { decorators : decorator list
   ; static : Region.t option
   ; name : variable
-  ; field_type : type_expr
+  ; field_type : type_expr option
   ; field_value : expr
   }
 

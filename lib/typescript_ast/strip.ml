@@ -921,11 +921,6 @@ and strip_public_field_definition (node : Ast.public_field_definition wrap)
     | Some (Optional sym | Definite_assert sym) -> Strip_err.(pack sym#region Field_mode)
   in
   let* field_type = map_opt strip_type_annotation type_ in
-  let* field_type =
-    match field_type with
-    | None -> Strip_err.(pack node#region Missing_type)
-    | Some field_type -> Ok field_type
-  in
   let* field_value =
     match default with
     | None -> Strip_err.(pack name#region No_default)
