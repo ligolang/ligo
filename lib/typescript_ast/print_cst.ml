@@ -40,7 +40,7 @@ let child_with_field ~err field node =
       then (
         let name = get_name node in
         if String.equal name "NULL"
-        then sprintf "NULL parent of field %S." field
+        then sprintf "ERROR: NULL parent of field %S." field
         else sprintf "ERROR: Node %S%s is missing the field %S." name region field)
       else sprintf "ERROR: %s%s" (Print_err.to_string err) region
     in
@@ -82,9 +82,10 @@ let print_error_node state node =
 let print_error_node' state node ~err =
   let region = !get_region node
   and msg =
-    if debug then
-      sprintf "ERROR: Unexpected node %S." (get_name node)
-    else sprintf "ERROR: %s." (Print_err.to_string err) in
+    if debug
+    then sprintf "ERROR: Unexpected node %S." (get_name node)
+    else sprintf "ERROR: %s." (Print_err.to_string err)
+  in
   if arity node = 0
   then Tree.make_node ~region state msg
   else Tree.make_unary ~region state msg Tree.make_node "UNMATCHED children."
@@ -139,7 +140,7 @@ let print_null_node state = Tree.make_node state "INTERNAL: Null node"
 
 let make_kwd ?(comments = []) state node ~err =
   match get_name node with
-  | "MISSING" | "NULL" | "ERROR" -> print_error_node' state node ~err
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node' state node ~err
   | _ ->
     let region = !get_region node in
     let root = Lexeme.read region ^ " [keyword]" in
@@ -266,7 +267,10 @@ let mk_sym_xor_equal = make_sym' ~err:Print_err.Xor_equal
 let mk_sym_and_equal = make_sym' ~err:Print_err.And_equal
 let mk_sym_or_equal = make_sym' ~err:Print_err.Or_equal
 let mk_sym_right_shift_equal = make_sym' ~err:Print_err.Right_shift_equal
-let mk_sym_unsigned_right_shift_equal = make_sym' ~err:Print_err.Unsigned_right_shift_equal
+
+let mk_sym_unsigned_right_shift_equal =
+  make_sym' ~err:Print_err.Unsigned_right_shift_equal
+
 let mk_sym_left_shift_equal = make_sym' ~err:Print_err.Left_shift_equal
 let mk_sym_unsigned_left_shift_equal = make_sym' ~err:Print_err.Unsigned_left_shift_equal
 let mk_sym_exponent_equal = make_sym' ~err:Print_err.Exponent_equal
@@ -297,7 +301,6 @@ let mk_sym_no_conv_different = make_sym' ~err:Print_err.No_conv_different
 let mk_sym_greater_than_or_equal = make_sym' ~err:Print_err.Greater_than_or_equal
 let mk_sym_greater_than = make_sym' ~err:Print_err.Greater_than
 let mk_sym_non_null = make_sym' ~err:Print_err.Non_null
-
 
 (* Making children and unary trees *)
 
@@ -332,20 +335,18 @@ let internal_error = internal_error ~debug
 
 let print_identifier ?comments state node =
   match get_name node with
-  | "MISSING" | "NULL" | "ERROR" ->
-     print_error_node' state node ~err:Print_err.Identifier
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node' state node ~err:Print_err.Identifier
   | _ -> make_node ?comments state node
 
 let print_string ?comments state node =
   match get_name node with
-  | "MISSING" | "NULL" | "ERROR" ->
-     print_error_node' state node ~err:Print_err.String_literal
+  | "ERROR" | "MISSING" | "NULL" ->
+    print_error_node' state node ~err:Print_err.String_literal
   | _ -> make_node ?comments state node
 
 let print_regex ?comments state node =
   match get_name node with
-  | "MISSING" | "NULL" | "ERROR" ->
-     print_error_node' state node ~err:Print_err.Regexp
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node' state node ~err:Print_err.Regexp
   | _ -> make_node ?comments state node
 
 let decode_comments ?(comments = []) node : Wrap.comment list =
@@ -358,8 +359,8 @@ let decode_comments ?(comments = []) node : Wrap.comment list =
 
 let print_number ?(comments = []) state node =
   match get_name node with
-  | "MISSING" | "NULL" | "ERROR" ->
-     print_error_node' state node ~err:Print_err.Number_literal
+  | "ERROR" | "MISSING" | "NULL" ->
+    print_error_node' state node ~err:Print_err.Number_literal
   | _ ->
     let region = !get_region node in
     let lexeme = Lexeme.read region in
@@ -390,8 +391,16 @@ let print_number ?(comments = []) state node =
 
 (* Printing enclosed constructs *)
 
-let print_enclosed ?(comments = []) state node printer opening closing
-      ~open_err ~close_err =
+let print_enclosed
+    ?(comments = [])
+    state
+    node
+    printer
+    opening
+    closing
+    ~open_err
+    ~close_err
+  =
   match get_name node with
   | "ERROR" | "MISSING" | "NULL" -> print_error_node' state node ~err:open_err
   | _ ->
@@ -401,48 +410,68 @@ let print_enclosed ?(comments = []) state node printer opening closing
     and clauses = collect_named_children node in
     let children =
       (mk_child_res (make_sym' ~comments ~err:open_err) opening
-       :: mk_children_list printer clauses)
+      :: mk_children_list printer clauses)
       @ [ mk_child_res (make_sym' ~err:close_err) closing ]
     in
     make_tree state node children
 
-let print_braces ?(comments = []) state node printer =
-  print_enclosed ~comments state node printer "{" "}"
-    ~open_err:Print_err.Left_brace ~close_err:Print_err.Right_brace
+let print_braces ?(comments = []) state node printer ~err =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node' state node ~err
+  | _ ->
+    print_enclosed
+      ~comments
+      state
+      node
+      printer
+      "{"
+      "}"
+      ~open_err:Print_err.Left_brace
+      ~close_err:Print_err.Right_brace
 
-let print_chevrons ?(comments = []) state node printer =
-  print_enclosed ~comments state node printer "<" ">"
-    ~open_err:Print_err.Left_chevron ~close_err:Print_err.Right_chevron
+let print_chevrons ?(comments = []) state node printer ~err =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node' state node ~err
+  | _ ->
+    print_enclosed
+      ~comments
+      state
+      node
+      printer
+      "<"
+      ">"
+      ~open_err:Print_err.Left_chevron
+      ~close_err:Print_err.Right_chevron
 
-let print_brackets ?(comments = []) state node printer =
-  print_enclosed ~comments state node printer "[" "]"
-    ~open_err:Print_err.Left_bracket ~close_err:Print_err.Right_bracket
+let print_brackets ?(comments = []) state node printer ~err =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node' state node ~err
+  | _ ->
+    print_enclosed
+      ~comments
+      state
+      node
+      printer
+      "["
+      "]"
+      ~open_err:Print_err.Left_bracket
+      ~close_err:Print_err.Right_bracket
 
-let print_parens ?(comments = []) state node printer =
-  print_enclosed ~comments state node printer "(" ")"
-    ~open_err:Print_err.Left_parenthesis ~close_err:Print_err.Right_parenthesis
+let print_parens ?(comments = []) state node printer ~err =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node' state node ~err
+  | _ ->
+    print_enclosed
+      ~comments
+      state
+      node
+      printer
+      "("
+      ")"
+      ~open_err:Print_err.Left_parenthesis
+      ~close_err:Print_err.Right_parenthesis
 
 (* Concluding a pattern matching with a default printer. Dropping comments. *)
-
-let match_rest state node print_default =
-  match get_name node with
-  (* Comments are ignored *)
-  | "comment" -> ()
-  (* Errors *)
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state (* Generated by [Ts_wrap.get_name] *)
-  (* Default case *)
-  | _ -> print_default state node
-
-let match_rest' state node print_default ~err =
-  match get_name node with
-  (* Comments are ignored *)
-  | "comment" -> ()
-  (* Errors *)
-  | "ERROR" | "MISSING" | "NULL" -> print_error_node' state node ~err
-  (* Default case *)
-  | _ -> print_default state node ~err
 
 (* Printing the CST *)
 
@@ -468,8 +497,7 @@ let rec print_program file (map : Loc_map.t) node =
 
 and print_statements state node =
   match get_name node with
-  | "ERROR" | "MISSING" | "NULL" ->
-     print_error_node' state node ~err:Print_err.Statement
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node' state node ~err:Print_err.Statement
   | _ -> tree_of_named_children state node print_statement
 
 and print_statement ?(comments = []) state node =
@@ -514,8 +542,7 @@ and print_statement ?(comments = []) state node =
 
 and print_export_statement ?(comments = []) state node =
   match get_name node with
-  | "ERROR" | "MISSING" | "NULL" ->
-     print_error_node' state node ~err:Print_err.Export
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node' state node ~err:Print_err.Export
   | _ ->
     let comments = comments @ prev_comments node
     and decorators = children_named "decorator" node
@@ -580,7 +607,7 @@ and print_export_statement ?(comments = []) state node =
 and print_namespace_export ?(comments = []) state node =
   match get_name node with
   | "ERROR" | "MISSING" | "NULL" ->
-     print_error_node' state node ~err:Print_err.Namespace_export
+    print_error_node' state node ~err:Print_err.Namespace_export
   | _ ->
     let comments = comments @ prev_comments node
     and sym_asterisk = first_child_named "*" node
@@ -611,7 +638,7 @@ and mk_child_from_clause_opt node =
   | Some kwd_from -> [ mk_child_from_clause (Ok kwd_from) node ]
 
 and print_export_clause state node =
-  print_braces state node print_export_specifier
+  print_braces state node print_export_specifier ~err:Export_clause
 
 and print_module_export_name ?(comments = []) state node =
   match get_name node with
@@ -622,7 +649,7 @@ and print_module_export_name ?(comments = []) state node =
 and print_export_specifier ?(comments = []) state node =
   match get_name node with
   | "ERROR" | "MISSING" | "NULL" ->
-     print_error_node' state node ~err:Print_err.Identifier_or_string
+    print_error_node' state node ~err:Print_err.Identifier_or_string
   | _ ->
     let comments = comments @ prev_comments node in
     let name_field = child_with_field "name" node ~err:Print_err.Identifier_or_string in
@@ -674,7 +701,7 @@ and print_import_statement ?(comments = []) state node =
 and print_import_clause ?(comments = []) state node =
   match get_name node with
   | "ERROR" | "MISSING" | "NULL" ->
-     print_error_node' state node ~err:Print_err.Import_clause
+    print_error_node' state node ~err:Print_err.Import_clause
   | _ ->
     let comments = comments @ prev_comments node in
     let print_rest state node =
@@ -712,9 +739,8 @@ and print_import_clause ?(comments = []) state node =
 
 and print_namespace_import ?(comments = []) state node =
   match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
+  | "ERROR" | "MISSING" | "NULL" ->
+    print_error_node' state node ~err:Print_err.Namespace_import
   | _ ->
     let comments = comments @ prev_comments node
     and sym_asterisk = first_child_named "*" node
@@ -729,17 +755,12 @@ and print_namespace_import ?(comments = []) state node =
     make_tree state node children
 
 and print_named_imports ?(comments = []) state node =
-  match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
-  | _ -> print_braces ~comments state node print_import_specifier
+  print_braces ~comments state node print_import_specifier ~err:Print_err.Named_imports
 
 and print_import_specifier ?(comments = []) state node =
   match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
+  | "ERROR" | "MISSING" | "NULL" ->
+    print_error_node' state node ~err:Print_err.Import_specifier
   | _ ->
     let comments = comments @ prev_comments node in
     let kind_node =
@@ -772,9 +793,8 @@ and print_import_specifier ?(comments = []) state node =
 
 and print_import_require_clause ?(comments = []) state node =
   match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
+  | "ERROR" | "MISSING" | "NULL" ->
+    print_error_node' state node ~err:Print_err.Import_require_clause
   | _ ->
     let comments = comments @ prev_comments node
     and identifier = child_ranked 0 node
@@ -796,9 +816,8 @@ and print_import_require_clause ?(comments = []) state node =
 
 and print_import_attribute state node =
   match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
+  | "ERROR" | "MISSING" | "NULL" ->
+    print_error_node' state node ~err:Print_err.Import_attribute
   | _ ->
     let kind_node = child_ranked 0 node
     and object_node = child_ranked 1 node
@@ -806,7 +825,7 @@ and print_import_attribute state node =
       match get_name node with
       | "with" -> mk_kwd_with state node
       | "assert" -> mk_kwd_assert state node
-      | _ -> match_rest state node print_unexpected_node
+      | _ -> print_error_node' state node ~err:Print_err.Import_attribute
     in
     let children =
       [ mk_child_res print_kind kind_node; mk_child_res print_object object_node ]
@@ -817,9 +836,7 @@ and print_import_attribute state node =
 
 and print_debugger_statement ?(comments = []) state node =
   match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node' state node ~err:Print_err.Debugger
   | _ ->
     let kwd_debugger = first_child_named "debugger" node in
     let children = [ mk_child_res (mk_kwd_debugger ~comments) kwd_debugger ] in
@@ -837,9 +854,7 @@ and print_debugger_statement ?(comments = []) state node =
 
 and print_expression_statement ?(comments = []) state node =
   match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node' state node ~err:Print_err.Expression
   | _ ->
     let comments = comments @ prev_comments node
     and child = named_child_ranked 0 node in
@@ -853,19 +868,13 @@ and print_expressions ?(comments = []) state (node : ts_tree) =
 (* Statement blocks *)
 
 and print_statement_block ?(comments = []) state node =
-  match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
-  | _ -> print_braces ~comments state node print_statement
+  print_braces ~comments state node print_statement ~err:Print_err.Block
 
 (* If statement *)
 
 and print_if_statement ?(comments = []) state node =
   match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node' state node ~err:Print_err.If
   | _ ->
     let kwd_if = first_child_named "if" node
     and condition_field =
@@ -883,9 +892,7 @@ and print_if_statement ?(comments = []) state node =
 
 and print_else_clause ?(comments = []) state node =
   match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node' state node ~err:Print_err.Else
   | _ ->
     let comments = comments @ prev_comments node in
     let kwd_else = first_child_named "else" node in
@@ -901,9 +908,7 @@ and print_else_clause ?(comments = []) state node =
 
 and print_switch_statement state node =
   match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node' state node ~err:Print_err.Switch
   | _ ->
     let kwd_switch = first_child_named "switch" node
     and value_field =
@@ -918,23 +923,17 @@ and print_switch_statement state node =
     make_tree state node children
 
 and print_switch_body state node =
-  match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
-  | _ ->
-    let print state node =
-      match get_name node with
-      | "switch_case" -> print_switch_case state node
-      | _ -> match_rest state node print_switch_default
-    in
-    print_braces state node print
+  let print state node =
+    match get_name node with
+    | "switch_case" -> print_switch_case state node
+    | "switch_default" -> print_switch_default state node
+    | _ -> print_error_node' state node ~err:Print_err.Switch_body
+  in
+  print_braces state node print ~err:Print_err.Switch_body
 
 and print_switch_case state node =
   match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node' state node ~err:Print_err.Case
   | _ ->
     let kwd_case = first_child_named "case" node
     and children = collect_children node in
@@ -956,9 +955,7 @@ and print_switch_case state node =
 
 and print_switch_default state node =
   match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node' state node ~err:Print_err.Default
   | _ ->
     let kwd_default = first_child_named "default" node
     and statements = collect_named_children node in
@@ -972,9 +969,7 @@ and print_switch_default state node =
 
 and print_for_statement state node =
   match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node' state node ~err:Print_err.For
   | _ ->
     let kwd_for = first_child_named "for" node
     and sym_lparen = first_child_named "(" node
@@ -991,12 +986,12 @@ and print_for_statement state node =
       | "variable_declaration" -> print_variable_declaration state node
       | "expression_statement" -> print_expression_statement state node
       | "empty_statement" -> print_empty_statement state node
-      | _ -> match_rest state node print_unexpected_node
+      | _ -> print_error_node' state node ~err:Print_err.Initial_assignment
     and print_condition state node =
       match get_name node with
       | "expression_statement" -> print_expression_statement state node
       | "empty_statement" -> print_empty_statement state node
-      | _ -> match_rest state node print_unexpected_node
+      | _ -> print_error_node' state node ~err:Print_err.Expression_or_semicolon
     in
     let children =
       [ mk_child_res mk_kwd_for kwd_for
@@ -1014,9 +1009,8 @@ and print_for_statement state node =
 
 and print_for_in_statement state node =
   match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
+  | "ERROR" | "MISSING" | "NULL" ->
+    print_error_node' state node ~err:Print_err.For_or_await
   | _ ->
     let kwd_await = first_child_named_opt "await" node
     and kwd_for = first_child_named "for" node
@@ -1031,22 +1025,26 @@ and print_for_in_statement state node =
       match get_name node with
       | "in" -> mk_kwd_in state node
       | "of" -> mk_kwd_of state node
-      | _ -> match_rest state node print_unexpected_node
+      | _ -> print_error_node' state node ~err:Print_err.In_or_of
     in
     let header_children =
       match kind_field with
       | None ->
         let print_left state node =
           match get_name node with
+          | "ERROR" | "MISSING" | "NULL" ->
+            print_error_node' state node ~err:Print_err.Expression
           | "parenthesized_expression" -> print_parenthesized_expression state node
-          | _ -> match_rest state node print_lhs_expression
+          | _ -> print_lhs_expression state node
         in
         [ mk_child_res print_left left_field ]
       | Some kind_field ->
         let print_left state node =
           match get_name node with
+          | "ERROR" | "MISSING" | "NULL" ->
+            print_error_node' state node ~err:Print_err.Pattern
           | "identifier" -> print_identifier state node
-          | _ -> match_rest state node print_destructuring_pattern
+          | _ -> print_destructuring_pattern state node (* Hidden *)
         in
         (match get_name kind_field with
         | "var" ->
@@ -1058,7 +1056,8 @@ and print_for_in_statement state node =
         | "let" -> [ mk_child mk_kwd_let kind_field; mk_child_res print_left left_field ]
         | "const" ->
           [ mk_child mk_kwd_const kind_field; mk_child_res print_left left_field ]
-        | _ -> [ mk_child print_unexpected_node kind_field ])
+        | _ ->
+          [ mk_child (print_error_node' ~err:Print_err.Let_or_const_or_var) kind_field ])
     in
     let children =
       (mk_child_res mk_kwd_for kwd_for
@@ -1077,9 +1076,7 @@ and print_for_in_statement state node =
 
 and print_while_statement state node =
   match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node' state node ~err:Print_err.While
   | _ ->
     let kwd_while = first_child_named "while" node
     and condition_field =
@@ -1097,9 +1094,7 @@ and print_while_statement state node =
 
 and print_do_statement state node =
   match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node' state node ~err:Print_err.Do
   | _ ->
     let kwd_do = first_child_named "do" node
     and body_field = child_with_field "body" node ~err:Print_err.Statement
@@ -1120,9 +1115,7 @@ and print_do_statement state node =
 
 and print_try_statement state node =
   match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node' state node ~err:Print_err.Try
   | _ ->
     let kwd_try = first_child_named "try" node
     and body_field = child_with_field "body" node ~err:Print_err.Block
@@ -1139,17 +1132,17 @@ and print_try_statement state node =
 
 and print_catch_clause state node =
   match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node' state node ~err:Print_err.Catch
   | _ ->
     let kwd_catch = first_child_named "catch" node
     and body_field = child_with_field "body" node ~err:Print_err.Block
     and parameter_field = child_with_field_opt "parameter" node
     and print_parameter state node =
       match get_name node with
+      | "ERROR" | "MISSING" | "NULL" ->
+        print_error_node' state node ~err:Print_err.Pattern
       | "identifier" -> print_identifier state node
-      | _ -> match_rest state node print_destructuring_pattern
+      | _ -> print_destructuring_pattern state node
     in
     let children =
       match parameter_field with
@@ -1170,9 +1163,7 @@ and print_catch_clause state node =
 
 and print_finally_clause state node =
   match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node' state node ~err:Print_err.Finally
   | _ ->
     let kwd_finally = first_child_named "finally" node
     and body_field = child_with_field "body" node ~err:Print_err.Block in
@@ -1187,9 +1178,7 @@ and print_finally_clause state node =
 
 and print_with_statement state node =
   match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node' state node ~err:Print_err.With
   | _ ->
     let kwd_with = first_child_named "with" node
     and object_field =
@@ -1207,9 +1196,7 @@ and print_with_statement state node =
 
 and print_break_statement state node =
   match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node' state node ~err:Print_err.Break
   | _ ->
     let kwd_break = first_child_named "break" node
     and label_field = child_with_field_opt "label" node in
@@ -1222,9 +1209,7 @@ and print_break_statement state node =
 
 and print_continue_statement state node =
   match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node' state node ~err:Print_err.Continue
   | _ ->
     let kwd_continue = first_child_named "continue" node
     and label_field = child_with_field_opt "label" node in
@@ -1252,9 +1237,7 @@ and print_continue_statement state node =
 
 and print_return_statement state node =
   match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node' state node ~err:Print_err.Return
   | _ ->
     let kwd_return = first_child_named "return" node in
     (match child_ranked_opt 1 node with
@@ -1272,9 +1255,7 @@ and print_return_statement state node =
 
 and print_throw_statement state node =
   match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node' state node ~err:Print_err.Throw
   | _ ->
     let kwd_throw = first_child_named "throw" node
     and expr = child_ranked 1 node in
@@ -1287,9 +1268,8 @@ and print_throw_statement state node =
 
 and print_empty_statement state node =
   match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
+  | "ERROR" | "MISSING" | "NULL" ->
+    print_error_node' state node ~err:Print_err.Empty_statement
   | _ ->
     let region = !get_region node
     and label = get_name node in
@@ -1299,9 +1279,7 @@ and print_empty_statement state node =
 
 and print_labeled_statement state node =
   match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node' state node ~err:Print_err.Label
   | _ ->
     let label_field = child_with_field "label" node ~err:Print_err.Label
     and body_field = child_with_field "body" node ~err:Print_err.Statement in
@@ -1318,36 +1296,30 @@ and print_labeled_statement state node =
    "declaration" be a supertype, that is, a hidden rule. *)
 
 and print_declaration ?(comments = []) state node =
+  let comments = comments @ prev_comments node in
   match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
-  | _ ->
-    let comments = comments @ prev_comments node in
-    (match get_name node with
-    | "function_declaration" -> print_function_declaration state node
-    | "generator_function_declaration" -> print_generator_function_declaration state node
-    | "class_declaration" -> print_class_declaration ~comments state node
-    | "lexical_declaration" -> print_lexical_declaration ~comments state node
-    | "variable_declaration" -> print_variable_declaration state node
-    | "function_signature" -> print_function_signature state node
-    | "abstract_class_declaration" -> print_abstract_class_declaration state node
-    | "module" -> print_module state node
-    | "internal_module" -> print_internal_module ~comments state node
-    | "type_alias_declaration" -> print_type_alias_declaration ~comments state node
-    | "enum_declaration" -> print_enum_declaration state node
-    | "interface_declaration" -> print_interface_declaration state node
-    | "import_alias" -> print_import_alias state node
-    | "ambient_declaration" -> print_ambient_declaration state node
-    | _ -> match_rest state node print_unexpected_node)
+  | "function_declaration" -> print_function_declaration state node
+  | "generator_function_declaration" -> print_generator_function_declaration state node
+  | "class_declaration" -> print_class_declaration ~comments state node
+  | "lexical_declaration" -> print_lexical_declaration ~comments state node
+  | "variable_declaration" -> print_variable_declaration state node
+  | "function_signature" -> print_function_signature state node
+  | "abstract_class_declaration" -> print_abstract_class_declaration state node
+  | "module" -> print_module state node
+  | "internal_module" -> print_internal_module ~comments state node
+  | "type_alias_declaration" -> print_type_alias_declaration ~comments state node
+  | "enum_declaration" -> print_enum_declaration state node
+  | "interface_declaration" -> print_interface_declaration state node
+  | "import_alias" -> print_import_alias state node
+  | "ambient_declaration" -> print_ambient_declaration state node
+  | _ -> print_error_node' state node ~err:Print_err.Declaration
 
 (* Function declaration (see [print_function_signature]) *)
 
 and print_function_declaration ?(comments = []) state node =
   match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
+  | "ERROR" | "MISSING" | "NULL" ->
+    print_error_node' state node ~err:Print_err.Function_declaration
   | _ ->
     let comments = comments @ prev_comments node
     and kwd_async = first_child_named_opt "async" node
@@ -1378,17 +1350,18 @@ and print_function_declaration ?(comments = []) state node =
 
 and print_return_type state node =
   match get_name node with
+  | "ERROR" | "MISSING" | "NULL" ->
+    print_error_node' state node ~err:Print_err.Type_expression
   | "type_annotation" -> print_type_annotation state node
   | "asserts_annotation" -> print_asserts_annotation state node
-  | _ -> match_rest state node print_type_predicate_annotation
+  | _ -> print_type_predicate_annotation state node
 
 (* Generator function declaration (see function declaration) *)
 
 and print_generator_function_declaration state node =
   match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
+  | "ERROR" | "MISSING" | "NULL" ->
+    print_error_node' state node ~err:Print_err.Generator_function_declaration
   | _ ->
     let kwd_async = first_child_named_opt "async" node
     and kwd_function = first_child_named "function" node
@@ -1417,9 +1390,8 @@ and print_generator_function_declaration state node =
 
 and print_class_declaration ?(comments = []) state node =
   match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
+  | "ERROR" | "MISSING" | "NULL" ->
+    print_error_node' state node ~err:Print_err.Class_declaration
   | _ ->
     let comments = comments @ prev_comments node
     and decorators = children_named "decorator" node
@@ -1443,9 +1415,8 @@ and print_class_declaration ?(comments = []) state node =
 
 and print_lexical_declaration ?(comments = []) state node =
   match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
+  | "ERROR" | "MISSING" | "NULL" ->
+    print_error_node' state node ~err:Print_err.Let_or_const
   | _ ->
     let comments = comments @ prev_comments node
     and kind_field = child_with_field "kind" node ~err:Print_err.Let_or_const
@@ -1454,7 +1425,7 @@ and print_lexical_declaration ?(comments = []) state node =
       match get_name node with
       | "let" -> mk_kwd_let ~comments state node
       | "const" -> mk_kwd_const ~comments state node
-      | _ -> match_rest state node print_unexpected_node
+      | _ -> print_error_node' state node ~err:Print_err.Let_or_const
     in
     let children =
       mk_child_res print_set_or_const kind_field
@@ -1464,9 +1435,7 @@ and print_lexical_declaration ?(comments = []) state node =
 
 and print_variable_declarator state node =
   match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node' state node ~err:Print_err.Variable
   | _ ->
     let name_field = child_with_field "name" node ~err:Print_err.Variable in
     let sym_qmark = first_child_named_opt "!" node in
@@ -1487,16 +1456,15 @@ and print_variable_declarator state node =
 
 and print_lhs_pattern state node =
   match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node' state node ~err:Print_err.Pattern
   | "identifier" -> print_identifier state node
-  | _ -> match_rest state node print_destructuring_pattern
+  | _ -> print_destructuring_pattern state node
 
 (* Variable declaration (see [print_lexical_declaration]) *)
 
 and print_variable_declaration ?(comments = []) state node =
   match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node' state node ~err:Print_err.Var
   | _ ->
     let comments = comments @ prev_comments node
     and kwd_var = first_child_named "var" node
@@ -1511,9 +1479,8 @@ and print_variable_declaration ?(comments = []) state node =
 
 and print_function_signature state node =
   match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
+  | "ERROR" | "MISSING" | "NULL" ->
+    print_error_node' state node ~err:Print_err.Async_or_function
   | _ ->
     let kwd_async = first_child_named_opt "async" node
     and kwd_function = first_child_named "function" node
@@ -1538,9 +1505,7 @@ and print_function_signature state node =
 
 and print_abstract_class_declaration state node =
   match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node' state node ~err:Print_err.Abstract
   | _ ->
     let decorators = children_named "decorator" node
     and kwd_abstract = first_child_named "abstract" node
@@ -1565,9 +1530,8 @@ and print_abstract_class_declaration state node =
 
 and print_module ?(comments = []) state node =
   match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
+  | "ERROR" | "MISSING" | "NULL" ->
+    print_error_node' state node ~err:Print_err.Module_name
   | _ ->
     let comments = comments @ prev_comments node
     and kwd_module = first_child_named "module" node
@@ -1578,7 +1542,7 @@ and print_module ?(comments = []) state node =
       | "string" -> print_string state node
       | "identifier" -> print_identifier state node
       | "nested_identifier" -> print_nested_identifier state node
-      | _ -> match_rest state node print_unexpected_node
+      | _ -> print_error_node' state node ~err:Print_err.Module_name
     in
     let children =
       [ mk_child_res (mk_kwd_module ~comments) kwd_module
@@ -1592,9 +1556,8 @@ and print_module ?(comments = []) state node =
 
 and print_internal_module ?(comments = []) state node =
   match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
+  | "ERROR" | "MISSING" | "NULL" ->
+    print_error_node' state node ~err:Print_err.Namespace_name
   | _ ->
     let comments = comments @ prev_comments node
     and kwd_namespace = first_child_named "namespace" node
@@ -1605,7 +1568,7 @@ and print_internal_module ?(comments = []) state node =
       | "string" -> print_string state node
       | "identifier" -> print_identifier state node
       | "nested_identifier" -> print_nested_identifier state node
-      | _ -> match_rest state node print_unexpected_node
+      | _ -> print_error_node' state node ~err:Print_err.Namespace_name
     in
     let children =
       [ mk_child_res (mk_kwd_namespace ~comments) kwd_namespace
@@ -1619,9 +1582,7 @@ and print_internal_module ?(comments = []) state node =
 
 and print_type_alias_declaration ?(comments = []) state node =
   match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node' state node ~err:Print_err.Type_name
   | _ ->
     let comments = comments @ prev_comments node
     and kwd_type = first_child_named "type" node
@@ -1642,17 +1603,12 @@ and print_type_alias_declaration ?(comments = []) state node =
 (* Type parameters *)
 
 and print_type_parameters state node =
-  match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
-  | _ -> print_chevrons state node print_type_parameter
+  print_chevrons state node print_type_parameter ~err:Print_err.Type_parameters
 
 and print_type_parameter state node =
   match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
+  | "ERROR" | "MISSING" | "NULL" ->
+    print_error_node' state node ~err:Print_err.Const_or_type_name
   | _ ->
     let kwd_const = first_child_named_opt "const" node
     and name_field = child_with_field "name" node ~err:Print_err.Type_parameter
@@ -1669,10 +1625,13 @@ and print_type_parameter state node =
 
 and print_constraint state node =
   match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node' state node ~err:Print_err.Extends
   | _ ->
+    (* The grammar says:
+
+            constraint: $ => seq(choice('extends', ':'), $.type),
+
+            What is ':'? *)
     let kwd_extends = first_child_named "extends" node
     and type_child = child_ranked 1 node in
     let children =
@@ -1682,9 +1641,7 @@ and print_constraint state node =
 
 and print_default_type state node =
   match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node' state node ~err:Print_err.Equal
   | _ ->
     let sym_equal = first_child_named "=" node
     and type_node = child_ranked 1 node in
@@ -1697,9 +1654,8 @@ and print_default_type state node =
 
 and print_enum_declaration state node =
   match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
+  | "ERROR" | "MISSING" | "NULL" ->
+    print_error_node' state node ~err:Print_err.Const_or_enum
   | _ ->
     let kwd_const = first_child_named_opt "const" node
     and kwd_enum = first_child_named "enum" node
@@ -1715,23 +1671,19 @@ and print_enum_declaration state node =
     make_tree state node children
 
 and print_enum_body state node =
-  match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
-  | _ ->
-    let print state node =
-      match get_name node with
-      | "enum_assignment" -> print_enum_assignment state node
-      | _ -> match_rest state node print_property_name
-    in
-    print_braces state node print
+  let print state node =
+    match get_name node with
+    | "ERROR" | "MISSING" | "NULL" ->
+      print_error_node' state node ~err:Print_err.Enumeration_name
+    | "enum_assignment" -> print_enum_assignment state node
+    | _ -> print_property_name state node
+  in
+  print_braces state node print ~err:Print_err.Left_brace
 
 and print_enum_assignment state node =
   match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
+  | "ERROR" | "MISSING" | "NULL" ->
+    print_error_node' state node ~err:Print_err.Enumeration_name
   | _ ->
     let name_field = child_with_field "name" node ~err:Print_err.Enumeration_name in
     let children =
@@ -1744,9 +1696,7 @@ and print_enum_assignment state node =
 
 and print_interface_declaration state node =
   match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node' state node ~err:Print_err.Interface
   | _ ->
     let kwd_interface = first_child_named "interface" node
     and name_field = child_with_field "name" node ~err:Print_err.Interface_name
@@ -1767,9 +1717,7 @@ and print_interface_body state node = print_object_type state node
 
 and print_extends_type_clause state node =
   match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node' state node ~err:Print_err.Extends
   | _ ->
     let kwd_extends = first_child_named "extends" node
     and print state node =
@@ -1777,7 +1725,7 @@ and print_extends_type_clause state node =
       | "type_identifier" -> print_type_identifier state node
       | "nested_type_identifier" -> print_nested_type_identifier state node
       | "generic_type" -> print_generic_type state node
-      | _ -> match_rest state node print_unexpected_node
+      | _ -> print_error_node' state node ~err:Print_err.Type_expression
     in
     let children =
       mk_child_res mk_kwd_extends kwd_extends
@@ -1789,9 +1737,7 @@ and print_extends_type_clause state node =
 
 and print_import_alias state node =
   match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node' state node ~err:Print_err.Import
   | _ ->
     let kwd_import = first_child_named "import" node
     and lhs = child_ranked 1 node
@@ -1801,7 +1747,7 @@ and print_import_alias state node =
       match get_name node with
       | "identifier" -> print_identifier state node
       | "nested_identifier" -> print_nested_identifier state node
-      | _ -> match_rest state node print_unexpected_node
+      | _ -> print_error_node' state node ~err:Print_err.Identifier_or_path
     in
     let children =
       [ mk_child_res mk_kwd_import kwd_import
@@ -1816,9 +1762,7 @@ and print_import_alias state node =
 
 and print_ambient_declaration state node =
   match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node' state node ~err:Print_err.Declare
   | _ ->
     let kwd_declare = first_child_named "declare" node
     and fst_child = named_child_ranked 0 node in
@@ -1844,7 +1788,7 @@ and print_ambient_declaration state node =
 
 (* EXPRESSION
 
-   The JavasScript tree-sitter grammar have the non-terminals
+   The JavaScript tree-sitter grammar has the non-terminals
    "expression" and "primary_expression" be supertypes, that is,
    hidden rules. Therefore we have to match all the RHS of those
    non-terminals in [print_expression]. *)
@@ -1894,24 +1838,22 @@ and print_primary_expression ?(comments = []) state node =
   | "meta_property" -> print_meta_property state node
   | "call_expression" -> print_call_expression state node
   | "non_null_expression" -> print_non_null_expression state node
-  | _ -> match_rest state node print_unexpected_node
+  | _ -> print_error_node' state node ~err:Print_err.Expression
 
 (* Glimmer template (not supported) *)
 
 and print_glimmer_template state node =
   match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
+  | "ERROR" | "MISSING" | "NULL" ->
+    print_error_node' state node ~err:Print_err.Glimmer_template
   | _ -> make_node state node
 
 (* Assignment expression *)
 
 and print_assignment_expression state node =
   match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
+  | "ERROR" | "MISSING" | "NULL" ->
+    print_error_node' state node ~err:Print_err.Using_or_expression
   | _ ->
     let kwd_using = first_child_named_opt "using" node
     and left_field = child_with_field "left" node ~err:Print_err.Expression
@@ -1919,8 +1861,10 @@ and print_assignment_expression state node =
     and right_field = child_with_field "right" node ~err:Print_err.Expression
     and print_left state node =
       match get_name node with
+      | "ERROR" | "MISSING" | "NULL" ->
+        print_error_node' state node ~err:Print_err.Expression
       | "parenthesized_expression" -> print_parenthesized_expression state node
-      | _ -> match_rest state node print_lhs_expression
+      | _ -> print_lhs_expression state node
     in
     let children =
       [ mk_child_opt mk_kwd_using kwd_using
@@ -1935,9 +1879,8 @@ and print_assignment_expression state node =
 
 and print_augmented_assignment_expression state node =
   match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
+  | "ERROR" | "MISSING" | "NULL" ->
+    print_error_node' state node ~err:Print_err.LHS_of_augmented_assgmnt
   | _ ->
     let left_field = child_with_field "left" node ~err:Print_err.Expression
     and right_field = child_with_field "right" node ~err:Print_err.Expression
@@ -1949,7 +1892,7 @@ and print_augmented_assignment_expression state node =
       | "subscript_expression" -> print_subscript_expression state node
       | "identifier" -> print_identifier state node
       | "parenthesized_expression" -> print_parenthesized_expression state node
-      | _ -> match_rest state node print_unexpected_node
+      | _ -> print_error_node' state node ~err:Print_err.Expression
     and print_assignment state node =
       match get_name node with
       | "+=" -> mk_sym_plus_equal state node
@@ -1967,7 +1910,7 @@ and print_augmented_assignment_expression state node =
       | "&&=" -> mk_sym_conjunction_equal state node
       | "||=" -> mk_sym_disjunction_equal state node
       | "??=" -> mk_sym_non_null_equal state node
-      | _ -> match_rest state node print_unexpected_node
+      | _ -> print_error_node' state node ~err:Print_err.Augmented_assignment
     in
     let children =
       [ mk_child_res print_assignment operator
@@ -1981,9 +1924,7 @@ and print_augmented_assignment_expression state node =
 
 and print_await_expression state node =
   match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node' state node ~err:Print_err.Await
   | _ ->
     let kwd_await = first_child_named "await" node
     and expression = child_ranked 1 node in
@@ -1996,9 +1937,8 @@ and print_await_expression state node =
 
 and print_unary_expression state node =
   match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
+  | "ERROR" | "MISSING" | "NULL" ->
+    print_error_node' state node ~err:Print_err.Unary_operator
   | _ ->
     let operator_field = child_with_field "operator" node ~err:Print_err.Unary_operator
     and argument_field = child_with_field "argument" node ~err:Print_err.Expression
@@ -2011,7 +1951,7 @@ and print_unary_expression state node =
       | "typeof" -> mk_kwd_typeof state node
       | "void" -> mk_kwd_void state node
       | "delete" -> mk_kwd_delete state node
-      | _ -> match_rest state node print_unexpected_node
+      | _ -> print_error_node' state node ~err:Print_err.Unary_operator
     in
     let children =
       [ mk_child_res print_unary_operator operator_field
@@ -2024,9 +1964,7 @@ and print_unary_expression state node =
 
 and print_binary_expression ?(comments = []) state node =
   match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node' state node ~err:Print_err.Expression
   | _ ->
     let comments = comments @ prev_comments node
     and left_field = child_with_field "left" node ~err:Print_err.Expression
@@ -2034,8 +1972,10 @@ and print_binary_expression ?(comments = []) state node =
     and operator = child_with_field "operator" node ~err:Print_err.Binary_operator in
     let print_left state node =
       match get_name node with
+      | "ERROR" | "MISSING" | "NULL" ->
+        print_error_node' state node ~err:Print_err.Expression
       | "private_property_identifier" -> print_identifier ~comments state node
-      | _ -> match_rest state node (print_expression ~comments)
+      | _ -> print_expression ~comments state node
     and print_bin_operator state node =
       match get_name node with
       | "&&" -> mk_sym_conjunction state node
@@ -2063,7 +2003,7 @@ and print_binary_expression ?(comments = []) state node =
       | "??" -> mk_sym_non_null state node
       | "instanceof" -> mk_kwd_instanceof state node
       | "in" -> mk_kwd_in state node
-      | _ -> match_rest state node print_unexpected_node
+      | _ -> print_error_node' state node ~err:Print_err.Binary_operator
     in
     let children =
       [ mk_child_res print_left left_field
@@ -2077,9 +2017,7 @@ and print_binary_expression ?(comments = []) state node =
 
 and print_ternary_expression state node =
   match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node' state node ~err:Print_err.Expression
   | _ ->
     let condition_field = child_with_field "condition" node ~err:Print_err.Expression
     and consequence_field = child_with_field "consequence" node ~err:Print_err.Expression
@@ -2098,9 +2036,7 @@ and print_ternary_expression state node =
 
 and print_update_expression state node =
   match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node' state node ~err:Print_err.Expression
   | _ ->
     let argument_field = child_with_field "argument" node ~err:Print_err.Expression
     and first_child = child_ranked 0 node in
@@ -2142,9 +2078,7 @@ and print_update_expression state node =
 
 and print_new_expression state node =
   match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node' state node ~err:Print_err.New
   | _ ->
     let kwd_new = first_child_named "new" node
     and constructor_field = child_with_field "constructor" node ~err:Print_err.Expression
@@ -2163,9 +2097,7 @@ and print_new_expression state node =
 
 and print_yield_expression state node =
   match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node' state node ~err:Print_err.Yield
   | _ ->
     let kwd_yield = first_child_named "yield" node in
     (match child_ranked_opt 1 node with
@@ -2185,17 +2117,17 @@ and print_yield_expression state node =
 
 and print_as_expression state node =
   match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node' state node ~err:Print_err.As
   | _ ->
     let expression = child_ranked 0 node
     and kwd_as = first_child_named "as" node
     and as_what = child_ranked 2 node
     and print_as state node =
       match get_name node with
+      | "ERROR" | "MISSING" | "NULL" ->
+        print_error_node' state node ~err:Print_err.Const_or_type
       | "const" -> mk_kwd_const state node
-      | _ -> match_rest state node print_type
+      | _ -> print_type state node
     in
     let children =
       [ mk_child_res print_expression expression
@@ -2209,9 +2141,7 @@ and print_as_expression state node =
 
 and print_satisfies_expression state node =
   match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node' state node ~err:Print_err.Satisfies
   | _ ->
     let expression = child_ranked 0 node
     and kwd_satisfies = first_child_named "satisfies" node
@@ -2228,9 +2158,7 @@ and print_satisfies_expression state node =
 
 and print_instantiation_expression state node =
   match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node' state node ~err:Print_err.Expression
   | _ ->
     let expression = named_child_ranked 0 node
     and type_arguments_field =
@@ -2247,9 +2175,8 @@ and print_instantiation_expression state node =
 
 and print_type_assertion state node =
   match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
+  | "ERROR" | "MISSING" | "NULL" ->
+    print_error_node' state node ~err:Print_err.Type_arguments
   | _ ->
     let type_arguments = named_child_ranked 0 node
     and expression = named_child_ranked 1 node in
@@ -2264,9 +2191,7 @@ and print_type_assertion state node =
 
 and print_subscript_expression state node =
   match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node' state node ~err:Print_err.Expression
   | _ ->
     let object_field = child_with_field "object" node ~err:Print_err.Expression
     and optional_chain_field = child_with_field_opt "optional_chain" node
@@ -2276,9 +2201,11 @@ and print_subscript_expression state node =
     and print_chain state node =
       match get_name node with
       | "optional_chain" -> make_node state node
-      | _ -> match_rest state node print_unexpected_node
+      | _ -> print_error_node' state node ~err:Print_err.Optional_chain
     and print_index state node =
       match get_name node with
+      | "ERROR" | "MISSING" | "NULL" ->
+        print_error_node' state node ~err:Print_err.Index_expression
       | "sequence_expression" -> print_sequence_expression state node
       | _ -> print_expression state node
     in
@@ -2296,9 +2223,8 @@ and print_subscript_expression state node =
 
 and print_member_expression state node =
   match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
+  | "ERROR" | "MISSING" | "NULL" ->
+    print_error_node' state node ~err:Print_err.Member_expression
   | _ ->
     let object_field = child_with_field "object" node ~err:Print_err.Expression
     and optional_chain_field = child_with_field_opt "optional_chain" node
@@ -2306,8 +2232,10 @@ and print_member_expression state node =
       child_with_field "property" node ~err:Print_err.Property_identifier
     and print_object state node =
       match get_name node with
+      | "ERROR" | "MISSING" | "NULL" ->
+        print_error_node' state node ~err:Print_err.Object_denotation
       | "import" -> mk_kwd_import state node
-      | _ -> match_rest state node print_expression
+      | _ -> print_expression state node
     and print_selector state = function
       | None -> () (* "." *)
       | Some node ->
@@ -2326,9 +2254,8 @@ and print_member_expression state node =
 
 and print_parenthesized_expression ?(comments = []) state node =
   match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
+  | "ERROR" | "MISSING" | "NULL" ->
+    print_error_node' state node ~err:Print_err.Parenthesized_expression
   | _ ->
     let comments = comments @ prev_comments node in
     let opening = first_child_named "(" node
@@ -2359,9 +2286,8 @@ and print_parenthesized_expression ?(comments = []) state node =
 
 and print_template_string ?(comments = []) state node =
   match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
+  | "ERROR" | "MISSING" | "NULL" ->
+    print_error_node' state node ~err:Print_err.Template_string
   | _ ->
     let opening = child_ranked 0 node in
     let closing = last_child node in
@@ -2371,7 +2297,7 @@ and print_template_string ?(comments = []) state node =
       | "string_fragment" -> make_node ?comments state node
       | "escape_sequence" -> make_node ?comments state node
       | "template_substitution" -> make_node ?comments state node
-      | _ -> match_rest state node print_unexpected_node
+      | _ -> print_error_node' state node ~err:Template_string
     in
     let children =
       (mk_child_res (make_sym ~comments) opening :: mk_children_list print raw_children)
@@ -2382,29 +2308,23 @@ and print_template_string ?(comments = []) state node =
 (* Object *)
 
 and print_object state node =
-  match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
-  | _ ->
-    let print state node =
-      match get_name node with
-      | "pair" -> print_pair state node
-      | "spread_element" -> print_spread_element state node
-      | "method_definition" -> print_method_definition state node
-      | "shorthand_property_identifier" ->
-        print_shorthand_property_identifier_pattern state node
-      | _ -> match_rest state node print_unexpected_node
-    in
-    print_braces state node print
+  let print state node =
+    match get_name node with
+    | "pair" -> print_pair state node
+    | "spread_element" -> print_spread_element state node
+    | "method_definition" -> print_method_definition state node
+    | "shorthand_property_identifier" ->
+      print_shorthand_property_identifier_pattern state node
+    | _ -> print_error_node' state node ~err:Print_err.Object_field
+  in
+  print_braces state node print ~err:Print_err.Object_expression
 
 (* Pairs *)
 
 and print_pair state node =
   match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
+  | "ERROR" | "MISSING" | "NULL" ->
+    print_error_node' state node ~err:Print_err.Key_value_pair
   | _ ->
     let key_field = child_with_field "key" node ~err:Print_err.Property_name
     and value_field = child_with_field "value" node ~err:Print_err.Expression
@@ -2420,22 +2340,17 @@ and print_pair state node =
 (* Array (expression) *)
 
 and print_array state node =
-  match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
-  | _ -> print_brackets state node print_array_cell
+  print_brackets state node print_array_cell ~err:Print_err.Array
 
 and print_array_cell state node =
   match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node' state node ~err:Print_err.Array_cell
   | "spread_element" -> print_spread_element state node
-  | _ -> match_rest state node print_expression
+  | _ -> print_expression state node (* Hidden *)
 
 and print_spread_element state node =
   match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node' state node ~err:Print_err.Spread
   | _ ->
     let sym_ellipsis = first_child_named "..." node
     and expr_node = named_child_ranked 0 node in
@@ -2448,9 +2363,8 @@ and print_spread_element state node =
 
 and print_function_expression state node =
   match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
+  | "ERROR" | "MISSING" | "NULL" ->
+    print_error_node' state node ~err:Print_err.Function_expression
   | _ ->
     let kwd_async = first_child_named_opt "async" node
     and kwd_function = first_child_named "function" node
@@ -2477,9 +2391,8 @@ and print_function_expression state node =
 
 and print_arrow_function state node =
   match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
+  | "ERROR" | "MISSING" | "NULL" ->
+    print_error_node' state node ~err:Print_err.Arrow_function
   | _ ->
     let kwd_async = first_child_named_opt "async" node
     and parameter_field = child_with_field_opt "parameter" node
@@ -2510,16 +2423,17 @@ and print_arrow_function state node =
 
 and print_arrow_function_body state node =
   match get_name node with
+  | "ERROR" | "MISSING" | "NULL" ->
+    print_error_node' state node ~err:Print_err.Block_or_expression
   | "statement_block" -> print_statement_block state node
-  | _ -> match_rest state node print_expression
+  | _ -> print_expression state node (* Hidden *)
 
 (* Generator function *)
 
 and print_generator_function state node =
   match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
+  | "ERROR" | "MISSING" | "NULL" ->
+    print_error_node' state node ~err:Print_err.Generator_function
   | _ ->
     let kwd_async = first_child_named_opt "async" node
     and kwd_function = first_child_named "function" node
@@ -2548,9 +2462,8 @@ and print_generator_function state node =
 
 and print_class state node =
   match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
+  | "ERROR" | "MISSING" | "NULL" ->
+    print_error_node' state node ~err:Print_err.Class_expression
   | _ ->
     let decorators = children_named "decorator" node
     and kwd_class = first_child_named "class" node
@@ -2571,9 +2484,8 @@ and print_class state node =
 
 and print_class_heritage state node =
   match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
+  | "ERROR" | "MISSING" | "NULL" ->
+    print_error_node' state node ~err:Print_err.Extends_or_implements
   | _ ->
     let children =
       match first_child_named_opt "extends_clause" node with
@@ -2591,9 +2503,8 @@ and print_class_heritage state node =
 
 and print_implements_clause state node =
   match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
+  | "ERROR" | "MISSING" | "NULL" ->
+    print_error_node' state node ~err:Print_err.Implements_clause
   | _ ->
     let kwd_implements = first_child_named "implements" node
     and named_children = collect_named_children node in
@@ -2605,9 +2516,8 @@ and print_implements_clause state node =
 
 and print_extends_clause state node =
   match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
+  | "ERROR" | "MISSING" | "NULL" ->
+    print_error_node' state node ~err:Print_err.Extends_clause
   | _ ->
     let kwd_extends = first_child_named "extends" node
     and children =
@@ -2641,9 +2551,7 @@ and print_extends_clause state node =
 
 and print_class_body ?(comments = []) state node =
   match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node' state node ~err:Print_err.Class_body
   | _ ->
     let comments = comments @ prev_comments node in
     let opening = first_child_named "{" node
@@ -2673,13 +2581,12 @@ and print_class_member state (decorators, node) =
   | "abstract_method_signature" -> print_abstract_method_signature state node
   | "index_signature" -> print_index_signature state node
   | "public_field_definition" -> print_public_field_definition state node
-  | _ -> match_rest state node print_unexpected_node
+  | _ -> print_error_node' state node ~err:Print_err.Class_member
 
 and print_method_definition state node =
   match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
+  | "ERROR" | "MISSING" | "NULL" ->
+    print_error_node' state node ~err:Print_err.Method_definition
   | _ ->
     let accessibility_modifier = first_child_named_opt "accessibility_modifier" node
     and kwd_static = first_child_named_opt "static" node
@@ -2718,9 +2625,8 @@ and print_method_definition state node =
 
 and print_class_static_block state node =
   match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
+  | "ERROR" | "MISSING" | "NULL" ->
+    print_error_node' state node ~err:Print_err.Static_block
   | _ ->
     let kwd_static = first_child_named "static" node
     and body_field = child_with_field "body" node ~err:Print_err.Block in
@@ -2733,9 +2639,8 @@ and print_class_static_block state node =
 
 and print_abstract_method_signature state node =
   match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
+  | "ERROR" | "MISSING" | "NULL" ->
+    print_error_node' state node ~err:Print_err.Abstract_method_signature
   | _ ->
     let accessibility_modifier = first_child_named_opt "accessibility_modifier" node
     and kwd_abstract = first_child_named_opt "abstract" node
@@ -2767,9 +2672,8 @@ and print_abstract_method_signature state node =
 
 and print_public_field_definition state node =
   match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
+  | "ERROR" | "MISSING" | "NULL" ->
+    print_error_node' state node ~err:Print_err.Public_field_definition
   | _ ->
     let decorators = children_named "decorator" node
     and accessibility_modifier = first_child_named_opt "accessibility_modifier" node
@@ -2805,9 +2709,8 @@ and print_public_field_definition state node =
 
 and print_meta_property state node =
   match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
+  | "ERROR" | "MISSING" | "NULL" ->
+    print_error_node' state node ~err:Print_err.Meta_property
   | _ ->
     let fst_child = child_ranked 0 node
     and snd_child = child_ranked 2 node in
@@ -2822,9 +2725,8 @@ and print_meta_property state node =
 
 and print_call_expression state node =
   match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
+  | "ERROR" | "MISSING" | "NULL" ->
+    print_error_node' state node ~err:Print_err.Call_expression
   | _ ->
     let function_field = child_with_field "function" node ~err:Print_err.Expression
     and member_selection = first_child_named_opt "?." node
@@ -2835,12 +2737,14 @@ and print_call_expression state node =
       | None ->
         let print_function state node =
           match get_name node with
+          | "ERROR" | "MISSING" | "NULL" ->
+            print_error_node' state node ~err:Print_err.Import_or_expression
           | "import" -> mk_kwd_import state node
-          | _ -> match_rest state node print_expression
+          | _ -> print_expression state node
         and print_arguments state node =
           match get_name node with
           | "template_string" -> print_template_string state node
-          | _ -> match_rest state node print_arguments
+          | _ -> print_arguments state node
         in
         [ mk_child_res print_function function_field
         ; mk_child_opt print_type_arguments type_arguments_field
@@ -2855,31 +2759,23 @@ and print_call_expression state node =
     make_tree state node children
 
 and print_type_arguments state node =
-  match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
-  | _ -> print_chevrons state node print_type
+  print_chevrons state node print_type ~err:Print_err.Type_arguments
 
 and print_arguments state node =
-  match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
-  | _ -> print_parens state node print_argument
+  print_parens state node print_argument ~err:Print_err.Arguments
 
 and print_argument state node =
   match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node' state node ~err:Print_err.Argument
   | "spread_element" -> print_spread_element state node
-  | _ -> match_rest state node print_expression
+  | _ -> print_expression state node (* Hidden *)
 
 (* Non-null expression *)
 
 and print_non_null_expression state node =
   match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
+  | "ERROR" | "MISSING" | "NULL" ->
+    print_error_node' state node ~err:Print_err.Non_null_expression
   | _ ->
     let child = named_child_ranked 0 node in
     make_unary_res state node print_expression child
@@ -2888,9 +2784,7 @@ and print_non_null_expression state node =
 
 and print_sequence_expression ?(comments = []) state node =
   match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node' state node ~err:Print_err.Expression
   | _ -> tree_of_named_children ~comments state node print_expression
 
 (* TYPE
@@ -2909,15 +2803,14 @@ and print_type state node =
     print_type_query_member_expression_in_type_annotation state node
   | "call_expression" -> print_type_query_call_expression_in_type_annotation state node
   (* "primary_type" is hidden *)
-  | _ -> match_rest state node print_primary_type
+  | _ -> print_primary_type state node
 
 (* Type queries in type annotations (expressions) *)
 
 and print_type_query_member_expression_in_type_annotation state node =
   match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
+  | "ERROR" | "MISSING" | "NULL" ->
+    print_error_node' state node ~err:Print_err.Member_or_call
   | _ ->
     let object_field = child_with_field "object" node ~err:Print_err.Member_or_call
     and selector = first_child_named "." node
@@ -2930,7 +2823,7 @@ and print_type_query_member_expression_in_type_annotation state node =
         print_type_query_member_expression_in_type_annotation state node
       | "call_expression" ->
         print_type_query_call_expression_in_type_annotation state node
-      | _ -> match_rest state node print_unexpected_node
+      | _ -> print_error_node' state node ~err:Print_err.Object_field
     in
     let children =
       [ mk_child_res print_object_field object_field
@@ -2944,13 +2837,12 @@ and print_type_query_property state node =
   match get_name node with
   | "property_identifier" -> print_identifier state node
   | "private_property_identifier" -> print_identifier state node
-  | _ -> match_rest state node print_unexpected_node
+  | _ -> print_error_node' state node ~err:Print_err.Property_identifier
 
 and print_type_query_call_expression_in_type_annotation state node =
   match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
+  | "ERROR" | "MISSING" | "NULL" ->
+    print_error_node' state node ~err:Print_err.Member_expression
   | _ ->
     let function_field = child_with_field "function" node ~err:Print_err.Member_expression
     and arguments_field = child_with_field "arguments" node ~err:Print_err.Arguments
@@ -2959,7 +2851,7 @@ and print_type_query_call_expression_in_type_annotation state node =
       | "import" -> mk_kwd_import state node
       | "member_expression" ->
         print_type_query_member_expression_in_type_annotation state node
-      | _ -> match_rest state node print_unexpected_node
+      | _ -> print_error_node' state node ~err:Print_err.Member_expression
     in
     let children =
       [ mk_child_res print_function_field function_field
@@ -2991,7 +2883,7 @@ and print_primary_type state node =
   | "template_literal_type" -> print_template_literal_type state node
   | "intersection_type" -> print_intersection_type state node
   | "union_type" -> print_union_type state node
-  | _ -> match_rest state node print_unexpected_node
+  | _ -> print_error_node' state node ~err:Print_err.Type_expression
 
 (* Flow maybe type
 
@@ -3000,9 +2892,7 @@ and print_primary_type state node =
 
 and print_flow_maybe_type state node =
   match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node' state node ~err:Print_err.Type
   | _ ->
     let child = named_child_ranked 0 node in
     make_unary_res state node print_primary_type child
@@ -3011,27 +2901,20 @@ and print_flow_maybe_type state node =
 
 and print_type_identifier ?comments state node =
   match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node' state node ~err:Print_err.Type_name
   | _ -> print_identifier ?comments state node
 
 (* Parenthesized type *)
 
 and print_parenthesized_type state node =
-  match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
-  | _ -> print_parens state node print_type
+  print_parens state node print_type ~err:Print_err.Parenthesized_type
 
 (* Predefined type *)
 
 and print_predefined_type ?(comments = []) state node =
   match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
+  | "ERROR" | "MISSING" | "NULL" ->
+    print_error_node' state node ~err:Print_err.Predefined_type
   | _ ->
     let comments = comments @ prev_comments node in
     (match collect_children node with
@@ -3059,7 +2942,7 @@ and print_predefined_type ?(comments = []) state node =
         | "unknown" -> mk_kwd_unknown ~comments state node
         | "never" -> mk_kwd_never ~comments state node
         | "object" -> mk_kwd_object ~comments state node
-        | _ -> match_rest state node print_unexpected_node
+        | _ -> print_error_node' state node ~err:Print_err.Predefined_type
       in
       make_unary state node print child)
 
@@ -3067,9 +2950,8 @@ and print_predefined_type ?(comments = []) state node =
 
 and print_nested_type_identifier ?comments state node =
   match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
+  | "ERROR" | "MISSING" | "NULL" ->
+    print_error_node' state node ~err:Print_err.Nested_type_identifier
   | _ ->
     let module_field = child_with_field "module" node ~err:Print_err.Identifier_or_path
     and name_field = child_with_field "name" node ~err:Print_err.Type_name
@@ -3077,7 +2959,7 @@ and print_nested_type_identifier ?comments state node =
       match get_name node with
       | "identifier" -> print_identifier ?comments state node
       | "nested_identifier" -> print_nested_identifier ?comments state node
-      | _ -> match_rest state node print_unexpected_node
+      | _ -> print_error_node' state node ~err:Print_err.Identifier_or_path
     in
     let children =
       [ mk_child_res print_module_field module_field
@@ -3090,9 +2972,8 @@ and print_nested_type_identifier ?comments state node =
 
 and print_nested_identifier ?comments state node =
   match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
+  | "ERROR" | "MISSING" | "NULL" ->
+    print_error_node' state node ~err:Print_err.Identifier_or_member
   | _ ->
     let object_field = child_with_field "object" node ~err:Print_err.Identifier_or_member
     and property_field =
@@ -3101,11 +2982,11 @@ and print_nested_identifier ?comments state node =
       match get_name node with
       | "identifier" -> print_identifier ?comments state node
       | "member_expression" -> print_nested_identifier ?comments state node
-      | _ -> match_rest state node print_unexpected_node
+      | _ -> print_error_node' state node ~err:Print_err.Identifier_or_member
     and print_property_field state node =
       match get_name node with
       | "property_identifier" -> print_identifier state node
-      | _ -> match_rest state node print_unexpected_node
+      | _ -> print_error_node' state node ~err:Print_err.Property_identifier
     in
     let children =
       [ mk_child_res print_object_field object_field
@@ -3118,9 +2999,8 @@ and print_nested_identifier ?comments state node =
 
 and print_generic_type ?(comments = []) state node =
   match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
+  | "ERROR" | "MISSING" | "NULL" ->
+    print_error_node' state node ~err:Print_err.Generic_type
   | _ ->
     let comments = comments @ prev_comments node in
     let name_field = child_with_field "name" node ~err:Print_err.Type_identifier_or_path
@@ -3130,7 +3010,7 @@ and print_generic_type ?(comments = []) state node =
       match get_name node with
       | "type_identifier" -> print_type_identifier ~comments state node
       | "nested_type_identifier" -> print_nested_type_identifier ~comments state node
-      | _ -> match_rest state node print_unexpected_node
+      | _ -> print_error_node' state node ~err:Print_err.Type_identifier_or_path
     in
     let children =
       [ mk_child_res print_name_field name_field
@@ -3142,11 +3022,7 @@ and print_generic_type ?(comments = []) state node =
 (* Object type *)
 
 and print_object_type state node =
-  match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
-  | _ -> print_braces state node print_object_type_field
+  print_braces state node print_object_type_field ~err:Print_err.Object_type
 
 and print_object_type_field state node =
   match get_name node with
@@ -3156,13 +3032,12 @@ and print_object_type_field state node =
   | "construct_signature" -> print_construct_signature state node
   | "index_signature" -> print_index_signature state node
   | "method_signature" -> print_method_signature state node
-  | _ -> match_rest state node print_unexpected_node
+  | _ -> print_error_node' state node ~err:Print_err.Object_type_field
 
 and print_property_signature state node =
   match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
+  | "ERROR" | "MISSING" | "NULL" ->
+    print_error_node' state node ~err:Print_err.Property_signature
   | _ ->
     let accessibility_modifier = first_child_named_opt "accessibility_modifier" node
     and kwd_static = first_child_named_opt "static" node
@@ -3187,9 +3062,8 @@ and print_property_signature state node =
 
 and print_call_signature state node =
   match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
+  | "ERROR" | "MISSING" | "NULL" ->
+    print_error_node' state node ~err:Print_err.Call_signature
   | _ ->
     let type_parameters_field = child_with_field_opt "type_parameters" node
     and parameters_field = child_with_field "parameters" node ~err:Print_err.Parameters
@@ -3206,18 +3080,15 @@ and print_call_signature state node =
 
 and print_asserts_annotation state node =
   match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
+  | "ERROR" | "MISSING" | "NULL" ->
+    print_error_node' state node ~err:Print_err.Asserts_annotation
   | _ ->
     let asserts = first_child_named "asserts" node in
     make_unary_res state node print_asserts asserts
 
 and print_asserts state node =
   match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node' state node ~err:Print_err.Asserts
   | _ ->
     let kwd_asserts = first_child_named "asserts" node
     and child = child_ranked 1 node
@@ -3226,7 +3097,7 @@ and print_asserts state node =
       | "type_predicate" -> print_type_predicate state node
       | "identifier" -> print_identifier state node
       | "this" -> mk_kwd_this state node
-      | _ -> match_rest state node print_unexpected_node
+      | _ -> print_error_node' state node ~err:Print_err.Asserted
     in
     let children =
       [ mk_child_res mk_kwd_asserts kwd_asserts; mk_child_res print child ]
@@ -3236,21 +3107,15 @@ and print_asserts state node =
 (* Type predicate annotation *)
 
 and print_type_predicate_annotation state node =
-  match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
-  | _ ->
-    let predicate = child_ranked 1 node in
-    make_unary_res state node print_type_predicate predicate
+  let predicate = child_ranked 1 node in
+  make_unary_res state node print_type_predicate predicate
 
 (* Construct signature *)
 
 and print_construct_signature state node =
   match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
+  | "ERROR" | "MISSING" | "NULL" ->
+    print_error_node' state node ~err:Print_err.Construct_signature
   | _ ->
     let kwd_abstract = first_child_named_opt "abstract" node
     and kwd_new = first_child_named "new" node
@@ -3271,9 +3136,8 @@ and print_construct_signature state node =
 
 and print_index_signature state node =
   match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
+  | "ERROR" | "MISSING" | "NULL" ->
+    print_error_node' state node ~err:Print_err.Index_signature
   | _ ->
     let kwd_readonly = first_child_named_opt "readonly" node
     and sign_field = child_with_field_opt "sign" node
@@ -3287,7 +3151,7 @@ and print_index_signature state node =
       | "omitting_type_annotation" -> print_omitting_type_annotation state node
       | "adding_type_annotation" -> print_adding_type_annotation state node
       | "opting_type_annotation" -> print_opting_type_annotation state node
-      | _ -> match_rest state node print_unexpected_node
+      | _ -> print_error_node' state node ~err:Print_err.Type_of_index_signature
     in
     let prefix =
       [ mk_child_opt print_plus_minus sign_field
@@ -3319,13 +3183,12 @@ and print_plus_minus state node =
   match get_name node with
   | "+" -> make_sym state node
   | "-" -> make_sym state node
-  | _ -> match_rest state node print_unexpected_node
+  | _ -> print_error_node' state node ~err:Print_err.Plus_or_minus
 
 and print_mapped_type_clause state node =
   match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
+  | "ERROR" | "MISSING" | "NULL" ->
+    print_error_node' state node ~err:Print_err.Mapped_type_signature
   | _ ->
     let name_field = child_with_field "name" node ~err:Print_err.Type_name
     and kwd_in = first_child_named "in" node
@@ -3349,9 +3212,8 @@ and print_mapped_type_clause state node =
 
 and print_omitting_type_annotation state node =
   match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
+  | "ERROR" | "MISSING" | "NULL" ->
+    print_error_node' state node ~err:Print_err.Omitting_type_annotation
   | _ ->
     let sym_kind = first_child_named "-?:" node
     and type_child = named_child_ranked 0 node in
@@ -3362,9 +3224,8 @@ and print_omitting_type_annotation state node =
 
 and print_adding_type_annotation state node =
   match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
+  | "ERROR" | "MISSING" | "NULL" ->
+    print_error_node' state node ~err:Print_err.Adding_type_annotation
   | _ ->
     let sym_kind = first_child_named "+?:" node
     and type_child = named_child_ranked 0 node in
@@ -3375,9 +3236,8 @@ and print_adding_type_annotation state node =
 
 and print_opting_type_annotation state node =
   match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
+  | "ERROR" | "MISSING" | "NULL" ->
+    print_error_node' state node ~err:Print_err.Opting_type_annotation
   | _ ->
     let sym_kind = first_child_named "?:" node
     and type_child = named_child_ranked 0 node in
@@ -3390,9 +3250,8 @@ and print_opting_type_annotation state node =
 
 and print_method_signature state node =
   match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
+  | "ERROR" | "MISSING" | "NULL" ->
+    print_error_node' state node ~err:Print_err.Method_signature
   | _ ->
     let accessibility_modifier = first_child_named_opt "accessibility_modifier" node
     and kwd_static = first_child_named_opt "static" node
@@ -3430,9 +3289,7 @@ and print_method_signature state node =
 
 and print_array_type state node =
   match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node' state node ~err:Print_err.Array_type
   | _ ->
     let type_child = child_ranked 0 node
     and sym_lbracket = first_child_named "[" node
@@ -3448,11 +3305,7 @@ and print_array_type state node =
 (* Tuple type *)
 
 and print_tuple_type state node =
-  match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
-  | _ -> print_brackets state node print_tuple_type_member
+  print_brackets state node print_tuple_type_member ~err:Print_err.Tuple_type
 
 and print_tuple_type_member state node =
   match get_name node with
@@ -3460,13 +3313,12 @@ and print_tuple_type_member state node =
   | "optional_parameter" -> print_optional_tuple_parameter state node (* Alias *)
   | "optional_type" -> print_optional_type state node
   | "rest_type" -> print_rest_type state node
-  | _ -> match_rest state node print_type (* "type" is a hidden rule *)
+  | _ -> print_type state node (* "type" is a hidden rule *)
 
 and print_tuple_parameter state node =
   match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
+  | "ERROR" | "MISSING" | "NULL" ->
+    print_error_node' state node ~err:Print_err.Tuple_parameter
   | _ ->
     let name_field = child_with_field "name" node ~err:Print_err.Identifier_or_rest
     and type_field = child_with_field "type" node ~err:Print_err.Type_annotation
@@ -3474,7 +3326,7 @@ and print_tuple_parameter state node =
       match get_name node with
       | "identifier" -> print_identifier state node
       | "rest_pattern" -> print_rest_pattern state node
-      | _ -> match_rest state node print_unexpected_node
+      | _ -> print_error_node' state node ~err:Print_err.Identifier_or_rest
     in
     let children =
       [ mk_child_res print_name_field name_field
@@ -3485,9 +3337,8 @@ and print_tuple_parameter state node =
 
 and print_optional_tuple_parameter state node =
   match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
+  | "ERROR" | "MISSING" | "NULL" ->
+    print_error_node' state node ~err:Print_err.Optional_tuple_parameter
   | _ ->
     let name_field = child_with_field "name" node ~err:Print_err.Identifier
     and type_field = child_with_field "type" node ~err:Print_err.Type_annotation in
@@ -3502,9 +3353,8 @@ and print_optional_tuple_parameter state node =
 
 and print_type_annotation state node =
   match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
+  | "ERROR" | "MISSING" | "NULL" ->
+    print_error_node' state node ~err:Print_err.Type_annotation
   | _ ->
     let sym_colon = first_child_named ":" node
     and type_child = named_child_ranked 0 node in
@@ -3517,9 +3367,8 @@ and print_type_annotation state node =
 
 and print_rest_pattern state node =
   match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
+  | "ERROR" | "MISSING" | "NULL" ->
+    print_error_node' state node ~err:Print_err.Rest_pattern
   | _ ->
     let sym_ellipsis = first_child_named "..." node
     and expr_child = named_child_ranked 0 node in
@@ -3539,22 +3388,19 @@ and print_lhs_expression state node =
   | "object_pattern" -> print_object_pattern state node
   | "array_pattern" -> print_array_pattern state node
   | "non_null_expression" -> print_non_null_expression state node
-  | _ -> match_rest state node print_unexpected_node
+  | _ -> print_error_node' state node ~err:Print_err.Expression
 
 and print_optional_type state node =
   match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
+  | "ERROR" | "MISSING" | "NULL" ->
+    print_error_node' state node ~err:Print_err.Optional_type
   | _ ->
     let child = named_child_ranked 0 node in
     make_unary_res state node print_type child
 
 and print_rest_type state node =
   match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node' state node ~err:Print_err.Rest_type
   | _ ->
     let sym_ellipsis = first_child_named "..." node
     and type_child = named_child_ranked 0 node in
@@ -3567,9 +3413,7 @@ and print_rest_type state node =
 
 and print_type_query state node =
   match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node' state node ~err:Print_err.Type_query
   | _ ->
     let kwd_typeof = first_child_named "typeof" node
     and child = child_ranked 1 node
@@ -3581,16 +3425,15 @@ and print_type_query state node =
       | "instantiation_expression" -> print_type_query_instantiation_expression state node
       | "identifier" -> print_identifier state node
       | "this" -> mk_kwd_this state node
-      | _ -> match_rest state node print_unexpected_node
+      | _ -> print_error_node' state node ~err:Print_err.Type_query
     in
     let children = [ mk_child_res mk_kwd_typeof kwd_typeof; mk_child_res print child ] in
     make_tree state node children
 
 and print_type_query_subscript_expression state node =
   match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
+  | "ERROR" | "MISSING" | "NULL" ->
+    print_error_node' state node ~err:Print_err.Type_query_subscript
   | _ ->
     let object_field = child_with_field "object" node ~err:Print_err.Object_denotation
     and index_field =
@@ -3600,9 +3443,9 @@ and print_type_query_subscript_expression state node =
     and print_index_field state node =
       match get_name node with
       | "predefined_type" -> print_predefined_type state node
-      | "string" -> make_node state node
+      | "string" -> print_string state node
       | "number" -> print_number state node
-      | _ -> match_rest state node print_unexpected_node
+      | _ -> print_error_node' state node ~err:Print_err.Predefined_type
     in
     let children =
       [ mk_child_res print_object_field object_field
@@ -3615,9 +3458,8 @@ and print_type_query_subscript_expression state node =
 
 and print_type_query_member_expression state node =
   match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
+  | "ERROR" | "MISSING" | "NULL" ->
+    print_error_node' state node ~err:Print_err.Type_query_member
   | _ ->
     let object_field = child_with_field "object" node ~err:Print_err.Object_denotation
     and property_field =
@@ -3637,15 +3479,14 @@ and print_object_field state node =
   | "subscript_expression" -> print_type_query_subscript_expression state node
   | "member_expression" -> print_type_query_member_expression state node
   | "call_expression" -> print_type_query_call_expression state node
-  | _ -> match_rest state node print_unexpected_node
+  | _ -> print_error_node' state node ~err:Print_err.Object_denotation
 
 and print_property_field state node = print_type_query_property state node
 
 and print_type_query_instantiation_expression state node =
   match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
+  | "ERROR" | "MISSING" | "NULL" ->
+    print_error_node' state node ~err:Print_err.Type_query_instantiation
   | _ ->
     let function_field =
       child_with_field "function" node ~err:Print_err.Function_denotation
@@ -3665,13 +3506,12 @@ and print_function_field state node =
   | "identifier" -> print_identifier state node
   | "member_expression" -> print_type_query_member_expression state node
   | "subscript_expression" -> print_type_query_subscript_expression state node
-  | _ -> match_rest state node print_unexpected_node
+  | _ -> print_error_node' state node ~err:Print_err.Function_denotation
 
 and print_type_query_call_expression state node =
   match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
+  | "ERROR" | "MISSING" | "NULL" ->
+    print_error_node' state node ~err:Print_err.Type_query_call
   | _ ->
     let function_field =
       child_with_field "function" node ~err:Print_err.Function_denotation
@@ -3687,9 +3527,8 @@ and print_type_query_call_expression state node =
 
 and print_index_type_query state node =
   match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
+  | "ERROR" | "MISSING" | "NULL" ->
+    print_error_node' state node ~err:Print_err.Index_type_query
   | _ ->
     let child = named_child_ranked 0 node in
     make_unary_res state node print_primary_type child
@@ -3698,18 +3537,16 @@ and print_index_type_query state node =
 
 and print_existential_type state node =
   match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
+  | "ERROR" | "MISSING" | "NULL" ->
+    print_error_node' state node ~err:Print_err.Existential_type
   | _ -> make_node state node
 
 (* Literal type *)
 
 and print_literal_type state node =
   match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
+  | "ERROR" | "MISSING" | "NULL" ->
+    print_error_node' state node ~err:Print_err.Literal_type
   | _ ->
     let child = named_child_ranked 0 node
     and print state node =
@@ -3721,7 +3558,7 @@ and print_literal_type state node =
       | "false" -> mk_kwd_false state node
       | "null" -> mk_kwd_null state node
       | "undefined" -> mk_kwd_undefined state node
-      | _ -> match_rest state node print_unexpected_node
+      | _ -> print_error_node' state node ~err:Print_err.Literal_type
     in
     make_unary_res state node print child
 
@@ -3732,9 +3569,8 @@ and print_literal_type state node =
 
 and print_lookup_type state node =
   match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
+  | "ERROR" | "MISSING" | "NULL" ->
+    print_error_node' state node ~err:Print_err.Lookup_type
   | _ ->
     let primary_type_child = named_child_ranked 0 node
     and sym_lbracket = first_child_named "[" node
@@ -3753,9 +3589,8 @@ and print_lookup_type state node =
 
 and print_conditional_type state node =
   match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
+  | "ERROR" | "MISSING" | "NULL" ->
+    print_error_node' state node ~err:Print_err.Conditional_type
   | _ ->
     let left_field = child_with_field "left" node ~err:Print_err.Type
     and kwd_extends = first_child_named "extends" node
@@ -3780,18 +3615,16 @@ and print_conditional_type state node =
 
 and print_template_literal_type state node =
   match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
+  | "ERROR" | "MISSING" | "NULL" ->
+    print_error_node' state node ~err:Print_err.Template_literal_type
   | _ -> make_node state node
 
 (* Intersection type *)
 
 and print_intersection_type state node =
   match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
+  | "ERROR" | "MISSING" | "NULL" ->
+    print_error_node' state node ~err:Print_err.Intersection_type
   | _ ->
     let first_child = child_ranked_opt 0 node
     and sym_ampersand = first_child_named "&" node in
@@ -3817,9 +3650,7 @@ and print_intersection_type state node =
 
 and print_union_type state node =
   match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node' state node ~err:Print_err.Union_type
   | _ ->
     let first_child = child_ranked_opt 0 node
     and sym_vbar = first_child_named "|" node in
@@ -3845,9 +3676,8 @@ and print_union_type state node =
 
 and print_function_type state node =
   match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
+  | "ERROR" | "MISSING" | "NULL" ->
+    print_error_node' state node ~err:Print_err.Function_type
   | _ ->
     let type_parameters_field = child_with_field_opt "type_parameters" node
     and parameters_field = child_with_field "parameters" node ~err:Print_err.Parameters
@@ -3857,7 +3687,7 @@ and print_function_type state node =
       match get_name node with
       | "asserts" -> print_asserts state node
       | "type_predicate" -> print_type_predicate state node
-      | _ -> match_rest state node print_type
+      | _ -> print_type state node
     in
     let children =
       [ mk_child_opt print_type_parameters type_parameters_field
@@ -3870,9 +3700,8 @@ and print_function_type state node =
 
 and print_type_predicate state node =
   match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
+  | "ERROR" | "MISSING" | "NULL" ->
+    print_error_node' state node ~err:Print_err.Type_predicate
   | _ ->
     let name_field = child_with_field "name" node ~err:Print_err.Identifier_or_type
     and kwd_is = first_child_named "is" node
@@ -3881,7 +3710,7 @@ and print_type_predicate state node =
       match get_name node with
       | "identifier" -> print_identifier state node
       | "this" -> mk_kwd_this state node
-      | _ -> match_rest state node print_predefined_type
+      | _ -> print_predefined_type state node
     in
     let children =
       [ mk_child_res print_name_field name_field
@@ -3895,9 +3724,8 @@ and print_type_predicate state node =
 
 and print_readonly_type state node =
   match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
+  | "ERROR" | "MISSING" | "NULL" ->
+    print_error_node' state node ~err:Print_err.Readonly_type
   | _ ->
     let kwd_readonly = first_child_named "readonly" node
     and type_child = child_ranked 1 node in
@@ -3910,9 +3738,8 @@ and print_readonly_type state node =
 
 and print_constructor_type state node =
   match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
+  | "ERROR" | "MISSING" | "NULL" ->
+    print_error_node' state node ~err:Print_err.Constructor_type
   | _ ->
     let kwd_abstract = first_child_named_opt "abstract" node
     and kwd_new = first_child_named "new" node
@@ -3932,25 +3759,20 @@ and print_constructor_type state node =
     make_tree state node children
 
 and print_formal_parameters state node =
-  match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
-  | _ -> print_parens state node print_formal_parameter
+  print_parens state node print_formal_parameter ~err:Print_err.Parameters
 
 and print_formal_parameter state node =
   match get_name node with
   | "required_parameter" -> print_required_parameter state node
   | "optional_parameter" -> print_optional_parameter state node
-  | _ -> match_rest state node print_unexpected_node
+  | _ -> print_error_node' state node ~err:Print_err.Parameter
 
 and print_optional_parameter state node = print_required_parameter state node
 
 and print_required_parameter state node =
   match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
+  | "ERROR" | "MISSING" | "NULL" ->
+    print_error_node' state node ~err:Print_err.Required_parameter
   | _ ->
     (* "_parameter_name" inlined: *)
     let decorators = children_named "decorator" node
@@ -3993,9 +3815,7 @@ and mk_child_initializer_opt node =
 
 and print_decorator state node =
   match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node' state node ~err:Print_err.Decorator
   | _ ->
     let child = named_child_ranked 0 node
     and print state node =
@@ -4004,15 +3824,14 @@ and print_decorator state node =
       | "member_expression" -> print_decorator_member_expression state node
       | "call_expression" -> print_decorator_call_expression state node
       | "parenthesized_expression" -> print_decorator_parenthesized_expression state node
-      | _ -> match_rest state node print_unexpected_node
+      | _ -> print_error_node' state node ~err:Print_err.Decorator
     in
     make_unary_res state node print child
 
 and print_decorator_member_expression state node =
   match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
+  | "ERROR" | "MISSING" | "NULL" ->
+    print_error_node' state node ~err:Print_err.Decorator_member
   | _ ->
     let object_field = child_with_field "object" node ~err:Print_err.Identifier_or_member
     and selector = first_child_named "." node
@@ -4021,7 +3840,7 @@ and print_decorator_member_expression state node =
     and print_object state node =
       match get_name node with
       | "identifier" -> print_identifier state node
-      | _ -> match_rest state node print_decorator_member_expression
+      | _ -> print_decorator_member_expression state node
     in
     let children =
       [ mk_child_res print_object object_field
@@ -4033,9 +3852,8 @@ and print_decorator_member_expression state node =
 
 and print_decorator_call_expression state node =
   match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
+  | "ERROR" | "MISSING" | "NULL" ->
+    print_error_node' state node ~err:Print_err.Decorator_call
   | _ ->
     let function_field =
       child_with_field "function" node ~err:Print_err.Identifier_or_member
@@ -4045,7 +3863,7 @@ and print_decorator_call_expression state node =
       match get_name node with
       | "identifier" -> print_identifier state node
       | "member_expression" -> print_decorator_member_expression state node
-      | _ -> match_rest state node print_unexpected_node
+      | _ -> print_error_node' state node ~err:Print_err.Decorator_call
     in
     let children =
       [ mk_child_res print_function function_field
@@ -4056,26 +3874,20 @@ and print_decorator_call_expression state node =
     make_tree state node children
 
 and print_decorator_parenthesized_expression ?comments state node =
-  match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
-  | _ ->
-    let print state node =
-      match get_name node with
-      | "identifier" -> print_identifier state node
-      | "member_expression" -> print_decorator_member_expression state node
-      | _ -> match_rest state node print_call_expression
-    in
-    print_parens ?comments state node print
+  let print state node =
+    match get_name node with
+    | "identifier" -> print_identifier state node
+    | "member_expression" -> print_decorator_member_expression state node
+    | _ -> print_call_expression state node
+  in
+  print_parens ?comments state node print ~err:Print_err.Parenthesized_decorator
 
 (* Accessibility modifier *)
 
 and print_accessibility_modifier state node =
   match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
+  | "ERROR" | "MISSING" | "NULL" ->
+    print_error_node' state node ~err:Print_err.Public_private_protected
   | _ ->
     let child = child_ranked 0 node
     and print state node =
@@ -4083,7 +3895,7 @@ and print_accessibility_modifier state node =
       | "public" -> mk_kwd_public state node
       | "private" -> mk_kwd_private state node
       | "protected" -> mk_kwd_protected state node
-      | _ -> match_rest state node print_unexpected_node
+      | _ -> print_error_node' state node ~err:Print_err.Public_private_protected
     in
     make_unary_res state node print child
 
@@ -4091,9 +3903,7 @@ and print_accessibility_modifier state node =
 
 and print_override_modifier state node =
   match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node' state node ~err:Print_err.Override
   | _ ->
     let child = child_ranked 0 node in
     make_unary_res state node mk_kwd_override child
@@ -4102,9 +3912,7 @@ and print_override_modifier state node =
 
 and print_infer_type state node =
   match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node' state node ~err:Print_err.Infer
   | _ ->
     let kwd_infer = first_child_named "infer" node
     and type_identifier_child = child_ranked 1 node (* name "type_identifier"? *)
@@ -4127,11 +3935,7 @@ and print_infer_type state node =
 (* Object pattern *)
 
 and print_object_pattern state node =
-  match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
-  | _ -> print_braces state node print_object_pattern_field
+  print_braces state node print_object_pattern_field ~err:Print_err.Object_pattern
 
 and print_object_pattern_field state node =
   match get_name node with
@@ -4140,23 +3944,24 @@ and print_object_pattern_field state node =
   | "object_assignment_pattern" -> print_object_assignment_pattern state node
   | "shorthand_property_identifier_pattern" ->
     print_shorthand_property_identifier_pattern state node
-  | _ -> match_rest state node print_unexpected_node
+  | _ -> print_error_node' state node ~err:Print_err.Object_pattern_field
 
 (* Pair pattern *)
 
 and print_pair_pattern state node =
   match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
+  | "ERROR" | "MISSING" | "NULL" ->
+    print_error_node' state node ~err:Print_err.Pair_pattern
   | _ ->
     let key_field = child_with_field "key" node ~err:Print_err.Property_name
     and sym_colon = first_child_named ":" node
     and value_field = child_with_field "value" node ~err:Print_err.Pattern
     and print_value state node =
       match get_name node with
+      | "ERROR" | "MISSING" | "NULL" ->
+        print_error_node' state node ~err:Print_err.Value_of_pair_pattern
       | "assignment_pattern" -> print_assignment_pattern state node
-      | _ -> match_rest state node print_pattern (* Hidden rule *)
+      | _ -> print_pattern state node (* Hidden rule *)
     in
     let children =
       [ mk_child_res print_property_name key_field
@@ -4170,9 +3975,8 @@ and print_pair_pattern state node =
 
 and print_assignment_pattern state node =
   match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
+  | "ERROR" | "MISSING" | "NULL" ->
+    print_error_node' state node ~err:Print_err.Assignment_pattern
   | _ ->
     let left_field = child_with_field "left" node ~err:Print_err.Pattern
     and right_field = child_with_field "right" node ~err:Print_err.Expression
@@ -4194,29 +3998,22 @@ and print_property_name state node =
   | "string" -> print_string state node
   | "number" -> print_number state node
   | "computed_property_name" -> print_computed_property_name state node
-  | _ -> match_rest state node print_unexpected_node
+  | _ -> print_error_node' state node ~err:Print_err.Property_name
 
 and print_computed_property_name state node =
-  match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
-  | _ -> print_brackets state node print_expression
+  print_brackets state node print_expression ~err:Print_err.Computed_property_name
 
 and print_shorthand_property_identifier_pattern state node =
   match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node' state node ~err:Print_err.Identifier
   | _ -> make_node state node
 
 (* Object assignment pattern *)
 
 and print_object_assignment_pattern state node =
   match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
+  | "ERROR" | "MISSING" | "NULL" ->
+    print_error_node' state node ~err:Print_err.Object_assignment_pattern
   | _ ->
     let left_field = child_with_field "left" node ~err:Print_err.Pattern
     and sym_equal = first_child_named "=" node
@@ -4233,7 +4030,7 @@ and print_object_lhs_pattern state node =
   match get_name node with
   | "shorthand_property_identifier_pattern" ->
     print_shorthand_property_identifier_pattern state node
-  | _ -> match_rest state node print_destructuring_pattern
+  | _ -> print_destructuring_pattern state node
 
 (* Rule "_destructuring_pattern" is inlined. *)
 
@@ -4241,21 +4038,19 @@ and print_destructuring_pattern state node =
   match get_name node with
   | "object_pattern" -> print_object_pattern state node
   | "array_pattern" -> print_array_pattern state node
-  | _ -> match_rest state node print_unexpected_node
+  | _ -> print_error_node' state node ~err:Print_err.Object_or_array_pattern
 
 (* Array pattern *)
 
 and print_array_pattern state node =
-  match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
-  | _ -> print_brackets state node print_array_pattern_cell
+  print_brackets state node print_array_pattern_cell ~err:Print_err.Array_pattern
 
 and print_array_pattern_cell state node =
   match get_name node with
+  | "ERROR" | "MISSING" | "NULL" ->
+    print_error_node' state node ~err:Print_err.Array_cell_pattern
   | "assignment_pattern" -> print_assignment_pattern state node
-  | _ -> match_rest state node print_pattern (* hidden rule *)
+  | _ -> print_pattern state node (* hidden rule *)
 
 (* General patterns (hidden rule) *)
 
