@@ -535,7 +535,7 @@ let compile_public_field_definition (node : T.public_field_definition reg) : T.s
   let kind = `Const Region.ghost in
   let var = T.{ path = []; selected = name } in
   let pattern = T.P_var (mk_reg name#region var) in
-  let rhs_type = Some field_type in
+  let rhs_type = field_type in
   let rhs_expr = field_value in
   let region = Region.cover name#region (T.region_of_expr rhs_expr) in
   let binding = T.{ pattern; rhs_type; rhs_expr } in
