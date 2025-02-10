@@ -2392,7 +2392,7 @@ and strip_E_object (node : Ast.object_expr) : (S.expr, _) result =
       pack
         snd_spread#region
         Multiple_spreads_in_object
-        ~hint:"Expand in place on of them.")
+        ~hint:"Expand in place one of them.")
 
 and strip_object_entry (node : Ast.object_entry)
     : (S.expr S.property reg option, _) result
