@@ -140,7 +140,7 @@ let decode_jsligo_program ~raise file : (Ast.t, string Region.reg) result =
   (* Getting ahold of the root of the tree *)
   let program_node : Ts_wrap.ts_tree = TS_fun.ts_tree_root_node tree in
   (* Decoding the tree *)
-  let ast = Decode.dec_program file line_map program_node in
+  let ast = Decode.dec_program ~filename:file ~file:input line_map program_node in
   (* Releasing the memory allocated to the tree *)
   let () = TS_fun.ts_tree_delete tree in
   match ast with
@@ -169,7 +169,7 @@ let decode_jsligo_expression ~raise buffer : (Ast.expression, string Region.reg)
   (* Getting ahold of the root of the tree *)
   let program_node : Ts_wrap.ts_tree = TS_fun.ts_tree_root_node tree in
   (* Decoding the tree *)
-  let ast = Decode.dec_standalone_expression line_map program_node in
+  let ast = Decode.dec_standalone_expression ~file:input line_map program_node in
   (* Releasing the memory allocated to the tree *)
   let () = TS_fun.ts_tree_delete tree in
   match ast with
@@ -277,14 +277,16 @@ let parse_and_abstract_string_cameligo ~raise ~preprocess_define buffer =
 
 
 let decode_string_jsligo ~raise buffer : (Ast.t, string Region.reg) result =
-  let line_map : Loc_map.t = Map.set Int.Map.empty ~key:1 ~data:0 in
-  let input = Buffer.contents buffer in
+  (* Loading the code as a string *)
+  let input : string = Buffer.contents buffer in
+  (* Building the map from line-column pairs to positions [Pos.t] *)
+  let line_map : Loc_map.t = Loc_map.scan_string input in
   (* Parsing the code into a tree *)
   let tree : Ts_wrap.ts_tree_ptr = Ts_wrap.parse_typescript_string input in
   (* Getting ahold of the root of the tree *)
   let program_node : Ts_wrap.ts_tree = TS_fun.ts_tree_root_node tree in
   (* Decoding the tree *)
-  let ast = Decode.dec_program "" line_map program_node in
+  let ast = Decode.dec_program ~filename:"" ~file:input line_map program_node in
   (* Releasing the memory allocated to the tree *)
   let () = TS_fun.ts_tree_delete tree in
   match ast with

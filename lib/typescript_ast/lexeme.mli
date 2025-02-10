@@ -3,8 +3,4 @@
 
 module Region = Simple_utils.Region
 
-val open_input : file:string -> unit
-val close_input : unit -> unit
-val read : Region.t -> string
-
-(*val read_buffer : Buffer.t -> Region.t -> string*)
+val read : Buffer.t -> Region.t -> string

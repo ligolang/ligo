@@ -18,17 +18,17 @@ module Decode = Typescript_decoder.Decode
 
 (* Parsing *)
 
-let parse file : (Ast.t, string) result =
+let parse filename : (Ast.t, string) result =
   (* Loading the code as text *)
-  let input : string = Core.In_channel.read_all file in
+  let file : string = Core.In_channel.read_all filename in
   (* Building the map from line+columns to positions *)
-  let line_map = Loc_map.scan_string input in
+  let line_map = Loc_map.scan_string file in
   (* Parsing the code into a tree *)
-  let tree : Ts_wrap.ts_tree_ptr = Ts_wrap.parse_typescript_string input in
+  let tree : Ts_wrap.ts_tree_ptr = Ts_wrap.parse_typescript_string file in
   (* Getting ahold of the root of the tree *)
   let program_node : Ts_wrap.ts_tree = TS_fun.ts_tree_root_node tree in
-  (* Decoding the tree *)
-  let ast = Decode.dec_program file line_map program_node in
+  (* Decoding the CST *)
+  let ast = Decode.dec_program ~filename ~file line_map program_node in
   (* Releasing the memory allocated to the tree *)
   let () = TS_fun.ts_tree_delete tree in
   ast

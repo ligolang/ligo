@@ -33,6 +33,12 @@ let rec skip_until_colon = function
 let get_region : (Ts_wrap.ts_tree -> Region.t) ref =
   ref (fun _ -> failwith "Internal error: Decode.get_region")
 
+(* The input source (default: a hundred lines) *)
+
+let input : Buffer.t ref = ref (Buffer.create (80 * 100))
+
+(* Utilities *)
+
 let wrap decode ?comments node : ('a Wrap.t, _) result =
   let* decoded_node = decode ?comments node in
   Ok (Wrap.make decoded_node (!get_region node))
@@ -73,14 +79,14 @@ let error fun_name node : (_, string) result =
 let dec_comments ?(comments = []) node : Wrap.comment list =
   let f node =
     let region = !get_region node in
-    let value = Lexeme.read region in
+    let value = Lexeme.read !input region in
     Wrap.Block Region.{ value; region }
   in
   List.map ~f (comments @ prev_comments node)
 
 let make_node ?comments node : string wrap =
   let region = !get_region node in
-  let root = Lexeme.read region
+  let root = Lexeme.read !input region
   and comments = dec_comments ?comments node in
   Wrap.make ~comments root region
 
@@ -92,7 +98,7 @@ let dec_regex ?comments node : string_literal = make_node ?comments node
 
 let dec_number ?(comments = []) node : (number, _) result =
   let region = !get_region node in
-  let lexeme = Lexeme.read region in
+  let lexeme = Lexeme.read !input region in
   let lexbuf = Lexing.from_string lexeme
   and comments = dec_comments ~comments node in
   Number.scan comments region lexbuf
@@ -3447,25 +3453,24 @@ and dec_generic_name ?(comments = []) node : (generic_name, _) result =
 
 (* Decoding the CST *)
 
-let dec_program file map node : (Ast.t, string) result =
-  (* Opening a read channel for lexemes *)
-  let () = Lexeme.open_input ~file in
+let dec_program ~filename ~file map node : (Ast.t, string) result =
   (* Setting up the extraction of source regions *)
-  let () = get_region := Ts_wrap.get_region file map in
+  let () = get_region := Ts_wrap.get_region filename map in
+  (* Setting the input as a top-level string buffer *)
+  let () = Buffer.add_string !input file in
   (* Decoding the CST into an AST *)
-  let ast = dec_statements node in
-  (* Closing the input channel for reading lexemes *)
-  let () = Lexeme.close_input () in
-  ast
+  dec_statements node
 
 (* The parameter [node] is the root of a Typescript CST, *not of an
    expression*. That's why we have to find the expression below the
    root. This is because tree-sitter does not provide the generated
    parsers with multiple entry-points. *)
 
-let dec_standalone_expression map node : (Ast.expression, string) result =
+let dec_standalone_expression ~file map node : (Ast.expression, string) result =
   (* Setting up the extraction of source regions *)
   let () = get_region := Ts_wrap.get_region "" map in
+  (* Setting the input as a top-level string buffer *)
+  let () = Buffer.add_string !input file in
   (* Decoding the CST into an AST *)
   let* ast = dec_statements node in
   match ast with

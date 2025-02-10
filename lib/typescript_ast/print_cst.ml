@@ -25,6 +25,10 @@ let ( let* ) v f = Result.bind v ~f
 let get_region : (ts_tree -> Region.t) ref =
   ref (fun _ -> failwith "Internal error: Print_cst.get_region")
 
+(* The input source (default: a hundred lines) *)
+
+let input : Buffer.t ref = ref (Buffer.create (80 * 100))
+
 (* Tayloring the fetching of a field with error messages *)
 
 let child_with_field ~err field node =
@@ -69,7 +73,7 @@ let make_unary state root printer child =
 
 let make_node state node =
   let region = !get_region node in
-  let lexeme = Lexeme.read region in
+  let lexeme = Lexeme.read !input region in
   make_unary state node Tree.make_node lexeme
 
 let print_comment state node = make_node state node
@@ -115,7 +119,7 @@ let tree_of_named_children ?(comments = []) state node printer =
 
 let make_node ?(comments = []) state node =
   let region = !get_region node in
-  let lexeme = Lexeme.read region in
+  let lexeme = Lexeme.read !input region in
   let comments = comments @ prev_comments node in
   let children =
     mk_children_list print_comment comments @ [ mk_child Tree.make_node lexeme ]
@@ -143,7 +147,7 @@ let make_kwd ?(comments = []) state node ~err =
   | "ERROR" | "MISSING" | "NULL" -> print_error_node' state node ~err
   | _ ->
     let region = !get_region node in
-    let root = Lexeme.read region ^ " [keyword]" in
+    let root = Lexeme.read !input region ^ " [keyword]" in
     let comments = comments @ prev_comments node in
     Tree.of_list ~region state root print_comment comments
 
@@ -240,7 +244,7 @@ let make_sym ?(comments = []) state node =
   | "NULL" -> print_null_node state
   | _ ->
     let region = !get_region node in
-    let root = Lexeme.read region in
+    let root = Lexeme.read !input region in
     let comments = comments @ prev_comments node in
     Tree.of_list ~region state root print_comment comments
 
@@ -249,7 +253,7 @@ let make_sym' ?(comments = []) state node ~err =
   | "ERROR" | "MISSING" | "NULL" -> print_error_node' state node ~err
   | _ ->
     let region = !get_region node in
-    let root = Lexeme.read region in
+    let root = Lexeme.read !input region in
     let comments = comments @ prev_comments node in
     Tree.of_list ~region state root print_comment comments
 
@@ -352,7 +356,7 @@ let print_regex ?comments state node =
 let decode_comments ?(comments = []) node : Wrap.comment list =
   let f node =
     let region = !get_region node in
-    let value = Lexeme.read region in
+    let value = Lexeme.read !input region in
     Wrap.Block Region.{ value; region }
   in
   List.map ~f (comments @ prev_comments node)
@@ -363,7 +367,7 @@ let print_number ?(comments = []) state node =
     print_error_node' state node ~err:Print_err.Number_literal
   | _ ->
     let region = !get_region node in
-    let lexeme = Lexeme.read region in
+    let lexeme = Lexeme.read !input region in
     let lexbuf = Lexing.from_string lexeme in
     let w_comments = decode_comments ~comments node in
     (match Number.scan w_comments region lexbuf with
@@ -475,18 +479,16 @@ let print_parens ?(comments = []) state node printer ~err =
 
 (* Printing the CST *)
 
-let rec print_program file (map : Loc_map.t) node =
-  (* Opening a read channel for lexemes *)
-  let () = Lexeme.open_input ~file in
+let rec print_program ~filename ~file (map : Loc_map.t) node =
   (* Setting up the extracting of source regions *)
-  let () = get_region := Ts_wrap.get_region file map in
+  let () = get_region := Ts_wrap.get_region filename map in
+  (* Setting the input as a top-level string buffer *)
+  let () = Buffer.add_string !input file in
   (* Empty state for building the AST *)
   let buffer = Buffer.create 1023 in
   let state = Tree.mk_state ~buffer ~regions:true ~layout:true ~offsets:true `Byte in
   (* Printing the CST into a string buffer in [state] *)
   let () = print_statements state node in
-  (* Closing the input channel for reading lexemes *)
-  let () = Lexeme.close_input () in
   (* Making the output string *)
   Buffer.contents @@ Tree.to_buffer state
 

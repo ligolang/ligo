@@ -15,17 +15,17 @@ module TS_fun = Tree_sitter.Api.Functions
 
 (* Parsing *)
 
-let parse file =
+let parse filename : unit =
   (* Loading the code as text *)
-  let input : string = Core.In_channel.read_all file in
+  let file : string = Core.In_channel.read_all filename in
   (* Building the map from line+columns to positions *)
-  let line_map = Loc_map.scan_string input in
+  let line_map = Loc_map.scan_string file in
   (* Parsing the code *)
-  let tree : Ts_wrap.ts_tree_ptr = Ts_wrap.parse_typescript_string input in
+  let tree : Ts_wrap.ts_tree_ptr = Ts_wrap.parse_typescript_string file in
   (* Getting ahold of the root *)
   let program_node : Ts_wrap.ts_tree = TS_fun.ts_tree_root_node tree in
   (* Printing the tree from the root *)
-  let cst : string = Print_cst.print_program file line_map program_node in
+  let cst : string = Print_cst.print_program ~filename ~file line_map program_node in
   Printf.printf "%s%!" cst;
   (* Releasing the memory allocated to the tree *)
   TS_fun.ts_tree_delete tree
@@ -39,7 +39,7 @@ let cli_args : string array = Sys.get_argv ()
 let () =
   match Array.length cli_args with
   | 2 ->
-    let file = cli_args.(1) in
-    (try parse file with
+    let filename = cli_args.(1) in
+    (try parse filename with
     | Sys_error msg -> prerr_endline ("Error: " ^ msg))
   | _ -> prerr_endline ("Usage: " ^ cli_args.(0) ^ " [file]")
