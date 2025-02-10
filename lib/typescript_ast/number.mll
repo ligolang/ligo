@@ -49,8 +49,7 @@ let make_dec comments lexbuf ?(integral="0") ?(fractional="0") ?(exponent="")
 
 let digit = ['0'-'9']
 let decimalDigits = digit ('_'? digit)*
-let signedInteger = ('-' | '+')? decimalDigits
-let exponentPart = ('e' | 'E')? signedInteger as exponent
+let exponentPart = (('e' | 'E') ('-' | '+')? decimalDigits) as exponent
 
 let decimalIntegerLiteral = ('0' | '0'? ['1'-'9'] ('_'? decimalDigits)?)
 
