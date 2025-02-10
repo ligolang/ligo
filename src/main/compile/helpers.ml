@@ -131,9 +131,10 @@ let lift ~(raise : (Main_errors.all, Main_warnings.all) Simple_utils.Trace.raise
    resulting buffer. *)
 
 let decode_jsligo_program ~raise file : (Ast.t, string Region.reg) result =
-  let* line_map = Loc_map.scan file in
   (* Loading the code as a string *)
-  let input : string = Core.In_channel.read_all file in
+  let input : string = In_channel.read_all file in
+  (* Building the map from line-column pairs to positions [Pos.t] *)
+  let line_map : Loc_map.t = Loc_map.scan_string input in
   (* Parsing the code into a tree *)
   let tree : Ts_wrap.ts_tree_ptr = Ts_wrap.parse_typescript_string input in
   (* Getting ahold of the root of the tree *)
@@ -160,8 +161,9 @@ let parse_and_abstract_jsligo ~raise ~preprocess_define (buffer : Buffer.t) file
 (* JsLIGO expressions *)
 
 let decode_jsligo_expression ~raise buffer : (Ast.expression, string Region.reg) result =
-  let line_map : Loc_map.t = Map.set Int.Map.empty ~key:1 ~data:0 in
   let input = Buffer.contents buffer in
+  (* Building the map from line-column pairs to positions [Pos.t] *)
+  let line_map : Loc_map.t = Loc_map.scan_string input in
   (* Parsing the code into a tree *)
   let tree : Ts_wrap.ts_tree_ptr = Ts_wrap.parse_typescript_string input in
   (* Getting ahold of the root of the tree *)
