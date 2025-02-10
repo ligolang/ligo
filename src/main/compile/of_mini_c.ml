@@ -61,172 +61,63 @@ let compile_contract ~raise
  fun ~options e_contract ->
   let open Lwt.Let_syntax in
   let input_ty, contract = optimize_for_contract ~raise options e_contract in
-  (* Compile with IR *)
-  let%bind expr_ir =
-    let e_optimised =
-      trace ~raise self_mini_c_tracer @@ Self_mini_c.all_expression options contract.body
-    in
-    let expr =
-      let Var lltz_var, lltz_ty, lltz_body =
-        Ligo_lltz_codegen.compile_contract contract.binder input_ty e_optimised
-      in
-      Lltz_codegen.compile_contract_to_micheline lltz_var lltz_ty lltz_body []
-    in
-    let%map expr =
-      Lwt.return
-        (Micheline.map_node
-           (fun _ -> dummy)
-           (fun prim -> Michelson.Ast.Prim.to_string prim)
-           expr)
-    in
-    Self_michelson.optimize
-      ~experimental_disable_optimizations_for_debugging:
-        options.backend.experimental_disable_optimizations_for_debugging
-      ~has_comment:(has_comment options)
-      expr
-  in
-  (* Compile with IR *)
-  let%bind expr_ir_no_opt =
-    let e_optimised =
-      trace ~raise self_mini_c_tracer @@ Self_mini_c.all_expression options contract.body
-    in
-    let expr =
-      let Var lltz_var, lltz_ty, lltz_body =
-        Ligo_lltz_codegen.compile_contract contract.binder input_ty e_optimised
-      in
-      Lltz_codegen.compile_contract_to_micheline lltz_var lltz_ty lltz_body []
-    in
-    let%map expr =
-      Lwt.return
-        (Micheline.map_node
-           (fun _ -> dummy)
-           (fun prim -> Michelson.Ast.Prim.to_string prim)
-           expr)
-    in
-    (*Printf.printf "expr_ir_no_opt preopt:";
-    let open Micheline_printer in
-      expr |> Micheline.strip_locations |> printable (fun value -> value) |> print_expr Format.std_formatter;*)
-    expr
-  in
   (* Compile without IR *)
   let%bind expr_no_ir =
     let de_bruijn =
       trace ~raise scoping_tracer @@ Scoping.translate_closed_function contract input_ty
     in
     let%map expr = Stacking.Program.compile_function_body de_bruijn in
-    (*Printf.printf "expr_no_ir preopt:";
-    let open Micheline_printer in
-      expr |> Micheline.strip_locations |> printable (fun value -> value) |> print_expr Format.std_formatter;*)
     Self_michelson.optimize
       ~experimental_disable_optimizations_for_debugging:
         options.backend.experimental_disable_optimizations_for_debugging
       ~has_comment:(has_comment options)
       expr
   in
-  (* Measure code sizes *)
-  let%bind size_ir = Of_michelson.measure ~raise expr_ir in
-  let%bind size_no_ir = Of_michelson.measure ~raise expr_no_ir in
-  let%bind size_ir_no_opt = Of_michelson.measure ~raise expr_ir_no_opt in
-  let _ =
-    if size_ir_no_opt > size_no_ir
-    then (
-      Printf.printf "SIZE (IR_NO_OPT, NO_IR): (%d, %d)\n" size_ir_no_opt size_no_ir;
-      let open Micheline_printer in
-      expr_ir_no_opt
-      |> Micheline.strip_locations
-      |> printable (fun value -> value)
-      |> print_expr Format.std_formatter;
-      let open Micheline_printer in
-      expr_no_ir
-      |> Micheline.strip_locations
-      |> printable (fun value -> value)
-      |> print_expr Format.std_formatter;
-      47)
-    else 9
-  in
-  let _ =
-    if size_ir_no_opt > size_ir
-    then (
-      Printf.printf "SIZE (IR_NO_OPT, IR): (%d, %d)\n" size_ir_no_opt size_ir;
-      let open Micheline_printer in
-      expr_ir
-      |> Micheline.strip_locations
-      |> printable (fun value -> value)
-      |> print_expr Format.std_formatter;
-      let open Micheline_printer in
-      expr_ir_no_opt
-      |> Micheline.strip_locations
-      |> printable (fun value -> value)
-      |> print_expr Format.std_formatter;
-      47)
-    else 9
-  in
-  (* Output pair of sizes to a file *)
-  (*let output_file = "code_sizes.txt" in
-    let%bind () =
-      Lwt_io.with_file
-        ~mode:Lwt_io.Output
-        ~flags:[Core_unix.O_WRONLY; Core_unix.O_CREAT; Core_unix.O_APPEND]
-        output_file
-        (fun oc ->
-          let content = Printf.sprintf "contract (%d, %d)\n" size_ir size_no_ir in
-          Lwt_io.write oc content
-        )
-    in*)
-
   (* Return the value as before *)
-  let expr_to_return =
-    if (*options.backend.lltz_ir*) true then expr_ir_no_opt else expr_no_ir
+  let%bind expr_to_return =
+    if options.backend.lltz_ir
+    then (
+      (* Compile with IR *)
+      let%bind expr_ir =
+        let e_optimised =
+          trace ~raise self_mini_c_tracer
+          @@ Self_mini_c.all_expression options contract.body
+        in
+        let expr =
+          let Var lltz_var, lltz_ty, lltz_body =
+            Ligo_lltz_codegen.compile_contract contract.binder input_ty e_optimised
+          in
+          Lltz_codegen.compile_contract_to_micheline lltz_var lltz_ty lltz_body []
+        in
+        let%map expr =
+          Lwt.return
+            (Micheline.map_node
+               (fun _ -> dummy)
+               (fun prim -> Michelson.Ast.Prim.to_string prim)
+               expr)
+        in
+        expr
+      in
+      (* Measure code sizes *)
+      let%bind size_ir = Of_michelson.measure ~raise expr_ir in
+      let%bind size_no_ir = Of_michelson.measure ~raise expr_no_ir in
+      if size_ir > size_no_ir
+      then
+        Printf.printf
+          "You can achieve a smaller code size by not using lltz-ir.\n\
+          \ \n\
+          \           Size with lltz-ir: %d, Size without lltz-ir: %d\n\
+          \ \n\
+          \           We aim to improve this soon.\n\n"
+          size_ir
+          size_no_ir;
+      Lwt.return expr_ir)
+    else Lwt.return expr_no_ir
   in
-  (*ir no opt todo*)
   let expr_ty = compile_type e_contract.type_expression in
   let expr_ty = dummy_locations expr_ty in
   Lwt.return ({ expr_ty; expr = expr_to_return } : Stacking.Program.compiled_expression)
 
-
-(*let compile_contract ~raise
-    : options:Compiler_options.t -> expression -> Stacking.compiled_expression Lwt.t
-  =
- fun ~options e_contract ->
-  let open Lwt.Let_syntax in
-  let input_ty, contract = optimize_for_contract ~raise options e_contract in
-
-  let optimize = 
-    function expr -> 
-        Self_michelson.optimize
-          ~experimental_disable_optimizations_for_debugging:
-            options.backend.experimental_disable_optimizations_for_debugging
-          ~has_comment:(has_comment options)
-          expr
-  in
-  let%map expr =
-    if true then
-      let e_optimised = trace ~raise self_mini_c_tracer @@ Self_mini_c.all_expression options contract.body in
-      let expr = 
-        let (Var lltz_var, lltz_ty, lltz_body) = Ligo_lltz_codegen.compile_contract contract.binder input_ty e_optimised in
-        Lltz_codegen.compile_contract_to_micheline lltz_var lltz_ty lltz_body [] in
-      Lwt.return (Micheline.map_node (fun _ -> dummy) (fun prim -> Michelson.Ast.Prim.to_string prim) expr)
-    else
-      let de_bruijn =
-        trace ~raise scoping_tracer @@ Scoping.translate_closed_function contract input_ty
-      in
-      let%bind expr = Stacking.Program.compile_function_body de_bruijn in
-      let optimised_expr = optimize expr in
-
-      Lwt.return optimised_expr
-  in
-    let expr =
-      Self_michelson.optimize
-        ~experimental_disable_optimizations_for_debugging:
-          options.backend.experimental_disable_optimizations_for_debugging
-        ~has_comment:(has_comment options)
-        expr
-    in
-    (*let open Micheline_printer in
-      expr |> Micheline.strip_locations |> printable (fun value -> value) |> print_expr Format.std_formatter;*)
-    let expr_ty = compile_type e_contract.type_expression in
-    let expr_ty = dummy_locations expr_ty in
-    ({ expr_ty; expr } : Stacking.Program.compiled_expression)*)
 
 let compile_view ~raise
     : options:Compiler_options.t -> expression -> Stacking.compiled_expression Lwt.t
@@ -266,75 +157,14 @@ let compile_view ~raise
   ({ expr_ty; expr } : Stacking.Program.compiled_expression)
 
 
-(*let compile_expression ~raise
-    : options:Compiler_options.t -> expression -> compiled_expression Lwt.t
-  =
-    fun ~options e ->
-      let e = trace ~raise self_mini_c_tracer @@ Self_mini_c.all_expression options e in
-      let open Lwt.Let_syntax in
-
-      let optimize = 
-        function expr -> 
-            Self_michelson.optimize
-              ~experimental_disable_optimizations_for_debugging:
-                options.backend.experimental_disable_optimizations_for_debugging
-              ~has_comment:(has_comment options)
-              expr
-      in
-
-      let%map expr = 
-        if false then
-          let expr = Lltz_codegen.compile_to_micheline (Ligo_lltz_codegen.compile_expression e) [] in
-          Lwt.return (optimize (Micheline.map_node (fun _ -> dummy) (fun prim -> Michelson.Ast.Prim.to_string prim) expr))
-        else
-          let expr = trace ~raise scoping_tracer @@ Scoping.translate_expression e [] in
-          let%bind expr = Stacking.Program.compile_expr [] expr in
-          Lwt.return (optimize expr)
-      in
-      (*let open Micheline_printer in
-      expr |> Micheline.strip_locations |> printable (fun value -> value) |> print_expr Format.std_formatter;*)
-        let expr_ty = compile_type e.type_expression in
-        (({ expr_ty; expr } : Program.compiled_expression))*)
-
 let compile_expression ~raise
     : options:Compiler_options.t -> expression -> compiled_expression Lwt.t
   =
  fun ~options e ->
-  let e = trace ~raise self_mini_c_tracer @@ Self_mini_c.all_expression options e in
   let open Lwt.Let_syntax in
-  (* Compile with IR *)
-  let%bind expr_ir =
-    let expr =
-      Lltz_codegen.compile_to_micheline (Ligo_lltz_codegen.compile_expression e) []
-    in
-    let%map expr =
-      Lwt.return
-        (Micheline.map_node
-           (fun _ -> dummy)
-           (fun prim -> Michelson.Ast.Prim.to_string prim)
-           expr)
-    in
-    Self_michelson.optimize
-      ~experimental_disable_optimizations_for_debugging:
-        options.backend.experimental_disable_optimizations_for_debugging
-      ~has_comment:(has_comment options)
-      expr
-  in
-  (* Compile with IR *)
-  let%bind expr_ir_no_opt =
-    let expr =
-      Lltz_codegen.compile_to_micheline (Ligo_lltz_codegen.compile_expression e) []
-    in
-    let%map expr =
-      Lwt.return
-        (Micheline.map_node
-           (fun _ -> dummy)
-           (fun prim -> Michelson.Ast.Prim.to_string prim)
-           expr)
-    in
-    expr
-  in
-  (* Compile without IR *)
+  (* Preprocess the expression using Self_mini_c. *)
+  let e = trace ~raise self_mini_c_tracer @@ Self_mini_c.all_expression options e in
+  (* First: compile to Michelson without IR. *)
   let%bind expr_no_ir =
     let expr = trace ~raise scoping_tracer @@ Scoping.translate_expression e [] in
     let%map expr = Stacking.Program.compile_expr [] expr in
@@ -344,63 +174,38 @@ let compile_expression ~raise
       ~has_comment:(has_comment options)
       expr
   in
-  (* Measure code sizes *)
-  let%bind size_ir = Of_michelson.measure ~raise expr_ir in
-  let%bind size_no_ir = Of_michelson.measure ~raise expr_no_ir in
-  let%bind size_ir_no_opt = Of_michelson.measure ~raise expr_ir_no_opt in
-  let _ =
-    if size_ir_no_opt > size_no_ir
+  (* If requested, also compile with IR and compare sizes. Otherwise, just reuse expr_no_ir. *)
+  let%bind expr_final =
+    if options.backend.lltz_ir
     then (
-      Printf.printf "SIZE (IR_NO_OPT, NO_IR): (%d, %d)\n" size_ir_no_opt size_no_ir;
-      let open Micheline_printer in
-      expr_ir_no_opt
-      |> Micheline.strip_locations
-      |> printable (fun value -> value)
-      |> print_expr Format.std_formatter;
-      let open Micheline_printer in
-      expr_no_ir
-      |> Micheline.strip_locations
-      |> printable (fun value -> value)
-      |> print_expr Format.std_formatter;
-      47)
-    else 9
+      let%bind expr_ir =
+        let expr =
+          Lltz_codegen.compile_to_micheline (Ligo_lltz_codegen.compile_expression e) []
+        in
+        let expr =
+          Micheline.map_node
+            (fun _ -> dummy)
+            (fun prim -> Michelson.Ast.Prim.to_string prim)
+            expr
+        in
+        Lwt.return expr
+      in
+      let%bind size_ir = Of_michelson.measure ~raise expr_ir in
+      let%bind size_no_ir = Of_michelson.measure ~raise expr_no_ir in
+      if size_ir > size_no_ir
+      then
+        Printf.printf
+          "You can achieve a smaller code size by not using lltz-ir.\n\
+           Size with lltz-ir: %d, Size without lltz-ir: %d\n\
+           We aim to improve this soon.\n\n"
+          size_ir
+          size_no_ir;
+      Lwt.return expr_ir)
+    else Lwt.return expr_no_ir
   in
-  let _ =
-    if size_ir_no_opt > size_ir
-    then (
-      Printf.printf "SIZE (IR_NO_OPT, IR): (%d, %d)\n" size_ir_no_opt size_ir;
-      let open Micheline_printer in
-      expr_ir
-      |> Micheline.strip_locations
-      |> printable (fun value -> value)
-      |> print_expr Format.std_formatter;
-      let open Micheline_printer in
-      expr_ir_no_opt
-      |> Micheline.strip_locations
-      |> printable (fun value -> value)
-      |> print_expr Format.std_formatter;
-      47)
-    else 9
-  in
-  (* Output pair of sizes to a file *)
-  (*let output_file = "code_sizes.txt" in
-  let%bind () =
-    Lwt_io.with_file
-      ~mode:Lwt_io.Output
-      ~flags:[Core_unix.O_WRONLY; Core_unix.O_CREAT; Core_unix.O_APPEND]
-      output_file
-      (fun oc ->
-        let content = Printf.sprintf "(%d, %d)\n" size_ir size_no_ir in
-        Lwt_io.write oc content
-      )
-  in*)
-
-  (* Return the value as before *)
-  let expr_to_return =
-    if (*options.backend.lltz_ir*) true then expr_ir_no_opt else expr_no_ir
-  in
+  (* Finally, compile the type and return the overall result. *)
   let expr_ty = compile_type e.type_expression in
-  Lwt.return ({ expr_ty; expr = expr_to_return } : Program.compiled_expression)
+  Lwt.return { expr_ty; expr = expr_final }
 
 
 let compile_expression_function ~raise

@@ -8,11 +8,11 @@ import Syntax from '@theme/Syntax';
 The LIGO command-line interpreter provides commands to test your LIGO code.
 It provides three main ways to test code:
 
-* `ligo run test`: Runs automated tests in LIGO code
+- `ligo run test`: Runs automated tests in LIGO code
 
-* `ligo run interpret`: Interprets a LIGO expression in the context of a LIGO file
+- `ligo run interpret`: Interprets a LIGO expression in the context of a LIGO file
 
-* `ligo run dry-run`: Simulates running a contract based on a given parameter and storage value
+- `ligo run dry-run`: Simulates running a contract based on a given parameter and storage value
 
 :::warning
 LIGO testing tools are in beta and may change.
@@ -626,6 +626,7 @@ const remove_balances_under = (b: balances, threshold: tez): balances => {
 You can test this function against a range of thresholds with the LIGO test framework.
 
 <!-- I divided unit-remove-balance in multiple part of clarity -->
+
 First, include the file under test and reset the state with 5 bootstrap accounts:
 
 <Syntax syntax="cameligo">

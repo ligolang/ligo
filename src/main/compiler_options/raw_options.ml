@@ -86,7 +86,7 @@ module Default_options = struct
   let constants = []
   let file_constants = None
   let function_body = false
-  let lltz_ir = true
+  let lltz_ir = false
   let preprocess_define = []
 end
 

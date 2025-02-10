@@ -397,6 +397,7 @@ let compile_constant
     (* only interpreter *)
     assert false
   | C_GLOBAL_CONSTANT ->
+    (* Arguments and their types enforced by frontend. **)
     (match args with
     | hash :: args ->
       (match hash with
