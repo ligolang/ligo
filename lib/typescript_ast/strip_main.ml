@@ -19,9 +19,11 @@ module Strip = Typescript_stripper.Strip
 
 (* Parsing *)
 
-let parse file line_map : (Ast.t, string) result =
-  (* Loading the code as a string *)
+let parse file : (Ast.t, string) result =
+  (* Loading the code as text *)
   let input : string = Core.In_channel.read_all file in
+  (* Building the map from line+columns to positions *)
+  let line_map = Loc_map.scan_string input in
   (* Parsing the code into a tree *)
   let tree : Ts_wrap.ts_tree_ptr = Ts_wrap.parse_typescript_string input in
   (* Getting ahold of the root of the tree *)
@@ -42,14 +44,11 @@ let () =
   match Array.length cli_args with
   | 2 ->
     let file = cli_args.(1) in
-    (match Loc_map.scan file with
-    | Ok line_map ->
-      (match parse file line_map with
-      | Error msg -> Printf.eprintf "Error: %s\n%!" msg
-      | Ok ast ->
-        (match Strip.statements ast with
-        | Ok _ -> Printf.printf "Stripped.\n%!"
-        | Error { region; value } ->
-          Printf.eprintf "Error: %s\n%s\n%!" value (region#compact `Byte)))
-    | Error { region; value = _ } -> Printf.eprintf "Error: %s\n%!" (region#compact `Byte))
+    (match parse file with
+    | Error msg -> Printf.eprintf "Error: %s\n%!" msg
+    | Ok ast ->
+      (match Strip.statements ast with
+      | Ok _ -> Printf.printf "Stripped.\n%!"
+      | Error { region; value } ->
+        Printf.eprintf "Error: %s\n%s\n%!" value (region#compact `Byte)))
   | _ -> prerr_endline ("Usage: " ^ cli_args.(0) ^ " [file]")
