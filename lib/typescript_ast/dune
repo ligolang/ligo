@@ -1,5 +1,9 @@
 ;; LIBRARIES
 
+;; Lexers
+
+(ocamllex number decorator loc_map)
+
 ;; Library exporting the TypeScript CST and our AST
 
 (library
@@ -72,6 +76,9 @@
   yojson)
  (modules static_nodes_reader))
 
-;; Lexers
+;; Testing the map from line numbers to beginnings-of-line offsets
 
-(ocamllex number decorator)
+(executable
+ (name loc_map_main)
+ (libraries typescript_ast)
+ (modules loc_map_main))
