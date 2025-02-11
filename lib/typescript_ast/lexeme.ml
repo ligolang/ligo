@@ -4,7 +4,7 @@
 open Core
 module Region = Simple_utils.Region
 
-let read (buffer : Buffer.t) (region: Region.t) : string =
+let read (buffer : Buffer.t) (region : Region.t) : string =
   let start_pos, stop_pos = region#byte_pos in
   let start_cnum = start_pos.Lexing.pos_cnum
   and stop_cnum = stop_pos.Lexing.pos_cnum in

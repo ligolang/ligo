@@ -237,18 +237,7 @@ let mk_kwd_instanceof = make_kwd ~err:Print_err.Instanceof
 
 (* Symbols *)
 
-let make_sym ?(comments = []) state node =
-  match get_name node with
-  | "ERROR" -> print_error_node state node
-  | "MISSING" -> print_missing_node state node
-  | "NULL" -> print_null_node state
-  | _ ->
-    let region = !get_region node in
-    let root = Lexeme.read !input region in
-    let comments = comments @ prev_comments node in
-    Tree.of_list ~region state root print_comment comments
-
-let make_sym' ?(comments = []) state node ~err =
+let make_sym ?(comments = []) state node ~err =
   match get_name node with
   | "ERROR" | "MISSING" | "NULL" -> print_error_node' state node ~err
   | _ ->
@@ -257,54 +246,71 @@ let make_sym' ?(comments = []) state node ~err =
     let comments = comments @ prev_comments node in
     Tree.of_list ~region state root print_comment comments
 
-let mk_sym_asterisk = make_sym' ~err:Print_err.Asterisk
-let mk_sym_equal = make_sym' ~err:Print_err.Equal
-let mk_sym_lparen = make_sym' ~err:Print_err.Left_parenthesis
-let mk_sym_rparen = make_sym' ~err:Print_err.Right_parenthesis
-let mk_sym_qmark = make_sym' ~err:Print_err.Question_mark
-let mk_sym_plus_equal = make_sym' ~err:Print_err.Plus_equal
-let mk_sym_minus_equal = make_sym' ~err:Print_err.Minus_equal
-let mk_sym_mult_equal = make_sym' ~err:Print_err.Mult_equal
-let mk_sym_div_equal = make_sym' ~err:Print_err.Div_equal
-let mk_sym_rem_equal = make_sym' ~err:Print_err.Rem_equal
-let mk_sym_xor_equal = make_sym' ~err:Print_err.Xor_equal
-let mk_sym_and_equal = make_sym' ~err:Print_err.And_equal
-let mk_sym_or_equal = make_sym' ~err:Print_err.Or_equal
-let mk_sym_right_shift_equal = make_sym' ~err:Print_err.Right_shift_equal
-
-let mk_sym_unsigned_right_shift_equal =
-  make_sym' ~err:Print_err.Unsigned_right_shift_equal
-
-let mk_sym_left_shift_equal = make_sym' ~err:Print_err.Left_shift_equal
-let mk_sym_unsigned_left_shift_equal = make_sym' ~err:Print_err.Unsigned_left_shift_equal
-let mk_sym_exponent_equal = make_sym' ~err:Print_err.Exponent_equal
-let mk_sym_conjunction_equal = make_sym' ~err:Print_err.Conjunction_equal
-let mk_sym_disjunction_equal = make_sym' ~err:Print_err.Disjunction_equal
-let mk_sym_non_null_equal = make_sym' ~err:Print_err.Non_null_equal
-let mk_sym_bang = make_sym' ~err:Print_err.Exclamation_mark
-let mk_sym_tilde = make_sym' ~err:Print_err.Tilde
-let mk_sym_minus = make_sym' ~err:Print_err.Minus
-let mk_sym_plus = make_sym' ~err:Print_err.Plus
-let mk_sym_conjunction = make_sym' ~err:Print_err.Conjunction
-let mk_sym_disjunction = make_sym' ~err:Print_err.Disjunction
-let mk_sym_right_shift = make_sym' ~err:Print_err.Right_shift
-let mk_sym_unsigned_right_shift = make_sym' ~err:Print_err.Unsigned_right_shift
-let mk_sym_left_shift = make_sym' ~err:Print_err.Left_shift
-let mk_sym_unsigned_left_shift = make_sym' ~err:Print_err.Unsigned_left_shift
-let mk_sym_and = make_sym' ~err:Print_err.And
-let mk_sym_xor = make_sym' ~err:Print_err.Xor
-let mk_sym_or = make_sym' ~err:Print_err.Or
-let mk_sym_div = make_sym' ~err:Print_err.Div
-let mk_sym_rem = make_sym' ~err:Print_err.Rem
-let mk_sym_exponent = make_sym' ~err:Print_err.Exponent
-let mk_sym_lower_than = make_sym' ~err:Print_err.Lower_than
-let mk_sym_lower_than_or_equal = make_sym' ~err:Print_err.Lower_than_or_equal
-let mk_sym_no_conv_equal = make_sym' ~err:Print_err.No_conv_equal
-let mk_sym_different = make_sym' ~err:Print_err.Different
-let mk_sym_no_conv_different = make_sym' ~err:Print_err.No_conv_different
-let mk_sym_greater_than_or_equal = make_sym' ~err:Print_err.Greater_than_or_equal
-let mk_sym_greater_than = make_sym' ~err:Print_err.Greater_than
-let mk_sym_non_null = make_sym' ~err:Print_err.Non_null
+let mk_sym_asterisk = make_sym ~err:Print_err.Asterisk
+let mk_sym_equal = make_sym ~err:Print_err.Equal
+let mk_sym_lparen = make_sym ~err:Print_err.Left_parenthesis
+let mk_sym_rparen = make_sym ~err:Print_err.Right_parenthesis
+let mk_sym_qmark = make_sym ~err:Print_err.Question_mark
+let mk_sym_plus_equal = make_sym ~err:Print_err.Plus_equal
+let mk_sym_minus_equal = make_sym ~err:Print_err.Minus_equal
+let mk_sym_mult_equal = make_sym ~err:Print_err.Mult_equal
+let mk_sym_div_equal = make_sym ~err:Print_err.Div_equal
+let mk_sym_rem_equal = make_sym ~err:Print_err.Rem_equal
+let mk_sym_xor_equal = make_sym ~err:Print_err.Xor_equal
+let mk_sym_and_equal = make_sym ~err:Print_err.And_equal
+let mk_sym_or_equal = make_sym ~err:Print_err.Or_equal
+let mk_sym_right_shift_equal = make_sym ~err:Print_err.Right_shift_equal
+let mk_sym_increment = make_sym ~err:Print_err.Increment
+let mk_sym_decrement = make_sym ~err:Print_err.Decrement
+let mk_sym_lbrace = make_sym ~err:Print_err.Left_brace
+let mk_sym_rbrace = make_sym ~err:Print_err.Right_brace
+let mk_sym_lbracket = make_sym ~err:Print_err.Left_bracket
+let mk_sym_rbracket = make_sym ~err:Print_err.Right_bracket
+let mk_sym_optional_chain = make_sym ~err:Print_err.Optional_chain
+let mk_sym_backquote = make_sym ~err:Print_err.Backquote
+let mk_sym_colon = make_sym ~err:Print_err.Colon
+let mk_sym_ellipsis = make_sym ~err:Print_err.Ellipsis
+let mk_sym_arrow = make_sym ~err:Print_err.Arrow
+let mk_sym_asterisk = make_sym ~err:Print_err.Asterisk
+let mk_sym_qmark = make_sym ~err:Print_err.Question_mark
+let mk_sym_emark = make_sym ~err:Print_err.Exclamation_mark
+let mk_sym_dot = make_sym ~err:Print_err.Dot
+let mk_sym_omitting = make_sym ~err:Print_err.Omitting_type_annotation
+let mk_sym_adding = make_sym ~err:Print_err.Adding_type_annotation
+let mk_sym_opting = make_sym ~err:Print_err.Opting_type_annotation
+let mk_sym_ampersand = make_sym ~err:Print_err.Ampersand
+let mk_sym_vbar = make_sym ~err:Print_err.Vertical_bar
+let mk_sym_unsigned_right_shift_equal = make_sym ~err:Print_err.Unsigned_right_shift_equal
+let mk_sym_left_shift_equal = make_sym ~err:Print_err.Left_shift_equal
+let mk_sym_unsigned_left_shift_equal = make_sym ~err:Print_err.Unsigned_left_shift_equal
+let mk_sym_exponent_equal = make_sym ~err:Print_err.Exponent_equal
+let mk_sym_conjunction_equal = make_sym ~err:Print_err.Conjunction_equal
+let mk_sym_disjunction_equal = make_sym ~err:Print_err.Disjunction_equal
+let mk_sym_non_null_equal = make_sym ~err:Print_err.Non_null_equal
+let mk_sym_bang = make_sym ~err:Print_err.Exclamation_mark
+let mk_sym_tilde = make_sym ~err:Print_err.Tilde
+let mk_sym_minus = make_sym ~err:Print_err.Minus
+let mk_sym_plus = make_sym ~err:Print_err.Plus
+let mk_sym_conjunction = make_sym ~err:Print_err.Conjunction
+let mk_sym_disjunction = make_sym ~err:Print_err.Disjunction
+let mk_sym_right_shift = make_sym ~err:Print_err.Right_shift
+let mk_sym_unsigned_right_shift = make_sym ~err:Print_err.Unsigned_right_shift
+let mk_sym_left_shift = make_sym ~err:Print_err.Left_shift
+let mk_sym_unsigned_left_shift = make_sym ~err:Print_err.Unsigned_left_shift
+let mk_sym_and = make_sym ~err:Print_err.And
+let mk_sym_xor = make_sym ~err:Print_err.Xor
+let mk_sym_or = make_sym ~err:Print_err.Or
+let mk_sym_div = make_sym ~err:Print_err.Div
+let mk_sym_rem = make_sym ~err:Print_err.Rem
+let mk_sym_exponent = make_sym ~err:Print_err.Exponent
+let mk_sym_lower_than = make_sym ~err:Print_err.Lower_than
+let mk_sym_lower_than_or_equal = make_sym ~err:Print_err.Lower_than_or_equal
+let mk_sym_no_conv_equal = make_sym ~err:Print_err.No_conv_equal
+let mk_sym_different = make_sym ~err:Print_err.Different
+let mk_sym_no_conv_different = make_sym ~err:Print_err.No_conv_different
+let mk_sym_greater_than_or_equal = make_sym ~err:Print_err.Greater_than_or_equal
+let mk_sym_greater_than = make_sym ~err:Print_err.Greater_than
+let mk_sym_non_null = make_sym ~err:Print_err.Non_null
 
 (* Making children and unary trees *)
 
@@ -413,9 +419,9 @@ let print_enclosed
     and closing = first_child_named closing node
     and clauses = collect_named_children node in
     let children =
-      (mk_child_res (make_sym' ~comments ~err:open_err) opening
+      (mk_child_res (make_sym ~comments ~err:open_err) opening
       :: mk_children_list printer clauses)
-      @ [ mk_child_res (make_sym' ~err:close_err) closing ]
+      @ [ mk_child_res (make_sym ~err:close_err) closing ]
     in
     make_tree state node children
 
@@ -2046,12 +2052,12 @@ and print_update_expression state node =
       match get_name_res first_child with
       | "++" ->
         (* Prefix *)
-        [ mk_child_res make_sym first_child
+        [ mk_child_res mk_sym_increment first_child
         ; mk_child_res print_expression argument_field
         ]
       | "--" ->
         (* Prefix *)
-        [ mk_child_res make_sym first_child
+        [ mk_child_res mk_sym_decrement first_child
         ; mk_child_res print_expression argument_field
         ]
       | _ ->
@@ -2060,12 +2066,12 @@ and print_update_expression state node =
         | "++" ->
           (* Postfix *)
           [ mk_child_res print_expression argument_field
-          ; mk_child_res make_sym snd_child
+          ; mk_child_res mk_sym_increment snd_child
           ]
         | "--" ->
           (* Postfix *)
           [ mk_child_res print_expression argument_field
-          ; mk_child_res make_sym snd_child
+          ; mk_child_res mk_sym_decrement snd_child
           ]
         | _ -> [] (* Should not happen. *))
     in
@@ -2214,9 +2220,9 @@ and print_subscript_expression state node =
     let children =
       [ mk_child_res print_expression object_field
       ; mk_child_opt print_chain optional_chain_field
-      ; mk_child_res make_sym sym_lbracket
+      ; mk_child_res mk_sym_lbracket sym_lbracket
       ; mk_child_res print_index index_field
-      ; mk_child_res make_sym sym_rbracket
+      ; mk_child_res mk_sym_rbracket sym_rbracket
       ]
     in
     make_tree state node children
@@ -2242,7 +2248,7 @@ and print_member_expression state node =
       | None -> () (* "." *)
       | Some node ->
         (* "?." *)
-        make_sym state node
+        mk_sym_optional_chain state node
     in
     let children =
       [ mk_child_res print_object object_field
@@ -2279,8 +2285,8 @@ and print_parenthesized_expression ?(comments = []) state node =
         [ mk_child_res print first_named_child ]
     in
     let children =
-      (mk_child_res (make_sym ~comments) opening :: children)
-      @ [ mk_child_res make_sym closing ]
+      (mk_child_res (mk_sym_lparen ~comments) opening :: children)
+      @ [ mk_child_res mk_sym_rparen closing ]
     in
     make_tree state node children
 
@@ -2302,8 +2308,9 @@ and print_template_string ?(comments = []) state node =
       | _ -> print_error_node' state node ~err:Template_string
     in
     let children =
-      (mk_child_res (make_sym ~comments) opening :: mk_children_list print raw_children)
-      @ [ mk_child_res make_sym closing ]
+      (mk_child_res (mk_sym_backquote ~comments) opening
+      :: mk_children_list print raw_children)
+      @ [ mk_child_res mk_sym_backquote closing ]
     in
     make_tree state node children
 
@@ -2333,7 +2340,7 @@ and print_pair state node =
     and sym_colon = first_child_named ":" node in
     let children =
       [ mk_child_res print_property_name key_field
-      ; mk_child_res make_sym sym_colon
+      ; mk_child_res mk_sym_colon sym_colon
       ; mk_child_res print_expression value_field
       ]
     in
@@ -2357,7 +2364,9 @@ and print_spread_element state node =
     let sym_ellipsis = first_child_named "..." node
     and expr_node = named_child_ranked 0 node in
     let children =
-      [ mk_child_res make_sym sym_ellipsis; mk_child_res print_expression expr_node ]
+      [ mk_child_res mk_sym_ellipsis sym_ellipsis
+      ; mk_child_res print_expression expr_node
+      ]
     in
     make_tree state node children
 
@@ -2405,7 +2414,7 @@ and print_arrow_function state node =
       | Some parameter_field ->
         [ mk_child_opt mk_kwd_async kwd_async
         ; mk_child print_identifier parameter_field
-        ; mk_child_res make_sym sym_arrow
+        ; mk_child_res mk_sym_arrow sym_arrow
         ; mk_child_res print_arrow_function_body body_field
         ]
       | None ->
@@ -2417,7 +2426,7 @@ and print_arrow_function state node =
         ; mk_child_opt print_type_parameters type_parameters_field
         ; mk_child_res print_formal_parameters parameters_field
         ; mk_child_opt print_return_type return_type_field
-        ; mk_child_res make_sym sym_arrow
+        ; mk_child_res mk_sym_arrow sym_arrow
         ; mk_child_res print_arrow_function_body body_field
         ]
     in
@@ -2450,7 +2459,7 @@ and print_generator_function state node =
     let children =
       [ mk_child_opt mk_kwd_async kwd_async
       ; mk_child_res mk_kwd_function kwd_function
-      ; mk_child_res make_sym sym_asterisk
+      ; mk_child_res mk_sym_asterisk sym_asterisk
       ; mk_child_opt print_identifier name_field
       ; mk_child_opt print_type_parameters type_parameters_field
       ; mk_child_res print_formal_parameters parameters_field
@@ -2567,9 +2576,9 @@ and print_class_body ?(comments = []) state node =
     let _, pairs = List.fold_left ~f:pair ~init:([], []) named_children in
     let pairs = List.rev pairs in
     let children =
-      (mk_child_res (make_sym ~comments) opening
+      (mk_child_res (mk_sym_lbracket ~comments) opening
       :: mk_children_list print_class_member pairs)
-      @ [ mk_child_res make_sym closing ]
+      @ [ mk_child_res mk_sym_rbracket closing ]
     in
     make_tree state node children
 
@@ -2614,7 +2623,7 @@ and print_method_definition state node =
       ; mk_child_opt mk_kwd_async kwd_async
       ; mk_child_opt mk_kwd_set kwd_set
       ; mk_child_opt mk_kwd_get kwd_get
-      ; mk_child_opt make_sym sym_asterisk
+      ; mk_child_opt mk_sym_asterisk sym_asterisk
       ; mk_child_res print_property_name name_field
       ; mk_child_opt make_node qmark
       ; mk_child_opt print_type_parameters type_parameters_field
@@ -2664,7 +2673,7 @@ and print_abstract_method_signature state node =
       ; mk_child_opt mk_kwd_get kwd_get
       ; mk_child_opt make_node sym_asterisk
       ; mk_child_res print_property_name name_field
-      ; mk_child_opt make_sym sym_qmark
+      ; mk_child_opt mk_sym_qmark sym_qmark
       ; mk_child_opt print_type_parameters type_parameters_field
       ; mk_child_res print_formal_parameters parameters_field
       ; mk_child_opt print_return_type return_type_field
@@ -2699,8 +2708,8 @@ and print_public_field_definition state node =
         ; mk_child_opt mk_kwd_accessor kwd_accessor
         ; mk_child_opt mk_kwd_abstract kwd_abstract
         ; mk_child_res print_property_name name_field
-        ; mk_child_opt make_sym sym_qmark
-        ; mk_child_opt make_sym sym_emark
+        ; mk_child_opt mk_sym_qmark sym_qmark
+        ; mk_child_opt mk_sym_emark sym_emark
         ; mk_child_opt print_type_annotation type_field
         ]
       @ mk_child_initializer_opt node (* "_initializer" inlined *)
@@ -2829,7 +2838,7 @@ and print_type_query_member_expression_in_type_annotation state node =
     in
     let children =
       [ mk_child_res print_object_field object_field
-      ; mk_child_res make_sym selector
+      ; mk_child_res mk_sym_dot selector
       ; mk_child_res print_type_query_property property_field
       ]
     in
@@ -3054,7 +3063,7 @@ and print_property_signature state node =
       ; mk_child_opt print_override_modifier override_modifier
       ; mk_child_opt mk_kwd_readonly kwd_readonly
       ; mk_child_res print_identifier name_field
-      ; mk_child_opt make_sym sym_qmark
+      ; mk_child_opt mk_sym_qmark sym_qmark
       ; mk_child_opt print_type_annotation type_field
       ]
     in
@@ -3162,13 +3171,13 @@ and print_index_signature state node =
     in
     let children =
       prefix
-      @ [ mk_child_res make_sym sym_lbracket ]
+      @ [ mk_child_res mk_sym_lbracket sym_lbracket ]
       @ (match name_field with
         | Some name_field ->
           let sym_colon = first_child_named ":" node
           and index_type_field = child_with_field "index_type" node ~err:Print_err.Type in
           [ mk_child print_identifier name_field
-          ; mk_child_res make_sym sym_colon
+          ; mk_child_res mk_sym_colon sym_colon
           ; mk_child_res print_type index_type_field
           ; mk_child_res print_type_field type_field
           ]
@@ -3177,14 +3186,14 @@ and print_index_signature state node =
           [ mk_child_res print_mapped_type_clause mapped_type_clause
           ; mk_child_res print_type_field type_field
           ])
-      @ [ mk_child_res make_sym sym_rbracket ]
+      @ [ mk_child_res mk_sym_rbracket sym_rbracket ]
     in
     make_tree state node children
 
 and print_plus_minus state node =
   match get_name node with
-  | "+" -> make_sym state node
-  | "-" -> make_sym state node
+  | "+" -> mk_sym_plus state node
+  | "-" -> mk_sym_minus state node
   | _ -> print_error_node' state node ~err:Print_err.Plus_or_minus
 
 and print_mapped_type_clause state node =
@@ -3220,7 +3229,7 @@ and print_omitting_type_annotation state node =
     let sym_kind = first_child_named "-?:" node
     and type_child = named_child_ranked 0 node in
     let children =
-      [ mk_child_res make_sym sym_kind; mk_child_res print_type type_child ]
+      [ mk_child_res mk_sym_omitting sym_kind; mk_child_res print_type type_child ]
     in
     make_tree state node children
 
@@ -3232,7 +3241,7 @@ and print_adding_type_annotation state node =
     let sym_kind = first_child_named "+?:" node
     and type_child = named_child_ranked 0 node in
     let children =
-      [ mk_child_res make_sym sym_kind; mk_child_res print_type type_child ]
+      [ mk_child_res mk_sym_adding sym_kind; mk_child_res print_type type_child ]
     in
     make_tree state node children
 
@@ -3244,7 +3253,7 @@ and print_opting_type_annotation state node =
     let sym_kind = first_child_named "?:" node
     and type_child = named_child_ranked 0 node in
     let children =
-      [ mk_child_res make_sym sym_kind; mk_child_res print_type type_child ]
+      [ mk_child_res mk_sym_opting sym_kind; mk_child_res print_type type_child ]
     in
     make_tree state node children
 
@@ -3277,9 +3286,9 @@ and print_method_signature state node =
       ; mk_child_opt mk_kwd_async kwd_async
       ; mk_child_opt mk_kwd_set kwd_set
       ; mk_child_opt mk_kwd_get kwd_get
-      ; mk_child_opt make_sym sym_asterisk
+      ; mk_child_opt mk_sym_asterisk sym_asterisk
       ; mk_child_res print_property_name name_field
-      ; mk_child_opt make_sym sym_qmark
+      ; mk_child_opt mk_sym_qmark sym_qmark
       ; mk_child_opt print_type_parameters type_parameters_field
       ; mk_child_res print_formal_parameters parameters_field
       ; mk_child_opt print_return_type return_type_field
@@ -3298,8 +3307,8 @@ and print_array_type state node =
     and sym_rbracket = first_child_named "]" node in
     let children =
       [ mk_child_res print_type type_child
-      ; mk_child_res make_sym sym_lbracket
-      ; mk_child_res make_sym sym_rbracket
+      ; mk_child_res mk_sym_lbracket sym_lbracket
+      ; mk_child_res mk_sym_rbracket sym_rbracket
       ]
     in
     make_tree state node children
@@ -3361,7 +3370,7 @@ and print_type_annotation state node =
     let sym_colon = first_child_named ":" node
     and type_child = named_child_ranked 0 node in
     let children =
-      [ mk_child_res make_sym sym_colon; mk_child_res print_type type_child ]
+      [ mk_child_res mk_sym_colon sym_colon; mk_child_res print_type type_child ]
     in
     make_tree state node children
 
@@ -3375,7 +3384,9 @@ and print_rest_pattern state node =
     let sym_ellipsis = first_child_named "..." node
     and expr_child = named_child_ranked 0 node in
     let children =
-      [ mk_child_res make_sym sym_ellipsis; mk_child_res print_lhs_expression expr_child ]
+      [ mk_child_res mk_sym_ellipsis sym_ellipsis
+      ; mk_child_res print_lhs_expression expr_child
+      ]
     in
     make_tree state node children
 
@@ -3407,7 +3418,7 @@ and print_rest_type state node =
     let sym_ellipsis = first_child_named "..." node
     and type_child = named_child_ranked 0 node in
     let children =
-      [ mk_child_res make_sym sym_ellipsis; mk_child_res print_type type_child ]
+      [ mk_child_res mk_sym_ellipsis sym_ellipsis; mk_child_res print_type type_child ]
     in
     make_tree state node children
 
@@ -3451,9 +3462,9 @@ and print_type_query_subscript_expression state node =
     in
     let children =
       [ mk_child_res print_object_field object_field
-      ; mk_child_res make_sym sym_lbracket
+      ; mk_child_res mk_sym_lbracket sym_lbracket
       ; mk_child_res print_index_field index_field
-      ; mk_child_res make_sym sym_rbracket
+      ; mk_child_res mk_sym_rbracket sym_rbracket
       ]
     in
     make_tree state node children
@@ -3580,9 +3591,9 @@ and print_lookup_type state node =
     and type_child = named_child_ranked 1 node in
     let children =
       [ mk_child_res print_primary_type primary_type_child
-      ; mk_child_res make_sym sym_lbracket
+      ; mk_child_res mk_sym_lbracket sym_lbracket
       ; mk_child_res print_type type_child
-      ; mk_child_res make_sym sym_rbracket
+      ; mk_child_res mk_sym_rbracket sym_rbracket
       ]
     in
     make_tree state node children
@@ -3605,9 +3616,9 @@ and print_conditional_type state node =
       [ mk_child_res print_type left_field
       ; mk_child_res mk_kwd_extends kwd_extends
       ; mk_child_res print_type right_field
-      ; mk_child_res make_sym sym_qmark
+      ; mk_child_res mk_sym_qmark sym_qmark
       ; mk_child_res print_type consequence_field
-      ; mk_child_res make_sym sym_colon
+      ; mk_child_res mk_sym_colon sym_colon
       ; mk_child_res print_type alternative_field
       ]
     in
@@ -3637,12 +3648,14 @@ and print_intersection_type state node =
         (match get_name left_type with
         | "&" ->
           let type_node = child_ranked 1 node in
-          [ mk_child_res make_sym sym_ampersand; mk_child_res print_type type_node ]
+          [ mk_child_res mk_sym_ampersand sym_ampersand
+          ; mk_child_res print_type type_node
+          ]
         | _ ->
           (* "type" is a supertype, therefore a hidden rule *)
           let right_type = child_ranked 2 node in
           [ mk_child print_type left_type
-          ; mk_child_res make_sym sym_ampersand
+          ; mk_child_res mk_sym_ampersand sym_ampersand
           ; mk_child_res print_type right_type
           ])
     in
@@ -3663,12 +3676,12 @@ and print_union_type state node =
         (match get_name left_type with
         | "|" ->
           let type_node = child_ranked 1 node in
-          [ mk_child_res make_sym sym_vbar; mk_child_res print_type type_node ]
+          [ mk_child_res mk_sym_vbar sym_vbar; mk_child_res print_type type_node ]
         | _ ->
           (* "type" is a supertype, therefore a hidden rule *)
           let right_type = child_ranked 2 node in
           [ mk_child print_type left_type
-          ; mk_child_res make_sym sym_vbar
+          ; mk_child_res mk_sym_vbar sym_vbar
           ; mk_child_res print_type right_type
           ])
     in
@@ -3694,7 +3707,7 @@ and print_function_type state node =
     let children =
       [ mk_child_opt print_type_parameters type_parameters_field
       ; mk_child_res print_formal_parameters parameters_field
-      ; mk_child_res make_sym sym_arrow
+      ; mk_child_res mk_sym_arrow sym_arrow
       ; mk_child_res print_return_type return_type_field
       ]
     in
@@ -3754,7 +3767,7 @@ and print_constructor_type state node =
       ; mk_child_res mk_kwd_new kwd_new
       ; mk_child_opt print_type_parameters type_parameters_field
       ; mk_child_res print_formal_parameters parameters_field
-      ; mk_child_res make_sym sym_arrow
+      ; mk_child_res mk_sym_arrow sym_arrow
       ; mk_child_res print_type type_field
       ]
     in
@@ -3804,7 +3817,7 @@ and print_required_parameter state node =
 and mk_child_initializer sym_equal node =
   let value_field = child_with_field "value" node ~err:Print_err.Expression in
   let children =
-    [ mk_child_res make_sym sym_equal; mk_child_res print_expression value_field ]
+    [ mk_child_res mk_sym_equal sym_equal; mk_child_res print_expression value_field ]
   in
   Some (fun state -> Tree.make_tree state "initializer" children)
 
@@ -3846,7 +3859,7 @@ and print_decorator_member_expression state node =
     in
     let children =
       [ mk_child_res print_object object_field
-      ; mk_child_res make_sym selector
+      ; mk_child_res mk_sym_dot selector
       ; mk_child_res print_identifier property_field
       ]
     in
@@ -3967,7 +3980,7 @@ and print_pair_pattern state node =
     in
     let children =
       [ mk_child_res print_property_name key_field
-      ; mk_child_res make_sym sym_colon
+      ; mk_child_res mk_sym_colon sym_colon
       ; mk_child_res print_value value_field
       ]
     in
@@ -3985,7 +3998,7 @@ and print_assignment_pattern state node =
     and sym_equal = first_child_named "=" node in
     let children =
       [ mk_child_res print_pattern left_field
-      ; mk_child_res make_sym sym_equal
+      ; mk_child_res mk_sym_equal sym_equal
       ; mk_child_res print_expression right_field
       ]
     in
@@ -4022,7 +4035,7 @@ and print_object_assignment_pattern state node =
     and right_field = child_with_field "right" node ~err:Print_err.Expression in
     let children =
       [ mk_child_res print_object_lhs_pattern left_field
-      ; mk_child_res make_sym sym_equal
+      ; mk_child_res mk_sym_equal sym_equal
       ; mk_child_res print_expression right_field
       ]
     in
