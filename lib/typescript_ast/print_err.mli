@@ -308,6 +308,15 @@ type t =
   | Value_of_pair_pattern
   | Object_or_array_pattern
   | Array_cell_pattern
+  | Increment
+  | Decrement
+  | Backquote
+  | Colon
+  | Ellipsis
+  | Arrow
+  | Dot
+  | Ampersand
+  | Vertical_bar
 
 type error = t
 

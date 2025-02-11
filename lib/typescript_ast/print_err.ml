@@ -308,6 +308,15 @@ type t =
   | Value_of_pair_pattern
   | Object_or_array_pattern
   | Array_cell_pattern
+  | Increment
+  | Decrement
+  | Backquote
+  | Colon
+  | Ellipsis
+  | Arrow
+  | Dot
+  | Ampersand
+  | Vertical_bar
 
 type error = t
 
@@ -448,6 +457,13 @@ let to_string : t -> string = function
   | Greater_than_or_equal -> "The symbol '>=' is expected."
   | Greater_than -> "The symbol '>' is expected."
   | Non_null -> "The symbol '??' is expected."
+  | Increment -> "The symbol '++' is expected."
+  | Decrement -> "The symbol '--' is expected."
+  | Backquote -> "A backquote '`' is expected."
+  | Colon -> "A colon ':' is expected."
+  | Ellipsis -> "The symbol '...' is expected."
+  | Arrow -> "The symbol '=>' is expected."
+  | Dot -> "The symbol '.' is expected."
   (* Syntax errors *)
   | Expression -> "An expression is expected."
   | Export_clause -> "An export clause is expected."
@@ -566,6 +582,8 @@ let to_string : t -> string = function
   | Omitting_type_annotation -> "A type omission annotation '-?:' is expected."
   | Adding_type_annotation -> "A type addition annotation '+?:' is expected."
   | Opting_type_annotation -> "An optional type annotation '?:' is expected."
+  | Ampersand -> "The symbol '&' is expected."
+  | Vertical_bar -> "The symbol '|' is expected."
   | Method_signature -> "A method signature is expected."
   | Array_type -> "An array type is expected."
   | Tuple_type -> "A tuple type is expected."
@@ -606,7 +624,7 @@ let to_string : t -> string = function
   | Array_pattern -> "An array pattern is expected."
   | Let_or_const_or_var -> "The keyword 'let' or 'const' or 'var' is expected."
   | Const_or_type -> "The keyword 'const' or a type is expected."
-  | Optional_chain -> "An optional chain '?.' is expected."
+  | Optional_chain -> "The optional chain symbol '?.' is expected."
   | Index_expression -> "An index expression is expected."
   | Object_field -> "An object field is expected."
   | Array_cell -> "An array cell is expected."
