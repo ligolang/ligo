@@ -69,7 +69,7 @@ let child_with_field ?(msg = "") field node =
 
 (* Region of a node as a string *)
 
-let error fun_name node : (_, string) result =
+let error fun_name node =
   let region = (!get_region node)#compact `Byte
   and node_name = get_name node in
   Error (Printf.sprintf "%s: %S (%s)" fun_name node_name region)
@@ -238,7 +238,7 @@ let dec_list_in_parens ?comments node decode : ('a list parens, _) result =
 (* Decoding enclosed non-empty lists *)
 
 let dec_enclosed_ne_list ?(comments = []) node decode error opening closing
-    : ('a ne_list enclosed wrap, string) result
+    : ('a ne_list enclosed wrap, _) result
   =
   let comments = comments @ prev_comments node in
   let* opening = first_child_named opening node in
@@ -1260,7 +1260,7 @@ and dec_extends_clause node : (extends_clause, _) result =
     | [] -> List.rev acc
   in
   let pairs : (ts_tree * ts_tree option) list = pair_up [] raw_clauses in
-  let mk_clause (value, type_arguments_opt) : (extends_clause_single wrap, string) result =
+  let mk_clause (value, type_arguments_opt) : (extends_clause_single wrap, _) result =
     let region =
       match type_arguments_opt with
       | None -> !get_region value
@@ -2407,7 +2407,7 @@ and dec_object_entry ?(comments = []) node : (object_entry, _) result =
     Ok (Object_entry_shorthand pattern)
   | _ -> error "dec_object_entry" node
 
-and dec_pair ?(comments = []) node : (pair, string) result =
+and dec_pair ?(comments = []) node : (pair, _) result =
   let* key_field = child_with_field "key" node in
   let* key = dec_property_name ~comments key_field in
   let* sym_colon = first_child_named ":" node in
@@ -3453,7 +3453,7 @@ and dec_generic_name ?(comments = []) node : (generic_name, _) result =
 
 (* Decoding the CST *)
 
-let dec_program ~filename ~file map node : (Ast.t, string) result =
+let dec_program ~filename ~file map node : (Ast.t, _) result =
   (* Setting up the extraction of source regions *)
   let () = get_region := Ts_wrap.get_region filename map in
   (* Setting the input as a top-level string buffer *)
@@ -3466,7 +3466,7 @@ let dec_program ~filename ~file map node : (Ast.t, string) result =
    root. This is because tree-sitter does not provide the generated
    parsers with multiple entry-points. *)
 
-let dec_standalone_expression ~file map node : (Ast.expression, string) result =
+let dec_standalone_expression ~file map node : (Ast.expression, _) result =
   (* Setting up the extraction of source regions *)
   let () = get_region := Ts_wrap.get_region "" map in
   (* Setting the input as a top-level string buffer *)
@@ -3495,7 +3495,7 @@ let dec_standalone_expression ~file map node : (Ast.expression, string) result =
    so we fetch the type in the produced CST (last child of the root,
    which is an type_alias_declaration). *)
 
-let dec_standalone_type_expr map node : (Ast.type_expr, string) result =
+let dec_standalone_type_expr map node : (Ast.type_expr, _) result =
   (* Setting up the extraction of source regions *)
   let () = get_region := Ts_wrap.get_region "" map in
   (* Decoding the CST into an AST *)
