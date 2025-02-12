@@ -1,5 +1,7 @@
 (* Decoding the tree-sitter CST for TypeScript *)
 
+open Core
+
 let debug = true
 
 (* Dependencies and scopes *)
@@ -7,10 +9,10 @@ let debug = true
 module Region = Simple_utils.Region
 module Wrap = Lexing_shared.Wrap
 module Ts_wrap = Typescript_ast.Ts_wrap
+module Loc_map = Typescript_ast.Loc_map
 module Ast = Typescript_ast.Ast
 module Lexeme = Typescript_ast.Lexeme
 module Number = Typescript_ast.Number
-open Core
 open Ts_wrap
 open Ast
 
@@ -3453,7 +3455,7 @@ and dec_generic_name ?(comments = []) node : (generic_name, _) result =
 
 (* Decoding the CST *)
 
-let dec_program ~filename ~file map node : (Ast.t, _) result =
+let dec_program ~filename ~file (map : Loc_map.t) node : (Ast.t, _) result =
   (* Setting up the extraction of source regions *)
   let () = get_region := Ts_wrap.get_region filename map in
   (* Setting the input as a top-level string buffer *)

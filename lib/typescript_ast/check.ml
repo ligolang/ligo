@@ -1,9 +1,12 @@
 (* Checking and collecting all error nodes in the C CST
    (tree-sitter-generated) *)
 
+open Core
+open Typescript_ast.Ts_wrap
 module Region = Simple_utils.Region
+module Ts_wrap = Typescript_ast.Ts_wrap
+module Loc_map = Typescript_ast.Loc_map
 module Wrap = Lexing_shared.Wrap
-open Ts_wrap
 
 (* Monadic let-binder for result values *)
 
@@ -15,36 +18,25 @@ let ( let* ) v f = Core.Result.bind v ~f
 let get_region : (ts_tree -> Region.t) ref =
   ref (fun _ -> failwith "Internal error: Check.get_region")
 
+(* The input source (default: a hundred lines) *)
+
+let input : Buffer.t ref = ref (Buffer.create (80 * 100))
+
 (* Traversing the CST *)
 
-let rec check_program file (map : Loc_map.t) node =
-  (* Opening a read channel for lexemes *)
-  let () = Lexeme.open_input ~file in
-  (* Setting up the extracting of source regions *)
-  let () = get_region := Ts_wrap.get_region file map in
-  (* Collecting all ERROR and MISSING nodes *)
-  let* () = check_tree [] node in
-  (* Closing the input channel for reading lexemes *)
-  let () = Lexeme.close_input () in
-  Ok ()
+let rec check_program ~filename ~file (map : Loc_map.t) node =
+  (* Setting up the extraction of source regions *)
+  let () = get_region := Ts_wrap.get_region filename map in
+  (* Setting the input as a top-level string buffer *)
+  let () = Buffer.add_string !input file in
+  (* Collating errors from the stripped AST *)
+  check_statements [] node
 
 (* STATEMENTS
 
    The JavaScript tree-sitter grammar has the non-terminals
    "statement" be a supertype, that is, a hidden rule. *)
 
-and check_tree errors node =
-  ignore (errors, node);
-  Error "TODO: check_tree"
-(*  let children = Ts_wrap.collect_all_children node in
-  let f node acc =
-
-
-  Core.List.fold_right ~f ~init:[] children
-
-
-(*        match string_of_ts_node_type child with
-        | "ERROR" | "MISSING" -> fold (child :: acc) index
-        | _ -> fold errors (child :: normal) index)
- *)
- *)
+and check_statements errors node =
+  ignore node;
+  Error ("TODO: check_statements" :: errors)

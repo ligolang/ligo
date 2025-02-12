@@ -1,12 +1,13 @@
 (* Printing the tree-sitter CST for TypeScript *)
 
+open Core
+
 [@@@warning "-32"]
 
 let debug = false
 
 (* Dependencies and scopes *)
 
-open Core
 open Typescript_ast.Ts_wrap
 module Lexeme = Typescript_ast.Lexeme
 module Ts_wrap = Typescript_ast.Ts_wrap
@@ -88,7 +89,7 @@ let print_error_node' state node ~err =
   and msg =
     if debug
     then sprintf "ERROR: Unexpected node %S." (get_name node)
-    else sprintf "ERROR: %s." (Print_err.to_string err)
+    else sprintf "ERROR: %s" (Print_err.to_string err)
   in
   if arity node = 0
   then Tree.make_node ~region state msg
