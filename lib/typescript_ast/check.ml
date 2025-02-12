@@ -6,6 +6,7 @@ open Typescript_ast.Ts_wrap
 module Region = Simple_utils.Region
 module Ts_wrap = Typescript_ast.Ts_wrap
 module Loc_map = Typescript_ast.Loc_map
+module Syntax_err = Typescript_ast.Syntax_err
 module Wrap = Lexing_shared.Wrap
 
 (* Monadic let-binder for result values *)
@@ -38,5 +39,4 @@ let rec check_program ~filename ~file (map : Loc_map.t) node =
    "statement" be a supertype, that is, a hidden rule. *)
 
 and check_statements errors node =
-  ignore node;
-  Error ("TODO: check_statements" :: errors)
+  ignore node; errors

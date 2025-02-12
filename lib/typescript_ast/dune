@@ -9,7 +9,7 @@
 (library
  (name typescript_ast)
  (public_name ligo.typescript_ast)
- (modules ast ts_wrap loc_map lexeme number)
+ (modules syntax_err ast ts_wrap loc_map lexeme number)
  (libraries
   tree_sitter
   tree_sitter_typescript
@@ -44,14 +44,14 @@
 (executable
  (name print_cst_main)
  (libraries typescript_ast)
- (modules print_err print_cst print_cst_main))
+ (modules print_cst print_cst_main))
 
 ;; Collecting all errors from the CST (debug)
 
 (executable
  (name check_main)
  (libraries typescript_ast)
- (modules print_err print_cst check check_main))
+ (modules check check_main))
 
 ;; Decoding the CST into the AST
 
