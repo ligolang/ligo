@@ -1,5 +1,7 @@
 (* Decoding the tree-sitter CST for TypeScript *)
 
+open Core
+
 (* Vendored *)
 
 module Region = Simple_utils.Region
@@ -34,8 +36,6 @@ let parse filename : (Ast.t, string) result =
   ast
 
 (* Reading the input TypeScript, parsing and printing the AST *)
-
-open Core
 
 let cli_args : string array = Sys.get_argv ()
 

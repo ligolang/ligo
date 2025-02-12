@@ -39,31 +39,33 @@
 
 ;; STANDALONES
 
-;; Standalone for printing the CST
+;; Printing the CST (debug)
 
 (executable
  (name print_cst_main)
  (libraries typescript_ast)
  (modules print_err print_cst print_cst_main))
 
-;; Standalone for decoding the CST into the AST
+;; Collecting all errors from the CST (debug)
+
+(executable
+ (name check_main)
+ (libraries typescript_ast)
+ (modules print_err print_cst check check_main))
+
+;; Decoding the CST into the AST
 
 (executable
  (name decode_main)
  (libraries typescript_decoder)
  (modules decode_main))
 
-;; Standalone for decoding and stripping the AST
+;; Decoding the cST and stripping the resulting AST
 
 (executable
  (name strip_main)
  (libraries typescript_stripper)
  (modules strip_main))
-
-;; (executable
-;;  (name check_main)
-;;  (libraries typescript_ast)
-;;  (modules check_main))
 
 ;; Local build of a standalone parser for node-types.json
 
