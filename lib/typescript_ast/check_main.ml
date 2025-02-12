@@ -18,7 +18,7 @@ module Loc_map = Typescript_ast.Loc_map
 
 (* Parsing and collecting all errors *)
 
-let parse filename : (unit, string list) result =
+let parse filename : string list =
   (* Loading the code as text *)
   let file : string = Core.In_channel.read_all filename in
   (* Building the map from line+columns to positions *)
@@ -45,7 +45,5 @@ let () =
   match Array.length cli_args with
   | 2 ->
     let file = cli_args.(1) in
-    (match parse file with
-    | Ok () -> ()
-    | Error messages -> print_errors messages)
+    print_errors (parse file)
   | _ -> prerr_endline ("Usage: " ^ cli_args.(0) ^ " [file]")
