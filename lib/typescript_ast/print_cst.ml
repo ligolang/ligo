@@ -91,6 +91,20 @@ let print_error_node state node ~err =
   then Tree.make_node ~region state msg
   else Tree.make_unary ~region state msg Tree.make_node "UNMATCHED children."
 
+let mk_error_child node ~err =
+  let region = !get_region node
+  and msg =
+    if debug
+    then sprintf "ERROR: Unexpected node %S." (get_name node)
+    else sprintf "ERROR: %s" (Syntax_err.to_string err)
+  in
+  if arity node = 0
+  then Some (fun state -> Tree.make_node ~region state msg)
+  else
+    Some
+      (fun state ->
+        Tree.make_unary ~region state msg Tree.make_node "UNMATCHED children.")
+
 let make_tree state node children =
   let region = !get_region node
   and label = get_name node in
@@ -122,20 +136,6 @@ let make_node ?(comments = []) state node =
     mk_children_list print_comment comments @ [ mk_child Tree.make_node lexeme ]
   in
   make_tree state node children
-
-let print_missing_node state node = make_node state node
-
-let print_unexpected_node state node =
-  let region = !get_region node
-  and label = get_name node in
-  Tree.make_node ~region state ("INTERNAL: " ^ label)
-
-let print_unexpected_node' state node =
-  let region = !get_region node
-  and label = get_name node in
-  Tree.make_node ~region state ("INTERNAL: " ^ label)
-
-let print_null_node state = Tree.make_node state "INTERNAL: Null node"
 
 (* Keywords *)
 
@@ -321,25 +321,6 @@ let mk_child_res print = function
 let make_unary_res state node print = function
   | Result.Ok child -> make_unary state node print child
   | Error child_name -> make_unary state node Tree.make_node child_name
-
-(* Internal errors *)
-
-let internal_error ~debug ~err child_name parent_node =
-  if debug
-  then (
-    let child_name = if String.(child_name = "") then child_name else " " ^ child_name in
-    let parent_name = get_name parent_node
-    and suffix = Printf.sprintf "Child%s is missing." child_name in
-    let default_msg = Printf.sprintf "INTERNAL: [%s] %s" parent_name suffix in
-    mk_child Tree.make_node default_msg)
-  else (
-    let region = !get_region parent_node in
-    let region =
-      if Region.is_empty region then "" else " (" ^ region#compact `Byte ^ ")"
-    in
-    mk_child Tree.make_node (sprintf "%s%s" (Syntax_err.to_string err) region))
-
-let internal_error = internal_error ~debug
 
 (* Some literals *)
 
@@ -558,14 +539,13 @@ and print_export_statement ?(comments = []) state node =
     let decorators = mk_children_list print_decorator decorators in
     let children =
       match kwd_export with
-      | None -> [ internal_error "export" node ~err:Syntax_err.Export ]
+      | None -> [ mk_error_child node ~err:Syntax_err.Export ]
       | Some kwd_export ->
         (* Previous comments are hooked to the keyword "export" *)
         mk_child (mk_kwd_export ~comments) kwd_export
         ::
         (match next_sibling kwd_export with
-        | Error _ ->
-          [ internal_error "after \"export\"" node ~err:Syntax_err.Export_clause_or_all ]
+        | Error _ -> [ mk_error_child node ~err:Syntax_err.Export_clause_or_all ]
         | Ok after_export ->
           (match get_name after_export with
           | "*" ->
@@ -592,15 +572,14 @@ and print_export_statement ?(comments = []) state node =
               [ mk_child_res print_expression value_field ])
           | "type" ->
             (match next_sibling after_export with
-            | Error _ ->
-              [ internal_error "export_clause" node ~err:Syntax_err.Export_clause ]
+            | Error _ -> [ mk_error_child node ~err:Syntax_err.Export_clause ]
             | Ok export_clause ->
               mk_child mk_kwd_type after_export
               :: mk_child print_export_clause export_clause
               :: mk_child_from_clause_opt node)
           | "=" ->
             (match next_sibling after_export with
-            | Error _ -> [ internal_error "expression" node ~err:Syntax_err.Expression ]
+            | Error _ -> [ mk_error_child node ~err:Syntax_err.Expression ]
             | Ok expression ->
               [ mk_child mk_sym_equal after_export; mk_child print_expression expression ])
           | "as" ->
@@ -722,9 +701,7 @@ and print_import_clause ?(comments = []) state node =
     in
     let children =
       match child_ranked_opt 0 node with
-      | None ->
-        [ internal_error "\"first child\"" node ~err:Syntax_err.Named_imports_or_all_or_id
-        ]
+      | None -> [ mk_error_child node ~err:Syntax_err.Named_imports_or_all_or_id ]
       | Some fst_child ->
         (match get_name fst_child with
         | "namespace_import" -> [ mk_child (print_namespace_import ~comments) fst_child ]
@@ -736,14 +713,10 @@ and print_import_clause ?(comments = []) state node =
           | None -> []
           | Some comma ->
             (match next_sibling comma with
-            | Error _ ->
-              [ internal_error
-                  "namespace_import/named_imports"
-                  node
-                  ~err:Syntax_err.Named_imports_or_all
-              ]
+            | Error _ -> [ mk_error_child node ~err:Syntax_err.Named_imports_or_all ]
             | Ok next -> [ mk_child print_rest next ]))
-        | _ -> [ mk_child print_unexpected_node fst_child ])
+        | _ ->
+          [ mk_error_child fst_child ~err:Syntax_err.Namespace_or_named_imports_or_ident ])
     in
     make_tree state node children
 
@@ -3648,7 +3621,7 @@ and print_intersection_type state node =
     and sym_ampersand = first_child_named "&" node in
     let children =
       match first_child with
-      | None -> [ internal_error "" node ~err:Syntax_err.Type_or_conjunction ]
+      | None -> [ mk_error_child node ~err:Syntax_err.Type_or_conjunction ]
       | Some left_type ->
         (match get_name left_type with
         | "&" ->
@@ -3676,7 +3649,7 @@ and print_union_type state node =
     and sym_vbar = first_child_named "|" node in
     let children =
       match first_child with
-      | None -> [ internal_error "" node ~err:Syntax_err.Type_or_disjunction ]
+      | None -> [ mk_error_child node ~err:Syntax_err.Type_or_disjunction ]
       | Some left_type ->
         (match get_name left_type with
         | "|" ->
