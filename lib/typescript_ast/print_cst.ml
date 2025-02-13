@@ -277,7 +277,10 @@ let mk_sym_adding = make_sym ~err:Syntax_err.Adding_type_annotation
 let mk_sym_opting = make_sym ~err:Syntax_err.Opting_type_annotation
 let mk_sym_ampersand = make_sym ~err:Syntax_err.Ampersand
 let mk_sym_vbar = make_sym ~err:Syntax_err.Vertical_bar
-let mk_sym_unsigned_right_shift_equal = make_sym ~err:Syntax_err.Unsigned_right_shift_equal
+
+let mk_sym_unsigned_right_shift_equal =
+  make_sym ~err:Syntax_err.Unsigned_right_shift_equal
+
 let mk_sym_left_shift_equal = make_sym ~err:Syntax_err.Left_shift_equal
 let mk_sym_unsigned_left_shift_equal = make_sym ~err:Syntax_err.Unsigned_left_shift_equal
 let mk_sym_exponent_equal = make_sym ~err:Syntax_err.Exponent_equal
@@ -322,13 +325,13 @@ let make_unary_res state node print = function
 (* Internal errors *)
 
 let internal_error ~debug ~err child_name parent_node =
-  let child_name = if String.(child_name = "") then child_name else " " ^ child_name in
-  let parent_name = get_name parent_node
-  and suffix = Printf.sprintf "Child%s is missing." child_name in
-  let default_msg = Printf.sprintf "INTERNAL: [%s] %s" parent_name suffix in
-  let default = mk_child Tree.make_node default_msg in
   if debug
-  then default
+  then (
+    let child_name = if String.(child_name = "") then child_name else " " ^ child_name in
+    let parent_name = get_name parent_node
+    and suffix = Printf.sprintf "Child%s is missing." child_name in
+    let default_msg = Printf.sprintf "INTERNAL: [%s] %s" parent_name suffix in
+    mk_child Tree.make_node default_msg)
   else (
     let region = !get_region parent_node in
     let region =
@@ -583,7 +586,9 @@ and print_export_statement ?(comments = []) state node =
             (match declaration_field with
             | Some declaration_field -> [ mk_child print_declaration declaration_field ]
             | None ->
-              let value_field = child_with_field "value" node ~err:Syntax_err.Expression in
+              let value_field =
+                child_with_field "value" node ~err:Syntax_err.Expression
+              in
               [ mk_child_res print_expression value_field ])
           | "type" ->
             (match next_sibling after_export with
@@ -2852,7 +2857,8 @@ and print_type_query_call_expression_in_type_annotation state node =
   | "ERROR" | "MISSING" | "NULL" ->
     print_error_node state node ~err:Syntax_err.Member_expression
   | _ ->
-    let function_field = child_with_field "function" node ~err:Syntax_err.Member_expression
+    let function_field =
+      child_with_field "function" node ~err:Syntax_err.Member_expression
     and arguments_field = child_with_field "arguments" node ~err:Syntax_err.Arguments
     and print_function_field state node =
       match get_name node with
@@ -3172,7 +3178,9 @@ and print_index_signature state node =
       @ (match name_field with
         | Some name_field ->
           let sym_colon = first_child_named ":" node
-          and index_type_field = child_with_field "index_type" node ~err:Syntax_err.Type in
+          and index_type_field =
+            child_with_field "index_type" node ~err:Syntax_err.Type
+          in
           [ mk_child print_identifier name_field
           ; mk_child_res mk_sym_colon sym_colon
           ; mk_child_res print_type index_type_field
