@@ -201,6 +201,7 @@ type t =
   | Namespace_export
   | Import_clause
   | Namespace_or_named_imports
+  | Namespace_or_named_imports_or_ident
   | Namespace_import
   | Named_imports
   | Import_specifier
@@ -528,6 +529,8 @@ let to_string : t -> string = function
   | Import_clause -> "An import clause is expected."
   | Namespace_or_named_imports ->
     "A namespace import clause or named imports are expected."
+  | Namespace_or_named_imports_or_ident ->
+    "A namespace import clause or named imports or an identifier are expected."
   | Namespace_import -> "A namespace import ('* as') is expected."
   | Named_imports -> "Named imports (between braces) are expected."
   | Import_specifier ->

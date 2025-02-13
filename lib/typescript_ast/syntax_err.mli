@@ -201,6 +201,7 @@ type t =
   | Namespace_export
   | Import_clause
   | Namespace_or_named_imports
+  | Namespace_or_named_imports_or_ident
   | Namespace_import
   | Named_imports
   | Import_specifier
