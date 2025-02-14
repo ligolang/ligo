@@ -56,16 +56,16 @@ let child_with_field ~err field node =
 (* Formatting an error node *)
 
 let mk_err_msg node err =
-  let region = " (" ^ (!get_region node)#compact `Byte ^ ")" in
+  let region = !get_region node in
+  let region =
+    if Region.is_empty region then "(empty region)" else " (" ^ region#compact `Byte ^ ")"
+  in
   "ERROR: " ^ Syntax_err.to_string err ^ region
 
-(* Wrapping the fetching of nodes by name *)
+(* Wrapping the fetching of nodes *)
 
 let first_child_named name node ~err =
   Ts_wrap.first_child_named name node ~msg:(mk_err_msg node err)
-
-(* Partially evaluating wrappers so they print regions in case of
-   error (shadowing) *)
 
 let child_ranked index node ~err =
   Ts_wrap.child_ranked index node ~msg:(mk_err_msg node err)
