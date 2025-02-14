@@ -31,6 +31,15 @@ let get_region : (ts_tree -> Region.t) ref =
 
 let input : Buffer.t ref = ref (Buffer.create (80 * 100))
 
+(* Formatting an error node *)
+
+let mk_err_msg node err =
+  let region = !get_region node in
+  let region =
+    if Region.is_empty region then "(empty region)" else " (" ^ region#compact `Byte ^ ")"
+  in
+  "ERROR: " ^ Syntax_err.to_string err ^ region
+
 (* Tayloring the fetching of a field, with an error message in case of
    failure. *)
 
@@ -49,18 +58,9 @@ let child_with_field ~err field node =
         if String.equal name "NULL"
         then sprintf "ERROR: NULL parent of field %S." field
         else sprintf "ERROR: Node %S%s is missing the field %S." name region field)
-      else sprintf "ERROR: %s%s" (Syntax_err.to_string err) region
+      else mk_err_msg node err
     in
     Error msg
-
-(* Formatting an error node *)
-
-let mk_err_msg node err =
-  let region = !get_region node in
-  let region =
-    if Region.is_empty region then "(empty region)" else " (" ^ region#compact `Byte ^ ")"
-  in
-  "ERROR: " ^ Syntax_err.to_string err ^ region
 
 (* Wrapping the fetching of nodes *)
 
