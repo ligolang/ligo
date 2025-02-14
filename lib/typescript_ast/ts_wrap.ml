@@ -141,19 +141,11 @@ let collect_children ?(comments = false) (node : ts_tree) : ts_forest =
 (* Extracting a named child by its index amongst its siblings that are
    not comment/error/missing nodes *)
 
-let named_child_ranked ?(get_region : (ts_tree -> Region.t) ref option) index node =
+let named_child_ranked index node ~msg =
   let raw_children = collect_named_children node in
   match Core.List.nth raw_children index with
-  | None ->
-    let name = get_name node in
-    let region =
-      match get_region with
-      | None -> ""
-      | Some get_region -> " (" ^ (!get_region node)#compact `Byte ^ ")"
-    in
-    Error
-      (sprintf "INTERNAL: Node %S%s has no named child at index %i." name region index)
   | Some child -> Ok child
+  | None -> Error msg
 
 let named_child_ranked_opt index node =
   let raw_children = collect_named_children node in
@@ -161,18 +153,11 @@ let named_child_ranked_opt index node =
 
 (* Extracting a child by its index *)
 
-let child_ranked ?(get_region : (ts_tree -> Region.t) ref option) index (node : ts_tree) =
+let child_ranked index node ~msg =
   let raw_children = collect_children node in
   match Core.List.nth raw_children index with
-  | None ->
-    let name = get_name node in
-    let region =
-      match get_region with
-      | None -> ""
-      | Some get_region -> " (" ^ (!get_region node)#compact `Byte ^ ")"
-    in
-    Error (sprintf "INTERNAL: Node %S%s has no child at index %i" name region index)
   | Some child -> Ok child
+  | None -> Error msg
 
 let child_ranked_opt index (node : ts_tree) =
   let raw_children = collect_children node in
@@ -230,21 +215,24 @@ let filter_first_by_name_opt name nodes =
   | node :: _ -> Some node
   | [] -> None
 
-let filter_first_by_name name nodes =
-  match filter_first_by_name_opt name nodes with
-  | None -> Error (sprintf "INTERNAL: Name %S missing" name)
-  | Some node -> Ok node
+let first_child_named name node ~msg =
+  let children = collect_children node in
+  match filter_by_name name children with
+  | node :: _ -> Ok node
+  | [] -> Error msg
 
 let first_child_named_opt name node =
-  filter_first_by_name_opt name @@ collect_children node
+  let children = collect_children node in
+  match filter_by_name name children with
+  | node :: _ -> Some node
+  | [] -> None
 
-let first_child_named name node = filter_first_by_name name @@ collect_children node
 let children_named name node = filter_by_name name @@ collect_children node
 
 (* Arity *)
 
 let arity node = UInt32.to_int (TS_fun.ts_node_child_count node)
-let last_child node = child_ranked (arity node - 1) node
+let last_child node ~msg = child_ranked (arity node - 1) node ~msg
 
 (* Source locations *)
 
