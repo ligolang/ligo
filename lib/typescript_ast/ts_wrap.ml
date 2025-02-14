@@ -1,6 +1,8 @@
 (* Some additional wrappers for decoding the nodes of the
    tree-sitter-generated parser in C *)
 
+(* NOTE: Do not open [Core] globally, due to captures by [Ctypes] below *)
+
 module Pos = Simple_utils.Pos
 module Region = Simple_utils.Region
 
@@ -169,9 +171,6 @@ let next_sibling_opt (node : ts_tree) : ts_tree option =
 
 let next_sibling (node : ts_tree) ~msg : (ts_tree, string) result =
   opt_to_res msg @@ next_sibling_opt node
-
-let next_sibling_res (node : (ts_tree, string) result) ~msg : (ts_tree, string) result =
-  Core.Result.bind node ~f:(next_sibling ~msg)
 
 (* Getting the comments immediately to the left of a given node *)
 
