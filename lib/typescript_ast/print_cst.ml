@@ -53,31 +53,32 @@ let child_with_field ~err field node =
     in
     Error msg
 
-(* Tayloring the fetching of a node by name, with an error message in
-   case of failure *)
+(* Formatting an error node *)
+
+let mk_err_msg node err =
+  let region = " (" ^ (!get_region node)#compact `Byte ^ ")" in
+  "ERROR: " ^ Syntax_err.to_string err ^ region
+
+(* Wrapping the fetching of nodes by name *)
 
 let first_child_named name node ~err =
-  let region = " (" ^ (!get_region node)#compact `Byte ^ ")" in
-  let msg = "ERROR: " ^ Syntax_err.to_string err ^ region in
-  Ts_wrap.first_child_named name node ~msg
+  Ts_wrap.first_child_named name node ~msg:(mk_err_msg node err)
 
 (* Partially evaluating wrappers so they print regions in case of
    error (shadowing) *)
 
 let child_ranked index node ~err =
-  let region = " (" ^ (!get_region node)#compact `Byte ^ ")" in
-  let msg = "ERROR: " ^ Syntax_err.to_string err ^ region in
-  Ts_wrap.child_ranked index node ~msg
+  Ts_wrap.child_ranked index node ~msg:(mk_err_msg node err)
 
 let named_child_ranked index node ~err =
-  let region = " (" ^ (!get_region node)#compact `Byte ^ ")" in
-  let msg = "ERROR: " ^ Syntax_err.to_string err ^ region in
-  Ts_wrap.named_child_ranked index node ~msg
+  Ts_wrap.named_child_ranked index node ~msg:(mk_err_msg node err)
 
-let last_child node ~err =
-  let region = " (" ^ (!get_region node)#compact `Byte ^ ")" in
-  let msg = "ERROR: " ^ Syntax_err.to_string err ^ region in
-  Ts_wrap.last_child node ~msg
+let last_child node ~err = Ts_wrap.last_child node ~msg:(mk_err_msg node err)
+let next_sibling node ~err = Ts_wrap.next_sibling node ~msg:(mk_err_msg node err)
+
+let next_sibling_res node_res ~err =
+  let f node = Ts_wrap.next_sibling_res node_res ~msg:(mk_err_msg node err) in
+  Result.bind node_res ~f
 
 (* To print the AST in ASCII art *)
 
@@ -101,31 +102,6 @@ let make_node state node =
 
 let print_comment state node = make_node state node
 
-let print_error_node state node ~err =
-  let region = !get_region node
-  and msg =
-    if debug
-    then sprintf "ERROR: Unexpected node %S." (get_name node)
-    else sprintf "ERROR: %s" (Syntax_err.to_string err)
-  in
-  if arity node = 0
-  then Tree.make_node ~region state msg
-  else Tree.make_unary ~region state msg Tree.make_node "UNMATCHED children."
-
-let mk_error_child node ~err =
-  let region = !get_region node
-  and msg =
-    if debug
-    then sprintf "ERROR: Unexpected node %S." (get_name node)
-    else sprintf "ERROR: %s" (Syntax_err.to_string err)
-  in
-  if arity node = 0
-  then Some (fun state -> Tree.make_node ~region state msg)
-  else
-    Some
-      (fun state ->
-        Tree.make_unary ~region state msg Tree.make_node "UNMATCHED children.")
-
 let make_tree state node children =
   let region = !get_region node
   and label = get_name node in
@@ -136,10 +112,10 @@ let tree_of_list ?(comments = []) state node printer raw_children =
   let children =
     match raw_children with
     | [] -> []
-    | fst_raw_child :: siblings ->
+    | first_raw_child :: siblings ->
       let printer = printer ?comments:(Some comments) in
-      let fst_child = mk_child printer fst_raw_child in
-      fst_child :: List.fold_right ~f ~init:[] siblings
+      let first_child = mk_child printer first_raw_child in
+      first_child :: List.fold_right ~f ~init:[] siblings
   in
   make_tree state node children
 
@@ -157,6 +133,25 @@ let make_node ?(comments = []) state node =
     mk_children_list print_comment comments @ [ mk_child Tree.make_node lexeme ]
   in
   make_tree state node children
+
+(* Error nodes *)
+
+let mk_error_child node ~msg =
+  let region = !get_region node
+  and msg =
+    if debug
+    then sprintf "ERROR: Unexpected node %S." (get_name node)
+    else sprintf "ERROR: %s" msg
+  in
+  if arity node = 0
+  then fun state -> Tree.make_node ~region state msg
+  else fun state ->
+       Tree.make_unary ~region state msg Tree.make_node "UNMATCHED children."
+
+let print_error_node state node ~err =
+  mk_error_child node state ~msg:(mk_err_msg node err)
+
+let mk_error_child node ~msg = Some (mk_error_child node ~msg) (* Shadowing *)
 
 (* Keywords *)
 
@@ -336,11 +331,11 @@ let mk_sym_non_null = make_sym ~err:Syntax_err.Non_null
 (* Making children and unary trees *)
 
 let mk_child_res print = function
-  | Result.Ok child -> mk_child print child
+  | Ok child -> mk_child print child
   | Error name -> mk_child Tree.make_node name
 
 let make_unary_res state node print = function
-  | Result.Ok child -> make_unary state node print child
+  | Ok child -> make_unary state node print child
   | Error child_name -> make_unary state node Tree.make_node child_name
 
 (* Some literals *)
@@ -556,64 +551,58 @@ and print_export_statement ?(comments = []) state node =
   | _ ->
     let comments = comments @ prev_comments node
     and decorators = children_named "decorator" node
-    and kwd_export = first_child_named_opt "export" node in
+    and kwd_export = first_child_named "export" node ~err:Syntax_err.Export in
     let decorators = mk_children_list print_decorator decorators in
     let children =
-      match kwd_export with
-      | None -> [ mk_error_child node ~err:Syntax_err.Export ]
-      | Some kwd_export ->
-        (* Previous comments are hooked to the keyword "export" *)
-        mk_child (mk_kwd_export ~comments) kwd_export
-        ::
-        (match next_sibling kwd_export with
-        | Error _ -> [ mk_error_child node ~err:Syntax_err.Export_clause_or_all ]
-        | Ok after_export ->
-          (match get_name after_export with
-          | "*" ->
-            let kwd_from = first_child_named "from" node ~err:Syntax_err.From in
-            [ mk_child mk_sym_asterisk after_export; mk_child_from_clause kwd_from node ]
-          | "namespace_export" ->
-            let kwd_from = first_child_named "from" node ~err:Syntax_err.From in
-            [ mk_child print_namespace_export after_export
-            ; mk_child_from_clause kwd_from node
-            ]
-          | "export_clause" ->
-            mk_child print_export_clause after_export :: mk_child_from_clause_opt node
-          | "default" ->
-            let declaration_field = child_with_field_opt "declaration" node in
-            decorators
-            @ [ mk_child mk_kwd_default after_export ]
-            @
-            (match declaration_field with
-            | Some declaration_field -> [ mk_child print_declaration declaration_field ]
-            | None ->
-              let value_field =
-                child_with_field "value" node ~err:Syntax_err.Expression
-              in
-              [ mk_child_res print_expression value_field ])
-          | "type" ->
-            (match next_sibling after_export with
-            | Error _ -> [ mk_error_child node ~err:Syntax_err.Export_clause ]
-            | Ok export_clause ->
-              mk_child mk_kwd_type after_export
-              :: mk_child print_export_clause export_clause
-              :: mk_child_from_clause_opt node)
-          | "=" ->
-            (match next_sibling after_export with
-            | Error _ -> [ mk_error_child node ~err:Syntax_err.Expression ]
-            | Ok expression ->
-              [ mk_child mk_sym_equal after_export; mk_child print_expression expression ])
-          | "as" ->
-            let kwd_namespace =
-              first_child_named "namespace" node ~err:Syntax_err.Namespace
-            and identifier =
-              first_child_named "identifier" node ~err:Syntax_err.Identifier
-            in
-            [ mk_child mk_kwd_as after_export
-            ; mk_child_res mk_kwd_namespace kwd_namespace
-            ; mk_child_res print_identifier identifier
-            ]
-          | _ -> decorators @ [ mk_child print_declaration after_export ]))
+      (* Previous comments are hooked to the keyword "export" *)
+      mk_child_res (mk_kwd_export ~comments) kwd_export
+      ::
+      (match next_sibling_res kwd_export ~err:Syntax_err.Export_clause_or_all with
+      | Error msg -> [ mk_error_child node ~msg ]
+      | Ok after_export ->
+        (match get_name after_export with
+        | "*" ->
+          let kwd_from = first_child_named "from" node ~err:Syntax_err.From in
+          [ mk_child mk_sym_asterisk after_export; mk_child_from_clause kwd_from node ]
+        | "namespace_export" ->
+          let kwd_from = first_child_named "from" node ~err:Syntax_err.From in
+          [ mk_child print_namespace_export after_export
+          ; mk_child_from_clause kwd_from node
+          ]
+        | "export_clause" ->
+          mk_child print_export_clause after_export :: mk_child_from_clause_opt node
+        | "default" ->
+          let declaration_field = child_with_field_opt "declaration" node in
+          decorators
+          @ [ mk_child mk_kwd_default after_export ]
+          @
+          (match declaration_field with
+          | Some declaration_field -> [ mk_child print_declaration declaration_field ]
+          | None ->
+            let value_field = child_with_field "value" node ~err:Syntax_err.Expression in
+            [ mk_child_res print_expression value_field ])
+        | "type" ->
+          (match next_sibling after_export ~err:Syntax_err.Export_clause with
+          | Error msg -> [ mk_error_child after_export ~msg ]
+          | Ok export_clause ->
+            mk_child mk_kwd_type after_export
+            :: mk_child print_export_clause export_clause
+            :: mk_child_from_clause_opt node)
+        | "=" ->
+          (match next_sibling after_export ~err:Syntax_err.Expression with
+          | Error msg -> [ mk_error_child after_export ~msg ]
+          | Ok expression ->
+            [ mk_child mk_sym_equal after_export; mk_child print_expression expression ])
+        | "as" ->
+          let kwd_namespace = first_child_named "namespace" node ~err:Syntax_err.Namespace
+          and identifier =
+            first_child_named "identifier" node ~err:Syntax_err.Identifier
+          in
+          [ mk_child mk_kwd_as after_export
+          ; mk_child_res mk_kwd_namespace kwd_namespace
+          ; mk_child_res print_identifier identifier
+          ]
+        | _ -> decorators @ [ mk_child print_declaration after_export ]))
     in
     make_tree state node children
 
@@ -625,7 +614,9 @@ and print_namespace_export ?(comments = []) state node =
     let comments = comments @ prev_comments node
     and sym_asterisk = first_child_named "*" node ~err:Syntax_err.Asterisk
     and kwd_as = first_child_named "as" node ~err:Syntax_err.As in
-    let module_export_name = next_sibling_res kwd_as in
+    let module_export_name =
+      next_sibling_res kwd_as ~err:Syntax_err.Identifier_or_string
+    in
     let children =
       [ mk_child_res (mk_sym_asterisk ~comments) sym_asterisk
       ; mk_child_res mk_kwd_as kwd_as
@@ -724,23 +715,24 @@ and print_import_clause ?(comments = []) state node =
       | _ -> print_error_node state node ~err:Syntax_err.Namespace_or_named_imports
     in
     let children =
-      match child_ranked_opt 0 node with
-      | None -> [ mk_error_child node ~err:Syntax_err.Named_imports_or_all_or_id ]
-      | Some fst_child ->
-        (match get_name fst_child with
-        | "namespace_import" -> [ mk_child (print_namespace_import ~comments) fst_child ]
-        | "named_imports" -> [ mk_child (print_named_imports ~comments) fst_child ]
+      match child_ranked 0 node ~err:Syntax_err.Named_imports_or_all_or_id with
+      | Error msg -> [ mk_error_child node ~msg ]
+      | Ok first_child ->
+        (match get_name first_child with
+        | "namespace_import" -> [ mk_child (print_namespace_import ~comments) first_child ]
+        | "named_imports" -> [ mk_child (print_named_imports ~comments) first_child ]
         | "identifier" ->
-          mk_child (print_identifier ~comments) fst_child
+          mk_child (print_identifier ~comments) first_child
           ::
-          (match next_sibling_opt fst_child with
+          (match next_sibling_opt first_child with
           | None -> []
           | Some comma ->
-            (match next_sibling comma with
-            | Error _ -> [ mk_error_child node ~err:Syntax_err.Named_imports_or_all ]
+            (match next_sibling comma ~err:Syntax_err.Named_imports_or_all with
+            | Error msg -> [ mk_error_child comma ~msg ]
             | Ok next -> [ mk_child print_rest next ]))
         | _ ->
-          [ mk_error_child fst_child ~err:Syntax_err.Namespace_or_named_imports_or_ident ])
+          let msg = mk_err_msg first_child Syntax_err.Namespace_or_named_imports_or_ident in
+          [ mk_error_child first_child ~msg ])
     in
     make_tree state node children
 
@@ -752,7 +744,7 @@ and print_namespace_import ?(comments = []) state node =
     let comments = comments @ prev_comments node
     and sym_asterisk = first_child_named "*" node ~err:Syntax_err.Asterisk
     and kwd_as = first_child_named "as" node ~err:Syntax_err.As in
-    let identifier = next_sibling_res kwd_as in
+    let identifier = next_sibling_res kwd_as ~err:Syntax_err.Identifier in
     let children =
       [ mk_child_res (mk_sym_asterisk ~comments) sym_asterisk
       ; mk_child_res mk_kwd_as kwd_as
@@ -775,7 +767,7 @@ and print_import_specifier ?(comments = []) state node =
       | None -> first_child_named_opt "typeof" node
       | some -> some
     in
-    let fst_child_comments, snd_child_comments =
+    let first_child_comments, snd_child_comments =
       match kind_node with
       | None -> [], comments
       | Some _ -> comments, []
@@ -783,7 +775,7 @@ and print_import_specifier ?(comments = []) state node =
     and alias_field = child_with_field_opt "alias" node in
     let children =
       mk_child_opt
-        (make_kwd ~comments:fst_child_comments ~err:Syntax_err.Type_or_typeof)
+        (make_kwd ~comments:first_child_comments ~err:Syntax_err.Type_or_typeof)
         kind_node
       ::
       (match alias_field with
@@ -903,7 +895,7 @@ and print_else_clause ?(comments = []) state node =
   | _ ->
     let comments = comments @ prev_comments node in
     let kwd_else = first_child_named "else" node ~err:Syntax_err.Else in
-    let statement = next_sibling_res kwd_else in
+    let statement = next_sibling_res kwd_else ~err:Syntax_err.Statement in
     let children =
       [ mk_child_res (mk_kwd_else ~comments) kwd_else
       ; mk_child_res print_statement statement
@@ -1771,25 +1763,28 @@ and print_ambient_declaration state node =
   match get_name node with
   | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Syntax_err.Declare
   | _ ->
-    let kwd_declare = first_child_named "declare" node ~err:Syntax_err.Declare
-    and fst_child = named_child_ranked 0 node ~err:Syntax_err.Block_or_ident_or_decl in
+    let kwd_declare = first_child_named "declare" node ~err:Syntax_err.Declare in
+    let first_child = named_child_ranked 0 node ~err:Syntax_err.Block_or_ident_or_decl in
     let children =
       mk_child_res mk_kwd_declare kwd_declare
       ::
-      (match get_name_res fst_child with
-      | "statement_block" ->
-        let kwd_global = first_child_named "global" node ~err:Syntax_err.Global in
-        [ mk_child_res mk_kwd_global kwd_global
-        ; mk_child_res print_statement_block fst_child
-        ]
-      | "property_identifier" ->
-        let kwd_module = first_child_named "module" node ~err:Syntax_err.Module
-        and type_child = child_ranked 5 node ~err:Syntax_err.Type_expression in
-        [ mk_child_res mk_kwd_module kwd_module
-        ; mk_child_res print_identifier fst_child
-        ; mk_child_res print_type type_child
-        ]
-      | _ -> [ mk_child_res print_declaration fst_child ])
+      (match first_child with
+       | Error msg -> [ mk_error_child node ~msg ]
+       | Ok first_child ->
+          match get_name first_child with
+          | "statement_block" ->
+             let kwd_global = first_child_named "global" node ~err:Syntax_err.Global in
+             [ mk_child_res mk_kwd_global kwd_global
+             ; mk_child print_statement_block first_child
+             ]
+          | "property_identifier" ->
+             let kwd_module = first_child_named "module" node ~err:Syntax_err.Module
+             and type_child = child_ranked 5 node ~err:Syntax_err.Type_expression in
+             [ mk_child_res mk_kwd_module kwd_module
+             ; mk_child print_identifier first_child
+             ; mk_child_res print_type type_child
+             ]
+          | _ -> [ mk_child print_declaration first_child ])
     in
     make_tree state node children
 
@@ -2048,31 +2043,37 @@ and print_update_expression state node =
     let argument_field = child_with_field "argument" node ~err:Syntax_err.Expression
     and first_child = child_ranked 0 node ~err:Syntax_err.Incr_or_decr_or_expr in
     let children =
-      match get_name_res first_child with
-      | "++" ->
-        (* Prefix *)
-        [ mk_child_res mk_sym_increment first_child
-        ; mk_child_res print_expression argument_field
-        ]
-      | "--" ->
-        (* Prefix *)
-        [ mk_child_res mk_sym_decrement first_child
-        ; mk_child_res print_expression argument_field
-        ]
-      | _ ->
-        let snd_child = child_ranked 1 node ~err:Syntax_err.Increment_or_decrement in
-        (match get_name_res snd_child with
-        | "++" ->
-          (* Postfix *)
-          [ mk_child_res print_expression argument_field
-          ; mk_child_res mk_sym_increment snd_child
-          ]
-        | "--" ->
-          (* Postfix *)
-          [ mk_child_res print_expression argument_field
-          ; mk_child_res mk_sym_decrement snd_child
-          ]
-        | _ -> [] (* Should not happen. *))
+      match first_child with
+      | Error msg -> [ mk_error_child node ~msg ]
+      | Ok first_child ->
+         match get_name first_child with
+         | "++" ->
+            (* Prefix *)
+            [ mk_child mk_sym_increment first_child
+            ; mk_child_res print_expression argument_field
+            ]
+         | "--" ->
+            (* Prefix *)
+            [ mk_child mk_sym_decrement first_child
+            ; mk_child_res print_expression argument_field
+            ]
+         | _ ->
+            let snd_child = child_ranked 1 node ~err:Syntax_err.Increment_or_decrement in
+            match snd_child with
+            | Error msg -> [ mk_error_child first_child ~msg ]
+            | Ok snd_child ->
+               (match get_name snd_child with
+                | "++" ->
+                   (* Postfix *)
+                   [ mk_child_res print_expression argument_field
+                   ; mk_child mk_sym_increment snd_child
+                   ]
+                | "--" ->
+                   (* Postfix *)
+                   [ mk_child_res print_expression argument_field
+                   ; mk_child mk_sym_decrement snd_child
+                   ]
+                | _ -> [] (* Should not happen. *))
     in
     make_tree state node children
 
@@ -2722,10 +2723,10 @@ and print_meta_property state node =
   | "ERROR" | "MISSING" | "NULL" ->
     print_error_node state node ~err:Syntax_err.Meta_property
   | _ ->
-    let fst_child = child_ranked 0 node ~err:Syntax_err.New_or_import
+    let first_child = child_ranked 0 node ~err:Syntax_err.New_or_import
     and snd_child = child_ranked 2 node ~err:Syntax_err.Target_or_meta in
     let children =
-      [ mk_child_res (make_kwd ~err:Syntax_err.New_or_import) fst_child
+      [ mk_child_res (make_kwd ~err:Syntax_err.New_or_import) first_child
       ; mk_child_res (make_kwd ~err:Syntax_err.Target_or_meta) snd_child
       ]
     in
@@ -3643,12 +3644,11 @@ and print_intersection_type state node =
   | "ERROR" | "MISSING" | "NULL" ->
     print_error_node state node ~err:Syntax_err.Intersection_type
   | _ ->
-    let first_child = child_ranked_opt 0 node
-    and sym_ampersand = first_child_named "&" node ~err:Syntax_err.Ampersand in
+    let sym_ampersand = first_child_named "&" node ~err:Syntax_err.Ampersand in
     let children =
-      match first_child with
-      | None -> [ mk_error_child node ~err:Syntax_err.Type_or_conjunction ]
-      | Some left_type ->
+      match child_ranked 0 node ~err:Syntax_err.Type_or_conjunction with
+      | Error msg -> [ mk_error_child node ~msg ]
+      | Ok left_type ->
         (match get_name left_type with
         | "&" ->
           let type_node = child_ranked 1 node ~err:Syntax_err.Type_expression in
@@ -3671,12 +3671,11 @@ and print_union_type state node =
   match get_name node with
   | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Syntax_err.Union_type
   | _ ->
-    let first_child = child_ranked_opt 0 node
-    and sym_vbar = first_child_named "|" node ~err:Syntax_err.Vertical_bar in
+    let sym_vbar = first_child_named "|" node ~err:Syntax_err.Vertical_bar in
     let children =
-      match first_child with
-      | None -> [ mk_error_child node ~err:Syntax_err.Type_or_disjunction ]
-      | Some left_type ->
+      match child_ranked 0 node ~err:Syntax_err.Type_or_disjunction with
+      | Error msg -> [ mk_error_child node ~msg ]
+      | Ok left_type ->
         (match get_name left_type with
         | "|" ->
           let type_node = child_ranked 1 node ~err:Syntax_err.Type_expression in
