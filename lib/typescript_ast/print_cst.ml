@@ -134,11 +134,7 @@ let make_node ?(comments = []) state node =
 
 let mk_error_child node ~msg =
   let region = !get_region node
-  and msg =
-    if debug
-    then sprintf "ERROR: Unexpected node %S." (get_name node)
-    else sprintf "ERROR: %s" msg
-  in
+  and msg = if debug then sprintf "ERROR: Unexpected node %S." (get_name node) else msg in
   if arity node = 0
   then fun state -> Tree.make_node ~region state msg
   else fun state -> Tree.make_unary ~region state msg Tree.make_node "UNMATCHED children."
