@@ -67,10 +67,6 @@ let node_to_opt node = if is_null node then None else Some node
 let get_name (node : ts_tree) : string =
   if is_null node then "NULL" else string_of_char_ptr @@ TS_fun.ts_node_type node
 
-let get_name_res = function
-  | Ok node -> get_name node
-  | Error name -> name
-
 (* Wrappers for filtering fields (failure on null node or optional value) *)
 
 let child_with_field ?get_region field node =
@@ -171,24 +167,13 @@ let sibling_opt get_sibling (node : ts_tree) : ts_tree option =
 let next_sibling_opt (node : ts_tree) : ts_tree option =
   sibling_opt TS_fun.ts_node_next_sibling node
 
-let prev_sibling_opt (node : ts_tree) : ts_tree option =
-  sibling_opt TS_fun.ts_node_prev_sibling node
-
-let next_sibling (node : ts_tree) : (ts_tree, string) result =
+let next_sibling (node : ts_tree) ~msg : (ts_tree, string) result =
   match next_sibling_opt node with
   | Some sibling -> Ok sibling
-  | None -> Error (sprintf "ERROR: Node %S has no next sibling." (get_name node))
+  | None -> Error msg
 
-let prev_sibling (node : ts_tree) : (ts_tree, string) result =
-  match prev_sibling_opt node with
-  | Some sibling -> Ok sibling
-  | None -> Error (sprintf "ERROR: Node %S has no previous sibling." (get_name node))
-
-let next_sibling_res (node : (ts_tree, string) result) : (ts_tree, string) result =
-  Core.Result.bind node ~f:next_sibling
-
-let prev_sibling_res (node : (ts_tree, string) result) : (ts_tree, string) result =
-  Core.Result.bind node ~f:prev_sibling
+let next_sibling_res (node : (ts_tree, string) result) ~msg : (ts_tree, string) result =
+  Core.Result.bind node ~f:(next_sibling ~msg)
 
 (* Getting the comments immediately to the left of a given node *)
 
@@ -210,22 +195,16 @@ let filter_by_name name nodes =
   let f = String.equal name <@ get_name in
   Core.List.filter nodes ~f
 
-let filter_first_by_name_opt name nodes =
-  match filter_by_name name nodes with
-  | node :: _ -> Some node
-  | [] -> None
-
-let first_child_named name node ~msg =
-  let children = collect_children node in
-  match filter_by_name name children with
-  | node :: _ -> Ok node
-  | [] -> Error msg
-
 let first_child_named_opt name node =
   let children = collect_children node in
   match filter_by_name name children with
   | node :: _ -> Some node
   | [] -> None
+
+let first_child_named name node ~msg =
+  match first_child_named_opt name node with
+  | Some node -> Ok node
+  | None -> Error msg
 
 let children_named name node = filter_by_name name @@ collect_children node
 
