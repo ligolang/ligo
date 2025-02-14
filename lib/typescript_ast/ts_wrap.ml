@@ -144,22 +144,16 @@ let opt_to_res msg = function
   | None -> Error msg
 
 let named_child_ranked index node ~msg =
-  let raw_children = collect_named_children node in
-  opt_to_res msg @@ Core.List.nth raw_children index
+  opt_to_res msg @@ Core.List.nth (collect_named_children node) index
 
-let named_child_ranked_opt index node =
-  let raw_children = collect_named_children node in
-  Core.List.nth raw_children index
+let named_child_ranked_opt index node = Core.List.nth (collect_named_children node) index
 
 (* Extracting a child by its index *)
 
 let child_ranked index node ~msg =
-  let raw_children = collect_children node in
-  opt_to_res msg @@ Core.List.nth raw_children index
+  opt_to_res msg @@ Core.List.nth (collect_children node) index
 
-let child_ranked_opt index (node : ts_tree) =
-  let raw_children = collect_children node in
-  Core.List.nth raw_children index
+let child_ranked_opt index (node : ts_tree) = Core.List.nth (collect_children node) index
 
 (* Getting the sibling of a node (if any) *)
 
