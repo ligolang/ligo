@@ -318,6 +318,9 @@ type t =
   | Dot
   | Ampersand
   | Vertical_bar
+  | Incr_or_decr_or_expr
+  | Increment_or_decrement
+  | Block_or_ident_or_decl
 
 type error = t
 
@@ -643,3 +646,7 @@ let to_string : t -> string = function
   | Value_of_pair_pattern -> "A pattern for the value of a key-value pair is expected."
   | Object_or_array_pattern -> "An object or array pattern is expected."
   | Array_cell_pattern -> "A pattern for an array element is expected."
+  | Incr_or_decr_or_expr -> "An operator '--' or '++' or an expression is expected."
+  | Increment_or_decrement -> "An operator '--' or '++' is expected."
+  | Block_or_ident_or_decl ->
+    "A block or a property identifier or a declaration is expected."

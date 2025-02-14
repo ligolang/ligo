@@ -318,6 +318,9 @@ type t =
   | Dot
   | Ampersand
   | Vertical_bar
+  | Incr_or_decr_or_expr
+  | Increment_or_decrement
+  | Block_or_ident_or_decl
 
 type error = t
 
