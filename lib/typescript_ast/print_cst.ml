@@ -45,7 +45,7 @@ let mk_err_msg node err =
 
 let child_with_field ~err field node =
   match Ts_wrap.child_with_field ~get_region field node with
-  | Ok child -> Ok child
+  | Ok _ as ok -> ok
   | Error () ->
     let region = !get_region node in
     let region =
