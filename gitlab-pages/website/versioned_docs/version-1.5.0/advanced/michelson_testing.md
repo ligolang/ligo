@@ -17,7 +17,7 @@ test contracts in Michelson:
 
 Another alternative is to use Tezos's binary `tezos-client`
 directly. There's a new
-[mockup](https://tezos.gitlab.io/user/mockup.html) mode which is does
+[mockup](https://octez.tezos.com/docs/user/mockup.html) mode which is does
 not need a Tezos node to be running (albeit this is less similar to
 mainnet than running a Tezos sandbox node).
 

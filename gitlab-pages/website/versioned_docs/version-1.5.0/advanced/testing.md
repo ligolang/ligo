@@ -211,7 +211,7 @@ and then show you how to handle it.
 
 There is two kind of operations in the protocol : external and internal.
 `internal operations` are those created by smart contracts and `external operations` are those created from outside the chain
-(e.g. using `Test.originate` or `tezos-client` for instance) [more information here](https://tezos.gitlab.io/active/michelson.html#semantics-of-smart-contracts-and-transactions)
+(e.g. using `Test.originate` or `tezos-client` for instance) [more information here](https://octez.tezos.com/docs/active/michelson.html#semantics-of-smart-contracts-and-transactions)
 
 In the protocol, both external and internal `transfer`/`origination` operations contains a piece of michelson code representing the `parameter`/`initial storage`.
 Now imagine you have a value of type `parameter_ty`/`storage_ty` containing a ticket, that you want to transfer or originate,

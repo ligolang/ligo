@@ -12,7 +12,7 @@ import SyntaxTitle from '@theme/SyntaxTitle';
 
 ### Deprecation
 
-The type `tx_rollup_l2_address` has been disabled (see the [changelog](https://tezos.gitlab.io/protocols/016_mumbai.html#breaking-changes) for the Mumbai protocol).
+The type `tx_rollup_l2_address` has been disabled (see the [changelog](https://octez.tezos.com/docs/protocols/016_mumbai.html#breaking-changes) for the Mumbai protocol).
 
 ### New operators
 

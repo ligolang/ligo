@@ -16,14 +16,14 @@ Two choices are offered, ideal if you want to work with Ligo :
 - Install necessary stuff onto your machine
     - [Ligo compiler](https://ligolang.org/docs/intro/installation) to compile your code.
     - [IDE plugins](https://ligolang.org/docs/intro/editor-support)
-    - [octez-client](https://tezos.gitlab.io/introduction/howtoget.html) used to interact with tezos blockchain. Pre-built binaries are available [here](https://github.com/serokell/tezos-packaging)
+    - [octez-client](https://octez.tezos.com/docs/introduction/howtoget.html) used to interact with tezos blockchain. Pre-built binaries are available [here](https://github.com/serokell/tezos-packaging)
 - Use [webide](https://ide.ligolang.org), ideal if you want a quick view of ligo. You'll be able to do, test, dry-run, and deploy the code !
 
 ## Building a smart-contract.
 
 We will use a simple  smart contract in this section and the following one. A counter that is available on a homepage.
 
-First, create a `ligo_tutorial` folder on your computer.  
+First, create a `ligo_tutorial` folder on your computer.
 `mligo` is the extension of cameligo file and `jsligo` for the jsligo file.
 
 <Syntax syntax="cameligo">
@@ -312,7 +312,7 @@ octez-client call counter from <my_tz_address...> \
 ```
 
 
-arg is obtained by compiling ligo expression onto michelson 
+arg is obtained by compiling ligo expression onto michelson
 
 <Syntax syntax="cameligo">
 
@@ -335,7 +335,7 @@ If you do so, back to `tzkt`, you will see several information on the operation,
 
 ## Testing the Michelson contract locally
 
-It can be annoying to deploy you contract onto a node to test it. We advise testing that [the Michelson code locally using mockup environment](https://tezos.gitlab.io/user/mockup.html). It'll allow to automate end to end tests in simulated environment
+It can be annoying to deploy you contract onto a node to test it. We advise testing that [the Michelson code locally using mockup environment](https://octez.tezos.com/docs/user/mockup.html). It'll allow to automate end to end tests in simulated environment
 
 This conclude this part of our tutorial.
 You should now be able to compile, test, publish and call a contract.

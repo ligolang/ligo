@@ -17,7 +17,7 @@ There are two frameworks for testing Michelson contracts:
 You can also test compiled contracts in sandboxes and on test networks, which work in a way similar to Tezos Mainnet but do not have the same costs.
 Several options for sandboxes and testnets are available, including:
 
-- The Octez suite [mockup mode](https://tezos.gitlab.io/user/mockup.html) and [sandbox mode](https://tezos.gitlab.io/user/sandbox.html)
+- The Octez suite [mockup mode](https://octez.tezos.com/docs/user/mockup.html) and [sandbox mode](https://octez.tezos.com/docs/user/sandbox.html)
 - Local test networks such as [Flextesa](https://tezos.gitlab.io/flextesa/) and [Tezbox](https://github.com/tez-capital/tezbox)
 - Public test networks such as Ghostnet, which are listed at https://teztnets.com
 
@@ -122,7 +122,7 @@ Now you can follow these steps to deploy the compiled contract to the Octez clie
 1. Install the Octez client.
 
    One way is to install it via opam by running `opam install octez-client`.
-   For other installation methods, see [Installing Octez](https://tezos.gitlab.io/introduction/howtoget.html) in the Octez documentation.
+   For other installation methods, see [Installing Octez](https://octez.tezos.com/docs/introduction/howtoget.html) in the Octez documentation.
 
 1. Print a list of supported protocol versions by running `octez-client list mockup protocols`.
 
