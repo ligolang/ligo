@@ -145,8 +145,7 @@ let mk_error_child node ~msg =
   in
   if arity node = 0
   then fun state -> Tree.make_node ~region state msg
-  else fun state ->
-       Tree.make_unary ~region state msg Tree.make_node "UNMATCHED children."
+  else fun state -> Tree.make_unary ~region state msg Tree.make_node "UNMATCHED children."
 
 let print_error_node state node ~err =
   mk_error_child node state ~msg:(mk_err_msg node err)
@@ -719,7 +718,8 @@ and print_import_clause ?(comments = []) state node =
       | Error msg -> [ mk_error_child node ~msg ]
       | Ok first_child ->
         (match get_name first_child with
-        | "namespace_import" -> [ mk_child (print_namespace_import ~comments) first_child ]
+        | "namespace_import" ->
+          [ mk_child (print_namespace_import ~comments) first_child ]
         | "named_imports" -> [ mk_child (print_named_imports ~comments) first_child ]
         | "identifier" ->
           mk_child (print_identifier ~comments) first_child
@@ -731,7 +731,9 @@ and print_import_clause ?(comments = []) state node =
             | Error msg -> [ mk_error_child comma ~msg ]
             | Ok next -> [ mk_child print_rest next ]))
         | _ ->
-          let msg = mk_err_msg first_child Syntax_err.Namespace_or_named_imports_or_ident in
+          let msg =
+            mk_err_msg first_child Syntax_err.Namespace_or_named_imports_or_ident
+          in
           [ mk_error_child first_child ~msg ])
     in
     make_tree state node children
@@ -1769,22 +1771,22 @@ and print_ambient_declaration state node =
       mk_child_res mk_kwd_declare kwd_declare
       ::
       (match first_child with
-       | Error msg -> [ mk_error_child node ~msg ]
-       | Ok first_child ->
-          match get_name first_child with
-          | "statement_block" ->
-             let kwd_global = first_child_named "global" node ~err:Syntax_err.Global in
-             [ mk_child_res mk_kwd_global kwd_global
-             ; mk_child print_statement_block first_child
-             ]
-          | "property_identifier" ->
-             let kwd_module = first_child_named "module" node ~err:Syntax_err.Module
-             and type_child = child_ranked 5 node ~err:Syntax_err.Type_expression in
-             [ mk_child_res mk_kwd_module kwd_module
-             ; mk_child print_identifier first_child
-             ; mk_child_res print_type type_child
-             ]
-          | _ -> [ mk_child print_declaration first_child ])
+      | Error msg -> [ mk_error_child node ~msg ]
+      | Ok first_child ->
+        (match get_name first_child with
+        | "statement_block" ->
+          let kwd_global = first_child_named "global" node ~err:Syntax_err.Global in
+          [ mk_child_res mk_kwd_global kwd_global
+          ; mk_child print_statement_block first_child
+          ]
+        | "property_identifier" ->
+          let kwd_module = first_child_named "module" node ~err:Syntax_err.Module
+          and type_child = child_ranked 5 node ~err:Syntax_err.Type_expression in
+          [ mk_child_res mk_kwd_module kwd_module
+          ; mk_child print_identifier first_child
+          ; mk_child_res print_type type_child
+          ]
+        | _ -> [ mk_child print_declaration first_child ]))
     in
     make_tree state node children
 
@@ -2046,34 +2048,34 @@ and print_update_expression state node =
       match first_child with
       | Error msg -> [ mk_error_child node ~msg ]
       | Ok first_child ->
-         match get_name first_child with
-         | "++" ->
-            (* Prefix *)
-            [ mk_child mk_sym_increment first_child
-            ; mk_child_res print_expression argument_field
-            ]
-         | "--" ->
-            (* Prefix *)
-            [ mk_child mk_sym_decrement first_child
-            ; mk_child_res print_expression argument_field
-            ]
-         | _ ->
-            let snd_child = child_ranked 1 node ~err:Syntax_err.Increment_or_decrement in
-            match snd_child with
-            | Error msg -> [ mk_error_child first_child ~msg ]
-            | Ok snd_child ->
-               (match get_name snd_child with
-                | "++" ->
-                   (* Postfix *)
-                   [ mk_child_res print_expression argument_field
-                   ; mk_child mk_sym_increment snd_child
-                   ]
-                | "--" ->
-                   (* Postfix *)
-                   [ mk_child_res print_expression argument_field
-                   ; mk_child mk_sym_decrement snd_child
-                   ]
-                | _ -> [] (* Should not happen. *))
+        (match get_name first_child with
+        | "++" ->
+          (* Prefix *)
+          [ mk_child mk_sym_increment first_child
+          ; mk_child_res print_expression argument_field
+          ]
+        | "--" ->
+          (* Prefix *)
+          [ mk_child mk_sym_decrement first_child
+          ; mk_child_res print_expression argument_field
+          ]
+        | _ ->
+          let snd_child = child_ranked 1 node ~err:Syntax_err.Increment_or_decrement in
+          (match snd_child with
+          | Error msg -> [ mk_error_child first_child ~msg ]
+          | Ok snd_child ->
+            (match get_name snd_child with
+            | "++" ->
+              (* Postfix *)
+              [ mk_child_res print_expression argument_field
+              ; mk_child mk_sym_increment snd_child
+              ]
+            | "--" ->
+              (* Postfix *)
+              [ mk_child_res print_expression argument_field
+              ; mk_child mk_sym_decrement snd_child
+              ]
+            | _ -> [] (* Should not happen. *))))
     in
     make_tree state node children
 

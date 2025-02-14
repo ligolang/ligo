@@ -137,11 +137,13 @@ let collect_children ?(comments = false) (node : ts_tree) : ts_forest =
 (* Extracting a named child by its index amongst its siblings that are
    not comment/error/missing nodes *)
 
+let opt_to_res msg = function
+  | Some x -> Ok x
+  | None -> Error msg
+
 let named_child_ranked index node ~msg =
   let raw_children = collect_named_children node in
-  match Core.List.nth raw_children index with
-  | Some child -> Ok child
-  | None -> Error msg
+  opt_to_res msg @@ Core.List.nth raw_children index
 
 let named_child_ranked_opt index node =
   let raw_children = collect_named_children node in
@@ -151,9 +153,7 @@ let named_child_ranked_opt index node =
 
 let child_ranked index node ~msg =
   let raw_children = collect_children node in
-  match Core.List.nth raw_children index with
-  | Some child -> Ok child
-  | None -> Error msg
+  opt_to_res msg @@ Core.List.nth raw_children index
 
 let child_ranked_opt index (node : ts_tree) =
   let raw_children = collect_children node in
@@ -168,9 +168,7 @@ let next_sibling_opt (node : ts_tree) : ts_tree option =
   sibling_opt TS_fun.ts_node_next_sibling node
 
 let next_sibling (node : ts_tree) ~msg : (ts_tree, string) result =
-  match next_sibling_opt node with
-  | Some sibling -> Ok sibling
-  | None -> Error msg
+  opt_to_res msg @@ next_sibling_opt node
 
 let next_sibling_res (node : (ts_tree, string) result) ~msg : (ts_tree, string) result =
   Core.Result.bind node ~f:(next_sibling ~msg)
@@ -191,9 +189,7 @@ let prev_comments (node : ts_tree) : ts_forest =
 
 (* Filtering by name a list of nodes *)
 
-let filter_by_name name nodes =
-  let f = String.equal name <@ get_name in
-  Core.List.filter nodes ~f
+let filter_by_name name nodes = Core.List.filter nodes ~f:(String.equal name <@ get_name)
 
 let first_child_named_opt name node =
   let children = collect_children node in
@@ -201,11 +197,7 @@ let first_child_named_opt name node =
   | node :: _ -> Some node
   | [] -> None
 
-let first_child_named name node ~msg =
-  match first_child_named_opt name node with
-  | Some node -> Ok node
-  | None -> Error msg
-
+let first_child_named name node ~msg = opt_to_res msg @@ first_child_named_opt name node
 let children_named name node = filter_by_name name @@ collect_children node
 
 (* Arity *)
