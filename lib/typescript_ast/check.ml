@@ -36,7 +36,8 @@ let no_colour = true
 
 let format_msg error node =
   let region = !get_region node in
-  Printf.sprintf "%s%s"
+  Printf.sprintf
+    "%s%s"
     (Format.asprintf "%a" (Snippet.pp_lift ~no_colour) region)
     (Syntax_err.to_string error)
 
@@ -44,20 +45,17 @@ let format_msg error node =
 
 let check_identifier node errors =
   match get_name node with
-  | "ERROR" | "MISSING" | "NULL" ->
-     format_msg Syntax_err.Identifier node :: errors
+  | "ERROR" | "MISSING" | "NULL" -> format_msg Syntax_err.Identifier node :: errors
   | _ -> errors
 
 let check_string node errors =
   match get_name node with
-  | "ERROR" | "MISSING" | "NULL" ->
-    format_msg Syntax_err.String_literal node :: errors
+  | "ERROR" | "MISSING" | "NULL" -> format_msg Syntax_err.String_literal node :: errors
   | _ -> errors
 
 let check_regex node errors =
   match get_name node with
-  | "ERROR" | "MISSING" | "NULL" ->
-     format_msg Syntax_err.Regexp node :: errors
+  | "ERROR" | "MISSING" | "NULL" -> format_msg Syntax_err.Regexp node :: errors
   | _ -> errors
 
 (* Checking forests *)
@@ -99,8 +97,7 @@ let next_sibling node ~err errors =
 
 let make_sym node ~err errors =
   match get_name node with
-  | "ERROR" | "MISSING" | "NULL" ->
-    format_msg err node :: errors
+  | "ERROR" | "MISSING" | "NULL" -> format_msg err node :: errors
   | _ -> errors
 
 (* Check enclosed constructs *)
@@ -109,45 +106,61 @@ let check_enclosed node check opening closing ~open_err ~close_err errors =
   match get_name node with
   | "ERROR" | "MISSING" | "NULL" -> format_msg open_err node :: errors
   | _ ->
-    first_child_named opening node ~err:open_err errors |>
-    first_child_named closing node ~err:close_err |>
-    check_named_children node check
+    first_child_named opening node ~err:open_err errors
+    |> first_child_named closing node ~err:close_err
+    |> check_named_children node check
 
 let check_braces node check ~err errors =
   match get_name node with
   | "ERROR" | "MISSING" | "NULL" -> format_msg err node :: errors
   | _ ->
-     check_enclosed node check "{" "}"
-       ~open_err:Syntax_err.Left_brace
-       ~close_err:Syntax_err.Right_brace
-       errors
+    check_enclosed
+      node
+      check
+      "{"
+      "}"
+      ~open_err:Syntax_err.Left_brace
+      ~close_err:Syntax_err.Right_brace
+      errors
 
 let check_chevrons node check ~err errors =
   match get_name node with
   | "ERROR" | "MISSING" | "NULL" -> format_msg err node :: errors
   | _ ->
-     check_enclosed node check "<" ">"
-       ~open_err:Syntax_err.Left_chevron
-       ~close_err:Syntax_err.Right_chevron
-       errors
+    check_enclosed
+      node
+      check
+      "<"
+      ">"
+      ~open_err:Syntax_err.Left_chevron
+      ~close_err:Syntax_err.Right_chevron
+      errors
 
 let check_brackets node check ~err errors =
   match get_name node with
   | "ERROR" | "MISSING" | "NULL" -> format_msg err node :: errors
   | _ ->
-     check_enclosed node check "[" "]"
-       ~open_err:Syntax_err.Left_bracket
-       ~close_err:Syntax_err.Right_bracket
-       errors
+    check_enclosed
+      node
+      check
+      "["
+      "]"
+      ~open_err:Syntax_err.Left_bracket
+      ~close_err:Syntax_err.Right_bracket
+      errors
 
 let check_parens node check ~err errors =
   match get_name node with
   | "ERROR" | "MISSING" | "NULL" -> format_msg err node :: errors
   | _ ->
-     check_enclosed node check "(" ")"
-       ~open_err:Syntax_err.Left_parenthesis
-       ~close_err:Syntax_err.Right_parenthesis
-       errors
+    check_enclosed
+      node
+      check
+      "("
+      ")"
+      ~open_err:Syntax_err.Left_parenthesis
+      ~close_err:Syntax_err.Right_parenthesis
+      errors
 
 (* Traversing the CST *)
 
@@ -349,8 +362,7 @@ and check_throw_statement node errors =
 
 and check_empty_statement node errors =
   match get_name node with
-  | "ERROR" | "MISSING" | "NULL" ->
-    format_msg Syntax_err.Empty_statement node :: errors
+  | "ERROR" | "MISSING" | "NULL" -> format_msg Syntax_err.Empty_statement node :: errors
   | _ -> errors (* TODO *)
 
 (* Labeled statement *)
@@ -403,16 +415,14 @@ and check_generator_function_declaration node errors =
 
 and check_class_declaration node errors =
   match get_name node with
-  | "ERROR" | "MISSING" | "NULL" ->
-    format_msg Syntax_err.Class_declaration node :: errors
+  | "ERROR" | "MISSING" | "NULL" -> format_msg Syntax_err.Class_declaration node :: errors
   | _ -> errors (* TODO *)
 
 (* Lexical declaration (see [check_variable_declaration]) *)
 
 and check_lexical_declaration node errors =
   match get_name node with
-  | "ERROR" | "MISSING" | "NULL" ->
-    format_msg Syntax_err.Let_or_const node :: errors
+  | "ERROR" | "MISSING" | "NULL" -> format_msg Syntax_err.Let_or_const node :: errors
   | _ -> errors (* TODO *)
 
 (* Variable declaration (see [check_lexical_declaration]) *)
@@ -426,8 +436,7 @@ and check_variable_declaration node errors =
 
 and check_function_signature node errors =
   match get_name node with
-  | "ERROR" | "MISSING" | "NULL" ->
-    format_msg Syntax_err.Async_or_function node :: errors
+  | "ERROR" | "MISSING" | "NULL" -> format_msg Syntax_err.Async_or_function node :: errors
   | _ -> errors (* TODO *)
 
 (* Abstract class declaration ( see [check_class_declaration]) *)
@@ -462,8 +471,7 @@ and check_type_alias_declaration node errors =
 
 and check_enum_declaration node errors =
   match get_name node with
-  | "ERROR" | "MISSING" | "NULL" ->
-    format_msg Syntax_err.Const_or_enum node :: errors
+  | "ERROR" | "MISSING" | "NULL" -> format_msg Syntax_err.Const_or_enum node :: errors
   | _ -> errors (* TODO *)
 
 (* Interface declaration *)
@@ -547,8 +555,7 @@ and check_primary_expression node errors =
 
 and check_glimmer_template node errors =
   match get_name node with
-  | "ERROR" | "MISSING" | "NULL" ->
-    format_msg Syntax_err.Glimmer_template node :: errors
+  | "ERROR" | "MISSING" | "NULL" -> format_msg Syntax_err.Glimmer_template node :: errors
   | _ -> errors
 
 (* Assignment expression *)
@@ -578,8 +585,7 @@ and check_await_expression node errors =
 
 and check_unary_expression node errors =
   match get_name node with
-  | "ERROR" | "MISSING" | "NULL" ->
-    format_msg Syntax_err.Unary_operator node :: errors
+  | "ERROR" | "MISSING" | "NULL" -> format_msg Syntax_err.Unary_operator node :: errors
   | _ -> errors (* TODO *)
 
 (* Binary expression *)
@@ -661,8 +667,7 @@ and check_subscript_expression node errors =
 
 and check_member_expression node errors =
   match get_name node with
-  | "ERROR" | "MISSING" | "NULL" ->
-    format_msg Syntax_err.Member_expression node :: errors
+  | "ERROR" | "MISSING" | "NULL" -> format_msg Syntax_err.Member_expression node :: errors
   | _ -> errors (* TODO *)
 
 (* Parenthesised expression *)
@@ -670,15 +675,14 @@ and check_member_expression node errors =
 and check_parenthesized_expression node errors =
   match get_name node with
   | "ERROR" | "MISSING" | "NULL" ->
-     format_msg Syntax_err.Parenthesized_expression node :: errors
+    format_msg Syntax_err.Parenthesized_expression node :: errors
   | _ -> errors (* TODO *)
 
 (* Template strings *)
 
 and check_template_string node errors =
   match get_name node with
-  | "ERROR" | "MISSING" | "NULL" ->
-    format_msg Syntax_err.Template_string node :: errors
+  | "ERROR" | "MISSING" | "NULL" -> format_msg Syntax_err.Template_string node :: errors
   | _ -> errors (* TODO *)
 
 (* Object *)
@@ -687,14 +691,14 @@ and check_object node errors =
   check_braces node check_object_field ~err:Syntax_err.Object_expression errors
 
 and check_object_field node errors =
-  ignore node; errors (* TODO *)
+  ignore node;
+  errors (* TODO *)
 
 (* Pairs *)
 
 and check_pair node errors =
   match get_name node with
-  | "ERROR" | "MISSING" | "NULL" ->
-    format_msg Syntax_err.Key_value_pair node :: errors
+  | "ERROR" | "MISSING" | "NULL" -> format_msg Syntax_err.Key_value_pair node :: errors
   | _ -> errors (* TODO *)
 
 (* Array (expression) *)
@@ -719,8 +723,7 @@ and check_function_expression node errors =
 
 and check_arrow_function node errors =
   match get_name node with
-  | "ERROR" | "MISSING" | "NULL" ->
-    format_msg Syntax_err.Arrow_function node :: errors
+  | "ERROR" | "MISSING" | "NULL" -> format_msg Syntax_err.Arrow_function node :: errors
   | _ -> errors (* TODO *)
 
 (* Generator function *)
@@ -735,24 +738,21 @@ and check_generator_function node errors =
 
 and check_class node errors =
   match get_name node with
-  | "ERROR" | "MISSING" | "NULL" ->
-    format_msg Syntax_err.Class_expression node :: errors
+  | "ERROR" | "MISSING" | "NULL" -> format_msg Syntax_err.Class_expression node :: errors
   | _ -> errors (* TODO *)
 
 (* Meta-property *)
 
 and check_meta_property node errors =
   match get_name node with
-  | "ERROR" | "MISSING" | "NULL" ->
-    format_msg Syntax_err.Meta_property node :: errors
+  | "ERROR" | "MISSING" | "NULL" -> format_msg Syntax_err.Meta_property node :: errors
   | _ -> errors (* TODO *)
 
 (* Call expression *)
 
 and check_call_expression node errors =
   match get_name node with
-  | "ERROR" | "MISSING" | "NULL" ->
-    format_msg Syntax_err.Call_expression node :: errors
+  | "ERROR" | "MISSING" | "NULL" -> format_msg Syntax_err.Call_expression node :: errors
   | _ -> errors (* TODO *)
 
 (* Non-null expression *)
@@ -767,6 +767,5 @@ and check_non_null_expression node errors =
 
 and check_sequence_expression node errors =
   match get_name node with
-  | "ERROR" | "MISSING" | "NULL" ->
-     format_msg Syntax_err.Expression node :: errors
+  | "ERROR" | "MISSING" | "NULL" -> format_msg Syntax_err.Expression node :: errors
   | _ -> check_named_children node check_expression errors
