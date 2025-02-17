@@ -469,8 +469,6 @@ let print_parens ?(comments = []) state node printer ~err =
       ~open_err:Syntax_err.Left_parenthesis
       ~close_err:Syntax_err.Right_parenthesis
 
-(* Concluding a pattern matching with a default printer. Dropping comments. *)
-
 (* Printing the CST *)
 
 let rec print_program ~filename ~file (map : Loc_map.t) node =
@@ -1610,8 +1608,6 @@ and print_type_alias_declaration ?(comments = []) state node =
     in
     make_tree state node children
 
-(* Type parameters *)
-
 and print_type_parameters state node =
   print_chevrons state node print_type_parameter ~err:Syntax_err.Type_parameters
 
@@ -1825,6 +1821,8 @@ and print_expression ?(comments = []) state (node : ts_tree) =
   | "internal_module" -> print_internal_module ~comments state node
   | "type_assertion" -> print_type_assertion state node
   | _ -> print_primary_expression ~comments state node
+
+(* Primary expression *)
 
 and print_primary_expression ?(comments = []) state node =
   match get_name node with
@@ -2328,16 +2326,16 @@ and print_template_string ?(comments = []) state node =
 (* Object *)
 
 and print_object state node =
-  let print state node =
-    match get_name node with
-    | "pair" -> print_pair state node
-    | "spread_element" -> print_spread_element state node
-    | "method_definition" -> print_method_definition state node
-    | "shorthand_property_identifier" ->
-      print_shorthand_property_identifier_pattern state node
-    | _ -> print_error_node state node ~err:Syntax_err.Object_field
-  in
-  print_braces state node print ~err:Syntax_err.Object_expression
+  print_braces state node print_object_field ~err:Syntax_err.Object_expression
+
+and print_object_field state node =
+  match get_name node with
+  | "pair" -> print_pair state node
+  | "spread_element" -> print_spread_element state node
+  | "method_definition" -> print_method_definition state node
+  | "shorthand_property_identifier" ->
+    print_shorthand_property_identifier_pattern state node
+  | _ -> print_error_node state node ~err:Syntax_err.Object_field
 
 (* Pairs *)
 
@@ -3495,13 +3493,13 @@ and print_type_query_member_expression state node =
       child_with_field "property" node ~err:Syntax_err.Property_identifier
     in
     let children =
-      [ mk_child_res print_object_field object_field
+      [ mk_child_res print_object_denotation object_field
       ; mk_child_res print_property_field property_field
       ]
     in
     make_tree state node children
 
-and print_object_field state node =
+and print_object_denotation state node =
   match get_name node with
   | "identifier" -> print_identifier state node
   | "this" -> mk_kwd_this state node
