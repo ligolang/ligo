@@ -43,20 +43,17 @@ let format_msg error node =
 
 (* Some literals *)
 
-let check_identifier node errors =
+let check_leaf node errors ~err =
   match get_name node with
-  | "ERROR" | "MISSING" | "NULL" -> format_msg Syntax_err.Identifier node :: errors
+  | "ERROR" | "MISSING" | "NULL" -> format_msg err node :: errors
   | _ -> errors
 
-let check_string node errors =
-  match get_name node with
-  | "ERROR" | "MISSING" | "NULL" -> format_msg Syntax_err.String_literal node :: errors
-  | _ -> errors
-
-let check_regex node errors =
-  match get_name node with
-  | "ERROR" | "MISSING" | "NULL" -> format_msg Syntax_err.Regexp node :: errors
-  | _ -> errors
+let check_kwd = check_leaf
+let check_identifier = check_leaf ~err:Syntax_err.Identifier
+let check_type_identifier = check_leaf ~err:Syntax_err.Type_name
+let check_string = check_leaf ~err:Syntax_err.String_literal
+let check_regex = check_leaf ~err:Syntax_err.Regexp
+let check_number = check_leaf ~err:Syntax_err.Number_literal
 
 (* Checking forests *)
 
@@ -110,7 +107,7 @@ let check_enclosed node check opening closing ~open_err ~close_err errors =
     |> first_child_named closing node ~err:close_err
     |> check_named_children node check
 
-let check_braces node check ~err errors =
+let check_braces node check err errors =
   match get_name node with
   | "ERROR" | "MISSING" | "NULL" -> format_msg err node :: errors
   | _ ->
@@ -123,7 +120,7 @@ let check_braces node check ~err errors =
       ~close_err:Syntax_err.Right_brace
       errors
 
-let check_chevrons node check ~err errors =
+let check_chevrons node check err errors =
   match get_name node with
   | "ERROR" | "MISSING" | "NULL" -> format_msg err node :: errors
   | _ ->
@@ -136,7 +133,7 @@ let check_chevrons node check ~err errors =
       ~close_err:Syntax_err.Right_chevron
       errors
 
-let check_brackets node check ~err errors =
+let check_brackets node check err errors =
   match get_name node with
   | "ERROR" | "MISSING" | "NULL" -> format_msg err node :: errors
   | _ ->
@@ -149,7 +146,7 @@ let check_brackets node check ~err errors =
       ~close_err:Syntax_err.Right_bracket
       errors
 
-let check_parens node check ~err errors =
+let check_parens node check err errors =
   match get_name node with
   | "ERROR" | "MISSING" | "NULL" -> format_msg err node :: errors
   | _ ->
@@ -259,7 +256,7 @@ and check_expression_statement node errors =
 (* Statement blocks *)
 
 and check_statement_block node errors =
-  check_braces node check_statement ~err:Syntax_err.Block errors
+  check_braces node check_statement Syntax_err.Block errors
 
 (* If statement *)
 
@@ -530,16 +527,16 @@ and check_primary_expression node errors =
   | "member_expression" -> check_member_expression node errors
   | "parenthesized_expression" -> check_parenthesized_expression node errors
   | "identifier" -> check_identifier node errors
-  | "undefined" -> mk_kwd_undefined node errors
-  | "this" -> mk_kwd_this node errors
-  | "super" -> mk_kwd_super node errors
+  | "undefined" -> check_kwd node errors ~err:Syntax_err.Undefined
+  | "this" -> check_kwd node errors ~err:Syntax_err.This
+  | "super" -> check_kwd node errors ~err:Syntax_err.Super
   | "number" -> check_number node errors
   | "string" -> check_string node errors
   | "template_string" -> check_template_string node errors
   | "regex" -> check_regex node errors
-  | "true" -> mk_kwd_true node errors
-  | "false" -> mk_kwd_false node errors
-  | "null" -> mk_kwd_null node errors
+  | "true" -> check_kwd node errors ~err:Syntax_err.True
+  | "false" -> check_kwd node errors ~err:Syntax_err.False
+  | "null" -> check_kwd node errors ~err:Syntax_err.Null
   | "object" -> check_object node errors
   | "array" -> check_array node errors
   | "function_expression" -> check_function_expression node errors
@@ -688,7 +685,7 @@ and check_template_string node errors =
 (* Object *)
 
 and check_object node errors =
-  check_braces node check_object_field ~err:Syntax_err.Object_expression errors
+  check_braces node check_object_field Syntax_err.Object_expression errors
 
 and check_object_field node errors =
   ignore node;
@@ -704,7 +701,7 @@ and check_pair node errors =
 (* Array (expression) *)
 
 and check_array node errors =
-  check_brackets node check_array_cell ~err:Syntax_err.Array errors
+  check_brackets node check_array_cell Syntax_err.Array errors
 
 and check_array_cell node errors =
   match get_name node with
@@ -769,3 +766,575 @@ and check_sequence_expression node errors =
   match get_name node with
   | "ERROR" | "MISSING" | "NULL" -> format_msg Syntax_err.Expression node :: errors
   | _ -> check_named_children node check_expression errors
+
+(* TYPE
+
+   The non-terminals "type" and "primary_type" are supertypes in the
+   TypeScript grammar, which means that they are hidden rules. *)
+
+and check_type node errors =
+  match get_name node with
+  | "function_type" -> check_function_type node errors
+  | "readonly_type" -> check_readonly_type node errors
+  | "constructor_type" -> check_constructor_type node errors
+  | "infer_type" -> check_infer_type node errors
+  (* A couple of aliases *)
+  | "member_expression" ->
+    check_type_query_member_expression_in_type_annotation node errors
+  | "call_expression" -> check_type_query_call_expression_in_type_annotation node errors
+  (* "primary_type" is hidden *)
+  | _ -> check_primary_type node errors
+
+(* Primary type *)
+
+and check_primary_type node errors =
+  match get_name node with
+  | "parenthesized_type" -> check_parenthesized_type node errors
+  | "predefined_type" -> check_predefined_type node errors
+  | "type_identifier" -> check_type_identifier node errors (* Including "const" *)
+  | "nested_type_identifier" -> check_nested_type_identifier node errors
+  | "generic_type" -> check_generic_type node errors
+  | "object_type" -> check_object_type node errors
+  | "array_type" -> check_array_type node errors
+  | "tuple_type" -> check_tuple_type node errors
+  | "flow_maybe_type" -> check_flow_maybe_type node errors
+  | "type_query" -> check_type_query node errors
+  | "index_type_query" -> check_index_type_query node errors
+  | "this_type" -> check_kwd node errors ~err:Syntax_err.This
+  | "existential_type" -> check_existential_type node errors
+  | "literal_type" -> check_literal_type node errors
+  | "lookup_type" -> check_lookup_type node errors
+  | "conditional_type" -> check_conditional_type node errors
+  | "template_literal_type" -> check_template_literal_type node errors
+  | "intersection_type" -> check_intersection_type node errors
+  | "union_type" -> check_union_type node errors
+  | _ -> format_msg Syntax_err.Type_expression node :: errors
+
+(* Type queries in type annotations (expressions) *)
+
+and check_type_query_member_expression_in_type_annotation node errors =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" ->
+    format_msg Syntax_err.Member_or_call node :: errors
+  | _ -> errors (* TODO *)
+
+and check_type_query_property node errors =
+  match get_name node with
+  | "property_identifier" -> check_identifier node errors
+  | "private_property_identifier" -> check_identifier node errors
+  | _ -> format_msg Syntax_err.Property_identifier node :: errors
+
+and check_type_query_call_expression_in_type_annotation node errors =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" ->
+    format_msg Syntax_err.Member_expression node :: errors
+  | _ -> errors (* TODO *)
+
+(* Flow maybe type
+
+   flow_maybe_type: $ => prec.right(seq('?', $.primary_type))
+ *)
+
+and check_flow_maybe_type node errors =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> format_msg Syntax_err.Type node :: errors
+  | _ -> errors (* TODO *)
+
+(* Parenthesized type *)
+
+and check_parenthesized_type node errors =
+  check_parens node check_type Syntax_err.Parenthesized_type errors
+
+(* Predefined type *)
+
+and check_predefined_type node errors =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" ->
+    format_msg Syntax_err.Predefined_type node :: errors
+  | _ -> errors (* TODO *)
+
+(* Nested type identifier *)
+
+and check_nested_type_identifier node errors =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" ->
+    format_msg Syntax_err.Nested_type_identifier node :: errors
+  | _ -> errors (* TODO *)
+
+(* Nested identifier *)
+
+and check_nested_identifier node errors =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" ->
+    format_msg Syntax_err.Identifier_or_member node :: errors
+  | _ -> errors (* TODO *)
+
+(* Generic type *)
+
+and check_generic_type node errors =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" ->
+    format_msg Syntax_err.Generic_type node :: errors
+  | _ -> errors (* TODO *)
+
+(* Object type *)
+
+and check_object_type node errors =
+  check_braces node check_object_type_field Syntax_err.Object_type errors
+
+and check_object_type_field node errors =
+  match get_name node with
+  | "export_statement" -> check_export_statement node errors
+  | "property_signature" -> check_property_signature node errors
+  | "call_signature" -> check_call_signature node errors
+  | "construct_signature" -> check_construct_signature node errors
+  | "index_signature" -> check_index_signature node errors
+  | "method_signature" -> check_method_signature node errors
+  | _ -> format_msg Syntax_err.Object_type_field node :: errors
+
+(* Property signature *)
+
+and check_property_signature node errors =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" ->
+    format_msg Syntax_err.Property_signature node :: errors
+  | _ -> errors (* TODO *)
+
+(* Call signature *)
+
+and check_call_signature node errors =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" ->
+    format_msg Syntax_err.Call_signature node :: errors
+  | _ -> errors (* TODO *)
+
+(* Asserts annotation *)
+
+and check_asserts_annotation node errors =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" ->
+    format_msg Syntax_err.Asserts_annotation node :: errors
+  | _ -> errors (* TODO *)
+
+(* Type predicate annotation *)
+
+and check_type_predicate_annotation node errors =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" ->
+    format_msg Syntax_err.Type_predicate node :: errors
+  | _ -> errors (* TODO *)
+
+(* Construct signature *)
+
+and check_construct_signature node errors =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" ->
+    format_msg Syntax_err.Construct_signature node :: errors
+  | _ -> errors (* TODO *)
+
+(* Index signature *)
+
+and check_index_signature node errors =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" ->
+    format_msg Syntax_err.Index_signature node :: errors
+  | _ -> errors (* TODO *)
+
+(* Method signature *)
+
+and check_method_signature node errors =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" ->
+    format_msg Syntax_err.Method_signature node :: errors
+  | _ -> errors (* TODO *)
+
+(* Array type *)
+
+and check_array_type node errors =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> format_msg Syntax_err.Array_type node :: errors
+  | _ -> errors (* TODO *)
+
+(* Tuple type *)
+
+and check_tuple_type node errors =
+  check_brackets node check_tuple_type_member Syntax_err.Tuple_type errors
+
+and check_tuple_type_member node errors =
+  match get_name node with
+  | "required_parameter" -> check_tuple_parameter node errors (* Alias *)
+  | "optional_parameter" -> check_optional_tuple_parameter node errors (* Alias *)
+  | "optional_type" -> check_optional_type node errors
+  | "rest_type" -> check_rest_type node errors
+  | _ -> check_type node errors (* "type" is a hidden rule *)
+
+and check_tuple_parameter node errors =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" ->
+    format_msg Syntax_err.Tuple_parameter node :: errors
+  | _ -> errors (* TODO *)
+
+and check_optional_tuple_parameter node errors =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" ->
+    format_msg Syntax_err.Optional_tuple_parameter node :: errors
+  | _ -> errors (* TODO *)
+
+(* Type annotation *)
+
+and check_type_annotation node errors =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" ->
+    format_msg Syntax_err.Type_annotation node :: errors
+  | _ -> errors (* TODO *)
+
+(* Rest pattern *)
+
+and check_rest_pattern node errors =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" ->
+    format_msg Syntax_err.Rest_pattern node :: errors
+  | _ -> errors (* TODO *)
+
+(* Optional type *)
+
+and check_optional_type node errors =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" ->
+    format_msg Syntax_err.Optional_type node :: errors
+  | _ -> errors (* TODO *)
+
+(* Rest type *)
+
+and check_rest_type node errors =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" ->
+     format_msg Syntax_err.Rest_type node :: errors
+  | _ -> errors (* TODO *)
+
+(* LHS expression *)
+
+and check_lhs_expression node errors =
+  match get_name node with
+  | "member_expression" -> check_member_expression node errors
+  | "subscript_expression" -> check_subscript_expression node errors
+  | "identifier" -> check_identifier node errors
+  | "undefined" -> check_kwd node errors ~err:Syntax_err.Undefined
+  | "object_pattern" -> check_object_pattern node errors
+  | "array_pattern" -> check_array_pattern node errors
+  | "non_null_expression" -> check_non_null_expression node errors
+  | _ -> format_msg Syntax_err.Expression node :: errors
+
+
+(* Type query *)
+
+and check_type_query node errors =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> format_msg Syntax_err.Type_query node :: errors
+  | _ -> errors (* TODO *)
+
+and check_type_query_subscript_expression node errors =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" ->
+    format_msg Syntax_err.Type_query_subscript node :: errors
+  | _ -> errors (* TODO *)
+
+and check_type_query_member_expression node errors =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" ->
+    format_msg Syntax_err.Type_query_member node :: errors
+  | _ -> errors (* TODO *)
+
+and check_object_denotation node errors =
+  match get_name node with
+  | "identifier" -> check_identifier node errors
+  | "this" -> check_kwd node errors ~err:Syntax_err.This
+  | "subscript_expression" -> check_type_query_subscript_expression node errors
+  | "member_expression" -> check_type_query_member_expression node errors
+  | "call_expression" -> check_type_query_call_expression node errors
+  | _ -> format_msg Syntax_err.Object_denotation node :: errors
+
+and check_property_field node errors = check_type_query_property node errors
+
+and check_type_query_instantiation_expression node errors =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" ->
+    format_msg Syntax_err.Type_query_instantiation node :: errors
+  | _ -> errors (* TODO *)
+
+and check_function_field node errors =
+  match get_name node with
+  | "import" -> check_kwd node errors ~err:Syntax_err.Import
+  | "identifier" -> check_identifier node errors
+  | "member_expression" -> check_type_query_member_expression node errors
+  | "subscript_expression" -> check_type_query_subscript_expression node errors
+  | _ -> format_msg Syntax_err.Function_denotation node :: errors
+
+and check_type_query_call_expression node errors =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" ->
+    format_msg Syntax_err.Type_query_call node :: errors
+  | _ -> errors (* TODO *)
+
+(* Index type query *)
+
+and check_index_type_query node errors =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" ->
+    format_msg Syntax_err.Index_type_query node :: errors
+  | _ -> errors (* TODO *)
+
+(* Existential type *)
+
+and check_existential_type node errors =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" ->
+    format_msg Syntax_err.Existential_type node :: errors
+  | _ -> errors (* TODO *)
+
+(* Literal type *)
+
+and check_literal_type node errors =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" ->
+    format_msg Syntax_err.Literal_type node :: errors
+  | _ -> errors (* TODO *)
+
+(* Look up type
+
+   The non-terminals "type" and "primary_type" are supertypes in the
+   TypeScript grammar, which means that they are hidden rules. *)
+
+and check_lookup_type node errors =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" ->
+    format_msg Syntax_err.Lookup_type node :: errors
+  | _ -> errors (* TODO *)
+
+(* Conditional type *)
+
+and check_conditional_type node errors =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" ->
+    format_msg Syntax_err.Conditional_type node :: errors
+  | _ -> errors (* TODO *)
+
+(* Template literal type *)
+
+and check_template_literal_type node errors =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" ->
+    format_msg Syntax_err.Template_literal_type node :: errors
+  | _ -> errors (* TODO *)
+
+(* Intersection type *)
+
+and check_intersection_type node errors =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" ->
+    format_msg Syntax_err.Intersection_type node :: errors
+  | _ -> errors (* TODO *)
+
+(* Union type *)
+
+and check_union_type node errors =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" ->
+     format_msg Syntax_err.Union_type node :: errors
+  | _ -> errors (* TODO *)
+
+(* Function type *)
+
+and check_function_type node errors =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" ->
+    format_msg Syntax_err.Function_type node :: errors
+  | _ -> errors (* TODO *)
+
+(* Type predicate *)
+
+and check_type_predicate node errors =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" ->
+    format_msg Syntax_err.Type_predicate node :: errors
+  | _ -> errors (* TODO *)
+
+(* Readonly type *)
+
+and check_readonly_type node errors =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" ->
+    format_msg Syntax_err.Readonly_type node :: errors
+  | _ -> errors (* TODO *)
+
+(* Constructor type *)
+
+and check_constructor_type node errors =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" ->
+    format_msg Syntax_err.Constructor_type node :: errors
+  | _ -> errors (* TODO *)
+
+and check_formal_parameters node errors =
+  check_parens node check_formal_parameter Syntax_err.Parameters errors
+
+and check_formal_parameter node errors =
+  match get_name node with
+  | "required_parameter" -> check_required_parameter node errors
+  | "optional_parameter" -> check_optional_parameter node errors
+  | _ -> format_msg Syntax_err.Parameter node :: errors
+
+and check_optional_parameter node errors = check_required_parameter node errors
+
+and check_required_parameter node errors =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" ->
+    format_msg Syntax_err.Required_parameter node :: errors
+  | _ -> errors (* TODO *)
+
+(* Infer type *)
+
+and check_infer_type node errors =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> format_msg Syntax_err.Infer node :: errors
+  | _ -> errors (* TODO *)
+
+(* Decorator *)
+
+and check_decorator node errors =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> format_msg Syntax_err.Decorator node :: errors
+  | _ -> errors (* TODO *)
+
+and check_decorator_member_expression node errors =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" ->
+    format_msg Syntax_err.Decorator_member node :: errors
+  | _ -> errors (* TODO *)
+
+and check_decorator_call_expression node errors =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" ->
+    format_msg Syntax_err.Decorator_call node :: errors
+  | _ -> errors (* TODO *)
+
+and check_decorator_parenthesized_expression node errors =
+  check_parens node check_decorator_in_parens
+    Syntax_err.Parenthesized_decorator errors
+
+and check_decorator_in_parens node errors =
+  match get_name node with
+  | "identifier" -> check_identifier node errors
+  | "member_expression" -> check_decorator_member_expression node errors
+  | _ -> check_call_expression node errors
+
+(* Accessibility modifier *)
+
+and check_accessibility_modifier node errors =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" ->
+    format_msg Syntax_err.Public_private_protected node :: errors
+  | _ -> errors (* TODO *)
+
+(* Override modifier *)
+
+and check_override_modifier node errors =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> format_msg Syntax_err.Override node :: errors
+  | _ -> errors (* TODO *)
+
+(* PATTERN
+
+   The JavasScript tree-sitter grammar have the non-terminal
+   "pattern" be a supertype, that is, a hidden rule. *)
+
+(* Object pattern *)
+
+and check_object_pattern node errors =
+  check_braces node check_object_pattern_field Syntax_err.Object_pattern errors
+
+and check_object_pattern_field node errors =
+  match get_name node with
+  | "pair_pattern" -> check_pair_pattern node errors
+  | "rest_pattern" -> check_rest_pattern node errors
+  | "object_assignment_pattern" -> check_object_assignment_pattern node errors
+  | "shorthand_property_identifier_pattern" ->
+    check_shorthand_property_identifier_pattern node errors
+  | _ -> format_msg Syntax_err.Object_pattern_field node :: errors
+
+(* Pair pattern *)
+
+and check_pair_pattern node errors =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" ->
+    format_msg Syntax_err.Pair_pattern node :: errors
+  | _ -> errors (* TODO *)
+
+(* Assignment pattern *)
+
+and check_assignment_pattern node errors =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" ->
+    format_msg Syntax_err.Assignment_pattern node :: errors
+  | _ -> errors (* TODO *)
+
+(* Property names *)
+
+and check_property_name node errors =
+  match get_name node with
+  | "property_identifier" -> check_identifier node errors
+  | "private_property_identifier" -> check_identifier node errors
+  | "string" -> check_string node errors
+  | "number" -> check_number node errors
+  | "computed_property_name" -> check_computed_property_name node errors
+  | _ -> format_msg Syntax_err.Property_name node :: errors
+
+and check_computed_property_name node errors =
+  check_brackets node check_expression Syntax_err.Computed_property_name errors
+
+and check_shorthand_property_identifier_pattern node errors =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" ->
+     format_msg Syntax_err.Identifier node :: errors
+  | _ -> errors (* TODO *)
+
+(* Object assignment pattern *)
+
+and check_object_assignment_pattern node errors =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" ->
+    format_msg Syntax_err.Object_assignment_pattern node :: errors
+  | _ -> errors (* TODO *)
+
+and check_object_lhs_pattern node errors =
+  match get_name node with
+  | "shorthand_property_identifier_pattern" ->
+    check_shorthand_property_identifier_pattern node errors
+  | _ -> check_destructuring_pattern node errors
+
+(* Rule "_destructuring_pattern" is inlined. *)
+
+and check_destructuring_pattern node errors =
+  match get_name node with
+  | "object_pattern" -> check_object_pattern node errors
+  | "array_pattern" -> check_array_pattern node errors
+  | _ -> format_msg Syntax_err.Object_or_array_pattern node :: errors
+
+(* Array pattern *)
+
+and check_array_pattern node errors =
+  check_brackets node check_array_pattern_cell Syntax_err.Array_pattern errors
+
+and check_array_pattern_cell node errors =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" ->
+    format_msg Syntax_err.Array_cell_pattern node :: errors
+  | "assignment_pattern" -> check_assignment_pattern node errors
+  | _ -> check_pattern node errors (* hidden rule *)
+
+(* General patterns (hidden rule) *)
+
+and check_pattern node errors =
+  match get_name node with
+  | "rest_pattern" -> check_rest_pattern node errors
+  | _ -> check_lhs_expression node errors
