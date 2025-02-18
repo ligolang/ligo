@@ -2825,6 +2825,31 @@ and print_type state node =
   (* "primary_type" is hidden *)
   | _ -> print_primary_type state node
 
+(* Primary type *)
+
+and print_primary_type state node =
+  match get_name node with
+  | "parenthesized_type" -> print_parenthesized_type state node
+  | "predefined_type" -> print_predefined_type state node
+  | "type_identifier" -> print_type_identifier state node (* Including "const" *)
+  | "nested_type_identifier" -> print_nested_type_identifier state node
+  | "generic_type" -> print_generic_type state node
+  | "object_type" -> print_object_type state node
+  | "array_type" -> print_array_type state node
+  | "tuple_type" -> print_tuple_type state node
+  | "flow_maybe_type" -> print_flow_maybe_type state node
+  | "type_query" -> print_type_query state node
+  | "index_type_query" -> print_index_type_query state node
+  | "this_type" -> mk_kwd_this state node
+  | "existential_type" -> print_existential_type state node
+  | "literal_type" -> print_literal_type state node
+  | "lookup_type" -> print_lookup_type state node
+  | "conditional_type" -> print_conditional_type state node
+  | "template_literal_type" -> print_template_literal_type state node
+  | "intersection_type" -> print_intersection_type state node
+  | "union_type" -> print_union_type state node
+  | _ -> print_error_node state node ~err:Syntax_err.Type_expression
+
 (* Type queries in type annotations (expressions) *)
 
 and print_type_query_member_expression_in_type_annotation state node =
@@ -2880,31 +2905,6 @@ and print_type_query_call_expression_in_type_annotation state node =
       ]
     in
     make_tree state node children
-
-(* Primary type *)
-
-and print_primary_type state node =
-  match get_name node with
-  | "parenthesized_type" -> print_parenthesized_type state node
-  | "predefined_type" -> print_predefined_type state node
-  | "type_identifier" -> print_type_identifier state node (* Including "const" *)
-  | "nested_type_identifier" -> print_nested_type_identifier state node
-  | "generic_type" -> print_generic_type state node
-  | "object_type" -> print_object_type state node
-  | "array_type" -> print_array_type state node
-  | "tuple_type" -> print_tuple_type state node
-  | "flow_maybe_type" -> print_flow_maybe_type state node
-  | "type_query" -> print_type_query state node
-  | "index_type_query" -> print_index_type_query state node
-  | "this_type" -> mk_kwd_this state node
-  | "existential_type" -> print_existential_type state node
-  | "literal_type" -> print_literal_type state node
-  | "lookup_type" -> print_lookup_type state node
-  | "conditional_type" -> print_conditional_type state node
-  | "template_literal_type" -> print_template_literal_type state node
-  | "intersection_type" -> print_intersection_type state node
-  | "union_type" -> print_union_type state node
-  | _ -> print_error_node state node ~err:Syntax_err.Type_expression
 
 (* Flow maybe type
 
@@ -3055,6 +3055,8 @@ and print_object_type_field state node =
   | "method_signature" -> print_method_signature state node
   | _ -> print_error_node state node ~err:Syntax_err.Object_type_field
 
+(* Property signature *)
+
 and print_property_signature state node =
   match get_name node with
   | "ERROR" | "MISSING" | "NULL" ->
@@ -3128,8 +3130,12 @@ and print_asserts state node =
 (* Type predicate annotation *)
 
 and print_type_predicate_annotation state node =
-  let predicate = child_ranked 1 node ~err:Syntax_err.Type_predicate in
-  make_unary_res state node print_type_predicate predicate
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" ->
+    print_error_node state node ~err:Syntax_err.Type_predicate
+  | _ ->
+     let predicate = child_ranked 1 node ~err:Syntax_err.Type_predicate in
+     make_unary_res state node print_type_predicate predicate
 
 (* Construct signature *)
 
@@ -3404,6 +3410,29 @@ and print_rest_pattern state node =
     in
     make_tree state node children
 
+(* Optional type *)
+
+and print_optional_type state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" ->
+    print_error_node state node ~err:Syntax_err.Optional_type
+  | _ ->
+    let child = named_child_ranked 0 node ~err:Syntax_err.Optional_type in
+    make_unary_res state node print_type child
+
+(* Rest type *)
+
+and print_rest_type state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Syntax_err.Rest_type
+  | _ ->
+    let sym_ellipsis = first_child_named "..." node ~err:Syntax_err.Ellipsis
+    and type_child = named_child_ranked 0 node ~err:Syntax_err.Type_expression in
+    let children =
+      [ mk_child_res mk_sym_ellipsis sym_ellipsis; mk_child_res print_type type_child ]
+    in
+    make_tree state node children
+
 (* LHS expression *)
 
 and print_lhs_expression state node =
@@ -3416,25 +3445,6 @@ and print_lhs_expression state node =
   | "array_pattern" -> print_array_pattern state node
   | "non_null_expression" -> print_non_null_expression state node
   | _ -> print_error_node state node ~err:Syntax_err.Expression
-
-and print_optional_type state node =
-  match get_name node with
-  | "ERROR" | "MISSING" | "NULL" ->
-    print_error_node state node ~err:Syntax_err.Optional_type
-  | _ ->
-    let child = named_child_ranked 0 node ~err:Syntax_err.Optional_type in
-    make_unary_res state node print_type child
-
-and print_rest_type state node =
-  match get_name node with
-  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Syntax_err.Rest_type
-  | _ ->
-    let sym_ellipsis = first_child_named "..." node ~err:Syntax_err.Ellipsis
-    and type_child = named_child_ranked 0 node ~err:Syntax_err.Type_expression in
-    let children =
-      [ mk_child_res mk_sym_ellipsis sym_ellipsis; mk_child_res print_type type_child ]
-    in
-    make_tree state node children
 
 (* Type query *)
 
@@ -3725,6 +3735,8 @@ and print_function_type state node =
     in
     make_tree state node children
 
+(* Type predicate *)
+
 and print_type_predicate state node =
   match get_name node with
   | "ERROR" | "MISSING" | "NULL" ->
@@ -3838,6 +3850,26 @@ and mk_child_initializer_opt node =
   | None -> []
   | Some sym_equal -> [ mk_child_initializer (Ok sym_equal) node ]
 
+(* Infer type *)
+
+and print_infer_type state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Syntax_err.Infer
+  | _ ->
+    let kwd_infer = first_child_named "infer" node ~err:Syntax_err.Infer
+    and type_identifier_child =
+      child_ranked 1 node ~err:Syntax_err.Identifier (* name "type_identifier"? *)
+    and kwd_extends = first_child_named_opt "extends" node
+    and type_child = child_ranked_opt 3 node in
+    let children =
+      [ mk_child_res mk_kwd_infer kwd_infer
+      ; mk_child_res print_identifier type_identifier_child
+      ; mk_child_opt mk_kwd_extends kwd_extends
+      ; mk_child_opt print_type type_child
+      ]
+    in
+    make_tree state node children
+
 (* Decorator *)
 
 and print_decorator state node =
@@ -3901,13 +3933,14 @@ and print_decorator_call_expression state node =
     make_tree state node children
 
 and print_decorator_parenthesized_expression ?comments state node =
-  let print state node =
-    match get_name node with
-    | "identifier" -> print_identifier state node
-    | "member_expression" -> print_decorator_member_expression state node
-    | _ -> print_call_expression state node
-  in
-  print_parens ?comments state node print ~err:Syntax_err.Parenthesized_decorator
+  print_parens ?comments state node print_decorator_in_parens
+    ~err:Syntax_err.Parenthesized_decorator
+
+and print_decorator_in_parens state node =
+  match get_name node with
+  | "identifier" -> print_identifier state node
+  | "member_expression" -> print_decorator_member_expression state node
+  | _ -> print_call_expression state node
 
 (* Accessibility modifier *)
 
@@ -3934,26 +3967,6 @@ and print_override_modifier state node =
   | _ ->
     let child = child_ranked 0 node ~err:Syntax_err.Override in
     make_unary_res state node mk_kwd_override child
-
-(* Infer type *)
-
-and print_infer_type state node =
-  match get_name node with
-  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Syntax_err.Infer
-  | _ ->
-    let kwd_infer = first_child_named "infer" node ~err:Syntax_err.Infer
-    and type_identifier_child =
-      child_ranked 1 node ~err:Syntax_err.Identifier (* name "type_identifier"? *)
-    and kwd_extends = first_child_named_opt "extends" node
-    and type_child = child_ranked_opt 3 node in
-    let children =
-      [ mk_child_res mk_kwd_infer kwd_infer
-      ; mk_child_res print_identifier type_identifier_child
-      ; mk_child_opt mk_kwd_extends kwd_extends
-      ; mk_child_opt print_type type_child
-      ]
-    in
-    make_tree state node children
 
 (* PATTERN
 
