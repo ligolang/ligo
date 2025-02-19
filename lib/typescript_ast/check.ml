@@ -13,9 +13,13 @@ module Syntax_err = Typescript_ast.Syntax_err
 module Wrap = Lexing_shared.Wrap
 open Syntax_err
 
+(* Utilities *)
+
+let sprintf = Printf.sprintf
+
 (* Monadic let-binder for result values *)
 
-let ( let* ) v f = Core.Result.bind v ~f
+let ( let* ) v f = Result.bind v ~f
 
 (* Utilities *)
 
@@ -37,10 +41,10 @@ let no_colour = true
 
 let format_msg error node =
   let region = !get_region node in
-  Printf.sprintf
+  sprintf
     "%s%s"
     (Format.asprintf "%a" (Snippet.pp_lift ~no_colour) region)
-    (to_string error)
+    (Syntax_err.to_string error)
 
 (* Some literals *)
 
