@@ -7,14 +7,21 @@ let debug = true
 (* Dependencies and scopes *)
 
 module Region = Simple_utils.Region
+module Snippet = Simple_utils.Snippet
 module Wrap = Lexing_shared.Wrap
 module Ts_wrap = Typescript_ast.Ts_wrap
 module Loc_map = Typescript_ast.Loc_map
+module Syntax_err = Typescript_ast.Syntax_err
 module Ast = Typescript_ast.Ast
 module Lexeme = Typescript_ast.Lexeme
 module Number = Typescript_ast.Number
+open Syntax_err
 open Ts_wrap
 open Ast
+
+(* Utilities *)
+
+let sprintf = Printf.sprintf
 
 (* Monadic let-binder for result values *)
 
@@ -39,42 +46,67 @@ let get_region : (Ts_wrap.ts_tree -> Region.t) ref =
 
 let input : Buffer.t ref = ref (Buffer.create (80 * 100))
 
+(* Formatting error messages (snippets) *)
+
+let no_colour = true
+
+let format_msg error node =
+  let region = !get_region node in
+  sprintf
+    "%s%s"
+    (Format.asprintf "%a" (Snippet.pp_lift ~no_colour) region)
+    (Syntax_err.to_string error)
+
 (* Utilities *)
 
 let wrap decode ?comments node : ('a Wrap.t, _) result =
   let* decoded_node = decode ?comments node in
   Ok (Wrap.make decoded_node (!get_region node))
 
-let named_child_ranked = Ts_wrap.named_child_ranked ~get_region
-let child_ranked = Ts_wrap.child_ranked ~get_region
+(* Tayloring the fetching of a field, with an error message in case of
+   failure. *)
 
-(*let child_with_field = Ts_wrap.child_with_field ~get_region*)
-
-let child_with_field ?(msg = "") field node =
+let child_with_field field node ~err =
   match Ts_wrap.child_with_field ~get_region field node with
-  | Ok child -> Ok child
+  | Ok _ as ok -> ok
   | Error () ->
     let region = !get_region node in
     let region =
-      if Region.is_empty region then "" else " (" ^ region#compact `Byte ^ ")"
+      if Region.is_empty region then "empty region" else region#compact `Byte
     in
     let msg =
       if debug
       then (
         let name = get_name node in
         if String.equal name "NULL"
-        then sprintf "NULL parent of field %S." field
-        else sprintf "ERROR: Node %S%s is missing the field %S." name region field)
-      else sprintf "ERROR: %s%s" msg region
+        then sprintf "ERROR: NULL parent of field %S." field
+        else sprintf "ERROR: Node %S (%s) is missing the field %S." name region field)
+      else format_msg err node
     in
     Error msg
+
+(* Wrapping the fetching of nodes *)
+
+let first_child_named name node ~err =
+  Ts_wrap.first_child_named name node ~msg:(format_msg err node)
+
+let child_ranked index node ~err =
+  Ts_wrap.child_ranked index node ~msg:(format_msg err node)
+
+let named_child_ranked index node ~err =
+  Ts_wrap.named_child_ranked index node ~msg:(format_msg err node)
+
+let last_child node ~err = Ts_wrap.last_child node ~msg:(format_msg err node)
+let next_sibling node ~err = Ts_wrap.next_sibling node ~msg:(format_msg err node)
 
 (* Region of a node as a string *)
 
 let error fun_name node =
   let region = (!get_region node)#compact `Byte
   and node_name = get_name node in
-  Error (Printf.sprintf "%s: %S (%s)" fun_name node_name region)
+  Error (sprintf "%s: %S (%s)" fun_name node_name region)
+
+let mk_err err node = Error (format_msg err node)
 
 (* Decoding literals *)
 
@@ -92,7 +124,6 @@ let make_node ?comments node : string wrap =
   and comments = dec_comments ?comments node in
   Wrap.make ~comments root region
 
-let make_kwd ?comments node : keyword = make_node ?comments node
 let make_sym ?comments node : symbol = make_node ?comments node
 let dec_identifier ?comments node : identifier = make_node ?comments node
 let dec_string ?comments node : string_literal = make_node ?comments node
@@ -104,6 +135,101 @@ let dec_number ?(comments = []) node : (number, _) result =
   let lexbuf = Lexing.from_string lexeme
   and comments = dec_comments ~comments node in
   Number.scan comments region lexbuf
+
+(* Keywords *)
+
+let make_kwd ?comments node : keyword = make_node ?comments node
+
+(*
+let make_kwd ?comments node ~err =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> Error err
+  | _ -> Ok (make_node ?comments node)
+
+let mk_kwd_infer = make_kwd ~err:Infer
+let mk_kwd_keyof = make_kwd ~err:Keyof
+let mk_kwd_meta = make_kwd ~err:Meta
+let mk_kwd_target = make_kwd ~err:Target
+let mk_kwd_false = make_kwd ~err:False
+let mk_kwd_true = make_kwd ~err:True
+let mk_kwd_super = make_kwd ~err:Super
+let mk_kwd_null = make_kwd ~err:Null
+let mk_kwd_satisfies = make_kwd ~err:Satisfies
+let mk_kwd_yield = make_kwd ~err:Yield
+let mk_kwd_new = make_kwd ~err:New
+let mk_kwd_instanceof = make_kwd ~err:Instanceof
+let mk_kwd_implements = make_kwd ~err:Implements
+let mk_kwd_assert = make_kwd ~err:Assert
+let mk_kwd_as = make_kwd ~err:As
+let mk_kwd_async = make_kwd ~err:Async
+let mk_kwd_function = make_kwd ~err:Function
+let mk_kwd_override = make_kwd ~err:Override
+let mk_kwd_readonly = make_kwd ~err:Readonly
+let mk_kwd_public = make_kwd ~err:Public
+let mk_kwd_private = make_kwd ~err:Private
+let mk_kwd_protected = make_kwd ~err:Protected
+let mk_kwd_set = make_kwd ~err:Set
+let mk_kwd_get = make_kwd ~err:Get
+let mk_kwd_all = make_kwd ~err:All
+let mk_kwd_static = make_kwd ~err:Static
+let mk_kwd_this = make_kwd ~err:This
+let mk_kwd_is = make_kwd ~err:Is
+let mk_kwd_class = make_kwd ~err:Class
+let mk_kwd_const = make_kwd ~err:Const
+let mk_kwd_constraint = make_kwd ~err:Constraint
+let mk_kwd_let = make_kwd ~err:Let
+let mk_kwd_undefined = make_kwd ~err:Undefined
+let mk_kwd_abstract = make_kwd ~err:Abstract
+let mk_kwd_declare = make_kwd ~err:Declare
+let mk_kwd_accessor = make_kwd ~err:Accessor
+let mk_kwd_global = make_kwd ~err:Global
+let mk_kwd_module = make_kwd ~err:Module
+let mk_kwd_enum = make_kwd ~err:Enum
+let mk_kwd_import = make_kwd ~err:Import
+let mk_kwd_interface = make_kwd ~err:Interface
+let mk_kwd_extends = make_kwd ~err:Extends
+let mk_kwd_namespace = make_kwd ~err:Namespace
+let mk_kwd_type = make_kwd ~err:Type
+let mk_kwd_using = make_kwd ~err:Using
+let mk_kwd_return = make_kwd ~err:Return
+let mk_kwd_switch = make_kwd ~err:Switch
+let mk_kwd_case = make_kwd ~err:Case
+let mk_kwd_default = make_kwd ~err:Default
+let mk_kwd_throw = make_kwd ~err:Throw
+let mk_kwd_while = make_kwd ~err:While
+let mk_kwd_with = make_kwd ~err:With
+let mk_kwd_any = make_kwd ~err:Any
+let mk_kwd_number = make_kwd ~err:Number
+let mk_kwd_boolean = make_kwd ~err:Boolean
+let mk_kwd_string = make_kwd ~err:String
+let mk_kwd_symbol = make_kwd ~err:Symbol
+let mk_kwd_unique_symbol = make_kwd ~err:Unique_symbol
+let mk_kwd_void = make_kwd ~err:Void
+let mk_kwd_unknown = make_kwd ~err:Unknown
+let mk_kwd_never = make_kwd ~err:Never
+let mk_kwd_object = make_kwd ~err:Object
+let mk_kwd_asserts = make_kwd ~err:Asserts
+let mk_kwd_debugger = make_kwd ~err:Debugger
+let mk_kwd_break = make_kwd ~err:Break
+let mk_kwd_continue = make_kwd ~err:Continue
+let mk_kwd_do = make_kwd ~err:Do
+let mk_kwd_export = make_kwd ~err:Export
+let mk_kwd_for = make_kwd ~err:For
+let mk_kwd_from = make_kwd ~err:From
+let mk_kwd_await = make_kwd ~err:Await
+let mk_kwd_var = make_kwd ~err:Var
+let mk_kwd_in = make_kwd ~err:In
+let mk_kwd_of = make_kwd ~err:Of
+let mk_kwd_if = make_kwd ~err:If
+let mk_kwd_else = make_kwd ~err:Else
+let mk_kwd_typeof = make_kwd ~err:Typeof
+let mk_kwd_try = make_kwd ~err:Try
+let mk_kwd_catch = make_kwd ~err:Catch
+let mk_kwd_require = make_kwd ~err:Require
+let mk_kwd_delete = make_kwd ~err:Delete
+let mk_kwd_finally = make_kwd ~err:Finally
+let mk_kwd_instanceof = make_kwd ~err:Instanceof
+ *)
 
 (* Optional nodes *)
 
@@ -175,99 +301,179 @@ let wrap_ne_list_opt_of_children ?(comments = []) decode children
 
 (* Decoding enclosed unique child *)
 
-let dec_enclosed ?(comments = []) node decode opening closing
+let dec_enclosed ?(comments = []) node decode opening closing ~open_err ~close_err ~err
     : ('a enclosed wrap, _) result
   =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> mk_err err node
+  | _ ->
   let comments = comments @ prev_comments node in
-  let* opening = first_child_named opening node in
+  let* opening = first_child_named opening node ~err:open_err in
   let opening = make_sym ~comments opening in
-  let* closing = first_child_named closing node in
+  let* closing = first_child_named closing node ~err:close_err in
   let closing = make_sym closing in
-  let* child = (* We assume one child *) child_ranked 1 node in
+  let* child = (* We assume one child *) child_ranked 1 node ~err in
   let* contents = decode child in
   let region = !get_region node in
   Ok (Wrap.make { opening; contents; closing } region)
 
-(*
-  let dec_braces ?comments node decode : ('a braces, _) result =
-  let* braces = dec_enclosed ?comments node decode "{" "}" in
-  Ok (Braces braces)
-
-let dec_chevrons ?comments node decode : ('a chevrons, _) result =
-  let* chevrons = dec_enclosed ?comments node decode "<" ">" in
-  Ok (Chevrons chevrons)
-*)
-
-let dec_brackets ?comments node decode : ('a brackets, _) result =
-  let* brackets = dec_enclosed ?comments node decode "[" "]" in
+let dec_brackets ?comments node decode ~err : ('a brackets, _) result =
+  let* brackets =
+    dec_enclosed
+      ?comments
+      node
+      decode
+      "["
+      "]"
+      ~open_err:Left_bracket
+      ~close_err:Right_bracket
+      ~err
+  in
   Ok (Brackets brackets)
 
-let dec_parens ?comments node decode : ('a parens, _) result =
-  let* parens = dec_enclosed ?comments node decode "(" ")" in
+let dec_parens ?comments node decode ~err : ('a parens, _) result =
+  let* parens =
+    dec_enclosed
+      ?comments
+      node
+      decode
+      "("
+      ")"
+      ~open_err:Left_parenthesis
+      ~close_err:Right_parenthesis
+      ~err
+  in
   Ok (Parens parens)
 
 (* Decoding enclosed lists of children *)
 
-let dec_enclosed_list ?(comments = []) node decode opening closing
+let dec_enclosed_list ?(comments = []) node decode opening closing ~open_err ~close_err ~err
     : ('a list enclosed wrap, _) result
   =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> mk_err err node
+  | _ ->
   let comments = comments @ prev_comments node in
-  let* opening = first_child_named opening node in
+  let* opening = first_child_named opening node ~err:open_err in
   let opening = make_sym ~comments opening in
-  let* closing = first_child_named closing node in
+  let* closing = first_child_named closing node ~err:close_err in
   let closing = make_sym closing in
   let clauses = collect_named_children node in
   let* contents = list_of_children decode clauses in
   let region = !get_region node in
   Ok (Wrap.make { opening; contents; closing } region)
 
-let dec_list_in_braces ?comments node decode : ('a list braces, _) result =
-  let* list = dec_enclosed_list ?comments node decode "{" "}" in
-  Ok (Braces list)
+let dec_list_in_braces ?comments node decode ~err : ('a list braces, _) result =
+    let* list =
+      dec_enclosed_list
+        ?comments
+        node
+        decode
+        "{"
+        "}"
+        ~open_err:Left_brace
+        ~close_err:Right_brace
+        ~err
+    in
+    Ok (Braces list)
 
-let dec_list_in_chevrons ?comments node decode : ('a list chevrons, _) result =
-  let* list = dec_enclosed_list ?comments node decode "<" ">" in
-  Ok (Chevrons list)
+let dec_list_in_chevrons ?comments node decode ~err : ('a list chevrons, _) result =
+    let* list =
+      dec_enclosed_list
+        ?comments
+        node
+        decode
+        "<"
+        ">"
+        ~open_err:Left_chevron
+        ~close_err:Right_chevron
+        ~err
+    in
+    Ok (Chevrons list)
 
-let dec_list_in_brackets ?comments node decode : ('a list brackets, _) result =
-  let* list = dec_enclosed_list ?comments node decode "[" "]" in
-  Ok (Brackets list)
+let dec_list_in_brackets ?comments node decode ~err : ('a list brackets, _) result =
+    let* list =
+      dec_enclosed_list
+        ?comments
+        node
+        decode
+        "["
+        "]"
+        ~open_err:Left_bracket
+        ~close_err:Right_bracket
+        ~err
+    in
+    Ok (Brackets list)
 
-let dec_list_in_parens ?comments node decode : ('a list parens, _) result =
-  let* list = dec_enclosed_list ?comments node decode "(" ")" in
-  Ok (Parens list)
+let dec_list_in_parens ?comments node decode ~err : ('a list parens, _) result =
+    let* list =
+      dec_enclosed_list
+        ?comments
+        node
+        decode
+        "("
+        ")"
+        ~open_err:Left_parenthesis
+        ~close_err:Right_parenthesis
+        ~err
+    in
+    Ok (Parens list)
 
 (* Decoding enclosed non-empty lists *)
 
-let dec_enclosed_ne_list ?(comments = []) node decode error opening closing
+let dec_enclosed_ne_list
+    ?(comments = [])
+    node
+    decode
+    error
+    opening
+    closing
+    ~open_err
+    ~close_err
+    ~err
     : ('a ne_list enclosed wrap, _) result
   =
-  let comments = comments @ prev_comments node in
-  let* opening = first_child_named opening node in
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> mk_err err node
+  | _ ->
+ let comments = comments @ prev_comments node in
+  let* opening = first_child_named opening node ~err:open_err in
   let opening = make_sym ~comments opening in
-  let* closing = first_child_named closing node in
+  let* closing = first_child_named closing node ~err:close_err in
   let closing = make_sym closing in
   let clauses = collect_named_children node in
   let* contents = ne_list_of_children decode error clauses in
   let region = !get_region node in
   Ok (Wrap.make { opening; contents; closing } region)
 
-(*
-let dec_ne_list_in_braces ?comments node decode : ('a ne_list braces, _) result =
-  let* braces = dec_enclosed_ne_list ?comments node decode "{" "}" in
-  Ok (Braces braces)
-
-let dec_ne_list_in_parens ?comments node decode : ('a ne_list parens, _) result =
-  let* parens = dec_enclosed_ne_list ?comments node decode "(" ")" in
-  Ok (Parens parens)
-*)
-
-let dec_ne_list_in_chevrons ?comments node decode error : ('a ne_list chevrons, _) result =
-  let* chevrons = dec_enclosed_ne_list ?comments node decode error "<" ">" in
+let dec_ne_list_in_chevrons ?comments node decode error ~err : ('a ne_list chevrons, _) result =
+  let* chevrons =
+    dec_enclosed_ne_list
+      ?comments
+      node
+      decode
+      error
+      "<"
+      ">"
+      ~open_err:Left_chevron
+      ~close_err:Right_chevron
+      ~err
+  in
   Ok (Chevrons chevrons)
 
-let dec_ne_list_in_brackets ?comments node decode error : ('a ne_list brackets, _) result =
-  let* brackets = dec_enclosed_ne_list ?comments node decode error "[" "]" in
+let dec_ne_list_in_brackets ?comments node decode error ~err : ('a ne_list brackets, _) result =
+  let* brackets =
+    dec_enclosed_ne_list
+      ?comments
+      node
+      decode
+      error
+      "["
+      "]"
+      ~open_err:Left_bracket
+      ~close_err:Right_bracket
+      ~err
+  in
   Ok (Brackets brackets)
 
 (* STATEMENTS
@@ -276,8 +482,11 @@ let dec_ne_list_in_brackets ?comments node decode error : ('a ne_list brackets, 
    "statement" be a supertype, that is, a hidden rule. *)
 
 let rec dec_statements ?(comments = []) node : (statements, _) result =
-  let children = collect_named_children node in
-  wrap_ne_list_opt_of_children ~comments dec_statement children
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> mk_err Statement node
+  | _ ->
+    let children = collect_named_children node in
+    wrap_ne_list_opt_of_children ~comments dec_statement children
 
 and dec_statement ?(comments = []) node : (statement, _) result =
   match get_name node with
@@ -339,60 +548,53 @@ and dec_statement ?(comments = []) node : (statement, _) result =
     let* declaration = dec_declaration ~comments node in
     Ok (S_declaration_statement declaration)
 
-(* Labeled statement *)
-
-and dec_labeled_statement ?(comments = []) node : (labeled_statement, _) result =
-  let* label_field = child_with_field "label" node in
-  let label = dec_identifier ~comments label_field in
-  let* sym_colon = first_child_named ":" node in
-  let sym_colon = make_sym sym_colon in
-  let* body_field = child_with_field "body" node in
-  let* body = dec_statement body_field in
-  Ok { label; sym_colon; body }
-
 (* Export statement *)
 
 and dec_export_statement ?(comments = []) node : (export_statement, _) result =
-  let comments = comments @ prev_comments node in
-  let* kwd_export = first_child_named "export" node in
-  let* after_export = next_sibling kwd_export in
-  let kwd_export = make_kwd ~comments kwd_export in
-  let* export_kind =
-    match get_name after_export with
-    | "*" ->
-      let* kwd_from = first_child_named "from" node in
-      let* from_clause = dec_from_clause node kwd_from in
-      Ok (Export_from from_clause)
-    | "namespace_export" ->
-      let* kwd_from = first_child_named "from" node in
-      let* namespace_export = dec_namespace_export after_export in
-      let* from_clause = dec_from_clause node kwd_from in
-      Ok (Export_as (namespace_export, from_clause))
-    | "export_clause" ->
-      let kwd_from = first_child_named_opt "from" node in
-      let* export_clause = dec_export_clause after_export in
-      let* from_clause = make_opt_res (dec_from_clause node) kwd_from in
-      Ok (Export_clause (export_clause, from_clause))
-    | "default" -> dec_export_default after_export node
-    | "type" ->
-      let* export_type = dec_export_type after_export node in
-      Ok (Export_type export_type)
-    | "=" ->
-      let* expression = next_sibling after_export in
-      let* expression = dec_expression expression in
-      Ok (Export_equal (make_sym after_export, expression))
-    | "as" ->
-      let* kwd_namespace = first_child_named "namespace" node in
-      let* identifier = first_child_named "identifier" node in
-      Ok (Export_as_namespace (make_kwd kwd_namespace, dec_identifier identifier))
-    | _ ->
-      let* export_declaration = dec_export_declaration after_export node in
-      Ok (Export_declaration export_declaration)
-  in
-  Ok { kwd_export; export_kind }
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> mk_err Export node
+  | _ ->
+    let comments = comments @ prev_comments node in
+    (* Decorators? *)
+    let* kwd_export = first_child_named "export" node ~err:Export in
+    let* after_export = next_sibling kwd_export ~err:Export_clause_or_all in
+    let kwd_export = make_kwd ~comments kwd_export in
+    let* export_kind =
+      match get_name after_export with
+      | "*" ->
+        let* kwd_from = first_child_named "from" node ~err:From in
+        let* from_clause = dec_from_clause node kwd_from in
+        Ok (Export_from from_clause)
+      | "namespace_export" ->
+        let* kwd_from = first_child_named "from" node ~err:From in
+        let* namespace_export = dec_namespace_export after_export in
+        let* from_clause = dec_from_clause node kwd_from in
+        Ok (Export_as (namespace_export, from_clause))
+      | "export_clause" ->
+        let kwd_from = first_child_named_opt "from" node in
+        let* export_clause = dec_export_clause after_export in
+        let* from_clause = make_opt_res (dec_from_clause node) kwd_from in
+        Ok (Export_clause (export_clause, from_clause))
+      | "default" -> dec_export_default after_export node
+      | "type" ->
+        let* export_type = dec_export_type after_export node in
+        Ok (Export_type export_type)
+      | "=" ->
+        let* expression = next_sibling after_export ~err:Expression in
+        let* expression = dec_expression expression in
+        Ok (Export_equal (make_sym after_export, expression))
+      | "as" ->
+        let* kwd_namespace = first_child_named "namespace" node ~err:Namespace in
+        let* identifier = first_child_named "identifier" node ~err:Identifier in
+        Ok (Export_as_namespace (make_kwd kwd_namespace, dec_identifier identifier))
+      | _ ->
+        let* export_declaration = dec_export_declaration after_export node in
+        Ok (Export_declaration export_declaration)
+    in
+    Ok { kwd_export; export_kind }
 
 and dec_export_type after_export node : (export_type, _) result =
-  let* export_clause = next_sibling after_export in
+  let* export_clause = next_sibling after_export ~err:Export_clause in
   let kwd_type = make_kwd after_export in
   let* export_clause = dec_export_clause export_clause in
   let kwd_from = first_child_named_opt "from" node in
@@ -410,11 +612,11 @@ and dec_decorated : 'a. ts_forest -> 'a -> ('a decorated, _) result =
   Ok { decorators; decorated }
 
 and dec_export_clause node : (export_clause, _) result =
-  dec_list_in_braces node dec_export_specifier
+  dec_list_in_braces node dec_export_specifier ~err:Export_clause
 
 and dec_export_specifier ?(comments = []) node : (export_specifier, _) result =
   let comments = comments @ prev_comments node in
-  let* name_field = child_with_field "name" node in
+  let* name_field = child_with_field "name" node ~err:Identifier_or_string in
   let* name = dec_module_export_name ~comments name_field in
   let alias_field = child_with_field_opt "alias" node in
   let* alias = make_opt_res dec_module_export_name alias_field in
@@ -422,7 +624,7 @@ and dec_export_specifier ?(comments = []) node : (export_specifier, _) result =
     match alias with
     | None -> Ok None
     | Some alias ->
-      let* kwd_as = first_child_named "as" node in
+      let* kwd_as = first_child_named "as" node ~err:As in
       Ok (Some (make_kwd kwd_as, alias))
   in
   Ok ({ name; alias } : export_specifier)
@@ -431,28 +633,31 @@ and dec_module_export_name ?(comments = []) node : (module_export_name, _) resul
   match get_name node with
   | "identifier" -> Ok (Export_ident (dec_identifier ~comments node))
   | "string" -> Ok (Export_string (dec_string ~comments node))
-  | _ -> error "dec_module_export_name" node
+  | _ -> mk_err Identifier_or_string node
 
 and dec_from_clause node kwd_from : (from_clause, _) result =
-  let* source_field = child_with_field "source" node in
+  let* source_field = child_with_field "source" node ~err:File_path in
   Ok (make_kwd kwd_from, dec_string source_field)
 
 and dec_namespace_export ?(comments = []) node : (namespace_export, _) result =
-  let comments = comments @ prev_comments node in
-  let* sym_star = first_child_named "*" node in
-  let sym_star = make_sym ~comments sym_star in
-  let* kwd_as = first_child_named "as" node in
-  let* module_export_name = next_sibling kwd_as in
-  let kwd_as = make_kwd kwd_as in
-  let* namespace_name = dec_module_export_name module_export_name in
-  Ok { sym_star; kwd_as; namespace_name }
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> mk_err Namespace_export node
+  | _ ->
+    let comments = comments @ prev_comments node in
+    let* sym_star = first_child_named "*" node ~err:Asterisk in
+    let sym_star = make_sym ~comments sym_star in
+    let* kwd_as = first_child_named "as" node ~err:As in
+    let* module_export_name = next_sibling kwd_as ~err:Identifier_or_string in
+    let kwd_as = make_kwd kwd_as in
+    let* namespace_name = dec_module_export_name module_export_name in
+    Ok { sym_star; kwd_as; namespace_name }
 
 and dec_export_default after_export node : (export_kind, _) result =
   let decorators = children_named "decorator" node in
   let kwd_default = make_kwd after_export in
   match child_with_field_opt "declaration" node with
   | None ->
-    let* value_field = child_with_field "value" node in
+    let* value_field = child_with_field "value" node ~err:Expression in
     let* expression = dec_expression value_field in
     let contents = kwd_default, expression in
     let* decorated = dec_decorated decorators contents in
@@ -466,8 +671,11 @@ and dec_export_default after_export node : (export_kind, _) result =
 (* Import statement *)
 
 and dec_import_statement ?(comments = []) node : (import_statement, _) result =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> mk_err Import node
+  | _ ->
   let comments = comments @ prev_comments node in
-  let* kwd_import = first_child_named "import" node in
+  let* kwd_import = first_child_named "import" node ~err:Import in
   let kwd_import = make_kwd ~comments kwd_import in
   let import_kind =
     match first_child_named_opt "type" node with
@@ -482,7 +690,7 @@ and dec_import_statement ?(comments = []) node : (import_statement, _) result =
   let* (import : import) =
     match first_child_named_opt "import_clause" node with
     | Some import_clause ->
-      let* kwd_from = first_child_named "from" node in
+      let* kwd_from = first_child_named "from" node ~err:From in
       let* import_clause = dec_import_clause import_clause in
       let* from_clause = dec_from_clause node kwd_from in
       Ok (Import_clause (import_clause, from_clause))
@@ -492,14 +700,17 @@ and dec_import_statement ?(comments = []) node : (import_statement, _) result =
         let* require_clause = wrap dec_import_require_clause clause in
         Ok (Import_require_clause require_clause)
       | None ->
-        let* source_field = child_with_field "source" node in
+        let* source_field = child_with_field "source" node ~err:String in
         Ok (Import_source (dec_string source_field)))
   in
   Ok { kwd_import; import_kind; import; import_attribute }
 
 and dec_import_clause ?(comments = []) node : (import_clause, _) result =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> mk_err Import_clause node
+  | _ ->
   let comments = comments @ prev_comments node in
-  let* fst_child = child_ranked 0 node in
+  let* fst_child = child_ranked 0 node ~err:Named_imports_or_all_or_id in
   match get_name fst_child with
   | "namespace_import" ->
     let* namespace_import = wrap dec_namespace_import ~comments fst_child in
@@ -513,12 +724,12 @@ and dec_import_clause ?(comments = []) node : (import_clause, _) result =
       match next_sibling_opt fst_child with
       | None -> Ok None
       | Some comma ->
-        let* next = next_sibling comma in
+        let* next = next_sibling comma ~err:Named_imports_or_all in
         let* next = dec_namespace_or_named_imports next in
         Ok (Some next)
     in
     Ok (Import_ident (ident, from))
-  | _ -> error "dec_import_clause" fst_child
+  | _ -> mk_err Namespace_or_named_imports_or_ident fst_child
 
 and dec_namespace_or_named_imports node : (namespace_or_named_imports, _) result =
   match get_name node with
@@ -528,22 +739,28 @@ and dec_namespace_or_named_imports node : (namespace_or_named_imports, _) result
   | "named_imports" ->
     let* named_imports = dec_named_imports node in
     Ok (Import_named named_imports)
-  | _ -> error "dec_namespace_or_named_imports" node
+  | _ -> mk_err Namespace_or_named_imports node
 
 and dec_namespace_import ?(comments = []) node : (namespace_import, _) result =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> mk_err Namespace_import node
+  | _ ->
   let comments = comments @ prev_comments node in
-  let* sym_star = first_child_named "*" node in
+  let* sym_star = first_child_named "*" node ~err:Asterisk in
   let sym_star = make_sym ~comments sym_star in
-  let* kwd_as = first_child_named "as" node in
-  let* identifier = next_sibling kwd_as in
+  let* kwd_as = first_child_named "as" node ~err:As in
+  let* identifier = next_sibling kwd_as ~err:Identifier in
   let kwd_as = make_kwd kwd_as in
   let identifier = dec_identifier identifier in
   Ok { sym_star; kwd_as; identifier }
 
 and dec_named_imports ?(comments = []) node : (named_imports, _) result =
-  dec_list_in_braces ~comments node dec_import_specifier
+  dec_list_in_braces ~comments node dec_import_specifier ~err:Named_imports
 
 and dec_import_specifier ?(comments = []) node : (import_specifier, _) result =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> mk_err Import_specifier node
+  | _ ->
   let comments = comments @ prev_comments node in
   let import_kind : import_kind option =
     match first_child_named_opt "type" node with
@@ -558,13 +775,13 @@ and dec_import_specifier ?(comments = []) node : (import_specifier, _) result =
     | None -> comments
     | Some _ -> []
   in
-  let* name_field = child_with_field "name" node in
+  let* name_field = child_with_field "name" node ~err:Identifier in
   let* (import_specifier' : import_specifier') =
     match child_with_field_opt "alias" node with
     | None ->
       Ok (Import_spec_name (dec_identifier ~comments:snd_child_comments name_field))
     | Some alias_field ->
-      let* kwd_as = first_child_named "as" node in
+      let* kwd_as = first_child_named "as" node ~err:As in
       let* name = dec_module_export_name ~comments:snd_child_comments name_field in
       let kwd_as = make_kwd kwd_as in
       let alias = dec_identifier alias_field in
@@ -573,24 +790,30 @@ and dec_import_specifier ?(comments = []) node : (import_specifier, _) result =
   Ok (import_kind, import_specifier')
 
 and dec_import_require_clause ?(comments = []) node : (import_require_clause, _) result =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> mk_err Import_require_clause node
+  | _ ->
   let comments = comments @ prev_comments node in
-  let* identifier = child_ranked 0 node in
+  let* identifier = child_ranked 0 node ~err:Identifier in
   let ident = dec_identifier ~comments identifier in
-  let* sym_equal = first_child_named "=" node in
+  let* sym_equal = first_child_named "=" node ~err:Equal in
   let sym_equal = make_sym sym_equal in
-  let* kwd_require = first_child_named "require" node in
+  let* kwd_require = first_child_named "require" node ~err:Require in
   let kwd_require = make_kwd kwd_require in
-  let* sym_lpar = first_child_named "(" node in
+  let* sym_lpar = first_child_named "(" node ~err:Left_parenthesis in
   let sym_lpar = make_sym sym_lpar in
-  let* source_field = child_with_field "source" node in
+  let* source_field = child_with_field "source" node ~err:String in
   let source = dec_string source_field in
-  let* sym_rpar = first_child_named ")" node in
+  let* sym_rpar = first_child_named ")" node ~err:Right_parenthesis in
   let sym_rpar = make_sym sym_rpar in
   Ok { ident; sym_equal; kwd_require; sym_lpar; source; sym_rpar }
 
 and dec_import_attribute node : (import_attribute, _) result =
-  let* kind_node = child_ranked 0 node in
-  let* object_node = child_ranked 1 node in
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> mk_err Import_attribute node
+  | _ ->
+  let* kind_node = child_ranked 0 node ~err:Import_attribute in
+  let* object_node = child_ranked 1 node ~err:Object_expression in
   match get_name kind_node with
   | "with" ->
     let* expression = dec_object_expr object_node in
@@ -598,7 +821,7 @@ and dec_import_attribute node : (import_attribute, _) result =
   | "assert" ->
     let* expression = dec_object_expr object_node in
     Ok (Import_assert (make_kwd kind_node, expression))
-  | _ -> error "dec_import_attribute" kind_node
+  | _ -> mk_err Import_attribute node
 
 (* Expression statements
 
@@ -611,9 +834,12 @@ and dec_import_attribute node : (import_attribute, _) result =
    See [dec_expression]. *)
 
 and dec_expression_statement ?(comments = []) node : (expression_statement, _) result =
-  let comments = comments @ prev_comments node in
-  let* child = named_child_ranked 0 node in
-  dec_expressions ~comments child
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> mk_err Expression node
+  | _ ->
+     let comments = comments @ prev_comments node in
+     let* child = named_child_ranked 0 node ~err:Expression in
+     dec_expressions ~comments child
 
 and dec_expressions ?(comments = []) (node : ts_tree) : (expressions, _) result =
   match get_name node with
@@ -626,50 +852,62 @@ and dec_expressions ?(comments = []) (node : ts_tree) : (expressions, _) result 
 (* Statement blocks *)
 
 and dec_statement_block ?(comments = []) node : (statement_block, _) result =
-  let comments = comments @ prev_comments node in
-  let* opening = first_child_named "{" node in
-  let opening = make_sym ~comments opening in
-  let* closing = first_child_named "}" node in
-  let closing = make_sym closing in
-  let clauses = collect_named_children node in
-  let* contents = wrap_ne_list_opt_of_children dec_statement clauses in
-  let region = !get_region node in
-  let braces = Wrap.make { opening; contents; closing } region in
-  Ok (Braces braces)
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> mk_err Block node
+  | _ ->
+     let comments = comments @ prev_comments node in
+     let* opening = first_child_named "{" node ~err:Left_brace in
+     let opening = make_sym ~comments opening in
+     let* closing = first_child_named "}" node ~err:Right_brace in
+     let closing = make_sym closing in
+     let clauses = collect_named_children node in
+     let* contents = wrap_ne_list_opt_of_children dec_statement clauses in
+     let region = !get_region node in
+     let braces = Wrap.make { opening; contents; closing } region in
+     Ok (Braces braces)
 
 (* If statement *)
 
 and dec_if_statement ?(comments = []) node : (if_statement, _) result =
-  let* kwd_if = first_child_named "if" node in
-  let kwd_if = make_kwd ~comments kwd_if in
-  let* condition_field = child_with_field "condition" node in
-  let* condition = dec_parenthesized_expression condition_field in
-  let* consequence_field = child_with_field "consequence" node in
-  let* consequence = dec_statement consequence_field in
-  let alternative_field = child_with_field_opt "alternative" node in
-  let* alternative = make_opt_res dec_else_clause alternative_field in
-  Ok { kwd_if; condition; consequence; alternative }
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> mk_err If node
+  | _ ->
+     let* kwd_if = first_child_named "if" node ~err:If in
+     let kwd_if = make_kwd ~comments kwd_if in
+     let* condition_field = child_with_field "condition" node ~err:Parenthesized_expression in
+     let* condition = dec_parenthesized_expression condition_field in
+     let* consequence_field = child_with_field "consequence" node ~err:Statement in
+     let* consequence = dec_statement consequence_field in
+     let alternative_field = child_with_field_opt "alternative" node in
+     let* alternative = make_opt_res dec_else_clause alternative_field in
+     Ok { kwd_if; condition; consequence; alternative }
 
 and dec_else_clause ?(comments = []) node : (kwd_else * statement, _) result =
-  let comments = comments @ prev_comments node in
-  let* kwd_else = first_child_named "else" node in
-  let* statement = next_sibling kwd_else in
-  let* statement = dec_statement statement in
-  Ok (make_kwd ~comments kwd_else, statement)
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> mk_err Else node
+  | _ ->
+     let comments = comments @ prev_comments node in
+     let* kwd_else = first_child_named "else" node ~err:Else in
+     let* statement = next_sibling kwd_else ~err:Statement in
+     let* statement = dec_statement statement in
+     Ok (make_kwd ~comments kwd_else, statement)
 
 (* Switch statement *)
 
 and dec_switch_statement ?(comments = []) node : (switch_statement, _) result =
-  let* kwd_switch = first_child_named "switch" node in
-  let kwd_switch = make_kwd ~comments kwd_switch in
-  let* value_field = child_with_field "value" node in
-  let* value = dec_parenthesized_expression value_field in
-  let* body_field = child_with_field "body" node in
-  let* body = dec_switch_body body_field in
-  Ok { kwd_switch; value; body }
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> mk_err Switch node
+  | _ ->
+     let* kwd_switch = first_child_named "switch" node ~err:Switch in
+     let kwd_switch = make_kwd ~comments kwd_switch in
+     let* value_field = child_with_field "value" node ~err:Parenthesized_expression in
+     let* value = dec_parenthesized_expression value_field in
+     let* body_field = child_with_field "body" node ~err:Switch_body in
+     let* body = dec_switch_body body_field in
+     Ok { kwd_switch; value; body }
 
 and dec_switch_body node : (switch_body, _) result =
-  dec_list_in_braces node dec_switch_entry
+  dec_list_in_braces node dec_switch_entry ~err:Switch_body
 
 and dec_switch_entry ?(comments = []) node : (switch_entry, _) result =
   match get_name node with
@@ -679,26 +917,32 @@ and dec_switch_entry ?(comments = []) node : (switch_entry, _) result =
   | "switch_default" ->
     let* default = wrap dec_switch_default ~comments node in
     Ok (Switch_default default)
-  | _ -> error "dec_switch_entry" node
+  | _ -> mk_err Switch_body node
 
 and dec_switch_case ?(comments = []) node : (switch_case, _) result =
-  let comments = comments @ prev_comments node in
-  let* kwd_case = first_child_named "case" node in
-  let kwd_case = make_kwd ~comments kwd_case in
-  let* value_field = child_with_field "value" node in
-  let* value = dec_expressions value_field in
-  let children = collect_children node in
-  let stmt_children = skip_until_colon children in
-  let* body = wrap_ne_list_opt_of_children dec_statement stmt_children in
-  Ok { kwd_case; value; body }
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> mk_err Case node
+  | _ ->
+     let comments = comments @ prev_comments node in
+     let* kwd_case = first_child_named "case" node ~err:Case in
+     let kwd_case = make_kwd ~comments kwd_case in
+     let* value_field = child_with_field "value" node ~err:Expression in
+     let* value = dec_expressions value_field in
+     let children = collect_children node in
+     let stmt_children = skip_until_colon children in
+     let* body = wrap_ne_list_opt_of_children dec_statement stmt_children in
+     Ok { kwd_case; value; body }
 
 and dec_switch_default ?(comments = []) node : (switch_default, _) result =
-  let comments = comments @ prev_comments node in
-  let* kwd_default = first_child_named "default" node in
-  let kwd_default = make_kwd ~comments kwd_default in
-  let statements = collect_named_children node in
-  let* statements = wrap_ne_list_opt_of_children dec_statement statements in
-  Ok { kwd_default; statements }
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> mk_err Default node
+  | _ ->
+     let comments = comments @ prev_comments node in
+     let* kwd_default = first_child_named "default" node ~err:Default in
+     let kwd_default = make_kwd ~comments kwd_default in
+     let statements = collect_named_children node in
+     let* statements = wrap_ne_list_opt_of_children dec_statement statements in
+     Ok { kwd_default; statements }
 
 (* For statement *)
 
@@ -936,6 +1180,17 @@ and dec_throw_statement ?(comments = []) node : (throw_statement, _) result =
   let* expr = child_ranked 1 node in
   let* expressions = dec_expressions expr in
   Ok { kwd_throw; expressions }
+
+(* Labeled statement *)
+
+and dec_labeled_statement ?(comments = []) node : (labeled_statement, _) result =
+  let* label_field = child_with_field "label" node ~err:Label in
+  let label = dec_identifier ~comments label_field in
+  let* sym_colon = first_child_named ":" node ~err:Colon in
+  let sym_colon = make_sym sym_colon in
+  let* body_field = child_with_field "body" node ~err:Statement in
+  let* body = dec_statement body_field in
+  Ok { label; sym_colon; body }
 
 (* DECLARATION
 
