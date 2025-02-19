@@ -22,6 +22,15 @@ open Syntax_err
 
 let ( let* ) v f = Result.bind v ~f
 
+(* Skipping strings in a list until a colon is found *)
+
+let rec skip_until_colon = function
+  | [] -> []
+  | node :: nodes ->
+     (match get_name node with
+      | ":" -> nodes
+      | _ -> skip_until_colon nodes)
+
 (* Source map for converting vertical and horizontal offset ranges
    into regions *)
 
@@ -36,32 +45,30 @@ let input : Buffer.t ref = ref (Buffer.create (80 * 100))
 
 let mk_err_msg node err =
   let region = !get_region node in
-  let region =
-    if Region.is_empty region then "(empty region)" else " (" ^ region#compact `Byte ^ ")"
-  in
-  "ERROR: " ^ to_string err ^ region
+  let region = if Region.is_empty region then "empty region" else region#compact `Byte in
+  sprintf "ERROR: %s (%s)" (Syntax_err.to_string err) region
 
 (* Tayloring the fetching of a field, with an error message in case of
    failure. *)
 
-let child_with_field ~err field node =
+let child_with_field field node ~err =
   match Ts_wrap.child_with_field ~get_region field node with
   | Ok _ as ok -> ok
   | Error () ->
     let region = !get_region node in
     let region =
-      if Region.is_empty region then "" else " (" ^ region#compact `Byte ^ ")"
+      if Region.is_empty region then "empty region" else region#compact `Byte
     in
     let msg =
       if debug
       then (
         let name = get_name node in
         if String.equal name "NULL"
-        then sprintf "ERROR: NULL parent of field %S." field
-        else sprintf "ERROR: Node %S%s is missing the field %S." name region field)
-      else mk_err_msg node err
+        then sprintf "NULL parent of field %S." field
+        else sprintf "Node %S (%s) is missing the field %S." name region field)
+      else sprintf "%s (%s)" (Syntax_err.to_string err) region
     in
-    Error msg
+    Error ("ERROR: " ^ msg)
 
 (* Wrapping the fetching of nodes *)
 
@@ -394,9 +401,10 @@ let print_enclosed
     closing
     ~open_err
     ~close_err
+    ~err
   =
   match get_name node with
-  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:open_err
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err
   | _ ->
     let comments = comments @ prev_comments node in
     let opening = first_child_named opening node ~err:open_err
@@ -410,60 +418,52 @@ let print_enclosed
     make_tree state node children
 
 let print_braces ?(comments = []) state node printer ~err =
-  match get_name node with
-  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err
-  | _ ->
-    print_enclosed
-      ~comments
-      state
-      node
-      printer
-      "{"
-      "}"
-      ~open_err:Left_brace
-      ~close_err:Right_brace
+  print_enclosed
+    ~comments
+    state
+    node
+    printer
+    "{"
+    "}"
+    ~open_err:Left_brace
+    ~close_err:Right_brace
+    ~err
 
 let print_chevrons ?(comments = []) state node printer ~err =
-  match get_name node with
-  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err
-  | _ ->
-    print_enclosed
-      ~comments
-      state
-      node
-      printer
-      "<"
-      ">"
-      ~open_err:Left_chevron
-      ~close_err:Right_chevron
+  print_enclosed
+    ~comments
+    state
+    node
+    printer
+    "<"
+    ">"
+    ~open_err:Left_chevron
+    ~close_err:Right_chevron
+    ~err
 
 let print_brackets ?(comments = []) state node printer ~err =
-  match get_name node with
-  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err
-  | _ ->
-    print_enclosed
-      ~comments
-      state
-      node
-      printer
-      "["
-      "]"
-      ~open_err:Left_bracket
-      ~close_err:Right_bracket
+  print_enclosed
+    ~comments
+    state
+    node
+    printer
+    "["
+    "]"
+    ~open_err:Left_bracket
+    ~close_err:Right_bracket
+    ~err
 
 let print_parens ?(comments = []) state node printer ~err =
-  match get_name node with
-  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err
-  | _ ->
-    print_enclosed
-      ~comments
-      state
-      node
-      printer
-      "("
-      ")"
-      ~open_err:Left_parenthesis
-      ~close_err:Right_parenthesis
+  print_enclosed
+    ~comments
+    state
+    node
+    printer
+    "("
+    ")"
+    ~open_err:Left_parenthesis
+    ~close_err:Right_parenthesis
+    ~err
 
 (* Printing the CST *)
 
@@ -921,13 +921,6 @@ and print_switch_case state node =
   | _ ->
     let kwd_case = first_child_named "case" node ~err:Case
     and children = collect_children node in
-    let rec skip_until_colon = function
-      | [] -> []
-      | node :: nodes ->
-        (match get_name node with
-        | ":" -> nodes
-        | _ -> skip_until_colon nodes)
-    in
     let stmt_children = skip_until_colon children
     and value_field = child_with_field "value" node ~err:Expression in
     let children =
