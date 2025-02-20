@@ -1627,7 +1627,7 @@ and print_enum_declaration state node =
     make_tree state node children
 
 and print_enum_body state node =
-  print_braces state node print_in_enum_body ~err:Left_brace
+  print_braces state node print_in_enum_body ~err:Enumeration
 
 and print_in_enum_body state node =
   match get_name node with
@@ -1673,19 +1673,19 @@ and print_extends_type_clause state node =
   match get_name node with
   | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Extends
   | _ ->
-    let kwd_extends = first_child_named "extends" node ~err:Extends
-    and print state node =
-      match get_name node with
-      | "type_identifier" -> print_type_identifier state node
-      | "nested_type_identifier" -> print_nested_type_identifier state node
-      | "generic_type" -> print_generic_type state node
-      | _ -> print_error_node state node ~err:Type_expression
-    in
+    let kwd_extends = first_child_named "extends" node ~err:Extends in
     let children =
       mk_child_res mk_kwd_extends kwd_extends
-      :: mk_children_list print (collect_named_children node)
+      :: mk_children_list print_type_extension (collect_named_children node)
     in
     make_tree state node children
+
+and print_type_extension state node =
+  match get_name node with
+  | "type_identifier" -> print_type_identifier state node
+  | "nested_type_identifier" -> print_nested_type_identifier state node
+  | "generic_type" -> print_generic_type state node
+  | _ -> print_error_node state node ~err:Type_expression
 
 (* Import alias *)
 
@@ -1696,21 +1696,21 @@ and print_import_alias state node =
     let kwd_import = first_child_named "import" node ~err:Import
     and lhs = child_ranked 1 node ~err:Identifier
     and rhs = child_ranked 3 node ~err:Identifier_or_path
-    and sym_equal = first_child_named "=" node ~err:Equal
-    and print_rhs state node =
-      match get_name node with
-      | "identifier" -> print_identifier state node
-      | "nested_identifier" -> print_nested_identifier state node
-      | _ -> print_error_node state node ~err:Identifier_or_path
-    in
+    and sym_equal = first_child_named "=" node ~err:Equal in
     let children =
       [ mk_child_res mk_kwd_import kwd_import
       ; mk_child_res print_identifier lhs
       ; mk_child_res mk_sym_equal sym_equal
-      ; mk_child_res print_rhs rhs
+      ; mk_child_res print_aliased rhs
       ]
     in
     make_tree state node children
+
+and print_aliased state node =
+  match get_name node with
+  | "identifier" -> print_identifier state node
+  | "nested_identifier" -> print_nested_identifier state node
+  | _ -> print_error_node state node ~err:Identifier_or_path
 
 (* Ambient declaration *)
 
@@ -1752,7 +1752,6 @@ and print_ambient_declaration state node =
 
 and print_expression ?(comments = []) state (node : ts_tree) =
   match get_name node with
-  (* Rest of "expression": *)
   | "glimmer_template" -> print_glimmer_template state node
   | "assignment_expression" -> print_assignment_expression state node
   | "augmented_assignment_expression" -> print_augmented_assignment_expression state node
@@ -2897,19 +2896,19 @@ and print_nested_type_identifier ?comments state node =
     print_error_node state node ~err:Nested_type_identifier
   | _ ->
     let module_field = child_with_field "module" node ~err:Identifier_or_path
-    and name_field = child_with_field "name" node ~err:Type_name
-    and print_module_field state node =
-      match get_name node with
-      | "identifier" -> print_identifier ?comments state node
-      | "nested_identifier" -> print_nested_identifier ?comments state node
-      | _ -> print_error_node state node ~err:Identifier_or_path
-    in
+    and name_field = child_with_field "name" node ~err:Type_name in
     let children =
-      [ mk_child_res print_module_field module_field
+      [ mk_child_res (print_module_path ?comments) module_field
       ; mk_child_res print_type_identifier name_field
       ]
     in
     make_tree state node children
+
+and print_module_path ?comments state node =
+  match get_name node with
+  | "identifier" -> print_identifier ?comments state node
+  | "nested_identifier" -> print_nested_identifier ?comments state node
+  | _ -> print_error_node state node ~err:Identifier_or_path
 
 (* Nested identifier *)
 
@@ -2918,23 +2917,24 @@ and print_nested_identifier ?comments state node =
   | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Identifier_or_member
   | _ ->
     let object_field = child_with_field "object" node ~err:Identifier_or_member
-    and property_field = child_with_field "property" node ~err:Property_identifier
-    and print_object_field state node =
-      match get_name node with
-      | "identifier" -> print_identifier ?comments state node
-      | "member_expression" -> print_nested_identifier ?comments state node
-      | _ -> print_error_node state node ~err:Identifier_or_member
-    and print_property_field state node =
-      match get_name node with
-      | "property_identifier" -> print_identifier state node
-      | _ -> print_error_node state node ~err:Property_identifier
-    in
+    and property_field = child_with_field "property" node ~err:Property_identifier in
     let children =
-      [ mk_child_res print_object_field object_field
-      ; mk_child_res print_property_field property_field
+      [ mk_child_res (print_object_path ?comments) object_field
+      ; mk_child_res print_property property_field
       ]
     in
     make_tree state node children
+
+and print_object_path ?comments state node =
+  match get_name node with
+  | "identifier" -> print_identifier ?comments state node
+  | "member_expression" -> print_nested_identifier ?comments state node
+  | _ -> print_error_node state node ~err:Identifier_or_member
+
+and print_property state node =
+  match get_name node with
+  | "property_identifier" -> print_identifier state node
+  | _ -> print_error_node state node ~err:Property_identifier
 
 (* Generic type *)
 

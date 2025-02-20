@@ -165,7 +165,9 @@ type t =
   | Variable
   | Type_annotation
   | Module_name
+  | Module_declaration
   | Namespace_name
+  | Namespace_declaration
   | Type_name
   | Type_expression
   | Type_parameter
@@ -321,6 +323,8 @@ type t =
   | Incr_or_decr_or_expr
   | Increment_or_decrement
   | Block_or_ident_or_decl
+  | Type_alias_declaration
+  | Variable_declaration
 
 type error = t
 
@@ -495,7 +499,9 @@ let to_string : t -> string = function
   | Variable -> "A variable is expected."
   | Type_annotation -> "A type annotation is expected."
   | Module_name -> "A module name is expected."
+  | Module_declaration -> "A module declaration is expected."
   | Namespace_name -> "A namespace name is expected."
+  | Namespace_declaration -> "A namespace declaration is expected."
   | Type_name -> "A type name is expected."
   | Type_expression -> "A type is expected."
   | Type_parameter -> "A type parameter is expected."
@@ -650,3 +656,5 @@ let to_string : t -> string = function
   | Increment_or_decrement -> "An operator '--' or '++' is expected."
   | Block_or_ident_or_decl ->
     "A block or a property identifier or a declaration is expected."
+  | Type_alias_declaration -> "A type alias declaration is expected."
+  | Variable_declaration -> "A variable declaration is expected."
