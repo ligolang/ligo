@@ -1427,7 +1427,7 @@ and print_lhs_pattern state node =
 
 and print_variable_declaration ?(comments = []) state node =
   match get_name node with
-  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Var
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Variable_declaration
   | _ ->
     let comments = comments @ prev_comments node
     and kwd_var = first_child_named "var" node ~err:Var
@@ -1492,7 +1492,7 @@ and print_abstract_class_declaration state node =
 
 and print_module ?(comments = []) state node =
   match get_name node with
-  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Module_name
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Module_declaration
   | _ ->
     let comments = comments @ prev_comments node
     and kwd_module = first_child_named "module" node ~err:Module
@@ -1517,7 +1517,7 @@ and print_module ?(comments = []) state node =
 
 and print_internal_module ?(comments = []) state node =
   match get_name node with
-  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Namespace_name
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Namespace_declaration
   | _ ->
     let comments = comments @ prev_comments node
     and kwd_namespace = first_child_named "namespace" node ~err:Namespace
@@ -1542,7 +1542,7 @@ and print_internal_module ?(comments = []) state node =
 
 and print_type_alias_declaration ?(comments = []) state node =
   match get_name node with
-  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Type_name
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Type_alias_declaration
   | _ ->
     let comments = comments @ prev_comments node
     and kwd_type = first_child_named "type" node ~err:Type
@@ -2450,18 +2450,6 @@ and print_class_heritage state node =
     in
     make_tree state node children
 
-and print_implements_clause state node =
-  match get_name node with
-  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Implements_clause
-  | _ ->
-    let kwd_implements = first_child_named "implements" node ~err:Implements
-    and named_children = collect_named_children node in
-    let children =
-      mk_child_res mk_kwd_implements kwd_implements
-      :: mk_children_list print_type named_children
-    in
-    make_tree state node children
-
 and print_extends_clause state node =
   match get_name node with
   | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Extends_clause
@@ -2469,7 +2457,7 @@ and print_extends_clause state node =
     let kwd_extends = first_child_named "extends" node ~err:Extends
     and children =
       match collect_children node with
-      | [] -> []
+      | [] | [ _ ] -> []
       | _extends :: clauses -> clauses
     in
     let not_comma child = String.(get_name child <> ",") in
@@ -2493,6 +2481,18 @@ and print_extends_clause state node =
     let children =
       mk_child_res mk_kwd_extends kwd_extends
       :: List.fold_right ~f:mk_children pairs ~init:[]
+    in
+    make_tree state node children
+
+and print_implements_clause state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Implements_clause
+  | _ ->
+    let kwd_implements = first_child_named "implements" node ~err:Implements
+    and named_children = collect_named_children node in
+    let children =
+      mk_child_res mk_kwd_implements kwd_implements
+      :: mk_children_list print_type named_children
     in
     make_tree state node children
 
@@ -2527,6 +2527,8 @@ and print_class_member state (decorators, node) =
   | "index_signature" -> print_index_signature state node
   | "public_field_definition" -> print_public_field_definition state node
   | _ -> print_error_node state node ~err:Class_member
+
+(* Method definition *)
 
 and print_method_definition_with_decorators decorators state node =
   List.iter ~f:(print_decorator state) decorators;
@@ -2584,13 +2586,15 @@ and print_class_static_block state node =
     in
     make_tree state node children
 
+(* Abstract method signature *)
+
 and print_abstract_method_signature state node =
   match get_name node with
   | "ERROR" | "MISSING" | "NULL" ->
     print_error_node state node ~err:Abstract_method_signature
   | _ ->
     let accessibility_modifier = first_child_named_opt "accessibility_modifier" node
-    and kwd_abstract = first_child_named_opt "abstract" node
+    and kwd_abstract = first_child_named "abstract" node ~err:Abstract
     and override_modifier = first_child_named_opt "override_modifier" node
     and kwd_set = first_child_named_opt "set" node
     and kwd_get = first_child_named_opt "get" node
@@ -2603,7 +2607,7 @@ and print_abstract_method_signature state node =
     and return_type_field = child_with_field_opt "return_type" node in
     let children =
       [ mk_child_opt print_accessibility_modifier accessibility_modifier
-      ; mk_child_opt mk_kwd_abstract kwd_abstract
+      ; mk_child_res mk_kwd_abstract kwd_abstract
       ; mk_child_opt print_override_modifier override_modifier
       ; mk_child_opt mk_kwd_set kwd_set
       ; mk_child_opt mk_kwd_get kwd_get
@@ -3079,15 +3083,7 @@ and print_index_signature state node =
     and name_field = child_with_field_opt "name" node
     and type_field = child_with_field "type" node ~err:Type_annotation
     and sym_lbracket = first_child_named "[" node ~err:Left_bracket
-    and sym_rbracket = first_child_named "]" node ~err:Right_bracket
-    and print_type_field state node =
-      match get_name node with
-      | "type_annotation" -> print_type_annotation state node
-      | "omitting_type_annotation" -> print_omitting_type_annotation state node
-      | "adding_type_annotation" -> print_adding_type_annotation state node
-      | "opting_type_annotation" -> print_opting_type_annotation state node
-      | _ -> print_error_node state node ~err:Type_of_index_signature
-    in
+    and sym_rbracket = first_child_named "]" node ~err:Right_bracket in
     let prefix =
       [ mk_child_opt print_plus_minus sign_field
       ; mk_child_opt mk_kwd_readonly kwd_readonly
@@ -3103,16 +3099,24 @@ and print_index_signature state node =
           [ mk_child print_identifier name_field
           ; mk_child_res mk_sym_colon sym_colon
           ; mk_child_res print_type index_type_field
-          ; mk_child_res print_type_field type_field
+          ; mk_child_res print_index_annotation type_field
           ]
         | None ->
           let mapped_type_clause = named_child_ranked 0 node ~err:Mapped_type_signature in
           [ mk_child_res print_mapped_type_clause mapped_type_clause
-          ; mk_child_res print_type_field type_field
+          ; mk_child_res print_index_annotation type_field
           ])
       @ [ mk_child_res mk_sym_rbracket sym_rbracket ]
     in
     make_tree state node children
+
+and print_index_annotation state node =
+  match get_name node with
+  | "type_annotation" -> print_type_annotation state node
+  | "omitting_type_annotation" -> print_omitting_type_annotation state node
+  | "adding_type_annotation" -> print_adding_type_annotation state node
+  | "opting_type_annotation" -> print_opting_type_annotation state node
+  | _ -> print_error_node state node ~err:Type_of_index_signature
 
 and print_plus_minus state node =
   match get_name node with
