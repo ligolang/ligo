@@ -27,9 +27,9 @@ let ( let* ) v f = Result.bind v ~f
 let rec skip_until_colon = function
   | [] -> []
   | node :: nodes ->
-     (match get_name node with
-      | ":" -> nodes
-      | _ -> skip_until_colon nodes)
+    (match get_name node with
+    | ":" -> nodes
+    | _ -> skip_until_colon nodes)
 
 (* Source map for converting vertical and horizontal offset ranges
    into regions *)
@@ -907,9 +907,9 @@ and print_switch_statement state node =
     make_tree state node children
 
 and print_switch_body state node =
-  print_braces state node print_in_switch_body ~err:Switch_body
+  print_braces state node print_switch_entry ~err:Switch_body
 
-and print_in_switch_body state node =
+and print_switch_entry state node =
   match get_name node with
   | "switch_case" -> print_switch_case state node
   | "switch_default" -> print_switch_default state node
@@ -954,31 +954,32 @@ and print_for_statement state node =
     and condition_field = child_with_field "condition" node ~err:Expression_or_semicolon
     and increment_field = child_with_field_opt "increment" node
     and sym_rparen = first_child_named ")" node ~err:Right_parenthesis
-    and body_field = child_with_field "body" node ~err:Statement
-    and print_initializer state node =
-      match get_name node with
-      | "lexical_declaration" -> print_lexical_declaration state node
-      | "variable_declaration" -> print_variable_declaration state node
-      | "expression_statement" -> print_expression_statement state node
-      | "empty_statement" -> print_empty_statement state node
-      | _ -> print_error_node state node ~err:Initial_assignment
-    and print_condition state node =
-      match get_name node with
-      | "expression_statement" -> print_expression_statement state node
-      | "empty_statement" -> print_empty_statement state node
-      | _ -> print_error_node state node ~err:Expression_or_semicolon
-    in
+    and body_field = child_with_field "body" node ~err:Statement in
     let children =
       [ mk_child_res mk_kwd_for kwd_for
       ; mk_child_res mk_sym_lparen sym_lparen
-      ; mk_child_res print_initializer initializer_field
-      ; mk_child_res print_condition condition_field
+      ; mk_child_res print_for_initializer initializer_field
+      ; mk_child_res print_for_condition condition_field
       ; mk_child_opt print_expressions increment_field
       ; mk_child_res mk_sym_rparen sym_rparen
       ; mk_child_res print_statement body_field
       ]
     in
     make_tree state node children
+
+and print_for_initializer state node =
+  match get_name node with
+  | "lexical_declaration" -> print_lexical_declaration state node
+  | "variable_declaration" -> print_variable_declaration state node
+  | "expression_statement" -> print_expression_statement state node
+  | "empty_statement" -> print_empty_statement state node
+  | _ -> print_error_node state node ~err:Initial_assignment
+
+and print_for_condition state node =
+  match get_name node with
+  | "expression_statement" -> print_expression_statement state node
+  | "empty_statement" -> print_empty_statement state node
+  | _ -> print_error_node state node ~err:Expression_or_semicolon
 
 (* For-in statement *)
 
@@ -1006,7 +1007,6 @@ and print_for_in_statement state node =
       | None ->
         let print_left state node =
           match get_name node with
-          | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Expression
           | "parenthesized_expression" -> print_parenthesized_expression state node
           | _ -> print_lhs_expression state node
         in
@@ -1106,13 +1106,7 @@ and print_catch_clause state node =
   | _ ->
     let kwd_catch = first_child_named "catch" node ~err:Catch
     and body_field = child_with_field "body" node ~err:Block
-    and parameter_field = child_with_field_opt "parameter" node
-    and print_parameter state node =
-      match get_name node with
-      | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Pattern
-      | "identifier" -> print_identifier state node
-      | _ -> print_destructuring_pattern state node
-    in
+    and parameter_field = child_with_field_opt "parameter" node in
     let children =
       match parameter_field with
       | Some parameter_field ->
@@ -1120,7 +1114,7 @@ and print_catch_clause state node =
         and type_field = child_with_field_opt "type" node
         and sym_rparen = first_child_named ")" node ~err:Right_parenthesis in
         [ mk_child_res mk_sym_lparen sym_lparen
-        ; mk_child print_parameter parameter_field
+        ; mk_child print_catch_parameter_kind parameter_field
         ; mk_child_opt print_type_annotation type_field
         ; mk_child_res mk_sym_rparen sym_rparen
         ]
@@ -1129,6 +1123,12 @@ and print_catch_clause state node =
     let children = mk_child_res mk_kwd_catch kwd_catch :: children in
     let children = children @ [ mk_child_res print_statement_block body_field ] in
     make_tree state node children
+
+and print_catch_parameter_kind state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Pattern
+  | "identifier" -> print_identifier state node
+  | _ -> print_destructuring_pattern state node
 
 and print_finally_clause state node =
   match get_name node with
@@ -2434,16 +2434,19 @@ and print_class_heritage state node =
   | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Extends_or_implements
   | _ ->
     let children =
-      match first_child_named_opt "extends_clause" node with
-      | Some extends_clause ->
-        let implements_clause = first_child_named_opt "implements_clause" node in
-        [ mk_child print_extends_clause extends_clause
-        ; mk_child_opt print_implements_clause implements_clause
-        ]
-      | None ->
-        (* [implements_clause] is never [None]. *)
-        let implements_clause = first_child_named_opt "implements_clause" node in
-        [ mk_child_opt print_implements_clause implements_clause ]
+      match child_ranked 0 node ~err:Extends_or_implements with
+      | Error msg -> [ mk_error_child node ~msg ]
+      | Ok first_child ->
+        (match get_name first_child with
+        | "extends_clause" ->
+          let implements_clause = first_child_named_opt "implements_clause" node in
+          [ mk_child print_extends_clause first_child
+          ; mk_child_opt print_implements_clause implements_clause
+          ]
+        | "implements_clause" -> [ mk_child print_implements_clause first_child ]
+        | _ ->
+          let msg = mk_err_msg node Extends_or_implements in
+          [ mk_error_child node ~msg ])
     in
     make_tree state node children
 
@@ -3021,7 +3024,7 @@ and print_asserts state node =
   match get_name node with
   | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Asserts
   | _ ->
-    let kwd_asserts = first_child_named "asserts" ~err:Asserts node
+    let kwd_asserts = first_child_named "asserts" node ~err:Asserts
     and child = child_ranked 1 node ~err:Asserted
     and print state node =
       match get_name node with
