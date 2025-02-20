@@ -165,7 +165,9 @@ type t =
   | Variable
   | Type_annotation
   | Module_name
+  | Module_declaration
   | Namespace_name
+  | Namespace_declaration
   | Type_name
   | Type_expression
   | Type_parameter
@@ -321,6 +323,8 @@ type t =
   | Incr_or_decr_or_expr
   | Increment_or_decrement
   | Block_or_ident_or_decl
+  | Type_alias_declaration
+  | Variable_declaration
 
 type error = t
 
