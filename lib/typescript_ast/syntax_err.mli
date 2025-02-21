@@ -325,6 +325,8 @@ type t =
   | Block_or_ident_or_decl
   | Type_alias_declaration
   | Variable_declaration
+  | String_or_type
+  | Selector_or_optional_chain
 
 type error = t
 
