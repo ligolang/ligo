@@ -166,6 +166,12 @@ let next_sibling_opt (node : ts_tree) : ts_tree option =
 let next_sibling (node : ts_tree) ~msg : (ts_tree, string) result =
   opt_to_res msg @@ next_sibling_opt node
 
+let prev_sibling_opt (node : ts_tree) : ts_tree option =
+  sibling_opt TS_fun.ts_node_prev_sibling node
+
+let prev_sibling (node : ts_tree) ~msg : (ts_tree, string) result =
+  opt_to_res msg @@ prev_sibling_opt node
+
 (* Getting the comments immediately to the left of a given node *)
 
 let prev_comments (node : ts_tree) : ts_forest =
