@@ -811,7 +811,7 @@ and print_import_attribute state node =
       | _ -> print_error_node state node ~err:Import_attribute
     in
     let children =
-      [ mk_child_res print_kind kind_node; mk_child_res print_object object_node ]
+      [ mk_child_res print_kind kind_node; mk_child_res print_object_expr object_node ]
     in
     make_tree state node children
 
@@ -1787,12 +1787,12 @@ and print_primary_expression ?(comments = []) state node =
   | "true" -> mk_kwd_true state node
   | "false" -> mk_kwd_false state node
   | "null" -> mk_kwd_null state node
-  | "object" -> print_object state node
+  | "object" -> print_object_expr state node
   | "array" -> print_array state node
   | "function_expression" -> print_function_expression state node
   | "arrow_function" -> print_arrow_function state node
   | "generator_function" -> print_generator_function state node
-  | "class" -> print_class state node
+  | "class" -> print_class_expression state node
   | "meta_property" -> print_meta_property state node
   | "call_expression" -> print_call_expression state node
   | "non_null_expression" -> print_non_null_expression state node
@@ -1814,21 +1814,20 @@ and print_assignment_expression state node =
     let kwd_using = first_child_named_opt "using" node
     and left_field = child_with_field "left" node ~err:Expression
     and sym_equal = first_child_named "=" node ~err:Equal
-    and right_field = child_with_field "right" node ~err:Expression
-    and print_left state node =
-      match get_name node with
-      | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Expression
-      | "parenthesized_expression" -> print_parenthesized_expression state node
-      | _ -> print_lhs_expression state node
-    in
+    and right_field = child_with_field "right" node ~err:Expression in
     let children =
       [ mk_child_opt mk_kwd_using kwd_using
-      ; mk_child_res print_left left_field
+      ; mk_child_res print_assignment_lhs left_field
       ; mk_child_res mk_sym_equal sym_equal
       ; mk_child_res print_expression right_field
       ]
     in
     make_tree state node children
+
+and print_assignment_lhs state node =
+  match get_name node with
+  | "parenthesized_expression" -> print_parenthesized_expression state node
+  | _ -> print_lhs_expression state node
 
 (* Augmented assignment expression *)
 
@@ -1838,42 +1837,43 @@ and print_augmented_assignment_expression state node =
     print_error_node state node ~err:LHS_of_augmented_assgmnt
   | _ ->
     let left_field = child_with_field "left" node ~err:Expression
-    and right_field = child_with_field "right" node ~err:Expression
     and operator = child_with_field "operator" node ~err:Augmented_assignment
-    and print_left state node =
-      (* "_augmented_assignment_lhs" is inlined here (hidden rule): *)
-      match get_name node with
-      | "member_expression" -> print_member_expression state node
-      | "subscript_expression" -> print_subscript_expression state node
-      | "identifier" -> print_identifier state node
-      | "parenthesized_expression" -> print_parenthesized_expression state node
-      | _ -> print_error_node state node ~err:Expression
-    and print_assignment state node =
-      match get_name node with
-      | "+=" -> mk_sym_plus_equal state node
-      | "-=" -> mk_sym_minus_equal state node
-      | "*=" -> mk_sym_mult_equal state node
-      | "/=" -> mk_sym_div_equal state node
-      | "%=" -> mk_sym_rem_equal state node
-      | "^=" -> mk_sym_xor_equal state node
-      | "&=" -> mk_sym_and_equal state node
-      | "|=" -> mk_sym_or_equal state node
-      | ">>=" -> mk_sym_right_shift_equal state node
-      | ">>>=" -> mk_sym_unsigned_right_shift_equal state node
-      | "<<=" -> mk_sym_left_shift_equal state node
-      | "**=" -> mk_sym_unsigned_left_shift_equal state node
-      | "&&=" -> mk_sym_conjunction_equal state node
-      | "||=" -> mk_sym_disjunction_equal state node
-      | "??=" -> mk_sym_non_null_equal state node
-      | _ -> print_error_node state node ~err:Augmented_assignment
-    in
+    and right_field = child_with_field "right" node ~err:Expression in
     let children =
-      [ mk_child_res print_assignment operator
-      ; mk_child_res print_left left_field
+      [ mk_child_res print_assignment_operator operator
+      ; mk_child_res print_augmented_assignment_lhs left_field
       ; mk_child_res print_expression right_field
       ]
     in
     make_tree state node children
+
+and print_assignment_operator state node =
+  match get_name node with
+  | "+=" -> mk_sym_plus_equal state node
+  | "-=" -> mk_sym_minus_equal state node
+  | "*=" -> mk_sym_mult_equal state node
+  | "/=" -> mk_sym_div_equal state node
+  | "%=" -> mk_sym_rem_equal state node
+  | "^=" -> mk_sym_xor_equal state node
+  | "&=" -> mk_sym_and_equal state node
+  | "|=" -> mk_sym_or_equal state node
+  | ">>=" -> mk_sym_right_shift_equal state node
+  | ">>>=" -> mk_sym_unsigned_right_shift_equal state node
+  | "<<=" -> mk_sym_left_shift_equal state node
+  | "**=" -> mk_sym_unsigned_left_shift_equal state node
+  | "&&=" -> mk_sym_conjunction_equal state node
+  | "||=" -> mk_sym_disjunction_equal state node
+  | "??=" -> mk_sym_non_null_equal state node
+  | _ -> print_error_node state node ~err:Augmented_assignment
+
+and print_augmented_assignment_lhs state node =
+  (* "_augmented_assignment_lhs" is inlined here (hidden rule): *)
+  match get_name node with
+  | "member_expression" -> print_member_expression state node
+  | "subscript_expression" -> print_subscript_expression state node
+  | "identifier" -> print_identifier state node
+  | "parenthesized_expression" -> print_parenthesized_expression state node
+  | _ -> print_error_node state node ~err:Expression
 
 (* Await expression *)
 
@@ -1895,24 +1895,24 @@ and print_unary_expression state node =
   | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Unary_operator
   | _ ->
     let operator_field = child_with_field "operator" node ~err:Unary_operator
-    and argument_field = child_with_field "argument" node ~err:Expression
-    and print_unary_operator state node =
-      match get_name node with
-      | "!" -> mk_sym_bang state node
-      | "~" -> mk_sym_tilde state node
-      | "-" -> mk_sym_minus state node
-      | "+" -> mk_sym_plus state node
-      | "typeof" -> mk_kwd_typeof state node
-      | "void" -> mk_kwd_void state node
-      | "delete" -> mk_kwd_delete state node
-      | _ -> print_error_node state node ~err:Unary_operator
-    in
+    and argument_field = child_with_field "argument" node ~err:Expression in
     let children =
       [ mk_child_res print_unary_operator operator_field
       ; mk_child_res print_expression argument_field
       ]
     in
     make_tree state node children
+
+and print_unary_operator state node =
+  match get_name node with
+  | "!" -> mk_sym_bang state node
+  | "~" -> mk_sym_tilde state node
+  | "-" -> mk_sym_minus state node
+  | "+" -> mk_sym_plus state node
+  | "typeof" -> mk_kwd_typeof state node
+  | "void" -> mk_kwd_void state node
+  | "delete" -> mk_kwd_delete state node
+  | _ -> print_error_node state node ~err:Unary_operator
 
 (* Binary expression *)
 
@@ -1922,49 +1922,49 @@ and print_binary_expression ?(comments = []) state node =
   | _ ->
     let comments = comments @ prev_comments node
     and left_field = child_with_field "left" node ~err:Expression
-    and right_field = child_with_field "right" node ~err:Expression
-    and operator = child_with_field "operator" node ~err:Binary_operator in
-    let print_left state node =
-      match get_name node with
-      | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Expression
-      | "private_property_identifier" -> print_identifier ~comments state node
-      | _ -> print_expression ~comments state node
-    and print_bin_operator state node =
-      match get_name node with
-      | "&&" -> mk_sym_conjunction state node
-      | "||" -> mk_sym_disjunction state node
-      | ">>" -> mk_sym_right_shift state node
-      | ">>>" -> mk_sym_unsigned_right_shift state node
-      | "<<" -> mk_sym_left_shift state node
-      | "&" -> mk_sym_and state node
-      | "^" -> mk_sym_xor state node
-      | "|" -> mk_sym_or state node
-      | "+" -> mk_sym_plus state node
-      | "-" -> mk_sym_minus state node
-      | "*" -> mk_sym_asterisk state node
-      | "/" -> mk_sym_div state node
-      | "%" -> mk_sym_rem state node
-      | "**" -> mk_sym_exponent state node
-      | "<" -> mk_sym_lower_than state node
-      | "<=" -> mk_sym_lower_than_or_equal state node
-      | "==" -> mk_sym_equal state node
-      | "===" -> mk_sym_no_conv_equal state node
-      | "!=" -> mk_sym_different state node
-      | "!==" -> mk_sym_no_conv_different state node
-      | ">=" -> mk_sym_greater_than_or_equal state node
-      | ">" -> mk_sym_greater_than state node
-      | "??" -> mk_sym_non_null state node
-      | "instanceof" -> mk_kwd_instanceof state node
-      | "in" -> mk_kwd_in state node
-      | _ -> print_error_node state node ~err:Binary_operator
-    in
+    and operator = child_with_field "operator" node ~err:Binary_operator
+    and right_field = child_with_field "right" node ~err:Expression in
     let children =
-      [ mk_child_res print_left left_field
-      ; mk_child_res print_bin_operator operator
+      [ mk_child_res (print_lhs_bin_expression ~comments) left_field
+      ; mk_child_res print_binary_operator operator
       ; mk_child_res print_expression right_field
       ]
     in
     make_tree state node children
+
+and print_lhs_bin_expression ?(comments = []) state node =
+  match get_name node with
+  | "private_property_identifier" -> print_identifier ~comments state node
+  | _ -> print_expression ~comments state node
+
+and print_binary_operator state node =
+  match get_name node with
+  | "&&" -> mk_sym_conjunction state node
+  | "||" -> mk_sym_disjunction state node
+  | ">>" -> mk_sym_right_shift state node
+  | ">>>" -> mk_sym_unsigned_right_shift state node
+  | "<<" -> mk_sym_left_shift state node
+  | "&" -> mk_sym_and state node
+  | "^" -> mk_sym_xor state node
+  | "|" -> mk_sym_or state node
+  | "+" -> mk_sym_plus state node
+  | "-" -> mk_sym_minus state node
+  | "*" -> mk_sym_asterisk state node
+  | "/" -> mk_sym_div state node
+  | "%" -> mk_sym_rem state node
+  | "**" -> mk_sym_exponent state node
+  | "<" -> mk_sym_lower_than state node
+  | "<=" -> mk_sym_lower_than_or_equal state node
+  | "==" -> mk_sym_equal state node
+  | "===" -> mk_sym_no_conv_equal state node
+  | "!=" -> mk_sym_different state node
+  | "!==" -> mk_sym_no_conv_different state node
+  | ">=" -> mk_sym_greater_than_or_equal state node
+  | ">" -> mk_sym_greater_than state node
+  | "??" -> mk_sym_non_null state node
+  | "instanceof" -> mk_kwd_instanceof state node
+  | "in" -> mk_kwd_in state node
+  | _ -> print_error_node state node ~err:Binary_operator
 
 (* Ternary expression *)
 
@@ -2062,7 +2062,7 @@ and print_yield_expression state node =
     | Some snd_child ->
       let snd_child =
         match get_name snd_child with
-        | "*" -> child_ranked 2 node ~err:Asterisk
+        | "*" -> child_ranked 2 node ~err:Expression
         | _ -> Ok snd_child
       in
       let children =
@@ -2074,7 +2074,7 @@ and print_yield_expression state node =
 
 and print_as_expression state node =
   match get_name node with
-  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:As
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Expression
   | _ ->
     let expression = child_ranked 0 node ~err:Expression
     and kwd_as = first_child_named "as" node ~err:As
@@ -2097,7 +2097,7 @@ and print_as_expression state node =
 
 and print_satisfies_expression state node =
   match get_name node with
-  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Satisfies
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Expression
   | _ ->
     let expression = child_ranked 0 node ~err:Expression
     and kwd_satisfies = first_child_named "satisfies" node ~err:Satisfies
@@ -2152,26 +2152,27 @@ and print_subscript_expression state node =
     and optional_chain_field = child_with_field_opt "optional_chain" node
     and index_field = child_with_field "index" node ~err:Expression
     and sym_lbracket = first_child_named "[" node ~err:Left_bracket
-    and sym_rbracket = first_child_named "]" node ~err:Right_bracket
-    and print_chain state node =
-      match get_name node with
-      | "optional_chain" -> make_node state node
-      | _ -> print_error_node state node ~err:Optional_chain
-    and print_index state node =
-      match get_name node with
-      | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Index_expression
-      | "sequence_expression" -> print_sequence_expression state node
-      | _ -> print_expression state node
-    in
+    and sym_rbracket = first_child_named "]" node ~err:Right_bracket in
     let children =
       [ mk_child_res print_expression object_field
-      ; mk_child_opt print_chain optional_chain_field
+      ; mk_child_opt print_optional_chain optional_chain_field
       ; mk_child_res mk_sym_lbracket sym_lbracket
       ; mk_child_res print_index index_field
       ; mk_child_res mk_sym_rbracket sym_rbracket
       ]
     in
     make_tree state node children
+
+and print_optional_chain state node =
+  match get_name node with
+  | "optional_chain" -> make_node state node
+  | _ -> print_error_node state node ~err:Optional_chain
+
+and print_index state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Index_expression
+  | "sequence_expression" -> print_sequence_expression state node
+  | _ -> print_expression state node
 
 (* Member expression *)
 
@@ -2182,11 +2183,6 @@ and print_member_expression state node =
     let object_field = child_with_field "object" node ~err:Expression
     and optional_chain_field = child_with_field_opt "optional_chain" node
     and property_field = child_with_field "property" node ~err:Property_identifier
-    and print_object state node =
-      match get_name node with
-      | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Object_denotation
-      | "import" -> mk_kwd_import state node
-      | _ -> print_expression state node
     and print_selector state = function
       | None -> () (* "." *)
       | Some node ->
@@ -2194,12 +2190,18 @@ and print_member_expression state node =
         mk_sym_optional_chain state node
     in
     let children =
-      [ mk_child_res print_object object_field
+      [ mk_child_res print_object_member object_field
       ; mk_child print_selector optional_chain_field
       ; mk_child_res print_property_field property_field
       ]
     in
     make_tree state node children
+
+and print_object_member state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Object_denotation
+  | "import" -> mk_kwd_import state node
+  | _ -> print_expression state node
 
 (* Parenthesised expression *)
 
@@ -2242,26 +2244,26 @@ and print_template_string ?(comments = []) state node =
     let opening = child_ranked 0 node ~err:Backquote in
     let closing = last_child node ~err:Backquote in
     let raw_children = collect_named_children node in
-    let print ?comments state node =
-      match get_name node with
-      | "string_fragment" -> make_node ?comments state node
-      | "escape_sequence" -> make_node ?comments state node
-      | "template_substitution" -> make_node ?comments state node
-      | _ -> print_error_node state node ~err:Template_string
-    in
     let children =
       (mk_child_res (mk_sym_backquote ~comments) opening
-      :: mk_children_list print raw_children)
+      :: mk_children_list print_template_string_fragment raw_children)
       @ [ mk_child_res mk_sym_backquote closing ]
     in
     make_tree state node children
 
+and print_template_string_fragment ?comments state node =
+  match get_name node with
+  | "string_fragment" -> make_node ?comments state node
+  | "escape_sequence" -> make_node ?comments state node
+  | "template_substitution" -> make_node ?comments state node
+  | _ -> print_error_node state node ~err:Template_string
+
 (* Object *)
 
-and print_object state node =
-  print_braces state node print_object_field ~err:Object_expression
+and print_object_expr state node =
+  print_braces state node print_object_entry ~err:Object_expression
 
-and print_object_field state node =
+and print_object_entry state node =
   match get_name node with
   | "pair" -> print_pair state node
   | "spread_element" -> print_spread_element state node
@@ -2277,8 +2279,8 @@ and print_pair state node =
   | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Key_value_pair
   | _ ->
     let key_field = child_with_field "key" node ~err:Property_name
-    and value_field = child_with_field "value" node ~err:Expression
-    and sym_colon = first_child_named ":" node ~err:Colon in
+    and sym_colon = first_child_named ":" node ~err:Colon
+    and value_field = child_with_field "value" node ~err:Expression in
     let children =
       [ mk_child_res print_property_name key_field
       ; mk_child_res mk_sym_colon sym_colon
@@ -2405,9 +2407,9 @@ and print_generator_function state node =
     in
     make_tree state node children
 
-(* Class *)
+(* Class expression ("class_" in the grammar) *)
 
-and print_class state node =
+and print_class_expression state node =
   match get_name node with
   | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Class_expression
   | _ ->
@@ -2733,7 +2735,7 @@ and print_sequence_expression ?(comments = []) state node =
   | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Expression
   | _ -> tree_of_named_children ~comments state node print_expression
 
-(* TYPE
+(* TYPES
 
    The non-terminals "type" and "primary_type" are supertypes in the
    TypeScript grammar, which means that they are hidden rules. *)
@@ -2813,20 +2815,20 @@ and print_type_query_call_expression_in_type_annotation state node =
   | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Member_expression
   | _ ->
     let function_field = child_with_field "function" node ~err:Member_expression
-    and arguments_field = child_with_field "arguments" node ~err:Arguments
-    and print_function_field state node =
-      match get_name node with
-      | "import" -> mk_kwd_import state node
-      | "member_expression" ->
-        print_type_query_member_expression_in_type_annotation state node
-      | _ -> print_error_node state node ~err:Member_expression
-    in
+    and arguments_field = child_with_field "arguments" node ~err:Arguments in
     let children =
-      [ mk_child_res print_function_field function_field
+      [ mk_child_res print_type_query_call_lambda function_field
       ; mk_child_res print_arguments arguments_field
       ]
     in
     make_tree state node children
+
+and print_type_query_call_lambda state node =
+  match get_name node with
+  | "import" -> mk_kwd_import state node
+  | "member_expression" ->
+     print_type_query_member_expression_in_type_annotation state node
+  | _ -> print_error_node state node ~err:Member_expression
 
 (* Flow maybe type
 
@@ -2944,26 +2946,26 @@ and print_generic_type ?(comments = []) state node =
   | _ ->
     let comments = comments @ prev_comments node in
     let name_field = child_with_field "name" node ~err:Type_identifier_or_path
-    and type_arguments_field = child_with_field "type_arguments" node ~err:Type_arguments
-    and print_name_field state node =
-      match get_name node with
-      | "type_identifier" -> print_type_identifier ~comments state node
-      | "nested_type_identifier" -> print_nested_type_identifier ~comments state node
-      | _ -> print_error_node state node ~err:Type_identifier_or_path
-    in
+    and type_arguments_field = child_with_field "type_arguments" node ~err:Type_arguments in
     let children =
-      [ mk_child_res print_name_field name_field
+      [ mk_child_res (print_generic_name ~comments) name_field
       ; mk_child_res print_type_arguments type_arguments_field
       ]
     in
     make_tree state node children
 
+and print_generic_name ?(comments = []) state node =
+  match get_name node with
+  | "type_identifier" -> print_type_identifier ~comments state node
+  | "nested_type_identifier" -> print_nested_type_identifier ~comments state node
+  | _ -> print_error_node state node ~err:Type_identifier_or_path
+
 (* Object type *)
 
 and print_object_type state node =
-  print_braces state node print_object_type_field ~err:Object_type
+  print_braces state node print_member_type ~err:Object_type
 
-and print_object_type_field state node =
+and print_member_type state node =
   match get_name node with
   | "export_statement" -> print_export_statement state node
   | "property_signature" -> print_property_signature state node
@@ -3257,19 +3259,19 @@ and print_tuple_parameter state node =
   | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Tuple_parameter
   | _ ->
     let name_field = child_with_field "name" node ~err:Identifier_or_rest
-    and type_field = child_with_field "type" node ~err:Type_annotation
-    and print_name_field state node =
-      match get_name node with
-      | "identifier" -> print_identifier state node
-      | "rest_pattern" -> print_rest_pattern state node
-      | _ -> print_error_node state node ~err:Identifier_or_rest
-    in
+    and type_field = child_with_field "type" node ~err:Type_annotation in
     let children =
-      [ mk_child_res print_name_field name_field
+      [ mk_child_res print_tuple_parameter_name name_field
       ; mk_child_res print_type_annotation type_field
       ]
     in
     make_tree state node children
+
+and print_tuple_parameter_name state node =
+  match get_name node with
+  | "identifier" -> print_identifier state node
+  | "rest_pattern" -> print_rest_pattern state node
+  | _ -> print_error_node state node ~err:Identifier_or_rest
 
 and print_optional_tuple_parameter state node =
   match get_name node with
@@ -3346,7 +3348,7 @@ and print_lhs_expression state node =
   | "object_pattern" -> print_object_pattern state node
   | "array_pattern" -> print_array_pattern state node
   | "non_null_expression" -> print_non_null_expression state node
-  | _ -> print_error_node state node ~err:Expression
+  | _ -> print_error_node state node ~err:Pattern
 
 (* Type query *)
 
@@ -3374,24 +3376,24 @@ and print_type_query_subscript_expression state node =
   | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Type_query_subscript
   | _ ->
     let object_field = child_with_field "object" node ~err:Object_denotation
-    and index_field = child_with_field "index" node ~err:Type_or_string_or_number
     and sym_lbracket = first_child_named "[" node ~err:Left_bracket
-    and sym_rbracket = first_child_named "]" node ~err:Right_bracket
-    and print_index_field state node =
-      match get_name node with
-      | "predefined_type" -> print_predefined_type state node
-      | "string" -> print_string state node
-      | "number" -> print_number state node
-      | _ -> print_error_node state node ~err:Predefined_type
-    in
+    and index_field = child_with_field "index" node ~err:Type_or_string_or_number
+    and sym_rbracket = first_child_named "]" node ~err:Right_bracket in
     let children =
-      [ mk_child_res print_object_field object_field
+      [ mk_child_res print_type_query_object object_field
       ; mk_child_res mk_sym_lbracket sym_lbracket
-      ; mk_child_res print_index_field index_field
+      ; mk_child_res print_type_query_index index_field
       ; mk_child_res mk_sym_rbracket sym_rbracket
       ]
     in
     make_tree state node children
+
+and print_type_query_index state node =
+  match get_name node with
+  | "predefined_type" -> print_predefined_type state node
+  | "string" -> print_string state node
+  | "number" -> print_number state node
+  | _ -> print_error_node state node ~err:Predefined_type
 
 and print_type_query_member_expression state node =
   match get_name node with
@@ -3400,13 +3402,13 @@ and print_type_query_member_expression state node =
     let object_field = child_with_field "object" node ~err:Object_denotation
     and property_field = child_with_field "property" node ~err:Property_identifier in
     let children =
-      [ mk_child_res print_object_denotation object_field
+      [ mk_child_res print_type_query_object object_field
       ; mk_child_res print_property_field property_field
       ]
     in
     make_tree state node children
 
-and print_object_denotation state node =
+and print_type_query_object state node =
   match get_name node with
   | "identifier" -> print_identifier state node
   | "this" -> mk_kwd_this state node
@@ -3427,13 +3429,13 @@ and print_type_query_instantiation_expression state node =
       child_with_field "type_arguments" node ~err:Type_arguments
     in
     let children =
-      [ mk_child_res print_function_field function_field
+      [ mk_child_res print_type_query_call_function function_field
       ; mk_child_res print_type_arguments type_arguments_field
       ]
     in
     make_tree state node children
 
-and print_function_field state node =
+and print_type_query_call_function state node =
   match get_name node with
   | "import" -> mk_kwd_import state node
   | "identifier" -> print_identifier state node
@@ -3448,7 +3450,7 @@ and print_type_query_call_expression state node =
     let function_field = child_with_field "function" node ~err:Function_denotation
     and arguments_field = child_with_field "arguments" node ~err:Arguments in
     let children =
-      [ mk_child_res print_function_field function_field
+      [ mk_child_res print_type_query_call_function function_field
       ; mk_child_res print_arguments arguments_field
       ]
     in
@@ -3501,8 +3503,8 @@ and print_lookup_type state node =
   | _ ->
     let primary_type_child = named_child_ranked 0 node ~err:Type_expression
     and sym_lbracket = first_child_named "[" node ~err:Left_bracket
-    and sym_rbracket = first_child_named "]" node ~err:Right_bracket
-    and type_child = named_child_ranked 1 node ~err:Type_expression in
+    and type_child = named_child_ranked 1 node ~err:Type_expression
+    and sym_rbracket = first_child_named "]" node ~err:Right_bracket in
     let children =
       [ mk_child_res print_primary_type primary_type_child
       ; mk_child_res mk_sym_lbracket sym_lbracket
@@ -3520,11 +3522,11 @@ and print_conditional_type state node =
   | _ ->
     let left_field = child_with_field "left" node ~err:Type
     and kwd_extends = first_child_named "extends" node ~err:Extends
-    and right_field = child_with_field "right" node ~err:Type
-    and consequence_field = child_with_field "consequence" node ~err:Type
-    and alternative_field = child_with_field "alternative" node ~err:Type
+    and right_field = child_with_field "right" node ~err:Type_expression
     and sym_qmark = first_child_named "?" node ~err:Question_mark
-    and sym_colon = first_child_named ":" node ~err:Colon in
+    and consequence_field = child_with_field "consequence" node ~err:Type_expression
+    and sym_colon = first_child_named ":" node ~err:Colon
+    and alternative_field = child_with_field "alternative" node ~err:Type_expression in
     let children =
       [ mk_child_res print_type left_field
       ; mk_child_res mk_kwd_extends kwd_extends
@@ -3604,7 +3606,7 @@ and print_function_type state node =
   | _ ->
     let type_parameters_field = child_with_field_opt "type_parameters" node
     and parameters_field = child_with_field "parameters" node ~err:Parameters
-    and return_type_field = child_with_field "return_type" node ~err:Type
+    and return_type_field = child_with_field "return_type" node ~err:Type_expression
     and sym_arrow = first_child_named "=>" node ~err:Arrow
     and print_return_type state node =
       match get_name node with
@@ -3742,7 +3744,7 @@ and print_infer_type state node =
     and type_identifier_child =
       child_ranked 1 node ~err:Identifier (* name "type_identifier"? *)
     and kwd_extends = first_child_named_opt "extends" node
-    and type_child = child_ranked_opt 3 node in
+    and type_child = child_ranked_opt 3 node in (* Should not be an optional value. *)
     let children =
       [ mk_child_res mk_kwd_infer kwd_infer
       ; mk_child_res print_identifier type_identifier_child
@@ -3853,9 +3855,9 @@ and print_override_modifier state node =
 (* Object pattern *)
 
 and print_object_pattern state node =
-  print_braces state node print_object_pattern_field ~err:Object_pattern
+  print_braces state node print_member_pattern ~err:Object_pattern
 
-and print_object_pattern_field state node =
+and print_member_pattern state node =
   match get_name node with
   | "pair_pattern" -> print_pair_pattern state node
   | "rest_pattern" -> print_rest_pattern state node
@@ -3872,21 +3874,21 @@ and print_pair_pattern state node =
   | _ ->
     let key_field = child_with_field "key" node ~err:Property_name
     and sym_colon = first_child_named ":" node ~err:Colon
-    and value_field = child_with_field "value" node ~err:Pattern
-    and print_value state node =
-      match get_name node with
-      | "ERROR" | "MISSING" | "NULL" ->
-        print_error_node state node ~err:Value_of_pair_pattern
-      | "assignment_pattern" -> print_assignment_pattern state node
-      | _ -> print_pattern state node (* Hidden rule *)
-    in
+    and value_field = child_with_field "value" node ~err:Pattern in
     let children =
       [ mk_child_res print_property_name key_field
       ; mk_child_res mk_sym_colon sym_colon
-      ; mk_child_res print_value value_field
+      ; mk_child_res print_pair_value_pattern value_field
       ]
     in
     make_tree state node children
+
+and print_pair_value_pattern state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" ->
+     print_error_node state node ~err:Value_of_pair_pattern
+  | "assignment_pattern" -> print_assignment_pattern state node
+  | _ -> print_pattern state node (* Hidden rule *)
 
 (* Assignment pattern *)
 
@@ -3895,8 +3897,8 @@ and print_assignment_pattern state node =
   | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Assignment_pattern
   | _ ->
     let left_field = child_with_field "left" node ~err:Pattern
-    and right_field = child_with_field "right" node ~err:Expression
-    and sym_equal = first_child_named "=" node ~err:Equal in
+    and sym_equal = first_child_named "=" node ~err:Equal
+    and right_field = child_with_field "right" node ~err:Expression in
     let children =
       [ mk_child_res print_pattern left_field
       ; mk_child_res mk_sym_equal sym_equal

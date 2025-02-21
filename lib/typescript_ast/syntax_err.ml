@@ -325,6 +325,8 @@ type t =
   | Block_or_ident_or_decl
   | Type_alias_declaration
   | Variable_declaration
+  | String_or_type
+  | Selector_or_optional_chain
 
 type error = t
 
@@ -658,3 +660,5 @@ let to_string : t -> string = function
     "A block or a property identifier or a declaration is expected."
   | Type_alias_declaration -> "A type alias declaration is expected."
   | Variable_declaration -> "A variable declaration is expected."
+  | String_or_type -> "A string literal or a type expression is expected."
+  | Selector_or_optional_chain -> "A selector '.' or an optional chain '?.' is expected."

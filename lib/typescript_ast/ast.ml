@@ -2753,7 +2753,7 @@ and type_query =
 
 and type_query_subscript_expression =
   { object_expr : type_query_object
-  ; optional : sym_opt_chain (* "?." *)
+  ; optional : sym_opt_chain option (* "?." *)
   ; index : type_query_index brackets
   }
 
