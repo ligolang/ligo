@@ -1542,7 +1542,8 @@ and print_internal_module ?(comments = []) state node =
 
 and print_type_alias_declaration ?(comments = []) state node =
   match get_name node with
-  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Type_alias_declaration
+  | "ERROR" | "MISSING" | "NULL" ->
+    print_error_node state node ~err:Type_alias_declaration
   | _ ->
     let comments = comments @ prev_comments node
     and kwd_type = first_child_named "type" node ~err:Type
@@ -2827,7 +2828,7 @@ and print_type_query_call_lambda state node =
   match get_name node with
   | "import" -> mk_kwd_import state node
   | "member_expression" ->
-     print_type_query_member_expression_in_type_annotation state node
+    print_type_query_member_expression_in_type_annotation state node
   | _ -> print_error_node state node ~err:Member_expression
 
 (* Flow maybe type
@@ -2946,7 +2947,9 @@ and print_generic_type ?(comments = []) state node =
   | _ ->
     let comments = comments @ prev_comments node in
     let name_field = child_with_field "name" node ~err:Type_identifier_or_path
-    and type_arguments_field = child_with_field "type_arguments" node ~err:Type_arguments in
+    and type_arguments_field =
+      child_with_field "type_arguments" node ~err:Type_arguments
+    in
     let children =
       [ mk_child_res (print_generic_name ~comments) name_field
       ; mk_child_res print_type_arguments type_arguments_field
@@ -3744,7 +3747,8 @@ and print_infer_type state node =
     and type_identifier_child =
       child_ranked 1 node ~err:Identifier (* name "type_identifier"? *)
     and kwd_extends = first_child_named_opt "extends" node
-    and type_child = child_ranked_opt 3 node in (* Should not be an optional value. *)
+    and type_child = child_ranked_opt 3 node in
+    (* Should not be an optional value. *)
     let children =
       [ mk_child_res mk_kwd_infer kwd_infer
       ; mk_child_res print_identifier type_identifier_child
@@ -3885,8 +3889,7 @@ and print_pair_pattern state node =
 
 and print_pair_value_pattern state node =
   match get_name node with
-  | "ERROR" | "MISSING" | "NULL" ->
-     print_error_node state node ~err:Value_of_pair_pattern
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Value_of_pair_pattern
   | "assignment_pattern" -> print_assignment_pattern state node
   | _ -> print_pattern state node (* Hidden rule *)
 
