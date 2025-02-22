@@ -20,7 +20,7 @@ module Decode = Typescript_decoder.Decode
 
 (* Parsing *)
 
-let parse filename : (Ast.t, string) result =
+let parse no_colour_arg debug_arg filename : (Ast.t, string) result =
   (* Loading the code as text *)
   let file : string = Core.In_channel.read_all filename in
   (* Building the map from line+columns to positions *)
@@ -30,20 +30,28 @@ let parse filename : (Ast.t, string) result =
   (* Getting ahold of the root of the tree *)
   let program_node : Ts_wrap.ts_tree = TS_fun.ts_tree_root_node tree in
   (* Decoding the CST *)
-  let ast = Decode.dec_program ~filename ~file line_map program_node in
+  let ast =
+    Decode.dec_program ~no_colour_arg ~debug_arg ~filename ~file line_map program_node
+  in
   (* Releasing the memory allocated to the tree *)
   let () = TS_fun.ts_tree_delete tree in
   ast
 
 (* Reading the input TypeScript, parsing and printing the AST *)
 
-let cli_args : string array = Sys.get_argv ()
+let usage_msg = "Usage: decode_main [-no-colour] <filename>.ts"
+let no_colour = ref false
+let debug = ref false
+let input_file = ref ""
+let anon_fun filename = input_file := filename
+
+let speclist =
+  [ "-no-colour", Arg.Set no_colour, "Colourless code snippets in errors."
+  ; "-debug", Arg.Set debug, "A missing field yields internal information."
+  ]
 
 let () =
-  match Array.length cli_args with
-  | 2 ->
-    let file = cli_args.(1) in
-    (match parse file with
-    | Ok _ast -> Printf.printf "Decoded.\n%!"
-    | Error msg -> Printf.eprintf "Error: %s\n%!" msg)
-  | _ -> prerr_endline ("Usage: " ^ cli_args.(0) ^ " [file]")
+  Arg.parse speclist anon_fun usage_msg;
+  match parse !no_colour !debug !input_file with
+  | Ok _ast -> Printf.printf " Done.\n%!"
+  | Error msg -> Printf.printf "\n%s\n%!" msg
