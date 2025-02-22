@@ -37,7 +37,7 @@ let parse no_colour_arg debug_arg filename : (Ast.t, string) result =
   let () = TS_fun.ts_tree_delete tree in
   ast
 
-(* Reading the input TypeScript, parsing and printing the AST *)
+(* Reading the input TypeScript, parsing and decoding the AST *)
 
 let usage_msg = "Usage: decode_main [-no-colour] <filename>.ts"
 let no_colour = ref false
