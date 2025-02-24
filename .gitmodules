@@ -10,6 +10,3 @@
 	path = vendors/lltz
 	url = https://github.com/trilitech/lltz.git
 	branch = main
-[submodule "vendors/grace"]
-	path = vendors/grace
-	url = https://github.com/johnyob/grace

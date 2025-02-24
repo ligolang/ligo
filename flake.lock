@@ -210,22 +210,6 @@
         "url": "https://gitlab.haskell.org/ghc/ghc"
       }
     },
-    "grace": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1717098178,
-        "narHash": "sha256-jubzimeKs29Y6Di2/kpKEOnNAEzMzVpC5HMLjog4Tlg=",
-        "owner": "johnyob",
-        "repo": "grace",
-        "rev": "d15a6d7d07a2551d1a9934fa79c2cf84c918f990",
-        "type": "github"
-      },
-      "original": {
-        "owner": "johnyob",
-        "repo": "grace",
-        "type": "github"
-      }
-    },
     "hackage": {
       "flake": false,
       "locked": {
@@ -777,7 +761,6 @@
       "inputs": {
         "build-yarn-package": "build-yarn-package",
         "flake-utils": "flake-utils",
-        "grace": "grace",
         "hackage": "hackage",
         "haskell-nix": "haskell-nix",
         "lltz": "lltz",

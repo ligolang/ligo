@@ -5,7 +5,6 @@
   tezos-ligo,
   tree-sitter,
   tree-sitter-typescript,
-  grace,
   lltz,
   libiconv,
 }: let
@@ -30,8 +29,6 @@ in
         find . -type d -exec chmod u+w {} +
         patchShebangs .
         cd ../../../..
-        mkdir -p vendors/grace
-        cp -r ${grace}/. vendors/grace/
         mkdir -p vendors/lltz
         cp -r ${lltz}/. vendors/lltz/
       '';
@@ -129,6 +126,7 @@ in
           cohttp
           conduit-lwt-unix
           magic-mime
+          grace
         ]
         ++ lib.optionals stdenv.isDarwin [
           darwin.apple_sdk.frameworks.Security
