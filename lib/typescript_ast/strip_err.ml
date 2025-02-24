@@ -86,12 +86,12 @@ type t =
   | Complex_rest_pattern
   | Subscript_pattern
   | Member_pattern
-  | Bit_usr_eq
+  | Bitwise_usr_eq
   | Exp_eq
-  | Log_and_eq
-  | Log_or_eq
+  | Logical_and_eq
+  | Logical_or_eq
   | Complex_lhs
-  | Unary_add
+  | Plus_zero
   | Typeof_void_delete
   | Class_expression
   | Metaproperty
@@ -159,6 +159,7 @@ type t =
   | Generic_class
   | Invalid_implements
   | Empty_class
+  | Exp
 
 type error = t
 
@@ -247,12 +248,12 @@ let to_string = function
   | Complex_rest_pattern -> "Complex rest patterns are not supported in JsLIGO."
   | Subscript_pattern -> "Subscript patterns are not supported in JsLIGO."
   | Member_pattern -> "Member patterns are not supported in JsLIGO."
-  | Bit_usr_eq -> "The augmented unsigned bitwise shift-right is not supported in JsLIGO."
+  | Bitwise_usr_eq -> "The augmented unsigned bitwise shift-right is not supported in JsLIGO."
   | Exp_eq -> "The augmented exponent is not supported in JsLIGO."
-  | Log_and_eq -> "The augmented logical conjunction is not supported in JsLIGO."
-  | Log_or_eq -> "The augmented logical disjunction is not supported in JsLIGO."
+  | Logical_and_eq -> "The augmented logical conjunction is not supported in JsLIGO."
+  | Logical_or_eq -> "The augmented logical disjunction is not supported in JsLIGO."
   | Complex_lhs -> "Complex left-hand sides are not supported in JsLIGO."
-  | Unary_add -> "Unary plus is not supported in JsLIGO."
+  | Plus_zero -> "Unary plus is not supported in JsLIGO."
   | Typeof_void_delete ->
     "Only arithmetic and logical unary operators are supported in JsLIGO."
   | Class_expression -> "Class expressions are not supported in JsLIGO."
@@ -332,21 +333,4 @@ let to_string = function
   | Invalid_implements ->
     "General types in implements clauses are not supported in JsLIGO."
   | Empty_class -> "Empty classes are not supported in JsLIGO."
-
-(* Creating errors *)
-
-let make ?(hint : string option) (region : Region.t) (error : t) =
-  let hint =
-    match hint with
-    | None | Some "" -> ""
-    | Some msg -> "\nHint: " ^ msg
-  in
-  Error (Printf.sprintf "%s:\n%s%s" (region#to_string `Byte) (to_string error) hint)
-
-let pack ?(hint : string option) (region : Region.t) (error : t) =
-  let hint =
-    match hint with
-    | None | Some "" -> ""
-    | Some msg -> "\nHint: " ^ msg
-  in
-  Error Region.{ region; value = to_string error ^ hint }
+  | Exp -> "The exponent operator is not supported in JsLIGO."

@@ -99,9 +99,10 @@ rule scan comments region = parse
     Ok (make_dec comments lexbuf ~integral ~exponent region false)
   }
 | natural { Ok (make_dec comments lexbuf ~integral:nat region false) }
-| eof { Error "INTERNAL: Number.mll: Empty number." }
+| eof { Error Region.{value="INTERNAL: Number.mll: Empty number."; region} }
 | _ as c {
-  Error (Printf.sprintf "INTERNAL: Number.mll: Unexpected character \"%c\"." c) }
+  let value = Printf.sprintf "INTERNAL: Number.mll: Unexpected character \"%c\"." c in
+  Error Region.{value; region} }
 
 (* END LEXER DEFINITION *)
 

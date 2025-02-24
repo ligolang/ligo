@@ -97,6 +97,7 @@ type t =
   | Right_parenthesis
   | Asterisk
   | Equal
+  | Strict_equal
   | Question_mark
   | Plus_equal
   | Minus_equal
@@ -107,9 +108,9 @@ type t =
   | And_equal
   | Or_equal
   | Right_shift_equal
-  | Unsigned_right_shift_equal
+  | Unsigned_shift_right_equal
   | Left_shift_equal
-  | Unsigned_left_shift_equal
+  | Unsigned_shift_left_equal
   | Exponent_equal
   | Conjunction_equal
   | Disjunction_equal
@@ -121,17 +122,17 @@ type t =
   | Conjunction
   | Disjunction
   | Right_shift
-  | Unsigned_right_shift
+  | Unsigned_shift_right
   | Left_shift
-  | Unsigned_left_shift
+  | Unsigned_shift_left
   | And
   | Xor
   | Or
   | Div
   | Rem
   | Exponent
-  | Lower_than
-  | Lower_than_or_equal
+  | Less_than
+  | Less_than_or_equal
   | No_conv_equal
   | Different
   | No_conv_different
@@ -426,6 +427,7 @@ let to_string : t -> string = function
   | Right_parenthesis -> "The symbol ')' is expected."
   | Asterisk -> "The symbol '*' is expected."
   | Equal -> "The symbol '=' is expected."
+  | Strict_equal -> "The symbol '==' is expected."
   | Question_mark -> "The symbol '?' is expected."
   | Plus_equal -> "The symbol '+=' is expected."
   | Minus_equal -> "The symbol '-=' is expected."
@@ -436,9 +438,9 @@ let to_string : t -> string = function
   | And_equal -> "The symbol '&=' is expected."
   | Or_equal -> "The symbol '|=' is expected."
   | Right_shift_equal -> "The symbol '>>=' is expected."
-  | Unsigned_right_shift_equal -> "The symbol '>>>=' is expected."
+  | Unsigned_shift_right_equal -> "The symbol '>>>=' is expected."
   | Left_shift_equal -> "The symbol '<<=' is expected."
-  | Unsigned_left_shift_equal -> "The symbol '<<<=' is expected."
+  | Unsigned_shift_left_equal -> "The symbol '<<<=' is expected."
   | Exponent_equal -> "The symbol '**=' is expected."
   | Conjunction_equal -> "The symbol '&&=' is expected."
   | Disjunction_equal -> "The symbol '||=' is expected."
@@ -450,17 +452,17 @@ let to_string : t -> string = function
   | Conjunction -> "The symbol '&&' is expected."
   | Disjunction -> "The symbol '||' is expected."
   | Right_shift -> "The symbol '>>' is expected."
-  | Unsigned_right_shift -> "The symbol '>>>' is expected."
+  | Unsigned_shift_right -> "The symbol '>>>' is expected."
   | Left_shift -> "The symbol '<<' is expected."
-  | Unsigned_left_shift -> "The symbol '<<<' is expected."
+  | Unsigned_shift_left -> "The symbol '<<<' is expected."
   | And -> "The symbol '&' is expected."
   | Xor -> "The symbol '^' is expected."
   | Or -> "The symbol '|' is expected."
   | Div -> "The symbol '/' is expected."
   | Rem -> "The symbol '%' is expected."
   | Exponent -> "The symbol '**' is expected."
-  | Lower_than -> "The symbol '<' is expected."
-  | Lower_than_or_equal -> "The symbol '<=' is expected."
+  | Less_than -> "The symbol '<' is expected."
+  | Less_than_or_equal -> "The symbol '<=' is expected."
   | No_conv_equal -> "The symbol '===' is expected."
   | Different -> "The symbol '!=' is expected."
   | No_conv_different -> "The symbol '!==' is expected."

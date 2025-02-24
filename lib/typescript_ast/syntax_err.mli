@@ -97,6 +97,7 @@ type t =
   | Right_parenthesis
   | Asterisk
   | Equal
+  | Strict_equal
   | Question_mark
   | Plus_equal
   | Minus_equal
@@ -107,9 +108,9 @@ type t =
   | And_equal
   | Or_equal
   | Right_shift_equal
-  | Unsigned_right_shift_equal
+  | Unsigned_shift_right_equal
   | Left_shift_equal
-  | Unsigned_left_shift_equal
+  | Unsigned_shift_left_equal
   | Exponent_equal
   | Conjunction_equal
   | Disjunction_equal
@@ -121,17 +122,17 @@ type t =
   | Conjunction
   | Disjunction
   | Right_shift
-  | Unsigned_right_shift
+  | Unsigned_shift_right
   | Left_shift
-  | Unsigned_left_shift
+  | Unsigned_shift_left
   | And
   | Xor
   | Or
   | Div
   | Rem
   | Exponent
-  | Lower_than
-  | Lower_than_or_equal
+  | Less_than
+  | Less_than_or_equal
   | No_conv_equal
   | Different
   | No_conv_different
