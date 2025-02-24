@@ -17,6 +17,18 @@ with prev; {
             propagatedBuildInputs = [base64 re stringext uri-sexp];
           };
 
+          grace = buildDunePackage rec {
+            pname = "grace";
+            version = "0.0.2";
+            src = fetchFromGitHub {
+              owner = "johnyob";
+              repo = "grace";
+              rev = "d15a6d7d07a2551d1a9934fa79c2cf84c918f990";
+              hash = "sha256-jubzimeKs29Y6Di2/kpKEOnNAEzMzVpC5HMLjog4Tlg=";
+            };
+            propagatedBuildInputs = [core ppx_jane fmt dedent iter core_unix uutf ppx_optcomp];
+          };
+
           tezt = buildDunePackage rec {
             pname = "tezt";
             version = "4.1.0";
