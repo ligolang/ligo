@@ -206,7 +206,7 @@ let compile_constant
          ~range
          (O.Dsl.slice ~range offset ~length ~seq)
          ~some:
-           (let var_name = O.Dsl.gen_name in
+           (let var_name = O.Dsl.gen_name () in
             O.Dsl.annon_function
               var_name
               seq.type_
@@ -296,7 +296,7 @@ let compile_constant
          ~range
          (O.Dsl.get ~range key coll)
          ~some:
-           (let var_name = O.Dsl.gen_name in
+           (let var_name = O.Dsl.gen_name () in
             match coll.type_ with
             | { desc = Map (key_ty, value_ty); _ } ->
               O.Dsl.annon_function
