@@ -3503,7 +3503,7 @@ and catch_parameter_kind =
   | Catch_object_pattern of object_pattern
   | Catch_array_pattern of array_pattern
 
-and finally_clause = statement_block
+and finally_clause = kwd_finally * statement_block
 
 (** Class
 

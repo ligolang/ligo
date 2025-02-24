@@ -187,13 +187,11 @@ let mk_kwd_private = make_kwd ~err:Private
 let mk_kwd_protected = make_kwd ~err:Protected
 let mk_kwd_set = make_kwd ~err:Set
 let mk_kwd_get = make_kwd ~err:Get
-let mk_kwd_all = make_kwd ~err:All
 let mk_kwd_static = make_kwd ~err:Static
 let mk_kwd_this = make_kwd ~err:This
 let mk_kwd_is = make_kwd ~err:Is
 let mk_kwd_class = make_kwd ~err:Class
 let mk_kwd_const = make_kwd ~err:Const
-let mk_kwd_constraint = make_kwd ~err:Constraint
 let mk_kwd_let = make_kwd ~err:Let
 let mk_kwd_undefined = make_kwd ~err:Undefined
 let mk_kwd_abstract = make_kwd ~err:Abstract
@@ -291,11 +289,10 @@ let mk_sym_dot = make_sym ~err:Dot
 let mk_sym_omitting = make_sym ~err:Omitting_type_annotation
 let mk_sym_adding = make_sym ~err:Adding_type_annotation
 let mk_sym_opting = make_sym ~err:Opting_type_annotation
-let mk_sym_ampersand = make_sym ~err:Ampersand
+let mk_sym_and = make_sym ~err:And
 let mk_sym_vbar = make_sym ~err:Vertical_bar
 let mk_sym_unsigned_shift_right_equal = make_sym ~err:Unsigned_shift_right_equal
 let mk_sym_shift_left_equal = make_sym ~err:Left_shift_equal
-let mk_sym_unsigned_shift_left_equal = make_sym ~err:Unsigned_shift_left_equal
 let mk_sym_exponent_equal = make_sym ~err:Exponent_equal
 let mk_sym_conjunction_equal = make_sym ~err:Conjunction_equal
 let mk_sym_disjunction_equal = make_sym ~err:Disjunction_equal
@@ -308,7 +305,6 @@ let mk_sym_disjunction = make_sym ~err:Disjunction
 let mk_sym_shift_right = make_sym ~err:Right_shift
 let mk_sym_unsigned_shift_right = make_sym ~err:Unsigned_shift_right
 let mk_sym_shift_left = make_sym ~err:Left_shift
-let mk_sym_unsigned_shift_left = make_sym ~err:Unsigned_shift_left
 let mk_sym_and = make_sym ~err:And
 let mk_sym_xor = make_sym ~err:Xor
 let mk_sym_or = make_sym ~err:Or
@@ -1861,7 +1857,7 @@ and print_assignment_operator state node =
   | ">>=" -> mk_sym_shift_right_equal state node
   | ">>>=" -> mk_sym_unsigned_shift_right_equal state node
   | "<<=" -> mk_sym_shift_left_equal state node
-  | "**=" -> mk_sym_unsigned_shift_left_equal state node
+  | "**=" -> mk_sym_exponent_equal state node
   | "&&=" -> mk_sym_conjunction_equal state node
   | "||=" -> mk_sym_disjunction_equal state node
   | "??=" -> mk_sym_non_null_equal state node
@@ -3555,7 +3551,7 @@ and print_intersection_type state node =
   match get_name node with
   | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Intersection_type
   | _ ->
-    let sym_ampersand = first_child_named "&" node ~err:Ampersand in
+    let sym_and = first_child_named "&" node ~err:And in
     let children =
       match child_ranked 0 node ~err:Type_or_conjunction with
       | Error msg -> [ mk_error_child node ~msg ]
@@ -3563,14 +3559,14 @@ and print_intersection_type state node =
         (match get_name left_type with
         | "&" ->
           let type_node = child_ranked 1 node ~err:Type_expression in
-          [ mk_child_res mk_sym_ampersand sym_ampersand
+          [ mk_child_res mk_sym_and sym_and
           ; mk_child_res print_type type_node
           ]
         | _ ->
           (* "type" is a supertype, therefore a hidden rule *)
           let right_type = child_ranked 2 node ~err:Type_expression in
           [ mk_child print_type left_type
-          ; mk_child_res mk_sym_ampersand sym_ampersand
+          ; mk_child_res mk_sym_and sym_and
           ; mk_child_res print_type right_type
           ])
     in
