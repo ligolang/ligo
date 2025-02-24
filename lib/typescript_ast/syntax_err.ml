@@ -28,13 +28,11 @@ type t =
   | Protected
   | Set
   | Get
-  | All
   | Static
   | This
   | Is
   | Class
   | Const
-  | Constraint
   | Let
   | Undefined
   | Abstract
@@ -110,7 +108,6 @@ type t =
   | Right_shift_equal
   | Unsigned_shift_right_equal
   | Left_shift_equal
-  | Unsigned_shift_left_equal
   | Exponent_equal
   | Conjunction_equal
   | Disjunction_equal
@@ -124,8 +121,6 @@ type t =
   | Right_shift
   | Unsigned_shift_right
   | Left_shift
-  | Unsigned_shift_left
-  | And
   | Xor
   | Or
   | Div
@@ -319,7 +314,7 @@ type t =
   | Ellipsis
   | Arrow
   | Dot
-  | Ampersand
+  | And
   | Vertical_bar
   | Incr_or_decr_or_expr
   | Increment_or_decrement
@@ -358,13 +353,11 @@ let to_string : t -> string = function
   | Protected -> "The keyword 'protected' is expected."
   | Set -> "The keyword 'set' is expected."
   | Get -> "The keyword 'get' is expected."
-  | All -> "The keyword 'all' is expected."
   | Static -> "The keyword 'static' is expected."
   | This -> "The keyword 'this' is expected."
   | Is -> "The keyword 'is' is expected."
   | Class -> "The keyword 'class' is expected."
   | Const -> "The keyword 'const' is expected."
-  | Constraint -> "The keyword 'constraint' is expected."
   | Let -> "The keyword 'let' is expected."
   | Undefined -> "The keyword 'undefined' is expected."
   | Abstract -> "The keyword 'abstract' is expected."
@@ -440,7 +433,6 @@ let to_string : t -> string = function
   | Right_shift_equal -> "The symbol '>>=' is expected."
   | Unsigned_shift_right_equal -> "The symbol '>>>=' is expected."
   | Left_shift_equal -> "The symbol '<<=' is expected."
-  | Unsigned_shift_left_equal -> "The symbol '<<<=' is expected."
   | Exponent_equal -> "The symbol '**=' is expected."
   | Conjunction_equal -> "The symbol '&&=' is expected."
   | Disjunction_equal -> "The symbol '||=' is expected."
@@ -454,8 +446,6 @@ let to_string : t -> string = function
   | Right_shift -> "The symbol '>>' is expected."
   | Unsigned_shift_right -> "The symbol '>>>' is expected."
   | Left_shift -> "The symbol '<<' is expected."
-  | Unsigned_shift_left -> "The symbol '<<<' is expected."
-  | And -> "The symbol '&' is expected."
   | Xor -> "The symbol '^' is expected."
   | Or -> "The symbol '|' is expected."
   | Div -> "The symbol '/' is expected."
@@ -598,7 +588,7 @@ let to_string : t -> string = function
   | Omitting_type_annotation -> "A type omission annotation '-?:' is expected."
   | Adding_type_annotation -> "A type addition annotation '+?:' is expected."
   | Opting_type_annotation -> "An optional type annotation '?:' is expected."
-  | Ampersand -> "The symbol '&' is expected."
+  | And -> "The symbol '&' is expected."
   | Vertical_bar -> "The symbol '|' is expected."
   | Method_signature -> "A method signature is expected."
   | Array_type -> "An array type is expected."

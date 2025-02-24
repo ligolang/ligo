@@ -28,13 +28,11 @@ type t =
   | Protected
   | Set
   | Get
-  | All
   | Static
   | This
   | Is
   | Class
   | Const
-  | Constraint
   | Let
   | Undefined
   | Abstract
@@ -110,7 +108,6 @@ type t =
   | Right_shift_equal
   | Unsigned_shift_right_equal
   | Left_shift_equal
-  | Unsigned_shift_left_equal
   | Exponent_equal
   | Conjunction_equal
   | Disjunction_equal
@@ -124,8 +121,6 @@ type t =
   | Right_shift
   | Unsigned_shift_right
   | Left_shift
-  | Unsigned_shift_left
-  | And
   | Xor
   | Or
   | Div
@@ -319,7 +314,7 @@ type t =
   | Ellipsis
   | Arrow
   | Dot
-  | Ampersand
+  | And
   | Vertical_bar
   | Incr_or_decr_or_expr
   | Increment_or_decrement

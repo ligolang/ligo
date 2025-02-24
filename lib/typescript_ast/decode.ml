@@ -160,13 +160,11 @@ let dec_kwd_private = dec_kwd ~err:Syntax_err.Private
 let dec_kwd_protected = dec_kwd ~err:Syntax_err.Protected
 let dec_kwd_set = dec_kwd ~err:Syntax_err.Set
 let dec_kwd_get = dec_kwd ~err:Syntax_err.Get
-let dec_kwd_all = dec_kwd ~err:Syntax_err.All
 let dec_kwd_static = dec_kwd ~err:Syntax_err.Static
 let dec_kwd_this = dec_kwd ~err:Syntax_err.This
 let dec_kwd_is = dec_kwd ~err:Syntax_err.Is
 let dec_kwd_class = dec_kwd ~err:Syntax_err.Class
 let dec_kwd_const = dec_kwd ~err:Syntax_err.Const
-let dec_kwd_constraint = dec_kwd ~err:Syntax_err.Constraint
 let dec_kwd_let = dec_kwd ~err:Syntax_err.Let
 let dec_kwd_undefined = dec_kwd ~err:Syntax_err.Undefined
 let dec_kwd_abstract = dec_kwd ~err:Syntax_err.Abstract
@@ -257,11 +255,10 @@ let dec_sym_dot = dec_sym ~err:Dot
 let dec_sym_omitting = dec_sym ~err:Omitting_type_annotation
 let dec_sym_adding = dec_sym ~err:Adding_type_annotation
 let dec_sym_opting = dec_sym ~err:Opting_type_annotation
-let dec_sym_ampersand = dec_sym ~err:Ampersand
+let dec_sym_and = dec_sym ~err:And
 let dec_sym_vbar = dec_sym ~err:Vertical_bar
 let dec_sym_unsigned_shift_right_equal = dec_sym ~err:Unsigned_shift_right_equal
 let dec_sym_shift_left_equal = dec_sym ~err:Left_shift_equal
-let dec_sym_unsigned_shift_left_equal = dec_sym ~err:Unsigned_shift_left_equal
 let dec_sym_exponent_equal = dec_sym ~err:Exponent_equal
 let dec_sym_conjunction_equal = dec_sym ~err:Conjunction_equal
 let dec_sym_disjunction_equal = dec_sym ~err:Disjunction_equal
@@ -274,8 +271,6 @@ let dec_sym_disjunction = dec_sym ~err:Disjunction
 let dec_sym_shift_right = dec_sym ~err:Right_shift
 let dec_sym_unsigned_shift_right = dec_sym ~err:Unsigned_shift_right
 let dec_sym_shift_left = dec_sym ~err:Left_shift
-let dec_sym_unsigned_shift_left = dec_sym ~err:Unsigned_shift_left
-let dec_sym_and = dec_sym ~err:And
 let dec_sym_xor = dec_sym ~err:Xor
 let dec_sym_or = dec_sym ~err:Or
 let dec_sym_div = dec_sym ~err:Div
@@ -1228,7 +1223,15 @@ and dec_catch_parameter_kind node : (catch_parameter_kind, _) result =
     Ok (Catch_array_pattern pattern)
   | _ -> mk_err Pattern node
 
-and dec_finally_clause node : (finally_clause, _) result = dec_statement_block node
+and dec_finally_clause node : (finally_clause, _) result =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> mk_err Finally node
+  | _ ->
+     let* kwd_finally = first_child_named "finally" node ~err:Finally in
+     let* kwd_finally = dec_kwd_finally kwd_finally in
+     let* body_field = child_with_field "body" node ~err:Block in
+     let* finalizer_block = dec_statement_block body_field in
+     Ok (kwd_finally, finalizer_block)
 
 (* Type annotation *)
 
@@ -1980,7 +1983,7 @@ and dec_omitting_type_annotation node : (symbol * type_expr, _) result =
   | "ERROR" | "MISSING" | "NULL" -> mk_err Omitting_type_annotation node
   | _ ->
      let* sym_kind = first_child_named "-?:" node ~err:Omitting_type_annotation in
-     let* sym_kind = dec_sym sym_kind ~err:Omitting_type_annotation in
+     let* sym_kind = dec_sym_omitting sym_kind in
      let* type_child = named_child_ranked 0 node ~err:Type_expression in
      let* type_expr = dec_type type_child in
      Ok (sym_kind, type_expr)
@@ -1990,7 +1993,7 @@ and dec_adding_type_annotation node : (symbol * type_expr, _) result =
   | "ERROR" | "MISSING" | "NULL" -> mk_err Adding_type_annotation node
   | _ ->
     let* sym_kind = first_child_named "+?:" node ~err:Adding_type_annotation in
-    let* sym_kind = dec_sym sym_kind ~err:Adding_type_annotation in
+    let* sym_kind = dec_sym_adding sym_kind in
     let* type_child = named_child_ranked 0 node ~err:Type_expression in
     let* type_expr = dec_type type_child in
     Ok (sym_kind, type_expr)
@@ -1999,8 +2002,8 @@ and dec_opting_type_annotation node : (symbol * type_expr, _) result =
   match get_name node with
   | "ERROR" | "MISSING" | "NULL" -> mk_err Opting_type_annotation node
   | _ ->
-    let* sym_kind = first_child_named "?:" node ~err:Adding_type_annotation in
-    let* sym_kind = dec_sym sym_kind ~err:Adding_type_annotation in
+    let* sym_kind = first_child_named "?:" node ~err:Opting_type_annotation in
+    let* sym_kind = dec_sym_opting sym_kind in
     let* type_child = named_child_ranked 0 node ~err:Type_expression in
     let* type_expr = dec_type type_child in
     Ok (sym_kind, type_expr)
@@ -2782,8 +2785,8 @@ and dec_binary_operator node : (binary_operator, _) result =
              Ok (Bitwise_usr sym_unsigned_shift_right)
   | "<<" -> let* sym_shift_left = dec_sym_shift_left node in
             Ok (Bitwise_sl sym_shift_left)
-  | "&" -> let* sym_ampersand = dec_sym_ampersand node in
-           Ok (Bitwise_and sym_ampersand)
+  | "&" -> let* sym_and = dec_sym_and node in
+           Ok (Bitwise_and sym_and)
   | "^" -> let* sym_xor = dec_sym_xor node in
            Ok (Bitwise_xor sym_xor)
   | "|" -> let* sym_or = dec_sym_or node in
@@ -2996,7 +2999,7 @@ and dec_subscript_expression ?(comments = []) node : (subscript_expression, _) r
     let optional_chain_field = child_with_field_opt "optional_chain" node in
     let* optional_chain = make_opt_res dec_optional_chain optional_chain_field in
     let* index_field = child_with_field "index" node ~err:Expression in
-    let* contents = dec_expressions index_field in
+    let* contents = dec_index index_field in
     let* sym_lbracket = first_child_named "[" node ~err:Left_bracket in
     let* opening = dec_sym_lbracket sym_lbracket in
     let* sym_rbracket = first_child_named "]" node ~err:Right_bracket in
@@ -3013,7 +3016,7 @@ and dec_optional_chain node : (optional_chain, _) result =
      Ok (Optional_chain sym_optional_chain)
   | _ -> mk_err Optional_chain node
 
-and dec_index node ~comments : (sequence_expression, _) result =
+and dec_index ?(comments = []) node : (sequence_expression, _) result =
   (* See [dec_expressions] *)
   match get_name node with
   | "ERROR" | "MISSING" | "NULL" -> mk_err Index_expression node
@@ -3430,26 +3433,9 @@ and dec_template_string_fragment ?(comments = []) node
   | "template_substitution" -> Ok (Template_substitution (make_node ~comments node))
   | _ -> mk_err Template_string node
 
-(* Class expression ("class_" in the grammar) *)
-
-and dec_class_expression ?(comments = []) node : (class_expression, _) result =
-  let decorators = children_named "decorator" node in
-  let* decorators = list_of_children dec_decorator decorators in
-  let* kwd_class = first_child_named "class" node ~err:Class in
-  let* kwd_class = dec_kwd_class ~comments kwd_class in
-  let name_field = child_with_field_opt "name" node in
-  let name = make_opt dec_identifier name_field in
-  let type_parameters_field = child_with_field_opt "type_parameters" node in
-  let* type_parameters = make_opt_res dec_type_parameters type_parameters_field in
-  let heritage_child = first_child_named_opt "class_heritage" node in
-  let* class_heritage = make_opt_res dec_class_heritage heritage_child in
-  let* body_field = child_with_field "body" node ~err:Class_body in
-  let* body = dec_class_body body_field in
-  Ok { decorators; kwd_class; name; type_parameters; class_heritage; body }
-
 (* PATTERN
 
-   The JavasScript tree-sitter grammar have the non-terminal
+   The JavaScript tree-sitter grammar has the non-terminal
    "pattern" be a supertype, that is, a hidden rule. *)
 
 and dec_pattern ?(comments = []) node : (pattern, _) result =
@@ -3792,20 +3778,20 @@ and dec_intersection_type ?(comments = []) node : (intersection_type, _) result 
   | "ERROR" | "MISSING" | "NULL" -> mk_err Intersection_type node
   | _ ->
     let* first_child = child_ranked 0 node ~err:Type_or_conjunction in
-    let* sym_ampersand = first_child_named "&" node ~err:Ampersand in
+    let* sym_and = first_child_named "&" node ~err:And in
     (match get_name first_child with
     | "&" ->
-      let* sym_ampersand = dec_sym_ampersand ~comments sym_ampersand in
+      let* sym_and = dec_sym_and ~comments sym_and in
       let* single_type_node = child_ranked 1 node ~err:Type_expression in
       let* type_expr = dec_type single_type_node in
-      Ok (None, sym_ampersand, type_expr)
+      Ok (None, sym_and, type_expr)
     | _ ->
       (* "type" is a supertype, therefore a hidden rule *)
       let* left_type = dec_type ~comments first_child in
-      let* sym_ampersand = dec_sym_ampersand sym_ampersand in
+      let* sym_and = dec_sym_and sym_and in
       let* right_type = child_ranked 2 node ~err:Type_expression in
       let* right_type = dec_type right_type in
-      Ok (Some left_type, sym_ampersand, right_type))
+      Ok (Some left_type, sym_and, right_type))
 
 (* Template literal type *)
 
