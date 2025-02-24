@@ -260,6 +260,7 @@ let make_sym ?(comments = []) state node ~err =
 
 let mk_sym_asterisk = make_sym ~err:Asterisk
 let mk_sym_equal = make_sym ~err:Equal
+let mk_sym_strict_equal = make_sym ~err:Strict_equal
 let mk_sym_lparen = make_sym ~err:Left_parenthesis
 let mk_sym_rparen = make_sym ~err:Right_parenthesis
 let mk_sym_qmark = make_sym ~err:Question_mark
@@ -271,7 +272,7 @@ let mk_sym_rem_equal = make_sym ~err:Rem_equal
 let mk_sym_xor_equal = make_sym ~err:Xor_equal
 let mk_sym_and_equal = make_sym ~err:And_equal
 let mk_sym_or_equal = make_sym ~err:Or_equal
-let mk_sym_right_shift_equal = make_sym ~err:Right_shift_equal
+let mk_sym_shift_right_equal = make_sym ~err:Right_shift_equal
 let mk_sym_increment = make_sym ~err:Increment
 let mk_sym_decrement = make_sym ~err:Decrement
 let mk_sym_lbrace = make_sym ~err:Left_brace
@@ -292,31 +293,30 @@ let mk_sym_adding = make_sym ~err:Adding_type_annotation
 let mk_sym_opting = make_sym ~err:Opting_type_annotation
 let mk_sym_ampersand = make_sym ~err:Ampersand
 let mk_sym_vbar = make_sym ~err:Vertical_bar
-let mk_sym_unsigned_right_shift_equal = make_sym ~err:Unsigned_right_shift_equal
-let mk_sym_left_shift_equal = make_sym ~err:Left_shift_equal
-let mk_sym_unsigned_left_shift_equal = make_sym ~err:Unsigned_left_shift_equal
+let mk_sym_unsigned_shift_right_equal = make_sym ~err:Unsigned_shift_right_equal
+let mk_sym_shift_left_equal = make_sym ~err:Left_shift_equal
+let mk_sym_unsigned_shift_left_equal = make_sym ~err:Unsigned_shift_left_equal
 let mk_sym_exponent_equal = make_sym ~err:Exponent_equal
 let mk_sym_conjunction_equal = make_sym ~err:Conjunction_equal
 let mk_sym_disjunction_equal = make_sym ~err:Disjunction_equal
 let mk_sym_non_null_equal = make_sym ~err:Non_null_equal
-let mk_sym_bang = make_sym ~err:Exclamation_mark
 let mk_sym_tilde = make_sym ~err:Tilde
 let mk_sym_minus = make_sym ~err:Minus
 let mk_sym_plus = make_sym ~err:Plus
 let mk_sym_conjunction = make_sym ~err:Conjunction
 let mk_sym_disjunction = make_sym ~err:Disjunction
-let mk_sym_right_shift = make_sym ~err:Right_shift
-let mk_sym_unsigned_right_shift = make_sym ~err:Unsigned_right_shift
-let mk_sym_left_shift = make_sym ~err:Left_shift
-let mk_sym_unsigned_left_shift = make_sym ~err:Unsigned_left_shift
+let mk_sym_shift_right = make_sym ~err:Right_shift
+let mk_sym_unsigned_shift_right = make_sym ~err:Unsigned_shift_right
+let mk_sym_shift_left = make_sym ~err:Left_shift
+let mk_sym_unsigned_shift_left = make_sym ~err:Unsigned_shift_left
 let mk_sym_and = make_sym ~err:And
 let mk_sym_xor = make_sym ~err:Xor
 let mk_sym_or = make_sym ~err:Or
 let mk_sym_div = make_sym ~err:Div
 let mk_sym_rem = make_sym ~err:Rem
 let mk_sym_exponent = make_sym ~err:Exponent
-let mk_sym_lower_than = make_sym ~err:Lower_than
-let mk_sym_lower_than_or_equal = make_sym ~err:Lower_than_or_equal
+let mk_sym_less_than = make_sym ~err:Less_than
+let mk_sym_less_than_or_equal = make_sym ~err:Less_than_or_equal
 let mk_sym_no_conv_equal = make_sym ~err:No_conv_equal
 let mk_sym_different = make_sym ~err:Different
 let mk_sym_no_conv_different = make_sym ~err:No_conv_different
@@ -388,7 +388,7 @@ let print_number ?(comments = []) state node =
         @ [ mk_child print_kind num; mk_child Tree.make_node lexeme ]
       in
       make_tree state node children
-    | Error msg -> make_unary state node Tree.make_node msg)
+    | Error {region=_; value}-> make_unary state node Tree.make_node value)
 
 (* Printing enclosed constructs *)
 
@@ -1858,10 +1858,10 @@ and print_assignment_operator state node =
   | "^=" -> mk_sym_xor_equal state node
   | "&=" -> mk_sym_and_equal state node
   | "|=" -> mk_sym_or_equal state node
-  | ">>=" -> mk_sym_right_shift_equal state node
-  | ">>>=" -> mk_sym_unsigned_right_shift_equal state node
-  | "<<=" -> mk_sym_left_shift_equal state node
-  | "**=" -> mk_sym_unsigned_left_shift_equal state node
+  | ">>=" -> mk_sym_shift_right_equal state node
+  | ">>>=" -> mk_sym_unsigned_shift_right_equal state node
+  | "<<=" -> mk_sym_shift_left_equal state node
+  | "**=" -> mk_sym_unsigned_shift_left_equal state node
   | "&&=" -> mk_sym_conjunction_equal state node
   | "||=" -> mk_sym_disjunction_equal state node
   | "??=" -> mk_sym_non_null_equal state node
@@ -1906,7 +1906,7 @@ and print_unary_expression state node =
 
 and print_unary_operator state node =
   match get_name node with
-  | "!" -> mk_sym_bang state node
+  | "!" -> mk_sym_emark state node
   | "~" -> mk_sym_tilde state node
   | "-" -> mk_sym_minus state node
   | "+" -> mk_sym_plus state node
@@ -1942,9 +1942,9 @@ and print_binary_operator state node =
   match get_name node with
   | "&&" -> mk_sym_conjunction state node
   | "||" -> mk_sym_disjunction state node
-  | ">>" -> mk_sym_right_shift state node
-  | ">>>" -> mk_sym_unsigned_right_shift state node
-  | "<<" -> mk_sym_left_shift state node
+  | ">>" -> mk_sym_shift_right state node
+  | ">>>" -> mk_sym_unsigned_shift_right state node
+  | "<<" -> mk_sym_shift_left state node
   | "&" -> mk_sym_and state node
   | "^" -> mk_sym_xor state node
   | "|" -> mk_sym_or state node
@@ -1954,9 +1954,9 @@ and print_binary_operator state node =
   | "/" -> mk_sym_div state node
   | "%" -> mk_sym_rem state node
   | "**" -> mk_sym_exponent state node
-  | "<" -> mk_sym_lower_than state node
-  | "<=" -> mk_sym_lower_than_or_equal state node
-  | "==" -> mk_sym_equal state node
+  | "<" -> mk_sym_less_than state node
+  | "<=" -> mk_sym_less_than_or_equal state node
+  | "==" -> mk_sym_strict_equal state node
   | "===" -> mk_sym_no_conv_equal state node
   | "!=" -> mk_sym_different state node
   | "!==" -> mk_sym_no_conv_different state node

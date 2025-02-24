@@ -148,15 +148,15 @@ type sym_vbar = symbol (* "|" *)
 type sym_qmark = symbol (* "?" *)
 type sym_equal = symbol (* "=" *)
 type sym_colon = symbol (* ":" *)
-type sym_star = symbol (* "*" *)
+type sym_asterisk = symbol (* "*" *)
 type sym_ellipsis = symbol (* "..." *)
 type sym_plus = symbol (* "+" *)
 type sym_minus = symbol (* "-" *)
-type sym_bang = symbol (* "!" *)
+type sym_emark = symbol (* "!" *)
 type sym_dot = symbol (* "." *)
-type sym_opt_chain = symbol (* "?." *)
-type sym_lpar = symbol (* "(" *)
-type sym_rpar = symbol (* ")" *)
+type sym_optional_chain = symbol (* "?." *)
+type sym_lparen = symbol (* "(" *)
+type sym_rparen = symbol (* ")" *)
 type sym_tilde = symbol (* "~" *)
 type sym_incr = symbol (* "++" *)
 type sym_decr = symbol (* "--" *)
@@ -422,7 +422,7 @@ and type_predicate_name =
        optional($._automatic_semicolon)))
     ]}
  *)
-and generator_function_declaration = sym_star * function_declaration
+and generator_function_declaration = sym_asterisk * function_declaration
 
 (** Class Declaration
 
@@ -596,7 +596,7 @@ and accessibility_modifier =
 and set_get_all =
   | Set of kwd_set
   | Get of kwd_get
-  | All of sym_star
+  | All of sym_asterisk
 
 and method_scope =
   { kwd_static : kwd_static option
@@ -1024,7 +1024,7 @@ and field_scope =
 
 and field_mode =
   | Optional of sym_qmark
-  | Definite_assert of sym_bang
+  | Definite_assert of sym_emark
 
 (** Ambient Declaration
 
@@ -1417,7 +1417,7 @@ and object_member =
 
 and selector =
   | Dot of sym_dot
-  | Optional_chain of sym_opt_chain
+  | Optional_chain of sym_optional_chain
 
 and property_ident =
   | Private_property_identifier of hash_name
@@ -1454,7 +1454,7 @@ and subscript_expression =
   ; index : expressions brackets
   }
 
-and optional_chain = Optional_chain of sym_opt_chain
+and optional_chain = Optional_chain of sym_optional_chain
 and expressions = sequence_expression
 and sequence_expression = expression ne_list wrap
 
@@ -1509,15 +1509,15 @@ and assignment_operator =
   | Mult_eq of symbol (* *= *)
   | Div_eq of symbol (* /= *)
   | Rem_eq of symbol (* %= *)
-  | Bit_xor_eq of symbol (* ^= *)
-  | Bit_and_eq of symbol (* &= *)
-  | Bit_or_eq of symbol (* |= *)
-  | Bit_sr_eq of symbol (* >>= *)
-  | Bit_usr_eq of symbol (* >>>= *)
-  | Bit_sl_eq of symbol (* <<= *)
+  | Bitwise_xor_eq of symbol (* ^= *)
+  | Bitwise_and_eq of symbol (* &= *)
+  | Bitwise_or_eq of symbol (* |= *)
+  | Bitwise_sr_eq of symbol (* >>= *)
+  | Bitwise_usr_eq of symbol (* >>>= *)
+  | Bitwise_sl_eq of symbol (* <<= *)
   | Exp_eq of symbol (* **= *)
-  | Log_and_eq of symbol (* &&= *)
-  | Log_or_eq of symbol (* ||= *)
+  | Logical_and_eq of symbol (* &&= *)
+  | Logical_or_eq of symbol (* ||= *)
   | Non_null_eq of symbol (* ??= *)
 
 (** Await-expression
@@ -1608,14 +1608,14 @@ and lhs_bin_expression =
   | Lhs_bin_hash of private_property_identifier
 
 and binary_operator =
-  | Log_and of symbol (** && *)
-  | Log_or of symbol (** || *)
-  | Bit_sr of symbol (** >> *)
-  | Bit_usr of symbol (** >>> *)
-  | Bit_sl of symbol (** << *)
-  | Bit_and of symbol (** &  *)
-  | Bit_xor of symbol (** ^ *)
-  | Bit_or of symbol (** | *)
+  | Logical_and of symbol (** && *)
+  | Logical_or of symbol (** || *)
+  | Bitwise_sr of symbol (** >> *)
+  | Bitwise_usr of symbol (** >>> *)
+  | Bitwise_sl of symbol (** << *)
+  | Bitwise_and of symbol (** &  *)
+  | Bitwise_xor of symbol (** ^ *)
+  | Bitwise_or of symbol (** | *)
   | Add of symbol (** + *)
   | Sub of symbol (** - *)
   | Mult of symbol (** * *)
@@ -1784,10 +1784,10 @@ and unary_expression =
   }
 
 and unary_operator =
-  | Bang of sym_bang (* !x *)
-  | Not of sym_tilde (* ~x *)
-  | Unary_sub of sym_minus (* -x *)
-  | Unary_add of sym_plus (* +x *)
+  | Logical_neg of sym_emark (* !x *)
+  | Bitwise_not of sym_tilde (* ~x *)
+  | Neg of sym_minus (* -x *)
+  | Plus_zero of sym_plus (* +x *)
   | Typeof of kwd_typeof (* typeof x *)
   | Void of kwd_void (* void x *)
   | Delete of kwd_delete (* delete x *)
@@ -1844,7 +1844,7 @@ and incr_decr_operator =
 *)
 and yield_expression =
   | Yield of (kwd_yield * expression option) wrap
-  | Yield_iterable of (kwd_yield * sym_star * expression) wrap
+  | Yield_iterable of (kwd_yield * sym_asterisk * expression) wrap
 
 (** Primary Expression
 
@@ -2043,7 +2043,7 @@ and function_expression =
        field('body', $.statement_block)))
     ]}
  *)
-and generator_function = sym_star * function_expression wrap
+and generator_function = sym_asterisk * function_expression wrap
 
 (** Metaproperty
 
@@ -2371,7 +2371,7 @@ and primary_type =
   | T_type_query of (kwd_keyof * type_query) wrap
   | T_index_type_query of (kwd_keyof * primary_type) wrap
   | T_this of kwd_this
-  | T_existential_type of sym_star
+  | T_existential_type of sym_asterisk
   | T_literal_type of literal_type
   | T_lookup_type of lookup_type wrap
   | T_conditional_type of conditional_type wrap
@@ -2753,7 +2753,7 @@ and type_query =
 
 and type_query_subscript_expression =
   { object_expr : type_query_object
-  ; optional : sym_opt_chain option (* "?." *)
+  ; optional : sym_optional_chain option (* "?." *)
   ; index : type_query_index brackets
   }
 
@@ -2777,7 +2777,7 @@ and type_query_member_expression =
 
 and query_selector =
   | Query_selector_dot of sym_dot
-  | Query_selector_opt_chain of sym_opt_chain
+  | Query_selector_opt_chain of sym_optional_chain
 
 and type_query_property =
   | Type_query_property_private of private_property_identifier
@@ -3105,7 +3105,7 @@ and 'a decorated =
 and from_clause = kwd_from * string_literal
 
 and namespace_export =
-  { sym_star : sym_star
+  { sym_asterisk : sym_asterisk
   ; kwd_as : kwd_as
   ; namespace_name : module_export_name
   }
@@ -3176,9 +3176,9 @@ and expression_statement = expressions
 and for_in_statement =
   { kwd_for : kwd_for
   ; kwd_await : kwd_await option
-  ; sym_lpar : sym_lpar
+  ; sym_lparen : sym_lparen
   ; for_header : for_header
-  ; sym_rpar : sym_rpar
+  ; sym_rparen : sym_rparen
   ; body : statement
   }
 
@@ -3232,11 +3232,11 @@ and for_operator =
 *)
 and for_statement =
   { kwd_for : kwd_for
-  ; sym_lpar : sym_lpar
+  ; sym_lparen : sym_lparen
   ; initializer_ : for_initializer
   ; condition : for_condition
   ; increment : expressions option
-  ; sym_rpar : sym_rpar
+  ; sym_rparen : sym_rparen
   ; body : statement
   }
 
@@ -3370,7 +3370,7 @@ and import_kind =
 (*
   import * as M from "/my/path.ts"
   ~>
-  Import_clause (Import_namespace {sym_star; kwd_as; ident}, (kwd_from, string))
+  Import_clause (Import_namespace {sym_asterisk; kwd_as; ident}, (kwd_from, string))
 
   import {x} from "/my/path.ts"
   ~>
@@ -3391,7 +3391,7 @@ and namespace_or_named_imports =
   | Import_named of named_imports
 
 and namespace_import =
-  { sym_star : sym_star
+  { sym_asterisk : sym_asterisk
   ; kwd_as : kwd_as
   ; identifier : identifier
   }
@@ -3415,9 +3415,9 @@ and import_require_clause =
   { ident : identifier
   ; sym_equal : sym_equal
   ; kwd_require : kwd_require
-  ; sym_lpar : sym_lpar
+  ; sym_lparen : sym_lparen
   ; source : string_literal
-  ; sym_rpar : sym_rpar
+  ; sym_rparen : sym_rparen
   }
 
 and import_attribute =
@@ -3492,10 +3492,10 @@ and catch_clause =
   }
 
 and catch_parameter =
-  { sym_lpar : sym_lpar
+  { sym_lparen : sym_lparen
   ; catch_parameter : catch_parameter_kind
   ; type_opt : type_annotation option
-  ; sym_rpar : sym_rpar
+  ; sym_rparen : sym_rparen
   }
 
 and catch_parameter_kind =

@@ -86,12 +86,12 @@ type t =
   | Complex_rest_pattern
   | Subscript_pattern
   | Member_pattern
-  | Bit_usr_eq
+  | Bitwise_usr_eq
   | Exp_eq
-  | Log_and_eq
-  | Log_or_eq
+  | Logical_and_eq
+  | Logical_or_eq
   | Complex_lhs
-  | Unary_add
+  | Plus_zero
   | Typeof_void_delete
   | Class_expression
   | Metaproperty
@@ -159,10 +159,8 @@ type t =
   | Generic_class
   | Invalid_implements
   | Empty_class
+  | Exp
 
 type error = t
 
-(* Making errors *)
-
-val make : ?hint:string -> Region.t -> error -> (_, string) Result.t
-val pack : ?hint:string -> Region.t -> error -> (_, string Region.reg) Result.t
+val to_string : error -> string

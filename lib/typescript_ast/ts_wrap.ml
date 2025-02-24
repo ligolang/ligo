@@ -139,9 +139,9 @@ let collect_children ?(comments = false) (node : ts_tree) : ts_forest =
 (* Extracting a named child by its index amongst its siblings that are
    not comment/error/missing nodes *)
 
-let opt_to_res msg = function
+let opt_to_res error = function
   | Some x -> Ok x
-  | None -> Error msg
+  | None -> Error error
 
 let named_child_ranked index node ~msg =
   opt_to_res msg @@ Core.List.nth (collect_named_children node) index
@@ -163,13 +163,13 @@ let sibling_opt get_sibling (node : ts_tree) : ts_tree option =
 let next_sibling_opt (node : ts_tree) : ts_tree option =
   sibling_opt TS_fun.ts_node_next_sibling node
 
-let next_sibling (node : ts_tree) ~msg : (ts_tree, string) result =
+let next_sibling (node : ts_tree) ~msg : (ts_tree, _) result =
   opt_to_res msg @@ next_sibling_opt node
 
 let prev_sibling_opt (node : ts_tree) : ts_tree option =
   sibling_opt TS_fun.ts_node_prev_sibling node
 
-let prev_sibling (node : ts_tree) ~msg : (ts_tree, string) result =
+let prev_sibling (node : ts_tree) ~msg : (ts_tree, _) result =
   opt_to_res msg @@ prev_sibling_opt node
 
 (* Getting the comments immediately to the left of a given node *)
