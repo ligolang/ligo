@@ -5,6 +5,7 @@ open Core
 (* Vendored *)
 
 module Region = Simple_utils.Region
+module Snippet = Simple_utils.Snippet
 
 (* Tree-sitter ctypes-APIs for types and related functions *)
 
@@ -25,7 +26,7 @@ module Strip = Typescript_stripper.Strip
    that [Decode.dec_program] should have type [(_, string Region.reg)
    result] *)
 
-let parse filename : (Ast.t, string) Result.t =
+let parse debug_arg filename : (Ast.t, string Region.reg) Result.t =
   (* Loading the code as text *)
   let file : string = In_channel.read_all filename in
   (* Building the map from line+columns to positions *)
@@ -35,26 +36,40 @@ let parse filename : (Ast.t, string) Result.t =
   (* Getting ahold of the root of the tree *)
   let program_node : Ts_wrap.ts_tree = TS_fun.ts_tree_root_node tree in
   (* Decoding the CST *)
-  let ast = Decode.dec_program ~filename ~file line_map program_node in
+  let ast = Decode.dec_program ~debug_arg ~filename ~file line_map program_node
+  in
   (* Releasing the memory allocated to the CST *)
   let () = TS_fun.ts_tree_delete tree in
   ast
 
 (* Reading the input TypeScript, parsing and printing the AST *)
 
-open Core
+let usage_msg = "Usage: strip_main [-no-colour] <filename>.ts"
+let no_colour = ref false
+let debug = ref false
+let input_file = ref ""
+let anon_fun filename = input_file := filename
 
-let cli_args : string array = Sys.get_argv ()
+let speclist =
+  [ "-no-colour", Arg.Set no_colour, "Colourless code snippets in errors."
+  ; "-debug", Arg.Set debug, "A missing field yields internal information."
+  ]
+
+(* Formatting error messages (snippets) *)
+
+let format_msg Region.{value; region} =
+  sprintf
+    "%sError: %s"
+    (Format.asprintf "%a" (Snippet.pp_lift ~no_colour:!no_colour) region)
+    value
+
+(* Main *)
 
 let () =
-  match Array.length cli_args with
-  | 2 ->
-    let filename = cli_args.(1) in
-    (match parse filename with
-    | Error msg -> Printf.eprintf "Error: %s\n%!" msg
-    | Ok ast ->
-      (match Strip.statements ast with
-      | Ok _ -> Printf.printf "Stripped.\n%!"
-      | Error { region; value } ->
-        Printf.eprintf "Error: %s\n%s\n%!" value (region#compact `Byte)))
-  | _ -> prerr_endline ("Usage: " ^ cli_args.(0) ^ " [file]")
+  Arg.parse speclist anon_fun usage_msg;
+  match parse !debug !input_file with
+  | Error msg -> Printf.eprintf "%s\n%!" (format_msg msg)
+  | Ok ast ->
+    (match Strip.statements ast with
+    | Ok _ -> Printf.printf " Done.\n%!"
+    | Error msg -> Printf.printf "%s\n%!" (format_msg msg))

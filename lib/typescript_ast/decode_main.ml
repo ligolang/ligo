@@ -5,6 +5,7 @@ open Core
 (* Vendored *)
 
 module Region = Simple_utils.Region
+module Snippet = Simple_utils.Snippet
 
 (* Tree-sitter ctypes-APIs for types and related functions *)
 
@@ -20,7 +21,7 @@ module Decode = Typescript_decoder.Decode
 
 (* Parsing *)
 
-let parse no_colour_arg debug_arg filename : (Ast.t, string) result =
+let parse debug_arg filename : (Ast.t, string Region.reg) result =
   (* Loading the code as text *)
   let file : string = Core.In_channel.read_all filename in
   (* Building the map from line+columns to positions *)
@@ -30,8 +31,7 @@ let parse no_colour_arg debug_arg filename : (Ast.t, string) result =
   (* Getting ahold of the root of the tree *)
   let program_node : Ts_wrap.ts_tree = TS_fun.ts_tree_root_node tree in
   (* Decoding the CST *)
-  let ast =
-    Decode.dec_program ~no_colour_arg ~debug_arg ~filename ~file line_map program_node
+  let ast = Decode.dec_program ~debug_arg ~filename ~file line_map program_node
   in
   (* Releasing the memory allocated to the tree *)
   let () = TS_fun.ts_tree_delete tree in
@@ -50,8 +50,18 @@ let speclist =
   ; "-debug", Arg.Set debug, "A missing field yields internal information."
   ]
 
+(* Formatting error messages (snippets) *)
+
+let format_msg Region.{value; region} =
+  sprintf
+    "%sError: %s"
+    (Format.asprintf "%a" (Snippet.pp_lift ~no_colour:!no_colour) region)
+    value
+
+(* Main *)
+
 let () =
   Arg.parse speclist anon_fun usage_msg;
-  match parse !no_colour !debug !input_file with
-  | Ok _ast -> Printf.printf " Done.\n%!"
-  | Error msg -> Printf.printf "\n%s\n%!" msg
+  match parse !debug !input_file with
+  | Ok _ast -> Printf.printf "Decoded.\n%!"
+  | Error msg -> Printf.printf "%s\n%!" (format_msg msg)
