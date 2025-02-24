@@ -2,7 +2,6 @@
   stdenv,
   lib,
   pkgs,
-  tezos-ligo,
   tree-sitter,
   tree-sitter-typescript,
   lltz,
@@ -23,21 +22,9 @@ in
       enableParallelBuilding = false;
 
       postPatch = ''
-        mkdir -p vendors/tezos-ligo
-        cp -r ${tezos-ligo}/. vendors/tezos-ligo/
-        cd vendors/tezos-ligo/src/rust_deps
-        find . -type d -exec chmod u+w {} +
-        patchShebangs .
-        cd ../../../..
         mkdir -p vendors/lltz
         cp -r ${lltz}/. vendors/lltz/
       '';
-
-      # TODO: this is not ideal, remove it when unvendor Tezos
-      cargoRoot = "vendors/tezos-ligo/src/rust_deps";
-      cargoDeps = rustPlatform.importCargoLock {
-        lockFile = "${tezos-ligo}/src/rust_deps/Cargo.lock";
-      };
 
       nativeBuildInputs = [
         menhir
@@ -46,9 +33,6 @@ in
         crunch
         odoc
         python3Packages.jsonschema
-        rustc
-        cargo
-        rustPlatform.cargoSetupHook
       ];
 
       propagatedBuildInputs =
@@ -127,6 +111,8 @@ in
           conduit-lwt-unix
           magic-mime
           grace
+          octez-libs
+          octez-protocol-alpha-libs
         ]
         ++ lib.optionals stdenv.isDarwin [
           darwin.apple_sdk.frameworks.Security

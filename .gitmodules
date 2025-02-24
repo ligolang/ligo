@@ -1,7 +1,3 @@
-[submodule "vendors/tezos-ligo"]
-	path = vendors/tezos-ligo
-	url = https://gitlab.com/ligolang/tezos-ligo.git
-	branch = v21-ligo
 [submodule "tools/lsp-bench/projects/submodules/checker"]
 	path = tools/lsp-bench/projects/submodules/checker
 	url = https://github.com/marigold-dev/checker-ligo.git

@@ -767,7 +767,6 @@
         "nixpkgs": "nixpkgs_2",
         "ocaml-overlay": "ocaml-overlay",
         "stackage": "stackage",
-        "tezos-ligo": "tezos-ligo",
         "treefmt": "treefmt"
       }
     },
@@ -815,23 +814,6 @@
         "owner": "nix-systems",
         "repo": "default",
         "type": "github"
-      }
-    },
-    "tezos-ligo": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1723647240,
-        "narHash": "sha256-FkOR4VqFngdejBCqzwwySINfK/oNklsnIVrvQYVAfyc=",
-        "owner": "ligolang",
-        "repo": "tezos-ligo",
-        "rev": "fb4bad17f4d4a8b1df1ba5ea96935f63321e3a30",
-        "type": "gitlab"
-      },
-      "original": {
-        "owner": "ligolang",
-        "ref": "v21-ligo",
-        "repo": "tezos-ligo",
-        "type": "gitlab"
       }
     },
     "treefmt": {
