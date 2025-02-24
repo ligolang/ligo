@@ -24,8 +24,10 @@ with prev; {
                 asetmap lwt-watcher tezt ppx_expect alcotest-lwt aches hacl-star seqes stdint cohttp
                 camlp-streams secp256k1-internal lwt-canceler lwt-exit magic-mime aches-lwt tar-unix
                 dune-configurator camlzip yaml ppx_import ctypes ctypes-foreign class_group_vdf
-                pprint ocaml-migrate-parsetree-2 ocp-ocamlres pyml
-              ] ++ propagatedBuildInputs;
+                pprint ocaml-migrate-parsetree-2 ocp-ocamlres pyml libiconv
+              ] ++ propagatedBuildInputs ++ lib.optionals stdenv.isDarwin [
+                darwin.apple_sdk.frameworks.Security
+              ];
             };
           cohttp = buildDunePackage rec {
             pname = "cohttp";
