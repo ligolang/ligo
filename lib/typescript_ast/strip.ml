@@ -62,7 +62,7 @@ let pack_err ?(hint : string option) err region =
     | Some msg -> "\nHint: " ^ msg
   in
   let value = Strip_err.to_string err ^ hint in
-  Region.{region; value}
+  Region.{ region; value }
 
 let mk_err ?hint err region = Error (pack_err ?hint err region)
 
@@ -373,7 +373,13 @@ and strip_Import_require_clause (node : Ast.import_require_clause wrap)
     : (S.declaration, _) result
   =
   let Ast.
-        { ident = _; sym_equal = _; kwd_require; sym_lparen = _; source = _; sym_rparen = _ }
+        { ident = _
+        ; sym_equal = _
+        ; kwd_require
+        ; sym_lparen = _
+        ; source = _
+        ; sym_rparen = _
+        }
     =
     node#payload
   in

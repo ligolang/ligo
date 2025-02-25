@@ -248,7 +248,8 @@ let to_string = function
   | Complex_rest_pattern -> "Complex rest patterns are not supported in JsLIGO."
   | Subscript_pattern -> "Subscript patterns are not supported in JsLIGO."
   | Member_pattern -> "Member patterns are not supported in JsLIGO."
-  | Bitwise_usr_eq -> "The augmented unsigned bitwise shift-right is not supported in JsLIGO."
+  | Bitwise_usr_eq ->
+    "The augmented unsigned bitwise shift-right is not supported in JsLIGO."
   | Exp_eq -> "The augmented exponent is not supported in JsLIGO."
   | Logical_and_eq -> "The augmented logical conjunction is not supported in JsLIGO."
   | Logical_or_eq -> "The augmented logical disjunction is not supported in JsLIGO."
