@@ -384,7 +384,7 @@ let print_number ?(comments = []) state node =
         @ [ mk_child print_kind num; mk_child Tree.make_node lexeme ]
       in
       make_tree state node children
-    | Error {region=_; value}-> make_unary state node Tree.make_node value)
+    | Error { region = _; value } -> make_unary state node Tree.make_node value)
 
 (* Printing enclosed constructs *)
 
@@ -3559,9 +3559,7 @@ and print_intersection_type state node =
         (match get_name left_type with
         | "&" ->
           let type_node = child_ranked 1 node ~err:Type_expression in
-          [ mk_child_res mk_sym_and sym_and
-          ; mk_child_res print_type type_node
-          ]
+          [ mk_child_res mk_sym_and sym_and; mk_child_res print_type type_node ]
         | _ ->
           (* "type" is a supertype, therefore a hidden rule *)
           let right_type = child_ranked 2 node ~err:Type_expression in

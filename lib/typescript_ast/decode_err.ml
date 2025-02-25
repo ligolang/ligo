@@ -28,4 +28,4 @@ let to_string = function
 
 let make (region : Region.t) (error : t) =
   let value = Printf.sprintf "%s:\n%s" (region#to_string `Byte) (to_string error) in
-  Error Region.{value; region}
+  Error Region.{ value; region }

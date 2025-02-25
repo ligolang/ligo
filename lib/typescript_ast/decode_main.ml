@@ -31,8 +31,7 @@ let parse debug_arg filename : (Ast.t, string Region.reg) result =
   (* Getting ahold of the root of the tree *)
   let program_node : Ts_wrap.ts_tree = TS_fun.ts_tree_root_node tree in
   (* Decoding the CST *)
-  let ast = Decode.dec_program ~debug_arg ~filename ~file line_map program_node
-  in
+  let ast = Decode.dec_program ~debug_arg ~filename ~file line_map program_node in
   (* Releasing the memory allocated to the tree *)
   let () = TS_fun.ts_tree_delete tree in
   ast
@@ -52,7 +51,7 @@ let speclist =
 
 (* Formatting error messages (snippets) *)
 
-let format_msg Region.{value; region} =
+let format_msg Region.{ value; region } =
   sprintf
     "%sError: %s"
     (Format.asprintf "%a" (Snippet.pp_lift ~no_colour:!no_colour) region)
@@ -63,5 +62,5 @@ let format_msg Region.{value; region} =
 let () =
   Arg.parse speclist anon_fun usage_msg;
   match parse !debug !input_file with
-  | Ok _ast -> Printf.printf "Decoded.\n%!"
+  | Ok _ast -> Printf.printf "Done.\n%!"
   | Error msg -> Printf.printf "%s\n%!" (format_msg msg)
