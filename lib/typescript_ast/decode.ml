@@ -4367,11 +4367,6 @@ let dec_program
   (* Decoding the CST into an AST *)
   dec_statements node
 
-(* The parameter [node] is the root of a Typescript CST, *not of an
-   expression*. That's why we have to find the expression below the
-   root. This is because tree-sitter does not provide the generated
-   parsers with multiple entry-points. *)
-
 let dec_standalone_expression ~file map node : (Ast.expression, _) result =
   (* Setting up the extraction of source regions *)
   let () = get_region := Ts_wrap.get_region "" map in
@@ -4393,13 +4388,6 @@ let dec_standalone_expression ~file map node : (Ast.expression, _) result =
           Decode_err.(make (region_of_expression expr2) No_single_expression)
         | Nonempty_list.[ expr ] -> Ok expr)
       | _ -> Decode_err.(make (region_of_statement stmt) No_single_expression)))
-
-(* The parameter [node] is the root of a Typescript CST, *not of a
-   type expression*. tree-sitter does not provide the generated
-   parsers with multiple entry-points, so, in order to parse a type
-   expression, we assume that the input string starts with "type t = ",
-   so we fetch the type in the produced CST (last child of the root,
-   which is an type_alias_declaration). *)
 
 let dec_standalone_type_expr map node : (Ast.type_expr, _) result =
   (* Setting up the extraction of source regions *)
