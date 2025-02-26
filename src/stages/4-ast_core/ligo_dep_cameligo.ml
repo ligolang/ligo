@@ -19,18 +19,14 @@ and collect_from_decl ({ deps; scope } as acc) decl =
   match Location.unwrap decl with
   | Types.D_module decl -> collect_from_module_decl acc decl
   | D_signature sig_decl ->
-    let { deps; _ } =
-      collect_from_signature_decl acc sig_decl
-    in
+    let { deps; _ } = collect_from_signature_decl acc sig_decl in
     { acc with deps }
   | D_value decl ->
     let { deps; _ } = collect_from_value acc decl in
     { acc with deps }
   | D_irrefutable_match { pattern; expr; attr = _ } ->
     let { deps; _ } = collect_from_expr acc expr in
-    let { deps; _ } =
-      collect_from_pattern { deps; scope } pattern
-    in
+    let { deps; _ } = collect_from_pattern { deps; scope } pattern in
     { acc with deps }
   | D_type { type_expr; type_binder = _; type_attr = _ } ->
     let { deps; _ } = collect_from_ty_expr acc type_expr in
@@ -50,17 +46,15 @@ and collect_from_signature_decl
   let { deps; _ } = collect_from_signature_expr acc signature in
   { acc with deps }
 
+
 (** Collect external deps from signature expr. Singleton paths
     cannot be external. Other paths are external iff the
     first item of the path is external *)
-and collect_from_signature_expr
-    ({ deps; scope } as acc)
-    sig_expr
-  =
+and collect_from_signature_expr ({ deps; scope } as acc) sig_expr =
   let deps =
     match Location.unwrap sig_expr with
     (* It's not possible to be external being the module type *)
-    | Types.S_path (mvar :: []) -> deps
+    | Types.S_path [ mvar ] -> deps
     (* Only the first module var from the path could be external *)
     | S_path (mvar :: _) -> add_to_deps acc mvar
     | S_sig signature ->
@@ -73,10 +67,7 @@ and collect_from_signature_expr
 
 (** Collects external deps from signature.
     Built up scope gets discarded after folding it. *)
-and collect_from_signature
-    ({ deps; scope } as acc)
-    Types.{ items }
-  =
+and collect_from_signature ({ deps; scope } as acc) Types.{ items } =
   (* We have to discard scope accumulated inside signature *)
   let { deps; _ } = List.fold items ~init:acc ~f:collect_from_sig_item in
   { acc with deps }
@@ -124,8 +115,7 @@ and collect_from_module_decl
 (** Collects external deps from `mod in` expression.
     It evaluates module expression in previous scope
     and adds its binder to the resulting scope *)
-and collect_from_mod_in ({ deps; scope } as acc) binder mod_expr
-  =
+and collect_from_mod_in ({ deps; scope } as acc) binder mod_expr =
   let { deps; _ } = collect_from_mod_expr acc mod_expr in
   { deps; scope = Set.add scope binder }
 
@@ -158,17 +148,13 @@ and collect_from_value
 
 
 (** Collects external deps from ty expr. *)
-and collect_from_ty_expr
-    ({ deps; scope } as acc)
-    { type_content; location = _ }
-  =
+and collect_from_ty_expr ({ deps; scope } as acc) { type_content; location = _ } =
   match type_content with
   | T_variable _ -> acc
   | T_constant (_, _) -> acc
   | T_contract_parameter (h :: tl) ->
     let deps =
-      List.fold (h :: tl) ~init:deps ~f:(fun deps m ->
-          add_to_deps { deps; scope } m)
+      List.fold (h :: tl) ~init:deps ~f:(fun deps m -> add_to_deps { deps; scope } m)
     in
     { acc with deps }
   | T_sum { fields; _ } ->
@@ -176,15 +162,13 @@ and collect_from_ty_expr
       List.fold
         (Map.to_alist fields)
         ~init:acc
-        ~f:(fun ({ deps; scope } as acc) (_, ty) ->
-          collect_from_ty_expr acc ty)
+        ~f:(fun ({ deps; scope } as acc) (_, ty) -> collect_from_ty_expr acc ty)
     in
     { acc with deps }
   | T_union union ->
     let { deps; _ }, _ =
       Union.fold_map
-        (fun ({ deps; scope } as acc) ty ->
-          collect_from_ty_expr acc ty, ty)
+        (fun ({ deps; scope } as acc) ty -> collect_from_ty_expr acc ty, ty)
         acc
         union
     in
@@ -194,8 +178,7 @@ and collect_from_ty_expr
       List.fold
         (Record.to_list fields)
         ~init:acc
-        ~f:(fun ({ deps; scope } as acc) (_, ty) ->
-          collect_from_ty_expr acc ty)
+        ~f:(fun ({ deps; scope } as acc) (_, ty) -> collect_from_ty_expr acc ty)
     in
     { acc with deps }
   | T_arrow { type1; type2; param_names = _ } ->
@@ -205,10 +188,7 @@ and collect_from_ty_expr
   | T_app { type_operator = { module_path = h :: _; element = _ }; arguments } ->
     let deps = add_to_deps acc h in
     let { deps; _ } =
-      List.fold
-        arguments
-        ~init:{ acc with deps }
-        ~f:(fun ({ deps; scope } as acc) ty ->
+      List.fold arguments ~init:{ acc with deps } ~f:(fun ({ deps; scope } as acc) ty ->
           collect_from_ty_expr acc ty)
     in
     { acc with deps }
@@ -227,10 +207,7 @@ and collect_from_ty_expr
 (** Collects external deps from expression.
     Only thing affecting local expression scope is `E_mod_in`.
     Other items are used only to collect deps *)
-and collect_from_expr
-    ({ deps; scope } as acc)
-    { expression_content; location = _ }
-  =
+and collect_from_expr ({ deps; scope } as acc) { expression_content; location = _ } =
   match expression_content with
   | E_variable _ -> acc
   | E_literal _ -> acc
@@ -274,31 +251,19 @@ and collect_from_expr
       } ->
     let Binder.{ ascr; var = _ } = binder.binder in
     let { deps; _ } = collect_from_expr acc result in
-    let { deps; _ } =
-      collect_from_ty_expr { acc with deps } output_type
-    in
-    let { deps; _ } =
-      collect_from_ty_expr { acc with deps } ascr
-    in
-    let { deps; _ } =
-      collect_from_ty_expr { acc with deps } fun_type
-    in
+    let { deps; _ } = collect_from_ty_expr { acc with deps } output_type in
+    let { deps; _ } = collect_from_ty_expr { acc with deps } ascr in
+    let { deps; _ } = collect_from_ty_expr { acc with deps } fun_type in
     { acc with deps }
   | E_type_abstraction { result; type_binder = _ } -> collect_from_expr acc result
   | E_let_in { let_binder; rhs; let_result; attributes = _ } ->
     let { deps; _ } = collect_from_expr acc rhs in
-    let { deps; _ } =
-      collect_from_expr { acc with deps } let_result
-    in
-    let { deps; _ } =
-      collect_from_pattern { acc with deps } let_binder
-    in
+    let { deps; _ } = collect_from_expr { acc with deps } let_result in
+    let { deps; _ } = collect_from_pattern { acc with deps } let_binder in
     { acc with deps }
   | E_type_in { rhs; let_result; type_binder = _ } ->
     let { deps; _ } = collect_from_expr acc let_result in
-    let { deps; _ } =
-      collect_from_ty_expr { deps; scope } rhs
-    in
+    let { deps; _ } = collect_from_ty_expr { deps; scope } rhs in
     { acc with deps }
   | E_raw_code { code; language = _ } ->
     let { deps; _ } = collect_from_expr acc code in
@@ -319,28 +284,19 @@ and collect_from_expr
     { acc with deps }
   | E_record l ->
     let { deps; _ } =
-      List.fold
-        (Record.to_list l)
-        ~init:acc
-        ~f:(fun ({ deps; scope } as acc) (_, expr) ->
+      List.fold (Record.to_list l) ~init:acc ~f:(fun ({ deps; scope } as acc) (_, expr) ->
           collect_from_expr acc expr)
     in
     { acc with deps }
   | E_tuple (h :: tl) ->
     let { deps; _ } =
-      List.fold
-        (h :: tl)
-        ~init:acc
-        ~f:(fun ({ deps; scope } as acc) expr ->
+      List.fold (h :: tl) ~init:acc ~f:(fun ({ deps; scope } as acc) expr ->
           collect_from_expr acc expr)
     in
     { acc with deps }
   | E_array l ->
     let { deps; _ } =
-      List.fold
-        l
-        ~init:acc
-        ~f:(fun ({ deps; scope } as acc) expr ->
+      List.fold l ~init:acc ~f:(fun ({ deps; scope } as acc) expr ->
           match expr with
           | Expr_entry expr -> collect_from_expr acc expr
           | Rest_entry expr -> collect_from_expr acc expr)
@@ -348,10 +304,7 @@ and collect_from_expr
     { acc with deps }
   | E_array_as_list l ->
     let { deps; _ } =
-      List.fold
-        l
-        ~init:acc
-        ~f:(fun ({ deps; scope } as acc) expr ->
+      List.fold l ~init:acc ~f:(fun ({ deps; scope } as acc) expr ->
           match expr with
           | Expr_entry expr -> collect_from_expr acc expr
           | Rest_entry expr -> collect_from_expr acc expr)
@@ -362,26 +315,19 @@ and collect_from_expr
     { acc with deps }
   | E_update { struct_; update; path = _ } ->
     let { deps; _ } = collect_from_expr acc update in
-    let { deps; _ } =
-      collect_from_expr { acc with deps } struct_
-    in
+    let { deps; _ } = collect_from_expr { acc with deps } struct_ in
     { acc with deps }
   | E_ascription { anno_expr; type_annotation } ->
     let { deps; _ } = collect_from_expr acc anno_expr in
-    let { deps; _ } =
-      collect_from_ty_expr { acc with deps } type_annotation
-    in
+    let { deps; _ } = collect_from_ty_expr { acc with deps } type_annotation in
     { acc with deps }
   | E_module_accessor { module_path = []; element = _ } -> acc
-  | E_module_accessor { module_path = h :: _; element = _ } -> { acc with deps = add_to_deps acc h }
+  | E_module_accessor { module_path = h :: _; element = _ } ->
+    { acc with deps = add_to_deps acc h }
   | E_let_mut_in { let_binder; rhs; let_result; attributes = _ } ->
     let { deps; _ } = collect_from_expr acc rhs in
-    let { deps; _ } =
-      collect_from_expr { acc with deps } let_result
-    in
-    let { deps; _ } =
-      collect_from_pattern { acc with deps } let_binder
-    in
+    let { deps; _ } = collect_from_expr { acc with deps } let_result in
+    let { deps; _ } = collect_from_pattern { acc with deps } let_binder in
     { acc with deps }
   | E_assign { expression; binder = { ascr; var = _ } } ->
     let { deps; _ } = collect_from_expr acc expression in
@@ -396,15 +342,11 @@ and collect_from_expr
     let { deps; _ } = collect_from_expr acc start in
     let { deps; _ } = collect_from_expr { acc with deps } final in
     let { deps; _ } = collect_from_expr { acc with deps } incr in
-    let { deps; _ } =
-      collect_from_expr { acc with deps } f_body
-    in
+    let { deps; _ } = collect_from_expr { acc with deps } f_body in
     { acc with deps }
   | E_for_each { collection; fe_body; fe_binder = _; collection_type = _ } ->
     let { deps; _ } = collect_from_expr acc collection in
-    let { deps; _ } =
-      collect_from_expr { acc with deps } fe_body
-    in
+    let { deps; _ } = collect_from_expr { acc with deps } fe_body in
     { acc with deps }
   | E_while { cond; body } ->
     let { deps; _ } = collect_from_expr acc cond in
@@ -443,6 +385,7 @@ and collect_from_pattern ({ deps; scope } as acc) pat =
       deps
   in
   { acc with deps }
+
 
 (* Accepts stdlib since stdlib modules shouldn't be considered external *)
 let dependencies ~std_lib prg =
