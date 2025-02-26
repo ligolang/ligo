@@ -1737,7 +1737,6 @@ and strip_T_intersection_type (node : Ast.intersection_type wrap)
 (* Union type *)
 
 and strip_T_union_type (node : Ast.union_type wrap) : (S.type_expr, _) result =
-  let region = node#region in
   let type_1_opt, _, type_2 = node#payload in
   let* type_2 = strip_type_expr type_2 in
   let* union_type =
@@ -1745,9 +1744,9 @@ and strip_T_union_type (node : Ast.union_type wrap) : (S.type_expr, _) result =
     | None -> Ok (Ne_list.singleton type_2)
     | Some type_1 ->
       let* type_1 = strip_type_expr type_1 in
-      Ok Ne_list.(type_1 :: [ type_2 ])
+      Ok Ne_list.[ type_1; type_2 ]
   in
-  Ok (S.T_union (mk_reg region union_type))
+  Ok (S.T_union (mk_reg node#region union_type))
 
 (* Function type *)
 
