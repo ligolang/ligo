@@ -1734,9 +1734,21 @@ and strip_T_intersection_type (node : Ast.intersection_type wrap)
   =
   mk_err Intersection_type node#region
 
-(* Union type
+(* Union type and sum type (see comment about the latter in [Ast_stripped])
 
-   Note: Function [flatten_type_expr] is quadratic in the number of summands.
+   There are two stages to the stripping of union types.
+
+     1. We transform the AST node for a union type into Disjunctive
+     Normal Form (DNF), as expected by the rest of the pipeline, by
+     means of a call to the function [flatten]. Note that the function
+     [flatten_type_expr] is quadratic in the number of summands
+     because of the use of [Ne_list.append] instead of folding with an
+     accumulator. We do not expect this to be an issue, as the number
+     of operands is always small.
+
+     2. We try to build a sum type out of the union type, as they are
+     a special case handled apart by the type-checker, by calling the
+     function [filter_sums].
 *)
 
 and strip_T_union_type (node : Ast.union_type wrap) : (S.type_expr, _) result =
@@ -1749,7 +1761,26 @@ and strip_T_union_type (node : Ast.union_type wrap) : (S.type_expr, _) result =
   let* stripped_head = strip_type_expr head in
   let* stripped_tail = Result.all @@ List.map ~f:strip_type_expr tail in
   let union_type = Nonempty_list.(stripped_head :: stripped_tail) in
-  Ok (S.T_union (mk_reg node#region union_type))
+  Ok (filter_sum union_type node#region)
+
+and filter_sum (node : S.type_expr Nonempty_list.t) region : S.type_expr =
+  let variant_of_type_expr : S.type_expr -> S.variant reg option = function
+    | T_tuple members ->
+      let Nonempty_list.(first_memb :: rest) = members.value in
+      (match first_memb with
+      | T_string literal -> Some Region.{ value = literal, rest; region }
+      | _ -> None)
+    | _ -> None
+  in
+  let Nonempty_list.(first_member :: more_members) = node in
+  let first_member = variant_of_type_expr first_member in
+  let more_members = List.map ~f:variant_of_type_expr more_members in
+  let more_members = Option.all more_members in
+  match first_member, more_members with
+  | None, _ | _, None -> S.T_union (mk_reg region node)
+  | Some first, Some more ->
+    let members = Nonempty_list.(first :: more) in
+    S.T_sum (mk_reg region members)
 
 and flatten (node : Ast.type_expr Nonempty_list.t) : Ast.type_expr Nonempty_list.t =
   Nonempty_list.concat_map ~f:flatten_type_expr node
