@@ -10,7 +10,7 @@ open Core
 
 module Region = Simple_utils.Region
 module Snippet = Simple_utils.Snippet
-module Ne_list = Nonempty_list
+module Ne_list = Simple_utils.Ne_list
 
 (* LIGO dependencies *)
 
@@ -227,7 +227,7 @@ let rec strip_statements (node : Ast.statements) : (S.statements option, _) resu
     (match stmts' with
     | [] -> Ok None
     | fst_stmt :: more_stmts ->
-      let stmts' = Ne_list.(fst_stmt :: more_stmts) in
+      let stmts' = Nonempty_list.(fst_stmt :: more_stmts) in
       Ok (Some (mk_reg stmts#region stmts')))
 
 and strip_statement (node : Ast.statement) : (S.statement option, _) result =
@@ -346,7 +346,7 @@ and strip_named_imports region file_path (node : Ast.named_imports)
   | fst_import :: more_imports ->
     let* fst_import = strip_import_specifier fst_import in
     let* more_imports = Result.all @@ List.map ~f:strip_import_specifier more_imports in
-    let imported_vars = Ne_list.(fst_import :: more_imports) in
+    let imported_vars = Nonempty_list.(fst_import :: more_imports) in
     let import_from = mk_reg region (imported_vars, file_path) in
     Ok (S.Import_from import_from)
 
@@ -474,7 +474,7 @@ and strip_in_expressions (node : Ast.in_expressions) : (S.expr list, _) result =
   | Sequence_expression expressions -> strip_expressions expressions
 
 and strip_expressions (node : Ast.expressions) : (S.expr list, _) result =
-  let expressions = Ne_list.to_list node#payload in
+  let expressions = Nonempty_list.to_list node#payload in
   Result.all @@ List.map ~f:strip_expression expressions
 
 (* Switch statement *)
@@ -521,7 +521,7 @@ and strip_switch_body (node : Ast.switch_body) : (S.cases, _) result =
 and strip_switch_case (node : Ast.switch_case wrap) : (S.switch_case, _) result =
   let Ast.{ kwd_case = _; value; body } = node#payload in
   match value#payload with
-  | Ne_list.[ expr ] ->
+  | Nonempty_list.[ expr ] ->
     let* expr = strip_expression expr in
     let* body = strip_statements body in
     Ok (expr, body)
@@ -952,7 +952,7 @@ and strip_class_heritage (node : Ast.class_heritage option)
   | Some (Extends_clause ((kwd_extends, _), _)) ->
     mk_err Extends_clause kwd_extends#region
   | Some (Implements_clause (_, type_exprs)) ->
-    let type_exprs = Ne_list.to_list type_exprs in
+    let type_exprs = Nonempty_list.to_list type_exprs in
     let* type_exprs = Result.all @@ List.map ~f:strip_type_expr type_exprs in
     let filter type_expr =
       match type_expr with
@@ -1048,12 +1048,12 @@ and strip_D_lexical_declaration (node : Ast.lexical_declaration wrap)
   Ok (List.fold_right ~f ~init:decl decorators)
 
 and strip_variable_declarators (node : Ast.variable_declarator Ast.ne_list)
-    : (S.val_binding reg Ne_list.t, _) result
+    : (S.val_binding reg Nonempty_list.t, _) result
   =
   let (var_decl :: var_decls) = node in
   let* var_decl = strip_variable_declarator var_decl in
   let* var_decls = Result.all @@ List.map ~f:strip_variable_declarator var_decls in
-  Ok Ne_list.(var_decl :: var_decls)
+  Ok Nonempty_list.(var_decl :: var_decls)
 
 and strip_variable_declarator (node : Ast.variable_declarator)
     : (S.val_binding reg, _) result
@@ -1324,7 +1324,7 @@ and strip_method_signature_as_intf_entry (node : Ast.method_signature wrap)
 
 and strip_extends (node : Ast.extends_type_clause) : (S.simple_path reg list, _) result =
   let Ast.{ kwd_extends = _; extensions } = node in
-  let extensions = Ne_list.to_list extensions in
+  let extensions = Nonempty_list.to_list extensions in
   Result.all @@ List.map ~f:strip_type_extension extensions
 
 and strip_type_extension (node : Ast.type_extension) : (S.simple_path reg, _) result =
@@ -1354,7 +1354,7 @@ and strip_aliased (node : Ast.aliased) : S.simple_path reg =
 
 and strip_nested_identifier (node : Ast.nested_identifier wrap) : S.simple_path reg =
   let path, selected = node#payload in
-  let path = List.rev (Ne_list.to_list path) in
+  let path = List.rev (Nonempty_list.to_list path) in
   let path = List.map ~f:strip_type_identifier path
   and selected = strip_type_identifier selected in
   mk_reg node#region S.{ path; selected }
@@ -1453,7 +1453,7 @@ and strip_nested_type_identifier (node : Ast.nested_type_identifier wrap)
     : S.simple_path reg
   =
   let path, selected = node#payload in
-  let path = List.rev (Ne_list.to_list path) in
+  let path = List.rev (Nonempty_list.to_list path) in
   let path = List.map ~f:strip_type_identifier path
   and selected = strip_type_identifier selected in
   mk_reg node#region S.{ path; selected }
@@ -1493,7 +1493,7 @@ and strip_generic_name (node : Ast.generic_name) : S.simple_path reg =
 and strip_type_arguments (node : Ast.type_arguments) : (S.type_expr list, _) result =
   let (Chevrons chevrons) = node in
   let type_args = chevrons#payload.contents in
-  let type_args = Ne_list.to_list type_args in
+  let type_args = Nonempty_list.to_list type_args in
   Result.all @@ List.map ~f:strip_type_expr type_args
 
 (* Object type *)
@@ -1627,7 +1627,7 @@ and strip_T_tuple_type (node : Ast.tuple_type) : (S.type_expr, _) result =
   match members with
   | [] -> mk_err Empty_tuple_type brackets#region
   | fst_comp :: components ->
-    let members = Ne_list.(fst_comp :: components) in
+    let members = Nonempty_list.(fst_comp :: components) in
     Ok (S.T_tuple (mk_reg brackets#region members))
 
 and strip_tuple_type_member (node : Ast.tuple_type_member) : (S.type_expr, _) result =
@@ -1734,19 +1734,33 @@ and strip_T_intersection_type (node : Ast.intersection_type wrap)
   =
   mk_err Intersection_type node#region
 
-(* Union type *)
+(* Union type
+
+   Note: Function [flatten_type_expr] is quadratic in the number of summands.
+*)
 
 and strip_T_union_type (node : Ast.union_type wrap) : (S.type_expr, _) result =
-  let type_1_opt, _, type_2 = node#payload in
-  let* type_2 = strip_type_expr type_2 in
-  let* union_type =
-    match type_1_opt with
-    | None -> Ok (Ne_list.singleton type_2)
-    | Some type_1 ->
-      let* type_1 = strip_type_expr type_1 in
-      Ok Ne_list.[ type_1; type_2 ]
+  let types =
+    match node#payload with
+    | None, _, type_2 -> Nonempty_list.[ type_2 ]
+    | Some type_1, _, type_2 -> Nonempty_list.[ type_1; type_2 ]
   in
+  let Nonempty_list.(head :: tail) = flatten types in
+  let* stripped_head = strip_type_expr head in
+  let* stripped_tail = Result.all @@ List.map ~f:strip_type_expr tail in
+  let union_type = Nonempty_list.(stripped_head :: stripped_tail) in
   Ok (S.T_union (mk_reg node#region union_type))
+
+and flatten (node : Ast.type_expr Nonempty_list.t) : Ast.type_expr Nonempty_list.t =
+  Nonempty_list.concat_map ~f:flatten_type_expr node
+
+and flatten_type_expr : Ast.type_expr -> Ast.type_expr Nonempty_list.t = function
+  | Ast.T_primary_type (T_union_type t) ->
+    (match t#payload with
+    | None, _, type_2 -> flatten_type_expr type_2
+    | Some type_1, _, type_2 ->
+      Ne_list.append (flatten_type_expr type_1) (flatten_type_expr type_2))
+  | type_expr -> Nonempty_list.[ type_expr ]
 
 (* Function type *)
 
