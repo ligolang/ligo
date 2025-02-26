@@ -242,8 +242,45 @@ and type_expr =
   | T_parameter_of of simple_path reg reg (* parameter_of<N.C> *)
   | T_path of simple_path reg (* t  M.t *)
   | T_string of string_literal (* "x" *)
+  | T_sum of sum_type (* ["some", T] | ["none"] *)
   | T_tuple of type_expr Ne_list.t reg (* [t, [u, v]] *)
   | T_union of union_type (* number | string *)
+
+(* Sum type
+
+  A sum type is a special case of a union type, where all the summands
+  are tuple types whose first component is an identifier starting with
+  a dollar ($) sign. That identifier denotes a _data constructor_, and
+  the rest of the components are the _type parameters_ to that
+  constructor. The tuple type as a whole is called a _variant_. For
+  instance:
+
+  type option<T> = ["some", T] | ["none"];
+
+  The constructors are "some" and "none". The former takes a
+  parameter T, whereas the latter takes none.
+
+  The values of a sum type are created with a function call to the
+  desired constructor. For instance:
+
+  const some_number : option<number> = ["some", 1];
+
+  Those values are projected by means of _pattern matchings_. Those
+  are a special case of a call to a predefined function "$match",
+  whose first argument is the value to be matched (the projected
+  subject), and the second is an object pattern whose property names
+  are the constructors above, and the properties themselves are
+  functions taking the parameters to the constructor. The compiler
+  checks that no constructor has been forgotten. For instance:
+
+  function to_list<T> (x : option<T>) : list<T> {
+    return $match(x, { some: (y) => [y],
+                       none: ()  => []});
+
+  const singleton : list<number> = to_list<number>(some_number);
+ *)
+and sum_type = variant reg Ne_list.t reg
+and variant = string_literal * type_expr list
 
 (* Object type and class bodies *)
 and member_type =
@@ -321,6 +358,7 @@ and expr =
   | E_int of int_literal (* 42 *)
   | E_leq of (expr * expr) reg (* x <= y *)
   | E_lt of (expr * expr) reg (* x < y *)
+  | E_match of (expr * match_clause Ne_list.t) reg (* $match(x, {c: () => e}) *)
   | E_member of (expr * variable) reg (* e.x *)
   | E_michelson of michelson_expr (* michelson (`{ADD}`) as t *)
   | E_mult of (expr * expr) reg (* x * y *)
@@ -347,6 +385,13 @@ and expr =
   | E_update of update_expr reg (* {...x, y : z} *)
   | E_var of variable (* x *)
   | E_xor of (expr * expr) reg (* x ^^ y *)
+
+(* Pattern matching *)
+and match_clause =
+  { constructor : variable
+  ; parameters : parameter reg list
+  ; fun_body : fun_body
+  }
 
 (* Michelson injection: "Michelson (`{ADD}`) as t" *)
 and michelson_expr = (variable * string_literal * type_expr) reg
@@ -402,6 +447,7 @@ let region_of_type_expr = function
   | T_int w -> w#region
   | T_object { region; _ } | T_parameter_of { region; _ } -> region
   | T_string w -> w#region
+  | T_sum { region; _ } -> region
   | T_tuple { region; _ } -> region
   | T_union { region; _ } -> region
   | T_path { region; _ } -> region
@@ -446,6 +492,7 @@ let region_of_expr = function
   | E_int w -> w#region
   | E_leq { region; _ }
   | E_lt { region; _ }
+  | E_match { region; _ }
   | E_member { region; _ }
   | E_michelson { region; _ }
   | E_mult { region; _ }
