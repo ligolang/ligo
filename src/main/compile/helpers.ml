@@ -143,9 +143,7 @@ let decode_jsligo_program ~raise file : (Ast.t, string Region.reg) result =
   let ast = Decode.dec_program ~filename:file ~file:input line_map program_node in
   (* Releasing the memory allocated to the tree *)
   let () = TS_fun.ts_tree_delete tree in
-  match ast with
-  | Error internal_error -> Error (Region.wrap_ghost internal_error)
-  | Ok ast -> Ok ast
+  ast
 
 
 let decode_jsligo_program ~raise file = lift ~raise @@ decode_jsligo_program ~raise file
@@ -172,12 +170,7 @@ let decode_jsligo_expression ~raise buffer : (Ast.expression, string Region.reg)
   let ast = Decode.dec_standalone_expression ~file:input line_map program_node in
   (* Releasing the memory allocated to the tree *)
   let () = TS_fun.ts_tree_delete tree in
-  match ast with
-  | Error internal_error ->
-    let region = Region.min ~file:"" in
-    Error Region.{ value = internal_error; region }
-  | Ok ast -> Ok ast
-
+  ast
 
 let decode_jsligo_expression ~raise buffer =
   lift ~raise @@ decode_jsligo_expression ~raise buffer
@@ -207,12 +200,7 @@ let decode_jsligo_type_expression ~raise buffer
   let ast = Decode.dec_standalone_type_expr line_map program_node in
   (* Releasing the memory allocated to the tree *)
   let () = TS_fun.ts_tree_delete tree in
-  match ast with
-  | Error internal_error ->
-    let region = Region.min ~file:"" in
-    Error Region.{ value = internal_error; region }
-  | Ok ast -> Ok ast
-
+  ast
 
 let decode_jsligo_type_expression ~raise buffer =
   lift ~raise @@ decode_jsligo_type_expression ~raise buffer
@@ -289,12 +277,7 @@ let decode_string_jsligo ~raise buffer : (Ast.t, string Region.reg) result =
   let ast = Decode.dec_program ~filename:"" ~file:input line_map program_node in
   (* Releasing the memory allocated to the tree *)
   let () = TS_fun.ts_tree_delete tree in
-  match ast with
-  | Error internal_error ->
-    let region = Region.min ~file:"" in
-    Error Region.{ value = internal_error; region }
-  | Ok ast -> Ok ast
-
+  ast
 
 let decode_string_jsligo ~raise buffer = lift ~raise @@ decode_string_jsligo ~raise buffer
 
