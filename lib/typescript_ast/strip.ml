@@ -2271,10 +2271,10 @@ and strip_parameters (node : Ast.parameters) : (parameters, _) result =
 
 and strip_E_call_expression (node : Ast.call_expression) : (S.expr, _) result =
   match node with
-  | Call fun_call -> strip_call_fun fun_call
+  | Call fun_call -> strip_fun_call fun_call
   | Member expr_call -> mk_err Optional_chaining expr_call#region
 
-and strip_call_fun (node : (Ast.fun_call, Ast.arguments_to_call) Ast.call wrap)
+and strip_fun_call (node : (Ast.fun_call, Ast.arguments_to_call) Ast.call wrap)
     : (S.expr, _) result
   =
   let Ast.{ lambda; type_arguments; arguments } = node#payload in
