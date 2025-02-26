@@ -2278,7 +2278,10 @@ and strip_call_fun (node : (Ast.fun_call, Ast.arguments_to_call) Ast.call wrap)
     : (S.expr, _) result
   =
   let Ast.{ lambda; type_arguments; arguments } = node#payload in
-  let* (lambda : S.expr) = strip_fun_call lambda in
+  let* (lambda : S.expr) =
+    match lambda with
+    | Fun_call expr -> strip_expression expr
+    | Import kwd_import -> mk_err Import kwd_import#region in
   let* () =
     match type_arguments with
     | None -> Ok ()
@@ -2301,11 +2304,6 @@ and strip_call_fun (node : (Ast.fun_call, Ast.arguments_to_call) Ast.call wrap)
       | _ -> error)
     | _ -> ok)
   | _ -> ok
-
-and strip_fun_call (node : Ast.fun_call) : (S.expr, _) result =
-  match node with
-  | Fun_call expr -> strip_expression expr
-  | Import kwd_import -> mk_err Import kwd_import#region
 
 and strip_arguments_to_call (node : Ast.arguments_to_call) : (S.expr list, _) result =
   match node with
