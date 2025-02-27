@@ -160,6 +160,9 @@ type t =
   | Invalid_implements
   | Empty_class
   | Exp
+  | Pattern_matching
+  | Empty_match
+  | Match_clause_rhs
 
 type error = t
 
@@ -335,3 +338,6 @@ let to_string = function
     "General types in implements clauses are not supported in JsLIGO."
   | Empty_class -> "Empty classes are not supported in JsLIGO."
   | Exp -> "The exponent operator is not supported in JsLIGO."
+  | Pattern_matching -> "Pattern matching expects two arguments: subject and object."
+  | Empty_match -> "Pattern matchings cannot be empty."
+  | Match_clause_rhs -> "A non-generic arrow function is expected."
