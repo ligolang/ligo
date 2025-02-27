@@ -1749,6 +1749,12 @@ and strip_T_intersection_type (node : Ast.intersection_type wrap)
      2. We try to build a sum type out of the union type, as they are
      a special case handled apart by the type-checker, by calling the
      function [filter_sums].
+
+   For example, the declaration
+
+     type parameter = ["Increment", int] | ["Decrement", int] | ["Reset"];
+
+   will be filtered as a sum type, not a general union type.
 *)
 
 and strip_T_union_type (node : Ast.union_type wrap) : (S.type_expr, _) result =
@@ -2199,7 +2205,7 @@ and strip_E_array (node : Ast.array) : (S.expr, _) result =
   let (Ast.Brackets brackets) = node in
   let list = brackets#payload.contents in
   let* array = Result.all @@ List.map ~f:strip_argument list in
-  Ok (S.E_array (mk_reg brackets#region array))
+  Ok (filter_constructor_application array brackets#region)
 
 and strip_argument (node : Ast.argument) : (S.expr S.element, _) result =
   match node with
@@ -2210,6 +2216,49 @@ and strip_argument (node : Ast.argument) : (S.expr S.element, _) result =
     let _, expr = spread#payload in
     let* expr = strip_expression expr in
     Ok (S.Spread expr)
+
+(* Application of data constructors
+
+   The convention is that the application of data constructors is
+   syntactically distinguished from an array by having the following
+   form:
+
+     ["constructor" as "constructor", expression_1, ..., expression_n]
+
+   where "constructor" is a data constructor, and "expression_1"
+   etc. are its arguments. (See function [strip_T_union_type] and its
+   comment.)
+
+   Note how we always return an expression, that is, the function is
+   complete. This because our convention is idiosyncrasic to JsLIGO,
+   so any deviation from it is not considered an error. (We might
+   revisit this after feedback from users.)
+ *)
+
+and filter_constructor_application (node : S.expr S.element list) region : S.expr =
+  let array = S.E_array (mk_reg region node) in
+  match node with
+  | [] -> array
+  | first :: more ->
+     match first with
+     | Element S.E_typed as_expr ->
+        (match as_expr.value with
+         | S.E_string literal_1, S.T_string literal_2
+              when String.equal literal_1#payload literal_2#payload ->
+            let ctor = literal_1 in
+            (match filter_constructor_arguments more with
+             | None -> array
+             | Some args -> S.E_ctor_app (mk_reg region (ctor, args)))
+         | _ -> array)
+     | _ -> array
+
+and filter_constructor_arguments (node : S.expr S.element list) : S.expr list option =
+  Option.all @@ List.map ~f:filter_constructor_argument node
+
+and filter_constructor_argument (node : S.expr S.element) : S.expr option =
+  match node with
+  | Spread _ -> None
+  | Element expr -> Some expr
 
 (* Arrow function (expression) *)
 
@@ -2267,7 +2316,28 @@ and strip_parameters (node : Ast.parameters) : (parameters, _) result =
     let* call_sig = strip_call_signature call_sig in
     Ok (Call_signature call_sig)
 
-(* Pattern matching *)
+(* Pattern matching
+
+   We assume the existence of a predefined function "$match" taking
+   two arguments: the first is the subject expression, that is, the
+   expression to be matched; the second is an object whose contents is
+   used to filter and handle all the cases of the matching.
+
+   For example, given the following declaration of a sum type:
+
+     type parameter = ["Increment", int] | ["Decrement", int] | ["Reset"];
+
+   the following expression of type "int" is a pattern matching each
+   constructor:
+
+      $match(p, {
+        Increment: (n) => storage + n,
+        Decrement: (n) => storage - n,
+        Reset: () => 0,
+      })
+
+   assuming that "p" is of type "parameter", and "storage" of type "int".
+ *)
 
 and filter_match_clauses (node : S.expr) : (S.match_clause Ne_list.t, _) result =
   match node with

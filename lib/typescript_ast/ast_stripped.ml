@@ -348,6 +348,7 @@ and expr =
   | E_bit_xor_eq of (expr * expr) reg (* x ^= y *)
   | E_bytes of bytes_literal (* 0xFFFA *)
   | E_contract_of of simple_path reg reg (* contract_of (M.N) *)
+  | E_ctor_app of (string_literal * expr list) reg (* ["K", 1, e] *)
   | E_div of (expr * expr) reg (* x / y *)
   | E_div_eq of (expr * expr) reg (* x /= y *)
   | E_equal of (expr * expr) reg (* x == y *)
@@ -360,7 +361,7 @@ and expr =
   | E_lt of (expr * expr) reg (* x < y *)
   | E_match of (expr * match_clause Ne_list.t) reg (* $match(x, {c: (x) => e}) *)
   | E_member of (expr * variable) reg (* e.x *)
-  | E_michelson of michelson_expr (* michelson (`{ADD}`) as t *)
+  | E_michelson of michelson_expr (* michelson(`{ADD}`) as t *)
   | E_mult of (expr * expr) reg (* x * y *)
   | E_mult_eq of (expr * expr) reg (* x *= y *)
   | E_neg of expr reg (* -x *)
@@ -484,6 +485,7 @@ let region_of_expr = function
   | E_bit_xor_eq { region; _ } -> region
   | E_bytes w -> w#region
   | E_contract_of { region; _ }
+  | E_ctor_app { region; _ }
   | E_div { region; _ }
   | E_div_eq { region; _ }
   | E_equal { region; _ } -> region
