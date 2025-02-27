@@ -358,7 +358,7 @@ and expr =
   | E_int of int_literal (* 42 *)
   | E_leq of (expr * expr) reg (* x <= y *)
   | E_lt of (expr * expr) reg (* x < y *)
-  | E_match of (expr * match_clause Ne_list.t) reg (* $match(x, {c: () => e}) *)
+  | E_match of (expr * match_clause Ne_list.t) reg (* $match(x, {c: (x) => e}) *)
   | E_member of (expr * variable) reg (* e.x *)
   | E_michelson of michelson_expr (* michelson (`{ADD}`) as t *)
   | E_mult of (expr * expr) reg (* x * y *)
