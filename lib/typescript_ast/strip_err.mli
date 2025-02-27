@@ -160,6 +160,9 @@ type t =
   | Invalid_implements
   | Empty_class
   | Exp
+  | Pattern_matching
+  | Empty_match
+  | Match_clause_rhs
 
 type error = t
 

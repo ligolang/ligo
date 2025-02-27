@@ -2267,6 +2267,35 @@ and strip_parameters (node : Ast.parameters) : (parameters, _) result =
     let* call_sig = strip_call_signature call_sig in
     Ok (Call_signature call_sig)
 
+(* Pattern matching *)
+
+and filter_match_clauses (node : S.expr) : (S.match_clause Ne_list.t, _) result =
+  match node with
+  | E_object obj ->
+     (match obj.value with
+      | [] -> mk_err Empty_match obj.region
+      | first_property :: more_properties ->
+         let* head = filter_match_clause first_property in
+         let* tail =
+           Result.all @@ List.map ~f:filter_match_clause more_properties in
+         Ok Nonempty_list.(head :: tail))
+  | _ -> mk_err Pattern_matching (S.region_of_expr node)
+           ~hint:"The object contains arrow functions for each case."
+
+and filter_match_clause (node : S.expr S.property reg) : (S.match_clause, _) result =
+  let S.{ decorators=_; comments=_; property_name; static=_; property_rhs } =
+    node.value in
+  let constructor = property_name in
+  match property_rhs with
+  | E_arrow_fun arrow_fun ->
+     let S.{ generics; parameters; rhs_type=_; fun_body } = arrow_fun.value in
+     let* () =
+       match generics with
+       | [] -> Ok ()
+       | _ -> mk_err Match_clause_rhs node.region in
+     Ok S.{constructor; parameters; fun_body }
+  | _ -> mk_err Match_clause_rhs node.region
+
 (* Call expression *)
 
 and strip_E_call_expression (node : Ast.call_expression) : (S.expr, _) result =
@@ -2292,16 +2321,22 @@ and strip_fun_call (node : (Ast.fun_call, Ast.arguments_to_call) Ast.call wrap)
   let* (arguments : S.expr list) = strip_arguments_to_call arguments in
   let app = mk_reg node#region (lambda, arguments) in
   let ok = Ok (S.E_app app) in
-  let error = mk_err Invalid_contract_of node#region in
   match lambda with
   | S.E_var var ->
     (match var#payload with
+    | "$match" ->
+      (match arguments with
+      | [ subject_expr; object_expr ] ->
+         let* match_clauses = filter_match_clauses object_expr in
+         let matching = subject_expr, match_clauses in
+         Ok (S.E_match (mk_reg node#region matching))
+      | _ -> mk_err Pattern_matching node#region)
     | "contract_of" ->
       (match arguments with
       | [ expr ] ->
         let* path = filter_path expr in
         Ok (S.E_contract_of (mk_reg node#region path))
-      | _ -> error)
+      | _ -> mk_err Invalid_contract_of node#region)
     | _ -> ok)
   | _ -> ok
 
