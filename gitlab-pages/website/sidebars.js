@@ -8,7 +8,8 @@ const sidebars = {
       "intro/introduction",
       "intro/installation",
       "intro/editor-support",
-      "tutorials/getting-started/getting-started"
+      "tutorials/getting-started/getting-started",
+      "intro/template",
     ],
     "Writing a Contract": [
       {
@@ -19,7 +20,6 @@ const sidebars = {
           "tutorials/taco-shop/tezos-taco-shop-payout"
         ]
       },
-      "tutorials/start-a-project-from-a-template"
     ],
     "Syntax": [
       "syntax/comments",
