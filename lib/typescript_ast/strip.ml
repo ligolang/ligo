@@ -2240,17 +2240,17 @@ and filter_constructor_application (node : S.expr S.element list) region : S.exp
   match node with
   | [] -> array
   | first :: more ->
-     match first with
-     | Element S.E_typed as_expr ->
-        (match as_expr.value with
-         | S.E_string literal_1, S.T_string literal_2
-              when String.equal literal_1#payload literal_2#payload ->
-            let ctor = literal_1 in
-            (match filter_constructor_arguments more with
-             | None -> array
-             | Some args -> S.E_ctor_app (mk_reg region (ctor, args)))
-         | _ -> array)
-     | _ -> array
+    (match first with
+    | Element (S.E_typed as_expr) ->
+      (match as_expr.value with
+      | S.E_string literal_1, S.T_string literal_2
+        when String.equal literal_1#payload literal_2#payload ->
+        let ctor = literal_1 in
+        (match filter_constructor_arguments more with
+        | None -> array
+        | Some args -> S.E_ctor_app (mk_reg region (ctor, args)))
+      | _ -> array)
+    | _ -> array)
 
 and filter_constructor_arguments (node : S.expr S.element list) : S.expr list option =
   Option.all @@ List.map ~f:filter_constructor_argument node
@@ -2342,38 +2342,43 @@ and strip_parameters (node : Ast.parameters) : (parameters, _) result =
 and filter_match_clauses (node : S.expr) : (S.match_clause Ne_list.t, _) result =
   match node with
   | E_object obj ->
-     (match obj.value with
-      | [] -> mk_err Empty_match obj.region
-      | first_property :: more_properties ->
-         let* head = filter_match_clause first_property in
-         let* tail =
-           Result.all @@ List.map ~f:filter_match_clause more_properties in
-         Ok Nonempty_list.(head :: tail))
-  | _ -> mk_err Pattern_matching (S.region_of_expr node)
-           ~hint:"The object contains arrow functions for each case."
+    (match obj.value with
+    | [] -> mk_err Empty_match obj.region
+    | first_property :: more_properties ->
+      let* head = filter_match_clause first_property in
+      let* tail = Result.all @@ List.map ~f:filter_match_clause more_properties in
+      Ok Nonempty_list.(head :: tail))
+  | _ ->
+    mk_err
+      Pattern_matching
+      (S.region_of_expr node)
+      ~hint:"The object contains arrow functions for each case."
 
 and filter_match_clause (node : S.expr S.property reg) : (S.match_clause, _) result =
-  let S.{ decorators=_; comments=_; property_name; static=_; property_rhs } =
-    node.value in
+  let S.{ decorators = _; comments = _; property_name; static = _; property_rhs } =
+    node.value
+  in
   let constructor = property_name in
   match property_rhs with
   | E_arrow_fun arrow_fun ->
-     let S.{ generics; parameters; rhs_type=_; fun_body } = arrow_fun.value in
-     let* () =
-       match generics with
-       | [] -> Ok ()
-       | _ -> mk_err Match_clause_rhs node.region in
-     let* filter =
-       match parameters with
-       | [] -> Ok None
-       | [ parameter ] -> Ok (Some parameter)
-       | _ :: param_2 :: _ ->
-          mk_err Match_filter param_2.region in
-     let* clause_expr =
-       match fun_body with
-       | S.Expr_body expr -> Ok expr
-       | Stmt_body stmts -> mk_err Match_clause_rhs stmts.region in
-     Ok S.{ constructor; filter; clause_expr }
+    let S.{ generics; parameters; rhs_type = _; fun_body } = arrow_fun.value in
+    let* () =
+      match generics with
+      | [] -> Ok ()
+      | _ -> mk_err Match_clause_rhs node.region
+    in
+    let* filter =
+      match parameters with
+      | [] -> Ok None
+      | [ parameter ] -> Ok (Some parameter)
+      | _ :: param_2 :: _ -> mk_err Match_filter param_2.region
+    in
+    let* clause_expr =
+      match fun_body with
+      | S.Expr_body expr -> Ok expr
+      | Stmt_body stmts -> mk_err Match_clause_rhs stmts.region
+    in
+    Ok S.{ constructor; filter; clause_expr }
   | _ -> mk_err Match_clause_rhs node.region
 
 (* Call expression *)
@@ -2390,7 +2395,8 @@ and strip_fun_call (node : (Ast.fun_call, Ast.arguments_to_call) Ast.call wrap)
   let* (lambda : S.expr) =
     match lambda with
     | Fun_call expr -> strip_expression expr
-    | Import kwd_import -> mk_err Import kwd_import#region in
+    | Import kwd_import -> mk_err Import kwd_import#region
+  in
   let* () =
     match type_arguments with
     | None -> Ok ()
@@ -2407,9 +2413,9 @@ and strip_fun_call (node : (Ast.fun_call, Ast.arguments_to_call) Ast.call wrap)
     | "$match" ->
       (match arguments with
       | [ subject_expr; object_expr ] ->
-         let* match_clauses = filter_match_clauses object_expr in
-         let matching = subject_expr, match_clauses in
-         Ok (S.E_match (mk_reg node#region matching))
+        let* match_clauses = filter_match_clauses object_expr in
+        let matching = subject_expr, match_clauses in
+        Ok (S.E_match (mk_reg node#region matching))
       | _ -> mk_err Pattern_matching node#region)
     | "contract_of" ->
       (match arguments with
