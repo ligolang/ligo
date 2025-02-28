@@ -341,5 +341,6 @@ let to_string = function
   | Exp -> "The exponent operator is not supported in JsLIGO."
   | Pattern_matching -> "Pattern matching expects two arguments: subject and object."
   | Empty_match -> "A pattern matching cannot be empty."
-  | Match_clause_rhs -> "A non-generic arrow function returning an expression is expected."
+  | Match_clause_rhs ->
+    "A non-generic arrow function returning an expression is expected."
   | Match_filter -> "A match filter is only one pattern."
