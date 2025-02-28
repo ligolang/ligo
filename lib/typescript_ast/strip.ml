@@ -2363,7 +2363,14 @@ and filter_match_clause (node : S.expr S.property reg) : (S.match_clause, _) res
        match generics with
        | [] -> Ok ()
        | _ -> mk_err Match_clause_rhs node.region in
-     Ok S.{constructor; parameters; fun_body }
+     let* filter =
+       match parameters with
+       | [] -> Ok None
+       | [ parameter ] -> Ok (Some parameter)
+       | _ :: param_2 :: _ ->
+          mk_err Match_filter param_2.region in
+     let match_rhs = fun_body in
+     Ok S.{ constructor; filter; match_rhs }
   | _ -> mk_err Match_clause_rhs node.region
 
 (* Call expression *)
