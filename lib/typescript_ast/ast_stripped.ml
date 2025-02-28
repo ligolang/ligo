@@ -260,10 +260,11 @@ and type_expr =
   The constructors are "some" and "none". The former takes a
   parameter T, whereas the latter takes none.
 
-  The values of a sum type are created with a function call to the
-  desired constructor. For instance:
+  The values of a sum type are created with a tuple whose first member
+  (component) is the constructor coerced to a singleton type, and the
+  other members are the arguments. For instance:
 
-  const some_number : option<number> = ["some", 1];
+  const some_number : option<number> = ["some" as "some", 1];
 
   Those values are projected by means of _pattern matchings_. Those
   are a special case of a call to a predefined function "$match",
@@ -390,8 +391,8 @@ and expr =
 (* Pattern matching *)
 and match_clause =
   { constructor : variable
-  ; parameters : parameter reg list
-  ; fun_body : fun_body
+  ; filter : parameter reg option
+  ; match_rhs : fun_body
   }
 
 (* Michelson injection: "Michelson (`{ADD}`) as t" *)

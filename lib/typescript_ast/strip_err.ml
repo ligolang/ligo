@@ -163,6 +163,7 @@ type t =
   | Pattern_matching
   | Empty_match
   | Match_clause_rhs
+  | Match_filter
 
 type error = t
 
@@ -339,5 +340,6 @@ let to_string = function
   | Empty_class -> "Empty classes are not supported in JsLIGO."
   | Exp -> "The exponent operator is not supported in JsLIGO."
   | Pattern_matching -> "Pattern matching expects two arguments: subject and object."
-  | Empty_match -> "Pattern matchings cannot be empty."
+  | Empty_match -> "A pattern matching cannot be empty."
   | Match_clause_rhs -> "A non-generic arrow function is expected."
+  | Match_filter -> "A match filter is only one pattern."

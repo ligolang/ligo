@@ -163,6 +163,7 @@ type t =
   | Pattern_matching
   | Empty_match
   | Match_clause_rhs
+  | Match_filter
 
 type error = t
 
