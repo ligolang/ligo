@@ -6,14 +6,8 @@ const sidebars = {
   "docs": {
     "Getting started": [
       "intro/introduction",
-      {
-        "type": "category",
-        "label": "Installation",
-        "items": [
-          "intro/installation",
-          "intro/editor-support"
-        ]
-      },
+      "intro/installation",
+      "intro/editor-support",
       "tutorials/getting-started/getting-started"
     ],
     "Writing a Contract": [
