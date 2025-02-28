@@ -392,7 +392,7 @@ and expr =
 and match_clause =
   { constructor : variable
   ; filter : parameter reg option
-  ; match_rhs : fun_body
+  ; match_rhs : expr
   }
 
 (* Michelson injection: "Michelson (`{ADD}`) as t" *)
