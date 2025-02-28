@@ -2369,11 +2369,11 @@ and filter_match_clause (node : S.expr S.property reg) : (S.match_clause, _) res
        | [ parameter ] -> Ok (Some parameter)
        | _ :: param_2 :: _ ->
           mk_err Match_filter param_2.region in
-     let* match_rhs =
+     let* clause_expr =
        match fun_body with
        | S.Expr_body expr -> Ok expr
        | Stmt_body stmts -> mk_err Match_clause_rhs stmts.region in
-     Ok S.{ constructor; filter; match_rhs }
+     Ok S.{ constructor; filter; clause_expr }
   | _ -> mk_err Match_clause_rhs node.region
 
 (* Call expression *)
