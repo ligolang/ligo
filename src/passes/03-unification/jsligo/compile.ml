@@ -229,11 +229,11 @@ let compile_match_clause (node : I.match_clause) : _ O.Match_tc39.match_clause =
     match filter with
     | None -> I.P_ctor_app (mk_reg constructor#region (constructor, []))
     | Some parameter ->
+      let region = Region.cover constructor#region parameter.region in
       (match parameter.value with
-      | pattern, None -> pattern
+      | pattern, None -> I.P_ctor_app (mk_reg region (constructor, [ pattern ]))
       | pattern, Some type_expr ->
         let param = I.P_typed (mk_reg parameter.region (pattern, type_expr)) in
-        let region = Region.cover constructor#region parameter.region in
         I.P_ctor_app (mk_reg region (constructor, [ param ])))
   in
   O.Match_tc39.{ filter; clause_expr }
@@ -242,9 +242,9 @@ let compile_match_clause (node : I.match_clause) : _ O.Match_tc39.match_clause =
 let compile_match_clauses (node : (I.expr * I.match_clause Ne_list.t) reg) =
   let subject, clauses = node.Region.value in
   let clauses = Nonempty_list.map ~f:compile_match_clause clauses in
-  let clauses = O.Match_tc39.AllClauses (clauses, None) in
+  let match_clauses = O.Match_tc39.AllClauses (clauses, None) in
   (* No default clauses *)
-  O.E_match_tc39 { subject; match_clauses = clauses }
+  O.E_match_tc39 { subject; match_clauses }
 
 
 let expr (expr : Eq.expr) : Folding.expr =
@@ -489,13 +489,13 @@ let statement (stmt : Eq.statement) : Folding.statement =
 (* INSTRUCTIONS *)
 
 let instruction (instr : Eq.instruction) : Folding.instruction =
-  let loc = Location.lift (I.region_of_statement instr) in
-  let return = Location.wrap ~loc in
+  Location.wrap ~loc:(Location.lift (I.region_of_statement instr))
+  @@
   match instr with
-  | S_block stmts -> return (O.I_block stmts)
-  | S_break _ -> return O.I_break
+  | S_block stmts -> O.I_block stmts
+  | S_break _ -> O.I_break
   | S_decl _ | S_export _ -> assert false
-  | S_expr expr -> return (O.I_expr expr)
+  | S_expr expr -> O.I_expr expr
   | S_for stmt ->
     let I.{ initialiser; condition; afterthought; for_body } = stmt.value in
     let afterthought =
@@ -504,7 +504,7 @@ let instruction (instr : Eq.instruction) : Folding.instruction =
       | fst_expr :: more_exprs -> Some Nonempty_list.(fst_expr :: more_exprs)
     in
     let statement = for_body in
-    return @@ O.I_for_stmt { initialiser; condition; afterthought; statement }
+    O.I_for_stmt { initialiser; condition; afterthought; statement }
   | S_for_of stmt ->
     let I.{ index_kind; index; expr; for_of_body } = stmt.value in
     let index_kind =
@@ -526,14 +526,14 @@ let instruction (instr : Eq.instruction) : Folding.instruction =
         [ I.Element (I.P_var key'); I.Element (I.P_var value') ]
     in
     let index = I.P_array (mk_reg index.region index') in
-    return (O.I_for_of { index_kind; index; expr; for_stmt = for_of_body })
+    O.I_for_of { index_kind; index; expr; for_stmt = for_of_body }
   | S_if stmt ->
     let I.{ test; if_so; if_not } = stmt.value in
     let compile_branch = compile_branch statement in
     let ifso = compile_branch if_so
     and ifnot = Option.map if_not ~f:compile_branch in
-    return @@ O.I_cond { test; ifso; ifnot }
-  | S_return stmt -> return (O.I_return stmt.value)
+    O.I_cond { test; ifso; ifnot }
+  | S_return stmt -> O.I_return stmt.value
   | S_switch stmt ->
     let switch_subject, cases = stmt.value in
     let switch_cases, default_case = cases in
@@ -543,12 +543,12 @@ let instruction (instr : Eq.instruction) : Folding.instruction =
     in
     let cases = Nonempty_list.map ~f switch_cases in
     let cases = O.Switch.AllCases (cases, default_case) in
-    return @@ O.I_switch { subject = switch_subject; cases }
+    O.I_switch { subject = switch_subject; cases }
   | S_while stmt ->
     let cond, statement = stmt.value in
     let block = Nonempty_list.singleton statement in
     let block = mk_reg stmt.region block in
-    return (O.I_while { cond; block })
+    O.I_while { cond; block }
 
 
 (* DECLARATIONS *)
