@@ -1,4 +1,5 @@
 open Core
+module Wrap = Lexing_shared.Wrap
 module Location = Unification_shared.Helpers.Location
 module Make_Folding = Unification_shared.Helpers.Folding
 module Region = Simple_utils.Region
@@ -203,8 +204,7 @@ let compile_member (node : (I.expr * I.variable) reg) =
   let module_path, property_path = split_rev_path path in
   match expr, module_path, property_path with
   | I.E_var v, m, p1 :: p when Char.is_uppercase v#payload.[0] ->
-    let module_path = Nonempty_list.(v :: m) in
-    let module_path = Nonempty_list.map ~f:compile_mvar module_path in
+    let module_path = Nonempty_list.(map ~f:compile_mvar (v :: m)) in
     let f acc var =
       let region = Region.cover (I.region_of_expr acc) var#region in
       I.E_member Region.{ region; value = acc, var }
@@ -213,14 +213,22 @@ let compile_member (node : (I.expr * I.variable) reg) =
     O.E_module_open_in { module_path; field; field_as_open = false }
   | _ ->
     let f variable = O.Selection.FieldName (mk_label variable) in
-    let property_path = List.map ~f property_path in
-    O.E_proj (expr, property_path)
+    O.E_proj (expr, List.map ~f property_path)
+
+
+(* The value [normalise_string s] is the string [s] without its
+   delimiters and with its contents unescaped. *)
+
+let normalise_string (str : I.string_literal) : I.string_literal =
+  let raw = str#payload in
+  let chopped = String.sub raw ~pos:1 ~len:(String.length raw - 2) in
+  let unescaped = Scanf.unescaped chopped in
+  Wrap.make unescaped str#region
 
 
 let compile_ctor_app (node : (I.string_literal * I.expr list) reg) =
   let ctor, args = node.Region.value in
-  let args = Ne_list.of_list_opt args in
-  O.E_ctor_app (I.E_string ctor, args)
+  O.E_ctor_app (I.E_string ctor, Ne_list.of_list_opt args)
 
 
 let compile_match_clause (node : I.match_clause) : _ O.Match_tc39.match_clause =
@@ -297,6 +305,7 @@ let expr (expr : Eq.expr) : Folding.expr =
        [E_michelson], so we can safely ignore here the type
        expression. *)
     let language, code, _type_expr = expr.value in
+    let code = normalise_string code in
     let code = I.E_template code in
     return (O.E_raw_code { language = language#payload; code })
   | E_mult expr -> compile_bin_op STAR expr
@@ -313,6 +322,7 @@ let expr (expr : Eq.expr) : Folding.expr =
   | E_rem expr -> compile_bin_op PRCENT expr
   | E_rem_eq expr -> compile_chain_assignment Mod_eq expr
   | E_string expr ->
+    let expr = normalise_string expr in
     return @@ O.E_literal (Literal_string (Ligo_string.Standard expr#payload))
   | E_sub expr -> compile_bin_op MINUS expr
   | E_subscript expr ->
@@ -395,13 +405,16 @@ let rec ty_expr (t_expr : Eq.ty_expr) : Folding.ty_expr =
   | T_parameter_of t_expr ->
     let path = compile_path t_expr.value in
     return (O.T_contract_parameter path)
-  | T_string t_expr -> return @@ O.T_string t_expr#payload
+  | T_string t_expr ->
+    let t_expr = normalise_string t_expr in
+    return @@ O.T_string t_expr#payload
   | T_union t_expr ->
     let variants = Nonempty_list.to_list t_expr.value in
     return (O.T_union variants)
   | T_sum t_expr ->
     let destruct variant : O.Label.t * I.type_expr option * _ list =
       let ctor, arguments = variant.Region.value in
+      let ctor = normalise_string ctor in
       let tuple =
         match arguments with
         | [] -> None
@@ -452,6 +465,7 @@ let pattern (pattern : Eq.pattern) : Folding.pattern =
     let fields = List.map ~f:compile_property_pattern pattern.value in
     O.P_pun_record fields
   | P_string pattern ->
+    let pattern = normalise_string pattern in
     let string = Ligo_string.standard pattern#payload in
     O.P_literal (Literal_string string)
   | P_true _ -> O.P_ctor (Ligo_prim.Label.of_string "True")
