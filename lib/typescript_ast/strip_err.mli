@@ -118,7 +118,6 @@ type t =
   | Object_pattern_in_lhs
   | Rest_in_object_pattern
   | Asgmt_in_object_pattern
-  | Property_as_string
   | Property_as_number
   | Computed_property_name
   | Invalid_parameter_of
