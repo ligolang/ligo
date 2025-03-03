@@ -140,7 +140,7 @@ and method_signature =
   { decorators : decorator list
   ; comments : comment list
   ; static : Region.t option
-  ; method_name : variable
+  ; method_name : property_name
   ; generics : variable list
   ; parameters : (variable * type_expr) reg list
   ; rhs_type : type_expr
@@ -149,7 +149,7 @@ and method_signature =
 and public_field_definition =
   { decorators : decorator list
   ; static : Region.t option
-  ; name : variable
+  ; name : property_name
   ; field_type : type_expr option
   ; field_value : expr
   }
@@ -194,7 +194,7 @@ and interface_decl =
 and intf_entry =
   { decorators : decorator list
   ; comments : comment list
-  ; entry_name : variable
+  ; entry_name : property_name
   ; entry_optional : Region.t option
   ; entry_type : type_expr
   }
@@ -287,9 +287,13 @@ and variant = string_literal * type_expr list
 and member_type =
   { decorators : decorator list
   ; comments : comment list
-  ; property_name : variable
+  ; property_name : property_name
   ; rhs_type : type_expr
   }
+
+and property_name =
+  | Property_string of string_literal
+  | Property_ident of variable
 
 (* Functional type *)
 and fun_type = (variable * type_expr) reg list * type_expr
@@ -300,7 +304,7 @@ and 'a _object = 'a property reg list reg
 and 'a property =
   { decorators : decorator list (* From the property identifier *)
   ; comments : comment list (* From the property identifier *)
-  ; property_name : variable
+  ; property_name : property_name
   ; static : Region.t option
   ; property_rhs : 'a
   }
@@ -322,7 +326,7 @@ and pattern =
      never produced by [Strip]). They are needed for the compilation
      to the unified AST. *)
   | P_typed of (pattern * type_expr) reg
-  | P_ctor_app of (variable * pattern list) reg
+  | P_ctor_app of (property_name * pattern list) reg
 
 (* Array pattern (shadowing the predefined type [array]) *)
 and 'a array = 'a element list reg
@@ -394,7 +398,7 @@ and expr =
 
 (* Pattern matching *)
 and match_clause =
-  { constructor : variable
+  { constructor : property_name
   ; filter : parameter reg option
   ; clause_expr : expr
   }
@@ -542,3 +546,15 @@ let region_of_fun_body_to_region = function
 
 let region_of_class_member = function
   | Method_definition { region; _ } | Public_field_definition { region; _ } -> region
+
+let region_of_property_name = function
+  | Property_string literal -> literal#region
+  | Property_ident variable -> variable#region
+
+let comments_of_property_name = function
+  | Property_string literal -> literal#comments
+  | Property_ident variable -> variable#comments
+
+let contents_of_property_name = function
+  | Property_string literal -> literal
+  | Property_ident variable -> variable

@@ -938,7 +938,7 @@ and strip_public_field_definition (node : Ast.public_field_definition wrap)
   let* field_type = map_opt strip_type_annotation type_ in
   let* field_value =
     match default with
-    | None -> mk_err No_default name#region
+    | None -> mk_err No_default (S.region_of_property_name name)
     | Some (_, expr) -> strip_expression expr
   in
   let def = S.{ decorators; static; name; field_type; field_value } in
@@ -1274,7 +1274,7 @@ and strip_property_signature_as_intf_entry (node : Ast.property_signature wrap)
   match entry_type with
   | None -> mk_err Missing_type node#region
   | Some entry_type ->
-    let comments = entry_name#comments in
+    let comments = S.comments_of_property_name entry_name in
     let comments = strip_comments comments in
     let decorators = extract_decorators comments in
     let entry = S.{ decorators; comments; entry_name; entry_optional; entry_type } in
@@ -1316,7 +1316,7 @@ and strip_method_signature_as_intf_entry (node : Ast.method_signature wrap)
     | [] -> rhs_type
     | _ -> S.T_for_all (mk_reg call_sig.region (generics, rhs_type))
   in
-  let comments = entry_name#comments in
+  let comments = S.comments_of_property_name entry_name in
   let comments = strip_comments comments in
   let decorators = extract_decorators comments in
   let entry = S.{ decorators; comments; entry_name; entry_optional; entry_type } in
@@ -1529,7 +1529,7 @@ and strip_property_signature (node : Ast.property_signature wrap)
   match rhs_type with
   | None -> mk_err Missing_type node#region
   | Some rhs_type ->
-    let comments = property_name#comments in
+    let comments = S.comments_of_property_name property_name in
     let comments = strip_comments comments in
     let decorators = extract_decorators comments in
     let signature = S.{ decorators; comments; property_name; rhs_type } in
@@ -1567,7 +1567,7 @@ and strip_method_signature_as_property (node : Ast.method_signature wrap)
     | [] -> rhs_type
     | _ -> S.T_for_all (mk_reg call_sig.region (generics, rhs_type))
   in
-  let comments = property_name#comments in
+  let comments = S.comments_of_property_name property_name in
   let comments = strip_comments comments in
   let decorators = extract_decorators comments in
   let signature : S.member_type = S.{ decorators; comments; property_name; rhs_type } in
@@ -1604,7 +1604,7 @@ and strip_method_signature decorators (node : Ast.method_signature wrap)
     | [] -> rhs_type
     | _ -> S.T_for_all (mk_reg call_sig.region (generics, rhs_type))
   in
-  let comments = method_name#comments in
+  let comments = S.comments_of_property_name method_name in
   let comments = strip_comments comments in
   let* decorators = strip_decorators decorators in
   let decorators = decorators @ extract_decorators comments in
@@ -2606,6 +2606,7 @@ and strip_object_entry (node : Ast.object_entry)
     let decorators = extract_decorators comments in
     let property_name = strip_identifier ident in
     let property_rhs = S.E_var property_name in
+    let property_name = S.Property_ident property_name in
     let static = None in
     let property : S.expr S.property =
       { decorators; comments; property_name; static; property_rhs }
@@ -2856,6 +2857,7 @@ and strip_member_pattern (node : Ast.member_pattern)
     let decorators = extract_decorators comments in
     let property_name = strip_identifier ident in
     let path = S.{ path = []; selected = property_name } in
+    let property_name = S.Property_ident property_name in
     let property_rhs = S.P_var (mk_reg ident#region path) in
     let static = None in
     let property : S.pattern S.property =
@@ -2864,11 +2866,11 @@ and strip_member_pattern (node : Ast.member_pattern)
     let region = Ast.region_of_member_pattern node in
     Ok (mk_reg region property)
 
-and strip_property_name (node : Ast.property_name) : (S.variable, _) result =
+and strip_property_name (node : Ast.property_name) : (S.property_name, _) result =
   match node with
-  | Property_identifier ident -> Ok (strip_identifier ident)
+  | Property_identifier ident -> Ok (S.Property_ident (strip_identifier ident))
   | Private_property_identifier hash -> mk_err Private_property hash#region
-  | String str_literal -> mk_err Property_as_string str_literal#region
+  | String literal -> Ok (S.Property_string literal)
   | Number n -> mk_err Property_as_number (Ast.region_of_number n)
   | Computed_property_name brackets ->
     mk_err Computed_property_name (Ast.region_of_brackets brackets)
