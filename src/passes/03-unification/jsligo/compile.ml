@@ -68,9 +68,18 @@ let compile_branch compile_statement (stmt : I.statement)
     O.Test_clause.ClauseBlock singleton
 
 
-let mk_label (v : I.variable) : O.Label.t =
+let label_of_var (v : I.variable) : O.Label.t =
   O.Label.T.create ~loc:(Location.lift v#region) v#payload
 
+let mk_field_id (name: I.property_name) : _ O.Object_.field_id =
+  match name with
+  | Property_string literal -> O.Object_.F_Str literal#payload
+  | Property_ident name -> O.Object_.F_Name (label_of_var name)
+
+let mk_label (name: I.property_name) : O.Label.t =
+  match name with
+  | Property_string literal -> label_of_var literal (* Because we don't keep delimiters *)
+  | Property_ident name -> label_of_var name
 
 let pattern_to_param pattern = O.Param.{ pattern; param_kind = `Const }
 
@@ -97,7 +106,7 @@ let compile_property (property : 'a I.property reg) =
   let I.{ decorators = _; comments = _; property_name; static = _; property_rhs } =
     property.value
   in
-  let field_id = O.Object_.F_Name (mk_label property_name) in
+  let field_id = mk_field_id property_name in
   let field_rhs = Some property_rhs in
   let object_ = O.Object_.{ field_id; field_rhs } in
   Location.wrap ~loc:(Location.lift property.region) object_
@@ -212,7 +221,7 @@ let compile_member (node : (I.expr * I.variable) reg) =
     let field = List.fold_left ~f ~init:(I.E_var p1) p in
     O.E_module_open_in { module_path; field; field_as_open = false }
   | _ ->
-    let f variable = O.Selection.FieldName (mk_label variable) in
+    let f variable = O.Selection.FieldName (label_of_var variable) in
     O.E_proj (expr, List.map ~f property_path)
 
 
@@ -233,11 +242,12 @@ let compile_ctor_app (node : (I.string_literal * I.expr list) reg) =
 
 let compile_match_clause (node : I.match_clause) : _ O.Match_tc39.match_clause =
   let I.{ constructor; filter; clause_expr } = node in
+  let ctor_region = I.region_of_property_name constructor in
   let filter =
     match filter with
-    | None -> I.P_ctor_app (mk_reg constructor#region (constructor, []))
+    | None -> I.P_ctor_app (mk_reg ctor_region (constructor, []))
     | Some parameter ->
-      let region = Region.cover constructor#region parameter.region in
+      let region = Region.cover ctor_region parameter.region in
       (match parameter.value with
       | pattern, None -> I.P_ctor_app (mk_reg region (constructor, [ pattern ]))
       | pattern, Some type_expr ->
@@ -423,7 +433,7 @@ let rec ty_expr (t_expr : Eq.ty_expr) : Folding.ty_expr =
           let components = Nonempty_list.(fst :: more) in
           Some (I.T_tuple (mk_reg variant.region components))
       in
-      mk_label ctor, tuple, [] (* TODO: Decorators? *)
+      label_of_var ctor, tuple, [] (* TODO: Decorators? *)
     in
     let variants =
       Nonempty_list.to_list t_expr.Region.value
@@ -483,8 +493,9 @@ let pattern (pattern : Eq.pattern) : Folding.pattern =
     let pattern, type_expr = pattern.value in
     O.P_typed (type_expr, pattern)
   | P_ctor_app pattern ->
-    let variable, patterns = pattern.value in
-    O.P_ctor_app (I.P_string variable :: patterns)
+    let property_name, patterns = pattern.value in
+    let ctor = I.contents_of_property_name property_name in
+    O.P_ctor_app (I.P_string ctor :: patterns)
 
 
 (* STATEMENTS *)
@@ -572,7 +583,7 @@ let compile_method_definition (node : I.method_definition reg) : I.statement =
   let I.{ decorators; comments; static; method_name; generics; parameters; rhs_type } =
     method_sig.value
   in
-  let fun_name = method_name in
+  let fun_name = I.contents_of_property_name method_name in
   let mk_param (param : (I.variable * I.type_expr) reg) : I.parameter reg =
     let var, type_expr = param.value in
     let path = I.{ path = []; selected = var } in
@@ -596,11 +607,13 @@ let compile_method_definition (node : I.method_definition reg) : I.statement =
 let compile_public_field_definition (node : I.public_field_definition reg) : I.statement =
   let I.{ decorators; static; name; field_type; field_value } = node.value in
   let kind = `Const Region.ghost in
-  let var = I.{ path = []; selected = name } in
-  let pattern = I.P_var (mk_reg name#region var) in
+  let selected = I.contents_of_property_name name in
+  let name_region = I.region_of_property_name name in
+  let var = I.{ path = []; selected } in
+  let pattern = I.P_var (mk_reg name_region var) in
   let rhs_type = field_type in
   let rhs_expr = field_value in
-  let region = Region.cover name#region (I.region_of_expr rhs_expr) in
+  let region = Region.cover name_region (I.region_of_expr rhs_expr) in
   let binding = I.{ pattern; rhs_type; rhs_expr } in
   let binding = mk_reg region binding in
   let bindings = Nonempty_list.singleton binding in
@@ -749,7 +762,7 @@ let sig_entry (node : Eq.sig_entry) : Folding.sig_entry =
     let entry' = { node with value = entry' } in
     (O.S_attr (compile_decorator fst_dec, entry') : _ O.sig_entry_content_)
   | [] ->
-    let var = compile_var entry_name in
+    let var = compile_var @@ I.contents_of_property_name entry_name in
     O.S_value (var, entry_type, Option.is_some entry_optional)
 
 
