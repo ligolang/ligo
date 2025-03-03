@@ -2,7 +2,12 @@ open Core
 open Grace
 open Ligo_prim
 module I = Mini_c
-module O = Lltz_ir
+
+module O = struct
+  include Lltz_ir
+  module Dsl = Lltz_ir.Ast_builder.Default
+end
+
 module Ligo_string = Simple_utils.Ligo_string
 module Location = Simple_utils.Location
 module Lltz_codegen = Lltz_codegen
@@ -63,7 +68,7 @@ let rec compile_type_expression (type_ : I.type_expression) : O.Type.t =
   | T_base TB_bls12_381_fr -> return Bls12_381_fr
   | T_base TB_never -> return Never
   | T_base TB_tx_rollup_l2_address -> return Tx_rollup_l2_address
-  | T_base (TB_type_int _) -> return Int
+  | T_base (TB_type_int memo) -> return @@ Sapling_state { memo = Z.to_int memo }
   | T_base TB_chest -> return Chest
   | T_base TB_chest_key -> return Chest_key
   (* dead baker account support *)
@@ -168,27 +173,27 @@ let compile_constant
   | C_LSR -> mk_prim Lsr
   | C_EQ ->
     (match args with
-    | a :: b :: tl -> mk_prim ~args:(O.Dsl.compare_ ~range a b :: tl) Eq
+    | a :: b :: tl -> mk_prim ~args:(O.Dsl.compare ~range a b :: tl) Eq
     | _ -> assert false)
   | C_NEQ ->
     (match args with
-    | a :: b :: tl -> mk_prim ~args:(O.Dsl.compare_ ~range a b :: tl) Neq
+    | a :: b :: tl -> mk_prim ~args:(O.Dsl.compare ~range a b :: tl) Neq
     | _ -> assert false)
   | C_LT ->
     (match args with
-    | a :: b :: tl -> mk_prim ~args:(O.Dsl.compare_ ~range a b :: tl) Lt
+    | a :: b :: tl -> mk_prim ~args:(O.Dsl.compare ~range a b :: tl) Lt
     | _ -> assert false)
   | C_GT ->
     (match args with
-    | a :: b :: tl -> mk_prim ~args:(O.Dsl.compare_ ~range a b :: tl) Gt
+    | a :: b :: tl -> mk_prim ~args:(O.Dsl.compare ~range a b :: tl) Gt
     | _ -> assert false)
   | C_LE ->
     (match args with
-    | a :: b :: tl -> mk_prim ~args:(O.Dsl.compare_ ~range a b :: tl) Le
+    | a :: b :: tl -> mk_prim ~args:(O.Dsl.compare ~range a b :: tl) Le
     | _ -> assert false)
   | C_GE ->
     (match args with
-    | a :: b :: tl -> mk_prim ~args:(O.Dsl.compare_ ~range a b :: tl) Ge
+    | a :: b :: tl -> mk_prim ~args:(O.Dsl.compare ~range a b :: tl) Ge
     | _ -> assert false)
   | C_CONCAT -> mk_prim Concat2
   | C_CONCATS -> mk_prim Concat1
@@ -198,13 +203,14 @@ let compile_constant
     (match args with
     | offset :: length :: seq :: tl ->
       (O.Dsl.if_none
+         ~range
          (O.Dsl.slice ~range offset ~length ~seq)
          ~some:
            (let var_name = O.Dsl.gen_name () in
             O.Dsl.annon_function
               var_name
               seq.type_
-              ~body:(O.Dsl.variable (Var var_name) seq.type_))
+              ~body:(O.Dsl.variable ~range (Var var_name) seq.type_))
          ~none:(O.Dsl.failwith ~range (O.Dsl.string ~range "Slice out of bounds")))
         .desc
     | _ -> assert false)
@@ -287,6 +293,7 @@ let compile_constant
     (match args with
     | key :: coll :: tl ->
       (O.Dsl.if_none
+         ~range
          (O.Dsl.get ~range key coll)
          ~some:
            (let var_name = O.Dsl.gen_name () in
@@ -295,7 +302,7 @@ let compile_constant
               O.Dsl.annon_function
                 var_name
                 value_ty
-                ~body:(O.Dsl.variable (Var var_name) value_ty)
+                ~body:(O.Dsl.variable ~range (Var var_name) value_ty)
             | _ -> assert false)
          ~none:(O.Dsl.failwith ~range (O.Dsl.string ~range "Key not found")))
         .desc
@@ -390,8 +397,17 @@ let compile_constant
     (* only interpreter *)
     assert false
   | C_GLOBAL_CONSTANT ->
-    (* TODO: removed in ?? *)
-    assert false
+    (* Arguments and their types enforced by frontend. **)
+    (match args with
+    | hash :: args ->
+      (match hash with
+      | { desc = Const (String s); _ } ->
+        (match return_ty with
+        | { desc = O.Type.Function (param_ty, return_ty); _ } ->
+          (O.Dsl.global_constant ~range s args return_ty).desc
+        | _ -> assert false)
+      | _ -> assert false)
+    | _ -> assert false)
   | C_POLYMORPHIC_ADD ->
     (* removed in checking *)
     assert false
@@ -432,7 +448,9 @@ let compile_micheline_seq nodes =
 let rec compile_expression (expr : I.expression) : O.Expr.t =
   let return_ty = compile_type_expression expr.type_expression in
   let range = compile_location expr.location in
-  let return (desc : O.Expr.desc) : O.Expr.t = { desc; range; type_ = return_ty } in
+  let return (desc : O.Expr.desc) : O.Expr.t =
+    { desc; range; type_ = return_ty; annotations = O.Annotations.empty }
+  in
   match expr.content with
   | E_literal lit -> return @@ Const (compile_literal lit)
   | E_closure func ->
@@ -528,6 +546,7 @@ let rec compile_expression (expr : I.expression) : O.Expr.t =
          ; cond = O.Dsl.le ~range (O.Dsl.deref ~range index index_ty) stop
          ; update =
              O.Dsl.assign
+               ~range
                index
                (O.Dsl.add ~range (O.Dsl.deref ~range index index_ty) step)
          ; index
@@ -592,6 +611,7 @@ let rec compile_expression (expr : I.expression) : O.Expr.t =
                      }
                ; range
                ; type_ = body_ty
+               ; annotations = O.Annotations.empty
                }
            }
     | _ -> assert false)
@@ -599,7 +619,8 @@ let rec compile_expression (expr : I.expression) : O.Expr.t =
     let micheline, args = compile_inline_michelson (code, args') in
     return @@ Raw_michelson { michelson = micheline; args }
   | I.E_global_constant (hash, args) ->
-    assert false
+    let args = List.map args ~f:compile_expression in
+    return @@ Global_constant { hash; args }
     (*TODO: let args = List.map args ~f:compile_expression in
     return @@ Global_constant { hash; args }
 
@@ -650,7 +671,7 @@ and compile_tuple_index (index : int) : O.Row.Path.t = O.Row.Path.Here [ index ]
 
 and compile_binders binders ~(in_ : O.Expr.t) : (O.Expr.var * O.Type.t) * O.Expr.t =
   let create_expr (desc : O.Expr.desc) : O.Expr.t =
-    { desc; range = in_.range; type_ = in_.type_ }
+    { desc; range = in_.range; type_ = in_.type_; annotations = O.Annotations.empty }
   in
   match binders with
   | [] -> assert false
@@ -686,6 +707,28 @@ and compile_inline_michelson (code, args') =
   let replace m =
     let open Tezos_micheline.Micheline in
     match m with
+    | Prim (_, "SAPLING_EMPTY_STATE", [ Prim (_, s, [], [ id ]) ], [])
+      when String.equal "typeopt" s && String.is_prefix ~prefix:"$" id ->
+      let id = String.chop_prefix_exn ~prefix:"$" id in
+      let id = Int.of_string id in
+      used := id :: !used;
+      (match List.nth args_ty id with
+      | Some prim ->
+        (match Lltz_codegen.convert_type prim with
+        | Prim
+            ( _
+            , Michelson.Ast.Prim.T Michelson.Ast.Prim.Type.Option
+            , [ Prim (_, _, [ Int (_, z) ], _) ]
+            , _ ) ->
+          let instruction =
+            Michelson.Ast.Instruction.sapling_empty_state (Int.of_string (Z.to_string z))
+          in
+          Tezos_micheline.Micheline.map_node
+            (fun _ -> ())
+            (fun prim -> Michelson.Ast.Prim.to_string prim)
+            instruction
+        | _ -> raise_s [%message "could not resolve (SAPLING_EMPTY_STATE $)" (id : int)])
+      | _ -> assert false)
     | Prim (_, s, [], [ id ])
       when String.equal "typeopt" s && String.is_prefix ~prefix:"$" id ->
       let id = String.chop_prefix_exn ~prefix:"$" id in
