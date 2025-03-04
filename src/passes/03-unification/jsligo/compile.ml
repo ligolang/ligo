@@ -537,20 +537,19 @@ let instruction (instr : Eq.instruction) : Folding.instruction =
       | Some (`Let _) -> `Let
       | _ -> `Const
     in
-    let index' : I.pattern I.element list =
+    let index : I.pattern =
       match index.value with
       | var, None ->
         let var = I.{ path = []; selected = var } in
-        let var = mk_reg index.region var in
-        [ I.Element (I.P_var var) ]
+        I.P_var (mk_reg index.region var)
       | key, Some value ->
         let key' = I.{ path = []; selected = key } in
         let key' = mk_reg key#region key' in
         let value' = I.{ path = []; selected = value } in
         let value' = mk_reg value#region value' in
-        [ I.Element (I.P_var key'); I.Element (I.P_var value') ]
+        let array =  [ I.Element (I.P_var key'); I.Element (I.P_var value') ] in
+        I.P_array (mk_reg index.region array)
     in
-    let index = I.P_array (mk_reg index.region index') in
     O.I_for_of { index_kind; index; expr; for_stmt = for_of_body }
   | S_if stmt ->
     let I.{ test; if_so; if_not } = stmt.value in
