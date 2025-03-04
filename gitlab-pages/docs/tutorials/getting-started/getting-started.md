@@ -579,4 +579,4 @@ octez-client get contract storage for counter
 Now you have a simple LIGO smart contract and can test it, deploy it, and call it.
 You can use it as a starting point to write your own contracts and experiment with LIGO.
 
-You can also continue with the [Taco shop tutorial](../taco-shop/tezos-taco-shop-smart-contract) to learn more about programming with LIGO.
+You can also continue with the [Taco shop tutorial](../taco-shop/selling-tacos) to learn more about programming with LIGO.
