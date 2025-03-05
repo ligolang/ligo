@@ -211,7 +211,7 @@ let compile_constant
               var_name
               seq.type_
               ~body:(O.Dsl.variable ~range (Var var_name) seq.type_))
-         ~none:(O.Dsl.failwith ~range (O.Dsl.string ~range "Slice out of bounds")))
+         ~none:(O.Dsl.failwith ~range (O.Dsl.string ~range "SLICE")))
         .desc
     | _ -> assert false)
   | C_PAIR -> mk_prim (Pair (None, None))
