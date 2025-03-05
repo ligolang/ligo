@@ -28,6 +28,27 @@ Note: See predefined [namespace String](../reference/string-reference/?lang=jsli
 
 </Syntax>
 
+LIGO assumes that literal values within double quotes are strings, not any other value such as addresses.
+To set a literal address, cast a string value as an `address` data type:
+
+<Syntax syntax="cameligo">
+
+```cameligo group=strings
+let my_account : address =
+  ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" : address)
+```
+
+</Syntax>
+
+<Syntax syntax="jsligo">
+
+```jsligo group=strings
+const my_account: address =
+  "tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" as address;
+```
+
+</Syntax>
+
 ### Casting
 
 Strings can be used in contexts where a boolean is expected: an empty

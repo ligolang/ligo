@@ -1,3 +1,7 @@
-const my_map : map<int,int> = Map.literal([[0,0], [1,1], [2,2]]);
-// plus_one == Map.literal([[0,0],[1,2],[2,4]])
-const plus_one = Map.map(([k,v]) => k + v, my_map);
+const my_map: map<string, int> = Map.literal([
+  ["Alice", 2],
+  ["Bob", 5],
+  ["Charlie", 8],
+]);
+
+const squared_map: map<string, int> = Map.map(([_k, v]) => v * v, my_map);
