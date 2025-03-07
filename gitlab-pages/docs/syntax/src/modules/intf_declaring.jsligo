@@ -6,7 +6,8 @@ interface Euro_INTF {
 };
 namespace Euro implements Euro_INTF {
   export type t = nat; // No more abstract
-  export const add = (a: t, b: t) : t => a + b;
+  export const add = (a: t, b: t): t => a + b;
   export const one: t = 1n;
   export const two: t = 2n;
+  export const multiply = (a: t, b: t): t=> a * b;
 };
