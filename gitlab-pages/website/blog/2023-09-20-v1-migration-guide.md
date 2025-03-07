@@ -21,15 +21,15 @@ Exciting news, LIGO has released version 1.0! We made sure to fit in this releas
 
 You should not manually craft a `main` function that calls your entry points anymore. Instead, above each entry point function, you can now write `@entry` for JsLIGO or `[@entry]` for CameLIGO. This will cause a `main` function to be automatically generated behind the scenes.
 
-If you need more fine-grained control, it is still possible to write a `main` function, but you will need to add `@entry` or `[@entry]` above that `main` function (and only that function). See [the documentation on the main function and entry points](/docs/advanced/entrypoints-contracts#main-function) for more details on how to do this.
+If you need more fine-grained control, it is still possible to write a `main` function, but you will need to add `@entry` or `[@entry]` above that `main` function (and only that function). See [the documentation on the main function and entry points](/docs/syntax/contracts/entrypoints#the-main-function) for more details on how to do this.
 
-[Views](/docs/contract/views) can be declared in a similar way with `@view` for JsLIGO and `[@view]` for CameLIGO.
+[Views](/docs/syntax/contracts/views) can be declared in a similar way with `@view` for JsLIGO and `[@view]` for CameLIGO.
 
 As the use of `@entry` or `[@entry]` (and `@view` or `[@view]`) in the source is now mandatory, it is not possible anymore to rely on the auto-detection of the `main` function as the sole entry point, and it is not possible anymore to specify a entry points via the `-e` function on the command-line or views via the `--views` / `-v` options.
 
 Another consequence of this change is that, when originating a contract for tests, `Test.originate` now take as an argument a module containing multiple entry points instead of a single function, i.e. a single entry point
 
-We are also rolling out a new feature allowing the addition, removal and update of dynamic entry points for a contract after deployment. This could be a useful feature for example when building a DAO which allows on-chain vote to upgrade its code (or a DAO which controls the code of another separate contract). For more information, see [the documentation](/docs/advanced/dynamic-entrypoints) and [the reference](/docs/reference/dynamic-entrypoints-reference) for this feature.
+We are also rolling out a new feature allowing the addition, removal and update of dynamic entry points for a contract after deployment. This could be a useful feature for example when building a DAO which allows on-chain vote to upgrade its code (or a DAO which controls the code of another separate contract). For more information, see [the documentation](/docs/syntax/contracts/dynamic-entrypoints) and [the reference](/docs/reference/dynamic-entrypoints-reference) for this feature.
 
 MRs:
 
@@ -193,7 +193,7 @@ const part : bool = stuff.y["universe"][2];
 ### Miscellaneous
 
 - The internal command `ligo daemon` has been removed in [v0.69.0](https://gitlab.com/ligolang/ligo/-/releases/0.69.0) ([changelog](/docs/intro/changelog#0690)). It was previously used by the old language server to create a persistent LIGO process, but it was hacky and offered no performance improvements. There should be no noticeable change for the user, as the new language server (used e.g. by the VsCode plug-in) does not make use of this command anymore. MR: https://gitlab.com/ligolang/ligo/-/merge_requests/2690.
-- The support for CST mutation testing has been dropped in [v0.66.0](https://gitlab.com/ligolang/ligo/-/releases/0.66.0) ([changelog](/docs/intro/changelog#0660)). Unfortunately, that feature was incomplete and broken. With the disappearance of this feature, the command `ligo mutate` has been removed. However, AST mutation testing is still supported and part of the [testing framework](/docs/advanced/mutation-testing). MRs: https://gitlab.com/ligolang/ligo/-/merge_requests/2455 and https://gitlab.com/ligolang/ligo/-/merge_requests/2607.
+- The support for CST mutation testing has been dropped in [v0.66.0](https://gitlab.com/ligolang/ligo/-/releases/0.66.0) ([changelog](/docs/intro/changelog#0660)). Unfortunately, that feature was incomplete and broken. With the disappearance of this feature, the command `ligo mutate` has been removed. However, AST mutation testing is still supported and part of the [testing framework](/docs/testing/mutation-testing). MRs: https://gitlab.com/ligolang/ligo/-/merge_requests/2455 and https://gitlab.com/ligolang/ligo/-/merge_requests/2607.
 - Starting from [v0.64.2](https://gitlab.com/ligolang/ligo/-/releases/0.64.2) ([changelog](/docs/intro/changelog#0642)), the transpilation commands now take `--from-syntax` and `--to-syntax`, instead of the former, less clear use of `--syntax` for the source syntax and an unnamed parameter for the destination syntax. The destination syntax can still be inferred from the filename given to `-o`, e.g. `-o dest.jsligo`. MR: https://gitlab.com/ligolang/ligo/-/merge_requests/2501
 - Starting from [v0.64.2](https://gitlab.com/ligolang/ligo/-/releases/0.64.2) ([changelog](/docs/intro/changelog#0642)), the Kathmandu protocol is deprecated. If you need to recompile an old LIGO contract for an outdated protocol version, you may use the compiler version that the project was developed with. MR: https://gitlab.com/ligolang/ligo/-/merge_requests/2500
 
