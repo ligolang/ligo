@@ -122,16 +122,6 @@ const sidebars = {
       },
       "data-types/parametric_types"
     ],
-    "Preprocessor": [
-      "preprocessor/preprocessor",
-      "preprocessor/comments",
-      "preprocessor/strings",
-      "preprocessor/if",
-      "preprocessor/define",
-      "preprocessor/include",
-      "preprocessor/import",
-      "preprocessor/error"
-    ],
     "Testing": [
       "testing/testing",
       "testing/testing-tickets",
@@ -139,6 +129,7 @@ const sidebars = {
       "testing/michelson_testing"
     ],
     "Compiling": [
+      "compiling/preprocessor",
       "compiling/compiling",
       "compiling/deploying"
     ],
