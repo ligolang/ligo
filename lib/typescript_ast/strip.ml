@@ -600,8 +600,8 @@ and strip_for_header (node : Ast.for_header) : (for_header, _) result =
   let Ast.{ range; operator; collection } = node in
   let* in_region =
     match operator with
-    | In kwd_in -> Ok kwd_in#region
-    | Of kwd_of -> mk_err Range_over_keys kwd_of#region ~hint:"Try using 'in' instead."
+    | In kwd_in -> mk_err Range_over_keys kwd_in#region ~hint:"Iterate over key and values using 'of' instead."
+    | Of kwd_of -> Ok kwd_of#region
   in
   let* index_kind, index = strip_for_range range in
   let* exprs = strip_expressions collection in
