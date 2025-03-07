@@ -338,4 +338,39 @@ with prev; {
     customOCamlPackages = final.ocaml-ng.ocamlPackages_4_14;
     buildIde = false;
   };
+  tree-sitter = tree-sitter.override (
+    # override for getting tree-sitter version 0.25.3
+    let
+      rp = rustPlatform;
+    in
+      rec {
+        # dont want rust Playground
+        webUISupport = false;
+        rustPlatform = rp // {
+          buildRustPackage = args: rp.buildRustPackage (
+            args // rec {
+              version = "0.25.3";
+              src = fetchFromGitHub {
+                owner = "tree-sitter";
+                repo = "tree-sitter";
+                rev = "v${version}";
+                hash = "sha256-xafeni6Z6QgPiKzvhCT2SyfPn0agLHo47y+6ExQXkzE";
+                fetchSubmodules = true;
+              };
+              cargoHash = "sha256-CPLUHIihMSF8pTve0cJYt5Pb71zNZH2/d35bCKtp8w8";
+              nativeBuildInputs = args.nativeBuildInputs ++ [
+                # needs rustc 1.82
+                final.rust-bin.stable.latest.default
+              ];
+              # NOTE still need to patch as we dont want the playground support,
+              # but the treesitter src code has changed so need an updated patch file
+              patches = lib.optionals (!webUISupport) [
+                (substitute {
+                  src = ./tree-sitter-remove-web-interface.patch;
+                })
+              ];
+            }
+          );
+        };
+      });
 }

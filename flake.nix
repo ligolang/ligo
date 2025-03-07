@@ -38,6 +38,11 @@
       url = "github:trilitech/lltz";
       flake = false;
     };
+
+    rust-overlay = {
+      url = "github:oxalica/rust-overlay";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
   outputs = inputs:
     with inputs;
@@ -56,6 +61,7 @@
                   coqPackages = coqPackages_8_13;
                   ocamlformat = ocaml-ng.ocamlPackages_4_14.ocamlformat_0_21_0;
                 })
+              rust-overlay.overlays.default
             ];
           };
 
