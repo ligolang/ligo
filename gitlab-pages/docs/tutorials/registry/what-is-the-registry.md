@@ -11,7 +11,7 @@ Packages are similar to libraries. They're pieces of code made by the community 
 
 ### How to publish my own package?
 
-You can refer to [this documentation](https://ligolang.org/docs/advanced/package-management#packaging) to learn how to turn LIGO files into a library and publish them.
+You can refer to [this documentation](../../advanced/package-management#packaging) to learn how to turn LIGO files into a library and publish them.
 
 ## [Contracts](https://packages.ligolang.org/contracts)
 
