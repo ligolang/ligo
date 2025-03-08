@@ -60,7 +60,7 @@ Earlier versions of LIGO used [`esy`](https://esy.sh) as the backend for package
 
 ### Workflow
 
-We will need the LIGO compiler to compile smart contracts, to get the LIGO compiler follow these [instructions](https://ligolang.org/docs/intro/installation).
+We will need the LIGO compiler to compile smart contracts, to get the LIGO compiler follow these [instructions](../intro/installation).
 
 Next, we will use a simple dependency `@ligo/math-lib` published on the LIGO registry. To download & install the library, run,
 

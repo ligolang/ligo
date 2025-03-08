@@ -1,4 +1,4 @@
-#import "gitlab-pages/docs/preprocessor/src/import/euro_namespace_public.jsligo" "Euro_import"
+#import "gitlab-pages/docs/compiling/src/preprocessor/euro_namespace_public.jsligo" "Euro_import"
 
 type euro_balance = Euro_import.Euro.t;
 

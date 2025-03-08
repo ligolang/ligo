@@ -149,7 +149,7 @@ ligo compile contract taco_shop.mligo
 > To avoid warning at compilation, change `taco_kind_index` into `_taco_kind_index`, it'll tell to the compiler that this variable is authorized to not be used.
 
 
-A good practice is to scope your contract into a [module](https://ligolang.org/docs/language-basics/modules?lang=cameligo).
+A good practice is to scope your contract into a [module](../../language-basics/modules).
 
 <Syntax syntax="cameligo">
 
@@ -195,7 +195,7 @@ namespace TacoShop {
 
 </Syntax>
 
-There is an impact onto the compilation, now you have to tell to the compiler which [module](https://ligolang.org/docs/language-basics/modules?lang=cameligo) it need to compile :
+There is an impact onto the compilation, now you have to tell to the compiler which [module](../../language-basics/modules) it need to compile :
 
 ```
 ligo compile contract taco_shop.mligo -m TacoShop

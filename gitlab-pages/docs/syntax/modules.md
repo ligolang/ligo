@@ -315,13 +315,13 @@ Including modules is not possible in JsLIGO.
 ## Importing modules
 
 You can import modules from other files with the `#import` directive.
-See [`#import`](../preprocessor/import).
+See [`#import`](../compiling/preprocessor#import).
 
 </Syntax>
 
 <Syntax syntax="jsligo">
 
 You can import namespaces from other files with the `#import` directive, but only if the namespaces have the `@public` decorator.
-See [`#import`](../preprocessor/import).
+See [`#import`](../compiling/preprocessor#import).
 
 </Syntax>

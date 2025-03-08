@@ -141,7 +141,7 @@ Exposes tezos timelock library function [create_chest_key](https://gitlab.com/te
 
 ### Timelock
 
-Extensive documentation about timelock can be found [here](https://tezos.gitlab.io/alpha/timelock.html#timelock).
+Extensive documentation about timelock can be found [here](https://octez.tezos.com/docs/active/timelock.html#timelock).
 Here is an example of a contract trying to open a chest and the corresponding tests to trigger all error kinds:
 
 <Syntax test-ligo syntax="cameligo">
@@ -221,7 +221,7 @@ function open_or_fail (const ck : chest_key; const c : chest; const @time : nat)
 
 ### On-chain views
 
-> Tezos documentation on views can be found [here](https://tezos.gitlab.io/011/michelson.html#operations-on-views)
+> Tezos documentation on views can be found [here](https://octez.tezos.com/docs/active/views.html)
 
 On-chain views are named routines attached to your contract allowing
 another contract to call them to get a "view" of your contract current

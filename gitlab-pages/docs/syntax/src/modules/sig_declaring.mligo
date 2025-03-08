@@ -7,7 +7,7 @@ module type Euro_SIG =
   end
 module Euro : Euro_SIG =
   struct
-    type t = nat // No more abstract
+    type t = nat
     let add (a, b : t * t) = a + b
     let one : t = 1n
     let two : t = 2n

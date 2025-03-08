@@ -210,22 +210,6 @@
         "url": "https://gitlab.haskell.org/ghc/ghc"
       }
     },
-    "grace": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1717098178,
-        "narHash": "sha256-jubzimeKs29Y6Di2/kpKEOnNAEzMzVpC5HMLjog4Tlg=",
-        "owner": "johnyob",
-        "repo": "grace",
-        "rev": "d15a6d7d07a2551d1a9934fa79c2cf84c918f990",
-        "type": "github"
-      },
-      "original": {
-        "owner": "johnyob",
-        "repo": "grace",
-        "type": "github"
-      }
-    },
     "hackage": {
       "flake": false,
       "locked": {
@@ -510,11 +494,11 @@
     "lltz": {
       "flake": false,
       "locked": {
-        "lastModified": 1729268450,
-        "narHash": "sha256-b4MHvVnzB7uYTBGW5pEgSXoWPOtEWVKprJaUihFVbFk=",
+        "lastModified": 1740059309,
+        "narHash": "sha256-EGv7r9paCNM9xhU4L3rUysIbH8ewaXfYITdUaygQFrI=",
         "owner": "trilitech",
         "repo": "lltz",
-        "rev": "8f32aa728b8aadf08b662d710717f2f1c2bc3ddd",
+        "rev": "770794f0d9b2b254cee48c09c3b1862d96aa3ef8",
         "type": "github"
       },
       "original": {
@@ -777,15 +761,34 @@
       "inputs": {
         "build-yarn-package": "build-yarn-package",
         "flake-utils": "flake-utils",
-        "grace": "grace",
         "hackage": "hackage",
         "haskell-nix": "haskell-nix",
         "lltz": "lltz",
         "nixpkgs": "nixpkgs_2",
         "ocaml-overlay": "ocaml-overlay",
+        "rust-overlay": "rust-overlay",
         "stackage": "stackage",
-        "tezos-ligo": "tezos-ligo",
         "treefmt": "treefmt"
+      }
+    },
+    "rust-overlay": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1741228283,
+        "narHash": "sha256-VzqI+k/eoijLQ5am6rDFDAtFAbw8nltXfLBC6SIEJAE=",
+        "owner": "oxalica",
+        "repo": "rust-overlay",
+        "rev": "38e9826bc4296c9daf18bc1e6aa299f3e932a403",
+        "type": "github"
+      },
+      "original": {
+        "owner": "oxalica",
+        "repo": "rust-overlay",
+        "type": "github"
       }
     },
     "stackage": {
@@ -832,23 +835,6 @@
         "owner": "nix-systems",
         "repo": "default",
         "type": "github"
-      }
-    },
-    "tezos-ligo": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1723647240,
-        "narHash": "sha256-FkOR4VqFngdejBCqzwwySINfK/oNklsnIVrvQYVAfyc=",
-        "owner": "ligolang",
-        "repo": "tezos-ligo",
-        "rev": "fb4bad17f4d4a8b1df1ba5ea96935f63321e3a30",
-        "type": "gitlab"
-      },
-      "original": {
-        "owner": "ligolang",
-        "ref": "v21-ligo",
-        "repo": "tezos-ligo",
-        "type": "gitlab"
       }
     },
     "treefmt": {

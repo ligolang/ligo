@@ -274,7 +274,7 @@ Get the default contract associated with an on-chain key-pair. This
 contract does not execute code, instead it exists to receive tokens on
 behalf of a key's owner.
 
-See also: http://tezos.gitlab.io/user/glossary.html#implicit-account
+See also: https://octez.tezos.com/docs/active/glossary.html#user-account
 
 <Syntax syntax="cameligo">
 
@@ -433,7 +433,7 @@ let set_delegate: (delegate: option&lt;key_hash&gt;) => operation
 
 
 
-Modify the [delegate](http://tezos.gitlab.io/user/glossary.html?highlight=delegate#delegate) of the current contract.
+Modify the [delegate](http://tezos.gitlab.io/user/glossary.html#delegate) of the current contract.
 
 The operation fails when:
 - the delegate is the same as current delegate

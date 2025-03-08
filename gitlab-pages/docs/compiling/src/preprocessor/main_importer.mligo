@@ -1,4 +1,4 @@
-#import "gitlab-pages/docs/preprocessor/src/import/euro.mligo" "Euro"
+#import "gitlab-pages/docs/compiling/src/preprocessor/euro.mligo" "Euro"
 
 type storage = Euro.t
 

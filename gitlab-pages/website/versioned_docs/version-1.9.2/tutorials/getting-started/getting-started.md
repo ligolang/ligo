@@ -414,7 +414,7 @@ The Ghostnet test network is just like the Tezos mainnet, so you can use it to t
    brew install tezos-client
    ```
 
-   - For other methods, see https://tezos.gitlab.io/introduction/howtoget.html.
+   - For other methods, see https://octez.tezos.com/docs/introduction/howtoget.html.
 
 1. Verify that you have at least version 20 of the Octez client by running `octez-client --version` and verifying that the version is at least 20.0.
 

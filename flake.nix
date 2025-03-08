@@ -34,19 +34,14 @@
     };
 
     # Also doesn't belong here, but required to avoid nix's bad UX with submodules
-    tezos-ligo = {
-      url = "gitlab:ligolang/tezos-ligo/v21-ligo";
-      flake = false;
-    };
-
-    grace = {
-      url = "github:johnyob/grace";
-      flake = false;
-    };
-
     lltz = {
       url = "github:trilitech/lltz";
       flake = false;
+    };
+
+    rust-overlay = {
+      url = "github:oxalica/rust-overlay";
+      inputs.nixpkgs.follows = "nixpkgs";
     };
   };
   outputs = inputs:
@@ -66,11 +61,12 @@
                   coqPackages = coqPackages_8_13;
                   ocamlformat = ocaml-ng.ocamlPackages_4_14.ocamlformat_0_21_0;
                 })
+              rust-overlay.overlays.default
             ];
           };
 
           tree-sitter-typescript = pkgs.callPackage ./nix/tree-sitter-typescript.nix {};
-          ligo = pkgs.callPackage ./nix/ligo.nix {inherit tezos-ligo tree-sitter-typescript grace lltz;};
+          ligo = pkgs.callPackage ./nix/ligo.nix {inherit tree-sitter-typescript lltz;};
 
           pkgs-extended = pkgs.extend (lib.composeManyExtensions [
             build-yarn-package.overlays.default

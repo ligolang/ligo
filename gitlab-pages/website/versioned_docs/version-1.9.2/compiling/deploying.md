@@ -7,7 +7,7 @@ LIGO doesn't include a built-in way to deploy (originate) contracts to Tezos.
 You can deploy contracts in the [LIGO IDE](https://ide.ligolang.org/) or use other tools that can deploy Tezos contracts.
 
 One popular tool is the
-[Octez client](https://tezos.gitlab.io/user/setup-client.html), which is a
+[Octez client](https://octez.tezos.com/docs/user/setup-client.html), which is a
 command-line client that runs many different kinds of Tezos operations. For
 installation instructions, see
 [Installing the Octez client](https://docs.tezos.com/developing/octez-client/installing)
