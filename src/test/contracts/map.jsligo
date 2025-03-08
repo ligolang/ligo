@@ -1,57 +1,57 @@
 type foobar = map <int, int>;
 
-let empty_map: foobar = Map.empty;
+const empty_map: foobar = Map.empty;
 
-let map1 : foobar =
+const map1 : foobar =
   Map.literal ([[144, 23], [51, 23], [42, 23], [120, 23], [421, 23]]);
 
-let map2 : foobar = Map.literal ([[23, 0], [42, 0]]);
+const map2 : foobar = Map.literal ([[23, 0], [42, 0]]);
 
-let set_ = ([n, m]: [int, foobar]) : foobar => Map.update (23, Some (n), m);
+const set_ = ([n, m]: [int, foobar]) : foobar => Map.update (23, ["Some" as "Some", n], m);
 
-let add = ([n, m]: [int, foobar]) : foobar => Map.add (23, n, m);
+const add = ([n, m]: [int, foobar]) : foobar => Map.add (23, n, m);
 
-let rm = (m: foobar) : foobar => Map.remove (42, m);
+const rm = (m: foobar) : foobar => Map.remove (42, m);
 
-let patch_ = (_m : foobar) : foobar =>
+const patch_ = (_m : foobar) : foobar =>
   Map.literal ([[0, 5], [1, 6], [2, 7]]);
 
 /* Second dummy test, see above */
 
-let patch_empty = (_m : foobar) : foobar =>
+const patch_empty = (_m : foobar) : foobar =>
   Map.literal ([[0, 0], [1, 1], [2, 2]]);
 
 /* Third dummy test, see above */
 
-let patch_deep = (_m : [foobar, nat]) : [foobar, nat] =>
+const patch_deep = (_m : [foobar, nat]) : [foobar, nat] =>
   [Map.literal([[0, 0], [1, 9], [2, 2]]), (10 as nat)];
 
-let size_ = (m : foobar) : nat => Map.size (m);
+const size_ = (m : foobar) : nat => Map.size (m);
 
-let get = (m: foobar): option<int> => Map.find_opt (42, m);
-let get_ = (m: foobar): option<int> => Map.find_opt(42, m);
+const get = (m: foobar): option<int> => Map.find_opt (42, m);
+const get_ = (m: foobar): option<int> => Map.find_opt(42, m);
 
-let mem = (km: [int, foobar]): bool => Map.mem (km[0], km[1]);
+const mem = (km: [int, foobar]): bool => Map.mem (km[0], km[1]);
 
-let iter_op = (m: foobar): unit => {
-  let assert_eq = ([i, j]: [int, int]):unit => assert (i == j);
+const iter_op = (m: foobar): unit => {
+  const assert_eq = ([i, j]: [int, int]):unit => Assert.assert (i == j);
   Map.iter (assert_eq, m);
   return unit;
 };
 
-let map_op = (m: foobar) : foobar => {
-  let increment = ([_z, j]: [int, int]):int => j + 1;
+const map_op = (m: foobar) : foobar => {
+  const increment = ([_z, j]: [int, int]):int => j + 1;
   return Map.map (increment, m);
 };
 
-let fold_op = (m: foobar): int => {
-  let aggregate = ([i, j]: [int, [int, int]]):int => i + j[0] + j[1];
+const fold_op = (m: foobar): int => {
+  const aggregate = ([i, j]: [int, [int, int]]):int => i + j[0] + j[1];
   return Map.fold (aggregate, m, 10);
 };
 
-let deep_op = (m: foobar) : foobar => {
-  let coco:[int, foobar] = [0, m];
-  let coco1:[int, foobar] = [0, Map.remove (42, coco[1])];
-  let coco2:[int, foobar] = [0, Map.update (32, Some (16), coco1[1])];
+const deep_op = (m: foobar) : foobar => {
+  const coco:[int, foobar] = [0, m];
+  const coco1:[int, foobar] = [0, Map.remove (42, coco[1])];
+  const coco2:[int, foobar] = [0, Map.update (32, ["Some" as "Some", 16], coco1[1])];
   return coco2[1];
 };

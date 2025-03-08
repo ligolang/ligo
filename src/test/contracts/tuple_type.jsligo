@@ -1,14 +1,3 @@
-/*
-  The difference between tuples and arguments is subtle in JsLIGO.
-
-   `f(a, b);`
-   f is called with two arguments
-
-   `f((a, b));`
-   f is called with a tuple.
-
-*/
-
 type fun_type = (a: int, b: int) => int
 
 const arguments = (b: int, c: int) : int => b + c

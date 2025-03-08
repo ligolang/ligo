@@ -3,6 +3,6 @@ type foobar =
 | ["Bar", bool]
 | ["Kee", nat];
 
-let foo: foobar = Foo(42);
-let bar: foobar = Bar(true);
-let kee: foobar = Kee((23 as nat));
+const foo: foobar = ["Foo" as "Foo", 42];
+const bar: foobar = ["Bar" as "Bar", true];
+const kee: foobar = ["Kee" as "Kee", (23 as nat)];
