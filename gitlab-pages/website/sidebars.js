@@ -30,17 +30,7 @@ const sidebars = {
     "Syntax": [
       "syntax/comments",
       "syntax/variables",
-      {
-        "type": "category",
-        "label": "Functions",
-        "items": [
-          "functions/declaring",
-          "functions/lambdas",
-          "functions/higher-order",
-          "functions/inlining",
-          "functions/recursion"
-        ]
-      },
+      "syntax/functions",
       {
         "type": "category",
         "label": "Flow control",
@@ -48,16 +38,16 @@ const sidebars = {
           "imperative/looping",
           "imperative/asserting",
           "imperative/switches",
-          "imperative/exceptions",
-        ],
+          "imperative/exceptions"
+        ]
       },
       {
         "type": "doc",
         "label": "Modules",
         "customProps": {
-          "jsLigoName": "Namespaces",
+          "jsLigoName": "Namespaces"
         },
-        "id": "syntax/modules",
+        "id": "syntax/modules"
       },
       {
         "type": "category",
@@ -70,29 +60,29 @@ const sidebars = {
           "syntax/contracts/views",
           "syntax/contracts/dynamic-entrypoints",
           "syntax/contracts/interop",
-          "syntax/contracts/michelson-injection",
-        ],
+          "syntax/contracts/michelson-injection"
+        ]
       },
       {
         "type": "doc",
         "label": "Attributes",
         "customProps": {
-          "jsLigoName": "Decorators",
+          "jsLigoName": "Decorators"
         },
-        "id": "syntax/decorators",
+        "id": "syntax/decorators"
       },
       {
         "type": "category",
         "label": "Signatures",
         "customProps": {
-          "jsLigoName": "Interfaces",
+          "jsLigoName": "Interfaces"
         },
         "items": [
           "signatures/declaring",
           "signatures/extending"
         ]
       },
-      'syntax/keywords',
+      "syntax/keywords"
     ],
     "Data types": [
       {
@@ -130,10 +120,10 @@ const sidebars = {
           "data-types/contracts-type",
           "data-types/big_sets",
           "data-types/big_maps",
-          "data-types/tickets",
-        ],
+          "data-types/tickets"
+        ]
       },
-      'data-types/parametric_types',
+      "data-types/parametric_types"
     ],
     "Preprocessor": [
       "preprocessor/preprocessor",
@@ -153,7 +143,7 @@ const sidebars = {
     ],
     "Compiling": [
       "compiling/compiling",
-      "compiling/deploying",
+      "compiling/deploying"
     ],
     "Advanced Topics": [
       "advanced/package-management",
@@ -176,23 +166,6 @@ const sidebars = {
       "reference/big-set-reference",
       "reference/dynamic-entrypoints-reference",
       "reference/tuple2-reference",
-      {
-        "type": "category",
-        "label": "Attributes",
-        "customProps": {
-          "jsLigoName": "Decorators",
-        },
-        "items": [
-          "reference/decorators/annot",
-          "reference/decorators/deprecated",
-          "reference/decorators/dyn_entry",
-          "reference/decorators/entry",
-          "reference/decorators/inline",
-          "reference/decorators/layout",
-          "reference/decorators/private",
-          "reference/decorators/view"
-        ],
-      },
       {
         "type": "category",
         "label": "tezos",

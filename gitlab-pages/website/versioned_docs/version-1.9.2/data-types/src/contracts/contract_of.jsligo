@@ -1,0 +1,37 @@
+type storage = int;
+type @return = [list<operation>, storage];
+
+namespace C {
+  @entry
+  const decrement = (param: int, storage: storage) : @return =>
+    [[], storage - param];
+
+  @entry
+  const increment = (param: int, storage: storage) : @return =>
+    [[], storage + param];
+
+  @entry
+  const reset = (_unit: unit, _storage: storage) : @return =>
+    [[], 0];
+}
+
+import Test = Test.Next;
+
+const test_initial_storage = () : unit => {
+  const init_storage = 42;
+  const fee = 0mutez;
+  const contract = Test.Originate.contract(contract_of(C), init_storage, fee);
+
+  // Call contract through entrypoints
+  Test.Contract.transfer_exn(Test.Typed_address.get_entrypoint("increment", contract.taddr), 15, 0tez);
+  Test.Contract.transfer_exn(Test.Typed_address.get_entrypoint("decrement", contract.taddr), 14, 0tez);
+
+  // Call contract through `main` function
+  const increment_param: parameter_of C = Increment(8);
+  const decrement_param: parameter_of C = Decrement(3);
+  Test.transfer_exn(contract.taddr, increment_param, 0mutez);
+  Test.transfer_exn(contract.taddr, decrement_param, 0mutez);
+
+  const new_storage = Test.Typed_address.get_storage(contract.taddr);
+  Assert.assert(new_storage == init_storage + 15 - 14 + 8 - 3);
+}

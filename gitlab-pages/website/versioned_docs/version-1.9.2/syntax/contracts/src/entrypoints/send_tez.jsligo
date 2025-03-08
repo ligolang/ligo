@@ -1,0 +1,15 @@
+type storage = unit;
+type return_value = [list<operation>, storage];
+
+@entry
+const give5tez = (_: unit, storage: storage): return_value => {
+  let operations: list<operation> = [];
+  if (Tezos.get_balance() >= 5tez) {
+    const receiver_contract = match(Tezos.get_contract_opt(Tezos.get_sender())) {
+      when(Some(contract)): contract;
+      when(None): failwith("Couldn't find account");
+    };
+    operations = [Tezos.Next.Operation.transaction(unit, 5tez, receiver_contract)];
+  }
+  return [operations, storage];
+}

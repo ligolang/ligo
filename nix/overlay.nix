@@ -13,8 +13,8 @@ with prev; {
               url = "https://github.com/mirage/ocaml-cohttp/releases/download/v${version}/cohttp-${version}.tbz";
               hash = "sha256-9eJz08Lyn/R71+Ftsj4fPWzQGkC+ACCJhbxDTIjUV2s=";
             };
-            buildInputs = [ jsonm ppx_sexp_conv ];
-            propagatedBuildInputs = [ base64 re stringext uri-sexp ];
+            buildInputs = [jsonm ppx_sexp_conv];
+            propagatedBuildInputs = [base64 re stringext uri-sexp];
           };
 
           tezt = buildDunePackage rec {
@@ -30,8 +30,8 @@ with prev; {
               hash = "sha256-1Cl/GOB+MDPJIl/6600PLTSL+vCYcAZGjedd6hr7rJw=";
             };
 
-            propagatedBuildInputs = [ clap ezjsonm lwt re ];
-          };  
+            propagatedBuildInputs = [clap ezjsonm lwt re];
+          };
 
           # TODO: odoc-parser and ocamlformat are issues with nix-ocaml
           odoc-parser = prev.odoc-parser.overrideAttrs (prev: {

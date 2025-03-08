@@ -1,0 +1,5 @@
+type animal =
+[@layout tree]
+| Elephant
+| Dog
+| Cat
