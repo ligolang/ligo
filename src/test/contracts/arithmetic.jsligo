@@ -11,11 +11,11 @@ function foo      (n : int) { return n + 10  }
 function neg_op_2 (b : int) { return -foo(b) }
 function ediv_op  (n : int) : option<[int, nat]> { return ediv(n,2) }
 
-function aux (unit : unit) : unit {
-  let _x : int = 42 * 42n
-  let _y : int = 23n * 23
-  let _z : int = 144 * 144
-  let _w : nat = 7n * 7n
+function aux (_unit : unit) : unit {
+  const _x : int = 42 * 42n
+  const _y : int = 23n * 23
+  const _z : int = 144 * 144
+  const _w : nat = (7 as nat) * (7 as nat)
 }
 
-let mul_woo = aux (unit)
+const mul_woo = aux (unit)

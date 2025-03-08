@@ -1,67 +1,63 @@
-let for_of_single_statement = (xs : list<int>) : list<int> => {
-    let ys : list<int> = [];
-    for (const x of xs) {
-        ys = [x, ...ys];
-    };
-    return ys;
+function for_of_single_statement (xs : list<int>) : list<int> {
+  let ys : list<int> = [];
+  for (const x of xs) ys = [x, ...ys];
+  return ys;
 }
 
-let for_of_multi_statements_1 = (xs : list<int>) : list<int> => {
-    let ys : list<int> = [];
-    for (const x of xs) {
-        let z = 1;
-        z += 1;
-        let c = z + x;
-        ys = [c, ...ys];
-    };
-    return ys;
-}
-
-let for_of_multi_statements_2 = (xs : list<int>) : list<int> => {
-    let ys : list<int> = [];
+function for_of_multi_statements_1 (xs : list<int>) : list<int> {
+  let ys : list<int> = [];
+  for (const x of xs) {
     let z = 1;
-    for (const x of xs) {
-        let c = z + x;
-        ys = [c, ...ys];
-        z += 1;
-    };
-    let _ = z;
-    return ys;
+    z += 1;
+    const c = z + x;
+    ys = [c, ...ys];
+  };
+  return ys;
 }
 
-let while_single_statement = (n : int) : int => {
-    let _i = 1;
-    let m = n;
-    while (m > 0) {
-        m -= 1;
-    };
-    let _ = m;
-    return n;
+function for_of_multi_statements_2 (xs : list<int>) : list<int> {
+  let ys : list<int> = [];
+  let z = 1;
+  for (const x of xs) {
+    let c = z + x;
+    ys = [c, ...ys];
+    z += 1;
+  };
+  const _ = z;
+  return ys;
 }
 
-let while_multi_statements_1 = (n : int) : int => {
-    let sum = 0;
-    let i = 1;
-    let m = n;
-    while (m > 0) {
-        sum += i;
-        i += 1;
-        m -= 1;
-    };
-    m = i;
-    return sum
+function while_single_statement (n : int) : int {
+  const _i = 1;
+  let m = n;
+  while (m > 0) m -= 1;
+  const _ = m;
+  return n;
 }
 
-let while_multi_statements_2 = (n : int) : int => {
-    let sum = 0;
-    let i = 1;
-    let m = n;
-    while (m > 0) {
-        let x = i;
-        sum += x;
-        i += 1;
-        m -= 1;
-    };
-    i = m;
-    return sum
+function while_multi_statements_1 (n : int) : int {
+  let sum = 0;
+  let i = 1;
+  let m = n;
+  while (m > 0) {
+    sum += i;
+    i += 1;
+    m -= 1;
+  };
+  m = i;
+  return sum
+}
+
+function while_multi_statements_2 (n : int) : int {
+  let sum = 0;
+  let i = 1;
+  let m = n;
+  while (m > 0) {
+    let x = i;
+    sum += x;
+    i += 1;
+    m -= 1;
+  };
+  i = m;
+  return sum
 };

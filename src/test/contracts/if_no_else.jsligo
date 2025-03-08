@@ -1,8 +1,8 @@
-let a = (x: bool): bool => {
-    let _a = 2;
-    if (x == true) {
-      _a = 1; // to ensure this doesn't cause issues.
-      return true
-    }
-    return false
+function a (x: bool): bool {
+  let a = 2;
+  if (x) {
+    a = 1;
+    return true
   }
+  return false
+}

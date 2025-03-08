@@ -1,11 +1,11 @@
 /* Test conditional in JsLIGO */
 
 function simple (i : int) : int {
-  if (i == 2) return 42 else return 0
+  if (i == 2) return 42; else return 0
 }
 
 function annot (i : int) : int {
-  if (((i == 2) as bool)) return (42 as int) else return (0 as int)
+  if (((i == 2) as bool)) return (42 as int); else return (0 as int)
 }
 
 function shadow (i: int): int {

@@ -1,1 +1,1 @@
-let check = (i : int): option <nat> => is_nat (i);
+const check = (i : int) : option<nat> => is_nat(i);
