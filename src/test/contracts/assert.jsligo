@@ -1,8 +1,8 @@
-function main (p : bool, s : unit):[list<operation>, unit] {
-  let _ : unit = assert (p);
+function main (p : bool, s : unit) : [list<operation>, unit] {
+  const _ : unit = Assert.assert (p);
   return [[], s];
 };
 
-function some (o : option<unit>):unit {
-  assert_some(o)
+function some (o : option<unit>) : unit {
+  Assert.some(o)
 };

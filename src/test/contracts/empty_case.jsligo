@@ -2,8 +2,8 @@ type fooBarBaz =
   ["Bar", int]
 | ["Baz"];
 
-let check = (f : fooBarBaz) : int =>
-  match(f) {
-    when(Bar(i)): i;
-    when(Baz()): -1
-  };
+const check = (f : fooBarBaz) : int =>
+  $match(f, {
+    "Bar": (i) => i,
+    "Baz": () => -1
+  });

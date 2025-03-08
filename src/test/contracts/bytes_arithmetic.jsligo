@@ -1,5 +1,5 @@
-let concat_op = (s: bytes): bytes => Bytes.concat(s, 0x7070);
-let nested_concat_op = (s: bytes): bytes =>
+const concat_op = (s: bytes): bytes => Bytes.concat(s, 0x7070);
+const nested_concat_op = (s: bytes): bytes =>
   Bytes.concat(Bytes.concat(s, 0x5faaaa), 0xcd);
-let slice_op = (s: bytes): bytes => Bytes.sub(1n, 2n, s);
-let hasherman = (s: bytes): bytes => Crypto.sha256(s);
+const slice_op = (s: bytes): bytes => Bytes.sub(1n, 2n, s);
+const hasherman = (s: bytes): bytes => Crypto.sha256(s);

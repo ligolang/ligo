@@ -1753,6 +1753,18 @@ module List = struct
     tail list
 
   (** display-only-for-cameligo
+    The call `List.head_and_tail l`, where `l` is a list, is `None` if `l` is
+    empty; otherwise, `Some (hd, tl)`, where `hd` and `tl` are the head and tail of the
+    list, respectively. *)
+  (** display-only-for-jsligo
+    The call `List.head_and_tail(l)`, where `l` is a list, is `["None" as "None"]` if `l` is
+    empty; otherwise, `["Some" as "Some", [hd,tl]]`, where `hd` and `tl` are the head and tail of the list, respectively. *)
+  let head_and_tail (type elt) (list: elt t) : (elt * elt t) option =
+    match list with
+    | [] -> None
+    | head :: tail -> Some (head, tail)
+
+  (** display-only-for-cameligo
      The call `List.map f [a1; ...; an]` applies the function `f` to `a1`,
     ..., `an` (from left to right), and builds the list
     `[f a1; ...; f an]` with the results returned by `f`. *)
@@ -1866,10 +1878,10 @@ module List = struct
 
   (** display-only-for-cameligo
     The call `List.update_with p d l` is the list `l` where the elements
-    `e` such that satisfy the predicate `p` are replaced by `d`. *)
+    that satisfy the predicate `p` are replaced by `d`. *)
   (** display-only-for-jsligo
     The call `List.update_with(p,d,l)` is the list `l` where the elements
-    `e` such that satisfy the predicate `p` are replaced by `d`. *)
+    that satisfy the predicate `p` are replaced by `d`. *)
   let update_with
     (type elt) (pred: elt -> bool) (default: elt) (list: elt t) : elt t =
     map (fun elt -> if pred elt then default else elt) list
@@ -4311,7 +4323,7 @@ module Test = struct
     end
     let originate = Originate.contract
     let failwith = Assert.failwith
-    
+
     include Typed_address
   end
 end

@@ -1,23 +1,23 @@
 const a = 1
-const b = 1n
-const c = 2mutez
-const d = 1n + 2n
-const e = 1mutez + 3mutez
+const b = 1 as nat
+const c = 2 as mutez
+const d = (1 as nat) + (2 as nat) // Parens needed
+const e = (1 as mutez) + (3 as mutez) // Parens needed
 const f = [a, c]
 const g = [a + 1, c]
 const h = ["a" + "2", d]
-const i = (a: int, b: int): int => a + b
-const j = (a: int, b: int): int => a - b
+const i = (a: int, b: int) : int => a + b
+const j = (a: int, b: int) : int => a - b
 const k = () => b
 const l = () => i(2,3)
 // const m = {
 //     const z = 3;
 //     z;
 // };
-const n = (a: int): int => a + 1
-const o = (a: int): int => a + 1
-const n2 = (a: int, _: int): int => a + 1
-const o2 = (a: int, _: int): int => a + 1
+const n = (a: int) : int => a + 1
+const o = (a: int) : int => a + 1
+const n2 = (a: int, _: int) : int => a + 1
+const o2 = (a: int, _: int) : int => a + 1
 // const p = {{
 //     3;
 // }};
