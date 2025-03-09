@@ -52,10 +52,15 @@ let print_simple_path (path : simple_path) : unit =
 
 type t = statements
 
-(* STATEMENTS *)
+(* STATEMENTS
+
+   The constructor [S_decorated] is not initial, that is, it is never
+   produced by [Strip]: it is used by the translation to the unified
+   AST. *)
 and statements = statement Ne_list.t reg
 
 and statement =
+  | S_decorated of decorator * statement
   | S_block of statements
   | S_break of Region.t
   | S_decl of declaration
@@ -529,7 +534,8 @@ let region_of_expr = function
   | E_var w -> w#region
   | E_xor { region; _ } -> region
 
-let region_of_statement = function
+let rec region_of_statement = function
+  | S_decorated (_, stmt) -> region_of_statement stmt
   | S_block { region; _ } -> region
   | S_break r -> r
   | S_decl d | S_export d -> region_of_declaration d
@@ -558,3 +564,22 @@ let comments_of_property_name = function
 let contents_of_property_name = function
   | Property_string literal -> literal
   | Property_ident variable -> variable
+
+(* Lifting decorators from declarations to statements *)
+
+let rec lift_decorators_from_decl (decl: declaration) =
+  match decl with
+  | D_decorated (decorator, decl) ->
+     let decorate, decl = lift_decorators_from_decl decl in
+     (fun stmt -> S_decorated (decorator, decorate stmt)), decl
+  | _ -> (fun stmt -> stmt), decl
+
+let lift_decorators (stmt: statement) : statement =
+  match stmt with
+  | S_decl decl ->
+     let decorate, decl = lift_decorators_from_decl decl in
+     decorate (S_decl decl)
+  | S_export decl ->
+     let decorate, decl = lift_decorators_from_decl decl in
+     decorate (S_export decl)
+  | _ -> stmt
