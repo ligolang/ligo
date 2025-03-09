@@ -503,11 +503,13 @@ let pattern (pattern : Eq.pattern) : Folding.pattern =
 let statement (stmt : Eq.statement) : Folding.statement =
   let loc = Location.lift (I.region_of_statement stmt) in
   let return = Location.wrap ~loc in
-  match stmt with
-  | S_block _ | S_break _ -> return @@ O.S_instr stmt
-  | S_decl decl -> return @@ O.S_decl decl
-  | S_export decl -> return @@ O.S_export decl
-  | S_expr _ | S_for _ | S_for_of _ | S_if _ | S_return _ | S_switch _ | S_while _ ->
+  match I.lift_decorators stmt with
+  | I.S_decorated (dec, stmt) ->
+     return @@ (O.S_attr (compile_decorator dec, stmt))
+  | I.S_block _ | I.S_break _ -> return @@ O.S_instr stmt
+  | I.S_decl decl -> return @@ O.S_decl decl
+  | I.S_export decl -> return @@ O.S_export decl
+  | I.S_expr _ | I.S_for _ | I.S_for_of _ | I.S_if _ | I.S_return _ | I.S_switch _ | I.S_while _ ->
     return @@ O.S_instr stmt
 
 
@@ -519,7 +521,7 @@ let instruction (instr : Eq.instruction) : Folding.instruction =
   match instr with
   | S_block stmts -> O.I_block stmts
   | S_break _ -> O.I_break
-  | S_decl _ | S_export _ -> assert false
+  | S_decorated _ | S_decl _ | S_export _ -> assert false
   | S_expr expr -> O.I_expr expr
   | S_for stmt ->
     let I.{ initialiser; condition; afterthought; for_body } = stmt.value in
@@ -727,11 +729,11 @@ let rec declaration (decl : Eq.declaration) : Folding.declaration =
 
 let program_entry (stmt : Eq.program_entry) : Folding.program_entry =
   match Location.unwrap @@ statement stmt with
-  | O.S_export decl -> PE_export (I.S_decl decl)
-  | O.S_decl decl -> PE_declaration decl
-  | O.S_instr _ -> PE_top_level_instruction stmt
-  | O.S_directive () -> PE_preproc_directive ()
-  | O.S_attr (attr, s) -> PE_attr (attr, stmt)
+  | O.S_export decl -> O.PE_export (I.S_decl decl)
+  | O.S_decl decl -> O.PE_declaration decl
+  | O.S_instr _ -> O.PE_top_level_instruction stmt
+  | O.S_directive () -> O.PE_preproc_directive ()
+  | O.S_attr (attr, s) -> O.PE_attr (attr, s)
 
 
 let program (stmts : Eq.program) : Folding.program = Nonempty_list.to_list stmts.value
