@@ -4450,6 +4450,7 @@ let dec_program ?(debug_arg = false) ~filename ~file (map : Loc_map.t) node
   (* Setting up the extraction of source regions *)
   let () = get_region := Ts_wrap.get_region filename map in
   (* Setting the input as a top-level string buffer *)
+  let () = Buffer.reset !input in
   let () = Buffer.add_string !input file in
   (* Setting debug mode *)
   let () = debug := debug_arg in
@@ -4460,6 +4461,7 @@ let dec_standalone_expression ~file map node : (Ast.expression, _) result =
   (* Setting up the extraction of source regions *)
   let () = get_region := Ts_wrap.get_region "" map in
   (* Setting the input as a top-level string buffer *)
+  let () = Buffer.reset !input in
   let () = Buffer.add_string !input file in
   (* Decoding the CST into an AST *)
   let* ast = dec_statements node in
