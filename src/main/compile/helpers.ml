@@ -7,6 +7,7 @@ type meta = { syntax : Syntax_types.t }
 
 type options = Compiler_options.t
 
+
 let preprocess_file ~raise ~(options : Compiler_options.frontend) ~(meta : meta) file_path
     : Preprocessor.LowAPI.success
   =
@@ -20,7 +21,6 @@ let preprocess_file ~raise ~(options : Compiler_options.frontend) ~(meta : meta)
   Trace.trace ~raise preproc_tracer
   @@ Simple_utils.Trace.from_result
        (preprocess_file ?project_root ~preprocess_define libraries file_path)
-
 
 let preprocess_string
     ~raise
@@ -125,11 +125,6 @@ let lift ~(raise : (Main_errors.all, Main_warnings.all) Simple_utils.Trace.raise
 
 (* JsLIGO programs *)
 
-(* Note: The parameter [buffer] to [parse_and_abstract_jsligo] is a
-   string buffer expected to contain the result of preprocessing the
-   input. For now, we let the preprocessor run, but we ignore the
-   resulting buffer. *)
-
 let decode_jsligo_program ~raise file : (Ast.t, string Region.reg) result =
   (* Loading the code as a string *)
   let input : string = In_channel.read_all file in
@@ -147,6 +142,10 @@ let decode_jsligo_program ~raise file : (Ast.t, string Region.reg) result =
 
 
 let decode_jsligo_program ~raise file = lift ~raise @@ decode_jsligo_program ~raise file
+
+(* Note: The parameter [buffer] to [parse_and_abstract_jsligo] is a
+   string buffer expected to contain the result of preprocessing the
+   input. We do not run the preprocessor, so we ignore the buffer. *)
 
 let parse_and_abstract_jsligo ~raise ~preprocess_define (buffer : Buffer.t) file_path =
   ignore preprocess_define;
