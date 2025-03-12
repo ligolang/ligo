@@ -23,6 +23,8 @@ module Ast = Typescript_ast.Ast
 module S = Ast_stripped
 open Strip_err
 
+exception Declaration of S.declaration
+
 (* Utilities *)
 
 type 'a reg = 'a Region.reg
@@ -398,13 +400,16 @@ and strip_S_debugger_statement (node : Ast.kwd_debugger) : (S.statement option, 
 and strip_S_expression_statement (node : Ast.expression_statement)
     : (S.statement option, _) result
   =
-  let* expr = strip_expression_statement node in
-  Ok (Option.map ~f:(fun e -> S.S_expr e) expr)
+  try
+    let* expr = strip_expression_statement ~is_stmt:true node in
+    Ok (Option.map ~f:(fun e -> S.S_expr e) expr)
+  with
+  | Declaration decl -> Ok (Some (S.S_decl decl))
 
-and strip_expression_statement (node : Ast.expression_statement)
+and strip_expression_statement ?(is_stmt = false) (node : Ast.expression_statement)
     : (S.expr option, _) result
   =
-  let* exprs = strip_expressions node in
+  let* exprs = strip_expressions ~is_stmt node in
   match exprs with
   | [] -> Ok None (* Should not happen *)
   | [ expr ] -> Ok (Some expr)
@@ -473,9 +478,9 @@ and strip_in_expressions (node : Ast.in_expressions) : (S.expr list, _) result =
     Ok [ S.E_typed (mk_reg region (expr, type_expr)) ]
   | Sequence_expression expressions -> strip_expressions expressions
 
-and strip_expressions (node : Ast.expressions) : (S.expr list, _) result =
+and strip_expressions ?is_stmt (node : Ast.expressions) : (S.expr list, _) result =
   let expressions = Nonempty_list.to_list node#payload in
-  Result.all @@ List.map ~f:strip_expression expressions
+  Result.all @@ List.map ~f:(strip_expression ?is_stmt) expressions
 
 (* Switch statement *)
 
@@ -600,7 +605,11 @@ and strip_for_header (node : Ast.for_header) : (for_header, _) result =
   let Ast.{ range; operator; collection } = node in
   let* in_region =
     match operator with
-    | In kwd_in -> mk_err Range_over_keys kwd_in#region ~hint:"Iterate over key and values using 'of' instead."
+    | In kwd_in ->
+      mk_err
+        Range_over_keys
+        kwd_in#region
+        ~hint:"Iterate over key and values using 'of' instead."
     | Of kwd_of -> Ok kwd_of#region
   in
   let* index_kind, index = strip_for_range range in
@@ -1944,7 +1953,7 @@ and strip_T_type_query_call_expression_in_type_annotation
 
 (* EXPRESSIONS *)
 
-and strip_expression (node : Ast.expression) : (S.expr, _) result =
+and strip_expression ?is_stmt (node : Ast.expression) : (S.expr, _) result =
   match node with
   | E_as_expression e -> strip_E_as_expression e
   | E_assignment_expression e -> strip_E_assignment_expression e
@@ -1952,7 +1961,7 @@ and strip_expression (node : Ast.expression) : (S.expr, _) result =
   | E_await_expression e -> strip_E_await_expression e
   | E_binary_expression e -> strip_E_binary_expression e
   | E_instantiation_expression e -> strip_E_instantiation_expression e
-  | E_internal_module e -> strip_E_internal_module e
+  | E_internal_module e -> strip_E_internal_module ?is_stmt e
   | E_new_expression e -> strip_E_new_expression e
   | E_primary_expression e -> strip_E_primary_expression e
   | E_satisfies_expression e -> strip_E_satisfies_expression e
@@ -2163,8 +2172,14 @@ and strip_E_instantiation_expression (node : Ast.instantiation_expression wrap)
 
 (* Internal module expression *)
 
-and strip_E_internal_module (node : Ast.internal_module wrap) : (S.expr, _) result =
-  mk_err Namespace_expression node#region
+and strip_E_internal_module ?(is_stmt = false) (node : Ast.internal_module wrap)
+    : (S.expr, _) result
+  =
+  if is_stmt
+  then
+    let* decl = strip_D_internal_module node in
+    raise (Declaration decl)
+  else mk_err Namespace_expression node#region
 
 (* New-expression *)
 

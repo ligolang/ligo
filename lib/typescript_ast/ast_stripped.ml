@@ -567,19 +567,19 @@ let contents_of_property_name = function
 
 (* Lifting decorators from declarations to statements *)
 
-let rec lift_decorators_from_decl (decl: declaration) =
+let rec lift_decorators_from_decl (decl : declaration) =
   match decl with
   | D_decorated (decorator, decl) ->
-     let decorate, decl = lift_decorators_from_decl decl in
-     (fun stmt -> S_decorated (decorator, decorate stmt)), decl
+    let decorate, decl = lift_decorators_from_decl decl in
+    (fun stmt -> S_decorated (decorator, decorate stmt)), decl
   | _ -> (fun stmt -> stmt), decl
 
-let lift_decorators (stmt: statement) : statement =
+let lift_decorators (stmt : statement) : statement =
   match stmt with
   | S_decl decl ->
-     let decorate, decl = lift_decorators_from_decl decl in
-     decorate (S_decl decl)
+    let decorate, decl = lift_decorators_from_decl decl in
+    decorate (S_decl decl)
   | S_export decl ->
-     let decorate, decl = lift_decorators_from_decl decl in
-     decorate (S_export decl)
+    let decorate, decl = lift_decorators_from_decl decl in
+    decorate (S_export decl)
   | _ -> stmt
