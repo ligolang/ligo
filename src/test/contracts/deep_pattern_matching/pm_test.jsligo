@@ -3,31 +3,27 @@ type myt =
   | ["Cons", [int, int]];
 
 // this essentially test variable substitution (see var rule)
-let t2 = (x: myt, y: myt): int => {
-  return match(x) {
-    when(Nil()):
-      match(y) {
-        when(Nil()): 1;
-        when(Cons(p)): do {
-          let [_a, b] = p;
-          let a1 = "a";
-          return (int(String.length(a1))) + b;
-        }
-      };
-    when(Cons(p)): do {
-      let [a, b]: [int, int] = p;
-      let old_b = b;
-      let b_fn = (a: int, b: int): int => {
-        return match(y) {
-          when(Nil()): do {
-            let f = (b: int): int => b + a;
-            return f(b + 1)
-          };
-          when(Cons(_)): a + b
-        }
-      };
-      b = b_fn(a, b);
-      return a + b + old_b;
-    }
-  }
-}
+const t2 = (x: myt, y: myt): int =>
+  $match(x, {
+    "Nil": () =>
+      $match(y, {
+        "Nil": () => 1,
+        "Cons": ([_a, b]) =>
+          (() => {
+            const a1 = "a";
+            return (int(String.length(a1))) + b})()
+      }),
+    "Cons": (p) =>
+      (() => {
+        let [a, b]: [int, int] = p;
+        const old_b = b;
+        const b_fn = (a: int, b: int): int =>
+          $match(y, {
+            "Nil": () => (() => {
+              let f = (b: int): int => b + a;
+              return f(b + 1)})(),
+            "Cons": (_) => a + b
+          });
+        b = b_fn(a, b);
+        return a + b + old_b})()
+  })
