@@ -1358,7 +1358,7 @@ and dec_declaration ?(comments = []) node : (declaration, _) result =
     let* generator = wrap dec_generator_function_declaration ~comments node in
     Ok (D_generator_function_declaration generator)
   | "class_declaration" ->
-    let* declaration = wrap dec_class_declaration ~comments node in
+    let* declaration = wrap dec_class_declaration node in
     Ok (D_class_declaration declaration)
   | "lexical_declaration" ->
     let* declaration = wrap dec_lexical_declaration ~comments node in
@@ -1385,7 +1385,7 @@ and dec_declaration ?(comments = []) node : (declaration, _) result =
     let* declaration = wrap dec_enum_declaration node in
     Ok (D_enum_declaration declaration)
   | "interface_declaration" ->
-    let* declaration = wrap dec_interface_declaration node in
+    let* declaration = wrap dec_interface_declaration ~comments node in
     Ok (D_interface_declaration declaration)
   | "import_alias" ->
     let* declaration = wrap dec_import_alias node in
@@ -2107,7 +2107,6 @@ and dec_lexical_declaration ?(comments = []) node : (lexical_declaration, _) res
   match get_name node with
   | "ERROR" | "MISSING" | "NULL" -> mk_err Let_or_const node
   | _ ->
-    let comments = comments @ prev_comments node in
     let* kind_field = child_with_field "kind" node ~err:Let_or_const in
     let decls = children_named "variable_declarator" node in
     let error = mk_err Let_or_const node in
@@ -4300,6 +4299,7 @@ and dec_property_signature ?(comments = []) node : (property_signature, _) resul
   match get_name node with
   | "ERROR" | "MISSING" | "NULL" -> mk_err Property_signature node
   | _ ->
+    let comments = comments @ prev_comments node in
     let accessibility_modifier = first_child_named_opt "accessibility_modifier" node in
     let* access = make_opt_res dec_accessibility_modifier accessibility_modifier in
     let* scope = dec_method_scope node in
