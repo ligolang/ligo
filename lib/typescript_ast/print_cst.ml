@@ -519,7 +519,7 @@ and print_statement ?(comments = []) state node =
   | "internal_module" -> print_internal_module ~comments state node
   | "type_alias_declaration" -> print_type_alias_declaration state node
   | "enum_declaration" -> print_enum_declaration state node
-  | "interface_declaration" -> print_interface_declaration state node
+  | "interface_declaration" -> print_interface_declaration ~comments state node
   | "import_alias" -> print_import_alias state node
   | "ambient_declaration" -> print_ambient_declaration state node
   | _ -> print_error_node state node ~err:Statement
@@ -1645,17 +1645,18 @@ and print_enum_assignment state node =
 
 (* Interface declaration *)
 
-and print_interface_declaration state node =
+and print_interface_declaration ?(comments = []) state node =
   match get_name node with
   | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Interface
   | _ ->
+    let comments = comments @ prev_comments node in
     let kwd_interface = first_child_named "interface" node ~err:Interface
     and name_field = child_with_field "name" node ~err:Interface_name
     and type_parameters_field = child_with_field_opt "type_parameters" node
     and extends_type_clause = first_child_named_opt "extends_type_clause" node
     and body_field = child_with_field "body" node ~err:Interface_body in
     let children =
-      [ mk_child_res mk_kwd_interface kwd_interface
+      [ mk_child_res (mk_kwd_interface ~comments) kwd_interface
       ; mk_child_res print_type_identifier name_field
       ; mk_child_opt print_type_parameters type_parameters_field
       ; mk_child_opt print_extends_type_clause extends_type_clause
@@ -2980,6 +2981,7 @@ and print_property_signature state node =
   match get_name node with
   | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Property_signature
   | _ ->
+    let comments = prev_comments node in
     let accessibility_modifier = first_child_named_opt "accessibility_modifier" node
     and kwd_static = first_child_named_opt "static" node
     and override_modifier = first_child_named_opt "override_modifier" node
@@ -2992,7 +2994,7 @@ and print_property_signature state node =
       ; mk_child_opt mk_kwd_static kwd_static
       ; mk_child_opt print_override_modifier override_modifier
       ; mk_child_opt mk_kwd_readonly kwd_readonly
-      ; mk_child_res print_identifier name_field
+      ; mk_child_res (print_identifier ~comments) name_field
       ; mk_child_opt mk_sym_qmark sym_qmark
       ; mk_child_opt print_type_annotation type_field
       ]
@@ -3191,6 +3193,7 @@ and print_method_signature state node =
   match get_name node with
   | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Method_signature
   | _ ->
+    let comments = prev_comments node in
     let accessibility_modifier = first_child_named_opt "accessibility_modifier" node
     and kwd_static = first_child_named_opt "static" node
     and override_modifier = first_child_named_opt "override_modifier" node
@@ -3214,7 +3217,7 @@ and print_method_signature state node =
       ; mk_child_opt mk_kwd_set kwd_set
       ; mk_child_opt mk_kwd_get kwd_get
       ; mk_child_opt mk_sym_asterisk sym_asterisk
-      ; mk_child_res print_property_name name_field
+      ; mk_child_res (print_property_name ~comments) name_field
       ; mk_child_opt mk_sym_qmark sym_qmark
       ; mk_child_opt print_type_parameters type_parameters_field
       ; mk_child_res print_formal_parameters parameters_field
@@ -3906,17 +3909,17 @@ and print_assignment_pattern state node =
 
 (* Property names *)
 
-and print_property_name state node =
+and print_property_name ?(comments = []) state node =
   match get_name node with
-  | "property_identifier" -> print_identifier state node
-  | "private_property_identifier" -> print_identifier state node
-  | "string" -> print_string state node
-  | "number" -> print_number state node
-  | "computed_property_name" -> print_computed_property_name state node
+  | "property_identifier" -> print_identifier ~comments state node
+  | "private_property_identifier" -> print_identifier ~comments state node
+  | "string" -> print_string ~comments state node
+  | "number" -> print_number ~comments state node
+  | "computed_property_name" -> print_computed_property_name ~comments state node
   | _ -> print_error_node state node ~err:Property_name
 
-and print_computed_property_name state node =
-  print_brackets state node print_expression ~err:Computed_property_name
+and print_computed_property_name ?comments state node =
+  print_brackets state node (print_expression ?comments) ~err:Computed_property_name
 
 and print_shorthand_property_identifier_pattern state node =
   match get_name node with
