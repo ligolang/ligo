@@ -87,7 +87,7 @@ let compile_contract ~raise
           let Var lltz_var, lltz_ty, lltz_body =
             Ligo_lltz_codegen.compile_contract contract.binder input_ty e_optimised
           in
-          Lltz_codegen.compile_contract_to_micheline lltz_var lltz_ty lltz_body []
+          Lltz_codegen.compile_contract_to_micheline lltz_var lltz_body []
         in
         let%map expr =
           Lwt.return
