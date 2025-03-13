@@ -656,12 +656,12 @@ let compile_import_decl = function
   | I.Import_all_as import ->
     let alias, file_path = import.value in
     let alias = compile_mvar alias in
-    let module_str = file_path#payload in
+    let module_str = (normalise_string file_path)#payload in
     O.Import.Import_all_as { alias; module_str }
   | I.Import_from import ->
     let imported, file_path = import.value in
     let imported = Nonempty_list.map ~f:compile_var imported in
-    let module_str = file_path#payload in
+    let module_str = (normalise_string file_path)#payload in
     O.Import.Import_selected { imported; module_str }
 
 
