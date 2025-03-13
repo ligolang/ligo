@@ -4,5 +4,7 @@ const last = { b: true } as { a: int } | { b: bool };
 
 const first_or_last = (b: bool) => b ? first : last;
 
-@entry
-const entry = (_p: nat, _s: int): [list<operation>, int] => { return [[], 1]; }
+class C {
+  @entry
+  entry = (_p: nat, _s: int): [list<operation>, int] => [[], 1];
+}
