@@ -1274,11 +1274,11 @@ and strip_intf_entry (node : Ast.member_type) : (S.intf_entry reg, _) result =
 and strip_property_signature_as_intf_entry (node : Ast.property_signature wrap)
     : (S.intf_entry reg, _) result
   =
-  let Ast.{ access; scope; name; sym_qmark = _; type_ } = node#payload in
+  let Ast.{ access; scope; name; sym_qmark; type_ } = node#payload in
   let* () = filter_access access in
   let* () = filter_method_scope scope in
   let* entry_name = strip_property_name name in
-  let entry_optional = None in
+  let entry_optional = Option.map ~f:(fun sym_qmark -> sym_qmark#region) sym_qmark in
   let* entry_type = map_opt strip_type_annotation type_ in
   match entry_type with
   | None -> mk_err Missing_type node#region
