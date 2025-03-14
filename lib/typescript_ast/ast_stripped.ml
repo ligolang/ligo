@@ -375,7 +375,8 @@ and expr =
   | E_lt of (expr * expr) reg (* x < y *)
   | E_match of (expr * match_clause Ne_list.t) reg (* $match(x, {c: (x) => e}) *)
   | E_member of (expr * variable) reg (* e.x *)
-  | E_michelson of michelson_expr (* michelson(`{ADD}`) as t *)
+  | E_michelson of
+      michelson_expr (* michelson `{ADD}`; create_contract_of_file `foo.tz` *)
   | E_mult of (expr * expr) reg (* x * y *)
   | E_mult_eq of (expr * expr) reg (* x *= y *)
   | E_neg of expr reg (* -x *)
@@ -408,8 +409,8 @@ and match_clause =
   ; clause_expr : expr
   }
 
-(* Michelson injection: "Michelson (`{ADD}`) as t" *)
-and michelson_expr = (variable * string_literal * type_expr) reg
+(* Michelson injection: "Michelson `{ADD}`" or "create_contract_of_file `foo.tz`" *)
+and michelson_expr = (variable * string_literal) reg
 
 (* Functional expressions *)
 and arrow_fun_expr =
