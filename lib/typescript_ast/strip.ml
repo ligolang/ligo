@@ -1440,7 +1440,10 @@ and strip_T_predefined_type (node : Ast.predefined_type) : (S.type_expr, _) resu
     mk_err Unique_symbol_type kwd_unique_symbol#region
   | T_void kwd_void -> mk_err Void_type kwd_void#region
   | T_unknown kwd_unknown -> mk_err Unknown_type kwd_unknown#region
-  | T_never kwd_never -> mk_err Never_type kwd_never#region
+  | T_never kwd_never ->
+    let region = kwd_never#region in
+    let path = mk_reg region S.{ path = []; selected = kwd_never } in
+    Ok (S.T_path path)
   | T_object kwd_object -> mk_err Object_type kwd_object#region
 
 (* Type identifier *)
