@@ -311,11 +311,7 @@ let expr (expr : Eq.expr) : Folding.expr =
   | E_match expr -> return @@ compile_match_clauses expr
   | E_member expr -> return @@ compile_member expr
   | E_michelson expr ->
-    (* Module [Strip] wraps for now a [E_typed] around the
-       [E_michelson], so we can safely ignore here the type
-       expression. *)
-    let language, code, _type_expr = expr.value in
-    let code = normalise_string code in
+    let language, code = expr.value in
     let code = I.E_template code in
     return (O.E_raw_code { language = language#payload; code })
   | E_mult expr -> compile_bin_op STAR expr

@@ -1978,35 +1978,9 @@ and strip_E_as_expression (node : Ast.as_expression wrap) : (S.expr, _) result =
   let expr, _, as_what = as_expr in
   match as_what with
   | Ast.As_type type_expr ->
-    (* Filtering Michelson code injections *)
-    let* expr' = strip_expression expr in
+    let* expr = strip_expression expr in
     let* type_expr = strip_type_expr type_expr in
-    let ok = Ok (S.E_typed (mk_reg region (expr', type_expr))) in
-    (match expr with
-    | Ast.E_primary_expression (E_call_expression (Call call)) ->
-      let Ast.{ lambda; type_arguments; arguments } = call#payload in
-      (match lambda with
-      | Ast.Fun_call (E_primary_expression (E_identifier fun_name))
-        when String.(fun_name#payload = "michelson" || fun_name#payload = "Michelson") ->
-        (match type_arguments with
-        | None ->
-          (match arguments with
-          | Ast.Template_string w ->
-            (match w#payload with
-            | _, [ String_fragment literal ], _ ->
-              let code_inj = fun_name, literal, type_expr in
-              let code_inj = mk_reg node#region code_inj in
-              (* [NOTE][TEMPORARY]: The wrapping of a S.E_typed
-                 constructor (with duplication of the type annotation)
-                 is not strictly necessary, but it helps with the
-                 compilation to the unified AST. *)
-              let typed_expr = S.E_michelson code_inj, type_expr in
-              Ok S.(E_typed (mk_reg node#region typed_expr))
-            | _ -> ok)
-          | _ -> ok)
-        | _ -> ok)
-      | _ -> ok)
-    | _ -> ok)
+    Ok (S.E_typed (mk_reg region (expr, type_expr)))
   | As_const kwd_const -> mk_err Constant_type kwd_const#region
 
 (* Assignment expression *)
@@ -2438,6 +2412,12 @@ and strip_fun_call (node : (Ast.fun_call, Ast.arguments_to_call) Ast.call wrap)
         let* path = filter_path expr in
         Ok (S.E_contract_of (mk_reg node#region path))
       | _ -> mk_err Invalid_contract_of node#region)
+    | "michelson" | "Michelson" | "create_contract_of_file" ->
+      (match arguments with
+      | [ S.E_template string_literal ] ->
+        let code_inj = mk_reg node#region (var, string_literal) in
+        Ok (S.E_michelson code_inj)
+      | _ -> ok)
     | _ -> ok)
   | _ -> ok
 
