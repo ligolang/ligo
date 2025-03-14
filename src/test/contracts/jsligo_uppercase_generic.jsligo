@@ -1,6 +1,4 @@
-type internal<T> = {
-        it: set<T>
-    };
+type internal<T> = { it: set<T> };
 
 const j : set<int> = Set.literal([3, 2, 2, 1]);
 

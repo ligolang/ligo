@@ -14,10 +14,10 @@ import D = A;
 
 import E = A.C;
 
-@no_mutation
+// @no_mutation
 export const toto : D.titi = E.toto;
 
-@inline
+// @inline
 const add2 = (a: A.titi, b: D.titi) : A.titi => A.add (a, b);
 
 namespace Foo {

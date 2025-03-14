@@ -1,71 +1,66 @@
-interface FABase {
-  type t;
-};
+type ret = [list<operation>, int]
 
-interface FA0 extends FABase {
-  @entry const transfer : (_u : unit, s : t) => [list<operation>, t];
+interface FA0 {
+  // @entry
+  transfer : (_u : unit, s : int) => ret
 };
 
 interface FA0Ext extends FA0 {
-  @entry const other1 : (_u : unit, s : t) => [list<operation>, t];
+  // @entry
+  other1 : (_u : unit, s : int) => ret;
 };
 
-interface FA1 extends FABase {
-  @entry const other2 : (_u : unit, s : t) => [list<operation>, t];
+interface FA1 {
+  // @entry
+  other2 : (_u : unit, s : int) => ret;
 };
 
-namespace Impl implements FA0Ext, FA1 {
-  export type t = int;
-
-  @entry const transfer = (_u : unit, s : t) : [list<operation>, t] => [[], s];
-  @entry const other1 = (_u : unit, s : t) : [list<operation>, t] => [[], s];
-  @entry const other2 = (_u : unit, s : t) : [list<operation>, t] => [[], s];
+class Impl implements FA0Ext, FA1 {
+  @entry transfer = (_u : unit, s : int) : ret => [[], s];
+  @entry other1 = (_u : unit, s : int) : ret => [[], s];
+  @entry other2 = (_u : unit, s : int) : ret => [[], s];
 };
 
 interface FAAll extends FA0Ext, FA1 {
-  @entry const other3 : (_u : unit, s : t) => [list<operation>, t];
-  @view const v1 : (_u : unit, s : t) => t;
-
-  /* this one is optional */
-  @entry const juju? : (i : int, s : t) => [list<operation>, t];
+  // @entry
+  other3 : (_u : unit, s : int) => ret;
+  // @view
+  v1 : (_u : unit, s : int) => int;
+  // @entry
+  juju? : (i : int, s : int) => ret;
 };
 
-namespace ImplAll implements FAAll {
-  export type t = int;
-
-  @entry const transfer = (_u : unit, s : t) : [list<operation>, t] => [[], s];
-  @entry const other1 = (_u : unit, s : t) : [list<operation>, t] => [[], s];
-  @entry const other2 = (_u : unit, s : t) : [list<operation>, t] => [[], s];
-  @entry const other3 = (_u : unit, s : t) : [list<operation>, t] => [[], s];
-  @view const v1 = (_u : unit, s : t) : t => s;
-  @entry const juju = (_i : int, s : t) : [list<operation>, t] => [[], s];
+class ImplAll implements FAAll {
+  @entry transfer = (_u : unit, s : int) : ret => [[], s];
+  @entry other1 = (_u : unit, s : int) : ret => [[], s];
+  @entry other2 = (_u : unit, s : int) : ret => [[], s];
+  @entry other3 = (_u : unit, s : int) : ret => [[], s];
+  @view v1 = (_u : unit, s : int) : int => s;
+  @entry juju = (_i : int, s : int) : ret => [[], s];
 
   /* foo, other4 and v2 are not in FAAll, but still added, because filtering
      is not enabled */
-  export const foo = (s : t) : t => s;
-  @entry const other4 = (_u : unit, s : t) : [list<operation>, t] => [[], s];
-  @view const v2 = (_u : unit, s : t) : t => s;
-}
+  static foo = (s : int) : int => s;
+  @entry other4 = (_u : unit, s : int) : ret => [[], s];
+  @view v2 = (_u : unit, s : int) : int => s;
+};
 
-
-namespace ImplAllNoJuju implements FAAll {
-  export type t = int;
-
-  @entry const transfer = (_u : unit, s : t) : [list<operation>, t] => [[], s];
-  @entry const other1 = (_u : unit, s : t) : [list<operation>, t] => [[], s];
-  @entry const other2 = (_u : unit, s : t) : [list<operation>, t] => [[], s];
-  @entry const other3 = (_u : unit, s : t) : [list<operation>, t] => [[], s];
-  @view const v1 = (_u : unit, s : t) : t => s;
+class ImplAllNoJuju implements FAAll {
+  @entry transfer = (_u : unit, s : int) : ret => [[], s];
+  @entry other1 = (_u : unit, s : int) : ret => [[], s];
+  @entry other2 = (_u : unit, s : int) : ret => [[], s];
+  @entry other3 = (_u : unit, s : int) : ret => [[], s];
+  @view  v1 = (_u : unit, s : int) : int => s;
 
   /* foo, other4 and v2 are not in FAAll, but still added, because filtering
      is not enabled */
-  export const foo = (s : t) : t => s;
-  @entry const other4 = (_u : unit, s : t) : [list<operation>, t] => [[], s];
-  @view const v2 = (_u : unit, s : t) : t => s;
-}
+  foo = (s : int) : int => s;
+  @entry other4 = (_u : unit, s : int) : ret => [[], s];
+  @view v2 = (_u : unit, s : int) : int => s;
+};
 
-const test = do {
-  let orig = Test.originate(contract_of(ImplAll), ImplAll.foo(42), 0tez);
-  let p : parameter_of ImplAll = Other4();
-  Test.transfer_exn(orig.addr, p, 1mutez);
-}
+const test = (() => {
+  let orig = Test.Next.Originate.contract(contract_of(ImplAll), ImplAll.foo(42), 0 as tez);
+  let p : parameter_of<ImplAll> = ["Other4" as "Other4"];
+  Test.Next.Typed_address.transfer_exn(orig.taddr, p, 1 as mutez);
+})()
