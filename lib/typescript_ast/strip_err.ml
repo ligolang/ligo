@@ -38,7 +38,6 @@ type t =
   | Unique_symbol_type
   | Void_type
   | Unknown_type
-  | Never_type
   | Object_type
   | Array_type
   | Unsupported_tuple_member
@@ -195,7 +194,6 @@ let to_string = function
   | Unique_symbol_type -> "The type 'unique symbol' is not supported in JsLIGO."
   | Void_type -> "The type type 'void' is not supported by JsLIGO."
   | Unknown_type -> "The type 'unknown' is not supported by JsLIGO."
-  | Never_type -> "Type type 'never' is not supported by JsLIGO."
   | Object_type -> "The type 'object' is not supported by JsLIGO."
   | Array_type -> "The type 'array' is not supported by JsLIGO."
   | Unsupported_tuple_member -> "Unsupported tuple member in JsLIGO."
