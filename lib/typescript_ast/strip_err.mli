@@ -38,7 +38,6 @@ type t =
   | Unique_symbol_type
   | Void_type
   | Unknown_type
-  | Never_type
   | Object_type
   | Array_type
   | Unsupported_tuple_member
