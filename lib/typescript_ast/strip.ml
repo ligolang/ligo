@@ -2415,7 +2415,7 @@ and strip_fun_call (node : (Ast.fun_call, Ast.arguments_to_call) Ast.call wrap)
         let* path = filter_path expr in
         Ok (S.E_contract_of (mk_reg node#region path))
       | _ -> mk_err Invalid_contract_of node#region)
-    | "michelson" | "Michelson" | "create_contract_of_file" ->
+    | "michelson" | "Michelson" | "create_contract_of_file" | "bytes" ->
       (match arguments with
       | [ S.E_template string_literal ] ->
         let code_inj = mk_reg node#region (var, string_literal) in
