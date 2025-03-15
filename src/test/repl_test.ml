@@ -152,7 +152,7 @@ let test_def_jsligo ~raise ~raw_options () =
     ~raise
     ~raw_options
     init_state_jsligo
-    [ "let f = (x : int) : int => x * 2"; "f(3)" ]
+    [ "const f = (x : int) : int => x * 2"; "f(3)" ]
     [ "f"; "6" ]
     ()
 
@@ -164,9 +164,9 @@ let test_mod_jsligo ~raise ~raw_options () =
     init_state_jsligo
     [ "namespace EURO {\n\
        export type t = int;\n\
-       export let add = ([a, b]: [t, t]): t => a + b;\n\
-       export let zero: t = 0;\n\
-       export let one: t = 1\n\
+       export const add = ([a, b]: [t, t]): t => a + b;\n\
+       export const zero: t = 0;\n\
+       export const one: t = 1\n\
        }"
     ; "EURO.one"
     ]
@@ -198,10 +198,10 @@ let test_long_jsligo ~raise ~raw_options () =
     ; "f(4)"
     ; "namespace EURO {\n\
        export type t = nat;\n\
-       export let add = ([a, b]: [t, t]): t => a + b;\n\
+       export const add = ([a, b]: [t, t]): t => a + b;\n\
        export namespace CONST {\n\
-       export let zero: t = 0 as nat;\n\
-       export let one: t = 1 as nat;\n\
+       export const zero: t = 0 as nat;\n\
+       export const one: t = 1 as nat;\n\
        };\n\
        }"
     ; "import US_DOLLAR = EURO"
