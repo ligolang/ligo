@@ -2738,7 +2738,7 @@ and print_sequence_expression ?(comments = []) state node =
    The non-terminals "type" and "primary_type" are supertypes in the
    TypeScript grammar, which means that they are hidden rules. *)
 
-and print_type state node =
+and print_type ?(comments = []) state node =
   match get_name node with
   | "function_type" -> print_function_type state node
   | "readonly_type" -> print_readonly_type state node
@@ -2749,11 +2749,11 @@ and print_type state node =
     print_type_query_member_expression_in_type_annotation state node
   | "call_expression" -> print_type_query_call_expression_in_type_annotation state node
   (* "primary_type" is hidden *)
-  | _ -> print_primary_type state node
+  | _ -> print_primary_type ~comments state node
 
 (* Primary type *)
 
-and print_primary_type state node =
+and print_primary_type ?(comments = []) state node =
   match get_name node with
   | "parenthesized_type" -> print_parenthesized_type state node
   | "predefined_type" -> print_predefined_type state node
@@ -2773,7 +2773,7 @@ and print_primary_type state node =
   | "conditional_type" -> print_conditional_type state node
   | "template_literal_type" -> print_template_literal_type state node
   | "intersection_type" -> print_intersection_type state node
-  | "union_type" -> print_union_type state node
+  | "union_type" -> print_union_type ~comments state node
   | _ -> print_error_node state node ~err:Type_expression
 
 (* Type queries in type annotations (expressions) *)
@@ -3575,10 +3575,11 @@ and print_intersection_type state node =
 
 (* Union type *)
 
-and print_union_type state node =
+and print_union_type ?(comments = []) state node =
   match get_name node with
   | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Union_type
   | _ ->
+    let comments = comments @ prev_comments node in
     let sym_vbar = first_child_named "|" node ~err:Vertical_bar in
     let children =
       match child_ranked 0 node ~err:Type_or_disjunction with
@@ -3587,11 +3588,12 @@ and print_union_type state node =
         (match get_name left_type with
         | "|" ->
           let type_node = child_ranked 1 node ~err:Type_expression in
-          [ mk_child_res mk_sym_vbar sym_vbar; mk_child_res print_type type_node ]
+          [ mk_child_res (mk_sym_vbar ~comments) sym_vbar
+          ; mk_child_res print_type type_node ]
         | _ ->
           (* "type" is a supertype, therefore a hidden rule *)
           let right_type = child_ranked 2 node ~err:Type_expression in
-          [ mk_child print_type left_type
+          [ mk_child (print_type ~comments) left_type
           ; mk_child_res mk_sym_vbar sym_vbar
           ; mk_child_res print_type right_type
           ])
