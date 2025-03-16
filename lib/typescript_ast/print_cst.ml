@@ -3589,7 +3589,8 @@ and print_union_type ?(comments = []) state node =
         | "|" ->
           let type_node = child_ranked 1 node ~err:Type_expression in
           [ mk_child_res (mk_sym_vbar ~comments) sym_vbar
-          ; mk_child_res print_type type_node ]
+          ; mk_child_res print_type type_node
+          ]
         | _ ->
           (* "type" is a supertype, therefore a hidden rule *)
           let right_type = child_ranked 2 node ~err:Type_expression in

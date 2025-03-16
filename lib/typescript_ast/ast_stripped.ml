@@ -238,7 +238,6 @@ and val_binding =
   }
 
 (* TYPE EXPRESSIONS *)
-
 and type_expr =
   | T_apply of (type_expr * type_expr list) reg (* t<u,v> *)
   | T_decorated of decorator * type_expr
