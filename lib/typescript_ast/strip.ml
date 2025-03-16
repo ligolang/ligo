@@ -1784,12 +1784,12 @@ and strip_T_union_type (node : Ast.union_type wrap) : (S.type_expr, _) result =
 
 and decoration_of_union_type (node : Ast.union_type wrap) =
   match node#payload with
-  | None, sym_vbar, _ ->
-     spool @@ extract_decorators @@ strip_comments sym_vbar#comments
-  | Some Ast.T_primary_type T_union_type type_1, _, _ -> decoration_of_union_type type_1
+  | None, sym_vbar, _ -> spool @@ extract_decorators @@ strip_comments sym_vbar#comments
+  | Some (Ast.T_primary_type (T_union_type type_1)), _, _ ->
+    decoration_of_union_type type_1
   | _ -> fun t -> t
 
-and spool (decorators : S.decorator list) (t_expr: S.type_expr) : S.type_expr =
+and spool (decorators : S.decorator list) (t_expr : S.type_expr) : S.type_expr =
   match decorators with
   | [] -> t_expr
   | decorator :: decorators -> S.T_decorated (decorator, spool decorators t_expr)
