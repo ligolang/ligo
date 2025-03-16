@@ -1,7 +1,7 @@
 namespace Bar {
-    namespace Foo {
-        let a = 2;
-    }
+  namespace Foo {
+    const a = 2;
+  }
 };
 
 import Foo = Bar.Foo

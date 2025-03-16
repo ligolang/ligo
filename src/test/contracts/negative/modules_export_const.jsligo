@@ -1,5 +1,5 @@
 namespace Bar {
-    let foo = 2
+  const foo = 2
 }
 
-let a = Bar.foo;
+const a = Bar.foo;
