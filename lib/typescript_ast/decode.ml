@@ -403,7 +403,7 @@ let dec_parens ?comments node decode ~err : ('a parens, _) result =
 (* Decoding enclosed lists of children *)
 
 let dec_enclosed_list
-    ?(comments = [])
+    ?comments
     node
     decode
     opening
@@ -416,15 +416,15 @@ let dec_enclosed_list
   match get_name node with
   | "ERROR" | "MISSING" | "NULL" -> mk_err err node
   | _ ->
-    let comments = comments @ prev_comments node in
+    let comments = dec_comments ?comments node in
     let* opening = first_child_named opening node ~err:open_err in
-    let* opening = dec_sym ~comments opening ~err:open_err in
+    let* opening = dec_sym opening ~err:open_err in
     let* closing = first_child_named closing node ~err:close_err in
     let* closing = dec_sym closing ~err:close_err in
     let clauses = collect_named_children node in
     let* contents = list_of_children decode clauses in
     let region = !get_region node in
-    Ok (Wrap.make { opening; contents; closing } region)
+    Ok (Wrap.make ~comments { opening; contents; closing } region)
 
 let dec_list_in_braces ?comments node decode ~err : ('a list braces, _) result =
   let* list =
@@ -3839,6 +3839,7 @@ and dec_union_type ?(comments = []) node : (union_type, _) result =
   match get_name node with
   | "ERROR" | "MISSING" | "NULL" -> mk_err Union_type node
   | _ ->
+    let comments = comments @ prev_comments node in
     let* first_child = child_ranked 0 node ~err:Type_or_disjunction in
     let* sym_vbar = first_child_named "|" node ~err:Vertical_bar in
     (match get_name first_child with
@@ -4268,8 +4269,8 @@ and dec_array_type ?(comments = []) node : (array_type, _) result =
 
 (* Object type *)
 
-and dec_object_type ?comments node : (object_type, _) result =
-  dec_list_in_braces ?comments node dec_member_type ~err:Object_type
+and dec_object_type ?(comments = []) node : (object_type, _) result =
+  dec_list_in_braces ~comments node dec_member_type ~err:Object_type
 
 and dec_member_type ?(comments = []) node : (member_type, _) result =
   match get_name node with

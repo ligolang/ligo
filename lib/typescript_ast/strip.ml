@@ -1511,15 +1511,13 @@ and strip_type_arguments (node : Ast.type_arguments) : (S.type_expr list, _) res
 (* Object type *)
 
 and strip_T_object_type (node : Ast.object_type) : (S.type_expr, _) result =
-  let* object_type = strip_object_type node in
-  let object_type = { object_type with value = object_type.value } in
-  Ok (S.T_object object_type)
-
-and strip_object_type (node : Ast.object_type) : (S.member_type reg list reg, _) result =
   let Ast.(Braces braces) = node in
+  let decorate = spool @@ extract_decorators @@ strip_comments braces#comments in
   let member_types = braces#payload.contents in
   let* members = Result.all @@ List.map ~f:strip_member_type member_types in
-  Ok (mk_reg braces#region members)
+  let object_type = mk_reg braces#region members in
+  let object_type = { object_type with value = object_type.value } in
+  Ok (decorate @@ S.T_object object_type)
 
 and strip_member_type (node : Ast.member_type) : (S.member_type reg, _) result =
   match node with
@@ -1748,7 +1746,7 @@ and strip_T_intersection_type (node : Ast.intersection_type wrap)
 
 (* Union type and sum type (see comment about the latter in [Ast_stripped])
 
-   There are two stages to the stripping of union types.
+   There are three stages to the stripping of union types.
 
      1. We transform the AST node for a union type into Disjunctive
      Normal Form (DNF), as expected by the rest of the pipeline, by
@@ -1760,16 +1758,19 @@ and strip_T_intersection_type (node : Ast.intersection_type wrap)
 
      2. We try to build a sum type out of the union type, as they are
      a special case handled apart by the type-checker, by calling the
-     function [filter_sums].
+     function [filter_sum]. For example, the declaration
 
-   For example, the declaration
+       type parameter = ["Increment", int] | ["Decrement", int] | ["Reset"];
 
-     type parameter = ["Increment", int] | ["Decrement", int] | ["Reset"];
+     will be filtered as a sum type, not a general union type.
 
-   will be filtered as a sum type, not a general union type.
-*)
+     3. We look a vertical bar starting the union type. If none, then
+     there are no decorators; otherwise we extract and decorator in
+     them and create a [S.T_decorated] node wrapping the resulting
+     union or sum type. *)
 
 and strip_T_union_type (node : Ast.union_type wrap) : (S.type_expr, _) result =
+  let decorate = decoration_of_union_type node in
   let types =
     match node#payload with
     | None, _, type_2 -> Nonempty_list.[ type_2 ]
@@ -1779,7 +1780,19 @@ and strip_T_union_type (node : Ast.union_type wrap) : (S.type_expr, _) result =
   let* stripped_head = strip_type_expr head in
   let* stripped_tail = Result.all @@ List.map ~f:strip_type_expr tail in
   let union_type = Nonempty_list.(stripped_head :: stripped_tail) in
-  Ok (filter_sum union_type node#region)
+  Ok (decorate @@ filter_sum union_type node#region)
+
+and decoration_of_union_type (node : Ast.union_type wrap) =
+  match node#payload with
+  | None, sym_vbar, _ ->
+     spool @@ extract_decorators @@ strip_comments sym_vbar#comments
+  | Some Ast.T_primary_type T_union_type type_1, _, _ -> decoration_of_union_type type_1
+  | _ -> fun t -> t
+
+and spool (decorators : S.decorator list) (t_expr: S.type_expr) : S.type_expr =
+  match decorators with
+  | [] -> t_expr
+  | decorator :: decorators -> S.T_decorated (decorator, spool decorators t_expr)
 
 and filter_sum (node : S.type_expr Nonempty_list.t) region : S.type_expr =
   let variant_of_type_expr : S.type_expr -> S.variant reg option = function
