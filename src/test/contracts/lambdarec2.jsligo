@@ -1,5 +1,4 @@
-
-const wrong = (x : int) : int => {
+function wrong (x : int) : int {
   const l : list<int> = [x, x];
   let total = 0;
   for (const i of l) {

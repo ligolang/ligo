@@ -7,22 +7,20 @@ type planet = {
   lord: option<address>
 };
 
-class C {
-  @entry
-  main = (p: planet, _: int): [list<operation>, int] => {
-    let state = 0;
-    let planetType = p.planetType;
-    switch (planetType.kind) {
-      case "Tellurian":
-        state += 1;
-        break;
-      case "Gaseous":
-        state -= 2;
-        break;
-      case "Other":
-        state = 0;
-        break;
-    };
-    return [[], state]
+// @entry
+const main = (p: planet, _: int): [list<operation>, int] => {
+  let state = 0;
+  let planetType = p.planetType;
+  switch (planetType.kind) {
+    case "Tellurian":
+      state += 1;
+      break;
+    case "Gaseous":
+      state -= 2;
+      break;
+    case "Other":
+      state = 0;
+      break;
   };
+  return [[], state]
 }

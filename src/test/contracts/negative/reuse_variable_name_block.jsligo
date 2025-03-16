@@ -1,5 +1,5 @@
-let foo = (): int => {
-    let x = 2;
-    let x = 2;
-    return x;
+function foo () : int {
+  const x = 2;
+  const x = 2;
+  return x;
 }
