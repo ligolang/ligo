@@ -402,15 +402,7 @@ let dec_parens ?comments node decode ~err : ('a parens, _) result =
 
 (* Decoding enclosed lists of children *)
 
-let dec_enclosed_list
-    ?comments
-    node
-    decode
-    opening
-    closing
-    ~open_err
-    ~close_err
-    ~err
+let dec_enclosed_list ?comments node decode opening closing ~open_err ~close_err ~err
     : ('a list enclosed wrap, _) result
   =
   match get_name node with
