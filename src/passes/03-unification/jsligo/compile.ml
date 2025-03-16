@@ -381,6 +381,8 @@ let rec ty_expr (t_expr : Eq.ty_expr) : Folding.ty_expr =
     | fst_arg :: more_args ->
       let type_args = Nonempty_list.(fst_arg :: more_args) in
       return (O.T_app { constr; type_args }))
+  | T_decorated (decorator, ty_expr) ->
+    return @@ O.T_attr (compile_decorator decorator, ty_expr)
   | T_tuple t_expr -> return (O.T_prod t_expr.value)
   | T_for_all t_expr ->
     let type_vars, type_ = t_expr.value in
