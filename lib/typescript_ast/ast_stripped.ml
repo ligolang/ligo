@@ -60,7 +60,7 @@ type t = statements
 and statements = statement Ne_list.t reg
 
 and statement =
-  | S_decorated of decorator * statement
+  | S_decorated of decorator * statement (* Not initial *)
   | S_block of statements
   | S_break of Region.t
   | S_decl of declaration
@@ -238,8 +238,10 @@ and val_binding =
   }
 
 (* TYPE EXPRESSIONS *)
+
 and type_expr =
   | T_apply of (type_expr * type_expr list) reg (* t<u,v> *)
+  | T_decorated of decorator * type_expr
   | T_for_all of (variable list * type_expr) reg (* <T,U>(x: T) => U *)
   | T_fun of fun_type reg (* (x : T) => U *)
   | T_int of int_literal (* 42 *)
@@ -254,22 +256,21 @@ and type_expr =
 (* Sum type
 
   A sum type is a special case of a union type, where all the summands
-  are tuple types whose first component is an identifier starting with
-  a dollar ($) sign. That identifier denotes a _data constructor_, and
-  the rest of the components are the _type parameters_ to that
-  constructor. The tuple type as a whole is called a _variant_. For
-  instance:
+  are tuple types whose first component is a string. That string
+  contains an identifier called a _data constructor_, and the rest of
+  the components are the _type parameters_ to that constructor. The
+  tuple type as a whole is called a _variant_. For instance:
 
-  type option<T> = ["some", T] | ["none"];
+  type option<T> = ["Some", T] | ["None"];
 
-  The constructors are "some" and "none". The former takes a
-  parameter T, whereas the latter takes none.
+  The constructors are "Some" and "None". The former takes a parameter
+  T, whereas the latter takes none.
 
   The values of a sum type are created with a tuple whose first member
   (component) is the constructor coerced to a singleton type, and the
   other members are the arguments. For instance:
 
-  const some_number : option<number> = ["some" as "some", 1];
+  const some_one : option<number> = ["Some" as "Some", 1];
 
   Those values are projected by means of _pattern matchings_. Those
   are a special case of a call to a predefined function "$match",
@@ -280,10 +281,10 @@ and type_expr =
   checks that no constructor has been forgotten. For instance:
 
   function to_list<T> (x : option<T>) : list<T> {
-    return $match(x, { some: (y) => [y],
-                       none: ()  => []});
+    return $match(x, { "Some": (y) => [y],
+                       "None": ()  => []});
 
-  const singleton : list<number> = to_list<number>(some_number);
+  const singleton : list<number> = to_list<number>(some_one);
  *)
 and sum_type = variant reg Ne_list.t reg
 and variant = string_literal * type_expr list
@@ -458,8 +459,9 @@ let rec region_of_declaration = function
   | D_interface { region; _ } | D_namespace { region; _ } | D_type { region; _ } -> region
   | D_value { region; _ } -> region
 
-let region_of_type_expr = function
+let rec region_of_type_expr = function
   | T_apply { region; _ } | T_for_all { region; _ } | T_fun { region; _ } -> region
+  | T_decorated (_, t) -> region_of_type_expr t
   | T_int w -> w#region
   | T_object { region; _ } | T_parameter_of { region; _ } -> region
   | T_string w -> w#region
