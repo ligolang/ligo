@@ -311,7 +311,7 @@ and 'a property =
   ; comments : comment list (* From the property identifier *)
   ; property_name : property_name
   ; static : Region.t option
-  ; property_rhs : 'a
+  ; property_rhs : 'a option
   }
 
 (* Union type *)
