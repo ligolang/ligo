@@ -9,7 +9,7 @@ set -x
 # Install local dependencies
 export PATH=~/.cargo/bin:$PATH
 
-BLST_PORTABLE=y opam install -y --deps-only --with-test --with-doc .
+OPAMSOLVERTIMEOUT=600 OPAMSOLVERTOLERANCE=0.0003 BLST_PORTABLE=y opam install -y --deps-only --with-test --with-doc .
 
 # TODO: this is a hack
 cd vendors

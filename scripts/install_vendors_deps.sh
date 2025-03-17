@@ -12,7 +12,7 @@ fi
 opam update
 
 # Install local dependencies
-BLST_PORTABLE=y opam install -y --deps-only --with-test .
+OPAMSOLVERTIMEOUT=600 OPAMSOLVERTOLERANCE=0.0003 BLST_PORTABLE=y opam install -y --deps-only --with-test .
 
 # TODO: this is a hack
 cd vendors
