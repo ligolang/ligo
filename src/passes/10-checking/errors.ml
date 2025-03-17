@@ -377,7 +377,7 @@ let rec extract_loc_and_message
     let type_ = type_improve type_ in
     ( loc
     , Format.asprintf
-        "@[<hv>Expected collection of type \"%a\", but recieved collection of type \
+        "@[<hv>Expected collection of type \"%a\", but received collection of type \
          \"%a\".%a@]"
         For_each_loop.pp_collect_type
         collection_type
@@ -385,13 +385,13 @@ let rec extract_loc_and_message
         type_
         (pp_texists_hint ~requires_annotations:true ())
         [ type_ ] )
-  | `Typer_mismatching_for_each_binder_arity (expected_arity, recieved_arity, loc) ->
+  | `Typer_mismatching_for_each_binder_arity (expected_arity, received_arity, loc) ->
     ( loc
     , Format.asprintf
         "@[<hv>Expected for each loop to bind %d variables, but loop binds %d \
          variables.@]"
         expected_arity
-        recieved_arity )
+        received_arity )
   | `Typer_unbound_constructor (c, loc) ->
     loc, Format.asprintf "@[<hv>Constructor \"%a\" not found. @]" Label.pp c
   | `Typer_type_app_wrong_arity (op_opt, e, a, loc) ->
