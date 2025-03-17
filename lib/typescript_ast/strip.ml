@@ -2365,7 +2365,7 @@ and filter_match_clause (node : S.expr S.property reg) : (S.match_clause, _) res
   in
   let constructor = property_name in
   match property_rhs with
-  | E_arrow_fun arrow_fun ->
+  | Some E_arrow_fun arrow_fun ->
     let S.{ generics; parameters; rhs_type = _; fun_body } = arrow_fun.value in
     let* () =
       match generics with
@@ -2603,10 +2603,8 @@ and strip_object_entry (node : Ast.object_entry)
     let parameters = List.map ~f:make_parameter parameters in
     let rhs_type = Some rhs_type in
     let property_rhs : S.function_expr = S.{ generics; parameters; rhs_type; fun_body } in
-    let property_rhs : S.expr =
       (* [method_body.region] is an approximation *)
-      S.E_function (mk_reg method_body.region property_rhs)
-    in
+    let property_rhs = Some (S.E_function (mk_reg method_body.region property_rhs)) in
     let property : S.expr S.property =
       { decorators; comments; property_name; static; property_rhs }
     in
@@ -2616,9 +2614,9 @@ and strip_object_entry (node : Ast.object_entry)
     let comments = strip_comments comments in
     let decorators = extract_decorators comments in
     let property_name = strip_identifier ident in
-    let property_rhs = S.E_var property_name in
     let property_name = S.Property_ident property_name in
     let static = None in
+    let property_rhs = None in
     let property : S.expr S.property =
       { decorators; comments; property_name; static; property_rhs }
     in
@@ -2631,6 +2629,7 @@ and strip_pair (node : Ast.pair wrap) : (S.expr S.property reg, _) result =
   let decorators = extract_decorators comments in
   let* property_name = strip_property_name key in
   let* property_rhs = strip_expression value in
+  let property_rhs = Some property_rhs in
   let static = None in
   let property : S.expr S.property =
     { decorators; comments; property_name; static; property_rhs }
@@ -2867,9 +2866,8 @@ and strip_member_pattern (node : Ast.member_pattern)
     let comments = strip_comments comments in
     let decorators = extract_decorators comments in
     let property_name = strip_identifier ident in
-    let path = S.{ path = []; selected = property_name } in
     let property_name = S.Property_ident property_name in
-    let property_rhs = S.P_var (mk_reg ident#region path) in
+    let property_rhs = None in
     let static = None in
     let property : S.pattern S.property =
       { decorators; comments; property_name; static; property_rhs }
@@ -2896,6 +2894,7 @@ and strip_pair_pattern (node : Ast.pair_pattern wrap)
   let* property_name = strip_property_name key in
   let static = None in
   let* property_rhs = strip_pair_value_pattern value in
+  let property_rhs = Some property_rhs in
   let property : S.pattern S.property =
     { decorators; comments; property_name; static; property_rhs }
   in

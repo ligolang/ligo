@@ -107,7 +107,7 @@ let compile_property (property : 'a I.property reg) =
     property.value
   in
   let field_id = mk_field_id property_name in
-  let field_rhs = Some property_rhs in
+  let field_rhs = property_rhs in
   let object_ = O.Object_.{ field_id; field_rhs } in
   Location.wrap ~loc:(Location.lift property.region) object_
 
@@ -447,11 +447,11 @@ let compile_property_pattern (property : I.pattern I.property Region.reg)
     : (O.Label.t, I.pattern) O.Field.t
   =
   let I.{ decorators = _; comments = _; property_name; static = _; property_rhs } =
-    property.value
-  in
+    property.value in
   let property_name = mk_label property_name in
-  O.Field.Complete (property_name, property_rhs)
-
+  match property_rhs with
+  | None -> O.Field.Punned Location.(wrap ~loc:(lift property.region) property_name)
+  | Some rhs -> O.Field.Complete (property_name, rhs)
 
 let pattern (pattern : Eq.pattern) : Folding.pattern =
   Location.wrap ~loc:(Location.lift (I.region_of_pattern pattern))
