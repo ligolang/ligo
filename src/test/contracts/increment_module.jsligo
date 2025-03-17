@@ -8,16 +8,15 @@ const add = (store: storage, delta: int): storage => store + delta;
 
 const sub = (store: storage, delta: int): storage => store - delta;
 
-namespace C {
+class C {
   @entry
-  const main = (action: parameter, store: storage): ret => {
-    return [
-      [],
-      match(action) {
-          when(Increment(n)): add(store, n);
-          when(Decrement(n)): sub(store, n);
-          when(Reset()): 0;
-        }
-    ]
-  }
-};
+  main = (action: parameter, store: storage): ret =>
+   [
+    [],
+    $match(action, {
+      "Increment": (n) => add(store, n),
+      "Decrement": (n) => sub(store, n),
+      "Reset": () => 0
+    })
+   ]
+}

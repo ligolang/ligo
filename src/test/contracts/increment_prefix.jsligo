@@ -1,27 +1,30 @@
-namespace IncDec {
-  type storage = int;
-  type ret = [list<operation>, storage];
+type storage = int;
+type ret = [list<operation>, storage];
 
+class IncDec {
   @entry
-  function increment (_: unit, store : storage) : ret {
+  increment (_: unit, store : storage) : ret {
     let s = store
     return [[], ++s];
   }
 
   @entry
-  function decrement (_: unit, store : storage) : ret {
+  decrement (_: unit, store : storage) : ret {
     let s = store
     return [[], --s];
   }
 
   @entry
-    const reset = (_p : unit, _s : storage) : ret =>
-    [[], 0];
+  reset = (_p : unit, _s : storage) : ret => [[], 0];
 };
+
+const get_storage = Test.Next.Typed_address.get_storage
 
 const test_increment = (() => {
   let initial_storage = 42;
-  let orig = Test.originate(contract_of(IncDec), initial_storage, 0tez);
-  Test.transfer_exn(orig.addr, Increment(), 1mutez);
-  return assert(Test.get_storage(orig.addr) == initial_storage + 1);
-}) ();
+  let orig = Test.Next.Originate.contract(contract_of(IncDec), initial_storage, 0 as tez);
+  Test.Next.Typed_address.transfer_exn(orig.taddr,
+                                       ["Increment" as "Increment"],
+                                       1 as mutez);
+  return Assert.assert(get_storage(orig.taddr) == initial_storage + 1);
+})();
