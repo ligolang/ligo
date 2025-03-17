@@ -6,8 +6,9 @@
   tree-sitter-typescript,
   lltz,
   libiconv,
+  static,
 }: let
-  inherit (pkgs) darwin ocamlPackages python3Packages coq_8_13 rustc cargo rustPlatform;
+  inherit (pkgs) darwin ocamlPackages python3Packages coq_8_13;
 in
   with ocamlPackages;
     buildDunePackage rec {
@@ -34,6 +35,13 @@ in
         odoc
         python3Packages.jsonschema
       ];
+
+      buildPhase = ''
+        runHook preBuild
+        dune build -p ${pname} \
+          --profile=${if static then "static" else "release"}
+        runHook postBuild
+      '';
 
       propagatedBuildInputs =
         [

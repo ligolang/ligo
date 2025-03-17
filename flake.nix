@@ -50,11 +50,11 @@
         system: let
           lib = nixpkgs.legacyPackages.${system}.lib;
 
-          pkgs = import nixpkgs {
+          make-pkgs = { static }: import nixpkgs {
             inherit system;
             overlays = [
               ocaml-overlay.overlays.default
-              (import ./nix/overlay.nix)
+              (import ./nix/overlay.nix { inherit static; })
               (_: prev:
                 with prev; {
                   ocamlPackages = ocaml-ng.ocamlPackages_4_14;
@@ -65,8 +65,14 @@
             ];
           };
 
+          pkgs = make-pkgs { static = false; };
+          pkgs-static = (make-pkgs { static = true; }).pkgsMusl;
+
           tree-sitter-typescript = pkgs.callPackage ./nix/tree-sitter-typescript.nix {};
-          ligo = pkgs.callPackage ./nix/ligo.nix {inherit tree-sitter-typescript lltz;};
+          ligo = pkgs.callPackage ./nix/ligo.nix
+            {inherit tree-sitter-typescript lltz; static = false;};
+          ligo-static = pkgs-static.callPackage ./nix/ligo.nix
+            {inherit tree-sitter-typescript lltz; static = true;};
 
           pkgs-extended = pkgs.extend (lib.composeManyExtensions [
             build-yarn-package.overlays.default
@@ -121,6 +127,7 @@
             inherit (ligo-webide) ligo-webide-backend ligo-webide-frontend;
             inherit ligo-debugger;
             ligo = ligo;
+            ligo-static = ligo-static;
             default = ligo;
           };
 

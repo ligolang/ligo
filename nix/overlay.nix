@@ -1,10 +1,10 @@
-final: prev:
+{ static }: final: prev:
 with prev; {
   ocaml-ng =
     ocaml-ng
     // (with ocaml-ng; {
-      ocamlPackages_4_14 = ocamlPackages_4_14.overrideScope (_: prev:
-        with prev; rec {
+      ocamlPackages_4_14 = ocamlPackages_4_14.overrideScope (super: prev:
+        with super; rec {
           octezSource = fetchFromGitLab {
             owner = "ligolang";
             repo = "tezos-ligo";
@@ -27,7 +27,8 @@ with prev; {
                   logs
                   ppx_repr
                   digestif
-                  zarith
+                  # TODO: this is a hack
+                  super.zarith
                   mtime
                   lwt
                   rusage
@@ -252,7 +253,7 @@ with prev; {
               rev = "4f11ba67965bef101763fb167c4eed1cd967ecf8";
               hash = "sha256-0lcGsL+rrc13ZwfzfAneLwJVoi0MbPjOEhQiveexOco=";
             };
-            propagatedBuildInputs = [zarith];
+            propagatedBuildInputs = [super.zarith];
           };
           prbnmcn-stats = buildDunePackage {
             pname = "prbnmcn-stats";
@@ -332,6 +333,12 @@ with prev; {
               tezt-tezos
             ];
           };
+          zarith = prev.zarith.override {
+            gmp = gmp.override {withStatic = static;};
+          };
+          ssl = prev.ssl.override {
+            openssl = (openssl-oc.override {static = static;}).dev;
+          };
         });
     });
   coq_8_13 = coq_8_13.override {
@@ -373,4 +380,6 @@ with prev; {
           );
         };
       });
+  libev = prev.libev.override {static = static;};
+  libev-oc = prev.libev-oc.override {static = static;};
 }
