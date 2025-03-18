@@ -49,9 +49,9 @@ emacs-lsp-client-test:
   stage: tools-check
   tags:
     - gcp-docker
-  image: silex/emacs:27.2-ci-cask
+  image: 29.2-alpine-ci-cask
   variables:
-    EMACS: "emacs-27.2"
+    EMACS: "emacs-29.2"
   rules:
     - !reference [.dev]
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"

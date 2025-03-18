@@ -81,7 +81,7 @@
 ;; Experiments with running tests in batch mode
 
 ;; Tests can be run in batch mode with following command:
-;; EMACS=emacs-27.2 cask emacs --batch -l tests/functionality-test.el -f ert-run-tests-batch-and-exit
+;; EMACS=emacs-29.2 cask emacs --batch -l tests/functionality-test.el -f ert-run-tests-batch-and-exit
 
 ;; Unfortunately for some reason it fails because lsp server is not initialized yet when the
 ;; request (like lsp-rename) is coming to it. And any attempts to wait for server doesn't succeed
