@@ -2365,7 +2365,7 @@ and filter_match_clause (node : S.expr S.property reg) : (S.match_clause, _) res
   in
   let constructor = property_name in
   match property_rhs with
-  | Some E_arrow_fun arrow_fun ->
+  | Some (E_arrow_fun arrow_fun) ->
     let S.{ generics; parameters; rhs_type = _; fun_body } = arrow_fun.value in
     let* () =
       match generics with
@@ -2551,6 +2551,15 @@ and strip_dec (node : Ast.dec_literal) : (S.expr, _) result =
 and strip_E_object (node : Ast.object_expr) : (S.expr, _) result =
   let Ast.(Braces braces) = node in
   let entries = braces#payload.contents in
+  let* properties = Result.all @@ List.map ~f:strip_object_entry entries in
+  let properties =
+    let f entry acc =
+      match entry with
+      | None -> acc
+      | Some entry -> entry :: acc
+    in
+    List.fold_right ~f ~init:[] properties
+  in
   let spreads : Ast.spread_element wrap list =
     let app entry acc =
       match entry with
@@ -2558,13 +2567,6 @@ and strip_E_object (node : Ast.object_expr) : (S.expr, _) result =
       | _ -> acc
     in
     List.fold_right ~f:app ~init:[] entries
-  in
-  let* properties = Result.all @@ List.map ~f:strip_object_entry entries in
-  let properties = Option.all properties in
-  let properties =
-    match properties with
-    | None -> []
-    | Some list -> list
   in
   match spreads with
   | [] -> Ok (S.E_object (mk_reg braces#region properties))
@@ -2586,7 +2588,7 @@ and strip_object_entry (node : Ast.object_entry)
   | Object_entry_pair pair ->
     let* pair = strip_pair pair in
     Ok (Some pair)
-  | Object_entry_spread _ -> Ok None
+  | Object_entry_spread _ -> Ok None (* See [strip_E_object] *)
   | Object_entry_method definition ->
     let make_parameter (node : (S.variable * S.type_expr) reg) : S.parameter reg =
       let variable, type_expr = node.value in
@@ -2603,7 +2605,7 @@ and strip_object_entry (node : Ast.object_entry)
     let parameters = List.map ~f:make_parameter parameters in
     let rhs_type = Some rhs_type in
     let property_rhs : S.function_expr = S.{ generics; parameters; rhs_type; fun_body } in
-      (* [method_body.region] is an approximation *)
+    (* [method_body.region] is an approximation *)
     let property_rhs = Some (S.E_function (mk_reg method_body.region property_rhs)) in
     let property : S.expr S.property =
       { decorators; comments; property_name; static; property_rhs }
