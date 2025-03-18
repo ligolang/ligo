@@ -3588,60 +3588,6 @@ let%expect_test _ =
   run_ligo_good [ "run"; "test"; contract "reverse_string_for_loop.jsligo" ];
   [%expect
     {|
-    File "../../test/contracts/reverse_string_for_loop.jsligo", line 19, characters 17-31:
-     18 |       let initial_storage = "esrever";
-     19 |       let orig = Test.originate(contract_of(C), initial_storage, 0 as tez);
-                           ^^^^^^^^^^^^^^
-     20 |       Test.transfer_exn(orig.addr, Main(unit), 1 as mutez);
-    :
-    Warning: deprecated value.
-    In a future version, `Test` will be replaced by `Test.Next`, and using `Originate.contract` from `Test.Next` is encouraged for a smoother migration.
-
-    File "../../test/contracts/reverse_string_for_loop.jsligo", line 20, characters 6-23:
-     19 |       let orig = Test.originate(contract_of(C), initial_storage, 0 as tez);
-     20 |       Test.transfer_exn(orig.addr, Main(unit), 1 as mutez);
-                ^^^^^^^^^^^^^^^^^
-     21 |       Test.log(Test.get_storage(orig.addr));
-    :
-    Warning: deprecated value.
-    In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.transfer_exn` from `Test.Next` is encouraged for a smoother migration.
-
-    File "../../test/contracts/reverse_string_for_loop.jsligo", line 21, characters 6-14:
-     20 |       Test.transfer_exn(orig.addr, Main(unit), 1 as mutez);
-     21 |       Test.log(Test.get_storage(orig.addr));
-                ^^^^^^^^
-     22 |       return assert(Test.get_storage(orig.addr) == "reverse")
-    :
-    Warning: deprecated value.
-    In a future version, `Test` will be replaced by `Test.Next`, and using `IO.log` from `Test.Next` is encouraged for a smoother migration.
-
-    File "../../test/contracts/reverse_string_for_loop.jsligo", line 21, characters 15-31:
-     20 |       Test.transfer_exn(orig.addr, Main(unit), 1 as mutez);
-     21 |       Test.log(Test.get_storage(orig.addr));
-                         ^^^^^^^^^^^^^^^^
-     22 |       return assert(Test.get_storage(orig.addr) == "reverse")
-    :
-    Warning: deprecated value.
-    In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.get_storage` from `Test.Next` is encouraged for a smoother migration.
-
-    File "../../test/contracts/reverse_string_for_loop.jsligo", line 22, characters 13-19:
-     21 |       Test.log(Test.get_storage(orig.addr));
-     22 |       return assert(Test.get_storage(orig.addr) == "reverse")
-                       ^^^^^^
-     23 |     }
-    :
-    Warning: deprecated value.
-    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
-
-    File "../../test/contracts/reverse_string_for_loop.jsligo", line 22, characters 20-36:
-     21 |       Test.log(Test.get_storage(orig.addr));
-     22 |       return assert(Test.get_storage(orig.addr) == "reverse")
-                              ^^^^^^^^^^^^^^^^
-     23 |     }
-    :
-    Warning: deprecated value.
-    In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.get_storage` from `Test.Next` is encouraged for a smoother migration.
-
     "reverse"
     Everything at the top-level was executed.
     - test exited with value (). |}]
@@ -3664,7 +3610,7 @@ let%expect_test "dry-run module contract" =
     [ "run"
     ; "dry-run"
     ; contract "simple_contract_in_module.jsligo"
-    ; "1n"
+    ; "\"1 as nat\""
     ; "default_storage"
     ; "-m"
     ; "C"
