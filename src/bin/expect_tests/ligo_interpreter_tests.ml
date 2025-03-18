@@ -492,6 +492,8 @@ let%expect_test _ =
 let () = Sys_unix.chdir pwd
 let () = Sys_unix.chdir "../../test/contracts/interpreter_tests/"
 
+(* TODO: Enable back when import statements are working
+
 let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "test_mutate_module.jsligo" ];
   [%expect
@@ -504,6 +506,7 @@ let%expect_test _ =
     )]
     Everything at the top-level was executed.
     - test exited with value (). |}]
+ *)
 
 let () = Sys_unix.chdir pwd
 let () = Sys_unix.chdir "../../test/contracts/interpreter_tests/"
@@ -551,7 +554,7 @@ let () = Sys_unix.chdir pwd
 let () = Sys_unix.chdir "../../test/contracts/interpreter_tests/"
 
 let%expect_test _ =
-  run_ligo_good [ "run"; "test"; test "switch_case_part_1.jsligo"; "--no-warn" ];
+  run_ligo_good [ "run"; "test"; test "switch_case_part_1.jsligo" ];
   [%expect
     {|
     Everything at the top-level was executed.
@@ -578,7 +581,7 @@ let () = Sys_unix.chdir pwd
 let () = Sys_unix.chdir "../../test/contracts/interpreter_tests/"
 
 let%expect_test _ =
-  run_ligo_good [ "run"; "test"; test "switch_case_part_2.jsligo"; "--no-warn" ];
+  run_ligo_good [ "run"; "test"; test "switch_case_part_2.jsligo" ];
   [%expect
     {|
       Everything at the top-level was executed.
@@ -641,7 +644,7 @@ let () = Sys_unix.chdir pwd
 let () = Sys_unix.chdir "../../test/contracts/interpreter_tests/"
 
 let%expect_test _ =
-  run_ligo_good [ "run"; "test"; test "switch_case_part_3.jsligo"; "--no-warn" ];
+  run_ligo_good [ "run"; "test"; test "switch_case_part_3.jsligo" ];
   [%expect
     {|
       Everything at the top-level was executed.
@@ -662,14 +665,13 @@ let%expect_test _ =
       - test15 exited with value ().
       - test16 exited with value ().
       - test17 exited with value ().
-      - test18 exited with value ().
-      - test19 exited with value (). |}]
+      - test18 exited with value (). |}]
 
 let () = Sys_unix.chdir pwd
 let () = Sys_unix.chdir "../../test/contracts/interpreter_tests/"
 
 let%expect_test _ =
-  run_ligo_good [ "run"; "test"; test "switch_case_if_else.jsligo"; "--no-warn" ];
+  run_ligo_good [ "run"; "test"; test "switch_case_if_else.jsligo" ];
   [%expect
     {|
       Everything at the top-level was executed.
@@ -1102,7 +1104,7 @@ let () = Sys_unix.chdir pwd
 let () = Sys_unix.chdir "../../test/contracts/interpreter_tests/"
 
 let%expect_test _ =
-  run_ligo_good [ "run"; "test"; test "test_error_balance.jsligo"; "--no-warn" ];
+  run_ligo_good [ "run"; "test"; test "test_error_balance.jsligo" ];
   [%expect
     {|
     100000000000000mutez

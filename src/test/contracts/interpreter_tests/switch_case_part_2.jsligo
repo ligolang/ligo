@@ -1,1596 +1,1487 @@
 // 3 case 1 default - 3 * 3 * 3 * 2 -> 54 cases
 
-let case1 = (n : int) : string => {
-    let output = "";
-    switch (n) {
-        case 1:
-            output = output + "Hello";
-        case 2:
-            output = output + " World";
-        case 3:
-            output = output + " @@@";
-        default:
-            output = output + " !!!";
-    };
-    output = output + " end";
-    return output;
+const case1 = (n : int) : string => {
+  let output = "";
+  switch (n) {
+    case 1: output = output + "Hello";
+    case 2: output = output + " World";
+    case 3: output = output + " @@@";
+    default: output = output + " !!!";
+  };
+  output = output + " end";
+  return output;
 };
-let _test1 = () : unit => {
-    let _1 = case1(1);
-    let _2 = case1(2);
-    let _3 = case1(3);
-    let _4 = case1(4);
-    assert (_1 == "Hello World @@@ !!! end");
-    assert (_2 == " World @@@ !!! end");
-    assert (_3 == " @@@ !!! end");
-    assert (_4 == " !!! end");
-};
-let test1 = _test1();
 
-let case2 = (n : int) : string => {
-    let output = "";
-    switch (n) {
-        case 1:
-            output = output + "Hello";
-        case 2:
-            output = output + " World";
-        case 3:
-            output = output + " @@@";
+const _test1 = () : unit => {
+  const _1 = case1(1);
+  const _2 = case1(2);
+  const _3 = case1(3);
+  const _4 = case1(4);
+  Assert.assert (_1 == "Hello World @@@ !!! end");
+  Assert.assert (_2 == " World @@@ !!! end");
+  Assert.assert (_3 == " @@@ !!! end");
+  Assert.assert (_4 == " !!! end");
+};
+
+const test1 = _test1();
+
+const case2 = (n : int) : string => {
+  let output = "";
+  switch (n) {
+    case 1: output = output + "Hello";
+    case 2: output = output + " World";
+    case 3: output = output + " @@@";
             break;
-        default:
-            output = output + " !!!";
-    };
-    output = output + " end";
-    return output;
+    default: output = output + " !!!";
+  };
+  output = output + " end";
+  return output;
 };
-let _test2 = () : unit => {
-    let _1 = case2(1);
-    let _2 = case2(2);
-    let _3 = case2(3);
-    let _4 = case2(4);
-    assert (_1 == "Hello World @@@ end");
-    assert (_2 == " World @@@ end");
-    assert (_3 == " @@@ end");
-    assert (_4 == " !!! end");
-};
-let test2 = _test2();
 
-let case3 = (n : int) : string => {
-    let output = "";
-    switch (n) {
-        case 1:
-            output = output + "Hello";
-        case 2:
-            output = output + " World";
-        case 3:
-            output = output + " @@@";
+const _test2 = () : unit => {
+  const _1 = case2(1);
+  const _2 = case2(2);
+  const _3 = case2(3);
+  const _4 = case2(4);
+  Assert.assert (_1 == "Hello World @@@ end");
+  Assert.assert (_2 == " World @@@ end");
+  Assert.assert (_3 == " @@@ end");
+  Assert.assert (_4 == " !!! end");
+};
+
+const test2 = _test2();
+
+const case3 = (n : int) : string => {
+  let output = "";
+  switch (n) {
+    case 1: output = output + "Hello";
+    case 2: output = output + " World";
+    case 3: output = output + " @@@";
             return output;
-        default:
-            output = output + " !!!";
-    };
-    output = output + " end";
-    return output;
+    default: output = output + " !!!";
+  };
+  output = output + " end";
+  return output;
 };
-let _test3 = () : unit => {
-    let _1 = case3(1);
-    let _2 = case3(2);
-    let _3 = case3(3);
-    let _4 = case3(4);
-    assert (_1 == "Hello World @@@");
-    assert (_2 == " World @@@");
-    assert (_3 == " @@@");
-    assert (_4 == " !!! end");
-};
-let test3 = _test3();
 
-let case4 = (n : int) : string => {
-    let output = "";
-    switch (n) {
-        case 1:
-            output = output + "Hello";
-        case 2:
-            output = output + " World";
+const _test3 = () : unit => {
+  const _1 = case3(1);
+  const _2 = case3(2);
+  const _3 = case3(3);
+  const _4 = case3(4);
+  Assert.assert (_1 == "Hello World @@@");
+  Assert.assert (_2 == " World @@@");
+  Assert.assert (_3 == " @@@");
+  Assert.assert (_4 == " !!! end");
+};
+
+const test3 = _test3();
+
+const case4 = (n : int) : string => {
+  let output = "";
+  switch (n) {
+    case 1: output = output + "Hello";
+    case 2: output = output + " World";
             break;
-        case 3:
-            output = output + " @@@";
-        default:
-            output = output + " !!!";
-    };
-    output = output + " end";
-    return output;
+    case 3: output = output + " @@@";
+    default: output = output + " !!!";
+  };
+  output = output + " end";
+  return output;
 };
-let _test4 = () : unit => {
-    let _1 = case4(1);
-    let _2 = case4(2);
-    let _3 = case4(3);
-    let _4 = case4(4);
-    assert (_1 == "Hello World end");
-    assert (_2 == " World end");
-    assert (_3 == " @@@ !!! end");
-    assert (_4 == " !!! end");
-};
-let test4 = _test4();
 
-let case5 = (n : int) : string => {
-    let output = "";
-    switch (n) {
-        case 1:
-            output = output + "Hello";
-        case 2:
-            output = output + " World";
-            break;
-        case 3:
-            output = output + " @@@";
-            break;
-        default:
-            output = output + " !!!";
-    };
-    output = output + " end";
-    return output;
+const _test4 = () : unit => {
+  const _1 = case4(1);
+  const _2 = case4(2);
+  const _3 = case4(3);
+  const _4 = case4(4);
+  Assert.assert (_1 == "Hello World end");
+  Assert.assert (_2 == " World end");
+  Assert.assert (_3 == " @@@ !!! end");
+  Assert.assert (_4 == " !!! end");
 };
-let _test5 = () : unit => {
-    let _1 = case5(1);
-    let _2 = case5(2);
-    let _3 = case5(3);
-    let _4 = case5(4);
-    assert (_1 == "Hello World end");
-    assert (_2 == " World end");
-    assert (_3 == " @@@ end");
-    assert (_4 == " !!! end");
-};
-let test5 = _test5();
 
-let case6 = (n : int) : string => {
-    let output = "";
-    switch (n) {
-        case 1:
-            output = output + "Hello";
-        case 2:
-            output = output + " World";
-            break;
-        case 3:
-            output = output + " @@@";
-            return output;
-        default:
-            output = output + " !!!";
-    };
-    output = output + " end";
-    return output;
-};
-let _test6 = () : unit => {
-    let _1 = case6(1);
-    let _2 = case6(2);
-    let _3 = case6(3);
-    let _4 = case6(4);
-    assert (_1 == "Hello World end");
-    assert (_2 == " World end");
-    assert (_3 == " @@@");
-    assert (_4 == " !!! end");
-};
-let test6 = _test6();
+const test4 = _test4();
 
-let case7 = (n : int) : string => {
-    let output = "";
-    switch (n) {
-        case 1:
-            output = output + "Hello";
-        case 2:
-            output = output + " World";
-            return output;
-        case 3:
-            output = output + " @@@";
-        default:
-            output = output + " !!!";
-    };
-    output = output + " end";
-    return output;
+const case5 = (n : int) : string => {
+  let output = "";
+  switch (n) {
+    case 1: output = output + "Hello";
+    case 2: output = output + " World";
+            break;
+    case 3: output = output + " @@@";
+            break;
+    default: output = output + " !!!";
+  };
+  output = output + " end";
+  return output;
 };
-let _test7 = () : unit => {
-    let _1 = case7(1);
-    let _2 = case7(2);
-    let _3 = case7(3);
-    let _4 = case7(4);
-    assert (_1 == "Hello World");
-    assert (_2 == " World");
-    assert (_3 == " @@@ !!! end");
-    assert (_4 == " !!! end");
-};
-let test7 = _test7();
 
-let case8 = (n : int) : string => {
-    let output = "";
-    switch (n) {
-        case 1:
-            output = output + "Hello";
-        case 2:
-            output = output + " World";
-            return output;
-        case 3:
-            output = output + " @@@";
-            break;
-        default:
-            output = output + " !!!";
-    };
-    output = output + " end";
-    return output;
+const _test5 = () : unit => {
+  const _1 = case5(1);
+  const _2 = case5(2);
+  const _3 = case5(3);
+  const _4 = case5(4);
+  Assert.assert (_1 == "Hello World end");
+  Assert.assert (_2 == " World end");
+  Assert.assert (_3 == " @@@ end");
+  Assert.assert (_4 == " !!! end");
 };
-let _test8 = () : unit => {
-    let _1 = case8(1);
-    let _2 = case8(2);
-    let _3 = case8(3);
-    let _4 = case8(4);
-    assert (_1 == "Hello World");
-    assert (_2 == " World");
-    assert (_3 == " @@@ end");
-    assert (_4 == " !!! end");
-};
-let test8 = _test8();
 
-let case9 = (n : int) : string => {
-    let output = "";
-    switch (n) {
-        case 1:
-            output = output + "Hello";
-        case 2:
-            output = output + " World";
-            return output;
-        case 3:
-            output = output + " @@@";
-            return output;
-        default:
-            output = output + " !!!";
-    };
-    output = output + " end";
-    return output;
-};
-let _test9 = () : unit => {
-    let _1 = case9(1);
-    let _2 = case9(2);
-    let _3 = case9(3);
-    let _4 = case9(4);
-    assert (_1 == "Hello World");
-    assert (_2 == " World");
-    assert (_3 == " @@@");
-    assert (_4 == " !!! end");
-};
-let test9 = _test9();
+const test5 = _test5();
 
+const case6 = (n : int) : string => {
+  let output = "";
+  switch (n) {
+    case 1: output = output + "Hello";
+    case 2: output = output + " World";
+            break;
+    case 3: output = output + " @@@";
+            return output;
+    default: output = output + " !!!";
+  };
+  output = output + " end";
+  return output;
+};
 
-let case10 = (n : int) : string => {
-    let output = "";
-    switch (n) {
-        case 1:
-            output = output + "Hello";
-            break;
-        case 2:
-            output = output + " World";
-        case 3:
-            output = output + " @@@";
-        default:
-            output = output + " !!!";
-    };
-    output = output + " end";
-    return output;
+const _test6 = () : unit => {
+  const _1 = case6(1);
+  const _2 = case6(2);
+  const _3 = case6(3);
+  const _4 = case6(4);
+  Assert.assert (_1 == "Hello World end");
+  Assert.assert (_2 == " World end");
+  Assert.assert (_3 == " @@@");
+  Assert.assert (_4 == " !!! end");
 };
-let _test10 = () : unit => {
-    let _1 = case10(1);
-    let _2 = case10(2);
-    let _3 = case10(3);
-    let _4 = case10(4);
-    assert (_1 == "Hello end");
-    assert (_2 == " World @@@ !!! end");
-    assert (_3 == " @@@ !!! end");
-    assert (_4 == " !!! end");
-};
-let test10 = _test10();
 
-let case11 = (n : int) : string => {
-    let output = "";
-    switch (n) {
-        case 1:
-            output = output + "Hello";
-            break;
-        case 2:
-            output = output + " World";
-        case 3:
-            output = output + " @@@";
-            break;
-        default:
-            output = output + " !!!";
-    };
-    output = output + " end";
-    return output;
-};
-let _test11 = () : unit => {
-    let _1 = case11(1);
-    let _2 = case11(2);
-    let _3 = case11(3);
-    let _4 = case11(4);
-    assert (_1 == "Hello end");
-    assert (_2 == " World @@@ end");
-    assert (_3 == " @@@ end");
-    assert (_4 == " !!! end");
-};
-let test11 = _test11();
+const test6 = _test6();
 
-let case12 = (n : int) : string => {
-    let output = "";
-    switch (n) {
-        case 1:
-            output = output + "Hello";
-            break;
-        case 2:
-            output = output + " World";
-        case 3:
-            output = output + " @@@";
+const case7 = (n : int) : string => {
+  let output = "";
+  switch (n) {
+    case 1: output = output + "Hello";
+    case 2: output = output + " World";
             return output;
-        default:
-            output = output + " !!!";
-    };
-    output = output + " end";
-    return output;
+    case 3: output = output + " @@@";
+    default: output = output + " !!!";
+  };
+  output = output + " end";
+  return output;
 };
-let _test12 = () : unit => {
-    let _1 = case12(1);
-    let _2 = case12(2);
-    let _3 = case12(3);
-    let _4 = case12(4);
-    assert (_1 == "Hello end");
-    assert (_2 == " World @@@");
-    assert (_3 == " @@@");
-    assert (_4 == " !!! end");
-};
-let test12 = _test12();
 
-let case13 = (n : int) : string => {
-    let output = "";
-    switch (n) {
-        case 1:
-            output = output + "Hello";
-            break;
-        case 2:
-            output = output + " World";
-            break;
-        case 3:
-            output = output + " @@@";
-        default:
-            output = output + " !!!";
-    };
-    output = output + " end";
-    return output;
+const _test7 = () : unit => {
+  const _1 = case7(1);
+  const _2 = case7(2);
+  const _3 = case7(3);
+  const _4 = case7(4);
+  Assert.assert (_1 == "Hello World");
+  Assert.assert (_2 == " World");
+  Assert.assert (_3 == " @@@ !!! end");
+  Assert.assert (_4 == " !!! end");
 };
-let _test13 = () : unit => {
-    let _1 = case13(1);
-    let _2 = case13(2);
-    let _3 = case13(3);
-    let _4 = case13(4);
-    assert (_1 == "Hello end");
-    assert (_2 == " World end");
-    assert (_3 == " @@@ !!! end");
-    assert (_4 == " !!! end");
-};
-let test13 = _test13();
 
-let case14 = (n : int) : string => {
-    let output = "";
-    switch (n) {
-        case 1:
-            output = output + "Hello";
-            break;
-        case 2:
-            output = output + " World";
-            break;
-        case 3:
-            output = output + " @@@";
-            break;
-        default:
-            output = output + " !!!";
-    };
-    output = output + " end";
-    return output;
-};
-let _test14 = () : unit => {
-    let _1 = case14(1);
-    let _2 = case14(2);
-    let _3 = case14(3);
-    let _4 = case14(4);
-    assert (_1 == "Hello end");
-    assert (_2 == " World end");
-    assert (_3 == " @@@ end");
-    assert (_4 == " !!! end");
-};
-let test14 = _test14();
+const test7 = _test7();
 
-let case15 = (n : int) : string => {
-    let output = "";
-    switch (n) {
-        case 1:
-            output = output + "Hello";
-            break;
-        case 2:
-            output = output + " World";
-            break;
-        case 3:
-            output = output + " @@@";
+const case8 = (n : int) : string => {
+  let output = "";
+  switch (n) {
+    case 1: output = output + "Hello";
+    case 2: output = output + " World";
             return output;
-        default:
-            output = output + " !!!";
-    };
-    output = output + " end";
-    return output;
+    case 3: output = output + " @@@";
+            break;
+    default: output = output + " !!!";
+  };
+  output = output + " end";
+  return output;
 };
-let _test15 = () : unit => {
-    let _1 = case15(1);
-    let _2 = case15(2);
-    let _3 = case15(3);
-    let _4 = case15(4);
-    assert (_1 == "Hello end");
-    assert (_2 == " World end");
-    assert (_3 == " @@@");
-    assert (_4 == " !!! end");
-};
-let test15 = _test15();
 
-let case16 = (n : int) : string => {
-    let output = "";
-    switch (n) {
-        case 1:
-            output = output + "Hello";
-            break;
-        case 2:
-            output = output + " World";
-            return output;
-        case 3:
-            output = output + " @@@";
-        default:
-            output = output + " !!!";
-    };
-    output = output + " end";
-    return output;
+const _test8 = () : unit => {
+  const _1 = case8(1);
+  const _2 = case8(2);
+  const _3 = case8(3);
+  const _4 = case8(4);
+  Assert.assert (_1 == "Hello World");
+  Assert.assert (_2 == " World");
+  Assert.assert (_3 == " @@@ end");
+  Assert.assert (_4 == " !!! end");
 };
-let _test16 = () : unit => {
-    let _1 = case16(1);
-    let _2 = case16(2);
-    let _3 = case16(3);
-    let _4 = case16(4);
-    assert (_1 == "Hello end");
-    assert (_2 == " World");
-    assert (_3 == " @@@ !!! end");
-    assert (_4 == " !!! end");
-};
-let test16 = _test16();
 
-let case17 = (n : int) : string => {
-    let output = "";
-    switch (n) {
-        case 1:
-            output = output + "Hello";
-            break;
-        case 2:
-            output = output + " World";
-            return output;
-        case 3:
-            output = output + " @@@";
-            break;
-        default:
-            output = output + " !!!";
-    };
-    output = output + " end";
-    return output;
-};
-let _test17 = () : unit => {
-    let _1 = case17(1);
-    let _2 = case17(2);
-    let _3 = case17(3);
-    let _4 = case17(4);
-    assert (_1 == "Hello end");
-    assert (_2 == " World");
-    assert (_3 == " @@@ end");
-    assert (_4 == " !!! end");
-};
-let test17 = _test17();
+const test8 = _test8();
 
-let case18 = (n : int) : string => {
-    let output = "";
-    switch (n) {
-        case 1:
-            output = output + "Hello";
+const case9 = (n : int) : string => {
+  let output = "";
+  switch (n) {
+    case 1: output = output + "Hello";
+    case 2: output = output + " World";
+            return output;
+    case 3: output = output + " @@@";
+            return output;
+    default: output = output + " !!!";
+  };
+  output = output + " end";
+  return output;
+};
+
+const _test9 = () : unit => {
+  const _1 = case9(1);
+  const _2 = case9(2);
+  const _3 = case9(3);
+  const _4 = case9(4);
+  Assert.assert (_1 == "Hello World");
+  Assert.assert (_2 == " World");
+  Assert.assert (_3 == " @@@");
+  Assert.assert (_4 == " !!! end");
+};
+
+const test9 = _test9();
+
+const case10 = (n : int) : string => {
+  let output = "";
+  switch (n) {
+    case 1: output = output + "Hello";
             break;
-        case 2:
-            output = output + " World";
-            return output;
-        case 3:
-            output = output + " @@@";
-            return output;
-        default:
-            output = output + " !!!";
-    };
-    output = output + " end";
-    return output;
+    case 2: output = output + " World";
+    case 3: output = output + " @@@";
+    default: output = output + " !!!";
+  };
+  output = output + " end";
+  return output;
 };
-let _test18 = () : unit => {
-    let _1 = case18(1);
-    let _2 = case18(2);
-    let _3 = case18(3);
-    let _4 = case18(4);
-    assert (_1 == "Hello end");
-    assert (_2 == " World");
-    assert (_3 == " @@@");
-    assert (_4 == " !!! end");
-};
-let test18 = _test18();
 
-let case19 = (n : int) : string => {
-    let output = "";
-    switch (n) {
-        case 1:
-            output = output + "Hello";
-            return output;
-        case 2:
-            output = output + " World";
-        case 3:
-            output = output + " @@@";
-        default:
-            output = output + " !!!";
-    };
-    output = output + " end";
-    return output;
+const _test10 = () : unit => {
+  const _1 = case10(1);
+  const _2 = case10(2);
+  const _3 = case10(3);
+  const _4 = case10(4);
+  Assert.assert (_1 == "Hello end");
+  Assert.assert (_2 == " World @@@ !!! end");
+  Assert.assert (_3 == " @@@ !!! end");
+  Assert.assert (_4 == " !!! end");
 };
-let _test19 = () : unit => {
-    let _1 = case19(1);
-    let _2 = case19(2);
-    let _3 = case19(3);
-    let _4 = case19(4);
-    assert (_1 == "Hello");
-    assert (_2 == " World @@@ !!! end");
-    assert (_3 == " @@@ !!! end");
-    assert (_4 == " !!! end");
-};
-let test19 = _test19();
 
-let case20 = (n : int) : string => {
-    let output = "";
-    switch (n) {
-        case 1:
-            output = output + "Hello";
-            return output;
-        case 2:
-            output = output + " World";
-        case 3:
-            output = output + " @@@";
+const test10 = _test10();
+
+const case11 = (n : int) : string => {
+  let output = "";
+  switch (n) {
+    case 1: output = output + "Hello";
             break;
-        default:
-            output = output + " !!!";
-    };
-    output = output + " end";
-    return output;
-};
-let _test20 = () : unit => {
-    let _1 = case20(1);
-    let _2 = case20(2);
-    let _3 = case20(3);
-    let _4 = case20(4);
-    assert (_1 == "Hello");
-    assert (_2 == " World @@@ end");
-    assert (_3 == " @@@ end");
-    assert (_4 == " !!! end");
-};
-let test20 = _test20();
-
-let case21 = (n : int) : string => {
-    let output = "";
-    switch (n) {
-        case 1:
-            output = output + "Hello";
-            return output;
-        case 2:
-            output = output + " World";
-        case 3:
-            output = output + " @@@";
-            return output;
-        default:
-            output = output + " !!!";
-    };
-    output = output + " end";
-    return output;
-};
-let _test21 = () : unit => {
-    let _1 = case21(1);
-    let _2 = case21(2);
-    let _3 = case21(3);
-    let _4 = case21(4);
-    assert (_1 == "Hello");
-    assert (_2 == " World @@@");
-    assert (_3 == " @@@");
-    assert (_4 == " !!! end");
-};
-let test21 = _test21();
-
-let case22 = (n : int) : string => {
-    let output = "";
-    switch (n) {
-        case 1:
-            output = output + "Hello";
-            return output;
-        case 2:
-            output = output + " World";
+    case 2: output = output + " World";
+    case 3: output = output + " @@@";
             break;
-        case 3:
-            output = output + " @@@";
-        default:
-            output = output + " !!!";
-    };
-    output = output + " end";
-    return output;
+    default: output = output + " !!!";
+  };
+  output = output + " end";
+  return output;
 };
-let _test22 = () : unit => {
-    let _1 = case22(1);
-    let _2 = case22(2);
-    let _3 = case22(3);
-    let _4 = case22(4);
-    assert (_1 == "Hello");
-    assert (_2 == " World end");
-    assert (_3 == " @@@ !!! end");
-    assert (_4 == " !!! end");
-};
-let test22 = _test22();
 
-let case23 = (n : int) : string => {
-    let output = "";
-    switch (n) {
-        case 1:
-            output = output + "Hello";
-            return output;
-        case 2:
-            output = output + " World";
-            break;
-        case 3:
-            output = output + " @@@";
-            break;
-        default:
-            output = output + " !!!";
-    };
-    output = output + " end";
-    return output;
+const _test11 = () : unit => {
+  const _1 = case11(1);
+  const _2 = case11(2);
+  const _3 = case11(3);
+  const _4 = case11(4);
+  Assert.assert (_1 == "Hello end");
+  Assert.assert (_2 == " World @@@ end");
+  Assert.assert (_3 == " @@@ end");
+  Assert.assert (_4 == " !!! end");
 };
-let _test23 = () : unit => {
-    let _1 = case23(1);
-    let _2 = case23(2);
-    let _3 = case23(3);
-    let _4 = case23(4);
-    assert (_1 == "Hello");
-    assert (_2 == " World end");
-    assert (_3 == " @@@ end");
-    assert (_4 == " !!! end");
-};
-let test23 = _test23();
 
-let case24 = (n : int) : string => {
-    let output = "";
-    switch (n) {
-        case 1:
-            output = output + "Hello";
-            return output;
-        case 2:
-            output = output + " World";
-            break;
-        case 3:
-            output = output + " @@@";
-            return output;
-        default:
-            output = output + " !!!";
-    };
-    output = output + " end";
-    return output;
-};
-let _test24 = () : unit => {
-    let _1 = case24(1);
-    let _2 = case24(2);
-    let _3 = case24(3);
-    let _4 = case24(4);
-    assert (_1 == "Hello");
-    assert (_2 == " World end");
-    assert (_3 == " @@@");
-    assert (_4 == " !!! end");
-};
-let test24 = _test24();
+const test11 = _test11();
 
-let case25 = (n : int) : string => {
-    let output = "";
-    switch (n) {
-        case 1:
-            output = output + "Hello";
-            return output;
-        case 2:
-            output = output + " World";
-            return output;
-        case 3:
-            output = output + " @@@";
-        default:
-            output = output + " !!!";
-    };
-    output = output + " end";
-    return output;
-};
-let _test25 = () : unit => {
-    let _1 = case25(1);
-    let _2 = case25(2);
-    let _3 = case25(3);
-    let _4 = case25(4);
-    assert (_1 == "Hello");
-    assert (_2 == " World");
-    assert (_3 == " @@@ !!! end");
-    assert (_4 == " !!! end");
-};
-let test25 = _test25();
-
-let case26 = (n : int) : string => {
-    let output = "";
-    switch (n) {
-        case 1:
-            output = output + "Hello";
-            return output;
-        case 2:
-            output = output + " World";
-            return output;
-        case 3:
-            output = output + " @@@";
+const case12 = (n : int) : string => {
+  let output = "";
+  switch (n) {
+    case 1: output = output + "Hello";
             break;
-        default:
-            output = output + " !!!";
-    };
-    output = output + " end";
-    return output;
+    case 2: output = output + " World";
+    case 3: output = output + " @@@";
+            return output;
+    default: output = output + " !!!";
+  };
+  output = output + " end";
+  return output;
 };
-let _test26 = () : unit => {
-    let _1 = case26(1);
-    let _2 = case26(2);
-    let _3 = case26(3);
-    let _4 = case26(4);
-    assert (_1 == "Hello");
-    assert (_2 == " World");
-    assert (_3 == " @@@ end");
-    assert (_4 == " !!! end");
+
+const _test12 = () : unit => {
+  const _1 = case12(1);
+  const _2 = case12(2);
+  const _3 = case12(3);
+  const _4 = case12(4);
+  Assert.assert (_1 == "Hello end");
+  Assert.assert (_2 == " World @@@");
+  Assert.assert (_3 == " @@@");
+  Assert.assert (_4 == " !!! end");
 };
-let test26 = _test26();
+
+const test12 = _test12();
+
+const case13 = (n : int) : string => {
+  let output = "";
+  switch (n) {
+    case 1: output = output + "Hello";
+            break;
+    case 2: output = output + " World";
+            break;
+    case 3: output = output + " @@@";
+    default: output = output + " !!!";
+  };
+  output = output + " end";
+  return output;
+};
+
+const _test13 = () : unit => {
+  const _1 = case13(1);
+  const _2 = case13(2);
+  const _3 = case13(3);
+  const _4 = case13(4);
+  Assert.assert (_1 == "Hello end");
+  Assert.assert (_2 == " World end");
+  Assert.assert (_3 == " @@@ !!! end");
+  Assert.assert (_4 == " !!! end");
+};
+
+const test13 = _test13();
+
+const case14 = (n : int) : string => {
+  let output = "";
+  switch (n) {
+    case 1: output = output + "Hello";
+            break;
+    case 2: output = output + " World";
+            break;
+    case 3: output = output + " @@@";
+            break;
+    default: output = output + " !!!";
+  };
+  output = output + " end";
+  return output;
+};
+
+const _test14 = () : unit => {
+  const _1 = case14(1);
+  const _2 = case14(2);
+  const _3 = case14(3);
+  const _4 = case14(4);
+  Assert.assert (_1 == "Hello end");
+  Assert.assert (_2 == " World end");
+  Assert.assert (_3 == " @@@ end");
+  Assert.assert (_4 == " !!! end");
+};
+
+const test14 = _test14();
+
+const case15 = (n : int) : string => {
+  let output = "";
+  switch (n) {
+    case 1: output = output + "Hello";
+            break;
+    case 2: output = output + " World";
+            break;
+    case 3: output = output + " @@@";
+            return output;
+    default: output = output + " !!!";
+  };
+  output = output + " end";
+  return output;
+};
+
+const _test15 = () : unit => {
+  const _1 = case15(1);
+  const _2 = case15(2);
+  const _3 = case15(3);
+  const _4 = case15(4);
+  Assert.assert (_1 == "Hello end");
+  Assert.assert (_2 == " World end");
+  Assert.assert (_3 == " @@@");
+  Assert.assert (_4 == " !!! end");
+};
+
+const test15 = _test15();
+
+const case16 = (n : int) : string => {
+  let output = "";
+  switch (n) {
+    case 1: output = output + "Hello";
+            break;
+    case 2: output = output + " World";
+            return output;
+    case 3: output = output + " @@@";
+    default: output = output + " !!!";
+  };
+  output = output + " end";
+  return output;
+};
+
+const _test16 = () : unit => {
+  const _1 = case16(1);
+  const _2 = case16(2);
+  const _3 = case16(3);
+  const _4 = case16(4);
+  Assert.assert (_1 == "Hello end");
+  Assert.assert (_2 == " World");
+  Assert.assert (_3 == " @@@ !!! end");
+  Assert.assert (_4 == " !!! end");
+};
+
+const test16 = _test16();
+
+const case17 = (n : int) : string => {
+  let output = "";
+  switch (n) {
+    case 1: output = output + "Hello";
+            break;
+    case 2: output = output + " World";
+            return output;
+    case 3: output = output + " @@@";
+            break;
+    default: output = output + " !!!";
+  };
+  output = output + " end";
+  return output;
+};
+
+const _test17 = () : unit => {
+  const _1 = case17(1);
+  const _2 = case17(2);
+  const _3 = case17(3);
+  const _4 = case17(4);
+  Assert.assert (_1 == "Hello end");
+  Assert.assert (_2 == " World");
+  Assert.assert (_3 == " @@@ end");
+  Assert.assert (_4 == " !!! end");
+};
+
+const test17 = _test17();
+
+const case18 = (n : int) : string => {
+  let output = "";
+  switch (n) {
+    case 1: output = output + "Hello";
+            break;
+    case 2: output = output + " World";
+            return output;
+    case 3: output = output + " @@@";
+            return output;
+    default: output = output + " !!!";
+  };
+  output = output + " end";
+  return output;
+};
+
+const _test18 = () : unit => {
+  const _1 = case18(1);
+  const _2 = case18(2);
+  const _3 = case18(3);
+  const _4 = case18(4);
+  Assert.assert (_1 == "Hello end");
+  Assert.assert (_2 == " World");
+  Assert.assert (_3 == " @@@");
+  Assert.assert (_4 == " !!! end");
+};
+
+const test18 = _test18();
+
+const case19 = (n : int) : string => {
+  let output = "";
+  switch (n) {
+    case 1: output = output + "Hello";
+            return output;
+    case 2: output = output + " World";
+    case 3: output = output + " @@@";
+    default: output = output + " !!!";
+  };
+  output = output + " end";
+  return output;
+};
+
+const _test19 = () : unit => {
+  const _1 = case19(1);
+  const _2 = case19(2);
+  const _3 = case19(3);
+  const _4 = case19(4);
+  Assert.assert (_1 == "Hello");
+  Assert.assert (_2 == " World @@@ !!! end");
+  Assert.assert (_3 == " @@@ !!! end");
+  Assert.assert (_4 == " !!! end");
+};
+
+const test19 = _test19();
+
+const case20 = (n : int) : string => {
+  let output = "";
+  switch (n) {
+    case 1: output = output + "Hello";
+            return output;
+    case 2: output = output + " World";
+    case 3: output = output + " @@@";
+            break;
+    default: output = output + " !!!";
+  };
+  output = output + " end";
+  return output;
+};
+
+const _test20 = () : unit => {
+  const _1 = case20(1);
+  const _2 = case20(2);
+  const _3 = case20(3);
+  const _4 = case20(4);
+  Assert.assert (_1 == "Hello");
+  Assert.assert (_2 == " World @@@ end");
+  Assert.assert (_3 == " @@@ end");
+  Assert.assert (_4 == " !!! end");
+};
+
+const test20 = _test20();
+
+const case21 = (n : int) : string => {
+  let output = "";
+  switch (n) {
+    case 1: output = output + "Hello";
+            return output;
+    case 2: output = output + " World";
+    case 3: output = output + " @@@";
+            return output;
+    default:output = output + " !!!";
+  };
+  output = output + " end";
+  return output;
+};
+
+const _test21 = () : unit => {
+  const _1 = case21(1);
+  const _2 = case21(2);
+  const _3 = case21(3);
+  const _4 = case21(4);
+  Assert.assert (_1 == "Hello");
+  Assert.assert (_2 == " World @@@");
+  Assert.assert (_3 == " @@@");
+  Assert.assert (_4 == " !!! end");
+};
+
+const test21 = _test21();
+
+const case22 = (n : int) : string => {
+  let output = "";
+  switch (n) {
+    case 1: output = output + "Hello";
+            return output;
+    case 2: output = output + " World";
+            break;
+    case 3: output = output + " @@@";
+    default: output = output + " !!!";
+  };
+  output = output + " end";
+  return output;
+};
+
+const _test22 = () : unit => {
+  const _1 = case22(1);
+  const _2 = case22(2);
+  const _3 = case22(3);
+  const _4 = case22(4);
+  Assert.assert (_1 == "Hello");
+  Assert.assert (_2 == " World end");
+  Assert.assert (_3 == " @@@ !!! end");
+  Assert.assert (_4 == " !!! end");
+};
+
+const test22 = _test22();
+
+const case23 = (n : int) : string => {
+  let output = "";
+  switch (n) {
+    case 1: output = output + "Hello";
+            return output;
+    case 2: output = output + " World";
+            break;
+    case 3: output = output + " @@@";
+            break;
+  default: output = output + " !!!";
+  };
+  output = output + " end";
+  return output;
+};
+
+const _test23 = () : unit => {
+  const _1 = case23(1);
+  const _2 = case23(2);
+  const _3 = case23(3);
+  const _4 = case23(4);
+  Assert.assert (_1 == "Hello");
+  Assert.assert (_2 == " World end");
+  Assert.assert (_3 == " @@@ end");
+  Assert.assert (_4 == " !!! end");
+};
+
+const test23 = _test23();
+
+const case24 = (n : int) : string => {
+  let output = "";
+  switch (n) {
+    case 1: output = output + "Hello";
+            return output;
+    case 2: output = output + " World";
+            break;
+    case 3: output = output + " @@@";
+            return output;
+    default: output = output + " !!!";
+  };
+  output = output + " end";
+  return output;
+};
+
+const _test24 = () : unit => {
+  const _1 = case24(1);
+  const _2 = case24(2);
+  const _3 = case24(3);
+  const _4 = case24(4);
+  Assert.assert (_1 == "Hello");
+  Assert.assert (_2 == " World end");
+  Assert.assert (_3 == " @@@");
+  Assert.assert (_4 == " !!! end");
+};
+
+const test24 = _test24();
+
+const case25 = (n : int) : string => {
+  let output = "";
+  switch (n) {
+    case 1: output = output + "Hello";
+            return output;
+    case 2: output = output + " World";
+            return output;
+    case 3: output = output + " @@@";
+    default: output = output + " !!!";
+  };
+  output = output + " end";
+  return output;
+};
+
+const _test25 = () : unit => {
+  const _1 = case25(1);
+  const _2 = case25(2);
+  const _3 = case25(3);
+  const _4 = case25(4);
+  Assert.assert (_1 == "Hello");
+  Assert.assert (_2 == " World");
+  Assert.assert (_3 == " @@@ !!! end");
+  Assert.assert (_4 == " !!! end");
+};
+
+const test25 = _test25();
+
+const case26 = (n : int) : string => {
+  let output = "";
+  switch (n) {
+    case 1: output = output + "Hello";
+            return output;
+    case 2: output = output + " World";
+            return output;
+    case 3: output = output + " @@@";
+            break;
+    default: output = output + " !!!";
+  };
+  output = output + " end";
+  return output;
+};
+
+const _test26 = () : unit => {
+  const _1 = case26(1);
+  const _2 = case26(2);
+  const _3 = case26(3);
+  const _4 = case26(4);
+  Assert.assert (_1 == "Hello");
+  Assert.assert (_2 == " World");
+  Assert.assert (_3 == " @@@ end");
+  Assert.assert (_4 == " !!! end");
+};
+
+const test26 = _test26();
 
 
-let case27 = (n : int) : string => {
-    let output = "";
-    switch (n) {
-        case 1:
-            output = output + "Hello";
+const case27 = (n : int) : string => {
+  let output = "";
+  switch (n) {
+    case 1: output = output + "Hello";
             return output;
-        case 2:
-            output = output + " World";
+    case 2: output = output + " World";
             return output;
-        case 3:
-            output = output + " @@@";
+    case 3: output = output + " @@@";
             return output;
-        default:
-            output = output + " !!!";
-    };
-    output = output + " end";
-    return output;
+    default: output = output + " !!!";
+  };
+  output = output + " end";
+  return output;
 };
-let _test27 = () : unit => {
-    let _1 = case27(1);
-    let _2 = case27(2);
-    let _3 = case27(3);
-    let _4 = case27(4);
-    assert (_1 == "Hello");
-    assert (_2 == " World");
-    assert (_3 == " @@@");
-    assert (_4 == " !!! end");
-};
-let test27 = _test27();
 
-let case28 = (n : int) : string => {
-    let output = "";
-    switch (n) {
-        case 1:
-            output = output + "Hello";
-        case 2:
-            output = output + " World";
-        case 3:
-            output = output + " @@@";
-        default:
-            output = output + " !!!";
-            return output;
-    };
-    output = output + " end";
-    return output;
+const _test27 = () : unit => {
+  const _1 = case27(1);
+  const _2 = case27(2);
+  const _3 = case27(3);
+  const _4 = case27(4);
+  Assert.assert (_1 == "Hello");
+  Assert.assert (_2 == " World");
+  Assert.assert (_3 == " @@@");
+  Assert.assert (_4 == " !!! end");
 };
-let _test28 = () : unit => {
-    let _1 = case28(1);
-    let _2 = case28(2);
-    let _3 = case28(3);
-    let _4 = case28(4);
-    assert (_1 == "Hello World @@@ !!!");
-    assert (_2 == " World @@@ !!!");
-    assert (_3 == " @@@ !!!");
-    assert (_4 == " !!!");
-};
-let test28 = _test28();
 
-let case29 = (n : int) : string => {
-    let output = "";
-    switch (n) {
-        case 1:
-            output = output + "Hello";
-        case 2:
-            output = output + " World";
-        case 3:
-            output = output + " @@@";
-            break;
-        default:
-            output = output + " !!!";
-            return output;
-    };
-    output = output + " end";
-    return output;
-};
-let _test29 = () : unit => {
-    let _1 = case29(1);
-    let _2 = case29(2);
-    let _3 = case29(3);
-    let _4 = case29(4);
-    assert (_1 == "Hello World @@@ end");
-    assert (_2 == " World @@@ end");
-    assert (_3 == " @@@ end");
-    assert (_4 == " !!!");
-};
-let test29 = _test29();
+const test27 = _test27();
 
-let case30 = (n : int) : string => {
-    let output = "";
-    switch (n) {
-        case 1:
-            output = output + "Hello";
-        case 2:
-            output = output + " World";
-        case 3:
-            output = output + " @@@";
+const case28 = (n : int) : string => {
+  let output = "";
+  switch (n) {
+    case 1: output = output + "Hello";
+    case 2: output = output + " World";
+    case 3: output = output + " @@@";
+    default: output = output + " !!!";
             return output;
-        default:
-            output = output + " !!!";
-            return output;
-    };
-    output = output + " end";
-    return output;
+  };
+  output = output + " end";
+  return output;
 };
-let _test30 = () : unit => {
-    let _1 = case30(1);
-    let _2 = case30(2);
-    let _3 = case30(3);
-    let _4 = case30(4);
-    assert (_1 == "Hello World @@@");
-    assert (_2 == " World @@@");
-    assert (_3 == " @@@");
-    assert (_4 == " !!!");
-};
-let test30 = _test30();
 
-let case31 = (n : int) : string => {
-    let output = "";
-    switch (n) {
-        case 1:
-            output = output + "Hello";
-        case 2:
-            output = output + " World";
-            break;
-        case 3:
-            output = output + " @@@";
-        default:
-            output = output + " !!!";
-            return output;
-    };
-    output = output + " end";
-    return output;
+const _test28 = () : unit => {
+  const _1 = case28(1);
+  const _2 = case28(2);
+  const _3 = case28(3);
+  const _4 = case28(4);
+  Assert.assert (_1 == "Hello World @@@ !!!");
+  Assert.assert (_2 == " World @@@ !!!");
+  Assert.assert (_3 == " @@@ !!!");
+  Assert.assert (_4 == " !!!");
 };
-let _test31 = () : unit => {
-    let _1 = case31(1);
-    let _2 = case31(2);
-    let _3 = case31(3);
-    let _4 = case31(4);
-    assert (_1 == "Hello World end");
-    assert (_2 == " World end");
-    assert (_3 == " @@@ !!!");
-    assert (_4 == " !!!");
-};
-let test31 = _test31();
 
-let case32 = (n : int) : string => {
-    let output = "";
-    switch (n) {
-        case 1:
-            output = output + "Hello";
-        case 2:
-            output = output + " World";
-            break;
-        case 3:
-            output = output + " @@@";
-            break;
-        default:
-            output = output + " !!!";
-            return output;
-    };
-    output = output + " end";
-    return output;
-};
-let _test32 = () : unit => {
-    let _1 = case32(1);
-    let _2 = case32(2);
-    let _3 = case32(3);
-    let _4 = case32(4);
-    assert (_1 == "Hello World end");
-    assert (_2 == " World end");
-    assert (_3 == " @@@ end");
-    assert (_4 == " !!!");
-};
-let test32 = _test32();
+const test28 = _test28();
 
-let case33 = (n : int) : string => {
-    let output = "";
-    switch (n) {
-        case 1:
-            output = output + "Hello";
-        case 2:
-            output = output + " World";
+const case29 = (n : int) : string => {
+  let output = "";
+  switch (n) {
+    case 1: output = output + "Hello";
+    case 2: output = output + " World";
+    case 3: output = output + " @@@";
             break;
-        case 3:
-            output = output + " @@@";
+    default: output = output + " !!!";
             return output;
-        default:
-            output = output + " !!!";
-            return output;
-    };
-    output = output + " end";
-    return output;
+  };
+  output = output + " end";
+  return output;
 };
-let _test33 = () : unit => {
-    let _1 = case33(1);
-    let _2 = case33(2);
-    let _3 = case33(3);
-    let _4 = case33(4);
-    assert (_1 == "Hello World end");
-    assert (_2 == " World end");
-    assert (_3 == " @@@");
-    assert (_4 == " !!!");
-};
-let test33 = _test33();
 
-let case34 = (n : int) : string => {
-    let output = "";
-    switch (n) {
-        case 1:
-            output = output + "Hello";
-        case 2:
-            output = output + " World";
-            return output;
-        case 3:
-            output = output + " @@@";
-        default:
-            output = output + " !!!";
-            return output;
-    };
-    output = output + " end";
-    return output;
+const _test29 = () : unit => {
+  const _1 = case29(1);
+  const _2 = case29(2);
+  const _3 = case29(3);
+  const _4 = case29(4);
+  Assert.assert (_1 == "Hello World @@@ end");
+  Assert.assert (_2 == " World @@@ end");
+  Assert.assert (_3 == " @@@ end");
+  Assert.assert (_4 == " !!!");
 };
-let _test34 = () : unit => {
-    let _1 = case34(1);
-    let _2 = case34(2);
-    let _3 = case34(3);
-    let _4 = case34(4);
-    assert (_1 == "Hello World");
-    assert (_2 == " World");
-    assert (_3 == " @@@ !!!");
-    assert (_4 == " !!!");
-};
-let test34 = _test34();
 
-let case35 = (n : int) : string => {
-    let output = "";
-    switch (n) {
-        case 1:
-            output = output + "Hello";
-        case 2:
-            output = output + " World";
-            return output;
-        case 3:
-            output = output + " @@@";
-            break;
-        default:
-            output = output + " !!!";
-            return output;
-    };
-    output = output + " end";
-    return output;
-};
-let _test35 = () : unit => {
-    let _1 = case35(1);
-    let _2 = case35(2);
-    let _3 = case35(3);
-    let _4 = case35(4);
-    assert (_1 == "Hello World");
-    assert (_2 == " World");
-    assert (_3 == " @@@ end");
-    assert (_4 == " !!!");
-};
-let test35 = _test35();
+const test29 = _test29();
 
-let case36 = (n : int) : string => {
-    let output = "";
-    switch (n) {
-        case 1:
-            output = output + "Hello";
-        case 2:
-            output = output + " World";
+const case30 = (n : int) : string => {
+  let output = "";
+  switch (n) {
+    case 1: output = output + "Hello";
+    case 2: output = output + " World";
+    case 3: output = output + " @@@";
             return output;
-        case 3:
-            output = output + " @@@";
-            return output;
-        default:
-            output = output + " !!!";
-            return output;
-    };
-    output = output + " end";
-    return output;
+    default: output = output + " !!!";
+             return output;
+  };
+  output = output + " end";
+  return output;
 };
-let _test36 = () : unit => {
-    let _1 = case36(1);
-    let _2 = case36(2);
-    let _3 = case36(3);
-    let _4 = case36(4);
-    assert (_1 == "Hello World");
-    assert (_2 == " World");
-    assert (_3 == " @@@");
-    assert (_4 == " !!!");
-};
-let test36 = _test36();
 
-let case37 = (n : int) : string => {
-    let output = "";
-    switch (n) {
-        case 1:
-            output = output + "Hello";
-            break;
-        case 2:
-            output = output + " World";
-        case 3:
-            output = output + " @@@";
-        default:
-            output = output + " !!!";
-            return output;
-    };
-    output = output + " end";
-    return output;
+const _test30 = () : unit => {
+  const _1 = case30(1);
+  const _2 = case30(2);
+  const _3 = case30(3);
+  const _4 = case30(4);
+  Assert.assert (_1 == "Hello World @@@");
+  Assert.assert (_2 == " World @@@");
+  Assert.assert (_3 == " @@@");
+  Assert.assert (_4 == " !!!");
 };
-let _test37 = () : unit => {
-    let _1 = case37(1);
-    let _2 = case37(2);
-    let _3 = case37(3);
-    let _4 = case37(4);
-    assert (_1 == "Hello end");
-    assert (_2 == " World @@@ !!!");
-    assert (_3 == " @@@ !!!");
-    assert (_4 == " !!!");
-};
-let test37 = _test37();
 
-let case38 = (n : int) : string => {
-    let output = "";
-    switch (n) {
-        case 1:
-            output = output + "Hello";
-            break;
-        case 2:
-            output = output + " World";
-        case 3:
-            output = output + " @@@";
-            break;
-        default:
-            output = output + " !!!";
-            return output;
-    };
-    output = output + " end";
-    return output;
-};
-let _test38 = () : unit => {
-    let _1 = case38(1);
-    let _2 = case38(2);
-    let _3 = case38(3);
-    let _4 = case38(4);
-    assert (_1 == "Hello end");
-    assert (_2 == " World @@@ end");
-    assert (_3 == " @@@ end");
-    assert (_4 == " !!!");
-};
-let test38 = _test38();
+const test30 = _test30();
 
-let case39 = (n : int) : string => {
-    let output = "";
-    switch (n) {
-        case 1:
-            output = output + "Hello";
+const case31 = (n : int) : string => {
+  let output = "";
+  switch (n) {
+    case 1: output = output + "Hello";
+    case 2: output = output + " World";
             break;
-        case 2:
-            output = output + " World";
-        case 3:
-            output = output + " @@@";
-            return output;
-        default:
-            output = output + " !!!";
-            return output;
-    };
-    output = output + " end";
-    return output;
+    case 3: output = output + " @@@";
+    default: output = output + " !!!";
+             return output;
+  };
+  output = output + " end";
+  return output;
 };
-let _test39 = () : unit => {
-    let _1 = case39(1);
-    let _2 = case39(2);
-    let _3 = case39(3);
-    let _4 = case39(4);
-    assert (_1 == "Hello end");
-    assert (_2 == " World @@@");
-    assert (_3 == " @@@");
-    assert (_4 == " !!!");
-};
-let test39 = _test39();
 
-let case40 = (n : int) : string => {
-    let output = "";
-    switch (n) {
-        case 1:
-            output = output + "Hello";
-            break;
-        case 2:
-            output = output + " World";
-            break;
-        case 3:
-            output = output + " @@@";
-        default:
-            output = output + " !!!";
-            return output;
-    };
-    output = output + " end";
-    return output;
+const _test31 = () : unit => {
+  const _1 = case31(1);
+  const _2 = case31(2);
+  const _3 = case31(3);
+  const _4 = case31(4);
+  Assert.assert (_1 == "Hello World end");
+  Assert.assert (_2 == " World end");
+  Assert.assert (_3 == " @@@ !!!");
+  Assert.assert (_4 == " !!!");
 };
-let _test40 = () : unit => {
-    let _1 = case40(1);
-    let _2 = case40(2);
-    let _3 = case40(3);
-    let _4 = case40(4);
-    assert (_1 == "Hello end");
-    assert (_2 == " World end");
-    assert (_3 == " @@@ !!!");
-    assert (_4 == " !!!");
-};
-let test40 = _test40();
 
-let case41 = (n : int) : string => {
-    let output = "";
-    switch (n) {
-        case 1:
-            output = output + "Hello";
-            break;
-        case 2:
-            output = output + " World";
-            break;
-        case 3:
-            output = output + " @@@";
-            break;
-        default:
-            output = output + " !!!";
-            return output;
-    };
-    output = output + " end";
-    return output;
-};
-let _test41 = () : unit => {
-    let _1 = case41(1);
-    let _2 = case41(2);
-    let _3 = case41(3);
-    let _4 = case41(4);
-    assert (_1 == "Hello end");
-    assert (_2 == " World end");
-    assert (_3 == " @@@ end");
-    assert (_4 == " !!!");
-};
-let test41 = _test41();
+const test31 = _test31();
 
-let case42 = (n : int) : string => {
-    let output = "";
-    switch (n) {
-        case 1:
-            output = output + "Hello";
+const case32 = (n : int) : string => {
+  let output = "";
+  switch (n) {
+    case 1: output = output + "Hello";
+    case 2: output = output + " World";
             break;
-        case 2:
-            output = output + " World";
+    case 3: output = output + " @@@";
             break;
-        case 3:
-            output = output + " @@@";
+    default: output = output + " !!!";
             return output;
-        default:
-            output = output + " !!!";
-            return output;
-    };
-    output = output + " end";
-    return output;
+  };
+  output = output + " end";
+  return output;
 };
-let _test42 = () : unit => {
-    let _1 = case42(1);
-    let _2 = case42(2);
-    let _3 = case42(3);
-    let _4 = case42(4);
-    assert (_1 == "Hello end");
-    assert (_2 == " World end");
-    assert (_3 == " @@@");
-    assert (_4 == " !!!");
-};
-let test42 = _test42();
 
-let case43 = (n : int) : string => {
-    let output = "";
-    switch (n) {
-        case 1:
-            output = output + "Hello";
+const _test32 = () : unit => {
+  const _1 = case32(1);
+  const _2 = case32(2);
+  const _3 = case32(3);
+  const _4 = case32(4);
+  Assert.assert (_1 == "Hello World end");
+  Assert.assert (_2 == " World end");
+  Assert.assert (_3 == " @@@ end");
+  Assert.assert (_4 == " !!!");
+};
+
+const test32 = _test32();
+
+const case33 = (n : int) : string => {
+  let output = "";
+  switch (n) {
+    case 1: output = output + "Hello";
+    case 2: output = output + " World";
             break;
-        case 2:
-            output = output + " World";
+    case 3: output = output + " @@@";
             return output;
-        case 3:
-            output = output + " @@@";
-        default:
-            output = output + " !!!";
-            return output;
-    };
-    output = output + " end";
-    return output;
+    default: output = output + " !!!";
+             return output;
+  };
+  output = output + " end";
+   return output;
 };
-let _test43 = () : unit => {
-    let _1 = case43(1);
-    let _2 = case43(2);
-    let _3 = case43(3);
-    let _4 = case43(4);
-    assert (_1 == "Hello end");
-    assert (_2 == " World");
-    assert (_3 == " @@@ !!!");
-    assert (_4 == " !!!");
-};
-let test43 = _test43();
 
-let case44 = (n : int) : string => {
-    let output = "";
-    switch (n) {
-        case 1:
-            output = output + "Hello";
+const _test33 = () : unit => {
+  const _1 = case33(1);
+  const _2 = case33(2);
+  const _3 = case33(3);
+  const _4 = case33(4);
+  Assert.assert (_1 == "Hello World end");
+  Assert.assert (_2 == " World end");
+  Assert.assert (_3 == " @@@");
+  Assert.assert (_4 == " !!!");
+};
+
+const test33 = _test33();
+
+const case34 = (n : int) : string => {
+  let output = "";
+  switch (n) {
+    case 1: output = output + "Hello";
+    case 2: output = output + " World";
+            return output;
+    case 3: output = output + " @@@";
+    default: output = output + " !!!";
+             return output;
+  };
+  output = output + " end";
+  return output;
+};
+
+const _test34 = () : unit => {
+  const _1 = case34(1);
+  const _2 = case34(2);
+  const _3 = case34(3);
+  const _4 = case34(4);
+  Assert.assert (_1 == "Hello World");
+  Assert.assert (_2 == " World");
+  Assert.assert (_3 == " @@@ !!!");
+  Assert.assert (_4 == " !!!");
+};
+
+const test34 = _test34();
+
+const case35 = (n : int) : string => {
+  let output = "";
+  switch (n) {
+    case 1: output = output + "Hello";
+    case 2: output = output + " World";
+            return output;
+    case 3: output = output + " @@@";
             break;
-        case 2:
-            output = output + " World";
+    default: output = output + " !!!";
             return output;
-        case 3:
-            output = output + " @@@";
+  };
+  output = output + " end";
+  return output;
+};
+
+const _test35 = () : unit => {
+  const _1 = case35(1);
+  const _2 = case35(2);
+  const _3 = case35(3);
+  const _4 = case35(4);
+  Assert.assert (_1 == "Hello World");
+  Assert.assert (_2 == " World");
+  Assert.assert (_3 == " @@@ end");
+  Assert.assert (_4 == " !!!");
+};
+
+const test35 = _test35();
+
+const case36 = (n : int) : string => {
+  let output = "";
+  switch (n) {
+    case 1: output = output + "Hello";
+    case 2: output = output + " World";
+            return output;
+    case 3: output = output + " @@@";
+            return output;
+    default: output = output + " !!!";
+             return output;
+  };
+  output = output + " end";
+  return output;
+};
+
+const _test36 = () : unit => {
+  const _1 = case36(1);
+  const _2 = case36(2);
+  const _3 = case36(3);
+  const _4 = case36(4);
+  Assert.assert (_1 == "Hello World");
+  Assert.assert (_2 == " World");
+  Assert.assert (_3 == " @@@");
+  Assert.assert (_4 == " !!!");
+};
+
+const test36 = _test36();
+
+const case37 = (n : int) : string => {
+  let output = "";
+  switch (n) {
+    case 1: output = output + "Hello";
             break;
-        default:
-            output = output + " !!!";
-            return output;
-    };
-    output = output + " end";
-    return output;
+    case 2: output = output + " World";
+    case 3: output = output + " @@@";
+    default: output = output + " !!!";
+             return output;
+  };
+  output = output + " end";
+  return output;
 };
-let _test44 = () : unit => {
-    let _1 = case44(1);
-    let _2 = case44(2);
-    let _3 = case44(3);
-    let _4 = case44(4);
-    assert (_1 == "Hello end");
-    assert (_2 == " World");
-    assert (_3 == " @@@ end");
-    assert (_4 == " !!!");
-};
-let test44 = _test44();
 
-let case45 = (n : int) : string => {
-    let output = "";
-    switch (n) {
-        case 1:
-            output = output + "Hello";
+const _test37 = () : unit => {
+  const _1 = case37(1);
+  const _2 = case37(2);
+  const _3 = case37(3);
+  const _4 = case37(4);
+  Assert.assert (_1 == "Hello end");
+  Assert.assert (_2 == " World @@@ !!!");
+  Assert.assert (_3 == " @@@ !!!");
+  Assert.assert (_4 == " !!!");
+};
+
+const test37 = _test37();
+
+const case38 = (n : int) : string => {
+  let output = "";
+  switch (n) {
+    case 1: output = output + "Hello";
             break;
-        case 2:
-            output = output + " World";
-            return output;
-        case 3:
-            output = output + " @@@";
-            return output;
-        default:
-            output = output + " !!!";
-            return output;
-    };
-    output = output + " end";
-    return output;
-};
-let _test45 = () : unit => {
-    let _1 = case45(1);
-    let _2 = case45(2);
-    let _3 = case45(3);
-    let _4 = case45(4);
-    assert (_1 == "Hello end");
-    assert (_2 == " World");
-    assert (_3 == " @@@");
-    assert (_4 == " !!!");
-};
-let test45 = _test45();
-
-let case46 = (n : int) : string => {
-    let output = "";
-    switch (n) {
-        case 1:
-            output = output + "Hello";
-            return output;
-        case 2:
-            output = output + " World";
-        case 3:
-            output = output + " @@@";
-        default:
-            output = output + " !!!";
-            return output;
-    };
-    output = output + " end";
-    return output;
-};
-let _test46 = () : unit => {
-    let _1 = case46(1);
-    let _2 = case46(2);
-    let _3 = case46(3);
-    let _4 = case46(4);
-    assert (_1 == "Hello");
-    assert (_2 == " World @@@ !!!");
-    assert (_3 == " @@@ !!!");
-    assert (_4 == " !!!");
-};
-let test46 = _test46();
-
-let case47 = (n : int) : string => {
-    let output = "";
-    switch (n) {
-        case 1:
-            output = output + "Hello";
-            return output;
-        case 2:
-            output = output + " World";
-        case 3:
-            output = output + " @@@";
+    case 2: output = output + " World";
+    case 3: output = output + " @@@";
             break;
-        default:
-            output = output + " !!!";
-            return output;
-    };
-    output = output + " end";
-    return output;
+    default: output = output + " !!!";
+             return output;
+  };
+  output = output + " end";
+  return output;
 };
-let _test47 = () : unit => {
-    let _1 = case47(1);
-    let _2 = case47(2);
-    let _3 = case47(3);
-    let _4 = case47(4);
-    assert (_1 == "Hello");
-    assert (_2 == " World @@@ end");
-    assert (_3 == " @@@ end");
-    assert (_4 == " !!!");
-};
-let test47 = _test47();
 
-let case48 = (n : int) : string => {
-    let output = "";
-    switch (n) {
-        case 1:
-            output = output + "Hello";
-            return output;
-        case 2:
-            output = output + " World";
-        case 3:
-            output = output + " @@@";
-            return output;
-        default:
-            output = output + " !!!";
-            return output;
-    };
-    output = output + " end";
-    return output;
+const _test38 = () : unit => {
+  const _1 = case38(1);
+  const _2 = case38(2);
+  const _3 = case38(3);
+  const _4 = case38(4);
+  Assert.assert (_1 == "Hello end");
+  Assert.assert (_2 == " World @@@ end");
+  Assert.assert (_3 == " @@@ end");
+  Assert.assert (_4 == " !!!");
 };
-let _test48 = () : unit => {
-    let _1 = case48(1);
-    let _2 = case48(2);
-    let _3 = case48(3);
-    let _4 = case48(4);
-    assert (_1 == "Hello");
-    assert (_2 == " World @@@");
-    assert (_3 == " @@@");
-    assert (_4 == " !!!");
-};
-let test48 = _test48();
 
-let case49 = (n : int) : string => {
-    let output = "";
-    switch (n) {
-        case 1:
-            output = output + "Hello";
-            return output;
-        case 2:
-            output = output + " World";
+const test38 = _test38();
+
+const case39 = (n : int) : string => {
+  let output = "";
+  switch (n) {
+    case 1: output = output + "Hello";
             break;
-        case 3:
-            output = output + " @@@";
-        default:
-            output = output + " !!!";
+    case 2: output = output + " World";
+    case 3: output = output + " @@@";
             return output;
-    };
-    output = output + " end";
-    return output;
+    default: output = output + " !!!";
+             return output;
+  };
+  output = output + " end";
+  return output;
 };
-let _test49 = () : unit => {
-    let _1 = case49(1);
-    let _2 = case49(2);
-    let _3 = case49(3);
-    let _4 = case49(4);
-    assert (_1 == "Hello");
-    assert (_2 == " World end");
-    assert (_3 == " @@@ !!!");
-    assert (_4 == " !!!");
-};
-let test49 = _test49();
 
-let case50 = (n : int) : string => {
-    let output = "";
-    switch (n) {
-        case 1:
-            output = output + "Hello";
-            return output;
-        case 2:
-            output = output + " World";
+const _test39 = () : unit => {
+  const _1 = case39(1);
+  const _2 = case39(2);
+  const _3 = case39(3);
+  const _4 = case39(4);
+  Assert.assert (_1 == "Hello end");
+  Assert.assert (_2 == " World @@@");
+  Assert.assert (_3 == " @@@");
+  Assert.assert (_4 == " !!!");
+};
+
+const test39 = _test39();
+
+const case40 = (n : int) : string => {
+  let output = "";
+  switch (n) {
+    case 1: output = output + "Hello";
             break;
-        case 3:
-            output = output + " @@@";
+    case 2: output = output + " World";
             break;
-        default:
-            output = output + " !!!";
+    case 3: output = output + " @@@";
+    default: output = output + " !!!";
             return output;
-    };
-    output = output + " end";
-    return output;
+  };
+  output = output + " end";
+  return output;
 };
-let _test50 = () : unit => {
-    let _1 = case50(1);
-    let _2 = case50(2);
-    let _3 = case50(3);
-    let _4 = case50(4);
-    assert (_1 == "Hello");
-    assert (_2 == " World end");
-    assert (_3 == " @@@ end");
-    assert (_4 == " !!!");
-};
-let test50 = _test50();
 
-let case51 = (n : int) : string => {
-    let output = "";
-    switch (n) {
-        case 1:
-            output = output + "Hello";
-            return output;
-        case 2:
-            output = output + " World";
+const _test40 = () : unit => {
+  const _1 = case40(1);
+  const _2 = case40(2);
+  const _3 = case40(3);
+  const _4 = case40(4);
+  Assert.assert (_1 == "Hello end");
+  Assert.assert (_2 == " World end");
+  Assert.assert (_3 == " @@@ !!!");
+  Assert.assert (_4 == " !!!");
+};
+
+const test40 = _test40();
+
+const case41 = (n : int) : string => {
+  let output = "";
+  switch (n) {
+    case 1: output = output + "Hello";
             break;
-        case 3:
-            output = output + " @@@";
-            return output;
-        default:
-            output = output + " !!!";
-            return output;
-    };
-    output = output + " end";
-    return output;
-};
-let _test51 = () : unit => {
-    let _1 = case51(1);
-    let _2 = case51(2);
-    let _3 = case51(3);
-    let _4 = case51(4);
-    assert (_1 == "Hello");
-    assert (_2 == " World end");
-    assert (_3 == " @@@");
-    assert (_4 == " !!!");
-};
-let test51 = _test51();
-
-let case52 = (n : int) : string => {
-    let output = "";
-    switch (n) {
-        case 1:
-            output = output + "Hello";
-            return output;
-        case 2:
-            output = output + " World";
-            return output;
-        case 3:
-            output = output + " @@@";
-        default:
-            output = output + " !!!";
-            return output;
-    };
-    output = output + " end";
-    return output;
-};
-let _test52 = () : unit => {
-    let _1 = case52(1);
-    let _2 = case52(2);
-    let _3 = case52(3);
-    let _4 = case52(4);
-    assert (_1 == "Hello");
-    assert (_2 == " World");
-    assert (_3 == " @@@ !!!");
-    assert (_4 == " !!!");
-};
-let test52 = _test52();
-
-let case53 = (n : int) : string => {
-    let output = "";
-    switch (n) {
-        case 1:
-            output = output + "Hello";
-            return output;
-        case 2:
-            output = output + " World";
-            return output;
-        case 3:
-            output = output + " @@@";
+    case 2: output = output + " World";
             break;
-        default:
-            output = output + " !!!";
-            return output;
-    };
-    output = output + " end";
-    return output;
+    case 3: output = output + " @@@";
+            break;
+    default: output = output + " !!!";
+             return output;
+  };
+  output = output + " end";
+  return output;
 };
-let _test53 = () : unit => {
-    let _1 = case53(1);
-    let _2 = case53(2);
-    let _3 = case53(3);
-    let _4 = case53(4);
-    assert (_1 == "Hello");
-    assert (_2 == " World");
-    assert (_3 == " @@@ end");
-    assert (_4 == " !!!");
-};
-let test53 = _test53();
 
-let case54 = (n : int) : string => {
-    let output = "";
-    switch (n) {
-        case 1:
-            output = output + "Hello";
-            return output;
-        case 2:
-            output = output + " World";
-            return output;
-        case 3:
-            output = output + " @@@";
-            return output;
-        default:
-            output = output + " !!!";
-            return output;
-    };
-    output = output + " end";
-    return output;
+const _test41 = () : unit => {
+  const _1 = case41(1);
+  const _2 = case41(2);
+  const _3 = case41(3);
+  const _4 = case41(4);
+  Assert.assert (_1 == "Hello end");
+  Assert.assert (_2 == " World end");
+  Assert.assert (_3 == " @@@ end");
+  Assert.assert (_4 == " !!!");
 };
-let _test54 = () : unit => {
-    let _1 = case54(1);
-    let _2 = case54(2);
-    let _3 = case54(3);
-    let _4 = case54(4);
-    assert (_1 == "Hello");
-    assert (_2 == " World");
-    assert (_3 == " @@@");
-    assert (_4 == " !!!");
+
+const test41 = _test41();
+
+const case42 = (n : int) : string => {
+  let output = "";
+  switch (n) {
+    case 1: output = output + "Hello";
+            break;
+    case 2: output = output + " World";
+            break;
+    case 3: output = output + " @@@";
+            return output;
+    default: output = output + " !!!";
+             return output;
+  };
+  output = output + " end";
+  return output;
 };
-let test54 = _test54();
+
+const _test42 = () : unit => {
+  const _1 = case42(1);
+  const _2 = case42(2);
+  const _3 = case42(3);
+  const _4 = case42(4);
+  Assert.assert (_1 == "Hello end");
+  Assert.assert (_2 == " World end");
+  Assert.assert (_3 == " @@@");
+  Assert.assert (_4 == " !!!");
+};
+
+const test42 = _test42();
+
+const case43 = (n : int) : string => {
+  let output = "";
+  switch (n) {
+    case 1: output = output + "Hello";
+            break;
+    case 2: output = output + " World";
+            return output;
+    case 3: output = output + " @@@";
+    default: output = output + " !!!";
+             return output;
+  };
+  output = output + " end";
+  return output;
+};
+
+const _test43 = () : unit => {
+  const _1 = case43(1);
+  const _2 = case43(2);
+  const _3 = case43(3);
+  const _4 = case43(4);
+  Assert.assert (_1 == "Hello end");
+  Assert.assert (_2 == " World");
+  Assert.assert (_3 == " @@@ !!!");
+  Assert.assert (_4 == " !!!");
+};
+
+const test43 = _test43();
+
+const case44 = (n : int) : string => {
+  let output = "";
+  switch (n) {
+    case 1: output = output + "Hello";
+            break;
+    case 2: output = output + " World";
+            return output;
+    case 3: output = output + " @@@";
+            break;
+    default: output = output + " !!!";
+             return output;
+  };
+  output = output + " end";
+  return output;
+};
+
+const _test44 = () : unit => {
+  const _1 = case44(1);
+  const _2 = case44(2);
+  const _3 = case44(3);
+  const _4 = case44(4);
+  Assert.assert (_1 == "Hello end");
+  Assert.assert (_2 == " World");
+  Assert.assert (_3 == " @@@ end");
+  Assert.assert (_4 == " !!!");
+};
+
+const test44 = _test44();
+
+const case45 = (n : int) : string => {
+  let output = "";
+  switch (n) {
+    case 1: output = output + "Hello";
+            break;
+    case 2: output = output + " World";
+            return output;
+    case 3: output = output + " @@@";
+            return output;
+    default: output = output + " !!!";
+             return output;
+  };
+  output = output + " end";
+  return output;
+};
+
+const _test45 = () : unit => {
+  const _1 = case45(1);
+  const _2 = case45(2);
+  const _3 = case45(3);
+  const _4 = case45(4);
+  Assert.assert (_1 == "Hello end");
+  Assert.assert (_2 == " World");
+  Assert.assert (_3 == " @@@");
+  Assert.assert (_4 == " !!!");
+};
+
+const test45 = _test45();
+
+const case46 = (n : int) : string => {
+  let output = "";
+  switch (n) {
+    case 1: output = output + "Hello";
+            return output;
+    case 2: output = output + " World";
+    case 3: output = output + " @@@";
+    default: output = output + " !!!";
+             return output;
+  };
+  output = output + " end";
+  return output;
+};
+
+const _test46 = () : unit => {
+  const _1 = case46(1);
+  const _2 = case46(2);
+  const _3 = case46(3);
+  const _4 = case46(4);
+  Assert.assert (_1 == "Hello");
+  Assert.assert (_2 == " World @@@ !!!");
+  Assert.assert (_3 == " @@@ !!!");
+  Assert.assert (_4 == " !!!");
+};
+
+const test46 = _test46();
+
+const case47 = (n : int) : string => {
+  let output = "";
+  switch (n) {
+    case 1: output = output + "Hello";
+            return output;
+    case 2: output = output + " World";
+    case 3: output = output + " @@@";
+            break;
+    default: output = output + " !!!";
+             return output;
+  };
+  output = output + " end";
+  return output;
+};
+
+const _test47 = () : unit => {
+  const _1 = case47(1);
+  const _2 = case47(2);
+  const _3 = case47(3);
+  const _4 = case47(4);
+  Assert.assert (_1 == "Hello");
+  Assert.assert (_2 == " World @@@ end");
+  Assert.assert (_3 == " @@@ end");
+  Assert.assert (_4 == " !!!");
+};
+
+const test47 = _test47();
+
+const case48 = (n : int) : string => {
+  let output = "";
+  switch (n) {
+    case 1: output = output + "Hello";
+            return output;
+    case 2: output = output + " World";
+    case 3: output = output + " @@@";
+            return output;
+    default: output = output + " !!!";
+             return output;
+  };
+  output = output + " end";
+  return output;
+};
+
+const _test48 = () : unit => {
+  const _1 = case48(1);
+  const _2 = case48(2);
+  const _3 = case48(3);
+  const _4 = case48(4);
+  Assert.assert (_1 == "Hello");
+  Assert.assert (_2 == " World @@@");
+  Assert.assert (_3 == " @@@");
+  Assert.assert (_4 == " !!!");
+};
+
+const test48 = _test48();
+
+const case49 = (n : int) : string => {
+  let output = "";
+  switch (n) {
+    case 1: output = output + "Hello";
+            return output;
+    case 2: output = output + " World";
+            break;
+    case 3: output = output + " @@@";
+    default: output = output + " !!!";
+             return output;
+  };
+  output = output + " end";
+  return output;
+};
+
+const _test49 = () : unit => {
+  const _1 = case49(1);
+  const _2 = case49(2);
+  const _3 = case49(3);
+  const _4 = case49(4);
+  Assert.assert (_1 == "Hello");
+  Assert.assert (_2 == " World end");
+  Assert.assert (_3 == " @@@ !!!");
+  Assert.assert (_4 == " !!!");
+};
+
+const test49 = _test49();
+
+const case50 = (n : int) : string => {
+  let output = "";
+  switch (n) {
+    case 1: output = output + "Hello";
+            return output;
+    case 2: output = output + " World";
+            break;
+    case 3: output = output + " @@@";
+            break;
+    default: output = output + " !!!";
+             return output;
+  };
+  output = output + " end";
+  return output;
+};
+
+const _test50 = () : unit => {
+  const _1 = case50(1);
+  const _2 = case50(2);
+  const _3 = case50(3);
+  const _4 = case50(4);
+  Assert.assert (_1 == "Hello");
+  Assert.assert (_2 == " World end");
+  Assert.assert (_3 == " @@@ end");
+  Assert.assert (_4 == " !!!");
+};
+
+const test50 = _test50();
+
+const case51 = (n : int) : string => {
+  let output = "";
+  switch (n) {
+    case 1: output = output + "Hello";
+            return output;
+    case 2: output = output + " World";
+            break;
+    case 3: output = output + " @@@";
+            return output;
+    default: output = output + " !!!";
+             return output;
+  };
+  output = output + " end";
+  return output;
+};
+
+const _test51 = () : unit => {
+  const _1 = case51(1);
+  const _2 = case51(2);
+  const _3 = case51(3);
+  const _4 = case51(4);
+  Assert.assert (_1 == "Hello");
+  Assert.assert (_2 == " World end");
+  Assert.assert (_3 == " @@@");
+  Assert.assert (_4 == " !!!");
+};
+
+const test51 = _test51();
+
+const case52 = (n : int) : string => {
+  let output = "";
+  switch (n) {
+    case 1: output = output + "Hello";
+            return output;
+    case 2: output = output + " World";
+            return output;
+    case 3: output = output + " @@@";
+    default: output = output + " !!!";
+             return output;
+  };
+  output = output + " end";
+  return output;
+};
+
+const _test52 = () : unit => {
+  const _1 = case52(1);
+  const _2 = case52(2);
+  const _3 = case52(3);
+  const _4 = case52(4);
+  Assert.assert (_1 == "Hello");
+  Assert.assert (_2 == " World");
+  Assert.assert (_3 == " @@@ !!!");
+  Assert.assert (_4 == " !!!");
+};
+
+const test52 = _test52();
+
+const case53 = (n : int) : string => {
+  let output = "";
+  switch (n) {
+    case 1: output = output + "Hello";
+            return output;
+    case 2: output = output + " World";
+            return output;
+    case 3: output = output + " @@@";
+            break;
+    default: output = output + " !!!";
+             return output;
+  };
+  output = output + " end";
+  return output;
+};
+
+const _test53 = () : unit => {
+  const _1 = case53(1);
+  const _2 = case53(2);
+  const _3 = case53(3);
+  const _4 = case53(4);
+  Assert.assert (_1 == "Hello");
+  Assert.assert (_2 == " World");
+  Assert.assert (_3 == " @@@ end");
+  Assert.assert (_4 == " !!!");
+};
+
+const test53 = _test53();
+
+const case54 = (n : int) : string => {
+  let output = "";
+  switch (n) {
+    case 1: output = output + "Hello";
+            return output;
+    case 2: output = output + " World";
+            return output;
+    case 3: output = output + " @@@";
+            return output;
+    default: output = output + " !!!";
+             return output;
+  };
+  output = output + " end";
+  return output;
+};
+
+const _test54 = () : unit => {
+  const _1 = case54(1);
+  const _2 = case54(2);
+  const _3 = case54(3);
+  const _4 = case54(4);
+  Assert.assert (_1 == "Hello");
+  Assert.assert (_2 == " World");
+  Assert.assert (_3 == " @@@");
+  Assert.assert (_4 == " !!!");
+};
+
+const test54 = _test54();
