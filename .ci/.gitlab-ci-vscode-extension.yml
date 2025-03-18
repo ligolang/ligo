@@ -49,7 +49,7 @@ emacs-lsp-client-test:
   stage: tools-check
   tags:
     - gcp-docker
-  image: 29.2-alpine-ci-cask
+  image: silex/emacs:29.2-alpine-ci-cask
   variables:
     EMACS: "emacs-29.2"
   rules:
