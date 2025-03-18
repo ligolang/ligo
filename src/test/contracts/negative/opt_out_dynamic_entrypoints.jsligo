@@ -1,7 +1,6 @@
 type storage =
-  {
-    storage : int;
-    dynamic_entrypoints;
+  { storage : int;
+    dynamic_entrypoints: dynamic_entrypoints
   }
 
 const two = (_u1: unit, _u2: unit) : [list<operation>, unit] => {
@@ -9,5 +8,5 @@ const two = (_u1: unit, _u2: unit) : [list<operation>, unit] => {
   (External `OPT_OUT_ENTRY`)
 }
 
-@entry
+// @entry
 const nope = (_u: unit, _storage: storage) : [list<operation>, storage] => failwith ()
