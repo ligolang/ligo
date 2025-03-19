@@ -2683,8 +2683,11 @@ and strip_E_subscript_expression (node : Ast.subscript_expression wrap)
   match expr with
   | E_int nat ->
     let* obj = strip_expression object_expr in
-    Ok (S.E_subscript (mk_reg node#region (obj, nat)))
-  | _ -> mk_err Invalid_subscript node#region ~hint:"Use a natural number as an index."
+    Ok (S.E_subscript (mk_reg node#region (obj, S.Component nat)))
+  | E_string str ->
+    let* obj = strip_expression object_expr in
+    Ok (S.E_subscript (mk_reg node#region (obj, S.PropertyName str)))
+  | _ -> mk_err Invalid_subscript node#region ~hint:"Use a natural number or a string as an index."
 
 (* Super (expression) *)
 

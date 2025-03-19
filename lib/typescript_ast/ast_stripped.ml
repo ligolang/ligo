@@ -392,7 +392,7 @@ and expr =
   | E_rem_eq of (expr * expr) reg (* x %= y*)
   | E_string of string_literal (* "abcdef" *)
   | E_sub of (expr * expr) reg (* x - y *)
-  | E_subscript of (expr * int_literal) reg (* e[1] *)
+  | E_subscript of (expr * index) reg (* e[1], e["x"] *)
   | E_sub_eq of (expr * expr) reg (* x -= y *)
   | E_template of string_literal (* `abcdef` *)
   | E_ternary of ternary reg (* x ? y : z *)
@@ -401,6 +401,11 @@ and expr =
   | E_update of update_expr reg (* {...x, y : z} *)
   | E_var of variable (* x *)
   | E_xor of (expr * expr) reg (* x ^^ y *)
+
+(* Subscript expressions *)
+and index =
+  | Component of int_literal
+  | PropertyName of string_literal
 
 (* Pattern matching *)
 and match_clause =
