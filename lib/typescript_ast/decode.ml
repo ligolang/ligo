@@ -73,12 +73,16 @@ let child_with_field field node ~err : (_, string Region.reg) result =
     in
     Error Region.{ region; value }
 
-(* Wrapping the fetching of nodes *)
+(* Making errors *)
 
 let pack_err err node =
   let value = Syntax_err.to_string err
   and region = !get_region node in
   Region.{ value; region }
+
+let mk_err err node = Error (pack_err err node)
+
+(* Wrapping the fetching of nodes *)
 
 let first_child_named name node ~err =
   Ts_wrap.first_child_named name node ~msg:(pack_err err node)
@@ -93,9 +97,10 @@ let last_child node ~err = Ts_wrap.last_child node ~msg:(pack_err err node)
 let next_sibling node ~err = Ts_wrap.next_sibling node ~msg:(pack_err err node)
 let prev_sibling node ~err = Ts_wrap.prev_sibling node ~msg:(pack_err err node)
 
-(* Making errors *)
-
-let mk_err err node = Error (pack_err err node)
+let check_first_error_child node =
+  match first_child_named_opt "ERROR" node with
+  | None -> Ok ()
+  | Some error_child -> Error (pack_err Syntax_err.Syntax_error error_child)
 
 (* Decoding literals *)
 
@@ -370,6 +375,7 @@ let dec_enclosed ?(comments = []) node decode opening closing ~open_err ~close_e
     let* child = (* We assume one child *) child_ranked 1 node ~err in
     let* contents = decode child in
     let region = !get_region node in
+    let* () = check_first_error_child node in
     Ok (Wrap.make { opening; contents; closing } region)
 
 let dec_brackets ?comments node decode ~err : ('a brackets, _) result =
@@ -416,6 +422,7 @@ let dec_enclosed_list ?comments node decode opening closing ~open_err ~close_err
     let clauses = collect_named_children node in
     let* contents = list_of_children decode clauses in
     let region = !get_region node in
+    let* () = check_first_error_child node in
     Ok (Wrap.make ~comments { opening; contents; closing } region)
 
 let dec_list_in_braces ?comments node decode ~err : ('a list braces, _) result =
@@ -499,6 +506,7 @@ let dec_enclosed_ne_list
     let error = mk_err err node in
     let* contents = ne_list_of_children decode error clauses in
     let region = !get_region node in
+    let* () = check_first_error_child node in
     Ok (Wrap.make { opening; contents; closing } region)
 
 let dec_ne_list_in_chevrons ?comments node decode ~err : ('a ne_list chevrons, _) result =
@@ -543,6 +551,7 @@ let rec dec_statements ?(comments = []) node : (statements, _) result =
   match get_name node with
   | "ERROR" | "MISSING" | "NULL" -> mk_err Statement node
   | _ ->
+    let* () = check_first_error_child node in
     let children = collect_named_children node in
     wrap_ne_list_opt_of_children ~comments dec_statement children
 
@@ -653,6 +662,7 @@ and dec_export_statement ?(comments = []) node : (export_statement, _) result =
         let* export_declaration = dec_export_declaration after_export node in
         Ok (Export_declaration export_declaration)
     in
+    let* () = check_first_error_child node in
     Ok { kwd_export; export_kind }
 
 and dec_export_type after_export node : (export_type, _) result =
@@ -661,11 +671,13 @@ and dec_export_type after_export node : (export_type, _) result =
   let* export_clause = dec_export_clause export_clause in
   let kwd_from = first_child_named_opt "from" node in
   let* from_clause = make_opt_res (dec_from_clause node) kwd_from in
+  let* () = check_first_error_child node in
   Ok { kwd_type; export_clause; from_clause }
 
 and dec_export_declaration after_export node : (declaration decorated, _) result =
   let decorators = children_named "decorator" node in
   let* declaration = dec_declaration after_export in
+  let* () = check_first_error_child node in
   dec_decorated decorators declaration
 
 and dec_decorated : 'a. ts_forest -> 'a -> ('a decorated, _) result =
@@ -690,17 +702,23 @@ and dec_export_specifier ?(comments = []) node : (export_specifier, _) result =
       let* kwd_as = dec_kwd_as kwd_as in
       Ok (Some (kwd_as, alias))
   in
+  let* () = check_first_error_child node in
   Ok ({ name; alias } : export_specifier)
 
 and dec_module_export_name ?(comments = []) node : (module_export_name, _) result =
   match get_name node with
-  | "identifier" -> Ok (Export_ident (dec_identifier ~comments node))
-  | "string" -> Ok (Export_string (dec_string ~comments node))
+  | "identifier" ->
+    let* () = check_first_error_child node in
+    Ok (Export_ident (dec_identifier ~comments node))
+  | "string" ->
+    let* () = check_first_error_child node in
+    Ok (Export_string (dec_string ~comments node))
   | _ -> mk_err Identifier_or_string node
 
 and dec_from_clause node kwd_from : (from_clause, _) result =
   let* source_field = child_with_field "source" node ~err:File_path in
   let* kwd_from = dec_kwd_from kwd_from in
+  let* () = check_first_error_child node in
   Ok (kwd_from, dec_string source_field)
 
 and dec_namespace_export ?(comments = []) node : (namespace_export, _) result =
@@ -714,6 +732,7 @@ and dec_namespace_export ?(comments = []) node : (namespace_export, _) result =
     let* module_export_name = next_sibling kwd_as ~err:Identifier_or_string in
     let* kwd_as = dec_kwd_as kwd_as in
     let* namespace_name = dec_module_export_name module_export_name in
+    let* () = check_first_error_child node in
     Ok { sym_asterisk; kwd_as; namespace_name }
 
 and dec_export_default after_export node : (export_kind, _) result =
@@ -725,11 +744,13 @@ and dec_export_default after_export node : (export_kind, _) result =
     let* expression = dec_expression value_field in
     let contents = kwd_default, expression in
     let* decorated = dec_decorated decorators contents in
+    let* () = check_first_error_child node in
     Ok (Export_default_expression decorated)
   | Some declaration ->
     let* declaration = dec_declaration declaration in
     let contents = kwd_default, declaration in
     let* decorated = dec_decorated decorators contents in
+    let* () = check_first_error_child node in
     Ok (Export_default_declaration decorated)
 
 (* Import statement *)
@@ -771,6 +792,7 @@ and dec_import_statement ?(comments = []) node : (import_statement, _) result =
           let* source_field = child_with_field "source" node ~err:String in
           Ok (Import_source (dec_string source_field)))
     in
+    let* () = check_first_error_child node in
     Ok { kwd_import; import_kind; import; import_attribute }
 
 and dec_import_clause ?(comments = []) node : (import_clause, _) result =
@@ -782,9 +804,11 @@ and dec_import_clause ?(comments = []) node : (import_clause, _) result =
     (match get_name fst_child with
     | "namespace_import" ->
       let* namespace_import = wrap dec_namespace_import ~comments fst_child in
+      let* () = check_first_error_child node in
       Ok (Import_namespace namespace_import : import_clause)
     | "named_imports" ->
       let* named_imports = dec_named_imports ~comments fst_child in
+      let* () = check_first_error_child node in
       Ok (Import_named named_imports : import_clause)
     | "identifier" ->
       let ident = dec_identifier ~comments fst_child in
@@ -796,6 +820,7 @@ and dec_import_clause ?(comments = []) node : (import_clause, _) result =
           let* next = dec_namespace_or_named_imports next in
           Ok (Some next)
       in
+      let* () = check_first_error_child node in
       Ok (Import_ident (ident, from))
     | _ -> mk_err Namespace_or_named_imports_or_ident fst_child)
 
@@ -803,9 +828,11 @@ and dec_namespace_or_named_imports node : (namespace_or_named_imports, _) result
   match get_name node with
   | "namespace_import" ->
     let* namespace_import = wrap dec_namespace_import node in
+    let* () = check_first_error_child node in
     Ok (Import_namespace namespace_import)
   | "named_imports" ->
     let* named_imports = dec_named_imports node in
+    let* () = check_first_error_child node in
     Ok (Import_named named_imports)
   | _ -> mk_err Namespace_or_named_imports node
 
@@ -820,6 +847,7 @@ and dec_namespace_import ?(comments = []) node : (namespace_import, _) result =
     let* identifier = next_sibling kwd_as ~err:Identifier in
     let* kwd_as = dec_kwd_as kwd_as in
     let identifier = dec_identifier identifier in
+    let* () = check_first_error_child node in
     Ok { sym_asterisk; kwd_as; identifier }
 
 and dec_named_imports ?(comments = []) node : (named_imports, _) result =
@@ -859,6 +887,7 @@ and dec_import_specifier ?(comments = []) node : (import_specifier, _) result =
         let alias = dec_identifier alias_field in
         Ok (Import_spec_alias { name; kwd_as; alias })
     in
+    let* () = check_first_error_child node in
     Ok (import_kind, import_specifier')
 
 and dec_import_require_clause ?(comments = []) node : (import_require_clause, _) result =
@@ -878,6 +907,7 @@ and dec_import_require_clause ?(comments = []) node : (import_require_clause, _)
     let source = dec_string source_field in
     let* sym_rparen = first_child_named ")" node ~err:Right_parenthesis in
     let* sym_rparen = dec_sym_rparen sym_rparen in
+    let* () = check_first_error_child node in
     Ok { ident; sym_equal; kwd_require; sym_lparen; source; sym_rparen }
 
 and dec_import_attribute node : (import_attribute, _) result =
@@ -890,9 +920,11 @@ and dec_import_attribute node : (import_attribute, _) result =
     (match get_name kind_node with
     | "with" ->
       let* kwd_with = dec_kwd_with kind_node in
+      let* () = check_first_error_child node in
       Ok (Import_with (kwd_with, expression))
     | "assert" ->
       let* kwd_assert = dec_kwd_assert kind_node in
+      let* () = check_first_error_child node in
       Ok (Import_assert (kwd_assert, expression))
     | _ -> mk_err Import_attribute node)
 
@@ -912,6 +944,7 @@ and dec_expression_statement ?(comments = []) node : (expression_statement, _) r
   | _ ->
     let comments = comments @ prev_comments node in
     let* child = named_child_ranked 0 node ~err:Expression in
+    let* () = check_first_error_child node in
     dec_expressions ~comments child
 
 and dec_expressions ?(comments = []) (node : ts_tree) : (expressions, _) result =
@@ -920,6 +953,7 @@ and dec_expressions ?(comments = []) (node : ts_tree) : (expressions, _) result 
   | _ ->
     let* expression = dec_expression ~comments node in
     let region = !get_region node in
+    let* () = check_first_error_child node in
     Ok (Wrap.make Nonempty_list.[ expression ] region)
 
 (* Statement blocks *)
@@ -937,6 +971,7 @@ and dec_statement_block ?(comments = []) node : (statement_block, _) result =
     let* contents = wrap_ne_list_opt_of_children dec_statement clauses in
     let region = !get_region node in
     let braces = Wrap.make { opening; contents; closing } region in
+    let* () = check_first_error_child node in
     Ok (Braces braces)
 
 (* If statement *)
@@ -955,6 +990,7 @@ and dec_if_statement ?(comments = []) node : (if_statement, _) result =
     let* consequence = dec_statement consequence_field in
     let alternative_field = child_with_field_opt "alternative" node in
     let* alternative = make_opt_res dec_else_clause alternative_field in
+    let* () = check_first_error_child node in
     Ok { kwd_if; condition; consequence; alternative }
 
 and dec_else_clause ?(comments = []) node : (kwd_else * statement, _) result =
@@ -966,6 +1002,7 @@ and dec_else_clause ?(comments = []) node : (kwd_else * statement, _) result =
     let* statement = next_sibling kwd_else ~err:Statement in
     let* statement = dec_statement statement in
     let* kwd_else = dec_kwd_else ~comments kwd_else in
+    let* () = check_first_error_child node in
     Ok (kwd_else, statement)
 
 (* Switch statement *)
@@ -980,6 +1017,7 @@ and dec_switch_statement ?(comments = []) node : (switch_statement, _) result =
     let* value = dec_parenthesized_expression value_field in
     let* body_field = child_with_field "body" node ~err:Switch_body in
     let* body = dec_switch_body body_field in
+    let* () = check_first_error_child node in
     Ok { kwd_switch; value; body }
 
 and dec_switch_body node : (switch_body, _) result =
@@ -989,9 +1027,11 @@ and dec_switch_entry ?(comments = []) node : (switch_entry, _) result =
   match get_name node with
   | "switch_case" ->
     let* switch_case = wrap dec_switch_case ~comments node in
+    let* () = check_first_error_child node in
     Ok (Switch_case switch_case)
   | "switch_default" ->
     let* default = wrap dec_switch_default ~comments node in
+    let* () = check_first_error_child node in
     Ok (Switch_default default)
   | _ -> mk_err Switch_body node
 
@@ -1007,6 +1047,7 @@ and dec_switch_case ?(comments = []) node : (switch_case, _) result =
     let children = collect_children node in
     let stmt_children = skip_until_colon children in
     let* body = wrap_ne_list_opt_of_children dec_statement stmt_children in
+    let* () = check_first_error_child node in
     Ok { kwd_case; value; body }
 
 and dec_switch_default ?(comments = []) node : (switch_default, _) result =
@@ -1018,6 +1059,7 @@ and dec_switch_default ?(comments = []) node : (switch_default, _) result =
     let* kwd_default = dec_kwd_default ~comments kwd_default in
     let statements = collect_named_children node in
     let* statements = wrap_ne_list_opt_of_children dec_statement statements in
+    let* () = check_first_error_child node in
     Ok { kwd_default; statements }
 
 (* For statement *)
@@ -1044,28 +1086,37 @@ and dec_for_statement ?(comments = []) node : (for_statement, _) result =
     let* sym_rparen = dec_sym_rparen sym_rparen in
     let* body_field = child_with_field "body" node ~err:Statement in
     let* body = dec_statement body_field in
+    let* () = check_first_error_child node in
     Ok { kwd_for; sym_lparen; initializer_; condition; increment; sym_rparen; body }
 
 and dec_for_initializer node : (for_initializer, _) result =
   match get_name node with
   | "lexical_declaration" ->
     let* declaration = wrap dec_lexical_declaration node in
+    let* () = check_first_error_child node in
     Ok (For_lexical_declaration declaration)
   | "variable_declaration" ->
     let* declaration = wrap dec_variable_declaration node in
+    let* () = check_first_error_child node in
     Ok (For_variable_declaration declaration)
   | "expression_statement" ->
     let* expression = dec_expression_statement node in
+    let* () = check_first_error_child node in
     Ok (For_expression_statement expression)
-  | "empty_statement" -> Ok (For_empty_statement (!get_region node))
+  | "empty_statement" ->
+    let* () = check_first_error_child node in
+    Ok (For_empty_statement (!get_region node))
   | _ -> mk_err Initial_assignment node
 
 and dec_for_condition node : (for_condition, _) result =
   match get_name node with
   | "expression_statement" ->
     let* expression = dec_expression_statement node in
+    let* () = check_first_error_child node in
     Ok (For_condition_expression expression)
-  | "empty_statement" -> Ok (For_condition_empty (!get_region node))
+  | "empty_statement" ->
+    let* () = check_first_error_child node in
+    Ok (For_condition_empty (!get_region node))
   | _ -> mk_err Expression_or_semicolon node
 
 (* For-in statement *)
@@ -1124,15 +1175,18 @@ and dec_for_in_statement ?(comments = []) node : (for_in_statement, _) result =
         | _ -> mk_err Let_or_const_or_var kind_field)
     in
     let for_header : for_header = { range; operator; collection } in
+    let* () = check_first_error_child node in
     Ok { kwd_for; kwd_await; sym_lparen; for_header; sym_rparen; body }
 
 and dec_for_operator node : (for_operator, _) result =
   match get_name node with
   | "in" ->
     let* kwd_in = dec_kwd_in node in
+    let* () = check_first_error_child node in
     Ok (In kwd_in)
   | "of" ->
     let* kwd_of = dec_kwd_of node in
+    let* () = check_first_error_child node in
     Ok (Of kwd_of)
   | _ -> mk_err In_or_of node
 
@@ -1150,6 +1204,7 @@ and dec_while_statement ?(comments = []) node : (while_statement, _) result =
     let* condition = dec_parenthesized_expression condition_field in
     let* body_field = child_with_field "body" node ~err:Statement in
     let* body = dec_statement body_field in
+    let* () = check_first_error_child node in
     Ok { kwd_while; condition; body }
 
 (* Do statement *)
@@ -1168,6 +1223,7 @@ and dec_do_statement ?(comments = []) node : (do_statement, _) result =
       child_with_field "condition" node ~err:Parenthesized_expression
     in
     let* condition = dec_parenthesized_expression condition_field in
+    let* () = check_first_error_child node in
     Ok { kwd_do; body; kwd_while; condition }
 
 (* Try statement *)
@@ -1184,6 +1240,7 @@ and dec_try_statement ?(comments = []) node : (try_statement, _) result =
     let* handler = make_opt_res dec_catch_clause handler_field in
     let finalizer_field = child_with_field_opt "finalizer" node in
     let* finalizer = make_opt_res dec_finally_clause finalizer_field in
+    let* () = check_first_error_child node in
     Ok { kwd_try; body; handler; finalizer }
 
 and dec_catch_clause node : (catch_clause, _) result =
@@ -1196,6 +1253,7 @@ and dec_catch_clause node : (catch_clause, _) result =
     let* parameter = make_opt_res (dec_catch_parameter node) parameter_field in
     let* body_field = child_with_field "body" node ~err:Block in
     let* body = dec_statement_block body_field in
+    let* () = check_first_error_child node in
     Ok { kwd_catch; parameter; body }
 
 and dec_catch_parameter node param : (catch_parameter, _) result =
@@ -1206,6 +1264,7 @@ and dec_catch_parameter node param : (catch_parameter, _) result =
   let* type_opt = make_opt_res dec_type_annotation type_field in
   let* sym_rparen = first_child_named ")" node ~err:Right_parenthesis in
   let* sym_rparen = dec_sym_rparen sym_rparen in
+  let* () = check_first_error_child node in
   Ok { sym_lparen; catch_parameter; type_opt; sym_rparen }
 
 and dec_catch_parameter_kind node : (catch_parameter_kind, _) result =
@@ -1213,9 +1272,11 @@ and dec_catch_parameter_kind node : (catch_parameter_kind, _) result =
   | "identifier" -> Ok (Catch_identifier (dec_identifier node))
   | "object_pattern" ->
     let* pattern = dec_object_pattern node in
+    let* () = check_first_error_child node in
     Ok (Catch_object_pattern pattern)
   | "array_pattern" ->
     let* pattern = dec_array_pattern node in
+    let* () = check_first_error_child node in
     Ok (Catch_array_pattern pattern)
   | _ -> mk_err Pattern node
 
@@ -1227,6 +1288,7 @@ and dec_finally_clause node : (finally_clause, _) result =
     let* kwd_finally = dec_kwd_finally kwd_finally in
     let* body_field = child_with_field "body" node ~err:Block in
     let* finalizer_block = dec_statement_block body_field in
+    let* () = check_first_error_child node in
     Ok (kwd_finally, finalizer_block)
 
 (* Type annotation *)
@@ -1239,6 +1301,7 @@ and dec_type_annotation node : (type_annotation, _) result =
     let* sym_colon = dec_sym_colon sym_colon in
     let* type_child = named_child_ranked 0 node ~err:Type_expression in
     let* type_expr = dec_type type_child in
+    let* () = check_first_error_child node in
     Ok (sym_colon, type_expr)
 
 (* With statement *)
@@ -1253,6 +1316,7 @@ and dec_with_statement ?(comments = []) node : (with_statement, _) result =
     let* object_expr = dec_parenthesized_expression object_field in
     let* body_field = child_with_field "body" node ~err:Statement in
     let* body = dec_statement body_field in
+    let* () = check_first_error_child node in
     Ok { kwd_with; object_expr; body }
 
 (* Break statement *)
@@ -1265,6 +1329,7 @@ and dec_break_statement ?(comments = []) node : (break_statement, _) result =
     let* kwd_break = dec_kwd_break ~comments kwd_break in
     let label_field = child_with_field_opt "label" node in
     let stmt_id = make_opt dec_identifier label_field in
+    let* () = check_first_error_child node in
     Ok { kwd_break; stmt_id }
 
 (* Continue statement *)
@@ -1277,6 +1342,7 @@ and dec_continue_statement ?(comments = []) node : (continue_statement, _) resul
     let* kwd_continue = dec_kwd_continue ~comments kwd_continue in
     let label_field = child_with_field_opt "label" node in
     let stmt_id = make_opt dec_identifier label_field in
+    let* () = check_first_error_child node in
     Ok { kwd_continue; stmt_id }
 
 (* Return statement
@@ -1301,12 +1367,17 @@ and dec_return_statement ?(comments = []) node : (return_statement, _) result =
     let* kwd_return = first_child_named "return" node ~err:Return in
     let* kwd_return = dec_kwd_return ~comments kwd_return in
     (match child_ranked_opt 1 node with
-    | None -> Ok { kwd_return; expressions = None }
+    | None ->
+      let* () = check_first_error_child node in
+      Ok { kwd_return; expressions = None }
     | Some snd_child ->
       (match get_name snd_child with
-      | ";" -> Ok { kwd_return; expressions = None }
+      | ";" ->
+        let* () = check_first_error_child node in
+        Ok { kwd_return; expressions = None }
       | _ ->
         let* expressions = dec_expressions snd_child in
+        let* () = check_first_error_child node in
         Ok { kwd_return; expressions = Some expressions }))
 
 (* Throw statement *)
@@ -1319,6 +1390,7 @@ and dec_throw_statement ?(comments = []) node : (throw_statement, _) result =
     let* kwd_throw = dec_kwd_throw ~comments kwd_throw in
     let* expr = child_ranked 1 node ~err:Expression in
     let* expressions = dec_expressions expr in
+    let* () = check_first_error_child node in
     Ok { kwd_throw; expressions }
 
 (* Labeled statement *)
@@ -1333,6 +1405,7 @@ and dec_labeled_statement ?(comments = []) node : (labeled_statement, _) result 
     let* sym_colon = dec_sym_colon sym_colon in
     let* body_field = child_with_field "body" node ~err:Statement in
     let* body = dec_statement body_field in
+    let* () = check_first_error_child node in
     Ok { label; sym_colon; body }
 
 (* DECLARATION
@@ -1396,6 +1469,7 @@ and dec_function_declaration ?(comments = []) node : (function_declaration, _) r
     let* fun_sig = dec_function_signature ~comments node in
     let* body_field = child_with_field "body" node ~err:Block in
     let* body = dec_statement_block body_field in
+    let* () = check_first_error_child node in
     Ok { fun_sig; body }
 
 (* Accessibility modifier *)
@@ -1408,12 +1482,15 @@ and dec_accessibility_modifier node : (accessibility_modifier, _) result =
     (match get_name child with
     | "public" ->
       let* kwd_public = dec_kwd_public child in
+      let* () = check_first_error_child node in
       Ok (Public kwd_public)
     | "private" ->
       let* kwd_private = dec_kwd_private child in
+      let* () = check_first_error_child node in
       Ok (Private kwd_private)
     | "protected" ->
       let* kwd_protected = dec_kwd_protected child in
+      let* () = check_first_error_child node in
       Ok (Protected kwd_protected)
     | _ -> mk_err Public_private_protected node)
 
@@ -1426,6 +1503,7 @@ and dec_override_modifier node : (kwd_override, _) result =
     let* child = first_child_named "override" node ~err:Override in
     let* kwd_override = dec_kwd_override child in
     (* TODO: Test. See [Print_cst] *)
+    let* () = check_first_error_child node in
     Ok kwd_override
 
 (* Return type annotation *)
@@ -1434,12 +1512,15 @@ and dec_call_return_type node : (call_return_type, _) result =
   match get_name node with
   | "type_annotation" ->
     let* annotation = dec_type_annotation node in
+    let* () = check_first_error_child node in
     Ok (Type_annotation annotation : call_return_type)
   | "asserts_annotation" ->
     let* annotation = dec_asserts_annotation node in
+    let* () = check_first_error_child node in
     Ok (Asserts_annotation annotation)
   | "type_predicate_annotation" ->
     let* annotation = wrap dec_type_predicate_annotation node in
+    let* () = check_first_error_child node in
     Ok (Type_predicate_annotation annotation)
   | _ -> mk_err Type_expression node
 
@@ -1450,6 +1531,7 @@ and dec_asserts_annotation node : (asserts_annotation, _) result =
   | "ERROR" | "MISSING" | "NULL" -> mk_err Asserts_annotation node
   | _ ->
     let* asserts = first_child_named "asserts" node ~err:Asserts in
+    let* () = check_first_error_child node in
     dec_asserts asserts
 
 and dec_asserts node : (asserts_annotation, _) result =
@@ -1462,10 +1544,14 @@ and dec_asserts node : (asserts_annotation, _) result =
     (match get_name child with
     | "type_predicate" ->
       let* predicate = wrap dec_type_predicate child in
+      let* () = check_first_error_child node in
       Ok (Assert_predicate (kwd_asserts, predicate))
-    | "identifier" -> Ok (Assert_type (kwd_asserts, dec_identifier child))
+    | "identifier" ->
+      let* () = check_first_error_child node in
+      Ok (Assert_type (kwd_asserts, dec_identifier child))
     | "this" ->
       let* kwd_this = dec_kwd_this child in
+      let* () = check_first_error_child node in
       Ok (Assert_this (kwd_asserts, kwd_this))
     | _ -> mk_err Asserted child)
 
@@ -1476,6 +1562,7 @@ and dec_type_predicate_annotation ?comments node : (type_predicate, _) result =
   | "ERROR" | "MISSING" | "NULL" -> mk_err Type_predicate node
   | _ ->
     let* predicate = child_ranked 1 node ~err:Type_predicate in
+    let* () = check_first_error_child node in
     dec_type_predicate ?comments predicate
 
 (* Type predicate *)
@@ -1490,18 +1577,22 @@ and dec_type_predicate ?(comments = []) node : (type_predicate, _) result =
     let* kwd_is = dec_kwd_is kwd_is in
     let* type_field = child_with_field "type" node ~err:Type_expression in
     let* type_expr = dec_type type_field in
+    let* () = check_first_error_child node in
     Ok { name; kwd_is; type_expr }
 
 and dec_type_predicate_name ?(comments = []) node : (type_predicate_name, _) result =
   match get_name node with
   | "identifier" ->
     let ident = dec_identifier ~comments node in
+    let* () = check_first_error_child node in
     Ok (Type_predicate_identifier ident)
   | "this" ->
     let* kwd_this = dec_kwd_this ~comments node in
+    let* () = check_first_error_child node in
     Ok (Type_predicate_this kwd_this)
   | _ ->
     let* type_expr = dec_predefined_type ~comments node in
+    let* () = check_first_error_child node in
     Ok (Type_predicate_type type_expr)
 
 (* Predefined type *)
@@ -1527,33 +1618,43 @@ and dec_predefined_type ?(comments = []) node : (predefined_type, _) result =
       (match get_name child with
       | "any" ->
         let* kwd_any = dec_kwd_any ~comments child in
+        let* () = check_first_error_child node in
         Ok (T_any kwd_any)
       | "number" ->
         let* kwd_number = dec_kwd_number ~comments child in
+        let* () = check_first_error_child node in
         Ok (T_number kwd_number)
       | "boolean" ->
         let* kwd_boolean = dec_kwd_boolean ~comments child in
+        let* () = check_first_error_child node in
         Ok (T_boolean kwd_boolean)
       | "string" ->
         let* kwd_string = dec_kwd_string ~comments child in
+        let* () = check_first_error_child node in
         Ok (T_string kwd_string)
       | "symbol" ->
         let* kwd_symbol = dec_kwd_symbol ~comments child in
+        let* () = check_first_error_child node in
         Ok (T_symbol kwd_symbol)
       | "unique symbol" ->
         let* kwd_unique_symbol = dec_kwd_unique_symbol ~comments child in
+        let* () = check_first_error_child node in
         Ok (T_unique_symbol kwd_unique_symbol)
       | "void" ->
         let* kwd_void = dec_kwd_void ~comments child in
+        let* () = check_first_error_child node in
         Ok (T_void kwd_void)
       | "unknown" ->
         let* kwd_unknown = dec_kwd_unknown ~comments child in
+        let* () = check_first_error_child node in
         Ok (T_unknown kwd_unknown)
       | "never" ->
         let* kwd_never = dec_kwd_never ~comments child in
+        let* () = check_first_error_child node in
         Ok (T_never kwd_never)
       | "object" ->
         let* kwd_object = dec_kwd_object ~comments child in
+        let* () = check_first_error_child node in
         Ok (T_object kwd_object)
       | _ -> mk_err Predefined_type child))
 
@@ -1568,12 +1669,15 @@ and dec_decorator ?(comments = []) node : (decorator, _) result =
     | "identifier" -> Ok (Decorator_identifier (dec_identifier ~comments child))
     | "member_expression" ->
       let* member_expression = wrap dec_decorator_member_expression ~comments child in
+      let* () = check_first_error_child node in
       Ok (Decorator_member_expression member_expression)
     | "call_expression" ->
       let* call_expression = wrap dec_decorator_call_expression ~comments child in
+      let* () = check_first_error_child node in
       Ok (Decorator_call_expression call_expression)
     | "parenthesized_expression" ->
       let* expression = dec_decorator_parenthesized_expression ~comments child in
+      let* () = check_first_error_child node in
       Ok (Decorator_parenthesized_expression expression)
     | _ -> mk_err Decorator child)
 
@@ -1589,15 +1693,19 @@ and dec_decorator_member_expression ?(comments = []) node
     let* sym_dot = dec_sym_dot sym_dot in
     let* property_field = child_with_field "property" node ~err:Property_identifier in
     let property = dec_identifier property_field in
+    let* () = check_first_error_child node in
     Ok { object_expr; sym_dot; property }
 
 and dec_object_member_expression ?(comments = []) node
     : (object_member_expression, _) result
   =
   match get_name node with
-  | "identifier" -> Ok (Object_name (dec_identifier ~comments node))
+  | "identifier" ->
+     let* () = check_first_error_child node in
+     Ok (Object_name (dec_identifier ~comments node))
   | _ ->
     let* member_expression = wrap dec_decorator_member_expression ~comments node in
+    let* () = check_first_error_child node in
     Ok (Qualified_member_expression member_expression : object_member_expression)
 
 and dec_decorator_call_expression ?(comments = []) node
@@ -1612,13 +1720,17 @@ and dec_decorator_call_expression ?(comments = []) node
     let* type_arguments = make_opt_res dec_type_arguments type_arguments_field in
     let* arguments_field = child_with_field "arguments" node ~err:Arguments in
     let* arguments = dec_arguments arguments_field in
+    let* () = check_first_error_child node in
     Ok { function_; type_arguments; arguments }
 
 and dec_function_or_property ?(comments = []) node : (function_or_property, _) result =
   match get_name node with
-  | "identifier" -> Ok (Function_name (dec_identifier ~comments node))
+  | "identifier" ->
+    let* () = check_first_error_child node in
+    Ok (Function_name (dec_identifier ~comments node))
   | "member_expression" ->
     let* member_expression = wrap dec_decorator_member_expression ~comments node in
+    let* () = check_first_error_child node in
     Ok (Qualified_member_expression member_expression)
   | _ -> mk_err Decorator_call node
 
@@ -1632,9 +1744,11 @@ and decode_decorator_in_parens node =
   | "identifier" -> Ok (Parenthesized_ident (dec_identifier node))
   | "member_expression" ->
     let* member_expression = wrap dec_decorator_member_expression node in
+    let* () = check_first_error_child node in
     Ok (Parenthesized_member member_expression)
   | _ ->
     let* call_expression = wrap dec_decorator_call_expression node in
+    let* () = check_first_error_child node in
     Ok (Parenthesized_call call_expression)
 
 (* Type arguments *)
@@ -1652,9 +1766,11 @@ and dec_argument ?comments node : (argument, _) result =
   | "ERROR" | "MISSING" | "NULL" -> mk_err Argument node
   | "spread_element" ->
     let* spread = wrap dec_spread_element node in
+    let* () = check_first_error_child node in
     Ok (Spread_element spread)
   | _ ->
     let* expression = dec_expression ?comments node in
+    let* () = check_first_error_child node in
     Ok (Expression expression : argument)
 
 and dec_spread_element ?(comments = []) node : (spread_element, _) result =
@@ -1665,6 +1781,7 @@ and dec_spread_element ?(comments = []) node : (spread_element, _) result =
     let* sym_ellipsis = dec_sym_ellipsis ~comments sym_ellipsis in
     let* expression = named_child_ranked 0 node ~err:Expression in
     let* expression = dec_expression expression in
+    let* () = check_first_error_child node in
     Ok (sym_ellipsis, expression)
 
 (* Generator function declaration (see function declaration) *)
@@ -1678,6 +1795,7 @@ and dec_generator_function_declaration ?(comments = []) node
     let* fun_decl = dec_function_declaration ~comments node in
     let* sym_asterisk = first_child_named "*" node ~err:Asterisk in
     let* sym_asterisk = dec_sym_asterisk sym_asterisk in
+    let* () = check_first_error_child node in
     Ok (sym_asterisk, fun_decl)
 
 (* Class declaration (see [dec_class]) *)
@@ -1699,6 +1817,7 @@ and dec_class_declaration ?(comments = []) node : (class_declaration, _) result 
     let* class_heritage = make_opt_res dec_class_heritage heritage_child in
     let* body_field = child_with_field "body" node ~err:Class_body in
     let* body = dec_class_body body_field in
+    let* () = check_first_error_child node in
     Ok
       ({ decorators; kwd_class; name; type_parameters; class_heritage; body }
         : class_declaration)
@@ -1713,9 +1832,11 @@ and dec_class_heritage node : (class_heritage, _) result =
       let* extends_clause = dec_extends_clause first_child in
       let implements_clause = first_child_named_opt "implements_clause" node in
       let* implements_clause = make_opt_res dec_implements_clause implements_clause in
+      let* () = check_first_error_child node in
       Ok (Extends_clause (extends_clause, implements_clause))
     | "implements_clause" ->
       let* implements_clause = dec_implements_clause first_child in
+      let* () = check_first_error_child node in
       Ok (Implements_clause implements_clause)
     | _ -> mk_err Extends_or_implements first_child)
 
@@ -1763,6 +1884,7 @@ and dec_extends_clause node : (extends_clause, _) result =
       | [] -> mk_err Extends_clause node
       | clause :: clauses -> Ok Nonempty_list.(clause :: clauses)
     in
+    let* () = check_first_error_child node in
     Ok (kwd_extends, extends_clauses)
 
 and dec_implements_clause node : (implements_clause, _) result =
@@ -1774,6 +1896,7 @@ and dec_implements_clause node : (implements_clause, _) result =
     let raw_clauses = collect_named_children node in
     let error = mk_err Implements_clause node in
     let* type_exprs = ne_list_of_children dec_type error raw_clauses in
+    let* () = check_first_error_child node in
     Ok (kwd_implements, type_exprs)
 
 and dec_class_body ?(comments = []) node : (class_body, _) result =
@@ -1795,6 +1918,7 @@ and dec_class_body ?(comments = []) node : (class_body, _) result =
     let contents = List.map ~f:dec_class_member @@ List.rev pairs in
     let* contents = Result.all contents in
     let region = !get_region node in
+    let* () = check_first_error_child node in
     Ok (Braces (Wrap.make { opening; contents; closing } region))
 
 and dec_class_member ?(comments = []) (decorators, node) : (class_member, _) result =
@@ -1802,22 +1926,28 @@ and dec_class_member ?(comments = []) (decorators, node) : (class_member, _) res
   | "method_definition" ->
     let* decorators = list_of_children dec_decorator decorators in
     let* definition = wrap dec_method_definition ~comments node in
+    let* () = check_first_error_child node in
     (* Not ideal *)
     Ok (Method_definition (decorators, definition))
   | "method_signature" ->
     let* signature = wrap dec_method_signature node in
+    let* () = check_first_error_child node in
     Ok (Method_signature signature : class_member)
   | "class_static_block" ->
     let* static_block = dec_class_static_block node in
+    let* () = check_first_error_child node in
     Ok (Call_static_block static_block)
   | "abstract_method_signature" ->
     let* signature = wrap dec_abstract_method_signature node in
+    let* () = check_first_error_child node in
     Ok (Abstract_method_signature signature)
   | "index_signature" ->
     let* signature = wrap dec_index_signature node in
+    let* () = check_first_error_child node in
     Ok (Index_signature signature : class_member)
   | "public_field_definition" ->
     let* definition = wrap dec_public_field_definition node in
+    let* () = check_first_error_child node in
     Ok (Public_field_definition definition)
   | _ -> mk_err Class_member node
 
@@ -1830,6 +1960,7 @@ and dec_method_definition ?(comments = []) node : (method_definition, _) result 
     let* signature = wrap dec_method_signature ~comments node in
     let* body_field = child_with_field "body" node ~err:Block in
     let* body = dec_statement_block body_field in
+    let* () = check_first_error_child node in
     Ok { signature; body }
 
 (* Method signature *)
@@ -1849,6 +1980,7 @@ and dec_method_signature ?(comments = []) node : (method_signature, _) result =
     let sym_qmark = first_child_named_opt "?" node in
     let* optional = make_opt_res dec_sym_qmark sym_qmark in
     let* call_sig = dec_call_signature node in
+    let* () = check_first_error_child node in
     Ok { access; scope; kwd_async; set_get_all; name; optional; call_sig }
 
 (* Method scope *)
@@ -1860,6 +1992,7 @@ and dec_method_scope node : (method_scope, _) result =
   let* kwd_override = make_opt_res dec_override_modifier override_modifier in
   let kwd_readonly = first_child_named_opt "readonly" node in
   let* kwd_readonly = make_opt_res dec_kwd_readonly kwd_readonly in
+  let* () = check_first_error_child node in
   Ok { kwd_static; kwd_override; kwd_readonly }
 
 (* Class static block *)
@@ -1874,6 +2007,7 @@ and dec_class_static_block ?(comments = []) node
     let* kwd_static = dec_kwd_static ~comments kwd_static in
     let* body_field = child_with_field "body" node ~err:Block in
     let* block = dec_statement_block body_field in
+    let* () = check_first_error_child node in
     Ok (kwd_static, block)
 
 (* Abstract method signature *)
@@ -1897,6 +2031,7 @@ and dec_abstract_method_signature ?(comments = []) node
     let sym_qmark = first_child_named_opt "?" node in
     let* optional = make_opt_res dec_sym_qmark sym_qmark in
     let* call_sig = dec_call_signature node in
+    let* () = check_first_error_child node in
     Ok { access; kwd_abstract; kwd_override; set_get_all; name; optional; call_sig }
 
 (* Call signature *)
@@ -1922,6 +2057,7 @@ and dec_call_signature ?(comments = []) node : (call_signature wrap, _) result =
     let return_type_field = child_with_field_opt "return_type" node in
     let* return_type = make_opt_res dec_call_return_type return_type_field in
     let call_sig : call_signature = { type_parameters; parameters; return_type } in
+    let* () = check_first_error_child node in
     Ok (Wrap.make call_sig region)
 
 (* Index signature *)
@@ -1964,6 +2100,7 @@ and dec_index_signature ?(comments = []) node : (index_signature, _) result =
     let region = !get_region node in
     let brackets = { opening; contents = range; closing } in
     let range = Brackets (Wrap.make brackets region) in
+    let* () = check_first_error_child node in
     Ok { sign; range; annotation }
 
 and dec_mapped_type_clause node : (mapped_type_clause, _) result =
@@ -1986,6 +2123,7 @@ and dec_mapped_type_clause node : (mapped_type_clause, _) result =
         let* kwd_as = dec_kwd_as kwd_as in
         Ok (Some (kwd_as, type_expr))
     in
+    let* () = check_first_error_child node in
     Ok { name; kwd_in; type_expr; alias }
 
 and dec_omitting_type_annotation node : (symbol * type_expr, _) result =
@@ -1996,6 +2134,7 @@ and dec_omitting_type_annotation node : (symbol * type_expr, _) result =
     let* sym_kind = dec_sym_omitting sym_kind in
     let* type_child = named_child_ranked 0 node ~err:Type_expression in
     let* type_expr = dec_type type_child in
+    let* () = check_first_error_child node in
     Ok (sym_kind, type_expr)
 
 and dec_adding_type_annotation node : (symbol * type_expr, _) result =
@@ -2006,6 +2145,7 @@ and dec_adding_type_annotation node : (symbol * type_expr, _) result =
     let* sym_kind = dec_sym_adding sym_kind in
     let* type_child = named_child_ranked 0 node ~err:Type_expression in
     let* type_expr = dec_type type_child in
+    let* () = check_first_error_child node in
     Ok (sym_kind, type_expr)
 
 and dec_opting_type_annotation node : (symbol * type_expr, _) result =
@@ -2016,21 +2156,26 @@ and dec_opting_type_annotation node : (symbol * type_expr, _) result =
     let* sym_kind = dec_sym_opting sym_kind in
     let* type_child = named_child_ranked 0 node ~err:Type_expression in
     let* type_expr = dec_type type_child in
+    let* () = check_first_error_child node in
     Ok (sym_kind, type_expr)
 
 and dec_index_annotation node : (index_annotation, _) result =
   match get_name node with
   | "type_annotation" ->
     let* annotation = dec_type_annotation node in
+    let* () = check_first_error_child node in
     Ok (Type_annotation annotation)
   | "omitting_type_annotation" ->
     let* annotation = dec_omitting_type_annotation node in
+    let* () = check_first_error_child node in
     Ok (Omitting_type_annotation annotation)
   | "adding_type_annotation" ->
     let* annotation = dec_adding_type_annotation node in
+    let* () = check_first_error_child node in
     Ok (Adding_type_annotation annotation)
   | "opting_type_annotation" ->
     let* annotation = dec_opting_type_annotation node in
+    let* () = check_first_error_child node in
     Ok (Opting_type_annotation annotation)
   | _ -> mk_err Type_of_index_signature node
 
@@ -2038,9 +2183,11 @@ and dec_sign node : (sign, _) result =
   match get_name node with
   | "+" ->
     let* sym_plus = dec_sym_plus node in
+    let* () = check_first_error_child node in
     Ok (Plus sym_plus)
   | "-" ->
     let* sym_minus = dec_sym_minus node in
+    let* () = check_first_error_child node in
     Ok (Minus sym_minus)
   | _ -> mk_err Plus_or_minus node
 
@@ -2065,6 +2212,7 @@ and dec_public_field_definition ?(comments = []) node
     let type_field = child_with_field_opt "type" node in
     let* type_ = make_opt_res dec_type_annotation type_field in
     let* default = mk_child_initializer_opt node in
+    let* () = check_first_error_child node in
     Ok { decorators; access; kwd_declare; scope; name; mode; type_; default }
 
 and dec_field_mode_opt node : (field_mode option, _) result =
@@ -2072,12 +2220,16 @@ and dec_field_mode_opt node : (field_mode option, _) result =
   match sym_qmark with
   | Some sym_qmark ->
     let* sym_qmark = dec_sym_qmark sym_qmark in
+    let* () = check_first_error_child node in
     Ok (Some (Optional sym_qmark))
   | None ->
     (match first_child_named_opt "!" node with
-    | None -> Ok None
+     | None ->
+        let* () = check_first_error_child node in
+        Ok None
     | Some sym_emark ->
       let* sym_emark = dec_sym_emark sym_emark in
+      let* () = check_first_error_child node in
       Ok (Some (Definite_assert sym_emark)))
 
 and dec_field_scope node : (field_scope, _) result =
@@ -2091,6 +2243,7 @@ and dec_field_scope node : (field_scope, _) result =
   let* kwd_readonly = make_opt_res dec_kwd_readonly kwd_readonly in
   let kwd_accessor = first_child_named_opt "accessor" node in
   let* kwd_accessor = make_opt_res dec_kwd_accessor kwd_accessor in
+  let* () = check_first_error_child node in
   Ok { kwd_static; kwd_override; kwd_readonly; kwd_abstract; kwd_accessor }
 
 (* Lexical declaration (see [dec_variable_declaration]) *)
@@ -2113,6 +2266,7 @@ and dec_lexical_declaration ?(comments = []) node : (lexical_declaration, _) res
         Ok (Const kwd_const)
       | _ -> mk_err Let_or_const kind_field
     in
+    let* () = check_first_error_child node in
     Ok { kind; decls }
 
 (* Variable declaration (see [dec_lexical_declaration]) *)
@@ -2127,6 +2281,7 @@ and dec_variable_declaration ?(comments = []) node : (variable_declaration, _) r
     let var_decls = children_named "variable_declarator" node in
     let error = mk_err Variable_declaration node in
     let* var_decls = ne_list_of_children dec_variable_declarator error var_decls in
+    let* () = check_first_error_child node in
     Ok (kwd_var, var_decls)
 
 and dec_variable_declarator ?(comments = []) node : (variable_declarator, _) result =
@@ -2143,19 +2298,24 @@ and dec_variable_declarator ?(comments = []) node : (variable_declarator, _) res
       let* var_type = make_opt_res dec_type_annotation type_field in
       let* default = mk_child_initializer_opt node in
       let decl = { var_names; var_type; default } in
+      let* () = check_first_error_child node in
       Ok (Var_decl (Wrap.make decl (!get_region node)))
     | Some sym_qmark ->
       let identifier = dec_identifier ~comments name_field in
       let* sym_qmark = dec_sym_qmark sym_qmark in
       let* type_field = child_with_field "type" node ~err:Type_annotation in
       let* var_type = dec_type_annotation type_field in
+      let* () = check_first_error_child node in
       Ok (Var_decl_assertion (identifier, sym_qmark, var_type)))
 
 and dec_lhs_pattern ?comments node : (lhs_pattern, _) result =
   match get_name node with
-  | "identifier" -> Ok (Decl_ident (dec_identifier ?comments node))
+  | "identifier" ->
+     let* () = check_first_error_child node in
+     Ok (Decl_ident (dec_identifier ?comments node))
   | _ ->
     let* pattern = dec_destructuring_pattern ?comments node in
+    let* () = check_first_error_child node in
     Ok (Decl_pattern pattern)
 
 (* Function signature (See [dec_function_declaration]) *)
@@ -2174,6 +2334,7 @@ and dec_function_signature ?(comments = []) node : (function_signature, _) resul
   let* name_field = child_with_field "name" node ~err:Function_name in
   let name = dec_identifier name_field in
   let* call_sig = dec_call_signature node in
+  let* () = check_first_error_child node in
   Ok { kwd_async; kwd_function; name; call_sig }
 
 (* Formal parameters *)
@@ -2195,6 +2356,7 @@ and dec_required_parameter ?(comments = []) node : (formal_parameter, _) result 
   let type_field = child_with_field_opt "type" node in
   let* type_opt = make_opt_res dec_type_annotation type_field in
   let* default = mk_child_initializer_opt node in
+  let* () = check_first_error_child node in
   Ok { parameter_name; optional; type_opt; default }
 
 and dec_optional_parameter ?(comments = []) node : (formal_parameter, _) result =
@@ -2205,6 +2367,7 @@ and dec_optional_parameter ?(comments = []) node : (formal_parameter, _) result 
   let type_field = child_with_field_opt "type" node in
   let* type_opt = make_opt_res dec_type_annotation type_field in
   let* default = mk_child_initializer_opt node in
+  let* () = check_first_error_child node in
   Ok { parameter_name; optional; type_opt; default }
 
 and dec_parameter_name ?(comments = []) node : (parameter_name, _) result =
@@ -2219,28 +2382,35 @@ and dec_parameter_name ?(comments = []) node : (parameter_name, _) result =
   let* kwd_readonly = make_opt_res dec_kwd_readonly kwd_readonly in
   let* pattern_field = child_with_field "pattern" node ~err:Pattern in
   let* pattern = dec_parameter_pattern ~comments pattern_field (* Not ideal *) in
+  let* () = check_first_error_child node in
   Ok { decorators; access; kwd_override; kwd_readonly; pattern }
 
 and dec_parameter_pattern ?(comments = []) node : (parameter_pattern, _) result =
   match get_name node with
   | "this" ->
     let* kwd_this = dec_kwd_this ~comments node in
+    let* () = check_first_error_child node in
     Ok (Parameter_this kwd_this)
   | _ ->
     let* pattern = dec_pattern ~comments node in
+    let* () = check_first_error_child node in
     Ok (Parameter_pattern pattern)
 
 and mk_child_initializer_opt node : ((sym_equal * expression) option, _) result =
   match first_child_named_opt "=" node with
-  | None -> Ok None
+  | None ->
+    let* () = check_first_error_child node in
+    Ok None
   | Some sym_equal ->
     let* init = mk_child_initializer sym_equal node in
+    let* () = check_first_error_child node in
     Ok (Some init)
 
 and mk_child_initializer sym_equal node : (sym_equal * expression, _) result =
   let* sym_equal = dec_sym_equal sym_equal in
   let* value_field = child_with_field "value" node ~err:Expression in
   let* expression = dec_expression value_field in
+  let* () = check_first_error_child node in
   Ok (sym_equal, expression)
 
 (* Abstract class declaration
@@ -2272,6 +2442,7 @@ and dec_abstract_class_declaration ?(comments = []) node
     let* class_heritage = make_opt_res dec_class_heritage heritage_child in
     let* body_field = child_with_field "body" node ~err:Class_body in
     let* body = dec_class_body body_field in
+    let* () = check_first_error_child node in
     Ok
       { decorators; kwd_abstract; kwd_class; name; type_parameters; class_heritage; body }
 
@@ -2288,15 +2459,21 @@ and dec_module_declaration ?(comments = []) node : (module_declaration, _) resul
     let* module_name = dec_module_name name_field in
     let body_field = child_with_field_opt "body" node in
     let* module_body = make_opt_res dec_statement_block body_field in
+    let* () = check_first_error_child node in
     Ok { kwd_module; module_name; module_body }
 
 and dec_module_name node : (module_name, _) result =
   match get_name node with
-  | "string" -> Ok (Module_string (dec_string node))
-  | "identifier" -> Ok (Module_ident (dec_identifier node))
+  | "string" ->
+    let* () = check_first_error_child node in
+    Ok (Module_string (dec_string node))
+  | "identifier" ->
+    let* () = check_first_error_child node in
+    Ok (Module_ident (dec_identifier node))
   | "nested_identifier" ->
     let* nested = dec_nested_identifier node in
     let nested = Wrap.make nested (!get_region node) in
+    let* () = check_first_error_child node in
     Ok (Module_nested nested)
   | _ -> mk_err Module_name node
 
@@ -2313,6 +2490,7 @@ and dec_internal_module ?(comments = []) node : (internal_module, _) result =
     let* module_name = dec_module_name name_field in
     let body_field = child_with_field_opt "body" node in
     let* module_body = make_opt_res dec_statement_block body_field in
+    let* () = check_first_error_child node in
     Ok { kwd_namespace; module_name; module_body }
 
 (* Type alias declaration *)
@@ -2332,6 +2510,7 @@ and dec_type_alias_declaration ?(comments = []) node : (type_alias_declaration, 
     let* type_parameters = make_opt_res dec_type_parameters type_parameters_field in
     let* value_field = child_with_field "value" node ~err:Type_expression in
     let* type_expr = dec_type value_field in
+    let* () = check_first_error_child node in
     Ok { kwd_type; name; type_parameters; sym_equal; type_expr }
 
 (* Type parameters *)
@@ -2353,6 +2532,7 @@ and dec_type_parameter ?(comments = []) node : (type_parameter wrap, _) result =
     let value_field = child_with_field_opt "value" node in
     let* default_type = make_opt_res dec_default_type value_field in
     let type_parameter = { kwd_const; name; constraint_expr; default_type } in
+    let* () = check_first_error_child node in
     Ok (Wrap.make type_parameter (!get_region node))
 
 and dec_type_identifier ?comments node : type_identifier = dec_identifier ?comments node
@@ -2365,6 +2545,7 @@ and dec_constraint node : (kwd_extends * type_expr, _) result =
     let* kwd_extends = dec_kwd_extends kwd_extends in
     let* type_child = child_ranked 1 node ~err:Type_expression in
     let* type_expr = dec_type type_child in
+    let* () = check_first_error_child node in
     Ok (kwd_extends, type_expr)
 
 and dec_default_type node : (sym_equal * type_expr, _) result =
@@ -2375,6 +2556,7 @@ and dec_default_type node : (sym_equal * type_expr, _) result =
     let* sym_equal = dec_sym_equal sym_equal in
     let* type_node = child_ranked 1 node ~err:Type_expression in
     let* type_expr = dec_type type_node in
+    let* () = check_first_error_child node in
     Ok (sym_equal, type_expr)
 
 (* Enum declaration *)
@@ -2391,6 +2573,7 @@ and dec_enum_declaration ?(comments = []) node : (enum_declaration, _) result =
     let name = dec_identifier name_field in
     let* body_field = child_with_field "body" node ~err:Enumeration in
     let* body = dec_enum_entries body_field in
+    let* () = check_first_error_child node in
     Ok { kwd_const; kwd_enum; name; body }
 
 and dec_enum_entries node : (enum_body list braces, _) result =
@@ -2401,9 +2584,11 @@ and dec_enum_body ?(comments = []) node : (enum_body, _) result =
   | "ERROR" | "MISSING" | "NULL" -> mk_err Enumeration_name node
   | "enum_assignment" ->
     let* assignment = wrap dec_enum_assignment ~comments node in
+    let* () = check_first_error_child node in
     Ok (Enum_assignment assignment)
   | _ ->
     let* property = dec_property_name ~comments node in
+    let* () = check_first_error_child node in
     Ok (Enum_name property)
 
 and dec_enum_assignment ?comments node : (enum_assignment, _) result =
@@ -2414,21 +2599,31 @@ and dec_enum_assignment ?comments node : (enum_assignment, _) result =
     let* name = dec_property_name ?comments name_field in
     let* sym_equal = first_child_named "=" node ~err:Equal in
     let* default = mk_child_initializer sym_equal node in
+    let* () = check_first_error_child node in
     Ok { name; default }
 
 (* Property names *)
 
 and dec_property_name ?(comments = []) node : (property_name, _) result =
   match get_name node with
-  | "property_identifier" -> Ok (Property_identifier (dec_identifier ~comments node))
+  | "property_identifier" ->
+    let* () = check_first_error_child node in
+    let ident = dec_identifier ~comments node in
+    Ok (Property_identifier ident : property_name)
   | "private_property_identifier" ->
-    Ok (Private_property_identifier (dec_private_property_identifier ~comments node))
-  | "string" -> Ok (String (dec_string ~comments node))
+    let* () = check_first_error_child node in
+    let ident = dec_private_property_identifier ~comments node in
+    Ok (Private_property_identifier ident : property_name)
+  | "string" ->
+    let* () = check_first_error_child node in
+    Ok (String (dec_string ~comments node))
   | "number" ->
     let* number = dec_number ~comments node in
+    let* () = check_first_error_child node in
     Ok (Number number)
   | "computed_property_name" ->
     let* expression = dec_computed_property_name ~comments node in
+    let* () = check_first_error_child node in
     Ok (Computed_property_name expression)
   | _ -> mk_err Property_name node
 
@@ -2454,6 +2649,7 @@ and dec_interface_declaration ?(comments = []) node : (interface_declaration, _)
     let* extends = make_opt_res dec_extends_type_clause extends_type_clause in
     let* body_field = child_with_field "body" node ~err:Interface_body in
     let* body = dec_object_type body_field in
+    let* () = check_first_error_child node in
     Ok { kwd_interface; name; type_parameters; extends; body }
 
 and dec_extends_type_clause node : (extends_type_clause, _) result =
@@ -2465,16 +2661,21 @@ and dec_extends_type_clause node : (extends_type_clause, _) result =
     let named_children = collect_named_children node in
     let error = mk_err Extends node in
     let* extensions = ne_list_of_children dec_type_extension error named_children in
+    let* () = check_first_error_child node in
     Ok { kwd_extends; extensions }
 
 and dec_type_extension ?(comments = []) node : (type_extension, _) result =
   match get_name node with
-  | "type_identifier" -> Ok (Extends_type (dec_type_identifier ~comments node))
+  | "type_identifier" ->
+    let* () = check_first_error_child node in
+    Ok (Extends_type (dec_type_identifier ~comments node))
   | "nested_type_identifier" ->
     let* nested = wrap dec_nested_type_identifier ~comments node in
+    let* () = check_first_error_child node in
     Ok (Extends_nested nested)
   | "generic_type" ->
     let* type_expr = wrap dec_generic_type ~comments node in
+    let* () = check_first_error_child node in
     Ok (Extends_generic type_expr)
   | _ -> mk_err Type_expression node
 
@@ -2487,13 +2688,17 @@ and dec_nested_type_identifier ?(comments = []) node : (nested_type_identifier, 
     let* module_field = child_with_field "module" node ~err:Identifier_or_path in
     let* name_field = child_with_field "name" node ~err:Type_name in
     let* path = dec_module_path ~comments module_field in
+    let* () = check_first_error_child node in
     Ok (path, dec_type_identifier name_field)
 
 and dec_module_path ?(comments = []) node : (identifier ne_list, _) result =
   match get_name node with
-  | "identifier" -> Ok Nonempty_list.[ dec_type_identifier ~comments node ]
+  | "identifier" ->
+    let* () = check_first_error_child node in
+    Ok Nonempty_list.[ dec_type_identifier ~comments node ]
   | "nested_identifier" ->
     let* path, id = dec_nested_identifier ~comments node in
+    let* () = check_first_error_child node in
     Ok (Nonempty_list.cons id path)
   | _ -> mk_err Identifier_or_path node
 
@@ -2511,6 +2716,7 @@ and dec_import_alias ?(comments = []) node : (import_alias, _) result =
     let* sym_equal = dec_sym_equal sym_equal in
     let* rhs = child_ranked 3 node ~err:Identifier_or_path in
     let* aliased = dec_aliased rhs in
+    let* () = check_first_error_child node in
     Ok { kwd_import; alias; sym_equal; aliased }
 
 and dec_aliased node : (aliased, _) result =
@@ -2518,6 +2724,7 @@ and dec_aliased node : (aliased, _) result =
   | "identifier" -> Ok (Ident (dec_identifier node))
   | "nested_identifier" ->
     let* nested = wrap dec_nested_identifier node in
+    let* () = check_first_error_child node in
     Ok (Nested nested)
   | _ -> mk_err Identifier_or_path node
 
@@ -2531,19 +2738,25 @@ and dec_nested_identifier ?(comments = []) node : (nested_identifier, _) result 
     let* property_field = child_with_field "property" node ~err:Property_identifier in
     let* path = dec_object_path ~comments object_field in
     let* property = dec_property property_field in
+    let* () = check_first_error_child node in
     Ok (path, property)
 
 and dec_object_path ?(comments = []) node : (identifier ne_list, _) result =
   match get_name node with
-  | "identifier" -> Ok Nonempty_list.[ dec_identifier ~comments node ]
+  | "identifier" ->
+    let* () = check_first_error_child node in
+    Ok Nonempty_list.[ dec_identifier ~comments node ]
   | "member_expression" ->
     let* path, id = dec_nested_identifier ~comments node in
+    let* () = check_first_error_child node in
     Ok (Nonempty_list.cons id path)
   | _ -> mk_err Identifier_or_member node
 
 and dec_property node : (identifier, _) result =
   match get_name node with
-  | "property_identifier" -> Ok (dec_identifier node)
+  | "property_identifier" ->
+    let* () = check_first_error_child node in
+    Ok (dec_identifier node)
   | _ -> mk_err Property_identifier node
 
 (* Ambient declaration *)
@@ -2573,6 +2786,7 @@ and dec_ambient_declaration ?comments node : (ambient_declaration, _) result =
         let* declaration = dec_declaration fst_child in
         Ok (Declaration declaration)
     in
+    let* () = check_first_error_child node in
     Ok { kwd_declare; ambient_kind }
 
 (* EXPRESSION
@@ -2587,48 +2801,63 @@ and dec_expression ?(comments = []) node : (expression, _) result =
   (*| "glimmer_template" -> Ok (E_glimmer_template (dec_glimmer_template node))*)
   | "assignment_expression" ->
     let* expression = wrap dec_assignment_expression node in
+    let* () = check_first_error_child node in
     Ok (E_assignment_expression expression)
   | "augmented_assignment_expression" ->
     let* expression = wrap dec_augmented_assignment_expression node in
+    let* () = check_first_error_child node in
     Ok (E_augmented_assignment_expression expression)
   | "await_expression" ->
     let* expression = wrap dec_await_expression node in
+    let* () = check_first_error_child node in
     Ok (E_await_expression expression)
   | "unary_expression" ->
     let* expression = wrap dec_unary_expression ~comments node in
+    let* () = check_first_error_child node in
     Ok (E_unary_expression expression)
   | "binary_expression" ->
     let* expression = wrap dec_binary_expression ~comments node in
+    let* () = check_first_error_child node in
     Ok (E_binary_expression expression)
   | "ternary_expression" ->
     let* expression = wrap dec_ternary_expression ~comments node in
+    let* () = check_first_error_child node in
     Ok (E_ternary_expression expression)
   | "update_expression" ->
     let* expression = dec_update_expression ~comments node in
+    let* () = check_first_error_child node in
     Ok (E_update_expression expression)
   | "new_expression" ->
     let* expression = wrap dec_new_expression ~comments node in
+    let* () = check_first_error_child node in
     Ok (E_new_expression expression)
   | "yield_expression" ->
     let* expression = dec_yield_expression node in
+    let* () = check_first_error_child node in
     Ok (E_yield_expression expression)
   | "as_expression" ->
     let* expression = wrap dec_as_expression ~comments node in
+    let* () = check_first_error_child node in
     Ok (E_as_expression expression)
   | "satisfies_expression" ->
     let* expression = wrap dec_satisfies_expression ~comments node in
+    let* () = check_first_error_child node in
     Ok (E_satisfies_expression expression)
   | "instantiation_expression" ->
     let* expression = wrap dec_instantiation_expression ~comments node in
+    let* () = check_first_error_child node in
     Ok (E_instantiation_expression expression)
   | "internal_module" ->
     let* declaration = wrap dec_internal_module ~comments node in
+    let* () = check_first_error_child node in
     Ok (E_internal_module declaration)
   | "type_assertion" ->
     let* assertion = wrap dec_type_assertion ~comments node in
+    let* () = check_first_error_child node in
     Ok (E_type_assertion assertion)
   | _ ->
     let* expression = dec_primary_expression ~comments node in
+    let* () = check_first_error_child node in
     Ok (E_primary_expression expression)
 
 (* Assignment expression *)
@@ -2645,15 +2874,18 @@ and dec_assignment_expression ?(comments = []) node : (assignment_expression, _)
     let* sym_equal = dec_sym_equal sym_equal in
     let* right_field = child_with_field "right" node ~err:Expression in
     let* right = dec_expression right_field in
+    let* () = check_first_error_child node in
     Ok { kwd_using; left; sym_equal; right }
 
 and dec_assignment_lhs ?(comments = []) node : (assignment_lhs, _) result =
   match get_name node with
   | "parenthesized_expression" ->
     let* expression = dec_parenthesized_expression ~comments node in
+    let* () = check_first_error_child node in
     Ok (Assign_lhs_parens expression)
   | _ ->
     let* expression = dec_lhs_expression ~comments node in
+    let* () = check_first_error_child node in
     Ok (Assign_lhs expression)
 
 (* Augmented assignment expression *)
@@ -2670,54 +2902,70 @@ and dec_augmented_assignment_expression ?(comments = []) node
     let* operator = dec_assignment_operator operator in
     let* right_field = child_with_field "right" node ~err:Expression in
     let* right = dec_expression right_field in
+    let* () = check_first_error_child node in
     Ok { left; operator; right }
 
 and dec_assignment_operator node : (assignment_operator, _) result =
   match get_name node with
   | "+=" ->
     let* sym_plus_equal = dec_sym_plus_equal node in
+    let* () = check_first_error_child node in
     Ok (Add_eq sym_plus_equal)
   | "-=" ->
     let* sym_minus_equal = dec_sym_minus_equal node in
+    let* () = check_first_error_child node in
     Ok (Sub_eq sym_minus_equal)
   | "*=" ->
     let* sym_mult_equal = dec_sym_mult_equal node in
+    let* () = check_first_error_child node in
     Ok (Mult_eq sym_mult_equal)
   | "/=" ->
     let* sym_div_equal = dec_sym_div_equal node in
+    let* () = check_first_error_child node in
     Ok (Div_eq sym_div_equal)
   | "%=" ->
     let* sym_rem_equal = dec_sym_rem_equal node in
+    let* () = check_first_error_child node in
     Ok (Rem_eq sym_rem_equal)
   | "^=" ->
     let* sym_xor_equal = dec_sym_xor_equal node in
+    let* () = check_first_error_child node in
     Ok (Bitwise_xor_eq sym_xor_equal)
   | "&=" ->
     let* sym_and_equal = dec_sym_and_equal node in
+    let* () = check_first_error_child node in
     Ok (Bitwise_and_eq sym_and_equal)
   | "|=" ->
     let* sym_or_equal = dec_sym_or_equal node in
+    let* () = check_first_error_child node in
     Ok (Bitwise_or_eq sym_or_equal)
   | ">>=" ->
     let* sym_shift_right_equal = dec_sym_shift_right_equal node in
+    let* () = check_first_error_child node in
     Ok (Bitwise_sr_eq sym_shift_right_equal)
   | ">>>=" ->
     let* sym_unsigned_shift_right_equal = dec_sym_unsigned_shift_right_equal node in
+    let* () = check_first_error_child node in
     Ok (Bitwise_usr_eq sym_unsigned_shift_right_equal)
   | "<<=" ->
     let* sym_shift_left_equal = dec_sym_shift_left_equal node in
+    let* () = check_first_error_child node in
     Ok (Bitwise_sl_eq sym_shift_left_equal)
   | "**=" ->
     let* sym_exponent_equal = dec_sym_exponent_equal node in
+    let* () = check_first_error_child node in
     Ok (Exp_eq sym_exponent_equal)
   | "&&=" ->
     let* sym_conjunction_equal = dec_sym_conjunction_equal node in
+    let* () = check_first_error_child node in
     Ok (Logical_and_eq sym_conjunction_equal)
   | "||=" ->
     let* sym_disjunction_equal = dec_sym_disjunction_equal node in
+    let* () = check_first_error_child node in
     Ok (Logical_or_eq sym_disjunction_equal)
   | "??=" ->
     let* sym_non_null_equal = dec_sym_non_null_equal node in
+    let* () = check_first_error_child node in
     Ok (Non_null_eq sym_non_null_equal)
   | _ -> mk_err Augmented_assignment node
 
@@ -2727,13 +2975,18 @@ and dec_augmented_assignment_lhs ?(comments = []) node
   match get_name node with
   | "member_expression" ->
     let* expression = wrap dec_member_expression ~comments node in
+    let* () = check_first_error_child node in
     Ok (Member_expression expression)
   | "subscript_expression" ->
     let* expression = wrap dec_subscript_expression ~comments node in
+    let* () = check_first_error_child node in
     Ok (Subscript_expression expression)
-  | "identifier" -> Ok (Identifier (dec_identifier ~comments node))
+  | "identifier" ->
+    let* () = check_first_error_child node in
+    Ok (Identifier (dec_identifier ~comments node))
   | "parenthesized_expression" ->
     let* expression = dec_parenthesized_expression ~comments node in
+    let* () = check_first_error_child node in
     Ok (Parenthesized_expression expression)
   | _ -> mk_err Expression node
 
@@ -2747,6 +3000,7 @@ and dec_await_expression ?(comments = []) node : (await_expression, _) result =
     let* kwd_await = dec_kwd_await ~comments kwd_await in
     let* expression = child_ranked 1 node ~err:Expression in
     let* expression = dec_expression expression in
+    let* () = check_first_error_child node in
     Ok { kwd_await; expression }
 
 (* Unary expression *)
@@ -2759,30 +3013,38 @@ and dec_unary_expression ?(comments = []) node : (unary_expression, _) result =
     let* operator = dec_unary_operator ~comments operator_field in
     let* argument_field = child_with_field "argument" node ~err:Expression in
     let* argument = dec_expression argument_field in
+    let* () = check_first_error_child node in
     Ok ({ operator; argument } : unary_expression)
 
 and dec_unary_operator ?(comments = []) node : (unary_operator, _) result =
   match get_name node with
   | "!" ->
     let* sym_qmark = dec_sym_qmark ~comments node in
+    let* () = check_first_error_child node in
     Ok (Logical_neg sym_qmark)
   | "~" ->
     let* sym_tilde = dec_sym_tilde ~comments node in
+    let* () = check_first_error_child node in
     Ok (Bitwise_not sym_tilde)
   | "-" ->
     let* sym_minus = dec_sym_minus ~comments node in
+    let* () = check_first_error_child node in
     Ok (Neg sym_minus)
   | "+" ->
     let* sym_plus = dec_sym_plus ~comments node in
+    let* () = check_first_error_child node in
     Ok (Plus_zero sym_plus)
   | "typeof" ->
     let* kwd_typeof = dec_kwd_typeof ~comments node in
+    let* () = check_first_error_child node in
     Ok (Typeof kwd_typeof)
   | "void" ->
     let* kwd_void = dec_kwd_void ~comments node in
+    let* () = check_first_error_child node in
     Ok (Void kwd_void)
   | "delete" ->
     let* kwd_delete = dec_kwd_delete ~comments node in
+    let* () = check_first_error_child node in
     Ok (Delete kwd_delete)
   | _ -> mk_err Unary_operator node
 
@@ -2799,92 +3061,120 @@ and dec_binary_expression ?(comments = []) node : (binary_expression, _) result 
     let* operator = dec_binary_operator operator in
     let* right_field = child_with_field "right" node ~err:Expression in
     let* rhs_expr = dec_expression right_field in
+    let* () = check_first_error_child node in
     Ok { lhs_expr; operator; rhs_expr }
 
 and dec_lhs_bin_expression ~comments node : (lhs_bin_expression, _) result =
   match get_name node with
   | "private_property_identifier" ->
+    let* () = check_first_error_child node in
     Ok (Lhs_bin_hash (dec_private_property_identifier ~comments node))
   | _ ->
     let* hash = dec_expression ~comments node in
+    let* () = check_first_error_child node in
     Ok (Lhs_bin_expression hash)
 
 and dec_binary_operator node : (binary_operator, _) result =
   match get_name node with
   | "&&" ->
     let* sym_conjunction = dec_sym_conjunction node in
+    let* () = check_first_error_child node in
     Ok (Logical_and sym_conjunction)
   | "||" ->
     let* sym_disjunction = dec_sym_disjunction node in
+    let* () = check_first_error_child node in
     Ok (Logical_or sym_disjunction)
   | ">>" ->
     let* sym_shift_right = dec_sym_shift_right node in
+    let* () = check_first_error_child node in
     Ok (Bitwise_sr sym_shift_right)
   | ">>>" ->
     let* sym_unsigned_shift_right = dec_sym_unsigned_shift_right node in
+    let* () = check_first_error_child node in
     Ok (Bitwise_usr sym_unsigned_shift_right)
   | "<<" ->
     let* sym_shift_left = dec_sym_shift_left node in
+    let* () = check_first_error_child node in
     Ok (Bitwise_sl sym_shift_left)
   | "&" ->
     let* sym_and = dec_sym_and node in
+    let* () = check_first_error_child node in
     Ok (Bitwise_and sym_and)
   | "^" ->
     let* sym_xor = dec_sym_xor node in
+    let* () = check_first_error_child node in
     Ok (Bitwise_xor sym_xor)
   | "|" ->
     let* sym_or = dec_sym_or node in
+    let* () = check_first_error_child node in
     Ok (Bitwise_or sym_or)
   | "+" ->
     let* sym_plus = dec_sym_plus node in
+    let* () = check_first_error_child node in
     Ok (Add sym_plus)
   | "-" ->
     let* sym_minus = dec_sym_minus node in
+    let* () = check_first_error_child node in
     Ok (Sub sym_minus)
   | "*" ->
     let* sym_asterisk = dec_sym_asterisk node in
+    let* () = check_first_error_child node in
     Ok (Mult sym_asterisk)
   | "/" ->
     let* sym_div = dec_sym_div node in
+    let* () = check_first_error_child node in
     Ok (Div sym_div)
   | "%" ->
     let* sym_rem = dec_sym_rem node in
+    let* () = check_first_error_child node in
     Ok (Rem sym_rem)
   | "**" ->
     let* sym_exponent = dec_sym_exponent node in
+    let* () = check_first_error_child node in
     Ok (Exp sym_exponent)
   | "<" ->
     let* sym_less_than = dec_sym_less_than node in
+    let* () = check_first_error_child node in
     Ok (Lt sym_less_than)
   | "<=" ->
     let* sym_less_than_or_equal = dec_sym_less_than_or_equal node in
+    let* () = check_first_error_child node in
     Ok (Leq sym_less_than_or_equal)
   | "==" ->
     let* sym_strict_equal = dec_sym_strict_equal node in
+    let* () = check_first_error_child node in
     Ok (Equal sym_strict_equal)
   | "===" ->
     let* sym_no_conv_equal = dec_sym_no_conv_equal node in
+    let* () = check_first_error_child node in
     Ok (Strict_eq sym_no_conv_equal)
   | "!=" ->
     let* sym_different = dec_sym_different node in
+    let* () = check_first_error_child node in
     Ok (Neq sym_different)
   | "!==" ->
     let* sym_no_conv_different = dec_sym_no_conv_different node in
+    let* () = check_first_error_child node in
     Ok (Strict_neq sym_no_conv_different)
   | ">=" ->
     let* sym_greater_than_or_equal = dec_sym_greater_than_or_equal node in
+    let* () = check_first_error_child node in
     Ok (Geq sym_greater_than_or_equal)
   | ">" ->
     let* sym_greater_than = dec_sym_greater_than node in
+    let* () = check_first_error_child node in
     Ok (Gt sym_greater_than)
   | "??" ->
     let* sym_non_null = dec_sym_non_null node in
+    let* () = check_first_error_child node in
     Ok (Non_null sym_non_null)
   | "instanceof" ->
     let* kwd_instanceof = dec_kwd_instanceof node in
+    let* () = check_first_error_child node in
     Ok (Instance_of kwd_instanceof)
   | "in" ->
     let* kwd_in = dec_kwd_in node in
+    let* () = check_first_error_child node in
     Ok (In kwd_in : binary_operator)
   | _ -> mk_err Binary_operator node
 
@@ -2904,6 +3194,7 @@ and dec_ternary_expression ?(comments = []) node : (ternary_expression, _) resul
     let* sym_colon = dec_sym_colon sym_colon in
     let* alternative_field = child_with_field "alternative" node ~err:Expression in
     let* alternative = dec_expression alternative_field in
+    let* () = check_first_error_child node in
     Ok { condition; sym_qmark; consequence; sym_colon; alternative }
 
 (* Update expression *)
@@ -2921,6 +3212,7 @@ and dec_update_expression ?(comments = []) node : (update_expression, _) result 
       let* argument = dec_expression argument_field in
       let update : update = { argument; operator } in
       let update = Wrap.make update region in
+      let* () = check_first_error_child node in
       Ok (Update_prefix update)
     | _ ->
       let* argument = dec_expression ~comments first_child in
@@ -2930,15 +3222,18 @@ and dec_update_expression ?(comments = []) node : (update_expression, _) result 
       let* operator = dec_incr_decr_operator operator_field in
       let update : update = { argument; operator } in
       let update = Wrap.make update region in
+      let* () = check_first_error_child node in
       Ok (Update_postfix update))
 
 and dec_incr_decr_operator ?(comments = []) node : (incr_decr_operator, _) result =
   match get_name node with
   | "++" ->
     let* sym_increment = dec_sym_increment ~comments node in
+    let* () = check_first_error_child node in
     Ok (Increment sym_increment)
   | "--" ->
     let* sym_decrement = dec_sym_decrement ~comments node in
+    let* () = check_first_error_child node in
     Ok (Decrement sym_decrement)
   | _ -> mk_err Increment_or_decrement node
 
@@ -2961,6 +3256,7 @@ and dec_new_expression ?(comments = []) node : (new_expression, _) result =
     let* type_arguments = make_opt_res dec_type_arguments type_arguments_field in
     let arguments_field = child_with_field_opt "arguments" node in
     let* arguments = make_opt_res dec_arguments arguments_field in
+    let* () = check_first_error_child node in
     Ok { kwd_new; constructor; type_arguments; arguments }
 
 (* Yield expression *)
@@ -2973,7 +3269,9 @@ and dec_yield_expression node : (yield_expression, _) result =
     let* kwd_yield = first_child_named "yield" node ~err:Yield in
     let* kwd_yield = dec_kwd_yield kwd_yield in
     (match child_ranked_opt 1 node with
-    | None -> Ok (Yield (Wrap.make (kwd_yield, None) region))
+    | None ->
+      let* () = check_first_error_child node in
+      Ok (Yield (Wrap.make (kwd_yield, None) region))
     | Some snd_child ->
       (match get_name snd_child with
       | "*" ->
@@ -2981,10 +3279,12 @@ and dec_yield_expression node : (yield_expression, _) result =
         let* expression = child_ranked 2 node ~err:Expression in
         let* expression = dec_expression expression in
         let iterable = kwd_yield, sym_asterisk, expression in
+        let* () = check_first_error_child node in
         Ok (Yield_iterable (Wrap.make iterable region))
       | _ ->
         let* expression = dec_expression snd_child in
         let yield = kwd_yield, Some expression in
+        let* () = check_first_error_child node in
         Ok (Yield (Wrap.make yield region))))
 
 (* As-expression *)
@@ -2999,15 +3299,18 @@ and dec_as_expression ?(comments = []) node : (as_expression, _) result =
     let* kwd_as = dec_kwd_as kwd_as in
     let* as_what = child_ranked 2 node ~err:Const_or_type in
     let* as_what = dec_as_what as_what in
+    let* () = check_first_error_child node in
     Ok (expression, kwd_as, as_what)
 
 and dec_as_what node : (as_what, _) result =
   match get_name node with
   | "const" ->
     let* kwd_const = dec_kwd_const node in
+    let* () = check_first_error_child node in
     Ok (As_const kwd_const)
   | _ ->
     let* type_expr = dec_type node in
+    let* () = check_first_error_child node in
     Ok (As_type type_expr)
 
 (* Statisfies-expression *)
@@ -3022,6 +3325,7 @@ and dec_satisfies_expression ?(comments = []) node : (satisfies_expression, _) r
     let* kwd_satisfies = dec_kwd_satisfies kwd_satisfies in
     let* type_child = child_ranked 2 node ~err:Type_expression in
     let* type_expr = dec_type type_child in
+    let* () = check_first_error_child node in
     Ok (expression, kwd_satisfies, type_expr)
 
 (* Instantiation expression *)
@@ -3038,6 +3342,7 @@ and dec_instantiation_expression ?(comments = []) node
       child_with_field "type_arguments" node ~err:Type_arguments
     in
     let* type_arguments = dec_type_arguments type_arguments_field in
+    let* () = check_first_error_child node in
     Ok (expression, type_arguments)
 
 (* Type assertion *)
@@ -3050,6 +3355,7 @@ and dec_type_assertion ?(comments = []) node : (type_assertion, _) result =
     let* type_arguments = dec_type_arguments ~comments type_arguments in
     let* expression = named_child_ranked 1 node ~err:Expression in
     let* expression = dec_expression expression in
+    let* () = check_first_error_child node in
     Ok (type_arguments, expression)
 
 (* Subscript expression (see [dec_member_expression]) *)
@@ -3071,12 +3377,14 @@ and dec_subscript_expression ?(comments = []) node : (subscript_expression, _) r
     let region = !get_region node in
     let brackets = { opening; contents; closing } in
     let index = Brackets (Wrap.make brackets region) in
+    let* () = check_first_error_child node in
     Ok { object_expr; optional_chain; index }
 
 and dec_optional_chain node : (optional_chain, _) result =
   match get_name node with
   | "optional_chain" ->
     let* sym_optional_chain = dec_sym_optional_chain node in
+    let* () = check_first_error_child node in
     Ok (Optional_chain sym_optional_chain)
   | _ -> mk_err Optional_chain node
 
@@ -3088,6 +3396,7 @@ and dec_index ?(comments = []) node : (sequence_expression, _) result =
   | _ ->
     let* expression = dec_expression ~comments node in
     let region = !get_region node in
+    let* () = check_first_error_child node in
     Ok (Wrap.make Nonempty_list.[ expression ] region)
 
 (* Member expression *)
@@ -3111,22 +3420,29 @@ and dec_member_expression ?(comments = []) node : (member_expression, _) result 
         let* sym_optional_chain = dec_sym_optional_chain node in
         Ok (Optional_chain sym_optional_chain : selector)
     in
+    let* () = check_first_error_child node in
     Ok ({ object_expr; selector; property } : member_expression)
 
 and dec_object_member ?comments node : (object_member, _) result =
   match get_name node with
   | "import" ->
     let* kwd_import = dec_kwd_import ?comments node in
+    let* () = check_first_error_child node in
     Ok (Object_member_import kwd_import)
   | _ ->
     let* expression = dec_expression ?comments node in
+    let* () = check_first_error_child node in
     Ok (Object_member_expression expression)
 
 and dec_property_ident ?comments node : (property_ident, _) result =
   let identifier = dec_identifier ?comments node in
   match get_name node with
-  | "private_property_identifier" -> Ok (Private_property_identifier identifier)
-  | "property_identifier" -> Ok (Property_identifier identifier)
+  | "private_property_identifier" ->
+    let* () = check_first_error_child node in
+    Ok (Private_property_identifier identifier)
+  | "property_identifier" ->
+    let* () = check_first_error_child node in
+    Ok (Property_identifier identifier)
   | _ -> mk_err Property_identifier node
 
 (* Parenthesised expression *)
@@ -3163,6 +3479,7 @@ and dec_parenthesized_expression ?(comments = []) node
         Ok (Sequence_expression seq_expr)
     in
     let region = !get_region node in
+    let* () = check_first_error_child node in
     Ok (Parens (Wrap.make { opening; contents; closing } region))
 
 (* Sequence expression *)
@@ -3174,7 +3491,9 @@ and dec_sequence_expression ?(comments = []) node : (sequence_expression, _) res
     let raw_children = collect_named_children node in
     let* list = wrap_ne_list_opt_of_children ~comments dec_expression raw_children in
     (match list with
-    | Some ne_list -> Ok ne_list
+    | Some ne_list ->
+      let* () = check_first_error_child node in
+      Ok ne_list
     | None -> mk_err Expression node)
 
 (* Object expression *)
@@ -3186,15 +3505,19 @@ and dec_object_entry ?(comments = []) node : (object_entry, _) result =
   match get_name node with
   | "pair" ->
     let* pair = wrap dec_pair ~comments node in
+    let* () = check_first_error_child node in
     Ok (Object_entry_pair pair)
   | "spread_element" ->
     let* spread = wrap dec_spread_element ~comments node in
+    let* () = check_first_error_child node in
     Ok (Object_entry_spread spread)
   | "method_definition" ->
     let* definition = wrap dec_method_definition ~comments node in
+    let* () = check_first_error_child node in
     Ok (Object_entry_method definition)
   | "shorthand_property_identifier" ->
     let* pattern = dec_shorthand_property_identifier_pattern ~comments node in
+    let* () = check_first_error_child node in
     Ok (Object_entry_shorthand pattern)
   | _ -> mk_err Object_field node
 
@@ -3210,6 +3533,7 @@ and dec_pair ?(comments = []) node : (pair, _) result =
     let* sym_colon = dec_sym_colon sym_colon in
     let* value_field = child_with_field "value" node ~err:Expression in
     let* value = dec_expression value_field in
+    let* () = check_first_error_child node in
     Ok { key; sym_colon; value }
 
 (* LHS expression *)
@@ -3218,22 +3542,28 @@ and dec_lhs_expression ?comments node : (lhs_expression, _) result =
   match get_name node with
   | "member_expression" ->
     let* expression = wrap dec_member_expression ?comments node in
+    let* () = check_first_error_child node in
     Ok (Member_expression expression : lhs_expression)
   | "subscript_expression" ->
     let* expression = wrap dec_subscript_expression ?comments node in
+    let* () = check_first_error_child node in
     Ok (Subscript_expression expression : lhs_expression)
   | "identifier" -> Ok (Identifier (dec_identifier ?comments node))
   | "undefined" ->
     let* kwd_undefined = dec_kwd_undefined ?comments node in
+    let* () = check_first_error_child node in
     Ok (Undefined kwd_undefined)
   | "object_pattern" ->
     let* pattern = dec_object_pattern ?comments node in
+    let* () = check_first_error_child node in
     Ok (Pattern (Pattern_object pattern))
   | "array_pattern" ->
     let* pattern = dec_array_pattern ?comments node in
+    let* () = check_first_error_child node in
     Ok (Pattern (Pattern_array pattern))
   | "non_null_expression" ->
     let* expression = dec_non_null_expression ?comments node in
+    let* () = check_first_error_child node in
     Ok (Non_null_expression expression)
   | _ -> mk_err Pattern node
 
@@ -3244,6 +3574,7 @@ and dec_non_null_expression ?comments node : (expression, _) result =
   | "ERROR" | "MISSING" | "NULL" -> mk_err Non_null_expression node
   | _ ->
     let* child = named_child_ranked 0 node ~err:Non_null_expression in
+    let* () = check_first_error_child node in
     dec_expression ?comments child
 
 (* PRIMARY EXPRESSION *)
@@ -3252,66 +3583,90 @@ and dec_primary_expression ?(comments = []) node : (primary_expression, _) resul
   match get_name node with
   | "subscript_expression" ->
     let* expression = wrap dec_subscript_expression node in
+    let* () = check_first_error_child node in
     Ok (E_subscript_expression expression)
   | "member_expression" ->
     let* expression = wrap dec_member_expression node in
+    let* () = check_first_error_child node in
     Ok (E_member_expression expression)
   | "parenthesized_expression" ->
     let* expression = dec_parenthesized_expression node in
+    let* () = check_first_error_child node in
     Ok (E_parenthesized_expression expression)
   | "identifier" -> Ok (E_identifier (dec_identifier ~comments node))
   | "undefined" ->
     let* kwd_undefined = dec_kwd_undefined node in
+    let* () = check_first_error_child node in
     Ok (E_undefined kwd_undefined)
   | "this" ->
     let* kwd_this = dec_kwd_this node in
+    let* () = check_first_error_child node in
     Ok (E_this kwd_this)
   | "super" ->
     let* kwd_super = dec_kwd_super node in
+    let* () = check_first_error_child node in
     Ok (E_super kwd_super)
   | "number" ->
     let* number = dec_number ~comments node in
+    let* () = check_first_error_child node in
     Ok (E_number number)
-  | "string" -> Ok (E_string (dec_string node))
+  | "string" ->
+    let* () = check_first_error_child node in
+    Ok (E_string (dec_string node))
   | "template_string" ->
     let* expression = wrap dec_template_string ~comments node in
+    let* () = check_first_error_child node in
     Ok (E_template_string expression)
-  | "regex" -> Ok (E_regex (dec_regex node))
+  | "regex" ->
+    let* () = check_first_error_child node in
+    Ok (E_regex (dec_regex node))
   | "true" ->
     let* kwd_true = dec_kwd_true node in
+    let* () = check_first_error_child node in
     Ok (E_true kwd_true)
   | "false" ->
     let* kwd_false = dec_kwd_false node in
+    let* () = check_first_error_child node in
     Ok (E_false kwd_false)
   | "null" ->
     let* kwd_null = dec_kwd_null node in
+    let* () = check_first_error_child node in
     Ok (E_null kwd_null)
   | "object" ->
     let* expression = dec_object_expr node in
+    let* () = check_first_error_child node in
     Ok (E_object expression)
   | "array" ->
     let* expression = dec_array node in
+    let* () = check_first_error_child node in
     Ok (E_array expression)
   | "function_expression" ->
     let* expression = wrap dec_function_expression node in
+    let* () = check_first_error_child node in
     Ok (E_function_expression expression)
   | "arrow_function" ->
     let* expression = wrap dec_arrow_function node in
+    let* () = check_first_error_child node in
     Ok (E_arrow_function expression)
   | "generator_function" ->
     let* expression = wrap dec_generator_function node in
+    let* () = check_first_error_child node in
     Ok (E_generator_function expression)
   | "class" ->
     let* expression = wrap dec_class node in
+    let* () = check_first_error_child node in
     Ok (E_class expression)
   | "meta_property" ->
     let* expression = dec_meta_property node in
+    let* () = check_first_error_child node in
     Ok (E_meta_property expression)
   | "call_expression" ->
     let* expression = dec_call_expression node in
+    let* () = check_first_error_child node in
     Ok (E_call_expression expression)
   | "non_null_expression" ->
     let* expression = dec_non_null_expression node in
+    let* () = check_first_error_child node in
     Ok (E_non_null_expression expression)
   | _ -> mk_err Expression node
 
@@ -3332,30 +3687,36 @@ and dec_call_expression ?(comments = []) node : (call_expression, _) result =
       let* arguments = dec_arguments_to_call arguments_field in
       let call = { lambda; type_arguments; arguments } in
       let region = !get_region node in
+      let* () = check_first_error_child node in
       Ok (Call (Wrap.make call region))
     | Some _ ->
       let* lambda = dec_primary_expression ~comments function_field in
       let* arguments = dec_arguments arguments_field in
       let call = { lambda; type_arguments; arguments } in
       let region = !get_region node in
+      let* () = check_first_error_child node in
       Ok (Member (Wrap.make call region)))
 
 and dec_fun_call ?(comments = []) node : (fun_call, _) result =
   match get_name node with
   | "import" ->
     let* kwd_import = dec_kwd_import ~comments node in
+    let* () = check_first_error_child node in
     Ok (Import kwd_import)
   | _ ->
     let* expression = dec_expression ~comments node in
+    let* () = check_first_error_child node in
     Ok (Fun_call expression)
 
 and dec_arguments_to_call node : (arguments_to_call, _) result =
   match get_name node with
   | "template_string" ->
     let* expression = wrap dec_template_string node in
+    let* () = check_first_error_child node in
     Ok (Template_string expression)
   | _ ->
     let* arguments = dec_arguments node in
+    let* () = check_first_error_child node in
     Ok (Arguments arguments)
 
 (* Meta-property *)
@@ -3372,11 +3733,13 @@ and dec_meta_property ?(comments = []) node : (meta_property, _) result =
       let* kwd_new = dec_kwd_new ~comments fst_child in
       let* kwd_target = dec_kwd_target snd_child in
       let meta = kwd_new, kwd_target in
+      let* () = check_first_error_child node in
       Ok (Meta_new_target (Wrap.make meta region))
     | "import" ->
       let* kwd_import = dec_kwd_import ~comments fst_child in
       let* kwd_meta = dec_kwd_meta snd_child in
       let meta = kwd_import, kwd_meta in
+      let* () = check_first_error_child node in
       Ok (Meta_import_meta (Wrap.make meta region))
     | _ -> mk_err Meta_property fst_child)
 
@@ -3399,6 +3762,7 @@ and dec_class ?(comments = []) node : (class_expression, _) result =
     let* class_heritage = make_opt_res dec_class_heritage heritage_child in
     let* body_field = child_with_field "body" node ~err:Class_body in
     let* body = dec_class_body body_field in
+    let* () = check_first_error_child node in
     Ok { decorators; kwd_class; name; type_parameters; class_heritage; body }
 
 (* Generator function *)
@@ -3410,6 +3774,7 @@ and dec_generator_function ?(comments = []) node : (generator_function, _) resul
     let* fun_decl = wrap dec_function_expression ~comments node in
     let* sym_asterisk = first_child_named "*" node ~err:Asterisk in
     let* sym_asterisk = dec_sym_asterisk sym_asterisk in
+    let* () = check_first_error_child node in
     Ok (sym_asterisk, fun_decl)
 
 (* Arrow function *)
@@ -3428,19 +3793,23 @@ and dec_arrow_function ?(comments = []) node : (arrow_function, _) result =
     (match parameter_field with
     | Some parameter_field ->
       let parameters = Parameter (dec_identifier ~comments parameter_field) in
+      let* () = check_first_error_child node in
       Ok { kwd_async; parameters; sym_arrow; body }
     | None ->
       let* signature = dec_call_signature ~comments node in
       let parameters : parameters = Call_signature signature in
+      let* () = check_first_error_child node in
       Ok { kwd_async; parameters; sym_arrow; body })
 
 and dec_function_body ?(comments = []) node : (function_body, _) result =
   match get_name node with
   | "statement_block" ->
     let* statement = dec_statement_block ~comments node in
+    let* () = check_first_error_child node in
     Ok (Statement_block statement)
   | _ ->
     let* expression = dec_expression ~comments node in
+    let* () = check_first_error_child node in
     Ok (Expression expression)
 
 (* Function (expression) *)
@@ -3464,6 +3833,7 @@ and dec_function_expression ?(comments = []) node : (function_expression, _) res
     let* call_sig = dec_call_signature node in
     let* body_field = child_with_field "body" node ~err:Block in
     let* body = dec_statement_block body_field in
+    let* () = check_first_error_child node in
     Ok { kwd_async; kwd_function; name; call_sig; body }
 
 (* Array (expression) *)
@@ -3476,10 +3846,12 @@ and dec_array_cell ?comments node =
   | "ERROR" | "MISSING" | "NULL" -> mk_err Array_cell node
   | "spread_element" ->
     let* spread = wrap dec_spread_element node in
+    let* () = check_first_error_child node in
     Ok (Spread_element spread)
   | _ ->
     (* Hidden rule: *)
     let* expression = dec_expression ?comments node in
+    let* () = check_first_error_child node in
     Ok (Expression expression : argument)
 
 (* Template strings *)
@@ -3495,15 +3867,22 @@ and dec_template_string ?(comments = []) node : (template_string, _) result =
     let* fragments = Result.all fragments in
     let* closing_bquote = last_child node ~err:Backquote in
     let* closing_bquote = dec_sym_backquote closing_bquote in
+    let* () = check_first_error_child node in
     Ok (opening_bquote, fragments, closing_bquote)
 
 and dec_template_string_fragment ?(comments = []) node
     : (template_string_fragment, _) result
   =
   match get_name node with
-  | "string_fragment" -> Ok (String_fragment (make_node ~comments node))
-  | "escape_sequence" -> Ok (Escape_sequence (make_node ~comments node))
-  | "template_substitution" -> Ok (Template_substitution (make_node ~comments node))
+  | "string_fragment" ->
+    let* () = check_first_error_child node in
+    Ok (String_fragment (make_node ~comments node))
+  | "escape_sequence" ->
+    let* () = check_first_error_child node in
+    Ok (Escape_sequence (make_node ~comments node))
+  | "template_substitution" ->
+    let* () = check_first_error_child node in
+    Ok (Template_substitution (make_node ~comments node))
   | _ -> mk_err Template_string node
 
 (* PATTERN
@@ -3515,16 +3894,20 @@ and dec_pattern ?(comments = []) node : (pattern, _) result =
   match get_name node with
   | "rest_pattern" ->
     let* pattern = wrap dec_rest_pattern ~comments node in
+    let* () = check_first_error_child node in
     Ok (P_rest_pattern pattern)
   | _ ->
     let* expression = dec_lhs_expression ~comments node in
-    (match expression with
-    | Member_expression expression -> Ok (P_member_expression expression)
-    | Subscript_expression expression -> Ok (P_subscript_expression expression)
-    | Identifier identifier -> Ok (P_identifier identifier)
-    | Undefined kwd_undefined -> Ok (P_undefined kwd_undefined)
-    | Pattern pattern -> Ok (P_destructuring_pattern pattern)
-    | Non_null_expression expression -> Ok (P_non_null_expression expression))
+    let pattern =
+      match expression with
+      | Member_expression expression -> P_member_expression expression
+      | Subscript_expression expression -> P_subscript_expression expression
+      | Identifier identifier -> P_identifier identifier
+      | Undefined kwd_undefined -> P_undefined kwd_undefined
+      | Pattern pattern -> P_destructuring_pattern pattern
+      | Non_null_expression expression -> P_non_null_expression expression in
+    let* () = check_first_error_child node in
+    Ok pattern
 
 (* Object pattern *)
 
@@ -3535,15 +3918,19 @@ and dec_member_pattern ?(comments = []) node : (member_pattern, _) result =
   match get_name node with
   | "pair_pattern" ->
     let* pattern = dec_pair_pattern ~comments node in
+    let* () = check_first_error_child node in
     Ok (Member_pair_pattern pattern)
   | "rest_pattern" ->
     let* pattern = wrap dec_rest_pattern ~comments node in
+    let* () = check_first_error_child node in
     Ok (Member_rest_pattern pattern)
   | "object_assignment_pattern" ->
     let* pattern = wrap dec_object_assignment_pattern node in
+    let* () = check_first_error_child node in
     Ok (Member_object_assignment pattern)
   | "shorthand_property_identifier_pattern" ->
     let* shorthand = dec_shorthand_property_identifier_pattern node in
+    let* () = check_first_error_child node in
     Ok (Member_shorthand_property shorthand)
   | _ -> mk_err Object_pattern_field node
 
@@ -3560,6 +3947,7 @@ and dec_pair_pattern ?(comments = []) node : (pair_pattern wrap, _) result =
     let* value_field = child_with_field "value" node ~err:Pattern in
     let* value = dec_pair_value_pattern value_field in
     let region = !get_region node in
+    let* () = check_first_error_child node in
     Ok (Wrap.make { key; sym_colon; value } region)
 
 and dec_pair_value_pattern node : (pair_value_pattern, _) result =
@@ -3567,10 +3955,12 @@ and dec_pair_value_pattern node : (pair_value_pattern, _) result =
   | "ERROR" | "MISSING" | "NULL" -> mk_err Value_of_pair_pattern node
   | "assignment_pattern" ->
     let* pattern = wrap dec_assignment_pattern node in
+    let* () = check_first_error_child node in
     Ok (Pair_value_assignment pattern)
   | _ ->
     (* Hidden rule *)
     let* pattern = dec_pattern node in
+    let* () = check_first_error_child node in
     Ok (Pair_value pattern)
 
 (* Rest pattern *)
@@ -3583,6 +3973,7 @@ and dec_rest_pattern ?(comments = []) node : (rest_pattern, _) result =
     let* sym_ellipsis = dec_sym_ellipsis ~comments sym_ellipsis in
     let* expr_child = named_child_ranked 0 node ~err:Expression in
     let* expression = dec_lhs_expression expr_child in
+    let* () = check_first_error_child node in
     Ok { sym_ellipsis; expression }
 
 (* Object assignment pattern *)
@@ -3599,16 +3990,19 @@ and dec_object_assignment_pattern ?(comments = []) node
     let* sym_equal = dec_sym_equal sym_equal in
     let* right_field = child_with_field "right" node ~err:Expression in
     let* right = dec_expression right_field in
+    let* () = check_first_error_child node in
     Ok ({ left; sym_equal; right } : object_assignment_pattern)
 
 and dec_object_lhs_pattern ?comments node : (object_lhs_pattern, _) result =
   match get_name node with
   | "shorthand_property_identifier_pattern" ->
     let* shorthand = dec_shorthand_property_identifier_pattern ?comments node in
+    let* () = check_first_error_child node in
     Ok (Decl_ident shorthand)
   | _ ->
     (* Hidden rule *)
     let* pattern = dec_destructuring_pattern ?comments node in
+    let* () = check_first_error_child node in
     Ok (Decl_pattern pattern)
 
 (* Shorthand property identifier pattern *)
@@ -3616,7 +4010,9 @@ and dec_object_lhs_pattern ?comments node : (object_lhs_pattern, _) result =
 and dec_shorthand_property_identifier_pattern ?comments node : (identifier, _) result =
   match get_name node with
   | "ERROR" | "MISSING" | "NULL" -> mk_err Identifier node
-  | _ -> Ok (dec_identifier ?comments node)
+  | _ ->
+    let* () = check_first_error_child node in
+    Ok (dec_identifier ?comments node)
 
 (* Array pattern *)
 
@@ -3629,10 +4025,12 @@ and dec_array_cell_pattern ?comments node : (array_cell_pattern, _) result =
   | "assignment_pattern" ->
     let* pattern = dec_assignment_pattern ?comments node in
     let region = !get_region node in
+    let* () = check_first_error_child node in
     Ok (Cell_assignment (Wrap.make pattern region))
   | _ ->
     (* hidden rule *)
     let* pattern = dec_pattern ?comments node in
+    let* () = check_first_error_child node in
     Ok (Cell_pattern pattern)
 
 (* Assignment pattern *)
@@ -3647,6 +4045,7 @@ and dec_assignment_pattern ?(comments = []) node : (assignment_pattern, _) resul
     let* sym_equal = dec_sym_equal sym_equal in
     let* right_field = child_with_field "right" node ~err:Expression in
     let* right = dec_expression right_field in
+    let* () = check_first_error_child node in
     Ok { left; sym_equal; right }
 
 (* Rule "_destructuring_pattern" is inlined. *)
@@ -3655,9 +4054,11 @@ and dec_destructuring_pattern ?comments node : (destructuring_pattern, _) result
   match get_name node with
   | "object_pattern" ->
     let* pattern = dec_object_pattern ?comments node in
+    let* () = check_first_error_child node in
     Ok (Pattern_object pattern)
   | "array_pattern" ->
     let* pattern = dec_array_pattern ?comments node in
+    let* () = check_first_error_child node in
     Ok (Pattern_array pattern)
   | _ -> mk_err Object_or_array_pattern node
 
@@ -3670,30 +4071,37 @@ and dec_type ?(comments = []) node : (type_expr, _) result =
   match get_name node with
   | "function_type" ->
     let* type_expr = wrap dec_function_type ~comments node in
+    let* () = check_first_error_child node in
     Ok (T_function_type type_expr)
   | "readonly_type" ->
     let* type_expr = wrap dec_readonly_type ~comments node in
+    let* () = check_first_error_child node in
     Ok (T_readonly_type type_expr)
   | "constructor_type" ->
     let* type_expr = wrap dec_constructor_type ~comments node in
+    let* () = check_first_error_child node in
     Ok (T_constructor_type type_expr)
   | "infer_type" ->
     let* type_expr = wrap dec_infer_type ~comments node in
+    let* () = check_first_error_child node in
     Ok (T_infer_type type_expr)
   (* A couple of aliases *)
   | "member_expression" ->
     let* expression =
       wrap dec_type_query_member_expression_in_type_annotation ~comments node
     in
+    let* () = check_first_error_child node in
     Ok (T_member_expression expression)
   | "call_expression" ->
     let* expression =
       wrap dec_type_query_call_expression_in_type_annotation ~comments node
     in
+    let* () = check_first_error_child node in
     Ok (T_call_expression expression)
   (* "primary_type" is hidden *)
   | _ ->
     let* type_expr = dec_primary_type ~comments node in
+    let* () = check_first_error_child node in
     Ok (T_primary_type type_expr)
 
 (* Type queries in type annotations (expressions)
@@ -3728,6 +4136,7 @@ and dec_type_query_member_expression_in_type_annotation ?(comments = []) node
     let* object_expr = dec_object_field object_field in
     let* selector = dec_sym_dot sym_dot in
     let* property = dec_type_query_property property_field in
+    let* () = check_first_error_child node in
     Ok
       ({ object_expr; selector; property }
         : type_query_member_expression_in_type_annotation)
@@ -3742,17 +4151,20 @@ and dec_type_query_call_expression_in_type_annotation ?(comments = []) node
     let* arguments_field = child_with_field "arguments" node ~err:Arguments in
     let* lambda = dec_type_query_call_lambda ~comments function_field in
     let* arguments = dec_arguments arguments_field in
+    let* () = check_first_error_child node in
     Ok ({ lambda; arguments } : type_query_call_expression_in_type_annotation)
 
 and dec_type_query_call_lambda ?(comments = []) node : (type_query_call_lambda, _) result =
   match get_name node with
   | "import" ->
     let* kwd_import = dec_kwd_import ~comments node in
+    let* () = check_first_error_child node in
     Ok (Type_query_call_import kwd_import : type_query_call_lambda)
   | "member_expression" ->
     let* expression =
       dec_type_query_member_expression_in_type_annotation ~comments node
     in
+    let* () = check_first_error_child node in
     Ok (Type_query_call_member expression)
   | _ -> mk_err Member_expression node
 
@@ -3762,60 +4174,79 @@ and dec_primary_type ?(comments = []) node : (primary_type, _) result =
   match get_name node with
   | "parenthesized_type" ->
     let* type_expr = dec_parenthesized_type ~comments node in
+    let* () = check_first_error_child node in
     Ok (T_parenthesized_type type_expr)
   | "predefined_type" ->
     let* type_expr = dec_predefined_type ~comments node in
+    let* () = check_first_error_child node in
     Ok (T_predefined_type type_expr)
   | "type_identifier" ->
     let identifier = dec_type_identifier ~comments node in
+    let* () = check_first_error_child node in
     Ok (T_type_identifier identifier)
   | "nested_type_identifier" ->
     let* nested_id = wrap dec_nested_type_identifier ~comments node in
+    let* () = check_first_error_child node in
     Ok (T_nested_type_identifier nested_id)
   | "generic_type" ->
     let* type_expr = wrap dec_generic_type ~comments node in
+    let* () = check_first_error_child node in
     Ok (T_generic_type type_expr)
   | "object_type" ->
     let* type_expr = dec_object_type ~comments node in
+    let* () = check_first_error_child node in
     Ok (T_object_type type_expr)
   | "array_type" ->
     let* type_expr = wrap dec_array_type ~comments node in
+    let* () = check_first_error_child node in
     Ok (T_array_type type_expr)
   | "tuple_type" ->
     let* type_expr = dec_tuple_type ~comments node in
+    let* () = check_first_error_child node in
     Ok (T_tuple_type type_expr)
   | "flow_maybe_type" ->
     let* type_expr = wrap dec_flow_maybe_type ~comments node in
+    let* () = check_first_error_child node in
     Ok (T_flow_maybe_type type_expr)
   | "type_query" ->
     let* type_query = wrap dec_type_query ~comments node in
+    let* () = check_first_error_child node in
     Ok (T_type_query type_query)
   | "index_type_query" ->
     let* type_expr = wrap dec_index_type_query ~comments node in
+    let* () = check_first_error_child node in
     Ok (T_index_type_query type_expr)
   | "this_type" ->
     let* kwd_this = dec_kwd_this ~comments node in
+    let* () = check_first_error_child node in
     Ok (T_this kwd_this)
   | "existential_type" ->
     let* sym_asterisk = dec_existential_type ~comments node in
+    let* () = check_first_error_child node in
     Ok (T_existential_type sym_asterisk)
   | "literal_type" ->
     let* type_expr = dec_literal_type ~comments node in
+    let* () = check_first_error_child node in
     Ok (T_literal_type type_expr)
   | "lookup_type" ->
     let* type_expr = wrap dec_lookup_type ~comments node in
+    let* () = check_first_error_child node in
     Ok (T_lookup_type type_expr)
   | "conditional_type" ->
     let* type_expr = wrap dec_conditional_type ~comments node in
+    let* () = check_first_error_child node in
     Ok (T_conditional_type type_expr)
   | "template_literal_type" ->
     let* type_expr = wrap dec_template_literal_type ~comments node in
+    let* () = check_first_error_child node in
     Ok (T_template_literal_type type_expr)
   | "intersection_type" ->
     let* type_expr = wrap dec_intersection_type ~comments node in
+    let* () = check_first_error_child node in
     Ok (T_intersection_type type_expr)
   | "union_type" ->
     let* type_expr = wrap dec_union_type ~comments node in
+    let* () = check_first_error_child node in
     Ok (T_union_type type_expr)
   | _ -> mk_err Type_expression node
 
@@ -3823,6 +4254,7 @@ and dec_primary_type ?(comments = []) node : (primary_type, _) result =
 
 and dec_existential_type ?(comments = []) node : (sym_asterisk, _) result =
   let* sym_asterisk = first_child_named "*" node ~err:Asterisk in
+  let* () = check_first_error_child node in
   dec_sym_asterisk ~comments sym_asterisk
 
 (* Union type *)
@@ -3839,6 +4271,7 @@ and dec_union_type ?(comments = []) node : (union_type, _) result =
       let* sym_vbar = dec_sym_vbar ~comments sym_vbar in
       let* single_type_node = child_ranked 1 node ~err:Type_expression in
       let* type_expr = dec_type single_type_node in
+      let* () = check_first_error_child node in
       Ok (None, sym_vbar, type_expr)
     | _ ->
       (* "type" is a supertype, therefore a hidden rule *)
@@ -3846,6 +4279,7 @@ and dec_union_type ?(comments = []) node : (union_type, _) result =
       let* sym_vbar = dec_sym_vbar sym_vbar in
       let* right_type = child_ranked 2 node ~err:Type_expression in
       let* right_type = dec_type right_type in
+      let* () = check_first_error_child node in
       Ok (Some left_type, sym_vbar, right_type))
 
 (* Intersection type *)
@@ -3861,6 +4295,7 @@ and dec_intersection_type ?(comments = []) node : (intersection_type, _) result 
       let* sym_and = dec_sym_and ~comments sym_and in
       let* single_type_node = child_ranked 1 node ~err:Type_expression in
       let* type_expr = dec_type single_type_node in
+      let* () = check_first_error_child node in
       Ok (None, sym_and, type_expr)
     | _ ->
       (* "type" is a supertype, therefore a hidden rule *)
@@ -3868,6 +4303,7 @@ and dec_intersection_type ?(comments = []) node : (intersection_type, _) result 
       let* sym_and = dec_sym_and sym_and in
       let* right_type = child_ranked 2 node ~err:Type_expression in
       let* right_type = dec_type right_type in
+      let* () = check_first_error_child node in
       Ok (Some left_type, sym_and, right_type))
 
 (* Template literal type *)
@@ -3883,13 +4319,17 @@ and dec_template_literal_type ?(comments = []) node : (template_literal_type, _)
     let* fragments = Result.all fragments in
     let* closing_bquote = last_child node ~err:Backquote in
     let* closing_bquote = dec_sym_backquote closing_bquote in
+    let* () = check_first_error_child node in
     Ok (opening_bquote, fragments, closing_bquote)
 
 and dec_template_type_fragment ?(comments = []) node : (template_type_fragment, _) result =
   match get_name node with
-  | "string_fragment" -> Ok (Template_type_string (dec_string ~comments node))
+  | "string_fragment" ->
+    let* () = check_first_error_child node in
+    Ok (Template_type_string (dec_string ~comments node))
   | "template_type" ->
     let* type_expr = dec_template_type ~comments node in
+    let* () = check_first_error_child node in
     Ok (Template_type type_expr)
   | _ -> mk_err String_or_type node
 
@@ -3901,10 +4341,12 @@ and dec_template_type ?(comments = []) node : (template_type, _) result =
     (match get_name type_node with
     | "infer_type" ->
       let* type_expr = wrap dec_infer_type ~comments type_node in
+      let* () = check_first_error_child node in
       Ok (Template_type_infer type_expr)
       (* "primary_type" is hidden *)
     | _ ->
       let* type_expr = dec_primary_type ~comments type_node in
+      let* () = check_first_error_child node in
       Ok (Template_type_primary type_expr))
 
 (* Conditional type *)
@@ -3927,6 +4369,7 @@ and dec_conditional_type ?(comments = []) node : (conditional_type, _) result =
     let* sym_colon = dec_sym_colon sym_colon in
     let* alternative_field = child_with_field "alternative" node ~err:Type_expression in
     let* alternative = dec_type alternative_field in
+    let* () = check_first_error_child node in
     Ok { left; kwd_extends; right; sym_qmark; consequence; sym_colon; alternative }
 
 (* Look up type
@@ -3949,6 +4392,7 @@ and dec_lookup_type ?(comments = []) node : (lookup_type, _) result =
     let region = !get_region node in
     let brackets = { opening; contents; closing } in
     let index_type = Brackets (Wrap.make brackets region) in
+    let* () = check_first_error_child node in
     Ok (primary_type, index_type)
 
 (* Literal type *)
@@ -3961,22 +4405,30 @@ and dec_literal_type ?(comments = []) node : (literal_type, _) result =
     (match get_name child with
     | "unary_expression" ->
       let* expression = wrap dec_unary_expression ~comments child in
+      let* () = check_first_error_child node in
       Ok (T_unary_type expression)
     | "number" ->
       let* number = dec_number ~comments child in
+      let* () = check_first_error_child node in
       Ok (T_number number : literal_type)
-    | "string" -> Ok (T_string (dec_string ~comments child))
+    | "string" ->
+      let* () = check_first_error_child node in
+      Ok (T_string (dec_string ~comments child) : literal_type)
     | "true" ->
       let* kwd_true = dec_kwd_true ~comments child in
+      let* () = check_first_error_child node in
       Ok (T_true kwd_true)
     | "false" ->
       let* kwd_false = dec_kwd_false ~comments child in
+      let* () = check_first_error_child node in
       Ok (T_false kwd_false)
     | "null" ->
       let* kwd_null = dec_kwd_null ~comments child in
+      let* () = check_first_error_child node in
       Ok (T_null kwd_null)
     | "undefined" ->
       let* kwd_undefined = dec_kwd_undefined ~comments child in
+      let* () = check_first_error_child node in
       Ok (T_undefined kwd_undefined)
     | _ -> mk_err Literal_type node)
 
@@ -3990,6 +4442,7 @@ and dec_index_type_query ?(comments = []) node : (kwd_keyof * primary_type, _) r
     let* kwd_keyof = dec_kwd_keyof ~comments kwd_keyof in
     let* type_node = child_ranked 1 node ~err:Type_expression in
     let* primary_type = dec_primary_type type_node in
+    let* () = check_first_error_child node in
     Ok (kwd_keyof, primary_type)
 
 (* Type query *)
@@ -4021,6 +4474,7 @@ and dec_type_query ?(comments = []) node : (kwd_keyof * type_query, _) result =
         Ok (Typeof_this kwd_this)
       | _ -> mk_err Type_query node
     in
+    let* () = check_first_error_child node in
     Ok (kwd_typeof, type_query)
 
 and dec_type_query_subscript_expression ?(comments = []) node
@@ -4042,22 +4496,29 @@ and dec_type_query_subscript_expression ?(comments = []) node
     let region = !get_region node in
     let brackets = { opening; contents; closing } in
     let index = Brackets (Wrap.make brackets region) in
+    let* () = check_first_error_child node in
     Ok { object_expr; optional; index }
 
 and dec_type_query_object ?(comments = []) node : (type_query_object, _) result =
   match get_name node with
-  | "identifier" -> Ok (Type_query_object_identifier (dec_identifier ~comments node))
+  | "identifier" ->
+    let* () = check_first_error_child node in
+    Ok (Type_query_object_identifier (dec_identifier ~comments node))
   | "this" ->
     let* kwd_this = dec_kwd_this ~comments node in
+    let* () = check_first_error_child node in
     Ok (Type_query_object_this kwd_this)
   | "subscript_expression" ->
     let* expression = dec_type_query_subscript_expression ~comments node in
+    let* () = check_first_error_child node in
     Ok (Type_query_object_subscript_expression expression)
   | "member_expression" ->
     let* expression = dec_type_query_member_expression ~comments node in
+    let* () = check_first_error_child node in
     Ok (Type_query_object_member_expression expression)
   | "call_expression" ->
     let* expression = dec_type_query_call_expression ~comments node in
+    let* () = check_first_error_child node in
     Ok (Type_query_object_call_expression expression)
   | _ -> mk_err Object_denotation node
 
@@ -4065,10 +4526,14 @@ and dec_type_query_index node : (type_query_index, _) result =
   match get_name node with
   | "predefined_type" ->
     let* type_expr = dec_predefined_type node in
+    let* () = check_first_error_child node in
     Ok (Type_query_index_predefined_type type_expr)
-  | "string" -> Ok (Type_query_index_string (dec_string node))
+  | "string" ->
+     let* () = check_first_error_child node in
+     Ok (Type_query_index_string (dec_string node))
   | "number" ->
     let* number = dec_number node in
+    let* () = check_first_error_child node in
     Ok (Type_query_index_number number)
   | _ -> mk_err Predefined_type node
 
@@ -4084,23 +4549,29 @@ and dec_type_query_member_expression ?(comments = []) node
     let* property = dec_type_query_property property_field in
     let* selector = prev_sibling property_field ~err:Selector_or_optional_chain in
     let* selector = dec_query_selector selector in
+    let* () = check_first_error_child node in
     Ok { object_expr; selector; property }
 
 and dec_query_selector node : (query_selector, _) result =
   match get_name node with
   | "." ->
     let* sym_dot = dec_sym_dot node in
+    let* () = check_first_error_child node in
     Ok (Query_selector_dot sym_dot)
   | "?." ->
     let* sym_optional_chain = dec_sym_optional_chain node in
+    let* () = check_first_error_child node in
     Ok (Query_selector_opt_chain sym_optional_chain)
   | _ -> mk_err Selector_or_optional_chain node
 
 and dec_type_query_property node : (type_query_property, _) result =
   match get_name node with
   | "private_property_identifier" ->
+    let* () = check_first_error_child node in
     Ok (Type_query_property_private (dec_private_property_identifier node))
-  | "property_identifier" -> Ok (Type_query_property_identifier (dec_identifier node))
+  | "property_identifier" ->
+    let* () = check_first_error_child node in
+    Ok (Type_query_property_identifier (dec_identifier node))
   | _ -> mk_err Property_identifier node
 
 and dec_type_query_call_expression ?(comments = []) node
@@ -4113,6 +4584,7 @@ and dec_type_query_call_expression ?(comments = []) node
     let* lambda = dec_type_query_call_function ~comments function_field in
     let* arguments_field = child_with_field "arguments" node ~err:Arguments in
     let* arguments = dec_type_query_call_arguments arguments_field in
+    let* () = check_first_error_child node in
     Ok ({ lambda; arguments } : type_query_call_expression)
 
 and dec_type_query_call_function ?(comments = []) node
@@ -4121,13 +4593,16 @@ and dec_type_query_call_function ?(comments = []) node
   match get_name node with
   | "import" ->
     let* kwd_import = dec_kwd_export ~comments node in
+    let* () = check_first_error_child node in
     Ok (Type_query_call_import kwd_import)
   | "identifier" -> Ok (Type_query_call_identifier (dec_identifier ~comments node))
   | "member_expression" ->
     let* expression = dec_type_query_member_expression ~comments node in
+    let* () = check_first_error_child node in
     Ok (Type_query_call_member_expression expression)
   | "subscript_expression" ->
     let* expression = dec_type_query_subscript_expression ~comments node in
+    let* () = check_first_error_child node in
     Ok (Type_query_call_subscript_expression expression)
   | _ -> mk_err Function_denotation node
 
@@ -4146,6 +4621,7 @@ and dec_type_query_instantiation_expression ?(comments = []) node
       child_with_field "type_arguments" node ~err:Type_arguments
     in
     let* type_arguments = dec_type_arguments type_arguments_field in
+    let* () = check_first_error_child node in
     Ok { lambda; type_arguments }
 
 (* Flow maybe type
@@ -4161,6 +4637,7 @@ and dec_flow_maybe_type ?(comments = []) node : (sym_qmark * primary_type, _) re
     let* sym_qmark = dec_sym_qmark ~comments sym_qmark in
     let* type_node = child_ranked 1 node ~err:Type_expression in
     let* primary_type = dec_primary_type type_node in
+    let* () = check_first_error_child node in
     Ok (sym_qmark, primary_type)
 
 (* Tuple type *)
@@ -4173,20 +4650,25 @@ and dec_tuple_type_member ?(comments = []) node : (tuple_type_member, _) result 
   | "required_parameter" ->
     (* Alias *)
     let* parameter = wrap dec_tuple_parameter ~comments node in
+    let* () = check_first_error_child node in
     Ok (Tuple_parameter parameter)
   | "optional_parameter" ->
     (* Alias *)
     let* parameter = wrap dec_optional_tuple_parameter ~comments node in
+    let* () = check_first_error_child node in
     Ok (Tuple_optional_parameter parameter)
   | "optional_type" ->
     let* opt_type = wrap dec_optional_type ~comments node in
+    let* () = check_first_error_child node in
     Ok (Tuple_optional_type opt_type)
   | "rest_type" ->
     let* type_expr = wrap dec_rest_type ~comments node in
+    let* () = check_first_error_child node in
     Ok (Tuple_rest_type type_expr)
   | _ ->
     (* "type" is a hidden rule *)
     let* type_expr = dec_type ~comments node in
+    let* () = check_first_error_child node in
     Ok (Tuple_type type_expr)
 
 and dec_tuple_parameter ?(comments = []) node : (tuple_parameter, _) result =
@@ -4197,13 +4679,17 @@ and dec_tuple_parameter ?(comments = []) node : (tuple_parameter, _) result =
     let* name = dec_tuple_parameter_name ~comments name_field in
     let* type_field = child_with_field "type" node ~err:Type_annotation in
     let* annotation = dec_type_annotation type_field in
+    let* () = check_first_error_child node in
     Ok (name, annotation)
 
 and dec_tuple_parameter_name ?(comments = []) node : (tuple_parameter_name, _) result =
   match get_name node with
-  | "identifier" -> Ok (Tuple_parameter_ident (dec_identifier ~comments node))
+  | "identifier" ->
+    let* () = check_first_error_child node in
+    Ok (Tuple_parameter_ident (dec_identifier ~comments node))
   | "rest_pattern" ->
     let* pattern = wrap dec_rest_pattern ~comments node in
+    let* () = check_first_error_child node in
     Ok (Tuple_parameter_rest pattern)
   | _ -> mk_err Identifier_or_rest node
 
@@ -4219,6 +4705,7 @@ and dec_optional_tuple_parameter ?(comments = []) node
     let* sym_qmark = dec_sym_qmark sym_qmark in
     let* type_field = child_with_field "type" node ~err:Type_annotation in
     let* annotation = dec_type_annotation type_field in
+    let* () = check_first_error_child node in
     Ok (name, sym_qmark, annotation)
 
 (* Optional type *)
@@ -4231,6 +4718,7 @@ and dec_optional_type ?(comments = []) node : (type_expr * sym_qmark, _) result 
     let* type_expr = dec_type ~comments type_node in
     let* sym_qmark = child_ranked 1 node ~err:Question_mark in
     let* sym_qmark = dec_sym_qmark sym_qmark in
+    let* () = check_first_error_child node in
     Ok (type_expr, sym_qmark)
 
 (* Rest type *)
@@ -4243,6 +4731,7 @@ and dec_rest_type ?(comments = []) node : (sym_ellipsis * type_expr, _) result =
     let* sym_ellipsis = dec_sym_ellipsis ~comments sym_ellipsis in
     let* type_child = named_child_ranked 0 node ~err:Type_expression in
     let* type_expr = dec_type type_child in
+    let* () = check_first_error_child node in
     Ok (sym_ellipsis, type_expr)
 
 (* Array type *)
@@ -4257,6 +4746,7 @@ and dec_array_type ?(comments = []) node : (array_type, _) result =
     let* sym_lbracket = dec_sym_lbracket sym_lbracket in
     let* sym_rbracket = first_child_named "]" node ~err:Right_bracket in
     let* sym_rbracket = dec_sym_rbracket sym_rbracket in
+    let* () = check_first_error_child node in
     Ok (type_expr, sym_lbracket, sym_rbracket)
 
 (* Object type *)
@@ -4268,21 +4758,27 @@ and dec_member_type ?(comments = []) node : (member_type, _) result =
   match get_name node with
   | "export_statement" ->
     let* statement = wrap dec_export_statement ~comments node in
+    let* () = check_first_error_child node in
     Ok (Export_statement statement)
   | "property_signature" ->
     let* signature = wrap dec_property_signature ~comments node in
+    let* () = check_first_error_child node in
     Ok (Property_signature signature)
   | "call_signature" ->
     let* signature = dec_call_signature ~comments node in
+    let* () = check_first_error_child node in
     Ok (Call_signature signature)
   | "construct_signature" ->
     let* signature = wrap dec_construct_signature ~comments node in
+    let* () = check_first_error_child node in
     Ok (Construct_signature signature)
   | "index_signature" ->
     let* signature = wrap dec_index_signature ~comments node in
+    let* () = check_first_error_child node in
     Ok (Index_signature signature)
   | "method_signature" ->
     let* signature = wrap dec_method_signature ~comments node in
+    let* () = check_first_error_child node in
     Ok (Method_signature signature)
   | _ -> mk_err Object_type_field node
 
@@ -4302,6 +4798,7 @@ and dec_property_signature ?(comments = []) node : (property_signature, _) resul
     let* sym_qmark = make_opt_res dec_sym_qmark sym_qmark in
     let type_field = child_with_field_opt "type" node in
     let* type_ = make_opt_res dec_type_annotation type_field in
+    let* () = check_first_error_child node in
     Ok { access; scope; name; sym_qmark; type_ }
 
 (* Construct signature *)
@@ -4320,6 +4817,7 @@ and dec_construct_signature ?(comments = []) node : (construct_signature, _) res
     let* parameters = dec_formal_parameters parameters_field in
     let type_field = child_with_field_opt "type" node in
     let* type_ = make_opt_res dec_type_annotation type_field in
+    let* () = check_first_error_child node in
     Ok { kwd_abstract; kwd_new; type_parameters; parameters; type_ }
 
 (* Parenthesized type *)
@@ -4348,6 +4846,7 @@ and dec_infer_type ?(comments = []) node : (infer_type, _) result =
         let* type_expr = dec_type type_child in
         Ok (Some (kwd_extends, type_expr))
     in
+    let* () = check_first_error_child node in
     Ok { kwd_infer; type_id; extends }
 
 (* Constructor type *)
@@ -4368,6 +4867,7 @@ and dec_constructor_type ?(comments = []) node : (constructor_type, _) result =
     let* sym_arrow = dec_sym_arrow sym_arrow in
     let* type_field = child_with_field "type" node ~err:Type_expression in
     let* type_expr = dec_type type_field in
+    let* () = check_first_error_child node in
     Ok { kwd_abstract; kwd_new; type_parameters; parameters; sym_arrow; type_expr }
 
 (* Function type *)
@@ -4384,18 +4884,22 @@ and dec_function_type ?(comments = []) node : (function_type, _) result =
     let* sym_arrow = dec_sym_arrow sym_arrow in
     let* return_type_field = child_with_field "return_type" node ~err:Type_expression in
     let* return_type = dec_return_type return_type_field in
+    let* () = check_first_error_child node in
     Ok { type_parameters; parameters; sym_arrow; return_type }
 
 and dec_return_type node : (return_type, _) result =
   match get_name node with
   | "asserts" ->
     let* annotation = dec_asserts node in
+    let* () = check_first_error_child node in
     Ok (Return_asserts annotation)
   | "type_predicate" ->
     let* predicate = wrap dec_type_predicate node in
+    let* () = check_first_error_child node in
     Ok (Return_type_predicate predicate)
   | _ ->
     let* type_expr = dec_type node in
+    let* () = check_first_error_child node in
     Ok (Return_type type_expr)
 
 (* Readonly type *)
@@ -4408,6 +4912,7 @@ and dec_readonly_type ?(comments = []) node : (readonly_type, _) result =
     let* kwd_readonly = dec_kwd_readonly ~comments kwd_readonly in
     let* type_child = child_ranked 1 node ~err:Type_expression in
     let* type_expr = dec_type type_child in
+    let* () = check_first_error_child node in
     Ok (kwd_readonly, type_expr)
 
 (* Generic type *)
@@ -4423,15 +4928,18 @@ and dec_generic_type ?(comments = []) node : (generic_type, _) result =
       child_with_field "type_arguments" node ~err:Type_arguments
     in
     let* type_arguments = dec_type_arguments type_arguments_field in
+    let* () = check_first_error_child node in
     Ok (generic_name, type_arguments)
 
 and dec_generic_name ?(comments = []) node : (generic_name, _) result =
   match get_name node with
   | "type_identifier" ->
     let identifier = dec_type_identifier ~comments node in
+    let* () = check_first_error_child node in
     Ok (Generic_type identifier)
   | "nested_type_identifier" ->
     let* nested = wrap dec_nested_type_identifier ~comments node in
+    let* () = check_first_error_child node in
     Ok (Generic_nested nested)
   | _ -> mk_err Type_identifier_or_path node
 
