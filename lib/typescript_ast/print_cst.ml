@@ -18,10 +18,6 @@ module Number = Typescript_ast.Number
 module Wrap = Lexing_shared.Wrap
 open Syntax_err
 
-(* Monadic let-binder for result values *)
-
-let ( let* ) v f = Result.bind v ~f
-
 (* Skipping strings in a list until a colon is found *)
 
 let rec skip_until_colon = function
@@ -383,6 +379,8 @@ let print_number ?(comments = []) state node =
         mk_children_list print_comment comments
         @ [ mk_child print_kind num; mk_child Tree.make_node lexeme ]
       in
+      let error_child = first_child_named "ERROR" node ~err:Syntax_error in
+      let children = mk_child_res make_node error_child :: children in
       make_tree state node children
     | Error { region = _; value } -> make_unary state node Tree.make_node value)
 
@@ -586,6 +584,8 @@ and print_export_statement ?(comments = []) state node =
             ]
           | _ -> decorators @ [ mk_child print_declaration after_export ])))
     in
+    let error_child = first_child_named "ERROR" node ~err:Syntax_error in
+    let children = mk_child_res make_node error_child :: children in
     make_tree state node children
 
 and print_namespace_export ?(comments = []) state node =
@@ -606,6 +606,8 @@ and print_namespace_export ?(comments = []) state node =
         let module_export_name = next_sibling kwd_as ~err:Identifier_or_string in
         [ mk_child_res print_module_export_name module_export_name ]
     in
+    let error_child = first_child_named "ERROR" node ~err:Syntax_error in
+    let children = mk_child_res make_node error_child :: children in
     make_tree state node children
 
 (* Argument [node] cannot be an ERROR/MISSING node. See [print_export_statement]. *)
@@ -648,6 +650,8 @@ and print_export_specifier ?(comments = []) state node =
         let kwd_as = first_child_named "as" node ~err:As in
         [ mk_child_res mk_kwd_as kwd_as; mk_child print_module_export_name alias_field ])
     in
+    let error_child = first_child_named "ERROR" node ~err:Syntax_error in
+    let children = mk_child_res make_node error_child :: children in
     make_tree state node children
 
 (* Import statement *)
@@ -682,6 +686,8 @@ and print_import_statement ?(comments = []) state node =
       :: middle_children)
       @ [ mk_child_opt print_import_attribute import_attribute ]
     in
+    let error_child = first_child_named "ERROR" node ~err:Syntax_error in
+    let children = mk_child_res make_node error_child :: children in
     make_tree state node children
 
 and print_import_clause ?(comments = []) state node =
@@ -716,6 +722,8 @@ and print_import_clause ?(comments = []) state node =
           let msg = mk_err_msg first_child Namespace_or_named_imports_or_ident in
           [ mk_error_child first_child ~msg ])
     in
+    let error_child = first_child_named "ERROR" node ~err:Syntax_error in
+    let children = mk_child_res make_node error_child :: children in
     make_tree state node children
 
 and print_namespace_import ?(comments = []) state node =
@@ -736,6 +744,8 @@ and print_namespace_import ?(comments = []) state node =
         let identifier = next_sibling kwd_as ~err:Identifier in
         [ mk_child_res print_identifier identifier ]
     in
+    let error_child = first_child_named "ERROR" node ~err:Syntax_error in
+    let children = mk_child_res make_node error_child :: children in
     make_tree state node children
 
 and print_named_imports ?(comments = []) state node =
@@ -770,6 +780,8 @@ and print_import_specifier ?(comments = []) state node =
         ; mk_child print_identifier alias_field
         ])
     in
+    let error_child = first_child_named "ERROR" node ~err:Syntax_error in
+    let children = mk_child_res make_node error_child :: children in
     make_tree state node children
 
 and print_import_require_clause ?(comments = []) state node =
@@ -792,6 +804,8 @@ and print_import_require_clause ?(comments = []) state node =
       ; mk_child_res mk_sym_rparen sym_rparen
       ]
     in
+    let error_child = first_child_named "ERROR" node ~err:Syntax_error in
+    let children = mk_child_res make_node error_child :: children in
     make_tree state node children
 
 and print_import_attribute state node =
@@ -809,6 +823,8 @@ and print_import_attribute state node =
     let children =
       [ mk_child_res print_kind kind_node; mk_child_res print_object_expr object_node ]
     in
+    let error_child = first_child_named "ERROR" node ~err:Syntax_error in
+    let children = mk_child_res make_node error_child :: children in
     make_tree state node children
 
 (* Debugger statement *)
@@ -819,6 +835,8 @@ and print_debugger_statement ?(comments = []) state node =
   | _ ->
     let kwd_debugger = first_child_named "debugger" node ~err:Debugger in
     let children = [ mk_child_res (mk_kwd_debugger ~comments) kwd_debugger ] in
+    let error_child = first_child_named "ERROR" node ~err:Syntax_error in
+    let children = mk_child_res make_node error_child :: children in
     make_tree state node children
 
 (* Expression statements
@@ -837,7 +855,10 @@ and print_expression_statement ?(comments = []) state node =
   | _ ->
     let comments = comments @ prev_comments node
     and child = named_child_ranked 0 node ~err:Expression in
-    make_unary_res state node (print_expressions ~comments) child
+    let children = [ mk_child_res (print_expressions ~comments) child ] in
+    let error_child = first_child_named "ERROR" node ~err:Syntax_error in
+    let children = mk_child_res make_node error_child :: children in
+    make_tree state node children
 
 and print_expressions ?(comments = []) state (node : ts_tree) =
   match get_name node with
@@ -866,6 +887,8 @@ and print_if_statement ?(comments = []) state node =
       ; mk_child_opt print_else_clause alternative_field
       ]
     in
+    let error_child = first_child_named "ERROR" node ~err:Syntax_error in
+    let children = mk_child_res make_node error_child :: children in
     make_tree state node children
 
 and print_else_clause ?(comments = []) state node =
@@ -883,6 +906,8 @@ and print_else_clause ?(comments = []) state node =
         let statement = next_sibling kwd_else ~err:Statement in
         [ mk_child_res print_statement statement ])
     in
+    let error_child = first_child_named "ERROR" node ~err:Syntax_error in
+    let children = mk_child_res make_node error_child :: children in
     make_tree state node children
 
 (* Switch statement *)
@@ -900,6 +925,8 @@ and print_switch_statement state node =
       ; mk_child_res print_switch_body body_field
       ]
     in
+    let error_child = first_child_named "ERROR" node ~err:Syntax_error in
+    let children = mk_child_res make_node error_child :: children in
     make_tree state node children
 
 and print_switch_body state node =
@@ -924,6 +951,8 @@ and print_switch_case state node =
       :: mk_child_res print_expressions value_field
       :: mk_children_list print_statement stmt_children
     in
+    let error_child = first_child_named "ERROR" node ~err:Syntax_error in
+    let children = mk_child_res make_node error_child :: children in
     make_tree state node children
 
 and print_switch_default state node =
@@ -936,6 +965,8 @@ and print_switch_default state node =
       mk_child_res mk_kwd_default kwd_default
       :: mk_children_list print_statement statements
     in
+    let error_child = first_child_named "ERROR" node ~err:Syntax_error in
+    let children = mk_child_res make_node error_child :: children in
     make_tree state node children
 
 (* For statement *)
@@ -961,6 +992,8 @@ and print_for_statement state node =
       ; mk_child_res print_statement body_field
       ]
     in
+    let error_child = first_child_named "ERROR" node ~err:Syntax_error in
+    let children = mk_child_res make_node error_child :: children in
     make_tree state node children
 
 and print_for_initializer state node =
@@ -1037,6 +1070,8 @@ and print_for_in_statement state node =
         ; mk_child_res print_statement body_field
         ]
     in
+    let error_child = first_child_named "ERROR" node ~err:Syntax_error in
+    let children = mk_child_res make_node error_child :: children in
     make_tree state node children
 
 (* While statement *)
@@ -1054,6 +1089,8 @@ and print_while_statement state node =
       ; mk_child_res print_statement body_field
       ]
     in
+    let error_child = first_child_named "ERROR" node ~err:Syntax_error in
+    let children = mk_child_res make_node error_child :: children in
     make_tree state node children
 
 (* Do statement *)
@@ -1075,6 +1112,8 @@ and print_do_statement state node =
       ; mk_child_res print_parenthesized_expression condition_field
       ]
     in
+    let error_child = first_child_named "ERROR" node ~err:Syntax_error in
+    let children = mk_child_res make_node error_child :: children in
     make_tree state node children
 
 (* Try statement *)
@@ -1094,6 +1133,8 @@ and print_try_statement state node =
       ; mk_child_opt print_finally_clause finalizer_field
       ]
     in
+    let error_child = first_child_named "ERROR" node ~err:Syntax_error in
+    let children = mk_child_res make_node error_child :: children in
     make_tree state node children
 
 and print_catch_clause state node =
@@ -1118,6 +1159,8 @@ and print_catch_clause state node =
     in
     let children = mk_child_res mk_kwd_catch kwd_catch :: children in
     let children = children @ [ mk_child_res print_statement_block body_field ] in
+    let error_child = first_child_named "ERROR" node ~err:Syntax_error in
+    let children = mk_child_res make_node error_child :: children in
     make_tree state node children
 
 and print_catch_parameter_kind state node =
@@ -1137,6 +1180,8 @@ and print_finally_clause state node =
       ; mk_child_res print_statement_block body_field
       ]
     in
+    let error_child = first_child_named "ERROR" node ~err:Syntax_error in
+    let children = mk_child_res make_node error_child :: children in
     make_tree state node children
 
 (* With statement *)
@@ -1154,6 +1199,8 @@ and print_with_statement state node =
       ; mk_child_res print_statement body_field
       ]
     in
+    let error_child = first_child_named "ERROR" node ~err:Syntax_error in
+    let children = mk_child_res make_node error_child :: children in
     make_tree state node children
 
 (* Break statement *)
@@ -1167,6 +1214,8 @@ and print_break_statement state node =
     let children =
       [ mk_child_res mk_kwd_break kwd_break; mk_child_opt print_identifier label_field ]
     in
+    let error_child = first_child_named "ERROR" node ~err:Syntax_error in
+    let children = mk_child_res make_node error_child :: children in
     make_tree state node children
 
 (* Continue statement *)
@@ -1182,6 +1231,8 @@ and print_continue_statement state node =
       ; mk_child_opt print_identifier label_field
       ]
     in
+    let error_child = first_child_named "ERROR" node ~err:Syntax_error in
+    let children = mk_child_res make_node error_child :: children in
     make_tree state node children
 
 (* Return statement
@@ -1205,14 +1256,24 @@ and print_return_statement state node =
   | _ ->
     let kwd_return = first_child_named "return" node ~err:Return in
     (match child_ranked_opt 1 node with
-    | None -> make_unary_res state node mk_kwd_return kwd_return
+    | None ->
+       let children = [ mk_child_res mk_kwd_return kwd_return ] in
+       let error_child = first_child_named "ERROR" node ~err:Syntax_error in
+       let children = mk_child_res make_node error_child :: children in
+       make_tree state node children
     | Some snd_child ->
       (match get_name snd_child with
-      | ";" -> make_unary_res state node mk_kwd_return kwd_return
+       | ";" ->
+         let children = [ mk_child_res mk_kwd_return kwd_return ] in
+         let error_child = first_child_named "ERROR" node ~err:Syntax_error in
+         let children = mk_child_res make_node error_child :: children in
+         make_tree state node children
       | _ ->
         let children =
           [ mk_child_res mk_kwd_return kwd_return; mk_child print_expressions snd_child ]
         in
+        let error_child = first_child_named "ERROR" node ~err:Syntax_error in
+        let children = mk_child_res make_node error_child :: children in
         make_tree state node children))
 
 (* Throw statement *)
@@ -1226,6 +1287,8 @@ and print_throw_statement state node =
     let children =
       [ mk_child_res mk_kwd_throw kwd_throw; mk_child_res print_expressions expr ]
     in
+    let error_child = first_child_named "ERROR" node ~err:Syntax_error in
+    let children = mk_child_res make_node error_child :: children in
     make_tree state node children
 
 (* Empty statement *)
@@ -1251,6 +1314,8 @@ and print_labeled_statement state node =
       ; mk_child_res print_statement body_field
       ]
     in
+    let error_child = first_child_named "ERROR" node ~err:Syntax_error in
+    let children = mk_child_res make_node error_child :: children in
     make_tree state node children
 
 (* DECLARATION
@@ -1308,6 +1373,8 @@ and print_function_declaration ?(comments = []) state node =
       ; mk_child_res print_statement_block body_field
       ]
     in
+    let error_child = first_child_named "ERROR" node ~err:Syntax_error in
+    let children = mk_child_res make_node error_child :: children in
     make_tree state node children
 
 and print_return_type state node =
@@ -1345,6 +1412,8 @@ and print_generator_function_declaration state node =
       ; mk_child_res print_statement_block body_field
       ]
     in
+    let error_child = first_child_named "ERROR" node ~err:Syntax_error in
+    let children = mk_child_res make_node error_child :: children in
     make_tree state node children
 
 (* Class declaration (see [print_class]) *)
@@ -1390,6 +1459,8 @@ and print_lexical_declaration ?(comments = []) state node =
       mk_child_res print_set_or_const kind_field
       :: mk_children_list print_variable_declarator var_decls
     in
+    let error_child = first_child_named "ERROR" node ~err:Syntax_error in
+    let children = mk_child_res make_node error_child :: children in
     make_tree state node children
 
 and print_variable_declarator state node =
@@ -1411,6 +1482,8 @@ and print_variable_declarator state node =
         :: mk_child mk_sym_qmark sym_qmark
         :: [ mk_child_res print_type_annotation type_field ]
     in
+    let error_child = first_child_named "ERROR" node ~err:Syntax_error in
+    let children = mk_child_res make_node error_child :: children in
     make_tree state node children
 
 and print_lhs_pattern state node =
@@ -1432,6 +1505,8 @@ and print_variable_declaration ?(comments = []) state node =
       mk_child_res (mk_kwd_var ~comments) kwd_var
       :: mk_children_list print_variable_declarator var_decls
     in
+    let error_child = first_child_named "ERROR" node ~err:Syntax_error in
+    let children = mk_child_res make_node error_child :: children in
     make_tree state node children
 
 (* Function signature (See [print_function_declaration]) *)
@@ -1457,6 +1532,8 @@ and print_function_signature state node =
       ; mk_child_opt print_return_type return_type_field
       ]
     in
+    let error_child = first_child_named "ERROR" node ~err:Syntax_error in
+    let children = mk_child_res make_node error_child :: children in
     make_tree state node children
 
 (* Abstract class declaration ( see [print_class_declaration]) *)
@@ -1482,6 +1559,8 @@ and print_abstract_class_declaration state node =
         ; mk_child_res print_class_body body_field
         ]
     in
+    let error_child = first_child_named "ERROR" node ~err:Syntax_error in
+    let children = mk_child_res make_node error_child :: children in
     make_tree state node children
 
 (* Module *)
@@ -1507,6 +1586,8 @@ and print_module ?(comments = []) state node =
       ; mk_child_opt print_statement_block body_field
       ]
     in
+    let error_child = first_child_named "ERROR" node ~err:Syntax_error in
+    let children = mk_child_res make_node error_child :: children in
     make_tree state node children
 
 (* Internal module (a.k.a. namespaces) *)
@@ -1532,6 +1613,8 @@ and print_internal_module ?(comments = []) state node =
       ; mk_child_opt print_statement_block body_field
       ]
     in
+    let error_child = first_child_named "ERROR" node ~err:Syntax_error in
+    let children = mk_child_res make_node error_child :: children in
     make_tree state node children
 
 (* Type alias declaration *)
@@ -1555,6 +1638,8 @@ and print_type_alias_declaration ?(comments = []) state node =
       ; mk_child_res print_type value_field
       ]
     in
+    let error_child = first_child_named "ERROR" node ~err:Syntax_error in
+    let children = mk_child_res make_node error_child :: children in
     make_tree state node children
 
 and print_type_parameters state node =
@@ -1575,6 +1660,8 @@ and print_type_parameter state node =
       ; mk_child_opt print_default_type value_field
       ]
     in
+    let error_child = first_child_named "ERROR" node ~err:Syntax_error in
+    let children = mk_child_res make_node error_child :: children in
     make_tree state node children
 
 and print_constraint state node =
@@ -1591,6 +1678,8 @@ and print_constraint state node =
     let children =
       [ mk_child_res mk_kwd_extends kwd_extends; mk_child_res print_type type_child ]
     in
+    let error_child = first_child_named "ERROR" node ~err:Syntax_error in
+    let children = mk_child_res make_node error_child :: children in
     make_tree state node children
 
 and print_default_type state node =
@@ -1602,6 +1691,8 @@ and print_default_type state node =
     let children =
       [ mk_child_res mk_sym_equal sym_equal; mk_child_res print_type type_node ]
     in
+    let error_child = first_child_named "ERROR" node ~err:Syntax_error in
+    let children = mk_child_res make_node error_child :: children in
     make_tree state node children
 
 (* Enum declaration *)
@@ -1621,6 +1712,8 @@ and print_enum_declaration state node =
       ; mk_child_res print_enum_body body_field
       ]
     in
+    let error_child = first_child_named "ERROR" node ~err:Syntax_error in
+    let children = mk_child_res make_node error_child :: children in
     make_tree state node children
 
 and print_enum_body state node =
@@ -1641,6 +1734,8 @@ and print_enum_assignment state node =
       mk_child_res print_property_name name_field
       :: mk_child_initializer_opt node (* "_initializer" inlined *)
     in
+    let error_child = first_child_named "ERROR" node ~err:Syntax_error in
+    let children = mk_child_res make_node error_child :: children in
     make_tree state node children
 
 (* Interface declaration *)
@@ -1663,6 +1758,8 @@ and print_interface_declaration ?(comments = []) state node =
       ; mk_child_res print_interface_body body_field
       ]
     in
+    let error_child = first_child_named "ERROR" node ~err:Syntax_error in
+    let children = mk_child_res make_node error_child :: children in
     make_tree state node children
 
 and print_interface_body state node = print_object_type state node
@@ -1676,6 +1773,8 @@ and print_extends_type_clause state node =
       mk_child_res mk_kwd_extends kwd_extends
       :: mk_children_list print_type_extension (collect_named_children node)
     in
+    let error_child = first_child_named "ERROR" node ~err:Syntax_error in
+    let children = mk_child_res make_node error_child :: children in
     make_tree state node children
 
 and print_type_extension state node =
@@ -1702,6 +1801,8 @@ and print_import_alias state node =
       ; mk_child_res print_aliased rhs
       ]
     in
+    let error_child = first_child_named "ERROR" node ~err:Syntax_error in
+    let children = mk_child_res make_node error_child :: children in
     make_tree state node children
 
 and print_aliased state node =
@@ -1739,6 +1840,8 @@ and print_ambient_declaration state node =
           ]
         | _ -> [ mk_child print_declaration first_child ]))
     in
+    let error_child = first_child_named "ERROR" node ~err:Syntax_error in
+    let children = mk_child_res make_node error_child :: children in
     make_tree state node children
 
 (* EXPRESSION
@@ -1820,6 +1923,8 @@ and print_assignment_expression state node =
       ; mk_child_res print_expression right_field
       ]
     in
+    let error_child = first_child_named "ERROR" node ~err:Syntax_error in
+    let children = mk_child_res make_node error_child :: children in
     make_tree state node children
 
 and print_assignment_lhs state node =
@@ -1843,6 +1948,8 @@ and print_augmented_assignment_expression state node =
       ; mk_child_res print_expression right_field
       ]
     in
+    let error_child = first_child_named "ERROR" node ~err:Syntax_error in
+    let children = mk_child_res make_node error_child :: children in
     make_tree state node children
 
 and print_assignment_operator state node =
@@ -1884,6 +1991,8 @@ and print_await_expression state node =
     let children =
       [ mk_child_res mk_kwd_await kwd_await; mk_child_res print_expression expression ]
     in
+    let error_child = first_child_named "ERROR" node ~err:Syntax_error in
+    let children = mk_child_res make_node error_child :: children in
     make_tree state node children
 
 (* Unary expression *)
@@ -1899,6 +2008,8 @@ and print_unary_expression state node =
       ; mk_child_res print_expression argument_field
       ]
     in
+    let error_child = first_child_named "ERROR" node ~err:Syntax_error in
+    let children = mk_child_res make_node error_child :: children in
     make_tree state node children
 
 and print_unary_operator state node =
@@ -1928,6 +2039,8 @@ and print_binary_expression ?(comments = []) state node =
       ; mk_child_res print_expression right_field
       ]
     in
+    let error_child = first_child_named "ERROR" node ~err:Syntax_error in
+    let children = mk_child_res make_node error_child :: children in
     make_tree state node children
 
 and print_lhs_bin_expression ?(comments = []) state node =
@@ -1979,6 +2092,8 @@ and print_ternary_expression state node =
       ; mk_child_res print_expression alternative_field
       ]
     in
+    let error_child = first_child_named "ERROR" node ~err:Syntax_error in
+    let children = mk_child_res make_node error_child :: children in
     make_tree state node children
 
 (* Update expression *)
@@ -2022,6 +2137,8 @@ and print_update_expression state node =
               ]
             | _ -> [] (* Should not happen. *))))
     in
+    let error_child = first_child_named "ERROR" node ~err:Syntax_error in
+    let children = mk_child_res make_node error_child :: children in
     make_tree state node children
 
 (* New expression
@@ -2046,6 +2163,8 @@ and print_new_expression state node =
       ; mk_child_opt print_arguments arguments_field
       ]
     in
+    let error_child = first_child_named "ERROR" node ~err:Syntax_error in
+    let children = mk_child_res make_node error_child :: children in
     make_tree state node children
 
 (* Yield expression *)
@@ -2056,7 +2175,11 @@ and print_yield_expression state node =
   | _ ->
     let kwd_yield = first_child_named "yield" node ~err:Yield in
     (match child_ranked_opt 1 node with
-    | None -> make_unary_res state node mk_kwd_yield kwd_yield
+     | None ->
+       let children = [ mk_child_res mk_kwd_yield kwd_yield ] in
+       let error_child = first_child_named "ERROR" node ~err:Syntax_error in
+       let children = mk_child_res make_node error_child :: children in
+       make_tree state node children
     | Some snd_child ->
       let snd_child =
         match get_name snd_child with
@@ -2066,6 +2189,8 @@ and print_yield_expression state node =
       let children =
         [ mk_child_res mk_kwd_yield kwd_yield; mk_child_res print_expression snd_child ]
       in
+      let error_child = first_child_named "ERROR" node ~err:Syntax_error in
+      let children = mk_child_res make_node error_child :: children in
       make_tree state node children)
 
 (* As-expression *)
@@ -2089,6 +2214,8 @@ and print_as_expression state node =
       ; mk_child_res print_as as_what
       ]
     in
+    let error_child = first_child_named "ERROR" node ~err:Syntax_error in
+    let children = mk_child_res make_node error_child :: children in
     make_tree state node children
 
 (* Statisfies-expression *)
@@ -2106,6 +2233,8 @@ and print_satisfies_expression state node =
       ; mk_child_res print_type type_child
       ]
     in
+    let error_child = first_child_named "ERROR" node ~err:Syntax_error in
+    let children = mk_child_res make_node error_child :: children in
     make_tree state node children
 
 (* Instantiation expression *)
@@ -2123,6 +2252,8 @@ and print_instantiation_expression state node =
       ; mk_child_res print_type_arguments type_arguments_field
       ]
     in
+    let error_child = first_child_named "ERROR" node ~err:Syntax_error in
+    let children = mk_child_res make_node error_child :: children in
     make_tree state node children
 
 (* Type assertion *)
@@ -2138,6 +2269,8 @@ and print_type_assertion state node =
       ; mk_child_res print_expression expression
       ]
     in
+    let error_child = first_child_named "ERROR" node ~err:Syntax_error in
+    let children = mk_child_res make_node error_child :: children in
     make_tree state node children
 
 (* Subscript expression (see [print_member_expression]) *)
@@ -2159,6 +2292,8 @@ and print_subscript_expression state node =
       ; mk_child_res mk_sym_rbracket sym_rbracket
       ]
     in
+    let error_child = first_child_named "ERROR" node ~err:Syntax_error in
+    let children = mk_child_res make_node error_child :: children in
     make_tree state node children
 
 and print_optional_chain state node =
@@ -2193,6 +2328,8 @@ and print_member_expression state node =
       ; mk_child_res print_property_field property_field
       ]
     in
+    let error_child = first_child_named "ERROR" node ~err:Syntax_error in
+    let children = mk_child_res make_node error_child :: children in
     make_tree state node children
 
 and print_object_member state node =
@@ -2231,6 +2368,8 @@ and print_parenthesized_expression ?(comments = []) state node =
       (mk_child_res (mk_sym_lparen ~comments) opening :: children)
       @ [ mk_child_res mk_sym_rparen closing ]
     in
+    let error_child = first_child_named "ERROR" node ~err:Syntax_error in
+    let children = mk_child_res make_node error_child :: children in
     make_tree state node children
 
 (* Template strings *)
@@ -2247,6 +2386,8 @@ and print_template_string ?(comments = []) state node =
       :: mk_children_list print_template_string_fragment raw_children)
       @ [ mk_child_res mk_sym_backquote closing ]
     in
+    let error_child = first_child_named "ERROR" node ~err:Syntax_error in
+    let children = mk_child_res make_node error_child :: children in
     make_tree state node children
 
 and print_template_string_fragment ?comments state node =
@@ -2285,6 +2426,8 @@ and print_pair state node =
       ; mk_child_res print_expression value_field
       ]
     in
+    let error_child = first_child_named "ERROR" node ~err:Syntax_error in
+    let children = mk_child_res make_node error_child :: children in
     make_tree state node children
 
 (* Array (expression) *)
@@ -2308,6 +2451,8 @@ and print_spread_element state node =
       ; mk_child_res print_expression expr_node
       ]
     in
+    let error_child = first_child_named "ERROR" node ~err:Syntax_error in
+    let children = mk_child_res make_node error_child :: children in
     make_tree state node children
 
 (* Function (expression) *)
@@ -2335,6 +2480,8 @@ and print_function_expression state node =
       ; mk_child_res print_statement_block body_field
       ]
     in
+    let error_child = first_child_named "ERROR" node ~err:Syntax_error in
+    let children = mk_child_res make_node error_child :: children in
     make_tree state node children
 
 (* Arrow function *)
@@ -2368,6 +2515,8 @@ and print_arrow_function state node =
         ; mk_child_res print_arrow_function_body body_field
         ]
     in
+    let error_child = first_child_named "ERROR" node ~err:Syntax_error in
+    let children = mk_child_res make_node error_child :: children in
     make_tree state node children
 
 and print_arrow_function_body state node =
@@ -2403,6 +2552,8 @@ and print_generator_function state node =
       ; mk_child_res print_statement_block body_field
       ]
     in
+    let error_child = first_child_named "ERROR" node ~err:Syntax_error in
+    let children = mk_child_res make_node error_child :: children in
     make_tree state node children
 
 (* Class expression ("class_" in the grammar) *)
@@ -2426,6 +2577,8 @@ and print_class_expression state node =
         ; mk_child_res print_class_body body_field
         ]
     in
+    let error_child = first_child_named "ERROR" node ~err:Syntax_error in
+    let children = mk_child_res make_node error_child :: children in
     make_tree state node children
 
 and print_class_heritage state node =
@@ -2447,6 +2600,8 @@ and print_class_heritage state node =
           let msg = mk_err_msg node Extends_or_implements in
           [ mk_error_child node ~msg ])
     in
+    let error_child = first_child_named "ERROR" node ~err:Syntax_error in
+    let children = mk_child_res make_node error_child :: children in
     make_tree state node children
 
 and print_extends_clause state node =
@@ -2481,6 +2636,8 @@ and print_extends_clause state node =
       mk_child_res mk_kwd_extends kwd_extends
       :: List.fold_right ~f:mk_children pairs ~init:[]
     in
+    let error_child = first_child_named "ERROR" node ~err:Syntax_error in
+    let children = mk_child_res make_node error_child :: children in
     make_tree state node children
 
 and print_implements_clause state node =
@@ -2493,6 +2650,8 @@ and print_implements_clause state node =
       mk_child_res mk_kwd_implements kwd_implements
       :: mk_children_list print_type named_children
     in
+    let error_child = first_child_named "ERROR" node ~err:Syntax_error in
+    let children = mk_child_res make_node error_child :: children in
     make_tree state node children
 
 and print_class_body ?(comments = []) state node =
@@ -2515,6 +2674,8 @@ and print_class_body ?(comments = []) state node =
       :: mk_children_list print_class_member pairs)
       @ [ mk_child_res mk_sym_rbracket closing ]
     in
+    let error_child = first_child_named "ERROR" node ~err:Syntax_error in
+    let children = mk_child_res make_node error_child :: children in
     make_tree state node children
 
 and print_class_member state (decorators, node) =
@@ -2570,6 +2731,8 @@ and print_method_definition state node =
       ; mk_child_res print_statement_block body_field
       ]
     in
+    let error_child = first_child_named "ERROR" node ~err:Syntax_error in
+    let children = mk_child_res make_node error_child :: children in
     make_tree state node children
 
 and print_class_static_block state node =
@@ -2583,6 +2746,8 @@ and print_class_static_block state node =
       ; mk_child_res print_statement_block body_field
       ]
     in
+    let error_child = first_child_named "ERROR" node ~err:Syntax_error in
+    let children = mk_child_res make_node error_child :: children in
     make_tree state node children
 
 (* Abstract method signature *)
@@ -2618,6 +2783,8 @@ and print_abstract_method_signature state node =
       ; mk_child_opt print_return_type return_type_field
       ]
     in
+    let error_child = first_child_named "ERROR" node ~err:Syntax_error in
+    let children = mk_child_res make_node error_child :: children in
     make_tree state node children
 
 and print_public_field_definition state node =
@@ -2653,6 +2820,8 @@ and print_public_field_definition state node =
         ]
       @ mk_child_initializer_opt node (* "_initializer" inlined *)
     in
+    let error_child = first_child_named "ERROR" node ~err:Syntax_error in
+    let children = mk_child_res make_node error_child :: children in
     make_tree state node children
 
 (* Meta-property *)
@@ -2668,6 +2837,8 @@ and print_meta_property state node =
       ; mk_child_res (make_kwd ~err:Target_or_meta) snd_child
       ]
     in
+    let error_child = first_child_named "ERROR" node ~err:Syntax_error in
+    let children = mk_child_res make_node error_child :: children in
     make_tree state node children
 
 (* Call expression *)
@@ -2704,6 +2875,8 @@ and print_call_expression state node =
         ; mk_child_res print_arguments arguments_field
         ]
     in
+    let error_child = first_child_named "ERROR" node ~err:Syntax_error in
+    let children = mk_child_res make_node error_child :: children in
     make_tree state node children
 
 and print_type_arguments state node =
@@ -2724,7 +2897,10 @@ and print_non_null_expression state node =
   | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Non_null_expression
   | _ ->
     let child = named_child_ranked 0 node ~err:Non_null_expression in
-    make_unary_res state node print_expression child
+    let children = [ mk_child_res print_expression child ] in
+    let error_child = first_child_named "ERROR" node ~err:Syntax_error in
+    let children = mk_child_res make_node error_child :: children in
+    make_tree state node children
 
 (* Sequence expression *)
 
@@ -2800,6 +2976,8 @@ and print_type_query_member_expression_in_type_annotation state node =
       ; mk_child_res print_type_query_property property_field
       ]
     in
+    let error_child = first_child_named "ERROR" node ~err:Syntax_error in
+    let children = mk_child_res make_node error_child :: children in
     make_tree state node children
 
 and print_type_query_property state node =
@@ -2819,6 +2997,8 @@ and print_type_query_call_expression_in_type_annotation state node =
       ; mk_child_res print_arguments arguments_field
       ]
     in
+    let error_child = first_child_named "ERROR" node ~err:Syntax_error in
+    let children = mk_child_res make_node error_child :: children in
     make_tree state node children
 
 and print_type_query_call_lambda state node =
@@ -2838,7 +3018,10 @@ and print_flow_maybe_type state node =
   | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Type
   | _ ->
     let child = named_child_ranked 0 node ~err:Type_expression in
-    make_unary_res state node print_primary_type child
+    let children = [ mk_child_res print_primary_type child ] in
+    let error_child = first_child_named "ERROR" node ~err:Syntax_error in
+    let children = mk_child_res make_node error_child :: children in
+    make_tree state node children
 
 (* Type identifier *)
 
@@ -2886,7 +3069,10 @@ and print_predefined_type ?(comments = []) state node =
         | "object" -> mk_kwd_object ~comments state node
         | _ -> print_error_node state node ~err:Predefined_type
       in
-      make_unary state node print child)
+      let children = [ mk_child print child ] in
+      let error_child = first_child_named "ERROR" node ~err:Syntax_error in
+      let children = mk_child_res make_node error_child :: children in
+      make_tree state node children)
 
 (* Nested type identifier *)
 
@@ -2902,6 +3088,8 @@ and print_nested_type_identifier ?comments state node =
       ; mk_child_res print_type_identifier name_field
       ]
     in
+    let error_child = first_child_named "ERROR" node ~err:Syntax_error in
+    let children = mk_child_res make_node error_child :: children in
     make_tree state node children
 
 and print_module_path ?comments state node =
@@ -2923,6 +3111,8 @@ and print_nested_identifier ?comments state node =
       ; mk_child_res print_property property_field
       ]
     in
+    let error_child = first_child_named "ERROR" node ~err:Syntax_error in
+    let children = mk_child_res make_node error_child :: children in
     make_tree state node children
 
 and print_object_path ?comments state node =
@@ -2952,6 +3142,8 @@ and print_generic_type ?(comments = []) state node =
       ; mk_child_res print_type_arguments type_arguments_field
       ]
     in
+    let error_child = first_child_named "ERROR" node ~err:Syntax_error in
+    let children = mk_child_res make_node error_child :: children in
     make_tree state node children
 
 and print_generic_name ?(comments = []) state node =
@@ -2999,6 +3191,8 @@ and print_property_signature state node =
       ; mk_child_opt print_type_annotation type_field
       ]
     in
+    let error_child = first_child_named "ERROR" node ~err:Syntax_error in
+    let children = mk_child_res make_node error_child :: children in
     make_tree state node children
 
 (* Call signature *)
@@ -3016,6 +3210,8 @@ and print_call_signature state node =
       ; mk_child_opt print_return_type return_type_field
       ]
     in
+    let error_child = first_child_named "ERROR" node ~err:Syntax_error in
+    let children = mk_child_res make_node error_child :: children in
     make_tree state node children
 
 (* Asserts annotation *)
@@ -3024,8 +3220,11 @@ and print_asserts_annotation state node =
   match get_name node with
   | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Asserts_annotation
   | _ ->
-    let asserts = first_child_named "asserts" node ~err:Asserts in
-    make_unary_res state node print_asserts asserts
+    let child = first_child_named "asserts" node ~err:Asserts in
+    let children = [ mk_child_res print_asserts child ] in
+    let error_child = first_child_named "ERROR" node ~err:Syntax_error in
+    let children = mk_child_res make_node error_child :: children in
+    make_tree state node children
 
 and print_asserts state node =
   match get_name node with
@@ -3043,6 +3242,8 @@ and print_asserts state node =
     let children =
       [ mk_child_res mk_kwd_asserts kwd_asserts; mk_child_res print child ]
     in
+    let error_child = first_child_named "ERROR" node ~err:Syntax_error in
+    let children = mk_child_res make_node error_child :: children in
     make_tree state node children
 
 (* Type predicate annotation *)
@@ -3051,8 +3252,11 @@ and print_type_predicate_annotation state node =
   match get_name node with
   | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Type_predicate
   | _ ->
-    let predicate = child_ranked 1 node ~err:Type_predicate in
-    make_unary_res state node print_type_predicate predicate
+    let child = child_ranked 1 node ~err:Type_predicate in
+    let children = [ mk_child_res print_type_predicate child ] in
+    let error_child = first_child_named "ERROR" node ~err:Syntax_error in
+    let children = mk_child_res make_node error_child :: children in
+    make_tree state node children
 
 (* Construct signature *)
 
@@ -3073,6 +3277,8 @@ and print_construct_signature state node =
       ; mk_child_opt print_type_annotation type_field
       ]
     in
+    let error_child = first_child_named "ERROR" node ~err:Syntax_error in
+    let children = mk_child_res make_node error_child :: children in
     make_tree state node children
 
 (* Index signature *)
@@ -3111,6 +3317,8 @@ and print_index_signature state node =
           ])
       @ [ mk_child_res mk_sym_rbracket sym_rbracket ]
     in
+    let error_child = first_child_named "ERROR" node ~err:Syntax_error in
+    let children = mk_child_res make_node error_child :: children in
     make_tree state node children
 
 and print_index_annotation state node =
@@ -3149,6 +3357,8 @@ and print_mapped_type_clause state node =
       ]
       @ alias_children
     in
+    let error_child = first_child_named "ERROR" node ~err:Syntax_error in
+    let children = mk_child_res make_node error_child :: children in
     make_tree state node children
 
 and print_omitting_type_annotation state node =
@@ -3161,6 +3371,8 @@ and print_omitting_type_annotation state node =
     let children =
       [ mk_child_res mk_sym_omitting sym_kind; mk_child_res print_type type_child ]
     in
+    let error_child = first_child_named "ERROR" node ~err:Syntax_error in
+    let children = mk_child_res make_node error_child :: children in
     make_tree state node children
 
 and print_adding_type_annotation state node =
@@ -3173,6 +3385,8 @@ and print_adding_type_annotation state node =
     let children =
       [ mk_child_res mk_sym_adding sym_kind; mk_child_res print_type type_child ]
     in
+    let error_child = first_child_named "ERROR" node ~err:Syntax_error in
+    let children = mk_child_res make_node error_child :: children in
     make_tree state node children
 
 and print_opting_type_annotation state node =
@@ -3185,6 +3399,8 @@ and print_opting_type_annotation state node =
     let children =
       [ mk_child_res mk_sym_opting sym_kind; mk_child_res print_type type_child ]
     in
+    let error_child = first_child_named "ERROR" node ~err:Syntax_error in
+    let children = mk_child_res make_node error_child :: children in
     make_tree state node children
 
 (* Method signature *)
@@ -3224,6 +3440,8 @@ and print_method_signature state node =
       ; mk_child_opt print_return_type return_type_field
       ]
     in
+    let error_child = first_child_named "ERROR" node ~err:Syntax_error in
+    let children = mk_child_res make_node error_child :: children in
     make_tree state node children
 
 (* Array type *)
@@ -3241,6 +3459,8 @@ and print_array_type state node =
       ; mk_child_res mk_sym_rbracket sym_rbracket
       ]
     in
+    let error_child = first_child_named "ERROR" node ~err:Syntax_error in
+    let children = mk_child_res make_node error_child :: children in
     make_tree state node children
 
 (* Tuple type *)
@@ -3267,6 +3487,8 @@ and print_tuple_parameter state node =
       ; mk_child_res print_type_annotation type_field
       ]
     in
+    let error_child = first_child_named "ERROR" node ~err:Syntax_error in
+    let children = mk_child_res make_node error_child :: children in
     make_tree state node children
 
 and print_tuple_parameter_name state node =
@@ -3287,6 +3509,8 @@ and print_optional_tuple_parameter state node =
       ; mk_child_res print_type_annotation type_field
       ]
     in
+    let error_child = first_child_named "ERROR" node ~err:Syntax_error in
+    let children = mk_child_res make_node error_child :: children in
     make_tree state node children
 
 (* Type annotation *)
@@ -3300,6 +3524,8 @@ and print_type_annotation state node =
     let children =
       [ mk_child_res mk_sym_colon sym_colon; mk_child_res print_type type_child ]
     in
+    let error_child = first_child_named "ERROR" node ~err:Syntax_error in
+    let children = mk_child_res make_node error_child :: children in
     make_tree state node children
 
 (* Rest pattern *)
@@ -3315,6 +3541,8 @@ and print_rest_pattern state node =
       ; mk_child_res print_lhs_expression expr_child
       ]
     in
+    let error_child = first_child_named "ERROR" node ~err:Syntax_error in
+    let children = mk_child_res make_node error_child :: children in
     make_tree state node children
 
 (* Optional type *)
@@ -3324,7 +3552,10 @@ and print_optional_type state node =
   | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Optional_type
   | _ ->
     let child = named_child_ranked 0 node ~err:Optional_type in
-    make_unary_res state node print_type child
+    let children = [ mk_child_res print_type child ] in
+    let error_child = first_child_named "ERROR" node ~err:Syntax_error in
+    let children = mk_child_res make_node error_child :: children in
+    make_tree state node children
 
 (* Rest type *)
 
@@ -3337,6 +3568,8 @@ and print_rest_type state node =
     let children =
       [ mk_child_res mk_sym_ellipsis sym_ellipsis; mk_child_res print_type type_child ]
     in
+    let error_child = first_child_named "ERROR" node ~err:Syntax_error in
+    let children = mk_child_res make_node error_child :: children in
     make_tree state node children
 
 (* LHS expression *)
@@ -3371,6 +3604,8 @@ and print_type_query state node =
       | _ -> print_error_node state node ~err:Type_query
     in
     let children = [ mk_child_res mk_kwd_typeof kwd_typeof; mk_child_res print child ] in
+    let error_child = first_child_named "ERROR" node ~err:Syntax_error in
+    let children = mk_child_res make_node error_child :: children in
     make_tree state node children
 
 and print_type_query_subscript_expression state node =
@@ -3408,6 +3643,8 @@ and print_type_query_member_expression state node =
       ; mk_child_res print_property_field property_field
       ]
     in
+    let error_child = first_child_named "ERROR" node ~err:Syntax_error in
+    let children = mk_child_res make_node error_child :: children in
     make_tree state node children
 
 and print_type_query_object state node =
@@ -3435,6 +3672,8 @@ and print_type_query_instantiation_expression state node =
       ; mk_child_res print_type_arguments type_arguments_field
       ]
     in
+    let error_child = first_child_named "ERROR" node ~err:Syntax_error in
+    let children = mk_child_res make_node error_child :: children in
     make_tree state node children
 
 and print_type_query_call_function state node =
@@ -3456,6 +3695,8 @@ and print_type_query_call_expression state node =
       ; mk_child_res print_arguments arguments_field
       ]
     in
+    let error_child = first_child_named "ERROR" node ~err:Syntax_error in
+    let children = mk_child_res make_node error_child :: children in
     make_tree state node children
 
 (* Index type query *)
@@ -3465,7 +3706,10 @@ and print_index_type_query state node =
   | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Index_type_query
   | _ ->
     let child = named_child_ranked 0 node ~err:Index_type_query in
-    make_unary_res state node print_primary_type child
+    let children = [mk_child_res print_primary_type child ] in
+    let error_child = first_child_named "ERROR" node ~err:Syntax_error in
+    let children = mk_child_res make_node error_child :: children in
+    make_tree state node children
 
 (* Existential type *)
 
@@ -3492,7 +3736,10 @@ and print_literal_type state node =
       | "undefined" -> mk_kwd_undefined state node
       | _ -> print_error_node state node ~err:Literal_type
     in
-    make_unary_res state node print child
+    let children = [ mk_child_res print child ] in
+    let error_child = first_child_named "ERROR" node ~err:Syntax_error in
+    let children = mk_child_res make_node error_child :: children in
+    make_tree state node children
 
 (* Look up type
 
@@ -3514,6 +3761,8 @@ and print_lookup_type state node =
       ; mk_child_res mk_sym_rbracket sym_rbracket
       ]
     in
+    let error_child = first_child_named "ERROR" node ~err:Syntax_error in
+    let children = mk_child_res make_node error_child :: children in
     make_tree state node children
 
 (* Conditional type *)
@@ -3539,6 +3788,8 @@ and print_conditional_type state node =
       ; mk_child_res print_type alternative_field
       ]
     in
+    let error_child = first_child_named "ERROR" node ~err:Syntax_error in
+    let children = mk_child_res make_node error_child :: children in
     make_tree state node children
 
 (* Template literal type *)
@@ -3571,6 +3822,8 @@ and print_intersection_type state node =
           ; mk_child_res print_type right_type
           ])
     in
+    let error_child = first_child_named "ERROR" node ~err:Syntax_error in
+    let children = mk_child_res make_node error_child :: children in
     make_tree state node children
 
 (* Union type *)
@@ -3599,6 +3852,8 @@ and print_union_type ?(comments = []) state node =
           ; mk_child_res print_type right_type
           ])
     in
+    let error_child = first_child_named "ERROR" node ~err:Syntax_error in
+    let children = mk_child_res make_node error_child :: children in
     make_tree state node children
 
 (* Function type *)
@@ -3624,6 +3879,8 @@ and print_function_type state node =
       ; mk_child_res print_return_type return_type_field
       ]
     in
+    let error_child = first_child_named "ERROR" node ~err:Syntax_error in
+    let children = mk_child_res make_node error_child :: children in
     make_tree state node children
 
 (* Type predicate *)
@@ -3647,6 +3904,8 @@ and print_type_predicate state node =
       ; mk_child_res print_type type_field
       ]
     in
+    let error_child = first_child_named "ERROR" node ~err:Syntax_error in
+    let children = mk_child_res make_node error_child :: children in
     make_tree state node children
 
 (* Readonly type *)
@@ -3660,6 +3919,8 @@ and print_readonly_type state node =
     let children =
       [ mk_child_res mk_kwd_readonly kwd_readonly; mk_child_res print_type type_child ]
     in
+    let error_child = first_child_named "ERROR" node ~err:Syntax_error in
+    let children = mk_child_res make_node error_child :: children in
     make_tree state node children
 
 (* Constructor type *)
@@ -3683,6 +3944,8 @@ and print_constructor_type state node =
       ; mk_child_res print_type type_field
       ]
     in
+    let error_child = first_child_named "ERROR" node ~err:Syntax_error in
+    let children = mk_child_res make_node error_child :: children in
     make_tree state node children
 
 and print_formal_parameters state node =
@@ -3723,6 +3986,8 @@ and print_required_parameter state node =
         ]
       @ mk_child_initializer_opt node (* "_initializer" inlined *)
     in
+    let error_child = first_child_named "ERROR" node ~err:Syntax_error in
+    let children = mk_child_res make_node error_child :: children in
     make_tree state node children
 
 and mk_child_initializer sym_equal node =
@@ -3730,6 +3995,8 @@ and mk_child_initializer sym_equal node =
   let children =
     [ mk_child_res mk_sym_equal sym_equal; mk_child_res print_expression value_field ]
   in
+  let error_child = first_child_named "ERROR" node ~err:Syntax_error in
+  let children = mk_child_res make_node error_child :: children in
   Some (fun state -> Tree.make_tree state "initializer" children)
 
 and mk_child_initializer_opt node =
@@ -3756,6 +4023,8 @@ and print_infer_type state node =
       ; mk_child_opt print_type type_child
       ]
     in
+    let error_child = first_child_named "ERROR" node ~err:Syntax_error in
+    let children = mk_child_res make_node error_child :: children in
     make_tree state node children
 
 (* Decorator *)
@@ -3773,7 +4042,10 @@ and print_decorator state node =
       | "parenthesized_expression" -> print_decorator_parenthesized_expression state node
       | _ -> print_error_node state node ~err:Decorator
     in
-    make_unary_res state node print child
+    let children = [ mk_child_res print child ] in
+    let error_child = first_child_named "ERROR" node ~err:Syntax_error in
+    let children = mk_child_res make_node error_child :: children in
+    make_tree state node children
 
 and print_decorator_member_expression state node =
   match get_name node with
@@ -3793,6 +4065,8 @@ and print_decorator_member_expression state node =
       ; mk_child_res print_identifier property_field
       ]
     in
+    let error_child = first_child_named "ERROR" node ~err:Syntax_error in
+    let children = mk_child_res make_node error_child :: children in
     make_tree state node children
 
 and print_decorator_call_expression state node =
@@ -3814,6 +4088,8 @@ and print_decorator_call_expression state node =
       ; mk_child_res print_arguments arguments_field
       ]
     in
+    let error_child = first_child_named "ERROR" node ~err:Syntax_error in
+    let children = mk_child_res make_node error_child :: children in
     make_tree state node children
 
 and print_decorator_parenthesized_expression ?comments state node =
@@ -3840,7 +4116,10 @@ and print_accessibility_modifier state node =
       | "protected" -> mk_kwd_protected state node
       | _ -> print_error_node state node ~err:Public_private_protected
     in
-    make_unary_res state node print child
+    let children = [ mk_child_res print child ] in
+    let error_child = first_child_named "ERROR" node ~err:Syntax_error in
+    let children = mk_child_res make_node error_child :: children in
+    make_tree state node children
 
 (* Override modifier *)
 
@@ -3849,7 +4128,10 @@ and print_override_modifier state node =
   | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Override
   | _ ->
     let child = child_ranked 0 node ~err:Override in
-    make_unary_res state node mk_kwd_override child
+    let children = [ mk_child_res mk_kwd_override child ] in
+    let error_child = first_child_named "ERROR" node ~err:Syntax_error in
+    let children = mk_child_res make_node error_child :: children in
+    make_tree state node children
 
 (* PATTERN
 
@@ -3885,6 +4167,8 @@ and print_pair_pattern state node =
       ; mk_child_res print_pair_value_pattern value_field
       ]
     in
+    let error_child = first_child_named "ERROR" node ~err:Syntax_error in
+    let children = mk_child_res make_node error_child :: children in
     make_tree state node children
 
 and print_pair_value_pattern state node =
@@ -3908,6 +4192,8 @@ and print_assignment_pattern state node =
       ; mk_child_res print_expression right_field
       ]
     in
+    let error_child = first_child_named "ERROR" node ~err:Syntax_error in
+    let children = mk_child_res make_node error_child :: children in
     make_tree state node children
 
 (* Property names *)
@@ -3945,6 +4231,8 @@ and print_object_assignment_pattern state node =
       ; mk_child_res print_expression right_field
       ]
     in
+    let error_child = first_child_named "ERROR" node ~err:Syntax_error in
+    let children = mk_child_res make_node error_child :: children in
     make_tree state node children
 
 and print_object_lhs_pattern state node =
