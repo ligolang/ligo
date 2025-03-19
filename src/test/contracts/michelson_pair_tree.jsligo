@@ -6,8 +6,8 @@ type storage = michelson_pair<[int, "three", inner_storage, "four"]>;
 
 type return_ = [list<operation>, storage];
 
-@entry
-const main = (action: unit, store: storage): return_ => {
+// @entry
+function main (_action: unit, _store: storage): return_ {
   let foo = [3, [1, 2 as nat]];
   return [[], foo as storage]
 };
