@@ -22,7 +22,5 @@ const new_storage = {a : 4, b : false, c : "new"};
 
 const l_copy = list([{...new_storage,} as storage]);
 
-@entry
-const main = (_ : int, s : int) : [list<operation>, int] => {
-  return [(list([]) as list<operation>), s]
-};
+// @entry
+const main = (_ : int, s : int) : [list<operation>, int] => [[], s]

@@ -1,9 +1,9 @@
-const select = (source: map<int, string>, idx: int): option<[int, string]> => {
+function select (source: map<int, string>, idx: int): option<[int, string]> {
   let index = 0;
-  let result : option<[int, string]> = None();
+  let result : option<[int, string]> = ["None" as "None"];
   for (const item of source) {
     if (index == idx)
-      result = Some(item);
+      result = ["Some" as "Some", item];
     index++
   }
   return result;
