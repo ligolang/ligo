@@ -333,8 +333,12 @@ let expr (expr : Eq.expr) : Folding.expr =
   | E_sub expr -> compile_bin_op MINUS expr
   | E_subscript expr ->
     (* We assume that there is no need for unspooling [expr]. Correct? *)
-    let expr, int = expr.value in
-    let index = O.Selection.Component_num int#payload in
+    let expr, index = expr.value in
+    let index =
+      match index with
+      | I.Component nat -> O.Selection.Component_num nat#payload
+      | I.PropertyName str ->
+         O.Selection.FieldName (label_of_var (normalise_string str)) in
     return (O.E_proj (expr, [ index ]))
   | E_sub_eq expr -> compile_chain_assignment Min_eq expr
   | E_template expr ->
