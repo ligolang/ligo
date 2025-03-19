@@ -323,6 +323,7 @@ type t =
   | Variable_declaration
   | String_or_type
   | Selector_or_optional_chain
+  | Syntax_error
 
 type error = t
 
