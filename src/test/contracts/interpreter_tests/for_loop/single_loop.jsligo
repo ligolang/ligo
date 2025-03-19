@@ -1,19 +1,19 @@
 import Test = Test.Next;
+
 const assert = Test.Assert.assert
 
 const getChar = (s: string, idx: nat): string => String.sub(idx, 1 as nat, s)
 
 const isPalindrome = (s: string): bool => {
   let p = "";
-  let length = String.length(s);
-  for (let i = length - 1 ; i >= 0 ; i--) {
+  const length = String.length(s);
+  for (let i = length - 1 ; i >= 0 ; i--)
     p += getChar(s, abs(i));
-  }
   return p == s;
 }
 
-const isPalindrome_ = (s: string): bool => {
-  let length = String.length(s);
+function isPalindrome_ (s: string): bool {
+  const length = String.length(s);
   let isP = true;
   for (let i = 0, j = length - 1 ;  i <= j ; i++, j--) {
     isP = isP && getChar(s, abs(i)) == getChar(s, abs(j))
