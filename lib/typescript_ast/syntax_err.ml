@@ -323,6 +323,7 @@ type t =
   | Variable_declaration
   | String_or_type
   | Selector_or_optional_chain
+  | Syntax_error
 
 type error = t
 
@@ -654,3 +655,4 @@ let to_string : t -> string = function
   | Variable_declaration -> "A variable declaration is expected."
   | String_or_type -> "A string literal or a type expression is expected."
   | Selector_or_optional_chain -> "A selector '.' or an optional chain '?.' is expected."
+  | Syntax_error -> "Syntax error."
