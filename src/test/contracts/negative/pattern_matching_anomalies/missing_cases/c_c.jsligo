@@ -2,11 +2,12 @@ type p = ["Four"] | ["Five"] | ["Six"]
 
 type t = ["One", p] | ["Two", nat] | ["Three"]
 
-let s = (x : t) : unit => 
-  match(x) {
-    when(Two(_)): unit;
-    when(Three()): unit;
-    when(One(c)): match(c) {  
-      when(Four()): unit
-    }
-  }
+const s = (x : t) : unit =>
+  $match(x, {
+    "Two": (_) => unit,
+    "Three": () => unit,
+    "One": (c) =>
+      $match(c, {
+        "Four": () => unit
+      })
+  })
