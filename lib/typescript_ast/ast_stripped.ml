@@ -362,7 +362,7 @@ and expr =
   | E_bit_xor_eq of (expr * expr) reg (* x ^= y *)
   | E_bytes of bytes_literal (* 0xFFFA *)
   | E_contract_of of simple_path reg reg (* contract_of (M.N) *)
-  | E_ctor_app of (string_literal * expr list) reg (* ["K", 1, e] *)
+  | E_ctor_app of (string_literal * expr list) reg (* ["K" as "K", x] *)
   | E_div of (expr * expr) reg (* x / y *)
   | E_div_eq of (expr * expr) reg (* x /= y *)
   | E_equal of (expr * expr) reg (* x == y *)
@@ -373,7 +373,7 @@ and expr =
   | E_int of int_literal (* 42 *)
   | E_leq of (expr * expr) reg (* x <= y *)
   | E_lt of (expr * expr) reg (* x < y *)
-  | E_match of (expr * match_clause Ne_list.t) reg (* $match(x, {c: (x) => e}) *)
+  | E_match of (expr * match_clause Ne_list.t) reg (* $match(x, {"K": (x) => e}) *)
   | E_member of (expr * variable) reg (* e.x *)
   | E_michelson of
       michelson_expr (* michelson `{ADD}`; create_contract_of_file `foo.tz` *)
