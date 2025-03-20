@@ -4,7 +4,7 @@ type parameter = unit;
 
 const id = <P>(x: P) => {
   const id_1 = <Q>(y: Q) => {
-    const id_2 = <R>(z: R) => { return z };
+    const id_2 = <R>(z: R) => z;
     return id_2(y)
   };
   return id_1(x)
@@ -12,7 +12,7 @@ const id = <P>(x: P) => {
 
 const ident = <P>(x: P) => {
   const ident_1 = <P>(y: P) => {
-    const ident_2 = <P>(z: P) => { return z };
+    const ident_2 = <P>(z: P) => z;
     return ident_2(y)
   };
   return ident_1(x)
@@ -24,7 +24,5 @@ const x: int = snd("Hello", id(1) + ident(1));
 
 type return_ = [list<operation>, storage];
 
-@entry
-const main = (_p: parameter, _s: storage): return_ => {
-  return [[], x]
-};
+// @entry
+const main = (_p: parameter, _s: storage): return_ => [[], x]
