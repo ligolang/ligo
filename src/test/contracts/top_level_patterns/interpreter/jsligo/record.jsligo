@@ -1,19 +1,18 @@
-// TODO: write this in jsligo
+const _ = Test.Next.IO.set_test_print ();
 
-// let () = Test.set_print_values ()
+type r = { a: nat, b: int, c: string }
 
-// type r = { a : nat , b : int , c : string }
+function f () {
+  Test.Next.IO.log("Once");
+  return { a: 1 as nat, b: 1, c: "Hello" }
+}
 
-// let f = () => {
-//   let () = Test.log "Once" in
-//   { a = 1n ; b = 1 ; c = "Hello" }
-// }
-// let { a ; b ; c } = f ()
-// let { a = a1 ; b = b1 ; c = c1 } = { a = 1n ; b = 1 ; c = "Hello" }
+const {a, b, c } = f ()
 
-// let test =
-//   begin
-//     assert (a = a1);
-//     assert (b = b1);
-//     assert (c = c1)
-//   end
+const { a: a1, b: b1, c: c1 } = { a: 1 as nat, b: 1, c: "Hello" }
+
+const test = (() => {
+  Assert.assert(a == a1);
+  Assert.assert(b == b1);
+  Assert.assert(c == c1)
+})()

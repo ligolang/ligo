@@ -1,9 +1,13 @@
 type t = { b: ticket<string> };
 
-const { b } = { b: Option.unopt(Tezos.create_ticket("one", 10 as nat)) };
+const { b } = {
+  b: Option.value_with_error("option is None",
+                             Tezos.Next.Ticket.create("one", 10 as nat))
+};
 
 type storage = ticket<string>;
 
-@entry
+// @entry
 const main = (_p: unit, _s: storage): [list<operation>, storage] =>
-  [[], Option.unopt(Tezos.join_tickets([b, b]))];
+      [[], Option.value_with_error("option is None",
+                                   Tezos.Next.Ticket.join([b, b]))];
