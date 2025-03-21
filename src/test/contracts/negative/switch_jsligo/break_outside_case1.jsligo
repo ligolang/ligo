@@ -1,5 +1,5 @@
-let fn = (n : int) : string => {
-    let output = "Hello";
-    break;
-    return output;
+function fn (n : int) : string {
+  const output = "Hello";
+  break;
+  return output;
 };
