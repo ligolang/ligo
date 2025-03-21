@@ -1,5 +1,5 @@
-@entry
-const main = (_p: unit, _s: int): [list<operation>, int] => {
+// @entry
+function main (_p: unit, _s: int): [list<operation>, int] {
   let y = 0;
   for ( ; ; ) ;
   return [[], y]
