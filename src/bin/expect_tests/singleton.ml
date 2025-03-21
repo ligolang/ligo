@@ -2,105 +2,65 @@ open Cli_expect
 
 let%expect_test "inhabit int singleton" =
   run_ligo_good
-    [ "compile"; "expression"; "jsligo"; {|
-    do {
-      const a : 1 = 1;
-    }
-    |} ];
-  [%expect {|
-             Unit
-             |}]
+    [ "compile"; "expression"; "jsligo"; {| (() => { const a : 1 = 1; })() |} ];
+  [%expect {| Unit |}]
 
 let%expect_test "cast int singleton" =
   run_ligo_good
     [ "compile"
     ; "expression"
     ; "jsligo"
-    ; {|
-               do {
-                 const a : 1 = 1;
-                 return a + 2;
-               }
-               |}
+    ; {| (() => { const a : 1 = 1; return a + 2; })() |}
     ];
-  [%expect {|
-                        3
-                        |}]
+  [%expect {| 3 |}]
+
+(* TypeScript syntax does not allow nat singleton types.
 
 let%expect_test "inhabit nat singleton" =
   run_ligo_good
     [ "compile"
     ; "expression"
     ; "jsligo"
-    ; {|
-                          do {
-                            const a : 1n = 1n;
-                          }
-                          |}
+    ; {| (() => { const a : 1 = 1; })() |}
     ];
   [%expect
-    {|
-                                   Unit
-                                   |}]
+    {| Unit |}]
 
 let%expect_test "cast nat singleton" =
   run_ligo_good
     [ "compile"
     ; "expression"
     ; "jsligo"
-    ; {|
-                                     do {
-                                       const a : 1n = 1n;
-                                       return a + 2n;
-                                     }
-                                     |}
+    ; {| (() => { const a : 1 = 1; return a + 2; })() |}
     ];
   [%expect
-    {|
-                                              3
-                                              |}]
+    {| 3 |}]
+ *)
 
 let%expect_test "inhabit string singleton" =
   run_ligo_good
     [ "compile"
     ; "expression"
     ; "jsligo"
-    ; {|
-    do {
-      const a : "a" = "a";
-    }
-    |}
+    ; {| (() => { const a : "a" = "a"; })() |}
     ];
-  [%expect {|
-             Unit
-             |}]
+  [%expect {| Unit |}]
 
 let%expect_test "cast string singleton" =
   run_ligo_good
     [ "compile"
     ; "expression"
     ; "jsligo"
-    ; {|
-               do {
-                 const a : "a" = "a";
-                 return a + "b";
-               }
-               |}
+    ; {| (() => { const a : "a" = "a"; return a + "b"; })() |}
     ];
-  [%expect {|
-                        "ab"
-                        |}]
+  [%expect {| "ab" |}]
 
 let%expect_test "wrong singleton type 1" =
   run_ligo_bad
     [ "compile"
     ; "expression"
     ; "jsligo"
-    ; {|
-    do {
-      const a : 1 = "a";
-    }
-    |}
+    ; {| (() => { const a : 1 = "a" })() |}
     ];
   [%expect
     {|
@@ -113,17 +73,13 @@ let%expect_test "wrong singleton type 2" =
     [ "compile"
     ; "expression"
     ; "jsligo"
-    ; {|
-             do {
-               const a : "a" = 1;
-             }
-             |}
+    ; {| (() => { const a : "a" = 1; })() |}
     ];
   [%expect
     {|
                       Invalid type(s).
                       Expected ""a"", but got: "1".
-                    
+
                       |}]
 
 let%expect_test "wrong singleton type 3" =
@@ -131,11 +87,7 @@ let%expect_test "wrong singleton type 3" =
     [ "compile"
     ; "expression"
     ; "jsligo"
-    ; {|
-                      do {
-                        const a : 1 = 2;
-                      }
-                      |}
+    ; {| (() => { const a : 1 = 2; })() |}
     ];
   [%expect {|
     Invalid type(s).
@@ -146,13 +98,7 @@ let%expect_test "duplicate singleton type" =
     [ "compile"
     ; "expression"
     ; "jsligo"
-    ; {|
-                      do {
-                        const a : 1 = 2;
-                        const b = a;
-                        const c = a;
-                      }
-                      |}
+    ; {| (() => { const a : 1 = 2, b = a, c = a; })() |}
     ];
   [%expect {|
     Invalid type(s).
