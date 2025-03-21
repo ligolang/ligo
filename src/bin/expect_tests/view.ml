@@ -410,42 +410,6 @@ let%expect_test _ =
   run_ligo_good [ "run"; "test"; contract "view_exported.jsligo" ];
   [%expect
     {|
-    File "../../test/contracts/view_exported.jsligo", line 10, characters 13-27:
-      9 | const test = do {
-     10 |   let orig = Test.originate(contract_of(C), [], 0tez);
-                       ^^^^^^^^^^^^^^
-     11 |   Test.log(orig.code);
-    :
-    Warning: deprecated value.
-    In a future version, `Test` will be replaced by `Test.Next`, and using `Originate.contract` from `Test.Next` is encouraged for a smoother migration.
-
-    File "../../test/contracts/view_exported.jsligo", line 11, characters 2-10:
-     10 |   let orig = Test.originate(contract_of(C), [], 0tez);
-     11 |   Test.log(orig.code);
-            ^^^^^^^^
-     12 |   let c = Test.to_contract(orig.addr);
-    :
-    Warning: deprecated value.
-    In a future version, `Test` will be replaced by `Test.Next`, and using `IO.log` from `Test.Next` is encouraged for a smoother migration.
-
-    File "../../test/contracts/view_exported.jsligo", line 12, characters 10-26:
-     11 |   Test.log(orig.code);
-     12 |   let c = Test.to_contract(orig.addr);
-                    ^^^^^^^^^^^^^^^^
-     13 |
-    :
-    Warning: deprecated value.
-    In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.to_contract` from `Test.Next` is encouraged for a smoother migration.
-
-    File "../../test/contracts/view_exported.jsligo", line 14, characters 2-10:
-     13 |
-     14 |   Test.log(Tezos.call_view("bar", unit, Tezos.address(c)) as option<C.storage>);
-            ^^^^^^^^
-     15 | };
-    :
-    Warning: deprecated value.
-    In a future version, `Test` will be replaced by `Test.Next`, and using `IO.log` from `Test.Next` is encouraged for a smoother migration.
-
     { parameter unit ;
       storage unit ;
       code { CDR ; NIL operation ; PAIR } ;
