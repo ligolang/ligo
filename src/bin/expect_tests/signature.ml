@@ -37,7 +37,9 @@ let%expect_test _ =
     ];
   [%expect {| 42 |}]
 
-(* FIXME: @Christian.Rinderknecht
+(* TODO: Enable back with import statements are fixed.
+
+   FIXME: @Christian.Rinderknecht
    These tests are disabled because of the upgrade of Core to its latest version.
 *)
 
