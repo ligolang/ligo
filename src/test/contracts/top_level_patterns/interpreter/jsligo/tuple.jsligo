@@ -1,17 +1,17 @@
-const _ = Test.set_print_values ()
+const _ = Test.Next.IO.set_test_print ();
 
-const f = () => {
-  Test.log("Once");
+function f () {
+  Test.Next.IO.log("Once");
   return [1 as nat, 1, "Hello"]
 }
 const [a, b, c] = f ()
 
 const [a1, b1, c1] = [1 as nat, 1, "Hello"]
 
-const _test = () => {
-    assert (a == a1);
-    assert (b == b1);
-    assert (c == c1)
+function _test () {
+  Assert.assert (a == a1);
+  Assert.assert (b == b1);
+  Assert.assert (c == c1)
 }
 
 const test = _test()
