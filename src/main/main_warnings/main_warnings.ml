@@ -151,7 +151,7 @@ let pp
       Format.fprintf
         f
         "@[<hv>%a@.Warning: A boolean conditional expression is expected.@.Otherwise \
-         this leads to an infinte loop.@.@]"
+         this leads to an infinite loop.@.@]"
         snippet_pp
         loc
     | `Self_ast_imperative_warning_deprecated_polymorphic_variable (loc, name) ->
@@ -387,7 +387,7 @@ let to_warning : all -> Warning.t =
   | `Nanopasses_infinite_for_loop loc ->
     let message =
       "Warning: A boolean conditional expression is expected.\n\
-       Otherwise this leads to an infinte loop."
+       Otherwise this leads to an infinite loop."
     in
     let content = make_content ~message ~location:loc () in
     make ~stage:"typer" ~content

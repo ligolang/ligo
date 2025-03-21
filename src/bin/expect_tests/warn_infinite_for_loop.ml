@@ -20,7 +20,7 @@ let%expect_test "for loop negative tests" =
       7 |   return [[], x]
 
     Warning: A boolean conditional expression is expected.
-    Otherwise this leads to an infinte loop.
+    Otherwise this leads to an infinite loop.
 
     { parameter unit ;
       storage int ;
@@ -49,7 +49,7 @@ let%expect_test "for loop negative tests" =
       7 |   return [[], y]
 
     Warning: A boolean conditional expression is expected.
-    Otherwise this leads to an infinte loop.
+    Otherwise this leads to an infinite loop.
 
     { parameter unit ;
       storage int ;
@@ -78,7 +78,7 @@ let%expect_test "for loop negative tests" =
       7 |   return [[], y]
 
     Warning: A boolean conditional expression is expected.
-    Otherwise this leads to an infinte loop.
+    Otherwise this leads to an infinite loop.
 
     { parameter unit ;
       storage int ;
@@ -107,7 +107,7 @@ let%expect_test "for loop negative tests" =
       7 |   return [[], y]
 
     Warning: A boolean conditional expression is expected.
-    Otherwise this leads to an infinte loop.
+    Otherwise this leads to an infinite loop.
 
     { parameter unit ;
       storage int ;
@@ -136,7 +136,7 @@ let%expect_test "for loop negative tests" =
       7 |   return [[], x]
 
     Warning: A boolean conditional expression is expected.
-    Otherwise this leads to an infinte loop.
+    Otherwise this leads to an infinite loop.
 
     { parameter unit ;
       storage int ;
@@ -167,7 +167,7 @@ let%expect_test "for loop negative tests" =
       7 |   return [[], y]
 
     Warning: A boolean conditional expression is expected.
-    Otherwise this leads to an infinte loop.
+    Otherwise this leads to an infinite loop.
 
     { parameter unit ;
       storage int ;
@@ -192,7 +192,7 @@ File "../../test/contracts/for_loop/infinite_for_loop7.jsligo", line 4, characte
   5 |   return [[], y]
 
 Warning: A boolean conditional expression is expected.
-Otherwise this leads to an infinte loop.
+Otherwise this leads to an infinite loop.
 
 { parameter unit ;
   storage int ;
@@ -217,7 +217,7 @@ File "../../test/contracts/for_loop/infinite_for_loop8.jsligo", line 4, characte
   5 |   return [[], y]
 
 Warning: A boolean conditional expression is expected.
-Otherwise this leads to an infinte loop.
+Otherwise this leads to an infinite loop.
 
 { parameter unit ;
   storage int ;
