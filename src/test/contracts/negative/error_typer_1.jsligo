@@ -1,12 +1,9 @@
-type action = unit ;
+type action = unit;
+type storage = nat;
 
-type storage = nat ;
+const add_one = (oldStorage: nat) : nat => oldStorage + (1 as nat);
 
-let addone = (oldStorage: nat) : nat => {
-   return oldStorage + (1 as nat);
-}
-
-let main = (param : action, oldStorage : storage) : [list<operation>, storage] => {
-    let newStorage : storage = addone (oldStorage, 1 as nat);
-    return [[], newStorage];
+function main (param : action, oldStorage : storage) : [list<operation>, storage] {
+  let newStorage : storage = add_one (oldStorage, 1 as nat);
+  return [[], newStorage];
 }
