@@ -31,25 +31,6 @@ end
 
 </Syntax>
 
-<Syntax syntax="jsligo">
-
-```jsligo group=includereset
-export namespace MyContract {
-  export type storage = int;
-  export type result = [list<operation>, storage];
-
-  @entry const increment = (delta : int, storage : storage) : result => [[], storage + delta];
-
-  @entry const decrement = (delta : int, storage : storage) : result => [[], storage - delta];
-
-  #if INCLUDE_RESET
-  @entry const reset = (_u : unit, _storage : storage) : result => [[], 0];
-  #endif
-}
-```
-
-</Syntax>
-
 <Syntax syntax="cameligo">
 
 You can set these Boolean preprocessor variables with the [`#define`](#define-and-undef) directive or by passing them to the `-D` argument of the `ligo compile contract` command.
@@ -67,23 +48,6 @@ ligo compile contract -D INCLUDE_RESET mycontract.mligo
 
 </Syntax>
 
-<Syntax syntax="jsligo">
-
-You can set these Boolean preprocessor variables with the [`#define`](#define-and-undef) directive or by passing them to the `-D` argument of the `ligo compile contract` command.
-For example, if the contract in the previous example is in a file named `mycontract.jsligo`, this command causes the preprocessor and compiler to output a contract with only two entrypoints:
-
-```bash
-ligo compile contract mycontract.jsligo
-```
-
-This command passes the `INCLUDE_RESET` Boolean variable to the preprocessor and causes the compiler to output a contract with three entrypoints:
-
-```bash
-ligo compile contract -D INCLUDE_RESET mycontract.jsligo
-```
-
-</Syntax>
-
 ## Viewing the preprocessor output
 
 It's rarely necessary to view the output of the preprocessor, but if you need to see the output to debug directives, you can view the output with the `ligo print preprocessed` command, as in this example:
@@ -92,14 +56,6 @@ It's rarely necessary to view the output of the preprocessor, but if you need to
 
 ```bash
 ligo print preprocessed myContract.mligo
-```
-
-</Syntax>
-
-<Syntax syntax="jsligo">
-
-```bash
-ligo print preprocessed myContract.jsligo
 ```
 
 </Syntax>
@@ -128,16 +84,6 @@ For example, this code includes a string with the text `#endif`, but the preproc
 ```cameligo skip
 #if true
 let textValue = "This string includes the text #endif"
-#endif
-```
-
-</Syntax>
-
-<Syntax syntax="jsligo">
-
-```jsligo skip
-#if true
-const textValue = "This string includes the text #endif";
 #endif
 ```
 
@@ -333,84 +279,17 @@ For more information, see [Modules](../syntax/modules).
 
 </Syntax>
 
-<Syntax syntax="jsligo">
-
-The `#import` directive prompts the preprocessor to include another file as a [namespace](../syntax/modules) in the current file.
-
-For example, you can create a file with related type definitions, as in this example file named `euro.jsligo`:
-
-```jsligo group=euro
-export type t = nat;
-
-export const add = (a: t, b: t): t => a + b;
-
-export const one: t = 1n;
-export const two: t = 2n;
-```
-
-In another file, you can import this file, assign it the namespace `Euro`, and use its definitions:
-
-```jsligo group=main_importer
-#import "gitlab-pages/docs/compiling/src/preprocessor/euro.jsligo" "Euro"
-
-type storage = Euro.t;
-
-const tip = (s : storage) : storage =>
-  Euro.add (s, Euro.one);
-```
-
-When you import a file with the `#import` directive, LIGO packages the file as a namespace.
-Therefore, any namespaces in the file are sub-namespaces of that namespace.
-
-However, the namespace does not export those sub-namespaces automatically.
-As a result, if you import a file that contains namespaces, those namespaces are not accessible.
-
-To work around this limitation, add the `@public` decorator to the namespaces in the file.
-For example, this file defines the Euro type as a namespace with the `@public` decorator:
-
-```jsligo group=euro_namespace_public
-// This file is gitlab-pages/docs/preprocessor/src/import/euro_namespace_public.jsligo
-
-@public
-namespace Euro {
-  export type t = nat;
-  export const add = (a: t, b: t) : t => a + b;
-  export const one: t = 1n;
-  export const two: t = 2n;
-};
-```
-
-Because the namespace is public, you can access it as a sub-namespace when you import the file into another file:
-
-```jsligo group=import_euro_public
-#import "gitlab-pages/docs/compiling/src/preprocessor/euro_namespace_public.jsligo" "Euro_import"
-
-type euro_balance = Euro_import.Euro.t;
-
-const add_tip = (s: euro_balance): euro_balance =>
-  Euro_import.Euro.add(s, Euro_import.Euro.one);
-```
-
-For more information, see [Namespaces](../syntax/modules).
-
-</Syntax>
 
 ### `#include`
 
 The `#include` directive includes the entire text contents of the specified file, as in this example:
 
 ```
-#include "path/to/standard_1.ligo"
+#include "path/to/standard_1.mligo"
 ```
 
 <Syntax syntax="cameligo">
 
 Unlike the `#import` directive, the `#include` directive does not package the included file as a module.
-
-</Syntax>
-
-<Syntax syntax="jsligo">
-
-Unlike the `#import` directive, the `#include` directive does not package the included file as a namespace.
 
 </Syntax>
