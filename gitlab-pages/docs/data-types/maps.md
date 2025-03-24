@@ -53,8 +53,8 @@ const empty_dict: dictionary = Map.empty;
 
 const dictionary : dictionary =
   Map.literal([
-    ["one", (["The number 1.", "A member of a group."] as definition)],
-    ["two", (["The number 2."] as definition)]]);
+    ["one", ["The number 1.", "A member of a group."]],
+    ["two", ["The number 2."]]]);
 ```
 
 The `Map.literal` predefined function builds a map from a list of
@@ -81,7 +81,7 @@ The predefined function `Map.size` returns the number of bindings
 ```cameligo group=map_size
 let my_map : (int, string) map =
   Map.literal [(1,"one"); (2,"two")]
-let size : nat = Map.size my_map // = 2
+let size : nat = Map.size my_map // = 2n
 ```
 Note: See the predefined
 [module Map](../reference/map-reference)
@@ -93,7 +93,7 @@ Note: See the predefined
 ```jsligo group=map_size
 const my_map: map<int,string> =
   Map.literal([[1,"one"],[2,"two"]]);
-const size: nat = Map.size(my_map); // == 2
+const size: nat = Map.size(my_map); // == (2 as nat)
 ```
 
 Note: See the predefined
@@ -163,12 +163,11 @@ let force_access key map =
 <Syntax syntax="jsligo">
 
 ```jsligo group=map_searching
-let force_access = (key, map) => {
-  return match(Map.find_opt (key, map)) {
-    when(Some(value)): value;
-    when(None): failwith("No value.")
-  };
-};
+const force_access = (key, map) =>
+  $match(Map.find_opt (key, map), {
+    "Some": (value) => value,
+    "None": () => failwith("No value.")
+  });
 ```
 
 </Syntax>
@@ -280,10 +279,10 @@ let contains_2 = Map.mem 2 map_without_2 // = false
 
 ```jsligo group=map_updating
 const my_map: map<int,string> = Map.literal([[1,"one"],[2,"two"]]);
-const map_with_3 = Map.update (3, Some("three"), my_map);
+const map_with_3 = Map.update (3, ["Some" as "Some", "three"], my_map);
 const contains_3 = Map.mem(3, map_with_3); // == true
-const map_without_2 = Map.update(2, None(), my_map);
-const contains_2 = Map.mem (2, map_without_2); // == false
+const map_without_2 = Map.update(2, ["None" as "None"], my_map);
+const contains_2 = Map.mem(2, map_without_2); // == false
 ```
 
 </Syntax>
@@ -306,8 +305,8 @@ Note: See the predefined
 <Syntax syntax="jsligo">
 
 ```jsligo group=map_updating
-// three == Some("three")
-const [three, map_without_3] = Map.get_and_update(3, None(), map_with_3);
+// three == ["Some" as "Some", "three"]
+const [three, map_without_3] = Map.get_and_update(3, ["None" as "None"], map_with_3);
 ```
 
 Note: See the predefined
@@ -363,7 +362,7 @@ type ordinate = int
 type move = [abscissa, ordinate]
 type game = map<player, move>
 
-const horizontal_offset = (g: game): int => {
+function horizontal_offset (g: game): int {
   let folded = ([acc, j]: [int, [player, move]]) => acc + j[1][0];
   return Map.fold(folded, g, 0);
 };

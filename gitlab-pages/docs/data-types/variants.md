@@ -26,8 +26,8 @@ let tail : coin = Tail
 
 ```jsligo group=variants
 type coin = ["Head"] | ["Tail"];
-let head: coin = Head();
-let tail: coin = Tail();
+let head: coin = ["Head" as "Head"];
+let tail: coin = ["Tail" as "Tail"];
 ```
 
 </Syntax>
@@ -71,8 +71,8 @@ type user =
 | ["Manager", id]
 | ["Guest"];
 
-const bob : user = Admin(1000n);
-const carl : user = Guest();
+const bob : user = ["Admin" as "Admin", 1000 as nat];
+const carl : user = ["Guest" as "Guest"];
 ```
 
 A constant constructor is equivalent to the same constructor taking an
@@ -145,7 +145,8 @@ arithmetics is the division:
 
 ```jsligo group=options
 function div (a: nat, b: nat): option<nat> {
-  if (b == 0n) return None() else return Some(a/b)
+  if (b == 0n) return ["None" as "None"];
+  return ["Some" as "Some", a/b]
 };
 ```
 
@@ -184,10 +185,10 @@ natural and integer numbers:
 
 ```jsligo group=options_euclidean
 // All below equal Some (7,2)
-const ediv1: option<[int, nat]> = ediv(37,  5);
-const ediv2: option<[int, nat]> = ediv(37n, 5);
-const ediv3: option<[nat, nat]> = ediv(37n, 5n);
-const ediv4: option<[int, nat]> = ediv(37,  5n);
+const ediv1: option<[int, nat]> = ediv(37, 5);
+const ediv2: option<[int, nat]> = ediv(37 as nat, 5);
+const ediv3: option<[nat, nat]> = ediv(37 as nat, 5 as nat);
+const ediv4: option<[int, nat]> = ediv(37, 5 as nat);
 ```
 
 </Syntax>
@@ -252,11 +253,11 @@ type colour =
 | ["Default"];
 
 const int_of_colour = (c : colour) : int =>
-  match(c) {
-    when(RGB([r,g,b])): 16 + b + g * 6 + r * 36;
-    when(Gray(i)): 232 + i;
-    when(Default): 0;
-  };
+  $match(c, {
+    "RGB": ([r,g,b]) => 16 + b + g * 6 + r * 36,
+    "Gray": i => 232 + i,
+    "Default": () => 0
+  });
 ```
 
 > Note: The `when`-clauses must cover all the variants of the type
@@ -272,16 +273,11 @@ block ended with a `return` statement whose argument has the value of
 the block, like so:
 
 ```jsligo group=match_with_block
-function match_with_block (x : option<int>) : int {
-  return
-    match(x) {
-      when(None): 0;
-      when(Some(n)): do {
-        let y = n + 1;
-        return y
-      }
-    };
-};
+const match_with_block = (x : option<int>) : int =>
+  $match(x, {
+    "None": () => 0,
+    "Some": n => (() => { const y = n + 1; return y })()
+  });
 ```
 
 </Syntax>
@@ -304,10 +300,10 @@ let is_it_a_nat (i : int) =
 
 ```jsligo group=nat_matching
 const is_it_a_nat = (i : int) =>
-  match (is_nat(i)) {
-    when(None): false;
-    when(Some(n)): do {ignore(n); return true; }
-  }
+  $match(is_nat(i), {
+    "None": () => false,
+    "Some": n => (() => { ignore(n); return true; })()
+  })
 ```
 
 </Syntax>
