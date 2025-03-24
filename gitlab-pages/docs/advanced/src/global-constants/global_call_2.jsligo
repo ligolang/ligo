@@ -1,3 +1,4 @@
-@entry
+// @entry
 const main = (p: string, s: int) : [list<operation>, int] =>
-  [ [], Tezos.constant("exprv547Y7U5wKLbQGmkDU9Coh5tKPzvEJjyUed7px9yGt9nrkELXf")([p, s]) ];
+  [ [],
+Tezos.constant("exprv547Y7U5wKLbQGmkDU9Coh5tKPzvEJjyUed7px9yGt9nrkELXf")([p, s]) ];
