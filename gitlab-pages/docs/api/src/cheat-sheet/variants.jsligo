@@ -2,9 +2,9 @@ type action =
   ["Increment", int]
 | ["Decrement", int]
 | ["Reset"];
-let a: action = Increment(5)
-const result: int = match(a) {
-  when(Increment(n)): n + 1;
-  when(Decrement(n)): n - 1;
-  when(Reset()): 0;
-}
+const a: action = ["Increment" as "Increment", 5];
+const result: int = $match(a, {
+  "Increment": n => n + 1,
+  "Decrement": n => n - 1,
+  "Reset": () => 0
+})
