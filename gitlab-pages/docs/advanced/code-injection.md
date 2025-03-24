@@ -119,19 +119,19 @@ let main (action : parameter) (store : storage) : operation list * storage =
 
 <Syntax syntax="jsligo">
 
-```jsligo skip
+```jsligo group=never
 type parameter =
   ["Increment", int]
 | ["Extend", never];
 
 type storage = int;
 
-@entry
+// @entry
 function main (action: parameter, store: storage) : [list<operation>, storage] {
   let storage =
-    match(action, {
-      Increment: n => store + n,
-      Extend: k => (Michelson`{ NEVER }` as ((n: never) => int))(k)
+    $match(action, {
+      "Increment": n => store + n,
+      "Extend": k => (Michelson`{ NEVER }` as ((n: never) => int))(k)
     });
   return [[], storage];
 };
@@ -155,4 +155,3 @@ ligo compile contract --protocol nairobi --disable-michelson-typechecking gitlab
 > instruction `NEVER` directly from LIGO, using `Tezos.never`.
 
 <!-- updated use of entry -->
-

@@ -112,7 +112,8 @@ It is possible to specify multiple decorators as follows:
 type storage = int;
 type result = [list<operation>, storage];
 
-@entry @no_mutation
+// @entry
+// @no_mutation
 const sub = (delta : int, store : storage) : result =>
   [[], store - delta]
 ```
@@ -170,7 +171,7 @@ This decorator is slightly different from the others in that it does not need `@
 ```jsligo
 namespace MathPi {
   export const pi_millionth_numerator : int = 3141593
-  export const pi_millionth_denominator : nat = 1000000n
+  export const pi_millionth_denominator : nat = 1000000 as nat
 }
 ```
 

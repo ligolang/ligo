@@ -57,10 +57,10 @@ let main (_p : unit) (s : int) : operation list * int =
 <Syntax syntax="jsligo">
 
 ```jsligo group=global_call
-const c : ((_p : int) => int) = Tezos.constant("expruCKsgmUZjC7k8NRcwbcGbFSuLHv5rUyApNd972MwArLuxEZQm2")
+const c : (_p : int) => int = Tezos.constant("expruCKsgmUZjC7k8NRcwbcGbFSuLHv5rUyApNd972MwArLuxEZQm2")
 
-@entry
-let main = (_p : unit, s : int) : [list<operation>, int] =>
+// @entry
+const main = (_p : unit, s : int) : [list<operation>, int] =>
   [[], c(s)]
 ```
 
@@ -147,7 +147,7 @@ let main (p : string) (s : int) : operation list * int =
 const helper = ([s, x]: [string, int]) =>
   String.length(s) + x * 3 + 2;
 
-@entry
+// @entry
 const main = (p: string, s: int) : [list<operation>, int] =>
   [[], helper ([p, s])];
 ```
@@ -165,7 +165,7 @@ ligo compile constant cameligo "helper" --init-file ./gitlab-pages/docs/advanced
 # Michelson constant as JSON string:
 # "{ UNPAIR ;\n  PUSH int 2 ;\n  PUSH int 3 ;\n  DIG 3 ;\n  MUL ;\n  DIG 2 ;\n  SIZE ;\n  ADD ;\n  ADD }"
 # This string can be passed in `--constants` argument when compiling a contract.
-# 
+#
 # Remember to register it in the network, e.g.:
 # > tezos-client register global constant "{ UNPAIR ;
 #   PUSH int 2 ;
@@ -176,7 +176,7 @@ ligo compile constant cameligo "helper" --init-file ./gitlab-pages/docs/advanced
 #   SIZE ;
 #   ADD ;
 #   ADD }" from bootstrap1
-# 
+#
 # Constant hash:
 # exprv547Y7U5wKLbQGmkDU9Coh5tKPzvEJjyUed7px9yGt9nrkELXf
 ```
@@ -191,7 +191,7 @@ ligo compile constant jsligo "helper" --init-file ./gitlab-pages/docs/advanced/s
 # Michelson constant as JSON string:
 # "{ UNPAIR ;\n  PUSH int 2 ;\n  PUSH int 3 ;\n  DIG 3 ;\n  MUL ;\n  DIG 2 ;\n  SIZE ;\n  ADD ;\n  ADD }"
 # This string can be passed in `--constants` argument when compiling a contract.
-# 
+#
 # Remember to register it in the network, e.g.:
 # > tezos-client register global constant "{ UNPAIR ;
 #   PUSH int 2 ;
@@ -202,7 +202,7 @@ ligo compile constant jsligo "helper" --init-file ./gitlab-pages/docs/advanced/s
 #   SIZE ;
 #   ADD ;
 #   ADD }" from bootstrap1
-# 
+#
 # Constant hash:
 # exprv547Y7U5wKLbQGmkDU9Coh5tKPzvEJjyUed7px9yGt9nrkELXf
 ```
@@ -241,7 +241,7 @@ references to `helper` by
 <Syntax syntax="jsligo">
 
 ```
-(Tezos.constant("exprv547Y7U5wKLbQGmkDU9Coh5tKPzvEJjyUed7px9yGt9nrkELXf") as ((_ps : [string, int]) => int))
+(Tezos.constant("exprv547Y7U5wKLbQGmkDU9Coh5tKPzvEJjyUed7px9yGt9nrkELXf") as (_ps : [string, int]) => int)
 ```
 
 </Syntax>
@@ -261,7 +261,7 @@ let main (p : string) (s : int) : operation list * int =
 <Syntax syntax="jsligo">
 
 ```jsligo group=global_call_2
-@entry
+// @entry
 const main = (p: string, s: int) : [list<operation>, int] =>
   [ [], Tezos.constant("exprv547Y7U5wKLbQGmkDU9Coh5tKPzvEJjyUed7px9yGt9nrkELXf")([p, s]) ];
 ```
@@ -356,7 +356,7 @@ module C = struct
 
   [@entry]
   let main (() : parameter) (store : storage) : return =
-    [], (Tezos.constant ct store)
+    [], Tezos.constant ct store
 end
 
 let test =
@@ -370,23 +370,23 @@ let test =
 <Syntax syntax="jsligo">
 
 ```jsligo test-ligo group=test_global
-namespace C {
-  type storage = int
-  type parameter = unit
+type storage = int;
+type parameter = unit;
 
-  const f = (x : int) => x * 3 + 2;
+class C {
+  static f = (x : int) => x * 3 + 2;
 
-  const ct = Test.register_constant(Test.eval(f));
+  static ct = Test.register_constant(Test.eval(f));
 
   @entry
-  const main = (p: parameter, s: storage) : [list<operation>, storage] =>
+  main = (_p: parameter, s: storage) : [list<operation>, storage] =>
     [[], Tezos.constant(ct)(s)];
 }
 
 const _test = () => {
-  let orig = Test.originate(contract_of(C), 1, 0tez);
-  Test.transfer_exn(orig.addr, Main(unit), 0tez);
-  assert (Test.get_storage(orig.addr) == 5);
+  let orig = Test.originate(contract_of(C), 1, 0 as tez);
+  Test.transfer_exn(orig.addr, ["Main" as "Main"], 0 as tez);
+  Assert.assert (Test.get_storage(orig.addr) == 5);
 };
 
 const test = _test();
