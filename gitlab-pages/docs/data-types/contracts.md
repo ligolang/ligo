@@ -57,13 +57,14 @@ type contractParam =
   | ["Decrement", int]
   | ["Increment", int];
 
-@entry
-const callContract = (_: unit, storage: int): returnType => {
+// @entry
+function callContract (_: unit, storage: int): returnType {
   const contractAddress: address = ("KT1FpuaoBHwXMXJ6zn3F4ZhpjpPZV28MAinz" as address);
-  const myContract: contract<contractParam> = Tezos.get_contract(contractAddress);
-  const contractArg: contractParam = Increment(4);
-  const operation = Tezos.transaction(contractArg, 0tez, myContract);
-  return [list([operation]), storage + 1]
+  const myContract: contract<contractParam> = Tezos.Next.get_contract(contractAddress);
+  const contractArg: contractParam = ["Increment" as "Increment", 4];
+  const operation =
+    Tezos.Next.Operation.transaction(contractArg, 0 as tez, myContract);
+  return [[operation], storage + 1]
 }
 ```
 
@@ -147,19 +148,19 @@ In the example below, `contract_of(C)` returns the implicitly-declared `main` fu
 
 ```jsligo group=contract_of
 type storage = int;
-type @return = [list<operation>, storage];
+type return_ = [list<operation>, storage];
 
-namespace C {
+class C {
   @entry
-  const decrement = (param: int, storage: storage) : @return =>
+  decrement = (param: int, storage: storage) : return_ =>
     [[], storage - param];
 
   @entry
-  const increment = (param: int, storage: storage) : @return =>
+  increment = (param: int, storage: storage) : return_ =>
     [[], storage + param];
 
   @entry
-  const reset = (_unit: unit, _storage: storage) : @return =>
+  reset = (_unit: unit, _storage: storage) : return_ =>
     [[], 0];
 }
 
@@ -167,18 +168,18 @@ import Test = Test.Next;
 
 const test_initial_storage = () : unit => {
   const init_storage = 42;
-  const fee = 0mutez;
+  const fee = 0 as mutez;
   const contract = Test.Originate.contract(contract_of(C), init_storage, fee);
 
   // Call contract through entrypoints
-  Test.Contract.transfer_exn(Test.Typed_address.get_entrypoint("increment", contract.taddr), 15, 0tez);
-  Test.Contract.transfer_exn(Test.Typed_address.get_entrypoint("decrement", contract.taddr), 14, 0tez);
+  Test.Contract.transfer_exn(Test.Typed_address.get_entrypoint("increment", contract.taddr), 15, 0 as tez);
+  Test.Contract.transfer_exn(Test.Typed_address.get_entrypoint("decrement", contract.taddr), 14, 0 as tez);
 
   // Call contract through `main` function
-  const increment_param: parameter_of C = Increment(8);
-  const decrement_param: parameter_of C = Decrement(3);
-  Test.transfer_exn(contract.taddr, increment_param, 0mutez);
-  Test.transfer_exn(contract.taddr, decrement_param, 0mutez);
+  const increment_param: parameter_of<C> = ["Increment" as "Increment", 8];
+  const decrement_param: parameter_of<C> = ["Decrement" as "Decrement", 3];
+  Test.transfer_exn(contract.taddr, increment_param, 0 as mutez);
+  Test.transfer_exn(contract.taddr, decrement_param, 0 as mutez);
 
   const new_storage = Test.Typed_address.get_storage(contract.taddr);
   Assert.assert(new_storage == init_storage + 15 - 14 + 8 - 3);

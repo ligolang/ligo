@@ -231,7 +231,9 @@ Note: See the predefined
 <Syntax syntax="jsligo">
 
 ```jsligo group=set_updating
-const f = x => x % 2 == 0n ? None() : Some(x);
+const f = x => x % 2 == (0 as nat) ?
+               ["None" as "None"] :
+               ["Some" as "Some", x];
 // odds == Set.literal([3, 1])
 const odds = Set.filter_map(f, nats);
 ```
