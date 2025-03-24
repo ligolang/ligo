@@ -110,17 +110,18 @@ namespace ComplexStorage {
     y: int,
     z: int,
   };
+
   type my_labels = {
     a: string,
     b: string,
     c: string,
   };
+
   type storage = [my_record, my_labels, address];
   type return_type = [list<operation>, storage];
 
-  @entry
+  // @entry
   const noop = (_u: unit, storage: storage): return_type => [[], storage];
-
 }
 ```
 
@@ -198,15 +199,15 @@ namespace ComplexParam {
   const sum_fold = ([result, i]: [int, int]): int => result + i;
   const mult_fold = ([result, i]: [int, int]): int => result * i;
 
-  @entry
-  const complexmath = (param: paramType, _s: storage): returnType => {
+  // @entry
+  function complexmath (param: paramType, _s: storage): returnType {
     const [list1, list2, str_tuple] = param;
     const sum: int = List.fold(sum_fold, list1, 0);
     const product: int = List.fold(mult_fold, list2, 1);
     const [str1, str2] = str_tuple;
     const string_diff: int = String.length(str2) - String.length(str1);
     const newVal = (sum + product) * string_diff;
-    return [list([]), newVal];
+    return [[], newVal];
   }
 
 }
@@ -215,7 +216,8 @@ namespace ComplexParam {
 To compile a parameter to call this contract, create a JsLIGO expression for the parameter and pass it and the entrypoint name to the `ligo compile parameter` command, as in this example:
 
 ```bash
-ligo compile parameter ComplexParam.jsligo -m ComplexParam 'Complexmath([[1, 2, 3], [2, 2, 1], ["three", "fifteen"]])'
+ligo compile parameter ComplexParam.jsligo -m ComplexParam
+'["Complexmath" as "Complexmath", ([[1, 2, 3], [2, 2, 1], ["three", "fifteen"]])]'
 ```
 
 </Syntax>
