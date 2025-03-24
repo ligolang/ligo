@@ -29,7 +29,7 @@ let zero_too = 0x00
 
 ```jsligo group=bytes
 const a : bytes = 0x70FF;
-const zero : bytes = 0x;
+const zero = "" as bytes;
 const zero_too = 0x00;
 ```
 
@@ -62,7 +62,7 @@ let i : int = int 0x7B // i = 123
 <Syntax syntax="jsligo">
 
 ```jsligo group=bytes
-const b: bytes = bytes(123n); // 7B in hexadecimal
+const b: bytes = bytes(123 as nat); // 7B in hexadecimal
 const c: bytes = bytes(123);
 const d: bytes = bytes(-123); // Two's complement
 
@@ -99,7 +99,7 @@ let from_ascii : bytes = [%bytes "foo"]
 <Syntax syntax="jsligo">
 
 ```jsligo group=bytes
-const from_ascii: bytes = bytes`foo`; // Not a call
+const from_ascii: bytes = bytes`foo`; // Not a function call
 ```
 
 </Syntax>
@@ -175,7 +175,7 @@ let len : nat = Bytes.length 0x0AFF // len = 2n
 <Syntax syntax="jsligo">
 
 ```jsligo group=sizing
-const len: nat = Bytes.length(0x0AFF); // len == 2n
+const len: nat = Bytes.length(0x0AFF); // len == (2 as nat)
 ```
 
 </Syntax>
@@ -200,7 +200,7 @@ let slice = Bytes.sub 1n 2n large // sub = 0x3456
 
 ```jsligo group=slicing
 const large = 0x12345678;
-const slice = Bytes.sub(1n, 2n, large); // sub == 0x3456
+const slice = Bytes.sub(1 as nat, 2 as nat, large); // sub == 0x3456
 ```
 
 </Syntax>
@@ -243,10 +243,10 @@ const or: bytes = 0x0005 | 0x0106; // 0x0107
 const xor: bytes = 0x0005 ^ 0x0106; // 0x0103
 
 // Bitwise "shift left"
-const shift_left: bytes = 0x06 << 8n; // 0x0600
+const shift_left: bytes = 0x06 << (8 as nat); // 0x0600
 
 // Bitwise "shift right"
-const shift_right: bytes = 0x0006 >> 1n; // 0x0003
+const shift_right: bytes = 0x0006 >> (1 as nat); // 0x0003
 ```
 
 </Syntax>
@@ -279,7 +279,7 @@ let id_string (p : string) : string option =
 <Syntax syntax="jsligo">
 
 ```jsligo group=packing
-const id_string = (p: string) : option<string> => {
+function id_string (p: string) : option<string> {
   let packed = Bytes.pack(p);
   return Bytes.unpack(packed);
 };

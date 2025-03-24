@@ -47,8 +47,10 @@ let my_ticket2 = Option.unopt (Tezos.create_ticket "one" 10n)
 <Syntax syntax="jsligo">
 
 ```jsligo group=manip_ticket
-const my_ticket1 = Option.unopt(Tezos.create_ticket(1, 10n));
-const my_ticket2 = Option.unopt(Tezos.create_ticket("one", 10n));
+const my_ticket1 =
+  Option.value_with_error("option is None", Tezos.Next.Ticket.create(1, 10 as nat));
+const my_ticket2 =
+  Option.value_with_error("option is None", Tezos.Next.Ticket.create("one", 10 as nat));
 ```
 
 </Syntax>
@@ -87,10 +89,10 @@ let v =
 To read the content of a ticket, you need to use tuple destructuring:
 
 ```jsligo group=manip_ticket
-const v2 = do {
-  let [[_addr, [payload, _amt]], _ticket] = Tezos.read_ticket (my_ticket2);
+const v2 = (() => {
+  let [[_addr, [payload, _amt]], _ticket] = Tezos.Next.Ticket.read(my_ticket2);
   return payload;
-}
+})()
 ```
 
 </Syntax>
@@ -127,10 +129,10 @@ let ta, tb =
 
 ```jsligo group=manip_ticket
 const [ta, tb] =
-  match(Tezos.split_ticket(my_ticket1, [6n, 4n])) {
-    when(None()): failwith("amt_a + amt_v != amt");
-    when(Some(split_tickets)): split_tickets
-  };
+  $match(Tezos.Next.Ticket.split(my_ticket1, [6 as nat, 4 as nat]), {
+    "None": () => failwith("amt_a + amt_v != amt"),
+    "Some": (split_tickets) => split_tickets
+  });
 ```
 
 </Syntax>
@@ -163,9 +165,11 @@ let tc : int ticket option =
 <Syntax syntax="jsligo">
 
 ```jsligo group=manip_ticket2
-const ta = Option.unopt(Tezos.create_ticket(1, 10n));
-const tb = Option.unopt(Tezos.create_ticket(1, 5n));
-const tc = Tezos.join_tickets([ta, tb]);
+const ta = Option.value_with_error("option is None",
+                                   Tezos.Next.Ticket.create(1, 10 as nat));
+const tb = Option.value_with_error("option is None",
+                                   Tezos.Next.Ticket.create(1, 5 as nat));
+const tc = Tezos.Next.Ticket.join([ta, tb]);
 ```
 
 </Syntax>

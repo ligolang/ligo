@@ -21,7 +21,7 @@ Note: See the predefined
 <Syntax syntax="jsligo">
 
 ```jsligo group=strings
-const a :string = "Hello Alice";
+const a: string = "Hello Alice";
 ```
 
 Note: See predefined [namespace String](../reference/string-reference/?lang=jsligo)
@@ -36,7 +36,7 @@ string is then interpreted as `false`, and `true` otherwise.
 <Syntax syntax="cameligo">
 
 ```cameligo group=strings
-let one  = if "" then 0 else 1
+let one = if "" then 0 else 1
 let zero = if "foo" then 0 else 1
 ```
 
@@ -45,7 +45,7 @@ let zero = if "foo" then 0 else 1
 <Syntax syntax="jsligo">
 
 ```jsligo group=strings
-const one  = "" ? 0 : 1;
+const one = "" ? 0 : 1;
 const zero = "foo" ? 0 : 1;
 ```
 
@@ -102,7 +102,7 @@ Note: See the predefined
 <Syntax syntax="jsligo">
 
 ```jsligo group=length
-const length : nat = String.size("Alice"); // length == 5n
+const length : nat = String.size("Alice"); // length == (5 as nat)
 ```
 
 Note: See predefined [namespace String](../reference/string-reference/?lang=jsligo)
@@ -133,7 +133,7 @@ The offset and length of the slice are natural number:
 
 ```jsligo group=slicing
 const name = "Alice";
-const slice = String.sub (0n, 1n, name); // slice == "A"
+const slice = String.sub (0 as nat, 1 as nat, name); // slice == "A"
 ```
 
 Note: See predefined [namespace String](../reference/string-reference/?lang=jsligo)
@@ -175,4 +175,3 @@ const s : string = `\n` // String made of two characters
 Note: See predefined [namespace String](../reference/string-reference/?lang=jsligo)
 
 </Syntax>
-
