@@ -67,14 +67,6 @@ const config = {
         disableSwitch: false,
         respectPrefersColorScheme: false,
       },
-      announcementBar: {
-        id: "support_us",
-        content:
-          "<b>Ligo v1 is now available ! <a href='/blog/v1-migration-guide'>Check the migration guide</a> ! </b>",
-        backgroundColor: "#003ee0",
-        textColor: "#efefef",
-        isCloseable: false,
-      },
       navbar: {
         logo: {
           width: "104",

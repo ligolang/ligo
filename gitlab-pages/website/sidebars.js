@@ -10,6 +10,7 @@ const sidebars = {
       "intro/editor-support",
       "tutorials/getting-started/getting-started",
       "intro/template",
+      "intro/upgrade-v1",
     ],
     "Writing a Contract": [
       {
