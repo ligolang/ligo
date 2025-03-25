@@ -33,15 +33,10 @@ import Syntax from '@theme/Syntax';
 
 > I'm trying to write some functions in (came)ligo that compare several values as long as they are ints, strings, or nats. compare_equal is one of them.
 >
-> This errors out with Only composed types of not more than two element are allowed to be compared.
->
 > ```jsligo skip
-> const compare_equal = <k>(a : k, b: k) : bool => {
->     if (a == b) {
->       return true;
->     } else {
->       return false;
->     }
+> function compare_equal <k>(a : k, b: k) : bool {
+>   if (a == b) return true;
+>   return false;
 > }
 > ```
 >
@@ -49,10 +44,10 @@ import Syntax from '@theme/Syntax';
 >
 > ```jsligo skip
 > const compare_equal = <k>(a : k, b: k) : bool =>
->     match (a) {
->       when(int(v)): do { if (a = b) { return true; } else { return false; } };
->       when(string(v)): do { if (a = b) { return true; } else { return false; } };
->     }
+>    $match(a, {
+>       "int": (v) => (() => { if (a = b) return true; else return false; })(),
+>       "string": (v) => (() => { if (a = b) return true; else return false; })()
+>     });
 > ```
 >
 
