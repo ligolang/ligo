@@ -83,8 +83,8 @@ function gcd (a: nat, b: nat) {
     const z = x;
     x = y; y = z; // Swapping x and y
   }
-  let r: nat = 0n
-  while (y != 0n) {
+  let r: nat = 0
+  while (y != (0 as nat)) {
     r = x % y;
     x = y;
     y = r;
@@ -119,12 +119,12 @@ two natural numbers by means of Euclid's algorithm using tail
 recursion (no loops):
 
 ```jsligo group=looping
-function iter (x: nat,y: nat): nat {
-  if (y == 0n) return x else return iter (y, x % y)
+function iter (x: nat, y: nat): nat {
+  if (y == (0 as nat)) return x; else return iter(y, x % y)
 };
 
 function gcd2 (x: nat,y: nat) : nat {
-  if (x < y) return iter (y, x) else return iter (x, y)
+  if (x < y) return iter(y, x); else return iter(x, y)
 };
 ```
 
@@ -135,7 +135,8 @@ Finally, here is how to check if a string is a palindrome using a
 `for` loop:
 
 ```jsligo group=looping
-const getChar = (s: string, idx: nat) : string => String.sub(idx, 1n, s);
+const getChar = (s: string, idx: nat) : string => String.sub(idx, 1 as
+nat, s);
 
 function isPalindrome (s: string): bool {
   let p = "";
@@ -157,7 +158,7 @@ of the form `for (const <element var> of <collection var>) <block>`.
 Here is an example where the integers in a list are summed up.
 
 ```jsligo group=looping
-function sum_list (l : list<int>) {
+function sum_list (l: list<int>) {
   let acc = 0;
   for (const i of l) acc += i;
   return acc; // total
