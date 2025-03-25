@@ -64,7 +64,7 @@ type ledger = map <account, account_data>;
 const my_ledger : ledger =
   Map.literal([
     ["tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" as address,
-     {balance: 10mutez, transactions: 5n}]]);
+     {balance: 10 as mutez, transactions: 5 as nat}]]);
 ```
 
 </Syntax>

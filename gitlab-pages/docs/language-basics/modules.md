@@ -73,8 +73,8 @@ the given currency, as well as constants for zero and one.
 namespace EURO {
   export type t = nat;
   export const add = (a: t, b: t) : t => a + b;
-  export const zero: t = 0n;
-  export const one: t = 1n
+  export const zero: t = 0 as nat;
+  export const one: t = 1 as nat
 }
 ```
 
@@ -107,8 +107,8 @@ let main (_action : unit) (store : storage) : operation list * storage =
 ```jsligo group=EURO
 type storage = EURO.t;
 
-@entry
-let main = (_action: unit, store: storage): [list<operation>, storage] =>
+// @entry
+const main = (_action: unit, store: storage): [list<operation>, storage] =>
   [[], EURO.add (store, EURO.one)];
 ```
 
@@ -190,8 +190,8 @@ namespace EURO {
   export let add = (a: t, b: t): t => a + b;
 
   export namespace CONST {
-    export let zero: t = 0n;
-    export let one: t = 1n;
+    export let zero: t = 0 as nat;
+    export let one: t = 1 as nat;
   };
 };
 ```
@@ -218,8 +218,8 @@ let main (_action : unit) (store : storage) : operation list * storage =
 ```jsligo group=EURO3
 type storage = EURO.t;
 
-@entry
-let main = (_action: unit, store: storage) : [list<operation>, storage] =>
+// @entry
+const main = (_action: unit, store: storage) : [list<operation>, storage] =>
  [[], EURO.add (store, EURO.CONST.one)]
 ```
 
@@ -261,8 +261,8 @@ export type t = nat;
 
 export const add = (a: t, b: t): t => a + b;
 
-export const zero: t = 0n;
-export const one: t = 1n;
+export const zero: t = 0 as nat;
+export const one: t = 1 as nat;
 ```
 
 </Syntax>
@@ -286,24 +286,24 @@ let main (_action : unit) (store : storage) : operation list * storage =
 
 </Syntax>
 
-<Syntax syntax="jsligo">
+<!-- TODO: Renable when import statements are working. -->
 
-Later, in another file, we can import `imported.jsligo` as a module, and
-use its definitions. For example, we could create a `importer.jsligo`
-that imports all definitions from `imported.jsligo` as the module
-`EURO`:
+<!-- <Syntax syntax="jsligo"> -->
 
-```jsligo group=importer
-import * as EURO from "gitlab-pages/docs/language-basics/src/modules/imported.jsligo";
+<!-- ```jsligo group=importer -->
+<!-- import * as EURO from "gitlab-pages/docs/language-basics/src/modules/imported.jsligo"; -->
 
-type storage = EURO.t;
+<!-- ```jsligo group=importer -->
+<!-- #import "gitlab-pages/docs/language-basics/src/modules/imported.jsligo" "EURO" -->
 
-@entry
-const main = (_action: unit, store: storage): [list<operation>, storage] =>
-  [[], EURO.add(store, EURO.one)];
-```
+<!-- type storage = EURO.t; -->
 
-</Syntax>
+<!-- // @entry -->
+<!-- const main = (_action: unit, store: storage): [list<operation>, storage] => -->
+<!--   [[], EURO.add(store, EURO.one)]; -->
+<!-- ``` -->
+
+<!-- </Syntax> -->
 
 We can compile the file that uses the `#import` statement directly,
 without having to mention the imported file.
@@ -316,13 +316,13 @@ ligo compile contract --library . gitlab-pages/docs/language-basics/src/modules/
 
 </Syntax>
 
-<Syntax syntax="jsligo">
+<!-- <Syntax syntax="jsligo"> -->
 
-```shell
-ligo compile contract --library . gitlab-pages/docs/language-basics/src/modules/importer.jsligo
-```
+<!-- ```shell -->
+<!-- ligo compile contract --library . gitlab-pages/docs/language-basics/src/modules/importer.jsligo -->
+<!-- ``` -->
 
-</Syntax>
+<!-- </Syntax> -->
 
 
 ## Module Aliases
@@ -375,11 +375,11 @@ declarations in the module tagged as `@entry` are grouped, and a
 dispatcher contract is generated.
 
 ```jsligo group=contract
-namespace C {
+class C {
   @entry
-  const increment = (p : int, s : int) : [list<operation>, int] => [[], s + p];
+  increment = (p : int, s : int) : [list<operation>, int] => [[], s + p];
   @entry
-  const decrement = (p : int, s : int) : [list<operation>, int] => [[], s - p];
+  decrement = (p : int, s : int) : [list<operation>, int] => [[], s - p];
 };
 ```
 
@@ -423,11 +423,11 @@ let test =
 <Syntax syntax="jsligo">
 
 ```jsligo group=contract
-const test = do {
-  let orig = Test.originate(contract_of(C), 0, 0tez);
-  Test.transfer_exn(orig.addr, (Increment (42)), 1mutez);
-  return assert(Test.get_storage(orig.addr) == 42);
-};
+const test = (() => {
+  let orig = Test.Next.Originate.contract(contract_of(C), 0, 0 as tez);
+  Test.Next.Typed_address.transfer_exn(orig.taddr, ["Increment" as "Increment", 42], 1 as mutez);
+  return Assert.assert(Test.Next.Typed_address.get_storage(orig.taddr) == 42);
+})();
 ```
 
 </Syntax>
@@ -515,9 +515,11 @@ expressivity and type safety. Interfaces are introduced by the keyword
 with their type, like so:
 
 ```jsligo group=contract2
+type storage = int;
+
 interface FA0_INTF {
-  type storage;
-  @entry const add : (s : int, k : storage) => [list<operation>, storage];
+  // @entry
+  add : (s : int, k : storage) => [list<operation>, storage];
 }
 ```
 
@@ -526,70 +528,73 @@ ensuring that said namespace contains *at least* the types and values
 listed in the given interface, like so:
 
 ```jsligo group=contract2
-namespace FA0 implements FA0_INTF {
-  export type storage = int;
-  @entry const add = (s : int, k : int) : [list<operation>, int] => [[], s + k];
-  @entry const extra = (s : int, k : int) : [list<operation>, int] => [[], s - k];
+class FA0 implements FA0_INTF {
+  @entry
+  add = (s : int, k : int) : [list<operation>, int] => [[], s + k];
+
+  @entry
+  extra = (s : int, k : int) : [list<operation>, int] => [[], s - k];
 }
 ```
 
 Interfaces can be extended by inheritance, like so:
 
 ```jsligo group=contract2
-interface FABase_INTF {
-  type t;
-};
+type t = int;
 
-interface FA0_INTF extends FABase_INTF {
-  @entry const transfer : (_u : unit, s : t) => [list<operation>, t];
+interface FA0_INTF {
+  // @entry
+  transfer : (_u : unit, s : t) => [list<operation>, t];
 };
 
 interface FA0Ext_INTF extends FA0_INTF {
-  @entry const transfer1 : (_u : unit, s : t) => [list<operation>, t];
+  // @entry
+  transfer1 : (_u : unit, s : t) => [list<operation>, t];
 };
 
-interface FA1_INTF extends FABase_INTF {
-  @entry const transfer2 : (_u : unit, s : t) => [list<operation>, t];
+interface FA1_INTF {
+  // @entry
+  transfer2 : (_u : unit, s : t) => [list<operation>, t];
 };
 ```
-
-Note how the abstract type `t` in `FABase_INTF` remains abstract.
 
 It is possible to design diamond inheritance, that is, inheriting
 twice the same base interface, like so:
 
 ```jsligo group=contract2
 interface FAAll_INTF extends FA0Ext_INTF, FA1_INTF {
-  @entry const transfer3 : (_u : unit, s : t) => [list<operation>, t];
-  @view const v1 : (_u : unit, s : t) => t;
-  @entry const opt_val? : (i : int, s : t) => [list<operation>, t];
+  // @entry
+  transfer3 : (_u : unit, s : t) => [list<operation>, t];
+  // @view
+  v1 : (_u : unit, s : t) => t;
+  // @entry
+  opt_val? : (i : int, s : t) => [list<operation>, t];
 }
 ```
 
-Here, the abstract type `t` was inherited twice from
-`FABase_INTF`. Note the *optional value* `opt_val`, distinghished as
-such by a question mark: `opt_val?`. This means that a namespace
-implementing `FAAll_INTF` can choose not to implement
-`opt_val`. The implementation of an interface can be done as follows:
+Here, the type `t` was inherited twice from `FABase_INTF`. Note the
+*optional value* `opt_val`, distinghished as such by a question mark:
+`opt_val?`. This means that a namespace implementing `FAAll_INTF` can
+choose not to implement `opt_val`. The implementation of an interface
+can be done as follows:
 
 ```jsligo group=contract2
-namespace FAAll_wo_opt_val implements FAAll_INTF {
-  export type t = int;
+class FAAll_wo_opt_val implements FAAll_INTF {
+  @entry transfer = (_u : unit, s : t) : [list<operation>, t] => [[], s];
 
-  @entry const transfer = (_u : unit, s : t) : [list<operation>, t] => [[], s];
-  @entry const transfer1 = (_u : unit, s : t) : [list<operation>, t] => [[], s];
-  @entry const transfer2 = (_u : unit, s : t) : [list<operation>, t] => [[], s];
-  @entry const transfer3 = (_u : unit, s : t) : [list<operation>, t] => [[], s];
-  @view const v1 = (_u : unit, s : t) : t => s;
+  @entry transfer1 = (_u : unit, s : t) : [list<operation>, t] => [[], s];
+  @entry transfer2 = (_u : unit, s : t) : [list<operation>, t] => [[], s];
+  @entry transfer3 = (_u : unit, s : t) : [list<operation>, t] => [[], s];
+  @view v1 = (_u : unit, s : t) : t => s;
 
   /* "foo", "transfer4" and "v2" are not in "FAAll_INTF", but can
      nevertheless be added here, because "implements" does not filter,
      but only have the compiler check that the fields in the interface
      are implemented. */
 
-  export const foo = (s : t) : t => s;
-  @entry const transfer4 = (_u : unit, s : t) : [list<operation>, t] => [[], s];
-  @view const v2 = (_u : unit, s : t) : t => s;
+  foo = (s : t) : t => s;
+  @entry transfer4 = (_u : unit, s : t) : [list<operation>, t] => [[], s];
+  @view v2 = (_u : unit, s : t) : t => s;
 }
 
 ```

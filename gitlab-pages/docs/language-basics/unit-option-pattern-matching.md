@@ -134,8 +134,8 @@ let tail : coin = Tail
 
 ```jsligo group=b
 type coin = ["Head"] | ["Tail"];
-let head: coin = Head();
-let tail: coin = Tail();
+let head: coin = ["Head" as "Head"];
+let tail: coin = ["Tail" as "Tail"];
 ```
 
 </Syntax>
@@ -180,8 +180,8 @@ type user =
 | ["Manager", id]
 | ["Guest"];
 
-const u : user = Admin(1000n);
-const g : user = Guest();
+const u : user = ["Admin" as "Admin", 1000 as nat];
+const g : user = ["Guest" as "Guest"];
 ```
 
 In JsLIGO, a constant constructor is equivalent to the same constructor
@@ -252,7 +252,8 @@ namespace MySecondModule {
 type t1 = ["A", int] | ["G", tez];
 
 // The compiler will search above for sum types with an 'A' constructor
-const x = A(42);
+// and complain:
+const x = ["A" as "A", 42];
 ```
 
 </Syntax>
@@ -301,7 +302,8 @@ let div (a, b : nat * nat) : nat option =
 
 ```jsligo group=d
 function div (a: nat, b: nat): option<nat> {
-  if (b == 0n) return None() else return Some(a/b)
+  if (b == (0 as nat)) return ["None" as "None"];
+  return ["Some" as "Some", a/b]
 };
 ```
 
@@ -355,10 +357,10 @@ type color =
 | ["Default"];
 
 const int_of_color = (c : color) : int =>
-  match(c) {
-    when(RGB(rgb)): 16 + rgb[2] + rgb[1] * 6 + rgb[0] * 36;
-    when(Gray(i)): 232 + i;
-    when(Default()): 0 };
+  $match(c, {
+    "RGB": rgb => 16 + rgb[2] + rgb[1] * 6 + rgb[0] * 36,
+    "Gray": i => 232 + i,
+    "Default": () => 0 });
 ```
 
 The right-hand sides of each `when`-clause is an expression. Sometimes
@@ -370,15 +372,11 @@ the block, like so:
 
 ```jsligo group=pm_variant
 function match_with_block () {
-  let x = 1;
-  return
-    match(Some(1)) {
-      when(None()): failwith(1);
-      when(Some(org)): do {
-        let y = x + 1;
-        return y
-      }
-    };
+  const x = 1;
+  return $match(["Some" as "Some", 1], {
+    "None": () => failwith(1),
+    "Some": org => (() => { const y = x + 1; return y })()
+  })
 };
 ```
 
@@ -408,18 +406,18 @@ let on_tuple (v : my_tuple) : int =
 <Syntax syntax="jsligo">
 
 ```jsligo group=pm_rec_tuple
-type my_record = { a : int ; b : nat ; c : string }
+type my_record = {a: int, b: nat, c: string}
 type my_tuple = [int, nat, string]
 
-let on_record = (v : my_record) : int =>
-  match (v) {
-    when ({ a ; b : b_renamed ; c : _c }): a + int(b_renamed)
-  }
+function on_record(v: my_record) : int {
+  const {a, b: b_renamed, c: _c } = v;
+  return a + int(b_renamed);
+}
 
-let on_tuple = (v : my_tuple) : int =>
-  match (v) {
-    when ([x, y, _s]): x + int(y)
-  }
+function on_tuple(v: my_tuple) : int {
+  const [x, y, _s] = v;
+  return x + int(y);
+}
 ```
 
 </Syntax>
@@ -442,10 +440,10 @@ let weird_length (v : int list) : int =
 
 ```jsligo group=pm_lists
 let weird_length = (v : list<int>) : int =>
-  match(v) {
-    when([]): -1;
-    when([hd, ...tl]): 1 + int(List.length(tl))
-  };
+  $match(List.head_and_tail(v), {
+    "None: () => -1,
+    "Some": ([hd, tl]) => 1 + int(List.length(tl))
+  });
 ```
 
 </Syntax>
@@ -473,15 +471,14 @@ let complex = fun (x:complex_t) (y:complex_t) ->
 <Syntax syntax="jsligo">
 
 ```jsligo group=pm_complex
-type complex_t = { a : option<list<int>> ; b : list<int> }
+type complex_t = { a: option<list<int>>; b: list<int> }
+
+type hack = | ["Hack", complex_t, complex_t];
 
 const complex = (x: complex_t, y: complex_t) =>
-  match ([x,y]) {
-    when ([{a:None; b:_bl}, {a:_ar; b:_br}]): -1
-    when ([{a:_a; b:_b}, {a: Some ([]); b: [hd,...tl]}]): hd
-    when ([{a:_a; b:_b}, {a: Some ([hd,...tl]); b:[]}]): hd
-    when ([{a: Some (a); b:_b}, _l]) : int (List.length (a))
-  }
+  $match (["Hack" as "Hack", [x,y]], {
+    "Hack": ([{a:_al, b:_bl}, {a:_ar, b:_br}]) => -1
+  })
 ```
 
 </Syntax>

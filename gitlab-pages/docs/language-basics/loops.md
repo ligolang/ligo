@@ -82,7 +82,7 @@ and through the use of tail recursive functions.
 Here is how to check if a string is a palindrome or not using a `for` loop:
 
 ```jsligo group=a
-const getChar = (s: string, idx: nat): string => String.sub(idx, 1n, s);
+const getChar = (s: string, idx: nat): string => String.sub(idx, 1 as nat, s);
 
 function isPalindrome (s: string): bool {
   let p = "";
@@ -103,8 +103,8 @@ function gcd (a: nat, b: nat) {
     const z = x;
     x = y; y = z;
   }
-  let r: nat = 0n
-  while (y != 0n) {
+  let r: nat = 0
+  while (y != (0 as nat)) {
     r = x % y;
     x = y;
     y = r;
@@ -117,12 +117,12 @@ And here is how to compute the greatest common divisors of two natural
 numbers by means of Euclid's algorithm using tail recursion:
 
 ```jsligo group=gcd
-function iter (x: nat,y: nat): nat {
-  if (y == 0n) return x else return iter (y, x % y)
+function iter (x: nat, y: nat): nat {
+  if (y == (0 as nat)) return x; else return iter(y, x % y)
 };
 
-function gcd2 (x: nat,y: nat) : nat {
-  if (x < y) return iter (y, x) else return iter (x, y)
+function gcd2 (x: nat, y: nat) : nat {
+  if (x < y) return iter(y, x); else return iter(x, y)
 };
 ```
 
@@ -204,8 +204,7 @@ all the integers and concatenate all the strings.
 function sum_map (m: map<string, int>) {
   let string_total = ""
   let int_total = 0
-  for (const item of m) {
-    let [key, value] = item;
+  for (const [key, value] of m) {
     string_total = string_total + key;
     int_total = int_total + value
   }
