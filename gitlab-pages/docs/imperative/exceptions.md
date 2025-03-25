@@ -38,7 +38,7 @@ The call to the `failwith` function sometimes needs to be annotated with a type 
 <Syntax syntax="jsligo">
 
 ```jsligo group=failwith
-@entry
+// @entry
 const main = (p: unit, s: unit) : [list<operation>, unit] =>
   failwith("This contract always fails");
 ```
