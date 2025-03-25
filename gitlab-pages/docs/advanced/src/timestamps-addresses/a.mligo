@@ -1,1 +1,0 @@
-let today : timestamp = Tezos.get_now ()
