@@ -79,19 +79,19 @@ let g : int = 1_000_000
 const a = 5 + 10;
 
 // nat + int yields int
-const b = 5n + 10;
+const b = (5 as nat) + 10;
 
 // tez + tez yields tez
-const c: tez = 5mutez + 1tez;
+const c: tez = (5 as mutez) + (1 as tez);
 
 // tez + int or tez + nat is invalid:
-// const d : tez = 5mutez + 10n;
+// const d : tez = (5 as mutez) + (10 as nat);
 
 // two nats yield a nat
-const e: nat = 5n + 10n;
+const e: nat = (5 as nat) + (10 as nat);
 
 // nat + int yields an int: invalid
-// const f : nat = 5n + 10;
+// const f : nat = (5 as nat) + 10;
 
 const g = 1_000_000;
 ```
@@ -99,7 +99,7 @@ const g = 1_000_000;
 > Tip: you can use underscores for readability when defining large
 > numbers:
 >```jsligo
->let sum : tez = 100_000mutez;
+>let sum : tez = 100_000 as mutez;
 >```
 
 </Syntax>
@@ -130,10 +130,10 @@ let b : int = 5n - 2n
 const a = 5 - 10;
 
 // Subtraction of two nats yields an int
-const b: int = 5n - 2n;
+const b: int = (5 as nat) - (2 as nat);
 
 // Therefore the following is invalid
-// const c : nat = 5n - 2n;
+// const c : nat = (5 as nat) - (2 as nat);
 ```
 
 </Syntax>
@@ -154,8 +154,10 @@ let e : tez option = 1mutez - 5mutez (* None *)
 <Syntax syntax="jsligo">
 
 ```jsligo group=b
-const d : option<tez> = 5mutez - 1mutez; /* Some (4mutez) */
-const e : option<tez> = 1mutez - 5mutez; /* None */
+// ["Some" as "Some", 4 as mutez]
+const d : option<tez> = (5 as mutez) - (1 as mutez);
+// ["None" as "None"]
+const e : option<tez> = (1 as mutez) - (5 as mutez);
 ```
 
 </Syntax>
@@ -180,10 +182,10 @@ let c : tez = 5n * 5mutez
 
 ```jsligo group=c
 const a = 5 * 5;
-const b: nat = 5n * 5n;
+const b: nat = (5 as nat) * (5 as nat);
 
 // You can also multiply `nat` and `tez`
-const c: tez = 5n * 5mutez;
+const c: tez = (5 as nat) * (5 as mutez);
 ```
 
 </Syntax>
@@ -209,8 +211,8 @@ let c : nat = 10mutez / 3mutez
 
 ```jsligo group=d
 const a: int = 10 / 3;
-const b: nat = 10n / 3n;
-const c: nat = 10mutez / 3mutez;
+const b: nat = (10 as nat) / (3 as nat);
+const c: nat = (10 as mutez) / (3 as mutez);
 ```
 
 </Syntax>
@@ -245,9 +247,9 @@ let rem4 : nat = a mod d  // 3
 const a = 120;
 const b = 9;
 const rem1 = a % b;  // 3
-const c = 120n;
+const c = 120 as nat;
 const rem2 = c % b;  // 3
-const d = 9n;
+const d = 9 as nat;
 const rem3 = c % d;  // 3
 const rem4 = a % d;  // 3
 ```
@@ -279,12 +281,12 @@ let ediv4 : (int * nat) option = ediv a d  // Some (7, 2)
 ```jsligo group=f
 const a = 37;
 const b = 5;
-const ediv1 : option<[int , nat]> = ediv(a, b);  // Some (7, 2)
-const c = 37n;
-const ediv2: option<[int , nat]> = ediv(c, b);  // Some (7, 2)
-const d = 5n;
-const ediv3: option<[nat , nat]> = ediv(c, d);  // Some (7, 2)
-const ediv4: option<[int , nat]> = ediv(a, d);  // Some (7, 2)
+const ediv1 : option<[int , nat]> = ediv(a, b);  // ["Some" as "Some", [7, 2]]
+const c = 37 as nat;
+const ediv2: option<[int , nat]> = ediv(c, b);  // ["Some" as "Some", [7, 2]]
+const d = 5 as nat;
+const ediv3: option<[nat , nat]> = ediv(c, d);  // ["Some" as "Some", [7, 2]]
+const ediv4: option<[int , nat]> = ediv(a, d);  // ["Some" as "Some", [7, 2]]
 ```
 
 </Syntax>
@@ -306,7 +308,7 @@ let b : nat = abs (1)
 <Syntax syntax="jsligo">
 
 ```jsligo group=g
-const a = int(1n);
+const a = int(1 as nat);
 const b = abs(1);
 ```
 
@@ -374,21 +376,19 @@ In the **postfix** position (`p++`) the operator increments the value but
 returns the old value before the increment.
 
 ```jsligo test-ligo group=increment_ops
-
 const testInc = (() => {
   let inc = 0;
 
   // Prefix increment operator
-  assert(++inc == 1);
-  assert(inc   == 1);
+  Assert.assert(++inc == 1);
+  Assert.assert(inc == 1);
 
   // Postfix increment operator
-  assert(inc++ == 1);
-  assert(inc   == 2);
+  Assert.assert(inc++ == 1);
+  Assert.assert(inc == 2);
 })();
 
 ```
-
 
 ## Decrement operator
 
@@ -401,17 +401,16 @@ In the **postfix** position (`p--`) the operator decrements the value but
 returns the old value before the decrement.
 
 ```jsligo test-ligo group=decrement_ops
-
 const testDec = (() => {
   let v = 10;
 
   // Prefix decrement operator
-  assert(--v == 9);
-  assert(v   == 9);
+  Assert.assert(--v == 9);
+  Assert.assert(v == 9);
 
   // Postfix decrement operator
-  assert(v-- == 9);
-  assert(v   == 8);
+  Assert.assert(v-- == 9);
+  Assert.assert(v == 8);
 })();
 
 ```

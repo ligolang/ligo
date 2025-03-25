@@ -115,15 +115,13 @@ let alice = first_person_fun(friends);
 and within a code block:
 
 ```jsligo group=tuple
-let destruct_tuple = (x : [ int , [int , nat] ]) : nat => {
-  let [a,[b,c]] = x ;
+function destruct_tuple (x : [ int , [int , nat] ]) : nat {
+  const [a, [b, c]] = x;
   return c
 };
-```
 
-```jsligo group=tuple
-let destruct_record = (x : { a : int , b : string }) : int => {
-  let { a , b } = x ;
+function destruct_record (x : { a : int , b : string }) : int {
+  const {a, b } = x;
   return a
 };
 ```
@@ -289,7 +287,7 @@ let assert_all_greater_than_three (l : int list) : unit =
 
 ```jsligo group=lists
 const assert_all_greater_than_three = (l: list<int>): unit => {
-  let predicate = i => assert(i > 3);
+  const predicate = i => Assert.assert(i > 3);
   List.iter(predicate, l);
 };
 ```
@@ -576,7 +574,7 @@ let assert_all_greater_than_three (s : int set) : unit =
 
 ```jsligo group=sets
 const assert_all_greater_than_three = s => {
-  let predicate = i => assert(i > 3);
+  const predicate = i => Assert.assert(i > 3);
   Set.iter(predicate, s);
 };
 ```
@@ -616,7 +614,7 @@ signature `val fold_right : ('acc * 'elt -> 'acc) * 'elt set * 'acc ->
 
 ```jsligo group=sets
 const sum = ([acc, i]: [int, int]) => acc + i;
-const sum_of_elements = Set.fold (sum, my_set, 0);
+const sum_of_elements = Set.fold(sum, my_set, 0);
 ```
 
 </Syntax>

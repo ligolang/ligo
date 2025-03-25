@@ -334,14 +334,14 @@ let h : bool = (a <> b)
 <Syntax syntax="jsligo">
 
 ```jsligo group=c
-const a  = 5;
-const b  = 4;
-const c = (a == b);
-const d = (a > b);
-const e = (a < b);
-const f = (a <= b);
-const g = (a >= b);
-const h = (a != b);
+const a : int = 5;
+const b : int = 4;
+const c : bool = (a == b);
+const d : bool = (a > b);
+const e : bool = (a < b);
+const f : bool = (a <= b);
+const g : bool = (a >= b);
+const h : bool = (a != b);
 ```
 
 </Syntax>
@@ -356,8 +356,8 @@ To check if the following operators have the expected result use
 Usage:
 
 ```cameligo group=d
-let a : bytes  = 0x1001
-let b : bytes  = 0x1000
+let a : bytes = 0x1001
+let b : bytes = 0x1000
 let c : bool = (a = b)
 let d : bool = (a > b)
 let e : bool = (a < b)
@@ -376,14 +376,14 @@ To check if the following operators have the expected result use
 Usage:
 
 ```jsligo group=d
-const a = 0x1001;
-const b = 0x1000;
-const c = (a == b);
-const d = (a > b);
-const e = (a < b);
-const f = (a <= b);
-const g = (a >= b);
-const h = (a != b);
+const a : bytes = 0x1001;
+const b : bytes = 0x1000;
+const c : bool = (a == b);
+const d : bool = (a > b);
+const e : bool = (a < b);
+const f : bool = (a <= b);
+const g : bool = (a >= b);
+const h : bool = (a != b);
 ```
 
 </Syntax>
@@ -396,8 +396,8 @@ const h = (a != b);
 <Syntax syntax="cameligo">
 
 ```cameligo group=e
-let a : tez  = 5mutez
-let b : tez  = 10mutez
+let a : tez = 5mutez
+let b : tez = 10mutez
 let c : bool = (a = b) // false
 ```
 
@@ -406,14 +406,12 @@ let c : bool = (a = b) // false
 <Syntax syntax="jsligo">
 
 ```jsligo group=e
-const a: tez  = 5mutez;
-const b: tez  = 10mutez;
-const c = (a == b); // false
+const a: tez = 5 as mutez;
+const b: tez = 10 as mutez;
+const c : bool = (a == b); // false
 ```
 
 </Syntax>
-
-
 
 ## Conditionals
 
@@ -447,8 +445,9 @@ ligo run evaluate-call gitlab-pages/docs/language-basics/src/boolean-if-else/con
 ```jsligo group=cond
 type magnitude = ["Small"] | ["Large"]; // See variant types.
 
-const compare = (n) => {
-  if (n < 10n) return Small() else return Large()
+const compare = (n: nat): magnitude => {
+  if (n < (10 as nat)) return ["Small" as "Small"];
+  return ["Large" as "Large"]
 };
 ```
 
@@ -522,7 +521,7 @@ ligo run evaluate-call  gitlab-pages/docs/language-basics/src/boolean-if-else/sw
 JsLIGO also supports JavaScript's ternary expression:
 
 ```jsligo
-const ternary = a => a == 1 ? true : false;
+const ternary = a => (a == 1) ? true : false;
 ```
 
 which can also be nested:

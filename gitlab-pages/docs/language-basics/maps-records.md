@@ -70,7 +70,7 @@ And here is how an object value is defined:
 
 ```jsligo group=records1
 const alice : user = {
-  id       : 1n,
+  id       : 1 as nat,
   is_admin : true,
   name     : "Alice"
 };
@@ -143,8 +143,8 @@ let get_id (u : user) =
 ```jsligo group=records1
 function getId (u : user) {
   let { id, is_admin, name } = u;
-  /* we don't use `is_admin` and `name`
-   so prevent warning with `ignore` */
+  /* We don't use `is_admin` and `name`
+     so we prevent warning with `ignore`: */
   ignore([is_admin, name]);
   return id
 }
@@ -462,12 +462,11 @@ let force_access (key, moves : address * register) : move =
 <Syntax syntax="jsligo">
 
 ```jsligo group=maps
-let force_access = (key: address, moves: register) => {
-  return match(Map.find_opt (key, moves)) {
-    when(Some(move)): move;
-    when(None()): failwith("No move.")
-  };
-};
+const force_access = (key: address, moves: register) : move =>
+  $match(Map.find_opt(key, moves), {
+    "Some": move => move,
+    "None": () => failwith("No move.")
+  });
 ```
 
 </Syntax>
@@ -620,7 +619,7 @@ let map_op (m : register) : register =
 <Syntax syntax="jsligo">
 
 ```jsligo group=maps
-const map_op = (m: register) => {
+finction map_op (m: register) {
   let increment = ([_a, j]: [address, move]) => [j[0], j[1] + 1];
   return Map.map(increment, m);
 };
@@ -653,7 +652,7 @@ let fold_op (m : register) : int =
 <Syntax syntax="jsligo">
 
 ```jsligo group=maps
-const fold_op = (m: register): int => {
+function fold_op (m: register): int {
   let folded = ([i, j]: [int, [address, move]]) => i + j[1][1];
   return Map.fold(folded, m, 5);
 };

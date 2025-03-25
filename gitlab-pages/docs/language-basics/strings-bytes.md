@@ -70,7 +70,7 @@ let slice : string = String.sub 0n 1n name (* slice = "A" *)
 
 ```jsligo group=b
 const name = "Alice";
-const slice = String.sub (0n, 1n, name); // slice == "A"
+const slice = String.sub(0 as nat, 1 as nat, name); // slice == "A"
 ```
 
 </Syntax>
@@ -185,7 +185,7 @@ let slice : bytes = Bytes.sub 1n 2n b (* 0x3456 *)
 
 ```jsligo group=e
 const b     = 0x12345678;
-const slice = Bytes.sub (1n, 2n, b); // 0x3456
+const slice = Bytes.sub(1 as nat, 2 as nat, b); // 0x3456
 ```
 
 </Syntax>
@@ -250,10 +250,10 @@ const b_or            = 0x0005 | 0x0106; // 0x0107
 const b_xor           = 0x0005 ^ 0x0106; // 0x0103
 
 /* Bitwise shift left */
-const b_shift_left    = 0x06 << 8n; // 0x0600
+const b_shift_left    = 0x06 << (8 as nat); // 0x0600
 
 /* Bitwise shift right */
-const b_shift_right   = 0x0006 >> 1n; // 0x0003
+const b_shift_right   = 0x0006 >> (1 as nat); // 0x0003
 ```
 
 </Syntax>
@@ -279,10 +279,10 @@ let test_nat_bytes = bytes 4660n (* 0x1234 *)
 <Syntax syntax="jsligo">
 
 ```jsligo group=h
-/* bytes -> nat */
+/* bytes => nat */
 const test_bytes_nat = nat(0x1234) // 1234n
 
-/* nat -> bytes */
+/* nat => bytes */
 const test_nat_bytes = bytes(4660n) // 0x1234
 ```
 
@@ -308,10 +308,10 @@ let test_int_bytes = bytes 4660 (* 0x1234 *)
 <Syntax syntax="jsligo">
 
 ```jsligo group=h
-/* bytes -> int */
+/* bytes => int */
 const test_bytes_int = int(0x1234) // 4660
 
-/* int -> bytes */
+/* int => bytes */
 const test_int_bytes = bytes(4660) // 0x1234
 ```
 
