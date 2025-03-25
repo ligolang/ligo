@@ -27,12 +27,12 @@ let test =
 <Syntax syntax="jsligo">
 
 ```jsligo test-ligo group=addr2contract
-const test = do {
+const test = (() => {
   const addr : address = "tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx";
-  const taddr : typed_address<unit,unit> = Test.cast_address(addr);
-  const contract : contract<unit> = Test.to_contract(taddr);
+  const taddr : typed_address<unit,unit> = Test.Next.Address.to_typed_address(addr);
+  const contract : contract<unit> = Test.Next.Typed_address.to_contract(taddr);
   return contract;
-};
+})();
 ```
 
 </Syntax>
