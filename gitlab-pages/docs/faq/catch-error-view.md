@@ -30,7 +30,7 @@ type ('success,'failure) result =
 In JsLIGO:
 
 ```jsligo group=failwith_view
-type result<success,failure> =
+type result<success, failure> =
 | ["Ok", success]
 | ["Error", failure]
 ```
