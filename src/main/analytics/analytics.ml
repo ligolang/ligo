@@ -441,6 +441,7 @@ let push_collected_metrics ~skip_analytics =
     in
     let p_2 =
       let%lwt _ = PushableCollectorRegistry.push registry in
+      (* TODO: log those failures *)
       Lwt.return_unit
     in
     Lwt.join [ p_1; p_2 ])

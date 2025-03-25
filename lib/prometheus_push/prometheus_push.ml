@@ -1,6 +1,5 @@
 open Prometheus
 open Prometheus_format
-open Lwt.Infix
 
 module PushableCollectorRegistry = struct
   type t =
@@ -21,42 +20,36 @@ module PushableCollectorRegistry = struct
     | None -> failwith "Default registry hasn't been set."
 
   let clean t = t.collectorRegistry <- CollectorRegistry.create ()
-
-  let handle_server_response response body =
-    let open Cohttp_lwt in
-    Body.to_string body
-    >|= fun body ->
-    print_string body;
-    let code = Cohttp.Response.status response in
-    match code with
-    | #Cohttp.Code.success_status -> Ok ("Metric successfully published", "")
-    | _ -> Error (body, "")
+  let ( let* ) = Lwt.bind
+  let ( let+ ) v f = Lwt.map f v
 
   let push t =
-    CollectorRegistry.collect t.collectorRegistry
-    >>= fun collected ->
+    let* collected = CollectorRegistry.collect t.collectorRegistry in
     let open Cohttp_lwt_unix in
     let uri = t.url in
     let body =
       Fmt.to_to_string TextFormat_0_0_4.output collected |> Cohttp_lwt.Body.of_string
     in
-    let body_headers =
-      Lwt.bind (Cohttp_lwt.Body.length body) (fun (content_size, body) ->
-          let headers =
-            Cohttp.Header.of_list
-              [ "Content-Type", "text/plain"
-              ; "version", "0.0.4"
-              ; "Content-Length", Int64.to_string content_size
-              ]
-          in
-          Lwt.return (body, headers))
+    let* content_size, body = Cohttp_lwt.Body.length body in
+    let headers =
+      Cohttp.Header.of_list
+        [ "Content-Type", "text/plain"
+        ; "version", "0.0.4"
+        ; "Content-Length", Int64.to_string content_size
+        ]
     in
-    let r =
-      Lwt.bind body_headers (fun (body, headers) ->
-          Lwt.pick [ Lwt_unix.timeout 1.0; Client.put ~headers ~body uri ])
-    in
-    r
-    >>= fun (response, body) ->
+    let* response, body = Client.put ~headers ~body uri in
     clean t;
-    handle_server_response response body
+    let+ body = Cohttp_lwt.Body.to_string body in
+    let code = Cohttp.Response.status response in
+    match code with
+    | #Cohttp.Code.success_status -> Ok "Metric successfully published"
+    | _ ->
+      Error
+        (Format.sprintf "Bad Status: %s@.%s@." (Cohttp.Code.string_of_status code) body)
+
+  let push t =
+    Lwt.catch
+      (fun () -> Lwt.pick [ Lwt_unix.timeout 3.0; push t ])
+      (fun exn -> Lwt.return @@ Error (Printexc.to_string exn))
 end
