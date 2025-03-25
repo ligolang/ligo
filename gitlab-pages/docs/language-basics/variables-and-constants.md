@@ -34,7 +34,7 @@ ligo run evaluate-expr gitlab-pages/docs/language-basics/src/variables-and-const
 > Constants in JsLIGO are enforced:
 
 ```jsligo skip
-const x = do {
+function x () {
   const age = 25;
   age = 3; // Yields an error
 };
@@ -43,7 +43,7 @@ const x = do {
 Unlike the other syntaxes, JsLIGO doesn't allow variable names to be reused in the same block scope:
 
 ```jsligo skip
-const x = () => {
+function x () {
   const age = 25;
   const age = 3; // Yields an error
 };
@@ -52,7 +52,7 @@ const x = () => {
 However, the following does work:
 
 ```jsligo group=d
-const x = () => {
+function x () {
   const _age = 25;
   {
     const _age = 3; // does not give an error
@@ -110,7 +110,7 @@ Variables, unlike constants, are *mutable*.
 
 
 ```jsligo group=add
-let add = (a: int, b: int): int => {
+function add (a: int, b: int): int {
   let c = a;
   c = c + b;
   return c;
@@ -138,21 +138,15 @@ identifier with an underscore, like `amount_`. (Beware that if you
 prefix with an underscore, like `_amount`, the compiler will not
 complain about the value being not used.) But this is not a good
 practice because we do not pronounce aloud the underscores, and there
-is the issue of one or two underscores. To solve all those problems,
-in LIGO, you can prefix you identifier with `@`, like `@amount`.
+is the issue of one or two underscores.
 
 <Syntax syntax="cameligo">
 
+To solve all those problems, in LIGO, you can prefix you identifier
+with `@`, like `@amount`.
+
 ```cameligo group=a
 let @Unique_name = true
-```
-
-</Syntax>
-
-<Syntax syntax="jsligo">
-
-```jsligo group=a
-const @Unique_name = true
 ```
 
 </Syntax>

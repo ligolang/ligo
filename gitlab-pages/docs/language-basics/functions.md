@@ -223,7 +223,7 @@ ligo run evaluate-expr gitlab-pages/docs/language-basics/src/functions/anon.mlig
 <Syntax syntax="jsligo">
 
 ```jsligo group=anon
-const increment = (b) => ((a) => a + 1) (b);
+const increment = (b) => ((a) => a + 1)(b);
 const a = increment(1); // a == 2
 ```
 
@@ -294,7 +294,7 @@ let closure_example (i : int) : int =
 <Syntax syntax="jsligo">
 
 ```jsligo
-function closure_example (i) {
+function closure_example(i) {
   let closure = j => i + j;
   return closure(i);
 };
@@ -322,12 +322,12 @@ let rec fibo (n, n_1, n_0 : int * int * int) : int =
 In JsLigo, recursive functions are defined and called using the same syntax as non-recursive functions.
 
 ```jsligo group=d
-function sum (n: int, acc: int): int {
-  if (n < 1) return acc else return sum(n-1, acc + n);
+function sum(n: int, acc: int): int {
+  if (n < 1) return acc; else return sum(n-1, acc + n);
 };
 
-function fibo (n: int, n_1: int, n_0: int): int {
-  if (n < 2) return n_1 else return fibo (n-1, n_1 + n_0, n_1);
+function fibo(n: int, n_1: int, n_0: int): int {
+  if (n < 2) return n_1; else return fibo(n-1, n_1 + n_0, n_1);
 };
 ```
 </Syntax>
