@@ -42,7 +42,7 @@ Even if LIGO currently offers **two syntaxes**, you'll need to **choose only one
   let store_hello (delta : int) (store : storage) : operation list * storage = [], "Hello"
 ```
 
-A significant advantage of the multi-syntax feature is to share knowledge, toolings, and [modules](../language-basics/modules) (like [libraries](../advanced/package-management) onto [registry](https://packages.ligolang.org/packages)) in a larger community.
+A significant advantage of the multi-syntax feature is to share knowledge, toolings, and [modules](../syntax/module) (like [libraries](../advanced/package-management) onto [registry](https://packages.ligolang.org/packages)) in a larger community.
 
 ### LIGO, designed to be cost-effective
 
