@@ -16,6 +16,7 @@ See [Entrypoints](./contracts/entrypoints).
 <Syntax syntax="cameligo">
 
 To declare a function, use the `let` keyword, just like declaring variables.
+Unlike OCaml, cameLIGO functions can accept multiple parameters.
 The function declaration includes its parameters, after the function name, following OCaml syntax, as in this example:
 
 ```cameligo group=fun_decl
@@ -78,6 +79,61 @@ If the function does not use one of its parameters, you can prefix its name with
 ```jsligo group=unused
 const drop = (x, _y) => x; // _y silently ignored
 ```
+
+</Syntax>
+
+<Syntax syntax="cameligo">
+
+## Chaining functions
+
+To chain functions, use parentheses to group each function name with its parameters.
+For example, assume that you have defined these three functions:
+
+```cameligo group=paren_grouping
+let f (x : int) = x + 1
+let g (x : int) = x - 2
+let h (x : int) = x + x - 3
+```
+
+To chain calls to these three functions, you must group them properly with parentheses.
+For example, this code passes 42 to function `f`, passes the result to function `g`, and passes that result to function `h`:
+
+```cameligo group=paren_grouping
+let result = h (g (f 42))
+```
+
+The parentheses are required in this case.
+If you omit the parentheses, CameLIGO runs the functions in order from left to right, as in this example:
+
+```cameligo skip
+(* Previous example without parentheses *)
+let result_2 = h g f 42
+(* The resulting value is equivalent to this code: *)
+let result_2_equivalent = ((h g) f) 42
+(* These values cause errors because `g` is not a valid parameter of `h`)
+```
+
+To reduce the amount of parentheses for readability, you can use the reverse-application operator (`|>`).
+For example, the expression `f x` can be written as `x |> f`, and the expression `g (f x)` can be written as `x |> f |> g`.
+You can think of this expression as "I take `x`, give it to function `f`, and then give the result to function `g`."
+
+In this way, the expression `let result = h (g (f 42))` can also be written like this:
+
+```cameligo group=paren_grouping
+let result = 42 |> f |> g |> h
+```
+
+Function application has precedence over the reverse-application operator.
+For this reason, `f 42 |> g` is the same as `(f 42) |> g` and not `f (42 |> g)`.
+Therefore, this example shows another way to write the expression `let result = h (g (f 42))`:
+
+```cameligo group=paren_grouping
+let result = f 42 |> g |> h
+```
+
+The reverse-application operator can be useful when you have to deal with a long chain of function calls.
+
+This operator comes from [OCaml's pervasives](https://v2.ocaml.org/releases/4.02/htmlman/libref/Pervasives.html#6_Compositionoperators).
 
 </Syntax>
 
