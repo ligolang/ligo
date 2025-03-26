@@ -7,9 +7,75 @@ import Syntax from '@theme/Syntax';
 
 Smart contracts are programs that run on a blockchain.
 For an overview of how smart contracts work on Tezos, see [An introduction to smart contracts](https://docs.tezos.com/smart-contracts) on docs.tezos.com.
-For an example LIGO contract, see [Quickstart](../../tutorials/getting-started) or load one of the templates in the [Online IDE](https://ide.ligolang.org/).
 
 For the data type that represents a contract, see [Contracts](../../data-types/contracts-type).
+
+## Example contract
+
+This example contract stores an integer and provides two entrypoints that allow callers to add to that integer or subtract from that integer.
+The code includes automated tests for the contract that are not part of the contract itself; for more information about tests, see [Testing](../../testing).
+
+<Syntax syntax="cameligo">
+
+```cameligo group=starter_counter
+module Test = Test.Next
+
+module Counter = struct
+  type storage_type = int
+  type return_type = operation list * storage_type
+
+  [@entry]
+  let add (value : int) ( store: storage_type) : return_type =
+    [], store + value
+
+  [@entry]
+  let sub (value : int) ( store: storage_type) : return_type =
+    [], store - value
+
+end
+
+let test =
+
+  let contract = Test.Originate.contract (contract_of Counter) 0 0tez in
+  let _ = Test.Contract.transfer_exn (Test.Typed_address.get_entrypoint "add" contract.taddr) 5 0tez in
+  let _ = Test.Contract.transfer_exn (Test.Typed_address.get_entrypoint "sub" contract.taddr) 2 0tez in
+  Assert.assert ((Test.Typed_address.get_storage contract.taddr) = 3)
+```
+
+</Syntax>
+
+<Syntax syntax="jsligo">
+
+```jsligo group=starter_counter
+import Test = Test.Next;
+
+namespace Counter {
+  type storage_type = int;
+  type return_type = [list<operation>, storage_type];
+
+  @entry
+  const add = (value: int, store: storage_type): return_type =>
+    [[], store + value];
+
+  @entry
+  const sub = (value: int, store: storage_type): return_type =>
+    [[], store - value];
+
+}
+
+const test = (() => {
+
+  const contract = Test.Originate.contract(contract_of(Counter), 0, 0tez);
+  Test.Contract.transfer_exn(Test.Typed_address.get_entrypoint("add", contract.taddr), 5, 0tez);
+  Test.Contract.transfer_exn(Test.Typed_address.get_entrypoint("sub", contract.taddr), 2, 0tez);
+  Assert.assert(Test.Typed_address.get_storage(contract.taddr) == 3);
+
+})();
+```
+
+</Syntax>
+
+For more examples of contracts, see [Quickstart](../../tutorials/getting-started) or load one of the templates in the [Online IDE](https://ide.ligolang.org/).
 
 ## Components of a contract
 
