@@ -1,0 +1,1 @@
+let one_is_nat : nat option = is_nat (1)
