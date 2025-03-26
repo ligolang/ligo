@@ -1,8 +1,0 @@
-const a = 120;
-const b = 9;
-const rem1 = a % b;  // 3
-const c = 120n;
-const rem2 = c % b;  // 3
-const d = 9n;
-const rem3 = c % d;  // 3
-const rem4 = a % d;  // 3

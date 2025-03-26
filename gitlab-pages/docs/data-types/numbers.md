@@ -354,3 +354,67 @@ const one_is_nat: option<nat> = is_nat(1);
 
 </Syntax>
 
+<Syntax syntax="cameligo">
+
+## Bitwise operations
+
+You can perform bitwise operations with numbers in these cases:
+
+```cameligo group=bitwise
+// Bitwise and (first operand can be int or nat)
+let four : nat = 4n land 4n // 4
+
+// Other bitwise operations require two nats
+let four_ : nat = 7 land 4n // 4
+// Bitwise or
+let seven : nat = 7n lor 4n // 7
+// Bitwise xor
+let three : nat = 7n lxor 4n // 3
+// Bitwise shift left
+let fourteen : nat = 7n lsl 1n // 14
+// Bitwise shift right
+let seven_ : nat = 14n land 1n // 7
+```
+
+</Syntax>
+
+<Syntax syntax="jsligo">
+
+## Increment and decrement operators
+
+The increment operator (`++`) adds one to a number, and the decrement operator (`--`) subtracts one from a number.
+
+You can use these operators as independent statements, as in these examples:
+
+```jsligo test-ligo group=increment_ops
+const testIncDecIndependent = (() => {
+  let value = 0;
+  value++;
+  assert(value == 1);
+  value--;
+  assert(value == 0);
+})();
+```
+
+You can also use these operators in expressions that do other things.
+The order of operations for the expressions depends on whether the operator is before or after the value:
+
+- In the **prefix** position (`++p`) the operator increments the value and returns the updated value for use in the current expression.
+
+- In the **postfix** position (`p++`) the operator increments the value but returns the old value before the increment for use in the current expression.
+
+```jsligo test-ligo group=increment_ops
+const testIncEmbedded = (() => {
+  let value = 0;
+
+  // Prefix increment operator adds one immediately
+  assert(++value == 1);
+  assert(value   == 1);
+
+  // Postfix increment operator adds one after the expression is evaluated
+  assert(value++ == 1);
+  assert(value   == 2);
+})();
+```
+
+</Syntax>

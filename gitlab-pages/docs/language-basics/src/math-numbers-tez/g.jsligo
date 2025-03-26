@@ -1,2 +1,0 @@
-const a = int(1n);
-const b = abs(1);

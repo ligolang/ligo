@@ -1,0 +1,18 @@
+const testIncDecIndependent = (() => {
+  let value = 0;
+  value++;
+  assert(value == 1);
+  value--;
+  assert(value == 0);
+})();
+const testIncEmbedded = (() => {
+  let value = 0;
+
+  // Prefix increment operator adds one immediately
+  assert(++value == 1);
+  assert(value   == 1);
+
+  // Postfix increment operator adds one after the expression is evaluated
+  assert(value++ == 1);
+  assert(value   == 2);
+})();
