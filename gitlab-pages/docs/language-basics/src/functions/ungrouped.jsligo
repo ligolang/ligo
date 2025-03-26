@@ -1,5 +1,0 @@
-const k_other = (x: int, _y: int) => x;
-function closure_example (i) {
-  let closure = j => i + j;
-  return closure(i);
-};

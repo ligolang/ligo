@@ -1,7 +1,0 @@
-function sum (n: int, acc: int): int {
-  if (n < 1) return acc else return sum(n-1, acc + n);
-};
-
-function fibo (n: int, n_1: int, n_0: int): int {
-  if (n < 2) return n_1 else return fibo (n-1, n_1 + n_0, n_1);
-};
