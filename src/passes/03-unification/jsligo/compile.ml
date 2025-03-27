@@ -349,8 +349,15 @@ let expr (expr : Eq.expr) : Folding.expr =
     return (O.E_cond { test = condition; ifso = truthy; ifnot })
   | E_true _ -> return (O.E_constr (Ligo_prim.Label.of_string "True"))
   | E_typed expr ->
-    let expr, type_expr = expr.value in
-    return (O.E_annot (expr, type_expr))
+    let e, type_expr = expr.value in
+    (match e with
+     | I.E_michelson Region.{value = (var, code); region}
+       when String.(var#payload = "michelson_of_file")->
+        let of_file = Wrap.make "of_file" var#region, code in
+        let code = I.E_michelson (mk_reg var#region of_file) in
+        let code = I.E_typed (mk_reg expr.region (code, type_expr)) in
+        return (O.E_raw_code { language = "michelson"; code })
+     | _ -> return (O.E_annot (e, type_expr)))
   | E_update expr ->
     let I.{ obj_expr; updates } = expr.value in
     let updates = compile_properties updates in
