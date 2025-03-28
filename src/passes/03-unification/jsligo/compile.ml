@@ -431,10 +431,11 @@ let rec ty_expr (t_expr : Eq.ty_expr) : Folding.ty_expr =
     let variants = Nonempty_list.to_list t_expr.value in
     return (O.T_union variants)
   | T_sum t_expr ->
-    let destruct variant : O.Label.t * I.type_expr option * _ list =
-      let ctor, arguments = variant.Region.value in
-      let ctor = normalise_string ctor in
-      let tuple =
+    let destruct (variant: I.variant reg) : O.Label.t * I.type_expr option * _ list =
+      let I.{decorators; constructor; arguments} = variant.Region.value in
+      let decorators = compile_decorators decorators
+      and ctor = normalise_string constructor
+      and tuple =
         match arguments with
         | [] -> None
         | [ t ] -> Some t
@@ -442,7 +443,7 @@ let rec ty_expr (t_expr : Eq.ty_expr) : Folding.ty_expr =
           let components = Nonempty_list.(fst :: more) in
           Some (I.T_tuple (mk_reg variant.region components))
       in
-      label_of_var ctor, tuple, [] (* TODO: Decorators? *)
+      label_of_var ctor, tuple, decorators
     in
     let variants =
       Nonempty_list.to_list t_expr.Region.value
