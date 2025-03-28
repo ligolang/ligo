@@ -71,15 +71,18 @@ let compile_branch compile_statement (stmt : I.statement)
 let label_of_var (v : I.variable) : O.Label.t =
   O.Label.T.create ~loc:(Location.lift v#region) v#payload
 
-let mk_field_id (name: I.property_name) : _ O.Object_.field_id =
+
+let mk_field_id (name : I.property_name) : _ O.Object_.field_id =
   match name with
   | Property_string literal -> O.Object_.F_Str literal#payload
   | Property_ident name -> O.Object_.F_Name (label_of_var name)
 
-let mk_label (name: I.property_name) : O.Label.t =
+
+let mk_label (name : I.property_name) : O.Label.t =
   match name with
   | Property_string literal -> label_of_var literal (* Because we don't keep delimiters *)
   | Property_ident name -> label_of_var name
+
 
 let pattern_to_param pattern = O.Param.{ pattern; param_kind = `Const }
 
@@ -337,8 +340,8 @@ let expr (expr : Eq.expr) : Folding.expr =
     let index =
       match index with
       | I.Component nat -> O.Selection.Component_num nat#payload
-      | I.PropertyName str ->
-         O.Selection.FieldName (label_of_var (normalise_string str)) in
+      | I.PropertyName str -> O.Selection.FieldName (label_of_var (normalise_string str))
+    in
     return (O.E_proj (expr, [ index ]))
   | E_sub_eq expr -> compile_chain_assignment Min_eq expr
   | E_template expr ->
@@ -351,13 +354,13 @@ let expr (expr : Eq.expr) : Folding.expr =
   | E_typed expr ->
     let e, type_expr = expr.value in
     (match e with
-     | I.E_michelson Region.{value = (var, code); region}
-       when String.(var#payload = "michelson_of_file")->
-        let of_file = Wrap.make "of_file" var#region, code in
-        let code = I.E_michelson (mk_reg var#region of_file) in
-        let code = I.E_typed (mk_reg expr.region (code, type_expr)) in
-        return (O.E_raw_code { language = "michelson"; code })
-     | _ -> return (O.E_annot (e, type_expr)))
+    | I.E_michelson Region.{ value = var, code; region }
+      when String.(var#payload = "michelson_of_file") ->
+      let of_file = Wrap.make "of_file" var#region, code in
+      let code = I.E_michelson (mk_reg var#region of_file) in
+      let code = I.E_typed (mk_reg expr.region (code, type_expr)) in
+      return (O.E_raw_code { language = "michelson"; code })
+    | _ -> return (O.E_annot (e, type_expr)))
   | E_update expr ->
     let I.{ obj_expr; updates } = expr.value in
     let updates = compile_properties updates in
@@ -431,8 +434,8 @@ let rec ty_expr (t_expr : Eq.ty_expr) : Folding.ty_expr =
     let variants = Nonempty_list.to_list t_expr.value in
     return (O.T_union variants)
   | T_sum t_expr ->
-    let destruct (variant: I.variant reg) : O.Label.t * I.type_expr option * _ list =
-      let I.{decorators; constructor; arguments} = variant.Region.value in
+    let destruct (variant : I.variant reg) : O.Label.t * I.type_expr option * _ list =
+      let I.{ decorators; constructor; arguments } = variant.Region.value in
       let decorators = compile_decorators decorators
       and ctor = normalise_string constructor
       and tuple =
@@ -459,11 +462,13 @@ let compile_property_pattern (property : I.pattern I.property Region.reg)
     : (O.Label.t, I.pattern) O.Field.t
   =
   let I.{ decorators = _; comments = _; property_name; static = _; property_rhs } =
-    property.value in
+    property.value
+  in
   let property_name = mk_label property_name in
   match property_rhs with
   | None -> O.Field.Punned Location.(wrap ~loc:(lift property.region) property_name)
   | Some rhs -> O.Field.Complete (property_name, rhs)
+
 
 let pattern (pattern : Eq.pattern) : Folding.pattern =
   Location.wrap ~loc:(Location.lift (I.region_of_pattern pattern))
@@ -514,13 +519,17 @@ let statement (stmt : Eq.statement) : Folding.statement =
   let loc = Location.lift (I.region_of_statement stmt) in
   let return = Location.wrap ~loc in
   match I.lift_decorators stmt with
-  | I.S_decorated (dec, stmt) ->
-     return @@ (O.S_attr (compile_decorator dec, stmt))
+  | I.S_decorated (dec, stmt) -> return @@ O.S_attr (compile_decorator dec, stmt)
   | I.S_block _ | I.S_break _ -> return @@ O.S_instr stmt
   | I.S_decl decl -> return @@ O.S_decl decl
   | I.S_export decl -> return @@ O.S_export decl
-  | I.S_expr _ | I.S_for _ | I.S_for_of _ | I.S_if _ | I.S_return _ | I.S_switch _ | I.S_while _ ->
-    return @@ O.S_instr stmt
+  | I.S_expr _
+  | I.S_for _
+  | I.S_for_of _
+  | I.S_if _
+  | I.S_return _
+  | I.S_switch _
+  | I.S_while _ -> return @@ O.S_instr stmt
 
 
 (* INSTRUCTIONS *)
@@ -559,7 +568,7 @@ let instruction (instr : Eq.instruction) : Folding.instruction =
         let key' = mk_reg key#region key' in
         let value' = I.{ path = []; selected = value } in
         let value' = mk_reg value#region value' in
-        let array =  [ I.Element (I.P_var key'); I.Element (I.P_var value') ] in
+        let array = [ I.Element (I.P_var key'); I.Element (I.P_var value') ] in
         I.P_array (mk_reg index.region array)
     in
     O.I_for_of { index_kind; index; expr; for_stmt = for_of_body }
