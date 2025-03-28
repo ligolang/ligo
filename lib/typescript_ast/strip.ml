@@ -1795,24 +1795,25 @@ and spool (decorators : S.decorator list) (t_expr : S.type_expr) : S.type_expr =
   | [] -> t_expr
   | decorator :: decorators -> S.T_decorated (decorator, spool decorators t_expr)
 
-and unspool (t_expr: S.type_expr) : S.decorator list * S.type_expr =
+and unspool (t_expr : S.type_expr) : S.decorator list * S.type_expr =
   match t_expr with
   | T_decorated (decorator, t_expr) ->
-     let decorators, t_expr = unspool t_expr in
-     decorator :: decorators, t_expr
+    let decorators, t_expr = unspool t_expr in
+    decorator :: decorators, t_expr
   | _ -> [], t_expr
 
 and filter_sum (node : S.type_expr Nonempty_list.t) region : S.type_expr =
-  let variant_of_type_expr (t_expr: S.type_expr) : S.variant reg option =
+  let variant_of_type_expr (t_expr : S.type_expr) : S.variant reg option =
     let decorators, t_expr = unspool t_expr in
     match t_expr with
     | T_tuple members ->
       let Nonempty_list.(first_member :: rest) = members.value in
       (match first_member with
       | T_string literal ->
-         let variant : S.variant =
-           { decorators; constructor = literal; arguments = rest } in
-         Some Region.{ value = variant; region }
+        let variant : S.variant =
+          { decorators; constructor = literal; arguments = rest }
+        in
+        Some Region.{ value = variant; region }
       | _ -> None)
     | _ -> None
   in
@@ -2441,8 +2442,13 @@ and strip_fun_call (node : (Ast.fun_call, Ast.arguments_to_call) Ast.call wrap)
         let* path = filter_path expr in
         Ok (S.E_contract_of (mk_reg node#region path))
       | _ -> mk_err Invalid_contract_of node#region)
-    | "michelson" | "Michelson" | "create_contract_of_file" | "bytes"
-    | "external" | "External" | "michelson_of_file" ->
+    | "michelson"
+    | "Michelson"
+    | "create_contract_of_file"
+    | "bytes"
+    | "external"
+    | "External"
+    | "michelson_of_file" ->
       (match arguments with
       | [ S.E_template string_literal ] ->
         let code_inj = mk_reg node#region (var, string_literal) in
@@ -2700,7 +2706,11 @@ and strip_E_subscript_expression (node : Ast.subscript_expression wrap)
   | E_string str ->
     let* obj = strip_expression object_expr in
     Ok (S.E_subscript (mk_reg node#region (obj, S.PropertyName str)))
-  | _ -> mk_err Invalid_subscript node#region ~hint:"Use a natural number or a string as an index."
+  | _ ->
+    mk_err
+      Invalid_subscript
+      node#region
+      ~hint:"Use a natural number or a string as an index."
 
 (* Super (expression) *)
 

@@ -1701,8 +1701,8 @@ and dec_object_member_expression ?(comments = []) node
   =
   match get_name node with
   | "identifier" ->
-     let* () = check_first_error_child node in
-     Ok (Object_name (dec_identifier ~comments node))
+    let* () = check_first_error_child node in
+    Ok (Object_name (dec_identifier ~comments node))
   | _ ->
     let* member_expression = wrap dec_decorator_member_expression ~comments node in
     let* () = check_first_error_child node in
@@ -2224,9 +2224,9 @@ and dec_field_mode_opt node : (field_mode option, _) result =
     Ok (Some (Optional sym_qmark))
   | None ->
     (match first_child_named_opt "!" node with
-     | None ->
-        let* () = check_first_error_child node in
-        Ok None
+    | None ->
+      let* () = check_first_error_child node in
+      Ok None
     | Some sym_emark ->
       let* sym_emark = dec_sym_emark sym_emark in
       let* () = check_first_error_child node in
@@ -2311,8 +2311,8 @@ and dec_variable_declarator ?(comments = []) node : (variable_declarator, _) res
 and dec_lhs_pattern ?comments node : (lhs_pattern, _) result =
   match get_name node with
   | "identifier" ->
-     let* () = check_first_error_child node in
-     Ok (Decl_ident (dec_identifier ?comments node))
+    let* () = check_first_error_child node in
+    Ok (Decl_ident (dec_identifier ?comments node))
   | _ ->
     let* pattern = dec_destructuring_pattern ?comments node in
     let* () = check_first_error_child node in
@@ -3905,7 +3905,8 @@ and dec_pattern ?(comments = []) node : (pattern, _) result =
       | Identifier identifier -> P_identifier identifier
       | Undefined kwd_undefined -> P_undefined kwd_undefined
       | Pattern pattern -> P_destructuring_pattern pattern
-      | Non_null_expression expression -> P_non_null_expression expression in
+      | Non_null_expression expression -> P_non_null_expression expression
+    in
     let* () = check_first_error_child node in
     Ok pattern
 
@@ -4529,8 +4530,8 @@ and dec_type_query_index node : (type_query_index, _) result =
     let* () = check_first_error_child node in
     Ok (Type_query_index_predefined_type type_expr)
   | "string" ->
-     let* () = check_first_error_child node in
-     Ok (Type_query_index_string (dec_string node))
+    let* () = check_first_error_child node in
+    Ok (Type_query_index_string (dec_string node))
   | "number" ->
     let* number = dec_number node in
     let* () = check_first_error_child node in

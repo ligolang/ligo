@@ -1257,17 +1257,17 @@ and print_return_statement state node =
     let kwd_return = first_child_named "return" node ~err:Return in
     (match child_ranked_opt 1 node with
     | None ->
-       let children = [ mk_child_res mk_kwd_return kwd_return ] in
-       let error_child = Ts_wrap.first_child_named_opt "ERROR" node in
-       let children = mk_child_opt make_node error_child :: children in
-       make_tree state node children
+      let children = [ mk_child_res mk_kwd_return kwd_return ] in
+      let error_child = Ts_wrap.first_child_named_opt "ERROR" node in
+      let children = mk_child_opt make_node error_child :: children in
+      make_tree state node children
     | Some snd_child ->
       (match get_name snd_child with
-       | ";" ->
-         let children = [ mk_child_res mk_kwd_return kwd_return ] in
-         let error_child = Ts_wrap.first_child_named_opt "ERROR" node in
-         let children = mk_child_opt make_node error_child :: children in
-         make_tree state node children
+      | ";" ->
+        let children = [ mk_child_res mk_kwd_return kwd_return ] in
+        let error_child = Ts_wrap.first_child_named_opt "ERROR" node in
+        let children = mk_child_opt make_node error_child :: children in
+        make_tree state node children
       | _ ->
         let children =
           [ mk_child_res mk_kwd_return kwd_return; mk_child print_expressions snd_child ]
@@ -2175,11 +2175,11 @@ and print_yield_expression state node =
   | _ ->
     let kwd_yield = first_child_named "yield" node ~err:Yield in
     (match child_ranked_opt 1 node with
-     | None ->
-       let children = [ mk_child_res mk_kwd_yield kwd_yield ] in
-       let error_child = Ts_wrap.first_child_named_opt "ERROR" node in
-       let children = mk_child_opt make_node error_child :: children in
-       make_tree state node children
+    | None ->
+      let children = [ mk_child_res mk_kwd_yield kwd_yield ] in
+      let error_child = Ts_wrap.first_child_named_opt "ERROR" node in
+      let children = mk_child_opt make_node error_child :: children in
+      make_tree state node children
     | Some snd_child ->
       let snd_child =
         match get_name snd_child with
@@ -3706,7 +3706,7 @@ and print_index_type_query state node =
   | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Index_type_query
   | _ ->
     let child = named_child_ranked 0 node ~err:Index_type_query in
-    let children = [mk_child_res print_primary_type child ] in
+    let children = [ mk_child_res print_primary_type child ] in
     let error_child = Ts_wrap.first_child_named_opt "ERROR" node in
     let children = mk_child_opt make_node error_child :: children in
     make_tree state node children
