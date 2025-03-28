@@ -257,8 +257,9 @@ and type_expr =
   A sum type is a special case of a union type, where all the summands
   are tuple types whose first component is a string. That string
   contains an identifier called a _data constructor_, and the rest of
-  the components are the _type parameters_ to that constructor. The
-  tuple type as a whole is called a _variant_. For instance:
+  the components (if any) are the _type parameters_ to that
+  constructor. The tuple type as a whole is called a _variant_. For
+  instance:
 
   type option<T> = ["Some", T] | ["None"];
 
@@ -286,7 +287,12 @@ and type_expr =
   const singleton : list<number> = to_list<number>(some_one);
  *)
 and sum_type = variant reg Ne_list.t reg
-and variant = string_literal * type_expr list
+
+and variant =
+  { decorators : decorator list
+  ; constructor : string_literal
+  ; arguments : type_expr list
+  }
 
 (* Object type and class bodies *)
 and member_type =

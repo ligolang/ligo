@@ -1632,13 +1632,14 @@ and strip_T_array_type (node : Ast.array_type wrap) : (S.type_expr, _) result =
 
 and strip_T_tuple_type (node : Ast.tuple_type) : (S.type_expr, _) result =
   let (Brackets brackets) = node in
+  let decorate = spool @@ extract_decorators @@ strip_comments brackets#comments in
   let members = brackets#payload.contents in
   let* members = Result.all @@ List.map ~f:strip_tuple_type_member members in
   match members with
   | [] -> mk_err Empty_tuple_type brackets#region
   | fst_comp :: components ->
     let members = Nonempty_list.(fst_comp :: components) in
-    Ok (S.T_tuple (mk_reg brackets#region members))
+    Ok (decorate @@ S.T_tuple (mk_reg brackets#region members))
 
 and strip_tuple_type_member (node : Ast.tuple_type_member) : (S.type_expr, _) result =
   let region = Ast.region_of_tuple_type_member node in
@@ -1794,12 +1795,24 @@ and spool (decorators : S.decorator list) (t_expr : S.type_expr) : S.type_expr =
   | [] -> t_expr
   | decorator :: decorators -> S.T_decorated (decorator, spool decorators t_expr)
 
+and unspool (t_expr: S.type_expr) : S.decorator list * S.type_expr =
+  match t_expr with
+  | T_decorated (decorator, t_expr) ->
+     let decorators, t_expr = unspool t_expr in
+     decorator :: decorators, t_expr
+  | _ -> [], t_expr
+
 and filter_sum (node : S.type_expr Nonempty_list.t) region : S.type_expr =
-  let variant_of_type_expr : S.type_expr -> S.variant reg option = function
+  let variant_of_type_expr (t_expr: S.type_expr) : S.variant reg option =
+    let decorators, t_expr = unspool t_expr in
+    match t_expr with
     | T_tuple members ->
-      let Nonempty_list.(first_memb :: rest) = members.value in
-      (match first_memb with
-      | T_string literal -> Some Region.{ value = literal, rest; region }
+      let Nonempty_list.(first_member :: rest) = members.value in
+      (match first_member with
+      | T_string literal ->
+         let variant : S.variant =
+           { decorators; constructor = literal; arguments = rest } in
+         Some Region.{ value = variant; region }
       | _ -> None)
     | _ -> None
   in
