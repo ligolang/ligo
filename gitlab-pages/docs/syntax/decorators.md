@@ -61,7 +61,8 @@ You can also apply multiple decorators on one line, as in this example:
 type storage = int;
 type result = [list<operation>, storage];
 
-@entry @no_mutation
+// @entry
+// @no_mutation
 const sub = (delta: int, storage: storage) : result =>
   [[], storage - delta];
 ```

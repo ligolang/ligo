@@ -63,15 +63,16 @@ type return_value = operation list * storage
 type storage = unit;
 type return_value = [list<operation>, storage];
 
-@entry
+// @entry
 const give5tez = (_: unit, storage: storage): return_value => {
   let operations: list<operation> = [];
-  if (Tezos.Next.get_balance() >= 5tez) {
-    const receiver_contract = match(Tezos.Next.get_contract_opt(Tezos.Next.get_sender())) {
-      when(Some(contract)): contract;
-      when(None): failwith("Couldn't find account");
-    };
-    operations = [Tezos.Next.Operation.transaction(unit, 5tez, receiver_contract)];
+  if (Tezos.Next.get_balance() >= (5 as tez)) {
+    const receiver_contract =
+      $match(Tezos.Next.get_contract_opt(Tezos.Next.get_sender()), {
+        "Some": contract => contract,
+        "None": () => failwith("Couldn't find account")
+    });
+    operations = [Tezos.Next.Operation.transaction(unit, 5 as tez, receiver_contract)];
   }
   return [operations, storage];
 }
@@ -146,51 +147,56 @@ let test =
 ```jsligo group=operation_transaction
 import Test = Test.Next;
 
-type @return<storage> = [list<operation>, storage];
+type return_<storage> = [list<operation>, storage];
 
 namespace A {
   type storage = int;
 
-  @entry
-  const add = (delta: int, storage: storage): @return<storage> =>
+  // @entry
+  const add = (delta: int, storage: storage): return_<storage> =>
     [[], storage + delta];
 
-  @entry
-  const sub = (delta: int, storage: storage): @return<storage> =>
+  // @entry
+  const sub = (delta: int, storage: storage): return_<storage> =>
     [[], storage - delta];
 }
 
 namespace B {
   type storage = address;
 
-  @entry
-  const increment = (value: int, stored_address: storage): @return<storage> => {
+  // @entry
+  const increment = (value: int, stored_address: storage): return_<storage> => {
     const contract = Tezos.Next.get_contract(stored_address);
-    const parameter = Add(value) as parameter_of A;
-    const operation = Tezos.Next.Operation.transaction(parameter, 0tez, contract);
+    const parameter = ["Add" as "Add", value] as parameter_of<A>;
+    const operation = Tezos.Next.Operation.transaction(parameter, 0 as
+  tez, contract);
     return [[operation], stored_address];
   }
 
-  @entry
-  const decrement = (value: int, stored_address: storage): @return<storage> => {
+  // @entry
+  const decrement = (value: int, stored_address: storage): return_<storage> => {
     const contract = Tezos.Next.get_contract(stored_address);
-    const parameter = Sub(value) as parameter_of A;
-    const operation = Tezos.Next.Operation.transaction(parameter, 0tez, contract);
+    const parameter = ["Sub" as "Sub", value] as parameter_of<A>;
+    const operation = Tezos.Next.Operation.transaction(parameter, 0 as
+  tez, contract);
     return [[operation], stored_address];
   }
 }
 
 const test = () => {
   // Originate contract A
-  const contract_A = Test.Originate.contract(contract_of(A), 0, 0tez);
+  const contract_A = Test.Originate.contract(contract_of(A), 0, 0 as tez);
   const contract_A_address = Test.Typed_address.to_address(contract_A.taddr);
 
   // Originate contract B with the address of contract A in its storage
-  const contract_B = Test.Originate.contract(contract_of(B), contract_A_address, 0tez);
+  const contract_B = Test.Originate.contract(contract_of(B),
+                                             contract_A_address, 0 as tez);
 
   // Call contract B
-  Test.Contract.transfer_exn(Test.Typed_address.get_entrypoint("increment", contract_B.taddr), 10 as int, 0tez);
-  Test.Contract.transfer_exn(Test.Typed_address.get_entrypoint("decrement", contract_B.taddr), 2 as int, 0tez);
+  Test.Contract.transfer_exn(Test.Typed_address.get_entrypoint("increment",
+  contract_B.taddr), 10, 0 as tez);
+  Test.Contract.transfer_exn(Test.Typed_address.get_entrypoint("decrement",
+  contract_B.taddr), 2, 0 as tez);
 
   const newNumber = Test.Typed_address.get_storage(contract_A.taddr);
   Assert.assert(newNumber == 8);
@@ -246,17 +252,17 @@ module C = struct
 namespace C {
   type storage = address;
 
-  @entry
-  const increment = (value: int, stored_address: storage): @return<storage> => {
+  // @entry
+  const increment = (value: int, stored_address: storage): return_<storage> => {
     const contract = Tezos.Next.get_entrypoint("%add", stored_address);
-    const operation = Tezos.Next.Operation.transaction(value, 0tez, contract);
+    const operation = Tezos.Next.Operation.transaction(value, 0 as tez, contract);
     return [[operation], stored_address];
   }
 
-  @entry
-  const decrement = (value: int, stored_address: storage): @return<storage> => {
+  // @entry
+  const decrement = (value: int, stored_address: storage): return_<storage> => {
     const contract = Tezos.Next.get_entrypoint("%sub", stored_address);
-    const operation = Tezos.Next.Operation.transaction(value, 0tez, contract);
+    const operation = Tezos.Next.Operation.transaction(value, 0 as tez, contract);
     return [[operation], stored_address];
   }
 }
@@ -292,7 +298,7 @@ let pass_5_to_sub : contract_a_param = M_left 5
 
 ```jsligo skip
 type contract_a_param = michelson_or<[int, "sub", int, "add"]>;
-const pass_5_to_sub: contract_a_param = M_left(5);
+const pass_5_to_sub: contract_a_param = ["M_left" as "M_left", 5];
 ```
 
 </Syntax>
@@ -331,19 +337,21 @@ namespace D {
   type storage = address;
   type contract_a_param = michelson_or<[int, "sub", int, "add"]>;
 
-  @entry
-  const increment = (value: int, stored_address: storage): @return<storage> => {
-    const pass_to_add: contract_a_param = M_right(value);
+  // @entry
+  const increment = (value: int, stored_address: storage): return_<storage> => {
+    const pass_to_add: contract_a_param = ["M_right" as "M_right", value];
     const contract = Tezos.Next.get_contract(stored_address);
-    const operation = Tezos.Next.Operation.transaction(pass_to_add, 0tez, contract);
+    const operation = Tezos.Next.Operation.transaction(pass_to_add,
+                                                       0 as tez, contract);
     return [[operation], stored_address];
   }
 
-  @entry
-  const decrement = (value: int, stored_address: storage): @return<storage> => {
-    const pass_to_sub: contract_a_param = M_left(value);
+  // @entry
+  const decrement = (value: int, stored_address: storage): return_<storage> => {
+    const pass_to_sub: contract_a_param = ["M_left" as "M_left", value];
     const contract = Tezos.Next.get_contract(stored_address);
-    const operation = Tezos.Next.Operation.transaction(pass_to_sub, 0tez, contract);
+    const operation = Tezos.Next.Operation.transaction(pass_to_sub,
+                                                       0 as tez, contract);
     return [[operation], stored_address];
   }
 }
@@ -392,16 +400,15 @@ let main (_ : string) (storage : string) : return =
 <Syntax syntax="jsligo">
 
 ```jsligo group=origination
-type @return = [list<operation>, string];
+type return_ = [list<operation>, string];
 
-@entry
-const main = (_: string, storage: string) : @return => {
-  const entrypoint = (_param: nat, storage: string) =>
-    [list([]), storage];
+// @entry
+const main = (_: string, storage: string) : return_ => {
+  const entrypoint = (_param: nat, storage: string) : return_ => [[], storage];
   const [op, _addr]: [operation, address] =
     Tezos.Next.Operation.create_contract(entrypoint,
-                          (None() as option<key_hash>),
-                          300000000mutez,
+                          (["None" as "None"] as option<key_hash>),
+                          300000000 as mutez,
                           "one");
   return [[op], storage];
 }
@@ -429,9 +436,9 @@ let changeDelegate (new_delegate : key_hash) (storage : unit) : operation list *
 <Syntax syntax="jsligo">
 
 ```jsligo group=set_delegate
-@entry
+// @entry
 const changeDelegate = (new_delegate: key_hash, storage: unit): [list<operation>, unit] =>
-  [[Tezos.Next.Operation.set_delegate (Some(new_delegate))], storage];
+  [[Tezos.Next.Operation.set_delegate (["Some" as "Some", new_delegate])], storage];
 ```
 
 </Syntax>
@@ -458,7 +465,7 @@ let emitEvents (_ : unit) (storage : int) : operation list * int =
 <Syntax syntax="jsligo">
 
 ```jsligo group=event_emit
-@entry
+// @entry
 const emitEvents = (_: unit, storage: int): [list<operation>, int] => {
   const event1: operation = Tezos.Next.Operation.emit("%emitEvents", "hi");
   const event2: operation = Tezos.Next.Operation.emit("%emitEvents", 6);
