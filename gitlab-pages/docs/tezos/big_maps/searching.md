@@ -65,12 +65,11 @@ let force_access key map =
 <Syntax syntax="jsligo">
 
 ```jsligo group=big_map_searching
-let force_access = (key, map) => {
-  return match(Big_map.find_opt (key, map)) {
-    when(Some(value)): value;
-    when(None): failwith("No value.")
-  };
-};
+const force_access = (key, map) =>
+  $match(Big_map.find_opt (key, map) {
+    "Some": value => value,
+    "None" () => failwith("No value.")
+  });
 ```
 
 </Syntax>
