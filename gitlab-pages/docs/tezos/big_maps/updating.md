@@ -30,9 +30,9 @@ let contains_2 = Big_map.mem 2 map_without_2 // = false
 ```jsligo group=big_map_updating
 const my_map: big_map<int,string> =
   Big_map.literal([[1,"one"],[2,"two"]]);
-const map_with_3 = Big_map.update (3, Some("three"), my_map);
+const map_with_3 = Big_map.update (3, ["Some" as "Some", "three"], my_map);
 const contains_3 = Big_map.mem(3, map_with_3); // == true
-const map_without_2 = Big_map.update(2, None(), my_map);
+const map_without_2 = Big_map.update(2, ["None" as "None"], my_map);
 const contains_2 = Big_map.mem (2, map_without_2); // == false
 ```
 
@@ -53,9 +53,9 @@ let three, map_without_3 = Big_map.get_and_update 3 None map_with_3
 <Syntax syntax="jsligo">
 
 ```jsligo group=big_map_updating
-// three == Some("three")
+// three == ["Some" as "Some", "three"]
 const [three, map_without_3] =
-  Big_map.get_and_update(3, None(), map_with_3);
+  Big_map.get_and_update(3, ["None" as "None"], map_with_3);
 ```
 
 </Syntax>
