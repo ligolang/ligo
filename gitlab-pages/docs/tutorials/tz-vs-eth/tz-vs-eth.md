@@ -134,9 +134,9 @@ Valid values of this type are regular numbers wrapped in `Number` (e.g., `Number
 ```jsligo group=b4
 type int_option = ["Number", int] | ["Null"];
 
-let x = Number(5);
+const x = ["Number" as "Number", 5];
 
-let y = Null ();
+const y = ["Null" as "Null"];
 ```
 
 Valid values of this type are regular numbers wrapped in `Number` (e.g., `Number(5)`, `Number(10)`, etc.) or `Null`. Notice how `Null()` does not hold any value.
@@ -170,21 +170,21 @@ let x_or_zero =
 <Syntax syntax="jsligo">
 
 ```jsligo group=b5
-let x = Some(5);
+const x = ["Some" as "Some", 5];
 
-let y: option<int> = None();
+const y: option<int> = ["None" as "None"];
 ```
 
 This is how we express _nullability_ in LIGO: instead of using a special ad-hoc value like "zero address", we just say it is an `option<address>`. We can then use `match` to see if there is something inside:
 
 ```jsligo group=b6
-let x = Some (5);
+const x = ["Some" as "Some", 5];
 
-let x_or_zero  =
-  match(x) {
-    when(Some(value)): value;
-    when(None()): 0
-  };
+const x_or_zero =
+  $match(x, {
+    "Some": value => value,
+    "None": () => 0
+  });
 ```
 
 </Syntax>
@@ -269,16 +269,14 @@ let decrement (_ : unit) (s : storage) : result = [], s - 1
 <Syntax syntax="jsligo">
 
 ```jsligo group=a2
-let main = (parameter: bytes, storage: int): [list<operation>, int] => {
-  if (parameter == 0xbc1ecb8e) {
-    return [[], storage + 1]
-  } else {
-    if (parameter == 0x36e44653) {
-      return [[], storage - 1]
-    } else {
-      return (failwith("Unknown entrypoint"))
-    }
-  }
+const main = (parameter: bytes, storage: int): [list<operation>, int] => {
+  if (parameter == 0xbc1ecb8e)
+    return [[], storage + 1];
+  else
+    if (parameter == 0x36e44653)
+      return [[], storage - 1];
+    else
+      failwith("Unknown entrypoint");
 };
 ```
 
@@ -288,10 +286,10 @@ However, we can do better. As we discussed, LIGO has a much richer type system t
 type storage = int;
 type result = [list<operation>, int]
 
-@entry
+// @entry
 const increment = (_u : unit, s : storage) : result => [[], s + 1]
 
-@entry
+// @entry
 const decrement = (_u : unit, s : storage) : result => [[], s - 1]
 ```
 
@@ -322,10 +320,10 @@ let subtract (i : int) (s : storage) : result = [], s - i
 type storage = int;
 type result = [list<operation>, int]
 
-@entry
+// @entry
 const add = (i : int, s : storage) : result => [[], s + i]
 
-@entry
+// @entry
 const subtract = (i : int, s : storage) : result => [[], s - i]
 ```
 
@@ -375,12 +373,15 @@ let doMultiplyBy4 (store : storage) : int = doMultiplyBy2 (doMultiplyBy2 store)
 type storage = int
 type result = [list<operation>, storage]
 
-let doMultiplyBy2 = (store : storage) : int => store * 2;
+const doMultiplyBy2 = (store : storage) : int => store * 2;
 
-let doMultiplyBy4 = (store : storage) : int => doMultiplyBy2(doMultiplyBy2(store));
+const doMultiplyBy4 = (store : storage) : int => doMultiplyBy2(doMultiplyBy2(store));
 
-@entry const multiplyBy4 = (_u : unit, s : storage) : result => [[], doMultiplyBy4(s)]
-@entry const multiplyBy16 = (_u : unit, s : storage) : result => [[], doMultiplyBy4(doMultiplyBy4(s))]
+// @entry
+const multiplyBy4 = (_u : unit, s : storage) : result => [[], doMultiplyBy4(s)]
+
+// @entry
+const multiplyBy16 = (_u : unit, s : storage) : result => [[], doMultiplyBy4(doMultiplyBy4(s))]
 ```
 
 </Syntax>
@@ -419,7 +420,7 @@ ligo run interpret 'main (Compute (fun (x : int) -> x * x + 2 * x + 1), 3)' --in
 ```jsligo group=a6
 type storage = int;
 
-@entry
+// @entry
 const compute = (func: ((v : int) => int), s: storage) : [list<operation>, int] =>
   [[], func(s)]
 ```
@@ -465,18 +466,17 @@ Now we can _upgrade_ a part of the implementation by calling our contract with `
 type storage = { fn : option<((x : int) => int)>, value : int };
 type result = [list<operation>, storage];
 
-const call = (fn: option<((x : int) => int)>, value: int) : int => {
-  return match(fn) {
-    when(Some(f)): f(value);
-    when(None()): failwith("Lambda is not set")
-  }
-};
+const call = (fn: option<((x : int) => int)>, value: int) : int =>
+  $match(fn, {
+    "Some": f => f(value),
+    "None: () => failwith("Lambda is not set")
+  });
 
-@entry
+// @entry
 const setFunction = (fn : ((v : int) => int), s : storage) : result =>
-  [[], {...s, fn: Some(fn)}];
+  [[], {...s, fn: ["Some" as "Some", fn]}];
 
-@entry
+// @entry
 const callFunction = (_u : unit, s : storage) : result =>
   [[], {...s, value: call(s.fn, s.value)}];
 ```
@@ -548,20 +548,20 @@ let treasury (p, s : unit * storage) =
 ```jsligo group=b1
 type storage = {rewardsLeft: tez, beneficiaryAddress: address };
 
-let treasury = (p : unit, s : storage) => {
+const treasury = (p : unit, s : storage) => {
   // We do our computations first
-  let newStorage = {...s, rewardsLeft: 0mutez};
+  const newStorage = {...s, rewardsLeft: 0 as mutez};
 
   // Then we find our beneficiary's `handleRewards` entrypoint:
-  let beneficiaryOpt = Tezos.get_entrypoint_opt("%handleTransfer", s.beneficiaryAddress);
-  let beneficiary =
-    match(beneficiaryOpt) {
-     when(Some(contract)): contract;
-     when(None()): failwith("Beneficiary does not exist")
-    };
+  const beneficiaryOpt = Tezos.get_entrypoint_opt("%handleTransfer", s.beneficiaryAddress);
+  const beneficiary =
+    $match(beneficiaryOpt, {
+     "Some": contract => contract,
+     "None": () => failwith("Beneficiary does not exist")
+    });
 
   // Then we prepare the internal operation we want to perform
-  let operation = Tezos.transaction(unit, s.rewardsLeft, beneficiary);
+  const operation = Tezos.transaction(unit, s.rewardsLeft, beneficiary);
 
   // ...and return both the operations and the updated storage
   return [list([operation]), newStorage];
@@ -594,9 +594,9 @@ let doSomethingCont (p, s : int * int) = ([] : operation list), p + s
 ```jsligo skip
 type parameter = ["DoSomething"] | ["DoSomethingCont", int];
 
-let doSomething = ([p, s]: [unit, int]) => {
+const doSomething = ([p, s]: [unit, int]) => {
   /* The callee should call `%doSomethingCont` with the value we want */
-  let op = Tezos.transaction ...;
+  const op = Tezos.transaction ...;
   return [[], s]
 }
 

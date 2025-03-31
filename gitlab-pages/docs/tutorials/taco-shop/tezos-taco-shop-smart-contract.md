@@ -117,18 +117,13 @@ let buy_taco (taco_kind_index : nat) (taco_shop_storage : taco_shop_storage) : o
 <Syntax syntax="jsligo">
 
 ```jsligo skip
-@entry
-function buy_taco(taco_kind_index: nat, taco_shop_storage: taco_shop_storage): [
-  list<operation>,
-  taco_shop_storage
-]  {
-    return [[], taco_shop_storage]
-  };
+// @entry
+const buy_taco = (taco_kind_index: nat, taco_shop_storage: taco_shop_storage): [list<operation>, taco_shop_storage] => [[], taco_shop_storage]
 ```
 
 </Syntax>
 
-It's already possible to compile your contract by running : 
+It's already possible to compile your contract by running :
 
 <Syntax syntax="jsligo">
 
@@ -167,7 +162,7 @@ module TacoShop = struct
   let buy_taco (taco_kind_index : nat) (taco_shop_storage : taco_shop_storage) : operation list * taco_shop_storage =
     [], taco_shop_storage
 
-end 
+end
 ```
 
 </Syntax>
@@ -179,14 +174,10 @@ end
 namespace TacoShop {
   type taco_supply = { current_stock: nat, max_price: tez };
   export type taco_shop_storage = map<nat, taco_supply>;
-  
-  @entry
-  function buy_taco(taco_kind_index: nat, taco_shop_storage: taco_shop_storage): [
-    list<operation>,
-    taco_shop_storage
-  ] {
-    return [[], taco_shop_storage]
-  };
+
+  // @entry
+  const buy_taco = (taco_kind_index: nat, taco_shop_storage: taco_shop_storage): [list<operation>, taco_shop_storage] =>
+    [[], taco_shop_storage]
 };
 
 ```
@@ -205,8 +196,8 @@ ligo compile contract taco_shop.mligo -m TacoShop
 
 When deploying contract, it is crucial to provide a correct
 initial storage value.  In our case the storage is type-checked as
-`taco_shop_storage`, because the default storage is not directly used in the code, 
-we encourage to declare the type, if your storage mutate, your default_storage will be in error. 
+`taco_shop_storage`, because the default storage is not directly used in the code,
+we encourage to declare the type, if your storage mutate, your default_storage will be in error.
 Reflecting [Pedro's daily offer](tezos-taco-shop-smart-contract.md#daily-offer),
 our storage's value will be defined as follows:
 
@@ -225,8 +216,8 @@ let default_storage: taco_shop_storage  = Map.literal [
 
 ```jsligo group=TacoShop
 const default_storage: taco_shop_storage = Map.literal ([
-  [1n, { current_stock : 50n, max_price : 50tez }],
-  [2n, { current_stock : 20n, max_price : 75tez }]
+  [1 as nat, { current_stock : 50 as nat, max_price : 50 as tez }],
+  [2 as nat, { current_stock : 20 as nat, max_price : 75 as tez }]
 ]);
 ```
 
@@ -302,23 +293,20 @@ let buy_taco (taco_kind_index : nat) (taco_shop_storage : taco_shop_storage) : o
 <Syntax syntax="jsligo">
 
 ```jsligo skip
-@entry
-function buy_taco(taco_kind_index: nat, taco_shop_storage: taco_shop_storage): [
-  list<operation>,
-  taco_shop_storage
-]  {
-
+// @entry
+function buy_taco(taco_kind_index: nat, taco_shop_storage: taco_shop_storage): [list<operation>, taco_shop_storage]  {
   /* Retrieve the taco_kind from the contracts storage or fail */
   const taco_kind: taco_supply =
-  match (Map.find_opt (taco_kind_index, taco_shop_storage)) {
-    when(Some(kind)): kind;
-    when(None()): (failwith ("Unknown kind of taco"))
-  };
+    $match (Map.find_opt (taco_kind_index, taco_shop_storage), {
+      "Some": kind => kind,
+      "None": ()=> failwith ("Unknown kind of taco")
+  });
 
   // Update the storage decreasing the stock by 1n
   const taco_shop_storage_updated = Map.update (
     taco_kind_index,
-    (Some (({...taco_kind, current_stock : abs (taco_kind.current_stock - (1n)) }))),
+    ["Some" as "Some", {...taco_kind,
+                        current_stock : abs(taco_kind.current_stock - (1 as nat)) }],
     taco_shop_storage );
   return [[], taco_shop_storage_updated]
 };
@@ -379,26 +367,23 @@ let buy_taco (taco_kind_index : nat) (taco_shop_storage : taco_shop_storage)
 <Syntax syntax="jsligo">
 
 ```jsligo group=TacoShop
-@entry
-const buy_taco = (taco_kind_index: nat, taco_shop_storage: taco_shop_storage) : [
-    list<operation>,
-    taco_shop_storage
-  ] => {
+// @entry
+function buy_taco (taco_kind_index: nat, taco_shop_storage: taco_shop_storage) : [list<operation>, taco_shop_storage] {
   /* Retrieve the taco_kind from the contracts storage or fail */
   const taco_kind : taco_supply =
-    match (Map.find_opt (taco_kind_index, taco_shop_storage)) {
-      when(Some(kind)): kind;
-      when(None()): failwith ("Unknown kind of taco")
-    };
+    $match (Map.find_opt (taco_kind_index, taco_shop_storage), {
+      "Some": kind => kind,
+      "None": () => failwith ("Unknown kind of taco")
+    });
   const current_purchase_price : tez = taco_kind.max_price / taco_kind.current_stock ;
   /* We won't sell tacos if the amount is not correct */
-  if ((Tezos.get_amount ()) != current_purchase_price) {
-    return failwith ("Sorry, the taco you are trying to purchase has a different price")
-  } else {
-    /* Update the storage decreasing the stock by 1n */
-    let taco_shop_storage = Map.update (
+  if ((Tezos.get_amount ()) != current_purchase_price)
+    return failwith ("Sorry, the taco you are trying to purchase has a different price");
+  else {
+    /* Update the storage decreasing the stock by 1 nat */
+    const taco_shop_storage = Map.update (
       taco_kind_index,
-      (Some (({...taco_kind, current_stock : abs (taco_kind.current_stock - 1n) }))),
+      ["Some" as "Some", {...taco_kind, current_stock : abs (taco_kind.current_stock - (1 as nat)) }],
       taco_shop_storage );
     return [[], taco_shop_storage]
   }
@@ -462,114 +447,114 @@ let test =
 
 </Syntax>
 
-<Syntax syntax="jsligo">
+<!-- TODO: Enable with import statements are fixed.  -->
+<!-- <Syntax syntax="jsligo"> -->
 
-```jsligo test-ligo group=test
-import * as TacoShop from "gitlab-pages/docs/tutorials/taco-shop/src/tezos-taco-shop-smart-contract/TacoShop.jsligo";
+<!-- ```jsligo test-ligo group=test -->
+<!-- import * as TacoShop from "gitlab-pages/docs/tutorials/taco-shop/src/tezos-taco-shop-smart-contract/TacoShop.jsligo"; -->
+<!-- function assert_string_failure (res: test_exec_result, expected: string) { -->
+<!--   const expected_bis = Test.eval(expected); -->
+<!--   match(res) { -->
+<!--     when (Fail(x)): -->
+<!--       match(x) { -->
+<!--         when (Rejected(y)): -->
+<!--           assert(Test.michelson_equal(y[0], expected_bis)) -->
+<!--         when (Balance_too_low(_)): -->
+<!--           failwith("contract failed for an unknown reason") -->
+<!--         when (Other(_o)): -->
+<!--           failwith("contract failed for an unknown reason") -->
+<!--       } -->
+<!--     when (Success(_s)): -->
+<!--       failwith("bad price check") -->
+<!--   }; -->
+<!-- } -->
 
-function assert_string_failure (res: test_exec_result, expected: string) {
-  const expected_bis = Test.eval(expected);
-  match(res) {
-    when (Fail(x)):
-      match(x) {
-        when (Rejected(y)):
-          assert(Test.michelson_equal(y[0], expected_bis))
-        when (Balance_too_low(_)):
-          failwith("contract failed for an unknown reason")
-        when (Other(_o)):
-          failwith("contract failed for an unknown reason")
-      }
-    when (Success(_s)):
-      failwith("bad price check")
-  };
-}
+<!-- const test = ( -->
+<!--   (_u: unit): unit => { -->
+<!--       /* Originate the contract with a initial storage */ -->
 
-const test = (
-  (_u: unit): unit => {
-      /* Originate the contract with a initial storage */
+<!--       let init_storage = -->
+<!--         Map.literal( -->
+<!--           list( -->
+<!--             [ -->
+<!--               [1n, { current_stock: 50n, max_price: 50000000mutez }], -->
+<!--               [2n, { current_stock: 20n, max_price: 75000000mutez }] -->
+<!--             ] -->
+<!--           ) -->
+<!--         ); -->
+<!--       const { addr , code , size } = -->
+<!--         Test.originate(contract_of(TacoShop), init_storage, 0mutez); -->
 
-      let init_storage =
-        Map.literal(
-          list(
-            [
-              [1n, { current_stock: 50n, max_price: 50000000mutez }],
-              [2n, { current_stock: 20n, max_price: 75000000mutez }]
-            ]
-          )
-        );
-      const { addr , code , size } =
-        Test.originate(contract_of(TacoShop), init_storage, 0mutez);
+<!--       /* Test inputs */ -->
 
-      /* Test inputs */
+<!--       const clasico_kind : parameter_of TacoShop = Buy_taco (1n); -->
+<!--       const unknown_kind : parameter_of TacoShop = Buy_taco (3n); -->
+<!--       /* Auxiliary function for testing equality in maps */ -->
 
-      const clasico_kind : parameter_of TacoShop = Buy_taco (1n);
-      const unknown_kind : parameter_of TacoShop = Buy_taco (3n);
-      /* Auxiliary function for testing equality in maps */
+<!--       const eq_in_map = (r: TacoShop.taco_supply, m: TacoShop.taco_shop_storage, k: nat) => -->
+<!--         match(Map.find_opt(k, m)) { -->
+<!--           when (None): -->
+<!--             false -->
+<!--           when (Some(v)): -->
+<!--             v.current_stock == r.current_stock && v.max_price == r.max_price -->
+<!--         }; -->
+<!--       /* Purchasing a Taco with 1tez and checking that the stock has been updated */ -->
 
-      const eq_in_map = (r: TacoShop.taco_supply, m: TacoShop.taco_shop_storage, k: nat) =>
-        match(Map.find_opt(k, m)) {
-          when (None):
-            false
-          when (Some(v)):
-            v.current_stock == r.current_stock && v.max_price == r.max_price
-        };
-      /* Purchasing a Taco with 1tez and checking that the stock has been updated */
+<!--       const ok_case: test_exec_result = -->
+<!--         Test.transfer( -->
+<!--           addr, -->
+<!--           clasico_kind, -->
+<!--           1000000mutez -->
+<!--         ); -->
 
-      const ok_case: test_exec_result =
-        Test.transfer(
-          addr,
-          clasico_kind,
-          1000000mutez
-        );
-      
-        match(ok_case) {
-          when (Success(_s)):
-            do {
-              let storage = Test.get_storage(addr);
-              assert(
-                eq_in_map(
-                  { current_stock: 49n, max_price: 50000000mutez },
-                  storage,
-                  1n
-                )
-                && eq_in_map(
-                     { current_stock: 20n, max_price: 75000000mutez },
-                     storage,
-                     2n
-                   )
-              );
-            }
-          when (Fail(_e)):
-            failwith("ok test case failed")
-        };
-      /* Purchasing an unregistred Taco */
+<!--         match(ok_case) { -->
+<!--           when (Success(_s)): -->
+<!--             do { -->
+<!--               let storage = Test.get_storage(addr); -->
+<!--               assert( -->
+<!--                 eq_in_map( -->
+<!--                   { current_stock: 49n, max_price: 50000000mutez }, -->
+<!--                   storage, -->
+<!--                   1n -->
+<!--                 ) -->
+<!--                 && eq_in_map( -->
+<!--                      { current_stock: 20n, max_price: 75000000mutez }, -->
+<!--                      storage, -->
+<!--                      2n -->
+<!--                    ) -->
+<!--               ); -->
+<!--             } -->
+<!--           when (Fail(_e)): -->
+<!--             failwith("ok test case failed") -->
+<!--         }; -->
+<!--       /* Purchasing an unregistred Taco */ -->
 
-      const nok_unknown_kind =
-        Test.transfer(
-          addr,
-          unknown_kind,
-          1000000mutez
-        );
-      assert_string_failure(nok_unknown_kind, "Unknown kind of taco");
-      /* Attempting to Purchase a Taco with 2tez */
+<!--       const nok_unknown_kind = -->
+<!--         Test.transfer( -->
+<!--           addr, -->
+<!--           unknown_kind, -->
+<!--           1000000mutez -->
+<!--         ); -->
+<!--       assert_string_failure(nok_unknown_kind, "Unknown kind of taco"); -->
+<!--       /* Attempting to Purchase a Taco with 2tez */ -->
 
-      const nok_wrong_price =
-        Test.transfer(
-          addr,
-          clasico_kind,
-          2000000mutez
-        );
-      
-        assert_string_failure(
-          nok_wrong_price,
-          "Sorry, the taco you are trying to purchase has a different price"
-        );
-      return unit
-    }
-  ) ();
-```
+<!--       const nok_wrong_price = -->
+<!--         Test.transfer( -->
+<!--           addr, -->
+<!--           clasico_kind, -->
+<!--           2000000mutez -->
+<!--         ); -->
 
-</Syntax>
+<!--         assert_string_failure( -->
+<!--           nok_wrong_price, -->
+<!--           "Sorry, the taco you are trying to purchase has a different price" -->
+<!--         ); -->
+<!--       return unit -->
+<!--     } -->
+<!--   ) (); -->
+<!-- ``` -->
+
+<!-- </Syntax> -->
 
 Let's break it down a little bit:
 - we include the file corresponding to the smart contract we want to
