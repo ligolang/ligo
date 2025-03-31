@@ -58,7 +58,7 @@ If the entrypoint code doesn't access one or both of these arguments, prefix the
 <Syntax syntax="jsligo">
 
 ```jsligo group=silent_variables
-@entry
+// @entry
 const reset = (_param : unit, _storage : int) : [list<operation>, int] => [[], 0];
 ```
 
@@ -106,13 +106,13 @@ const x = 2; // Yields an error
 However, the following example works because the constants are in different scopes:
 
 ```jsligo group=constants
-const d = do {
+const d = (() => {
   const x = 1;
   {
     const x = 2; // No error: a sub-block
     return x;
   }
-};
+})();
 ```
 
 </Syntax>

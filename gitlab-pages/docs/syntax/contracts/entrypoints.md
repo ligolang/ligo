@@ -42,19 +42,19 @@ export namespace IncDec {
 
   // Four entrypoints
 
-  @entry
+  // @entry
   const increment = (delta: int, storage: storage): result =>
     [[], storage + delta];
 
-  @entry
-  const @default = (_u: unit, storage: storage): result =>
+  // @entry
+  const default = (_u: unit, storage: storage): result =>
     increment(1, storage)
 
-  @entry
+  // @entry
   const decrement = (delta: int, storage: storage): result =>
     [[], storage - delta];
 
-  @entry
+  // @entry
   const reset = (_p: unit, _s: storage): result =>
     [[], 0];
 };
@@ -426,7 +426,6 @@ namespace ContractB {
 
 The name `default` has a special meaning for a Tezos entrypoint.
 It denotes the default entrypoint that is called unless another is specified.
-Because `default` is a reserved keyword in JsLIGO, if you want to create an entrypoint named `default`, you must escape its name as `@default`.
 
 For more information about the default entrypoint and its internal behavior, see [Implementation details: the default entrypoint](https://docs.tezos.com/smart-contracts/entrypoints#implementation-details-the-default-entrypoint) on docs.tezos.com.
 
@@ -477,7 +476,7 @@ const test_one_entrypoint = (() => {
   let contract = Test.Originate.contract(contract_of(OneEntrypoint), initial_storage, 0tez);
   Test.Contract.transfer_exn(Test.Typed_address.get_entrypoint("default", contract.taddr), unit, 0tez);
   return Assert.assert(Test.Typed_address.get_storage(contract.taddr) == initial_storage + 1);
-}) ();
+})();
 ```
 
 </Syntax>
@@ -543,12 +542,12 @@ const entry_A = (n: nat, store: storage): result =>
 const entry_B = (s: string, store: storage): result =>
   [[], {...store, name: s}];
 
-@entry
+// @entry
 const main = (action: parameter, store: storage): result =>
-  match(action) {
-    when(Action_A(n)): entry_A(n, store);
-    when(Action_B(s)): entry_B(s, store)
-  };
+  $match(action, {
+    "Action_A": n => entry_A(n, store),
+    "Action_B": s => entry_B(s, store)
+  });
 ```
 
 </Syntax>
@@ -605,28 +604,30 @@ ligo compile contract --library . -m Proxy gitlab-pages/docs/advanced/src/entryp
 
 </Syntax>
 
-<Syntax syntax="jsligo">
+<!-- TODO: Enable back after import statements are fixed -->
 
-```jsligo group=contract_main_proxy
-#import "gitlab-pages/docs/syntax/contracts/src/entrypoints/contract_main.jsligo" "C"
+<!-- <Syntax syntax="jsligo"> -->
 
-namespace Proxy {
-  @entry
-  const proxy =
-    (p: C.parameter, s: C.storage): [list<operation>, C.storage] =>
-    C.main(p, s)
-}
-```
+<!-- ```jsligo group=contract_main_proxy -->
+<!-- #import "gitlab-pages/docs/syntax/contracts/src/entrypoints/contract_main.jsligo" "C" -->
 
-The contract can then be compiled using the following command:
+<!-- namespace Proxy { -->
+<!--   @entry -->
+<!--   const proxy = -->
+<!--     (p: C.parameter, s: C.storage): [list<operation>, C.storage] => -->
+<!--     C.main(p, s) -->
+<!-- } -->
+<!-- ``` -->
 
-```shell
-ligo compile contract --library . \
-  -m Proxy \
-  gitlab-pages/docs/advanced/src/entrypoints-contracts/contract_main_proxy.jsligo
-```
+<!-- The contract can then be compiled using the following command: -->
 
-</Syntax>
+<!-- ```shell -->
+<!-- ligo compile contract --library . \ -->
+<!--   -m Proxy \ -->
+<!--   gitlab-pages/docs/advanced/src/entrypoints-contracts/contract_main_proxy.jsligo -->
+<!-- ``` -->
+
+<!-- </Syntax> -->
 
 Notice that to compile a parameter for this contract, now we need to
 pass the either `-e proxy` or construct a value using the `Proxy`

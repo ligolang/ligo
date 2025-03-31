@@ -123,8 +123,8 @@ It packages together a type (internally called `t`), an operation `add` that sum
 namespace Euro {
   export type t = nat;
   export const add = (a: t, b: t) : t => a + b;
-  export const one: t = 1n;
-  export const two: t = 2n;
+  export const one: t = 1 as nat;
+  export const two: t = 2 as nat;
 };
 ```
 
@@ -208,8 +208,8 @@ namespace Euro {
   export let add = (a: t, b: t): t => a + b;
 
   export namespace Coin {
-    export let one: t = 1n;
-    export let two: t = 2n;
+    export let one: t = 1 as nat;
+    export let two: t = 2 as nat;
   };
 };
 ```
@@ -263,8 +263,8 @@ For example, until 2025, the Bulgarian Lev is pegged to the euro currency, so th
 namespace Euro {
   export type t = nat;
   export const add = (a: t, b: t) : t => a + b;
-  export const one: t = 1n;
-  export const two: t = 2n;
+  export const one: t = 1 as nat;
+  export const two: t = 2 as nat;
 };
 
 import Bulgarian_Lev = Euro;
