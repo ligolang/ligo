@@ -57,11 +57,11 @@ type storage = string;
 
 type result = [list<operation>, storage];
 
-@entry
+// @entry
 const append = (s: string, storage: storage): result =>
   [[], storage + s]
 
-@entry
+// @entry
 const reset = (_: unit, _storage: storage): result =>
   [[], ""]
 ```
