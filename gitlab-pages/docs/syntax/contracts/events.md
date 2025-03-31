@@ -30,7 +30,7 @@ let emitEvents (_ : unit) (storage : int) : operation list * int =
 <Syntax syntax="jsligo">
 
 ```jsligo group=events
-@entry
+// @entry
 const emitEvents = (_: unit, storage: int): [list<operation>, int] => {
   const event1: operation = Tezos.Next.Operation.emit("%emitEvents", "hi");
   const event2: operation = Tezos.Next.Operation.emit("%emitEvents", 6);

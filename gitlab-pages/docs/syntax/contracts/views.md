@@ -60,24 +60,22 @@ To define an on-chain view, use the `@view` decorator.
 type storage = string
 type ret = [list<operation>, storage];
 
-@entry
+// @entry
 const main = (word : string, storage : storage) : ret
   => [[] , storage + " " + word]
 
 // This view returns the storage
-@view
-const view1 = (_arg : unit, storage : storage) : storage
-  => storage;
+// @view
+const view1 = (_arg : unit, storage : storage) : storage => storage;
 
 // This view returns true if the storage has a given length
-@view
+// @view
 const view2 = (expected_length : nat , storage : storage) : bool
   => (String.length (storage) == expected_length);
 
 // This view does not use the parameters or storage and returns a constant int
-@view
-const view3 = (_arg : unit , _s : storage) : int
-  => 42;
+// @view
+const view3 = (_arg : unit , _s : storage) : int => 42;
 ```
 
 </Syntax>
@@ -112,10 +110,10 @@ end
 namespace C {
   type storage = string
 
-  @entry
+  // @entry
   const append = (a: string, s: storage) : [list<operation> , storage] => [[], s + a];
 
-  @entry
+  // @entry
   const clear = (_p: unit, _s: storage) : [list<operation>, storage] => [[], ""];
 
   export const v = (expected_length: nat, s: storage) : bool => (String.length (s) == expected_length);
@@ -233,11 +231,11 @@ namespace ContractWithView {
   type storage = int;
   type return_type = [list<operation>, storage];
 
-  @entry
+  // @entry
   const main = (param: int, _storage: storage): return_type =>
     [[], param];
 
-  @view
+  // @view
   const multiply = (param: int, storage: storage): int =>
     param * storage;
 }
@@ -250,7 +248,7 @@ namespace CallView {
   type storage = [address, int];
   type return_type = [list<operation>, storage];
 
-  @entry
+  // @entry
   const callView = (param: int, storage: storage): return_type => {
     const [targetAddress, _s] = storage;
     const resultOpt: option<int> = Tezos.call_view(
@@ -258,12 +256,10 @@ namespace CallView {
       param,
       targetAddress
     );
-    return match(resultOpt) {
-      when (None):
-        failwith("Something went wrong");
-      when (Some(newValue)):
-        [[], [targetAddress, newValue]];
-    }
+    return $match(resultOpt, {
+             "None": () => failwith("Something went wrong"),
+             "Some": newValue => [[], [targetAddress, newValue]]
+    })
   }
 }
 ```
@@ -274,15 +270,20 @@ This test deploys both contracts, calls the contract that calls the view, and ve
 const test = (() => {
 
   // Originate ContractWithView
-  const contract1 = Test.Next.Originate.contract(contract_of(ContractWithView), 5, 0tez);
+  const contract1 = Test.Next.Originate.contract(contract_of(ContractWithView), 5, 0 as tez);
   const addr1 = Test.Next.Typed_address.to_address(contract1.taddr);
 
   // Originate CallView with address of ContractWithView in storage
   const initial_storage = [addr1, 0 as int];
-  const contract2 = Test.Next.Originate.contract(contract_of(CallView), initial_storage, 0tez);
+  const contract2 =
+  Test.Next.Originate.contract(contract_of(CallView), initial_storage,
+                               0 as tez);
 
   // Call callView
-  Test.Next.Contract.transfer_exn(Test.Next.Typed_address.get_entrypoint("default", contract2.taddr), 12, 0tez);
+  Test.Next.Contract.transfer_exn(
+    Test.Next.Typed_address.get_entrypoint("default", contract2.taddr),
+    12,
+    0 as tez);
   const [_address, integer] = Test.Next.Typed_address.get_storage(contract2.taddr);
   Assert.assert(integer == 60);
 }) ()

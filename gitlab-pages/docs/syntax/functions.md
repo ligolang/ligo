@@ -252,11 +252,11 @@ Recursive functions are defined and called using the same syntax as non-recursiv
 
 ```jsligo group=recursion
 function sum (n: int, acc: int) : int {
-  if (n < 1) return acc else return sum (n-1, acc + n);
+  if (n < 1) return acc; else return sum (n-1, acc + n);
 };
 
 function fibonacci (n: int, n_1: int, n_0: int): int {
-  if (n < 2) return n_1 else return fibonacci (n-1, n_1 + n_0, n_1);
+  if (n < 2) return n_1; else return fibonacci (n-1, n_1 + n_0, n_1);
 };
 ```
 
@@ -340,12 +340,12 @@ This table shows the results of the command `ligo info measure-contract inline.m
 To force inlining, use the `@inline` decorator.
 
 ```jsligo group=inlining
-@inline
+// @inline
 const fst = (p: [nat, nat]) => p[0];
 
-@entry
+// @entry
 const main = (p: [nat, nat], s: [nat, nat]) : [list<operation>, [nat, nat]] =>
-    [[], [fst([p[0], p[1]]), fst([s[1], s[0]])]];
+  [[], [fst([p[0], p[1]]), fst([s[1], s[0]])]];
 ```
 
 You can measure the difference between inlining and not inlining with the `info measure-contract` command.
