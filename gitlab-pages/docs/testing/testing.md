@@ -70,9 +70,14 @@ export namespace MyContract {
   export type storage = int;
   export type result = [list<operation>, storage];
 
-  @entry const increment = (delta : int, storage : storage) : result => [[], storage + delta];
-  @entry const decrement = (delta : int, storage : storage) : result => [[], storage - delta];
-  @entry const reset = (_u : unit, _storage : storage) : result => [[], 0];
+  // @entry
+  const increment = (delta : int, storage : storage) : result => [[], storage + delta];
+
+  // @entry
+  const decrement = (delta : int, storage : storage) : result => [[], storage - delta];
+
+  // @entry
+  const reset = (_u : unit, _storage : storage) : result => [[], 0];
 }
 ```
 
@@ -111,26 +116,28 @@ let run_test1 =
 
 </Syntax>
 
-<Syntax syntax="jsligo">
+<!-- TODO: Enable back when import statements are fixed. -->
 
-```jsligo test-ligo group=mycontract-test
-// This is mycontract-test.jligo
+<!-- <Syntax syntax="jsligo"> -->
 
-import Test = Test.Next;
+<!-- ```jsligo test-ligo group=mycontract-test -->
+<!-- // This is mycontract-test.jligo -->
 
-import * as MyModule from "gitlab-pages/docs/testing/src/testing/mycontract.jsligo";
+<!-- import * as MyModule from "gitlab-pages/docs/testing/src/testing/mycontract.jsligo"; -->
 
-const run_test1 = () => {
-    let initial_storage = 10;
-    let orig = Test.Originate.contract(contract_of(MyModule.MyContract), initial_storage, 0tez);
-    Test.Contract.transfer_exn(Test.Typed_address.get_entrypoint("increment", orig.taddr), 5, 0tez);
-    return Assert.assert(Test.Typed_address.get_storage(orig.taddr) == initial_storage + 5);
-};
+<!-- #import "gitlab-pages/docs/testing/src/testing/mycontract.jsligo" "MyModule" -->
 
-const test1 = run_test1();
-```
+<!-- const run_test1 = () => { -->
+<!--     let initial_storage = 10; -->
+<!--     let orig = Test.Originate.contract(contract_of(MyModule.MyContract), initial_storage, 0tez); -->
+<!--     Test.Contract.transfer_exn(Test.Typed_address.get_entrypoint("increment", orig.taddr), 5, 0tez); -->
+<!--     return Assert.assert(Test.Typed_address.get_storage(orig.taddr) == initial_storage + 5); -->
+<!-- }; -->
 
-</Syntax>
+<!-- const test1 = run_test1(); -->
+<!-- ``` -->
+
+<!-- </Syntax> -->
 
 The `run test` command evaluates all top-level definitions and prints any
 entries that begin with the prefix `test` as well as the value that these
@@ -149,13 +156,15 @@ ligo run test --library gitlab-pages/docs/testing/src/testing/ gitlab-pages/docs
 
 </Syntax>
 
-<Syntax syntax="jsligo">
+<!-- TODO: Enable back when import statements are fixed. -->
 
-```shell
-ligo run test --library gitlab-pages/docs/testing/src/testing/ gitlab-pages/docs/testing/src/testing/mycontract-test.jsligo
-```
+<!-- <Syntax syntax="jsligo"> -->
 
-</Syntax>
+<!-- ```shell -->
+<!-- ligo run test --library gitlab-pages/docs/testing/src/testing/ gitlab-pages/docs/testing/src/testing/mycontract-test.jsligo -->
+<!-- ``` -->
+
+<!-- </Syntax> -->
 
 The response shows that the functions at the top level of the file ran successfully:
 
@@ -225,11 +234,16 @@ namespace MyContract {
   export type storage = int;
   export type result = [list<operation>, storage];
 
-  @entry const increment = (delta : int, storage : storage) : result =>
-    abs(delta) <= 5n ? [[], storage + delta] : failwith("Pass 5 or less");
-  @entry const decrement = (delta : int, storage : storage) : result =>
-    abs(delta) <= 5n ? [[], storage - delta] : failwith("Pass 5 or less");
-  @entry const reset = (_u : unit, _storage : storage) : result => [[], 0];
+  // @entry
+  const increment = (delta : int, storage : storage) : result =>
+    abs(delta) <= (5 as nat) ? [[], storage + delta] : failwith("Pass 5 or less");
+
+  // @entry
+  const decrement = (delta : int, storage : storage) : result =>
+    abs(delta) <= (5 as nat) ? [[], storage - delta] : failwith("Pass 5 or less");
+
+  // @entry
+  const reset = (_u : unit, _storage : storage) : result => [[], 0];
 }
 ```
 
@@ -240,13 +254,16 @@ import Test = Test.Next;
 
 const test_failure = () => {
   const initial_storage = 10 as int;
-  const orig = Test.Originate.contract(contract_of(MyContract), initial_storage, 0tez);
-  const result = Test.Contract.transfer(Test.Typed_address.get_entrypoint("increment", orig.taddr), 50 as int, 0tez);
+  const orig = Test.Originate.contract(contract_of(MyContract),
+                                       initial_storage, 0 as tez);
+  const result =
+    Test.Contract.transfer(Test.Typed_address.get_entrypoint("increment",
+                             orig.taddr), 50 as int, 0 as tez);
 
-  match(result) {
-    when(Fail(_x)): Test.IO.log("Failed as expected");
-    when(Success(_s)): failwith("This should not succeed")
-  };
+  $match(result, {
+    "Fail": _x => Test.IO.log("Failed as expected"),
+    "Success": _s => failwith("This should not succeed")
+  });
 }
 
 const test1 = test_failure();
@@ -294,25 +311,24 @@ namespace Counter {
   type storage = [int, address];
   type return_type = [list<operation>, storage];
 
-  @entry
+  // @entry
   const increment = (n: int, storage: storage): return_type => {
     const [number, admin_account] = storage;
     return [[], [number + n, admin_account]];
   }
 
-  @entry
+  // @entry
   const decrement = (n: int, storage: storage): return_type => {
     const [number, admin_account] = storage;
     return [[], [number - n, admin_account]];
   }
 
-  @entry
+  // @entry
   const reset = (_: unit, storage: storage): return_type => {
     const [_number, admin_account] = storage;
 
-    if (Tezos.get_sender() != admin_account) {
+    if (Tezos.get_sender() != admin_account)
       return failwith("Only the owner can call this entrypoint");
-    }
 
     return [[], [0, admin_account]];
   }
@@ -363,8 +379,8 @@ let test_admin =
 import Test = Test.Next;
 
 const test_admin = (() => {
-  const admin_account = Test.Account.address(0n);
-  const user_account = Test.Account.address(1n);
+  const admin_account = Test.Account.address(0 as nat);
+  const user_account = Test.Account.address(1 as nat);
 
   // Originate the contract with the admin account in storage
   const initial_storage = [10 as int, admin_account];
@@ -372,19 +388,23 @@ const test_admin = (() => {
 
   // Try to call the reset entrypoint as the user and expect it to fail
   Test.State.set_source(user_account);
-  const result = Test.Contract.transfer(Test.Typed_address.get_entrypoint("reset", orig.taddr), unit, 0tez);
-  match(result) {
-    when(Fail(_err)): Test.IO.log("Test succeeded");
-    when (Success(_s)): failwith("User should not be able to call reset");
-  };
+  const result =
+    Test.Contract.transfer(Test.Typed_address.get_entrypoint("reset",
+                             orig.taddr), unit, 0 as tez);
+  $match(result, {
+    "Fail": _err => Test.IO.log("Test succeeded"),
+    "Success": _s => failwith("User should not be able to call reset")
+  });
 
   // Call the reset entrypoint as the admin and expect it to succeed
   Test.State.set_source(admin_account);
-  Test.Contract.transfer_exn(Test.Typed_address.get_entrypoint("reset", orig.taddr), unit, 0tez);
+  Test.Contract.transfer_exn(Test.Typed_address.get_entrypoint("reset",
+  orig.taddr), unit, 0 as tez);
 
-  const [newNumber, _admin_account] = Test.Typed_address.get_storage(orig.taddr);
+  const [newNumber, _admin_account] =
+    Test.Typed_address.get_storage(orig.taddr);
   Assert.assert(newNumber == 0);
-}) ()
+})()
 ```
 
 </Syntax>
@@ -421,17 +441,17 @@ let test_accounts =
 import Test = Test.Next;
 
 const test_accounts = () => {
-  Test.State.reset(3n, [] as list <tez>);
-  const admin_account = Test.Account.address(0n);
-  const user_account1 = Test.Account.address(1n);
-  const user_account2 = Test.Account.address(2n);
+  Test.State.reset(3 as nat, [] as list<tez>);
+  const admin_account = Test.Account.address(0 as nat);
+  const user_account1 = Test.Account.address(1 as nat);
+  const user_account2 = Test.Account.address(2 as nat);
 
   Test.IO.log(Test.Address.get_balance(admin_account));
-  // 3800000000000mutez
+  // 3800000000000 as mutez
   Test.IO.log(Test.Address.get_balance(user_account1));
-  // 3800000000000mutez
+  // 3800000000000 as mutez
   Test.IO.log(Test.Address.get_balance(user_account2));
-  // 3800000000000mutez
+  // 3800000000000 as mutez
 }
 ```
 
@@ -493,20 +513,18 @@ let test_view =
 
 ```jsligo group=test_views
 namespace Testviews {
-
   type storage = string;
-
   type return_type = [list<operation>, storage];
 
-  @entry
+  // @entry
   const set = (inputStr: storage, _storage: storage): return_type =>
-    [list([]), inputStr];
+    [[], inputStr];
 
-  @entry
+  // @entry
   const reset = (_u: unit, _storage: storage): return_type =>
-    [list([]), ""];
+    [[], ""];
 
-  @view
+  // @view
   const getString = (_u: unit, storage: storage): string =>
     storage;
 }
@@ -520,14 +538,16 @@ import Test = Test.Next;
 import Tezos = Tezos.Next;
 
 const test_view = () => {
-  const contract = Test.Originate.contract(contract_of(Testviews), "", 0tez);
-  Test.Contract.transfer_exn(Test.Typed_address.get_entrypoint("set", contract.taddr), "hello", 0tez);
+  const contract = Test.Originate.contract(contract_of(Testviews), "",
+  0 as tez);
+  Test.Contract.transfer_exn(Test.Typed_address.get_entrypoint("set",
+  contract.taddr), "hello", 0 as tez);
   const address = Test.Typed_address.to_address(contract.taddr);
   const viewResultOption: option<string> = Tezos.View.call("getString", unit, address);
-  const viewResult = match(viewResultOption) {
-    when(Some(str)): str;
-    when(None()): "";
-  };
+  const viewResult = $match(viewResultOption, {
+    "Some": str => str,
+    "None": () => ""
+  });
   Assert.assert(Test.Compare.eq(viewResult, "hello"));
 };
 const test1 = test_view();
@@ -561,7 +581,7 @@ let test_foo =
 
 ```jsligo test-ligo group=test_ex
 namespace C {
-  @entry
+  // @entry
   const main = (p: [int, int], _: unit) => {
     const op1 = Tezos.emit("%foo", p);
     const op2 = Tezos.emit("%foo", p[0]);
@@ -572,8 +592,8 @@ namespace C {
 import Test = Test.Next;
 
 const test = () => {
-  const orig = Test.Originate.contract(contract_of(C), unit, 0tez);
-  Test.Typed_address.transfer_exn(orig.taddr, Main ([1,2]), 0tez);
+  const orig = Test.Originate.contract(contract_of(C), unit, 0 as tez);
+  Test.Typed_address.transfer_exn(orig.taddr, ["Main" as "Main", [1,2]], 0 as tez);
   return [Test.State.last_events(orig.taddr, "foo") as list<[int, int]>, Test.State.last_events(orig.taddr, "foo") as list<int>];
 };
 
@@ -610,12 +630,12 @@ let remove_balances_under (b : balances) (threshold : tez) : balances =
 ```jsligo group=remove-balance
 // This is remove-balance.jsligo
 
-type balances = map <address, tez>;
+type balances = map<address, tez>;
 
 const remove_balances_under = (b: balances, threshold: tez): balances => {
   let f = ([acc, kv]: [balances, [address, tez]] ): balances => {
     let [k, v] = kv;
-    if (v < threshold) { return Map.remove (k, acc) } else {return acc}
+    if (v < threshold) return Map.remove (k, acc); else return acc
   };
   return Map.fold (f, b, b);
 }
@@ -642,18 +662,21 @@ let test_remove_balance =
 
 </Syntax>
 
-<Syntax syntax="jsligo">
 
-```jsligo test-ligo group=unit-remove-balance-mixed
-#include "./gitlab-pages/docs/testing/src/testing/remove-balance.jsligo"
+<!-- TODO: Enable when import statements are fixed. -->
 
-import Test = Test.Next;
+<!-- <Syntax syntax="jsligo"> -->
 
-const test_remove_balance = (() => {
-  Test.State.reset(5n, [] as list <tez>);
-```
+<!-- ```jsligo test-ligo group=unit-remove-balance-mixed -->
+<!-- #include "./gitlab-pages/docs/testing/src/testing/remove-balance.jsligo" -->
 
-</Syntax>
+<!-- import Test = Test.Next; -->
+
+<!-- const test_remove_balance = (() => { -->
+<!--   Test.State.reset(5n, [] as list <tez>); -->
+<!-- ``` -->
+
+<!-- </Syntax> -->
 
 Now build the `balances` map that serves as the test input:
 
@@ -666,16 +689,19 @@ let balances: balances =
 ```
 
 </Syntax>
-<Syntax syntax="jsligo">
 
-```jsligo test-ligo group=unit-remove-balance-mixed
-const balances: balances =
-  Map.literal([[Test.Account.address(1n), 10tez],
-              [Test.Account.address(2n), 100tez],
-              [Test.Account.address(3n), 1000tez]]);
-```
+<!-- TODO: Enable when import statements are fixed. -->
 
-</Syntax>
+<!-- <Syntax syntax="jsligo"> -->
+
+<!-- ```jsligo test-ligo group=unit-remove-balance-mixed -->
+<!-- const balances: balances = -->
+<!--   Map.literal([[Test.Account.address(1 as nat), 10 as tez], -->
+<!--               [Test.Account.address(2 as nat), 100 as tez], -->
+<!--               [Test.Account.address(3 as nat), 1000 as tez]]); -->
+<!-- ``` -->
+
+<!-- </Syntax> -->
 
 The test loop will call the function with the compiled map
 defined above, get the size of the resulting map, and compare it to an
@@ -710,23 +736,28 @@ List.iter
 ```
 
 </Syntax>
-<Syntax syntax="jsligo">
 
-```jsligo test-ligo group=unit-remove-balance-mixed
-return List.iter(([threshold, expected_size]: [tez, nat]): unit => {
-    const tester = ([balances, threshold]: [balances, tez]): nat =>
-      Map.size (remove_balances_under (balances, threshold));
-    const size = Test.Michelson.run(tester, [balances, threshold]);
-    const expected_size_ = Test.Michelson.eval(expected_size);
-    Test.IO.log(["expected", expected_size]);
-    Test.IO.log(["actual", size]);
-    return (Assert.assert (Test.Compare.eq(size, expected_size_)))
-  },
-  list ([ [15tez, 2n], [130tez, 1n], [1200tez, 0n]]) );
-}) ()
-```
+<!-- TODO: Enable when import statements are fixed. -->
 
-</Syntax>
+<!-- <Syntax syntax="jsligo"> -->
+
+<!-- ```jsligo test-ligo group=unit-remove-balance-mixed -->
+<!-- return List.iter(([threshold, expected_size]: [tez, nat]): unit => { -->
+<!--     const tester = ([balances, threshold]: [balances, tez]): nat => -->
+<!--       Map.size (remove_balances_under (balances, threshold)); -->
+<!--     const size = Test.Michelson.run(tester, [balances, threshold]); -->
+<!--     const expected_size_ = Test.Michelson.eval(expected_size); -->
+<!--     Test.IO.log(["expected", expected_size]); -->
+<!--     Test.IO.log(["actual", size]); -->
+<!--     return (Assert.assert (Test.Compare.eq(size, expected_size_))) -->
+<!--   }, -->
+<!--   list ([ [15 as tez, 2 as nat], -->
+<!--           [130 as tez, 1 as nat], -->
+<!--           [1200 as tez, 0 as nat]]) ); -->
+<!-- }) () -->
+<!-- ``` -->
+
+<!-- </Syntax> -->
 
 Here is the complete test file:
 
@@ -756,33 +787,36 @@ let balances: balances =
 
 </Syntax>
 
-<Syntax syntax="jsligo">
+<!-- TODO: Enable when import statements are fixed. -->
 
-```jsligo test-ligo group=unit-remove-balance-complete
-#include "./gitlab-pages/docs/testing/src/testing/remove-balance.jsligo"
+<!-- <Syntax syntax="jsligo"> -->
 
-import Test = Test.Next;
+<!-- ```jsligo test-ligo group=unit-remove-balance-complete -->
+<!-- #include "./gitlab-pages/docs/testing/src/testing/remove-balance.jsligo" -->
 
-const test_remove_balance = (() => {
-  Test.State.reset(5n, [] as list <tez>);
-  const balances: balances =
-    Map.literal([[Test.Account.address(1n), 10tez],
-                 [Test.Account.address(2n), 100tez],
-                 [Test.Account.address(3n), 1000tez]]);
-  return List.iter(([threshold, expected_size]: [tez, nat]): unit => {
-      const tester = ([balances, threshold]: [balances, tez]): nat =>
-        Map.size (remove_balances_under (balances, threshold));
-      const size = Test.Michelson.run(tester, [balances, threshold]);
-      const expected_size_ = Test.Michelson.eval(expected_size);
-      Test.IO.log(["expected", expected_size]);
-      Test.IO.log(["actual", size]);
-      return (Assert.assert (Test.Compare.eq(size, expected_size_)))
-    },
-    list ([ [15tez, 2n], [130tez, 1n], [1200tez, 0n]]) );
-}) ()
-```
+<!-- import Test = Test.Next; -->
 
-</Syntax>
+<!-- const test_remove_balance = (() => { -->
+<!--   Test.State.reset(5 as nat, [] as list <tez>); -->
+<!--   const balances: balances = -->
+<!--     Map.literal([[Test.Account.address(1 as nat), 10 as tez], -->
+<!--                  [Test.Account.address(2 as nat), 100 as tez], -->
+<!--                  [Test.Account.address(3 as nat), 1000 as tez]]); -->
+<!--   return List.iter(([threshold, expected_size]: [tez, nat]): unit => { -->
+<!--       const tester = ([balances, threshold]: [balances, tez]): nat => -->
+<!--         Map.size (remove_balances_under (balances, threshold)); -->
+<!--       const size = Test.Michelson.run(tester, [balances, threshold]); -->
+<!--       const expected_size_ = Test.Michelson.eval(expected_size); -->
+<!--       Test.IO.log(["expected", expected_size]); -->
+<!--       Test.IO.log(["actual", size]); -->
+<!--       return (Assert.assert (Test.Compare.eq(size, expected_size_))) -->
+<!--     }, -->
+<!--     list ([ [15 as tez, 2 as nat], [130 as tez, 1 as nat], -->
+<!--     [1200 as tez, 0 as nat]]) ); -->
+<!-- }) () -->
+<!-- ``` -->
+
+<!-- </Syntax> -->
 
 You can now execute the test by running this command:
 
@@ -794,13 +828,15 @@ ligo run test --library . gitlab-pages/docs/testing/src/testing/unit-remove-bala
 
 </Syntax>
 
-<Syntax syntax="jsligo">
+<!-- TODO: Enable when import statements are fixed. -->
 
-```shell
-ligo run test --library . gitlab-pages/docs/testing/src/testing/unit-remove-balance-mixed.jsligo
-```
+<!-- <Syntax syntax="jsligo"> -->
 
-</Syntax>
+<!-- ```shell -->
+<!-- ligo run test --library . gitlab-pages/docs/testing/src/testing/unit-remove-balance-mixed.jsligo -->
+<!-- ``` -->
+
+<!-- </Syntax> -->
 
 The response shows the expected and actual results of each test run:
 
@@ -843,9 +879,8 @@ let encodeEntry (a : int) (b : string): myDataType =
 // This is interpret.jsligo
 type myDataType = map<int, string>;
 
-const encodeEntry = (a: int, b: string): myDataType => {
-  return Map.literal([[a, b]]);
-}
+const encodeEntry = (a: int, b: string): myDataType =>
+  Map.literal([[a, b]]);
 ```
 
 </Syntax>
@@ -931,7 +966,7 @@ namespace Counter {
   type storage_type = int;
   type return_type = [list<operation>, storage_type];
 
-  @entry
+  // @entry
   const main = (_action: unit, storage: storage_type): return_type =>
     [[], storage + 1]
 }
@@ -988,7 +1023,7 @@ namespace MyContract {
   type storage_type = map<nat, string>;
   type return_type = [list<operation>, storage_type];
 
-  @entry
+  // @entry
   const update = (param: [nat, string], storage: storage_type): return_type => {
     const [index, value] = param;
     const updated_map = Map.add(index, value, storage);
