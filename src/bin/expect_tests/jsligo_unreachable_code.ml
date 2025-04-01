@@ -25,10 +25,10 @@ let%expect_test _ =
      35 |     case 4:
 
     Warning: Unreachable code.
-    File "../../test/contracts/jsligo_unreachable_code.jsligo", line 38, characters 6-73:
+    File "../../test/contracts/jsligo_unreachable_code.jsligo", line 38, characters 6-74:
      37 |       break;
      38 |       return "Unreachable post-break code that should trigger a warnings";
-                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
      39 |     default:
 
     Warning: Unreachable code.

@@ -1,6 +1,6 @@
 type t = { typ: "INT", val: int } | { typ: "STR", val: string }
 
-function f = (x: int) {
+function f (x: int) {
   const record: t = { typ: "INT" as "INT", val: x };
 
   if (record.typ == "INT")

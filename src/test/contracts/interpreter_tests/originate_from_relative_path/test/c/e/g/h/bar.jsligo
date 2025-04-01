@@ -3,6 +3,6 @@ import Test = Test.Next;
 const f = "../../../../../src/contract/unit.mligo";
 
 export const originate = () => {
-  const x = Test.Originate.from_file(f, unit, 0mutez);
+  const x = Test.Originate.from_file(f, unit, 0 as mutez);
   return x.taddr
 };
