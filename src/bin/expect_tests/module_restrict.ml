@@ -21,7 +21,7 @@ let%expect_test _ =
   run_ligo_bad [ "print"; "ast-core"; bad_test "modules_access_not_open1.jsligo" ];
   [%expect
     {|
-    File "../../test/contracts/negative/modules_access_not_open1.jsligo", line 1, characters 12-13:
+    File "../../test/contracts/negative/modules_access_not_open1.jsligo", line 1, characters 11-12:
       1 | let y = A.B.(x.z)
                      ^
     Syntax error. |}]

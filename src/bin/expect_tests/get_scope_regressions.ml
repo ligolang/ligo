@@ -149,7 +149,7 @@ let%expect_test _ =
     Type definitions:
     (user#1:5-9 -> user)
     Range: File "../../test/contracts/get_scope_tests/regressions/buggy_file_with_core_types.jsligo", line 1, characters 5-9
-    Decl Range: File "../../test/contracts/get_scope_tests/regressions/buggy_file_with_core_types.jsligo", line 1, character 0 to line 5, character 1
+    Decl Range: File "../../test/contracts/get_scope_tests/regressions/buggy_file_with_core_types.jsligo", line 1, character 0 to line 5, character 2
     Content: |record[id -> nat ,
                      is_admin -> bool ,
                      name -> string({ name: id }, { name: is_admin }, { name: name })]|

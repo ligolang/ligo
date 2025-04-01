@@ -1,4 +1,4 @@
-function f = (x: int) {
+function f (x: int) {
   const record:
     | { typ: "NUMBER", number_kind: "INT", val: int }
     | { typ: "NUMBER", number_kind: "NAT", val: nat }

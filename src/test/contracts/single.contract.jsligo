@@ -1,4 +1,2 @@
-class C {
-  @entry
-  poke = (_ : unit, s : int) : [list<operation>, int] => [[], s];
-}
+// @entry
+const poke = (_ : unit, s : int) : [list<operation>, int] => [[], s];

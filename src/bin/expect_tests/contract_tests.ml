@@ -223,8 +223,8 @@ let%expect_test _ =
           ^
      48 |
 
-     Value "juju" does not match.
-     Expected "[_i, s]string -> int -> ret", but got: "[i, s]int -> int -> ret". |}];
+    Value "juju" does not match.
+    Expected "[_i, s]string -> int -> ret", but got: "[i, s]int -> int -> ret". |}];
   run_ligo_good [ "run"; "test"; contract "interfaces.include.jsligo" ];
   [%expect
     {|
@@ -658,10 +658,11 @@ let%expect_test _ =
   run_ligo_bad [ "compile"; "contract"; bad_contract "create_contract_of_file.jsligo" ];
   [%expect
     {|
-    File "../../test/contracts/negative/create_contract_of_file.jsligo", line 4, characters 23-61:
-      3 |   main = (u : unit, _ : unit) : [list<operation>, unit] => {
-      4 |     let [op, _addr] = (create_contract_of_file `./removed.tz`)(["None" as "None"], 1 as tez, u);
-      5 |     return [[op], []]
+File "../../test/contracts/negative/create_contract_of_file.jsligo", line 4, characters 23-61:
+  3 |   main = (u : unit, _ : unit) : [list<operation>, unit] => {
+  4 |     let [op, _addr] = (create_contract_of_file `./removed.tz`)(["None" as "None"], 1 as tez, u);
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  5 |     return [[op], []]
 
 Found a system error: ./removed.tz: No such file or directory. |}]
 
@@ -1161,7 +1162,7 @@ File "../../test/contracts/negative/create_contract_toplevel.mligo", line 5, cha
       ^^^^^^^^
  10 |   in
 
-Not all free variables could be inlined in Tezos.create_contract usage: gen#474. |}];
+Not all free variables could be inlined in Tezos.create_contract usage: gen#475. |}];
   run_ligo_good [ "compile"; "contract"; contract "create_contract_var.mligo" ];
   [%expect
     {|
@@ -1253,7 +1254,7 @@ Not all free variables could be inlined in Tezos.create_contract usage: gen#474.
           ^^^^^^^^^^
      15 |   ([toto.0], store)
 
-    Not all free variables could be inlined in Tezos.create_contract usage: gen#475. |}];
+    Not all free variables could be inlined in Tezos.create_contract usage: gen#476. |}];
   run_ligo_bad [ "compile"; "contract"; bad_contract "create_contract_no_inline.mligo" ];
   [%expect
     {|
@@ -1316,7 +1317,7 @@ Not all free variables could be inlined in Tezos.create_contract usage: gen#474.
           ^^^^^^^
      15 |   let toto : operation list = [op] in
 
-    Not all free variables could be inlined in Tezos.create_contract usage: foo#489. |}];
+    Not all free variables could be inlined in Tezos.create_contract usage: foo#490. |}];
   run_ligo_good [ "compile"; "contract"; contract "create_contract.mligo" ];
   [%expect
     {|
@@ -1725,20 +1726,12 @@ let%expect_test _ =
   run_ligo_bad [ "compile"; "contract"; bad_contract "modules_export_namespace.jsligo" ];
   [%expect
     {|
-      File "../../test/contracts/negative/modules_export_namespace.jsligo", line 3, characters 8-17:
-        2 |     namespace Foo {
-        3 |         let a = 2;
-                    ^^^^^^^^^
-        4 |     }
-
-      Toplevel let declaration is silently changed to const declaration.
-
       File "../../test/contracts/negative/modules_export_namespace.jsligo", line 7, characters 13-20:
         6 |
         7 | import Foo = Bar.Foo
                          ^^^^^^^
 
-      Module "Bar.Foo" not found. |}] (* ; *)
+       Module "Bar.Foo" not found. |}] (* ; *)
 (* TODO: Enable again after fixing bug with import:
 
     run_ligo_bad
@@ -2672,7 +2665,7 @@ let%expect_test _ =
 
 (* test compile parameter w.r.t. @entry *)
 let%expect_test _ =
-  run_ligo_good [ "compile"; "parameter"; "-m"; "C"; contract "single.contract.jsligo"; "[\"Poke\" as \"Poke\"]" ];
+  run_ligo_good [ "compile"; "parameter"; contract "single.contract.jsligo"; "[\"Poke\" as \"Poke\"]" ];
   [%expect {| Unit |}];
   run_ligo_good
     [ "compile"; "parameter"; contract "single.contract.jsligo"; "[]"; "-e"; "poke" ];
@@ -2932,6 +2925,7 @@ let%expect_test _ =
     File "../../test/contracts/negative/entrypoint_no_type.jsligo", line 9, characters 6-12:
       8 | // @entry
       9 | const unique = (_p : organization, _s : storage) => {
+                ^^^^^^
      10 |     return failwith("You need to be part of Tezos organization to activate an organization");
 
     Not an entrypoint: [_p]record[admins -> int , name -> string] -> ∀ a : * . [_s]int -> a |}]
@@ -3513,11 +3507,11 @@ let%expect_test _ =
     ];
   [%expect
     {|
-     File "negative/loop.jsligo", line 4, characters 15-24:
-       3 |     let values : list<int> = [];
-       4 |     for (const [k, v, z] of x) {
-                          ^^^^^^^^^
-       5 |       keys = [k, ...keys];
+     File "../../test/contracts/negative/loop.jsligo", line 4, characters 13-22:
+       3 |   let values : list<int> = [];
+       4 |   for (const [k, v, z] of x) {
+                        ^^^^^^^^^
+       5 |     keys = [k, ...keys];
      Only a variable or a pair key-value (for maps) can index loops in JsLIGO. |}]
 
 let%expect_test _ =
@@ -3531,19 +3525,19 @@ let%expect_test _ =
     ];
   [%expect
     {|
-    File "../../test/contracts/negative/loop2.jsligo", line 4, character 4 to line 7, character 5:
-      3 |     let values : list<int> = [];
-      4 |     for (const [k, v] of x) {
-              ^^^^^^^^^^^^^^^^^^^^^^^^^
-      5 |       keys = [k, ...keys];
-          ^^^^^^^^^^^^^^^^^^^^^^^^^^
-      6 |       values = [v, ...values];
-          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-      7 |     };
-          ^^^^^
-      8 |     return [keys, values];
+    File "../../test/contracts/negative/loop2.jsligo", line 4, character 2 to line 7, character 3:
+      3 |   let values : list<int> = [];
+      4 |   for (const [k, v] of x) {
+            ^^^^^^^^^^^^^^^^^^^^^^^^^
+      5 |     keys = [k, ...keys];
+          ^^^^^^^^^^^^^^^^^^^^^^^^
+      6 |     values = [v, ...values];
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+      7 |   };
+          ^^^
+      8 |   return [keys, values];
 
-    Expected collection of type "any", but recieved collection of type "list (
+    Expected collection of type "any", but received collection of type "list (
     ( int *
       int ))". |}]
 
@@ -3610,7 +3604,7 @@ let%expect_test "dry-run module contract" =
     [ "run"
     ; "dry-run"
     ; contract "simple_contract_in_module.jsligo"
-    ; "\"1 as nat\""
+    ; "1 as nat"
     ; "default_storage"
     ; "-m"
     ; "C"

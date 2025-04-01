@@ -50,6 +50,7 @@ File "../../test/contracts/negative/vars_consts/assign_const_param_2.jsligo", li
   2 |   a = 42;
         ^
   3 |   return a;
+
 Mutable variable "a" not found. |}]
 
 let%expect_test _ =

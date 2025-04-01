@@ -1,10 +1,10 @@
 const assert = Test.Next.Assert.assert
 
 const map_find_exn = (map: map<[int, int], int>, idx: [int, int]) =>
-  return $match(Map.find_opt(idx, map), {
-           "None": () => failwith("Not_found"),
-          "Some": (v) => v
-         });
+  $match(Map.find_opt(idx, map), {
+    "None": () => failwith("Not_found"),
+    "Some": v => v
+  });
 
 const matrixMultiply = (m1: map<[int, int], int>,
                         m1r: int,

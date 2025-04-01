@@ -44,10 +44,10 @@ let%expect_test _ =
   run_ligo_bad [ "compile"; "contract"; bad_test "dynamic_entry_wrong_storage.jsligo" ];
   [%expect
     {|
-      File "../../test/contracts/negative/dynamic_entry_wrong_storage.jsligo", line 9, characters 37-44:
-        8 | @entry
-        9 |   const foo = (_u : unit, _storage : storage) : [list<operation>, storage] => failwith ()
-                                                 ^^^^^^^
+      File "../../test/contracts/negative/dynamic_entry_wrong_storage.jsligo", line 7, characters 35-42:
+        6 | // @entry
+        7 | const foo = (_u : unit, _storage : storage) : [list<operation>, storage] => failwith ()
+                                               ^^^^^^^
 
        Wrong dynamic entrypoints storage definition record[dynamic_entrypoints -> big_map (nat , bytes) ,
                                                            extra -> int ,
@@ -85,7 +85,7 @@ let%expect_test "dynamic entrypoints with tickets (mligo)" =
       storage (pair (int %storage) (big_map %dynamic_entrypoints nat bytes)) ; |}]
 
 let%expect_test "dynamic entrypoints with tickets (jsligo)" =
-  run_ligo_good [ "compile"; "contract"; test "dynamic_entrypoints.jligo" ];
+  run_ligo_good [ "compile"; "contract"; test "dynamic_entrypoints.jsligo" ];
   shrink_output [%expect.output];
   [%expect
     {|
@@ -226,11 +226,12 @@ let%expect_test "opt out (jsligo)" =
   run_ligo_bad [ "compile"; "contract"; bad_test "opt_out_dynamic_entrypoints.jsligo" ];
   [%expect
     {|
-    File "negative/opt_out_dynamic_entrypoints.jsligo", line 8, characters 3-27:
-      7 |   let _i = 1;
-      8 |   (External `OPT_OUT_ENTRY`)
-      9 | }
+  File "../../test/contracts/negative/opt_out_dynamic_entrypoints.jsligo", line 8, characters 3-27:
+    7 |   let _i = 1;
+    8 |   (External `OPT_OUT_ENTRY`)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+    9 | }
 
-    Illegal position for opted out entry.
-     Only allowed in contracts "@dyn_entry" top-level declarations right-end side.
+  Illegal position for opted out entry.
+   Only allowed in contracts "@dyn_entry" top-level declarations right-end side.
 |}]
