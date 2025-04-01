@@ -1,6 +1,6 @@
 type foo = { x : int, y : int };
 
-function bar = (v : foo) {
+function bar (v : foo) {
   const { x, y } = v;
   ignore(y);
   return x;

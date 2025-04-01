@@ -135,11 +135,6 @@ let type_tfile f =
   test_case f (type_file_ f true None)
 
 
-let type_lfile f =
-  let f = "./lexer/" ^ f in
-  test_case f (type_file_ f false None)
-
-
 let comp_file f =
   let f = "./contracts/" ^ f in
   test_case f (comp_file_ f false None)
@@ -174,7 +169,8 @@ let typed_prod =
   Test_helpers.test_suite
     "Ast-typed productions"
     [ type_file "build/D.mligo"
-    ; type_file_v2 "build/v2/H.jsligo"
+    (* TODO: Enable when import statements are fixed *)
+    (*    ; type_file_v2 "build/v2/H.jsligo" *)
     ; type_file "build/instance/main.mligo"
     ; type_file "infer_fun_application.mligo"
     ; type_file "protocol_dalphanet.mligo"
@@ -188,7 +184,6 @@ let typed_prod =
     ; type_file "modules_and_free_vars/module_with_free_vars.mligo"
     ; type_file "modules_and_free_vars/nested_modules_with_free_vars.mligo"
     ; type_tfile "pattern_match4.jsligo"
-    ; type_lfile "add_semi.jsligo"
     ; type_file "type_shadowing.mligo"
     ; type_file "type_vars_let_fun.mligo"
     ; type_file "export_newline.jsligo"

@@ -1,4 +1,4 @@
-function f = (x: int) {
+function f (x: int) {
   const record: { typ: "INT", val: int } | { typ: "STR", val: string } = {
     typ: "INT" as "INT",
     val: x
