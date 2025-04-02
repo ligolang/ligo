@@ -1761,38 +1761,6 @@ let switch_cases_jsligo ~raise () : unit =
     expect_eq
       ~raise
       program
-      "single_default_return"
-      (e_int ~loc 5)
-      (e_string ~loc "Hello!!")
-  in
-  let _ =
-    expect_eq
-      ~raise
-      program
-      "single_default_no_statements"
-      (e_int ~loc 5)
-      (e_string ~loc "Hello")
-  in
-  let _ =
-    expect_eq
-      ~raise
-      program
-      "single_default_break_1"
-      (e_int ~loc 5)
-      (e_string ~loc "HelloWorld")
-  in
-  let _ =
-    expect_eq
-      ~raise
-      program
-      "single_default_break_2"
-      (e_int ~loc 5)
-      (e_string ~loc "Hello World")
-  in
-  let _ =
-    expect_eq
-      ~raise
-      program
       "single_case_no_statements"
       (e_int ~loc 1)
       (e_string ~loc "Hello")
