@@ -1,4 +1,4 @@
-@entry
+// @entry
 const main = (_ : int, s : int) : [list<operation>, int] => {
   return [[], s]
 };

@@ -12,9 +12,9 @@ function main (action: parameter, store: storage) : [list<operation>, storage] {
   if (true) {
     return [
       [],    // No operations
-      $match(action {
-        "Increment": (n) => add (store, n),
-        "Decrement": (n) => sub (store, n),
+      $match(action, {
+        "Increment": n => add (store, n),
+        "Decrement": n => sub (store, n),
         "Reset": () => 0
       })
     ]
@@ -27,9 +27,9 @@ function main2 (action: parameter, store: storage) : [list<operation>, storage] 
     return [
       [],    // No operations
       $match(action, {
-        "Increment": (n) => add (store, n),
-        "Decrement": (n) => sub (store, n),
-        "Reset" () => 0
+        "Increment": n => add (store, n),
+        "Decrement": n => sub (store, n),
+        "Reset": () => 0
       })
     ]
   } // comment should also work
@@ -41,8 +41,8 @@ function main3 (action: parameter, store: storage) : [list<operation>, storage] 
     return [
       [],    // No operations
       $match(action, {
-        "Increment": (n) => add (store, n),
-        "Decrement" (n) => sub (store, n),
+        "Increment": n => add (store, n),
+        "Decrement": n => sub (store, n),
         "Reset": () => 0
       })
     ]
@@ -56,8 +56,8 @@ function main4 (action: parameter, store: storage) : [list<operation>, storage] 
     return [
       [],    // No operations
       $match(action, {
-        "Increment": (n) => add (store, n),
-        "Decrement": (n) => sub (store, n),
+        "Increment": n => add (store, n),
+        "Decrement": n => sub (store, n),
         "Reset": () => 0
       })
     ]

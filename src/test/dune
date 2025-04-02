@@ -99,12 +99,12 @@
  (deps
   (:schema ../main/scopes/schema.json)
   (glob_files contracts/*)
-  (glob_files contracts/negative/*))
-;;  (glob_files error-recovery/simple/cameligo/*.mligo)
-;;  (glob_files error-recovery/simple/cameligo/original/*.mligo)
-;;  (glob_files error-recovery/simple/jsligo/*.jsligo)
-;;  (glob_files error-recovery/simple/jsligo/original/*.jsligo)
-;;  (glob_files error-recovery/multiple_errors/*))
+  (glob_files contracts/negative/*)
+  (glob_files error-recovery/simple/cameligo/*.mligo)
+  (glob_files error-recovery/simple/cameligo/original/*.mligo)
+  (glob_files error-recovery/simple/jsligo/*.jsligo)
+  (glob_files error-recovery/simple/jsligo/original/*.jsligo)
+  (glob_files error-recovery/multiple_errors/*))
  (action
   (run ./get_scope_tests.exe -q -c)))
 
@@ -131,10 +131,10 @@
   (alias repl-test)
   (alias contract_test)
 ;;  (alias error-recovery/recovery-test)
-  (alias get_scope_tests)
+;;  (alias get_scope_tests)
 ;;  (alias decompiler_tests)
 ;;  (alias pretty-printer-tests)
-  ;;  (alias lsp-test))
+  ;;  (alias lsp-test)
   ))
 
 (rule
