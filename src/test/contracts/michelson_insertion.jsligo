@@ -1,4 +1,4 @@
 // Test michelson insertion in JsLIGO
 
 const michelson_add = (n : [nat, nat]) : nat =>
-  (michelson`{ UNPAIR; ADD }` as ((n: [nat, nat]) => nat))(n);
+  (Michelson`{ UNPAIR; ADD }` as ((n: [nat, nat]) => nat))(n);
