@@ -7,7 +7,6 @@ type meta = { syntax : Syntax_types.t }
 
 type options = Compiler_options.t
 
-
 let preprocess_file ~raise ~(options : Compiler_options.frontend) ~(meta : meta) file_path
     : Preprocessor.LowAPI.success
   =
@@ -16,11 +15,17 @@ let preprocess_file ~raise ~(options : Compiler_options.frontend) ~(meta : meta)
   let preprocess_file =
     match meta.syntax with
     | CameLIGO -> Cameligo.preprocess_file
-    | JsLIGO -> Jsligo.preprocess_file
+    | JsLIGO ->
+      fun ?project_root ~preprocess_define dirs src ->
+        let input : string = In_channel.read_all src in
+        let buffer = Buffer.create (String.length input) in
+        let () = Buffer.add_string buffer input in
+        Ok (buffer, [])
   in
   Trace.trace ~raise preproc_tracer
   @@ Simple_utils.Trace.from_result
        (preprocess_file ?project_root ~preprocess_define libraries file_path)
+
 
 let preprocess_string
     ~raise
@@ -33,7 +38,11 @@ let preprocess_string
   let preprocess_string =
     match meta.syntax with
     | CameLIGO -> Cameligo.preprocess_string
-    | JsLIGO -> Jsligo.preprocess_string
+    | JsLIGO ->
+      fun ?project_root ~preprocess_define dirs input ->
+        let buffer = Buffer.create (String.length input) in
+        let () = Buffer.add_string buffer input in
+        Ok (buffer, [])
   in
   Trace.trace ~raise preproc_tracer
   @@ Trace.from_result
@@ -52,7 +61,11 @@ let preprocess_raw_input
   let preprocess_raw_input =
     match meta.syntax with
     | CameLIGO -> Cameligo.preprocess_raw_input
-    | JsLIGO -> Jsligo.preprocess_raw_input
+    | JsLIGO ->
+      fun ?project_root ~preprocess_define dirs (_file, input) ->
+        let buffer = Buffer.create (String.length input) in
+        let () = Buffer.add_string buffer input in
+        Ok (buffer, [])
   in
   Trace.trace ~raise preproc_tracer
   @@ Trace.from_result
@@ -125,9 +138,9 @@ let lift ~(raise : (Main_errors.all, Main_warnings.all) Simple_utils.Trace.raise
 
 (* JsLIGO programs *)
 
-let decode_jsligo_program ~raise file : (Ast.t, string Region.reg) result =
+let decode_jsligo_program ~raise buffer filename : (Ast.t, string Region.reg) result =
   (* Loading the code as a string *)
-  let input : string = In_channel.read_all file in
+  let input : string = Buffer.contents buffer in
   (* Building the map from line-column pairs to positions [Pos.t] *)
   let line_map : Loc_map.t = Loc_map.scan_string input in
   (* Parsing the code into a tree *)
@@ -135,22 +148,19 @@ let decode_jsligo_program ~raise file : (Ast.t, string Region.reg) result =
   (* Getting ahold of the root of the tree *)
   let program_node : Ts_wrap.ts_tree = TS_fun.ts_tree_root_node tree in
   (* Decoding the tree *)
-  let ast = Decode.dec_program ~filename:file ~file:input line_map program_node in
+  let ast = Decode.dec_program ~filename ~file:input line_map program_node in
   (* Releasing the memory allocated to the tree *)
   let () = TS_fun.ts_tree_delete tree in
   ast
 
 
-let decode_jsligo_program ~raise file = lift ~raise @@ decode_jsligo_program ~raise file
+let decode_jsligo_program ~raise buffer filename =
+  lift ~raise @@ decode_jsligo_program ~raise buffer filename
 
-(* Note: The parameter [buffer] to [parse_and_abstract_jsligo] is a
-   string buffer expected to contain the result of preprocessing the
-   input. We do not run the preprocessor, so we ignore the buffer. *)
 
 let parse_and_abstract_jsligo ~raise ~preprocess_define (buffer : Buffer.t) file_path =
   ignore preprocess_define;
-  ignore buffer;
-  let ast = decode_jsligo_program ~raise file_path in
+  let ast = decode_jsligo_program ~raise buffer file_path in
   let stripped = lift ~raise (Strip.statements ast) in
   Unification.Jsligo.compile_program stripped
 
@@ -170,6 +180,7 @@ let decode_jsligo_expression ~raise buffer : (Ast.expression, string Region.reg)
   (* Releasing the memory allocated to the tree *)
   let () = TS_fun.ts_tree_delete tree in
   ast
+
 
 let decode_jsligo_expression ~raise buffer =
   lift ~raise @@ decode_jsligo_expression ~raise buffer
@@ -200,6 +211,7 @@ let decode_jsligo_type_expression ~raise buffer
   (* Releasing the memory allocated to the tree *)
   let () = TS_fun.ts_tree_delete tree in
   ast
+
 
 let decode_jsligo_type_expression ~raise buffer =
   lift ~raise @@ decode_jsligo_type_expression ~raise buffer
@@ -277,6 +289,7 @@ let decode_string_jsligo ~raise buffer : (Ast.t, string Region.reg) result =
   (* Releasing the memory allocated to the tree *)
   let () = TS_fun.ts_tree_delete tree in
   ast
+
 
 let decode_string_jsligo ~raise buffer = lift ~raise @@ decode_string_jsligo ~raise buffer
 
