@@ -29,7 +29,8 @@ For example, the `List` namespace of the standard library has a deprecated funct
 Its `@deprecated` attribute shows what function to use instead:
 
 ```jsligo group=deprecated
-@inline @deprecated("Use `List.tail` instead.")
+// @inline
+// @deprecated("Use `List.tail` instead.")
 const tail_opt = <elt>(list: List.t<elt>) : option<List.t<elt>> =>
   List.tail(list);
 ```

@@ -141,11 +141,10 @@ means of `type`, it does not need a quote, like `'a`.
 ```jsligo group=reverse
 function rev <T>(xs : list<T>) : list<T> {
   const rev = <T>([xs, acc] : [list<T>, list<T>]) : list<T> =>
-    match(xs) {
-      when([]): acc;
-      when([y,...ys]): rev([ys, list([y,...acc])])
-    };
-
+    $match(List.head_and_tail(xs), {
+      "None": () => acc,
+      "Some": ([y,ys]) => rev([ys, list([y,...acc])])
+    });
   return rev([xs, []]);
 };
 ```
@@ -182,7 +181,7 @@ let nats : nat list = rev [1n; 2n; 3n]
 
 ```jsligo group=reverse
 const ints : list<int> = rev([1, 2, 3]);
-const nats : list<nat> = rev([1n, 2n, 3n]);
+const nats : list<nat> = rev([1 as nat, 2 as nat, 3 as nat]);
 ```
 
 See predefined
@@ -247,7 +246,8 @@ the value is `Some(v)`, then the element is replaced in the resulting
 list by `v`.
 
 ```jsligo group=list_updating
-const f = x => x % 2 == 0n ? None() : Some(x*x);
+const f = x =>
+  x % 2 == (0 as nat) ? ["None" as "None"] : ["Some" as "Some", x*x];
 // odds == [0, 1, 2, 9, 4]
 const odds_squared = List.update(f, nats);
 ```

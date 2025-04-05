@@ -763,7 +763,7 @@ If/else Statement
 
 ```jsligo
 function if_statement (age : nat): string {
-  if (age >= 16 as nat) return "yes"; else return "no";
+  if (age >= (16 as nat)) return "yes"; else return "no";
 }
 ```
 
@@ -820,11 +820,12 @@ Matching on variant cases
 
 ```jsligo group=variants
 const a: action = ["Increment" as "Increment", 5];
-const result: int = $match(a, {
-  "Increment": n => n + 1,
-  "Decrement": n => n - 1,
-  "Reset": () => 0
-})
+const result: int =
+  $match(a, {
+    "Increment": n => n + 1,
+    "Decrement": n => n - 1,
+    "Reset": () => 0
+  });
 ```
 
 </div>
@@ -879,7 +880,7 @@ const destinationAddress: address = "tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx";
 
 const contract : contract<unit> =
   $match(Tezos.get_contract_opt(Tezos.get_sender()) as option<contract<unit>>, {
-    "Some": (contract) => contract,
+    "Some": contract => contract,
     "None": () => failwith("no contract or wrong contract type")
   })
 ```
@@ -892,7 +893,7 @@ Transactions
 
 ```jsligo group=tezos_specific
 const payment: operation =
-  Tezos.transaction(unit, 100mutez, contract);
+  Tezos.transaction(unit, 100 as mutez, contract);
 ```
 
 </div>

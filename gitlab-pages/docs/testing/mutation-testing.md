@@ -158,12 +158,12 @@ let test_mutation =
 
 ```jsligo test-ligo group=twice
 const test_mutation =
-  $match(Test.Mutation.func(twice, simple_tests) {
+  $match(Test.Mutation.func(twice, simple_tests), {
     "None": () => unit,
     "Some": pmutation => (() => {
       Test.IO.log(pmutation[1]);
       Test.IO.println("Some mutation also passes the tests! ^^")
-    })
+    })()
   });
 ```
 
