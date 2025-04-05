@@ -45,9 +45,9 @@ let m (x : int) =
 
 In JsLIGO, the unique value of the `unit` type is `[]`. The global variable `unit` contains `[]` so that name can be used for clarity, but the value is the same.
 ```jsligo group=a
-let u1 : unit = [];
-let u2 : unit = unit;
-let eq = (u1 == u2); // true
+const u1 : unit = [];
+const u2 : unit = unit;
+const eq = (u1 == u2); // true
 ```
 
 </Syntax>
@@ -74,13 +74,13 @@ Creating an object from a discriminated union type requires all the fields
 to be fully written. So for increment that would be:
 
 ```jsligo
-let obj = { kind: "increment", amount: 3};
+const obj = { kind: "increment", amount: 3};
 ```
 
 or
 
 ```jsligo
-let obj2 = { kind: "reset" };
+const obj2 = { kind: "reset" };
 ```
 
 Pattern matching over a discriminated union type works like this:
@@ -134,8 +134,8 @@ let tail : coin = Tail
 
 ```jsligo group=b
 type coin = ["Head"] | ["Tail"];
-let head: coin = ["Head" as "Head"];
-let tail: coin = ["Tail" as "Tail"];
+const head: coin = ["Head" as "Head"];
+const tail: coin = ["Tail" as "Tail"];
 ```
 
 </Syntax>
@@ -360,7 +360,8 @@ const int_of_color = (c : color) : int =>
   $match(c, {
     "RGB": rgb => 16 + rgb[2] + rgb[1] * 6 + rgb[0] * 36,
     "Gray": i => 232 + i,
-    "Default": () => 0 });
+    "Default": () => 0
+  });
 ```
 
 The right-hand sides of each `when`-clause is an expression. Sometimes
@@ -439,9 +440,9 @@ let weird_length (v : int list) : int =
 <Syntax syntax="jsligo">
 
 ```jsligo group=pm_lists
-let weird_length = (v : list<int>) : int =>
+const weird_length = (v : list<int>) : int =>
   $match(List.head_and_tail(v), {
-    "None: () => -1,
+    "None": () => -1,
     "Some": ([hd, tl]) => 1 + int(List.length(tl))
   });
 ```

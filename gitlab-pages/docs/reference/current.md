@@ -29,7 +29,7 @@ let check (p,s : unit * tez) = [], Tezos.get_balance()
 <Syntax syntax="jsligo">
 
 ```jsligo
-let check = (p: unit, s: tez):[list<operation>, tez] =>
+const check = (p: unit, s: tez):[list<operation>, tez] =>
   [[], Tezos.get_balance()];
 ```
 
@@ -68,11 +68,11 @@ let one_day_later = some_date + one_day
 <Syntax syntax="jsligo">
 
 ```jsligo group=b
-let today         = Tezos.get_now();
-let one_day       = 86_400;
-let in_24_hrs     = today + one_day;
-let some_date     = ("2000-01-01t10:10:10Z" as timestamp);
-let one_day_later = some_date + one_day;
+const today         = Tezos.get_now();
+const one_day       = 86_400;
+const in_24_hrs     = today + one_day;
+const some_date     = ("2000-01-01t10:10:10Z" as timestamp);
+const one_day_later = some_date + one_day;
 ```
 
 </Syntax>
@@ -93,9 +93,9 @@ let in_24_hrs = today - one_day
 <Syntax syntax="jsligo">
 
 ```jsligo group=c
-let today     = Tezos.get_now();
-let one_day   = 86_400;
-let in_24_hrs = today - one_day;
+const today     = Tezos.get_now();
+const one_day   = 86_400;
+const in_24_hrs = today - one_day;
 ```
 
 </Syntax>
@@ -117,7 +117,7 @@ let not_tomorrow = (Tezos.get_now () = in_24_hrs)
 <Syntax syntax="jsligo">
 
 ```jsligo group=c
-let not_tomorrow = (Tezos.get_now() == in_24_hrs);
+const not_tomorrow = (Tezos.get_now() == in_24_hrs);
 ```
 
 </Syntax>
@@ -145,7 +145,7 @@ let threshold (p : unit) = if Tezos.get_amount () = 100tz then 42 else 0
 
 ```jsligo
 function threshold (p : unit) {
-  if (Tezos.get_amount() == 100tez) return 42 else return 0;
+  if (Tezos.get_amount() == (100 as tez)) return 42; else return 0;
 };
 ```
 
@@ -172,7 +172,7 @@ let check (p : unit) = Tezos.get_sender ()
 <Syntax syntax="jsligo">
 
 ```jsligo group=e
-let check = (p : unit) => Tezos.get_sender ();
+const check = (p : unit) => Tezos.get_sender();
 ```
 
 </Syntax>
@@ -200,8 +200,8 @@ let check (p : key_hash) =
 <Syntax syntax="jsligo">
 
 ```jsligo group=f
-let check = (p : key_hash) => {
-  let c = Tezos.implicit_account(p);
+const check = (p : key_hash) => {
+  const c = Tezos.implicit_account(p);
   return Tezos.address(c);
 };
 ```
@@ -229,7 +229,7 @@ let check (p : unit) = Tezos.get_self_address ()
 <Syntax syntax="jsligo">
 
 ```jsligo group=g
-let check = (p : unit) => Tezos.get_self_address();
+const check = (p : unit) => Tezos.get_self_address();
 ```
 
 </Syntax>
@@ -257,7 +257,7 @@ let check (p : unit) = Tezos.self("%default")
 <Syntax syntax="jsligo">
 
 ```jsligo group=h
-let check = (p: unit) => Tezos.self("%default");
+const check = (p: unit) => Tezos.self("%default");
 ```
 
 </Syntax>
@@ -287,7 +287,7 @@ let check (kh : key_hash) = Tezos.implicit_account kh
 <Syntax syntax="jsligo">
 
 ```jsligo group=i
-let check = (kh: key_hash) => Tezos.implicit_account(kh);
+const check = (kh: key_hash) => Tezos.implicit_account(kh);
 ```
 
 </Syntax>
@@ -337,7 +337,7 @@ let check (p : unit) = Tezos.get_source ()
 <Syntax syntax="jsligo">
 
 ```jsligo group=j
-let check = (p : unit) => Tezos.get_source();
+const check = (p : unit) => Tezos.get_source();
 ```
 
 </Syntax>
@@ -386,14 +386,12 @@ let main (_ignore : unit) (store : storage) =
 ```jsligo group=k
 type storage = bytes;
 
-@entry
-let main = (_ignore: unit, storage: storage) : [list<operation>, storage] => {
-  let packed = Bytes.pack(Tezos.get_chain_id());
-  if (storage != packed) {
+// @entry
+const main = (_ignore: unit, storage: storage) : [list<operation>, storage] => {
+  const packed = Bytes.pack(Tezos.get_chain_id());
+  if (storage != packed)
     return failwith("wrong chain") as [list<operation>, storage];
-  } else {
-    return [[], packed];
-  };
+  else return [[], packed];
 };
 ```
 
@@ -585,7 +583,7 @@ let x = Tezos.sapling_empty_state
 <Syntax syntax="jsligo">
 
 ```jsligo group=sap_t
-let x = Tezos.sapling_empty_state ;
+const x = Tezos.sapling_empty_state;
 ```
 
 </Syntax>
@@ -617,11 +615,11 @@ let f (tr : tr) =
 <Syntax syntax="jsligo">
 
 ```jsligo group=sap_t
-let f = (tr : tr) =>
-  match (Tezos.sapling_verify_update(tr, x)) {
-    when(Some(p)): p[1];
-    when(None()): failwith ("failed")
-  };
+const f = (tr : tr) =>
+  $match(Tezos.sapling_verify_update(tr, x), {
+    "Some": p => p[1],
+    "None": () => failwith ("failed")
+  });
 ```
 
 </Syntax>
@@ -650,16 +648,15 @@ let main (i : parameter) (store : storage) : result =
 <Syntax syntax="jsligo">
 
 ```jsligo group=contract_ticket
-type storage = big_map<string, ticket<int>> ;
-
-type parameter = int ;
-
+type storage = big_map<string, ticket<int>>;
+type parameter = int;
 type result = [list<operation>, storage];
 
-@entry
+// @entry
 function main (i: parameter, store : storage): result {
-  let my_ticket1 = Option.unopt (Tezos.create_ticket (i, 10n));
-  let [_x, ret] = Big_map.get_and_update ("hello", Some(my_ticket1), store);
+  const my_ticket1 = Option.unopt (Tezos.create_ticket(i, 10 as nat));
+  const [_x, ret] =
+    Big_map.get_and_update ("hello", ["Some" as "Some", my_ticket1], store);
   return [[], ret]
 };
 ```

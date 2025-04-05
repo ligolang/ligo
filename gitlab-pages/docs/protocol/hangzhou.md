@@ -165,12 +165,12 @@ let test =
 <Syntax syntax="jsligo">
 
 ```jsligo skip
-let open_or_fail = ([ck, c, @time] : [chest_key, chest, nat]) : bytes => {
-  return (match ( Tezos.open_chest(ck,c,@time), {
-    Ok_opening: (b:bytes) => b,
-    Fail_decrypt: () => failwith("decrypt"),
-    Fail_timelock: () => failwith("timelock"),
-  }))
+const open_or_fail = ([ck, c, time_] : [chest_key, chest, nat]) : bytes =>
+  $match(Tezos.open_chest(ck,c,time_), {
+    "Ok_opening": b => b,
+    "Fail_decrypt": () => failwith("decrypt"),
+    "Fail_timelock": () => failwith("timelock")
+  })
 };
 ```
 
@@ -222,19 +222,19 @@ let main (((),s): unit * storage) : operation list * storage = [] , s
 
 ```jsligo group=views
 type storage = string
-let main = ([_ , s]: [unit , storage]) : [ list<operation> , storage] => [[], s];
+const main = ([_ , s]: [unit , storage]) : [ list<operation> , storage] => [[], s];
 
 /* view 'view1', simply returns the storage */
-@view
-let view1 = ([_ , s]: [unit , storage]) : storage => s;
+// @view
+const view1 = ([_ , s]: [unit , storage]) : storage => s;
 
 /* view 'v2', returns true if the storage has a given length */
-@view
-let v2 = ([expected_length,s] : [nat , storage]) : bool => (String.length (s) == expected_length);
+// @view
+const v2 = ([expected_length,s] : [nat , storage]) : bool => (String.length (s) == expected_length);
 
 /* view 'view3' returns a constant int */
-@view
-let view3 = ([_ , _s]: [unit , storage]) : int => 42;
+// @view
+const view3 = ([_ , _s]: [unit , storage]) : int => 42;
 ```
 
 </Syntax>
@@ -263,7 +263,7 @@ let view_call ((name,parameter,addr): string * int * address) : int option = Tez
 <Syntax syntax="jsligo">
 
 ```jsligo group=views
-let view_call = ([name,parameter,addr]: [string , int , address]) : option<int> => Tezos.call_view ("sto_plus_n", 1, addr)
+const view_call = ([name,parameter,addr]: [string , int , address]) : option<int> => Tezos.call_view ("sto_plus_n", 1, addr)
 ```
 
 </Syntax>

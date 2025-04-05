@@ -115,6 +115,7 @@ namespace TacoShop {
       taco_shop_storage );
     return [[], taco_shop_storage]
   }
+ }
 };
 
 const default_storage: TacoShop.taco_shop_storage =
@@ -365,7 +366,7 @@ namespace TacoShop {
         });
 
       const donationAmount = ((Tezos.get_amount ()) / (10 as nat)) as tez;
-x
+
       // Pedro will get 90% of the amount
       const op1 =
         $match (Tezos.get_amount () - donationAmount, {

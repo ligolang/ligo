@@ -66,9 +66,9 @@ let force_access key map =
 
 ```jsligo group=big_map_searching
 const force_access = (key, map) =>
-  $match(Big_map.find_opt (key, map) {
+  $match(Big_map.find_opt (key, map), {
     "Some": value => value,
-    "None" () => failwith("No value.")
+    "None": () => failwith("No value.")
   });
 ```
 

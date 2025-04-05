@@ -37,14 +37,14 @@ The decorator is `@view` and placed just before a function, like the
 ```jsligo group=view
 type return_type = [list<operation>, int];
 
-@view
+// @view
 const add = (param: int, storage: int): int => param + storage
 
-@view
-const get_storage = (_ : unit, storage: int): int => storage
+// @view
+const get_storage = (_: unit, storage: int): int => storage
 
-@entry
-const main = (_ : unit, storage: int): return_type =>
+// @entry
+const main = (_: unit, storage: int): return_type =>
   [[], storage]
 ```
 

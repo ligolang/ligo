@@ -40,22 +40,22 @@ Here is an example of entrypoints defined in a module:
 
 ```jsligo group=entry
 type storage = int;
-type @return = [list<operation>, storage];
+type return_ = [list<operation>, storage];
 
 namespace Foo {
-  @entry
-  const decrement = (param: int, storage: storage) : @return =>
+  // @entry
+  const decrement = (param: int, storage: storage) : return_ =>
     [[], storage - param];
 
-  @entry
-  const increment = (param: int, storage: storage) : @return =>
+  // @entry
+  const increment = (param: int, storage: storage) : return_ =>
     [[], storage + param];
 
-  @entry
-  const reset = (_u: unit, _s: storage) : @return =>
+  // @entry
+  const reset = (_u: unit, _s: storage) : return_ =>
     [[], 0];
 
-  @view
+  // @view
   const get_storage = (_: unit, storage: storage) : storage => storage;
 };
 ```
