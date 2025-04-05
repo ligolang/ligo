@@ -118,7 +118,7 @@ let user_to_tuple (u : user) =
 
 ```jsligo group=records1
 function userToTuple (u : user) {
-  let { id, is_admin, name } = u;
+  const { id, is_admin, name } = u;
   return [id, is_admin, name];
 }
 ```
@@ -142,7 +142,7 @@ let get_id (u : user) =
 
 ```jsligo group=records1
 function getId (u : user) {
-  let { id, is_admin, name } = u;
+  const { id, is_admin, name } = u;
   /* We don't use `is_admin` and `name`
      so we prevent warning with `ignore`: */
   ignore([is_admin, name]);
@@ -200,7 +200,7 @@ ligo run evaluate-call \
 
 <Syntax syntax="jsligo">
 
-The syntax for the functional updates of record in JsLIGO:
+The syntax for the functional updates of records in JsLIGO:
 
 ```jsligo group=record_update
 type point = {x: int, y: int, z: int}
@@ -510,7 +510,9 @@ We can update a binding in a map in JsLIGO by means of the
 ```jsligo group=maps
 const assign = (m: register) =>
   Map.update
-    ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" as address, Some ([4, 9]), m);
+    ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" as address,
+     ["Some" as "Some", [4, 9]],
+     m);
 ```
 
 Notice the optional value `Some ([4,9])` instead of `[4, 9]`. If we used
@@ -619,8 +621,8 @@ let map_op (m : register) : register =
 <Syntax syntax="jsligo">
 
 ```jsligo group=maps
-finction map_op (m: register) {
-  let increment = ([_a, j]: [address, move]) => [j[0], j[1] + 1];
+function map_op (m: register) {
+  const increment = ([_a, j]: [address, move]) => [j[0], j[1] + 1];
   return Map.map(increment, m);
 };
 ```
@@ -653,7 +655,7 @@ let fold_op (m : register) : int =
 
 ```jsligo group=maps
 function fold_op (m: register): int {
-  let folded = ([i, j]: [int, [address, move]]) => i + j[1][1];
+  const folded = ([i, j]: [int, [address, move]]) => i + j[1][1];
   return Map.fold(folded, m, 5);
 };
 ```
@@ -802,7 +804,9 @@ built-in:
 ```jsligo group=big_maps
 const updated_map: register =
   Big_map.update
-    ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" as address, Some([4, 9]), moves);
+    ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" as address,
+     ["Some" as "Some", [4, 9]],
+     moves);
 ```
 
 </Syntax>

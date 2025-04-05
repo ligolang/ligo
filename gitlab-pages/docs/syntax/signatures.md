@@ -148,8 +148,8 @@ any problems for the interface.
 ```jsligo group=intf_extending
 interface NewEuro_INTF
   extends WithTenEuro_INTF, WithFiftyEuro_INTF {
-  hundred: t;
-  five_hundred?: t;
+  hundred: nat;
+  five_hundred?: nat;
 };
 ```
 

@@ -469,7 +469,7 @@ type result = [list<operation>, storage];
 const call = (fn: option<((x : int) => int)>, value: int) : int =>
   $match(fn, {
     "Some": f => f(value),
-    "None: () => failwith("Lambda is not set")
+    "None": () => failwith("Lambda is not set")
   });
 
 // @entry

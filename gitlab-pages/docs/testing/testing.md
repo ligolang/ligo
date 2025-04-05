@@ -384,7 +384,8 @@ const test_admin = (() => {
 
   // Originate the contract with the admin account in storage
   const initial_storage = [10 as int, admin_account];
-  const orig = Test.Originate.contract(contract_of(Counter), initial_storage, 0tez);
+  const orig =
+  Test.Originate.contract(contract_of(Counter), initial_storage, 0 as tez);
 
   // Try to call the reset entrypoint as the user and expect it to fail
   Test.State.set_source(user_account);

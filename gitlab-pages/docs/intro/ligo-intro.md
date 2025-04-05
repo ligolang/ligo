@@ -20,13 +20,12 @@ Even if LIGO currently offers **two syntaxes**, you'll need to **choose only one
 
   - **JsLIGO**, ideal for web developers, is a TypeScript/JavaScript inspired syntax without unnecessary complexity, which is not helpful in smart contract development. A quick way to produce your first dApp!
 
-
-```jsligo
+```jsligo group=intro
   type storage = string;
 
-  @entry
-  const store_hello = (delta: int, store: storage): [list<operation>, storage] =>
-    [[], "Hello"];
+  // @entry
+  const store_hello = (delta: int, store: storage): [list<operation>, storage] => [[], "Hello"];
+
 ```
 
   - **CameLIGO** is designed for developers with a background in
@@ -35,11 +34,12 @@ Even if LIGO currently offers **two syntaxes**, you'll need to **choose only one
     a functional style.
 
 
-```cameligo
+```cameligo group=intro
   type storage = string
 
   [@entry]
   let store_hello (delta : int) (store : storage) : operation list * storage = [], "Hello"
+
 ```
 
 A significant advantage of the multi-syntax feature is to share knowledge, toolings, and [modules](../language-basics/modules) (like [libraries](../advanced/package-management) onto [registry](https://packages.ligolang.org/packages)) in a larger community.
