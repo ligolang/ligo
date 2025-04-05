@@ -126,14 +126,28 @@ module Attributes = struct
       let open Literal_value in
       let literal =
         match constant with
-        | Pconst_integer (n, Some 'n') ->
+        | Pconst_string (n, _loc, Some "nat") ->
           (* TODO: exception here *)
           let n = Z.of_string n in
           Literal_nat n
-        | Pconst_integer (n, Some 'i') ->
+        | Pconst_string (n, _loc, Some "int") ->
           (* TODO: exception here *)
           let n = Z.of_string n in
           Literal_int n
+        (* TODO: timestamp *)
+        (* TODO: mutez? *)
+        | Pconst_string (n, _loc, Some "mutez") ->
+          (* TODO: exception here *)
+          let n = Z.of_string n in
+          Literal_mutez n
+        | Pconst_string (n, _loc, Some "tez") ->
+          (* TODO: exception here *)
+          let n = Z.of_string n in
+          let n = Z.(mul (of_int 1_000_000) n) in
+          Literal_mutez n
+        (* TODO: bytes *)
+        | Pconst_string (s, _loc, Some "address") -> Literal_address s
+        (* TODO: crypto *)
         | Pconst_string (s, _loc, None) ->
           (* TODO: verbatim vs standard? *)
           Literal_string (Ligo_string.standard s)
@@ -799,76 +813,10 @@ and extract_expr_function ~exp_env ~exp_type ~loc param cases =
 and extract_expr_apply ~loc ~type_ lambda args =
   (* TODO: duplicated *)
   let { exp_desc; exp_loc; exp_extra; exp_type; exp_env; exp_attributes } = lambda in
-  let () =
-    let loc = extract_loc ~loc:exp_loc in
-    let@@ () = try_enhance ~loc in
-    let () = List.iter exp_extra ~f:extract_expr_extra in
-    Utils.assert_no_attributes exp_attributes
-  in
-  (* TODO: this is really hackish *)
-  match exp_desc with
-  | Texp_ident
-      ( _path
-      , _label
-      , { val_type = _
-        ; val_kind = Val_prim prim
-        ; val_loc = _
-        ; val_attributes
-        ; val_uid = _
-        } ) ->
-    Utils.assert_no_attributes val_attributes;
-    extract_expr_apply_primitive ~loc ~type_ prim args
-  | _ -> extract_expr_apply_fallback ~loc ~type_ lambda args
-
-
-and extract_expr_apply_primitive ~loc ~type_ prim args =
-  (* TODO: check properties *)
-  let Primitive.
-        { prim_name
-        ; prim_arity = _
-        ; prim_alloc = _
-        ; prim_native_name = _
-        ; prim_native_repr_args = _
-        ; prim_native_repr_res = _
-        }
-    =
-    prim
-  in
-  (* TODO: much better error messages *)
-  match prim_name, args with
-  | ("%ligo.nat" | "%ligo.tez" | "%ligo.address"), [ (Nolabel, Some arg) ] ->
-    let constant =
-      (* TODO: duplicated *)
-      let { exp_desc; exp_loc; exp_extra; exp_type; exp_env; exp_attributes } = arg in
-      let () = List.iter exp_extra ~f:extract_expr_extra in
-      Utils.assert_no_attributes exp_attributes;
-      (* TODO: this is clearly disgusting  *)
-      match exp_desc with
-      | Texp_constant constant -> constant
-      | _ -> raise_pre_error @@ E_unsupported
-    in
-    extract_expr_ligo_literals ~loc ~type_ prim_name constant
-  | _ -> raise_pre_error @@ E_unsupported
-
-
-and extract_expr_ligo_literals ~loc ~type_ prim constant =
-  (* TODO: this is duplicated code from checking *)
-  (* TODO: this can be deleted whenever we start targetting Ast_typed *)
-  (* TODO: attributes here *)
-  match prim, constant with
-  | "%ligo.nat", Const_int n ->
-    let lit = Z.of_int n in
-    expr_wrap loc type_ @@ E_literal (Literal_nat lit)
-  | "%ligo.tez", Const_int n ->
-    let lit = Z.of_int n in
-    let lit = Z.mul (Z.of_int 1_000_000) lit in
-    expr_wrap loc type_ @@ E_literal (Literal_mutez lit)
-  | "%ligo.address", Const_string (lit, _loc, None) ->
-    expr_wrap loc type_ @@ E_literal (Literal_address lit)
-  | _ -> raise_pre_error @@ E_unsupported
-
-
-and extract_expr_apply_fallback ~loc ~type_ lambda args =
+  let loc = extract_loc ~loc:exp_loc in
+  let@@ () = try_enhance ~loc in
+  let () = List.iter exp_extra ~f:extract_expr_extra in
+  Utils.assert_no_attributes exp_attributes;
   let lambda = extract_expr lambda in
   let args =
     List.map

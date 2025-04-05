@@ -8,20 +8,14 @@ type storage =
 
 type return = operation list * storage
 
-let x : nat =
-  (let module M = struct
-     external magic : unit -> 'a = "%identity"
-   end
-   in
-  M.magic ()) [@ligo.internal.literal 1n]
+module M = struct
+  let u = ()
+end
 
-let add (x : nat) (y : nat) : nat =
-  ((let module M = struct
-      external magic : unit -> 'a = "%identity"
-    end
-    in
-   M.magic ())
-     x
-     y [@ocaml.warning "-20"] [@ligo.internal.constant "ADD"])
-
+let a = [%nat 1]
+let b = [%int 2]
+let c = [%tez 3]
+let d = [%mutez 4]
+let e = [%address "KT1MNN3eEAu3nfKq8u814KfMGuwap7qZ7LPv"]
+let add (x : nat) (y : nat) : nat = [%ligo.constant ADD (x, y)]
 let next () (storage : storage) : return = [], storage

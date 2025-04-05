@@ -168,6 +168,81 @@ let check_extract str =
     (* TODO: properly manage this *)
     assert false
 
+(* TODO: all of this
+  unit, int, nat, timestamp, mutez, string, bytes, address,
+  signature, key, key_hash, chain_id, operation,
+  bls12_381_g1, bls12_381_g2, bls12_381_fr, chest, chest_key *)
+
+(* TODO: document this, aka placeholder value *)
+let magic loc =
+  [%expr
+    let module M = struct
+      external magic : unit -> 'a = "%identity"
+    end
+    in
+    M.magic ()]
+
+module Extensions = struct
+  open Ast_builder.Default
+
+  let make name pattern f =
+    Extension.declare
+      name
+      Extension.Context.expression
+      Ast_pattern.(pstr @@ pstr_eval (pexp_loc __ pattern) nil ^:: nil)
+      (* TODO: not using this loc is weird *)
+        (fun ~loc:_ ~path:_ -> f)
+
+  let ( let@@ ) = ( @@ )
+
+  let nat =
+    make "nat" Ast_pattern.(pexp_constant @@ pconst_integer __ none)
+    @@ fun loc label ->
+    (* TODO: weird 'n' here *)
+    let lit = pexp_constant ~loc (Pconst_string (label, loc, Some "nat")) in
+    [%expr (([%e magic loc] [@ligo.internal.literal [%e lit]]) : nat)]
+
+  let int =
+    make "int" Ast_pattern.(pexp_constant @@ pconst_integer __ none)
+    @@ fun loc label ->
+    let lit = pexp_constant ~loc (Pconst_string (label, loc, Some "int")) in
+    [%expr (([%e magic loc] [@ligo.internal.literal [%e lit]]) : int)]
+
+  let mutez =
+    make "mutez" Ast_pattern.(pexp_constant @@ pconst_integer __ none)
+    @@ fun loc label ->
+    let lit = pexp_constant ~loc (Pconst_string (label, loc, Some "mutez")) in
+    [%expr (([%e magic loc] [@ligo.internal.literal [%e lit]]) : tez)]
+
+  let tez =
+    make "tez" Ast_pattern.(pexp_constant @@ pconst_integer __ none)
+    @@ fun loc label ->
+    let lit = pexp_constant ~loc (Pconst_string (label, loc, Some "tez")) in
+    [%expr (([%e magic loc] [@ligo.internal.literal [%e lit]]) : tez)]
+
+  let address =
+    make "address" Ast_pattern.(pexp_constant @@ pconst_string __ __ none)
+    @@ fun loc label _label_loc ->
+    let lit = pexp_constant ~loc (Pconst_string (label, loc, Some "address")) in
+    [%expr (([%e magic loc] [@ligo.internal.literal [%e lit]]) : address)]
+
+  let constant =
+    make "ligo.constant" Ast_pattern.(pexp_construct (lident __) (some (pexp_tuple __)))
+    @@ fun loc name args ->
+    let name = estring ~loc name in
+    let core = eapply ~loc (magic loc) args in
+    [%expr [%e core] [@ocaml.warning "-20"] [@ligo.internal.constant [%e name]]]
+end
+
+let extensions =
+  [ Extensions.nat
+  ; Extensions.int
+  ; Extensions.mutez
+  ; Extensions.tez
+  ; Extensions.address
+  ; Extensions.constant
+  ]
+
 let () =
   let impl str =
     let additional_errors, str =
@@ -203,4 +278,4 @@ let () =
       in
       error_stri :: str
   in
-  Driver.register_transformation "ppx_caml_ligo" ~impl
+  Driver.register_transformation ~extensions "ppx_caml_ligo" ~impl
