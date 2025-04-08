@@ -60,7 +60,7 @@ depends: [
   "magic-mime"
   "seqes"
   "ctypes_stubs_js"
-#  "ctypes"
+  "ctypes"
   "ctypes-foreign"
   "hacl-star-raw"
   "hacl-star"
