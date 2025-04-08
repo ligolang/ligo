@@ -2,8 +2,9 @@
 export namespace AddSub {
   export type storage = int;
 
-  @entry
+  // @entry
   const add = (delta: int, storage: storage): [list<operation>, storage] => [[], storage + delta];
-  @entry
+
+  // @entry
   const sub = (delta: int, storage: storage): [list<operation>, storage] => [[], storage - delta];
 }

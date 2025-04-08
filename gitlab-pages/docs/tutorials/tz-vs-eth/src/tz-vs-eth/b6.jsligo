@@ -1,7 +1,7 @@
-let x = Some (5);
+const x = ["Some" as "Some", 5];
 
-let x_or_zero  =
-  match(x) {
-    when(Some(value)): value;
-    when(None()): 0
-  };
+const x_or_zero =
+  $match(x, {
+    "Some": value => value,
+    "None": () => 0
+  });

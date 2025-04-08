@@ -11,18 +11,17 @@ type storage = {
   funded   : bool
 };
 
-@entry
-const back = (param : unit, store : storage) : [list<operation>, storage] => { // Annotation
-  if (Tezos.get_now() > store.deadline) {
+// @entry
+function back (_param: unit, store: storage): [list<operation>, storage] {
+  if (Tezos.get_now() > store.deadline)
     return failwith ("Deadline passed.");
-  }
-  else {
-    return match(Map.find_opt (Tezos.get_sender(), store.backers)) {
-      when(None()): do {
-        let backers = Map.update(Tezos.get_sender(), Some(Tezos.get_amount()), store.backers);
-        return [[], {...store, backers:backers}];
-      };
-      when(Some(x)): [[], store]
-    }
-  };
+  return $match(Map.find_opt (Tezos.get_sender(), store.backers), {
+           "None": () =>
+              (() => { const backers =
+                         Map.update(Tezos.get_sender(),
+                                    ["Some" as "Some", Tezos.get_amount()],
+                                    store.backers);
+                       return [list([]), {...store, backers: backers}]})(),
+           "Some": _x => [[], store]
+    })
 };

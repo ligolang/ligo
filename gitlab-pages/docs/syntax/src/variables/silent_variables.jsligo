@@ -1,2 +1,2 @@
-@entry
+// @entry
 const reset = (_param : unit, _storage : int) : [list<operation>, int] => [[], 0];

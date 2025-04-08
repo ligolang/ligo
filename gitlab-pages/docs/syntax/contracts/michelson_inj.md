@@ -40,7 +40,7 @@ of the Michelson code.
 
 ```jsligo group=michelson_inj
 const michelson_add = n =>
-  (michelson`{ UNPAIR ; ADD }` as ((n: [nat, nat]) => nat))(n);
+  (Michelson`{ UNPAIR ; ADD }` as ((n: [nat, nat]) => nat))(n);
 ```
 
 </Syntax>
@@ -99,7 +99,7 @@ outputs:
 The following command-line:
 
 ```shell
-ligo compile expression jsligo "(michelson`{ PUSH nat 42; DROP; PUSH nat 1; ADD }` : nat -> nat)"
+ligo compile expression jsligo "(Michelson`{ PUSH nat 42; DROP; PUSH nat 1; ADD }` : nat -> nat)"
 ```
 
 outputs:
@@ -134,7 +134,7 @@ outputs:
 The following command-line:
 
 ```shell
-ligo compile expression jsligo "fun n -> (michelson`{ PUSH nat 42; DROP ; PUSH nat 1; ADD }` : nat -> nat) n"
+ligo compile expression jsligo "fun n -> (Michelson`{ PUSH nat 42; DROP ; PUSH nat 1; ADD }` : nat -> nat) n"
 ```
 
 outputs:
@@ -155,7 +155,7 @@ ellipsis is a string containing a file path to a Michelson file with
 extension `.tz`. It has to be wrapped in a `[%Michelson ...]` hook,
 like so:
 
-```cameligo
+```cameligo skip
 let michelson_add (v1 : int) (v2 : int) : int =
   [%Michelson ([%of_file "my_michelson.tz"] : int * int -> int)] (v1, v2)
 ```
@@ -168,9 +168,9 @@ This is achieved by the special hook `(michelson_of_file ...)`, where the
 ellipsis is a *verbatim* string containing a file path to a Michelson
 file with extension `.tz`, like so:
 
-```jsligo
+```jsligo skip
 const michelson_add = (n : [int, int]) : int =>
-  (michelson_of_file`my_michelson.tz` as ((n: [int, int]) => int))(n)
+  (Michelson_of_file`my_michelson.tz` as ((n: [int, int]) => int))(n)
 ```
 
 </Syntax>

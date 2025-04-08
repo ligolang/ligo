@@ -1,3 +1,4 @@
-@inline @deprecated("Use `List.tail` instead.")
+// @inline
+// @deprecated("Use `List.tail` instead.")
 const tail_opt = <elt>(list: List.t<elt>) : option<List.t<elt>> =>
   List.tail(list);

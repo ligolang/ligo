@@ -4,19 +4,19 @@ export namespace IncDec {
 
   // Four entrypoints
 
-  @entry
+  // @entry
   const increment = (delta: int, storage: storage): result =>
     [[], storage + delta];
 
-  @entry
-  const @default = (_u: unit, storage: storage): result =>
+  // @entry
+  const default = (_u: unit, storage: storage): result =>
     increment(1, storage)
 
-  @entry
+  // @entry
   const decrement = (delta: int, storage: storage): result =>
     [[], storage - delta];
 
-  @entry
+  // @entry
   const reset = (_p: unit, _s: storage): result =>
     [[], 0];
 };

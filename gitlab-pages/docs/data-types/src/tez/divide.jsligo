@@ -1,1 +1,1 @@
-const div: nat = 10mutez / 3mutez;
+const div: nat = (10 as mutez) / (3 as mutez);

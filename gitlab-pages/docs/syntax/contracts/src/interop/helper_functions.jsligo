@@ -19,32 +19,39 @@ type test = {
 };
 
 const make_concrete_sum = (r: z_to_v): z_or =>
-  match(r) {
-    when(Z()): M_left(unit);
-    when(Y()): M_right(M_left(unit));
-    when(X()): M_right (M_right (M_left(unit)));
-    when(W()): M_right (M_right (M_right(M_left(unit))));
-    when(V()): M_right (M_right (M_right(M_right(unit))))
-  };
-
+  $match(r, {
+    "Z": () => ["M_left" as "M_left"],
+    "Y": () => ["M_right" as "M_right", ["M_left" as "M_left"]],
+    "X": () => ["M_right" as "M_right", ["M_right" as "M_right",
+                                         ["M_left" as "M_left"]]],
+    "W": () => ["M_right" as "M_right",
+                ["M_right" as "M_right",
+                 ["M_right" as "M_right", ["M_left" as "M_left"]]]],
+    "V": () => ["M_right" as "M_right", ["M_right" as "M_right",
+                                         ["M_right" as "M_right",
+                                          ["M_right" as "M_right"]]]]
+  });
 
 const make_concrete_record = (r: test) =>
   [r.z, r.y, r.x, r.w, r.v];
 
 const make_abstract_sum = (z_or: z_or): z_to_v =>
-  match(z_or) {
-    when(M_left(n)): Z();
-    when(M_right(y_or)): match(y_or) {
-        when(M_left(n)): Y();
-        when(M_right(x_or)): match(x_or) {
-            when(M_left(n)): X();
-            when(M_right(w_or)): match(w_or) {
-                when(M_left(n)): W();
-                when(M_right(n)): V()
-            }
-        }
-    }
-  };
+  $match(z_or, {
+    "M_left": _ => ["Z" as "Z"],
+    "M_right": y_or =>
+      $match(y_or, {
+        "M_left": _ => ["Y" as "Y"],
+        "M_right": x_or =>
+          $match(x_or, {
+            "M_left": _ => ["X" as "X"],
+            "M_right": w_or =>
+              $match(w_or, {
+                "M_left": _ => ["W" as "W"],
+                "M_right": _ => ["V" as "V"]
+              })
+          })
+      })
+  });
 
 const make_abstract_record =
   (z: string, y: int, x: string, w: bool, v: int) => ({z,y,x,w,v});

@@ -16,4 +16,5 @@ namespace MySecondModule {
 type t1 = ["A", int] | ["G", tez];
 
 // The compiler will search above for sum types with an 'A' constructor
-const x = A(42);
+// and complain:
+const x = ["A" as "A", 42];

@@ -4,18 +4,15 @@ type color =
 | ["Default"];
 
 const int_of_color = (c : color) : int =>
-  match(c) {
-    when(RGB(rgb)): 16 + rgb[2] + rgb[1] * 6 + rgb[0] * 36;
-    when(Gray(i)): 232 + i;
-    when(Default()): 0 };
+  $match(c, {
+    "RGB": rgb => 16 + rgb[2] + rgb[1] * 6 + rgb[0] * 36,
+    "Gray": i => 232 + i,
+    "Default": () => 0
+  });
 function match_with_block () {
-  let x = 1;
-  return
-    match(Some(1)) {
-      when(None()): failwith(1);
-      when(Some(org)): do {
-        let y = x + 1;
-        return y
-      }
-    };
+  const x = 1;
+  return $match(["Some" as "Some", 1], {
+    "None": () => failwith(1),
+    "Some": org => (() => { const y = x + 1; return y })()
+  })
 };

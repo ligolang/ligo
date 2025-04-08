@@ -1,9 +1,11 @@
 const a = 5 - 10;
 
 // Subtraction of two nats yields an int
-const b: int = 5n - 2n;
+const b: int = (5 as nat) - (2 as nat);
 
 // Therefore the following is invalid
-// const c : nat = 5n - 2n;
-const d : option<tez> = 5mutez - 1mutez; /* Some (4mutez) */
-const e : option<tez> = 1mutez - 5mutez; /* None */
+// const c : nat = (5 as nat) - (2 as nat);
+// ["Some" as "Some", 4 as mutez]
+const d : option<tez> = (5 as mutez) - (1 as mutez);
+// ["None" as "None"]
+const e : option<tez> = (1 as mutez) - (5 as mutez);

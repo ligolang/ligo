@@ -1,12 +1,11 @@
-
 const testInc = (() => {
   let inc = 0;
 
   // Prefix increment operator
-  assert(++inc == 1);
-  assert(inc   == 1);
+  Assert.assert(++inc == 1);
+  Assert.assert(inc == 1);
 
   // Postfix increment operator
-  assert(inc++ == 1);
-  assert(inc   == 2);
+  Assert.assert(inc++ == 1);
+  Assert.assert(inc == 2);
 })();

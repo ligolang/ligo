@@ -1,13 +1,11 @@
 interface Euro_INTF {
-  type t;
-  const add: (a: t, b: t) => t;
-  const one: t;
-  const two: t;
+  add: (a: nat, b: nat) => nat;
+  one: nat;
+  two: nat;
 };
-namespace Euro implements Euro_INTF {
-  export type t = nat; // No more abstract
-  export const add = (a: t, b: t): t => a + b;
-  export const one: t = 1n;
-  export const two: t = 2n;
-  export const multiply = (a: t, b: t): t=> a * b;
+class Euro implements Euro_INTF {
+  static add = (a: nat, b: nat): nat => a + b;
+  static one = 1 as nat;
+  static two : nat = 2 as nat;
+  multiply = (a: nat, b: nat): nat => a * b;
 };

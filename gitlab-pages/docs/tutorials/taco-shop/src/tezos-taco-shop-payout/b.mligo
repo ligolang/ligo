@@ -39,7 +39,7 @@ module TacoShop = struct
     let receiver : unit contract =
       match (Tezos.get_contract_opt ownerAddress : unit contract option) with
         Some (contract) -> contract
-      | None -> (failwith "Not a contract" : unit contract) in 
+      | None -> (failwith "Not a contract" : unit contract) in
 
     let payoutOperation : operation = Tezos.transaction () (Tezos.get_amount ()) receiver in
     let operations : operation list = [payoutOperation] in

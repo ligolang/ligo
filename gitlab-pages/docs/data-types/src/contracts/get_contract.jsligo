@@ -5,11 +5,12 @@ type contractParam =
   | ["Decrement", int]
   | ["Increment", int];
 
-@entry
-const callContract = (_: unit, storage: int): returnType => {
+// @entry
+function callContract (_: unit, storage: int): returnType {
   const contractAddress: address = ("KT1FpuaoBHwXMXJ6zn3F4ZhpjpPZV28MAinz" as address);
-  const myContract: contract<contractParam> = Tezos.get_contract(contractAddress);
-  const contractArg: contractParam = Increment(4);
-  const operation = Tezos.transaction(contractArg, 0tez, myContract);
-  return [list([operation]), storage + 1]
+  const myContract: contract<contractParam> = Tezos.Next.get_contract(contractAddress);
+  const contractArg: contractParam = ["Increment" as "Increment", 4];
+  const operation =
+    Tezos.Next.Operation.transaction(contractArg, 0 as tez, myContract);
+  return [[operation], storage + 1]
 }

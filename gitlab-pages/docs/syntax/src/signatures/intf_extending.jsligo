@@ -1,32 +1,29 @@
 interface Euro_INTF {
-  type t;
-  const add: (a: t, b: t) => t;
-  const one: t;
-  const two: t;
+  add: (a: nat, b: nat) => nat;
+  one: nat;
+  two: nat;
 };
 
 interface WithTenEuro_INTF extends Euro_INTF {
-  const ten: t;
+  ten: nat;
 };
 
 interface WithFiftyEuro_INTF extends Euro_INTF {
-  const fifty: t;
+  fifty: nat;
 };
 interface NewEuro_INTF
   extends WithTenEuro_INTF, WithFiftyEuro_INTF {
-  const hundred: t;
-  const five_hundred?: t;
+  hundred: nat;
+  five_hundred?: nat;
 };
-namespace NewEuro implements NewEuro_INTF {
-  export type t = int;
+class NewEuro implements NewEuro_INTF {
+  static add = (a: nat, b: nat) => a + b;
 
-  export const add = (a: t, b: t) => a + b;
-
-  export const one: t = 1;
-  export const two: t = 2;
-  export const ten: t = 10;
-  export const fifty: t = 50;
-  export const hundred: t = 100;
-  export const five_hundred: t = 500; // Could be omitted
-  const twenty: t = 20; // Extra new constant
+  static one: nat = 1;
+  static two: nat = 2;
+  static ten: nat = 10;
+  static fifty: nat = 50;
+  static hundred: nat = 100;
+  static five_hundred: nat = 500; // Could be omitted
+  static twenty: nat = 20; // Extra new constant
 }

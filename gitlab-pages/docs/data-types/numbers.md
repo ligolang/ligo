@@ -125,7 +125,7 @@ natural number for all inputs.
 
 <Syntax syntax="cameligo">
 
-```cameligo group=additing
+```cameligo group=adding
 let a : int = 5 + 10    // int + int yields int
 let b : nat = 5n + 10n  // nat + nat yields nat
 let c : int = 5n + 10   // nat + int yields int
@@ -137,7 +137,7 @@ let d : int = 10 + 5n   // int + nat yields int
 
 <Syntax syntax="jsligo">
 
-```jsligo group=additing
+```jsligo group=adding
 const a : int = 5 + 10;    // int + int yields int
 const b : nat = (5 as nat) + (10 as nat);  // nat + nat yields nat
 const c : int = (5 as nat) + 10;   // nat + int yields int

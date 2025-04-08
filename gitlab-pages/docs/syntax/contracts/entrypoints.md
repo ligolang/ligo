@@ -128,21 +128,15 @@ type return_type = operation list * storage
 <Syntax syntax="jsligo">
 
 ```jsligo group=complex_param
-type complexParam = [
-  int,
-  string,
-  bool,
-];
+type complexParam = [ int, string, bool ];
 
 type storage = [int, string];
 type return_type = [list<operation>, storage];
 
-@entry
+// @entry
 const dosomething = (param: complexParam, storage: storage): return_type => {
   const [intParam, stringParam, boolParam] = param;
-  if (boolParam) {
-    return [[], [intParam, stringParam]];
-  }
+  if (boolParam) return [[], [intParam, stringParam]];
   return [[], storage];
 }
 ```
@@ -209,13 +203,11 @@ type parameter = unit;
 type storage = unit;
 type result = [list<operation>, storage];
 
-@entry
+// @entry
 const no_tokens = (action: parameter, storage: storage): result => {
-  if (Tezos.get_amount() > 0tez) {
+  if (Tezos.get_amount() > (0 as tez))
     return failwith("This contract does not accept tokens.");
-  } else {
-    return [[], storage];
-  };
+  return [[], storage];
 };
 ```
 
@@ -248,15 +240,17 @@ type return_value = operation list * storage
 type storage = unit;
 type return_value = [list<operation>, storage];
 
-@entry
+// @entry
 const give5tez = (_: unit, storage: storage): return_value => {
   let operations: list<operation> = [];
-  if (Tezos.get_balance() >= 5tez) {
-    const receiver_contract = match(Tezos.get_contract_opt(Tezos.get_sender())) {
-      when(Some(contract)): contract;
-      when(None): failwith("Couldn't find account");
-    };
-    operations = [Tezos.Next.Operation.transaction(unit, 5tez, receiver_contract)];
+  if (Tezos.get_balance() >= (5 as tez)) {
+    const receiver_contract =
+      $match(Tezos.get_contract_opt(Tezos.get_sender()), {
+        "Some": contract => contract,
+        "None": () => failwith("Couldn't find account")
+      });
+    operations =
+     [Tezos.Next.Operation.transaction(unit, 5 as tez, receiver_contract)]
   }
   return [operations, storage];
 }
@@ -287,10 +281,10 @@ let owner_only (action : parameter) (storage: storage) : result =
 ```jsligo group=c
 const owner: address = "tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx";
 
-@entry
+// @entry
 const owner_only = (action: parameter, storage: storage): result => {
-  if (Tezos.get_sender() != owner) { return failwith("Access denied."); }
-  else { return [[], storage]; };
+  if (Tezos.get_sender() != owner) return failwith("Access denied.");
+  return [[], storage];
 };
 ```
 
@@ -333,14 +327,16 @@ type return_value = operation list * storage
 type storage = unit;
 type return_value = [list<operation>, storage];
 
-@entry
+// @entry
 const callContract = (param: [address, string], storage: storage): return_value => {
   const [addr, parameter] = param;
-  const receiver_contract = match(Tezos.get_contract_opt(addr)) {
-    when(Some(contract)): contract;
-    when(None): failwith("Couldn't find contract");
-  }
-  const operations = [Tezos.Next.Operation.transaction(parameter, 0tez, receiver_contract)];
+  const receiver_contract =
+    $match(Tezos.get_contract_opt(addr), {
+      "Some": contract => contract,
+      "None": () => failwith("Couldn't find contract")
+    });
+  const operations =
+    [Tezos.Next.Operation.transaction(parameter, 0 as tez, receiver_contract)]
   return [operations, storage];
 }
 ```
@@ -399,13 +395,13 @@ namespace ContractA {
   type storage_type = int;
   type return_type = [list<operation>, storage_type];
 
-  @entry
+  // @entry
   const increment = (delta: int, storage: storage_type): return_type => [[], storage + delta];
 
-  @entry
+  // @entry
   const decrement = (delta: int, storage: storage_type): return_type => [[], storage - delta];
 
-  @entry
+  // @entry
   const reset = (_: unit, _s: storage_type): return_type => [[], 0];
 }
 
@@ -413,9 +409,10 @@ namespace ContractB {
   type storage_type = int;
   export type return_type = [list<operation>, storage_type];
 
-  @entry
+  // @entry
   const add = ContractA.increment;
-  @entry
+
+  // @entry
   const sub = ContractA.decrement;
 }
 ```
@@ -464,7 +461,7 @@ namespace OneEntrypoint {
   type storage = int;
   type return_type = [list<operation>, storage];
 
-  @entry
+  // @entry
   const increment = (_: unit, storage: storage): return_type =>
     [[], storage + 1];
 };
@@ -473,8 +470,11 @@ import Test = Test.Next;
 
 const test_one_entrypoint = (() => {
   let initial_storage = 42;
-  let contract = Test.Originate.contract(contract_of(OneEntrypoint), initial_storage, 0tez);
-  Test.Contract.transfer_exn(Test.Typed_address.get_entrypoint("default", contract.taddr), unit, 0tez);
+  let contract =
+    Test.Originate.contract(contract_of(OneEntrypoint),
+                            initial_storage,
+                            0 as tez);
+  Test.Contract.transfer_exn(Test.Typed_address.get_entrypoint("default", contract.taddr), unit, 0 as tez);
   return Assert.assert(Test.Typed_address.get_storage(contract.taddr) == initial_storage + 1);
 })();
 ```

@@ -1,5 +1,5 @@
 namespace C {
-  @entry
+  // @entry
   const main = (p: [int, int], _: unit) => {
     const op1 = Tezos.emit("%foo", p);
     const op2 = Tezos.emit("%foo", p[0]);
@@ -10,8 +10,8 @@ namespace C {
 import Test = Test.Next;
 
 const test = () => {
-  const orig = Test.Originate.contract(contract_of(C), unit, 0tez);
-  Test.Typed_address.transfer_exn(orig.taddr, Main ([1,2]), 0tez);
+  const orig = Test.Originate.contract(contract_of(C), unit, 0 as tez);
+  Test.Typed_address.transfer_exn(orig.taddr, ["Main" as "Main", [1,2]], 0 as tez);
   return [Test.State.last_events(orig.taddr, "foo") as list<[int, int]>, Test.State.last_events(orig.taddr, "foo") as list<int>];
 };
 

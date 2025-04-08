@@ -1,6 +1,5 @@
 type age = int
 type name = string
-
 function add (a: int, b: int): int {
   const c = a;
   const d = b;
