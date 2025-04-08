@@ -2722,7 +2722,8 @@ and strip_E_template_string (node : Ast.template_string wrap) : (S.expr, _) resu
 
 and strip_template_string (node : Ast.template_string wrap) : (S.expr, _) result =
   match node#payload with
-  | _, [ String_fragment literal ], _ -> Ok (S.E_template literal)
+  | _, [ String_fragment literal ], _
+  | _, [ Escape_sequence literal ], _ -> Ok (S.E_template literal)
   | _ -> mk_err Template_string node#region
 
 (* This (expression) *)
