@@ -6,8 +6,8 @@ const cardinal: nat = Set.size(my_set);
 const larger_set: set<int> = Set.add(4, my_set);
 const smaller_set: set<int> = Set.remove(3, my_set);
 const assert_all_greater_than_three = s => {
-  let predicate = i => assert(i > 3);
+  const predicate = i => Assert.assert(i > 3);
   Set.iter(predicate, s);
 };
 const sum = ([acc, i]: [int, int]) => acc + i;
-const sum_of_elements = Set.fold (sum, my_set, 0);
+const sum_of_elements = Set.fold(sum, my_set, 0);

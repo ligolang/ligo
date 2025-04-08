@@ -1,4 +1,4 @@
-const c : ((_p : int) => int) = Tezos.constant("expruCKsgmUZjC7k8NRcwbcGbFSuLHv5rUyApNd972MwArLuxEZQm2")
+const c : (_p : int) => int = Tezos.constant("expruCKsgmUZjC7k8NRcwbcGbFSuLHv5rUyApNd972MwArLuxEZQm2")
 
 // @entry
 const main = (_p : unit, s : int) : [list<operation>, int] =>

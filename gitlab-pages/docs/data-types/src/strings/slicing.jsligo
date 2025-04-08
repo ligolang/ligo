@@ -1,2 +1,2 @@
 const name = "Alice";
-const slice = String.sub (0n, 1n, name); // slice == "A"
+const slice = String.sub (0 as nat, 1 as nat, name); // slice == "A"

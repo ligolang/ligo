@@ -9,7 +9,7 @@ module C = struct
 
   [@entry]
   let main (() : parameter) (store : storage) : return =
-    [], (Tezos.constant ct store)
+    [], Tezos.constant ct store
 end
 
 let test =

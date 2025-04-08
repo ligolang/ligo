@@ -1,4 +1,4 @@
-const x = () => {
+function x () {
   const _age = 25;
   {
     const _age = 3; // does not give an error

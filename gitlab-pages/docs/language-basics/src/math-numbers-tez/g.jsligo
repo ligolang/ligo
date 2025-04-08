@@ -1,2 +1,2 @@
-const a = int(1n);
+const a = int(1 as nat);
 const b = abs(1);

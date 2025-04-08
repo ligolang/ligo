@@ -1,10 +1,10 @@
 type animal =
-@layout("comb")
+// @layout("comb")
 | ["Elephant"]
 | ["Dog"]
 | ["Cat"];
 type artist =
-@layout("comb")
+// @layout("comb")
 {
   genre : string,
   since : timestamp,
@@ -14,23 +14,24 @@ type w_and_v = michelson_pair<[int, "w", nat, "v"]>;
 type x_and = michelson_pair<[string, "x", w_and_v, "other"]>;
 type y_or = michelson_or<[unit, "y", x_and, "other"]>;
 type z_or = michelson_or<[unit, "z", y_or, "other"]>;
-let z : z_or = M_left(unit);
+const z : z_or = ["M_left" as "M_left"];
 
-let y_1 : y_or = M_left(unit);
-let y : z_or = M_right(y_1);
+const y_1 : y_or = ["M_left" as "M_left"];
+const y : z_or = ["M_right" as "M_right", y_1];
 
-let x_pair = ["foo", [2, 3n]];
-let x_1 : y_or = M_right (x_pair);
-let x : z_or = M_right (y_1);
+const x_pair = ["foo", [2, 3 as nat]];
+const x_1 : y_or = ["M_right" as "M_right", x_pair];
+const x : z_or = ["M_right" as "M_right", y_1];
 type storage = int;
 
 type parameter =
    ["Left", int]
  | ["Right", int];
 
-let main = (p: parameter, x: storage): [list<operation>, storage] =>
-  [list ([]), match(p) {
-    when(Left(i)): x - i;
-    when(Right(i)): x + i
-   }
+const main = (p: parameter, x: storage): [list<operation>, storage] =>
+  [[],
+   $match(p, {
+    "Left": i => x - i,
+    "Right": i => x + i
+   })
   ];

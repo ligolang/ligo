@@ -1,1 +1,1 @@
-let check = (p : unit) => Tezos.get_self_address();
+const check = (p : unit) => Tezos.get_self_address();

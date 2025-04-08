@@ -1,5 +1,5 @@
 type int_option = ["Number", int] | ["Null"];
 
-let x = Number(5);
+const x = ["Number" as "Number", 5];
 
-let y = Null ();
+const y = ["Null" as "Null"];

@@ -2,8 +2,8 @@ type foo =
   { kind: "increment", amount: int}
 | { kind: "decrement", amount: int}
 | { kind: "reset"};
-let obj = { kind: "increment", amount: 3};
-let obj2 = { kind: "reset" };
+const obj = { kind: "increment", amount: 3};
+const obj2 = { kind: "reset" };
 function foo (item: foo) {
   let state = 0;
   switch(item.kind) {

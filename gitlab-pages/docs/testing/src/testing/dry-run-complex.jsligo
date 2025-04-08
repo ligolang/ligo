@@ -2,7 +2,7 @@ namespace MyContract {
   type storage_type = map<nat, string>;
   type return_type = [list<operation>, storage_type];
 
-  @entry
+  // @entry
   const update = (param: [nat, string], storage: storage_type): return_type => {
     const [index, value] = param;
     const updated_map = Map.add(index, value, storage);

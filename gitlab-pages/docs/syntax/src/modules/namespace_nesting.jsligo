@@ -4,8 +4,8 @@ namespace Euro {
   export let add = (a: t, b: t): t => a + b;
 
   export namespace Coin {
-    export let one: t = 1n;
-    export let two: t = 2n;
+    export let one: t = 1 as nat;
+    export let two: t = 2 as nat;
   };
 };
 type euro_balance = Euro.t;

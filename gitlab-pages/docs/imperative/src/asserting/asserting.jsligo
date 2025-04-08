@@ -1,9 +1,9 @@
-const incr_if_true = (b: bool, n: int) : int => {
-  assert(b);
+function incr_if_true (b: bool, n: int) : int {
+  Assert.assert(b);
   return n+1;
 };
 
-const incr_if_some = (b: option<unit>, n: int) : int => {
-  assert_some(b);
+function incr_if_some (b: option<unit>, n: int) : int {
+  Assert.some(b);
   return n+1;
 };

@@ -33,7 +33,7 @@ const lastName: string = winner[1];
 const add = (a: int, b: int): int =>
   a + b;
 function if_statement (age : nat): string {
-  if (age >= 16n) return "yes"; else return "no"
+  if (age >= (16 as nat)) return "yes"; else return "no";
 }
 type middle_name = option<string>;
 const a_middle_name : middle_name = ["Some" as "Some", "Foo"];
@@ -82,15 +82,15 @@ namespace FA0_inferred {
   // @entry
   const extra = (s : int, k : int) : [list<operation>, int] => [[], s - k];
 }
-type storage;
+type storage = int;
 
 interface FA0_INTF {
   //@entry
   add : (s : int, k : storage) => [list<operation>, storage];
 }
 interface FA0_EXT_INTF extends FA0_INTF {
-  type storage;
-  @entry const add : (s : int, k : storage) => [list<operation>, storage];
+  // @entry
+  add : (s : int, k : storage) => [list<operation>, storage];
 }
 class FA0 implements FA0_INTF {
   @entry

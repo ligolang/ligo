@@ -3,8 +3,9 @@ type action =
 | ["Decrement", int]
 | ["Reset"];
 const a: action = ["Increment" as "Increment", 5];
-const result: int = $match(a, {
-  "Increment": n => n + 1,
-  "Decrement": n => n - 1,
-  "Reset": () => 0
-})
+const result: int =
+  $match(a, {
+    "Increment": n => n + 1,
+    "Decrement": n => n - 1,
+    "Reset": () => 0
+  });

@@ -1,1 +1,1 @@
-let check = (p : unit) => Tezos.get_sender ();
+const check = (p : unit) => Tezos.get_sender();

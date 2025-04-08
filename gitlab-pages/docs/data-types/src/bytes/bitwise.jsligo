@@ -8,7 +8,7 @@ const or: bytes = 0x0005 | 0x0106; // 0x0107
 const xor: bytes = 0x0005 ^ 0x0106; // 0x0103
 
 // Bitwise "shift left"
-const shift_left: bytes = 0x06 << 8n; // 0x0600
+const shift_left: bytes = 0x06 << (8 as nat); // 0x0600
 
 // Bitwise "shift right"
-const shift_right: bytes = 0x0006 >> 1n; // 0x0003
+const shift_right: bytes = 0x0006 >> (1 as nat); // 0x0003

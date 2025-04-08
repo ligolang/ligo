@@ -1,12 +1,11 @@
-type storage = big_map<string, ticket<int>> ;
-
-type parameter = int ;
-
+type storage = big_map<string, ticket<int>>;
+type parameter = int;
 type result = [list<operation>, storage];
 
-@entry
+// @entry
 function main (i: parameter, store : storage): result {
-  let my_ticket1 = Option.unopt (Tezos.create_ticket (i, 10n));
-  let [_x, ret] = Big_map.get_and_update ("hello", Some(my_ticket1), store);
+  const my_ticket1 = Option.unopt (Tezos.create_ticket(i, 10 as nat));
+  const [_x, ret] =
+    Big_map.get_and_update ("hello", ["Some" as "Some", my_ticket1], store);
   return [[], ret]
 };
