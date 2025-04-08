@@ -1,3 +1,3 @@
-let x = Some(5);
+const x = ["Some" as "Some", 5];
 
-let y: option<int> = None();
+const y: option<int> = ["None" as "None"];

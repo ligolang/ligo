@@ -11,4 +11,4 @@ module TacoShop = struct
   let buy_taco (taco_kind_index : nat) (taco_shop_storage : taco_shop_storage) : operation list * taco_shop_storage =
     [], taco_shop_storage
 
-end 
+end

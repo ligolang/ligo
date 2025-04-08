@@ -1,4 +1,4 @@
 const incr_if_true = (b: bool, n: int) : int => {
-  assert_with_error (b, "My custom error message.");
+  Assert.Error.assert (b, "My custom error message.");
   return n+1;
 };

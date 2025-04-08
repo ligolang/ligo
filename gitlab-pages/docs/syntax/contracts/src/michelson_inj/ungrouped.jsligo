@@ -1,0 +1,2 @@
+const michelson_add = (n : [int, int]) : int =>
+  (michelson_of_file`my_michelson.tz` as ((n: [int, int]) => int))(n)

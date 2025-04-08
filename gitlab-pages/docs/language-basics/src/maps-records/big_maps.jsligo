@@ -9,6 +9,8 @@ const my_balance: option<move> =
   Big_map.find_opt("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" as address, moves);
 const updated_map: register =
   Big_map.update
-    ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" as address, Some([4, 9]), moves);
+    ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" as address,
+     ["Some" as "Some", [4, 9]],
+     moves);
 const updated_map_: register =
   Big_map.remove("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" as address, moves);

@@ -1,0 +1,15 @@
+type parameter =
+  ["Increment", int]
+| ["Extend", never];
+
+type storage = int;
+
+// @entry
+function main (action: parameter, store: storage) : [list<operation>, storage] {
+  let storage =
+    $match(action, {
+      "Increment": n => store + n,
+      "Extend": k => (Michelson`{ NEVER }` as ((n: never) => int))(k)
+    });
+  return [[], storage];
+};

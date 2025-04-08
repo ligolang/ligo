@@ -1,1 +1,1 @@
-let check = (p: unit) => Tezos.self("%default");
+const check = (p: unit) => Tezos.self("%default");

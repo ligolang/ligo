@@ -1,11 +1,13 @@
-const my_ticket1 = Option.unopt(Tezos.create_ticket(1, 10n));
-const my_ticket2 = Option.unopt(Tezos.create_ticket("one", 10n));
-const v2 = do {
-  let [[_addr, [payload, _amt]], _ticket] = Tezos.read_ticket (my_ticket2);
+const my_ticket1 =
+  Option.value_with_error("option is None", Tezos.Next.Ticket.create(1, 10 as nat));
+const my_ticket2 =
+  Option.value_with_error("option is None", Tezos.Next.Ticket.create("one", 10 as nat));
+const v2 = (() => {
+  let [[_addr, [payload, _amt]], _ticket] = Tezos.Next.Ticket.read(my_ticket2);
   return payload;
-}
+})()
 const [ta, tb] =
-  match(Tezos.split_ticket(my_ticket1, [6n, 4n])) {
-    when(None()): failwith("amt_a + amt_v != amt");
-    when(Some(split_tickets)): split_tickets
-  };
+  $match(Tezos.Next.Ticket.split(my_ticket1, [6 as nat, 4 as nat]), {
+    "None": () => failwith("amt_a + amt_v != amt"),
+    "Some": (split_tickets) => split_tickets
+  });

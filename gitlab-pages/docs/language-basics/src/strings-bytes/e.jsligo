@@ -1,2 +1,2 @@
 const b     = 0x12345678;
-const slice = Bytes.sub (1n, 2n, b); // 0x3456
+const slice = Bytes.sub(1 as nat, 2 as nat, b); // 0x3456

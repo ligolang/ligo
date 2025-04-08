@@ -5,5 +5,5 @@ type user =
 | ["Manager", id]
 | ["Guest"];
 
-const u : user = Admin(1000n);
-const g : user = Guest();
+const u : user = ["Admin" as "Admin", 1000 as nat];
+const g : user = ["Guest" as "Guest"];

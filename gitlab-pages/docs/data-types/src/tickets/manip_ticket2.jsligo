@@ -1,3 +1,5 @@
-const ta = Option.unopt(Tezos.create_ticket(1, 10n));
-const tb = Option.unopt(Tezos.create_ticket(1, 5n));
-const tc = Tezos.join_tickets([ta, tb]);
+const ta = Option.value_with_error("option is None",
+                                   Tezos.Next.Ticket.create(1, 10 as nat));
+const tb = Option.value_with_error("option is None",
+                                   Tezos.Next.Ticket.create(1, 5 as nat));
+const tc = Tezos.Next.Ticket.join([ta, tb]);

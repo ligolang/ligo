@@ -1,6 +1,6 @@
-@inline
+// @inline
 const fst = (p: [nat, nat]) => p[0];
 
-@entry
+// @entry
 const main = (p: [nat, nat], s: [nat, nat]) : [list<operation>, [nat, nat]] =>
-    [[], [fst([p[0], p[1]]), fst([s[1], s[0]])]];
+  [[], [fst([p[0], p[1]]), fst([s[1], s[0]])]];

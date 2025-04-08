@@ -1,12 +1,12 @@
-type my_record = { a : int ; b : nat ; c : string }
+type my_record = {a: int, b: nat, c: string}
 type my_tuple = [int, nat, string]
 
-let on_record = (v : my_record) : int =>
-  match (v) {
-    when ({ a ; b : b_renamed ; c : _c }): a + int(b_renamed)
-  }
+function on_record(v: my_record) : int {
+  const {a, b: b_renamed, c: _c } = v;
+  return a + int(b_renamed);
+}
 
-let on_tuple = (v : my_tuple) : int =>
-  match (v) {
-    when ([x, y, _s]): x + int(y)
-  }
+function on_tuple(v: my_tuple) : int {
+  const [x, y, _s] = v;
+  return x + int(y);
+}

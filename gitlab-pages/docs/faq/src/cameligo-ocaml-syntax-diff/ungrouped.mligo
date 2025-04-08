@@ -1,6 +1,6 @@
 let y = -(-1) (* In CameLIGO *)
 (* In CameLIGO *)
-let res = 
+let res =
   type t = int list in
   let x : t = [42] in
   43 :: x

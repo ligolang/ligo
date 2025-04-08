@@ -4,7 +4,7 @@ type ordinate = int
 type move = [abscissa, ordinate]
 type game = map<player, move>
 
-const horizontal_offset = (g: game): int => {
+function horizontal_offset (g: game): int {
   let folded = ([acc, j]: [int, [player, move]]) => acc + j[1][0];
   return Map.fold(folded, g, 0);
 };

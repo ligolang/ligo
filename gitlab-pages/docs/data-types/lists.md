@@ -211,7 +211,7 @@ let evens_zeroed = List.update_with (fun x -> x mod 2 = 0n) 0 nats
 ```jsligo group=list_updating
 const nats : list<int> = [0, 1, 2, 3, 4];
 // evens_zeroed == [0, 1, 0, 3, 0]
-const evens_zeroed = List.update_with(x => x % 2 == 0n, 0, nats);
+const evens_zeroed = List.update_with(x => x % 2 == (0 as nat), 0, nats);
 ```
 
 </Syntax>

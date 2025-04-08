@@ -2,18 +2,18 @@
 const a = 5 + 10;
 
 // nat + int yields int
-const b = 5n + 10;
+const b = (5 as nat) + 10;
 
 // tez + tez yields tez
-const c: tez = 5mutez + 1tez;
+const c: tez = (5 as mutez) + (1 as tez);
 
 // tez + int or tez + nat is invalid:
-// const d : tez = 5mutez + 10n;
+// const d : tez = (5 as mutez) + (10 as nat);
 
 // two nats yield a nat
-const e: nat = 5n + 10n;
+const e: nat = (5 as nat) + (10 as nat);
 
 // nat + int yields an int: invalid
-// const f : nat = 5n + 10;
+// const f : nat = (5 as nat) + 10;
 
 const g = 1_000_000;

@@ -145,7 +145,7 @@ arithmetics is the division:
 
 ```jsligo group=options
 function div (a: nat, b: nat): option<nat> {
-  if (b == 0n) return ["None" as "None"];
+  if (b == (0 as nat)) return ["None" as "None"];
   return ["Some" as "Some", a/b]
 };
 ```

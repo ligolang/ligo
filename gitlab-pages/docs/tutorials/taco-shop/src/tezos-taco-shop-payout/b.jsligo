@@ -6,20 +6,14 @@ namespace TacoShop {
 
   const donationAddress : address = "tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx";
 
-  @entry
-  function buy_taco(taco_kind_index: nat, taco_shop_storage: taco_shop_storage): [
-    list<operation>,
-    taco_shop_storage
-  ]  {
+  // @entry
+  function buy_taco(taco_kind_index: nat, taco_shop_storage: taco_shop_storage): [list<operation>, taco_shop_storage] {
     /* Retrieve the taco_kind from the contracts storage or fail */
-
     const taco_kind: taco_supply =
-      match(Map.find_opt(taco_kind_index, taco_shop_storage)) {
-        when (Some(kind)):
-          kind
-        when (None):
-          failwith("Unknown kind of taco")
-      };
+      $match(Map.find_opt(taco_kind_index, taco_shop_storage), {
+        "Some": kind => kind,
+        "None": () => failwith("Unknown kind of taco")
+      });
     const current_purchase_price: tez =
       taco_kind.max_price / taco_kind.current_stock;
     /* We won't sell tacos if the amount is not correct */
@@ -34,33 +28,34 @@ namespace TacoShop {
       const taco_shop_storage =
         Map.update(
           taco_kind_index,
-          (
-            Some({
-              ...taco_kind, current_stock: abs(taco_kind.current_stock - 1n)
-            })
-          ),
+          [
+            "Some" as "Some", {
+              ...taco_kind, current_stock: abs(taco_kind.current_stock - (1 as nat))
+            }
+          ],
           taco_shop_storage
         );
 
       const receiver : contract<unit> =
-      match ((Tezos.get_contract_opt (ownerAddress))) {
-        when(Some(contract)): contract;
-        when(None()): ((failwith ("Not a contract")))
-      };
+        $match(Tezos.get_contract_opt (ownerAddress), {
+          "Some": contract => contract,
+          "None": () => failwith ("Not a contract")
+      });
 
       const donationReceiver : contract<unit>  =
-        match ((Tezos.get_contract_opt (donationAddress))) {
-          when(Some(contract)): contract;
-          when(None()): ((failwith ("Not a contract")))
-        };
+        $match((Tezos.get_contract_opt (donationAddress)), {
+          "Some": contract => contract,
+          "None": () => failwith ("Not a contract")
+        });
 
-      const donationAmount = ((Tezos.get_amount ()) / 10n) as tez;
+      const donationAmount = ((Tezos.get_amount ()) / (10 as nat)) as tez;
 
       // Pedro will get 90% of the amount
-      const op1 = match ((Tezos.get_amount ()) - donationAmount) {
-        when(Some(x)): Tezos.transaction (unit, x, receiver);
-        when(None()): failwith ("Insufficient balance")
-      };
+      const op1 =
+        $match (Tezos.get_amount () - donationAmount, {
+          "Some": x => Tezos.transaction (unit, x, receiver),
+          "None": () => failwith ("Insufficient balance")
+      });
       const op2 = Tezos.transaction (unit, donationAmount, donationReceiver);
       const operations : list<operation> = [ op1 , op2 ];
 
@@ -68,12 +63,13 @@ namespace TacoShop {
     }
   };
 }
+
 const default_storage: TacoShop.taco_shop_storage =
   Map.literal(
     list(
       [
-        [1n, { current_stock: 50n, max_price: 50000000mutez }],
-        [2n, { current_stock: 20n, max_price: 75000000mutez }]
+        [1 as nat, { current_stock: 50 as nat, max_price: 50000000 as mutez }],
+        [2 as nat, { current_stock: 20 as nat, max_price: 75000000 as mutez }]
       ]
     )
   );
