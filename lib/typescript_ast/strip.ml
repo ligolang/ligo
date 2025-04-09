@@ -343,13 +343,9 @@ and strip_named_imports region file_path (node : Ast.named_imports)
     : (S.import_decl, _) result
   =
   let Ast.(Braces braces) = node in
-  match braces#payload.contents with
-  | [] -> mk_err Empty_import_list region
-  | fst_import :: more_imports ->
-    let* fst_import = strip_import_specifier fst_import in
-    let* more_imports = Result.all @@ List.map ~f:strip_import_specifier more_imports in
-    let imported_vars = Nonempty_list.(fst_import :: more_imports) in
-    let import_from = mk_reg region (imported_vars, file_path) in
+  let imports = braces#payload.contents in
+    let* imports = Result.all @@ List.map ~f:strip_import_specifier imports in
+    let import_from = mk_reg region (imports, file_path) in
     Ok (S.Import_from import_from)
 
 and strip_import_specifier (node : Ast.import_specifier) : (S.variable, _) result =

@@ -144,7 +144,6 @@ type t =
   | No_default
   | Invalid_export
   | Invalid_import
-  | Empty_import_list
   | Import_and_rename
   | Multiple_spreads_in_object
   | Complex_path
@@ -319,7 +318,6 @@ let to_string = function
   | No_default -> "Fields without default values are not supported in JsLIGO."
   | Invalid_export -> "Only exports of one declaration at a time are supported in JsLIGO."
   | Invalid_import -> "This form of import is not supported in JsLIGO."
-  | Empty_import_list -> "Empty import lists are not supported in JsLIGO."
   | Import_and_rename -> "Importing with a renaming is not supported in JsLIGO."
   | Multiple_spreads_in_object ->
     "Multiple spreads in objects are not supported in JsLIGO."

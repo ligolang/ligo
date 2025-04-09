@@ -144,7 +144,6 @@ type t =
   | No_default
   | Invalid_export
   | Invalid_import
-  | Empty_import_list
   | Import_and_rename
   | Multiple_spreads_in_object
   | Complex_path

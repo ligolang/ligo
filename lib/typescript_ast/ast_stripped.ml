@@ -184,7 +184,7 @@ and import_alias = variable * simple_path reg
 and import_all_as = variable * file_path
 
 (* import {x, y} from "/my/path.ts" *)
-and import_from = variable Ne_list.t * file_path
+and import_from = variable list * file_path
 
 (* Interfaces
 
