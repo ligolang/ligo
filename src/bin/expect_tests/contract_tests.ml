@@ -264,7 +264,6 @@ let%expect_test _ =
     ];
   [%expect {| {} |}]
 
-(* TODO: Put it back in after the bug on imports has been fixed.
 let%expect_test _ =
   run_ligo_good
     [ "compile"
@@ -275,7 +274,6 @@ let%expect_test _ =
     ; contract "import_export/h.jsligo"
     ];
   [%expect {| 42 |}]
- *)
 
 let%expect_test _ =
   run_ligo_good
@@ -347,7 +345,6 @@ let%expect_test _ =
   [%expect {|
     84 |}]
 
-(* TODO: After the bug on imports has been fixed.
 let%expect_test _ =
   run_ligo_good
     [ "compile"; "contract"; contract "FA1_2_interface.mligo"; "-m"; "FA12_ENTRIES" ];
@@ -537,7 +534,6 @@ let%expect_test _ =
                              UPDATE 3 } ;
                          NIL operation } } } ;
              PAIR } } |}]
- *)
 
 let%expect_test _ =
   run_ligo_good
@@ -1731,9 +1727,7 @@ let%expect_test _ =
         7 | import Foo = Bar.Foo
                          ^^^^^^^
 
-       Module "Bar.Foo" not found. |}] (* ; *)
-(* TODO: Enable again after fixing bug with import:
-
+       Module "Bar.Foo" not found. |}] ;
     run_ligo_bad
     [ "compile"
     ; "expression"
@@ -1750,7 +1744,6 @@ let%expect_test _ =
                       ^^^
 
       Type "t" not found. |}]
- *)
 
 (* Test compile contract with Big_map.get_and_update for Hangzhou *)
 let%expect_test _ =
@@ -2669,9 +2662,7 @@ let%expect_test _ =
   [%expect {| Unit |}];
   run_ligo_good
     [ "compile"; "parameter"; contract "single.contract.jsligo"; "[]"; "-e"; "poke" ];
-  [%expect {| Unit |}] (*;*)
-  (* TODO: Enable back when import is fixed
-
+  [%expect {| Unit |}];
     run_ligo_good
     [ "compile"
     ; "parameter"
@@ -2688,7 +2679,7 @@ let%expect_test _ =
     [ "compile"
     ; "parameter"
     ; contract "single.parameter.jsligo"
-    ; "Poke()"
+    ; "[\"Poke\" as \"Poke\"]"
     ; "-m"
     ; "Contract"
     ];
@@ -2704,7 +2695,6 @@ let%expect_test _ =
     ];
   [%expect {|
     Unit |}]
-   *)
 
 (* make sure that in compile storage we annotate the type *)
 let%expect_test _ =
@@ -2902,8 +2892,6 @@ let%expect_test _ =
     ];
   [%expect {| ( LIST_EMPTY() , 42 ) |}]
 
-(* TODO: Enable back when import statements are working
-
 let%expect_test _ =
   run_ligo_good
     [ "compile"; "contract"; contract "entrypoint_in_module.jsligo"; "-m"; "M.C" ];
@@ -2916,7 +2904,6 @@ let%expect_test _ =
              NIL operation ;
              PAIR } ;
       view "foo" int int { UNPAIR ; ADD } } |}]
- *)
 
 let%expect_test _ =
   run_ligo_bad [ "compile"; "contract"; bad_contract "entrypoint_no_type.jsligo" ];

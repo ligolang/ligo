@@ -268,7 +268,7 @@ let two : t = 2n
 In another file, you can import this file, assign it the module `Euro`, and use its definitions:
 
 ```cameligo group=main_importer
-#import "gitlab-pages/docs/compiling/src/preprocessor/euro.mligo" "Euro"
+module Euro = Gitlab_pages.Docs.Compiling.Src.Preprocessor.Euro
 
 type storage = Euro.t
 

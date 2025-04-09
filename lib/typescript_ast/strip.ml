@@ -283,7 +283,10 @@ and strip_decorated_declaration (node : Ast.declaration Ast.decorated)
   let f dec decl = S.D_decorated (dec, decl) in
   Ok (List.fold_right ~f ~init:decl decorators)
 
-(* Import statement *)
+(* Import statement
+
+  We ignore any decorator in a comment, except "@export".
+ *)
 
 and strip_S_import_statement (node : Ast.import_statement wrap)
     : (S.statement option, _) result
@@ -292,7 +295,7 @@ and strip_S_import_statement (node : Ast.import_statement wrap)
   Ok (Some statement)
 
 and strip_import_statement (node : Ast.import_statement wrap) : (S.statement, _) result =
-  let Ast.{ kwd_import = _; import_kind; import; import_attribute } = node#payload in
+  let Ast.{ kwd_import; import_kind; import; import_attribute } = node#payload in
   let* () =
     match import_kind with
     | None -> Ok ()
@@ -305,8 +308,20 @@ and strip_import_statement (node : Ast.import_statement wrap) : (S.statement, _)
     | Some (Import_with (kwd, _)) | Some (Import_assert (kwd, _)) ->
       mk_err Invalid_import kwd#region
   in
+  let comments = kwd_import#comments in
+  let comments = strip_comments comments in
+  let decorators = extract_decorators comments in
+  let rec filter_export rev_prefix = function
+    | [] -> None, List.rev rev_prefix
+    | d :: decorators ->
+       match d#payload with
+       | "export", None -> Some d, decorators
+       | _ -> filter_export (d:: rev_prefix) decorators in
+  let export_decorator, _ = filter_export [] decorators in
   let* import_decl = strip_import node#region import in
-  Ok (S.S_decl import_decl)
+  match export_decorator with
+  | None -> Ok (S.S_decl import_decl)
+  | Some _ -> Ok (S.S_export import_decl)
 
 and strip_import region (node : Ast.import) : (S.declaration, _) result =
   match node with

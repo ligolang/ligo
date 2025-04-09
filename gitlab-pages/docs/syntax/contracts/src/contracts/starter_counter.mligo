@@ -15,7 +15,6 @@ module Counter = struct
 end
 
 let test =
-
   let contract = Test.Originate.contract (contract_of Counter) 0 0tez in
   let _ = Test.Contract.transfer_exn (Test.Typed_address.get_entrypoint "add" contract.taddr) 5 0tez in
   let _ = Test.Contract.transfer_exn (Test.Typed_address.get_entrypoint "sub" contract.taddr) 2 0tez in

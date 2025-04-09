@@ -281,8 +281,6 @@ let%expect_test _ =
     ];
   [%expect {| { Pair 3 4 5 ; Pair 4 3 5 } |}]
 
-(* TODO: Rewrite after impor statements are fixed.
-
 let () = Sys_unix.chdir pwd
 let () = Sys_unix.chdir "../../test/contracts/polymorphism/"
 
@@ -297,7 +295,6 @@ let%expect_test _ =
     ];
   [%expect {|
     { Pair 3 4 5 ; Pair 6 8 10 } |}]
- *)
 
 let () = Sys_unix.chdir pwd
 let () = Sys_unix.chdir "../../test/contracts/polymorphism/"
@@ -361,8 +358,6 @@ let%expect_test _ =
     Everything at the top-level was executed.
     - test_helpers exited with value (). |}]
 
-(* TODO: Rewrite after impor statements are fixed.
-
 let () = Sys_unix.chdir pwd
 let () = Sys_unix.chdir "../../test/contracts/polymorphism/"
 
@@ -370,18 +365,8 @@ let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "use_rec.jsligo" ];
   [%expect
     {|
-    File "./use_rec.jsligo", line 4, characters 14-28:
-      3 | const _test = (_t : unit) : int => {
-      4 |    let orig = Test.originate(contract_of (Contract), 0, 0 as tez);
-                        ^^^^^^^^^^^^^^
-      5 |    return orig.size;
-    :
-    Warning: deprecated value.
-    In a future version, `Test` will be replaced by `Test.Next`, and using `Originate.contract` from `Test.Next` is encouraged for a smoother migration.
-
     Everything at the top-level was executed.
     - test exited with value 51. |}]
- *)
 
 let () = Sys_unix.chdir pwd
 let () = Sys_unix.chdir "../../test/contracts/polymorphism/"
