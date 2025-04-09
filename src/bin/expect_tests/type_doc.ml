@@ -26,16 +26,21 @@ let%expect_test _ =
   print_endline @@ replace_import @@ [%expect.output];
   [%expect
     {|
-    //@ts-nocheck
-    export import SomeFile =
+    // @ts-nocheck
+    // @export
+    import SomeFile =
     ../../test/contracts/tuples_sequences_functions.jsligo
-    export import MligoWontBeInTheOutput = ../../test/contracts/address.mligo
+
+    // @export
+    import MligoWontBeInTheOutput = ../../test/contracts/address.mligo
 
     /**
      * Top level value doc
      */
     export const top_level_value : int = "..."
-    export import Map = ../../test/contracts/map.jsligo
+
+    // @export
+    import Map = ../../test/contracts/map.jsligo
 
     /** Doc for type */
     export type t <a,b> = ["A", int] | ["B", a] | ["C", b]

@@ -1,10 +1,4 @@
-//#define USE_SET
-
-#if USE_SET
 import * as M from "set_monad.mligo";
-#else
-import * as M from "list_monad.mligo";
-#endif
 
 type t<a> = M.monad<a>;
 

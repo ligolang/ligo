@@ -70,7 +70,7 @@ For example, this view uses the old syntax:
 
 ```jsligo skip
 // Prior to LIGO 1.0
-// @entry
+@entry
 const set_storage = ([new_storage, _old_storage] : [int, int]): [list<operation>, int] => [[], new_storage]
 
 @view
@@ -80,11 +80,12 @@ const get_storage = ([_, storage] : [unit, int]): int => storage
 This equivalent view uses the new syntax:
 
 ```jsligo
-@entry
+// @entry
 const set_storage = (new_storage: int, _old_storage: int): [list<operation>, int] => [[], new_storage]
 
-@view
+// @view
 const get_storage = (_: unit, storage: int): int => storage
+
 ```
 
 </Syntax>
@@ -131,20 +132,22 @@ If your project has a stable ABI that other tools rely on, you might need to man
 
 Combs and trees can perform differently, so you can try setting types such as variants with many cases as combs or trees and comparing the size and gas consumption of the compiled contracts.
 
-## Decorators are not commented
+## Decorators in and out of comments
 
-Prior to version 1.0, JsLIGO decorators were put in comments, as in this example:
+Prior to version 1.0, JsLIGO some decorators were put in comments, as in this example:
 
 ```jsligo skip
 // @entry
 const my_entry_point = (_: unit, n: int) : [list<operation>, int] => [[], n];
 ```
 
-Now, decorators are not in comments, as in this example:
+Now, some decorators are in comments, others not when the TypeScript
+allows it, as in this example:
 
 ```jsligo
-@entry
+// @entry
 const my_entry_point = (_: unit, n: int) : [list<operation>, int] => [[], n];
+
 ```
 
 For more information, see [Decorators](../syntax/decorators).
@@ -207,20 +210,20 @@ The following operators have been added, and can be used with `nat` and `bytes`:
 Here are examples of these operators in context:
 
 ```jsligo
-const zero: nat = 2n & 1n; // Bitwise and
+const zero: nat = (2 as nat) & (1 as nat); // Bitwise and
 const two_bytes: bytes = 0x11 & 0x10
 
-const five: nat = 4n | 1n; // Bitwise or
+const five: nat = (4 as nat) | (1 as nat); // Bitwise or
 const three_bytes: bytes = 0x11 | 0x10
 
-const three: nat = 2n ^ 1n; // Bitwise xor
+const three: nat = (2 as nat) ^ (1 as nat); // Bitwise xor
 const one_byte: bytes = 0x11 ^ 0x10
 
-const four: nat = 2n << 1n // Bitwise left shift
-const five_one_two: bytes = 0x0100 << 1n
+const four: nat = (2 as nat) << (1 as nat) // Bitwise left shift
+const five_one_two: bytes = 0x0100 << (1 as nat)
 
-const one: nat = 2n >> 1n; // Bitwise right shift
-const zero_bytes: bytes = 0x01 >> 1n
+const one: nat = (2 as nat) >> (1 as nat); // Bitwise right shift
+const zero_bytes: bytes = 0x01 >> (1 as nat)
 ```
 
 For more information, see [Bitwise operations](../data-types/bytes#bitwise-operations).
@@ -256,18 +259,12 @@ const force_positive = (key: string, dict: map<string, int>) => {
 This is an equivalent match in JsLIGO 1.0:
 
 ```jsligo
-const force_positive = (key: string, dict: map<string, int>) => {
-  return match(Map.find_opt (key, dict)) {
-    when(Some(val)): do {
-        if (val >= 0) {
-            return val;
-        } else {
-            failwith("Negative value");
-        }
-    };
-    when(None()): failwith("Not found.")
-  };
-}
+const force_positive = (key: string, dict: map<string, int>) =>
+  $match(Map.find_opt (key, dict), {
+    "Some": val =>
+       (() => { if (val >= 0) return val; else failwith("Negative value") })(),
+    "None": () => failwith("Not found.")
+  });
 ```
 
 Pattern-matching on lists in version 1.0 uses the syntaxes `when([])` and `when([head, ...tail])`:
@@ -277,12 +274,13 @@ type storage = [int, list <int>];
 type parameter = list <int>;
 type returnx = [list <operation>, storage];
 
-let main = (p : parameter, s : storage) : returnx => {
-  let storage = match (p) {
-    when([]): s;
-    when([hd, ...tl]): [s[0] + hd, tl]
-  };
-  return [([] as list<operation>), storage];
+function main (p : parameter, s : storage) : returnx {
+  const storage =
+    $match(List.head_and_tail(p), {
+      "None": () => s,
+      "Some": ([hd, tl]) => [s[0] + hd, tl]
+    });
+  return [[], storage];
 };
 ```
 

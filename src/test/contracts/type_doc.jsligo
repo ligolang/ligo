@@ -1,12 +1,15 @@
-export import * as SomeFile from "tuples_sequences_functions.jsligo";
-export import * as MligoWontBeInTheOutput from "address.mligo";
+// @export
+import * as SomeFile from "tuples_sequences_functions.jsligo";
+// @export
+import * as MligoWontBeInTheOutput from "address.mligo";
 
 /**
  * Top level value doc
  */
 export const top_level_value = 42
 
-export import * as Map from "map.jsligo";
+// @export
+import * as Map from "map.jsligo";
 
 /** Doc for type */
 export type t<a, b> =

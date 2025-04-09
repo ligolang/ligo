@@ -1,1 +1,2 @@
-export import { toto, fb } from "D.jsligo";
+// @export
+import { toto, fb } from "D.jsligo";

@@ -492,8 +492,6 @@ let%expect_test _ =
 let () = Sys_unix.chdir pwd
 let () = Sys_unix.chdir "../../test/contracts/interpreter_tests/"
 
-(* TODO: Enable back when import statements are working
-
 let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "test_mutate_module.jsligo" ];
   [%expect
@@ -506,7 +504,6 @@ let%expect_test _ =
     )]
     Everything at the top-level was executed.
     - test exited with value (). |}]
- *)
 
 let () = Sys_unix.chdir pwd
 let () = Sys_unix.chdir "../../test/contracts/interpreter_tests/"
@@ -1787,15 +1784,13 @@ let%expect_test _ =
     {|
     Everything at the top-level was executed.
     - test_originate_from_file_relative_path exited with value KT1MoPRoithHNa7i6LYHqeQfZB4oyWThinnS.
-    - test_originate_from_file_relative_path_w_r_t_imported_file exited with value true. |}] (*;*)
-(* TODO: Enable back when import statements work.
+    - test_originate_from_file_relative_path_w_r_t_imported_file exited with value true. |}] ;
   run_ligo_good [ "run"; "test"; test "test.jsligo" ];
   [%expect
     {|
     Everything at the top-level was executed.
     - test_originate_from_file_relative_path exited with value KT1MoPRoithHNa7i6LYHqeQfZB4oyWThinnS.
     - test_originate_from_file_relative_path_w_r_t_imported_file exited with value true. |}]
- *)
 
 let () = Sys_unix.chdir pwd
 let () = Sys_unix.chdir "../../test/contracts/interpreter_tests/"
@@ -1818,8 +1813,6 @@ let%expect_test _ =
     Everything at the top-level was executed.
     - test_originate_from_file_relative_path exited with value KT1MoPRoithHNa7i6LYHqeQfZB4oyWThinnS.
     - test_originate_from_file_relative_path_w_r_t_imported_file exited with value true. |}]
-
-(* TODO: Enable back when import statements work.
   ;
   run_ligo_good [ "run"; "test"; test "test/a/b/test.jsligo" ];
   [%expect
@@ -1827,7 +1820,6 @@ let%expect_test _ =
     Everything at the top-level was executed.
     - test_originate_from_file_relative_path exited with value KT1MoPRoithHNa7i6LYHqeQfZB4oyWThinnS.
     - test_originate_from_file_relative_path_w_r_t_imported_file exited with value true. |}]
- *)
 
 let () = Sys_unix.chdir pwd
 let bad_test n = bad_test ("/interpreter_tests/" ^ n)
