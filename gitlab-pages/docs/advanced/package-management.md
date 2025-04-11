@@ -471,7 +471,7 @@ Yes, any syntax can be used in packages. Furthermore, one can consume a package 
 If you need to use the entry points defined within a package, the best approach is likely to alias them:
 
 ```cameligo skip
-#import "package_name/increment.mligo" "Increment"
+module Increment = Package_name.Increment
 
 [@entry] let add = Increment.add
 ```

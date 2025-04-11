@@ -16,3 +16,15 @@ const test_mutation =
       Test.IO.println("Some mutation also passes the tests! ^^")
     })()
   });
+const get_all_mutations =
+  $match(List.head_and_tail(Test.Mutation.All.func(twice, simple_tests)), {
+    "None": () => unit,
+    "Some": ([hd,tl]) => (() => {
+      let mutations = list([hd,...tl]);
+      Test.IO.println("Some mutations also pass the tests!");
+      for (const m of mutations) {
+        let [_, mutation] = m;
+        Test.IO.log(mutation);
+      };
+    })()
+  });

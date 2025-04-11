@@ -286,24 +286,19 @@ let main (_action : unit) (store : storage) : operation list * storage =
 
 </Syntax>
 
-<!-- TODO: Renable when import statements are working. -->
+<Syntax syntax="jsligo">
 
-<!-- <Syntax syntax="jsligo"> -->
+```jsligo group=importer
+import * as EURO from "gitlab-pages/docs/language-basics/src/modules/imported.jsligo";
 
-<!-- ```jsligo group=importer -->
-<!-- import * as EURO from "gitlab-pages/docs/language-basics/src/modules/imported.jsligo"; -->
+type storage = EURO.t;
 
-<!-- ```jsligo group=importer -->
-<!-- #import "gitlab-pages/docs/language-basics/src/modules/imported.jsligo" "EURO" -->
+// @entry
+const main = (_action: unit, store: storage): [list<operation>, storage] =>
+  [[], EURO.add(store, EURO.one)];
+```
 
-<!-- type storage = EURO.t; -->
-
-<!-- // @entry -->
-<!-- const main = (_action: unit, store: storage): [list<operation>, storage] => -->
-<!--   [[], EURO.add(store, EURO.one)]; -->
-<!-- ``` -->
-
-<!-- </Syntax> -->
+</Syntax>
 
 We can compile the file that uses the `#import` statement directly,
 without having to mention the imported file.
@@ -316,13 +311,13 @@ ligo compile contract --library . gitlab-pages/docs/language-basics/src/modules/
 
 </Syntax>
 
-<!-- <Syntax syntax="jsligo"> -->
+<Syntax syntax="jsligo">
 
-<!-- ```shell -->
-<!-- ligo compile contract --library . gitlab-pages/docs/language-basics/src/modules/importer.jsligo -->
-<!-- ``` -->
+```shell
+ligo compile contract --library . gitlab-pages/docs/language-basics/src/modules/importer.jsligo
+```
 
-<!-- </Syntax> -->
+</Syntax>
 
 
 ## Module Aliases

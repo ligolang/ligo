@@ -588,65 +588,51 @@ proxy file which declares a single entry point and calls the existing
 module C = Gitlab_pages.Docs.Syntax.Contracts.Src.Entrypoints.Contract_main
 
 module Proxy = struct
-
   [@entry]
   let proxy (p : C.parameter) (s : C.storage) : operation list * C.storage =
     C.main p s
-
 end
 ```
 
 The contract can then be compiled using the following command:
 
 ```shell
-ligo compile contract --library . -m Proxy gitlab-pages/docs/advanced/src/entrypoints-contracts/contract_main_proxy.mligo
+ligo compile contract --library . -m Proxy gitlab-pages/docs/syntax/contracts/src/entrypoints-contracts/contract_main_proxy.mligo
 ```
 
 </Syntax>
 
-<!-- TODO: Enable back after import statements are fixed -->
+```jsligo group=contract_main_proxy
+import * as C from "gitlab-pages/docs/syntax/contracts/src/entrypoints/contract_main.jsligo";
 
-<!-- ```jsligo group=contract_main_proxy -->
-<!-- import * as C from "gitlab-pages/docs/syntax/contracts/src/entrypoints/contract_main.jsligo"; -->
+namespace Proxy {
+  // @entry
+  const proxy = (p: C.parameter, s: C.storage): [list<operation>, C.storage] =>
+    C.main(p, s)
+}
+```
 
-<!-- ```jsligo group=contract_main_proxy -->
-<!-- #import "gitlab-pages/docs/syntax/contracts/src/entrypoints/contract_main.jsligo" "C" -->
+The contract can then be compiled using the following command:
 
-<!-- namespace Proxy { -->
-<!--   @entry -->
-<!--   const proxy = -->
-<!--     (p: C.parameter, s: C.storage): [list<operation>, C.storage] => -->
-<!--     C.main(p, s) -->
-<!-- } -->
-<!-- ``` -->
+```shell
+ligo compile contract --library . -m Proxy \ gitlab-pages/docs/syntax/contracts/src/entrypoints-contracts/contract_main_proxy.jsligo
+```
 
-<!-- The contract can then be compiled using the following command: -->
-
-<!-- ```shell -->
-<!-- ligo compile contract --library . \ -->
-<!--   -m Proxy \ -->
-<!--   gitlab-pages/docs/advanced/src/entrypoints-contracts/contract_main_proxy.jsligo -->
-<!-- ``` -->
-
-<!-- </Syntax> -->
+</Syntax>
 
 Notice that to compile a parameter for this contract, now we need to
-pass the either `-e proxy` or construct a value using the `Proxy`
+pass either `-e proxy` or construct a value using the `Proxy`
 constructor:
 
 <Syntax syntax="cameligo">
 
 ```shell
-ligo compile parameter --library . \
-  -m Proxy -e proxy \
-  gitlab-pages/docs/advanced/src/entrypoints-contracts/contract_main_proxy.mligo \
+ligo compile parameter --library . -m Proxy -e proxy \ gitlab-pages/docs/advanced/src/entrypoints-contracts/contract_main_proxy.mligo \
   "Action_A(42n)"
 ```
 
 ```shell
-ligo compile parameter --library . \
-  -m Proxy \
-  gitlab-pages/docs/advanced/src/entrypoints-contracts/contract_main_proxy.mligo \
+ligo compile parameter --library . -m Proxy \ gitlab-pages/docs/advanced/src/entrypoints-contracts/contract_main_proxy.mligo \
   "Proxy(Action_A(42n))"
 ```
 
@@ -655,19 +641,13 @@ ligo compile parameter --library . \
 <Syntax syntax="jsligo">
 
 ```shell
-ligo compile parameter --library . \
-  -m Proxy -e proxy \
-  gitlab-pages/docs/advanced/src/entrypoints-contracts/contract_main_proxy.jsligo \
-  "Action_A(42n)"
+ligo compile parameter --library . -m Proxy -e proxy \ gitlab-pages/docs/syntax/contracts/src/entrypoints-contracts/contract_main_proxy.jsligo \
+  "["Action_A" as "Action_A", 42 as nat]"
 ```
 
 ```shell
-ligo compile parameter --library . \
-  -m Proxy \
-  gitlab-pages/docs/advanced/src/entrypoints-contracts/contract_main_proxy.jsligo \
-  "Proxy(Action_A(42n))"
+ligo compile parameter --library . -m Proxy \ gitlab-pages/docs/syntax/contracts/src/entrypoints-contracts/contract_main_proxy.jsligo \
+  "["Proxy" as "Proxy", ["Action_A" as "Action_A", 42 as nat]]"
 ```
 
 </Syntax>
-
-<!-- updated use of entry -->

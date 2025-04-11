@@ -37,33 +37,35 @@ let foo = ModuleWithPrivate.f 123  // = 5167
 
 </Syntax>
 
-<!-- TODO: Enable back with import statements work. -->
+<Syntax syntax="jsligo">
 
-<!-- <Syntax syntax="jsligo"> -->
+The decorator `@private` can be used on a top-level declaration to
+prevent a given value from being exported outside the compilation
+unit.
 
-<!-- The decorator `@private` can be used on a top-level declaration to -->
-<!-- prevent a given value from being exported outside the compilation -->
-<!-- unit. -->
+Consider the following contents of the file `module-with-private.jsligo`:
 
-<!-- Consider the following contents of the file `module-with-private.jsligo`: -->
+```jsligo group=module-with-private
+// @private
+const stuff = 42;
 
-<!-- ```jsligo group=module-with-private -->
-<!-- @private const stuff = 42; -->
-<!-- @private const g = x => x * stuff; -->
-<!-- const f = x => g(x) + 1; // exported by default -->
-<!-- ``` -->
+// @private
+const g = x => x * stuff;
 
-<!-- ```jsligo group=import-module-with-private -->
-<!-- import * as ModuleWithPrivate from "gitlab-pages/docs/reference/decorators/src/private/module-with-private.mligo"; -->
+const f = x => g(x) + 1; // exported by default
+```
 
-<!-- const foo = ModuleWithPrivate.f(123);  // = 5167 -->
+```jsligo group=import-module-with-private
+import * as ModuleWithPrivate from "gitlab-pages/docs/reference/decorators/src/private/module-with-private.mligo";
 
-<!-- /* -->
-<!--   The following lines cause errors because g and stuff are private: -->
+const foo = ModuleWithPrivate.f(123);  // = 5167
 
-<!--   const bad_1 = ModuleWithPrivate.g(123); -->
-<!--   const bad_2 = ModuleWithPrivate.stuff; -->
-<!-- */ -->
-<!-- ``` -->
+/*
+  The following lines cause errors because g and stuff are private:
 
-<!-- </Syntax> -->
+  const bad_1 = ModuleWithPrivate.g(123);
+  const bad_2 = ModuleWithPrivate.stuff;
+*/
+```
+
+</Syntax>
