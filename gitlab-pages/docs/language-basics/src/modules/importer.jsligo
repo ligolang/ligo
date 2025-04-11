@@ -2,6 +2,6 @@ import * as EURO from "gitlab-pages/docs/language-basics/src/modules/imported.js
 
 type storage = EURO.t;
 
-@entry
+// @entry
 const main = (_action: unit, store: storage): [list<operation>, storage] =>
   [[], EURO.add(store, EURO.one)];

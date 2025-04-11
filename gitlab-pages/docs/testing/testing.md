@@ -100,11 +100,9 @@ It follows these basic steps:
 <Syntax syntax="cameligo">
 
 ```cameligo test-ligo group=mycontract-test
-(* This is mycontract-test.mligo *)
+module MyContract = Gitlab_pages.Docs.Testing.Src.Testing.Mycontract
 
 module Test = Test.Next
-
-module MyContract = Gitlab_pages.Docs.Testing.Src.Testing.Mycontract
 
 let run_test1 =
   let initial_storage = 10 in
@@ -116,28 +114,30 @@ let run_test1 =
 
 </Syntax>
 
-<!-- TODO: Enable back when import statements are fixed. -->
+<Syntax syntax="jsligo">
 
-<!-- <Syntax syntax="jsligo"> -->
+```jsligo test-ligo group=mycontract-test
+import * as MyContract from "gitlab-pages/docs/testing/src/testing/mycontract.jsligo";
 
-<!-- ```jsligo test-ligo group=mycontract-test -->
-<!-- // This is mycontract-test.jligo -->
+import Test = Test.Next;
 
-<!-- import * as MyModule from "gitlab-pages/docs/testing/src/testing/mycontract.jsligo"; -->
+const run_test1 = () => {
+  let initial_storage = 10;
+  let orig = Test.Originate.contract(
+               contract_of(MyContract.MyContract),
+               initial_storage,
+               0 as tez);
+  Test.Contract.transfer_exn(
+    Test.Typed_address.get_entrypoint("increment", orig.taddr),
+    5,
+    0 as tez);
+  return Assert.assert(Test.Typed_address.get_storage(orig.taddr) == initial_storage + 5);
+};
 
-<!-- #import "gitlab-pages/docs/testing/src/testing/mycontract.jsligo" "MyModule" -->
+const test1 = run_test1();
+```
 
-<!-- const run_test1 = () => { -->
-<!--     let initial_storage = 10; -->
-<!--     let orig = Test.Originate.contract(contract_of(MyModule.MyContract), initial_storage, 0tez); -->
-<!--     Test.Contract.transfer_exn(Test.Typed_address.get_entrypoint("increment", orig.taddr), 5, 0tez); -->
-<!--     return Assert.assert(Test.Typed_address.get_storage(orig.taddr) == initial_storage + 5); -->
-<!-- }; -->
-
-<!-- const test1 = run_test1(); -->
-<!-- ``` -->
-
-<!-- </Syntax> -->
+</Syntax>
 
 The `run test` command evaluates all top-level definitions and prints any
 entries that begin with the prefix `test` as well as the value that these
@@ -156,15 +156,13 @@ ligo run test --library gitlab-pages/docs/testing/src/testing/ gitlab-pages/docs
 
 </Syntax>
 
-<!-- TODO: Enable back when import statements are fixed. -->
+<Syntax syntax="jsligo">
 
-<!-- <Syntax syntax="jsligo"> -->
+```shell
+ligo run test --library gitlab-pages/docs/testing/src/testing/ gitlab-pages/docs/testing/src/testing/mycontract-test.jsligo
+```
 
-<!-- ```shell -->
-<!-- ligo run test --library gitlab-pages/docs/testing/src/testing/ gitlab-pages/docs/testing/src/testing/mycontract-test.jsligo -->
-<!-- ``` -->
-
-<!-- </Syntax> -->
+</Syntax>
 
 The response shows that the functions at the top level of the file ran successfully:
 
@@ -631,11 +629,11 @@ let remove_balances_under (b : balances) (threshold : tez) : balances =
 ```jsligo group=remove-balance
 // This is remove-balance.jsligo
 
-type balances = map<address, tez>;
+export type balances = map<address, tez>;
 
-const remove_balances_under = (b: balances, threshold: tez): balances => {
+export function remove_balances_under (b: balances, threshold: tez): balances {
   let f = ([acc, kv]: [balances, [address, tez]] ): balances => {
-    let [k, v] = kv;
+    const [k, v] = kv;
     if (v < threshold) return Map.remove (k, acc); else return acc
   };
   return Map.fold (f, b, b);
@@ -663,21 +661,22 @@ let test_remove_balance =
 
 </Syntax>
 
+<Syntax syntax="jsligo">
 
-<!-- TODO: Enable when import statements are fixed. -->
+```jsligo test-ligo group=unit-remove-balance-mixed
+import * as RemoveBalance from
+"./gitlab-pages/docs/testing/src/testing/remove-balance.jsligo";
 
-<!-- <Syntax syntax="jsligo"> -->
+type balances = RemoveBalance.balances
+const remove_balances_under = RemoveBalance.remove_balances_under
 
-<!-- ```jsligo test-ligo group=unit-remove-balance-mixed -->
-<!-- #include "./gitlab-pages/docs/testing/src/testing/remove-balance.jsligo" -->
+import Test = Test.Next;
 
-<!-- import Test = Test.Next; -->
+const test_remove_balance = (() => {
+  Test.State.reset(5 as nat, [] as list<tez>);
+```
 
-<!-- const test_remove_balance = (() => { -->
-<!--   Test.State.reset(5n, [] as list <tez>); -->
-<!-- ``` -->
-
-<!-- </Syntax> -->
+</Syntax>
 
 Now build the `balances` map that serves as the test input:
 
@@ -691,18 +690,16 @@ let balances: balances =
 
 </Syntax>
 
-<!-- TODO: Enable when import statements are fixed. -->
+<Syntax syntax="jsligo">
 
-<!-- <Syntax syntax="jsligo"> -->
+```jsligo test-ligo group=unit-remove-balance-mixed
+const balances: balances =
+  Map.literal([[Test.Account.address(1 as nat), 10 as tez],
+              [Test.Account.address(2 as nat), 100 as tez],
+              [Test.Account.address(3 as nat), 1000 as tez]]);
+```
 
-<!-- ```jsligo test-ligo group=unit-remove-balance-mixed -->
-<!-- const balances: balances = -->
-<!--   Map.literal([[Test.Account.address(1 as nat), 10 as tez], -->
-<!--               [Test.Account.address(2 as nat), 100 as tez], -->
-<!--               [Test.Account.address(3 as nat), 1000 as tez]]); -->
-<!-- ``` -->
-
-<!-- </Syntax> -->
+</Syntax>
 
 The test loop will call the function with the compiled map
 defined above, get the size of the resulting map, and compare it to an
@@ -738,27 +735,25 @@ List.iter
 
 </Syntax>
 
-<!-- TODO: Enable when import statements are fixed. -->
+<Syntax syntax="jsligo">
 
-<!-- <Syntax syntax="jsligo"> -->
+```jsligo test-ligo group=unit-remove-balance-mixed
+return List.iter(([threshold, expected_size]: [tez, nat]): unit => {
+    const tester = ([balances, threshold]: [balances, tez]): nat =>
+      Map.size (remove_balances_under (balances, threshold));
+    const size = Test.Michelson.run(tester, [balances, threshold]);
+    const expected_size_ = Test.Michelson.eval(expected_size);
+    Test.IO.log(["expected", expected_size]);
+    Test.IO.log(["actual", size]);
+    return (Assert.assert (Test.Compare.eq(size, expected_size_)))
+  },
+  list ([ [15 as tez, 2 as nat],
+          [130 as tez, 1 as nat],
+          [1200 as tez, 0 as nat]]));
+})()
+```
 
-<!-- ```jsligo test-ligo group=unit-remove-balance-mixed -->
-<!-- return List.iter(([threshold, expected_size]: [tez, nat]): unit => { -->
-<!--     const tester = ([balances, threshold]: [balances, tez]): nat => -->
-<!--       Map.size (remove_balances_under (balances, threshold)); -->
-<!--     const size = Test.Michelson.run(tester, [balances, threshold]); -->
-<!--     const expected_size_ = Test.Michelson.eval(expected_size); -->
-<!--     Test.IO.log(["expected", expected_size]); -->
-<!--     Test.IO.log(["actual", size]); -->
-<!--     return (Assert.assert (Test.Compare.eq(size, expected_size_))) -->
-<!--   }, -->
-<!--   list ([ [15 as tez, 2 as nat], -->
-<!--           [130 as tez, 1 as nat], -->
-<!--           [1200 as tez, 0 as nat]]) ); -->
-<!-- }) () -->
-<!-- ``` -->
-
-<!-- </Syntax> -->
+</Syntax>
 
 Here is the complete test file:
 
@@ -788,36 +783,38 @@ let balances: balances =
 
 </Syntax>
 
-<!-- TODO: Enable when import statements are fixed. -->
+<Syntax syntax="jsligo">
 
-<!-- <Syntax syntax="jsligo"> -->
+```jsligo test-ligo group=unit-remove-balance-complete
+import * as RemoveBalance from
+"./gitlab-pages/docs/testing/src/testing/remove-balance.jsligo";
 
-<!-- ```jsligo test-ligo group=unit-remove-balance-complete -->
-<!-- #include "./gitlab-pages/docs/testing/src/testing/remove-balance.jsligo" -->
+type balances = RemoveBalance.balances
+const remove_balances_under = RemoveBalance.remove_balances_under
 
-<!-- import Test = Test.Next; -->
+import Test = Test.Next;
 
-<!-- const test_remove_balance = (() => { -->
-<!--   Test.State.reset(5 as nat, [] as list <tez>); -->
-<!--   const balances: balances = -->
-<!--     Map.literal([[Test.Account.address(1 as nat), 10 as tez], -->
-<!--                  [Test.Account.address(2 as nat), 100 as tez], -->
-<!--                  [Test.Account.address(3 as nat), 1000 as tez]]); -->
-<!--   return List.iter(([threshold, expected_size]: [tez, nat]): unit => { -->
-<!--       const tester = ([balances, threshold]: [balances, tez]): nat => -->
-<!--         Map.size (remove_balances_under (balances, threshold)); -->
-<!--       const size = Test.Michelson.run(tester, [balances, threshold]); -->
-<!--       const expected_size_ = Test.Michelson.eval(expected_size); -->
-<!--       Test.IO.log(["expected", expected_size]); -->
-<!--       Test.IO.log(["actual", size]); -->
-<!--       return (Assert.assert (Test.Compare.eq(size, expected_size_))) -->
-<!--     }, -->
-<!--     list ([ [15 as tez, 2 as nat], [130 as tez, 1 as nat], -->
-<!--     [1200 as tez, 0 as nat]]) ); -->
-<!-- }) () -->
-<!-- ``` -->
+const test_remove_balance = (() => {
+  Test.State.reset(5 as nat, [] as list <tez>);
+  const balances: balances =
+    Map.literal([[Test.Account.address(1 as nat), 10 as tez],
+                 [Test.Account.address(2 as nat), 100 as tez],
+                 [Test.Account.address(3 as nat), 1000 as tez]]);
+  return List.iter(([threshold, expected_size]: [tez, nat]): unit => {
+      const tester = ([balances, threshold]: [balances, tez]): nat =>
+        Map.size (remove_balances_under (balances, threshold));
+      const size = Test.Michelson.run(tester, [balances, threshold]);
+      const expected_size_ = Test.Michelson.eval(expected_size);
+      Test.IO.log(["expected", expected_size]);
+      Test.IO.log(["actual", size]);
+      return (Assert.assert (Test.Compare.eq(size, expected_size_)))
+    },
+    list ([ [15 as tez, 2 as nat], [130 as tez, 1 as nat],
+    [1200 as tez, 0 as nat]]) );
+}) ()
+```
 
-<!-- </Syntax> -->
+</Syntax>
 
 You can now execute the test by running this command:
 
@@ -829,15 +826,13 @@ ligo run test --library . gitlab-pages/docs/testing/src/testing/unit-remove-bala
 
 </Syntax>
 
-<!-- TODO: Enable when import statements are fixed. -->
+<Syntax syntax="jsligo">
 
-<!-- <Syntax syntax="jsligo"> -->
+```shell
+ligo run test --library . gitlab-pages/docs/testing/src/testing/unit-remove-balance-mixed.jsligo
+```
 
-<!-- ```shell -->
-<!-- ligo run test --library . gitlab-pages/docs/testing/src/testing/unit-remove-balance-mixed.jsligo -->
-<!-- ``` -->
-
-<!-- </Syntax> -->
+</Syntax>
 
 The response shows the expected and actual results of each test run:
 

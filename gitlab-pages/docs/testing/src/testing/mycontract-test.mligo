@@ -1,8 +1,6 @@
-(* This is mycontract-test.mligo *)
+module MyContract = Gitlab_pages.Docs.Testing.Src.Testing.Mycontract
 
 module Test = Test.Next
-
-module MyContract = Gitlab_pages.Docs.Testing.Src.Testing.Mycontract
 
 let run_test1 =
   let initial_storage = 10 in

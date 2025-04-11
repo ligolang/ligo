@@ -3,7 +3,6 @@ type storage = int;
 
 type result = [list<operation>, storage];
 
-// Two entrypoints
 // @entry
 const add = (delta : int, store : storage) : result => {
   // @no_mutation

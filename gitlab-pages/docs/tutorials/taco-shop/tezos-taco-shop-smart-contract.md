@@ -447,114 +447,119 @@ let test =
 
 </Syntax>
 
-<!-- TODO: Enable with import statements are fixed.  -->
-<!-- <Syntax syntax="jsligo"> -->
+<Syntax syntax="jsligo">
 
-<!-- ```jsligo test-ligo group=test -->
-<!-- import * as TacoShop from "gitlab-pages/docs/tutorials/taco-shop/src/tezos-taco-shop-smart-contract/TacoShop.jsligo"; -->
-<!-- function assert_string_failure (res: test_exec_result, expected: string) { -->
-<!--   const expected_bis = Test.eval(expected); -->
-<!--   match(res) { -->
-<!--     when (Fail(x)): -->
-<!--       match(x) { -->
-<!--         when (Rejected(y)): -->
-<!--           assert(Test.michelson_equal(y[0], expected_bis)) -->
-<!--         when (Balance_too_low(_)): -->
-<!--           failwith("contract failed for an unknown reason") -->
-<!--         when (Other(_o)): -->
-<!--           failwith("contract failed for an unknown reason") -->
-<!--       } -->
-<!--     when (Success(_s)): -->
-<!--       failwith("bad price check") -->
-<!--   }; -->
-<!-- } -->
+```jsligo test-ligo group=test
+import * as TacoShop from "gitlab-pages/docs/tutorials/taco-shop/src/tezos-taco-shop-smart-contract/TacoShop.jsligo";
 
-<!-- const test = ( -->
-<!--   (_u: unit): unit => { -->
-<!--       /* Originate the contract with a initial storage */ -->
+function assert_string_failure (res: test_exec_result, expected: string) {
+  const expected_bis = Test.eval(expected);
+  $match(res, {
+    "Fail": x =>
+      $match(x, {
+        "Rejected": y =>
+          Assert.assert(Test.michelson_equal(y[0], expected_bis)),
+        "Balance_too_low": _ =>
+          failwith("contract failed for an unknown reason"),
+        "Other": _o =>
+          failwith("contract failed for an unknown reason")
+      }),
+    "Success": _s => failwith("bad price check")
+  });
+}
 
-<!--       let init_storage = -->
-<!--         Map.literal( -->
-<!--           list( -->
-<!--             [ -->
-<!--               [1n, { current_stock: 50n, max_price: 50000000mutez }], -->
-<!--               [2n, { current_stock: 20n, max_price: 75000000mutez }] -->
-<!--             ] -->
-<!--           ) -->
-<!--         ); -->
-<!--       const { addr , code , size } = -->
-<!--         Test.originate(contract_of(TacoShop), init_storage, 0mutez); -->
+const test = (
+  (_u: unit): unit => {
+    /* Originate the contract with a initial storage */
+      let init_storage =
+        Map.literal(
+          list(
+            [
+              [1 as nat, { current_stock: 50 as nat, max_price: 50000000 as mutez }],
+              [2 as nat, { current_stock: 20 as nat, max_price: 75000000 as mutez }]
+            ]
+          )
+        );
+      const { addr , code , size } =
+        Test.originate(contract_of(TacoShop), init_storage, 0 as mutez);
 
-<!--       /* Test inputs */ -->
+      /* Test inputs */
 
-<!--       const clasico_kind : parameter_of TacoShop = Buy_taco (1n); -->
-<!--       const unknown_kind : parameter_of TacoShop = Buy_taco (3n); -->
-<!--       /* Auxiliary function for testing equality in maps */ -->
+      const clasico_kind : parameter_of<TacoShop> =
+        ["Buy_taco" as "Buy_taco", 1 as nat];
 
-<!--       const eq_in_map = (r: TacoShop.taco_supply, m: TacoShop.taco_shop_storage, k: nat) => -->
-<!--         match(Map.find_opt(k, m)) { -->
-<!--           when (None): -->
-<!--             false -->
-<!--           when (Some(v)): -->
-<!--             v.current_stock == r.current_stock && v.max_price == r.max_price -->
-<!--         }; -->
-<!--       /* Purchasing a Taco with 1tez and checking that the stock has been updated */ -->
+      const unknown_kind : parameter_of<TacoShop> =
+        ["Buy_taco" as "Buy_taco", 3 as nat];
 
-<!--       const ok_case: test_exec_result = -->
-<!--         Test.transfer( -->
-<!--           addr, -->
-<!--           clasico_kind, -->
-<!--           1000000mutez -->
-<!--         ); -->
+      /* Auxiliary function for testing equality in maps */
 
-<!--         match(ok_case) { -->
-<!--           when (Success(_s)): -->
-<!--             do { -->
-<!--               let storage = Test.get_storage(addr); -->
-<!--               assert( -->
-<!--                 eq_in_map( -->
-<!--                   { current_stock: 49n, max_price: 50000000mutez }, -->
-<!--                   storage, -->
-<!--                   1n -->
-<!--                 ) -->
-<!--                 && eq_in_map( -->
-<!--                      { current_stock: 20n, max_price: 75000000mutez }, -->
-<!--                      storage, -->
-<!--                      2n -->
-<!--                    ) -->
-<!--               ); -->
-<!--             } -->
-<!--           when (Fail(_e)): -->
-<!--             failwith("ok test case failed") -->
-<!--         }; -->
-<!--       /* Purchasing an unregistred Taco */ -->
+      const eq_in_map = (r: TacoShop.taco_supply, m: TacoShop.taco_shop_storage, k: nat) =>
+        $match(Map.find_opt(k, m), {
+          "None": () => false,
+          "Some": v =>
+            v.current_stock == r.current_stock && v.max_price == r.max_price
+        });
 
-<!--       const nok_unknown_kind = -->
-<!--         Test.transfer( -->
-<!--           addr, -->
-<!--           unknown_kind, -->
-<!--           1000000mutez -->
-<!--         ); -->
-<!--       assert_string_failure(nok_unknown_kind, "Unknown kind of taco"); -->
-<!--       /* Attempting to Purchase a Taco with 2tez */ -->
+      /* Purchasing a Taco with 1tez and checking that the stock has been updated */
 
-<!--       const nok_wrong_price = -->
-<!--         Test.transfer( -->
-<!--           addr, -->
-<!--           clasico_kind, -->
-<!--           2000000mutez -->
-<!--         ); -->
+      const ok_case: test_exec_result =
+        Test.transfer(
+          addr,
+          clasico_kind,
+          1000000 as mutez
+        );
 
-<!--         assert_string_failure( -->
-<!--           nok_wrong_price, -->
-<!--           "Sorry, the taco you are trying to purchase has a different price" -->
-<!--         ); -->
-<!--       return unit -->
-<!--     } -->
-<!--   ) (); -->
-<!-- ``` -->
+      $match(ok_case, {
+        "Success": _s =>
+            (() => {
+              let storage = Test.get_storage(addr);
+              Assert.assert(
+                eq_in_map(
+                  { current_stock: 49 as nat, max_price: 50000000 as mutez },
+                  storage,
+                  1 as nat
+                )
+                &&
+                eq_in_map(
+                  { current_stock: 20 as nat, max_price: 75000000
+        as mutez },
+                    storage,
+                    2 as nat
+                )
+              );
+            })(),
+        "Fail": _e => failwith("ok test case failed")
+        });
 
-<!-- </Syntax> -->
+      /* Purchasing an unregistred Taco */
+
+      const nok_unknown_kind =
+        Test.transfer(
+          addr,
+          unknown_kind,
+          1000000 as mutez
+        );
+      assert_string_failure(nok_unknown_kind, "Unknown kind of taco");
+
+      /* Attempting to Purchase a Taco with 2tez */
+
+      const nok_wrong_price =
+        Test.transfer(
+          addr,
+          clasico_kind,
+          2000000 as mutez
+        );
+
+        assert_string_failure(
+          nok_wrong_price,
+          "Sorry, the taco you are trying to purchase has a different price"
+        );
+      return unit
+    }
+  )();
+```
+
+</Syntax>
 
 Let's break it down a little bit:
 - we include the file corresponding to the smart contract we want to

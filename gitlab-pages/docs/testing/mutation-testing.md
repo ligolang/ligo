@@ -309,9 +309,12 @@ Note that the test uses a function named `tester` to deploy the contract and run
 (* This is mutation-contract-test.mligo *)
 
 module MutationContract = Gitlab_pages.Docs.Testing.Src.Mutation_testing.Mutation_contract
+
 module Test = Test.Next
+
 type storage = MutationContract.AddSub.storage
 type param = MutationContract.AddSub parameter_of
+
 let initial_storage = 7
 
 let tester (taddr : (param, storage) typed_address) (_ : (param ,storage) michelson_contract) (_:int) : unit =
@@ -325,27 +328,35 @@ let test_original =
 
 </Syntax>
 
-<!-- TODO: Enable when import statements are fixed. -->
+<Syntax syntax="jsligo">
 
-<!-- <Syntax syntax="jsligo"> -->
+```jsligo test-ligo group=mutation-contract-test
+import * as MutationContract from "gitlab-pages/docs/testing/src/mutation-testing/mutation-contract.jsligo";
 
-<!-- import * as MutationContract from "gitlab-pages/docs/testing/src/mutation-testing/mutation-contract.jsligo"; -->
-<!-- import Test = Test.Next; -->
-<!-- type storage = int; -->
-<!-- type param = parameter_of<MutationContract.AddSub>; -->
-<!-- const initial_storage = 7; -->
-<!-- const tester = (taddr: typed_address<param, storage>, _c: michelson_contract<param, storage> , _: int): unit => { -->
-<!--   Test.Contract.transfer_exn(Test.Typed_address.get_entrypoint("add", taddr), 7, 0tez); -->
-<!--   Assert.assert(Test.Typed_address.get_storage(taddr) == initial_storage + 7); -->
-<!-- } -->
+import Test = Test.Next;
 
-<!-- const test_original = (() => { -->
-<!--   let orig = Test.Originate.contract(contract_of(MutationContract.AddSub), initial_storage, 0tez); -->
-<!--   return tester(orig.taddr); -->
-<!-- })(); -->
-<!-- ``` -->
+type storage = int;
+type param = parameter_of<MutationContract.AddSub>;
 
-<!-- </Syntax> -->
+const initial_storage = 7;
+
+const tester = (taddr: typed_address<param, storage>,
+                _c: michelson_contract<param, storage>,
+                _: int): unit => {
+  Test.Contract.transfer_exn(
+    Test.Typed_address.get_entrypoint("add", taddr), 7, 0 as tez);
+  Assert.assert(Test.Typed_address.get_storage(taddr) == initial_storage + 7);
+}
+
+const test_original = (() => {
+  let orig =
+  Test.Originate.contract
+    (contract_of(MutationContract.AddSub), initial_storage, 0 as tez);
+  return tester(orig.taddr);
+})();
+```
+
+</Syntax>
 
 This test runs mutation tests on the contract by passing mutations of it to the `tester` function:
 
@@ -365,25 +376,27 @@ let test_mutation =
 
 </Syntax>
 
-<!-- TODO: Enable when import statements are fixed. -->
+<Syntax syntax="jsligo">
 
-<!-- <Syntax syntax="jsligo"> -->
+```jsligo test-ligo group=mutation-contract-test
+const test_mutation =
+  $match(Test.Mutation.contract(
+           contract_of(MutationContract.AddSub),
+           initial_storage,
+           0 as tez,
+           tester), {
+    "None": () => unit,
+    "Some": pmutation => (() => {
+      Test.IO.log(pmutation[1]);
+      // In a real program, one would write `failwith "A mutation passes"`
+      // Because we want to demonstrate the issue without an actual error
+      // a milder println is used in this document.
+      Test.IO.println("A mutation of the contract still passes the tests!");
+    })()
+  });
+```
 
-<!-- ```jsligo test-ligo group=mutation-contract-test -->
-<!-- const test_mutation = -->
-<!--   match(Test.Mutation.contract(contract_of(MutationContract.AddSub), initial_storage, 0tez, tester)) { -->
-<!--     when(None()): unit; -->
-<!--     when(Some(pmutation)): do { -->
-<!--       Test.IO.log(pmutation[1]); -->
-<!--       // In a real program, one would write `failwith "A mutation passes"` -->
-<!--       // Because we want to demonstrate the issue without an actual error -->
-<!--       // a milder println is used in this document. -->
-<!--       Test.IO.println("A mutation of the contract still passes the tests!"); -->
-<!--     } -->
-<!--   }; -->
-<!-- ``` -->
-
-<!-- </Syntax> -->
+</Syntax>
 
 The test prints a warning about the `Sub` entrypoint:
 
@@ -404,24 +417,22 @@ ligo run test --library . gitlab-pages/docs/testing/src/mutation-testing/mutatio
 
 </Syntax>
 
-<!-- TODO: Enable when import statements are fixed. -->
+<Syntax syntax="jsligo">
 
-<!-- <Syntax syntax="jsligo"> -->
+```shell run
+ligo run test --library . gitlab-pages/docs/testing/src/mutation-testing/mutation-contract-test.jsligo
+# Outputs:
+# Mutation at: File "gitlab-pages/docs/testing/src/mutation-testing/mutation-contract.jsligo", line 8, characters 81-96:
+#   7 |   @entry
+#   8 |   const sub = (delta: int, storage: storage): [list<operation>, storage] => [[], storage - delta];
+#   9 | }
+#
+# Replacing by: storage + delta.
+#
+# A mutation of the contract still passes the tests!
+```
 
-<!-- ```shell run -->
-<!-- ligo run test --library . gitlab-pages/docs/testing/src/mutation-testing/mutation-contract-test.jsligo -->
-<!-- # Outputs: -->
-<!-- # Mutation at: File "gitlab-pages/docs/testing/src/mutation-testing/mutation-contract.jsligo", line 8, characters 81-96: -->
-<!-- #   7 |   @entry -->
-<!-- #   8 |   const sub = (delta: int, storage: storage): [list<operation>, storage] => [[], storage - delta]; -->
-<!-- #   9 | } -->
-<!-- # -->
-<!-- # Replacing by: storage + delta. -->
-<!-- # -->
-<!-- # A mutation of the contract still passes the tests! -->
-<!-- ``` -->
-
-<!-- </Syntax> -->
+</Syntax>
 
 The mutation testing found that the `sub` function can be changed with no consequences in the test.
 This warning signals that the test does not cover the `Sub` entrypoint thoroughly enough.
@@ -446,30 +457,36 @@ let test_mutation_sub =
 
 </Syntax>
 
-<!-- TODO: Enable when import statements are fixed. -->
+<Syntax syntax="jsligo">
 
-<!-- <Syntax syntax="jsligo"> -->
+```jsligo test-ligo group=mutation-contract-test
+const tester_add_and_sub =
+  (taddr: typed_address<param, storage>,
+   _c: michelson_contract<param, storage>,
+   _i: int): unit => {
+  Test.Contract.transfer_exn
+    (Test.Typed_address.get_entrypoint("add", taddr), 7, 0 as tez);
+  Assert.assert(Test.Typed_address.get_storage(taddr) == initial_storage + 7);
+  Test.Contract.transfer_exn
+    (Test.Typed_address.get_entrypoint("sub", taddr), 3, 0 as tez);
+  Assert.assert(Test.Typed_address.get_storage(taddr) == initial_storage + 4);
+}
 
-<!-- ```jsligo test-ligo group=mutation-contract-test -->
-<!-- const tester_add_and_sub = (taddr: typed_address<param, storage>, _c: michelson_contract<param, storage>, _i: int): unit => { -->
+const test_mutation_sub =
+  $match(Test.Mutation.contract(
+           contract_of(MutationContract.AddSub),
+           initial_storage,
+           0 as tez,
+           tester_add_and_sub), {
+    "None": () => unit,
+    "Some": pmutation => (() => {
+      Test.IO.log(pmutation[1]);
+      Test.IO.println("A mutation of the contract still passes the tests!");
+    })()
+  });
+```
 
-<!--   Test.Contract.transfer_exn(Test.Typed_address.get_entrypoint("add", taddr), 7, 0tez); -->
-<!--   Assert.assert(Test.Typed_address.get_storage(taddr) == initial_storage + 7); -->
-<!--   Test.Contract.transfer_exn(Test.Typed_address.get_entrypoint("sub", taddr), 3, 0tez); -->
-<!--   Assert.assert(Test.Typed_address.get_storage(taddr) == initial_storage + 4); -->
-<!-- } -->
-
-<!-- const test_mutation_sub = -->
-<!--   match(Test.Mutation.contract(contract_of(MutationContract.AddSub), initial_storage, 0tez, tester_add_and_sub)) { -->
-<!--     when(None()): unit; -->
-<!--     when(Some(pmutation)): do { -->
-<!--       Test.IO.log(pmutation[1]); -->
-<!--       Test.IO.println("A mutation of the contract still passes the tests!"); -->
-<!--     } -->
-<!--   }; -->
-<!-- ``` -->
-
-<!-- </Syntax> -->
+</Syntax>
 
 When this test runs, it finds that no mutation of the `Sub` entrypoint passes all of the tests and therefore does not print a warning.
 
@@ -494,26 +511,24 @@ let get_all_mutations =
 
 </Syntax>
 
-<!-- TODO: Enable when import statements are fixed. -->
+<Syntax syntax="jsligo">
 
-<!-- <Syntax syntax="jsligo"> -->
+```jsligo test-ligo group=twice
+const get_all_mutations =
+  $match(List.head_and_tail(Test.Mutation.All.func(twice, simple_tests)), {
+    "None": () => unit,
+    "Some": ([hd,tl]) => (() => {
+      let mutations = list([hd,...tl]);
+      Test.IO.println("Some mutations also pass the tests!");
+      for (const m of mutations) {
+        let [_, mutation] = m;
+        Test.IO.log(mutation);
+      };
+    })()
+  });
+```
 
-<!-- ```jsligo test-ligo group=twice -->
-<!-- const get_all_mutations = -->
-<!--   match(Test.Mutation.All.func(twice, simple_tests)) { -->
-<!--     when([]): unit; -->
-<!--     when([hd,...tl]): do { -->
-<!--       let mutations = list([hd,...tl]); -->
-<!--       Test.IO.println("Some mutations also pass the tests!"); -->
-<!--       for (const m of mutations) { -->
-<!--         let [_, mutation] = m; -->
-<!--         Test.IO.log(mutation); -->
-<!--       }; -->
-<!--     } -->
-<!--   }; -->
-<!-- ``` -->
-
-<!-- </Syntax> -->
+</Syntax>
 
 In this case, the output is the same because only one mutation passed all of the tests.
 
@@ -560,24 +575,27 @@ Replacing by: storage * delta.
 
 </Syntax>
 
-<!-- TODO: Enable when import statements are fixed. -->
+<Syntax syntax="jsligo">
 
-<!-- <Syntax syntax="jsligo"> -->
-
-<!-- ```jsligo test-ligo group=mutation-contract-test -->
-<!-- const test_mutation_all = -->
-<!--   match(Test.Mutation.All.contract(contract_of(MutationContract.AddSub), initial_storage, 0tez, tester)) { -->
-<!--     when([]): unit; -->
-<!--     when([hd,...tl]): do { -->
-<!--       let mutations = list([hd,...tl]); -->
-<!--       let _p = Test.IO.println("Some mutations also pass the tests!"); -->
-<!--       for (const m of mutations) { -->
-<!--         let [_, mutation] = m; -->
-<!--         Test.IO.log(mutation); -->
-<!--       }; -->
-<!--     } -->
-<!--   }; -->
-<!-- ``` -->
+```jsligo test-ligo group=mutation-contract-test
+const test_mutation_all =
+  $match(List.head_and_tail(
+           Test.Mutation.All.contract(
+             contract_of(MutationContract.AddSub),
+             initial_storage,
+             0 as tez,
+             tester)), {
+    "None": () => unit,
+    "Some": ([hd,tl]) => (() => {
+      let mutations = list([hd,...tl]);
+      let _p = Test.IO.println("Some mutations also pass the tests!");
+      for (const m of mutations) {
+        let [_, mutation] = m;
+        Test.IO.log(mutation);
+      };
+    })()
+  });
+```
 
 In this case, the output shows that multiple mutations pass the tests:
 
@@ -652,7 +670,6 @@ type storage = int;
 
 type result = [list<operation>, storage];
 
-// Two entrypoints
 // @entry
 const add = (delta : int, store : storage) : result => {
   // @no_mutation

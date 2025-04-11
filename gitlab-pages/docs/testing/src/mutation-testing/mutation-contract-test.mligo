@@ -1,9 +1,12 @@
 (* This is mutation-contract-test.mligo *)
 
 module MutationContract = Gitlab_pages.Docs.Testing.Src.Mutation_testing.Mutation_contract
+
 module Test = Test.Next
+
 type storage = MutationContract.AddSub.storage
 type param = MutationContract.AddSub parameter_of
+
 let initial_storage = 7
 
 let tester (taddr : (param, storage) typed_address) (_ : (param ,storage) michelson_contract) (_:int) : unit =
