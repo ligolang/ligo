@@ -1,0 +1,411 @@
+---
+title: Migrating to LIGO v2.0
+---
+
+import Syntax from '@theme/Syntax';
+
+Version 2.0 of LIGO includes breaking changes, so you must update your code when you upgrade your installation of LIGO as described in [Installation](./installation).
+
+<Syntax syntax="cameligo">
+
+</Syntax>
+
+<Syntax syntax="jsligo">
+
+## Contract syntax
+
+In previous versions of JsLIGO, contracts could be defined in namespaces or at the top level of a file.
+Version 2.0 adds the option to define contracts in classes.
+Whether you define contracts in namespaces, classes, or in the top level of a file depends on the features that you need and the syntax that you prefer.
+For example, if you want a contract to implement an interface, you must put the contract in a class.
+
+The syntax for contracts in namespaces and in the top levels of files has changed in some ways:
+
+- As before, they can include type definitions
+- As before, they must define entrypoints as functions with the `function`, `const`, or `let` properties
+- They must put decorators such as `@entry` and `@view` in a comment immediately before the definition that they modify
+- They cannot implement interfaces
+
+Here is an example of a JsLIGO 2.0 contract in a namespace.
+The only change for JsLIGO 2.0 is that the decorators are now in comments:
+
+```jsligo group=namespace
+namespace Counter {
+  type storage_type = int;
+  type return_type = [list<operation>, storage_type];
+
+  // @entry
+  const add = (value: int, storage: storage_type): return_type =>
+    [[], storage + value];
+
+  // @entry
+  const sub = (value: int, storage: storage_type): return_type =>
+    [[], storage - value];
+}
+```
+
+The syntax for a JsLIGO 2.0 contract at the top level of a file is similar.
+The only change for JsLIGO 2.0 is that the decorators are now in comments:
+
+```jsligo group=toplevel
+type storage_type = int;
+type return_type = [list<operation>, storage_type];
+
+// @entry
+const add = (value: int, store: storage_type): return_type =>
+  [[], store + value];
+
+// @entry
+const sub = (value: int, store: storage_type): return_type =>
+  [[], store - value];
+```
+
+However, the syntax for a JsLIGO 2.0 contract in a class is different, as described in [Classes](#classes).
+
+## Namespaces
+
+As described in [Contract syntax](#contract-syntax), the syntax for namespaces (whether they define a contract or merely a group of other related definitions) has changed in some ways:
+
+- As before, they can include type definitions
+- As before, they must define entrypoints as functions with the `function`, `const`, or `let` properties
+- They must put decorators such as `@entry` and `@view` in a comment immediately before the definition that they modify
+- They cannot implement interfaces
+
+## Classes
+
+JsLIGO 2.0 introduces classes, which are similar to classes in JavaScript/Typescript.
+You can use JsLIGO classes to define a smart contract or group related functions, which are referred to as properties when they are in a class.
+However, JsLIGO classes do not have all of the same features as JavaScript/TypeScript classes.
+For example, JsLIGO classes cannot inherit from other classes as they can in JavaScript/TypeScript.
+
+JsLIGO classes have these characteristics:
+
+- They cannot include type definitions
+- They define functions (including entrypoints) without the `function`, `const`, or `let` keywords
+- They do not need to put decorators such as `@entry` and `@view` in comments
+- They can implement interfaces
+
+Here is an example contract that is defined in a class:
+
+```jsligo group=classes
+type storage_type = int;
+type return_type = [list<operation>, storage_type];
+
+class Counter {
+  @entry
+  add = (value: int, storage: storage_type): return_type =>
+    [[], storage + value];
+
+  @entry
+  sub = (value: int, storage: storage_type): return_type =>
+    [[], storage - value];
+}
+```
+
+To encapsulate classes with types, such as if you want to define a type that represents the contract storage or complex parameter types, you can group the contract class and the related types in a namespace.
+
+## Interfaces
+
+The syntax for interfaces has changed; they now have a syntax that is similar to classes:
+
+- Like classes, they cannot contain type definitions.
+- They contain function signatures that are not defined with the `function`, `const`, or `let` properties.
+- Unlike classes, they must put decorators such as `@entry` and `@view` in a comment immediately before the definition that they modify.
+
+For example, this is an interface in JsLIGO 1.9.2:
+
+```jsligo skip
+// Not valid in JsLIGO 2.0
+interface MyInterface {
+  type storage = int;
+  @entry
+  const add: (s: int, k: storage) => [list<operation>, storage];
+}
+```
+
+This is the equivalent interface in JsLIGO 2.0:
+
+```jsligo group=interfaces
+type storage = int;
+interface MyInterface {
+  // @entry
+  add: (s: int, k: storage) => [list<operation>, storage];
+}
+```
+
+As a result of these changes, abstract types (type names that are required by an interface without specifying the actual type) are no longer permitted in JsLIGO.
+
+## Types
+
+JsLIGO 2.0 includes changes to make its type system more similar to TypeScript.
+
+### Specifying the types of literals
+
+Instead of using postfixes to denote certain types, LIGO 2.0 uses the `as` keyword to denote the type of a literal, as in these examples:
+
+Data type | LIGO 1.0 | LIGO 2.0
+--- | --- | ---
+Bytes | `const zero = 0x` | `const zero = "" as bytes`
+Natural numbers | `const one = 1n` | `const one = 1 as nat`
+tez | `const one_tez = 1tez` | `const one_tez = 1 as tez`
+mutez | `const one_mutez = 1mutez` | `const one_mutez = 1 as mutez`
+
+Similarly, the `parameter_of` keyword now takes its type in a way more similar to TypeScript:
+
+LIGO 1.0 | LIGO 2.0
+--- | ---
+`const parameter = MyEntrypoint(value) as parameter_of MyContract;` | `const parameter = MyEntrypoint(value) as parameter_of<MyContract>;`
+
+### Records (now called objects)
+
+To be closer to JavaScript, JslIGO now refers to the record data type as an object.
+JsLIGO objects are similar to JavaScript objects, but they have some limitations that JavaScript objects don't have.
+
+To specify the type of an object, use commas to separate the fields, not semicolons as in the previous version of JsLIGO.
+Continue to use commas to separate the values in an object, as in the previous version of JsLIGO and as in JavaScript.
+For example, this contract uses an object type in JsLIGO 2.0:
+
+```jsligo group=objects
+type object_type = {x: int, y: int, z: int};
+type storage_type = object_type;
+type return_type = [list<operation>, storage_type];
+
+class Counter {
+  @entry
+  reset = (_: unit, _s: storage_type): return_type => {
+    const newObject: object_type = {
+      x: 0,
+      y: 0,
+      z: 0,
+    };
+    return [[], newObject];
+  }
+
+  @entry
+  increment = (_: unit, storage: storage_type): return_type => {
+    const { x, y, z } = storage;
+    const newObject: object_type = {
+      x: x + 1,
+      y: y + 1,
+      z: z + 1,
+    };
+    return [[], newObject];
+  }
+}
+```
+
+Field name punning (a shorthand way of setting the value of a field to a variable of the same name) is no longer permitted in object type definitions.
+This example shows how to avoid punning by specifying the type of each field explicitly:
+
+```jsligo group=type_punning
+type x = int;
+type y = int;
+type z = int;
+// type object_type = { x, y, z }; // not permitted
+type object_type = {x: x, y: y, z: z}; // correct
+```
+
+Punning is still permitted in variable definitions, as in this example:
+
+```jsligo group=value_punning
+type object_type = { x: int, y: int, z: int };
+const x = 5;
+const y = 6;
+const z = 7;
+const newObject: object_type = { x, y, z };
+```
+
+JsLIGO objects have these limitations that JavaScript objects don't have:
+
+- You cannot change the fields of a JsLIGO object that is declared as a constant.
+However, you can change the fields of a JsLIGO object that is declared as a variable.
+- You cannot add fields to an object after you create it, regardless of whether it is declared as a constant or a variable.
+- You cannot access fields in an object by putting a variable name in brackets; you must access the fields by specifying the field names as literals in brackets or with the selection operator (`.`).
+
+For more information about objects, see [Objects](../data-types/records).
+
+### Variants and options
+
+The syntax for variant and option types has changed.
+If the variant type has only one variant, it must start with a vertical bar, as in this example:
+
+```jsligo group=union
+type singleton = | ["Single"];
+```
+
+To define the values of a variant type, use the usual tuple syntax, with the type as the first tuple value and the value of the variant as the second tuple value.
+To prevent the compiler from seeing the first value as a string, you must set its type as one of the constructors from the variant type, as in this example:
+
+```jsligo group=union
+type user =
+  ["Admin", nat]
+| ["Manager", int]
+| ["Guest"];
+
+const admin1: user = ["Admin" as "Admin", 1 as nat];
+const manager2: user = ["Manager" as "Manager", 2 as int];
+const guest3: user = ["Guest" as "Guest"];
+```
+
+## Imports
+
+JsLIGO now uses a syntax closer to JavaScript/TypeScript to import definitions.
+It supports three syntaxes for importing definitions from other files and namespaces:
+
+- `import M = M.O`
+- `import * as M from "./targetFile.jsligo"`
+- `import {x, y} from "./targetFile.jsligo"`
+
+However, you cannot import types as in this TypeScript syntax:
+
+```jsligo skip
+// Not allowed
+import { type x } from "./myTypes.jsligo";
+```
+
+Instead, import the file and bind a type locally, as in this example:
+
+```jsligo skip
+import * as myTypes from "./myTypes.jsligo";
+type storage_type = myTypes.storage_type;
+type return_type = myTypes.return_type;
+```
+
+For example, assume that this file is `myTypes.jsligo`:
+
+```jsligo group=myTypes
+export type storage_type = int;
+export type return_type = [list<operation>, storage_type];
+```
+
+This file imports those types and uses them:
+
+```jsligo group=use_myTypes
+import * as myTypes from "./myTypes.jsligo";
+type storage_type = myTypes.storage_type;
+type return_type = myTypes.return_type;
+
+class Counter {
+  @entry
+  add = (value: int, storage: storage_type): return_type =>
+    [[], storage + value];
+
+  @entry
+  sub = (value: int, storage: storage_type): return_type =>
+    [[], storage - value];
+}
+```
+
+## Preprocessor directives
+
+Preprocessor directives are no longer used in JsLIGO version 2.0.
+Here are some ways to update code that uses preprocessor directives:
+
+- Instead of using the `#include` or `#import` directives, import namespaces in other files directly with the `import` keyword as described previously.
+
+- The `#if`, `#else`, `#elif`, `#endif`, `#define`, `#undef`, and `#error` directives are no longer supported.
+If you need to continue using them, you can run your JsLIGO code through a C++ preprocessor, which uses the same syntax.
+JsLIGO code with these directives does not compile.
+
+## Pattern matching
+
+The syntax for pattern matching has changed to use the `$match` predefined function instead of the `match` keyword.
+As its parameters, the `$match` function receives the variant value to match on and an object.
+The property names of the object are the constructors of the corresponding variant type.
+The property values are either a single expression or functions that receive the value of the variant as a parameter.
+Here is an example:
+
+```jsligo group=matching
+type user =
+  ["Admin", nat]
+| ["Manager", nat]
+| ["Guest"];
+
+const greetUser = (user: user): null => {
+  $match (user, {
+    "Admin": _id => console.log("Hello, administrator"),
+    "Manager": _id => console.log("Welcome, manager"),
+    "Guest": () => console.log("Hello, guest"),
+  });
+}
+```
+
+To define the thunk, use an immediately invoked function expression (IIFE) as the result of a match, as in the following example.
+JsLIGO 2.0 uses this syntax in place of `do` expressions in the previous version.
+
+```jsligo group=matching
+const getSquareOfUserId = (user: user): nat => {
+  $match (user, {
+    "Admin": id => (() => {
+      const squareOfId = id * id;
+      return squareOfId;
+    })(),
+    "Manager": id => (() => {
+      const squareOfId = id * id;
+      return squareOfId;
+    })(),
+    "Guest": () => 0,
+  });
+}
+```
+
+Also, matching works only on values of variant types.
+If you want to use the `$match` statement on other types or on more than one variable at a time, you can wrap them in a variant or option.
+This example wraps two types in a variant so the `$match` statement can use them both:
+
+```jsligo group=matching
+type wrapper = | ["Wrap", [int, int]];
+const wrapped: wrapper = ["Wrap" as "Wrap", [5, 5]];
+
+const compareResult: string = $match(wrapped, {
+  "Wrap": ([_a, _b]) => (() => {
+    if (_a == _b) return "Equal";
+    if (_a > _b) return "Greater";
+    if (_a < _b) return "Less";
+    return "Default";
+  })(),
+});
+```
+
+## The `switch` statement
+
+Blocks that use the `switch` statement must have at least one case.
+Also, `switch` blocks can have only one default case.
+
+## `do` expressions
+
+Instead of the expression `do { ... }`, use an IIFE in the format `(() => {})()`.
+IIFEs are often used to run tests, as in this example:
+
+```jsligo skip
+const test = (() => {
+
+  const contract = Test.Originate.contract(contract_of(Counter), 0, 0 as tez);
+  Test.Contract.transfer_exn(Test.Typed_address.get_entrypoint("add", contract.taddr), 5, 0 as tez);
+  Test.Contract.transfer_exn(Test.Typed_address.get_entrypoint("sub", contract.taddr), 2, 0 as tez);
+  Assert.assert(Test.Typed_address.get_storage(contract.taddr) == 3);
+
+})();
+```
+
+## Escaping keywords
+
+Escaping keywords is no longer supported; keywords cannot be used as variable names or object fields, even if you prefix the names with the `@` symbol.
+For example, you can add an underscore as a suffix, creating variables with names such as `return_` or `entry_`.
+
+## Decorators
+
+Decorators such as `@entry` and `@view` must now be in a comment immediately before the definition that they modify except when they are in classes, as described above.
+
+## Commands
+
+The `ligo run dry-run` command accepts a different format for entrypoints and parameters.
+Instead of accepting the name of the entrypoint, it accepts the entrypoint and parameter as a value of a variant type with the name of the entrypoint.
+The name of the entrypoint is always capitalized.
+For example, this command calls an entrypoint named `add` that accepts an integer as a parameter:
+
+```bash
+ligo run dry-run counter.jsligo -m "Counter" '["Add" as "Add", 1]' 5
+```
+
+</Syntax>
