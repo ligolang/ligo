@@ -30,10 +30,10 @@ As it is, this contract cannot change the administrator address after it is depl
 
    ```jsligo skip
    // Create contract object that represents the target account
-   const receiver_contract =  match(Tezos.get_contract_opt(storage.admin_address)) {
-     when(Some(contract)): contract;
-     when(None): failwith("Couldn't find account");
-   };
+   const receiver_contract = $match(Tezos.get_contract_opt(storage.admin_address), {
+     "Some": (contract) => contract,
+     "None": () => failwith("Couldn't find account"),
+   });
 
    // Create operation to send tez
    const payout_operation = Tezos.Operation.transaction(unit, Tezos.get_balance(), receiver_contract);
@@ -78,7 +78,7 @@ As it is, this contract cannot change the administrator address after it is depl
 The complete entrypoint looks like this:
 
 ```jsligo skip
-@entry
+// @entry
 const payout = (_u: unit, storage: storage): [
     list<operation>,
     storage
@@ -90,10 +90,10 @@ const payout = (_u: unit, storage: storage): [
   }
 
   // Create contract object that represents the target account
-  const receiver_contract =  match(Tezos.get_contract_opt(storage.admin_address)) {
-    when(Some(contract)): contract;
-    when(None): failwith("Couldn't find account");
-  };
+  const receiver_contract = $match(Tezos.get_contract_opt(storage.admin_address), {
+    "Some": (contract) => contract,
+    "None": () => failwith("Couldn't find account"),
+  });
 
   // Create operation to send tez
   const payout_operation = Tezos.Operation.transaction(unit, Tezos.get_balance(), receiver_contract);
@@ -230,29 +230,28 @@ Of course, after you implement the `payout` entrypoint, you should add tests for
      Test.Contract.transfer(
        Test.Typed_address.get_entrypoint("payout", contract.taddr),
        unit,
-       0tez
+       0 as tez
      );
-   match(payout_result) {
-     when(Success(_s)):
-       do {
+   $match(payout_result, {
+     "Success": (_s) => (() => {
          const storage = Test.Typed_address.get_storage(contract.taddr);
          // Check that the stock has been reset
          Assert.assert(
            eq_in_map(
-             Map.find(1n, TacoShop.default_taco_data),
+             Map.find(1 as nat, TacoShop.default_taco_data),
              storage.taco_data,
-             1n
+             1 as nat
            ));
          Assert.assert(
            eq_in_map(
-             Map.find(2n, TacoShop.default_taco_data),
+             Map.find(2 as nat, TacoShop.default_taco_data),
              storage.taco_data,
-             2n
+             2 as nat
            ));
          Test.IO.log("Successfully reset taco storage");
-       }
-     when(Fail(_err)): failwith("Failed to reset taco storage");
-   };
+       })(),
+       "Fail": (_err) => failwith("Failed to reset taco storage"),
+     });
    ```
 
 1. Add this code to verify that Pedro's account received the tez from the contract:
@@ -269,18 +268,18 @@ Of course, after you implement the `payout` entrypoint, you should add tests for
 
    ```jsligo skip
    // Verify that the entrypoint fails if called by someone else
-   const other_user_account = Test.Account.address(1n);
+   const other_user_account = Test.Account.address(1 as nat);
    Test.State.set_source(other_user_account);
    const failed_payout_result =
      Test.Contract.transfer(
        Test.Typed_address.get_entrypoint("payout", contract.taddr),
        unit,
-       0tez
+       0 as tez
      );
-   match(failed_payout_result) {
-     when(Success(_s)): failwith("A non-admin user was able to call the payout entrypoint");
-     when(Fail(_err)): Test.IO.log("Successfully prevented a non-admin user from calling the payout entrypoint");
-   };
+   $match(failed_payout_result, {
+     "Success": (_s) => failwith("A non-admin user was able to call the payout entrypoint"),
+     "Fail": (_err) => Test.IO.log("Successfully prevented a non-admin user from calling the payout entrypoint"),
+   });
    ```
 
 1. Run the test with `ligo run test taco_shop.jsligo` and verify that the test runs successfully.

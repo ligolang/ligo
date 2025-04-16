@@ -138,13 +138,13 @@ In this case, the contract needs to store the taco data map and the administrato
 
    ```jsligo skip
    export const default_taco_data: taco_data = Map.literal([
-     [1n, { current_stock: 50n, max_price: 50tez }],
-     [2n, { current_stock: 20n, max_price: 75tez }]
+     [1 as nat, { current_stock: 50 as nat, max_price: 50 as tez }],
+     [2 as nat, { current_stock: 20 as nat, max_price: 75 as tez }]
    ]);
    ```
 
-   Note that the natural numbers are indicated with an `n` after the number; otherwise, LIGO assumes that numbers are integers.
-   Similarly, the maximum prices of the tacos are suffixed with `tez` to indicate that they are amounts of tez.
+   Note that the natural numbers are indicated with an `as nat` after the number; otherwise, LIGO assumes that numbers are integers.
+   Similarly, the maximum prices of the tacos have `as tez` to indicate that they are amounts of tez.
 
 1. To keep the code for the contract organized, put the types and values in a namespace named `TacoShop`.
 The contract looks like this so far:
@@ -159,9 +159,9 @@ The contract looks like this so far:
        taco_data: taco_data,
      };
 
-     export const default_taco_data: taco_data = Map.literal ([
-       [1n, { current_stock: 50n, max_price: 50tez }],
-       [2n, { current_stock: 20n, max_price: 75tez }]
+     export const default_taco_data: taco_data = Map.literal([
+       [1 as nat, { current_stock: 50 as nat, max_price: 50 as tez }],
+       [2 as nat, { current_stock: 20 as nat, max_price: 75 as tez }]
      ]);
 
    };
@@ -254,10 +254,10 @@ Add this function inside the namespace, immediately after the `default_taco_data
 // Internal function to get the price of a taco
 const get_taco_price_internal = (taco_kind_index: nat, taco_data: taco_data): tez => {
   const taco_kind: taco_supply =
-    match (Map.find_opt(taco_kind_index, taco_data)) {
-      when(Some(kind)): kind;
-      when(None()): failwith("Unknown kind of taco")
-    };
+    $match (Map.find_opt(taco_kind_index, taco_data), {
+      "Some": (kind) => kind,
+      "None": () => failwith("Unknown kind of taco"),
+    });
   return taco_kind.max_price / taco_kind.current_stock;
 }
 ```
@@ -303,7 +303,7 @@ As described in [Entrypoints](../../syntax/contracts/entrypoints), entrypoints m
 
 <Syntax syntax="jsligo">
 
-- Entrypoints are functions marked with the `@entry` decorator
+- Entrypoints are functions marked with the `@entry` decorator, which (when used in a namespace) must be in a comment immediately before the function
 - Entrypoints receive a parameter from the caller and the current state of the contract storage
 - Entrypoints return a tuple consisting of a list of operations to run (such as calls to other smart contracts or transfers of tez) and the new state of the contract storage
 
@@ -311,7 +311,7 @@ As described in [Entrypoints](../../syntax/contracts/entrypoints), entrypoints m
 
    ```jsligo skip
    // Buy a taco
-   @entry
+   // @entry
    const buy_taco = (taco_kind_index: nat, storage: storage): [
        list<operation>,
        storage
@@ -341,10 +341,10 @@ As described in [Entrypoints](../../syntax/contracts/entrypoints), entrypoints m
    ```jsligo skip
    // Retrieve the kind of taco from the contracts storage or fail
    const taco_kind: taco_supply =
-     match (Map.find_opt(taco_kind_index, taco_data)) {
-       when(Some(kind)): kind;
-       when(None()): failwith("Unknown kind of taco");
-     };
+     $match (Map.find_opt(taco_kind_index, taco_data), {
+       "Some": (kind) => kind,
+       "None": () => failwith("Unknown kind of taco"),
+   });
    ```
 
 1. After the code you just added, add this code to get the current price of a taco:
@@ -368,7 +368,7 @@ It uses the `Tezos.get_amount()` function, which returns the amount of tez that 
 
    ```jsligo skip
    // Verify that there is at least one of this type of taco
-   if (taco_kind.current_stock == 0n) {
+   if (taco_kind.current_stock == 0 as nat) {
      return failwith("Sorry, we are out of this type of taco");
    }
    ```
@@ -379,7 +379,7 @@ It uses the `Tezos.get_amount()` function, which returns the amount of tez that 
    // Update the storage with the new quantity of tacos
    const updated_taco_data: taco_data = Map.update(
      taco_kind_index,
-     (Some (({...taco_kind, current_stock: abs(taco_kind.current_stock - 1n) }))),
+     ["Some" as "Some", {...taco_kind, current_stock: abs(taco_kind.current_stock - 1) }],
      taco_data);
    ```
 
@@ -404,7 +404,7 @@ It uses the `Tezos.get_amount()` function, which returns the amount of tez that 
 1. After the code for the `buy_taco` entrypoint, stub in the code for the entrypoint that allows Pedro to retrieve the tez in the contract, which you will add in a later section:
 
    ```jsligo skip
-   @entry
+   // @entry
    const payout = (_u: unit, storage: storage): [
        list<operation>,
        storage
@@ -545,7 +545,7 @@ Unlike entrypoints, they return a single value to the caller instead of a list o
 Add this view to the contract, after the `get_taco_price_internal` function and somewhere within the namespace:
 
 ```jsligo skip
-@view
+// @view
 const get_taco_price = (taco_kind_index: nat, storage: storage): tez =>
   get_taco_price_internal(taco_kind_index, storage.taco_data);
 ```
@@ -567,26 +567,26 @@ namespace TacoShop {
   };
 
   export const default_taco_data: taco_data = Map.literal([
-    [1n, { current_stock: 50n, max_price: 50tez }],
-    [2n, { current_stock: 20n, max_price: 75tez }]
+    [1 as nat, { current_stock: 50 as nat, max_price: 50 as tez }],
+    [2 as nat, { current_stock: 20 as nat, max_price: 75 as tez }]
   ]);
 
   // Internal function to get the price of a taco
   const get_taco_price_internal = (taco_kind_index: nat, taco_data: taco_data): tez => {
     const taco_kind: taco_supply =
-      match (Map.find_opt(taco_kind_index, taco_data)) {
-        when(Some(kind)): kind;
-        when(None()): failwith("Unknown kind of taco")
-      };
+      $match (Map.find_opt(taco_kind_index, taco_data), {
+        "Some": (kind) => kind,
+        "None": () => failwith("Unknown kind of taco"),
+      });
     return taco_kind.max_price / taco_kind.current_stock;
   }
 
-  @view
+  // @view
   const get_taco_price = (taco_kind_index: nat, storage: storage): tez =>
     get_taco_price_internal(taco_kind_index, storage.taco_data);
 
   // Buy a taco
-  @entry
+  // @entry
   const buy_taco = (taco_kind_index: nat, storage: storage): [
       list<operation>,
       storage
@@ -596,10 +596,10 @@ namespace TacoShop {
 
     // Retrieve the kind of taco from the contracts storage or fail
     const taco_kind: taco_supply =
-      match (Map.find_opt(taco_kind_index, taco_data)) {
-        when(Some(kind)): kind;
-        when(None()): failwith("Unknown kind of taco");
-      };
+      $match (Map.find_opt(taco_kind_index, taco_data), {
+        "Some": (kind) => kind,
+        "None": () => failwith("Unknown kind of taco"),
+      });
 
     // Get the current price of this type of taco
     const current_purchase_price = get_taco_price_internal(taco_kind_index, taco_data);
@@ -610,14 +610,14 @@ namespace TacoShop {
     }
 
     // Verify that there is at least one of this type of taco
-    if (taco_kind.current_stock == 0n) {
+    if (taco_kind.current_stock == (0 as nat)) {
       return failwith("Sorry, we are out of this type of taco");
     }
 
     // Update the storage with the new quantity of tacos
     const updated_taco_data: taco_data = Map.update(
       taco_kind_index,
-      (Some (({...taco_kind, current_stock: abs (taco_kind.current_stock - 1n) }))),
+      ["Some" as "Some", {...taco_kind, current_stock: abs(taco_kind.current_stock - 1) }],
       taco_data);
 
     const updated_storage: storage = {
@@ -628,7 +628,7 @@ namespace TacoShop {
     return [[], updated_storage];
   }
 
-  @entry
+  // @entry
   const payout = (_u: unit, storage: storage): [
       list<operation>,
       storage
@@ -638,6 +638,7 @@ namespace TacoShop {
 
     return [[], storage];
   }
+
 };
 ```
 

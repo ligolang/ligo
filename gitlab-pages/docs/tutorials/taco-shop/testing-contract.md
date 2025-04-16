@@ -26,10 +26,10 @@ For convenience, in this tutorial, you put the tests in the same file.
    // Convenience function to get current taco price
    const get_taco_price = (untyped_address: address, taco_kind_index: nat): tez => {
      const view_result_option: option<tez> = Tezos.View.call("get_taco_price", taco_kind_index, untyped_address);
-     return match(view_result_option) {
-       when(Some(cost_mutez)): cost_mutez;
-       when(None()): Test.failwith("Couldn't get the price of the taco.")
-     };
+     return $match(view_result_option, {
+       "Some": (cost_mutez) => cost_mutez,
+       "None": () => Test.failwith("Couldn't get the price of the taco."),
+     });
    }
    ```
 
@@ -38,12 +38,10 @@ For convenience, in this tutorial, you put the tests in the same file.
    ```jsligo skip
    // Convenience function for testing equality in maps
    const eq_in_map = (r: TacoShop.taco_supply, m: TacoShop.taco_data, k: nat) =>
-     match(Map.find_opt(k, m)) {
-       when(None):
-         false
-       when(Some(v)):
-         v.current_stock == r.current_stock && v.max_price == r.max_price
-   };
+     $match(Map.find_opt(k, m), {
+       "None": () => false,
+       "Some": (v) => v.current_stock == r.current_stock && v.max_price == r.max_price
+     });
    ```
 
    This function accepts information about a taco type and verifies that the values in the stored map match.
@@ -62,12 +60,12 @@ For convenience, in this tutorial, you put the tests in the same file.
 
    ```jsligo skip
    // Set the initial storage and deploy the contract
-   const admin_address: address = Test.Account.address(0n);
+   const admin_address: address = Test.Account.address(0 as nat);
    const initial_storage: TacoShop.storage = {
      admin_address: admin_address,
      taco_data: TacoShop.default_taco_data,
    }
-   const contract = Test.Originate.contract(contract_of(TacoShop), initial_storage, 0tez);
+   const contract = Test.Originate.contract(contract_of(TacoShop), initial_storage, 0 as tez);
    ```
 
    This code creates the `contract` object to represent the deployed (originated) contract.
@@ -79,7 +77,7 @@ For convenience, in this tutorial, you put the tests in the same file.
    ```jsligo skip
    // Get the current price of a taco
    const untyped_address = Test.Typed_address.to_address(contract.taddr);
-   const current_price = get_taco_price(untyped_address, 1n);
+   const current_price = get_taco_price(untyped_address, 1 as nat);
    ```
 
 1. Call the `buy_taco` entrypoint with this code:
@@ -89,7 +87,7 @@ For convenience, in this tutorial, you put the tests in the same file.
    const success_result =
      Test.Contract.transfer(
        Test.Typed_address.get_entrypoint("buy_taco", contract.taddr),
-       1n,
+       1 as nat,
        current_price
      );
    ```
@@ -98,35 +96,34 @@ For convenience, in this tutorial, you put the tests in the same file.
    It takes these parameters:
 
     1. The contract to call, here represented by the `buy_taco` entrypoint of the contract.
-    1. The parameter to pass to the entrypoint, in this case `1n` to represent the first type of taco.
+    1. The parameter to pass to the entrypoint, in this case `1 as nat` to represent the first type of taco.
     1. The amount of tez to send with the transaction, in this case the current price of that type of taco from the previous lines of code.
 
 1. Verify that the transaction completed successfully and that the number of tacos of that type decreased by 1:
 
    ```jsligo skip
    // Verify that the stock was updated
-   match(success_result) {
-     when(Success(_s)):
-     do {
+   $match(success_result, {
+     "Success": (_s) => (() => {
        const storage = Test.Typed_address.get_storage(contract.taddr);
        // Check that the stock has been updated correctly
        Assert.assert(
          eq_in_map(
-           { current_stock: 49n, max_price: 50000000mutez },
+           { current_stock: 49 as nat, max_price: 50000000 as mutez },
            storage.taco_data,
-           1n
+           1 as nat
          ));
        // Check that the amount of the other taco type has not changed
        Assert.assert(eq_in_map(
-           { current_stock: 20n, max_price: 75000000mutez },
+           { current_stock: 20 as nat, max_price: 75000000 as mutez },
            storage.taco_data,
-           2n
+           2 as nat
          )
        );
        Test.IO.log("Successfully bought a taco");
-     }
-     when(Fail(err)): failwith(err);
-   };
+   })(),
+     "Fail": (err) => failwith(err),
+   });
    ```
 
 1. Verify that the entrypoint fails when a client passes the wrong price:
@@ -136,13 +133,13 @@ For convenience, in this tutorial, you put the tests in the same file.
    const fail_result =
      Test.Contract.transfer(
        Test.Typed_address.get_entrypoint("buy_taco", contract.taddr),
-       1n,
-       1mutez
+       1 as nat,
+       1 as mutez
      );
-   match(fail_result) {
-     when(Success(_s)): failwith("Test was able to buy a taco for the wrong price");
-     when(Fail(_err)): Test.IO.log("Contract successfully blocked purchase with incorrect price");
-   };
+   $match(fail_result, {
+     "Success": (_s) => failwith("Test was able to buy a taco for the wrong price"),
+     "Fail": (_err) => Test.IO.log("Contract successfully blocked purchase with incorrect price"),
+   });
    ```
 
    It's important to test failure cases as well as success cases to make sure the contract works properly in all cases.
@@ -157,79 +154,76 @@ import Tezos = Tezos.Next;
 
 // Convenience function to get current taco price
 const get_taco_price = (untyped_address: address, taco_kind_index: nat): tez => {
-    const view_result_option: option<tez> = Tezos.View.call("get_taco_price", taco_kind_index, untyped_address);
-    return match(view_result_option) {
-      when(Some(cost_mutez)): cost_mutez;
-      when(None()): Test.failwith("Couldn't get the price of the taco.")
-    };
+  const view_result_option: option<tez> = Tezos.View.call("get_taco_price", taco_kind_index, untyped_address);
+  return $match(view_result_option, {
+    "Some": (cost_mutez) => cost_mutez,
+    "None": () => Test.failwith("Couldn't get the price of the taco."),
+  });
 }
 
 // Convenience function for testing equality in maps
 const eq_in_map = (r: TacoShop.taco_supply, m: TacoShop.taco_data, k: nat) =>
-  match(Map.find_opt(k, m)) {
-    when(None):
-      false
-    when(Some(v)):
-      v.current_stock == r.current_stock && v.max_price == r.max_price
-  };
+  $match(Map.find_opt(k, m), {
+    "None": () => false,
+    "Some": (v) => v.current_stock == r.current_stock && v.max_price == r.max_price
+  });
 
 const test = (() => {
 
   // Set the initial storage and deploy the contract
-  const admin_address: address = Test.Account.address(0n);
+  const admin_address: address = Test.Account.address(0 as nat);
   const initial_storage: TacoShop.storage = {
     admin_address: admin_address,
     taco_data: TacoShop.default_taco_data,
   }
-  const contract = Test.Originate.contract(contract_of(TacoShop), initial_storage, 0tez);
+  const contract = Test.Originate.contract(contract_of(TacoShop), initial_storage, 0 as tez);
 
   // Get the current price of a taco
   const untyped_address = Test.Typed_address.to_address(contract.taddr);
-  const current_price = get_taco_price(untyped_address, 1n);
+  const current_price = get_taco_price(untyped_address, 1 as nat);
 
   // Purchase a taco
   const success_result =
     Test.Contract.transfer(
       Test.Typed_address.get_entrypoint("buy_taco", contract.taddr),
-      1n,
+      1 as nat,
       current_price
     );
 
   // Verify that the stock was updated
-  match(success_result) {
-    when(Success(_s)):
-    do {
+  $match(success_result, {
+    "Success": (_s) => (() => {
       const storage = Test.Typed_address.get_storage(contract.taddr);
       // Check that the stock has been updated correctly
       Assert.assert(
         eq_in_map(
-          { current_stock: 49n, max_price: 50000000mutez },
+          { current_stock: 49 as nat, max_price: 50000000 as mutez },
           storage.taco_data,
-          1n
+          1 as nat
         ));
       // Check that the amount of the other taco type has not changed
       Assert.assert(eq_in_map(
-          { current_stock: 20n, max_price: 75000000mutez },
+          { current_stock: 20 as nat, max_price: 75000000 as mutez },
           storage.taco_data,
-          2n
+          2 as nat
         )
       );
       Test.IO.log("Successfully bought a taco");
-    }
-    when(Fail(err)): failwith(err);
-  };
+  })(),
+    "Fail": (err) => failwith(err),
+  });
 
   // Fail to purchase a taco without sending enough tez
   const fail_result =
     Test.Contract.transfer(
       Test.Typed_address.get_entrypoint("buy_taco", contract.taddr),
-      1n,
-      1mutez
+      1 as nat,
+      1 as mutez
     );
-  match(fail_result) {
-    when(Success(_s)): failwith("Test was able to buy a taco for the wrong price");
-    when(Fail(_err)): Test.IO.log("Contract successfully blocked purchase with incorrect price");
-  };
+  $match(fail_result, {
+    "Success": (_s) => failwith("Test was able to buy a taco for the wrong price"),
+    "Fail": (_err) => Test.IO.log("Contract successfully blocked purchase with incorrect price"),
+  });
 }) ();
 ```
 
