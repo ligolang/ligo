@@ -1633,8 +1633,8 @@ and print_type_alias_declaration ?(comments = []) state node =
     let children =
       [ mk_child_res (mk_kwd_type ~comments) kwd_type
       ; mk_child_res print_identifier name_field
-      ; mk_child_res mk_sym_equal sym_equal
       ; mk_child_opt print_type_parameters type_parameters_field
+      ; mk_child_res mk_sym_equal sym_equal
       ; mk_child_res print_type value_field
       ]
     in
