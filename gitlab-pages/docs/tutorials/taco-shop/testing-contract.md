@@ -476,9 +476,14 @@ For example, you can test the `buy_taco` entrypoint with this command:
 <Syntax syntax="jsligo">
 
 ```bash
-ligo run dry-run taco_shop.jsligo -m TacoShop --amount 1 "Buy_taco(1n)" \
+ligo run dry-run taco_shop.jsligo -m TacoShop --amount 1 '["Buy_taco" as "Buy_taco", 1 as nat]' \
   '{admin_address: "tz1QCVQinE8iVj1H2fckqx6oiM85CNJSK9Sx" as address, taco_data: TacoShop.default_taco_data}'
 ```
+
+The entrypoint and parameter in this command are formatted as a variant type.
+When the contract is compiled to Michelson, its parameter is a variant that has cases for each entrypoint, so you must pass the variant that corresponds to the entrypoint.
+For the purposes of the `ligo run dry-run` command, the variant type is the name of the entrypoint with the first letter in upper case.
+Note also that you can use variables from the contract (as in `TacoShop.default_taco_data`) in the command because the contract parameter and storage value are LIGO expressions.
 
 </Syntax>
 
@@ -489,10 +494,10 @@ ligo run dry-run taco_shop.mligo -m TacoShop --amount 1 "Buy_taco 1n" \
   '{admin_address = "tz1QCVQinE8iVj1H2fckqx6oiM85CNJSK9Sx" ; taco_data = TacoShop.default_taco_data}'
 ```
 
-</Syntax>
-
 Note that the entrypoint name starts with a capital letter when you use it in a dry run.
 Note also that you can use variables from the contract (as in `TacoShop.default_taco_data`) in the command because the contract parameter and storage value are LIGO expressions.
+
+</Syntax>
 
 The address in the dry run command isn't stored beyond this run of the command; you just need to provide any address for the amin address in storage.
 However, you must use the `as address` declaration to specify that the string is a LIGO `address` type; without the type declaration, LIGO would assume that it was a string.
