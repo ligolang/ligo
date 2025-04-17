@@ -602,6 +602,8 @@ ligo compile contract --library . -m Proxy gitlab-pages/docs/syntax/contracts/sr
 
 </Syntax>
 
+<Syntax syntax="jsligo">
+
 ```jsligo group=contract_main_proxy
 import * as C from "gitlab-pages/docs/syntax/contracts/src/entrypoints/contract_main.jsligo";
 
