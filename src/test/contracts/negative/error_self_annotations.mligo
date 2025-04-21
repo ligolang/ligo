@@ -5,5 +5,5 @@ type param =
 [@entry]
 let main (_ : param) (_ : unit) : operation list * unit =
   let c = (Tezos.self ("%a") : unit contract) in
-  let op = Tezos.transaction () 0mutez c in
+  let op = Tezos.Next.Operation.transaction () 0mutez c in
   ([op] : operation list), ()

@@ -9,10 +9,10 @@ let main () (store : int option) : operation list * (int option) =
 let test =
   let a = Some 1 in
   let b = Option.map to_tup a in
-  let _ = assert (b = (Some ("foo", 1))) in
-  let _ = assert (a = (Option.map to_int b)) in
+  let _ = Assert.assert (b = (Some ("foo", 1))) in
+  let _ = Assert.assert (a = (Option.map to_int b)) in
   let a : int option = None in
   let b = Option.map to_tup a in
-  let _ = assert (b = (None : (string * int) option)) in
-  let _ = assert (a = (Option.map to_int b)) in
+  let _ = Assert.assert (b = (None : (string * int) option)) in
+  let _ = Assert.assert (a = (Option.map to_int b)) in
   ()

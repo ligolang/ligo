@@ -1,3 +1,5 @@
+module Tezos = Tezos.Next
+
 let assert = Assert.assert
 
 type storage = (bytes ticket) option
@@ -7,7 +9,7 @@ let main (() : unit) (s : storage) : operation list * storage =
   [] , (
     match s with
     | Some ticket ->
-      let (_ , t) = Tezos.Next.Ticket.read ticket in
+      let (_ , t) = Tezos.Ticket.read ticket in
       Some t
     | None -> None
   )
