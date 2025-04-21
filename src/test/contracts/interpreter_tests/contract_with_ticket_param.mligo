@@ -1,16 +1,19 @@
+module Tezos = Tezos.Next
+
 module C = struct
   type param = int * string ticket
 
   [@entry]
   let main (p : param) (_ : string * address) : operation list * (string * address) =
     let (_,ticket) = p in
-    let (_,(v,_)) , _ = Tezos.read_ticket ticket in
+    let (_,(v,_)) , _ = Tezos.Ticket.read ticket in
     [] , (v, Tezos.get_sender ())
 end
 
 let test_transfer_to_contract =
-  let orig = Test.originate (contract_of C) ("bye",Test.nth_bootstrap_account 1) 1mutez in
-  let main_addr = Tezos.address (Test.to_contract orig.addr) in
+  let orig = Test.Next.Originate.contract (contract_of C)
+               ("bye", Test.Next.Account.address 1) 1mutez in
+  let main_addr = Tezos.address (Test.Next.Typed_address.to_contract orig.taddr) in
 
   (* Use this address everytime you want to send tickets from the same proxy-contract *)
   let proxy_taddr =
@@ -29,6 +32,6 @@ let test_transfer_to_contract =
     let ticket_info = ("world",5n) in
     Test.Proxy_ticket.transfer proxy_taddr (ticket_info,main_addr)
   in
-  let s, addr = Test.get_storage_of_address main_addr in
-  let p_addr = proxy_taddr |> Test.to_contract |> Tezos.address in
-  assert (s = "world" && addr = p_addr)
+  let s, addr = Test.Next.Address.get_storage main_addr in
+  let p_addr = proxy_taddr |> Test.Next.Typed_address.to_contract |> Tezos.address in
+  Assert.assert (s = "world" && addr = p_addr)

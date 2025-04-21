@@ -3,7 +3,7 @@ module A = struct
 
   let other =
     fun (n : nat) -> let current_turn = current_turn 1n in
-      assert (n = current_turn)
+      Assert.assert (n = current_turn)
 
 end
 

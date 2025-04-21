@@ -4,7 +4,7 @@ let rec foo (n : int) : address =
   else
     let addr = foo (n - 1) in
     Tezos.address
-      (Option.unopt (Tezos.get_contract_opt addr : int contract option))
+      (Option.value_with_error "option is None" (Tezos.get_contract_opt addr : int contract option))
 
 [@entry]
 let main (p : int) (_ : address) : (operation list * address) =

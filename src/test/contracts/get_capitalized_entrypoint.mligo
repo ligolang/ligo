@@ -4,5 +4,5 @@ let main (_ : unit) (_ : unit) : operation list * unit =
   match dst with
   | None -> failwith "lol"
   | Some dst ->
-    let op : operation = Tezos.transaction () 0mutez dst in
+    let op : operation = Tezos.Next.Operation.transaction () 0mutez dst in
     ([op], ())

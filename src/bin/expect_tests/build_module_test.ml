@@ -164,14 +164,6 @@ let%expect_test _ =
   run_ligo_good [ "run"; "test"; contract "C1.mligo" ];
   [%expect
     {|
-    File "../../test/contracts/build/C1.mligo", line 3, characters 11-17:
-      2 |
-      3 | let test = assert (b = c)
-                     ^^^^^^
-    :
-    Warning: deprecated value.
-    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
-
     Everything at the top-level was executed.
     - test exited with value (). |}]
 
@@ -179,14 +171,6 @@ let%expect_test _ =
   run_ligo_good [ "run"; "test"; contract "C_test.mligo" ];
   [%expect
     {|
-    File "../../test/contracts/build/C_test.mligo", line 5, characters 11-17:
-      4 |
-      5 | let test = assert (tata = 44)
-                     ^^^^^^
-    :
-    Warning: deprecated value.
-    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
-
     Everything at the top-level was executed.
     - test exited with value (). |}]
 

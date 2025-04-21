@@ -1,3 +1,5 @@
-let () = Test.unset_print_values ()
-let () = Test.println "aloh"
+module Test = Test.Next
+
+let () = Test.IO.unset_test_print ()
+let () = Test.IO.println "aloh"
 let test = 42

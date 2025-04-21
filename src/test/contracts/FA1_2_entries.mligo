@@ -51,10 +51,10 @@ let transfer (param : transfer) (storage : storage) : result =
   let allowances = storage.allowances in
   let tokens = storage.tokens in
   let allowances =
-    if Tezos.get_sender () = param.address_from
+    if Tezos.Next.get_sender () = param.address_from
     then allowances
     else
-      let allowance_key = { owner = param.address_from ; spender = Tezos.get_sender () } in
+      let allowance_key = { owner = param.address_from ; spender = Tezos.Next.get_sender () } in
       let authorized_value =
         match Big_map.find_opt allowance_key allowances with
         | Some value -> value
@@ -105,7 +105,7 @@ let getAllowance (param : getAllowance) (storage : storage) : operation list * s
     match Big_map.find_opt param.request storage.allowances with
     | Some value -> value
     | None -> 0n in
-  [Tezos.transaction value 0mutez param.callback], storage
+  [Tezos.Next.Operation.transaction value 0mutez param.callback], storage
 
 [@entry]
 let getBalance (param : getBalance) (storage : storage) : operation list * storage =
@@ -113,12 +113,12 @@ let getBalance (param : getBalance) (storage : storage) : operation list * stora
     match Big_map.find_opt param.owner storage.tokens with
     | Some value -> value
     | None -> 0n in
-  [Tezos.transaction value 0mutez param.callback], storage
+  [Tezos.Next.Operation.transaction value 0mutez param.callback], storage
 
 [@entry]
 let getTotalSupply (param : getTotalSupply) (storage : storage) : operation list * storage =
   let total = storage.total_supply in
-  [Tezos.transaction total 0mutez param.callback],storage
+  [Tezos.Next.Operation.transaction total 0mutez param.callback],storage
 
 (* These are helpers written for testing *)
 
