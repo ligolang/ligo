@@ -44,6 +44,7 @@ const sidebars = {
         },
         "id": "syntax/modules"
       },
+      'syntax/classes',
       {
         "type": "category",
         "label": "Contracts",

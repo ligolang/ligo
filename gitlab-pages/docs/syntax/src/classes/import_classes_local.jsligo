@@ -1,0 +1,19 @@
+namespace MyTypes {
+  export type storage_type = int;
+  export type return_type = [list<operation>, storage_type];
+}
+
+class MyFunctions {
+  static add = (a: int, b: int): int => a + b;
+  static sub = (a: int, b: int): int => a - b;
+}
+
+class Counter {
+  @entry
+  add = (value: int, storage: MyTypes.storage_type): MyTypes.return_type =>
+    [[], MyFunctions.add(storage, value)];
+
+  @entry
+  sub = (value: int, storage: MyTypes.storage_type): MyTypes.return_type =>
+    [[], MyFunctions.add(storage, value)];
+}
