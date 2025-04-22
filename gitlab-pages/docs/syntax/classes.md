@@ -13,7 +13,7 @@ Classes are not supported in CameLIGO.
 <Syntax syntax="jsligo">
 
 Classes (introduced in JsLIGO 2.0) are similar to classes in JavaScript/Typescript.
-You can use them to define a smart contract or group related functions.
+You can use them to define a smart contract or group related definitions.
 
 JsLIGO classes do not have all of the same features as JavaScript/TypeScript classes.
 For example, JsLIGO classes cannot inherit from other classes as they can in JavaScript/TypeScript.
@@ -21,8 +21,8 @@ However, classes can implement [interfaces](./signatures).
 
 ## Creating classes
 
-JsLIGO classes can contain only function definitions, which are referred to as _properties_ when they are in a class.
-Because each property is assumed to be a function, you do not prefix definitions with the `function`, `const`, or `let` keywords.
+JsLIGO classes can contain only function definitions and value definitions, which are referred to as _properties_ when they are in a class.
+Because each property is assumed to be constant, you do not prefix definitions with the `function`, `const`, or `let` keywords.
 Within a class, you can also apply decorators such as `@entry` to functions without putting them in comments.
 
 Classes are one way to define contracts, as in this example:
@@ -44,7 +44,7 @@ class Counter {
 
 :::tip
 
-Classes cannot contain type definitions, only functions.
+Classes cannot contain type definitions.
 To encapsulate classes with types, such as if you want to define a type that represents the contract storage or types that represent complex parameter types, you can group the contract class and the related types in a namespace.
 
 :::
