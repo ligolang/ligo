@@ -98,14 +98,6 @@ let%expect_test _ =
   run_ligo_good [ "compile"; "contract"; contract "rollup_address.mligo" ];
   [%expect
     {|
-    File "../../test/contracts/rollup_address.mligo", line 4, characters 4-21:
-      3 |   let sr_cont = Tezos.get_contract_with_error sr_address "Err" in
-      4 |   [ Tezos.transaction () 0mutez sr_cont ], ()
-              ^^^^^^^^^^^^^^^^^
-    :
-    Warning: deprecated value.
-    In a future version, `Tezos` will be replaced by `Tezos.Next`, and using `Operation.transaction` from `Tezos.Next` is encouraged for a smoother migration.
-
     { parameter unit ;
       storage unit ;
       code { DROP ;
@@ -121,7 +113,7 @@ let%expect_test _ =
              CONS ;
              PAIR } } |}]
 
-(* Test if pre alpha protocol works in this case it's mumbai, but in future this 
+(* Test if pre alpha protocol works in this case it's mumbai, but in future this
    will change *)
 let%expect_test _ =
   run_ligo_good [ "compile"; "contract"; contract "unit.mligo"; "--protocol"; "parisb" ];

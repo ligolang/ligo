@@ -159,40 +159,6 @@ let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "test.mligo" ];
   [%expect
     {|
-    File "./test.mligo", line 9, characters 13-27:
-      8 | let test =
-      9 |   let orig = Test.originate (contract_of C) 0 0tez in
-                       ^^^^^^^^^^^^^^
-     10 |   let _ = Test.transfer_exn orig.addr (Main 42) 0tez in
-    :
-    Warning: deprecated value.
-    In a future version, `Test` will be replaced by `Test.Next`, and using `Originate.contract` from `Test.Next` is encouraged for a smoother migration.
-
-    File "./test.mligo", line 10, characters 10-27:
-      9 |   let orig = Test.originate (contract_of C) 0 0tez in
-     10 |   let _ = Test.transfer_exn orig.addr (Main 42) 0tez in
-                    ^^^^^^^^^^^^^^^^^
-     11 |   assert (Test.get_storage orig.addr = 42)
-    :
-    Warning: deprecated value.
-    In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.transfer_exn` from `Test.Next` is encouraged for a smoother migration.
-
-    File "./test.mligo", line 11, characters 2-8:
-     10 |   let _ = Test.transfer_exn orig.addr (Main 42) 0tez in
-     11 |   assert (Test.get_storage orig.addr = 42)
-            ^^^^^^
-    :
-    Warning: deprecated value.
-    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
-
-    File "./test.mligo", line 11, characters 10-26:
-     10 |   let _ = Test.transfer_exn orig.addr (Main 42) 0tez in
-     11 |   assert (Test.get_storage orig.addr = 42)
-                    ^^^^^^^^^^^^^^^^
-    :
-    Warning: deprecated value.
-    In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.get_storage` from `Test.Next` is encouraged for a smoother migration.
-
     Everything at the top-level was executed.
     - test exited with value (). |}]
 
@@ -347,14 +313,6 @@ let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "module_k.mligo" ];
   [%expect
     {|
-    File "./module_k.mligo", line 9, characters 2-8:
-      8 |   let v = H.k 1 2 in
-      9 |   assert (v = 1)
-            ^^^^^^
-    :
-    Warning: deprecated value.
-    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
-
     Everything at the top-level was executed.
     - test_helpers exited with value (). |}]
 
