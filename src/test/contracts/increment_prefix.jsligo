@@ -1,3 +1,5 @@
+import Test = Test.Next;
+
 type storage = int;
 type ret = [list<operation>, storage];
 
@@ -18,13 +20,13 @@ class IncDec {
   reset = (_p : unit, _s : storage) : ret => [[], 0];
 };
 
-const get_storage = Test.Next.Typed_address.get_storage
+const get_storage = Test.Typed_address.get_storage
 
 const test_increment = (() => {
   let initial_storage = 42;
-  let orig = Test.Next.Originate.contract(contract_of(IncDec), initial_storage, 0 as tez);
-  Test.Next.Typed_address.transfer_exn(orig.taddr,
-                                       ["Increment" as "Increment"],
-                                       1 as mutez);
+  let orig = Test.Originate.contract(contract_of(IncDec), initial_storage, 0 as tez);
+  Test.Typed_address.transfer_exn(orig.taddr,
+                                  ["Increment" as "Increment"],
+                                  1 as mutez);
   return Assert.assert(get_storage(orig.taddr) == initial_storage + 1);
 })();

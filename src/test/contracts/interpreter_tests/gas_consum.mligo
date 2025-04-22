@@ -1,3 +1,5 @@
+module Test = Test.Next
+
 let assert = Assert.assert
 
 module C = struct
@@ -16,14 +18,14 @@ let test =
       if p = 0 then acc else aux (p::acc) (p-1)
     in aux ([]:int list) 2000
   in
-  let orig =  Test.Next.Originate.contract (contract_of C) big_list 0tez in
+  let orig =  Test.Originate.contract (contract_of C) big_list 0tez in
   let _caching =
     (* some caching is happening on the first transaction *)
-    Test.Next.Typed_address.transfer orig.taddr (Main true) 0tez
+    Test.Typed_address.transfer orig.taddr (Main true) 0tez
   in
-  let tx1 = Test.Next.Typed_address.transfer orig.taddr (Main false) 0tez in
-  let tx2 = Test.Next.Typed_address.transfer orig.taddr (Main true) 0tez in
-  let tx3 = Test.Next.Typed_address.transfer orig.taddr (Main true) 0tez in
+  let tx1 = Test.Typed_address.transfer orig.taddr (Main false) 0tez in
+  let tx2 = Test.Typed_address.transfer orig.taddr (Main true) 0tez in
+  let tx3 = Test.Typed_address.transfer orig.taddr (Main true) 0tez in
   match (tx1 , tx2, tx3) with
   | Success cons1 , Success cons2, Success cons3 ->
     let () = assert ((cons1 < cons2) && (cons2 = cons3)) in

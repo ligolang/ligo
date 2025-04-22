@@ -1,3 +1,5 @@
+import Test = Test.Next;
+
 const if_switch_break = (n : int) : string => {
   let output = "";
   if (n >= 0 && n <= 5) {
@@ -70,7 +72,7 @@ const if_switch_return = (n : int) : string => {
     };
   };
   output = output + "end";
-  Test.Next.IO.log(output);
+  Test.IO.log(output);
   return output;
 };
 

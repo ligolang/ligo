@@ -53,32 +53,32 @@ let%expect_test _ =
   run_ligo_good [ "run"; "test"; contract "deprecated.mligo" ];
   [%expect
       {|
-File "../../test/contracts/deprecated.mligo", line 5, characters 74-75:
-  4 | module C = struct
-  5 |   [@entry] let foo (() : unit) (m : int) : operation list * int = [], m + f ()
-                                                                                ^
-  6 | end
+File "../../test/contracts/deprecated.mligo", line 10, characters 65-66:
+  9 |   [@entry]
+ 10 |   let foo (() : unit) (m : int) : operation list * int = [], m + f ()
+                                                                       ^
+ 11 | end
 :
 Warning: deprecated value.
 Replace me by...
 g!
 mail: foo@bar.com
 
-File "../../test/contracts/deprecated.mligo", line 8, characters 29-30:
-  7 |
-  8 | let test = Test.Next.IO.log (f ())
-                                   ^
-  9 |
-:
-Warning: deprecated value.
-Replace me by...
-g!
-mail: foo@bar.com
-
-File "../../test/contracts/deprecated.mligo", line 13, characters 30-31:
+File "../../test/contracts/deprecated.mligo", line 13, characters 24-25:
  12 |
- 13 | let test2 = Test.Next.IO.log (h () + i ())
-                                    ^
+ 13 | let test = Test.IO.log (f ())
+                              ^
+ 14 |
+:
+Warning: deprecated value.
+Replace me by...
+g!
+mail: foo@bar.com
+
+File "../../test/contracts/deprecated.mligo", line 21, characters 25-26:
+ 20 |
+ 21 | let test2 = Test.IO.log (h () + i ())
+                               ^
 :
 Warning: deprecated value.
 this is h, but only h or i will trigger
@@ -94,11 +94,11 @@ let%expect_test _ =
   run_ligo_good [ "compile"; "contract"; contract "deprecated.mligo"; "-m"; "C" ];
   [%expect
     {|
-    File "../../test/contracts/deprecated.mligo", line 5, characters 74-75:
-      4 | module C = struct
-      5 |   [@entry] let foo (() : unit) (m : int) : operation list * int = [], m + f ()
-                                                                                    ^
-      6 | end
+    File "../../test/contracts/deprecated.mligo", line 10, characters 65-66:
+      9 |   [@entry]
+     10 |   let foo (() : unit) (m : int) : operation list * int = [], m + f ()
+                                                                           ^
+     11 | end
     :
     Warning: deprecated value.
     Replace me by...
