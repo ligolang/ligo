@@ -73,7 +73,7 @@ ligo run dry-run -m IncDec gitlab-pages/docs/syntax/contracts/src/entrypoints/in
 
 :::note
 
-The entrypoint name in the `dry-run` command always starts with a capital letter, even if the entrypoint name in the source code starts with a lowercase letter.
+The entrypoint name in the `dry-run` command always starts with a capital letter, even if the entrypoint name in the source code starts with a lower case letter.
 
 :::
 
@@ -93,7 +93,7 @@ The parameter is a [variant](../../data-types/variants) type where the construct
 The `ligo run dry-run` command uses this format because Tezos smart contracts don't actually have multiple entrypoints; they are compiled to run code based on the parameter that callers pass.
 The LIGO compiler compiles the contract to include a parameter that runs the code that corresponds to the entrypoint.
 
-For more information about this internal behavior, see [Implementation details: the default entrypoint](https://docs.tezos.com/smart-contracts/entrypoints#implementation-details-the-default-entrypoint) on docs.tezos.com.
+For more information about this internal behaviour, see [Implementation details: the default entrypoint](https://docs.tezos.com/smart-contracts/entrypoints#implementation-details-the-default-entrypoint) on docs.tezos.com.
 
 :::
 
