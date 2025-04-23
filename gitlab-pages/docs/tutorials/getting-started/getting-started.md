@@ -169,7 +169,7 @@ ligo run dry-run counter.mligo 'Add(3)' '5'
 <Syntax syntax="jsligo">
 
 ```bash
-ligo run dry-run counter.jsligo 'Add(3)' '5'
+ligo run dry-run counter.jsligo '["Add" as "Add", 3]' '5'
 ```
 
 </Syntax>

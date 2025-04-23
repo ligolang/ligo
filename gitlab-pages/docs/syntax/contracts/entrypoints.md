@@ -62,22 +62,40 @@ export namespace IncDec {
 
 </Syntax>
 
+<Syntax syntax="cameligo">
+
 To call an entrypoint, pass the name of the entrypoint with an initial capital and the parameter.
 For example, this `run dry-run` command calls the `increment` entrypoint in the previous contract:
-
-<Syntax syntax="cameligo">
 
 ```bash
 ligo run dry-run -m IncDec gitlab-pages/docs/syntax/contracts/src/entrypoints/incdec.mligo 'Increment(5)' '4'
 ```
 
+:::note
+
+The entrypoint name in the `dry-run` command always starts with a capital letter, even if the entrypoint name in the source code starts with a lowercase letter.
+
+:::
+
 </Syntax>
 
 <Syntax syntax="jsligo">
 
+To call an entrypoint, you can use the `run dry-run` command, as in this example, which calls the `increment` entrypoint in the previous contract:
+
 ```bash
-ligo run dry-run -m IncDec gitlab-pages/docs/syntax/contracts/src/entrypoints/incdec.jsligo 'Increment(5)' '4'
+ligo run dry-run -m IncDec gitlab-pages/docs/syntax/contracts/src/entrypoints/incdec.jsligo '["Increment" as "Increment", 5]' '4'
 ```
+
+:::note
+
+The parameter is a [variant](../../data-types/variants) type where the constructor is the name of the entrypoint with the first letter capitalized and the value is the parameter to pass to the entrypoint.
+The `ligo run dry-run` command uses this format because Tezos smart contracts don't actually have multiple entrypoints; they are compiled to run code based on the parameter that callers pass.
+The LIGO compiler compiles the contract to include a parameter that runs the code that corresponds to the entrypoint.
+
+For more information about this internal behavior, see [Implementation details: the default entrypoint](https://docs.tezos.com/smart-contracts/entrypoints#implementation-details-the-default-entrypoint) on docs.tezos.com.
+
+:::
 
 </Syntax>
 
@@ -86,8 +104,6 @@ The response shows an empty list of transactions to run next and the new state o
 ```
 ( LIST_EMPTY() , 9 )
 ```
-
-Note that even though the entrypoint name starts with a lower-case letter, the `run dry-run` command uses an initial upper-case letter to call it.
 
 ## Parameters
 
@@ -566,7 +582,7 @@ ligo run dry-run gitlab-pages/docs/syntax/contracts/src/entrypoints/contract_mai
 <Syntax syntax="jsligo">
 
 ```bash
-ligo run dry-run gitlab-pages/docs/syntax/contracts/src/entrypoints/contract_main.jsligo 'Action_A(5n)' '[5n, "hello"]'
+ligo run dry-run gitlab-pages/docs/syntax/contracts/src/entrypoints/contract_main.jsligo '["Action_A" as "Action_A", 5 as nat]' '[5n, "hello"]'
 ```
 
 </Syntax>
