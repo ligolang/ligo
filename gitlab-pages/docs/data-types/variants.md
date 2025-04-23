@@ -75,7 +75,7 @@ A constant constructor is equivalent to the same constructor taking a value of t
 
 :::note
 
-To create a variable of a variant type, you must specify its value as a tuple where the first value is the constructor and the second value is the value that the case takes.
+To create a variable of a variant type, you must specify its value as a tuple where the first value is the constructor and the second value is the value that the constructor takes.
 To prevent the compiler from seeing the name of the constructor as a string, you must set its type as one of the constructors from the variant type with the `as` syntax, as in the previous examples.
 
 :::
@@ -118,8 +118,8 @@ const x : unit = [];
 The option type is a predefined variant type that has two cases: `Some(v)`, where `v` is some value of any type, and `None`.
 
 Some functions return options when they are not defined for certain inputs.
-For example, you can get a value from a big-map by passing the key to the `Big_map.find_opt` function.
-This function returns an option that is `Some` with the value if the key is defined in the big-map or `None` with unit if it is not.
+For example, you can get a value from a big map by passing the key to the `Big_map.find_opt` function.
+This function returns an option that is `Some` with the value if the key is defined in the big map or `None` with unit if it is not.
 
 Similarly, division by zero is not defined, so this function divides two numbers and returns `Some` if the result is defined or `None` if it is not:
 
@@ -155,7 +155,7 @@ To work with variants and options, you must handle each case of the type.
 LIGO handles different cases by *pattern matching*, which uses the `$match` predefined function to run different code for each case.
 The `$match` function must cover all of the cases of the type.
 
-For example, the following code defines a color variant type and a function that converts values of that type to a single integer by using pattern matching on each variant:
+For example, the following code defines a colour variant type and a function that converts values of that type to a single integer by using pattern matching on each variant:
 
 <Syntax syntax="cameligo">
 
