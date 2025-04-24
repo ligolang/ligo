@@ -1034,7 +1034,7 @@ type as the contract storage as the initial value of the storage:
 
 ```bash
 ligo run dry-run -m MyContract gitlab-pages/docs/testing/src/testing/dry-run-complex.jsligo \
-  'Update(1n, "new value")' \
+  '["Update" as "Update", [1 as nat, "new value"]]' \
   'Map.empty as map<nat, string>'
 ```
 
