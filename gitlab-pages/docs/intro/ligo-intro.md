@@ -98,7 +98,7 @@ For a quick overview, [get-started](../tutorials/getting-started) is a good choi
 
 Your choice to learn LIGO is already available:
 - Read [basics](../language-basics/types) to have a basic comprehension
-- Write your first [smart contract](../tutorials/taco-shop/tezos-taco-shop-smart-contract).
+- Write your first [smart contract](../tutorials/taco-shop/selling-tacos).
 - Others resources are available on [marigold.dev](https://www.marigold.dev/learn)
 
 ### Do you want to build a production-ready project?
