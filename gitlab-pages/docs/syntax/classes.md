@@ -97,7 +97,6 @@ type return_type = [list<operation>, storage_type];
 import * as MyImportedFunctions from "gitlab-pages/docs/syntax/src/classes/exported_class.jsligo";
 
 class Calculator {
-
   @entry
   add = (value: int, storage: storage_type): return_type =>
     [[], MyImportedFunctions.MyFunctions.add(storage, value)];
@@ -105,7 +104,6 @@ class Calculator {
   @entry
   sub = (value: int, storage: storage_type): return_type =>
     [[], MyImportedFunctions.MyFunctions.sub(storage, value)];
-
 }
 ```
 
