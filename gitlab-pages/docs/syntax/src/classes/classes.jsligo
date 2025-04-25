@@ -1,0 +1,12 @@
+type storage_type = int;
+type return_type = [list<operation>, storage_type];
+
+class Counter {
+  @entry
+  add = (value: int, storage: storage_type): return_type =>
+    [[], storage + value];
+
+  @entry
+  sub = (value: int, storage: storage_type): return_type =>
+    [[], storage - value];
+}

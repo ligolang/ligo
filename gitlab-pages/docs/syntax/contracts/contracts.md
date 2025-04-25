@@ -10,6 +10,12 @@ For an overview of how smart contracts work on Tezos, see [An introduction to sm
 
 For the data type that represents a contract, see [Contracts](../../data-types/contracts-type).
 
+<Syntax syntax="jsligo">
+
+You can define contracts in [classes](../classes), in [namespaces](../modules), or at the top level of a file.
+
+</Syntax>
+
 ## Example contract
 
 This example contract stores an integer and provides two entrypoints that allow callers to add to that integer or subtract from that integer.
