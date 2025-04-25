@@ -215,9 +215,11 @@ let xy_translate (p, vec : point * vector) : point =
 You can change the fields of an object that is declared as a variable, as in this example:
 
 ```jsligo group=object_update
-let my_object = {a: 1, b: 2};
-my_object.a = 5;
-my_object["b"] = 3;
+function my_function () {
+  let my_object = {a: 1, b: 2};
+  my_object.a = 5;
+  my_object["b"] = 3;
+}
 ```
 
 :::note

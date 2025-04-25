@@ -12,8 +12,8 @@ type account = {
 const user: user = {login: "al", name: "Alice"};
 const alice: account = {user, id: 5, is_admin: true};
 const is_alice_admin = alice.is_admin; // == true
-const alice_id = alice["id"]; // 5
 const alice_name = alice.user.name; // == "Alice"
+const alice_id = alice["id"]; // 5
 function userToTuple (a: account) {
   const {user, id, is_admin} = a;
   return [user, id, is_admin];

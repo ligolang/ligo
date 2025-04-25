@@ -1,2 +1,7 @@
 // @entry
 const reset = (_param : unit, _storage : int) : [list<operation>, int] => [[], 0];
+function f () {
+  const user = {name: "Alice", id: 5 as nat};
+  const { name, id } = user;
+  ignore([name, id]);
+}
