@@ -94,7 +94,7 @@ This file imports and uses the class:
 type storage_type = int;
 type return_type = [list<operation>, storage_type];
 
-import * as MyImportedFunctions from "./exported_class.jsligo";
+import * as MyImportedFunctions from "gitlab-pages/docs/syntax/src/classes/exported_class.jsligo";
 
 class Calculator {
 

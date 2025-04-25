@@ -65,9 +65,11 @@ const reset = (_param : unit, _storage : int) : [list<operation>, int] => [[], 0
 You can also use the predefined function `ignore` on variables that you do not use, as in this example:
 
 ```jsligo group=silent_variables
-const user = {name: "Alice", id: 5 as nat};
-const { name, id } = user;
-ignore([name, id]);
+function f () {
+  const user = {name: "Alice", id: 5 as nat};
+  const { name, id } = user;
+  ignore([name, id]);
+}
 ```
 
 </Syntax>
