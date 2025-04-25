@@ -1,4 +1,5 @@
 module Test = Test.Next
+module Tezos = Tezos.Next
 
 let log = Test.IO.log
 

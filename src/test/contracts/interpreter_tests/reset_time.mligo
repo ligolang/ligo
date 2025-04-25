@@ -1,4 +1,5 @@
 module Test = Test.Next
+module Tezos = Tezos.Next
 
 let test_x =
   let t1 = Tezos.get_now () in

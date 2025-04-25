@@ -1,4 +1,5 @@
 module Test = Test.Next
+module Tezos = Tezos.Next
 
 module C = struct
   type parameter = Foo of int | Bar of nat

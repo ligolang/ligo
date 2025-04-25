@@ -1,5 +1,4 @@
 module Tezos = Tezos.Next
-module Proxy_ticket = Test.Proxy_ticket
 module Test = Test.Next
 
 type storage = (bytes ticket) option
@@ -17,8 +16,8 @@ let main (() : unit) (s : storage) : operation list * storage =
 let test_originate_contract =
   let mk_storage = fun (t : bytes ticket) -> Some t in
   let ticket_info = (0x0202, 15n) in
-  let addr = Proxy_ticket.originate ticket_info mk_storage main in
-  let unforged_storage : unforged_storage = Proxy_ticket.get_storage addr in
+  let addr = Test.Ticket.Proxy.originate ticket_info mk_storage main in
+  let unforged_storage : unforged_storage = Test.Ticket.Proxy.get_storage addr in
   (* the ticket 'unforged_storage' can be manipulated freely without caring about ticket linearity *)
 
   match unforged_storage with

@@ -1,2 +1,4 @@
-let test1 = Test.Next.Assert.assert (1 = 1)
-let test2 = Test.Next.Assert.assert (1 = 2)
+module Test = Test.Next
+
+let test1 = Test.Assert.assert (1 = 1)
+let test2 = Test.Assert.assert (1 = 2)

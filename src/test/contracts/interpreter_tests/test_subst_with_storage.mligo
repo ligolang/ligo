@@ -1,6 +1,6 @@
-module C = Contract_under_test.Contract_record_storage_ty
-
 module Test = Test.Next
+
+module C = Contract_under_test.Contract_record_storage_ty
 
 let test =
   let init_storage = {foo = 0 ; bar = "bar"} in

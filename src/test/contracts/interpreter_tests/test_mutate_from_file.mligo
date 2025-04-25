@@ -1,6 +1,6 @@
-let assert = Assert.assert
-
 module Test = Test.Next
+
+let assert = Assert.assert
 
 let test =
   let tester (a, _, _) : unit =

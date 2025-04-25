@@ -1,5 +1,5 @@
 module Test = Test.Next
-
+module Tezos = Tezos.Next
 module Timelock = Test.Timelock
 
 let assert = Test.Assert.assert

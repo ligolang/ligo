@@ -1,6 +1,8 @@
+module Test = Test.Next
+module Tezos = Tezos.Next
+
 module Hashlock = Super__.Hashlock
 
-module Test = Test.Next
 module State = Test.State
 module Typed_address = Test.Typed_address
 module Account = Test.Account

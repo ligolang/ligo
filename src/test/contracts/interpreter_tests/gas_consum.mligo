@@ -1,7 +1,5 @@
 module Test = Test.Next
 
-let assert = Assert.assert
-
 module C = struct
   type storage = int list
   type parameter = bool
@@ -28,7 +26,7 @@ let test =
   let tx3 = Test.Typed_address.transfer orig.taddr (Main true) 0tez in
   match (tx1 , tx2, tx3) with
   | Success cons1 , Success cons2, Success cons3 ->
-    let () = assert ((cons1 < cons2) && (cons2 = cons3)) in
+    let () = Assert.assert ((cons1 < cons2) && (cons2 = cons3)) in
     (cons1,cons2,cons3)
   | _ ->
     (failwith "one of the transcations failed" : nat * nat * nat)

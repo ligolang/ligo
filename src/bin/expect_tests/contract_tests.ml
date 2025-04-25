@@ -1106,7 +1106,7 @@ File "../../test/contracts/negative/create_contract_toplevel.mligo", line 5, cha
       ^^^^^^^^
  10 |   in
 
-Not all free variables could be inlined in Tezos.create_contract usage: gen#475. |}];
+Not all free variables could be inlined in Tezos.create_contract usage: gen#478. |}];
   run_ligo_good [ "compile"; "contract"; contract "create_contract_var.mligo" ];
   [%expect
     {|
@@ -1198,7 +1198,7 @@ Not all free variables could be inlined in Tezos.create_contract usage: gen#475.
           ^^^^^^^^^^
      15 |   ([toto.0], store)
 
-    Not all free variables could be inlined in Tezos.create_contract usage: gen#476. |}];
+    Not all free variables could be inlined in Tezos.create_contract usage: gen#479. |}];
   run_ligo_bad [ "compile"; "contract"; bad_contract "create_contract_no_inline.mligo" ];
   [%expect
     {|
@@ -1261,7 +1261,7 @@ Not all free variables could be inlined in Tezos.create_contract usage: gen#475.
           ^^^^^^^
      15 |   let toto : operation list = [op] in
 
-    Not all free variables could be inlined in Tezos.create_contract usage: foo#490. |}];
+    Not all free variables could be inlined in Tezos.create_contract usage: foo#493. |}];
   run_ligo_good [ "compile"; "contract"; contract "create_contract.mligo" ];
   [%expect
     {|
@@ -1490,11 +1490,11 @@ let%expect_test _ =
   run_ligo_bad [ "compile"; "contract"; bad_contract "error_self_annotations.mligo" ];
   [%expect
     {|
-    File "../../test/contracts/negative/error_self_annotations.mligo", line 7, characters 10-45:
-      6 | let main (_ : param) (_ : unit) : operation list * unit =
-      7 |   let c = (Tezos.self ("%a") : unit contract) in
+    File "../../test/contracts/negative/error_self_annotations.mligo", line 9, characters 10-45:
+      8 | let main (_ : param) (_ : unit) : operation list * unit =
+      9 |   let c = (Tezos.self ("%a") : unit contract) in
                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-      8 |   let op = Tezos.Next.Operation.transaction () 0mutez c in
+     10 |   let op = Tezos.Operation.transaction () 0mutez c in
 
     Invalid entrypoint value.
     The entrypoint value does not match a constructor of the contract parameter. |}]

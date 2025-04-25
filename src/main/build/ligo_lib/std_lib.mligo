@@ -943,6 +943,34 @@ module Tezos = struct
     [%external ("GLOBAL_CONSTANT", hash)]
 
   module Next = struct
+
+    (* Views *)
+
+    (** display-only-for-cameligo
+      The call `Tezos.call_view v p a` calls the view `v` with parameter
+      `param` at the contract whose address is `a`. The value returned
+      is `None` if the view does not exist, or has a different type of
+      parameter, or if the contract does not exist at that
+      address. Otherwise, it is `Some v`, where `v` is the return value
+      of the view. Note: the storage of the view is the same as when the
+      execution of the contract calling the view started.*)
+    (** display-only-for-jsligo
+      The call `Tezos.call_view(v, p, a)` calls the view `v` with parameter
+      `param` at the contract whose address is `a`. The value returned
+      is `None()` if the view does not exist, or has a different type of
+      parameter, or if the contract does not exist at that
+      address. Otherwise, it is `Some(v)`, where `v` is the return value
+      of the view. Note: the storage of the view is the same as when the
+      execution of the contract calling the view started. *)
+    [@inline] [@thunk]
+    let call_view
+      (type param return) (view: string) (param: param) (addr: address)
+      : return option =
+      let () = [%external ("CHECK_CALL_VIEW_LITSTR", view)]
+      in [%michelson ({| {VIEW (litstr $0) (typeopt $1)} |}
+                      view (None : return option) param addr
+                      : return option)]
+
     (* Addresses *)
 
     (** display-only-for-cameligo
@@ -3002,11 +3030,6 @@ module Test = struct
   [@deprecated "In a future version, `Test` will be replaced by `Test.Next`, and using `State.last_originations` from `Test.Next` is encouraged for a smoother migration."]
   let last_originations (u : unit) : (address, address list) map = [%external ("TEST_LAST_ORIGINATIONS", u)]
 
-  (** This function creates a random value for a chosen type. *)
-  let random (type a) (_u : unit) : a =
-    let g : a pbt_gen = [%external ("TEST_RANDOM", false)] in
-    [%external ("TEST_GENERATOR_EVAL", g)]
-
   (** Creates and returns secret key & public key of a new account. *)
   [@deprecated "In a future version, `Test` will be replaced by `Test.Next`, and using `Account.new` from `Test.Next` is encouraged for a smoother migration."]
   let new_account (u : unit) : string * key = [%external ("TEST_NEW_ACCOUNT", u)]
@@ -3016,8 +3039,6 @@ module Test = struct
     can be used in tests to manually advance time. *)
   [@deprecated "In a future version, `Test` will be replaced by `Test.Next`, and using `State.bake_until` from `Test.Next` is encouraged for a smoother migration."]
   let bake_until_n_cycle_end (n : nat) : unit = [%external ("TEST_BAKE_UNTIL_N_CYCLE_END", n)]
-
-  let get_time (_u : unit) : timestamp = Tezos.get_now ()
 
   (** Registers a `key_hash` corresponding to an account as a delegate. *)
   [@deprecated "In a future version, `Test` will be replaced by `Test.Next`, and using `State.register_delegate` from `Test.Next` is encouraged for a smoother migration."]
@@ -3130,6 +3151,13 @@ module Test = struct
     tests. *)
   [@deprecated "In a future version, `Test` will be replaced by `Test.Next`, and using `IO.unset_test_print` from `Test.Next` is encouraged for a smoother migration."]
   let unset_print_values (_ : unit) : unit = let _ = [%external ("TEST_SET_PRINT_VALUES", false)] in ()
+
+  (** This function creates a random value for a chosen type. *)
+  let random (type a) (_u : unit) : a =
+    let g : a pbt_gen = [%external ("TEST_RANDOM", false)] in
+    [%external ("TEST_GENERATOR_EVAL", g)]
+
+  let get_time (_u : unit) : timestamp = Tezos.get_now ()
 
   module PBT = struct
     let gen (type a) : a pbt_gen = [%external ("TEST_RANDOM", false)]
@@ -3732,6 +3760,14 @@ module Test = struct
       (decompile s : s2)
   end
   module Next = struct
+
+    (** This function creates a random value for a chosen type. *)
+    let random (type a) (_u : unit) : a =
+      let g : a pbt_gen = [%external ("TEST_RANDOM", false)] in
+      [%external ("TEST_GENERATOR_EVAL", g)]
+
+    let get_time (_u : unit) : timestamp = Tezos.Next.get_now ()
+
     module Mutation = struct
       (** Given a value to mutate (first argument), it will try all the
         mutations available of it, passing each one to the function

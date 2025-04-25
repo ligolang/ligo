@@ -1,4 +1,5 @@
 module Test = Test.Next
+module Tezos = Tezos.Next
 
 module C = struct
   type parameter = Foo of int | Bar of nat
@@ -15,8 +16,8 @@ let test =
   let c = Test.Typed_address.to_contract ta in
   let a = Tezos.address c in
   let () = Assert.some (Tezos.get_entrypoint_opt "%foo" a : (int contract) option) in
-  let _ = (Tezos.get_entrypoint "%foo" a : (int contract)) in
-  let () = Assert.some (Tezos.get_contract_opt a : (C parameter_of contract) option) in
-  let _ = (Tezos.get_contract a : (C parameter_of contract)) in
-  let _ = (Tezos.get_contract_with_error a "foo" : (int contract)) in
+  let _ = (Tezos.get_entrypoint "%foo" a : int contract) in
+  let () = Assert.some (Tezos.get_contract_opt a : C parameter_of contract option) in
+  let _ = (Tezos.get_contract a : C parameter_of contract) in
+  let _ = (Tezos.get_contract_with_error a "foo" : int contract) in
   ()

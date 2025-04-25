@@ -1,8 +1,10 @@
+module Tezos = Tezos.Next
+
 [@entry]
 let main (_ : unit) (_ : unit) : operation list * unit =
-  let dst : (unit contract) option = Tezos.get_entrypoint_opt "%Upper" (Tezos.get_sender ()) in
+  let dst : unit contract option = Tezos.get_entrypoint_opt "%Upper" (Tezos.get_sender ()) in
   match dst with
   | None -> failwith "lol"
   | Some dst ->
-    let op : operation = Tezos.Next.Operation.transaction () 0mutez dst in
+    let op : operation = Tezos.Operation.transaction () 0mutez dst in
     ([op], ())

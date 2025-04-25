@@ -1,10 +1,11 @@
 module Test = Test.Next
+module Tezos = Tezos.Next
 
 module Factory = struct
   [@entry]
   let main (i : int) (s : address list) : operation list * address list =
     let main (d : int) (k : int) : operation list * int = ([], d + k) in
-    let (op, addr) = Tezos.create_contract main (None : key_hash option) 1tz i in
+    let op, addr = Tezos.Operation.create_contract main (None : key_hash option) 1tz i in
     [op], addr :: s
 end
 

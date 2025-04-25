@@ -17,8 +17,8 @@ namespace C {
   const main = (action: parameter, store: storage) : return_ =>
     [ [],    // No operations
       $match (action, {
-        "Increment": (n) => add ([store, n]),
-        "Decrement": (n) => sub ([store, n]),
+        "Increment": n => add ([store, n]),
+        "Decrement": n => sub ([store, n]),
         "Reset": () => 0 })
     ]
 }
@@ -31,8 +31,8 @@ function _test () : test_exec_error_balance_too_low {
             ["Main" as "Main", ["Increment" as "Increment", 1]],
             100000000 as tez);
   return $match(r, {
-      "Success": (_n) => failwith("Success"),
-      "Fail": (e) =>
+      "Success": _n => failwith("Success"),
+      "Fail": e =>
         $match(e, {
           "Rejected": (_) => failwith("Rejected"),
           "Balance_too_low": (x) =>

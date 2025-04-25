@@ -1,8 +1,7 @@
-module C = Contract_under_test.Fail_contract
-
 module Test = Test.Next
+module Tezos = Tezos.Next
 
-let assert = Assert.assert
+module C = Contract_under_test.Fail_contract
 
 let test =
   let orig = Test.Originate.contract (contract_of C) () 0tez in
@@ -14,7 +13,7 @@ let test =
     match e with
     | Rejected x ->
       let (x, addr_fail) = x in
-      let () = assert (addr_fail = addr) in
+      let () = Assert.assert (addr_fail = addr) in
       x
     | _ -> (failwith "Failed, but wrong reason" : michelson_program )
   )

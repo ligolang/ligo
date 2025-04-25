@@ -1,4 +1,6 @@
+import Tezos = Tezos.Next;
+
 function check (p: key_hash) : list<operation> {
-  let _ = Tezos.Next.Operation.set_delegate (["Some" as "Some", p]);
+  let _ = Tezos.Operation.set_delegate (["Some" as "Some", p]);
   return [];
 }
