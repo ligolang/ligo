@@ -511,7 +511,7 @@ To deploy (or originate) the contract you need:
 
    The result is the compiled value of the integer in Michelson, which is the same as it is in LIGO.
    In this case the LIGO storage value maps 1:1 to its Michelson representation.
-   More complex data types like records and maps look different in Michelson than in LIGO.
+   More complex data types like records, objects, and maps look different in Michelson than in LIGO.
 
 1. Deploy the contract by running this command, putting the initial storage value in the `--init` argument:
 

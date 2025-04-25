@@ -99,15 +99,15 @@ Developers often put a single smart contract in a namespace, but LIGO does not r
 
 :::
 
-Namespaces have some similarities with records because they can both contain multiple definitions.
-However, there are significant differences between records and namespaces:
+Namespaces have some similarities with objects because they can both contain multiple definitions.
+However, there are significant differences between objects and namespaces:
 
-- Records are expressions and therefore can be used as values, and namespaces are not expressions and can't be used as values.
+- Objects are expressions and therefore can be used as values, and namespaces are not expressions and can't be used as values.
 For example, you can pass a record as an argument to a function, but you cannot pass a namespace in this way except in specific circumstances, such using the `contract_of` function to create a contract from a namespace to use in [Testing](../testing).
 
-- Records cannot package type and value definitions together like namespaces can.
+- Objects cannot package type and value definitions together like namespaces can.
 
-Which construct you use depends on your design and strategy: namespaces behave like libraries and records behave like individual units of computation.
+Which construct you use depends on your design and strategy: namespaces behave like libraries and objects behave like individual units of computation.
 
 ## Creating namespaces
 
@@ -128,7 +128,7 @@ namespace Euro {
 };
 ```
 
-To access the contents of a namespace, use the name of the namespace and the selection operator "`.`", as with records.
+To access the contents of a namespace, use the name of the namespace and the selection operator "`.`", as with objects.
 For example, this piece of code in the same file defines a value of the `Euro` type and uses the functions and constants in the namespace to manipulate it:
 
 ```jsligo group=euro
