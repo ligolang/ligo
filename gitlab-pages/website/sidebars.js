@@ -90,7 +90,14 @@ const sidebars = {
           "data-types/tuples",
           "data-types/variants",
           "data-types/lists",
-          "data-types/records",
+          {
+            "type": "doc",
+            "label": "Records",
+            "customProps": {
+              "jsLigoName": "Objects"
+            },
+            "id": "data-types/records",
+          },
           "data-types/sets",
           "data-types/maps"
         ]
