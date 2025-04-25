@@ -62,13 +62,40 @@ If the entrypoint code doesn't access one or both of these arguments, prefix the
 const reset = (_param : unit, _storage : int) : [list<operation>, int] => [[], 0];
 ```
 
+</Syntax>
+
 You can also use the predefined function `ignore` on variables that you do not use, as in this example:
 
+<Syntax syntax="cameligo">
+
+```cameligo group=silent_variables
+type user = {
+  id       : int;
+  is_admin : bool;
+  name     : string
+}
+
+let getUserID (user : user) : int =
+  let { id; is_admin; name } = user in
+  let () = ignore ([is_admin, name]) in
+  id
+```
+
+</Syntax>
+
+<Syntax syntax="jsligo">
+
+
 ```jsligo group=silent_variables
-function f () {
-  const user = {name: "Alice", id: 5 as nat};
-  const { name, id } = user;
-  ignore([name, id]);
+type user = {
+  id       : int,
+  is_admin : bool,
+  name     : string
+};
+const getUserID = (user: user): int => {
+  const { id, is_admin, name } = user;
+  ignore([is_admin, name]);
+  return id;
 }
 ```
 
