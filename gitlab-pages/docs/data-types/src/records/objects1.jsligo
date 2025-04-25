@@ -4,7 +4,7 @@ type user = {
   name     : string
 };
 const alice : user = {
-  id       : 1n,
+  id       : 1 as nat,
   is_admin : true,
   name     : "Alice"
 };
