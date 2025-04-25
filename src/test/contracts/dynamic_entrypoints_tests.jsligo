@@ -1,3 +1,5 @@
+import Test = Test.Next
+
 export type storage =
   { storage: int;
     dynamic_entrypoints: dynamic_entrypoints
@@ -10,9 +12,9 @@ export class C {
   @entry
   call_one = (_u: unit, s: storage) : [list<operation>, storage] =>
     $match(Dynamic_entrypoints.get(one, s.dynamic_entrypoints), {
-      "Some": (f) => (() => { const [op, storage] = f([], s.storage);
-                              return [op, ({...s, storage})]
-                            })(),
+      "Some": f => (() => { const [op, storage] = f([], s.storage);
+                            return [op, ({...s, storage})]
+                          })(),
       "None": () => failwith(-1)
     });
 
@@ -25,7 +27,6 @@ export class C {
   }
 }
 
-import Test = Test.Next
 const get_storage = Test.Typed_address.get_storage
 const transfer_exn = Test.Typed_address.transfer_exn
 

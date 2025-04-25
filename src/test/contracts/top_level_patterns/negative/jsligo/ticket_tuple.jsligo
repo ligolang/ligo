@@ -1,10 +1,12 @@
+import Tezos = Tezos.Next;
+
 const [b, _] =
       [Option.value_with_error("option is None",
-                               Tezos.Next.Ticket.create("one", 10 as nat)), 1];
+                               Tezos.Ticket.create("one", 10 as nat)), 1];
 
 type storage = ticket<string>;
 
 // @entry
 const main = (_p: unit, _s: storage): [list<operation>, storage] =>
       [[], Option.value_with_error("option is None",
-                                   Tezos.Next.Ticket.join([b, b]))];
+                                   Tezos.Ticket.join([b, b]))];

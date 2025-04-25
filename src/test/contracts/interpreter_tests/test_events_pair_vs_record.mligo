@@ -1,4 +1,5 @@
 module Test = Test.Next
+module Tezos = Tezos.Next
 
 let failwith = Test.Assert.failwith
 
@@ -11,7 +12,8 @@ module C = struct
   type storage = unit
 
   [@entry]
-  let main (p : mystruct) (s : storage) : operation list * storage = [ Tezos.emit "%foo" p; ], s
+  let main (p : mystruct) (s : storage) : operation list * storage =
+    [ Tezos.Operation.emit "%foo" p; ], s
 end
 
 let test_foo =

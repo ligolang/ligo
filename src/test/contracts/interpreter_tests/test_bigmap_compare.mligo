@@ -1,6 +1,6 @@
-let assert = Assert.assert
-
 module Test = Test.Next
+
+let assert = Assert.assert
 
 module C = struct
   [@entry]

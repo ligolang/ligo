@@ -1,4 +1,3 @@
-module Proxy_ticket = Test.Proxy_ticket
 module Tezos = Tezos.Next
 module Test = Test.Next
 
@@ -22,17 +21,17 @@ let test_transfer_to_contract =
     (* mk_param is executed __by the proxy contract__ *)
     let mk_param : string ticket -> C.param = fun (t : string ticket) -> 42,t in
     (* initialize a proxy contract in charge of creating and sending your tickets *)
-    Proxy_ticket.init_transfer mk_param
+    Test.Ticket.Proxy.init_transfer mk_param
   in
   let _ =
     (* ticket_info lets you control the amount and the value of the tickets you send *)
     let ticket_info = ("hello",10n) in
     (* we send ticket to main through the proxy-contract *)
-    Proxy_ticket.transfer proxy_taddr (ticket_info,main_addr)
+    Test.Ticket.Proxy.transfer proxy_taddr (ticket_info,main_addr)
   in
   let _ =
     let ticket_info = ("world",5n) in
-    Proxy_ticket.transfer proxy_taddr (ticket_info,main_addr)
+    Test.Ticket.Proxy.transfer proxy_taddr (ticket_info,main_addr)
   in
   let s, addr = Test.Address.get_storage main_addr in
   let p_addr = proxy_taddr |> Test.Typed_address.to_contract |> Tezos.address in

@@ -1,3 +1,5 @@
+module Test = Test.Next
+
 module C = struct
   type storage = {
     participants : address set ;
@@ -29,4 +31,4 @@ module C = struct
   }
 end
 
-let test_x = Test.Next.Originate.contract (contract_of C) C.init_storage 0mutez
+let test_x = Test.Originate.contract (contract_of C) C.init_storage 0mutez

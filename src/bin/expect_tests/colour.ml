@@ -63,14 +63,14 @@ let%expect_test _ =
   run_ligo_bad [ "run"; "test"; contract_test ];
   [%expect
     {|
-     File "../../test/contracts/negative/colour_test.mligo", line 2, characters 12-43:
-       1 | let test1 = Test.Next.Assert.assert (1 = 1)
-       2 | let test2 = [1m[31mTest.Next.Assert.assert (1 = 2)[0m
+     File "../../test/contracts/negative/colour_test.mligo", line 4, characters 12-38:
+       3 | let test1 = Test.Assert.assert (1 = 1)
+       4 | let test2 = [1m[31mTest.Assert.assert (1 = 2)[0m
 
      Test failed with "failed assertion"
      Trace:
-     File "../../test/contracts/negative/colour_test.mligo", line 2, characters 12-43 ,
-     File "../../test/contracts/negative/colour_test.mligo", line 2, characters 12-43
+     File "../../test/contracts/negative/colour_test.mligo", line 4, characters 12-38 ,
+     File "../../test/contracts/negative/colour_test.mligo", line 4, characters 12-38
      |}];
   Ligo_unix.putenv ~key:"TERM" ~data:"dumb"
 
@@ -84,15 +84,15 @@ let%expect_test _ =
   run_ligo_bad [ "run"; "test"; "--no-color"; contract_test ];
   [%expect
     {|
-    File "../../test/contracts/negative/colour_test.mligo", line 2, characters 12-43:
-      1 | let test1 = Test.Next.Assert.assert (1 = 1)
-      2 | let test2 = Test.Next.Assert.assert (1 = 2)
-                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    File "../../test/contracts/negative/colour_test.mligo", line 4, characters 12-38:
+      3 | let test1 = Test.Assert.assert (1 = 1)
+      4 | let test2 = Test.Assert.assert (1 = 2)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
     Test failed with "failed assertion"
     Trace:
-    File "../../test/contracts/negative/colour_test.mligo", line 2, characters 12-43 ,
-    File "../../test/contracts/negative/colour_test.mligo", line 2, characters 12-43 |}];
+    File "../../test/contracts/negative/colour_test.mligo", line 4, characters 12-38 ,
+    File "../../test/contracts/negative/colour_test.mligo", line 4, characters 12-38 |}];
   Ligo_unix.putenv ~key:"TERM" ~data:"dumb"
 
 (* Test of [compile contract] with NO_COLOR env var unset *)

@@ -1,4 +1,5 @@
 module Test = Test.Next
+module Tezos = Tezos.Next
 
 let assert = Test.Assert.assert
 

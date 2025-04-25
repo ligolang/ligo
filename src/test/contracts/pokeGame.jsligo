@@ -1,3 +1,5 @@
+import Tezos = Tezos.Next;
+
 export type pokeMessage = {
     receiver : address,
     feedback : string
@@ -81,7 +83,7 @@ const init = (p : [address, nat], store: storage) : return_ => {
   } else {
     const t : ticket<string> =
       Option.value_with_error("option is None",
-                              Tezos.Next.Ticket.create("can_poke", ticketCount));
+                              Tezos.Ticket.create("can_poke", ticketCount));
     return [[], { feedback,
                   pokeTraces,
                   ticketOwnership: Map.add(a, t, ticketOwnership) }]
