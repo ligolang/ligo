@@ -302,5 +302,65 @@ const d : nat = 120 % (9 as nat); // int % nat yields nat
 
 </Syntax>
 
-> It is possible to obtain both the quotient and remainder together, by
-> means of the predefined function `ediv`: See [Euclidean division](./variants#euclidean-division).
+<Syntax syntax="cameligo">
+
+For cases when you need both the quotient and the remainder, LIGO
+provides the `ediv` operation. `ediv x y` returns `Some (quotient,
+remainder)`, unless `y` is zero, in which case it returns `None`. The
+function `ediv` is overloaded to accept all the combinations (4) of
+natural and integer numbers:
+
+```cameligo group=euclidean
+// All below equal Some (7,2)
+let ediv1 : (int * nat) option = ediv 37  5
+let ediv2 : (int * nat) option = ediv 37n 5
+let ediv3 : (nat * nat) option = ediv 37n 5n
+let ediv4 : (int * nat) option = ediv 37  5n
+```
+
+</Syntax>
+
+<Syntax syntax="jsligo">
+
+For cases when you need both the quotient and the remainder, LIGO
+provides the `ediv` operation. `ediv(x,y)` returns `Some (quotient,
+remainder)`, unless `y` is zero, in which case it returns `None`. The
+function `ediv` is overloaded to accept all the combinations (4) of
+natural and integer numbers:
+
+```jsligo group=euclidean
+// All below equal Some (7,2)
+const ediv1: option<[int, nat]> = ediv(37, 5);
+const ediv2: option<[int, nat]> = ediv(37 as nat, 5);
+const ediv3: option<[nat, nat]> = ediv(37 as nat, 5 as nat);
+const ediv4: option<[int, nat]> = ediv(37, 5 as nat);
+```
+
+</Syntax>
+
+The `ediv` operation returns an option type which is `Some` if the result is defined and `None` if it is not, as when you try to divide by zero.
+To handle option types, see [Matching](./variants#matching).
+
+## Checking positivity
+
+You can check if a value is a natural number (`nat`) by using a
+predefined cast function which accepts an integer (`int`) and returns
+an optional natural number (`nat`): if the result is `None`, then the
+given integer was positive, otherwise the corresponding natural number
+`n` is given with `Some(n)`.
+
+<Syntax syntax="cameligo">
+
+```cameligo group=positive
+let one_is_nat : nat option = is_nat (1)
+```
+
+</Syntax>
+
+<Syntax syntax="jsligo">
+
+```jsligo group=positive
+const one_is_nat: option<nat> = is_nat(1);
+```
+
+</Syntax>

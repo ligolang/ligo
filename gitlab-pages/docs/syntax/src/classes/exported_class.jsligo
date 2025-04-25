@@ -1,0 +1,4 @@
+export class MyFunctions {
+  static add = (a: int, b: int): int => a + b;
+  static sub = (a: int, b: int): int => a - b;
+}

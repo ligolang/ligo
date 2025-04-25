@@ -12,15 +12,10 @@ const sidebars = {
       "intro/template",
       "intro/upgrade-v1",
     ],
-    "Writing a Contract": [
-      {
-        "type": "category",
-        "label": "First contract",
-        "items": [
-          "tutorials/taco-shop/tezos-taco-shop-smart-contract",
-          "tutorials/taco-shop/tezos-taco-shop-payout"
-        ]
-      },
+    "Tutorial": [
+      "tutorials/taco-shop/selling-tacos",
+      "tutorials/taco-shop/testing-contract",
+      "tutorials/taco-shop/getting-payouts",
     ],
     "Syntax": [
       "syntax/comments",
@@ -44,6 +39,7 @@ const sidebars = {
         },
         "id": "syntax/modules"
       },
+      'syntax/classes',
       {
         "type": "category",
         "label": "Contracts",
@@ -95,7 +91,14 @@ const sidebars = {
           "data-types/tuples",
           "data-types/variants",
           "data-types/lists",
-          "data-types/records",
+          {
+            "type": "doc",
+            "label": "Records",
+            "customProps": {
+              "jsLigoName": "Objects"
+            },
+            "id": "data-types/records",
+          },
           "data-types/sets",
           "data-types/maps"
         ]

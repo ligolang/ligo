@@ -4,13 +4,11 @@ title: Variants
 
 import Syntax from '@theme/Syntax';
 
-A variant type is a type that defines a type by the union of
-non-overlapping cases, so a value of a variant type is either this, or
-that or... The simplest variant type is equivalent to the enumerated
-types found in Java, C++, JavaScript etc.
+Variant types have one or more non-overlapping cases.
+A value of a variant type can be one of these cases or another but never more than one case.
 
-Here is how we define a coin as being either head or tail (and nothing
-else):
+Simple variant types are similar to enumerated types found in many other languages.
+For example, this type defines a coin as being either heads or tails (and nothing else):
 
 <Syntax syntax="cameligo">
 
@@ -32,14 +30,12 @@ let tail: coin = ["Tail" as "Tail"];
 
 </Syntax>
 
-The names `Head` and `Tail` in the definition of the type `coin` are
-called *data constructors*, or *variants*. In this particular case,
-they carry no information beyond their names, so they are called
-*constant constructors*.
+The names `Head` and `Tail` in the definition of the type `coin` are called *data constructors*.
+In this particular case, they carry no information beyond their names, so they are called *constant constructors*.
 
-In general, it is interesting for variants to carry some information,
-and thus go beyond enumerated types. In the following, we show how to
-define different kinds of users of a system.
+Variants can carry more information than just their constructors.
+Each constructor in a variant can specify types that the constructor contains.
+For example, this variant types defines different kinds of users of a system, with some having an ID number and others not:
 
 <Syntax syntax="cameligo">
 
@@ -75,17 +71,23 @@ const bob : user = ["Admin" as "Admin", 1000 as nat];
 const carl : user = ["Guest" as "Guest"];
 ```
 
-A constant constructor is equivalent to the same constructor taking an
-argument of type `unit`, so, for example, `Guest()` is the same value
-as `Guest([])` or `Guest(unit)`.
+A constant constructor is equivalent to the same constructor taking a value of type `unit`, so, for example, `["Guest" as "Guest"]` is the same value as `["Guest" as "Guest", []]` and `["Guest" as "Guest", unit]`.
+
+:::note
+
+To create a variable of a variant type, you must specify its value as a tuple where the first value is the constructor and the second value is the value that the constructor takes.
+To prevent the compiler from seeing the name of the constructor as a string, you must set its type as one of the constructors from the variant type with the `as` syntax, as in the previous examples.
+
+:::
 
 </Syntax>
 
 ## Unit
 
 The type `unit` is a predefined type that contains only one value that
-carries no information. It is used when no relevant information is
-required or produced.
+carries no information.
+It is used when no relevant information is
+required or produced, as in constant constructors.
 
 <Syntax syntax="cameligo">
 
@@ -93,7 +95,7 @@ The unique value of type `unit` is written `()`, like an empty tuple,
 following the OCaml convention.
 
 ```cameligo group=unit
-let x : unit = ()
+let x: unit = ()
 ```
 
 Imperative statements, like statements and loops, will have type
@@ -113,15 +115,15 @@ const x : unit = [];
 
 ## Options
 
-<Syntax syntax="cameligo">
+The option type is a predefined variant type that has two cases: `Some(v)`, where `v` is some value of any type, and `None`.
 
-The `option` type is a parametric, predefined variant type that is
-used to express whether there is a value of some type or none. This is
-especially useful when calling a *partial function*, that is, a
-function that is not defined for some inputs. In that case, the value
-of the `option` type would be `None`, otherwise `Some (v)`, where `v`
-is some meaningful value *of any type*. A typical example from
-arithmetics is the division:
+Some functions return options when they are not defined for certain inputs.
+For example, you can get a value from a big map by passing the key to the `Big_map.find_opt` function.
+This function returns an option that is `Some` with the value if the key is defined in the big map or `None` with unit if it is not.
+
+Similarly, division by zero is not defined, so this function divides two numbers and returns `Some` if the result is defined or `None` if it is not:
+
+<Syntax syntax="cameligo">
 
 ```cameligo group=options
 let div (a, b : nat * nat) : nat option =
@@ -135,14 +137,6 @@ Note: See the predefined
 
 <Syntax syntax="jsligo">
 
-The `option` type is a parametric, predefined variant type that is
-used to express whether there is a value of some type or none. This is
-especially useful when calling a *partial function*, that is, a
-function that is not defined for some inputs. In that case, the value
-of the `option` type would be `None()`, otherwise `Some(v)`, where `v`
-is some meaningful value *of any type*. A typical example from
-arithmetics is the division:
-
 ```jsligo group=options
 function div (a: nat, b: nat): option<nat> {
   if (b == (0 as nat)) return ["None" as "None"];
@@ -155,75 +149,13 @@ Note: See the predefined
 
 </Syntax>
 
-### Euclidean Division
-
-<Syntax syntax="cameligo">
-
-For cases when you need both the quotient and the remainder, LIGO
-provides the `ediv` operation. `ediv x y` returns `Some (quotient,
-remainder)`, unless `y` is zero, in which case it returns `None`. The
-function `ediv` is overloaded to accept all the combinations (4) of
-natural and integer numbers:
-
-```cameligo group=options_euclidean
-// All below equal Some (7,2)
-let ediv1 : (int * nat) option = ediv 37  5
-let ediv2 : (int * nat) option = ediv 37n 5
-let ediv3 : (nat * nat) option = ediv 37n 5n
-let ediv4 : (int * nat) option = ediv 37  5n
-```
-
-</Syntax>
-
-<Syntax syntax="jsligo">
-
-For cases when you need both the quotient and the remainder, LIGO
-provides the `ediv` operation. `ediv(x,y)` returns `Some (quotient,
-remainder)`, unless `y` is zero, in which case it returns `None`. The
-function `ediv` is overloaded to accept all the combinations (4) of
-natural and integer numbers:
-
-```jsligo group=options_euclidean
-// All below equal Some (7,2)
-const ediv1: option<[int, nat]> = ediv(37, 5);
-const ediv2: option<[int, nat]> = ediv(37 as nat, 5);
-const ediv3: option<[nat, nat]> = ediv(37 as nat, 5 as nat);
-const ediv4: option<[int, nat]> = ediv(37, 5 as nat);
-```
-
-</Syntax>
-
-### Checking positivity
-
-You can check if a value is a natural number (`nat`) by using a
-predefined cast function which accepts an integer (`int`) and returns
-an optional natural number (`nat`): if the result is `None`, then the
-given integer was positive, otherwise the corresponding natural number
-`n` is given with `Some(n)`.
-
-<Syntax syntax="cameligo">
-
-```cameligo group=options_positive
-let one_is_nat : nat option = is_nat (1)
-```
-
-</Syntax>
-
-<Syntax syntax="jsligo">
-
-```jsligo group=options_positive
-const one_is_nat : option<nat> = is_nat(1);
-```
-
-</Syntax>
-
 ## Matching
 
-Variant types being, in essence, the disjunctive union of cases akin
-to types, values of such types need to be examined case by case: this
-is what *pattern matching* does.
+To work with variants and options, you must handle each case of the type.
+LIGO handles different cases by *pattern matching*, which uses the `$match` predefined function to run different code for each case.
+The `$match` function must cover all of the cases of the type.
 
-Here is a function that transforms a colour variant type to an integer.
+For example, the following code defines a colour variant type and a function that converts values of that type to a single integer by using pattern matching on each variant:
 
 <Syntax syntax="cameligo">
 
@@ -260,23 +192,22 @@ const int_of_colour = (c : colour) : int =>
   });
 ```
 
-> Note: The `when`-clauses must cover all the variants of the type
-> `colour`. When the constructor has no argument, which is equivalent
-> to having a `[]` (unit) argument, it can be omitted, hence
-> `when(Default)` instead of `when(Default())`.
+As its parameters, the `$match` function receives the variant value to match on and an object.
+The property names of the object are the constructors of the corresponding variant type.
+The property values are either a single expression or expressions that receive the value of the variant as a parameter.
+When the variant has no value, as in constant constructors or the `None` variant, the expression receives unit as a parameter.
 
-The right-hand sides of each `when`-clause is an expression. Sometimes
-we might need statements to be processed before a value is given to
-the clause. In that case, the `do` expression comes handy. It enables
-the opening of a block of statements like a function body, that is, a
-block ended with a `return` statement whose argument has the value of
-the block, like so:
+For complex expressions, you can use an immediately invoked function expression (IIFE) as the result of a match.
+This allows you to use a block of statements with a `return` statement like a function body, as in this example:
 
 ```jsligo group=match_with_block
 const match_with_block = (x : option<int>) : int =>
   $match(x, {
     "None": () => 0,
-    "Some": n => (() => { const y = n + 1; return y })()
+    "Some": n => (() => {
+      const y = n + 1;
+      return y;
+    })(),
   });
 ```
 

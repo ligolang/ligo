@@ -169,7 +169,7 @@ ligo run dry-run counter.mligo 'Add(3)' '5'
 <Syntax syntax="jsligo">
 
 ```bash
-ligo run dry-run counter.jsligo 'Add(3)' '5'
+ligo run dry-run counter.jsligo '["Add" as "Add", 3]' '5'
 ```
 
 </Syntax>
@@ -511,7 +511,7 @@ To deploy (or originate) the contract you need:
 
    The result is the compiled value of the integer in Michelson, which is the same as it is in LIGO.
    In this case the LIGO storage value maps 1:1 to its Michelson representation.
-   More complex data types like records and maps look different in Michelson than in LIGO.
+   More complex data types like records, objects, and maps look different in Michelson than in LIGO.
 
 1. Deploy the contract by running this command, putting the initial storage value in the `--init` argument:
 
@@ -579,4 +579,4 @@ octez-client get contract storage for counter
 Now you have a simple LIGO smart contract and can test it, deploy it, and call it.
 You can use it as a starting point to write your own contracts and experiment with LIGO.
 
-You can also continue with the [Taco shop tutorial](../taco-shop/tezos-taco-shop-smart-contract) to learn more about programming with LIGO.
+You can also continue with the [Taco shop tutorial](../taco-shop/selling-tacos) to learn more about programming with LIGO.

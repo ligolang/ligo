@@ -152,7 +152,7 @@ For more information, see [Interop: Different Michelson annotations](../syntax/c
 
 ## @layout to specify the Michelson layout of composite data types (structures and variants)
 
-Michelson does not natively support records or variants. These have to be encoded using nested `pair`s or nested `or`s. Many tree representations could translate to the same linear sequence of fields or constructors. LIGO makes it possible to choose between a right comb which preserves the order or the fields or constructors as declared in the source code, and a left-balanced, alphabetically ordered binary tree. The decorators `@layout("comb")` and `@layout("tree")` can be placed before the `{ ... }` for records and before the first constructor or leading `|` for variants, in order to explicitly choose the desired layout.
+Michelson does not natively support objects or variants. These have to be encoded using nested `pair`s or nested `or`s. Many tree representations could translate to the same linear sequence of fields or constructors. LIGO makes it possible to choose between a right comb which preserves the order or the fields or constructors as declared in the source code, and a left-balanced, alphabetically ordered binary tree. The decorators `@layout("comb")` and `@layout("tree")` can be placed before the `{ ... }` for objects and before the first constructor or leading `|` for variants, in order to explicitly choose the desired layout.
 
 For more information, see [Interop: Michelson layout of LIGO data structures](../syntax/contracts/interop.md##michelson-layout-of-ligo-data-structures).
 

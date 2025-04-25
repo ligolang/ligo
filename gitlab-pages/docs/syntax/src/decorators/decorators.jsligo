@@ -5,3 +5,18 @@ type result = [list<operation>, storage];
 // @no_mutation
 const sub = (delta: int, storage: storage) : result =>
   [[], storage - delta];
+class Counter {
+
+  @entry
+  @inline
+  add = (value: int, storage: storage): result =>
+    [[], storage + value];
+
+  @entry
+  @deprecated
+  sub = (value: int, storage: storage): result =>
+    [[], storage - value];
+
+  @view
+  get = (_: unit, storage: storage): storage => storage;
+}
