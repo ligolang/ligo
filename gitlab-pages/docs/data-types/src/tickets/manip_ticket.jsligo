@@ -1,13 +1,16 @@
+import Tezos = Tezos.Next;
+import Ticket = Tezos.Ticket;
+
 const my_ticket1 =
-  Option.value_with_error("option is None", Tezos.Next.Ticket.create(1, 10 as nat));
+  Option.value_with_error("ticket1 failed", Ticket.create(1, 10 as nat));
 const my_ticket2 =
-  Option.value_with_error("option is None", Tezos.Next.Ticket.create("one", 10 as nat));
+  Option.value_with_error("ticket2 failed", Ticket.create("one", 10 as nat));
 const v2 = (() => {
-  let [[_addr, [payload, _amt]], _ticket] = Tezos.Next.Ticket.read(my_ticket2);
+  let [[_addr, [payload, _amt]], _ticket] = Ticket.read(my_ticket2);
   return payload;
 })()
 const [ta, tb] =
-  $match(Tezos.Next.Ticket.split(my_ticket1, [6 as nat, 4 as nat]), {
+  $match(Ticket.split(my_ticket1, [6 as nat, 4 as nat]), {
     "None": () => failwith("amt_a + amt_v != amt"),
-    "Some": (split_tickets) => split_tickets
+    "Some": split_tickets => split_tickets
   });

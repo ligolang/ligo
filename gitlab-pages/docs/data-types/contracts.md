@@ -23,6 +23,8 @@ The type is parameterized based on the parameter that the contract accepts.
 For example, if the contract accepts an integer, the type is `int contract`.
 
 ```cameligo group=get_contract
+module Tezos = Tezos.Next
+
 type returnType = operation list * int
 
 type contractParam =
@@ -33,9 +35,11 @@ Reset
 [@entry]
 let callContract (_ : unit) (storage : int) : returnType =
   let contractAddress : address = ("KT1FpuaoBHwXMXJ6zn3F4ZhpjpPZV28MAinz" : address) in
-  let myContract: contractParam contract = Tezos.get_contract contractAddress in
-  let operation = Tezos.transaction (Increment 4) 0tez myContract in
-  [operation], storage
+  let myContract : contractParam contract =
+    Tezos.get_contract contractAddress in
+  let operation =
+    Tezos.Operation.transaction (Increment 4) 0tez myContract
+  in [operation], storage
 ```
 
 </Syntax>
@@ -50,6 +54,8 @@ The type is parameterized based on the parameter that the contract accepts.
 For example, if the contract accepts an integer, the type is `contract<int>`.
 
 ```jsligo group=get_contract
+import Tezos = Tezos.Next
+
 type returnType = [list<operation>, int];
 
 type contractParam =
@@ -60,10 +66,10 @@ type contractParam =
 // @entry
 function callContract (_: unit, storage: int): returnType {
   const contractAddress: address = ("KT1FpuaoBHwXMXJ6zn3F4ZhpjpPZV28MAinz" as address);
-  const myContract: contract<contractParam> = Tezos.Next.get_contract(contractAddress);
+  const myContract: contract<contractParam> = Tezos.get_contract(contractAddress);
   const contractArg: contractParam = ["Increment" as "Increment", 4];
   const operation =
-    Tezos.Next.Operation.transaction(contractArg, 0 as tez, myContract);
+    Tezos.Operation.transaction(contractArg, 0 as tez, myContract);
   return [[operation], storage + 1]
 }
 ```

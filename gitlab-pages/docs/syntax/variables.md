@@ -53,6 +53,16 @@ If the entrypoint code doesn't access one or both of these arguments, prefix the
 [@entry] let reset (_param: unit) (_storage : int) : operation list * int = [], 0
 ```
 
+You can also use the predefined function `ignore` on variables that
+you do not use, as in this example:
+
+```cameligo group=silent_variables
+let f () =
+  let user = {name = "Alice"; id = 5n} in
+  let { name; id } = user in
+  ignore (name, id)
+```
+
 </Syntax>
 
 <Syntax syntax="jsligo">
@@ -62,7 +72,8 @@ If the entrypoint code doesn't access one or both of these arguments, prefix the
 const reset = (_param : unit, _storage : int) : [list<operation>, int] => [[], 0];
 ```
 
-You can also use the predefined function `ignore` on variables that you do not use, as in this example:
+You can also use the predefined function `ignore` on variables that
+you do not use, as in this example:
 
 ```jsligo group=silent_variables
 function f () {
