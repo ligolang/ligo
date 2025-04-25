@@ -50,19 +50,9 @@ If the entrypoint code doesn't access one or both of these arguments, prefix the
 <Syntax syntax="cameligo">
 
 ```cameligo group=silent_variables
-[@entry] let reset (_param: unit) (_storage : int) : operation list * int = [], 0
+[@entry]
+let reset (_param: unit) (_storage : int) : operation list * int = [], 0
 ```
-
-You can also use the predefined function `ignore` on variables that
-you do not use, as in this example:
-
-```cameligo group=silent_variables
-let f () =
-  let user = {name = "Alice"; id = 5n} in
-  let { name; id } = user in
-  ignore (name, id)
-```
-
 </Syntax>
 
 <Syntax syntax="jsligo">
@@ -71,15 +61,41 @@ let f () =
 // @entry
 const reset = (_param : unit, _storage : int) : [list<operation>, int] => [[], 0];
 ```
+</Syntax>
 
 You can also use the predefined function `ignore` on variables that
 you do not use, as in this example:
 
+<Syntax syntax="cameligo">
+
+```cameligo group=silent_variables
+type user = {
+  id       : int;
+  is_admin : bool;
+  name     : string
+}
+
+let getUserID (user : user) : int =
+  let { id; is_admin; name } = user in
+  let () = ignore ([is_admin, name]) in
+  id
+```
+
+</Syntax>
+
+<Syntax syntax="jsligo">
+
 ```jsligo group=silent_variables
-function f () {
-  const user = {name: "Alice", id: 5 as nat};
-  const { name, id } = user;
-  ignore([name, id]);
+type user = {
+  id       : int,
+  is_admin : bool,
+  name     : string
+};
+
+const getUserID = (user: user): int => {
+  const { id, is_admin, name } = user;
+  ignore([is_admin, name]);
+  return id;
 }
 ```
 
