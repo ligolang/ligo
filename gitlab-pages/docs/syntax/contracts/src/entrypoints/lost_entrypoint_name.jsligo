@@ -1,3 +1,5 @@
+import Test = Test.Next;
+
 namespace OneEntrypoint {
   type storage = int;
   type return_type = [list<operation>, storage];
@@ -6,8 +8,6 @@ namespace OneEntrypoint {
   const increment = (_: unit, storage: storage): return_type =>
     [[], storage + 1];
 };
-
-import Test = Test.Next;
 
 const test_one_entrypoint = (() => {
   let initial_storage = 42;

@@ -513,6 +513,8 @@ Contract, view and test
 <div className="example">
 
 ```jsligo group=simple_contract_with_view_and_test
+import Test = Test.Next;
+
 type storage = int;
 
 class C {
@@ -533,10 +535,10 @@ class C {
 
 const testC = (() => {
   const initial_storage = 42;
-  const originated = Test.Next.Originate.contract(contract_of(C), initial_storage, 0 as tez);
+  const originated = Test.Originate.contract(contract_of(C), initial_storage, 0 as tez);
   const p : parameter_of<C> = ["Increment" as "Increment", 1];
-  Test.Next.Typed_address.transfer_exn(originated.taddr, p, 1 as mutez);
-  return Assert.assert(Test.Next.Typed_address.get_storage(originated.taddr) == initial_storage + 1);
+  Test.Typed_address.transfer_exn(originated.taddr, p, 1 as mutez);
+  return Assert.assert(Test.Typed_address.get_storage(originated.taddr) == initial_storage + 1);
 })()
 ```
 

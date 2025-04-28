@@ -18,11 +18,11 @@ The list can include any number of operations of any type.
 
 As described in [Operations](https://docs.tezos.com/smart-contracts/logic/operations) on docs.tezos.com, operations do not run immediately when the operation object is created.
 Instead, operations are added to a stack of operations to run after the code of the entrypoint is complete.
-For example, if a contract checks its balance with the `Tezos.Next.get_balance` function, creates an operation to transfer tez to another account, and then checks its balance again in the same entrypoint execution, the balance is the same because the transfer operation has not run yet.
+For example, if a contract checks its balance with the `Tezos.Next.Typed_address.get_balance` function, creates an operation to transfer tez to another account, and then checks its balance again in the same entrypoint execution, the balance is the same because the transfer operation has not run yet.
 For more detailed examples, see [Operations](https://docs.tezos.com/smart-contracts/logic/operations) on docs.tezos.com.
 
 There are no literal values of type operation.
-Instead, such values are created using the following functions from the standard library: `Tezos.Next.Operation.transaction` (transfer), `Tezos.Next.Operation.create_contract` (origination), `Tezos.Next.Operation.set_delegate` (delegation), and `Tezos.Next.Operation.Emit` (emission of event).
+Instead, such values are created using the following functions from the standard library: `Tezos.Next.Operation.transaction` (transfer), `Tezos.Next.Operation.create_contract` (origination), `Tezos.Next.Operation.set_delegate` (delegation), and `Tezos.Next.Operation.emit` (emission of event).
 For the operation to run, these operation values must be included in the list of operations returned at the end of the entrypoint code.
 
 ## Creating transactions
@@ -41,15 +41,17 @@ To send tez to a user account, pass `unit` as the parameter and the address of t
 <Syntax syntax="cameligo">
 
 ```cameligo group=send_tez
+module Tezos = Tezos.Next
+
 type storage = unit
 type return_value = operation list * storage
 
 [@entry] let give5tez (_ : unit) (storage : storage) : return_value =
-  if Tezos.Next.get_balance () >= 5tez then
-    let receiver_contract = match Tezos.Next.get_contract_opt (Tezos.Next.get_sender ()) with
+  if Tezos.get_balance () >= 5tez then
+    let receiver_contract = match Tezos.get_contract_opt (Tezos.get_sender ()) with
       Some contract -> contract
     | None -> failwith "Couldn't find account" in
-    let operation = Tezos.Next.Operation.transaction unit 5tez receiver_contract in
+    let operation = Tezos.Operation.transaction unit 5tez receiver_contract in
     [operation], storage
   else
     [], storage
@@ -60,19 +62,21 @@ type return_value = operation list * storage
 <Syntax syntax="jsligo">
 
 ```jsligo group=send_tez
+import Tezos = Tezos.Next;
+
 type storage = unit;
 type return_value = [list<operation>, storage];
 
 // @entry
 const give5tez = (_: unit, storage: storage): return_value => {
   let operations: list<operation> = [];
-  if (Tezos.Next.get_balance() >= (5 as tez)) {
+  if (Tezos.get_balance() >= (5 as tez)) {
     const receiver_contract =
-      $match(Tezos.Next.get_contract_opt(Tezos.Next.get_sender()), {
+      $match(Tezos.get_contract_opt(Tezos.get_sender()), {
         "Some": contract => contract,
         "None": () => failwith("Couldn't find account")
     });
-    operations = [Tezos.Next.Operation.transaction(unit, 5 as tez, receiver_contract)];
+    operations = [Tezos.Operation.transaction(unit, 5 as tez, receiver_contract)];
   }
   return [operations, storage];
 }
@@ -90,6 +94,7 @@ To get the correct parameter for the transaction, contract B uses the `parameter
 <Syntax syntax="cameligo">
 
 ```cameligo group=operation_transaction
+module Tezos = Tezos.Next
 module Test = Test.Next
 
 type 'storage return = operation list * 'storage
@@ -111,16 +116,16 @@ module B = struct
 
     [@entry]
     let increment (value : int) (stored_address : storage) : storage return =
-      let contract = Tezos.Next.get_contract stored_address in
+      let contract = Tezos.get_contract stored_address in
       let parameter : A parameter_of = Add value in
-      let operation = Tezos.Next.Operation.transaction parameter 0tez contract in
+      let operation = Tezos.Operation.transaction parameter 0tez contract in
     [operation], stored_address
 
     [@entry]
     let decrement (value : int) (stored_address : storage) : storage return =
-      let contract = Tezos.Next.get_contract stored_address in
+      let contract = Tezos.get_contract stored_address in
       let parameter : A parameter_of = Sub value in
-      let operation = Tezos.Next.Operation.transaction parameter 0tez contract in
+      let operation = Tezos.Operation.transaction parameter 0tez contract in
     [operation], stored_address
   end
 
@@ -145,6 +150,7 @@ let test =
 <Syntax syntax="jsligo">
 
 ```jsligo group=operation_transaction
+import Tezos = Tezos.Next;
 import Test = Test.Next;
 
 type return_<storage> = [list<operation>, storage];
@@ -166,18 +172,18 @@ namespace B {
 
   // @entry
   const increment = (value: int, stored_address: storage): return_<storage> => {
-    const contract = Tezos.Next.get_contract(stored_address);
+    const contract = Tezos.get_contract(stored_address);
     const parameter = ["Add" as "Add", value] as parameter_of<A>;
-    const operation = Tezos.Next.Operation.transaction(parameter, 0 as
+    const operation = Tezos.Operation.transaction(parameter, 0 as
   tez, contract);
     return [[operation], stored_address];
   }
 
   // @entry
   const decrement = (value: int, stored_address: storage): return_<storage> => {
-    const contract = Tezos.Next.get_contract(stored_address);
+    const contract = Tezos.get_contract(stored_address);
     const parameter = ["Sub" as "Sub", value] as parameter_of<A>;
-    const operation = Tezos.Next.Operation.transaction(parameter, 0 as
+    const operation = Tezos.Operation.transaction(parameter, 0 as
   tez, contract);
     return [[operation], stored_address];
   }
@@ -232,14 +238,14 @@ module C = struct
 
     [@entry]
     let increment (value : int) (stored_address : storage) : storage return =
-      let contract = Tezos.Next.get_entrypoint "%add" stored_address in
-      let operation = Tezos.Next.Operation.transaction value 0tez contract in
+      let contract = Tezos.get_entrypoint "%add" stored_address in
+      let operation = Tezos.Operation.transaction value 0tez contract in
     [operation], stored_address
 
     [@entry]
     let decrement (value : int) (stored_address : storage) : storage return =
-      let contract = Tezos.Next.get_entrypoint "%sub" stored_address in
-      let operation = Tezos.Next.Operation.transaction value 0tez contract in
+      let contract = Tezos.get_entrypoint "%sub" stored_address in
+      let operation = Tezos.Operation.transaction value 0tez contract in
     [operation], stored_address
   end
 ```
@@ -254,15 +260,15 @@ namespace C {
 
   // @entry
   const increment = (value: int, stored_address: storage): return_<storage> => {
-    const contract = Tezos.Next.get_entrypoint("%add", stored_address);
-    const operation = Tezos.Next.Operation.transaction(value, 0 as tez, contract);
+    const contract = Tezos.get_entrypoint("%add", stored_address);
+    const operation = Tezos.Operation.transaction(value, 0 as tez, contract);
     return [[operation], stored_address];
   }
 
   // @entry
   const decrement = (value: int, stored_address: storage): return_<storage> => {
-    const contract = Tezos.Next.get_entrypoint("%sub", stored_address);
-    const operation = Tezos.Next.Operation.transaction(value, 0 as tez, contract);
+    const contract = Tezos.get_entrypoint("%sub", stored_address);
+    const operation = Tezos.Operation.transaction(value, 0 as tez, contract);
     return [[operation], stored_address];
   }
 }
@@ -315,15 +321,15 @@ module D = struct
   [@entry]
   let increment (value : int) (stored_address : storage) : storage return =
     let pass_to_add : contract_a_param = M_right value in
-    let contract = Tezos.Next.get_contract stored_address in
-    let operation = Tezos.Next.Operation.transaction pass_to_add 0tez contract in
+    let contract = Tezos.get_contract stored_address in
+    let operation = Tezos.Operation.transaction pass_to_add 0tez contract in
   [operation], stored_address
 
   [@entry]
   let decrement (value : int) (stored_address : storage) : storage return =
     let pass_to_sub : contract_a_param = M_left value in
-    let contract = Tezos.Next.get_contract stored_address in
-    let operation = Tezos.Next.Operation.transaction pass_to_sub 0tez contract in
+    let contract = Tezos.get_contract stored_address in
+    let operation = Tezos.Operation.transaction pass_to_sub 0tez contract in
   [operation], stored_address
 end
 ```
@@ -340,8 +346,8 @@ namespace D {
   // @entry
   const increment = (value: int, stored_address: storage): return_<storage> => {
     const pass_to_add: contract_a_param = ["M_right" as "M_right", value];
-    const contract = Tezos.Next.get_contract(stored_address);
-    const operation = Tezos.Next.Operation.transaction(pass_to_add,
+    const contract = Tezos.get_contract(stored_address);
+    const operation = Tezos.Operation.transaction(pass_to_add,
                                                        0 as tez, contract);
     return [[operation], stored_address];
   }
@@ -349,8 +355,8 @@ namespace D {
   // @entry
   const decrement = (value: int, stored_address: storage): return_<storage> => {
     const pass_to_sub: contract_a_param = ["M_left" as "M_left", value];
-    const contract = Tezos.Next.get_contract(stored_address);
-    const operation = Tezos.Next.Operation.transaction(pass_to_sub,
+    const contract = Tezos.get_contract(stored_address);
+    const operation = Tezos.Operation.transaction(pass_to_sub,
                                                        0 as tez, contract);
     return [[operation], stored_address];
   }
@@ -380,6 +386,8 @@ This example originates a simple contract:
 <Syntax syntex="cameligo">
 
 ```cameligo group=origination
+module Tezos = Tezos.Next
+
 type return = operation list * string
 
 [@entry]
@@ -387,7 +395,7 @@ let main (_ : string) (storage : string) : return =
   let entrypoint (_ : nat) (storage : string) =
     (([] : operation list), storage) in
   let op, _addr : operation * address =
-    Tezos.Next.Operation.create_contract
+    Tezos.Operation.create_contract
       entrypoint
       (None : key_hash option)
       300000000mutez
@@ -400,13 +408,15 @@ let main (_ : string) (storage : string) : return =
 <Syntax syntax="jsligo">
 
 ```jsligo group=origination
+import Tezos = Tezos.Next;
+
 type return_ = [list<operation>, string];
 
 // @entry
 const main = (_: string, storage: string) : return_ => {
   const entrypoint = (_param: nat, storage: string) : return_ => [[], storage];
   const [op, _addr]: [operation, address] =
-    Tezos.Next.Operation.create_contract(entrypoint,
+    Tezos.Operation.create_contract(entrypoint,
                           (["None" as "None"] as option<key_hash>),
                           300000000 as mutez,
                           "one");
@@ -425,9 +435,11 @@ The operation (not the function itself) fails if the new key hash is the same as
 <Syntax syntax="cameligo">
 
 ```cameligo group=set_delegate
+module Tezos = Tezos.Next
+
 [@entry]
 let changeDelegate (new_delegate : key_hash) (storage : unit) : operation list * unit =
-  [Tezos.Next.Operation.set_delegate (Some new_delegate)], storage
+  [Tezos.Operation.set_delegate (Some new_delegate)], storage
 ```
 
 </Syntax>
@@ -436,9 +448,11 @@ let changeDelegate (new_delegate : key_hash) (storage : unit) : operation list *
 <Syntax syntax="jsligo">
 
 ```jsligo group=set_delegate
+import Tezos = Tezos.Next;
+
 // @entry
 const changeDelegate = (new_delegate: key_hash, storage: unit): [list<operation>, unit] =>
-  [[Tezos.Next.Operation.set_delegate (["Some" as "Some", new_delegate])], storage];
+  [[Tezos.Operation.set_delegate (["Some" as "Some", new_delegate])], storage];
 ```
 
 </Syntax>
@@ -446,17 +460,19 @@ const changeDelegate = (new_delegate: key_hash, storage: unit): [list<operation>
 
 ## Emitting events
 
-The `Tezos.Next.Operation.Emit` function creates an event emission operation.
+The `Tezos.Next.Operation.emit` function creates an event emission operation.
 Its parameters are the tag for the event and the payload for the event.
 For more information about events, see [Events](../../syntax/contracts/events).
 
 <Syntax syntax="cameligo">
 
 ```cameligo group=event_emit
+module Tezos = Tezos.Next
+
 [@entry]
 let emitEvents (_ : unit) (storage : int) : operation list * int =
-  let event1 : operation = Tezos.Next.Operation.emit "%emitEvents" "hi" in
-  let event2 : operation = Tezos.Next.Operation.emit "%emitEvents" 6 in
+  let event1 : operation = Tezos.Operation.emit "%emitEvents" "hi" in
+  let event2 : operation = Tezos.Operation.emit "%emitEvents" 6 in
   [event1; event2], storage
 ```
 
@@ -465,10 +481,12 @@ let emitEvents (_ : unit) (storage : int) : operation list * int =
 <Syntax syntax="jsligo">
 
 ```jsligo group=event_emit
+import Tezos = Tezos.Next;
+
 // @entry
 const emitEvents = (_: unit, storage: int): [list<operation>, int] => {
-  const event1: operation = Tezos.Next.Operation.emit("%emitEvents", "hi");
-  const event2: operation = Tezos.Next.Operation.emit("%emitEvents", 6);
+  const event1: operation = Tezos.Operation.emit("%emitEvents", "hi");
+  const event2: operation = Tezos.Operation.emit("%emitEvents", 6);
   return [[event1, event2], storage];
 }
 ```

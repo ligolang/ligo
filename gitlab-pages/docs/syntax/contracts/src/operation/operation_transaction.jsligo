@@ -1,3 +1,4 @@
+import Tezos = Tezos.Next;
 import Test = Test.Next;
 
 type return_<storage> = [list<operation>, storage];
@@ -19,18 +20,18 @@ namespace B {
 
   // @entry
   const increment = (value: int, stored_address: storage): return_<storage> => {
-    const contract = Tezos.Next.get_contract(stored_address);
+    const contract = Tezos.get_contract(stored_address);
     const parameter = ["Add" as "Add", value] as parameter_of<A>;
-    const operation = Tezos.Next.Operation.transaction(parameter, 0 as
+    const operation = Tezos.Operation.transaction(parameter, 0 as
   tez, contract);
     return [[operation], stored_address];
   }
 
   // @entry
   const decrement = (value: int, stored_address: storage): return_<storage> => {
-    const contract = Tezos.Next.get_contract(stored_address);
+    const contract = Tezos.get_contract(stored_address);
     const parameter = ["Sub" as "Sub", value] as parameter_of<A>;
-    const operation = Tezos.Next.Operation.transaction(parameter, 0 as
+    const operation = Tezos.Operation.transaction(parameter, 0 as
   tez, contract);
     return [[operation], stored_address];
   }
@@ -61,15 +62,15 @@ namespace C {
 
   // @entry
   const increment = (value: int, stored_address: storage): return_<storage> => {
-    const contract = Tezos.Next.get_entrypoint("%add", stored_address);
-    const operation = Tezos.Next.Operation.transaction(value, 0 as tez, contract);
+    const contract = Tezos.get_entrypoint("%add", stored_address);
+    const operation = Tezos.Operation.transaction(value, 0 as tez, contract);
     return [[operation], stored_address];
   }
 
   // @entry
   const decrement = (value: int, stored_address: storage): return_<storage> => {
-    const contract = Tezos.Next.get_entrypoint("%sub", stored_address);
-    const operation = Tezos.Next.Operation.transaction(value, 0 as tez, contract);
+    const contract = Tezos.get_entrypoint("%sub", stored_address);
+    const operation = Tezos.Operation.transaction(value, 0 as tez, contract);
     return [[operation], stored_address];
   }
 }
@@ -80,8 +81,8 @@ namespace D {
   // @entry
   const increment = (value: int, stored_address: storage): return_<storage> => {
     const pass_to_add: contract_a_param = ["M_right" as "M_right", value];
-    const contract = Tezos.Next.get_contract(stored_address);
-    const operation = Tezos.Next.Operation.transaction(pass_to_add,
+    const contract = Tezos.get_contract(stored_address);
+    const operation = Tezos.Operation.transaction(pass_to_add,
                                                        0 as tez, contract);
     return [[operation], stored_address];
   }
@@ -89,8 +90,8 @@ namespace D {
   // @entry
   const decrement = (value: int, stored_address: storage): return_<storage> => {
     const pass_to_sub: contract_a_param = ["M_left" as "M_left", value];
-    const contract = Tezos.Next.get_contract(stored_address);
-    const operation = Tezos.Next.Operation.transaction(pass_to_sub,
+    const contract = Tezos.get_contract(stored_address);
+    const operation = Tezos.Operation.transaction(pass_to_sub,
                                                        0 as tez, contract);
     return [[operation], stored_address];
   }

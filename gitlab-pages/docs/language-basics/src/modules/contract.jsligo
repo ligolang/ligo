@@ -4,8 +4,10 @@ class C {
   @entry
   decrement = (p : int, s : int) : [list<operation>, int] => [[], s - p];
 };
+import Test = Test.Next;
+
 const test = (() => {
-  let orig = Test.Next.Originate.contract(contract_of(C), 0, 0 as tez);
-  Test.Next.Typed_address.transfer_exn(orig.taddr, ["Increment" as "Increment", 42], 1 as mutez);
-  return Assert.assert(Test.Next.Typed_address.get_storage(orig.taddr) == 42);
+  let orig = Test.Originate.contract(contract_of(C), 0, 0 as tez);
+  Test.Typed_address.transfer_exn(orig.taddr, ["Increment" as "Increment", 42], 1 as mutez);
+  return Assert.assert(Test.Typed_address.get_storage(orig.taddr) == 42);
 })();
