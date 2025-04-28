@@ -401,16 +401,18 @@ ligo compile contract gitlab-pages/docs/language-basics/src/modules/contract.jsl
 To access the contract from the module, the primitive `contract_of`
 can be used. The type of the parameter generated for the module can be
 obtaining using the primitive `parameter_of`. This is particularly
-useful when working with the testing framework, in conjunction with the
-function `Test.originate`:
+useful when working with the testing framework, in conjunction with
+the function `Test.Next.Originate.contract`:
 
 <Syntax syntax="cameligo">
 
 ```cameligo group=contract
+module Test = Test.Next
+
 let test =
-  let orig = Test.originate (contract_of C) 0 0tez in
-  let _ = Test.transfer_exn orig.addr (Increment 42) 0tez
-  in assert (42 = Test.get_storage orig.addr)
+  let orig = Test.Originate.contract (contract_of C) 0 0tez in
+  let _ = Test.Typed_address.transfer_exn orig.taddr (Increment 42) 0tez
+  in Assert.assert (Test.Typed_address.get_storage orig.taddr = 42)
 ```
 
 </Syntax>
@@ -418,10 +420,12 @@ let test =
 <Syntax syntax="jsligo">
 
 ```jsligo group=contract
+import Test = Test.Next;
+
 const test = (() => {
-  let orig = Test.Next.Originate.contract(contract_of(C), 0, 0 as tez);
-  Test.Next.Typed_address.transfer_exn(orig.taddr, ["Increment" as "Increment", 42], 1 as mutez);
-  return Assert.assert(Test.Next.Typed_address.get_storage(orig.taddr) == 42);
+  let orig = Test.Originate.contract(contract_of(C), 0, 0 as tez);
+  Test.Typed_address.transfer_exn(orig.taddr, ["Increment" as "Increment", 42], 1 as mutez);
+  return Assert.assert(Test.Typed_address.get_storage(orig.taddr) == 42);
 })();
 ```
 

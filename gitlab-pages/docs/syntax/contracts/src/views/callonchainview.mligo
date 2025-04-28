@@ -20,17 +20,18 @@ module CallView = struct
       Some newValue -> [], (targetAddress, newValue)
     | None -> failwith("Something went wrong")
 end
-let test =
+module Test = Test.Next
 
+let test =
   // Originate ContractWithView
-  let contract1 = Test.Next.Originate.contract (contract_of ContractWithView) 5 0tez in
-  let addr1 = Test.Next.Typed_address.to_address contract1.taddr in
+  let contract1 = Test.Originate.contract (contract_of ContractWithView) 5 0tez in
+  let addr1 = Test.Typed_address.to_address contract1.taddr in
 
   // Originate CallView with address of ContractWithView in storage
   let initial_storage = (addr1, 0) in
-  let contract2 = Test.Next.Originate.contract (contract_of CallView) initial_storage 0tez in
+  let contract2 = Test.Originate.contract (contract_of CallView) initial_storage 0tez in
 
   // Call callView
-  let _ : nat = Test.Next.Contract.transfer_exn (Test.Next.Typed_address.get_entrypoint "default" contract2.taddr) 12 0tez in
-  let (_address, integer) = Test.Next.Typed_address.get_storage contract2.taddr in
+  let _ : nat = Test.Contract.transfer_exn (Test.Typed_address.get_entrypoint "default" contract2.taddr) 12 0tez in
+  let _address, integer = Test.Typed_address.get_storage contract2.taddr in
   Assert.assert(integer = 60)

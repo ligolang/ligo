@@ -1,3 +1,5 @@
+module Test = Test.Next
+
 module OneEntrypoint = struct
   type storage = int
   type return_type = operation list * storage
@@ -7,8 +9,6 @@ module OneEntrypoint = struct
     [], storage + 1
 
 end
-
-module Test = Test.Next
 
 let test_one_entrypoint =
   let initial_storage = 42 in

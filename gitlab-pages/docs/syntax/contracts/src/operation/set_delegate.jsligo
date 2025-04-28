@@ -1,3 +1,5 @@
+import Tezos = Tezos.Next;
+
 // @entry
 const changeDelegate = (new_delegate: key_hash, storage: unit): [list<operation>, unit] =>
-  [[Tezos.Next.Operation.set_delegate (["Some" as "Some", new_delegate])], storage];
+  [[Tezos.Operation.set_delegate (["Some" as "Some", new_delegate])], storage];

@@ -2,14 +2,18 @@
 
 const increment = (b: int): int => ((a: int): int => a + 1)(b);
 
-const with_semicolon = [1 + 2 * 3, M.fold_test, "lol string in a list aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"];
+const with_semicolon = [
+  1 + 2 * 3,
+  M.fold_test,
+  "lol string in a list aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+];
 
 const longer = [
-        1 + 2 * 3,
-        M.fold_test,
-        "lol string in a list aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-        "lol string in a list aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-        "lol string in a list aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+  1 + 2 * 3,
+  M.fold_test,
+  "lol string in a list aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "lol string in a list aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "lol string in a list aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
 ];
 
 const incr_map = (l: list<int>): list<int> => List.map((i: int) => i + 1, l);

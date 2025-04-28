@@ -1,3 +1,5 @@
+module Tezos = Tezos.Next
+
 [@entry]
 let changeDelegate (new_delegate : key_hash) (storage : unit) : operation list * unit =
-  [Tezos.Next.Operation.set_delegate (Some new_delegate)], storage
+  [Tezos.Operation.set_delegate (Some new_delegate)], storage

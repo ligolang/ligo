@@ -1,3 +1,4 @@
+module Tezos = Tezos.Next
 module Test = Test.Next
 
 type 'storage return = operation list * 'storage
@@ -19,16 +20,16 @@ module B = struct
 
     [@entry]
     let increment (value : int) (stored_address : storage) : storage return =
-      let contract = Tezos.Next.get_contract stored_address in
+      let contract = Tezos.get_contract stored_address in
       let parameter : A parameter_of = Add value in
-      let operation = Tezos.Next.Operation.transaction parameter 0tez contract in
+      let operation = Tezos.Operation.transaction parameter 0tez contract in
     [operation], stored_address
 
     [@entry]
     let decrement (value : int) (stored_address : storage) : storage return =
-      let contract = Tezos.Next.get_contract stored_address in
+      let contract = Tezos.get_contract stored_address in
       let parameter : A parameter_of = Sub value in
-      let operation = Tezos.Next.Operation.transaction parameter 0tez contract in
+      let operation = Tezos.Operation.transaction parameter 0tez contract in
     [operation], stored_address
   end
 
@@ -51,14 +52,14 @@ module C = struct
 
     [@entry]
     let increment (value : int) (stored_address : storage) : storage return =
-      let contract = Tezos.Next.get_entrypoint "%add" stored_address in
-      let operation = Tezos.Next.Operation.transaction value 0tez contract in
+      let contract = Tezos.get_entrypoint "%add" stored_address in
+      let operation = Tezos.Operation.transaction value 0tez contract in
     [operation], stored_address
 
     [@entry]
     let decrement (value : int) (stored_address : storage) : storage return =
-      let contract = Tezos.Next.get_entrypoint "%sub" stored_address in
-      let operation = Tezos.Next.Operation.transaction value 0tez contract in
+      let contract = Tezos.get_entrypoint "%sub" stored_address in
+      let operation = Tezos.Operation.transaction value 0tez contract in
     [operation], stored_address
   end
 module D = struct
@@ -68,14 +69,14 @@ module D = struct
   [@entry]
   let increment (value : int) (stored_address : storage) : storage return =
     let pass_to_add : contract_a_param = M_right value in
-    let contract = Tezos.Next.get_contract stored_address in
-    let operation = Tezos.Next.Operation.transaction pass_to_add 0tez contract in
+    let contract = Tezos.get_contract stored_address in
+    let operation = Tezos.Operation.transaction pass_to_add 0tez contract in
   [operation], stored_address
 
   [@entry]
   let decrement (value : int) (stored_address : storage) : storage return =
     let pass_to_sub : contract_a_param = M_left value in
-    let contract = Tezos.Next.get_contract stored_address in
-    let operation = Tezos.Next.Operation.transaction pass_to_sub 0tez contract in
+    let contract = Tezos.get_contract stored_address in
+    let operation = Tezos.Operation.transaction pass_to_sub 0tez contract in
   [operation], stored_address
 end

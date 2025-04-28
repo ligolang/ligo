@@ -2,10 +2,12 @@ module C = struct
   [@entry] let increment (p : int) (s : int) : operation list * int = [], s + p
   [@entry] let decrement (p : int) (s : int) : operation list * int = [], s - p
 end
+module Test = Test.Next
+
 let test =
-  let orig = Test.originate (contract_of C) 0 0tez in
-  let _ = Test.transfer_exn orig.addr (Increment 42) 0tez
-  in assert (42 = Test.get_storage orig.addr)
+  let orig = Test.Originate.contract (contract_of C) 0 0tez in
+  let _ = Test.Typed_address.transfer_exn orig.taddr (Increment 42) 0tez
+  in Assert.assert (Test.Typed_address.get_storage orig.taddr = 42)
 module FA0 = struct
   type t = unit
   [@entry] let transfer (_ : unit) (_ : t) : operation list * t = [], ()

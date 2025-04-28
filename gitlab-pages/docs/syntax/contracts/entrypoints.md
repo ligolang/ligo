@@ -229,20 +229,25 @@ const no_tokens = (action: parameter, storage: storage): result => {
 
 </Syntax>
 
-To send tez, create a transaction with `Tezos.transaction` and return it in the list of operations at the end of the entrypoint, as in this example:
+To send tez, create a transaction with `Tezos.Operarion.transaction`
+and return it in the list of operations at the end of the entrypoint,
+as in this example:
 
 <Syntax syntax="cameligo">
 
 ```cameligo group=send_tez
+module Tezos = Tezos.Next
+
 type storage = unit
 type return_value = operation list * storage
 
-[@entry] let give5tez (_ : unit) (storage : storage) : return_value =
+[@entry]
+let give5tez (_ : unit) (storage : storage) : return_value =
   if Tezos.get_balance () >= 5tez then
     let receiver_contract = match Tezos.get_contract_opt (Tezos.get_sender ()) with
       Some contract -> contract
     | None -> failwith "Couldn't find account" in
-    let operation = Tezos.Next.Operation.transaction unit 5tez receiver_contract in
+    let operation = Tezos.Operation.transaction unit 5tez receiver_contract in
     [operation], storage
   else
     [], storage
@@ -253,6 +258,8 @@ type return_value = operation list * storage
 <Syntax syntax="jsligo">
 
 ```jsligo group=send_tez
+import Tezos = Tezos.Next;
+
 type storage = unit;
 type return_value = [list<operation>, storage];
 
@@ -266,7 +273,7 @@ const give5tez = (_: unit, storage: storage): return_value => {
         "None": () => failwith("Couldn't find account")
       });
     operations =
-     [Tezos.Next.Operation.transaction(unit, 5 as tez, receiver_contract)]
+     [Tezos.Operation.transaction(unit, 5 as tez, receiver_contract)]
   }
   return [operations, storage];
 }
@@ -323,6 +330,8 @@ To call other entrypoints or contracts, create an operation and return it in the
 <Syntax syntax="cameligo">
 
 ```cameligo group=call_entrypoint
+module Tezos = Tezos.Next
+
 type storage = unit
 type return_value = operation list * storage
 
@@ -331,7 +340,7 @@ type return_value = operation list * storage
   let receiver_contract = match Tezos.get_contract_opt(addr) with
     Some contract -> contract
   | None -> failwith "Couldn't find contract" in
-  let operations = [Tezos.Next.Operation.transaction parameter 0tez receiver_contract] in
+  let operations = [Tezos.Operation.transaction parameter 0tez receiver_contract] in
   operations, storage
 ```
 
@@ -340,6 +349,8 @@ type return_value = operation list * storage
 <Syntax syntax="jsligo">
 
 ```jsligo group=call_entrypoint
+import Tezos = Tezos.Next;
+
 type storage = unit;
 type return_value = [list<operation>, storage];
 
@@ -352,7 +363,7 @@ const callContract = (param: [address, string], storage: storage): return_value 
       "None": () => failwith("Couldn't find contract")
     });
   const operations =
-    [Tezos.Next.Operation.transaction(parameter, 0 as tez, receiver_contract)]
+    [Tezos.Operation.transaction(parameter, 0 as tez, receiver_contract)]
   return [operations, storage];
 }
 ```
@@ -449,6 +460,8 @@ When it is compiled it becomes the default entrypoint, so the test calls the `de
 <Syntax syntax="cameligo">
 
 ```cameligo group=lost_entrypoint_name
+module Test = Test.Next
+
 module OneEntrypoint = struct
   type storage = int
   type return_type = operation list * storage
@@ -458,8 +471,6 @@ module OneEntrypoint = struct
     [], storage + 1
 
 end
-
-module Test = Test.Next
 
 let test_one_entrypoint =
   let initial_storage = 42 in
@@ -473,6 +484,8 @@ let test_one_entrypoint =
 <Syntax syntax="jsligo">
 
 ```jsligo group=lost_entrypoint_name
+import Test = Test.Next;
+
 namespace OneEntrypoint {
   type storage = int;
   type return_type = [list<operation>, storage];
@@ -481,8 +494,6 @@ namespace OneEntrypoint {
   const increment = (_: unit, storage: storage): return_type =>
     [[], storage + 1];
 };
-
-import Test = Test.Next;
 
 const test_one_entrypoint = (() => {
   let initial_storage = 42;

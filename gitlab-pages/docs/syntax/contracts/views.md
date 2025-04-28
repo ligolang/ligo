@@ -204,19 +204,20 @@ end
 This test deploys both contracts, calls the contract that calls the view, and verifies the result:
 
 ```cameligo group=callonchainview
-let test =
+module Test = Test.Next
 
+let test =
   // Originate ContractWithView
-  let contract1 = Test.Next.Originate.contract (contract_of ContractWithView) 5 0tez in
-  let addr1 = Test.Next.Typed_address.to_address contract1.taddr in
+  let contract1 = Test.Originate.contract (contract_of ContractWithView) 5 0tez in
+  let addr1 = Test.Typed_address.to_address contract1.taddr in
 
   // Originate CallView with address of ContractWithView in storage
   let initial_storage = (addr1, 0) in
-  let contract2 = Test.Next.Originate.contract (contract_of CallView) initial_storage 0tez in
+  let contract2 = Test.Originate.contract (contract_of CallView) initial_storage 0tez in
 
   // Call callView
-  let _ : nat = Test.Next.Contract.transfer_exn (Test.Next.Typed_address.get_entrypoint "default" contract2.taddr) 12 0tez in
-  let (_address, integer) = Test.Next.Typed_address.get_storage contract2.taddr in
+  let _ : nat = Test.Contract.transfer_exn (Test.Typed_address.get_entrypoint "default" contract2.taddr) 12 0tez in
+  let _address, integer = Test.Typed_address.get_storage contract2.taddr in
   Assert.assert(integer = 60)
 ```
 
@@ -267,24 +268,25 @@ namespace CallView {
 This test deploys both contracts, calls the contract that calls the view, and verifies the result:
 
 ```jsligo group=callonchainview
-const test = (() => {
+import Test = Test.Next;
 
+const test = (() => {
   // Originate ContractWithView
-  const contract1 = Test.Next.Originate.contract(contract_of(ContractWithView), 5, 0 as tez);
-  const addr1 = Test.Next.Typed_address.to_address(contract1.taddr);
+  const contract1 = Test.Originate.contract(contract_of(ContractWithView), 5, 0 as tez);
+  const addr1 = Test.Typed_address.to_address(contract1.taddr);
 
   // Originate CallView with address of ContractWithView in storage
   const initial_storage = [addr1, 0 as int];
   const contract2 =
-  Test.Next.Originate.contract(contract_of(CallView), initial_storage,
+  Test.Originate.contract(contract_of(CallView), initial_storage,
                                0 as tez);
 
   // Call callView
-  Test.Next.Contract.transfer_exn(
-    Test.Next.Typed_address.get_entrypoint("default", contract2.taddr),
+  Test.Contract.transfer_exn(
+    Test.Typed_address.get_entrypoint("default", contract2.taddr),
     12,
     0 as tez);
-  const [_address, integer] = Test.Next.Typed_address.get_storage(contract2.taddr);
+  const [_address, integer] = Test.Typed_address.get_storage(contract2.taddr);
   Assert.assert(integer == 60);
 }) ()
 ```
