@@ -200,8 +200,11 @@ Follow these steps to add an automated test to the contract:
      type storage = int
      type return_type = operation list * storage
 
-     [@entry] let add (n : int) (storage : storage) : return_type = [], storage + n
-     [@entry] let sub (n : int) (storage : storage) : return_type = [], storage - n
+     [@entry]
+     let add (n : int) (storage : storage) : return_type = [], storage + n
+
+     [@entry]
+     let sub (n : int) (storage : storage) : return_type = [], storage - n
    end
    ```
 
@@ -217,8 +220,9 @@ Follow these steps to add an automated test to the contract:
 1. Add code to _originate_ (deploy) the contract to the test environment:
 
    ```cameligo
+   module Test = Test.Next
    let initial_storage = 10 in
-   let orig = Test.Next.Originate.contract (contract_of Counter) initial_storage 0tez in
+   let orig = Test.Originate.contract (contract_of Counter) initial_storage 0tez in
    ```
 
    This command simulates deploying the contract, setting its initial storage to 10, and setting its initial balance to 0 tez.
@@ -226,18 +230,20 @@ Follow these steps to add an automated test to the contract:
 1. Add code to call the `add` entrypoint and pass the value 32:
 
    ```cameligo
-   let _ = Test.Next.Contract.transfer_exn (Test.Next.Typed_address.get_entrypoint "add" orig.taddr) 32 0tez in
+   let _ = Test.Contract.transfer_exn (Test.Typed_address.get_entrypoint "add" orig.taddr) 32 0tez in
    ```
 
 1. Add code to verify that the new value of the storage is correct:
 
    ```cameligo
-   Assert.assert (Test.Next.Typed_address.get_storage(orig.taddr) = initial_storage + 32)
+   Assert.assert (Test.Typed_address.get_storage(orig.taddr) = initial_storage + 32)
    ```
 
    The complete code looks like this:
 
    ```cameligo group=b
+   module Test = Test.Next
+
    module Counter = struct
      type storage = int
      type return_type = operation list * storage
@@ -248,9 +254,9 @@ Follow these steps to add an automated test to the contract:
 
    let test_add =
      let initial_storage = 10 in
-     let orig = Test.Next.Originate.contract (contract_of Counter) initial_storage 0tez in
-     let _ = Test.Next.Contract.transfer_exn (Test.Next.Typed_address.get_entrypoint "add" orig.taddr) 32 0tez in
-     Assert.assert (Test.Next.Typed_address.get_storage(orig.taddr) = initial_storage + 32)
+     let orig = Test.Originate.contract (contract_of Counter) initial_storage 0tez in
+     let _ = Test.Contract.transfer_exn (Test.Typed_address.get_entrypoint "add" orig.taddr) 32 0tez in
+     Assert.assert (Test.Typed_address.get_storage(orig.taddr) = initial_storage + 32)
    ```
 
 1. Run this command to run the test:
@@ -293,7 +299,7 @@ Follow these steps to add an automated test to the contract:
 
    ```jsligo
    const initial_storage = 10 as int;
-   const orig = Test.Next.Originate.contract(contract_of(Counter),
+   const orig = Test.Originate.contract(contract_of(Counter),
      initial_storage, 0 as tez);
    ```
 
@@ -302,19 +308,21 @@ Follow these steps to add an automated test to the contract:
 1. Add code to call the `add` entrypoint and pass the value 32:
 
    ```jsligo
-   Test.Next.Contract.transfer_exn(Test.Next.Typed_address.get_entrypoint("add",
+   Test.Contract.transfer_exn(Test.Typed_address.get_entrypoint("add",
    orig.taddr), 32 as int, 0 as tez);
    ```
 
 1. Add code to verify that the new value of the storage is correct:
 
    ```jsligo
-   return Assert.assert(Test.Next.Typed_address.get_storage(orig.taddr) == initial_storage + 32);
+   return Assert.assert(Test.Typed_address.get_storage(orig.taddr) == initial_storage + 32);
    ```
 
    The complete code looks like this:
 
    ```jsligo group=b
+   import Test = Test.Next
+
    namespace Counter {
      type storage = int;
      type return_type = [list<operation>, storage];
@@ -328,11 +336,11 @@ Follow these steps to add an automated test to the contract:
 
    const test_add = (() => {
      const initial_storage = 10 as int;
-     const orig = Test.Next.Originate.contract(contract_of(Counter),
+     const orig = Test.Originate.contract(contract_of(Counter),
      initial_storage, 0 as tez);
-     Test.Next.Contract.transfer_exn(Test.Next.Typed_address.get_entrypoint("add",
+     Test.Contract.transfer_exn(Test.Typed_address.get_entrypoint("add",
      orig.taddr), 32 as int, 0 as tez);
-     return Assert.assert(Test.Next.Typed_address.get_storage(orig.taddr) == initial_storage + 32);
+     return Assert.assert(Test.Typed_address.get_storage(orig.taddr) == initial_storage + 32);
    })()
    ```
 
