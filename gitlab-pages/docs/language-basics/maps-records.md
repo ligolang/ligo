@@ -553,7 +553,6 @@ const delete = (key: address, moves: register) =>
 </Syntax>
 
 
-
 ### Functional Iteration over Maps
 
 A *functional iterator* is a function that traverses a data structure
@@ -581,7 +580,7 @@ of moves is iterated to check that the start of each move is above
 
 ```cameligo group=maps
 let iter_op (m : register) : unit =
-  let predicate = fun (i,j : address * move) -> assert (j.0 > 3)
+  let predicate = fun (i,j : address * move) -> Assert.assert (j.0 > 3)
   in Map.iter predicate m
 ```
 
@@ -591,7 +590,7 @@ let iter_op (m : register) : unit =
 
 ```jsligo group=maps
 const assert_all_greater_than_three = (m: register) => {
-  let predicate = ([i, j]: [address, move]) => assert(j[0] > 3);
+  let predicate = ([i, j]: [address, move]) => Assert.assert(j[0] > 3);
   Map.iter(predicate, m);
 };
 ```

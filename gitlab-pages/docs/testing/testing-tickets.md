@@ -4,7 +4,7 @@ title: Testing tickets
 ---
 
 Testing code that uses tickets requires extra steps because of how tickets are used in Tezos operations.
-LIGO provides the `Proxy_ticket` module to help you test with tickets.
+LIGO provides the `Ticket.Proxy` module to help you test with tickets.
 
 ## The problem with testing tickets
 
@@ -49,10 +49,10 @@ LIGO testing tools to provide ways to create tickets via a proxy contract so you
 
 ## Proxy ticket contracts
 
-The LIGO test library provides a `Proxy_ticket` module which helps in working with tickets in the test framework.
+The LIGO test library provides a `Ticket.Proxy` module which helps in working with tickets in the test framework.
 Instead of creating tickets yourself, you use a proxy contract to create tickets and send them with operations.
 
-The `Proxy_ticket` module provides these functions:
+The `Ticket.Proxy` module provides these functions:
 
 - `init_transfer`: Creates a proxy contract that you can use as the source of tickets in test operations
 - `transfer`: Uses a proxy contract to create a ticket and send it as the parameter of a smart contract call
@@ -75,23 +75,21 @@ It provides an entrypoint that reads the ticket and adds its amount to the integ
 module Tezos = Tezos.Next
 
 module MyContract = struct
-  type storage = int * (bytes ticket) option
-  type unforged_storage = int * (bytes unforged_ticket) option
+  type storage = int * bytes ticket option
+  type unforged_storage = int * bytes unforged_ticket option
 
   [@entry]
-  let main (_ : unit) (storage : storage) :operation list * storage =
+  let main (_ : unit) (storage : storage) : operation list * storage =
     let (stored_value, ticket_opt) = storage in
     let new_storage : storage =
       match ticket_opt with
         // If there is a ticket, add its amount to the int in storage
         Some ticket ->
           let (_address, (_payload, amount)), new_ticket = Tezos.Ticket.read ticket in
-          (stored_value + (int amount), Some new_ticket)
+          stored_value + int amount, Some new_ticket
         // If there is no ticket in storage, do nothing
-        | None -> stored_value, None ()
-      in
-    [], new_storage
-
+        | None -> stored_value, None
+    in [], new_storage
 end
 ```
 
@@ -136,8 +134,9 @@ Then, the test uses the proxy contract to originate the contract to test:
 <Syntax syntax="cameligo">
 
 ```cameligo group=usage_orig
-let test_originate_contract =
+module Test = Test.Next
 
+let test_originate_contract =
   // Create a function that the proxy runs to return the contract storage
   let create_storage = fun (t : bytes ticket) : MyContract.storage -> (0, Some t) in
   let ticket_bytes : bytes = 0x0202 in
@@ -145,7 +144,7 @@ let test_originate_contract =
   let ticket_info = ticket_bytes, ticket_amount in
 
   // Create the proxy contract and use it to originate the contract
-  let addr = Test.Proxy_ticket.originate ticket_info create_storage MyContract.main in
+  let addr = Test.Ticket.Proxy.originate ticket_info create_storage MyContract.main in
   // ...
 ```
 
@@ -154,6 +153,8 @@ let test_originate_contract =
 <Syntax syntax="jsligo">
 
 ```jsligo group=usage_orig
+import Test = Test.Next;
+
 const test_originate_contract = (() => {
   // Create a function that the proxy runs to return the contract storage
   const create_storage = (t: ticket<bytes>): MyContract.storage =>
@@ -161,13 +162,13 @@ const test_originate_contract = (() => {
   const ticket_info = [0x0202, 15 as nat];
 
   // Create the proxy contract and use it to originate the contract
-  const addr = Test.Proxy_ticket.originate (ticket_info, create_storage, MyContract.main);
+  const addr = Test.Ticket.Proxy.originate (ticket_info, create_storage, MyContract.main);
   // ...
 ```
 
 </Syntax>
 
-To verify that the ticket is in the contract storage, you must use the `Test.Proxy_ticket.get_storage` function to retrieve the ticket from the contract storage.
+To verify that the ticket is in the contract storage, you must use the `Test.Ticket.Proxy.get_storage` function to retrieve the ticket from the contract storage.
 This function provides tickets as _unforged tickets_, which are tickets that you can read freely without destroying them and recreating them with the `Tezos.Ticket.read` function.
 In this code, the test retrieves the ticket from the contract and verifies its contents:
 
@@ -175,7 +176,7 @@ In this code, the test retrieves the ticket from the contract and verifies its c
 
 ```cameligo group=usage_orig
   // The ticket 'unforged_ticket_opt' can be manipulated freely without being destroyed
-  let unforged_storage : MyContract.unforged_storage = Test.Proxy_ticket.get_storage addr in
+  let unforged_storage : MyContract.unforged_storage = Test.Ticket.Proxy.get_storage addr in
   let (_stored_value, unforged_ticket_opt) = unforged_storage in
 
   // Verify that the ticket is in storage
@@ -190,8 +191,8 @@ In this code, the test retrieves the ticket from the contract and verifies its c
 
   // Call the entrypoint and verify that the value in storage changes
   let _ : nat = Test.Contract.transfer_exn (Test.Typed_address.get_entrypoint"default" addr) unit 0tez in
-  let new_storage : MyContract.unforged_storage = Test.Proxy_ticket.get_storage addr in
-  let (new_stored_value, _unforged_ticket_opt) = new_storage in
+  let new_storage : MyContract.unforged_storage = Test.Ticket.Proxy.get_storage addr in
+  let new_stored_value, _unforged_ticket_opt = new_storage in
   Assert.assert (new_stored_value = (int ticket_amount))
 ```
 
@@ -201,7 +202,7 @@ In this code, the test retrieves the ticket from the contract and verifies its c
 
 ```jsligo group=usage_orig
   // The ticket 'unforged_ticket_opt' can be manipulated freely without being destroyed
-  const [_stored_value, unforged_ticket_opt] = (Test.Proxy_ticket.get_storage(addr) as MyContract.unforged_storage);
+  const [_stored_value, unforged_ticket_opt] = (Test.Ticket.Proxy.get_storage(addr) as MyContract.unforged_storage);
 
   // Verify that the ticket is in storage
   $match(unforged_ticket_opt, {
@@ -218,7 +219,7 @@ In this code, the test retrieves the ticket from the contract and verifies its c
   // Call the entrypoint and verify that the value in storage changes
  Test.Contract.transfer_exn(Test.Typed_address.get_entrypoint("default",
   addr), unit, 0 as tez);
-  const [new_stored_value, _unforged_ticket_opt] = Test.Proxy_ticket.get_storage(addr) as MyContract.unforged_storage;
+  const [new_stored_value, _unforged_ticket_opt] = Test.Ticket.Proxy.get_storage(addr) as MyContract.unforged_storage;
   Assert.assert(new_stored_value == int(ticket_info[1]));
 })();
 ```
@@ -244,8 +245,9 @@ module MyContract = struct
   type storage = int
   type param = int * int ticket
 
-  [@entry] let main (param : param) (storage : storage) : operation list * storage =
-    let (multiplier, ticket) = param in
+  [@entry]
+  let main (param : param) (storage : storage) : operation list * storage =
+    let multiplier, ticket = param in
     // Read the ticket, destroy it, and add its amount times the multiplier to storage
     let (_address, (payload, amount)), _ticket = Tezos.Ticket.read ticket in
     [], (storage + (multiplier * payload * (int amount)))
@@ -281,6 +283,8 @@ Then create a function that returns the parameter for the entrypoint, create a p
 <Syntax syntax="cameligo">
 
 ```cameligo group=usage_entrypoint
+module Test = Test.Next
+
 let test_transfer_to_contract =
   // Originate the contract as usual
   let orig = Test.Originate.contract (contract_of MyContract) 0 0tez in
@@ -290,12 +294,12 @@ let test_transfer_to_contract =
   let create_param : int ticket -> MyContract.param = fun (t : int ticket) -> 5, t in
 
   // Create the proxy contract
-  let proxy_taddr = Test.Proxy_ticket.init_transfer create_param in
+  let proxy_taddr = Test.Ticket.Proxy.init_transfer create_param in
   let () = Test.IO.log ("proxy addr:", proxy_taddr) in
 
   // Use the proxy to call the entrypoint
   let ticket_info = 3, 10n in
-  let _ : test_exec_result = Test.Proxy_ticket.transfer proxy_taddr (ticket_info, main_addr) in
+  let _ : test_exec_result = Test.Ticket.Proxy.transfer proxy_taddr (ticket_info, main_addr) in
   Assert.assert (Test.Typed_address.get_storage orig.taddr = 150)
 ```
 
@@ -304,6 +308,8 @@ let test_transfer_to_contract =
 <Syntax syntax="jsligo">
 
 ```jsligo group=usage_entrypoint
+import Test = Test.Next;
+
 const test_transfer_to_contract = (() => {
   // Originate the contract as usual
   let orig = Test.Originate.contract(contract_of(MyContract), 0,
@@ -314,12 +320,12 @@ const test_transfer_to_contract = (() => {
   const create_param = (t: ticket<int>): MyContract.param => [5, t];
 
   // Create the proxy contract
-  const proxy_taddr = Test.Proxy_ticket.init_transfer(create_param);
+  const proxy_taddr = Test.Ticket.Proxy.init_transfer(create_param);
   Test.IO.log(["proxy addr:", proxy_taddr]);
 
   // Use the proxy to call the entrypoint
   const ticket_info = [3, 10 as nat];
-  Test.Proxy_ticket.transfer(proxy_taddr, [ticket_info, main_addr]);
+  Test.Ticket.Proxy.transfer(proxy_taddr, [ticket_info, main_addr]);
 
   // Verify that the value in storage changes
   Assert.assert(Test.Typed_address.get_storage(orig.taddr) == 150);

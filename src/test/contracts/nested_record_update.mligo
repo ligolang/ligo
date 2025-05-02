@@ -25,7 +25,7 @@ let update (s , n: level3 * int) : level3 =
 let test () : level3 =
   let s : level3 = {
     buz = 0;
-    l2 = { 
+    l2 = {
       fiz = 0;
       l1 = {
         foo = 0;
@@ -35,8 +35,8 @@ let test () : level3 =
     }
   } in
   let s1 = update (s, 5) in
-  let () = assert (s1.buz = 5) in
-  let () = assert (s1.l2.fiz = 5) in
-  let () = assert (s1.l2.l1.bar = 5) in
-  let () = assert (s1.l2.l1.foo = 5) in
+  let () = Assert.assert (s1.buz = 5) in
+  let () = Assert.assert (s1.l2.fiz = 5) in
+  let () = Assert.assert (s1.l2.l1.bar = 5) in
+  let () = Assert.assert (s1.l2.l1.foo = 5) in
   s1

@@ -354,10 +354,10 @@ let%expect_test _ =
     ];
   [%expect
     {|
-    File "../../test/contracts/top_level_patterns/negative/cameligo/constr_tuple_destructuring.mligo", line 3, characters 0-40:
+    File "../../test/contracts/top_level_patterns/negative/cameligo/constr_tuple_destructuring.mligo", line 3, characters 0-35:
       2 |
-      3 | let (a,  (Foo x), c) = (1, Foo 2, "hey")
-          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+      3 | let a, (Foo x), c = 1, Foo 2, "hey"
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
       4 |
 
     Error : this pattern-matching is not exhaustive.

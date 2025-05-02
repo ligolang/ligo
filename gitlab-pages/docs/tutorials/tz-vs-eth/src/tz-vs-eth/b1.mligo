@@ -1,3 +1,5 @@
+module Tezos = Tezos.Next
+
 type storage = {rewardsLeft : tez; beneficiaryAddress : address}
 
 let treasury (p, s : unit * storage) =
@@ -12,7 +14,8 @@ let treasury (p, s : unit * storage) =
     | None -> failwith "Beneficiary does not exist" in
 
   // Then we prepare the internal operation we want to perform
-  let operation = Tezos.transaction () s.rewardsLeft beneficiary in
+  let operation =
+    Tezos.Operation.transaction () s.rewardsLeft beneficiary in
 
   // ...and return both the operations and the updated storage
   ([operation], newStorage)

@@ -3,6 +3,4 @@ function main (p : bool, s : unit) : [list<operation>, unit] {
   return [[], s];
 };
 
-function some (o : option<unit>) : unit {
-  Assert.some(o)
-};
+const some = (o : option<unit>) : unit => Assert.some(o)

@@ -1,3 +1,5 @@
+module Test = Test.Next
+
 module C = struct
   type storage = int
 
@@ -18,8 +20,9 @@ module C = struct
 end
 
 let testC =
-    let initial_storage = 42 in
-    let originated = Test.originate (contract_of C) initial_storage 0tez in
-    let p : C parameter_of = Increment 1 in
-    let _ = Test.transfer_exn originated.addr p 1mutez in
-    assert (Test.get_storage originated.addr = initial_storage + 1)
+  let initial_storage = 42 in
+  let originated =
+    Test.Originate.contract (contract_of C) initial_storage 0tez in
+  let p : C parameter_of = Increment 1 in
+  let _ = Test.Typed_address.transfer_exn originated.taddr p 1mutez in
+  Assert.assert (Test.get_storage originated.taddr = initial_storage + 1)

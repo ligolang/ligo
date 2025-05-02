@@ -12,4 +12,4 @@ let gamma_abc = ((0x0af10ee82fcec5230ab73b92e85c24e58f4fe86a92e4436ebbbc8e5d462b
 
 let test =
   let t = gamma_abc.1 * input_x + gamma_abc.2 * input_y + gamma_abc.0 in
-  assert (Tezos.pairing_check [(proof_a, proof_b); (-t, gamma); (-proof_c, delta); (-alpha, beta)])
+  Assert.assert (Tezos.pairing_check [(proof_a, proof_b); (-t, gamma); (-proof_c, delta); (-alpha, beta)])

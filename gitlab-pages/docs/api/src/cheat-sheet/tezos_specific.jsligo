@@ -6,4 +6,4 @@ const contract : contract<unit> =
     "None": () => failwith("no contract or wrong contract type")
   })
 const payment: operation =
-  Tezos.transaction(unit, 100 as mutez, contract);
+  Tezos.Next.Operation.transaction(unit, 100 as mutez, contract);

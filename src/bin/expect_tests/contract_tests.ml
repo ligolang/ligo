@@ -1092,47 +1092,39 @@ let%expect_test _ =
   run_ligo_bad [ "compile"; "contract"; bad_contract "create_contract_toplevel.mligo" ];
   [%expect
     {|
-File "../../test/contracts/negative/create_contract_toplevel.mligo", line 5, character 35 to line 9, character 8:
+File "../../test/contracts/negative/create_contract_toplevel.mligo", line 5, characters 35-56:
   4 | let main (_ : string) (store : string) : return =
   5 |   let toto : operation * address = Tezos.create_contract
                                          ^^^^^^^^^^^^^^^^^^^^^
   6 |     (fun (_p : nat) (_s : string) -> (([] : operation list), store))
-      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  7 |     (None: key_hash option)
-      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  8 |     300tz
-      ^^^^^^^^^^
-  9 |     "un"
-      ^^^^^^^^
- 10 |   in
 
-Not all free variables could be inlined in Tezos.create_contract usage: gen#478. |}];
+Variable "create_contract" not found. |}];
   run_ligo_good [ "compile"; "contract"; contract "create_contract_var.mligo" ];
   [%expect
     {|
-    File "../../test/contracts/create_contract_var.mligo", line 9, characters 22-23:
-      8 |     Tezos.create_contract
-      9 |       (fun (p : nat) (s : int) -> (([] : operation list), a))
+    File "../../test/contracts/create_contract_var.mligo", line 11, characters 22-23:
+     10 |     Tezos.Operation.create_contract
+     11 |       (fun (p : nat) (s : int) -> (([] : operation list), a))
                                 ^
-     10 |       (None : key_hash option)
+     12 |       (None : key_hash option)
     :
     Warning: unused variable "s".
     Hint: replace it by "_s" to prevent this warning.
 
-    File "../../test/contracts/create_contract_var.mligo", line 9, characters 12-13:
-      8 |     Tezos.create_contract
-      9 |       (fun (p : nat) (s : int) -> (([] : operation list), a))
+    File "../../test/contracts/create_contract_var.mligo", line 11, characters 12-13:
+     10 |     Tezos.Operation.create_contract
+     11 |       (fun (p : nat) (s : int) -> (([] : operation list), a))
                       ^
-     10 |       (None : key_hash option)
+     12 |       (None : key_hash option)
     :
     Warning: unused variable "p".
     Hint: replace it by "_p" to prevent this warning.
 
-    File "../../test/contracts/create_contract_var.mligo", line 6, characters 10-16:
-      5 | [@entry]
-      6 | let main (action : string) (store : string) : return =
+    File "../../test/contracts/create_contract_var.mligo", line 8, characters 10-16:
+      7 | [@entry]
+      8 | let main (action : string) (store : string) : return =
                     ^^^^^^
-      7 |   let toto : operation * address =
+      9 |   let toto : operation * address =
     :
     Warning: unused variable "action".
     Hint: replace it by "_action" to prevent this warning.
@@ -1157,137 +1149,137 @@ Not all free variables could be inlined in Tezos.create_contract usage: gen#478.
   run_ligo_bad [ "compile"; "contract"; bad_contract "create_contract_modfv.mligo" ];
   [%expect
     {|
-    File "../../test/contracts/negative/create_contract_modfv.mligo", line 11, characters 22-23:
-     10 |     Tezos.create_contract
-     11 |       (fun (p : nat) (s : string) -> (([] : operation list), Foo.store))
+    File "../../test/contracts/negative/create_contract_modfv.mligo", line 12, characters 22-23:
+     11 |     Tezos.Operation.create_contract
+     12 |       (fun (p : nat) (s : string) -> (([] : operation list), Foo.store))
                                 ^
-     12 |       (None : key_hash option)
+     13 |       (None : key_hash option)
     :
     Warning: unused variable "s".
     Hint: replace it by "_s" to prevent this warning.
 
-    File "../../test/contracts/negative/create_contract_modfv.mligo", line 11, characters 12-13:
-     10 |     Tezos.create_contract
-     11 |       (fun (p : nat) (s : string) -> (([] : operation list), Foo.store))
+    File "../../test/contracts/negative/create_contract_modfv.mligo", line 12, characters 12-13:
+     11 |     Tezos.Operation.create_contract
+     12 |       (fun (p : nat) (s : string) -> (([] : operation list), Foo.store))
                       ^
-     12 |       (None : key_hash option)
+     13 |       (None : key_hash option)
     :
     Warning: unused variable "p".
     Hint: replace it by "_p" to prevent this warning.
 
-    File "../../test/contracts/negative/create_contract_modfv.mligo", line 4, characters 10-16:
-      3 | [@entry]
-      4 | let main (action : string) (store : string) : return =
+    File "../../test/contracts/negative/create_contract_modfv.mligo", line 6, characters 10-16:
+      5 | [@entry]
+      6 | let main (action : string) (store : string) : return =
                     ^^^^^^
-      5 |   module Foo = struct
+      7 |   module Foo = struct
     :
     Warning: unused variable "action".
     Hint: replace it by "_action" to prevent this warning.
 
-    File "../../test/contracts/negative/create_contract_modfv.mligo", line 10, character 4 to line 14, character 10:
-      9 |   let toto : operation * address =
-     10 |     Tezos.create_contract
-              ^^^^^^^^^^^^^^^^^^^^^
-     11 |       (fun (p : nat) (s : string) -> (([] : operation list), Foo.store))
+    File "../../test/contracts/negative/create_contract_modfv.mligo", line 11, character 4 to line 15, character 10:
+     10 |   let toto : operation * address =
+     11 |     Tezos.Operation.create_contract
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     12 |       (fun (p : nat) (s : string) -> (([] : operation list), Foo.store))
           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-     12 |       (None : key_hash option)
+     13 |       (None : key_hash option)
           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-     13 |       300000000mutez
+     14 |       300000000mutez
           ^^^^^^^^^^^^^^^^^^^^
-     14 |       "un" in
+     15 |       "un" in
           ^^^^^^^^^^
-     15 |   ([toto.0], store)
+     16 |   ([toto.0], store)
 
-    Not all free variables could be inlined in Tezos.create_contract usage: gen#479. |}];
+    Not all free variables could be inlined in Tezos.create_contract usage: gen#476. |}];
   run_ligo_bad [ "compile"; "contract"; bad_contract "create_contract_no_inline.mligo" ];
   [%expect
     {|
-    File "../../test/contracts/negative/create_contract_no_inline.mligo", line 5, characters 30-31:
-      4 |
-      5 | let dummy_contract (p : nat) (s : int) : return = (([] : operation list), foo)
-                                        ^
+    File "../../test/contracts/negative/create_contract_no_inline.mligo", line 7, characters 30-31:
       6 |
+      7 | let dummy_contract (p : nat) (s : int) : return = (([] : operation list), foo)
+                                        ^
+      8 |
     :
     Warning: unused variable "s".
     Hint: replace it by "_s" to prevent this warning.
 
-    File "../../test/contracts/negative/create_contract_no_inline.mligo", line 5, characters 20-21:
-      4 |
-      5 | let dummy_contract (p : nat) (s : int) : return = (([] : operation list), foo)
-                              ^
+    File "../../test/contracts/negative/create_contract_no_inline.mligo", line 7, characters 20-21:
       6 |
+      7 | let dummy_contract (p : nat) (s : int) : return = (([] : operation list), foo)
+                              ^
+      8 |
     :
     Warning: unused variable "p".
     Hint: replace it by "_p" to prevent this warning.
 
-    File "../../test/contracts/negative/create_contract_no_inline.mligo", line 9, characters 11-15:
-      8 | let main (action : int) (store : int) : return =
-      9 |   let (op, addr) =
+    File "../../test/contracts/negative/create_contract_no_inline.mligo", line 11, characters 11-15:
+     10 | let main (action : int) (store : int) : return =
+     11 |   let (op, addr) =
                      ^^^^
-     10 |     Tezos.create_contract
+     12 |     Tezos.Operation.create_contract
     :
     Warning: unused variable "addr".
     Hint: replace it by "_addr" to prevent this warning.
 
-    File "../../test/contracts/negative/create_contract_no_inline.mligo", line 8, characters 25-30:
-      7 | [@entry]
-      8 | let main (action : int) (store : int) : return =
+    File "../../test/contracts/negative/create_contract_no_inline.mligo", line 10, characters 25-30:
+      9 | [@entry]
+     10 | let main (action : int) (store : int) : return =
                                    ^^^^^
-      9 |   let (op, addr) =
+     11 |   let (op, addr) =
     :
     Warning: unused variable "store".
     Hint: replace it by "_store" to prevent this warning.
 
-    File "../../test/contracts/negative/create_contract_no_inline.mligo", line 8, characters 10-16:
-      7 | [@entry]
-      8 | let main (action : int) (store : int) : return =
+    File "../../test/contracts/negative/create_contract_no_inline.mligo", line 10, characters 10-16:
+      9 | [@entry]
+     10 | let main (action : int) (store : int) : return =
                     ^^^^^^
-      9 |   let (op, addr) =
+     11 |   let (op, addr) =
     :
     Warning: unused variable "action".
     Hint: replace it by "_action" to prevent this warning.
 
-    File "../../test/contracts/negative/create_contract_no_inline.mligo", line 10, character 4 to line 14, character 7:
-      9 |   let (op, addr) =
-     10 |     Tezos.create_contract
-              ^^^^^^^^^^^^^^^^^^^^^
-     11 |       dummy_contract
+    File "../../test/contracts/negative/create_contract_no_inline.mligo", line 12, character 4 to line 16, character 7:
+     11 |   let (op, addr) =
+     12 |     Tezos.Operation.create_contract
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     13 |       dummy_contract
           ^^^^^^^^^^^^^^^^^^^^
-     12 |       ((None : key_hash option))
+     14 |       ((None : key_hash option))
           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-     13 |       300000000mutez
+     15 |       300000000mutez
           ^^^^^^^^^^^^^^^^^^^^
-     14 |       1 in
+     16 |       1 in
           ^^^^^^^
-     15 |   let toto : operation list = [op] in
+     17 |   let toto : operation list = [op] in
 
-    Not all free variables could be inlined in Tezos.create_contract usage: foo#493. |}];
+    Not all free variables could be inlined in Tezos.create_contract usage: foo#490. |}];
   run_ligo_good [ "compile"; "contract"; contract "create_contract.mligo" ];
   [%expect
     {|
-    File "../../test/contracts/create_contract.mligo", line 7, characters 22-23:
-      6 |     Tezos.create_contract
-      7 |       (fun (p : nat) (s : string) -> (([] : operation list), "one"))
+    File "../../test/contracts/create_contract.mligo", line 9, characters 22-23:
+      8 |     Tezos.Operation.create_contract
+      9 |       (fun (p : nat) (s : string) -> (([] : operation list), "one"))
                                 ^
-      8 |       (None : key_hash option)
+     10 |       (None : key_hash option)
     :
     Warning: unused variable "s".
     Hint: replace it by "_s" to prevent this warning.
 
-    File "../../test/contracts/create_contract.mligo", line 7, characters 12-13:
-      6 |     Tezos.create_contract
-      7 |       (fun (p : nat) (s : string) -> (([] : operation list), "one"))
+    File "../../test/contracts/create_contract.mligo", line 9, characters 12-13:
+      8 |     Tezos.Operation.create_contract
+      9 |       (fun (p : nat) (s : string) -> (([] : operation list), "one"))
                       ^
-      8 |       (None : key_hash option)
+     10 |       (None : key_hash option)
     :
     Warning: unused variable "p".
     Hint: replace it by "_p" to prevent this warning.
 
-    File "../../test/contracts/create_contract.mligo", line 4, characters 10-16:
-      3 | [@entry]
-      4 | let main (action : string) (store : string) : return =
+    File "../../test/contracts/create_contract.mligo", line 6, characters 10-16:
+      5 | [@entry]
+      6 | let main (action : string) (store : string) : return =
                     ^^^^^^
-      5 |   let toto : operation * address =
+      7 |   let toto : operation * address =
     :
     Warning: unused variable "action".
     Hint: replace it by "_action" to prevent this warning.

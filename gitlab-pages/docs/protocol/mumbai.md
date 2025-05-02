@@ -30,11 +30,11 @@ let test_bytes_bitwise_ops  =
   let b_shift_left  = 0x06   lsl  8n     in
   let b_shift_right = 0x0006 lsr  1n     in
 
-  assert (b_and         = 0x0004 &&
-          b_or          = 0x0107 &&
-          b_xor         = 0x0103 &&
-          b_shift_left  = 0x0600 &&
-          b_shift_right = 0x0003  )
+  Assert.assert (b_and         = 0x0004 &&
+                 b_or          = 0x0107 &&
+                 b_xor         = 0x0103 &&
+                 b_shift_left  = 0x0600 &&
+                 b_shift_right = 0x0003)
 ```
 
 </Syntax>
@@ -48,11 +48,12 @@ const test_bytes_bitwise_module = (() => {
   const b_shift_left    = Bitwise.shift_left  (0x06  , 8 as nat);
   const b_shift_right   = Bitwise.shift_right (0x0006, 1 as nat);
 
-  assert (b_and         == 0x0004 &&
-          b_or          == 0x0107 &&
-          b_xor         == 0x0103 &&
-          b_shift_left  == 0x0600 &&
-          b_shift_right == 0x0003  )})()
+  Assert.assert (b_and         == 0x0004 &&
+                 b_or          == 0x0107 &&
+                 b_xor         == 0x0103 &&
+                 b_shift_left  == 0x0600 &&
+                 b_shift_right == 0x0003 )
+  })()
 ```
 
 </Syntax>

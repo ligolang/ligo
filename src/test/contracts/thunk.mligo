@@ -5,7 +5,7 @@ let main (_ : string) (store : string) : return =
   [@thunk]
   let sender = Tezos.get_sender () in
   let toto : operation * address =
-    Tezos.create_contract
+    Tezos.Next.Operation.create_contract
       (fun (_ : nat) (_ : address) -> (([] : operation list), sender))
       (None : key_hash option)
       1000000mutez

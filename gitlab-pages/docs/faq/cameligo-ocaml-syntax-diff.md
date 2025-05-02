@@ -98,8 +98,8 @@ type storage = int
 let main (_p : unit) (s : storage) : operation list * storage =
   let tests =
     begin
-      assert (1 = 1);
-      assert (2 = 2) // no semicolon here
+      Assert.assert (1 = 1);
+      Assert.assert (2 = 2) // no semicolon here
     end
   in
   [], s

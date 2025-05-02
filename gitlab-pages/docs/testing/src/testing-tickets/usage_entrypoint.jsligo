@@ -1,3 +1,5 @@
+import Tezos = Tezos.Next;
+
 namespace MyContract {
   type storage = int;
   export type param = [int, ticket<int>];
@@ -6,27 +8,29 @@ namespace MyContract {
   function main (param: param, storage: storage): [list<operation>, storage] {
     const [multiplier, ticket] = param;
     // Read the ticket, destroy it, and add its amount times the multiplier to storage
-    const [[_address, [payload, amount]], _ticket] = Tezos.Next.Ticket.read(ticket);
+    const [[_address, [payload, amount]], _ticket] = Tezos.Ticket.read(ticket);
     return ([[], storage + (multiplier * payload * int(amount))]);
   };
 }
+import Test = Test.Next;
+
 const test_transfer_to_contract = (() => {
   // Originate the contract as usual
-  let orig = Test.Next.Originate.contract(contract_of(MyContract), 0,
+  let orig = Test.Originate.contract(contract_of(MyContract), 0,
   0 as tez);
-  let main_addr = Test.Next.Typed_address.to_address(orig.taddr);
+  let main_addr = Test.Typed_address.to_address(orig.taddr);
 
   // Create a function that the proxy runs to return the parameter
   const create_param = (t: ticket<int>): MyContract.param => [5, t];
 
   // Create the proxy contract
-  const proxy_taddr = Test.Proxy_ticket.init_transfer(create_param);
-  Test.Next.IO.log(["proxy addr:", proxy_taddr]);
+  const proxy_taddr = Test.Ticket.Proxy.init_transfer(create_param);
+  Test.IO.log(["proxy addr:", proxy_taddr]);
 
   // Use the proxy to call the entrypoint
   const ticket_info = [3, 10 as nat];
-  Test.Proxy_ticket.transfer(proxy_taddr, [ticket_info, main_addr]);
+  Test.Ticket.Proxy.transfer(proxy_taddr, [ticket_info, main_addr]);
 
   // Verify that the value in storage changes
-  Assert.assert(Test.Next.Typed_address.get_storage(orig.taddr) == 150);
+  Assert.assert(Test.Typed_address.get_storage(orig.taddr) == 150);
 })();

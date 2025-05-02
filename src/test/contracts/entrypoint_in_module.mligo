@@ -1,3 +1,5 @@
+module Test = Test.Next
+
 type storage = int
 
 // Two entrypoints
@@ -41,11 +43,11 @@ module C = Bar.C
 let initial_storage = 42
 
 let test_initial_storage =
-  let orig = Test.originate (contract_of C) initial_storage 0mutez in
-  assert (Test.get_storage orig.addr = initial_storage)
+  let orig = Test.Originate.contract (contract_of C) initial_storage 0mutez in
+  Assert.assert (Test.get_storage orig.taddr = initial_storage)
 
 let test_increment =
-  let orig = Test.originate (contract_of C) initial_storage 0mutez in
-  let contr = Test.to_contract orig.addr in
-  let _ = Test.transfer_to_contract_exn contr (Increment 1) 1mutez in
-  assert (Test.get_storage orig.addr = initial_storage + 1)
+  let orig = Test.Originate.contract (contract_of C) initial_storage 0mutez in
+  let contr = Test.Typed_address.to_contract orig.taddr in
+  let _ = Test.Contract.transfer_exn contr (Increment 1) 1mutez in
+  Assert.assert (Test.get_storage orig.taddr = initial_storage + 1)

@@ -20,7 +20,7 @@ let add (m : register) : register =
 let delete (key, moves : address * register) : register =
   Map.remove key moves
 let iter_op (m : register) : unit =
-  let predicate = fun (i,j : address * move) -> assert (j.0 > 3)
+  let predicate = fun (i,j : address * move) -> Assert.assert (j.0 > 3)
   in Map.iter predicate m
 let map_op (m : register) : register =
   let increment = fun (_,j : address * move) -> j.0, j.1 + 1
