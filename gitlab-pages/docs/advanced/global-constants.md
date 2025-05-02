@@ -340,11 +340,13 @@ The string returned by `Test.register_constant` can be used via
 `Tezos.constant`, as in the examples above.
 
 A simple usage case is the following, in which we obtain a
-`michelson_program` by using `Test.eval`:
+`michelson_program` by using `Test.Michelson.eval`:
 
 <Syntax syntax="cameligo">
 
 ```cameligo test-ligo group=test_global
+module Test = Test.Next
+
 module C = struct
   type storage = int
   type parameter = unit
@@ -352,7 +354,7 @@ module C = struct
 
   let f (x : int) = x * 3 + 2
 
-  let ct = Test.register_constant (Test.eval f)
+  let ct = Test.State.register_constant (Test.Michelson.eval f)
 
   [@entry]
   let main (() : parameter) (store : storage) : return =
@@ -360,9 +362,9 @@ module C = struct
 end
 
 let test =
-  let orig = Test.originate (contract_of C) 1 0tez in
-  let _ = Test.transfer_exn orig.addr (Main ()) 0tez in
-  assert (Test.get_storage orig.addr = 5)
+  let orig = Test.Originate.contract (contract_of C) 1 0tez in
+  let _ = Test.Typed_address.transfer_exn orig.taddr (Main ()) 0tez in
+  Assert.assert (Test.get_storage orig.taddr = 5)
 ```
 
 </Syntax>
@@ -370,13 +372,15 @@ let test =
 <Syntax syntax="jsligo">
 
 ```jsligo test-ligo group=test_global
+import Test = Test.Next;
+
 type storage = int;
 type parameter = unit;
 
 class C {
   static f = (x : int) => x * 3 + 2;
 
-  static ct = Test.register_constant(Test.eval(f));
+  static ct = Test.State.register_constant(Test.Michelson.eval(f));
 
   @entry
   main = (_p: parameter, s: storage) : [list<operation>, storage] =>
@@ -384,9 +388,9 @@ class C {
 }
 
 const _test = () => {
-  let orig = Test.originate(contract_of(C), 1, 0 as tez);
-  Test.transfer_exn(orig.addr, ["Main" as "Main"], 0 as tez);
-  Assert.assert (Test.get_storage(orig.addr) == 5);
+  let orig = Test.Originate.contract(contract_of(C), 1, 0 as tez);
+  Test.Typed_address.transfer_exn(orig.taddr, ["Main" as "Main"], 0 as tez);
+  Assert.assert (Test.get_storage(orig.taddr) == 5);
 };
 
 const test = _test();

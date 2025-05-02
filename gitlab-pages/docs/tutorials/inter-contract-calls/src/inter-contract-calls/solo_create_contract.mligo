@@ -1,4 +1,6 @@
-let op = Tezos.create_contract
+module Tezos = Tezos.Next
+
+let op = Tezos.Operation.create_contract
   (fun (p : int) (s : int) -> [], p + s)
   None
   0mutez

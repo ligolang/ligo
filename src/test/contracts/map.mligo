@@ -33,7 +33,7 @@ let get  (m : foobar) : int option = Map.find_opt 42 m
 let mem (k,m : int * foobar) : bool = Map.mem k m
 
 let iter_op (m : foobar) : unit =
-  let assert_eq = fun (a, b : int * int) -> assert (a = b)
+  let assert_eq = fun (a, b : int * int) -> Assert.assert (a = b)
   in Map.iter assert_eq m
 
 let map_op (m : foobar) : foobar =

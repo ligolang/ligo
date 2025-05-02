@@ -1278,7 +1278,7 @@ let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "contract_with_ticket_storage.mligo" ];
   [%expect
     {|
-    ("unforged_ticket" , Some ({amount = 15n ; ticketer = KT1CDHnKFHBMFtyzC92oTfi4Z5wthR4Yk3LW ; value = 0x0202}))
+    ("unforged_ticket" , Some ({amount = 15n ; ticketer = KT1J6ZRf5Ni53KqEXS5yaQ5FPiBTMFH75EVf ; value = 0x0202}))
     Everything at the top-level was executed.
     - test_originate_contract exited with value (). |}];
   run_ligo_good [ "run"; "test"; test "contract_with_ticket_param.mligo" ];

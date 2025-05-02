@@ -7,4 +7,4 @@ let contract : unit contract =
     | None -> (failwith "no contract" : unit contract)
 
 let payment : operation =
-  Tezos.transaction unit 100mutez contract
+  Tezos.Next.Operation.transaction unit 100mutez contract

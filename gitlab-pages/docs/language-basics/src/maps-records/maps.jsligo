@@ -23,7 +23,7 @@ const add = (m: register) =>
 const delete = (key: address, moves: register) =>
   Map.remove(key, moves);
 const assert_all_greater_than_three = (m: register) => {
-  let predicate = ([i, j]: [address, move]) => assert(j[0] > 3);
+  let predicate = ([i, j]: [address, move]) => Assert.assert(j[0] > 3);
   Map.iter(predicate, m);
 };
 function map_op (m: register) {

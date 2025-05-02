@@ -2,4 +2,4 @@
 
 const z = y + x
 
-const test = assert(z == 3)
+const test = Assert.assert(z == 3)

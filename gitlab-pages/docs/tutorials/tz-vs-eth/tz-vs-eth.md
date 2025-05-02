@@ -521,6 +521,8 @@ In Tezos, the execution model is quite different. Contracts communicate via mess
 <Syntax syntax="cameligo">
 
 ```cameligo group=b1
+module Tezos = Tezos.Next
+
 type storage = {rewardsLeft : tez; beneficiaryAddress : address}
 
 let treasury (p, s : unit * storage) =
@@ -535,7 +537,8 @@ let treasury (p, s : unit * storage) =
     | None -> failwith "Beneficiary does not exist" in
 
   // Then we prepare the internal operation we want to perform
-  let operation = Tezos.transaction () s.rewardsLeft beneficiary in
+  let operation =
+    Tezos.Operation.transaction () s.rewardsLeft beneficiary in
 
   // ...and return both the operations and the updated storage
   ([operation], newStorage)
@@ -546,6 +549,8 @@ let treasury (p, s : unit * storage) =
 <Syntax syntax="jsligo">
 
 ```jsligo group=b1
+import Tezos = Tezos.Next;
+
 type storage = {rewardsLeft: tez, beneficiaryAddress: address };
 
 const treasury = (p : unit, s : storage) => {
@@ -561,7 +566,8 @@ const treasury = (p : unit, s : storage) => {
     });
 
   // Then we prepare the internal operation we want to perform
-  const operation = Tezos.transaction(unit, s.rewardsLeft, beneficiary);
+  const operation =
+    Tezos.Operation.transaction(unit, s.rewardsLeft, beneficiary);
 
   // ...and return both the operations and the updated storage
   return [list([operation]), newStorage];
@@ -581,7 +587,7 @@ type parameter = DoSomething | DoSomethingCont of int
 
 let doSomething (p, s : unit * int) =
   (* The callee should call `%doSomethingCont` with the value we want *)
-  let op = Tezos.transaction ... in
+  let op = Tezos.Next.Operation.transaction ... in
   ([op], s)
 
 let doSomethingCont (p, s : int * int) = ([] : operation list), p + s
@@ -596,7 +602,7 @@ type parameter = ["DoSomething"] | ["DoSomethingCont", int];
 
 const doSomething = ([p, s]: [unit, int]) => {
   /* The callee should call `%doSomethingCont` with the value we want */
-  const op = Tezos.transaction ...;
+  const op = Tezos.Next.Operation.transaction ...;
   return [[], s]
 }
 

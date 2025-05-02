@@ -1,3 +1,5 @@
+module Tezos = Tezos.Next
+
 type id = int
 
 type id_details = {
@@ -26,7 +28,7 @@ be to deter people from doing it just to chew up address space.
 *)
 
 let buy (parameter, storage: (bytes * address option) * storage) =
-  let void: unit = assert (Tezos.get_amount () = storage.2.0) in
+  let void: unit = Assert.assert (Tezos.get_amount () = storage.2.0) in
   let profile, initial_controller = parameter in
   let identities, last_id, prices = storage in
   let controller: address =
@@ -98,7 +100,7 @@ let update_details (parameter, storage: (id * bytes option * address option) * s
 
 (* Let someone skip the next identity so nobody has to take one that's undesirable *)
 let skip (p,s: unit * storage) =
-  let void: unit = assert (Tezos.get_amount () = storage.2.1) in
+  let void: unit = Assert.assert (Tezos.get_amount () = storage.2.1) in
   let identities, last_id, prices = storage in
   ([]: instruction), (identities, last_id + 1, prices)
 

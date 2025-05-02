@@ -1,3 +1,5 @@
+module Tezos = Tezos.Next
+
 type parameter = Fund | Send of address * tez
 
 type transaction = Incoming of address * tez | Outgoing of address * tez
@@ -10,7 +12,7 @@ let do_send (dst, @amount : address * tez) =
   let callee = Tezos.get_contract_opt dst in
   match callee with
     Some contract ->
-      let op = Tezos.transaction () @amount contract in
+      let op = Tezos.Operation.transaction () @amount contract in
       Outgoing (dst, @amount), [op]
   | None -> (failwith "Could not send tokens" : transaction * operation list)
 
@@ -24,7 +26,7 @@ let fund (_ : unit) (s : storage) : result =
 
 [@entry]
 let send (args : address * tez) (s : storage) =
-  let u = assert ((Tezos.get_sender ()) = s.owner && (Tezos.get_amount ()) = 0mutez) in
+  let u = Assert.assert ((Tezos.get_sender ()) = s.owner && (Tezos.get_amount ()) = 0mutez) in
   let tx, ops = do_send args in
   ops, { s with transactionLog = tx :: s.transactionLog }
 type storage = {beneficiary : address; balances : (address, tez) map}
@@ -42,7 +44,7 @@ let withdraw (param, s : parameter * storage) =
     | Some x -> x
     | None -> (failwith "Insufficient balance" : tez)
   in
-  let op = Tezos.transaction () @amount beneficiary in
+  let op = Tezos.Operation.transaction () @amount beneficiary in
   let new_balances =
     Map.update beneficiary_addr (Some new_balance) s.balances in
   [op], {s with balances = new_balances}
@@ -55,7 +57,7 @@ let send_rewards (beneficiary_addr : address) =
     match maybe_contract with
       Some contract -> contract
     | None -> (failwith "CONTRACT_NOT_FOUND" : unit contract) in
-  Tezos.transaction () 5000000mutez beneficiary
+  Tezos.Operation.transaction () 5000000mutez beneficiary
 
 let main (p, s : unit * storage) =
   if (Tezos.get_sender ()) <> s.owner

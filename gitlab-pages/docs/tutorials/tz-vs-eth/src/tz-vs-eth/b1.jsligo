@@ -1,3 +1,5 @@
+import Tezos = Tezos.Next;
+
 type storage = {rewardsLeft: tez, beneficiaryAddress: address };
 
 const treasury = (p : unit, s : storage) => {
@@ -13,7 +15,8 @@ const treasury = (p : unit, s : storage) => {
     });
 
   // Then we prepare the internal operation we want to perform
-  const operation = Tezos.transaction(unit, s.rewardsLeft, beneficiary);
+  const operation =
+    Tezos.Operation.transaction(unit, s.rewardsLeft, beneficiary);
 
   // ...and return both the operations and the updated storage
   return [list([operation]), newStorage];

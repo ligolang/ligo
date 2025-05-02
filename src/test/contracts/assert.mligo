@@ -1,19 +1,17 @@
 let main (p : bool) (s : unit) =
-  let () : unit = assert p
+  let () : unit = Assert.assert p
   in ([] : operation list), s
 
-let with_error (p, s: bool * unit) =
-  let _ : unit = assert_with_error p "my custom error" in
-  ([] : operation list), s
+let with_error (p, s: bool * unit) : operation list * unit =
+  let () = Assert.Error.assert p "my custom error"
+  in [], s
 
-let some (o : unit option) =
-  assert_some o
+let some (o : unit option) = Assert.some o
 
 let some_with_error (o : unit option) =
-  assert_some_with_error o "my custom error"
+  Assert.Error.some o "my custom error"
 
-let none (o : unit option) =
-  assert_none o
+let none (o : unit option) = Assert.none o
 
 let none_with_error (o : unit option) =
-  assert_none_with_error o "my custom error"
+  Assert.Error.none o "my custom error"

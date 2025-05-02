@@ -94,30 +94,8 @@ let unit : unit = () (* TODO: Remove constant UNIT. *)
   performs side-effects. *)
 let ignore (type a) (_: a) : unit = ()
 
-(** display-only-for-cameligo
-  The call `curry f x y` has the same value as `f (x,y)`. *)
-(** display-only-for-jsligo
-  The call `curry(f,x,y)` has the same value as `f(x,y)`. *)
-[@deprecated "In a future version, this function will be deprecated, and using `Tuple2.curry` is encouraged for a smoother migration."]
-let curry (type a b c) (f: a * b -> c) (x: a) (y: b) : c = f (x, y)
-
-(** display-only-for-cameligo
-  The call `uncurry f (x,y)` has the same value as `f x y`. *)
-(** display-only-for-jsligo
-  The call `uncurry(f,[x,y])` has the same value as `f(x)(y)`. *)
-[@deprecated "In a future version, this function will be deprecated, and using `Tuple2.uncurry` is encouraged for a smoother migration."]
-let uncurry (type a b c) (f: a -> b -> c) (x,y : a * b) : c = f x y
-
-(** Projecting the first component of a pair *)
-[@deprecated "In a future version, this function will be deprecated, and using `Tuple2.get1` is encouraged for a smoother migration."]
-let fst (type a b) (x,_ : a * b) : a = x
-
-(** Projecting the second component of a pair. *)
-[@deprecated "In a future version, this function will be deprecated, and using `Tuple2.get2` is encouraged for a smoother migration."]
-let snd (type a b) (_,y : a * b) : b = y
-
 (** Binary tuples *)
-module Tuple2 = struct
+module Pair = struct
   (** display-only-for-cameligo
     The call `curry f x y` has the same value as `f (x,y)`. *)
   (** display-only-for-jsligo
@@ -128,16 +106,16 @@ module Tuple2 = struct
     The call `uncurry f (x,y)` has the same value as `f x y`. *)
   (** display-only-for-jsligo
     The call `uncurry(f,[x,y])` has the same value as `f(x)(y)`. *)
-  let uncurry (type a b c) (f: a -> b -> c) (x,y : a * b) : c = f x y
+  let uncurry (type a b c) (f: a -> b -> c) (x, y : a * b) : c = f x y
 
   (** Projecting the first component of a pair *)
-  let get1 (type a b) (x,_ : a * b) : a = x
+  let get1 (type a b) (x, _ : a * b) : a = x
 
   (** Projecting the second component of a pair. *)
-  let get2 (type a b) (_,y : a * b) : b = y
+  let get2 (type a b) (_, y : a * b) : b = y
 
   (** Swap the components of a pair. *)
-  let swap (type a b) (x,y : a * b) : b * a = (y, x)
+  let swap (type a b) (x, y : a * b) : b * a = y, x
 end
 
 (** display-only-for-cameligo
@@ -158,81 +136,6 @@ let bytes (type a) (value: a) : a external_bytes =
   [%michelson ({| {BYTES} |} value : a external_bytes)]
 
 (* Assertions *)
-
-(** display-only-for-cameligo
-  The call `assert_with_error cond error` terminates the execution
-  with the string `error` (that is, an error message) if, and only if,
-  the boolean condition `cond` is false. *)
-(** display-only-for-jsligo
-  The call `assert_with_error(cond, error)` terminates the execution
-  with the string `error` (that is, an error message) if, and only if,
-  the boolean condition `cond` is false. *)
-[@deprecated "In a future version, this function will be deprecated, and using `Assert.Error.assert` is encouraged for a smoother migration."]
-let assert_with_error (condition: bool) (error: string) : unit =
-  if condition then () else failwith error
-
-(** display-only-for-cameligo
-  The call `assert cond` terminates the execution with the string
-  `"failed assertion"` if, and only if, the boolean condition `cond`
-  is false. *)
-(** display-only-for-jsligo
-  The call `assert(cond)` terminates the execution with the string
-  `"failed assertion"` if, and only if, the boolean condition `cond`
-  is false. *)
-[@deprecated "In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration."]
-[@inline]
-let assert (condition: bool) : unit =
-  assert_with_error condition "failed assertion"
-
-(** display-only-for-cameligo
-  The call `assert_some_with_error opt err` terminates the execution
-  with the string `err` (that is, an error message) if, and only if,
-  `opt` is `None`. *)
-(** display-only-for-jsligo
-  The call `assert_some_with_error(opt, err)` terminates the execution
-  with the string `err` (that is, an error message) if, and only if,
-  `opt` is `None()`. *)
-[@deprecated "In a future version, this function will be deprecated, and using `Assert.Error.some` is encouraged for a smoother migration."]
-let assert_some_with_error (type a) (opt: a option) (err: string) : unit =
-  match opt with
-  | None -> failwith err
-  | Some _ -> ()
-
-(** display-only-for-cameligo
-  The call `assert_some opt` terminates the execution with the
-  string `"failed assert some"` if, and only if, `opt` is `None`. *)
-(** display-only-for-jsligo
-  The call `assert_some(opt)` terminates the execution with the
-  string `"failed assert some"` if, and only if, `opt` is `None()`. *)
-[@deprecated "In a future version, this function will be deprecated, and using `Assert.some` is encouraged for a smoother migration."]
-[@inline]
-let assert_some (type a) (opt: a option) : unit =
-  assert_some_with_error opt "failed assert some"
-
-(** display-only-for-cameligo
-  The call `assert_none_with_error opt err` terminates the execution
-  with the string `err` (that is, an error message) if, and only if,
-  `opt` is an optional value different from `None`. *)
-(** display-only-for-jsligo
-  The call `assert_none_with_error(opt, err)` terminates the execution
-  with the string `err` (that is, an error message) if, and only if,
-  `opt` is an optional value different from `None()`. *)
-[@deprecated "In a future version, this function will be deprecated, and using `Assert.Error.none` is encouraged for a smoother migration."]
-let assert_none_with_error (type a) (opt: a option) (err: string) : unit =
-  match opt with
-  | None -> ()
-  | Some _ -> failwith err
-
-(** display-only-for-cameligo
-  The call `assert_none opt` terminates the execution with the string
-  `"failed assert none"` if, and only if, `opt` is not `None`. *)
-(** display-only-for-jsligo
-  The call `assert_none(opt)` terminates the execution with the string
-  `"failed assert none"` if, and only if, `opt` is not `None()`. *)
-[@deprecated "In a future version, this function will be deprecated, and using `Assert.none` is encouraged for a smoother migration."]
-[@inline]
-let assert_none (type a) (opt: a option) : unit =
-  assert_none_with_error opt "failed assert none"
 
 module Assert = struct
   module Error = struct
@@ -578,6 +481,7 @@ module Tezos = struct
     | None -> failwith "bad address for get_entrypoint"
     | Some contract_addr -> contract_addr
 
+(*
   (** display-only-for-cameligo
     The call `Tezos.create_contract e d a s` returns a contract creation
     operation (origination) for the entrypoint `e` (as a function)
@@ -608,7 +512,7 @@ module Tezos = struct
     (storage: storage)
     : operation * address =
     [%external ("CREATE_CONTRACT",
-                Tuple2.uncurry entrypoint, delegate, amount, storage)]
+                Pair.uncurry entrypoint, delegate, amount, storage)]
 
   (** display-only-for-cameligo
     The call `Tezos.set_delegate d` evaluates in an operation that sets
@@ -656,6 +560,7 @@ module Tezos = struct
     : operation =
     [%michelson
       ({| {TRANSFER_TOKENS} |} param amount contract_addr : operation)]
+ *)
 
   (** display-only-for-cameligo
     The call `Tezos.call_view v p a` calls the view `v` with parameter
@@ -943,7 +848,6 @@ module Tezos = struct
     [%external ("GLOBAL_CONSTANT", hash)]
 
   module Next = struct
-
     (* Views *)
 
     (** display-only-for-cameligo
@@ -1201,7 +1105,7 @@ module Tezos = struct
         (storage: storage)
         : operation * address =
         [%external ("CREATE_CONTRACT",
-                    Tuple2.uncurry entrypoint, delegate, amount, storage)]
+                    Pair.uncurry entrypoint, delegate, amount, storage)]
 
       (** display-only-for-cameligo
         The call `set_delegate d` evaluates in an operation that sets
@@ -1975,7 +1879,7 @@ module Map = struct
     (type key value) (key: key) (upd: value option) (map: (key, value) t)
     : (key, value) t =
     (* TODO: Remove constant MAP_UPDATE. *)
-    get_and_update key upd map |> snd
+    get_and_update key upd map |> Pair.get2
 
   (** display-only-for-cameligo
     The call `Map.add key value map` returns a copy of the `map` where
@@ -2192,7 +2096,7 @@ module Big_map = struct
   let update
     (type key value) (key: key) (upd: value option) (map: (key, value) t)
     : (key, value) t =
-    get_and_update key upd map |> snd
+    get_and_update key upd map |> Pair.get2
 
   (** display-only-for-cameligo
       The call `Big_map.add key value map` returns a copy of the big
@@ -3542,7 +3446,8 @@ module Test = struct
     The failure is handled by LIGO's testing framework and
     not by Michelson's interpreter. *)
   [@deprecated "In a future version, `Test` will be replaced by `Test.Next`, and using `Assert.some` from `Test.Next` is encouraged for a smoother migration."]
-  let assert_some (type a) (v : a option) : unit = match v with | None -> failwith "failed assert some" | Some _ -> ()
+  let assert_some (type a) (v : a option) : unit =
+    match v with | None -> failwith "failed assert some" | Some _ -> ()
 
   (** display-only-for-cameligo
     The call `assert_none opt` terminates the execution with the string
@@ -3555,7 +3460,8 @@ module Test = struct
     The failure is handled by LIGO's testing framework and
     not by Michelson's interpreter. *)
   [@deprecated "In a future version, `Test` will be replaced by `Test.Next`, and using `Assert.none` from `Test.Next` is encouraged for a smoother migration."]
-  let assert_none (type a) (v : a option) : unit = match v with | None -> () | Some _ -> failwith "failed assert none"
+  let assert_none (type a) (v : a option) : unit =
+    match v with | None -> () | Some _ -> failwith "failed assert none"
 
   (** display-only-for-cameligo
     The call `assert_with_error cond error` terminates the execution
@@ -3581,7 +3487,8 @@ module Test = struct
     and only if, `opt` is `None()`. The failure is handled by LIGO's
     testing framework and not by Michelson's interpreter. *)
   [@deprecated "In a future version, `Test` will be replaced by `Test.Next`, and using `Assert.Error.some` from `Test.Next` is encouraged for a smoother migration."]
-  let assert_some_with_error (type a) (v : a option) (s : string) : unit = match v with | None -> failwith s | Some _ -> ()
+  let assert_some_with_error (type a) (v : a option) (s : string) : unit =
+    match v with | None -> failwith s | Some _ -> ()
 
   (** display-only-for-cameligo
     The call `assert_none_with_error opt err` terminates the execution
@@ -3596,7 +3503,8 @@ module Test = struct
     `None()`. The failure is handled by LIGO's testing framework and
     not by Michelson's interpreter. *)
   [@deprecated "In a future version, `Test` will be replaced by `Test.Next`, and using `Assert.Error.none` from `Test.Next` is encouraged for a smoother migration."]
-  let assert_none_with_error (type a) (v : a option) (s : string) : unit = match v with | None -> () | Some _ -> failwith s
+  let assert_none_with_error (type a) (v : a option) (s : string) : unit =
+    match v with | None -> () | Some _ -> failwith s
 
   (* Comparisons *)
 
@@ -3675,90 +3583,6 @@ module Test = struct
   [@deprecated "In a future version, `Test` will be replaced by `Test.Next`, and using `Timelock.create_key` from `Test.Next` is encouraged for a smoother migration."]
   let create_chest_key (c : chest) (n : nat) : chest_key = [%external ("TEST_CREATE_CHEST_KEY", c, n)]
 
-  module Proxy_ticket = struct
-    [@private]
-    let proxy_transfer_contract
-      (type vt whole_p)
-      (mk_param : vt ticket -> whole_p)
-      (p        : (vt * nat) * address)
-      (()       : unit)
-      : operation list * unit =
-      let ((v,amt),dst_addr) = p in
-      let ticket = Option.unopt (Tezos.create_ticket v amt) in
-      let tx_param = mk_param ticket in
-      let c : whole_p contract = Tezos.get_contract_with_error dst_addr "Testing proxy: you provided a wrong address" in
-      let op = Tezos.transaction tx_param 1mutez c
-      in [op], ()
-
-    [@private]
-    let proxy_originate_contract
-      (type vt whole_s vp)
-      (mk_storage : vt ticket -> whole_s)
-      (main       : vp -> whole_s -> operation list * whole_s)
-      (p          : (vt * nat))
-      (_          : address option)
-      : operation list * address option =
-      let (v,amt) = p in
-      let ticket = Option.unopt (Tezos.create_ticket v amt) in
-      let init_storage : whole_s = mk_storage ticket in
-      let op,addr =
-        Tezos.create_contract main (None: key_hash option) 0mutez init_storage
-      in [op], Some addr
-
-    [@private]
-    let originate_from_function
-      (type p s)
-      (f : p -> s -> operation list * s)
-      (s : s)
-      (t : tez)
-      : (p, s) typed_address =
-      let code = compile_contract (Tuple2.uncurry f)
-      in originate_contract code s t
-
-    type 'v proxy_address = (('v * nat) * address , unit) typed_address
-
-    let init_transfer
-      (type vt whole_p)
-      (mk_param: vt ticket -> whole_p)
-      : vt proxy_address =
-      let proxy_transfer
-        : (vt * nat) * address -> unit -> operation list * unit =
-        proxy_transfer_contract mk_param
-      in originate_from_function proxy_transfer () 1tez
-
-    let transfer
-      (type vt)
-      (taddr_proxy : vt proxy_address)
-      (info        : (vt * nat) * address)
-      : test_exec_result =
-      let ticket_info, dst_addr = info in
-      transfer_to_contract
-        (to_contract taddr_proxy)
-        (ticket_info , dst_addr)
-        1mutez
-
-    let originate
-      (type vt whole_s vp)
-      (ticket_info : vt * nat)
-      (mk_storage  : vt ticket -> whole_s)
-      (contract    : vp -> whole_s -> operation list * whole_s)
-      : (vp,whole_s) typed_address =
-      let proxy_origination
-        : vt * nat -> address option -> operation list * address option =
-        proxy_originate_contract mk_storage contract
-      in
-      let taddr =
-        originate_from_function
-          proxy_origination (None : address option) 1tez in
-      let _ = transfer_exn taddr ticket_info 0tez in
-      match get_storage taddr with
-      | Some addr -> (cast_address addr : (vp,whole_s) typed_address)
-      | None -> failwith "internal error"
-
-    let get_storage (type p s s2) (t : (p, s) typed_address) : s2 =
-      let s : michelson_program = [%external ("TEST_GET_STORAGE", t)] in
-      (decompile s : s2)
-  end
   module Next = struct
 
     (** This function creates a random value for a chosen type. *)
@@ -4138,6 +3962,7 @@ module Test = struct
         tests. *)
       let unset_test_print = unset_print_values
     end
+
     module Assert = struct
       (** Cause the testing framework to fail. *)
       let failwith (type a b) (v : a) : b =
@@ -4154,7 +3979,6 @@ module Test = struct
         is false. The failure is handled by LIGO's testing framework and
         not by Michelson's interpreter. *)
       let assert = assert
-
 
       (** display-only-for-cameligo
         The call `some opt` terminates the execution with the
@@ -4220,6 +4044,7 @@ module Test = struct
         let none = assert_none_with_error
       end
     end
+
     module String = struct
       (** String consisting of the character represented by a `nat` in the
         interval `[0, 255]`. *)
@@ -4237,9 +4062,7 @@ module Test = struct
 
       let debugger_json = to_debugger_json
     end
-    module Ticket = struct
-      module Proxy = Proxy_ticket
-    end
+
     module Originate = struct
       type ('p, 's) origination_result =
         { taddr : ('p, 's) typed_address
@@ -4272,6 +4095,99 @@ module Test = struct
         let s = eval s in
         [%external ("TEST_ORIGINATE", c, s, t)]
     end
+
+    module Ticket = struct
+      module Proxy = struct
+        [@private]
+        let proxy_transfer_contract
+              (type vt whole_p)
+              (mk_param : vt ticket -> whole_p)
+              (p        : (vt * nat) * address)
+              (()       : unit)
+            : operation list * unit =
+          let (v, amt), dst_addr = p in
+          let ticket = Option.value_with_error "No ticket."
+                         (Tezos.Next.Ticket.create v amt) in
+          let tx_param = mk_param ticket in
+          let c : whole_p contract =
+            Tezos.get_contract_with_error dst_addr
+              "Testing proxy: you provided a wrong address" in
+          let op = Tezos.Next.Operation.transaction tx_param 1mutez c
+          in [op], ()
+
+        [@private]
+        let proxy_originate_contract
+              (type vt whole_s vp)
+              (mk_storage : vt ticket -> whole_s)
+              (main       : vp -> whole_s -> operation list * whole_s)
+              (p          : vt * nat)
+              (_          : address option)
+            : operation list * address option =
+          let v, amt = p in
+          let ticket = Option.value_with_error "No ticket."
+                         (Tezos.Next.Ticket.create v amt) in
+          let init_storage : whole_s = mk_storage ticket in
+          let op,addr =
+            Tezos.Next.Operation.create_contract
+              main (None: key_hash option) 0mutez init_storage
+          in [op], Some addr
+
+        [@private]
+        let originate_from_function
+              (type p s)
+              (f : p -> s -> operation list * s)
+              (s : s)
+              (t : tez)
+            : (p, s) typed_address =
+          let code = compile_contract (Pair.uncurry f)
+          in Originate.michelson code s t
+
+        type 'v proxy_address = (('v * nat) * address , unit) typed_address
+
+        let init_transfer
+              (type vt whole_p)
+              (mk_param: vt ticket -> whole_p)
+            : vt proxy_address =
+          let proxy_transfer
+              : (vt * nat) * address -> unit -> operation list * unit =
+            proxy_transfer_contract mk_param
+          in originate_from_function proxy_transfer () 1tez
+
+        let transfer
+              (type vt)
+              (taddr_proxy : vt proxy_address)
+              (info        : (vt * nat) * address)
+            : test_exec_result =
+          let ticket_info, dst_addr = info in
+          transfer_to_contract
+            (to_contract taddr_proxy)
+            (ticket_info , dst_addr)
+            1mutez
+
+        let originate
+              (type vt whole_s vp)
+              (ticket_info : vt * nat)
+              (mk_storage  : vt ticket -> whole_s)
+              (contract    : vp -> whole_s -> operation list * whole_s)
+            : (vp,whole_s) typed_address =
+          let proxy_origination
+              : vt * nat -> address option -> operation list * address option =
+            proxy_originate_contract mk_storage contract
+          in
+          let taddr =
+            originate_from_function
+              proxy_origination (None : address option) 1tez in
+          let _ = transfer_exn taddr ticket_info 0tez in
+          match get_storage taddr with
+          | Some addr -> (cast_address addr : (vp,whole_s) typed_address)
+          | None -> failwith "internal error"
+
+        let get_storage (type p s s2) (t : (p, s) typed_address) : s2 =
+          let s : michelson_program = [%external ("TEST_GET_STORAGE", t)] in
+          (decompile s : s2)
+      end
+    end
+
     module Contract = struct
       let transfer = transfer_to_contract
       let transfer_exn = transfer_to_contract_exn

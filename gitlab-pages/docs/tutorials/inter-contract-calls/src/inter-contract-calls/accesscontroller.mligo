@@ -1,5 +1,7 @@
 (* examples/contracts/mligo/AccessController.mligo *)
 
+module Tezos = Tezos.Next
+
 type storage = {senders_whitelist : address set}
 
 [@entry]
@@ -12,5 +14,5 @@ let call (op : unit -> operation) (s : storage) : operation list * storage =
 let iswhitelisted (arg : address * (bool contract)) (s : storage) : operation list * storage =
   let addr, callback_contract = arg in
   let whitelisted = Set.mem addr s.senders_whitelist in
-  let op = Tezos.transaction whitelisted 0mutez callback_contract in
+  let op = Tezos.Operation.transaction whitelisted 0mutez callback_contract in
   [op], s

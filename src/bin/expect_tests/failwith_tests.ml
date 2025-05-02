@@ -7,12 +7,12 @@ let%expect_test _ =
   [%expect {| failed with: "This contract always fails" |}]
 
 let%expect_test _ =
-  run_ligo_good [ "run"; "interpret"; "assert(1=1)"; "--syntax"; "cameligo" ];
+  run_ligo_good [ "run"; "interpret"; "Assert.assert(1=1)"; "--syntax"; "cameligo" ];
   [%expect {|
     unit |}]
 
 let%expect_test _ =
-  run_ligo_good [ "run"; "interpret"; "assert(1=2)"; "--syntax"; "cameligo" ];
+  run_ligo_good [ "run"; "interpret"; "Assert.assert(1=2)"; "--syntax"; "cameligo" ];
   [%expect {|
     failed with: "failed assertion" |}]
 

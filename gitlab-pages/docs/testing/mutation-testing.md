@@ -645,7 +645,7 @@ type result = operation list * storage
 (* Two entrypoints *)
 [@entry]
 let add (delta : int) (store : storage) : result =
-  [@no_mutation] let _ = assert (0 = 0) in
+  [@no_mutation] let _ = Assert.assert (0 = 0) in
   [], store + delta
 
 [@entry] [@no_mutation]
