@@ -1,3 +1,5 @@
+module Tezos = Tezos.Next
+
 type id = int
 
 type id_details = {

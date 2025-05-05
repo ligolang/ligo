@@ -1,3 +1,5 @@
+module Tezos = Tezos.Next
+
 type commit = {
   date        : timestamp;
   salted_hash : bytes;

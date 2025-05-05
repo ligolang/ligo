@@ -1,1 +1,3 @@
+import Tezos = Tezos.Next;
+
 const check = (kh: key_hash) => Tezos.implicit_account(kh);
