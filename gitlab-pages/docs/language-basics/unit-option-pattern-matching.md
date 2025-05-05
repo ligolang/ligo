@@ -33,8 +33,8 @@ different type to `unit`:
 ```cameligo group=a
 let m (x : int) =
   begin
-    assert (x > 0);
-    assert (x < 10);
+    Assert.assert (x > 0);
+    Assert.assert (x < 10);
     x
   end
 ```
@@ -164,9 +164,9 @@ let u : user = Admin 1000n
 let g : user = Guest
 ```
 
-In CameLIGO, a constant constructor is equivalent to the same constructor
-taking an argument of type `unit`, so, for example, `Guest` is the
-same value as `Guest ()`.
+A constant constructor is equivalent to the same constructor taking an
+argument of type `unit`, so, for example, `Guest` is the same value as
+`Guest ()`.
 
 </Syntax>
 
@@ -184,10 +184,10 @@ const u : user = ["Admin" as "Admin", 1000 as nat];
 const g : user = ["Guest" as "Guest"];
 ```
 
-In JsLIGO, a constant constructor is equivalent to the same constructor
-taking an argument of type `unit`, so, for example, `Guest ()` is the
-same value as `Guest (unit)`.
-</Syntax>
+A constant constructor is equivalent to the same constructor taking an
+argument of type `unit`, so, for example, `["Guest" as "Guest"] is the
+same value as `["Guest" as "Guest", ()]` and
+`["Guest" as "Guest", unit]`.  </Syntax>
 
 There are cases where several sum types match a given constructor.
 

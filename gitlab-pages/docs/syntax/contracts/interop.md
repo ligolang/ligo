@@ -570,8 +570,9 @@ This contract can be called by another contract, like this one:
 <Syntax syntax="cameligo">
 
 ```cameligo group=get_entrypoint_opt
-type storage = int
+module Tezos = Tezos.Next
 
+type storage = int
 type parameter = int
 
 type x = Left of int
@@ -583,7 +584,7 @@ let main (p : parameter) (s : storage): operation list * storage =
     | Some c -> c
     | None -> failwith "contract does not match"
   in
-  [Tezos.transaction (Left 2) 2mutez contract], s
+  [Tezos.Operation.transaction (Left 2) 2mutez contract], s
 ```
 
 </Syntax>
@@ -591,8 +592,9 @@ let main (p : parameter) (s : storage): operation list * storage =
 <Syntax syntax="jsligo">
 
 ```jsligo group=get_entrypoint_opt
-type storage = int;
+import Tezos = Tezos.Next;
 
+type storage = int;
 type parameter = int;
 
 type x = | ["Left", int];
@@ -604,7 +606,8 @@ const main = (p: parameter, s: storage): [list<operation>, storage] => {
       "Some": c => c,
       "None": () => failwith ("contract does not match")
     });
-  return [[Tezos.transaction(["Left" as "Left", 2], 2 as mutez, contract)], s];
+  return [[Tezos.Operation.transaction(["Left" as "Left", 2],
+                                       2 as mutez, contract)], s];
 };
 ```
 

@@ -348,7 +348,7 @@ iterated to check that all its elements (integers) are greater than
 
 ```cameligo group=set_iterating
 let assert_all_greater_than_3 (s : int set) : unit =
-  Set.iter (fun i -> assert (i > 3)) s
+  Set.iter (fun i -> Assert.assert (i > 3)) s
 ```
 
 Note: See the predefined
@@ -360,7 +360,7 @@ Note: See the predefined
 
 ```jsligo group=set_iterating
 const assert_all_greater_than_3 =
-  (s: set<int>) : unit => Set.iter(i => assert(i > 3), s);
+  (s: set<int>) : unit => Set.iter(i => Assert.assert(i > 3), s);
 ```
 
 Note: See the predefined
