@@ -4,7 +4,7 @@ let larger_list : int list = 5 :: my_list (* [5;1;2;2] *)
 let head : int option = List.head_opt my_list (* 1 *)
 let tail : int list option = List.tail_opt my_list (* [2;2] *)
 let assert_all_greater_than_three (l : int list) : unit =
-  let predicate = fun (i:int) -> assert (i > 3)
+  let predicate = fun (i:int) -> Assert.assert (i > 3)
   in List.iter predicate l
 let increment (i : int) = i + 1
 

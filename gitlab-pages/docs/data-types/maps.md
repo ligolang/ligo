@@ -430,7 +430,7 @@ integer values are greater than `3`.
 
 ```cameligo group=map_iterating
 let assert_all_greater_than_3 (m : (int, int) map) : unit =
-  Map.iter (fun (_,v) -> assert (v > 3)) m  // The key is discarded
+  Map.iter (fun (_,v) -> Assert.assert (v > 3)) m  // The key is discarded
 ```
 
 Note: See the predefined
@@ -442,7 +442,7 @@ Note: See the predefined
 
 ```jsligo group=map_iterating
 const assert_all_greater_than_3 =
-  (m: map<int,int>) : unit => Map.iter(([_k,v]) => assert(v > 3), m);
+  (m: map<int,int>) : unit => Map.iter(([_k,v]) => Assert.assert(v > 3), m);
 ```
 
 Note: See the predefined

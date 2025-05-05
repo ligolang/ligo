@@ -277,7 +277,7 @@ elements (integers) are strictly greater than `3`.
 
 ```cameligo group=lists
 let assert_all_greater_than_three (l : int list) : unit =
-  let predicate = fun (i:int) -> assert (i > 3)
+  let predicate = fun (i:int) -> Assert.assert (i > 3)
   in List.iter predicate l
 ```
 
@@ -513,7 +513,7 @@ it.
 
 <Syntax syntax="cameligo">
 
-In CameLIGO, we can use the predefined functions `Set.add` and
+We can use the predefined functions `Set.add` and
 `Set.remove`. We update a given set by creating another one, with or
 without some elements.
 
@@ -526,9 +526,9 @@ let smaller_set : int set = Set.remove 3 my_set
 
 <Syntax syntax="jsligo">
 
-In JsLIGO, we can use the predefined functions `Set.add` and
-`Set.remove`. We update a given set by creating another one, with or
-without some elements.
+We can use the predefined functions `Set.add` and `Set.remove`. We
+update a given set by creating another one, with or without some
+elements.
 
 ```jsligo group=sets
 const larger_set: set<int> = Set.add(4, my_set);
@@ -564,7 +564,7 @@ iterated to check that all its elements (integers) are greater than
 
 ```cameligo group=sets
 let assert_all_greater_than_three (s : int set) : unit =
-  let predicate = fun (i : int) -> assert (i > 3)
+  let predicate = fun (i : int) -> Assert.assert (i > 3)
   in Set.iter predicate s
 ```
 
