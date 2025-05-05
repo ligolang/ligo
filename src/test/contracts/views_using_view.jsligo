@@ -1,5 +1,6 @@
-type storage = int
+import Tezos = Tezos.Next;
 
+type storage = int
 type parameter = | ["Default"]
 
 const x = 0

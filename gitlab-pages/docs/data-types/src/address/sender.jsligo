@@ -1,1 +1,3 @@
+import Tezos = Tezos.Next;
+
 const sender: address = Tezos.get_sender();

@@ -279,6 +279,8 @@ It checks the sender of the transaction in the `reset` entrypoint and fails if t
 <Syntax syntax="cameligo">
 
 ```cameligo group=test-accounts
+module Tezos = Tezos.Next
+
 module Counter = struct
   type storage = int * address
   type return_type = operation list * storage
@@ -305,6 +307,8 @@ end
 <Syntax syntax="jsligo">
 
 ```jsligo group=test-accounts
+import Tezos = Tezos.Next;
+
 namespace Counter {
   type storage = [int, address];
   type return_type = [list<operation>, storage];

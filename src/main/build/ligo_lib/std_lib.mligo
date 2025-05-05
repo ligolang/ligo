@@ -281,21 +281,6 @@ let ediv (type a b) (left: a) (right: b) : (a, b) external_ediv =
 (** Tezos-specific functions *)
 module Tezos = struct
 
-  (* Addresses *)
-
-  (** display-only-for-cameligo
-    The call `Tezos.get_sender ()` is the address of the contract (that
-    is, a smart contract or an implicit account) that initiated the
-    current internal transaction. Note that, if transactions have been
-    chained, that address could be different from `Tezos.get_source ()`. *)
-  (** display-only-for-jsligo
-    The call `Tezos.get_sender()` is the address of the contract (that
-    is, a smart contract or an implicit account) that initiated the
-    current internal transaction. Note that, if transactions have been
-    chained, that address could be different from `Tezos.get_source()`. *)
-  let get_sender () : address =
-    [%michelson ({| {SENDER} |} : address)]
-
   (** display-only-for-cameligo
     The call `Tezos.get_source ()` is the address of the implicit account
     that initiated the current transaction. If transactions have been
@@ -480,87 +465,6 @@ module Tezos = struct
     match get_entrypoint_opt entrypoint addr with
     | None -> failwith "bad address for get_entrypoint"
     | Some contract_addr -> contract_addr
-
-(*
-  (** display-only-for-cameligo
-    The call `Tezos.create_contract e d a s` returns a contract creation
-    operation (origination) for the entrypoint `e` (as a function)
-    with optional delegate `d`, initial amount `a` and initial
-    storage `s`, together with the address of the created
-    contract. Note that the created contract cannot be called
-    immediately afterwards (that is, `Tezos.get_contract_opt` on that
-    address would return `None`), as the origination must be
-    performed successfully first, for example by calling a proxy
-    contract or itself. *)
-  (** display-only-for-jsligo
-    The call `Tezos.create_contract(e,d,a,s)` returns a contract creation
-    operation (origination) for the entrypoint `e` (as a function)
-    with optional delegate `d`, initial amount `a` and initial
-    storage `s`, together with the address of the created
-    contract. Note that the created contract cannot be called
-    immediately afterwards (that is, `Tezos.get_contract_opt` on that
-    address would return `None()`), as the origination must be
-    performed successfully first, for example by calling a proxy
-    contract or itself. *)
-  [@deprecated "In a future version, `Tezos` will be replaced by `Tezos.Next`, and using `Operation.create_contract` from `Tezos.Next` is encouraged for a smoother migration."]
-  [@inline] [@thunk]
-  let create_contract
-    (type param storage)
-    (entrypoint: (param, storage) entrypoint)
-    (delegate: key_hash option)
-    (amount: tez)
-    (storage: storage)
-    : operation * address =
-    [%external ("CREATE_CONTRACT",
-                Pair.uncurry entrypoint, delegate, amount, storage)]
-
-  (** display-only-for-cameligo
-    The call `Tezos.set_delegate d` evaluates in an operation that sets
-    the delegate of the current smart contract to be `d`, where `d` is
-    an optional key hash. If `None`, the delegation is withdrawn. If
-    the contract has no delegation, then no change occurs. If `d` is
-    `Some kh`, where `kh` is the key hash of a registered delegate
-    that is not the current delegate of the contract, then this
-    operation sets the delegate of the contract to this registered
-    delegate. A failure occurs if `kh` is the current delegate of the
-    contract or if `kh` is not a registered delegate. However, the
-    instruction in itself does not fail; it produces an operation that
-    will fail when applied. *)
-  (** display-only-for-jsligo
-    The call `Tezos.set_delegate(d)` evaluates in an operation that sets
-    the delegate of the current smart contract to be `d`, where `d` is
-    an optional key hash. If `None()`, the delegation is withdrawn. If
-    the contract has no delegation, then no change occurs. If `d` is
-    `Some(kh)`, where `kh` is the key hash of a registered delegate
-    that is not the current delegate of the contract, then this
-    operation sets the delegate of the contract to this registered
-    delegate. A failure occurs if `kh` is the current delegate of the
-    contract or if `kh` is not a registered delegate. However, the
-    instruction in itself does not fail; it produces an operation that
-    will fail when applied. *)
-  [@deprecated "In a future version, `Tezos` will be replaced by `Tezos.Next`, and using `Operation.set_delegate` from `Tezos.Next` is encouraged for a smoother migration."]
-  let set_delegate (delegate: key_hash option) : operation =
-    [%michelson ({| {SET_DELEGATE} |} delegate : operation)]
-
-  (** display-only-for-cameligo
-    The call `Tezos.transaction param amount contract_addr` evaluates in
-    an operation that will send the amount `amount` in mutez to the
-    contract at the valid address `contract_addr`, with parameter
-    `param`. If the contract is an implicit account, the parameter
-    must be `unit`. *)
-  (** display-only-for-jsligo
-    The call `Tezos.transaction(param, amount, contract_addr)` evaluates in
-    an operation that will send the amount `amount` in mutez to the
-    contract at the valid address `contract_addr`, with parameter
-    `param`. If the contract is an implicit account, the parameter
-    must be `unit`. *)
-  [@deprecated "In a future version, `Tezos` will be replaced by `Tezos.Next`, and using `Operation.transaction` from `Tezos.Next` is encouraged for a smoother migration."]
-  let transaction
-    (type param) (param: param) (amount: tez) (contract_addr: param contract)
-    : operation =
-    [%michelson
-      ({| {TRANSFER_TOKENS} |} param amount contract_addr : operation)]
- *)
 
   (** display-only-for-cameligo
     The call `Tezos.call_view v p a` calls the view `v` with parameter

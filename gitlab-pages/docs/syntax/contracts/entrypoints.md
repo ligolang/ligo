@@ -199,6 +199,8 @@ If you don't want an entrypoint to accept tez, check how much tez was included w
 <Syntax syntax="cameligo">
 
 ```cameligo group=c
+module Tezos = Tezos.Next
+
 type parameter = unit
 type storage = unit
 type result = operation list * storage
@@ -215,6 +217,8 @@ let no_tokens (action : parameter) (storage : storage) : result =
 <Syntax syntax="jsligo">
 
 ```jsligo group=c
+import Tezos = Tezos.Next;
+
 type parameter = unit;
 type storage = unit;
 type result = [list<operation>, storage];

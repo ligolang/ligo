@@ -1,3 +1,5 @@
+module Tezos = Tezos.Next
+
 type store =
   {
    a : int;

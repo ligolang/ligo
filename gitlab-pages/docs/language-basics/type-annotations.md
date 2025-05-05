@@ -14,6 +14,8 @@ annotate an expression with its desired type. Here is an example:
 <Syntax syntax="cameligo">
 
 ```cameligo group=d
+module Tezos = Tezos.Next
+
 type parameter = Back | Claim | Withdraw
 
 type storage = {
@@ -40,6 +42,8 @@ let back (param : unit) (store : storage) : operation list * storage = (* Annota
 <Syntax syntax="jsligo">
 
 ```jsligo group=d
+import Tezos = Tezos.Next;
+
 type parameter =
   ["Back"]
 | ["Claim"]

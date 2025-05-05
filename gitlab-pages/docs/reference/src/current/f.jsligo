@@ -1,3 +1,5 @@
+import Tezos = Tezos.Next;
+
 const check = (p : key_hash) => {
   const c = Tezos.implicit_account(p);
   return Tezos.address(c);

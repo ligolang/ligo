@@ -1190,7 +1190,7 @@ Variable "create_contract" not found. |}];
           ^^^^^^^^^^
      16 |   ([toto.0], store)
 
-    Not all free variables could be inlined in Tezos.create_contract usage: gen#476. |}];
+    Not all free variables could be inlined in Tezos.create_contract usage: gen#475. |}];
   run_ligo_bad [ "compile"; "contract"; bad_contract "create_contract_no_inline.mligo" ];
   [%expect
     {|
@@ -1253,7 +1253,7 @@ Variable "create_contract" not found. |}];
           ^^^^^^^
      17 |   let toto : operation list = [op] in
 
-    Not all free variables could be inlined in Tezos.create_contract usage: foo#490. |}];
+    Not all free variables could be inlined in Tezos.create_contract usage: foo#489. |}];
   run_ligo_good [ "compile"; "contract"; contract "create_contract.mligo" ];
   [%expect
     {|
@@ -2428,19 +2428,19 @@ let%expect_test _ =
   run_ligo_bad [ "compile"; "contract"; bad_contract "call_view_not_litstr.mligo" ];
   [%expect
     {|
-    File "../../test/contracts/negative/call_view_not_litstr.mligo", line 4, character 10 to line 8, character 21:
-      3 |   let u =
-      4 |     match (Tezos.call_view
+    File "../../test/contracts/negative/call_view_not_litstr.mligo", line 6, character 10 to line 10, character 21:
+      5 |   let u =
+      6 |     match (Tezos.call_view
                     ^^^^^^^^^^^^^^^^
-      5 |          s
+      7 |          s
           ^^^^^^^^^^
-      6 |          (Tezos.get_sender ())
+      8 |          (Tezos.get_sender ())
           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-      7 |          ("tz1fakefakefakefakefakefakefakcphLA5" : address)
+      9 |          ("tz1fakefakefakefakefakefakefakcphLA5" : address)
           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-      8 |        : unit option)
+     10 |        : unit option)
           ^^^^^^^^^^^^^^^^^^^^^
-      9 |     with
+     11 |     with
 
     Invalid argument.
     View name must be a string literal. |}]
