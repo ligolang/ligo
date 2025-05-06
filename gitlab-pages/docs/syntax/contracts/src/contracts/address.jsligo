@@ -1,1 +1,2 @@
+import Tezos = Tezos.Next;
 const current_addr: address = Tezos.get_self_address();

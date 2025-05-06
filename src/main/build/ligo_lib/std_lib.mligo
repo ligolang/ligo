@@ -280,28 +280,6 @@ let ediv (type a b) (left: a) (right: b) : (a, b) external_ediv =
 
 (** Tezos-specific functions *)
 module Tezos = struct
-
-  (** display-only-for-cameligo
-    The call `Tezos.get_self_address ()` is the address of the smart
-    contract actually executing the call, as a value of type
-    `address`. That contract can be different from the one containing
-    the call if the call is in a lambda transmitted to another smart
-    contract. Therefore, it is assumed that, in general, the type of
-    the executing contract is statically unknown, so the return type
-    of `Tezos.get_self_address` is not `'a contract`, but `address`. (See
-    `Tezos.self`.) *)
-  (** display-only-for-jsligo
-    The call `Tezos.get_self_address()` is the address of the smart
-    contract actually executing the call, as a value of type
-    `address`. That contract can be different from the one containing
-    the call if the call is in a lambda transmitted to another smart
-    contract. Therefore, it is assumed that, in general, the type of
-    the executing contract is statically unknown, so the return type
-    of `Tezos.get_self_address` is not `'a contract`, but `address`. (See
-    `Tezos.self`.) *)
-  let get_self_address () : address =
-    [%michelson ({| {SELF_ADDRESS} |} : address)]
-
   (** display-only-for-cameligo
     The call `Tezos.address contract` casts the address of the smart
     contract `contract` into the more general value of type
