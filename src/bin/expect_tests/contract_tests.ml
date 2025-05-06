@@ -1190,57 +1190,12 @@ Variable "create_contract" not found. |}];
           ^^^^^^^^^^
      16 |   ([toto.0], store)
 
-    Not all free variables could be inlined in Tezos.create_contract usage: gen#475. |}];
+    Not all free variables could be inlined in Tezos.create_contract usage: gen#474. |}];
   run_ligo_bad [ "compile"; "contract"; bad_contract "create_contract_no_inline.mligo" ];
   [%expect
     {|
-    File "../../test/contracts/negative/create_contract_no_inline.mligo", line 7, characters 30-31:
-      6 |
-      7 | let dummy_contract (p : nat) (s : int) : return = (([] : operation list), foo)
-                                        ^
-      8 |
-    :
-    Warning: unused variable "s".
-    Hint: replace it by "_s" to prevent this warning.
-
-    File "../../test/contracts/negative/create_contract_no_inline.mligo", line 7, characters 20-21:
-      6 |
-      7 | let dummy_contract (p : nat) (s : int) : return = (([] : operation list), foo)
-                              ^
-      8 |
-    :
-    Warning: unused variable "p".
-    Hint: replace it by "_p" to prevent this warning.
-
-    File "../../test/contracts/negative/create_contract_no_inline.mligo", line 11, characters 11-15:
-     10 | let main (action : int) (store : int) : return =
-     11 |   let (op, addr) =
-                     ^^^^
-     12 |     Tezos.Operation.create_contract
-    :
-    Warning: unused variable "addr".
-    Hint: replace it by "_addr" to prevent this warning.
-
-    File "../../test/contracts/negative/create_contract_no_inline.mligo", line 10, characters 25-30:
-      9 | [@entry]
-     10 | let main (action : int) (store : int) : return =
-                                   ^^^^^
-     11 |   let (op, addr) =
-    :
-    Warning: unused variable "store".
-    Hint: replace it by "_store" to prevent this warning.
-
-    File "../../test/contracts/negative/create_contract_no_inline.mligo", line 10, characters 10-16:
-      9 | [@entry]
-     10 | let main (action : int) (store : int) : return =
-                    ^^^^^^
-     11 |   let (op, addr) =
-    :
-    Warning: unused variable "action".
-    Hint: replace it by "_action" to prevent this warning.
-
     File "../../test/contracts/negative/create_contract_no_inline.mligo", line 12, character 4 to line 16, character 7:
-     11 |   let (op, addr) =
+     11 |   let op, _addr =
      12 |     Tezos.Operation.create_contract
               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
      13 |       dummy_contract
@@ -1249,11 +1204,11 @@ Variable "create_contract" not found. |}];
           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
      15 |       300000000mutez
           ^^^^^^^^^^^^^^^^^^^^
-     16 |       1 in
+     16 |       1
           ^^^^^^^
-     17 |   let toto : operation list = [op] in
+     17 |   in [op], foo
 
-    Not all free variables could be inlined in Tezos.create_contract usage: foo#489. |}];
+    Not all free variables could be inlined in Tezos.create_contract usage: foo#487. |}];
   run_ligo_good [ "compile"; "contract"; contract "create_contract.mligo" ];
   [%expect
     {|
