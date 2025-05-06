@@ -137,6 +137,7 @@ use `"%default"`.
 <Syntax syntax="cameligo">
 
 ```cameligo group=self
+module Tezos = Tezos.Next
 let check () = Tezos.self("%default")
 ```
 
@@ -145,6 +146,7 @@ let check () = Tezos.self("%default")
 <Syntax syntax="jsligo">
 
 ```jsligo group=self
+import Tezos = Tezos.Next;
 const check = () => Tezos.self("%default");
 ```
 

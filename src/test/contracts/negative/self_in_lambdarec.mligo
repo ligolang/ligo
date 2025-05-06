@@ -1,3 +1,5 @@
+module Tezos = Tezos.Next
+
 let rec foo (n : int) : address =
   if (n <= 1)
   then Tezos.address (Tezos.self "%default" : int contract)
@@ -10,4 +12,4 @@ let rec foo (n : int) : address =
 let main (p : int) (_ : address) : (operation list * address) =
   let _dummy = foo p in
   (* force not to inline foo *)
-  (([] : operation list), foo p)
+  [], foo p

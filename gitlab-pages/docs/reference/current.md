@@ -272,7 +272,8 @@ you are not using entrypoints: use "%default"
 
 <Syntax syntax="cameligo">
 
-```cameligo
+```cameligo group=h
+module Tezos = Tezos.Next
 let check (p : unit) = Tezos.self("%default")
 ```
 
@@ -281,6 +282,7 @@ let check (p : unit) = Tezos.self("%default")
 <Syntax syntax="jsligo">
 
 ```jsligo group=h
+import Tezos = Tezos.Next;
 const check = (p: unit) => Tezos.self("%default");
 ```
 
