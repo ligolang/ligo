@@ -1190,7 +1190,7 @@ Variable "create_contract" not found. |}];
           ^^^^^^^^^^
      16 |   ([toto.0], store)
 
-    Not all free variables could be inlined in Tezos.create_contract usage: gen#474. |}];
+    Not all free variables could be inlined in Tezos.create_contract usage: gen#473. |}];
   run_ligo_bad [ "compile"; "contract"; bad_contract "create_contract_no_inline.mligo" ];
   [%expect
     {|
@@ -1208,7 +1208,7 @@ Variable "create_contract" not found. |}];
           ^^^^^^^
      17 |   in [op], foo
 
-    Not all free variables could be inlined in Tezos.create_contract usage: foo#487. |}];
+    Not all free variables could be inlined in Tezos.create_contract usage: foo#486. |}];
   run_ligo_good [ "compile"; "contract"; contract "create_contract.mligo" ];
   [%expect
     {|

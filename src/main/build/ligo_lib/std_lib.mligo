@@ -264,7 +264,7 @@ let nat (bytes: bytes) : nat =
     on values of type `tez`. When `z1` and `z2` are of type `tez` and
     `z2` is nonzero, we get a `nat` quotient and a `tez`
     remainder. When `z1` is a `tez` and `z2` is a nonzero `nat`, the
-    calls yields a quotient and a remainder both of type `tez`. *)
+    calls yields a quotient and a remainder, both of type `tez`. *)
 (** display-only-for-jsligo
     The call `ediv(z1, z2)`, where `z1` and `z2` are either of type
     `int` or `nat`, returns `None()` if `z2` is zero; otherwise, it
@@ -274,41 +274,12 @@ let nat (bytes: bytes) : nat =
     on values of type `tez`. When `z1` and `z2` are of type `tez` and
     `z2` is nonzero, we get a `nat` quotient and a `tez`
     remainder. When `z1` is a `tez` and `z2` is a nonzero `nat`, the
-    calls yields a quotient and a remainder both of type `tez`. *)
+    calls yields a quotient and a remainder, both of type `tez`. *)
 let ediv (type a b) (left: a) (right: b) : (a, b) external_ediv =
   [%michelson ({| {EDIV} |} left right : (a, b) external_ediv)]
 
 (** Tezos-specific functions *)
 module Tezos = struct
-
-  (** display-only-for-cameligo
-    The call `Tezos.self entrypoint` is the address of the current smart
-    contract, that is, the smart contract containing the call. For the
-    address of the smart contract actually *executing* the call,
-    because it is embedded in a lambda sent to another smart contract,
-    use `Tezos.get_self_address` instead. The string `entrypoint` is the
-    name of a valid entrypoint such that `entrypoint` is not
-    `"%default"`, or the empty string denoting the `"%default"`
-    entrypoint (which is the root of the smart contract parameter if
-    no `"%default"` entrypoint is explicitly defined). If the contract
-    does not have the specified entrypoint, the call results in an
-    type checking error. *)
-  (** display-only-for-jsligo
-    The call `Tezos.self(entrypoint)` is the address of the current smart
-    contract, that is, the smart contract containing the call. For the
-    address of the smart contract actually *executing* the call,
-    because it is embedded in a lambda sent to another smart contract,
-    use `Tezos.get_self_address` instead. The string `entrypoint` is the
-    name of a valid entrypoint such that `entrypoint` is not
-    `"%default"`, or the empty string denoting the `"%default"`
-    entrypoint (which is the root of the smart contract parameter if
-    no `"%default"` entrypoint is explicitly defined). If the contract
-    does not have the specified entrypoint, the call results in an
-    type checking error. *)
-  [@inline] [@thunk]
-  let self (type a) (entrypoint: string) : a contract =
-    let _ : a option = [%external ("CHECK_SELF", entrypoint)] in
-    [%michelson ({| {SELF (annot $0)} |} entrypoint : a contract)]
 
   (** display-only-for-cameligo
     The call `Tezos.get_self_address ()` is the address of the smart
