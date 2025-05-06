@@ -78,6 +78,7 @@ If there is more than one transaction in the chain, that address is different fr
 <Syntax syntax="cameligo">
 
 ```cameligo group=source
+module Tezos = Tezos.Next
 let source : address = Tezos.get_source ()
 ```
 
@@ -86,6 +87,7 @@ let source : address = Tezos.get_source ()
 <Syntax syntax="jsligo">
 
 ```jsligo group=source
+import Tezos = Tezos.Next;
 const source: address = Tezos.get_source();
 ```
 

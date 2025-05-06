@@ -282,17 +282,6 @@ let ediv (type a b) (left: a) (right: b) : (a, b) external_ediv =
 module Tezos = struct
 
   (** display-only-for-cameligo
-    The call `Tezos.get_source ()` is the address of the implicit account
-    that initiated the current transaction. If transactions have been
-    chained, that address is different from `Tezos.get_sender ()`. *)
-  (** display-only-for-jsligo
-    The call `Tezos.get_source()` is the address of the implicit account
-    that initiated the current transaction. If transactions have been
-    chained, that address is different from `Tezos.get_sender()`. *)
-  let get_source () : address =
-    [%michelson ({| {SOURCE} |} : address)]
-
-  (** display-only-for-cameligo
     The call `Tezos.self entrypoint` is the address of the current smart
     contract, that is, the smart contract containing the call. For the
     address of the smart contract actually *executing* the call,
