@@ -1,3 +1,6 @@
+import Tezos = Tezos.Next;
+import Test = Test.Next;
+
 namespace C {
   export type storage = unit
   type result = [list<operation>, storage];
@@ -9,10 +12,11 @@ namespace C {
 }
 
 const test = (() => {
-  let orig = Test.Next.Originate.contract(contract_of(C.C), [], 0 as tez);
-  Test.Next.IO.log(orig.code);
-  let c = Test.Next.Typed_address.to_contract(orig.taddr);
+  let orig = Test.Originate.contract(contract_of(C.C), [], 0 as tez);
+  Test.IO.log(orig.code);
+  let c = Test.Typed_address.to_contract(orig.taddr);
 
-  Test.Next.IO.log(Tezos.call_view("bar", unit,
-                                   Tezos.address(c)) as option<C.storage>);
+  Test.IO.log(Tezos.call_view("bar",
+                              unit,
+                              Tezos.address(c)) as option<C.storage>);
 })();
