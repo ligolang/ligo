@@ -281,17 +281,6 @@ let ediv (type a b) (left: a) (right: b) : (a, b) external_ediv =
 (** Tezos-specific functions *)
 module Tezos = struct
   (** display-only-for-cameligo
-    The call `Tezos.address contract` casts the address of the smart
-    contract `contract` into the more general value of type
-    `address`. *)
-  (** display-only-for-jsligo
-    The call `Tezos.address(contract)` casts the address of the smart
-    contract `contract` into the more general value of type
-    `address`. *)
-  let address (type a) (contract_addr: a contract) : address =
-    [%michelson ({| {ADDRESS} |} contract_addr : address)]
-
-  (** display-only-for-cameligo
     The call `Tezos.implicit_account kh` casts the public key hash `kh`
     into the address of its implicit account. Note that addresses of
     implicit accounts always have the type `unit contract`. *)
@@ -2928,7 +2917,7 @@ module Test = struct
     annotated with the expected payload type. *)
   [@deprecated "In a future version, `Test` will be replaced by `Test.Next`, and using `State.last_events` from `Test.Next` is encouraged for a smoother migration."]
   let get_last_events_from (type a p s) (addr : (p,s) typed_address) (rtag: string) : a list =
-    let addr = Tezos.address (to_contract addr) in
+    let addr = Tezos.Next.address (to_contract addr) in
     let event_map : (address * a) list = [%external ("TEST_LAST_EVENTS", rtag)] in
     let f ((acc, (c_addr,event)) : a list * (address * a)) : a list =
       if addr = c_addr then event::acc
@@ -3595,7 +3584,7 @@ module Test = struct
         (addr : (p,s) typed_address)
         (rtag: string)
       : a list =
-        let addr = Tezos.address (to_contract addr) in
+        let addr = Tezos.Next.address (to_contract addr) in
         let event_map : (address * a) list = [%external ("TEST_LAST_EVENTS", rtag)] in
         let f ((acc, (c_addr,event)) : a list * (address * a)) : a list =
           if addr = c_addr then event::acc
