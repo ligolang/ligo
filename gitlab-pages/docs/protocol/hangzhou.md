@@ -208,7 +208,7 @@ type storage = string
 let main (((),s): unit * storage) : operation list * storage = [] , s
 
 (* view 'view1', simply returns the storage *)
-[@view] let view1 ((),s: unit * storage) : storage = s
+[@view] let view1 ((), s : unit * storage) : storage = s
 
 (* view 'v2', returns true if the storage has a given length *)
 [@view] let v2 (expected_length,s: nat * storage) : bool = (String.length s = expected_length)
@@ -256,6 +256,7 @@ view or the parameter type do not match, `Tezos.call_view` will return `None`.
 <Syntax syntax="cameligo">
 
 ```cameligo group=views
+module Tezos = Tezos.Next
 let view_call ((name,parameter,addr): string * int * address) : int option = Tezos.call_view "sto_plus_n" 1 addr
 ```
 
@@ -263,6 +264,7 @@ let view_call ((name,parameter,addr): string * int * address) : int option = Tez
 <Syntax syntax="jsligo">
 
 ```jsligo group=views
+import Tezos = Tezos.Next;
 const view_call = ([name,parameter,addr]: [string , int , address]) : option<int> => Tezos.call_view ("sto_plus_n", 1, addr)
 ```
 

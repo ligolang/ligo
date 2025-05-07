@@ -9,6 +9,8 @@ module ContractWithView = struct
     param * storage
 
 end
+module Tezos = Tezos.Next
+
 module CallView = struct
   type storage = address * int
   type return_type = operation list * storage

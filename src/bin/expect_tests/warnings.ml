@@ -46,11 +46,11 @@ let%expect_test _ =
     ];
   [%expect
     {|
-  File "../../test/contracts/warning_duplicate.mligo", line 2, characters 6-7:
-    1 | module Foo = struct
-    2 |   let x : nat ticket = Option.unopt (Tezos.create_ticket 42n 42n)
+  File "../../test/contracts/warning_duplicate.mligo", line 4, characters 6-7:
+    3 | module Foo = struct
+    4 |   let x : nat ticket = Option.unopt (Tezos.Ticket.create 42n 42n)
               ^
-    3 | end
+    5 | end
   :
   Warning: variable cannot be used more than once.
 
@@ -69,10 +69,11 @@ let%expect_test _ =
     ];
   [%expect
     {|
-  File "../../test/contracts/warning_duplicate2.mligo", line 1, characters 4-5:
-    1 | let x = Tezos.create_ticket 42n 42n
+  File "../../test/contracts/warning_duplicate2.mligo", line 2, characters 4-5:
+    1 | module Tezos = Tezos.Next
+    2 | let x = Tezos.Ticket.create 42n 42n
             ^
-    2 | let x = (x, x)
+    3 | let x = x, x
   :
   Warning: variable cannot be used more than once.
 
