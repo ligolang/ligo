@@ -280,118 +280,6 @@ let ediv (type a b) (left: a) (right: b) : (a, b) external_ediv =
 
 (** Tezos-specific functions *)
 module Tezos = struct
-  (** display-only-for-cameligo
-    The call `Tezos.implicit_account kh` casts the public key hash `kh`
-    into the address of its implicit account. Note that addresses of
-    implicit accounts always have the type `unit contract`. *)
-  (** display-only-for-jsligo
-    The call `Tezos.implicit_account(kh)` casts the public key hash `kh`
-    into the address of its implicit account. Note that addresses of
-    implicit accounts always have the type `contract<unit>`. *)
-  let implicit_account (kh: key_hash) : unit contract =
-    [%michelson ({| {IMPLICIT_ACCOUNT} |} kh : unit contract)]
-
-  (* Contracts and operations *)
-
-  (** display-only-for-cameligo
-    The call `Tezos.get_contract_opt addr` casts the address `addr` into
-    that of a contract address, if such contract exists. The value of
-    the call is `None` if no such contract exists, otherwise `Some
-    contract`, where `contract` is the contract's address. Note: The
-    address of an implicit account has type `unit contract`. *)
-  (** display-only-for-jsligo
-    The call `Tezos.get_contract_opt(addr)` casts the address `addr` into
-    that of a contract address, if such contract exists. The value of
-    the call is `None()` if no such contract exists, otherwise `Some
-    contract`, where `contract` is the contract's address. Note: The
-    address of an implicit account has type `unit contract`. *)
-  [@inline] [@thunk]
-  let get_contract_opt (type param) (addr: address) : param contract option =
-    [%michelson ({| {CONTRACT (typeopt $0)} |} (None : param option) addr
-                 : param contract option)]
-
-  (** display-only-for-cameligo
-    The call `Tezos.get_contract_with_error addr error` casts the address
-    `addr` into that of a contract address, if such contract
-    exists. If not, the execution fails with the error message
-    `error`. *)
-  (** display-only-for-jsligo
-    The call `Tezos.get_contract_with_error(addr, error)` casts the address
-    `addr` into that of a contract address, if such contract
-    exists. If not, the execution fails with the error message
-    `error`. *)
-  let get_contract_with_error (type param) (addr: address) (error: string)
-    : param contract =
-    match get_contract_opt addr with
-    | None -> failwith error
-    | Some contract_addr -> contract_addr
-
-  (** display-only-for-cameligo
-    The call `Tezos.get_contract addr` casts the address `addr` into that
-    of a smart contract address, if such contract exists. The call
-    fails with the message `"bad address for get_contract"` if no
-    such smart contract exists. Note: The address of an implicit
-    account has type `unit contract`. *)
-  (** display-only-for-jsligo
-    The call `Tezos.get_contract(addr)` casts the address `addr` into that
-    of a smart contract address, if such contract exists. The call
-    fails with the message `"bad address for get_contract"` if no
-    such smart contract exists. Note: The address of an implicit
-    account has type `contract<unit>`. *)
-  [@inline] [@thunk]
-  let get_contract (type param) (addr: address) : param contract =
-    get_contract_with_error addr "bad address for get_contract"
-
-  (** display-only-for-cameligo
-    The call `Tezos.get_entrypoint_opt entrypoint addr` has the same
-    behaviour as `Tezos.get_contract_opt addr`, with the additional
-    constraint that the contract must have an entrypoint named
-    `entrypoint`. In other words, `Tezos.get_entrypoint_opt entrypoint addr`
-    casts the address `addr` into that of a smart contract
-    address, if such contract exists and has an entrypoint named
-    `entrypoint`. The value of the call is `None` if no such smart
-    contract exists, otherwise `Some contract`, where `contract` is
-    the smart contract's address. Note: The address of an implicit
-    account has type `unit contract`. *)
-  (** display-only-for-jsligo
-    The call `Tezos.get_entrypoint_opt(entrypoint, addr)` has the same
-    behaviour as `Tezos.get_contract_opt(addr)`, with the additional
-    constraint that the contract must have an entrypoint named
-    `entrypoint`. In other words, `Tezos.get_entrypoint_opt(entrypoint, addr)`
-    casts the address `addr` into that of a smart contract
-    address, if such contract exists and has an entrypoint named
-    `entrypoint`. The value of the call is `None()` if no such smart
-    contract exists, otherwise `Some(contract)`, where `contract` is
-    the smart contract's address. Note: The address of an implicit
-    account has type `contract<unit>`. *)
-  [@inline] [@thunk]
-  let get_entrypoint_opt (type param) (entrypoint: string) (addr: address)
-    : param contract option =
-    let () = [%external ("CHECK_ENTRYPOINT", entrypoint)] in
-    [%michelson ({| {CONTRACT (annot $0) (typeopt $1)} |}
-                 entrypoint (None : param option) addr
-                 : param contract option)]
-
-  (** display-only-for-cameligo
-    The call `Tezos.get_entrypoint entrypoint addr` casts the address
-    `addr` into that of a smart contract address, if such contract
-    exists and has an entrypoint named `entrypoint`. If no such smart
-    contract exists, the execution fails with the error message
-    `"bad address for get_entrypoint"`. Note: The address of an implicit
-    account has type `unit contract`. *)
-  (** display-only-for-jsligo
-    The call `Tezos.get_entrypoint(entrypoint, addr)` casts the address
-    `addr` into that of a smart contract address, if such contract
-    exists and has an entrypoint named `entrypoint`. If no such smart
-    contract exists, the execution fails with the error message
-    `"bad address for get_entrypoint"`. Note: The address of an implicit
-    account has type `contract<unit>`. *)
-  [@inline] [@thunk]
-  let get_entrypoint (type param) (entrypoint: string) (addr: address)
-    : param contract =
-    match get_entrypoint_opt entrypoint addr with
-    | None -> failwith "bad address for get_entrypoint"
-    | Some contract_addr -> contract_addr
 
   (** display-only-for-cameligo
     The call `Tezos.call_view v p a` calls the view `v` with parameter
@@ -3905,16 +3793,14 @@ module Test = struct
         form, initial storage and initial balance. *)
       let contract (type p s) (c : (p, s) module_contract) (s : s) (t : tez) : (p, s) origination_result =
         let { addr; code ; size } = originate c s t in
-        let taddr = addr in
-        { taddr ; code ; size }
+        { taddr = addr; code ; size }
 
       (** Originate a contract with a path to the contract file, an
         entrypoint, and a list of views, together with an initial storage
         and an initial balance. *)
-      let from_file (type p s) (fn : string) (s : s)  (t : tez) : (p, s) origination_result =
+      let from_file (type p s) (fn : string) (s : s) (t : tez) : (p, s) origination_result =
         let { addr ; code ; size } = originate_from_file fn s t in
-        let taddr = addr in
-        { taddr ; code ; size }
+        { taddr = addr; code ; size }
 
       (** Originate a contract with initial storage and initial
         balance. *)
@@ -3941,7 +3827,7 @@ module Test = struct
                          (Tezos.Next.Ticket.create v amt) in
           let tx_param = mk_param ticket in
           let c : whole_p contract =
-            Tezos.get_contract_with_error dst_addr
+            Tezos.Next.get_contract_with_error dst_addr
               "Testing proxy: you provided a wrong address" in
           let op = Tezos.Next.Operation.transaction tx_param 1mutez c
           in [op], ()
