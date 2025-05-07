@@ -12,4 +12,5 @@ const v2 = ([expected_length,s] : [nat , storage]) : bool => (String.length (s) 
 /* view 'view3' returns a constant int */
 // @view
 const view3 = ([_ , _s]: [unit , storage]) : int => 42;
+import Tezos = Tezos.Next;
 const view_call = ([name,parameter,addr]: [string , int , address]) : option<int> => Tezos.call_view ("sto_plus_n", 1, addr)

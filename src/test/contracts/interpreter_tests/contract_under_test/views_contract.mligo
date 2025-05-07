@@ -1,3 +1,5 @@
+module Tezos = Tezos.Next
+
 type 'a return = operation list * 'a
 
 module Main_with_view = struct
@@ -5,8 +7,7 @@ module Main_with_view = struct
   let sto_plus_n (n : int) (s : int) : int = s + n + 1
 
   [@entry]
-  let main (() : unit) (s : int) : int return =
-    ([] : operation list), s
+  let main (() : unit) (s : int) : int return = [], s
 end
 
 module Caller = struct
@@ -16,6 +17,6 @@ module Caller = struct
     let ret =
       match x with
         None -> (failwith "view call failed" : int)
-      | Some i -> i in
-    ([] : operation list), ret
+      | Some i -> i
+    in [], ret
 end

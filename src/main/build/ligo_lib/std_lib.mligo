@@ -281,46 +281,7 @@ let ediv (type a b) (left: a) (right: b) : (a, b) external_ediv =
 (** Tezos-specific functions *)
 module Tezos = struct
 
-  (** display-only-for-cameligo
-    The call `Tezos.call_view v p a` calls the view `v` with parameter
-    `param` at the contract whose address is `a`. The value returned
-    is `None` if the view does not exist, or has a different type of
-    parameter, or if the contract does not exist at that
-    address. Otherwise, it is `Some v`, where `v` is the return value
-    of the view. Note: the storage of the view is the same as when the
-    execution of the contract calling the view started.*)
-  (** display-only-for-jsligo
-    The call `Tezos.call_view(v, p, a)` calls the view `v` with parameter
-    `param` at the contract whose address is `a`. The value returned
-    is `None()` if the view does not exist, or has a different type of
-    parameter, or if the contract does not exist at that
-    address. Otherwise, it is `Some(v)`, where `v` is the return value
-    of the view. Note: the storage of the view is the same as when the
-    execution of the contract calling the view started. *)
-  [@inline] [@thunk]
-  let call_view
-    (type param return) (view: string) (param: param) (addr: address)
-    : return option =
-    let () = [%external ("CHECK_CALL_VIEW_LITSTR", view)]
-    in [%michelson ({| {VIEW (litstr $0) (typeopt $1)} |}
-                    view (None : return option) param addr
-                    : return option)]
-
   (* Tickets *)
-
-  (** display-only-for-cameligo
-    The call `Tezos.create_ticket v a` creates a ticket with value `v` and
-    amount `a`. If the creation is a success, the value `Some t` is
-    returned, where `t` is the ticket; otherwise, `None` is the
-    result. Note: Tickets cannot be duplicated. *)
-  (** display-only-for-jsligo
-    The call `Tezos.create_ticket(v, a)` creates a ticket with value `v` and
-    amount `a`. If the creation is a success, the value `Some(t)` is
-    returned, where `t` is the ticket; otherwise, `None()` is the
-    result. Note: Tickets cannot be duplicated. *)
-  [@deprecated "In a future version, `Tezos` will be replaced by `Tezos.Next`, and using `Ticket.create` from `Tezos.Next` is encouraged for a smoother migration."]
-  let create_ticket (type a) (value: a) (amount: nat) : a ticket option =
-    [%michelson ({| {TICKET} |} value amount : a ticket option)]
 
   (** display-only-for-cameligo
     The call `Tezos.split_ticket t (a1, a2)` results in a pair of tickets

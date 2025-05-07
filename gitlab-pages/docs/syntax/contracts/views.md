@@ -34,20 +34,21 @@ type storage = string
 type ret = operation list * storage
 
 [@entry]
-let main (word : string) (storage : storage) : ret
-  = [] , storage ^ " " ^ word
+let main (word : string) (storage : storage) : ret =
+  [] , storage ^ " " ^ word
 
 (* This view returns the storage *)
-[@view] let view1 (() : unit) (storage : storage) : storage
-  = storage
+[@view]
+let view1 (() : unit) (storage : storage) : storage = storage
 
 (* This view returns true if the storage has a given length *)
-[@view] let view2 (expected_length : nat) (storage : storage) : bool
-  = (String.length storage = expected_length)
+[@view]
+let view2 (expected_length : nat) (storage : storage) : bool =
+  String.length storage = expected_length
 
 (* This view does not use the parameters or storage and returns a constant int *)
-[@view] let view3 (() : unit) (_ : storage) : int
-  = 42
+[@view]
+let view3 (() : unit) (_ : storage) : int = 42
 ```
 
 </Syntax>
@@ -188,6 +189,8 @@ end
 This contract stores the address of the first contract and calls its view:
 
 ```cameligo group=callonchainview
+module Tezos = Tezos.Next
+
 module CallView = struct
   type storage = address * int
   type return_type = operation list * storage
@@ -245,6 +248,8 @@ namespace ContractWithView {
 This contract stores the address of the first contract and calls its view:
 
 ```jsligo group=callonchainview
+import Tezos = Tezos.Next;
+
 namespace CallView {
   type storage = [address, int];
   type return_type = [list<operation>, storage];

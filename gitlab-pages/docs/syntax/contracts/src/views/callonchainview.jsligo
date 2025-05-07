@@ -10,6 +10,8 @@ namespace ContractWithView {
   const multiply = (param: int, storage: storage): int =>
     param * storage;
 }
+import Tezos = Tezos.Next;
+
 namespace CallView {
   type storage = [address, int];
   type return_type = [list<operation>, storage];
