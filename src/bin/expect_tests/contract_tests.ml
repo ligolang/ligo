@@ -857,24 +857,6 @@ let%expect_test _ =
   run_ligo_good [ "compile"; "contract"; contract "implicit.mligo" ];
   [%expect
     {|
-    File "../../test/contracts/implicit.mligo", line 4, characters 8-9:
-      3 |   let main (p : key_hash) (s : unit) =
-      4 |     let c : unit contract = Tezos.implicit_account p in
-                  ^
-      5 |     ([] : operation list), unit
-    :
-    Warning: unused variable "c".
-    Hint: replace it by "_c" to prevent this warning.
-
-    File "../../test/contracts/implicit.mligo", line 3, characters 27-28:
-      2 |   [@entry]
-      3 |   let main (p : key_hash) (s : unit) =
-                                     ^
-      4 |     let c : unit contract = Tezos.implicit_account p in
-    :
-    Warning: unused variable "s".
-    Hint: replace it by "_s" to prevent this warning.
-
     { parameter key_hash ;
       storage unit ;
       code { DROP ; UNIT ; NIL operation ; PAIR } } |}]
@@ -1190,7 +1172,7 @@ Variable "create_contract" not found. |}];
           ^^^^^^^^^^
      16 |   ([toto.0], store)
 
-    Not all free variables could be inlined in Tezos.create_contract usage: gen#471. |}];
+    Not all free variables could be inlined in Tezos.create_contract usage: gen#465. |}];
   run_ligo_bad [ "compile"; "contract"; bad_contract "create_contract_no_inline.mligo" ];
   [%expect
     {|
@@ -1208,7 +1190,7 @@ Variable "create_contract" not found. |}];
           ^^^^^^^
      17 |   in [op], foo
 
-    Not all free variables could be inlined in Tezos.create_contract usage: foo#484. |}];
+    Not all free variables could be inlined in Tezos.create_contract usage: foo#478. |}];
   run_ligo_good [ "compile"; "contract"; contract "create_contract.mligo" ];
   [%expect
     {|
@@ -1451,17 +1433,15 @@ let%expect_test _ =
   run_ligo_bad [ "compile"; "contract"; bad_contract "bad_get_entrypoint.mligo" ];
   [%expect
     {|
-    File "../../test/contracts/negative/bad_get_entrypoint.mligo", line 4, character 4 to line 7, character 28:
-      3 |   let v =
-      4 |     (Tezos.get_entrypoint_opt
-              ^^^^^^^^^^^^^^^^^^^^^^^^^
-      5 |        "foo"
-          ^^^^^^^^^^^^
-      6 |        ("tz1fakefakefakefakefakefakefakcphLA5" : address)
-          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-      7 |      : unit contract option) in
-          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-      8 |   let u : unit =
+    File "../../test/contracts/negative/bad_get_entrypoint.mligo", line 6, character 4 to line 8, character 56:
+      5 |   let v : unit contract option =
+      6 |     Tezos.get_entrypoint_opt
+              ^^^^^^^^^^^^^^^^^^^^^^^^
+      7 |       "foo"
+          ^^^^^^^^^^^
+      8 |       ("tz1fakefakefakefakefakefakefakcphLA5" : address) in
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+      9 |   let u : unit =
 
     Invalid entrypoint "foo". One of the following patterns is expected:
     * "%bar" is expected for entrypoint "Bar"
