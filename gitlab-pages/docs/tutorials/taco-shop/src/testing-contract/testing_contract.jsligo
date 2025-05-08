@@ -1,0 +1,160 @@
+import Test = Test.Next;
+import Tezos = Tezos.Next;
+
+namespace TacoShop {
+  export type taco_supply = { current_stock: nat, max_price: tez };
+  export type taco_data = map<nat, taco_supply>;
+  export type admin_address = address;
+  export type storage = {
+    admin_address: admin_address,
+    taco_data: taco_data,
+  };
+
+  export const default_taco_data: taco_data = Map.literal([
+    [1 as nat, { current_stock: 50 as nat, max_price: 50 as tez }],
+    [2 as nat, { current_stock: 20 as nat, max_price: 75 as tez }]
+  ]);
+
+  // Internal function to get the price of a taco
+  const get_taco_price_internal = (taco_kind_index: nat, taco_data: taco_data): tez => {
+    const taco_kind: taco_supply =
+      $match (Map.find_opt(taco_kind_index, taco_data), {
+        "Some": (kind) => kind,
+        "None": () => failwith("Unknown kind of taco"),
+      });
+    return taco_kind.max_price / taco_kind.current_stock;
+  }
+
+  // @view
+  const get_taco_price = (taco_kind_index: nat, storage: storage): tez =>
+    get_taco_price_internal(taco_kind_index, storage.taco_data);
+
+  // Buy a taco
+  // @entry
+  const buy_taco = (taco_kind_index: nat, storage: storage): [
+      list<operation>,
+      storage
+    ] => {
+
+    const { admin_address, taco_data } = storage;
+
+    // Retrieve the kind of taco from the contracts storage or fail
+    const taco_kind: taco_supply =
+      $match (Map.find_opt(taco_kind_index, taco_data), {
+        "Some": (kind) => kind,
+        "None": () => failwith("Unknown kind of taco"),
+      });
+
+    // Get the current price of this type of taco
+    const current_purchase_price = get_taco_price_internal(taco_kind_index, taco_data);
+
+    // Verify that the caller sent the correct amount of tez
+    if ((Tezos.get_amount()) != current_purchase_price) {
+      return failwith("Sorry, the taco you are trying to purchase has a different price");
+    }
+
+    // Verify that there is at least one of this type of taco
+    if (taco_kind.current_stock == (0 as nat)) {
+      return failwith("Sorry, we are out of this type of taco");
+    }
+
+    // Update the storage with the new quantity of tacos
+    const updated_taco_data: taco_data = Map.update(
+      taco_kind_index,
+      ["Some" as "Some", {...taco_kind, current_stock: abs(taco_kind.current_stock - 1) }],
+      taco_data);
+
+    const updated_storage: storage = {
+      admin_address: admin_address,
+      taco_data: updated_taco_data,
+    };
+
+    return [[], updated_storage];
+  }
+
+  // @entry
+  const payout = (_u: unit, storage: storage): [
+      list<operation>,
+      storage
+    ] => {
+
+    // Entrypoint logic goes here
+
+    return [[], storage];
+  }
+
+};
+
+// Convenience function to get current taco price
+const get_taco_price = (untyped_address: address, taco_kind_index: nat): tez => {
+  const view_result_option: option<tez> = Tezos.View.call("get_taco_price", taco_kind_index, untyped_address);
+  return $match(view_result_option, {
+    "Some": (cost_mutez) => cost_mutez,
+    "None": () => Test.failwith("Couldn't get the price of the taco."),
+  });
+}
+
+// Convenience function for testing equality in maps
+const eq_in_map = (r: TacoShop.taco_supply, m: TacoShop.taco_data, k: nat) =>
+  $match(Map.find_opt(k, m), {
+    "None": () => false,
+    "Some": (v) => v.current_stock == r.current_stock && v.max_price == r.max_price
+  });
+
+const test = (() => {
+
+  // Set the initial storage and deploy the contract
+  const admin_address: address = Test.Account.address(0 as nat);
+  const initial_storage: TacoShop.storage = {
+    admin_address: admin_address,
+    taco_data: TacoShop.default_taco_data,
+  }
+  const contract = Test.Originate.contract(contract_of(TacoShop), initial_storage, 0 as tez);
+
+  // Get the current price of a taco
+  const untyped_address = Test.Typed_address.to_address(contract.taddr);
+  const current_price = get_taco_price(untyped_address, 1 as nat);
+
+  // Purchase a taco
+  const success_result =
+    Test.Contract.transfer(
+      Test.Typed_address.get_entrypoint("buy_taco", contract.taddr),
+      1 as nat,
+      current_price
+    );
+
+  // Verify that the stock was updated
+  $match(success_result, {
+    "Success": (_s) => (() => {
+      const storage = Test.Typed_address.get_storage(contract.taddr);
+      // Check that the stock has been updated correctly
+      Assert.assert(
+        eq_in_map(
+          { current_stock: 49 as nat, max_price: 50000000 as mutez },
+          storage.taco_data,
+          1 as nat
+        ));
+      // Check that the amount of the other taco type has not changed
+      Assert.assert(eq_in_map(
+          { current_stock: 20 as nat, max_price: 75000000 as mutez },
+          storage.taco_data,
+          2 as nat
+        )
+      );
+      Test.IO.log("Successfully bought a taco");
+  })(),
+    "Fail": (err) => failwith(err),
+  });
+
+  // Fail to purchase a taco without sending enough tez
+  const fail_result =
+    Test.Contract.transfer(
+      Test.Typed_address.get_entrypoint("buy_taco", contract.taddr),
+      1 as nat,
+      1 as mutez
+    );
+  $match(fail_result, {
+    "Success": (_s) => failwith("Test was able to buy a taco for the wrong price"),
+    "Fail": (_err) => Test.IO.log("Contract successfully blocked purchase with incorrect price"),
+  });
+}) ();

@@ -144,13 +144,95 @@ For convenience, in this tutorial, you put the tests in the same file.
 
    It's important to test failure cases as well as success cases to make sure the contract works properly in all cases.
 
-The completed convenience functions and test functions look like this:
+The completed contract file with convenience functions and test functions looks like this:
 
-```jsligo skip
+```jsligo group=testing_contract
 import Test = Test.Next;
 import Tezos = Tezos.Next;
 
-// TacoShop namespace goes here
+namespace TacoShop {
+  export type taco_supply = { current_stock: nat, max_price: tez };
+  export type taco_data = map<nat, taco_supply>;
+  export type admin_address = address;
+  export type storage = {
+    admin_address: admin_address,
+    taco_data: taco_data,
+  };
+
+  export const default_taco_data: taco_data = Map.literal([
+    [1 as nat, { current_stock: 50 as nat, max_price: 50 as tez }],
+    [2 as nat, { current_stock: 20 as nat, max_price: 75 as tez }]
+  ]);
+
+  // Internal function to get the price of a taco
+  const get_taco_price_internal = (taco_kind_index: nat, taco_data: taco_data): tez => {
+    const taco_kind: taco_supply =
+      $match (Map.find_opt(taco_kind_index, taco_data), {
+        "Some": (kind) => kind,
+        "None": () => failwith("Unknown kind of taco"),
+      });
+    return taco_kind.max_price / taco_kind.current_stock;
+  }
+
+  // @view
+  const get_taco_price = (taco_kind_index: nat, storage: storage): tez =>
+    get_taco_price_internal(taco_kind_index, storage.taco_data);
+
+  // Buy a taco
+  // @entry
+  const buy_taco = (taco_kind_index: nat, storage: storage): [
+      list<operation>,
+      storage
+    ] => {
+
+    const { admin_address, taco_data } = storage;
+
+    // Retrieve the kind of taco from the contracts storage or fail
+    const taco_kind: taco_supply =
+      $match (Map.find_opt(taco_kind_index, taco_data), {
+        "Some": (kind) => kind,
+        "None": () => failwith("Unknown kind of taco"),
+      });
+
+    // Get the current price of this type of taco
+    const current_purchase_price = get_taco_price_internal(taco_kind_index, taco_data);
+
+    // Verify that the caller sent the correct amount of tez
+    if ((Tezos.get_amount()) != current_purchase_price) {
+      return failwith("Sorry, the taco you are trying to purchase has a different price");
+    }
+
+    // Verify that there is at least one of this type of taco
+    if (taco_kind.current_stock == (0 as nat)) {
+      return failwith("Sorry, we are out of this type of taco");
+    }
+
+    // Update the storage with the new quantity of tacos
+    const updated_taco_data: taco_data = Map.update(
+      taco_kind_index,
+      ["Some" as "Some", {...taco_kind, current_stock: abs(taco_kind.current_stock - 1) }],
+      taco_data);
+
+    const updated_storage: storage = {
+      admin_address: admin_address,
+      taco_data: updated_taco_data,
+    };
+
+    return [[], updated_storage];
+  }
+
+  // @entry
+  const payout = (_u: unit, storage: storage): [
+      list<operation>,
+      storage
+    ] => {
+
+    // Entrypoint logic goes here
+
+    return [[], storage];
+  }
+
+};
 
 // Convenience function to get current taco price
 const get_taco_price = (untyped_address: address, taco_kind_index: nat): tez => {
@@ -350,13 +432,86 @@ const test = (() => {
 
    It's important to test failure cases as well as success cases to make sure the contract works properly in all cases.
 
-The completed convenience functions and test functions look like this:
+The completed contract file with the convenience functions and test functions looks like this:
 
-```cameligo skip
+```cameligo group=testing_contract
 module Test = Test.Next
 module Tezos = Tezos.Next
 
-(* TacoShop module goes here *)
+module TacoShop = struct
+
+  type taco_supply = { current_stock: nat; max_price: tez }
+  type taco_data = (nat, taco_supply) map
+  type admin_address = address
+  type storage = {
+    admin_address: admin_address;
+    taco_data: taco_data;
+  }
+
+  let default_taco_data: taco_data = Map.literal [
+    (1n, { current_stock = 50n; max_price = 50tez });
+    (2n, { current_stock = 20n; max_price = 75tez });
+  ]
+
+  (* Internal function to get the price of a taco *)
+  let get_taco_price_internal (taco_kind_index : nat) (taco_data : taco_data) : tez =
+    let taco_kind : taco_supply =
+      match Map.find_opt taco_kind_index taco_data with
+      | Some kind -> kind
+      | None -> failwith "Unknown kind of taco"
+      in
+      taco_kind.max_price / taco_kind.current_stock
+
+  [@view]
+  let get_taco_price (taco_kind_index : nat) (storage : storage) : tez =
+    get_taco_price_internal taco_kind_index storage.taco_data
+
+  (* Buy a taco *)
+  [@entry]
+  let buy_taco (taco_kind_index : nat) (storage : storage) : operation list * storage =
+
+    let { admin_address; taco_data } = storage in
+
+    (* Retrieve the kind of taco from the contracts storage or fail *)
+    let taco_kind : taco_supply =
+      match Map.find_opt taco_kind_index taco_data with
+      | Some kind -> kind
+      | None -> failwith "Unknown kind of taco" in
+
+    (* Get the current price of this type of taco *)
+    let current_purchase_price = get_taco_price_internal taco_kind_index taco_data in
+
+    (* Verify that the caller sent the correct amount of tez *)
+    let _ = if (Tezos.get_amount () <> current_purchase_price) then
+      failwith "Sorry, the taco you are trying to purchase has a different price" in
+
+    (* Verify that there is at least one of this type of taco *)
+    let _ = if (taco_kind.current_stock = 0n) then
+      failwith "Sorry, we are out of this type of taco" in
+
+
+    (* Update the storage with the new quantity of tacos *)
+    let updated_taco_data : taco_data = Map.update
+      taco_kind_index
+      (Some { taco_kind with current_stock = abs (taco_kind.current_stock - 1n) })
+      taco_data in
+
+
+    let updated_storage : storage = {
+      admin_address = admin_address;
+      taco_data = updated_taco_data;
+    } in
+
+    [], updated_storage
+
+    [@entry]
+    let payout (_u : unit) (storage : storage) : operation list * storage =
+
+      (* Entrypoint logic goes here *)
+
+      [], storage
+
+  end
 
 (* Convenience function to get current taco price *)
 let get_taco_price (untyped_address : address) (taco_kind_index : nat) : tez =
