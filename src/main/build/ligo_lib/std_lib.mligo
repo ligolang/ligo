@@ -255,142 +255,31 @@ let int (type a) (value: a) : int =
 let nat (bytes: bytes) : nat =
   [%michelson ({| {NAT} |} bytes : nat)]
 
-(** display-only-for-cameligo
-    The call `ediv z1 z2`, where `z1` and `z2` are either of type
-    `int` or `nat`, returns `None` if `z2` is zero; otherwise, it
-    returns the pair `(q,r)`, where `q` is the quotient and `r` the
-    positive remainder, as is the convention of the mathematical
-    Euclidian division. The function `ediv` is also overloaded to work
-    on values of type `tez`. When `z1` and `z2` are of type `tez` and
-    `z2` is nonzero, we get a `nat` quotient and a `tez`
-    remainder. When `z1` is a `tez` and `z2` is a nonzero `nat`, the
-    calls yields a quotient and a remainder, both of type `tez`. *)
-(** display-only-for-jsligo
-    The call `ediv(z1, z2)`, where `z1` and `z2` are either of type
-    `int` or `nat`, returns `None()` if `z2` is zero; otherwise, it
-    returns the pair `[q,r]`, where `q` is the quotient and `r` the
-    positive remainder, as is the convention of the mathematical
-    Euclidian division. The function `ediv` is also overloaded to work
-    on values of type `tez`. When `z1` and `z2` are of type `tez` and
-    `z2` is nonzero, we get a `nat` quotient and a `tez`
-    remainder. When `z1` is a `tez` and `z2` is a nonzero `nat`, the
-    calls yields a quotient and a remainder, both of type `tez`. *)
+(** display-only-for-cameligo The call `ediv z1 z2`, where `z1` and
+    `z2` are either of type `int` or `nat`, returns `None` if `z2` is
+    zero; otherwise, it returns `Some (q,r)`, where `q` is the
+    quotient and `r` the positive remainder, as is the convention of
+    the mathematical Euclidian division. The function `ediv` is also
+    overloaded to work on values of type `tez`. When `z1` and `z2` are
+    of type `tez` and `z2` is nonzero, we get a `nat` quotient and a
+    `tez` remainder. When `z1` is a `tez` and `z2` is a nonzero `nat`,
+    the calls yields a quotient and a remainder, both of type
+    `tez`. *)
+(** display-only-for-jsligo The call `ediv(z1, z2)`, where `z1` and
+    `z2` are either of type `int` or `nat`, returns `["None" as
+    "None"]` if `z2` is zero; otherwise, it returns `["Some" as
+    "Some", [q,r]]`, where `q` is the quotient and `r` the positive
+    remainder, as is the convention of the mathematical Euclidian
+    division. The function `ediv` is also overloaded to work on values
+    of type `tez`. When `z1` and `z2` are of type `tez` and `z2` is
+    nonzero, we get a `nat` quotient and a `tez` remainder. When `z1`
+    is a `tez` and `z2` is a nonzero `nat`, the calls yields a
+    quotient and a remainder, both of type `tez`. *)
 let ediv (type a b) (left: a) (right: b) : (a, b) external_ediv =
   [%michelson ({| {EDIV} |} left right : (a, b) external_ediv)]
 
 (** Tezos-specific functions *)
 module Tezos = struct
-
-  (* Tickets *)
-
-  (** display-only-for-cameligo
-    The call `Tezos.split_ticket t (a1, a2)` results in a pair of tickets
-    `t1` and `t2` such that the former owns the amount `a1` and the
-    later `a2`. More precisely, the value of the call is
-    `Some (t1, t2)` because signifying to the callee the failure of
-    the splitting is achieved by returning the value `None`. *)
-  (** display-only-for-jsligo
-    The call `Tezos.split_ticket(t, [a1, a2])` results in a pair of tickets
-    `t1` and `t2` such that the former owns the amount `a1` and the
-    later `a2`. More precisely, the value of the call is
-    `Some([t1, t2])` because signifying to the callee the failure of
-    the splitting is achieved by returning the value `None()`. *)
-  [@deprecated "In a future version, `Tezos` will be replaced by `Tezos.Next`, and using `Ticket.split` from `Tezos.Next` is encouraged for a smoother migration."]
-  let split_ticket (type a) (ticket: a ticket) (amounts: nat * nat)
-    : (a ticket * a ticket) option =
-    [%michelson ({| {SPLIT_TICKET} |} ticket amounts
-                 : (a ticket * a ticket) option)]
-
-  (** display-only-for-cameligo
-    The call `Tezos.join_tickets (t1, t2)` joins the tickets `t1` and
-    `t2`, which must have the same type of value. *)
-  (** display-only-for-jsligo
-    The call `Tezos.join_tickets(t1, t2)` joins the tickets `t1` and
-    `t2`, which must have the same type of value. *)
-  [@deprecated "In a future version, `Tezos` will be replaced by `Tezos.Next`, and using `Ticket.join` from `Tezos.Next` is encouraged for a smoother migration."]
-  let join_tickets (type a) (tickets: a ticket * a ticket) : a ticket option =
-    [%michelson ({| {JOIN_TICKETS} |} tickets : a ticket option)]
-
-  (** display-only-for-cameligo
-    The call `Tezos.read_ticket t` returns `t` itself and the contents of
-    `t` which is a pair `(address, (value, amount))`, where `address` is
-    the address of the smart contract that created it. *)
-  (** display-only-for-jsligo
-    The call `Tezos.read_ticket(t)` returns `t` itself and the contents of
-    `t` which is a pair `[address, [value, amount]]`, where `address` is
-    the address of the smart contract that created it. *)
-  [@deprecated "In a future version, `Tezos` will be replaced by `Tezos.Next`, and using `Ticket.read` from `Tezos.Next` is encouraged for a smoother migration."]
-  let read_ticket (type a) (ticket: a ticket)
-    : (address * (a * nat)) * a ticket =
-    [%michelson ({| {READ_TICKET; PAIR} |} ticket
-                 : (address * (a * nat)) * a ticket)]
-
-  (* Sapling *)
-
-  (** The evaluation of the constant `Tezos.sapling_empty_state` is an empty
-    sapling state, that is, no one can spend tokens from it. *)
-  [@deprecated "In a future version, `Tezos` will be replaced by `Tezos.Next`, and using `Sapling.empty_state` from `Tezos.Next` is encouraged for a smoother migration."]
-  [@inline] [@thunk]
-  let sapling_empty_state (type sap_t) : sap_t sapling_state =
-    [%michelson ({| {SAPLING_EMPTY_STATE (typeopt $0)} |}
-                 (None : sap_t option)
-                 : sap_t sapling_state)]
-
-  (** display-only-for-cameligo
-    The call `Tezos.sapling_verify_update trans state`, where the
-    transaction `trans` can be applied to the state `state`, returns
-    `Some (data, (delta, new_state))`, where `data` is the bound data
-    (as bytes), `delta` is the difference between the outputs and the
-    inputs of the transaction, and `new_state` is the updated
-    state. *)
-  (** display-only-for-jsligo
-    The call `Tezos.sapling_verify_update(trans, state)`, where the
-    transaction `trans` can be applied to the state `state`, returns
-    `Some ([data, [delta, new_state]])`, where `data` is the bound data
-    (as bytes), `delta` is the difference between the outputs and the
-    inputs of the transaction, and `new_state` is the updated
-    state. *)
-  [@deprecated "In a future version, `Tezos` will be replaced by `Tezos.Next`, and using `Sapling.verify_update` from `Tezos.Next` is encouraged for a smoother migration."]
-  [@inline] [@thunk]
-  let sapling_verify_update
-    (type sap_a)
-    (trans: sap_a sapling_transaction)
-    (state: sap_a sapling_state)
-    : (bytes * (int * sap_a sapling_state)) option =
-    [%michelson ({| {SAPLING_VERIFY_UPDATE} |} trans state
-                 : (bytes * (int * sap_a sapling_state)) option)]
-
-  (* Events *)
-
-  (** display-only-for-cameligo
-    The call `Tezos.emit event_tag event_type` evaluates in an operation
-    that will write an event into the transaction receipt after the
-    successful execution of this contract. The event is annotated by
-    the string `event_tag` if it is not empty. The argument
-    `event_type` is used only to specify the type of data attachment. *)
-  (** display-only-for-jsligo
-    The call `Tezos.emit(event_tag, event_type)` evaluates in an operation
-    that will write an event into the transaction receipt after the
-    successful execution of this contract. The event is annotated by
-    the string `event_tag` if it is not empty. The argument
-    `event_type` is used only to specify the type of data attachment. *)
-  [@deprecated "In a future version, `Tezos` will be replaced by `Tezos.Next`, and using `Operation.emit` from `Tezos.Next` is encouraged for a smoother migration."]
-  [@inline] [@thunk]
-  let emit (type event_type) (event_tag: string) (event_type: event_type)
-    : operation =
-    let () = [%external ("CHECK_EMIT_EVENT", event_tag, event_type)] in
-    [%michelson ({| {EMIT (annot $0) (typeopt $1)} |}
-                 event_tag (None : event_type option) event_type
-                 : operation)]
-
-  (* Time-lock *)
-
-  (** The function [open_chest] opens a timelocked chest given its key
-    and the time. The result is a byte option depending if the opening
-    is correct or not. *)
-  let open_chest (key: chest_key) (chest: chest) (time: nat) : bytes option =
-    [%michelson ({| {OPEN_CHEST} |} key chest time : bytes option)]
-
   (* Miscellanea *)
 
   (** display-only-for-cameligo
@@ -950,13 +839,12 @@ module Tezos = struct
         (as bytes), `delta` is the difference between the outputs and the
         inputs of the transaction, and `new_state` is the updated
         state. *)
-      (** display-only-for-jsligo
-        The call `verify_update(trans, state)`, where the
-        transaction `trans` can be applied to the state `state`, returns
-        `Some ([data, [delta, new_state]])`, where `data` is the bound data
-        (as bytes), `delta` is the difference between the outputs and the
-        inputs of the transaction, and `new_state` is the updated
-        state. *)
+      (** display-only-for-jsligo The call `verify_update(trans,
+          state)`, where the transaction `trans` can be applied to the
+          state `state`, returns `["Some" as "Some", [data, [delta,
+          new_state]]]`, where `data` is the bound data (as bytes),
+          `delta` is the difference between the outputs and the inputs
+          of the transaction, and `new_state` is the updated state. *)
       [@inline] [@thunk]
       let verify_update
         (type sap_a)

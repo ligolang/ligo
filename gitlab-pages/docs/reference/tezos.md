@@ -487,102 +487,97 @@ The call `Tezos.create_ticket v a` creates a ticket with value `v` and
 
 <Syntax syntax="jsligo">
 
-The call `Tezos.create_ticket(v, a)` creates a ticket with value `v` and
-    amount `a`. If the creation is a success, the value `Some(t)` is
-    returned, where `t` is the ticket; otherwise, `None()` is the
-    result. Note: Tickets cannot be duplicated.
+The call `Tezos.Ticket.create(v, a)` creates a ticket with value `v`
+and amount `a`. If the creation is a success, the value
+`["Some" as "Some", t]` is returned, where `t` is the ticket;
+otherwise, `["None" as "None"]` is the result. Note: Tickets cannot be
+duplicated.
 
 </Syntax>
 
 
 <SyntaxTitle syntax="cameligo">
-val split&#95;ticket : &#39;a.&#39;a ticket -&gt; (nat * nat) -&gt; (&#39;a ticket * &#39;a ticket) option
+val split : &#39;a.&#39;a ticket -&gt; (nat * nat) -&gt; (&#39;a ticket * &#39;a ticket) option
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let split&#95;ticket: &lt;a&gt;(&#95;: ticket&lt;a&gt;) =&gt; (&#95;: [nat, nat]) =&gt; option&lt;[ticket&lt;a&gt;, ticket&lt;a&gt;]&gt;
+split : &lt;a&gt;(&#95;: ticket&lt;a&gt;) =&gt; (&#95;: [nat, nat]) =&gt; option&lt;[ticket&lt;a&gt;, ticket&lt;a&gt;]&gt;
 </SyntaxTitle>
-**Deprecated:** In a future version, `Tezos` will be replaced by `Tezos.Next`, and using `Ticket.split` from `Tezos.Next` is encouraged for a smoother migration.
 
 <Syntax syntax="cameligo">
 
-The call `Tezos.split_ticket t (a1, a2)` results in a pair of tickets
-    `t1` and `t2` such that the former owns the amount `a1` and the
-    later `a2`. More precisely, the value of the call is
-    `Some (t1, t2)` because signifying to the callee the failure of
-    the splitting is achieved by returning the value `None`.
+The call `Tezos.Ticket.split t (a1, a2)` results in a pair of tickets
+`t1` and `t2` such that the former owns the amount `a1` and the later
+`a2`. More precisely, the value of the call is `Some (t1, t2)` because
+signifying to the callee the failure of the splitting is achieved by
+returning the value `None`.
 
 </Syntax>
 
 <Syntax syntax="jsligo">
 
-The call `Tezos.split_ticket(t, [a1, a2])` results in a pair of tickets
-    `t1` and `t2` such that the former owns the amount `a1` and the
-    later `a2`. More precisely, the value of the call is
-    `Some([t1, t2])` because signifying to the callee the failure of
-    the splitting is achieved by returning the value `None()`.
+The call `Tezos.Ticket.split(t, [a1, a2])` results in a pair of
+tickets `t1` and `t2` such that the former owns the amount `a1` and
+the later `a2`. More precisely, the value of the call is
+`["Some" as "Some", [t1, t2]]` because signifying to the callee the
+failure of the splitting is achieved by returning the value
+`["None" as "None"]`.
 
 </Syntax>
 
-
 <SyntaxTitle syntax="cameligo">
-val join&#95;tickets : &#39;a.(&#39;a ticket * &#39;a ticket) -&gt; &#39;a ticket option
+val join : &#39;a.(&#39;a ticket * &#39;a ticket) -&gt; &#39;a ticket option
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let join&#95;tickets: &lt;a&gt;(&#95;: [ticket&lt;a&gt;, ticket&lt;a&gt;]) =&gt; option&lt;ticket&lt;a&gt;&gt;
+join: &lt;a&gt;(&#95;: [ticket&lt;a&gt;, ticket&lt;a&gt;]) =&gt; option&lt;ticket&lt;a&gt;&gt;
 </SyntaxTitle>
-**Deprecated:** In a future version, `Tezos` will be replaced by `Tezos.Next`, and using `Ticket.join` from `Tezos.Next` is encouraged for a smoother migration.
 
 <Syntax syntax="cameligo">
 
-The call `Tezos.join_tickets (t1, t2)` joins the tickets `t1` and
-    `t2`, which must have the same type of value.
+The call `Tezos.Ticket.join (t1, t2)` joins the tickets `t1` and `t2`,
+which must have the same type of value.
 
 </Syntax>
 
 <Syntax syntax="jsligo">
 
-The call `Tezos.join_tickets(t1, t2)` joins the tickets `t1` and
-    `t2`, which must have the same type of value.
+The call `Tezos.Ticket.join(t1, t2)` joins the tickets `t1` and `t2`,
+which must have the same type of value.
 
 </Syntax>
 
 
 <SyntaxTitle syntax="cameligo">
-val read&#95;ticket : &#39;a.&#39;a ticket -&gt; (address * &#39;a * nat * &#39;a ticket)
+val read : &#39;a.&#39;a ticket -&gt; (address * &#39;a * nat * &#39;a ticket)
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let read&#95;ticket: &lt;a&gt;(&#95;: ticket&lt;a&gt;) =&gt; [[address, [a, nat]], ticket&lt;a&gt;]
+read: &lt;a&gt;(&#95;: ticket&lt;a&gt;) =&gt; [[address, [a, nat]], ticket&lt;a&gt;]
 </SyntaxTitle>
-**Deprecated:** In a future version, `Tezos` will be replaced by `Tezos.Next`, and using `Ticket.read` from `Tezos.Next` is encouraged for a smoother migration.
 
 <Syntax syntax="cameligo">
 
-The call `Tezos.read_ticket t` returns `t` itself and the contents of
-    `t` which is a pair `(address, (value, amount))`, where `address` is
-    the address of the smart contract that created it.
+The call `Tezos.Ticket.read t` returns `t` itself and the contents of
+`t` which is a pair `(address, (value, amount))`, where `address` is
+the address of the smart contract that created it.
 
 </Syntax>
 
 <Syntax syntax="jsligo">
 
-The call `Tezos.read_ticket(t)` returns `t` itself and the contents of
-    `t` which is a pair `[address, [value, amount]]`, where `address` is
-    the address of the smart contract that created it.
+The call `Tezos.Ticket.read(t)` returns `t` itself and the contents of
+`t` which is a pair `[address, [value, amount]]`, where `address` is
+the address of the smart contract that created it.
 
 </Syntax>
 
-
 <SyntaxTitle syntax="cameligo">
-val sapling&#95;empty&#95;state : &#39;sap&#95;t.&#39;sap&#95;t sapling&#95;state
+val empty&#95;state : &#39;sap&#95;t.&#39;sap&#95;t sapling&#95;state
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let sapling&#95;empty&#95;state: &lt;sap&#95;t&gt;sapling&#95;state&lt;sap&#95;t&gt;
+empty&#95;state: &lt;sap&#95;t&gt;sapling&#95;state&lt;sap&#95;t&gt;
 </SyntaxTitle>
-**Deprecated:** In a future version, `Tezos` will be replaced by `Tezos.Next`, and using `Sapling.empty_state` from `Tezos.Next` is encouraged for a smoother migration.
 
-The evaluation of the constant `Tezos.sapling_empty_state` is an empty
-    sapling state, that is, no one can spend tokens from it.
-
+The evaluation of the constant `Tezos.Sapling.empty_state` is an empty
+sapling state, that is, no one can spend tokens from it.
 
 <SyntaxTitle syntax="cameligo">
 val sapling&#95;verify&#95;update :

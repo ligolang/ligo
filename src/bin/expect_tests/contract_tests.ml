@@ -1172,7 +1172,7 @@ Variable "create_contract" not found. |}];
           ^^^^^^^^^^
      16 |   ([toto.0], store)
 
-    Not all free variables could be inlined in Tezos.create_contract usage: gen#463. |}];
+    Not all free variables could be inlined in Tezos.create_contract usage: gen#456. |}];
   run_ligo_bad [ "compile"; "contract"; bad_contract "create_contract_no_inline.mligo" ];
   [%expect
     {|
@@ -1190,7 +1190,7 @@ Variable "create_contract" not found. |}];
           ^^^^^^^
      17 |   in [op], foo
 
-    Not all free variables could be inlined in Tezos.create_contract usage: foo#476. |}];
+    Not all free variables could be inlined in Tezos.create_contract usage: foo#469. |}];
   run_ligo_good [ "compile"; "contract"; contract "create_contract.mligo" ];
   [%expect
     {|
@@ -2494,10 +2494,10 @@ let%expect_test _ =
   run_ligo_bad [ "compile"; "contract"; bad_contract "emit_bad_tag.mligo" ];
   [%expect
     {|
-    File "../../test/contracts/negative/emit_bad_tag.mligo", line 3, characters 3-31:
-      2 | let main (_ : unit) (_ : string) : operation list * string =
-      3 |   [Tezos.emit "%hello world" 12], "bye"
-             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    File "../../test/contracts/negative/emit_bad_tag.mligo", line 5, characters 3-41:
+      4 | let main (_ : unit) (_ : string) : operation list * string =
+      5 |   [Tezos.Operation.emit "%hello world" 12], "bye"
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
     Invalid entrypoint "%hello world". One of the following patterns is expected:
     * "%bar" is expected for entrypoint "Bar"

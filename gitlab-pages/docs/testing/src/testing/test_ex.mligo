@@ -1,9 +1,13 @@
-module C = struct
-  [@entry] let main (p : int*int) () =
-    [Tezos.emit "%foo" p ; Tezos.emit "%foo" p.0],()
-end
-
+module Tezos = Tezos.Next
 module Test = Test.Next
+
+module C = struct
+  [@entry]
+  let main (p : int * int) () =
+    let op1 = Tezos.Operation.emit "%foo" p in
+    let op2 = Tezos.Operation.emit "%foo" p.0 in
+    [op1; op2], ()
+end
 
 let test_foo =
   let orig = Test.Originate.contract (contract_of C) () 0tez in
