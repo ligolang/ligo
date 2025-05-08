@@ -321,7 +321,43 @@ See [`#import`](../compiling/preprocessor#import).
 
 <Syntax syntax="jsligo">
 
-You can import namespaces from other files with the `#import` directive, but only if the namespaces have the `@public` decorator.
-See [`#import`](../compiling/preprocessor#import).
+## Importing namespaces
+
+You can import namespaces and other definitions from the same file or other files with the `import` keyword in three ways:
+
+- `import M = M.O`
+- `import * as M from "./targetFile.jsligo"`
+- `import {x, y} from "./targetFile.jsligo"`
+
+For example, assume that this file is `myFunctions.jsligo`:
+
+```jsligo group=myFunctions
+export namespace MyFunctions {
+  export const addToImport = (a: int, b: int): int => a + b;
+  export const subToImport = (a: int, b: int): int => a - b;
+}
+```
+
+You can import the file and access the namespace like this:
+
+```jsligo group=useMyFunctions
+import * as MyFileWithFunctions from './gitlab-pages/docs/syntax/src/modules/myFunctions.jsligo';
+const addToImport = MyFileWithFunctions.MyFunctions.addToImport;
+const subToImport = MyFileWithFunctions.MyFunctions.subToImport;
+
+namespace Counter {
+  type storage_type = int;
+  type return_type = [list<operation>, storage_type];
+
+  // @entry
+  const add = (value: int, storage: storage_type): return_type =>
+    [[], addToImport(storage, value)];
+
+  // @entry
+  const sub = (value: int, storage: storage_type): return_type =>
+    [[], subToImport(storage, value)];
+
+}
+```
 
 </Syntax>
