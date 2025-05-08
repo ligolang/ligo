@@ -560,17 +560,23 @@ const test1 = test_view();
 
 ### Testing events
 
-To test events, emit them as usual with the `Tezos.emit` function and use the `Test.Next.State.last_events` function to capture the most recent events, as in this example:
+To test events, emit them as usual with the `Tezos.Operation.emit`
+function and use the `Test.Next.State.last_events` function to capture
+the most recent events, as in this example:
 
 <Syntax syntax="cameligo">
 
 ```cameligo test-ligo group=test_ex
-module C = struct
-  [@entry] let main (p : int*int) () =
-    [Tezos.emit "%foo" p ; Tezos.emit "%foo" p.0],()
-end
-
+module Tezos = Tezos.Next
 module Test = Test.Next
+
+module C = struct
+  [@entry]
+  let main (p : int * int) () =
+    let op1 = Tezos.Operation.emit "%foo" p in
+    let op2 = Tezos.Operation.emit "%foo" p.0 in
+    [op1; op2], ()
+end
 
 let test_foo =
   let orig = Test.Originate.contract (contract_of C) () 0tez in
@@ -583,16 +589,17 @@ let test_foo =
 <Syntax syntax="jsligo">
 
 ```jsligo test-ligo group=test_ex
+import Tezos = Tezos.Next;
+import Test = Test.Next;
+
 namespace C {
   // @entry
-  const main = (p: [int, int], _: unit) => {
-    const op1 = Tezos.emit("%foo", p);
-    const op2 = Tezos.emit("%foo", p[0]);
-    return [([op1, op2] as list<operation>), unit];
+  const main = (p: [int, int], _: unit) : [list<operation>, unit] => {
+    const op1 = Tezos.Operation.emit("%foo", p);
+    const op2 = Tezos.Operation.emit("%foo", p[0]);
+    return [[op1, op2], unit];
   };
 }
-
-import Test = Test.Next;
 
 const test = () => {
   const orig = Test.Originate.contract(contract_of(C), unit, 0 as tez);

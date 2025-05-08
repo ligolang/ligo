@@ -1,13 +1,14 @@
+import Tezos = Tezos.Next;
+import Test = Test.Next;
+
 namespace C {
   // @entry
-  const main = (p: [int, int], _: unit) => {
-    const op1 = Tezos.emit("%foo", p);
-    const op2 = Tezos.emit("%foo", p[0]);
-    return [([op1, op2] as list<operation>), unit];
+  const main = (p: [int, int], _: unit) : [list<operation>, unit] => {
+    const op1 = Tezos.Operation.emit("%foo", p);
+    const op2 = Tezos.Operation.emit("%foo", p[0]);
+    return [[op1, op2], unit];
   };
 }
-
-import Test = Test.Next;
 
 const test = () => {
   const orig = Test.Originate.contract(contract_of(C), unit, 0 as tez);
