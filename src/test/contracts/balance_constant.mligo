@@ -10,6 +10,8 @@ generated. unrecognized constant: {"constant":"BALANCE","location":"generated"}
 
 *)
 
+module Tezos = Tezos.Next
+
 type parameter = unit
 type storage = tez
 type return = operation list * storage
