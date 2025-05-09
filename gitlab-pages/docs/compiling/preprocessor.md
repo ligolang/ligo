@@ -9,7 +9,7 @@ The preprocessor edits files before they go to the LIGO compiler.
 
 <Syntax syntax="jsligo">
 
-The JsLIGO preprocessor no longer supports preprocessor directives.
+The JsLIGO compiler no longer supports preprocessor directives.
 
 - Instead of using the `#include` or `#import` directives, import namespaces in other files directly with the `import` keyword as described in [Importing and using classes](../syntax/classes#importing-and-using-classes) or [Importing namespaces](../syntax/modules#importing-namespaces).
 
