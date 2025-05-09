@@ -1,0 +1,5 @@
+type x = int;
+type y = int;
+type z = int;
+// type object_type = { x, y, z }; // not permitted
+type object_type = {x: x, y: y, z: z}; // correct

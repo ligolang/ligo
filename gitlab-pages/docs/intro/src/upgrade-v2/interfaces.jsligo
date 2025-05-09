@@ -1,0 +1,5 @@
+type storage = int;
+interface MyInterface {
+  // @entry
+  add: (s: int, k: storage) => [list<operation>, storage];
+}

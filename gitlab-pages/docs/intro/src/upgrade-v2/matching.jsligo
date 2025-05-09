@@ -1,0 +1,36 @@
+type user =
+  ["Admin", nat]
+| ["Manager", nat]
+| ["Guest"];
+
+const greetUser = (user: user): string => {
+  $match (user, {
+    "Admin": _id => "Hello, administrator",
+    "Manager": _id => "Welcome, manager",
+    "Guest": () => "Hello, guest",
+  });
+}
+const getSquareOfUserId = (user: user): nat => {
+  $match (user, {
+    "Admin": id => (() => {
+      const squareOfId = id * id;
+      return squareOfId;
+    })(),
+    "Manager": id => (() => {
+      const squareOfId = id * id;
+      return squareOfId;
+    })(),
+    "Guest": () => 0,
+  });
+}
+type wrapper = | ["Wrap", [int, int]];
+const wrapped: wrapper = ["Wrap" as "Wrap", [5, 5]];
+
+const compareResult: string = $match(wrapped, {
+  "Wrap": ([_a, _b]) => (() => {
+    if (_a == _b) return "Equal";
+    if (_a > _b) return "Greater";
+    if (_a < _b) return "Less";
+    return "Default";
+  })(),
+});

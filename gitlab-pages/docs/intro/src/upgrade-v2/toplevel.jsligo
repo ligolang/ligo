@@ -1,0 +1,10 @@
+type storage_type = int;
+type return_type = [list<operation>, storage_type];
+
+// @entry
+const add = (value: int, store: storage_type): return_type =>
+  [[], store + value];
+
+// @entry
+const sub = (value: int, store: storage_type): return_type =>
+  [[], store - value];

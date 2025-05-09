@@ -1,0 +1,26 @@
+type object_type = {x: int, y: int, z: int};
+type storage_type = object_type;
+type return_type = [list<operation>, storage_type];
+
+class Counter {
+  @entry
+  reset = (_: unit, _s: storage_type): return_type => {
+    const newObject: object_type = {
+      x: 0,
+      y: 0,
+      z: 0,
+    };
+    return [[], newObject];
+  }
+
+  @entry
+  increment = (_: unit, storage: storage_type): return_type => {
+    const { x, y, z } = storage;
+    const newObject: object_type = {
+      x: x + 1,
+      y: y + 1,
+      z: z + 1,
+    };
+    return [[], newObject];
+  }
+}
