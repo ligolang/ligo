@@ -187,7 +187,9 @@ const g : user = ["Guest" as "Guest"];
 A constant constructor is equivalent to the same constructor taking an
 argument of type `unit`, so, for example, `["Guest" as "Guest"] is the
 same value as `["Guest" as "Guest", ()]` and
-`["Guest" as "Guest", unit]`.  </Syntax>
+`["Guest" as "Guest", unit]`.
+
+</Syntax>
 
 There are cases where several sum types match a given constructor.
 
