@@ -283,26 +283,6 @@ module Tezos = struct
   (* Miscellanea *)
 
   (** display-only-for-cameligo
-    The call `Tezos.get_balance ()` returns the balance in mutez of the
-    account associated to the currently executed smart contract,
-    including any mutez added by the calling transaction. *)
-  (** display-only-for-jsligo
-    The call `Tezos.get_balance()` returns the balance in mutez of the
-    account associated to the currently executed smart contract,
-    including any mutez added by the calling transaction. *)
-  let get_balance () : tez =
-    [%michelson ({| {BALANCE} |} : tez)]
-
-  (** display-only-for-cameligo
-    The call `Tezos.get_amount ()` returns the amount in mutez of the
-    current transaction. *)
-  (** display-only-for-jsligo
-    The call `Tezos.get_amount()` returns the amount in mutez of the
-    current transaction. *)
-  let get_amount () : tez =
-    [%michelson ({| {AMOUNT} |} : tez)]
-
-  (** display-only-for-cameligo
     The call `Tezos.get_now ()` returns the minimal injection time for the
     current block, namely the block whose application triggered this
     execution. The minimal injection time constitutes an estimate of

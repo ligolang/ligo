@@ -918,51 +918,6 @@ let%expect_test _ =
   (* AMOUNT should occur inside the second lambda, but not the first lambda *)
   [%expect
     {|
-    File "../../test/contracts/amount_lambda.mligo", line 5, characters 7-8:
-      4 |   let amt : tez = Tezos.get_amount () in
-      5 |   fun (x : unit) -> amt
-                 ^
-      6 |
-    :
-    Warning: unused variable "x".
-    Hint: replace it by "_x" to prevent this warning.
-
-    File "../../test/contracts/amount_lambda.mligo", line 3, characters 8-9:
-      2 |
-      3 | let f1 (x : unit) : unit -> tez =
-                  ^
-      4 |   let amt : tez = Tezos.get_amount () in
-    :
-    Warning: unused variable "x".
-    Hint: replace it by "_x" to prevent this warning.
-
-    File "../../test/contracts/amount_lambda.mligo", line 9, characters 39-40:
-      8 |
-      9 | let f2 (x : unit) : unit -> tez = fun (x : unit) -> Tezos.get_amount ()
-                                                 ^
-     10 |
-    :
-    Warning: unused variable "x".
-    Hint: replace it by "_x" to prevent this warning.
-
-    File "../../test/contracts/amount_lambda.mligo", line 9, characters 8-9:
-      8 |
-      9 | let f2 (x : unit) : unit -> tez = fun (x : unit) -> Tezos.get_amount ()
-                  ^
-     10 |
-    :
-    Warning: unused variable "x".
-    Hint: replace it by "_x" to prevent this warning.
-
-    File "../../test/contracts/amount_lambda.mligo", line 12, characters 21-22:
-     11 | [@entry]
-     12 | let main (b : bool) (s : (unit -> tez)) : operation list * (unit -> tez) =
-                               ^
-     13 |   (([] : operation list), (if b then f1 () else f2 ()))
-    :
-    Warning: unused variable "s".
-    Hint: replace it by "_s" to prevent this warning.
-
     { parameter bool ;
       storage (lambda unit mutez) ;
       code { CAR ;
@@ -1172,7 +1127,7 @@ Variable "create_contract" not found. |}];
           ^^^^^^^^^^
      16 |   ([toto.0], store)
 
-    Not all free variables could be inlined in Tezos.create_contract usage: gen#456. |}];
+    Not all free variables could be inlined in Tezos.create_contract usage: gen#454. |}];
   run_ligo_bad [ "compile"; "contract"; bad_contract "create_contract_no_inline.mligo" ];
   [%expect
     {|
@@ -1190,7 +1145,7 @@ Variable "create_contract" not found. |}];
           ^^^^^^^
      17 |   in [op], foo
 
-    Not all free variables could be inlined in Tezos.create_contract usage: foo#469. |}];
+    Not all free variables could be inlined in Tezos.create_contract usage: foo#467. |}];
   run_ligo_good [ "compile"; "contract"; contract "create_contract.mligo" ];
   [%expect
     {|
