@@ -283,15 +283,6 @@ module Tezos = struct
   (* Miscellanea *)
 
   (** display-only-for-cameligo
-    The call `Tezos.get_min_block_time ()` returns the minimal delay
-    between two consecutive blocks in the chain. *)
-  (** display-only-for-jsligo
-    The call `Tezos.get_min_block_time()` returns the minimal delay
-    between two consecutive blocks in the chain. *)
-  let get_min_block_time () : nat =
-    [%michelson ({| {MIN_BLOCK_TIME} |} : nat)]
-
-  (** display-only-for-cameligo
     The call `Tezos.get_level ()` returns the current block level. *)
   (** display-only-for-jsligo
     The call `Tezos.get_level()` returns the current block level. *)
