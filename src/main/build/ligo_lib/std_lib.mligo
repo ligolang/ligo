@@ -283,21 +283,6 @@ module Tezos = struct
   (* Miscellanea *)
 
   (** display-only-for-cameligo
-    The call `Tezos.get_now ()` returns the minimal injection time for the
-    current block, namely the block whose application triggered this
-    execution. The minimal injection time constitutes an estimate of
-    the moment when the current block is injected, hence the name
-    "now". *)
-  (** display-only-for-jsligo
-    The call `Tezos.get_now()` returns the minimal injection time for the
-    current block, namely the block whose application triggered this
-    execution. The minimal injection time constitutes an estimate of
-    the moment when the current block is injected, hence the name
-    "now". *)
-  let get_now () : timestamp =
-    [%michelson ({| {NOW} |} : timestamp)]
-
-  (** display-only-for-cameligo
     The call `Tezos.get_min_block_time ()` returns the minimal delay
     between two consecutive blocks in the chain. *)
   (** display-only-for-jsligo
@@ -2609,7 +2594,7 @@ module Test = struct
     let g : a pbt_gen = [%external ("TEST_RANDOM", false)] in
     [%external ("TEST_GENERATOR_EVAL", g)]
 
-  let get_time (_u : unit) : timestamp = Tezos.get_now ()
+  let get_time (_u : unit) : timestamp = Tezos.Next.get_now ()
 
   module PBT = struct
     let gen (type a) : a pbt_gen = [%external ("TEST_RANDOM", false)]
