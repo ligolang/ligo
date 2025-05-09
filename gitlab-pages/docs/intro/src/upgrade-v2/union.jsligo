@@ -1,0 +1,9 @@
+type singleton = | ["Single"];
+type user =
+  ["Admin", nat]
+| ["Manager", int]
+| ["Guest"];
+
+const admin1: user = ["Admin" as "Admin", 1 as nat];
+const manager2: user = ["Manager" as "Manager", 2 as int];
+const guest3: user = ["Guest" as "Guest"];
