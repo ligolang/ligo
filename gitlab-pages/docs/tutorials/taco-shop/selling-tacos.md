@@ -557,6 +557,8 @@ For more information about views, see [Views](../../syntax/contracts/views).
 The complete contract file looks like this:
 
 ```jsligo group=selling_tacos
+import Tezos = Tezos.Next;
+
 namespace TacoShop {
   export type taco_supply = { current_stock: nat, max_price: tez };
   export type taco_data = map<nat, taco_supply>;
@@ -661,8 +663,9 @@ For more information about views, see [Views](../../syntax/contracts/views).
 The complete contract file looks like this:
 
 ```cameligo group=selling_tacos
-module TacoShop = struct
+module Tezos = Tezos.Next
 
+module TacoShop = struct
   type taco_supply = { current_stock: nat; max_price: tez }
   type taco_data = (nat, taco_supply) map
   type admin_address = address
