@@ -283,22 +283,6 @@ module Tezos = struct
   (* Miscellanea *)
 
   (** display-only-for-cameligo
-    The call `Tezos.get_level ()` returns the current block level. *)
-  (** display-only-for-jsligo
-    The call `Tezos.get_level()` returns the current block level. *)
-  let get_level () : nat =
-    [%michelson ({| {LEVEL} |} : nat)]
-
-  (** display-only-for-cameligo
-    The call `Tezos.get_chain_id ()` returns the identifier of the chain
-    on which the smart contract is executed. *)
-  (** display-only-for-jsligo
-    The call `Tezos.get_chain_id ()` returns the identifier of the chain
-    on which the smart contract is executed. *)
-  let get_chain_id () : chain_id =
-    [%michelson ({| {CHAIN_ID} |} : chain_id)]
-
-  (** display-only-for-cameligo
     The call `Tezos.get_total_voting_power ()` returns the total voting
     power of all contracts. The total voting power coincides with the
     sum of the stake of every contract in the voting listings. The
