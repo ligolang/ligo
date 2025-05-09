@@ -281,7 +281,7 @@ export type return_type = [list<operation>, storage_type];
 This file imports those types and uses them:
 
 ```jsligo group=use_myTypes
-import * as myTypes from "./myTypes.jsligo";
+import * as myTypes from "./gitlab-pages/docs/intro/src/upgrade-v2/myTypes.jsligo";
 type storage_type = myTypes.storage_type;
 type return_type = myTypes.return_type;
 
@@ -321,11 +321,11 @@ type user =
 | ["Manager", nat]
 | ["Guest"];
 
-const greetUser = (user: user): null => {
+const greetUser = (user: user): string => {
   $match (user, {
-    "Admin": _id => console.log("Hello, administrator"),
-    "Manager": _id => console.log("Welcome, manager"),
-    "Guest": () => console.log("Hello, guest"),
+    "Admin": _id => "Hello, administrator",
+    "Manager": _id => "Welcome, manager",
+    "Guest": () => "Hello, guest",
   });
 }
 ```

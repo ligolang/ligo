@@ -1,0 +1,2 @@
+export type storage_type = int;
+export type return_type = [list<operation>, storage_type];
