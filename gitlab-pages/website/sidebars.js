@@ -11,6 +11,7 @@ const sidebars = {
       "tutorials/getting-started/getting-started",
       "intro/template",
       "intro/upgrade-v1",
+      "intro/upgrade-v2",
     ],
     "Tutorial": [
       "tutorials/taco-shop/selling-tacos",
