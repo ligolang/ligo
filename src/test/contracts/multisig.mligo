@@ -1,4 +1,6 @@
-// storage type
+module Tezos = Tezos.Next
+
+(* storage type *)
 
 type counter = nat
 type threshold = nat
@@ -12,7 +14,7 @@ type storage = {
   auth      : authorized_keys
 }
 
-// I/O types
+(* I/O types *)
 
 type message = unit -> operation list
 
