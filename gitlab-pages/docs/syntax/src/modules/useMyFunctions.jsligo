@@ -1,0 +1,17 @@
+import * as MyFileWithFunctions from './gitlab-pages/docs/syntax/src/modules/myFunctions.jsligo';
+const addToImport = MyFileWithFunctions.MyFunctions.addToImport;
+const subToImport = MyFileWithFunctions.MyFunctions.subToImport;
+
+namespace Counter {
+  type storage_type = int;
+  type return_type = [list<operation>, storage_type];
+
+  // @entry
+  const add = (value: int, storage: storage_type): return_type =>
+    [[], addToImport(storage, value)];
+
+  // @entry
+  const sub = (value: int, storage: storage_type): return_type =>
+    [[], subToImport(storage, value)];
+
+}

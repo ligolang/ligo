@@ -1,0 +1,4 @@
+export namespace MyFunctions {
+  export const addToImport = (a: int, b: int): int => a + b;
+  export const subToImport = (a: int, b: int): int => a - b;
+}

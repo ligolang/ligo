@@ -6,13 +6,26 @@ title: Preprocessor
 import Syntax from '@theme/Syntax';
 
 The preprocessor edits files before they go to the LIGO compiler.
-You can include commands called _preprocessor directives_ to instruct the preprocessor to make changes to a file before the compiler receives it, such as including or excluding code and importing code from other files.
+
+<Syntax syntax="jsligo">
+
+The JsLIGO compiler no longer supports preprocessor directives.
+
+- Instead of using the `#include` or `#import` directives, import namespaces in other files directly with the `import` keyword as described in [Importing and using classes](../syntax/classes#importing-and-using-classes) or [Importing namespaces](../syntax/modules#importing-namespaces).
+
+- The `#if`, `#else`, `#elif`, `#endif`, `#define`, `#undef`, and `#error` directives are no longer supported.
+If you need to continue using them, you can run your JsLIGO code through a C++ preprocessor, which uses the same syntax.
+JsLIGO code with these directives does not compile.
+
+</Syntax>
+
+<Syntax syntax="cameligo">
+
+CameLIGO code can include commands called _preprocessor directives_ to instruct the preprocessor to make changes to a file before the compiler receives it, such as including or excluding code and importing code from other files.
 
 Preprocessor directives can allow you to make changes to files before the compiler processes them.
 For example, the following contract has three entrypoints, but one is between `#if` and `#endif` directives.
 The line `#if INCLUDE_RESET` instructs the preprocessor to include the text between the directives (in this case, the third entrypoint) only if the `INCLUDE_RESET` Boolean variable is set:
-
-<Syntax syntax="cameligo">
 
 ```cameligo group=includereset
 module MyContract = struct
@@ -28,10 +41,6 @@ module MyContract = struct
   #endif
 end
 ```
-
-</Syntax>
-
-<Syntax syntax="cameligo">
 
 You can set these Boolean preprocessor variables with the [`#define`](#define-and-undef) directive or by passing them to the `-D` argument of the `ligo compile contract` command.
 For example, if the contract in the previous example is in a file named `mycontract.mligo`, this command causes the preprocessor and compiler to output a contract with only two entrypoints:
@@ -60,6 +69,16 @@ ligo print preprocessed myContract.mligo
 
 </Syntax>
 
+<Syntax syntax="jsligo">
+
+```bash
+ligo print preprocessed myContract.jsligo
+```
+
+</Syntax>
+
+<Syntax syntax="cameligo">
+
 ## Comments
 
 The preprocessor ignores directives that are in [comments](../syntax/comments), which prevents problems where comments in your code contain text that looks like a directive.
@@ -79,15 +98,11 @@ The preprocessor ignores directives that are in strings, which prevents problems
 
 For example, this code includes a string with the text `#endif`, but the preprocessor does not interpret this text as the `#endif` directive:
 
-<Syntax syntax="cameligo">
-
 ```cameligo skip
 #if true
 let textValue = "This string includes the text #endif"
 #endif
 ```
-
-</Syntax>
 
 ## Blank lines
 
@@ -162,7 +177,7 @@ The LIGO compiler ignores these linemarkers when it compiles the code.
 
 ## Directives
 
-These are the preprocessor directives that the LIGO preprocessor supports:
+These are the preprocessor directives that the CameLIGO preprocessor supports:
 
 - [`#define` and `#undef`](#define-and-undef)
 - [`#error`](#error)
@@ -250,8 +265,6 @@ type storage =
 
 ### `#import`
 
-<Syntax syntax="cameligo">
-
 The `#import` directive prompts the preprocessor to include another file as a [module](../syntax/modules) in the current file.
 
 For example, you can create a file with related type definitions, as in this example file named `euro.mligo`:
@@ -277,9 +290,6 @@ let tip (s : storage) : storage = Euro.add (s, Euro.one)
 
 For more information, see [Modules](../syntax/modules).
 
-</Syntax>
-
-
 ### `#include`
 
 The `#include` directive includes the entire text contents of the specified file, as in this example:
@@ -287,8 +297,6 @@ The `#include` directive includes the entire text contents of the specified file
 ```
 #include "path/to/standard_1.mligo"
 ```
-
-<Syntax syntax="cameligo">
 
 Unlike the `#import` directive, the `#include` directive does not package the included file as a module.
 

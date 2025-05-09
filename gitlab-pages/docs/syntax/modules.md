@@ -163,6 +163,84 @@ Client code should always try to respect the interface provided by the namespace
 
 <Syntax syntax="cameligo">
 
+## Importing modules
+
+You can import modules from other files with the `#import` directive.
+See [`#import`](../compiling/preprocessor#import).
+
+</Syntax>
+
+<Syntax syntax="jsligo">
+
+## Importing namespaces
+
+You can import namespaces and other definitions from the same file or other files with the `import` keyword in three ways:
+
+- `import M = M.O`
+- `import * as M from "./targetFile.jsligo"`
+- `import {x, y} from "./targetFile.jsligo"`
+
+For example, assume that this file is `myFunctions.jsligo`:
+
+```jsligo group=myFunctions
+export namespace MyFunctions {
+  export const addToImport = (a: int, b: int): int => a + b;
+  export const subToImport = (a: int, b: int): int => a - b;
+}
+```
+
+You can import the file and access the namespace like this:
+
+```jsligo group=useMyFunctions
+import * as MyFileWithFunctions from './gitlab-pages/docs/syntax/src/modules/myFunctions.jsligo';
+const addToImport = MyFileWithFunctions.MyFunctions.addToImport;
+const subToImport = MyFileWithFunctions.MyFunctions.subToImport;
+
+namespace Counter {
+  type storage_type = int;
+  type return_type = [list<operation>, storage_type];
+
+  // @entry
+  const add = (value: int, storage: storage_type): return_type =>
+    [[], addToImport(storage, value)];
+
+  // @entry
+  const sub = (value: int, storage: storage_type): return_type =>
+    [[], subToImport(storage, value)];
+
+}
+```
+
+</Syntax>
+
+<Syntax syntax="cameligo">
+
+## Including modules
+
+You can include the content of one module inside another with the `include` keyword.
+Including another module in this way can be another way to nest and organize code.
+It can also allow you to upgrade or extend a module, such as by adding new types, functions, and values.
+
+This example extends the `Euro` module by including it in a new `NewEuro` module that has a constant for a 10 Euro note:
+
+```cameligo group=including
+module Euro =
+  struct
+    type t = nat
+    let add (a, b : t * t) : t = a + b
+    let one : t = 1n
+    let two : t = 2n
+  end
+
+module NewEuro =
+  struct
+    include Euro
+    let ten : t = 10n
+  end
+```
+
+Including modules is not possible in JsLIGO.
+
 ## Nesting modules
 
 You can define a module inside another module.
@@ -277,51 +355,5 @@ Now other code can use the Lev just like it is a Euro for now, and you can chang
 You must use the `import` keyword to alias the namespace, even if it is in the same file.
 
 :::
-
-</Syntax>
-
-<Syntax syntax="cameligo">
-
-## Including modules
-
-You can include the content of one module inside another with the `include` keyword.
-Including another module in this way can be another way to nest and organize code.
-It can also allow you to upgrade or extend a module, such as by adding new types, functions, and values.
-
-This example extends the `Euro` module by including it in a new `NewEuro` module that has a constant for a 10 Euro note:
-
-```cameligo group=including
-module Euro =
-  struct
-    type t = nat
-    let add (a, b : t * t) : t = a + b
-    let one : t = 1n
-    let two : t = 2n
-  end
-
-module NewEuro =
-  struct
-    include Euro
-    let ten : t = 10n
-  end
-```
-
-Including modules is not possible in JsLIGO.
-
-</Syntax>
-
-<Syntax syntax="cameligo">
-
-## Importing modules
-
-You can import modules from other files with the `#import` directive.
-See [`#import`](../compiling/preprocessor#import).
-
-</Syntax>
-
-<Syntax syntax="jsligo">
-
-You can import namespaces from other files with the `#import` directive, but only if the namespaces have the `@public` decorator.
-See [`#import`](../compiling/preprocessor#import).
 
 </Syntax>
