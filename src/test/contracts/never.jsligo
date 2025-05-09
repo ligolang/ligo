@@ -1,4 +1,8 @@
-type parameter = ["Increment", int] | ["Extend", never];
+import Tezos = Tezos.Next;
+
+type parameter =
+  ["Increment", int]
+| ["Extend", never];
 
 type storage = int;
 
@@ -6,7 +10,9 @@ class C {
   @entry
   main = (action: parameter, store: storage): [list<operation>, storage] =>
   [[],
-   ($match(action, {
-     "Increment": (n) => store + n,
-     "Extend": (k) => (Tezos.never(k) as storage)})]
+   $match(action, {
+     "Increment": n => store + n,
+     "Extend": k => (Tezos.never(k) as storage)
+   }
+  ]
 };

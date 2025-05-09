@@ -73,8 +73,8 @@ type bool = False | True
 (** display-only-for-jsligo
   Type of optional values. They are useful, for example, when a
   function can fail, but the caller wants to be able to handle the
-  failure, which is then denoted by the result `None()`. Note:
-  Assertions and `failwith` do not allow handling. *)
+  failure, which is then denoted by the result `["None" as "None"]`.
+  Note: Assertions and `failwith` do not allow handling. *)
 type 'a option = None | Some of 'a
 
 (** Unit type. It is useful for typing side-effects, for example
@@ -157,7 +157,7 @@ module Assert = struct
     (** display-only-for-jsligo
       The call `some(opt, err)` terminates the execution
       with the string `err` (that is, an error message) if, and only if,
-      `opt` is `None()`. *)
+      `opt` is `["None" as "None"]`. *)
     let some (type a) (opt: a option) (err: string) : unit =
       match opt with
       | None -> failwith err
@@ -170,7 +170,7 @@ module Assert = struct
     (** display-only-for-jsligo
       The call `none(opt, err)` terminates the execution
       with the string `err` (that is, an error message) if, and only if,
-      `opt` is an optional value different from `None()`. *)
+      `opt` is an optional value different from `["None" as "None"]`. *)
     let none (type a) (opt: a option) (err: string) : unit =
       match opt with
       | None -> ()
@@ -193,8 +193,8 @@ module Assert = struct
     The call `some opt` terminates the execution with the
     string `"failed assert some"` if, and only if, `opt` is `None`. *)
   (** display-only-for-jsligo
-    The call `some(opt)` terminates the execution with the
-    string `"failed assert some"` if, and only if, `opt` is `None()`. *)
+    The call `some(opt)` terminates the execution with the string
+    `"failed assert some"` if, and only if, `opt` is `["None" as "None"]`. *)
   [@inline]
   let some (type a) (opt: a option) : unit =
     Error.some opt "failed assert some"
@@ -204,7 +204,7 @@ module Assert = struct
     `"failed assert none"` if, and only if, `opt` is not `None`. *)
   (** display-only-for-jsligo
     The call `none(opt)` terminates the execution with the string
-    `"failed assert none"` if, and only if, `opt` is not `None()`. *)
+    `"failed assert none"` if, and only if, `opt` is not `["None" as "None"]`. *)
   [@inline]
   let none (type a) (opt: a option) : unit =
     Error.none opt "failed assert none"
@@ -222,8 +222,8 @@ let abs (integer: int) : nat =
   The call `is_nat i` is `Some n`, where `n` is the absolute
   value of `i`, if, and only if, `i` is positive or zero. *)
 (** display-only-for-jsligo
-  The call `is_nat(i)` is `Some(n)`, where `n` is the absolute
-  value of `i`, if, and only if, `i` is positive or zero. *)
+  The call `is_nat(i)` is `["Some" as "Some", n]`, where `n` is the
+  absolute value of `i`, if, and only if, `i` is positive or zero. *)
 let is_nat (integer: int) : nat option =
   [%michelson ({| {ISNAT} |} integer : nat option)]
 
@@ -266,64 +266,21 @@ let nat (bytes: bytes) : nat =
     the calls yields a quotient and a remainder, both of type
     `tez`. *)
 (** display-only-for-jsligo The call `ediv(z1, z2)`, where `z1` and
-    `z2` are either of type `int` or `nat`, returns `["None" as
-    "None"]` if `z2` is zero; otherwise, it returns `["Some" as
-    "Some", [q,r]]`, where `q` is the quotient and `r` the positive
-    remainder, as is the convention of the mathematical Euclidian
-    division. The function `ediv` is also overloaded to work on values
-    of type `tez`. When `z1` and `z2` are of type `tez` and `z2` is
-    nonzero, we get a `nat` quotient and a `tez` remainder. When `z1`
-    is a `tez` and `z2` is a nonzero `nat`, the calls yields a
-    quotient and a remainder, both of type `tez`. *)
+    `z2` are either of type `int` or `nat`, returns `["None" as "None"]`
+    if `z2` is zero; otherwise, it returns `["Some" as "Some", [q,r]]`,
+    where `q` is the quotient and `r` the positive remainder, as is
+    the convention of the mathematical Euclidian division. The
+    function `ediv` is also overloaded to work on values of type
+    `tez`. When `z1` and `z2` are of type `tez` and `z2` is nonzero,
+    we get a `nat` quotient and a `tez` remainder. When `z1` is a
+    `tez` and `z2` is a nonzero `nat`, the calls yields a quotient and
+    a remainder, both of type `tez`. *)
 let ediv (type a b) (left: a) (right: b) : (a, b) external_ediv =
   [%michelson ({| {EDIV} |} left right : (a, b) external_ediv)]
 
 (** Tezos-specific functions *)
 module Tezos = struct
   (* Miscellanea *)
-
-  (** display-only-for-cameligo
-    The call `Tezos.get_total_voting_power ()` returns the total voting
-    power of all contracts. The total voting power coincides with the
-    sum of the stake of every contract in the voting listings. The
-    voting listings is calculated at the beginning of every voting
-    period. *)
-  (** display-only-for-jsligo
-    The call `Tezos.get_total_voting_power()` returns the total voting
-    power of all contracts. The total voting power coincides with the
-    sum of the stake of every contract in the voting listings. The
-    voting listings is calculated at the beginning of every voting
-    period. *)
-  let get_total_voting_power () : nat =
-    [%michelson ({| {TOTAL_VOTING_POWER} |} : nat)]
-
-  (** display-only-for-cameligo
-    The call `Tezos.voting_power contract_kh` returns the voting power of
-    a given contract specified by the key hash `contract_kh`. This
-    voting power coincides with the weight of the contract in the
-    voting listings (that is, the stake) which is calculated at the
-    beginning of every voting period. *)
-  (** display-only-for-jsligo
-    The call `Tezos.voting_power(contract_kh)` returns the voting power of
-    a given contract specified by the key hash `contract_kh`. This
-    voting power coincides with the weight of the contract in the
-    voting listings (that is, the stake) which is calculated at the
-    beginning of every voting period. *)
-  let voting_power (kh : key_hash) : nat =
-    [%michelson ({| {VOTING_POWER} |} kh : nat)]
-
-  (** display-only-for-cameligo
-    The call `Tezos.never n` is never meant to be executed, as the type
-    `never` is inhabited, but to instruct the typechecker that a
-    branch in the control flow, for example, in a pattern matching, is
-    dead. *)
-  (** display-only-for-jsligo
-    The call `Tezos.never(n)` is never meant to be executed, as the type
-    `never` is inhabited, but to instruct the typechecker that a
-    branch in the control flow, for example, in a pattern matching, is
-    dead. *)
-  let never (type a) (never: never) : a =
-    [%michelson ({| {NEVER} |} never : a)]
 
   (** display-only-for-cameligo
     The call `Tezos.pairing_check pairings` verifies that the product of
@@ -368,13 +325,14 @@ module Tezos = struct
       of the view. Note: the storage of the view is the same as when the
       execution of the contract calling the view started.*)
     (** display-only-for-jsligo
-      The call `Tezos.call_view(v, p, a)` calls the view `v` with parameter
-      `param` at the contract whose address is `a`. The value returned
-      is `None()` if the view does not exist, or has a different type of
-      parameter, or if the contract does not exist at that
-      address. Otherwise, it is `Some(v)`, where `v` is the return value
-      of the view. Note: the storage of the view is the same as when the
-      execution of the contract calling the view started. *)
+      The call `Tezos.call_view(v, p, a)` calls the view `v` with
+      parameter `param` at the contract whose address is `a`. The
+      value returned is `["None" as "None"]` if the view does not
+      exist, or has a different type of parameter, or if the contract
+      does not exist at that address. Otherwise, it is `["Some" as "Some", v]`,
+      where `v` is the return value of the view. Note: the storage of
+      the view is the same as when the execution of the contract
+      calling the view started. *)
     [@inline] [@thunk]
     let call_view
       (type param return) (view: string) (param: param) (addr: address)
@@ -487,15 +445,16 @@ module Tezos = struct
     (** display-only-for-cameligo
       The call `get_contract_opt addr` casts the address `addr` into
       that of a contract address, if such contract exists. The value of
-      the call is `None` if no such contract exists, otherwise `Some
-      contract`, where `contract` is the contract's address. Note: The
-      address of an implicit account has type `unit contract`. *)
+      the call is `None` if no such contract exists, otherwise `Some contract`,
+      where `contract` is the contract's address. Note: The address of
+      an implicit account has type `unit contract`. *)
     (** display-only-for-jsligo
       The call `get_contract_opt(addr)` casts the address `addr` into
-      that of a contract address, if such contract exists. The value of
-      the call is `None()` if no such contract exists, otherwise `Some
-      contract`, where `contract` is the contract's address. Note: The
-      address of an implicit account has type `unit contract`. *)
+      that of a contract address, if such contract exists. The value
+      of the call is `["None" as "None"]` if no such contract exists,
+      otherwise `["Some" as "Some", contract]`, where `contract` is
+      the contract's address. Note: The address of an implicit account
+      has type `unit contract`. *)
     [@inline] [@thunk]
     let get_contract_opt (type param) (addr: address) : param contract option =
       [%michelson ({| {CONTRACT (typeopt $0)} |} (None : param option) addr
@@ -551,10 +510,10 @@ module Tezos = struct
       `entrypoint`. In other words, `get_entrypoint_opt(entrypoint, addr)`
       casts the address `addr` into that of a smart contract
       address, if such contract exists and has an entrypoint named
-      `entrypoint`. The value of the call is `None()` if no such smart
-      contract exists, otherwise `Some(contract)`, where `contract` is
-      the smart contract's address. Note: The address of an implicit
-      account has type `contract<unit>`. *)
+      `entrypoint`. The value of the call is `["None" as "None"]` if
+      no such smart contract exists, otherwise `["Some" as "Some", contract]`,
+      where `contract` is the smart contract's address. Note: The
+      address of an implicit account has type `contract<unit>`. *)
     [@inline] [@thunk]
     let get_entrypoint_opt (type param) (entrypoint: string) (addr: address)
       : param contract option =
@@ -596,15 +555,15 @@ module Tezos = struct
         performed successfully first, for example by calling a proxy
         contract or itself. *)
       (** display-only-for-jsligo
-        The call `create_contract(e,d,a,s)` returns a contract creation
-        operation (origination) for the entrypoint `e` (as a function)
-        with optional delegate `d`, initial amount `a` and initial
-        storage `s`, together with the address of the created
+        The call `create_contract(e,d,a,s)` returns a contract
+        creation operation (origination) for the entrypoint `e` (as a
+        function) with optional delegate `d`, initial amount `a` and
+        initial storage `s`, together with the address of the created
         contract. Note that the created contract cannot be called
         immediately afterwards (that is, `get_contract_opt` on that
-        address would return `None()`), as the origination must be
-        performed successfully first, for example by calling a proxy
-        contract or itself. *)
+        address would return `["None" as "None"]`), as the origination
+        must be performed successfully first, for example by calling a
+        proxy contract or itself. *)
       [@inline] [@thunk]
       let create_contract
         (type param storage)
@@ -630,16 +589,17 @@ module Tezos = struct
         will fail when applied. *)
       (** display-only-for-jsligo
         The call `set_delegate(d)` evaluates in an operation that sets
-        the delegate of the current smart contract to be `d`, where `d` is
-        an optional key hash. If `None()`, the delegation is withdrawn. If
-        the contract has no delegation, then no change occurs. If `d` is
-        `Some(kh)`, where `kh` is the key hash of a registered delegate
-        that is not the current delegate of the contract, then this
-        operation sets the delegate of the contract to this registered
-        delegate. A failure occurs if `kh` is the current delegate of the
-        contract or if `kh` is not a registered delegate. However, the
-        instruction in itself does not fail; it produces an operation that
-        will fail when applied. *)
+        the delegate of the current smart contract to be `d`, where
+        `d` is an optional key hash. If `["None" as "None"]`, the
+        delegation is withdrawn. If the contract has no delegation,
+        then no change occurs. If `d` is `["Some" as "Some", kh]`,
+        where `kh` is the key hash of a registered delegate that is
+        not the current delegate of the contract, then this operation
+        sets the delegate of the contract to this registered
+        delegate. A failure occurs if `kh` is the current delegate of
+        the contract or if `kh` is not a registered delegate. However,
+        the instruction in itself does not fail; it produces an
+        operation that will fail when applied. *)
       let set_delegate (delegate: key_hash option) : operation =
         [%michelson ({| {SET_DELEGATE} |} delegate : operation)]
 
@@ -693,12 +653,13 @@ module Tezos = struct
         execution of the contract calling the view started.*)
       (** display-only-for-jsligo
         The call `call(v, p, a)` calls the view `v` with parameter
-        `param` at the contract whose address is `a`. The value returned
-        is `None()` if the view does not exist, or has a different type of
-        parameter, or if the contract does not exist at that
-        address. Otherwise, it is `Some(v)`, where `v` is the return value
-        of the view. Note: the storage of the view is the same as when the
-        execution of the contract calling the view started. *)
+        `param` at the contract whose address is `a`. The value
+        returned is `["None" as "None"]` if the view does not exist,
+        or has a different type of parameter, or if the contract does
+        not exist at that address. Otherwise, it is `["Some" as "Some", v]`,
+        where `v` is the return value of the view. Note: the storage
+        of the view is the same as when the execution of the contract
+        calling the view started. *)
       [@inline] [@thunk]
       let call
         (type param return) (view: string) (param: param) (addr: address)
@@ -717,9 +678,10 @@ module Tezos = struct
         result. Note: Tickets cannot be duplicated. *)
       (** display-only-for-jsligo
         The call `create(v, a)` creates a ticket with value `v` and
-        amount `a`. If the creation is a success, the value `Some(t)` is
-        returned, where `t` is the ticket; otherwise, `None()` is the
-        result. Note: Tickets cannot be duplicated. *)
+        amount `a`. If the creation is a success, the value
+        `["Some" as "Some", t]` is returned, where `t` is the ticket;
+        otherwise, `["None" as "None"]` is the result. Note: Tickets
+        cannot be duplicated. *)
       let create (type a) (value: a) (amount: nat) : a ticket option =
         [%michelson ({| {TICKET} |} value amount : a ticket option)]
 
@@ -731,10 +693,11 @@ module Tezos = struct
         the splitting is achieved by returning the value `None`. *)
       (** display-only-for-jsligo
         The call `split(t, [a1, a2])` results in a pair of tickets
-        `t1` and `t2` such that the former owns the amount `a1` and the
-        later `a2`. More precisely, the value of the call is
-        `Some([t1, t2])` because signifying to the callee the failure of
-        the splitting is achieved by returning the value `None()`. *)
+        `t1` and `t2` such that the former owns the amount `a1` and
+        the later `a2`. More precisely, the value of the call is
+        `["Some" as "Some", [t1, t2]]` because signifying to the
+        callee the failure of the splitting is achieved by returning
+        the value `["None" as "None"]`. *)
       let split (type a) (ticket: a ticket) (amounts: nat * nat)
         : (a ticket * a ticket) option =
         [%michelson ({| {SPLIT_TICKET} |} ticket amounts
@@ -779,12 +742,13 @@ module Tezos = struct
         (as bytes), `delta` is the difference between the outputs and the
         inputs of the transaction, and `new_state` is the updated
         state. *)
-      (** display-only-for-jsligo The call `verify_update(trans,
-          state)`, where the transaction `trans` can be applied to the
-          state `state`, returns `["Some" as "Some", [data, [delta,
-          new_state]]]`, where `data` is the bound data (as bytes),
-          `delta` is the difference between the outputs and the inputs
-          of the transaction, and `new_state` is the updated state. *)
+      (** display-only-for-jsligo
+        The call `verify_update(trans, state)`, where the transaction
+        `trans` can be applied to the state `state`, returns
+        `["Some" as "Some", [data, [delta, new_state]]]`, where `data` is
+        the bound data (as bytes), `delta` is the difference between the
+        outputs and the inputs of the transaction, and `new_state` is
+        the updated state. *)
       [@inline] [@thunk]
       let verify_update
         (type sap_a)
@@ -1030,8 +994,8 @@ module Option = struct
     The call `Option.value d opt` is `v` if `opt` is `Some v`, and `d`
     otherwise. *)
   (** display-only-for-jsligo
-    The call `Option.value(d, opt)` is `v` if `opt` is `Some(v)`, and `d`
-    otherwise. *)
+    The call `Option.value(d, opt)` is `v` if `opt` is
+    `["Some" as "Some", v]`, and `d` otherwise. *)
   let value (type a) (default: a) (opt: a option) : a =
     match opt with
     | None -> default
@@ -1042,9 +1006,9 @@ module Option = struct
     `err` if, and only if, `opt` is `None`; otherwise it is `Some v`
     and `v` is returned. *)
   (** display-only-for-jsligo
-    The call `Option.value_with_error(err, opt)` terminates with the error
-    `err` if, and only if, `opt` is `None()`; otherwise it is `Some(v)`
-    and `v` is returned. *)
+    The call `Option.value_with_error(err, opt)` terminates with the
+    error `err` if, and only if, `opt` is `["None" as "None"]`;
+    otherwise it is `["Some" as "Some", v]` and `v` is returned. *)
   let value_with_error (type err a) (error: err) (opt: a option) : a =
     match opt with
     | None -> failwith error
@@ -1055,9 +1019,9 @@ module Option = struct
     and only if, `opt` is `None`; otherwise it is `Some v` and `v` is
     returned. *)
   (** display-only-for-jsligo
-    The call `Option.value_exn(err, opt)` terminates with the error `err` if,
-    and only if, `opt` is `None()`; otherwise it is `Some(v)` and `v` is
-    returned. *)
+    The call `Option.value_exn(err, opt)` terminates with the error
+    `err` if, and only if, `opt` is `["None" as "None"]`; otherwise it
+    is `["Some" as "Some", v]` and `v` is returned. *)
   [@inline] [@deprecated "Use `Option.value_with_error` instead."]
   let value_exn (type err a) (error: err) (opt: a option) : a =
     value_with_error error opt
@@ -1067,21 +1031,21 @@ module Option = struct
     `err` if, and only if, `opt` is `None`; otherwise it is `Some v`
     and `v` is returned. *)
   (** display-only-for-jsligo
-    The call `Option.unopt_with_error(opt, err)` terminates with the error
-    `err` if, and only if, `opt` is `None()`; otherwise it is
-    `Some(v)` and `v` is returned. *)
+    The call `Option.unopt_with_error(opt, err)` terminates with the
+    error `err` if, and only if, `opt` is `["None" as "None"]`;
+    otherwise it is `["Some" as "Some", v]` and `v` is returned. *)
   [@inline] [@deprecated "Use `Option.value_with_error` instead."]
   let unopt_with_error (type a) (opt: a option) (error: string) : a =
     value_with_error error opt
 
   (** display-only-for-cameligo
-    The call `Option.unopt opt ` terminates with the string
+    The call `Option.unopt opt` terminates with the string
     `"option is None"` if, and only if, `opt` is `None`; otherwise it is
     `Some v` and `v` is returned.*)
   (** display-only-for-jsligo
     The call `Option.unopt(opt)` terminates with the string
-    `"option is None"` if, and only if, `opt` is `None()`; otherwise it is
-    `Some(v)` and `v` is returned.*)
+    `"option is None"` if, and only if, `opt` is `["None" as "None"]`;
+    otherwise it is `["Some" as "Some", v]` and `v` is returned.*)
   [@inline] [@deprecated "Use `Option.value_with_error` instead."]
   let unopt (type a) (opt: a option) : a =
     value_with_error "option is None" opt
@@ -1090,8 +1054,9 @@ module Option = struct
     The call `Option.map f opt` is `None` if `opt` is `None`, and
     `Some (f v)` if `opt` is `Some v`. *)
   (** display-only-for-jsligo
-    The call `Option.map(f, opt)` is `None()` if `opt` is `None()`, and
-    `Some(f(v))` if `opt` is `Some(v)`. *)
+    The call `Option.map(f, opt)` is `["None" as "None"]` if `opt` is
+    `["None" as "None"]`, and `["Some" as "Some", f(v)]` if `opt` is
+    `["Some" as "Some", v]`. *)
   [@thunk]
   let map (type a b) (f: a -> b) (opt: a option) : b option =
     [%external ("OPTION_MAP", f, opt)]
@@ -1101,7 +1066,7 @@ module Option = struct
     `None`. *)
   (** display-only-for-jsligo
     The call `Option.is_none(opt)` is `true` if, and only if, `opt` is
-    `None()`. *)
+    `["None" as "None"]`. *)
   let is_none (type a) (opt: a option) : bool =
     match opt with
     | None -> true
@@ -1112,7 +1077,7 @@ module Option = struct
     `None`. *)
   (** display-only-for-jsligo
     The call `Option.is_some(opt)` is `false` if, and only if, `opt` is
-    `None()`. *)
+    `["None" as "None"]`. *)
   let is_some (type a) (opt: a option) : bool =
     match opt with
     | None -> false
@@ -1155,8 +1120,9 @@ module List = struct
     The call `List.head l`, where `l` is a list, is `None` if `l` is
     empty; otherwise, `Some hd`, where `hd` is the head of the list. *)
   (** display-only-for-jsligo
-    The call `List.head(l)`, where `l` is a list, is `None()` if `l` is
-    empty; otherwise, `Some(hd)`, where `hd` is the head of the list. *)
+    The call `List.head(l)`, where `l` is a list, is `["None" as "None"]`
+    if `l` is empty; otherwise, `["Some" as "Some", hd]`, where `hd`
+    is the head of the list. *)
   let head (type elt) (list: elt t) : elt option =
     match list with
     | [] -> None
@@ -1166,8 +1132,9 @@ module List = struct
     The call `List.head_opt l`, where `l` is a list, is `None` if `l` is
     empty; otherwise, `Some hd`, where `hd` is the head of the list. *)
   (** display-only-for-jsligo
-    The call `List.head_opt(l)`, where `l` is a list, is `None()` if `l` is
-    empty; otherwise, `Some(hd)`, where `hd` is the head of the list. *)
+    The call `List.head_opt(l)`, where `l` is a list, is `["None" as "None"]`
+    if `l` is empty; otherwise, `["Some" as "Some", hd]`, where `hd`
+    is the head of the list. *)
   [@inline] [@deprecated "Use `List.head` instead."]
   let head_opt (type elt) (list: elt t) : elt option = head list
 
@@ -1175,8 +1142,9 @@ module List = struct
     The call `List.tail l`, where `l` is a list, is `None` if `l` is
     empty; otherwise, `Some tl`, where `tl` is the tail of the list. *)
   (** display-only-for-jsligo
-    The call `List.tail(l)`, where `l` is a list, is `None()` if `l` is
-    empty; otherwise, `Some(tl)`, where `tl` is the tail of the list. *)
+    The call `List.tail(l)`, where `l` is a list, is `["None" as "None"]`
+    if `l` is empty; otherwise, `["Some" as "Some", tl]`, where `tl`
+    is the tail of the list. *)
   let tail (type elt) (list: elt t) : elt t option =
     match list with
     | [] -> None
@@ -1186,19 +1154,22 @@ module List = struct
     The call `List.tail_opt l`, where `l` is a list, is `None` if `l` is
     empty; otherwise, `Some tl`, where `tl` is the tail of the list. *)
   (** display-only-for-jsligo
-    The call `List.tail_opt(l)`, where `l` is a list, is `None()` if `l` is
-    empty; otherwise, `Some(tl)`, where `tl` is the tail of the list. *)
+    The call `List.tail_opt(l)`, where `l` is a list, is `["None" as "None"]`
+    if `l` is empty; otherwise, `["Some" as "Some", tl]`, where `tl`
+    is the tail of the list. *)
   [@inline] [@deprecated "Use `List.tail` instead."]
   let tail_opt (type elt) (list: elt t) : elt t option =
     tail list
 
   (** display-only-for-cameligo
-    The call `List.head_and_tail l`, where `l` is a list, is `None` if `l` is
-    empty; otherwise, `Some (hd, tl)`, where `hd` and `tl` are the head and tail of the
-    list, respectively. *)
+    The call `List.head_and_tail l`, where `l` is a list, is `None` if
+    `l` is empty; otherwise, `Some (hd, tl)`, where `hd` and `tl` are
+    the head and tail of the list, respectively. *)
   (** display-only-for-jsligo
-    The call `List.head_and_tail(l)`, where `l` is a list, is `["None" as "None"]` if `l` is
-    empty; otherwise, `["Some" as "Some", [hd,tl]]`, where `hd` and `tl` are the head and tail of the list, respectively. *)
+    The call `List.head_and_tail(l)`, where `l` is a list, is
+    `["None"  as "None"]` if `l` is empty; otherwise,
+    `["Some" as "Some", [hd,tl]]`, where `hd` and `tl` are the head and
+    tail of the list, respectively. *)
   let head_and_tail (type elt) (list: elt t) : (elt * elt t) option =
     match list with
     | [] -> None
@@ -1274,10 +1245,11 @@ module List = struct
     `Some e`, where `e` is the leftmost element in `list` that satisfies
     `pred`. The order of the calls of `pred` is not specified. *)
   (** display-only-for-jsligo
-    The call `List.find_opt(pred, list)` is `None()` if no element of the
-    list `list` satisfies the predicate `pred`; otherwise, it is
-    `Some(e)`, where `e` is the leftmost element in `list` that satisfies
-    `pred`. The order of the calls of `pred` is not specified. *)
+    The call `List.find_opt(pred, list)` is `["None" as "None"]` if no
+    element of the list `list` satisfies the predicate `pred`;
+    otherwise, it is `["Some" as "Some", e]`, where `e` is the
+    leftmost element in `list` that satisfies `pred`. The order of the
+    calls of `pred` is not specified. *)
   let find_opt
     (type elt) (pred: elt -> bool) (list: elt t) : elt option =
     let aux (elt, acc : elt * elt option) : elt option =
@@ -1290,10 +1262,10 @@ module List = struct
     `f` is called on all elements of `l`. The order of the calls of
     `f` is not specified. *)
   (** display-only-for-jsligo
-    The call `List.filter_map(f, l)` is the maximal sub-list of `l` such
-    that the call of function `f` on its elements is not `None()`. Note:
-    `f` is called on all elements of `l`. The order of the calls of
-    `f` is not specified. *)
+    The call `List.filter_map(f, l)` is the maximal sub-list of `l`
+    such that the call of function `f` on its elements is not
+    `["None" as "None"]`. Note: `f` is called on all elements of `l`.
+    The order of the calls of `f` is not specified. *)
   let filter_map
     (type src dst) (filter: src -> dst option) (list: src list) : dst list =
     let f (elt, acc : src * dst list) =
@@ -1306,8 +1278,9 @@ module List = struct
     The call `List.update f l` is the list `l` where the elements `e`
     such that `f e` is `Some v` have been replaced by `v`. *)
   (** display-only-for-jsligo
-    The call `List.update(f, l)` is the list `l` where the elements `e`
-    such that `f(e)` is `Some(v)` have been replaced by `v`. *)
+    The call `List.update(f, l)` is the list `l` where the elements
+    `e` such that `f(e)` is `["Some" as "Some", v]` have been replaced
+    by `v`. *)
   let update
     (type elt) (filter: elt -> elt option) (list: elt t) : elt t =
     let f elt =
@@ -1357,13 +1330,14 @@ module Map = struct
     there was already a value `v` bound to `key`, it is returned as
     `Some v`, otherwise `None`. *)
   (** display-only-for-jsligo
-    The call `Map.get_and_update(key, None(), map)` returns a copy of the
-    map `map` without the entry for the key `key` in `map` (no change
-    if the key is absent). The call `Map.get_and_update(key, Some(value),
-    map)` returns a copy of the map `map` where there is an entry for
-    the key `key` associated with the value `value`. In both cases, if
-    there was already a value `v` bound to `key`, it is returned as
-    `Some(v)`, otherwise `None()`. *)
+    The call `Map.get_and_update(key, ["None" as "None"], map)`
+    returns a copy of the map `map` without the entry for the key
+    `key` in `map` (no change if the key is absent). The call
+    `Map.get_and_update(key, ["Some" as "Some", value], map)` returns
+    a copy of the map `map` where there is an entry for the key `key`
+    associated with the value `value`. In both cases, if there was
+    already a value `v` bound to `key`, it is returned as
+    `["Some" as "Some", v]`, otherwise `["None" as "None"]`. *)
   let get_and_update
     (type key value) (key: key) (upd: value option) (map: (key, value) t)
     : value option * (key, value) t =
@@ -1377,9 +1351,10 @@ module Map = struct
     the value `value`. In both cases, the value originally bound to
     `key` is lost. See `Map.get_and_update`. *)
   (** display-only-for-jsligo
-    The call `Map.update(key, None(), map)` returns a copy of the map `map`
-    without the entry for the key `key` in `map` (no change if the key
-    is absent). The call `Map.update(key, Some(value), map)` returns the map
+    The call `Map.update(key, ["None" as "None"], map)` returns a copy
+    of the map `map` without the entry for the key `key` in `map` (no
+    change if the key is absent). The call
+    `Map.update(key, ["Some" as "Some", value], map)` returns the map
     `map` where there is an entry for the key `key` associated with
     the value `value`. In both cases, the value originally bound to
     `key` is lost. See `Map.get_and_update`. *)
@@ -1462,9 +1437,11 @@ module Map = struct
     present in the map `map`; otherwise, it is `Some v`, where `v` is
     the value associated to `key` in `map`. *)
   (** display-only-for-jsligo
-    The call `Map.find_opt(key, map)` returns `None()` if the key `key` is
-    present in the map `map`; otherwise, it is `Some(v)`, where `v` is
-    the value associated to `key` in `map`. *)
+
+    The call `Map.find_opt(key, map)` returns `["None" as "None"]` if
+    the key `key` is present in the map `map`; otherwise, it is
+    `["Some" as "Some", v]`, where `v` is the value associated to
+    `key` in `map`. *)
   let find_opt (type key value) (key: key) (map: (key, value) t)
     : value option =
     [%external ("MAP_FIND_OPT", key, map)]
@@ -1572,14 +1549,14 @@ module Big_map = struct
       already a value `v` bound to `key`, it is returned as `Some v`,
       otherwise `None`. *)
   (** display-only-for-jsligo
-      The call `Big_map.get_and_update(key, None(), map)` returns a
-      copy of the big map `map` without the entry for the key `key` in
-      `map` (no change if the key is absent). The call
-      `Big_map.get_and_update(key, Some(value), map)` returns a copy
-      of the big map `map` where there is an entry for the key `key`
-      associated with the value `value`. In both cases, if there was
-      already a value `v` bound to `key`, it is returned as `Some(v)`,
-      otherwise `None()`. *)
+      The call `Big_map.get_and_update(key, ["None" as "None"], map)`
+      returns a copy of the big map `map` without the entry for the
+      key `key` in `map` (no change if the key is absent). The call
+      `Big_map.get_and_update(key, ["Some" as "Some", value], map)`
+      returns a copy of the big map `map` where there is an entry for
+      the key `key` associated with the value `value`. In both cases,
+      if there was already a value `v` bound to `key`, it is returned
+      as `["Some" as "Some", v]`, otherwise `["None" as "None"]`. *)
   let get_and_update
     (type key value) (key: key) (upd: value option) (map: (key, value) t)
     : value option * (key, value) t =
@@ -1594,12 +1571,13 @@ module Big_map = struct
       cases, the value originally bound to `key` is lost. See
       `Big_map.get_and_update`. *)
   (** display-only-for-jsligo
-      The call `Big_map.update(key, None(), map)` returns a copy of
-      the big map `map` without the entry for the key `key` in `map`
-      (no change if the key is absent). The call `Big_map.update(key,
-      Some(value), map)` returns the big map `map` where there is an
-      entry for the key `key` associated with the value `value`. In
-      both cases, the value originally bound to `key` is lost. See
+      The call `Big_map.update(key, ["None" as "None"], map)` returns
+      a copy of the big map `map` without the entry for the key `key`
+      in `map` (no change if the key is absent). The call
+      `Big_map.update(key, ["Some" as "Some", value], map)` returns
+      the big map `map` where there is an entry for the key `key`
+      associated with the value `value`. In both cases, the value
+      originally bound to `key` is lost. See
       `Big_map.get_and_update`. *)
   let update
     (type key value) (key: key) (upd: value option) (map: (key, value) t)
@@ -1674,9 +1652,10 @@ module Big_map = struct
       `key` is present in the big map `map`; otherwise, it is `Some v`,
       where `v` is the value associated to `key` in `map`. *)
   (** display-only-for-jsligo
-      The call `Big_map.find_opt(key, map)` returns `None()` if the
-      key `key` is present in the big map `map`; otherwise, it is
-      `Some(v)`, where `v` is the value associated to `key` in `map`. *)
+      The call `Big_map.find_opt(key, map)` returns `["None" as "None"]`
+      if the key `key` is present in the big map `map`; otherwise, it
+      is `["Some" as "Some", v]`, where `v` is the value associated to
+      `key` in `map`. *)
   let find_opt (type key value) (key: key) (map: (key, value) t)
     : value option =
     [%external ("MAP_FIND_OPT", key, map)]
@@ -1719,12 +1698,13 @@ module Set = struct
 
   (** display-only-for-cameligo
     The call `Set.update elt true set` is a copy of the set `set`
-    containing the element `elt`. The call `Set.update elt false set` is a
-    copy of the set `set` where the element `elt` is absent. *)
+    containing the element `elt`. The call `Set.update elt false set`
+    is a copy of the set `set` where the element `elt` is absent. *)
   (** display-only-for-jsligo
+
     The call `Set.update(elt, true, set)` is a copy of the set `set`
-    containing the element `elt`. The call `Set.update(elt, false, set)` is a
-    copy of the set `set` where the element `elt` is absent. *)
+    containing the element `elt`. The call `Set.update(elt, false, set)`
+    is a copy of the set `set` where the element `elt` is absent. *)
   let update (type elt) (elt: elt) (add: bool) (set: elt t) : elt t =
     [%external ("SET_UPDATE", elt, add, set)]
 
@@ -1828,10 +1808,10 @@ module Set = struct
     the element is skipped in the result, otherwise, if it is
     `Some e`, then `e` is kept. *)
   (** display-only-for-jsligo
-    The call `Set.filter_map(f, set)` is a set made by calling `f` (the
-    filter) on each element of the set `set`: if `f` returns `None()`,
-    the element is skipped in the result, otherwise, if it is
-    `Some(e)`, then `e` is kept. *)
+    The call `Set.filter_map(f, set)` is a set made by calling `f`
+    (the filter) on each element of the set `set`: if `f` returns
+    `["None" as "None"]`, the element is skipped in the result,
+    otherwise, if it is `["Some" as "Some", e]`, then `e` is kept. *)
   let filter_map
     (type old new) (filter: old -> new option) (set: old t) : new t =
     let f (old, set) =
@@ -1882,8 +1862,8 @@ module Big_set = struct
 
   (** display-only-for-cameligo
     The call `Big_set.update elt true set` is a copy of the big set `set`
-    containing the element `elt`. The call `Big_set.update elt false set` is a
-    copy of the big set `set` where the element `elt` is absent. *)
+    containing the element `elt`. The call `Big_set.update elt false set`
+    is a copy of the big set `set` where the element `elt` is absent. *)
   (** display-only-for-jsligo
     The call `Big_set.update(elt, true, set)` is a copy of the big set `set`
     containing the element `elt`. The call `Big_set.update(elt, false, set)`
@@ -2104,9 +2084,9 @@ module Bytes = struct
     The call `Bytes.unpack bytes` is `Some v` if the sequence of bytes
     `bytes` decodes into a valid LIGO value `v`; otherwise `None`. *)
   (** display-only-for-jsligo
-    The call `Bytes.unpack(bytes)` is `Some(v)` if the sequence of bytes
-    `bytes` decodes into a valid LIGO value `v`; otherwise
-    `None()`. *)
+    The call `Bytes.unpack(bytes)` is `["Some" as "Some", v]` if the
+    sequence of bytes `bytes` decodes into a valid LIGO value `v`;
+    otherwise `["None" as "None"]`. *)
   let unpack (type a) (bytes: bytes) : a option =
     [%michelson ({| {UNPACK (typeopt $0)} |} (None : a option) bytes
                  : a option)]
@@ -2201,12 +2181,13 @@ module Dynamic_entrypoints = struct
       `dyn_map` where the dynamic entrypoint `dyn` is associated to the static
       entrypoint `entrypoint`. *)
   (** display-only-for-jsligo
-      The call `Dynamic_entrypoints.set(dyn, None(), dyn_map)` returns a copy
-      of the map of dynamic entrypoints `dyn_map` where the dynamic entrypoint
-      `dyn` is not associated to a static entrypoint. The call
-      `Dynamic_entrypoints.set(dyn, Some(entrypoint), dyn_map)` is a copy of
-      `dyn_map` where the  dynamic entrypoint `dyn` is associated to the static
-      entrypoint `entrypoint`. *)
+      The call `Dynamic_entrypoints.set(dyn, ["None" as "None"], dyn_map)`
+      returns a copy of the map of dynamic entrypoints
+      `dyn_map` where the dynamic entrypoint `dyn` is not associated
+      to a static entrypoint. The call
+      `Dynamic_entrypoints.set(dyn, ["Some" as "Some", entrypoint], dyn_map)`
+      is a copy of `dyn_map` where the dynamic entrypoint `dyn` is associated
+      to the static entrypoint `entrypoint`. *)
   let set
     (type param storage)
     (dyn: (param, storage) dynamic_entrypoint)
@@ -2225,13 +2206,15 @@ module Dynamic_entrypoints = struct
       entrypoint encoded by the sequence of bytes `bytes`. If that sequence is
       invalid, any call to the dynamic entrypoint will fail. *)
   (** display-only-for-jsligo
-      The call `Dynamic_entrypoints.set_bytes(dyn, None(), dyn_map)` returns a
-      copy of the map of dynamic entrypoints `dyn_map` where the dynamic
-      entrypoint `dyn` is not associated to a static entrypoint. The
-      call `Dynamic_entrypoints.set_bytes(dyn, Some(bytes), dyn_map)` is a copy
-      of `dyn_map` where the dynamic entrypoint `dyn` is associated to the static
-      entrypoint encoded by the sequence of bytes `bytes`. If that sequence is
-      invalid, any call to the dynamic entrypoint will fail. *)
+      The call `Dynamic_entrypoints.set_bytes(dyn, ["None" as "None"], dyn_map)`
+      returns a copy of the map of dynamic entrypoints
+      `dyn_map` where the dynamic entrypoint `dyn` is not associated
+      to a static entrypoint. The call
+      `Dynamic_entrypoints.set_bytes(dyn, ["Some" as "Some", bytes], dyn_map)`
+      is a copy of `dyn_map` where the dynamic entrypoint
+      `dyn` is associated to the static entrypoint encoded by the
+      sequence of bytes `bytes`. If that sequence is invalid, any call
+      to the dynamic entrypoint will fail. *)
   let set_bytes
     (type param storage)
     (dyn: (param, storage) dynamic_entrypoint)
@@ -2247,10 +2230,11 @@ module Dynamic_entrypoints = struct
       static entrypoint that is callable (like a function). See type
       `entrypoint`. *)
   (** display-only-for-jsligo
-      The call `Dynamic_entrypoints.get(dyn, dyn_map)` is `None()` if the dynamic
-      entrypoint `dyn` is absent from the dynamic entrypoints map
-      `dyn_map`. Otherwise, it is `Some(entry)`, where `entry` is a
-      static entrypoint that is callable (like a function). See type
+      The call `Dynamic_entrypoints.get(dyn, dyn_map)` is
+      `["None" as "None"]` if the dynamic entrypoint `dyn` is absent
+      from the dynamic entrypoints map `dyn_map`. Otherwise, it is
+      `["Some" as "Some", entry]`, where `entry` is a static
+      entrypoint that is callable (like a function). See type
       `entrypoint`. *)
   let get
     (type param storage)
@@ -2949,10 +2933,10 @@ module Test = struct
     The failure is handled by LIGO's testing framework and
     not by Michelson's interpreter. *)
   (** display-only-for-jsligo
-    The call `assert_some(opt)` terminates the execution with the
-    string `"failed assert some"` if, and only if, `opt` is `None()`.
-    The failure is handled by LIGO's testing framework and
-    not by Michelson's interpreter. *)
+      The call `assert_some(opt)` terminates the execution with the
+      string `"failed assert some"` if, and only if, `opt` is
+      `["None" as "None"]`. The failure is handled by LIGO's testing framework
+      and not by Michelson's interpreter. *)
   [@deprecated "In a future version, `Test` will be replaced by `Test.Next`, and using `Assert.some` from `Test.Next` is encouraged for a smoother migration."]
   let assert_some (type a) (v : a option) : unit =
     match v with | None -> failwith "failed assert some" | Some _ -> ()
@@ -2963,10 +2947,10 @@ module Test = struct
     The failure is handled by LIGO's testing framework and
     not by Michelson's interpreter. *)
   (** display-only-for-jsligo
-    The call `assert_none(opt)` terminates the execution with the string
-    `"failed assert none"` if, and only if, `opt` is not `None()`.
-    The failure is handled by LIGO's testing framework and
-    not by Michelson's interpreter. *)
+    The call `assert_none(opt)` terminates the execution with the
+    string `"failed assert none"` if, and only if, `opt` is not
+    `["None" as "None"]`.  The failure is handled by LIGO's testing
+    framework and not by Michelson's interpreter. *)
   [@deprecated "In a future version, `Test` will be replaced by `Test.Next`, and using `Assert.none` from `Test.Next` is encouraged for a smoother migration."]
   let assert_none (type a) (v : a option) : unit =
     match v with | None -> () | Some _ -> failwith "failed assert none"
@@ -2992,8 +2976,8 @@ module Test = struct
   (** display-only-for-jsligo
     The call `assert_some_with_error(opt, err)` terminates the
     execution with the string `err` (that is, an error message) if,
-    and only if, `opt` is `None()`. The failure is handled by LIGO's
-    testing framework and not by Michelson's interpreter. *)
+    and only if, `opt` is `["None" as "None"]`. The failure is handled
+    by LIGO's testing framework and not by Michelson's interpreter. *)
   [@deprecated "In a future version, `Test` will be replaced by `Test.Next`, and using `Assert.Error.some` from `Test.Next` is encouraged for a smoother migration."]
   let assert_some_with_error (type a) (v : a option) (s : string) : unit =
     match v with | None -> failwith s | Some _ -> ()
@@ -3007,16 +2991,18 @@ module Test = struct
   (** display-only-for-jsligo
     The call `assert_none_with_error(opt, err)` terminates the
     execution with the string `err` (that is, an error message) if,
-    and only if, `opt` is an optional value different from
-    `None()`. The failure is handled by LIGO's testing framework and
-    not by Michelson's interpreter. *)
+    and only if, `opt` is an optional value different from `["None" as "None"]`.
+    The failure is handled by LIGO's testing framework and not by Michelson's
+    interpreter. *)
   [@deprecated "In a future version, `Test` will be replaced by `Test.Next`, and using `Assert.Error.none` from `Test.Next` is encouraged for a smoother migration."]
   let assert_none_with_error (type a) (v : a option) (s : string) : unit =
     match v with | None -> () | Some _ -> failwith s
 
   (* Comparisons *)
 
-  [@private] let compare (type a) (lhs : a) (rhs : a) : int = [%external ("TEST_COMPARE", lhs, rhs)]
+  [@private]
+  let compare (type a) (lhs : a) (rhs : a) : int =
+    [%external ("TEST_COMPARE", lhs, rhs)]
 
   (** display-only-for-cameligo
     The call `equal x y` returns `true` if, and only if, `x` and `y`
@@ -3494,10 +3480,10 @@ module Test = struct
         The failure is handled by LIGO's testing framework and
         not by Michelson's interpreter. *)
       (** display-only-for-jsligo
-        The call `some(opt)` terminates the execution with the
-        string `"failed assert some"` if, and only if, `opt` is `None()`.
-        The failure is handled by LIGO's testing framework and
-        not by Michelson's interpreter. *)
+        The call `some(opt)` terminates the execution with the string
+        `"failed assert some"` if, and only if, `opt` is `["None" as "None"]`.
+        The failure is handled by LIGO's testing framework
+        and not by Michelson's interpreter. *)
       let some = assert_some
 
       (** display-only-for-cameligo
@@ -3507,9 +3493,9 @@ module Test = struct
         not by Michelson's interpreter. *)
       (** display-only-for-jsligo
         The call `none(opt)` terminates the execution with the string
-        `"failed assert none"` if, and only if, `opt` is not `None()`.
-        The failure is handled by LIGO's testing framework and
-        not by Michelson's interpreter. *)
+        `"failed assert none"` if, and only if, `opt` is not
+        `["None" as "None"]`.  The failure is handled by LIGO's testing
+        framework and not by Michelson's interpreter. *)
       let none = assert_none
 
       module Error = struct
@@ -3531,10 +3517,11 @@ module Test = struct
           `opt` is `None`. The failure is handled by LIGO's testing
           framework and not by Michelson's interpreter. *)
         (** display-only-for-jsligo
-          The call `some(opt, err)` terminates the
-          execution with the string `err` (that is, an error message) if,
-          and only if, `opt` is `None()`. The failure is handled by LIGO's
-          testing framework and not by Michelson's interpreter. *)
+          The call `some(opt, err)` terminates the execution with the
+          string `err` (that is, an error message) if, and only if,
+          `opt` is `["None" as "None"]`. The failure is handled by
+          LIGO's testing framework and not by Michelson's
+          interpreter. *)
         let some = assert_some_with_error
 
         (** display-only-for-cameligo
@@ -3544,11 +3531,11 @@ module Test = struct
           handled by LIGO's testing framework and not by Michelson's
           interpreter. *)
         (** display-only-for-jsligo
-          The call `none(opt, err)` terminates the
-          execution with the string `err` (that is, an error message) if,
-          and only if, `opt` is an optional value different from
-          `None()`. The failure is handled by LIGO's testing framework and
-          not by Michelson's interpreter. *)
+          The call `none(opt, err)` terminates the execution with the
+          string `err` (that is, an error message) if, and only if,
+          `opt` is an optional value different from `["None" as "None"]`.
+          The failure is handled by LIGO's testing framework and not
+          by Michelson's interpreter. *)
         let none = assert_none_with_error
       end
     end
@@ -3738,8 +3725,8 @@ module Test = struct
                   if Toplevel.String.sub 0n 1n s = "%" then
                     let () = IO.eprintln "WARNING: get_entrypoint: automatically removing starting %" in
                     Toplevel.String.sub 1n (abs (Toplevel.String.length s - 1)) s
-	                else s
-	              else s in
+                 else s
+               else s in
         [%external ("TEST_TO_ENTRYPOINT", s, t)]
     end
     module Address = struct

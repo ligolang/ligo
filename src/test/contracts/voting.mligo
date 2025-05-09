@@ -1,3 +1,5 @@
+module Tezos = Tezos.Next
+
 [@entry]
 let main (p : key) (_s : nat * nat) : operation list * (nat * nat) =
   let x = Tezos.voting_power (Crypto.hash_key p) in
