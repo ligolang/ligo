@@ -174,11 +174,10 @@ See [`#import`](../compiling/preprocessor#import).
 
 ## Importing namespaces
 
-You can import namespaces and other definitions from the same file or other files with the `import` keyword in three ways:
+You can import namespaces from the same file or other files with the `import` keyword in these ways:
 
 - `import M = M.O`
 - `import * as M from "./targetFile.jsligo"`
-- `import {x, y} from "./targetFile.jsligo"`
 
 For example, assume that this file is `myFunctions.jsligo`:
 
