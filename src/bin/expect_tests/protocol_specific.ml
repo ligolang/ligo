@@ -7,15 +7,6 @@ let%expect_test _ =
   run_ligo_good [ "compile"; "contract"; contract "protocol_dalphanet.mligo" ];
   [%expect
     {|
-    File "../../test/contracts/protocol_dalphanet.mligo", line 18, characters 22-23:
-     17 | [@entry]
-     18 | let main (p : bls_l) (s : bool) : operation list * bool =
-                                ^
-     19 |   (([] : operation list), Tezos.pairing_check p)
-    :
-    Warning: unused variable "s".
-    Hint: replace it by "_s" to prevent this warning.
-
     { parameter (list (pair bls12_381_g1 bls12_381_g2)) ;
       storage bool ;
       code { CAR ; PAIRING_CHECK ; NIL operation ; PAIR } } |}]

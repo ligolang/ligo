@@ -1,7 +1,7 @@
+module Tezos = Tezos.Next
+
 type storage = int * (int -> int)
-
 type parameter = int -> int
-
 type return = operation list * storage
 
 let i =
@@ -12,4 +12,4 @@ let s = (1, i)
 
 [@entry]
 let main (f : parameter) ((k, g) : storage) : return =
-  ([] : operation list), (g k, f)
+  [], (g k, f)
