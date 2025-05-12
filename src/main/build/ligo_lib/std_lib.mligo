@@ -280,39 +280,6 @@ let ediv (type a b) (left: a) (right: b) : (a, b) external_ediv =
 
 (** Tezos-specific functions *)
 module Tezos = struct
-  (* Miscellanea *)
-
-  (** display-only-for-cameligo
-    The call `Tezos.pairing_check pairings` verifies that the product of
-    pairings of the given list of points `pairings` is equal to 1 in
-    the field Fq12. It evaluates in `true` if the list is empty. This
-    function can be used to verify if two pairings P1 and P2 are equal
-    by verifying P1 * P2^(-1) = 1. *)
-  (** display-only-for-jsligo
-    The call `Tezos.pairing_check(pairings)` verifies that the product of
-    pairings of the given list of points `pairings` is equal to 1 in
-    the field Fq12. It evaluates in `true` if the list is empty. This
-    function can be used to verify if two pairings P1 and P2 are equal
-    by verifying P1 * P2^(-1) = 1. *)
-  let pairing_check (list: (bls12_381_g1 * bls12_381_g2) list) : bool =
-    [%michelson ({| {PAIRING_CHECK} |} list : bool)]
-
-  (** display-only-for-cameligo
-    The call to `Tezos.constant hash` returns the value stored on-chain
-    whose hash value is `hash` (global constants). This call can fail
-    when the contract is originated if the hash is invalid or the
-    expansion of the global constant is ill-typed, or too large (gas
-    consumption). *)
-  (** display-only-for-cameligo
-    The call to `Tezos.constant(hash)` returns the value stored on-chain
-    whose hash value is `hash` (global constants). This call can fail
-    when the contract is originated if the hash is invalid or the
-    expansion of the global constant is ill-typed, or too large (gas
-    consumption). *)
-  [@inline] [@thunk]
-  let constant (type a) (hash: string) : a =
-    [%external ("GLOBAL_CONSTANT", hash)]
-
   module Next = struct
     (* Views *)
 
