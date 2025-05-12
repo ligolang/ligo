@@ -1,3 +1,0 @@
-const name = "Alice";
-const greeting = "Hello";
-const full_greeting = greeting + " " + name;
