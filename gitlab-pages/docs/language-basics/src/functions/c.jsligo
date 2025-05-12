@@ -1,3 +1,0 @@
-const increment = (b) => ((a) => a + 1) (b);
-const a = increment(1); // a == 2
-let incr_map = l => List.map(i => i + 1, l);
