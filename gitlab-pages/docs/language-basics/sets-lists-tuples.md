@@ -43,7 +43,7 @@ Like records, tuple components can be of arbitrary types.
 
 ### Defining Tuples
 
-Unlike [a record](maps-records.md), tuple types do not
+Unlike a record, tuple types do not
 have to be defined before they can be used. However below we will give
 them names by *type aliasing*.
 
