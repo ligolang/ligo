@@ -256,21 +256,83 @@ It supports three syntaxes for importing definitions from other files and namesp
 - `import * as M from "./targetFile.jsligo"`
 - `import {x, y} from "./targetFile.jsligo"`
 
-However, you cannot import types as in this TypeScript syntax:
+In most cases, to import definitions from other files, use the syntax `import * as M from "./targetFile.jsligo"` to import everything in a file and then create local definitions from that imported file.
+
+For example, assume that this file is `myFunctions.jsligo`:
+
+```jsligo group=myFunctions
+export namespace MyFunctions {
+  export const addToImport = (a: int, b: int): int => a + b;
+  export const subToImport = (a: int, b: int): int => a - b;
+}
+```
+
+You can import the file and access the namespace like this:
+
+```jsligo group=useMyFunctions
+import * as MyFileWithFunctions from './gitlab-pages/docs/intro/src/upgrade-v2/myFunctions.jsligo';
+const addToImport = MyFileWithFunctions.MyFunctions.addToImport;
+const subToImport = MyFileWithFunctions.MyFunctions.subToImport;
+
+namespace Counter {
+  type storage_type = int;
+  type return_type = [list<operation>, storage_type];
+
+  // @entry
+  const add = (value: int, storage: storage_type): return_type =>
+    [[], addToImport(storage, value)];
+
+  // @entry
+  const sub = (value: int, storage: storage_type): return_type =>
+    [[], subToImport(storage, value)];
+
+}
+```
+
+If variables or functions are defined at the top level of the file, you can import them directly with the syntax `import {x, y} from "./targetFile.jsligo"`.
+You cannot import types, classes, or namespaces with this syntax.
+
+For example, assume that this file is `topLevelDefinitions.jsligo`:
+
+```jsligo group=topLevelDefinitions
+export const addToImport = (a: int, b: int): int => a + b;
+export const subToImport = (a: int, b: int): int => a - b;
+export const myConstant = 5 as int;
+```
+
+You can import and use those definitions as in this example:
+
+```jsligo group=useTopLevelDefinitions
+import { addToImport, subToImport, myConstant } from "./gitlab-pages/docs/intro/src/upgrade-v2/topLevelDefinitions.jsligo";
+
+type storage_type = int;
+type return_type = [list<operation>, storage_type];
+
+class Calculator {
+
+  @entry
+  add = (value: int, storage: storage_type): return_type =>
+    [[], addToImport(storage, value)];
+
+  @entry
+  sub = (value: int, storage: storage_type): return_type =>
+    [[], subToImport(storage, value)];
+
+  @entry
+  increment = (_: unit, storage: storage_type): return_type =>
+    [[], addToImport(storage, myConstant)];
+
+}
+```
+
+You cannot import types as in this TypeScript syntax:
 
 ```jsligo skip
 // Not allowed
 import { type x } from "./myTypes.jsligo";
 ```
 
-Instead, import the file and bind a type locally, as in this example:
-
-```jsligo skip
-import * as myTypes from "./myTypes.jsligo";
-type storage_type = myTypes.storage_type;
-type return_type = myTypes.return_type;
-```
-
+Instead, import the file and bind a type locally.
 For example, assume that this file is `myTypes.jsligo`:
 
 ```jsligo group=myTypes
