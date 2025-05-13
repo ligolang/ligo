@@ -35,16 +35,13 @@ const zero_too = 0x00;
 
 </Syntax>
 
-Clearly, this means that literal bytes are always comprised of an even
-number of hexadecimal digits (because one hexadecimal digit requires
-up to four bits in binary, and eight are needed to make up a byte).
+This means that literal bytes are always comprised of an even number of hexadecimal digits, because one hexadecimal digit requires up to four bits in binary, and eight are needed to make up a byte.
 
 ## From numbers to bytes and back
 
-Some other numerals can be converted to bytes by means of calling the
-predefined function `bytes`, which is overloaded. The reverse
-conversion is done by the predefined functions `int` and `nat`. For
-instance, here how to create bytes from natural numbers and integers:
+You can convert some other numerals to bytes by calling the predefined function `bytes`.
+To convert ints or nats to bytes, use the predefined functions `int` and `nat`.
+For example, here is how to create bytes from natural numbers and integers:
 
 <Syntax syntax="cameligo">
 
@@ -72,21 +69,16 @@ const i: int = int(0x7B); // i == 123
 
 </Syntax>
 
-> Note: See
-> [Two's complement](https://en.wikipedia.org/wiki/Two's_complement).
+Note: See [Two's complement](https://en.wikipedia.org/wiki/Two's_complement).
 
 ## From strings
 
-A string literal can be converted to bytes in two ways:
+You can convert a string literal to bytes in two ways:
 
-  1. by interpreting the [ASCII](https://en.wikipedia.org/wiki/ASCII)
-code of each character (which spans over two hexadecimal digits) as
-one byte;
-  2. by interpreting directly each character as one hexadecimal digit.
+- By interpreting the [ASCII](https://en.wikipedia.org/wiki/ASCII) code of each character (which spans over two hexadecimal digits) as one byte
+- By interpreting directly each character as one hexadecimal digit
 
-
-In the former case, the syntax is somewhat odd -- as opposed to simply
-calling the function `bytes`:
+To interpret the ASCII code, use this syntax:
 
 <Syntax syntax="cameligo">
 
@@ -104,7 +96,7 @@ const from_ascii: bytes = bytes`foo`; // Not a function call
 
 </Syntax>
 
-The latter case is implemented as a type cast:
+To interpret each character directly, use a type cast:
 
 <Syntax syntax="cameligo">
 
@@ -113,12 +105,13 @@ The latter case is implemented as a type cast:
 let raw : bytes = ("666f6f" : bytes)
 ```
 
-> Note that both the `[%bytes ...]` and `(... : bytes)` syntaxes apply
-> only to *string literals*, not general expressions of type
-> `string`. In other words, the contents of the strings must be
-> available in-place at compile-time. (This actually reveals that
-> `("666f6f" : bytes)` is not really a cast, as casts are
-> non-operations.)
+:::note
+
+Both cases apply only to string literals, not variables or other expressions of type `string`.
+In other words, the contents of the strings must be available in-place at compile time.
+(This reveals that `("666f6f" : bytes)` is not really a cast, because casts are non-operations.)
+
+:::
 
 </Syntax>
 
@@ -129,11 +122,13 @@ let raw : bytes = ("666f6f" : bytes)
 const raw: bytes = ("666f6f" as bytes);
 ```
 
-> Note that both syntaxes apply respectively only to *verbatim* string
-> literals and general strings, not general expressions of type
-> `string`. In other words, the contents of the strings must be
-> available at compile-time. (This actually reveals that `("666f6f" as
-> bytes)` is not really a cast, as casts are non-operations.)
+:::note
+
+Both cases apply only to string literals, not variables or other expressions of type `string`.
+In other words, the contents of the strings must be available in-place at compile time.
+(This reveals that `("666f6f" as bytes)` is not really a cast, because casts are non-operations.)
+
+:::
 
 </Syntax>
 
@@ -182,10 +177,10 @@ const len: nat = Bytes.length(0x0AFF); // len == (2 as nat)
 
 ## Slicing
 
-Bytes can be extracted using the predefined function `Bytes.sub`. The
-first parameter is the start index and the second is the number of
-bytes of the slice we want. Keep in mind that the first byte in a
-sequence has index `0n`.
+You can extract a subset from bytes with the `Bytes.sub` function.
+It accepts a nat for the index of the start of the subset and a nat for the number of bytes in the subset.
+Both numbers are inclusive.
+The first byte has the index 0.
 
 <Syntax syntax="cameligo">
 
@@ -253,18 +248,16 @@ const shift_right: bytes = 0x0006 >> (1 as nat); // 0x0003
 
 ## Packing and unpacking
 
-As Michelson provides the instructions `PACK` and `UNPACK` for data
-serialisation, so does LIGO with `Bytes.pack` and `Bytes.unpack`.  The
-former serialises Michelson data structures into a binary format, and
-the latter reverses that transformation. Unpacking may fail, so the
-return type of `Byte.unpack` is an option that needs to be annotated.
+LIGO provides the functions `Bytes.pack` and `Bytes.unpack` to serialize and deserialize data into a binary format.
+These functions correspond to the Michelson instructions `PACK` and `UNPACK`.
+Unpacking may fail, so the return type of `Byte.unpack` is an option that needs a type annotation.
 
-> Note: `PACK` and `UNPACK` are Michelson instructions that are
-> intended to be used by people that really know what they are
-> doing. There are several risks and failure cases, such as unpacking
-> a lambda from an untrusted source or casting the result to the wrong
-> type. Be careful.
+:::note
 
+These functions are intended for use by developers who are familiar with data serialization.
+There are several risks and failure cases, such as unpacking a lambda from an untrusted source or casting the result to the wrong type.
+
+:::
 
 <Syntax syntax="cameligo">
 
