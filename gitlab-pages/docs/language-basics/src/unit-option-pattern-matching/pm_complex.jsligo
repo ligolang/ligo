@@ -1,8 +1,0 @@
-type complex_t = { a: option<list<int>>; b: list<int> }
-
-type hack = | ["Hack", complex_t, complex_t];
-
-const complex = (x: complex_t, y: complex_t) =>
-  $match (["Hack" as "Hack", [x,y]], {
-    "Hack": ([{a:_al, b:_bl}, {a:_ar, b:_br}]) => -1
-  })

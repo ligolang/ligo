@@ -1,3 +1,0 @@
-type coin = ["Head"] | ["Tail"];
-const head: coin = ["Head" as "Head"];
-const tail: coin = ["Tail" as "Tail"];

@@ -1,5 +1,0 @@
-const weird_length = (v : list<int>) : int =>
-  $match(List.head_and_tail(v), {
-    "None": () => -1,
-    "Some": ([hd, tl]) => 1 + int(List.length(tl))
-  });
