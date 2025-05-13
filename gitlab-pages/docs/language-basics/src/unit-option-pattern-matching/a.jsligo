@@ -1,3 +1,0 @@
-const u1 : unit = [];
-const u2 : unit = unit;
-const eq = (u1 == u2); // true

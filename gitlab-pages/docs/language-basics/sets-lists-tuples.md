@@ -133,7 +133,7 @@ function destruct_record (x : { a : int , b : string }) : int {
 ### Accessing Components
 
 Accessing the components of a tuple in OCaml is achieved by
-[pattern matching](unit-option-pattern-matching.md). LIGO
+[pattern matching](../data-types/variants#matching). LIGO
 currently supports tuple patterns only in the parameters of functions,
 not in pattern matching. However, we can access components by their
 position in their tuple, which cannot be done in OCaml. *Tuple
@@ -245,8 +245,7 @@ const tail: option<list<int>> = List.tail_opt(my_list); // [2,2]
 
 </Syntax>
 
-However, the canonical way to destructure lists is using [pattern
-matching](unit-option-pattern-matching.md#matching-lists).
+However, the canonical way to destructure lists is using [pattern matching](../data-types/variants#matching).
 
 ### Functional Iteration over Lists
 
