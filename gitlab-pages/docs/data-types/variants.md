@@ -130,9 +130,6 @@ let div (a, b : nat * nat) : nat option =
   if b = 0n then None else Some (a/b)
 ```
 
-Note: See the predefined
-[module Option](../reference/option-reference/?lang=cameligo)
-
 </Syntax>
 
 <Syntax syntax="jsligo">
@@ -144,8 +141,22 @@ function div (a: nat, b: nat): option<nat> {
 };
 ```
 
-Note: See the predefined
-[namespace Option](../reference/option-reference/?lang=jsligo)
+</Syntax>
+
+As a shortcut to dealing with options, you can use the function `Option.value_with_error` to assume that an option is `Some` and retrieve the value.
+If the option is `None`, the function throws an error.
+
+However, the best way to deal with option types is by pattern matching, as described in the next section, because it allows you to handle both cases explicitly.
+
+<Syntax syntax="cameligo">
+
+For more functions that deal with option types, see the predefined [module Option](../reference/option-reference/?lang=cameligo).
+
+</Syntax>
+
+<Syntax syntax="jsligo">
+
+For more functions that deal with option types, see the predefined [namespace Option](../reference/option-reference/?lang=jsligo).
 
 </Syntax>
 

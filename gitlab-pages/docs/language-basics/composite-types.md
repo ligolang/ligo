@@ -70,7 +70,7 @@ const my_ledger : ledger =
 </Syntax>
 
 Complementary to objects are the *variant types*, which are described in the
-section on [pattern matching](../language-basics/unit-option-pattern-matching#variant-types).
+section on [pattern matching](../data-types/variants#matching).
 Objects are a product of types, while variant types are sums of types.
 
 <!-- updated use of entry -->
