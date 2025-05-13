@@ -1,5 +1,6 @@
 // Bitwise and (first operand can be int or nat)
 let four : nat = 4n land 4n // 4
+// Other bitwise operations require two nats
 let four_ : nat = 7 land 4n // 4
 // Bitwise or
 let seven : nat = 7n lor 4n // 7
