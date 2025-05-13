@@ -1,5 +1,3 @@
-import Tezos = Tezos.Next;
-
 namespace MyContract {
   type storage = int;
   export type param = [int, ticket<int>];

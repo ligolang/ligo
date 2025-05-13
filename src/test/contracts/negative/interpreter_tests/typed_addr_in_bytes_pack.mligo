@@ -1,4 +1,3 @@
-module Tezos = Tezos.Next
 module Test = Test.Next
 
 let originate_record () =

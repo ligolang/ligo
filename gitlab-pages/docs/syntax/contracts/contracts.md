@@ -110,7 +110,6 @@ For example, it's possible for one contract to run a lambda that is contained in
 <Syntax syntax="cameligo">
 
 ```cameligo group=address
-module Tezos = Tezos.Next
 let current_addr : address = Tezos.get_self_address ()
 ```
 
@@ -119,7 +118,6 @@ let current_addr : address = Tezos.get_self_address ()
 <Syntax syntax="jsligo">
 
 ```jsligo group=address
-import Tezos = Tezos.Next;
 const current_addr: address = Tezos.get_self_address();
 ```
 
@@ -139,7 +137,6 @@ use `"%default"`.
 <Syntax syntax="cameligo">
 
 ```cameligo group=self
-module Tezos = Tezos.Next
 let check () = Tezos.self("%default")
 ```
 
@@ -148,7 +145,6 @@ let check () = Tezos.self("%default")
 <Syntax syntax="jsligo">
 
 ```jsligo group=self
-import Tezos = Tezos.Next;
 const check = () => Tezos.self("%default");
 ```
 

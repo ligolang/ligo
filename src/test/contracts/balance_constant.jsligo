@@ -10,8 +10,6 @@ generated. unrecognized constant: {"constant":"BALANCE","location":"generated"}
 
 */
 
-import Tezos = Tezos.Next;
-
 type storage = tez;
 
 function main3 (_unit : unit, _storage : storage) : [list<operation>, tez] {

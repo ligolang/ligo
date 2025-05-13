@@ -17,7 +17,6 @@ module Testviews = struct
     storage
 end
 module Test = Test.Next
-module Tezos = Tezos.Next
 
 let test_view =
   let contract = Test.Originate.contract (contract_of Testviews) "" 0tez in

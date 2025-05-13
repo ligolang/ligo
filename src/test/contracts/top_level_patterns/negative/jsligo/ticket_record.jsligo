@@ -1,5 +1,3 @@
-import Tezos = Tezos.Next;
-
 type t = { b: ticket<string> };
 
 const { b } = {

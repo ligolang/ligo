@@ -570,8 +570,6 @@ This contract can be called by another contract, like this one:
 <Syntax syntax="cameligo">
 
 ```cameligo group=get_entrypoint_opt
-module Tezos = Tezos.Next
-
 type storage = int
 type parameter = int
 
@@ -592,8 +590,6 @@ let main (p : parameter) (s : storage): operation list * storage =
 <Syntax syntax="jsligo">
 
 ```jsligo group=get_entrypoint_opt
-import Tezos = Tezos.Next;
-
 type storage = int;
 type parameter = int;
 

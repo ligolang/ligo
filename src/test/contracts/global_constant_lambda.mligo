@@ -1,5 +1,3 @@
-module Tezos = Tezos.Next
-
 type storage = int * (int -> int)
 type parameter = int -> int
 type return = operation list * storage

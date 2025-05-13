@@ -75,45 +75,37 @@ let%expect_test _ =
   [%expect
     {|
     Scopes:
-    [  ] File "../../test/contracts/get_scope_tests/regressions/missing_stdlib.mligo", line 1, characters 15-25
-    [ p#3:11-12  ] File "../../test/contracts/get_scope_tests/regressions/missing_stdlib.mligo", line 4, characters 10-14
-    [ p#3:11-12  ] File "../../test/contracts/get_scope_tests/regressions/missing_stdlib.mligo", line 4, characters 26-52
-    [ p#3:11-12 c#4:6-7  ] File "../../test/contracts/get_scope_tests/regressions/missing_stdlib.mligo", line 5, characters 2-17
+    [ p#1:11-12  ] File "../../test/contracts/get_scope_tests/regressions/missing_stdlib.mligo", line 2, characters 10-14
+    [ p#1:11-12  ] File "../../test/contracts/get_scope_tests/regressions/missing_stdlib.mligo", line 2, characters 26-52
+    [ p#1:11-12 c#2:6-7  ] File "../../test/contracts/get_scope_tests/regressions/missing_stdlib.mligo", line 3, characters 2-17
 
     Variable definitions:
-    (check#3:4-9 -> check)
-    Range: File "../../test/contracts/get_scope_tests/regressions/missing_stdlib.mligo", line 3, characters 4-9
-    Decl Range: File "../../test/contracts/get_scope_tests/regressions/missing_stdlib.mligo", line 3, character 0 to line 5, character 17
+    (check#1:4-9 -> check)
+    Range: File "../../test/contracts/get_scope_tests/regressions/missing_stdlib.mligo", line 1, characters 4-9
+    Decl Range: File "../../test/contracts/get_scope_tests/regressions/missing_stdlib.mligo", line 1, character 0 to line 3, character 17
     Content: |core: key_hash -> address|
     references: []
     Mod Path =
     Def Type = Global
-    (p#3:11-12 -> p)
-    Range: File "../../test/contracts/get_scope_tests/regressions/missing_stdlib.mligo", line 3, characters 11-12
-    Decl Range: File "../../test/contracts/get_scope_tests/regressions/missing_stdlib.mligo", line 3, characters 11-23
+    (p#1:11-12 -> p)
+    Range: File "../../test/contracts/get_scope_tests/regressions/missing_stdlib.mligo", line 1, characters 11-12
+    Decl Range: File "../../test/contracts/get_scope_tests/regressions/missing_stdlib.mligo", line 1, characters 11-23
     Content: |core: key_hash|
     references:
-      File "../../test/contracts/get_scope_tests/regressions/missing_stdlib.mligo", line 4, characters 50-51
+      File "../../test/contracts/get_scope_tests/regressions/missing_stdlib.mligo", line 2, characters 50-51
     Mod Path =
     Def Type = Parameter
-    (c#4:6-7 -> c)
-    Range: File "../../test/contracts/get_scope_tests/regressions/missing_stdlib.mligo", line 4, characters 6-7
-    Decl Range: File "../../test/contracts/get_scope_tests/regressions/missing_stdlib.mligo", line 4, character 2 to line 5, character 2
+    (c#2:6-7 -> c)
+    Range: File "../../test/contracts/get_scope_tests/regressions/missing_stdlib.mligo", line 2, characters 6-7
+    Decl Range: File "../../test/contracts/get_scope_tests/regressions/missing_stdlib.mligo", line 2, character 2 to line 3, character 2
     Content: |core: contract (unit)|
     references:
-      File "../../test/contracts/get_scope_tests/regressions/missing_stdlib.mligo", line 5, characters 16-17
+      File "../../test/contracts/get_scope_tests/regressions/missing_stdlib.mligo", line 3, characters 16-17
     Mod Path =
     Def Type = Local
     Type definitions:
     Constructors and fields:
-    Module definitions:
-    (Tezos#1:7-12 -> Tezos)
-    Range: File "../../test/contracts/get_scope_tests/regressions/missing_stdlib.mligo", line 1, characters 7-12
-    Decl Range: File "../../test/contracts/get_scope_tests/regressions/missing_stdlib.mligo", line 1, characters 0-25
-    Content: Tezos#1:15-20.Next#1:21-25 (unresolved)
-    references:
-      File "../../test/contracts/get_scope_tests/regressions/missing_stdlib.mligo", line 4, characters 26-31 ,
-      File "../../test/contracts/get_scope_tests/regressions/missing_stdlib.mligo", line 5, characters 2-7 |}]
+    Module definitions: |}]
 
 let%expect_test _ =
   run_ligo_good

@@ -1,5 +1,3 @@
-import Tezos = Tezos.Next;
-
 type return_ = [list<operation>, string];
 
 // @entry

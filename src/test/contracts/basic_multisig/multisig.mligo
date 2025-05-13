@@ -1,7 +1,5 @@
 #include "config.mligo"
 
-module Tezos = Tezos.Next
-
 // storage type
 
 type counter = c_counter_type

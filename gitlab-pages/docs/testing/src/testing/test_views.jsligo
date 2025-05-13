@@ -15,7 +15,6 @@ namespace Testviews {
     storage;
 }
 import Test = Test.Next;
-import Tezos = Tezos.Next;
 
 const test_view = () => {
   const contract = Test.Originate.contract(contract_of(Testviews), "",

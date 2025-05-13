@@ -20,11 +20,11 @@ let%expect_test _ =
     ];
   [%expect
     {|
-    File "../../test/contracts/sapling.mligo", line 12, characters 27-32:
-     11 | [@entry]
-     12 | let main (tr : parameter) (store : storage) : return =
+    File "../../test/contracts/sapling.mligo", line 8, characters 27-32:
+      7 | [@entry]
+      8 | let main (tr : parameter) (store : storage) : return =
                                      ^^^^^
-     13 |   ([] : operation list),
+      9 |   ([] : operation list),
     :
     Warning: unused variable "store".
     Hint: replace it by "_store" to prevent this warning.
@@ -77,9 +77,9 @@ let%expect_test _ =
   run_ligo_bad [ "compile"; "contract"; bad_contract "emit.mligo" ];
   [%expect
     {|
-    File "../../test/contracts/negative/emit.mligo", line 6, characters 3-28:
-      5 |   let x = "%lol" in
-      6 |   [Tezos.Operation.emit x 12], x
+    File "../../test/contracts/negative/emit.mligo", line 4, characters 3-28:
+      3 |   let x = "%lol" in
+      4 |   [Tezos.Operation.emit x 12], x
              ^^^^^^^^^^^^^^^^^^^^^^^^^
 
     Invalid event tag.

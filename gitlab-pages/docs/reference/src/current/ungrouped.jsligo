@@ -1,5 +1,3 @@
-import Tezos = Tezos.Next;
-
 const check = (p: unit, s: tez):[list<operation>, tez] =>
   [[], Tezos.get_balance()];
 function threshold (p : unit) {

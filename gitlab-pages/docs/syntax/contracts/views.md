@@ -189,8 +189,6 @@ end
 This contract stores the address of the first contract and calls its view:
 
 ```cameligo group=callonchainview
-module Tezos = Tezos.Next
-
 module CallView = struct
   type storage = address * int
   type return_type = operation list * storage
@@ -248,8 +246,6 @@ namespace ContractWithView {
 This contract stores the address of the first contract and calls its view:
 
 ```jsligo group=callonchainview
-import Tezos = Tezos.Next;
-
 namespace CallView {
   type storage = [address, int];
   type return_type = [list<operation>, storage];

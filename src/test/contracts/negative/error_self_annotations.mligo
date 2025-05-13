@@ -1,5 +1,3 @@
-module Tezos = Tezos.Next
-
 type param =
 | [@annot foo] A of unit
 | B of unit

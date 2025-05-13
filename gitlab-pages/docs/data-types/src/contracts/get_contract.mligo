@@ -1,5 +1,3 @@
-module Tezos = Tezos.Next
-
 type returnType = operation list * int
 
 type contractParam =

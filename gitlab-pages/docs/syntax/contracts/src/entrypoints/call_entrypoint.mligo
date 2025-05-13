@@ -1,5 +1,3 @@
-module Tezos = Tezos.Next
-
 type storage = unit
 type return_value = operation list * storage
 

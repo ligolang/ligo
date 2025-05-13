@@ -336,7 +336,6 @@ let create&#95;contract:
     address
   ]
 </SyntaxTitle>
-**Deprecated:** In a future version, `Tezos` will be replaced by `Tezos.Next`, and using `Operation.create_contract` from `Tezos.Next` is encouraged for a smoother migration.
 
 <Syntax syntax="cameligo">
 
@@ -373,7 +372,6 @@ val set&#95;delegate : key&#95;hash option -&gt; operation
 <SyntaxTitle syntax="jsligo">
 let set&#95;delegate: (&#95;: option&lt;key&#95;hash&gt;) =&gt; operation
 </SyntaxTitle>
-**Deprecated:** In a future version, `Tezos` will be replaced by `Tezos.Next`, and using `Operation.set_delegate` from `Tezos.Next` is encouraged for a smoother migration.
 
 <Syntax syntax="cameligo">
 
@@ -414,7 +412,6 @@ val transaction : &#39;param.&#39;param -&gt; tez -&gt; &#39;param contract -&gt
 <SyntaxTitle syntax="jsligo">
 let transaction: &lt;param&gt;(&#95;: param) =&gt; (&#95;: tez) =&gt; (&#95;: contract&lt;param&gt;) =&gt; operation
 </SyntaxTitle>
-**Deprecated:** In a future version, `Tezos` will be replaced by `Tezos.Next`, and using `Operation.transaction` from `Tezos.Next` is encouraged for a smoother migration.
 
 <Syntax syntax="cameligo">
 
@@ -474,7 +471,6 @@ val create&#95;ticket : &#39;a.&#39;a -&gt; nat -&gt; &#39;a ticket option
 <SyntaxTitle syntax="jsligo">
 let create&#95;ticket: &lt;a&gt;(&#95;: a) =&gt; (&#95;: nat) =&gt; option&lt;ticket&lt;a&gt;&gt;
 </SyntaxTitle>
-**Deprecated:** In a future version, `Tezos` will be replaced by `Tezos.Next`, and using `Ticket.create` from `Tezos.Next` is encouraged for a smoother migration.
 
 <Syntax syntax="cameligo">
 
@@ -587,7 +583,6 @@ val sapling&#95;verify&#95;update :
 let sapling&#95;verify&#95;update:
   &lt;sap&#95;a&gt;(&#95;: sapling&#95;transaction&lt;sap&#95;a&gt;) =&gt; (&#95;: sapling&#95;state&lt;sap&#95;a&gt;) =&gt; option&lt;[bytes, [int, sapling&#95;state&lt;sap&#95;a&gt;]]&gt;
 </SyntaxTitle>
-**Deprecated:** In a future version, `Tezos` will be replaced by `Tezos.Next`, and using `Sapling.verify_update` from `Tezos.Next` is encouraged for a smoother migration.
 
 <Syntax syntax="cameligo">
 
@@ -618,7 +613,6 @@ val emit : &#39;event&#95;type.string -&gt; &#39;event&#95;type -&gt; operation
 <SyntaxTitle syntax="jsligo">
 let emit: &lt;event&#95;type&gt;(&#95;: string) =&gt; (&#95;: event&#95;type) =&gt; operation
 </SyntaxTitle>
-**Deprecated:** In a future version, `Tezos` will be replaced by `Tezos.Next`, and using `Operation.emit` from `Tezos.Next` is encouraged for a smoother migration.
 
 <Syntax syntax="cameligo">
 

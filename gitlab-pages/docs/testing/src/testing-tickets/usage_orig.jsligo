@@ -1,5 +1,3 @@
-import Tezos = Tezos.Next;
-
 namespace MyContract {
   export type storage = [int, option<ticket<bytes>>];
   export type unforged_storage = [int, option<unforged_ticket<bytes>>];

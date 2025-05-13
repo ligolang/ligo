@@ -44,7 +44,6 @@ create: 'value => nat => option&lt;ticket&lt;'value&gt;&gt;
 <Syntax syntax="cameligo">
 
 ```cameligo group=manip_ticket
-module Tezos = Tezos.Next
 module Ticket = Tezos.Ticket
 
 let my_ticket1 = Option.value_with_error "ticket1 failed" (Ticket.create 1 10n)
@@ -56,7 +55,6 @@ let my_ticket2 = Option.value_with_error "ticket2 failed" (Ticket.create "one" 1
 <Syntax syntax="jsligo">
 
 ```jsligo group=manip_ticket
-import Tezos = Tezos.Next;
 import Ticket = Tezos.Ticket;
 
 const my_ticket1 =
@@ -175,7 +173,6 @@ join : &lt;ticket&lt;'value&gt;, ticket&lt;'value&gt;&gt; => option &lt;ticket&l
 <Syntax syntax="cameligo">
 
 ```cameligo group=manip_ticket2
-module Tezos = Tezos.Next
 module Ticket = Tezos.Ticket
 
 let tc : int ticket option =
@@ -189,7 +186,6 @@ let tc : int ticket option =
 <Syntax syntax="jsligo">
 
 ```jsligo group=manip_ticket2
-import Tezos = Tezos.Next;
 import Ticket = Tezos.Ticket;
 
 const ta = Option.value_with_error("ta failed",

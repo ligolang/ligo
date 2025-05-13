@@ -35,8 +35,6 @@ The simplest example of an internal transaction is sending Tez to a contract. No
 <Syntax syntax="cameligo">
 
 ```cameligo
-module Tezos = Tezos.Next
-
 type parameter = address
 type storage = unit
 
@@ -65,8 +63,6 @@ Let us also examine a contract that stores the address of another contract and p
 
 ```cameligo group=proxy
 (* examples/contracts/mligo/Proxy.mligo *)
-
-module Tezos = Tezos.Next
 
 type parameter = int
 type storage = address
@@ -142,8 +138,6 @@ To specify an entrypoint, we can use `Tezos.get_entrypoint_opt` instead of `Tezo
 
 ```cameligo group=entrypointproxy
 (* contracts/examples/mligo/EntrypointProxy.mligo *)
-
-module Tezos = Tezos.Next
 
 type parameter = int
 type storage = address
@@ -263,8 +257,6 @@ Let us look at a simple access control contract with a "view" entrypoint:
 ```cameligo group=accesscontroller
 (* examples/contracts/mligo/AccessController.mligo *)
 
-module Tezos = Tezos.Next
-
 type storage = {senders_whitelist : address set}
 
 [@entry]
@@ -332,8 +324,6 @@ For example, we can create a new counter contract with
 <Syntax syntax="cameligo">
 
 ```cameligo group=solo_create_contract
-module Tezos = Tezos.Next
-
 let op = Tezos.Operation.create_contract
   (fun (p : int) (s : int) -> [], p + s)
   None

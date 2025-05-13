@@ -1,5 +1,3 @@
-module Tezos = Tezos.Next
-
 type storage = (string, int ticket) big_map
 type parameter = int
 type result = operation list * storage

@@ -1,3 +1,1 @@
-import Tezos = Tezos.Next;
-
 const check = (_: unit) : address => Tezos.get_self_address();

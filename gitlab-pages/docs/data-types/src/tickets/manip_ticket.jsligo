@@ -1,4 +1,3 @@
-import Tezos = Tezos.Next;
 import Ticket = Tezos.Ticket;
 
 const my_ticket1 =

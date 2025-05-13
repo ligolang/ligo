@@ -1,5 +1,3 @@
-import Tezos = Tezos.Next;
-
 namespace Counter {
   type storage = [int, address];
   type return_type = [list<operation>, storage];

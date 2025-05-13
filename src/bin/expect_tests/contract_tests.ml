@@ -800,11 +800,11 @@ let%expect_test _ =
   run_ligo_good [ "compile"; "contract"; contract "ticket_builder.mligo" ];
   [%expect
     {|
-    File "../../test/contracts/ticket_builder.mligo", line 31, characters 30-36:
-     30 |         begin
-     31 |           let ((ticketer, _), ticket) =
+    File "../../test/contracts/ticket_builder.mligo", line 29, characters 30-36:
+     28 |         begin
+     29 |           let ((ticketer, _), ticket) =
                                         ^^^^^^
-     32 |             (Tezos.Ticket.read ticket : (address * (unit * nat)) * unit ticket) in
+     30 |             (Tezos.Ticket.read ticket : (address * (unit * nat)) * unit ticket) in
     :
     Warning: unused variable "ticket".
     Hint: replace it by "_ticket" to prevent this warning.
@@ -1039,29 +1039,29 @@ Variable "create_contract" not found. |}];
   run_ligo_good [ "compile"; "contract"; contract "create_contract_var.mligo" ];
   [%expect
     {|
-    File "../../test/contracts/create_contract_var.mligo", line 11, characters 22-23:
-     10 |     Tezos.Operation.create_contract
-     11 |       (fun (p : nat) (s : int) -> (([] : operation list), a))
+    File "../../test/contracts/create_contract_var.mligo", line 9, characters 22-23:
+      8 |     Tezos.Operation.create_contract
+      9 |       (fun (p : nat) (s : int) -> (([] : operation list), a))
                                 ^
-     12 |       (None : key_hash option)
+     10 |       (None : key_hash option)
     :
     Warning: unused variable "s".
     Hint: replace it by "_s" to prevent this warning.
 
-    File "../../test/contracts/create_contract_var.mligo", line 11, characters 12-13:
-     10 |     Tezos.Operation.create_contract
-     11 |       (fun (p : nat) (s : int) -> (([] : operation list), a))
+    File "../../test/contracts/create_contract_var.mligo", line 9, characters 12-13:
+      8 |     Tezos.Operation.create_contract
+      9 |       (fun (p : nat) (s : int) -> (([] : operation list), a))
                       ^
-     12 |       (None : key_hash option)
+     10 |       (None : key_hash option)
     :
     Warning: unused variable "p".
     Hint: replace it by "_p" to prevent this warning.
 
-    File "../../test/contracts/create_contract_var.mligo", line 8, characters 10-16:
-      7 | [@entry]
-      8 | let main (action : string) (store : string) : return =
+    File "../../test/contracts/create_contract_var.mligo", line 6, characters 10-16:
+      5 | [@entry]
+      6 | let main (action : string) (store : string) : return =
                     ^^^^^^
-      9 |   let toto : operation * address =
+      7 |   let toto : operation * address =
     :
     Warning: unused variable "action".
     Hint: replace it by "_action" to prevent this warning.
@@ -1086,92 +1086,92 @@ Variable "create_contract" not found. |}];
   run_ligo_bad [ "compile"; "contract"; bad_contract "create_contract_modfv.mligo" ];
   [%expect
     {|
-    File "../../test/contracts/negative/create_contract_modfv.mligo", line 12, characters 22-23:
-     11 |     Tezos.Operation.create_contract
-     12 |       (fun (p : nat) (s : string) -> (([] : operation list), Foo.store))
+    File "../../test/contracts/negative/create_contract_modfv.mligo", line 10, characters 22-23:
+      9 |     Tezos.Operation.create_contract
+     10 |       (fun (p : nat) (s : string) -> (([] : operation list), Foo.store))
                                 ^
-     13 |       (None : key_hash option)
+     11 |       (None : key_hash option)
     :
     Warning: unused variable "s".
     Hint: replace it by "_s" to prevent this warning.
 
-    File "../../test/contracts/negative/create_contract_modfv.mligo", line 12, characters 12-13:
-     11 |     Tezos.Operation.create_contract
-     12 |       (fun (p : nat) (s : string) -> (([] : operation list), Foo.store))
+    File "../../test/contracts/negative/create_contract_modfv.mligo", line 10, characters 12-13:
+      9 |     Tezos.Operation.create_contract
+     10 |       (fun (p : nat) (s : string) -> (([] : operation list), Foo.store))
                       ^
-     13 |       (None : key_hash option)
+     11 |       (None : key_hash option)
     :
     Warning: unused variable "p".
     Hint: replace it by "_p" to prevent this warning.
 
-    File "../../test/contracts/negative/create_contract_modfv.mligo", line 6, characters 10-16:
-      5 | [@entry]
-      6 | let main (action : string) (store : string) : return =
+    File "../../test/contracts/negative/create_contract_modfv.mligo", line 4, characters 10-16:
+      3 | [@entry]
+      4 | let main (action : string) (store : string) : return =
                     ^^^^^^
-      7 |   module Foo = struct
+      5 |   module Foo = struct
     :
     Warning: unused variable "action".
     Hint: replace it by "_action" to prevent this warning.
 
-    File "../../test/contracts/negative/create_contract_modfv.mligo", line 11, character 4 to line 15, character 10:
-     10 |   let toto : operation * address =
-     11 |     Tezos.Operation.create_contract
+    File "../../test/contracts/negative/create_contract_modfv.mligo", line 9, character 4 to line 13, character 10:
+      8 |   let toto : operation * address =
+      9 |     Tezos.Operation.create_contract
               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-     12 |       (fun (p : nat) (s : string) -> (([] : operation list), Foo.store))
+     10 |       (fun (p : nat) (s : string) -> (([] : operation list), Foo.store))
           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-     13 |       (None : key_hash option)
+     11 |       (None : key_hash option)
           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-     14 |       300000000mutez
+     12 |       300000000mutez
           ^^^^^^^^^^^^^^^^^^^^
-     15 |       "un" in
+     13 |       "un" in
           ^^^^^^^^^^
-     16 |   ([toto.0], store)
+     14 |   ([toto.0], store)
 
     Not all free variables could be inlined in Tezos.create_contract usage: gen#445. |}];
   run_ligo_bad [ "compile"; "contract"; bad_contract "create_contract_no_inline.mligo" ];
   [%expect
     {|
-    File "../../test/contracts/negative/create_contract_no_inline.mligo", line 12, character 4 to line 16, character 7:
-     11 |   let op, _addr =
-     12 |     Tezos.Operation.create_contract
+    File "../../test/contracts/negative/create_contract_no_inline.mligo", line 10, character 4 to line 14, character 7:
+      9 |   let op, _addr =
+     10 |     Tezos.Operation.create_contract
               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-     13 |       dummy_contract
+     11 |       dummy_contract
           ^^^^^^^^^^^^^^^^^^^^
-     14 |       ((None : key_hash option))
+     12 |       ((None : key_hash option))
           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-     15 |       300000000mutez
+     13 |       300000000mutez
           ^^^^^^^^^^^^^^^^^^^^
-     16 |       1
+     14 |       1
           ^^^^^^^
-     17 |   in [op], foo
+     15 |   in [op], foo
 
     Not all free variables could be inlined in Tezos.create_contract usage: foo#458. |}];
   run_ligo_good [ "compile"; "contract"; contract "create_contract.mligo" ];
   [%expect
     {|
-    File "../../test/contracts/create_contract.mligo", line 9, characters 22-23:
-      8 |     Tezos.Operation.create_contract
-      9 |       (fun (p : nat) (s : string) -> (([] : operation list), "one"))
+    File "../../test/contracts/create_contract.mligo", line 7, characters 22-23:
+      6 |     Tezos.Operation.create_contract
+      7 |       (fun (p : nat) (s : string) -> (([] : operation list), "one"))
                                 ^
-     10 |       (None : key_hash option)
+      8 |       (None : key_hash option)
     :
     Warning: unused variable "s".
     Hint: replace it by "_s" to prevent this warning.
 
-    File "../../test/contracts/create_contract.mligo", line 9, characters 12-13:
-      8 |     Tezos.Operation.create_contract
-      9 |       (fun (p : nat) (s : string) -> (([] : operation list), "one"))
+    File "../../test/contracts/create_contract.mligo", line 7, characters 12-13:
+      6 |     Tezos.Operation.create_contract
+      7 |       (fun (p : nat) (s : string) -> (([] : operation list), "one"))
                       ^
-     10 |       (None : key_hash option)
+      8 |       (None : key_hash option)
     :
     Warning: unused variable "p".
     Hint: replace it by "_p" to prevent this warning.
 
-    File "../../test/contracts/create_contract.mligo", line 6, characters 10-16:
-      5 | [@entry]
-      6 | let main (action : string) (store : string) : return =
+    File "../../test/contracts/create_contract.mligo", line 4, characters 10-16:
+      3 | [@entry]
+      4 | let main (action : string) (store : string) : return =
                     ^^^^^^
-      7 |   let toto : operation * address =
+      5 |   let toto : operation * address =
     :
     Warning: unused variable "action".
     Hint: replace it by "_action" to prevent this warning.
@@ -1374,11 +1374,11 @@ let%expect_test _ =
   run_ligo_bad [ "compile"; "contract"; bad_contract "error_self_annotations.mligo" ];
   [%expect
     {|
-    File "../../test/contracts/negative/error_self_annotations.mligo", line 9, characters 10-45:
-      8 | let main (_ : param) (_ : unit) : operation list * unit =
-      9 |   let c = (Tezos.self ("%a") : unit contract) in
+    File "../../test/contracts/negative/error_self_annotations.mligo", line 7, characters 10-45:
+      6 | let main (_ : param) (_ : unit) : operation list * unit =
+      7 |   let c = (Tezos.self ("%a") : unit contract) in
                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-     10 |   let op = Tezos.Operation.transaction () 0mutez c in
+      8 |   let op = Tezos.Operation.transaction () 0mutez c in
 
     Invalid entrypoint value.
     The entrypoint value does not match a constructor of the contract parameter. |}]
@@ -1388,15 +1388,15 @@ let%expect_test _ =
   run_ligo_bad [ "compile"; "contract"; bad_contract "bad_get_entrypoint.mligo" ];
   [%expect
     {|
-    File "../../test/contracts/negative/bad_get_entrypoint.mligo", line 6, character 4 to line 8, character 56:
-      5 |   let v : unit contract option =
-      6 |     Tezos.get_entrypoint_opt
+    File "../../test/contracts/negative/bad_get_entrypoint.mligo", line 4, character 4 to line 6, character 56:
+      3 |   let v : unit contract option =
+      4 |     Tezos.get_entrypoint_opt
               ^^^^^^^^^^^^^^^^^^^^^^^^
-      7 |       "foo"
+      5 |       "foo"
           ^^^^^^^^^^^
-      8 |       ("tz1fakefakefakefakefakefakefakcphLA5" : address) in
+      6 |       ("tz1fakefakefakefakefakefakefakcphLA5" : address) in
           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-      9 |   let u : unit =
+      7 |   let u : unit =
 
     Invalid entrypoint "foo". One of the following patterns is expected:
     * "%bar" is expected for entrypoint "Bar"
@@ -2318,19 +2318,19 @@ let%expect_test _ =
   run_ligo_bad [ "compile"; "contract"; bad_contract "call_view_not_litstr.mligo" ];
   [%expect
     {|
-    File "../../test/contracts/negative/call_view_not_litstr.mligo", line 6, character 10 to line 10, character 21:
-      5 |   let u =
-      6 |     match (Tezos.call_view
+    File "../../test/contracts/negative/call_view_not_litstr.mligo", line 4, character 10 to line 8, character 21:
+      3 |   let u =
+      4 |     match (Tezos.call_view
                     ^^^^^^^^^^^^^^^^
-      7 |          s
+      5 |          s
           ^^^^^^^^^^
-      8 |          (Tezos.get_sender ())
+      6 |          (Tezos.get_sender ())
           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-      9 |          ("tz1fakefakefakefakefakefakefakcphLA5" : address)
+      7 |          ("tz1fakefakefakefakefakefakefakcphLA5" : address)
           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-     10 |        : unit option)
+      8 |        : unit option)
           ^^^^^^^^^^^^^^^^^^^^^
-     11 |     with
+      9 |     with
 
     Invalid argument.
     View name must be a string literal. |}]
@@ -2449,9 +2449,9 @@ let%expect_test _ =
   run_ligo_bad [ "compile"; "contract"; bad_contract "emit_bad_tag.mligo" ];
   [%expect
     {|
-    File "../../test/contracts/negative/emit_bad_tag.mligo", line 5, characters 3-41:
-      4 | let main (_ : unit) (_ : string) : operation list * string =
-      5 |   [Tezos.Operation.emit "%hello world" 12], "bye"
+    File "../../test/contracts/negative/emit_bad_tag.mligo", line 3, characters 3-41:
+      2 | let main (_ : unit) (_ : string) : operation list * string =
+      3 |   [Tezos.Operation.emit "%hello world" 12], "bye"
              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
     Invalid entrypoint "%hello world". One of the following patterns is expected:

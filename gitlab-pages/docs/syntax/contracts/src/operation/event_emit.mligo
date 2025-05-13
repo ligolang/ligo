@@ -1,5 +1,3 @@
-module Tezos = Tezos.Next
-
 [@entry]
 let emitEvents (_ : unit) (storage : int) : operation list * int =
   let event1 : operation = Tezos.Operation.emit "%emitEvents" "hi" in

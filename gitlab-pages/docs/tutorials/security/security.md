@@ -20,8 +20,6 @@ Let us look at a seemingly innocent wallet contract that stores an event log:
 <Syntax syntax="cameligo">
 
 ```cameligo
-module Tezos = Tezos.Next
-
 type parameter = Fund | Send of address * tez
 
 type transaction = Incoming of address * tez | Outgoing of address * tez

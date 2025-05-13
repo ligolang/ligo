@@ -1,5 +1,3 @@
-module Tezos = Tezos.Next
-
 module TacoShop = struct
   type taco_supply = { current_stock: nat; max_price: tez }
   type taco_data = (nat, taco_supply) map

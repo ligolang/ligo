@@ -280,7 +280,6 @@ let ediv (type a b) (left: a) (right: b) : (a, b) external_ediv =
 
 (** Tezos-specific functions *)
 module Tezos = struct
-  module Next = struct
     (* Views *)
 
     (** display-only-for-cameligo
@@ -869,7 +868,6 @@ module Tezos = struct
     [@inline] [@thunk]
     let constant (type a) (hash: string) : a =
       [%external ("GLOBAL_CONSTANT", hash)]
-  end
 end
 
 (** Bitwise operations *)
@@ -2520,7 +2518,7 @@ module Test = struct
     let g : a pbt_gen = [%external ("TEST_RANDOM", false)] in
     [%external ("TEST_GENERATOR_EVAL", g)]
 
-  let get_time (_u : unit) : timestamp = Tezos.Next.get_now ()
+  let get_time (_u : unit) : timestamp = Tezos.get_now ()
 
   module PBT = struct
     let gen (type a) : a pbt_gen = [%external ("TEST_RANDOM", false)]
@@ -2545,7 +2543,7 @@ module Test = struct
     annotated with the expected payload type. *)
   [@deprecated "In a future version, `Test` will be replaced by `Test.Next`, and using `State.last_events` from `Test.Next` is encouraged for a smoother migration."]
   let get_last_events_from (type a p s) (addr : (p,s) typed_address) (rtag: string) : a list =
-    let addr = Tezos.Next.address (to_contract addr) in
+    let addr = Tezos.address (to_contract addr) in
     let event_map : (address * a) list = [%external ("TEST_LAST_EVENTS", rtag)] in
     let f ((acc, (c_addr,event)) : a list * (address * a)) : a list =
       if addr = c_addr then event::acc
@@ -3051,7 +3049,7 @@ module Test = struct
       let g : a pbt_gen = [%external ("TEST_RANDOM", false)] in
       [%external ("TEST_GENERATOR_EVAL", g)]
 
-    let get_time (_u : unit) : timestamp = Tezos.Next.get_now ()
+    let get_time (_u : unit) : timestamp = Tezos.get_now ()
 
     module Mutation = struct
       (** Given a value to mutate (first argument), it will try all the
@@ -3214,7 +3212,7 @@ module Test = struct
         (addr : (p,s) typed_address)
         (rtag: string)
       : a list =
-        let addr = Tezos.Next.address (to_contract addr) in
+        let addr = Tezos.address (to_contract addr) in
         let event_map : (address * a) list = [%external ("TEST_LAST_EVENTS", rtag)] in
         let f ((acc, (c_addr,event)) : a list * (address * a)) : a list =
           if addr = c_addr then event::acc
@@ -3567,12 +3565,12 @@ module Test = struct
             : operation list * unit =
           let (v, amt), dst_addr = p in
           let ticket = Option.value_with_error "No ticket."
-                         (Tezos.Next.Ticket.create v amt) in
+                         (Tezos.Ticket.create v amt) in
           let tx_param = mk_param ticket in
           let c : whole_p contract =
-            Tezos.Next.get_contract_with_error dst_addr
+            Tezos.get_contract_with_error dst_addr
               "Testing proxy: you provided a wrong address" in
-          let op = Tezos.Next.Operation.transaction tx_param 1mutez c
+          let op = Tezos.Operation.transaction tx_param 1mutez c
           in [op], ()
 
         [@private]
@@ -3585,10 +3583,10 @@ module Test = struct
             : operation list * address option =
           let v, amt = p in
           let ticket = Option.value_with_error "No ticket."
-                         (Tezos.Next.Ticket.create v amt) in
+                         (Tezos.Ticket.create v amt) in
           let init_storage : whole_s = mk_storage ticket in
           let op,addr =
-            Tezos.Next.Operation.create_contract
+            Tezos.Operation.create_contract
               main (None: key_hash option) 0mutez init_storage
           in [op], Some addr
 

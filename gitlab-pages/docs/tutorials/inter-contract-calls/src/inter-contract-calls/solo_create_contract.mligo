@@ -1,5 +1,3 @@
-module Tezos = Tezos.Next
-
 let op = Tezos.Operation.create_contract
   (fun (p : int) (s : int) -> [], p + s)
   None

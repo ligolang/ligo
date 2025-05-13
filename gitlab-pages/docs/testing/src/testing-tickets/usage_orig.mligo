@@ -1,5 +1,3 @@
-module Tezos = Tezos.Next
-
 module MyContract = struct
   type storage = int * bytes ticket option
   type unforged_storage = int * bytes unforged_ticket option

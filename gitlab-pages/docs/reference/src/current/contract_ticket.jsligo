@@ -1,5 +1,3 @@
-import Tezos = Tezos.Next;
-
 type storage = big_map<string, ticket<int>>;
 type parameter = int;
 type result = [list<operation>, storage];

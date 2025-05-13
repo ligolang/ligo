@@ -279,8 +279,6 @@ It checks the sender of the transaction in the `reset` entrypoint and fails if t
 <Syntax syntax="cameligo">
 
 ```cameligo group=test-accounts
-module Tezos = Tezos.Next
-
 module Counter = struct
   type storage = int * address
   type return_type = operation list * storage
@@ -307,8 +305,6 @@ end
 <Syntax syntax="jsligo">
 
 ```jsligo group=test-accounts
-import Tezos = Tezos.Next;
-
 namespace Counter {
   type storage = [int, address];
   type return_type = [list<operation>, storage];
@@ -491,12 +487,14 @@ module Testviews = struct
 end
 ```
 
-This test casts the contract's typed address to an ordinary address type and uses that address to call the view with the function `Tezos.Next.View.call` and pass the parameter `unit`.
-This function returns an option, so the test matches the option to verify the response from the view:
+This test casts the contract's typed address to an ordinary address
+type and uses that address to call the view with the function
+`Tezos.View.call` and pass the parameter `unit`.  This function
+returns an option, so the test matches the option to verify the
+response from the view:
 
 ```cameligo group=test_views
 module Test = Test.Next
-module Tezos = Tezos.Next
 
 let test_view =
   let contract = Test.Originate.contract (contract_of Testviews) "" 0tez in
@@ -533,12 +531,11 @@ namespace Testviews {
 }
 ```
 
-This test casts the contract's typed address to an ordinary address type and uses that address to call the view with the function `Tezos.Next.View.call`.
+This test casts the contract's typed address to an ordinary address type and uses that address to call the view with the function `Tezos.View.call`.
 This function returns an option, so the test matches the option to verify the response from the view:
 
 ```jsligo group=test_views
 import Test = Test.Next;
-import Tezos = Tezos.Next;
 
 const test_view = () => {
   const contract = Test.Originate.contract(contract_of(Testviews), "",
@@ -567,7 +564,6 @@ the most recent events, as in this example:
 <Syntax syntax="cameligo">
 
 ```cameligo test-ligo group=test_ex
-module Tezos = Tezos.Next
 module Test = Test.Next
 
 module C = struct
@@ -589,7 +585,6 @@ let test_foo =
 <Syntax syntax="jsligo">
 
 ```jsligo test-ligo group=test_ex
-import Tezos = Tezos.Next;
 import Test = Test.Next;
 
 namespace C {

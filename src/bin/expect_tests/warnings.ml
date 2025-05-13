@@ -46,11 +46,11 @@ let%expect_test _ =
     ];
   [%expect
     {|
-  File "../../test/contracts/warning_duplicate.mligo", line 4, characters 6-7:
-    3 | module Foo = struct
-    4 |   let x : nat ticket = Option.unopt (Tezos.Ticket.create 42n 42n)
+  File "../../test/contracts/warning_duplicate.mligo", line 2, characters 6-7:
+    1 | module Foo = struct
+    2 |   let x : nat ticket = Option.unopt (Tezos.Ticket.create 42n 42n)
               ^
-    5 | end
+    3 | end
   :
   Warning: variable cannot be used more than once.
 
@@ -69,11 +69,10 @@ let%expect_test _ =
     ];
   [%expect
     {|
-  File "../../test/contracts/warning_duplicate2.mligo", line 2, characters 4-5:
-    1 | module Tezos = Tezos.Next
-    2 | let x = Tezos.Ticket.create 42n 42n
+  File "../../test/contracts/warning_duplicate2.mligo", line 1, characters 4-5:
+    1 | let x = Tezos.Ticket.create 42n 42n
             ^
-    3 | let x = x, x
+    2 | let x = x, x
   :
   Warning: variable cannot be used more than once.
 
@@ -85,19 +84,19 @@ let%expect_test _ =
   run_ligo_bad [ "compile"; "contract"; contract "duplicate_ticket_local_module.mligo" ];
   [%expect
     {|
-      File "../../test/contracts/duplicate_ticket_local_module.mligo", line 10, characters 8-9:
-        9 |     let ticket = Option.value_with_error "option is None" (Tezos.Ticket.create 10n 10n)
-       10 |     let y = ticket, ticket
+      File "../../test/contracts/duplicate_ticket_local_module.mligo", line 8, characters 8-9:
+        7 |     let ticket = Option.value_with_error "option is None" (Tezos.Ticket.create 10n 10n)
+        8 |     let y = ticket, ticket
                     ^
-       11 |   end in
+        9 |   end in
       :
       Warning: variable cannot be used more than once.
 
-      File "../../test/contracts/duplicate_ticket_local_module.mligo", line 9, characters 8-14:
-        8 |   module B = struct
-        9 |     let ticket = Option.value_with_error "option is None" (Tezos.Ticket.create 10n 10n)
+      File "../../test/contracts/duplicate_ticket_local_module.mligo", line 7, characters 8-14:
+        6 |   module B = struct
+        7 |     let ticket = Option.value_with_error "option is None" (Tezos.Ticket.create 10n 10n)
                     ^^^^^^
-       10 |     let y = ticket, ticket
+        8 |     let y = ticket, ticket
       :
       Warning: variable cannot be used more than once.
 

@@ -45,8 +45,6 @@ In a contract, we can make reference to a global constant by using the
 <Syntax syntax="cameligo">
 
 ```cameligo group=global_call
-module Tezos = Tezos.Next
-
 let c : int -> int = Tezos.constant "expruCKsgmUZjC7k8NRcwbcGbFSuLHv5rUyApNd972MwArLuxEZQm2"
 
 [@entry]
@@ -59,8 +57,6 @@ let main (_p : unit) (s : int) : operation list * int =
 <Syntax syntax="jsligo">
 
 ```jsligo group=global_call
-import Tezos = Tezos.Next;
-
 const c : (_p : int) => int = Tezos.constant("expruCKsgmUZjC7k8NRcwbcGbFSuLHv5rUyApNd972MwArLuxEZQm2")
 
 // @entry
@@ -255,8 +251,6 @@ The new version of `global_call` looks as follows:
 <Syntax syntax="cameligo">
 
 ```cameligo group=global_call_2
-module Tezos = Tezos.Next
-
 [@entry]
 let main (p : string) (s : int) : operation list * int =
   ([], (Tezos.constant "exprv547Y7U5wKLbQGmkDU9Coh5tKPzvEJjyUed7px9yGt9nrkELXf")(p, s))
@@ -267,8 +261,6 @@ let main (p : string) (s : int) : operation list * int =
 <Syntax syntax="jsligo">
 
 ```jsligo group=global_call_2
-import Tezos = Tezos.Next;
-
 // @entry
 const main = (p: string, s: int) : [list<operation>, int] =>
   [ [], Tezos.constant("exprv547Y7U5wKLbQGmkDU9Coh5tKPzvEJjyUed7px9yGt9nrkELXf")([p, s]) ];
@@ -354,7 +346,6 @@ A simple usage case is the following, in which we obtain a
 
 ```cameligo test-ligo group=test_global
 module Test = Test.Next
-module Tezos = Tezos.Next
 
 module C = struct
   type storage = int
@@ -382,7 +373,6 @@ let test =
 
 ```jsligo test-ligo group=test_global
 import Test = Test.Next;
-import Tezos = Tezos.Next;
 
 type storage = int;
 type parameter = unit;

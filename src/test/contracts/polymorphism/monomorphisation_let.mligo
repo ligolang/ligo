@@ -1,5 +1,3 @@
-module Tezos = Tezos.Next
-
 let empty (n : nat) : 42 sapling_state =
   let _n = n in
   Tezos.Sapling.empty_state

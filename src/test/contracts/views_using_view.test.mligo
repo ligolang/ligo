@@ -1,4 +1,3 @@
-module Tezos = Tezos.Next
 module Test = Test.Next
 
 module Proxy = struct

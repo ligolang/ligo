@@ -68,14 +68,14 @@ let transfer (from_,(to_,value):transfer) (s:storage) =
 type getBalance = address * nat contract
 let getBalance ((owner,callback): getBalance) (s: storage) =
    let balance_ = Storage.get_amount_for_owner s owner in
-   let operation = Tezos.Next.Operation.transaction balance_ 0tez callback in
+   let operation = Tezos.Operation.transaction balance_ 0tez callback in
    ([operation]: operation list),s
 
 
 (** getTotalSupply entrypoint *)
 type getTotalSupply = unit * nat contract
 let getTotalSupply ((),callback : getTotalSupply) (s:storage) =
-   let operation = Tezos.Next.Operation.transaction s.totalSupply 0tez callback in
+   let operation = Tezos.Operation.transaction s.totalSupply 0tez callback in
    ([operation]: operation list),s
 
 

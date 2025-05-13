@@ -1,5 +1,3 @@
-module Tezos = Tezos.Next
-
 let assert = Assert.assert
 
 let input_x = (0xe406000000000000000000000000000000000000000000000000000000000000 : bls12_381_fr)

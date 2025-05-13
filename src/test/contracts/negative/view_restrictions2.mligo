@@ -1,5 +1,3 @@
-module Tezos = Tezos.Next
-
 type 'a return = operation list * 'a
 
 [@entry]

@@ -1,5 +1,3 @@
-module Tezos = Tezos.Next
-
 [@entry]
 let main (s : string) () : operation list * unit =
   let u =

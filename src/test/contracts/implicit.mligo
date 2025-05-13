@@ -1,5 +1,3 @@
-module Tezos = Tezos.Next
-
 module Other_main = struct
   [@entry]
   let main (p : key_hash) (_ : unit) : operation list * unit =

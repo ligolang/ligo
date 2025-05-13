@@ -6,8 +6,6 @@ Modelled after:
 Goes with ticket_wallet.mligo.
 *)
 
-module Tezos = Tezos.Next
-
 type mint_parameter =
   [@layout comb]
   {

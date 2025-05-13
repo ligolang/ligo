@@ -23,8 +23,6 @@ The type is parameterized based on the parameter that the contract accepts.
 For example, if the contract accepts an integer, the type is `int contract`.
 
 ```cameligo group=get_contract
-module Tezos = Tezos.Next
-
 type returnType = operation list * int
 
 type contractParam =
@@ -54,8 +52,6 @@ The type is parameterized based on the parameter that the contract accepts.
 For example, if the contract accepts an integer, the type is `contract<int>`.
 
 ```jsligo group=get_contract
-import Tezos = Tezos.Next
-
 type returnType = [list<operation>, int];
 
 type contractParam =
