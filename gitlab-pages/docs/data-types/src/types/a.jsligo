@@ -1,0 +1,6 @@
+type breed = string;
+const dog_breed_1: breed = "Saluki";
+const dog_breed_2: string = "Shiba Inu";
+
+const greet_dogs = (dogs: list<breed>): string =>
+  List.fold(([a, b]: [breed, breed]) => String.concats([a, ", ", b]), dogs, "Hello");

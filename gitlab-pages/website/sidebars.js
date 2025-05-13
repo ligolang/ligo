@@ -74,6 +74,7 @@ const sidebars = {
       "syntax/keywords"
     ],
     "Data types": [
+      "data-types/types",
       {
         "type": "category",
         "label": "Primitive types",
