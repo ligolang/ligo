@@ -1,2 +1,0 @@
-const b      = 0x123456;
-const length = Bytes.length(b);  // length = 3
