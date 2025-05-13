@@ -1,6 +1,0 @@
-namespace EURO {
-  export type t = int;
-  export const add = (a: t, b: t) : t => a + b;
-  export const zero: t = 0;
-  export const one: t = 1;
-}

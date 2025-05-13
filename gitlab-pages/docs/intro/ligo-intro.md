@@ -42,7 +42,7 @@ Even if LIGO currently offers **two syntaxes**, you'll need to **choose only one
 
 ```
 
-A significant advantage of the multi-syntax feature is to share knowledge, toolings, and [modules](../language-basics/modules) (like [libraries](../advanced/package-management) onto [registry](https://packages.ligolang.org/packages)) in a larger community.
+A significant advantage of the multi-syntax feature is to share knowledge, toolings, and [modules](../syntax/modules) (like [libraries](../advanced/package-management) onto [registry](https://packages.ligolang.org/packages)) in a larger community.
 
 ### LIGO, designed to be cost-effective
 
@@ -104,7 +104,7 @@ Your choice to learn LIGO is already available:
 ### Do you want to build a production-ready project?
 
 You will need a deeper comprehension:
-- Teach yourself how to structure your code with [Combining code](../language-basics/modules) section
+- Teach yourself how to structure your code with [Combining code](../syntax/modules) section
 - Learn how to [write tests](../testing) we strongly encourage to use [breathalyzer library from the LIGO registry.](https://packages.ligolang.org/package/ligo-breathalyzer)
 - Understand how to [secure a contract](../tutorials/security)
 

@@ -1,0 +1,20 @@
+import { addToImport, subToImport, myConstant } from "./gitlab-pages/docs/intro/src/upgrade-v2/topLevelDefinitions.jsligo";
+
+type storage_type = int;
+type return_type = [list<operation>, storage_type];
+
+class Calculator {
+
+  @entry
+  add = (value: int, storage: storage_type): return_type =>
+    [[], addToImport(storage, value)];
+
+  @entry
+  sub = (value: int, storage: storage_type): return_type =>
+    [[], subToImport(storage, value)];
+
+  @entry
+  increment = (_: unit, storage: storage_type): return_type =>
+    [[], addToImport(storage, myConstant)];
+
+}
