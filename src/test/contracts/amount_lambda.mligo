@@ -1,5 +1,3 @@
-module Tezos = Tezos.Next
-
 (* should return a constant function *)
 
 let f1 () : unit -> tez =

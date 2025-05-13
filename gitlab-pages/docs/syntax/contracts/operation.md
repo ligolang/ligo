@@ -18,16 +18,23 @@ The list can include any number of operations of any type.
 
 As described in [Operations](https://docs.tezos.com/smart-contracts/logic/operations) on docs.tezos.com, operations do not run immediately when the operation object is created.
 Instead, operations are added to a stack of operations to run after the code of the entrypoint is complete.
-For example, if a contract checks its balance with the `Tezos.Next.Typed_address.get_balance` function, creates an operation to transfer tez to another account, and then checks its balance again in the same entrypoint execution, the balance is the same because the transfer operation has not run yet.
+For example, if a contract checks its balance with the `Tezos.Typed_address.get_balance` function, creates an operation to transfer tez to another account, and then checks its balance again in the same entrypoint execution, the balance is the same because the transfer operation has not run yet.
 For more detailed examples, see [Operations](https://docs.tezos.com/smart-contracts/logic/operations) on docs.tezos.com.
 
-There are no literal values of type operation.
-Instead, such values are created using the following functions from the standard library: `Tezos.Next.Operation.transaction` (transfer), `Tezos.Next.Operation.create_contract` (origination), `Tezos.Next.Operation.set_delegate` (delegation), and `Tezos.Next.Operation.emit` (emission of event).
-For the operation to run, these operation values must be included in the list of operations returned at the end of the entrypoint code.
+There are no literal values of type operation.  Instead, such values
+are created using the following functions from the standard library:
+`Tezos.Operation.transaction` (transfer),
+`Tezos.Operation.create_contract` (origination),
+`Tezos.Operation.set_delegate` (delegation), and
+`Tezos.peration.emit` (emission of event).  For the operation to run,
+these operation values must be included in the list of operations
+returned at the end of the entrypoint code.
 
 ## Creating transactions
 
-The `Tezos.Next.Operation.transaction` function creates a transaction operation, which can be a call to a smart contract (including the same contract) or a transfer of tez to a user account (implicit account).
+The `Tezos.Operation.transaction` function creates a transaction
+operation, which can be a call to a smart contract (including the same
+contract) or a transfer of tez to a user account (implicit account).
 Its parameters are:
 
 - The parameter to pass
@@ -41,8 +48,6 @@ To send tez to a user account, pass `unit` as the parameter and the address of t
 <Syntax syntax="cameligo">
 
 ```cameligo group=send_tez
-module Tezos = Tezos.Next
-
 type storage = unit
 type return_value = operation list * storage
 
@@ -62,8 +67,6 @@ type return_value = operation list * storage
 <Syntax syntax="jsligo">
 
 ```jsligo group=send_tez
-import Tezos = Tezos.Next;
-
 type storage = unit;
 type return_value = [list<operation>, storage];
 
@@ -94,7 +97,6 @@ To get the correct parameter for the transaction, contract B uses the `parameter
 <Syntax syntax="cameligo">
 
 ```cameligo group=operation_transaction
-module Tezos = Tezos.Next
 module Test = Test.Next
 
 type 'storage return = operation list * 'storage
@@ -150,7 +152,6 @@ let test =
 <Syntax syntax="jsligo">
 
 ```jsligo group=operation_transaction
-import Tezos = Tezos.Next;
 import Test = Test.Next;
 
 type return_<storage> = [list<operation>, storage];
@@ -227,8 +228,8 @@ In most cases, the parameter is annotated with the names of the entrypoints from
 In this case, the annotations `%sub` and `%add` indicate the parameters to pass to run the code from the `sub` and `add` entrypoints from the source code.
 
 LIGO can use these annotations to parse the parameter and format the call to the contract.
-For example, this contract uses the `Tezos.Next.get_entrypoint` function to create a contract address that includes the parameter that indicates the entrypoint.
-Then it passes the parameter value for the entrypoint without the entrypoint name as the first parameter of the `Tezos.Next.Operation.transaction` function:
+For example, this contract uses the `Tezos.get_entrypoint` function to create a contract address that includes the parameter that indicates the entrypoint.
+Then it passes the parameter value for the entrypoint without the entrypoint name as the first parameter of the `Tezos.Operation.transaction` function:
 
 <Syntax syntax="cameligo">
 
@@ -369,7 +370,7 @@ For information about constructing more complicated parameters, see [Interoperab
 
 ## Originating contracts
 
-The `Tezos.Next.Operation.create_contract` function creates an operation to originate a contract.
+The `Tezos.Operation.create_contract` function creates an operation to originate a contract.
 Its parameters are:
 
 - The code of the new contract as a function
@@ -377,17 +378,15 @@ Its parameters are:
 - The amount of tez for the contract's initial balance
 - The initial storage value for the contract
 
-The `Tezos.Next.Operation.create_contract` function returns the operation and the address of the new contract.
+The `Tezos.Operation.create_contract` function returns the operation and the address of the new contract.
 However, a contract cannot originate a contract and call it in the same entrypoint execution because the origination operation must run first, and as described previously, operations do not run until the entrypoint execution is complete.
-Calling the `Tezos.Next.get_contract_opt` function on that address returns `None` until the new contract is actually originated.
+Calling the `Tezos.get_contract_opt` function on that address returns `None` until the new contract is actually originated.
 
 This example originates a simple contract:
 
 <Syntax syntex="cameligo">
 
 ```cameligo group=origination
-module Tezos = Tezos.Next
-
 type return = operation list * string
 
 [@entry]
@@ -408,8 +407,6 @@ let main (_ : string) (storage : string) : return =
 <Syntax syntax="jsligo">
 
 ```jsligo group=origination
-import Tezos = Tezos.Next;
-
 type return_ = [list<operation>, string];
 
 // @entry
@@ -428,15 +425,13 @@ const main = (_: string, storage: string) : return_ => {
 
 ## Changing delegation
 
-The `Tezos.Next.Operation.set_delegate` function creates an operation that changes the delegate for the current contract.
+The `Tezos.Operation.set_delegate` function creates an operation that changes the delegate for the current contract.
 Its parameter is an option with the public key hash of the new delegate or `None` to withdraw delegation.
 The operation (not the function itself) fails if the new key hash is the same as the current delegate or is not registered as a delegate.
 
 <Syntax syntax="cameligo">
 
 ```cameligo group=set_delegate
-module Tezos = Tezos.Next
-
 [@entry]
 let changeDelegate (new_delegate : key_hash) (storage : unit) : operation list * unit =
   [Tezos.Operation.set_delegate (Some new_delegate)], storage
@@ -448,8 +443,6 @@ let changeDelegate (new_delegate : key_hash) (storage : unit) : operation list *
 <Syntax syntax="jsligo">
 
 ```jsligo group=set_delegate
-import Tezos = Tezos.Next;
-
 // @entry
 const changeDelegate = (new_delegate: key_hash, storage: unit): [list<operation>, unit] =>
   [[Tezos.Operation.set_delegate (["Some" as "Some", new_delegate])], storage];
@@ -460,15 +453,14 @@ const changeDelegate = (new_delegate: key_hash, storage: unit): [list<operation>
 
 ## Emitting events
 
-The `Tezos.Next.Operation.emit` function creates an event emission operation.
-Its parameters are the tag for the event and the payload for the event.
-For more information about events, see [Events](../../syntax/contracts/events).
+The `Tezos.Operation.emit` function creates an event emission
+operation.  Its parameters are the tag for the event and the payload
+for the event.  For more information about events, see
+[Events](../../syntax/contracts/events).
 
 <Syntax syntax="cameligo">
 
 ```cameligo group=event_emit
-module Tezos = Tezos.Next
-
 [@entry]
 let emitEvents (_ : unit) (storage : int) : operation list * int =
   let event1 : operation = Tezos.Operation.emit "%emitEvents" "hi" in
@@ -481,8 +473,6 @@ let emitEvents (_ : unit) (storage : int) : operation list * int =
 <Syntax syntax="jsligo">
 
 ```jsligo group=event_emit
-import Tezos = Tezos.Next;
-
 // @entry
 const emitEvents = (_: unit, storage: int): [list<operation>, int] => {
   const event1: operation = Tezos.Operation.emit("%emitEvents", "hi");

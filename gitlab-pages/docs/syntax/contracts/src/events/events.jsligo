@@ -1,5 +1,3 @@
-import Tezos = Tezos.Next;
-
 // @entry
 const emitEvents = (_: unit, storage: int): [list<operation>, int] => {
   const event1: operation = Tezos.Operation.emit("%emitEvents", "hi");

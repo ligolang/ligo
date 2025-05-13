@@ -1,7 +1,5 @@
 (* examples/contracts/mligo/AccessController.mligo *)
 
-module Tezos = Tezos.Next
-
 type storage = {senders_whitelist : address set}
 
 [@entry]

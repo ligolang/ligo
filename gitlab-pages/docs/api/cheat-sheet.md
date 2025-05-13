@@ -376,8 +376,6 @@ Contracts & Accounts
 <div className="example">
 
 ```cameligo group=tezos_specific
-module Tezos = Tezos.Next
-
 let destinationAddress : address =
   ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" : address)
 
@@ -882,8 +880,6 @@ Contracts & Accounts
 <div className="example">
 
 ```jsligo group=tezos_specific
-import Tezos = Tezos.Next;
-
 const destinationAddress: address = "tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx";
 
 const contract : contract<unit> =

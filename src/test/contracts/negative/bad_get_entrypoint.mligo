@@ -1,5 +1,3 @@
-module Tezos = Tezos.Next
-
 [@entry]
 let main (_ : unit) (_ : unit) : operation list * unit =
   let v : unit contract option =

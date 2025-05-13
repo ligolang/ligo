@@ -1,5 +1,3 @@
-import Tezos = Tezos.Next;
-
 type storage = {rewardsLeft: tez, beneficiaryAddress: address };
 
 const treasury = (p : unit, s : storage) => {

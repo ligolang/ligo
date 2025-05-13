@@ -53,8 +53,6 @@ Account A is the source of all subsequent transactions in the chain, including a
 <Syntax syntax="cameligo">
 
 ```cameligo group=sender
-module Tezos = Tezos.Next
-
 let sender : address = Tezos.get_sender ()
 ```
 
@@ -63,8 +61,6 @@ let sender : address = Tezos.get_sender ()
 <Syntax syntax="jsligo">
 
 ```jsligo group=sender
-import Tezos = Tezos.Next;
-
 const sender: address = Tezos.get_sender();
 ```
 
@@ -78,7 +74,6 @@ If there is more than one transaction in the chain, that address is different fr
 <Syntax syntax="cameligo">
 
 ```cameligo group=source
-module Tezos = Tezos.Next
 let source : address = Tezos.get_source ()
 ```
 
@@ -87,7 +82,6 @@ let source : address = Tezos.get_source ()
 <Syntax syntax="jsligo">
 
 ```jsligo group=source
-import Tezos = Tezos.Next;
 const source: address = Tezos.get_source();
 ```
 

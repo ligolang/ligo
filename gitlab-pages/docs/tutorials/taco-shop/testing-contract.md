@@ -17,7 +17,6 @@ For convenience, in this tutorial, you put the tests in the same file.
 
    ```jsligo skip
    import Test = Test.Next;
-   import Tezos = Tezos.Next;
    ```
 
 1. At the end of the contract file, outside of the namespace, add this convenience function to call the view and get the current price of a taco:
@@ -148,7 +147,6 @@ The completed contract file with convenience functions and test functions looks 
 
 ```jsligo group=testing_contract
 import Test = Test.Next;
-import Tezos = Tezos.Next;
 
 namespace TacoShop {
   export type taco_supply = { current_stock: nat, max_price: tez };
@@ -317,7 +315,6 @@ const test = (() => {
 
    ```cameligo skip
    module Test = Test.Next
-   module Tezos = Tezos.Next
    ```
 
 1. At the end of the contract file, outside of the module, add this convenience function to call the view and get the current price of a taco:
@@ -436,10 +433,8 @@ The completed contract file with the convenience functions and test functions lo
 
 ```cameligo group=testing_contract
 module Test = Test.Next
-module Tezos = Tezos.Next
 
 module TacoShop = struct
-
   type taco_supply = { current_stock: nat; max_price: tez }
   type taco_data = (nat, taco_supply) map
   type admin_address = address

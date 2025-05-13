@@ -199,8 +199,6 @@ If you don't want an entrypoint to accept tez, check how much tez was included w
 <Syntax syntax="cameligo">
 
 ```cameligo group=c
-module Tezos = Tezos.Next
-
 type parameter = unit
 type storage = unit
 type result = operation list * storage
@@ -217,8 +215,6 @@ let no_tokens (action : parameter) (storage : storage) : result =
 <Syntax syntax="jsligo">
 
 ```jsligo group=c
-import Tezos = Tezos.Next;
-
 type parameter = unit;
 type storage = unit;
 type result = [list<operation>, storage];
@@ -240,8 +236,6 @@ as in this example:
 <Syntax syntax="cameligo">
 
 ```cameligo group=send_tez
-module Tezos = Tezos.Next
-
 type storage = unit
 type return_value = operation list * storage
 
@@ -262,8 +256,6 @@ let give5tez (_ : unit) (storage : storage) : return_value =
 <Syntax syntax="jsligo">
 
 ```jsligo group=send_tez
-import Tezos = Tezos.Next;
-
 type storage = unit;
 type return_value = [list<operation>, storage];
 
@@ -334,8 +326,6 @@ To call other entrypoints or contracts, create an operation and return it in the
 <Syntax syntax="cameligo">
 
 ```cameligo group=call_entrypoint
-module Tezos = Tezos.Next
-
 type storage = unit
 type return_value = operation list * storage
 
@@ -353,8 +343,6 @@ type return_value = operation list * storage
 <Syntax syntax="jsligo">
 
 ```jsligo group=call_entrypoint
-import Tezos = Tezos.Next;
-
 type storage = unit;
 type return_value = [list<operation>, storage];
 

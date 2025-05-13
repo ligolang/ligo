@@ -1,5 +1,3 @@
-module Tezos = Tezos.Next
-
 type storage = address option
 type return = operation list * storage
 type parameter = One | Two

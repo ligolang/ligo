@@ -1,5 +1,3 @@
-module Tezos = Tezos.Next
-
 type parameter = Fund | Send of address * tez
 
 type transaction = Incoming of address * tez | Outgoing of address * tez

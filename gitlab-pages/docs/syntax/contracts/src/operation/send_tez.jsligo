@@ -1,5 +1,3 @@
-import Tezos = Tezos.Next;
-
 type storage = unit;
 type return_value = [list<operation>, storage];
 

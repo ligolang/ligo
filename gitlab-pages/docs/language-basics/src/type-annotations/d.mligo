@@ -1,5 +1,3 @@
-module Tezos = Tezos.Next
-
 type parameter = Back | Claim | Withdraw
 
 type storage = {

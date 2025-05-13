@@ -1,5 +1,3 @@
-module Tezos = Tezos.Next
-
 let foo : int = 42
 
 type return = operation list * int

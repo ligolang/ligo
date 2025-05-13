@@ -1,4 +1,3 @@
-import Tezos = Tezos.Next;
 import Test = Test.Next;
 
 type return_<storage> = [list<operation>, storage];

@@ -1,5 +1,3 @@
-import Tezos = Tezos.Next;
-
 namespace TacoShop {
   export type taco_supply = { current_stock: nat, max_price: tez };
   export type taco_data = map<nat, taco_supply>;

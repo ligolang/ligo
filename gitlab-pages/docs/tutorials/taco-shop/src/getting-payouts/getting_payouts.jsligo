@@ -1,5 +1,4 @@
 import Test = Test.Next;
-import Tezos = Tezos.Next;
 
 namespace TacoShop {
   export type taco_supply = { current_stock: nat, max_price: tez };

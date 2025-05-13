@@ -1,3 +1,1 @@
-import Tezos = Tezos.Next;
-
 const check = (p : unit) => Tezos.get_source();

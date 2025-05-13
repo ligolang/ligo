@@ -395,37 +395,30 @@ let%expect_test _ =
   [%expect
     {|
     Scopes:
-    [  ] File "../../test/contracts/warning_duplicate2.mligo", line 1, characters 15-25
-    [  ] File "../../test/contracts/warning_duplicate2.mligo", line 2, characters 8-35
-    [ x#2:4-5  ] File "../../test/contracts/warning_duplicate2.mligo", line 3, characters 8-9
-    [ x#2:4-5  ] File "../../test/contracts/warning_duplicate2.mligo", line 3, characters 11-12
+    [  ] File "../../test/contracts/warning_duplicate2.mligo", line 1, characters 8-35
+    [ x#1:4-5  ] File "../../test/contracts/warning_duplicate2.mligo", line 2, characters 8-9
+    [ x#1:4-5  ] File "../../test/contracts/warning_duplicate2.mligo", line 2, characters 11-12
 
     Variable definitions:
-    (x#2:4-5 -> x)
-    Range: File "../../test/contracts/warning_duplicate2.mligo", line 2, characters 4-5
-    Decl Range: File "../../test/contracts/warning_duplicate2.mligo", line 2, characters 0-35
+    (x#1:4-5 -> x)
+    Range: File "../../test/contracts/warning_duplicate2.mligo", line 1, characters 4-5
+    Decl Range: File "../../test/contracts/warning_duplicate2.mligo", line 1, characters 0-35
     Content: |resolved: option (ticket (nat))|
     references:
-      File "../../test/contracts/warning_duplicate2.mligo", line 3, characters 8-9 ,
-      File "../../test/contracts/warning_duplicate2.mligo", line 3, characters 11-12
+      File "../../test/contracts/warning_duplicate2.mligo", line 2, characters 8-9 ,
+      File "../../test/contracts/warning_duplicate2.mligo", line 2, characters 11-12
     Mod Path =
     Def Type = Global
-    (x#3:4-5 -> x)
-    Range: File "../../test/contracts/warning_duplicate2.mligo", line 3, characters 4-5
-    Decl Range: File "../../test/contracts/warning_duplicate2.mligo", line 3, characters 0-12
+    (x#2:4-5 -> x)
+    Range: File "../../test/contracts/warning_duplicate2.mligo", line 2, characters 4-5
+    Decl Range: File "../../test/contracts/warning_duplicate2.mligo", line 2, characters 0-12
     Content: |resolved: ( option (ticket (nat)) * option (ticket (nat)) )|
     references: []
     Mod Path =
     Def Type = Global
     Type definitions:
     Constructors and fields:
-    Module definitions:
-    (Tezos#1:7-12 -> Tezos)
-    Range: File "../../test/contracts/warning_duplicate2.mligo", line 1, characters 7-12
-    Decl Range: File "../../test/contracts/warning_duplicate2.mligo", line 1, characters 0-25
-    Content: Tezos#1:15-20.Next#1:21-25 (unresolved)
-    references:
-      File "../../test/contracts/warning_duplicate2.mligo", line 2, characters 8-13 |}];
+    Module definitions: |}];
   run_ligo_good
     [ "info"
     ; "get-scope"
@@ -439,16 +432,15 @@ let%expect_test _ =
   [%expect
     {|
     Scopes:
-    [  ] File "../../test/contracts/warning_duplicate.mligo", line 1, characters 15-25
-    [  ] File "../../test/contracts/warning_duplicate.mligo", line 4, characters 10-13
-    [  ] File "../../test/contracts/warning_duplicate.mligo", line 4, characters 23-65
-    [ Foo#3:7-10  ] File "../../test/contracts/warning_duplicate.mligo", line 7, characters 8-13
-    [ Foo#3:7-10  ] File "../../test/contracts/warning_duplicate.mligo", line 7, characters 15-20
+    [  ] File "../../test/contracts/warning_duplicate.mligo", line 2, characters 10-13
+    [  ] File "../../test/contracts/warning_duplicate.mligo", line 2, characters 23-65
+    [ Foo#1:7-10  ] File "../../test/contracts/warning_duplicate.mligo", line 5, characters 8-13
+    [ Foo#1:7-10  ] File "../../test/contracts/warning_duplicate.mligo", line 5, characters 15-20
 
     Variable definitions:
-    (x#7:4-5 -> x)
-    Range: File "../../test/contracts/warning_duplicate.mligo", line 7, characters 4-5
-    Decl Range: File "../../test/contracts/warning_duplicate.mligo", line 7, characters 0-20
+    (x#5:4-5 -> x)
+    Range: File "../../test/contracts/warning_duplicate.mligo", line 5, characters 4-5
+    Decl Range: File "../../test/contracts/warning_duplicate.mligo", line 5, characters 0-20
     Content: |resolved: ( ticket (nat) * ticket (nat) )|
     references: []
     Mod Path =
@@ -456,26 +448,17 @@ let%expect_test _ =
     Type definitions:
     Constructors and fields:
     Module definitions:
-    (Tezos#1:7-12 -> Tezos)
-    Range: File "../../test/contracts/warning_duplicate.mligo", line 1, characters 7-12
-    Decl Range: File "../../test/contracts/warning_duplicate.mligo", line 1, characters 0-25
-    Content: Tezos#1:15-20.Next#1:21-25 (unresolved)
-    references:
-      File "../../test/contracts/warning_duplicate.mligo", line 4, characters 37-42
-
-
-
-    (Foo#3:7-10 -> Foo)
-    Range: File "../../test/contracts/warning_duplicate.mligo", line 3, characters 7-10
-    Decl Range: File "../../test/contracts/warning_duplicate.mligo", line 3, character 0 to line 5, character 3
+    (Foo#1:7-10 -> Foo)
+    Range: File "../../test/contracts/warning_duplicate.mligo", line 1, characters 7-10
+    Decl Range: File "../../test/contracts/warning_duplicate.mligo", line 1, character 0 to line 3, character 3
     Content: Members: Variable definitions:
-                      (x#4:6-7 -> x)
-                      Range: File "../../test/contracts/warning_duplicate.mligo", line 4, characters 6-7
-                      Decl Range: File "../../test/contracts/warning_duplicate.mligo", line 4, characters 2-65
+                      (x#2:6-7 -> x)
+                      Range: File "../../test/contracts/warning_duplicate.mligo", line 2, characters 6-7
+                      Decl Range: File "../../test/contracts/warning_duplicate.mligo", line 2, characters 2-65
                       Content: |core: ticket (nat)|
                       references:
-                        File "../../test/contracts/warning_duplicate.mligo", line 7, characters 12-13 ,
-                        File "../../test/contracts/warning_duplicate.mligo", line 7, characters 19-20
+                        File "../../test/contracts/warning_duplicate.mligo", line 5, characters 12-13 ,
+                        File "../../test/contracts/warning_duplicate.mligo", line 5, characters 19-20
                       Mod Path = "Foo"
                       Def Type = Module_field
                       Type definitions:
@@ -483,5 +466,5 @@ let%expect_test _ =
                       Module definitions:
 
     references:
-      File "../../test/contracts/warning_duplicate.mligo", line 7, characters 8-11 ,
-      File "../../test/contracts/warning_duplicate.mligo", line 7, characters 15-18 |}]
+      File "../../test/contracts/warning_duplicate.mligo", line 5, characters 8-11 ,
+      File "../../test/contracts/warning_duplicate.mligo", line 5, characters 15-18 |}]

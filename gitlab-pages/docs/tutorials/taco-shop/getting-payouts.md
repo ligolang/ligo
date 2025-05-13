@@ -288,7 +288,6 @@ The complete contract and tests looks like this:
 
 ```jsligo group=getting_payouts
 import Test = Test.Next;
-import Tezos = Tezos.Next;
 
 namespace TacoShop {
   export type taco_supply = { current_stock: nat, max_price: tez };
@@ -596,10 +595,8 @@ The completed contract file with the convenience functions and test functions lo
 
 ```cameligo group=getting_payouts
 module Test = Test.Next
-module Tezos = Tezos.Next
 
 module TacoShop = struct
-
   type taco_supply = { current_stock: nat; max_price: tez }
   type taco_data = (nat, taco_supply) map
   type admin_address = address

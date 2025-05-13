@@ -1,5 +1,3 @@
-import Tezos = Tezos.Next;
-
 type storage = bytes;
 
 // @entry

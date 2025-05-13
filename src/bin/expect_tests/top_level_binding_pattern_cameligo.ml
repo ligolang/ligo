@@ -241,19 +241,19 @@ let%expect_test _ =
     ];
   [%expect
     {|
-      File "../../test/contracts/top_level_patterns/negative/cameligo/ticket_record.mligo", line 5, characters 5-6:
-        4 |
-        5 | let {b} = {b = Option.value_with_error "option is None" (Tezos.Ticket.create "one" 10n)}
+      File "../../test/contracts/top_level_patterns/negative/cameligo/ticket_record.mligo", line 3, characters 5-6:
+        2 |
+        3 | let {b} = {b = Option.value_with_error "option is None" (Tezos.Ticket.create "one" 10n)}
                  ^
-        6 |
+        4 |
       :
       Warning: variable cannot be used more than once.
 
-      File "../../test/contracts/top_level_patterns/negative/cameligo/ticket_record.mligo", line 5, characters 5-6:
-        4 |
-        5 | let {b} = {b = Option.value_with_error "option is None" (Tezos.Ticket.create "one" 10n)}
+      File "../../test/contracts/top_level_patterns/negative/cameligo/ticket_record.mligo", line 3, characters 5-6:
+        2 |
+        3 | let {b} = {b = Option.value_with_error "option is None" (Tezos.Ticket.create "one" 10n)}
                  ^
-        6 |
+        4 |
       :
       Warning: variable cannot be used more than once.
       { parameter unit ;
@@ -284,19 +284,17 @@ let%expect_test _ =
     ];
   [%expect
     {|
-     File "../../test/contracts/top_level_patterns/negative/cameligo/ticket_tuple.mligo", line 3, characters 4-5:
-       2 |
-       3 | let b, _ = Option.value_with_error "option is None" (Tezos.Ticket.create "one" 10n), 1
+     File "../../test/contracts/top_level_patterns/negative/cameligo/ticket_tuple.mligo", line 1, characters 4-5:
+       1 | let b, _ = Option.value_with_error "option is None" (Tezos.Ticket.create "one" 10n), 1
                ^
-       4 |
+       2 |
      :
      Warning: variable cannot be used more than once.
 
-     File "../../test/contracts/top_level_patterns/negative/cameligo/ticket_tuple.mligo", line 3, characters 4-5:
-       2 |
-       3 | let b, _ = Option.value_with_error "option is None" (Tezos.Ticket.create "one" 10n), 1
+     File "../../test/contracts/top_level_patterns/negative/cameligo/ticket_tuple.mligo", line 1, characters 4-5:
+       1 | let b, _ = Option.value_with_error "option is None" (Tezos.Ticket.create "one" 10n), 1
                ^
-       4 |
+       2 |
      :
      Warning: variable cannot be used more than once.
      { parameter unit ;

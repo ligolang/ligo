@@ -1,7 +1,5 @@
 type st = sapling_state<8>;
 type tr = sapling_transaction<8>;
-import Tezos = Tezos.Next;
-
 const x = Tezos.Sapling.empty_state;
 const f = (tr : tr) =>
   $match(Tezos.Sapling.verify_update(tr, x), {

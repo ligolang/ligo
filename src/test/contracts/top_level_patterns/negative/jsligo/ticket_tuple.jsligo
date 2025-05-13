@@ -1,5 +1,3 @@
-import Tezos = Tezos.Next;
-
 const [b, _] =
       [Option.value_with_error("option is None",
                                Tezos.Ticket.create("one", 10 as nat)), 1];

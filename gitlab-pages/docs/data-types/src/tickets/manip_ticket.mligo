@@ -1,4 +1,3 @@
-module Tezos = Tezos.Next
 module Ticket = Tezos.Ticket
 
 let my_ticket1 = Option.value_with_error "ticket1 failed" (Ticket.create 1 10n)

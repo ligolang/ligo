@@ -1,4 +1,3 @@
-module Tezos = Tezos.Next
 module Ticket = Tezos.Ticket
 
 type t = { a : int ticket ; b : string ticket ; c : nat ticket }

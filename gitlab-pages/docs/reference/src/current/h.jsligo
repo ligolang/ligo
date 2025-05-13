@@ -1,2 +1,1 @@
-import Tezos = Tezos.Next;
 const check = (p: unit) => Tezos.self("%default");

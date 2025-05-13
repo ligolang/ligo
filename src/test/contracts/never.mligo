@@ -1,5 +1,3 @@
-module Tezos = Tezos.Next
-
 type parameter =
 | Increment of int
 | Extend of never

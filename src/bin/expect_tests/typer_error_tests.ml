@@ -244,11 +244,11 @@ Expected a function type, but got "nat". |}];
     [ "compile"; "contract"; "--no-color"; "../../test/contracts/negative/id.mligo" ];
   [%expect
     {|
-    File "../../test/contracts/negative/id.mligo", line 47, characters 26-40:
-     46 |   let updated_identities: (id, id_details) big_map =
-     47 |     Big_map.update new_id new_id_details identities
+    File "../../test/contracts/negative/id.mligo", line 45, characters 26-40:
+     44 |   let updated_identities: (id, id_details) big_map =
+     45 |     Big_map.update new_id new_id_details identities
                                     ^^^^^^^^^^^^^^
-     48 |   in
+     46 |   in
 
     This expression has type "id_details", but an expression was expected of type
     "option (^a)".

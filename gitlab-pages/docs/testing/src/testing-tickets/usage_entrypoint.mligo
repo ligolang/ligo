@@ -1,5 +1,3 @@
-module Tezos = Tezos.Next
-
 module MyContract = struct
   type storage = int
   type param = int * int ticket

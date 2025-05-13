@@ -1,6 +1,5 @@
-
 let c () : operation * address =
-  Tezos.Next.Operation.create_contract (fun (_ : unit) (_ : unit) -> ([] : operation list), ()) (None : key_hash option) 0tez ()
+  Tezos.Operation.create_contract (fun (_ : unit) (_ : unit) -> ([] : operation list), ()) (None : key_hash option) 0tez ()
 
 let foo =
   let (_a, _b) : operation * address = c () in

@@ -1,5 +1,4 @@
 import Test = Test.Next;
-import Tezos = Tezos.Next;
 
 type storage = int;
 type parameter = unit;

@@ -1,11 +1,7 @@
-module Tezos = Tezos.Next
-
 type ss = 8 sapling_state
 
 type storage = int * ss
-
 type parameter = 8 sapling_transaction
-
 type return = operation list * storage
 
 [@entry]

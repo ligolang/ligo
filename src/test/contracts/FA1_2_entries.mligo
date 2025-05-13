@@ -1,5 +1,3 @@
-module Tezos = Tezos.Next
-
 type transfer =
   [@layout:comb]
   { [@annot:from] address_from : address;

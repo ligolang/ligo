@@ -1580,11 +1580,11 @@ let%expect_test _ =
   run_ligo_bad [ "run"; "test"; bad_test "test_source1.mligo" ];
   [%expect
     {|
-    File "../../test/contracts/negative//interpreter_tests/test_source1.mligo", line 16, characters 10-57:
-     15 |   let () = Test.State.set_source addr in
-     16 |   let _ = Test.Originate.contract (contract_of C) () 0tez in
+    File "../../test/contracts/negative//interpreter_tests/test_source1.mligo", line 15, characters 10-57:
+     14 |   let () = Test.State.set_source addr in
+     15 |   let _ = Test.Originate.contract (contract_of C) () 0tez in
                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-     17 |   ()
+     16 |   ()
 
     The source address is not an implicit account
     KT1MoPRoithHNa7i6LYHqeQfZB4oyWThinnS |}]
@@ -1654,11 +1654,11 @@ let%expect_test _ =
   run_ligo_bad [ "run"; "test"; bad_test "test_register_delegate.mligo" ];
   [%expect
     {|
-    File "../../test/contracts/negative//interpreter_tests/test_register_delegate.mligo", line 28, characters 4-51:
-     27 |   let {taddr=ta; code=_; size=_} =
-     28 |     Test.Originate.contract (contract_of C) 41 5tez in
+    File "../../test/contracts/negative//interpreter_tests/test_register_delegate.mligo", line 26, characters 4-51:
+     25 |   let {taddr=ta; code=_; size=_} =
+     26 |     Test.Originate.contract (contract_of C) 41 5tez in
               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-     29 |
+     27 |
 
     Baker cannot bake. Enough rolls? Enough cycles passed?
     "STARTING BALANCE AND VOTING POWER"
@@ -1667,11 +1667,11 @@ let%expect_test _ =
   run_ligo_bad [ "run"; "test"; bad_test "test_register_delegate_stake.mligo" ];
   [%expect
     {|
-    File "../../test/contracts/negative//interpreter_tests/test_register_delegate_stake.mligo", line 15, characters 11-42:
-     14 |   let () = Test.State.register_delegate pkh in
-     15 |   let () = Test.State.stake pkh 1000000tez in
+    File "../../test/contracts/negative//interpreter_tests/test_register_delegate_stake.mligo", line 14, characters 11-42:
+     13 |   let () = Test.State.register_delegate pkh in
+     14 |   let () = Test.State.stake pkh 1000000tez in
                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-     16 |   ()
+     15 |   ()
 
     An uncaught error occured:
     { "id": "proto.alpha.operation.manual_staking_forbidden",
@@ -1679,7 +1679,7 @@ let%expect_test _ =
         "Manual staking operations are forbidden because staking is currently automated.",
       "data": {} }
     Trace:
-    File "../../test/contracts/negative//interpreter_tests/test_register_delegate_stake.mligo", line 15, characters 11-42 |}]
+    File "../../test/contracts/negative//interpreter_tests/test_register_delegate_stake.mligo", line 14, characters 11-42 |}]
 
 let () = Sys_unix.chdir pwd
 let () = Sys_unix.chdir "../../test/contracts/negative/interpreter_tests/"
@@ -1689,19 +1689,19 @@ let%expect_test _ =
   run_ligo_bad [ "run"; "test"; "typed_addr_in_bytes_pack.mligo" ];
   [%expect
     {|
-File "typed_addr_in_bytes_pack.mligo", line 16, character 17 to line 20, character 5:
- 15 |     let r = originate_record () in
- 16 |     let packed = Bytes.pack (fun() ->
+File "typed_addr_in_bytes_pack.mligo", line 15, character 17 to line 19, character 5:
+ 14 |     let r = originate_record () in
+ 15 |     let packed = Bytes.pack (fun() ->
                        ^^^^^^^^^^^^^^^^^^^^
- 17 |         match (Tezos.get_entrypoint_opt "%transfer" r.addr : unit contract option) with
+ 16 |         match (Tezos.get_entrypoint_opt "%transfer" r.addr : unit contract option) with
       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
- 18 |           Some(c) -> let op = Tezos.Operation.transaction () 0mutez c in [op]
+ 17 |           Some(c) -> let op = Tezos.Operation.transaction () 0mutez c in [op]
       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
- 19 |         | None ->  ([] : operation list)
+ 18 |         | None ->  ([] : operation list)
       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
- 20 |     ) in
+ 19 |     ) in
       ^^^^^
- 21 |     let () = Test.IO.log(packed) in
+ 20 |     let () = Test.IO.log(packed) in
 
 Cannot decompile value KT1MoPRoithHNa7i6LYHqeQfZB4oyWThinnS of type typed_address (unit ,
 unit)
@@ -1725,14 +1725,14 @@ let%expect_test _ =
   run_ligo_bad [ "run"; "test"; bad_test "get_contract.mligo" ];
   [%expect
     {|
-    File "../../test/contracts/negative//interpreter_tests/get_contract.mligo", line 22, characters 10-64:
-     21 |   let _ = (Tezos.get_contract a : C parameter_of contract) in
-     22 |   let _ = (Tezos.get_contract_with_error a "foo" : int contract) in
+    File "../../test/contracts/negative//interpreter_tests/get_contract.mligo", line 21, characters 10-64:
+     20 |   let _ = (Tezos.get_contract a : C parameter_of contract) in
+     21 |   let _ = (Tezos.get_contract_with_error a "foo" : int contract) in
                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-     23 |   ()
+     22 |   ()
 
     An uncaught error occured:
     Failwith: "foo"
     Trace:
-    File "../../test/contracts/negative//interpreter_tests/get_contract.mligo", line 22, characters 10-64 ,
-    File "../../test/contracts/negative//interpreter_tests/get_contract.mligo", line 22, characters 10-64 |}]
+    File "../../test/contracts/negative//interpreter_tests/get_contract.mligo", line 21, characters 10-64 ,
+    File "../../test/contracts/negative//interpreter_tests/get_contract.mligo", line 21, characters 10-64 |}]

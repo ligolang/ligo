@@ -5,8 +5,6 @@
  *   https://gitlab.com/tezos/tezos/-/blob/master/src/proto_alpha/lib_protocol/contracts/timelock_flip.tz
  *)
 
-module Tezos = Tezos.Next
-
 module C = struct
   type storage = { level: nat; chest: chest; guess: bytes; result: bytes }
 

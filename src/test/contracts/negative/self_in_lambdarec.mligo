@@ -1,7 +1,5 @@
-module Tezos = Tezos.Next
-
 let rec foo (n : int) : address =
-  if (n <= 1)
+  if n <= 1
   then Tezos.address (Tezos.self "%default" : int contract)
   else
     let addr = foo (n - 1) in

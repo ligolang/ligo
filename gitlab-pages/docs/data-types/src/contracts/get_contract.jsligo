@@ -1,5 +1,3 @@
-import Tezos = Tezos.Next
-
 type returnType = [list<operation>, int];
 
 type contractParam =

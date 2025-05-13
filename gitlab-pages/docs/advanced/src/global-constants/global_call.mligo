@@ -1,5 +1,3 @@
-module Tezos = Tezos.Next
-
 let c : int -> int = Tezos.constant "expruCKsgmUZjC7k8NRcwbcGbFSuLHv5rUyApNd972MwArLuxEZQm2"
 
 [@entry]

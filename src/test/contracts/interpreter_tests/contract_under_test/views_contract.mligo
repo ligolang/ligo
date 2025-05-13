@@ -1,5 +1,3 @@
-module Tezos = Tezos.Next
-
 type 'a return = operation list * 'a
 
 module Main_with_view = struct

@@ -1,5 +1,3 @@
-module Tezos = Tezos.Next
-
 (* storage type *)
 
 type counter = nat

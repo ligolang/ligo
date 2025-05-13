@@ -1,5 +1,3 @@
-module Tezos = Tezos.Next
-
 module Counter = struct
   type storage = int * address
   type return_type = operation list * storage

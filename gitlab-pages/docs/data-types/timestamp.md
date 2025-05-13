@@ -20,7 +20,6 @@ that it is up to the baker to set the current timestamp value.
 <Syntax syntax="cameligo">
 
 ```cameligo group=now
-module Tezos = Tezos.Next
 let today : timestamp = Tezos.get_now ()
 ```
 
@@ -29,7 +28,6 @@ let today : timestamp = Tezos.get_now ()
 <Syntax syntax="jsligo">
 
 ```jsligo group=now
-import Tezos = Tezos.Next;
 const today: timestamp = Tezos.get_now();
 ```
 
@@ -49,7 +47,6 @@ constraints on your smart contracts. Consider the following scenarios.
 <Syntax syntax="cameligo">
 
 ```cameligo group=tomorrow
-module Tezos = Tezos.Next
 let today : timestamp = Tezos.get_now ()
 let one_day : int = 86_400
 let in_24_hrs : timestamp = today + one_day
@@ -62,7 +59,6 @@ let one_day_later : timestamp = some_date + one_day
 <Syntax syntax="jsligo">
 
 ```jsligo group=tomorrow
-import Tezos = Tezos.Next;
 const today: timestamp = Tezos.get_now();
 const one_day: int = 86_400;
 const in_24_hrs: timestamp = today + one_day;
@@ -78,7 +74,6 @@ const one_day_later: timestamp = some_date + one_day;
 <Syntax syntax="cameligo">
 
 ```cameligo group=yesterday
-module Tezos = Tezos.Next
 let today : timestamp = Tezos.get_now ()
 let one_day : int = 86400
 let in_24_hrs : timestamp = today - one_day
@@ -89,7 +84,6 @@ let in_24_hrs : timestamp = today - one_day
 <Syntax syntax="jsligo">
 
 ```jsligo group=yesterday
-import Tezos = Tezos.Next;
 const today: timestamp = Tezos.get_now();
 const one_day: int = 86400;
 const in_24_hrs: timestamp = today - one_day;
@@ -105,7 +99,6 @@ between two timestamps:
 <Syntax syntax="cameligo">
 
 ```cameligo group=subtracting
-module Tezos = Tezos.Next
 let today : timestamp = Tezos.get_now ()
 let some_date : timestamp = ("2035-01-01t10:10:10Z" : timestamp)
 let secs_until_some_date : int = some_date - today
@@ -116,7 +109,6 @@ let secs_until_some_date : int = some_date - today
 <Syntax syntax="jsligo">
 
 ```jsligo group=subtracting
-import Tezos = Tezos.Next;
 const today: timestamp = Tezos.get_now();
 const some_date: timestamp = "2035-01-01t10:10:10Z" as timestamp;
 const secs_until_some_date: int = some_date - today;
@@ -134,7 +126,6 @@ applying to numerical value.
 <Syntax syntax="cameligo">
 
 ```cameligo group=comparing
-module Tezos = Tezos.Next
 let today : timestamp = Tezos.get_now ()
 let one_day : int = 86400
 let in_24_hrs : timestamp = today - one_day
@@ -146,7 +137,6 @@ let not_tomorrow : bool = (Tezos.get_now () = in_24_hrs)
 <Syntax syntax="jsligo">
 
 ```jsligo group=comparing
-import Tezos = Tezos.Next;
 const today: timestamp = Tezos.get_now();
 const one_day: int = 86400;
 const in_24_hrs: timestamp = today - one_day;

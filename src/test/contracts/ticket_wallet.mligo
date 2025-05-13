@@ -6,8 +6,6 @@ Modelled after:
 Goes with ticket_builder.mligo.
 *)
 
-module Tezos = Tezos.Next
-
 type send_parameter =
   [@layout comb]
   {

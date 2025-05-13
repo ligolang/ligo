@@ -45,7 +45,6 @@ Here is how you emit events and fetch them from your tests:
 <Syntax syntax="cameligo">
 
 ```cameligo test-ligo group=test_ex
-module Tezos = Tezos.Next
 module Test = Test.Next
 
 module C = struct
@@ -66,7 +65,6 @@ let test_foo =
 <Syntax syntax="jsligo">
 
 ```jsligo test-ligo group=test_ex
-import Tezos = Tezos.Next;
 import Test = Test.Next;
 
 namespace C {

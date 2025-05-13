@@ -10,8 +10,6 @@
    that contracts can use it.
 *)
 
-module Tezos = Tezos.Next
-
 type storage = address
 
 type parameter =

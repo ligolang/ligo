@@ -1,4 +1,3 @@
-import Tezos = Tezos.Next;
 import Test = Test.Next;
 
 namespace C {

@@ -1,5 +1,3 @@
-module Tezos = Tezos.Next
-
 type storage = {rewardsLeft : tez; beneficiaryAddress : address}
 
 let treasury (p, s : unit * storage) =

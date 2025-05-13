@@ -21,8 +21,6 @@ Get the balance for the contract.
 <Syntax syntax="cameligo">
 
 ```cameligo
-module Tezos = Tezos.Next
-
 let check (p,s : unit * tez) = [], Tezos.get_balance()
 ```
 
@@ -31,8 +29,6 @@ let check (p,s : unit * tez) = [], Tezos.get_balance()
 <Syntax syntax="jsligo">
 
 ```jsligo
-import Tezos = Tezos.Next;
-
 const check = (p: unit, s: tez):[list<operation>, tez] =>
   [[], Tezos.get_balance()];
 ```
@@ -60,8 +56,6 @@ smart contracts like this:
 <Syntax syntax="cameligo">
 
 ```cameligo group=b
-module Tezos = Tezos.Next
-
 let today         = Tezos.get_now ()
 let one_day       = 86_400
 let in_24_hrs     = today + one_day
@@ -74,8 +68,6 @@ let one_day_later = some_date + one_day
 <Syntax syntax="jsligo">
 
 ```jsligo group=b
-import Tezos = Tezos.Next;
-
 const today         = Tezos.get_now();
 const one_day       = 86_400;
 const in_24_hrs     = today + one_day;
@@ -91,8 +83,6 @@ const one_day_later = some_date + one_day;
 <Syntax syntax="cameligo">
 
 ```cameligo group=c
-module Tezos = Tezos.Next
-
 let today     = Tezos.get_now ()
 let one_day   = 86_400
 let in_24_hrs = today - one_day
@@ -103,8 +93,6 @@ let in_24_hrs = today - one_day
 <Syntax syntax="jsligo">
 
 ```jsligo group=c
-import Tezos = Tezos.Next;
-
 const today     = Tezos.get_now();
 const one_day   = 86_400;
 const in_24_hrs = today - one_day;
@@ -176,8 +164,6 @@ Get the address that initiated the current transaction.
 <Syntax syntax="cameligo">
 
 ```cameligo group=e
-module Tezos = Tezos.Next
-
 let check (p : unit) = Tezos.get_sender ()
 ```
 
@@ -186,8 +172,6 @@ let check (p : unit) = Tezos.get_sender ()
 <Syntax syntax="jsligo">
 
 ```jsligo group=e
-import Tezos = Tezos.Next;
-
 const check = (p : unit) => Tezos.get_sender();
 ```
 
@@ -206,8 +190,6 @@ Get the address associated with a value of type `contract`.
 <Syntax syntax="cameligo">
 
 ```cameligo group=f
-module Tezos = Tezos.Next
-
 let check (p : key_hash) =
   let c = Tezos.implicit_account p
   in Tezos.address c
@@ -218,8 +200,6 @@ let check (p : key_hash) =
 <Syntax syntax="jsligo">
 
 ```jsligo group=f
-import Tezos = Tezos.Next;
-
 const check = (p : key_hash) => {
   const c = Tezos.implicit_account(p);
   return Tezos.address(c);
@@ -241,8 +221,6 @@ Get the address of the currently running contract.
 <Syntax syntax="cameligo">
 
 ```cameligo group=g
-module Tezos = Tezos.Next
-
 let check (p : unit) = Tezos.get_self_address ()
 ```
 
@@ -251,8 +229,6 @@ let check (p : unit) = Tezos.get_self_address ()
 <Syntax syntax="jsligo">
 
 ```jsligo group=g
-import Tezos = Tezos.Next;
-
 const check = (p : unit) => Tezos.get_self_address();
 ```
 
@@ -273,7 +249,6 @@ you are not using entrypoints: use "%default"
 <Syntax syntax="cameligo">
 
 ```cameligo group=h
-module Tezos = Tezos.Next
 let check (p : unit) = Tezos.self("%default")
 ```
 
@@ -282,7 +257,6 @@ let check (p : unit) = Tezos.self("%default")
 <Syntax syntax="jsligo">
 
 ```jsligo group=h
-import Tezos = Tezos.Next;
 const check = (p: unit) => Tezos.self("%default");
 ```
 
@@ -305,8 +279,6 @@ See also: https://octez.tezos.com/docs/active/glossary.html#user-account
 <Syntax syntax="cameligo">
 
 ```cameligo group=i
-module Tezos = Tezos.Next
-
 let check (kh : key_hash) = Tezos.implicit_account kh
 ```
 
@@ -315,8 +287,6 @@ let check (kh : key_hash) = Tezos.implicit_account kh
 <Syntax syntax="jsligo">
 
 ```jsligo group=i
-import Tezos = Tezos.Next;
-
 const check = (kh: key_hash) => Tezos.implicit_account(kh);
 ```
 
@@ -359,8 +329,6 @@ current transaction.
 <Syntax syntax="cameligo">
 
 ```cameligo group=j
-module Tezos = Tezos.Next
-
 let check (p : unit) = Tezos.get_source ()
 ```
 
@@ -369,8 +337,6 @@ let check (p : unit) = Tezos.get_source ()
 <Syntax syntax="jsligo">
 
 ```jsligo group=j
-import Tezos = Tezos.Next;
-
 const check = (p : unit) => Tezos.get_source();
 ```
 
@@ -402,8 +368,6 @@ only be used together with `Bytes.pack` and `Bytes.unpack`.
 <Syntax syntax="cameligo">
 
 ```cameligo group=k
-module Tezos = Tezos.Next
-
 type storage = bytes
 
 [@entry]
@@ -420,8 +384,6 @@ let main (_ignore : unit) (store : storage) : operation list * storage
 <Syntax syntax="jsligo">
 
 ```jsligo group=k
-import Tezos = Tezos.Next;
-
 type storage = bytes;
 
 // @entry
@@ -613,8 +575,6 @@ empty_state: sapling_state&lt;n&gt;
 <Syntax syntax="cameligo">
 
 ```cameligo group=sap_t
-module Tezos = Tezos.Next
-
 let x = Tezos.Sapling.empty_state
 ```
 
@@ -623,8 +583,6 @@ let x = Tezos.Sapling.empty_state
 <Syntax syntax="jsligo">
 
 ```jsligo group=sap_t
-import Tezos = Tezos.Next;
-
 const x = Tezos.Sapling.empty_state;
 ```
 
@@ -674,8 +632,6 @@ For the same reasons, if tickets are stored in a `map`/`big_map` you must use th
 <Syntax syntax="cameligo">
 
 ```cameligo group=contract_ticket
-module Tezos = Tezos.Next
-
 type storage = (string, int ticket) big_map
 type parameter = int
 type result = operation list * storage
@@ -692,8 +648,6 @@ let main (i : parameter) (store : storage) : result =
 <Syntax syntax="jsligo">
 
 ```jsligo group=contract_ticket
-import Tezos = Tezos.Next;
-
 type storage = big_map<string, ticket<int>>;
 type parameter = int;
 type result = [list<operation>, storage];

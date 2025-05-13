@@ -1,5 +1,3 @@
-import Tezos = Tezos.Next;
-
 export type pokeMessage = {
     receiver : address,
     feedback : string

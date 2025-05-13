@@ -1,5 +1,3 @@
-import Tezos = Tezos.Next;
-
 export type storage = {
   storage: unit;
   dynamic_entrypoints: dynamic_entrypoints

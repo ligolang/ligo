@@ -87,19 +87,19 @@ let%expect_test _ =
     ];
   [%expect
     {|
-File "../../test/contracts/top_level_patterns/negative/jsligo/ticket_record.jsligo", line 5, characters 8-9:
-  4 |
-  5 | const { b } = {
+File "../../test/contracts/top_level_patterns/negative/jsligo/ticket_record.jsligo", line 3, characters 8-9:
+  2 |
+  3 | const { b } = {
               ^
-  6 |   b: Option.value_with_error("option is None",
+  4 |   b: Option.value_with_error("option is None",
 :
 Warning: variable cannot be used more than once.
 
-File "../../test/contracts/top_level_patterns/negative/jsligo/ticket_record.jsligo", line 5, characters 8-9:
-  4 |
-  5 | const { b } = {
+File "../../test/contracts/top_level_patterns/negative/jsligo/ticket_record.jsligo", line 3, characters 8-9:
+  2 |
+  3 | const { b } = {
               ^
-  6 |   b: Option.value_with_error("option is None",
+  4 |   b: Option.value_with_error("option is None",
 :
 Warning: variable cannot be used more than once.
 { parameter unit ;
@@ -131,19 +131,17 @@ let%expect_test _ =
     ];
   [%expect
     {|
-File "../../test/contracts/top_level_patterns/negative/jsligo/ticket_tuple.jsligo", line 3, characters 7-8:
-  2 |
-  3 | const [b, _] =
+File "../../test/contracts/top_level_patterns/negative/jsligo/ticket_tuple.jsligo", line 1, characters 7-8:
+  1 | const [b, _] =
              ^
-  4 |       [Option.value_with_error("option is None",
+  2 |       [Option.value_with_error("option is None",
 :
 Warning: variable cannot be used more than once.
 
-File "../../test/contracts/top_level_patterns/negative/jsligo/ticket_tuple.jsligo", line 3, characters 7-8:
-  2 |
-  3 | const [b, _] =
+File "../../test/contracts/top_level_patterns/negative/jsligo/ticket_tuple.jsligo", line 1, characters 7-8:
+  1 | const [b, _] =
              ^
-  4 |       [Option.value_with_error("option is None",
+  2 |       [Option.value_with_error("option is None",
 :
 Warning: variable cannot be used more than once.
 { parameter unit ;

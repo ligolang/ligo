@@ -1,4 +1,3 @@
-module Tezos = Tezos.Next
 module Ticket = Tezos.Ticket
 
 let tc : int ticket option =

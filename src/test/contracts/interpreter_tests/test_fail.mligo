@@ -1,5 +1,4 @@
 module Test = Test.Next
-module Tezos = Tezos.Next
 
 module C = Contract_under_test.Fail_contract
 

@@ -1,7 +1,5 @@
 (* examples/contracts/mligo/Proxy.mligo *)
 
-module Tezos = Tezos.Next
-
 type parameter = int
 type storage = address
 

@@ -72,8 +72,6 @@ It provides an entrypoint that reads the ticket and adds its amount to the integ
 <Syntax syntax="cameligo">
 
 ```cameligo group=usage_orig
-module Tezos = Tezos.Next
-
 module MyContract = struct
   type storage = int * bytes ticket option
   type unforged_storage = int * bytes unforged_ticket option
@@ -98,8 +96,6 @@ end
 <Syntax syntax="jsligo">
 
 ```jsligo group=usage_orig
-import Tezos = Tezos.Next;
-
 namespace MyContract {
   export type storage = [int, option<ticket<bytes>>];
   export type unforged_storage = [int, option<unforged_ticket<bytes>>];
@@ -239,8 +235,6 @@ It multiplies the integer in the first parameter with the integer in the ticket 
 <Syntax syntax="cameligo">
 
 ```cameligo group=usage_entrypoint
-module Tezos = Tezos.Next
-
 module MyContract = struct
   type storage = int
   type param = int * int ticket
@@ -259,8 +253,6 @@ end
 <Syntax syntax="jsligo">
 
 ```jsligo group=usage_entrypoint
-import Tezos = Tezos.Next;
-
 namespace MyContract {
   type storage = int;
   export type param = [int, ticket<int>];

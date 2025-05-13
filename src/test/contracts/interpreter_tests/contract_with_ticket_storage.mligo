@@ -1,4 +1,3 @@
-module Tezos = Tezos.Next
 module Test = Test.Next
 
 type storage = (bytes ticket) option

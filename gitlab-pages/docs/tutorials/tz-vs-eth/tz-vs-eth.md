@@ -521,8 +521,6 @@ In Tezos, the execution model is quite different. Contracts communicate via mess
 <Syntax syntax="cameligo">
 
 ```cameligo group=b1
-module Tezos = Tezos.Next
-
 type storage = {rewardsLeft : tez; beneficiaryAddress : address}
 
 let treasury (p, s : unit * storage) =
@@ -549,8 +547,6 @@ let treasury (p, s : unit * storage) =
 <Syntax syntax="jsligo">
 
 ```jsligo group=b1
-import Tezos = Tezos.Next;
-
 type storage = {rewardsLeft: tez, beneficiaryAddress: address };
 
 const treasury = (p : unit, s : storage) => {
@@ -587,7 +583,7 @@ type parameter = DoSomething | DoSomethingCont of int
 
 let doSomething (p, s : unit * int) =
   (* The callee should call `%doSomethingCont` with the value we want *)
-  let op = Tezos.Next.Operation.transaction ... in
+  let op = Tezos.Operation.transaction ... in
   ([op], s)
 
 let doSomethingCont (p, s : int * int) = ([] : operation list), p + s
@@ -602,7 +598,7 @@ type parameter = ["DoSomething"] | ["DoSomethingCont", int];
 
 const doSomething = ([p, s]: [unit, int]) => {
   /* The callee should call `%doSomethingCont` with the value we want */
-  const op = Tezos.Next.Operation.transaction ...;
+  const op = Tezos.Operation.transaction ...;
   return [[], s]
 }
 

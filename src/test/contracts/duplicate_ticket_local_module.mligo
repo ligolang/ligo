@@ -1,5 +1,3 @@
-module Tezos = Tezos.Next
-
 let fst (x, _) = x
 let snd (_, x) = x
 
