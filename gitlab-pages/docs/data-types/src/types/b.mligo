@@ -1,5 +1,3 @@
-// The type account_balances denotes maps from addresses to tez
-
 type account_balances = (address, tez) map
 
 let ledger : account_balances =
