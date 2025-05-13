@@ -97,7 +97,6 @@ For a quick overview, [get-started](../tutorials/getting-started) is a good choi
 ### Do you want to learn LIGO?
 
 Your choice to learn LIGO is already available:
-- Read [basics](../language-basics/types) to have a basic comprehension
 - Write your first [smart contract](../tutorials/taco-shop/selling-tacos).
 - Others resources are available on [marigold.dev](https://www.marigold.dev/learn)
 

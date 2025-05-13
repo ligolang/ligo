@@ -1,6 +1,6 @@
 ---
-id: types
-title: Simple Types
+id: data-types
+title: Data types
 ---
 
 import Syntax from '@theme/Syntax';
