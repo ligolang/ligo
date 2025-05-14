@@ -1,3 +1,4 @@
+module Test = Test.Next
 module PBT = Test.PBT
 
 (* Let's check if it really is *)

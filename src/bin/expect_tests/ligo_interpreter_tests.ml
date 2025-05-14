@@ -1457,11 +1457,11 @@ let%expect_test _ =
   run_ligo_bad [ "run"; "test"; bad_test "test_random.mligo" ];
   [%expect
     {|
-    File "../../test/contracts/negative//interpreter_tests/test_random.mligo", line 6, characters 46-49:
-      5 |   (* We generate the property *)
-      6 |   let test = PBT.make_test (PBT.gen_small : ((int contract) list) pbt_gen) (fun (xs : (int contract) list) -> List.length xs = 42n) in
+    File "../../test/contracts/negative//interpreter_tests/test_random.mligo", line 7, characters 46-49:
+      6 |   (* We generate the property *)
+      7 |   let test = PBT.make_test (PBT.gen_small : ((int contract) list) pbt_gen) (fun (xs : (int contract) list) -> List.length xs = 42n) in
                                                         ^^^
-      7 |   (* And run it *)
+      8 |   (* And run it *)
 
     Generator for type contract (int) is not implemented. For now, only unit, string, bytes, address, int, nat, tez, records, sums, lists, sets, maps and big_maps can be generated. |}]
 
