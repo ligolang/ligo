@@ -1,9 +1,0 @@
-type id = nat;
-
-type user =
-  ["Admin", id]
-| ["Manager", id]
-| ["Guest"];
-
-const u : user = ["Admin" as "Admin", 1000 as nat];
-const g : user = ["Guest" as "Guest"];

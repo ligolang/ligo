@@ -1,4 +1,0 @@
-function div (a: nat, b: nat): option<nat> {
-  if (b == (0 as nat)) return ["None" as "None"];
-  return ["Some" as "Some", a/b]
-};
