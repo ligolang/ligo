@@ -1896,7 +1896,6 @@ type 'elt big_set = 'elt Big_set.t
 
 (** Strings of characters *)
 module String = struct
-
   (** display-only-for-cameligo
       The call `String.length s` is the number of characters in the string
       `s`. Note: `String.length` is another name for `String.size`. *)
@@ -1976,8 +1975,7 @@ module Bytes = struct
       The call `Bytes.length(b)` is the number of bytes in the sequence of
       bytes `b`. Note: `Bytes.length` is another name for
       `Bytes.size`. *)
-  let length (bytes: bytes) : nat =
-    [%external ("SIZE", bytes)]
+  let length (bytes: bytes) : nat = [%external ("SIZE", bytes)]
 
   (** display-only-for-cameligo
     The call `Bytes.size b` is the number of bytes in the sequence of
@@ -2270,6 +2268,894 @@ end
 
 (** The testing framework *)
 module Test = struct
+  module Next = struct
+    (** This function creates a random value for a chosen type. *)
+    let random (type a) (_u : unit) : a =
+      let g : a pbt_gen = [%external ("TEST_RANDOM", false)] in
+      [%external ("TEST_GENERATOR_EVAL", g)]
+
+    let get_time (_u : unit) : timestamp = Tezos.get_now ()
+
+    module Michelson = struct
+      (** Run a function on an input, all in Michelson. More concretely:
+        a) compiles the function argument to Michelson `f_mich`; b)
+        compiles the value argument (which was evaluated already) to
+        Michelson `v_mich`; c) runs the Michelson interpreter on the code
+        `f_mich` with starting stack `[v_mich]`. *)
+      let run (type a b) (f : a -> b) (v : a) : michelson_program =
+        [%external ("TEST_RUN", f, v)]
+
+      (** Compile a LIGO value to Michelson. Currently it is a
+        renaming of `compile_value`. *)
+      let eval (type a) (x : a) : michelson_program = run (fun (x : a) -> x) x
+
+      (** Decompile a Michelson value to LIGO, following the
+        (mandatory) type annotation. Note: This operation can fail at
+        run-time, in case that the `michelson_program` given cannot be
+        decompiled to something compatible with the annotated type. *)
+      let decompile (type a) (m : michelson_program) : a =
+        [%external ("TEST_DECOMPILE", m)]
+
+      (** Parses Michelson (as string) into a `michelson_program`. *)
+      let parse (s : string) : michelson_program =
+        [%external ("TEST_CONSTANT_TO_MICHELSON", s)]
+
+      module Contract = struct
+        (** Compiles a contract from an entrypoint function. *)
+        let compile (type p s) (f : p * s -> operation list * s) : (p,s) michelson_contract =
+          let no_vs : s views = [%external ("TEST_NIL_VIEWS", ())] in
+          let ast_c : (p,s) michelson_contract = [%external ("TEST_COMPILE_CONTRACT", f, no_vs)] in
+          [%external ("TEST_COMPILE_AST_CONTRACT", ast_c)]
+
+        let compile_with_views (type p s) (f : p * s -> operation list * s) (vs : s views)
+          : (p,s) michelson_contract =
+          let ast_c : (p,s) michelson_contract = [%external ("TEST_COMPILE_CONTRACT", f, vs)] in
+          [%external ("TEST_COMPILE_AST_CONTRACT", ast_c)]
+
+        (** Measures the size of a contract. *)
+        let size (type p s) (c : (p,s) michelson_contract) : int = [%external ("TEST_SIZE", c)]
+
+        (** Reads a contract from a `.tz` file. *)
+        let from_file (type p s) (fn : string) : (p,s) michelson_contract =
+          [%external ("TEST_READ_CONTRACT_FROM_FILE", fn)]
+
+        (** Compiles a contract with a path to the contract file, an
+            entrypoint, and a list of views. *)
+        let compile_from_file (type p s) (fn : string) : (p,s) michelson_contract =
+          let ast_c : (p,s) michelson_contract =
+            [%external ("TEST_COMPILE_CONTRACT_FROM_FILE", fn, (None : nat option))] in
+          [%external ("TEST_COMPILE_AST_CONTRACT", ast_c)]
+      end
+    end
+
+    module Originate = struct
+      type ('p, 's) origination_result =
+        { taddr : ('p, 's) typed_address
+        ; code : ('p, 's) michelson_contract
+        ; size : int
+        }
+
+      (** Originate a contract with initial storage and initial
+        balance. *)
+      let michelson (type p s)
+        (c : (p,s) michelson_contract)
+        (s : s)
+        (t : tez)
+      : (p,s) typed_address =
+        let s = Michelson.eval s in
+        [%external ("TEST_ORIGINATE", c, s, t)]
+
+      (** Originate a contract with an entrypoint function in curried
+        form, initial storage and initial balance. *)
+      let contract (type p s) ((f, vs, _) : (p, s) module_contract) (s : s) (t : tez) : (p, s) origination_result =
+        let code = Michelson.Contract.compile_with_views f vs in
+        let taddr = michelson code s t in
+        let size = Michelson.Contract.size code in
+        { taddr ; code ; size }
+
+      (** Originate a contract with a path to the contract file, an
+        entrypoint, and a list of views, together with an initial storage
+        and an initial balance. *)
+      let from_file (type p s) (fn : string) (s : s) (t : tez) : (p, s) origination_result =
+        let ast_c : (p,s) michelson_contract =
+          [%external ("TEST_COMPILE_CONTRACT_FROM_FILE", fn, (None : nat option))] in
+        let code = [%external ("TEST_COMPILE_AST_CONTRACT", ast_c)] in
+        let taddr = michelson code s t in
+        let size = Michelson.Contract.size code in
+        { taddr; code ; size }
+    end
+
+    module Mutation = struct
+      (** Mutates a value using a natural number as an index for the
+        available mutations, returns an option for indicating whether
+        mutation was successful or not. *)
+      let value (type a) (n : nat) (v : a) : (a * mutation) option =
+        [%external ("TEST_MUTATE_VALUE", n, v)]
+
+      (** This function reconstructs a file from a mutation (second
+        argument), and saves it to a file in the directory path (first
+        argument). It returns an optional string indicating the filename
+        where the mutation was saved, or `None` if there was an error. *)
+      let save (s : string) (m : mutation) : string option =
+        [%external ("TEST_SAVE_MUTATION", s, m)]
+
+      (** Given a value to mutate (first argument), it will try all the
+        mutations available of it, passing each one to the function
+        (second argument). On the first case of non failure when running
+        the function on a mutation, the value and mutation involved will
+        be returned. *)
+      let func (type a b) (v : a) (tester : a -> b) : (b * mutation) option =
+        let try_with (type a) (v : unit -> a) (c : unit -> a) = [%external ("TEST_TRY_WITH", v, c)] in
+        type ret_code = Passed of (b * mutation) | Continue | Stop in
+        let rec mutation_nth (n : nat) : (b * mutation) option =
+        let curr = match value n v with
+          | Some (v, m) -> try_with (fun () -> let b = tester v in Passed (b, m)) (fun () -> Continue)
+          | None -> Stop in
+        match curr with
+        | Stop -> None
+        | Continue -> mutation_nth (n + 1n)
+        | Passed (b, m) -> Some (b, m) in
+        mutation_nth 0n
+
+      (** Given a contract from a file (passed by filepath, entrypoint and
+        views), an initial storage and balance, it will originate mutants
+        of the contract and pass the result to the function (last
+        argument). On the first case of non failure when running the
+        function on a mutation, the value and mutation involved will be
+        returned. *)
+      let from_file (type b p s) (fn : string) (s : s) (t : tez)
+                    (tester : (p,s) typed_address * (p,s) michelson_contract * int -> b) : (b * mutation) option =
+        let wrap_tester (v : (p,s) michelson_contract) : b =
+          let f = [%external ("TEST_COMPILE_AST_CONTRACT", v)] in
+          let a = Originate.michelson f s t in
+          let c = Michelson.Contract.size f in
+          tester (a, f, c) in
+        let ast_c : (p,s) michelson_contract = [%external ("TEST_COMPILE_CONTRACT_FROM_FILE", fn, (None : nat option))] in
+        let try_with (type a) (v : unit -> a) (c : unit -> a) = [%external ("TEST_TRY_WITH", v, c)] in
+        type ret_code = Passed of (b * mutation) | Continue | Stop in
+        let rec mutation_nth (n : nat) : (b * mutation) option =
+          let mutated = [%external ("TEST_MUTATE_CONTRACT", n, ast_c)] in
+          let curr = match mutated with
+            | Some (v, m) -> try_with (fun () -> let b = wrap_tester v in Passed (b, m)) (fun () -> Continue)
+            | None -> Stop in
+          match curr with
+          | Stop -> None
+          | Continue -> mutation_nth (n + 1n)
+          | Passed (b, m) -> Some (b, m) in
+        mutation_nth 0n
+
+      (** Given a contract as a module/namespace, an initial storage and
+        balance, it will originate mutants of the contract and pass the
+        result to the function (last argument). On the first case of non
+        failure when running the function on a mutation, the value and
+        mutation involved will be returned. *)
+      let contract (type p s b) ((f, vs, _) : (p, s) module_contract) (s : s) (t : tez)
+                                  (tester : (p, s) typed_address -> (p,s) michelson_contract -> int -> b) : (b * mutation) option =
+        let wrap_tester (v : (p,s) michelson_contract) : b =
+          let f = [%external ("TEST_COMPILE_AST_CONTRACT", v)] in
+          let a = Originate.michelson f s t in
+          let c = Michelson.Contract.size f in
+          tester a f c in
+        let ast_c : (p,s) michelson_contract = [%external ("TEST_COMPILE_CONTRACT", f, vs)] in
+        let try_with (type a) (v : unit -> a) (c : unit -> a) = [%external ("TEST_TRY_WITH", v, c)] in
+      type ret_code = Passed of (b * mutation) | Continue | Stop in
+      let rec mutation_nth (n : nat) : (b * mutation) option =
+        let mutated = [%external ("TEST_MUTATE_CONTRACT", n, ast_c)] in
+        let curr = match mutated with
+          | Some (v, m) -> try_with (fun () -> let b = wrap_tester v in Passed (b, m)) (fun () -> Continue)
+          | None -> Stop in
+        match curr with
+        | Stop -> None
+        | Continue -> mutation_nth (n + 1n)
+        | Passed (b, m) -> Some (b, m) in
+      mutation_nth 0n
+
+      module All = struct
+        (** Given a value to mutate (first argument), it will try all the
+            mutations of it, passing each one to the function (second
+            argument). In case no failure arises when running the function on
+            a mutation, the failure and mutation involved will be added to the
+            list to be returned. *)
+        let func (type a b) (v : a) (tester : a -> b) : (b * mutation) list =
+          let try_with (type a) (v : unit -> a) (c : unit -> a) = [%external ("TEST_TRY_WITH", v, c)] in
+          type ret_code = Passed of (b * mutation) | Continue | Stop in
+          let rec mutation_nth (acc : (b * mutation) list) (n : nat) : (b * mutation) list =
+            let curr = match value n v with
+              | Some (v, m) -> try_with (fun () -> let b = tester v in Passed (b, m)) (fun () -> Continue)
+              | None -> Stop in
+            match curr with
+            | Stop -> acc
+            | Continue -> mutation_nth acc (n + 1n)
+            | Passed (b, m) -> mutation_nth ((b, m) :: acc) (n + 1n) in
+          mutation_nth ([] : (b * mutation) list) 0n
+
+        (** Given a contract from a file (passed by filepath, entrypoint and
+            views), an initial storage and balance, it will originate mutants
+            of the contract and pass the result to the function (last
+            argument). In case no failure arises when running the function on
+            a mutation, the failure and mutation involved will be added to the
+            list to be returned. *)
+        let from_file (type b p s) (fn : string) (s : s) (t : tez)
+                                         (tester : (p,s) typed_address * (p,s) michelson_contract * int -> b) : (b * mutation) list =
+          let wrap_tester (v : (p,s) michelson_contract) : b =
+            let f = [%external ("TEST_COMPILE_AST_CONTRACT", v)] in
+            let a = Originate.michelson f s t in
+            let c = Michelson.Contract.size f in
+            tester (a, f, c) in
+          let ast_c : (p,s) michelson_contract = [%external ("TEST_COMPILE_CONTRACT_FROM_FILE", fn, (None : nat option))] in
+          let try_with (type a) (v : unit -> a) (c : unit -> a) = [%external ("TEST_TRY_WITH", v, c)] in
+          type ret_code = Passed of (b * mutation) | Continue | Stop in
+          let rec mutation_nth (acc : (b * mutation) list) (n : nat) : (b * mutation) list =
+            let mutated = [%external ("TEST_MUTATE_CONTRACT", n, ast_c)] in
+            let curr =
+              match mutated with
+              | Some (v, m) ->
+                 try_with (fun () -> let b = wrap_tester v in Passed (b, m)) (fun () -> Continue)
+              | None -> Stop in
+            match curr with
+            | Stop -> acc
+            | Continue -> mutation_nth acc (n + 1n)
+            | Passed (b, m) -> mutation_nth ((b, m) :: acc) (n + 1n) in
+          mutation_nth ([] : (b * mutation) list) 0n
+
+        (** Given a contract as a module/namespace, an initial storage and
+            balance, it will originate mutants of the contract and pass the
+            result to the function (last argument). In case no failure arises
+            when running the function on a mutation, the failure and mutation
+            involved will be added to the list to be returned. *)
+          let contract (type p s b) ((f, vs, _) : (p, s) module_contract) (s : s) (t : tez)
+                       (tester : (p, s) typed_address -> (p,s) michelson_contract -> int -> b) : (b * mutation) list =
+            let wrap_tester (v : (p,s) michelson_contract) : b =
+              let f = [%external ("TEST_COMPILE_AST_CONTRACT", v)] in
+              let a = Originate.michelson f s t in
+              let c = Michelson.Contract.size f in
+              tester a f c in
+            let ast_c : (p,s) michelson_contract = [%external ("TEST_COMPILE_CONTRACT", f, vs)] in
+            let try_with (type a) (v : unit -> a) (c : unit -> a) = [%external ("TEST_TRY_WITH", v, c)] in
+            type ret_code = Passed of (b * mutation) | Continue | Stop in
+            let rec mutation_nth (acc : (b * mutation) list) (n : nat) : (b * mutation) list =
+              let mutated = [%external ("TEST_MUTATE_CONTRACT", n, ast_c)] in
+              let curr =
+                match mutated with
+                | Some (v, m) -> try_with (fun () -> let b = wrap_tester v in Passed (b, m)) (fun () -> Continue)
+                | None -> Stop in
+              match curr with
+              | Stop -> acc
+              | Continue -> mutation_nth acc (n + 1n)
+              | Passed (b, m) -> mutation_nth ((b, m) :: acc) (n + 1n) in
+            mutation_nth ([] : (b * mutation) list) 0n
+      end
+    end
+
+    module PBT = struct
+      let gen (type a) : a pbt_gen = [%external ("TEST_RANDOM", false)]
+      let gen_small (type a) : a pbt_gen = [%external ("TEST_RANDOM", true)]
+      let make_test (type a) (g : a pbt_gen) (p : a -> bool) : a pbt_test = (g, p)
+      let run (type a) ((g, p) : a pbt_test) (k : nat) : a pbt_result =
+        let iter = fun ((n, _) : nat * a pbt_result) ->
+          if n = k then
+            [%external ("LOOP_STOP", (0n, (Success : a pbt_result)))]
+          else
+            let v = [%external ("TEST_GENERATOR_EVAL", g)] in
+            if p v then
+              [%external ("LOOP_CONTINUE", ((n + 1n), (Success : a pbt_result)))]
+            else
+              [%external ("LOOP_STOP", (n, Fail v))] in
+        let (_, v) = [%external ("LOOP_LEFT", iter, (0n, (Success : a pbt_result)))] in
+        v
+    end
+
+    module String = struct
+      (** String consisting of only a newline. *)
+      let nl = [%external ("TEST_UNESCAPE_STRING", "\n")]
+
+      (** Converts a value to a string (same conversion as used by
+        `Test.log`). *)
+      let show (type a) (v : a) : string = [%external ("TEST_TO_STRING", v, 0)]
+
+      (** Converts a value to its JSON representation (as a string). *)
+      let json (type a) (v : a) : string = [%external ("TEST_TO_STRING", v, 1)]
+
+      let debugger_json (type a) (v : a) : string =
+        [%external ("TEST_TO_STRING", v, 2)]
+
+      (** String consisting of the character represented by a `nat` in the
+          interval `[0, 255]`. *)
+      let chr (n : nat) : string option =
+        let backslash = "\\" in
+        if n < 10n then
+          Some ([%external ("TEST_UNESCAPE_STRING", (backslash ^ "00" ^ show (int n)))])
+        else if n < 100n then
+          Some ([%external ("TEST_UNESCAPE_STRING", (backslash ^ "0" ^ show (int n)))])
+        else if n < 256n then
+          Some ([%external ("TEST_UNESCAPE_STRING", (backslash ^ show (int n)))])
+        else
+          None
+    end
+
+    module IO = struct
+      (** Prints an string to stdout. *)
+      let print (v : string) : unit = [%external ("TEST_PRINT", 1, v)]
+
+      (** Prints an string to stdout, ended with a newline. *)
+      let println (v : string) : unit = print (v ^ String.nl)
+
+      (** Prints an string to stderr. *)
+      let eprint (v : string) : unit = [%external ("TEST_PRINT", 2, v)]
+
+      (** Prints an string to stderr, ended with a newline. *)
+      let eprintln (v : string) : unit = eprint (v ^ String.nl)
+
+      (** Logs a value. *)
+      let log (type a) (v : a) : unit = print (String.show v ^ String.nl)
+
+      (** Turns on the printing of `test` prefixed values at the end of
+        tests. This is the default behaviour. *)
+      let set_test_print (_ : unit) : unit =
+        let _ = [%external ("TEST_SET_PRINT_VALUES", true)] in ()
+
+      (** Turns off the printing of `test` prefixed values at the end of
+        tests. *)
+      let unset_test_print (_ : unit) : unit =
+        let _ = [%external ("TEST_SET_PRINT_VALUES", false)] in ()
+    end
+
+    module Typed_address = struct
+      (** Gets the contract corresponding to the default entrypoint of a
+        typed address: the contract parameter in the result will be the
+        type of the default entrypoint (generally `'param`, but this might
+        differ if `'param` includes a "default" entrypoint). *)
+      let to_contract (type p s) (t : (p, s) typed_address) : p contract =
+        [%external ("TEST_TO_CONTRACT", t)]
+
+       (** Bakes a transaction by sending an amount of tez with a parameter
+         from the current source to another account. Returns the amount of
+         gas consumed by the execution of the contract. *)
+      let transfer (type p s) (a : (p,s) typed_address) (s : p) (t : tez) : test_exec_result =
+        let a = to_contract a in
+        let s : michelson_program = Michelson.eval s in
+        [%external ("TEST_EXTERNAL_CALL_TO_ADDRESS", a, (None : string option), s, t)]
+
+      (** Bakes a transaction by sending an amount of tez with a parameter
+        from the current source to another account. Returns the amount of
+        gas consumed by the execution of the contract. Similar as
+        `Test.transfer`, but fails when anything goes wrong. *)
+      let transfer_exn (type p s) (a : (p,s) typed_address) (s : p) (t : tez) : nat =
+        let a = to_contract a in
+        let s : michelson_program = Michelson.eval s in
+        [%external ("TEST_EXTERNAL_CALL_TO_ADDRESS_EXN", a, (None : string option), s, t)]
+
+      (** Gets the storage of a typed account. *)
+      let get_storage (type p s) (t : (p, s) typed_address) : s =
+        let s : michelson_program = [%external ("TEST_GET_STORAGE", t)] in
+        (Michelson.decompile s : s)
+
+      (** Gets the balance of an account in tez. *)
+      let to_address (type p s) (c : (p, s) typed_address) : address =
+        [%external ("TEST_TO_ADDRESS", c)]
+
+      let get_balance (type p s) (a : (p, s) typed_address) : tez =
+        [%external ("TEST_GET_BALANCE", to_address a)]
+
+      (** Gets the contract corresponding to an entrypoint of a typed
+        address: the contract parameter in the result will be the type of
+        the entrypoint, it needs to be annotated, entrypoint string should
+        omit the prefix "%", but if passed a string starting with "%", it
+        will be removed (and a warning emitted). *)
+      let get_entrypoint (type p s q) (s : string) (t : (p, s) typed_address) : q contract =
+        let s =
+          if Toplevel.String.length s > 0n then
+            if Toplevel.String.sub 0n 1n s = "%" then
+              let () = IO.eprintln "WARNING: get_entrypoint: automatically removing starting %" in
+              Toplevel.String.sub 1n (abs (Toplevel.String.length s - 1)) s
+            else s
+          else s in
+        [%external ("TEST_TO_ENTRYPOINT", s, t)]
+    end
+
+    module State = struct
+      (** Pops a testing framework context from the stack of contexts, and
+        sets it up as the new current context. In case the stack was
+        empty, the current context is kept. *)
+      let restore (u : unit) : unit = [%external ("TEST_POP_CONTEXT", u)]
+
+      (** Takes current testing framework context and saves it, pushing it
+        into a stack of contexts. *)
+      let save (u : unit) : unit = [%external ("TEST_PUSH_CONTEXT", u)]
+
+      (** Drops a testing framework context from the stack of contexts. In
+        case the stack was empty, nothing is done. *)
+      let drop (u : unit) : unit = [%external ("TEST_DROP_CONTEXT", u)]
+
+      (** Generates a number of random bootstrapped accounts with a
+        default amount of `4000000` tez. The passed list can be used to
+        overwrite the amount. By default, the state only has two
+        bootstrapped accounts. Notice that since Ithaca, a percentage of
+        an account's balance is frozen (5% in testing mode) in case the
+        account can be taken to be a validator, and thus getting
+        balance can show a different amount to the one being set with
+        `Test.State.reset`. *)
+      let reset (n : nat) (l : tez list) : unit =
+        [%external ("TEST_STATE_RESET", (None : timestamp option), n, l)]
+
+      (** Generates a number of random bootstrapped accounts with a
+        default amount of `4000000` tez. The passed list can be used to
+        overwrite the amount. By default, the state only has two
+        bootstrapped accounts. Notice that since Ithaca, a percentage of
+        an account's balance is frozen (5% in testing mode) in case the
+        account can be taken to be a validator, and thus getting
+        balance can show a different amount to the one being set with
+        `Test.State.reset`. It also takes a starting timestamp
+        for the genesis block. *)
+      let reset_at (t:timestamp) (n : nat) (l : tez list) : unit =
+        [%external ("TEST_STATE_RESET", (Some t), n, l)]
+
+      (** Registers a `key_hash` corresponding to an account as a delegate. *)
+      let register_delegate (kh : key_hash) : unit =
+        [%external ("TEST_REGISTER_DELEGATE", kh)]
+
+      (** Registers a global constant, returns its hash as a string. See
+        the documentation for global constants for an example of usage. *)
+      let register_constant (m : michelson_program) : string =
+        [%external ("TEST_REGISTER_CONSTANT", m)]
+
+      (** Sets the source for `Test.transfer` and `Test.originate`. *)
+      let set_source (a : address) : unit =
+        [%external ("TEST_SET_SOURCE", a)]
+
+      (** Forces the baking policy for `Test.transfer` and
+        `Test.originate`. By default, the first bootstrapped account. *)
+      let set_baker_policy (bp : test_baker_policy) : unit =
+        [%external ("TEST_SET_BAKER", bp)]
+
+      (** Forces the baker for `Test.transfer` and `Test.originate`,
+        implemented using `Test.set_baker_policy` with `By_account`. By
+        default, the first bootstrapped account. *)
+      let set_baker (a : address) : unit =
+        set_baker_policy (By_account a)
+
+      (** It bakes until a number of cycles pass, so that an account
+       registered as delegate can effectively act as a baker. Note: It
+       can be used in tests to manually advance time. *)
+      let bake_until (n : nat) : unit =
+        [%external ("TEST_BAKE_UNTIL_N_CYCLE_END", n)]
+
+      (** The testing framework keeps an internal reference to the values
+        corresponding to big map identifiers. This function allows to
+        override the value of a particular big map identifier. It should
+        not be normally needed, except in particular circumstances such as
+        using custom bootstrap contracts that initialize big maps. *)
+      let set_big_map (type k v) (i : int) (m : (k, v) big_map) : unit =
+        [%external ("TEST_SET_BIG_MAP", i, m)]
+
+      (** Return the voting power of a given contract. This voting power
+        coincides with the weight of the contract in the voting listings
+        (i.e., the rolls count) which is calculated at the beginning of
+        every voting period. *)
+      let get_voting_power (kh : key_hash) : nat =
+        [%external ("TEST_GET_VOTING_POWER", kh)]
+
+      (** Returns the total voting power of all contracts. The total
+        voting power coincides with the sum of the rolls count of every
+        contract in the voting listings. The voting listings is calculated
+        at the beginning of every voting period. *)
+      let get_total_voting_power (() : unit) : nat =
+        [%external ("TEST_GET_TOTAL_VOTING_POWER", ())]
+
+      (** Returns addresses of orginated accounts in the last transfer. It
+        is given in the form of a map binding the address of the source of
+        the origination operation to the addresses of newly originated
+        accounts. *)
+      let last_originations (() : unit) : (address, address list) map =
+        [%external ("TEST_LAST_ORIGINATIONS", ())]
+
+      (** Returns the list of all the event payloads emited with a given
+        tag by a given address. Any call to this function must be
+        annotated with the expected payload type. *)
+      let last_events (type a p s) (addr : (p,s) typed_address) (rtag: string)
+      : a list =
+        let addr = Tezos.address (Typed_address.to_contract addr) in
+        let event_map : (address * a) list = [%external ("TEST_LAST_EVENTS", rtag)] in
+        let f ((acc, (c_addr,event)) : a list * (address * a)) : a list =
+          if addr = c_addr then event :: acc else acc in
+        List.fold f event_map ([]: a list)
+
+      let stake (kh : key_hash) (t : tez) : unit =
+        [%external ("TEST_STAKE", kh, t)]
+
+      module Reset = struct
+        (** Adds an account `(sk, pk)` as a baker. The change is only
+          effective after `Test.reset_state`. *)
+        let add_baker (p : string * key) (o : tez option) : unit =
+          [%external ("TEST_BAKER_ACCOUNT", p, o)]
+
+        (** Setup a bootstrap contract with an entrypoint function, initial
+          storage and initial balance. Bootstrap contracts will be loaded in
+          order, and they will be available only after reset. *)
+        let add_func_contract (type p s)
+          (f : p * s -> operation list * s)
+          (s : s)
+          (t : tez)
+        : unit =
+          [%external ("TEST_BOOTSTRAP_CONTRACT", f, s, t)]
+      end
+    end
+
+    module Account = struct
+      (** Returns the address of the nth bootstrapped account. *)
+      let address (n : nat) =
+        let (a, _, _) = [%external ("TEST_GET_NTH_BS", (int n))] in
+        a
+
+      (** Returns the address of the 0th bootstrapped account. *)
+      let alice () = address 0n
+
+      (** Returns the address of the 1st bootstrapped account. *)
+      let bob () = address 1n
+
+      (** Returns the address of the 2nd bootstrapped account. *)
+      let carol () = address 2n
+
+      (** Returns the address of the 3rd bootstrapped account. *)
+      let dan () = address 3n
+
+      (** Adds an account specfied by secret key & public key to the test
+        context. *)
+      let add (s : string) (k : key) : unit = [%external ("TEST_ADD_ACCOUNT", s, k)]
+
+      type info = { addr: address; pk: key; sk: string }
+
+      (** Returns the address information of the nth bootstrapped
+        account. *)
+      let info (n : nat) : info =
+        let (addr, pk, sk) = [%external ("TEST_GET_NTH_BS", (int n))] in
+        { addr ; pk ; sk }
+
+      (** Creates and returns information of a new account. *)
+      let new (() : unit) : info =
+        let (sk, pk) = [%external ("TEST_NEW_ACCOUNT", ())] in
+        let addr = [%michelson ({| { HASH_KEY ; IMPLICIT_ACCOUNT ; ADDRESS } |} pk : address)] in
+        { addr ; pk ; sk }
+
+      module Contract = struct
+        (** Returns the address corresponding to the nth bootstrapped
+            contract. *)
+        let bootstrap (i : nat) : address =
+          [%external ("TEST_NTH_BOOTSTRAP_CONTRACT", i)]
+
+        (** Returns the typed address corresponding to the nth
+            bootstrapped contract currently loaded. The types are
+            inferred from those contracts loaded with
+            `Test.State.Reset.add_func_contract` (before reset). *)
+        let bootstrap_typed_address (type a b) (n : nat) : (a, b) typed_address =
+          [%external ("TEST_NTH_BOOTSTRAP_TYPED_ADDRESS", n)]
+      end
+    end
+
+    module Compare = struct
+      [@private]
+      let compare (type a) (lhs : a) (rhs : a) : int =
+        [%external ("TEST_COMPARE", lhs, rhs)]
+
+      (** display-only-for-cameligo
+        The call `eq x y` returns `true` if, and only if, `x` and `y`
+        are considered to be equal w.r.t. the order on the underlying
+        type. *)
+      (** display-only-for-jsligo
+        The call `eq(x, y)` returns `true` if, and only if, `x` and `y`
+        are considered to be equal w.r.t. the order on the underlying
+        type. *)
+      let eq (type a) (lhs : a) (rhs : a) : bool =
+        compare lhs rhs = 0
+
+      (** display-only-for-cameligo
+        The call `neq x y` returns `true` if, and only if, `x` and
+        `y` are not considered to be equal w.r.t. the order on the
+        underlying type. *)
+      (** display-only-for-jsligo
+        The call `neq(x, y)` returns `true` if, and only if, `x` and
+        `y` are not considered to be equal w.r.t. the order on the
+        underlying type. *)
+      let neq (type a) (lhs : a) (rhs : a) : bool =
+        compare lhs rhs <> 0
+
+      (** display-only-for-cameligo
+        The call `gt x y` returns `true` if, and only if, `x` is
+        considered to be greater than `y` w.r.t. the order on the
+        underlying type. *)
+      (** display-only-for-jsligo
+        The call `gt(x, y)` returns `true` if, and only if, `x` is
+        considered to be greater than `y` w.r.t. the order on the
+        underlying type. *)
+      let gt (type a) (lhs : a) (rhs : a) : bool =
+        compare lhs rhs > 0
+
+      (** display-only-for-cameligo
+        The call `lt` returns `true` if, and only if, `x` is
+        considered to be less than `y` w.r.t. the order on the underlying
+        type. *)
+      (** display-only-for-jsligo
+        The call `lt(x, y)` returns `true` if, and only if, `x` is
+        considered to be less than `y` w.r.t. the order on the underlying
+        type. *)
+      let lt (type a) (lhs : a) (rhs : a) : bool =
+        compare lhs rhs < 0
+
+
+      (** display-only-for-cameligo
+        The call `ge x y` returns `true` if, and only if,
+        `x` is considered to be greater or equal than `y` w.r.t. the order
+        on the underlying type. *)
+      (** display-only-for-jsligo
+        The call `ge(x, y)` returns `true` if, and only if,
+        `x` is considered to be greater or equal than `y` w.r.t. the order
+        on the underlying type. *)
+      let ge (type a) (lhs : a) (rhs : a) : bool =
+        compare lhs rhs >= 0
+
+      (** display-only-for-cameligo
+        The call `le x y` returns `true` if, and only if, `x`
+        is considered to be less or equal than `y` w.r.t. the order on the
+        underlying type. *)
+      (** display-only-for-jsligo
+        The call `le(x, y)` returns `true` if, and only if, `x`
+        is considered to be less or equal than `y` w.r.t. the order on the
+        underlying type. *)
+      let le (type a) (lhs : a) (rhs : a) : bool =
+        compare lhs rhs <= 0
+    end
+
+    module Assert = struct
+      (** Cause the testing framework to fail. *)
+      let failwith (type a b) (v : a) : b =
+        [%external ("TEST_FAILWITH", v)]
+
+      (** display-only-for-cameligo
+        The call `assert cond` terminates the execution with the string
+        `"failed assertion"` if, and only if, the boolean condition `cond`
+        is false. The failure is handled by LIGO's testing framework and
+        not by Michelson's interpreter. *)
+      (** display-only-for-jsligo
+        The call `assert(cond)` terminates the execution with the string
+        `"failed assertion"` if, and only if, the boolean condition `cond`
+        is false. The failure is handled by LIGO's testing framework and
+        not by Michelson's interpreter. *)
+      let assert (b : bool) : unit = if b then () else failwith "failed assertion"
+
+      (** display-only-for-cameligo
+        The call `some opt` terminates the execution with the
+        string `"failed assert some"` if, and only if, `opt` is `None`.
+        The failure is handled by LIGO's testing framework and
+        not by Michelson's interpreter. *)
+      (** display-only-for-jsligo
+        The call `some(opt)` terminates the execution with the string
+        `"failed assert some"` if, and only if, `opt` is `["None" as "None"]`.
+        The failure is handled by LIGO's testing framework
+        and not by Michelson's interpreter. *)
+      let some = Assert.some
+
+      (** display-only-for-cameligo
+        The call `none opt` terminates the execution with the string
+        `"failed assert none"` if, and only if, `opt` is not `None`.
+        The failure is handled by LIGO's testing framework and
+        not by Michelson's interpreter. *)
+      (** display-only-for-jsligo
+        The call `none(opt)` terminates the execution with the string
+        `"failed assert none"` if, and only if, `opt` is not
+        `["None" as "None"]`.  The failure is handled by LIGO's testing
+        framework and not by Michelson's interpreter. *)
+      let none = Assert.none
+
+      module Error = struct
+        (** display-only-for-cameligo
+          The call `assert cond error` terminates the execution
+          with the string `error` (that is, an error message) if, and only
+          if, the boolean condition `cond` is false. The failure is handled
+          by LIGO's testing framework and not by Michelson's interpreter. *)
+        (** display-only-for-jsligo
+          The call `assert(cond, error)` terminates the execution
+          with the string `error` (that is, an error message) if, and only
+          if, the boolean condition `cond` is false. The failure is handled
+          by LIGO's testing framework and not by Michelson's interpreter. *)
+        let assert = Assert.Error.assert
+
+        (** display-only-for-cameligo
+          The call `some opt err` terminates the execution
+          with the string `err` (that is, an error message) if, and only if,
+          `opt` is `None`. The failure is handled by LIGO's testing
+          framework and not by Michelson's interpreter. *)
+        (** display-only-for-jsligo
+          The call `some(opt, err)` terminates the execution with the
+          string `err` (that is, an error message) if, and only if,
+          `opt` is `["None" as "None"]`. The failure is handled by
+          LIGO's testing framework and not by Michelson's
+          interpreter. *)
+        let some = Assert.Error.some
+
+        (** display-only-for-cameligo
+          The call `none opt err` terminates the execution
+          with the string `err` (that is, an error message) if, and only if,
+          `opt` is an optional value different from `None`. The failure is
+          handled by LIGO's testing framework and not by Michelson's
+          interpreter. *)
+        (** display-only-for-jsligo
+          The call `none(opt, err)` terminates the execution with the
+          string `err` (that is, an error message) if, and only if,
+          `opt` is an optional value different from `["None" as "None"]`.
+          The failure is handled by LIGO's testing framework and not
+          by Michelson's interpreter. *)
+        let none = Assert.Error.none
+      end
+    end
+
+    module Contract = struct
+      (** Bake a transaction by sending an amount of tez with a parameter
+          from the current source to a contract. Returns the amount of gas
+          consumed by the execution of the contract. *)
+      let transfer (type p) (c : p contract) (s : p) (t : tez) : test_exec_result =
+        let e : string option = [%external ("TEST_GET_ENTRYPOINT", c)] in
+        let s : michelson_program = Michelson.eval s in
+        [%external ("TEST_EXTERNAL_CALL_TO_ADDRESS", c, e, s, t)]
+
+      (** Bakes a transaction by sending an amount of tez with a
+          parameter from the current source to a contract. Returns the
+          amount of gas consumed by the execution of the
+          contract. Similar to `transfer`, but fails when
+          anything goes wrong. *)
+      let transfer_exn (type p) (c : p contract) (s : p) (t : tez) : nat =
+        let e : string option = [%external ("TEST_GET_ENTRYPOINT", c)] in
+        let s : michelson_program = Michelson.eval s in
+        [%external ("TEST_EXTERNAL_CALL_TO_ADDRESS_EXN", c, e, s, t)]
+
+      let to_typed_address (type p s) (c : p contract) : (p, s) typed_address =
+        [%external ("TEST_TO_TYPED_ADDRESS", c)]
+    end
+
+    module Address = struct
+      (** Gets the balance of an account (given as an address) in tez. *)
+      let get_balance (a : address) : tez = [%external ("TEST_GET_BALANCE", a)]
+
+      (** This function casts an address to a typed address. You will
+          need to annotate the result with the type you expect. *)
+      let to_typed_address (type a b) (a : address) : (a, b) typed_address =
+        [%external ("TEST_CAST_ADDRESS", a)]
+
+      let get_storage (type b) (a : address) : b =
+        (* we use unit bellow because we don't want inference to force useless annotations *)
+        let a : (unit, b) typed_address = to_typed_address a in
+        Typed_address.get_storage a
+    end
+
+    module Ticket = struct
+      module Proxy = struct
+        [@private]
+        let proxy_transfer_contract
+              (type vt whole_p)
+              (mk_param : vt ticket -> whole_p)
+              (p        : (vt * nat) * address)
+              (()       : unit)
+            : operation list * unit =
+          let (v, amt), dst_addr = p in
+          let ticket = Option.value_with_error "No ticket."
+                         (Tezos.Ticket.create v amt) in
+          let tx_param = mk_param ticket in
+          let c : whole_p contract =
+            Tezos.get_contract_with_error dst_addr
+              "Testing proxy: you provided a wrong address" in
+          let op = Tezos.Operation.transaction tx_param 1mutez c
+          in [op], ()
+
+        [@private]
+        let proxy_originate_contract
+              (type vt whole_s vp)
+              (mk_storage : vt ticket -> whole_s)
+              (main       : vp -> whole_s -> operation list * whole_s)
+              (p          : vt * nat)
+              (_          : address option)
+            : operation list * address option =
+          let v, amt = p in
+          let ticket = Option.value_with_error "No ticket."
+                         (Tezos.Ticket.create v amt) in
+          let init_storage : whole_s = mk_storage ticket in
+          let op,addr =
+            Tezos.Operation.create_contract
+              main (None: key_hash option) 0mutez init_storage
+          in [op], Some addr
+
+        [@private]
+        let originate_from_function
+              (type p s)
+              (f : p -> s -> operation list * s)
+              (s : s)
+              (t : tez)
+            : (p, s) typed_address =
+          let code = Michelson.Contract.compile (Pair.uncurry f)
+          in Originate.michelson code s t
+
+        type 'v proxy_address = (('v * nat) * address , unit) typed_address
+
+        let init_transfer
+              (type vt whole_p)
+              (mk_param: vt ticket -> whole_p)
+            : vt proxy_address =
+          let proxy_transfer
+              : (vt * nat) * address -> unit -> operation list * unit =
+            proxy_transfer_contract mk_param
+          in originate_from_function proxy_transfer () 1tez
+
+        let transfer
+              (type vt)
+              (taddr_proxy : vt proxy_address)
+              (info        : (vt * nat) * address)
+            : test_exec_result =
+          let ticket_info, dst_addr = info in
+          Contract.transfer
+            (Typed_address.to_contract taddr_proxy)
+            (ticket_info , dst_addr)
+            1mutez
+
+        let originate
+              (type vt whole_s vp)
+              (ticket_info : vt * nat)
+              (mk_storage  : vt ticket -> whole_s)
+              (contract    : vp -> whole_s -> operation list * whole_s)
+            : (vp,whole_s) typed_address =
+          let proxy_origination
+              : vt * nat -> address option -> operation list * address option =
+            proxy_originate_contract mk_storage contract
+          in
+          let taddr =
+            originate_from_function
+              proxy_origination (None : address option) 1tez in
+          let _ = Typed_address.transfer_exn taddr ticket_info 0tez in
+          match Typed_address.get_storage taddr with
+          | Some addr -> (Address.to_typed_address addr : (vp,whole_s) typed_address)
+          | None -> failwith "internal error"
+
+        let get_storage (type p s s2) (t : (p, s) typed_address) : s2 =
+          let s : michelson_program = [%external ("TEST_GET_STORAGE", t)] in
+          (Michelson.decompile s : s2)
+      end
+    end
+
+    module Timelock = struct
+      let create (b : bytes) (n : nat) : chest * chest_key =
+        [%external ("TEST_CREATE_CHEST", b, n)]
+      let create_key (c : chest) (n : nat) : chest_key =
+        [%external ("TEST_CREATE_CHEST_KEY", c, n)]
+
+      (** display-only-for-cameligo
+        The call `verify chest chest_key n` verifies a matching
+        between `chest` and `chest_key` (taking into account `n`). *)
+      (** display-only-for-jsligo
+        The call `verify(chest, chest_key, n)` verifies a matching
+        between `chest` and `chest_key` (taking into account `n`). *)
+      let verify (c : chest) (ck : chest_key) (n : nat) : bool =
+        [%external ("TEST_VERIFY_CHEST", c, ck, n)]
+    end
+
+    module Crypto = struct
+      let sign (sk : string) (d : bytes) : signature =
+        [%external ("TEST_SIGN", sk, d)]
+    end
+
+    module Dynamic_entrypoints = struct
+      let storage (type p s s2)
+        ((_, _, init_opt) : (p, s) module_contract)
+        (s:s2)
+      =
+        type t = [@layout comb] { storage : s2 ; dynamic_entrypoints : dynamic_entrypoints} in
+        match init_opt with
+        | Some dynamic_entrypoints -> ({storage = s ; dynamic_entrypoints } : t)
+        | None -> failwith "Your contract do not have dynamic entrypoints"
+    end
+
+    let originate = Originate.contract
+
+    let failwith = Assert.failwith
+
+    include Typed_address
+  end
 
   (** Run a function on an input, all in Michelson. More concretely:
     a) compiles the function argument to Michelson `f_mich`; b)
@@ -2284,16 +3170,84 @@ module Test = struct
   [@deprecated "In a future version, `Test` will be replaced by `Test.Next`, and using `Michelson.eval` from `Test.Next` is encouraged for a smoother migration."]
   let eval (type a) (x : a) : michelson_program = run (fun (x : a) -> x) x
 
+  (** Compile a LIGO value to Michelson. *)
+  [@deprecated "In a future version, `Test` will be replaced by `Test.Next`, and using `Michelson.eval` from `Test.Next` is encouraged for a smoother migration."]
+  let compile_value (type a) (x : a) : michelson_program = eval x
+
+  (** Bakes a transaction by sending an amount of tez with a parameter
+    from the current source to another account. Returns the amount of
+    gas consumed by the execution of the contract. *)
+  [@deprecated "In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.transfer` from `Test.Next` is encouraged for a smoother migration."]
+  let transfer (type p s) (a : (p,s) typed_address) (s : p) (t : tez) : test_exec_result =
+    let a = Next.Typed_address.to_contract a in
+    let s : michelson_program = Next.Michelson.eval s in
+    [%external ("TEST_EXTERNAL_CALL_TO_ADDRESS", a, (None : string option), s, t)]
+
+  (** Bakes a transaction by sending an amount of tez with a parameter
+    from the current source to another account. Returns the amount of
+    gas consumed by the execution of the contract. Similar as
+    `Test.transfer`, but fails when anything goes wrong. *)
+  [@deprecated "In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.transfer_exn` from `Test.Next` is encouraged for a smoother migration."]
+  let transfer_exn (type p s) (a : (p,s) typed_address) (s : p) (t : tez) : nat =
+    let a = Next.Typed_address.to_contract a in
+    let s : michelson_program = Next.Michelson.eval s in
+    [%external ("TEST_EXTERNAL_CALL_TO_ADDRESS_EXN", a, (None : string option), s, t)]
+  [@deprecated "In a future version, `Test` will be replaced by `Test.Next`, and using `IO.log` from `Test.Next` is encouraged for a smoother migration."]
+
+  (** Bake a transaction by sending an amount of tez with a parameter
+    from the current source to a contract. Returns the amount of gas
+    consumed by the execution of the contract. *)
+  [@deprecated "In a future version, `Test` will be replaced by `Test.Next`, and using `Contract.transfer` from `Test.Next` is encouraged for a smoother migration."]
+  let transfer_to_contract (type p) (c : p contract) (s : p) (t : tez) : test_exec_result =
+    let e : string option = [%external ("TEST_GET_ENTRYPOINT", c)] in
+    let s : michelson_program = eval s in
+    [%external ("TEST_EXTERNAL_CALL_TO_ADDRESS", c, e, s, t)]
+
+  (** Bakes a transaction by sending an amount of tez with a parameter
+    from the current source to a contract. Returns the amount of gas
+    consumed by the execution of the contract. Similar as
+    `Test.transfer_to_contract`, but fails when anything goes
+    wrong. *)
+  [@deprecated "In a future version, `Test` will be replaced by `Test.Next`, and using `Contract.transfer_exn` from `Test.Next` is encouraged for a smoother migration."]
+  let transfer_to_contract_exn (type p) (c : p contract) (s : p) (t : tez) : nat =
+      let e : string option = [%external ("TEST_GET_ENTRYPOINT", c)] in
+      let s : michelson_program = eval s in
+      [%external ("TEST_EXTERNAL_CALL_TO_ADDRESS_EXN", c, e, s, t)]
+
+  (** Originate a contract with initial storage and initial
+    balance. *)
+  [@deprecated "In a future version, `Test` will be replaced by `Test.Next`, and using `Originate.michelson` from `Test.Next` is encouraged for a smoother migration."]
+  let originate_contract (type p s) (c : (p,s) michelson_contract) (s : s) (t : tez) : (p,s) typed_address =
+    let s = eval s in
+    [%external ("TEST_ORIGINATE", c, s, t)]
+
+  (** Originate a contract with an entrypoint function in curried
+    form, initial storage and initial balance. *)
+  [@deprecated "In a future version, `Test` will be replaced by `Test.Next`, and using `Originate.contract` from `Test.Next` is encouraged for a smoother migration."]
+  let originate (type p s) ((f, vs, _) : (p, s) module_contract) (s : s) (t : tez) : (p, s) origination_result =
+    let code = Next.Michelson.Contract.compile_with_views f vs in
+    let addr = Next.Originate.michelson code s t in
+    let size = Next.Michelson.Contract.size code in
+    { addr ; code ; size }
+
+  (** Originate a contract with a path to the contract file, an
+    entrypoint, and a list of views, together with an initial storage
+    and an initial balance. *)
+  [@deprecated "In a future version, `Test` will be replaced by `Test.Next`, and using `Originate.from_file` from `Test.Next` is encouraged for a smoother migration."]
+  let originate_from_file (type p s) (fn : string) (s : s)  (t : tez) : (p, s) origination_result =
+    let code = Next.Michelson.Contract.compile_from_file fn in
+    let addr = Next.Originate.michelson code s t in
+    let size = Next.Michelson.Contract.size code in
+    { addr ; code ; size }
+
+(* *)
+
   (** Decompile a Michelson value to LIGO, following the (mandatory)
   type annotation. Note: This operation can fail at run-time, in case
   that the `michelson_program` given cannot be decompiled to something
   compatible with the annotated type. *)
   [@deprecated "In a future version, `Test` will be replaced by `Test.Next`, and using `Michelson.decompile` from `Test.Next` is encouraged for a smoother migration."]
   let decompile (type a) (m : michelson_program) : a = [%external ("TEST_DECOMPILE", m)]
-
-  (** Compile a LIGO value to Michelson. *)
-  [@deprecated "In a future version, `Test` will be replaced by `Test.Next`, and using `Michelson.eval` from `Test.Next` is encouraged for a smoother migration."]
-  let compile_value (type a) (x : a) : michelson_program = eval x
 
   (** Returns the total voting power of all contracts. The total
     voting power coincides with the sum of the rolls count of every
@@ -2499,8 +3453,7 @@ module Test = struct
 
   (** Prints an string to stdout, ended with a newline. *)
   [@deprecated "In a future version, `Test` will be replaced by `Test.Next`, and using `IO.println` from `Test.Next` is encouraged for a smoother migration."]
-  let println (v : string) : unit =
-    print (v ^ nl)
+  let println (v : string) : unit = print (v ^ nl)
   (* one day we might be able to write  `[@private] let print_values : ref bool = true` or something *)
 
   (** Turns on the printing of `test` prefixed values at the end of
@@ -2520,56 +3473,18 @@ module Test = struct
 
   let get_time (_u : unit) : timestamp = Tezos.get_now ()
 
-  module PBT = struct
-    let gen (type a) : a pbt_gen = [%external ("TEST_RANDOM", false)]
-    let gen_small (type a) : a pbt_gen = [%external ("TEST_RANDOM", true)]
-    let make_test (type a) (g : a pbt_gen) (p : a -> bool) : a pbt_test = (g, p)
-    let run (type a) ((g, p) : a pbt_test) (k : nat) : a pbt_result =
-      let iter = fun ((n, _) : nat * a pbt_result) ->
-                                       if n = k then
-                                         [%external ("LOOP_STOP", (0n, (Success : a pbt_result)))]
-                                       else
-                                         let v = [%external ("TEST_GENERATOR_EVAL", g)] in
-                                         if p v then
-                                           [%external ("LOOP_CONTINUE", ((n + 1n), (Success : a pbt_result)))]
-                                         else
-                                           [%external ("LOOP_STOP", (n, Fail v))] in
-      let (_, v) = [%external ("LOOP_LEFT", iter, (0n, (Success : a pbt_result)))] in
-      v
-  end
-
   (** Returns the list of all the event payloads emited with a given
     tag by a given address. Any call to this function must be
     annotated with the expected payload type. *)
   [@deprecated "In a future version, `Test` will be replaced by `Test.Next`, and using `State.last_events` from `Test.Next` is encouraged for a smoother migration."]
   let get_last_events_from (type a p s) (addr : (p,s) typed_address) (rtag: string) : a list =
-    let addr = Tezos.address (to_contract addr) in
+    let addr = Tezos.address (Next.Typed_address.to_contract addr) in
     let event_map : (address * a) list = [%external ("TEST_LAST_EVENTS", rtag)] in
     let f ((acc, (c_addr,event)) : a list * (address * a)) : a list =
       if addr = c_addr then event::acc
       else acc
     in
     List.fold f event_map ([]: a list)
-
-  (** Bakes a transaction by sending an amount of tez with a parameter
-    from the current source to another account. Returns the amount of
-    gas consumed by the execution of the contract. *)
-  [@deprecated "In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.transfer` from `Test.Next` is encouraged for a smoother migration."]
-  let transfer (type p s) (a : (p,s) typed_address) (s : p) (t : tez) : test_exec_result =
-    let a = to_contract a in
-    let s : michelson_program = eval s in
-    [%external ("TEST_EXTERNAL_CALL_TO_ADDRESS", a, (None : string option), s, t)]
-
-  (** Bakes a transaction by sending an amount of tez with a parameter
-    from the current source to another account. Returns the amount of
-    gas consumed by the execution of the contract. Similar as
-    `Test.transfer`, but fails when anything goes wrong. *)
-  [@deprecated "In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.transfer_exn` from `Test.Next` is encouraged for a smoother migration."]
-  let transfer_exn (type p s) (a : (p,s) typed_address) (s : p) (t : tez) : nat =
-    let a = to_contract a in
-    let s : michelson_program = eval s in
-    [%external ("TEST_EXTERNAL_CALL_TO_ADDRESS_EXN", a, (None : string option), s, t)]
-  [@deprecated "In a future version, `Test` will be replaced by `Test.Next`, and using `IO.log` from `Test.Next` is encouraged for a smoother migration."]
 
   (** Logs a value. *)
   let log (type a) (v : a) : unit =
@@ -2636,31 +3551,11 @@ module Test = struct
 
   (** The testing framework keeps an internal reference to the values
     corresponding to big map identifiers. This function allows to
-    override the value of a particular big map identifier. It should
+    override the value of a parteicular big map identifier. It should
     not be normally needed, except in particular circumstances such as
     using custom bootstrap contracts that initialize big maps. *)
   [@deprecated "In a future version, `Test` will be replaced by `Test.Next`, and using `State.set_big_map` from `Test.Next` is encouraged for a smoother migration."]
   let set_big_map (type a b) (i : int) (m : (a, b) big_map) : unit = [%external ("TEST_SET_BIG_MAP", i, m)]
-
-  (** Bake a transaction by sending an amount of tez with a parameter
-    from the current source to a contract. Returns the amount of gas
-    consumed by the execution of the contract. *)
-  [@deprecated "In a future version, `Test` will be replaced by `Test.Next`, and using `Contract.transfer` from `Test.Next` is encouraged for a smoother migration."]
-  let transfer_to_contract (type p) (c : p contract) (s : p) (t : tez) : test_exec_result =
-    let e : string option = [%external ("TEST_GET_ENTRYPOINT", c)] in
-    let s : michelson_program = eval s in
-    [%external ("TEST_EXTERNAL_CALL_TO_ADDRESS", c, e, s, t)]
-
-  (** Bakes a transaction by sending an amount of tez with a parameter
-    from the current source to a contract. Returns the amount of gas
-    consumed by the execution of the contract. Similar as
-    `Test.transfer_to_contract`, but fails when anything goes
-    wrong. *)
-  [@deprecated "In a future version, `Test` will be replaced by `Test.Next`, and using `Contract.transfer_exn` from `Test.Next` is encouraged for a smoother migration."]
-  let transfer_to_contract_exn (type p) (c : p contract) (s : p) (t : tez) : nat =
-      let e : string option = [%external ("TEST_GET_ENTRYPOINT", c)] in
-      let s : michelson_program = eval s in
-      [%external ("TEST_EXTERNAL_CALL_TO_ADDRESS_EXN", c, e, s, t)]
 
   (** Compares two Michelson values. *)
   [@deprecated "In a future version, `Test` will be replaced by `Test.Next`, and using `Compare.eq` from `Test.Next` is encouraged for a smoother migration."]
@@ -2689,26 +3584,10 @@ module Test = struct
       ({storage = s ; dynamic_entrypoints } : t)
     | None -> failwith "Your contract do not have dynamic entrypoints"
 
-  (** Originate a contract with initial storage and initial
-    balance. *)
-  [@deprecated "In a future version, `Test` will be replaced by `Test.Next`, and using `Originate.michelson` from `Test.Next` is encouraged for a smoother migration."]
-  let originate_contract (type p s) (c : (p,s) michelson_contract) (s : s) (t : tez) : (p,s) typed_address =
-    let s = eval s in
-    [%external ("TEST_ORIGINATE", c, s, t)]
-
   [@deprecated "In a future version, `Test` will be replaced by `Test.Next`, and using `Michelson.Contract.compile_with_views` from `Test.Next` is encouraged for a smoother migration."]
   let compile_contract_with_views (type p s) (f : p * s -> operation list * s) (vs : s views) : (p,s) michelson_contract =
     let ast_c : (p,s) michelson_contract = [%external ("TEST_COMPILE_CONTRACT", f, vs)] in
     [%external ("TEST_COMPILE_AST_CONTRACT", ast_c)]
-
-  (** Originate a contract with an entrypoint function in curried
-    form, initial storage and initial balance. *)
-  [@deprecated "In a future version, `Test` will be replaced by `Test.Next`, and using `Originate.contract` from `Test.Next` is encouraged for a smoother migration."]
-  let originate (type p s) ((f, vs, _) : (p, s) module_contract) (s : s) (t : tez) : (p, s) origination_result =
-    let code = compile_contract_with_views f vs in
-    let addr = originate_contract code s t in
-    let size = size code in
-    { addr ; code ; size }
 
   (** Compiles a contract with a path to the contract file, an
     entrypoint, and a list of views. *)
@@ -2716,16 +3595,6 @@ module Test = struct
   let compile_contract_from_file (type p s) (fn : string) : (p,s) michelson_contract =
     let ast_c : (p,s) michelson_contract = [%external ("TEST_COMPILE_CONTRACT_FROM_FILE", fn, (None : nat option))] in
     [%external ("TEST_COMPILE_AST_CONTRACT", ast_c)]
-
-  (** Originate a contract with a path to the contract file, an
-    entrypoint, and a list of views, together with an initial storage
-    and an initial balance. *)
-  [@deprecated "In a future version, `Test` will be replaced by `Test.Next`, and using `Originate.from_file` from `Test.Next` is encouraged for a smoother migration."]
-  let originate_from_file (type p s) (fn : string) (s : s)  (t : tez) : (p, s) origination_result =
-    let code = compile_contract_from_file fn in
-    let addr = originate_contract code s t in
-    let size = size code in
-    { addr ; code ; size }
 
   (* Mutations *)
 
@@ -2770,34 +3639,6 @@ module Test = struct
   (** Given a contract from a file (passed by filepath, entrypoint and
     views), an initial storage and balance, it will originate mutants
     of the contract and pass the result to the function (last
-    argument). On the first case of non failure when running the
-    function on a mutation, the value and mutation involved will be
-    returned. *)
-  [@deprecated "In a future version, `Test` will be replaced by `Test.Next`, and using `Mutation.from_file` from `Test.Next` is encouraged for a smoother migration."]
-  let originate_from_file_and_mutate (type b p s) (fn : string) (s : s) (t : tez)
-                                     (tester : (p,s) typed_address * (p,s) michelson_contract * int -> b) : (b * mutation) option =
-    let wrap_tester (v : (p,s) michelson_contract) : b =
-      let f = [%external ("TEST_COMPILE_AST_CONTRACT", v)] in
-      let a = originate_contract f s t in
-      let c = size f in
-      tester (a, f, c) in
-    let ast_c : (p,s) michelson_contract = [%external ("TEST_COMPILE_CONTRACT_FROM_FILE", fn, (None : nat option))] in
-    let try_with (type a) (v : unit -> a) (c : unit -> a) = [%external ("TEST_TRY_WITH", v, c)] in
-    type ret_code = Passed of (b * mutation) | Continue | Stop in
-    let rec mutation_nth (n : nat) : (b * mutation) option =
-      let mutated = [%external ("TEST_MUTATE_CONTRACT", n, ast_c)] in
-      let curr = match mutated with
-        | Some (v, m) -> try_with (fun () -> let b = wrap_tester v in Passed (b, m)) (fun () -> Continue)
-        | None -> Stop in
-      match curr with
-      | Stop -> None
-      | Continue -> mutation_nth (n + 1n)
-      | Passed (b, m) -> Some (b, m) in
-    mutation_nth 0n
-
-  (** Given a contract from a file (passed by filepath, entrypoint and
-    views), an initial storage and balance, it will originate mutants
-    of the contract and pass the result to the function (last
     argument). In case no failure arises when running the function on
     a mutation, the failure and mutation involved will be added to the
     list to be returned. *)
@@ -2806,8 +3647,8 @@ module Test = struct
                                          (tester : (p,s) typed_address * (p,s) michelson_contract * int -> b) : (b * mutation) list =
     let wrap_tester (v : (p,s) michelson_contract) : b =
       let f = [%external ("TEST_COMPILE_AST_CONTRACT", v)] in
-      let a = originate_contract f s t in
-      let c = size f in
+      let a = Next.Originate.michelson f s t in
+      let c = Next.Michelson.Contract.size f in
       tester (a, f, c) in
     let ast_c : (p,s) michelson_contract = [%external ("TEST_COMPILE_CONTRACT_FROM_FILE", fn, (None : nat option))] in
     let try_with (type a) (v : unit -> a) (c : unit -> a) = [%external ("TEST_TRY_WITH", v, c)] in
@@ -2833,8 +3674,8 @@ module Test = struct
                                   (tester : (p, s) typed_address -> (p,s) michelson_contract -> int -> b) : (b * mutation) option =
     let wrap_tester (v : (p,s) michelson_contract) : b =
       let f = [%external ("TEST_COMPILE_AST_CONTRACT", v)] in
-      let a = originate_contract f s t in
-      let c = size f in
+      let a = Next.Originate.michelson f s t in
+      let c = Next.Michelson.Contract.size f in
       tester a f c in
     let ast_c : (p,s) michelson_contract = [%external ("TEST_COMPILE_CONTRACT", f, vs)] in
     let try_with (type a) (v : unit -> a) (c : unit -> a) = [%external ("TEST_TRY_WITH", v, c)] in
@@ -2860,8 +3701,8 @@ module Test = struct
                                       (tester : (p, s) typed_address -> (p,s) michelson_contract -> int -> b) : (b * mutation) list =
     let wrap_tester (v : (p,s) michelson_contract) : b =
       let f = [%external ("TEST_COMPILE_AST_CONTRACT", v)] in
-      let a = originate_contract f s t in
-      let c = size f in
+      let a = Next.Originate.michelson f s t in
+      let c = Next.Michelson.Contract.size f in
       tester a f c in
     let ast_c : (p,s) michelson_contract = [%external ("TEST_COMPILE_CONTRACT", f, vs)] in
     let try_with (type a) (v : unit -> a) (c : unit -> a) = [%external ("TEST_TRY_WITH", v, c)] in
@@ -3042,698 +3883,4 @@ module Test = struct
   [@deprecated "In a future version, `Test` will be replaced by `Test.Next`, and using `Timelock.create_key` from `Test.Next` is encouraged for a smoother migration."]
   let create_chest_key (c : chest) (n : nat) : chest_key = [%external ("TEST_CREATE_CHEST_KEY", c, n)]
 
-  module Next = struct
-
-    (** This function creates a random value for a chosen type. *)
-    let random (type a) (_u : unit) : a =
-      let g : a pbt_gen = [%external ("TEST_RANDOM", false)] in
-      [%external ("TEST_GENERATOR_EVAL", g)]
-
-    let get_time (_u : unit) : timestamp = Tezos.get_now ()
-
-    module Mutation = struct
-      (** Given a value to mutate (first argument), it will try all the
-        mutations available of it, passing each one to the function
-        (second argument). On the first case of non failure when running
-        the function on a mutation, the value and mutation involved will
-        be returned. *)
-      let func = mutation_test
-
-      (** Given a contract from a file (passed by filepath, entrypoint and
-        views), an initial storage and balance, it will originate mutants
-        of the contract and pass the result to the function (last
-        argument). On the first case of non failure when running the
-        function on a mutation, the value and mutation involved will be
-        returned. *)
-      let from_file = originate_from_file_and_mutate
-
-      (** Given a contract as a module/namespace, an initial storage and
-        balance, it will originate mutants of the contract and pass the
-        result to the function (last argument). On the first case of non
-        failure when running the function on a mutation, the value and
-        mutation involved will be returned. *)
-      let contract = originate_module_and_mutate
-
-      module All = struct
-          (** Given a value to mutate (first argument), it will try all the
-             mutations of it, passing each one to the function (second
-             argument). In case no failure arises when running the function on
-             a mutation, the failure and mutation involved will be added to the
-             list to be returned. *)
-          let func = mutation_test_all
-
-          (** Given a contract from a file (passed by filepath, entrypoint and
-            views), an initial storage and balance, it will originate mutants
-            of the contract and pass the result to the function (last
-            argument). In case no failure arises when running the function on
-            a mutation, the failure and mutation involved will be added to the
-            list to be returned. *)
-          let from_file = originate_from_file_and_mutate_all
-
-          (** Given a contract as a module/namespace, an initial storage and
-            balance, it will originate mutants of the contract and pass the
-            result to the function (last argument). In case no failure arises
-            when running the function on a mutation, the failure and mutation
-            involved will be added to the list to be returned. *)
-          let contract = originate_and_mutate_all
-      end
-
-      (** Mutates a value using a natural number as an index for the
-        available mutations, returns an option for indicating whether
-        mutation was successful or not. *)
-      let value (type a) (n : nat) (v : a) : (a * mutation) option =
-        [%external ("TEST_MUTATE_VALUE", n, v)]
-
-      (** This function reconstructs a file from a mutation (second
-        argument), and saves it to a file in the directory path (first
-        argument). It returns an optional string indicating the filename
-        where the mutation was saved, or `None` if there was an error. *)
-      let save (s : string) (m : mutation) : string option =
-        [%external ("TEST_SAVE_MUTATION", s, m)]
-    end
-    module PBT = PBT
-    module State = struct
-      (** Pops a testing framework context from the stack of contexts, and
-        sets it up as the new current context. In case the stack was
-        empty, the current context is kept. *)
-      let restore = restore_context
-
-      (** Takes current testing framework context and saves it, pushing it
-        into a stack of contexts. *)
-      let save = save_context
-
-      (** Drops a testing framework context from the stack of contexts. In
-        case the stack was empty, nothing is done. *)
-      let drop = drop_context
-
-      (** Generates a number of random bootstrapped accounts with a
-        default amount of `4000000` tez. The passed list can be used to
-        overwrite the amount. By default, the state only has two
-        bootstrapped accounts. Notice that since Ithaca, a percentage of
-        an account's balance is frozen (5% in testing mode) in case the
-        account can be taken to be a validator, and thus getting
-        balance can show a different amount to the one being set with
-        `Test.State.reset`. *)
-      let reset = reset_state
-
-      (** Generates a number of random bootstrapped accounts with a
-        default amount of `4000000` tez. The passed list can be used to
-        overwrite the amount. By default, the state only has two
-        bootstrapped accounts. Notice that since Ithaca, a percentage of
-        an account's balance is frozen (5% in testing mode) in case the
-        account can be taken to be a validator, and thus getting
-        balance can show a different amount to the one being set with
-        `Test.State.reset`. It also takes a starting timestamp
-        for the genesis block. *)
-      let reset_at = reset_state_at
-
-      (** Registers a `key_hash` corresponding to an account as a delegate. *)
-      let register_delegate = register_delegate
-
-
-      (** Registers a global constant, returns its hash as a string. See
-        the documentation for global constants for an example of usage. *)
-      let register_constant = register_constant
-
-      (** Sets the source for `Test.transfer` and `Test.originate`. *)
-      let set_source (a : address) : unit =
-        [%external ("TEST_SET_SOURCE", a)]
-
-      (** Forces the baking policy for `Test.transfer` and
-        `Test.originate`. By default, the first bootstrapped account. *)
-      let set_baker_policy (bp : test_baker_policy) : unit =
-        [%external ("TEST_SET_BAKER", bp)]
-
-      (** Forces the baker for `Test.transfer` and `Test.originate`,
-        implemented using `Test.set_baker_policy` with `By_account`. By
-        default, the first bootstrapped account. *)
-      let set_baker (a : address) : unit =
-        set_baker_policy (By_account a)
-
-      (** It bakes until a number of cycles pass, so that an account
-       registered as delegate can effectively act as a baker. Note: It
-       can be used in tests to manually advance time. *)
-      let bake_until (n : nat) : unit =
-        [%external ("TEST_BAKE_UNTIL_N_CYCLE_END", n)]
-
-      (** The testing framework keeps an internal reference to the values
-        corresponding to big map identifiers. This function allows to
-        override the value of a particular big map identifier. It should
-        not be normally needed, except in particular circumstances such as
-        using custom bootstrap contracts that initialize big maps. *)
-      let set_big_map (type k v) (i : int) (m : (k, v) big_map) : unit =
-        [%external ("TEST_SET_BIG_MAP", i, m)]
-
-      (** Return the voting power of a given contract. This voting power
-        coincides with the weight of the contract in the voting listings
-        (i.e., the rolls count) which is calculated at the beginning of
-        every voting period. *)
-      let get_voting_power (kh : key_hash) : nat =
-        [%external ("TEST_GET_VOTING_POWER", kh)]
-
-      (** Returns the total voting power of all contracts. The total
-        voting power coincides with the sum of the rolls count of every
-        contract in the voting listings. The voting listings is calculated
-        at the beginning of every voting period. *)
-      let get_total_voting_power (() : unit) : nat =
-        [%external ("TEST_GET_TOTAL_VOTING_POWER", ())]
-
-      (** Returns addresses of orginated accounts in the last transfer. It
-        is given in the form of a map binding the address of the source of
-        the origination operation to the addresses of newly originated
-        accounts. *)
-      let last_originations (() : unit) : (address, address list) map =
-        [%external ("TEST_LAST_ORIGINATIONS", ())]
-
-      (** Returns the list of all the event payloads emited with a given
-        tag by a given address. Any call to this function must be
-        annotated with the expected payload type. *)
-      let last_events (type a p s)
-        (addr : (p,s) typed_address)
-        (rtag: string)
-      : a list =
-        let addr = Tezos.address (to_contract addr) in
-        let event_map : (address * a) list = [%external ("TEST_LAST_EVENTS", rtag)] in
-        let f ((acc, (c_addr,event)) : a list * (address * a)) : a list =
-          if addr = c_addr then event::acc
-          else acc
-        in
-        List.fold f event_map ([]: a list)
-
-      let stake (kh : key_hash) (t : tez) : unit =
-        [%external ("TEST_STAKE", kh, t)]
-
-      module Reset = struct
-        (** Adds an account `(sk, pk)` as a baker. The change is only
-          effective after `Test.reset_state`. *)
-        let add_baker (p : string * key) (o : tez option) : unit =
-          [%external ("TEST_BAKER_ACCOUNT", p, o)]
-
-        (** Setup a bootstrap contract with an entrypoint function, initial
-          storage and initial balance. Bootstrap contracts will be loaded in
-          order, and they will be available only after reset. *)
-        let add_func_contract (type p s)
-          (f : p * s -> operation list * s)
-          (s : s)
-          (t : tez)
-        : unit =
-          [%external ("TEST_BOOTSTRAP_CONTRACT", f, s, t)]
-      end
-    end
-    module Account = struct
-      (** Returns the address of the nth bootstrapped account. *)
-      let address (n : nat) =
-        let (a, _, _) = [%external ("TEST_GET_NTH_BS", (int n))] in
-        a
-
-      (** Returns the address of the 0th bootstrapped account. *)
-      let alice () = address 0n
-
-      (** Returns the address of the 1st bootstrapped account. *)
-      let bob () = address 1n
-
-      (** Returns the address of the 2nd bootstrapped account. *)
-      let carol () = address 2n
-
-      (** Returns the address of the 3rd bootstrapped account. *)
-      let dan () = address 3n
-
-      (** Adds an account specfied by secret key & public key to the test
-        context. *)
-      let add = add_account
-
-      type info = { addr: address; pk: key; sk: string }
-
-      (** Returns the address information of the nth bootstrapped
-        account. *)
-      let info (n : nat) : info =
-        let (addr, pk, sk) = get_bootstrap_account n in
-        { addr ; pk ; sk }
-
-      (** Creates and returns information of a new account. *)
-      let new (() : unit) : info =
-        let (sk, pk) = [%external ("TEST_NEW_ACCOUNT", ())] in
-        let addr = [%michelson ({| { HASH_KEY ; IMPLICIT_ACCOUNT ; ADDRESS } |} pk : address)] in
-        { addr ; pk ; sk }
-
-      module Contract = struct
-        (** Returns the address corresponding to the nth bootstrapped
-          contract. *)
-        let bootstrap (i : nat) : address =
-          [%external ("TEST_NTH_BOOTSTRAP_CONTRACT", i)]
-
-        (** Returns the typed address corresponding to the nth bootstrapped
-          contract currently loaded. The types are inferred from those
-          contracts loaded with `Test.State.Reset.add_func_contract`
-	  (before reset). *)
-        let bootstrap_typed_address (type a b) (n : nat) : (a, b) typed_address =
-          [%external ("TEST_NTH_BOOTSTRAP_TYPED_ADDRESS", n)]
-      end
-    end
-    module Compare = struct
-      [@private]
-      let compare (type a) (lhs : a) (rhs : a) : int =
-        [%external ("TEST_COMPARE", lhs, rhs)]
-
-      (** display-only-for-cameligo
-        The call `eq x y` returns `true` if, and only if, `x` and `y`
-        are considered to be equal w.r.t. the order on the underlying
-        type. *)
-      (** display-only-for-jsligo
-        The call `eq(x, y)` returns `true` if, and only if, `x` and `y`
-        are considered to be equal w.r.t. the order on the underlying
-        type. *)
-      let eq (type a) (lhs : a) (rhs : a) : bool =
-        compare lhs rhs = 0
-
-      (** display-only-for-cameligo
-        The call `neq x y` returns `true` if, and only if, `x` and
-        `y` are not considered to be equal w.r.t. the order on the
-        underlying type. *)
-      (** display-only-for-jsligo
-        The call `neq(x, y)` returns `true` if, and only if, `x` and
-        `y` are not considered to be equal w.r.t. the order on the
-        underlying type. *)
-      let neq (type a) (lhs : a) (rhs : a) : bool =
-        compare lhs rhs <> 0
-
-      (** display-only-for-cameligo
-        The call `gt x y` returns `true` if, and only if, `x` is
-        considered to be greater than `y` w.r.t. the order on the
-        underlying type. *)
-      (** display-only-for-jsligo
-        The call `gt(x, y)` returns `true` if, and only if, `x` is
-        considered to be greater than `y` w.r.t. the order on the
-        underlying type. *)
-      let gt (type a) (lhs : a) (rhs : a) : bool =
-        compare lhs rhs > 0
-
-      (** display-only-for-cameligo
-        The call `lt` returns `true` if, and only if, `x` is
-        considered to be less than `y` w.r.t. the order on the underlying
-        type. *)
-      (** display-only-for-jsligo
-        The call `lt(x, y)` returns `true` if, and only if, `x` is
-        considered to be less than `y` w.r.t. the order on the underlying
-        type. *)
-      let lt (type a) (lhs : a) (rhs : a) : bool =
-        compare lhs rhs < 0
-
-
-      (** display-only-for-cameligo
-        The call `ge x y` returns `true` if, and only if,
-        `x` is considered to be greater or equal than `y` w.r.t. the order
-        on the underlying type. *)
-      (** display-only-for-jsligo
-        The call `ge(x, y)` returns `true` if, and only if,
-        `x` is considered to be greater or equal than `y` w.r.t. the order
-        on the underlying type. *)
-      let ge (type a) (lhs : a) (rhs : a) : bool =
-        compare lhs rhs >= 0
-
-      (** display-only-for-cameligo
-        The call `le x y` returns `true` if, and only if, `x`
-        is considered to be less or equal than `y` w.r.t. the order on the
-        underlying type. *)
-      (** display-only-for-jsligo
-        The call `le(x, y)` returns `true` if, and only if, `x`
-        is considered to be less or equal than `y` w.r.t. the order on the
-        underlying type. *)
-      let le (type a) (lhs : a) (rhs : a) : bool =
-        compare lhs rhs <= 0
-    end
-    module Michelson = struct
-      (** Run a function on an input, all in Michelson. More concretely:
-        a) compiles the function argument to Michelson `f_mich`; b)
-        compiles the value argument (which was evaluated already) to
-        Michelson `v_mich`; c) runs the Michelson interpreter on the code
-        `f_mich` with starting stack `[v_mich]`. *)
-      let run = run
-
-      (** Compile a LIGO value to Michelson. Currently it is a
-        renaming of `compile_value`. *)
-      let eval = eval
-
-      (** Decompile a Michelson value to LIGO, following the
-        (mandatory) type annotation. Note: This operation can fail at
-        run-time, in case that the `michelson_program` given cannot be
-        decompiled to something compatible with the annotated type. *)
-      let decompile = decompile
-
-      (** Parses Michelson (as string) into a `michelson_program`. *)
-      let parse = parse_michelson
-
-      module Contract = struct
-        (** Compiles a contract from an entrypoint function. *)
-        let compile = compile_contract
-
-        let compile_with_views = compile_contract_with_views
-
-        (** Measures the size of a contract. *)
-        let size = size
-
-        (** Reads a contract from a `.tz` file. *)
-        let from_file = read_contract_from_file
-      end
-    end
-    module IO = struct
-      (** Prints an string to stdout. *)
-      let print = print
-
-      (** Prints an string to stdout, ended with a newline. *)
-      let println = println
-
-      (** Prints an string to stderr. *)
-      let eprint = eprint
-
-      (** Prints an string to stderr, ended with a newline. *)
-      let eprintln (v : string) : unit =
-        eprint (v ^ nl)
-
-      (** Logs a value. *)
-      let log = log
-
-      (** Turns on the printing of `test` prefixed values at the end of
-        tests. This is the default behaviour. *)
-      let set_test_print = set_print_values
-
-      (** Turns off the printing of `test` prefixed values at the end of
-        tests. *)
-      let unset_test_print = unset_print_values
-    end
-
-    module Assert = struct
-      (** Cause the testing framework to fail. *)
-      let failwith (type a b) (v : a) : b =
-        [%external ("TEST_FAILWITH", v)]
-
-      (** display-only-for-cameligo
-        The call `assert cond` terminates the execution with the string
-        `"failed assertion"` if, and only if, the boolean condition `cond`
-        is false. The failure is handled by LIGO's testing framework and
-        not by Michelson's interpreter. *)
-      (** display-only-for-jsligo
-        The call `assert(cond)` terminates the execution with the string
-        `"failed assertion"` if, and only if, the boolean condition `cond`
-        is false. The failure is handled by LIGO's testing framework and
-        not by Michelson's interpreter. *)
-      let assert = assert
-
-      (** display-only-for-cameligo
-        The call `some opt` terminates the execution with the
-        string `"failed assert some"` if, and only if, `opt` is `None`.
-        The failure is handled by LIGO's testing framework and
-        not by Michelson's interpreter. *)
-      (** display-only-for-jsligo
-        The call `some(opt)` terminates the execution with the string
-        `"failed assert some"` if, and only if, `opt` is `["None" as "None"]`.
-        The failure is handled by LIGO's testing framework
-        and not by Michelson's interpreter. *)
-      let some = assert_some
-
-      (** display-only-for-cameligo
-        The call `none opt` terminates the execution with the string
-        `"failed assert none"` if, and only if, `opt` is not `None`.
-        The failure is handled by LIGO's testing framework and
-        not by Michelson's interpreter. *)
-      (** display-only-for-jsligo
-        The call `none(opt)` terminates the execution with the string
-        `"failed assert none"` if, and only if, `opt` is not
-        `["None" as "None"]`.  The failure is handled by LIGO's testing
-        framework and not by Michelson's interpreter. *)
-      let none = assert_none
-
-      module Error = struct
-        (** display-only-for-cameligo
-          The call `assert cond error` terminates the execution
-          with the string `error` (that is, an error message) if, and only
-          if, the boolean condition `cond` is false. The failure is handled
-          by LIGO's testing framework and not by Michelson's interpreter. *)
-        (** display-only-for-jsligo
-          The call `assert(cond, error)` terminates the execution
-          with the string `error` (that is, an error message) if, and only
-          if, the boolean condition `cond` is false. The failure is handled
-          by LIGO's testing framework and not by Michelson's interpreter. *)
-        let assert = assert_with_error
-
-        (** display-only-for-cameligo
-          The call `some opt err` terminates the execution
-          with the string `err` (that is, an error message) if, and only if,
-          `opt` is `None`. The failure is handled by LIGO's testing
-          framework and not by Michelson's interpreter. *)
-        (** display-only-for-jsligo
-          The call `some(opt, err)` terminates the execution with the
-          string `err` (that is, an error message) if, and only if,
-          `opt` is `["None" as "None"]`. The failure is handled by
-          LIGO's testing framework and not by Michelson's
-          interpreter. *)
-        let some = assert_some_with_error
-
-        (** display-only-for-cameligo
-          The call `none opt err` terminates the execution
-          with the string `err` (that is, an error message) if, and only if,
-          `opt` is an optional value different from `None`. The failure is
-          handled by LIGO's testing framework and not by Michelson's
-          interpreter. *)
-        (** display-only-for-jsligo
-          The call `none(opt, err)` terminates the execution with the
-          string `err` (that is, an error message) if, and only if,
-          `opt` is an optional value different from `["None" as "None"]`.
-          The failure is handled by LIGO's testing framework and not
-          by Michelson's interpreter. *)
-        let none = assert_none_with_error
-      end
-    end
-
-    module String = struct
-      (** String consisting of the character represented by a `nat` in the
-        interval `[0, 255]`. *)
-      let chr = chr
-
-      (** String consisting of only a newline. *)
-      let nl = nl
-
-      (** Converts a value to a string (same conversion as used by
-        `Test.log`). *)
-      let show = to_string
-
-      (** Converts a value to its JSON representation (as a string). *)
-      let json = to_json
-
-      let debugger_json = to_debugger_json
-    end
-
-    module Originate = struct
-      type ('p, 's) origination_result =
-        { taddr : ('p, 's) typed_address
-        ; code : ('p, 's) michelson_contract
-        ; size : int
-        }
-
-      (** Originate a contract with an entrypoint function in curried
-        form, initial storage and initial balance. *)
-      let contract (type p s) (c : (p, s) module_contract) (s : s) (t : tez) : (p, s) origination_result =
-        let { addr; code ; size } = originate c s t in
-        { taddr = addr; code ; size }
-
-      (** Originate a contract with a path to the contract file, an
-        entrypoint, and a list of views, together with an initial storage
-        and an initial balance. *)
-      let from_file (type p s) (fn : string) (s : s) (t : tez) : (p, s) origination_result =
-        let { addr ; code ; size } = originate_from_file fn s t in
-        { taddr = addr; code ; size }
-
-      (** Originate a contract with initial storage and initial
-        balance. *)
-      let michelson (type p s)
-        (c : (p,s) michelson_contract)
-        (s : s)
-        (t : tez)
-      : (p,s) typed_address =
-        let s = eval s in
-        [%external ("TEST_ORIGINATE", c, s, t)]
-    end
-
-    module Ticket = struct
-      module Proxy = struct
-        [@private]
-        let proxy_transfer_contract
-              (type vt whole_p)
-              (mk_param : vt ticket -> whole_p)
-              (p        : (vt * nat) * address)
-              (()       : unit)
-            : operation list * unit =
-          let (v, amt), dst_addr = p in
-          let ticket = Option.value_with_error "No ticket."
-                         (Tezos.Ticket.create v amt) in
-          let tx_param = mk_param ticket in
-          let c : whole_p contract =
-            Tezos.get_contract_with_error dst_addr
-              "Testing proxy: you provided a wrong address" in
-          let op = Tezos.Operation.transaction tx_param 1mutez c
-          in [op], ()
-
-        [@private]
-        let proxy_originate_contract
-              (type vt whole_s vp)
-              (mk_storage : vt ticket -> whole_s)
-              (main       : vp -> whole_s -> operation list * whole_s)
-              (p          : vt * nat)
-              (_          : address option)
-            : operation list * address option =
-          let v, amt = p in
-          let ticket = Option.value_with_error "No ticket."
-                         (Tezos.Ticket.create v amt) in
-          let init_storage : whole_s = mk_storage ticket in
-          let op,addr =
-            Tezos.Operation.create_contract
-              main (None: key_hash option) 0mutez init_storage
-          in [op], Some addr
-
-        [@private]
-        let originate_from_function
-              (type p s)
-              (f : p -> s -> operation list * s)
-              (s : s)
-              (t : tez)
-            : (p, s) typed_address =
-          let code = compile_contract (Pair.uncurry f)
-          in Originate.michelson code s t
-
-        type 'v proxy_address = (('v * nat) * address , unit) typed_address
-
-        let init_transfer
-              (type vt whole_p)
-              (mk_param: vt ticket -> whole_p)
-            : vt proxy_address =
-          let proxy_transfer
-              : (vt * nat) * address -> unit -> operation list * unit =
-            proxy_transfer_contract mk_param
-          in originate_from_function proxy_transfer () 1tez
-
-        let transfer
-              (type vt)
-              (taddr_proxy : vt proxy_address)
-              (info        : (vt * nat) * address)
-            : test_exec_result =
-          let ticket_info, dst_addr = info in
-          transfer_to_contract
-            (to_contract taddr_proxy)
-            (ticket_info , dst_addr)
-            1mutez
-
-        let originate
-              (type vt whole_s vp)
-              (ticket_info : vt * nat)
-              (mk_storage  : vt ticket -> whole_s)
-              (contract    : vp -> whole_s -> operation list * whole_s)
-            : (vp,whole_s) typed_address =
-          let proxy_origination
-              : vt * nat -> address option -> operation list * address option =
-            proxy_originate_contract mk_storage contract
-          in
-          let taddr =
-            originate_from_function
-              proxy_origination (None : address option) 1tez in
-          let _ = transfer_exn taddr ticket_info 0tez in
-          match get_storage taddr with
-          | Some addr -> (cast_address addr : (vp,whole_s) typed_address)
-          | None -> failwith "internal error"
-
-        let get_storage (type p s s2) (t : (p, s) typed_address) : s2 =
-          let s : michelson_program = [%external ("TEST_GET_STORAGE", t)] in
-          (decompile s : s2)
-      end
-    end
-
-    module Contract = struct
-      let transfer = transfer_to_contract
-      let transfer_exn = transfer_to_contract_exn
-      let to_typed_address (type p s) (c : p contract) : (p, s) typed_address =
-        [%external ("TEST_TO_TYPED_ADDRESS", c)]
-    end
-    module Typed_address = struct
-       (** Bakes a transaction by sending an amount of tez with a parameter
-         from the current source to another account. Returns the amount of
-         gas consumed by the execution of the contract. *)
-      let transfer = transfer
-
-      (** Bakes a transaction by sending an amount of tez with a parameter
-        from the current source to another account. Returns the amount of
-        gas consumed by the execution of the contract. Similar as
-        `Test.transfer`, but fails when anything goes wrong. *)
-      let transfer_exn = transfer_exn
-
-      (** Gets the storage of a typed account. *)
-      let get_storage = get_storage
-
-      (** Gets the balance of an account in tez. *)
-      let get_balance (type p s) (a : (p, s) typed_address) : tez =
-        [%external ("TEST_GET_BALANCE", to_address a)]
-      let to_address (type p s) (c : (p, s) typed_address) : address =
-        [%external ("TEST_TO_ADDRESS", c)]
-
-      (** Gets the contract corresponding to the default entrypoint of a
-        typed address: the contract parameter in the result will be the
-        type of the default entrypoint (generally `'param`, but this might
-        differ if `'param` includes a "default" entrypoint). *)
-      let to_contract (type p s) (t : (p, s) typed_address) : p contract =
-        [%external ("TEST_TO_CONTRACT", t)]
-
-      (** Gets the contract corresponding to an entrypoint of a typed
-        address: the contract parameter in the result will be the type of
-        the entrypoint, it needs to be annotated, entrypoint string should
-        omit the prefix "%", but if passed a string starting with "%", it
-        will be removed (and a warning emitted). *)
-      let get_entrypoint (type p s q) (s : string) (t : (p, s) typed_address) : q contract =
-        let s = if Toplevel.String.length s > 0n then
-                  if Toplevel.String.sub 0n 1n s = "%" then
-                    let () = IO.eprintln "WARNING: get_entrypoint: automatically removing starting %" in
-                    Toplevel.String.sub 1n (abs (Toplevel.String.length s - 1)) s
-                 else s
-               else s in
-        [%external ("TEST_TO_ENTRYPOINT", s, t)]
-    end
-    module Address = struct
-      let get_balance = get_balance_of_address
-      let to_typed_address = cast_address
-      let get_storage (type b) (a : address) : b =
-        (* we use unit bellow because we don't want inference to force useless annotations *)
-        let a : (unit, b) typed_address = to_typed_address a in
-        Typed_address.get_storage a
-    end
-    module Timelock = struct
-      let create (b : bytes) (n : nat) : chest * chest_key =
-        [%external ("TEST_CREATE_CHEST", b, n)]
-      let create_key (c : chest) (n : nat) : chest_key =
-        [%external ("TEST_CREATE_CHEST_KEY", c, n)]
-
-      (** display-only-for-cameligo
-        The call `verify chest chest_key n` verifies a matching
-        between `chest` and `chest_key` (taking into account `n`). *)
-      (** display-only-for-jsligo
-        The call `verify(chest, chest_key, n)` verifies a matching
-        between `chest` and `chest_key` (taking into account `n`). *)
-      let verify (c : chest) (ck : chest_key) (n : nat) : bool =
-        [%external ("TEST_VERIFY_CHEST", c, ck, n)]
-    end
-    module Crypto = struct
-      let sign (sk : string) (d : bytes) : signature =
-        [%external ("TEST_SIGN", sk, d)]
-    end
-    module Dynamic_entrypoints = struct
-      let storage (type p s s2)
-        ((_, _, init_opt) : (p, s) module_contract)
-        (s:s2)
-      =
-        type t = [@layout comb] { storage : s2 ; dynamic_entrypoints : dynamic_entrypoints} in
-        match init_opt with
-        | Some dynamic_entrypoints -> ({storage = s ; dynamic_entrypoints } : t)
-        | None -> failwith "Your contract do not have dynamic entrypoints"
-    end
-    let originate = Originate.contract
-    let failwith = Assert.failwith
-
-    include Typed_address
-  end
 end
