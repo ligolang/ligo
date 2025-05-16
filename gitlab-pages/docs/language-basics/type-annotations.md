@@ -1,74 +1,184 @@
 ---
 id: type-annotations
-title: Type Annotations
+title: Type annotations
 ---
 
 import Syntax from '@theme/Syntax';
 
-## Annotations
+As described in [Types](./types), the LIGO compiler must know the type of each variable to be able to compile to Michelson, which is strongly and statically typed.
+LIGO can infer or assume the types of variables in many cases, but in cases where it can't, you can manually annotate the types of variables, as in TypeScript and Ocaml.
+Annotating types can also improve code readability.
 
-In certain cases, the type of an expression cannot be properly
-inferred by the compiler. In order to help the type checker, you can
-annotate an expression with its desired type. Here is an example:
+## Annotating types
 
 <Syntax syntax="cameligo">
 
-```cameligo group=d
-type parameter = Back | Claim | Withdraw
+As in Ocaml, you can annotate a variable with its type by adding a colon and the type or type alias:
 
-type storage = {
-  owner    : address;
-  goal     : tez;
-  deadline : timestamp;
-  backers  : (address, tez) map;
-  funded   : bool
-}
+```cameligo group=annotate
+let myInteger : int = 5
+let myString : string = "Hello"
+```
 
-[@entry]
-let back (param : unit) (store : storage) : operation list * storage = (* Annotation *)
-  if Tezos.get_now () > store.deadline then failwith "Deadline passed."
-  else
-    match Map.find_opt (Tezos.get_sender ()) store.backers with
-      None ->
-        let backers = Map.update (Tezos.get_sender ()) (Some (Tezos.get_amount ())) store.backers
-        in [], {store with backers=backers}
-    | Some (x) -> [], store
+More complex types such as lists and maps take sub-types, as in these examples:
+
+```cameligo group=annotate
+let myList : int list = [1; 2; 3]
+let myMap : (string, int) map =
+  Map.literal [
+    ("one", 1);
+    ("two", 2);
+  ]
+```
+
+For readability, contracts often annotate function and entrypoint parameters and return types, as in this example:
+
+```cameligo group=annotate
+module Counter = struct
+  type storage_type = int
+  type return_type = operation list * storage_type
+
+  [@entry]
+  let add (value : int) (storage: storage_type) : return_type =
+    [], storage + value
+
+  [@entry]
+  let sub (value : int) (storage: storage_type) : return_type =
+    [], storage - value
+
+end
 ```
 
 </Syntax>
 
 <Syntax syntax="jsligo">
 
-```jsligo group=d
-type parameter =
-  ["Back"]
-| ["Claim"]
-| ["Withdraw"];
+As in TypeScript, you can annotate a variable with its type by adding a colon and the type or type alias:
 
-type storage = {
-  owner    : address,
-  goal     : tez,
-  deadline : timestamp,
-  backers  : map<address, tez>,
-  funded   : bool
-};
+```jsligo group=annotate
+const myInteger: int = 5;
+const myString: string = "Hello";
+```
 
-// @entry
-function back (_param: unit, store: storage): [list<operation>, storage] {
-  if (Tezos.get_now() > store.deadline)
-    return failwith ("Deadline passed.");
-  return $match(Map.find_opt (Tezos.get_sender(), store.backers), {
-           "None": () =>
-              (() => { const backers =
-                         Map.update(Tezos.get_sender(),
-                                    ["Some" as "Some", Tezos.get_amount()],
-                                    store.backers);
-                       return [list([]), {...store, backers: backers}]})(),
-           "Some": _x => [[], store]
-    })
-};
+Similarly, you can annotate the value that you assign to a variable:
+
+```jsligo group=annotate
+const myOtherInteger = 5 as int;
+const myOtherString = "Hello" as string;
+```
+
+More complex types such as lists and maps take sub-types in angle brackets, as in these examples:
+
+```jsligo group=annotate
+const myList: list<int> = [1, 2, 3];
+const myMap: map<string, int> =
+  Map.literal([
+    ["one", 1],
+    ["two", 2],
+  ]);
+```
+
+For readability, contracts often annotate function and entrypoint parameters and return types, as in this example:
+
+```jsligo group=annotate
+namespace Counter {
+  type storage_type = int;
+  type return_type = [list<operation>, storage_type];
+
+  // @entry
+  const add = (value: int, storage: storage_type): return_type =>
+    [[], storage + value];
+
+  // @entry
+  const sub = (value: int, storage: storage_type): return_type =>
+    [[], storage - value];
+
+}
 ```
 
 </Syntax>
+
+## Inferring types
+
+Sometimes, the LIGO compiler can infer a variable's type from the context.
+
+The following example subtracts two nats and puts the result in a variable.
+This variable does not have an explicit type declaration, but the compiler infers that it is a number and that it is an int because the value could be negative, even though in this case it is positive:
+
+<Syntax syntax="cameligo">
+
+```cameligo group=inferring
+let a : nat = 7
+let b : nat = 5
+let c = a - b (* Inferred to be an int *)
+```
+
+</Syntax>
+
+<Syntax syntax="jsligo">
+
+```jsligo group=inferring
+const a: nat = 7;
+const b: nat = 5;
+const c = a - b; // Inferred to be an int
+```
+
+</Syntax>
+
+## Type assumptions
+
+In some cases, the LIGO compiler assumes a variable's type when it does not have complete information.
+
+For example, when LIGO knows that a variable is a number but not whether that number is an integer or a nat, it assumes that it is an integer.
+Similarly, LIGO assumes that a list of literal values in brackets is a tuple, not a list, unless you cast that list with the `list` function.
+
+The following contract has two entrypoints that each accept one parameter.
+The types of the parameters are not specified, but the compiler can infer that they are numbers by how they are used.
+From there, it assumes that they are integers and therefore types them as integers in the compiled contract.
+
+<Syntax syntax="cameligo">
+
+```cameligo group=assumptions
+module Counter = struct
+  type storage_type = int
+  type return_type = operation list * storage_type
+
+  [@entry]
+  (* The type of the value parameter is assumed to be an int *)
+  let add (value) (storage: storage_type) : return_type =
+    [], storage + value
+
+  [@entry]
+  (* The type of the value parameter is assumed to be an int *)
+  let sub (value) (storage: storage_type) : return_type =
+    [], storage - value
+
+end
+```
+
+</Syntax>
+
+<Syntax syntax="jsligo">
+
+```jsligo group=assumptions
+namespace Counter {
+  type storage_type = int;
+  type return_type = [list<operation>, storage_type];
+
+  // @entry
+  // The type of the value parameter is assumed to be an int
+  const add = (value, storage: storage_type): return_type =>
+    [[], storage + value];
+
+  // @entry
+  // The type of the value parameter is assumed to be an int
+  const sub = (value, storage: storage_type): return_type =>
+    [[], storage - value];
+
+}
+```
+
+</Syntax>
+
 
 <!-- updated use of entry -->
