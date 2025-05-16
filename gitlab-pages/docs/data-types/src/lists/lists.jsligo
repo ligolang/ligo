@@ -1,2 +1,4 @@
 const empty_list : list<int> = [];
 const my_list : list<int> = [1, 2, 2]; // The head is 1, the tail is [2, 2]
+const my_literal_tuple = [1, 2, 3]; // Assumed to be a tuple
+const my_literal_list = list([1, 2, 3]); // Casted to a list

@@ -38,14 +38,15 @@ const empty_list : list<int> = [];
 const my_list : list<int> = [1, 2, 2]; // The head is 1, the tail is [2, 2]
 ```
 
-Note how we need to use the cast `list(...)` on a tuple to make it a
-list. In general, tuples are not lists: tuples have a fixed number of
-components that appear in their type, and each component can have a
-different type, whereas lists have a variable number of elements and
-they have all the same type. Nevertheless, LIGO uses the same syntax
-for tuples and lists, except that the latter is enclosed in
-`list(...)`, except when the context makes it unambiguous that it is a
-list (we will see some example with pattern matching).
+The syntax for a literal list value is the same as for a tuple.
+Therefore, in some cases, you may need to use the `list` function to cast a value to make it a list instead of a tuple.
+In the previous example, the `my_list` variable is a list because of the type annotation.
+However, if you assign a literal list value to a variable when the context is ambiguous, you must cast it with the `list` function or else LIGO assumes that it is a tuple, as in this example:
+
+```jsligo group=lists
+const my_literal_tuple = [1, 2, 3]; // Assumed to be a tuple
+const my_literal_list = list([1, 2, 3]); // Casted to a list
+```
 
 See predefined
 [namespace List](../reference/list-reference/?lang=jsligo).
