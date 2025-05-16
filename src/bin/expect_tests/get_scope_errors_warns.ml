@@ -52,14 +52,14 @@ let%expect_test _ =
     (b#12:4-5 -> b)
     Range: File "../../test/contracts/get_scope_tests/bad_field_record.mligo", line 12, characters 4-5
     Decl Range: File "../../test/contracts/get_scope_tests/bad_field_record.mligo", line 12, character 0 to line 14, character 3
-    Content: |resolved: ^gen#910|
+    Content: |resolved: ^gen#901|
     references: []
     Mod Path =
     Def Type = Global
     (j#13:6-7 -> j)
     Range: File "../../test/contracts/get_scope_tests/bad_field_record.mligo", line 13, characters 6-7
     Decl Range: File "../../test/contracts/get_scope_tests/bad_field_record.mligo", line 13, character 2 to line 14, character 2
-    Content: |resolved: ^gen#910|
+    Content: |resolved: ^gen#901|
     references:
       File "../../test/contracts/get_scope_tests/bad_field_record.mligo", line 14, characters 2-3
     Mod Path =
@@ -433,14 +433,14 @@ let%expect_test _ =
     {|
     Scopes:
     [  ] File "../../test/contracts/warning_duplicate.mligo", line 2, characters 10-13
-    [  ] File "../../test/contracts/warning_duplicate.mligo", line 2, characters 23-65
-    [ Foo#1:7-10  ] File "../../test/contracts/warning_duplicate.mligo", line 5, characters 8-13
-    [ Foo#1:7-10  ] File "../../test/contracts/warning_duplicate.mligo", line 5, characters 15-20
+    [  ] File "../../test/contracts/warning_duplicate.mligo", line 3, characters 4-69
+    [ Foo#1:7-10  ] File "../../test/contracts/warning_duplicate.mligo", line 6, characters 8-13
+    [ Foo#1:7-10  ] File "../../test/contracts/warning_duplicate.mligo", line 6, characters 15-20
 
     Variable definitions:
-    (x#5:4-5 -> x)
-    Range: File "../../test/contracts/warning_duplicate.mligo", line 5, characters 4-5
-    Decl Range: File "../../test/contracts/warning_duplicate.mligo", line 5, characters 0-20
+    (x#6:4-5 -> x)
+    Range: File "../../test/contracts/warning_duplicate.mligo", line 6, characters 4-5
+    Decl Range: File "../../test/contracts/warning_duplicate.mligo", line 6, characters 0-20
     Content: |resolved: ( ticket (nat) * ticket (nat) )|
     references: []
     Mod Path =
@@ -450,15 +450,15 @@ let%expect_test _ =
     Module definitions:
     (Foo#1:7-10 -> Foo)
     Range: File "../../test/contracts/warning_duplicate.mligo", line 1, characters 7-10
-    Decl Range: File "../../test/contracts/warning_duplicate.mligo", line 1, character 0 to line 3, character 3
+    Decl Range: File "../../test/contracts/warning_duplicate.mligo", line 1, character 0 to line 4, character 3
     Content: Members: Variable definitions:
                       (x#2:6-7 -> x)
                       Range: File "../../test/contracts/warning_duplicate.mligo", line 2, characters 6-7
-                      Decl Range: File "../../test/contracts/warning_duplicate.mligo", line 2, characters 2-65
+                      Decl Range: File "../../test/contracts/warning_duplicate.mligo", line 2, character 2 to line 3, character 69
                       Content: |core: ticket (nat)|
                       references:
-                        File "../../test/contracts/warning_duplicate.mligo", line 5, characters 12-13 ,
-                        File "../../test/contracts/warning_duplicate.mligo", line 5, characters 19-20
+                        File "../../test/contracts/warning_duplicate.mligo", line 6, characters 12-13 ,
+                        File "../../test/contracts/warning_duplicate.mligo", line 6, characters 19-20
                       Mod Path = "Foo"
                       Def Type = Module_field
                       Type definitions:
@@ -466,5 +466,5 @@ let%expect_test _ =
                       Module definitions:
 
     references:
-      File "../../test/contracts/warning_duplicate.mligo", line 5, characters 8-11 ,
-      File "../../test/contracts/warning_duplicate.mligo", line 5, characters 15-18 |}]
+      File "../../test/contracts/warning_duplicate.mligo", line 6, characters 8-11 ,
+      File "../../test/contracts/warning_duplicate.mligo", line 6, characters 15-18 |}]
