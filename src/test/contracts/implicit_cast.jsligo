@@ -1,8 +1,12 @@
-const f = (s : list<int>) => {
+function f (s : list<int>) {
   let _s = s;
   let k = 0;
   while (_s && k < 3) {
-    _s = Option.value_with_error ("no tail", List.tail_opt(_s));
+    _s =
+      $match(List.head_and_tail(_s), {
+        "None": () => failwith("empty list _s"),
+        "Some": ([_, tail]) => tail
+      });
     k++;
   };
   return k;
@@ -10,4 +14,5 @@ const f = (s : list<int>) => {
 
 const xss : list<list<int>> = [[], [1,2], [1]];
 
-const has_non_empty : option<list<int>> = List.find_opt((xs : list<int>) : bool => xs, xss);
+const has_non_empty : option<list<int>> =
+  List.find_opt((xs : list<int>) : bool => xs, xss);
