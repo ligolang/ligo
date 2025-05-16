@@ -1069,17 +1069,6 @@ module List = struct
     | _ :: tail -> Some tail
 
   (** display-only-for-cameligo
-    The call `List.tail_opt l`, where `l` is a list, is `None` if `l` is
-    empty; otherwise, `Some tl`, where `tl` is the tail of the list. *)
-  (** display-only-for-jsligo
-    The call `List.tail_opt(l)`, where `l` is a list, is `["None" as "None"]`
-    if `l` is empty; otherwise, `["Some" as "Some", tl]`, where `tl`
-    is the tail of the list. *)
-  [@inline] [@deprecated "Use `List.tail` instead."]
-  let tail_opt (type elt) (list: elt t) : elt t option =
-    tail list
-
-  (** display-only-for-cameligo
     The call `List.head_and_tail l`, where `l` is a list, is `None` if
     `l` is empty; otherwise, `Some (hd, tl)`, where `hd` and `tl` are
     the head and tail of the list, respectively. *)

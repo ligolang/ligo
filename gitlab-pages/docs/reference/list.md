@@ -148,29 +148,6 @@ The call `List.tail(l)`, where `l` is a list, is `None()` if `l` is
 
 
 <SyntaxTitle syntax="cameligo">
-val tail&#95;opt : &#39;elt.&#39;elt t -&gt; &#39;elt t option
-</SyntaxTitle>
-<SyntaxTitle syntax="jsligo">
-let tail&#95;opt: &lt;elt&gt;(&#95;: t&lt;elt&gt;) =&gt; option&lt;t&lt;elt&gt;&gt;
-</SyntaxTitle>
-**Deprecated:** Use `List.tail` instead.
-
-<Syntax syntax="cameligo">
-
-The call `List.tail_opt l`, where `l` is a list, is `None` if `l` is
-    empty; otherwise, `Some tl`, where `tl` is the tail of the list.
-
-</Syntax>
-
-<Syntax syntax="jsligo">
-
-The call `List.tail_opt(l)`, where `l` is a list, is `None()` if `l` is
-    empty; otherwise, `Some(tl)`, where `tl` is the tail of the list.
-
-</Syntax>
-
-
-<SyntaxTitle syntax="cameligo">
 val map : &#39;src &#39;dst.(&#39;src -&gt; &#39;dst) -&gt; &#39;src list -&gt; &#39;dst list
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
