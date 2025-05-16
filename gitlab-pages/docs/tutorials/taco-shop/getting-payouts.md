@@ -395,7 +395,7 @@ const get_taco_price = (untyped_address: address, taco_kind_index: nat): tez => 
   const view_result_option: option<tez> = Tezos.View.call("get_taco_price", taco_kind_index, untyped_address);
   return $match(view_result_option, {
     "Some": (cost_mutez) => cost_mutez,
-    "None": () => Test.failwith("Couldn't get the price of the taco."),
+    "None": () => Test.Assert.failwith("Couldn't get the price of the taco."),
   });
 }
 
@@ -692,7 +692,7 @@ let get_taco_price (untyped_address : address) (taco_kind_index : nat) : tez =
     untyped_address in
   match view_result_option with
   | Some cost_mutez -> cost_mutez
-  | None -> Test.failwith "Couldn't get the price of a taco"
+  | None -> Test.Assert.failwith "Couldn't get the price of a taco"
 
 (* Convenience function for testing equality in maps *)
 let eq_in_map (r : TacoShop.taco_supply) (m : TacoShop.taco_data) (k : nat) =

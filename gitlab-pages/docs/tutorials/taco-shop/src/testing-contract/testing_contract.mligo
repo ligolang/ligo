@@ -82,7 +82,7 @@ let get_taco_price (untyped_address : address) (taco_kind_index : nat) : tez =
     untyped_address in
   match view_result_option with
   | Some cost_mutez -> cost_mutez
-  | None -> Test.failwith "Couldn't get the price of a taco"
+  | None -> Test.Assert.failwith "Couldn't get the price of a taco"
 
 (* Convenience function for testing equality in maps *)
 let eq_in_map (r : TacoShop.taco_supply) (m : TacoShop.taco_data) (k : nat) =
