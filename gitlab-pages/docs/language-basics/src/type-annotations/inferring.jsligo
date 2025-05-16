@@ -1,3 +1,0 @@
-const a: nat = 7;
-const b: nat = 5;
-const c = a - b; // Inferred to be an int
