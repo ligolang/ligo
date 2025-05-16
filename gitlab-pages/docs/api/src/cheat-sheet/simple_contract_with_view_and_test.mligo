@@ -25,4 +25,4 @@ let testC =
     Test.Originate.contract (contract_of C) initial_storage 0tez in
   let p : C parameter_of = Increment 1 in
   let _ = Test.Typed_address.transfer_exn originated.taddr p 1mutez in
-  Assert.assert (Test.get_storage originated.taddr = initial_storage + 1)
+  Assert.assert (Test.Typed_address.get_storage originated.taddr = initial_storage + 1)

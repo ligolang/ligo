@@ -130,8 +130,8 @@ let test_initial_storage () : unit =
   (* Call contract through `main` function *)
   let increment_param : C parameter_of = Increment 8 in
   let decrement_param : C parameter_of = Decrement 3 in
-  let _ = Test.transfer_exn contract.taddr increment_param 0mutez in
-  let _ = Test.transfer_exn contract.taddr decrement_param 0mutez in
+  let _ = Test.Typed_address.transfer_exn contract.taddr increment_param 0mutez in
+  let _ = Test.Typed_address.transfer_exn contract.taddr decrement_param 0mutez in
 
   let new_storage = Test.Typed_address.get_storage contract.taddr
   in Assert.assert (new_storage = init_storage + 15 - 14 + 8 - 3)
@@ -180,8 +180,8 @@ const test_initial_storage = () : unit => {
   // Call contract through `main` function
   const increment_param: parameter_of<C> = ["Increment" as "Increment", 8];
   const decrement_param: parameter_of<C> = ["Decrement" as "Decrement", 3];
-  Test.transfer_exn(contract.taddr, increment_param, 0 as mutez);
-  Test.transfer_exn(contract.taddr, decrement_param, 0 as mutez);
+  Test.Typed_address.transfer_exn(contract.taddr, increment_param, 0 as mutez);
+  Test.Typed_address.transfer_exn(contract.taddr, decrement_param, 0 as mutez);
 
   const new_storage = Test.Typed_address.get_storage(contract.taddr);
   Assert.assert(new_storage == init_storage + 15 - 14 + 8 - 3);

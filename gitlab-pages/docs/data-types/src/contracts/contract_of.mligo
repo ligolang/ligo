@@ -28,8 +28,8 @@ let test_initial_storage () : unit =
   (* Call contract through `main` function *)
   let increment_param : C parameter_of = Increment 8 in
   let decrement_param : C parameter_of = Decrement 3 in
-  let _ = Test.transfer_exn contract.taddr increment_param 0mutez in
-  let _ = Test.transfer_exn contract.taddr decrement_param 0mutez in
+  let _ = Test.Typed_address.transfer_exn contract.taddr increment_param 0mutez in
+  let _ = Test.Typed_address.transfer_exn contract.taddr decrement_param 0mutez in
 
   let new_storage = Test.Typed_address.get_storage contract.taddr
   in Assert.assert (new_storage = init_storage + 15 - 14 + 8 - 3)

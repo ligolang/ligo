@@ -34,10 +34,10 @@ let test_new =
   let () = Test.State.reset 2n ([] : tez list) in
   let i = Test.Account.new () in
   let () = Test.Assert.assert (i.addr = Tezos.address (Tezos.implicit_account (Crypto.hash_key i.pk))) in
-  let _ = Test.transfer_exn (cast_implicit_account i.addr) () 123tez in
+  let _ = Test.Typed_address.transfer_exn (cast_implicit_account i.addr) () 123tez in
   let _ = Test.State.set_source i.addr in
   let to_ = Test.Account.alice () in
-  let _ = Test.transfer_exn (cast_implicit_account to_) () 12tez in
+  let _ = Test.Typed_address.transfer_exn (cast_implicit_account to_) () 12tez in
   Test.Address.get_balance i.addr
 
 let test_add =
@@ -50,8 +50,8 @@ let test_add =
     }
   in
   let () = Test.Account.add i.sk i.pk in
-  let _ = Test.transfer_exn (cast_implicit_account i.addr) () 123tez in
+  let _ = Test.Typed_address.transfer_exn (cast_implicit_account i.addr) () 123tez in
   let _ = Test.State.set_source i.addr in
   let to_ = Test.Account.alice () in
-  let _ = Test.transfer_exn (cast_implicit_account to_) () 12tez in
+  let _ = Test.Typed_address.transfer_exn (cast_implicit_account to_) () 12tez in
   Test.Address.get_balance i.addr
