@@ -1021,11 +1021,11 @@ module List = struct
   (** display-only-for-cameligo
     The value `List.empty` is the empty list. It is a synonym for
     `[]`. In some contexts, it is useful to annotate it with its type,
-    for example: `(empty : int list)`. *)
+    for example: `(List.empty : int list)`. *)
   (** display-only-for-jsligo
     The value `List.empty` is the empty list. It is a synonym for
     `list([])`. In some contexts, it is useful to annotate it with its
-    type, for example: `(empty as list<int>)`. *)
+    type, for example: `(List.empty as list<int>)`. *)
   let empty (type elt) : elt t = []
 
   (** display-only-for-cameligo
@@ -1055,16 +1055,6 @@ module List = struct
     match list with
     | [] -> None
     | head :: _ -> Some head
-
-  (** display-only-for-cameligo
-    The call `List.head_opt l`, where `l` is a list, is `None` if `l` is
-    empty; otherwise, `Some hd`, where `hd` is the head of the list. *)
-  (** display-only-for-jsligo
-    The call `List.head_opt(l)`, where `l` is a list, is `["None" as "None"]`
-    if `l` is empty; otherwise, `["Some" as "Some", hd]`, where `hd`
-    is the head of the list. *)
-  [@inline] [@deprecated "Use `List.head` instead."]
-  let head_opt (type elt) (list: elt t) : elt option = head list
 
   (** display-only-for-cameligo
     The call `List.tail l`, where `l` is a list, is `None` if `l` is
