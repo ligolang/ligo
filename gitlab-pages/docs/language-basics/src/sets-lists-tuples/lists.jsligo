@@ -1,8 +1,7 @@
 const empty_list : list<int> = [];
 const my_list : list<int> = [1, 2, 2]; // The head is 1, the tail is [2, 2]
 const larger_list : list<int> = [5, ...my_list]; // [5,1,2,2]
-const head: option<int> = List.head_opt(my_list); // 1
-const tail: option<list<int>> = List.tail_opt(my_list); // [2,2]
+const hd_tl: option<[int, list<int>]> = List.head_and_tail(my_list);
 const assert_all_greater_than_three = (l: list<int>): unit => {
   const predicate = i => Assert.assert(i > 3);
   List.iter(predicate, l);

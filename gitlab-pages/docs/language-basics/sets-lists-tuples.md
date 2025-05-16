@@ -224,14 +224,13 @@ const larger_list : list<int> = [5, ...my_list]; // [5,1,2,2]
 ### Accessing list elements
 
 You cannot access element directly in list but you can access the
-first element, the head or the rest of the list, the tail.  The two
-function to access those are `List.head_opt` and `List.tail_opt`
+first element, the head or the rest of the list, the tail.  The function
+to access those is `List.head_and_tail`.
 
 <Syntax syntax="cameligo">
 
 ```cameligo group=lists
-let head : int option = List.head_opt my_list (* 1 *)
-let tail : int list option = List.tail_opt my_list (* [2;2] *)
+let hd_tl : (int * int list) option = List.head_and_tail my_list
 ```
 
 </Syntax>
@@ -239,8 +238,7 @@ let tail : int list option = List.tail_opt my_list (* [2;2] *)
 <Syntax syntax="jsligo">
 
 ```jsligo group=lists
-const head: option<int> = List.head_opt(my_list); // 1
-const tail: option<list<int>> = List.tail_opt(my_list); // [2,2]
+const hd_tl: option<[int, list<int>]> = List.head_and_tail(my_list);
 ```
 
 </Syntax>
