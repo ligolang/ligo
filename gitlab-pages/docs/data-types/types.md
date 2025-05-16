@@ -15,6 +15,8 @@ This test is called *type checking*.
 LIGO types are built on top of Michelson's type system, so there are many similarities but not a one-to-one match between LIGO types and Michelson types.
 For information on Michelson types, see [Michelson: the language of Smart Contracts in Tezos](https://octez.tezos.com/docs/active/michelson.html) in the Octez documentation.
 
+Types and type annotations work in a way similar to TypeScript and OCaml; see [Type annotations](./type-annotations).
+
 ## Built-in types
 
 For reference, you can find all the LIGO built-in types [here](https://gitlab.com/ligolang/ligo/-/blob/dev/src/main/build/ligo_lib/std_lib.mligo#L1-33).

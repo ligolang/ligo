@@ -1,0 +1,23 @@
+const myInteger: int = 5;
+const myString: string = "Hello";
+const myOtherInteger = 5 as int;
+const myOtherString = "Hello" as string;
+const myList: list<int> = [1, 2, 3];
+const myMap: map<string, int> =
+  Map.literal([
+    ["one", 1],
+    ["two", 2],
+  ]);
+namespace Counter {
+  type storage_type = int;
+  type return_type = [list<operation>, storage_type];
+
+  // @entry
+  const add = (value: int, storage: storage_type): return_type =>
+    [[], storage + value];
+
+  // @entry
+  const sub = (value: int, storage: storage_type): return_type =>
+    [[], storage - value];
+
+}
