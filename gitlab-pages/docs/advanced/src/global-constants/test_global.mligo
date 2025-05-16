@@ -17,4 +17,4 @@ end
 let test =
   let orig = Test.Originate.contract (contract_of C) 1 0tez in
   let _ = Test.Typed_address.transfer_exn orig.taddr (Main ()) 0tez in
-  Assert.assert (Test.get_storage orig.taddr = 5)
+  Assert.assert (Test.Typed_address.get_storage orig.taddr = 5)

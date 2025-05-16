@@ -2619,7 +2619,7 @@ module Test = struct
       (** Bakes a transaction by sending an amount of tez with a parameter
         from the current source to another account. Returns the amount of
         gas consumed by the execution of the contract. Similar as
-        `Test.transfer`, but fails when anything goes wrong. *)
+        `transfer`, but fails when anything goes wrong. *)
       let transfer_exn (type p s) (a : (p,s) typed_address) (s : p) (t : tez) : nat =
         let a = to_contract a in
         let s : michelson_program = Michelson.eval s in
@@ -3153,8 +3153,6 @@ module Test = struct
     let originate = Originate.contract
 
     let failwith = Assert.failwith
-
-    include Typed_address
   end
 
   (** Run a function on an input, all in Michelson. More concretely:

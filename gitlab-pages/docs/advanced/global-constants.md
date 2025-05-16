@@ -364,7 +364,7 @@ end
 let test =
   let orig = Test.Originate.contract (contract_of C) 1 0tez in
   let _ = Test.Typed_address.transfer_exn orig.taddr (Main ()) 0tez in
-  Assert.assert (Test.get_storage orig.taddr = 5)
+  Assert.assert (Test.Typed_address.get_storage orig.taddr = 5)
 ```
 
 </Syntax>
@@ -390,7 +390,7 @@ class C {
 const _test = () => {
   let orig = Test.Originate.contract(contract_of(C), 1, 0 as tez);
   Test.Typed_address.transfer_exn(orig.taddr, ["Main" as "Main"], 0 as tez);
-  Assert.assert (Test.get_storage(orig.taddr) == 5);
+  Assert.assert (Test.Typed_address.get_storage(orig.taddr) == 5);
 };
 
 const test = _test();

@@ -27,14 +27,17 @@ module C = struct
 
 end
 
+let get_storage = Test.Typed_address.get_storage
+let transfer_exn = Test.Typed_address.transfer_exn
+
 let test_dyn =
   let init_storage = Test.Dynamic_entrypoints.storage (contract_of C) 42 in
   let orig = Test.Originate.contract (contract_of C) init_storage 0mutez in
   (* Call initial one *)
-  let _ = Test.Typed_address.transfer_exn orig.taddr (Call_one ()) 1mutez in
-  let () = Assert.assert ((Test.get_storage orig.taddr).storage = 1) in
+  let _ = transfer_exn orig.taddr (Call_one ()) 1mutez in
+  let () = Assert.assert ((get_storage orig.taddr).storage = 1) in
   (* Change initial one and call it *)
   let f = fun () (i : int) : operation list * int -> [], i + 1 in
-  let _ = Test.Typed_address.transfer_exn orig.taddr (Set_one f) 1mutez in
-  let _ = Test.Typed_address.transfer_exn orig.taddr (Call_one ()) 1mutez in
-  Assert.assert ((Test.Typed_address.get_storage orig.taddr).storage = 2)
+  let _ = transfer_exn orig.taddr (Set_one f) 1mutez in
+  let _ = transfer_exn orig.taddr (Call_one ()) 1mutez in
+  Assert.assert ((get_storage orig.taddr).storage = 2)

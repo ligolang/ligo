@@ -44,10 +44,10 @@ let initial_storage = 42
 
 let test_initial_storage =
   let orig = Test.Originate.contract (contract_of C) initial_storage 0mutez in
-  Assert.assert (Test.get_storage orig.taddr = initial_storage)
+  Assert.assert (Test.Typed_address.get_storage orig.taddr = initial_storage)
 
 let test_increment =
   let orig = Test.Originate.contract (contract_of C) initial_storage 0mutez in
   let contr = Test.Typed_address.to_contract orig.taddr in
   let _ = Test.Contract.transfer_exn contr (Increment 1) 1mutez in
-  Assert.assert (Test.get_storage orig.taddr = initial_storage + 1)
+  Assert.assert (Test.Typed_address.get_storage orig.taddr = initial_storage + 1)

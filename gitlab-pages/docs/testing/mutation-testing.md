@@ -443,9 +443,9 @@ The following updated test adds a call to the `Sub` entrypoint to test it:
 ```cameligo test-ligo group=mutation-contract-test
 let tester_add_and_sub (taddr : (param, storage) typed_address) (_ : (param, storage) michelson_contract) (_ : int) : unit =
   let _ = Test.Contract.transfer_exn (Test.Typed_address.get_entrypoint "add" taddr) 7 0tez in
-  let () = Assert.assert (Test.get_storage taddr = initial_storage + 7) in
+  let () = Assert.assert (Test.Typed_address.get_storage taddr = initial_storage + 7) in
   let _ = Test.Contract.transfer_exn (Test.Typed_address.get_entrypoint "sub" taddr) 3 0tez in
-  Assert.assert (Test.get_storage taddr = initial_storage + 4)
+  Assert.assert (Test.Typed_address.get_storage taddr = initial_storage + 4)
 
 let test_mutation_sub =
   match Test.Mutation.contract (contract_of MutationContract.AddSub) initial_storage 0tez tester_add_and_sub with
