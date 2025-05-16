@@ -59,7 +59,7 @@ let pp
       Format.fprintf
         f
         "@[<hv>%a@ You are using Michelson failwith primitive (loaded from standard \
-         library).@.Consider using `Test.failwith` for throwing a testing framework \
+         library).@.Consider using `Test.Assert.failwith` for throwing a testing framework \
          failure.@.@]"
         snippet_pp
         loc
@@ -291,7 +291,7 @@ let to_warning : all -> Warning.t =
     let message =
       Format.asprintf
         "You are using Michelson failwith primitive (loaded from standard \
-         library).@.Consider using `Test.failwith` for throwing a testing framework \
+         library).@.Consider using `Test.Assert.failwith` for throwing a testing framework \
          failure.@."
     in
     let content = make_content ~message ~location () in

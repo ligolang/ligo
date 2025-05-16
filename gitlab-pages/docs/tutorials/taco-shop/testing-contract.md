@@ -27,7 +27,7 @@ For convenience, in this tutorial, you put the tests in the same file.
      const view_result_option: option<tez> = Tezos.View.call("get_taco_price", taco_kind_index, untyped_address);
      return $match(view_result_option, {
        "Some": (cost_mutez) => cost_mutez,
-       "None": () => Test.failwith("Couldn't get the price of the taco."),
+       "None": () => Test.Assert.failwith("Couldn't get the price of the taco."),
      });
    }
    ```
@@ -121,7 +121,7 @@ For convenience, in this tutorial, you put the tests in the same file.
        );
        Test.IO.log("Successfully bought a taco");
    })(),
-     "Fail": (err) => failwith(err),
+     "Fail": err => failwith(err),
    });
    ```
 
@@ -136,8 +136,8 @@ For convenience, in this tutorial, you put the tests in the same file.
        1 as mutez
      );
    $match(fail_result, {
-     "Success": (_s) => failwith("Test was able to buy a taco for the wrong price"),
-     "Fail": (_err) => Test.IO.log("Contract successfully blocked purchase with incorrect price"),
+     "Success": _s => failwith("Test was able to buy a taco for the wrong price"),
+     "Fail": _err => Test.IO.log("Contract successfully blocked purchase with incorrect price"),
    });
    ```
 
@@ -236,8 +236,8 @@ namespace TacoShop {
 const get_taco_price = (untyped_address: address, taco_kind_index: nat): tez => {
   const view_result_option: option<tez> = Tezos.View.call("get_taco_price", taco_kind_index, untyped_address);
   return $match(view_result_option, {
-    "Some": (cost_mutez) => cost_mutez,
-    "None": () => Test.failwith("Couldn't get the price of the taco."),
+    "Some": cost_mutez => cost_mutez,
+    "None": () => Test.Assert.failwith("Couldn't get the price of the taco."),
   });
 }
 
@@ -290,7 +290,7 @@ const test = (() => {
       );
       Test.IO.log("Successfully bought a taco");
   })(),
-    "Fail": (err) => failwith(err),
+    "Fail": err => failwith(err),
   });
 
   // Fail to purchase a taco without sending enough tez
@@ -301,8 +301,8 @@ const test = (() => {
       1 as mutez
     );
   $match(fail_result, {
-    "Success": (_s) => failwith("Test was able to buy a taco for the wrong price"),
-    "Fail": (_err) => Test.IO.log("Contract successfully blocked purchase with incorrect price"),
+    "Success": _s => failwith("Test was able to buy a taco for the wrong price"),
+    "Fail": _err => Test.IO.log("Contract successfully blocked purchase with incorrect price"),
   });
 }) ();
 ```
@@ -328,7 +328,7 @@ const test = (() => {
        untyped_address in
      match view_result_option with
      | Some cost_mutez -> cost_mutez
-     | None -> Test.failwith "Couldn't get the price of a taco"
+     | None -> Test.Assert.failwith "Couldn't get the price of a taco"
    ```
 
 1. Add this convenience function to verify the current stock and maximum price of a taco:
@@ -516,7 +516,7 @@ let get_taco_price (untyped_address : address) (taco_kind_index : nat) : tez =
     untyped_address in
   match view_result_option with
   | Some cost_mutez -> cost_mutez
-  | None -> Test.failwith "Couldn't get the price of a taco"
+  | None -> Test.Assert.failwith "Couldn't get the price of a taco"
 
 (* Convenience function for testing equality in maps *)
 let eq_in_map (r : TacoShop.taco_supply) (m : TacoShop.taco_data) (k : nat) =

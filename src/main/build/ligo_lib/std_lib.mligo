@@ -3147,12 +3147,8 @@ module Test = struct
         type t = [@layout comb] { storage : s2 ; dynamic_entrypoints : dynamic_entrypoints} in
         match init_opt with
         | Some dynamic_entrypoints -> ({storage = s ; dynamic_entrypoints } : t)
-        | None -> failwith "Your contract do not have dynamic entrypoints"
+        | None -> failwith "Your contract does not have any dynamic entrypoints"
     end
-
-    let originate = Originate.contract
-
-    let failwith = Assert.failwith
   end
 
   (** Run a function on an input, all in Michelson. More concretely:
