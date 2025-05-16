@@ -954,7 +954,6 @@ end
 
 (** The module of optional values *)
 module Option = struct
-
   (** display-only-for-cameligo
     The call `Option.value d opt` is `v` if `opt` is `Some v`, and `d`
     otherwise. *)
@@ -978,42 +977,6 @@ module Option = struct
     match opt with
     | None -> failwith error
     | Some v -> v
-
-  (** display-only-for-cameligo
-    The call `Option.value_exn err opt` terminates with the error `err` if,
-    and only if, `opt` is `None`; otherwise it is `Some v` and `v` is
-    returned. *)
-  (** display-only-for-jsligo
-    The call `Option.value_exn(err, opt)` terminates with the error
-    `err` if, and only if, `opt` is `["None" as "None"]`; otherwise it
-    is `["Some" as "Some", v]` and `v` is returned. *)
-  [@inline] [@deprecated "Use `Option.value_with_error` instead."]
-  let value_exn (type err a) (error: err) (opt: a option) : a =
-    value_with_error error opt
-
-  (** display-only-for-cameligo
-    The call `Option.unopt_with_error opt err` terminates with the error
-    `err` if, and only if, `opt` is `None`; otherwise it is `Some v`
-    and `v` is returned. *)
-  (** display-only-for-jsligo
-    The call `Option.unopt_with_error(opt, err)` terminates with the
-    error `err` if, and only if, `opt` is `["None" as "None"]`;
-    otherwise it is `["Some" as "Some", v]` and `v` is returned. *)
-  [@inline] [@deprecated "Use `Option.value_with_error` instead."]
-  let unopt_with_error (type a) (opt: a option) (error: string) : a =
-    value_with_error error opt
-
-  (** display-only-for-cameligo
-    The call `Option.unopt opt` terminates with the string
-    `"option is None"` if, and only if, `opt` is `None`; otherwise it is
-    `Some v` and `v` is returned.*)
-  (** display-only-for-jsligo
-    The call `Option.unopt(opt)` terminates with the string
-    `"option is None"` if, and only if, `opt` is `["None" as "None"]`;
-    otherwise it is `["Some" as "Some", v]` and `v` is returned.*)
-  [@inline] [@deprecated "Use `Option.value_with_error` instead."]
-  let unopt (type a) (opt: a option) : a =
-    value_with_error "option is None" opt
 
   (** display-only-for-cameligo
     The call `Option.map f opt` is `None` if `opt` is `None`, and
@@ -3121,6 +3084,7 @@ module Test = struct
     module Timelock = struct
       let create (b : bytes) (n : nat) : chest * chest_key =
         [%external ("TEST_CREATE_CHEST", b, n)]
+
       let create_key (c : chest) (n : nat) : chest_key =
         [%external ("TEST_CREATE_CHEST_KEY", c, n)]
 
@@ -3869,12 +3833,4 @@ module Test = struct
     underlying type. *)
   [@deprecated "In a future version, `Test` will be replaced by `Test.Next`, and using `Compare.le` from `Test.Next` is encouraged for a smoother migration."]
   let less_or_equal (type a) (lhs : a) (rhs : a) : bool = compare lhs rhs <= 0
-
-  (* Timelocks *)
-
-  [@deprecated "In a future version, `Test` will be replaced by `Test.Next`, and using `Timelock.create` from `Test.Next` is encouraged for a smoother migration."]
-  let create_chest (b : bytes) (n : nat) : chest * chest_key = [%external ("TEST_CREATE_CHEST", b, n)]
-  [@deprecated "In a future version, `Test` will be replaced by `Test.Next`, and using `Timelock.create_key` from `Test.Next` is encouraged for a smoother migration."]
-  let create_chest_key (c : chest) (n : nat) : chest_key = [%external ("TEST_CREATE_CHEST_KEY", c, n)]
-
 end

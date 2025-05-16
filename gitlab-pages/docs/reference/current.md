@@ -638,7 +638,8 @@ type result = operation list * storage
 
 [@entry]
 let main (i : parameter) (store : storage) : result =
-  let my_ticket1 = Option.unopt (Tezos.Ticket.create i 10n) in
+  let my_ticket1 =
+    Option.value_with_error "no ticket" (Tezos.Ticket.create i 10n) in
   let _, x = Big_map.get_and_update "hello" (Some my_ticket1) store
   in [], x
 ```
@@ -654,7 +655,8 @@ type result = [list<operation>, storage];
 
 // @entry
 function main (i: parameter, store : storage): result {
-  const my_ticket1 = Option.unopt (Tezos.Ticket.create(i, 10 as nat));
+  const my_ticket1 =
+    Option.value_with_error ("no ticket", Tezos.Ticket.create(i, 10 as nat));
   const [_x, ret] =
     Big_map.get_and_update ("hello", ["Some" as "Some", my_ticket1], store);
   return [[], ret]

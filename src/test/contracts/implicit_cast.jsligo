@@ -2,7 +2,7 @@ const f = (s : list<int>) => {
   let _s = s;
   let k = 0;
   while (_s && k < 3) {
-    _s = Option.unopt(List.tail_opt(_s));
+    _s = Option.value_with_error ("no tail", List.tail_opt(_s));
     k++;
   };
   return k;
