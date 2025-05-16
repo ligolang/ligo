@@ -75,6 +75,7 @@ const sidebars = {
     ],
     "Data types": [
       "data-types/types",
+      "data-types/type-annotations",
       {
         "type": "category",
         "label": "Primitive types",
