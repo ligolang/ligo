@@ -1,8 +1,6 @@
 namespace Foo {
-
   type storage = int;
   type ret = [list<operation>, storage];
-  // Three entrypoints
 
   // @entry
   const increment = (delta: int, store: storage): ret =>
@@ -17,4 +15,4 @@ namespace Foo {
 };
 
 
-let test = Test.log (Test.compile_value(contract_of(Foo)))
+let test = Test.log (Test.Next.Michelson.eval(contract_of(Foo)))
