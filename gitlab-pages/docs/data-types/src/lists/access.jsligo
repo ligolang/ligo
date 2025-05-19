@@ -1,0 +1,11 @@
+const my_list: list<int> = [1, 2, 3];
+const head_option: option<int> = List.head(my_list);
+const head = $match(head_option, {
+  "Some": value => value,
+  "None": () => failwith("Failed to get the head of the list"),
+});
+const tail_option: option<list<int>> = List.tail(my_list);
+const tail = $match(tail_option, {
+  "Some": value => value,
+  "None": () => failwith("Failed to get the tail of the list"),
+});
