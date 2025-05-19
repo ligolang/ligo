@@ -1191,7 +1191,7 @@ let%expect_test _ =
     ; "test-expr"
     ; "cameligo"
     ; "type t = [@layout:comb] { num : int ; num_nat : nat ; str : string } in let v = \
-       Test.parse_michelson {| { Elt 1 (Pair 1 1 \"q\") } |} in ((Test.decompile v : \
+       Test.Next.Michelson.parse {| { Elt 1 (Pair 1 1 \"q\") } |} in ((Test.Next.Michelson.decompile v : \
        (nat, t) big_map))"
     ];
   [%expect
