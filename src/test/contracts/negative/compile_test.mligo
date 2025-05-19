@@ -1,3 +1,5 @@
+module Test = Test.Next
+
 module C = struct
   type storage = int
 
@@ -12,14 +14,12 @@ module C = struct
 
   [@entry]
   let increment (store : storage) (delta : int) : operation list * storage =
-    let () = Test.log "foo" in
+    let () = Test.IO.log "foo" in
     [], store + delta
 
   [@entry]
   let decrement (store : storage) (delta : int) : operation list * storage = [], store - delta
 end
-
-module Test = Test.Next
 
 let _test () =
   let initial_storage = 10 in

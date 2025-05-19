@@ -29,14 +29,14 @@ If the function is updated, the typer will fail, triggering a warning,
 and you'll have to change the expected signature everywhere it's mentioned in the file.
 
 ```cameligo test-ligo group=log
-let _dummy : nat -> unit = Test.bake_until_n_cycle_end
-let _dummy : timestamp -> nat -> tez list -> unit = Test.reset_state_at
+let _dummy : nat -> unit = Test.Next.State.bake_until
+let _dummy : timestamp -> nat -> tez list -> unit = Test.Next.State.reset_at
 ```
 
 
 ```jsligo test-ligo group=log
-let _dummy : (cycles : nat) => unit = Test.bake_until_n_cycle_end
-let _dummy_2 : (initial_timestamp : timestamp, no_of_accounts: nat, amount: list<tez>) => unit = Test.reset_state_at
+let _dummy : (cycles : nat) => unit = Test.Next.State.bake_until
+let _dummy_2 : (initial_timestamp : timestamp, no_of_accounts: nat, amount: list<tez>) => unit = Test.Next.State.reset_at
 ```
 
 -->

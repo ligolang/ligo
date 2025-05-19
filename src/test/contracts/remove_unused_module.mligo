@@ -1,3 +1,5 @@
+module Test = Test.Next
+
 module Baz = struct
   let g (x : int) = x
 
@@ -21,7 +23,7 @@ module Foo = struct
   type t = int
 
   let f (x : int) =
-    let () = Test.log "hello" in
+    let () = Test.IO.log "hello" in
     x
 
 end

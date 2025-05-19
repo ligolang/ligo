@@ -1,3 +1,5 @@
+import Test = Test.Next;
+
 namespace Foo {
   type storage = int;
   type ret = [list<operation>, storage];
@@ -15,4 +17,4 @@ namespace Foo {
 };
 
 
-let test = Test.log (Test.Next.Michelson.eval(contract_of(Foo)))
+let test = Test.IO.log (Test.Michelson.eval(contract_of(Foo)))
