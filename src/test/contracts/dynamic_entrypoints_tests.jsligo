@@ -1,5 +1,3 @@
-import Test = Test.Next
-
 export type storage =
   { storage: int;
     dynamic_entrypoints: dynamic_entrypoints

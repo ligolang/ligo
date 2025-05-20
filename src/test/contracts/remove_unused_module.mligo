@@ -1,8 +1,5 @@
-module Test = Test.Next
-
 module Baz = struct
   let g (x : int) = x
-
 end
 
 module Foo = struct
@@ -14,7 +11,6 @@ module Foo = struct
     let g (x : int) = Baz.g x
 
   end
-
 end
 
 module Bah = Foo.Bar
@@ -25,10 +21,9 @@ module Foo = struct
   let f (x : int) =
     let () = Test.IO.log "hello" in
     x
-
 end
 
 [@entry]
 let main (_ : unit) (_ : unit) : operation list * unit =
   let _ = Bah.g 42 in
-  ([] : operation list), ()
+  [], ()

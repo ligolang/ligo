@@ -1,4 +1,3 @@
-module Test = Test.Next
 module Ticket = Tezos.Ticket
 
 let assert = Test.Assert.assert

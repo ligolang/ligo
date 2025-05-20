@@ -1,5 +1,3 @@
-module Test = Test.Next
-
 let cast_implicit_account c : implicit_address =
   Test.Address.to_typed_address c
 

@@ -9,8 +9,6 @@ module MyContract = struct
     let (_address, (payload, amount)), _ticket = Tezos.Ticket.read ticket in
     [], (storage + (multiplier * payload * (int amount)))
 end
-module Test = Test.Next
-
 let test_transfer_to_contract =
   // Originate the contract as usual
   let orig = Test.Originate.contract (contract_of MyContract) 0 0tez in

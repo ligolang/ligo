@@ -1,5 +1,3 @@
-module Test = Test.Next
-
 module Foo = Super__.Super__.C.D.Foo
 
 let test_originate_from_file_relative_path : (unit, unit) typed_address =

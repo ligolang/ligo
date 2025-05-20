@@ -1,5 +1,3 @@
-import Test = Test.Next;
-
 namespace C {
   // @entry
   const main = (p: [int, int], _: unit) : [list<operation>, unit] => {

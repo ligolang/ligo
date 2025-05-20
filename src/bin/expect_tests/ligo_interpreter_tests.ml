@@ -1137,7 +1137,7 @@ let%expect_test _ =
   [%expect
     {|
     ["typed_address","KT19SRGEVxDMKdou6Fu7vZrtPy6X9GB7Dwna"]
-    ["record",[[["Label","bar",["File",{"start":{"byte":{"pos_fname":"./test_to_json.mligo","pos_lnum":9,"pos_bol":0,"pos_cnum":31},"point_num":228,"point_bol":197},"stop":{"byte":{"pos_fname":"./test_to_json.mligo","pos_lnum":9,"pos_bol":0,"pos_cnum":34},"point_num":231,"point_bol":197}}]],["list",[["constant",["string","hello"]],["constant",["string","world"]]]]],[["Label","foo",["File",{"start":{"byte":{"pos_fname":"./test_to_json.mligo","pos_lnum":9,"pos_bol":0,"pos_cnum":19},"point_num":216,"point_bol":197},"stop":{"byte":{"pos_fname":"./test_to_json.mligo","pos_lnum":9,"pos_bol":0,"pos_cnum":22},"point_num":219,"point_bol":197}}]],["constant",["int","42"]]]]] |}]
+    ["record",[[["Label","bar",["File",{"start":{"byte":{"pos_fname":"./test_to_json.mligo","pos_lnum":7,"pos_bol":0,"pos_cnum":31},"point_num":203,"point_bol":172},"stop":{"byte":{"pos_fname":"./test_to_json.mligo","pos_lnum":7,"pos_bol":0,"pos_cnum":34},"point_num":206,"point_bol":172}}]],["list",[["constant",["string","hello"]],["constant",["string","world"]]]]],[["Label","foo",["File",{"start":{"byte":{"pos_fname":"./test_to_json.mligo","pos_lnum":7,"pos_bol":0,"pos_cnum":19},"point_num":191,"point_bol":172},"stop":{"byte":{"pos_fname":"./test_to_json.mligo","pos_lnum":7,"pos_bol":0,"pos_cnum":22},"point_num":194,"point_bol":172}}]],["constant",["int","42"]]]]] |}]
 
 (*
 let%expect_test _ =
@@ -1191,7 +1191,7 @@ let%expect_test _ =
     ; "test-expr"
     ; "cameligo"
     ; "type t = [@layout:comb] { num : int ; num_nat : nat ; str : string } in let v = \
-       Test.Next.Michelson.parse {| { Elt 1 (Pair 1 1 \"q\") } |} in ((Test.Next.Michelson.decompile v : \
+       Test.Michelson.parse {| { Elt 1 (Pair 1 1 \"q\") } |} in ((Test.Michelson.decompile v : \
        (nat, t) big_map))"
     ];
   [%expect
@@ -1444,11 +1444,11 @@ let%expect_test _ =
   run_ligo_bad [ "run"; "test"; bad_test "test_capture_meta_type.mligo" ];
   [%expect
     {|
-    File "../../test/contracts/negative//interpreter_tests/test_capture_meta_type.mligo", line 15, characters 26-27:
-     14 |
-     15 | let f = fun (_ : unit) -> v.x
+    File "../../test/contracts/negative//interpreter_tests/test_capture_meta_type.mligo", line 14, characters 26-27:
+     13 |
+     14 | let f = fun (_ : unit) -> v.x
                                     ^
-     16 |
+     15 |
 
     Invalid usage of a Test type: typed_address (sum[Main -> unit] ,
     unit) in record[x -> int , y -> typed_address (sum[Main -> unit] , unit)] cannot be translated to Michelson. |}]
@@ -1457,11 +1457,11 @@ let%expect_test _ =
   run_ligo_bad [ "run"; "test"; bad_test "test_random.mligo" ];
   [%expect
     {|
-    File "../../test/contracts/negative//interpreter_tests/test_random.mligo", line 7, characters 46-49:
-      6 |   (* We generate the property *)
-      7 |   let test = PBT.make_test (PBT.gen_small : ((int contract) list) pbt_gen) (fun (xs : (int contract) list) -> List.length xs = 42n) in
+    File "../../test/contracts/negative//interpreter_tests/test_random.mligo", line 6, characters 46-49:
+      5 |   (* We generate the property *)
+      6 |   let test = PBT.make_test (PBT.gen_small : ((int contract) list) pbt_gen) (fun (xs : (int contract) list) -> List.length xs = 42n) in
                                                         ^^^
-      8 |   (* And run it *)
+      7 |   (* And run it *)
 
     Generator for type contract (int) is not implemented. For now, only unit, string, bytes, address, int, nat, tez, records, sums, lists, sets, maps and big_maps can be generated. |}]
 
@@ -1498,10 +1498,9 @@ let%expect_test _ =
   run_ligo_bad [ "run"; "test"; bad_test "bad_balances_reset.mligo" ];
   [%expect
     {|
-    File "../../test/contracts/negative//interpreter_tests/bad_balances_reset.mligo", line 3, characters 11-48:
-      2 |
-      3 | let test = Test.State.reset 2n [4000tez;4000tez]
-                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    File "../../test/contracts/negative//interpreter_tests/bad_balances_reset.mligo", line 1, characters 11-49:
+      1 | let test = Test.State.reset 2n [4000tez; 4000tez]
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
      baker account initial balance must at least reach 6000 tez |}]
 
@@ -1542,37 +1541,37 @@ let%expect_test _ =
   run_ligo_bad [ "run"; "test"; bad_test "test_trace2.mligo" ];
   [%expect
     {|
-    File "../../test/contracts/negative//interpreter_tests/test_trace2.mligo", line 9, characters 11-86:
-      8 | let make_call (contr : C parameter_of contract) =
-      9 |   let () = Test.Address.get_storage ("KT1RYW6Zm24t3rSquhw1djfcgQeH9gBdsmiL" : address) in
+    File "../../test/contracts/negative//interpreter_tests/test_trace2.mligo", line 7, characters 11-86:
+      6 | let make_call (contr : C parameter_of contract) =
+      7 |   let () = Test.Address.get_storage ("KT1RYW6Zm24t3rSquhw1djfcgQeH9gBdsmiL" : address) in
                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-     10 |   Test.Contract.transfer_exn contr (Main ()) 10tez
+      8 |   Test.Contract.transfer_exn contr (Main ()) 10tez
 
     An uncaught error occured:
     Did not find service: GET ocaml:context/contracts/KT1RYW6Zm24t3rSquhw1djfcgQeH9gBdsmiL/storage
     Trace:
-    File "../../test/contracts/negative//interpreter_tests/test_trace2.mligo", line 9, characters 11-86 ,
-    File "../../test/contracts/negative//interpreter_tests/test_trace2.mligo", line 9, characters 11-86 ,
-    File "../../test/contracts/negative//interpreter_tests/test_trace2.mligo", line 15, characters 2-55 |}]
+    File "../../test/contracts/negative//interpreter_tests/test_trace2.mligo", line 7, characters 11-86 ,
+    File "../../test/contracts/negative//interpreter_tests/test_trace2.mligo", line 7, characters 11-86 ,
+    File "../../test/contracts/negative//interpreter_tests/test_trace2.mligo", line 13, characters 2-55 |}]
 
 let%expect_test _ =
   run_ligo_bad [ "run"; "test"; bad_test "test_mutation_loop.mligo"; "--steps"; "1000" ];
   [%expect
     {|
-    File "../../test/contracts/negative//interpreter_tests/test_mutation_loop.mligo", line 15, characters 8-55:
-     14 |         let () = Test.IO.log(mutation) in
-     15 |         failwith "Some mutation also passes the tests!"
+    File "../../test/contracts/negative//interpreter_tests/test_mutation_loop.mligo", line 13, characters 8-55:
+     12 |         let () = Test.IO.log(mutation) in
+     13 |         failwith "Some mutation also passes the tests!"
                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
     An uncaught error occured:
     Failwith: "Some mutation also passes the tests!"
     Trace:
-    File "../../test/contracts/negative//interpreter_tests/test_mutation_loop.mligo", line 15, characters 8-55
-    Mutation at: File "../../test/contracts/negative//interpreter_tests/test_mutation_loop.mligo", line 4, characters 43-44:
-      3 | let rec my_rec_fun (rounds : int) : unit =
-      4 |   if rounds > 0 then  my_rec_fun (rounds - 1)
+    File "../../test/contracts/negative//interpreter_tests/test_mutation_loop.mligo", line 13, characters 8-55
+    Mutation at: File "../../test/contracts/negative//interpreter_tests/test_mutation_loop.mligo", line 2, characters 43-44:
+      1 | let rec my_rec_fun (rounds : int) : unit =
+      2 |   if rounds > 0 then  my_rec_fun (rounds - 1)
                                                      ^
-      5 |
+      3 |
 
     Replacing by: 2. |}]
 
@@ -1580,11 +1579,11 @@ let%expect_test _ =
   run_ligo_bad [ "run"; "test"; bad_test "test_source1.mligo" ];
   [%expect
     {|
-    File "../../test/contracts/negative//interpreter_tests/test_source1.mligo", line 15, characters 10-57:
-     14 |   let () = Test.State.set_source addr in
-     15 |   let _ = Test.Originate.contract (contract_of C) () 0tez in
+    File "../../test/contracts/negative//interpreter_tests/test_source1.mligo", line 13, characters 10-57:
+     12 |   let () = Test.State.set_source addr in
+     13 |   let _ = Test.Originate.contract (contract_of C) () 0tez in
                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-     16 |   ()
+     14 |   ()
 
     The source address is not an implicit account
     KT1MoPRoithHNa7i6LYHqeQfZB4oyWThinnS |}]
@@ -1593,11 +1592,11 @@ let%expect_test _ =
   run_ligo_bad [ "run"; "test"; bad_test "test_source2.mligo" ];
   [%expect
     {|
-    File "../../test/contracts/negative//interpreter_tests/test_source2.mligo", line 13, characters 10-67:
-     12 |              (Test.Typed_address.to_address orig.taddr) in
-     13 |   let _ = Test.Typed_address.transfer_exn orig.taddr (Main ()) 0tez in
+    File "../../test/contracts/negative//interpreter_tests/test_source2.mligo", line 11, characters 10-67:
+     10 |              (Test.Typed_address.to_address orig.taddr) in
+     11 |   let _ = Test.Typed_address.transfer_exn orig.taddr (Main ()) 0tez in
                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-     14 |   ()
+     12 |   ()
 
     The source address is not an implicit account
     KT1MoPRoithHNa7i6LYHqeQfZB4oyWThinnS |}]
@@ -1606,9 +1605,9 @@ let%expect_test _ =
   run_ligo_bad [ "run"; "test"; bad_test "test_run_types.jsligo" ];
   [%expect
     {|
-    File "../../test/contracts/negative//interpreter_tests/test_run_types.jsligo", line 4, characters 36-54:
-      3 | const foo = (x: {field: int}): {field: int} => x;
-      4 | const bar = Test.Michelson.run(foo, {property: "toto"});
+    File "../../test/contracts/negative//interpreter_tests/test_run_types.jsligo", line 2, characters 36-54:
+      1 | const foo = (x: {field: int}): {field: int} => x;
+      2 | const bar = Test.Michelson.run(foo, {property: "toto"});
                                               ^^^^^^^^^^^^^^^^^^
 
     Mismatching record labels. Expected record of type "record[field -> int]". |}]
@@ -1617,9 +1616,9 @@ let%expect_test _ =
   run_ligo_bad [ "run"; "test"; bad_test "test_run_types2.jsligo" ];
   [%expect
     {|
-    File "../../test/contracts/negative//interpreter_tests/test_run_types2.jsligo", line 4, characters 36-42:
-      3 | const foo = (x:  {b:int}):  {b:int} => x;
-      4 | const bar = Test.Michelson.run(foo, "toto");
+    File "../../test/contracts/negative//interpreter_tests/test_run_types2.jsligo", line 2, characters 36-42:
+      1 | const foo = (x:  {b:int}):  {b:int} => x;
+      2 | const bar = Test.Michelson.run(foo, "toto");
                                               ^^^^^^
 
     This expression has type "string", but an expression was expected of type
@@ -1630,9 +1629,9 @@ let%expect_test _ =
   run_ligo_bad [ "run"; "test"; bad_test "test_run_types3.jsligo" ];
   [%expect
     {|
-    File "../../test/contracts/negative//interpreter_tests/test_run_types3.jsligo", line 4, characters 36-51:
-      3 | const foo = (x: int): int => x;
-      4 | const bar = Test.Michelson.run(foo, {field: "toto"});
+    File "../../test/contracts/negative//interpreter_tests/test_run_types3.jsligo", line 2, characters 36-51:
+      1 | const foo = (x: int): int => x;
+      2 | const bar = Test.Michelson.run(foo, {field: "toto"});
                                               ^^^^^^^^^^^^^^^
 
     This expression has type "record[field -> string]", but an expression was expected of type
@@ -1643,9 +1642,9 @@ let%expect_test _ =
   run_ligo_bad [ "run"; "test"; bad_test "test_decompile.mligo" ];
   [%expect
     {|
-    File "../../test/contracts/negative//interpreter_tests/test_decompile.mligo", line 5, characters 2-39:
-      4 |   let x = Test.Michelson.eval 4n in
-      5 |   (Test.Michelson.decompile x : string)
+    File "../../test/contracts/negative//interpreter_tests/test_decompile.mligo", line 3, characters 2-39:
+      2 |   let x = Test.Michelson.eval 4n in
+      3 |   (Test.Michelson.decompile x : string)
             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
     This Michelson value has assigned type 'nat', which does not coincide with expected type 'string'. |}]
@@ -1654,11 +1653,11 @@ let%expect_test _ =
   run_ligo_bad [ "run"; "test"; bad_test "test_register_delegate.mligo" ];
   [%expect
     {|
-    File "../../test/contracts/negative//interpreter_tests/test_register_delegate.mligo", line 26, characters 4-51:
-     25 |   let {taddr=ta; code=_; size=_} =
-     26 |     Test.Originate.contract (contract_of C) 41 5tez in
+    File "../../test/contracts/negative//interpreter_tests/test_register_delegate.mligo", line 24, characters 4-51:
+     23 |   let {taddr=ta; code=_; size=_} =
+     24 |     Test.Originate.contract (contract_of C) 41 5tez in
               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-     27 |
+     25 |
 
     Baker cannot bake. Enough rolls? Enough cycles passed?
     "STARTING BALANCE AND VOTING POWER"
@@ -1667,11 +1666,11 @@ let%expect_test _ =
   run_ligo_bad [ "run"; "test"; bad_test "test_register_delegate_stake.mligo" ];
   [%expect
     {|
-    File "../../test/contracts/negative//interpreter_tests/test_register_delegate_stake.mligo", line 14, characters 11-42:
-     13 |   let () = Test.State.register_delegate pkh in
-     14 |   let () = Test.State.stake pkh 1000000tez in
+    File "../../test/contracts/negative//interpreter_tests/test_register_delegate_stake.mligo", line 13, characters 11-42:
+     12 |   let () = Test.State.register_delegate pkh in
+     13 |   let () = Test.State.stake pkh 1000000tez in
                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-     15 |   ()
+     14 |   ()
 
     An uncaught error occured:
     { "id": "proto.alpha.operation.manual_staking_forbidden",
@@ -1679,7 +1678,7 @@ let%expect_test _ =
         "Manual staking operations are forbidden because staking is currently automated.",
       "data": {} }
     Trace:
-    File "../../test/contracts/negative//interpreter_tests/test_register_delegate_stake.mligo", line 14, characters 11-42 |}]
+    File "../../test/contracts/negative//interpreter_tests/test_register_delegate_stake.mligo", line 13, characters 11-42 |}]
 
 let () = Sys_unix.chdir pwd
 let () = Sys_unix.chdir "../../test/contracts/negative/interpreter_tests/"
@@ -1689,19 +1688,19 @@ let%expect_test _ =
   run_ligo_bad [ "run"; "test"; "typed_addr_in_bytes_pack.mligo" ];
   [%expect
     {|
-File "typed_addr_in_bytes_pack.mligo", line 15, character 17 to line 19, character 5:
- 14 |     let r = originate_record () in
- 15 |     let packed = Bytes.pack (fun() ->
+File "typed_addr_in_bytes_pack.mligo", line 13, character 17 to line 17, character 5:
+ 12 |     let r = originate_record () in
+ 13 |     let packed = Bytes.pack (fun() ->
                        ^^^^^^^^^^^^^^^^^^^^
- 16 |         match (Tezos.get_entrypoint_opt "%transfer" r.addr : unit contract option) with
+ 14 |         match (Tezos.get_entrypoint_opt "%transfer" r.addr : unit contract option) with
       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
- 17 |           Some(c) -> let op = Tezos.Operation.transaction () 0mutez c in [op]
+ 15 |           Some(c) -> let op = Tezos.Operation.transaction () 0mutez c in [op]
       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
- 18 |         | None ->  ([] : operation list)
+ 16 |         | None ->  ([] : operation list)
       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
- 19 |     ) in
+ 17 |     ) in
       ^^^^^
- 20 |     let () = Test.IO.log(packed) in
+ 18 |     let () = Test.IO.log(packed) in
 
 Cannot decompile value KT1MoPRoithHNa7i6LYHqeQfZB4oyWThinnS of type typed_address (unit ,
 unit)
@@ -1713,11 +1712,11 @@ let%expect_test _ =
   run_ligo_bad [ "run"; "test"; bad_test "test_michelson_non_func.mligo" ];
   [%expect
     {test|
-    File "../../test/contracts/negative//interpreter_tests/test_michelson_non_func.mligo", line 4, characters 16-55:
-      3 | let test =
-      4 |   let x : int = [%Michelson ({|{ PUSH int 1 }|} : int)] in
+    File "../../test/contracts/negative//interpreter_tests/test_michelson_non_func.mligo", line 2, characters 16-55:
+      1 | let test =
+      2 |   let x : int = [%Michelson ({|{ PUSH int 1 }|} : int)] in
                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-      5 |   begin
+      3 |   begin
 
     Embedded raw code can only have a functional type |test}]
 
@@ -1725,14 +1724,14 @@ let%expect_test _ =
   run_ligo_bad [ "run"; "test"; bad_test "get_contract.mligo" ];
   [%expect
     {|
-    File "../../test/contracts/negative//interpreter_tests/get_contract.mligo", line 21, characters 10-64:
-     20 |   let _ = (Tezos.get_contract a : C parameter_of contract) in
-     21 |   let _ = (Tezos.get_contract_with_error a "foo" : int contract) in
+    File "../../test/contracts/negative//interpreter_tests/get_contract.mligo", line 19, characters 10-64:
+     18 |   let _ = (Tezos.get_contract a : C parameter_of contract) in
+     19 |   let _ = (Tezos.get_contract_with_error a "foo" : int contract) in
                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-     22 |   ()
+     20 |   ()
 
     An uncaught error occured:
     Failwith: "foo"
     Trace:
-    File "../../test/contracts/negative//interpreter_tests/get_contract.mligo", line 21, characters 10-64 ,
-    File "../../test/contracts/negative//interpreter_tests/get_contract.mligo", line 21, characters 10-64 |}]
+    File "../../test/contracts/negative//interpreter_tests/get_contract.mligo", line 19, characters 10-64 ,
+    File "../../test/contracts/negative//interpreter_tests/get_contract.mligo", line 19, characters 10-64 |}]

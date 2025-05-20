@@ -1,5 +1,3 @@
-module Test = Test.Next
-
 module C = struct
   module Storage =
     struct

@@ -1,5 +1,3 @@
-module Test = Test.Next
-
 let test =
   let {addr; pk; sk} = Test.Account.info 0n in
   let () = Test.IO.log (addr, pk, sk) in

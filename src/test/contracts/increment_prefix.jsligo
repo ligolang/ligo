@@ -1,5 +1,3 @@
-import Test = Test.Next;
-
 type storage = int;
 type ret = [list<operation>, storage];
 

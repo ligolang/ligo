@@ -1,5 +1,3 @@
-module Test = Test.Next
-
 module C = Contract_under_test.Contract_create
 
 let test =

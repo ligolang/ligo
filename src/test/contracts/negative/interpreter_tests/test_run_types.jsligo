@@ -1,4 +1,2 @@
-import Test = Test.Next;
-
 const foo = (x: {field: int}): {field: int} => x;
 const bar = Test.Michelson.run(foo, {property: "toto"});

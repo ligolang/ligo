@@ -14,8 +14,6 @@ module C = struct
   let reset () (_ : storage) : return = [], 0
 end
 
-module Test = Test.Next
-
 let test_initial_storage () : unit =
   let init_storage = 42 in
   let fee = 0mutez in

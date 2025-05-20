@@ -1,5 +1,3 @@
-import Test = Test.Next;
-
 const map_find_exn = (map: map<[int, int], int>, idx: [int, int]) =>
   $match(Map.find_opt(idx, map), {
     "None": () => failwith("Not_found"),

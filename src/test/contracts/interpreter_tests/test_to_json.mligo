@@ -1,5 +1,3 @@
-module Test = Test.Next
-
 let println = Test.IO.println
 let to_json = Test.String.json
 

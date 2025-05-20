@@ -1,5 +1,3 @@
-import Test = Test.Next;
-
 namespace C {
   export type storage = unit
   type result = [list<operation>, storage];

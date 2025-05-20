@@ -1,7 +1,7 @@
-const _ = Test.Next.IO.set_test_print ();
+const _ = Test.IO.set_test_print ();
 
 function f () {
-  Test.Next.IO.log("Once");
+  Test.IO.log("Once");
   return [1 as nat, 1, "Hello"]
 }
 const [a, b, c] = f ()

@@ -1,5 +1,3 @@
-module Test = Test.Next
-
 module OneEntrypoint = struct
   type storage = int
   type return_type = operation list * storage

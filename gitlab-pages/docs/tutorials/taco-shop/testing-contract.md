@@ -12,13 +12,6 @@ You can put tests in the same file as the contract or in a different file.
 For convenience, in this tutorial, you put the tests in the same file.
 
 <Syntax syntax="jsligo">
-
-1. At the top of the contract file, outside of the namespace, add this code to import the new version of LIGO testing tools:
-
-   ```jsligo skip
-   import Test = Test.Next;
-   ```
-
 1. At the end of the contract file, outside of the namespace, add this convenience function to call the view and get the current price of a taco:
 
    ```jsligo skip
@@ -146,8 +139,6 @@ For convenience, in this tutorial, you put the tests in the same file.
 The completed contract file with convenience functions and test functions looks like this:
 
 ```jsligo group=testing_contract
-import Test = Test.Next;
-
 namespace TacoShop {
   export type taco_supply = { current_stock: nat, max_price: tez };
   export type taco_data = map<nat, taco_supply>;
@@ -310,13 +301,6 @@ const test = (() => {
 </Syntax>
 
 <Syntax syntax="cameligo">
-
-1. At the top of the contract file, outside of the module, add this code to import the new version of LIGO testing tools:
-
-   ```cameligo skip
-   module Test = Test.Next
-   ```
-
 1. At the end of the contract file, outside of the module, add this convenience function to call the view and get the current price of a taco:
 
    ```cameligo skip
@@ -432,8 +416,6 @@ const test = (() => {
 The completed contract file with the convenience functions and test functions looks like this:
 
 ```cameligo group=testing_contract
-module Test = Test.Next
-
 module TacoShop = struct
   type taco_supply = { current_stock: nat; max_price: tez }
   type taco_data = (nat, taco_supply) map

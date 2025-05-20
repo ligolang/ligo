@@ -1,5 +1,3 @@
-import Test = Test.Next;
-
 const if_switch_break = (n : int) : string => {
   let output = "";
   if (n >= 0 && n <= 5) {

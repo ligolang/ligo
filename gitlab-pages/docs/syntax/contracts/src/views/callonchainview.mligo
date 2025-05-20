@@ -20,8 +20,6 @@ module CallView = struct
       Some newValue -> [], (targetAddress, newValue)
     | None -> failwith("Something went wrong")
 end
-module Test = Test.Next
-
 let test =
   // Originate ContractWithView
   let contract1 = Test.Originate.contract (contract_of ContractWithView) 5 0tez in

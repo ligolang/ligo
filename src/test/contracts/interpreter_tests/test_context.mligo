@@ -1,5 +1,3 @@
-module Test = Test.Next
-
 let get_storage = Test.Typed_address.get_storage
 let transfer_exn = Test.Typed_address.transfer_exn
 let get_balance = Test.Address.get_balance

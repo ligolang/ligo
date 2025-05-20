@@ -1,7 +1,4 @@
-module Test = Test.Next
-
 module Hashlock = Super__.Hashlock
-
 module State = Test.State
 module Typed_address = Test.Typed_address
 module Account = Test.Account

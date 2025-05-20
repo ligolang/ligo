@@ -1,11 +1,10 @@
-module Test = Test.Next
-
 module C = struct
   type storage = {
     participants : address set ;
     secrets : (address, bool) map ;
     metadata: (string,bytes) big_map
   }
+
   type parameter = unit
   type return = operation list * storage
 
@@ -31,4 +30,5 @@ module C = struct
   }
 end
 
-let test_x = Test.Originate.contract (contract_of C) C.init_storage 0mutez
+let test_x =
+  Test.Originate.contract (contract_of C) C.init_storage 0mutez

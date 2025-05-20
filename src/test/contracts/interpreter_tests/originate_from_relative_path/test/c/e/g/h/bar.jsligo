@@ -1,5 +1,3 @@
-import Test = Test.Next;
-
 const f = "../../../../../src/contract/unit.mligo";
 
 export const originate = () => {

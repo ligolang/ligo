@@ -14,8 +14,6 @@ namespace Testviews {
   const getString = (_u: unit, storage: storage): string =>
     storage;
 }
-import Test = Test.Next;
-
 const test_view = () => {
   const contract = Test.Originate.contract(contract_of(Testviews), "",
   0 as tez);

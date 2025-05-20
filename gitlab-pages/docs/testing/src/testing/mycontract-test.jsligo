@@ -1,7 +1,5 @@
 import * as MyContract from "gitlab-pages/docs/testing/src/testing/mycontract.jsligo";
 
-import Test = Test.Next;
-
 const run_test1 = () => {
   let initial_storage = 10;
   let orig = Test.Originate.contract(

@@ -1,17 +1,14 @@
-module Test = Test.Next
-
 module Counter = struct
   type storage_type = int
   type return_type = operation list * storage_type
 
   [@entry]
-  let add (value : int) ( store: storage_type) : return_type =
+  let add (value : int) (store : storage_type) : return_type =
     [], store + value
 
   [@entry]
-  let sub (value : int) ( store: storage_type) : return_type =
+  let sub (value : int) (store : storage_type) : return_type =
     [], store - value
-
 end
 
 let test =

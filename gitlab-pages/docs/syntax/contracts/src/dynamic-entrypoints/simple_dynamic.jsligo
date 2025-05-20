@@ -74,8 +74,6 @@ namespace DynamicContract {
     }];
   }
 }
-import Test = Test.Next;
-
 const test_dyn = (() => {
   // Generate storage with dynamic entrypoints
   const initial_storage =

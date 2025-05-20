@@ -1,5 +1,3 @@
-module Test = Test.Next
-
 module C = struct
   let michelson_add : int * int -> int =
     [%Michelson ({| { UNPAIR ; ADD } |} : int * int -> int) ]

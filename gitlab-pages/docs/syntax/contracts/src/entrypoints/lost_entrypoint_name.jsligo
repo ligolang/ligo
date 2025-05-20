@@ -1,5 +1,3 @@
-import Test = Test.Next;
-
 namespace OneEntrypoint {
   type storage = int;
   type return_type = [list<operation>, storage];

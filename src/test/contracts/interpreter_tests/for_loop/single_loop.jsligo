@@ -1,5 +1,3 @@
-import Test = Test.Next;
-
 const assert = Test.Assert.assert
 
 const getChar = (s: string, idx: nat): string => String.sub(idx, 1 as nat, s)

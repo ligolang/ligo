@@ -1,12 +1,10 @@
-module Test = Test.Next
-
 type t = { s : int option ; n : string option } option
 
 module C = struct
   type return = operation list * t
   [@entry]
   let main (_ : unit) (_ : t) : return =
-    ([] : operation list), Some { s = Some 1 ; n = (None : string option) }
+    [], Some { s = Some 1 ; n = (None : string option) }
 end
 
 let test =

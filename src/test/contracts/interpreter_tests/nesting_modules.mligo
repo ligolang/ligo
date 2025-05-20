@@ -1,5 +1,3 @@
-module Test = Test.Next
-
 module Bar = struct
   let y (x : int) = 5 + x
 end
@@ -29,7 +27,7 @@ module C = struct
   [@entry]
   let main (_ : unit) (s : int) : operation list * int =
     let v = foo () + Foo.x () + y () in
-    ([] : operation list), (s + v)
+    [], (s + v)
 end
 
 let test =

@@ -1,7 +1,5 @@
 #include "./gitlab-pages/docs/testing/src/testing/remove-balance.mligo"
 
-module Test = Test.Next
-
 let test_remove_balance =
   let () = Test.State.reset 5n ([]: tez list) in
 let balances: balances =

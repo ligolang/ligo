@@ -1,5 +1,3 @@
-import Test = Test.Next;
-
 const test_accounts = () => {
   Test.State.reset(3 as nat, [] as list<tez>);
   const admin_account = Test.Account.address(0 as nat);

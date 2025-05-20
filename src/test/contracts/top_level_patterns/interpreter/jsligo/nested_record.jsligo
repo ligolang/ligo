@@ -1,10 +1,10 @@
-const _ = Test.Next.IO.set_test_print ();
+const _ = Test.IO.set_test_print ();
 
 type t = { c : nat ; d : int ; e : string }
 type r = { a : t   ; b : t   ; c : t      }
 
 function f () {
-  Test.Next.IO.log("Once");
+  Test.IO.log("Once");
   return { a: { c: 1 as nat, d: 1, e: "H" },
            b: { c: 2 as nat, d: 2, e: "E" },
            c: { c: 3 as nat, d: 3, e: "L" }
@@ -25,7 +25,7 @@ const { a: { c: c4, d: d4, e: e4 },
       }
 
 const test = (() => {
-  Assert.assert ((c1 + c2 + c3) == (c4 + c5 + c6));
-  Assert.assert ((d1 + d2 + d3) == (d4 + d5 + d6));
-  Assert.assert ((e1 + e2 + e3) == (e4 + e5 + e6))
+  Assert.assert (c1 + c2 + c3 == c4 + c5 + c6);
+  Assert.assert (d1 + d2 + d3 == d4 + d5 + d6);
+  Assert.assert (e1 + e2 + e3 == e4 + e5 + e6)
 })()

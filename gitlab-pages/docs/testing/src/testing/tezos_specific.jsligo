@@ -7,7 +7,6 @@ namespace Counter {
   @entry
   const decrement = (action: int, store: storage) : [list <operation>, storage] => [[], store - action];
 };
-import Test = Test.Next;
 
 const testC = () => {
   const initial_storage = 42;

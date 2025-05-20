@@ -452,8 +452,6 @@ When it is compiled it becomes the default entrypoint, so the test calls the `de
 <Syntax syntax="cameligo">
 
 ```cameligo group=lost_entrypoint_name
-module Test = Test.Next
-
 module OneEntrypoint = struct
   type storage = int
   type return_type = operation list * storage
@@ -476,8 +474,6 @@ let test_one_entrypoint =
 <Syntax syntax="jsligo">
 
 ```jsligo group=lost_entrypoint_name
-import Test = Test.Next;
-
 namespace OneEntrypoint {
   type storage = int;
   type return_type = [list<operation>, storage];

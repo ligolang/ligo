@@ -1,5 +1,3 @@
-import Test = Test.Next;
-
 const assert = Assert.assert;
 
 namespace C {

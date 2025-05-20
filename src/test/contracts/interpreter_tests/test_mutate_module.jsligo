@@ -1,5 +1,3 @@
-import Test = Test.Next;
-
 import * as Adder from "./contract_under_test/module_adder.mligo";
 
 function _tester (a : typed_address<parameter_of<Adder>, int>,
