@@ -83,7 +83,7 @@ This example shows a tuple whose second component is a tuple:
 <Syntax syntax="cameligo">
 
 ```cameligo group=nested
-type nested_tuple = (int * (string * nat))
+type nested_tuple = int * (string * nat)
 let my_nested_value = (-5, ("Hello", 12))
 ```
 
@@ -115,7 +115,7 @@ If you are not going to use any of these variables, give them the name `_` or a 
 Using silent variables prevents the LIGO compiler from warning you about unused variables, as in this example:
 
 ```cameligo group=destructuring
-let alice, _bob = friends
+let alice, _bob = friends (* This alice shadows the previous one *)
 ```
 
 You can destructure nested tuples in the same manner:
