@@ -2208,7 +2208,6 @@ end
 
 (** The testing framework *)
 module Test = struct
-  module Next = struct
     (** This function creates a random value for a chosen type. *)
     let random (type a) (_u : unit) : a =
       let g : a pbt_gen = [%external ("TEST_RANDOM", false)] in
@@ -2278,18 +2277,22 @@ module Test = struct
       (** Originate a contract with initial storage and initial
         balance. *)
       let michelson (type p s)
-        (c : (p,s) michelson_contract)
-        (s : s)
-        (t : tez)
-      : (p,s) typed_address =
-        let s = Michelson.eval s in
-        [%external ("TEST_ORIGINATE", c, s, t)]
+        (contract : (p,s) michelson_contract)
+        (storage : s)
+        (balance : tez)
+        : (p,s) typed_address =
+        let storage = Michelson.eval storage in
+        [%external ("TEST_ORIGINATE", contract, storage, balance)]
 
       (** Originate a contract with an entrypoint function in curried
         form, initial storage and initial balance. *)
-      let contract (type p s) ((f, vs, _) : (p, s) module_contract) (s : s) (t : tez) : (p, s) origination_result =
+      let contract (type p s)
+        ((f, vs, _) : (p, s) module_contract)
+        (storage : s)
+        (balance : tez)
+        : (p, s) origination_result =
         let code = Michelson.Contract.compile_with_views f vs in
-        let taddr = michelson code s t in
+        let taddr = michelson code storage balance in
         let size = Michelson.Contract.size code in
         { taddr ; code ; size }
 
@@ -3097,5 +3100,4 @@ module Test = struct
         | Some dynamic_entrypoints -> ({storage = s ; dynamic_entrypoints } : t)
         | None -> failwith "Your contract does not have any dynamic entrypoints"
     end
-  end
 end

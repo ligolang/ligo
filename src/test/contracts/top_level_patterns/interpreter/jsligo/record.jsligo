@@ -1,9 +1,9 @@
-const _ = Test.Next.IO.set_test_print ();
+const _ = Test.IO.set_test_print ();
 
 type r = { a: nat, b: int, c: string }
 
 function f () {
-  Test.Next.IO.log("Once");
+  Test.IO.log("Once");
   return { a: 1 as nat, b: 1, c: "Hello" }
 }
 

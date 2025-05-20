@@ -1,4 +1,3 @@
-module Test = Test.Next
 module Adder = Contract_under_test.Module_adder
 
 let _tester (a : (Adder parameter_of, int) typed_address) (_ : (Adder parameter_of, int) michelson_contract) (_ : int) : unit =

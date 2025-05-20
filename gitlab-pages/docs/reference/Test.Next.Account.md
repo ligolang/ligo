@@ -78,19 +78,19 @@ type info = &#123; addr: address; pk: key; sk: string &#125;
 </SyntaxTitle>
 
 <SyntaxTitle syntax="cameligo">
-val info : nat -&gt; Test.Next.Account.info
+val info : nat -&gt; Test.Account.info
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let info: (&#95;: nat) =&gt; Test.Next.Account.info
+let info: (&#95;: nat) =&gt; Test.Account.info
 </SyntaxTitle>
 Returns the address information of the nth bootstrapped
         account.
 
 
 <SyntaxTitle syntax="cameligo">
-val new : unit -&gt; Test.Next.Account.info
+val new : unit -&gt; Test.Account.info
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let new: (&#95;: unit) =&gt; Test.Next.Account.info
+let new: (&#95;: unit) =&gt; Test.Account.info
 </SyntaxTitle>
 Creates and returns information of a new account.

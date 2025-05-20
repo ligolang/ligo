@@ -1,5 +1,3 @@
-module Test = Test.Next
-
 module Factory = struct
   [@entry]
   let main (i : int) (s : address list) : operation list * address list =

@@ -16,8 +16,6 @@ Contract, view and test
 <div className="example">
 
 ```cameligo group=simple_contract_with_view_and_test
-module Test = Test.Next
-
 module C = struct
   type storage = int
 
@@ -515,8 +513,6 @@ Contract, view and test
 <div className="example">
 
 ```jsligo group=simple_contract_with_view_and_test
-import Test = Test.Next;
-
 type storage = int;
 
 class C {

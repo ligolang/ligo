@@ -1,5 +1,3 @@
-module Test = Test.Next
-
 let () = Test.IO.set_test_print ()
 
 type r =

@@ -4,8 +4,6 @@ import * as RemoveBalance from
 type balances = RemoveBalance.balances
 const remove_balances_under = RemoveBalance.remove_balances_under
 
-import Test = Test.Next;
-
 const test_remove_balance = (() => {
   Test.State.reset(5 as nat, [] as list <tez>);
   const balances: balances =

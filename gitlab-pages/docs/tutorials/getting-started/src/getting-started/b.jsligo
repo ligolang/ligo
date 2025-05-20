@@ -1,5 +1,3 @@
-import Test = Test.Next;
-
 namespace Counter {
   type storage = int;
   type return_type = [list<operation>, storage];

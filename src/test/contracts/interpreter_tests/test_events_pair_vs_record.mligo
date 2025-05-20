@@ -1,5 +1,3 @@
-module Test = Test.Next
-
 let failwith = Test.Assert.failwith
 
 module C = struct

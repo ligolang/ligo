@@ -24,20 +24,17 @@ The code includes automated tests for the contract that are not part of the cont
 <Syntax syntax="cameligo">
 
 ```cameligo group=starter_counter
-module Test = Test.Next
-
 module Counter = struct
   type storage_type = int
   type return_type = operation list * storage_type
 
   [@entry]
-  let add (value : int) ( store: storage_type) : return_type =
+  let add (value : int) (store : storage_type) : return_type =
     [], store + value
 
   [@entry]
-  let sub (value : int) ( store: storage_type) : return_type =
+  let sub (value : int) (store : storage_type) : return_type =
     [], store - value
-
 end
 
 let test =
@@ -52,8 +49,6 @@ let test =
 <Syntax syntax="jsligo">
 
 ```jsligo group=starter_counter
-import Test = Test.Next;
-
 namespace Counter {
   type storage_type = int;
   type return_type = [list<operation>, storage_type];

@@ -1,5 +1,3 @@
-module Test = Test.Next
-
 let x = 2
 let x = 1
 

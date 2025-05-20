@@ -1,5 +1,3 @@
-module Test = Test.Next
-
 module C = struct
   type param = int * string ticket
 

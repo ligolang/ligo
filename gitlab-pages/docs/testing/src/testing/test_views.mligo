@@ -16,8 +16,6 @@ module Testviews = struct
   let getString (_u : unit) (storage : storage) : string =
     storage
 end
-module Test = Test.Next
-
 let test_view =
   let contract = Test.Originate.contract (contract_of Testviews) "" 0tez in
   let _ : nat = Test.Contract.transfer_exn (Test.Typed_address.get_entrypoint "set" contract.taddr) "hello" 0tez in

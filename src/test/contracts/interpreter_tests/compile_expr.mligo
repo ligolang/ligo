@@ -1,4 +1,3 @@
-module Test = Test.Next
 let assert = Assert.assert
 
 (* Some basic types and functions *)

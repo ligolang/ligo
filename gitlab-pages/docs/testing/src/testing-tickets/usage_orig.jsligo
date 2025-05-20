@@ -18,8 +18,6 @@ namespace MyContract {
     return [[], new_storage];
   };
 }
-import Test = Test.Next;
-
 const test_originate_contract = (() => {
   // Create a function that the proxy runs to return the contract storage
   const create_storage = (t: ticket<bytes>): MyContract.storage =>

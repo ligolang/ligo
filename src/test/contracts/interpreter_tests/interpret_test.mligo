@@ -1,5 +1,3 @@
-module Test = Test.Next
-
 let assert = Test.Assert.assert
 
 let test_lambda_call =

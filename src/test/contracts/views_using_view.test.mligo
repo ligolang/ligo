@@ -1,5 +1,3 @@
-module Test = Test.Next
-
 module Proxy = struct
   type param =
       Basic of address * address

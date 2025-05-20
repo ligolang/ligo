@@ -1,5 +1,4 @@
 const twice = (x: int) => x + x;
-import Test = Test.Next;
 const simple_tests = (f : ((input: int) => int)) : unit => {
   /* Test 1 */
   Assert.assert(Test.Compare.eq(Test.Michelson.run(f, 0), Test.Michelson.eval(0)));

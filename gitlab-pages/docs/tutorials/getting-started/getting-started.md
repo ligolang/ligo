@@ -220,7 +220,6 @@ Follow these steps to add an automated test to the contract:
 1. Add code to _originate_ (deploy) the contract to the test environment:
 
    ```cameligo
-   module Test = Test.Next
    let initial_storage = 10 in
    let orig = Test.Originate.contract (contract_of Counter) initial_storage 0tez in
    ```
@@ -242,8 +241,6 @@ Follow these steps to add an automated test to the contract:
    The complete code looks like this:
 
    ```cameligo group=b
-   module Test = Test.Next
-
    module Counter = struct
      type storage = int
      type return_type = operation list * storage
@@ -321,8 +318,6 @@ Follow these steps to add an automated test to the contract:
    The complete code looks like this:
 
    ```jsligo group=b
-   import Test = Test.Next
-
    namespace Counter {
      type storage = int;
      type return_type = [list<operation>, storage];

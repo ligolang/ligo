@@ -1,5 +1,3 @@
-module Test = Test.Next
-
 [@deprecated "Replace me by...@.g!@.mail: foo@@bar.com"]
 let f () = 1
 

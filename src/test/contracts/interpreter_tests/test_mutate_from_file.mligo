@@ -1,5 +1,3 @@
-module Test = Test.Next
-
 let assert = Assert.assert
 
 let test =

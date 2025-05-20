@@ -1,5 +1,3 @@
-module Test = Test.Next
-
 module C = struct
   [@entry]
   let main (() : unit) (() : unit) : operation list * unit =

@@ -345,8 +345,6 @@ A simple usage case is the following, in which we obtain a
 <Syntax syntax="cameligo">
 
 ```cameligo test-ligo group=test_global
-module Test = Test.Next
-
 module C = struct
   type storage = int
   type parameter = unit
@@ -372,8 +370,6 @@ let test =
 <Syntax syntax="jsligo">
 
 ```jsligo test-ligo group=test_global
-import Test = Test.Next;
-
 type storage = int;
 type parameter = unit;
 

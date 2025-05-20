@@ -1,5 +1,3 @@
-module Test = Test.Next
-
 let test_x =
   let t1 = Tezos.get_now () in
   let () = Test.State.reset_at ("2012-02-02t10:10:10Z" : timestamp) 2n ([] : tez list) in

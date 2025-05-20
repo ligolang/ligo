@@ -130,8 +130,6 @@ Then, the test uses the proxy contract to originate the contract to test:
 <Syntax syntax="cameligo">
 
 ```cameligo group=usage_orig
-module Test = Test.Next
-
 let test_originate_contract =
   // Create a function that the proxy runs to return the contract storage
   let create_storage = fun (t : bytes ticket) : MyContract.storage -> (0, Some t) in
@@ -149,8 +147,6 @@ let test_originate_contract =
 <Syntax syntax="jsligo">
 
 ```jsligo group=usage_orig
-import Test = Test.Next;
-
 const test_originate_contract = (() => {
   // Create a function that the proxy runs to return the contract storage
   const create_storage = (t: ticket<bytes>): MyContract.storage =>
@@ -275,8 +271,6 @@ Then create a function that returns the parameter for the entrypoint, create a p
 <Syntax syntax="cameligo">
 
 ```cameligo group=usage_entrypoint
-module Test = Test.Next
-
 let test_transfer_to_contract =
   // Originate the contract as usual
   let orig = Test.Originate.contract (contract_of MyContract) 0 0tez in
@@ -300,8 +294,6 @@ let test_transfer_to_contract =
 <Syntax syntax="jsligo">
 
 ```jsligo group=usage_entrypoint
-import Test = Test.Next;
-
 const test_transfer_to_contract = (() => {
   // Originate the contract as usual
   let orig = Test.Originate.contract(contract_of(MyContract), 0,

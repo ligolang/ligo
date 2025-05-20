@@ -116,8 +116,6 @@ module C = struct
   let reset () (_ : storage) : return = [], 0
 end
 
-module Test = Test.Next
-
 let test_initial_storage () : unit =
   let init_storage = 42 in
   let fee = 0mutez in
@@ -165,8 +163,6 @@ class C {
   reset = (_unit: unit, _storage: storage) : return_ =>
     [[], 0];
 }
-
-import Test = Test.Next;
 
 const test_initial_storage = () : unit => {
   const init_storage = 42;

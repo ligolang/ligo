@@ -1,4 +1,3 @@
-module Test = Test.Next
 let assert = Assert.assert
 
 module External = Test_imported

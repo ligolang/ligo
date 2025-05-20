@@ -10,8 +10,6 @@ namespace MyContract {
     return ([[], storage + (multiplier * payload * int(amount))]);
   };
 }
-import Test = Test.Next;
-
 const test_transfer_to_contract = (() => {
   // Originate the contract as usual
   let orig = Test.Originate.contract(contract_of(MyContract), 0,

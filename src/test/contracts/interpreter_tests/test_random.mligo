@@ -1,4 +1,3 @@
-module Test = Test.Next
 module PBT = Test.PBT
 
 (* This function is almost like identity... *)

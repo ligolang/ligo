@@ -447,8 +447,11 @@ You can use this value as the initial storage when you originate the contract.
 
 ## Testing dynamic entrypoints
 
-To simplify testing contracts with dynamic entrypoints, you can use the function `Test.Next.storage_with_dynamic_entrypoints` to generate the initial storage.
-Like the `ligo compile storage` command, this function takes only the value of the `storage` field in the contract storage, not the full storage value.
+To simplify testing contracts with dynamic entrypoints, you can use
+the function `Test.Dynamic_entrypoints.storage` to generate the
+initial storage.  Like the `ligo compile storage` command, this
+function takes only the value of the `storage` field in the contract
+storage, not the full storage value.
 
 It returns the full storage value with both the `storage` and `dynamic_entrypoints` field.
 Then you can use this return value to originate the contract in the test.
@@ -461,10 +464,7 @@ For example, this is a test for the contract in [Defining dynamic entrypoints](#
 <Syntax syntax="cameligo">
 
 ```cameligo group=simple_dynamic
-module Test = Test.Next
-
 let test_dyn =
-
   // Generate storage with dynamic entrypoints
   let initial_storage = Test.Dynamic_entrypoints.storage (contract_of DynamicContract) 3 in
   let contract = Test.Originate.contract (contract_of DynamicContract) initial_storage 0mutez in
@@ -506,8 +506,6 @@ let test_dyn =
 <Syntax syntax="jsligo">
 
 ```jsligo group=simple_dynamic
-import Test = Test.Next;
-
 const test_dyn = (() => {
   // Generate storage with dynamic entrypoints
   const initial_storage =

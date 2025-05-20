@@ -1,5 +1,3 @@
-module Test = Test.Next
-
 module C = struct
   type storage = int
   type parameter = unit

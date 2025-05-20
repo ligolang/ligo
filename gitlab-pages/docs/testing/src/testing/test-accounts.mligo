@@ -17,8 +17,6 @@ module Counter = struct
     else
       failwith "Only the owner can call this entrypoint"
 end
-module Test = Test.Next
-
 let test_admin =
   let (admin_account, user_account) = (Test.Account.address(0n), Test.Account.address(1n)) in
 

@@ -13,8 +13,6 @@ namespace MyContract {
   // @entry
   const reset = (_u : unit, _storage : storage) : result => [[], 0];
 }
-import Test = Test.Next;
-
 const test_failure = () => {
   const initial_storage = 10 as int;
   const orig = Test.Originate.contract(contract_of(MyContract),

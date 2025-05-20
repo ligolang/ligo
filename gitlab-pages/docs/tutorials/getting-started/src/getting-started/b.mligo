@@ -1,5 +1,3 @@
-module Test = Test.Next
-
 module Counter = struct
   type storage = int
   type return_type = operation list * storage

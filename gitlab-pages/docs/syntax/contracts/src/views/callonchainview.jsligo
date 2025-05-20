@@ -28,8 +28,6 @@ namespace CallView {
     })
   }
 }
-import Test = Test.Next;
-
 const test = (() => {
   // Originate ContractWithView
   const contract1 = Test.Originate.contract(contract_of(ContractWithView), 5, 0 as tez);

@@ -1,5 +1,3 @@
-module Test = Test.Next
-
 type storage = (bytes ticket) option
 type unforged_storage = (bytes unforged_ticket) option
 

@@ -1,5 +1,3 @@
-module Test = Test.Next
-
 let log = Test.IO.log
 
 module C = struct

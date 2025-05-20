@@ -2,8 +2,6 @@
 
 module MutationContract = Gitlab_pages.Docs.Testing.Src.Mutation_testing.Mutation_contract
 
-module Test = Test.Next
-
 type storage = MutationContract.AddSub.storage
 type param = MutationContract.AddSub parameter_of
 

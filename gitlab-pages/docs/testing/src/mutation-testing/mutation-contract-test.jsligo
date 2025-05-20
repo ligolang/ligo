@@ -1,7 +1,5 @@
 import * as MutationContract from "gitlab-pages/docs/testing/src/mutation-testing/mutation-contract.jsligo";
 
-import Test = Test.Next;
-
 type storage = int;
 type param = parameter_of<MutationContract.AddSub>;
 

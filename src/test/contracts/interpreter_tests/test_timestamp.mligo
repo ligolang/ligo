@@ -1,5 +1,3 @@
-module Test = Test.Next
-
 let test_sub =
  let subtractthis : int = 2*86400 in
  let the_time : timestamp = ("1970-01-04t00:00:00Z" : timestamp) in

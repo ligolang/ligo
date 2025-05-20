@@ -1,5 +1,3 @@
-module Test = Test.Next
-
 module C = struct
   type registry = (nat, key) big_map
   type storage = {registry : registry; next_id : nat}

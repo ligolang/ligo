@@ -1,10 +1,8 @@
-module Test = Test.Next
-
 let id (type a) (x : a) : a = x
 
 module C = struct
-  [@entry] let main (m : int) (n : int) : operation list * int =
-    ([] : operation list), (id n) + (id m)
+  [@entry]
+  let main (m : int) (n : int) : operation list * int = [], id n + id m
 end
 
 let test =

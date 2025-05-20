@@ -1,4 +1,4 @@
-const _ = Test.Next.IO.set_test_print ();
+const _ = Test.IO.set_test_print ();
 
 type r =
   { a: [nat, int, string],
@@ -7,7 +7,7 @@ type r =
   }
 
 function f () {
-  Test.Next.IO.log("Once");
+  Test.IO.log("Once");
   return { a: [1 as nat, 1, "H"],
            b: [2, 2 as nat, "E"],
            c: ["Hello", 3 , 3 as nat]

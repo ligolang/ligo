@@ -13,8 +13,6 @@ class C {
 
 /* Tests for main access point */
 
-import Test = Test.Next
-
 const get_storage = Test.Typed_address.get_storage
 
 const test_initial_storage =

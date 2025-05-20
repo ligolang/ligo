@@ -1,5 +1,3 @@
-module Test = Test.Next
-
 let originate_record () =
     let orig = Test.Originate.from_file "./unit_contract.mligo" () 0tez in
     let addr = Test.Typed_address.to_address orig.taddr in

@@ -1,5 +1,3 @@
-module Test = Test.Next
-
 let test_accounts =
   let initial_balances : tez list = [] in
   let () = Test.State.reset 3n initial_balances in

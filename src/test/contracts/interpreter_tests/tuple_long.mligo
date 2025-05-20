@@ -1,5 +1,3 @@
-module Test = Test.Next
-
 type big_tuple = int * int * int * int * int * int * int * int * int * int * int * int
 
 let br : big_tuple = (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11)

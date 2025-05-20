@@ -1,5 +1,3 @@
-module Test = Test.Next
-
 module CUT = Contract_under_test.Views_contract
 
 let test =

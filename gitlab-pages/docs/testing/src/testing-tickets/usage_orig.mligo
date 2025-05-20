@@ -15,8 +15,6 @@ module MyContract = struct
         | None -> stored_value, None
     in [], new_storage
 end
-module Test = Test.Next
-
 let test_originate_contract =
   // Create a function that the proxy runs to return the contract storage
   let create_storage = fun (t : bytes ticket) : MyContract.storage -> (0, Some t) in

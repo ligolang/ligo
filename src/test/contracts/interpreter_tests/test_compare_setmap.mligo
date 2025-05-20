@@ -1,4 +1,3 @@
-module Test = Test.Next
 module Michelson = Test.Michelson
 
 let test_address_set =

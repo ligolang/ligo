@@ -36,7 +36,6 @@ To test this function, you might provide some input and output values as test ca
 <Syntax syntax="cameligo">
 
 ```cameligo test-ligo group=twice
-module Test = Test.Next
 let simple_tests (f : int -> int) =
   (* Test 1 *)
   let () = Assert.assert (Test.Compare.eq (Test.Michelson.run f 0) (Test.Michelson.eval 0)) in
@@ -52,7 +51,6 @@ let test = simple_tests twice
 <Syntax syntax="jsligo">
 
 ```jsligo test-ligo group=twice
-import Test = Test.Next;
 const simple_tests = (f : ((input: int) => int)) : unit => {
   /* Test 1 */
   Assert.assert(Test.Compare.eq(Test.Michelson.run(f, 0), Test.Michelson.eval(0)));
@@ -119,9 +117,13 @@ That result suggests that the tests are not good enough to distinguish a good im
 
 To help you add more test cases and ensure that the tests are complete, you can use mutation testing to identify different versions of the function (known as _mutations_) that pass all of the tests.
 
-The `Test.Next.Mutation.func` function takes a value to mutate (usually a function) and a test case function to apply to mutated versions of that value.
-If the test case function terminates correctly, the `Test.Next.Mutation.func` function stops trying mutations and returns a `Some` option with the mutation that passed all of the tests.
-If no mutation passes the test case function, the `Test.Next.Mutation.func` function returns `None`.
+The `Test.Mutation.func` function takes a value to mutate (usually a
+function) and a test case function to apply to mutated versions of
+that value.  If the test case function terminates correctly, the
+`Test.Mutation.func` function stops trying mutations and returns
+a `Some` option with the mutation that passed all of the tests.  If no
+mutation passes the test case function, the `Test.Mutation.func`
+function returns `None`.
 
 <Syntax syntax="cameligo">
 
@@ -178,7 +180,6 @@ ligo run test gitlab-pages/docs/testing/src/mutation-testing/twice.mligo
 # Outputs:
 # Mutation at: File "gitlab-pages/docs/testing/src/mutation-testing/twice.mligo", line 1, characters 22-27:
 #   1 | let twice (x : int) = x + x
-#   2 | module Test = Test.Next
 #
 # Replacing by: x * x.
 #
@@ -194,7 +195,6 @@ ligo run test gitlab-pages/docs/testing/src/mutation-testing/twice.jsligo
 # Outputs:
 # Mutation at: File "/Users/timothymcmackin/tezos/ligo/gitlab-pages/docs/testing/src/mutation-testing/twice.jsligo", line 1, characters 26-31:
 #   1 | const twice = (x: int) => x + x;
-#   2 | import Test = Test.Next;
 #
 # Replacing by: x * x.
 #
@@ -310,8 +310,6 @@ Note that the test uses a function named `tester` to deploy the contract and run
 
 module MutationContract = Gitlab_pages.Docs.Testing.Src.Mutation_testing.Mutation_contract
 
-module Test = Test.Next
-
 type storage = MutationContract.AddSub.storage
 type param = MutationContract.AddSub parameter_of
 
@@ -332,8 +330,6 @@ let test_original =
 
 ```jsligo test-ligo group=mutation-contract-test
 import * as MutationContract from "gitlab-pages/docs/testing/src/mutation-testing/mutation-contract.jsligo";
-
-import Test = Test.Next;
 
 type storage = int;
 type param = parameter_of<MutationContract.AddSub>;
@@ -492,9 +488,13 @@ When this test runs, it finds that no mutation of the `Sub` entrypoint passes al
 
 ## Returning multiple mutations
 
-In the previous examples, the functions `Test.Next.Mutation.func` and `Test.Next.Mutation.contract` return an option that contains either None or Some with a single mutation that passes the tests.
-To speed up the process of eliminating mutations, you can use the `Test.Next.Mutation.All.func` and `Test.Next.Mutation.All.contract` functions to get every mutation that passes the tests.
-These functions return a list of mutations instead of an option.
+In the previous examples, the functions `Test.Mutation.func` and
+`Test.Mutation.contract` return an option that contains either None or
+Some with a single mutation that passes the tests.  To speed up the
+process of eliminating mutations, you can use the
+`Test.Mutation.All.func` and `Test.Mutation.All.contract` functions to
+get every mutation that passes the tests.  These functions return a
+list of mutations instead of an option.
 
 This example gets every mutation that passes the tests for the `twice` function:
 
@@ -532,8 +532,10 @@ const get_all_mutations =
 
 In this case, the output is the same because only one mutation passed all of the tests.
 
-Similarly, the `Test.Next.Mutation.All.contract` function returns a list of all contract mutations that pass the tests.
-For example, this test adapts the contract test in the previous section to return every passing mutation:
+Similarly, the `Test.Mutation.All.contract` function returns a list of
+all contract mutations that pass the tests.  For example, this test
+adapts the contract test in the previous section to return every
+passing mutation:
 
 <Syntax syntax="cameligo">
 

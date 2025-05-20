@@ -1,5 +1,3 @@
-module Test = Test.Next
-
 let test =
   let x : int = [%Michelson ({|{ PUSH int 1 }|} : int)] in
   begin

@@ -1,5 +1,3 @@
-module Test = Test.Next
-
 type storage = int
 
 type parameter =

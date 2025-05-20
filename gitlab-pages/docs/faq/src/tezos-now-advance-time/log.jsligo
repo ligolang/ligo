@@ -1,2 +1,2 @@
-let _dummy : (cycles : nat) => unit = Test.Next.State.bake_until
-let _dummy_2 : (initial_timestamp : timestamp, no_of_accounts: nat, amount: list<tez>) => unit = Test.Next.State.reset_at
+let _dummy : (cycles : nat) => unit = Test.State.bake_until
+let _dummy_2 : (initial_timestamp : timestamp, no_of_accounts: nat, amount: list<tez>) => unit = Test.State.reset_at

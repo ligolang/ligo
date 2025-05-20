@@ -1,5 +1,3 @@
-module Test = Test.Next
-
 type 'storage return = operation list * 'storage
 
 module A = struct

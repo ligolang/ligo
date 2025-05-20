@@ -1,5 +1,3 @@
-module Test = Test.Next
-
 type t = Foo of int
 
 let f () =

@@ -1,5 +1,3 @@
-import Test = Test.Next;
-
 type ret = [list<operation>, int]
 
 interface FA0 {

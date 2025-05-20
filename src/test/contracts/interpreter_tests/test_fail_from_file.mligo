@@ -1,5 +1,3 @@
-module Test = Test.Next
-
 #include "./contract_under_test/fail_contract.mligo"
 
 let under_test = "./contract_under_test/fail_contract.mligo"

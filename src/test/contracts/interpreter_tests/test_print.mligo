@@ -1,5 +1,3 @@
-module Test = Test.Next
-
 let test =
   let () = Test.IO.print "Hello " in
   let () = Test.IO.println "world" in

@@ -1,7 +1,5 @@
 module MyContract = Gitlab_pages.Docs.Testing.Src.Testing.Mycontract
 
-module Test = Test.Next
-
 let run_test1 =
   let initial_storage = 10 in
   let orig = Test.Originate.contract (contract_of MyContract.MyContract) initial_storage 0tez in

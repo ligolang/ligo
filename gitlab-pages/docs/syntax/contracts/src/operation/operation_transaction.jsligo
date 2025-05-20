@@ -1,5 +1,3 @@
-import Test = Test.Next;
-
 type return_<storage> = [list<operation>, storage];
 
 namespace A {

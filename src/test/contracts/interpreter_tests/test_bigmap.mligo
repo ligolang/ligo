@@ -1,10 +1,8 @@
-module Test = Test.Next
-
 module C = struct
   type storage = (int, nat) big_map
 
   [@entry] let main ((k, v) : int * nat) (s : storage) : operation list * storage =
-    ([] : operation list), Big_map.add k v s
+    [], Big_map.add k v s
 end
 
 let test =

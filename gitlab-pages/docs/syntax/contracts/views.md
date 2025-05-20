@@ -205,8 +205,6 @@ end
 This test deploys both contracts, calls the contract that calls the view, and verifies the result:
 
 ```cameligo group=callonchainview
-module Test = Test.Next
-
 let test =
   // Originate ContractWithView
   let contract1 = Test.Originate.contract (contract_of ContractWithView) 5 0tez in
@@ -269,8 +267,6 @@ namespace CallView {
 This test deploys both contracts, calls the contract that calls the view, and verifies the result:
 
 ```jsligo group=callonchainview
-import Test = Test.Next;
-
 const test = (() => {
   // Originate ContractWithView
   const contract1 = Test.Originate.contract(contract_of(ContractWithView), 5, 0 as tez);

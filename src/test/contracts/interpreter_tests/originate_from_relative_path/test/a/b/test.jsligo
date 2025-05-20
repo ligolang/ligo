@@ -1,5 +1,3 @@
-import Test = Test.Next;
-
 import * as Foo from "../../c/d/foo.jsligo";
 
 function _test_originate_from_file_relative_path () : typed_address<unit, unit> {

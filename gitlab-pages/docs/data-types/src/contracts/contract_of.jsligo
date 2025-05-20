@@ -15,8 +15,6 @@ class C {
     [[], 0];
 }
 
-import Test = Test.Next;
-
 const test_initial_storage = () : unit => {
   const init_storage = 42;
   const fee = 0 as mutez;

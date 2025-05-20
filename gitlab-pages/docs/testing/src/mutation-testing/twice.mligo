@@ -1,5 +1,4 @@
 let twice (x : int) = x + x
-module Test = Test.Next
 let simple_tests (f : int -> int) =
   (* Test 1 *)
   let () = Assert.assert (Test.Compare.eq (Test.Michelson.run f 0) (Test.Michelson.eval 0)) in

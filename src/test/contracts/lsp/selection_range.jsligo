@@ -1,10 +1,7 @@
-// alias
-import Test = Test.Next
-
 // structure / contract
 namespace C {
   type storage = unit
-  
+
   // entrypoint attr
   @entry const f = (_p: unit, _s: unit): [list<operation>, unit] => [[], []]
 }

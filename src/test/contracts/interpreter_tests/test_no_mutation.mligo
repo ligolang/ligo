@@ -1,5 +1,3 @@
-module Test = Test.Next
-
 module C = struct
   // This is mutation-contract.mligo
   type storage = int

@@ -97,8 +97,6 @@ To get the correct parameter for the transaction, contract B uses the `parameter
 <Syntax syntax="cameligo">
 
 ```cameligo group=operation_transaction
-module Test = Test.Next
-
 type 'storage return = operation list * 'storage
 
 module A = struct
@@ -152,8 +150,6 @@ let test =
 <Syntax syntax="jsligo">
 
 ```jsligo group=operation_transaction
-import Test = Test.Next;
-
 type return_<storage> = [list<operation>, storage];
 
 namespace A {
