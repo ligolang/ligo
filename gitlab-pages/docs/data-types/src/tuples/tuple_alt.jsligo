@@ -1,2 +1,2 @@
 type couple = [string, string];
-const friends : couple = ["Alice", "Bob"];
+const friends: couple = ["Alice", "Bob"];
