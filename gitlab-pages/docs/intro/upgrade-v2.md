@@ -6,6 +6,105 @@ import Syntax from '@theme/Syntax';
 
 Version 2.0 of LIGO includes breaking changes, so you must update your code when you upgrade your installation of LIGO as described in [Installation](./installation).
 
+## Promotion of `Test.Next`
+
+The `Test.Next` library is now the `Test` library, replacing the old `Test` library.
+This table shows the old functions and their new equivalents:
+
+| Function in LIGO v1.9.2 | Function in LIGO v2 |
+| --- | --- |
+| `Test.run`| `Test.Michelson.run`|
+| `Test.eval`| `Test.Michelson.eval`|
+| `Test.decompile`| `Test.Michelson.decompile`|
+| `Test.compile_value`| `Test.Michelson.eval`|
+| `Test.get_total_voting_power`| `Test.State.get_total_voting_power`|
+| `Test.failwith`| `Test.Assert.failwith`|
+| `Test.to_contract`| `Test.Typed_address.to_contract`|
+| `Test.set_source`| `Test.State.set_source`|
+| `Test.cast_address`| `Test.Address.to_typed_address`|
+| `Test.to_address`| `Test.Typed_address.to_address`|
+| `Test.get_storage`| `Test.Typed_address.get_storage`|
+| `Test.get_storage_of_address`| `Test.Address.get_storage`|
+| `Test.get_balance_of_address`| `Test.Address.get_balance`|
+| `Test.get_balance`| `Test.Typed_address.get_balance`|
+| `Test.print`| `Test.IO.print`|
+| `Test.eprint`| `Test.IO.eprint`|
+| `Test.get_voting_power`| `Test.State.get_voting_power`|
+| `Test.nth_bootstrap_contract`| `Test.Account.Contract.bootstrap`|
+| `Test.nth_bootstrap_account`| `Test.Account.address`|
+| `Test.get_bootstrap_account`| `Test.Account.info`|
+| `Test.nth_bootstrap_typed_address`| `Test.Account.Contract.bootstrap_typed_address`|
+| `Test.last_originations`| `Test.State.last_originations`|
+| `Test.random`| `Test.random` (unchanged) |
+| `Test.new_account`| `Test.Account.new`|
+| `Test.bake_until_n_cycle_end`| `Test.State.bake_until`|
+| `Test.get_time`| `Tezos.get_now` |
+| `Test.register_delegate`| `Test.State.register_delegate`|
+| `Test.stake`| `Test.State.stake`|
+| `Test.register_constant`| `Test.State.register_constant`|
+| `Test.to_typed_address`| `Test.Contract.to_typed_address`|
+| `Test.constant_to_michelson_program`| `Test.Michelson.parse`|
+| `Test.parse_michelson`| `Test.Michelson.parse`|
+| `Test.restore_context`| `Test.State.restore`|
+| `Test.save_context`| `Test.State.save`|
+| `Test.drop_context`| `Test.State.drop`|
+| `Test.to_string`| `Test.String.show`|
+| `Test.to_json`| `Test.String.json`|
+| `Test.to_debugger_json`| `Test.String.debugger_json`|
+| `Test.set_baker_policy`| `Test.State.set_baker_policy`|
+| `Test.set_baker`| `Test.State.set_baker`|
+| `Test.size`| `Test.Michelson.Contract.size`|
+| `Test.compile_contract`| `Test.Michelson.Contract.compile`|
+| `Test.read_contract_from_file`| `Test.Michelson.Contract.from_file`|
+| `Test.chr`| `Test.String.chr`|
+| `Test.nl`| `Test.String.nl`|
+| `Test.println`| `Test.IO.println`|
+| `Test.set_print_values`| `Test.IO.set_test_print`|
+| `Test.unset_print_values`| `Test.IO.unset_test_print`|
+| `Test.get_last_events_from`| `Test.State.last_events`|
+| `Test.transfer`| `Test.Typed_address.transfer`|
+| `Test.transfer_exn`| `Test.Typed_address.transfer_exn`|
+| `Test.log`| `Test.IO.log`|
+| `Test.reset_state`| `Test.State.reset`|
+| `Test.reset_state_at`| `Test.State.reset_at`|
+| `Test.bootstrap_contract`| `Test.State.Reset.add_func_contract`|
+| `Test.mutate_value`| `Test.Mutation.value`|
+| `Test.save_mutation`| `Test.Mutation.save`|
+| `Test.sign`| `Test.Crypto.sign`|
+| `Test.add_account`| `Test.Account.add`|
+| `Test.baker_account`| `Test.State.Reset.add_baker`|
+| `Test.set_big_map`| `Test.State.set_big_map`|
+| `Test.transfer_to_contract`| `Test.Contract.transfer`|
+| `Test.transfer_to_contract_exn`| `Test.Contract.transfer_exn`|
+| `Test.michelson_equal`| `Test.Compare.eq`|
+| `Test.to_entrypoint`| `Test.Typed_address.get_entrypoint`|
+| `Test.storage_with_dynamic_entrypoints`| `Test.Dynamic_entrypoints.storage`|
+| `Test.originate_contract`| `Test.Originate.michelson`|
+| `Test.compile_contract_with_views`| `Test.Michelson.Contract.compile_with_views`|
+| `Test.originate`| `Test.Originate.contract`|
+| `Test.compile_contract_from_file`| `Test.Michelson.Contract.from_file`|
+| `Test.originate_from_file`| `Test.Originate.from_file`|
+| `Test.mutation_test`| `Test.Mutation.func`|
+| `Test.mutation_test_all`| `Test.Mutation.All.func`|
+| `Test.originate_from_file_and_mutate`| `Test.Mutation.from_file`|
+| `Test.originate_from_file_and_mutate_all`| `Test.Mutation.All.from_file`|
+| `Test.originate_module_and_mutate`| `Test.Mutation.contract`|
+| `Test.originate_and_mutate_all`| `Test.Mutation.All.contract`|
+| `Test.assert`| `Test.Assert.assert`|
+| `Test.assert_some`| `Test.Assert.some`|
+| `Test.assert_none`| `Test.Assert.none`|
+| `Test.assert_with_error`| `Test.Assert.Error.assert`|
+| `Test.assert_some_with_error`| `Test.Assert.Error.some`|
+| `Test.assert_none_with_error`| `Test.Assert.Error.none`|
+| `Test.equal`| `Test.Compare.eq`|
+| `Test.not_equal`| `Test.Compare.neq`|
+| `Test.greater`| `Test.Compare.gt`|
+| `Test.less`| `Test.Compare.lt`|
+| `Test.greater_or_equal`| `Test.Compare.ge`|
+| `Test.less_or_equal`| `Test.Compare.le`|
+| `Test.create_chest`| `Test.Timelock.create`|
+| `Test.create_chest_key`| `Test.Timelock.create_key`|
+
 <Syntax syntax="cameligo">
 
 </Syntax>
