@@ -35,7 +35,7 @@ This table shows the old functions and their new equivalents:
 | `Test.get_bootstrap_account`| `Test.Account.info`|
 | `Test.nth_bootstrap_typed_address`| `Test.Account.Contract.bootstrap_typed_address`|
 | `Test.last_originations`| `Test.State.last_originations`|
-| `Test.random`| ?? |
+| `Test.random`| `Test.random` (unchanged) |
 | `Test.new_account`| `Test.Account.new`|
 | `Test.bake_until_n_cycle_end`| `Test.State.bake_until`|
 | `Test.get_time`| `Tezos.get_now` |
