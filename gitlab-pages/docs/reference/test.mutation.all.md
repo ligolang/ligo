@@ -85,7 +85,7 @@ val from_file :
   -> tez
   -> ((&#39;p,&#39;s) typed_address * (&#39;p,&#39;s) michelson_contract * int -> &#39;b)
   -> (&#39;b * mutation) list
-</Syntaxtitle>
+</SyntaxTitle>
 
 <SyntaxTitle syntax="cameligo">
 from_file :
