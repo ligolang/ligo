@@ -1,5 +1,0 @@
-@entry
-let main = (p: bool, s: unit) : [list<operation>, unit] => {
-  assert_with_error (p, "My custom error message.");
-  return [list([]), s];
-};

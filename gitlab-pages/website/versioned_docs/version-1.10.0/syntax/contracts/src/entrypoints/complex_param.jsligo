@@ -1,0 +1,17 @@
+type complexParam = [
+  int,
+  string,
+  bool,
+];
+
+type storage = [int, string];
+type return_type = [list<operation>, storage];
+
+@entry
+const dosomething = (param: complexParam, storage: storage): return_type => {
+  const [intParam, stringParam, boolParam] = param;
+  if (boolParam) {
+    return [[], [intParam, stringParam]];
+  }
+  return [[], storage];
+}

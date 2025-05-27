@@ -1,5 +1,0 @@
-const s: set<int> = Set.literal(list([1, 2, 3]));
-// incr == list([3, 2, 1])
-const incr: list<int> = Set.fold (([a,i]) => list([i,...a]), s, list([]));
-// decr == list([1, 2, 3])
-const decr: list<int> = Set.fold_desc (([i,a]) => list([i,...a]), s, list([]));

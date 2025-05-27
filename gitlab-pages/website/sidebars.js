@@ -72,7 +72,7 @@ const sidebars = {
         "customProps": {
           "jsLigoName": "Interfaces"
         },
-        "id": "syntax/signatures",
+        "id": "syntax/signatures"
       },
       "syntax/keywords"
     ],
