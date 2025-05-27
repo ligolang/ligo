@@ -92,7 +92,7 @@ from_file :
   &lt;p,b,s&gt;(fn: string, s: s, t: tez,
   tester: (_ : [typed_address&lt;p,s&gt;, michelson_contract&lt;p,s&gt;, int]) =&gt; b)
   =&gt; list&lt;[b, mutation]&gt;
-</Syntaxtitle>
+</SyntaxTitle>
 
 Given a contract from a file (passed by filepath, entrypoint and
 views), an initial storage and balance, it will originate mutants of
