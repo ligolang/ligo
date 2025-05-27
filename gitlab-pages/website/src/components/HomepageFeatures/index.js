@@ -28,7 +28,7 @@ const FEATURES = [
     title: "Testing System",
     content:
       "Ligo uses a robust testing system to simulate the Tezos blockchain, as if you were inside.",
-    link: "docs/advanced/testing",
+    link: "docs/testing",
   },
   {
     image: "img/ligo_features/ligo-feature-community.svg",
