@@ -1,6 +1,6 @@
 ---
-id: test-originate-reference
-title: test-originate
+id: test.originate-reference
+title: originate
 hide_table_of_contents: true
 ---
 import Syntax from '@theme/Syntax';
