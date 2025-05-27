@@ -13,7 +13,7 @@ val get_balance : unit -> tez
 </SyntaxTitle>
 
 <SyntaxTitle syntax="jsligo">
-let get_balance: (_u: unit) => tez
+get_balance: (_u: unit) => tez
 </SyntaxTitle>
 
 Get the balance for the contract.
@@ -40,7 +40,7 @@ val get_now : unit -> timestamp
 </SyntaxTitle>
 
 <SyntaxTitle syntax="jsligo">
-let get_now: (_u : unit) => timestamp
+get_now: (_u : unit) => timestamp
 </SyntaxTitle>
 
 Returns the current time as a [UNIX timestamp](https://en.wikipedia.org/wiki/Unix_time).
@@ -127,7 +127,7 @@ val get_amount : unit -> tez
 </SyntaxTitle>
 
 <SyntaxTitle syntax="jsligo">
-let get_amount: (_u : unit) => tez
+get_amount: (_u : unit) => tez
 </SyntaxTitle>
 
 Get the amount of tez provided by the sender to complete this
@@ -156,7 +156,7 @@ val get_sender : unit -> address
 </SyntaxTitle>
 
 <SyntaxTitle syntax="jsligo">
-let get_sender: (_u : unit) => address
+get_sender: (_u : unit) => address
 </SyntaxTitle>
 
 Get the address that initiated the current transaction.
@@ -182,7 +182,7 @@ val address : 'a contract -> address
 </SyntaxTitle>
 
 <SyntaxTitle syntax="jsligo">
-let address: (contract: contract&lt;&apos;a&gt;) => address
+address: (contract: contract&lt;&apos;a&gt;) => address
 </SyntaxTitle>
 
 Get the address associated with a value of type `contract`.
@@ -213,7 +213,7 @@ val get_self_address : unit -> address
 </SyntaxTitle>
 
 <SyntaxTitle syntax="jsligo">
-let get_self_address: (_u : unit) => address
+get_self_address: (_u : unit) => address
 </SyntaxTitle>
 
 Get the address of the currently running contract.
@@ -239,7 +239,7 @@ val self : string -> 'a contract
 </SyntaxTitle>
 
 <SyntaxTitle syntax="jsligo">
-let self: (entrypoint: string) => contract&lt;&apos;a&gt;
+self: (entrypoint: string) => contract&lt;&apos;a&gt;
 </SyntaxTitle>
 
 Typecast the currently running contract with an entrypoint annotation.
@@ -267,7 +267,7 @@ val implicit_account : key_hash -> 'a contract
 </SyntaxTitle>
 
 <SyntaxTitle syntax="jsligo">
-let implicit_account : (_: key_hash) => contract&lt;unit&gt;
+implicit_account : (_: key_hash) => contract&lt;unit&gt;
 </SyntaxTitle>
 
 Get the default contract associated with an on-chain key-pair. This
@@ -297,7 +297,7 @@ val get_source : unit -> address
 </SyntaxTitle>
 
 <SyntaxTitle syntax="jsligo">
-let get_source: (_u : unit) => address
+get_source: (_u : unit) => address
 </SyntaxTitle>
 
 Get the _originator_ (address) of the current transaction. That is, if
@@ -347,7 +347,7 @@ val failwith : 'a -> unit
 </SyntaxTitle>
 
 <SyntaxTitle syntax="jsligo">
-let failwith: (message: &apos;a) => unit
+failwith: (message: &apos;a) => unit
 </SyntaxTitle>
 
 [See `failwith`](toplevel.md#failwith)
@@ -357,7 +357,7 @@ val get_chain_id : unit -> chain_id
 </SyntaxTitle>
 
 <SyntaxTitle syntax="jsligo">
-let get_chain_id: (_u : unit) => chain_id
+get_chain_id: (_u : unit) => chain_id
 </SyntaxTitle>
 
 Get the identifier of the chain to distinguish between main and test chains.
@@ -402,7 +402,7 @@ val transaction : 'param -> mutez -> 'param contract -> operation
 </SyntaxTitle>
 
 <SyntaxTitle syntax="jsligo">
-let transaction: (action: &apos;param, amount: mutez, contract: contract&lt;&apos;param&gt;) => operation
+transaction: (action: &apos;param, amount: mutez, contract: contract&lt;&apos;param&gt;) => operation
 </SyntaxTitle>
 
 Transfer `tez` to an account, or run code of another smart contract.
@@ -414,7 +414,7 @@ val create_contract : ('param -> 'storage -> operation list * 'storage) -> key_h
 </SyntaxTitle>
 
 <SyntaxTitle syntax="jsligo">
-let create_contract = (contract: ('param, 'storage) => (list &lt;operation&gt;, &apos;storage), delegate: option&lt;key_hash&gt;, balance: tez, init: 'storage) => [operation, address]
+create_contract = (contract: ('param, 'storage) => (list &lt;operation&gt;, &apos;storage), delegate: option&lt;key_hash&gt;, balance: tez, init: 'storage) => [operation, address]
 </SyntaxTitle>
 
 Construct an operation that originates a contract from a function. The
@@ -426,7 +426,7 @@ val set_delegate : key_hash option -> operation
 </SyntaxTitle>
 
 <SyntaxTitle syntax="jsligo">
-let set_delegate: (delegate: option&lt;key_hash&gt;) => operation
+set_delegate: (delegate: option&lt;key_hash&gt;) => operation
 </SyntaxTitle>
 
 
@@ -444,7 +444,7 @@ val get_contract_opt : address -> 'param contract option
 </SyntaxTitle>
 
 <SyntaxTitle syntax="jsligo">
-let get_contract_opt : (a: address) => option&lt;contract&lt;&apos;param&gt;&gt;
+get_contract_opt : (a: address) => option&lt;contract&lt;&apos;param&gt;&gt;
 </SyntaxTitle>
 
 Get a contract from an address.
@@ -457,7 +457,7 @@ val get_contract_with_error : address -> string -> 'param contract
 </SyntaxTitle>
 
 <SyntaxTitle syntax="jsligo">
-let get_contract_with_error : (a: address,s: string) => contract&lt;&apos;param&gt;
+get_contract_with_error : (a: address,s: string) => contract&lt;&apos;param&gt;
 </SyntaxTitle>
 
 Get a contract from an address.
@@ -469,7 +469,7 @@ val get_entrypoint_opt : string -> address -> 'param contract option
 </SyntaxTitle>
 
 <SyntaxTitle syntax="jsligo">
-let get_entrypoint_opt: (entrypoint: string, a: address) => option&lt;contract&lt;&apos;param&gt;&gt;
+get_entrypoint_opt: (entrypoint: string, a: address) => option&lt;contract&lt;&apos;param&gt;&gt;
 </SyntaxTitle>
 
 Get a contract from an address and entrypoint.
@@ -484,7 +484,7 @@ val get_level : unit -> nat
 </SyntaxTitle>
 
 <SyntaxTitle syntax="jsligo">
-let get_level : (_u : unit) => nat
+get_level : (_u : unit) => nat
 </SyntaxTitle>
 
 Get the current block level.
@@ -494,7 +494,7 @@ val min_block_time : unit -> nat
 </SyntaxTitle>
 
 <SyntaxTitle syntax="jsligo">
-let min_block_time: unit => nat;
+min_block_time: unit => nat;
 </SyntaxTitle>
 
 Returns the current minimal time between blocks, the value is obtained from the protocol’s minimal_block_delay constant.
@@ -504,7 +504,7 @@ val pairing_check : (bls12_381_g1 * bls12_381_g2) list -> bool
 </SyntaxTitle>
 
 <SyntaxTitle syntax="jsligo">
-let pairing_check: list&lt;[bls12_381_g1, bls12_381_g2]&gt;) => bool
+pairing_check: list&lt;[bls12_381_g1, bls12_381_g2]&gt;) => bool
 </SyntaxTitle>
 
 Verify that the product of pairings of the given list of points is equal to 1 in Fq12. Returns true if the list is empty.
@@ -516,7 +516,7 @@ val never : never -> 'a
 </SyntaxTitle>
 
 <SyntaxTitle syntax="jsligo">
-let never: (never: never) => &apos;a
+never: (never: never) => &apos;a
 </SyntaxTitle>
 
 Eliminate a value of the type `never` using the instruction `NEVER`
@@ -527,7 +527,7 @@ val get_total_voting_power : unit -> nat
 </SyntaxTitle>
 
 <SyntaxTitle syntax="jsligo">
-let get_total_voting_power: (_u : unit) => nat
+get_total_voting_power: (_u : unit) => nat
 </SyntaxTitle>
 
 Return the total voting power of all contracts. The total voting power coincides with the sum of the rolls count of every contract in the voting listings. The voting listings is calculated at the beginning of every voting period.
@@ -537,7 +537,7 @@ val voting_power : key_hash -> nat
 </SyntaxTitle>
 
 <SyntaxTitle syntax="jsligo">
-let voting_power: (key_hash:key_hash) => nat
+voting_power: (key_hash:key_hash) => nat
 </SyntaxTitle>
 
 Return the voting power of a given contract. The voting power value is the full staking power of the delegate, currently expressed in mutez. Though, developers should not rely on `Tezos.voting_power` to query the staking power of a contract in mutez: the value returned by `Tezos.voting_power` is still of type` nat and it should only be considered relative to `Tezos.total_voting_power`.
@@ -595,7 +595,7 @@ val verify_update : 'a sapling_transaction -> 'a sapling_state -> (bytes * (int 
 </SyntaxTitle>
 
 <SyntaxTitle syntax="jsligo">
-let verify_update: sapling_transaction&lt;'a&gt; => sapling_state&lt;'a&gt; => option&lt;[bytes, [int, sapling_state&lt;'a&gt;]]&gt;
+verify_update: sapling_transaction&lt;'a&gt; => sapling_state&lt;'a&gt; => option&lt;[bytes, [int, sapling_state&lt;'a&gt;]]&gt;
 </SyntaxTitle>
 
 
@@ -673,7 +673,7 @@ val open_chest : chest_key -> chest -> nat -> bytes option
 </SyntaxTitle>
 
 <SyntaxTitle syntax="jsligo">
-let open_chest : (key: chest_key, chest: chest, time: nat) => option&lt;bytes&gt;
+open_chest : (key: chest_key, chest: chest, time: nat) => option&lt;bytes&gt;
 </SyntaxTitle>
 
 Open a timelocked chest given its key and the time.

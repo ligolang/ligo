@@ -6,8 +6,6 @@ hide_table_of_contents: true
 import Syntax from '@theme/Syntax';
 import SyntaxTitle from '@theme/SyntaxTitle';
 
-
-
 <SyntaxTitle syntax="cameligo">
 type string
 </SyntaxTitle>
@@ -374,7 +372,7 @@ The call `ignore(v)` evaluates `v` and ignores its value, returning
 val curry : &#39;a &#39;b &#39;c.((&#39;a * &#39;b) -&gt; &#39;c) -&gt; &#39;a -&gt; &#39;b -&gt; &#39;c
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let curry: &lt;a, b, c&gt;(&#95;: (&#95;: [a, b]) =&gt; c) =&gt; (&#95;: a) =&gt; (&#95;: b) =&gt; c
+curry: &lt;a, b, c&gt;(&#95;: (&#95;: [a, b]) =&gt; c) =&gt; (&#95;: a) =&gt; (&#95;: b) =&gt; c
 </SyntaxTitle>
 **Deprecated:** In a future version, this function will be deprecated, and using `Tuple2.curry` is encouraged for a smoother migration.
 
