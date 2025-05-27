@@ -109,10 +109,10 @@ module Pair = struct
   let uncurry (type a b c) (f: a -> b -> c) (x, y : a * b) : c = f x y
 
   (** Projecting the first component of a pair *)
-  let get1 (type a b) (x, _ : a * b) : a = x
+  let fst (type a b) (x, _ : a * b) : a = x
 
   (** Projecting the second component of a pair. *)
-  let get2 (type a b) (_, y : a * b) : b = y
+  let snd (type a b) (_, y : a * b) : b = y
 
   (** Swap the components of a pair. *)
   let swap (type a b) (x, y : a * b) : b * a = y, x
@@ -1271,7 +1271,7 @@ module Map = struct
     (type key value) (key: key) (upd: value option) (map: (key, value) t)
     : (key, value) t =
     (* TODO: Remove constant MAP_UPDATE. *)
-    get_and_update key upd map |> Pair.get2
+    get_and_update key upd map |> Pair.snd
 
   (** display-only-for-cameligo
     The call `Map.add key value map` returns a copy of the `map` where
@@ -1346,7 +1346,6 @@ module Map = struct
     present in the map `map`; otherwise, it is `Some v`, where `v` is
     the value associated to `key` in `map`. *)
   (** display-only-for-jsligo
-
     The call `Map.find_opt(key, map)` returns `["None" as "None"]` if
     the key `key` is present in the map `map`; otherwise, it is
     `["Some" as "Some", v]`, where `v` is the value associated to
@@ -1431,18 +1430,18 @@ module Big_map = struct
       The type `('key,'value) Big_map.t` is an alias for
       `('key,'value) big_map`. *)
   (** display-only-for-jsligo
-      The type `Big_map.t<key, value>` is an alias for `big_map<key,
-      value>`. *)
+      The type `Big_map.t<key, value>` is an alias for
+      `big_map<key, value>`. *)
   type ('key,'value) t = ('key,'value) big_map
 
   (** display-only-for-cameligo
       The value `Big_map.empty` is the empty big map. In some
       contexts, it is useful to annotate it with its type, for example:
-      `(Big_map.empty : (int, string) big_map)`.*)
+      `(Big_map.empty : (int, string) big_map)`. *)
   (** display-only-for-jsligo
       The value `Big_map.empty` is the empty big map. In some
       contexts, it is useful to annotate it with its type, for example:
-      `(Big_map.empty as big_map<int, string>`.*)
+      `(Big_map.empty as big_map<int, string>`. *)
   [@inline]
   let empty (type key value) : (key, value) t =
     [%external "BIG_MAP_EMPTY"]
@@ -1490,7 +1489,7 @@ module Big_map = struct
   let update
     (type key value) (key: key) (upd: value option) (map: (key, value) t)
     : (key, value) t =
-    get_and_update key upd map |> Pair.get2
+    get_and_update key upd map |> Pair.snd
 
   (** display-only-for-cameligo
       The call `Big_map.add key value map` returns a copy of the big
@@ -1698,13 +1697,13 @@ module Set = struct
     [%external ("SET_FOLD", f, set, init)]
 
   (** display-only-for-cameligo
-    The call `Set.fold f set init` is `f(... (f (init, en), ...), e1)`,
+    The call `Set.fold_desc f set init` is `f(... (f (init, en), ...), e1)`,
     where `e1`, `e2`, ..., `en` are the elements of the set `set` in
-    increasing order. *)
+    decreasing order. *)
   (** display-only-for-jsligo
-    The call `Set.fold(f, set, init)` is `f(... (f (init, en), ...), e1)`,
+    The call `Set.fold_desc(f, set, init)` is `f(... (f (init, en), ...), e1)`,
     where `e1`, `e2`, ..., `en` are the elements of the set `set` in
-    increasing order. *)
+    decreasing order. *)
   let fold_desc
     (type elt acc) (f: elt * acc -> acc) (set: elt t) (init: acc) : acc =
     [%external ("SET_FOLD_DESC", f, set, init)]
@@ -1856,10 +1855,10 @@ module String = struct
 
   (** display-only-for-cameligo
     The call `String.concat left right` is the concatenation of the string
-    `left` and the string `right`, in that order.  *)
+    `left` and the string `right`, in that order. *)
   (** display-only-for-jsligo
     The call `String.concat(left, right)` is the concatenation of the string
-    `left` and the string `right`, in that order.  *)
+    `left` and the string `right`, in that order. *)
   let concat (left: string) (right: string) : string =
     (* TODO: Remove constant CONCAT. *)
     left ^ right
@@ -1910,13 +1909,11 @@ end
 module Bytes = struct
 
   (** display-only-for-cameligo
-      The call `Bytes.length b` is the number of bytes in the sequence of
-      bytes `b`. Note: `Bytes.length` is another name for
-      `Bytes.size`. *)
+    The call `Bytes.length b` is the number of bytes in the sequence of
+    bytes `b`. Note: `Bytes.length` is another name for `Bytes.size`. *)
   (** display-only-for-jsligo
-      The call `Bytes.length(b)` is the number of bytes in the sequence of
-      bytes `b`. Note: `Bytes.length` is another name for
-      `Bytes.size`. *)
+    The call `Bytes.length(b)` is the number of bytes in the sequence of
+    bytes `b`. Note: `Bytes.length` is another name for `Bytes.size`. *)
   let length (bytes: bytes) : nat = [%external ("SIZE", bytes)]
 
   (** display-only-for-cameligo
@@ -1930,12 +1927,10 @@ module Bytes = struct
 
   (** display-only-for-cameligo
     The call `Bytes.concat left right` is the sequence of bytes obtained
-    by concatenating the sequence `left` before the sequence
-    `right`. *)
+    by concatenating the sequence `left` before the sequence `right`. *)
   (** display-only-for-jsligo
     The call `Bytes.concat(left, right)` is the sequence of bytes obtained
-    by concatenating the sequence `left` before the sequence
-    `right`. *)
+    by concatenating the sequence `left` before the sequence `right`. *)
   let concat (left: bytes) (right: bytes) : bytes =
     [%external ("CONCAT", left, right)]
 
@@ -2101,13 +2096,14 @@ module Dynamic_entrypoints = struct
     Big_map.update (cast_dynamic_entrypoint dyn) packed_entry_opt dyn_map
 
   (** display-only-for-cameligo
-      The call `Dynamic_entrypoints.set_bytes dyn None dyn_map` returns a copy of
-      the map of dynamic entrypoints `dyn_map` where the dynamic entrypoint
-      `dyn` is not associated to a static entrypoint. The call
-      `Dynamic_entrypoints.set_bytes dyn (Some bytes) dyn_map` is a copy of
-      `dyn_map` where the dynamic entrypoint `dyn` is associated to the static
-      entrypoint encoded by the sequence of bytes `bytes`. If that sequence is
-      invalid, any call to the dynamic entrypoint will fail. *)
+      The call `Dynamic_entrypoints.set_bytes dyn None dyn_map`
+      returns a copy of the map of dynamic entrypoints `dyn_map` where
+      the dynamic entrypoint `dyn` is not associated to a static
+      entrypoint. The call `Dynamic_entrypoints.set_bytes dyn (Some
+      bytes) dyn_map` is a copy of `dyn_map` where the dynamic
+      entrypoint `dyn` is associated to the static entrypoint encoded
+      by the sequence of bytes `bytes`. If that sequence is invalid,
+      any call to the dynamic entrypoint will fail. *)
   (** display-only-for-jsligo
       The call `Dynamic_entrypoints.set_bytes(dyn, ["None" as "None"], dyn_map)`
       returns a copy of the map of dynamic entrypoints

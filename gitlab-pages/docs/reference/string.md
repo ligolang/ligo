@@ -3,6 +3,7 @@ id: string-reference
 title: string
 hide_table_of_contents: true
 ---
+
 import Syntax from '@theme/Syntax';
 import SyntaxTitle from '@theme/SyntaxTitle';
 
@@ -14,19 +15,20 @@ Strings of characters
 val length : string -&gt; nat
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let length: (&#95;: string) =&gt; nat
+length: (&#95;: string) =&gt; nat
 </SyntaxTitle>
+
 <Syntax syntax="cameligo">
 
 The call `String.length s` is the number of characters in the string
-      `s`. Note: `String.length` is another name for `String.size`.
+`s`. Note: `String.length` is another name for `String.size`.
 
 </Syntax>
 
 <Syntax syntax="jsligo">
 
 The call `String.length(s)` is the number of characters in the string
-      `s`. Note: `String.length` is another name for `String.size`.
+`s`. Note: `String.length` is another name for `String.size`.
 
 </Syntax>
 
@@ -35,8 +37,9 @@ The call `String.length(s)` is the number of characters in the string
 val size : string -&gt; nat
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let size: (&#95;: string) =&gt; nat
+size: (&#95;: string) =&gt; nat
 </SyntaxTitle>
+
 <Syntax syntax="cameligo">
 
 The call `String.size s` is the number of characters in the string `s`.
@@ -54,19 +57,20 @@ The call `String.size(s)` is the number of characters in the string `s`.
 val concat : string -&gt; string -&gt; string
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let concat: (&#95;: string) =&gt; (&#95;: string) =&gt; string
+concat: (&#95;: string) =&gt; (&#95;: string) =&gt; string
 </SyntaxTitle>
+
 <Syntax syntax="cameligo">
 
 The call `String.concat left right` is the concatenation of the string
-    `left` and the string `right`, in that order.
+`left` and the string `right`, in that order.
 
 </Syntax>
 
 <Syntax syntax="jsligo">
 
 The call `String.concat(left, right)` is the concatenation of the string
-    `left` and the string `right`, in that order.
+`left` and the string `right`, in that order.
 
 </Syntax>
 
@@ -75,19 +79,20 @@ The call `String.concat(left, right)` is the concatenation of the string
 val concats : string list -&gt; string
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let concats: (&#95;: list&lt;string&gt;) =&gt; string
+concats: (&#95;: list&lt;string&gt;) =&gt; string
 </SyntaxTitle>
+
 <Syntax syntax="cameligo">
 
 The call `String.concats list` is the concatenation of the strings in
-    the list `list`, from left to right.
+the list `list`, from left to right.
 
 </Syntax>
 
 <Syntax syntax="jsligo">
 
 The call `String.concats(list)` is the concatenation of the strings in
-    the list `list`, from left to right.
+the list `list`, from left to right.
 
 </Syntax>
 
@@ -96,23 +101,24 @@ The call `String.concats(list)` is the concatenation of the strings in
 val sub : nat -&gt; nat -&gt; string -&gt; string
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let sub: (&#95;: nat) =&gt; (&#95;: nat) =&gt; (&#95;: string) =&gt; string
+sub: (&#95;: nat) =&gt; (&#95;: nat) =&gt; (&#95;: string) =&gt; string
 </SyntaxTitle>
+
 <Syntax syntax="cameligo">
 
 The call `String.sub index len str` is the substring of string `str`
-    starting at index `index` (0 denoting the first character) and of
-    length `len`. If the index or length are invalid, an exception
-    interrupts the execution.
+starting at index `index` (0 denoting the first character) and of
+length `len`. If the index or length are invalid, an exception
+interrupts the execution.
 
 </Syntax>
 
 <Syntax syntax="jsligo">
 
 The call `String.sub(index, len, str)` is the substring of string `str`
-    starting at index `index` (0 denoting the first character) and of
-    length `len`. If the index or length are invalid, an exception
-    interrupts the execution.
+starting at index `index` (0 denoting the first character) and of
+length `len`. If the index or length are invalid, an exception
+interrupts the execution.
 
 </Syntax>
 
@@ -121,22 +127,23 @@ The call `String.sub(index, len, str)` is the substring of string `str`
 val slice : nat -&gt; nat -&gt; string -&gt; string
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let slice: (&#95;: nat) =&gt; (&#95;: nat) =&gt; (&#95;: string) =&gt; string
+slice: (&#95;: nat) =&gt; (&#95;: nat) =&gt; (&#95;: string) =&gt; string
 </SyntaxTitle>
+
 <Syntax syntax="cameligo">
 
 The call `String.slice index len str` is the substring of string `str`
-    starting at index `index` (0 denoting the first character) and of
-    length `len`. If the index or length are invalid, an exception
-    interrupts the execution.
+starting at index `index` (0 denoting the first character) and of
+length `len`. If the index or length are invalid, an exception
+interrupts the execution.
 
 </Syntax>
 
 <Syntax syntax="jsligo">
 
 The call `String.slice(index, len, str)` is the substring of string `str`
-    starting at index `index` (0 denoting the first character) and of
-    length `len`. If the index or length are invalid, an exception
-    interrupts the execution.
+starting at index `index` (0 denoting the first character) and of
+length `len`. If the index or length are invalid, an exception
+interrupts the execution.
 
 </Syntax>

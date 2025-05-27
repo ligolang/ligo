@@ -33,21 +33,22 @@ The type `Set.t<elt>` is an alias for `set<elt>`.
 val empty : &#39;elt.&#39;elt t
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let empty: &lt;elt&gt;t&lt;elt&gt;
+empty: &lt;elt&gt;t&lt;elt&gt;
 </SyntaxTitle>
+
 <Syntax syntax="cameligo">
 
 The value `Set.empty` denotes the empty set. In some contexts, it is
-    useful to annotate it with its type, for example:
-    `(Set.empty : int set)`.
+useful to annotate it with its type, for example: `(Set.empty : int
+set)`.
 
 </Syntax>
 
 <Syntax syntax="jsligo">
 
 The value `Set.empty` denotes the empty set. In some contexts, it is
-    useful to annotate it with its type, for example:
-    `(Set.empty as set<int>)`.
+useful to annotate it with its type, for example:
+`(Set.empty as set<int>)`.
 
 </Syntax>
 
@@ -56,21 +57,22 @@ The value `Set.empty` denotes the empty set. In some contexts, it is
 val update : &#39;elt.&#39;elt -&gt; bool -&gt; &#39;elt t -&gt; &#39;elt t
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let update: &lt;elt&gt;(&#95;: elt) =&gt; (&#95;: bool) =&gt; (&#95;: t&lt;elt&gt;) =&gt; t&lt;elt&gt;
+update: &lt;elt&gt;(&#95;: elt) =&gt; (&#95;: bool) =&gt; (&#95;: t&lt;elt&gt;) =&gt; t&lt;elt&gt;
 </SyntaxTitle>
+
 <Syntax syntax="cameligo">
 
 The call `Set.update elt true set` is a copy of the set `set`
-    containing the element `elt`. The call `Set.update elt false set` is a
-    copy of the set `set` where the element `elt` is absent.
+containing the element `elt`. The call `Set.update elt false set` is a
+copy of the set `set` where the element `elt` is absent.
 
 </Syntax>
 
 <Syntax syntax="jsligo">
 
 The call `Set.update(elt, true, set)` is a copy of the set `set`
-    containing the element `elt`. The call `Set.update(elt, false, set)` is a
-    copy of the set `set` where the element `elt` is absent.
+containing the element `elt`. The call `Set.update(elt, false, set)` is a
+copy of the set `set` where the element `elt` is absent.
 
 </Syntax>
 
@@ -79,19 +81,20 @@ The call `Set.update(elt, true, set)` is a copy of the set `set`
 val add : &#39;elt.&#39;elt -&gt; &#39;elt t -&gt; &#39;elt t
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let add: &lt;elt&gt;(&#95;: elt) =&gt; (&#95;: t&lt;elt&gt;) =&gt; t&lt;elt&gt;
+add: &lt;elt&gt;(&#95;: elt) =&gt; (&#95;: t&lt;elt&gt;) =&gt; t&lt;elt&gt;
 </SyntaxTitle>
+
 <Syntax syntax="cameligo">
 
 The call `Set.add elt set` is a set containing all the elements of
-    the set `set`, plus the element `elt`.
+the set `set`, plus the element `elt`.
 
 </Syntax>
 
 <Syntax syntax="jsligo">
 
 The call `Set.add(elt, set)` is a set containing all the elements of
-    the set `set`, plus the element `elt`.
+the set `set`, plus the element `elt`.
 
 </Syntax>
 
@@ -100,19 +103,20 @@ The call `Set.add(elt, set)` is a set containing all the elements of
 val remove : &#39;elt.&#39;elt -&gt; &#39;elt t -&gt; &#39;elt t
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let remove: &lt;elt&gt;(&#95;: elt) =&gt; (&#95;: t&lt;elt&gt;) =&gt; t&lt;elt&gt;
+remove: &lt;elt&gt;(&#95;: elt) =&gt; (&#95;: t&lt;elt&gt;) =&gt; t&lt;elt&gt;
 </SyntaxTitle>
+
 <Syntax syntax="cameligo">
 
 The call `Set.remove elt set` is a copy of the set `set` without the
-    element `elt`.
+element `elt`.
 
 </Syntax>
 
 <Syntax syntax="jsligo">
 
 The call `Set.remove(elt, set)` is a copy of the set `set` without the
-    element `elt`.
+element `elt`.
 
 </Syntax>
 
@@ -121,21 +125,21 @@ The call `Set.remove(elt, set)` is a copy of the set `set` without the
 val literal : &#39;elt.&#39;elt list -&gt; &#39;elt t
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let literal: &lt;elt&gt;(&#95;: list&lt;elt&gt;) =&gt; t&lt;elt&gt;
+literal: &lt;elt&gt;(&#95;: list&lt;elt&gt;) =&gt; t&lt;elt&gt;
 </SyntaxTitle>
 <Syntax syntax="cameligo">
 
 The call `Set.literal [e1; ...; en]` is a set containing exactly the
-    elements in the list. Note: The list must be literal, not an
-    expression (compile-time list of values).
+elements in the list. Note: The list must be literal, not an
+expression (compile-time list of values).
 
 </Syntax>
 
 <Syntax syntax="jsligo">
 
 The call `Set.literal(list([e1, ..., en]))` is a set containing
-    exactly the elements in the list. Note: The list must be literal,
-    not an expression (compile-time list of values).
+exactly the elements in the list. Note: The list must be literal, not
+an expression (compile-time list of values).
 
 </Syntax>
 
@@ -144,23 +148,24 @@ The call `Set.literal(list([e1, ..., en]))` is a set containing
 val of&#95;list : &#39;elt.&#39;elt list -&gt; &#39;elt t
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let of&#95;list: &lt;elt&gt;(&#95;: list&lt;elt&gt;) =&gt; t&lt;elt&gt;
+of&#95;list: &lt;elt&gt;(&#95;: list&lt;elt&gt;) =&gt; t&lt;elt&gt;
 </SyntaxTitle>
+
 <Syntax syntax="cameligo">
 
 The call `Set.of_list elements` is a set containing exactly the
-    elements in the list `elements`. Note: Use `Set.literal` instead if
-    using a literal list. Note: Use `literal` instead if using a
-    literal list.
+elements in the list `elements`. Note: Use `Set.literal` instead if
+using a literal list. Note: Use `literal` instead if using a literal
+list.
 
 </Syntax>
 
 <Syntax syntax="jsligo">
 
 The call `Set.of_list(elements)` is a set containing exactly the
-    elements in the list `elements`. Note: Use `Set.literal` instead if
-    using a literal list. Note: Use `literal` instead if using a
-    literal list.
+elements in the list `elements`. Note: Use `Set.literal` instead if
+using a literal list. Note: Use `literal` instead if using a literal
+list.
 
 </Syntax>
 
@@ -169,7 +174,7 @@ The call `Set.of_list(elements)` is a set containing exactly the
 val size : &#39;elt.&#39;elt t -&gt; nat
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let size: &lt;elt&gt;(&#95;: t&lt;elt&gt;) =&gt; nat
+size: &lt;elt&gt;(&#95;: t&lt;elt&gt;) =&gt; nat
 </SyntaxTitle>
 <Syntax syntax="cameligo">
 
@@ -188,8 +193,9 @@ The call `Set.size(set)` is the number of elements of the set `set`.
 val cardinal : &#39;elt.&#39;elt t -&gt; nat
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let cardinal: &lt;elt&gt;(&#95;: t&lt;elt&gt;) =&gt; nat
+cardinal: &lt;elt&gt;(&#95;: t&lt;elt&gt;) =&gt; nat
 </SyntaxTitle>
+
 <Syntax syntax="cameligo">
 
 The call `Set.cardinal set` is the number of elements of the set `set`.
@@ -207,19 +213,20 @@ The call `Set.cardinal(set)` is the number of elements of the set `set`.
 val mem : &#39;elt.&#39;elt -&gt; &#39;elt t -&gt; bool
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let mem: &lt;elt&gt;(&#95;: elt) =&gt; (&#95;: t&lt;elt&gt;) =&gt; bool
+mem: &lt;elt&gt;(&#95;: elt) =&gt; (&#95;: t&lt;elt&gt;) =&gt; bool
 </SyntaxTitle>
+
 <Syntax syntax="cameligo">
 
 The call `Set.mem elt set` is `true` if, and only if, the element
-    `elt` belongs to the set `set`.
+`elt` belongs to the set `set`.
 
 </Syntax>
 
 <Syntax syntax="jsligo">
 
 The call `Set.mem(elt, set)` is `true` if, and only if, the element
-    `elt` belongs to the set `set`.
+`elt` belongs to the set `set`.
 
 </Syntax>
 
@@ -228,23 +235,21 @@ The call `Set.mem(elt, set)` is `true` if, and only if, the element
 val fold : &#39;elt &#39;acc.((&#39;acc * &#39;elt) -&gt; &#39;acc) -&gt; &#39;elt t -&gt; &#39;acc -&gt; &#39;acc
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let fold: &lt;elt, acc&gt;(&#95;: (&#95;: [acc, elt]) =&gt; acc) =&gt; (&#95;: t&lt;elt&gt;) =&gt; (&#95;: acc) =&gt; acc
+fold: &lt;elt, acc&gt;(&#95;: (&#95;: [acc, elt]) =&gt; acc) =&gt; (&#95;: t&lt;elt&gt;) =&gt; (&#95;: acc) =&gt; acc
 </SyntaxTitle>
+
 <Syntax syntax="cameligo">
 
-The call `Set.fold f set init` is
-    `f(... (f (f (init, e1), e2), ...), en)`,
-    where `e1`, `e2`, ..., `en` are the elements of the set `set` in
-    increasing order.
+The call `Set.fold f set init` is `f(... (f (f (init, e1), e2), ...),
+en)`, where `e1`, `e2`, ..., `en` are the elements of the set `set` in
+increasing order.
 
 </Syntax>
 
 <Syntax syntax="jsligo">
 
-The call `Set.fold(f, set, init)` is
-    `f(... (f (f (init, e1), e2), ...), en)`,
-    where `e1`, `e2`, ..., `en` are the elements of the set `set` in
-    increasing order.
+The call `Set.fold(f, set, init)` is `f(... (f (f (init, e1), e2), ...), en)`, where `e1`, `e2`, ..., `en` are the elements of the
+set `set` in increasing order.
 
 </Syntax>
 
@@ -253,21 +258,45 @@ The call `Set.fold(f, set, init)` is
 val fold&#95;desc : &#39;elt &#39;acc.((&#39;elt * &#39;acc) -&gt; &#39;acc) -&gt; &#39;elt t -&gt; &#39;acc -&gt; &#39;acc
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let fold&#95;desc: &lt;elt, acc&gt;(&#95;: (&#95;: [elt, acc]) =&gt; acc) =&gt; (&#95;: t&lt;elt&gt;) =&gt; (&#95;: acc) =&gt; acc
+fold&#95;desc: &lt;elt, acc&gt;(&#95;: (&#95;: [elt, acc]) =&gt; acc) =&gt; (&#95;: t&lt;elt&gt;) =&gt; (&#95;: acc) =&gt; acc
 </SyntaxTitle>
+
 <Syntax syntax="cameligo">
 
 The call `Set.fold f set init` is `f(... (f (init, en), ...), e1)`,
-    where `e1`, `e2`, ..., `en` are the elements of the set `set` in
-    increasing order.
+where `e1`, `e2`, ..., `en` are the elements of the set `set` in
+increasing order.
 
 </Syntax>
 
 <Syntax syntax="jsligo">
 
 The call `Set.fold(f, set, init)` is `f(... (f (init, en), ...), e1)`,
-    where `e1`, `e2`, ..., `en` are the elements of the set `set` in
-    increasing order.
+where `e1`, `e2`, ..., `en` are the elements of the set `set` in
+increasing order.
+
+</Syntax>
+
+<SyntaxTitle syntax="cameligo">
+val fold&#95;desc : &#39;elt &#39;acc.((&#39;elt * &#39;acc) -&gt; &#39;acc) -&gt; &#39;elt t -&gt; &#39;acc -&gt; &#39;acc
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+fold&#95;desc: &lt;elt, acc&gt;(&#95;: (&#95;: [elt, acc]) =&gt; acc) =&gt; (&#95;: t&lt;elt&gt;) =&gt; (&#95;: acc) =&gt; acc
+</SyntaxTitle>
+
+<Syntax syntax="cameligo">
+
+The call `Set.fold_desc f set init` is `f(... (f (init, en), ...),
+e1)`, where `e1`, `e2`, ..., `en` are the elements of the set `set` in
+decreasing order.
+
+</Syntax>
+
+<Syntax syntax="jsligo">
+
+The call `Set.fold_desc(f, set, init)` is `f(... (f (init, en), ...),
+e1)`, where `e1`, `e2`, ..., `en` are the elements of the set `set` in
+decreasing order.
 
 </Syntax>
 
@@ -276,23 +305,24 @@ The call `Set.fold(f, set, init)` is `f(... (f (init, en), ...), e1)`,
 val filter&#95;map : &#39;old &#39;new.(&#39;old -&gt; &#39;new option) -&gt; &#39;old t -&gt; &#39;new t
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let filter&#95;map: &lt;old, new&gt;(&#95;: (&#95;: old) =&gt; option&lt;new&gt;) =&gt; (&#95;: t&lt;old&gt;) =&gt; t&lt;new&gt;
+filter&#95;map: &lt;old, new&gt;(&#95;: (&#95;: old) =&gt; option&lt;new&gt;) =&gt; (&#95;: t&lt;old&gt;) =&gt; t&lt;new&gt;
 </SyntaxTitle>
+
 <Syntax syntax="cameligo">
 
 The call `Set.filter_map f set` is a set made by calling `f` (the
-    filter) on each element of the set `set`: if `f` returns `None`,
-    the element is skipped in the result, otherwise, if it is
-    `Some e`, then `e` is kept.
+filter) on each element of the set `set`: if `f` returns `None`, the
+element is skipped in the result, otherwise, if it is `Some e`, then
+`e` is kept.
 
 </Syntax>
 
 <Syntax syntax="jsligo">
 
 The call `Set.filter_map(f, set)` is a set made by calling `f` (the
-    filter) on each element of the set `set`: if `f` returns `None()`,
-    the element is skipped in the result, otherwise, if it is
-    `Some(e)`, then `e` is kept.
+filter) on each element of the set `set`: if `f` returns
+`["None" as "None"]`, the element is skipped in the result, otherwise,
+if it is `["Some" as "Some", e]`, then `e` is kept.
 
 </Syntax>
 
@@ -301,19 +331,20 @@ The call `Set.filter_map(f, set)` is a set made by calling `f` (the
 val iter : &#39;elt.(&#39;elt -&gt; unit) -&gt; &#39;elt t -&gt; unit
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let iter: &lt;elt&gt;(&#95;: (&#95;: elt) =&gt; unit) =&gt; (&#95;: t&lt;elt&gt;) =&gt; unit
+iter: &lt;elt&gt;(&#95;: (&#95;: elt) =&gt; unit) =&gt; (&#95;: t&lt;elt&gt;) =&gt; unit
 </SyntaxTitle>
+
 <Syntax syntax="cameligo">
 
 The call `Set.iter f set` applies `f` to all the elements of the set
-    `set` in increasing order.
+`set` in increasing order.
 
 </Syntax>
 
 <Syntax syntax="jsligo">
 
 The call `Set.iter(f, set)` applies `f` to all the elements of the set
-    `set` in increasing order.
+`set` in increasing order.
 
 </Syntax>
 
@@ -322,18 +353,19 @@ The call `Set.iter(f, set)` applies `f` to all the elements of the set
 val map : &#39;old &#39;new.(&#39;old -&gt; &#39;new) -&gt; &#39;old t -&gt; &#39;new t
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let map: &lt;old, new&gt;(&#95;: (&#95;: old) =&gt; new) =&gt; (&#95;: t&lt;old&gt;) =&gt; t&lt;new&gt;
+map: &lt;old, new&gt;(&#95;: (&#95;: old) =&gt; new) =&gt; (&#95;: t&lt;old&gt;) =&gt; t&lt;new&gt;
 </SyntaxTitle>
+
 <Syntax syntax="cameligo">
 
 The call `Set.map f set` evaluates in a set whose elements have been
-    obtained by applying `f` to the elements of the set `set`.
+obtained by applying `f` to the elements of the set `set`.
 
 </Syntax>
 
 <Syntax syntax="jsligo">
 
 The call `Set.map(f, set)` evaluates in a set whose elements have been
-    obtained by applying `f` to the elements of the set `set`.
+obtained by applying `f` to the elements of the set `set`.
 
 </Syntax>

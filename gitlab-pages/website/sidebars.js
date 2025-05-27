@@ -150,6 +150,7 @@ const sidebars = {
       "reference/bitwise-reference",
       "reference/set-reference",
       "reference/toplevel-reference",
+      "reference/pair-reference",
       "reference/crypto-reference",
       "reference/big-set-reference",
       "reference/dynamic-entrypoints-reference",
