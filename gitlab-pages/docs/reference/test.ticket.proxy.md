@@ -18,8 +18,8 @@ transfer: &lt;vt&gt;(&#95;: proxy_address&lt;vt;&gt;, info:
 
 <SyntaxTitle syntax="cameligo">
 
-val originate: &#39;vt &#39;whole_s &#39;vp.&#39;vt * nat -> (&#39;vt ticket -> &#39;whole_s)
--> (&#39;vp -> &#39;whole_s -> operation list * &#39;whole_s) ->
+val originate: &#39;vt &#39;whole_s &#39;vp.&#39;vt * nat -&gt; (&#39;vt ticket -&gt; &#39;whole_s)
+-&gt; (&#39;vp -&gt; &#39;whole_s -&gt; operation list * &#39;whole_s) -&gt;
 (&#39;vp, &#39; whole_s) typed_address
 
 </SyntaxTitle>
@@ -36,7 +36,7 @@ ticket&lt;vt&gt; =&gt; whole_s), contract: ([vp, whole_s] =&gt;
 
 <SyntaxTitle syntax="cameligo">
 
-val get_storage : &#39;p &#39;s &#39;s2.(&#39;p, &#39;s) typed_address -> &#39;s2
+val get_storage : &#39;p &#39;s &#39;s2.(&#39;p, &#39;s) typed_address -&gt; &#39;s2
 
 </SyntaxTitle>
 
