@@ -19,7 +19,6 @@ compiles the function argument to Michelson `f_mich`; b) compiles the
 value argument (which was evaluated already) to Michelson `v_mich`; c)
 runs the Michelson interpreter on the code `f_mich` with starting
 stack `[v_mich]`.
-</SyntaxTitle>
 
 
 <SyntaxTitle syntax="cameligo">
