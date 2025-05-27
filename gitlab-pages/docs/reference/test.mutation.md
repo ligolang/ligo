@@ -6,6 +6,9 @@ hide_table_of_contents: true
 import Syntax from '@theme/Syntax';
 import SyntaxTitle from '@theme/SyntaxTitle';
 
+[module all](test.mutation.all.md)
+
+
 <SyntaxTitle syntax="cameligo">
 val value : &#39;a.nat -&gt; &#39;a -&gt; (&#39;a * mutation) option
 </SyntaxTitle>
