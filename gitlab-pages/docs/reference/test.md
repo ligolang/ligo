@@ -29,6 +29,26 @@ The testing framework
 [module Dynamic_entrypoints](test.dynamic_entrypoints.md)
 
 <SyntaxTitle syntax="cameligo">
+val random : &#39;a.unit -&gt; &#39;a
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+random: &lt;a&gt;(&#95;: unit) =&gt; a
+</SyntaxTitle>
+
+This function creates a random value for a chosen type.
+
+<SyntaxTitle syntax="cameligo">
+val get_time : &#39;a.unit -&gt; &#39;a
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+get_time: &lt;a&gt;(&#95;: unit) =&gt; a
+</SyntaxTitle>
+
+Alias of `Tezos.get_now`.
+
+
+
+<SyntaxTitle syntax="cameligo">
 val get&#95;total&#95;voting&#95;power : unit -&gt; nat
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
@@ -203,15 +223,6 @@ Returns addresses of orginated accounts in the last transfer. It
     is given in the form of a map binding the address of the source of
     the origination operation to the addresses of newly originated
     accounts.
-
-
-<SyntaxTitle syntax="cameligo">
-val random : &#39;a.unit -&gt; &#39;a
-</SyntaxTitle>
-<SyntaxTitle syntax="jsligo">
-random: &lt;a&gt;(&#95;: unit) =&gt; a
-</SyntaxTitle>
-This function creates a random value for a chosen type.
 
 
 <SyntaxTitle syntax="cameligo">

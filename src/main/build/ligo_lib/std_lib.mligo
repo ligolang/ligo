@@ -2414,7 +2414,8 @@ module Test = struct
             a mutation, the failure and mutation involved will be added to the
             list to be returned. *)
         let from_file (type b p s) (fn : string) (s : s) (t : tez)
-                                         (tester : (p,s) typed_address * (p,s) michelson_contract * int -> b) : (b * mutation) list =
+                      (tester : (p,s) typed_address * (p,s) michelson_contract * int -> b)
+            : (b * mutation) list =
           let wrap_tester (v : (p,s) michelson_contract) : b =
             let f = [%external ("TEST_COMPILE_AST_CONTRACT", v)] in
             let a = Originate.michelson f s t in
@@ -2450,27 +2451,27 @@ module Test = struct
           failure arises when running the function on a mutation, the
           failure and mutation involved will be added to the list to
           be returned. *)
-          let contract (type p s b) ((f, vs, _) : (p, s) module_contract) (s : s) (t : tez)
-                       (tester : (p, s) typed_address -> (p,s) michelson_contract -> int -> b) : (b * mutation) list =
-            let wrap_tester (v : (p,s) michelson_contract) : b =
-              let f = [%external ("TEST_COMPILE_AST_CONTRACT", v)] in
-              let a = Originate.michelson f s t in
-              let c = Michelson.Contract.size f in
-              tester a f c in
-            let ast_c : (p,s) michelson_contract = [%external ("TEST_COMPILE_CONTRACT", f, vs)] in
-            let try_with (type a) (v : unit -> a) (c : unit -> a) = [%external ("TEST_TRY_WITH", v, c)] in
-            type ret_code = Passed of (b * mutation) | Continue | Stop in
-            let rec mutation_nth (acc : (b * mutation) list) (n : nat) : (b * mutation) list =
-              let mutated = [%external ("TEST_MUTATE_CONTRACT", n, ast_c)] in
-              let curr =
-                match mutated with
-                | Some (v, m) -> try_with (fun () -> let b = wrap_tester v in Passed (b, m)) (fun () -> Continue)
-                | None -> Stop in
-              match curr with
-              | Stop -> acc
-              | Continue -> mutation_nth acc (n + 1n)
-              | Passed (b, m) -> mutation_nth ((b, m) :: acc) (n + 1n) in
-            mutation_nth ([] : (b * mutation) list) 0n
+        let contract (type p s b) ((f, vs, _) : (p, s) module_contract) (s : s) (t : tez)
+                     (tester : (p, s) typed_address -> (p,s) michelson_contract -> int -> b) : (b * mutation) list =
+          let wrap_tester (v : (p,s) michelson_contract) : b =
+            let f = [%external ("TEST_COMPILE_AST_CONTRACT", v)] in
+            let a = Originate.michelson f s t in
+            let c = Michelson.Contract.size f in
+            tester a f c in
+          let ast_c : (p,s) michelson_contract = [%external ("TEST_COMPILE_CONTRACT", f, vs)] in
+          let try_with (type a) (v : unit -> a) (c : unit -> a) = [%external ("TEST_TRY_WITH", v, c)] in
+          type ret_code = Passed of (b * mutation) | Continue | Stop in
+          let rec mutation_nth (acc : (b * mutation) list) (n : nat) : (b * mutation) list =
+            let mutated = [%external ("TEST_MUTATE_CONTRACT", n, ast_c)] in
+            let curr =
+              match mutated with
+              | Some (v, m) -> try_with (fun () -> let b = wrap_tester v in Passed (b, m)) (fun () -> Continue)
+              | None -> Stop in
+            match curr with
+            | Stop -> acc
+            | Continue -> mutation_nth acc (n + 1n)
+            | Passed (b, m) -> mutation_nth ((b, m) :: acc) (n + 1n) in
+          mutation_nth ([] : (b * mutation) list) 0n
       end
     end
 
