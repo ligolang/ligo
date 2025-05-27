@@ -1,6 +1,0 @@
-const helper = ([s, x]: [string, int]) =>
-  String.length(s) + x * 3 + 2;
-
-@entry
-const main = (p: string, s: int) : [list<operation>, int] =>
-  [list([]), helper ([p, s])];

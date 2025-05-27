@@ -1,5 +1,0 @@
-const short_list = list([1,2,2]);
-// long_list == [5,1,2,2]
-const long_list = list([5, ...short_list]);
-// longer_list == list([6, 5, 1, 2, 2])
-const longer_list = List.cons(6, long_list);

@@ -260,9 +260,9 @@ xrefcheck:
     - touch to-dos.html; cp to-dos.html public/to-dos.html
     # Install S3 CLI and publish to S3; credentials are set via the AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY environment variables in CI
     - apt update
-    - apt install -y aws-cli
-    - aws s3 sync ./public s3://site-prod.ligo.tezos.com/docs --delete --only-show-errors
-    - aws cloudfront create-invalidation --distribution-id "${CLOUDFRONT_DISTRIBUTION_ID}" --paths "/*"
+    - apt install -y awscli
+    # - aws s3 sync ./public s3://site-prod.ligo.tezos.com/docs --delete --only-show-errors
+    # - aws cloudfront create-invalidation --distribution-id "${CLOUDFRONT_DISTRIBUTION_ID}" --paths "/*"
   artifacts:
     paths:
       - public

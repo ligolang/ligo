@@ -1,0 +1,13 @@
+type storage = unit;
+type return_value = [list<operation>, storage];
+
+@entry
+const callContract = (param: [address, string], storage: storage): return_value => {
+  const [addr, parameter] = param;
+  const receiver_contract = match(Tezos.get_contract_opt(addr)) {
+    when(Some(contract)): contract;
+    when(None): failwith("Couldn't find contract");
+  }
+  const operations = [Tezos.Next.Operation.transaction(parameter, 0tez, receiver_contract)];
+  return [operations, storage];
+}

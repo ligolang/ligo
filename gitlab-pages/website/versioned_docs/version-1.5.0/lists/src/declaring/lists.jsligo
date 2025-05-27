@@ -1,2 +1,0 @@
-const empty_list: list<int> = list([]);
-const my_list = list([1, 2, 2]); // The head is 1, the tail is list([2, 2])

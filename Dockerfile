@@ -21,6 +21,8 @@ ENV ENV BLST_PORTABLE=y
 
 # Install opam switch & deps
 COPY scripts/setup_switch.sh /ligo/scripts/setup_switch.sh
+# bypass some weird availability for alpine
+RUN opam var --global os-distribution=arch
 RUN opam update \
   && sh scripts/setup_switch.sh
 COPY scripts/install_opam_deps.sh /ligo/scripts/install_opam_deps.sh

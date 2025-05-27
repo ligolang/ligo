@@ -1,0 +1,5 @@
+type t<elt> = big_map<elt, unit>
+const empty_big_set: big_set<int> = Big_set.empty;
+const big_set1: big_set<int> = Big_set.literal([3, 2, 2, 1]);
+const two = 2;
+const big_set2 : big_set<int> = Big_set.of_list([3, two, two, 1]);

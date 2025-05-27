@@ -1,0 +1,6 @@
+// This is interpret.jsligo
+type myDataType = map<int, string>;
+
+const encodeEntry = (a: int, b: string): myDataType => {
+  return Map.literal([[a, b]]);
+}

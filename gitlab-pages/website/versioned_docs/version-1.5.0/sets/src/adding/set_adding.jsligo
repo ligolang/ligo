@@ -1,2 +1,0 @@
-const my_set: set<int> = Set.literal(list([3, 2, 2, 1]));
-const with_4: set<int> = Set.add(4, my_set);

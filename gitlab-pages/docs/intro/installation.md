@@ -51,7 +51,7 @@ brew upgrade ligolang/ligo/ligo
 <TabItem value="deb">
 
 A `.deb` package containing the static `ligo` executable is available.
-First download [the package](https://gitlab.com/ligolang/ligo/-/jobs/8861513110/artifacts/raw/ligo.deb) and then install it with this command:
+First download [the package](https://gitlab.com/ligolang/ligo/-/jobs/9440820352/artifacts/raw/ligo.deb) and then install it with this command:
 
 ```bash
 sudo apt install ./ligo.deb
@@ -81,13 +81,13 @@ If you've [installed 🐳 Docker](https://docs.docker.com/install/), you can run
 Linux or MacOS:
 
 ```bash
-docker run --rm -v "$PWD":"$PWD" -w "$PWD" ligolang/ligo:1.9.2
+docker run --rm -v "$PWD":"$PWD" -w "$PWD" ligolang/ligo:1.10.0
 ```
 
 Windows:
 
 ```bash
-docker run --rm -v "%CD%":/cd -w /cd ligolang/ligo:1.9.2
+docker run --rm -v "%CD%":/cd -w /cd ligolang/ligo:1.10.0
 ```
 
 For convenience, you can alias the command:
@@ -95,13 +95,13 @@ For convenience, you can alias the command:
 Linux or MacOS:
 
 ```bash
-alias ligo='docker run --rm -v "$PWD":"$PWD" -w "$PWD" ligolang/ligo:1.9.2'
+alias ligo='docker run --rm -v "$PWD":"$PWD" -w "$PWD" ligolang/ligo:1.10.0'
 ```
 
 Windows:
 
 ```dos
-doskey ligo=docker run --rm -v "%CD%":/cd -w /cd ligolang/ligo:1.9.2 $*
+doskey ligo=docker run --rm -v "%CD%":/cd -w /cd ligolang/ligo:1.10.2 $*
 ```
 
 Then you can use the alias to run LIGO commands, as in this command:
@@ -113,7 +113,7 @@ ligo compile contract myContract.jsligo
 To make this alias persistent across terminal sessions you must configure your shell to remember it.
 See [these instructions for Linux](https://www.tecmint.com/create-alias-in-linux/) or [this stackoverflow answer for Windows](https://stackoverflow.com/a/21040825).
 
-To use the development version of LIGO, replace the version above (`1.9.2`) with `next`.
+To use the development version of LIGO, replace the version above (`1.10.0`) with `next`.
 
 To run an older version of LIGO, you can get older Docker images on [DockerHub](https://hub.docker.com/r/ligolang/ligo/tags).
 
@@ -123,12 +123,12 @@ To run an older version of LIGO, you can get older Docker images on [DockerHub](
 It's possible to use ligo in [Docker](https://docs.docker.com/install/) through docker or [WSL2](https://learn.microsoft.com/en-us/windows/wsl/install).
 
 ```dos
-docker run --rm -v "%CD%":/cd -w /cd ligolang/ligo:1.9.2
+docker run --rm -v "%CD%":/cd -w /cd ligolang/ligo:1.10.0
 ```
 
 For convenience, you can alias the command:
 ```dos
-doskey ligo=docker run --rm -v "%CD%":/cd -w /cd ligolang/ligo:1.9.2 $*
+doskey ligo=docker run --rm -v "%CD%":/cd -w /cd ligolang/ligo:1.10.0 $*
 ```
 
 Then you can use the alias to run LIGO commands, as in this command:
@@ -140,7 +140,7 @@ ligo compile contract myContract.jsligo
 To make this alias persistent across terminal sessions you must configure your shell to remember it.
 See [this stackoverflow answer](https://stackoverflow.com/a/21040825).
 
-To use the development version of LIGO, replace the version above (`1.9.2`) with `next`.
+To use the development version of LIGO, replace the version above (`1.10.0`) with `next`.
 
 To run an older version of LIGO, you can get older Docker images on [DockerHub](https://hub.docker.com/r/ligolang/ligo/tags).
 
