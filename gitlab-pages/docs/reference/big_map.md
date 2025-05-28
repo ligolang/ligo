@@ -58,7 +58,8 @@ contexts, it is useful to annotate it with its type, for example:
 val get&#95;and&#95;update : &#39;key &#39;value.&#39;key -&gt; &#39;value option -&gt; (&#39;key, &#39;value) t -&gt; (&#39;value option * (&#39;key, &#39;value) t)
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-get&#95;and&#95;update: &lt;key, value&gt;(&#95;: key) =&gt; (&#95;: option&lt;value&gt;) =&gt; (&#95;: t&lt;key, value&gt;) =&gt; [option&lt;value&gt;, t&lt;key, value&gt;]
+get_and_update: &lt;key, value&gt;(key: key, upd: option&lt;value&gt;,
+map: t&lt;key, value&gt;) =&gt; [option&lt;value&gt;, t&lt;key, value&gt;]
 </SyntaxTitle>
 
 <Syntax syntax="cameligo">
@@ -92,7 +93,7 @@ as `["Some" as "Some", v]`, otherwise `["None" as "None"]`. *)
 val update : &#39;key &#39;value.&#39;key -&gt; &#39;value option -&gt; (&#39;key, &#39;value) t -&gt; (&#39;key, &#39;value) t
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-update: &lt;key, value&gt;(&#95;: key) =&gt; (&#95;: option&lt;value&gt;) =&gt; (&#95;: t&lt;key, value&gt;) =&gt; t&lt;key, value&gt;
+update: &lt;key, value&gt;(key: key, upd: option&lt;value&gt;, map: t&lt;key, value&gt;) =&gt; t&lt;key, value&gt;
 </SyntaxTitle>
 
 <Syntax syntax="cameligo">
@@ -125,7 +126,7 @@ originally bound to `key` is lost. See
 val add : &#39;key &#39;value.&#39;key -&gt; &#39;value -&gt; (&#39;key, &#39;value) t -&gt; (&#39;key, &#39;value) t
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-add: &lt;key, value&gt;(&#95;: key) =&gt; (&#95;: value) =&gt; (&#95;: t&lt;key, value&gt;) =&gt; t&lt;key, value&gt;
+add: &lt;key, value&gt;(key: key, value: value, map: t&lt;key, value&gt;) =&gt; t&lt;key, value&gt;
 </SyntaxTitle>
 
 <Syntax syntax="cameligo">
@@ -151,7 +152,7 @@ lost.
 val remove : &#39;key &#39;value.&#39;key -&gt; (&#39;key, &#39;value) t -&gt; (&#39;key, &#39;value) t
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-remove: &lt;key, value&gt;(&#95;: key) =&gt; (&#95;: t&lt;key, value&gt;) =&gt; t&lt;key, value&gt;
+remove: &lt;key, value&gt;(key: key, map: t&lt;key, value&gt;) =&gt; t&lt;key, value&gt;
 </SyntaxTitle>
 
 <Syntax syntax="cameligo">
@@ -173,7 +174,7 @@ map `map` where the binding for key `key` is absent.
 val literal : &#39;key &#39;value.(&#39;key * &#39;value) list -&gt; (&#39;key, &#39;value) t
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-literal: &lt;key, value&gt;(&#95;: list&lt;[key, value]&gt;) =&gt; t&lt;key, value&gt;
+literal: &lt;key, value&gt;(bindings: list&lt;[key, value]&gt;) =&gt; t&lt;key, value&gt;
 </SyntaxTitle>
 
 <Syntax syntax="cameligo">
@@ -195,10 +196,10 @@ values).
 
 
 <SyntaxTitle syntax="cameligo">
-val of&#95;list : &#39;key &#39;value.(&#39;key * &#39;value) list -&gt; (&#39;key, &#39;value) t
+val of_list : &#39;key &#39;value.(&#39;key * &#39;value) list -&gt; (&#39;key, &#39;value) t
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-of&#95;list: &lt;key, value&gt;(&#95;: list&lt;[key, value]&gt;) =&gt; t&lt;key, value&gt;
+of_list: &lt;key, value&gt;(bindings: list&lt;[key, value]&gt;) =&gt; t&lt;key, value&gt;
 </SyntaxTitle>
 
 <Syntax syntax="cameligo">
@@ -221,7 +222,7 @@ pairs of key/value in the list `bindings`. Note: Use
 val mem : &#39;key &#39;value.&#39;key -&gt; (&#39;key, &#39;value) t -&gt; bool
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-mem: &lt;key, value&gt;(&#95;: key) =&gt; (&#95;: t&lt;key, value&gt;) =&gt; bool
+mem: &lt;key, value&gt;(key: key, map: t&lt;key, value&gt;) =&gt; bool
 </SyntaxTitle>
 
 <Syntax syntax="cameligo">
@@ -240,10 +241,10 @@ key `key` is in the big map `map`.
 
 
 <SyntaxTitle syntax="cameligo">
-val find&#95;opt : &#39;key &#39;value.&#39;key -&gt; (&#39;key, &#39;value) t -&gt; &#39;value option
+val find_opt : &#39;key &#39;value.&#39;key -&gt; (&#39;key, &#39;value) t -&gt; &#39;value option
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-find&#95;opt: &lt;key, value&gt;(&#95;: key) =&gt; (&#95;: t&lt;key, value&gt;) =&gt; option&lt;value&gt;
+find_opt: &lt;key, value&gt;(key: key, map: t&lt;key, value&gt;) =&gt; option&lt;value&gt;
 </SyntaxTitle>
 
 <Syntax syntax="cameligo">
@@ -268,7 +269,7 @@ is `["Some" as "Some", v]`, where `v` is the value associated to
 val find : &#39;key &#39;value.&#39;key -&gt; (&#39;key, &#39;value) t -&gt; &#39;value
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-find: &lt;key, value&gt;(&#95;: key) =&gt; (&#95;: t&lt;key, value&gt;) =&gt; value
+find: &lt;key, value&gt;(key: key, map: t&lt;key, value&gt;) =&gt; value
 </SyntaxTitle>
 
 <Syntax syntax="cameligo">

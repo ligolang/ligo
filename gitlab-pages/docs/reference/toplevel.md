@@ -503,7 +503,7 @@ The call `nat(b)` casts the bytes `b` into a natural number.
 val ediv : &#39;a &#39;b.&#39;a -&gt; &#39;b -&gt; (&#39;a, &#39;b) external&#95;ediv
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-ediv: &lt;a, b&gt;(&#95;: a) =&gt; (&#95;: b) =&gt; external&#95;ediv&lt;a, b&gt;
+ediv: &lt;a, b&gt;(left: a, right: b) =&gt; external&#95;ediv&lt;a, b&gt;
 </SyntaxTitle>
 
 <Syntax syntax="cameligo">

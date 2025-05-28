@@ -1,6 +1,6 @@
 ---
-id: test-mutation-reference
-title: test-mutation
+id: test.mutation-reference
+title: mutation
 hide_table_of_contents: true
 ---
 import Syntax from '@theme/Syntax';
@@ -13,7 +13,7 @@ import SyntaxTitle from '@theme/SyntaxTitle';
 val value : &#39;a.nat -&gt; &#39;a -&gt; (&#39;a * mutation) option
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-value: &lt;a&gt;(&#95;: nat) =&gt; (&#95;: a) =&gt; option&lt;[a, mutation]&gt;
+value: &lt;a&gt;(n: nat, v: a) =&gt; option&lt;[a, mutation]&gt;
 </SyntaxTitle>
 
 Mutates a value using a natural number as an index for the available
@@ -21,10 +21,10 @@ mutations, returns an option for indicating whether mutation was
 successful or not.
 
 <SyntaxTitle syntax="cameligo">
-val save&#95;mutation : string -&gt; mutation -&gt; string option
+val save : string -&gt; mutation -&gt; string option
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-save&#95;mutation: (&#95;: string) =&gt; (&#95;: mutation) =&gt; option&lt;string&gt;
+save: (s: string, m: mutation) =&gt; option&lt;string&gt;
 </SyntaxTitle>
 
 <Syntax syntax="cameligo">
@@ -49,7 +49,7 @@ was saved, or `["None" as "None"]` if there was an error.
 val func : &#39;a &#39;b.&#39;a -&gt; (&#39;a -&gt; &#39;b) -&gt; (&#39;b * mutation) option
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-func: &lt;a, b&gt;(&#95;: a) =&gt; (&#95;: (&#95;: a) =&gt; b) =&gt; option&lt;[b, mutation]&gt;
+func: &lt;a, b&gt;(v: a, tester: (&#95;: a) =&gt; b) =&gt; option&lt;[b, mutation]&gt;
 </SyntaxTitle>
 
 Given a value to mutate (first argument), it will try all the
@@ -58,15 +58,15 @@ argument). On the first case of non failure when running the function
 on a mutation, the value and mutation involved will be returned.
 
 <SyntaxTitle syntax="cameligo">
-val from&#95;file&#95;and&#95;mutate :
+val from&#95;file :
   &#39;b
   &#39;p
   &#39;s.string -&gt;
   &#39;s -&gt; tez -&gt; (((&#39;p, &#39;s) typed&#95;address * (&#39;p, &#39;s) michelson&#95;contract * int) -&gt; &#39;b) -&gt; (&#39;b * mutation) option
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-from&#95;file&#95;and&#95;mutate:
-  &lt;b, p, s&gt;(&#95;: string) =&gt; (&#95;: s) =&gt; (&#95;: tez) =&gt; (&#95;: (&#95;: [typed&#95;address&lt;p, s&gt;, michelson&#95;contract&lt;p, s&gt;, int]) =&gt; b) =&gt; option&lt;
+from&#95;file:
+  &lt;b, p, s&gt;(fn: string, s: s, t: tez, tester: (&#95;: [typed&#95;address&lt;p, s&gt;, michelson&#95;contract&lt;p, s&gt;, int]) =&gt; b) =&gt; option&lt;
     [b, mutation]
   &gt;
 </SyntaxTitle>
@@ -86,8 +86,9 @@ val contract :
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
 contract:
-  &lt;p, s, b&gt;(&#95;: module&#95;contract&lt;p, s&gt;) =&gt; (&#95;: s) =&gt; (&#95;: tez) =&gt; (
-    &#95;: (&#95;: typed&#95;address&lt;p, s&gt;) =&gt; (&#95;: michelson&#95;contract&lt;p, s&gt;) =&gt; (&#95;: int) =&gt; b
+  &lt;p, s, b&gt;(&#95;: module&#95;contract&lt;p, s&gt;, s: s, t:
+  tez, tester: (&#95;: typed&#95;address&lt;p, s&gt;, &#95;:
+  michelson&#95;contract&lt;p, s&gt;, &#95;: int) =&gt; b
   ) =&gt; option&lt;[b, mutation]&gt;
 </SyntaxTitle>
 

@@ -46,7 +46,7 @@ The value `List.empty` is the empty list. It is a synonym for
 val length : &#39;elt.&#39;elt t -&gt; nat
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-length: &lt;elt&gt;(&#95;: t&lt;elt&gt;) =&gt; nat
+length: &lt;elt&gt;(list: t&lt;elt&gt;) =&gt; nat
 </SyntaxTitle>
 <Syntax syntax="cameligo">
 
@@ -67,7 +67,7 @@ The call `List.length(l)` is the number of elements in the list
 val size : &#39;elt.&#39;elt t -&gt; nat
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-size: &lt;elt&gt;(&#95;: t&lt;elt&gt;) =&gt; nat
+size: &lt;elt&gt;(list: t&lt;elt&gt;) =&gt; nat
 </SyntaxTitle>
 
 <Syntax syntax="cameligo">
@@ -87,7 +87,7 @@ The call `List.size(l)` is the number of elements in the list `l`.
 val head : &#39;elt.&#39;elt t -&gt; &#39;elt option
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-head: &lt;elt&gt;(&#95;: t&lt;elt&gt;) =&gt; option&lt;elt&gt;
+head: &lt;elt&gt;(list: t&lt;elt&gt;) =&gt; option&lt;elt&gt;
 </SyntaxTitle>
 
 <Syntax syntax="cameligo">
@@ -110,7 +110,7 @@ the head of the list.
 val tail : &#39;elt.&#39;elt t -&gt; &#39;elt t option
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-tail: &lt;elt&gt;(&#95;: t&lt;elt&gt;) =&gt; option&lt;t&lt;elt&gt;&gt;
+tail: &lt;elt&gt;(list: t&lt;elt&gt;) =&gt; option&lt;t&lt;elt&gt;&gt;
 </SyntaxTitle>
 
 <Syntax syntax="cameligo">
@@ -133,7 +133,7 @@ is the tail of the list.
 val head_and_tail : &#39;elt.&#39;elt t -&gt; (&#39;elt * &#39;elt t) option
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-head_and_tail: &lt;elt&gt;(&#95;: t&lt;elt&gt;) =&gt; option&lt;elt,t&lt; elt&gt;&gt;
+head_and_tail: &lt;elt&gt;(list: t&lt;elt&gt;) =&gt; option&lt;elt,t&lt; elt&gt;&gt;
 </SyntaxTitle>
 
 <Syntax syntax="cameligo">
@@ -155,10 +155,10 @@ tail of the list, respectively.
 
 
 <SyntaxTitle syntax="cameligo">
-val map : &#39;src &#39;dst.(&#39;src -&gt; &#39;dst) -&gt; &#39;src list -&gt; &#39;dst list
+val map : &#39;src &#39;dst.(&#39;src -&gt; &#39;dst) -&gt; &#39;src t -&gt; &#39;dst t
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-map: &lt;src, dst&gt;(&#95;: (&#95;: src) =&gt; dst) =&gt; (&#95;: list&lt;src&gt;) =&gt; list&lt;dst&gt;
+map: &lt;src, dst&gt;(f: (&#95;: src) =&gt; dst, list: t&lt;src&gt;) =&gt; t&lt;dst&gt;
 </SyntaxTitle>
 
 <Syntax syntax="cameligo">
@@ -182,7 +182,7 @@ The call `List.map(f, list([a1; ...; an]))` applies the function `f` to
 val iter : &#39;elt.(&#39;elt -&gt; unit) -&gt; &#39;elt t -&gt; unit
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-iter: &lt;elt&gt;(&#95;: (&#95;: elt) =&gt; unit) =&gt; (&#95;: t&lt;elt&gt;) =&gt; unit
+iter: &lt;elt&gt;(f: (&#95;: elt) =&gt; unit, list: t&lt;elt&gt;) =&gt; unit
 </SyntaxTitle>
 <Syntax syntax="cameligo">
 
@@ -202,10 +202,11 @@ f(a2); ...; f(an)}`.
 
 
 <SyntaxTitle syntax="cameligo">
-val fold&#95;left : &#39;elt &#39;acc.((&#39;acc * &#39;elt) -&gt; &#39;acc) -&gt; &#39;acc -&gt; &#39;elt t -&gt; &#39;acc
+val fold_left : &#39;elt &#39;acc.((&#39;acc * &#39;elt) -&gt; &#39;acc) -&gt; &#39;acc -&gt; &#39;elt t -&gt; &#39;acc
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-fold&#95;left: &lt;elt, acc&gt;(&#95;: (&#95;: [acc, elt]) =&gt; acc) =&gt; (&#95;: acc) =&gt; (&#95;: t&lt;elt&gt;) =&gt; acc
+fold_left: &lt;elt, acc&gt;(f: (&#95;: [acc, elt]) =&gt; acc, init:
+acc, list: t&lt;elt&gt;) =&gt; acc
 </SyntaxTitle>
 
 <Syntax syntax="cameligo">
@@ -224,10 +225,11 @@ The call `List.fold_left(f, init, list([a1; ...; an]))` is
 
 
 <SyntaxTitle syntax="cameligo">
-val fold&#95;right : &#39;elt &#39;acc.((&#39;elt * &#39;acc) -&gt; &#39;acc) -&gt; &#39;elt t -&gt; &#39;acc -&gt; &#39;acc
+val fold_right : &#39;elt &#39;acc.((&#39;elt * &#39;acc) -&gt; &#39;acc) -&gt; &#39;elt t -&gt; &#39;acc -&gt; &#39;acc
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-fold&#95;right: &lt;elt, acc&gt;(&#95;: (&#95;: [elt, acc]) =&gt; acc) =&gt; (&#95;: t&lt;elt&gt;) =&gt; (&#95;: acc) =&gt; acc
+fold_right: &lt;elt, acc&gt;(f: (&#95;: [elt, acc]) =&gt; acc, list:
+t&lt;elt&gt;, init: acc) =&gt; acc
 </SyntaxTitle>
 <Syntax syntax="cameligo">
 
@@ -248,7 +250,8 @@ The call `List.fold_right(f, list([a1; ...; an]), init)` is
 val fold : &#39;elt &#39;acc.((&#39;acc * &#39;elt) -&gt; &#39;acc) -&gt; &#39;elt t -&gt; &#39;acc -&gt; &#39;acc
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-fold: &lt;elt, acc&gt;(&#95;: (&#95;: [acc, elt]) =&gt; acc) =&gt; (&#95;: t&lt;elt&gt;) =&gt; (&#95;: acc) =&gt; acc
+fold: &lt;elt, acc&gt;(f: (&#95;: [acc, elt]) =&gt; acc, list:
+t&lt;elt&gt;, init: acc) =&gt; acc
 </SyntaxTitle>
 
 <Syntax syntax="cameligo">
@@ -272,7 +275,7 @@ The call `List.fold(f, list([a1; ...; an]), init)` is
 val cons : &#39;elt.&#39;elt -&gt; &#39;elt t -&gt; &#39;elt t
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-cons: &lt;elt&gt;(&#95;: elt) =&gt; (&#95;: t&lt;elt&gt;) =&gt; t&lt;elt&gt;
+cons: &lt;elt&gt;(elt: elt, list: t&lt;elt&gt;) =&gt; t&lt;elt&gt;
 </SyntaxTitle>
 
 <Syntax syntax="cameligo">
@@ -289,10 +292,10 @@ The call `List.cons(e, l)` is `list([e, ...l])`.
 
 
 <SyntaxTitle syntax="cameligo">
-val find&#95;opt : &#39;elt.(&#39;elt -&gt; bool) -&gt; &#39;elt t -&gt; &#39;elt option
+val find_opt : &#39;elt.(&#39;elt -&gt; bool) -&gt; &#39;elt t -&gt; &#39;elt option
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-find&#95;opt: &lt;elt&gt;(&#95;: (&#95;: elt) =&gt; bool) =&gt; (&#95;: t&lt;elt&gt;) =&gt; option&lt;elt&gt;
+find_opt: &lt;elt&gt;(f: (&#95;: elt) =&gt; bool, list: t&lt;elt&gt;) =&gt; option&lt;elt&gt;
 </SyntaxTitle>
 
 <Syntax syntax="cameligo">
@@ -316,10 +319,11 @@ specified.
 
 
 <SyntaxTitle syntax="cameligo">
-val filter&#95;map : &#39;src &#39;dst.(&#39;src -&gt; &#39;dst option) -&gt; &#39;src list -&gt; &#39;dst list
+val filter_map : &#39;src &#39;dst.(&#39;src -&gt; &#39;dst option) -&gt; &#39;src list -&gt; &#39;dst list
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-filter&#95;map: &lt;src, dst&gt;(&#95;: (&#95;: src) =&gt; option&lt;dst&gt;) =&gt; (&#95;: list&lt;src&gt;) =&gt; list&lt;dst&gt;
+filter_map: &lt;src, dst&gt;(filter: (&#95;: src) =&gt;
+option&lt;dst&gt;, list: list&lt;src&gt;) =&gt; list&lt;dst&gt;
 </SyntaxTitle>
 
 <Syntax syntax="cameligo">
@@ -345,7 +349,7 @@ order of the calls of `f` is not specified.
 val update : &#39;elt.(&#39;elt -&gt; &#39;elt option) -&gt; &#39;elt t -&gt; &#39;elt t
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-update: &lt;elt&gt;(&#95;: (&#95;: elt) =&gt; option&lt;elt&gt;) =&gt; (&#95;: t&lt;elt&gt;) =&gt; t&lt;elt&gt;
+update: &lt;elt&gt;(filter: (&#95;: elt) =&gt; option&lt;elt&gt;, list: t&lt;elt&gt;) =&gt; t&lt;elt&gt;
 </SyntaxTitle>
 
 <Syntax syntax="cameligo">
@@ -364,10 +368,10 @@ such that `f(e)` is `["Some" as "Some", v]` have been replaced by `v`.
 
 
 <SyntaxTitle syntax="cameligo">
-val update&#95;with : &#39;elt.(&#39;elt -&gt; bool) -&gt; &#39;elt -&gt; &#39;elt t -&gt; &#39;elt t
+val update_with : &#39;elt.(&#39;elt -&gt; bool) -&gt; &#39;elt -&gt; &#39;elt t -&gt; &#39;elt t
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-update&#95;with: &lt;elt&gt;(&#95;: (&#95;: elt) =&gt; bool) =&gt; (&#95;: elt) =&gt; (&#95;: t&lt;elt&gt;) =&gt; t&lt;elt&gt;
+update_with: &lt;elt&gt;(pred: (&#95;: elt) =&gt; bool, default: elt, list: t&lt;elt&gt;) =&gt; t&lt;elt&gt;
 </SyntaxTitle>
 <Syntax syntax="cameligo">
 

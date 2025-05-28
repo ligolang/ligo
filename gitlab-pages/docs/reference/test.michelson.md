@@ -1,11 +1,12 @@
 ---
-id: test-michelson-reference
+id: test.michelson-reference
 title: michelson
 hide_table_of_contents: true
 ---
 import Syntax from '@theme/Syntax';
 import SyntaxTitle from '@theme/SyntaxTitle';
 
+[module contract](test.michelson.contract.md)
 
 <SyntaxTitle syntax="cameligo">
 val run : &#39;a &#39;b.(&#39;a -&gt; &#39;b) -&gt; &#39;a -&gt; michelson&#95;program
@@ -52,5 +53,3 @@ decompile: string =&gt; michelson&#95;program
 </SyntaxTitle>
 
 Parses Michelson (as string) into a `michelson_program`.
-
-[module contract](test.michelson.contract.md)

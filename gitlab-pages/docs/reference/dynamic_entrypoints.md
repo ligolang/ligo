@@ -27,8 +27,9 @@ val set :
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
 set:
-  &lt;param, storage&gt;(&#95;: dynamic&#95;entrypoint&lt;param, storage&gt;) =&gt; (&#95;: option&lt;entrypoint&lt;param, storage&gt;&gt;) =&gt; (
-    &#95;: dynamic&#95;entrypoints
+  &lt;param, storage&gt;(dyn: dynamic&#95;entrypoint&lt;param,
+  storage&gt;, entry_opt: option&lt;entrypoint&lt;param,
+  storage&gt;&gt;, dyn_map: dynamic&#95;entrypoints
   ) =&gt; dynamic&#95;entrypoints
 </SyntaxTitle>
 
@@ -56,13 +57,14 @@ associated to the static entrypoint `entrypoint`.
 
 
 <SyntaxTitle syntax="cameligo">
-val set&#95;bytes :
+val set_bytes :
   &#39;param
   &#39;storage.(&#39;param, &#39;storage) dynamic&#95;entrypoint -&gt; bytes option -&gt; dynamic&#95;entrypoints -&gt; dynamic&#95;entrypoints
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-set&#95;bytes:
-  &lt;param, storage&gt;(&#95;: dynamic&#95;entrypoint&lt;param, storage&gt;) =&gt; (&#95;: option&lt;bytes&gt;) =&gt; (&#95;: dynamic&#95;entrypoints) =&gt; dynamic&#95;entrypoints
+set_bytes:
+  &lt;param, storage&gt;(dyn: dynamic&#95;entrypoint&lt;param,
+  storage&gt;, bytes_opt: option&lt;bytes&gt;, dyn_map: dynamic&#95;entrypoints) =&gt; dynamic&#95;entrypoints
 </SyntaxTitle>
 
 <Syntax syntax="cameligo">
@@ -98,9 +100,8 @@ val get :
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
 get:
-  &lt;param, storage&gt;(&#95;: dynamic&#95;entrypoint&lt;param, storage&gt;) =&gt; (&#95;: dynamic&#95;entrypoints) =&gt; option&lt;
-    entrypoint&lt;param, storage&gt;
-  &gt;
+  &lt;param, storage&gt;(dyn: dynamic&#95;entrypoint&lt;param,
+  storage&gt;, dyn_map: dynamic&#95;entrypoints) =&gt; option&lt;entrypoint&lt;param, storage&gt;&gt;
 </SyntaxTitle>
 
 <Syntax syntax="cameligo">

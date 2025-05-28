@@ -13,7 +13,7 @@ The module of optional values
 val value : &#39;a.&#39;a -&gt; &#39;a option -&gt; &#39;a
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-value: &lt;a&gt;(&#95;: a) =&gt; (&#95;: option&lt;a&gt;) =&gt; a
+value: &lt;a&gt;(default: a, opt: option&lt;a&gt;) =&gt; a
 </SyntaxTitle>
 
 <Syntax syntax="cameligo">
@@ -35,7 +35,7 @@ The call `Option.value(d, opt)` is `v` if `opt` is
 val value&#95;with&#95;error : &#39;err &#39;a.&#39;err -&gt; &#39;a option -&gt; &#39;a
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-value&#95;with&#95;error: &lt;err, a&gt;(&#95;: err) =&gt; (&#95;: option&lt;a&gt;) =&gt; a
+value&#95;with&#95;error: &lt;err, a&gt;(error: err, opt: option&lt;a&gt;) =&gt; a
 </SyntaxTitle>
 
 <Syntax syntax="cameligo">
@@ -59,7 +59,7 @@ otherwise it is `["Some" as "Some", v]` and `v` is returned.
 val map : &#39;a &#39;b.(&#39;a -&gt; &#39;b) -&gt; &#39;a option -&gt; &#39;b option
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-map: &lt;a, b&gt;(&#95;: (&#95;: a) =&gt; b) =&gt; (&#95;: option&lt;a&gt;) =&gt; option&lt;b&gt;
+map: &lt;a, b&gt;(f: (&#95;: a) =&gt; b, opt: option&lt;a&gt;) =&gt; option&lt;b&gt;
 </SyntaxTitle>
 
 <Syntax syntax="cameligo">
@@ -82,7 +82,7 @@ The call `Option.map(f, opt)` is `["None" as "None"]` if `opt` is
 val is&#95;none : &#39;a.&#39;a option -&gt; bool
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-is&#95;none: &lt;a&gt;(&#95;: option&lt;a&gt;) =&gt; bool
+is_none: &lt;a&gt;(&#95;: option&lt;a&gt;) =&gt; bool
 </SyntaxTitle>
 
 <Syntax syntax="cameligo">

@@ -106,7 +106,7 @@ sequences in the list `list`, from left to right.
 val sub : nat -&gt; nat -&gt; bytes -&gt; bytes
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-sub: (&#95;: nat) =&gt; (&#95;: nat) =&gt; (&#95;: bytes) =&gt; bytes
+sub: (index: nat, length: nat, bytes: bytes) =&gt; bytes
 </SyntaxTitle>
 
 <Syntax syntax="cameligo">
@@ -132,7 +132,7 @@ interrupts the execution.
 val slice : nat -&gt; nat -&gt; bytes -&gt; bytes
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-slice: (&#95;: nat) =&gt; (&#95;: nat) =&gt; (&#95;: bytes) =&gt; bytes
+slice: (index: nat, length: nat, bytes: bytes) =&gt; bytes
 </SyntaxTitle>
 
 <Syntax syntax="cameligo">

@@ -16,6 +16,7 @@ type &#39;elt t = &#39;elt set
 <SyntaxTitle syntax="jsligo">
 type t&lt;elt&gt; = set&lt;elt&gt;
 </SyntaxTitle>
+
 <Syntax syntax="cameligo">
 
 The type `'elt Set.t` is an alias for `'elt set`.
@@ -57,7 +58,7 @@ useful to annotate it with its type, for example:
 val update : &#39;elt.&#39;elt -&gt; bool -&gt; &#39;elt t -&gt; &#39;elt t
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-update: &lt;elt&gt;(&#95;: elt) =&gt; (&#95;: bool) =&gt; (&#95;: t&lt;elt&gt;) =&gt; t&lt;elt&gt;
+update: &lt;elt&gt;(elt: elt, add: bool, set: t&lt;elt&gt;) =&gt; t&lt;elt&gt;
 </SyntaxTitle>
 
 <Syntax syntax="cameligo">
@@ -81,7 +82,7 @@ copy of the set `set` where the element `elt` is absent.
 val add : &#39;elt.&#39;elt -&gt; &#39;elt t -&gt; &#39;elt t
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-add: &lt;elt&gt;(&#95;: elt) =&gt; (&#95;: t&lt;elt&gt;) =&gt; t&lt;elt&gt;
+add: &lt;elt&gt;(elt: elt, set: t&lt;elt&gt;) =&gt; t&lt;elt&gt;
 </SyntaxTitle>
 
 <Syntax syntax="cameligo">
@@ -103,7 +104,7 @@ the set `set`, plus the element `elt`.
 val remove : &#39;elt.&#39;elt -&gt; &#39;elt t -&gt; &#39;elt t
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-remove: &lt;elt&gt;(&#95;: elt) =&gt; (&#95;: t&lt;elt&gt;) =&gt; t&lt;elt&gt;
+remove: &lt;elt&gt;(elt: elt, set: t&lt;elt&gt;) =&gt; t&lt;elt&gt;
 </SyntaxTitle>
 
 <Syntax syntax="cameligo">
@@ -213,7 +214,7 @@ The call `Set.cardinal(set)` is the number of elements of the set `set`.
 val mem : &#39;elt.&#39;elt -&gt; &#39;elt t -&gt; bool
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-mem: &lt;elt&gt;(&#95;: elt) =&gt; (&#95;: t&lt;elt&gt;) =&gt; bool
+mem: &lt;elt&gt;(elt: elt, set: t&lt;elt&gt;) =&gt; bool
 </SyntaxTitle>
 
 <Syntax syntax="cameligo">
@@ -235,7 +236,8 @@ The call `Set.mem(elt, set)` is `true` if, and only if, the element
 val fold : &#39;elt &#39;acc.((&#39;acc * &#39;elt) -&gt; &#39;acc) -&gt; &#39;elt t -&gt; &#39;acc -&gt; &#39;acc
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-fold: &lt;elt, acc&gt;(&#95;: (&#95;: [acc, elt]) =&gt; acc) =&gt; (&#95;: t&lt;elt&gt;) =&gt; (&#95;: acc) =&gt; acc
+fold: &lt;elt, acc&gt;(f: (&#95;: [acc, elt]) =&gt; acc, set:
+t&lt;elt&gt;, init: acc) =&gt; acc
 </SyntaxTitle>
 
 <Syntax syntax="cameligo">
@@ -255,10 +257,11 @@ set `set` in increasing order.
 
 
 <SyntaxTitle syntax="cameligo">
-val fold&#95;desc : &#39;elt &#39;acc.((&#39;elt * &#39;acc) -&gt; &#39;acc) -&gt; &#39;elt t -&gt; &#39;acc -&gt; &#39;acc
+val fold_desc : &#39;elt &#39;acc.((&#39;elt * &#39;acc) -&gt; &#39;acc) -&gt; &#39;elt t -&gt; &#39;acc -&gt; &#39;acc
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-fold&#95;desc: &lt;elt, acc&gt;(&#95;: (&#95;: [elt, acc]) =&gt; acc) =&gt; (&#95;: t&lt;elt&gt;) =&gt; (&#95;: acc) =&gt; acc
+fold_desc: &lt;elt, acc&gt;(f: (&#95;: [elt, acc]) =&gt; acc, set:
+t&lt;elt&gt;, init: acc) =&gt; acc
 </SyntaxTitle>
 
 <Syntax syntax="cameligo">
@@ -278,34 +281,10 @@ increasing order.
 </Syntax>
 
 <SyntaxTitle syntax="cameligo">
-val fold&#95;desc : &#39;elt &#39;acc.((&#39;elt * &#39;acc) -&gt; &#39;acc) -&gt; &#39;elt t -&gt; &#39;acc -&gt; &#39;acc
+val filter_map : &#39;old &#39;new.(&#39;old -&gt; &#39;new option) -&gt; &#39;old t -&gt; &#39;new t
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-fold&#95;desc: &lt;elt, acc&gt;(&#95;: (&#95;: [elt, acc]) =&gt; acc) =&gt; (&#95;: t&lt;elt&gt;) =&gt; (&#95;: acc) =&gt; acc
-</SyntaxTitle>
-
-<Syntax syntax="cameligo">
-
-The call `Set.fold_desc f set init` is `f(... (f (init, en), ...),
-e1)`, where `e1`, `e2`, ..., `en` are the elements of the set `set` in
-decreasing order.
-
-</Syntax>
-
-<Syntax syntax="jsligo">
-
-The call `Set.fold_desc(f, set, init)` is `f(... (f (init, en), ...),
-e1)`, where `e1`, `e2`, ..., `en` are the elements of the set `set` in
-decreasing order.
-
-</Syntax>
-
-
-<SyntaxTitle syntax="cameligo">
-val filter&#95;map : &#39;old &#39;new.(&#39;old -&gt; &#39;new option) -&gt; &#39;old t -&gt; &#39;new t
-</SyntaxTitle>
-<SyntaxTitle syntax="jsligo">
-filter&#95;map: &lt;old, new&gt;(&#95;: (&#95;: old) =&gt; option&lt;new&gt;) =&gt; (&#95;: t&lt;old&gt;) =&gt; t&lt;new&gt;
+filter_map: &lt;old, new&gt;(filter: (elt: old) =&gt; option&lt;new&gt;, set: t&lt;old&gt;) =&gt; t&lt;new&gt;
 </SyntaxTitle>
 
 <Syntax syntax="cameligo">
@@ -331,7 +310,7 @@ if it is `["Some" as "Some", e]`, then `e` is kept.
 val iter : &#39;elt.(&#39;elt -&gt; unit) -&gt; &#39;elt t -&gt; unit
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-iter: &lt;elt&gt;(&#95;: (&#95;: elt) =&gt; unit) =&gt; (&#95;: t&lt;elt&gt;) =&gt; unit
+iter: &lt;elt&gt;(f: (&#95;: elt) =&gt; unit, set: t&lt;elt&gt;) =&gt; unit
 </SyntaxTitle>
 
 <Syntax syntax="cameligo">
@@ -353,7 +332,7 @@ The call `Set.iter(f, set)` applies `f` to all the elements of the set
 val map : &#39;old &#39;new.(&#39;old -&gt; &#39;new) -&gt; &#39;old t -&gt; &#39;new t
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-map: &lt;old, new&gt;(&#95;: (&#95;: old) =&gt; new) =&gt; (&#95;: t&lt;old&gt;) =&gt; t&lt;new&gt;
+map: &lt;old, new&gt;(f: (elt: old) =&gt; new, set: t&lt;old&gt;) =&gt; t&lt;new&gt;
 </SyntaxTitle>
 
 <Syntax syntax="cameligo">
