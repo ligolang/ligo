@@ -10,8 +10,11 @@ import SyntaxTitle from '@theme/SyntaxTitle';
 Tezos-specific functions
 
 [module Operation](tezos.operation.md)
+
 [module View](tezos.view.md)
+
 [module Ticket](tezos.ticket.md)
+
 [module Sapling](tezos.sapling.md)
 
 <SyntaxTitle syntax="cameligo">

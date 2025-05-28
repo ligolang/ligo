@@ -86,7 +86,7 @@ The call `hash_key(k)` computes the Base58Check of the public key `k`.
 val check : key -&gt; signature -&gt; bytes -&gt; bool
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-check: (&#95;: key) =&gt; (&#95;: signature) =&gt; (&#95;: bytes) =&gt; bool
+check: (key: key, sig: signature, bytes: bytes) =&gt; bool
 </SyntaxTitle>
 
 <Syntax syntax="cameligo">

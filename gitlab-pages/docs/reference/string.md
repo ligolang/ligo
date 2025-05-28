@@ -57,7 +57,7 @@ The call `String.size(s)` is the number of characters in the string `s`.
 val concat : string -&gt; string -&gt; string
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-concat: (&#95;: string) =&gt; (&#95;: string) =&gt; string
+concat: (left: string, right: string) =&gt; string
 </SyntaxTitle>
 
 <Syntax syntax="cameligo">
@@ -79,7 +79,7 @@ The call `String.concat(left, right)` is the concatenation of the string
 val concats : string list -&gt; string
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-concats: (&#95;: list&lt;string&gt;) =&gt; string
+concats: (list: list&lt;string&gt;) =&gt; string
 </SyntaxTitle>
 
 <Syntax syntax="cameligo">
@@ -101,7 +101,7 @@ the list `list`, from left to right.
 val sub : nat -&gt; nat -&gt; string -&gt; string
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-sub: (&#95;: nat) =&gt; (&#95;: nat) =&gt; (&#95;: string) =&gt; string
+sub: (index: nat, length: nat, string: string) =&gt; string
 </SyntaxTitle>
 
 <Syntax syntax="cameligo">
@@ -127,7 +127,7 @@ interrupts the execution.
 val slice : nat -&gt; nat -&gt; string -&gt; string
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-slice: (&#95;: nat) =&gt; (&#95;: nat) =&gt; (&#95;: string) =&gt; string
+slice: (index: nat, length: nat, string: string) =&gt; string
 </SyntaxTitle>
 
 <Syntax syntax="cameligo">

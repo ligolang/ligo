@@ -876,20 +876,20 @@ end
 (** Bitwise operations *)
 module Bitwise = struct
 
-  (** The call `Bitiwise.@and a b` is the conjunction defined on boolean,
+  (** The call `Bitiwise.and a b` is the conjunction defined on boolean,
     natural number and bytes operands. In the boolean case, the result
     is the logical "and" of the operands. In the natural number and
     bytes cases, the result is the bitwise "and" of the operands.
 
-    The function `Bitwise.@and` is also defined when the left operand is of
+    The function `Bitwise.and` is also defined when the left operand is of
     type `int`. Negative numbers are considered in two's complement
     representation, starting with a virtual infinite number of 1s.
 
-    When `Bitwise.@and` is used for bytes operands, the bytes result
+    When `Bitwise.and` is used for bytes operands, the bytes result
     has the same length as the shorter operand. The prefix of the
     longer operand is cut to match with the length of the shorter one
     before taking the bitwise "and". *)
-  let @and (type a b) (left: a) (right: b) : (a, b) external_and =
+  let and (type a b) (left: a) (right: b) : (a, b) external_and =
     [%michelson ({| {AND} |} left right : (a, b) external_and)]
 
   (** The call `Bitwise.@or a b` is the disjunction defined on boolean,
@@ -1092,7 +1092,7 @@ module List = struct
     The call `List.map(f, list([a1; ...; an]))` applies the function `f` to
     `a1`, ..., `an` (from left to right), and builds the list
     `list([f(a1); ...; f(an)])` with the results returned by `f`. *)
-  let map (type src dst) (f: src -> dst) (list: src list) : dst list =
+  let map (type src dst) (f: src -> dst) (list: src t) : dst t =
     [%external ("LIST_MAP", f, list)]
 
   (** display-only-for-cameligo
@@ -1133,7 +1133,8 @@ module List = struct
   (** display-only-for-jsligo
     The call `List.fold(f, list([a1; ...; an]), init)` is
     `f (... (f (f (init, a1), a2) ...), an)`. Note:
-    `List.fold_left(f, init, list)` is the same as `List.fold(f, list, init)`. *)
+    `List.fold_left(f, init, list)` is the same as `List.fold(f, list, init)`.
+  *)
   [@inline]
   let fold
     (type elt acc) (f: acc * elt -> acc) (list: elt t) (init: acc) : acc =
@@ -2367,8 +2368,10 @@ module Test = struct
         result to the function (last argument). On the first case of non
         failure when running the function on a mutation, the value and
         mutation involved will be returned. *)
-      let contract (type p s b) ((f, vs, _) : (p, s) module_contract) (s : s) (t : tez)
-                                  (tester : (p, s) typed_address -> (p,s) michelson_contract -> int -> b) : (b * mutation) option =
+      let contract (type p s b)
+        ((f, vs, _) : (p, s) module_contract) (s : s) (t : tez)
+        (tester : (p, s) typed_address -> (p,s) michelson_contract -> int -> b)
+        : (b * mutation) option =
         let wrap_tester (v : (p,s) michelson_contract) : b =
           let f = [%external ("TEST_COMPILE_AST_CONTRACT", v)] in
           let a = Originate.michelson f s t in

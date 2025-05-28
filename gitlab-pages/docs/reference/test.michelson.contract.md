@@ -1,6 +1,6 @@
 ---
-id: test-michelson-contract-reference
-title: michelson-contract
+id: test.michelson.contract-reference
+title: contract
 hide_table_of_contents: true
 ---
 import Syntax from '@theme/Syntax';

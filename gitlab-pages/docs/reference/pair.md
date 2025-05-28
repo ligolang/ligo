@@ -11,7 +11,7 @@ import SyntaxTitle from '@theme/SyntaxTitle';
 val curry : &#39;a &#39;b &#39;c.((&#39;a * &#39;b) -&gt; &#39;c) -&gt; &#39;a -&gt; &#39;b -&gt; &#39;c
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-curry: &lt;a, b, c&gt;(&#95;: (&#95;: [a, b]) =&gt; c) =&gt; (&#95;: a) =&gt; (&#95;: b) =&gt; c
+curry: &lt;a, b, c&gt;(f: (pair: [a, b]) =&gt; c, x: a, y: b) =&gt; c
 </SyntaxTitle>
 
 <Syntax syntax="cameligo">
@@ -30,7 +30,7 @@ The call `curry(f,x,y)` has the same value as `f(x,y)`.
 val uncurry : &#39;a &#39;b &#39;c.(&#39;a -&gt; &#39;b -&gt; &#39;c) -&gt; (&#39;a * &#39;b) -&gt; &#39;c
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-uncurry: &lt;a, b, c&gt;(&#95;: (&#95;: a) =&gt; (&#95;: b) =&gt; c) =&gt; (&#95;: [a, b]) =&gt; c
+uncurry: &lt;a, b, c&gt;(f: (&#95;: a) =&gt; (&#95;: b) =&gt; c) =&gt; (&#95;: [a, b]) =&gt; c
 </SyntaxTitle>
 
 <Syntax syntax="cameligo">

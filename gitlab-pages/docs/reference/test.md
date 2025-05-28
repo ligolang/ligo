@@ -11,21 +11,37 @@ The testing framework
 
 
 [module michelson](test.michelson.md)
+
 [module originate](test.originate.md)
+
 [module mutation](test.mutation.md)
+
 [module pbt](test.pbt.md)
+
 [module String](test.string.md)
+
 [module IO](test.io.md)
+
 [module Typed_address](test.typed_address.md)
+
 [module State](test.state.md)
+
 [module Account](test.account.md)
+
 [module Compare](test.compare.md)
+
 [module Assert](test.assert.md)
+
 [module Contract](test.contract.md)
+
 [module Address](test.address.md)
+
 [module Ticket](test.ticket.md)
+
 [module Timelock](test.timelock.md)
+
 [module Crypto](test.crypto.md)
+
 [module Dynamic_entrypoints](test.dynamic_entrypoints.md)
 
 <SyntaxTitle syntax="cameligo">

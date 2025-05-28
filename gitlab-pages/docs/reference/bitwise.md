@@ -14,30 +14,32 @@ Bitwise operations
 val and : &#39;a &#39;b.&#39;a -&gt; &#39;b -&gt; (&#39;a, &#39;b) external&#95;and
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-and: &lt;a, b&gt;(&#95;: a) =&gt; (&#95;: b) =&gt; external&#95;and&lt;a, b&gt;
+and: &lt;a, b&gt;(left: a, right: b) =&gt; external&#95;and&lt;a, b&gt;
 </SyntaxTitle>
 
-The call `Bitiwise.@and a b` is the conjunction defined on boolean,
+The call `Bitiwise.and a b` is the conjunction defined on boolean,
 natural number and bytes operands. In the boolean case, the result is
 the logical "and" of the operands. In the natural number and bytes
 cases, the result is the bitwise "and" of the operands.
 
-The function `Bitwise.@and` is also defined when the left operand is
+The function `Bitwise.and` is also defined when the left operand is
 of type `int`. Negative numbers are considered in two's complement
 representation, starting with a virtual infinite number of 1s.
 
-When `Bitwise.@and` is used for bytes operands, the bytes result has
+When `Bitwise.and` is used for bytes operands, the bytes result has
 the same length as the shorter operand. The prefix of the longer
 operand is cut to match with the length of the shorter one before
 taking the bitwise "and".
 
 
 <SyntaxTitle syntax="cameligo">
-val or : &#39;a &#39;b.&#39;a -&gt; &#39;b -&gt; (&#39;a, &#39;b) external&#95;or
+val @or : &#39;a &#39;b.&#39;a -&gt; &#39;b -&gt; (&#39;a, &#39;b) external&#95;or
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-or: &lt;a, b&gt;(&#95;: a) =&gt; (&#95;: b) =&gt; external&#95;or&lt;a, b&gt;
+or: &lt;a, b&gt;(left: a, right: b) =&gt; external&#95;or&lt;a, b&gt;
 </SyntaxTitle>
+
+<Syntax syntax="cameligo">
 
 The call `Bitwise.@or a b` is the disjunction defined on boolean,
 natural number and bytes operands. In the boolean case, the result is
@@ -49,12 +51,28 @@ bytes has the same length as the longer operand. The shorter operand
 is zero-padded on the left to match with the length of the longer one
 before taking the bitwise "or".
 
+</Syntax>
+
+<Syntax syntax="jsligo">
+
+The call `Bitwise.or a b` is the disjunction defined on boolean,
+natural number and bytes operands. In the boolean case, the result is
+the logical "or" of the operands. In the natural number and bytes
+cases, the result is the bitwise "or" of the operands.
+
+When the function `Bitwise.or` is used for bytes operands, the result
+bytes has the same length as the longer operand. The shorter operand
+is zero-padded on the left to match with the length of the longer one
+before taking the bitwise "or".
+
+</Syntax>
+
 
 <SyntaxTitle syntax="cameligo">
 val xor : &#39;a &#39;b.&#39;a -&gt; &#39;b -&gt; (&#39;a, &#39;b) external&#95;xor
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-xor: &lt;a, b&gt;(&#95;: a) =&gt; (&#95;: b) =&gt; external&#95;xor&lt;a, b&gt;
+xor: &lt;a, b&gt;(left: a, right: b) =&gt; external&#95;xor&lt;a, b&gt;
 </SyntaxTitle>
 
 The call `Bitwise.xor a b` is the exclusive disjunction defined on
@@ -70,10 +88,10 @@ before taking the bitwise "xor".
 
 
 <SyntaxTitle syntax="cameligo">
-val shift&#95;left : &#39;a &#39;b.&#39;a -&gt; &#39;b -&gt; (&#39;a, &#39;b) external&#95;lsl
+val shift_left : &#39;a &#39;b.&#39;a -&gt; &#39;b -&gt; (&#39;a, &#39;b) external&#95;lsl
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-shift&#95;left: &lt;a, b&gt;(&#95;: a) =&gt; (&#95;: b) =&gt; external&#95;lsl&lt;a, b&gt;
+shift_left: &lt;a, b&gt;(left: a, right: b) =&gt; external&#95;lsl&lt;a, b&gt;
 </SyntaxTitle>
 
 The function `Bitwise.shift_left` on natural numbers consumes two
@@ -96,10 +114,10 @@ than or equal to 64000.
 
 
 <SyntaxTitle syntax="cameligo">
-val shift&#95;right : &#39;a &#39;b.&#39;a -&gt; &#39;b -&gt; (&#39;a, &#39;b) external&#95;lsr
+val shift_right : &#39;a &#39;b.&#39;a -&gt; &#39;b -&gt; (&#39;a, &#39;b) external&#95;lsr
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-shift&#95;right: &lt;a, b&gt;(&#95;: a) =&gt; (&#95;: b) =&gt; external&#95;lsr&lt;a, b&gt;
+shift_right: &lt;a, b&gt;(left: a, right: b) =&gt; external&#95;lsr&lt;a, b&gt;
 </SyntaxTitle>
 
 The function `Bitwise.shift_right` on natural numbers consumes two

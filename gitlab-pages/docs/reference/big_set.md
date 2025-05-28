@@ -56,7 +56,7 @@ The value `Big_set.empty` denotes the empty big set. In some contexts,
 val update : &#39;elt.&#39;elt -&gt; bool -&gt; &#39;elt t -&gt; &#39;elt t
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let update: &lt;elt&gt;(&#95;: elt) =&gt; (&#95;: bool) =&gt; (&#95;: t&lt;elt&gt;) =&gt; t&lt;elt&gt;
+let update: &lt;elt&gt;(elt: elt, add: bool, set: t&lt;elt&gt;) =&gt; t&lt;elt&gt;
 </SyntaxTitle>
 <Syntax syntax="cameligo">
 
@@ -80,7 +80,7 @@ The call `Big_set.update(elt, true, set)` is a copy of the big set `set`
 val add : &#39;elt.&#39;elt -&gt; &#39;elt t -&gt; &#39;elt t
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let add: &lt;elt&gt;(&#95;: elt) =&gt; (&#95;: t&lt;elt&gt;) =&gt; t&lt;elt&gt;
+let add: &lt;elt&gt;(elt: elt, set: t&lt;elt&gt;) =&gt; t&lt;elt&gt;
 </SyntaxTitle>
 <Syntax syntax="cameligo">
 
@@ -101,7 +101,7 @@ The call `Big_set.add(elt, set)` is a big set containing all the elements
 val remove : &#39;elt.&#39;elt -&gt; &#39;elt t -&gt; &#39;elt t
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let remove: &lt;elt&gt;(&#95;: elt) =&gt; (&#95;: t&lt;elt&gt;) =&gt; t&lt;elt&gt;
+let remove: &lt;elt&gt;(elt: elt, set: t&lt;elt&gt;) =&gt; t&lt;elt&gt;
 </SyntaxTitle>
 <Syntax syntax="cameligo">
 
@@ -168,7 +168,7 @@ The call `Big_set.of_list(elements)` is a big set containing exactly the
 val mem : &#39;elt.&#39;elt -&gt; &#39;elt t -&gt; bool
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let mem: &lt;elt&gt;(&#95;: elt) =&gt; (&#95;: t&lt;elt&gt;) =&gt; bool
+let mem: &lt;elt&gt;(elt: elt, set: t&lt;elt&gt;) =&gt; bool
 </SyntaxTitle>
 <Syntax syntax="cameligo">
 

@@ -141,8 +141,8 @@ const sidebars = {
   },
   "API": {
     "Language": [
-      "reference/map-reference",
       "reference/bytes-reference",
+      "reference/map-reference",
       "reference/string-reference",
       "reference/option-reference",
       "reference/big-map-reference",
@@ -187,40 +187,40 @@ const sidebars = {
             "type": "category",
             "label": "state",
             "items": [
-              "reference/test.next.state-reference",
-              "reference/test.next.state.reset-reference"
+              "reference/test.state-reference",
+              "reference/test.state.reset-reference"
             ]
           },
           {
             "type": "category",
             "label": "michelson",
             "items": [
-              "reference/test.next.michelson.contract-reference",
-              "reference/test.next.michelson-reference"
+              "reference/test.michelson-reference",
+              "reference/test.michelson.contract-reference"
             ]
           },
           {
             "type": "category",
             "label": "mutation",
             "items": [
-              "reference/test.next.mutation.all-reference",
-              "reference/test.next.mutation-reference"
+              "reference/test.mutation-reference",
+              "reference/test.mutation.all-reference"
             ]
           },
           {
             "type": "category",
             "label": "account",
             "items": [
-              "reference/test.next.account.contract-reference",
-              "reference/test.next.account-reference"
+              "reference/test.account-reference",
+              "reference/test.account.contract-reference"
             ]
           },
           {
             "type": "category",
             "label": "assert",
             "items": [
-              "reference/test.next.assert.error-reference",
-              "reference/test.next.assert-reference"
+              "reference/test.assert-reference",
+              "reference/test.assert.error-reference"
             ]
           }
         ]
