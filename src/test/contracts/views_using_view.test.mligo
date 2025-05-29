@@ -11,11 +11,11 @@ module Proxy = struct
   [@entry]
   let main (p : param) (_ : store) : operation list * store
     = [], (match p with
-            Basic (v,a)       -> Integer (Option.value_with_error "option is None" (Tezos.call_view "basic" a v))
-          | Get_storage v     -> Integer (Option.value_with_error "option is None" (Tezos.call_view "get_storage" () v))
-          | Not_funny v       -> Integer (Option.value_with_error "option is None" (Tezos.call_view "not_funny" () v) )
-          | Get_address v     -> Address (Option.value_with_error "option is None" (Tezos.call_view "get_address" () v))
-          | Super_not_funny v -> Integer (Option.value_with_error "option is None" (Tezos.call_view "super_not_funny" () v)))
+            Basic (v,a)       -> Integer (Option.value_with_error "option is None" (Tezos.View.call "basic" a v))
+          | Get_storage v     -> Integer (Option.value_with_error "option is None" (Tezos.View.call "get_storage" () v))
+          | Not_funny v       -> Integer (Option.value_with_error "option is None" (Tezos.View.call "not_funny" () v) )
+          | Get_address v     -> Address (Option.value_with_error "option is None" (Tezos.View.call "get_address" () v))
+          | Super_not_funny v -> Integer (Option.value_with_error "option is None" (Tezos.View.call "super_not_funny" () v)))
 end
 
 type orig1 = (| Default, int) Test.Originate.origination_result

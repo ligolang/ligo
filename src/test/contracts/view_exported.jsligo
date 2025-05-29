@@ -13,7 +13,7 @@ const test = (() => {
   Test.IO.log(orig.code);
   let c = Test.Typed_address.to_contract(orig.taddr);
 
-  Test.IO.log(Tezos.call_view("bar",
+  Test.IO.log(Tezos.View.call("bar",
                               unit,
                               Tezos.address(c)) as option<C.storage>);
 })();

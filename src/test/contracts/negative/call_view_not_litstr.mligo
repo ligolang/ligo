@@ -1,7 +1,7 @@
 [@entry]
 let main (s : string) () : operation list * unit =
   let u =
-    match (Tezos.call_view
+    match (Tezos.View.call
          s
          (Tezos.get_sender ())
          ("tz1fakefakefakefakefakefakefakcphLA5" : address)
@@ -9,4 +9,4 @@ let main (s : string) () : operation list * unit =
     with
       Some x -> x
     | None -> () in
-  ([] : operation list), u
+  [], u

@@ -18,10 +18,10 @@ Tezos-specific functions
 [module Sapling](tezos.sapling.md)
 
 <SyntaxTitle syntax="cameligo">
-val call&#95;view : &#39;param &#39;return.string -&gt; &#39;param -&gt; address -&gt; &#39;return option
+val call_view : &#39;param &#39;return.string -&gt; &#39;param -&gt; address -&gt; &#39;return option
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-call&#95;view: &lt;param, return&gt;(&#95;: string) =&gt; (&#95;: param) =&gt; (&#95;: address) =&gt; option&lt;return&gt;
+call_view: &lt;param, return&gt;(view: string, param: param, addr: address) =&gt; option&lt;return&gt;
 </SyntaxTitle>
 
 <Syntax syntax="cameligo">
@@ -51,10 +51,10 @@ calling the view started.
 
 
 <SyntaxTitle syntax="cameligo">
-val get&#95;sender : unit -&gt; address
+val get_sender : unit -&gt; address
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-get&#95;sender: (&#95;: unit) =&gt; address
+get_sender: (_: unit) =&gt; address
 </SyntaxTitle>
 
 <Syntax syntax="cameligo">
@@ -77,10 +77,10 @@ that address could be different from `Tezos.get_source()`.
 
 
 <SyntaxTitle syntax="cameligo">
-val get&#95;source : unit -&gt; address
+val get_source : unit -&gt; address
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-get&#95;source: (&#95;: unit) =&gt; address
+get_source: (_: unit) =&gt; address
 </SyntaxTitle>
 
 <Syntax syntax="cameligo">
@@ -104,7 +104,7 @@ chained, that address is different from `Tezos.get_sender()`.
 val self : &#39;a.string -&gt; &#39;a contract
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-self: &lt;a&gt;(&#95;: string) =&gt; contract&lt;a&gt;
+self: &lt;a&gt;(entrypoint: string) =&gt; contract&lt;a&gt;
 </SyntaxTitle>
 
 <Syntax syntax="cameligo">
@@ -139,10 +139,10 @@ entrypoint, the call results in an type checking error.
 
 
 <SyntaxTitle syntax="cameligo">
-val get&#95;self&#95;address : unit -&gt; address
+val get_self_address : unit -&gt; address
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-get&#95;self&#95;address: (&#95;: unit) =&gt; address
+get_self_address: (_: unit) =&gt; address
 </SyntaxTitle>
 
 <Syntax syntax="cameligo">
@@ -176,7 +176,7 @@ executing contract is statically unknown, so the return type of
 val address : &#39;a.&#39;a contract -&gt; address
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-address: &lt;a&gt;(&#95;: contract&lt;a&gt;) =&gt; address
+address: &lt;a&gt;(contract_addr: contract&lt;a&gt;) =&gt; address
 </SyntaxTitle>
 
 <Syntax syntax="cameligo">
@@ -195,10 +195,10 @@ contract `contract` into the more general value of type `address`.
 
 
 <SyntaxTitle syntax="cameligo">
-val implicit&#95;account : key&#95;hash -&gt; unit contract
+val implicit_account : key_hash -&gt; unit contract
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-implicit&#95;account: (&#95;: key&#95;hash) =&gt; contract&lt;unit&gt;
+implicit_account: (_: key_hash) =&gt; contract&lt;unit&gt;
 </SyntaxTitle>
 
 <Syntax syntax="cameligo">
@@ -219,10 +219,10 @@ implicit accounts always have the type `contract<unit>`.
 
 
 <SyntaxTitle syntax="cameligo">
-val get&#95;contract&#95;opt : &#39;param.address -&gt; &#39;param contract option
+val get_contract_opt : &#39;param.address -&gt; &#39;param contract option
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-get&#95;contract&#95;opt: &lt;param&gt;(&#95;: address) =&gt; option&lt;contract&lt;param&gt;&gt;
+get_contract_opt: &lt;param&gt;(_: address) =&gt; option&lt;contract&lt;param&gt;&gt;
 </SyntaxTitle>
 
 <Syntax syntax="cameligo">
@@ -248,10 +248,10 @@ has type `contract<unit>`.
 
 
 <SyntaxTitle syntax="cameligo">
-val get&#95;contract&#95;with&#95;error : &#39;param.address -&gt; string -&gt; &#39;param contract
+val get_contract_with_error : &#39;param.address -&gt; string -&gt; &#39;param contract
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-get&#95;contract&#95;with&#95;error: &lt;param&gt;(&#95;: address) =&gt; (&#95;: string) =&gt; contract&lt;param&gt;
+get_contract_with_error: &lt;param&gt;(_: address) =&gt; (_: string) =&gt; contract&lt;param&gt;
 </SyntaxTitle>
 
 <Syntax syntax="cameligo">
@@ -272,10 +272,10 @@ exists. If not, the execution fails with the error message `error`.
 
 
 <SyntaxTitle syntax="cameligo">
-val get&#95;contract : &#39;param.address -&gt; &#39;param contract
+val get_contract : &#39;param.address -&gt; &#39;param contract
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-get&#95;contract: &lt;param&gt;(&#95;: address) =&gt; contract&lt;param&gt;
+get_contract: &lt;param&gt;(_: address) =&gt; contract&lt;param&gt;
 </SyntaxTitle>
 
 <Syntax syntax="cameligo">
@@ -300,10 +300,10 @@ contract exists. Note: The address of an implicit account has type
 
 
 <SyntaxTitle syntax="cameligo">
-val get&#95;entrypoint&#95;opt : &#39;param.string -&gt; address -&gt; &#39;param contract option
+val get_entrypoint_opt : &#39;param.string -&gt; address -&gt; &#39;param contract option
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-get&#95;entrypoint&#95;opt: &lt;param&gt;(&#95;: string) =&gt; (&#95;: address) =&gt; option&lt;contract&lt;param&gt;&gt;
+get_entrypoint_opt: &lt;param&gt;(entrypoint: string, addr: address) =&gt; option&lt;contract&lt;param&gt;&gt;
 </SyntaxTitle>
 
 <Syntax syntax="cameligo">
@@ -339,10 +339,10 @@ address. Note: The address of an implicit account has type
 
 
 <SyntaxTitle syntax="cameligo">
-val get&#95;entrypoint : &#39;param.string -&gt; address -&gt; &#39;param contract
+val get_entrypoint : &#39;param.string -&gt; address -&gt; &#39;param contract
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-get&#95;entrypoint: &lt;param&gt;(&#95;: string) =&gt; (&#95;: address) =&gt; contract&lt;param&gt;
+get_entrypoint: &lt;param&gt;(entrypoint: string, addr: address) =&gt; contract&lt;param&gt;
 </SyntaxTitle>
 
 <Syntax syntax="cameligo">
@@ -369,10 +369,10 @@ get_entrypoint"`. Note: The address of an implicit account has type
 
 
 <SyntaxTitle syntax="cameligo">
-val open&#95;chest : chest&#95;key -&gt; chest -&gt; nat -&gt; bytes option
+val open_chest : chest_key -&gt; chest -&gt; nat -&gt; bytes option
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-open&#95;chest: (&#95;: chest&#95;key) =&gt; (&#95;: chest) =&gt; (&#95;: nat) =&gt; option&lt;bytes&gt;
+open_chest: (key: chest_key, _: chest, time: nat) =&gt; option&lt;bytes&gt;
 </SyntaxTitle>
 
 The function `open_chest` opens a timelocked chest given its key and
@@ -381,10 +381,10 @@ correct or not.
 
 
 <SyntaxTitle syntax="cameligo">
-val get&#95;balance : unit -&gt; tez
+val get_balance : unit -&gt; tez
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-get&#95;balance: (&#95;: unit) =&gt; tez
+get_balance: (_: unit) =&gt; tez
 </SyntaxTitle>
 
 <Syntax syntax="cameligo">
@@ -404,10 +404,10 @@ any mutez added by the calling transaction.
 </Syntax>
 
 <SyntaxTitle syntax="cameligo">
-val get&#95;amount : unit -&gt; tez
+val get_amount : unit -&gt; tez
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-get&#95;amount: (&#95;: unit) =&gt; tez
+get_amount: (_: unit) =&gt; tez
 </SyntaxTitle>
 
 <Syntax syntax="cameligo">
@@ -426,10 +426,10 @@ current transaction.
 
 
 <SyntaxTitle syntax="cameligo">
-val get&#95;now : unit -&gt; timestamp
+val get_now : unit -&gt; timestamp
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-get&#95;now: (&#95;: unit) =&gt; timestamp
+get_now: (_: unit) =&gt; timestamp
 </SyntaxTitle>
 
 <Syntax syntax="cameligo">
@@ -452,10 +452,10 @@ moment when the current block is injected, hence the name "now".
 
 
 <SyntaxTitle syntax="cameligo">
-val get&#95;min&#95;block&#95;time : unit -&gt; nat
+val get_min_block_time : unit -&gt; nat
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-get&#95;min&#95;block&#95;time: (&#95;: unit) =&gt; nat
+get_min_block_time: (_: unit) =&gt; nat
 </SyntaxTitle>
 <Syntax syntax="cameligo">
 
@@ -473,10 +473,10 @@ between two consecutive blocks in the chain.
 
 
 <SyntaxTitle syntax="cameligo">
-val get&#95;level : unit -&gt; nat
+val get_level : unit -&gt; nat
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-get&#95;level: (&#95;: unit) =&gt; nat
+get_level: (_: unit) =&gt; nat
 </SyntaxTitle>
 
 <Syntax syntax="cameligo">
@@ -493,10 +493,10 @@ The call `Tezos.get_level()` returns the current block level.
 
 
 <SyntaxTitle syntax="cameligo">
-val get&#95;chain&#95;id : unit -&gt; chain&#95;id
+val get_chain_id : unit -&gt; chain_id
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-get&#95;chain&#95;id: (&#95;: unit) =&gt; chain&#95;id
+get_chain_id: (_: unit) =&gt; chain_id
 </SyntaxTitle>
 
 <Syntax syntax="cameligo">
@@ -515,10 +515,10 @@ on which the smart contract is executed.
 
 
 <SyntaxTitle syntax="cameligo">
-val get&#95;total&#95;voting&#95;power : unit -&gt; nat
+val get_total_voting_power : unit -&gt; nat
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-get&#95;total&#95;voting&#95;power: (&#95;: unit) =&gt; nat
+get_total_voting_power: (_: unit) =&gt; nat
 </SyntaxTitle>
 
 <Syntax syntax="cameligo">
@@ -541,10 +541,10 @@ listings is calculated at the beginning of every voting period.
 
 
 <SyntaxTitle syntax="cameligo">
-val voting&#95;power : key&#95;hash -&gt; nat
+val voting_power : key_hash -&gt; nat
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-voting&#95;power: (&#95;: key&#95;hash) =&gt; nat
+voting_power: (_: key_hash) =&gt; nat
 </SyntaxTitle>
 <Syntax syntax="cameligo">
 
@@ -571,7 +571,7 @@ voting period.
 val never : &#39;a.never -&gt; &#39;a
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-never: &lt;a&gt;(&#95;: never) =&gt; a
+never: &lt;a&gt;(_: never) =&gt; a
 </SyntaxTitle>
 <Syntax syntax="cameligo">
 
@@ -591,10 +591,10 @@ the control flow, for example, in a pattern matching, is dead.
 
 
 <SyntaxTitle syntax="cameligo">
-val pairing&#95;check : (bls12&#95;381&#95;g1 * bls12&#95;381&#95;g2) list -&gt; bool
+val pairing_check : (bls12_381_g1 * bls12_381_g2) list -&gt; bool
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-pairing&#95;check: (&#95;: list&lt;[bls12&#95;381&#95;g1, bls12&#95;381&#95;g2]&gt;) =&gt; bool
+pairing_check: (_: list&lt;[bls12_381_g1, bls12_381_g2]&gt;) =&gt; bool
 </SyntaxTitle>
 
 <Syntax syntax="cameligo">
@@ -622,8 +622,9 @@ P1 * P2^(-1) = 1.
 val constant : &#39;a.string -&gt; &#39;a
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-constant: &lt;a&gt;(&#95;: string) =&gt; a
+constant: &lt;a&gt;(hash: string) =&gt; a
 </SyntaxTitle>
+
 <Syntax syntax="cameligo">
 
 The call to `Tezos.constant hash` returns the value stored on-chain
@@ -633,7 +634,7 @@ the global constant is ill-typed, or too large (gas consumption).
 
 </Syntax>
 
-<Syntax syntax="cameligo">
+<Syntax syntax="jsligo">
 
 The call to `Tezos.constant(hash)` returns the value stored on-chain
 whose hash value is `hash` (global constants). This call can fail when

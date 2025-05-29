@@ -17,7 +17,7 @@ namespace CallView {
   // @entry
   const callView = (param: int, storage: storage): return_type => {
     const [targetAddress, _s] = storage;
-    const resultOpt: option<int> = Tezos.call_view(
+    const resultOpt: option<int> = Tezos.View.call(
       "multiply",
       param,
       targetAddress

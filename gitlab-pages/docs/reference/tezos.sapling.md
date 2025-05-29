@@ -20,12 +20,12 @@ sapling state, that is, no one can spend tokens from it.
 
 
 <SyntaxTitle syntax="cameligo">
-val verify&#95;update :
-  &#39;sap&#95;a.&#39;sap&#95;a sapling&#95;transaction -&gt; &#39;sap&#95;a sapling&#95;state -&gt; (bytes * int * &#39;sap&#95;a sapling&#95;state) option
+val verify_update :
+  &#39;sap_a.&#39;sap_a sapling_transaction -&gt; &#39;sap_a sapling_state -&gt; (bytes * int * &#39;sap_a sapling_state) option
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-verify&#95;update:
-  &lt;sap&#95;a&gt;(&#95;: sapling&#95;transaction&lt;sap&#95;a&gt;) =&gt; (&#95;: sapling&#95;state&lt;sap&#95;a&gt;) =&gt; option&lt;[bytes, [int, sapling&#95;state&lt;sap&#95;a&gt;]]&gt;
+verify_update:
+  &lt;sap_a&gt;(trans: sapling_transaction&lt;sap_a&gt;, state: sapling_state&lt;sap_a&gt;) =&gt; option&lt;[bytes, [int, sapling_state&lt;sap_a&gt;]]&gt;
 </SyntaxTitle>
 
 <Syntax syntax="cameligo">
