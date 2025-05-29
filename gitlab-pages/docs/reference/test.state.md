@@ -13,7 +13,7 @@ import SyntaxTitle from '@theme/SyntaxTitle';
 val restore : unit -&gt; unit
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-restore: (&#95;: unit) =&gt; unit
+restore: (_: unit) =&gt; unit
 </SyntaxTitle>
 
 Pops a testing framework context from the stack of contexts, and sets
@@ -25,7 +25,7 @@ current context is kept.
 val save : unit -&gt; unit
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-save: (&#95;: unit) =&gt; unit
+save: (_: unit) =&gt; unit
 </SyntaxTitle>
 Takes current testing framework context and saves it, pushing it
         into a stack of contexts.
@@ -35,7 +35,7 @@ Takes current testing framework context and saves it, pushing it
 val drop : unit -&gt; unit
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-drop: (&#95;: unit) =&gt; unit
+drop: (_: unit) =&gt; unit
 </SyntaxTitle>
 
 Drops a testing framework context from the stack of contexts. In case
@@ -46,7 +46,7 @@ the stack was empty, nothing is done.
 val reset : nat -&gt; tez list -&gt; unit
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-reset: (&#95;: nat) =&gt; (&#95;: list&lt;tez&gt;) =&gt; unit
+reset: (_: nat, amounts: list&lt;tez&gt;) =&gt; unit
 </SyntaxTitle>
 
 Generates a number of random bootstrapped accounts with a default
@@ -59,10 +59,10 @@ amount to the one being set with `Test.State.reset`.
 
 
 <SyntaxTitle syntax="cameligo">
-val reset&#95;at : timestamp -&gt; nat -&gt; tez list -&gt; unit
+val reset_at : timestamp -&gt; nat -&gt; tez list -&gt; unit
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-reset&#95;at: (&#95;: timestamp) =&gt; (&#95;: nat) =&gt; (&#95;: list&lt;tez&gt;) =&gt; unit
+reset_at: (_: timestamp, _: nat, amounts: list&lt;tez&gt;) =&gt; unit
 </SyntaxTitle>
 
 Generates a number of random bootstrapped accounts with a default
@@ -76,20 +76,20 @@ starting timestamp for the genesis block.
 
 
 <SyntaxTitle syntax="cameligo">
-val register&#95;delegate : key&#95;hash -&gt; unit
+val register_delegate : key_hash -&gt; unit
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-register&#95;delegate: (&#95;: key&#95;hash) =&gt; unit
+register_delegate: (_: key_hash) =&gt; unit
 </SyntaxTitle>
 
 Registers a `key_hash` corresponding to an account as a delegate.
 
 
 <SyntaxTitle syntax="cameligo">
-val register&#95;constant : michelson&#95;program -&gt; string
+val register_constant : michelson_program -&gt; string
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-register&#95;constant: (&#95;: michelson&#95;program) =&gt; string
+register_constant: (_: michelson_program) =&gt; string
 </SyntaxTitle>
 
 Registers a global constant, returns its hash as a string. See the
@@ -97,20 +97,20 @@ documentation for global constants for an example of usage.
 
 
 <SyntaxTitle syntax="cameligo">
-val set&#95;source : address -&gt; unit
+val set_source : address -&gt; unit
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-set&#95;source: (&#95;: address) =&gt; unit
+set_source: (_: address) =&gt; unit
 </SyntaxTitle>
 
 Sets the source for `Test.transfer` and `Test.originate`.
 
 
 <SyntaxTitle syntax="cameligo">
-val set&#95;baker&#95;policy : test&#95;baker&#95;policy -&gt; unit
+val set_baker_policy : test_baker_policy -&gt; unit
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-set&#95;baker&#95;policy: (&#95;: test&#95;baker&#95;policy) =&gt; unit
+set_baker_policy: (_: test_baker_policy) =&gt; unit
 </SyntaxTitle>
 
 Forces the baking policy for `Test.transfer` and `Test.originate`. By
@@ -118,10 +118,10 @@ default, the first bootstrapped account.
 
 
 <SyntaxTitle syntax="cameligo">
-val set&#95;baker : address -&gt; unit
+val set_baker : address -&gt; unit
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-set&#95;baker: (&#95;: address) =&gt; unit
+set_baker: (_: address) =&gt; unit
 </SyntaxTitle>
 
 Forces the baker for `Test.transfer` and `Test.originate`, implemented
@@ -130,10 +130,10 @@ bootstrapped account.
 
 
 <SyntaxTitle syntax="cameligo">
-val bake&#95;until : nat -&gt; unit
+val bake_until : nat -&gt; unit
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-bake&#95;until: (&#95;: nat) =&gt; unit
+bake_until: (_: nat) =&gt; unit
 </SyntaxTitle>
 
 It bakes until a number of cycles pass, so that an account registered
@@ -142,10 +142,10 @@ tests to manually advance time.
 
 
 <SyntaxTitle syntax="cameligo">
-val set&#95;big&#95;map : &#39;k &#39;v.int -&gt; (&#39;k, &#39;v) big&#95;map -&gt; unit
+val set_big_map : &#39;k &#39;v.int -&gt; (&#39;k, &#39;v) big_map -&gt; unit
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-set&#95;big&#95;map: &lt;k, v&gt;(&#95;: int) =&gt; (&#95;: big&#95;map&lt;k, v&gt;) =&gt; unit
+set_big_map: &lt;k, v&gt;(_: int, _: big_map&lt;k, v&gt;) =&gt; unit
 </SyntaxTitle>
 
 The testing framework keeps an internal reference to the values
@@ -156,10 +156,10 @@ custom bootstrap contracts that initialize big maps.
 
 
 <SyntaxTitle syntax="cameligo">
-val get&#95;voting&#95;power : key&#95;hash -&gt; nat
+val get_voting_power : key_hash -&gt; nat
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-get&#95;voting&#95;power: (&#95;: key&#95;hash) =&gt; nat
+get_voting_power: (_: key_hash) =&gt; nat
 </SyntaxTitle>
 
 Return the voting power of a given contract. This voting power
@@ -169,10 +169,10 @@ voting period.
 
 
 <SyntaxTitle syntax="cameligo">
-val get&#95;total&#95;voting&#95;power : unit -&gt; nat
+val get_total_voting_power : unit -&gt; nat
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-get&#95;total&#95;voting&#95;power: (&#95;: unit) =&gt; nat
+get_total_voting_power: (_: unit) =&gt; nat
 </SyntaxTitle>
 
 Returns the total voting power of all contracts. The total voting
@@ -182,10 +182,10 @@ beginning of every voting period.
 
 
 <SyntaxTitle syntax="cameligo">
-val last&#95;originations : unit -&gt; (address, address list) map
+val last_originations : unit -&gt; (address, address list) map
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-last&#95;originations: (&#95;: unit) =&gt; map&lt;address, list&lt;address&gt;&gt;
+last_originations: (_: unit) =&gt; map&lt;address, list&lt;address&gt;&gt;
 </SyntaxTitle>
 
 Returns addresses of orginated accounts in the last transfer. It is
@@ -194,10 +194,10 @@ origination operation to the addresses of newly originated accounts.
 
 
 <SyntaxTitle syntax="cameligo">
-val last&#95;events : &#39;a &#39;p &#39;s.(&#39;p, &#39;s) typed&#95;address -&gt; string -&gt; &#39;a list
+val last_events : &#39;a &#39;p &#39;s.(&#39;p, &#39;s) typed_address -&gt; string -&gt; &#39;a list
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-last&#95;events: &lt;a, p, s&gt;(&#95;: typed&#95;address&lt;p, s&gt;) =&gt; (&#95;: string) =&gt; list&lt;a&gt;
+last_events: &lt;a, p, s&gt;(_: typed_address&lt;p, s&gt;, tag: string) =&gt; list&lt;a&gt;
 </SyntaxTitle>
 
 Returns the list of all the event payloads emited with a given tag by
@@ -206,8 +206,8 @@ expected payload type.
 
 
 <SyntaxTitle syntax="cameligo">
-val stake : key&#95;hash -&gt; tez -&gt; unit
+val stake : key_hash -&gt; tez -&gt; unit
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-stake: (&#95;: key&#95;hash) =&gt; (&#95;: tez) =&gt; unit
+stake: (_: key_hash, amount: tez) =&gt; unit
 </SyntaxTitle>

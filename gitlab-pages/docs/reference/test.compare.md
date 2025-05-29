@@ -11,7 +11,7 @@ import SyntaxTitle from '@theme/SyntaxTitle';
 val eq : &#39;a.&#39;a -&gt; &#39;a -&gt; bool
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-eq: &lt;a&gt;(&#95;: a) =&gt; (&#95;: a) =&gt; bool
+eq: &lt;a&gt;(lhs: a, rhs: a) =&gt; bool
 </SyntaxTitle>
 
 <Syntax syntax="cameligo">
@@ -33,7 +33,7 @@ considered to be equal w.r.t. the order on the underlying type.
 val neq : &#39;a.&#39;a -&gt; &#39;a -&gt; bool
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-neq: &lt;a&gt;(&#95;: a) =&gt; (&#95;: a) =&gt; bool
+neq: &lt;a&gt;(lhs: a, rhs: a) =&gt; bool
 </SyntaxTitle>
 
 <Syntax syntax="cameligo">
@@ -55,7 +55,7 @@ not considered to be equal w.r.t. the order on the underlying type.
 val gt : &#39;a.&#39;a -&gt; &#39;a -&gt; bool
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-gt: &lt;a&gt;(&#95;: a) =&gt; (&#95;: a) =&gt; bool
+gt: &lt;a&gt;(lhs: a, rhs: a) =&gt; bool
 </SyntaxTitle>
 
 <Syntax syntax="cameligo">
@@ -77,7 +77,7 @@ to be greater than `y` w.r.t. the order on the underlying type.
 val lt : &#39;a.&#39;a -&gt; &#39;a -&gt; bool
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-lt: &lt;a&gt;(&#95;: a) =&gt; (&#95;: a) =&gt; bool
+lt: &lt;a&gt;(lhs: a, rhs: a) =&gt; bool
 </SyntaxTitle>
 
 <Syntax syntax="cameligo">
@@ -99,7 +99,7 @@ to be less than `y` w.r.t. the order on the underlying type.
 val ge : &#39;a.&#39;a -&gt; &#39;a -&gt; bool
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-ge: &lt;a&gt;(&#95;: a) =&gt; (&#95;: a) =&gt; bool
+ge: &lt;a&gt;(lhs: a, rhs: a) =&gt; bool
 </SyntaxTitle>
 <Syntax syntax="cameligo">
 
@@ -121,7 +121,7 @@ type.
 val le : &#39;a.&#39;a -&gt; &#39;a -&gt; bool
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-le: &lt;a&gt;(&#95;: a) =&gt; (&#95;: a) =&gt; bool
+le: &lt;a&gt;(lhs: a, rhs: a) =&gt; bool
 </SyntaxTitle>
 
 <Syntax syntax="cameligo">

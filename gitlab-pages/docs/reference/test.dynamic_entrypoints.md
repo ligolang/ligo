@@ -11,14 +11,14 @@ import SyntaxTitle from '@theme/SyntaxTitle';
 val storage :
   &#39;p
   &#39;s
-  &#39;s2.(&#39;p, &#39;s) module&#95;contract -&gt;
+  &#39;s2.(&#39;p, &#39;s) module_contract -&gt;
   &#39;s2 -&gt;
   &#123;
-   dynamic&#95;entrypoints : dynamic&#95;entrypoints;
+   dynamic_entrypoints : dynamic_entrypoints;
    storage : &#39;s2
   &#125;
 </SyntaxTitle>
 
 <SyntaxTitle syntax="jsligo">
-storage: &lt;p, s, s2&gt;(&#95;: module&#95;contract&lt;p, s&gt;, s: s2) =&gt; &#123; dynamic&#95;entrypoints: dynamic&#95;entrypoints; storage: s2 &#125;
+storage: &lt;p, s, s2&gt;(_: module_contract&lt;p, s&gt;, storage: s2) =&gt; &#123; dynamic_entrypoints: dynamic_entrypoints; storage: s2 &#125;
 </SyntaxTitle>

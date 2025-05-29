@@ -12,21 +12,21 @@ import SyntaxTitle from '@theme/SyntaxTitle';
 val assert : bool -&gt; string -&gt; unit
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let assert: (&#95;: bool) =&gt; (&#95;: string) =&gt; unit
+assert: (condition: bool, error: string) =&gt; unit
 </SyntaxTitle>
 <Syntax syntax="cameligo">
 
-The call `assert cond error` terminates the execution
-      with the string `error` (that is, an error message) if, and only if,
-      the boolean condition `cond` is false.
+The call `assert cond error` terminates the execution with the string
+`error` (that is, an error message) if, and only if, the boolean
+condition `cond` is false.
 
 </Syntax>
 
 <Syntax syntax="jsligo">
 
 The call `assert(cond, error)` terminates the execution
-      with the string `error` (that is, an error message) if, and only if,
-      the boolean condition `cond` is false.
+with the string `error` (that is, an error message) if, and only if,
+the boolean condition `cond` is false.
 
 </Syntax>
 
@@ -35,21 +35,22 @@ The call `assert(cond, error)` terminates the execution
 val some : &#39;a.&#39;a option -&gt; string -&gt; unit
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let some: &lt;a&gt;(&#95;: option&lt;a&gt;) =&gt; (&#95;: string) =&gt; unit
+some: &lt;a&gt;(_: option&lt;a&gt;, error: string) =&gt; unit
 </SyntaxTitle>
+
 <Syntax syntax="cameligo">
 
 The call `some opt err` terminates the execution
-      with the string `err` (that is, an error message) if, and only if,
-      `opt` is `None`.
+with the string `err` (that is, an error message) if, and only if,
+`opt` is `None`.
 
 </Syntax>
 
 <Syntax syntax="jsligo">
 
 The call `some(opt, err)` terminates the execution
-      with the string `err` (that is, an error message) if, and only if,
-      `opt` is `None()`.
+with the string `err` (that is, an error message) if, and only if,
+`opt` is `["None" as "None"]`.
 
 </Syntax>
 
@@ -58,20 +59,21 @@ The call `some(opt, err)` terminates the execution
 val none : &#39;a.&#39;a option -&gt; string -&gt; unit
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let none: &lt;a&gt;(&#95;: option&lt;a&gt;) =&gt; (&#95;: string) =&gt; unit
+none: &lt;a&gt;(_: option&lt;a&gt;, error: string) =&gt; unit
 </SyntaxTitle>
+
 <Syntax syntax="cameligo">
 
-The call `none opt err` terminates the execution
-      with the string `err` (that is, an error message) if, and only if,
-      `opt` is an optional value different from `None`.
+The call `none opt err` terminates the execution with the string `err`
+(that is, an error message) if, and only if, `opt` is an optional
+value different from `None`.
 
 </Syntax>
 
 <Syntax syntax="jsligo">
 
 The call `none(opt, err)` terminates the execution
-      with the string `err` (that is, an error message) if, and only if,
-      `opt` is an optional value different from `None()`.
+with the string `err` (that is, an error message) if, and only if,
+`opt` is an optional value different from `["None" as "None"]`.
 
 </Syntax>

@@ -378,7 +378,7 @@ module Tezos = struct
   let implicit_account (kh: key_hash) : unit contract =
     [%michelson ({| {IMPLICIT_ACCOUNT} |} kh : unit contract)]
 
-  (* Contracts and operations *)
+  (* Contracts *)
 
   (** display-only-for-cameligo The call `get_contract_opt addr` casts
       the address `addr` into that of a contract address, if such
@@ -2232,8 +2232,8 @@ module Test = struct
         [%external ("TEST_DECOMPILE", m)]
 
       (** Parses Michelson (as string) into a `michelson_program`. *)
-      let parse (s : string) : michelson_program =
-        [%external ("TEST_CONSTANT_TO_MICHELSON", s)]
+      let parse (code : string) : michelson_program =
+        [%external ("TEST_CONSTANT_TO_MICHELSON", code)]
 
       module Contract = struct
         (** Compiles a contract from an entrypoint function. *)
@@ -2252,8 +2252,8 @@ module Test = struct
         let size (type p s) (c : (p,s) michelson_contract) : int = [%external ("TEST_SIZE", c)]
 
         (** Reads a contract from a `.tz` file. *)
-        let from_file (type p s) (fn : string) : (p,s) michelson_contract =
-          [%external ("TEST_READ_CONTRACT_FROM_FILE", fn)]
+        let from_file (type p s) (michelson_file : string) : (p,s) michelson_contract =
+          [%external ("TEST_READ_CONTRACT_FROM_FILE", michelson_file)]
 
         (** Compiles a contract with a path to the contract file, an
             entrypoint, and a list of views. *)
@@ -2296,11 +2296,14 @@ module Test = struct
       (** Originate a contract with a path to the contract file, an
         entrypoint, and a list of views, together with an initial storage
         and an initial balance. *)
-      let from_file (type p s) (fn : string) (s : s) (t : tez) : (p, s) origination_result =
+      let from_file (type p s)
+        (path : string)
+        (storage : s)
+        (balance : tez) : (p, s) origination_result =
         let ast_c : (p,s) michelson_contract =
-          [%external ("TEST_COMPILE_CONTRACT_FROM_FILE", fn, (None : nat option))] in
+          [%external ("TEST_COMPILE_CONTRACT_FROM_FILE", path, (None : nat option))] in
         let code = [%external ("TEST_COMPILE_AST_CONTRACT", ast_c)] in
-        let taddr = michelson code s t in
+        let taddr = michelson code storage balance in
         let size = Michelson.Contract.size code in
         { taddr; code ; size }
     end
@@ -2455,11 +2458,15 @@ module Test = struct
           failure arises when running the function on a mutation, the
           failure and mutation involved will be added to the list to
           be returned. *)
-        let contract (type p s b) ((f, vs, _) : (p, s) module_contract) (s : s) (t : tez)
-                     (tester : (p, s) typed_address -> (p,s) michelson_contract -> int -> b) : (b * mutation) list =
+        let contract (type p s b)
+          ((f, vs, _) : (p, s) module_contract)
+          (storage : s)
+          (amount : tez)
+          (tester : (p, s) typed_address -> (p,s) michelson_contract -> int -> b)
+          : (b * mutation) list =
           let wrap_tester (v : (p,s) michelson_contract) : b =
             let f = [%external ("TEST_COMPILE_AST_CONTRACT", v)] in
-            let a = Originate.michelson f s t in
+            let a = Originate.michelson f storage amount in
             let c = Michelson.Contract.size f in
             tester a f c in
           let ast_c : (p,s) michelson_contract = [%external ("TEST_COMPILE_CONTRACT", f, vs)] in
@@ -2559,34 +2566,35 @@ module Test = struct
         typed address: the contract parameter in the result will be the
         type of the default entrypoint (generally `'param`, but this might
         differ if `'param` includes a "default" entrypoint). *)
-      let to_contract (type p s) (t : (p, s) typed_address) : p contract =
-        [%external ("TEST_TO_CONTRACT", t)]
+      let to_contract (type p s) (a : (p, s) typed_address) : p contract =
+        [%external ("TEST_TO_CONTRACT", a)]
 
        (** Bakes a transaction by sending an amount of tez with a parameter
          from the current source to another account. Returns the amount of
          gas consumed by the execution of the contract. *)
-      let transfer (type p s) (a : (p,s) typed_address) (s : p) (t : tez) : test_exec_result =
+      let transfer (type p s) (a : (p,s) typed_address) (param : p) (amount : tez)
+        : test_exec_result =
         let a = to_contract a in
-        let s : michelson_program = Michelson.eval s in
-        [%external ("TEST_EXTERNAL_CALL_TO_ADDRESS", a, (None : string option), s, t)]
+        let param : michelson_program = Michelson.eval param in
+        [%external ("TEST_EXTERNAL_CALL_TO_ADDRESS", a, (None : string option), param, amount)]
 
       (** Bakes a transaction by sending an amount of tez with a parameter
         from the current source to another account. Returns the amount of
         gas consumed by the execution of the contract. Similar as
-        `transfer`, but fails when anything goes wrong. *)
-      let transfer_exn (type p s) (a : (p,s) typed_address) (s : p) (t : tez) : nat =
+        `transfer`, but fails if anything goes wrong. *)
+      let transfer_exn (type p s) (a : (p,s) typed_address) (param : p) (amount : tez) : nat =
         let a = to_contract a in
-        let s : michelson_program = Michelson.eval s in
-        [%external ("TEST_EXTERNAL_CALL_TO_ADDRESS_EXN", a, (None : string option), s, t)]
+        let param : michelson_program = Michelson.eval param in
+        [%external ("TEST_EXTERNAL_CALL_TO_ADDRESS_EXN", a, (None : string option), param, amount)]
 
       (** Gets the storage of a typed account. *)
-      let get_storage (type p s) (t : (p, s) typed_address) : s =
-        let s : michelson_program = [%external ("TEST_GET_STORAGE", t)] in
+      let get_storage (type p s) (a : (p, s) typed_address) : s =
+        let s : michelson_program = [%external ("TEST_GET_STORAGE", a)] in
         (Michelson.decompile s : s)
 
       (** Casting a typed address to a regular address. *)
-      let to_address (type p s) (c : (p, s) typed_address) : address =
-        [%external ("TEST_TO_ADDRESS", c)]
+      let to_address (type p s) (a : (p, s) typed_address) : address =
+        [%external ("TEST_TO_ADDRESS", a)]
 
       (** Gets the balance of an account in tez. *)
       let get_balance (type p s) (a : (p, s) typed_address) : tez =
@@ -2597,15 +2605,17 @@ module Test = struct
         the entrypoint, it needs to be annotated, entrypoint string should
         omit the prefix "%", but if passed a string starting with "%", it
         will be removed (and a warning emitted). *)
-      let get_entrypoint (type p s q) (s : string) (t : (p, s) typed_address) : q contract =
-        let s =
-          if Toplevel.String.length s > 0n then
-            if Toplevel.String.sub 0n 1n s = "%" then
+      let get_entrypoint (type p s q)
+        (entrypoint : string) (a : (p, s) typed_address) : q contract =
+        let len = Toplevel.String.length entrypoint in
+        let entrypoint =
+          if len > 0n then
+            if Toplevel.String.sub 0n 1n entrypoint = "%" then
               let () = IO.eprintln "WARNING: get_entrypoint: automatically removing starting %" in
-              Toplevel.String.sub 1n (abs (Toplevel.String.length s - 1)) s
-            else s
-          else s in
-        [%external ("TEST_TO_ENTRYPOINT", s, t)]
+              Toplevel.String.sub 1n (abs (len - 1)) entrypoint
+            else entrypoint
+          else entrypoint in
+        [%external ("TEST_TO_ENTRYPOINT", entrypoint, a)]
     end
 
     module State = struct
@@ -2630,8 +2640,8 @@ module Test = struct
         account can be taken to be a validator, and thus getting
         balance can show a different amount to the one being set with
         `Test.State.reset`. *)
-      let reset (n : nat) (l : tez list) : unit =
-        [%external ("TEST_STATE_RESET", (None : timestamp option), n, l)]
+      let reset (n : nat) (amounts : tez list) : unit =
+        [%external ("TEST_STATE_RESET", (None : timestamp option), n, amounts)]
 
       (** Generates a number of random bootstrapped accounts with a
         default amount of `4000000` tez. The passed list can be used to
@@ -2707,10 +2717,10 @@ module Test = struct
       (** Returns the list of all the event payloads emited with a given
         tag by a given address. Any call to this function must be
         annotated with the expected payload type. *)
-      let last_events (type a p s) (addr : (p,s) typed_address) (rtag: string)
-      : a list =
+      let last_events (type a p s) (addr : (p,s) typed_address) (tag: string)
+        : a list =
         let addr = Tezos.address (Typed_address.to_contract addr) in
-        let event_map : (address * a) list = [%external ("TEST_LAST_EVENTS", rtag)] in
+        let event_map : (address * a) list = [%external ("TEST_LAST_EVENTS", tag)] in
         let f ((acc, (c_addr,event)) : a list * (address * a)) : a list =
           if addr = c_addr then event :: acc else acc in
         List.fold f event_map ([]: a list)
@@ -2729,10 +2739,10 @@ module Test = struct
           order, and they will be available only after reset. *)
         let add_func_contract (type p s)
           (f : p * s -> operation list * s)
-          (s : s)
-          (t : tez)
+          (storage : s)
+          (amount : tez)
         : unit =
-          [%external ("TEST_BOOTSTRAP_CONTRACT", f, s, t)]
+          [%external ("TEST_BOOTSTRAP_CONTRACT", f, storage, amount)]
       end
     end
 
@@ -2756,7 +2766,8 @@ module Test = struct
 
       (** Adds an account specfied by secret key & public key to the test
         context. *)
-      let add (s : string) (k : key) : unit = [%external ("TEST_ADD_ACCOUNT", s, k)]
+      let add (secret : string) (public : key) : unit =
+        [%external ("TEST_ADD_ACCOUNT", secret, public)]
 
       type info = { addr: address; pk: key; sk: string }
 
@@ -2947,20 +2958,20 @@ module Test = struct
       (** Bake a transaction by sending an amount of tez with a parameter
           from the current source to a contract. Returns the amount of gas
           consumed by the execution of the contract. *)
-      let transfer (type p) (c : p contract) (s : p) (t : tez) : test_exec_result =
+      let transfer (type p) (c : p contract) (param : p) (amount : tez) : test_exec_result =
         let e : string option = [%external ("TEST_GET_ENTRYPOINT", c)] in
-        let s : michelson_program = Michelson.eval s in
-        [%external ("TEST_EXTERNAL_CALL_TO_ADDRESS", c, e, s, t)]
+        let param : michelson_program = Michelson.eval param in
+        [%external ("TEST_EXTERNAL_CALL_TO_ADDRESS", c, e, param, amount)]
 
       (** Bakes a transaction by sending an amount of tez with a
           parameter from the current source to a contract. Returns the
           amount of gas consumed by the execution of the
           contract. Similar to `transfer`, but fails when
           anything goes wrong. *)
-      let transfer_exn (type p) (c : p contract) (s : p) (t : tez) : nat =
+      let transfer_exn (type p) (c : p contract) (param : p) (amount : tez) : nat =
         let e : string option = [%external ("TEST_GET_ENTRYPOINT", c)] in
-        let s : michelson_program = Michelson.eval s in
-        [%external ("TEST_EXTERNAL_CALL_TO_ADDRESS_EXN", c, e, s, t)]
+        let param : michelson_program = Michelson.eval param in
+        [%external ("TEST_EXTERNAL_CALL_TO_ADDRESS_EXN", c, e, param, amount)]
 
       let to_typed_address (type p s) (c : p contract) : (p, s) typed_address =
         [%external ("TEST_TO_TYPED_ADDRESS", c)]
@@ -3098,13 +3109,13 @@ module Test = struct
     module Dynamic_entrypoints = struct
       let storage (type p s s2)
         ((_, _, init_opt) : (p, s) module_contract)
-        (s: s2)
+        (storage: s2)
       = type t = [@layout comb]
         { storage : s2;
           dynamic_entrypoints : dynamic_entrypoints
         } in
         match init_opt with
-        | Some dynamic_entrypoints -> ({storage = s ; dynamic_entrypoints } : t)
+        | Some dynamic_entrypoints -> ({storage; dynamic_entrypoints } : t)
         | None -> failwith "Your contract does not have any dynamic entrypoints"
     end
 end

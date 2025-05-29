@@ -12,5 +12,5 @@ import SyntaxTitle from '@theme/SyntaxTitle';
 val sign : string -&gt; bytes -&gt; signature
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-sign: (&#95;: string) =&gt; (&#95;: bytes) =&gt; signature
+sign: (_: string, _: bytes) =&gt; signature
 </SyntaxTitle>

@@ -11,7 +11,7 @@ import SyntaxTitle from '@theme/SyntaxTitle';
 val func : &#39;a &#39;b.&#39;a -&gt; (&#39;a -&gt; &#39;b) -&gt; (&#39;b * mutation) list
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-func: &lt;a, b&gt;(&#95;: a) =&gt; (&#95;: (&#95;: a) =&gt; b) =&gt; list&lt;[b, mutation]&gt;
+func: &lt;a, b&gt;(_: a) =&gt; (_: (_: a) =&gt; b) =&gt; list&lt;[b, mutation]&gt;
 </SyntaxTitle>
 
 Given a value to mutate (first argument), it will try all the
@@ -22,14 +22,14 @@ to be returned.
 
 
 <SyntaxTitle syntax="cameligo">
-val from&#95;file :
+val from_file :
   &#39;b
   &#39;p
-  &#39;s.string -&gt; &#39;s -&gt; tez -&gt; (((&#39;p, &#39;s) typed&#95;address * (&#39;p, &#39;s) michelson&#95;contract * int) -&gt; &#39;b) -&gt; (&#39;b * mutation) list
+  &#39;s.string -&gt; &#39;s -&gt; tez -&gt; (((&#39;p, &#39;s) typed_address * (&#39;p, &#39;s) michelson_contract * int) -&gt; &#39;b) -&gt; (&#39;b * mutation) list
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-from&#95;file:
-  &lt;b, p, s&gt;(&#95;: string) =&gt; (&#95;: s) =&gt; (&#95;: tez) =&gt; (&#95;: (&#95;: [typed&#95;address&lt;p, s&gt;, michelson&#95;contract&lt;p, s&gt;, int]) =&gt; b) =&gt; list&lt;
+from_file:
+  &lt;b, p, s&gt;(_: string) =&gt; (_: s) =&gt; (_: tez) =&gt; (_: (_: [typed_address&lt;p, s&gt;, michelson_contract&lt;p, s&gt;, int]) =&gt; b) =&gt; list&lt;
     [b, mutation]
   &gt;
 </SyntaxTitle>
@@ -46,14 +46,14 @@ returned.
 val contract :
   &#39;p
   &#39;s
-  &#39;b.(&#39;p, &#39;s) module&#95;contract -&gt;
-  &#39;s -&gt; tez -&gt; ((&#39;p, &#39;s) typed&#95;address -&gt; (&#39;p, &#39;s) michelson&#95;contract -&gt; int -&gt; &#39;b) -&gt; (&#39;b * mutation) list
+  &#39;b.(&#39;p, &#39;s) module_contract -&gt;
+  &#39;s -&gt; tez -&gt; ((&#39;p, &#39;s) typed_address -&gt; (&#39;p, &#39;s) michelson_contract -&gt; int -&gt; &#39;b) -&gt; (&#39;b * mutation) list
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
 contract:
-  &lt;p, s, b&gt;(&#95;: module&#95;contract&lt;p, s&gt;) =&gt; (&#95;: s) =&gt; (&#95;: tez) =&gt; (
-    &#95;: (&#95;: typed&#95;address&lt;p, s&gt;) =&gt; (&#95;: michelson&#95;contract&lt;p, s&gt;) =&gt; (&#95;: int) =&gt; b
-  ) =&gt; list&lt;[b, mutation]&gt;
+  &lt;p, s, b&gt;(_: module_contract&lt;p, s&gt;, storage: s, amount:
+  tez, _: (_: typed_address&lt;p, s&gt;, _: michelson_contract&lt;p,
+  s&gt;, _: int) =&gt; b) =&gt; list&lt;[b, mutation]&gt;
 </SyntaxTitle>
 
 <Syntax syntax="cameligo">
@@ -87,7 +87,7 @@ val from_file :
   -> (&#39;b * mutation) list
 </SyntaxTitle>
 
-<SyntaxTitle syntax="cameligo">
+<SyntaxTitle syntax="jsligo">
 from_file :
   &lt;p,b,s&gt;(fn: string, s: s, t: tez,
   tester: (_ : [typed_address&lt;p,s&gt;, michelson_contract&lt;p,s&gt;, int]) =&gt; b)

@@ -9,24 +9,24 @@ import SyntaxTitle from '@theme/SyntaxTitle';
 
 
 <SyntaxTitle syntax="cameligo">
-val create : bytes -&gt; nat -&gt; (chest * chest&#95;key)
+val create : bytes -&gt; nat -&gt; (chest * chest_key)
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-create: (&#95;: bytes) =&gt; (&#95;: nat) =&gt; [chest, chest&#95;key]
+create: (_: bytes, _: nat) =&gt; [chest, chest_key]
 </SyntaxTitle>
 
 <SyntaxTitle syntax="cameligo">
-val create&#95;key : chest -&gt; nat -&gt; chest&#95;key
+val create_key : chest -&gt; nat -&gt; chest_key
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-create&#95;key: (&#95;: chest) =&gt; (&#95;: nat) =&gt; chest&#95;key
+create_key: (_: chest, _: nat) =&gt; chest_key
 </SyntaxTitle>
 
 <SyntaxTitle syntax="cameligo">
-val verify : chest -&gt; chest&#95;key -&gt; nat -&gt; bool
+val verify : chest -&gt; chest_key -&gt; nat -&gt; bool
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-verify: (&#95;: chest) =&gt; (&#95;: chest&#95;key) =&gt; (&#95;: nat) =&gt; bool
+verify: (_: chest, _: chest_key, _: nat) =&gt; bool
 </SyntaxTitle>
 
 <Syntax syntax="cameligo">
