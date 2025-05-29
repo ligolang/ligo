@@ -18,39 +18,6 @@ Tezos-specific functions
 [module Sapling](tezos.sapling.md)
 
 <SyntaxTitle syntax="cameligo">
-val call_view : &#39;param &#39;return.string -&gt; &#39;param -&gt; address -&gt; &#39;return option
-</SyntaxTitle>
-<SyntaxTitle syntax="jsligo">
-call_view: &lt;param, return&gt;(view: string, param: param, addr: address) =&gt; option&lt;return&gt;
-</SyntaxTitle>
-
-<Syntax syntax="cameligo">
-
-The call `Tezos.call_view v p a` calls the view `v` with parameter
-`param` at the contract whose address is `a`. The value returned is
-`None` if the view does not exist, or has a different type of
-parameter, or if the contract does not exist at that
-address. Otherwise, it is `Some v`, where `v` is the return value of
-the view. Note: the storage of the view is the same as when the
-execution of the contract calling the view started.
-
-</Syntax>
-
-<Syntax syntax="jsligo">
-
-The call `Tezos.call_view(v, p, a)` calls the view `v` with
-parameter `param` at the contract whose address is `a`. The
-value returned is `["None" as "None"]` if the view does not
-exist, or has a different type of parameter, or if the contract
-does not exist at that address. Otherwise, it is `["Some" as "Some", v]`,
-where `v` is the return value of the view. Note: the storage of
-the view is the same as when the execution of the contract
-calling the view started.
-
-</Syntax>
-
-
-<SyntaxTitle syntax="cameligo">
 val get_sender : unit -&gt; address
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
