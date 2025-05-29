@@ -15,7 +15,7 @@ import SyntaxTitle from '@theme/SyntaxTitle';
 val assert : bool -&gt; unit
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let assert: (&#95;: bool) =&gt; unit
+assert: (condition: bool) =&gt; unit
 </SyntaxTitle>
 <Syntax syntax="cameligo">
 
@@ -38,7 +38,7 @@ The call `assert(cond)` terminates the execution with the string
 val some : &#39;a.&#39;a option -&gt; unit
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let some: &lt;a&gt;(&#95;: option&lt;a&gt;) =&gt; unit
+some: &lt;a&gt;(_: option&lt;a&gt;) =&gt; unit
 </SyntaxTitle>
 <Syntax syntax="cameligo">
 
@@ -59,7 +59,7 @@ The call `some(opt)` terminates the execution with the
 val none : &#39;a.&#39;a option -&gt; unit
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let none: &lt;a&gt;(&#95;: option&lt;a&gt;) =&gt; unit
+none: &lt;a&gt;(_: option&lt;a&gt;) =&gt; unit
 </SyntaxTitle>
 <Syntax syntax="cameligo">
 

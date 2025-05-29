@@ -159,10 +159,10 @@ const sidebars = {
         "label": "tezos",
         "items": [
           "reference/tezos-reference",
-          "reference/tezos.sapling-reference",
-          "reference/tezos.view-reference",
           "reference/tezos.operation-reference",
-          "reference/tezos.ticket-reference"
+          "reference/tezos.view-reference",
+          "reference/tezos.ticket-reference",
+          "reference/tezos.sapling-reference"
         ]
       },
       {

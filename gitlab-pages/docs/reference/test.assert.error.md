@@ -11,7 +11,7 @@ import SyntaxTitle from '@theme/SyntaxTitle';
 val assert : bool -&gt; string -&gt; unit
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-assert: (b: bool, s: string) =&gt; unit
+assert: (condition: bool, error: string) =&gt; unit
 </SyntaxTitle>
 
 <Syntax syntax="cameligo">
@@ -37,7 +37,7 @@ testing framework and not by Michelson's interpreter.
 val some : &#39;a.&#39;a option -&gt; string -&gt; unit
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-some: &lt;a&gt;(&#95;: option&lt;a&gt;) =&gt; (&#95;: string) =&gt; unit
+some: &lt;a&gt;(_: option&lt;a&gt;, error: string) =&gt; unit
 </SyntaxTitle>
 <Syntax syntax="cameligo">
 
@@ -62,7 +62,7 @@ framework and not by Michelson's interpreter.
 val none : &#39;a.&#39;a option -&gt; string -&gt; unit
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-none: &lt;a&gt;(&#95;: option&lt;a&gt;) =&gt; (&#95;: string) =&gt; unit
+none: &lt;a&gt;(_: option&lt;a&gt;, error: string) =&gt; unit
 </SyntaxTitle>
 
 <Syntax syntax="cameligo">

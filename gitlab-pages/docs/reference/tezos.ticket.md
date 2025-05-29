@@ -12,7 +12,7 @@ import SyntaxTitle from '@theme/SyntaxTitle';
 val create : &#39;a.&#39;a -&gt; nat -&gt; &#39;a ticket option
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-create: &lt;a&gt;(&#95;: a) =&gt; (&#95;: nat) =&gt; option&lt;ticket&lt;a&gt;&gt;
+create: &lt;a&gt;(value: a, amount: nat) =&gt; option&lt;ticket&lt;a&gt;&gt;
 </SyntaxTitle>
 
 <Syntax syntax="cameligo">
@@ -39,7 +39,7 @@ cannot be duplicated.
 val split : &#39;a.&#39;a ticket -&gt; (nat * nat) -&gt; (&#39;a ticket * &#39;a ticket) option
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-split: &lt;a&gt;(&#95;: ticket&lt;a&gt;) =&gt; (&#95;: [nat, nat]) =&gt; option&lt;[ticket&lt;a&gt;, ticket&lt;a&gt;]&gt;
+split: &lt;a&gt;(&#95;: ticket&lt;a&gt;, amounts: [nat, nat]) =&gt; option&lt;[ticket&lt;a&gt;, ticket&lt;a&gt;]&gt;
 </SyntaxTitle>
 
 <Syntax syntax="cameligo">

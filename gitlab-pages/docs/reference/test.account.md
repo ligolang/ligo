@@ -24,7 +24,7 @@ Returns the address of the nth bootstrapped account.
 val alice : unit -&gt; address
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-alice: (&#95;: unit) =&gt; address
+alice: (_: unit) =&gt; address
 </SyntaxTitle>
 
 Returns the address of the 0th bootstrapped account.
@@ -34,7 +34,7 @@ Returns the address of the 0th bootstrapped account.
 val bob : unit -&gt; address
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-bob: (&#95;: unit) =&gt; address
+bob: (_: unit) =&gt; address
 </SyntaxTitle>
 
 Returns the address of the 1st bootstrapped account.
@@ -44,7 +44,7 @@ Returns the address of the 1st bootstrapped account.
 val carol : unit -&gt; address
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-carol: (&#95;: unit) =&gt; address
+carol: (_: unit) =&gt; address
 </SyntaxTitle>
 
 Returns the address of the 2nd bootstrapped account.
@@ -54,7 +54,7 @@ Returns the address of the 2nd bootstrapped account.
 val dan : unit -&gt; address
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-dan: (&#95;: unit) =&gt; address
+dan: (_: unit) =&gt; address
 </SyntaxTitle>
 
 Returns the address of the 3rd bootstrapped account.
@@ -64,7 +64,7 @@ Returns the address of the 3rd bootstrapped account.
 val add : string -&gt; key -&gt; unit
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-add: (&#95;: string) =&gt; (&#95;: key) =&gt; unit
+add: (public: string, secret: key) =&gt; unit
 </SyntaxTitle>
 
 Adds an account specfied by secret key & public key to the test
@@ -86,7 +86,7 @@ type info = &#123; addr: address; pk: key; sk: string &#125;
 val info : nat -&gt; Test.Account.info
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-info: (&#95;: nat) =&gt; Test.Account.info
+info: (_: nat) =&gt; Test.Account.info
 </SyntaxTitle>
 
 Returns the address information of the nth bootstrapped account.
@@ -96,7 +96,7 @@ Returns the address information of the nth bootstrapped account.
 val new : unit -&gt; Test.Account.info
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-new: (&#95;: unit) =&gt; Test.Account.info
+new: (_: unit) =&gt; Test.Account.info
 </SyntaxTitle>
 
 Creates and returns information of a new account.

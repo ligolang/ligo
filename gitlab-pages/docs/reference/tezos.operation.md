@@ -9,13 +9,14 @@ import SyntaxTitle from '@theme/SyntaxTitle';
 
 
 <SyntaxTitle syntax="cameligo">
-val create&#95;contract :
+val create_contract :
   &#39;param
-  &#39;storage.(&#39;param, &#39;storage) entrypoint -&gt; key&#95;hash option -&gt; tez -&gt; &#39;storage -&gt; (operation * address)
+  &#39;storage.(&#39;param, &#39;storage) entrypoint -&gt; key_hash option -&gt; tez -&gt; &#39;storage -&gt; (operation * address)
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-create&#95;contract:
-  &lt;param, storage&gt;(&#95;: entrypoint&lt;param, storage&gt;) =&gt; (&#95;: option&lt;key&#95;hash&gt;) =&gt; (&#95;: tez) =&gt; (&#95;: storage) =&gt; [
+create_contract:
+  &lt;param, storage&gt;(entrypoint: entrypoint&lt;param, storage&gt;,
+  delegate: option&lt;key_hash&gt;, amount: tez, _: storage) =&gt; [
     operation,
     address
   ]
@@ -50,10 +51,10 @@ proxy contract or itself.
 
 
 <SyntaxTitle syntax="cameligo">
-val set&#95;delegate : key&#95;hash option -&gt; operation
+val set_delegate : key_hash option -&gt; operation
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-set&#95;delegate: (&#95;: option&lt;key&#95;hash&gt;) =&gt; operation
+set_delegate: (delegate: option&lt;key_hash&gt;) =&gt; operation
 </SyntaxTitle>
 
 <Syntax syntax="cameligo">
@@ -93,7 +94,7 @@ produces an operation that will fail when applied.
 val transaction : &#39;param.&#39;param -&gt; tez -&gt; &#39;param contract -&gt; operation
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-transaction: &lt;param&gt;(&#95;: param) =&gt; (&#95;: tez) =&gt; (&#95;: contract&lt;param&gt;) =&gt; operation
+transaction: &lt;param&gt;(_: param, amount: tez, contract_addr: contract&lt;param&gt;) =&gt; operation
 </SyntaxTitle>
 
 <Syntax syntax="cameligo">
@@ -116,10 +117,10 @@ contract is an implicit account, the parameter must be `unit`.
 
 
 <SyntaxTitle syntax="cameligo">
-val emit : &#39;event&#95;type.string -&gt; &#39;event&#95;type -&gt; operation
+val emit : &#39;event_type.string -&gt; &#39;event_type -&gt; operation
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-emit: &lt;event&#95;type&gt;(&#95;: string) =&gt; (&#95;: event&#95;type) =&gt; operation
+emit: &lt;event_type&gt;(even_tag: string, _: event_type) =&gt; operation
 </SyntaxTitle>
 
 <Syntax syntax="cameligo">
