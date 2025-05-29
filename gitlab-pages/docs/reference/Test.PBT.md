@@ -1,5 +1,5 @@
 ---
-id: test.pbt-reference
+id: test.old.pbt-reference
 title: pbt
 hide_table_of_contents: true
 ---
