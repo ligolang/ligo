@@ -7,7 +7,7 @@ import Syntax from '@theme/Syntax';
 import SyntaxTitle from '@theme/SyntaxTitle';
 
 
-[module error](test.next.assert.error.md)
+[module error](test.assert.error.md)
 
 
 <SyntaxTitle syntax="cameligo">
