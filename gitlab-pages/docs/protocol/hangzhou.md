@@ -256,14 +256,14 @@ view or the parameter type do not match, `Tezos.call_view` will return `None`.
 <Syntax syntax="cameligo">
 
 ```cameligo group=views
-let view_call ((name,parameter,addr): string * int * address) : int option = Tezos.call_view "sto_plus_n" 1 addr
+let view_call ((name,parameter,addr): string * int * address) : int option = Tezos.View.call "sto_plus_n" 1 addr
 ```
 
 </Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo group=views
-const view_call = ([name,parameter,addr]: [string , int , address]) : option<int> => Tezos.call_view ("sto_plus_n", 1, addr)
+const view_call = ([name,parameter,addr]: [string , int , address]) : option<int> => Tezos.View.call ("sto_plus_n", 1, addr)
 ```
 
 </Syntax>

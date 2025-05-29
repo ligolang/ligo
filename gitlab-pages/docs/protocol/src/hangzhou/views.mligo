@@ -9,4 +9,4 @@ let main (((),s): unit * storage) : operation list * storage = [] , s
 
 (* view 'v3' returns a constant int *)
 [@view] let v3 ((),_ : unit * storage) : int = 42
-let view_call ((name,parameter,addr): string * int * address) : int option = Tezos.call_view "sto_plus_n" 1 addr
+let view_call ((name,parameter,addr): string * int * address) : int option = Tezos.View.call "sto_plus_n" 1 addr

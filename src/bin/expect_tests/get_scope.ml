@@ -726,7 +726,7 @@ let%expect_test _ =
     (b#3:4-5 -> b)
     Range: File "../../test/contracts/get_scope_tests/constant.mligo", line 3, characters 4-5
     Decl Range: File "../../test/contracts/get_scope_tests/constant.mligo", line 3, character 0 to line 6, character 33
-    Content: |resolved: list (int)|
+    Content: |resolved: t (int)|
     references: []
     Mod Path =
     Def Type = Global

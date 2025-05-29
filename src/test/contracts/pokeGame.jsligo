@@ -52,7 +52,7 @@ const pokeAndGetFeedback = (oracleAddress : address, store : storage) => {
       ticketOwnership);
 
   // Read the feedback view
-  let feedbackOpt: option<string> = Tezos.call_view("feedback", unit, oracleAddress);
+  let feedbackOpt: option<string> = Tezos.View.call("feedback", unit, oracleAddress);
 
   return $match(t, {
     "None": () => failwith("User does not have tickets => not allowed"),

@@ -2320,7 +2320,7 @@ let%expect_test _ =
     {|
     File "../../test/contracts/negative/call_view_not_litstr.mligo", line 4, character 10 to line 8, character 21:
       3 |   let u =
-      4 |     match (Tezos.call_view
+      4 |     match (Tezos.View.call
                     ^^^^^^^^^^^^^^^^
       5 |          s
           ^^^^^^^^^^

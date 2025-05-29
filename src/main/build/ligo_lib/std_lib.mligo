@@ -280,34 +280,6 @@ let ediv (type a b) (left: a) (right: b) : (a, b) external_ediv =
 
 (** Tezos-specific functions *)
 module Tezos = struct
-  (* Views *)
-
-  (** display-only-for-cameligo
-      The call `Tezos.call_view v p a` calls the view `v` with parameter
-      `param` at the contract whose address is `a`. The value returned
-      is `None` if the view does not exist, or has a different type of
-      parameter, or if the contract does not exist at that
-      address. Otherwise, it is `Some v`, where `v` is the return value
-      of the view. Note: the storage of the view is the same as when the
-      execution of the contract calling the view started.*)
-  (** display-only-for-jsligo
-      The call `Tezos.call_view(v, p, a)` calls the view `v` with
-      parameter `param` at the contract whose address is `a`. The
-      value returned is `["None" as "None"]` if the view does not
-      exist, or has a different type of parameter, or if the contract
-      does not exist at that address. Otherwise, it is `["Some" as "Some", v]`,
-      where `v` is the return value of the view. Note: the storage of
-      the view is the same as when the execution of the contract
-      calling the view started. *)
-  [@inline] [@thunk]
-  let call_view
-        (type param return) (view: string) (param: param) (addr: address)
-      : return option =
-    let () = [%external ("CHECK_CALL_VIEW_LITSTR", view)]
-    in [%michelson ({| {VIEW (litstr $0) (typeopt $1)} |}
-                      view (None : return option) param addr
-                    : return option)]
-
   (* Addresses *)
 
   (** display-only-for-cameligo
@@ -611,7 +583,35 @@ module Tezos = struct
                    : operation)]
   end
 
+  (* Views *)
   module View = struct
+    (** display-only-for-cameligo
+        The call `Tezos.View.call v p a` calls the view `v` with
+        parameter `param` at the contract whose address is `a`. The
+        value returned is `None` if the view does not exist, or has a
+        different type of parameter, or if the contract does not exist
+        at that address. Otherwise, it is `Some v`, where `v` is the
+        return value of the view. Note: the storage of the view is the
+        same as when the execution of the contract calling the view
+        started.*)
+    (** display-only-for-jsligo
+        The call `Tezos.View.call(v, p, a)` calls the view `v` with
+        parameter `param` at the contract whose address is `a`. The
+        value returned is `["None" as "None"]` if the view does not
+        exist, or has a different type of parameter, or if the
+        contract does not exist at that address. Otherwise, it is
+        `["Some" as "Some", v]`, where `v` is the return value of the
+        view. Note: the storage of the view is the same as when the
+        execution of the contract calling the view started. *)
+    [@inline] [@thunk]
+    let call_view
+          (type param return) (view: string) (param: param) (addr: address)
+        : return option =
+      let () = [%external ("CHECK_CALL_VIEW_LITSTR", view)]
+      in [%michelson ({| {VIEW (litstr $0) (typeopt $1)} |}
+                        view (None : return option) param addr
+                      : return option)]
+
     (** display-only-for-cameligo
         The call `call v p a` calls the view `v` with parameter
         `param` at the contract whose address is `a`. The value returned
@@ -856,18 +856,19 @@ module Tezos = struct
   let pairing_check (list: (bls12_381_g1 * bls12_381_g2) list) : bool =
     [%michelson ({| {PAIRING_CHECK} |} list : bool)]
 
-      (** display-only-for-cameligo
-          The call to `constant hash` returns the value stored on-chain
-          whose hash value is `hash` (global constants). This call can fail
-          when the contract is originated if the hash is invalid or the
-          expansion of the global constant is ill-typed, or too large (gas
-          consumption). *)
-      (** display-only-for-cameligo
-          The call to `constant(hash)` returns the value stored on-chain
-          whose hash value is `hash` (global constants). This call can fail
-          when the contract is originated if the hash is invalid or the
-          expansion of the global constant is ill-typed, or too large (gas
-          consumption). *)
+  (** display-only-for-cameligo
+      The call to `constant hash` returns the value stored on-chain
+      whose hash value is `hash` (global constants). This call can
+      fail when the contract is originated if the hash is invalid or
+      the expansion of the global constant is ill-typed, or too large
+      (gas consumption). *)
+
+  (** display-only-for-cameligo
+      The call to `constant(hash)` returns the value stored on-chain
+      whose hash value is `hash` (global constants). This call can
+      fail when the contract is originated if the hash is invalid or
+      the expansion of the global constant is ill-typed, or too large
+      (gas consumption). *)
       [@inline] [@thunk]
   let constant (type a) (hash: string) : a =
     [%external ("GLOBAL_CONSTANT", hash)]

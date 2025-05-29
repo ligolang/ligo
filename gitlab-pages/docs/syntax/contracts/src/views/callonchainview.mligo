@@ -7,7 +7,6 @@ module ContractWithView = struct
 
   [@view] let multiply (param : int) (storage : storage) : int =
     param * storage
-
 end
 module CallView = struct
   type storage = address * int
@@ -15,7 +14,7 @@ module CallView = struct
 
   [@entry] let callView (param : int) (storage : storage) : return_type =
     let (targetAddress, _s) = storage in
-    let resultOpt : int option = Tezos.call_view "multiply" param targetAddress in
+    let resultOpt : int option = Tezos.View.call "multiply" param targetAddress in
     match resultOpt with
       Some newValue -> [], (targetAddress, newValue)
     | None -> failwith("Something went wrong")

@@ -152,14 +152,15 @@ Note that the function is not annotated as an entrypoint or on-chain view; it is
 
 ## Calling views
 
-Contracts can call on-chain and off-chain views with the `Tezos.call_view` function and use the result immediately.
+Contracts can call on-chain and off-chain views with the
+`Tezos.View.call` function and use the result immediately.
 
 <SyntaxTitle syntax="cameligo">
-val call_view : string -> 'arg -> address -> 'ret option
+val call : string -> 'arg -> address -> 'ret option
 </SyntaxTitle>
 
 <SyntaxTitle syntax="jsligo">
-const call_view : string => 'arg => address => option &lt;'ret&gt;
+call: string => 'arg => address => option &lt;'ret&gt;
 </SyntaxTitle>
 
 The function accepts these parameters:
@@ -182,7 +183,6 @@ module ContractWithView = struct
 
   [@view] let multiply (param : int) (storage : storage) : int =
     param * storage
-
 end
 ```
 
@@ -195,7 +195,7 @@ module CallView = struct
 
   [@entry] let callView (param : int) (storage : storage) : return_type =
     let (targetAddress, _s) = storage in
-    let resultOpt : int option = Tezos.call_view "multiply" param targetAddress in
+    let resultOpt : int option = Tezos.View.call "multiply" param targetAddress in
     match resultOpt with
       Some newValue -> [], (targetAddress, newValue)
     | None -> failwith("Something went wrong")
@@ -251,7 +251,7 @@ namespace CallView {
   // @entry
   const callView = (param: int, storage: storage): return_type => {
     const [targetAddress, _s] = storage;
-    const resultOpt: option<int> = Tezos.call_view(
+    const resultOpt: option<int> = Tezos.View.call(
       "multiply",
       param,
       targetAddress
