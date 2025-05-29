@@ -179,10 +179,17 @@ const sidebars = {
           "reference/test.address-reference",
           "reference/test.dynamic-entrypoints-reference",
           "reference/test.io-reference",
-          "reference/test.ticket-reference",
           "reference/test.contract-reference",
           "reference/test.string-reference",
           "reference/test.crypto-reference",
+          {
+            "type": "category",
+            "label": "ticket",
+            "items": [
+              "reference/test.ticket-reference",
+              "reference/test.ticket.proxy-reference"
+            ]
+          },
           {
             "type": "category",
             "label": "state",
