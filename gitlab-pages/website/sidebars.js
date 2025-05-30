@@ -171,7 +171,6 @@ const sidebars = {
         "items": [
           "reference/test-reference",
           "reference/test.pbt-reference",
-          "reference/test.proxy-ticket-reference",
           "reference/test.originate-reference",
           "reference/test.typed-address-reference",
           "reference/test.timelock-reference",
