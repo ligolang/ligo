@@ -1,0 +1,7 @@
+function greater_than_5(input: int) {
+  if (input > 5) {
+    return true;
+  } else {
+    return false;
+  }
+}

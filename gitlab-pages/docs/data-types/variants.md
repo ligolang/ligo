@@ -67,8 +67,8 @@ type user =
 | ["Manager", id]
 | ["Guest"];
 
-const bob : user = ["Admin" as "Admin", 1000 as nat];
-const carl : user = ["Guest" as "Guest"];
+const bob: user = ["Admin" as "Admin", 1000 as nat];
+const carl: user = ["Guest" as "Guest"];
 ```
 
 A constant constructor is equivalent to the same constructor taking a value of type `unit`, so, for example, `["Guest" as "Guest"]` is the same value as `["Guest" as "Guest", []]` and `["Guest" as "Guest", unit]`.

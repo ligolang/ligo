@@ -5,7 +5,7 @@ title: Booleans
 
 import Syntax from '@theme/Syntax';
 
-The predefined type `bool` has exactly two values: `true` and `false`.
+The predefined Boolean type `bool` has exactly two values: `true` and `false`.
 
 <Syntax syntax="cameligo">
 

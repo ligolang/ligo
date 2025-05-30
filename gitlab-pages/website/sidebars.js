@@ -21,11 +21,14 @@ const sidebars = {
     "Syntax": [
       "syntax/comments",
       "syntax/variables",
+      "syntax/comparisons",
       "syntax/functions",
       {
         "type": "category",
         "label": "Flow control",
         "items": [
+
+          "imperative/conditionals",
           "imperative/looping",
           "imperative/asserting",
           "imperative/switches",

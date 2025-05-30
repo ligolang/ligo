@@ -1,6 +1,0 @@
-type magnitude = ["Small"] | ["Large"]; // See variant types.
-
-const compare = (n: nat): magnitude => {
-  if (n < (10 as nat)) return ["Small" as "Small"];
-  return ["Large" as "Large"]
-};
