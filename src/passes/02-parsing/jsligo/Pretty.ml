@@ -1418,7 +1418,7 @@ and print_T_NamePath state (node : type_expr namespace_path reg) =
 
 (* Natural singleton type *)
 
-and print_T_Nat (node : (lexeme * Z.t) wrap) = print_nat node
+and print_T_Nat (node : (lexeme * Z.t) wrap) = print_int node
 
 (* Object type *)
 
