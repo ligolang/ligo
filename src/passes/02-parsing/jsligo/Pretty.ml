@@ -990,10 +990,12 @@ and print_E_Lt state (node : lt bin_op reg) = print_bin_op state node
 
 and print_E_Match state (node : match_expr reg) =
   let {kwd_match; subject; clauses} = node.value in
-  group (token kwd_match
-         ^^ print_par state (print_expr state) subject ^^ space
-         ^^ print_braces ~force_hardline:true state (print_clauses state)
-                         clauses)
+  let subject = subject.Region.value.CST.inside in
+  let clauses = clauses.Region.value.CST.inside in
+  group (string "$match("
+         ^^ print_expr state subject ^^ string ", {"
+         ^^ nest state#indent (hardline ^^ print_clauses state clauses)
+         ^^ hardline ^^ string "})")
 
 and print_clauses state = function
   AllClauses    c -> print_AllClauses    state c
@@ -1011,9 +1013,28 @@ and print_match_clauses state (node : match_clause reg Ne.t) =
 
 and print_match_clause state (node : match_clause reg) =
   let {kwd_when; filter; colon; clause_expr} = node.value in
-  let thread = token kwd_when ^^ space ^^ print_par state (print_pattern state) filter in
-  let thread = thread ^^ token colon in
-  print_label_and_expr state thread clause_expr
+  let filter = filter.Region.value.CST.inside in
+  let thread = print_match_pattern state filter in
+  print_label_and_expr state thread clause_expr ^^ string ","
+
+and print_match_pattern state = function
+  P_CtorApp variant -> print_match_lhs state variant
+| pattern -> print_pattern state pattern
+
+and print_match_lhs state = function
+  Variant v -> print_match_tuple state v.Region.value.tuple
+| Legacy _ as v -> print_P_CtorApp state v
+
+and print_match_tuple state = function
+  ZeroArg ctor -> print_property_of_ctor ctor ^^ string ": () => "
+| MultArg (ctor, args) ->
+    print_property_of_ctor ctor ^^ string ": " ^^
+    print_par state (print_nsep_or_term (break 1) (print_pattern state)) args
+    ^^ string " => "
+
+and print_property_of_ctor = function
+  CtorStr str -> print_string str
+| CtorName ctor -> print_string ctor (* Delimiters? *)
 
 and print_DefaultClause state (node : match_default reg) =
   print_match_default state node
