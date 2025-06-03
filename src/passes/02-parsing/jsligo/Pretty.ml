@@ -224,7 +224,8 @@ let print_bytes (node : (lexeme * Hex.t) wrap) =
 let print_mutez (node : (lexeme * Int64.t) wrap) =
   let prefix =
     print_comments node#comments
-    ^/^ (Int64.to_string (snd node#payload) ^ "mutez" |> string)
+    ^/^ string "(" ^^
+    (Int64.to_string (snd node#payload) |> string) ^^ string " as mutez)"
   in print_line_comment_opt prefix node#line_comment
 
 let print_tez (node : (lexeme * Q.t) wrap) =
@@ -245,13 +246,15 @@ let print_tez (node : (lexeme * Q.t) wrap) =
     else
       str
   in
-  let fractional_no_trailing_zeros = remove_trailing_zeros fractional_with_zeros in
-
+  let fractional_no_trailing_zeros =
+    remove_trailing_zeros fractional_with_zeros in
   let prefix =
     print_comments node#comments
-    ^/^ (integral ^ (if String.(fractional_no_trailing_zeros <> "")
-                     then "." ^ fractional_no_trailing_zeros
-                     else "") ^ "tez" |> string)
+    ^/^ string "(" ^^
+      (integral ^ (if String.(fractional_no_trailing_zeros <> "")
+                   then "." ^ fractional_no_trailing_zeros
+                   else "") |> string) ^^
+        string " as tez)"
   in print_line_comment_opt prefix node#line_comment
 
 
@@ -275,8 +278,10 @@ let print_int (node : (lexeme * Z.t) wrap) =
   in print_line_comment_opt prefix node#line_comment
 
 and print_nat (node : (lexeme * Z.t) wrap) =
-  let prefix = print_comments node#comments
-               ^/^ string (Z.to_string (snd node#payload) ^ "n")
+  let prefix =
+    print_comments node#comments
+    ^/^ string "(" ^^ string (Z.to_string (snd node#payload))
+    ^^ string " as nat)"
   in print_line_comment_opt prefix node#line_comment
 
 (* Attributes *)
