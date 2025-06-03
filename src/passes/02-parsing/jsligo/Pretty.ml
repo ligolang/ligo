@@ -294,7 +294,7 @@ let print_attribute state (node : Attr.t wrap) =
                    thread ^^ string "("
                    ^^ nest state#indent (string ("\"" ^ value ^ "\""))
                    ^^ string ")"
-              | _ -> thread
+               | _ -> thread
   in group (print_comments node#comments ^/^ thread)
 
 let print_attributes state thread attributes =
@@ -1437,8 +1437,8 @@ and print_T_Par state (node : type_expr par) =
 
 and print_T_ParameterOf state (node : parameter_of_type reg) =
   let {kwd_parameter_of; namespace_path} = node.value in
-  token kwd_parameter_of ^^ space
-  ^^ print_namespace_selection state namespace_path
+  token kwd_parameter_of ^^ string "<"
+  ^^ print_namespace_selection state namespace_path ^^ string ">"
 
 (* String type *)
 
