@@ -311,12 +311,42 @@ let print_attributes state thread attributes =
 let rec print state (node : CST.t) =
   let {statements; eof} = node in
   let prog = Ne.to_list statements
+             |> List.map
+                  ~f:(fun (stmt, semi) -> top_let_to_const_in_stmt stmt, semi)
              |> List.map ~f:(print_statement_semi state)
              |> separate_map (hardline ^^ hardline) group
              |> Fun.flip ( ^^ ) hardline
   in match eof#comments with
        [] -> prog
      | comments -> prog ^/^ print_comments comments
+
+and top_let_to_const_in_stmt (node : statement) =
+  match node with
+  S_Attr  (attr, s) -> S_Attr (attr, top_let_to_const_in_stmt s)
+| S_Decl          d -> S_Decl (top_let_to_const_in_decl d)
+| S_Export        s -> S_Export (top_let_to_const_in_export s)
+| _                 -> node
+
+and top_let_to_const_in_export (node : export_stmt reg) =
+  let Region.{region; value} = node in
+  let kwd_export, decl = value in
+  let decl = top_let_to_const_in_decl decl in
+  Region.{region; value = kwd_export, decl}
+
+and top_let_to_const_in_decl (node : declaration) =
+  match node with
+    D_Value d -> D_Value (top_let_to_const_in_value_decl d)
+  | _ -> node
+
+and top_let_to_const_in_value_decl (node : value_decl Region.reg) =
+  let Region.{region; value} = node in
+  let {kind; bindings} = value in
+  let kind =
+    match kind with
+      `Let kwd_let -> `Const Token.ghost_const
+    | _ -> kind in
+  let value = {kind; bindings} in
+  Region.{region; value}
 
 and print_statement state = function
   S_Attr      s -> print_S_Attr      state s
@@ -1017,7 +1047,7 @@ and print_match_clauses state (node : match_clause reg Ne.t) =
   print_ne_list hardline (print_match_clause state) node
 
 and print_match_clause state (node : match_clause reg) =
-  let {kwd_when; filter; colon; clause_expr} = node.value in
+  let {kwd_when=_; filter; colon; clause_expr} = node.value in
   let filter = filter.Region.value.CST.inside in
   let thread = print_match_pattern state filter in
   print_label_and_expr state thread clause_expr ^^ string ","
@@ -1039,7 +1069,7 @@ and print_match_tuple state = function
 
 and print_property_of_ctor = function
   CtorStr str -> print_string str
-| CtorName ctor -> print_string ctor (* Delimiters? *)
+| CtorName ctor -> print_string ctor
 
 and print_DefaultClause state (node : match_default reg) =
   print_match_default state node
