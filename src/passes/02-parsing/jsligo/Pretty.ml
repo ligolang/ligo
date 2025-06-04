@@ -967,8 +967,9 @@ and print_E_DivEq state (node : div_eq bin_op reg) = print_bin_op state node
 
 and print_E_Do state (node : do_expr reg) =
   let {kwd_do; statements} = node.value in
-  token kwd_do ^^ space ^^
-  print_braces state (print_statements state) statements
+  string "(() =>"
+  ^/^ print_braces state (print_statements state) statements
+  ^^ string ")"
 
 (* Equality *)
 
