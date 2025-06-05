@@ -1151,7 +1151,7 @@ and print_property :
   let property_id = print_property_id state property_id in
   let property_rhs =
     match property_rhs with
-      None -> empty
+      None -> string ":" ^^ space ^^ property_id
     | Some (colon, value) -> token colon ^^ space ^^ print state value
   in attributes ^/^ property_id ^^ property_rhs
 
