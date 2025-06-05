@@ -286,7 +286,7 @@ and print_nat (node : (lexeme * Z.t) wrap) =
 
 (* Attributes *)
 
-let print_attribute state (node : Attr.t wrap) =
+let print_attribute state ?(in_comment = false) (node : Attr.t wrap) =
   let key, val_opt = node#payload in
   let thread = string "@" ^^ string key in
   let thread = match val_opt with
@@ -294,17 +294,20 @@ let print_attribute state (node : Attr.t wrap) =
                    thread ^^ string "("
                    ^^ nest state#indent (string ("\"" ^ value ^ "\""))
                    ^^ string ")"
-               | _ -> thread
+               | _ -> thread in
+  let thread =
+    if in_comment then string "// " ^^ thread ^^ hardline else thread
   in group (print_comments node#comments ^/^ thread)
 
-let print_attributes state thread attributes =
+let print_attributes state ?(in_comment = false) thread attributes =
   let drop_comment_attr attributes =
     let is_comment w = String.(fst (w#payload) = "comment")
     in List.filter ~f:(not <@ is_comment) attributes
   in
   match drop_comment_attr attributes with
     []    -> thread
-  | attrs -> separate_map (break 0) (print_attribute state) attrs ^/^ thread
+  | attrs -> let print = print_attribute ~in_comment state in
+             separate_map (break 0) print attrs ^/^ thread
 
 (* PRINTING THE CST *)
 
@@ -319,6 +322,8 @@ let rec print state (node : CST.t) =
   in match eof#comments with
        [] -> prog
      | comments -> prog ^/^ print_comments comments
+
+(* let -> const *)
 
 and top_let_to_const_in_stmt (node : statement) =
   match node with
@@ -369,7 +374,7 @@ and print_statement state = function
 and print_S_Attr state (node : attribute * statement) =
   let attributes, stmt = unroll_S_Attr node in
   let thread = print_statement state stmt
-  in print_attributes state thread attributes
+  in print_attributes ~in_comment:true state thread attributes
 
 (* Blocks of statements *)
 
@@ -1062,11 +1067,11 @@ and print_match_lhs state = function
 | Legacy _ as v -> print_P_CtorApp state v
 
 and print_match_tuple state = function
-  ZeroArg ctor -> print_property_of_ctor ctor ^^ string ": () => "
+  ZeroArg ctor -> print_property_of_ctor ctor ^^ string ": () =>"
 | MultArg (ctor, args) ->
     print_property_of_ctor ctor ^^ string ": " ^^
     print_par state (print_nsep_or_term (break 1) (print_pattern state)) args
-    ^^ string " => "
+    ^^ string " =>"
 
 and print_property_of_ctor = function
   CtorStr str -> print_string str
