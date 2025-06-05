@@ -885,7 +885,7 @@ and print_E_Assign state (node : equal bin_op reg) = print_bin_op state node
 and print_E_Attr state (node : attribute * expr) =
   let attributes, expr = unroll_E_Attr node in
   let thread = print_expr state expr
-  in print_attributes state thread attributes
+  in print_attributes ~in_comment:true state thread attributes
 
 (* Bitwise conjunction *)
 
@@ -1312,7 +1312,7 @@ and print_P_element state (node : pattern element) =
 and print_P_Attr state (node : attribute * pattern) =
   let attributes, pattern = unroll_P_Attr node in
   let thread = print_pattern state pattern
-  in print_attributes state thread attributes
+  in print_attributes ~in_comment:true state thread attributes
 
 (* Bytes pattern *)
 
