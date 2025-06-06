@@ -131,13 +131,18 @@ let print_par state print (node : 'a par) =
    sequence of type [Utils.nsepseq]. *)
 
 let print_nsepseq :
-  'a.document ->
+  'a. ?terminal:document -> document ->
   ('a -> document) -> ('a, lexeme Wrap.t) Utils.nsepseq -> document =
-  fun sep print elements ->
+  fun ?terminal sep print elements ->
     let hd, tl = elements in
     let rec separate_map = function
       []            -> empty
-    | (sep', x)::xs -> token ~sep sep' ^^ print x ^^ separate_map xs
+    | (sep', x)::xs ->
+       let t =
+         match terminal with
+           None -> token ~sep sep'
+         | Some term -> term ^^ break 1 in
+       t ^^ print x ^^ separate_map xs
     in print hd ^^ separate_map tl
 
 (*
@@ -153,19 +158,22 @@ let print_ne_list : 'a.document -> ('a -> document) -> 'a Ne.t -> document =
   fun sep print (head::tail) -> separate_map sep print (head::tail)
 
 let print_nsep_or_term :
-  'a.document -> ('a -> document) ->
+  'a. ?terminal:document -> document -> ('a -> document) ->
   ('a, lexeme wrap) Utils.nsep_or_term -> document =
-  fun sep print -> function
-    `Sep  seq -> print_nsepseq sep print seq
-  | `Term seq -> let print (item, term) = print item ^^ token term
+  fun ?terminal sep print -> function
+    `Sep  seq -> print_nsepseq ?terminal sep print seq
+  | `Term seq -> let print (item, term) =
+                   match terminal with
+                     None      -> print item ^^ token term
+                   | Some term -> print item ^^ term
                  in print_ne_list sep print seq
 
 let print_sep_or_term :
-  'a.document -> ('a -> document) ->
+  'a. ?terminal:document -> document -> ('a -> document) ->
   ('a, lexeme wrap) Utils.sep_or_term -> document =
-  fun sep print -> function
+  fun ?terminal sep print -> function
     None     -> empty
-  | Some seq -> print_nsep_or_term sep print seq
+  | Some seq -> print_nsep_or_term ?terminal sep print seq
 
 (* Enclosed structures *)
 
@@ -1140,7 +1148,9 @@ and print_E_Object state (node : expr _object) =
 and print_object :
   'a.state -> (state -> 'a -> document) -> 'a _object -> document =
   fun state print node ->
-    let print = print_sep_or_term (break 1) (print_property state print)
+    let print =
+      print_sep_or_term ~terminal:(string ",")
+                        (break 1) (print_property state print)
     in print_braces state print node
 
 and print_property :
@@ -1256,7 +1266,7 @@ and print_E_Typed state (node : typed_expr reg) =
 (* Object functional updates *)
 
 and print_updates state
-    (node : (expr property reg, property_sep) Utils.sep_or_term) =
+  (node : (expr property reg, property_sep) Utils.sep_or_term) =
   print_sep_or_term (break 1) (print_property state print_expr) node
 
 and print_update state (node : update_expr) =
@@ -1393,7 +1403,7 @@ and print_type_expr state = function
 | T_String      t -> print_T_String            t
 | T_Union       t -> print_T_Union       state t
 | T_Var         t -> print_T_Var               t
-| T_Sum     t -> print_T_Sum     state t
+| T_Sum         t -> print_T_Sum         state t
 
 (* Type constructor application *)
 
