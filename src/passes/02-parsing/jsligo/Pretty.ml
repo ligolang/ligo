@@ -1410,7 +1410,7 @@ and print_type_tuple state (node : type_ctor_args) =
 and print_T_Attr state (node : attribute * type_expr) =
   let attributes, t_expr = unroll_T_Attr node in
   let thread = print_type_expr state t_expr
-  in print_attributes state thread attributes
+  in print_attributes state ~in_comment:true thread attributes
 
 (* Array type *)
 
