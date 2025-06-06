@@ -1039,12 +1039,32 @@ and print_E_Lt state (node : lt bin_op reg) = print_bin_op state node
 
 and print_E_Match state (node : match_expr reg) =
   let {kwd_match; subject; clauses} = node.value in
+  let is_array = has_array_pattern clauses in
   let subject = subject.Region.value.CST.inside in
+  let subject = print_expr state subject in
+  let subject =
+    if is_array then
+      string "List.head_and_tail(" ^^ subject ^^ string ")"
+    else subject in
   let clauses = clauses.Region.value.CST.inside in
   group (string "$match("
-         ^^ print_expr state subject ^^ string ", {"
+         ^^ subject ^^ string ", {"
          ^^ nest state#indent (hardline ^^ print_clauses state clauses)
          ^^ hardline ^^ string "})")
+
+and has_array_pattern (node : match_clauses braces) : bool =
+  match node.Region.value.inside with
+    AllClauses (clauses, _default_opt) ->
+      has_array_all_clauses clauses
+  | DefaultClause _default -> false
+
+and has_array_all_clauses (node : match_clause reg Ne.t) : bool =
+  let hd :: _ = node in
+  let {kwd_when=_; filter; colon=_; clause_expr=_} = hd.Region.value in
+  let pattern = filter.Region.value.inside in
+  match pattern with
+    P_Array _ -> true
+  | _ -> false
 
 and print_clauses state = function
   AllClauses    c -> print_AllClauses    state c
@@ -1067,10 +1087,24 @@ and print_match_clause state (node : match_clause reg) =
   print_label_and_expr state thread clause_expr ^^ string ","
 
 and print_match_pattern state = function
-  P_CtorApp variant -> print_match_lhs state variant
-| pattern -> print_pattern state pattern
+  P_CtorApp variant -> print_match_lhs_ctor state variant
+| P_Array array -> print_match_lhs_array state array
+| pattern -> print_pattern state pattern ^^ string ": "
 
-and print_match_lhs state = function
+and print_match_lhs_array state (node : pattern _array) =
+  match node.Region.value.inside with
+    None -> string "\"None\": () =>"
+  | Some seq ->
+     let hd :: tl = Utils.nsep_or_term_to_ne_list seq in
+     let hd = print_element print_pattern state hd in
+     let some = string "\"Some\": ([" ^^ hd ^^ string ", " in
+     let more = match tl with
+                  [] -> string "_"
+                | [(Some _, pattern)] -> print_pattern state pattern
+                | _ -> string "/*TODO: Refactor the tail. */" in
+     some ^^ more ^^ string "]) =>"
+
+and print_match_lhs_ctor state = function
   Variant v -> print_match_tuple state v.Region.value.tuple
 | Legacy _ as v -> print_P_CtorApp state v
 
