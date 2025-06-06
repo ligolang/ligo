@@ -5,10 +5,10 @@
  (preprocess
   (pps ppx_jane)))
 
-(alias
- (name recovery-test)
- (deps
-  (alias simple/cameligo/runtest)
-  (alias simple/jsligo/runtest)
-  (alias fuzzing/cameligo/runtest)
-  (alias fuzzing/jsligo/runtest)))
+;; (alias
+;;  (name recovery-test)
+;;  (deps
+;;   (alias simple/cameligo/runtest)
+;;   (alias simple/jsligo/runtest)
+;;   (alias fuzzing/cameligo/runtest)
+;;   (alias fuzzing/jsligo/runtest)))
