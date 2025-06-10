@@ -629,7 +629,11 @@ and print_S_Directive state (node : Directive.t) =
 
 and print_S_Export state (node : export_stmt reg) =
   let kwd_export, declaration = node.value in
-  token kwd_export ^^ space ^^ print_declaration state declaration
+  let prefix =
+    match declaration with
+      D_Import _ -> empty
+    | _ -> token kwd_export ^^ space in
+  prefix ^^ print_declaration state declaration
 
 (* Expressions as statements *)
 
