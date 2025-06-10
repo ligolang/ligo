@@ -69,7 +69,7 @@ let token ?(sep=empty) (t : string Wrap.t) : document =
 let print_variable ?(sep=empty) = function
   Var t -> token ~sep t
 | Esc t ->
-    let prefix = print_comments t#comments ^^ string ("__" ^ t#payload)
+    let prefix = print_comments t#comments ^^ string (t#payload ^ "__")
     in print_line_comment_opt ~sep prefix t#line_comment
 
 (* Enclosed documents *)
@@ -985,7 +985,7 @@ and print_E_Do state (node : do_expr reg) =
   let {kwd_do; statements} = node.value in
   string "(() =>"
   ^/^ print_braces state (print_statements state) statements
-  ^^ string ")"
+  ^^ string ")()"
 
 (* Equality *)
 
