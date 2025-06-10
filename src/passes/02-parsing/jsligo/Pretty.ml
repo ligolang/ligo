@@ -69,7 +69,7 @@ let token ?(sep=empty) (t : string Wrap.t) : document =
 let print_variable ?(sep=empty) = function
   Var t -> token ~sep t
 | Esc t ->
-    let prefix = print_comments t#comments ^^ string ("@" ^ t#payload)
+    let prefix = print_comments t#comments ^^ string ("__" ^ t#payload)
     in print_line_comment_opt ~sep prefix t#line_comment
 
 (* Enclosed documents *)
@@ -620,7 +620,10 @@ and print_val_binding state (node : val_binding reg) =
 (* Preprocessing directives *)
 
 and print_S_Directive state (node : Directive.t) =
-  string (Directive.to_lexeme node).Region.value
+  let original = (Directive.to_lexeme node).Region.value in
+  match node with
+    PP_Import import_directive -> string original (* TODO *)
+  | _ -> string original
 
 (* Export statements *)
 
@@ -1098,10 +1101,11 @@ and print_match_lhs_array state (node : pattern _array) =
      let hd :: tl = Utils.nsep_or_term_to_ne_list seq in
      let hd = print_element print_pattern state hd in
      let some = string "\"Some\": ([" ^^ hd ^^ string ", " in
-     let more = match tl with
-                  [] -> string "_"
-                | [(Some _, pattern)] -> print_pattern state pattern
-                | _ -> string "/*TODO: Refactor the tail. */" in
+     let more =
+       match tl with
+         [] -> string "_"
+       | [(Some _, pattern)] -> print_pattern state pattern
+       | _ -> string "/* UPGRADE: Refactor the pattern matching. */" in
      some ^^ more ^^ string "]) =>"
 
 and print_match_lhs_ctor state = function
