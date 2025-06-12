@@ -23,6 +23,10 @@ val print           : state -> cst -> PPrint.document
 val print_expr      : state -> expr -> PPrint.document
 val print_type_expr : state -> type_expr -> PPrint.document
 val print_pattern   : state -> pattern -> PPrint.document
-val print_statement : state -> statement -> PPrint.document
+
+val print_statement :
+  ?let_to_const:bool -> state -> statement -> PPrint.document
+
 val print_legacy_variant : 'a. (state -> 'a -> PPrint.document) -> state -> 'a legacy_variant reg -> PPrint.document
+
 val print_signature_expr : state -> signature_expr -> PPrint.document
