@@ -1610,8 +1610,27 @@ and print_variant_kind : 'a. (state -> 'a -> document) -> state -> 'a variant_ki
 and print_variant : 'a. (state -> 'a -> document) -> state -> 'a variant reg -> document =
  fun printer state node ->
   let ({tuple; attributes} : 'a variant) = node.value in
-  let tuple = print_app state printer tuple
+  let tuple = print_app' state printer tuple
   in group (print_attributes state tuple attributes)
+
+and print_app' :
+  'a.state -> (state -> 'a -> document) -> 'a ctor_app -> document =
+  fun state print -> function
+    ZeroArg ctor ->
+      string "[" ^^ print_ctor_app_kind' ctor ^^ string "]"
+  | MultArg (ctor, args) ->
+      string "[" ^^
+      print_ctor_app_kind' ctor ^^
+      string ", " ^^
+      print_nsep_or_term (break 1) (print state) args.value.inside ^^
+      string "]"
+
+and print_ctor_app_kind' (node: ctor_app_kind) =
+  let name =
+    match node with
+      CtorStr  node
+    | CtorName node -> print_string node in
+  name ^^ string " as " ^^ name
 
 and print_legacy_variant : 'a. (state -> 'a -> document) -> state -> 'a legacy_variant reg -> document =
  fun printer state node ->
