@@ -623,7 +623,10 @@ and print_val_binding state (node : val_binding reg) =
 and print_S_Directive state (node : Directive.t) =
   let original = (Directive.to_lexeme node).Region.value in
   match node with
-    PP_Import import_directive -> string original (* TODO *)
+    PP_Import import ->
+     let file_path = import#file_path.Region.value
+     and module_name = import#module_name.Region.value in
+     string (Printf.sprintf "import * as %s from %S" module_name file_path)
   | _ -> string original
 
 (* Export statements *)
