@@ -31,6 +31,7 @@ module Make (LexerParams: LexerLib.CLI.PARAMETERS) : PARAMETERS =
         "Pretty-printing:";
         "      --pretty         Pretty-print the input";
         "      --width=<n>      Width for --pretty";
+        "      --classes        Translating namespaces as classes with --pretty";
         "CST printing:";
         "      --cst            Print the CST";
         "      --no-layout      With --cst, do not print the tree layout";
@@ -57,8 +58,9 @@ module Make (LexerParams: LexerLib.CLI.PARAMETERS) : PARAMETERS =
 
     (* Pretty-printing options *)
 
-    and pretty = ref false
-    and width  = ref (None : int option)
+    and pretty  = ref false
+    and width   = ref (None : int option)
+    and classes = ref false
 
     (* CST printing options *)
 
@@ -112,6 +114,7 @@ module Make (LexerParams: LexerLib.CLI.PARAMETERS) : PARAMETERS =
       Getopt.[
         noshort, "mono",           set mono true, None;
         noshort, "pretty",         set pretty true, None;
+        noshort, "classes",        set classes true, None;
         noshort, "width",          None, Some set_width;
         noshort, "cst",            set cst true, None;
         noshort, "no-layout",      set layout false, None;
@@ -155,6 +158,7 @@ module Make (LexerParams: LexerLib.CLI.PARAMETERS) : PARAMETERS =
       String.Set.empty
       |> add "--mono"
       |> add "--pretty"
+      |> add "--classes"
       |> add "--cst"
       |> add "--recovery"
       |> add "--trace-recovery"
@@ -200,6 +204,7 @@ module Make (LexerParams: LexerLib.CLI.PARAMETERS) : PARAMETERS =
     let mono     = !mono
     and pretty   = !pretty
     and width    = !width
+    and classes  = !classes
     and cst      = !cst
     and layout   = !layout
     and regions  = !regions
@@ -218,6 +223,7 @@ module Make (LexerParams: LexerLib.CLI.PARAMETERS) : PARAMETERS =
         sprintf "mono           = %b" mono;
         sprintf "pretty         = %b" pretty;
         sprintf "width          = %s" (print_width width);
+        sprintf "classes        = %b" classes;
         sprintf "cst            = %b" cst;
         sprintf "layout         = %b" layout;
         sprintf "regions        = %b" regions;
@@ -260,6 +266,7 @@ module Make (LexerParams: LexerLib.CLI.PARAMETERS) : PARAMETERS =
         let mono           = mono
         let pretty         = pretty
         let width          = width
+        let classes        = classes
         let cst            = cst
         let recovery       = recovery
         let trace_recovery = trace_recovery
