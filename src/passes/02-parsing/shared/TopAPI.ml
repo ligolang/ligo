@@ -49,7 +49,7 @@ module type PRETTY =
     val default_state : state
 
     type tree
-    val print : state -> tree -> PPrint.document
+    val print : ?classes:bool -> state -> tree -> PPrint.document
   end
 
 module type WARNING =
@@ -151,7 +151,7 @@ module Make
     let finalise tree (std : Std.t) : unit =
       if Options.pretty then
         (* Printing the syntax tree to source code *)
-        let doc = Pretty.(print default_state) tree in
+        let doc = Pretty.(print ~classes:Options.classes default_state) tree in
         let width =
           match Options.width with
             Some width -> width
