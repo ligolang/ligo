@@ -42,10 +42,13 @@ module type PRINTER =
 module type PRETTY =
   sig
     type state
+
     val default_state : state
 
     type tree
-    val print : ?classes:bool -> state -> tree -> PPrint.document
+
+    val print :
+      ?in_comment:bool -> ?classes:bool -> state -> tree -> PPrint.document
   end
 
 module type WARNING =

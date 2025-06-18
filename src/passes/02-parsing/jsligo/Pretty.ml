@@ -319,10 +319,10 @@ let print_attributes state ?(in_comment = false) thread attributes =
 
 (* PRINTING THE CST *)
 
-let rec print ?(classes=false) state (node : CST.t) =
+let rec print ?(in_comment=true) ?(classes=false) state (node : CST.t) =
   let {statements; eof} = node in
   let prog = Ne.to_list statements
-             |> List.map ~f:(print_statement_semi ~classes ~let_to_const:true state)
+             |> List.map ~f:(print_statement_semi ~in_comment ~classes ~let_to_const:true state)
              |> separate_map (hardline ^^ hardline) group
              |> Fun.flip ( ^^ ) hardline
   in match eof#comments with
@@ -359,8 +359,8 @@ and top_let_to_const_in_value_decl (node : value_decl Region.reg) =
   let value = {kind; bindings} in
   Region.{region; value}
 
-and print_statement ?(classes=false) ?(let_to_const=false) state = function
-  S_Attr      s -> print_S_Attr      ~let_to_const state s
+and print_statement ?(in_comment=true) ?(classes=false) ?(let_to_const=false) state = function
+  S_Attr      s -> print_S_Attr      ~in_comment ~classes ~let_to_const state s
 | S_Block     s -> print_S_Block     state s
 | S_Break     s -> print_S_Break     state s
 | S_Continue  s -> print_S_Continue  state s
@@ -377,27 +377,27 @@ and print_statement ?(classes=false) ?(let_to_const=false) state = function
 
 (* Decorated statements *)
 
-and print_S_Attr state ?(let_to_const=false) (node : attribute * statement) =
+and print_S_Attr state ?(in_comment=true) ?(classes=false) ?(let_to_const=false) (node : attribute * statement) =
   let attributes, stmt = unroll_S_Attr node in
-  let thread = print_statement ~let_to_const state stmt
-  in print_attributes ~in_comment:true state thread attributes
+  let thread = print_statement ~classes ~let_to_const state stmt
+  in print_attributes ~in_comment state thread attributes
 
 (* Blocks of statements *)
 
 and print_S_Block state (node : statements braces) =
   print_block state node
 
-and print_block ?(classes=false) ?(let_to_const=false) state (node : statements braces) =
-  let print = print_statements ~classes ~let_to_const state in
+and print_block ?(in_comment=true) ?(classes=false) ?(let_to_const=false) state (node : statements braces) =
+  let print = print_statements ~in_comment ~classes ~let_to_const state in
   print_braces ~force_hardline:true state print node
 
-and print_statements ?(classes=false) ?(let_to_const=false) state (node : statements) =
-  let print = print_statement_semi ~classes ~let_to_const state in
+and print_statements ?(in_comment=true) ?(classes=false) ?(let_to_const=false) state (node : statements) =
+  let print = print_statement_semi ~in_comment ~classes ~let_to_const state in
   print_ne_list (break 1) print node
 
-and print_statement_semi ?(classes=false) ?(let_to_const=false) state (node : statement * semi option) =
+and print_statement_semi ?(in_comment=true) ?(classes=false) ?(let_to_const=false) state (node : statement * semi option) =
   let statement, semi_opt = node in
-  let thread = print_statement ~classes ~let_to_const state statement in
+  let thread = print_statement ~in_comment ~classes ~let_to_const state statement in
   thread ^^ Option.value_map semi_opt ~default:empty ~f:token
 
 (* Break statement *)
@@ -547,8 +547,8 @@ and print_I_Const state (node : intf_const reg) =
 (* Namespace declaration *)
 
 and print_D_Namespace ?(classes=false) state (node : namespace_decl reg) =
-  let {kwd_namespace; namespace_name;
-       namespace_type; namespace_body} = node.value in
+  let {kwd_namespace; namespace_name; namespace_type; namespace_body} =
+    node.value in
   let translate_to_a_class =
     match namespace_type with
       Some _ -> true
@@ -556,35 +556,50 @@ and print_D_Namespace ?(classes=false) state (node : namespace_decl reg) =
   if translate_to_a_class then
     (* Creating a ghost keyword "class" and hooking any comments that
        the keyword "namespace" might carry. *)
-    let comments = kwd_namespace#comments in (* TODO *)
+    let comments = kwd_namespace#comments in
     let kwd_class = Wrap.wrap "class" Region.ghost in
     let add_comment c w = w#add_comment c in
     let kwd_class =
       List.fold_right ~f:add_comment ~init:kwd_class comments in
-    let () = ignore kwd_class in (* TODO *)
-    (* *)
-    let filter_decl attrs decl acc =
-      let functions, values, others = acc in
+    (* Filtering the contents of the namespace *)
+    let filter_decl attrs decl stmt_semi acc =
+      let fun_and_val, others = acc in
       match decl with
-        D_Fun d -> (attrs, d) :: functions, values, others
-      | D_Value d -> functions, (attrs, d) :: values, others
-      | _ -> functions, values, (attrs, S_Decl decl, semi) :: others in
-    let filter_stmt (stmt, _semi_opt) acc =
-      let functions, values, others = acc in
+        D_Fun _ | D_Value _ -> stmt_semi :: fun_and_val, others
+      | _ -> fun_and_val, stmt_semi :: others in
+    let filter_stmt (stmt, _ as stmt_semi) acc =
+      let fun_and_val, others = acc in
       match stmt with
-        S_Decl d -> filter_decl [] d acc
+        S_Decl decl -> filter_decl [] decl stmt_semi acc
       | S_Attr attr_stmt ->
-         let attrs, stmt = unroll_S_Attr attr_stmt in (
-           match stmt with
-             S_Decl d -> filter_decl attrs d acc
-           | _ -> functions, values, (attrs, stmt, semi) :: others)
-      | _ -> functions, values, ([], stmt, semi) :: others in
+          let attrs, stmt' = unroll_S_Attr attr_stmt in (
+          match stmt' with
+            S_Decl decl -> filter_decl attrs decl stmt_semi acc
+          | _ -> fun_and_val, stmt_semi :: others)
+      | _ -> fun_and_val, stmt_semi :: others in
     let body = Ne_list.to_list namespace_body.value.inside in
-    let fun_decls, value_decls, other_stmts =
-      List.fold_right ~f:filter_stmt ~init:([],[],[]) body in
-    let () = ignore (fun_decls, value_decls, other_stmts) in (* TODO *)
-  (*     let thread = thread ^^ space ^^ print_namespace_type state namespace_type *)
-    empty
+    let fun_and_val, other_stmts =
+      List.fold_right ~f:filter_stmt ~init:([],[]) body in
+    let () = ignore fun_and_val in (* TODO *)
+    let () = ignore namespace_type in (* TODO *)
+    (* Printing the statements moved out *)
+    let thread =
+      match other_stmts with
+      [] -> empty
+    | fst_stmt :: more_stmts ->
+        let statements = Ne_list.(fst_stmt :: more_stmts) in
+        print_statements ~classes ~let_to_const:true state statements
+        ^^ hardline ^^ hardline in
+    (* Printing the class *)
+    let class_doc = token kwd_class ^^ space ^^ token namespace_name in
+    match fun_and_val with
+      [] -> thread ^^ class_doc ^^ space ^^ string "{}"
+    | fst_stmt :: more_stmts ->
+        let inside = Ne_list.(fst_stmt :: more_stmts) in
+        let new_body = {namespace_body
+                        with value = {namespace_body.value with inside}} in
+        group (thread ^^ class_doc ^^ space ^^
+               print_block ~in_comment:false ~classes ~let_to_const:true state new_body)
   else
     let thread = token kwd_namespace ^^ space ^^ token namespace_name in
     group (thread ^^
