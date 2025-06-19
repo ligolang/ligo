@@ -364,7 +364,7 @@ and print_statement ?(in_comment=true) ?(classes=false) ?(let_to_const=false) st
 | S_Block     s -> print_S_Block     state s
 | S_Break     s -> print_S_Break     state s
 | S_Continue  s -> print_S_Continue  state s
-| S_Decl      s -> print_S_Decl      ~classes ~let_to_const state s
+| S_Decl      s -> print_S_Decl      ~in_comment ~classes ~let_to_const state s
 | S_Directive s -> print_S_Directive state s
 | S_Export    s -> print_S_Export    ~classes ~let_to_const state s
 | S_Expr      s -> print_S_Expr      state s
@@ -379,7 +379,7 @@ and print_statement ?(in_comment=true) ?(classes=false) ?(let_to_const=false) st
 
 and print_S_Attr state ?(in_comment=true) ?(classes=false) ?(let_to_const=false) (node : attribute * statement) =
   let attributes, stmt = unroll_S_Attr node in
-  let thread = print_statement ~classes ~let_to_const state stmt
+  let thread = print_statement ~in_comment ~classes ~let_to_const state stmt
   in print_attributes ~in_comment state thread attributes
 
 (* Blocks of statements *)
@@ -410,16 +410,17 @@ and print_S_Continue state (node : kwd_continue) = token node
 
 (* Declarations as statements *)
 
-and print_S_Decl ?(classes=false) ?(let_to_const=false) state (node : declaration) =
-  print_declaration ~classes ~let_to_const state node
+and print_S_Decl ?(in_comment=true) ?(classes=false) ?(let_to_const=false) state (node : declaration) =
+  print_declaration empty ~in_comment ~classes ~let_to_const state node
 
-and print_declaration ?(classes=false) ?(let_to_const=false) state = function
-  D_Fun       d -> print_D_Fun       state d
-| D_Import    d -> print_D_Import    state d
-| D_Interface d -> print_D_Interface state d
-| D_Namespace d -> print_D_Namespace ~classes state d
-| D_Type      d -> print_D_Type      state d
-| D_Value     d -> print_D_Value     ~let_to_const state d
+and print_declaration prefix ?(in_comment=true) ?(classes=false)
+  ?(let_to_const=false) state = function
+  D_Fun       d -> prefix ^^ print_D_Fun state d
+| D_Import    d -> prefix ^^ print_D_Import state d
+| D_Interface d -> prefix ^^ print_D_Interface state d
+| D_Namespace d -> print_D_Namespace prefix ~classes state d
+| D_Type      d -> prefix ^^ print_D_Type state d
+| D_Value     d -> prefix ^^ print_D_Value ~in_comment ~let_to_const state d
 
 (* Function declaration *)
 
@@ -546,7 +547,7 @@ and print_I_Const state (node : intf_const reg) =
 
 (* Namespace declaration *)
 
-and print_D_Namespace ?(classes=false) state (node : namespace_decl reg) =
+and print_D_Namespace prefix ?(classes=false) state (node : namespace_decl reg) =
   let {kwd_namespace; namespace_name; namespace_type; namespace_body} =
     node.value in
   let translate_to_a_class =
@@ -580,28 +581,30 @@ and print_D_Namespace ?(classes=false) state (node : namespace_decl reg) =
     let body = Ne_list.to_list namespace_body.value.inside in
     let fun_and_val, other_stmts =
       List.fold_right ~f:filter_stmt ~init:([],[]) body in
-    let () = ignore fun_and_val in (* TODO *)
     let () = ignore namespace_type in (* TODO *)
     (* Printing the statements moved out *)
     let thread =
       match other_stmts with
-      [] -> empty
-    | fst_stmt :: more_stmts ->
-        let statements = Ne_list.(fst_stmt :: more_stmts) in
-        print_statements ~classes ~let_to_const:true state statements
-        ^^ hardline ^^ hardline in
+        [] -> empty
+      | fst_stmt :: more_stmts ->
+         let statements = Ne_list.(fst_stmt :: more_stmts) in
+         print_statements ~classes ~let_to_const:true state statements
+         ^^ hardline ^^ hardline in
     (* Printing the class *)
-    let class_doc = token kwd_class ^^ space ^^ token namespace_name in
+    let class_doc =
+      prefix ^^ token kwd_class ^^ space ^^ token namespace_name in
     match fun_and_val with
       [] -> thread ^^ class_doc ^^ space ^^ string "{}"
     | fst_stmt :: more_stmts ->
         let inside = Ne_list.(fst_stmt :: more_stmts) in
         let new_body = {namespace_body
-                        with value = {namespace_body.value with inside}} in
-        group (thread ^^ class_doc ^^ space ^^
-               print_block ~in_comment:false ~classes ~let_to_const:true state new_body)
+                       with value = {namespace_body.value with inside}} in
+        let block = print_block ~in_comment:false ~classes
+                      ~let_to_const:true state new_body in
+        group (thread ^^ class_doc ^^ space ^^ block)
   else
-    let thread = token kwd_namespace ^^ space ^^ token namespace_name in
+    let thread =
+      prefix ^^ token kwd_namespace ^^ space ^^ token namespace_name in
     group (thread ^^
            print_block ~classes ~let_to_const:true state namespace_body)
 
@@ -636,9 +639,11 @@ and print_D_Type state (node : type_decl reg) =
 
 (* Value declarations *)
 
-and print_D_Value ?(let_to_const=false) state (node : value_decl reg) =
+and print_D_Value ?(in_comment=true) ?(let_to_const=false) state (node : value_decl reg) =
   let {kind; bindings} = node.value in
-  let thread   = print_var_kind ~let_to_const kind ^^ space
+  let thread   =
+    if in_comment then print_var_kind ~let_to_const kind ^^ space
+    else empty
   and bindings = print_nsepseq (break 1) (print_val_binding state) bindings
   in group (thread ^^ bindings)
 
@@ -689,7 +694,7 @@ and print_S_Export ?(classes=false) ?(let_to_const=false) state (node : export_s
     match declaration with
       D_Import _ -> empty
     | _ -> token kwd_export ^^ space in
-  prefix ^^ print_declaration ~classes ~let_to_const state declaration
+  print_declaration prefix ~classes ~let_to_const state declaration
 
 (* Expressions as statements *)
 
