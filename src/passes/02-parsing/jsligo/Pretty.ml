@@ -410,7 +410,8 @@ and print_S_Continue state (node : kwd_continue) = token node
 
 (* Declarations as statements *)
 
-and print_S_Decl ?(in_comment=true) ?(classes=false) ?(let_to_const=false) state (node : declaration) =
+and print_S_Decl ?(in_comment=true) ?(classes=false)
+                 ?(let_to_const=false) state (node : declaration) =
   print_declaration empty ~in_comment ~classes ~let_to_const state node
 
 and print_declaration prefix ?(in_comment=true) ?(classes=false)
@@ -550,10 +551,19 @@ and print_I_Const state (node : intf_const reg) =
 and print_D_Namespace prefix ?(classes=false) state (node : namespace_decl reg) =
   let {kwd_namespace; namespace_name; namespace_type; namespace_body} =
     node.value in
+  let rec is_nested_namespace = function
+    [] -> false
+  | S_Attr (_, stmt) :: more -> is_nested_namespace (stmt :: more)
+  | S_Decl (D_Namespace _) :: _ -> true
+  | _ :: stmts -> is_nested_namespace stmts in
+  let is_nested_namespace =
+    Ne_list.to_list namespace_body.value.inside
+    |> List.map ~f:fst
+    |> is_nested_namespace in
   let translate_to_a_class =
     match namespace_type with
       Some _ -> true
-    | None -> classes in
+    | None -> not is_nested_namespace && classes in
   if translate_to_a_class then
     (* Creating a ghost keyword "class" and hooking any comments that
        the keyword "namespace" might carry. *)
@@ -599,14 +609,15 @@ and print_D_Namespace prefix ?(classes=false) state (node : namespace_decl reg) 
         let inside = Ne_list.(fst_stmt :: more_stmts) in
         let new_body = {namespace_body
                        with value = {namespace_body.value with inside}} in
-        let block = print_block ~in_comment:false ~classes
+        let block = print_block ~in_comment:false ~classes:false
                       ~let_to_const:true state new_body in
         group (thread ^^ class_doc ^^ space ^^ block)
   else
     let thread =
-      prefix ^^ token kwd_namespace ^^ space ^^ token namespace_name in
-    group (thread ^^
-           print_block ~classes ~let_to_const:true state namespace_body)
+      prefix ^^ token kwd_namespace ^^ space
+      ^^ token namespace_name ^^ space in
+    group (thread ^^ print_block ~classes:false ~let_to_const:true
+                                 state namespace_body)
 
 and print_namespace_type state (node : interface option) =
   Option.value_map node ~default:empty ~f:(print_interface state)
