@@ -561,9 +561,10 @@ and print_D_Namespace prefix ?(classes=false) state (node : namespace_decl reg) 
     |> List.map ~f:fst
     |> is_nested in
   let translate_to_a_class =
+    not is_nested &&
     match namespace_type with
       Some _ -> true
-    | None -> not is_nested && classes in
+    | None -> classes in
   if translate_to_a_class then
     (* Creating a ghost keyword "class" and hooking any comments that
        the keyword "namespace" might carry. *)
@@ -591,7 +592,6 @@ and print_D_Namespace prefix ?(classes=false) state (node : namespace_decl reg) 
     let body = Ne_list.to_list namespace_body.value.inside in
     let fun_and_val, other_stmts =
       List.fold_right ~f:filter_stmt ~init:([],[]) body in
-    let () = ignore namespace_type in (* TODO *)
     (* Printing the statements moved out *)
     let thread =
       match other_stmts with
@@ -602,16 +602,22 @@ and print_D_Namespace prefix ?(classes=false) state (node : namespace_decl reg) 
          ^^ hardline ^^ hardline in
     (* Printing the class *)
     let class_doc =
-      prefix ^^ token kwd_class ^^ space ^^ token namespace_name in
+      thread ^^ prefix ^^ token kwd_class ^^ space
+      ^^ token namespace_name ^^ space in
+    (* Implementation of interfaces *)
+    let class_doc =
+      match namespace_type with
+        None -> class_doc
+      | Some intf -> class_doc ^^ print_interface state intf ^^ space in
     match fun_and_val with
-      [] -> thread ^^ class_doc ^^ space ^^ string "{}"
+      [] -> class_doc ^^ string "{}"
     | fst_stmt :: more_stmts ->
         let inside = Ne_list.(fst_stmt :: more_stmts) in
         let new_body = {namespace_body
                        with value = {namespace_body.value with inside}} in
         let block = print_block ~in_comment:false ~classes:false
                       ~let_to_const:true state new_body in
-        group (thread ^^ class_doc ^^ space ^^ block)
+        group (class_doc ^^ block)
   else
     let thread =
       (if is_nested && classes then
