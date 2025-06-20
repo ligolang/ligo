@@ -551,19 +551,19 @@ and print_I_Const state (node : intf_const reg) =
 and print_D_Namespace prefix ?(classes=false) state (node : namespace_decl reg) =
   let {kwd_namespace; namespace_name; namespace_type; namespace_body} =
     node.value in
-  let rec is_nested_namespace = function
+  let rec is_nested = function
     [] -> false
-  | S_Attr (_, stmt) :: more -> is_nested_namespace (stmt :: more)
+  | S_Attr (_, stmt) :: more -> is_nested (stmt :: more)
   | S_Decl (D_Namespace _) :: _ -> true
-  | _ :: stmts -> is_nested_namespace stmts in
-  let is_nested_namespace =
+  | _ :: stmts -> is_nested stmts in
+  let is_nested =
     Ne_list.to_list namespace_body.value.inside
     |> List.map ~f:fst
-    |> is_nested_namespace in
+    |> is_nested in
   let translate_to_a_class =
     match namespace_type with
       Some _ -> true
-    | None -> not is_nested_namespace && classes in
+    | None -> not is_nested && classes in
   if translate_to_a_class then
     (* Creating a ghost keyword "class" and hooking any comments that
        the keyword "namespace" might carry. *)
@@ -614,10 +614,12 @@ and print_D_Namespace prefix ?(classes=false) state (node : namespace_decl reg) 
         group (thread ^^ class_doc ^^ space ^^ block)
   else
     let thread =
+      (if is_nested && classes then
+         string "// UPGRADE: Nested namespaces need to be handled by hand."
+         ^^ hardline else empty) ^^
       prefix ^^ token kwd_namespace ^^ space
       ^^ token namespace_name ^^ space in
-    group (thread ^^ print_block ~classes:false ~let_to_const:true
-                                 state namespace_body)
+    group (thread ^^ print_block ~let_to_const:true state namespace_body)
 
 and print_namespace_type state (node : interface option) =
   Option.value_map node ~default:empty ~f:(print_interface state)
