@@ -505,28 +505,73 @@ and print_ImportFrom state (node : import_from reg) =
 
 and print_D_Interface state (node : interface_decl reg) =
   let {kwd_interface; intf_name; intf_extends = _; intf_body} = node.value in
+  let is_abstract (t: intf_type reg) =
+    match t.value.type_rhs with
+      None -> true
+    | Some _ -> false in
   (* Filtering the contents of the interface *)
+  let filter_entries entry acc =
+    let abs_types, types, constants = acc in
+    match entry with
+      I_Attr attr_entry  ->
+        let _, entry' = unroll_I_Attr attr_entry in (
+        match entry' with
+          I_Type t ->
+           if is_abstract t then
+             entry :: abs_types, types, constants
+           else abs_types, entry :: types, constants
+        | I_Const c -> abs_types, types, entry :: constants
+        | _ -> acc (* Should not happen *)
+        )
+    | I_Type t  ->
+       if is_abstract t then
+         entry :: abs_types, types, constants
+       else abs_types, entry :: types, constants
+    | I_Const c -> abs_types, types, entry :: constants in
+  let body = Utils.sep_or_term_to_list intf_body.value.inside in
+  let abs_types, types, constants =
+    List.fold_right ~f:filter_entries ~init:([],[],[]) body in
+  (* Checking if we can translate without error *)
+  let is_translatable = List.is_empty abs_types in
+  if is_translatable then
+    (* Moving the type entries out of the interface *)
+    let types_doc =
+      match types with
+        [] -> empty
+      | fst_type :: more_types ->
+         let ne_list = Ne_list.(fst_type :: more_types) in
+         print_ne_list (break 1) (print_intf_entry state) ne_list in
+    (* Printing the new interface *)
+    let lbrace = Wrap.wrap "{" Region.ghost
+    and rbrace = Wrap.wrap "}" Region.ghost
+    and comma  = string "," in
+    group (
+      types_doc ^^ hardline ^^ hardline ^^
+      token kwd_interface ^^ space ^^ token intf_name ^^ space
+      ^^ print_braces_like_document state ~force_hardline:true
+           (separate_map comma (print_intf_entry state) constants)
+           lbrace rbrace)
+  else (* No upgrade to v2 *)
+    group (token kwd_interface ^^ space ^^ token intf_name ^^ space
+           ^^ print_intf_body state intf_body)
 
+and print_intf_body ?(in_comment=true) state (node : intf_body) =
+  print_braces ~force_hardline:true state
+    (print_intf_entries ~in_comment:false state) node
 
+and print_intf_entries ?(in_comment=true) state (node : intf_entries) =
+  print_sep_or_term (break 1)
+    (print_intf_entry ~in_comment state) node
 
-  group (token kwd_interface ^^ space ^^ token intf_name ^^ space
-         ^^ print_intf_body state intf_body)
-
-and print_intf_body state (node : intf_body) =
-  print_braces ~force_hardline:true state (print_intf_entries state) node
-
-and print_intf_entries state (node : intf_entries) =
-  print_sep_or_term (break 1) (print_intf_entry state) node
-
-and print_intf_entry state = function
-  I_Attr  i -> print_I_Attr  state i
+and print_intf_entry ?(in_comment=true) state = function
+  I_Attr  i -> print_I_Attr  ~in_comment state i
 | I_Type  i -> print_I_Type  state i
-| I_Const i -> print_I_Const state i
+| I_Const i -> print_I_Const ~in_comment state i
 
-and print_I_Attr state (node : attribute * intf_entry) =
+and print_I_Attr state ?(in_comment=true) (node : attribute * intf_entry) =
   let attributes, entry = unroll_I_Attr node in
   let thread = print_intf_entry state entry
-  in print_attributes state thread attributes
+  in print_attributes ~in_comment state thread attributes
 
 and print_I_Type state (node : intf_type reg) =
   let {kwd_type; type_name; generics; type_rhs} = node.value in
@@ -542,12 +587,14 @@ and print_type_rhs state thread (node : (equal * type_expr) option) =
     else thread ^^ prefix state#indent 1 (space ^^ token eq) rhs
   in Option.value_map node ~default:thread ~f:(print state)
 
-and print_I_Const state (node : intf_const reg) =
+and print_I_Const ?(in_comment=true) state (node : intf_const reg) =
   let {kwd_const; const_name; const_optional; const_type} = node.value in
-  let thread = match const_optional with
-    | None -> token kwd_const ^^ space ^^ print_variable const_name
-    | Some qmark -> token kwd_const ^^ space
-                    ^^ print_variable const_name ^^ token qmark
+  let prefix = if in_comment then empty else token kwd_const ^^ space in
+  let thread =
+    prefix ^^ print_variable const_name ^^
+    match const_optional with
+    | None -> empty
+    | Some qmark -> token qmark
   in group (thread ^^ print_type_annotation state const_type)
 
 (* Namespace declaration *)
@@ -555,6 +602,7 @@ and print_I_Const state (node : intf_const reg) =
 and print_D_Namespace prefix ?(classes=false) state (node : namespace_decl reg) =
   let {kwd_namespace; namespace_name; namespace_type; namespace_body} =
     node.value in
+  (* Checking if we can translate without error *)
   let rec has_entrypoints = function
     [] -> false
   | S_Attr (attr, stmt) :: stmts ->
