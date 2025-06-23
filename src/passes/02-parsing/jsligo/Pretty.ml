@@ -505,6 +505,10 @@ and print_ImportFrom state (node : import_from reg) =
 
 and print_D_Interface state (node : interface_decl reg) =
   let {kwd_interface; intf_name; intf_extends = _; intf_body} = node.value in
+  (* Filtering the contents of the interface *)
+
+
+
   group (token kwd_interface ^^ space ^^ token intf_name ^^ space
          ^^ print_intf_body state intf_body)
 
@@ -585,22 +589,22 @@ and print_D_Namespace prefix ?(classes=false) state (node : namespace_decl reg) 
       List.fold_right ~f:add_comment ~init:kwd_class comments in
     (* Filtering the contents of the namespace *)
     let filter_decl decl stmt_semi acc =
-      let fun_and_val, others = acc in
+      let const, others = acc in
       match decl with
-        D_Fun _ | D_Value _ -> stmt_semi :: fun_and_val, others
-      | _ -> fun_and_val, stmt_semi :: others in
+        D_Fun _ | D_Value _ -> stmt_semi :: const, others
+      | _ -> const, stmt_semi :: others in
     let filter_stmt (stmt, _ as stmt_semi) acc =
-      let fun_and_val, others = acc in
+      let const, others = acc in
       match stmt with
         S_Decl decl -> filter_decl decl stmt_semi acc
       | S_Attr attr_stmt ->
           let _, stmt' = unroll_S_Attr attr_stmt in (
           match stmt' with
             S_Decl decl -> filter_decl decl stmt_semi acc
-          | _ -> fun_and_val, stmt_semi :: others)
-      | _ -> fun_and_val, stmt_semi :: others in
+          | _ -> const, stmt_semi :: others)
+      | _ -> const, stmt_semi :: others in
     let body = Ne_list.to_list namespace_body.value.inside in
-    let fun_and_val, other_stmts =
+    let const, other_stmts =
       List.fold_right ~f:filter_stmt ~init:([],[]) body in
     (* Printing the statements moved out *)
     let thread =
@@ -619,7 +623,7 @@ and print_D_Namespace prefix ?(classes=false) state (node : namespace_decl reg) 
       match namespace_type with
         None -> class_doc
       | Some intf -> class_doc ^^ print_interface state intf ^^ space in
-    match fun_and_val with
+    match const with
       [] -> class_doc ^^ string "{}"
     | fst_stmt :: more_stmts ->
         let inside = Ne_list.(fst_stmt :: more_stmts) in
