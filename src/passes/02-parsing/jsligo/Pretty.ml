@@ -551,9 +551,19 @@ and print_I_Const state (node : intf_const reg) =
 and print_D_Namespace prefix ?(classes=false) state (node : namespace_decl reg) =
   let {kwd_namespace; namespace_name; namespace_type; namespace_body} =
     node.value in
+  let rec has_entrypoints = function
+    [] -> false
+  | S_Attr (attr, stmt) :: stmts ->
+      let key, _ = attr#payload in
+      String.(key = "entry" || key = "view") || has_entrypoints stmts
+  | _ :: stmts -> has_entrypoints stmts in
+  let has_entrypoints =
+    Ne_list.to_list namespace_body.value.inside
+    |> List.map ~f:fst
+    |> has_entrypoints in
   let rec is_nested = function
     [] -> false
-  | S_Attr (_, stmt) :: more -> is_nested (stmt :: more)
+  | S_Attr (_, stmt) :: stmts -> is_nested (stmt :: stmts)
   | S_Decl (D_Namespace _) :: _ -> true
   | _ :: stmts -> is_nested stmts in
   let is_nested =
@@ -561,7 +571,7 @@ and print_D_Namespace prefix ?(classes=false) state (node : namespace_decl reg) 
     |> List.map ~f:fst
     |> is_nested in
   let translate_to_a_class =
-    not is_nested &&
+    not is_nested && has_entrypoints &&
     match namespace_type with
       Some _ -> true
     | None -> classes in
