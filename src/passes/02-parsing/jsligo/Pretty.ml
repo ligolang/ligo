@@ -584,7 +584,7 @@ and print_D_Namespace prefix ?(classes=false) state (node : namespace_decl reg) 
     let kwd_class =
       List.fold_right ~f:add_comment ~init:kwd_class comments in
     (* Filtering the contents of the namespace *)
-    let filter_decl attrs decl stmt_semi acc =
+    let filter_decl decl stmt_semi acc =
       let fun_and_val, others = acc in
       match decl with
         D_Fun _ | D_Value _ -> stmt_semi :: fun_and_val, others
@@ -592,11 +592,11 @@ and print_D_Namespace prefix ?(classes=false) state (node : namespace_decl reg) 
     let filter_stmt (stmt, _ as stmt_semi) acc =
       let fun_and_val, others = acc in
       match stmt with
-        S_Decl decl -> filter_decl [] decl stmt_semi acc
+        S_Decl decl -> filter_decl decl stmt_semi acc
       | S_Attr attr_stmt ->
-          let attrs, stmt' = unroll_S_Attr attr_stmt in (
+          let _, stmt' = unroll_S_Attr attr_stmt in (
           match stmt' with
-            S_Decl decl -> filter_decl attrs decl stmt_semi acc
+            S_Decl decl -> filter_decl decl stmt_semi acc
           | _ -> fun_and_val, stmt_semi :: others)
       | _ -> fun_and_val, stmt_semi :: others in
     let body = Ne_list.to_list namespace_body.value.inside in
