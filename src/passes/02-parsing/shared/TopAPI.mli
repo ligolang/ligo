@@ -48,7 +48,10 @@ module type PRETTY =
     type tree
 
     val print :
-      ?in_comment:bool -> ?classes:bool -> state -> tree -> PPrint.document
+      ?classes:bool ->
+      state ->
+      tree ->
+      PPrint.document
   end
 
 module type WARNING =

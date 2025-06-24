@@ -294,7 +294,7 @@ and print_nat (node : (lexeme * Z.t) wrap) =
 
 (* Attributes *)
 
-let print_attribute state ?(in_comment = false) (node : Attr.t wrap) =
+let print_attribute state ?(dec_in_com = false) (node : Attr.t wrap) =
   let key, val_opt = node#payload in
   let thread = string "@" ^^ string key in
   let thread = match val_opt with
@@ -304,25 +304,27 @@ let print_attribute state ?(in_comment = false) (node : Attr.t wrap) =
                    ^^ string ")"
                | _ -> thread in
   let thread =
-    if in_comment then string "// " ^^ thread ^^ hardline else thread
+    if dec_in_com then string "// " ^^ thread ^^ hardline else thread
   in group (print_comments node#comments ^/^ thread)
 
-let print_attributes state ?(in_comment = false) thread attributes =
+let print_attributes state ?(dec_in_com = false) thread attributes =
   let drop_comment_attr attributes =
     let is_comment w = String.(fst (w#payload) = "comment")
     in List.filter ~f:(not <@ is_comment) attributes
   in
   match drop_comment_attr attributes with
     []    -> thread
-  | attrs -> let print = print_attribute ~in_comment state in
+  | attrs -> let print = print_attribute ~dec_in_com state in
              separate_map (break 0) print attrs ^/^ thread
 
 (* PRINTING THE CST *)
 
-let rec print ?(in_comment=true) ?(classes=false) state (node : CST.t) =
+let rec print ?(classes=false) state (node : CST.t) =
   let {statements; eof} = node in
+  let f = print_statement_semi ~decl_kind:true ~dec_in_com:true
+                               ~classes ~let_to_const:true state in
   let prog = Ne.to_list statements
-             |> List.map ~f:(print_statement_semi ~in_comment ~classes ~let_to_const:true state)
+             |> List.map ~f
              |> separate_map (hardline ^^ hardline) group
              |> Fun.flip ( ^^ ) hardline
   in match eof#comments with
@@ -359,14 +361,17 @@ and top_let_to_const_in_value_decl (node : value_decl Region.reg) =
   let value = {kind; bindings} in
   Region.{region; value}
 
-and print_statement ?(in_comment=true) ?(classes=false) ?(let_to_const=false) state = function
-  S_Attr      s -> print_S_Attr      ~in_comment ~classes ~let_to_const state s
+and print_statement
+  ?(decl_kind=true) ?(dec_in_com=true) ?(classes=false)
+  ?(let_to_const=false) state = function
+  S_Attr      s -> print_S_Attr      ~decl_kind ~dec_in_com ~classes
+                                     ~let_to_const state s
 | S_Block     s -> print_S_Block     state s
 | S_Break     s -> print_S_Break     state s
 | S_Continue  s -> print_S_Continue  state s
-| S_Decl      s -> print_S_Decl      ~in_comment ~classes ~let_to_const state s
+| S_Decl      s -> print_S_Decl      ~decl_kind ~classes ~let_to_const state s
 | S_Directive s -> print_S_Directive state s
-| S_Export    s -> print_S_Export    ~classes ~let_to_const state s
+| S_Export    s -> print_S_Export    ~decl_kind ~classes ~let_to_const state s
 | S_Expr      s -> print_S_Expr      state s
 | S_For       s -> print_S_For       state s
 | S_ForOf     s -> print_S_ForOf     state s
@@ -377,27 +382,34 @@ and print_statement ?(in_comment=true) ?(classes=false) ?(let_to_const=false) st
 
 (* Decorated statements *)
 
-and print_S_Attr state ?(in_comment=true) ?(classes=false) ?(let_to_const=false) (node : attribute * statement) =
+and print_S_Attr state ?(decl_kind=true) ?(dec_in_com=true) ?(classes=false)
+                       ?(let_to_const=false) (node : attribute * statement) =
   let attributes, stmt = unroll_S_Attr node in
-  let thread = print_statement ~in_comment ~classes ~let_to_const state stmt
-  in print_attributes ~in_comment state thread attributes
+  let thread = print_statement ~decl_kind ~dec_in_com ~classes
+                               ~let_to_const state stmt
+  in print_attributes ~dec_in_com state thread attributes
 
 (* Blocks of statements *)
 
 and print_S_Block state (node : statements braces) =
   print_block state node
 
-and print_block ?(in_comment=true) ?(classes=false) ?(let_to_const=false) state (node : statements braces) =
-  let print = print_statements ~in_comment ~classes ~let_to_const state in
+and print_block ?(decl_kind=true) ?(dec_in_com=true) ?(classes=false) ?(let_to_const=false) state (node : statements braces) =
+  let print = print_statements ~decl_kind ~dec_in_com ~classes
+                               ~let_to_const state in
   print_braces ~force_hardline:true state print node
 
-and print_statements ?(in_comment=true) ?(classes=false) ?(let_to_const=false) state (node : statements) =
-  let print = print_statement_semi ~in_comment ~classes ~let_to_const state in
+and print_statements ?(decl_kind=true) ?(dec_in_com=true) ?(classes=false) ?(let_to_const=false) state (node : statements) =
+  let print = print_statement_semi ~decl_kind ~dec_in_com ~classes
+                                   ~let_to_const state in
   print_ne_list (break 1) print node
 
-and print_statement_semi ?(in_comment=true) ?(classes=false) ?(let_to_const=false) state (node : statement * semi option) =
+and print_statement_semi
+  ?(decl_kind=true) ?(dec_in_com=true) ?(classes=false)
+  ?(let_to_const=false) state (node : statement * semi option) =
   let statement, semi_opt = node in
-  let thread = print_statement ~in_comment ~classes ~let_to_const state statement in
+  let thread =print_statement ~decl_kind ~dec_in_com ~classes ~let_to_const
+                              state statement in
   thread ^^ Option.value_map semi_opt ~default:empty ~f:token
 
 (* Break statement *)
@@ -410,18 +422,21 @@ and print_S_Continue state (node : kwd_continue) = token node
 
 (* Declarations as statements *)
 
-and print_S_Decl ?(in_comment=true) ?(classes=false)
+and print_S_Decl ?(decl_kind=true) ?(dec_in_com=true) ?(classes=false)
                  ?(let_to_const=false) state (node : declaration) =
-  print_declaration empty ~in_comment ~classes ~let_to_const state node
+  print_declaration
+    empty ~decl_kind ~dec_in_com ~classes ~let_to_const state node
 
-and print_declaration prefix ?(in_comment=true) ?(classes=false)
-  ?(let_to_const=false) state = function
+and print_declaration
+  prefix ?(decl_kind=true) ?(dec_in_com=true)
+  ?(classes=false) ?(let_to_const=false) state = function
   D_Fun       d -> prefix ^^ print_D_Fun state d
 | D_Import    d -> prefix ^^ print_D_Import state d
 | D_Interface d -> prefix ^^ print_D_Interface state d
 | D_Namespace d -> print_D_Namespace prefix ~classes state d
 | D_Type      d -> prefix ^^ print_D_Type state d
-| D_Value     d -> prefix ^^ print_D_Value ~in_comment ~let_to_const state d
+| D_Value     d -> prefix ^^ print_D_Value ~decl_kind ~dec_in_com
+                                           ~let_to_const state d
 
 (* Function declaration *)
 
@@ -555,23 +570,23 @@ and print_D_Interface state (node : interface_decl reg) =
     group (token kwd_interface ^^ space ^^ token intf_name ^^ space
            ^^ print_intf_body state intf_body)
 
-and print_intf_body ?(in_comment=true) state (node : intf_body) =
+and print_intf_body ?(dec_in_com=true) state (node : intf_body) =
   print_braces ~force_hardline:true state
-    (print_intf_entries ~in_comment:false state) node
+    (print_intf_entries ~dec_in_com:false state) node
 
-and print_intf_entries ?(in_comment=true) state (node : intf_entries) =
+and print_intf_entries ?(dec_in_com=true) state (node : intf_entries) =
   print_sep_or_term (break 1)
-    (print_intf_entry ~in_comment state) node
+    (print_intf_entry ~dec_in_com state) node
 
-and print_intf_entry ?(in_comment=true) state = function
-  I_Attr  i -> print_I_Attr  ~in_comment state i
+and print_intf_entry ?(dec_in_com=true) state = function
+  I_Attr  i -> print_I_Attr  ~dec_in_com state i
 | I_Type  i -> print_I_Type  state i
-| I_Const i -> print_I_Const ~in_comment state i
+| I_Const i -> print_I_Const ~decl_kind:false state i
 
-and print_I_Attr state ?(in_comment=true) (node : attribute * intf_entry) =
+and print_I_Attr state ?(dec_in_com=true) (node : attribute * intf_entry) =
   let attributes, entry = unroll_I_Attr node in
   let thread = print_intf_entry state entry
-  in print_attributes ~in_comment state thread attributes
+  in print_attributes ~dec_in_com state thread attributes
 
 and print_I_Type state (node : intf_type reg) =
   let {kwd_type; type_name; generics; type_rhs} = node.value in
@@ -587,9 +602,9 @@ and print_type_rhs state thread (node : (equal * type_expr) option) =
     else thread ^^ prefix state#indent 1 (space ^^ token eq) rhs
   in Option.value_map node ~default:thread ~f:(print state)
 
-and print_I_Const ?(in_comment=true) state (node : intf_const reg) =
+and print_I_Const ?(decl_kind=true) state (node : intf_const reg) =
   let {kwd_const; const_name; const_optional; const_type} = node.value in
-  let prefix = if in_comment then empty else token kwd_const ^^ space in
+  let prefix = if decl_kind then token kwd_const ^^ space else empty in
   let thread =
     prefix ^^ print_variable const_name ^^
     match const_optional with
@@ -610,20 +625,25 @@ and print_D_Namespace prefix ?(classes=false) state (node : namespace_decl reg) 
       let key, _ = attr#payload in
       String.(key = "entry" || key = "view") || has_entrypoints stmts
   | _ :: stmts -> has_entrypoints stmts in
-  let has_entrypoints =
+  let has_entrypoints : bool =
     Ne_list.to_list namespace_body.value.inside
     |> List.map ~f:fst
     |> has_entrypoints in
   let rec is_nested = function
     [] -> false
   | S_Attr (_, stmt) :: stmts -> is_nested (stmt :: stmts)
+  | S_Export decl :: stmts -> (
+    match snd decl.value with
+      D_Namespace _ -> true
+    | _ -> is_nested stmts
+    )
   | S_Decl (D_Namespace _) :: _ -> true
   | _ :: stmts -> is_nested stmts in
-  let is_nested =
+  let is_nested : bool =
     Ne_list.to_list namespace_body.value.inside
     |> List.map ~f:fst
     |> is_nested in
-  let translate_to_a_class =
+  let translate_to_a_class : bool =
     not is_nested && has_entrypoints &&
     match namespace_type with
       Some _ -> true
@@ -643,24 +663,29 @@ and print_D_Namespace prefix ?(classes=false) state (node : namespace_decl reg) 
       match decl with
         D_Fun _ | D_Value _ -> stmt_semi :: const, others
       | _ -> const, stmt_semi :: others in
+    let filter_export stmt stmt_semi acc =
+      let _, decl = stmt.value in
+      filter_decl decl stmt_semi acc in
     let filter_stmt (stmt, _ as stmt_semi) acc =
       let fun_and_val, others = acc in
       match stmt with
         S_Decl decl -> filter_decl decl stmt_semi acc
+      | S_Export stmt -> filter_export stmt stmt_semi acc
       | S_Attr attr_stmt ->
           let _, stmt' = unroll_S_Attr attr_stmt in (
           match stmt' with
             S_Decl decl -> filter_decl decl stmt_semi acc
+          | S_Export stmt -> filter_export stmt stmt_semi acc
           | _ -> fun_and_val, stmt_semi :: others)
       | _ -> fun_and_val, stmt_semi :: others in
     let body = Ne_list.to_list namespace_body.value.inside in
-    let fun_and_val, other_stmts =
+    let fun_and_val_stmts, other_stmts =
       List.fold_right ~f:filter_stmt ~init:([],[]) body
     in
     (* From function declarations to constant declarations *)
     let fun_to_val (stmt, semi_opt) =
       CST.fun_stmt_to_arrow_stmt stmt, semi_opt in
-    let const = List.map ~f:fun_to_val fun_and_val
+    let const = List.map ~f:fun_to_val fun_and_val_stmts
     in
     (* Printing the statements moved out *)
     let thread =
@@ -668,7 +693,8 @@ and print_D_Namespace prefix ?(classes=false) state (node : namespace_decl reg) 
         [] -> empty
       | fst_stmt :: more_stmts ->
          let statements = Ne_list.(fst_stmt :: more_stmts) in
-         print_statements ~classes ~let_to_const:true state statements
+         print_statements ~decl_kind:true ~dec_in_com:true ~classes
+                          ~let_to_const:true state statements
          ^^ hardline ^^ hardline
     in
     (* Printing the class *)
@@ -687,8 +713,8 @@ and print_D_Namespace prefix ?(classes=false) state (node : namespace_decl reg) 
         let inside = Ne_list.(fst_stmt :: more_stmts) in
         let new_body = {namespace_body
                        with value = {namespace_body.value with inside}} in
-        let block = print_block ~in_comment:false ~classes:false
-                      ~let_to_const:true state new_body in
+        let block = print_block ~decl_kind:false ~dec_in_com:false ~classes:true
+                                ~let_to_const:true state new_body in
         group (class_doc ^^ block)
   else
     let thread =
@@ -697,7 +723,8 @@ and print_D_Namespace prefix ?(classes=false) state (node : namespace_decl reg) 
          ^^ hardline else empty) ^^
       prefix ^^ token kwd_namespace ^^ space
       ^^ token namespace_name ^^ space in
-    group (thread ^^ print_block ~let_to_const:true state namespace_body)
+    group (thread ^^ print_block ~decl_kind:true ~dec_in_com:true
+                                 ~let_to_const:true state namespace_body)
 
 and print_namespace_type state (node : interface option) =
   Option.value_map node ~default:empty ~f:(print_interface state)
@@ -730,10 +757,10 @@ and print_D_Type state (node : type_decl reg) =
 
 (* Value declarations *)
 
-and print_D_Value ?(in_comment=true) ?(let_to_const=false) state (node : value_decl reg) =
+and print_D_Value ?(decl_kind=true) ?(dec_in_com=true) ?(let_to_const=false) state (node : value_decl reg) =
   let {kind; bindings} = node.value in
   let thread   =
-    if in_comment then print_var_kind ~let_to_const kind ^^ space
+    if decl_kind then print_var_kind ~let_to_const kind ^^ space
     else empty
   and bindings = print_nsepseq (break 1) (print_val_binding state) bindings
   in group (thread ^^ bindings)
@@ -779,13 +806,14 @@ and print_S_Directive state (node : Directive.t) =
 
 (* Export statements *)
 
-and print_S_Export ?(classes=false) ?(let_to_const=false) state (node : export_stmt reg) =
+and print_S_Export ?(decl_kind=true) ?(classes=false) ?(let_to_const=false)
+                   state (node : export_stmt reg) =
   let kwd_export, declaration = node.value in
   let prefix =
     match declaration with
       D_Import _ -> empty
-    | _ -> token kwd_export ^^ space in
-  print_declaration prefix ~classes ~let_to_const state declaration
+    | _ -> if classes then empty else token kwd_export ^^ space in
+  print_declaration prefix ~decl_kind ~classes ~let_to_const state declaration
 
 (* Expressions as statements *)
 
@@ -1052,7 +1080,7 @@ and print_E_Assign state (node : equal bin_op reg) = print_bin_op state node
 and print_E_Attr state (node : attribute * expr) =
   let attributes, expr = unroll_E_Attr node in
   let thread = print_expr state expr
-  in print_attributes ~in_comment:true state thread attributes
+  in print_attributes ~dec_in_com:true state thread attributes
 
 (* Bitwise conjunction *)
 
@@ -1516,7 +1544,7 @@ and print_P_element state (node : pattern element) =
 and print_P_Attr state (node : attribute * pattern) =
   let attributes, pattern = unroll_P_Attr node in
   let thread = print_pattern state pattern
-  in print_attributes ~in_comment:true state thread attributes
+  in print_attributes ~dec_in_com:true state thread attributes
 
 (* Bytes pattern *)
 
@@ -1614,7 +1642,7 @@ and print_type_tuple state (node : type_ctor_args) =
 and print_T_Attr state (node : attribute * type_expr) =
   let attributes, t_expr = unroll_T_Attr node in
   let thread = print_type_expr state t_expr
-  in print_attributes state ~in_comment:true thread attributes
+  in print_attributes state ~dec_in_com:true thread attributes
 
 (* Array type *)
 
