@@ -939,3 +939,48 @@ let parameters_to_region = function
 (* Exposing types for the functor [Parsing_shared.Common.MakePretty] *)
 
 type signature_expr = intf_expr
+
+(* Converting function declarations to constant arrow functions *)
+
+let fun_to_arrow (node: fun_decl reg) : value_decl reg =
+  let {kwd_function; fun_name; generics; parameters; rhs_type; fun_body} =
+    node.value in
+  (* Keyword "const" *)
+  let comments = kwd_function#comments in
+  let kwd_const = Wrap.wrap "const" kwd_function#region in
+  let add_comment c w = w#add_comment c in
+  let kwd_const = List.fold_right ~f:add_comment ~init:kwd_const comments in
+  let kind : var_kind = `Const kwd_const in
+  (* Arrow function *)
+  let start = variable_to_region fun_name
+  and stop = fun_body.region in
+  let region = Region.cover start stop in
+  let pattern = P_Var fun_name in
+  let eq = Wrap.wrap "=" Region.ghost in
+  let start =
+    match generics with
+      None -> parameters.region
+    | Some gen -> gen.region
+  and stop = fun_body.region in
+  let arrow_fun_region = Region.cover start stop in
+  let arrow = Wrap.wrap "=>" Region.ghost in
+  let parameters = ParParams parameters in
+  let fun_body = StmtBody fun_body in
+  let arrow_fun_expr =
+    {generics; parameters; rhs_type; arrow; fun_body} in
+  let arrow_fun_reg = Region.{region=arrow_fun_region; value=arrow_fun_expr} in
+  let rhs_expr = E_ArrowFun arrow_fun_reg in
+  let val_binding = {pattern; rhs_type; eq; rhs_expr} in
+  let val_binding = Region.{region; value = val_binding} in
+  let bindings = val_binding, [] in
+  let value_decl : value_decl = {kind; bindings} in
+  Region.{value = value_decl; region = node.region}
+
+let fun_decl_to_val_decl = function
+  D_Fun decl -> D_Value (fun_to_arrow decl)
+| decl -> decl
+
+let rec fun_stmt_to_arrow_stmt = function
+  S_Attr (attr, stmt) -> S_Attr (attr, fun_stmt_to_arrow_stmt stmt)
+| S_Decl decl -> S_Decl (fun_decl_to_val_decl decl)
+| stmt -> stmt
