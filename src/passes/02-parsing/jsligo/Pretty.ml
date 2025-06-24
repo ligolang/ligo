@@ -601,7 +601,8 @@ and print_I_Const ?(in_comment=true) state (node : intf_const reg) =
 
 and print_D_Namespace prefix ?(classes=false) state (node : namespace_decl reg) =
   let {kwd_namespace; namespace_name; namespace_type; namespace_body} =
-    node.value in
+    node.value
+  in
   (* Checking if we can translate without error *)
   let rec has_entrypoints = function
     [] -> false
@@ -634,7 +635,8 @@ and print_D_Namespace prefix ?(classes=false) state (node : namespace_decl reg) 
     let kwd_class = Wrap.wrap "class" Region.ghost in
     let add_comment c w = w#add_comment c in
     let kwd_class =
-      List.fold_right ~f:add_comment ~init:kwd_class comments in
+      List.fold_right ~f:add_comment ~init:kwd_class comments
+    in
     (* Filtering the contents of the namespace *)
     let filter_decl decl stmt_semi acc =
       let const, others = acc in
@@ -642,18 +644,24 @@ and print_D_Namespace prefix ?(classes=false) state (node : namespace_decl reg) 
         D_Fun _ | D_Value _ -> stmt_semi :: const, others
       | _ -> const, stmt_semi :: others in
     let filter_stmt (stmt, _ as stmt_semi) acc =
-      let const, others = acc in
+      let fun_and_val, others = acc in
       match stmt with
         S_Decl decl -> filter_decl decl stmt_semi acc
       | S_Attr attr_stmt ->
           let _, stmt' = unroll_S_Attr attr_stmt in (
           match stmt' with
             S_Decl decl -> filter_decl decl stmt_semi acc
-          | _ -> const, stmt_semi :: others)
-      | _ -> const, stmt_semi :: others in
+          | _ -> fun_and_val, stmt_semi :: others)
+      | _ -> fun_and_val, stmt_semi :: others in
     let body = Ne_list.to_list namespace_body.value.inside in
-    let const, other_stmts =
-      List.fold_right ~f:filter_stmt ~init:([],[]) body in
+    let fun_and_val, other_stmts =
+      List.fold_right ~f:filter_stmt ~init:([],[]) body
+    in
+    (* From function declarations to constant declarations *)
+    let fun_to_val (stmt, semi_opt) =
+      CST.fun_stmt_to_arrow_stmt stmt, semi_opt in
+    let const = List.map ~f:fun_to_val fun_and_val
+    in
     (* Printing the statements moved out *)
     let thread =
       match other_stmts with
@@ -661,11 +669,13 @@ and print_D_Namespace prefix ?(classes=false) state (node : namespace_decl reg) 
       | fst_stmt :: more_stmts ->
          let statements = Ne_list.(fst_stmt :: more_stmts) in
          print_statements ~classes ~let_to_const:true state statements
-         ^^ hardline ^^ hardline in
+         ^^ hardline ^^ hardline
+    in
     (* Printing the class *)
     let class_doc =
       thread ^^ prefix ^^ token kwd_class ^^ space
-      ^^ token namespace_name ^^ space in
+      ^^ token namespace_name ^^ space
+    in
     (* Implementation of interfaces *)
     let class_doc =
       match namespace_type with
