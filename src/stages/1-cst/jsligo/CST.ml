@@ -980,7 +980,14 @@ let fun_decl_to_val_decl = function
   D_Fun decl -> D_Value (fun_to_arrow decl)
 | decl -> decl
 
+let export_to_arrow_stmt (node: export_stmt reg) =
+  let kwd_export, declaration = node.value in
+  let declaration = fun_decl_to_val_decl declaration in
+  let value = kwd_export, declaration in
+  {node with value}
+
 let rec fun_stmt_to_arrow_stmt = function
   S_Attr (attr, stmt) -> S_Attr (attr, fun_stmt_to_arrow_stmt stmt)
 | S_Decl decl -> S_Decl (fun_decl_to_val_decl decl)
+| S_Export stmt -> S_Export (export_to_arrow_stmt stmt)
 | stmt -> stmt
