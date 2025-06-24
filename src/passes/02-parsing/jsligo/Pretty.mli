@@ -33,6 +33,7 @@ val print_statement :
   ?decl_kind:bool ->
   ?dec_in_com:bool ->
   ?classes:bool ->
+  ?static:bool ->
   ?let_to_const:bool ->
   state ->
   statement ->
