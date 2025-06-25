@@ -28,10 +28,10 @@ module Make (LexerParams: LexerLib.CLI.PARAMETERS) : PARAMETERS =
     let make_help buffer : Buffer.t =
       let options = [
         "      --mono           Use Menhir monolithic API";
-        "Pretty-printing:";
-        "      --pretty         Pretty-print the input";
-        "      --width=<n>      Width for --pretty";
-        "      --classes        Translating namespaces as classes with --pretty";
+        "Upgrade to JsLIGO v2:";
+        "      --upgrade        Upgrade the input to JsLIGO v2";
+        "      --width=<n>      Display width for --upgrade";
+        "      --namespaces     Namespaces as classes with --upgrade";
         "CST printing:";
         "      --cst            Print the CST";
         "      --no-layout      With --cst, do not print the tree layout";
@@ -113,8 +113,8 @@ module Make (LexerParams: LexerLib.CLI.PARAMETERS) : PARAMETERS =
     let specs =
       Getopt.[
         noshort, "mono",           set mono true, None;
-        noshort, "pretty",         set pretty true, None;
-        noshort, "classes",        set classes true, None;
+        noshort, "upgrade",        set pretty true, None;
+        noshort, "namespaces",     set classes true, None;
         noshort, "width",          None, Some set_width;
         noshort, "cst",            set cst true, None;
         noshort, "no-layout",      set layout false, None;
@@ -157,8 +157,8 @@ module Make (LexerParams: LexerLib.CLI.PARAMETERS) : PARAMETERS =
     let opt_wo_arg =
       String.Set.empty
       |> add "--mono"
-      |> add "--pretty"
-      |> add "--classes"
+      |> add "--upgrade"
+      |> add "--namespaces"
       |> add "--cst"
       |> add "--recovery"
       |> add "--trace-recovery"
@@ -221,9 +221,9 @@ module Make (LexerParams: LexerLib.CLI.PARAMETERS) : PARAMETERS =
       (* Options "help", "version" and "cli" are not given. *)
       let options = [
         sprintf "mono           = %b" mono;
-        sprintf "pretty         = %b" pretty;
+        sprintf "upgrade        = %b" pretty;
         sprintf "width          = %s" (print_width width);
-        sprintf "classes        = %b" classes;
+        sprintf "namespaces     = %b" classes;
         sprintf "cst            = %b" cst;
         sprintf "layout         = %b" layout;
         sprintf "regions        = %b" regions;
@@ -244,7 +244,7 @@ module Make (LexerParams: LexerLib.CLI.PARAMETERS) : PARAMETERS =
     let status =
       match
         mono, pretty,  cst, recovery, trace_recovery with
-      |    _,  true,  true,        _,     _ -> `Conflict ("--pretty", "--cst")
+      |    _,  true,  true,        _,     _ -> `Conflict ("--upgrade", "--cst")
       | true,     _,     _,     true,     _ -> `Conflict ("--mono", "--recovery")
       |    _,     _,     _,    false,  Some _ -> `DependsOn ("--trace-recovery", "--recovery")
       |    _,     _,     _,        _,     _ -> status
