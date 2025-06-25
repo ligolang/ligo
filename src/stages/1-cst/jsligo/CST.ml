@@ -970,7 +970,7 @@ let fun_to_arrow (node: fun_decl reg) : value_decl reg =
     {generics; parameters; rhs_type; arrow; fun_body} in
   let arrow_fun_reg = Region.{region=arrow_fun_region; value=arrow_fun_expr} in
   let rhs_expr = E_ArrowFun arrow_fun_reg in
-  let val_binding = {pattern; rhs_type; eq; rhs_expr} in
+  let val_binding = {pattern; rhs_type=None; eq; rhs_expr} in
   let val_binding = Region.{region; value = val_binding} in
   let bindings = val_binding, [] in
   let value_decl : value_decl = {kind; bindings} in
