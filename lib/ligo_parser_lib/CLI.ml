@@ -32,6 +32,7 @@ module Make (LexerParams: LexerLib.CLI.PARAMETERS) : PARAMETERS =
         "      --upgrade        Upgrade the input to JsLIGO v2";
         "      --width=<n>      Display width for --upgrade";
         "      --namespaces     Namespaces as classes with --upgrade";
+        "      --stdlib         Standard library, except Test and Tezos";
         "CST printing:";
         "      --cst            Print the CST";
         "      --no-layout      With --cst, do not print the tree layout";
@@ -61,6 +62,7 @@ module Make (LexerParams: LexerLib.CLI.PARAMETERS) : PARAMETERS =
     and pretty  = ref false
     and width   = ref (None : int option)
     and classes = ref false
+    and stdlib  = ref false
 
     (* CST printing options *)
 
@@ -115,6 +117,7 @@ module Make (LexerParams: LexerLib.CLI.PARAMETERS) : PARAMETERS =
         noshort, "mono",           set mono true, None;
         noshort, "upgrade",        set pretty true, None;
         noshort, "namespaces",     set classes true, None;
+        noshort, "stdlib",         set stdlib true, None;
         noshort, "width",          None, Some set_width;
         noshort, "cst",            set cst true, None;
         noshort, "no-layout",      set layout false, None;
@@ -205,6 +208,7 @@ module Make (LexerParams: LexerLib.CLI.PARAMETERS) : PARAMETERS =
     and pretty   = !pretty
     and width    = !width
     and classes  = !classes
+    and stdlib   = !stdlib
     and cst      = !cst
     and layout   = !layout
     and regions  = !regions
@@ -224,6 +228,7 @@ module Make (LexerParams: LexerLib.CLI.PARAMETERS) : PARAMETERS =
         sprintf "upgrade        = %b" pretty;
         sprintf "width          = %s" (print_width width);
         sprintf "namespaces     = %b" classes;
+        sprintf "stdlib         = %b" stdlib;
         sprintf "cst            = %b" cst;
         sprintf "layout         = %b" layout;
         sprintf "regions        = %b" regions;
@@ -267,6 +272,7 @@ module Make (LexerParams: LexerLib.CLI.PARAMETERS) : PARAMETERS =
         let pretty         = pretty
         let width          = width
         let classes        = classes
+        let stdlib         = stdlib
         let cst            = cst
         let recovery       = recovery
         let trace_recovery = trace_recovery

@@ -48,6 +48,7 @@ module type PRETTY =
     type tree
 
     val print :
+      ?stdlib:bool ->
       ?classes:bool ->
       state ->
       tree ->
