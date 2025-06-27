@@ -51,6 +51,7 @@ module type PRETTY =
     type tree
 
     val print :
+      ?stdlib:bool ->
       ?classes:bool ->
       state ->
       tree ->
@@ -156,7 +157,9 @@ module Make
     let finalise tree (std : Std.t) : unit =
       if Options.pretty then
         (* Printing the syntax tree to source code *)
-        let doc = Pretty.(print ~classes:Options.classes default_state) tree in
+        let doc = Pretty.(print ~stdlib:Options.stdlib
+                                ~classes:Options.classes
+                                default_state) tree in
         let width =
           match Options.width with
             Some width -> width

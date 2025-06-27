@@ -363,7 +363,8 @@ and top_let_to_const_in_value_decl
   Region.{region; value}
 
 and print_statement
-  ?(stdlib=false) ?(decl_kind=true) ?(dec_in_com=true) ?(classes=false)
+  ?(decl_kind=true) ?(dec_in_com=true)
+  ?(stdlib=false) ?(classes=false)
   ?(static=false) ?(let_to_const=false) state = function
   S_Attr      s -> print_S_Attr      ~decl_kind ~dec_in_com ~classes
                                      ~static ~let_to_const state s
@@ -385,10 +386,9 @@ and print_statement
 
 (* Decorated statements *)
 
-and print_S_Attr
-  ?(stdlib=false) ?(decl_kind=true) ?(dec_in_com=true) ?(classes=false)
-  ?(static=false) ?(let_to_const=false)
-  state (node : attribute * statement) =
+and print_S_Attr ?(decl_kind=true) ?(dec_in_com=true) ?(classes=false)
+                 ?(stdlib=false) ?(static=false) ?(let_to_const=false)
+                 state (node : attribute * statement) =
   let attributes, stmt = unroll_S_Attr node in
   let thread = print_statement ~decl_kind ~dec_in_com ~classes
                                ~static ~let_to_const state stmt
@@ -396,28 +396,26 @@ and print_S_Attr
 
 (* Blocks of statements *)
 
-and print_S_Block ?(stdlib=false) state (node : statements braces) =
+and print_S_Block state ?(stdlib=false) (node : statements braces) =
   print_block state node
 
-and print_block
-  ?(stdlib=false) ?(decl_kind=true) ?(dec_in_com=true) ?(classes=false)
-  ?(let_to_const=false) ?(static=false)
-  state (node : statements braces) =
+and print_block ?(decl_kind=true) ?(dec_in_com=true) ?(classes=false)
+                ?(stdlib=false) ?(let_to_const=false) ?(static=false)
+                state (node : statements braces) =
   let print = print_statements ~decl_kind ~dec_in_com ~classes
                                ~static ~let_to_const state in
   print_braces ~force_hardline:true state print node
 
-and print_statements
-  ?(stdlib=false) ?(decl_kind=true) ?(dec_in_com=true) ?(classes=false)
-  ?(static=false) ?(let_to_const=false)
-  state (node : statements) =
+and print_statements ?(decl_kind=true) ?(dec_in_com=true) ?(classes=false)
+                     ?(stdlib=false) ?(static=false) ?(let_to_const=false)
+                     state (node : statements) =
   let print = print_statement_semi ~decl_kind ~dec_in_com ~classes
                                    ~static ~let_to_const state in
   print_ne_list (break 1) print node
 
 and print_statement_semi
-  ?(stdlib=false) ?(decl_kind=true) ?(dec_in_com=true) ?(classes=false)
-  ?(static=false) ?(let_to_const=false)
+  ?(decl_kind=true) ?(dec_in_com=true) ?(classes=false)
+  ?(stdlib=false) ?(static=false) ?(let_to_const=false)
   state (node : statement * semi option) =
   let statement, semi_opt = node in
   let thread = print_statement ~decl_kind ~dec_in_com ~classes ~let_to_const
@@ -434,14 +432,15 @@ and print_S_Continue state (node : kwd_continue) = token node
 
 (* Declarations as statements *)
 
-and print_S_Decl ?(decl_kind=true) ?(dec_in_com=true) ?(classes=false)
-                ?(static=false) ?(let_to_const=false) state (node : declaration) =
+and print_S_Decl
+  ?(decl_kind=true) ?(dec_in_com=true) ?(classes=false) ?(stdlib=false)
+  ?(static=false) ?(let_to_const=false) state (node : declaration) =
   print_declaration
     empty ~decl_kind ~dec_in_com ~classes ~let_to_const ~static state node
 
 and print_declaration
-  prefix ?(stdlib=false) ?(decl_kind=true) ?(dec_in_com=true) ?(classes=false)
-  ?(static=false) ?(let_to_const=false) state = function
+  prefix ?(decl_kind=true) ?(dec_in_com=true) ?(classes=false)
+  ?(stdlib=false) ?(static=false) ?(let_to_const=false) state = function
   D_Fun       d -> prefix ^^ print_D_Fun state d
 | D_Import    d -> prefix ^^ print_D_Import state d
 | D_Interface d -> prefix ^^ print_D_Interface state d
@@ -452,7 +451,7 @@ and print_declaration
 
 (* Function declaration *)
 
-and print_D_Fun state ?(stdlib=false) (node : fun_decl reg) =
+and print_D_Fun ?(stdlib=false) state (node : fun_decl reg) =
   let {kwd_function; fun_name; generics;
        parameters; rhs_type; fun_body} = node.value in
   let thread = token kwd_function ^^ space ^^ print_variable fun_name in
@@ -482,8 +481,7 @@ and print_type_annotation_opt
   ?(stdlib=false) state (node : type_annotation option) =
   Option.value_map node ~default:empty ~f:(print_type_annotation state)
 
-and print_type_annotation
-  ?(stdlib=false) state (node : type_annotation) =
+and print_type_annotation state ?(stdlib=false) (node : type_annotation) =
   let colon, type_expr = node in
   let rhs = print_type_expr state type_expr in
   group (token colon ^^ space ^^ rhs)
@@ -516,7 +514,7 @@ and print_namespace_path :
     let thread = print_nsepseq (break 0) token namespace_path
     in group (thread ^^ token selector ^^ break 0 ^^ print property)
 
-and print_M_Alias ?(stdlib=false) (node : namespace_name) = token node
+and print_M_Alias (node : namespace_name) = token node
 
 and print_ImportAllAs state (node : import_all_as reg) =
   let {kwd_import; times; kwd_as; alias; kwd_from; file_path} = node.value
@@ -592,8 +590,7 @@ and print_intf_body
 
 and print_intf_entries
   ?(stdlib=false) ?(dec_in_com=true) state (node : intf_entries) =
-  print_sep_or_term (break 1)
-    (print_intf_entry ~dec_in_com state) node
+  print_sep_or_term (break 1) (print_intf_entry ~dec_in_com state) node
 
 and print_intf_entry ?(stdlib=false) ?(dec_in_com=true) state = function
   I_Attr  i -> print_I_Attr  ~dec_in_com state i
@@ -601,20 +598,18 @@ and print_intf_entry ?(stdlib=false) ?(dec_in_com=true) state = function
 | I_Const i -> print_I_Const ~decl_kind:false state i
 
 and print_I_Attr
-  ?(stdlib=false) ?(dec_in_com=true) state (node : attribute * intf_entry) =
+  ?(stdlib=false) state ?(dec_in_com=true) (node : attribute * intf_entry) =
   let attributes, entry = unroll_I_Attr node in
   let thread = print_intf_entry state entry
   in print_attributes ~dec_in_com state thread attributes
 
-and print_I_Type
-  ?(stdlib=false) state (node : intf_type reg) =
+and print_I_Type ?(stdlib=false) state (node : intf_type reg) =
   let {kwd_type; type_name; generics; type_rhs} = node.value in
   let thread = token kwd_type ^^ space ^^ print_variable type_name in
   let thread = thread ^^ print_generics_opt state generics
   in group (print_type_rhs state thread type_rhs)
 
-and print_type_rhs
-  ?(stdlib=false) state thread (node : (equal * type_expr) option) =
+and print_type_rhs state thread (node : (equal * type_expr) option) =
   let print state (eq, type_expr) =
     let rhs = print_type_expr state type_expr in
     if is_enclosed_type type_expr
@@ -622,8 +617,7 @@ and print_type_rhs
     else thread ^^ prefix state#indent 1 (space ^^ token eq) rhs
   in Option.value_map node ~default:thread ~f:(print state)
 
-and print_I_Const
-  ?(stdlib=false) ?(decl_kind=true) state (node : intf_const reg) =
+and print_I_Const ?(decl_kind=true) state (node : intf_const reg) =
   let {kwd_const; const_name; const_optional; const_type} = node.value in
   let prefix = if decl_kind then token kwd_const ^^ space else empty in
   let thread =
@@ -635,8 +629,7 @@ and print_I_Const
 
 (* Namespace declaration *)
 
-and print_D_Namespace
-  prefix ?(stdlib=false) ?(classes=false) state (node : namespace_decl reg) =
+and print_D_Namespace prefix ?(classes=false) state (node : namespace_decl reg) =
   let {kwd_namespace; namespace_name; namespace_type; namespace_body} =
     node.value
   in
@@ -753,27 +746,26 @@ and print_D_Namespace
            print_block ~decl_kind:true ~dec_in_com:false ~static:false
              ~let_to_const:true state namespace_body)
 
-and print_namespace_type ?(stdlib=false) state (node : interface option) =
+and print_namespace_type state (node : interface option) =
   Option.value_map node ~default:empty ~f:(print_interface state)
 
-and print_interface ?(stdlib=false) state (node : interface) =
+and print_interface state (node : interface) =
   let kwd_implements, intf_exprs = node.value in
   let intf_exprs = print_nsepseq (break 1) (print_intf_expr state) intf_exprs in
   token kwd_implements ^^ space ^^ intf_exprs
 
-and print_intf_expr ?(stdlib=false) state = function
+and print_intf_expr state = function
   I_Body i -> print_I_Body state i
 | I_Path i -> print_I_Path state i
 
-and print_I_Body ?(stdlib=false) state (node : intf_body) =
-  print_intf_body state node
+and print_I_Body state (node : intf_body) = print_intf_body state node
 
-and print_I_Path ?(stdlib=false) state (node : namespace_selection) =
+and print_I_Path state (node : namespace_selection) =
   print_namespace_selection state node
 
 (* Type declarations *)
 
-and print_D_Type ?(stdlib=false) state (node : type_decl reg) =
+and print_D_Type state (node : type_decl reg) =
   let {kwd_type; name; generics; eq; type_expr} = node.value in
   let thread = token kwd_type ^^ space ^^ print_variable name in
   let thread = thread ^^ print_generics_opt state generics in
@@ -785,9 +777,8 @@ and print_D_Type ?(stdlib=false) state (node : type_decl reg) =
 
 (* Value declarations *)
 
-and print_D_Value
-  ?(stdlib=false) ?(decl_kind=true) ?(dec_in_com=true) ?(let_to_const=false)
-  ?(static=false) state (node : value_decl reg) =
+and print_D_Value ?(decl_kind=true) ?(dec_in_com=true) ?(let_to_const=false)
+                  ?(static=false) state (node : value_decl reg) =
   let {kind; bindings} = node.value in
   let thread = if static then string "static" ^^ space else empty in
   let thread = thread ^^
@@ -797,11 +788,11 @@ and print_D_Value
   and bindings = print_nsepseq (break 1) (print_val_binding state) bindings
   in group (thread ^^ bindings)
 
-and print_var_kind ?(stdlib=false) ?(let_to_const=false) = function
+and print_var_kind ?(let_to_const=false) = function
   `Let kwd_let -> if let_to_const then string "const" else token kwd_let
 | `Const kwd_const -> token kwd_const
 
-and print_val_binding ?(stdlib=false) state (node : val_binding reg) =
+and print_val_binding state (node : val_binding reg) =
   let {pattern; rhs_type; eq; rhs_expr} = node.value in
   (* In case the RHS is a lambda function, we want to try to display
      it in the same line instead of causing a line break. For example,
@@ -827,7 +818,7 @@ and print_val_binding ?(stdlib=false) state (node : val_binding reg) =
 
 (* Preprocessing directives *)
 
-and print_S_Directive ?(stdlib=false) state (node : Directive.t) =
+and print_S_Directive state (node : Directive.t) =
   let original = (Directive.to_lexeme node).Region.value in
   match node with
     PP_Import import ->
@@ -838,9 +829,8 @@ and print_S_Directive ?(stdlib=false) state (node : Directive.t) =
 
 (* Export statements *)
 
-and print_S_Export
-  ?(stdlib=false) ?(decl_kind=true) ?(classes=false) ?(let_to_const=false)
-  ?(static=false) state (node : export_stmt reg) =
+and print_S_Export ?(decl_kind=true) ?(classes=false) ?(let_to_const=false)
+                   ?(static=false) state (node : export_stmt reg) =
   let kwd_export, declaration = node.value in
   let prefix =
     match declaration with
@@ -851,19 +841,18 @@ and print_S_Export
 
 (* Expressions as statements *)
 
-and print_S_Expr ?(stdlib=false) state (node : expr) =
-  print_expr state node
+and print_S_Expr state (node : expr) = print_expr state node
 
 (* For-loops *)
 
-and print_S_For ?(stdlib=false) state (node : for_stmt reg) =
+and print_S_For state (node : for_stmt reg) =
   let {kwd_for; range; for_body} = node.value in
   let thread = token kwd_for ^^ space ^^ print_range_for state range in
   match for_body with
     None -> thread
   | Some stmt -> prefix state#indent 1 thread (print_statement state stmt)
 
-and print_range_for ?(stdlib=false) state (node : range_for par) =
+and print_range_for state (node : range_for par) =
   let {lpar; inside; rpar} = node.value in
   let {initialiser; semi1; condition; semi2; afterthought} = inside in
   let par =
@@ -878,12 +867,12 @@ and print_range_for ?(stdlib=false) state (node : range_for par) =
 
 (* For-of loops *)
 
-and print_S_ForOf ?(stdlib=false) state (node: for_of_stmt reg) =
+and print_S_ForOf state (node: for_of_stmt reg) =
   let {kwd_for; range; for_of_body} = node.value in
   let thread = token kwd_for ^^ space ^^ print_range_for_of state range
   in group (thread ^^ space ^^ print_statement state for_of_body)
 
-and print_range_for_of ?(stdlib=false) state (node : range_of par) =
+and print_range_for_of state (node : range_of par) =
   let {lpar; inside; rpar} = node.value in
   let {index_kind; index; kwd_of; expr} = inside in
   let par = print_var_kind index_kind ^^ space
@@ -893,25 +882,25 @@ and print_range_for_of ?(stdlib=false) state (node : range_of par) =
 
 (* Conditional statement *)
 
-and print_S_If ?(stdlib=false) state (node : if_stmt reg) =
+and print_S_If state (node : if_stmt reg) =
   let {kwd_if; test; if_so; if_not} = node.value in
   let thread = token kwd_if ^^ space ^^ print_par_expr state test in
   let thread = thread ^^ space ^^ print_statement_semi state if_so
   in group (print_if_not state thread if_not)
 
-and print_if_not ?(stdlib=false) state thread = function
+and print_if_not state thread = function
   None -> thread
 | Some (kwd_else, stmt) ->
     thread ^^ space ^^ token kwd_else ^^ space
     ^^ print_statement state stmt
 
-and print_par_expr ?(stdlib=false) state (node : expr par) =
+and print_par_expr state (node : expr par) =
   let {lpar; inside; rpar} = node.value in
   print_par_like_document state (print_expr state inside) lpar rpar
 
 (* Return statement *)
 
-and print_S_Return ?(stdlib=false) state (node : return_stmt reg) =
+and print_S_Return state (node : return_stmt reg) =
   match node.value with
     kwd_return, None -> token kwd_return
   | kwd_return, Some expr ->
@@ -919,7 +908,7 @@ and print_S_Return ?(stdlib=false) state (node : return_stmt reg) =
 
 (* Switch statement *)
 
-and print_S_Switch ?(stdlib=false) state (node : switch_stmt reg) =
+and print_S_Switch state (node : switch_stmt reg) =
   let {kwd_switch; subject; cases} = node.value in
   let {lbrace; inside; rbrace} = cases.value in
   let braces = print_braces_like_document state ~force_hardline:true
@@ -927,35 +916,35 @@ and print_S_Switch ?(stdlib=false) state (node : switch_stmt reg) =
   and thread = token kwd_switch ^^ space ^^ print_par_expr state subject
   in group (thread ^^ space ^^ braces)
 
-and print_cases ?(stdlib=false) state = function
+and print_cases state = function
   AllCases c -> print_AllCases state c
 | Default  c -> print_Default  state c
 
-and print_AllCases ?(stdlib=false) state (node : all_cases) =
+and print_AllCases state (node : all_cases) =
   let switch_cases, default_opt = node in
   let thread = print_switch_cases state switch_cases in
   match default_opt with
     None -> thread
   | Some default -> thread ^^ hardline ^^ print_switch_default state default
 
-and print_switch_cases ?(stdlib=false) state (node : switch_case reg Ne.t) =
+and print_switch_cases state (node : switch_case reg Ne.t) =
   print_ne_list hardline (print_switch_case state) node
 
-and print_switch_case ?(stdlib=false) state (node : switch_case reg) =
+and print_switch_case state (node : switch_case reg) =
   let {kwd_case; expr; colon; case_body} = node.value in
   let thread = token kwd_case ^^ space ^^ print_expr state expr in
   let thread = thread ^^ token colon in
   print_label_and_statements state thread case_body
 
-and print_Default state ?(stdlib=false) (node : switch_default reg) =
+and print_Default state (node : switch_default reg) =
   print_switch_default state node
 
-and print_switch_default ?(stdlib=false) state (node : switch_default reg) =
+and print_switch_default state (node : switch_default reg) =
   let {kwd_default; colon; default_body} = node.value in
   let thread = token kwd_default ^^ token colon in
   print_label_and_statements state thread default_body
 
-and print_label_and_statements ?(stdlib=false) state label = function
+and print_label_and_statements state label = function
   None -> label
 | Some ([stmt,_]) when is_enclosed_statement stmt ->
     label ^^ space ^^ group (print_statement state stmt)
@@ -964,7 +953,7 @@ and print_label_and_statements ?(stdlib=false) state label = function
 
 (* While-loop *)
 
-and print_S_While ?(stdlib=false) state (node : while_stmt reg) =
+and print_S_While state (node : while_stmt reg) =
   let {kwd_while; invariant; while_body} = node.value in
   let thread = token kwd_while ^^ space ^^ print_par_expr state invariant
   in group (thread ^^ space ^^ print_statement state while_body)
@@ -1039,10 +1028,9 @@ and print_expr ?(stdlib=false) state = function
 
 (* Addition *)
 
-and print_E_Add ?(stdlib=false) state (node : plus bin_op reg) =
-  print_bin_op state node
+and print_E_Add state (node : plus bin_op reg) = print_bin_op state node
 
-and print_bin_op ?(stdlib=false) state (node : lexeme wrap bin_op reg) =
+and print_bin_op state (node : lexeme wrap bin_op reg) =
   let {op; arg1; arg2} = node.value in
   let length = String.length op#payload + 1
   in group (print_expr state arg1 ^/^ token op ^^ space
@@ -1050,18 +1038,17 @@ and print_bin_op ?(stdlib=false) state (node : lexeme wrap bin_op reg) =
 
 (* Add and assign *)
 
-and print_E_AddEq ?(stdlib=false) state (node : plus_eq bin_op reg) =
-  print_bin_op state node
+and print_E_AddEq state (node : plus_eq bin_op reg) = print_bin_op state node
 
 (* Logical conjunction *)
 
-and print_E_And ?(stdlib=false) state (node : bool_and bin_op reg) =
-  print_bin_op state node
+and print_E_And state (node : bool_and bin_op reg) = print_bin_op state node
 
 (* Function application *)
 
-and print_E_App ?(stdlib=false) state (node : (expr * arguments) reg) =
-  let lambda, arguments = node.value in
+and print_E_App state (node : (expr * arguments) reg) =
+  let lambda,
+      arguments = node.value in
   let lambda    = print_expr state lambda in
   let print     = print_nsepseq (break 1) (print_expr state) in
   let print     = Option.value_map ~default:empty ~f:print in
@@ -1070,7 +1057,7 @@ and print_E_App ?(stdlib=false) state (node : (expr * arguments) reg) =
 
 (* Array expression *)
 
-and print_E_Array ?(stdlib=false) state (node : expr _array) =
+and print_E_Array state (node : expr _array) =
   print_array state (print_element print_expr) node
 
 and print_array :
@@ -1088,11 +1075,11 @@ and print_element :
 
 (* Arrow function *)
 
-and print_arrow_fun_params ?(stdlib=false) state = function
+and print_arrow_fun_params state = function
   ParParams  node -> print_fun_params state node
 | NakedParam node -> print_pattern state node
 
-and print_E_ArrowFun ?(stdlib=false) state (node : arrow_fun_expr reg) =
+and print_E_ArrowFun state (node : arrow_fun_expr reg) =
   let {generics; parameters; rhs_type; arrow; fun_body} = node.value in
   let thread = print_generics_opt state generics in
   let thread = thread ^^ print_arrow_fun_params state parameters in
@@ -1100,7 +1087,7 @@ and print_E_ArrowFun ?(stdlib=false) state (node : arrow_fun_expr reg) =
   let lhs    = thread ^^ space ^^ token arrow ^^ space
   in print_fun_body state lhs fun_body
 
-and print_fun_body ?(stdlib=false) state lhs = function
+and print_fun_body state lhs = function
   StmtBody s ->
     (* If the function has only one statement we may try to display
        it inline rather than in a new one. *)
@@ -1110,79 +1097,71 @@ and print_fun_body ?(stdlib=false) state lhs = function
 
 (* Assignment *)
 
-and print_E_Assign ?(stdlib=false) state (node : equal bin_op reg) =
-  print_bin_op state node
+and print_E_Assign state (node : equal bin_op reg) = print_bin_op state node
 
 (* Attributes expressions *)
 
-and print_E_Attr ?(stdlib=false) state (node : attribute * expr) =
+and print_E_Attr state (node : attribute * expr) =
   let attributes, expr = unroll_E_Attr node in
   let thread = print_expr state expr
   in print_attributes ~dec_in_com:true state thread attributes
 
 (* Bitwise conjunction *)
 
-and print_E_BitAnd ?(stdlib=false) state (node : bit_and bin_op reg) =
-  print_bin_op state node
+and print_E_BitAnd state (node : bit_and bin_op reg) = print_bin_op state node
 
 (* Bitwise conjuction & Assignment *)
 
-and print_E_BitAndEq ?(stdlib=false) state (node : bit_and_eq bin_op reg) =
+and print_E_BitAndEq state (node : bit_and_eq bin_op reg) =
   print_bin_op state node
 
 (* Bitwise negation *)
 
-and print_E_BitNeg ?(stdlib=false) state (node : bit_neg un_op reg) =
-  print_un_op state node
+and print_E_BitNeg state (node : bit_neg un_op reg) = print_un_op state node
 
 (* Bitwise disjunction *)
 
-and print_E_BitOr ?(stdlib=false) state (node : bit_or bin_op reg) =
-  print_bin_op state node
+and print_E_BitOr state (node : bit_or bin_op reg) = print_bin_op state node
 
 (* Bitwise disjunction & Assignment *)
 
-and print_E_BitOrEq ?(stdlib=false) state (node : bit_or_eq bin_op reg) =
+and print_E_BitOrEq state (node : bit_or_eq bin_op reg) =
   print_bin_op state node
 
 (* Bitwise left shift *)
 
-and print_E_BitSl ?(stdlib=false) state (node : bit_sl bin_op reg) =
-  print_bin_op state node
+and print_E_BitSl state (node : bit_sl bin_op reg) = print_bin_op state node
 
 (* Bitwise left shift & Assignment *)
 
-and print_E_BitSlEq ?(stdlib=false) state (node : bit_sl_eq bin_op reg) =
+and print_E_BitSlEq state (node : bit_sl_eq bin_op reg) =
   print_bin_op state node
 
 (* Bitwise right shift *)
 
-and print_E_BitSr ?(stdlib=false) state (node : bit_sr bin_op reg) =
-  print_bin_op state node
+and print_E_BitSr state (node : bit_sr bin_op reg) = print_bin_op state node
 
 (* Bitwise right shift & Assignmen *)
 
-and print_E_BitSrEq ?(stdlib=false) state (node : bit_sr_eq bin_op reg) =
+and print_E_BitSrEq state (node : bit_sr_eq bin_op reg) =
   print_bin_op state node
 
 (* Bitwise exclusive disjunction *)
 
-and print_E_BitXor ?(stdlib=false) state (node : bit_xor bin_op reg) =
-  print_bin_op state node
+and print_E_BitXor state (node : bit_xor bin_op reg) = print_bin_op state node
 
 (* Bitwise exclusive disjunction & Assignment *)
 
-and print_E_BitXorEq ?(stdlib=false) state (node : bit_xor_eq bin_op reg) =
+and print_E_BitXorEq state (node : bit_xor_eq bin_op reg) =
   print_bin_op state node
 
 (* Bytes expressions *)
 
-and print_E_Bytes ?(stdlib=false) (node : (lexeme * Hex.t) wrap) =
-  print_bytes node
+and print_E_Bytes (node : (lexeme * Hex.t) wrap) = print_bytes node
 
 (* Code injection *)
 
-and print_E_CodeInj ?(stdlib=false) state (node : code_inj reg) =
+and print_E_CodeInj state (node : code_inj reg) =
   let {language; code} = node.value in
   let language = token language in
   let code     = print_expr state code
@@ -1190,29 +1169,27 @@ and print_E_CodeInj ?(stdlib=false) state (node : code_inj reg) =
 
 (* Contract-of expression *)
 
-and print_E_ContractOf ?(stdlib=false) state (node : contract_of_expr reg) =
+and print_E_ContractOf state (node : contract_of_expr reg) =
   let {kwd_contract_of; namespace_path} = node.value in
   token kwd_contract_of ^^
   print_par state (print_namespace_selection state) namespace_path
 
 (* Constructor application *)
 
-and print_E_CtorApp ?(stdlib=false) state (node : expr variant_kind) =
+and print_E_CtorApp state (node : expr variant_kind) =
   print_variant_kind print_expr state node
 
 (* Euclidean division *)
 
-and print_E_Div ?(stdlib=false) state (node : slash bin_op reg) =
-  print_bin_op state node
+and print_E_Div state (node : slash bin_op reg) = print_bin_op state node
 
 (* Euclidean division & Assignment *)
 
-and print_E_DivEq ?(stdlib=false) state (node : div_eq bin_op reg) =
-  print_bin_op state node
+and print_E_DivEq state (node : div_eq bin_op reg) = print_bin_op state node
 
 (* Do-expression *)
 
-and print_E_Do ?(stdlib=false) state (node : do_expr reg) =
+and print_E_Do state (node : do_expr reg) =
   let {kwd_do; statements} = node.value in
   string "(() =>"
   ^/^ print_braces state (print_statements state) statements
@@ -1220,8 +1197,7 @@ and print_E_Do ?(stdlib=false) state (node : do_expr reg) =
 
 (* Equality *)
 
-and print_E_Equal ?(stdlib=false) state (node : equal bin_op reg) =
-  print_bin_op state node
+and print_E_Equal state (node : equal bin_op reg) = print_bin_op state node
 
 (* Logical falsity *)
 
@@ -1231,7 +1207,7 @@ and print_E_False (node : kwd_false) = print_false node
 
 (* Function expression *)
 
-and print_E_Function ?(stdlib=false) state (node : function_expr reg) =
+and print_E_Function state (node : function_expr reg) =
   let {kwd_function; generics; parameters; rhs_type; fun_body} = node.value in
   let kwd_function = token kwd_function in
   let generics     = print_generics_opt state generics in
@@ -1252,13 +1228,11 @@ and print_E_Function ?(stdlib=false) state (node : function_expr reg) =
 
 (* Greater of equal *)
 
-and print_E_Geq ?(stdlib=false) state (node : geq bin_op reg) =
-  print_bin_op state node
+and print_E_Geq state (node : geq bin_op reg) = print_bin_op state node
 
 (* Greater than *)
 
-and print_E_Gt ?(stdlib=false) state (node : gt bin_op reg) =
-  print_bin_op state node
+and print_E_Gt state (node : gt bin_op reg) = print_bin_op state node
 
 (* Integers *)
 
@@ -1266,17 +1240,15 @@ and print_E_Int (node : (lexeme * Z.t) wrap) = print_int node
 
 (* Lower or equal than *)
 
-and print_E_Leq ?(stdlib=false) state (node : leq bin_op reg) =
-  print_bin_op state node
+and print_E_Leq state (node : leq bin_op reg) = print_bin_op state node
 
 (* Lower than *)
 
-and print_E_Lt ?(stdlib=false) state (node : lt bin_op reg) =
-  print_bin_op state node
+and print_E_Lt state (node : lt bin_op reg) = print_bin_op state node
 
 (* Pattern matching *)
 
-and print_E_Match ?(stdlib=false) state (node : match_expr reg) =
+and print_E_Match state (node : match_expr reg) =
   let {kwd_match; subject; clauses} = node.value in
   let is_array = has_array_pattern clauses in
   let subject = subject.Region.value.CST.inside in
@@ -1291,14 +1263,13 @@ and print_E_Match ?(stdlib=false) state (node : match_expr reg) =
          ^^ nest state#indent (hardline ^^ print_clauses state clauses)
          ^^ hardline ^^ string "})")
 
-and has_array_pattern ?(stdlib=false) (node : match_clauses braces) : bool =
+and has_array_pattern (node : match_clauses braces) : bool =
   match node.Region.value.inside with
     AllClauses (clauses, _default_opt) ->
       has_array_all_clauses clauses
   | DefaultClause _default -> false
 
-and has_array_all_clauses
-  ?(stdlib=false) (node : match_clause reg Ne.t) : bool =
+and has_array_all_clauses (node : match_clause reg Ne.t) : bool =
   let hd :: _ = node in
   let {kwd_when=_; filter; colon=_; clause_expr=_} = hd.Region.value in
   let pattern = filter.Region.value.inside in
@@ -1306,32 +1277,32 @@ and has_array_all_clauses
     P_Array _ -> true
   | _ -> false
 
-and print_clauses ?(stdlib=false) state = function
+and print_clauses state = function
   AllClauses    c -> print_AllClauses    state c
 | DefaultClause c -> print_DefaultClause state c
 
-and print_AllClauses ?(stdlib=false) state (node : all_match_clauses) =
+and print_AllClauses state (node : all_match_clauses) =
   let match_clauses, default_opt = node in
   let thread = print_match_clauses state match_clauses in
   match default_opt with
     None -> thread
   | Some default -> thread ^^ hardline ^^ print_DefaultClause state default
 
-and print_match_clauses ?(stdlib=false) state (node : match_clause reg Ne.t) =
+and print_match_clauses state (node : match_clause reg Ne.t) =
   print_ne_list hardline (print_match_clause state) node
 
-and print_match_clause ?(stdlib=false) state (node : match_clause reg) =
+and print_match_clause state (node : match_clause reg) =
   let {kwd_when=_; filter; colon; clause_expr} = node.value in
   let filter = filter.Region.value.CST.inside in
   let thread = print_match_pattern state filter in
   print_label_and_expr state thread clause_expr ^^ string ","
 
-and print_match_pattern ?(stdlib=false) state = function
+and print_match_pattern state = function
   P_CtorApp variant -> print_match_lhs_ctor state variant
 | P_Array array -> print_match_lhs_array state array
 | pattern -> print_pattern state pattern ^^ string ": "
 
-and print_match_lhs_array ?(stdlib=false) state (node : pattern _array) =
+and print_match_lhs_array state (node : pattern _array) =
   match node.Region.value.inside with
     None -> string "\"None\": () =>"
   | Some seq ->
@@ -1345,11 +1316,11 @@ and print_match_lhs_array ?(stdlib=false) state (node : pattern _array) =
        | _ -> string "/* UPGRADE: Refactor the pattern matching. */" in
      some ^^ more ^^ string "]) =>"
 
-and print_match_lhs_ctor ?(stdlib=false) state = function
+and print_match_lhs_ctor state = function
   Variant v -> print_match_tuple state v.Region.value.tuple
 | Legacy _ as v -> print_P_CtorApp state v
 
-and print_match_tuple ?(stdlib=false) state = function
+and print_match_tuple state = function
   ZeroArg ctor -> print_property_of_ctor ctor ^^ string ": () =>"
 | MultArg (ctor, args) ->
     print_property_of_ctor ctor ^^ string ": " ^^
@@ -1360,25 +1331,24 @@ and print_property_of_ctor = function
   CtorStr str -> print_string str
 | CtorName ctor -> print_string ctor
 
-and print_DefaultClause ?(stdlib=false) state (node : match_default reg) =
+and print_DefaultClause state (node : match_default reg) =
   print_match_default state node
 
-and print_match_default ?(stdlib=false) state (node : match_default reg) =
+and print_match_default state (node : match_default reg) =
   let {kwd_default; colon; default_expr} = node.value in
   let thread = token kwd_default ^^ token colon in
   print_label_and_expr state thread default_expr
 
-and print_label_and_expr ?(stdlib=false) state label expr =
+and print_label_and_expr state label expr =
   hang state#indent (label ^/^ print_expr state expr)
 
 (* Multiplication *)
 
-and print_E_Mult ?(stdlib=false) state (node : times bin_op reg) =
-  print_bin_op state node
+and print_E_Mult state (node : times bin_op reg) = print_bin_op state node
 
 (* Multiplication && Assignment *)
 
-and print_E_MultEq ?(stdlib=false) state (node : times_eq bin_op reg) =
+and print_E_MultEq state (node : times_eq bin_op reg) =
   print_bin_op state node
 
 (* Mutez as an expression *)
@@ -1391,8 +1361,7 @@ and print_E_Tez (node : (lexeme * Q.t) wrap) = print_tez node
 
 (* Selection through nested namespaces *)
 
-and print_E_NamePath
-  ?(stdlib=false) state (node : expr namespace_path reg) =
+and print_E_NamePath state (node : expr namespace_path reg) =
   print_namespace_path state (print_expr state) node.value
 
 (* Natural numbers in expressions *)
@@ -1401,27 +1370,25 @@ and print_E_Nat (node :  (lexeme * Z.t) wrap) = print_nat node
 
 (* Arithmetic negation *)
 
-and print_E_Neg ?(stdlib=false) state (node : minus un_op reg) =
+and print_E_Neg state (node : minus un_op reg) =
   let {op; arg} = node.value in
   token op ^^ print_expr state arg
 
-and print_un_op ?(stdlib=false) state (node : lexeme wrap un_op reg) =
+and print_un_op state (node : lexeme wrap un_op reg) =
   let {op; arg} = node.value in
   token op ^^ space ^^ print_expr state arg
 
 (* Arithmetic difference *)
 
-and print_E_Neq ?(stdlib=false) state (node : neq bin_op reg) =
-  print_bin_op state node
+and print_E_Neq state (node : neq bin_op reg) = print_bin_op state node
 
 (* Logical negation *)
 
-and print_E_Not ?(stdlib=false) state (node : bool_neg un_op reg) =
-  print_un_op state node
+and print_E_Not state (node : bool_neg un_op reg) = print_un_op state node
 
 (* Objects *)
 
-and print_E_Object ?(stdlib=false) state (node : expr _object) =
+and print_E_Object state (node : expr _object) =
   print_object state print_expr node
 
 and print_object :
@@ -1451,46 +1418,45 @@ and print_property_id state = function
 
 (* Logical disjunction *)
 
-and print_E_Or ?(stdlib=false) state (node : bool_or bin_op reg) =
-  print_bin_op state node
+and print_E_Or state (node : bool_or bin_op reg) = print_bin_op state node
 
 (* Parenthesised expression *)
 
-and print_E_Par ?(stdlib=false) state (node : expr par) =
+and print_E_Par state (node : expr par) =
   print_par state (print_expr state) node
 
 (* Post-decrementation *)
 
-and print_E_PostDecr ?(stdlib=false) state (node : decrement un_op reg) =
+and print_E_PostDecr state (node : decrement un_op reg) =
   let {op; arg} = node.value in
   print_expr state arg ^^ token op
 
 (* Post-incrementation *)
 
-and print_E_PostIncr ?(stdlib=false) state (node : increment un_op reg) =
+and print_E_PostIncr state (node : increment un_op reg) =
   let {op; arg} = node.value in
   print_expr state arg ^^ token op
 
 (* Pre-decrementation *)
 
-and print_E_PreDecr ?(stdlib=false) state (node : decrement un_op reg) =
+and print_E_PreDecr state (node : decrement un_op reg) =
   let {op; arg} = node.value in
   token op ^^ print_expr state arg
 
 (* Pre-incrementation *)
 
-and print_E_PreIncr ?(stdlib=false) state (node : increment un_op reg) =
+and print_E_PreIncr state (node : increment un_op reg) =
   let {op; arg} = node.value in
   token op ^^ print_expr state arg
 
 (* Projections *)
 
-and print_selection ?(stdlib=false) state = function
+and print_selection state = function
   PropertyName (dot, n) -> token dot ^^ print_variable n
 | PropertyStr        s  -> print_brackets state print_string s
 | Component          i  -> print_brackets state print_int i
 
-and print_E_Proj ?(stdlib=false) state (node : projection reg) =
+and print_E_Proj state (node : projection reg) =
   let {object_or_array; property_path} = node.value in
   let thread = print_expr state object_or_array in
   let path   = print_ne_list (break 0) (print_selection state) property_path
@@ -1498,13 +1464,11 @@ and print_E_Proj ?(stdlib=false) state (node : projection reg) =
 
 (* Arithmetic remainder *)
 
-and print_E_Rem ?(stdlib=false) state (node : remainder bin_op reg) =
-  print_bin_op state node
+and print_E_Rem state (node : remainder bin_op reg) = print_bin_op state node
 
 (* Arithmetic remainder & Assignment *)
 
-and print_E_RemEq ?(stdlib=false) state (node : rem_eq bin_op reg) =
-  print_bin_op state node
+and print_E_RemEq state (node : rem_eq bin_op reg) = print_bin_op state node
 
 (* String expression *)
 
@@ -1512,17 +1476,15 @@ and print_E_String (node : lexeme wrap) = print_string node
 
 (* Arithmetic subtraction *)
 
-and print_E_Sub ?(stdlib=false) state (node : minus bin_op reg) =
-  print_bin_op state node
+and print_E_Sub state (node : minus bin_op reg) = print_bin_op state node
 
 (* Subtraction & Assignment *)
 
-and print_E_SubEq ?(stdlib=false) state (node : minus_eq bin_op reg) =
-  print_bin_op state node
+and print_E_SubEq state (node : minus_eq bin_op reg) = print_bin_op state node
 
 (* Ternary conditional *)
 
-and print_E_Ternary ?(stdlib=false) state (node : ternary reg) =
+and print_E_Ternary state (node : ternary reg) =
   let {condition; qmark; truthy; colon; falsy} = node.value in
   print_expr state condition ^^
   space ^^ token qmark ^^ space ^^
@@ -1541,7 +1503,7 @@ and print_E_True (node : kwd_true) = print_true node
 and print_infix state lhs middle rhs =
   group (lhs ^^ space ^^ prefix state#indent 1 middle rhs)
 
-and print_E_Typed ?(stdlib=false) state (node : typed_expr reg) =
+and print_E_Typed state (node : typed_expr reg) =
   let expr, kwd_as, type_expr = node.value in
   let lhs = print_expr state expr in
   let rhs = print_type_expr state type_expr
@@ -1549,16 +1511,16 @@ and print_E_Typed ?(stdlib=false) state (node : typed_expr reg) =
 
 (* Object functional updates *)
 
-and print_updates ?(stdlib=false) state
+and print_updates state
   (node : (expr property reg, property_sep) Utils.sep_or_term) =
   print_sep_or_term (break 1) (print_property state print_expr) node
 
-and print_update ?(stdlib=false) state (node : update_expr) =
+and print_update state (node : update_expr) =
   let {ellipsis; _object; sep; updates} = node in
   group (token ellipsis ^^ print_expr state _object
          ^^ token sep ^/^ print_updates state updates)
 
-and print_E_Update ?(stdlib=false) state (node : update_expr braces) =
+and print_E_Update state (node : update_expr braces) =
   print_braces state (print_update state) node
 
 (* Expression variable *)
@@ -1571,8 +1533,7 @@ and print_E_Verbatim (node : lexeme wrap) = print_verbatim node
 
 (* Logical exclusive disjunction *)
 
-and print_E_Xor ?(stdlib=false) state (node : bool_xor bin_op reg) =
-  print_bin_op state node
+and print_E_Xor state (node : bool_xor bin_op reg) = print_bin_op state node
 
 (* PATTERNS *)
 
@@ -1596,15 +1557,15 @@ and print_pattern ?(stdlib=false) state = function
 
 (* Array patterns *)
 
-and print_P_Array ?(stdlib=false) state (node : pattern _array) =
+and print_P_Array state (node : pattern _array) =
   print_array state print_P_element node
 
-and print_P_element ?(stdlib=false) state (node : pattern element) =
+and print_P_element state (node : pattern element) =
   print_element print_pattern state node
 
 (* Attributed pattern *)
 
-and print_P_Attr ?(stdlib=false) state (node : attribute * pattern) =
+and print_P_Attr state (node : attribute * pattern) =
   let attributes, pattern = unroll_P_Attr node in
   let thread = print_pattern state pattern
   in print_attributes ~dec_in_com:true state thread attributes
@@ -1615,7 +1576,7 @@ and print_P_Bytes (node : (lexeme * Hex.t) wrap) = print_bytes node
 
 (* Pattern for constructor application *)
 
-and print_P_CtorApp ?(stdlib=false) state (node : pattern variant_kind) =
+and print_P_CtorApp state (node : pattern variant_kind) =
   print_variant_kind print_pattern state node
 
 (* Logical false pattern *)
@@ -1636,8 +1597,7 @@ and print_P_Tez (node : (lexeme * Q.t) wrap) = print_tez node
 
 (* Selected pattern *)
 
-and print_P_NamePath
-  ?(stdlib=false) state (node : pattern namespace_path reg) =
+and print_P_NamePath state (node : pattern namespace_path reg) =
   print_namespace_path state (print_pattern state) node.value
 
 (* Natural numbers in patterns *)
@@ -1646,7 +1606,7 @@ and print_P_Nat (node : (lexeme * Z.t) wrap) = print_nat node
 
 (* Object patterns *)
 
-and print_P_Object ?(stdlib=false) state (node : pattern _object) =
+and print_P_Object state (node : pattern _object) =
   print_object state print_pattern node
 
 (* String patterns *)
@@ -1704,42 +1664,41 @@ and print_type_tuple ?(stdlib=false) state (node : type_ctor_args) =
 
 (* Attributed type *)
 
-and print_T_Attr ?(stdlib=false) state (node : attribute * type_expr) =
+and print_T_Attr state (node : attribute * type_expr) =
   let attributes, t_expr = unroll_T_Attr node in
   let thread = print_type_expr state t_expr
   in print_attributes state ~dec_in_com:true thread attributes
 
 (* Array type *)
 
-and print_T_Array ?(stdlib=false) state (node : array_type) =
+and print_T_Array state (node : array_type) =
   let seq = print_nsep_or_term (break 1) (print_type_expr state)
   in group (print_brackets state seq node)
 
 (* Universal type *)
 
-and print_T_ForAll ?(stdlib=false) state (node : (generics * type_expr) reg) =
+and print_T_ForAll state (node : (generics * type_expr) reg) =
   let generics, type_expr = node.value in
   print_generics state generics ^^ print_type_expr state type_expr
 
 (* Function type *)
 
-and print_fun_type_param ?(stdlib=false) state (node : fun_type_param reg) =
+and print_fun_type_param state (node : fun_type_param reg) =
   let pattern, type_annotation = node.value in
   group (print_pattern state pattern
          ^^ print_type_annotation state type_annotation)
 
-and print_fun_type_params ?(stdlib=false) state (node : fun_type_params) =
+and print_fun_type_params state (node : fun_type_params) =
   let print = print_sep_or_term (break 1) (print_fun_type_param state)
   in print_par state print node
 
-and print_fun_type ?(stdlib=false) state (node : fun_type) =
+and print_fun_type state (node : fun_type) =
   let lhs, arrow, rhs = node.value in
   let lhs = print_fun_type_params state lhs in
   let rhs = print_type_expr state rhs in
   group (lhs ^^ space ^^ token arrow ^^ space ^^ rhs)
 
-and print_T_Fun ?(stdlib=false) state (node : fun_type) =
-  print_fun_type state node
+and print_T_Fun state (node : fun_type) = print_fun_type state node
 
 (* Integer singleton type *)
 
@@ -1747,8 +1706,7 @@ and print_T_Int (node : (lexeme * Z.t) wrap) = print_int node
 
 (* Selection of a type *)
 
-and print_T_NamePath
-  ?(stdlib=false) state (node : type_expr namespace_path reg) =
+and print_T_NamePath state (node : type_expr namespace_path reg) =
   print_namespace_path state (print_type_expr state) node.value
 
 (* Natural singleton type *)
@@ -1757,15 +1715,15 @@ and print_T_Nat (node : (lexeme * Z.t) wrap) = print_int node
 
 (* Object type *)
 
-and print_object_type ?(stdlib=false) state (node : type_expr _object) =
+and print_object_type state (node : type_expr _object) =
   print_object state print_type_expr node
 
-and print_T_Object ?(stdlib=false) state (node : type_expr _object) =
+and print_T_Object state (node : type_expr _object) =
   print_object_type state node
 
 (* Parenthesised type expressions *)
 
-and print_T_Par ?(stdlib=false) state (node : type_expr par) =
+and print_T_Par state (node : type_expr par) =
   print_par state (print_type_expr state) node
 
 (* Parameter-of type *)
@@ -1781,7 +1739,7 @@ and print_T_String (node : lexeme wrap) = print_string node
 
 (* Union type *)
 
-and print_union_type ?(stdlib=false) state (node : union_type) =
+and print_union_type state (node : union_type) =
   print_variant_or_union_type state print_type_expr node
 
 and print_variant_or_union_type :
@@ -1836,8 +1794,7 @@ and print_variant_or_union_type :
   let app (bar, variant) = break 1 ^^ token bar ^^ space ^^ variant in
   group (head ^^ concat_map app tail)
 
-and print_T_Union ?(stdlib=false) state (node : union_type) =
-  print_union_type state node
+and print_T_Union state (node : union_type) = print_union_type state node
 
 (* Type variables *)
 
@@ -1845,15 +1802,13 @@ and print_T_Var (node : variable) = print_variable node
 
 (* Variant type *)
 
-and print_variant_kind :
- 'a. (state -> 'a -> document) -> state -> 'a variant_kind -> document =
+and print_variant_kind : 'a. (state -> 'a -> document) -> state -> 'a variant_kind -> document =
  fun printer state node ->
   match node with
     Variant node -> print_variant printer state node
   | Legacy  node -> print_legacy_variant printer state node
 
-and print_variant :
- 'a. (state -> 'a -> document) -> state -> 'a variant reg -> document =
+and print_variant : 'a. (state -> 'a -> document) -> state -> 'a variant reg -> document =
  fun printer state node ->
   let ({tuple; attributes} : 'a variant) = node.value in
   let tuple = print_app' state printer tuple
@@ -1871,29 +1826,27 @@ and print_app' :
       print_nsep_or_term (break 1) (print state) args.value.inside ^^
       string "]"
 
-and print_ctor_app_kind' ?(stdlib=false) (node: ctor_app_kind) =
+and print_ctor_app_kind' (node: ctor_app_kind) =
   let name =
     match node with
       CtorStr  node
     | CtorName node -> print_string node in
   name ^^ string " as " ^^ name
 
-and print_legacy_variant :
- 'a. (state -> 'a -> document) -> state -> 'a legacy_variant reg -> document =
- fun print state node ->
+and print_legacy_variant : 'a. (state -> 'a -> document) -> state -> 'a legacy_variant reg -> document =
+ fun printer state node ->
   let {attributes; tuple} = node.value in
-  let tuple = print_legacy_variant_args print state tuple in
+  let tuple = print_legacy_variant_args printer state tuple in
   print_attributes state tuple attributes
 
-and print_legacy_variant_args :
- 'a. (state -> 'a -> document) -> state -> 'a legacy_variant_args brackets -> document =
- fun print state ->
+and print_legacy_variant_args : 'a. (state -> 'a -> document) -> state -> 'a legacy_variant_args brackets -> document =
+ fun printer state ->
   print_brackets state (fun inside ->
     let {ctor; args} = inside in
     let ctor = print_string ctor in
     let rec separate_map = function
       []            -> empty
-    | (sep', x)::xs -> token ~sep:(break 1) sep' ^^ print state x ^^ separate_map xs
+    | (sep', x)::xs -> token ~sep:(break 1) sep' ^^ printer state x ^^ separate_map xs
     in ctor ^^ separate_map args)
 
 and print_app :
@@ -1908,11 +1861,10 @@ and print_ctor_app_kind = function
   CtorStr  node -> print_string node
 | CtorName node -> print_ctor node
 
-and print_sum_type ?(stdlib=false) state (node : sum_type) =
+and print_sum_type state (node : sum_type) =
   print_variant_or_union_type state (print_variant_kind print_type_expr) node
 
-and print_T_Sum ?(stdlib=false) state (node : sum_type) =
-  print_sum_type state node
+and print_T_Sum state (node : sum_type) = print_sum_type state node
 
 let print_type_expr = print_type_expr
 let print_pattern   = print_pattern
@@ -1927,6 +1879,5 @@ type expr      = CST.expr
 type type_expr = CST.type_expr
 type pattern   = CST.pattern
 type statement = CST.statement
-
 type 'a legacy_variant = 'a CST.legacy_variant
-type signature_expr   = CST.intf_expr
+type signature_expr    = CST.intf_expr
