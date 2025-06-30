@@ -346,6 +346,66 @@ const manager2: user = ["Manager" as "Manager", 2 as int];
 const guest3: user = ["Guest" as "Guest"];
 ```
 
+## Pattern matching
+
+The syntax for pattern matching has changed to use the `$match` predefined function instead of the `match` keyword.
+As its parameters, the `$match` function receives the variant value to match on and an object.
+The property names of the object are the constructors of the corresponding variant type.
+The property values are either a single expression or functions that receive the value of the variant as a parameter.
+Here is an example:
+
+```jsligo group=matching
+type user =
+  ["Admin", nat]
+| ["Manager", nat]
+| ["Guest"];
+
+const greetUser = (user: user): string => {
+  $match (user, {
+    "Admin": _id => "Hello, administrator",
+    "Manager": _id => "Welcome, manager",
+    "Guest": () => "Hello, guest",
+  });
+}
+```
+
+To define the thunk, use an immediately invoked function expression (IIFE) as the result of a match, as in the following example.
+JsLIGO 2.0 uses this syntax in place of `do` expressions in the previous version.
+
+```jsligo group=matching
+const getSquareOfUserId = (user: user): nat => {
+  $match (user, {
+    "Admin": id => (() => {
+      const squareOfId = id * id;
+      return squareOfId;
+    })(),
+    "Manager": id => (() => {
+      const squareOfId = id * id;
+      return squareOfId;
+    })(),
+    "Guest": () => 0,
+  });
+}
+```
+
+Matching works only on values of variant types.
+If you want to use the `$match` statement on other types or on more than one variable at a time, you can wrap them in a variant or option.
+This example wraps two types in a variant so the `$match` statement can use them both:
+
+```jsligo group=matching
+type wrapper = | ["Wrap", [int, int]];
+const wrapped: wrapper = ["Wrap" as "Wrap", [5, 5]];
+
+const compareResult: string = $match(wrapped, {
+  "Wrap": ([_a, _b]) => (() => {
+    if (_a == _b) return "Equal";
+    if (_a > _b) return "Greater";
+    if (_a < _b) return "Less";
+    return "Default";
+  })(),
+});
+```
+
 ## Imports
 
 JsLIGO now uses a syntax closer to JavaScript/TypeScript to import definitions.
@@ -467,66 +527,6 @@ Here are some ways to update code that uses preprocessor directives:
 - The `#if`, `#else`, `#elif`, `#endif`, `#define`, `#undef`, and `#error` directives are no longer supported.
 If you need to continue using them, you can run your JsLIGO code through a C++ preprocessor, which uses the same syntax.
 JsLIGO code with these directives does not compile.
-
-## Pattern matching
-
-The syntax for pattern matching has changed to use the `$match` predefined function instead of the `match` keyword.
-As its parameters, the `$match` function receives the variant value to match on and an object.
-The property names of the object are the constructors of the corresponding variant type.
-The property values are either a single expression or functions that receive the value of the variant as a parameter.
-Here is an example:
-
-```jsligo group=matching
-type user =
-  ["Admin", nat]
-| ["Manager", nat]
-| ["Guest"];
-
-const greetUser = (user: user): string => {
-  $match (user, {
-    "Admin": _id => "Hello, administrator",
-    "Manager": _id => "Welcome, manager",
-    "Guest": () => "Hello, guest",
-  });
-}
-```
-
-To define the thunk, use an immediately invoked function expression (IIFE) as the result of a match, as in the following example.
-JsLIGO 2.0 uses this syntax in place of `do` expressions in the previous version.
-
-```jsligo group=matching
-const getSquareOfUserId = (user: user): nat => {
-  $match (user, {
-    "Admin": id => (() => {
-      const squareOfId = id * id;
-      return squareOfId;
-    })(),
-    "Manager": id => (() => {
-      const squareOfId = id * id;
-      return squareOfId;
-    })(),
-    "Guest": () => 0,
-  });
-}
-```
-
-Also, matching works only on values of variant types.
-If you want to use the `$match` statement on other types or on more than one variable at a time, you can wrap them in a variant or option.
-This example wraps two types in a variant so the `$match` statement can use them both:
-
-```jsligo group=matching
-type wrapper = | ["Wrap", [int, int]];
-const wrapped: wrapper = ["Wrap" as "Wrap", [5, 5]];
-
-const compareResult: string = $match(wrapped, {
-  "Wrap": ([_a, _b]) => (() => {
-    if (_a == _b) return "Equal";
-    if (_a > _b) return "Greater";
-    if (_a < _b) return "Less";
-    return "Default";
-  })(),
-});
-```
 
 ## The `switch` statement
 
