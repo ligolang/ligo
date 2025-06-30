@@ -251,8 +251,13 @@ let unroll_E_Attr (attr, expr) =
 (* PRINTING LITERALS *)
 
 let print_bytes (node : (lexeme * Hex.t) wrap) =
-  let prefix = print_comments node#comments
-               ^/^ string ("0x" ^ Hex.show (snd node#payload))
+  let repr = snd node#payload in
+  let bytes = Hex.show repr in
+  let doc =
+    if String.(bytes = "") then
+      string ("\"\" as bytes")
+    else string ("0x" ^ bytes) in
+  let prefix = print_comments node#comments ^/^ doc
   in print_line_comment_opt prefix node#line_comment
 
 let print_mutez (node : (lexeme * Int64.t) wrap) =
