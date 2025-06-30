@@ -47,7 +47,6 @@ let upgrade_Option (node: expr namespace_path) =
         | "unopt" -> "value_with_error"
         | _ -> name#payload in
       let name' = name#set_payload name' in
-      let () = Printf.eprintf "name'=%S\n%!" name'#payload in
       E_Var (Var name')
     | _ -> property
   in {node with property}
