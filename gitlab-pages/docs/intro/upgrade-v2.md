@@ -671,8 +671,7 @@ Follow these steps to run the upgrade tool:
 
 The tool makes these changes:
 
-- It updates literals, such as `const one = 1n` to `const one = 1 as nat`.
-However, it does not update byte literals.
+- It updates literal definitions to the new syntax, such as `const one = 1n` to `const one = 1 as nat`.
 
 - It updates the syntax for variant and option types.
 
@@ -713,8 +712,6 @@ Also, the tool does not comment out decorators such as `@entry` in namespaces, s
 ### Changes that you must make manually
 
 After you run the upgrade tool, you must make these changes manually:
-
-- Convert byte literals, such as `const zero = 0x` to `const zero = "" as bytes`.
 
 - Comment out decorators such as `@entry` in namespaces.
 
