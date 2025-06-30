@@ -1413,8 +1413,19 @@ and print_match_lhs_ctor ?(stdlib=false) state = function
 and print_match_tuple ?(stdlib=false) state = function
   ZeroArg ctor -> print_property_of_ctor ctor ^^ string ": () =>"
 | MultArg (ctor, args) ->
+    let args' = args.value.inside in
+    let f p : pattern element = None, p in
+    let array : (pattern element, comma) Utils.sep_or_term =
+      Some (Utils.nsep_or_term_map f args') in
+    let lbracket = Wrap.wrap "[" Region.ghost
+    and rbracket = Wrap.wrap "]" Region.ghost in
+    let array = CST.{lbracket; inside=array; rbracket} in
+    let array : pattern _array = Region.wrap_ghost array in
+    let _array : pattern = P_Array array in
+    let value = {args.value with inside = _array} in
+    let args' = {args with value} in
     print_property_of_ctor ctor ^^ string ": " ^^
-    print_par state (print_nsep_or_term (break 1) (print_pattern state)) args
+    print_par state (print_pattern state) args'
     ^^ string " =>"
 
 and print_property_of_ctor = function
