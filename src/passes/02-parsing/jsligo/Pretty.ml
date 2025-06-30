@@ -321,8 +321,9 @@ let print_attributes state ?(dec_in_com = false) thread attributes =
 
 let rec print ?(stdlib=false) ?(classes=false) state (node : CST.t) =
   let {statements; eof} = node in
-  let f = print_statement_semi ~decl_kind:true ~dec_in_com:true
-                               ~classes ~let_to_const:true state in
+  let f = print_statement_semi
+            ~stdlib ~decl_kind:true ~dec_in_com:true
+            ~classes ~let_to_const:true state in
   let prog = Ne.to_list statements
              |> List.map ~f
              |> separate_map (hardline ^^ hardline) group
@@ -335,20 +336,20 @@ let rec print ?(stdlib=false) ?(classes=false) state (node : CST.t) =
 
 and top_let_to_const_in_stmt ?(stdlib=false) (node : statement) =
   match node with
-  S_Attr  (attr, s) -> S_Attr (attr, top_let_to_const_in_stmt s)
-| S_Decl          d -> S_Decl (top_let_to_const_in_decl d)
-| S_Export        s -> S_Export (top_let_to_const_in_export s)
+  S_Attr  (attr, s) -> S_Attr (attr, top_let_to_const_in_stmt ~stdlib s)
+| S_Decl          d -> S_Decl (top_let_to_const_in_decl ~stdlib d)
+| S_Export        s -> S_Export (top_let_to_const_in_export ~stdlib s)
 | _                 -> node
 
 and top_let_to_const_in_export ?(stdlib=false) (node : export_stmt reg) =
   let Region.{region; value} = node in
   let kwd_export, decl = value in
-  let decl = top_let_to_const_in_decl decl in
+  let decl = top_let_to_const_in_decl ~stdlib decl in
   Region.{region; value = kwd_export, decl}
 
 and top_let_to_const_in_decl ?(stdlib=false) (node : declaration) =
   match node with
-    D_Value d -> D_Value (top_let_to_const_in_value_decl d)
+    D_Value d -> D_Value (top_let_to_const_in_value_decl ~stdlib d)
   | _ -> node
 
 and top_let_to_const_in_value_decl
@@ -365,23 +366,23 @@ and top_let_to_const_in_value_decl
 and print_statement
   ?(stdlib=false) ?(decl_kind=true) ?(dec_in_com=true) ?(classes=false)
   ?(static=false) ?(let_to_const=false) state = function
-  S_Attr      s -> print_S_Attr      ~decl_kind ~dec_in_com ~classes
-                                     ~static ~let_to_const state s
-| S_Block     s -> print_S_Block     state s
-| S_Break     s -> print_S_Break     state s
-| S_Continue  s -> print_S_Continue  state s
-| S_Decl      s -> print_S_Decl      ~decl_kind ~classes ~static
-                                     ~let_to_const state s
+  S_Attr      s -> print_S_Attr ~stdlib ~decl_kind ~dec_in_com ~classes
+                                ~static ~let_to_const state s
+| S_Block     s -> print_S_Block ~stdlib state s
+| S_Break     s -> print_S_Break state s
+| S_Continue  s -> print_S_Continue state s
+| S_Decl      s -> print_S_Decl ~stdlib ~decl_kind ~classes ~static
+                                ~let_to_const state s
 | S_Directive s -> print_S_Directive state s
-| S_Export    s -> print_S_Export    ~decl_kind ~classes ~static
-                                     ~let_to_const state s
-| S_Expr      s -> print_S_Expr      state s
-| S_For       s -> print_S_For       state s
-| S_ForOf     s -> print_S_ForOf     state s
-| S_If        s -> print_S_If        state s
-| S_Return    s -> print_S_Return    state s
-| S_Switch    s -> print_S_Switch    state s
-| S_While     s -> print_S_While     state s
+| S_Export    s -> print_S_Export ~stdlib ~decl_kind ~classes ~static
+                                  ~let_to_const state s
+| S_Expr      s -> print_S_Expr ~stdlib state s
+| S_For       s -> print_S_For ~stdlib state s
+| S_ForOf     s -> print_S_ForOf ~stdlib state s
+| S_If        s -> print_S_If ~stdlib state s
+| S_Return    s -> print_S_Return ~stdlib state s
+| S_Switch    s -> print_S_Switch ~stdlib state s
+| S_While     s -> print_S_While ~stdlib state s
 
 (* Decorated statements *)
 
@@ -397,7 +398,7 @@ and print_S_Attr
 (* Blocks of statements *)
 
 and print_S_Block ?(stdlib=false) state (node : statements braces) =
-  print_block state node
+  print_block ~stdlib state node
 
 and print_block
   ?(stdlib=false) ?(decl_kind=true) ?(dec_in_com=true) ?(classes=false)
@@ -434,32 +435,33 @@ and print_S_Continue state (node : kwd_continue) = token node
 
 (* Declarations as statements *)
 
-and print_S_Decl ?(decl_kind=true) ?(dec_in_com=true) ?(classes=false)
-                ?(static=false) ?(let_to_const=false) state (node : declaration) =
+and print_S_Decl
+  ?(stdlib=false) ?(decl_kind=true) ?(dec_in_com=true) ?(classes=false)
+  ?(static=false) ?(let_to_const=false) state (node : declaration) =
   print_declaration
     empty ~decl_kind ~dec_in_com ~classes ~let_to_const ~static state node
 
 and print_declaration
-  prefix ?(stdlib=false) ?(decl_kind=true) ?(dec_in_com=true) ?(classes=false)
-  ?(static=false) ?(let_to_const=false) state = function
-  D_Fun       d -> prefix ^^ print_D_Fun state d
-| D_Import    d -> prefix ^^ print_D_Import state d
-| D_Interface d -> prefix ^^ print_D_Interface state d
-| D_Namespace d -> print_D_Namespace prefix ~classes state d
-| D_Type      d -> prefix ^^ print_D_Type state d
-| D_Value     d -> prefix ^^ print_D_Value ~decl_kind ~dec_in_com
+  prefix ?(stdlib=false) ?(decl_kind=true) ?(dec_in_com=true)
+  ?(classes=false) ?(static=false) ?(let_to_const=false) state = function
+  D_Fun       d -> prefix ^^ print_D_Fun ~stdlib state d
+| D_Import    d -> prefix ^^ print_D_Import ~stdlib state d
+| D_Interface d -> prefix ^^ print_D_Interface ~stdlib state d
+| D_Namespace d -> print_D_Namespace prefix ~stdlib ~classes state d
+| D_Type      d -> prefix ^^ print_D_Type ~stdlib state d
+| D_Value     d -> prefix ^^ print_D_Value ~stdlib ~decl_kind ~dec_in_com
                                            ~static ~let_to_const state d
 
 (* Function declaration *)
 
-and print_D_Fun state ?(stdlib=false) (node : fun_decl reg) =
+and print_D_Fun ?(stdlib=false) state (node : fun_decl reg) =
   let {kwd_function; fun_name; generics;
        parameters; rhs_type; fun_body} = node.value in
   let thread = token kwd_function ^^ space ^^ print_variable fun_name in
   let thread = thread ^^ print_generics_opt state generics in
-  let thread = thread ^^ print_fun_params state parameters in
-  let thread = thread ^^ print_type_annotation_opt state rhs_type
-  in group (thread ^^ space ^^ print_block state fun_body)
+  let thread = thread ^^ print_fun_params ~stdlib state parameters in
+  let thread = thread ^^ print_type_annotation_opt ~stdlib state rhs_type
+  in group (thread ^^ space ^^ print_block ~stdlib state fun_body)
 
 and print_generics_opt state (node : generics option) =
   Option.value_map node ~default:empty ~f:(print_generics state)
@@ -471,7 +473,7 @@ and print_generics state (node : generics) =
 
 and print_fun_params ?(stdlib=false) state (node : fun_params) =
   if Option.is_some node.value.inside then
-    let print = print_sep_or_term (break 1) (print_pattern state)
+    let print = print_sep_or_term (break 1) (print_pattern ~stdlib state)
     in print_par state print node
   else
     token node.value.lpar ^^ token node.value.rpar
@@ -480,18 +482,19 @@ and print_fun_params ?(stdlib=false) state (node : fun_params) =
 
 and print_type_annotation_opt
   ?(stdlib=false) state (node : type_annotation option) =
-  Option.value_map node ~default:empty ~f:(print_type_annotation state)
+  Option.value_map node ~default:empty
+                   ~f:(print_type_annotation ~stdlib state)
 
 and print_type_annotation
   ?(stdlib=false) state (node : type_annotation) =
   let colon, type_expr = node in
-  let rhs = print_type_expr state type_expr in
+  let rhs = print_type_expr ~stdlib state type_expr in
   group (token colon ^^ space ^^ rhs)
 
 (* Import declaration *)
 
 and print_D_Import ?(stdlib=false) state = function
-  ImportAlias i -> print_ImportAlias state i
+  ImportAlias i -> print_ImportAlias ~stdlib state i
 | ImportAllAs i -> print_ImportAllAs state i
 | ImportFrom  i -> print_ImportFrom  state i
 
@@ -499,11 +502,11 @@ and print_ImportAlias ?(stdlib=false) state (node : import_alias reg) =
   let {kwd_import; alias; equal; namespace_path} = node.value
   in group (token kwd_import ^^ space ^^ token alias
             ^^ space ^^ token equal ^^ space
-            ^^ print_namespace_selection state namespace_path)
+            ^^ print_namespace_selection ~stdlib state namespace_path)
 
 and print_namespace_selection ?(stdlib=false) state = function
-  M_Path  s -> print_M_Path  state s
-| M_Alias s -> print_M_Alias s
+  M_Path  s -> print_M_Path ~stdlib state s
+| M_Alias s -> print_M_Alias ~stdlib s
 
 and print_M_Path
   ?(stdlib=false) state (node : namespace_name namespace_path reg) =
@@ -570,7 +573,7 @@ and print_D_Interface ?(stdlib=false) state (node : interface_decl reg) =
         [] -> empty
       | fst_type :: more_types ->
          let ne_list = Ne_list.(fst_type :: more_types) in
-         print_ne_list (break 1) (print_intf_entry state) ne_list in
+         print_ne_list (break 1) (print_intf_entry ~stdlib state) ne_list in
     (* Printing the new interface *)
     let lbrace = Wrap.wrap "{" Region.ghost
     and rbrace = Wrap.wrap "}" Region.ghost
@@ -579,31 +582,31 @@ and print_D_Interface ?(stdlib=false) state (node : interface_decl reg) =
       types_doc ^^ hardline ^^ hardline ^^
       token kwd_interface ^^ space ^^ token intf_name ^^ space
       ^^ print_braces_like_document state ~force_hardline:true
-           (separate_map comma (print_intf_entry state) constants)
+           (separate_map comma (print_intf_entry ~stdlib state) constants)
            lbrace rbrace)
   else (* No upgrade to v2 *)
     group (token kwd_interface ^^ space ^^ token intf_name ^^ space
-           ^^ print_intf_body state intf_body)
+           ^^ print_intf_body ~stdlib state intf_body)
 
 and print_intf_body
   ?(stdlib=false) ?(dec_in_com=true) state (node : intf_body) =
   print_braces ~force_hardline:true state
-    (print_intf_entries ~dec_in_com:false state) node
+    (print_intf_entries ~stdlib ~dec_in_com:false state) node
 
 and print_intf_entries
   ?(stdlib=false) ?(dec_in_com=true) state (node : intf_entries) =
   print_sep_or_term (break 1)
-    (print_intf_entry ~dec_in_com state) node
+    (print_intf_entry ~stdlib ~dec_in_com state) node
 
 and print_intf_entry ?(stdlib=false) ?(dec_in_com=true) state = function
-  I_Attr  i -> print_I_Attr  ~dec_in_com state i
-| I_Type  i -> print_I_Type  state i
-| I_Const i -> print_I_Const ~decl_kind:false state i
+  I_Attr  i -> print_I_Attr  ~stdlib ~dec_in_com state i
+| I_Type  i -> print_I_Type  ~stdlib state i
+| I_Const i -> print_I_Const ~stdlib ~decl_kind:false state i
 
 and print_I_Attr
   ?(stdlib=false) ?(dec_in_com=true) state (node : attribute * intf_entry) =
   let attributes, entry = unroll_I_Attr node in
-  let thread = print_intf_entry state entry
+  let thread = print_intf_entry ~stdlib state entry
   in print_attributes ~dec_in_com state thread attributes
 
 and print_I_Type
@@ -611,12 +614,12 @@ and print_I_Type
   let {kwd_type; type_name; generics; type_rhs} = node.value in
   let thread = token kwd_type ^^ space ^^ print_variable type_name in
   let thread = thread ^^ print_generics_opt state generics
-  in group (print_type_rhs state thread type_rhs)
+  in group (print_type_rhs ~stdlib state thread type_rhs)
 
 and print_type_rhs
   ?(stdlib=false) state thread (node : (equal * type_expr) option) =
   let print state (eq, type_expr) =
-    let rhs = print_type_expr state type_expr in
+    let rhs = print_type_expr ~stdlib state type_expr in
     if is_enclosed_type type_expr
     then thread ^^ space ^^ token eq ^^ space ^^ rhs
     else thread ^^ prefix state#indent 1 (space ^^ token eq) rhs
@@ -631,7 +634,7 @@ and print_I_Const
     match const_optional with
     | None -> empty
     | Some qmark -> token qmark
-  in group (thread ^^ print_type_annotation state const_type)
+  in group (thread ^^ print_type_annotation ~stdlib state const_type)
 
 (* Namespace declaration *)
 
@@ -714,8 +717,9 @@ and print_D_Namespace
         [] -> empty
       | fst_stmt :: more_stmts ->
          let statements = Ne_list.(fst_stmt :: more_stmts) in
-         print_statements ~decl_kind:true ~dec_in_com:true ~classes
-                          ~static:false ~let_to_const:true state statements
+         print_statements
+           ~stdlib ~decl_kind:true ~dec_in_com:true ~classes
+           ~static:false ~let_to_const:true state statements
          ^^ hardline ^^ hardline
     in
     (* Printing the class name and what precedes *)
@@ -727,7 +731,7 @@ and print_D_Namespace
     let class_doc =
       match namespace_type with
         None -> class_doc
-      | Some intf -> class_doc ^^ print_interface state intf ^^ space
+      | Some intf -> class_doc ^^ print_interface ~stdlib state intf ^^ space
     in
     (* Printing the body of the class *)
     match const with
@@ -736,7 +740,7 @@ and print_D_Namespace
         let inside = Ne_list.(fst_stmt :: more_stmts) in
         let new_body = {namespace_body
                        with value = {namespace_body.value with inside}} in
-        let block = print_block
+        let block = print_block ~stdlib
                       ~decl_kind:false ~dec_in_com:false ~classes:true
                       ~static:true ~let_to_const:true state new_body in
         group (class_doc ^^ block)
@@ -748,28 +752,29 @@ and print_D_Namespace
       prefix ^^ token kwd_namespace ^^ space
       ^^ token namespace_name ^^ space in
     let thread =
-      thread ^^ print_namespace_type state namespace_type ^^ space in
-    group (thread ^^
-           print_block ~decl_kind:true ~dec_in_com:false ~static:false
-             ~let_to_const:true state namespace_body)
+      thread ^^ print_namespace_type ~stdlib state namespace_type ^^ space in
+    group (thread ^^ print_block
+                       ~stdlib ~decl_kind:true ~dec_in_com:false
+                       ~static:false ~let_to_const:true state namespace_body)
 
 and print_namespace_type ?(stdlib=false) state (node : interface option) =
-  Option.value_map node ~default:empty ~f:(print_interface state)
+  Option.value_map node ~default:empty ~f:(print_interface ~stdlib state)
 
 and print_interface ?(stdlib=false) state (node : interface) =
   let kwd_implements, intf_exprs = node.value in
-  let intf_exprs = print_nsepseq (break 1) (print_intf_expr state) intf_exprs in
+  let intf_exprs =
+    print_nsepseq (break 1) (print_intf_expr ~stdlib state) intf_exprs in
   token kwd_implements ^^ space ^^ intf_exprs
 
 and print_intf_expr ?(stdlib=false) state = function
-  I_Body i -> print_I_Body state i
-| I_Path i -> print_I_Path state i
+  I_Body i -> print_I_Body ~stdlib state i
+| I_Path i -> print_I_Path ~stdlib state i
 
 and print_I_Body ?(stdlib=false) state (node : intf_body) =
-  print_intf_body state node
+  print_intf_body ~stdlib state node
 
 and print_I_Path ?(stdlib=false) state (node : namespace_selection) =
-  print_namespace_selection state node
+  print_namespace_selection ~stdlib state node
 
 (* Type declarations *)
 
@@ -777,7 +782,7 @@ and print_D_Type ?(stdlib=false) state (node : type_decl reg) =
   let {kwd_type; name; generics; eq; type_expr} = node.value in
   let thread = token kwd_type ^^ space ^^ print_variable name in
   let thread = thread ^^ print_generics_opt state generics in
-  let rhs = print_type_expr state type_expr in
+  let rhs = print_type_expr ~stdlib state type_expr in
   group (thread ^^
          if is_enclosed_type type_expr
          then space ^^ token eq ^^ space ^^ rhs
@@ -789,12 +794,17 @@ and print_D_Value
   ?(stdlib=false) ?(decl_kind=true) ?(dec_in_com=true) ?(let_to_const=false)
   ?(static=false) state (node : value_decl reg) =
   let {kind; bindings} = node.value in
-  let thread = if static then string "static" ^^ space else empty in
+  let thread =
+    if static then
+      print_comments (comments_of_kind kind) ^^
+      string "static" ^^ space
+    else empty in
   let thread = thread ^^
     if decl_kind then
       print_var_kind ~let_to_const kind ^^ space
     else empty
-  and bindings = print_nsepseq (break 1) (print_val_binding state) bindings
+  and bindings =
+    print_nsepseq (break 1) (print_val_binding ~stdlib state) bindings
   in group (thread ^^ bindings)
 
 and print_var_kind ?(stdlib=false) ?(let_to_const=false) = function
@@ -818,16 +828,16 @@ and print_val_binding ?(stdlib=false) state (node : val_binding reg) =
     E_ArrowFun _ -> ( ^^ )
   | expr when is_enclosed_expr expr -> ( ^^ )
   | _ -> prefix state#indent 0 in
-  let lhs = print_pattern state pattern
+  let lhs = print_pattern ~stdlib state pattern
             ^^ Option.value_map rhs_type ~default:empty
-              ~f:(print_type_annotation state) in
+              ~f:(print_type_annotation ~stdlib state) in
   let lhs = lhs ^^ space ^^ token eq ^^ space
-  and rhs = print_expr state rhs_expr
+  and rhs = print_expr ~stdlib state rhs_expr
   in join rhs_expr lhs rhs
 
 (* Preprocessing directives *)
 
-and print_S_Directive ?(stdlib=false) state (node : Directive.t) =
+and print_S_Directive state (node : Directive.t) =
   let original = (Directive.to_lexeme node).Region.value in
   match node with
     PP_Import import ->
@@ -846,68 +856,74 @@ and print_S_Export
     match declaration with
       D_Import _ -> empty
     | _ -> (if static then string "static" else token kwd_export) ^^ space in
-  print_declaration prefix ~decl_kind ~classes ~let_to_const
-                      (* ~static:false *) state declaration
+  print_declaration prefix ~stdlib ~decl_kind ~classes ~let_to_const
+                    state declaration
 
 (* Expressions as statements *)
 
 and print_S_Expr ?(stdlib=false) state (node : expr) =
-  print_expr state node
+  print_expr ~stdlib state node
 
 (* For-loops *)
 
 and print_S_For ?(stdlib=false) state (node : for_stmt reg) =
   let {kwd_for; range; for_body} = node.value in
-  let thread = token kwd_for ^^ space ^^ print_range_for state range in
+  let thread = token kwd_for ^^ space
+               ^^ print_range_for ~stdlib state range in
   match for_body with
     None -> thread
-  | Some stmt -> prefix state#indent 1 thread (print_statement state stmt)
+  | Some stmt ->
+      prefix state#indent 1 thread (print_statement ~stdlib state stmt)
 
 and print_range_for ?(stdlib=false) state (node : range_for par) =
   let {lpar; inside; rpar} = node.value in
   let {initialiser; semi1; condition; semi2; afterthought} = inside in
   let par =
-    Option.value_map initialiser ~default:empty ~f:(print_statement state)
+    Option.value_map initialiser ~default:empty
+                     ~f:(print_statement ~stdlib state)
     ^^ token semi1
     ^^ Option.value_map condition ~default:empty
-                        ~f:(fun expr -> break 1 ^^ print_expr state expr)
+         ~f:(fun expr -> break 1 ^^ print_expr ~stdlib state expr)
     ^^ token semi2
     ^^ Option.value_map afterthought ~default:empty
-      ~f:(fun s -> break 1 ^^ print_nsepseq (break 1) (print_expr state) s)
+      ~f:(fun s -> break 1 ^^
+                   print_nsepseq (break 1) (print_expr ~stdlib state) s)
   in print_par_like_document state par lpar rpar
 
 (* For-of loops *)
 
 and print_S_ForOf ?(stdlib=false) state (node: for_of_stmt reg) =
   let {kwd_for; range; for_of_body} = node.value in
-  let thread = token kwd_for ^^ space ^^ print_range_for_of state range
-  in group (thread ^^ space ^^ print_statement state for_of_body)
+  let thread = token kwd_for ^^ space ^^
+               print_range_for_of ~stdlib state range
+  in group (thread ^^ space ^^ print_statement ~stdlib state for_of_body)
 
 and print_range_for_of ?(stdlib=false) state (node : range_of par) =
   let {lpar; inside; rpar} = node.value in
   let {index_kind; index; kwd_of; expr} = inside in
   let par = print_var_kind index_kind ^^ space
-            ^^ print_pattern state index
-            ^^ space ^^ token kwd_of ^^ space ^^ print_expr state expr
+            ^^ print_pattern ~stdlib state index
+            ^^ space ^^ token kwd_of ^^ space
+            ^^ print_expr ~stdlib state expr
   in print_par_like_document state par lpar rpar
 
 (* Conditional statement *)
 
 and print_S_If ?(stdlib=false) state (node : if_stmt reg) =
   let {kwd_if; test; if_so; if_not} = node.value in
-  let thread = token kwd_if ^^ space ^^ print_par_expr state test in
-  let thread = thread ^^ space ^^ print_statement_semi state if_so
-  in group (print_if_not state thread if_not)
+  let thread = token kwd_if ^^ space ^^ print_par_expr ~stdlib state test in
+  let thread = thread ^^ space ^^ print_statement_semi ~stdlib state if_so
+  in group (print_if_not ~stdlib state thread if_not)
 
 and print_if_not ?(stdlib=false) state thread = function
   None -> thread
 | Some (kwd_else, stmt) ->
     thread ^^ space ^^ token kwd_else ^^ space
-    ^^ print_statement state stmt
+    ^^ print_statement ~stdlib state stmt
 
 and print_par_expr ?(stdlib=false) state (node : expr par) =
   let {lpar; inside; rpar} = node.value in
-  print_par_like_document state (print_expr state inside) lpar rpar
+  print_par_like_document state (print_expr ~stdlib state inside) lpar rpar
 
 (* Return statement *)
 
@@ -915,7 +931,7 @@ and print_S_Return ?(stdlib=false) state (node : return_stmt reg) =
   match node.value with
     kwd_return, None -> token kwd_return
   | kwd_return, Some expr ->
-      group (token kwd_return ^^ space ^^ print_expr state expr)
+      group (token kwd_return ^^ space ^^ print_expr ~stdlib state expr)
 
 (* Switch statement *)
 
@@ -923,147 +939,150 @@ and print_S_Switch ?(stdlib=false) state (node : switch_stmt reg) =
   let {kwd_switch; subject; cases} = node.value in
   let {lbrace; inside; rbrace} = cases.value in
   let braces = print_braces_like_document state ~force_hardline:true
-                 (print_cases state inside) lbrace rbrace
-  and thread = token kwd_switch ^^ space ^^ print_par_expr state subject
+                 (print_cases ~stdlib state inside) lbrace rbrace
+  and thread = token kwd_switch ^^ space ^^
+               print_par_expr ~stdlib state subject
   in group (thread ^^ space ^^ braces)
 
 and print_cases ?(stdlib=false) state = function
-  AllCases c -> print_AllCases state c
-| Default  c -> print_Default  state c
+  AllCases c -> print_AllCases ~stdlib state c
+| Default  c -> print_Default  ~stdlib state c
 
 and print_AllCases ?(stdlib=false) state (node : all_cases) =
   let switch_cases, default_opt = node in
-  let thread = print_switch_cases state switch_cases in
+  let thread = print_switch_cases ~stdlib state switch_cases in
   match default_opt with
     None -> thread
-  | Some default -> thread ^^ hardline ^^ print_switch_default state default
+  | Some default ->
+      thread ^^ hardline ^^ print_switch_default ~stdlib state default
 
 and print_switch_cases ?(stdlib=false) state (node : switch_case reg Ne.t) =
-  print_ne_list hardline (print_switch_case state) node
+  print_ne_list hardline (print_switch_case ~stdlib state) node
 
 and print_switch_case ?(stdlib=false) state (node : switch_case reg) =
   let {kwd_case; expr; colon; case_body} = node.value in
-  let thread = token kwd_case ^^ space ^^ print_expr state expr in
+  let thread = token kwd_case ^^ space ^^ print_expr ~stdlib state expr in
   let thread = thread ^^ token colon in
-  print_label_and_statements state thread case_body
+  print_label_and_statements ~stdlib state thread case_body
 
 and print_Default state ?(stdlib=false) (node : switch_default reg) =
-  print_switch_default state node
+  print_switch_default ~stdlib state node
 
 and print_switch_default ?(stdlib=false) state (node : switch_default reg) =
   let {kwd_default; colon; default_body} = node.value in
   let thread = token kwd_default ^^ token colon in
-  print_label_and_statements state thread default_body
+  print_label_and_statements ~stdlib state thread default_body
 
 and print_label_and_statements ?(stdlib=false) state label = function
   None -> label
 | Some ([stmt,_]) when is_enclosed_statement stmt ->
-    label ^^ space ^^ group (print_statement state stmt)
+    label ^^ space ^^ group (print_statement ~stdlib state stmt)
 | Some stmts ->
-    hang state#indent (label ^/^ print_statements state stmts)
+    hang state#indent (label ^/^ print_statements ~stdlib state stmts)
 
 (* While-loop *)
 
 and print_S_While ?(stdlib=false) state (node : while_stmt reg) =
   let {kwd_while; invariant; while_body} = node.value in
-  let thread = token kwd_while ^^ space ^^ print_par_expr state invariant
-  in group (thread ^^ space ^^ print_statement state while_body)
+  let thread =
+    token kwd_while ^^ space ^^ print_par_expr ~stdlib state invariant
+  in group (thread ^^ space ^^ print_statement ~stdlib state while_body)
 
 (* EXPRESSIONS *)
 
 and print_expr ?(stdlib=false) state = function
-  E_Add        e -> print_E_Add        state e
-| E_AddEq      e -> print_E_AddEq      state e
-| E_And        e -> print_E_And        state e
-| E_App        e -> print_E_App        state e
-| E_Array      e -> print_E_Array      state e
-| E_ArrowFun   e -> print_E_ArrowFun   state e
-| E_Assign     e -> print_E_Assign     state e
-| E_Attr       e -> print_E_Attr       state e
-| E_BitAnd     e -> print_E_BitAnd     state e
-| E_BitAndEq   e -> print_E_BitAndEq   state e
-| E_BitNeg     e -> print_E_BitNeg     state e
-| E_BitOr      e -> print_E_BitOr      state e
-| E_BitOrEq    e -> print_E_BitOrEq    state e
-| E_BitSl      e -> print_E_BitSl      state e
-| E_BitSlEq    e -> print_E_BitSlEq    state e
-| E_BitSr      e -> print_E_BitSr      state e
-| E_BitSrEq    e -> print_E_BitSrEq    state e
-| E_BitXor     e -> print_E_BitXor     state e
-| E_BitXorEq   e -> print_E_BitXorEq   state e
+  E_Add        e -> print_E_Add        ~stdlib state e
+| E_AddEq      e -> print_E_AddEq      ~stdlib state e
+| E_And        e -> print_E_And        ~stdlib state e
+| E_App        e -> print_E_App        ~stdlib state e
+| E_Array      e -> print_E_Array      ~stdlib state e
+| E_ArrowFun   e -> print_E_ArrowFun   ~stdlib state e
+| E_Assign     e -> print_E_Assign     ~stdlib state e
+| E_Attr       e -> print_E_Attr       ~stdlib state e
+| E_BitAnd     e -> print_E_BitAnd     ~stdlib state e
+| E_BitAndEq   e -> print_E_BitAndEq   ~stdlib state e
+| E_BitNeg     e -> print_E_BitNeg     ~stdlib state e
+| E_BitOr      e -> print_E_BitOr      ~stdlib state e
+| E_BitOrEq    e -> print_E_BitOrEq    ~stdlib state e
+| E_BitSl      e -> print_E_BitSl      ~stdlib state e
+| E_BitSlEq    e -> print_E_BitSlEq    ~stdlib state e
+| E_BitSr      e -> print_E_BitSr      ~stdlib state e
+| E_BitSrEq    e -> print_E_BitSrEq    ~stdlib state e
+| E_BitXor     e -> print_E_BitXor     ~stdlib state e
+| E_BitXorEq   e -> print_E_BitXorEq   ~stdlib state e
 | E_Bytes      e -> print_E_Bytes            e
-| E_CodeInj    e -> print_E_CodeInj    state e
-| E_ContractOf e -> print_E_ContractOf state e
-| E_CtorApp    e -> print_E_CtorApp    state e
-| E_Div        e -> print_E_Div        state e
-| E_DivEq      e -> print_E_DivEq      state e
-| E_Do         e -> print_E_Do         state e
-| E_Equal      e -> print_E_Equal      state e
+| E_CodeInj    e -> print_E_CodeInj    ~stdlib state e
+| E_ContractOf e -> print_E_ContractOf ~stdlib state e
+| E_CtorApp    e -> print_E_CtorApp    ~stdlib state e
+| E_Div        e -> print_E_Div        ~stdlib state e
+| E_DivEq      e -> print_E_DivEq      ~stdlib state e
+| E_Do         e -> print_E_Do         ~stdlib state e
+| E_Equal      e -> print_E_Equal      ~stdlib state e
 | E_False      e -> print_E_False            e
-| E_Function   e -> print_E_Function   state e
-| E_Geq        e -> print_E_Geq        state e
-| E_Gt         e -> print_E_Gt         state e
+| E_Function   e -> print_E_Function   ~stdlib state e
+| E_Geq        e -> print_E_Geq        ~stdlib state e
+| E_Gt         e -> print_E_Gt         ~stdlib state e
 | E_Int        e -> print_E_Int              e
-| E_Leq        e -> print_E_Leq        state e
-| E_Lt         e -> print_E_Lt         state e
-| E_Match      e -> print_E_Match      state e
-| E_Mult       e -> print_E_Mult       state e
-| E_MultEq     e -> print_E_MultEq     state e
+| E_Leq        e -> print_E_Leq        ~stdlib state e
+| E_Lt         e -> print_E_Lt         ~stdlib state e
+| E_Match      e -> print_E_Match      ~stdlib state e
+| E_Mult       e -> print_E_Mult       ~stdlib state e
+| E_MultEq     e -> print_E_MultEq     ~stdlib state e
 | E_Mutez      e -> print_E_Mutez            e
 | E_Tez        e -> print_E_Tez              e
-| E_NamePath   e -> print_E_NamePath   state e
+| E_NamePath   e -> print_E_NamePath   ~stdlib state e
 | E_Nat        e -> print_E_Nat              e
-| E_Neg        e -> print_E_Neg        state e
-| E_Neq        e -> print_E_Neq        state e
-| E_Not        e -> print_E_Not        state e
-| E_Object     e -> print_E_Object     state e
-| E_Or         e -> print_E_Or         state e
-| E_Par        e -> print_E_Par        state e
-| E_PostDecr   e -> print_E_PostDecr   state e
-| E_PostIncr   e -> print_E_PostIncr   state e
-| E_PreDecr    e -> print_E_PreDecr    state e
-| E_PreIncr    e -> print_E_PreIncr    state e
-| E_Proj       e -> print_E_Proj       state e
-| E_Rem        e -> print_E_Rem        state e
-| E_RemEq      e -> print_E_RemEq      state e
+| E_Neg        e -> print_E_Neg        ~stdlib state e
+| E_Neq        e -> print_E_Neq        ~stdlib state e
+| E_Not        e -> print_E_Not        ~stdlib state e
+| E_Object     e -> print_E_Object     ~stdlib state e
+| E_Or         e -> print_E_Or         ~stdlib state e
+| E_Par        e -> print_E_Par        ~stdlib state e
+| E_PostDecr   e -> print_E_PostDecr   ~stdlib state e
+| E_PostIncr   e -> print_E_PostIncr   ~stdlib state e
+| E_PreDecr    e -> print_E_PreDecr    ~stdlib state e
+| E_PreIncr    e -> print_E_PreIncr    ~stdlib state e
+| E_Proj       e -> print_E_Proj       ~stdlib state e
+| E_Rem        e -> print_E_Rem        ~stdlib state e
+| E_RemEq      e -> print_E_RemEq      ~stdlib state e
 | E_String     e -> print_E_String           e
-| E_Sub        e -> print_E_Sub        state e
-| E_SubEq      e -> print_E_SubEq      state e
-| E_Ternary    e -> print_E_Ternary    state e
+| E_Sub        e -> print_E_Sub        ~stdlib state e
+| E_SubEq      e -> print_E_SubEq      ~stdlib state e
+| E_Ternary    e -> print_E_Ternary    ~stdlib state e
 | E_True       e -> print_E_True             e
-| E_Typed      e -> print_E_Typed      state e
-| E_Update     e -> print_E_Update     state e
+| E_Typed      e -> print_E_Typed      ~stdlib state e
+| E_Update     e -> print_E_Update     ~stdlib state e
 | E_Var        e -> print_E_Var              e
 | E_Verbatim   e -> print_E_Verbatim         e
-| E_Xor        e -> print_E_Xor        state e
+| E_Xor        e -> print_E_Xor        ~stdlib state e
 
 (* Addition *)
 
 and print_E_Add ?(stdlib=false) state (node : plus bin_op reg) =
-  print_bin_op state node
+  print_bin_op ~stdlib state node
 
 and print_bin_op ?(stdlib=false) state (node : lexeme wrap bin_op reg) =
   let {op; arg1; arg2} = node.value in
   let length = String.length op#payload + 1
-  in group (print_expr state arg1 ^/^ token op ^^ space
-            ^^ nest length (print_expr state arg2))
+  in group (print_expr ~stdlib state arg1 ^/^ token op ^^ space
+            ^^ nest length (print_expr ~stdlib state arg2))
 
 (* Add and assign *)
 
 and print_E_AddEq ?(stdlib=false) state (node : plus_eq bin_op reg) =
-  print_bin_op state node
+  print_bin_op ~stdlib state node
 
 (* Logical conjunction *)
 
 and print_E_And ?(stdlib=false) state (node : bool_and bin_op reg) =
-  print_bin_op state node
+  print_bin_op ~stdlib state node
 
 (* Function application *)
 
 and print_E_App ?(stdlib=false) state (node : (expr * arguments) reg) =
   let lambda, arguments = node.value in
-  let lambda    = print_expr state lambda in
-  let print     = print_nsepseq (break 1) (print_expr state) in
+  let lambda    = print_expr ~stdlib state lambda in
+  let print     = print_nsepseq (break 1) (print_expr ~stdlib state) in
   let print     = Option.value_map ~default:empty ~f:print in
   let arguments = print_par state print arguments
   in lambda ^^ arguments
@@ -1071,7 +1090,7 @@ and print_E_App ?(stdlib=false) state (node : (expr * arguments) reg) =
 (* Array expression *)
 
 and print_E_Array ?(stdlib=false) state (node : expr _array) =
-  print_array state (print_element print_expr) node
+  print_array state (print_element (print_expr ~stdlib)) node
 
 and print_array :
   'a.state -> (state -> 'a element -> document) -> 'a _array -> document =
@@ -1089,95 +1108,96 @@ and print_element :
 (* Arrow function *)
 
 and print_arrow_fun_params ?(stdlib=false) state = function
-  ParParams  node -> print_fun_params state node
-| NakedParam node -> print_pattern state node
+  ParParams  node -> print_fun_params ~stdlib state node
+| NakedParam node -> print_pattern ~stdlib state node
 
 and print_E_ArrowFun ?(stdlib=false) state (node : arrow_fun_expr reg) =
   let {generics; parameters; rhs_type; arrow; fun_body} = node.value in
   let thread = print_generics_opt state generics in
-  let thread = thread ^^ print_arrow_fun_params state parameters in
-  let thread = thread ^^ print_type_annotation_opt state rhs_type in
+  let thread = thread ^^ print_arrow_fun_params ~stdlib state parameters in
+  let thread = thread ^^ print_type_annotation_opt ~stdlib state rhs_type in
   let lhs    = thread ^^ space ^^ token arrow ^^ space
-  in print_fun_body state lhs fun_body
+  in print_fun_body ~stdlib state lhs fun_body
 
 and print_fun_body ?(stdlib=false) state lhs = function
   StmtBody s ->
     (* If the function has only one statement we may try to display
        it inline rather than in a new one. *)
     let force_hardline = Ne.length s.value.inside > 1 in
-    lhs ^^ print_braces state ~force_hardline (print_statements state) s
-| ExprBody e -> prefix state#indent 0 lhs (print_expr state e)
+    lhs ^^ print_braces state ~force_hardline
+             (print_statements ~stdlib state) s
+| ExprBody e -> prefix state#indent 0 lhs (print_expr ~stdlib state e)
 
 (* Assignment *)
 
 and print_E_Assign ?(stdlib=false) state (node : equal bin_op reg) =
-  print_bin_op state node
+  print_bin_op ~stdlib state node
 
 (* Attributes expressions *)
 
 and print_E_Attr ?(stdlib=false) state (node : attribute * expr) =
   let attributes, expr = unroll_E_Attr node in
-  let thread = print_expr state expr
+  let thread = print_expr ~stdlib state expr
   in print_attributes ~dec_in_com:true state thread attributes
 
 (* Bitwise conjunction *)
 
 and print_E_BitAnd ?(stdlib=false) state (node : bit_and bin_op reg) =
-  print_bin_op state node
+  print_bin_op ~stdlib state node
 
 (* Bitwise conjuction & Assignment *)
 
 and print_E_BitAndEq ?(stdlib=false) state (node : bit_and_eq bin_op reg) =
-  print_bin_op state node
+  print_bin_op ~stdlib state node
 
 (* Bitwise negation *)
 
 and print_E_BitNeg ?(stdlib=false) state (node : bit_neg un_op reg) =
-  print_un_op state node
+  print_un_op ~stdlib state node
 
 (* Bitwise disjunction *)
 
 and print_E_BitOr ?(stdlib=false) state (node : bit_or bin_op reg) =
-  print_bin_op state node
+  print_bin_op ~stdlib state node
 
 (* Bitwise disjunction & Assignment *)
 
 and print_E_BitOrEq ?(stdlib=false) state (node : bit_or_eq bin_op reg) =
-  print_bin_op state node
+  print_bin_op ~stdlib state node
 
 (* Bitwise left shift *)
 
 and print_E_BitSl ?(stdlib=false) state (node : bit_sl bin_op reg) =
-  print_bin_op state node
+  print_bin_op ~stdlib state node
 
 (* Bitwise left shift & Assignment *)
 
 and print_E_BitSlEq ?(stdlib=false) state (node : bit_sl_eq bin_op reg) =
-  print_bin_op state node
+  print_bin_op ~stdlib state node
 
 (* Bitwise right shift *)
 
 and print_E_BitSr ?(stdlib=false) state (node : bit_sr bin_op reg) =
-  print_bin_op state node
+  print_bin_op ~stdlib state node
 
 (* Bitwise right shift & Assignmen *)
 
 and print_E_BitSrEq ?(stdlib=false) state (node : bit_sr_eq bin_op reg) =
-  print_bin_op state node
+  print_bin_op ~stdlib state node
 
 (* Bitwise exclusive disjunction *)
 
 and print_E_BitXor ?(stdlib=false) state (node : bit_xor bin_op reg) =
-  print_bin_op state node
+  print_bin_op ~stdlib state node
 
 (* Bitwise exclusive disjunction & Assignment *)
 
 and print_E_BitXorEq ?(stdlib=false) state (node : bit_xor_eq bin_op reg) =
-  print_bin_op state node
+  print_bin_op ~stdlib state node
 
 (* Bytes expressions *)
 
-and print_E_Bytes ?(stdlib=false) (node : (lexeme * Hex.t) wrap) =
+and print_E_Bytes (node : (lexeme * Hex.t) wrap) =
   print_bytes node
 
 (* Code injection *)
@@ -1185,7 +1205,7 @@ and print_E_Bytes ?(stdlib=false) (node : (lexeme * Hex.t) wrap) =
 and print_E_CodeInj ?(stdlib=false) state (node : code_inj reg) =
   let {language; code} = node.value in
   let language = token language in
-  let code     = print_expr state code
+  let code     = print_expr ~stdlib state code
   in group (language ^/^ code)
 
 (* Contract-of expression *)
@@ -1193,35 +1213,35 @@ and print_E_CodeInj ?(stdlib=false) state (node : code_inj reg) =
 and print_E_ContractOf ?(stdlib=false) state (node : contract_of_expr reg) =
   let {kwd_contract_of; namespace_path} = node.value in
   token kwd_contract_of ^^
-  print_par state (print_namespace_selection state) namespace_path
+  print_par state (print_namespace_selection ~stdlib state) namespace_path
 
 (* Constructor application *)
 
 and print_E_CtorApp ?(stdlib=false) state (node : expr variant_kind) =
-  print_variant_kind print_expr state node
+  print_variant_kind (print_expr ~stdlib) state node
 
 (* Euclidean division *)
 
 and print_E_Div ?(stdlib=false) state (node : slash bin_op reg) =
-  print_bin_op state node
+  print_bin_op ~stdlib state node
 
 (* Euclidean division & Assignment *)
 
 and print_E_DivEq ?(stdlib=false) state (node : div_eq bin_op reg) =
-  print_bin_op state node
+  print_bin_op ~stdlib state node
 
 (* Do-expression *)
 
 and print_E_Do ?(stdlib=false) state (node : do_expr reg) =
   let {kwd_do; statements} = node.value in
   string "(() =>"
-  ^/^ print_braces state (print_statements state) statements
+  ^/^ print_braces state (print_statements ~stdlib state) statements
   ^^ string ")()"
 
 (* Equality *)
 
 and print_E_Equal ?(stdlib=false) state (node : equal bin_op reg) =
-  print_bin_op state node
+  print_bin_op ~stdlib state node
 
 (* Logical falsity *)
 
@@ -1235,8 +1255,8 @@ and print_E_Function ?(stdlib=false) state (node : function_expr reg) =
   let {kwd_function; generics; parameters; rhs_type; fun_body} = node.value in
   let kwd_function = token kwd_function in
   let generics     = print_generics_opt state generics in
-  let parameters   = print_arrow_fun_params state parameters in
-  let rhs_type     = print_type_annotation_opt state rhs_type in
+  let parameters   = print_arrow_fun_params ~stdlib state parameters in
+  let rhs_type     = print_type_annotation_opt ~stdlib state rhs_type in
   let lhs = generics ^^ parameters ^^ rhs_type in
   let thread =
     kwd_function ^/^
@@ -1246,19 +1266,20 @@ and print_E_Function ?(stdlib=false) state (node : function_expr reg) =
            it inline rather than in a new one.  *)
         let force_hardline = Ne.length s.value.inside > 1 in
         lhs ^^ space
-        ^^ print_braces state ~force_hardline (print_statements state) s
-    | ExprBody e -> prefix state#indent 1 lhs (print_expr state e)
+        ^^ print_braces state ~force_hardline
+             (print_statements ~stdlib state) s
+    | ExprBody e -> prefix state#indent 1 lhs (print_expr ~stdlib state e)
     in group thread
 
 (* Greater of equal *)
 
 and print_E_Geq ?(stdlib=false) state (node : geq bin_op reg) =
-  print_bin_op state node
+  print_bin_op ~stdlib state node
 
 (* Greater than *)
 
 and print_E_Gt ?(stdlib=false) state (node : gt bin_op reg) =
-  print_bin_op state node
+  print_bin_op ~stdlib state node
 
 (* Integers *)
 
@@ -1267,12 +1288,12 @@ and print_E_Int (node : (lexeme * Z.t) wrap) = print_int node
 (* Lower or equal than *)
 
 and print_E_Leq ?(stdlib=false) state (node : leq bin_op reg) =
-  print_bin_op state node
+  print_bin_op ~stdlib state node
 
 (* Lower than *)
 
 and print_E_Lt ?(stdlib=false) state (node : lt bin_op reg) =
-  print_bin_op state node
+  print_bin_op ~stdlib state node
 
 (* Pattern matching *)
 
@@ -1280,7 +1301,7 @@ and print_E_Match ?(stdlib=false) state (node : match_expr reg) =
   let {kwd_match; subject; clauses} = node.value in
   let is_array = has_array_pattern clauses in
   let subject = subject.Region.value.CST.inside in
-  let subject = print_expr state subject in
+  let subject = print_expr ~stdlib state subject in
   let subject =
     if is_array then
       string "List.head_and_tail(" ^^ subject ^^ string ")"
@@ -1288,7 +1309,7 @@ and print_E_Match ?(stdlib=false) state (node : match_expr reg) =
   let clauses = clauses.Region.value.CST.inside in
   group (string "$match("
          ^^ subject ^^ string ", {"
-         ^^ nest state#indent (hardline ^^ print_clauses state clauses)
+         ^^ nest state#indent (hardline ^^ print_clauses ~stdlib state clauses)
          ^^ hardline ^^ string "})")
 
 and has_array_pattern ?(stdlib=false) (node : match_clauses braces) : bool =
@@ -1307,18 +1328,19 @@ and has_array_all_clauses
   | _ -> false
 
 and print_clauses ?(stdlib=false) state = function
-  AllClauses    c -> print_AllClauses    state c
-| DefaultClause c -> print_DefaultClause state c
+  AllClauses    c -> print_AllClauses    ~stdlib state c
+| DefaultClause c -> print_DefaultClause ~stdlib state c
 
 and print_AllClauses ?(stdlib=false) state (node : all_match_clauses) =
   let match_clauses, default_opt = node in
-  let thread = print_match_clauses state match_clauses in
+  let thread = print_match_clauses ~stdlib state match_clauses in
   match default_opt with
     None -> thread
-  | Some default -> thread ^^ hardline ^^ print_DefaultClause state default
+  | Some default ->
+      thread ^^ hardline ^^ print_DefaultClause ~stdlib state default
 
 and print_match_clauses ?(stdlib=false) state (node : match_clause reg Ne.t) =
-  print_ne_list hardline (print_match_clause state) node
+  print_ne_list hardline (print_match_clause ~stdlib state) node
 
 and print_match_clause ?(stdlib=false) state (node : match_clause reg) =
   let {kwd_when=_; filter; colon; clause_expr} = node.value in
@@ -1327,27 +1349,27 @@ and print_match_clause ?(stdlib=false) state (node : match_clause reg) =
   print_label_and_expr state thread clause_expr ^^ string ","
 
 and print_match_pattern ?(stdlib=false) state = function
-  P_CtorApp variant -> print_match_lhs_ctor state variant
-| P_Array array -> print_match_lhs_array state array
-| pattern -> print_pattern state pattern ^^ string ": "
+  P_CtorApp variant -> print_match_lhs_ctor ~stdlib state variant
+| P_Array array -> print_match_lhs_array ~stdlib state array
+| pattern -> print_pattern ~stdlib state pattern ^^ string ": "
 
 and print_match_lhs_array ?(stdlib=false) state (node : pattern _array) =
   match node.Region.value.inside with
     None -> string "\"None\": () =>"
   | Some seq ->
      let hd :: tl = Utils.nsep_or_term_to_ne_list seq in
-     let hd = print_element print_pattern state hd in
+     let hd = print_element (print_pattern ~stdlib) state hd in
      let some = string "\"Some\": ([" ^^ hd ^^ string ", " in
      let more =
        match tl with
          [] -> string "_"
-       | [(Some _, pattern)] -> print_pattern state pattern
+       | [(Some _, pattern)] -> print_pattern ~stdlib state pattern
        | _ -> string "/* UPGRADE: Refactor the pattern matching. */" in
      some ^^ more ^^ string "]) =>"
 
 and print_match_lhs_ctor ?(stdlib=false) state = function
-  Variant v -> print_match_tuple state v.Region.value.tuple
-| Legacy _ as v -> print_P_CtorApp state v
+  Variant v -> print_match_tuple ~stdlib state v.Region.value.tuple
+| Legacy _ as v -> print_P_CtorApp ~stdlib state v
 
 and print_match_tuple ?(stdlib=false) state = function
   ZeroArg ctor -> print_property_of_ctor ctor ^^ string ": () =>"
@@ -1847,16 +1869,16 @@ and print_T_Var (node : variable) = print_variable node
 
 and print_variant_kind :
  'a. (state -> 'a -> document) -> state -> 'a variant_kind -> document =
- fun printer state node ->
+ fun print state node ->
   match node with
-    Variant node -> print_variant printer state node
-  | Legacy  node -> print_legacy_variant printer state node
+    Variant node -> print_variant print state node
+  | Legacy  node -> print_legacy_variant print state node
 
 and print_variant :
  'a. (state -> 'a -> document) -> state -> 'a variant reg -> document =
- fun printer state node ->
+ fun print state node ->
   let ({tuple; attributes} : 'a variant) = node.value in
-  let tuple = print_app' state printer tuple
+  let tuple = print_app' state print tuple
   in group (print_attributes state tuple attributes)
 
 and print_app' :

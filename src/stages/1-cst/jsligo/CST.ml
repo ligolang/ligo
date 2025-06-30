@@ -991,3 +991,9 @@ let rec fun_stmt_to_arrow_stmt = function
 | S_Decl decl -> S_Decl (fun_decl_to_val_decl decl)
 | S_Export stmt -> S_Export (export_to_arrow_stmt stmt)
 | stmt -> stmt
+
+(* Extracting comments from "let" or "const" *)
+
+let comments_of_kind = function
+  `Let kwd_let -> kwd_let#comments
+| `Const kwd_const -> kwd_const#comments
