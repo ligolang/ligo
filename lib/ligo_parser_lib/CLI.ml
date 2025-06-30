@@ -162,6 +162,7 @@ module Make (LexerParams: LexerLib.CLI.PARAMETERS) : PARAMETERS =
       |> add "--mono"
       |> add "--upgrade"
       |> add "--namespaces"
+      |> add "--stdlib"
       |> add "--cst"
       |> add "--recovery"
       |> add "--trace-recovery"

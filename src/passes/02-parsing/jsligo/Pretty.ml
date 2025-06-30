@@ -33,6 +33,32 @@ let (^/^)  = PrettyComb.(^/^)
 
 let (<@) = Ligo_fun.(<@)
 
+(* Upgrading calls to the LIGO standard library *)
+
+let upgrade_Option (node: expr namespace_path) =
+  let {namespace_path; selector; property} = node in
+  let property =
+    match property with
+      E_Var (Var name) ->
+      let name' =
+        match name#payload with
+        | "value_exn"
+        | "unopt_with_error"
+        | "unopt" -> "value_with_error"
+        | _ -> name#payload in
+      let name' = name#set_payload name' in
+      let () = Printf.eprintf "name'=%S\n%!" name'#payload in
+      E_Var (Var name')
+    | _ -> property
+  in {node with property}
+
+let upgrade_namespace_path_expr (node: expr namespace_path) =
+  let {namespace_path; selector; property} = node in
+  let fst_ns, more_ns = namespace_path in
+  match fst_ns#payload with
+    "Option" -> upgrade_Option node
+  | _ -> node
+
 (* Placement *)
 
 let default_state : state =
@@ -422,7 +448,7 @@ and print_statement_semi
   state (node : statement * semi option) =
   let statement, semi_opt = node in
   let thread = print_statement ~decl_kind ~dec_in_com ~classes ~let_to_const
-                               ~static state statement in
+                               ~stdlib ~static state statement in
   thread ^^ Option.value_map semi_opt ~default:empty ~f:token
 
 (* Break statement *)
@@ -439,7 +465,7 @@ and print_S_Decl
   ?(stdlib=false) ?(decl_kind=true) ?(dec_in_com=true) ?(classes=false)
   ?(static=false) ?(let_to_const=false) state (node : declaration) =
   print_declaration
-    empty ~decl_kind ~dec_in_com ~classes ~let_to_const ~static state node
+    empty ~stdlib ~decl_kind ~dec_in_com ~classes ~let_to_const ~static state node
 
 and print_declaration
   prefix ?(stdlib=false) ?(decl_kind=true) ?(dec_in_com=true)
@@ -513,8 +539,16 @@ and print_M_Path
   print_namespace_path state token node.value
 
 and print_namespace_path :
-  'a.state -> ('a -> document) -> 'a namespace_path -> document =
+  'a. state -> ('a -> document) -> 'a namespace_path -> document =
   fun state print node ->
+    let {namespace_path; selector; property} = node in
+    let thread = print_nsepseq (break 0) token namespace_path
+    in group (thread ^^ token selector ^^ break 0 ^^ print property)
+
+and print_namespace_path_expr :
+  ?stdlib:bool -> state -> (expr -> document) -> expr namespace_path -> document =
+  fun ?(stdlib=false) state print node ->
+    let node = if stdlib then upgrade_namespace_path_expr node else node in
     let {namespace_path; selector; property} = node in
     let thread = print_nsepseq (break 0) token namespace_path
     in group (thread ^^ token selector ^^ break 0 ^^ print property)
@@ -1415,7 +1449,8 @@ and print_E_Tez (node : (lexeme * Q.t) wrap) = print_tez node
 
 and print_E_NamePath
   ?(stdlib=false) state (node : expr namespace_path reg) =
-  print_namespace_path state (print_expr ~stdlib state) node.value
+  print_namespace_path_expr
+    ~stdlib state (print_expr ~stdlib state) node.value
 
 (* Natural numbers in expressions *)
 
@@ -1573,7 +1608,7 @@ and print_E_Typed ?(stdlib=false) state (node : typed_expr reg) =
 
 and print_updates ?(stdlib=false) state
   (node : (expr property reg, property_sep) Utils.sep_or_term) =
-  print_sep_or_term (break 1) (print_property state print_expr) node
+  print_sep_or_term (break 1) (print_property state (print_expr ~stdlib)) node
 
 and print_update ?(stdlib=false) state (node : update_expr) =
   let {ellipsis; _object; sep; updates} = node in

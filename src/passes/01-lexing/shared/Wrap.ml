@@ -32,6 +32,7 @@ type 'payload wrap = <
   comments     : comment list;
   line_comment : string Region.reg option;
 
+  set_payload      : 'payload          -> 'payload wrap;
   set_attributes   : attributes        -> 'payload wrap;
   add_attribute    : attribute         -> 'payload wrap;
   add_comment      : comment           -> 'payload wrap;
@@ -49,6 +50,7 @@ type 'a ctor =
 
 let wrap ?(attributes=[]) ?directive ?comments ?line_com payload region =
   object
+    val payload         = payload
     method payload      = payload
 
     val    attributes   = attributes
@@ -65,6 +67,7 @@ let wrap ?(attributes=[]) ?directive ?comments ?line_com payload region =
     val line_comment    = line_com
     method line_comment = line_comment
 
+    method set_payload    v    = {< payload = v >}
     method set_attributes attr = {< attributes = attr >}
     method add_attribute  attr = {< attributes = attr :: attributes >}
     method add_comment    com  = {< comments = com :: comments >}
