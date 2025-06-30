@@ -406,6 +406,56 @@ const compareResult: string = $match(wrapped, {
 });
 ```
 
+Also, match cases can accept only one parameter.
+In LIGO v1, the following match statement was allowed; note that the match expression for the `RGB` case accepts three parameters, one for each of the values in the variant:
+
+```jsligo skip
+type colour =
+| ["RGB", [int, int, int]]
+| ["Gray", int]
+| ["Default"];
+
+let colourInt: colour = RGB(1, 2, 3);
+let result = match(colourInt) {
+  when(Gray(val)): do {
+    const a = 5n;
+    const b = 6n;
+    return a + b + abs(val);
+  };
+  when(RGB(a, b, c)): do {
+    return abs(a + b + c);
+  }
+  when(Default): do {
+    return 5n;
+  };
+}
+```
+
+The equivalent match expression in LIGO v2 accepts only one parameter, a tuple that contains the values from the variant case:
+
+```jsligo group=match_case_tuple
+type colour =
+  ["RGB", [int, int, int]] | ["Gray", int] | ["Default"];
+
+let colourInt: colour = ["RGB" as "RGB", 1, 2, 3];
+let result =
+  $match(colourInt, {
+    "Gray": (val) =>
+      (() =>
+      {
+        const a = (5 as nat);
+        const b = (6 as nat);
+        return a + b + abs(val);
+      })(),
+    "RGB": ([a, b, c]) =>
+      (() =>
+      { return abs(a + b + c); })(),
+    "Default": () =>
+      (() =>
+      { return (5 as nat); })(),
+  })
+```
+
 ## Imports
 
 JsLIGO now uses a syntax closer to JavaScript/TypeScript to import definitions.
