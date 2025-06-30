@@ -29,6 +29,7 @@ type 'payload wrap = <
   comments     : comment list;
   line_comment : string Region.reg option;
 
+  set_payload      : 'payload          -> 'payload wrap;
   set_attributes   : attributes        -> 'payload wrap;
   add_attribute    : attribute         -> 'payload wrap;
   add_comment      : comment           -> 'payload wrap;
