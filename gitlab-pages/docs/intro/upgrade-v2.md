@@ -692,7 +692,12 @@ TODO describe changes to import syntax made.
 
 ### Converting namespaces to classes
 
-If you include the `--namespace` option, the tool attempts to convert namespaces to classes by making these changes:
+As described in [Contract syntax](#contract-syntax), JsLIGO now allows you to define contracts in classes as well as namespaces.
+If you include the `--namespace` option, the tool attempts to convert namespaces to classes.
+
+Converting namespaces to classes is required only if the namespace implements an interface because namespaces can no longer implement interfaces in JsLIGO 2.0.
+
+If you include the `--namespace` option, the tool makes these changes:
 
 - Converting the namespace declaration to a class.
 
