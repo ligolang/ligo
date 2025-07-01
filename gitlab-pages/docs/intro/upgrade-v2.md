@@ -686,9 +686,9 @@ The tool makes these changes:
 - It converts `do` blocks into `(() => {})` lambdas.
 In this case, sometimes you must manually add variables to the scope of the lambda, as described below.
 
-- The tool may change line breaks where they do not affect the syntax.
+- It updates the syntax of imports to use the `import` keyword instead of the `#import` preprocessor directive, as described in [Imports](#imports).
 
-TODO describe changes to import syntax made.
+- The tool may change line breaks where they do not affect the syntax.
 
 ### Converting namespaces to classes
 
@@ -709,10 +709,12 @@ The tool does not convert namespaces into classes in these cases:
 
 - The namespace contains no entrypoints or views.
 
+- Moving the types out of the namespace would leave the namespace empty, because empty namespaces are not supported.
+
 - The namespace has nested namespaces.
 In this case the tool adds the comment `// UPGRADE: Nested namespaces need to be handled by hand.`.
 
-Also, the tool does not comment out decorators such as `@entry` in namespaces, so you must do that manually after running the tool.
+See the next section for changes that you must make manually after using the `--namespace` option.
 
 ### Changes that you must make manually
 
@@ -732,6 +734,8 @@ After you run the upgrade tool, you must make these changes manually:
 - If you aliased the module `Test.Next` to `Test` or the module `Tezos.Next` to `Tezos`, you can remove those aliases because the `*.Next` libraries have been promoted.
 
 - Convert uses of `Test.Next.failwith` in tests to simply `failwith`.
+
+- Correct interfaces that have abstract types because they are no longer supported, as described in [Interfaces](#interfaces).
 
 - Correct instances where the updated syntax is not able to capture variables.
 For example, assume this JsLIGO v1 code:
@@ -779,5 +783,7 @@ For example, assume this JsLIGO v1 code:
      });
    };
    ```
+
+Also, if you used the `--namespace` option, check for references to types that the tool moved out of namespaces to ensure that the paths are correct.
 
 </Syntax>
