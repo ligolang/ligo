@@ -67,7 +67,6 @@ const dictionary: dictionary =
 ```
 
 The `Map.literal` predefined function builds a map from a list of key-value pairs, `[<key>, <value>]`.
-Note that each binding in the list is separated with a semicolon (`;`).
 
 For reference, see the predefined [namespace Map](../reference/map-reference).
 
