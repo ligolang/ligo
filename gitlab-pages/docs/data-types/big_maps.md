@@ -65,7 +65,7 @@ const dictionary: dictionary =
 ```
 
 The `Big_map.literal` predefined function builds a big-map from a list of key-value pairs, `[<key>, <value>]`.
-Note that each binding in the list is separated with a semicolon (`;`).
+Note that each binding in the list is separated with a comma (`,`).
 
 For reference, see the predefined [namespace Big_map](../reference/big-map-reference).
 
