@@ -14,7 +14,19 @@ module Pretty = Parsing_jsligo.Pretty
 
 (* Making the pretty-printers from CST nodes *)
 
-include Parsing_shared.Common.MakePretty (CST) (Pretty)
+include Parsing_shared.Common.MakePretty (CST) (
+  struct
+    (* TODO: this is monkey patching, remove it in the future *)
+    include Pretty
+
+    let print state cst = print state cst
+    let print_expr state expr = print_expr state expr
+    let print_type_expr state typ = print_type_expr state typ
+    let print_pattern state pat = print_pattern state pat
+    let print_signature_expr state sig_expr =
+      print_signature_expr state sig_expr
+  end
+)
 
 (* The functor *)
 

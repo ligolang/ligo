@@ -297,7 +297,13 @@ let test_cameligo =
 let test_jsligo =
   let module LexerOptions = LexerLib.Options.MakeDefault (Preprocessor.Options.Default) in
   let module CST = Cst_jsligo.CST in
-  let module Pretty = Parsing_jsligo.Pretty in
+  let module Pretty = struct
+    (* TODO: this is monkey patching, remove it in the future *)
+    include Parsing_jsligo.Pretty
+
+    let print state cst = print state cst
+  end
+  in
   let module Print = Cst_jsligo.Print in
   let module Config = Preprocessing_jsligo.Config in
   let module Token = Lexing_jsligo.Token in
