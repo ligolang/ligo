@@ -1,0 +1,39 @@
+type storage_type = int;
+type return_type = [list<operation>, storage_type];
+
+type view_param = [
+  list<int>,
+  [int, int, int],
+  option<int>,
+];
+
+class Counter {
+
+  @entry
+  add = (value: int, storage: storage_type): return_type =>
+    [[], storage + value];
+
+  @entry
+  sub = (value: int, storage: storage_type): return_type =>
+    [[], storage - value];
+
+  @view
+  math = (param: view_param, storage: storage_type): int => {
+    const [intList, intSet, intOption] = param;
+
+    // Get the sum of the ints in the list
+    let listSum = 0;
+    for (const i of intList) listSum = listSum + i;
+
+    // Multiply by the sum of the ints in the set
+    const [a, b, c] = intSet;
+    const setSum = a + b + c;
+    let returnValue = listSum * setSum;
+
+    // If the option int was provided, subtract it
+    return $match(intOption, {
+      "None": () => storage + returnValue,
+      "Some": (value) => storage + returnValue - value,
+    });
+  }
+}

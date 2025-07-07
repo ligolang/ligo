@@ -239,3 +239,128 @@ octez-client transfer 0 from my_wallet to ComplexParam \
 ```
 
 For more information about the `ligo compile parameter` command, see [`compile parameter`](../manpages/compile%20parameter).
+
+## Compiling expressions
+
+The `ligo compile expression` command is more general than the `ligo compile parameter` command because it does not take any source file into account.
+Instead, it compiles a single LIGO expression to Michelson using only the information you provide to the command, which means that you must provide information like type annotations and the syntax to use.
+
+One use of this command is to compile the parameter for a view, which you can not do with the `ligo compile parameter` command.
+For example, this contract has a view that accepts a complex parameter with multiple numbers and does some math on them:
+
+<Syntax syntax="cameligo">
+
+```cameligo group=complexview
+type storage_type = int
+type return_type = operation list * storage_type
+
+type view_param =
+  int list
+  * int set
+  * int option
+
+module Counter = struct
+
+  [@entry]
+  let add (value : int) (storage : storage_type) : return_type =
+    [], storage + value
+
+  [@entry]
+  let sub (value : int) (storage : storage_type) : return_type =
+    [], storage - value
+
+  [@view]
+  let math (param : view_param) (storage : storage_type) : int =
+    let intList, intSet, intOption = param in
+
+    (* Get the sum of the ints in the list *)
+    let listSum = List.fold_left (fun (a, b) -> a + b) 0 intList in
+
+    (* Multiply by the sum of the ints in the set *)
+    let setSum = Set.fold (fun (a, b) -> a + b) intSet 0 in
+    let returnValue = listSum * setSum in
+
+    (* If the option int was provided, subtract it *)
+    match intOption with
+      None -> storage + returnValue
+    | Some value -> storage + returnValue - value
+end
+```
+
+</Syntax>
+
+<Syntax syntax="jsligo">
+
+```jsligo group=complexview
+type storage_type = int;
+type return_type = [list<operation>, storage_type];
+
+type view_param = [
+  list<int>,
+  [int, int, int],
+  option<int>,
+];
+
+class Counter {
+
+  @entry
+  add = (value: int, storage: storage_type): return_type =>
+    [[], storage + value];
+
+  @entry
+  sub = (value: int, storage: storage_type): return_type =>
+    [[], storage - value];
+
+  @view
+  math = (param: view_param, storage: storage_type): int => {
+    const [intList, intSet, intOption] = param;
+
+    // Get the sum of the ints in the list
+    let listSum = 0;
+    for (const i of intList) listSum = listSum + i;
+
+    // Multiply by the sum of the ints in the set
+    const [a, b, c] = intSet;
+    const setSum = a + b + c;
+    let returnValue = listSum * setSum;
+
+    // If the option int was provided, subtract it
+    return $match(intOption, {
+      "None": () => storage + returnValue,
+      "Some": (value) => storage + returnValue - value,
+    });
+  }
+}
+```
+
+</Syntax>
+
+To compile the parameter to pass to the view, create an expression that matches the parameter for the view, including type annotations to ensure that the command compiles it to the correct types, as in this example:
+
+<Syntax syntax="cameligo">
+
+```cameligo
+ligo2 compile expression cameligo "([1; 2; 3; 4] : int list), (Set.literal [1; 2; 3]), Some 2"
+```
+
+</Syntax>
+
+<Syntax syntax="jsligo">
+
+```bash
+ligo compile expression jsligo "[([1, 2, 3, 4]: list<int>), Set.literal([1, 2, 3]), [\"Some\" as \"Some\", 2]]"
+```
+
+</Syntax>
+
+The result is a Michelson expression that is the parameter for the view:
+
+```michelson
+(Pair { 1 ; 2 ; 3 ; 4 } { 1 ; 2 ; 3 } (Some 2))
+```
+
+You can use this value as the parameter to call the view, as in this example:
+
+```bash
+octez-client run view math on contract counter with input "(Pair { 1 ; 2 ; 3 ; 4 } { 1 ; 2 ; 3 } (Some 2))"
+```
