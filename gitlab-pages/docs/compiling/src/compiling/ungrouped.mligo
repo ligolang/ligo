@@ -1,0 +1,1 @@
+ligo2 compile expression cameligo "([1; 2; 3; 4] : int list), (Set.literal [1; 2; 3]), Some 2"
