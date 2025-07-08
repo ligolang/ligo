@@ -1,0 +1,15 @@
+namespace Counter {
+  type storage_type = int;
+  type return_type = [list<operation>, storage_type];
+
+  // @entry
+  // The type of the value parameter is assumed to be an int
+  const add = (value, storage: storage_type): return_type =>
+    [[], storage + value];
+
+  // @entry
+  // The type of the value parameter is assumed to be an int
+  const sub = (value, storage: storage_type): return_type =>
+    [[], storage - value];
+
+}

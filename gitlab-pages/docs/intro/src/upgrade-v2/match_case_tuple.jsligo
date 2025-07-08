@@ -1,0 +1,20 @@
+type colour =
+  ["RGB", [int, int, int]] | ["Gray", int] | ["Default"];
+
+let colourInt: colour = ["RGB" as "RGB", 1, 2, 3];
+let result =
+  $match(colourInt, {
+    "Gray": (val) =>
+      (() =>
+      {
+        const a = (5 as nat);
+        const b = (6 as nat);
+        return a + b + abs(val);
+      })(),
+    "RGB": ([a, b, c]) =>
+      (() =>
+      { return abs(a + b + c); })(),
+    "Default": () =>
+      (() =>
+      { return (5 as nat); })(),
+  })
