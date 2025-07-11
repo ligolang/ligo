@@ -5,44 +5,27 @@ id: big_maps
 
 import Syntax from '@theme/Syntax';
 
-Ordinary maps are fine for contracts with a finite lifespan or a
-bounded number of users. For many contracts however, the intention is
-to have a map holding *many* entries, potentially millions of
-them. The cost of loading those entries into the environment each time
-a user executes the contract would eventually become too expensive
-were it not for *big maps*. Big maps are a data structure offered by
-Michelson which handles the scaling concerns for us. In LIGO, the
-interface for big maps is analogous to the one used for ordinary
-maps.
+Big-maps are data structures that are similar to [Maps](./maps) but are optimized in Michelson for large datasets.
+Like maps, big-maps associate keys to values, where all keys are the same type and all values are the same type.
+Like maps, the keys must be comparable types, which includes most primitives and tuples consisting of otherwise comparable types.
 
-For convenience, we duplicate here the documentation for maps in order
-to feature big maps, and we point out any relevant differences:
+As described in [Maps](./maps), to read a single element from a map, the contract must load the entire map.
+By contrast, elements in big-maps are lazily deserialised, which means that when a contract reads elements from a big-map, it loads only the elements that it needs to access, instead of the entire big-map.
+Loading only the necessary elements makes big-maps more cost-effective than maps when the dataset gets large because the contract manipulates less data.
+Internally, big-maps also store their keys as hashes instead of raw data, which can save space when the keys are large or complex.
 
-  * The hash of the keys are internally used to access the entries of
-    a big map, so this is advantageous when keys are large.
+Despite these internal differences, big-maps behave much like maps in contracts.
+However, the way big-maps are stored and deserialised causes these limitations that maps don't have:
 
-  * Since big maps are lazily-accessed maps, it makes no sense iterate
-    over them. In particular, there is not equivalent to the function
-    `Map.size`.
+- You can't get the number of elements in a big-map like you can with the `Map.size` function.
+- There is no way to get a list of all of the keys in a big-map.
+- You can't iterate through the elements in a big-map or use functions that access all of the elements in a big-map like the `Map.fold` and `Map.map` functions.
+- Big-maps are not packable.
 
-  * Big maps are not *packable*, as this would assume that they are
-    entirely serialised first.
+## Creating big-maps
 
-Big maps are a data structure which associates values of the same type
-to values of the same type. The former are called *key* and the latter
-*values*. Together they make up a *binding*. An additional requirement
-is that the type of the keys must be *comparable*, in the Michelson
-sense.
-
-As a consequence, the predefined type `big_map` has two parameters:
-the first is the type of the keys, and the second the type of the
-associated values.
-
-The empty big map is denoted by the predefined value
-`Big_map.empty`. A non-empty big map can be built by using the
-function `Big_map.literal` which takes a list of pairs of key and
-values, and returns a big map containing them as bindings, and only
-them.
+To create a big-map, you can use the predefined value `Big_map.empty` or create a non-empty map by passing a list of pairs of keys and values to the function `Big_map.literal`.
+This example creates a big-map type that uses a string for the key and a list of strings for the value:
 
 <Syntax syntax="cameligo">
 
@@ -59,10 +42,10 @@ let dictionary : dictionary =
     ("two", ["The number 2"])]
 ```
 
-The `Big_map.literal` predefined function builds a big map from a list
-of key-value pairs, `(<key>, <value>)`.  Note also the "`;`" to
-separate individual map bindings. Note that `("<string value>":
-address)` means that we type-cast a string into an address.
+The `Big_map.literal` predefined function builds a big-map from a list of key-value pairs, `(<key>, <value>)`.
+Note that each binding in the list is separated with a semicolon (`;`).
+
+For reference, see the predefined [module Big_map](../reference/big-map-reference).
 
 </Syntax>
 
@@ -75,34 +58,29 @@ type dictionary = big_map<word, definition>;
 
 const empty_dict: dictionary = Big_map.empty;
 
-const dictionary : dictionary =
+const dictionary: dictionary =
   Big_map.literal([
     ["one", (["The number 1.", "A member of a group."] as definition)],
     ["two", (["The number 2."] as definition)]]);
 ```
 
-The `Big_map.literal` predefined function builds a big map from a list
-of key-value pairs, `[<key>, <value>]`.  Note also the "`,`" to
-separate individual big map bindings. Note that `"<string value>" as
-address` means that we type-cast a string into an address.
+The `Big_map.literal` predefined function builds a big-map from a list of key-value pairs, `[<key>, <value>]`.
+Note that each binding in the list is separated with a comma (`,`).
+
+For reference, see the predefined [namespace Big_map](../reference/big-map-reference).
 
 </Syntax>
 
-> Note: Map keys are internally sorted by increasing values, so the
-> type of the keys be *comparable*, that is, they obey a total order
-> (any two keys can be compared).
+## Searching for elements
 
-## Searching
-
-The predicate `Big_map.mem` tests for membership in a given big map,
-given a purported key.
+The predefined function `Big_map.mem` returns true if a value exists in the big-map for a given key.
 
 <Syntax syntax="cameligo">
 
 ```cameligo group=big_map_searching
-let my_map : (int, string) big_map =
+let my_big_map : (int, string) big_map =
   Big_map.literal [(1,"one"); (2,"two")]
-let contains_2 : bool = Big_map.mem 2 my_map // = true
+let contains_2 : bool = Big_map.mem 2 my_big_map // = true
 ```
 
 </Syntax>
@@ -110,41 +88,24 @@ let contains_2 : bool = Big_map.mem 2 my_map // = true
 <Syntax syntax="jsligo">
 
 ```jsligo group=big_map_searching
-const my_map: big_map<int,string> =
-  Big_map.literal([[1,"one"],[2,"two"]]);
-const contains_2: bool = Big_map.mem(2, my_map); // == true
+const my_big_map: big_map<int,string> =
+  Big_map.literal([[1, "one"], [2, "two"]]);
+const contains_2: bool = Big_map.mem(2, my_big_map); // == true
 ```
 
 </Syntax>
 
-In practice, however, we would like to get the value associated to the
-key we searched. This is achieved by means of `Big_map.find_opt`.
+To get the value for a key, use the `Big_map.find_opt` function, which returns an [option](./variants#options).
+If the key exists in the big-map, the option is `Some()` with the value.
+If the key does not exist in the big-map, the option is `None()`.
+
+Because the return value of the `Big_map.find_opt` function is an option, you must account for missing keys in the big-map by [matching](./variants#matching) the return value, as in this example:
 
 <Syntax syntax="cameligo">
 
 ```cameligo group=big_map_searching
-let v : string option = Big_map.find_opt 2 my_map
-```
-
-</Syntax>
-
-<Syntax syntax="jsligo">
-
-```jsligo group=big_map_searching
-const v : option<string> = Big_map.find_opt(2, my_map);
-```
-
-</Syntax>
-
-Notice how the value we read is an optional value: this is to force
-the reader to account for a missing key in the big map. This requires
-*pattern matching*.
-
-<Syntax syntax="cameligo">
-
-```cameligo group=big_map_searching
-let force_access key map =
-  match Big_map.find_opt key map with
+let value_option : string option = Big_map.find_opt 2 my_big_map
+let value = match value_option with
     Some value -> value
   | None -> failwith "No value."
 ```
@@ -154,24 +115,22 @@ let force_access key map =
 <Syntax syntax="jsligo">
 
 ```jsligo group=big_map_searching
-const force_access = (key, map) =>
-  $match(Big_map.find_opt (key, map), {
-    "Some": (value) => value,
-    "None": () => failwith("No value.")
-  });
+const value_option: option<string> = Big_map.find_opt(2, my_big_map);
+const value = $match(value_option, {
+  "Some": value => value,
+  "None": () => failwith("No value."),
+});
 ```
 
 </Syntax>
 
-In fact, the predefined function `Big_map.find` does exactly that,
-except that the exception raised by `failwith` carries the default
-string `"MAP FIND"`.
+As shorthand, you can use the function `Big_map.find`.
+This function behaves like the previous example: it returns the value for a key if it exists or fails with the message `MAP FIND` if the value does not exist.
 
-## Adding
+## Adding elements
 
-Adding a binding to a big map is done by calling the function
-`Big_Map.add`. If the key was already present in the given big map,
-the corresponding value is updated.
+To add an element to a big-map, pass the key and value to the `Big_map.add` function.
+If the key already exists, the corresponding value is updated.
 
 <Syntax syntax="cameligo">
 
@@ -195,12 +154,10 @@ const contains_3 = Big_map.mem(3, new_map); // == true
 
 </Syntax>
 
-## Removing
+## Removing elements
 
-The function `Big_map.remove` creates a big map containing the
-elements of a given big map, without a given element. If the element
-is not already present, the new big map is the same as the old one, as
-expected.
+The function `Big_map.remove` creates a big-map containing the elements of a given big-map, without the element with the given key.
+If the element is not already present, the new big-map is the same as the old one.
 
 <Syntax syntax="cameligo">
 
@@ -224,14 +181,15 @@ const contains_3 = Big_map.mem(2, new_map); // == false
 
 </Syntax>
 
-## Updating
+## Updating elements
 
-Previous sections show how to add and remove a binding from a given
-big map. The function `Big_map.update` can do both depending whether
-some value is given for the new binding or not: in the former case, a
-new binding is added (and replaces any previous binding with the same
-key); in the latter case, any binding with the same key is removed and
-a new big map is returned.
+Previous sections show how to add and remove an element from a big-map.
+The function `Big_map.update` can do both depending whether some value is given for the new binding or not.
+
+To update a big-map in this way, pass the key and an option with the value.
+If the option is `Some(value)`, the function adds the element, replacing any element with the given key.
+If the option is `None()`, the function removes the element with the given key if it exists.
+In either case, the function returns a new big-map, as in these examples:
 
 <Syntax syntax="cameligo">
 
@@ -251,8 +209,7 @@ let contains_2 = Big_map.mem 2 map_without_2 // = false
 ```jsligo group=big_map_updating
 const my_map: big_map<int,string> =
   Big_map.literal([[1,"one"],[2,"two"]]);
-const map_with_3 =
-  Big_map.update (3, ["Some" as "Some", "three"], my_map);
+const map_with_3 = Big_map.update (3, ["Some" as "Some", "three"], my_map);
 const contains_3 = Big_map.mem(3, map_with_3); // == true
 const map_without_2 = Big_map.update(2, ["None" as "None"], my_map);
 const contains_2 = Big_map.mem (2, map_without_2); // == false
@@ -260,8 +217,8 @@ const contains_2 = Big_map.mem (2, map_without_2); // == false
 
 </Syntax>
 
-When we want to update a big map, but also obtain the value of the
-updated binding, we can use `Big_map.get_and_update`.
+To simultaneously update a map and obtain the value of the updated element, use the function `Big_map.get_and_update`.
+This function allows you to extract a value from a big-map for use, as in this example:
 
 <Syntax syntax="cameligo">
 
