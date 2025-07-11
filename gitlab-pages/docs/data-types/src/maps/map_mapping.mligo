@@ -1,3 +1,7 @@
-let my_map : (int, int) map = Map.literal [(0,0); (1,1); (2,2)]
-// plus_one = Map.literal [(0,0); (1,2); (2,4)]
-let plus_one = Map.map (fun (k,v) -> k + v) my_map
+let my_map : (string, int) map = Map.literal [
+  ("Alice", 2);
+  ("Bob", 5);
+  ("Charlie", 8);
+]
+
+let squared_map : (string, int) map = Map.map (fun (_k, v : string * int) : int -> v * v) my_map

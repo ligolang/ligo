@@ -1,9 +1,11 @@
-type player = string
-type abscissa = int
-type ordinate = int
-type move = abscissa * ordinate
-type game = (player, move) map
+let my_map : (string, nat) map = Map.literal [
+  ("Alice", 1n);
+  ("Bob", 4n);
+  ("Charlie", 5n);
+]
 
-let horizontal_offset (g : game) : int =
-  let folded = fun (acc, j : int * (player * move)) -> acc + j.1.0
-  in Map.fold folded g 0
+let fold_function = fun (acc, element : nat * (string * nat)) ->
+  let _key, value = element in
+  acc + value
+
+let map_sum = Map.fold fold_function my_map 0 (* 10 *)

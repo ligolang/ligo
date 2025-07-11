@@ -2,20 +2,32 @@
 title: Maps
 ---
 
-*Maps* are a data structure which associates values of the same type to
-values of the same type. The former are called *key* and the latter
-*values*. Together they make up a *binding*. An additional requirement
-is that the type of the keys must be *comparable*, in the Michelson
-sense.
+Maps are a data structure that associates keys to values.
+Together, a key and its value make up a *binding*, also called an *element*.
+The keys must all be the same type and the values must be the same type.
+Keys must be unique within a map.
 
-As a consequence, the predefined type `map` has two parameters: the
-first is the type of the keys, and the second the type of the
-associated values.
+The predefined type `map` has two parameters: the first is the type of the keys, and the second is the type of the associated values.
 
-The empty map is denoted by the predefined value `Map.empty`. A
-non-empty map can be built by using the function `Map.literal` which
-takes a list of pairs of key and values, and returns a map containing
-them as bindings, and only them.
+Internally, LIGO sorts maps in increasing order by their keys.
+Therefore, the type of the keys must be *comparable*, which means that Michelson allows them to be compared.
+Most primitive types are comparable, including strings, ints, nats, and addresses.
+To create more complex keys, you can use a [tuple](./tuples) of two comparable types.
+For more information about Michelson types and which types are comparable, see [Michelson](https://octez.tezos.com/docs/active/michelson.html) in the Octez reference.
+
+:::note Maps and big-maps
+
+Maps are appropriate for small data sets and data sets that you want to load all at once, such as if you want to run logic on every element or check their lengths.
+For data sets that may become larger, consider using a [Big-map](./big_maps).
+Big-maps can be more efficient for larger data sets because only the elements that you access are loaded, which reduces gas fees.
+However, this means that contracts can't do things that require them to load the entire big-map.
+
+:::
+
+## Creating maps
+
+To create a map, you can use the predefined value `Map.empty` or create a non-empty map by passing a list of pairs of keys and values to the function `Map.literal`.
+This example creates a map type that uses a string for the key and a list of strings for the value:
 
 <Syntax syntax="cameligo">
 
@@ -32,13 +44,10 @@ let dictionary : dictionary =
     ("two", ["The number 2"])]
 ```
 
-The `Map.literal` predefined function builds a map from a list of
-key-value pairs, `(<key>, <value>)`.  Note also the "`;`" to separate
-individual map bindings. Note that `("<string value>": address)` means
-that we type-cast a string into an address.
+The `Map.literal` predefined function builds a map from a list of key-value pairs, `(<key>, <value>)`.
+Note that each binding in the list is separated with a semicolon (`;`).
 
-Note: See the predefined
-[module Map](../reference/map-reference)
+For reference, see the predefined [module Map](../reference/map-reference).
 
 </Syntax>
 
@@ -51,40 +60,30 @@ type dictionary = map<word, definition>;
 
 const empty_dict: dictionary = Map.empty;
 
-const dictionary : dictionary =
+const dictionary: dictionary =
   Map.literal([
-    ["one", ["The number 1.", "A member of a group."]],
-    ["two", ["The number 2."]]]);
+    ["one", (["The number 1.", "A member of a group."])],
+    ["two", (["The number 2."])]]);
 ```
 
-The `Map.literal` predefined function builds a map from a list of
-key-value pairs, `[<key>, <value>]`.  Note also the "`,`" to separate
-individual map bindings. Note that `"<string value>" as address` means
-that we type-cast a string into an address.
+The `Map.literal` predefined function builds a map from a list of key-value pairs, `[<key>, <value>]`.
 
-Note: See the predefined
-[namespace Map](../reference/map-reference)
+For reference, see the predefined [namespace Map](../reference/map-reference).
 
 </Syntax>
 
-> Note: Map keys are internally sorted by increasing values, so the
-> type of the keys be *comparable*, that is, they obey a total order
-> (any two keys can be compared).
-
-## Sizing
+## Sizing maps
 
 The predefined function `Map.size` returns the number of bindings
-(entries) in a given map.
+(elements) in a given map.
 
 <Syntax syntax="cameligo">
 
 ```cameligo group=map_size
 let my_map : (int, string) map =
   Map.literal [(1,"one"); (2,"two")]
-let size : nat = Map.size my_map // = 2n
+let size : nat = Map.size my_map // = 2
 ```
-Note: See the predefined
-[module Map](../reference/map-reference)
 
 </Syntax>
 
@@ -92,19 +91,15 @@ Note: See the predefined
 
 ```jsligo group=map_size
 const my_map: map<int,string> =
-  Map.literal([[1,"one"],[2,"two"]]);
-const size: nat = Map.size(my_map); // == (2 as nat)
+  Map.literal([[1, "one"], [2, "two"]]);
+const size: nat = Map.size(my_map); // == 2
 ```
-
-Note: See the predefined
-[namespace Map](../reference/map-reference)
 
 </Syntax>
 
-## Searching
+## Searching for elements
 
-The predicate `Map.mem` tests for membership in a given map, given a
-purported key.
+The predefined function `Map.mem` returns true if a value exists in the map for a given key.
 
 <Syntax syntax="cameligo">
 
@@ -120,39 +115,23 @@ let contains_2 : bool = Map.mem 2 my_map // = true
 
 ```jsligo group=map_searching
 const my_map: map<int,string> =
-  Map.literal([[1,"one"],[2,"two"]]);
+  Map.literal([[1, "one"], [2, "two"]]);
 const contains_2: bool = Map.mem(2, my_map); // == true
 ```
 
 </Syntax>
 
-In practice, however, we would like to get the value associated to the
-key we searched. This is achieved by means of `Map.find_opt`.
+To get the value for a key, use the `Map.find_opt` function, which returns an [option](./variants#options).
+If the key exists in the map, the option is `Some()` with the value.
+If the key does not exist in the map, the option is `None()`.
+
+Because the return value of the `Map.find_opt` function is an option, you must account for missing keys in the map by [matching](./variants#matching) the return value, as in this example:
 
 <Syntax syntax="cameligo">
 
 ```cameligo group=map_searching
-let v : string option = Map.find_opt 2 my_map
-```
-
-</Syntax>
-
-<Syntax syntax="jsligo">
-
-```jsligo group=map_searching
-const v : option<string> = Map.find_opt(2, my_map);
-```
-
-</Syntax>
-
-Notice how the value we read is an optional value: this is to force
-the reader to account for a missing key in the map. This requires
-*pattern matching*.
-
-<Syntax syntax="cameligo">
-
-```cameligo group=map_searching
-let force_access key map =
+let value_option : string option = Map.find_opt 2 my_map
+let value key map =
   match Map.find_opt key map with
     Some value -> value
   | None -> failwith "No value."
@@ -163,105 +142,78 @@ let force_access key map =
 <Syntax syntax="jsligo">
 
 ```jsligo group=map_searching
-const force_access = (key, map) =>
-  $match(Map.find_opt (key, map), {
+const value_option: option<string> = Map.find_opt(2, my_map);
+const value = (key, map) =>
+  $match(Map.find_opt(key, map), {
     "Some": (value) => value,
-    "None": () => failwith("No value.")
+    "None": () => failwith("No value."),
   });
 ```
 
 </Syntax>
 
-In fact, the predefined function `Map.find` does exactly that, except
-that the exception raised by `failwith` carries the default string
-`"MAP FIND"`.
+As shorthand, you can use the function `Map.find`.
+This function behaves like the previous example: it returns the value for a key if it exists or fails with the message `MAP FIND` if the value does not exist.
 
-<Syntax syntax="cameligo">
+## Adding elements
 
-Note: See the predefined
-[module Map](../reference/map-reference)
-
-</Syntax>
-
-<Syntax syntax="jsligo">
-
-Note: See the predefined
-[namespace Map](../reference/map-reference)
-
-</Syntax>
-
-## Adding
-
-Adding a binding to a map is done by calling the function
-`Map.add`. If the key was already present in the given map, the
-corresponding value is updated.
+To add an element to a map, pass the key and value to the `Map.add` function.
+If the key already exists, the corresponding value is updated.
 
 <Syntax syntax="cameligo">
 
 ```cameligo group=map_adding
-let my_map : (int, string) map = Map.literal [(1,"one"); (2,"two")]
+let my_map : (int, string) map = Map.literal [(1, "one"); (2, "two")]
 let new_map = Map.add 3 "three" my_map
 let contains_3 = Map.mem 3 new_map // = true
 ```
-
-Note: See the predefined
-[module Map](../reference/map-reference)
 
 </Syntax>
 
 <Syntax syntax="jsligo">
 
 ```jsligo group=map_adding
-const my_map : map<int,string> = Map.literal([[1,"one"],[2,"two"]]);
+const my_map: map<int,string> = Map.literal([[1, "one"], [2, "two"]]);
 const new_map = Map.add(3, "three", my_map);
 const contains_3 = Map.mem(3, new_map); // == true
 ```
 
-Note: See the predefined
-[namespace Map](../reference/map-reference)
-
 </Syntax>
 
-## Removing
+## Removing elements
 
-The function `Map.remove` creates a map containing the elements of a
-given map, without a given element. If the element is not already
-present, the new map is the same as the old one, as expected.
+The function `Map.remove` creates a map containing the elements of a given map, without the element with the given key.
+If the element is not already present, the new map is the same as the old one.
 
 <Syntax syntax="cameligo">
 
 ```cameligo group=map_removing
-let my_map : (int, string) map = Map.literal [(1,"one"); (2,"two")]
+let my_map : (int, string) map = Map.literal [(1, "one"); (2, "two")]
 let new_map = Map.remove 2 my_map
 let contains_3 = Map.mem 2 new_map // = false
 ```
-
-Note: See the predefined
-[module Map](../reference/map-reference)
 
 </Syntax>
 
 <Syntax syntax="jsligo">
 
 ```jsligo group=map_removing
-const my_map : map<int,string> = Map.literal([[1,"one"],[2,"two"]]);
+const my_map: map<int,string> = Map.literal([[1, "one"], [2, "two"]]);
 const new_map = Map.remove(2, my_map);
 const contains_3 = Map.mem(2, new_map); // == false
 ```
 
-Note: See the predefined
-[namespace Map](../reference/map-reference)
-
 </Syntax>
 
-## Updating
+## Updating elements
 
-Previous sections show how to add and remove a binding from a given
-map. The function `Map.update` can do both depending whether some
-value is given for the new binding or not: in the former case, a new
-binding is added (and replaces any previous binding with the same
-key); in the latter case, any binding with the same key is removed and
-a new map is returned.
+Previous sections show how to add and remove an element from a map.
+The function `Map.update` can do both depending whether some value is given for the new binding or not.
+
+To update a map in this way, pass the key and an option with the value.
+If the option is `Some(value)`, the function adds the element, replacing any element with the given key.
+If the option is `None()`, the function removes the element with the given key if it exists.
+In either case, the function returns a new map, as in these examples:
 
 <Syntax syntax="cameligo">
 
@@ -287,8 +239,8 @@ const contains_2 = Map.mem(2, map_without_2); // == false
 
 </Syntax>
 
-When we want to update a map, but also obtain the value of the updated
-binding, we can use `Map.get_and_update`.
+To simultaneously update a map and obtain the value of the updated element, use the function `Map.get_and_update`.
+This function allows you to extract a value from a map for use, as in this example:
 
 <Syntax syntax="cameligo">
 
@@ -296,9 +248,6 @@ binding, we can use `Map.get_and_update`.
 // three = Some "three"
 let three, map_without_3 = Map.get_and_update 3 None map_with_3
 ```
-
-Note: See the predefined
-[module Map](../reference/map-reference)
 
 </Syntax>
 
@@ -309,132 +258,126 @@ Note: See the predefined
 const [three, map_without_3] = Map.get_and_update(3, ["None" as "None"], map_with_3);
 ```
 
-Note: See the predefined
-[namespace Map](../reference/map-reference)
-
 </Syntax>
 
-## Folding
+## Working with maps as a whole
 
-A *functional iterator* is a function that traverses a data structure
-and calls in turn a given function over the elements of that structure
-to compute some value. Another approach is sometimes possible:
-*loops*.
+As described earlier, you can run logic on an entire map, but not a big-map.
+LIGO runs logic on entire maps by applying a *functional iterator* to each element in the map.
+In JsLIGO, you can also loop through the elements in a map, but this is not possible in CameLIGO.
 
-There are three kinds of functional iterations over maps: the *fold*,
-the *map* (not to be confused with the *map data structure*) and the
-*iteration*.
+### Folding maps
 
-Let us consider first here the fold, which is the most general form of
-functional iteration. The folded function takes two arguments: an
-*accumulator* and the structure *element* at hand, with which it then
-produces a new accumulator. This enables having a partial result that
-becomes complete when the traversal of the data structure is over.
+A map *fold*, known in some other languages as a *reduce*, runs the same function on each element in a map and returns a single value that is the result of those functions.
+The function that you pass to the `Map.fold` function receives two arguments:
 
-The function `Map.fold` performs a fold over the binding of a map, in
-increasing order of its keys.
+- The *accumulator*, which is the result of the previous function iteration
+- The value of the current element
+
+Each iteration of the function returns a new accumulator, which is passed to the next function.
+The result of the last function iteration is the return value of the `Map.fold` function.
+The `Map.fold` function iterates over the map in increasing order of its keys.
+
+The `Map.fold` function accepts these parameters:
+
+1. The fold function
+1. The map to fold
+1. The starting value for  the accumulator
+
+For example, this code calculates the sum of the nats in a map.
+At each iteration, the accumulator is the value of the sum of the elements up to that point.
 
 <Syntax syntax="cameligo">
 
 ```cameligo group=map_folding
-type player = string
-type abscissa = int
-type ordinate = int
-type move = abscissa * ordinate
-type game = (player, move) map
+let my_map : (string, nat) map = Map.literal [
+  ("Alice", 1n);
+  ("Bob", 4n);
+  ("Charlie", 5n);
+]
 
-let horizontal_offset (g : game) : int =
-  let folded = fun (acc, j : int * (player * move)) -> acc + j.1.0
-  in Map.fold folded g 0
+let fold_function = fun (acc, element : nat * (string * nat)) ->
+  let _key, value = element in
+  acc + value
+
+let map_sum = Map.fold fold_function my_map 0 (* 10 *)
 ```
 
-Note: See the predefined
-[module Map](../reference/map-reference)
+For reference, see the predefined [module Map](../reference/map-reference).
 
 </Syntax>
 
 <Syntax syntax="jsligo">
 
 ```jsligo group=map_folding
-type player = string
-type abscissa = int
-type ordinate = int
-type move = [abscissa, ordinate]
-type game = map<player, move>
+const my_map: map<string, nat> = Map.literal([
+  ["Alice", 1 as nat],
+  ["Bob", 4 as nat],
+  ["Charlie", 5 as nat],
+]);
 
-function horizontal_offset (g: game): int {
-  let folded = ([acc, j]: [int, [player, move]]) => acc + j[1][0];
-  return Map.fold(folded, g, 0);
-};
+const fold_function = ([acc, element]: [nat, [string, nat]]): nat => {
+  const [_key, value] = element;
+  return acc + value;
+}
+
+const map_sum: nat = Map.fold(fold_function, my_map, 0 as nat); // 10 as nat
 ```
-
-Note: See the predefined
-[namespace Map](../reference/map-reference)
 
 </Syntax>
 
-## Mapping
+### Mapping maps
 
-We may want to change all the values of a given map by applying to
-them a function. This is called a *map operation*, not to be confused
-with the map data structure. The predefined functional iterator
-implementing the mapped operation over maps is called `Map.map`. It
-takes a binding, that is, a key and its associated value in the map,
-and computes a new value for that key.
+The *mapping* operation (not to be confused with the map type itself) runs the same function on every value in a map and returns the resulting map.
+Unlike folding, mapping operates on each element in the map independently from the others and returns a new map.
 
-In the following example, from a map from integers to integers is made
-a map whose values are the sum of the keys and values of each binding.
+The function that you pass to the `Map.map` function receives the key and value of the current element and returns the new value for the same key.
+You cannot change the key with this function; the new map has the same keys as the old map.
+
+The following example takes a map of integers and squares each integer, producing a map with the same keys and the squared values:
 
 <Syntax syntax="cameligo">
 
 ```cameligo group=map_mapping
-let my_map : (int, int) map = Map.literal [(0,0); (1,1); (2,2)]
-// plus_one = Map.literal [(0,0); (1,2); (2,4)]
-let plus_one = Map.map (fun (k,v) -> k + v) my_map
-```
+let my_map : (string, int) map = Map.literal [
+  ("Alice", 2);
+  ("Bob", 5);
+  ("Charlie", 8);
+]
 
-Note: See the predefined
-[module Map](../reference/map-reference)
+let squared_map : (string, int) map = Map.map (fun (_k, v : string * int) : int -> v * v) my_map
+```
 
 </Syntax>
 
 <Syntax syntax="jsligo">
 
 ```jsligo group=map_mapping
-const my_map : map<int,int> = Map.literal([[0,0], [1,1], [2,2]]);
-// plus_one == Map.literal([[0,0],[1,2],[2,4]])
-const plus_one = Map.map(([k,v]) => k + v, my_map);
-```
+const my_map: map<string, int> = Map.literal([
+  ["Alice", 2],
+  ["Bob", 5],
+  ["Charlie", 8],
+]);
 
-Note: See the predefined
-[namespace Map](../reference/map-reference)
+const squared_map: map<string, int> = Map.map(([_k, v]) => v * v, my_map);
+```
 
 </Syntax>
 
-## Iterating
+### Iterating over maps
 
-An *iterated operation* is a fold over the map that returns the value
-of type `unit`, that is, its only use is to produce side-effects. This
-can be useful if, for example, you would like to check that each value
-of a map is within a certain range, and fail with an error otherwise.
+An *iterated operation* is a fold over a map that returns the value of type `unit`, that is, its only use is to produce side-effects.
+For example, iterating over maps can be useful if you want to verify that each element in a map meets certain criteria, and fail with an error otherwise.
 
-The predefined functional iterator implementing the iterated operation
-over maps is called `Map.iter`. It
-takes a binding, that is, a key and its associated value in the map,
-performs some side-effect and returns the unit value.
-
-In the following example, a map is iterated to check that all its
-integer values are greater than `3`.
+To iterate over a map, pass the function to apply to each element to the `Map.iter` function.
+This example iterates over a map of integers and fails if any of them are not greater than 3:
 
 <Syntax syntax="cameligo">
 
 ```cameligo group=map_iterating
 let assert_all_greater_than_3 (m : (int, int) map) : unit =
-  Map.iter (fun (_,v) -> Assert.assert (v > 3)) m  // The key is discarded
+  Map.iter (fun (_, v) -> Assert.assert (v > 3)) m
 ```
-
-Note: See the predefined
-[module Map](../reference/map-reference)
 
 </Syntax>
 
@@ -442,12 +385,8 @@ Note: See the predefined
 
 ```jsligo group=map_iterating
 const assert_all_greater_than_3 =
-  (m: map<int,int>) : unit => Map.iter(([_k,v]) => Assert.assert(v > 3), m);
+  (m: map<int,int>) : unit => Map.iter(([_k, v]) => Assert.assert(v > 3), m);
 ```
-
-Note: See the predefined
-[namespace Map](../reference/map-reference)
-
 </Syntax>
 
 ## Looping
@@ -455,31 +394,22 @@ Note: See the predefined
 <Syntax syntax="cameligo">
 There is no loop over maps in CameLIGO.
 
-Note: See the predefined
-[module Map](../reference/map-reference)
-
 </Syntax>
 
 <Syntax syntax="jsligo">
 
-One can iterate through all the bindings of a map, in increasing order
-of the keys, thanks to a loop of the form `for (const <variable> of <map>) <block>`. It means that the `<block>` of statements (or a
-single statement) will be computed once for each `<variable>` ranging
-over the bindings (as pairs of keys and values) of the map `<map>` in
-increasing order.
+To iterate through all of the elements in a map, in increasing order of the keys, use the `for` loop in the form `for (const <variable> of <map>) <block>`.
+In this loop, the `<block>` of statements (or a single statement) runs once for each `<variable>` ranging over the elements of the map `<map>` in increasing order.
 
-Here is an example where the values in a map are summed up.
+Here is an example that adds the values in a map:
 
 ```jsligo group=map_looping
-function sum_val (m: map<int,int>) {
+function sum_val (m: map<int, int>) {
   let sum = 0;
   // The key is discarded.
   for (const [_key, val] of m) sum = sum + val;
   return sum;
 };
 ```
-
-Note: See the predefined
-[namespace Map](../reference/map-reference)
 
 </Syntax>
