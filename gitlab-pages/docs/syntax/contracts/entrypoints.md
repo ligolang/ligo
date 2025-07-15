@@ -312,7 +312,7 @@ const owner_only = (action: parameter, storage: storage): result => {
 :::note
 
 The entrypoint in the previous example uses `Tezos.get_sender` instead of `Tezos.get_source` to prevent a security flaw.
-For more information, see the [Security tutorial](../../tutorials/security/security.md#incorrect-authorisation-checks).
+For more information, see [Security](../../advanced/security).
 
 :::
 

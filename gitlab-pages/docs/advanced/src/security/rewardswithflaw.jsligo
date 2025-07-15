@@ -1,0 +1,41 @@
+namespace RewardsWithFlaw {
+
+  export type storage = {
+    owner: address,
+    beneficiaries: list<address>,
+  };
+
+  // Send rewards to one address
+  const send_one_reward = (beneficiary_addr: address): operation => {
+    const contract_opt =
+      Tezos.get_contract_opt( beneficiary_addr);
+    const beneficiary = $match(contract_opt, {
+      "Some": contract => contract,
+      "None": () => failwith("CONTRACT_NOT_FOUND"),
+    });
+    return Tezos.Operation.transaction(unit, 5 as tez, beneficiary);
+  }
+
+  // Send rewards to all beneficiaries
+  // @entry
+  const send_rewards = (_: unit, storage: storage): [list<operation>, storage] => {
+    if (Tezos.get_sender() != storage.owner) {
+      failwith("Not the owner");
+    }
+    const operations = List.map(send_one_reward, storage.beneficiaries);
+    return [operations, storage];
+  }
+
+  // @entry
+  const change_owner = (new_owner: address, storage: storage): [list<operation>, storage] => {
+    // Verify that the sender is the admin
+    if (Tezos.get_sender() != storage.owner) {
+      failwith("Not the owner");
+    }
+    return [[], {
+      owner: new_owner,
+      beneficiaries: storage.beneficiaries,
+     }];
+  }
+
+}

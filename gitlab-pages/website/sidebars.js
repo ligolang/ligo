@@ -137,7 +137,7 @@ const sidebars = {
     "Advanced Topics": [
       "advanced/package-management",
       "tutorials/optimisation/optimisation",
-      "tutorials/security/security"
+      "advanced/security"
     ]
   },
   "API": {

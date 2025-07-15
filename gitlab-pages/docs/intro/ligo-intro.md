@@ -105,7 +105,7 @@ Your choice to learn LIGO is already available:
 You will need a deeper comprehension:
 - Teach yourself how to structure your code with [Combining code](../syntax/modules) section
 - Learn how to [write tests](../testing) we strongly encourage to use [breathalyzer library from the LIGO registry.](https://packages.ligolang.org/package/ligo-breathalyzer)
-- Understand how to [secure a contract](../tutorials/security)
+- Understand how to [secure a contract](../advanced/security)
 
 ### Dig deeper
 
