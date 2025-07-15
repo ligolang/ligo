@@ -292,6 +292,6 @@ const test = (() => {
 
 To call views directly in tests, see [Testing views](../../testing#testing-views).
 
-To compile parameters to pass to views, see [Compiling expressions](../../compiling/compiling#compiling-expressions).
+To compile parameters to pass to views, see [Compiling expressions](../../compiling#compiling-expressions).
 
 <!-- updated use of entry -->
