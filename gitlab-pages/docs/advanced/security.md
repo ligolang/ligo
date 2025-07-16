@@ -458,7 +458,8 @@ Because the request comes directly from an authorised entity, contracts can be m
 This approach is a good default choice if both conditions hold true:
 
 1. The sender contract is well secured against emitting arbitrary operations.
-For instance, it must not contain ["view" entrypoints](https://gitlab.com/tzip/tzip/-/blob/master/proposals/tzip-4/tzip-4.md#view-entrypoints) as defined in [TZIP-4](https://gitlab.com/tzip/tzip/-/blob/master/proposals/tzip-4/tzip-4.md).
+For instance, it must not contain a certain kind of ["view" entrypoints](https://gitlab.com/tezos/tzip/-/blob/master/proposals/tzip-4/tzip-4.md#view-entrypoints#view-entrypoints) as defined in [TZIP-4](https://gitlab.com/tzip/tzip/-/blob/master/proposals/tzip-4/tzip-4.md).
+Ordinary views with the `@view` attribute/decorator do not have this vulnerability because they cannot create operations.
 
 2. You only need to authorise an immediate caller and not the contracts somewhere up in the call chain.
 
