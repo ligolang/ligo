@@ -5,15 +5,13 @@ title: Keywords
 
 import Syntax from '@theme/Syntax';
 
-_Keywords_ are reserved words that cannot be used as names in declarations.
-In some cases you can escape keywords to use them as variables or record fields.
+_Keywords_ are reserved words that cannot be used as names in declarations such as variables and record fields.
 
 <Syntax syntax="cameligo">
 
 ## Escaping keywords
 
-Keywords cannot be used as variables or record fields. If you need to
-use a keyword as a variable, you can prefix it with `@`, like so:
+If you need to use a keyword as a variable name, you can prefix it with `@`, as in this example:
 
 ```cameligo group=keywords
 let @from = ("tz1fakefakefakefakefakefakefakcphLA5" : address)
@@ -21,7 +19,53 @@ let @from = ("tz1fakefakefakefakefakefakefakcphLA5" : address)
 
 </Syntax>
 
+<Syntax syntax="jsligo">
+
+Unlike in previous versions of JsLIGO, you cannot start variable names with an `@` symbol and therefore you cannot escape keywords by putting an `@` symbol in front of their names.
+You can modify the keywords in other ways, such as adding an underscore to the end.
+
+</Syntax>
+
 ## List of keywords
+
+<Syntax syntax="jsligo">
+
+JsLIGO's keywords are the following:
+
+- `as`
+- `break`
+- `case`
+- `const`
+- `continue`
+- `contract_of`
+- `default`
+- `do`
+- `else`
+- `export`
+- `false`
+- `for`
+- `from`
+- `function`
+- `if`
+- `implements`
+- `import`
+- `interface`
+- `let`
+- `match`
+- `namespace`
+- `of`
+- `parameter_of`
+- `return`
+- `switch`
+- `true`
+- `type`
+- `when`
+- `while`
+
+JslIGO may allow you to create and use variables with these names in some cases, but for some uses the compiler fails to compile contracts that use variables with these names.
+Therefore, do not use variables with these names even if the contract appears to work.
+
+</Syntax>
 
 <Syntax syntax="cameligo">
 CameLIGO's keywords are the following:
